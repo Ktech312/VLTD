@@ -1,4 +1,4 @@
-# VLTD — Session Handoff (updated, fifteenth pass — Web Push CONFIRMED WORKING live on phone + desktop, security incident closed, Messages now live-updates — ALL CONFIRMED LIVE, no migrations pending)
+# VLTD — Session Handoff (updated, sixteenth pass — Web Push confirmed live; NEW: placeholder/incomplete-feature audit in §2 — PSA/Discogs/Vault-Scan/Lounge-charts need attention, read before claiming anything is "done")
 
 Read this top to bottom, then start on **§2 "What's LEFT."** This is written so a
 brand-new chat can pick up with no prior context.
@@ -178,6 +178,71 @@ who owns a screen.** EK is aware of this.
 ---
 
 ## 2. What's LEFT to do (prioritized)
+
+### NOT DONE, READ FIRST — placeholder/incomplete-feature audit (2026-08-21)
+After the DM saga above (things previously called "100% confirmed live"
+that turned out to have real bugs — search visibility, no live-update, push
+needing extensive debugging), EK directly asked: "any other items that have
+placeholders that are really 100% done?" Full codebase audit run in
+response — ranked by how likely a real user hits it and gets misled. None
+of this has been fixed yet; it's a punch list, not a done-list.
+
+**HIGH — looks fully working, isn't:**
+1. **PSA cert lookup on `/vault/add`** — real input + "Look up" button, but
+   `runPSALookupForCode()` (`src/app/vault/add/page.tsx` ~line 1228) has
+   `const ENABLE_PSA_LOOKUP = false;` hardcoded. Clicking does nothing but
+   show a quiet status message. Even if re-enabled, PSA's own API is
+   currently rejecting the account ("limited to approved customers") —
+   external blocker, nothing to build until they approve.
+2. **Vinyl lookup (Discogs)** — `src/app/api/vinyl-lookup/route.ts:86`
+   returns "Discogs token not configured" whenever the server-side
+   `DISCOGS_TOKEN` is empty/bad. Per EK's own earlier note in
+   `CHECKLIST.md` ("this has never worked"), this was flagged before with
+   no later confirmation it got fixed. Every vinyl scan across Capture,
+   Add, and Quick Add likely fails silently. **Needs checking**: is
+   `DISCOGS_TOKEN` actually set correctly in Vercel?
+3. **"Scan" button on the main Vault page's Add-to-Museum modal** —
+   `src/app/vault/VaultInner.tsx` ~lines 1186 and 1621 — shows a toast
+   "Barcode scan coming soon..." Confusing specifically because scanning
+   *does* work everywhere else (Quick Add, `/capture`, `/vault/add`) — this
+   one specific entry point is the dead one.
+
+**MEDIUM — real gaps, lower traffic or partly disclosed:**
+4. **VLT Lounge "Market Pulse"/"Volume" mini-charts are fake** —
+   `src/app/community-board/page.tsx`: `Spark()` (~line 142) and `Bars()`
+   (~line 150) always render the same hardcoded shape/heights, sitting
+   right next to the REAL percentage/dollar figures from the
+   `get_collector_signals` RPC. Same "hardcoded value next to real data"
+   pattern already fixed everywhere else in the app except here.
+5. **CGC-graded card/comic lookup doesn't exist at all** — not misleading
+   (nothing implies it works), just a real gap if EK has CGC-graded
+   inventory expecting a hit.
+6. **Documents + avatar image uploads are honestly labeled but
+   device-only** — no cloud sync/backup at all (`DocumentsSection.tsx`,
+   `account/page.tsx` ~line 659). Clearing browser data or switching
+   devices permanently loses them. Worth knowing since Documents is
+   pitched specifically for certs/receipts — the exact thing people expect
+   to be safe.
+7. **`/clubs` is a real, reachable nav page that's 100% "Coming soon."**
+
+**LOW / verified NOT an issue, listed for completeness:** the incognito
+toggle on `/account` is honestly disabled with a visible "Paid feature —
+coming soon" label (not misleading); Redeem Codes, 2FA/TOTP, and the
+comic-release scrapers were all independently verified as genuinely real,
+not stubs.
+
+**Also unverified (self-flagged in this same file's own earlier entries,
+not independently re-checked in this audit)**: the barcode scanner's
+successful-match path, ScanDex end-to-end on a real device, camera zoom/
+lens-switching on real Android hardware, and Vault Halls search — all
+previously noted as "compiles clean but never confirmed on a real device."
+Given this project's track record, worth EK spot-checking rather than
+assuming built means working.
+
+**Suggested order discussed with EK**: check/fix `DISCOGS_TOKEN` first
+(quick), then fix the misleading Vault "Scan" button (wire it or remove
+it), then decide on the fake Lounge charts (remove or make real). PSA
+stays blocked on their approval — nothing to build there yet.
 
 ### DONE, CONFIRMED WORKING LIVE (phone + desktop) — Web Push notifications for DMs (2026-08-21)
 EK asked: can someone get alerted about a new message even with the app
