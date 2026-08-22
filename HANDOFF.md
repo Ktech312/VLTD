@@ -303,13 +303,22 @@ this file, "compiles clean" isn't "confirmed working."
   before building (all-images-through-signed-URLs vs. a second private
   bucket that existing photos migrate into on upgrade) — flagged, not
   scoped yet.
-- **`/clubs`** — EK wants the full version: real clubs/discussion boards
-  with real moderation, PLUS syncing with Discord and Reddit (not just
-  link-out). Proposed build order: (1) real native clubs + discussion +
-  moderation, no external dependencies; (2) Discord — post club activity
-  to a webhook EK sets up in their own server; (3) Reddit — cross-post via
-  a Reddit developer app EK registers. Waiting on EK's go-ahead to start
-  #1 — not started.
+- **`/clubs` — BUILT 2026-08-22, all 3 phases, migrations not yet run.**
+  Real clubs (`clubs`/`club_members`/`club_posts`/`club_post_reports`/
+  `club_bans`/`club_integrations` tables, mirrors the existing
+  `lounge_posts` moderation-only-via-function pattern), a real ban list so
+  a removed member can't rejoin, `/clubs` (list+create) and
+  `/clubs/[clubId]` (discussion, join/leave, report/hide, staff moderation
+  panel, owner-only integration settings) -- not yet linked from nav.
+  Discord: a Postgres trigger posts new club posts straight to the club's
+  configured webhook (no Next.js route needed -- the webhook URL itself is
+  the credential). Reddit: needs real OAuth, so it follows the exact shape
+  of the DM push-notification trigger (secret in Supabase Vault, a Next.js
+  route at `/api/clubs/notify-reddit`) -- **genuinely unverified**, needs
+  real Reddit developer-app credentials in Vercel before it can post
+  anything. 3 migrations to run, given to EK in chat with full SQL inline
+  (never just a path) per the standing rule -- see chat for the one-time
+  Vault secret command too, deliberately not saved to any file.
 
 ### DONE, CONFIRMED WORKING LIVE (phone + desktop) — Web Push notifications for DMs (2026-08-21)
 EK asked: can someone get alerted about a new message even with the app
