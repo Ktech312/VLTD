@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 import { resolveAvatarSrc } from "@/lib/avatarResolve";
 import { listLoungePosts, addLoungePost, hideLoungePost, type LoungePost, type LoungePostKind } from "@/lib/loungePosts";
+import { listClubs, type Club } from "@/lib/clubs";
 import { PageHeader } from "@/components/layout/PageHeader";
 
 const ACTIVE_PROFILE_KEY = "vltd_active_profile_id_v1";
@@ -154,12 +155,17 @@ export default function VltLoungePage() {
   const [room, setRoom] = useState<RoomRow | null | undefined>(undefined); // undefined = loading
   const [posts, setPosts] = useState<LoungePost[] | null>(null);
   const [viewerProfileId, setViewerProfileId] = useState("");
+  const [clubs, setClubs] = useState<Club[] | null>(null);
   const [composerKind, setComposerKind] = useState<LoungePostKind | null>(null);
   const [composerBody, setComposerBody] = useState("");
   const [posting, setPosting] = useState(false);
 
   useEffect(() => {
     setViewerProfileId(getActiveProfileId());
+  }, []);
+
+  useEffect(() => {
+    void listClubs(3).then(setClubs);
   }, []);
 
   function openComposer(kind: LoungePostKind) {
@@ -563,6 +569,34 @@ export default function VltLoungePage() {
                 ))}
               </ul>
             )}
+          </section>
+
+          <section className="rounded-[8px]" style={CARD}>
+            <div className="flex items-center justify-between px-4 py-3" style={{ borderBottom: "1px solid var(--border)" }}>
+              <Label>Clubs</Label>
+              <More href="/clubs" />
+            </div>
+            {clubs === null ? (
+              <div className="px-4 py-6 text-center text-[12px]" style={{ color: "var(--muted2)" }}>Loading…</div>
+            ) : clubs.length === 0 ? (
+              <div className="px-4 py-6 text-center text-[12px]" style={{ color: "var(--muted2)" }}>
+                No clubs yet — be the first to start one.
+              </div>
+            ) : (
+              <ul>
+                {clubs.map((club) => (
+                  <li key={club.id} style={{ borderBottom: "1px solid var(--border)" }}>
+                    <Link href={`/clubs/${club.id}`} className="flex items-center justify-between gap-3 px-4 py-2.5 text-[12.5px] transition hover:bg-[color:var(--table-row-hover)]">
+                      <span className="min-w-0 truncate font-bold">{club.name}</span>
+                      <span className="shrink-0" style={{ color: "var(--muted)" }}>
+                        {club.memberCount} member{club.memberCount === 1 ? "" : "s"}
+                      </span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            )}
+            <Link href="/clubs" className="block w-full px-4 py-3 text-left text-[12px] font-bold" style={{ color: CYAN }}>Browse all Clubs →</Link>
           </section>
         </div>
       </div>
