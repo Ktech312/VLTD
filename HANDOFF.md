@@ -1,4 +1,4 @@
-# VLTD — Session Handoff (updated, sixteenth pass — Web Push confirmed live; NEW: placeholder/incomplete-feature audit in §2 — PSA/Discogs/Vault-Scan/Lounge-charts need attention, read before claiming anything is "done")
+# VLTD — Session Handoff (updated, seventeenth pass — Events page now self-expires + self-populates (2 new crons); header-strip button spacing fixed; NEW: placeholder/incomplete-feature audit in §2 — PSA/Discogs/Vault-Scan/Lounge-charts need attention, read before claiming anything is "done")
 
 Read this top to bottom, then start on **§2 "What's LEFT."** This is written so a
 brand-new chat can pick up with no prior context.
@@ -249,6 +249,91 @@ assuming built means working.
 (quick), then fix the misleading Vault "Scan" button (wire it or remove
 it), then decide on the fake Lounge charts (remove or make real). PSA
 stays blocked on their approval — nothing to build there yet.
+
+### DONE (2026-08-23) — Events page self-expire + self-populate, header-strip spacing fix, blue-button audit (nothing to fix)
+
+**Events page was 100% stale.** The "Upcoming Events" grid was 4 events
+hand-typed once into `20260624_collector_events.sql` — every one had
+already ended (NAMM's own name even had "(Past)" manually typed into it
+instead of being disabled). The "Find Events" search box was already live
+(real-time SerpApi call), only the persistent grid above it was frozen.
+Two-part fix, both live:
+1. **Self-expiring, not manually toggled.** `20260823_collector_events_auto_expire.sql`
+   (**confirmed run by EK**) changed the read policy to `enabled = true AND
+   ends_at >= now()` — an event disappears the moment it's over, no one
+   has to remember to flip `enabled=false` ever again.
+2. **Self-populating, via two new Vercel Cron jobs** (`CRON_SECRET`
+   confirmed set in Vercel):
+   - **Daily** `/api/cron/refresh-events` — pulls the same SerpApi Google
+     Events search the page's own search box uses, PLUS Ticketmaster
+     Discovery (real structured start/end dates, no text-date guessing).
+     Both are keyword-search sources (risk: a generic "convention" query
+     could match something unrelated, e.g. EK's own worry about a
+     plumbing convention) — so every candidate passes through ONE batched
+     Claude call (`ANTHROPIC_API_KEY`, already live) asking "is this a
+     genuine collectibles/hobby event?" before it's allowed into
+     `collector_events`. **Fails CLOSED**: if that AI check errors for any
+     reason, nothing from that run publishes, full stop.
+   - **Weekly (Mondays)** `/api/cron/refresh-major-events` — a curated,
+     EK-editable list of ~19 well-known recurring shows (SDCC, NYCC, The
+     National, Pokémon Worlds, ANA World's Fair of Money, Barrett-Jackson,
+     etc., see `MAJOR_SHOWS` in the route file). This is a NAME lookup,
+     not a keyword search — nothing is being discovered, only refreshed —
+     so there's no false-positive risk the way there is above. Only
+     publishes a date Claude is confident real search snippets actually
+     support; explicitly told not to extrapolate from a past year's
+     pattern.
+   - `enabled`/`is_featured` are deliberately never touched by either
+     cron's upsert — if EK manually disables a bad auto-added event or
+     features one, tomorrow's run can't silently undo it.
+   - **SerpApi's `google_events` engine is mid-outage upstream** — their
+     own status page: "[Google Events API] Empty results for all
+     queries," open since 2026-08-06, still "Investigating" as of
+     2026-08-10. Confirmed via a raw SerpApi call bypassing the app
+     entirely (`events_results_state: "Fully empty"` for even the most
+     generic query in a huge metro area) — not a VLTD bug, nothing to fix
+     here, Ticketmaster carries the daily job alone until SerpApi
+     resolves it.
+   - **`TICKETMASTER_API_KEY` added to Vercel by EK 2026-08-23** — the
+     redeploy was in progress as of the last check in this session.
+     **Not yet manually triggered/confirmed producing real rows** — do
+     that first thing next session if it wasn't already done.
+
+**Blue-gradient-button text-color audit — nothing was wrong.** EK: "any
+blue button like that, site wide, needs darker text color." Full sweep of
+every occurrence of the cyan/teal gradient (`79E7FB`/`41C6E4`/`2CB1D1`) —
+37 occurrences across 23 files, plus the two shared CSS classes
+(`.vltd-primary-button` in `vltd-design.css`, `.vltd-action-module__plate`
+in `globals.css`) most pages reference instead of repeating the gradient
+inline. **Every single one already used dark text (`#06171d`) correctly**
+— no theme override flips it light either. Nothing fixed because nothing
+was broken. Don't re-run this whole audit from scratch again; if a
+specific button is later spotted with light text on this gradient, it's
+either a different gradient or something overriding color at render
+time, not this pattern.
+
+**Header-strip action buttons were edge-to-edge, not a button-recipe
+change.** EK flagged (with screenshots) Vault's toolbar (Export/Halls/For
+Sale/Import/Sold/Quick Add/Add Item) and Insights' Filters/Export Report
+as touching the top/bottom of the pinstripe strip with zero breathing
+room, unlike before. Measured live via Claude-in-Chrome
+(`getBoundingClientRect`): the pill buttons render at 40px tall, and
+`PageHeader.tsx`'s strip had `lg:min-h-[42px]` — ~1px of slack total.
+Fixed centrally in the one shared `PageHeader.tsx` (→ `lg:min-h-[50px]`)
+rather than shrinking the button padding recipe itself (used across too
+many pages — Lounge, Vault, Insights, Exhibitions — to touch safely).
+Verified visually via a temporary CSS injection on the live site before
+shipping the real fix, then confirmed the real fix builds clean. Fixes
+every page that uses `PageHeader`, not just the two in EK's screenshots.
+
+**Also logged, no code change:** researched what forums/communities exist
+per VLTD's 10 universes as Clubs cross-posting targets. The one real
+"same free/no-approval pattern as Discord" find: the Pokémon TCG Discord
+(~308k members) — reachable today with zero new code, a TCG club owner
+just needs to paste that server's webhook into Settings. Everything else
+found was either Reddit (already ruled out, see the Clubs section below)
+or a legacy closed forum (WatchUSeek, Blowout, PCGS/NGC, Steve Hoffman,
+KLOV) with no bot/webhook API at all.
 
 ### DONE (2026-08-22) — Four items from the audit above, actually fixed
 EK picked these four to start with:

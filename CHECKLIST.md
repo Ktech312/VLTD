@@ -1,4 +1,32 @@
-# VLTD — Session Checklist (2026-08-05 night → ongoing, updated 2026-08-22)
+# VLTD — Session Checklist (2026-08-05 night → ongoing, updated 2026-08-23)
+
+## Events page self-expire + self-populate, header spacing, blue-button audit (2026-08-23)
+✅ **Events page was 100% stale** (4 hand-typed events from a one-time
+migration, all already past). RLS now requires `enabled = true AND
+ends_at >= now()` — events self-hide the moment they end, no manual
+toggle ever again. Migration `20260823_collector_events_auto_expire.sql`
+confirmed run by EK.
+✅ **Daily cron** (`/api/cron/refresh-events`) pulls Ticketmaster Discovery
++ SerpApi Google Events, gated by one batched Claude relevance check
+before anything publishes (fails CLOSED if that check errors — nothing
+ungated ever reaches the table). `CRON_SECRET` confirmed set in Vercel.
+✅ **Weekly cron** (`/api/cron/refresh-major-events`, Mondays) refreshes a
+curated, EK-editable list of ~19 major recurring shows by NAME — not a
+keyword search, so no false-positive risk the way the daily one has.
+⬜ **`TICKETMASTER_API_KEY` added to Vercel by EK, redeploy was in
+progress** — not yet manually triggered/confirmed producing real rows.
+Do this first next session if it wasn't already done live.
+ℹ️ **SerpApi's `google_events` engine is mid-outage upstream** (their own
+status page, open since 2026-08-06) — confirmed via a raw SerpApi call,
+not a VLTD bug. Ticketmaster carries the daily job alone until it clears.
+✅ **Blue-gradient-button text-color audit — nothing was wrong.** 37
+occurrences across 23 files + 2 shared CSS classes, all already using
+dark `#06171d` text correctly. Nothing fixed because nothing was broken;
+don't re-audit this from scratch again.
+✅ **Header-strip buttons (Vault/Insights toolbars) were edge-to-edge** —
+measured live (40px buttons in a 42px strip, ~1px slack). Fixed centrally
+in `PageHeader.tsx` (42px→50px), not the button recipe. Fixes every page
+using `PageHeader`. Verified visually on the live site before shipping.
 
 ## 4 items fixed from the 2026-08-21 placeholder audit (2026-08-22)
 ✅ Vault page's dead "Scan" button — now real, wired to the same camera/
