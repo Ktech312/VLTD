@@ -146,6 +146,61 @@ confirm with EK who owns a screen.** EK is aware of this.
 
 ---
 
+## ✅ 2026-08-23, later same day — tightened the Share/Export sheet's
+layout, EK's direct ask ("Next to tighten up this page"). **This edits
+`SocialExportSheet.tsx` and `GenerateCopyPanel.tsx` — shared components
+also used on the real item detail page (`vault/item/[id]/page.tsx`), not
+museum-only files.** Explicitly authorized by EK, called out here since
+it's outside this branch's usual scope.
+
+1. Background label moved inline next to its swatches (was stacked
+   above); swatches shrunk `h-8 w-8` → `h-6 w-6`, gap tightened, so
+   label + all 6 colors fit one row. Applied to both places this exact
+   markup was duplicated (Image tab and Then-vs-Now tab) for
+   consistency.
+2. "Show value" and "VLTD watermark" combined onto one row. Added an
+   opt-in `compact` prop to the shared `Toggle` component (default
+   `false` — its third, unrelated usage on the Then-vs-Now tab is
+   untouched) that puts the switch immediately next to the label instead
+   of pushed to the far edge via `justify-between`.
+3. "Preview {format}" and "Generate caption" are now the same size, side
+   by side, only while `!preview` (matches EK's screenshot state) —
+   `GenerateCopyPanel` gained an explicit `fullWidth` prop for this
+   rather than concatenating a `className` override on top of its
+   default classes, which would have left conflicting Tailwind
+   utilities (`rounded-[7px]` vs `rounded-2xl`, etc.) with no reliable
+   way to know which one actually wins in the generated CSS — a real
+   fix, not a fragile string-concat shortcut. Kept `GenerateCopyPanel`
+   as ONE persistent instance (not two separately-mounted copies for the
+   two states) so an in-progress AI caption draft survives toggling
+   Preview/Edit.
+4. Removed the now-redundant wrapper `<div className="mt-2">` around the
+   caption generator — it's a sibling in the same flex row now, so that
+   extra vertical space is gone, not just visually hidden.
+
+Deliberately NOT touched: toggle colors (green/red) — that's the
+separately-flagged, actually-site-wide task below, not part of this
+layout pass.
+
+`tsc --noEmit` (full project, given the shared-component edit) /
+`eslint` (0 errors, all warnings pre-existing) / `npm run build` clean.
+Verified structurally in a live browser tab: Background row confirmed
+`flex items-center gap-3` (inline), both toggles confirmed inside one
+shared `.flex.gap-6` row, and — after resetting `preview` state via
+Edit — Preview and Generate Caption buttons both confirmed
+`flex-1 rounded-2xl py-3 text-sm font-bold`, same parent element.
+
+## 📋 FLAGGED, NOT DONE — site-wide toggle colors (separate from the
+above). EK: "All sliders — site wide — need to be like the ones int he
+user page, they should be green when on and red when off, make that a
+full site scan to follow." This is a main-app, all-of-`src/`-spanning
+design change, unrelated to the 3D museum — spawned as a separate
+background task (title: "Make all site toggles green/red like the user
+page") rather than done here, since it needs to happen on `main` in
+whichever session owns the core product, not this branch.
+
+---
+
 ## ✅ 2026-08-23, later same day, second correction — the share sheet's
 image preview was STILL black. EK, correctly and sharply: "you are
 trying to quickly fix things instead of doing them right the first

@@ -46,6 +46,11 @@ type Props = {
   /** Label shown on the trigger button */
   triggerLabel?: string;
   className?: string;
+  /** Size-matches the idle trigger button to a full-width primary action
+   *  (e.g. sitting next to another flex-1 button) instead of its default
+   *  small pill. Only affects the idle state's own button classes —
+   *  the generating/review/accepted states already share sizing. */
+  fullWidth?: boolean;
 };
 
 // ─── States ───────────────────────────────────────────────────────────────────
@@ -60,6 +65,7 @@ export default function GenerateCopyPanel({
   onAccept,
   triggerLabel,
   className = "",
+  fullWidth = false,
 }: Props) {
   const [state, setState] = useState<PanelState>("idle");
   const [draft, setDraft] = useState("");
@@ -107,7 +113,9 @@ export default function GenerateCopyPanel({
         type="button"
         onClick={handleGenerate}
         className={[
-          "inline-flex items-center gap-1.5 rounded-[7px] px-3 py-1.5 text-xs font-semibold ring-1 transition",
+          fullWidth
+            ? "flex-1 flex items-center justify-center gap-1.5 rounded-2xl py-3 text-sm font-bold transition"
+            : "inline-flex items-center gap-1.5 rounded-[7px] px-3 py-1.5 text-xs font-semibold ring-1 transition",
           "hover:ring-[color:var(--theme-gold)] hover:text-[color:var(--theme-gold)]",
           className,
         ].join(" ")}
