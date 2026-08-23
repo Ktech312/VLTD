@@ -309,11 +309,20 @@ function drawSpineTexture(title: string, universe?: string) {
   canvas.height = 900;
   const ctx = canvas.getContext("2d");
   if (!ctx) return new THREE.CanvasTexture(canvas);
-  // EK: "the blue tone I circled is the blue I was talking about" — the
-  // app's real theme blue, same as the Save Room Draft button's own
-  // gradient/text pairing (THEME_BLUE/THEME_BLUE_TEXT below), not the
-  // hex guessed earlier. Dark text on the light blue for real contrast.
-  ctx.fillStyle = THEME_BLUE;
+  // EK: "this color does not match the button color" — a flat fill
+  // rendered with scene lighting/tone-mapping never looks like the same
+  // hex value shown in a plain CSS button (PBR shading + the room's own
+  // exposure both shift it). Two fixes: (1) draw the button's ACTUAL
+  // gradient (linear-gradient(180deg,#79E7FB,#41C6E4 55%,#2CB1D1)), not
+  // a flat approximation of just its lighter stop, and (2) the material
+  // built from this texture (below) is unlit + toneMapped:false, so it
+  // renders these exact pixel values instead of being reshaded by the
+  // room's lights.
+  const grd = ctx.createLinearGradient(0, 0, 0, canvas.height);
+  grd.addColorStop(0, "#79E7FB");
+  grd.addColorStop(0.55, "#41C6E4");
+  grd.addColorStop(1, "#2CB1D1");
+  ctx.fillStyle = grd;
   ctx.fillRect(0, 0, canvas.width, canvas.height);
   ctx.save();
   ctx.translate(canvas.width / 2, canvas.height / 2);
@@ -2254,11 +2263,24 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
       focal: THREE.Vector3;
       frozenYaw: number;
       inspectScale: number;
-      // A small, fixed-depth box added as a child of the card ONLY while
-      // held (never touches the shelf-resting frame/geometry at all) — the
-      // sides EK asked for: theme blue, with the title+universe as a
-      // spine-style label, "slightly wider" than the card, not a big box.
-      spineBox: THREE.Mesh;
+      // EK: "you did not make the entire item thicker, you just put a
+      // bigger end on it... looks like an I-Beam" — bolting a separate
+      // box onto the edge of an otherwise-flat card is exactly what
+      // produced that: front/back stayed paper-thin while only a thin
+      // strip at the edge had real depth, reading as two mismatched
+      // pieces, not one uniformly thick object. Real fix: swap the
+      // card's own geometry+material to a real box for as long as it's
+      // held (restored on put-back), so front/back/sides all belong to
+      // the SAME uniformly-thick shape — no bolted-on piece at all.
+      originalGeometry: THREE.BufferGeometry;
+      originalMaterial: THREE.Material | THREE.Material[];
+      // The 6 fresh materials built for the held box, so put-back can
+      // dispose exactly these (never the restored original).
+      boxMaterials: THREE.Material[];
+      // The back face's own material — kept directly reachable so the
+      // async back-image load (below) can update it in place if it
+      // resolves after this pickup already started.
+      backMat: THREE.MeshStandardMaterial;
     };
     let heldItem: HeldItem | null = null;
     let pullAnim: { dir: "in" | "out"; t: number } | null = null;
@@ -2269,7 +2291,6 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
     let inspectTargetYaw = 0;
     let inspectTargetPitch = 0;
     let heldDragYaw = 0;
-    let showingBack = false;
     // EK's ask (2026-08-22, later pass): "shrink it slightly ... its just
     // slight larger" — then, after a live test, "even bigger now ... paper
     // thin." Root cause: a flat multiplier on top of pos.scale, which
@@ -2294,28 +2315,60 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
       const focal = cameraBody.clone().addScaledVector(facing, 2.2);
       focal.y = cameraBody.y;
       const inspectScale = TARGET_HELD_HEIGHT / entry.naturalHeight;
-      // Sides: theme blue, title + universe as a spine label — a small
-      // fixed-depth box, "slightly wider" than the card, not the wall
-      // frame's own (much deeper) geometry. Built fresh here and added as
-      // a child of the card, so it inherits every position/rotation/scale
-      // change for free and never touches the shelf-resting appearance.
       const cardWidth = entry.naturalHeight * (1.12 / 1.54);
+
+      // Swap the card's own geometry/material to a real box for as long
+      // as it's held — front and back keep the real photo (front's own
+      // existing texture; back mirrors it unless a genuine back image
+      // exists), all 4 remaining faces are theme blue. One uniformly
+      // thick object, not a flat card with a separate piece bolted onto
+      // its edge (see the HeldItem type comment for why that read as an
+      // "I-Beam").
+      const originalGeometry = entry.mesh.geometry;
+      const originalMaterial = entry.mesh.material;
+      const frontTexture = (originalMaterial as THREE.MeshStandardMaterial).map ?? null;
+      const frontMat = new THREE.MeshStandardMaterial({
+        map: frontTexture,
+        roughness: 0.44,
+        metalness: 0.08,
+        emissive: new THREE.Color(0x05070a),
+        emissiveIntensity: 0.08,
+      });
+      const backMat = new THREE.MeshStandardMaterial({
+        map: entry.backTexture ?? frontTexture,
+        roughness: 0.44,
+        metalness: 0.08,
+        emissive: new THREE.Color(0x05070a),
+        emissiveIntensity: 0.08,
+      });
       const spineTexture = drawSpineTexture(entry.item.title, entry.item.universe);
-      const spineSideMat = new THREE.MeshStandardMaterial({ map: spineTexture, roughness: 0.5, metalness: 0.05 });
-      const spinePlainMat = new THREE.MeshStandardMaterial({ color: THEME_BLUE, roughness: 0.5, metalness: 0.05 });
-      // BoxGeometry's face order is [+X, -X, +Y, -Y, +Z, -Z] — right/left
-      // (the sides, labeled above), top/bottom (plain blue), then front/
-      // back. Front/back sit at the same local Z as the card's own image
-      // plane, so an opaque material there completely hid the card's
-      // photo (EK: "the cover image and back image are now missing") —
-      // fully transparent instead, so only the thin side edges show blue.
-      const spineInvisibleMat = new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false });
-      const spineBox = new THREE.Mesh(
-        new THREE.BoxGeometry(cardWidth + 0.05, entry.naturalHeight + 0.05, 0.16),
-        [spineSideMat, spineSideMat, spinePlainMat, spinePlainMat, spineInvisibleMat, spineInvisibleMat]
-      );
-      entry.mesh.add(spineBox);
-      heldItem = { id: itemId, mesh: entry.mesh, item: entry.item, shelfPos: entry.shelfPos.clone(), shelfRotY: entry.shelfRotY, waypoint, focal, frozenYaw, inspectScale, spineBox };
+      // MeshBasicMaterial + toneMapped:false so these render the exact
+      // gradient pixels drawn above, not reshaded by the room's own
+      // lights/exposure (EK: "this color does not match the button
+      // color" — a lit material never matches a flat CSS color exactly).
+      const sideMat = new THREE.MeshBasicMaterial({ map: spineTexture, toneMapped: false });
+      // Top/bottom edges: same blue family (the gradient's own midpoint),
+      // flat since there's no room for legible text on that thin a face.
+      const edgeMat = new THREE.MeshBasicMaterial({ color: "#53cce6", toneMapped: false });
+      const boxMaterials = [sideMat, sideMat, edgeMat, edgeMat, frontMat, backMat];
+      entry.mesh.geometry = new THREE.BoxGeometry(cardWidth, entry.naturalHeight, 0.16);
+      entry.mesh.material = boxMaterials;
+
+      heldItem = {
+        id: itemId,
+        mesh: entry.mesh,
+        item: entry.item,
+        shelfPos: entry.shelfPos.clone(),
+        shelfRotY: entry.shelfRotY,
+        waypoint,
+        focal,
+        frozenYaw,
+        inspectScale,
+        originalGeometry,
+        originalMaterial,
+        boxMaterials,
+        backMat,
+      };
       inspectYaw = 0;
       inspectPitch = 0;
       inspectVelYaw = 0;
@@ -2323,17 +2376,22 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
       inspectTargetYaw = 0;
       inspectTargetPitch = 0;
       heldDragYaw = 0;
-      showingBack = false;
       pullAnim = { dir: "in", t: 0 };
       setSelectedItemId(itemId);
 
       // Kick off the back-image load now (if there is one) so it's ready
-      // well before a drag could rotate far enough to need it.
+      // well before a drag could rotate far enough to need it. Updates
+      // the box's own back material directly if this same item is still
+      // the one being held once it resolves.
       if (entry.item.imageBackUrl && !entry.backTexture) {
         const img = new Image();
         img.crossOrigin = "anonymous";
         img.onload = () => {
           entry.backTexture = drawItemTexture(img);
+          if (heldItem?.id === itemId) {
+            heldItem.backMat.map = entry.backTexture;
+            heldItem.backMat.needsUpdate = true;
+          }
         };
         img.src = entry.item.imageBackUrl;
       }
@@ -2379,21 +2437,19 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
             mesh.rotation.y = heldItem.shelfRotY;
             mesh.rotation.x = 0;
             mesh.scale.setScalar(1);
-            // The spine box is held-only — it never belonged on the
-            // shelf, so it's removed and disposed here rather than
-            // reparented anywhere.
-            mesh.remove(heldItem.spineBox);
-            heldItem.spineBox.geometry.dispose();
-            for (const mat of heldItem.spineBox.material as THREE.Material[]) {
-              if (mat instanceof THREE.MeshStandardMaterial) mat.map?.dispose();
-              mat.dispose();
-            }
-            const entry = itemMeshIndex.get(heldItem.id);
-            if (entry?.frontTexture) {
-              const mat = mesh.material as THREE.MeshStandardMaterial;
-              mat.map = entry.frontTexture;
-              mat.needsUpdate = true;
-            }
+            // Restore the card's real flat geometry/material (the held
+            // box was always temporary — see pickUpItem) before
+            // disposing the box's own geometry and materials. Only the
+            // side material's own texture gets disposed — front/back
+            // reuse textures that are shared with the restored material
+            // or cached on entry.backTexture for next time, so those
+            // must NOT be disposed here.
+            const tempGeometry = mesh.geometry;
+            mesh.geometry = heldItem.originalGeometry;
+            mesh.material = heldItem.originalMaterial;
+            tempGeometry.dispose();
+            (heldItem.boxMaterials[0] as THREE.MeshBasicMaterial).map?.dispose(); // the side spine texture, unique per pickup
+            for (const mat of new Set(heldItem.boxMaterials)) mat.dispose();
             pullAnim = null;
             heldItem = null;
             setSelectedItemId("");
@@ -2418,22 +2474,10 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
       mesh.rotation.y = -heldItem.frozenYaw + inspectYaw * INSPECT_RANGE_YAW + heldDragYaw;
       mesh.rotation.x = inspectPitch * INSPECT_RANGE_PITCH;
       mesh.scale.setScalar(heldItem.inspectScale);
-
-      // Front/back swap once dragged past edge-on — only for items that
-      // actually have a back image; others just keep showing the front
-      // as they turn (EK's own earlier framing: "might not work for
-      // every item").
-      const entry = itemMeshIndex.get(heldItem.id);
-      if (entry?.backTexture) {
-        const normalizedYaw = ((heldDragYaw % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2);
-        const wantBack = normalizedYaw > Math.PI / 2 && normalizedYaw < Math.PI * 1.5;
-        if (wantBack !== showingBack) {
-          showingBack = wantBack;
-          const mat = mesh.material as THREE.MeshStandardMaterial;
-          mat.map = wantBack ? entry.backTexture : entry.frontTexture ?? entry.backTexture;
-          mat.needsUpdate = true;
-        }
-      }
+      // No front/back texture-swap-on-rotate needed any more — the held
+      // shape is now a real box with its own separate front and back
+      // faces (set up in pickUpItem), so rotating it naturally shows
+      // whichever face actually points at the camera.
     }
 
     // Height is NOT force-reset to eye level here anymore — a focus-click needs to

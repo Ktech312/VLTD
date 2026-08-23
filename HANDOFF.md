@@ -146,6 +146,47 @@ confirm with EK who owns a screen.** EK is aware of this.
 
 ---
 
+## ✅ 2026-08-23, later same day — the held-item spine was rebuilt
+properly this pass, after EK caught two real problems with a screenshot:
+"this color does not match the button color" and "you did not make the
+entire item thicker, you just put a bigger end on it... looks like an
+I-Beam."
+
+**Root cause of the I-Beam look**: bolting a separate small box onto
+the edge of an otherwise still-flat, zero-depth card produced exactly
+that — a thin uniform strip at the edge next to an abruptly-flat
+surface everywhere else, with the box's own top/bottom faces catching
+the camera at an angle and reading as flared "wings." **Real fix**:
+`pickUpItem` now temporarily SWAPS the card's own `geometry`/`material`
+to a real `BoxGeometry` for as long as it's held — front and back faces
+carry the real photo (front reuses the existing texture directly; back
+mirrors it unless a genuine `imageBackUrl` exists), all 4 remaining
+faces are the theme blue. One uniformly-thick object, no bolted-on
+piece. The original geometry/material are saved on `HeldItem` and
+restored exactly in `putBackItem`'s completion, before disposing the
+temporary box's own geometry/materials (carefully NOT disposing the
+front/back textures, which are shared with the restored material or
+cached for reuse). The old front/back texture-swap-on-drag logic (which
+operated on a single material) is gone entirely — a real box naturally
+shows whichever face points at the camera as it rotates, no swap needed.
+
+**Root cause of the color mismatch**: a lit `MeshStandardMaterial`
+never renders a flat CSS hex the same way a 2D button does — the
+scene's own lighting and tone-mapping reshade it. Fixed two ways: (1)
+the spine's canvas now draws the button's ACTUAL 3-stop gradient
+(`#79E7FB`→`#41C6E4`→`#2CB1D1`), not a flat approximation of just its
+lighter end; (2) the material is `MeshBasicMaterial` with
+`toneMapped: false`, so it renders those exact pixels unlit and
+un-reshaded, the same way the button itself does.
+
+`tsc --noEmit` / `eslint` (0 errors) / `npm run build` clean.
+Live-verified in a browser tab: picked up an item, dragged to rotate,
+released, picked up a SECOND item — zero console errors through the
+whole geometry/material swap-and-restore cycle, confirming it's robust
+across repeated use, not just a one-shot fix.
+
+---
+
 ## ✅ 2026-08-23, later same day — tightened the Share/Export sheet's
 layout, EK's direct ask ("Next to tighten up this page"). **This edits
 `SocialExportSheet.tsx` and `GenerateCopyPanel.tsx` — shared components
