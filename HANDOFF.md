@@ -146,6 +146,44 @@ confirm with EK who owns a screen.** EK is aware of this.
 
 ---
 
+## ✅ 2026-08-23, later same day — 3 real bugs in the previous pass,
+caught from EK's own screenshots within minutes of it shipping:
+
+1. **Cover AND back image both missing — a real regression.** The new
+   spine box's face-material array was `[side, side, plain, plain,
+   plain, plain]` — but `BoxGeometry`'s face order is `[+X, -X, +Y, -Y,
+   +Z, -Z]`, so indices 4/5 (front/back, `±Z`) got an OPAQUE plain-blue
+   material sitting at the same local Z as the card's own image plane,
+   completely covering it (a solid pale-blue slab with zero image — the
+   "cover image and back image are now missing" report). Fixed: indices
+   4/5 are now a fully transparent `MeshBasicMaterial` (`opacity: 0,
+   depthWrite: false`), so only the thin side edges (0/1) and top/bottom
+   (2/3) show blue — the card's real image shows through the front/back
+   unobstructed.
+2. **Wrong blue, unreadable text.** EK circled the "Save Room Draft"
+   button as the actual reference for "theme blue" — traced its real
+   colors in code: gradient `#79E7FB`→`#2CB1D1` with dark `#06171d`
+   text, not the `#4a9bff`/white I'd guessed twice now. Added
+   `THEME_BLUE`/`THEME_BLUE_TEXT` constants from those exact values,
+   used for the spine label (dark text on light blue = actually
+   readable) and the Description panel's header color.
+3. **Share sheet required scrolling to see the whole thing.** Rendered
+   via `createPortal(..., document.body)` instead of inline in the room
+   view's own tree — whatever in that tree was constraining `fixed
+   inset-0`'s viewport coverage (a `transform` on some ancestor, most
+   likely) no longer applies once it's a direct child of `<body>`.
+   Confirmed via `el.parentElement === document.body` after opening it.
+
+`tsc --noEmit` / `eslint` (0 errors) / `npm run build` clean. Live-
+verified the portal fix structurally (sheet root really is a direct
+`document.body` child now). Could not visually re-confirm the image/
+color fix on screen this pass — the Browser pane's viewport reported
+0×0 during this test (`window.innerWidth/innerHeight` both 0), the same
+not-actually-displayed limitation as every prior pass; the face-order
+bug and its fix were confirmed by code review, not a screenshot.
+
+---
+
 ## ✅ 2026-08-23 — 4 precise, numbered corrections from EK re-reading the
 reference image with circles on it, after the previous "side title"
 attempt (a floating tag) was itself wrong — EK: "I never asked for a

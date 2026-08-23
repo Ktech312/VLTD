@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 import {
   BadgeDollarSign,
   Boxes,
@@ -34,6 +35,12 @@ import { getPrimaryImageUrl, loadItems, type VaultItem } from "@/lib/vaultModel"
 import SocialExportSheet from "@/components/SocialExportSheet";
 import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment.js";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
+
+// The app's real theme blue — same tone/text pairing as the "Save Room
+// Draft" button's own gradient (`#79E7FB`→`#2CB1D1`) and dark text
+// (`#06171d`), not a guessed hex. Used for the held-item spine label.
+const THEME_BLUE = "#79E7FB";
+const THEME_BLUE_TEXT = "#06171d";
 
 // "blue" is the original hand-coded room (navy walls, brass door frame,
 // walnut floor) that used to BE the Vault look before the GLB pipeline —
@@ -302,19 +309,23 @@ function drawSpineTexture(title: string, universe?: string) {
   canvas.height = 900;
   const ctx = canvas.getContext("2d");
   if (!ctx) return new THREE.CanvasTexture(canvas);
-  ctx.fillStyle = "#4a9bff";
+  // EK: "the blue tone I circled is the blue I was talking about" — the
+  // app's real theme blue, same as the Save Room Draft button's own
+  // gradient/text pairing (THEME_BLUE/THEME_BLUE_TEXT below), not the
+  // hex guessed earlier. Dark text on the light blue for real contrast.
+  ctx.fillStyle = THEME_BLUE;
   ctx.fillRect(0, 0, canvas.width, canvas.height);
   ctx.save();
   ctx.translate(canvas.width / 2, canvas.height / 2);
   ctx.rotate(-Math.PI / 2);
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
-  ctx.fillStyle = "#ffffff";
+  ctx.fillStyle = THEME_BLUE_TEXT;
   ctx.font = "bold 46px Arial";
   ctx.fillText(title.slice(0, 40), 0, universe ? -18 : 0);
   if (universe) {
     ctx.font = "34px Arial";
-    ctx.fillStyle = "rgba(255,255,255,0.75)";
+    ctx.fillStyle = "rgba(6,23,29,0.7)";
     ctx.fillText(universe.toUpperCase(), 0, 32);
   }
   ctx.restore();
@@ -2291,10 +2302,17 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
       const cardWidth = entry.naturalHeight * (1.12 / 1.54);
       const spineTexture = drawSpineTexture(entry.item.title, entry.item.universe);
       const spineSideMat = new THREE.MeshStandardMaterial({ map: spineTexture, roughness: 0.5, metalness: 0.05 });
-      const spinePlainMat = new THREE.MeshStandardMaterial({ color: 0x4a9bff, roughness: 0.5, metalness: 0.05 });
+      const spinePlainMat = new THREE.MeshStandardMaterial({ color: THEME_BLUE, roughness: 0.5, metalness: 0.05 });
+      // BoxGeometry's face order is [+X, -X, +Y, -Y, +Z, -Z] — right/left
+      // (the sides, labeled above), top/bottom (plain blue), then front/
+      // back. Front/back sit at the same local Z as the card's own image
+      // plane, so an opaque material there completely hid the card's
+      // photo (EK: "the cover image and back image are now missing") —
+      // fully transparent instead, so only the thin side edges show blue.
+      const spineInvisibleMat = new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false });
       const spineBox = new THREE.Mesh(
         new THREE.BoxGeometry(cardWidth + 0.05, entry.naturalHeight + 0.05, 0.16),
-        [spineSideMat, spineSideMat, spinePlainMat, spinePlainMat, spinePlainMat, spinePlainMat]
+        [spineSideMat, spineSideMat, spinePlainMat, spinePlainMat, spineInvisibleMat, spineInvisibleMat]
       );
       entry.mesh.add(spineBox);
       heldItem = { id: itemId, mesh: entry.mesh, item: entry.item, shelfPos: entry.shelfPos.clone(), shelfRotY: entry.shelfRotY, waypoint, focal, frozenYaw, inspectScale, spineBox };
@@ -2366,8 +2384,8 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
             // reparented anywhere.
             mesh.remove(heldItem.spineBox);
             heldItem.spineBox.geometry.dispose();
-            for (const mat of heldItem.spineBox.material as THREE.MeshStandardMaterial[]) {
-              mat.map?.dispose();
+            for (const mat of heldItem.spineBox.material as THREE.Material[]) {
+              if (mat instanceof THREE.MeshStandardMaterial) mat.map?.dispose();
               mat.dispose();
             }
             const entry = itemMeshIndex.get(heldItem.id);
@@ -2997,7 +3015,7 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
             // Real per-item VaultItem fields, never invented text.
             <>
               <div className="pointer-events-none absolute left-5 top-1/2 w-[340px] -translate-y-1/2 rounded-[10px] bg-black/55 p-4 text-xs leading-5 text-white/80 ring-1 ring-white/15 backdrop-blur">
-                <div className="mb-1.5 text-[10px] font-black uppercase tracking-[0.18em]" style={{ color: "#4a9bff" }}>
+                <div className="mb-1.5 text-[10px] font-black uppercase tracking-[0.18em]" style={{ color: THEME_BLUE }}>
                   Description
                 </div>
                 {heldVaultItemDescription}
@@ -3031,9 +3049,12 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
                   <Share2 size={12} />
                 </button>
               </div>
-              {socialShareOpen ? (
-                <SocialExportSheet item={heldVaultItem} onClose={() => setSocialShareOpen(false)} />
-              ) : null}
+              {socialShareOpen
+                ? createPortal(
+                    <SocialExportSheet item={heldVaultItem} onClose={() => setSocialShareOpen(false)} />,
+                    document.body
+                  )
+                : null}
             </>
           ) : null}
         </div>
