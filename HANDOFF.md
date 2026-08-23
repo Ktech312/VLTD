@@ -146,6 +146,66 @@ confirm with EK who owns a screen.** EK is aware of this.
 
 ---
 
+## ✅ 2026-08-23, later same day — the rebuilt picker above was rendering
+completely broken (EK's screenshot: a transparent, mispositioned overlay
+sitting mid-page instead of a real full-screen takeover) — REAL ROOT CAUSE
+found and fixed, not a patch.
+
+`globals.css` has a global rule `body > * { z-index: 1; position: relative; }`
+(a stacking-context reset for top-level page sections), declared **outside**
+any Tailwind `@layer` block. Per the CSS Cascade Layers spec, ANY unlayered
+rule beats ANY layered rule regardless of selector specificity or source
+order — and Tailwind's own utility classes (`.fixed`, `.inset-0`, etc.) live
+inside `@layer utilities`. My new picker overlay is `createPortal(...,
+document.body)`'d, making it a **direct child of `<body>`** — exactly what
+`body > *` targets — so its Tailwind `fixed inset-0 z-[95]` classes lost to
+that reset and it rendered `position: relative`, shrink-to-content-height,
+wherever it happened to fall in the page's normal flow. Confirmed via
+`getComputedStyle` before (`position: "relative"`, a ~394px-tall box) and
+after the fix (`position: "fixed"`, exact viewport rect) — not guessed.
+
+`src/components/gallery/ItemPickerSheet.tsx` (a different existing
+body-portaled sheet in this same folder) already sidesteps this exact trap
+by setting `position`/`top`/`right`/`bottom`/`left`/`zIndex` as an **inline
+style** instead of Tailwind classes — inline styles beat any stylesheet rule,
+layered or not. Applied the same pattern to the picker's outer div: inline
+`style={{ position: "fixed", top:0, right:0, bottom:0, left:0, zIndex: 95,
+background: "var(--bg, #060a13)" }}`, Tailwind classes kept only for
+`flex flex-col` (unaffected by the reset). Also switched the background
+from `bg-[color:var(--bg,...)]` (a `background-color` declaration, invalid
+in the dark theme where `--bg` resolves to a multi-layer `--theme-bg`
+gradient — invalid values get silently dropped, which was a second reason
+the overlay looked transparent) to the `background` shorthand inline, which
+accepts either a flat color or a gradient.
+
+**Any other component that portals straight to `document.body` and relies
+on Tailwind's `fixed`/`absolute`/`inset-*` classes for positioning has this
+same latent bug** — worth a sweep later. `ItemPickerSheet.tsx` is already
+safe (inline style). Did not check every other `createPortal(..., document.
+body)` call in the app this pass — flagging, not fixing, since it's outside
+this feature's scope.
+
+**Separately investigated** (same message, EK circled empty back-wall slots
+in yellow with no badge/outline at all): added a temporary `console.debug`
+inside the badge-rendering loop and confirmed via the browser console that
+all 61 `positions` entries get a badge mesh added unconditionally, with zero
+thrown errors — so this is NOT a missing-data bug like the wall-capacity
+issue was; the JS/data layer is provably complete. Whatever's causing badges
+to not visually appear at those specific slots is a WebGL rendering
+question (camera clipping, transparent-object sort order, or something
+about that specific viewing angle) that needs real eyes on the live 3D
+render to diagnose — this sandboxed browser's tab isn't reliably compositing
+WebGL frames when not actively displayed (established earlier this session),
+so pixel-level 3D verification here isn't trustworthy. Debug log removed
+before this commit. **Needs a fresh screenshot once EK confirms the overlay
+fix above actually resolved what they were seeing** — it's possible the
+badge gaps were partly an artifact of the broken, mispositioned overlay
+sitting on top of the room view in that exact screenshot, not a second bug.
+
+`tsc --noEmit` / `eslint` (0 errors) / `npm run build` clean.
+
+---
+
 ## ✅ 2026-08-23, later same day — the "+" picker above was rebuilt from
 scratch to match the Vault's real "Wall" view, per EK's direct feedback on
 5 screenshots: "This pop up is useless like this... The pop up should look

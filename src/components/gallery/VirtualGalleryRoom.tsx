@@ -3782,7 +3782,18 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
       </div>
       {pickerSlotIdx !== null
         ? createPortal(
-            <div className="fixed inset-0 z-[95] flex flex-col bg-[color:var(--bg,#060a13)]">
+            <div
+              className="flex flex-col"
+              style={{
+                position: "fixed",
+                top: 0,
+                right: 0,
+                bottom: 0,
+                left: 0,
+                zIndex: 95,
+                background: "var(--bg, #060a13)",
+              }}
+            >
               {/* Row 1: close + title + selected counter */}
               <div className="flex shrink-0 items-center gap-3 p-3">
                 <button
