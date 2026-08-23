@@ -117,6 +117,7 @@ const DEMO_ITEMS: VaultItem[] = [
     category: "Comic Books",
     currentValue: 420,
     imageFrontUrl: "/collectibles/comic-slab.png",
+    notes: "Foil-cover variant, hand-signed by the cover artist at a convention signing. Limited print run, slabbed and graded shortly after release.",
   },
   {
     id: "demo-card",
@@ -126,6 +127,7 @@ const DEMO_ITEMS: VaultItem[] = [
     category: "Trading Cards",
     currentValue: 1850,
     imageFrontUrl: "/collectibles/sports-slab.png",
+    notes: "Rookie-year parallel, numbered print run. Graded a perfect 10 with sharp corners and centering.",
   },
   {
     id: "demo-record",
@@ -135,6 +137,7 @@ const DEMO_ITEMS: VaultItem[] = [
     category: "Vinyl",
     currentValue: 260,
     imageFrontUrl: "/collectibles/vinyl-record.png",
+    notes: "Original first pressing on the original label. Sleeve shows light shelf wear; the record itself plays near mint.",
   },
   {
     id: "demo-figure",
@@ -144,6 +147,7 @@ const DEMO_ITEMS: VaultItem[] = [
     category: "Figures",
     currentValue: 700,
     imageFrontUrl: "/collectibles/vinyl-figure.png",
+    notes: "Artist-proof edition, hand-numbered on the base. Never removed from its display stand.",
   },
   {
     id: "demo-poster",
@@ -153,6 +157,7 @@ const DEMO_ITEMS: VaultItem[] = [
     category: "Poster",
     currentValue: 540,
     imageFrontUrl: "/collectibles/movie-poster.png",
+    notes: "Original theatrical one-sheet from the film's release run. Professionally linen-backed for display.",
   },
   {
     id: "demo-guitar",
@@ -162,6 +167,7 @@ const DEMO_ITEMS: VaultItem[] = [
     category: "Instruments",
     currentValue: 3200,
     imageFrontUrl: "/collectibles/guitar.png",
+    notes: "Played on tour, with visible fret wear and a repaired headstock crack. Comes with a signed certificate of authenticity.",
   },
 ];
 
@@ -1111,19 +1117,6 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
         // Stored so pickUpItem can size every held item to the SAME absolute
         // height regardless of its shelf scale.
         naturalHeight: number;
-        // The matted picture-frame box built alongside this card (null for
-        // display-case/flat items, which never get one). pickUpItem was
-        // only ever moving `mesh` (the card) — the frame stayed glued to
-        // its shelf position the whole time an item was held, so a picked
-        // up item looked like a bare, frameless photo (EK: "paper thin, no
-        // title on the side") while its actual frame sat empty back on the
-        // shelf (the likely real explanation for EK's other screenshot
-        // showing a frame's bottom edge overlapping the shelf board below
-        // it — probably caught mid pull-animation, the orphaned frame still
-        // sitting at its old spot while the card had already started
-        // moving). Reparenting it onto the card in pickUpItem (below) makes
-        // it inherit every position/rotation/scale change for free.
-        frame: THREE.Mesh | null;
       }
     >();
 
@@ -2017,7 +2010,6 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
           frontTexture: null,
           backTexture: null,
           naturalHeight: 1.54 * pos.scale,
-          frame,
         });
       }
 
@@ -2239,7 +2231,6 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
       focal: THREE.Vector3;
       frozenYaw: number;
       inspectScale: number;
-      frame: THREE.Mesh | null;
     };
     let heldItem: HeldItem | null = null;
     let pullAnim: { dir: "in" | "out"; t: number } | null = null;
@@ -2275,12 +2266,7 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
       const focal = cameraBody.clone().addScaledVector(facing, 2.2);
       focal.y = cameraBody.y;
       const inspectScale = TARGET_HELD_HEIGHT / entry.naturalHeight;
-      // Reparent the frame onto the card (Object3D.attach preserves its
-      // current world transform) so every position/rotation/scale change
-      // below carries the frame along automatically — it used to stay
-      // glued to the shelf while only the bare card flew out and grew.
-      if (entry.frame) entry.mesh.attach(entry.frame);
-      heldItem = { id: itemId, mesh: entry.mesh, item: entry.item, shelfPos: entry.shelfPos.clone(), shelfRotY: entry.shelfRotY, waypoint, focal, frozenYaw, inspectScale, frame: entry.frame };
+      heldItem = { id: itemId, mesh: entry.mesh, item: entry.item, shelfPos: entry.shelfPos.clone(), shelfRotY: entry.shelfRotY, waypoint, focal, frozenYaw, inspectScale };
       inspectYaw = 0;
       inspectPitch = 0;
       inspectVelYaw = 0;
@@ -2344,11 +2330,6 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
             mesh.rotation.y = heldItem.shelfRotY;
             mesh.rotation.x = 0;
             mesh.scale.setScalar(1);
-            // Hand the frame back to the room at its now-restored resting
-            // transform, before it's forgotten below — attach() preserves
-            // the frame's CURRENT world position/rotation/scale, which at
-            // this exact point already equals its original shelf pose.
-            if (heldItem.frame) roomGroup.attach(heldItem.frame);
             const entry = itemMeshIndex.get(heldItem.id);
             if (entry?.frontTexture) {
               const mat = mesh.material as THREE.MeshStandardMaterial;
@@ -2976,29 +2957,17 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
             <>
               {heldVaultItem.universe || heldVaultItem.categoryLabel || heldVaultItem.category ? (
                 <div
-                  className="pointer-events-none absolute left-5 top-5 rounded-[6px] px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.14em] text-white shadow-[0_2px_10px_rgba(0,0,0,0.35)]"
-                  // Fixed, hardcoded color on purpose — var(--accent) turned
-                  // out to genuinely resolve to a near-neutral pale gray
-                  // (#C8CDD2) rather than a "vivid" color in this context, so
-                  // it read as invisible against the Vault room's own steel
-                  // tones. This is the same blue already used elsewhere in
-                  // this file for the frame-guide corner brackets — a color
-                  // guaranteed to actually stand out, not theme-dependent.
+                  className="pointer-events-none absolute left-5 top-16 rounded-[6px] px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.14em] text-white shadow-[0_2px_10px_rgba(0,0,0,0.35)]"
                   style={{ backgroundColor: "#4a9bff" }}
                 >
                   {heldVaultItem.universe || heldVaultItem.categoryLabel || heldVaultItem.category}
                 </div>
               ) : null}
-              {heldVaultItemDescription ? (
-                <div className="pointer-events-none absolute left-5 top-1/2 max-w-[260px] -translate-y-1/2 rounded-[10px] bg-black/55 p-4 text-xs leading-5 text-white/80 ring-1 ring-white/15 backdrop-blur">
-                  <div className="mb-1.5 text-[10px] font-black uppercase tracking-[0.18em] text-white/50">
-                    Description
-                  </div>
-                  {heldVaultItemDescription}
+              <div className="pointer-events-none absolute left-5 top-1/2 max-w-[260px] -translate-y-1/2 rounded-[10px] bg-black/55 p-4 text-xs leading-5 text-white/80 ring-1 ring-white/15 backdrop-blur">
+                <div className="mb-1.5 text-[10px] font-black uppercase tracking-[0.18em] text-white/50">
+                  Description
                 </div>
-              ) : null}
-              <div className="pointer-events-none absolute bottom-[4.6rem] left-1/2 -translate-x-1/2 rounded-full bg-black/40 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-white/70 ring-1 ring-white/10 backdrop-blur">
-                Hold + drag to turn it around · Click to put it back
+                {heldVaultItemDescription}
               </div>
               <div className="pointer-events-auto absolute bottom-5 left-1/2 flex max-w-[92%] -translate-x-1/2 items-center gap-3 rounded-[10px] bg-black/60 px-4 py-2.5 ring-1 ring-white/15 backdrop-blur">
                 <div className="min-w-0">
