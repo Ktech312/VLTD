@@ -522,18 +522,17 @@ export default function EventsPage() {
   }, [nowMs, sortedEvents]);
 
   const featuredEvent = useMemo(() => {
-    return upcomingEvents.find((event) => event.is_featured) ?? upcomingEvents[0] ?? sortedEvents[0];
-  }, [sortedEvents, upcomingEvents]);
+    return upcomingEvents.find((event) => event.is_featured) ?? upcomingEvents[0];
+  }, [upcomingEvents]);
 
   const selectedEvent = useMemo(() => {
     return sortedEvents.find((event) => event.id === selectedId) ?? featuredEvent;
   }, [featuredEvent, selectedId, sortedEvents]);
 
   const filteredEvents = useMemo(() => {
-    const base = upcomingEvents.length ? upcomingEvents : sortedEvents;
-    const active = filter === "all" ? base : base.filter((event) => categoryFor(event) === filter);
+    const active = filter === "all" ? upcomingEvents : upcomingEvents.filter((event) => categoryFor(event) === filter);
     return showSavedOnly ? active.filter((event) => savedIds.has(event.id)) : active;
-  }, [filter, sortedEvents, upcomingEvents, showSavedOnly, savedIds]);
+  }, [filter, upcomingEvents, showSavedOnly, savedIds]);
 
   const savedEvents = useMemo(() => {
     return sortedEvents.filter((event) => savedIds.has(event.id));
