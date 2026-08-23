@@ -36,6 +36,20 @@ const CATEGORY_QUERIES: Record<string, string> = {
   music: "record show vinyl show guitar show instrument expo",
 };
 
+// Ticketmaster's `keyword` param is a near-exact/AND match, not a fuzzy
+// natural-language search like Google -- the CATEGORY_QUERIES strings above
+// return zero every time on Ticketmaster (verified directly against their
+// API 2026-08-23). These were found by testing real single/short-phrase
+// keywords against the live API until each returned actual event hits.
+const TICKETMASTER_KEYWORDS: Record<string, string> = {
+  convention: "comic con",
+  card_show: "card show",
+  auction: "auction",
+  drop: "vintage market",
+  gallery: "comic art",
+  music: "record show",
+};
+
 // ── Source 1: Google Events via SerpApi ─────────────────────────────────
 // Same engine the "Find Events" search box uses. As of 2026-08 SerpApi has
 // an open incident ("[Google Events API] Empty results for all queries") --
@@ -249,7 +263,9 @@ export async function GET(req: NextRequest) {
   for (const [category, query] of Object.entries(CATEGORY_QUERIES)) {
     const [serpCandidates, tmCandidates] = await Promise.all([
       serpApiKey ? fetchSerpCandidates(serpApiKey, category, query, now).catch(() => []) : Promise.resolve([]),
-      ticketmasterKey ? fetchTicketmasterCandidates(ticketmasterKey, category, query).catch(() => []) : Promise.resolve([]),
+      ticketmasterKey
+        ? fetchTicketmasterCandidates(ticketmasterKey, category, TICKETMASTER_KEYWORDS[category] ?? category).catch(() => [])
+        : Promise.resolve([]),
     ]);
     allCandidates.push(...serpCandidates, ...tmCandidates);
     foundByCategory[category] = serpCandidates.length + tmCandidates.length;
