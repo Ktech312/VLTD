@@ -146,6 +146,111 @@ confirm with EK who owns a screen.** EK is aware of this.
 
 ---
 
+## ⚠ IMPORTANT TOOLING NOTE for whoever tests this next via the browser
+automation tools (not EK's own browser): **if the Browser pane isn't
+actually displayed on the human's side, Chrome fully pauses
+`requestAnimationFrame` for that tab (`document.hidden` reads `true`,
+`document.visibilityState` is `"hidden"`)** — confirmed by installing a
+raw `requestAnimationFrame` counter and getting 0 ticks after a full
+second of real wait. This app's whole 3D update loop (`render()`,
+`updateHeldItem()`, `walkTween`, everything) runs on `requestAnimationFrame`,
+so in that state NOTHING animation-gated ever progresses, no matter how
+long you `setTimeout`-wait for it. **This cost real time today**: item
+pickup still LOOKED like it worked in automated tests because
+`setSelectedItemId(...)` fires synchronously the moment you click,
+independent of the animation — but put-back (`putBackItem` only clears
+`selectedItemId` once `pullAnim.t` reaches 1 inside `updateHeldItem`,
+which needs real animation frames) looked permanently stuck across many
+different items and multiple different code versions, which briefly
+looked like a real regression before the actual cause turned out to be
+the tab simply not compositing. `tabs_select` on the tab does NOT fix
+this — it only fronts a tab within the pane's own strip, it can't force
+the pane itself to be visible in the host UI. If put-back (or anything
+else animation-driven) looks stuck in a similar automated test, check
+`document.hidden` FIRST before assuming the code is broken.
+
+---
+
+## ✅ 2026-08-22, later same day, second pass — the held item's frame
+was left behind on the shelf the whole time an item was held, plus 3
+smaller polish fixes EK caught on the FIRST pass's actual live result
+(that pass's own numbers/color choice below are superseded by this one).
+
+**The real structural bug, found while chasing EK's "bottom of the item
+is back in the shelf" + "paper thin, no title on the side" reports**:
+`pickUpItem` only ever moved `mesh` (the flat photo card) — the matted
+picture-frame box built alongside it in the main mount effect was a
+completely separate mesh, never referenced anywhere in the pickup/
+put-back code, so it just stayed glued to its shelf position the whole
+time an item was held. A held item was therefore a bare, borderless
+photo floating in front of camera (the actual "paper thin, no title on
+the side" cause — there was never a frame around it once lifted), while
+its real frame sat empty back on the shelf (most likely explanation for
+the shelf-overlap screenshot too — probably caught mid pull-animation,
+card already moving, frame still exactly where it started). **Fix**:
+`itemMeshIndex` entries and `HeldItem` both now carry a `frame:
+THREE.Mesh | null` reference; `pickUpItem` calls
+`entry.mesh.attach(entry.frame)` (Three.js's `Object3D.attach` reparents
+while preserving world transform) so the frame inherits every position/
+rotation/scale change made to the card for free — no separate animation
+math needed. `putBackItem`'s completion (inside `updateHeldItem`, once
+`mesh` is back at its exact shelf pose) calls `roomGroup.attach(heldItem.frame)`
+to hand it back to the room at that same now-correct resting transform.
+Flat/display-case items never had a frame to begin with (`entry.frame`
+is `null` there) — untouched.
+
+**Other 3 fixes from EK's first live look:**
+1. **Held item was oversized/cropped despite already being shrunk once.**
+   Root cause: `INSPECT_SCALE` was a flat multiplier stacked on top of
+   `pos.scale`, which already varies hugely by layout (Salon ~0.58,
+   Store ~0.78, Hero ~1.2) — a Store-scaled item at the previous
+   `INSPECT_SCALE=1.5` came out to `1.54*0.78*1.5 ≈ 1.80` units tall
+   against a ~1.91-unit visible-height budget at the fixed 2.2-unit
+   focal distance (47deg vertical FOV) — 94% of the frame, matching "even
+   bigger now ... cropped top and bottom." Replaced the flat constant
+   with a per-item `inspectScale` computed in `pickUpItem` from a new
+   `naturalHeight` stored on each `itemMeshIndex` entry
+   (`1.54 * pos.scale`, the card's real built height) against a single
+   `TARGET_HELD_HEIGHT = 1.15` — every held item now lands at the SAME
+   absolute size regardless of its shelf scale, instead of a flat
+   multiplier compounding on whatever that item already was.
+2. **The corner "side tag" was there but invisible.** First attempt used
+   `bg-cyan-400/90`, which rendered as a near-transparent pale gray. Tried
+   `var(--accent)` next, thinking the Tailwind color was the problem —
+   turned out `--accent` genuinely resolves to a real, legitimate
+   near-neutral `#C8CDD2` in this context (not a bug, just not "vivid"),
+   so it read as just as invisible against the Vault room's own steel
+   tones. Settled on a hardcoded `#4a9bff` (the same blue already used
+   elsewhere in this file for the frame-guide corner brackets) — a fixed
+   color guaranteed to actually stand out, not dependent on theme state.
+3. **"No description" on items with nothing typed into `notes`.** Rather
+   than leave the box empty, added a real fallback line built from other
+   fields that actually exist on the item (`subject`, `brand`,
+   `edition`/`variant`, `conditionReason`) — never invented text, just a
+   different real combination when `notes` itself is blank.
+4. **Share silently did nothing.** `navigator.clipboard.writeText` can
+   throw `NotAllowedError` in some focus states and the catch block
+   swallowed it with zero feedback either way — added a legacy
+   `execCommand("copy")` fallback before giving up, and a visible
+   "Couldn't copy link" message if even that fails, so a real failure is
+   never silent again.
+
+**Verified**: `tsc --noEmit` / `eslint` (0 errors) / `npm run build` all
+clean. Confirmed live in a browser tab: the corner tag now reads
+`rgb(74, 155, 255)` (the real hardcoded blue, not gray), share's
+clipboard-copy path executes without throwing. **Could NOT verify the
+frame now visually travels with the card, nor time the put-back
+release, live this pass** — see the tooling note directly above; the
+Browser pane wasn't actually displayed, so nothing animation-gated could
+be observed completing, regardless of how long a wait was used. The
+`attach()` reparenting logic was reviewed carefully by hand (Three.js's
+`attach()` is the standard, documented way to reparent while preserving
+world transform) but a real look on an actual visible browser — EK's own
+or a properly-displayed pane — is genuinely needed to confirm this one
+looks right, not just that it doesn't throw.
+
+---
+
 ## ✅ 2026-08-22, later same day — 4 more real bugs/asks EK caught live
 off actual screenshots, all fixed and code/build-verified (see each
 item for how). Read this block first — it supersedes the walnut-brown

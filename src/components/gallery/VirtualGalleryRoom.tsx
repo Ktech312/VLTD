@@ -868,7 +868,7 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
   // non-empty default made that hint show on page load with nothing
   // actually picked up.
   const [selectedItemId, setSelectedItemId] = useState<string>("");
-  const [heldItemShareState, setHeldItemShareState] = useState<"idle" | "copied">("idle");
+  const [heldItemShareState, setHeldItemShareState] = useState<"idle" | "copied" | "error">("idle");
   const [saveState, setSaveState] = useState<"idle" | "saved" | "error">("idle");
   const [isOrganizing, setIsOrganizing] = useState(false);
   const [roomPanelOpen, setRoomPanelOpen] = useState(true);
@@ -954,6 +954,17 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
         : [],
     [heldVaultItem]
   );
+  // EK: "no description" on an item with nothing typed into notes — rather
+  // than leave the panel empty, fall back to a real one-line summary built
+  // from other fields that actually exist on this item (never invented
+  // text). Only used when there's no real notes to show as-is.
+  const heldVaultItemDescription = useMemo(() => {
+    if (!heldVaultItem) return "";
+    if (heldVaultItem.notes) return heldVaultItem.notes;
+    return [heldVaultItem.subject, heldVaultItem.brand, heldVaultItem.edition || heldVaultItem.variant, heldVaultItem.conditionReason]
+      .filter(Boolean)
+      .join(" · ");
+  }, [heldVaultItem]);
   async function shareHeldItem(item: VaultItem) {
     const url = `${window.location.origin}/vault/item/${item.id}`;
     const shareData = { title: item.title, text: item.notes || item.title, url };
@@ -970,8 +981,33 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
       await navigator.clipboard.writeText(url);
       setHeldItemShareState("copied");
       window.setTimeout(() => setHeldItemShareState("idle"), 1800);
+      return;
     } catch {
-      // clipboard blocked (no permission/insecure context) — nothing more to fall back to here
+      // navigator.clipboard can throw NotAllowedError in some focus states —
+      // fall back to the old execCommand technique before giving up, and
+      // actually SHOW a failure if that fails too instead of doing nothing
+      // silently (silent failure is exactly what read as "share doesn't
+      // work" with zero feedback either way).
+    }
+    let copied = false;
+    try {
+      const textarea = document.createElement("textarea");
+      textarea.value = url;
+      textarea.style.position = "fixed";
+      textarea.style.opacity = "0";
+      document.body.appendChild(textarea);
+      textarea.select();
+      copied = document.execCommand("copy");
+      document.body.removeChild(textarea);
+    } catch {
+      copied = false;
+    }
+    if (copied) {
+      setHeldItemShareState("copied");
+      window.setTimeout(() => setHeldItemShareState("idle"), 1800);
+    } else {
+      setHeldItemShareState("error");
+      window.setTimeout(() => setHeldItemShareState("idle"), 2400);
     }
   }
   const universeRooms = useMemo(() => buildUniverseRooms(items), [items]);
@@ -1067,6 +1103,27 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
         shelfRotY: number;
         frontTexture: THREE.Texture | null;
         backTexture: THREE.Texture | null;
+        // Card height as actually built (1.54 * pos.scale) — layouts scale
+        // items very differently (Salon ~0.58, Store ~0.78, Hero ~1.2), so a
+        // single flat INSPECT_SCALE multiplier makes some items fill barely
+        // half the screen held up and others overflow it entirely (EK caught
+        // a Store-scaled item cropping top and bottom at INSPECT_SCALE=1.5).
+        // Stored so pickUpItem can size every held item to the SAME absolute
+        // height regardless of its shelf scale.
+        naturalHeight: number;
+        // The matted picture-frame box built alongside this card (null for
+        // display-case/flat items, which never get one). pickUpItem was
+        // only ever moving `mesh` (the card) — the frame stayed glued to
+        // its shelf position the whole time an item was held, so a picked
+        // up item looked like a bare, frameless photo (EK: "paper thin, no
+        // title on the side") while its actual frame sat empty back on the
+        // shelf (the likely real explanation for EK's other screenshot
+        // showing a frame's bottom edge overlapping the shelf board below
+        // it — probably caught mid pull-animation, the orphaned frame still
+        // sitting at its old spot while the card had already started
+        // moving). Reparenting it onto the card in pickUpItem (below) makes
+        // it inherit every position/rotation/scale change for free.
+        frame: THREE.Mesh | null;
       }
     >();
 
@@ -1959,6 +2016,8 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
           shelfRotY: pos.ry,
           frontTexture: null,
           backTexture: null,
+          naturalHeight: 1.54 * pos.scale,
+          frame,
         });
       }
 
@@ -2179,6 +2238,8 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
       waypoint: THREE.Vector3;
       focal: THREE.Vector3;
       frozenYaw: number;
+      inspectScale: number;
+      frame: THREE.Mesh | null;
     };
     let heldItem: HeldItem | null = null;
     let pullAnim: { dir: "in" | "out"; t: number } | null = null;
@@ -2191,8 +2252,18 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
     let heldDragYaw = 0;
     let showingBack = false;
     // EK's ask (2026-08-22, later pass): "shrink it slightly ... its just
-    // slight larger" — was 1.7, sitting a bit too big in the frame.
-    const INSPECT_SCALE = 1.5;
+    // slight larger" — then, after a live test, "even bigger now ... paper
+    // thin." Root cause: a flat multiplier on top of pos.scale, which
+    // already varies wildly by layout (Salon ~0.58, Store ~0.78, Hero
+    // ~1.2) — at focal distance 2.2 and this camera's 47deg vertical FOV,
+    // the visible height budget there is 2*2.2*tan(23.5deg) ≈ 1.91 units,
+    // so a Store-scaled item at the old flat 1.5x (1.54*0.78*1.5 ≈ 1.80)
+    // filled ~94% of the frame — exactly the "cropped top and bottom"
+    // EK saw. Replaced with a per-item scale computed in pickUpItem so
+    // every held item lands at the SAME absolute height regardless of
+    // its shelf scale, instead of a flat multiplier compounding on top
+    // of whatever that item already was.
+    const TARGET_HELD_HEIGHT = 1.15;
 
     function pickUpItem(itemId: string) {
       const entry = itemMeshIndex.get(itemId);
@@ -2203,7 +2274,13 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
       const facing = new THREE.Vector3(Math.sin(frozenYaw), 0, -Math.cos(frozenYaw));
       const focal = cameraBody.clone().addScaledVector(facing, 2.2);
       focal.y = cameraBody.y;
-      heldItem = { id: itemId, mesh: entry.mesh, item: entry.item, shelfPos: entry.shelfPos.clone(), shelfRotY: entry.shelfRotY, waypoint, focal, frozenYaw };
+      const inspectScale = TARGET_HELD_HEIGHT / entry.naturalHeight;
+      // Reparent the frame onto the card (Object3D.attach preserves its
+      // current world transform) so every position/rotation/scale change
+      // below carries the frame along automatically — it used to stay
+      // glued to the shelf while only the bare card flew out and grew.
+      if (entry.frame) entry.mesh.attach(entry.frame);
+      heldItem = { id: itemId, mesh: entry.mesh, item: entry.item, shelfPos: entry.shelfPos.clone(), shelfRotY: entry.shelfRotY, waypoint, focal, frozenYaw, inspectScale, frame: entry.frame };
       inspectYaw = 0;
       inspectPitch = 0;
       inspectVelYaw = 0;
@@ -2257,7 +2334,7 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
           // way the camera happened to be facing at pickup.
           mesh.rotation.y = THREE.MathUtils.lerp(heldItem.shelfRotY, -heldItem.frozenYaw, k);
           mesh.rotation.x = 0;
-          mesh.scale.setScalar(THREE.MathUtils.lerp(1, INSPECT_SCALE, k));
+          mesh.scale.setScalar(THREE.MathUtils.lerp(1, heldItem.inspectScale, k));
         }
         if (pullAnim.t >= 1) {
           if (pullAnim.dir === "in") {
@@ -2267,6 +2344,11 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
             mesh.rotation.y = heldItem.shelfRotY;
             mesh.rotation.x = 0;
             mesh.scale.setScalar(1);
+            // Hand the frame back to the room at its now-restored resting
+            // transform, before it's forgotten below — attach() preserves
+            // the frame's CURRENT world position/rotation/scale, which at
+            // this exact point already equals its original shelf pose.
+            if (heldItem.frame) roomGroup.attach(heldItem.frame);
             const entry = itemMeshIndex.get(heldItem.id);
             if (entry?.frontTexture) {
               const mat = mesh.material as THREE.MeshStandardMaterial;
@@ -2296,7 +2378,7 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
       mesh.position.copy(heldItem.focal);
       mesh.rotation.y = -heldItem.frozenYaw + inspectYaw * INSPECT_RANGE_YAW + heldDragYaw;
       mesh.rotation.x = inspectPitch * INSPECT_RANGE_PITCH;
-      mesh.scale.setScalar(INSPECT_SCALE);
+      mesh.scale.setScalar(heldItem.inspectScale);
 
       // Front/back swap once dragged past edge-on — only for items that
       // actually have a back image; others just keep showing the front
@@ -2893,16 +2975,26 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
             // (heldVaultItem, looked up by id above), never invented text.
             <>
               {heldVaultItem.universe || heldVaultItem.categoryLabel || heldVaultItem.category ? (
-                <div className="pointer-events-none absolute left-5 top-5 rounded-[6px] bg-cyan-400/90 px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.14em] text-black shadow-[0_2px_10px_rgba(0,0,0,0.35)]">
+                <div
+                  className="pointer-events-none absolute left-5 top-5 rounded-[6px] px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.14em] text-white shadow-[0_2px_10px_rgba(0,0,0,0.35)]"
+                  // Fixed, hardcoded color on purpose — var(--accent) turned
+                  // out to genuinely resolve to a near-neutral pale gray
+                  // (#C8CDD2) rather than a "vivid" color in this context, so
+                  // it read as invisible against the Vault room's own steel
+                  // tones. This is the same blue already used elsewhere in
+                  // this file for the frame-guide corner brackets — a color
+                  // guaranteed to actually stand out, not theme-dependent.
+                  style={{ backgroundColor: "#4a9bff" }}
+                >
                   {heldVaultItem.universe || heldVaultItem.categoryLabel || heldVaultItem.category}
                 </div>
               ) : null}
-              {heldVaultItem.notes ? (
+              {heldVaultItemDescription ? (
                 <div className="pointer-events-none absolute left-5 top-1/2 max-w-[260px] -translate-y-1/2 rounded-[10px] bg-black/55 p-4 text-xs leading-5 text-white/80 ring-1 ring-white/15 backdrop-blur">
                   <div className="mb-1.5 text-[10px] font-black uppercase tracking-[0.18em] text-white/50">
                     Description
                   </div>
-                  {heldVaultItem.notes}
+                  {heldVaultItemDescription}
                 </div>
               ) : null}
               <div className="pointer-events-none absolute bottom-[4.6rem] left-1/2 -translate-x-1/2 rounded-full bg-black/40 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-white/70 ring-1 ring-white/10 backdrop-blur">
@@ -2926,9 +3018,9 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
                 >
                   <Share2 size={14} />
                 </button>
-                {heldItemShareState === "copied" ? (
-                  <span className="absolute -top-8 right-0 rounded-[6px] bg-black/80 px-2 py-1 text-[10px] font-bold text-white/90 ring-1 ring-white/15">
-                    Link copied
+                {heldItemShareState !== "idle" ? (
+                  <span className="absolute -top-8 right-0 whitespace-nowrap rounded-[6px] bg-black/80 px-2 py-1 text-[10px] font-bold text-white/90 ring-1 ring-white/15">
+                    {heldItemShareState === "copied" ? "Link copied" : "Couldn't copy link"}
                   </span>
                 ) : null}
               </div>
