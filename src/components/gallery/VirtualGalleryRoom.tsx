@@ -31,6 +31,7 @@ import {
   type Gallery,
 } from "@/lib/galleryModel";
 import { getPrimaryImageUrl, loadItems, type VaultItem } from "@/lib/vaultModel";
+import SocialExportSheet from "@/components/SocialExportSheet";
 import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment.js";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 
@@ -288,6 +289,37 @@ function drawItemTexture(image?: HTMLImageElement | null) {
   const texture = new THREE.CanvasTexture(canvas);
   texture.colorSpace = THREE.SRGBColorSpace;
   texture.anisotropy = 8;
+  return texture;
+}
+
+// EK's ask: the sides of a held item should be theme blue with the title
+// and universe printed on them, like a book/case spine. Tall, narrow
+// canvas (matches the actual side face's real proportions); text is drawn
+// rotated so it reads top-to-bottom along the long edge.
+function drawSpineTexture(title: string, universe?: string) {
+  const canvas = document.createElement("canvas");
+  canvas.width = 100;
+  canvas.height = 900;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return new THREE.CanvasTexture(canvas);
+  ctx.fillStyle = "#4a9bff";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.save();
+  ctx.translate(canvas.width / 2, canvas.height / 2);
+  ctx.rotate(-Math.PI / 2);
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillStyle = "#ffffff";
+  ctx.font = "bold 46px Arial";
+  ctx.fillText(title.slice(0, 40), 0, universe ? -18 : 0);
+  if (universe) {
+    ctx.font = "34px Arial";
+    ctx.fillStyle = "rgba(255,255,255,0.75)";
+    ctx.fillText(universe.toUpperCase(), 0, 32);
+  }
+  ctx.restore();
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
   return texture;
 }
 
@@ -874,7 +906,7 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
   // non-empty default made that hint show on page load with nothing
   // actually picked up.
   const [selectedItemId, setSelectedItemId] = useState<string>("");
-  const [heldItemShareState, setHeldItemShareState] = useState<"idle" | "copied" | "error">("idle");
+  const [socialShareOpen, setSocialShareOpen] = useState(false);
   const [saveState, setSaveState] = useState<"idle" | "saved" | "error">("idle");
   const [isOrganizing, setIsOrganizing] = useState(false);
   const [roomPanelOpen, setRoomPanelOpen] = useState(true);
@@ -971,51 +1003,31 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
       .filter(Boolean)
       .join(" · ");
   }, [heldVaultItem]);
-  async function shareHeldItem(item: VaultItem) {
-    const url = `${window.location.origin}/vault/item/${item.id}`;
-    const shareData = { title: item.title, text: item.notes || item.title, url };
-    if (navigator.share) {
-      try {
-        await navigator.share(shareData);
-        return;
-      } catch {
-        // user cancelled the native share sheet — not an error, just stop
-        return;
-      }
+  // EK's ask: a real-fields list like the reference's Year/Runtime/Genre
+  // table, varying by what kind of item it actually is (comic vs card vs
+  // vinyl vs instrument) — never invented text, just whichever of these
+  // fields actually exist on this specific item.
+  const heldVaultItemInfoRows = useMemo(() => {
+    if (!heldVaultItem) return [];
+    const rows: { label: string; value: string }[] = [];
+    if (heldVaultItem.universe) rows.push({ label: "Universe", value: heldVaultItem.universe });
+    if (heldVaultItem.categoryLabel || heldVaultItem.category) {
+      rows.push({ label: "Category", value: heldVaultItem.categoryLabel || heldVaultItem.category! });
     }
-    try {
-      await navigator.clipboard.writeText(url);
-      setHeldItemShareState("copied");
-      window.setTimeout(() => setHeldItemShareState("idle"), 1800);
-      return;
-    } catch {
-      // navigator.clipboard can throw NotAllowedError in some focus states —
-      // fall back to the old execCommand technique before giving up, and
-      // actually SHOW a failure if that fails too instead of doing nothing
-      // silently (silent failure is exactly what read as "share doesn't
-      // work" with zero feedback either way).
+    if (heldVaultItem.year) rows.push({ label: "Year", value: heldVaultItem.year });
+    if (heldVaultItem.grade || heldVaultItem.condition) {
+      rows.push({ label: "Condition", value: heldVaultItem.grade || heldVaultItem.condition! });
     }
-    let copied = false;
-    try {
-      const textarea = document.createElement("textarea");
-      textarea.value = url;
-      textarea.style.position = "fixed";
-      textarea.style.opacity = "0";
-      document.body.appendChild(textarea);
-      textarea.select();
-      copied = document.execCommand("copy");
-      document.body.removeChild(textarea);
-    } catch {
-      copied = false;
+    if (heldVaultItem.brand) rows.push({ label: "Brand", value: heldVaultItem.brand });
+    if (heldVaultItem.edition || heldVaultItem.variant) {
+      rows.push({ label: "Edition", value: heldVaultItem.edition || heldVaultItem.variant! });
     }
-    if (copied) {
-      setHeldItemShareState("copied");
-      window.setTimeout(() => setHeldItemShareState("idle"), 1800);
-    } else {
-      setHeldItemShareState("error");
-      window.setTimeout(() => setHeldItemShareState("idle"), 2400);
-    }
-  }
+    if (heldVaultItem.comicIssueNumber) rows.push({ label: "Issue", value: heldVaultItem.comicIssueNumber });
+    if (heldVaultItem.tcgParallelType) rows.push({ label: "Parallel", value: heldVaultItem.tcgParallelType });
+    if (heldVaultItem.sportsParallelType) rows.push({ label: "Parallel", value: heldVaultItem.sportsParallelType });
+    if (heldVaultItem.vinylPressing) rows.push({ label: "Pressing", value: heldVaultItem.vinylPressing });
+    return rows;
+  }, [heldVaultItem]);
   const universeRooms = useMemo(() => buildUniverseRooms(items), [items]);
   // A fixed-shape key for the 3D effect's dependency array — `universeRooms`
   // itself is a variable-length array (it grows/shrinks as vault items load),
@@ -2231,6 +2243,11 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
       focal: THREE.Vector3;
       frozenYaw: number;
       inspectScale: number;
+      // A small, fixed-depth box added as a child of the card ONLY while
+      // held (never touches the shelf-resting frame/geometry at all) — the
+      // sides EK asked for: theme blue, with the title+universe as a
+      // spine-style label, "slightly wider" than the card, not a big box.
+      spineBox: THREE.Mesh;
     };
     let heldItem: HeldItem | null = null;
     let pullAnim: { dir: "in" | "out"; t: number } | null = null;
@@ -2266,7 +2283,21 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
       const focal = cameraBody.clone().addScaledVector(facing, 2.2);
       focal.y = cameraBody.y;
       const inspectScale = TARGET_HELD_HEIGHT / entry.naturalHeight;
-      heldItem = { id: itemId, mesh: entry.mesh, item: entry.item, shelfPos: entry.shelfPos.clone(), shelfRotY: entry.shelfRotY, waypoint, focal, frozenYaw, inspectScale };
+      // Sides: theme blue, title + universe as a spine label — a small
+      // fixed-depth box, "slightly wider" than the card, not the wall
+      // frame's own (much deeper) geometry. Built fresh here and added as
+      // a child of the card, so it inherits every position/rotation/scale
+      // change for free and never touches the shelf-resting appearance.
+      const cardWidth = entry.naturalHeight * (1.12 / 1.54);
+      const spineTexture = drawSpineTexture(entry.item.title, entry.item.universe);
+      const spineSideMat = new THREE.MeshStandardMaterial({ map: spineTexture, roughness: 0.5, metalness: 0.05 });
+      const spinePlainMat = new THREE.MeshStandardMaterial({ color: 0x4a9bff, roughness: 0.5, metalness: 0.05 });
+      const spineBox = new THREE.Mesh(
+        new THREE.BoxGeometry(cardWidth + 0.05, entry.naturalHeight + 0.05, 0.16),
+        [spineSideMat, spineSideMat, spinePlainMat, spinePlainMat, spinePlainMat, spinePlainMat]
+      );
+      entry.mesh.add(spineBox);
+      heldItem = { id: itemId, mesh: entry.mesh, item: entry.item, shelfPos: entry.shelfPos.clone(), shelfRotY: entry.shelfRotY, waypoint, focal, frozenYaw, inspectScale, spineBox };
       inspectYaw = 0;
       inspectPitch = 0;
       inspectVelYaw = 0;
@@ -2330,6 +2361,15 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
             mesh.rotation.y = heldItem.shelfRotY;
             mesh.rotation.x = 0;
             mesh.scale.setScalar(1);
+            // The spine box is held-only — it never belonged on the
+            // shelf, so it's removed and disposed here rather than
+            // reparented anywhere.
+            mesh.remove(heldItem.spineBox);
+            heldItem.spineBox.geometry.dispose();
+            for (const mat of heldItem.spineBox.material as THREE.MeshStandardMaterial[]) {
+              mat.map?.dispose();
+              mat.dispose();
+            }
             const entry = itemMeshIndex.get(heldItem.id);
             if (entry?.frontTexture) {
               const mat = mesh.material as THREE.MeshStandardMaterial;
@@ -2950,29 +2990,27 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
             </div>
           ) : null}
           {viewMode === "room" && selectedItemId && heldVaultItem ? (
-            // EK's ask (2026-08-22, later pass), styled after a reference
-            // screenshot: a side tag, a bottom title/info/share bar, and a
-            // left description panel — all real per-item VaultItem fields
-            // (heldVaultItem, looked up by id above), never invented text.
+            // EK's ask, styled after a reference screenshot: a description
+            // panel on the left (its own header label in a different
+            // color — the "side title, different color" line, not a
+            // separate floating tag) and a bottom title/info/share bar.
+            // Real per-item VaultItem fields, never invented text.
             <>
-              {heldVaultItem.universe || heldVaultItem.categoryLabel || heldVaultItem.category ? (
-                // Sits near the item's own top-left corner (the item is
-                // always centered, roughly 60% of the frame's height, at
-                // this camera setup) instead of pinned to the screen's
-                // corner — the reference badge moves with the item, not
-                // the viewport.
-                <div
-                  className="pointer-events-none absolute left-1/2 top-[22%] -translate-x-[9rem] rounded-[6px] px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.1em] text-white shadow-[0_2px_10px_rgba(0,0,0,0.35)]"
-                  style={{ backgroundColor: "#4a9bff" }}
-                >
-                  {heldVaultItem.universe || heldVaultItem.categoryLabel || heldVaultItem.category}
-                </div>
-              ) : null}
-              <div className="pointer-events-none absolute left-5 top-1/2 max-w-[260px] -translate-y-1/2 rounded-[10px] bg-black/55 p-4 text-xs leading-5 text-white/80 ring-1 ring-white/15 backdrop-blur">
-                <div className="mb-1.5 text-[10px] font-black uppercase tracking-[0.18em] text-white/50">
+              <div className="pointer-events-none absolute left-5 top-1/2 w-[340px] -translate-y-1/2 rounded-[10px] bg-black/55 p-4 text-xs leading-5 text-white/80 ring-1 ring-white/15 backdrop-blur">
+                <div className="mb-1.5 text-[10px] font-black uppercase tracking-[0.18em]" style={{ color: "#4a9bff" }}>
                   Description
                 </div>
                 {heldVaultItemDescription}
+                {heldVaultItemInfoRows.length > 0 ? (
+                  <div className="mt-3 border-t border-white/15 pt-3">
+                    {heldVaultItemInfoRows.map((row) => (
+                      <div key={row.label} className="flex items-baseline justify-between gap-3 py-0.5 text-[11px]">
+                        <span className="uppercase tracking-[0.08em] text-white/50">{row.label}</span>
+                        <span className="text-right font-bold text-white/85">{row.value}</span>
+                      </div>
+                    ))}
+                  </div>
+                ) : null}
               </div>
               <div className="pointer-events-auto absolute bottom-5 left-1/2 flex max-w-[92%] -translate-x-1/2 items-center gap-3 rounded-[10px] bg-black/60 px-4 py-2.5 ring-1 ring-white/15 backdrop-blur">
                 <div className="min-w-0">
@@ -2985,19 +3023,17 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
                 </div>
                 <button
                   type="button"
-                  onClick={() => void shareHeldItem(heldVaultItem)}
-                  className="grid h-7 w-7 shrink-0 place-items-center rounded-[6px] bg-white/10 text-white/80 ring-1 ring-white/15 transition hover:bg-white/20 hover:text-white"
+                  onClick={() => setSocialShareOpen(true)}
+                  className="grid h-6 w-6 shrink-0 place-items-center rounded-[6px] bg-white/10 text-white/80 ring-1 ring-white/15 transition hover:bg-white/20 hover:text-white"
                   title="Share this item"
                   aria-label="Share this item"
                 >
-                  <Share2 size={14} />
+                  <Share2 size={12} />
                 </button>
-                {heldItemShareState !== "idle" ? (
-                  <span className="absolute -top-8 right-0 whitespace-nowrap rounded-[6px] bg-black/80 px-2 py-1 text-[10px] font-bold text-white/90 ring-1 ring-white/15">
-                    {heldItemShareState === "copied" ? "Link copied" : "Couldn't copy link"}
-                  </span>
-                ) : null}
               </div>
+              {socialShareOpen ? (
+                <SocialExportSheet item={heldVaultItem} onClose={() => setSocialShareOpen(false)} />
+              ) : null}
             </>
           ) : null}
         </div>

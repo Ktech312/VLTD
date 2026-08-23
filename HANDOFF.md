@@ -146,6 +146,56 @@ confirm with EK who owns a screen.** EK is aware of this.
 
 ---
 
+## ✅ 2026-08-23 — 4 precise, numbered corrections from EK re-reading the
+reference image with circles on it, after the previous "side title"
+attempt (a floating tag) was itself wrong — EK: "I never asked for a
+floating tag, that's not on that image either." Removed that tag
+entirely; here's what it actually meant:
+
+1. **Description panel (left)**: widened to `w-[340px]` (was capped at
+   260px) and added a real key/value list below the existing notes-or-
+   fallback paragraph — `heldVaultItemInfoRows`, built from whichever of
+   Universe/Category/Year/Condition/Brand/Edition/comicIssueNumber/
+   tcgParallelType/sportsParallelType/vinylPressing actually have real
+   values on that specific item, so it naturally varies by whether it's
+   a comic, a card, vinyl, etc. without a hardcoded per-universe switch.
+2. **Share**: was a bespoke clipboard-copy implementation. Replaced with
+   the exact same `SocialExportSheet` component the real item detail
+   page (`vault/item/[id]/page.tsx`) already opens for its own Share
+   button — same flow everywhere now, nothing reinvented. Button
+   shrunk slightly (h-7→h-6).
+3. **"Side title, different color"**: this was the actual ask all
+   along — the SIDE FACE of the held item itself (like a book/case
+   spine), not a floating UI tag. Added a small, fixed-depth
+   (`0.16` units) box as a child of the card, created fresh in
+   `pickUpItem` and disposed in `putBackItem`'s completion — never
+   touches the shelf-resting frame at all. Its two ±X faces get a
+   canvas-drawn "spine" texture (theme blue `#4a9bff` background, title
+   + universe text rotated to read top-to-bottom); the other 4 faces are
+   a plain blue material. Sized `cardWidth + 0.05` / `cardHeight + 0.05`
+   — "slightly wider," not a large box, and being a child of the card it
+   scales/rotates with it automatically, same trick as the (reverted)
+   frame-attach idea, just scoped to a small dedicated mesh instead of
+   the wall-mount frame's own (much deeper) geometry.
+4. **Back image**: EK's ask ("should be the same as the front unless...
+   there's a real second image") — checked, already correct: the card
+   material is `DoubleSide` with a single texture, so without a distinct
+   `imageBackUrl` the back naturally shows the same (mirrored) image;
+   the existing `entry.backTexture` swap only kicks in when a real back
+   image exists. No change needed.
+
+`tsc --noEmit` / `eslint` (0 errors) / `npm run build` clean. Live-
+verified: picking up an item shows the description panel with real
+notes AND the new info rows (confirmed "Universe / Music", "Category /
+Vinyl" for First Press Vinyl), zero console errors from the new spine-
+box creation, and clicking Share genuinely opens `SocialExportSheet`
+(confirmed its own "Instagram Feed"/"Stories" text renders). Did not
+independently verify the spine box's on-screen appearance/color or its
+cleanup on put-back — same Browser-pane-not-displayed limitation as
+before; worth EK's own glance.
+
+---
+
 ## ✅ 2026-08-22, later same day, third pass — reverted the frame-attach
 "fix" from the previous pass; EK, sharply: "you used to have the image
 on the back and now that is gone too. YOU ARE DOING TOO MUCH, only do
