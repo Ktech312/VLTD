@@ -2956,8 +2956,13 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
             // (heldVaultItem, looked up by id above), never invented text.
             <>
               {heldVaultItem.universe || heldVaultItem.categoryLabel || heldVaultItem.category ? (
+                // Sits near the item's own top-left corner (the item is
+                // always centered, roughly 60% of the frame's height, at
+                // this camera setup) instead of pinned to the screen's
+                // corner — the reference badge moves with the item, not
+                // the viewport.
                 <div
-                  className="pointer-events-none absolute left-5 top-16 rounded-[6px] px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.14em] text-white shadow-[0_2px_10px_rgba(0,0,0,0.35)]"
+                  className="pointer-events-none absolute left-1/2 top-[22%] -translate-x-[9rem] rounded-[6px] px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.1em] text-white shadow-[0_2px_10px_rgba(0,0,0,0.35)]"
                   style={{ backgroundColor: "#4a9bff" }}
                 >
                   {heldVaultItem.universe || heldVaultItem.categoryLabel || heldVaultItem.category}
