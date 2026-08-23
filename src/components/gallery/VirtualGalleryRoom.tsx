@@ -33,6 +33,7 @@ import {
   type Gallery,
 } from "@/lib/galleryModel";
 import { getPrimaryImageUrl, loadItems, type VaultItem } from "@/lib/vaultModel";
+import { UNIVERSE_LABEL, type UniverseKey } from "@/lib/taxonomy";
 import SocialExportSheet from "@/components/SocialExportSheet";
 import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment.js";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
@@ -222,6 +223,38 @@ function itemSubtitle(item: VaultItem) {
 
 function itemImage(item: VaultItem) {
   return getPrimaryImageUrl(item) || item.imageFrontUrl || item.imageBackUrl || "";
+}
+
+// Same universe order + short labels as the Vault's "Wall" view
+// (VaultWallView.tsx) — the "+" picker below is built to match that view's
+// search/filter/A-Z browsing UX exactly, per EK's ask.
+const PICKER_UNIVERSE_ORDER: UniverseKey[] = [
+  "POP_CULTURE", "SPORTS", "TCG", "MUSIC",
+  "JEWELRY_APPAREL", "GAMES", "BUILT_BOTANY", "ART", "AUTOMOTIVE", "MISC",
+];
+const PICKER_SHORT_LABEL: Record<UniverseKey, string> = {
+  POP_CULTURE:     "Pop Culture",
+  SPORTS:          "Sports",
+  TCG:             "TCG",
+  MUSIC:           "Music",
+  JEWELRY_APPAREL: "Jewelry",
+  GAMES:           "Games",
+  BUILT_BOTANY:    "Botany",
+  MISC:            "Misc",
+  AUTOMOTIVE:      "Auto",
+  ART:             "Art",
+};
+const PICKER_LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ#".split("");
+
+function inferPickerUniverse(item: VaultItem): UniverseKey {
+  const raw = typeof item.universe === "string" ? item.universe.trim().toUpperCase() : "";
+  if (raw && UNIVERSE_LABEL[raw as UniverseKey]) return raw as UniverseKey;
+  return "MISC";
+}
+
+function pickerSearchText(item: VaultItem) {
+  return [item.title, item.subtitle, item.number, item.grade, item.notes, item.category, item.universe]
+    .filter(Boolean).join(" ").toLowerCase();
 }
 
 function safeDraft(value: unknown): Partial<RoomDraft> {
@@ -990,11 +1023,29 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
   const [roomSwitcherOpen, setRoomSwitcherOpen] = useState(false);
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
-  // EK's ask: an empty slot's "+" opens a universe-grouped item picker;
-  // multi-select fills the clicked slot first, then the next empty slots
-  // in order. pickerSelection order IS the fill order (append on select).
+  // EK's ask: an empty slot's "+" opens a picker built to match the Vault's
+  // own "Wall" view (search + universe filter pills w/ counts + A-Z jump +
+  // size slider — see VaultWallView.tsx). Multi-select fills the clicked
+  // slot first, then the next empty slots in order. pickerSelection order
+  // IS the fill order (append on select).
   const [pickerSlotIdx, setPickerSlotIdx] = useState<number | null>(null);
   const [pickerSelection, setPickerSelection] = useState<string[]>([]);
+  const [pickerQuery, setPickerQuery] = useState("");
+  const [pickerUniverses, setPickerUniverses] = useState<Set<UniverseKey>>(new Set());
+  const [pickerCols, setPickerCols] = useState(6);
+  const pickerLetterRefs = useRef<Record<string, HTMLDivElement | null>>({});
+
+  function openSlotPicker(idx: number) {
+    setPickerSlotIdx(idx);
+    setPickerSelection([]);
+    setPickerQuery("");
+    setPickerUniverses(new Set());
+  }
+
+  function closeSlotPicker() {
+    setPickerSlotIdx(null);
+    setPickerSelection([]);
+  }
   const touchFromRef = useRef<number | null>(null);
   const touchOverRef = useRef<number | null>(null);
   const touchCloneRef = useRef<HTMLElement | null>(null);
@@ -1170,21 +1221,56 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
   // The "+" picker's own list: only items not already placed in some slot
   // (this picker ADDS, it doesn't move something that's already on a
   // shelf — dragging in the Arrange grid already covers moving), grouped
-  // by universe so a large vault is actually browsable.
-  const pickerGroups = useMemo(() => {
+  // by universe, mirroring the Vault's own "Wall" view (VaultWallView.tsx)
+  // exactly — search + universe pills w/ counts + A-Z groups — instead of a
+  // one-off picker UI.
+  const pickerUnplaced = useMemo(() => {
     const placed = new Set(selectedIds.filter(Boolean));
-    const unplaced = items.filter((item) => !placed.has(item.id));
-    const byUniverse = new Map<string, VaultItem[]>();
-    for (const item of unplaced) {
-      const key = item.universe || "Other";
-      const list = byUniverse.get(key) ?? [];
-      list.push(item);
-      byUniverse.set(key, list);
-    }
-    return Array.from(byUniverse.entries())
-      .sort((a, b) => a[0].localeCompare(b[0]))
-      .map(([universe, universeItems]) => ({ universe, items: universeItems }));
+    return items.filter((item) => !placed.has(item.id));
   }, [items, selectedIds]);
+  // Universe pill counts — over all unplaced items, unaffected by the
+  // current search text (same convention as VaultWallView's universeCounts).
+  const pickerUniverseCounts = useMemo(() => {
+    const counts: Partial<Record<UniverseKey, number>> = {};
+    for (const item of pickerUnplaced) {
+      const u = inferPickerUniverse(item);
+      counts[u] = (counts[u] ?? 0) + 1;
+    }
+    return counts;
+  }, [pickerUnplaced]);
+  const pickerFiltered = useMemo(() => {
+    const q = pickerQuery.trim().toLowerCase();
+    return pickerUnplaced
+      .filter((item) => {
+        if (pickerUniverses.size > 0 && !pickerUniverses.has(inferPickerUniverse(item))) return false;
+        if (q && !pickerSearchText(item).includes(q)) return false;
+        return true;
+      })
+      .sort((a, b) => String(a.title ?? "").localeCompare(String(b.title ?? "")));
+  }, [pickerUnplaced, pickerQuery, pickerUniverses]);
+  const pickerGrouped = useMemo(() => {
+    const map: Record<string, VaultItem[]> = {};
+    for (const item of pickerFiltered) {
+      const first = (item.title ?? "").trim().toUpperCase()[0] ?? "#";
+      const key = /[A-Z]/.test(first) ? first : "#";
+      (map[key] ??= []).push(item);
+    }
+    return map;
+  }, [pickerFiltered]);
+  const pickerActiveLetters = useMemo(() => new Set(Object.keys(pickerGrouped)), [pickerGrouped]);
+
+  function jumpToPickerLetter(letter: string) {
+    pickerLetterRefs.current[letter]?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  function togglePickerUniverse(key: UniverseKey) {
+    setPickerUniverses((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  }
   const palette = getRoomPalette(roomStyle);
 
   function openUniverseRoom(room: MuseumUniverseRoom) {
@@ -3013,8 +3099,7 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
       }
       return next;
     });
-    setPickerSlotIdx(null);
-    setPickerSelection([]);
+    closeSlotPicker();
   }
 
   function saveDraft() {
@@ -3614,8 +3699,7 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
                                   type="button"
                                   onClick={(e) => {
                                     e.stopPropagation();
-                                    setPickerSlotIdx(idx);
-                                    setPickerSelection([]);
+                                    openSlotPicker(idx);
                                   }}
                                   aria-label="Add an item to this spot"
                                   className="absolute inset-0 grid place-items-center text-[color:var(--muted2)] transition hover:bg-[rgba(79,211,238,0.12)] hover:text-[#4FD3EE]"
@@ -3698,105 +3782,207 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
       </div>
       {pickerSlotIdx !== null
         ? createPortal(
-            <div
-              className="fixed inset-0 z-[95] flex items-center justify-center bg-black/70 p-4"
-              onClick={() => {
-                setPickerSlotIdx(null);
-                setPickerSelection([]);
-              }}
-            >
-              <div
-                className="flex max-h-[85vh] w-full max-w-2xl flex-col rounded-[10px] border bg-[color:var(--theme-card)] shadow-[var(--shadow-soft)]"
-                style={{ borderColor: "var(--theme-border)" }}
-                onClick={(e) => e.stopPropagation()}
-              >
-                <div className="flex items-center justify-between gap-3 border-b p-4" style={{ borderColor: "var(--theme-border)" }}>
-                  <div>
-                    <div className="text-sm font-black">
-                      Add to slot #{slotDisplayNumber.get(pickerSlotIdx) ?? pickerSlotIdx + 1}
-                    </div>
-                    <div className="text-xs text-[color:var(--muted)]">
-                      Pick one or more items. The first goes here — the rest fill the next open spots.
-                    </div>
+            <div className="fixed inset-0 z-[95] flex flex-col bg-[color:var(--bg,#060a13)]">
+              {/* Row 1: close + title + selected counter */}
+              <div className="flex shrink-0 items-center gap-3 p-3">
+                <button
+                  type="button"
+                  onClick={closeSlotPicker}
+                  aria-label="Close"
+                  className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-[color:var(--pill)] text-[color:var(--muted)] ring-1 ring-[color:var(--border)] transition hover:text-[color:var(--fg)]"
+                >
+                  <svg viewBox="0 0 20 20" fill="none" className="h-[15px] w-[15px]">
+                    <path d="M6 6l8 8M14 6l-8 8" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+                  </svg>
+                </button>
+                <div className="min-w-0 flex-1">
+                  <div className="truncate text-sm font-black">
+                    Add to slot #{slotDisplayNumber.get(pickerSlotIdx) ?? pickerSlotIdx + 1}
                   </div>
+                  <div className="truncate text-[11px] text-[color:var(--muted)]">
+                    The first pick goes here — the rest fill the next open spots.
+                  </div>
+                </div>
+                <div
+                  className={[
+                    "shrink-0 rounded-full px-2.5 py-1 text-[11px] font-bold tabular-nums ring-1",
+                    pickerSelection.length > 0
+                      ? "bg-[rgba(79,211,238,0.16)] text-[#4FD3EE] ring-[rgba(79,211,238,0.4)]"
+                      : "bg-[color:var(--pill)] text-[color:var(--muted)] ring-[color:var(--border)]",
+                  ].join(" ")}
+                >
+                  {pickerSelection.length} selected
+                </div>
+              </div>
+
+              {/* Controls bar — same shape as the Vault's Wall view: search +
+                  size slider + count, universe pills w/ counts, A-Z jump. */}
+              <div className="shrink-0 px-3 pb-2">
+                <div className="flex items-center gap-3 flex-wrap">
+                  <input
+                    type="search"
+                    value={pickerQuery}
+                    onChange={(e) => setPickerQuery(e.target.value)}
+                    placeholder="Search vault…"
+                    className="h-8 w-40 rounded-full bg-[color:var(--pill)] px-3 text-[13px] text-[color:var(--fg)] ring-1 ring-[color:var(--border)] outline-none placeholder:text-[color:var(--muted)] focus:ring-[#4FD3EE]/50"
+                  />
+                  <div className="ml-auto flex items-center gap-2">
+                    <span className="text-[11px] text-[color:var(--muted)]">Size</span>
+                    <input
+                      type="range"
+                      min={3}
+                      max={10}
+                      value={pickerCols}
+                      onChange={(e) => setPickerCols(Number(e.target.value))}
+                      className="w-24 accent-[#4FD3EE]"
+                    />
+                  </div>
+                  <span className="text-[11px] text-[color:var(--muted)]">{pickerFiltered.length} items</span>
+                </div>
+
+                <div className="mt-2 flex gap-1.5 overflow-x-auto pb-0.5" style={{ scrollbarWidth: "none" }}>
                   <button
                     type="button"
-                    onClick={() => {
-                      setPickerSlotIdx(null);
-                      setPickerSelection([]);
-                    }}
-                    aria-label="Close"
-                    className="grid h-7 w-7 shrink-0 place-items-center rounded-[6px] bg-[color:var(--input)] text-[color:var(--muted)] ring-1 ring-[color:var(--border)] transition hover:text-[color:var(--fg)]"
+                    onClick={() => setPickerUniverses(new Set())}
+                    className={[
+                      "shrink-0 rounded-full px-3 py-1 text-[11px] font-semibold ring-1 transition",
+                      pickerUniverses.size === 0
+                        ? "bg-[rgba(79,211,238,0.16)] text-[#4FD3EE] ring-[rgba(79,211,238,0.4)]"
+                        : "bg-[color:var(--pill)] text-[color:var(--muted)] ring-[color:var(--border)] hover:text-[color:var(--fg)]",
+                    ].join(" ")}
                   >
-                    ✕
+                    All ({pickerUnplaced.length})
                   </button>
+                  {PICKER_UNIVERSE_ORDER.map((key) => {
+                    const count = pickerUniverseCounts[key] ?? 0;
+                    if (count === 0) return null;
+                    const active = pickerUniverses.has(key);
+                    return (
+                      <button
+                        key={key}
+                        type="button"
+                        onClick={() => togglePickerUniverse(key)}
+                        className={[
+                          "shrink-0 rounded-full px-3 py-1 text-[11px] font-semibold ring-1 transition",
+                          active
+                            ? "bg-[rgba(79,211,238,0.16)] text-[#4FD3EE] ring-[rgba(79,211,238,0.4)]"
+                            : "bg-[color:var(--pill)] text-[color:var(--muted)] ring-[color:var(--border)] hover:text-[color:var(--fg)]",
+                        ].join(" ")}
+                      >
+                        {PICKER_SHORT_LABEL[key]} ({count})
+                      </button>
+                    );
+                  })}
                 </div>
-                <div className="grid gap-4 overflow-y-auto p-4">
-                  {pickerGroups.length === 0 ? (
-                    <p className="text-sm text-[color:var(--muted)]">
-                      Every item in this vault is already placed somewhere in this room.
-                    </p>
-                  ) : (
-                    pickerGroups.map((group) => (
-                      <div key={group.universe}>
-                        <div className="mb-1.5 text-[10px] font-black uppercase tracking-[0.14em] text-[color:var(--muted2)]">
-                          {group.universe}
-                        </div>
-                        <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
-                          {group.items.map((item) => {
-                            const order = pickerSelection.indexOf(item.id);
-                            const selected = order !== -1;
-                            return (
-                              <button
-                                key={item.id}
-                                type="button"
-                                onClick={() =>
-                                  setPickerSelection((current) =>
-                                    current.includes(item.id)
-                                      ? current.filter((id) => id !== item.id)
-                                      : [...current, item.id]
-                                  )
-                                }
-                                className={[
-                                  "relative overflow-hidden rounded-[6px] text-left transition",
-                                  selected ? "ring-2 ring-[#4FD3EE]" : "ring-1 ring-[color:var(--border)] hover:ring-[color:var(--muted)]",
-                                ].join(" ")}
-                              >
-                                <span className="block aspect-square overflow-hidden bg-black/20">
+
+                <div className="mt-2 flex gap-0.5 overflow-x-auto pb-0.5" style={{ scrollbarWidth: "none" }}>
+                  {PICKER_LETTERS.map((letter) => {
+                    const active = pickerActiveLetters.has(letter);
+                    return (
+                      <button
+                        key={letter}
+                        type="button"
+                        disabled={!active}
+                        onClick={() => jumpToPickerLetter(letter)}
+                        className={[
+                          "shrink-0 rounded px-1.5 py-0.5 text-[11px] font-mono font-semibold transition",
+                          active
+                            ? "text-[color:var(--muted)] hover:bg-[rgba(79,211,238,0.16)] hover:text-[#4FD3EE]"
+                            : "cursor-default text-[color:var(--muted2)] opacity-40",
+                        ].join(" ")}
+                      >
+                        {letter}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Thumbnail grid, grouped A-Z */}
+              <div className="min-h-0 flex-1 overflow-y-auto px-3">
+                {pickerFiltered.length === 0 ? (
+                  <div className="flex h-40 items-center justify-center text-sm text-[color:var(--muted)]">
+                    {pickerUnplaced.length === 0
+                      ? "Every item in this vault is already placed somewhere in this room."
+                      : "No items matched."}
+                  </div>
+                ) : (
+                  <div className="space-y-4 pb-4">
+                    {PICKER_LETTERS.map((letter) => {
+                      const group = pickerGrouped[letter];
+                      if (!group?.length) return null;
+                      return (
+                        <div key={letter} ref={(el) => { pickerLetterRefs.current[letter] = el; }}>
+                          <div className="mb-1.5 text-[11px] font-bold tracking-[0.2em] text-[color:var(--muted2)]">
+                            {letter}
+                          </div>
+                          <div
+                            className="grid gap-1.5"
+                            style={{ gridTemplateColumns: `repeat(${pickerCols}, minmax(0, 1fr))` }}
+                          >
+                            {group.map((item) => {
+                              const order = pickerSelection.indexOf(item.id);
+                              const selected = order !== -1;
+                              return (
+                                <button
+                                  key={item.id}
+                                  type="button"
+                                  onClick={() =>
+                                    setPickerSelection((current) =>
+                                      current.includes(item.id)
+                                        ? current.filter((id) => id !== item.id)
+                                        : [...current, item.id]
+                                    )
+                                  }
+                                  aria-pressed={selected}
+                                  aria-label={item.title}
+                                  className={[
+                                    "group relative block overflow-hidden rounded-[6px] bg-black/30 text-left transition",
+                                    selected ? "ring-2 ring-[#4FD3EE]" : "ring-1 ring-[color:var(--border)] hover:ring-[color:var(--muted)]",
+                                  ].join(" ")}
+                                  style={{ aspectRatio: "2/3" }}
+                                >
                                   {itemImage(item) ? (
                                     // eslint-disable-next-line @next/next/no-img-element
-                                    <img src={itemImage(item)} alt="" className="h-full w-full object-cover" />
+                                    <img src={itemImage(item)} alt="" className="h-full w-full object-cover" draggable={false} />
+                                  ) : (
+                                    <div className="flex h-full w-full items-center justify-center text-[9px] font-semibold uppercase tracking-widest text-[color:var(--muted2)]">
+                                      No photo
+                                    </div>
+                                  )}
+                                  <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent px-1 pb-1 pt-4">
+                                    <p className="line-clamp-2 text-center text-[9px] font-semibold leading-tight text-white">
+                                      {item.title}
+                                    </p>
+                                  </div>
+                                  {selected ? (
+                                    <span className="absolute right-1 top-1 grid h-5 w-5 place-items-center rounded-full bg-[#4FD3EE] text-[10px] font-black text-[#06171d]">
+                                      {order + 1}
+                                    </span>
                                   ) : null}
-                                </span>
-                                <span className="block truncate px-1.5 py-1 text-[10px] font-bold">{item.title}</span>
-                                {selected ? (
-                                  <span className="absolute right-1 top-1 grid h-5 w-5 place-items-center rounded-full bg-[#4FD3EE] text-[10px] font-black text-[#06171d]">
-                                    {order + 1}
-                                  </span>
-                                ) : null}
-                              </button>
-                            );
-                          })}
+                                </button>
+                              );
+                            })}
+                          </div>
                         </div>
-                      </div>
-                    ))
-                  )}
-                </div>
-                <div className="flex items-center justify-between gap-3 border-t p-4" style={{ borderColor: "var(--theme-border)" }}>
-                  <span className="text-xs text-[color:var(--muted)]">
-                    {pickerSelection.length} selected
-                  </span>
-                  <button
-                    type="button"
-                    disabled={pickerSelection.length === 0}
-                    onClick={() => fillFromSlot(pickerSlotIdx, pickerSelection)}
-                    className="inline-flex items-center gap-1.5 rounded-[6px] px-4 py-2 text-sm font-black transition disabled:opacity-40"
-                    style={{ background: "linear-gradient(180deg,#79E7FB,#2CB1D1)", color: "#06171d" }}
-                  >
-                    <Plus size={14} />
-                    Add {pickerSelection.length > 0 ? pickerSelection.length : ""}
-                  </button>
-                </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+
+              {/* Footer */}
+              <div className="shrink-0 border-t p-3" style={{ borderColor: "var(--theme-border)" }}>
+                <button
+                  type="button"
+                  disabled={pickerSelection.length === 0}
+                  onClick={() => fillFromSlot(pickerSlotIdx, pickerSelection)}
+                  className="flex w-full items-center justify-center gap-1.5 rounded-full py-3 text-sm font-black transition disabled:opacity-35"
+                  style={{ background: "linear-gradient(180deg,#79E7FB,#2CB1D1)", color: "#06171d" }}
+                >
+                  <Plus size={14} />
+                  {pickerSelection.length > 0 ? `Add ${pickerSelection.length}` : "Select items to add"}
+                </button>
               </div>
             </div>,
             document.body

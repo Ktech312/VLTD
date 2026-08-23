@@ -146,6 +146,78 @@ confirm with EK who owns a screen.** EK is aware of this.
 
 ---
 
+## ✅ 2026-08-23, later same day — the "+" picker above was rebuilt from
+scratch to match the Vault's real "Wall" view, per EK's direct feedback on
+5 screenshots: "This pop up is useless like this... The pop up should look
+like the Wall and search option on the Items list located int he Vault."
+
+The previous picker (grouped-by-universe, small thumbnail buttons — see the
+section below) was a one-off simplified UI. This one is a structural port of
+`src/components/VaultWallView.tsx` (the Vault's own "Wall" tab), not a new
+design: search bar, universe filter pills with REAL counts (`All (N)`, per
+universe), an A–Z jump bar that only lights up letters actually present,
+a size slider that changes grid columns live, and a full-viewport thumbnail
+grid grouped by first letter — same `var(--theme-card)`/`var(--theme-border)`
+tokens VaultWallView itself uses, so it reads as the same design language,
+not a gold-accented reskin (kept the museum's own `#4FD3EE` cyan for
+selection state instead of Vault's gold, since that's this feature's
+established accent color already).
+
+Kept from the previous version: multi-select with preserved pick order
+(first pick → the exact slot that was clicked, rest fill the next empty
+slots in order via `fillFromSlot`, unchanged), and the picker only lists
+items not already placed somewhere in the room.
+
+New pieces (all in `VirtualGalleryRoom.tsx`, no new files — matches how the
+rest of this large single-file component already duplicates small view
+constants rather than splitting into micro-modules):
+- `PICKER_UNIVERSE_ORDER` / `PICKER_SHORT_LABEL` / `PICKER_LETTERS` — same
+  order and short labels as `VaultWallView.tsx`'s own constants.
+- `inferPickerUniverse` / `pickerSearchText` — same logic as VaultWallView's
+  `inferUniverse`/search-text builder (uppercase + fall back to MISC for
+  anything not a real `UniverseKey`).
+- `pickerUnplaced` → `pickerUniverseCounts` (counts unaffected by search
+  text, same convention as Vault) → `pickerFiltered` (search + universe
+  filter) → `pickerGrouped` (by first letter) → `pickerActiveLetters`.
+- `pickerQuery` / `pickerUniverses` / `pickerCols` state, reset via
+  `openSlotPicker(idx)` each time a "+" is clicked (fresh search/filter,
+  size preference persists) — `closeSlotPicker()` used everywhere the modal
+  used to inline-reset both picker states.
+
+**Live-verified via real DOM checks** (not pixel-sampling — see the
+`⚠ IMPORTANT TOOLING NOTE` section further down for why): `tsc --noEmit` /
+`eslint` (0 errors, same 2 pre-existing warnings) / `npm run build` all
+clean. Temporarily added a 7th fixture item to the module-level `DEMO_ITEMS`
+array to get a real unplaced item to test against (this test account's demo
+vault auto-fills every one of its 6 items into "Scratch room" by default,
+so the real 6-item fixture alone always shows the picker's "already placed"
+empty state) — confirmed via DOM: universe pill counts render correctly
+("All (1)", "Pop Culture (1)" for a `POP_CULTURE` item), thumbnail image
+renders, search filters the grid down to 0/1 matches correctly, only the
+matching A–Z letter is enabled, the size slider live-updates
+`grid-template-columns`, selecting an item shows the order badge + updates
+the footer to "Add 1", and confirming correctly placed the item at the
+exact clicked slot (`data-arrange-idx`) and closed the modal. Removed the
+temp fixture item and rebuilt clean before committing — shipped `DEMO_ITEMS`
+is back to its original 6 entries.
+
+**Not addressed this pass**: EK's other piece of feedback from the same
+5-screenshot message — "You have a few missing spots and they are not
+spread out evenly, image 3 is the way the entire room should be spaced" —
+about the 3D room's physical item spacing. Re-read `distributeAcrossWalls`
+and `wallGridPosition` (below) as a sanity check: the position table they
+build is mathematically gapless and deterministic — every wall's own
+capacity fills in a fixed row-major order with no skipped cells, by
+construction. If there are still visible gaps/unevenness in the live 3D
+room, the cause isn't obvious from the code alone (could be a small vault
+simply not having enough items to fill every row yet, which is expected and
+not a bug), so this needs a fresh screenshot of the current build (post
+wall-capacity fix, commit `2ce81fc`) before guessing at a fix — the images
+EK originally attached aren't available in this session to compare
+against.
+
+---
+
 ## ✅ 2026-08-23, later same day — two substantial Arrange-panel features,
 EK's own words: "Finish and renumber the wall spaces, there are many not
 filled" + "each empty spot should have a plus... a large box should pop
