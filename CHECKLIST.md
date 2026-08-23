@@ -22,10 +22,13 @@ needed. Reddit turned out to need Reddit's new manually-approved developer
 process (not self-serve anymore, EK hit this directly trying to register
 an app) — real credentials still needed in Vercel before it can post
 anything, not guaranteed to be approved at all.
-✅ **Telegram + Slack added same day** — EK: "do any free ones we can."
-Both genuinely free, zero approval process, same "credential is the
-URL/token" shape as Discord. One more migration to run — see chat.
-Nothing tested live end-to-end yet on any of the 4 platforms.
+✅ **Telegram + Slack added same day, migration confirmed run by EK
+2026-08-22.** Both genuinely free, zero approval process, same
+"credential is the URL/token" shape as Discord — live now, same as
+Discord, the moment a club owner pastes a token/URL into Settings.
+Nothing tested live end-to-end yet on any of the 4 platforms (Discord/
+Telegram/Slack/Reddit) — worth actually posting in a club and confirming
+a message lands wherever it's configured to go.
 
 ## Per-exhibition curator Alias (2026-08-18) — ✅ DONE, migration confirmed run
 EK's ask: share an Exhibition without revealing your real identity, while
