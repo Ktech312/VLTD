@@ -297,9 +297,11 @@ export async function GET(req: NextRequest) {
   }));
 
   let upserted = 0;
+  let upsertError: string | null = null;
   if (rows.length) {
     const { error } = await svc.from("collector_events").upsert(rows, { onConflict: "slug" });
     if (!error) upserted = rows.length;
+    else upsertError = error.message;
   }
 
   return NextResponse.json({
@@ -308,5 +310,6 @@ export async function GET(req: NextRequest) {
     totalFound: allCandidates.length,
     approvedByAi: approved.length,
     upserted,
+    upsertError,
   });
 }
