@@ -2342,14 +2342,32 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
         emissiveIntensity: 0.08,
       });
       const spineTexture = drawSpineTexture(entry.item.title, entry.item.universe);
-      // MeshBasicMaterial + toneMapped:false so these render the exact
-      // gradient pixels drawn above, not reshaded by the room's own
-      // lights/exposure (EK: "this color does not match the button
-      // color" — a lit material never matches a flat CSS color exactly).
-      const sideMat = new THREE.MeshBasicMaterial({ map: spineTexture, toneMapped: false });
+      // EK: "the blue doesn't seem to have the white glow to it that the
+      // button does" — the button has a real box-shadow glow
+      // (shadow-[0_0_18px_rgba(79,211,238,0.22)]) around it; a flat unlit
+      // MeshBasicMaterial has no equivalent of that. Emissive light (as
+      // opposed to a diffuse map, which only reflects whatever light
+      // already hits it) reads as genuinely self-lit/glowing rather than
+      // just colored — color:black so the near-zero diffuse contribution
+      // can't get reshaded by the room's own lights, emissiveIntensity:1
+      // so the emitted color matches the drawn texture/hex exactly
+      // (still toneMapped:false too, same reasoning as before: renders
+      // the exact color, not reshaded by the room's exposure).
+      const sideMat = new THREE.MeshStandardMaterial({
+        color: 0x000000,
+        emissive: 0xffffff,
+        emissiveMap: spineTexture,
+        emissiveIntensity: 1,
+        toneMapped: false,
+      });
       // Top/bottom edges: same blue family (the gradient's own midpoint),
       // flat since there's no room for legible text on that thin a face.
-      const edgeMat = new THREE.MeshBasicMaterial({ color: "#53cce6", toneMapped: false });
+      const edgeMat = new THREE.MeshStandardMaterial({
+        color: 0x000000,
+        emissive: "#53cce6",
+        emissiveIntensity: 1,
+        toneMapped: false,
+      });
       const boxMaterials = [sideMat, sideMat, edgeMat, edgeMat, frontMat, backMat];
       entry.mesh.geometry = new THREE.BoxGeometry(cardWidth, entry.naturalHeight, 0.16);
       entry.mesh.material = boxMaterials;
@@ -2448,7 +2466,7 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
             mesh.geometry = heldItem.originalGeometry;
             mesh.material = heldItem.originalMaterial;
             tempGeometry.dispose();
-            (heldItem.boxMaterials[0] as THREE.MeshBasicMaterial).map?.dispose(); // the side spine texture, unique per pickup
+            (heldItem.boxMaterials[0] as THREE.MeshStandardMaterial).emissiveMap?.dispose(); // the side spine texture, unique per pickup
             for (const mat of new Set(heldItem.boxMaterials)) mat.dispose();
             pullAnim = null;
             heldItem = null;

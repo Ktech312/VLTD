@@ -146,6 +146,36 @@ confirm with EK who owns a screen.** EK is aware of this.
 
 ---
 
+## ✅ 2026-08-23, later same day — the spine box rebuild above got
+approved as a real improvement ("much better look"); one more polish
+note plus a separately-flagged site-wide item:
+
+- **"the blue doesn't seem to have the white glow to it that the
+  button does."** The button has a genuine `box-shadow` glow
+  (`shadow-[0_0_18px_rgba(79,211,238,0.22)]`) around it — a flat unlit
+  `MeshBasicMaterial` has no 3D equivalent of that at all. Switched the
+  spine's side/edge materials to `MeshStandardMaterial` with
+  `color: black` + `emissive`/`emissiveMap` at `emissiveIntensity: 1`
+  (still `toneMapped: false`) — emissive light reads as genuinely
+  self-lit/glowing rather than just colored, since it isn't dependent on
+  external light hitting the surface the way a diffuse map is. Black
+  diffuse base means the room's own lights can't reshade it on top of
+  that. Updated the put-back disposal to free `emissiveMap` instead of
+  `map` (this material no longer sets `map` at all — the earlier code
+  would have silently leaked the texture without this).
+- **"any blue button like that, site wide, needs darker text color."**
+  Checked this file's own one blue-gradient button (Save Room Draft) —
+  already correct (`text-[#06171d]`, dark). The site-wide part is
+  flagged as its own background task (same reasoning as the toggle-color
+  one above) rather than done here.
+
+`tsc --noEmit` / `eslint` (0 errors) / `npm run build` clean. Live-
+verified in a browser tab: picked up an item and put it back with the
+new emissive materials and the corrected disposal path — zero console
+errors either way.
+
+---
+
 ## ✅ 2026-08-23, later same day — the held-item spine was rebuilt
 properly this pass, after EK caught two real problems with a screenshot:
 "this color does not match the button color" and "you did not make the
