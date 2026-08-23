@@ -146,6 +146,46 @@ confirm with EK who owns a screen.** EK is aware of this.
 
 ---
 
+## ✅ 2026-08-23, later same day, second correction — the share sheet's
+image preview was STILL black. EK, correctly and sharply: "you are
+trying to quickly fix things instead of doing them right the first
+time." My first attempt (absolutizing `imageFrontUrl` to
+`http://localhost:3001/...` at the museum's own call site) was a
+band-aid, and it broke a SECOND time in a new way — traced fully this
+round instead of guessing again:
+
+- `getPrimaryImageUrl` (shared, `vaultModel.ts`) calls
+  `isDirectBrowserImageUrl`, which only recognized `http(s)/blob/data`
+  URLs — the museum's `DEMO_ITEMS` use root-relative
+  `/collectibles/*.png` paths, so it returned `""` for them. That's the
+  real gap.
+- My first "fix" absolutized the path to `http://localhost:3001/...` to
+  get past that check — which worked for `isDirectBrowserImageUrl`, but
+  then `SocialExportSheet`'s own `proxyImageUrl()` helper only skips
+  proxying for paths starting with `"/"`; a full `http://` URL routed
+  through `/api/image-proxy` instead, which is a deliberate SSRF guard
+  that ONLY allows `supabase.co`/`supabase.in` hosts — `localhost` got a
+  correct, working-as-designed 400. Two gates, two different
+  preferences, my fix satisfied one and broke the other.
+- **Real fix**: added `|| lower.startsWith("/")` to
+  `isDirectBrowserImageUrl` itself (`vaultCloud.ts`) — a root-relative
+  path genuinely IS already directly browser-loadable, which is exactly
+  what that function is supposed to recognize; it just never had a case
+  for it. Real Supabase storage keys never start with `/`, so this is
+  additive only, no behavior change for actual production data. Ran a
+  full-project `tsc --noEmit` (not just this file) given how many places
+  import this function — clean. Reverted the local absolutize hack in
+  `VirtualGalleryRoom.tsx` entirely now that the root cause is fixed
+  where it actually lives.
+
+**Verified this time, not assumed**: read the live network requests
+after the fix — `/collectibles/vinyl-record.png` etc. now load as plain
+200 GETs with zero `/api/image-proxy` calls at all (previously: one
+`/api/image-proxy?...localhost...` → 400). Confirms both gates are
+satisfied correctly, not just patched around.
+
+---
+
 ## ✅ 2026-08-23, later same day — 3 real bugs in the previous pass,
 caught from EK's own screenshots within minutes of it shipping:
 

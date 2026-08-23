@@ -27,7 +27,16 @@ export function isDirectBrowserImageUrl(value?: string | null) {
     lower.startsWith("http://") ||
     lower.startsWith("https://") ||
     lower.startsWith("blob:") ||
-    lower.startsWith("data:")
+    lower.startsWith("data:") ||
+    // A root-relative path ("/collectibles/guitar.png") is already
+    // directly loadable by the browser too — same-origin public asset,
+    // not a Supabase storage key (which never starts with "/"). Without
+    // this, getPrimaryImageUrl silently returned "" for the museum's own
+    // DEMO_ITEMS (which use these paths), and the one place that tried
+    // absolutizing it to a full origin URL instead broke a second time —
+    // the image-proxy route only allows supabase.co/supabase.in hosts, so
+    // an absolutized http://localhost URL got a 400 there.
+    lower.startsWith("/")
   );
 }
 

@@ -3051,7 +3051,10 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
               </div>
               {socialShareOpen
                 ? createPortal(
-                    <SocialExportSheet item={heldVaultItem} onClose={() => setSocialShareOpen(false)} />,
+                    <SocialExportSheet
+                      item={heldVaultItem}
+                      onClose={() => setSocialShareOpen(false)}
+                    />,
                     document.body
                   )
                 : null}
