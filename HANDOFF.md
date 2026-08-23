@@ -146,6 +146,63 @@ confirm with EK who owns a screen.** EK is aware of this.
 
 ---
 
+## ✅ 2026-08-23, later same day — two substantial Arrange-panel features,
+EK's own words: "Finish and renumber the wall spaces, there are many not
+filled" + "each empty spot should have a plus... a large box should pop
+up with all items under each Universe... select multiple items, the
+first selected goes to that spot and the rest will fill in, in order."
+
+**1. Wall-slot capacity was genuinely incomplete, not just "mostly
+empty."** Checked the actual room generator script
+(`scripts/generate-gallery-room-models.py`) rather than guess at 3D
+capacity — the shelf boards are single continuous planks with no baked
+physical dividers, so "8 columns × 3 rows = 24" for the back wall is a
+placement CONVENTION already coded in `wallGridPosition`, not a hard
+limit. But the old `MAX_ROOM_ITEMS=32` budget (minus 8 for vault's
+front/door wall) only left 24 slots for back+left+right COMBINED, so
+the 2:1:1 `WALL_CYCLE` ratio gave back only 12 of its own real 24
+positions, and left/right only 6 each — the rest genuinely had no slot
+index at all (no badge, no ghost outline, nothing), which is exactly
+the gaps EK circled on the back wall. Raised the budget
+(`BACK_WALL_CAPACITY=24`, `SIDE_WALL_CAPACITY=12` each, geometry-
+checked against Store's own `sideBaseZ`/`sideZStep` to land comfortably
+clear of the door-wall items, not guessed) and rewrote
+`distributeAcrossWalls` to keep the WALL_CYCLE's deliberate early-spread
+behavior (documented in its own comment — a small collection gets
+presence on every wall immediately, not just the back wall; preserved
+on purpose) while skipping a wall once it's genuinely full instead of
+blindly cycling past real capacity.
+**Renumbering**: the raw global slot index (kept as the real identity
+for drag/drop, badges, everything functional) reads as scattered
+non-sequential numbers per wall since WALL_CYCLE interleaves them — Back
+Wall showed 1,3,5,7... instead of 1,2,3,4... New `slotDisplayNumber`
+map (wall-local position, 1-based) is DISPLAY-ONLY, layered on top
+without touching the underlying index at all — every section now reads
+as a clean 1..N.
+
+**2. "+" picker on every empty slot.** Opens a modal (portaled to
+`document.body`, same pattern as the Share sheet) listing every vault
+item NOT already placed in some slot, grouped by universe. Multi-select
+(click toggles, order preserved); confirming assigns the first pick to
+the exact slot that was clicked, then walks forward through the whole
+slot table (wrapping once) placing the rest into the next empty slots in
+order — real per-item data throughout, nothing invented.
+
+`tsc --noEmit` / `eslint` (0 errors) / `npm run build` clean.
+**Live-verified via real DOM checks this time** (not pixel-sampling,
+which turned out unreliable earlier today) — confirmed: Back Wall shows
+"3/24" with sequential badges 1-24 (was "3/12" with scattered odd
+numbers); freed up 3 items via the plain Items list, opened the picker
+on an empty back-wall slot, confirmed it correctly listed only unplaced
+items grouped by their real universe ("SPORTS" → Rookie Parallel);
+selected 2 items in one picker session and confirmed the first landed
+exactly on the clicked slot (global index 8) and the second landed on
+the very next empty slot (global index 9) — the fill-in-order logic
+working exactly as asked. Zero console errors through the whole
+sequence.
+
+---
+
 ## ✅ 2026-08-23, later same day — the spine box rebuild above got
 approved as a real improvement ("much better look"); one more polish
 note plus a separately-flagged site-wide item:

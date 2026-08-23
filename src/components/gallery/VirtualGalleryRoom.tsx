@@ -20,6 +20,7 @@ import {
   MonitorUp,
   PackagePlus,
   Paintbrush,
+  Plus,
   Save,
   Share2,
   Sparkles,
@@ -79,7 +80,27 @@ type MuseumUniverseRoom = {
 
 const DRAFT_KEY = "vltd_virtual_gallery_room_draft_v1";
 const WALLPAPER_KEY = "vltd_virtual_gallery_wallpaper_v1";
-const MAX_ROOM_ITEMS = 32;
+// EK: "finish and renumber the wall spaces, there are many not filled" —
+// real gap, confirmed against the room generator script
+// (scripts/generate-gallery-room-models.py): the shelf boards are single
+// continuous planks with no baked physical dividers, so "8 columns x 3
+// rows = 24" for the back wall is a placement CONVENTION already coded
+// in wallGridPosition, not a hard limit — but the OLD MAX_ROOM_ITEMS=32
+// budget (minus 8 for the vault style's front/door wall) only left 24
+// "main wall" slots total for back+left+right COMBINED, so the 2:1:1
+// WALL_CYCLE ratio gave back only 12 of its own real 24 positions, and
+// left/right only 6 each (2 of their own real depth-steps) — the other
+// 12 back-wall positions and the deeper side-wall rows never got a
+// slot index at all, which is exactly the badge-less gaps EK circled.
+// Raised to fit BACK_WALL_CAPACITY (24, fixed) + a real, geometry-
+// checked SIDE_WALL_CAPACITY (12 each: 4 depth-steps x 3 rows, verified
+// by arithmetic against Store's own sideBaseZ/sideZStep to land at
+// z=-0.25 at the deepest — comfortably clear of the z=5.54 door-wall
+// items, not a guess) for both sides, plus the vault style's existing
+// 8-slot front/door wall.
+const BACK_WALL_CAPACITY = 24;
+const SIDE_WALL_CAPACITY = 12;
+const MAX_ROOM_ITEMS = BACK_WALL_CAPACITY + SIDE_WALL_CAPACITY * 2 + 8;
 // "blue" has no entry — it's the hand-coded shell shown permanently, with
 // no GLB to load at all. See the RoomStyle type above for what that means.
 const ROOM_MODEL_URLS: Partial<Record<RoomStyle, string>> = {
@@ -89,7 +110,7 @@ const ROOM_MODEL_URLS: Partial<Record<RoomStyle, string>> = {
 };
 
 // The 5 center display cases (built further down as decorative glass cabinets)
-// are also real, numbered, assignable slots — appended after the 32 wall slots.
+// are also real, numbered, assignable slots — appended after the wall slots.
 const CABINET_SPOTS: Array<[number, number]> = [
   [-3.4, -3.5],
   [0, -4.55],
@@ -632,8 +653,8 @@ function getRoomPalette(style: RoomStyle) {
 
 // Back wall gets 2 of every 4 items, left/right get 1 each — the back wall stays the
 // visual anchor, but both side walls start filling from item #1 instead of only once
-// the back wall's 32-slot grid is already full (which left a small collection's side
-// walls bare while the back wall did all the work).
+// the back wall's own full grid is already used up (which left a small collection's
+// side walls bare while the back wall did all the work).
 const WALL_CYCLE: Array<"back" | "left" | "right"> = ["back", "left", "back", "right"];
 
 // The physical shelf boards (built further down, same 4 heights) and every item's
@@ -723,12 +744,47 @@ function distributeAcrossWalls(
   count: number,
   config: { backZ: number; backScale: number; sideBaseZ: number; sideZStep: number; sideScale: number }
 ): RoomItemPosition[] {
+  // Keeps the WALL_CYCLE's early-spread behavior (see its own comment —
+  // a small collection gets presence on every wall right away, not just
+  // the back wall) while ALSO making sure every wall's own full capacity
+  // eventually gets a real slot once `count` is big enough to reach it —
+  // the previous version just cycled blindly and stopped at whatever
+  // count/ratio math it landed on, which is what left the back wall's
+  // own upper rows and the side walls' deeper rows with no slot index
+  // at all (EK circled the exact gaps in a screenshot).
+  const caps: Record<"back" | "left" | "right", number> = {
+    back: BACK_WALL_CAPACITY,
+    left: SIDE_WALL_CAPACITY,
+    right: SIDE_WALL_CAPACITY,
+  };
   const wallSlot: Record<"back" | "left" | "right", number> = { back: 0, left: 0, right: 0 };
-  return Array.from({ length: count }, (_, index) => {
-    const wall = WALL_CYCLE[index % WALL_CYCLE.length];
+  const positions: RoomItemPosition[] = [];
+  let cycleIndex = 0;
+  // `count` is always MAX_ROOM_ITEMS (or that minus the vault-only front
+  // wall's 8) — for vault that exactly equals the 3 caps' sum, so this
+  // never overflows in practice. Non-vault styles skip the front-wall
+  // carve-out and pass the full MAX_ROOM_ITEMS straight through, which
+  // DOES exceed the 3 caps' sum by exactly the front wall's 8 — rather
+  // than under-fill the array (breaking the fixed-length contract every
+  // caller relies on), any genuine overflow keeps cycling past each
+  // wall's normal cap once every wall has reached it, spread evenly
+  // rather than dumped on one wall.
+  while (positions.length < count) {
+    let wall = WALL_CYCLE[cycleIndex % WALL_CYCLE.length];
+    let skipped = 0;
+    const allAtCap = (["back", "left", "right"] as const).every((w) => wallSlot[w] >= caps[w]);
+    if (!allAtCap) {
+      while (wallSlot[wall] >= caps[wall] && skipped < WALL_CYCLE.length) {
+        cycleIndex++;
+        wall = WALL_CYCLE[cycleIndex % WALL_CYCLE.length];
+        skipped++;
+      }
+    }
     const slot = wallSlot[wall]++;
-    return wallGridPosition(wall, slot, config);
-  });
+    positions.push(wallGridPosition(wall, slot, config));
+    cycleIndex++;
+  }
+  return positions;
 }
 
 // EK's ask (2026-08-21): checked bingebrowse.net's own source (their
@@ -934,6 +990,11 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
   const [roomSwitcherOpen, setRoomSwitcherOpen] = useState(false);
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
+  // EK's ask: an empty slot's "+" opens a universe-grouped item picker;
+  // multi-select fills the clicked slot first, then the next empty slots
+  // in order. pickerSelection order IS the fill order (append on select).
+  const [pickerSlotIdx, setPickerSlotIdx] = useState<number | null>(null);
+  const [pickerSelection, setPickerSelection] = useState<string[]>([]);
   const touchFromRef = useRef<number | null>(null);
   const touchOverRef = useRef<number | null>(null);
   const touchCloneRef = useRef<HTMLElement | null>(null);
@@ -1089,6 +1150,41 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
       })
       .filter((group) => group.indices.length > 0);
   }, [slotPositions]);
+  // EK's ask: "renumber the wall spaces" — the raw global slot index
+  // (used as the actual identity for drag/drop and the badge/ghost
+  // rendering below, left untouched on purpose — WALL_CYCLE's
+  // interleaving is deliberate, see its own comment) reads as scattered,
+  // non-sequential numbers per wall (Back Wall showing 1,3,5,7... instead
+  // of 1,2,3,4...) since each wall's slots are spread through the global
+  // index rather than contiguous. This is a display-only remap — each
+  // slot's position WITHIN its own wall's group, 1-based — so every
+  // section reads as a clean 1..N regardless of where its slots actually
+  // fall in the underlying array.
+  const slotDisplayNumber = useMemo(() => {
+    const map = new Map<number, number>();
+    for (const group of slotGroups) {
+      group.indices.forEach((index, position) => map.set(index, position + 1));
+    }
+    return map;
+  }, [slotGroups]);
+  // The "+" picker's own list: only items not already placed in some slot
+  // (this picker ADDS, it doesn't move something that's already on a
+  // shelf — dragging in the Arrange grid already covers moving), grouped
+  // by universe so a large vault is actually browsable.
+  const pickerGroups = useMemo(() => {
+    const placed = new Set(selectedIds.filter(Boolean));
+    const unplaced = items.filter((item) => !placed.has(item.id));
+    const byUniverse = new Map<string, VaultItem[]>();
+    for (const item of unplaced) {
+      const key = item.universe || "Other";
+      const list = byUniverse.get(key) ?? [];
+      list.push(item);
+      byUniverse.set(key, list);
+    }
+    return Array.from(byUniverse.entries())
+      .sort((a, b) => a[0].localeCompare(b[0]))
+      .map(([universe, universeItems]) => ({ universe, items: universeItems }));
+  }, [items, selectedIds]);
   const palette = getRoomPalette(roomStyle);
 
   function openUniverseRoom(room: MuseumUniverseRoom) {
@@ -2070,7 +2166,7 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
     if (isOrganizing) {
       positions.forEach((pos, index) => {
         const occupied = Boolean(slotItems[index]);
-        const badgeTexture = drawSlotBadgeTexture(index + 1);
+        const badgeTexture = drawSlotBadgeTexture(slotDisplayNumber.get(index) ?? index + 1);
         const badge = new THREE.Mesh(
           new THREE.PlaneGeometry(0.4, 0.4),
           new THREE.MeshBasicMaterial({
@@ -2824,7 +2920,7 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
       renderer.dispose();
       container.innerHTML = "";
     };
-  }, [isOrganizing, palette.floor, palette.glow, palette.trim, palette.wall, roomLayout, roomStyle, showValues, slotItems, slotPositions, universeRoomsKey, viewMode, wallTextureUrl]);
+  }, [isOrganizing, palette.floor, palette.glow, palette.trim, palette.wall, roomLayout, roomStyle, showValues, slotDisplayNumber, slotItems, slotPositions, universeRoomsKey, viewMode, wallTextureUrl]);
 
   function applyGallery(nextGalleryId: string) {
     setGalleryId(nextGalleryId);
@@ -2890,6 +2986,35 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
       [next[fromIdx], next[toIdx]] = [next[toIdx], next[fromIdx]];
       return next;
     });
+  }
+
+  // EK's ask: the first item picked goes into the exact slot whose "+"
+  // was clicked; every item picked after that fills the next EMPTY slots
+  // in order, walking forward through the whole fixed-size table
+  // (wrapping back to the start once) rather than only within that one
+  // slot's own wall group — a small collection might only have one empty
+  // spot on the wall you clicked, and the rest should still land
+  // somewhere real instead of being silently dropped.
+  function fillFromSlot(startIdx: number, itemIds: string[]) {
+    if (itemIds.length === 0) return;
+    setSelectedIds((current) => {
+      const next = [...current];
+      next[startIdx] = itemIds[0];
+      let cursor = (startIdx + 1) % next.length;
+      let remaining = itemIds.slice(1);
+      let steps = 0;
+      while (remaining.length > 0 && steps < next.length) {
+        if (next[cursor] === "") {
+          next[cursor] = remaining[0];
+          remaining = remaining.slice(1);
+        }
+        cursor = (cursor + 1) % next.length;
+        steps++;
+      }
+      return next;
+    });
+    setPickerSlotIdx(null);
+    setPickerSelection([]);
   }
 
   function saveDraft() {
@@ -3473,7 +3598,7 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
                               ].join(" ")}
                             >
                               <span className="absolute left-0.5 top-0.5 z-[1] grid h-3.5 min-w-[14px] place-items-center rounded-[3px] bg-black/70 px-0.5 text-[8px] font-black leading-none text-white/85">
-                                {idx + 1}
+                                {slotDisplayNumber.get(idx) ?? idx + 1}
                               </span>
                               <span className="block aspect-square overflow-hidden bg-black/20">
                                 {item && itemImage(item) ? (
@@ -3483,6 +3608,20 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
                               </span>
                               {showLabel && item ? (
                                 <span className="block truncate px-1 py-0.5 text-[9px] font-bold">{item.title}</span>
+                              ) : null}
+                              {!item ? (
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setPickerSlotIdx(idx);
+                                    setPickerSelection([]);
+                                  }}
+                                  aria-label="Add an item to this spot"
+                                  className="absolute inset-0 grid place-items-center text-[color:var(--muted2)] transition hover:bg-[rgba(79,211,238,0.12)] hover:text-[#4FD3EE]"
+                                >
+                                  <Plus size={14} />
+                                </button>
                               ) : null}
                             </div>
                           );
@@ -3557,6 +3696,112 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
         {roomView}
         </div>
       </div>
+      {pickerSlotIdx !== null
+        ? createPortal(
+            <div
+              className="fixed inset-0 z-[95] flex items-center justify-center bg-black/70 p-4"
+              onClick={() => {
+                setPickerSlotIdx(null);
+                setPickerSelection([]);
+              }}
+            >
+              <div
+                className="flex max-h-[85vh] w-full max-w-2xl flex-col rounded-[10px] border bg-[color:var(--theme-card)] shadow-[var(--shadow-soft)]"
+                style={{ borderColor: "var(--theme-border)" }}
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="flex items-center justify-between gap-3 border-b p-4" style={{ borderColor: "var(--theme-border)" }}>
+                  <div>
+                    <div className="text-sm font-black">
+                      Add to slot #{slotDisplayNumber.get(pickerSlotIdx) ?? pickerSlotIdx + 1}
+                    </div>
+                    <div className="text-xs text-[color:var(--muted)]">
+                      Pick one or more items. The first goes here — the rest fill the next open spots.
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setPickerSlotIdx(null);
+                      setPickerSelection([]);
+                    }}
+                    aria-label="Close"
+                    className="grid h-7 w-7 shrink-0 place-items-center rounded-[6px] bg-[color:var(--input)] text-[color:var(--muted)] ring-1 ring-[color:var(--border)] transition hover:text-[color:var(--fg)]"
+                  >
+                    ✕
+                  </button>
+                </div>
+                <div className="grid gap-4 overflow-y-auto p-4">
+                  {pickerGroups.length === 0 ? (
+                    <p className="text-sm text-[color:var(--muted)]">
+                      Every item in this vault is already placed somewhere in this room.
+                    </p>
+                  ) : (
+                    pickerGroups.map((group) => (
+                      <div key={group.universe}>
+                        <div className="mb-1.5 text-[10px] font-black uppercase tracking-[0.14em] text-[color:var(--muted2)]">
+                          {group.universe}
+                        </div>
+                        <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
+                          {group.items.map((item) => {
+                            const order = pickerSelection.indexOf(item.id);
+                            const selected = order !== -1;
+                            return (
+                              <button
+                                key={item.id}
+                                type="button"
+                                onClick={() =>
+                                  setPickerSelection((current) =>
+                                    current.includes(item.id)
+                                      ? current.filter((id) => id !== item.id)
+                                      : [...current, item.id]
+                                  )
+                                }
+                                className={[
+                                  "relative overflow-hidden rounded-[6px] text-left transition",
+                                  selected ? "ring-2 ring-[#4FD3EE]" : "ring-1 ring-[color:var(--border)] hover:ring-[color:var(--muted)]",
+                                ].join(" ")}
+                              >
+                                <span className="block aspect-square overflow-hidden bg-black/20">
+                                  {itemImage(item) ? (
+                                    // eslint-disable-next-line @next/next/no-img-element
+                                    <img src={itemImage(item)} alt="" className="h-full w-full object-cover" />
+                                  ) : null}
+                                </span>
+                                <span className="block truncate px-1.5 py-1 text-[10px] font-bold">{item.title}</span>
+                                {selected ? (
+                                  <span className="absolute right-1 top-1 grid h-5 w-5 place-items-center rounded-full bg-[#4FD3EE] text-[10px] font-black text-[#06171d]">
+                                    {order + 1}
+                                  </span>
+                                ) : null}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+                <div className="flex items-center justify-between gap-3 border-t p-4" style={{ borderColor: "var(--theme-border)" }}>
+                  <span className="text-xs text-[color:var(--muted)]">
+                    {pickerSelection.length} selected
+                  </span>
+                  <button
+                    type="button"
+                    disabled={pickerSelection.length === 0}
+                    onClick={() => fillFromSlot(pickerSlotIdx, pickerSelection)}
+                    className="inline-flex items-center gap-1.5 rounded-[6px] px-4 py-2 text-sm font-black transition disabled:opacity-40"
+                    style={{ background: "linear-gradient(180deg,#79E7FB,#2CB1D1)", color: "#06171d" }}
+                  >
+                    <Plus size={14} />
+                    Add {pickerSelection.length > 0 ? pickerSelection.length : ""}
+                  </button>
+                </div>
+              </div>
+            </div>,
+            document.body
+          )
+        : null}
     </main>
   );
 }
