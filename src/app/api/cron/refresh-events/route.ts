@@ -169,8 +169,11 @@ async function fetchTicketmasterCandidates(apiKey: string, category: string, key
 
 // ── Relevance gate: one batched AI call for everything found this run ──
 
-async function filterRelevantCandidates(apiKey: string, candidates: Candidate[]): Promise<Set<number>> {
-  if (!candidates.length) return new Set();
+async function filterRelevantCandidates(
+  apiKey: string,
+  candidates: Candidate[],
+): Promise<{ approved: Set<number>; error: string | null }> {
+  if (!candidates.length) return { approved: new Set(), error: null };
 
   const prompt = [
     "You are screening event listings for VLTD, a collectibles/hobbyist marketplace app.",
@@ -202,23 +205,34 @@ async function filterRelevantCandidates(apiKey: string, candidates: Candidate[])
       },
       body: JSON.stringify({
         model: "claude-haiku-4-5-20251001",
-        max_tokens: 2048,
+        max_tokens: 4096,
         messages: [{ role: "user", content: prompt }],
       }),
     });
 
-    if (!response.ok) return new Set(); // fail closed
+    if (!response.ok) {
+      const details = await response.text().catch(() => "");
+      return { approved: new Set(), error: `AI request failed: ${response.status} ${details}`.slice(0, 500) };
+    }
 
-    const result = (await response.json()) as { content?: { type: string; text: string }[] };
+    const result = (await response.json()) as {
+      content?: { type: string; text: string }[];
+      stop_reason?: string;
+    };
     const rawText = result.content?.[0]?.text ?? "[]";
     const firstBracket = rawText.indexOf("[");
     const lastBracket = rawText.lastIndexOf("]");
-    if (firstBracket < 0 || lastBracket <= firstBracket) return new Set();
+    if (firstBracket < 0 || lastBracket <= firstBracket) {
+      return {
+        approved: new Set(),
+        error: `No JSON array in AI response (stop_reason=${result.stop_reason}): ${rawText}`.slice(0, 500),
+      };
+    }
 
     const parsed = JSON.parse(rawText.slice(firstBracket, lastBracket + 1)) as Array<{ i: number; relevant: boolean }>;
-    return new Set(parsed.filter((entry) => entry.relevant === true).map((entry) => entry.i));
-  } catch {
-    return new Set(); // fail closed
+    return { approved: new Set(parsed.filter((entry) => entry.relevant === true).map((entry) => entry.i)), error: null };
+  } catch (err) {
+    return { approved: new Set(), error: `AI filter threw: ${String(err)}`.slice(0, 500) }; // fail closed
   }
 }
 
@@ -274,8 +288,10 @@ export async function GET(req: NextRequest) {
   // No AI key to gate with -> nothing from a keyword search gets published,
   // full stop. (Not expected to trigger; ANTHROPIC_API_KEY has been live in
   // Vercel for months.)
-  const approvedIndexes = anthropicKey ? await filterRelevantCandidates(anthropicKey, allCandidates) : new Set<number>();
-  const approved = allCandidates.filter((_, i) => approvedIndexes.has(i));
+  const aiFilterResult = anthropicKey
+    ? await filterRelevantCandidates(anthropicKey, allCandidates)
+    : { approved: new Set<number>(), error: "ANTHROPIC_API_KEY not set" };
+  const approved = allCandidates.filter((_, i) => aiFilterResult.approved.has(i));
 
   const rows = approved.map((c) => ({
     slug: slugify(c.name, c.startsAt),
@@ -309,6 +325,7 @@ export async function GET(req: NextRequest) {
     foundByCategory,
     totalFound: allCandidates.length,
     approvedByAi: approved.length,
+    aiFilterError: aiFilterResult.error,
     upserted,
     upsertError,
   });
