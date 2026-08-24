@@ -4,6 +4,7 @@ import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { getMyAdminRole, type AdminRole } from "@/lib/adminAuth";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
+import { parseDateRangeFromText, stripTrailingDateText } from "@/lib/events/parseDatesFromText";
 
 async function authHeader(): Promise<Record<string, string>> {
   const supabase = getSupabaseBrowserClient();
@@ -23,6 +24,7 @@ function QuickAddForm() {
   const [link, setLink] = useState("");
   const [shortDesc, setShortDesc] = useState("");
   const [status, setStatus] = useState("");
+  const [datesGuessed, setDatesGuessed] = useState(false);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -30,9 +32,22 @@ function QuickAddForm() {
   }, []);
 
   useEffect(() => {
-    setName(params.get("name") ?? "");
+    const rawName = params.get("name") ?? "";
+    const desc = params.get("desc") ?? "";
+
+    // Try the title first (dates usually live there -- "Event - Jan 1-4"),
+    // fall back to the highlighted-text description. Purely local, no AI/API
+    // call -- this tool exists specifically to work without either.
+    const parsed = parseDateRangeFromText(rawName) ?? parseDateRangeFromText(desc);
+
+    setName(parsed ? stripTrailingDateText(rawName, parsed) : rawName);
     setLink(params.get("link") ?? "");
-    setShortDesc(params.get("desc") ?? "");
+    setShortDesc(desc);
+    setDatesGuessed(Boolean(parsed));
+    if (parsed) {
+      setStartDate(parsed.startDate);
+      setEndDate(parsed.endDate);
+    }
   }, [params]);
 
   async function save() {
@@ -103,7 +118,10 @@ function QuickAddForm() {
               <input
                 type="date"
                 value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
+                onChange={(e) => {
+                  setStartDate(e.target.value);
+                  setDatesGuessed(false);
+                }}
                 className="h-11 w-full rounded-lg border border-[color:var(--border)] bg-[color:var(--pill)] px-3 text-sm outline-none"
               />
             </label>
@@ -112,11 +130,19 @@ function QuickAddForm() {
               <input
                 type="date"
                 value={endDate}
-                onChange={(e) => setEndDate(e.target.value)}
+                onChange={(e) => {
+                  setEndDate(e.target.value);
+                  setDatesGuessed(false);
+                }}
                 className="h-11 w-full rounded-lg border border-[color:var(--border)] bg-[color:var(--pill)] px-3 text-sm outline-none"
               />
             </label>
           </div>
+          {datesGuessed && (
+            <p className="-mt-1 text-xs text-[color:var(--theme-gold)]">
+              Guessed from the title — double-check before saving.
+            </p>
+          )}
 
           <label className="block">
             <span className="mb-1 block text-xs font-semibold text-[color:var(--muted)]">City / State (optional)</span>
