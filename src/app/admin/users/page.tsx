@@ -17,6 +17,8 @@ type UserRow = {
   aiCalls: number;
   aiInputTokens: number;
   aiOutputTokens: number;
+  museumBetaEnabled: boolean;
+  museumBetaRequestedAt: string | null;
 };
 
 function formatJoined(value: string | null) {
@@ -40,6 +42,7 @@ export default function AdminUsersPage() {
   const [role, setRole] = useState<AdminRole | "loading">("loading");
   const [rows, setRows] = useState<UserRow[]>([]);
   const [status, setStatus] = useState("");
+  const [togglingId, setTogglingId] = useState<string | null>(null);
 
   const loadRows = useCallback(async () => {
     setStatus("Loading…");
@@ -56,6 +59,24 @@ export default function AdminUsersPage() {
       setStatus("Couldn't load users. Try again.");
     }
   }, []);
+
+  async function toggleMuseumBeta(row: UserRow) {
+    setTogglingId(row.id);
+    try {
+      const res = await fetch("/api/admin/users", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json", ...(await authHeader()) },
+        body: JSON.stringify({ profileId: row.id, museumBetaEnabled: !row.museumBetaEnabled }),
+      });
+      if (res.ok) {
+        setRows((current) =>
+          current.map((r) => (r.id === row.id ? { ...r, museumBetaEnabled: !r.museumBetaEnabled } : r))
+        );
+      }
+    } finally {
+      setTogglingId(null);
+    }
+  }
 
   useEffect(() => {
     void (async () => {
@@ -124,12 +145,13 @@ export default function AdminUsersPage() {
                 <th className="px-4 py-3 font-semibold">Avg session</th>
                 <th className="px-4 py-3 font-semibold">AI calls</th>
                 <th className="px-4 py-3 font-semibold">AI tokens</th>
+                <th className="px-4 py-3 font-semibold">3D Museum beta</th>
               </tr>
             </thead>
             <tbody>
               {rows.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="px-4 py-8 text-center text-[color:var(--muted)]">No accounts yet.</td>
+                  <td colSpan={9} className="px-4 py-8 text-center text-[color:var(--muted)]">No accounts yet.</td>
                 </tr>
               ) : (
                 rows.map((r) => (
@@ -150,6 +172,26 @@ export default function AdminUsersPage() {
                     <td className="px-4 py-3 text-[color:var(--muted)]">{r.aiCalls}</td>
                     <td className="px-4 py-3 text-[color:var(--muted)]">
                       {(r.aiInputTokens + r.aiOutputTokens).toLocaleString()}
+                    </td>
+                    <td className="px-4 py-3">
+                      <button
+                        type="button"
+                        onClick={() => void toggleMuseumBeta(r)}
+                        disabled={togglingId === r.id}
+                        className={[
+                          "inline-flex h-7 items-center rounded-full px-3 text-xs font-semibold transition disabled:opacity-50",
+                          r.museumBetaEnabled
+                            ? "bg-[#4FD3EE] text-[#06171d]"
+                            : "border border-[color:var(--border)] bg-[color:var(--pill)] text-[color:var(--muted)]",
+                        ].join(" ")}
+                        title={
+                          r.museumBetaRequestedAt
+                            ? `Requested ${formatJoined(r.museumBetaRequestedAt)}`
+                            : "Not requested"
+                        }
+                      >
+                        {r.museumBetaEnabled ? "Enabled" : r.museumBetaRequestedAt ? "Requested" : "Off"}
+                      </button>
                     </td>
                   </tr>
                 ))

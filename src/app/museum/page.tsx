@@ -39,6 +39,7 @@ import { getTierSafe, onTierChange, type Tier } from "@/lib/subscription";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 import { getPrimaryImageUrl, loadItems, type VaultItem } from "@/lib/vaultModel";
 import { getVaultImagePublicUrl } from "@/lib/vaultCloud";
+import { getMuseumBetaStatus, requestMuseumBetaAccess, type MuseumBetaStatus } from "@/lib/museumBeta";
 
 const ACTIVE_PROFILE_EVENT = "vltd:active-profile";
 const GALLERY_ASSET_BUCKET = "gallery-backgrounds";
@@ -181,6 +182,14 @@ export default function MuseumPage() {
   const [statusMessage, setStatusMessage] = useState("");
   const [isDeleting, setIsDeleting] = useState(false);
   const [isUploadingCover, setIsUploadingCover] = useState(false);
+  // 3D Museum beta gate — EK's ask: a Beta button on every card, either
+  // opens the builder (already enabled) or asks to request access
+  // (not yet). museum_beta_enabled itself is admin-only (a trigger
+  // blocks self-editing it), so this can only ever change via
+  // /admin/users actually granting it.
+  const [museumBetaStatus, setMuseumBetaStatus] = useState<MuseumBetaStatus>({ enabled: false, requestedAt: null });
+  const [showMuseumBetaModal, setShowMuseumBetaModal] = useState(false);
+  const [isSendingMuseumBetaRequest, setIsSendingMuseumBetaRequest] = useState(false);
   const coverInputRef = useRef<HTMLInputElement | null>(null);
   const selectedItemsDragRef = useRef({ active: false, dragged: false, startX: 0, scrollLeft: 0 });
   const [filter, setFilter] = useState<ExhibitionFilter>("ACTIVE");
@@ -228,6 +237,33 @@ export default function MuseumPage() {
       });
     }
   }, []);
+
+  useEffect(() => {
+    void getMuseumBetaStatus().then(setMuseumBetaStatus);
+  }, []);
+
+  function handleMuseumBetaClick(event: { preventDefault: () => void; stopPropagation: () => void }) {
+    event.preventDefault();
+    event.stopPropagation();
+    if (museumBetaStatus.enabled) {
+      router.push("/museum/virtual-room");
+      return;
+    }
+    setShowMuseumBetaModal(true);
+  }
+
+  async function handleSendMuseumBetaRequest() {
+    if (isSendingMuseumBetaRequest) return;
+    setIsSendingMuseumBetaRequest(true);
+    try {
+      const ok = await requestMuseumBetaAccess();
+      if (ok) {
+        setMuseumBetaStatus((current) => ({ ...current, requestedAt: Date.now() }));
+      }
+    } finally {
+      setIsSendingMuseumBetaRequest(false);
+    }
+  }
 
   useEffect(() => {
     refresh();
@@ -635,6 +671,25 @@ export default function MuseumPage() {
                   >
                     {/* Cover image with a distinct value shelf below. */}
                     <div className="relative h-[176px] overflow-hidden bg-[color:var(--theme-elevated)]">
+                      {/* EK's ask: a 3D Museum beta entry point on every
+                          card — always visible (not hover-gated) since
+                          it's meant to be discovered and clicked, not a
+                          secondary per-item action like the ones on the
+                          right. */}
+                      <button
+                        type="button"
+                        onClick={handleMuseumBetaClick}
+                        className="absolute left-2 top-2 z-20 inline-flex items-center gap-1 rounded-full bg-black/55 px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.08em] text-white ring-1 ring-white/20 backdrop-blur transition hover:bg-black/75"
+                        style={museumBetaStatus.enabled ? { color: "#06171d", background: "#4FD3EE" } : undefined}
+                        aria-label={`3D Museum beta for ${gallery.title}`}
+                      >
+                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                          <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z" />
+                          <path d="M3.27 6.96 12 12.01l8.73-5.05" />
+                          <path d="M12 22.08V12" />
+                        </svg>
+                        3D Museum
+                      </button>
                       {coverImage ? (
                         <ProgressiveImage
                           src={coverImage}
@@ -1027,6 +1082,51 @@ export default function MuseumPage() {
               >
                 Save
               </PillButton>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {showMuseumBetaModal ? (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/70 px-4 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-[26px] bg-[color:var(--surface)] p-6 ring-1 ring-[color:var(--border)] shadow-[0_30px_90px_rgba(0,0,0,0.42)]">
+            <div className="text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">
+              3D MUSEUM — BETA
+            </div>
+            {museumBetaStatus.requestedAt ? (
+              <>
+                <h2 className="mt-3 text-2xl font-semibold">Request sent</h2>
+                <p className="mt-3 text-sm leading-6 text-[color:var(--muted)]">
+                  You&apos;ve already asked to test the 3D Museum — we&apos;ll enable it for your
+                  account once a spot opens up.
+                </p>
+              </>
+            ) : (
+              <>
+                <h2 className="mt-3 text-2xl font-semibold">Try the 3D Museum?</h2>
+                <p className="mt-3 text-sm leading-6 text-[color:var(--muted)]">
+                  Build a walkable 3D room from your exhibitions. It&apos;s still in beta —
+                  request access and we&apos;ll turn it on for your account.
+                </p>
+              </>
+            )}
+            <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+              {museumBetaStatus.requestedAt ? (
+                <PillButton onClick={() => setShowMuseumBetaModal(false)}>Got it</PillButton>
+              ) : (
+                <>
+                  <PillButton
+                    onClick={() => void handleSendMuseumBetaRequest()}
+                    disabled={isSendingMuseumBetaRequest}
+                    style={{ background: "#4FD3EE", color: "#06171d" }}
+                  >
+                    {isSendingMuseumBetaRequest ? "Sending…" : "Request Access"}
+                  </PillButton>
+                  <PillButton onClick={() => setShowMuseumBetaModal(false)} disabled={isSendingMuseumBetaRequest}>
+                    Not now
+                  </PillButton>
+                </>
+              )}
             </div>
           </div>
         </div>

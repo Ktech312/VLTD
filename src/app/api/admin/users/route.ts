@@ -15,7 +15,7 @@ export async function GET(req: NextRequest) {
   const { data: profiles, error: profilesError } = await svc
     .from("profiles")
     .select(
-      "id, user_id, display_name, username, created_at, last_seen_at, session_started_at, total_seconds_online, session_count",
+      "id, user_id, display_name, username, created_at, last_seen_at, session_started_at, total_seconds_online, session_count, museum_beta_enabled, museum_beta_requested_at",
     )
     .order("created_at", { ascending: false });
 
@@ -67,8 +67,46 @@ export async function GET(req: NextRequest) {
       aiCalls: usage.calls,
       aiInputTokens: usage.inputTokens,
       aiOutputTokens: usage.outputTokens,
+      museumBetaEnabled: !!p.museum_beta_enabled,
+      museumBetaRequestedAt: p.museum_beta_requested_at,
     };
   });
 
   return NextResponse.json({ rows });
+}
+
+// Toggles the 3D Museum beta flag for one profile. Goes through the
+// service-role client + a verified admin check, same as GET above —
+// deliberately not a direct client-side `.update()` against
+// admins_update_all_profiles, so this stays consistent with the
+// strongest pattern already in this file rather than the RLS-only one
+// used elsewhere (e.g. admin/tiers/page.tsx).
+export async function PATCH(req: NextRequest) {
+  const svc = getServiceClient();
+  if (!svc) return NextResponse.json({ error: "not_configured", message: "Service unavailable." }, { status: 503 });
+
+  const admin = await getAdminEmail(req, svc);
+  if (!admin) return NextResponse.json({ error: "forbidden", message: "Admins only." }, { status: 403 });
+
+  const body = await req.json().catch(() => null);
+  const profileId = typeof body?.profileId === "string" ? body.profileId.trim() : "";
+  const museumBetaEnabled = typeof body?.museumBetaEnabled === "boolean" ? body.museumBetaEnabled : null;
+
+  if (!profileId || museumBetaEnabled === null) {
+    return NextResponse.json(
+      { error: "bad_request", message: "profileId and museumBetaEnabled are required." },
+      { status: 400 },
+    );
+  }
+
+  const { error } = await svc
+    .from("profiles")
+    .update({ museum_beta_enabled: museumBetaEnabled })
+    .eq("id", profileId);
+
+  if (error) {
+    return NextResponse.json({ error: "db_error", message: error.message }, { status: 500 });
+  }
+
+  return NextResponse.json({ ok: true });
 }
