@@ -1,10 +1,11 @@
 "use client";
 
 import { Suspense, useEffect, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { getMyAdminRole, type AdminRole } from "@/lib/adminAuth";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 import { parseDateRangeFromText, stripTrailingDateText } from "@/lib/events/parseDatesFromText";
+import { showToast } from "@/lib/toast";
 
 async function authHeader(): Promise<Record<string, string>> {
   const supabase = getSupabaseBrowserClient();
@@ -16,6 +17,7 @@ async function authHeader(): Promise<Record<string, string>> {
 
 function QuickAddForm() {
   const params = useSearchParams();
+  const router = useRouter();
   const [role, setRole] = useState<AdminRole | "loading">("loading");
   const [name, setName] = useState("");
   const [startDate, setStartDate] = useState("");
@@ -67,7 +69,8 @@ function QuickAddForm() {
       if (!res.ok) {
         setStatus(data.message || "Failed to save.");
       } else {
-        setStatus("Saved — it'll show up on the Events page right away.");
+        showToast("Saved!");
+        router.push(`/events?highlight=${encodeURIComponent(data.slug ?? "")}`);
       }
     } catch {
       setStatus("Failed to save. Try again.");

@@ -69,7 +69,9 @@ export function parseDateRangeFromText(text: string, now: Date = new Date()): Pa
 export function stripTrailingDateText(text: string, parsed: ParsedDateRange): string {
   if (!parsed || parsed.matchIndex < 0) return text;
   const tailStart = parsed.matchIndex + parsed.matchedText.length;
-  const afterMatch = text.slice(tailStart);
+  // Allow an immediately-trailing explicit year ("October 08 - 11, 2026") to
+  // count as still part of the date, not just whitespace/punctuation/parens.
+  const afterMatch = text.slice(tailStart).replace(/^[\s,]*20\d{2}/, "");
   if (!/^\)?[\s,]*$/.test(afterMatch)) return text; // date wasn't at the tail -- leave it alone
 
   const before = text.slice(0, parsed.matchIndex);

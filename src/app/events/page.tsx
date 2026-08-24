@@ -506,7 +506,16 @@ export default function EventsPage() {
         } else {
           const rows = (data ?? []) as CollectorEvent[];
           setEvents(rows);
-          setSelectedId(rows.find((event) => event.is_featured)?.id ?? rows[0]?.id ?? "");
+
+          // A save from the Quick Add Event fallback lands here with
+          // ?highlight=<slug> so the user can actually see it went in,
+          // rather than trusting a status message on a different page.
+          const highlightSlug = new URLSearchParams(window.location.search).get("highlight");
+          const highlighted = highlightSlug ? rows.find((event) => event.slug === highlightSlug) : undefined;
+          setSelectedId(highlighted?.id ?? rows.find((event) => event.is_featured)?.id ?? rows[0]?.id ?? "");
+          if (highlighted) {
+            window.setTimeout(() => detailRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" }), 300);
+          }
         }
         setLoading(false);
       });

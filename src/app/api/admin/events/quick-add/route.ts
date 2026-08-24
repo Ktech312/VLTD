@@ -36,10 +36,11 @@ export async function POST(req: NextRequest) {
 
   const startsAt = `${startDate}T00:00:00.000Z`;
   const endsAt = `${/^\d{4}-\d{2}-\d{2}$/.test(endDate) ? endDate : startDate}T23:59:59.000Z`;
+  const slug = slugify(name, startsAt);
 
   const { error } = await svc.from("collector_events").upsert(
     {
-      slug: slugify(name, startsAt),
+      slug,
       name,
       short_desc: shortDesc,
       starts_at: startsAt,
@@ -56,5 +57,5 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "db_error", message: error.message }, { status: 500 });
   }
 
-  return NextResponse.json({ success: true });
+  return NextResponse.json({ success: true, slug });
 }
