@@ -146,6 +146,53 @@ confirm with EK who owns a screen.** EK is aware of this.
 
 ---
 
+## ✅ 2026-08-23, later same day — the real root cause of "why do i not
+have access to my real items": the museum builder was reading a local-
+only cache and never actually fetching the signed-in user's cloud vault.
+
+EK's follow-up question after the previous fix ("ok, i see what you are
+showing but why do i not have access to my real items?") led to a real
+gap, not a config issue — exactly the [[backend-wiring-standard]] anti-
+pattern (no local-only real data for signed-in users), just not caught
+until now because this feature happened to be tested with a cold local
+cache the whole time.
+
+`loadItems()` (from `src/lib/vaultModel.ts`) only ever reads whatever's
+ALREADY cached in `window.localStorage` — it never talks to Supabase.
+The real `/vault` page's own `hydrateAll()` does an instant local render
+from `loadItems()` first (for speed), then calls
+`syncVaultItemsFromSupabase()` — which actually fetches the signed-in
+user's real vault, merges it with the local cache, and saves the merge
+back — and re-renders with that. `VirtualGalleryRoom.tsx`'s mount effect
+was only ever doing the FIRST half of that same pattern; it never called
+the sync function at all. A browser/origin with nothing cached yet (this
+local dev server is its own separate origin from the deployed site, with
+its own empty localStorage) fell straight through to the hardcoded
+`DEMO_ITEMS` fallback and had no way to ever reach the real data — same
+root cause on the deployed site too, just usually masked there by a
+warm cache from having used `/vault` first in that same browser.
+
+Fix: added the exact same `syncVaultItemsFromSupabase()` call, gated
+carefully so it can't clobber a saved room draft — a `draftAppliedSelectedIds`
+flag (set synchronously by the existing draft-restoration code, which
+always runs before this promise's `.then()` can fire) decides whether
+the newly-synced real items are also auto-placed into the room
+(only when the cache was cold AND no draft applied its own layout) or
+just refresh the available-items list (`items`) without touching
+whatever's already on the shelves.
+
+**Not fully end-to-end verifiable in this session**: `fetchVaultItemsFromSupabase`
+requires a real active profile/signed-in session
+(`if (!activeProfileId) return []`, short-circuits before any network
+call at all) — this sandboxed browser has no login (confirmed: visiting
+`/vault` redirects to the login screen), so testing here can only prove
+the code path is wired correctly and fails safe (no crash, falls back to
+demo items exactly as before, zero console errors) — not that real items
+actually arrive. That last part needs EK's own signed-in browser.
+`tsc`/`eslint` (0 errors)/`npm run build` clean.
+
+---
+
 ## ✅ 2026-08-23, later same day — picker now offers EVERY vault item,
 not just unplaced ones; picking an already-placed item moves it.
 

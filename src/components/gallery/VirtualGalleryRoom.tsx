@@ -32,7 +32,7 @@ import {
   loadGalleries,
   type Gallery,
 } from "@/lib/galleryModel";
-import { getPrimaryImageUrl, loadItems, type VaultItem } from "@/lib/vaultModel";
+import { getPrimaryImageUrl, loadItems, syncVaultItemsFromSupabase, type VaultItem } from "@/lib/vaultModel";
 import { UNIVERSE_LABEL, type UniverseKey } from "@/lib/taxonomy";
 import SocialExportSheet from "@/components/SocialExportSheet";
 import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment.js";
@@ -1151,10 +1151,38 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
       setSelectedItemId(vaultItems[0]?.id ?? "");
     }
 
+    // EK's ask: "why do i not have access to my real items?" — `loadItems()`
+    // above only reads whatever's ALREADY cached in this browser's local
+    // storage; it never talks to Supabase. The real /vault page's own
+    // hydrateAll() does exactly this same instant local render first, then
+    // calls `syncVaultItemsFromSupabase()` to actually fetch the real cloud
+    // vault and merge it in — this effect was only ever doing the first
+    // half, so a browser/origin with nothing cached yet (this local dev
+    // server is its own separate origin from the deployed site, with its
+    // own empty localStorage) fell straight through to the hardcoded
+    // DEMO_ITEMS fallback and stayed there.
+    // `draftAppliedSelectedIds` is set below, synchronously, before this
+    // promise's `.then()` ever gets a chance to run — a saved draft's own
+    // layout should win over auto-placing the newly-synced real items.
+    let draftAppliedSelectedIds = false;
+    void syncVaultItemsFromSupabase().then((syncedItems) => {
+      if (syncedItems.length === 0) return;
+      setItems(syncedItems);
+      // The synchronous load above only had DEMO_ITEMS to work with (cold
+      // cache) and no draft restored its own layout — safe to plant the
+      // room with the user's real items now, the same initial-fill this
+      // effect already does above when the cache happens to be warm.
+      if (vaultItems.length === 0 && !draftAppliedSelectedIds) {
+        setSelectedIds(fillSlots(syncedItems.slice(0, 12).map((item) => item.id)));
+        setSelectedItemId(syncedItems[0]?.id ?? "");
+      }
+    });
+
     try {
       const draft = safeDraft(JSON.parse(window.localStorage.getItem(DRAFT_KEY) || "{}"));
       if (draft.galleryId) setGalleryId(draft.galleryId);
       if (Array.isArray(draft.selectedIds) && draft.selectedIds.length > 0) {
+        draftAppliedSelectedIds = true;
         const ids = draft.selectedIds.filter((id): id is string => typeof id === "string");
         setSelectedIds(fillSlots(ids));
         setSelectedItemId(String(ids.find(Boolean) ?? ""));
