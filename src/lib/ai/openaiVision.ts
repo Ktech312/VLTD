@@ -1,3 +1,5 @@
+import { getStoredActiveProfileId } from "@/lib/auth";
+
 export type VisionAnalysisResult = {
   title: string;
   subtitle: string;
@@ -34,6 +36,8 @@ export async function analyzeImageWithVision(
   if (options?.universe?.trim()) formData.append("universe", options.universe.trim());
   if (options?.category?.trim()) formData.append("category", options.category.trim());
   if (options?.subcategory?.trim()) formData.append("subcategory", options.subcategory.trim());
+  const profileId = getStoredActiveProfileId();
+  if (profileId) formData.append("profileId", profileId);
 
   const response = await fetch("/api/ai/analyze-item", {
     method: "POST",

@@ -1,5 +1,29 @@
 import { NextRequest, NextResponse } from "next/server";
 import { TAXONOMY, UNIVERSE_KEYS, UNIVERSE_LABEL } from "@/lib/taxonomy";
+import { getServiceClient } from "@/lib/serverAdmin";
+
+// Best-effort usage logging for the future per-user analytics EK asked for
+// (Users admin page: AI calls + tokens per account, alongside the existing
+// time-on-app presence tracking). Never blocks or fails the real response --
+// void-called, own try/catch, no error surfaced to the caller either way.
+async function logAiUsage(
+  profileId: string | null,
+  feature: string,
+  usage?: { input_tokens?: number; output_tokens?: number },
+): Promise<void> {
+  try {
+    const svc = getServiceClient();
+    if (!svc) return;
+    await svc.from("ai_usage_log").insert({
+      profile_id: profileId,
+      feature,
+      input_tokens: usage?.input_tokens ?? null,
+      output_tokens: usage?.output_tokens ?? null,
+    });
+  } catch {
+    /* observability only -- never let logging break the real request */
+  }
+}
 
 const UNIVERSE_OPTIONS = UNIVERSE_KEYS.map((k) => UNIVERSE_LABEL[k]).join(", ");
 
@@ -126,6 +150,7 @@ export async function POST(req: NextRequest) {
     const universe = String(formData.get("universe") ?? "").trim();
     const category = String(formData.get("category") ?? "").trim();
     const subcategory = String(formData.get("subcategory") ?? "").trim();
+    const profileId = String(formData.get("profileId") ?? "").trim() || null;
 
     if (!(image instanceof File)) {
       return NextResponse.json({ error: "Missing image upload." }, { status: 400 });
@@ -255,9 +280,14 @@ card if it pictures an athlete.`,
       );
     }
 
-    const result = (await response.json()) as { content?: { type: string; text: string }[] };
+    const result = (await response.json()) as {
+      content?: { type: string; text: string }[];
+      usage?: { input_tokens?: number; output_tokens?: number };
+    };
     const rawText = result.content?.[0]?.text || "{}";
     const parsed = sanitizeVisionResult(extractJsonObject(rawText));
+
+    void logAiUsage(profileId, "analyze-item", result.usage);
 
     return NextResponse.json({
       title: parsed.detectedTitle,

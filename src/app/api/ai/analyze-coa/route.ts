@@ -1,4 +1,26 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getServiceClient } from "@/lib/serverAdmin";
+
+// Same best-effort usage logging as analyze-item/route.ts -- see that file
+// for the reasoning (EK's Users-admin-page analytics ask, 2026-08-23).
+async function logAiUsage(
+  profileId: string | null,
+  feature: string,
+  usage?: { input_tokens?: number; output_tokens?: number },
+): Promise<void> {
+  try {
+    const svc = getServiceClient();
+    if (!svc) return;
+    await svc.from("ai_usage_log").insert({
+      profile_id: profileId,
+      feature,
+      input_tokens: usage?.input_tokens ?? null,
+      output_tokens: usage?.output_tokens ?? null,
+    });
+  } catch {
+    /* observability only */
+  }
+}
 
 export type CoaAnalysisResult = {
   certNumber: string;
@@ -29,6 +51,7 @@ export async function POST(req: NextRequest) {
 
     const formData = await req.formData();
     const image = formData.get("image");
+    const profileId = String(formData.get("profileId") ?? "").trim() || null;
 
     if (!(image instanceof File)) {
       return NextResponse.json({ error: "Missing image." }, { status: 400 });
@@ -86,9 +109,14 @@ Rules:
       return NextResponse.json({ error: "AI request failed." }, { status: 502 });
     }
 
-    const result = (await response.json()) as { content?: { type: string; text: string }[] };
+    const result = (await response.json()) as {
+      content?: { type: string; text: string }[];
+      usage?: { input_tokens?: number; output_tokens?: number };
+    };
     const rawText = result.content?.[0]?.text || "{}";
     const parsed = extractJsonObject(rawText);
+
+    void logAiUsage(profileId, "analyze-coa", result.usage);
 
     return NextResponse.json({
       certNumber: String(parsed.certNumber ?? "").trim(),

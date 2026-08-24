@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 import type { CoaAnalysisResult } from "@/app/api/ai/analyze-coa/route";
+import { getStoredActiveProfileId } from "@/lib/auth";
 
 type Props = {
   onApply: (data: CoaAnalysisResult, imageFile: File) => void;
@@ -26,6 +27,8 @@ export default function CoaScanButton({ onApply }: Props) {
     try {
       const form = new FormData();
       form.append("image", file);
+      const profileId = getStoredActiveProfileId();
+      if (profileId) form.append("profileId", profileId);
       const res = await fetch("/api/ai/analyze-coa", { method: "POST", body: form });
       if (!res.ok) throw new Error("Scan failed.");
       const data = (await res.json()) as CoaAnalysisResult;
