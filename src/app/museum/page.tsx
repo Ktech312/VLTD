@@ -471,10 +471,31 @@ export default function MuseumPage() {
   const headerBlock = (
     <>
       {/* Desktop filter pills (mobile uses the inline dropdown in the toolbar) */}
-      <div className="mt-4 hidden flex-wrap gap-2 sm:flex">
+      <div className="mt-4 hidden flex-wrap items-center gap-2 sm:flex">
         {EXHIBITION_FILTERS.map((f) => (
           <button key={f.key} type="button" onClick={() => setFilter(f.key)} className={`inline-flex items-center rounded-[8px] px-4 py-1.5 text-sm font-semibold ring-1 transition ${filter === f.key ? "bg-[rgba(79,211,238,0.10)] text-[#5FDCF3] ring-[rgba(79,211,238,0.5)] shadow-[0_0_14px_rgba(79,211,238,0.22)]" : "bg-[color:var(--pill)] text-[color:var(--muted)] ring-[color:var(--border)]"}`}>{f.label}</button>
         ))}
+        {/* EK's ask: one button here, not one per card — clicking it
+            always opens the same generic blank builder regardless of
+            which exhibition you were looking at, so repeating it per
+            card had no real reason to exist. */}
+        <button
+          type="button"
+          onClick={handleMuseumBetaClick}
+          className="ml-1 inline-flex items-center gap-1.5 rounded-[8px] px-4 py-1.5 text-sm font-semibold ring-1 transition"
+          style={
+            museumBetaStatus.enabled
+              ? { background: "#4FD3EE", color: "#06171d" }
+              : { background: "var(--pill)", color: "var(--muted)", borderColor: "var(--border)" }
+          }
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z" />
+            <path d="M3.27 6.96 12 12.01l8.73-5.05" />
+            <path d="M12 22.08V12" />
+          </svg>
+          3D Museum
+        </button>
       </div>
     </>
   );
@@ -671,25 +692,6 @@ export default function MuseumPage() {
                   >
                     {/* Cover image with a distinct value shelf below. */}
                     <div className="relative h-[176px] overflow-hidden bg-[color:var(--theme-elevated)]">
-                      {/* EK's ask: a 3D Museum beta entry point on every
-                          card — always visible (not hover-gated) since
-                          it's meant to be discovered and clicked, not a
-                          secondary per-item action like the ones on the
-                          right. */}
-                      <button
-                        type="button"
-                        onClick={handleMuseumBetaClick}
-                        className="absolute left-2 top-2 z-20 inline-flex items-center gap-1 rounded-full bg-black/55 px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.08em] text-white ring-1 ring-white/20 backdrop-blur transition hover:bg-black/75"
-                        style={museumBetaStatus.enabled ? { color: "#06171d", background: "#4FD3EE" } : undefined}
-                        aria-label={`3D Museum beta for ${gallery.title}`}
-                      >
-                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                          <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z" />
-                          <path d="M3.27 6.96 12 12.01l8.73-5.05" />
-                          <path d="M12 22.08V12" />
-                        </svg>
-                        3D Museum
-                      </button>
                       {coverImage ? (
                         <ProgressiveImage
                           src={coverImage}
