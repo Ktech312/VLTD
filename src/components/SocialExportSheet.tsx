@@ -692,24 +692,53 @@ function triggerDownload(href: string, filename: string) {
 }
 
 // ─── Toggle component ─────────────────────────────────────────────────────────
-function Toggle({ on, onToggle, label, sub }: { on: boolean; onToggle: () => void; label: string; sub?: string }) {
+function Toggle({
+  on,
+  onToggle,
+  label,
+  sub,
+  compact,
+}: {
+  on: boolean;
+  onToggle: () => void;
+  label: string;
+  sub?: string;
+  // Puts the switch immediately next to the label instead of pushed to
+  // the far edge via justify-between — for when two toggles need to sit
+  // side by side on one row instead of each taking a full-width row.
+  compact?: boolean;
+}) {
+  const switchButton = (
+    <button
+      type="button"
+      onClick={onToggle}
+      className="relative h-6 w-11 rounded-full transition-colors flex-shrink-0"
+      style={{ background: on ? "var(--theme-gold)" : "var(--pill)" }}
+    >
+      <span
+        className="absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform"
+        style={{ transform: on ? "translateX(20px)" : "translateX(0)" }}
+      />
+    </button>
+  );
+  if (compact) {
+    return (
+      <div>
+        <div className="flex items-center gap-2">
+          <span className="text-sm font-medium" style={{ color: "var(--fg)" }}>{label}</span>
+          {switchButton}
+        </div>
+        {sub && <div className="text-[11px]" style={{ color: "var(--muted)" }}>{sub}</div>}
+      </div>
+    );
+  }
   return (
     <div className="flex items-center justify-between">
       <div>
         <div className="text-sm font-medium" style={{ color: "var(--fg)" }}>{label}</div>
         {sub && <div className="text-[11px]" style={{ color: "var(--muted)" }}>{sub}</div>}
       </div>
-      <button
-        type="button"
-        onClick={onToggle}
-        className="relative h-6 w-11 rounded-full transition-colors flex-shrink-0"
-        style={{ background: on ? "var(--theme-gold)" : "var(--pill)" }}
-      >
-        <span
-          className="absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform"
-          style={{ transform: on ? "translateX(20px)" : "translateX(0)" }}
-        />
-      </button>
+      {switchButton}
     </div>
   );
 }
@@ -717,13 +746,13 @@ function Toggle({ on, onToggle, label, sub }: { on: boolean; onToggle: () => voi
 // ─── BG picker ────────────────────────────────────────────────────────────────
 function BgPicker({ value, onChange }: { value: string; onChange: (v: string) => void }) {
   return (
-    <div className="flex flex-wrap gap-2">
+    <div className="flex flex-wrap gap-1.5">
       {BG_OPTIONS.map((b) => (
         <button
           key={b.id}
           type="button"
           onClick={() => onChange(b.value)}
-          className={`h-8 w-8 rounded-full transition ${value === b.value ? "ring-2 ring-[color:var(--theme-gold)] ring-offset-2 scale-110" : "ring-1 ring-[color:var(--border)] opacity-70 hover:opacity-100"}`}
+          className={`h-6 w-6 rounded-full transition ${value === b.value ? "ring-2 ring-[color:var(--theme-gold)] ring-offset-1 scale-110" : "ring-1 ring-[color:var(--border)] opacity-70 hover:opacity-100"}`}
           style={{ background: b.value, "--tw-ring-offset-color": "var(--surface)" } as React.CSSProperties}
           title={b.label}
         />
@@ -831,8 +860,8 @@ function ImageCardTab({ item }: { item: VaultItem }) {
       </div>
 
       {/* Background */}
-      <div>
-        <div className="mb-2 text-xs font-semibold uppercase tracking-widest" style={{ color: "var(--muted)" }}>Background</div>
+      <div className="flex items-center gap-3">
+        <div className="text-xs font-semibold uppercase tracking-widest" style={{ color: "var(--muted)" }}>Background</div>
         <BgPicker value={bg} onChange={(v) => { setBg(v); setPreview(null); }} />
       </div>
 
@@ -881,10 +910,10 @@ function ImageCardTab({ item }: { item: VaultItem }) {
       </div>
 
       {/* Toggles */}
-      <div className="flex flex-col gap-3">
-        <Toggle on={showValue} onToggle={() => { setShowValue(!showValue); setPreview(null); }}
+      <div className="flex gap-6">
+        <Toggle compact on={showValue} onToggle={() => { setShowValue(!showValue); setPreview(null); }}
           label="Show value" sub={showValue ? "Value visible in export" : "Value blurred for privacy"} />
-        <Toggle on={watermark} onToggle={() => { setWatermark(!watermark); setPreview(null); }}
+        <Toggle compact on={watermark} onToggle={() => { setWatermark(!watermark); setPreview(null); }}
           label="VLTD watermark" sub="Small branding in corner" />
       </div>
 
@@ -897,7 +926,10 @@ function ImageCardTab({ item }: { item: VaultItem }) {
         </div>
       )}
 
-      {/* Actions */}
+      {/* Actions — Generate caption sits in the same row, size-matched to
+          Preview while it's showing (EK's ask); a single persistent
+          GenerateCopyPanel instance so in-progress caption state survives
+          toggling Preview/Edit, rather than two separate mounts. */}
       <div className="flex gap-2">
         {!preview ? (
           <button type="button" onClick={() => void handleExport()} disabled={exporting}
@@ -926,13 +958,10 @@ function ImageCardTab({ item }: { item: VaultItem }) {
             </button>
           </>
         )}
-      </div>
-
-      {/* Caption generator */}
-      <div className="mt-2">
         <GenerateCopyPanel item={item} mode="social"
           onAccept={(text) => void navigator.clipboard?.writeText(text)}
-          triggerLabel="✦ Generate caption" />
+          triggerLabel="✦ Generate caption"
+          fullWidth={!preview} />
       </div>
 
       {/* Frame Studio link */}
@@ -1019,8 +1048,8 @@ function ThenVsNowTab({ item }: { item: VaultItem }) {
       )}
 
       {/* Background */}
-      <div>
-        <div className="mb-2 text-xs font-semibold uppercase tracking-widest" style={{ color: "var(--muted)" }}>Background</div>
+      <div className="flex items-center gap-3">
+        <div className="text-xs font-semibold uppercase tracking-widest" style={{ color: "var(--muted)" }}>Background</div>
         <BgPicker value={bg} onChange={(v) => { setBg(v); setPreview(null); }} />
       </div>
 

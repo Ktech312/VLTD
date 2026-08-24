@@ -124,20 +124,6 @@ who owns a screen.** EK is aware of this.
 - **`/capture` (normal Add) is THIS chat's now** — EK confirmed 2026-07-31 that
   Codex isn't on it; this chat added multi-photo + crop-zoom there. Still re-read
   before editing in case that changes.
-- **As of 2026-08-11 — not this chat's, do not touch:** `src/app/museum/
-  virtual-room/`, `src/app/owner-lab/`, `src/components/owner-lab/`,
-  `src/components/gallery/VirtualGalleryRoom.tsx`,
-  ~~`src/app/museum/page.tsx` (modified)~~ **UPDATE 2026-08-18: EK confirmed
-  the 3D-museum work is now local-only on the other chat's machine —
-  `museum/page.tsx` is this chat's again.** (See the PageHeader rollout entry
-  in §2 — its title/header was already converted.)
-  `src/components/NavShell.tsx` (modified),
-  `src/components/ProtectedRoute.tsx` (modified), plus a `marketing/` folder
-  and a `product/` folder at the repo root. EK flagged the `forge/` (3D-printer
-  app) placement under `/museum` as likely misplaced/unintended and is asking
-  about it separately — don't try to fix or move it, that's EK's call once
-  they've looked. `src/app/forge/` and `src/app/vault/forge/` are empty
-  directories (no `page.tsx`), harmless, safe to ignore.
 - **⚠ CHECK YOUR BRANCH BEFORE PUSHING.** 2026-08-12/13: the parallel
   session's 3D-museum work happened on a branch called
   `claude/museum-map-doorways` (not `main`) — and at some point mid-session
@@ -153,6 +139,2372 @@ who owns a screen.** EK is aware of this.
   **Run `git branch --show-current` before trusting that a push landed
   where you think it did** — don't assume you're still on `main` just
   because you were a few messages ago.
+- **As of 2026-08-14/15 — `src/app/museum/virtual-room/` and
+  `src/components/gallery/VirtualGalleryRoom.tsx` are THIS chat's now.** EK
+  explicitly handed the 3D museum work over ("take over and fix it") — see the
+  big dated section below for the full status. `src/app/owner-lab/`,
+  `src/components/owner-lab/`, and `src/app/museum/page.tsx`'s non-museum-room
+  parts are still not this chat's. EK flagged the `forge/` (3D-printer app)
+  placement under `/museum` as likely misplaced/unintended and is asking about
+  it separately — don't try to fix or move it, that's EK's call once they've
+  looked. `src/app/forge/` and `src/app/vault/forge/` are empty directories
+  (no `page.tsx`), harmless, safe to ignore.
+  **UPDATE 2026-08-24: the whole `claude/museum-map-doorways` branch (55**
+  **commits) was merged into `main`** after a security audit turned up that it
+  had never actually landed — the museum builder route didn't exist on `main`
+  at all, which is why a newly-built beta-access button pointed at a dead
+  page. The file-ownership split above is now moot; everything lives on
+  `main`. During the merge, `museum/page.tsx`'s header was kept as this
+  chat's most recent, EK-validated version (filter pills + a beta-gated "3D
+  Museum" button) — the museum branch's own competing header, which included
+  an *ungated* direct link straight to `/museum/virtual-room`, was
+  deliberately dropped so it can't bypass the request/approval gate EK asked
+  for. See the "3D Museum" section of `CHECKLIST.md` for current status.
+
+**New, as of 2026-08-12 - Virtual Gallery Builder / future VLTD Museum campus**
+- Prototype route: `/museum/virtual-room`
+  (`src/app/museum/virtual-room/page.tsx` +
+  `src/components/gallery/VirtualGalleryRoom.tsx`). This is a future add-on
+  concept, not a polished shipped feature.
+- Product intent from EK: users build virtual galleries/rooms from their own
+  vault items. Longer term this can become a searchable/public "museum campus"
+  or convention floor organized by universe/category, e.g. Comics, TCG,
+  Sports, Automobile, Music, MTG, Pokemon, etc. Users may eventually pay for
+  larger room sizes, premium templates, public convention booths, or featured
+  room placement.
+- Current implementation:
+  - `Room / Map` switch in the Gallery Builder sidebar.
+  - 3D room mode with wall shelves, hardwood floor, taller-ceiling hallway
+    feel, uploaded wallpaper texture support, movement controls, click-to-focus
+    item viewing, and center-room glass cabinet/plinth placeholders.
+  - Map mode groups real vault items by `universe`/`category` and shows a rough
+    museum-campus floorplan with Store, Elevator, Entrance, rotunda, Main
+    Gallery, Gallery A/C/D/E/F/G, Garden Gallery, and a side list of universe
+    rooms. Clicking a populated room opens that universe in the 3D room.
+- EK feedback on the current visual state: "looking better but needs clean up."
+  Screenshot showed the map is conceptually closer, but the cards/panels
+  overlap and crowd each other, typography is too large in small room blocks,
+  several room tiles are washed-out/too bright against the dark VLTD theme, and
+  the overview needs a cleaner real floorplan composition.
+- Important behavior requirement: clicking an item in 3D should move the camera
+  directly in front of that exact item, head-on, at a natural eye height. Earlier
+  attempts selected the item but put the viewer under/beside the shelf; keep
+  this in the cleanup checklist until visually confirmed.
+- Design inspiration EK supplied: museum floorplan maps, building cutaway,
+  classic museum facade, warm gallery room with seating, blue-wall gallery with
+  track lights, glass cabinet museum halls, open 3D exhibition floor models, and
+  a Sims/theme-park-style overhead campus map. The direction should feel like a
+  collector convention/museum, not just a flat dashboard.
+- Do not overbuild the full Sims editor first. Recommended product path:
+  1) clean 2D overview + clickable universe rooms,
+  2) polished 3D room templates with wall shelves and center display cabinets,
+  3) public/searchable rooms by universe,
+  4) paid room sizes/templates/convention placement,
+  5) later freeform room editing if usage justifies it.
+
+---
+
+## ✅ 2026-08-23, later same day — Organize moved to the room toolbar,
+the flat "Items" on/off list retired for good (not hidden).
+
+EK: "I really don't see the use for the Items Pill, it takes up room and
+all it does it turn thing on and off... Can you see a reason for me to
+keep it?" Checked before touching anything: the flat list's ONE real job
+the Arrange grid didn't already cover was removing an item from a shelf
+WITHOUT immediately putting something else there (the grid's "+" only
+ever ADDS/MOVES into an empty slot; a filled slot had no way to just go
+back to empty). Added that as a real "×" button on every filled Arrange
+cell (reuses the existing `toggleItem` — it already clears a slot when
+the id is already present, same call the old list's "ON" pill made) —
+the grid now covers add (+), move (drag), and remove (×), so the
+separate list has nothing left to do. Retired it entirely rather than
+leave dead code behind.
+
+Also relocated per EK's own markup (blue arrow to the room's own
+VLTD Room/Exit/Rooms toolbar): the Organize/Done toggle now lives there
+instead of in the sidebar panel's header — it only ever affected the 3D
+view's floating slot badges, and now the sidebar's own content, so it
+reads more naturally as a room-view toggle than a sidebar-section
+control. The sidebar's "ITEMS" panel is renamed "ARRANGE SHELF ORDER" and
+shows the grid unconditionally now — no more toggling between two
+different sidebar views. Dropped `selectedItems.length > 1` gating on
+the toggle too (it no longer changes what the sidebar shows, so there's
+no reason to hide it for a 0-1-item room), and removed the now-dead
+`itemSubtitle`/`selectedSet` helpers along with the list itself.
+
+Verified live: "ARRANGE SHELF ORDER" shows unconditionally with no
+Organize toggle in its header; a "Remove Rookie Parallel from this spot"
+button exists on that filled cell, clicking it actually clears the slot
+(confirmed via `data-arrange-idx` — the item no longer appears anywhere
+in the table, not just visually hidden); "Organize" button now lives in
+the room's own toolbar and correctly flips to "Done" on click. Zero
+console errors. `tsc`/`eslint` (0 errors)/`npm run build` clean.
+
+---
+
+## ⚠⚠⚠ 2026-08-23, later same day — REAL SECURITY GAP found and fixed:
+the museum builder had no concept of "who's looking." Anyone who opened
+`/museum/virtual-room` — logged in or not, owner or not — got the exact
+same full edit chrome (Organize, Items sidebar, Save Draft) for whatever
+exhibition the SOURCE dropdown happened to load, including exhibitions
+that belong to other people.
+
+EK caught this live and it's legitimate, not paranoia: "why am i able to
+manipulate things as a guest, a guest should be view only... you just
+left the door wide open on this for anyone to do anything." Confirmed by
+reading the code, not guessed: `/museum/virtual-room/page.tsx` renders
+`<VirtualGalleryRoom />` with zero auth/ownership check of any kind — the
+"Guest" pill in the header is just a link for the OWNER to preview their
+own guest-facing URL; it doesn't mean the current viewer IS a guest, and
+nothing enforces that assumption.
+
+**Important nuance, also confirmed by reading the code**: nothing in this
+builder — Organize, drag, the "+" picker, Save Room Draft — ever calls
+Supabase. Grepped the whole file: zero `.insert`/`.update`/`.upsert`/
+`supabase` references. Everything is local React state + localStorage.
+So the actual damage anyone could do through this specific screen was
+always zero — no one could really vandalize someone else's exhibition
+through it, and no one could vandalize EK's either. The real problem was
+the wrong PERMISSION MODEL (showing edit controls to non-owners at all),
+not an open write path — this matters for how urgent/how-fixed this is,
+not as an excuse to leave it as-is.
+
+**Fix**: added the exact ownership pattern already used elsewhere in this
+codebase for this exact purpose (`GuestGalleryRenderer.tsx`'s own
+`isOwner={Boolean(viewerProfileId) && ownerProfileId === viewerProfileId}`,
+reading `vltd_active_profile_id_v1` from localStorage) — not a new
+mechanism, the existing one just was never wired up here. New
+`effectiveGuest = guest || !isOwnerOfCurrentGallery`, computed from the
+currently-loaded gallery's `profile_id` vs. the viewer's own — Scratch
+room (building from your OWN vault, no real exhibition at stake) stays
+open to anyone as the harmless sandbox it's always been; loading a REAL,
+named exhibition through the Source dropdown now collapses the ENTIRE
+builder chrome to the same minimal, already-built read-only view a true
+guest gets, the moment you're not its owner. The existing "Builder" link
+in that read-only view (added earlier this session for an unrelated
+guest-navigation dead-end) doubles as the escape hatch here too — it
+always points at a fresh `/museum/virtual-room` load, which remounts back
+to Scratch rather than whatever gallery just collapsed the chrome.
+
+**Caveat EK should know**: `viewerProfileId` is a plain localStorage
+value, not a server-verified session — technically spoofable via
+devtools. That's an acceptable gap FOR NOW only because of the "nothing
+here writes to Supabase" fact above — a spoofed check still can't touch
+anything real. If a "publish my changes" / "save to my real exhibition"
+write path gets added later (sounds likely, given the "push it live as a
+Beta tab" plan), THAT path must have its own real, server-enforced
+ownership check (RLS or an API route) — this client-side gate alone would
+not be enough to protect a real write.
+
+**Separately, also surfaced (not yet acted on, needs EK's own decision,
+not a code fix)**: `createGallery()` in `src/lib/galleryModel.ts` hardcodes
+every new exhibition to `visibility: "PUBLIC"` at creation, and the
+`galleries` table's RLS policy (`supabase/migrations/20260601_public_galleries_read.sql`)
+lets anyone, including logged-out visitors, read anything
+`visibility='PUBLIC' AND state='ACTIVE'`. EK confirmed this specific part
+is INTENDED ("the exhibitions should be public, the ones that were
+created by their owners... just like the Museum, VIEW only") — public+
+view-only exhibitions are the desired design, not a bug. What's still
+open: whether new exhibitions should default to public immediately on
+creation (current behavior) or require an explicit "publish" step — EK
+hasn't decided that part yet, separate from this session's fix.
+
+Verified live (this sandboxed browser has no login, so `viewerProfileId`
+is always empty here — every real exhibition correctly reads as
+not-owned): confirmed Scratch room still shows full builder chrome
+(Organize present); confirmed selecting "Flora" from the Source dropdown
+instantly collapsed to the minimal read-only view (Organize/Save Draft/
+the dropdown itself all gone, only the room + a "Builder" escape link
+remain); confirmed that link's href points back at a fresh
+`/museum/virtual-room`; confirmed navigating there fresh restores full
+Scratch-room edit access. Zero console errors through the whole sequence.
+`tsc`/`eslint` (0 errors)/`npm run build` clean.
+
+---
+
+## ✅ 2026-08-23, later same day — the real root cause of "why do i not
+have access to my real items": the museum builder was reading a local-
+only cache and never actually fetching the signed-in user's cloud vault.
+
+EK's follow-up question after the previous fix ("ok, i see what you are
+showing but why do i not have access to my real items?") led to a real
+gap, not a config issue — exactly the [[backend-wiring-standard]] anti-
+pattern (no local-only real data for signed-in users), just not caught
+until now because this feature happened to be tested with a cold local
+cache the whole time.
+
+`loadItems()` (from `src/lib/vaultModel.ts`) only ever reads whatever's
+ALREADY cached in `window.localStorage` — it never talks to Supabase.
+The real `/vault` page's own `hydrateAll()` does an instant local render
+from `loadItems()` first (for speed), then calls
+`syncVaultItemsFromSupabase()` — which actually fetches the signed-in
+user's real vault, merges it with the local cache, and saves the merge
+back — and re-renders with that. `VirtualGalleryRoom.tsx`'s mount effect
+was only ever doing the FIRST half of that same pattern; it never called
+the sync function at all. A browser/origin with nothing cached yet (this
+local dev server is its own separate origin from the deployed site, with
+its own empty localStorage) fell straight through to the hardcoded
+`DEMO_ITEMS` fallback and had no way to ever reach the real data — same
+root cause on the deployed site too, just usually masked there by a
+warm cache from having used `/vault` first in that same browser.
+
+Fix: added the exact same `syncVaultItemsFromSupabase()` call, gated
+carefully so it can't clobber a saved room draft — a `draftAppliedSelectedIds`
+flag (set synchronously by the existing draft-restoration code, which
+always runs before this promise's `.then()` can fire) decides whether
+the newly-synced real items are also auto-placed into the room
+(only when the cache was cold AND no draft applied its own layout) or
+just refresh the available-items list (`items`) without touching
+whatever's already on the shelves.
+
+**Not fully end-to-end verifiable in this session**: `fetchVaultItemsFromSupabase`
+requires a real active profile/signed-in session
+(`if (!activeProfileId) return []`, short-circuits before any network
+call at all) — this sandboxed browser has no login (confirmed: visiting
+`/vault` redirects to the login screen), so testing here can only prove
+the code path is wired correctly and fails safe (no crash, falls back to
+demo items exactly as before, zero console errors) — not that real items
+actually arrive. That last part needs EK's own signed-in browser.
+`tsc`/`eslint` (0 errors)/`npm run build` clean.
+
+---
+
+## ✅ 2026-08-23, later same day — picker now offers EVERY vault item,
+not just unplaced ones; picking an already-placed item moves it.
+
+EK caught a real design mistake, not a bug per se: "why are there no
+items displayed to select?" (the demo vault's 6 items were all already
+placed in the room, so the picker's own "unplaced only" filter correctly
+showed nothing — but that filter itself was wrong). Follow-up: "I should
+be able to select any item that own, this isn't being fed off or exiting
+exhibitions only... Then i have to do double the work" — the old picker
+only listed items not already in some slot in this room, so moving an
+already-placed item meant removing it via the Items sidebar FIRST, then
+picking it — two steps for what should be one.
+
+- `pickerAllItems` replaces `pickerUnplaced` — the picker lists every
+  vault item now, full stop.
+- New `pickerCurrentSlotLabel` (built from `slotGroups`, not a raw index)
+  shows a small "Back #3" / "Left #1" style tag on any tile that's
+  already placed somewhere in this room — wall name included on purpose,
+  since wall-local numbering restarts at 1 on every wall, so three
+  different items can legitimately all read "#1" at once; the bare
+  number alone would've looked like a bug the moment more than one wall
+  had items in the picker together.
+- `fillFromSlot` now clears an item's OLD slot (`next.indexOf(id)`,
+  found and blanked) before assigning it to the new one, for every id in
+  the batch — picking an already-placed item moves it instead of
+  duplicating it into two slots at once. This was the one real risk in
+  opening the picker up: previously "already placed" items were filtered
+  out specifically so this case could never happen.
+- Empty-state copy updated: "Every item in this vault is already placed"
+  no longer applies (nothing is ever filtered out by placement anymore) —
+  now just "Your vault is empty" (0 items total) or "No items matched"
+  (search/filter excluded everything).
+
+**Verified live, full round-trip**: opened the picker on an empty slot,
+confirmed it showed all 6 items (was 0), confirmed the universe pills
+recompute against all 6 (`All (6)`, real per-item counts). Confirmed
+"Rookie Parallel"'s tile showed "Left #1" (its real current slot).
+Selected it, confirmed, then checked the actual room state via
+`data-arrange-idx`: "Rookie Parallel" appears exactly ONCE in the whole
+61+ slot table (no duplicate), now at its new slot — the move-not-
+duplicate path works end to end, not just in the picker's own UI. Zero
+console errors through the whole sequence. `tsc`/`eslint` (0 errors,
+same 2 pre-existing warnings)/`npm run build` clean.
+
+---
+
+## ✅ 2026-08-23, later same day — 3 more real fixes from EK's next round
+of screenshots. EK, sharply: "No Patches and FIXES, I don't care if
+something was hardcoded, its wrong, start over and do it the right way" —
+re read all the relevant code fresh for each one rather than layering
+another guess on the last pass.
+
+**1. Item description panel got stuck open.** `viewMode==="room" &&
+selectedItemId && heldVaultItem` drives the description overlay. Wall-
+mounted items ("held") already had a real dismiss path (`putBackItem`, any
+click puts it back). Display-case ("flat") items never did — the flat
+branch in `onPointerUp` just calls `setSelectedItemId(itemId)` directly, no
+equivalent "any other click clears it" logic, so it survived clicking the
+floor, a doorway, or toggling Organize — exactly what EK saw. Fixed at the
+one real choke point: right before `onPointerUp`'s hit-branches run, if a
+description is open and this click didn't hit that same item, clear it
+first — "close it first before anything else comes up," literally. Also
+clear it explicitly in the Organize toggle's own onClick. One real gotcha
+caught by `eslint`'s exhaustive-deps, not guessed past: `selectedItemId`
+is deliberately NOT a dependency of the giant mount effect (adding it would
+rebuild the whole 3D scene, camera included, every time a description
+opens/closes) — so reading it directly inside that effect's `onPointerUp`
+closure would read a stale snapshot. Added `selectedItemIdRef`, kept live
+via its own tiny effect, and read the ref instead.
+
+**2. Wall spacing — the real fix this time, not another guess.** EK's 4th
+time flagging this, with an annotated screenshot: back-wall items visibly
+closer together than side-wall items, and the side wall stopping well
+short of the far corner with real shelf length left unused. Went back to
+`scripts/generate-gallery-room-models.py` for the actual numbers instead of
+tuning by eye again:
+- `back_shelf_i`: width 19.9 (half 9.95); `back_corner_post_x`: half-width
+  0.65 centered x=+-10.36 -> inner face at x=+-9.71.
+- `left_shelf_i`/`right_shelf_i`: depth 23.2 centered z=-3.15 -> real board
+  spans z in [-14.75, 8.45] (the procedural whitebox/arcade shelves in
+  `VirtualGalleryRoom.tsx`'s own `addSideRowBoard` use this identical span,
+  so it's not vault-only).
+- `back_corner_post_x` (again, for the side-wall's back limit this time):
+  forward face at z=-11.22. `front_wall_left/right` (the door wall): near
+  face at z=5.71.
+An item's own footprint along the wall (frame width 1.12*scale + matting,
+at MIN_ITEM_SCALE=0.78) is ~0.975, so a safe CENTER position needs ~0.49
+clearance from any of those faces. That gives real, geometry-checked safe
+ranges — back wall half-width 9.0 (was implicitly ~7.35), side wall z from
+-10.5 to 4.9 (a real 15.4-unit run, was only ever using 9 of it in Store).
+The actual bug wasn't just "wasted space" — it was that back wall's own
+column step (a flat, layout-independent 2.1) and each layout's side-wall
+step (1.5 Salon / 2.1 Spotlight-supporting / 3.0 Store) were never checked
+against each other OR the real wall length, so Store in particular (the
+default for a small vault) had side-wall items ~43% farther apart than
+back-wall items while using well under half the real available length.
+Side-wall capacity raised from 12 (4 depth-steps x 3 rows) to 21 (7 x 3) so
+it has enough real slots to run at the SAME density as the back wall
+without needing to invent a different rule for each wall —
+`BACK_WALL_COL_STEP` (~2.571, back wall's real 18-unit safe span / 7 gaps)
+and `SIDE_WALL_STEP` (~2.567, side wall's real 15.4-unit safe span / 6
+gaps) are independently derived from these real numbers and land within
+0.005 of each other, not hand-matched. Store's side walls now use the
+FULL safe range end to end (`sideBaseZ: SIDE_WALL_SAFE_BACK_Z`). Salon's
+tighter 1.5 step and Spotlight-supporting's 2.1 step are KEPT as
+deliberate density choices (Salon's own comment already explains why —
+a small collection should read as a dense cluster, not just "Store with
+fewer items") — what changed for those two is that the resulting cluster
+is now explicitly CENTERED within the real safe range instead of starting
+flush at an ungeometry-checked position, so leftover slack splits evenly
+instead of piling up at one end.
+`MAX_ROOM_ITEMS`/`TOTAL_SLOT_COUNT` grow automatically from the capacity
+constants (24+21*2+8 = 74 wall slots +5 cabinets = 79 total, was 61) —
+nothing else hardcoded those numbers; confirmed via the sidebar's own
+dynamic `{group.indices.length}` label, which now reads "X/21" for both
+side walls without any other code change.
+**Verified the math directly** (pasted the exact same constant
+expressions into the live browser console): back-wall columns land at
+-9.0, -6.429, ..., 9.0 in steps of 2.5714; side-wall depths land at -10.5,
+-7.933, ..., 4.9 in steps of 2.5667. Confirmed the "X/21" capacity is live
+on both side walls via the actual rendered sidebar. **Not independently
+pixel-verified in 3D** (this sandboxed browser tab doesn't reliably
+composite WebGL frames when not actively displayed — same limitation
+noted throughout this session) — the math and the live slot-count are
+solid; whether it now visually reads as consistent needs EK's own eyes.
+
+**3. The "+" picker didn't read as a pop-up and needed mobile support.**
+It was a full-bleed, edge-to-edge takeover — correct for actually seeing
+content, but with 0 items available (this account's whole demo vault
+already placed) it just looked like a blank dead-end page, not a dialog.
+Rebuilt the outer shell to reuse the EXACT backdrop/sheet/handle pattern
+`SocialExportSheet.tsx` already uses elsewhere in this app instead of
+inventing a new one: a dimmed, blurred backdrop button (click closes),
+a centered `max-w-4xl` rounded card on desktop, a full-width bottom sheet
+with rounded top corners and a drag handle on mobile (`sm:` breakpoint),
+sized to content up to a `92dvh` cap with internal scroll — same
+`fixed`-via-inline-style fix as issue #1 above applies to the outer
+container (still body-portaled). **Verified via `getComputedStyle` at both
+desktop and mobile (375px) viewport widths**: desktop shows a centered
+896px-wide card with a visible backdrop; mobile shows a full-width,
+flush-bottom sheet with the drag handle switching from `display:none` to
+`display:flex` and the bottom corners losing their radius (flush with the
+screen edge) exactly as intended. Search/filter/grid content confirmed
+present and unchanged at both sizes.
+
+`tsc --noEmit` / `eslint` (0 errors, same 2 pre-existing warnings) /
+`npm run build` clean.
+
+---
+
+## ✅ 2026-08-23, later same day — the rebuilt picker above was rendering
+completely broken (EK's screenshot: a transparent, mispositioned overlay
+sitting mid-page instead of a real full-screen takeover) — REAL ROOT CAUSE
+found and fixed, not a patch.
+
+`globals.css` has a global rule `body > * { z-index: 1; position: relative; }`
+(a stacking-context reset for top-level page sections), declared **outside**
+any Tailwind `@layer` block. Per the CSS Cascade Layers spec, ANY unlayered
+rule beats ANY layered rule regardless of selector specificity or source
+order — and Tailwind's own utility classes (`.fixed`, `.inset-0`, etc.) live
+inside `@layer utilities`. My new picker overlay is `createPortal(...,
+document.body)`'d, making it a **direct child of `<body>`** — exactly what
+`body > *` targets — so its Tailwind `fixed inset-0 z-[95]` classes lost to
+that reset and it rendered `position: relative`, shrink-to-content-height,
+wherever it happened to fall in the page's normal flow. Confirmed via
+`getComputedStyle` before (`position: "relative"`, a ~394px-tall box) and
+after the fix (`position: "fixed"`, exact viewport rect) — not guessed.
+
+`src/components/gallery/ItemPickerSheet.tsx` (a different existing
+body-portaled sheet in this same folder) already sidesteps this exact trap
+by setting `position`/`top`/`right`/`bottom`/`left`/`zIndex` as an **inline
+style** instead of Tailwind classes — inline styles beat any stylesheet rule,
+layered or not. Applied the same pattern to the picker's outer div: inline
+`style={{ position: "fixed", top:0, right:0, bottom:0, left:0, zIndex: 95,
+background: "var(--bg, #060a13)" }}`, Tailwind classes kept only for
+`flex flex-col` (unaffected by the reset). Also switched the background
+from `bg-[color:var(--bg,...)]` (a `background-color` declaration, invalid
+in the dark theme where `--bg` resolves to a multi-layer `--theme-bg`
+gradient — invalid values get silently dropped, which was a second reason
+the overlay looked transparent) to the `background` shorthand inline, which
+accepts either a flat color or a gradient.
+
+**Any other component that portals straight to `document.body` and relies
+on Tailwind's `fixed`/`absolute`/`inset-*` classes for positioning has this
+same latent bug** — worth a sweep later. `ItemPickerSheet.tsx` is already
+safe (inline style). Did not check every other `createPortal(..., document.
+body)` call in the app this pass — flagging, not fixing, since it's outside
+this feature's scope.
+
+**Separately investigated** (same message, EK circled empty back-wall slots
+in yellow with no badge/outline at all): added a temporary `console.debug`
+inside the badge-rendering loop and confirmed via the browser console that
+all 61 `positions` entries get a badge mesh added unconditionally, with zero
+thrown errors — so this is NOT a missing-data bug like the wall-capacity
+issue was; the JS/data layer is provably complete. Whatever's causing badges
+to not visually appear at those specific slots is a WebGL rendering
+question (camera clipping, transparent-object sort order, or something
+about that specific viewing angle) that needs real eyes on the live 3D
+render to diagnose — this sandboxed browser's tab isn't reliably compositing
+WebGL frames when not actively displayed (established earlier this session),
+so pixel-level 3D verification here isn't trustworthy. Debug log removed
+before this commit. **Needs a fresh screenshot once EK confirms the overlay
+fix above actually resolved what they were seeing** — it's possible the
+badge gaps were partly an artifact of the broken, mispositioned overlay
+sitting on top of the room view in that exact screenshot, not a second bug.
+
+`tsc --noEmit` / `eslint` (0 errors) / `npm run build` clean.
+
+---
+
+## ✅ 2026-08-23, later same day — the "+" picker above was rebuilt from
+scratch to match the Vault's real "Wall" view, per EK's direct feedback on
+5 screenshots: "This pop up is useless like this... The pop up should look
+like the Wall and search option on the Items list located int he Vault."
+
+The previous picker (grouped-by-universe, small thumbnail buttons — see the
+section below) was a one-off simplified UI. This one is a structural port of
+`src/components/VaultWallView.tsx` (the Vault's own "Wall" tab), not a new
+design: search bar, universe filter pills with REAL counts (`All (N)`, per
+universe), an A–Z jump bar that only lights up letters actually present,
+a size slider that changes grid columns live, and a full-viewport thumbnail
+grid grouped by first letter — same `var(--theme-card)`/`var(--theme-border)`
+tokens VaultWallView itself uses, so it reads as the same design language,
+not a gold-accented reskin (kept the museum's own `#4FD3EE` cyan for
+selection state instead of Vault's gold, since that's this feature's
+established accent color already).
+
+Kept from the previous version: multi-select with preserved pick order
+(first pick → the exact slot that was clicked, rest fill the next empty
+slots in order via `fillFromSlot`, unchanged), and the picker only lists
+items not already placed somewhere in the room.
+
+New pieces (all in `VirtualGalleryRoom.tsx`, no new files — matches how the
+rest of this large single-file component already duplicates small view
+constants rather than splitting into micro-modules):
+- `PICKER_UNIVERSE_ORDER` / `PICKER_SHORT_LABEL` / `PICKER_LETTERS` — same
+  order and short labels as `VaultWallView.tsx`'s own constants.
+- `inferPickerUniverse` / `pickerSearchText` — same logic as VaultWallView's
+  `inferUniverse`/search-text builder (uppercase + fall back to MISC for
+  anything not a real `UniverseKey`).
+- `pickerUnplaced` → `pickerUniverseCounts` (counts unaffected by search
+  text, same convention as Vault) → `pickerFiltered` (search + universe
+  filter) → `pickerGrouped` (by first letter) → `pickerActiveLetters`.
+- `pickerQuery` / `pickerUniverses` / `pickerCols` state, reset via
+  `openSlotPicker(idx)` each time a "+" is clicked (fresh search/filter,
+  size preference persists) — `closeSlotPicker()` used everywhere the modal
+  used to inline-reset both picker states.
+
+**Live-verified via real DOM checks** (not pixel-sampling — see the
+`⚠ IMPORTANT TOOLING NOTE` section further down for why): `tsc --noEmit` /
+`eslint` (0 errors, same 2 pre-existing warnings) / `npm run build` all
+clean. Temporarily added a 7th fixture item to the module-level `DEMO_ITEMS`
+array to get a real unplaced item to test against (this test account's demo
+vault auto-fills every one of its 6 items into "Scratch room" by default,
+so the real 6-item fixture alone always shows the picker's "already placed"
+empty state) — confirmed via DOM: universe pill counts render correctly
+("All (1)", "Pop Culture (1)" for a `POP_CULTURE` item), thumbnail image
+renders, search filters the grid down to 0/1 matches correctly, only the
+matching A–Z letter is enabled, the size slider live-updates
+`grid-template-columns`, selecting an item shows the order badge + updates
+the footer to "Add 1", and confirming correctly placed the item at the
+exact clicked slot (`data-arrange-idx`) and closed the modal. Removed the
+temp fixture item and rebuilt clean before committing — shipped `DEMO_ITEMS`
+is back to its original 6 entries.
+
+**Not addressed this pass**: EK's other piece of feedback from the same
+5-screenshot message — "You have a few missing spots and they are not
+spread out evenly, image 3 is the way the entire room should be spaced" —
+about the 3D room's physical item spacing. Re-read `distributeAcrossWalls`
+and `wallGridPosition` (below) as a sanity check: the position table they
+build is mathematically gapless and deterministic — every wall's own
+capacity fills in a fixed row-major order with no skipped cells, by
+construction. If there are still visible gaps/unevenness in the live 3D
+room, the cause isn't obvious from the code alone (could be a small vault
+simply not having enough items to fill every row yet, which is expected and
+not a bug), so this needs a fresh screenshot of the current build (post
+wall-capacity fix, commit `2ce81fc`) before guessing at a fix — the images
+EK originally attached aren't available in this session to compare
+against.
+
+---
+
+## ✅ 2026-08-23, later same day — two substantial Arrange-panel features,
+EK's own words: "Finish and renumber the wall spaces, there are many not
+filled" + "each empty spot should have a plus... a large box should pop
+up with all items under each Universe... select multiple items, the
+first selected goes to that spot and the rest will fill in, in order."
+
+**1. Wall-slot capacity was genuinely incomplete, not just "mostly
+empty."** Checked the actual room generator script
+(`scripts/generate-gallery-room-models.py`) rather than guess at 3D
+capacity — the shelf boards are single continuous planks with no baked
+physical dividers, so "8 columns × 3 rows = 24" for the back wall is a
+placement CONVENTION already coded in `wallGridPosition`, not a hard
+limit. But the old `MAX_ROOM_ITEMS=32` budget (minus 8 for vault's
+front/door wall) only left 24 slots for back+left+right COMBINED, so
+the 2:1:1 `WALL_CYCLE` ratio gave back only 12 of its own real 24
+positions, and left/right only 6 each — the rest genuinely had no slot
+index at all (no badge, no ghost outline, nothing), which is exactly
+the gaps EK circled on the back wall. Raised the budget
+(`BACK_WALL_CAPACITY=24`, `SIDE_WALL_CAPACITY=12` each, geometry-
+checked against Store's own `sideBaseZ`/`sideZStep` to land comfortably
+clear of the door-wall items, not guessed) and rewrote
+`distributeAcrossWalls` to keep the WALL_CYCLE's deliberate early-spread
+behavior (documented in its own comment — a small collection gets
+presence on every wall immediately, not just the back wall; preserved
+on purpose) while skipping a wall once it's genuinely full instead of
+blindly cycling past real capacity.
+**Renumbering**: the raw global slot index (kept as the real identity
+for drag/drop, badges, everything functional) reads as scattered
+non-sequential numbers per wall since WALL_CYCLE interleaves them — Back
+Wall showed 1,3,5,7... instead of 1,2,3,4... New `slotDisplayNumber`
+map (wall-local position, 1-based) is DISPLAY-ONLY, layered on top
+without touching the underlying index at all — every section now reads
+as a clean 1..N.
+
+**2. "+" picker on every empty slot.** Opens a modal (portaled to
+`document.body`, same pattern as the Share sheet) listing every vault
+item NOT already placed in some slot, grouped by universe. Multi-select
+(click toggles, order preserved); confirming assigns the first pick to
+the exact slot that was clicked, then walks forward through the whole
+slot table (wrapping once) placing the rest into the next empty slots in
+order — real per-item data throughout, nothing invented.
+
+`tsc --noEmit` / `eslint` (0 errors) / `npm run build` clean.
+**Live-verified via real DOM checks this time** (not pixel-sampling,
+which turned out unreliable earlier today) — confirmed: Back Wall shows
+"3/24" with sequential badges 1-24 (was "3/12" with scattered odd
+numbers); freed up 3 items via the plain Items list, opened the picker
+on an empty back-wall slot, confirmed it correctly listed only unplaced
+items grouped by their real universe ("SPORTS" → Rookie Parallel);
+selected 2 items in one picker session and confirmed the first landed
+exactly on the clicked slot (global index 8) and the second landed on
+the very next empty slot (global index 9) — the fill-in-order logic
+working exactly as asked. Zero console errors through the whole
+sequence.
+
+---
+
+## ✅ 2026-08-23, later same day — the spine box rebuild above got
+approved as a real improvement ("much better look"); one more polish
+note plus a separately-flagged site-wide item:
+
+- **"the blue doesn't seem to have the white glow to it that the
+  button does."** The button has a genuine `box-shadow` glow
+  (`shadow-[0_0_18px_rgba(79,211,238,0.22)]`) around it — a flat unlit
+  `MeshBasicMaterial` has no 3D equivalent of that at all. Switched the
+  spine's side/edge materials to `MeshStandardMaterial` with
+  `color: black` + `emissive`/`emissiveMap` at `emissiveIntensity: 1`
+  (still `toneMapped: false`) — emissive light reads as genuinely
+  self-lit/glowing rather than just colored, since it isn't dependent on
+  external light hitting the surface the way a diffuse map is. Black
+  diffuse base means the room's own lights can't reshade it on top of
+  that. Updated the put-back disposal to free `emissiveMap` instead of
+  `map` (this material no longer sets `map` at all — the earlier code
+  would have silently leaked the texture without this).
+- **"any blue button like that, site wide, needs darker text color."**
+  Checked this file's own one blue-gradient button (Save Room Draft) —
+  already correct (`text-[#06171d]`, dark). The site-wide part is
+  flagged as its own background task (same reasoning as the toggle-color
+  one above) rather than done here.
+
+`tsc --noEmit` / `eslint` (0 errors) / `npm run build` clean. Live-
+verified in a browser tab: picked up an item and put it back with the
+new emissive materials and the corrected disposal path — zero console
+errors either way.
+
+---
+
+## ✅ 2026-08-23, later same day — the held-item spine was rebuilt
+properly this pass, after EK caught two real problems with a screenshot:
+"this color does not match the button color" and "you did not make the
+entire item thicker, you just put a bigger end on it... looks like an
+I-Beam."
+
+**Root cause of the I-Beam look**: bolting a separate small box onto
+the edge of an otherwise still-flat, zero-depth card produced exactly
+that — a thin uniform strip at the edge next to an abruptly-flat
+surface everywhere else, with the box's own top/bottom faces catching
+the camera at an angle and reading as flared "wings." **Real fix**:
+`pickUpItem` now temporarily SWAPS the card's own `geometry`/`material`
+to a real `BoxGeometry` for as long as it's held — front and back faces
+carry the real photo (front reuses the existing texture directly; back
+mirrors it unless a genuine `imageBackUrl` exists), all 4 remaining
+faces are the theme blue. One uniformly-thick object, no bolted-on
+piece. The original geometry/material are saved on `HeldItem` and
+restored exactly in `putBackItem`'s completion, before disposing the
+temporary box's own geometry/materials (carefully NOT disposing the
+front/back textures, which are shared with the restored material or
+cached for reuse). The old front/back texture-swap-on-drag logic (which
+operated on a single material) is gone entirely — a real box naturally
+shows whichever face points at the camera as it rotates, no swap needed.
+
+**Root cause of the color mismatch**: a lit `MeshStandardMaterial`
+never renders a flat CSS hex the same way a 2D button does — the
+scene's own lighting and tone-mapping reshade it. Fixed two ways: (1)
+the spine's canvas now draws the button's ACTUAL 3-stop gradient
+(`#79E7FB`→`#41C6E4`→`#2CB1D1`), not a flat approximation of just its
+lighter end; (2) the material is `MeshBasicMaterial` with
+`toneMapped: false`, so it renders those exact pixels unlit and
+un-reshaded, the same way the button itself does.
+
+`tsc --noEmit` / `eslint` (0 errors) / `npm run build` clean.
+Live-verified in a browser tab: picked up an item, dragged to rotate,
+released, picked up a SECOND item — zero console errors through the
+whole geometry/material swap-and-restore cycle, confirming it's robust
+across repeated use, not just a one-shot fix.
+
+---
+
+## ✅ 2026-08-23, later same day — tightened the Share/Export sheet's
+layout, EK's direct ask ("Next to tighten up this page"). **This edits
+`SocialExportSheet.tsx` and `GenerateCopyPanel.tsx` — shared components
+also used on the real item detail page (`vault/item/[id]/page.tsx`), not
+museum-only files.** Explicitly authorized by EK, called out here since
+it's outside this branch's usual scope.
+
+1. Background label moved inline next to its swatches (was stacked
+   above); swatches shrunk `h-8 w-8` → `h-6 w-6`, gap tightened, so
+   label + all 6 colors fit one row. Applied to both places this exact
+   markup was duplicated (Image tab and Then-vs-Now tab) for
+   consistency.
+2. "Show value" and "VLTD watermark" combined onto one row. Added an
+   opt-in `compact` prop to the shared `Toggle` component (default
+   `false` — its third, unrelated usage on the Then-vs-Now tab is
+   untouched) that puts the switch immediately next to the label instead
+   of pushed to the far edge via `justify-between`.
+3. "Preview {format}" and "Generate caption" are now the same size, side
+   by side, only while `!preview` (matches EK's screenshot state) —
+   `GenerateCopyPanel` gained an explicit `fullWidth` prop for this
+   rather than concatenating a `className` override on top of its
+   default classes, which would have left conflicting Tailwind
+   utilities (`rounded-[7px]` vs `rounded-2xl`, etc.) with no reliable
+   way to know which one actually wins in the generated CSS — a real
+   fix, not a fragile string-concat shortcut. Kept `GenerateCopyPanel`
+   as ONE persistent instance (not two separately-mounted copies for the
+   two states) so an in-progress AI caption draft survives toggling
+   Preview/Edit.
+4. Removed the now-redundant wrapper `<div className="mt-2">` around the
+   caption generator — it's a sibling in the same flex row now, so that
+   extra vertical space is gone, not just visually hidden.
+
+Deliberately NOT touched: toggle colors (green/red) — that's the
+separately-flagged, actually-site-wide task below, not part of this
+layout pass.
+
+`tsc --noEmit` (full project, given the shared-component edit) /
+`eslint` (0 errors, all warnings pre-existing) / `npm run build` clean.
+Verified structurally in a live browser tab: Background row confirmed
+`flex items-center gap-3` (inline), both toggles confirmed inside one
+shared `.flex.gap-6` row, and — after resetting `preview` state via
+Edit — Preview and Generate Caption buttons both confirmed
+`flex-1 rounded-2xl py-3 text-sm font-bold`, same parent element.
+
+## 📋 FLAGGED, NOT DONE — site-wide toggle colors (separate from the
+above). EK: "All sliders — site wide — need to be like the ones int he
+user page, they should be green when on and red when off, make that a
+full site scan to follow." This is a main-app, all-of-`src/`-spanning
+design change, unrelated to the 3D museum — spawned as a separate
+background task (title: "Make all site toggles green/red like the user
+page") rather than done here, since it needs to happen on `main` in
+whichever session owns the core product, not this branch.
+
+---
+
+## ✅ 2026-08-23, later same day, second correction — the share sheet's
+image preview was STILL black. EK, correctly and sharply: "you are
+trying to quickly fix things instead of doing them right the first
+time." My first attempt (absolutizing `imageFrontUrl` to
+`http://localhost:3001/...` at the museum's own call site) was a
+band-aid, and it broke a SECOND time in a new way — traced fully this
+round instead of guessing again:
+
+- `getPrimaryImageUrl` (shared, `vaultModel.ts`) calls
+  `isDirectBrowserImageUrl`, which only recognized `http(s)/blob/data`
+  URLs — the museum's `DEMO_ITEMS` use root-relative
+  `/collectibles/*.png` paths, so it returned `""` for them. That's the
+  real gap.
+- My first "fix" absolutized the path to `http://localhost:3001/...` to
+  get past that check — which worked for `isDirectBrowserImageUrl`, but
+  then `SocialExportSheet`'s own `proxyImageUrl()` helper only skips
+  proxying for paths starting with `"/"`; a full `http://` URL routed
+  through `/api/image-proxy` instead, which is a deliberate SSRF guard
+  that ONLY allows `supabase.co`/`supabase.in` hosts — `localhost` got a
+  correct, working-as-designed 400. Two gates, two different
+  preferences, my fix satisfied one and broke the other.
+- **Real fix**: added `|| lower.startsWith("/")` to
+  `isDirectBrowserImageUrl` itself (`vaultCloud.ts`) — a root-relative
+  path genuinely IS already directly browser-loadable, which is exactly
+  what that function is supposed to recognize; it just never had a case
+  for it. Real Supabase storage keys never start with `/`, so this is
+  additive only, no behavior change for actual production data. Ran a
+  full-project `tsc --noEmit` (not just this file) given how many places
+  import this function — clean. Reverted the local absolutize hack in
+  `VirtualGalleryRoom.tsx` entirely now that the root cause is fixed
+  where it actually lives.
+
+**Verified this time, not assumed**: read the live network requests
+after the fix — `/collectibles/vinyl-record.png` etc. now load as plain
+200 GETs with zero `/api/image-proxy` calls at all (previously: one
+`/api/image-proxy?...localhost...` → 400). Confirms both gates are
+satisfied correctly, not just patched around.
+
+---
+
+## ✅ 2026-08-23, later same day — 3 real bugs in the previous pass,
+caught from EK's own screenshots within minutes of it shipping:
+
+1. **Cover AND back image both missing — a real regression.** The new
+   spine box's face-material array was `[side, side, plain, plain,
+   plain, plain]` — but `BoxGeometry`'s face order is `[+X, -X, +Y, -Y,
+   +Z, -Z]`, so indices 4/5 (front/back, `±Z`) got an OPAQUE plain-blue
+   material sitting at the same local Z as the card's own image plane,
+   completely covering it (a solid pale-blue slab with zero image — the
+   "cover image and back image are now missing" report). Fixed: indices
+   4/5 are now a fully transparent `MeshBasicMaterial` (`opacity: 0,
+   depthWrite: false`), so only the thin side edges (0/1) and top/bottom
+   (2/3) show blue — the card's real image shows through the front/back
+   unobstructed.
+2. **Wrong blue, unreadable text.** EK circled the "Save Room Draft"
+   button as the actual reference for "theme blue" — traced its real
+   colors in code: gradient `#79E7FB`→`#2CB1D1` with dark `#06171d`
+   text, not the `#4a9bff`/white I'd guessed twice now. Added
+   `THEME_BLUE`/`THEME_BLUE_TEXT` constants from those exact values,
+   used for the spine label (dark text on light blue = actually
+   readable) and the Description panel's header color.
+3. **Share sheet required scrolling to see the whole thing.** Rendered
+   via `createPortal(..., document.body)` instead of inline in the room
+   view's own tree — whatever in that tree was constraining `fixed
+   inset-0`'s viewport coverage (a `transform` on some ancestor, most
+   likely) no longer applies once it's a direct child of `<body>`.
+   Confirmed via `el.parentElement === document.body` after opening it.
+
+`tsc --noEmit` / `eslint` (0 errors) / `npm run build` clean. Live-
+verified the portal fix structurally (sheet root really is a direct
+`document.body` child now). Could not visually re-confirm the image/
+color fix on screen this pass — the Browser pane's viewport reported
+0×0 during this test (`window.innerWidth/innerHeight` both 0), the same
+not-actually-displayed limitation as every prior pass; the face-order
+bug and its fix were confirmed by code review, not a screenshot.
+
+---
+
+## ✅ 2026-08-23 — 4 precise, numbered corrections from EK re-reading the
+reference image with circles on it, after the previous "side title"
+attempt (a floating tag) was itself wrong — EK: "I never asked for a
+floating tag, that's not on that image either." Removed that tag
+entirely; here's what it actually meant:
+
+1. **Description panel (left)**: widened to `w-[340px]` (was capped at
+   260px) and added a real key/value list below the existing notes-or-
+   fallback paragraph — `heldVaultItemInfoRows`, built from whichever of
+   Universe/Category/Year/Condition/Brand/Edition/comicIssueNumber/
+   tcgParallelType/sportsParallelType/vinylPressing actually have real
+   values on that specific item, so it naturally varies by whether it's
+   a comic, a card, vinyl, etc. without a hardcoded per-universe switch.
+2. **Share**: was a bespoke clipboard-copy implementation. Replaced with
+   the exact same `SocialExportSheet` component the real item detail
+   page (`vault/item/[id]/page.tsx`) already opens for its own Share
+   button — same flow everywhere now, nothing reinvented. Button
+   shrunk slightly (h-7→h-6).
+3. **"Side title, different color"**: this was the actual ask all
+   along — the SIDE FACE of the held item itself (like a book/case
+   spine), not a floating UI tag. Added a small, fixed-depth
+   (`0.16` units) box as a child of the card, created fresh in
+   `pickUpItem` and disposed in `putBackItem`'s completion — never
+   touches the shelf-resting frame at all. Its two ±X faces get a
+   canvas-drawn "spine" texture (theme blue `#4a9bff` background, title
+   + universe text rotated to read top-to-bottom); the other 4 faces are
+   a plain blue material. Sized `cardWidth + 0.05` / `cardHeight + 0.05`
+   — "slightly wider," not a large box, and being a child of the card it
+   scales/rotates with it automatically, same trick as the (reverted)
+   frame-attach idea, just scoped to a small dedicated mesh instead of
+   the wall-mount frame's own (much deeper) geometry.
+4. **Back image**: EK's ask ("should be the same as the front unless...
+   there's a real second image") — checked, already correct: the card
+   material is `DoubleSide` with a single texture, so without a distinct
+   `imageBackUrl` the back naturally shows the same (mirrored) image;
+   the existing `entry.backTexture` swap only kicks in when a real back
+   image exists. No change needed.
+
+`tsc --noEmit` / `eslint` (0 errors) / `npm run build` clean. Live-
+verified: picking up an item shows the description panel with real
+notes AND the new info rows (confirmed "Universe / Music", "Category /
+Vinyl" for First Press Vinyl), zero console errors from the new spine-
+box creation, and clicking Share genuinely opens `SocialExportSheet`
+(confirmed its own "Instagram Feed"/"Stories" text renders). Did not
+independently verify the spine box's on-screen appearance/color or its
+cleanup on put-back — same Browser-pane-not-displayed limitation as
+before; worth EK's own glance.
+
+---
+
+## ✅ 2026-08-22, later same day, third pass — reverted the frame-attach
+"fix" from the previous pass; EK, sharply: "you used to have the image
+on the back and now that is gone too. YOU ARE DOING TOO MUCH, only do
+the things I ask." Three separate corrections from one message:
+
+1. **Reverted `entry.mesh.attach(entry.frame)` entirely** (the frame
+   reparenting from the second pass, described two sections below). EK
+   never asked for that fix — it was inferred from an ambiguous
+   screenshot — and it caused two real regressions: the wall-mount
+   frame's depth (stretched to reach the wall, fine sitting still) now
+   scaled up along with the card when held, reading as a "cereal box"
+   instead of a flat photo; and it visibly blocked the existing
+   front/back texture-swap-on-rotate feature. Removed the `frame` field
+   from `itemMeshIndex` entries and `HeldItem`, and both `.attach()`
+   calls, back to the pre-existing bare-card pickup. **Lesson: don't
+   infer-and-fix a structural bug from an ambiguous screenshot without
+   being asked — ask first, or scope it separately.**
+2. **Removed the "Hold + drag to turn it around · Click to put it
+   back" hint text outright.** EK: "I never asked for directions on how
+   to use it." Wasn't part of the original 4-item spec (side tag,
+   bottom title/basics/share, left description) — added on my own
+   initiative last pass, removed now.
+3. **The description box's "hide when there's nothing real to show"
+   logic was itself the problem EK was hitting**, not a safety feature
+   worth keeping here: the `/museum/virtual-room` "Scratch room" items
+   are `DEMO_ITEMS` — this component's own placeholder/preview content,
+   not a real user's real vault items, so EK's "this is a fake item you
+   created for this, so fill in the information" is a legitimate, direct
+   ask, not a no-fake-data violation. Added a real one-line `notes`
+   string to each of the 6 `DEMO_ITEMS` entries, and the description box
+   now always renders (dropped the conditional hide) so it's actually
+   visible to test against, matching the "I want the Description box on
+   the side like this" ask. Also nudged the corner tag from `top-5` to
+   `top-16` — it was landing directly under/behind the "ROOM" panel
+   toggle button, illegible where they overlapped.
+
+`tsc --noEmit` / `eslint` (0 errors) / `npm run build` clean. Confirmed
+live via a real browser tab: hint text gone from the rendered page,
+description box shows the new real notes text for "First Press Vinyl"
+("Original first pressing on the original label...").
+
+---
+
+## ⚠ IMPORTANT TOOLING NOTE for whoever tests this next via the browser
+automation tools (not EK's own browser): **if the Browser pane isn't
+actually displayed on the human's side, Chrome fully pauses
+`requestAnimationFrame` for that tab (`document.hidden` reads `true`,
+`document.visibilityState` is `"hidden"`)** — confirmed by installing a
+raw `requestAnimationFrame` counter and getting 0 ticks after a full
+second of real wait. This app's whole 3D update loop (`render()`,
+`updateHeldItem()`, `walkTween`, everything) runs on `requestAnimationFrame`,
+so in that state NOTHING animation-gated ever progresses, no matter how
+long you `setTimeout`-wait for it. **This cost real time today**: item
+pickup still LOOKED like it worked in automated tests because
+`setSelectedItemId(...)` fires synchronously the moment you click,
+independent of the animation — but put-back (`putBackItem` only clears
+`selectedItemId` once `pullAnim.t` reaches 1 inside `updateHeldItem`,
+which needs real animation frames) looked permanently stuck across many
+different items and multiple different code versions, which briefly
+looked like a real regression before the actual cause turned out to be
+the tab simply not compositing. `tabs_select` on the tab does NOT fix
+this — it only fronts a tab within the pane's own strip, it can't force
+the pane itself to be visible in the host UI. If put-back (or anything
+else animation-driven) looks stuck in a similar automated test, check
+`document.hidden` FIRST before assuming the code is broken.
+
+---
+
+## ✅ 2026-08-22, later same day, second pass — the held item's frame
+was left behind on the shelf the whole time an item was held, plus 3
+smaller polish fixes EK caught on the FIRST pass's actual live result
+(that pass's own numbers/color choice below are superseded by this one).
+
+**The real structural bug, found while chasing EK's "bottom of the item
+is back in the shelf" + "paper thin, no title on the side" reports**:
+`pickUpItem` only ever moved `mesh` (the flat photo card) — the matted
+picture-frame box built alongside it in the main mount effect was a
+completely separate mesh, never referenced anywhere in the pickup/
+put-back code, so it just stayed glued to its shelf position the whole
+time an item was held. A held item was therefore a bare, borderless
+photo floating in front of camera (the actual "paper thin, no title on
+the side" cause — there was never a frame around it once lifted), while
+its real frame sat empty back on the shelf (most likely explanation for
+the shelf-overlap screenshot too — probably caught mid pull-animation,
+card already moving, frame still exactly where it started). **Fix**:
+`itemMeshIndex` entries and `HeldItem` both now carry a `frame:
+THREE.Mesh | null` reference; `pickUpItem` calls
+`entry.mesh.attach(entry.frame)` (Three.js's `Object3D.attach` reparents
+while preserving world transform) so the frame inherits every position/
+rotation/scale change made to the card for free — no separate animation
+math needed. `putBackItem`'s completion (inside `updateHeldItem`, once
+`mesh` is back at its exact shelf pose) calls `roomGroup.attach(heldItem.frame)`
+to hand it back to the room at that same now-correct resting transform.
+Flat/display-case items never had a frame to begin with (`entry.frame`
+is `null` there) — untouched.
+
+**Other 3 fixes from EK's first live look:**
+1. **Held item was oversized/cropped despite already being shrunk once.**
+   Root cause: `INSPECT_SCALE` was a flat multiplier stacked on top of
+   `pos.scale`, which already varies hugely by layout (Salon ~0.58,
+   Store ~0.78, Hero ~1.2) — a Store-scaled item at the previous
+   `INSPECT_SCALE=1.5` came out to `1.54*0.78*1.5 ≈ 1.80` units tall
+   against a ~1.91-unit visible-height budget at the fixed 2.2-unit
+   focal distance (47deg vertical FOV) — 94% of the frame, matching "even
+   bigger now ... cropped top and bottom." Replaced the flat constant
+   with a per-item `inspectScale` computed in `pickUpItem` from a new
+   `naturalHeight` stored on each `itemMeshIndex` entry
+   (`1.54 * pos.scale`, the card's real built height) against a single
+   `TARGET_HELD_HEIGHT = 1.15` — every held item now lands at the SAME
+   absolute size regardless of its shelf scale, instead of a flat
+   multiplier compounding on whatever that item already was.
+2. **The corner "side tag" was there but invisible.** First attempt used
+   `bg-cyan-400/90`, which rendered as a near-transparent pale gray. Tried
+   `var(--accent)` next, thinking the Tailwind color was the problem —
+   turned out `--accent` genuinely resolves to a real, legitimate
+   near-neutral `#C8CDD2` in this context (not a bug, just not "vivid"),
+   so it read as just as invisible against the Vault room's own steel
+   tones. Settled on a hardcoded `#4a9bff` (the same blue already used
+   elsewhere in this file for the frame-guide corner brackets) — a fixed
+   color guaranteed to actually stand out, not dependent on theme state.
+3. **"No description" on items with nothing typed into `notes`.** Rather
+   than leave the box empty, added a real fallback line built from other
+   fields that actually exist on the item (`subject`, `brand`,
+   `edition`/`variant`, `conditionReason`) — never invented text, just a
+   different real combination when `notes` itself is blank.
+4. **Share silently did nothing.** `navigator.clipboard.writeText` can
+   throw `NotAllowedError` in some focus states and the catch block
+   swallowed it with zero feedback either way — added a legacy
+   `execCommand("copy")` fallback before giving up, and a visible
+   "Couldn't copy link" message if even that fails, so a real failure is
+   never silent again.
+
+**Verified**: `tsc --noEmit` / `eslint` (0 errors) / `npm run build` all
+clean. Confirmed live in a browser tab: the corner tag now reads
+`rgb(74, 155, 255)` (the real hardcoded blue, not gray), share's
+clipboard-copy path executes without throwing. **Could NOT verify the
+frame now visually travels with the card, nor time the put-back
+release, live this pass** — see the tooling note directly above; the
+Browser pane wasn't actually displayed, so nothing animation-gated could
+be observed completing, regardless of how long a wait was used. The
+`attach()` reparenting logic was reviewed carefully by hand (Three.js's
+`attach()` is the standard, documented way to reparent while preserving
+world transform) but a real look on an actual visible browser — EK's own
+or a properly-displayed pane — is genuinely needed to confirm this one
+looks right, not just that it doesn't throw.
+
+---
+
+## ✅ 2026-08-22, later same day — 4 more real bugs/asks EK caught live
+off actual screenshots, all fixed and code/build-verified (see each
+item for how). Read this block first — it supersedes the walnut-brown
+color numbers in the block directly below (EK looked at the live result
+and asked for a different direction, same day).
+
+1. **Click-to-walk still landed too close to a wall/corner.** The
+   previous "roomier minimum" pass (see `clampWalkDestination`'s own
+   history, further below) only pulled the destination back to a ~4-unit
+   margin — EK's screenshots showed that's nowhere near enough; landing
+   nose-to-wall with zero floor/ceiling visible. EK: "much further
+   back... I need to see floor to ceiling... never any closer, that is
+   what zoom is for." Worked out the actual geometry: camera is
+   `PerspectiveCamera(47deg)` (vertical FOV) at `eyeHeight=3.6`, ceiling
+   at `y=9.15` — seeing literal floor-to-ceiling looking level at a flat
+   wall needs `D >= (9.15-3.6)/tan(23.5deg) ≈ 12.8` units, which is most
+   of the room. Rather than chase that exactly (it would barely let you
+   approach a corner at all), pulled `clampWalkDestination` in hard to a
+   generous room-interior stop — `x: [-3.5, 3.5]`, `z: [-4.6, 1.8]` (was
+   `x: [-6.2, 6.2]`, `z: [-7.8, 4.2]`) — in
+   `src/components/gallery/VirtualGalleryRoom.tsx`. Zoom (scroll wheel,
+   still governed by the separate, looser `clampPosition`) is how you
+   actually get close now, matching what EK asked for.
+2. **Item-inspect spun on every mouse move, not just while dragging.**
+   The bingebrowse-sourced "passive parallax" (cursor position feeding a
+   spring-damper tilt even with the mouse button up) read as
+   uncontrolled spinning, not a subtle tilt. EK: "only allow it to spin
+   when being held down or when clicked." Removed that branch from
+   `onPointerMove` entirely — the spring still exists and settles the
+   item after pickup, it just never gets re-driven by bare mouse
+   movement anymore. An actual drag (button held) still free-rotates the
+   item exactly as before, via `heldDragYaw`.
+3. **Held item sized slightly too large.** `INSPECT_SCALE` was `1.7`,
+   dropped to `1.5` per EK's "shrink it slightly... its just slight
+   larger."
+4. **Item-inspect had zero info panel — built one from a reference
+   screenshot EK provided.** Previously just a one-line "Drag to rotate"
+   hint with no other feedback. Added, all from real per-item
+   `VaultItem` fields (never invented text): a small colored corner tag
+   (universe/category), a bottom bar with the item's real title + real
+   basics (year / grade-or-condition / category) + a working Share
+   button (`navigator.share` where available, clipboard-copy fallback,
+   linking to the item's real `/vault/item/[id]` page), and a left-side
+   "Description" panel that only renders when the item actually has
+   `notes` (no fake filler when it doesn't). New `heldVaultItem` /
+   `heldVaultItemBasics` memos look the held item up from the component's
+   real `items` state by `selectedItemId` — the 3D effect's own
+   `heldItem` lives in a closure React can't read directly.
+   **Known pre-existing gap, not introduced here:** display-case ("flat")
+   item clicks also set `selectedItemId` (a separate, older code path,
+   camera-focus only, no real pickup), so this same panel — including
+   the "hold + drag / click to put back" hint — shows for those too even
+   though they don't actually support drag-rotate or click-to-release.
+   The original one-line hint had the identical ambiguity before this
+   pass; flagging it here rather than scope-creeping a fix into this
+   round.
+
+**Verified**: `tsc --noEmit` / `eslint` (0 errors) / `npm run build` all
+clean. Live-tested against a real production build in a browser tab:
+switched to White, dispatched real `PointerEvent`s to click-to-walk a
+corner and to pick up a wall item — zero console errors through dozens
+of interactions. Confirmed the new panel renders with genuine data by
+reading the live DOM: side tag "COMICS", title "Signed Variant Comic",
+basics "COMIC BOOKS", hint text exactly as written, and — correctly —
+no Description block for that item since its `notes` field is empty.
+**Not independently re-verified by pixel screenshot this pass** — the
+Browser pane wasn't displayed on EK's side during this session, so
+`computer{action:"screenshot"}` couldn't composite a frame; verification
+above is DOM/console-based instead. Worth EK's own visual glance next
+time to confirm the walk distance and inspect panel actually look right,
+not just that they don't crash.
+
+---
+
+## ✅ 2026-08-22 — White room shelf/floor warmed to walnut-brown, the
+one item left on the list from the §SESSION STATE block below. EK: "it
+could have been done 2 days ago." `style_mats()` in
+`scripts/generate-gallery-room-models.py` (whitebox branch) had the trim
+and floor_tones colors shifted warmer/redder (more R, less B — a hue
+shift, not a flat darken) instead of the grayish-tan they were: trim
+`(0.30,0.25,0.19)` -> `(0.34,0.21,0.12)`, floor_tones `(0.50,0.36,0.22)/
+(0.58,0.42,0.25)/(0.42,0.29,0.18)/(0.62,0.47,0.30)` ->
+`(0.52,0.33,0.17)/(0.60,0.38,0.20)/(0.38,0.22,0.11)/(0.64,0.42,0.22)`.
+Deliberately kept luminance close to the old values (a hue shift, not a
+brightness change) so the exposure/hemisphere/spot light values EK
+already confirmed good for "no longer washed out" don't get undone by
+this pass. Regenerated only `whitebox-room.glb` via `blender
+--background --python scripts/generate-gallery-room-models.py --
+whitebox` (vault/arcade untouched, no ask to change those). Bumped only
+whitebox's `ROOM_MODEL_URLS` cache-bust to `walnut-warm-2026-08-22`
+(vault/arcade left on `shelf-headroom-2026-08-22`, unchanged).
+**Verified**: parsed the exported GLB's material JSON directly — baked
+`baseColorFactor` values match the intended numbers exactly — and loaded
+whitebox live in a real browser tab (switched the room-style select to
+`whitebox` via a real DOM event), zero console errors. `tsc --noEmit` /
+`npm run build` clean.
+
+**⚠ Superseded same day** — EK looked at this live and called it too
+tan; see the block above (dated the same day, listed first) for the
+off-white/greige correction. Trim/floor are now `(0.62,0.60,0.55)` /
+`(0.60,0.58,0.53)`-family, not the walnut numbers just above.
+
+---
+
+## ✅ 2026-08-23, second overnight pass — 2 more real bugs EK caught in
+the morning-after screenshots, both fixed and LIVE-VERIFIED. Read this
+block first, then the one below it for the original 3-task pass.
+
+**1. Hero's frame was overlapping the shelf board above it.** EK: "the
+shelf design has to be custom for the Hero Frame. do not make the frame
+bigger, do not move the frame or change the size at all. The top shelf
+have to be redone from scratch to stop just before the hero image." Root
+cause: moving Hero to the middle row's height (previous fix) never
+checked collision against the physical TOP-ROW SHELF BOARD — items are
+column-discrete (Hero's x sits between regular columns, so no item-vs-
+item collision), but shelf boards are one continuous run across the
+WHOLE wall regardless of column, so Hero's taller frame reached straight
+up into the top board's own space. Fixed with a real notch, not a
+position/size change to Hero at all: `addBackRowBoard`/`addSideRowBoard`
+(shell/"Blue" style) and a post-GLTFLoad `getObjectByName("<wall>_shelf_
+0")` hide-and-replace (Vault/White/Arcade, since the notch can't be baked
+into a GLB shared by every layout) now build the top row as TWO segments
+with a `HERO_NOTCH_HALF=0.9` gap centered on Hero's own position, only
+when `roomLayout === "spotlight"` AND that specific wall actually has a
+populated Hero slot (`selectedItems.length >= 1/2/3` for back/left/
+right — mirrors `allHeroSlots`' own fill order). Store/Salon and any
+under-filled Hero wall keep the original unbroken board. GLB replacement
+segments reuse the FOUND mesh's own material so they match whatever that
+room style baked, not a guessed color. **Live-verified**: switched to
+Hero on Vault, zoomed on the feature piece — clean gap on both sides now,
+board no longer visibly crosses the frame.
+
+**2. Click-to-walk forced a final turn that shoved you into the wall.**
+EK: "it spins you to the position it thinks you want and puts you up
+close to the wall... it should not reposition the camera at the end."
+The walk itself (turn-to-face-destination, then walk) was fine per EK
+("the walk through work well") — the problem was a 3rd phase I'd added
+that then forced a FURTHER turn to face whichever wall was nearest the
+clicked point, landing you staring straight into it right as you arrived
+close to it. Removed that 3rd phase entirely — `startWalkTween` no longer
+takes a `finalYaw` param, `journeyDuration` is just `firstTurnDuration +
+moveDuration`, and the walk now settles facing the same direction you
+were already walking in. **Live-verified**: clicked to a floor spot,
+camera walked there and stopped at the travel-facing angle — no snap to
+stare at a wall.
+
+`tsc`/`eslint`/`npm run build` all clean after both fixes.
+
+---
+
+## ✅ 2026-08-22/23 OVERNIGHT — all 3 researched tasks IMPLEMENTED and
+LIVE-VERIFIED while EK slept ("do all 3 tasks... cross our fingers you
+get us 80% of the way there"). Read this block first for current status.
+
+**1. Three-phase click-to-walk** — replaced the old plain continuous lerp
+with `walkTween` (declared near the top of the big mount effect, right
+after `cameraBody`): turn-to-face-destination, walk-in-a-straight-line,
+turn-to-final-aim, each phase individually smoothstepped, exact
+timing/rate constants from bingebrowse.net's own source (see the 🔬
+research section further below for the full formula). `startWalkTween()`
+builds the tween; `render()` drives yaw/pitch/cameraBody from it each
+frame when one is active, falling back to the original continuous lerp
+otherwise (WASD/mouse-look untouched — matches the reference, which has
+no tween on those either). Any click, WASD press, or real mouse-drag
+cancels an in-progress walk. **Live-verified**: clicked the floor,
+watched the camera turn-then-travel smoothly over ~1-2 seconds instead of
+snapping.
+
+**2. Item pickup/inspect** — wall-mounted items (display-case items
+intentionally excluded, scope cut) now lift off the shelf into a held/
+inspect view instead of just moving the camera. `itemMeshIndex` (Map,
+built alongside the item meshes) tracks each item's shelf transform +
+front/back textures. `pickUpItem`/`putBackItem`/`updateHeldItem` do the
+two-phase pull animation (0.6s, easeOutCubic, split at eased-progress
+0.45 — exact shape from their `updateInspectAnim`), then a spring-damper
+idle parallax (`INSPECT_STIFF=100`/`INSPECT_DAMP=19`, their exact
+constants) driven by plain mouse movement, plus free drag-to-rotate
+(`heldDragYaw`) that swaps to `imageBackUrl` past the edge-on point if
+one exists. Camera movement (WASD/wheel-zoom/click-to-walk) is disabled
+while holding; Escape or any click releases. A minimal "Drag to rotate ·
+Click to put back" hint (gated on `selectedItemId`, reused from the
+existing pickup/release wiring) is the only feedback UI — no synopsis/
+metadata side panels, no next/prev browsing between held items, no touch/
+pinch support, all explicitly out of scope for this pass.
+**Bug found and fixed during live verification, not before**: the first
+version had the item's "face the camera" rotation formula wrong
+(`frozenYaw + Math.PI` instead of the correct `-frozenYaw`, worked out
+from how Three.js's rotation.y actually transforms a plane's local
+normal) — depending on which way the camera happened to be facing at
+pickup, this could land the lifted item edge-on to the camera, reading as
+the item vanishing when clicked. Live-verified end to end after the fix:
+picked an item off the shelf (visibly grew, centered, frame left empty on
+the wall), dragged it to rotate (visibly turned), clicked to release
+(animated back onto the shelf, texture and position restored exactly).
+**Not done, flag if asked:** display-case items, front/back swap wasn't
+exercised live (no test item had `imageBackUrl` set), multi-item
+carousel browsing.
+
+**3. Hero repositioning** — was `y=5.96`, wedged into the gap between the
+top shelf row and the wall rail; the math showed that gap (~1.23 units)
+is smaller than Hero's own frame height at scale 1.2 (~2.0 units), so no
+number up there could ever fully clear both boundaries. Moved to
+`shelfItemY(1, 1.2)` — the middle shelf row's own height — which is
+already collision-safe (regular items sit there without issue on every
+layout) and lands much closer to eye level (deviation from `eyeHeight=
+3.6` dropped from +2.36 to +0.594). Hero's x positions (0, ±10.22) sit
+between the regular grid's own column positions, so there's no actual
+horizontal collision despite the vertical range now overlapping where
+row-0/row-2 items would be. Spotlight target Y updated to match.
+**Live-verified**: switched to Hero layout, the feature piece now sits
+visibly at mid-wall height instead of crammed near the ceiling.
+
+`tsc`/`eslint`/`npm run build` all clean after every change above,
+verified fresh each time (not just after the first pass — re-verified
+after the rotation-formula fix too).
+
+---
+
+## ⚠⚠⚠⚠ 2026-08-22 — four more real bugs EK caught live, all fixed and
+LIVE-VERIFIED (screenshotted via claude-in-chrome against a fresh
+production build):
+
+1. **Item headroom** — `SHELF_ROW_Y` had exactly zero clearance between an
+   item's own top edge and the shelf board mounted above it (1.25 spacing
+   = item height (1.2) + board half-thickness (0.05), no margin at all).
+   EK: "the middle shelf doesn't give enough space on top of the items to
+   fit." Fixed WITHOUT changing item size, per EK's explicit instruction —
+   top row (4.72) untouched, middle/bottom dropped 0.25 each: `[4.72,
+   3.22, 1.72]` (was `[4.72, 3.47, 2.22]`). Same GLB-regen-and-verify
+   process as every SHELF_ROW_Y change — `shelf_y` in the generator script
+   updated to match, GLBs regenerated, baked values confirmed via the
+   byte-parse technique. Cache-bust now `shelf-headroom-2026-08-22`.
+2. **Builder page forced a scroll** — `roomView`'s non-guest section was
+   sized `min-h-[calc(100svh-116px)]`, guessing the toolbar above it was
+   116px tall. When the toolbar grows (Hero's expanded pills, the Guest
+   button added 2026-08-21), the guess falls short and the whole page
+   exceeds one screen. Changed to a fixed `min-h-[600px]` — can't ever
+   force that overflow, whatever the toolbar's real height is.
+3. **Item frame sinking into the shelf, plus frame/shelf color blending**
+   — two related bugs EK caught together ("I would have been able to tell
+   earlier" if the colors weren't the same). (a) The frame mesh reused
+   `trimMaterial` — literally the same color as the shelf boards and wall
+   trim, which is why the geometry bug below went unnoticed. Gave frames
+   their own dedicated `frameMaterial` (off-white matte matting,
+   `0xf2eee3`) that reads as a picture frame against any room style.
+   (b) The frame's matting used to extend symmetrically above AND below
+   the card — but the card's clearance above its shelf board is a fixed
+   0.05 units that doesn't scale with item size, while the frame's
+   overhang does, so at normal item scale the frame's bottom edge sank
+   into the board. Matting now only extends on top and the sides; the
+   frame's bottom is flush with the card's own bottom edge, so it
+   physically cannot dip into the shelf regardless of scale. Pure JS
+   change (frames aren't baked into the GLB) — no regen needed.
+4. **Guest view was a dead-end loop** — Exit only went guest-room -> map,
+   and the map had no link back to the actual builder/setup page at
+   `/museum/virtual-room` — a guest visitor (or EK checking guest view)
+   could only bounce between room and map forever. Added a "Builder" link
+   in the guest-mode top-left overlay, shown only when `guest` is true.
+5. **PWA install banner kept reappearing after a real install** —
+   `PWAInstallBanner.tsx`'s `install()` was *clearing* the dismiss-cooldown
+   key on success instead of recording a permanent "installed" flag, so
+   there was nothing stopping the banner from showing again (e.g. next
+   time `beforeinstallprompt` fires, or on a load that isn't in standalone
+   display mode even on an installed device). Added `INSTALLED_KEY`,
+   checked first before anything else; also listens for the browser's own
+   `appinstalled` event so it catches installs that didn't go through this
+   banner's own button.
+
+`tsc`/`eslint`/`npm run build` all clean after every fix above.
+
+---
+
+## 🔬 IMPLEMENTATION-READY RESEARCH, 2026-08-22 — read before starting the
+walking-pattern or item-inspect work. EK: "I don't want to sit around
+tomorrow for 6 hours waiting for you to do these things" — this is that
+research, done in full, so the next session can start writing code
+immediately instead of re-investigating. Everything below is pulled
+directly from bingebrowse.net's own bundle (fetched + grepped live, not
+guessed) — exact constants, exact formulas, not approximations.
+
+### A. The walking pattern (EK's biggest open complaint: "you never
+change the walking pattern like the other app")
+
+**WASD/arrow-key movement** (`updateMovement(dt)`):
+- Direct velocity, no acceleration curve — position += direction * speed
+  * dt, every frame. Starts and stops instantly; the "smoothness" comes
+  from elsewhere (below), not from easing the walk itself.
+- `speed = 1.25` units/sec normally, `0.85` units/sec while Shift is
+  held.
+- **Shift is a crouch, not a sprint** — it also eases the camera's eye
+  height down to `1.02` (from `EYE=1.30`) via `y += (target - y) *
+  min(1, dt*8)` — an exponential ease, ~1/8s time constant. We have
+  nothing like this at all; worth considering as a cheap, high-value
+  addition (a "duck down to see a low shelf" moment), separate from the
+  main walking-pattern fix.
+- Position is clamped to the room bounds every frame (same pattern our
+  `clampPosition` already uses).
+
+**Click-to-walk ("the stepping squares," our biggest gap from this)** —
+this is the real answer to EK's complaint. It is NOT a single continuous
+lerp toward a destination (which is what our current click-to-walk does,
+in `onPointerUp`'s floor-plane branch). It's a deliberate **three-phase
+tween**, comment verbatim: *"Search journeys move like a person: face the
+destination, travel with a steady view, stop, then turn to the exact
+film. Each phase is speed-bounded, so crossing the store cannot become a
+faster animation."*
+
+Phase 1 — **turn in place** to face the direction of travel (position
+frozen, only yaw/pitch animate).
+Phase 2 — **move** in a straight line at that fixed facing (position
+lerps, yaw/pitch frozen at the travel angle — you don't reorient while
+walking).
+Phase 3 — **turn** from the travel-facing to the precise final aim at the
+destination (position frozen again).
+
+Exact formulas (`THREE.MathUtils.clamp`, `angleDelta` = shortest-path
+angle difference):
+```
+travelDistance = camera.position.distanceTo(destination)
+travelYaw = yaw + angleDelta(yaw, angleToward(destination))
+firstTurnDuration = clamp(max(|travelYaw - yaw|, |travelPitch - pitch| * 1.4) / 2.2, 0.18, 1.25)  // seconds
+moveDuration       = clamp(travelDistance / 4.8, 0.34, 1.65)                                      // seconds
+finalTurnDuration  = clamp(max(|finalYaw - travelYaw|, |wantPitch - travelPitch| * 1.4) / 2.2, 0.18, 1.25)
+journeyDuration = firstTurnDuration + moveDuration + finalTurnDuration
+```
+Note the travel speed baked into `moveDuration` (~4.8 units/sec) is
+**~3.8x faster than the WASD walk speed (1.25 units/sec)** — click-to-walk
+reads as a deliberate "fast travel," not a real-time walk pace. Turn rate
+is ~2.2 rad/sec for both turn phases, each individually clamped to
+0.18-1.25s so neither a tiny nudge nor a huge cross-room turn feels wrong.
+
+Per-frame tween application (each phase gets its own **smoothstep**
+easing, `k = q*q*(3-2*q)` where `q` is that phase's own 0-1 progress —
+NOT one easing curve stretched across the whole journey):
+```
+tween.t += dt * (1 / journeyDuration)     // advances 0→1 across the WHOLE journey
+firstTurnEnd = firstTurnDuration / journeyDuration
+moveEnd      = (firstTurnDuration + moveDuration) / journeyDuration
+if t < firstTurnEnd:      q = t / firstTurnEnd;                    lerp(yaw/pitch, fromYaw/Pitch → travelYaw/Pitch, smoothstep(q)); position = fromPos (frozen)
+elif t < moveEnd:         q = (t - firstTurnEnd) / (moveEnd - firstTurnEnd); yaw/pitch = travelYaw/Pitch (frozen); position = lerp(fromPos → toPos, smoothstep(q))
+else:                     q = (t - moveEnd) / (1 - moveEnd);       lerp(yaw/pitch, travelYaw/Pitch → toYaw/Pitch, smoothstep(q)); position = toPos (frozen)
+```
+A simpler variant (no distinct phases — used for e.g. `aimAtBook`, just
+turning to face something without walking) uses a single easeOutCubic:
+`k = 1 - (1-t)^3`, applied directly to yaw/pitch/position over the same
+kind of duration-clamped tween.
+
+**Where this plugs into our file:** our `onPointerUp` floor-click branch
+(`VirtualGalleryRoom.tsx`, search `floorHit` / `clampPosition(floorHit)`)
+currently just sets `targetCameraBody`/`targetYaw` once and lets the
+existing per-frame lerp (`cameraBody.lerp(targetCameraBody, 0.15)` /
+`yaw += (targetYaw-yaw)*0.12` in `render()`) ease toward it continuously
+— that's the "single continuous lerp" this whole section says to
+replace. Implementing the above means: on a floor click, instead of just
+setting targets, construct a `tween` object (or equivalent local state)
+with the three phase boundaries and durations computed as above, and
+drive `render()`'s camera update from that tween's `t` instead of the
+constant-rate lerp, for click-to-walk specifically (WASD/mouse-look can
+keep using the existing continuous lerp — this replacement is scoped to
+destination travel only, matching the reference exactly).
+
+### B. Item pickup/inspect animation (Phase 2 of the interaction plan)
+
+**The pull animation** (`updateInspectAnim(dt)`): total duration **0.6
+seconds**, `easeOutCubic` (`e = 1 - (1-t)^3`), advancing via `t += dt /
+0.6`. Two phases split at `e = 0.45` (not a time split — an EASED-PROGRESS
+split, so the transition itself is smooth even though the two phases
+have different motion):
+- **e 0 → 0.45** ("pulling off the shelf"): item mesh lerps from its
+  shelf position to an intermediate **waypoint** (a point pulled straight
+  out from the shelf, before it starts heading toward center-screen).
+  Orientation and scale stay locked at shelf values during this phase —
+  the item doesn't grow or turn yet, it just slides straight out.
+- **e 0.45 → 1.0** ("settling into view"): item lerps from the waypoint
+  to its final held position (screen-center-ish focal point), rotates
+  from its shelf orientation to the camera-facing orientation
+  (`slerpQuaternions`), and grows from shelf-size to the final on-screen
+  inspect size, all simultaneously over this second sub-range.
+- On arrival (t=1): for their thin DVD-case items, the case additionally
+  "squashes" in depth to reveal the flat cover face (their spine-to-cover
+  flip). Our items are already flat cards, so this specific step doesn't
+  map over — the two-phase pull-then-settle STRUCTURE is the reusable
+  part, not this depth-squash detail.
+
+**Held-item parallax while inspecting** (mouse-follow tilt, EK's earlier
+"nice description" / "pick up and rotates" observation): a genuine
+**spring-damper simulation** chasing the cursor, not a direct 1:1 mapping
+or a simple lerp — comment: *"the held case is a spring chasing a
+cursor-driven target, with a velocity kick on fast flicks so the case
+swings with the cursor's acceleration (the 'wow' of the inspect view)."*
+Exact constants: `INSPECT_STIFF = 100, INSPECT_DAMP = 19` (their own
+comment: "near-critically damped: follows fast, barely overshoots"),
+`INSPECT_RANGE_YAW = 0.95` radians (max yaw the parallax responds within
+— it doesn't chase the cursor infinitely, it's range-limited). Formula,
+run every frame while an item is held:
+```
+damp = exp(-INSPECT_DAMP * dt)
+velocity = (velocity + (targetAngle - currentAngle) * INSPECT_STIFF * dt) * damp
+currentAngle += velocity * dt
+```
+This is a standard semi-implicit spring-damper — same shape for both yaw
+and pitch, each with their own velocity/target/current triplet. This is
+almost certainly want gives their "pick up and rotates" its expensive,
+tactile feel — worth implementing exactly, not approximating with a
+plain lerp, since a lerp reads noticeably stiffer/cheaper than a real
+spring for this kind of cursor-follow interaction.
+
+**Where this plugs into our file:** this is entirely new state/behavior
+— nothing in `VirtualGalleryRoom.tsx` currently lifts an item off the
+shelf at all (`onPointerUp`'s item-hit branch only moves the CAMERA to
+face the item in place, per the existing "Selected Piece" click-to-focus
+flow — see the file's own `standDistance`/`focusCamera` logic in that
+branch). Building this means: on item click, instead of (or in addition
+to) moving the camera, animate the ITEM mesh itself using the two-phase
+pull above, then on `pointermove` while an item is "held," drive its
+tilt via the spring formula above, and on drag (reusing the existing
+`isDragging`/`didDrag` tracking from `onPointerDown`/`onPointerMove`)
+rotate it fully to reveal `imageBackUrl` past a rotation threshold — this
+last part (front/back swap point) was already scoped in the original
+2026-08-20 interaction plan further below and doesn't need re-deriving.
+
+### C. Hero positioning (EK's older, still-open "not centered/eye-level"
+complaint) — no external research needed here, this is a room-geometry
+constraint, not a behavior to reverse-engineer:
+
+Hero's 3 feature slots sit at `y=5.96` (`buildWallPositions`, the
+`allHeroSlots` array) specifically because that's the only gap that
+existed between the (old) top shelf row and the wall rail above it — see
+that array's own comment for the full "huge box" bug history. Since then,
+`SHELF_ROW_Y`'s top row is still `4.72` (unchanged through every
+correction today) and items on it now have real headroom (fix #1 above),
+so the geometry hasn't shifted enough to free up a lower gap for Hero on
+its own. Bringing Hero down toward actual eye level (rather than
+"whatever gap happens to exist above the shelf grid") likely means either
+(a) giving Hero its own dedicated wall real estate that ISN'T sandwiched
+between the shelf grid and the rail — e.g. reserving the CENTER of the
+back wall at eye height and routing normal shelf items around it instead
+of stacking Hero above them, or (b) accepting Hero sits above the grid as
+now but pulling it down as close to the top shelf row's clearance as
+geometry allows and no further. This needs an actual layout decision from
+EK (which tradeoff), not just a number — flag it back rather than picking
+one silently, same principle as every other fix today.
+
+---
+
+## ⚠⚠⚠ CORRECTION, 2026-08-21 LATE — the eye-height fix below (item #3)
+was WRONG and has been REVERTED. Read this before touching eyeHeight or
+SHELF_ROW_Y again.
+
+EK reported the "live-verified" fix still felt broken — "I feel like a 5
+year old kid." Root cause: the entire `3.6 → 1.7` eyeHeight change was
+based on assuming this room's units are 1:1 meters, which was NEVER
+actually verified against anything in the room. Cross-checked against the
+one real-world anchor that exists in the baked geometry — the entrance
+door frame, 4.95 units tall (`add_standard_door()` in the generator
+script). A real grand-entrance door runs ~7-9 feet, putting 1 unit at
+roughly **0.43-0.55m, not 1m**. Redone with that scale: the ORIGINAL 3.6
+works out to ~5'1"-5'7" (normal adult), and the "fix" of 1.7 works out to
+~2'4"-3'0" (a toddler) — the opposite of the intended effect.
+
+**Current, correct state:**
+- `eyeHeight` reverted to `3.6` (its original value).
+- `SHELF_ROW_Y` reverted to `[4.72, 3.47, 2.22]` — the ORIGINAL top 3 rows
+  from the pre-session `[4.72, 3.47, 2.22, 0.97]` table, with ONLY the
+  genuinely-too-low bottom row (`0.97`) dropped. Two earlier attempts
+  wrongly reshuffled the whole band around the bad 1.7 number instead of
+  just removing the one bad row — both reverted.
+- `scripts/generate-gallery-room-models.py`'s `shelf_y` matches
+  (`[4.72, 3.47, 2.22]`), GLBs regenerated a third time and re-verified
+  byte-level (see technique below) — final baked values confirmed
+  `[0, 4.72, -11.62]`, `[0, 3.47, -11.62]`, `[0, 2.22, -11.62]` in all
+  three files. `ROOM_MODEL_URLS` cache-bust bumped to
+  `eyeheight-revert-2026-08-21c`.
+- `tsc`/`eslint`/`npm run build` all clean after the revert.
+
+**What's NOT confirmed:** whether this actually resolves EK's complaint.
+The door-height math is solid, but EK hasn't seen this specific version
+yet as of this note — don't claim it's fixed until they confirm. If it's
+STILL wrong after this, the eyeHeight number probably isn't the real
+issue at all (see EK's own words below).
+
+**The bigger, still-completely-untouched issue:** EK, verbatim: "You
+never change the walking pattern like the other app... literally nothing
+good has happened." This is telling us the core disappointment isn't
+shelf/eye-height numbers — it's that the actual MOVEMENT FEEL (pacing,
+camera behavior while walking, acceleration/deceleration, possibly camera
+bob or FOV behavior while moving) still doesn't resemble
+bingebrowse.net's, and nothing this session has touched that. Do NOT
+attempt another numeric guess at this — it needs the same kind of direct
+source-code investigation that worked for the image-size and room-scale
+questions (fetch their bundle, grep for the actual movement/update
+function, read the real acceleration/easing values) before changing
+anything. This is the most likely next real ask.
+
+---
+
+## ⚠⚠ SESSION STATE as of 2026-08-21 (evening pass) — SUPERSEDED BY THE
+CORRECTION ABOVE for eyeHeight/SHELF_ROW_Y specifically — kept for
+everything else in this block, which is still accurate and still done.
+
+**Everything below is DONE and LIVE-VERIFIED** — not just `tsc`/`eslint`/
+`build` clean, but actually seen rendering real data. EK's own dev-server
+login had blocked browser verification all session; broke through it by
+using the `claude-in-chrome` MCP (EK's real, already-authenticated Chrome,
+not the sandboxed Browser pane) against a real `npm run build` + `npm run
+start` production server — sidesteps both the login wall AND a Turbopack
+dev-route flake that was intermittently 404/500-ing `/museum/virtual-room`
+(unrelated to this session's edits — a known flaky pattern, see tooling
+note further down). Screenshotted the actual room with EK's own 12-item
+"Scratch room" data, walked it with click-to-walk, and opened the actual
+`/museum/virtual-room/guest` route.
+
+**1. Item texture rework** (`drawItemTexture`): photo fills ~86% of the
+object's own canvas (was ~49%), fit-inside not cropped (a crop chopped
+real content off graded-slab photos — EK caught this live, reverted same
+round), zero baked-in title/price text (already in the old "Selected
+Piece" panel, since removed — see #4).
+
+**2. `MIN_ITEM_SCALE = 0.78` floor**: every non-hero item placement —
+Store, Salon, Hero's supporting items, Vault's front-wall row. Display-
+case items alone stay smaller (0.58, physically capped by the case's
+baked glass size, 1.3×1.0 units — bigger clips through the glass).
+
+**3. Eye height + shelf rows — the "giant in the room" fix, corrected
+twice, now right.** EK: "you made the human inside the room much larger,
+that's why items feel small and it feels cramped at once" — confirmed
+correct. `eyeHeight`: `3.6` (~11'10" if 1 unit ≈ 1m) → `1.7` (~5'7", a
+real adult eye height — explicitly NOT bingebrowse.net's own deliberately
+-lowered `1.30`/~4'3" "chest-height browse" — EK does not want that
+cramped-store feel, wants correct human perspective in the SAME grand
+room, not a smaller one). `SHELF_ROW_Y`: first pass kept 4 rows shifted
+down to `[3.95, 2.7, 1.45, 0.2]` — wrong, the bottom row (item-Y ~0.85)
+was exactly the near-floor row EK explicitly said not to copy from the
+reference ("I don't want a row on the floor like they do"). **Corrected
+to 3 rows: `[2.95, 1.7, 0.45]`** — bottom row (item-Y ~1.1) sits at a real
+hip-height shelf, clearly off the floor; whole band centers much closer
+to the 1.7 eye height with one fewer row to fit. `wallGridPosition`'s row/
+depth math was hardcoded to assume exactly 4 rows (`% 4`, `/ 4`) — changed
+to derive from `SHELF_ROW_Y.length` so a future row-count change can't
+silently desync again the way this one almost did.
+- **Duplicated in `scripts/generate-gallery-room-models.py`** (`shelf_y`,
+  in `add_wall_panels()`) for the baked GLB shelf-board mesh in vault/
+  whitebox/arcade — kept in sync, regenerated TWICE (once for each shelf-
+  row correction) via `"C:\Program Files\Blender Foundation\Blender
+  5.2\blender.exe" --background --python
+  scripts/generate-gallery-room-models.py -- vault whitebox arcade`, run
+  from the worktree root. **Verified directly both times** — parsed each
+  `.glb`'s JSON chunk (byte offset 12 = JSON length) and read
+  `back_shelf_0..2` translations back out: final values are
+  `[0, 2.95, -11.62]`, `[0, 1.70, -11.62]`, `[0, 0.45, -11.62]` in all
+  three files, matching the JS exactly. `ROOM_MODEL_URLS` cache-bust
+  bumped to `3row-2026-08-21b`. Blue unaffected (shell-only, no GLB,
+  reads the JS constant directly).
+- **Live-confirmed:** walked the actual room via click-to-walk — ceiling,
+  all 3 shelf rows, and floor all sit comfortably in one natural camera
+  frame with no extreme up/down tilt and nothing hugging the floor. Real
+  photo items rendered correctly on the shelves.
+
+**4. Removed the bottom move/rotate control pad (`FloorMoveControls`) and
+the "Selected Piece" info bar** — EK: "I said remove both of these a long
+time ago and they are still here" (a request from earlier in the session
+that got missed). Deleted both entirely, not just from guest view — the
+whole component, its `sendMoveCommand`/`onMoveCommand`/`"vltd-room-move"`
+event-dispatch plumbing (now unreferenced by anything), the now-dead
+`selectedItem` derived value, and the now-unused `RotateCcw`/`RotateCw`/
+`ChevronLeft`/`ChevronRight` icon imports. Click-to-walk + drag-look are
+now the only navigation, matching the reference site.
+
+**5. Guest view**: `<VirtualGalleryRoom guest />` prop, route at
+`/museum/virtual-room/guest`, full-bleed below the header (no builder
+sidebar/toolbar), reachable via a "Guest" button in the builder's Virtual
+Room card. `NavShell.tsx` bypasses `BottomNav`/`PullToRefresh` for that
+route. **Bug found and fixed same round:** landing in map/overview mode
+had NO way back into the room at all (the "Exit" button only existed
+going room→map, nothing went map→room) — worst in guest view where
+there's no sidebar/Rooms-dropdown fallback. Added a "Back to Room" button
+in the same top-left overlay slot when `viewMode === "overview"`.
+Live-confirmed: guest route loads full-bleed, Exit→map→Back to Room→room
+round-trip all work.
+
+**Still open, unrelated to this pass, don't conflate:** Hero's 3 dedicated
+feature slots sit at `y=5.96`, clearing the new top shelf row but still
+well above the 1.7 eye height — EK's earlier "hero is way up high, not
+centered" complaint is unresolved, flagged in its own comment in
+`buildWallPositions`. Also: even at 3 rows, the top row still needs a
+mild upward glance (~1.9 above eye level) — better than 4 rows' ~2.9, not
+literally zero; a real tradeoff of legibility-sized items in this room,
+named to EK, not hidden.
+
+**Tooling note:** `/museum/virtual-room` intermittently 404'd or 500'd on
+the Turbopack DEV server this round, unrelated to any code change —
+symptoms matched a known flaky pattern already noted below (route
+manifest not picking up a new file/subfolder cleanly). Deleting `.next`
+and restarting sometimes fixed it, sometimes didn't; **the reliable fix
+was `npm run build && npm run start`** — a real production server, immune
+to dev-route flakiness, which is what actually got used for the live
+verification above.
+
+---
+
+## ⚠ SESSION STATE as of 2026-08-20, latest pass — read this block first,
+it supersedes specific numbers further down this section that are now
+stale (kept below for the reasoning trail, not as current values).
+
+**Confirmed good by EK, don't re-touch without being asked:**
+- Vault — look and materials confirmed good. Do not change `roomStyle
+  === "vault"` branches (or "blue", which mirrors vault) without an
+  explicit ask.
+- White room lighting/contrast — EK confirmed "overall looks good" after
+  two rounds of darkening trim/floor + cutting exposure/hemi/spot/point
+  light values specifically for whitebox. `toneMappingExposure = 0.68`,
+  hemisphere `1.5`, key spotlight `1.7`, warm point light `0.35` (all
+  whitebox-specific, in `VirtualGalleryRoom.tsx`'s big mount effect) —
+  untouched, don't re-touch without being asked. **Shelf/floor color
+  warmed to walnut-brown 2026-08-22** (see the dated section right after
+  the rules block above) — trim base now `(0.34, 0.21, 0.12)`, floor
+  tones now `(0.52,0.33,0.17)/(0.60,0.38,0.20)/(0.38,0.22,0.11)/
+  (0.64,0.42,0.22)`, GLB regenerated and live-verified. This was EK's
+  last open ask on White — nothing else queued for this room.
+- Corner-trim gap — fixed via a solid corner post (not fragile width-
+  matching), verified with a direct Blender render. Confirmed via EK's own
+  screenshot to no longer show as a black gap/hole.
+- Glass transparency (was "whited out," worst in White) — real bug, not
+  lighting: `make_mat()` in the generator script wasn't setting the
+  Principled BSDF's Alpha socket, so every "glass" material exported fully
+  opaque regardless of the alpha specified in Python. Fixed, confirmed by
+  reading the exported material JSON, confirmed live by EK's screenshot
+  showing genuinely transparent case glass.
+- Display-case items were floating 0.13 units ABOVE the case's own glass
+  cap (resting on top of the closed case, not inside it) — fixed, moved to
+  y=0.85, also made double-sided.
+
+**In progress right now — Store/Salon/Hero layout, EK's direct ask:**
+EK: "I don't really see much of a difference between Store, Salon and
+Hero... the names don't make sense," then after a first attempt: "for
+hero... now its a huge box, which looks really bad" and "Salon and store
+still look the same to me... [smaller items] make them way too hard to
+see." Two real bugs found and being fixed:
+1. **Hero's "huge box" bug**: the wall-mounted item frame mesh
+   (`VirtualGalleryRoom.tsx`, the `frame` BoxGeometry right after the card
+   `PlaneGeometry`) stretches its own depth to reach the actual wall,
+   assuming items sit close to it (`frameDepth = wallGap - frontOffset +
+   backOverlap`). The first Hero redesign positioned the 3 feature items
+   0.55–2.45 units off their walls for "presence" — with that much gap,
+   frameDepth blew up to as much as ~2.5 units, producing an actual box,
+   and because that box's depth spans back to the wall, it occupies the
+   same space as the shelf boards mounted there (EK's earlier "rails
+   crossing the picture" observation on the back-wall hero was the same
+   root cause). **Fix in progress:** hero items moved back to flush
+   wall-mount positions (z=-11.78 back, x=±10.22 sides, matching how
+   normal items sit) and repositioned to y=5.96 — dedicated headroom
+   between the top shelf row (y=4.72) and the top wall rail (y=7.2), so
+   nothing crosses the frame at all. Scale dropped from 1.7 to 1.2 to fit
+   that gap. **NOT YET DONE:** the three hero spotlights (added in the
+   previous pass, aimed at the OLD y=3.85 / z=-9.55/-3.2 / x=∓9.95
+   positions) still need their target coordinates updated to match — until
+   that's fixed the lights point at empty space, not the relocated items.
+2. **Salon/Store contrast**: original attempt only shrank Salon's scale
+   (0.48) with tighter spacing (1.55 step) — with few actual items in a
+   real collection, tighter spacing along the wall barely shows (not
+   enough items to fill even one row), so shrinking was the only visible
+   change, and it just made items hard to see rather than reading as
+   "densely packed." Rebalanced: Salon's scale brought back up to 0.58
+   (still smaller than Store, but legible) with the tight 1.5 step kept;
+   Store pushed the OTHER direction — bigger (0.78 side scale, up from
+   0.66) and much more spread out (3.0 step, up from 2.35) — so the
+   contrast comes from both ends instead of Salon alone trying to look
+   different. This part is done and should be visually distinct now.
+
+**Plan / next steps for whoever picks this up (or continues right now):**
+1. Fix the hero spotlight target coordinates (see above — mechanical,
+   just needs the same y=5.96/z=-11.78/x=±10.22 values the item positions
+   already use).
+2. `npx tsc --noEmit`, `npx eslint`, `npm run build` — all clean before
+   committing (has been the pattern all session, keep it up).
+3. Commit + push to `claude/museum-map-doorways`. No GLB regeneration
+   needed for this round — it's pure `VirtualGalleryRoom.tsx` item-
+   placement/lighting logic, not baked geometry.
+4. Ask EK to check Hero (all 3 walls, confirm no box/crossing-rails) and
+   Salon vs. Store (confirm they now read as visibly different) live —
+   this session's browser screenshot tool has been unreliable for direct
+   verification (see tooling note further down); EK's own screenshots are
+   the working feedback loop right now.
+5. ~~Still open: EK's ask that White's shelf/floor color lean closer to
+   the Blender reference render's warmer walnut tone.~~ **Done
+   2026-08-22** — see the dated section right after the rules block.
+
+---
+
+## 📋 REFERENCE PLAN — interaction/navigation upgrade (2026-08-20)
+
+**Not started. Documented here first per EK's explicit ask, before any
+building.** EK pointed to `https://bingebrowse.net` (a live, unrelated
+product — "your streaming services as a 3D video store") as a reference
+for how the room should *feel to move through and interact with* —
+**explicitly not** a request to copy its theme/walls/colors ("I'm not
+saying to change our format and walls, but this flows and moves better").
+I actually walked through the live site (Browser pane) to capture this
+accurately rather than go on a description alone.
+
+### What EK wants carried over (interaction patterns, not visuals)
+
+**1. Click-to-walk floor navigation ("the stepping squares").** Clicking a
+distant shelf section highlights a destination zone on the floor (a
+translucent purple outline of the walkable area) with a tooltip ("Click to
+walk to CULT CLASSICS BAY"); clicking it smoothly walks the camera there
+and lines it up facing the shelf. This is a genuinely new feature for us —
+we currently only have manual drag-look + directional move buttons, no
+point-and-click destination navigation at all.
+
+**2. Item pickup/inspect, not just a camera nudge.** This is the big one —
+EK: "do you see how the item pick up and rotates, has a nice description."
+Clicking an item on the shelf does NOT just move the camera to face it in
+place. It:
+- Lifts the item off the shelf and floats it centered on screen, at a
+  slight 3D angle showing real depth (cover + spine visible).
+- Responds to mouse movement with a subtle tilt (parallax).
+- **Drag rotates it fully around** — shown UI hint: "hold + drag to turn
+  it around" — this is how you see the BACK of the item, not a separate
+  toggle/button.
+- Click again (hint: "click to put it back") returns it to the shelf.
+- While lifted, side panels appear: left = synopsis/description +
+  metadata table (year, runtime, age guide, country, genre, a flavor
+  "rental number"); right = action buttons (stream/watch-trailer links,
+  add-to-list); bottom = title card (platform icon, title, byline, year,
+  rating, share icon). Left/right arrows let you browse to the next/prev
+  item on the same shelf without backing out to the wall view first.
+
+**3. Item density / room scale.** BingeBrowse packs a large catalog edge-
+to-edge on the shelves and the room reads as human-scaled (ceiling height,
+aisle width, shelf depth all feel walkable/real) — EK: "the size of the
+room, the height, it all feels real." A personal vault will always have
+far fewer items than a video store's full catalog, so exact packing
+density isn't a fair 1:1 target, but "items read as legible and well-
+proportioned, room feels like a real space" carries over regardless of
+count.
+
+### How this maps onto what we already have
+
+- **We already have click-to-focus** (`onPointerUp`'s raycast handling,
+  `VirtualGalleryRoom.tsx`) — clicking an item moves the camera to face it
+  level-on. That's the foundation for #2 above, but it stops at "camera
+  moves," it doesn't lift/rotate the item or show a rich panel.
+- **We already have a detail panel** — `selectedItem` renders a "Selected
+  Piece" card (image, title, value, universe) — but it's a sidebar element
+  in the regular page layout, not an overlay tied to the 3D view. Moving
+  this into an in-scene overlay near the lifted item is a much smaller
+  lift than building the panel from scratch.
+- **Front/back images and description already exist on the data model** —
+  confirmed in `src/lib/vaultModel.ts`: `imageFrontUrl`, `imageBackUrl`,
+  `subtitle`, `notes` are all real fields on `VaultItem` today. EK's own
+  point: "this might not work for every item, but it should with front and
+  back images and the description is already there for them to fill out"
+  — i.e., items with both images get the full rotate-to-see-back
+  treatment; items with only a front image can still lift/tilt, just
+  without a meaningful "back" to rotate to.
+- **Click-to-walk floor navigation is genuinely new** — no existing
+  equivalent, would need its own build (raycasting the floor plane,
+  computing a walkable-zone highlight, animating the camera to the
+  clicked destination).
+
+### Adjacent idea EK floated, capture only — not scoped
+
+"Could also work for a virtual comic and card store, browse, pick packs,
+buy next week comics or book, toys etc." — a bigger product direction
+(an actual storefront/commerce experience built on this same 3D
+interaction model, not just a personal vault viewer). Noted for whoever
+picks up product direction later; no design or scope work done on this
+yet, purely captured as a "the interaction model could extend beyond just
+viewing your own vault" idea.
+
+### Suggested phasing (not yet agreed with EK — propose, don't assume)
+
+1. Move the existing "Selected Piece" info out of the sidebar into an
+   in-3D overlay tied to the clicked item (small, reuses data already
+   flowing today).
+2. Add the lift-off-shelf + tilt-with-mouse + drag-to-rotate interaction
+   for the item mesh itself (front image today; back image on rotation
+   past 90° for items that have `imageBackUrl`).
+3. Click-to-walk floor navigation — the largest, most separable piece;
+   could ship independently of #1/#2.
+
+### Room scale — the actual root cause of "images look small" (2026-08-21)
+
+EK called this out directly after the item-size patches weren't enough:
+"I mention the ceiling height and size of the room, again nothing." Went
+back into the bundle and pulled it — this is a bigger finding than the
+item-texture fix, and explains why no amount of item scaling alone would
+fully fix legibility.
+
+**BingeBrowse's real room (source-confirmed constants):**
+- `RX = 3.65` (half-width) / `RZ = 4.65` (half-depth) → floor is **7.3m ×
+  9.3m total** — small, a real single retail-shop footprint.
+- `STORE_H = 3.05` — explicitly commented "low commercial ceiling."
+- `EYE = 1.30` — comment: "chest/rack-height browse: covers meet the eye
+  instead of being surveyed from above." **Deliberately lower than a real
+  adult's eye height** so shelf art sits right at eye level, not above it.
+- Movement clamp: `CLAMP = { xmin: -RX+0.42, xmax: RX-0.42, zmin:
+  -RZ+0.46, zmax: RZ-0.32 }` → the camera can get within **~0.42-0.46m**
+  of any wall. Genuinely nose-to-shelf close.
+- `GONDOLA_ROW_PITCH = 2.30` — aisle spacing between gondola rows.
+
+**Ours, for comparison:** `eyeHeight = 3.6` (our own code) — more than
+**2.7x** their deliberately-lowered eye height, and taller than a real
+adult even without the "lowered for legibility" trick. Room footprint
+(back wall z=-11.78, side walls x=±10.22) is roughly **20m × 17m** —
+call it 2-3x theirs in every linear dimension. `clampPosition` keeps the
+camera at least **~2.7-2.8 units** from any wall — about **6x** their
+minimum approach distance. Camera FOV is fixed at 47°, no dynamic
+narrowing like their 75°→58° "settled" zoom.
+
+**Why this matters more than item scale:** all three gaps (bigger room,
+taller eye height, farther minimum approach) compound multiplicatively —
+each one alone shrinks everything on the walls, and there are three of
+them stacked. The `MIN_ITEM_SCALE` fix (below) raises the item's own
+world-size, but it's fighting a room/camera setup that's fundamentally
+built at 2-3x the scale of the reference the legibility target came from.
+
+**This is a real creative-direction fork, not a bug fix — flagged, not
+decided:** our room was deliberately built "grand hall / museum" scale
+earlier this session (tall ceilings, wide floor) as EK's own explicit
+direction away from a cramped video-game feel. Shrinking the room and
+eye height to BingeBrowse's intimate proportions would directly fix
+legibility but is a real aesthetic reversal of that earlier call, and
+touches baked GLB geometry (regen required, and the room's baked
+geometry includes shared code paths — see "don't touch vault" above).
+**Needs EK's explicit direction before any room/eye-height/clamp change
+is made** — not something to patch unilaterally after the vault incident.
+A non-destructive middle path exists and is worth naming: keep the room
+grand, but let the camera clamp get much closer to a wall specifically
+while an item is in focus/inspect (mirroring their FOV-narrowing trick)
+without touching the baked room geometry at all.
+
+### Click-to-walk floor navigation — BUILT (2026-08-21)
+
+No longer just documented — implemented in `onPointerUp`'s `else` branch
+(fires when a click hits neither an item nor a doorway): raycasts the
+click against a `y=0` floor plane, clamps the hit point through the same
+`clampPosition` every other camera move already respects, sets
+`targetCameraBody.x/z` and a `targetYaw` that faces whichever wall
+(back/left/right) the destination is nearest to, and lets the existing
+per-frame lerp in `render()` carry the camera there — no new animation
+system, matches BingeBrowse's own confirmed UX exactly: their hint text
+reads "Click a shelf area to move · Click a nearby film to inspect it" —
+a single click, not a hover-then-confirm, which is why this reuses the
+same `didDrag` gate every other click here already used to tell a tap
+from a look-drag, instead of a separate two-step confirm state.
+**Not yet visually verified live** — `/museum/virtual-room` is behind
+EK's login; verified via `tsc`/`eslint`/`build` only.
+
+### Item pop-up / lift-and-rotate inspect — still NOT built
+
+This is Phase 2 from the plan below (lift off shelf, tilt-with-mouse,
+drag-to-rotate to reveal `imageBackUrl`, side info panels). Genuinely
+not started — don't imply otherwise. The click-to-walk fallback above
+occupies the `else` branch of the SAME `onPointerUp` handler where this
+would eventually also need to branch in (item click → lift, not just
+camera-refocus, once built).
+
+### Confirmed tech stack (2026-08-20, verified live via Browser pane)
+
+**BingeBrowse runs on vanilla Three.js — same core library we already
+use.** Verified directly, not assumed:
+- Top-level `bingebrowse.net` page has no canvas/WebGL of its own — the 3D
+  store is embedded via `<iframe id="store-frame" src="https://
+  bingebrowse.net/closet/index-bingebrowse.html?embed=1&roomv=br9&cc=US&
+  sr=US">`. Had to navigate directly into that iframe URL to inspect it.
+- Inside the iframe: two canvases — `ov-logo3d` (394×246, a small 3D logo
+  render) and an unnamed 365×910 canvas (the main room view). The main
+  canvas's context is `canvas.getContext('webgl2')`, confirmed via
+  `gl.getParameter(gl.VERSION)` → `"WebGL 2.0 (OpenGL ES 3.0 Chromium)"`.
+- Fetched the main bundle (`main-bingebrowse.deploy-b82c57b6bb23.js`,
+  ~775K chars) as text and grepped it directly: contains the literal
+  strings `"THREE.WebGLRenderer"` and `"PerspectiveCamera"`. **No
+  `@react-three`/`r3f` markers anywhere** — this rules out React Three
+  Fiber; it's Three.js used directly (imperative API), the same pattern
+  `VirtualGalleryRoom.tsx` already uses, not a declarative React wrapper.
+- Nothing is exposed on `window` (`THREE`, `BABYLON`, `PIXI` all
+  `undefined` at the top level) — expected for a production Vercel bundle,
+  tree-shaken/scoped inside the bundle closure, not evidence of a
+  different engine.
+- Script bundle naming (`<name>.deploy-<hash>.js?dpl=dpl_<id>`) matches
+  Vercel's deployment-artifact convention — separate bundles per concern:
+  `main-bingebrowse...js` (app/render logic), several
+  `catalog-vhs-2005*.js` files (catalog/content data, loaded separately
+  from render code), `streaming-commerce.js`, `streaming-trailers.js`,
+  `blockbuster-trailers.js`, `filters.js`, `lists.js`, `palette-lab.js`.
+  Read as: the 3D shelf-browsing UI and the "what's on the shelf" data are
+  intentionally decoupled bundles, not one monolith.
+
+**What this means for us:** nothing about what EK saw on BingeBrowse
+requires a new library, a framework swap, or a rewrite. Item pickup/
+rotation, floor raycasting for click-to-walk, and HTML/CSS overlay panels
+on top of a WebGL canvas are all things vanilla Three.js does natively —
+`VirtualGalleryRoom.tsx` already has a raycaster, a render loop, and
+DOM-overlay panels rendered alongside the canvas (see below). This is an
+extension of the existing file's patterns, not new infrastructure.
+
+### Implementation-ready detail per phase (file/line references, 2026-08-20)
+
+All line numbers below are from `VirtualGalleryRoom.tsx` as of this
+session — re-grep the anchor strings if they've drifted (`function
+onPointerUp`, `function moveCamera`, `Selected Piece`, etc.) since exact
+line numbers shift as the file is edited.
+
+**Existing scene-loop primitives to hook into (don't rebuild these):**
+- `const raycaster = new THREE.Raycaster();` and `const pointer = new
+  THREE.Vector2();` (~line 1758) — already set up once per mount effect,
+  reused inside `onPointerUp`.
+- `let yaw`, `pitch`, `targetYaw`, `targetPitch` (~1772-1775) — smoothed
+  camera look direction. `cameraBody`/`targetCameraBody` (~1777-1778) —
+  smoothed camera position, lerped each frame in `render()` (~1843,
+  `cameraBody.lerp(targetCameraBody, 0.15)`, `yaw +=
+  (targetYaw-yaw)*0.12`). Any camera-move animation (walk-to-point,
+  focus-on-item) works by setting `targetCameraBody`/`targetYaw`/
+  `targetPitch` and letting the existing per-frame lerp ease into it —
+  don't hand-roll a separate tween system, this one's already there and
+  already smooth.
+- `function clampPosition(position)` (~1795) — hard bounds `x: [-7.5,
+  7.5]`, `z: [-9, 4.72]`. Any new destination (click-to-walk target,
+  item-focus position) MUST go through this or the equivalent room-bounds
+  logic, or the camera can walk into/through a wall.
+- `function moveCamera(command, amount)` (~1814) — forward/back/left/
+  right/turn-left/turn-right, all relative to `facingDirection()`/
+  `strafeDirection()` (~1806-1812, yaw-based unit vectors). Reference
+  implementation for "move camera smoothly toward a computed target."
+- `function onPointerUp(event)` (~1878) — **this is where click-to-focus
+  already lives and where all 3 phases attach.** Current flow: build
+  `pointer` from click coords → `raycaster.setFromCamera(pointer, camera)`
+  → `raycaster.intersectObjects([...meshesRef.current,
+  ...doorwayMeshesRef.current], false)[0]` → branches on
+  `hit.object.userData.doorwayTarget` (room navigation) vs.
+  `hit.object.userData.itemId` (item focus, ~1898-1929). The item-focus
+  branch already computes a `standDistance`/`focusCamera` position and
+  sets `targetCameraBody`/`targetYaw`/`targetPitch` — this is the exact
+  spot phase 2's "lift and rotate" replaces/extends, and the pattern
+  (raycast → branch on `userData` → drive camera state) is exactly what
+  phase 3's floor click-to-walk reuses against a new floor-plane target
+  instead of a mesh.
+- `meshesRef.current` — the flat array of all clickable item meshes,
+  already carries `userData.itemId` and `userData.flat` (display-case vs.
+  wall-mounted) per mesh. Item meshes are built in the big mount effect
+  (search `new THREE.PlaneGeometry(1.12 * pos.scale` for the item `card`
+  mesh, and the `frame` BoxGeometry immediately after it for the
+  wall-mount trim). Any new mesh-side interaction (lift animation, rotate
+  handle) operates on these same objects — no new mesh registry needed.
+
+**Phase 1 — in-3D overlay panel (smallest, do first):**
+- Current "Selected Piece" panel: search `Selected Piece` in
+  `VirtualGalleryRoom.tsx` (~2632-2653) — a `selectedItem ?
+  (<div>...</div>) : (...)` block rendered in the sidebar's normal
+  document flow, using `itemImage(selectedItem)`, `selectedItem.title`,
+  `itemSubtitle(selectedItem) || selectedItem.notes ||
+  selectedItem.universe`, `formatMoney(selectedItem.currentValue)`,
+  `selectedItem.universe || selectedItem.category`. `selectedItem` itself
+  is derived state (~866-869): `selectedItems.find(item => item.id ===
+  selectedItemId) ?? selectedItems[0]`, and `selectedItemId` is set by
+  `onPointerUp`'s `setSelectedItemId(itemId)` call — this wiring already
+  exists end to end, only the JSX's *position* needs to change.
+- To move it into an overlay: keep the exact same JSX/data, just render it
+  as a CSS-positioned `<div>` (`position: absolute`, layered over the
+  `<canvas>` inside the same relatively-positioned container the canvas
+  mounts into — find where `renderer.domElement` gets appended to
+  `container` in the mount effect) instead of inside the sidebar's normal
+  flow. Gate its visibility on `selectedItemId` being non-empty AND
+  `viewMode === "room"` (don't show it in "overview"/map mode). This is
+  pure JSX/CSS relocation, zero new state.
+
+**Phase 2 — lift/tilt/drag-rotate the item mesh:**
+- Trigger point: `onPointerUp`'s `hit.object.userData.itemId` branch
+  (~1898). Currently this only moves the CAMERA to face the item
+  (`focusCamera`/`targetCameraBody`, ~1926-1929). To "lift" the item
+  instead (or in addition), animate the item's own mesh — read its
+  current `mesh.position`/`mesh.rotation` at click time, tween toward a
+  fixed "presentation slot" in front of the camera (e.g. a point computed
+  each frame as `camera.position + facingDirection() * 2.2`, offset
+  slightly down from screen center) using the same lerp-toward-target
+  pattern already used for `cameraBody`/`targetCameraBody` — add a
+  `liftedItemMesh` ref + `liftTargetPosition`/`liftTargetRotation`
+  Vector3/Euler that get lerped in `render()` alongside the existing
+  camera lerp.
+- Mouse-parallax tilt: in the existing `onPointerMove` handler
+  (~1866-1876, currently only drives `targetYaw`/`targetPitch` for
+  camera-look-drag), when an item is lifted, ALSO nudge the lifted mesh's
+  `rotation.x`/`rotation.y` by a small fraction of pointer offset from
+  screen center — same input, a second small effect, gated on `if
+  (liftedItemMesh)`.
+- Drag-to-rotate for front/back: reuse `isDragging`/`didDrag`/`startX`/
+  `startY` (already tracked, ~1779-1782, ~1859-1876) — when an item is
+  lifted, a drag updates the lifted mesh's `rotation.y` directly
+  (proportional to `dx`) instead of `targetYaw` (camera look). At
+  `rotation.y` crossing `Math.PI/2` (90°, the point where the plane's
+  edge-on to the camera and the back would start becoming visible), swap
+  the `card` mesh's material `map` texture from `itemImage(item)`
+  (front — already exists) to a back-image accessor using
+  `item.imageBackUrl` from `src/lib/vaultModel.ts`'s `VaultItem` type
+  (confirmed present: `imageFrontUrl?: string` line 64,
+  `imageBackUrl?: string` line 65). For items without `imageBackUrl`,
+  either clamp rotation short of 90° or show the front texture on both
+  sides (EK's own framing: "this might not work for every item... it
+  should with front and back images").
+- Click again to "put it back": same `onPointerUp` handler — if
+  `liftedItemMesh` is already set and the click doesn't hit a NEW item,
+  clear it (`liftedItemMesh = null`) and let the mesh lerp back to its
+  original shelf `position`/`rotation` (store those on lift so there's a
+  return target).
+- Left/right arrow to browse same-wall items without backing out: needs a
+  "what wall/slot is the current item on, what's next" lookup — the
+  slot/wall data already exists per item (`pos.wall`, see
+  `wallGridPosition`/`distributeAcrossWalls`), so this is a matter of
+  finding the current item's index within its wall's slot list and
+  re-triggering the same lift flow on the neighbor, not new geometry.
+
+**Phase 3 — click-to-walk floor navigation (largest, most separable):**
+- Needs a floor plane mesh to raycast against distinctly from item/
+  doorway meshes — either reuse the existing floor mesh (search
+  `add_floor_planks`-equivalent in the room-building code / the shell's
+  floor mesh) tagged with its own `userData` marker, or add a thin
+  invisible raycast-only plane at y≈0 sized to the room's walkable bounds
+  (same `[-7.5,7.5] x [-9,4.72]` bounds as `clampPosition`, ~1795-1799 —
+  reuse those exact numbers so the walkable-zone highlight can't ever
+  suggest walking somewhere `clampPosition` would then reject).
+- In `onPointerUp` (~1878), add a raycast branch against this floor plane
+  (alongside the existing item/doorway raycast) — on hit, don't move the
+  camera immediately; first show a destination-highlight decal (a flat
+  translucent circle/ring mesh, or a CSS-overlay ring projected via
+  `camera.project()` from the 3D hit point to screen space) at the hit
+  point, matching BingeBrowse's "highlight then click again" two-step
+  (hover/first-click = preview, confirm = walk) rather than instant
+  teleport, since instant teleport on every incidental floor click would
+  make normal look-around dragging accidentally trigger walks — needs a
+  deliberate confirm step, not just any floor click.
+- The actual walk: same pattern as `moveCamera` — set
+  `targetCameraBody` to the clamped destination point (keep
+  `y = eyeHeight`, the existing constant ~1763) and let the existing
+  per-frame lerp (~1846) carry the camera there smoothly; no new
+  animation system needed. Optionally also set `targetYaw` to face the
+  nearest wall/shelf at arrival (compute yaw from destination → nearest
+  wall's inward normal), matching BingeBrowse's "lines you up" behavior
+  EK called out specifically.
+- Distinguishing a floor click (walk) from a drag-to-look (camera pan)
+  from an item click (focus/lift): the existing `didDrag` flag
+  (~1780, ~1870) already solves "was this a click or a drag" — floor-walk
+  should only fire on `!didDrag` clicks that hit the floor plane and miss
+  every item/doorway mesh first (raycast items/doorways first, as today,
+  then floor as a fallback branch).
+
+---
+
+## ⚠ CURRENT ARCHITECTURE (2026-08-20+) — read this before the "Big update
+2026-08-14/15" section below, which describes an approach that's been
+**replaced**. Kept for history, not current.
+
+**The room is no longer hand-coded Three.js geometry. It's baked GLB models.**
+EK's explicit call, after seeing both side by side: the old hand-coded
+Three.js room (procedurally-built walls/shelves/floor, all colored via JS
+material properties) read as "fake, 1980s-video-game." A separate AI
+session (not this chat) built a parallel pipeline that bakes each room in
+Blender and loads the result as a `.glb` — that's the one EK wants. Do not
+revert to hand-coding geometry as "the fix" for a look problem; the fix
+lives in either the Blender/generator script or the material-override code
+that recolors the loaded GLB.
+
+**Terms, so a fresh chat doesn't have to reverse-engineer them:**
+- **"Shell" / "fallback shell"** — the OLD hand-coded room, still fully
+  present in `VirtualGalleryRoom.tsx` (walls, floor planks, shelves,
+  baseboards, the vault door). It's built on every mount, added to a
+  `fallbackShell` THREE.Group, and tracked mesh-by-mesh in a `shellObjects[]`
+  array via an `addShell()` helper. **It is not dead code** — see "blue"
+  below.
+- **"GLB model" / "baked model"** — the real room, generated in Blender by
+  `scripts/generate-gallery-room-models.py` (run *inside* Blender via `bpy`,
+  not a standalone Python script — `blender --background --python
+  scripts/generate-gallery-room-models.py -- vault whitebox arcade`), output
+  to `public/models/gallery-rooms/{style}-room.glb`. Loaded client-side via
+  `GLTFLoader` inside the big mount effect.
+- **The swap:** on mount, the shell renders immediately (it's cheap, no
+  network fetch). The GLTFLoader fetch+parse for the matching `.glb` takes
+  roughly a second; when it resolves, every `shellObjects[]` mesh gets
+  `.visible = false` and the loaded GLB model is added on top. **This is why
+  refreshing the room shows the shell for about a second before the GLB
+  "takes over."** If the GLB fetch errors, `fallbackShell.visible = true` is
+  the safety net (shell stays up instead of an empty room).
+- **`RoomStyle`** = `"vault" | "whitebox" | "arcade" | "blue"`. First three
+  each have a `.glb` and get the swap above. **`"blue"` is new (2026-08-20)
+  — it has no GLB entry in `ROOM_MODEL_URLS` (that constant is now
+  `Partial<Record<RoomStyle, string>>`), so the loader gate (`if (!inHub &&
+  modelUrl)`) skips it entirely and the shell just stays up permanently.**
+  Every shell-coloring conditional that used to check only
+  `roomStyle === "vault"` now checks `(roomStyle === "vault" || roomStyle
+  === "blue")` — "blue" is deliberately just "vault, but shell-only,
+  forever" — same navy/brass/walnut palette, same hand-coded vault door.
+  Selectable from the Room-style `<select>` in the toolbar (was a 3-way
+  `Segmented` pill row; changed to a native dropdown to fit a 4th option —
+  EK asked for "a drop down with the white room").
+
+**Why "blue" exists at all:** EK's exact words — the shell (the thing that
+flashes for ~1 second before being covered) *is* the version they like;
+the GLB that replaces it is what read as washed out / "filters on top of
+old work." Rather than argue about which one is "correct," both are now
+live, selectable options. Don't collapse them back into one without being
+asked.
+
+**⚠ DO NOT TOUCH VAULT'S LOOK WITHOUT BEING EXPLICITLY ASKED.** This was
+learned the hard way this session: a real, defensible fix (swapping
+Three.js's stock `RoomEnvironment` PMREM source, which has its own blue
+demo-accent panel, for a neutral one) got built, pushed, and then reverted
+in full at EK's direction — not because the reasoning was wrong, but
+because EK never asked for vault to be touched at all, and changing it
+without asking cost real trust. **Current vault code is confirmed good by
+EK as of 2026-08-20 — leave `roomStyle === "vault"` branches alone unless
+EK specifically asks for a vault change.** `RoomEnvironment` (the stock,
+colorful demo PMREM scene from `three/examples/jsm/environments/
+RoomEnvironment.js`) is back in place, unmodified, global to every style.
+
+**White room — fixed, NOT visually verified (see tooling note below):**
+Unlike vault, the `whitebox` GLB never had a color-override block at all
+(the `if (roomStyle === "vault") { ...material.color.setHex(...)... }`
+block only branches for vault — whitebox materials render exactly as
+Blender baked them, which on inspection are reasonable warm creams/tans,
+not the problem). The actual cause: `renderer.toneMappingExposure` (was
+`1.08` for whitebox) and the `HemisphereLight` intensity (was `4.8` for
+whitebox) were both tuned in an earlier pass for the *old shell's* material
+response, not the GLB's already-bright baked materials (base values ~0.72–
+0.9). Stacked with `ACESFilmicToneMapping`, that overexposed the room —
+white has far less headroom before clipping to blown-out than vault's dark
+navy did, which is why the same tuning read fine on vault and "too white"
+on whitebox. Dropped whitebox's exposure to `0.92` (matches vault) and
+hemisphere intensity to `2.4` (was `4.8`) — **reasoned from the numbers,
+not confirmed by eye. Ask EK to check it.**
+
+**Arcade — reviewed, not touched.** Its GLB's baked material colors (deep
+purple-black walls, bronze trim, cyan glass) are coherent and look
+intentional for the aesthetic; no evidence of a whitebox-style bug. Nobody
+has reported it broken. Left alone.
+
+**Corner-trim gap — real geometry bug, fixed and regenerated.** EK
+screenshotted it directly on Arcade/White/Vault: the back wall's horizontal
+decorative trim line stopped visibly short of the corner instead of
+meeting the side walls' vertical trim. Root cause in
+`scripts/generate-gallery-room-models.py`'s `add_wall_panels()`:
+`back_panel_rail` was built at width `20.0` (half-width 10.0) while the
+side walls' own panel posts sit at x=±10.36 — a 0.36-unit gap on every
+style, every corner, since `add_wall_panels()` is shared code (this is why
+it showed up on Arcade *and* White *and* Vault, but not Blue — Blue has no
+GLB). Fixed to `20.72`, matching exactly where the side posts are —
+verified against the regenerated GLB's actual mesh bounds (not eyeballed):
+`back_panel_rail` now spans x ∈ [-10.36, 10.36] precisely. Regenerated all
+three GLBs via `blender --background --python
+scripts/generate-gallery-room-models.py -- vault whitebox arcade` and
+bumped `ROOM_MODEL_URLS` cache-busting query params to `corner-trim-fix-1`
+so browsers actually fetch the new files instead of a cached old GLB.
+**Blender is installed** at `C:\Program Files\Blender Foundation\Blender
+5.2\blender.exe` — needed for any future GLB regeneration.
+
+EK also circled item-frame spacing looking uneven on Arcade/White vs. the
+clean grid on Blue — **not independently investigated or fixed.** Item
+placement (`wallGridPosition`/`distributeAcrossWalls` in
+`VirtualGalleryRoom.tsx`) is 100% shared JS code across every style, so if
+it looks right on Blue it's mathematically identical on Arcade/White — the
+apparent unevenness in those screenshots may just be the corner-gap issue
+distracting the eye, or a genuine per-style depth/perspective artifact.
+Worth a fresh look with working screenshots before assuming it's fixed by
+the corner-trim change alone.
+
+**⚠ Browser screenshot tooling was unreliable/frozen for a long stretch of
+this session** — repeated live mutations (material color, camera movement,
+tone mapping) produced byte-identical captures across many fresh tabs and
+long waits, meaning verification wasn't trustworthy. If you hit the same
+thing: don't trust a capture that doesn't change after an obvious action
+(camera turn, color swap) — closing every tab and starting a genuinely new
+`preview_start` sometimes clears it, but not reliably. When in doubt, ask
+EK to look at their own browser rather than trust a stuck automation tab.
+
+---
+
+**Big update, 2026-08-14/15 — a full session on this feature. SUPERSEDED —
+describes the hand-coded-geometry approach before the GLB pipeline
+existed. Read the section above first. Kept below for historical context
+only (the vault-door/shelf-alignment bug-hunting is still accurate
+*about the shell*, since the shell is still live code, just not the
+primary room anymore).**
+
+**⚠ Branch state — READ FIRST:** all of this work lives on branch
+`claude/museum-map-doorways`, pushed to GitHub, **NOT merged to `main`.**
+Reason it's not merged yet: EK is still actively iterating (see the open
+color/lighting problem below) and didn't want unfinished work auto-deployed
+to the live site. If you're a fresh chat picking this up, check out that
+branch — `main` does not have any of this.
+
+**⚠ Also: a dedicated git worktree exists specifically because the shared
+`C:\Users\EK\VLTD` checkout kept getting switched to `main` by another active
+session mid-work, three separate times, silently breaking the museum page
+each time (Turbopack resolves `/museum/virtual-room` to the wrong route when
+the file's simply missing from whatever branch is checked out).** To avoid a
+fourth time: there is now a **separate, isolated worktree** at
+`C:\Users\EK\VLTD-museum-doorways`, permanently checked out to
+`claude/museum-map-doorways`, with its own `node_modules` and its own dev
+server on **port 3010** (not 3000). Do your museum work there, not in the
+shared `C:\Users\EK\VLTD` folder. `git worktree list` from either directory
+shows all active worktrees.
+
+**What got built/fixed this session (all verified live, not just by
+reading code — see each commit message on the branch for exactly how each
+one was tested):**
+- Map floorplan rebuilt on a real CSS grid — the old absolute-% version had
+  real overlapping tiles (Gallery D/E overlapped Main Gallery).
+- Side walls now populate proportionally from item #1 (was back-wall-first,
+  leaving small rooms with two bare side walls).
+- Click-to-focus fixed **twice**: first pass over-corrected into tilting the
+  camera up/down to center tall/short items (read as "looking up at" the
+  item — EK caught this from a screenshot); second pass fixed it properly by
+  matching the camera's own height to the item's height for a true level,
+  face-on shot instead of tilting.
+- Main Gallery is a real intentional empty "Grand Hall" (not secretly
+  opening your biggest room like the first version did).
+- Doorways connect rooms with signs — **found and fixed a genuine raycaster
+  bug** here: the invisible hit-target planes used `material.visible = false`,
+  which makes Three.js skip them for raycasting entirely (not just hide
+  them), *and* they were never rotated so they showed their back face to a
+  default `FrontSide`-only material. Both fixed (transparent+opacity:0,
+  `side: THREE.DoubleSide`). This was the actual reason doorway clicks did
+  nothing — verified with a direct `raycaster.intersectObject` call before/
+  after (0 hits → hits) before touching anything else.
+- Shelf/item vertical alignment unified into one `SHELF_ROW_Y` table (was two
+  independently hand-tuned numbers that had drifted apart — items floated
+  above their shelf).
+- **Full explicit-slot arrangement system** (matches how the exhibition
+  builder's shelf slots already work): `selectedIds` is always exactly
+  `TOTAL_SLOT_COUNT` (37 = 32 wall slots + 5 display-case slots) long, one
+  entry per physical slot, `""` = empty. An "Organize" toggle turns the Items
+  panel into a real drag-and-drop grid grouped by wall (Back/Left/Right/
+  Display Cases), every slot numbered 1-37 (matches numbered badges that also
+  render floating in the actual 3D room during Organize, not just the
+  sidebar), drag any piece onto any square — filled or empty — to place it
+  exactly there.
+- Display cases are real assignable slots now — items render lying flat in
+  them instead of wall-mounted, with a different "look down into the case"
+  focus shot than wall items get.
+- Camera position/framing now persists across an Organize drag (was
+  silently resetting to the default spawn on every single item move, which
+  is why one drag used to throw you back to the entrance) — entering a
+  genuinely different room still correctly resets it.
+- Wallpaper save bug fixed — was embedded in the same small JSON blob as
+  everything else, so a large image could quietly blow the whole save past
+  localStorage's quota and silently drop the ENTIRE draft, not just the
+  wallpaper. Now saved under its own key with its own error handling.
+  Ceiling no longer inherits the wallpaper texture (it was sharing the
+  wall's material).
+- Always-visible "Exit" button (top-left) → jumps straight to the campus
+  map regardless of which room you're in — added after EK got stuck in the
+  Grand Hall with no obvious way out (the only exit was a doorway behind the
+  spawn point, easy to not realize is there).
+- "Rooms" dropdown (also top-left) → lists every populated universe room by
+  name + item count, click one to jump straight there. Added because
+  precisely clicking a small 3D archway with a real mouse is inherently
+  fiddly — this is a reliable, DOM-click alternative, not a replacement for
+  the archways (which do work, verified directly).
+- X button to dismiss the Grand Hall's "coming soon" card.
+- Room settings panel (Store/Salon/Hero, Vault/White/Arcade, Values,
+  Wallpaper) auto-collapses when Organize is on, freeing vertical space so
+  the 3D view doesn't get scrolled out of reach — manual collapse toggle too.
+- A shallow dim "vestibule" beyond the entrance doorway, because removing
+  the old solid black door-fill (so the opening wouldn't read as "closed")
+  left it showing flat `scene.background` through the gap with nothing
+  beyond — which read as a broken/blank texture, not an open passage.
+
+**⚠ UNRESOLVED — the actual current blocker, EK's words: "all of these
+colors are washed out, i don't see any of the inspiration and real colors i
+sent you."** This is the real next task, not the stuff above.
+
+Context: EK sent 5 real reference photos partway through this session —
+(1) a dark, moodily-spotlit museum hall with pedestal sculptures for the
+Grand Hall's own look, (2)-(4) an actual bank-vault-door photo (a real
+"Weapons Vault" museum exhibit — thick riveted circular door swung open,
+navy walls, plain wood floor) as the reference for the "Vault" room style,
+and (5) a bright white classical gallery (the Susquehanna Art Museum —
+cream walls with painted panel molding, warm wood/parquet floor, tall
+windows) as the reference for the "White" room style. EK's explicit call:
+Vault becomes this bank-vault look, White becomes this bright-gallery look,
+Grand Hall gets its own dark look independent of whichever style is picked.
+
+**What was actually built, and why EK's right that it doesn't match:** this
+whole pass was done by picking hex colors and Three.js material params
+(roughness/metalness) purely by reasoning about the reference photos in
+text — **no screenshot tool was available this session** (the Browser
+pane's screenshot action failed with "pane is not displayed" every time it
+was tried, all session, on both the shared checkout and this worktree).
+Every visual claim in this file's commit messages before this note was
+verified via things that don't need pixels — `raycaster.intersectObject`
+hit counts, DOM text/state checks, console-error absence, scene-graph
+introspection (mesh counts/colors read back via a temporary
+`window.__vltdDebug` hook, then removed). That's solid for confirming
+*mechanics* work (doorways navigate, drag-and-drop places items, camera
+math is exactly right) but it is **not sufficient for tuning how a
+lit 3D scene actually looks** — lighting, fog, material response, and
+color all interact in ways a hex value alone doesn't predict. Two rounds of
+"pick a hex color close to the photo" have now visibly not worked (EK's
+first review: "needs refinement" on a beige/washed White pass; second
+review: openly rejected, still washed out, still doesn't match).
+
+**Do not do a third blind color pass.** The next chat working on this
+needs an actual way to see the rendered result — screenshots working (try
+the Browser pane fresh; it may just have needed to be manually opened on
+EK's end), or EK screen-sharing/pasting a fresh screenshot after each
+material change, or some other way of closing the loop. Guessing a fourth
+set of hex values without seeing them render is very unlikely to land
+better than the first two attempts did.
+
+**Where the color logic currently lives, for whoever picks this up:**
+`getRoomPalette()` (wall/floor/trim/glow per style) and the inline
+`wallMaterial`/`floorMaterial`/`trimMaterial`/`baseboardMaterial`/
+`doorSideMaterial`/`ceilingMaterial` construction inside the big
+`useEffect` in `VirtualGalleryRoom.tsx` (search for `roomStyle ===
+"vault"` / `"whitebox"` / `"arcade"` — every material branches on it).
+The Grand Hall's own dark override is the `inHub` boolean, computed once
+near the top of that same effect and reused throughout (there was a real
+duplicate-`const inHub` bug from an earlier pass in this file's history —
+already fixed, don't reintroduce a second declaration).
+
+**Update — 2026-08-16, commit `4b71b77`:** fixed the two concrete geometry
+bugs EK flagged with red-circle screenshots ("why is this image floating
+and not on wall and why the shelves not just lined up") — separate from
+the color issue above, and root-caused precisely rather than guessed, by
+reading back real mesh coordinates through the same `window.__vltdDebug`
+scene-introspection hook (added, used, then removed again per the pattern
+above).
+1. **Items floating off the wall.** The wall-mount frame trim was a fixed
+   thin box offset a constant 0.045 behind the card, regardless of the
+   actual wall's distance. Confirmed against the real wall planes (back
+   wall z=-12, left x=-10.5, right x=10.5) that this left a real 0.15-0.2
+   unit air gap between the frame and the wall for every wall-mounted item
+   — it wasn't a lighting/angle illusion, the frame genuinely never
+   touched the wall. Frame depth now stretches to actually meet (and
+   embed slightly into) the wall; free-standing "center"/spotlight items
+   keep the old small offset since they aren't wall-mounted.
+2. **Gapped shelf corners (first pass, later superseded).** Original fix
+   added small corner-cap boxes to bridge the sliver at each back corner.
+   EK then sent a wider screenshot showing the real problem was bigger:
+   **every shelf board — back and both sides — was 0.55 thick centered
+   0.245 units clear of the real wall along its ENTIRE length**, not just
+   at the corners; wall texture was visible above/behind the board the
+   whole way down. Corner caps only patched a few inches of that. Fixed
+   properly in a follow-up commit: board depth/width increased to 0.845
+   (front face held in place, back face extended to embed 0.05 into the
+   actual wall) for all 4 rows, all 3 walls — which also closes the corner
+   gap on its own, so the standalone corner-cap boxes were removed as
+   redundant.
+Both verified by re-querying mesh positions after each fix (frame back
+face and every shelf board's back face land exactly at wall + 0.05
+embed) — not by eyeballing a screenshot, since none was available this
+pass either. **Lesson for next time:** a screenshot that looks like "the
+corner is wrong" may actually mean "the whole edge is wrong and the
+corner is just where it's most visible" — check the full run, not only
+the spot circled.
+
+**Also fixed, same session — vault door didn't match its opening
+(asked about 4 times before this, and the first attempt below still
+missed):** the entrance passage was always rectangular even in Vault
+style, with the round riveted door bolted onto the SIDE wall as pure
+decoration — a previous pass's comment explicitly says it gave up
+trying to hinge a round door into a square hole.
+
+*First attempt this session:* cut a full CIRCLE hole in the wall
+(`THREE.Shape` + `THREE.Path.absarc`, full 360°) and hinge-rotated the
+door open via a pivot group. Looked correct on paper (verified the
+disc's world position algebraically), but EK sent the actual reference
+photo side by side with a screenshot and the gap was real, not a
+nitpick: the reference opening is a floor-to-ceiling **arch** (straight
+sides, rounded top), not a circle, and the door in the photo stands
+**fully clear** off to the side on a heavy hinge column with its whole
+face visible — not mid-swing. Redoing the pivot math after the fact
+showed the "112° open" rotation still left the disc's footprint
+overlapping the hole by ~0.17 units, which is exactly the half-covered
+look EK's screenshot showed.
+
+*Second attempt, matches the reference:* wall opening rebuilt as an
+actual arch shape (`moveTo`/`lineTo`/`absarc` tracing straight sides up
+to y=3.25 then a semicircular top, `archHalfWidth` 1.7) with a riveted
+architrave (two posts + a half-torus top + a thicker hinge column)
+around it. The door is no longer hinge-rotated in place — it's placed
+directly at its open resting position, grounded near the floor beside
+the hinge column, with only a slight turn (not a full swing) so the
+riveted face stays visible. Placement math guarantees the door's
+center-minus-radius never reaches the arch's opening at all (a real
+margin, not a near-miss). Verified via raycasting straight through the
+wall mesh at five points (arch center, floor level, near the edge, and
+two points that should still be solid wall) — confirmed the hole is
+genuinely open where it should be and solid everywhere else, not just
+visually close. Non-vault styles are untouched, still rectangular.
+
+**Lesson for next time:** when a fix is verified only by math/geometry
+reads (no screenshot tool), "the numbers check out" is not the same as
+"it matches the reference" — get the actual reference photo next to the
+result before calling it done, the way EK's side-by-side did here.
 
 ---
 

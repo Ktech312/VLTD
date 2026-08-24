@@ -8,6 +8,7 @@ interface BeforeInstallPromptEvent extends Event {
 }
 
 const DISMISSED_KEY = "vltd_pwa_dismissed_until";
+const INSTALLED_KEY = "vltd_pwa_installed";
 const COOLDOWN_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
 
 export default function PWAInstallBanner() {
@@ -17,19 +18,45 @@ export default function PWAInstallBanner() {
   const [iosExpanded, setIosExpanded] = useState(false);
 
   useEffect(() => {
-    // Already installed as PWA
-    if (window.matchMedia("(display-mode: standalone)").matches) return;
+    // EK's ask (2026-08-21): the banner kept coming back after a real
+    // install. Root cause — a successful install used to just clear the
+    // dismiss-cooldown key instead of recording that the app was actually
+    // installed, so there was nothing permanent stopping it from showing
+    // again (e.g. the next time `beforeinstallprompt` fires, or on a load
+    // that isn't in standalone display mode — which happens even on an
+    // installed device if the app is opened as a normal browser tab
+    // instead of via the home-screen icon). This permanent flag is the
+    // actual "don't show again" — checked first, before the cooldown.
+    if (localStorage.getItem(INSTALLED_KEY) === "true") return;
+
+    // Already installed as PWA (this specific launch is running standalone)
+    if (window.matchMedia("(display-mode: standalone)").matches) {
+      localStorage.setItem(INSTALLED_KEY, "true");
+      return;
+    }
+
+    // Fires on ANY successful install — this banner's own button, the
+    // browser's own address-bar install icon, whatever. More reliable
+    // than only trusting this component's own install() flow.
+    const onInstalled = () => {
+      localStorage.setItem(INSTALLED_KEY, "true");
+      setShow(false);
+      setDeferredPrompt(null);
+    };
+    window.addEventListener("appinstalled", onInstalled);
 
     // Within cooldown window
     const until = localStorage.getItem(DISMISSED_KEY);
-    if (until && Date.now() < Number(until)) return;
+    if (until && Date.now() < Number(until)) {
+      return () => window.removeEventListener("appinstalled", onInstalled);
+    }
 
     // iOS detection (no beforeinstallprompt support)
     const ua = navigator.userAgent;
     if (/iphone|ipad|ipod/i.test(ua) && !/crios/i.test(ua)) {
       setIsIOS(true);
       setShow(true);
-      return;
+      return () => window.removeEventListener("appinstalled", onInstalled);
     }
 
     // Android/Chrome install prompt
@@ -39,7 +66,10 @@ export default function PWAInstallBanner() {
       setShow(true);
     };
     window.addEventListener("beforeinstallprompt", handler);
-    return () => window.removeEventListener("beforeinstallprompt", handler);
+    return () => {
+      window.removeEventListener("beforeinstallprompt", handler);
+      window.removeEventListener("appinstalled", onInstalled);
+    };
   }, []);
 
   function dismiss() {
@@ -53,7 +83,7 @@ export default function PWAInstallBanner() {
     await deferredPrompt.prompt();
     const result = await deferredPrompt.userChoice;
     if (result.outcome === "accepted") {
-      localStorage.removeItem(DISMISSED_KEY);
+      localStorage.setItem(INSTALLED_KEY, "true");
     }
     setShow(false);
     setDeferredPrompt(null);

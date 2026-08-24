@@ -30,6 +30,7 @@ export default function ProtectedRoute({
     setError("");
 
     const isPublicRoute =
+      pathname === "/museum/virtual-room" ||
       pathname?.startsWith("/museum/share") ||
       // Guest gallery: /museum/[galleryId]/guest (NOT /museum/guest)
       (() => {

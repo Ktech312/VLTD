@@ -9,6 +9,7 @@ import PullToRefresh from "@/components/PullToRefresh";
 export default function NavShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const isStudio = pathname?.startsWith("/studio");
+  const isOwnerLab = pathname?.startsWith("/owner-lab");
   // The public marketing home renders its own nav — don't stack the app shell nav on it.
   const isPublicHome = pathname === "/";
   // The admin console (admin/characters/page.tsx) iframes other admin pages
@@ -32,9 +33,22 @@ export default function NavShell({ children }: { children: React.ReactNode }) {
       return true;
     }
   });
+  // Guest 3D room view: full-bleed below the header (EK's ask) — no mobile
+  // bottom tab bar eating vertical space, and no pull-to-refresh, which
+  // would fight the room's own click-drag-to-look/walk navigation.
+  const isVirtualRoomGuest = pathname === "/museum/virtual-room/guest";
 
-  if (isStudio || isPublicHome || isFramed) {
+  if (isStudio || isOwnerLab || isPublicHome || isFramed) {
     return <>{children}</>;
+  }
+
+  if (isVirtualRoomGuest) {
+    return (
+      <>
+        <TopNav />
+        {children}
+      </>
+    );
   }
 
   return (
