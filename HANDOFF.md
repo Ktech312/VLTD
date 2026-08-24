@@ -146,6 +146,52 @@ confirm with EK who owns a screen.** EK is aware of this.
 
 ---
 
+## ✅ 2026-08-23, later same day — picker now offers EVERY vault item,
+not just unplaced ones; picking an already-placed item moves it.
+
+EK caught a real design mistake, not a bug per se: "why are there no
+items displayed to select?" (the demo vault's 6 items were all already
+placed in the room, so the picker's own "unplaced only" filter correctly
+showed nothing — but that filter itself was wrong). Follow-up: "I should
+be able to select any item that own, this isn't being fed off or exiting
+exhibitions only... Then i have to do double the work" — the old picker
+only listed items not already in some slot in this room, so moving an
+already-placed item meant removing it via the Items sidebar FIRST, then
+picking it — two steps for what should be one.
+
+- `pickerAllItems` replaces `pickerUnplaced` — the picker lists every
+  vault item now, full stop.
+- New `pickerCurrentSlotLabel` (built from `slotGroups`, not a raw index)
+  shows a small "Back #3" / "Left #1" style tag on any tile that's
+  already placed somewhere in this room — wall name included on purpose,
+  since wall-local numbering restarts at 1 on every wall, so three
+  different items can legitimately all read "#1" at once; the bare
+  number alone would've looked like a bug the moment more than one wall
+  had items in the picker together.
+- `fillFromSlot` now clears an item's OLD slot (`next.indexOf(id)`,
+  found and blanked) before assigning it to the new one, for every id in
+  the batch — picking an already-placed item moves it instead of
+  duplicating it into two slots at once. This was the one real risk in
+  opening the picker up: previously "already placed" items were filtered
+  out specifically so this case could never happen.
+- Empty-state copy updated: "Every item in this vault is already placed"
+  no longer applies (nothing is ever filtered out by placement anymore) —
+  now just "Your vault is empty" (0 items total) or "No items matched"
+  (search/filter excluded everything).
+
+**Verified live, full round-trip**: opened the picker on an empty slot,
+confirmed it showed all 6 items (was 0), confirmed the universe pills
+recompute against all 6 (`All (6)`, real per-item counts). Confirmed
+"Rookie Parallel"'s tile showed "Left #1" (its real current slot).
+Selected it, confirmed, then checked the actual room state via
+`data-arrange-idx`: "Rookie Parallel" appears exactly ONCE in the whole
+61+ slot table (no duplicate), now at its new slot — the move-not-
+duplicate path works end to end, not just in the picker's own UI. Zero
+console errors through the whole sequence. `tsc`/`eslint` (0 errors,
+same 2 pre-existing warnings)/`npm run build` clean.
+
+---
+
 ## ✅ 2026-08-23, later same day — 3 more real fixes from EK's next round
 of screenshots. EK, sharply: "No Patches and FIXES, I don't care if
 something was hardcoded, its wrong, start over and do it the right way" —

@@ -1308,36 +1308,65 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
     }
     return map;
   }, [slotGroups]);
-  // The "+" picker's own list: only items not already placed in some slot
-  // (this picker ADDS, it doesn't move something that's already on a
-  // shelf — dragging in the Arrange grid already covers moving), grouped
-  // by universe, mirroring the Vault's own "Wall" view (VaultWallView.tsx)
-  // exactly — search + universe pills w/ counts + A-Z groups — instead of a
-  // one-off picker UI.
-  const pickerUnplaced = useMemo(() => {
-    const placed = new Set(selectedIds.filter(Boolean));
-    return items.filter((item) => !placed.has(item.id));
-  }, [items, selectedIds]);
-  // Universe pill counts — over all unplaced items, unaffected by the
+  // EK's ask (2026-08-23): "I should be able to select any item that own,
+  // this isn't being fed off or exiting exhibitions only" — the picker
+  // used to only list items not already placed anywhere in this room,
+  // on the theory that dragging in the Arrange grid already covers
+  // moving something that's already placed. In practice that meant
+  // picking an already-placed item required removing it via the Items
+  // sidebar FIRST, opening the picker second — "double work," EK's own
+  // words. The picker now lists every vault item, period; selecting one
+  // that's already on a shelf elsewhere in THIS room just MOVES it (see
+  // fillFromSlot below, which now clears an item's old slot before
+  // placing it in the new one) instead of needing a separate step.
+  const pickerAllItems = items;
+  // Current slot label for every item already placed somewhere in this
+  // room — used to show e.g. "Back #3" on a tile so picking it reads as
+  // "move this" instead of silently duplicating it. Built straight from
+  // slotGroups (not slotDisplayNumber + a raw index) so the wall name is
+  // right there too — wall-local numbering restarts at 1 on every wall,
+  // so three different items can each legitimately be "#1" on their own
+  // wall; showing just the bare number without which wall would read as
+  // a bug once more than one wall has items in the picker at once.
+  const pickerCurrentSlotLabel = useMemo(() => {
+    const shortWallLabel: Record<string, string> = {
+      "Back Wall": "Back",
+      "Left Wall": "Left",
+      "Right Wall": "Right",
+      "Door Wall": "Door",
+      "Display Cases": "Case",
+      Featured: "Featured",
+    };
+    const map = new Map<string, string>();
+    for (const group of slotGroups) {
+      const label = shortWallLabel[group.label] ?? group.label;
+      group.indices.forEach((index, position) => {
+        const id = selectedIds[index];
+        if (id) map.set(id, `${label} #${position + 1}`);
+      });
+    }
+    return map;
+  }, [slotGroups, selectedIds]);
+  // Universe pill counts — over every vault item, unaffected by the
   // current search text (same convention as VaultWallView's universeCounts).
   const pickerUniverseCounts = useMemo(() => {
     const counts: Partial<Record<UniverseKey, number>> = {};
-    for (const item of pickerUnplaced) {
+    for (const item of pickerAllItems) {
       const u = inferPickerUniverse(item);
       counts[u] = (counts[u] ?? 0) + 1;
     }
     return counts;
-  }, [pickerUnplaced]);
+  }, [pickerAllItems]);
   const pickerFiltered = useMemo(() => {
     const q = pickerQuery.trim().toLowerCase();
-    return pickerUnplaced
+    return pickerAllItems
       .filter((item) => {
         if (pickerUniverses.size > 0 && !pickerUniverses.has(inferPickerUniverse(item))) return false;
         if (q && !pickerSearchText(item).includes(q)) return false;
         return true;
       })
       .sort((a, b) => String(a.title ?? "").localeCompare(String(b.title ?? "")));
-  }, [pickerUnplaced, pickerQuery, pickerUniverses]);
+  }, [pickerAllItems, pickerQuery, pickerUniverses]);
   const pickerGrouped = useMemo(() => {
     const map: Record<string, VaultItem[]> = {};
     for (const item of pickerFiltered) {
@@ -3183,10 +3212,22 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
   // slot's own wall group — a small collection might only have one empty
   // spot on the wall you clicked, and the rest should still land
   // somewhere real instead of being silently dropped.
+  //
+  // EK's ask (2026-08-23): the picker used to only offer items not
+  // already placed somewhere in this room — "I should be able to select
+  // any item that own... Then i have to do double the work" (remove it
+  // via the Items sidebar first, THEN pick it). The picker now offers
+  // every vault item, so an already-placed item can arrive here — clear
+  // its OLD slot before assigning it its new one, or picking it would
+  // just duplicate it into two slots at once instead of moving it.
   function fillFromSlot(startIdx: number, itemIds: string[]) {
     if (itemIds.length === 0) return;
     setSelectedIds((current) => {
       const next = [...current];
+      for (const id of itemIds) {
+        const existingIdx = next.indexOf(id);
+        if (existingIdx !== -1) next[existingIdx] = "";
+      }
       next[startIdx] = itemIds[0];
       let cursor = (startIdx + 1) % next.length;
       let remaining = itemIds.slice(1);
@@ -3933,7 +3974,7 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
                     Add to slot #{slotDisplayNumber.get(pickerSlotIdx) ?? pickerSlotIdx + 1}
                   </div>
                   <div className="truncate text-[11px] text-[color:var(--muted)]">
-                    The first pick goes here — the rest fill the next open spots.
+                    The first pick goes here — the rest fill the next open spots. Picking an item already on a shelf moves it.
                   </div>
                 </div>
                 <div
@@ -3984,7 +4025,7 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
                         : "bg-[color:var(--pill)] text-[color:var(--muted)] ring-[color:var(--border)] hover:text-[color:var(--fg)]",
                     ].join(" ")}
                   >
-                    All ({pickerUnplaced.length})
+                    All ({pickerAllItems.length})
                   </button>
                   {PICKER_UNIVERSE_ORDER.map((key) => {
                     const count = pickerUniverseCounts[key] ?? 0;
@@ -4035,8 +4076,8 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
               <div className="min-h-0 flex-1 overflow-y-auto px-3">
                 {pickerFiltered.length === 0 ? (
                   <div className="flex h-40 items-center justify-center text-sm text-[color:var(--muted)]">
-                    {pickerUnplaced.length === 0
-                      ? "Every item in this vault is already placed somewhere in this room."
+                    {pickerAllItems.length === 0
+                      ? "Your vault is empty — add items to it first."
                       : "No items matched."}
                   </div>
                 ) : (
@@ -4056,6 +4097,7 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
                             {group.map((item) => {
                               const order = pickerSelection.indexOf(item.id);
                               const selected = order !== -1;
+                              const currentSlot = pickerCurrentSlotLabel.get(item.id);
                               return (
                                 <button
                                   key={item.id}
@@ -4083,6 +4125,15 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
                                       No photo
                                     </div>
                                   )}
+                                  {currentSlot !== undefined ? (
+                                    // EK's ask: picking any owned item, including
+                                    // one already on a shelf, is now normal — this
+                                    // just makes it clear a click here MOVES it
+                                    // rather than duplicating it somewhere new.
+                                    <span className="absolute left-1 top-1 rounded-full bg-black/70 px-1.5 py-0.5 text-[8px] font-black uppercase tracking-[0.06em] text-white/85 ring-1 ring-white/20">
+                                      {currentSlot}
+                                    </span>
+                                  ) : null}
                                   <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent px-1 pb-1 pt-4">
                                     <p className="line-clamp-2 text-center text-[9px] font-semibold leading-tight text-white">
                                       {item.title}
