@@ -146,6 +146,86 @@ confirm with EK who owns a screen.** EK is aware of this.
 
 ---
 
+## ⚠⚠⚠ 2026-08-23, later same day — REAL SECURITY GAP found and fixed:
+the museum builder had no concept of "who's looking." Anyone who opened
+`/museum/virtual-room` — logged in or not, owner or not — got the exact
+same full edit chrome (Organize, Items sidebar, Save Draft) for whatever
+exhibition the SOURCE dropdown happened to load, including exhibitions
+that belong to other people.
+
+EK caught this live and it's legitimate, not paranoia: "why am i able to
+manipulate things as a guest, a guest should be view only... you just
+left the door wide open on this for anyone to do anything." Confirmed by
+reading the code, not guessed: `/museum/virtual-room/page.tsx` renders
+`<VirtualGalleryRoom />` with zero auth/ownership check of any kind — the
+"Guest" pill in the header is just a link for the OWNER to preview their
+own guest-facing URL; it doesn't mean the current viewer IS a guest, and
+nothing enforces that assumption.
+
+**Important nuance, also confirmed by reading the code**: nothing in this
+builder — Organize, drag, the "+" picker, Save Room Draft — ever calls
+Supabase. Grepped the whole file: zero `.insert`/`.update`/`.upsert`/
+`supabase` references. Everything is local React state + localStorage.
+So the actual damage anyone could do through this specific screen was
+always zero — no one could really vandalize someone else's exhibition
+through it, and no one could vandalize EK's either. The real problem was
+the wrong PERMISSION MODEL (showing edit controls to non-owners at all),
+not an open write path — this matters for how urgent/how-fixed this is,
+not as an excuse to leave it as-is.
+
+**Fix**: added the exact ownership pattern already used elsewhere in this
+codebase for this exact purpose (`GuestGalleryRenderer.tsx`'s own
+`isOwner={Boolean(viewerProfileId) && ownerProfileId === viewerProfileId}`,
+reading `vltd_active_profile_id_v1` from localStorage) — not a new
+mechanism, the existing one just was never wired up here. New
+`effectiveGuest = guest || !isOwnerOfCurrentGallery`, computed from the
+currently-loaded gallery's `profile_id` vs. the viewer's own — Scratch
+room (building from your OWN vault, no real exhibition at stake) stays
+open to anyone as the harmless sandbox it's always been; loading a REAL,
+named exhibition through the Source dropdown now collapses the ENTIRE
+builder chrome to the same minimal, already-built read-only view a true
+guest gets, the moment you're not its owner. The existing "Builder" link
+in that read-only view (added earlier this session for an unrelated
+guest-navigation dead-end) doubles as the escape hatch here too — it
+always points at a fresh `/museum/virtual-room` load, which remounts back
+to Scratch rather than whatever gallery just collapsed the chrome.
+
+**Caveat EK should know**: `viewerProfileId` is a plain localStorage
+value, not a server-verified session — technically spoofable via
+devtools. That's an acceptable gap FOR NOW only because of the "nothing
+here writes to Supabase" fact above — a spoofed check still can't touch
+anything real. If a "publish my changes" / "save to my real exhibition"
+write path gets added later (sounds likely, given the "push it live as a
+Beta tab" plan), THAT path must have its own real, server-enforced
+ownership check (RLS or an API route) — this client-side gate alone would
+not be enough to protect a real write.
+
+**Separately, also surfaced (not yet acted on, needs EK's own decision,
+not a code fix)**: `createGallery()` in `src/lib/galleryModel.ts` hardcodes
+every new exhibition to `visibility: "PUBLIC"` at creation, and the
+`galleries` table's RLS policy (`supabase/migrations/20260601_public_galleries_read.sql`)
+lets anyone, including logged-out visitors, read anything
+`visibility='PUBLIC' AND state='ACTIVE'`. EK confirmed this specific part
+is INTENDED ("the exhibitions should be public, the ones that were
+created by their owners... just like the Museum, VIEW only") — public+
+view-only exhibitions are the desired design, not a bug. What's still
+open: whether new exhibitions should default to public immediately on
+creation (current behavior) or require an explicit "publish" step — EK
+hasn't decided that part yet, separate from this session's fix.
+
+Verified live (this sandboxed browser has no login, so `viewerProfileId`
+is always empty here — every real exhibition correctly reads as
+not-owned): confirmed Scratch room still shows full builder chrome
+(Organize present); confirmed selecting "Flora" from the Source dropdown
+instantly collapsed to the minimal read-only view (Organize/Save Draft/
+the dropdown itself all gone, only the room + a "Builder" escape link
+remain); confirmed that link's href points back at a fresh
+`/museum/virtual-room`; confirmed navigating there fresh restores full
+Scratch-room edit access. Zero console errors through the whole sequence.
+`tsc`/`eslint` (0 errors)/`npm run build` clean.
+
+---
+
 ## ✅ 2026-08-23, later same day — the real root cause of "why do i not
 have access to my real items": the museum builder was reading a local-
 only cache and never actually fetching the signed-in user's cloud vault.

@@ -1060,6 +1060,23 @@ function buildPositions(layout: RoomLayout, style: RoomStyle): RoomItemPosition[
   return [...wallPositions, ...cabinetPositions];
 }
 
+// EK's ask (2026-08-23): the builder had no concept of "who's looking" at
+// all — anyone, signed in or not, owner or not, got the full edit chrome
+// (Organize, Items, Save Draft) for whatever exhibition the SOURCE
+// dropdown happened to load. Same local-profile pattern already used for
+// this exact purpose elsewhere (GuestGalleryRenderer.tsx's own
+// isOwner={Boolean(viewerProfileId) && ownerProfileId === viewerProfileId}) —
+// not a new mechanism, the existing one just was never wired up here.
+const ACTIVE_PROFILE_KEY = "vltd_active_profile_id_v1";
+function getActiveProfileId(): string {
+  if (typeof window === "undefined") return "";
+  try {
+    return String(window.localStorage.getItem(ACTIVE_PROFILE_KEY) ?? "").trim();
+  } catch {
+    return "";
+  }
+}
+
 export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean } = {}) {
   const mountRef = useRef<HTMLDivElement | null>(null);
   const roomGroupRef = useRef<THREE.Group | null>(null);
@@ -1074,6 +1091,14 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
   const [items, setItems] = useState<VaultItem[]>(DEMO_ITEMS);
   const [galleries, setGalleries] = useState<Gallery[]>([]);
   const [galleryId, setGalleryId] = useState("scratch");
+  // Same pattern as GuestGalleryRenderer.tsx's own viewerProfileId — read
+  // once on mount, not tied to auth state changing mid-session (a profile
+  // switch while this exact page is already open is a rare enough edge
+  // case not worth the extra event-listener plumbing here).
+  const [viewerProfileId, setViewerProfileId] = useState("");
+  useEffect(() => {
+    setViewerProfileId(getActiveProfileId());
+  }, []);
   // Feedback for the Source dropdown — switching exhibitions used to fail
   // silently (nothing visibly changed) whenever an exhibition's saved item
   // ids didn't match anything in the loaded vault, which read as "this
@@ -3316,6 +3341,25 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
       });
   }
 
+  // EK's ask (2026-08-23): "a guest should be view only" — a Scratch room
+  // (building from your OWN vault, nothing published, no real exhibition
+  // at stake) stays open to try regardless of sign-in — same low-stakes
+  // sandbox it's always been. Loading a REAL, named exhibition through the
+  // Source dropdown is the part that needs gating: only its actual owner
+  // gets edit chrome for it. `effectiveGuest` is what every render branch
+  // below checks instead of the raw `guest` prop, so "explicitly viewing
+  // via /museum/virtual-room/guest" and "opened someone else's exhibition
+  // without owning it" collapse to the exact same read-only treatment —
+  // including the existing "Builder" link back out (below), so picking a
+  // gallery you don't own doesn't strand you with no way to get edit
+  // chrome back.
+  const currentGallery = galleryId === "scratch" ? null : galleries.find((entry) => entry.id === galleryId) ?? null;
+  const isOwnerOfCurrentGallery =
+    galleryId === "scratch"
+      ? true
+      : Boolean(viewerProfileId) && currentGallery?.profile_id === viewerProfileId;
+  const effectiveGuest = guest || !isOwnerOfCurrentGallery;
+
   // Guest view (EK's ask, 2026-08-21): the builder chrome above — Source
   // dropdown, Room settings, Items sidebar, Save Draft — is for the owner
   // arranging the room, not a visitor looking at it. A guest gets just the
@@ -3335,13 +3379,13 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
   const roomView = (
     <section
       className={[
-        guest ? "h-full overflow-hidden" : "min-h-[600px] overflow-hidden rounded-[8px] border shadow-[0_30px_90px_rgba(0,0,0,0.34)]",
+        effectiveGuest ? "h-full overflow-hidden" : "min-h-[600px] overflow-hidden rounded-[8px] border shadow-[0_30px_90px_rgba(0,0,0,0.34)]",
         palette.shell,
       ].join(" ")}
-      style={guest ? undefined : { borderColor: "var(--theme-border)" }}
+      style={effectiveGuest ? undefined : { borderColor: "var(--theme-border)" }}
     >
-      <div className={guest ? "h-full" : "min-h-[600px]"}>
-        <div className={guest ? "relative h-full" : "relative min-h-[600px]"}>
+      <div className={effectiveGuest ? "h-full" : "min-h-[600px]"}>
+        <div className={effectiveGuest ? "relative h-full" : "relative min-h-[600px]"}>
           {viewMode === "room" ? (
             <div ref={mountRef} className="absolute inset-0" />
           ) : (
@@ -3352,11 +3396,15 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
               {viewMode === "room" ? <Sparkles size={14} /> : <MapIcon size={14} />}
               {viewMode === "room" ? "VLTD Room" : "Universe Map"}
             </div>
-            {guest ? (
+            {effectiveGuest ? (
               // Guest view had no way back to the builder at all — Exit
               // only reaches the campus map, and the map has no link back
               // to the setup page either, so a guest visitor was stuck in
-              // a room<->map loop with no escape. EK caught this live.
+              // a room<->map loop with no escape. EK caught this live. Also
+              // the escape hatch for "picked a gallery you don't own" —
+              // this always points at a fresh /museum/virtual-room load,
+              // which remounts back to Scratch, not whatever gallery just
+              // collapsed the chrome.
               <Link
                 href="/museum/virtual-room"
                 className="flex items-center gap-1.5 rounded-[6px] bg-black/42 px-3 py-2 text-xs font-black uppercase tracking-[0.14em] text-white ring-1 ring-white/12 backdrop-blur transition hover:bg-black/60"
@@ -3508,7 +3556,7 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
     </section>
   );
 
-  if (guest) {
+  if (effectiveGuest) {
     return (
       <div className="fixed inset-x-0 bottom-0 text-[color:var(--fg)]" style={{ top: "var(--topnav-h)" }}>
         {roomView}
