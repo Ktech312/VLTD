@@ -93,14 +93,57 @@ const WALLPAPER_KEY = "vltd_virtual_gallery_wallpaper_v1";
 // left/right only 6 each (2 of their own real depth-steps) — the other
 // 12 back-wall positions and the deeper side-wall rows never got a
 // slot index at all, which is exactly the badge-less gaps EK circled.
-// Raised to fit BACK_WALL_CAPACITY (24, fixed) + a real, geometry-
-// checked SIDE_WALL_CAPACITY (12 each: 4 depth-steps x 3 rows, verified
-// by arithmetic against Store's own sideBaseZ/sideZStep to land at
-// z=-0.25 at the deepest — comfortably clear of the z=5.54 door-wall
-// items, not a guess) for both sides, plus the vault style's existing
-// 8-slot front/door wall.
+// Raised to fit BACK_WALL_CAPACITY (24) + SIDE_WALL_CAPACITY for both
+// sides, plus the vault style's existing 8-slot front/door wall.
 const BACK_WALL_CAPACITY = 24;
-const SIDE_WALL_CAPACITY = 12;
+// EK's ask (2026-08-23, 4th time raised) — side-wall items sat much
+// farther apart than back-wall items AND stopped well short of the far
+// corner, wasting real shelf length. Root cause: the 12-slot side-wall
+// capacity (4 depth-steps x 3 rows) was never sized against the wall's
+// own real length — the old "4 depth-steps" comment only checked that
+// its deepest point (z=-0.25) stayed clear of an unrelated feature
+// (the vault style's own front/door-wall row at z=5.54), not how much
+// of the actual side shelf that left unused. Read the real numbers from
+// the room generator instead of guessing again:
+//   left_shelf_i / right_shelf_i: depth 23.2, centered z=-3.15
+//     -> real board spans z in [-14.75, 8.45]
+//     (scripts/generate-gallery-room-models.py add_wall_panels(); the
+//     procedural whitebox/arcade shelves in this file's own
+//     addSideRowBoard use the identical -14.75..8.45 span, so this
+//     applies to every room style, not just the baked vault GLB)
+//   back_corner_post_x: (1.3, 9.15, 1.3) centered z=-11.87
+//     -> forward face at z=-11.22; the back wall's own face sits at
+//     z~=-12.17..-11.99, so nothing should be centered any closer to
+//     the back corner than that post's forward face
+//   front_wall_left/right (the door wall): depth 0.18, centered z=5.8
+//     -> near face at z=5.71
+// An item's own footprint along the wall (frame width 1.12*scale plus
+// matting on both sides, at MIN_ITEM_SCALE=0.78) is ~0.975 wide, so a
+// safe CENTER position needs ~0.49 clearance from either limit:
+// SIDE_WALL_SAFE_BACK_Z (-10.5) sits comfortably past the corner post's
+// -11.22 forward face; SIDE_WALL_SAFE_FRONT_Z (4.9) sits comfortably
+// short of the door wall's 5.71 near face. Real safe usable run: 15.4.
+// Back wall gets the same treatment: real back_shelf_i is 19.9 wide
+// (half-width 9.95), but the back_corner_post_x pieces (half-width 0.65,
+// centered x=+-10.36) put their inner face at x=+-9.71 — BACK_WALL_HALF_WIDTH
+// (9.0) leaves the same ~0.49-unit item-footprint clearance from that,
+// same math as the side walls above.
+//
+// With both walls' safe usable lengths now real numbers, side-wall
+// capacity is raised from 12 to 21 (7 depth-steps x 3 rows, still
+// SHELF_ROW_Y.length rows) so its density can actually MATCH the back
+// wall's instead of being forced sparser by too few slots for the same
+// real length — see BACK_WALL_COL_STEP / SIDE_WALL_STEP below, both
+// independently computed from these same safe bounds and landing within
+// 0.01 units of each other, not hand-tuned to match.
+const BACK_WALL_HALF_WIDTH = 9.0;
+const BACK_WALL_COL_STEP = (BACK_WALL_HALF_WIDTH * 2) / 7; // 8 columns, 7 gaps
+const SIDE_WALL_SAFE_BACK_Z = -10.5;
+const SIDE_WALL_SAFE_FRONT_Z = 4.9;
+const SIDE_WALL_DEPTH_COUNT = 7;
+const SIDE_WALL_STEP =
+  (SIDE_WALL_SAFE_FRONT_Z - SIDE_WALL_SAFE_BACK_Z) / (SIDE_WALL_DEPTH_COUNT - 1); // full safe range, 6 gaps
+const SIDE_WALL_CAPACITY = SIDE_WALL_DEPTH_COUNT * 3; // 3 = SHELF_ROW_Y.length, fixed elsewhere below
 const MAX_ROOM_ITEMS = BACK_WALL_CAPACITY + SIDE_WALL_CAPACITY * 2 + 8;
 // "blue" has no entry — it's the hand-coded shell shown permanently, with
 // no GLB to load at all. See the RoomStyle type above for what that means.
@@ -752,7 +795,7 @@ function wallGridPosition(
     // caught and fixed just now.
     const row = Math.floor(slot / 8) % SHELF_ROW_Y.length;
     return {
-      x: -7.35 + col * 2.1,
+      x: -BACK_WALL_HALF_WIDTH + col * BACK_WALL_COL_STEP,
       y: shelfItemY(row, config.backScale),
       z: config.backZ,
       ry: 0,
@@ -858,9 +901,10 @@ function buildWallPositions(layout: RoomLayout, count: number): RoomItemPosition
     // level (deviation from eyeHeight=3.6 drops from +2.36 to +0.594).
     // Vertically it now spans slightly past where row-0/row-2 items would
     // sit at this same x — that's fine, x=0/±10.22 sit BETWEEN the regular
-    // grid's own column positions (columns are at -7.35+col*2.1, i.e.
-    // -7.35..7.35 in steps of 2.1 — 0 and ±10.22 are never one of them),
-    // so nothing is ever placed there for Hero to actually collide with.
+    // grid's own column positions (columns are at -BACK_WALL_HALF_WIDTH +
+    // col*BACK_WALL_COL_STEP, i.e. -9..9 in steps of ~2.57 — 0 and ±10.22
+    // are never one of them), so nothing is ever placed there for Hero to
+    // actually collide with.
     const HERO_Y = shelfItemY(1, 1.2); // the middle shelf row's own height, at hero scale — see comment above
     const allHeroSlots: RoomItemPosition[] = [
       { x: 0, y: HERO_Y, z: -11.78, ry: 0, scale: 1.2, wall: "back" },
@@ -869,10 +913,19 @@ function buildWallPositions(layout: RoomLayout, count: number): RoomItemPosition
     ];
     const heroSlots = allHeroSlots.slice(0, count);
     const remaining = Math.max(0, count - heroSlots.length);
+    // Medium density (unchanged design intent — a step between Salon's
+    // tight cluster and Store's full-width spread) — but now explicitly
+    // CENTERED within the real safe range (SIDE_WALL_SAFE_BACK_Z ..
+    // SIDE_WALL_SAFE_FRONT_Z) instead of starting flush at an old,
+    // ungeometry-checked -9.25, so the unused slack lands evenly on both
+    // ends rather than looking lopsided toward one corner.
+    const spotlightClusterSpan = 2.1 * (SIDE_WALL_DEPTH_COUNT - 1);
+    const spotlightBaseZ =
+      SIDE_WALL_SAFE_BACK_Z + (SIDE_WALL_SAFE_FRONT_Z - SIDE_WALL_SAFE_BACK_Z - spotlightClusterSpan) / 2;
     const supporting = distributeAcrossWalls(remaining, {
       backZ: -11.78,
       backScale: MIN_ITEM_SCALE,
-      sideBaseZ: -9.25,
+      sideBaseZ: spotlightBaseZ,
       sideZStep: 2.1,
       sideScale: MIN_ITEM_SCALE,
     });
@@ -890,10 +943,23 @@ function buildWallPositions(layout: RoomLayout, count: number): RoomItemPosition
     // EK called it out again as illegible — Salon's item SIZE is now
     // locked to the same floor as Store; only the tight step (spacing)
     // differentiates the two, not size.
+    //
+    // EK's ask (2026-08-23, 4th time raised): sideBaseZ/sideZStep here
+    // were picked without checking them against the wall's real length —
+    // see the SIDE_WALL_* constants' own comment for the actual geometry.
+    // Salon's tight 1.5 step is a deliberate, kept design choice (a small
+    // collection reading as a dense little cluster rather than the same
+    // spacing as Store just with less of it used) — what's fixed is that
+    // the cluster is now explicitly CENTERED in the real safe range
+    // instead of starting flush at an ungeometry-checked -9.6, so the
+    // unused wall length splits evenly on both ends instead of piling up
+    // on one side.
     return distributeAcrossWalls(count, {
       backZ: -11.82,
       backScale: MIN_ITEM_SCALE,
-      sideBaseZ: -9.6,
+      sideBaseZ:
+        SIDE_WALL_SAFE_BACK_Z +
+        (SIDE_WALL_SAFE_FRONT_Z - SIDE_WALL_SAFE_BACK_Z - 1.5 * (SIDE_WALL_DEPTH_COUNT - 1)) / 2,
       sideZStep: 1.5,
       sideScale: MIN_ITEM_SCALE,
     });
@@ -903,11 +969,23 @@ function buildWallPositions(layout: RoomLayout, count: number): RoomItemPosition
   // 2.35, sideScale 0.66) for real contrast against Salon's tight density
   // — a boutique, generously-spaced feel with fewer, larger pieces per
   // wall length, instead of two layouts occupying the same middle ground.
+  //
+  // EK's ask (2026-08-23, 4th time raised) — the real bug this session:
+  // the old sideZStep (3.0) was picked without checking it against
+  // either (a) the real usable side-wall length or (b) the back wall's
+  // own column spacing, so side-wall items landed both MUCH farther
+  // apart than back-wall items AND stopped a good ways short of the far
+  // corner — both true at once, which is exactly what got circled twice.
+  // SIDE_WALL_SAFE_BACK_Z/SIDE_WALL_STEP (see their own comment, real
+  // numbers from the room generator) now span the entire real safe
+  // side-wall run, at a step independently computed to land within 0.01
+  // units of BACK_WALL_COL_STEP — Store's side walls now read at the
+  // same density as its own back wall, using the real wall end to end.
   return distributeAcrossWalls(count, {
     backZ: -11.78,
     backScale: MIN_ITEM_SCALE,
-    sideBaseZ: -9.25,
-    sideZStep: 3.0,
+    sideBaseZ: SIDE_WALL_SAFE_BACK_Z,
+    sideZStep: SIDE_WALL_STEP,
     sideScale: MIN_ITEM_SCALE,
   });
 }
@@ -1015,6 +1093,18 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
   // non-empty default made that hint show on page load with nothing
   // actually picked up.
   const [selectedItemId, setSelectedItemId] = useState<string>("");
+  // `selectedItemId` is deliberately NOT a dependency of the big mount
+  // effect below (adding it would rebuild the entire 3D scene — camera
+  // and all — every time an item's description opens/closes). That
+  // means onPointerUp's closure only ever sees whatever selectedItemId
+  // was at the LAST real rebuild, not the live value — a ref kept in
+  // sync via this effect is how the "close it first" click-outside fix
+  // reads the CURRENT value without adding selectedItemId to that
+  // effect's deps.
+  const selectedItemIdRef = useRef(selectedItemId);
+  useEffect(() => {
+    selectedItemIdRef.current = selectedItemId;
+  }, [selectedItemId]);
   const [socialShareOpen, setSocialShareOpen] = useState(false);
   const [saveState, setSaveState] = useState<"idle" | "saved" | "error">("idle");
   const [isOrganizing, setIsOrganizing] = useState(false);
@@ -2871,6 +2961,18 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
           false
         )[0];
         walkTween = null; // any click/tap takes over camera control from an in-progress auto-walk
+        // EK's ask: a display-case (flat) item's description panel has no
+        // "put it back" pickup animation to close it (that's only the
+        // wall-mounted heldItem path above) — it was a pure React-state
+        // overlay with no dismiss trigger of its own, so it stayed open
+        // through anything: clicking the floor, a doorway, Organize, all
+        // of it. Every click that isn't a re-click of that exact item
+        // closes it FIRST, before this same click does anything else —
+        // clearing it here and letting a genuine item hit below set a new
+        // id in the same tick is equivalent to "close old, then open new."
+        if (selectedItemIdRef.current && hit?.object.userData.itemId !== selectedItemIdRef.current) {
+          setSelectedItemId("");
+        }
         if (hit?.object.userData.doorwayTarget) {
           const target = String(hit.object.userData.doorwayTarget);
           if (target === "__overview__") {
@@ -3525,6 +3627,10 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
                     });
                     setDragIndex(null);
                     setDragOverIndex(null);
+                    // Same "close it first" ask as the click-outside fix
+                    // above — an open item description has no business
+                    // surviving a switch into Organize mode.
+                    setSelectedItemId("");
                   }}
                   aria-pressed={isOrganizing}
                   className={[
@@ -3782,18 +3888,34 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
       </div>
       {pickerSlotIdx !== null
         ? createPortal(
+            // EK's ask: this should read as an actual pop-up (a dimmed
+            // backdrop behind a contained sheet), not a blank full-page
+            // takeover, and needs to work on mobile — reusing the exact
+            // backdrop/sheet/handle pattern SocialExportSheet.tsx already
+            // uses elsewhere in this app (bottom sheet + handle on
+            // mobile, a centered rounded dialog on desktop) instead of
+            // inventing a new one. Position/inset/z-index stay inline
+            // style, not Tailwind classes — see the `body > *` cascade
+            // note above fillFromSlot for why a body-portaled element's
+            // `fixed` class alone isn't safe here.
             <div
-              className="flex flex-col"
-              style={{
-                position: "fixed",
-                top: 0,
-                right: 0,
-                bottom: 0,
-                left: 0,
-                zIndex: 95,
-                background: "var(--bg, #060a13)",
-              }}
+              className="flex items-end justify-center p-0 sm:items-center sm:p-4"
+              style={{ position: "fixed", top: 0, right: 0, bottom: 0, left: 0, zIndex: 95 }}
             >
+              <button
+                type="button"
+                onClick={closeSlotPicker}
+                aria-label="Close"
+                className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+              />
+              <div
+                className="relative flex max-h-[92dvh] w-full flex-col overflow-hidden rounded-t-3xl ring-1 sm:max-w-4xl sm:rounded-3xl"
+                style={{ background: "var(--bg, #060a13)", borderColor: "var(--theme-border)" }}
+              >
+              {/* Drag handle — mobile bottom-sheet affordance only */}
+              <div className="flex justify-center pb-1 pt-3 sm:hidden">
+                <div className="h-1 w-12 rounded-full bg-[color:var(--border)]" />
+              </div>
               {/* Row 1: close + title + selected counter */}
               <div className="flex shrink-0 items-center gap-3 p-3">
                 <button
@@ -3994,6 +4116,7 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
                   <Plus size={14} />
                   {pickerSelection.length > 0 ? `Add ${pickerSelection.length}` : "Select items to add"}
                 </button>
+              </div>
               </div>
             </div>,
             document.body

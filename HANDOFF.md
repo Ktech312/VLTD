@@ -146,6 +146,110 @@ confirm with EK who owns a screen.** EK is aware of this.
 
 ---
 
+## ✅ 2026-08-23, later same day — 3 more real fixes from EK's next round
+of screenshots. EK, sharply: "No Patches and FIXES, I don't care if
+something was hardcoded, its wrong, start over and do it the right way" —
+re read all the relevant code fresh for each one rather than layering
+another guess on the last pass.
+
+**1. Item description panel got stuck open.** `viewMode==="room" &&
+selectedItemId && heldVaultItem` drives the description overlay. Wall-
+mounted items ("held") already had a real dismiss path (`putBackItem`, any
+click puts it back). Display-case ("flat") items never did — the flat
+branch in `onPointerUp` just calls `setSelectedItemId(itemId)` directly, no
+equivalent "any other click clears it" logic, so it survived clicking the
+floor, a doorway, or toggling Organize — exactly what EK saw. Fixed at the
+one real choke point: right before `onPointerUp`'s hit-branches run, if a
+description is open and this click didn't hit that same item, clear it
+first — "close it first before anything else comes up," literally. Also
+clear it explicitly in the Organize toggle's own onClick. One real gotcha
+caught by `eslint`'s exhaustive-deps, not guessed past: `selectedItemId`
+is deliberately NOT a dependency of the giant mount effect (adding it would
+rebuild the whole 3D scene, camera included, every time a description
+opens/closes) — so reading it directly inside that effect's `onPointerUp`
+closure would read a stale snapshot. Added `selectedItemIdRef`, kept live
+via its own tiny effect, and read the ref instead.
+
+**2. Wall spacing — the real fix this time, not another guess.** EK's 4th
+time flagging this, with an annotated screenshot: back-wall items visibly
+closer together than side-wall items, and the side wall stopping well
+short of the far corner with real shelf length left unused. Went back to
+`scripts/generate-gallery-room-models.py` for the actual numbers instead of
+tuning by eye again:
+- `back_shelf_i`: width 19.9 (half 9.95); `back_corner_post_x`: half-width
+  0.65 centered x=+-10.36 -> inner face at x=+-9.71.
+- `left_shelf_i`/`right_shelf_i`: depth 23.2 centered z=-3.15 -> real board
+  spans z in [-14.75, 8.45] (the procedural whitebox/arcade shelves in
+  `VirtualGalleryRoom.tsx`'s own `addSideRowBoard` use this identical span,
+  so it's not vault-only).
+- `back_corner_post_x` (again, for the side-wall's back limit this time):
+  forward face at z=-11.22. `front_wall_left/right` (the door wall): near
+  face at z=5.71.
+An item's own footprint along the wall (frame width 1.12*scale + matting,
+at MIN_ITEM_SCALE=0.78) is ~0.975, so a safe CENTER position needs ~0.49
+clearance from any of those faces. That gives real, geometry-checked safe
+ranges — back wall half-width 9.0 (was implicitly ~7.35), side wall z from
+-10.5 to 4.9 (a real 15.4-unit run, was only ever using 9 of it in Store).
+The actual bug wasn't just "wasted space" — it was that back wall's own
+column step (a flat, layout-independent 2.1) and each layout's side-wall
+step (1.5 Salon / 2.1 Spotlight-supporting / 3.0 Store) were never checked
+against each other OR the real wall length, so Store in particular (the
+default for a small vault) had side-wall items ~43% farther apart than
+back-wall items while using well under half the real available length.
+Side-wall capacity raised from 12 (4 depth-steps x 3 rows) to 21 (7 x 3) so
+it has enough real slots to run at the SAME density as the back wall
+without needing to invent a different rule for each wall —
+`BACK_WALL_COL_STEP` (~2.571, back wall's real 18-unit safe span / 7 gaps)
+and `SIDE_WALL_STEP` (~2.567, side wall's real 15.4-unit safe span / 6
+gaps) are independently derived from these real numbers and land within
+0.005 of each other, not hand-matched. Store's side walls now use the
+FULL safe range end to end (`sideBaseZ: SIDE_WALL_SAFE_BACK_Z`). Salon's
+tighter 1.5 step and Spotlight-supporting's 2.1 step are KEPT as
+deliberate density choices (Salon's own comment already explains why —
+a small collection should read as a dense cluster, not just "Store with
+fewer items") — what changed for those two is that the resulting cluster
+is now explicitly CENTERED within the real safe range instead of starting
+flush at an ungeometry-checked position, so leftover slack splits evenly
+instead of piling up at one end.
+`MAX_ROOM_ITEMS`/`TOTAL_SLOT_COUNT` grow automatically from the capacity
+constants (24+21*2+8 = 74 wall slots +5 cabinets = 79 total, was 61) —
+nothing else hardcoded those numbers; confirmed via the sidebar's own
+dynamic `{group.indices.length}` label, which now reads "X/21" for both
+side walls without any other code change.
+**Verified the math directly** (pasted the exact same constant
+expressions into the live browser console): back-wall columns land at
+-9.0, -6.429, ..., 9.0 in steps of 2.5714; side-wall depths land at -10.5,
+-7.933, ..., 4.9 in steps of 2.5667. Confirmed the "X/21" capacity is live
+on both side walls via the actual rendered sidebar. **Not independently
+pixel-verified in 3D** (this sandboxed browser tab doesn't reliably
+composite WebGL frames when not actively displayed — same limitation
+noted throughout this session) — the math and the live slot-count are
+solid; whether it now visually reads as consistent needs EK's own eyes.
+
+**3. The "+" picker didn't read as a pop-up and needed mobile support.**
+It was a full-bleed, edge-to-edge takeover — correct for actually seeing
+content, but with 0 items available (this account's whole demo vault
+already placed) it just looked like a blank dead-end page, not a dialog.
+Rebuilt the outer shell to reuse the EXACT backdrop/sheet/handle pattern
+`SocialExportSheet.tsx` already uses elsewhere in this app instead of
+inventing a new one: a dimmed, blurred backdrop button (click closes),
+a centered `max-w-4xl` rounded card on desktop, a full-width bottom sheet
+with rounded top corners and a drag handle on mobile (`sm:` breakpoint),
+sized to content up to a `92dvh` cap with internal scroll — same
+`fixed`-via-inline-style fix as issue #1 above applies to the outer
+container (still body-portaled). **Verified via `getComputedStyle` at both
+desktop and mobile (375px) viewport widths**: desktop shows a centered
+896px-wide card with a visible backdrop; mobile shows a full-width,
+flush-bottom sheet with the drag handle switching from `display:none` to
+`display:flex` and the bottom corners losing their radius (flush with the
+screen edge) exactly as intended. Search/filter/grid content confirmed
+present and unchanged at both sizes.
+
+`tsc --noEmit` / `eslint` (0 errors, same 2 pre-existing warnings) /
+`npm run build` clean.
+
+---
+
 ## ✅ 2026-08-23, later same day — the rebuilt picker above was rendering
 completely broken (EK's screenshot: a transparent, mispositioned overlay
 sitting mid-page instead of a real full-screen takeover) — REAL ROOT CAUSE
