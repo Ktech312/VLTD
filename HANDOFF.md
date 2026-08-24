@@ -146,6 +146,44 @@ confirm with EK who owns a screen.** EK is aware of this.
 
 ---
 
+## ✅ 2026-08-23, later same day — Organize moved to the room toolbar,
+the flat "Items" on/off list retired for good (not hidden).
+
+EK: "I really don't see the use for the Items Pill, it takes up room and
+all it does it turn thing on and off... Can you see a reason for me to
+keep it?" Checked before touching anything: the flat list's ONE real job
+the Arrange grid didn't already cover was removing an item from a shelf
+WITHOUT immediately putting something else there (the grid's "+" only
+ever ADDS/MOVES into an empty slot; a filled slot had no way to just go
+back to empty). Added that as a real "×" button on every filled Arrange
+cell (reuses the existing `toggleItem` — it already clears a slot when
+the id is already present, same call the old list's "ON" pill made) —
+the grid now covers add (+), move (drag), and remove (×), so the
+separate list has nothing left to do. Retired it entirely rather than
+leave dead code behind.
+
+Also relocated per EK's own markup (blue arrow to the room's own
+VLTD Room/Exit/Rooms toolbar): the Organize/Done toggle now lives there
+instead of in the sidebar panel's header — it only ever affected the 3D
+view's floating slot badges, and now the sidebar's own content, so it
+reads more naturally as a room-view toggle than a sidebar-section
+control. The sidebar's "ITEMS" panel is renamed "ARRANGE SHELF ORDER" and
+shows the grid unconditionally now — no more toggling between two
+different sidebar views. Dropped `selectedItems.length > 1` gating on
+the toggle too (it no longer changes what the sidebar shows, so there's
+no reason to hide it for a 0-1-item room), and removed the now-dead
+`itemSubtitle`/`selectedSet` helpers along with the list itself.
+
+Verified live: "ARRANGE SHELF ORDER" shows unconditionally with no
+Organize toggle in its header; a "Remove Rookie Parallel from this spot"
+button exists on that filled cell, clicking it actually clears the slot
+(confirmed via `data-arrange-idx` — the item no longer appears anywhere
+in the table, not just visually hidden); "Organize" button now lives in
+the room's own toolbar and correctly flips to "Done" on click. Zero
+console errors. `tsc`/`eslint` (0 errors)/`npm run build` clean.
+
+---
+
 ## ⚠⚠⚠ 2026-08-23, later same day — REAL SECURITY GAP found and fixed:
 the museum builder had no concept of "who's looking." Anyone who opened
 `/museum/virtual-room` — logged in or not, owner or not — got the exact

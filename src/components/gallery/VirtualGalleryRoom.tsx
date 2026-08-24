@@ -260,10 +260,6 @@ function formatCompactNumber(value: number) {
   }).format(value);
 }
 
-function itemSubtitle(item: VaultItem) {
-  return [item.subtitle, item.number, item.grade].filter(Boolean).join(" - ");
-}
-
 function itemImage(item: VaultItem) {
   return getPrimaryImageUrl(item) || item.imageFrontUrl || item.imageBackUrl || "";
 }
@@ -1239,7 +1235,6 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
     }
   }, []);
 
-  const selectedSet = useMemo(() => new Set(selectedIds.filter(Boolean)), [selectedIds]);
   const slotItems = useMemo(() => {
     const byId = new Map(items.map((item) => [item.id, item]));
     return selectedIds.map((id) => (id ? (byId.get(id) ?? null) : null));
@@ -3473,6 +3468,33 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
                 ) : null}
               </div>
             ) : null}
+            {/* EK's ask (2026-08-23): moved here from the Items panel header —
+                this toggle only ever affected the 3D view (the floating slot
+                badges/ghost outlines below) and the sidebar's own content, so
+                it reads more naturally next to the room's other view toggles
+                than buried in a sidebar section header. */}
+            {viewMode === "room" && !effectiveGuest ? (
+              <button
+                type="button"
+                onClick={() => {
+                  setIsOrganizing((current) => !current);
+                  setDragIndex(null);
+                  setDragOverIndex(null);
+                  setSelectedItemId("");
+                }}
+                aria-pressed={isOrganizing}
+                className={[
+                  "flex items-center gap-1.5 rounded-[6px] px-3 py-2 text-xs font-black uppercase tracking-[0.14em] backdrop-blur transition",
+                  isOrganizing
+                    ? "bg-[#4FD3EE] text-[#06171d]"
+                    : "bg-black/42 text-white ring-1 ring-white/12 hover:bg-black/60",
+                ].join(" ")}
+                title="Show slot numbers and rearrange shelves"
+              >
+                <Grid3X3 size={14} />
+                {isOrganizing ? "Done" : "Organize"}
+              </button>
+            ) : null}
           </div>
           {viewMode === "room" && selectedItems.length === 0 && !hallNoticeDismissed ? (
             <div className="absolute inset-0 grid place-items-center px-6 text-center">
@@ -3730,45 +3752,27 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
         <div className="grid gap-4 xl:grid-cols-[300px_minmax(0,1fr)]">
         <aside className="grid gap-3 xl:sticky xl:top-4 xl:self-start">
           <ControlPanel
-            title={isOrganizing ? "Arrange Shelf Order" : "Items"}
+            // EK's ask (2026-08-23): "I really don't see the use for the
+            // Items Pill... that can be done in the organize window in an
+            // easier less space taking way" — real gap check first, not
+            // just agreeing: the ONE thing the flat on/off list did that
+            // this grid didn't was let you pull an item off a shelf
+            // WITHOUT immediately putting something else there. Added that
+            // as a real "×" remove control on every filled cell below
+            // instead of keeping a whole separate list around for it — the
+            // grid (add via "+", move via drag, remove via "×") now covers
+            // everything the flat list did, so it's retired for good, not
+            // just hidden. The Organize/Done toggle itself moved to the
+            // room's own toolbar (it only ever affected the 3D badges +
+            // this always-visible grid, not two different sidebar views).
+            title="Arrange Shelf Order"
             icon={<PackagePlus size={15} />}
-            action={
-              selectedItems.length > 1 ? (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsOrganizing((current) => {
-                      const next = !current;
-                      setRoomPanelOpen(!next);
-                      return next;
-                    });
-                    setDragIndex(null);
-                    setDragOverIndex(null);
-                    // Same "close it first" ask as the click-outside fix
-                    // above — an open item description has no business
-                    // surviving a switch into Organize mode.
-                    setSelectedItemId("");
-                  }}
-                  aria-pressed={isOrganizing}
-                  className={[
-                    "inline-flex min-h-[26px] items-center justify-center rounded-full px-2.5 text-[11px] font-black transition",
-                    isOrganizing
-                      ? "bg-[#4FD3EE] text-[#06171d]"
-                      : "bg-[color:var(--input)] text-[color:var(--muted2)] ring-1 ring-[color:var(--border)]",
-                  ].join(" ")}
-                >
-                  {isOrganizing ? "Done" : "Organize"}
-                </button>
-              ) : null
-            }
           >
-            {isOrganizing ? (
-              <>
-                <p className="text-xs leading-5 text-[color:var(--muted)]">
-                  Sections below match the room&apos;s actual walls. Drag a piece onto any
-                  square — filled or empty — to put it on that exact shelf.
-                </p>
-                <div className="grid max-h-[520px] gap-4 overflow-y-auto pr-1">
+            <p className="text-xs leading-5 text-[color:var(--muted)]">
+              Sections below match the room&apos;s actual walls. Drag a piece onto any
+              square — filled or empty — to put it on that exact shelf.
+            </p>
+            <div className="grid max-h-[520px] gap-4 overflow-y-auto pr-1">
                   {slotGroups.map((group) => (
                     <div key={group.wall}>
                       <div className="mb-1.5 flex items-center justify-between text-[10px] font-black uppercase tracking-[0.14em] text-[color:var(--muted2)]">
@@ -3929,60 +3933,34 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
                                 >
                                   <Plus size={14} />
                                 </button>
-                              ) : null}
+                              ) : (
+                                // The one real job the old flat Items on/off
+                                // list did that this grid didn't: pull an
+                                // item off its shelf without also having to
+                                // put something else there. toggleItem
+                                // already clears a slot when the id is
+                                // already present — same call the old list's
+                                // own "ON" pill made.
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    toggleItem(item.id);
+                                  }}
+                                  aria-label={`Remove ${item.title} from this spot`}
+                                  className="absolute right-0.5 top-0.5 z-[1] grid h-4 w-4 place-items-center rounded-full bg-black/70 text-white/70 opacity-0 transition hover:bg-red-500/80 hover:text-white group-hover:opacity-100 focus-visible:opacity-100"
+                                  style={{ opacity: undefined }}
+                                >
+                                  <span aria-hidden className="text-[10px] leading-none">✕</span>
+                                </button>
+                              )}
                             </div>
                           );
                         })}
                       </div>
                     </div>
                   ))}
-                </div>
-              </>
-            ) : (
-              <div className="max-h-[360px] overflow-y-auto pr-1">
-                <div className="grid gap-2">
-                  {items.map((item) => {
-                    const selected = selectedSet.has(item.id);
-                    return (
-                      <button
-                        key={item.id}
-                        type="button"
-                        onClick={() => toggleItem(item.id)}
-                        className={[
-                          "grid grid-cols-[42px_minmax(0,1fr)_24px] items-center gap-2 rounded-[6px] p-2 text-left ring-1 transition",
-                          selected
-                            ? "bg-[rgba(79,211,238,0.10)] ring-[rgba(79,211,238,0.45)]"
-                            : "bg-[color:var(--input)] ring-[color:var(--border)]",
-                        ].join(" ")}
-                      >
-                        <span className="h-[54px] overflow-hidden rounded-[5px] bg-black/20">
-                          {itemImage(item) ? (
-                            // eslint-disable-next-line @next/next/no-img-element
-                            <img src={itemImage(item)} alt="" className="h-full w-full object-cover" draggable={false} />
-                          ) : null}
-                        </span>
-                        <span className="min-w-0">
-                          <span className="block truncate text-sm font-bold">{item.title}</span>
-                          <span className="mt-0.5 block truncate text-xs text-[color:var(--muted)]">
-                            {itemSubtitle(item) || item.universe || item.category || "Collection piece"}
-                          </span>
-                        </span>
-                        <span
-                          className={[
-                            "grid h-6 w-6 place-items-center rounded-[5px] text-xs font-black ring-1",
-                            selected
-                              ? "bg-[#4FD3EE] text-[#06171d] ring-cyan-200/40"
-                              : "bg-black/10 text-[color:var(--muted2)] ring-[color:var(--border)]",
-                          ].join(" ")}
-                        >
-                          {selected ? "ON" : "+"}
-                        </span>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
+            </div>
           </ControlPanel>
 
           <button
