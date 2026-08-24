@@ -413,11 +413,14 @@ export default function InviteGalleryPage() {
 
       if (supabase && gallery.itemIds.length > 0) {
         try {
-          const { data: links } = await supabase
-            .from("gallery_items")
-            .select("artifact_id, position")
-            .eq("gallery_id", gallery.id)
-            .order("position", { ascending: true });
+          // get_gallery_items_by_invite_token() (20260823) replaces a
+          // direct select — real invite validation (disabled/expired/
+          // token match) now happens inside the function itself, not just
+          // client-side after the fact.
+          const { data: links } = await supabase.rpc(
+            "get_gallery_items_by_invite_token",
+            { p_token: token }
+          );
 
           const orderedIds = Array.isArray(links) && links.length > 0
             ? links.map((r: Record<string, unknown>) => String(r.artifact_id ?? "").trim()).filter(Boolean)

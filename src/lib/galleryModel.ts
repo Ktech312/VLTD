@@ -1980,11 +1980,15 @@ export async function getGalleryByPublicToken(publicToken: string) {
 
   if (supabase) {
     try {
+      // Routed through get_gallery_by_share_token() (20260823) instead of a
+      // direct `.eq("public_token", ...)` select — the RLS policy that used
+      // to allow this table read anon-side only checked "does this gallery
+      // HAVE a token" (every gallery does, from creation), not "does it
+      // match the one being asked for". The function does the real
+      // comparison itself, bypassing RLS only once that's confirmed.
       const { data, error } = await supabase
-        .from("galleries")
-        .select("*")
-        .eq("public_token", cleanToken)
-        .single();
+        .rpc("get_gallery_by_share_token", { p_token: cleanToken })
+        .maybeSingle();
 
       if (!error && data) {
         const normalizedGallery = normalizeSupabaseGallery(data);
@@ -2144,10 +2148,11 @@ async function markSupabaseInviteTokenUsed(token: string) {
   if (!supabase) return;
 
   try {
-    await supabase
-      .from("gallery_invites")
-      .update({ last_used_at: new Date().toISOString() })
-      .eq("token", token);
+    // mark_invite_token_used() (20260823) replaces a direct update — the
+    // policy that used to let anon do this was `using(true) with
+    // check(true)` for every command on the whole table, which also let
+    // anyone create/disable/delete any invite, not just mark one used.
+    await supabase.rpc("mark_invite_token_used", { p_token: token });
   } catch (error) {
     console.error("Failed to mark Supabase invite token used:", error);
   }
@@ -2163,11 +2168,22 @@ export async function getGalleryByInviteToken(
 
   if (supabase) {
     try {
-      const { data: inviteRow, error: inviteError } = await supabase
-        .from("gallery_invites")
-        .select("*")
-        .eq("token", cleanToken)
-        .single();
+      // get_invite_token_info() (20260823) replaces a direct select — the
+      // removed policy let anon read every non-disabled invite for every
+      // gallery with no token check at all. This function returns the raw
+      // row unconditionally (needed for the disabled/expired messaging
+      // below), but the actual gallery content two lines down only ever
+      // comes from get_gallery_by_invite_token(), which re-validates for
+      // real and returns nothing for an invalid token regardless of what
+      // this call says.
+      const { data: inviteRowData, error: inviteError } = await supabase
+        .rpc("get_invite_token_info", { p_token: cleanToken })
+        .maybeSingle();
+      // get_invite_token_info isn't in the generated Supabase types (it's a
+      // brand-new RPC), so its row shape comes back as `{}` to tsc — same
+      // loose-row-typing already used throughout this file for raw
+      // Supabase payloads (see normalizeSupabaseGallery's own `raw: any`).
+      const inviteRow = inviteRowData as Record<string, any> | null;
 
       if (!inviteError && inviteRow) {
         const disabled = !!inviteRow.disabled;
@@ -2178,10 +2194,8 @@ export async function getGalleryByInviteToken(
 
         if (!disabled && !(typeof expiresAt === "number" && expiresAt < Date.now())) {
           const { data: galleryRow, error: galleryError } = await supabase
-            .from("galleries")
-            .select("*")
-            .eq("id", inviteRow.gallery_id)
-            .single();
+            .rpc("get_gallery_by_invite_token", { p_token: cleanToken })
+            .maybeSingle();
 
           if (!galleryError && galleryRow) {
             const normalizedGallery = normalizeSupabaseGallery(galleryRow);

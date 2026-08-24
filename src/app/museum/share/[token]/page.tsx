@@ -387,11 +387,15 @@ export default function SharedGalleryPage() {
         let hydratedItems: VaultItem[] = [];
 
         if (supabase) {
-          const { data: links, error: linkError } = await supabase
-            .from("gallery_items")
-            .select("artifact_id, position")
-            .eq("gallery_id", gallery.id)
-            .order("position", { ascending: true });
+          // get_gallery_items_by_share_token() (20260823) replaces a direct
+          // `.eq("gallery_id", ...)` select — gallery_items_read_public's
+          // anon policy no longer treats "this gallery merely has a token"
+          // as authorization, so a Locked gallery's items now only come
+          // back through the token this page was actually opened with.
+          const { data: links, error: linkError } = await supabase.rpc(
+            "get_gallery_items_by_share_token",
+            { p_token: token }
+          );
 
           if (linkError) {
             console.error("Failed loading gallery_items for shared gallery:", linkError);

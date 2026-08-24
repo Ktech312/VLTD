@@ -4,7 +4,16 @@
 import type { Metadata } from "next";
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
-const SUPABASE_ANON = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "";
+// Matches opengraph-image.tsx in this same route segment: the anon-key
+// policy that used to let a plain `public_token=eq.X` filter read a
+// gallery row (galleries_anon_read_by_public_token) only ever checked
+// that a token existed at all, not that it matched — removed in
+// 20260823_fix_gallery_share_and_invite_tokens.sql. Service role runs
+// server-side only here (never shipped to the browser) and is safe for
+// the same reason it already was in opengraph-image.tsx.
+const SUPABASE_ANON =
+  process.env.SUPABASE_SERVICE_ROLE_KEY ??
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "";
 const BASE = process.env.NEXT_PUBLIC_SITE_URL ?? "https://vltd.vercel.app";
 
 type GalleryRow = {
