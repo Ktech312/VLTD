@@ -25,6 +25,7 @@ type Candidate = {
   city: string | null;
   websiteUrl: string | null;
   ticketUrl: string | null;
+  imageUrl: string | null;
 };
 
 const CATEGORY_QUERIES: Record<string, string> = {
@@ -63,6 +64,7 @@ type SerpApiEvent = {
   link?: string;
   description?: string;
   ticket_info?: Array<{ source?: string; link?: string }>;
+  thumbnail?: string;
 };
 
 const NATIONWIDE_LOCATION = "United States";
@@ -109,6 +111,7 @@ async function fetchSerpCandidates(apiKey: string, category: string, query: stri
       city: address.location,
       websiteUrl: event.link ?? null,
       ticketUrl: pickTicketLink(event),
+      imageUrl: event.thumbnail ?? null,
     });
   }
   return candidates;
@@ -127,7 +130,14 @@ type TicketmasterEvent = {
   url?: string;
   dates?: { start?: { localDate?: string }; end?: { localDate?: string } };
   _embedded?: { venues?: Array<{ name?: string; city?: { name?: string }; state?: { stateCode?: string } }> };
+  images?: Array<{ url?: string; ratio?: string; width?: number }>;
 };
+
+function pickTicketmasterImage(event: TicketmasterEvent): string | null {
+  const images = event.images ?? [];
+  const wide = images.find((img) => img.ratio === "16_9" && (img.width ?? 0) >= 640);
+  return wide?.url ?? images[0]?.url ?? null;
+}
 
 async function fetchTicketmasterCandidates(apiKey: string, category: string, keyword: string): Promise<Candidate[]> {
   const url = new URL("https://app.ticketmaster.com/discovery/v2/events.json");
@@ -162,6 +172,7 @@ async function fetchTicketmasterCandidates(apiKey: string, category: string, key
       city,
       websiteUrl: event.url ?? null,
       ticketUrl: event.url ?? null,
+      imageUrl: pickTicketmasterImage(event),
     });
   }
   return candidates;
@@ -304,6 +315,7 @@ export async function GET(req: NextRequest) {
     city: c.city,
     website_url: c.websiteUrl,
     ticket_url: c.ticketUrl,
+    image_url: c.imageUrl,
     country: "US",
     // enabled/is_featured deliberately omitted: on a fresh insert the table
     // defaults (enabled=true, is_featured=false) apply, but on a re-run that

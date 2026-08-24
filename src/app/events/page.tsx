@@ -35,6 +35,7 @@ type CollectorEvent = {
   ticket_url: string | null;
   admission: string | null;
   emoji: string | null;
+  image_url: string | null;
   relevant_universes: string[] | null;
   is_featured: boolean;
 };
@@ -167,15 +168,23 @@ function EventArt({
   const category = categoryFor(event);
   const accent = categoryColor(category);
   const titleWords = event.name.split(/\s+/).filter(Boolean).slice(0, compact ? 2 : 4).join(" ");
+  const hasImage = Boolean(event.image_url);
 
   return (
     <div
       className={`relative overflow-hidden rounded-[7px] border ${className}`}
-      style={eventArtStyle(event)}
+      style={hasImage ? { borderColor: `color-mix(in srgb, ${accent} 52%, transparent)` } : eventArtStyle(event)}
     >
+      {hasImage ? (
+        // eslint-disable-next-line @next/next/no-img-element -- external, unknown-domain source URLs (source pages, SerpApi, Ticketmaster)
+        <img src={event.image_url ?? undefined} alt="" className="absolute inset-0 h-full w-full object-cover" loading="lazy" />
+      ) : (
+        <>
+          <div className="absolute -right-8 top-4 h-28 w-28 rotate-12 rounded-[18px] border border-white/10 bg-black/20 shadow-[0_20px_70px_rgba(0,0,0,0.5)]" />
+          <div className="absolute right-8 top-5 h-24 w-16 rotate-6 rounded-[5px] border border-[color:var(--theme-gold-border)] bg-black/35 shadow-[0_12px_28px_rgba(0,0,0,0.45)]" />
+        </>
+      )}
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_18%_72%,rgba(0,0,0,0),rgba(0,0,0,0.62)_70%)]" />
-      <div className="absolute -right-8 top-4 h-28 w-28 rotate-12 rounded-[18px] border border-white/10 bg-black/20 shadow-[0_20px_70px_rgba(0,0,0,0.5)]" />
-      <div className="absolute right-8 top-5 h-24 w-16 rotate-6 rounded-[5px] border border-[color:var(--theme-gold-border)] bg-black/35 shadow-[0_12px_28px_rgba(0,0,0,0.45)]" />
       <div className="absolute left-4 top-4 rounded-[5px] bg-black/45 px-2 py-1 text-[9px] font-black uppercase tracking-[0.16em]" style={{ color: accent }}>
         {categoryLabel(category)}
       </div>

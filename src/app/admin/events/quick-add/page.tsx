@@ -27,6 +27,7 @@ function QuickAddForm() {
   const [shortDesc, setShortDesc] = useState("");
   const [status, setStatus] = useState("");
   const [datesGuessed, setDatesGuessed] = useState(false);
+  const [imageUrl, setImageUrl] = useState("");
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -45,6 +46,7 @@ function QuickAddForm() {
     setName(parsed ? stripTrailingDateText(rawName, parsed) : rawName);
     setLink(params.get("link") ?? "");
     setShortDesc(desc);
+    setImageUrl(params.get("image") ?? "");
     setDatesGuessed(Boolean(parsed));
     if (parsed) {
       setStartDate(parsed.startDate);
@@ -63,7 +65,7 @@ function QuickAddForm() {
       const res = await fetch("/api/admin/events/quick-add", {
         method: "POST",
         headers: { "Content-Type": "application/json", ...(await authHeader()) },
-        body: JSON.stringify({ name, startDate, endDate, city, link, shortDesc }),
+        body: JSON.stringify({ name, startDate, endDate, city, link, shortDesc, imageUrl }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -145,6 +147,23 @@ function QuickAddForm() {
             <p className="-mt-1 text-xs text-[color:var(--theme-gold)]">
               Guessed from the title — double-check before saving.
             </p>
+          )}
+
+          {imageUrl && (
+            <div className="flex items-center gap-3 rounded-lg border border-[color:var(--border)] bg-[color:var(--pill)] p-2">
+              {/* eslint-disable-next-line @next/next/no-img-element -- unknown external domain, preview only */}
+              <img src={imageUrl} alt="" className="h-14 w-20 rounded object-cover" />
+              <div className="min-w-0 flex-1 text-xs text-[color:var(--muted)]">
+                Pulled from the page automatically.
+              </div>
+              <button
+                type="button"
+                onClick={() => setImageUrl("")}
+                className="shrink-0 text-xs font-semibold text-[color:var(--muted)] underline"
+              >
+                Remove
+              </button>
+            </div>
           )}
 
           <label className="block">

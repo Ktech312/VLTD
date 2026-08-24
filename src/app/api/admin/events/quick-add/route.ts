@@ -29,6 +29,8 @@ export async function POST(req: NextRequest) {
   const city = String(body?.city ?? "").trim() || null;
   const link = String(body?.link ?? "").trim() || null;
   const shortDesc = String(body?.shortDesc ?? "").trim() || null;
+  const rawImageUrl = String(body?.imageUrl ?? "").trim();
+  const imageUrl = /^https?:\/\//i.test(rawImageUrl) ? rawImageUrl : null;
 
   if (!name || !/^\d{4}-\d{2}-\d{2}$/.test(startDate)) {
     return NextResponse.json({ error: "bad_request", message: "Name and a valid start date are required." }, { status: 400 });
@@ -48,6 +50,7 @@ export async function POST(req: NextRequest) {
       city,
       website_url: link,
       ticket_url: link,
+      image_url: imageUrl,
       country: "US",
     },
     { onConflict: "slug" },
