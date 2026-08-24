@@ -129,18 +129,31 @@ export async function setFavoriteState({
   if (!identity) throw new Error("Favorite identity unavailable.");
 
   if (!favorited) {
-    let deleteQuery = supabase
-      .from(FAVORITES_TABLE)
-      .delete()
-      .eq("content_type", contentType)
-      .eq("content_id", contentId);
-
     const filter = identityFilter(identity);
-    if ("user_id" in filter) deleteQuery = deleteQuery.eq("user_id", filter.user_id);
-    else deleteQuery = deleteQuery.eq("anonymous_id", filter.anonymous_id);
-
-    const { error } = await deleteQuery;
-    if (error) throw error;
+    if ("user_id" in filter) {
+      // Signed-in users have a real, RLS-verified identity (auth.uid() =
+      // user_id) — the direct delete is already safely scoped server-side.
+      const { error } = await supabase
+        .from(FAVORITES_TABLE)
+        .delete()
+        .eq("content_type", contentType)
+        .eq("content_id", contentId)
+        .eq("user_id", filter.user_id);
+      if (error) throw error;
+    } else {
+      // Guests have no server-verified identity to check against, so this
+      // goes through unfavorite_as_guest instead of a raw delete — that
+      // RPC only ever removes the one exact row named, instead of relying
+      // on an RLS policy that (before 20260823_fix_guest_favorite_delete)
+      // couldn't tell an anonymous_id-scoped request from a bare
+      // "delete every guest favorite" one.
+      const { error } = await supabase.rpc("unfavorite_as_guest", {
+        p_content_type: contentType,
+        p_content_id: contentId,
+        p_anonymous_id: filter.anonymous_id,
+      });
+      if (error) throw error;
+    }
     return getFavoriteStatus(contentType, contentId);
   }
 
