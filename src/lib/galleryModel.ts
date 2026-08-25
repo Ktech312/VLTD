@@ -1834,6 +1834,20 @@ export function deleteGallery(id: string) {
   void deleteGalleryFromSupabase(id);
 }
 
+// EK's ask (2026-08-24): saving a Room Builder "Hall" that started from an
+// existing Exhibition can choose to add whatever vault items got placed on
+// its shelves into that Exhibition's own item list, instead of only saving
+// the 3D layout as a separate Hall. De-duped merge (a Set, not a plain
+// concat) so re-saving the same Hall against the same Exhibition repeatedly
+// never grows duplicate entries.
+export function addItemIdsToGallery(galleryId: string, itemIds: string[]) {
+  if (itemIds.length === 0) return;
+  mutateGallery(galleryId, (gallery) => ({
+    ...gallery,
+    itemIds: Array.from(new Set([...(gallery.itemIds ?? []), ...itemIds])),
+  }));
+}
+
 export function setGalleryCoverImage(galleryId: string, coverImage: string) {
   mutateGallery(galleryId, (gallery) => ({
     ...gallery,

@@ -28,10 +28,18 @@ import {
 import * as THREE from "three";
 
 import {
+  addItemIdsToGallery,
   getGallerySections,
   loadGalleries,
   type Gallery,
 } from "@/lib/galleryModel";
+import {
+  createHall,
+  listMyHalls,
+  updateHall,
+  uploadHallWallpaper,
+  type VirtualRoomRow,
+} from "@/lib/virtualRooms";
 import { getPrimaryImageUrl, loadItems, syncVaultItemsFromSupabase, type VaultItem } from "@/lib/vaultModel";
 import { UNIVERSE_LABEL, type UniverseKey } from "@/lib/taxonomy";
 import SocialExportSheet from "@/components/SocialExportSheet";
@@ -1087,6 +1095,18 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
   const [items, setItems] = useState<VaultItem[]>(DEMO_ITEMS);
   const [galleries, setGalleries] = useState<Gallery[]>([]);
   const [galleryId, setGalleryId] = useState("scratch");
+  // Real cloud-saved rooms ("Halls" in the UI) — EK's ask 2026-08-24, see
+  // virtualRooms.ts. `currentHallId` is set once this room IS a saved Hall
+  // (just created, or loaded from the "My Halls" group in Source) — while
+  // set, Save quietly updates that same row instead of asking to name a
+  // new one.
+  const [halls, setHalls] = useState<VirtualRoomRow[]>([]);
+  const [currentHallId, setCurrentHallId] = useState<string | null>(null);
+  const [saveModal, setSaveModal] = useState<
+    { step: "name" } | { step: "exhibition-choice"; galleryId: string; galleryTitle: string } | null
+  >(null);
+  const [hallNameInput, setHallNameInput] = useState("");
+  const [isSavingHall, setIsSavingHall] = useState(false);
   // Same pattern as GuestGalleryRenderer.tsx's own viewerProfileId — read
   // once on mount, not tied to auth state changing mid-session (a profile
   // switch while this exact page is already open is a rare enough edge
@@ -1160,6 +1180,13 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
   const touchFromRef = useRef<number | null>(null);
   const touchOverRef = useRef<number | null>(null);
   const touchCloneRef = useRef<HTMLElement | null>(null);
+
+  // Separate from the vault-items/galleries mount effect below (those are
+  // synchronous local-cache reads; this is a real network round trip) —
+  // populates the Source dropdown's "My Halls" group.
+  useEffect(() => {
+    void listMyHalls().then(setHalls);
+  }, []);
 
   useEffect(() => {
     const vaultItems = loadItems();
@@ -3223,6 +3250,140 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
     });
   }
 
+  // Loads a previously saved Hall back into the builder, replacing
+  // whatever's currently arranged — same full-replace semantics as picking
+  // an Exhibition above, just restoring EVERY room field (style/layout/
+  // wallpaper/shelf placement), not just an item list. Reads straight from
+  // the already-loaded `halls` state (listMyHalls already fetched full
+  // rows) rather than a second round trip.
+  function applyHall(hallId: string) {
+    const hall = halls.find((entry) => entry.id === hallId);
+    if (!hall) {
+      setSourceStatus({ ok: false, message: "Couldn't find that Hall." });
+      return;
+    }
+    setCurrentHallId(hall.id);
+    setGalleryId(hall.galleryId ?? "scratch");
+    if (hall.roomStyle === "vault" || hall.roomStyle === "whitebox" || hall.roomStyle === "arcade" || hall.roomStyle === "blue") {
+      setRoomStyle(hall.roomStyle);
+    }
+    if (hall.roomLayout === "storefront" || hall.roomLayout === "salon" || hall.roomLayout === "spotlight") {
+      setRoomLayout(hall.roomLayout);
+    }
+    if (hall.viewMode === "room" || hall.viewMode === "overview") setViewMode(hall.viewMode);
+    setShowValues(hall.showValues);
+    setWallTextureUrl(hall.wallpaperUrl ?? "");
+    // fillSlots is a plain positional copy (see its own definition) — safe
+    // here because hall.selectedIds is already the full slot-length array
+    // with "" gaps in their exact places, same as the local-draft restore
+    // above does for the same reason.
+    setSelectedIds(fillSlots(hall.selectedIds));
+    setSelectedItemId(hall.selectedIds.find(Boolean) ?? "");
+    setSourceStatus({ ok: true, message: `Loaded "${hall.title}".` });
+  }
+
+  // The Source dropdown's single onChange — EK's ask (2026-08-24) put "My
+  // Halls" in the same dropdown as Empty Hall/Exhibitions rather than a
+  // separate picker, so this is the one place that decides which of the
+  // three kinds of option was picked. Choosing Empty Hall or an Exhibition
+  // always starts a fresh (unsaved) arrangement — same as applyGallery
+  // already did before Halls existed — so it clears currentHallId; only
+  // explicitly picking a Hall continues editing a saved one.
+  function handleSourceChange(value: string) {
+    if (value.startsWith("hall:")) {
+      applyHall(value.slice(5));
+      return;
+    }
+    setCurrentHallId(null);
+    applyGallery(value);
+  }
+
+  // Kicks off the Save flow — EK caught the real gap here 2026-08-24:
+  // the old version wrote to one fixed local-storage slot regardless of
+  // what was open, never asked to name anything, and never touched the
+  // account at all. Now: continuing an already-saved Hall just quietly
+  // updates it; a brand-new room asks a question first (name it, or if it
+  // started from an Exhibition, add to that Exhibition vs. spin off a
+  // separately-named Hall).
+  function handleSaveClick() {
+    // Unrelated local safety net, unchanged — still protects against
+    // losing in-progress work to an accidental reload before a real save.
+    saveDraft();
+
+    if (currentHallId) {
+      void persistHall(currentHallId, null, galleryId === "scratch" ? null : galleryId);
+      return;
+    }
+    if (galleryId !== "scratch") {
+      const gallery = galleries.find((entry) => entry.id === galleryId);
+      setHallNameInput(gallery?.title ?? "");
+      setSaveModal({ step: "exhibition-choice", galleryId, galleryTitle: gallery?.title ?? "this Exhibition" });
+    } else {
+      setHallNameInput("");
+      setSaveModal({ step: "name" });
+    }
+  }
+
+  async function persistHall(hallId: string | null, title: string | null, linkGalleryId: string | null) {
+    setIsSavingHall(true);
+    try {
+      let wallpaperUrl: string | null = wallTextureUrl || null;
+      if (wallpaperUrl && wallpaperUrl.startsWith("data:")) {
+        // A freshly-uploaded wallpaper is still a data: URL in state at
+        // this point (see fileToRoomWallpaper) — upload it for real
+        // before saving so the row holds a URL, not a multi-hundred-KB
+        // blob (see uploadHallWallpaper's own comment for why). Fail
+        // safe to no wallpaper rather than failing the whole save over
+        // one image, or worse, writing the raw data: URL into the row.
+        wallpaperUrl = await uploadHallWallpaper(wallpaperUrl);
+      }
+      const input = {
+        galleryId: linkGalleryId,
+        roomStyle,
+        roomLayout,
+        viewMode,
+        showValues,
+        selectedIds,
+        wallpaperUrl,
+      };
+      if (hallId) {
+        const ok = await updateHall(hallId, input);
+        setSaveState(ok ? "saved" : "error");
+        if (ok) {
+          setHalls((current) =>
+            current.map((h) => (h.id === hallId ? { ...h, ...input, updatedAt: new Date().toISOString() } : h))
+          );
+        }
+      } else if (title) {
+        const created = await createHall(title, input);
+        if (created) {
+          setCurrentHallId(created.id);
+          setHalls((current) => [created, ...current.filter((h) => h.id !== created.id)]);
+          setSaveState("saved");
+        } else {
+          setSaveState("error");
+        }
+      }
+    } finally {
+      setIsSavingHall(false);
+      setSaveModal(null);
+      window.setTimeout(() => setSaveState("idle"), 1800);
+    }
+  }
+
+  function confirmSaveToExhibition() {
+    if (!saveModal || saveModal.step !== "exhibition-choice") return;
+    addItemIdsToGallery(saveModal.galleryId, selectedIds.filter(Boolean));
+    void persistHall(null, saveModal.galleryTitle, saveModal.galleryId);
+  }
+
+  function confirmSaveAsNewHall() {
+    const title = hallNameInput.trim();
+    if (!title) return;
+    const linkGalleryId = saveModal && saveModal.step === "exhibition-choice" ? saveModal.galleryId : null;
+    void persistHall(null, title, linkGalleryId);
+  }
+
   function toggleItem(itemId: string) {
     setSelectedIds((current) => {
       const existingIdx = current.indexOf(itemId);
@@ -3681,16 +3842,29 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
           <div className="w-[260px] shrink-0">
             <ControlPanel title="Source" icon={<Grid3X3 size={15} />}>
               <select
-                value={galleryId}
-                onChange={(event) => applyGallery(event.target.value)}
+                value={currentHallId ? `hall:${currentHallId}` : galleryId}
+                onChange={(event) => handleSourceChange(event.target.value)}
                 className="h-8 w-full rounded-[6px] bg-[color:var(--input)] px-2.5 text-xs ring-1 ring-[color:var(--border)]"
               >
-                <option value="scratch">Scratch room</option>
-                {galleries.map((gallery) => (
-                  <option key={gallery.id} value={gallery.id}>
-                    {gallery.title}
-                  </option>
-                ))}
+                <option value="scratch">Empty Hall</option>
+                {galleries.length > 0 ? (
+                  <optgroup label="Exhibitions">
+                    {galleries.map((gallery) => (
+                      <option key={gallery.id} value={gallery.id}>
+                        {gallery.title}
+                      </option>
+                    ))}
+                  </optgroup>
+                ) : null}
+                {halls.length > 0 ? (
+                  <optgroup label="My Halls">
+                    {halls.map((hall) => (
+                      <option key={hall.id} value={`hall:${hall.id}`}>
+                        {hall.title}
+                      </option>
+                    ))}
+                  </optgroup>
+                ) : null}
               </select>
               {sourceStatus ? (
                 <div
@@ -4010,16 +4184,23 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
 
           <button
             type="button"
-            onClick={saveDraft}
+            onClick={handleSaveClick}
+            disabled={isSavingHall}
             className={[
-              "inline-flex min-h-11 items-center justify-center gap-2 rounded-[6px] px-4 text-sm font-black shadow-[0_0_18px_rgba(79,211,238,0.22)]",
+              "inline-flex min-h-11 items-center justify-center gap-2 rounded-[6px] px-4 text-sm font-black shadow-[0_0_18px_rgba(79,211,238,0.22)] disabled:opacity-60",
               saveState === "error"
                 ? "bg-red-400 text-[#2a0505]"
                 : "bg-[linear-gradient(180deg,#79E7FB,#2CB1D1)] text-[#06171d]",
             ].join(" ")}
           >
             <Save size={16} />
-            {saveState === "saved" ? "Saved" : saveState === "error" ? "Save Failed" : "Save Room Draft"}
+            {saveState === "saved"
+              ? "Saved"
+              : saveState === "error"
+                ? "Save Failed"
+                : currentHallId
+                  ? "Update Hall"
+                  : "Save Hall"}
           </button>
         </aside>
 
@@ -4267,6 +4448,98 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
                   {pickerSelection.length > 0 ? `Add ${pickerSelection.length}` : "Select items to add"}
                 </button>
               </div>
+              </div>
+            </div>,
+            document.body
+          )
+        : null}
+      {saveModal
+        ? createPortal(
+            // Same backdrop/sheet shell as the slot picker above — a real
+            // pop-up, not a blank full-page takeover, and it works on
+            // mobile the same way.
+            <div
+              className="flex items-end justify-center p-0 sm:items-center sm:p-4"
+              style={{ position: "fixed", top: 0, right: 0, bottom: 0, left: 0, zIndex: 96 }}
+            >
+              <button
+                type="button"
+                onClick={() => setSaveModal(null)}
+                aria-label="Close"
+                className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+              />
+              <div
+                className="relative flex w-full max-w-md flex-col overflow-hidden rounded-t-3xl ring-1 sm:rounded-3xl"
+                style={{ background: "var(--bg, #060a13)", borderColor: "var(--theme-border)" }}
+              >
+                <div className="flex justify-center pb-1 pt-3 sm:hidden">
+                  <div className="h-1 w-12 rounded-full bg-[color:var(--border)]" />
+                </div>
+                <div className="p-5">
+                  {saveModal.step === "exhibition-choice" ? (
+                    <>
+                      <div className="text-sm font-black">Save this room</div>
+                      <p className="mt-1 text-xs text-[color:var(--muted)]">
+                        This room started from &quot;{saveModal.galleryTitle}&quot;. Add whatever you&apos;ve placed
+                        into that Exhibition, or save this as its own separate Hall instead?
+                      </p>
+                      <button
+                        type="button"
+                        disabled={isSavingHall}
+                        onClick={confirmSaveToExhibition}
+                        className="mt-4 flex w-full items-center justify-center gap-2 rounded-[6px] py-2.5 text-sm font-black disabled:opacity-50"
+                        style={{ background: "linear-gradient(180deg,#79E7FB,#2CB1D1)", color: "#06171d" }}
+                      >
+                        Add to &quot;{saveModal.galleryTitle}&quot;
+                      </button>
+                      <div className="mt-4 flex items-center gap-2">
+                        <div className="h-px flex-1" style={{ background: "var(--theme-border)" }} />
+                        <span className="text-[10px] font-black uppercase tracking-wider text-[color:var(--muted)]">
+                          or save as a new Hall
+                        </span>
+                        <div className="h-px flex-1" style={{ background: "var(--theme-border)" }} />
+                      </div>
+                      <input
+                        value={hallNameInput}
+                        onChange={(event) => setHallNameInput(event.target.value)}
+                        placeholder="Hall name"
+                        className="mt-3 h-10 w-full rounded-[6px] bg-[color:var(--input)] px-3 text-sm ring-1 ring-[color:var(--border)] focus:outline-none"
+                      />
+                      <button
+                        type="button"
+                        disabled={isSavingHall || !hallNameInput.trim()}
+                        onClick={confirmSaveAsNewHall}
+                        className="mt-2 flex w-full items-center justify-center gap-2 rounded-[6px] border py-2.5 text-sm font-black disabled:opacity-40"
+                        style={{ borderColor: "var(--theme-border)", color: "var(--fg)" }}
+                      >
+                        Save as New Hall
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <div className="text-sm font-black">Name this Hall</div>
+                      <p className="mt-1 text-xs text-[color:var(--muted)]">
+                        Give this room a name so you can find and reopen it later from the Source dropdown.
+                      </p>
+                      <input
+                        value={hallNameInput}
+                        onChange={(event) => setHallNameInput(event.target.value)}
+                        placeholder="e.g. My Trading Card Room"
+                        autoFocus
+                        className="mt-3 h-10 w-full rounded-[6px] bg-[color:var(--input)] px-3 text-sm ring-1 ring-[color:var(--border)] focus:outline-none"
+                      />
+                      <button
+                        type="button"
+                        disabled={isSavingHall || !hallNameInput.trim()}
+                        onClick={confirmSaveAsNewHall}
+                        className="mt-4 flex w-full items-center justify-center gap-2 rounded-[6px] py-2.5 text-sm font-black disabled:opacity-50"
+                        style={{ background: "linear-gradient(180deg,#79E7FB,#2CB1D1)", color: "#06171d" }}
+                      >
+                        Save Hall
+                      </button>
+                    </>
+                  )}
+                </div>
               </div>
             </div>,
             document.body
