@@ -3255,11 +3255,21 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
 
   // EK's ask: the first item picked goes into the exact slot whose "+"
   // was clicked; every item picked after that fills the next EMPTY slots
-  // in order, walking forward through the whole fixed-size table
-  // (wrapping back to the start once) rather than only within that one
-  // slot's own wall group — a small collection might only have one empty
-  // spot on the wall you clicked, and the rest should still land
-  // somewhere real instead of being silently dropped.
+  // in order.
+  //
+  // EK caught a real bug here 2026-08-24: this used to walk forward
+  // through the RAW global slot index (`cursor + 1`, wrapping at
+  // `next.length`) — but a wall's slots are NOT contiguous in that raw
+  // array (see slotGroups' own comment above: "WALL_CYCLE's interleaving
+  // is deliberate"). So clicking slot #2 on the Left Wall and adding a
+  // few more items scattered the overflow across whichever OTHER walls
+  // happened to be interleaved next in the raw table, instead of landing
+  // in that same wall's next empty slots (#3, #4, ...) the way it visibly
+  // reads on screen. Fixed by walking `slotGroups`' own per-wall index
+  // lists — same wall as the clicked slot first, in that wall's real
+  // shelf-reading order — and only spilling into other walls' groups
+  // once the clicked wall is completely full, so nothing still gets
+  // silently dropped for an oversized collection.
   //
   // EK's ask (2026-08-23): the picker used to only offer items not
   // already placed somewhere in this room — "I should be able to select
@@ -3277,16 +3287,33 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
         if (existingIdx !== -1) next[existingIdx] = "";
       }
       next[startIdx] = itemIds[0];
-      let cursor = (startIdx + 1) % next.length;
       let remaining = itemIds.slice(1);
-      let steps = 0;
-      while (remaining.length > 0 && steps < next.length) {
-        if (next[cursor] === "") {
-          next[cursor] = remaining[0];
-          remaining = remaining.slice(1);
+      if (remaining.length > 0) {
+        const ownGroup = slotGroups.find((g) => g.indices.includes(startIdx));
+        const orderedGroups = ownGroup ? [ownGroup, ...slotGroups.filter((g) => g !== ownGroup)] : slotGroups;
+        for (const group of orderedGroups) {
+          if (remaining.length === 0) break;
+          for (const idx of group.indices) {
+            if (remaining.length === 0) break;
+            if (idx === startIdx) continue;
+            if (next[idx] === "") {
+              next[idx] = remaining[0];
+              remaining = remaining.slice(1);
+            }
+          }
         }
-        cursor = (cursor + 1) % next.length;
-        steps++;
+        // Last-resort fallback — slotGroups should already cover every
+        // slot in the table, so this shouldn't normally trigger, but
+        // it's here so a mismatch fails safe (lands the item somewhere)
+        // instead of silently dropping it.
+        if (remaining.length > 0) {
+          for (let i = 0; i < next.length && remaining.length > 0; i++) {
+            if (next[i] === "") {
+              next[i] = remaining[0];
+              remaining = remaining.slice(1);
+            }
+          }
+        }
       }
       return next;
     });
@@ -3371,10 +3398,28 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
   // A fixed min-height instead of a viewport-minus-guess calc can't ever
   // force that overflow, whatever the toolbar's actual height turns out
   // to be.
+  //
+  // EK caught a real bug here 2026-08-24: a plain navy strip of dead
+  // space at the bottom of this rounded room panel, below the actual 3D
+  // view. Root cause — this `<section>` sits next to `<aside>` in a CSS
+  // grid row (`grid xl:grid-cols-[300px_minmax(0,1fr)]`), and grid items
+  // default to `align-items: stretch`, so this section was being
+  // stretched to match whatever height the sidebar's own content (all
+  // of Arrange Shelf Order's wall slots — often much taller than one
+  // room's worth of 3D view) happened to need. The `<div>`s inside only
+  // guarantee a 600px MINIMUM height, so they stayed at their own
+  // natural ~600px, and the section's now-taller stretched box exposed
+  // its own background color underneath as unused empty space. The
+  // aside already opts out of this with `xl:self-start` (that's why it
+  // sits at its own natural height instead of stretching); adding the
+  // same here makes this section do the same instead of matching the
+  // sidebar's height.
   const roomView = (
     <section
       className={[
-        effectiveGuest ? "h-full overflow-hidden" : "min-h-[600px] overflow-hidden rounded-[8px] border shadow-[0_30px_90px_rgba(0,0,0,0.34)]",
+        effectiveGuest
+          ? "h-full overflow-hidden"
+          : "min-h-[600px] overflow-hidden rounded-[8px] border shadow-[0_30px_90px_rgba(0,0,0,0.34)] xl:self-start",
         palette.shell,
       ].join(" ")}
       style={effectiveGuest ? undefined : { borderColor: "var(--theme-border)" }}
