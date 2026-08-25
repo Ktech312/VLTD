@@ -4,6 +4,8 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { getMyAdminRole, type AdminRole } from "@/lib/adminAuth";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 import { timeAgo, exactDateTime, formatDuration, averageSessionLength } from "@/lib/presence";
+import { getStoredActiveProfileId } from "@/lib/auth";
+import { setTierSafe, type Tier } from "@/lib/subscription";
 import { SEED_CHARACTERS } from "@/lib/seedCharacters";
 import { SEED_CHARACTERS_PART2 } from "@/lib/seedCharacters_part2";
 import { SEED_CHARACTERS_PART3 } from "@/lib/seedCharacters_part3";
@@ -46,6 +48,17 @@ type UserRow = {
   aiOutputTokens: number;
   museumBetaEnabled: boolean;
   museumBetaRequestedAt: string | null;
+  profileType: string;
+  tier: Tier;
+  tierExpiresAt: string | null;
+  tierSource: string | null;
+};
+
+const RIGHTS_TIERS: Tier[] = ["FREE", "MID", "FULL"];
+const TIER_STYLE: Record<Tier, { bg: string; border: string; fg: string }> = {
+  FREE: { bg: "rgba(255,255,255,0.06)", border: "rgba(255,255,255,0.18)", fg: "var(--muted)" },
+  MID: { bg: "rgba(96,165,250,0.14)", border: "rgba(96,165,250,0.45)", fg: "#93c5fd" },
+  FULL: { bg: "rgba(203,208,213,0.16)", border: "rgba(203,208,213,0.55)", fg: "#C8CDD2" },
 };
 
 function formatJoined(value: string | null) {
@@ -73,6 +86,8 @@ export default function AdminUsersPage() {
   const [showSeed, setShowSeed] = useState(false);
   const [sortKey, setSortKey] = useState<SortKey>("joined");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
+  const [query, setQuery] = useState("");
+  const [savingTierId, setSavingTierId] = useState("");
 
   const loadRows = useCallback(async () => {
     setStatus("Loading…");
@@ -105,6 +120,29 @@ export default function AdminUsersPage() {
       }
     } finally {
       setTogglingId(null);
+    }
+  }
+
+  // Moved over from Account Rights (admin/characters/page.tsx) at EK's
+  // request, 2026-08-24 -- same "lifetime, sourced as admin" semantics as
+  // that panel's applyTier, just going through this route's verified
+  // service-role PATCH instead of a direct client-side RLS-trusting update.
+  async function applyTier(row: UserRow, tier: Tier) {
+    setSavingTierId(row.id);
+    try {
+      const res = await fetch("/api/admin/users", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json", ...(await authHeader()) },
+        body: JSON.stringify({ profileId: row.id, tier }),
+      });
+      if (res.ok) {
+        setRows((current) =>
+          current.map((r) => (r.id === row.id ? { ...r, tier, tierExpiresAt: null, tierSource: "admin" } : r)),
+        );
+        if (getStoredActiveProfileId() === row.id) setTierSafe(tier);
+      }
+    } finally {
+      setSavingTierId("");
     }
   }
 
@@ -153,8 +191,20 @@ export default function AdminUsersPage() {
     return sorted;
   }, [rows, sortKey, sortDir]);
 
-  const realRows = useMemo(() => sortedRows.filter((r) => !SEED_PROFILE_IDS.has(r.id)), [sortedRows]);
-  const seedRows = useMemo(() => sortedRows.filter((r) => SEED_PROFILE_IDS.has(r.id)), [sortedRows]);
+  const queriedRows = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return sortedRows;
+    return sortedRows.filter(
+      (r) =>
+        r.displayName?.toLowerCase().includes(q) ||
+        r.username?.toLowerCase().includes(q) ||
+        r.email?.toLowerCase().includes(q) ||
+        r.id.toLowerCase().includes(q),
+    );
+  }, [sortedRows, query]);
+
+  const realRows = useMemo(() => queriedRows.filter((r) => !SEED_PROFILE_IDS.has(r.id)), [queriedRows]);
+  const seedRows = useMemo(() => queriedRows.filter((r) => SEED_PROFILE_IDS.has(r.id)), [queriedRows]);
 
   function SortHeader({ k, label }: { k: SortKey; label: string }) {
     const active = sortKey === k;
@@ -217,7 +267,12 @@ export default function AdminUsersPage() {
     return (
       <tr key={r.id} className="border-b border-[color:var(--border)] last:border-0">
         <td className="px-4 py-3">
-          <div className="font-medium text-text-primary">{r.displayName || r.username || "Unnamed"}</div>
+          <div className="flex items-center gap-2">
+            <span className="font-medium text-text-primary">{r.displayName || r.username || "Unnamed"}</span>
+            <span className="rounded-full bg-[color:var(--pill)] px-2 py-0.5 text-[10px] text-[color:var(--muted)] ring-1 ring-[color:var(--border)]">
+              {r.profileType}
+            </span>
+          </div>
           <div className="text-xs text-[color:var(--muted)]">{r.email || "—"}</div>
         </td>
         <td className="px-4 py-3 text-[color:var(--muted)]">{formatJoined(r.createdAt)}</td>
@@ -253,6 +308,36 @@ export default function AdminUsersPage() {
             {r.museumBetaEnabled ? "Enabled" : r.museumBetaRequestedAt ? "Requested" : "Off"}
           </button>
         </td>
+        <td className="px-4 py-3">
+          <div className="flex items-center gap-1.5">
+            {RIGHTS_TIERS.map((tier) => {
+              const active = r.tier === tier;
+              const s = TIER_STYLE[tier];
+              return (
+                <button
+                  key={tier}
+                  type="button"
+                  disabled={savingTierId === r.id}
+                  onClick={() => void applyTier(r, tier)}
+                  className="rounded-full px-2.5 py-1 text-[11px] font-bold transition disabled:opacity-50"
+                  style={
+                    active
+                      ? { background: s.bg, border: `1px solid ${s.border}`, color: s.fg }
+                      : { background: "transparent", border: "1px solid var(--border)", color: "var(--muted)" }
+                  }
+                >
+                  {tier}
+                </button>
+              );
+            })}
+          </div>
+          {r.tier !== "FREE" && (
+            <div className="mt-1 text-[10px] text-[color:var(--muted)]">
+              {r.tierExpiresAt ? `Expires ${formatJoined(r.tierExpiresAt)}` : "Lifetime"}
+              {r.tierSource ? ` · via ${r.tierSource}` : ""}
+            </div>
+          )}
+        </td>
       </tr>
     );
   }
@@ -268,13 +353,21 @@ export default function AdminUsersPage() {
               {totalTokens.toLocaleString()} tokens total
             </p>
           </div>
-          <button
-            type="button"
-            onClick={() => void loadRows()}
-            className="h-10 shrink-0 rounded-full border border-[color:var(--border)] bg-[color:var(--pill)] px-4 text-sm font-semibold text-[color:var(--muted)] transition hover:text-text-primary"
-          >
-            Refresh
-          </button>
+          <div className="flex shrink-0 items-center gap-2">
+            <input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search name, username, or ID…"
+              className="h-10 w-64 rounded-full border border-[color:var(--border)] bg-[color:var(--pill)] px-4 text-sm outline-none placeholder:text-[color:var(--muted)]"
+            />
+            <button
+              type="button"
+              onClick={() => void loadRows()}
+              className="h-10 shrink-0 rounded-full border border-[color:var(--border)] bg-[color:var(--pill)] px-4 text-sm font-semibold text-[color:var(--muted)] transition hover:text-text-primary"
+            >
+              Refresh
+            </button>
+          </div>
         </div>
 
         {status && (
@@ -296,19 +389,20 @@ export default function AdminUsersPage() {
                 <SortHeader k="aiCalls" label="AI calls" />
                 <SortHeader k="aiTokens" label="AI tokens" />
                 <SortHeader k="museumBeta" label="3D Museum beta" />
+                <th className="px-4 py-3 font-semibold">Tier</th>
               </tr>
             </thead>
             <tbody>
               {rows.length === 0 ? (
                 <tr>
-                  <td colSpan={9} className="px-4 py-8 text-center text-[color:var(--muted)]">No accounts yet.</td>
+                  <td colSpan={10} className="px-4 py-8 text-center text-[color:var(--muted)]">No accounts yet.</td>
                 </tr>
               ) : (
                 <>
                   {realRows.map(renderRow)}
                   {realRows.length === 0 ? (
                     <tr>
-                      <td colSpan={9} className="px-4 py-6 text-center text-[color:var(--muted)]">No real accounts.</td>
+                      <td colSpan={10} className="px-4 py-6 text-center text-[color:var(--muted)]">No accounts match.</td>
                     </tr>
                   ) : null}
                 </>

@@ -15,7 +15,7 @@ export async function GET(req: NextRequest) {
   const { data: profiles, error: profilesError } = await svc
     .from("profiles")
     .select(
-      "id, user_id, display_name, username, created_at, last_seen_at, session_started_at, total_seconds_online, session_count, museum_beta_enabled, museum_beta_requested_at",
+      "id, user_id, display_name, username, profile_type, tier, tier_expires_at, tier_source, created_at, last_seen_at, session_started_at, total_seconds_online, session_count, museum_beta_enabled, museum_beta_requested_at",
     )
     .order("created_at", { ascending: false });
 
@@ -69,6 +69,10 @@ export async function GET(req: NextRequest) {
       aiOutputTokens: usage.outputTokens,
       museumBetaEnabled: !!p.museum_beta_enabled,
       museumBetaRequestedAt: p.museum_beta_requested_at,
+      profileType: p.profile_type ?? "personal",
+      tier: p.tier === "MID" || p.tier === "FULL" ? p.tier : "FREE",
+      tierExpiresAt: p.tier_expires_at,
+      tierSource: p.tier_source,
     };
   });
 
@@ -91,18 +95,29 @@ export async function PATCH(req: NextRequest) {
   const body = await req.json().catch(() => null);
   const profileId = typeof body?.profileId === "string" ? body.profileId.trim() : "";
   const museumBetaEnabled = typeof body?.museumBetaEnabled === "boolean" ? body.museumBetaEnabled : null;
+  const tier = body?.tier === "FREE" || body?.tier === "MID" || body?.tier === "FULL" ? body.tier : null;
 
-  if (!profileId || museumBetaEnabled === null) {
+  if (!profileId || (museumBetaEnabled === null && tier === null)) {
     return NextResponse.json(
-      { error: "bad_request", message: "profileId and museumBetaEnabled are required." },
+      { error: "bad_request", message: "profileId and one of museumBetaEnabled/tier are required." },
       { status: 400 },
     );
   }
 
-  const { error } = await svc
-    .from("profiles")
-    .update({ museum_beta_enabled: museumBetaEnabled })
-    .eq("id", profileId);
+  // Tier grants from this admin panel are lifetime (no expiry), sourced as
+  // 'admin' -- same semantics AccountRightsPanel's applyTier already used
+  // (src/app/admin/characters/page.tsx), just routed through the service
+  // client + verified admin check instead of a client-side RLS-trusting
+  // update, matching the stronger pattern this route already uses below.
+  const patch: Record<string, unknown> = {};
+  if (museumBetaEnabled !== null) patch.museum_beta_enabled = museumBetaEnabled;
+  if (tier !== null) {
+    patch.tier = tier;
+    patch.tier_expires_at = null;
+    patch.tier_source = "admin";
+  }
+
+  const { error } = await svc.from("profiles").update(patch).eq("id", profileId);
 
   if (error) {
     return NextResponse.json({ error: "db_error", message: error.message }, { status: 500 });
