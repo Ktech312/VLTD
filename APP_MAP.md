@@ -202,20 +202,17 @@ Every file matching `src/app/admin/**/page.tsx` (confirmed via glob):
 | `src/app/admin/users/page.tsx` | ✅ Iframed as "Users" |
 | `src/app/admin/events/page.tsx` | ✅ Iframed as "Events" |
 | `src/app/admin/themes/page.tsx` | ✅ Iframed as "Themes" (also the default fallback case) |
-| `src/app/admin/events/quick-add/page.tsx` | ⚠️ NOT iframed into the shell. Reachable only as its own URL, and only linked from the orphaned `/admin` hub page below (and presumably by direct link from wherever EK bookmarked it). Manual fallback to upsert a single `collector_events` row by hand. |
-| `src/app/admin/referrals/page.tsx` | ❌ **Not wired into the shell at all.** No sidebar section, no iframe reference anywhere in `admin/characters/page.tsx`. Referral-program management (grant/edit perks, `@/lib/referral`). Only reachable by typing the URL directly or via the orphaned `/admin` hub below. |
-| `src/app/admin/spotlights/page.tsx` | ❌ **Not wired into the shell at all.** Featured-collection spotlight-pick CRUD (`spotlights` table). Same situation as referrals. |
-| `src/app/admin/tiers/page.tsx` | ❌ **Not wired into the shell at all**, and functionally overlaps with the inline "Account Rights" section in the shell (`AdminTiersPage` does the same FREE/MID/FULL tier-grant job against `profiles.tier` — this looks like an earlier, possibly superseded, standalone version of what "Account Rights" now does inline). Worth confirming with EK whether this file is dead code. |
-| `src/app/admin/page.tsx` | ❌ **This is the duplicate "hub" page built the night of the incident.** It's a `Link`-card grid (`AdminHubPage`) listing every admin tool as a peer, including linking to `/admin/characters` labeled just "Seed Characters" — which is misleading, since `/admin/characters` is actually the real console shell that Themes/Waitlist/Bugs/Scan Limits/Users/Events/Referrals/Spotlights/Tiers should all be reached *through*, not a sibling of. This page still exists in the tree; it has not been deleted as of this writing. Treat it as legacy/duplicate, not a second source of truth — do not add new tools to it. |
+| `src/app/admin/events/quick-add/page.tsx` | ⚠️ Not iframed in — reachable only by direct URL. Manual fallback to add one `collector_events` row by hand. |
+| `src/app/admin/referrals/page.tsx` | ✅ Iframed as "Referrals" (fixed 2026-08-24) |
+| `src/app/admin/spotlights/page.tsx` | ✅ Iframed as "Spotlights" (fixed 2026-08-24) |
+| `src/app/admin/tiers/page.tsx` | ❓ **Still not wired in — needs EK's call, not a code decision.** `AdminTiersPage` grants FREE/MID/FULL tiers against `profiles.tier`, which looks like the same job the inline "Account Rights" section already does. Ask EK whether this file is dead before touching it either way. |
 
-**Net takeaway:** three real, working admin tools (`/admin/referrals`, `/admin/spotlights`,
-possibly-dead `/admin/tiers`) currently have **no discoverable path** from the real
-admin console. If you're asked to touch referrals or spotlights admin, or to clean
-up admin structure, the correct fix is almost certainly to add a sidebar section +
-iframe for each into `admin/characters/page.tsx`, following the exact pattern used
-for Waitlist/Bugs/Scan Limits/Users/Events, and then decide with EK whether to
-delete the orphaned `/admin/page.tsx` hub and `/admin/tiers/page.tsx` — don't delete
-either unilaterally (see "ask before removing a feature" in `HANDOFF.md` §0).
+**Net takeaway:** Referrals and Spotlights are fixed. `/admin/tiers` is the one open
+question — don't add it to the sidebar and don't delete it; confirm with EK first
+whether it's dead code or does something Account Rights doesn't.
+
+(The duplicate `/admin` hub page mentioned in earlier drafts of this doc has been
+deleted at EK's direction, 2026-08-24 — it no longer exists.)
 
 ---
 
