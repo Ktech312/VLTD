@@ -1,4 +1,18 @@
-# VLTD — Session Checklist (2026-08-05 night → ongoing, updated 2026-08-23)
+# VLTD — Session Checklist (2026-08-05 night → ongoing, updated 2026-08-24)
+
+## Future cleanup — not urgent, wait for EK
+⬜ **Retire or trim "Account Rights" now that "Users" covers everything it
+did** (tier grants, activity stats, personal/business badge, search) —
+EK: "we will leave the changes until we have tested a few times." Both
+panels stay live side by side for now. Revisit once Users' tier controls
+have been used for real a few times.
+⬜ **`/admin/tiers/page.tsx`** — still unwired and undecided. Likely dead
+code duplicating Account Rights/Users, but needs EK to actually open it
+and compare before deleting or wiring it in. See `APP_MAP.md` §2.3.
+
+## Events page self-expire + self-populate, header spacing, blue-button audit (2026-08-23)
+✅ **Events page was 100% stale** (4 hand-typed events from a one-time
+migration, all already past). RLS now requires `enabled = true AND
 
 ## Events page self-expire + self-populate, header spacing, blue-button audit (2026-08-23)
 ✅ **Events page was 100% stale** (4 hand-typed events from a one-time
