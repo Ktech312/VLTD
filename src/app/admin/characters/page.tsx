@@ -651,6 +651,8 @@ function AdminIcon({ name }: { name: string }) {
       return <svg {...p}><path d="M12 20a6 6 0 0 0 6-6v-2a6 6 0 0 0-12 0v2a6 6 0 0 0 6 6zM12 8V6M5 11H3M19 11h2M5 16l-2 1M19 16l2 1" /></svg>;
     case "users":
       return <svg {...p}><circle cx="9" cy="8" r="3" /><path d="M3 21c0-3.3 2.7-6 6-6s6 2.7 6 6" /><circle cx="17" cy="9" r="2.5" /><path d="M15.5 12.5c2.6.4 4.5 2.5 4.5 5.2" /></svg>;
+    case "calendar":
+      return <svg {...p}><rect x="3" y="5" width="18" height="16" rx="2" /><path d="M3 10h18M8 3v4M16 3v4" /></svg>;
     default:
       return null;
   }
@@ -1934,7 +1936,7 @@ function CharacterDetail({ char }: { char: SeedCharacter }) {
 }
 
 // ── Main Page ─────────────────────────────────────────────────
-type AdminSection = "characters" | "account-rights" | "coupons" | "admins" | "themes" | "waitlist" | "bugs" | "scan-limits" | "users";
+type AdminSection = "characters" | "account-rights" | "coupons" | "admins" | "themes" | "waitlist" | "bugs" | "scan-limits" | "users" | "events";
 
 export default function AdminCharactersPage() {
   const [authState, setAuthState] = useState<"loading" | "signed-out" | "unauthorized" | "authorized">("loading");
@@ -1953,6 +1955,7 @@ export default function AdminCharactersPage() {
     bugs: false,
     "scan-limits": false,
     users: false,
+    events: false,
   });
 
   function selectSection(section: AdminSection) {
@@ -2152,6 +2155,20 @@ export default function AdminCharactersPage() {
               Per-account activity, AI usage, and 3D Museum beta access. Opens on the right.
             </p>
           </SidebarSection>
+
+          {/* Events — EK: couldn't find this tab at all, it lived only at
+              the standalone /admin/events URL with no way in from here. */}
+          <SidebarSection
+            title="Events"
+            icon="calendar"
+            open={openSections.events}
+            active={activeSection === "events"}
+            onToggle={() => selectSection("events")}
+          >
+            <p className="text-[11px] leading-4 text-white/40">
+              Enable/disable, feature, or delete any collector event. Opens on the right.
+            </p>
+          </SidebarSection>
         </div>
 
         <div className="shrink-0 p-3 border-t border-white/8 flex items-center justify-between">
@@ -2212,6 +2229,12 @@ export default function AdminCharactersPage() {
           <iframe
             src="/admin/users"
             title="Users"
+            className="h-full w-full border-0"
+          />
+        ) : activeSection === "events" ? (
+          <iframe
+            src="/admin/events"
+            title="Events"
             className="h-full w-full border-0"
           />
         ) : (
