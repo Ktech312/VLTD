@@ -3,9 +3,10 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { getMyAdminRole, type AdminRole } from "@/lib/adminAuth";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
-import { timeAgo, exactDateTime, formatDuration, averageSessionLength } from "@/lib/presence";
+import { timeAgo, exactDateTime, formatDuration, averageSessionLength, isOnline } from "@/lib/presence";
 import { getStoredActiveProfileId } from "@/lib/auth";
 import { setTierSafe, type Tier } from "@/lib/subscription";
+import OnlineDot from "@/components/OnlineDot";
 import { SEED_CHARACTERS } from "@/lib/seedCharacters";
 import { SEED_CHARACTERS_PART2 } from "@/lib/seedCharacters_part2";
 import { SEED_CHARACTERS_PART3 } from "@/lib/seedCharacters_part3";
@@ -84,7 +85,7 @@ export default function AdminUsersPage() {
   const [status, setStatus] = useState("");
   const [togglingId, setTogglingId] = useState<string | null>(null);
   const [showSeed, setShowSeed] = useState(false);
-  const [sortKey, setSortKey] = useState<SortKey>("joined");
+  const [sortKey, setSortKey] = useState<SortKey>("lastActive");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
   const [query, setQuery] = useState("");
   const [savingTierId, setSavingTierId] = useState("");
@@ -165,8 +166,14 @@ export default function AdminUsersPage() {
         return (a.displayName || a.username || "").localeCompare(b.displayName || b.username || "");
       case "joined":
         return (a.createdAt ? Date.parse(a.createdAt) : 0) - (b.createdAt ? Date.parse(b.createdAt) : 0);
-      case "lastActive":
+      case "lastActive": {
+        // Online now always sorts above offline, regardless of exact
+        // timestamps; within the same online status, most-recent first.
+        const aOnline = isOnline(a.lastSeenAt) ? 1 : 0;
+        const bOnline = isOnline(b.lastSeenAt) ? 1 : 0;
+        if (aOnline !== bOnline) return aOnline - bOnline;
         return (a.lastSeenAt ? Date.parse(a.lastSeenAt) : 0) - (b.lastSeenAt ? Date.parse(b.lastSeenAt) : 0);
+      }
       case "sessions":
         return a.sessionCount - b.sessionCount;
       case "totalTime":
@@ -268,6 +275,7 @@ export default function AdminUsersPage() {
       <tr key={r.id} className="border-b border-[color:var(--border)] last:border-0">
         <td className="px-4 py-3">
           <div className="flex items-center gap-2">
+            <OnlineDot lastSeenAt={r.lastSeenAt} size={8} />
             <span className="font-medium text-text-primary">{r.displayName || r.username || "Unnamed"}</span>
             <span className="rounded-full bg-[color:var(--pill)] px-2 py-0.5 text-[10px] text-[color:var(--muted)] ring-1 ring-[color:var(--border)]">
               {r.profileType}
