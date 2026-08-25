@@ -653,6 +653,10 @@ function AdminIcon({ name }: { name: string }) {
       return <svg {...p}><circle cx="9" cy="8" r="3" /><path d="M3 21c0-3.3 2.7-6 6-6s6 2.7 6 6" /><circle cx="17" cy="9" r="2.5" /><path d="M15.5 12.5c2.6.4 4.5 2.5 4.5 5.2" /></svg>;
     case "calendar":
       return <svg {...p}><rect x="3" y="5" width="18" height="16" rx="2" /><path d="M3 10h18M8 3v4M16 3v4" /></svg>;
+    case "gift":
+      return <svg {...p}><rect x="3" y="9" width="18" height="12" rx="1" /><path d="M3 9h18M12 9v12M12 9c-2-3-6-4-6-1s4 1 6 1M12 9c2-3 6-4 6-1s-4 1-6 1" /></svg>;
+    case "star":
+      return <svg {...p}><path d="M12 3l2.6 5.8 6.4.6-4.8 4.2 1.4 6.3L12 16.8 6.4 19.9l1.4-6.3-4.8-4.2 6.4-.6z" /></svg>;
     default:
       return null;
   }
@@ -1936,7 +1940,7 @@ function CharacterDetail({ char }: { char: SeedCharacter }) {
 }
 
 // ── Main Page ─────────────────────────────────────────────────
-type AdminSection = "characters" | "account-rights" | "coupons" | "admins" | "themes" | "waitlist" | "bugs" | "scan-limits" | "users" | "events";
+type AdminSection = "characters" | "account-rights" | "coupons" | "admins" | "themes" | "waitlist" | "bugs" | "scan-limits" | "users" | "events" | "referrals" | "spotlights";
 
 export default function AdminCharactersPage() {
   const [authState, setAuthState] = useState<"loading" | "signed-out" | "unauthorized" | "authorized">("loading");
@@ -1956,6 +1960,8 @@ export default function AdminCharactersPage() {
     "scan-limits": false,
     users: false,
     events: false,
+    referrals: false,
+    spotlights: false,
   });
 
   function selectSection(section: AdminSection) {
@@ -2169,6 +2175,34 @@ export default function AdminCharactersPage() {
               Enable/disable, feature, or delete any collector event. Opens on the right.
             </p>
           </SidebarSection>
+
+          {/* Referrals + Spotlights — same discovery gap as Events: real,
+              working pages with no path in from this shell at all (see
+              APP_MAP.md §2.3). Not touching /admin/tiers -- it may be dead
+              code duplicating Account Rights, needs EK's call first. */}
+          <SidebarSection
+            title="Referrals"
+            icon="gift"
+            open={openSections.referrals}
+            active={activeSection === "referrals"}
+            onToggle={() => selectSection("referrals")}
+          >
+            <p className="text-[11px] leading-4 text-white/40">
+              Referral program perks and grants. Opens on the right.
+            </p>
+          </SidebarSection>
+
+          <SidebarSection
+            title="Spotlights"
+            icon="star"
+            open={openSections.spotlights}
+            active={activeSection === "spotlights"}
+            onToggle={() => selectSection("spotlights")}
+          >
+            <p className="text-[11px] leading-4 text-white/40">
+              Featured-collection spotlight picks. Opens on the right.
+            </p>
+          </SidebarSection>
         </div>
 
         <div className="shrink-0 p-3 border-t border-white/8 flex items-center justify-between">
@@ -2235,6 +2269,18 @@ export default function AdminCharactersPage() {
           <iframe
             src="/admin/events"
             title="Events"
+            className="h-full w-full border-0"
+          />
+        ) : activeSection === "referrals" ? (
+          <iframe
+            src="/admin/referrals"
+            title="Referrals"
+            className="h-full w-full border-0"
+          />
+        ) : activeSection === "spotlights" ? (
+          <iframe
+            src="/admin/spotlights"
+            title="Spotlights"
             className="h-full w-full border-0"
           />
         ) : (

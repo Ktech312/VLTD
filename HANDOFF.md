@@ -11,6 +11,17 @@ Rules also live in the auto-memory index `MEMORY.md` (loaded each session) and t
 `memory/*.md` files it points to. If this handoff and a memory ever disagree,
 ask EK.
 
+**⚠ READ `APP_MAP.md` BEFORE BUILDING ANYTHING NEW, ESPECIALLY ADMIN TOOLS.**
+2026-08-23/24: a session built an entire standalone `/admin` hub page +
+`/admin/events` management page without knowing a real, 2200+ line admin
+console shell already existed at `src/app/admin/characters/page.tsx` (sidebar
+with Characters/Account Rights/Coupons/Waitlist/Bugs/Scan Limits/Users/Events
+sections) — genuine duplicate work, caught only because EK said "I do not see
+any new Event tab." `APP_MAP.md` exists specifically so this can't happen
+again: it's a structural map of every route, admin tool, table, and cron job
+that currently exists — read it FIRST, before assuming something doesn't
+exist yet. If it's stale or wrong, fix it as you go, same as HANDOFF.md.
+
 **Who you're working with:** EK, the founder. **Non-programmer.** Explain in plain
 language, never jargon. Give a recommendation, not an option-dump. If something
 is risky or can't be done, say so plainly.
