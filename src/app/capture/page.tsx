@@ -373,6 +373,18 @@ export default function CapturePage() {
   const [pendingNativeCrop, setPendingNativeCrop] = useState<ScanCropRect>(DEFAULT_NATIVE_CROP);
   const [isApplyingNativeCrop, setIsApplyingNativeCrop] = useState(false);
 
+  // Vault's "Upload from device" toolbar button -> "Single item" routes
+  // here with ?openUpload=1 so the file picker opens immediately instead
+  // of making EK tap "Add image" again once the page loads. Plain
+  // URLSearchParams read (not useSearchParams) so this doesn't need a
+  // Suspense boundary just for one query param.
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get("openUpload") === "1") {
+      uploadInputRef.current?.click();
+      router.replace("/capture", { scroll: false });
+    }
+  }, [router]);
+
   // Builder-first: the form + image panel is always shown; `analyzing` drives
   // the AI spinner. (The old camera-first "phase" state machine — idle/
   // loading/error — is gone; it never left "review" in real use.)

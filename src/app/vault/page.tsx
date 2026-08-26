@@ -978,6 +978,7 @@ function VaultSelectionDrawer({
 export default function VaultPage() {
   const [focusKey] = useState<UniverseKey | null>(() => readFocusUniverseKey());
   const [items, setItems] = useState<VaultItem[]>([]);
+  const [showUploadMenu, setShowUploadMenu] = useState(false);
   const [query, setQuery] = useState("");
   const [universeFilter, setUniverseFilter] = useState<UniverseFilter>("ALL");
   const [readinessFilter, setReadinessFilter] = useState<ReadinessFilter>("all");
@@ -1455,6 +1456,47 @@ export default function VaultPage() {
               <span className="vltd-action-module__plate !py-1.5">Add Item</span>
               <span className="vltd-action-module__block"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round"><path d="M12 5v14M5 12h14"/></svg></span>
             </Link>
+            {/* Upload from device — EK: hard to find, needs a Single (all
+                photos -> one item) vs Batch (each photo -> its own item)
+                choice up front. Single opens the existing Add flow's file
+                picker directly; Batch is the existing /vault/bulk flow. */}
+            <div className="relative shrink-0">
+              <button
+                type="button"
+                onClick={() => setShowUploadMenu((v) => !v)}
+                aria-label="Upload from device"
+                className="inline-flex h-[42px] w-[42px] items-center justify-center rounded-[6px] bg-[color:var(--pill)] ring-1 ring-[color:var(--border)]"
+              >
+                <Glyph name="share" size={16} />
+              </button>
+              {showUploadMenu ? (
+                <>
+                  <div className="fixed inset-0 z-40" onClick={() => setShowUploadMenu(false)} />
+                  <div className="absolute right-0 top-[calc(100%+6px)] z-50 w-64 overflow-hidden rounded-[7px] border border-[color:var(--border)] bg-[color:var(--surface)] shadow-lg">
+                    <Link
+                      href="/capture?openUpload=1"
+                      onClick={() => setShowUploadMenu(false)}
+                      className="block px-4 py-3 text-sm font-bold hover:bg-[color:var(--pill)]"
+                    >
+                      Single item
+                      <span className="mt-0.5 block text-xs font-normal text-[color:var(--muted)]">
+                        All the photos you pick go onto one item.
+                      </span>
+                    </Link>
+                    <Link
+                      href="/vault/bulk"
+                      onClick={() => setShowUploadMenu(false)}
+                      className="block border-t border-[color:var(--border)] px-4 py-3 text-sm font-bold hover:bg-[color:var(--pill)]"
+                    >
+                      Batch
+                      <span className="mt-0.5 block text-xs font-normal text-[color:var(--muted)]">
+                        Each photo becomes its own new item.
+                      </span>
+                    </Link>
+                  </div>
+                </>
+              ) : null}
+            </div>
           </>
         }
       />
