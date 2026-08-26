@@ -144,29 +144,35 @@ export default function AdminEventsPage() {
               Every event, including ones already hidden from the public page (past, or manually disabled).
             </p>
           </div>
-          <div className="flex shrink-0 gap-2">
-            <a
-              href="https://claude.ai/code/artifact/48d46d98-8e1f-4214-84df-71399faa09b2"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="h-10 inline-flex items-center gap-1.5 rounded-full border border-[color:var(--border)] bg-[color:var(--pill)] px-4 text-sm font-semibold text-[color:var(--muted)] transition hover:text-text-primary"
-            >
-              Event Catcher <span className="text-xs">↗</span>
-            </a>
-            <button
-              type="button"
-              onClick={() => setShowQuickAdd(true)}
-              className="h-10 inline-flex items-center rounded-full border border-[color:var(--theme-gold-border)] bg-[color:var(--pill)] px-4 text-sm font-semibold text-[color:var(--theme-gold)]"
-            >
-              + Quick Add
-            </button>
-            <button
-              type="button"
-              onClick={() => void loadRows()}
-              className="h-10 shrink-0 rounded-full border border-[color:var(--border)] bg-[color:var(--pill)] px-4 text-sm font-semibold text-[color:var(--muted)] transition hover:text-text-primary"
-            >
+          <div className="shrink-0 text-right">
+            <div className="flex justify-end gap-2">
+              <a
+                href="https://claude.ai/code/artifact/48d46d98-8e1f-4214-84df-71399faa09b2"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="vltd-primary-button h-10 inline-flex items-center gap-1.5 rounded-full px-4 text-sm font-black"
+              >
+                Event Catcher <span className="text-xs">↗</span>
+              </a>
+              <button
+                type="button"
+                onClick={() => setShowQuickAdd(true)}
+                className="h-10 inline-flex items-center rounded-full border border-[color:var(--theme-gold-border)] bg-[color:var(--pill)] px-4 text-sm font-semibold text-[color:var(--theme-gold)]"
+              >
+                + Quick Add
+              </button>
+              <button
+                type="button"
+                onClick={() => void loadRows()}
+                className="h-10 shrink-0 rounded-full border border-[color:var(--border)] bg-[color:var(--pill)] px-4 text-sm font-semibold text-[color:var(--muted)] transition hover:text-text-primary"
+              >
               Refresh
-            </button>
+              </button>
+            </div>
+            <p className="mt-1.5 text-xs text-[color:var(--muted)]">
+              Drag the bookmarklet on that page to your browser's bookmarks bar — click it on any
+              webpage to grab the title, link, and photo into Quick Add.
+            </p>
           </div>
         </div>
 
