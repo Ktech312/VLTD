@@ -1,4 +1,4 @@
-# VLTD — Session Handoff (updated, seventeenth pass — Events page now self-expires + self-populates (2 new crons); header-strip button spacing fixed; NEW: placeholder/incomplete-feature audit in §2 — PSA/Discogs/Vault-Scan/Lounge-charts need attention, read before claiming anything is "done")
+# VLTD — Session Handoff (updated, eighteenth pass — full backend security audit (8 real RLS/RPC vulnerabilities found + fixed); 3D Museum beta-access gating shipped, then the 55-commit `claude/museum-map-doorways` branch that beta was gating access to turned out to have NEVER been merged to `main` at all — merged; Admin Users page now hides seed/test accounts + sortable columns; 2 real Room Builder bugs fixed (dead space under the room panel, multi-item shelf-fill scattering across walls); Room Builder rooms ("Halls") now save to the account for real instead of one local-storage slot; SOC2 roadmap sketch written, not started. Read this whole entry before touching the museum/admin code.)
 
 Read this top to bottom, then start on **§2 "What's LEFT."** This is written so a
 brand-new chat can pick up with no prior context.
@@ -53,7 +53,30 @@ is risky or can't be done, say so plainly.
   ask EK to run it. **Never add a new column to the cloud row map
   (`src/lib/vaultCloud.ts`) without the migration** — unknown columns make the
   `vault_items` upsert throw.
-  **✅ NO MIGRATIONS PENDING.** `supabase/migrations/20260822_vault_documents.sql`
+  **✅ NO MIGRATIONS PENDING.** 8 more confirmed run by EK 2026-08-23/24, all
+  live: `20260823_fix_public_profiles_write_policy.sql` (closed a
+  `using(true) with check(true)` write hole on `public_profiles`),
+  `20260823_fix_place_bid_impersonation.sql` (`place_bid()` now rejects a
+  bid placed as anyone but the real caller), `20260823_fix_guest_favorite_delete.sql`
+  (guest favorite-deletes now go through a scoped `unfavorite_as_guest()`
+  RPC instead of a blanket delete policy), `20260823_protect_profile_billing_columns.sql`
+  (a BEFORE UPDATE trigger locks `tier`/`stripe_customer_id`/etc. to
+  privileged callers only — closes the RLS gap where any user could edit
+  ANY column on their own profile row, not just safe ones),
+  `20260823_fix_exhibition_events_team_check.sql` (team-profile-aware
+  ownership check, matching `is_profile_member()` used elsewhere),
+  `20260823_fix_gallery_share_and_invite_tokens.sql` (the worst finding of
+  the audit — `gallery_invites` had a `using(true) with_check(true)`
+  policy for ALL commands, anon+authenticated; replaced with 6 new
+  SECURITY DEFINER functions for share/invite-token reads instead of raw
+  table access), `20260823_museum_beta_flag.sql` (the two `profiles`
+  columns the 3D Museum beta-access gate below reads/writes), and
+  `20260824_virtual_rooms.sql` (new `virtual_rooms` table + `room-wallpapers`
+  storage bucket for real saved "Halls" — see the dated entry below; first
+  attempt at this one had a real bug, `gallery_id` was declared `text`
+  when `galleries.id` is actually `uuid` in the live DB — fixed and
+  re-run clean). See the dated sections below for the full story on each.
+  `supabase/migrations/20260822_vault_documents.sql`
   (private `vault-documents` storage bucket + `vault_documents` metadata
   table, see §2's placeholder-audit follow-up work) — **confirmed run by EK
   2026-08-22.** Documents (certs/receipts) now really sync to the cloud in
@@ -212,6 +235,231 @@ who owns a screen.** EK is aware of this.
   3) public/searchable rooms by universe,
   4) paid room sizes/templates/convention placement,
   5) later freeform room editing if usage justifies it.
+
+---
+
+## ✅ 2026-08-24, later same day — Room Builder rooms ("Halls") now save to
+the account for real, instead of one shared local-storage slot.
+
+EK asked what "Scratch room" meant and why hitting Save never asked to save
+as something new — turned out "Save Room Draft" only ever wrote the whole
+room (style/layout/wallpaper/shelf placement) to ONE fixed key in the
+browser's own local storage, unconditionally overwritten by literally any
+save, invisible on any other device, no name, no per-room identity at all.
+Real fix, built to EK's own exact spec after 3 design questions asked and
+answered first (reopening a saved Hall → same Source dropdown, not a
+separate page; linking to an Exhibition → the Hall stays its own row, just
+linked, not merged into the Exhibition's own data; repeat saves on an
+already-named Hall → quiet update, no re-prompt):
+
+- **New table `virtual_rooms`** (migration `20260824_virtual_rooms.sql`,
+  **confirmed run by EK** — first attempt had `gallery_id` typed `text` on
+  the assumption `galleries.id` was text too, per an old, apparently wrong
+  comment on `exhibition_events`; the live DB has `galleries.id` as `uuid`,
+  which this migration's real foreign key is what finally caught — fixed,
+  re-run clean). Owner-scoped RLS via `is_profile_member()`, same pattern as
+  `galleries`/`exhibition_events`. New public `room-wallpapers` Storage
+  bucket, `auth.uid()` folder convention matching every other image bucket.
+  New lib: `src/lib/virtualRooms.ts` (`listMyHalls`, `createHall`,
+  `updateHall`, `uploadHallWallpaper`).
+- **"Scratch room" relabeled "Empty Hall"** in the Source dropdown
+  (`VirtualGalleryRoom.tsx`) — same underlying `galleryId: "scratch"`
+  sentinel, just clearer wording.
+- **Save now asks a question on a brand-new room, once:** an Empty Hall
+  just needs a name; a room started from an Exhibition gets a choice —
+  "Add to '<Exhibition>'" (also grows that Exhibition's own `itemIds` via
+  a new `addItemIdsToGallery()` export in `galleryModel.ts`, de-duped) or
+  "Save as a new Hall" (same default name, pre-filled but editable,
+  linked via `gallery_id` either way — only whether the Exhibition's own
+  item list gets extended differs between the two choices). Once a room
+  IS a saved Hall (`currentHallId` set), further Save clicks just quietly
+  update that same row — the modal (a `createPortal` backdrop+sheet,
+  same shell as the existing slot-picker) never reappears unless you
+  explicitly start a new room.
+- **A "My Halls" `<optgroup>` in the same Source dropdown** lists your
+  saved Halls to reopen — picking one restores EVERY field (style/layout/
+  wallpaper/exact shelf placement, not just an item list the way picking
+  an Exhibition does), by reading straight out of the already-fetched
+  `listMyHalls()` state rather than a second round trip.
+- **Wallpaper uploads go through real Storage now**, not inline base64 —
+  `fileToRoomWallpaper()` still produces a resized `data:` URL for the
+  live 3D texture, but `uploadHallWallpaper()` uploads that to
+  `room-wallpapers` and only the resulting URL gets saved to the row,
+  matching how every other image in this app is stored. Fails safe to no
+  wallpaper rather than failing the whole save over one image.
+- The old local-storage draft (`DRAFT_KEY`) is untouched, still restores
+  in-progress work on a reload — it's just no longer the "real" save.
+- **Verified live** (Empty Hall → name → save → modal closes, no console
+  errors) via a local dev session with no active profile, which correctly
+  failed the actual Supabase write gracefully (no session = no save) —
+  **the Exhibition-linked "add items / new Hall" choice was NOT verified
+  end-to-end**, since that needs a real logged-in account that owns an
+  Exhibition. Worth EK running through that specific path once.
+
+## ✅ 2026-08-24, later same day — 2 real Room Builder bugs EK caught live,
+both fixed:
+
+1. **Dead flat-colored space at the bottom of the room panel, below the
+   actual 3D view** — EK circled it directly. Root cause: the room's
+   `<section>` sits next to the "Arrange Shelf Order" `<aside>` in a CSS
+   grid row (`grid xl:grid-cols-[300px_minmax(0,1fr)]`), and grid items
+   default to `align-items: stretch` — the section was stretching to match
+   the sidebar's own (often much taller) natural content height, while its
+   inner content stayed at its real `min-h-[600px]`, exposing the
+   section's own background color in the gap. Confirmed live in a test
+   session: the gap measured ~87px before, ~1px after. Fix: added
+   `xl:self-start` to the section, matching what the aside already had.
+2. **Dropping multiple items onto one shelf slot scattered the overflow
+   across OTHER walls instead of filling that same wall's next empty
+   slots** — EK circled Left Wall slot #2, added several items, expected
+   #3/#4/#6/#7 (that wall's own empty slots) to fill; something else did
+   instead. Root cause: `fillFromSlot()`'s overflow loop walked the RAW
+   global slot index (`cursor + 1`, wrapping at array length) — but a
+   wall's slots are deliberately NOT contiguous in that array (see
+   `slotGroups`' own comment: "WALL_CYCLE's interleaving is deliberate"),
+   so incrementing by 1 jumped between walls almost immediately. Fixed to
+   walk `slotGroups`' own per-wall index lists — same wall as the clicked
+   slot first, in that wall's real shelf-reading order — only spilling
+   into other walls' groups once the clicked wall is completely full.
+
+Both in `src/components/gallery/VirtualGalleryRoom.tsx`, clean on
+`tsc`/`eslint`/`npm run build`, verified live before pushing.
+
+## ✅ 2026-08-24 — Admin Users page: seed/test accounts hidden by default,
+every column sortable.
+
+EK's ask, mirroring the exact pattern already built into the Account
+Rights panel (`admin/characters/page.tsx`): hide the fake seed characters
+(da Vinci, Blackbeard, etc. — real `profiles` rows under fixed
+`00000000-...` UUIDs) at the bottom of `/admin/users` behind a
+collapsed "Seed / test accounts (N)" toggle instead of mixed into the
+real-account list, and let every column in the header row (Account/
+Joined/Last active/Sessions/Total time/Avg session/AI calls/AI tokens/3D
+Museum beta) sort ascending/descending on click. Reused the same
+`SEED_CHARACTERS`/`_PART2/3/4` profile-id set `admin/characters/page.tsx`
+already builds, rather than duplicating the seed-detection logic.
+`src/app/admin/users/page.tsx` only — clean on `tsc`/`eslint`/build.
+
+## ✅ 2026-08-24 — the 55-commit `claude/museum-map-doorways` branch was
+merged into `main`. **The 3D Museum builder existed only on that
+unmerged branch this whole time — `/museum/virtual-room` didn't exist on
+`main` at all until this merge.**
+
+Discovered while wiring the beta-access feature below: EK reported "3D
+does not come up" with a screenshot of a literal "Gallery not found"
+error — traced to the beta button correctly pointing at
+`/museum/virtual-room`, a route that simply didn't exist on `main`, so
+Next.js's dynamic catch-all `/museum/[galleryId]` matched instead and
+showed its own "not found" state. The whole 3D room builder (map
+floorplan, doorways, GLB room styles, shelf drag-and-drop, everything the
+"Big update 2026-08-14/15" and "CURRENT ARCHITECTURE" sections below
+describe) had been built and pushed to `claude/museum-map-doorways` over
+multiple prior sessions and never actually merged — EK confirmed
+("yes") to merge it once this was explained.
+
+**6 real merge conflicts, all resolved:**
+- `src/app/museum/page.tsx` — kept `main`'s header (filter pills + the
+  new beta-gated "3D Museum" button below), **deliberately discarded** the
+  museum branch's own competing header, which had an *ungated* direct
+  `<Link href="/museum/virtual-room">` — keeping that out matters because
+  it would let anyone skip the request/approval gate EK asked for below.
+- `src/components/NavShell.tsx` — combined both branches' logic (this
+  session's iframe self-detection fix + the museum branch's
+  `isVirtualRoomGuest` full-bleed case).
+- `package.json`/`package-lock.json` — both branches added different,
+  non-conflicting dependencies (`web-push` vs. `three`) — kept both,
+  regenerated the lockfile via `npm install` rather than hand-resolving it.
+- `CHECKLIST.md`/`HANDOFF.md` — merged both histories, dated notes added
+  explaining the merge.
+- Verified merged tree clean on `tsc --noEmit`/`eslint`/`npm run build`,
+  checked for remote divergence (`git fetch` + compare `HEAD` vs.
+  `origin/main`) before pushing. **Confirmed live afterward**:
+  `/museum/virtual-room` now renders the real builder (real galleries,
+  shelf-arrangement UI, no console errors) instead of "Gallery not found."
+- The isolated worktree at `C:\Users\EK\VLTD-museum-doorways` mentioned in
+  the "Big update, 2026-08-14/15" section below is no longer the required
+  place to do museum work — everything's unified on `main` now, in the
+  normal `C:\Users\EK\VLTD` checkout.
+
+## ✅ 2026-08-23/24 — full backend security audit: 8 real RLS/RPC
+vulnerabilities found and fixed. **EK's explicit standing instruction:
+"there are no low stakes, just issues and really bad issues" — every
+finding gets fixed properly, none get downplayed or deferred.**
+
+Started after finding the museum builder had zero ownership checks;
+widened into a full pass across every RLS policy and SECURITY DEFINER
+function reachable from the client. All 8 migrations listed in the
+pending-migrations block above, confirmed run by EK. Highlights:
+- **Worst finding: `gallery_invites_public_write`** — a
+  `using(true) with_check(true)` policy for ALL commands, for BOTH
+  anon and authenticated roles. Anyone could read, forge, or disable any
+  gallery's invite tokens. Replaced with 6 new SECURITY DEFINER functions
+  for every share/invite-token read path (`get_gallery_by_share_token`,
+  `get_gallery_items_by_share_token`, `get_gallery_by_invite_token`,
+  `get_gallery_items_by_invite_token`, `mark_invite_token_used`,
+  `get_invite_token_info`) plus a real member-scoped write policy.
+  `src/lib/galleryModel.ts` and the `museum/share/[token]`/`museum/
+  invite/[token]` pages all switched to call these RPCs instead of
+  querying the tables directly.
+- **`place_bid()` never checked the caller was who they claimed to be** —
+  `p_bidder` was trusted as-given; anyone could place a bid AS someone
+  else. Added an explicit `auth.uid() = p_bidder` check.
+- **`public_profiles`** had `for all using(true) with check(true)` — any
+  signed-in user could edit anyone's public profile row. Scoped to
+  owner-or-admin.
+- **RLS has no column-level granularity**: the `profiles` table's
+  owner-scoped policy let a user legitimately update ANY column on their
+  own row, including `tier`/`stripe_customer_id`/`account_code` —
+  nothing stopped a client-side call from just self-granting a paid
+  tier. Added a BEFORE INSERT/UPDATE trigger
+  (`protect_profile_billing_columns()`) that forces those columns back
+  to their prior/safe values unless the caller is privileged.
+- Guest favorite-deletes went through a blanket `using(true)` delete
+  policy — replaced with a scoped `unfavorite_as_guest()` RPC that
+  actually checks the anonymous id matches.
+- `exhibition_events`'s insert check used `auth.uid() = profile_id`,
+  which breaks for team-shared profiles — switched to the same
+  `is_profile_member()` helper used elsewhere (no client code needed;
+  callers already passed the right value).
+
+## ✅ 2026-08-23/24 — 3D Museum beta-access gating feature (the button
+that led to discovering the merge gap above).
+
+EK: "have the Beta Feature button on all, have it pop up and ask to be
+invited to test the features, then i can enable it for people in the
+Admin page." Built: 2 new `profiles` columns (`museum_beta_requested_at`,
+`museum_beta_enabled`, both locked to privileged callers by the same
+billing-columns trigger above), `src/lib/museumBeta.ts`
+(`getMuseumBetaStatus`/`requestMuseumBetaAccess`), a single "3D Museum"
+button on `/museum` next to the filter pills (EK corrected an early pass
+that put a button on every exhibition card instead — "one button next to
+Invite-only button") with a request-access modal, and an admin PATCH
+endpoint + toggle column on `/admin/users` to grant it per-account.
+**Two follow-up gaps EK caught, both fixed:**
+- **Duplicate top nav on admin pages** — root cause: `admin/characters/
+  page.tsx`'s sidebar iframes other admin pages (Waitlist/Bugs/Users/
+  etc.), and each of those, being a normal full page, ALSO passed
+  through `NavShell` a second time inside the iframe. Fixed generally via
+  iframe self-detection (`window.self !== window.top`, a lazy `useState`
+  initializer so there's no flash) rather than hardcoding a route list —
+  covers any future page embedded the same way.
+- **No way to actually grant yourself/anyone the beta** — the real admin
+  shell EK uses is `admin/characters/page.tsx` (a persistent sidebar that
+  iframes standalone admin pages), NOT the simpler `admin/page.tsx` hub;
+  a "Users" section didn't exist there at all. Added one.
+
+## 📋 SOC2 roadmap sketch — written, not started. `SOC2_ROADMAP.md`
+(repo root). Plain-language phased plan for EK: what SOC 2 actually is,
+which of the 5 Trust Services Criteria apply (Security/Availability/
+Confidentiality — recommended scope; skip Processing Integrity, maybe add
+Privacy later), an honest inventory of what the security audit above
+already covers vs. what's still missing (written policies, an admin
+action audit log, enforced MFA, tested backups, vendor review), and a
+phased rollout with real cost/timeline (~$30–70k all-in for a first
+Type II, spread 6–15 months). Recommendation given, not started building:
+draft the cheap Phase 1 policies + the admin audit log now (useful
+regardless of any formal audit); hold the expensive compliance-platform/
+auditor phase until a real deal or investor is actually asking for it.
 
 ---
 
@@ -2304,12 +2552,16 @@ only (the vault-door/shelf-alignment bug-hunting is still accurate
 *about the shell*, since the shell is still live code, just not the
 primary room anymore).**
 
-**⚠ Branch state — READ FIRST:** all of this work lives on branch
-`claude/museum-map-doorways`, pushed to GitHub, **NOT merged to `main`.**
-Reason it's not merged yet: EK is still actively iterating (see the open
-color/lighting problem below) and didn't want unfinished work auto-deployed
-to the live site. If you're a fresh chat picking this up, check out that
-branch — `main` does not have any of this.
+**⚠ Branch state — STALE, READ THE CORRECTION:** this originally said the
+branch was NOT merged to `main` and EK was still iterating on it. **That
+stopped being true 2026-08-24 — see the dated entry near the top of this
+file ("the 55-commit `claude/museum-map-doorways` branch was merged into
+`main`").** It turned out this branch sat unmerged for well over a week
+with nobody actively watching it, to the point a whole beta-access feature
+got built on `main` pointing at a route (`/museum/virtual-room`) that
+didn't exist there yet. Everything below is now live on `main`, in the
+normal `C:\Users\EK\VLTD` checkout — the rest of this note (kept for
+history) describes the state BEFORE that merge.
 
 **⚠ Also: a dedicated git worktree exists specifically because the shared
 `C:\Users\EK\VLTD` checkout kept getting switched to `main` by another active
