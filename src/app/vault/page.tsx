@@ -1471,28 +1471,31 @@ export default function VaultPage() {
               </button>
               {showUploadMenu ? (
                 <>
-                  <div className="fixed inset-0 z-40" onClick={() => setShowUploadMenu(false)} />
-                  {/* bg-[color:var(--bg)], not --surface -- --surface is
-                      deliberately translucent everywhere else in this app
-                      (cards over a flat page background), but that let the
-                      vault thumbnails behind this menu show through. --bg
-                      is a real opaque hex in every theme. */}
-                  <div className="absolute right-0 top-[calc(100%+6px)] z-50 w-60 overflow-hidden rounded-[7px] border border-[color:var(--border)] bg-[color:var(--bg)] shadow-lg">
+                  {/* Solid dark scrim behind the menu, same as the Quick Add
+                      modal -- belt and suspenders against any theme token
+                      turning out translucent (--bg alone wasn't reliably
+                      opaque enough; this can't show anything through it
+                      regardless). */}
+                  <div className="fixed inset-0 z-40 bg-black/70" onClick={() => setShowUploadMenu(false)} />
+                  <div
+                    className="absolute right-0 top-[calc(100%+6px)] z-50 w-48 overflow-hidden rounded-[7px] border border-[color:var(--border)] shadow-lg"
+                    style={{ backgroundColor: "#14171d" }}
+                  >
                     <Link
                       href="/capture?openUpload=1"
                       onClick={() => setShowUploadMenu(false)}
-                      className="block px-3 py-2.5 text-center text-xs hover:bg-[color:var(--pill)]"
+                      className="block px-3 py-2 text-center hover:bg-[color:var(--pill)]"
                     >
-                      <span className="font-bold">Single item</span>
-                      <span className="text-[color:var(--muted)]"> — All Images to 1 Item</span>
+                      <div className="text-xs font-bold">Single item</div>
+                      <div className="text-[10px] text-[color:var(--muted)]">All Images to 1 Item</div>
                     </Link>
                     <Link
                       href="/vault/bulk"
                       onClick={() => setShowUploadMenu(false)}
-                      className="block border-t border-[color:var(--border)] px-3 py-2.5 text-center text-xs hover:bg-[color:var(--pill)]"
+                      className="block border-t border-[color:var(--border)] px-3 py-2 text-center hover:bg-[color:var(--pill)]"
                     >
-                      <span className="font-bold">Batch</span>
-                      <span className="text-[color:var(--muted)]"> — Each Image creates new item</span>
+                      <div className="text-xs font-bold">Batch</div>
+                      <div className="text-[10px] text-[color:var(--muted)]">Each Image creates new item</div>
                     </Link>
                   </div>
                 </>
