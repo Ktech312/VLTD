@@ -9,6 +9,11 @@ have been used for real a few times.
 ⬜ **`/admin/tiers/page.tsx`** — still unwired and undecided. Likely dead
 code duplicating Account Rights/Users, but needs EK to actually open it
 and compare before deleting or wiring it in. See `APP_MAP.md` §2.3.
+⬜ **Event Catcher sharing** — currently admin-only (bookmarklet works for
+anyone, but saving through Quick Add needs VLTD admin access). EK: "leave
+it for now, figure out a way to share better in the future." If someone
+non-admin needs to add events later, that's a narrower permission that
+doesn't exist yet — would need building, not just granting admin.
 
 ## Events page self-expire + self-populate, header spacing, blue-button audit (2026-08-23)
 ✅ **Events page was 100% stale** (4 hand-typed events from a one-time
