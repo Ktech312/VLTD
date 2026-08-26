@@ -3069,6 +3069,26 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
     }
 
     function onPointerUp(event: PointerEvent) {
+      // EK caught this live 2026-08-25: clicking "Update Hall"/"Save Hall"
+      // in the sidebar sent the camera walking off toward a corner — root
+      // cause had nothing to do with Save. This listener is deliberately
+      // on `window`, not the canvas (so a look-drag that started on the
+      // canvas still completes correctly even if the mouse drifts off it
+      // before releasing) — but that means it ALSO fired for a pointerup
+      // on ANY button anywhere on the page (Save, Organize, the Room
+      // style dropdown, all of it), with no check that the click actually
+      // started on the canvas. `didDrag` alone didn't catch this: it just
+      // holds whatever value was left over from the LAST real canvas
+      // interaction, so a sidebar click after a plain (non-drag) canvas
+      // click read as `!didDrag` = true = "a clean tap" and fell into the
+      // click-to-walk floor logic below, raycasting from that button's
+      // own screen position (nowhere near the canvas) and walking to
+      // wherever that ray happened to land, clamped into the room —
+      // which is why it kept landing near a corner. `isDragging` is only
+      // ever set true by the canvas's OWN pointerdown (never by a click
+      // elsewhere on the page), so gating on it here means a pointerup
+      // that didn't start on the canvas correctly does nothing instead.
+      if (!isDragging) return;
       if (heldItem) {
         // Holding something? ANY click puts it back — a click that
         // dragged the item to rotate it (didDrag=true) is just the end
@@ -3207,8 +3227,6 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
     renderer.domElement.addEventListener("wheel", onWheel, { passive: false });
     resize();
     render();
-
-
 
     return () => {
       disposed = true;
