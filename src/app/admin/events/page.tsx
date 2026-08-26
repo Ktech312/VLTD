@@ -1,10 +1,10 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import Link from "next/link";
 import { getMyAdminRole, type AdminRole } from "@/lib/adminAuth";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 import { showToast } from "@/lib/toast";
+import QuickAddEventForm from "@/components/admin/QuickAddEventForm";
 
 type EventRow = {
   id: string;
@@ -41,6 +41,7 @@ export default function AdminEventsPage() {
   const [rows, setRows] = useState<EventRow[]>([]);
   const [status, setStatus] = useState("");
   const [busyId, setBusyId] = useState("");
+  const [showQuickAdd, setShowQuickAdd] = useState(false);
 
   const loadRows = useCallback(async () => {
     setStatus("Loading…");
@@ -152,12 +153,13 @@ export default function AdminEventsPage() {
             >
               Event Catcher <span className="text-xs">↗</span>
             </a>
-            <Link
-              href="/admin/events/quick-add"
+            <button
+              type="button"
+              onClick={() => setShowQuickAdd(true)}
               className="h-10 inline-flex items-center rounded-full border border-[color:var(--theme-gold-border)] bg-[color:var(--pill)] px-4 text-sm font-semibold text-[color:var(--theme-gold)]"
             >
               + Quick Add
-            </Link>
+            </button>
             <button
               type="button"
               onClick={() => void loadRows()}
@@ -271,6 +273,38 @@ export default function AdminEventsPage() {
           </table>
         </div>
       </div>
+
+      {showQuickAdd && (
+        <div
+          className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/60 px-4 py-10"
+          onClick={() => setShowQuickAdd(false)}
+        >
+          <div
+            className="w-full max-w-sm rounded-2xl border border-[color:var(--border)] bg-[color:var(--surface)] p-5"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-start justify-between gap-3">
+              <h2 className="text-lg font-black tracking-[-0.02em]">Quick Add Event</h2>
+              <button
+                type="button"
+                onClick={() => setShowQuickAdd(false)}
+                className="shrink-0 rounded-full p-1 text-[color:var(--muted)] transition hover:text-text-primary"
+                aria-label="Close"
+              >
+                ✕
+              </button>
+            </div>
+            <div className="mt-4">
+              <QuickAddEventForm
+                onSaved={() => {
+                  setShowQuickAdd(false);
+                  void loadRows();
+                }}
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }
