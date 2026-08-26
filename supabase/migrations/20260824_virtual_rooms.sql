@@ -21,11 +21,17 @@
 create table if not exists public.virtual_rooms (
   id uuid primary key default gen_random_uuid(),
   profile_id uuid not null references public.profiles(id) on delete cascade,
-  -- galleries.id is text, not uuid (client-generated, sometimes a
-  -- crypto.randomUUID() string, sometimes a "gallery_<timestamp>" fallback
-  -- -- see makeGalleryId() in galleryModel.ts). Matches exhibition_events'
-  -- own gallery_id column for the same reason.
-  gallery_id text references public.galleries(id) on delete set null,
+  -- galleries.id is uuid in the live DB. (An old comment on
+  -- exhibition_events elsewhere in this repo claimed it was text -- that
+  -- table's own gallery_id column has never actually had a real foreign
+  -- key constraint to prove it either way, so the claim went untested
+  -- until this migration tried to add one for real and Postgres rejected
+  -- the mismatch. galleryModel.ts's client-side id generator does have a
+  -- `gallery_<timestamp>` text fallback for browsers without
+  -- crypto.randomUUID(), but a row using that fallback could never have
+  -- been inserted into a real uuid column anyway, so it isn't a live
+  -- concern here.)
+  gallery_id uuid references public.galleries(id) on delete set null,
   title text not null,
   room_style text not null default 'vault',
   room_layout text not null default 'storefront',
@@ -39,6 +45,14 @@ create table if not exists public.virtual_rooms (
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
+
+-- Defensive: the first attempt at this migration may have already created
+-- the table with gallery_id as text before failing on the foreign key
+-- below (see the column comment above for why). The table is empty either
+-- way (that first run never got past the failing statement), so this cast
+-- is always safe -- makes the migration correct to re-run from a clean
+-- copy-paste no matter which state it's starting from.
+alter table if exists public.virtual_rooms alter column gallery_id type uuid using gallery_id::uuid;
 
 create index if not exists virtual_rooms_profile_id_idx on public.virtual_rooms (profile_id);
 create index if not exists virtual_rooms_gallery_id_idx on public.virtual_rooms (gallery_id);
