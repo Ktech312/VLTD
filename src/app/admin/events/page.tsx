@@ -286,7 +286,7 @@ export default function AdminEventsPage() {
           onClick={() => setShowQuickAdd(false)}
         >
           <div
-            className="w-full max-w-sm rounded-2xl border border-[color:var(--border)] bg-[color:var(--surface)] p-5"
+            className="w-full max-w-sm rounded-2xl border border-[color:var(--border)] bg-[color:var(--bg)] p-5"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-start justify-between gap-3">

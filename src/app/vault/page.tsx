@@ -1472,26 +1472,27 @@ export default function VaultPage() {
               {showUploadMenu ? (
                 <>
                   <div className="fixed inset-0 z-40" onClick={() => setShowUploadMenu(false)} />
-                  <div className="absolute right-0 top-[calc(100%+6px)] z-50 w-64 overflow-hidden rounded-[7px] border border-[color:var(--border)] bg-[color:var(--surface)] shadow-lg">
+                  {/* bg-[color:var(--bg)], not --surface -- --surface is
+                      deliberately translucent everywhere else in this app
+                      (cards over a flat page background), but that let the
+                      vault thumbnails behind this menu show through. --bg
+                      is a real opaque hex in every theme. */}
+                  <div className="absolute right-0 top-[calc(100%+6px)] z-50 w-60 overflow-hidden rounded-[7px] border border-[color:var(--border)] bg-[color:var(--bg)] shadow-lg">
                     <Link
                       href="/capture?openUpload=1"
                       onClick={() => setShowUploadMenu(false)}
-                      className="block px-4 py-3 text-sm font-bold hover:bg-[color:var(--pill)]"
+                      className="block px-3 py-2.5 text-center text-xs hover:bg-[color:var(--pill)]"
                     >
-                      Single item
-                      <span className="mt-0.5 block text-xs font-normal text-[color:var(--muted)]">
-                        All the photos you pick go onto one item.
-                      </span>
+                      <span className="font-bold">Single item</span>
+                      <span className="text-[color:var(--muted)]"> — All Images to 1 Item</span>
                     </Link>
                     <Link
                       href="/vault/bulk"
                       onClick={() => setShowUploadMenu(false)}
-                      className="block border-t border-[color:var(--border)] px-4 py-3 text-sm font-bold hover:bg-[color:var(--pill)]"
+                      className="block border-t border-[color:var(--border)] px-3 py-2.5 text-center text-xs hover:bg-[color:var(--pill)]"
                     >
-                      Batch
-                      <span className="mt-0.5 block text-xs font-normal text-[color:var(--muted)]">
-                        Each photo becomes its own new item.
-                      </span>
+                      <span className="font-bold">Batch</span>
+                      <span className="text-[color:var(--muted)]"> — Each Image creates new item</span>
                     </Link>
                   </div>
                 </>
