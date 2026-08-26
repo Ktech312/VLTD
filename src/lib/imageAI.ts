@@ -10,6 +10,9 @@ export async function removeBackgroundStub(imageUrl: string): Promise<Blob> {
   const data = await res.json();
 
   if (!res.ok) {
+    if (data?.error === "Missing API key") {
+      throw new Error("Background removal isn't set up yet — the REMOVE_BG_API_KEY isn't configured.");
+    }
     throw new Error(data?.error || "Background removal failed.");
   }
 

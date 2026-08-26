@@ -435,6 +435,43 @@ export default function ItemMedia({
         </div>
 
         <div className="order-1 lg:order-2">
+          <div className="mb-2 flex flex-wrap justify-end gap-2">
+            {onReplaceImage && activeVisibleEntry ? (
+              <button
+                type="button"
+                onClick={() => openEditorForEntry(activeVisibleEntry)}
+                className="rounded-full bg-[color:var(--pill)] px-3 py-2 text-xs text-text-primary ring-1 ring-[color:var(--border)]"
+              >
+                Edit Photo
+              </button>
+            ) : null}
+            <button
+              type="button"
+              onClick={() => cameraRef.current?.click()}
+              className="rounded-full bg-[color:var(--pill)] px-3 py-2 text-xs text-text-primary ring-1 ring-[color:var(--border)]"
+            >
+              Camera
+            </button>
+            {onRemoveBackground && activeVisibleEntry ? (
+              <button
+                type="button"
+                onClick={() => onRemoveBackground(activeVisibleEntry.originalIndex)}
+                className="rounded-full bg-[color:var(--pill)] px-3 py-2 text-xs text-text-primary ring-1 ring-[color:var(--border)]"
+              >
+                Remove BG
+              </button>
+            ) : null}
+            {onRevertBackground && canRevertBackground && activeVisibleEntry ? (
+              <button
+                type="button"
+                onClick={() => onRevertBackground(activeVisibleEntry.originalIndex)}
+                className="rounded-full bg-[color:var(--pill)] px-3 py-2 text-xs text-text-primary ring-1 ring-[color:var(--border)]"
+              >
+                Revert
+              </button>
+            ) : null}
+          </div>
+
           <div className="group relative aspect-[4/3] overflow-hidden rounded-[28px] bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.05),rgba(255,255,255,0.015)_45%,rgba(0,0,0,0.18)_100%)] ring-1 ring-[color:var(--border)]">
             {activeImage && activeVisibleEntry ? (
               <button
@@ -474,50 +511,6 @@ export default function ItemMedia({
                 </span>
               </div>
             ) : null}
-
-            <div className="absolute bottom-3 right-3 flex flex-wrap gap-2">
-              {onReplaceImage && activeVisibleEntry ? (
-                <button
-                  type="button"
-                  onClick={() => openEditorForEntry(activeVisibleEntry)}
-                  className="rounded-full bg-black/45 px-3 py-2 text-xs text-text-primary ring-1 ring-[color:var(--border)] backdrop-blur"
-                >
-                  Edit Photo
-                </button>
-              ) : null}
-              <button
-                type="button"
-                onClick={() => fileRef.current?.click()}
-                className="rounded-full bg-black/45 px-3 py-2 text-xs text-text-primary ring-1 ring-[color:var(--border)] backdrop-blur"
-              >
-                Add image
-              </button>
-              <button
-                type="button"
-                onClick={() => cameraRef.current?.click()}
-                className="rounded-full bg-black/45 px-3 py-2 text-xs text-text-primary ring-1 ring-[color:var(--border)] backdrop-blur"
-              >
-                Camera
-              </button>
-              {onRemoveBackground && activeVisibleEntry ? (
-                <button
-                  type="button"
-                  onClick={() => onRemoveBackground(activeVisibleEntry.originalIndex)}
-                  className="rounded-full bg-black/45 px-3 py-2 text-xs text-text-primary ring-1 ring-[color:var(--border)] backdrop-blur"
-                >
-                  Remove BG
-                </button>
-              ) : null}
-              {onRevertBackground && canRevertBackground && activeVisibleEntry ? (
-                <button
-                  type="button"
-                  onClick={() => onRevertBackground(activeVisibleEntry.originalIndex)}
-                  className="rounded-full bg-black/45 px-3 py-2 text-xs text-text-primary ring-1 ring-[color:var(--border)] backdrop-blur"
-                >
-                  Revert
-                </button>
-              ) : null}
-            </div>
           </div>
 
           {proofEntries.length > 0 ? (

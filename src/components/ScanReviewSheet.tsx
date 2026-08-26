@@ -147,7 +147,7 @@ export default function ScanReviewSheet({ items, removed, onRemove, onUndo, onCl
                       </div>
                     ) : null}
                     {!isRemoved ? (
-                      <div className="mt-1 grid grid-cols-2 gap-1.5">
+                      <div className="mt-1 grid grid-cols-1 gap-1.5 sm:grid-cols-2">
                         <select
                           value={isUniverseKey(item.universe) ? item.universe : ""}
                           onChange={(e) => {
@@ -157,7 +157,7 @@ export default function ScanReviewSheet({ items, removed, onRemove, onUndo, onCl
                               categoryLabel: getDefaultCategory(nextUniverse),
                             });
                           }}
-                          className="h-7 rounded-md bg-[color:var(--surface)] px-1.5 text-[11px] ring-1 ring-[color:var(--border)] focus:outline-none"
+                          className="h-8 w-full rounded-md bg-[color:var(--surface)] px-2 text-xs ring-1 ring-[color:var(--border)] focus:outline-none"
                         >
                           {REVIEW_UNIVERSES.map((u) => (
                             <option key={u} value={u}>{UNIVERSE_LABEL[u]}</option>
@@ -166,7 +166,7 @@ export default function ScanReviewSheet({ items, removed, onRemove, onUndo, onCl
                         <select
                           value={item.categoryLabel}
                           onChange={(e) => onPatch(item.id, { categoryLabel: e.target.value })}
-                          className="h-7 rounded-md bg-[color:var(--surface)] px-1.5 text-[11px] ring-1 ring-[color:var(--border)] focus:outline-none"
+                          className="h-8 w-full rounded-md bg-[color:var(--surface)] px-2 text-xs ring-1 ring-[color:var(--border)] focus:outline-none"
                         >
                           {isUniverseKey(item.universe) &&
                             getCategories(item.universe).map((c) => (
