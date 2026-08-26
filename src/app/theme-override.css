@@ -308,3 +308,14 @@
   color: #06171d !important;
   border: 1px solid #1a8fac !important;
 }
+
+/* ── PUBLIC PROFILE "REPORT CONTENT" POPOVER ──
+   Same bleed-through class of bug as the vault upload menu above (a
+   translucent --surface panel positioned over whatever's behind it, in
+   this case a backdrop-blurred image area) -- fixed via the same
+   id + !important pattern rather than waiting to hit the same complaint
+   twice. Solid dark, matching this app's default surface tone rather
+   than a new accent color -- this one wasn't asked to stand out. */
+#public-safety-report-panel {
+  background: #14171d !important;
+}

@@ -127,7 +127,10 @@ export function ReportContentButton({
       </button>
 
       {open ? (
-        <div className="absolute right-0 top-full mt-2 w-[min(320px,calc(100vw-2rem))] rounded-2xl bg-[color:var(--surface)] p-4 text-left text-sm text-[color:var(--fg)] ring-1 ring-[color:var(--border)] shadow-[0_24px_70px_rgba(0,0,0,0.5)]">
+        <div
+          id="public-safety-report-panel"
+          className="absolute right-0 top-full mt-2 w-[min(320px,calc(100vw-2rem))] rounded-2xl p-4 text-left text-sm text-[color:var(--fg)] ring-1 ring-[color:var(--border)] shadow-[0_24px_70px_rgba(0,0,0,0.5)]"
+        >
           <div className="flex items-center justify-between gap-3">
             <div className="text-[11px] tracking-[0.18em] text-[color:var(--muted2)]">REPORT CONTENT</div>
             <button type="button" onClick={() => setOpen(false)} className="text-xs text-[color:var(--muted)]">
