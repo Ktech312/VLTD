@@ -56,11 +56,18 @@ async function fetchItem(itemId: string): Promise<Row | null> {
   const { data, error } = await supabase
     .from(VAULT_ITEMS_TABLE)
     // Never expose price/value — only identity fields safe to share publicly
-    .select("id, title, grade, universe, image_front_url, image_front_storage_path, primary_image_key, images_json, notes")
+    .select("id, title, grade, universe, image_front_url, image_front_storage_path, primary_image_key, images_json, notes, is_public")
     .eq("id", itemId)
     .single();
 
   if (error || !data) return null;
+  // EK's ask 2026-08-25: this link used to work for ANY item regardless of
+  // its own Public/Private toggle (ItemVisibilityToggle) -- a real gap,
+  // since "Private" didn't actually stop a direct /share/{id} link from
+  // exposing it. `is_public` defaults to false when missing/null, same
+  // convention vaultModel.ts's own rowToItem() uses -- strict `=== true`
+  // required, not just truthy, so an unset column fails closed.
+  if (data.is_public !== true) return null;
   return data as Row;
 }
 

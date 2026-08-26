@@ -20,6 +20,7 @@ import {
   MonitorUp,
   PackagePlus,
   Paintbrush,
+  Pencil,
   Plus,
   Save,
   Share2,
@@ -1107,6 +1108,9 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
   >(null);
   const [hallNameInput, setHallNameInput] = useState("");
   const [isSavingHall, setIsSavingHall] = useState(false);
+  // Held-item panel: a viewer clicking "View item" on a private (non-public)
+  // item shows this inline notice instead of navigating anywhere.
+  const [privateItemNotice, setPrivateItemNotice] = useState(false);
   // Same pattern as GuestGalleryRenderer.tsx's own viewerProfileId — read
   // once on mount, not tied to auth state changing mid-session (a profile
   // switch while this exact page is already open is a rare enough edge
@@ -1289,6 +1293,22 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
         : [],
     [heldVaultItem]
   );
+  // EK caught this live 2026-08-24/25: when a Quick Add scan can't read an
+  // item's real title, the AI is deliberately instructed (see
+  // src/app/api/ai/analyze-item/route.ts) to write an honest placeholder
+  // like "Comic book (title not legible)" instead of guessing wrong — real
+  // stored data, not a display bug. But showing that caveat text as if it
+  // WERE the title reads badly. EK: "there is no title... leave it blank
+  // if the info isn't filled in." Only affects this panel's display, never
+  // touches the stored title (the new Edit button below is how you'd
+  // actually fix it).
+  const heldVaultItemDisplayTitle = useMemo(() => {
+    if (!heldVaultItem) return "";
+    const title = heldVaultItem.title ?? "";
+    return /\b(not\s+(clearly\s+)?legible|illegible|not\s+visible|unreadable|can'?t\s+(be\s+)?read)\b/i.test(title)
+      ? ""
+      : title;
+  }, [heldVaultItem]);
   // EK: "no description" on an item with nothing typed into notes — rather
   // than leave the panel empty, fall back to a real one-line summary built
   // from other fields that actually exist on this item (never invented
@@ -2656,7 +2676,7 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
       // The back face's own material — kept directly reachable so the
       // async back-image load (below) can update it in place if it
       // resolves after this pickup already started.
-      backMat: THREE.MeshStandardMaterial;
+      backMat: THREE.MeshBasicMaterial;
     };
     let heldItem: HeldItem | null = null;
     let pullAnim: { dir: "in" | "out"; t: number } | null = null;
@@ -2703,20 +2723,23 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
       const originalGeometry = entry.mesh.geometry;
       const originalMaterial = entry.mesh.material;
       const frontTexture = (originalMaterial as THREE.MeshStandardMaterial).map ?? null;
-      const frontMat = new THREE.MeshStandardMaterial({
-        map: frontTexture,
-        roughness: 0.44,
-        metalness: 0.08,
-        emissive: new THREE.Color(0x05070a),
-        emissiveIntensity: 0.08,
-      });
-      const backMat = new THREE.MeshStandardMaterial({
-        map: entry.backTexture ?? frontTexture,
-        roughness: 0.44,
-        metalness: 0.08,
-        emissive: new THREE.Color(0x05070a),
-        emissiveIntensity: 0.08,
-      });
+      // EK caught this live 2026-08-25: "it has to be the original bright
+      // image when you are looking at it up close" — some wash-out from
+      // the room's own dim, moody lighting is fine on the shelf (this is
+      // the SEPARATE material used only while held/inspected, swapped in
+      // below and restored on put-back — the shelf's own material is
+      // untouched), but a photo you've picked up to actually look at
+      // should show its true captured color, not get dimmed/tinted by
+      // whichever room style's lights and low exposure happen to be
+      // active. These used to be MeshStandardMaterial, which — even with
+      // the toneMapped:false the side/edge materials below already use —
+      // still diffusely REFLECTS the scene's actual lights, so a dim room
+      // still dimmed the photo. MeshBasicMaterial is unlit (ignores scene
+      // lights entirely) and toneMapped:false skips the exposure curve
+      // too, so the texture renders at its own native brightness/color no
+      // matter what room it's held in.
+      const frontMat = new THREE.MeshBasicMaterial({ map: frontTexture, toneMapped: false });
+      const backMat = new THREE.MeshBasicMaterial({ map: entry.backTexture ?? frontTexture, toneMapped: false });
       const spineTexture = drawSpineTexture(entry.item.title, entry.item.universe);
       // EK: "the blue doesn't seem to have the white glow to it that the
       // button does" — the button has a real box-shadow glow
@@ -3751,13 +3774,55 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
               </div>
               <div className="pointer-events-auto absolute bottom-5 left-1/2 flex max-w-[92%] -translate-x-1/2 items-center gap-3 rounded-[10px] bg-black/60 px-4 py-2.5 ring-1 ring-white/15 backdrop-blur">
                 <div className="min-w-0">
-                  <div className="truncate text-sm font-black text-white">{heldVaultItem.title}</div>
+                  {heldVaultItemDisplayTitle ? (
+                    <div className="truncate text-sm font-black text-white">{heldVaultItemDisplayTitle}</div>
+                  ) : null}
                   {heldVaultItemBasics.length > 0 ? (
                     <div className="mt-0.5 truncate text-[10px] font-bold uppercase tracking-[0.1em] text-white/55">
                       {heldVaultItemBasics.join(" · ")}
                     </div>
                   ) : null}
                 </div>
+                {/* EK's ask (2026-08-24/25): owner gets a way to fill in
+                    missing fields (this exact panel is what surfaced the
+                    blank-title case) without leaving the room; a viewer
+                    gets a link to the item's real public page, but only
+                    when the owner actually marked it Public — otherwise a
+                    quick inline notice instead of a dead link. */}
+                {!effectiveGuest ? (
+                  <Link
+                    href={`/vault/item/${heldVaultItem.id}`}
+                    className="grid h-6 w-6 shrink-0 place-items-center rounded-[6px] bg-white/10 text-white/80 ring-1 ring-white/15 transition hover:bg-white/20 hover:text-white"
+                    title="Edit this item"
+                    aria-label="Edit this item"
+                  >
+                    <Pencil size={12} />
+                  </Link>
+                ) : (
+                  <div className="relative shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (heldVaultItem.isPublic) {
+                          window.open(`/share/${heldVaultItem.id}`, "_blank", "noopener,noreferrer");
+                        } else {
+                          setPrivateItemNotice(true);
+                          window.setTimeout(() => setPrivateItemNotice(false), 2600);
+                        }
+                      }}
+                      className="grid h-6 w-6 place-items-center rounded-[6px] bg-white/10 text-white/80 ring-1 ring-white/15 transition hover:bg-white/20 hover:text-white"
+                      title="View this item"
+                      aria-label="View this item"
+                    >
+                      <ExternalLink size={12} />
+                    </button>
+                    {privateItemNotice ? (
+                      <div className="absolute bottom-full right-0 z-10 mb-2 w-max max-w-[220px] rounded-[6px] bg-black/90 px-2.5 py-1.5 text-[11px] font-semibold leading-4 text-white ring-1 ring-white/15">
+                        This user isn&apos;t sharing more details on this item right now.
+                      </div>
+                    ) : null}
+                  </div>
+                )}
                 <button
                   type="button"
                   onClick={() => setSocialShareOpen(true)}
