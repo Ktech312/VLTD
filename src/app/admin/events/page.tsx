@@ -144,6 +144,14 @@ export default function AdminEventsPage() {
             </p>
           </div>
           <div className="flex shrink-0 gap-2">
+            <a
+              href="https://claude.ai/code/artifact/48d46d98-8e1f-4214-84df-71399faa09b2"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="h-10 inline-flex items-center gap-1.5 rounded-full border border-[color:var(--border)] bg-[color:var(--pill)] px-4 text-sm font-semibold text-[color:var(--muted)] transition hover:text-text-primary"
+            >
+              Event Catcher <span className="text-xs">↗</span>
+            </a>
             <Link
               href="/admin/events/quick-add"
               className="h-10 inline-flex items-center rounded-full border border-[color:var(--theme-gold-border)] bg-[color:var(--pill)] px-4 text-sm font-semibold text-[color:var(--theme-gold)]"
