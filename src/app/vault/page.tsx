@@ -1445,12 +1445,12 @@ export default function VaultPage() {
         actions={
           <>
             <VaultExportButton />
-            <Link href="/vault/halls" className="inline-flex items-center justify-center gap-1.5 rounded-[6px] bg-[color:var(--pill)] px-4 py-2.5 text-sm font-bold ring-1 ring-[color:var(--border)]"><Glyph name="building" size={14} />Halls</Link>
-            <Link href="/vault/for-sale" className="inline-flex items-center justify-center rounded-[6px] bg-[color:var(--pill)] px-4 py-2.5 text-sm font-bold ring-1 ring-[color:var(--border)]">For Sale</Link>
-            <Link href="/vault/import" className="inline-flex items-center justify-center rounded-[6px] bg-[color:var(--pill)] px-4 py-2.5 text-sm font-bold ring-1 ring-[color:var(--border)]">Import</Link>
-            <Link href="/vault/sold" className="inline-flex items-center justify-center rounded-[6px] bg-[color:var(--pill)] px-4 py-2.5 text-sm font-bold ring-1 ring-[color:var(--border)]">Sold</Link>
+            <Link href="/vault/halls" className="inline-flex items-center justify-center gap-1.5 rounded-[6px] bg-[color:var(--pill)] px-4 py-1.5 text-sm font-bold ring-1 ring-[color:var(--border)]"><Glyph name="building" size={14} />Halls</Link>
+            <Link href="/vault/for-sale" className="inline-flex items-center justify-center rounded-[6px] bg-[color:var(--pill)] px-4 py-1.5 text-sm font-bold ring-1 ring-[color:var(--border)]">For Sale</Link>
+            <Link href="/vault/import" className="inline-flex items-center justify-center rounded-[6px] bg-[color:var(--pill)] px-4 py-1.5 text-sm font-bold ring-1 ring-[color:var(--border)]">Import</Link>
+            <Link href="/vault/sold" className="inline-flex items-center justify-center rounded-[6px] bg-[color:var(--pill)] px-4 py-1.5 text-sm font-bold ring-1 ring-[color:var(--border)]">Sold</Link>
             {/* Quick Add sits next to Add Item — the two "add" actions grouped together */}
-            <Link href="/vault/quick" className="inline-flex items-center justify-center rounded-[6px] bg-[color:var(--pill-active-bg)] px-4 py-2.5 text-sm font-bold text-[color:var(--fg)] ring-1 ring-[color:var(--pill-active-bg)]">Quick Add</Link>
+            <Link href="/vault/quick" className="inline-flex items-center justify-center rounded-[6px] bg-[color:var(--pill-active-bg)] px-4 py-1.5 text-sm font-bold text-[color:var(--fg)] ring-1 ring-[color:var(--pill-active-bg)]">Quick Add</Link>
             {/* Add Item — the single primary add on the page */}
             <Link href="/capture" className="vltd-action-module shrink-0">
               <span className="vltd-action-module__plate !py-1.5">Add Item</span>
@@ -1471,31 +1471,39 @@ export default function VaultPage() {
               </button>
               {showUploadMenu ? (
                 <>
-                  {/* Solid dark scrim behind the menu, same as the Quick Add
-                      modal -- belt and suspenders against any theme token
-                      turning out translucent (--bg alone wasn't reliably
-                      opaque enough; this can't show anything through it
-                      regardless). */}
+                  {/* Solid dark scrim behind the menu -- belt and suspenders
+                      against anything showing through regardless of the
+                      box's own background. */}
                   <div className="fixed inset-0 z-40 bg-black/70" onClick={() => setShowUploadMenu(false)} />
+                  {/* id + a matching !important rule (see globals.css
+                      #vault-upload-menu) -- EK saw thumbnails bleeding
+                      through this box through two previous attempts (a
+                      theme CSS variable, then a plain inline style). A
+                      stylesheet !important rule beats a non-important
+                      inline style, so if theme-override.css's blanket
+                      !important rules were ever the real cause, this is
+                      the one thing left that's guaranteed to win: nothing
+                      else in this codebase targets an #id with !important. */}
                   <div
-                    className="absolute right-0 top-[calc(100%+6px)] z-50 w-48 overflow-hidden rounded-[7px] border border-[color:var(--border)] shadow-lg"
-                    style={{ backgroundColor: "#14171d" }}
+                    id="vault-upload-menu"
+                    className="absolute right-0 top-[calc(100%+6px)] z-50 w-48 overflow-hidden rounded-[7px] shadow-lg"
                   >
                     <Link
                       href="/capture?openUpload=1"
                       onClick={() => setShowUploadMenu(false)}
-                      className="block px-3 py-2 text-center hover:bg-[color:var(--pill)]"
+                      className="block px-3 py-2 text-center hover:brightness-110"
                     >
-                      <div className="text-xs font-bold">Single item</div>
-                      <div className="text-[10px] text-[color:var(--muted)]">All Images to 1 Item</div>
+                      <div className="text-xs font-black">Single item</div>
+                      <div className="text-[10px] font-semibold opacity-80">All Images to 1 Item</div>
                     </Link>
+                    <div style={{ borderTop: "1px solid #C8CDD2" }} />
                     <Link
                       href="/vault/bulk"
                       onClick={() => setShowUploadMenu(false)}
-                      className="block border-t border-[color:var(--border)] px-3 py-2 text-center hover:bg-[color:var(--pill)]"
+                      className="block px-3 py-2 text-center hover:brightness-110"
                     >
-                      <div className="text-xs font-bold">Batch</div>
-                      <div className="text-[10px] text-[color:var(--muted)]">Each Image creates new item</div>
+                      <div className="text-xs font-black">Batch</div>
+                      <div className="text-[10px] font-semibold opacity-80">Each Image creates new item</div>
                     </Link>
                   </div>
                 </>

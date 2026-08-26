@@ -321,7 +321,7 @@ export default function VltLoungePage() {
         }
         actions={
           <>
-            <button type="button" onClick={() => openComposer("question")} className="inline-flex items-center gap-2 rounded-[6px] px-4 py-2.5 text-sm font-bold" style={{ ...CARD, color: "var(--fg)" }}>
+            <button type="button" onClick={() => openComposer("question")} className="inline-flex items-center gap-2 rounded-[6px] px-4 py-1.5 text-sm font-bold" style={{ ...CARD, color: "var(--fg)" }}>
               <span aria-hidden style={{ color: CYAN }}>?</span> Ask the Lounge
             </button>
             <button type="button" onClick={() => openComposer("update")} className="vltd-primary-button inline-flex items-center gap-2 rounded-[6px] px-4 py-2.5 text-sm font-black">

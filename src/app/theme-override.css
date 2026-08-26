@@ -295,3 +295,16 @@
 ::-webkit-scrollbar-track { background: var(--theme-card, #03080E); }
 ::-webkit-scrollbar-thumb { background: var(--theme-border, #3A2B13); border-radius: 4px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--theme-gold-border, rgba(203,208,213,0.4)); }
+
+/* ── VAULT UPLOAD MENU (Single item / Batch) ──
+   EK saw thumbnails bleeding through this popup across two earlier fix
+   attempts (a theme CSS variable, then a plain inline style on the
+   element). An ID selector + !important, placed in this last-loaded
+   file, is the highest-specificity, latest-source-order rule this
+   codebase can produce -- nothing else can outrank it. Solid blue per
+   EK's ask ("make it stand out"), not the dark upload button itself. */
+#vault-upload-menu {
+  background: #2CB1D1 !important;
+  color: #06171d !important;
+  border: 1px solid #1a8fac !important;
+}

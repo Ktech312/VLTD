@@ -510,10 +510,10 @@ export default function MuseumPage() {
           galleries.length > 0 ? (
             <>
               {/* Mobile-only filter dropdown, grouped inline with sort */}
-              <select value={filter} onChange={(e) => setFilter(e.target.value as ExhibitionFilter)} className="shrink-0 rounded-[6px] border px-4 py-2.5 text-sm font-bold outline-none sm:hidden" style={{ borderColor: "var(--theme-border)", background: "var(--theme-elevated)", color: "var(--fg)", boxShadow: "inset 0 1px 0 rgba(237,239,241,0.08)" }}>
+              <select value={filter} onChange={(e) => setFilter(e.target.value as ExhibitionFilter)} className="shrink-0 rounded-[6px] border px-4 py-1.5 text-sm font-bold outline-none sm:hidden" style={{ borderColor: "var(--theme-border)", background: "var(--theme-elevated)", color: "var(--fg)", boxShadow: "inset 0 1px 0 rgba(237,239,241,0.08)" }}>
                 {EXHIBITION_FILTERS.map((f) => (<option key={f.key} value={f.key}>{f.label}</option>))}
               </select>
-              <select value={sortMode} onChange={(e) => setSortMode(e.target.value as ExhibitionSort)} className="shrink-0 rounded-[6px] border px-4 py-2.5 text-sm font-bold outline-none" style={{ borderColor: "var(--theme-border)", background: "var(--theme-elevated)", color: "var(--fg)", boxShadow: "inset 0 1px 0 rgba(237,239,241,0.08)" }}>
+              <select value={sortMode} onChange={(e) => setSortMode(e.target.value as ExhibitionSort)} className="shrink-0 rounded-[6px] border px-4 py-1.5 text-sm font-bold outline-none" style={{ borderColor: "var(--theme-border)", background: "var(--theme-elevated)", color: "var(--fg)", boxShadow: "inset 0 1px 0 rgba(237,239,241,0.08)" }}>
                 {EXHIBITION_SORTS.map((s) => (<option key={s.key} value={s.key}>{s.label}</option>))}
               </select>
               <Link href="/museum/new" className="inline-flex shrink-0 items-center justify-center gap-1.5 rounded-[6px] px-4 py-2.5 text-sm font-black transition" style={{ background: "linear-gradient(180deg, #79E7FB, #41C6E4 55%, #2CB1D1)", color: "#06171d", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.5), 0 0 16px rgba(79,211,238,0.25)" }}>+ Create Exhibition</Link>
