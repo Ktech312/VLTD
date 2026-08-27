@@ -1,4 +1,4 @@
-# VLTD — Session Handoff (updated, nineteenth pass — Events tooling (Ticketmaster keyword fix, real photos, manual Quick Add + Event Catcher bookmarklet, two cron jobs); discovered a real 2200+ line admin console shell existed and had built a duplicate hub before finding it — APP_MAP.md now exists specifically to prevent that recurring, read it before building anything new; Users absorbed everything Account Rights had; Vault upload-from-device feature; a translucent-popover bug fixed in 3 places after taking 3 attempts on the first one — NONE of this pass verified live, no browser access all session, read the 2026-08-24/25/26 entry in full before assuming any of it actually works visually. Prior pass's summary — full backend security audit (8 real RLS/RPC vulnerabilities), 3D Museum beta-access gating, Room Builder fixes — is a different session's work, still below.)
+# VLTD — Session Handoff (updated, twentieth pass — self-directed overnight audit found ~110 VaultItem fields (nearly every per-universe detail field, plus condition/pricing/comps core fields) were never wired to Supabase at all, not just missing a mapping — new migration + full vaultCloud.ts fix, EK needs to run the migration, see the 2026-08-27 entry in §2. Also generalized the upsert schema-mismatch fallback to self-heal instead of needing a new hardcoded check every time this bug class recurs. Build-verified only, not live-verified. Prior (nineteenth) pass — Events tooling, admin console discovery + APP_MAP.md, Vault upload feature, a translucent-popover bug fixed 3x — also unverified live, read the 2026-08-24/25/26 entry before assuming it works visually. Older summary — full backend security audit (8 real RLS/RPC vulnerabilities), 3D Museum beta-access gating, Room Builder fixes — is a different session's work, still below.)
 
 Read this top to bottom, then start on **§2 "What's LEFT."** This is written so a
 brand-new chat can pick up with no prior context.
@@ -50,10 +50,15 @@ is risky or can't be done, say so plainly.
   **Deploys are SLOW right now (3–5 min, queue up).** Don't call something "live"
   until you re-checked the deployed page.
 - **Supabase migrations run MANUALLY by EK** (no CI). Write idempotent `.sql`,
-  ask EK to run it. **Never add a new column to the cloud row map
-  (`src/lib/vaultCloud.ts`) without the migration** — unknown columns make the
-  `vault_items` upsert throw.
-  **✅ NO MIGRATIONS PENDING.** 8 more confirmed run by EK 2026-08-23/24, all
+  ask EK to run it. `vaultCloud.ts`'s `upsertVaultItemToSupabase` is now
+  self-healing (2026-08-27): if a column named in `baseRow` doesn't exist in
+  the DB yet, it strips just that column from the request and retries (up to
+  150 times), instead of throwing — so shipping a new VaultItem field before
+  its migration is run no longer breaks saving, it just silently doesn't
+  sync that one field until the migration lands. Still write the migration
+  and give it to EK every time — don't rely on the fallback as a substitute.
+  **⚠ 1 MIGRATION PENDING — see the 2026-08-27 entry in §2, `EK needs to run
+  this SQL`.** Before that: 8 more confirmed run by EK 2026-08-23/24, all
   live: `20260823_fix_public_profiles_write_policy.sql` (closed a
   `using(true) with check(true)` write hole on `public_profiles`),
   `20260823_fix_place_bid_impersonation.sql` (`place_bid()` now rejects a
@@ -2799,6 +2804,68 @@ result before calling it done, the way EK's side-by-side did here.
 ---
 
 ## 2. What's LEFT to do (prioritized)
+
+### DONE (2026-08-27 overnight, self-directed audit) — ~110 VaultItem fields were never wired to Supabase at all — found, migrated, fixed
+
+**What EK needs to do:** run the migration below, then this is fully live.
+
+**How this was found:** EK asked twice for safe overnight work with no live
+browser access. Every prior "field defined but not synced to Supabase" bug in
+this codebase (tags, brand, itemType/itemAttributes) turned out to be a
+one-off missed mapping. I audited `src/lib/vaultModel.ts`'s `VaultItem` type
+against `src/lib/vaultCloud.ts`'s `rowToItem()`/`upsertVaultItemToSupabase()`
+field-by-field and found this was NOT a one-off — it was the bulk of the
+type. Confirmed via grep that none of the corresponding DB columns exist in
+any prior migration either, so this isn't a missed-mapping bug like the
+earlier ones, it's fields that were never given a Supabase column in the
+first place.
+
+**Scope — everything below existed on `VaultItem` and in local device storage
+(`normalizeOne()` in `vaultModel.ts` already has all of it — local data was
+never at risk) but was silently dropped on every cloud sync, in both
+directions:**
+- Core fields: `year`, `condition`/`conditionReason`/`conditionSource`,
+  `imageBackUrl`, `subject`, `edition`/`variant`/`printRun`/`isFirstEdition`,
+  and almost the entire pricing/comps block — `estimatedValue`,
+  `lastCompValue`, `valueLow`/`valueMedian`/`valueHigh`, `comparables`,
+  `priceSources`, `priceSource`, `priceConfidence`, `priceUpdatedAt`,
+  `priceNotes`.
+- Every per-universe detail field — all of TCG, Sports, Vinyl, Comics,
+  Original Comic Art, Toys, Art Cards, Memorabilia, Watches, Bags, Apparel,
+  Art & Prints, Coins, Games/Consoles. ~89 fields.
+
+**Practical effect while unfixed:** any of these fields typed in on one
+device stayed on that device only — a second device, a re-login, or a
+backup/export would never see them. Not data loss (local storage was fine),
+but silent cross-device/cloud desync on a large chunk of the per-universe
+detail forms.
+
+**What I did:**
+1. `supabase/migrations/20260827_vault_items_full_field_sync.sql` — adds all
+   ~109 columns. Purely additive (`add column if not exists`, all nullable,
+   no defaults) — cannot affect any existing row or feature. **EK: please
+   run this in the Supabase SQL editor** (full SQL is in that file, or ask
+   me and I'll paste it inline).
+2. [vaultCloud.ts](src/lib/vaultCloud.ts) — added every missing field to both
+   `rowToItem()` (download) and the `baseRow` object in
+   `upsertVaultItemToSupabase()` (upload).
+3. Also generalized the upsert's schema-mismatch fallback: it used to be 9
+   hardcoded `message.includes("column_name")` checks that grew by one each
+   time this bug class got fixed. Replaced with a generic loop that parses
+   the actual missing column name out of PostgREST's error message (`Could
+   not find the 'X' column of 'vault_items'...`) and strips just that
+   column, retrying up to 150 times. Same safety property, but now
+   self-healing against this bug class in the future instead of needing a
+   new hardcoded check every time — so if EK saves an item BEFORE running
+   the migration above, nothing breaks, the new fields just silently don't
+   sync yet (same as before this fix), and everything else still saves.
+4. Verified via `npx tsc --noEmit` (clean), `npx eslint src/lib/vaultCloud.ts`
+   (clean), and `npm run build` (clean). **Not live-verified** — no browser
+   access this session either. The mapping is mechanical (type → snake_case
+   column, same pattern as every existing field) so risk is low, but EK
+   should actually type a value into one of these fields (e.g. a TCG card's
+   Set Code) on one device and confirm it shows up after a reload/on another
+   device once the migration is run.
 
 ### DONE (2026-08-24/25/26 overnight) — Events tooling, admin console discovery + APP_MAP.md, Vault upload feature, a recurring transparency bug fixed 3x over
 
