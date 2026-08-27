@@ -1,4 +1,4 @@
-# VLTD — Session Handoff (updated, twentieth pass — self-directed overnight audit found ~110 VaultItem fields (nearly every per-universe detail field, plus condition/pricing/comps core fields) were never wired to Supabase at all, not just missing a mapping — new migration + full vaultCloud.ts fix, EK needs to run the migration, see the 2026-08-27 entry in §2. Also generalized the upsert schema-mismatch fallback to self-heal instead of needing a new hardcoded check every time this bug class recurs. Build-verified only, not live-verified. Prior (nineteenth) pass — Events tooling, admin console discovery + APP_MAP.md, Vault upload feature, a translucent-popover bug fixed 3x — also unverified live, read the 2026-08-24/25/26 entry before assuming it works visually. Older summary — full backend security audit (8 real RLS/RPC vulnerabilities), 3D Museum beta-access gating, Room Builder fixes — is a different session's work, still below.)
+# VLTD — Session Handoff (updated, twentieth pass — self-directed overnight audit (2026-08-27) found two real cloud-sync gaps and fixed both, TWO new migrations EK needs to run: (1) ~110 VaultItem fields — nearly every per-universe detail field plus condition/pricing/comps core fields — never had a Supabase column at all, not just a missing mapping; (2) 3 gaps in the museum/Gallery sync (item notes never written, view-count dedup never synced, invite tokens written but never read back on a second device). Also generalized both the vault and gallery upsert schema-mismatch fallbacks to self-heal against a missing column instead of needing a new hardcoded check every time this bug class recurs — see the two 2026-08-27 entries in §2 for exactly what to run and why. Build-verified only, not live-verified. Prior (nineteenth) pass — Events tooling, admin console discovery + APP_MAP.md, Vault upload feature, a translucent-popover bug fixed 3x — also unverified live, read the 2026-08-24/25/26 entry before assuming it works visually. Older summary — full backend security audit (8 real RLS/RPC vulnerabilities), 3D Museum beta-access gating, Room Builder fixes — is a different session's work, still below.)
 
 Read this top to bottom, then start on **§2 "What's LEFT."** This is written so a
 brand-new chat can pick up with no prior context.
@@ -50,15 +50,19 @@ is risky or can't be done, say so plainly.
   **Deploys are SLOW right now (3–5 min, queue up).** Don't call something "live"
   until you re-checked the deployed page.
 - **Supabase migrations run MANUALLY by EK** (no CI). Write idempotent `.sql`,
-  ask EK to run it. `vaultCloud.ts`'s `upsertVaultItemToSupabase` is now
-  self-healing (2026-08-27): if a column named in `baseRow` doesn't exist in
-  the DB yet, it strips just that column from the request and retries (up to
-  150 times), instead of throwing — so shipping a new VaultItem field before
-  its migration is run no longer breaks saving, it just silently doesn't
-  sync that one field until the migration lands. Still write the migration
-  and give it to EK every time — don't rely on the fallback as a substitute.
-  **⚠ 1 MIGRATION PENDING — see the 2026-08-27 entry in §2, `EK needs to run
-  this SQL`.** Before that: 8 more confirmed run by EK 2026-08-23/24, all
+  ask EK to run it. `vaultCloud.ts`'s `upsertVaultItemToSupabase` and (as of
+  2026-08-27) `galleryModel.ts`'s `upsertGalleryToSupabase` are both
+  self-healing: if a column named in the request doesn't exist in the DB
+  yet, they strip just that column and retry, instead of throwing — so
+  shipping a new field before its migration is run no longer breaks saving
+  entirely, it just silently doesn't sync that one field until the
+  migration lands. Still write the migration and give it to EK every
+  time — don't rely on the fallback as a substitute.
+  **⚠ 2 MIGRATIONS PENDING — see the two 2026-08-27 entries in §2**
+  (`20260827_vault_items_full_field_sync.sql` and
+  `20260827_galleries_item_notes_and_view_dedup.sql`), both purely
+  additive/nullable-column, safe to run any time. Before that: 8 more
+  confirmed run by EK 2026-08-23/24, all
   live: `20260823_fix_public_profiles_write_policy.sql` (closed a
   `using(true) with check(true)` write hole on `public_profiles`),
   `20260823_fix_place_bid_impersonation.sql` (`place_bid()` now rejects a
@@ -2804,6 +2808,63 @@ result before calling it done, the way EK's side-by-side did here.
 ---
 
 ## 2. What's LEFT to do (prioritized)
+
+### DONE (2026-08-27 overnight, same audit continued) — 3 gaps in Gallery/museum sync (item notes, view-count dedup, invite tokens never read back)
+
+**What EK needs to do:** run the migration below (2nd one tonight), then this
+is fully live.
+
+**How this was found:** after fixing the vault field-sync gap (entry right
+below this one), I ran a read-only audit agent over every other local
+model that syncs to Supabase (wishlist, sales, watchlist, comic wishlist,
+collection goals, value history, saved articles/events, galleries) looking
+for the same "field exists locally, never reaches the cloud" pattern.
+Everything came back clean except `src/lib/galleryModel.ts` (museum/gallery
+builder), which had 3 real gaps:
+
+1. **`Gallery.itemNotes`** (the per-item note you can type on a gallery
+   item in the museum builder) — was being *read* from Supabase
+   (`normalizeSupabaseGallery`) but never *written*
+   (`serializeGalleryForSupabase` had no `item_notes` key at all). Notes
+   typed in never left the device they were typed on.
+2. **`Gallery.analytics.uniqueViewKeys`** — the per-viewer dedupe list used
+   to decide whether a gallery view counts as "unique." Only `views` (the
+   running count) and `lastViewedAt` were ever synced; the dedupe list
+   itself was local-only, so the same viewer could inflate the count again
+   on a different device/browser.
+3. **`Gallery.share.inviteTokens`** — tokens WERE being written correctly
+   (`gallery_invites` table, via `upsertGalleryToSupabase`), but
+   `normalizeSupabaseGallery` unconditionally set `inviteTokens: []` on
+   read and nothing ever `.select()`'d the table back — so a share invite
+   created on one device was invisible on another, even though it still
+   worked for the guest using the link (that path re-validates server-side
+   via RPC).
+
+**What I did:**
+1. `supabase/migrations/20260827_galleries_item_notes_and_view_dedup.sql` —
+   adds `item_notes` and `analytics_unique_view_keys` (both jsonb, nullable,
+   additive) to `galleries`. **EK: please run this too**, same as the vault
+   one — full SQL is in the file.
+2. [galleryModel.ts](src/lib/galleryModel.ts): `serializeGalleryForSupabase()`
+   now writes both new fields; `normalizeSupabaseGallery()` now reads
+   `analytics_unique_view_keys` back; `recordGalleryView()`'s direct
+   `.update()` now sends the dedupe list too.
+3. For invite tokens specifically: deliberately did NOT wire them into
+   every caller of `normalizeSupabaseGallery` — checked each one first.
+   The public-token and invite-token lookup paths (a guest opening a share
+   link) correctly stay empty; a guest must never see the full invite-token
+   list. Only `hydrateLocalGalleriesFromSupabase()` (the owner loading
+   their own galleries) now fetches `gallery_invites` and merges the real
+   tokens in.
+4. Same self-healing-fallback treatment as the vault fix: `.upsert()`s that
+   include the two brand-new columns now strip whichever column the
+   database complains about and retry, instead of the whole gallery save
+   (or the whole analytics update) failing over one unrecognized field
+   until the migration is run.
+5. Verified via `tsc`/`eslint` (clean, no new warnings beyond the file's
+   existing `any`-heavy style) and `npm run build`. **Not live-verified** —
+   worth EK actually typing an item note or opening a share-settings panel
+   on two devices once the migration's run, to confirm it round-trips.
 
 ### DONE (2026-08-27 overnight, self-directed audit) — ~110 VaultItem fields were never wired to Supabase at all — found, migrated, fixed
 

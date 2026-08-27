@@ -825,6 +825,12 @@ export function normalizeSupabaseGallery(raw: any): Gallery | null {
         typeof raw.public_token === "string" && raw.public_token.trim()
           ? raw.public_token.trim()
           : undefined,
+      // Deliberately empty here — every caller of normalizeSupabaseGallery
+      // except the owner's own hydrate path is a guest/invite-link viewer
+      // (public token lookup, invite-token lookup, the guest page), and a
+      // guest must never see the list of all invite tokens for a gallery.
+      // hydrateLocalGalleriesFromSupabase() fetches gallery_invites
+      // separately and merges the real list in for the owner only.
       inviteTokens: [],
     },
     analytics: {
@@ -832,7 +838,9 @@ export function normalizeSupabaseGallery(raw: any): Gallery | null {
         typeof raw.analytics_views === "number" && Number.isFinite(raw.analytics_views)
           ? raw.analytics_views
           : 0,
-      uniqueViewKeys: [],
+      uniqueViewKeys: Array.isArray(raw.analytics_unique_view_keys)
+        ? raw.analytics_unique_view_keys
+        : [],
       lastViewedAt: raw.analytics_last_viewed_at
         ? Date.parse(raw.analytics_last_viewed_at) || undefined
         : undefined,
@@ -942,9 +950,11 @@ function serializeGalleryForSupabase(gallery: Gallery) {
     alias_name: normalizeAliasName(gallery.aliasName) || null,
     alias_avatar: normalizeAliasAvatar(gallery.aliasAvatar) || null,
     analytics_views: gallery.analytics?.views ?? 0,
+    analytics_unique_view_keys: gallery.analytics?.uniqueViewKeys ?? [],
     analytics_last_viewed_at: gallery.analytics?.lastViewedAt
       ? new Date(gallery.analytics.lastViewedAt).toISOString()
       : null,
+    item_notes: gallery.itemNotes ?? [],
     created_at: new Date(gallery.createdAt).toISOString(),
     updated_at: new Date(gallery.updatedAt).toISOString(),
   };
@@ -962,6 +972,28 @@ function serializeInviteTokenForSupabase(galleryId: string, invite: GalleryInvit
       typeof invite.expiresAt === "number" ? new Date(invite.expiresAt).toISOString() : null,
     disabled: !!invite.disabled,
     permissions: invite.permissions ?? null,
+  };
+}
+
+function inviteTokenFromRow(row: any): GalleryInviteToken | null {
+  const token = safeString(row?.token);
+  if (!token) return null;
+
+  return {
+    token,
+    label: typeof row?.label === "string" && row.label ? row.label : undefined,
+    createdAt: row?.created_at ? Date.parse(row.created_at) || Date.now() : Date.now(),
+    lastUsedAt: row?.last_used_at ? Date.parse(row.last_used_at) || undefined : undefined,
+    expiresAt: row?.expires_at ? Date.parse(row.expires_at) || undefined : undefined,
+    disabled: !!row?.disabled,
+    permissions:
+      row?.permissions && typeof row.permissions === "object"
+        ? {
+            images: !!row.permissions.images,
+            descriptionPage: !!row.permissions.descriptionPage,
+            financialHistory: !!row.permissions.financialHistory,
+          }
+        : undefined,
   };
 }
 
@@ -1104,10 +1136,28 @@ async function upsertGalleryToSupabase(
   if (!supabase) return;
 
   try {
-    const payload = serializeGalleryForSupabase(gallery);
-    const { error } = await supabase.from("galleries").upsert(payload, {
-      onConflict: "id",
-    });
+    // item_notes / analytics_unique_view_keys are new (2026-08-27
+    // migration) — until it's run, PostgREST rejects the WHOLE upsert over
+    // one unrecognized column, which would otherwise break gallery saves
+    // entirely. Self-heal the same way vaultCloud.ts's item upsert does:
+    // strip whichever single column the error names and retry.
+    let payload: Record<string, unknown> = serializeGalleryForSupabase(gallery);
+    let error: { message?: string } | null = null;
+
+    for (let attempt = 0; attempt < 5; attempt++) {
+      const result = await supabase.from("galleries").upsert(payload, {
+        onConflict: "id",
+      });
+      error = result.error;
+      if (!error) break;
+
+      const missingColumn = String(error.message ?? "").match(/'([a-zA-Z0-9_]+)' column/)?.[1];
+      if (!missingColumn || !(missingColumn in payload)) break;
+
+      const nextPayload = { ...payload };
+      delete nextPayload[missingColumn];
+      payload = nextPayload;
+    }
 
     if (error) {
       console.error("Failed to upsert gallery:", error);
@@ -1296,6 +1346,40 @@ async function hydrateLocalGalleriesFromSupabase(force = false) {
       .filter(Boolean) as Gallery[];
 
     if (remote.length === 0) return;
+
+    // Invite tokens were previously write-only: upsertGalleryToSupabase
+    // (and its delete-pruning) kept gallery_invites current, but nothing
+    // ever read the table back into a hydrated Gallery, so a second
+    // device (or a fresh hydrate after clearing local storage) always saw
+    // an empty invite list even though real tokens existed server-side.
+    // Fetch them here, for the owner's own galleries only.
+    try {
+      const { data: inviteRows, error: inviteError } = await supabase
+        .from("gallery_invites")
+        .select("*")
+        .in("gallery_id", remote.map((gallery) => gallery.id));
+
+      if (!inviteError && Array.isArray(inviteRows)) {
+        const tokensByGallery = new Map<string, GalleryInviteToken[]>();
+        for (const row of inviteRows) {
+          const galleryId = safeString((row as any)?.gallery_id);
+          const token = inviteTokenFromRow(row);
+          if (!galleryId || !token) continue;
+          const list = tokensByGallery.get(galleryId) ?? [];
+          list.push(token);
+          tokensByGallery.set(galleryId, list);
+        }
+
+        for (const gallery of remote) {
+          const tokens = tokensByGallery.get(gallery.id);
+          if (tokens) {
+            gallery.share = { ...gallery.share, inviteTokens: tokens };
+          }
+        }
+      }
+    } catch (error) {
+      console.error("Failed to hydrate gallery invite tokens:", error);
+    }
 
     const local = (() => {
       try {
@@ -2311,13 +2395,30 @@ export function recordGalleryView(galleryId: string) {
   const supabase = getSupabaseBrowserClient();
   if (!supabase) return;
 
-  void supabase
-    .from("galleries")
-    .update({
-      analytics_views: nextAnalytics.views,
-      analytics_last_viewed_at: new Date(nextAnalytics.lastViewedAt).toISOString(),
-    })
-    .eq("id", galleryId);
+  void (async () => {
+    const { error } = await supabase
+      .from("galleries")
+      .update({
+        analytics_views: nextAnalytics.views,
+        analytics_unique_view_keys: nextAnalytics.uniqueViewKeys,
+        analytics_last_viewed_at: new Date(nextAnalytics.lastViewedAt).toISOString(),
+      })
+      .eq("id", galleryId);
+
+    // analytics_unique_view_keys is new (2026-08-27 migration). Until it's
+    // run, a single unknown column would otherwise fail the WHOLE update —
+    // views/lastViewedAt would silently stop persisting too. Fall back so
+    // the columns that already exist keep working in the meantime.
+    if (error && String(error.message ?? "").toLowerCase().includes("analytics_unique_view_keys")) {
+      await supabase
+        .from("galleries")
+        .update({
+          analytics_views: nextAnalytics.views,
+          analytics_last_viewed_at: new Date(nextAnalytics.lastViewedAt).toISOString(),
+        })
+        .eq("id", galleryId);
+    }
+  })();
 }
 
 export function getGalleryShareUrl(gallery: Gallery, origin?: string) {
