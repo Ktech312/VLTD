@@ -1,4 +1,13 @@
-# VLTD — Session Checklist (2026-08-05 night → ongoing, updated 2026-08-24)
+# VLTD — Session Checklist (2026-08-05 night → ongoing, updated 2026-08-27)
+
+## ⚠ 2 migrations pending — EK to run when free (both safe, purely additive)
+⬜ `supabase/migrations/20260827_vault_items_full_field_sync.sql` — ~109 new
+nullable columns on `vault_items` (per-universe detail fields + condition/
+pricing fields that were never wired to the cloud at all). See HANDOFF.md
+§2, 2026-08-27 entry.
+⬜ `supabase/migrations/20260827_galleries_item_notes_and_view_dedup.sql` —
+2 new nullable columns on `galleries` (item notes, view-count dedupe list).
+See HANDOFF.md §2, 2026-08-27 entry.
 
 ## Future cleanup — not urgent, wait for EK
 ⬜ **Retire or trim "Account Rights" now that "Users" covers everything it
@@ -14,20 +23,13 @@ anyone, but saving through Quick Add needs VLTD admin access). EK: "leave
 it for now, figure out a way to share better in the future." If someone
 non-admin needs to add events later, that's a narrower permission that
 doesn't exist yet — would need building, not just granting admin.
-⬜ **5 more popovers with the same bleed-through bug shape, not yet
-fixed** — `src/app/museum/[galleryId]/page.tsx` lines ~1007, ~1090,
-~1163, ~1401, ~1444, all `absolute ... bg-[color:var(--surface)]`
-tooltips/dropdowns in the gallery editor (same pattern as the vault
-upload menu and the public-profile "Report Content" popover, both
-already fixed this session via an id + `!important` rule in
-`theme-override.css`). Left alone overnight on purpose — this is a large,
-unfamiliar file and none of tonight's fixes could be visually verified
-live (no browser access this session), so touching 5 spots in it blind
-felt like the wrong risk trade. Same fix pattern should work; worth
-doing once someone can actually see the result. Two other `--surface`
-hits (`AnalyticsDashboard.tsx`, `CollectionValuationScoreCard.tsx`) are
-decorative gauge-chart center circles, not menus — almost certainly not
-the same bug, left alone.
+✅ **5 popovers with the same bleed-through bug shape** —
+`src/app/museum/[galleryId]/page.tsx`, same id + `!important` pattern as
+the vault upload menu. Fixed 2026-08-25/26 (commit `30c9668`). Still not
+live-verified by anyone — worth a look next time EK's in the gallery
+editor. Two other `--surface` hits (`AnalyticsDashboard.tsx`,
+`CollectionValuationScoreCard.tsx`) are decorative gauge-chart center
+circles, not menus — not the same bug, left alone.
 
 ## Events page self-expire + self-populate, header spacing, blue-button audit (2026-08-23)
 ✅ **Events page was 100% stale** (4 hand-typed events from a one-time
