@@ -1,13 +1,12 @@
 # VLTD — Session Checklist (2026-08-05 night → ongoing, updated 2026-08-27)
 
-## ⚠ 2 migrations pending — EK to run when free (both safe, purely additive)
-⬜ `supabase/migrations/20260827_vault_items_full_field_sync.sql` — ~109 new
-nullable columns on `vault_items` (per-universe detail fields + condition/
-pricing fields that were never wired to the cloud at all). See HANDOFF.md
+## ✅ 2026-08-27 migrations — both confirmed run by EK, fully live
+✅ `supabase/migrations/20260827_vault_items_full_field_sync.sql` — ~109 new
+columns on `vault_items`. Not yet live-verified visually. See HANDOFF.md
 §2, 2026-08-27 entry.
-⬜ `supabase/migrations/20260827_galleries_item_notes_and_view_dedup.sql` —
-2 new nullable columns on `galleries` (item notes, view-count dedupe list).
-See HANDOFF.md §2, 2026-08-27 entry.
+✅ `supabase/migrations/20260827_galleries_item_notes_and_view_dedup.sql` —
+2 new columns on `galleries`. Not yet live-verified visually. See
+HANDOFF.md §2, 2026-08-27 entry.
 
 ## Future cleanup — not urgent, wait for EK
 ⬜ **Retire or trim "Account Rights" now that "Users" covers everything it

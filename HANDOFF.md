@@ -1,4 +1,4 @@
-# VLTD — Session Handoff (updated, twentieth pass — self-directed overnight audit (2026-08-27) found two real cloud-sync gaps and fixed both, TWO new migrations EK needs to run: (1) ~110 VaultItem fields — nearly every per-universe detail field plus condition/pricing/comps core fields — never had a Supabase column at all, not just a missing mapping; (2) 3 gaps in the museum/Gallery sync (item notes never written, view-count dedup never synced, invite tokens written but never read back on a second device). Also generalized both the vault and gallery upsert schema-mismatch fallbacks to self-heal against a missing column instead of needing a new hardcoded check every time this bug class recurs — see the two 2026-08-27 entries in §2 for exactly what to run and why. Build-verified only, not live-verified. Prior (nineteenth) pass — Events tooling, admin console discovery + APP_MAP.md, Vault upload feature, a translucent-popover bug fixed 3x — also unverified live, read the 2026-08-24/25/26 entry before assuming it works visually. Older summary — full backend security audit (8 real RLS/RPC vulnerabilities), 3D Museum beta-access gating, Room Builder fixes — is a different session's work, still below.)
+# VLTD — Session Handoff (updated, twentieth pass — self-directed overnight audit (2026-08-27) found two real cloud-sync gaps, fixed both, BOTH migrations confirmed run by EK, both fully live: (1) ~110 VaultItem fields — nearly every per-universe detail field plus condition/pricing/comps core fields — never had a Supabase column at all, not just a missing mapping; (2) 3 gaps in the museum/Gallery sync (item notes never written, view-count dedup never synced, invite tokens written but never read back on a second device). Also generalized both the vault and gallery upsert schema-mismatch fallbacks to self-heal against a missing column instead of needing a new hardcoded check every time this bug class recurs — see the two 2026-08-27 entries in §2. Build-verified only, still nobody has visually confirmed it live in a browser. Prior (nineteenth) pass — Events tooling, admin console discovery + APP_MAP.md, Vault upload feature, a translucent-popover bug fixed 3x — also unverified live, read the 2026-08-24/25/26 entry before assuming it works visually. Older summary — full backend security audit (8 real RLS/RPC vulnerabilities), 3D Museum beta-access gating, Room Builder fixes — is a different session's work, still below.)
 
 Read this top to bottom, then start on **§2 "What's LEFT."** This is written so a
 brand-new chat can pick up with no prior context.
@@ -58,11 +58,12 @@ is risky or can't be done, say so plainly.
   entirely, it just silently doesn't sync that one field until the
   migration lands. Still write the migration and give it to EK every
   time — don't rely on the fallback as a substitute.
-  **⚠ 2 MIGRATIONS PENDING — see the two 2026-08-27 entries in §2**
-  (`20260827_vault_items_full_field_sync.sql` and
-  `20260827_galleries_item_notes_and_view_dedup.sql`), both purely
-  additive/nullable-column, safe to run any time. Before that: 8 more
-  confirmed run by EK 2026-08-23/24, all
+  **✅ NO MIGRATIONS PENDING.** `20260827_vault_items_full_field_sync.sql`
+  and `20260827_galleries_item_notes_and_view_dedup.sql` both confirmed run
+  by EK 2026-08-27 — the ~110 vault fields and the 3 gallery sync gaps (see
+  the two 2026-08-27 entries in §2) are fully live, still not live-verified
+  by anyone looking at the actual site. Before that: 8 more confirmed run
+  by EK 2026-08-23/24, all
   live: `20260823_fix_public_profiles_write_policy.sql` (closed a
   `using(true) with check(true)` write hole on `public_profiles`),
   `20260823_fix_place_bid_impersonation.sql` (`place_bid()` now rejects a
@@ -2811,8 +2812,10 @@ result before calling it done, the way EK's side-by-side did here.
 
 ### DONE (2026-08-27 overnight, same audit continued) — 3 gaps in Gallery/museum sync (item notes, view-count dedup, invite tokens never read back)
 
-**What EK needs to do:** run the migration below (2nd one tonight), then this
-is fully live.
+**Migration confirmed run by EK 2026-08-27 — fully live.** Not yet
+live-verified visually (no browser access this session) — worth a real
+click-test (type an item note, open Share Settings on two devices) next
+time someone's in the gallery editor.
 
 **How this was found:** after fixing the vault field-sync gap (entry right
 below this one), I ran a read-only audit agent over every other local
@@ -2868,7 +2871,10 @@ builder), which had 3 real gaps:
 
 ### DONE (2026-08-27 overnight, self-directed audit) — ~110 VaultItem fields were never wired to Supabase at all — found, migrated, fixed
 
-**What EK needs to do:** run the migration below, then this is fully live.
+**Migration confirmed run by EK 2026-08-27 — fully live.** Not yet
+live-verified visually (no browser access this session) — worth typing a
+value into one per-universe field (e.g. a TCG Set Code) and confirming it
+survives a reload/shows on another device.
 
 **How this was found:** EK asked twice for safe overnight work with no live
 browser access. Every prior "field defined but not synced to Supabase" bug in
