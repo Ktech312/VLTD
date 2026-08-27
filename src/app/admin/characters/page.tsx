@@ -26,7 +26,7 @@ import OnlineDot from "@/components/OnlineDot";
 import { isOnline, sessionLength, exactDateTime, averageSessionLength, formatDuration } from "@/lib/presence";
 import { useSaveFeedback } from "@/lib/useSaveFeedback";
 import {
-  getMyAdminRole,
+  getMyAdminAccessStatus,
   listAdmins,
   grantAdmin,
   revokeAdmin,
@@ -151,16 +151,40 @@ function AdminLoginGate({ onSignedIn }: { onSignedIn: () => void }) {
 }
 
 // ── Not Authorized Screen ────────────────────────────────────
-function NotAuthorized({ userEmail }: { userEmail: string }) {
+// EK's ask (2026-08-27): admin access now requires the session to have
+// actually completed a 2FA/MFA challenge (see adminAuth.ts's own
+// comment for the full reasoning) — this needs its own message,
+// distinct from "you're just not an admin," so someone who genuinely
+// has the role isn't left thinking their account was removed when
+// they really just need to finish a 2FA step-up.
+function NotAuthorized({ userEmail, needsMfa }: { userEmail: string; needsMfa?: boolean }) {
   return (
     <div className="flex min-h-screen items-center justify-center bg-[#0a0c12]">
       <div className="w-full max-w-sm rounded-[24px] bg-[#111318] p-8 ring-1 ring-white/10 text-center">
         <div className="text-2xl">🚫</div>
-        <div className="mt-2 text-sm font-semibold text-white">Not Authorized</div>
-        <div className="mt-1 text-xs text-white/40">{userEmail} does not have admin access.</div>
+        {needsMfa ? (
+          <>
+            <div className="mt-2 text-sm font-semibold text-white">2FA Required</div>
+            <div className="mt-1 text-xs text-white/40">
+              {userEmail} has admin access, but this session hasn&apos;t completed a 2FA challenge yet.
+              Set it up (or complete it) at Account → Security, then reload this page.
+            </div>
+            <a
+              href="/account/security"
+              className="mt-6 block w-full rounded-xl bg-white/10 py-2.5 text-sm text-white/80 transition hover:bg-white/20"
+            >
+              Go to Account → Security
+            </a>
+          </>
+        ) : (
+          <>
+            <div className="mt-2 text-sm font-semibold text-white">Not Authorized</div>
+            <div className="mt-1 text-xs text-white/40">{userEmail} does not have admin access.</div>
+          </>
+        )}
         <button
           onClick={() => signOut().then(() => window.location.reload())}
-          className="mt-6 w-full rounded-xl bg-white/10 py-2.5 text-sm text-white/60 transition hover:bg-white/20"
+          className="mt-3 w-full rounded-xl bg-white/10 py-2.5 text-sm text-white/60 transition hover:bg-white/20"
         >
           Sign Out
         </button>
@@ -1946,6 +1970,7 @@ export default function AdminCharactersPage() {
   const [authState, setAuthState] = useState<"loading" | "signed-out" | "unauthorized" | "authorized">("loading");
   const [role, setRole] = useState<AdminRole>(null);
   const [userEmail, setUserEmail] = useState("");
+  const [needsMfa, setNeedsMfa] = useState(false);
   const [selectedHandle, setSelectedHandle] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [activeSection, setActiveSection] = useState<AdminSection>("characters");
@@ -1977,8 +2002,9 @@ export default function AdminCharactersPage() {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user?.email) { setAuthState("signed-out"); return; }
     setUserEmail(user.email);
-    const r = await getMyAdminRole();
-    if (!r) { setAuthState("unauthorized"); return; }
+    const { role: r, mfaOk } = await getMyAdminAccessStatus();
+    if (!r) { setNeedsMfa(false); setAuthState("unauthorized"); return; }
+    if (!mfaOk) { setNeedsMfa(true); setAuthState("unauthorized"); return; }
     setRole(r);
     setAuthState("authorized");
   }
@@ -1993,7 +2019,7 @@ export default function AdminCharactersPage() {
     );
   }
   if (authState === "signed-out") return <AdminLoginGate onSignedIn={checkAuth} />;
-  if (authState === "unauthorized") return <NotAuthorized userEmail={userEmail} />;
+  if (authState === "unauthorized") return <NotAuthorized userEmail={userEmail} needsMfa={needsMfa} />;
 
   const filtered = ALL_CHARACTERS.filter((c) => {
     const q = search.toLowerCase();
