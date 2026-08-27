@@ -1,4 +1,4 @@
-# VLTD — Session Handoff (updated, eighteenth pass — full backend security audit (8 real RLS/RPC vulnerabilities found + fixed); 3D Museum beta-access gating shipped, then the 55-commit `claude/museum-map-doorways` branch that beta was gating access to turned out to have NEVER been merged to `main` at all — merged; Admin Users page now hides seed/test accounts + sortable columns; 2 real Room Builder bugs fixed (dead space under the room panel, multi-item shelf-fill scattering across walls); Room Builder rooms ("Halls") now save to the account for real instead of one local-storage slot; SOC2 roadmap sketch written, not started. Read this whole entry before touching the museum/admin code.)
+# VLTD — Session Handoff (updated, nineteenth pass — Events tooling (Ticketmaster keyword fix, real photos, manual Quick Add + Event Catcher bookmarklet, two cron jobs); discovered a real 2200+ line admin console shell existed and had built a duplicate hub before finding it — APP_MAP.md now exists specifically to prevent that recurring, read it before building anything new; Users absorbed everything Account Rights had; Vault upload-from-device feature; a translucent-popover bug fixed in 3 places after taking 3 attempts on the first one — NONE of this pass verified live, no browser access all session, read the 2026-08-24/25/26 entry in full before assuming any of it actually works visually. Prior pass's summary — full backend security audit (8 real RLS/RPC vulnerabilities), 3D Museum beta-access gating, Room Builder fixes — is a different session's work, still below.)
 
 Read this top to bottom, then start on **§2 "What's LEFT."** This is written so a
 brand-new chat can pick up with no prior context.
@@ -2799,6 +2799,176 @@ result before calling it done, the way EK's side-by-side did here.
 ---
 
 ## 2. What's LEFT to do (prioritized)
+
+### DONE (2026-08-24/25/26 overnight) — Events tooling, admin console discovery + APP_MAP.md, Vault upload feature, a recurring transparency bug fixed 3x over
+
+Big multi-night session, no live browser access for most of it (Claude-in-
+Chrome never connected) — everything below is verified by `tsc`/`eslint`/
+`npm run build` only, confirmed via EK's own screenshots when something
+was wrong, not confirmed working by me looking at the live site. Treat
+accordingly.
+
+**Events tooling, real root causes found:**
+- Ticketmaster's `keyword` param is a near-exact/AND match, not fuzzy like
+  Google — the long natural-language category queries reused from SerpApi
+  returned zero every time. Found by testing real keywords directly against
+  their API; added a separate short-keyword map that actually returns hits.
+- The AI relevance filter (gates every keyword-search-found candidate
+  before it can publish, see the 2026-08-23 entry below for why it exists)
+  was silently failing closed with zero visibility into why. Added real
+  error surfacing (`aiFilterError`/`upsertError` in the cron's JSON
+  response) instead of a bare empty result — this is what actually
+  revealed the true cause: **the Anthropic account was/is at $0 credit
+  balance** (confirmed via the literal API error message, not a guess).
+  Resets 2026-09-01. This blocks the auto-populate AI gate AND real user
+  AI scans (Quick Add, bulk scan, AI Assist) — not a code bug, nothing to
+  fix, just know it's why AI-gated things go quiet.
+- `collector_events` never had anywhere to store a photo at all — new
+  `image_url` column (`20260823_collector_events_image_url.sql`,
+  **confirmed run**), wired into all three sources: SerpApi's `thumbnail`
+  field, Ticketmaster's `images[]` (prefers 16:9), and the bookmarklet
+  (grabs the page's `og:image`/`twitter:image` — same tag any link
+  preview already uses). `EventArt` in `events/page.tsx` renders a real
+  photo when present, falls back to the existing gradient placeholder
+  otherwise.
+
+**Manual fallback tooling (EK: "worst case, how do I add one by hand"):**
+- **Event Catcher** — a bookmarklet (published as a Claude Artifact,
+  `https://claude.ai/code/artifact/48d46d98-8e1f-4214-84df-71399faa09b2`,
+  EK owns/can update it) that grabs a page's title/link/`og:image`/
+  selected text and opens `/admin/events/quick-add?name=&link=&image=&desc=`.
+  Reinstalling the bookmark is required any time its JS payload changes —
+  it's a frozen snapshot at drag-time, the page updating doesn't reach an
+  already-saved bookmark.
+- **`src/lib/events/parseDatesFromText.ts`** — local regex date-range
+  parser (no AI/API call, this tool exists specifically to work without
+  either), recognizes "Jan 1-4" / "Mar 15 - Apr 2" / a trailing year, used
+  to pre-fill Quick Add's date fields from whatever text came with the
+  page and strip the matched date text back out of the name.
+- **`QuickAddEventForm`** (`src/components/admin/QuickAddEventForm.tsx`)
+  — shared component, two hosts: the standalone `/admin/events/quick-add`
+  page (has to stay a real URL — it's the bookmarklet's `window.open`
+  target, opened from an external site with no VLTD page loaded to put a
+  modal inside of) and a compact modal on `/admin/events` itself for
+  manual "+ Quick Add" clicks (EK: "only as large as the info that's
+  required, nothing more").
+- **`/admin/events`** — real management page, lists every event including
+  ones the public page already auto-hides (past/disabled), with working
+  Enabled/Featured toggles and Delete (there was previously no UI for
+  either, only raw SQL).
+- **Two Vercel Cron jobs** (`vercel.json`): `refresh-events` (daily,
+  06:00 Pacific) and `refresh-major-events` (weekly Mondays, a curated
+  EK-editable list of ~19 shows looked up by NAME via real search
+  snippets + Claude extraction — not a keyword search, so no false-
+  positive risk the way the daily one has).
+- **`collector_events`'s RLS policy now requires `ends_at >= now()`**, not
+  just `enabled = true` (`20260823_collector_events_auto_expire.sql`,
+  **confirmed run**) — an event disappears the moment it's over, nobody
+  has to remember to disable it.
+
+**⚠ The admin-console discovery — read this before touching ANY admin
+page again.** Built an entire duplicate `/admin` hub page + assumed
+`/admin/events`, `/admin/users` etc. were freestanding, before realizing
+a real, 2200+ line admin console shell already existed at
+`src/app/admin/characters/page.tsx` (sidebar + iframe-per-section
+pattern) — genuine wasted work, caught only because EK said "I do not
+see any new Event tab." Wired Events/Referrals/Spotlights into that real
+shell afterward (same iframe pattern as the existing Waitlist/Bugs/
+Scan-Limits/Users sections). **`APP_MAP.md` was written specifically so
+this can't happen again** — a structural map of every route, every
+admin section (which are inline vs. iframed vs. still-orphaned), every
+current DB table, and both cron jobs. New standing rule added to §0 of
+this file: read `APP_MAP.md` before building anything new. The duplicate
+`/admin` hub page was deleted at EK's direct instruction once the real
+tabs existed. `/admin/tiers/page.tsx` is still unwired and undecided —
+possibly dead code duplicating Account Rights, needs EK to actually open
+it and compare, logged in `CHECKLIST.md`.
+
+**Users vs. Account Rights — EK compared them directly and asked for the
+merge.** `/admin/users` (built 2026-08-23 for AI-usage analytics + 3D
+Museum beta) was missing everything Account Rights already had: tier
+granting, the personal/business badge, search, and the green online-now
+indicator. All four added — tier grants go through this route's verified
+service-role PATCH (`/api/admin/users`), not a client-side RLS-trusting
+update, matching the stronger pattern already used for museum-beta in
+the same file. Default sort is now "online first, then most-recently-
+active" instead of "newest signup first" (the old default buried every
+account with real activity under a wall of empty brand-new rows). EK's
+direction: leave Account Rights running in parallel until the new tier
+controls have been tested a few times for real, then decide whether to
+trim it — logged in `CHECKLIST.md`, not done.
+
+**Vault: upload-from-device (Single vs. Batch), and a transparency bug
+that took three real attempts to actually kill.** New icon button next
+to Add Item opens a small menu: "Single item" (all picked photos go onto
+one item — routes to `/capture?openUpload=1`, which now auto-triggers
+the existing file-picker input on load) or "Batch" (each photo becomes
+its own item — routes to the existing `/vault/bulk`, unchanged). Both
+underlying flows already existed; the actual gap was discoverability.
+
+The menu's background bled through to the vault thumbnails behind it
+across three fix attempts before it actually stopped: a theme CSS
+variable (`--surface`, deliberately translucent everywhere else in this
+app for cards-over-a-flat-background), then a plain inline
+`style={{backgroundColor}}` (should have worked — inline styles normally
+beat stylesheet rules — but apparently didn't). **Root cause, as best
+understood:** `theme-override.css` is a deliberate "loads last, wins
+always" file full of `!important` background rules, and a stylesheet
+`!important` rule beats a *non-important* inline style regardless of
+load order — that's the one cascade case where inline styles lose. Final
+fix: an `id` on the element + a matching `!important` rule placed in
+`theme-override.css` itself — an ID selector is higher specificity than
+any class-based selector already in that file, so nothing left in this
+codebase can outrank it. **Never fully confirmed live** (EK's screenshots
+showed the bug on attempts 1 and 2; attempt 3 was pushed but EK moved on
+to other requests before confirming it visually) — worth a direct check.
+Also recolored solid blue with a silver divider per EK's ask ("make it
+stand out"), and a bounded sweep afterward found + fixed the identical
+bug shape in two more places using the same id+`!important` pattern:
+`PublicSafetyControls.tsx`'s "Report Content" popover, and five settings
+popovers in the exhibition editor (`museum/[galleryId]/page.tsx` —
+access-mode help, alias info, 18+ info, expiry dropdown, permissions
+dropdown). **None of these three additional fixes have been visually
+confirmed either** — same caveat.
+
+**Toolbar button heights standardized to match Add Item.** EK compared
+every pinstripe button across pages directly: the plain pills (Export/
+Halls/Quick Add/etc.) were taller than Add Item, and the new upload
+button was taller than both. Changed the shared recipe (`px-4 py-2.5` →
+`py-1.5`, same `text-sm font-bold rounded-[6px]` otherwise) everywhere
+it's used in a page header actions row: Vault, Museum/Exhibitions,
+Lounge (`community-board/page.tsx` — a layout-mechanism change like the
+earlier PageHeader rollout, not a restyle of Codex's content, per the
+existing ownership carve-out), Activity, Insights, `VaultExportButton`.
+Left one coincidental match alone (`account/team/page.tsx`'s full-width
+"Transfer ownership" button shares the same class string but isn't a
+toolbar button).
+
+**Vault item Media section — real bugs, not just polish:**
+- The crop/"Save Photo" flow was failing with a raw Supabase error
+  ("Could not find the 'item_type' column") — `20260822_vault_item_type_
+  attributes.sql` (adds `item_type`/`item_attributes` to `vault_items`)
+  had been sitting unrun for two days despite a code-level fallback
+  existing for it. **EK ran it, confirmed fixed.**
+- The Edit Photo/Camera/Remove BG/Revert buttons were `absolute`-
+  positioned overlaying the main image itself — read as "ghost boxes"
+  floating on the photo. Moved to a normal row above the image instead.
+- Removed a genuinely redundant "Add image" button from that row — the
+  large "+ Add" square right below it in the thumbnail strip already did
+  the same thing.
+- `/api/remove-bg`'s raw `{error:"Missing API key"}` (REMOVE_BG_API_KEY
+  unset) was being thrown straight to the UI verbatim. `imageAI.ts` now
+  maps that specific case to a real explanation.
+- The Universe/Category dropdowns in the bulk "Review your Drop" sheet
+  were squeezed into a 2-column grid at 11px, truncating to "Pop C" /
+  "Comi". Stacked to full-width on narrow screens, bumped to a readable
+  size.
+
+**Also confirmed run by EK this session:** `20260823_ai_usage_log.sql`
+(new table logging every real AI Assist/Quick Add/bulk-scan/COA-scan
+call — profile, feature, input/output tokens — feeding the AI-usage
+columns on `/admin/users`; best-effort, never blocks the real scan if
+logging itself fails).
 
 ### NOT DONE, READ FIRST — placeholder/incomplete-feature audit (2026-08-21)
 After the DM saga above (things previously called "100% confirmed live"

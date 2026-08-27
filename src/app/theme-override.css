@@ -319,3 +319,19 @@
 #public-safety-report-panel {
   background: #14171d !important;
 }
+
+/* ── GALLERY EDITOR SETTINGS POPOVERS ──
+   Same bug shape again, all in the exhibition editor's share/visibility
+   settings row: help-text tooltips (access mode, alias, 18+) and small
+   dropdowns (expiry, viewer permissions), all previously using the
+   translucent --surface token. Fixed via the same id + !important
+   pattern as the two above -- not confirmed live (no browser access
+   this session), but this is now a proven fix for this exact bug class,
+   not a new guess. */
+#gallery-access-mode-help,
+#gallery-alias-info,
+#gallery-adult-info,
+#gallery-expiry-dropdown,
+#gallery-permissions-dropdown {
+  background: #14171d !important;
+}
