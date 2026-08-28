@@ -821,9 +821,22 @@ function wallGridPosition(
   };
 }
 
+function rowForWallSlot(wall: "back" | "left" | "right", slot: number): number {
+  if (wall === "back") return Math.floor(slot / 8) % SHELF_ROW_Y.length;
+  return slot % SHELF_ROW_Y.length;
+}
+
 function distributeAcrossWalls(
   count: number,
-  config: { backZ: number; backScale: number; sideBaseZ: number; sideZStep: number; sideScale: number }
+  config: { backZ: number; backScale: number; sideBaseZ: number; sideZStep: number; sideScale: number },
+  // Hero (spotlight layout) reserves its own row on whichever wall it sits
+  // on — a regular grid slot landing in that same row can sit close enough
+  // in depth to visually overlap Hero's much larger frame. EK caught this
+  // live: "you have an extra one behind it on each wall, this causes a
+  // conflict." Skipping the whole forbidden row on that wall (rather than
+  // dodging Hero's exact footprint by distance) is simple to reason about
+  // and can't be miscalculated the way a narrow exclusion zone could.
+  excludeRow: Partial<Record<"back" | "left" | "right", number>> = {}
 ): RoomItemPosition[] {
   // Keeps the WALL_CYCLE's early-spread behavior (see its own comment —
   // a small collection gets presence on every wall right away, not just
@@ -839,6 +852,17 @@ function distributeAcrossWalls(
     right: SIDE_WALL_CAPACITY,
   };
   const wallSlot: Record<"back" | "left" | "right", number> = { back: 0, left: 0, right: 0 };
+  function nextValidSlot(wall: "back" | "left" | "right"): number {
+    let slot = wallSlot[wall];
+    const forbidden = excludeRow[wall];
+    if (forbidden !== undefined) {
+      while (slot < caps[wall] && rowForWallSlot(wall, slot) === forbidden) slot++;
+    }
+    return slot;
+  }
+  function hasRoom(wall: "back" | "left" | "right"): boolean {
+    return nextValidSlot(wall) < caps[wall];
+  }
   const positions: RoomItemPosition[] = [];
   let cycleIndex = 0;
   // `count` is always MAX_ROOM_ITEMS (or that minus the vault-only front
@@ -853,15 +877,16 @@ function distributeAcrossWalls(
   while (positions.length < count) {
     let wall = WALL_CYCLE[cycleIndex % WALL_CYCLE.length];
     let skipped = 0;
-    const allAtCap = (["back", "left", "right"] as const).every((w) => wallSlot[w] >= caps[w]);
+    const allAtCap = (["back", "left", "right"] as const).every((w) => !hasRoom(w));
     if (!allAtCap) {
-      while (wallSlot[wall] >= caps[wall] && skipped < WALL_CYCLE.length) {
+      while (!hasRoom(wall) && skipped < WALL_CYCLE.length) {
         cycleIndex++;
         wall = WALL_CYCLE[cycleIndex % WALL_CYCLE.length];
         skipped++;
       }
     }
-    const slot = wallSlot[wall]++;
+    const slot = nextValidSlot(wall);
+    wallSlot[wall] = slot + 1;
     positions.push(wallGridPosition(wall, slot, config));
     cycleIndex++;
   }
@@ -927,13 +952,27 @@ function buildWallPositions(layout: RoomLayout, count: number): RoomItemPosition
     const spotlightClusterSpan = 2.1 * (SIDE_WALL_DEPTH_COUNT - 1);
     const spotlightBaseZ =
       SIDE_WALL_SAFE_BACK_Z + (SIDE_WALL_SAFE_FRONT_Z - SIDE_WALL_SAFE_BACK_Z - spotlightClusterSpan) / 2;
-    const supporting = distributeAcrossWalls(remaining, {
-      backZ: -11.78,
-      backScale: MIN_ITEM_SCALE,
-      sideBaseZ: spotlightBaseZ,
-      sideZStep: 2.1,
-      sideScale: MIN_ITEM_SCALE,
-    });
+    // Only left/right need the reservation — back-wall Hero sits at x=0,
+    // which never lands on a back-wall column (columns run -9..9 in steps
+    // of BACK_WALL_COL_STEP, an even split with no column at the exact
+    // midpoint), so nothing is ever placed there to collide with. Left/
+    // right Hero sits at a FIXED x (every item on that wall shares the
+    // same x — only row/depth vary), so its own row must stay reserved.
+    const heroWalls = new Set(heroSlots.map((slot) => slot.wall));
+    const supportingExcludeRow: Partial<Record<"back" | "left" | "right", number>> = {};
+    if (heroWalls.has("left")) supportingExcludeRow.left = 1;
+    if (heroWalls.has("right")) supportingExcludeRow.right = 1;
+    const supporting = distributeAcrossWalls(
+      remaining,
+      {
+        backZ: -11.78,
+        backScale: MIN_ITEM_SCALE,
+        sideBaseZ: spotlightBaseZ,
+        sideZStep: 2.1,
+        sideScale: MIN_ITEM_SCALE,
+      },
+      supportingExcludeRow
+    );
     return [...heroSlots, ...supporting];
   }
 
@@ -1510,6 +1549,19 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
     setRoomLayout("storefront");
     setViewMode("room");
     setHallNoticeDismissed(false);
+  }
+
+  // EK's ask: camera-position memory should only last while actively
+  // arranging (Organize/add/move — those re-run the mount effect without
+  // ever leaving room view, and cameraStateRef surviving that is correct,
+  // wanted behavior). It should NOT survive an actual "come back to look at
+  // the room" — from the campus map, or after picking a different Source/
+  // Hall — those should spawn back at the doorway like a fresh visit, same
+  // as openUniverseRoom/openMainHall already do above.
+  function enterRoomFresh() {
+    cameraStateRef.current = null;
+    setSelectedItemId("");
+    setViewMode("room");
   }
 
   useEffect(() => {
@@ -2551,6 +2603,60 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
     let startX = 0;
     let startY = 0;
 
+    // EK's ask, the still-open half of "you never changed the walking
+    // pattern like the other app" — click-to-walk (below) was the first
+    // half; this is WASD. Researched directly from bingebrowse.net's own
+    // bundle (`updateMovement(dt)`): held-key movement is direct velocity,
+    // no acceleration/deceleration curve at all — starts and stops the
+    // instant a key goes down/up, every frame while held. Our OLD
+    // implementation had no continuous movement whatsoever — onKeyDown
+    // fired `moveCamera()` as a single fixed-size nudge per keydown EVENT,
+    // relying entirely on the OS's own key-repeat timing for a held key,
+    // which is why it never felt like walking (inconsistent cadence, a
+    // startup delay before repeat kicks in, no per-frame smoothness).
+    // `pressedKeys` + `updateKeyboardMovement` below replace that with a
+    // real per-frame held-key loop, matching their model.
+    const pressedKeys = new Set<string>();
+    // Their own speed is 1.25 m/s (0.85 while Shift) — but their scene is
+    // genuine 1:1 meters and ours is NOT (see eyeHeight's own history: the
+    // entrance door's real baked height cross-checks this room at roughly
+    // 0.43-0.55m per unit, i.e. our units are about 2x a meter). Copying
+    // "1.25" as 1.25 units/sec here would walk at roughly HALF their real
+    // pace — same unit-scale mistake that broke eyeHeight earlier this
+    // session. Converted through that same verified ~0.49m/unit factor
+    // instead of copied raw.
+    const WALK_SPEED = 2.55; // units/sec, ~1.25 m/s equivalent
+    const WALK_SPEED_SLOW = 1.73; // units/sec, ~0.85 m/s equivalent (Shift)
+    // Keyboard turning (Left/Right) has no bingebrowse equivalent — theirs
+    // is mouse-look only — tuned to feel continuous and comparable to the
+    // walk speed above, not sourced from their bundle.
+    const TURN_RATE = 1.7; // rad/sec
+
+    function updateKeyboardMovement(dt: number) {
+      if (heldItem || pressedKeys.size === 0) return;
+      walkTween = null; // a held movement/turn key interrupts click-to-walk, same as every other nav input already does
+      const speed = pressedKeys.has("shift") ? WALK_SPEED_SLOW : WALK_SPEED;
+      const move = new THREE.Vector3();
+      if (pressedKeys.has("forward")) move.add(facingDirection());
+      if (pressedKeys.has("back")) move.sub(facingDirection());
+      if (pressedKeys.has("left")) move.sub(strafeDirection());
+      if (pressedKeys.has("right")) move.add(strafeDirection());
+      if (move.lengthSq() > 0) {
+        move.normalize().multiplyScalar(speed * dt);
+        cameraBody.add(move);
+        cameraBody.y = eyeHeight;
+        clampPosition(cameraBody);
+        targetCameraBody.copy(cameraBody);
+      }
+      let turn = 0;
+      if (pressedKeys.has("turn-left")) turn += 1;
+      if (pressedKeys.has("turn-right")) turn -= 1;
+      if (turn !== 0) {
+        yaw += turn * TURN_RATE * dt;
+        targetYaw = yaw;
+      }
+    }
+
     // EK's ask (2026-08-22/23): "you never changed the walking pattern
     // like the other app." Researched bingebrowse.net's own click-to-walk
     // directly from their bundle — it's not one continuous ease toward a
@@ -2984,6 +3090,7 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
     function render() {
       const dt = Math.min(clock.getDelta(), 0.05);
       updateHeldItem(dt);
+      updateKeyboardMovement(dt);
       if (walkTween) {
         walkTween.t = Math.min(1, walkTween.t + dt / walkTween.journeyDuration);
         const { t, firstTurnEnd, moveEnd } = walkTween;
@@ -3187,6 +3294,17 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
       moveCamera(event.deltaY > 0 ? "back" : "forward", 0.42);
     }
 
+    function movementKeyToken(event: KeyboardEvent): string | null {
+      if (event.key === "ArrowUp" || event.key.toLowerCase() === "w") return "forward";
+      if (event.key === "ArrowDown" || event.key.toLowerCase() === "s") return "back";
+      if (event.key.toLowerCase() === "a") return "left";
+      if (event.key.toLowerCase() === "d") return "right";
+      if (event.key === "ArrowLeft") return "turn-left";
+      if (event.key === "ArrowRight") return "turn-right";
+      if (event.key === "Shift") return "shift";
+      return null;
+    }
+
     function onKeyDown(event: KeyboardEvent) {
       const target = event.target as HTMLElement | null;
       if (target?.tagName === "INPUT" || target?.tagName === "TEXTAREA" || target?.tagName === "SELECT") return;
@@ -3197,25 +3315,23 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
         return;
       }
 
-      if (event.key === "ArrowUp" || event.key.toLowerCase() === "w") {
+      const token = movementKeyToken(event);
+      if (token) {
         event.preventDefault();
-        moveCamera("forward");
-      } else if (event.key === "ArrowDown" || event.key.toLowerCase() === "s") {
-        event.preventDefault();
-        moveCamera("back");
-      } else if (event.key.toLowerCase() === "a") {
-        event.preventDefault();
-        moveCamera("left");
-      } else if (event.key.toLowerCase() === "d") {
-        event.preventDefault();
-        moveCamera("right");
-      } else if (event.key === "ArrowLeft") {
-        event.preventDefault();
-        moveCamera("turn-left");
-      } else if (event.key === "ArrowRight") {
-        event.preventDefault();
-        moveCamera("turn-right");
+        pressedKeys.add(token);
       }
+    }
+
+    function onKeyUp(event: KeyboardEvent) {
+      const token = movementKeyToken(event);
+      if (token) pressedKeys.delete(token);
+    }
+
+    // A held key's keyup can be missed entirely if focus leaves the window
+    // while it's down (alt-tab, clicking a browser chrome element) — without
+    // this, that key would read as permanently "held" until pressed again.
+    function onWindowBlur() {
+      pressedKeys.clear();
     }
 
     const observer = new ResizeObserver(resize);
@@ -3224,6 +3340,8 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
     window.addEventListener("pointermove", onPointerMove);
     window.addEventListener("pointerup", onPointerUp);
     window.addEventListener("keydown", onKeyDown);
+    window.addEventListener("keyup", onKeyUp);
+    window.addEventListener("blur", onWindowBlur);
     renderer.domElement.addEventListener("wheel", onWheel, { passive: false });
     resize();
     render();
@@ -3237,6 +3355,8 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
       window.removeEventListener("pointermove", onPointerMove);
       window.removeEventListener("pointerup", onPointerUp);
       window.removeEventListener("keydown", onKeyDown);
+      window.removeEventListener("keyup", onKeyUp);
+      window.removeEventListener("blur", onWindowBlur);
       renderer.domElement.removeEventListener("wheel", onWheel);
       scene.traverse((object) => {
         if (object instanceof THREE.Mesh) {
@@ -3331,6 +3451,12 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
   // already did before Halls existed — so it clears currentHallId; only
   // explicitly picking a Hall continues editing a saved one.
   function handleSourceChange(value: string) {
+    // Loading a different Hall or exhibition through Source is the same
+    // kind of "entering a different room" as openUniverseRoom/openMainHall
+    // — reset the camera and put down whatever's held instead of carrying
+    // over wherever the LAST room's camera happened to be parked.
+    cameraStateRef.current = null;
+    setSelectedItemId("");
     if (value.startsWith("hall:")) {
       applyHall(value.slice(5));
       return;
@@ -3672,7 +3798,7 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
               // sidebar/Rooms dropdown to fall back on. EK flagged it live.
               <button
                 type="button"
-                onClick={() => setViewMode("room")}
+                onClick={enterRoomFresh}
                 className="flex items-center gap-1.5 rounded-[6px] bg-black/42 px-3 py-2 text-xs font-black uppercase tracking-[0.14em] text-white ring-1 ring-white/12 backdrop-blur transition hover:bg-black/60"
                 title="Back to the room"
               >
@@ -3985,7 +4111,7 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
                       ["room", "Room"],
                       ["overview", "Map"],
                     ]}
-                    onChange={(value) => setViewMode(value as ViewMode)}
+                    onChange={(value) => (value === "room" ? enterRoomFresh() : setViewMode(value as ViewMode))}
                   />
                 </div>
                 <div className="w-[136px] min-w-[136px]">
