@@ -2591,27 +2591,31 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
     // and didn't need this number to be right.
     const eyeHeight = 3.6;
     const savedCamera = cameraStateRef.current;
-    // A fresh spawn (no saved camera) looks straight down -Z at yaw 0, which
-    // points dead-on at the back shelf wall — it fills the frame edge-to-edge
-    // with flat, unforeshortened shelf rows and leaves almost no floor/ceiling/
-    // side-wall visible, reading as "staring at a wall" instead of "entering a
-    // room." Angling the default view ~25° toward a corner (and tilting down
-    // slightly) shows the back wall AND a side wall together with real depth,
-    // the way a person glancing across a room on arrival actually would.
+    // EK's ask (2026-08-28), with a direct reference screenshot from
+    // bingebrowse.net: their spawn looks STRAIGHT at the back wall, centered,
+    // level — not angled toward a corner. The old default here deliberately
+    // angled the view ~25° toward a corner (see this block's own prior
+    // history) reasoning that a dead-center view "fills the frame edge-to-
+    // edge with flat shelf rows" — but EK's reference shows exactly that
+    // straight-on framing looking correct and normal, not flat/boring the
+    // way it was assumed to. Reverted to straight ahead (yaw=0) and level
+    // (pitch=0) to match. The corner-angle idea is gone — stop reintroducing
+    // it as a "fix" for staring-at-a-wall complaints; EK's own reference
+    // proves centered/level is the wanted look.
     //
-    // EK's ask (2026-08-28): "this is where I stand on refresh, that's not
-    // in front of the door." The spawn Z here (-2.2) was never actually near
-    // the door — the front/door wall sits at z=5.54 (frontWallPosition),
-    // the walkable area's own forward clamp stops at z=4.72 (clampPosition,
-    // below), and the back wall is at z=-11.78. -2.2 sits almost exactly at
-    // the room's MIDPOINT (17.32-unit span, -2.2 is only ~1 unit off center)
-    // — a person standing there is already deep in the room, close enough to
-    // both the back wall and a side wall for items to fill the frame, which
-    // is exactly what read as "cornered" instead of "just walked in." Moved
-    // to z=3.8 — just inside the walkable clamp's own forward limit (4.72),
-    // genuinely near the entrance instead of the room's center.
-    let yaw = savedCamera?.yaw ?? -0.45;
-    let pitch = savedCamera?.pitch ?? -0.08;
+    // Z (2026-08-28, same message): "this is where I stand on refresh, that's
+    // not in front of the door." The spawn Z here (-2.2) was never actually
+    // near the door — the front/door wall sits at z=5.54
+    // (frontWallPosition), the walkable area's own forward clamp stops at
+    // z=4.72 (clampPosition, below), and the back wall is at z=-11.78. -2.2
+    // sits almost exactly at the room's MIDPOINT (17.32-unit span, -2.2 is
+    // only ~1 unit off center) — a person standing there is already deep in
+    // the room, close enough to both the back wall and a side wall for items
+    // to fill the frame. Moved to z=3.8 — just inside the walkable clamp's
+    // own forward limit (4.72), genuinely near the entrance instead of the
+    // room's center.
+    let yaw = savedCamera?.yaw ?? 0;
+    let pitch = savedCamera?.pitch ?? 0;
     let targetYaw = yaw;
     let targetPitch = pitch;
     const NAV_PITCH_LIMIT = 0.32;
