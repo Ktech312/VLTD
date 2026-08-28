@@ -216,7 +216,7 @@ export default function AdminUsersPage() {
   function SortHeader({ k, label }: { k: SortKey; label: string }) {
     const active = sortKey === k;
     return (
-      <th className="px-4 py-3 font-semibold">
+      <th className="px-3 py-2 font-semibold">
         <button
           type="button"
           onClick={() => toggleSort(k)}
@@ -273,36 +273,35 @@ export default function AdminUsersPage() {
   function renderRow(r: UserRow) {
     return (
       <tr key={r.id} className="border-b border-[color:var(--border)] last:border-0">
-        <td className="px-4 py-3">
-          <div className="flex items-center gap-2">
-            <OnlineDot lastSeenAt={r.lastSeenAt} size={8} />
+        <td className="px-3 py-1.5">
+          <div className="flex items-center gap-1.5">
+            <OnlineDot lastSeenAt={r.lastSeenAt} size={7} />
             <span className="font-medium text-text-primary">{r.displayName || r.username || "Unnamed"}</span>
-            <span className="rounded-full bg-[color:var(--pill)] px-2 py-0.5 text-[10px] text-[color:var(--muted)] ring-1 ring-[color:var(--border)]">
-              {r.profileType}
-            </span>
           </div>
-          <div className="text-xs text-[color:var(--muted)]">{r.email || "—"}</div>
+          <div className="font-mono text-[10.5px] text-[color:var(--muted)]">
+            {r.username ? `@${r.username}` : "—"} · {r.id}
+          </div>
         </td>
-        <td className="px-4 py-3 text-[color:var(--muted)]">{formatJoined(r.createdAt)}</td>
-        <td className="px-4 py-3 text-[color:var(--muted)]" title={exactDateTime(r.lastSeenAt)}>
+        <td className="px-3 py-1.5 text-[color:var(--muted)]">{formatJoined(r.createdAt)}</td>
+        <td className="px-3 py-1.5 text-[color:var(--muted)]" title={exactDateTime(r.lastSeenAt)}>
           {timeAgo(r.lastSeenAt)}
         </td>
-        <td className="px-4 py-3 text-[color:var(--muted)]">{r.sessionCount}</td>
-        <td className="px-4 py-3 text-[color:var(--muted)]">{formatDuration(r.totalSecondsOnline)}</td>
-        <td className="px-4 py-3 text-[color:var(--muted)]">
+        <td className="px-3 py-1.5 text-[color:var(--muted)]">{r.sessionCount}</td>
+        <td className="px-3 py-1.5 text-[color:var(--muted)]">{formatDuration(r.totalSecondsOnline)}</td>
+        <td className="px-3 py-1.5 text-[color:var(--muted)]">
           {averageSessionLength(r.totalSecondsOnline, r.sessionCount)}
         </td>
-        <td className="px-4 py-3 text-[color:var(--muted)]">{r.aiCalls}</td>
-        <td className="px-4 py-3 text-[color:var(--muted)]">
+        <td className="px-3 py-1.5 text-[color:var(--muted)]">{r.aiCalls}</td>
+        <td className="px-3 py-1.5 text-[color:var(--muted)]">
           {(r.aiInputTokens + r.aiOutputTokens).toLocaleString()}
         </td>
-        <td className="px-4 py-3">
+        <td className="px-3 py-1.5">
           <button
             type="button"
             onClick={() => void toggleMuseumBeta(r)}
             disabled={togglingId === r.id}
             className={[
-              "inline-flex h-7 items-center rounded-full px-3 text-xs font-semibold transition disabled:opacity-50",
+              "inline-flex h-6 items-center rounded-full px-2.5 text-[11px] font-semibold transition disabled:opacity-50",
               r.museumBetaEnabled
                 ? "bg-[#4FD3EE] text-[#06171d]"
                 : "border border-[color:var(--border)] bg-[color:var(--pill)] text-[color:var(--muted)]",
@@ -316,31 +315,32 @@ export default function AdminUsersPage() {
             {r.museumBetaEnabled ? "Enabled" : r.museumBetaRequestedAt ? "Requested" : "Off"}
           </button>
         </td>
-        <td className="px-4 py-3">
-          <div className="flex items-center gap-1.5">
-            {RIGHTS_TIERS.map((tier) => {
-              const active = r.tier === tier;
-              const s = TIER_STYLE[tier];
-              return (
-                <button
-                  key={tier}
-                  type="button"
-                  disabled={savingTierId === r.id}
-                  onClick={() => void applyTier(r, tier)}
-                  className="rounded-full px-2.5 py-1 text-[11px] font-bold transition disabled:opacity-50"
-                  style={
-                    active
-                      ? { background: s.bg, border: `1px solid ${s.border}`, color: s.fg }
-                      : { background: "transparent", border: "1px solid var(--border)", color: "var(--muted)" }
-                  }
-                >
-                  {tier}
-                </button>
-              );
-            })}
-          </div>
+        <td className="px-3 py-1.5">
+          <span className="rounded-full bg-[color:var(--pill)] px-2 py-0.5 text-[10px] text-[color:var(--muted)] ring-1 ring-[color:var(--border)]">
+            {r.profileType}
+          </span>
+        </td>
+        <td className="px-3 py-1.5 text-[color:var(--muted)]">{r.email || "—"}</td>
+        <td className="px-3 py-1.5">
+          <select
+            value={r.tier}
+            disabled={savingTierId === r.id}
+            onChange={(e) => void applyTier(r, e.target.value as Tier)}
+            className="rounded-lg border px-2 py-1 text-[11px] font-bold disabled:opacity-50"
+            style={{
+              background: TIER_STYLE[r.tier].bg,
+              borderColor: TIER_STYLE[r.tier].border,
+              color: TIER_STYLE[r.tier].fg,
+            }}
+          >
+            {RIGHTS_TIERS.map((tier) => (
+              <option key={tier} value={tier} style={{ background: "var(--surface)", color: "var(--fg)" }}>
+                {tier}
+              </option>
+            ))}
+          </select>
           {r.tier !== "FREE" && (
-            <div className="mt-1 text-[10px] text-[color:var(--muted)]">
+            <div className="mt-0.5 text-[10px] text-[color:var(--muted)]">
               {r.tierExpiresAt ? `Expires ${formatJoined(r.tierExpiresAt)}` : "Lifetime"}
               {r.tierSource ? ` · via ${r.tierSource}` : ""}
             </div>
@@ -397,20 +397,22 @@ export default function AdminUsersPage() {
                 <SortHeader k="aiCalls" label="AI calls" />
                 <SortHeader k="aiTokens" label="AI tokens" />
                 <SortHeader k="museumBeta" label="3D Museum beta" />
-                <th className="px-4 py-3 font-semibold">Tier</th>
+                <th className="px-3 py-2 font-semibold">Type</th>
+                <th className="px-3 py-2 font-semibold">Email</th>
+                <th className="px-3 py-2 font-semibold">Tier</th>
               </tr>
             </thead>
             <tbody>
               {rows.length === 0 ? (
                 <tr>
-                  <td colSpan={10} className="px-4 py-8 text-center text-[color:var(--muted)]">No accounts yet.</td>
+                  <td colSpan={12} className="px-4 py-8 text-center text-[color:var(--muted)]">No accounts yet.</td>
                 </tr>
               ) : (
                 <>
                   {realRows.map(renderRow)}
                   {realRows.length === 0 ? (
                     <tr>
-                      <td colSpan={10} className="px-4 py-6 text-center text-[color:var(--muted)]">No accounts match.</td>
+                      <td colSpan={12} className="px-4 py-6 text-center text-[color:var(--muted)]">No accounts match.</td>
                     </tr>
                   ) : null}
                 </>
