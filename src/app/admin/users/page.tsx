@@ -273,13 +273,13 @@ export default function AdminUsersPage() {
   function renderRow(r: UserRow) {
     return (
       <tr key={r.id} className="border-b border-[color:var(--border)] last:border-0">
-        <td className="px-3 py-1.5">
+        <td className="whitespace-nowrap px-3 py-1.5">
           <div className="flex items-center gap-1.5">
             <OnlineDot lastSeenAt={r.lastSeenAt} size={7} />
             <span className="font-medium text-text-primary">{r.displayName || r.username || "Unnamed"}</span>
           </div>
-          <div className="font-mono text-[10.5px] text-[color:var(--muted)]">
-            {r.username ? `@${r.username}` : "—"} · {r.id}
+          <div className="whitespace-nowrap font-mono text-[10.5px] text-[color:var(--muted)]" title={r.id}>
+            {r.username ? `@${r.username}` : "—"} · {r.id.slice(0, 8)}
           </div>
         </td>
         <td className="px-3 py-1.5 text-[color:var(--muted)]">{formatJoined(r.createdAt)}</td>
