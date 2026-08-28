@@ -2925,6 +2925,42 @@ result before calling it done, the way EK's side-by-side did here.
 
 ## 2. What's LEFT to do (prioritized)
 
+### DONE, LIVE-VERIFIED (2026-08-27/28) — Admin Users table redesign, Account Rights retired
+EK: rows too loose, missing info vs. the old Account Rights panel, the
+FREE/MID/FULL button row wasting space, and afterward: column text all
+left-offset, and asked to retire Account Rights (now redundant) and move
+Users to the top of the sidebar. All in `src/app/admin/users/page.tsx`
+and `src/app/admin/characters/page.tsx`.
+
+- Rows tightened (`px-4 py-3` → `px-3 py-1.5`), added the real
+  `@username · shortId` line under each account name (same convention
+  Account Rights used, id truncated to 8 chars with the full id on
+  hover — the first version wrapped this onto 3 lines, fixed with
+  `whitespace-nowrap`), FREE/MID/FULL collapsed into one color-coded
+  `<select>`, Account Type + Email moved into their own columns.
+- **Real root cause found for an unnecessary horizontal scroll**: the
+  page wraps everything in a fixed `max-w-6xl` (1152px) container, but
+  the redesigned table needs 1241px — so it scrolled inside a container
+  that was artificially narrower than the admin iframe's actual
+  available width (1628px, ~500px sitting unused). First "fix" attempt
+  (a sticky right-hand Tier column) was the wrong diagnosis and was
+  reverted once the real cause was found; widened the wrapper to
+  `max-w-[1400px]` instead so the whole table fits with zero scroll,
+  confirmed live in the actual embedded admin-sidebar view (not just the
+  standalone page, which has more room and hid the bug).
+- All data columns centered except Account (stays left — has the
+  online-dot + name flex row).
+- **Account Rights sidebar panel deleted entirely** (`AccountRightsPanel`/
+  `ProfileRow`/`TierProfile`, ~275 lines, not just hidden) — Users now
+  has everything it had (tier grants via the real service-role route,
+  personal/business badge, search) plus activity/AI-usage data it never
+  did. Users moved to the top of the sidebar as the primary per-account
+  screen.
+- **Live-verified in the actual embedded admin view** (not just the
+  standalone page) via the connected Chrome session: table fits with no
+  scroll, columns centered, Account Rights section gone from the
+  sidebar, Users listed first.
+
 ### DONE (2026-08-27 overnight, same audit continued) — 3 gaps in Gallery/museum sync (item notes, view-count dedup, invite tokens never read back)
 
 **Migration confirmed run by EK 2026-08-27 — fully live.** Not yet
