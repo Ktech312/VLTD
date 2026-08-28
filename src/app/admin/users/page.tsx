@@ -213,10 +213,10 @@ export default function AdminUsersPage() {
   const realRows = useMemo(() => queriedRows.filter((r) => !SEED_PROFILE_IDS.has(r.id)), [queriedRows]);
   const seedRows = useMemo(() => queriedRows.filter((r) => SEED_PROFILE_IDS.has(r.id)), [queriedRows]);
 
-  function SortHeader({ k, label }: { k: SortKey; label: string }) {
+  function SortHeader({ k, label, center = true }: { k: SortKey; label: string; center?: boolean }) {
     const active = sortKey === k;
     return (
-      <th className="px-3 py-2 font-semibold">
+      <th className={`px-3 py-2 font-semibold ${center ? "text-center" : ""}`}>
         <button
           type="button"
           onClick={() => toggleSort(k)}
@@ -282,20 +282,20 @@ export default function AdminUsersPage() {
             {r.username ? `@${r.username}` : "—"} · {r.id.slice(0, 8)}
           </div>
         </td>
-        <td className="px-3 py-1.5 text-[color:var(--muted)]">{formatJoined(r.createdAt)}</td>
-        <td className="px-3 py-1.5 text-[color:var(--muted)]" title={exactDateTime(r.lastSeenAt)}>
+        <td className="px-3 py-1.5 text-center text-[color:var(--muted)]">{formatJoined(r.createdAt)}</td>
+        <td className="px-3 py-1.5 text-center text-[color:var(--muted)]" title={exactDateTime(r.lastSeenAt)}>
           {timeAgo(r.lastSeenAt)}
         </td>
-        <td className="px-3 py-1.5 text-[color:var(--muted)]">{r.sessionCount}</td>
-        <td className="px-3 py-1.5 text-[color:var(--muted)]">{formatDuration(r.totalSecondsOnline)}</td>
-        <td className="px-3 py-1.5 text-[color:var(--muted)]">
+        <td className="px-3 py-1.5 text-center text-[color:var(--muted)]">{r.sessionCount}</td>
+        <td className="px-3 py-1.5 text-center text-[color:var(--muted)]">{formatDuration(r.totalSecondsOnline)}</td>
+        <td className="px-3 py-1.5 text-center text-[color:var(--muted)]">
           {averageSessionLength(r.totalSecondsOnline, r.sessionCount)}
         </td>
-        <td className="px-3 py-1.5 text-[color:var(--muted)]">{r.aiCalls}</td>
-        <td className="px-3 py-1.5 text-[color:var(--muted)]">
+        <td className="px-3 py-1.5 text-center text-[color:var(--muted)]">{r.aiCalls}</td>
+        <td className="px-3 py-1.5 text-center text-[color:var(--muted)]">
           {(r.aiInputTokens + r.aiOutputTokens).toLocaleString()}
         </td>
-        <td className="px-3 py-1.5">
+        <td className="px-3 py-1.5 text-center">
           <button
             type="button"
             onClick={() => void toggleMuseumBeta(r)}
@@ -315,15 +315,15 @@ export default function AdminUsersPage() {
             {r.museumBetaEnabled ? "Enabled" : r.museumBetaRequestedAt ? "Requested" : "Off"}
           </button>
         </td>
-        <td className="px-3 py-1.5">
+        <td className="px-3 py-1.5 text-center">
           <span className="rounded-full bg-[color:var(--pill)] px-2 py-0.5 text-[10px] text-[color:var(--muted)] ring-1 ring-[color:var(--border)]">
             {r.profileType}
           </span>
         </td>
-        <td className="max-w-[180px] truncate px-3 py-1.5 text-[color:var(--muted)]" title={r.email || undefined}>
+        <td className="max-w-[180px] truncate px-3 py-1.5 text-center text-[color:var(--muted)]" title={r.email || undefined}>
           {r.email || "—"}
         </td>
-        <td className="px-3 py-1.5">
+        <td className="px-3 py-1.5 text-center">
           <select
             value={r.tier}
             disabled={savingTierId === r.id}
@@ -390,7 +390,7 @@ export default function AdminUsersPage() {
           <table className="w-full text-left text-sm">
             <thead>
               <tr className="border-b border-[color:var(--border)] bg-[rgba(255,255,255,0.02)] text-[color:var(--muted2)]">
-                <SortHeader k="account" label="Account" />
+                <SortHeader k="account" label="Account" center={false} />
                 <SortHeader k="joined" label="Joined" />
                 <SortHeader k="lastActive" label="Last active" />
                 <SortHeader k="sessions" label="Sessions" />
@@ -399,9 +399,9 @@ export default function AdminUsersPage() {
                 <SortHeader k="aiCalls" label="AI calls" />
                 <SortHeader k="aiTokens" label="AI tokens" />
                 <SortHeader k="museumBeta" label="3D Museum beta" />
-                <th className="px-3 py-2 font-semibold">Type</th>
-                <th className="px-3 py-2 font-semibold">Email</th>
-                <th className="px-3 py-2 font-semibold">Tier</th>
+                <th className="px-3 py-2 text-center font-semibold">Type</th>
+                <th className="px-3 py-2 text-center font-semibold">Email</th>
+                <th className="px-3 py-2 text-center font-semibold">Tier</th>
               </tr>
             </thead>
             <tbody>

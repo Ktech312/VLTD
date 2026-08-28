@@ -193,283 +193,6 @@ function NotAuthorized({ userEmail, needsMfa }: { userEmail: string; needsMfa?: 
   );
 }
 
-// ── Account Rights Panel — per-account tier control ───────────
-type TierProfile = {
-  id: string;
-  user_id: string | null;
-  username: string;
-  display_name: string;
-  profile_type: string | null;
-  tier: string | null;
-  tier_expires_at: string | null;
-  tier_source: string | null;
-  created_at: string | null;
-  last_seen_at?: string | null;
-  session_started_at?: string | null;
-  total_seconds_online?: number | null;
-  session_count?: number | null;
-};
-
-const RIGHTS_TIERS: Tier[] = ["FREE", "MID", "FULL"];
-const TIER_STYLE: Record<Tier, { bg: string; border: string; fg: string }> = {
-  FREE: { bg: "rgba(255,255,255,0.06)", border: "rgba(255,255,255,0.18)", fg: "rgba(255,255,255,0.7)" },
-  MID: { bg: "rgba(96,165,250,0.14)", border: "rgba(96,165,250,0.45)", fg: "#93c5fd" },
-  FULL: { bg: "rgba(203,208,213,0.16)", border: "rgba(203,208,213,0.55)", fg: "#C8CDD2" },
-};
-
-function ProfileRow({
-  p,
-  savingId,
-  onApplyTier,
-}: {
-  p: TierProfile;
-  savingId: string;
-  onApplyTier: (p: TierProfile, tier: Tier) => void;
-}) {
-  const current: Tier = p.tier === "MID" || p.tier === "FULL" ? p.tier : "FREE";
-  return (
-    <div className="flex flex-wrap items-center gap-3 rounded-2xl bg-white/[0.04] px-4 py-3 ring-1 ring-white/10">
-      <div className="min-w-0 flex-1">
-        <div className="flex items-center gap-2">
-          <span className="truncate text-sm font-semibold text-white">{p.display_name || p.username}</span>
-          <span className="shrink-0 rounded-full bg-white/5 px-2 py-0.5 text-[10px] text-white/40 ring-1 ring-white/10">
-            {p.profile_type ?? "personal"}
-          </span>
-        </div>
-        <div className="mt-0.5 truncate text-[11px] text-white/30">@{p.username} · {p.id}</div>
-        <div className="mt-1 flex items-center gap-2 text-[10px] text-white/40">
-          <OnlineDot lastSeenAt={p.last_seen_at} label size={8} />
-          {isOnline(p.last_seen_at) && p.session_started_at ? (
-            <span>· on for {sessionLength(p.session_started_at, p.last_seen_at)}</span>
-          ) : null}
-        </div>
-        <div className="mt-0.5 flex flex-wrap gap-x-3 text-[10px] text-white/30">
-          <span>Last active {exactDateTime(p.last_seen_at)}</span>
-          <span>Avg {averageSessionLength(p.total_seconds_online, p.session_count)}/session</span>
-          <span>Clocked {formatDuration(p.total_seconds_online ?? 0)}</span>
-        </div>
-        {current !== "FREE" ? (
-          <div className="mt-0.5 text-[10px] text-white/40">
-            {p.tier_expires_at
-              ? `Expires ${new Date(p.tier_expires_at).toLocaleDateString()}`
-              : "Lifetime"}
-            {p.tier_source ? ` · via ${p.tier_source}` : ""}
-          </div>
-        ) : null}
-      </div>
-      <div className="flex shrink-0 items-center gap-1.5">
-        {RIGHTS_TIERS.map((tier) => {
-          const active = current === tier;
-          const s = TIER_STYLE[tier];
-          return (
-            <button
-              key={tier}
-              type="button"
-              disabled={savingId === p.id}
-              onClick={() => onApplyTier(p, tier)}
-              className="rounded-full px-3 py-1.5 text-xs font-bold transition disabled:opacity-50"
-              style={
-                active
-                  ? { background: s.bg, border: `1px solid ${s.border}`, color: s.fg }
-                  : { background: "transparent", border: "1px solid rgba(255,255,255,0.12)", color: "rgba(255,255,255,0.5)" }
-              }
-            >
-              {tier}
-            </button>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
-function AccountRightsPanel() {
-  const [profiles, setProfiles] = useState<TierProfile[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [query, setQuery] = useState("");
-  const [status, setStatus] = useState("");
-  const [savingId, setSavingId] = useState("");
-  const [needsMigration, setNeedsMigration] = useState(false);
-  const [showFake, setShowFake] = useState(false);
-
-  const load = useCallback(async () => {
-    const sb = getSupabaseBrowserClient();
-    if (!sb) { setStatus("Supabase is not configured."); setLoading(false); return; }
-    setLoading(true);
-    const BASE_COLS = "id,user_id,username,display_name,profile_type,tier,tier_expires_at,tier_source,created_at";
-    const PRESENCE_COLS = "last_seen_at,session_started_at";
-    const TOTALS_COLS = "total_seconds_online,session_count";
-    let data: TierProfile[] | null = null;
-    let error: { message: string } | null = null;
-    {
-      const res = await sb
-        .from("profiles")
-        .select(`${BASE_COLS},${PRESENCE_COLS},${TOTALS_COLS}`)
-        .order("created_at", { ascending: true });
-      data = (res.data ?? null) as TierProfile[] | null;
-      error = res.error;
-    }
-    // Cumulative-totals columns may not be migrated yet — fall back gracefully.
-    if (error && /total_seconds_online|session_count/i.test(error.message)) {
-      const res = await sb
-        .from("profiles")
-        .select(`${BASE_COLS},${PRESENCE_COLS}`)
-        .order("created_at", { ascending: true });
-      data = (res.data ?? null) as TierProfile[] | null;
-      error = res.error;
-    }
-    // Presence columns may not be migrated yet either — fall back gracefully.
-    if (error && /last_seen_at|session_started_at/i.test(error.message)) {
-      const res = await sb.from("profiles").select(BASE_COLS).order("created_at", { ascending: true });
-      data = (res.data ?? null) as TierProfile[] | null;
-      error = res.error;
-    }
-    if (error) {
-      if (/tier/i.test(error.message) && /column|does not exist|schema cache/i.test(error.message)) {
-        setNeedsMigration(true);
-      } else {
-        setStatus(error.message);
-      }
-      setLoading(false);
-      return;
-    }
-    setProfiles((data ?? []) as TierProfile[]);
-    setNeedsMigration(false);
-    setLoading(false);
-  }, []);
-
-  useEffect(() => { void load(); }, [load]);
-
-  async function applyTier(p: TierProfile, tier: Tier) {
-    const sb = getSupabaseBrowserClient();
-    if (!sb) return;
-    setSavingId(p.id);
-    // Admin grants are lifetime (no expiry) and sourced as 'admin'.
-    const patch = { tier, tier_expires_at: null as string | null, tier_source: "admin" };
-    const { error } = await sb.from("profiles").update(patch).eq("id", p.id);
-    if (error) {
-      setStatus(`Failed: ${error.message}`);
-      setSavingId("");
-      return;
-    }
-    setProfiles((prev) => prev.map((x) => (x.id === p.id ? { ...x, ...patch } : x)));
-    // If this profile is active on THIS device, apply immediately.
-    if (getStoredActiveProfileId() === p.id) setTierSafe(tier);
-    setStatus(`${p.display_name || p.username} → ${tier} (lifetime)`);
-    setSavingId("");
-  }
-
-  const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    if (!q) return profiles;
-    return profiles.filter(
-      (p) =>
-        p.username?.toLowerCase().includes(q) ||
-        p.display_name?.toLowerCase().includes(q) ||
-        p.id.toLowerCase().includes(q) ||
-        (p.user_id ?? "").toLowerCase().includes(q)
-    );
-  }, [profiles, query]);
-
-  const realFiltered = useMemo(() => filtered.filter((p) => !SEED_PROFILE_IDS.has(p.id)), [filtered]);
-  const fakeFiltered = useMemo(() => filtered.filter((p) => SEED_PROFILE_IDS.has(p.id)), [filtered]);
-  const realOnlineCount = useMemo(
-    () => profiles.filter((p) => !SEED_PROFILE_IDS.has(p.id) && isOnline(p.last_seen_at)).length,
-    [profiles]
-  );
-
-  return (
-    <div className="flex h-full flex-col p-5">
-      <div className="shrink-0">
-        <div className="flex items-center gap-3">
-          <h2 className="text-lg font-semibold">Account Rights</h2>
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-white/5 px-2.5 py-0.5 text-[11px] font-semibold text-white/60 ring-1 ring-white/10">
-            <span className="inline-block h-2 w-2 rounded-full" style={{ background: "#4ade80", boxShadow: "0 0 8px rgba(74,222,128,0.7)" }} />
-            {realOnlineCount} online now
-          </span>
-        </div>
-        <p className="mt-1 text-xs text-white/40">
-          Grant or revoke plan access per account. FULL lifts the item limit and unlocks paid features.
-          Changes sync to the user on next app load (instantly if it&apos;s the profile active on this device).
-        </p>
-      </div>
-
-      {needsMigration ? (
-        <div className="mt-4 rounded-xl bg-amber-500/10 px-4 py-3 text-xs text-amber-200 ring-1 ring-amber-400/25">
-          The <code>profiles.tier</code> column isn&apos;t set up yet. Run the migration
-          <code className="mx-1">supabase/migrations/20260705_profiles_tier.sql</code>
-          in your Supabase SQL editor, then Refresh.
-        </div>
-      ) : null}
-
-      <div className="mt-4 flex shrink-0 items-center gap-2">
-        <input
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search name, username, or ID…"
-          className="h-9 w-full rounded-xl bg-white/5 px-3 text-xs text-white ring-1 ring-white/10 focus:outline-none placeholder:text-white/30"
-        />
-        <button
-          onClick={() => void load()}
-          className="h-9 shrink-0 rounded-xl bg-white/5 px-3 text-xs font-semibold ring-1 ring-white/10 transition hover:bg-white/10"
-        >
-          Refresh
-        </button>
-      </div>
-
-      {status ? <div className="mt-2 shrink-0 text-[11px] text-white/50">{status}</div> : null}
-
-      <div className="mt-3 min-h-0 flex-1 overflow-y-auto pr-1">
-        {loading ? (
-          <div className="text-xs text-white/30">Loading accounts…</div>
-        ) : filtered.length === 0 ? (
-          <div className="text-xs text-white/30">No accounts found.</div>
-        ) : (
-          <>
-            <div className="grid gap-2">
-              {realFiltered.map((p) => (
-                <ProfileRow key={p.id} p={p} savingId={savingId} onApplyTier={(pr, t) => void applyTier(pr, t)} />
-              ))}
-              {realFiltered.length === 0 ? (
-                <div className="text-xs text-white/30">No real accounts match.</div>
-              ) : null}
-            </div>
-
-            {fakeFiltered.length > 0 ? (
-              <div className="mt-3 border-t border-white/8 pt-3">
-                <button
-                  type="button"
-                  onClick={() => setShowFake((v) => !v)}
-                  className="flex w-full items-center justify-between rounded-xl px-1 py-1.5 text-left transition hover:bg-white/[0.03]"
-                >
-                  <span className="text-[11px] font-semibold uppercase tracking-wider text-white/40">
-                    Seed / test accounts ({fakeFiltered.length})
-                  </span>
-                  <svg
-                    width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"
-                    strokeLinecap="round" strokeLinejoin="round"
-                    className={`text-white/30 transition-transform ${showFake ? "rotate-180" : ""}`}
-                    aria-hidden="true"
-                  >
-                    <polyline points="6 9 12 15 18 9" />
-                  </svg>
-                </button>
-                {showFake ? (
-                  <div className="mt-2 grid gap-2">
-                    {fakeFiltered.map((p) => (
-                      <ProfileRow key={p.id} p={p} savingId={savingId} onApplyTier={(pr, t) => void applyTier(pr, t)} />
-                    ))}
-                  </div>
-                ) : null}
-              </div>
-            ) : null}
-          </>
-        )}
-      </div>
-    </div>
-  );
-}
-
 // ── Coupons Panel — generate & manage redeemable access codes ─
 function CouponsPanel({ adminEmail }: { adminEmail: string }) {
   const [coupons, setCoupons] = useState<AccessCoupon[]>([]);
@@ -1964,7 +1687,7 @@ function CharacterDetail({ char }: { char: SeedCharacter }) {
 }
 
 // ── Main Page ─────────────────────────────────────────────────
-type AdminSection = "characters" | "account-rights" | "coupons" | "admins" | "themes" | "waitlist" | "bugs" | "scan-limits" | "users" | "events" | "referrals" | "spotlights";
+type AdminSection = "characters" | "coupons" | "admins" | "themes" | "waitlist" | "bugs" | "scan-limits" | "users" | "events" | "referrals" | "spotlights";
 
 export default function AdminCharactersPage() {
   const [authState, setAuthState] = useState<"loading" | "signed-out" | "unauthorized" | "authorized">("loading");
@@ -1976,7 +1699,6 @@ export default function AdminCharactersPage() {
   const [activeSection, setActiveSection] = useState<AdminSection>("characters");
   const [openSections, setOpenSections] = useState<Record<AdminSection, boolean>>({
     characters: false,
-    "account-rights": false,
     coupons: false,
     admins: false,
     themes: false,
@@ -2050,6 +1772,21 @@ export default function AdminCharactersPage() {
         </div>
 
         <div className="flex-1 overflow-y-auto">
+          {/* Users — moved to the top, EK's ask (2026-08-27): the account-
+              rights work (tier grants, 3D Museum beta) all lives here now
+              that Account Rights itself has been retired. */}
+          <SidebarSection
+            title="Users"
+            icon="users"
+            open={openSections.users}
+            active={activeSection === "users"}
+            onToggle={() => selectSection("users")}
+          >
+            <p className="text-[11px] leading-4 text-white/40">
+              Per-account activity, AI usage, tier, and 3D Museum beta access. Opens on the right.
+            </p>
+          </SidebarSection>
+
           {/* Characters */}
           <SidebarSection
             title="Characters"
@@ -2078,19 +1815,6 @@ export default function AdminCharactersPage() {
                 <div className="text-center text-xs text-white/30 py-6">No characters found</div>
               )}
             </div>
-          </SidebarSection>
-
-          {/* Account Rights */}
-          <SidebarSection
-            title="Account Rights"
-            icon="key"
-            open={openSections["account-rights"]}
-            active={activeSection === "account-rights"}
-            onToggle={() => selectSection("account-rights")}
-          >
-            <p className="text-[11px] leading-4 text-white/40">
-              Grant or revoke full access per account. Controls open on the right.
-            </p>
           </SidebarSection>
 
           {/* Coupons */}
@@ -2173,21 +1897,6 @@ export default function AdminCharactersPage() {
             </p>
           </SidebarSection>
 
-          {/* Users — EK's ask: couldn't find where to grant 3D Museum
-              beta access; that toggle lives on /admin/users, which had
-              no way in from this shell at all. */}
-          <SidebarSection
-            title="Users"
-            icon="users"
-            open={openSections.users}
-            active={activeSection === "users"}
-            onToggle={() => selectSection("users")}
-          >
-            <p className="text-[11px] leading-4 text-white/40">
-              Per-account activity, AI usage, and 3D Museum beta access. Opens on the right.
-            </p>
-          </SidebarSection>
-
           {/* Events — EK: couldn't find this tab at all, it lived only at
               the standalone /admin/events URL with no way in from here. */}
           <SidebarSection
@@ -2255,8 +1964,6 @@ export default function AdminCharactersPage() {
               </div>
             </div>
           )
-        ) : activeSection === "account-rights" ? (
-          <AccountRightsPanel />
         ) : activeSection === "coupons" ? (
           <CouponsPanel adminEmail={userEmail} />
         ) : activeSection === "admins" ? (
