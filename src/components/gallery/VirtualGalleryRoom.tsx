@@ -1239,7 +1239,8 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
     if (vaultItems.length > 0) {
       setItems(vaultItems);
       setSelectedIds(fillSlots(vaultItems.slice(0, 12).map((item) => item.id)));
-      setSelectedItemId(vaultItems[0]?.id ?? "");
+      // No auto-selected/held item on load — see the draft-restore block's
+      // own comment further down for the full reasoning.
     }
 
     // EK's ask: "why do i not have access to my real items?" — `loadItems()`
@@ -1265,7 +1266,6 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
       // effect already does above when the cache happens to be warm.
       if (vaultItems.length === 0 && !draftAppliedSelectedIds) {
         setSelectedIds(fillSlots(syncedItems.slice(0, 12).map((item) => item.id)));
-        setSelectedItemId(syncedItems[0]?.id ?? "");
       }
     });
 
@@ -1276,7 +1276,14 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
         draftAppliedSelectedIds = true;
         const ids = draft.selectedIds.filter((id): id is string => typeof id === "string");
         setSelectedIds(fillSlots(ids));
-        setSelectedItemId(String(ids.find(Boolean) ?? ""));
+        // EK's ask: walking into the room fresh should show nothing
+        // selected/held — the description panel and bottom title bar are
+        // gated on `selectedItemId` alone (`heldVaultItem`, further down),
+        // not on the 3D pickup animation, so auto-selecting the first
+        // restored item here made every fresh page load look like an item
+        // was already lifted off the shelf. `selectedIds` (which items sit
+        // on which shelves) still restores normally — only the "something
+        // is currently selected" state no longer defaults itself in.
       }
       if (
         draft.roomStyle === "vault" ||
@@ -1532,7 +1539,7 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
     cameraStateRef.current = null; // entering a different room — start at a fresh spawn, not wherever the last room's camera happened to be
     setGalleryId("scratch");
     setSelectedIds(fillSlots(ids));
-    setSelectedItemId(ids[0] ?? "");
+    setSelectedItemId(""); // no auto-selected/held item on a fresh room entry — see handleSourceChange's own comment
     setRoomLayout(ids.length > 16 ? "salon" : "storefront");
     setViewMode("room");
   }
@@ -3391,7 +3398,10 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
     const validIds = ids.filter((id) => items.some((item) => item.id === id));
     if (validIds.length > 0) {
       setSelectedIds(fillSlots(validIds));
-      setSelectedItemId(validIds[0] ?? "");
+      // Not auto-selecting the first item here anymore — see
+      // handleSourceChange's own comment: loading a different exhibition
+      // is "entering the room" too, and should land with nothing selected/
+      // held, not the description panel already open on item #1.
       setSourceStatus(
         validIds.length < ids.length
           ? { ok: true, message: `Loaded ${validIds.length} of ${ids.length} items (some no longer match your vault).` }
@@ -3439,7 +3449,7 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
     // with "" gaps in their exact places, same as the local-draft restore
     // above does for the same reason.
     setSelectedIds(fillSlots(hall.selectedIds));
-    setSelectedItemId(hall.selectedIds.find(Boolean) ?? "");
+    // Same reasoning as applyGallery just above — no auto-selected item on load.
     setSourceStatus({ ok: true, message: `Loaded "${hall.title}".` });
   }
 
