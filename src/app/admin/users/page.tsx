@@ -320,13 +320,15 @@ export default function AdminUsersPage() {
             {r.profileType}
           </span>
         </td>
-        <td className="px-3 py-1.5 text-[color:var(--muted)]">{r.email || "—"}</td>
+        <td className="max-w-[180px] truncate px-3 py-1.5 text-[color:var(--muted)]" title={r.email || undefined}>
+          {r.email || "—"}
+        </td>
         <td className="px-3 py-1.5">
           <select
             value={r.tier}
             disabled={savingTierId === r.id}
             onChange={(e) => void applyTier(r, e.target.value as Tier)}
-            className="rounded-lg border px-2 py-1 text-[11px] font-bold disabled:opacity-50"
+            className="w-[68px] rounded-md border px-1 py-0.5 text-[11px] font-bold disabled:opacity-50"
             style={{
               background: TIER_STYLE[r.tier].bg,
               borderColor: TIER_STYLE[r.tier].border,
@@ -352,7 +354,7 @@ export default function AdminUsersPage() {
 
   return (
     <main className="px-4 py-8 text-[color:var(--fg)] sm:px-6 lg:px-8">
-      <div className="mx-auto max-w-6xl">
+      <div className="mx-auto max-w-[1400px]">
         <div className="flex items-end justify-between gap-4">
           <div>
             <h1 className="text-3xl font-black tracking-[-0.03em]">Users</h1>
