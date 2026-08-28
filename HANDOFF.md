@@ -248,6 +248,121 @@ who owns a screen.** EK is aware of this.
 
 ---
 
+## ⚠⚠⚠ 2026-08-27/28 overnight — CORRECTION: the old "isolated branch"
+architecture description further down this file is STALE and was
+actively misleading. Read this before touching anything museum-related,
+especially before trusting any "not merged to main" claim below.
+
+**What was wrong:** the `⚠ CURRENT ARCHITECTURE` section later in this
+file says the museum work "lives on branch `claude/museum-map-doorways`,
+pushed to GitHub, NOT merged to main" and describes a dedicated worktree
+at `C:\Users\EK\VLTD-museum-doorways` as the place to do all museum work,
+separate from the live site. **That branch WAS merged into `main` back on
+2026-08-23** (commit `355373a`), and EK has been actively working on this
+feature LIVE on `main` (under a "3D Museum beta" toggle) every day since —
+including committing fixes directly (`c813ce5`). I repeated the stale
+claim to EK without checking current git state first, told them a push
+"wouldn't go live" when it already was live, and it took EK saying "this
+makes no sense, I've been working on the LIVE site for two days" before I
+actually checked. **The `claude/museum-map-doorways` branch has since been
+deleted** (both on GitHub and locally) — it was 4+ days stale (main's copy
+of `VirtualGalleryRoom.tsx` had diverged by ~450 lines) and everything it
+had was already merged in.
+
+**Current reality, going forward:** `src/components/gallery/
+VirtualGalleryRoom.tsx` and `src/app/museum/virtual-room/` are live,
+shipped code on `main`, deployed automatically by Vercel on every push,
+same as everything else in this repo — **not** a separate feature branch
+anyone needs to merge later. There is no "hidden until merged" safety net
+for this file anymore. Before editing it, always `git fetch origin main`
+and confirm you're building on the actual current tip — EK (and possibly
+other sessions) may have pushed since you last looked; this worktree got
+caught 4 days behind exactly once already, don't repeat it.
+
+**This worktree** (`C:\Users\EK\VLTD-museum-doorways`) is still a fine,
+low-risk place to do museum work — its own `node_modules`/dev port means
+another session switching the SHARED `C:\Users\EK\VLTD` checkout to a
+different branch mid-work still can't yank this one out from under you
+(the original reason it was created). It's now checked out to a branch
+called `museum-live-fixes`, tracking `origin/main` directly, rebased
+forward each time main moves — there's no more "isolated feature branch"
+to speak of, just a stable local copy. Push straight to `main` from here
+once `tsc`/`eslint`/`build` are clean, same as any other session would.
+
+## ✅ 2026-08-27/28 overnight — two real bugs from live testing, both
+fixed and pushed to `main` (`f35dfeb`, `f451f07`), Vercel-deployed and
+EK-confirmed the deploy itself succeeded (checked the actual Vercel
+dashboard, not assumed).
+
+**1. Camera didn't reset when actually re-entering the room.** EK: "that
+[persistence] was meant for when I arrange shelves or add an item, not
+every time I enter the room... I should be standing in front of the
+doorway." `cameraStateRef` (a plain in-memory ref) correctly survives an
+in-session arrange/organize action (re-runs the mount effect without ever
+leaving room view — wanted, kept). It was never reset on the actual
+"return to the room" actions: switching the Source/Hall dropdown
+(`applyGallery`/`applyHall`, now unified under `handleSourceChange`), the
+toolbar's "Back to Room" button, or the sidebar's Room/Map toggle. Added a
+shared `enterRoomFresh()` (nulls `cameraStateRef`, clears
+`selectedItemId`, sets room view) and wired it into all of the above —
+`openUniverseRoom`/`openMainHall` already did this correctly and were the
+reference pattern.
+
+**2. The REAL bug EK was actually seeing — not the camera at all.**
+After the camera fix, EK sent a screenshot showing the room still looked
+"stuck" — a description panel open, "Batman" shown, on what looked like a
+fresh page load straight from the URL (`https://vltd.vercel.app/museum/
+virtual-room`), which never even goes through `enterRoomFresh` or any of
+the click-triggered paths above. Root cause: the description panel + the
+bottom title bar (`heldVaultItem`) render off `selectedItemId` being
+truthy alone (`viewMode === "room" && selectedItemId && heldVaultItem`) —
+there's no check that the item was ever actually picked up in 3D
+(`heldItem`, the mesh-lift animation, is a completely separate piece of
+state). THREE separate places auto-set `selectedItemId` to the first
+item any time items load: the synchronous local-cache read, the
+Supabase-sync fallback, and the saved-draft restore (all inside the big
+mount `useEffect`) — so a genuinely fresh page load always looked like an
+item was already lifted off the shelf and being inspected, because
+technically one *was* "selected," just never picked up. Removed all three
+auto-selects, and for consistency did the same in `applyGallery`/
+`applyHall`/`openUniverseRoom` (switching exhibitions is "entering the
+room" too, same principle). `selectedIds` — which items sit on which
+physical shelf slots — still restores normally everywhere; only the
+"something is currently selected/held" state no longer defaults itself
+in. **Lesson for next time:** when a screenshot shows something that
+looks stuck, check what actually GATES that UI before assuming the fix
+from the last similar bug (camera) covers it — this was a same-looking
+symptom with a completely different, unrelated cause.
+
+**3. Hero (spotlight layout) reserves its own row on side walls it
+occupies**, fixing a regular grid item landing close enough in depth to
+visually overlap Hero's much larger frame — confirmed via the actual
+placement math (a regular slot was landing 0.4 units from Hero's own
+position, well inside Hero's ~0.7+ half-width). Back wall didn't need
+this — Hero's back-wall x=0 mathematically never lands on a real column.
+
+**4. WASD/arrow movement is now real per-frame held-key movement**
+(direct velocity, no easing — matches bingebrowse.net's own
+`updateMovement`) instead of one fixed-size nudge per keydown event
+relying entirely on the OS's own key-repeat timing, which is why it never
+felt like walking. Speed converted through this room's own verified
+~0.49m/unit scale (the entrance-door cross-check documented in
+eyeHeight's own history further below) rather than copying bingebrowse's
+raw 1.25 m/s number, which would have walked at roughly half their real
+pace here. Shift-crouch (bingebrowse eases eye height down while held)
+was intentionally NOT built — it's flagged in the same research section
+as a separate, optional nice-to-have, not part of what was asked.
+
+`tsc --noEmit` / `eslint` (0 errors, same pre-existing warnings) /
+`npm run build` all clean on every fix above, verified against the
+actual current `main`, not a stale branch. **Not visually verified by
+either of us in a live browser session** — EK's last screenshot was
+BEFORE the auto-select fix (#2), which is the one most likely to matter
+visually. Next session: confirm with EK whether the room now genuinely
+looks like a fresh, empty-handed entrance on a real page load.
+
+---
+
 ## ✅ 2026-08-24, later same day — Room Builder rooms ("Halls") now save to
 the account for real, instead of one shared local-storage slot.
 
