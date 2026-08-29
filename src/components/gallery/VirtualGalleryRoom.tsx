@@ -863,20 +863,6 @@ function distributeAcrossWalls(
   function hasRoom(wall: "back" | "left" | "right"): boolean {
     return nextValidSlot(wall) < caps[wall];
   }
-  // Overflow (allAtCap) fallback needs its own bounded slot list per wall —
-  // reusing wallSlot/nextValidSlot here let the slot index climb past
-  // caps[wall] forever (nextValidSlot only skips forward, never wraps),
-  // which sent wallGridPosition's depth calc past the wall's real geometry
-  // and produced items floating past the wall (EK: "these two ... used to
-  // be on the back wall just hanging there").
-  const validSlots: Record<"back" | "left" | "right", number[]> = { back: [], left: [], right: [] };
-  (["back", "left", "right"] as const).forEach((w) => {
-    const forbidden = excludeRow[w];
-    for (let s = 0; s < caps[w]; s++) {
-      if (forbidden === undefined || rowForWallSlot(w, s) !== forbidden) validSlots[w].push(s);
-    }
-  });
-  const overflowIndex: Record<"back" | "left" | "right", number> = { back: 0, left: 0, right: 0 };
   const positions: RoomItemPosition[] = [];
   let cycleIndex = 0;
   // `count` is always MAX_ROOM_ITEMS (or that minus the vault-only front
@@ -892,18 +878,12 @@ function distributeAcrossWalls(
     let wall = WALL_CYCLE[cycleIndex % WALL_CYCLE.length];
     let skipped = 0;
     const allAtCap = (["back", "left", "right"] as const).every((w) => !hasRoom(w));
-    if (allAtCap) {
-      const list = validSlots[wall];
-      const slot = list[overflowIndex[wall] % list.length];
-      overflowIndex[wall]++;
-      positions.push(wallGridPosition(wall, slot, config));
-      cycleIndex++;
-      continue;
-    }
-    while (!hasRoom(wall) && skipped < WALL_CYCLE.length) {
-      cycleIndex++;
-      wall = WALL_CYCLE[cycleIndex % WALL_CYCLE.length];
-      skipped++;
+    if (!allAtCap) {
+      while (!hasRoom(wall) && skipped < WALL_CYCLE.length) {
+        cycleIndex++;
+        wall = WALL_CYCLE[cycleIndex % WALL_CYCLE.length];
+        skipped++;
+      }
     }
     const slot = nextValidSlot(wall);
     wallSlot[wall] = slot + 1;
