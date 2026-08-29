@@ -158,8 +158,17 @@ def add_wall_panels(style, mats):
 
     # Architectural trim and recessed wall panels create real depth instead of flat planes.
     panel = mats.get("panel_seam", trim)
-    for z in [-11.95, 5.72]:
-        cube(f"baseboard_back_{z}", (0, 0.22, z), (20.7, 0.26, 0.14), trim, 0.025)
+    cube("baseboard_back", (0, 0.22, -11.95), (20.7, 0.26, 0.14), trim, 0.025)
+    # EK's ask (2026-08-28): "wall trim is going in front of the door."
+    # This used to loop the SAME unbroken 20.7-wide baseboard over both the
+    # back wall AND the front/door wall — but only the front wall has a real
+    # doorway opening, so that strip ran straight across the passage with no
+    # gap at all. Split it around the door instead, matching the fallback
+    # shell's own frontBaseboardLeft/frontBaseboardRight
+    # (VirtualGalleryRoom.tsx) exactly (same 8.6 width, same +-6.13 center) so
+    # the baked model and the shell finally agree here.
+    cube("baseboard_front_left", (-6.13, 0.22, 5.72), (8.6, 0.26, 0.14), trim, 0.025)
+    cube("baseboard_front_right", (6.13, 0.22, 5.72), (8.6, 0.26, 0.14), trim, 0.025)
     cube("baseboard_left", (-10.36, 0.22, -3.05), (0.14, 0.26, 23.4), trim, 0.025)
     cube("baseboard_right", (10.36, 0.22, -3.05), (0.14, 0.26, 23.4), trim, 0.025)
 

@@ -157,9 +157,9 @@ const MAX_ROOM_ITEMS = BACK_WALL_CAPACITY + SIDE_WALL_CAPACITY * 2 + 8;
 // "blue" has no entry — it's the hand-coded shell shown permanently, with
 // no GLB to load at all. See the RoomStyle type above for what that means.
 const ROOM_MODEL_URLS: Partial<Record<RoomStyle, string>> = {
-  vault: "/models/gallery-rooms/vault-room.glb?v=shelf-headroom-2026-08-22",
-  whitebox: "/models/gallery-rooms/whitebox-room.glb?v=off-white-not-tan-2026-08-22",
-  arcade: "/models/gallery-rooms/arcade-room.glb?v=shelf-headroom-2026-08-22",
+  vault: "/models/gallery-rooms/vault-room.glb?v=door-baseboard-fix-2026-08-28",
+  whitebox: "/models/gallery-rooms/whitebox-room.glb?v=door-baseboard-fix-2026-08-28",
+  arcade: "/models/gallery-rooms/arcade-room.glb?v=door-baseboard-fix-2026-08-28",
 };
 
 // The 5 center display cases (built further down as decorative glass cabinets)
@@ -1647,10 +1647,6 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
     const fallbackShell = new THREE.Group();
     roomGroup.add(fallbackShell);
     const shellObjects: THREE.Object3D[] = [];
-    // TEMPORARY debug hook (2026-08-28) — diagnosing a live report of a
-    // wall-trim piece rendering in front of the vault doorway that can't be
-    // reproduced from code reading alone. Remove once diagnosed.
-    (window as unknown as { __vltdDebug?: unknown }).__vltdDebug = { scene, roomGroup, fallbackShell, shellObjects, camera };
     function addShell(object: THREE.Object3D) {
       shellObjects.push(object);
       fallbackShell.add(object);
