@@ -821,22 +821,19 @@ function wallGridPosition(
   };
 }
 
-function rowForWallSlot(wall: "back" | "left" | "right", slot: number): number {
-  if (wall === "back") return Math.floor(slot / 8) % SHELF_ROW_Y.length;
-  return slot % SHELF_ROW_Y.length;
-}
-
 function distributeAcrossWalls(
   count: number,
   config: { backZ: number; backScale: number; sideBaseZ: number; sideZStep: number; sideScale: number },
-  // Hero (spotlight layout) reserves its own row on whichever wall it sits
-  // on — a regular grid slot landing in that same row can sit close enough
-  // in depth to visually overlap Hero's much larger frame. EK caught this
-  // live: "you have an extra one behind it on each wall, this causes a
-  // conflict." Skipping the whole forbidden row on that wall (rather than
-  // dodging Hero's exact footprint by distance) is simple to reason about
-  // and can't be miscalculated the way a narrow exclusion zone could.
-  excludeRow: Partial<Record<"back" | "left" | "right", number>> = {}
+  // Hero (spotlight layout) sits at a fixed depth on whichever side wall it
+  // occupies — only the ONE regular grid slot landing at that same depth
+  // and shelf row can visually overlap Hero's much larger frame (EK caught
+  // this live: "you have an extra one behind it on each wall, this causes a
+  // conflict" — confirmed via the placement math: that one slot landed 0.4
+  // units from Hero's own position). Excluding a whole row to dodge it
+  // (the first attempt at this) removed 7 slots per wall instead of 1,
+  // which is what starved Hero's normal-grid capacity and caused items to
+  // overflow off the wall entirely — skip only the exact colliding slot.
+  excludeSlot: Partial<Record<"back" | "left" | "right", number>> = {}
 ): RoomItemPosition[] {
   // Keeps the WALL_CYCLE's early-spread behavior (see its own comment —
   // a small collection gets presence on every wall right away, not just
@@ -854,10 +851,7 @@ function distributeAcrossWalls(
   const wallSlot: Record<"back" | "left" | "right", number> = { back: 0, left: 0, right: 0 };
   function nextValidSlot(wall: "back" | "left" | "right"): number {
     let slot = wallSlot[wall];
-    const forbidden = excludeRow[wall];
-    if (forbidden !== undefined) {
-      while (slot < caps[wall] && rowForWallSlot(wall, slot) === forbidden) slot++;
-    }
+    if (slot < caps[wall] && slot === excludeSlot[wall]) slot++;
     return slot;
   }
   function hasRoom(wall: "back" | "left" | "right"): boolean {
@@ -952,16 +946,18 @@ function buildWallPositions(layout: RoomLayout, count: number): RoomItemPosition
     const spotlightClusterSpan = 2.1 * (SIDE_WALL_DEPTH_COUNT - 1);
     const spotlightBaseZ =
       SIDE_WALL_SAFE_BACK_Z + (SIDE_WALL_SAFE_FRONT_Z - SIDE_WALL_SAFE_BACK_Z - spotlightClusterSpan) / 2;
-    // Only left/right need the reservation — back-wall Hero sits at x=0,
-    // which never lands on a back-wall column (columns run -9..9 in steps
-    // of BACK_WALL_COL_STEP, an even split with no column at the exact
+    // Only left/right need an exclusion — back-wall Hero sits at x=0, which
+    // never lands on a back-wall column (columns run -9..9 in steps of
+    // BACK_WALL_COL_STEP, an even split with no column at the exact
     // midpoint), so nothing is ever placed there to collide with. Left/
-    // right Hero sits at a FIXED x (every item on that wall shares the
-    // same x — only row/depth vary), so its own row must stay reserved.
+    // right Hero sits at a FIXED depth (z=-3.2) at the middle shelf row —
+    // with sideBaseZ/sideZStep above, that lands exactly on grid slot 10
+    // (depth 3, row 1: z=-2.8, only 0.4 units from Hero's own z=-3.2).
+    // That's the ONE slot that needs to be skipped, not the whole row.
     const heroWalls = new Set(heroSlots.map((slot) => slot.wall));
-    const supportingExcludeRow: Partial<Record<"back" | "left" | "right", number>> = {};
-    if (heroWalls.has("left")) supportingExcludeRow.left = 1;
-    if (heroWalls.has("right")) supportingExcludeRow.right = 1;
+    const supportingExcludeSlot: Partial<Record<"back" | "left" | "right", number>> = {};
+    if (heroWalls.has("left")) supportingExcludeSlot.left = 10;
+    if (heroWalls.has("right")) supportingExcludeSlot.right = 10;
     const supporting = distributeAcrossWalls(
       remaining,
       {
@@ -971,7 +967,7 @@ function buildWallPositions(layout: RoomLayout, count: number): RoomItemPosition
         sideZStep: 2.1,
         sideScale: MIN_ITEM_SCALE,
       },
-      supportingExcludeRow
+      supportingExcludeSlot
     );
     return [...heroSlots, ...supporting];
   }
