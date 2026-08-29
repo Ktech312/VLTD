@@ -273,18 +273,30 @@ def add_vault_door(mats):
     for y in [1.2, 4.2, 7.2]:
         cube(f"vault_front_panel_rail_left_{y}", (-6.48, y, 5.62), (7.75, 0.055, 0.1), mats["panel_seam"], 0.01)
         cube(f"vault_front_panel_rail_right_{y}", (6.48, y, 5.62), (7.75, 0.055, 0.1), mats["panel_seam"], 0.01)
-    cube("vault_plate_left", (-2.16, 2.48, 5.48), (0.52, 4.9, 0.22), steel, 0.035)
-    cube("vault_plate_right", (2.16, 2.48, 5.48), (0.52, 4.9, 0.22), steel, 0.035)
-    cube("vault_plate_top", (0, 5.02, 5.48), (4.32, 0.3, 0.22), steel, 0.035)
-    arch_curve("vault_arch_outer_trim", (0, 3.18, 5.19), 2.0, steel, 0.08)
-    arch_curve("vault_arch_inner_trim", (0, 3.18, 5.06), 1.66, dark, 0.055)
-    cube("vault_left_post", (-1.74, 1.58, 5.2), (0.22, 3.18, 0.24), steel, 0.028)
-    cube("vault_right_post", (1.74, 1.58, 5.2), (0.22, 3.18, 0.24), steel, 0.028)
-    cube("vault_inner_left_reveal", (-1.48, 1.62, 4.95), (0.28, 3.25, 0.55), dark, 0.02)
-    cube("vault_inner_right_reveal", (1.48, 1.62, 4.95), (0.28, 3.25, 0.55), dark, 0.02)
-    cube("vault_rear_left_reveal", (-1.25, 1.7, 5.65), (0.18, 3.4, 1.0), dark, 0.018)
-    cube("vault_rear_right_reveal", (1.25, 1.7, 5.65), (0.18, 3.4, 1.0), dark, 0.018)
-    cube("vault_threshold", (0, 0.06, 5.2), (3.65, 0.12, 0.36), dark, 0.018)
+    # EK's ask (2026-08-28): "the door is still off the wall." Confirmed via
+    # a live scene query, not guessed: vault_front_wall_left/right/top (the
+    # actual wall, with the door's cutout baked into it) sit at z=5.8, but
+    # every piece of this door/archway assembly below was clustered at
+    # z=4.95-5.65 — up to 0.85 units in front of the wall, floating
+    # detached from it. vault_rear_left/right_reveal (z=5.65) is the piece
+    # nearest the wall by design (the innermost recess lining), so it's the
+    # one that should actually touch the wall's near face (5.8 - half its
+    # own 0.18 thickness = 5.71) — it fell 0.06 short. Shifted the WHOLE
+    # assembly +0.06 in z so that piece meets the wall exactly, preserving
+    # every other piece's relative depth/reveal-step spacing unchanged.
+    DOOR_Z_SHIFT = 0.06
+    cube("vault_plate_left", (-2.16, 2.48, 5.48 + DOOR_Z_SHIFT), (0.52, 4.9, 0.22), steel, 0.035)
+    cube("vault_plate_right", (2.16, 2.48, 5.48 + DOOR_Z_SHIFT), (0.52, 4.9, 0.22), steel, 0.035)
+    cube("vault_plate_top", (0, 5.02, 5.48 + DOOR_Z_SHIFT), (4.32, 0.3, 0.22), steel, 0.035)
+    arch_curve("vault_arch_outer_trim", (0, 3.18, 5.19 + DOOR_Z_SHIFT), 2.0, steel, 0.08)
+    arch_curve("vault_arch_inner_trim", (0, 3.18, 5.06 + DOOR_Z_SHIFT), 1.66, dark, 0.055)
+    cube("vault_left_post", (-1.74, 1.58, 5.2 + DOOR_Z_SHIFT), (0.22, 3.18, 0.24), steel, 0.028)
+    cube("vault_right_post", (1.74, 1.58, 5.2 + DOOR_Z_SHIFT), (0.22, 3.18, 0.24), steel, 0.028)
+    cube("vault_inner_left_reveal", (-1.48, 1.62, 4.95 + DOOR_Z_SHIFT), (0.28, 3.25, 0.55), dark, 0.02)
+    cube("vault_inner_right_reveal", (1.48, 1.62, 4.95 + DOOR_Z_SHIFT), (0.28, 3.25, 0.55), dark, 0.02)
+    cube("vault_rear_left_reveal", (-1.25, 1.7, 5.65 + DOOR_Z_SHIFT), (0.18, 3.4, 1.0), dark, 0.018)
+    cube("vault_rear_right_reveal", (1.25, 1.7, 5.65 + DOOR_Z_SHIFT), (0.18, 3.4, 1.0), dark, 0.018)
+    cube("vault_threshold", (0, 0.06, 5.2 + DOOR_Z_SHIFT), (3.65, 0.12, 0.36), dark, 0.018)
     cube("vault_vestibule_floor", (0, 0.04, 6.35), (3.0, 0.08, 2.25), mats["floor"], 0.012)
     cube("vault_vestibule_wall", (0, 2.6, 8.75), (3.5, 5.2, 0.16), mats["vestibule"], 0.012)
 
@@ -293,10 +305,10 @@ def add_vault_door(mats):
         x = math.cos(angle) * 1.98
         y = 3.25 + math.sin(angle) * 1.98
         if y >= 3.18:
-            cyl(f"vault_arch_rivet_{i}", (x, y, 5.15), 0.045, 0.06, brass, 16, (math.pi / 2, 0, 0), True)
+            cyl(f"vault_arch_rivet_{i}", (x, y, 5.15 + DOOR_Z_SHIFT), 0.045, 0.06, brass, 16, (math.pi / 2, 0, 0), True)
     for side, x in [("left", -2.58), ("right", 2.58)]:
         for i in range(8):
-            cyl(f"vault_side_rivet_{side}_{i}", (x, 0.62 + i * 0.54, 5.15), 0.045, 0.06, brass, 16, (math.pi / 2, 0, 0), True)
+            cyl(f"vault_side_rivet_{side}_{i}", (x, 0.62 + i * 0.54, 5.15 + DOOR_Z_SHIFT), 0.045, 0.06, brass, 16, (math.pi / 2, 0, 0), True)
 
 
 def style_mats(style):
