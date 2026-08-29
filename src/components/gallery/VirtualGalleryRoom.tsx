@@ -913,30 +913,6 @@ function distributeAcrossWalls(
   return positions;
 }
 
-// True distinguishable slot count for a wall set once excludeRow removes a
-// row — used to cap how many items buildWallPositions ever ASKS
-// distributeAcrossWalls for. Without this, Hero's row-reservation (which
-// removes 1/3 of the left/right walls' capacity) let the requested count
-// exceed real capacity, so items fell into distributeAcrossWalls' overflow
-// branch and landed on top of each other (looked like items vanishing —
-// EK: "you removed items now").
-function totalWallCapacity(excludeRow: Partial<Record<"back" | "left" | "right", number>>): number {
-  const caps: Record<"back" | "left" | "right", number> = {
-    back: BACK_WALL_CAPACITY,
-    left: SIDE_WALL_CAPACITY,
-    right: SIDE_WALL_CAPACITY,
-  };
-  return (["back", "left", "right"] as const).reduce((sum, w) => {
-    const forbidden = excludeRow[w];
-    if (forbidden === undefined) return sum + caps[w];
-    let usable = 0;
-    for (let s = 0; s < caps[w]; s++) {
-      if (rowForWallSlot(w, s) !== forbidden) usable++;
-    }
-    return sum + usable;
-  }, 0);
-}
-
 // EK's ask (2026-08-21): checked bingebrowse.net's own source (their
 // rental-case mesh is a real 0.235 x ~0.165 world-unit DVD case, viewed at
 // a close ~1.2-1.4 unit aisle distance with a 58-75deg camera) against ours
@@ -986,6 +962,7 @@ function buildWallPositions(layout: RoomLayout, count: number): RoomItemPosition
       { x: 10.22, y: HERO_Y, z: -3.2, ry: -Math.PI / 2, scale: 1.2, wall: "right" },
     ];
     const heroSlots = allHeroSlots.slice(0, count);
+    const remaining = Math.max(0, count - heroSlots.length);
     // Medium density (unchanged design intent — a step between Salon's
     // tight cluster and Store's full-width spread) — but now explicitly
     // CENTERED within the real safe range (SIDE_WALL_SAFE_BACK_Z ..
@@ -1005,7 +982,6 @@ function buildWallPositions(layout: RoomLayout, count: number): RoomItemPosition
     const supportingExcludeRow: Partial<Record<"back" | "left" | "right", number>> = {};
     if (heroWalls.has("left")) supportingExcludeRow.left = 1;
     if (heroWalls.has("right")) supportingExcludeRow.right = 1;
-    const remaining = Math.min(Math.max(0, count - heroSlots.length), totalWallCapacity(supportingExcludeRow));
     const supporting = distributeAcrossWalls(
       remaining,
       {
