@@ -1056,10 +1056,6 @@ function frontWallPosition(slot: number): RoomItemPosition {
 }
 
 function buildVaultWallPositions(layout: RoomLayout, count: number): RoomItemPosition[] {
-  if (layout === "spotlight") {
-    return buildWallPositions(layout, count);
-  }
-
   const frontSlotCount = Math.min(8, count);
   const mainWallCount = Math.max(0, count - frontSlotCount);
   return [
