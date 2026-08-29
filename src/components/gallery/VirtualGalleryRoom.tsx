@@ -2591,14 +2591,6 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
     // and didn't need this number to be right.
     const eyeHeight = 3.6;
     const savedCamera = cameraStateRef.current;
-    // The single walkable zone — WASD/zoom (clampPosition) and click-to-
-    // walk (clampWalkDestination) both clamp to this same box, and the
-    // fresh-spawn point (below) starts at its center. See clampPosition's
-    // own comment further down for the full "Amber walk patch" history.
-    const WALK_ZONE_X = 3.5;
-    const WALK_ZONE_Z_MIN = -4.6;
-    const WALK_ZONE_Z_MAX = 1.8;
-    const WALK_ZONE_Z_CENTER = (WALK_ZONE_Z_MIN + WALK_ZONE_Z_MAX) / 2;
     // EK's ask (2026-08-28), with a direct reference screenshot from
     // bingebrowse.net: their spawn looks STRAIGHT at the back wall, centered,
     // level — not angled toward a corner. The old default here deliberately
@@ -2611,21 +2603,20 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
     // it as a "fix" for staring-at-a-wall complaints; EK's own reference
     // proves centered/level is the wanted look.
     //
-    // Z, corrected twice same day: first moved from -2.2 (the room's actual
-    // midpoint, never really "near the door") to 3.8 (just inside the OLD,
-    // looser walk clamp's forward limit). Then EK, from the floor-plan
-    // diagram: "let's do the Amber walk patch... you should start at the
-    // Amber circle" — now that WASD/click-to-walk share one tighter zone
-    // (WALK_ZONE_* above), spawn starts at that zone's own center instead
-    // of its own separately-reasoned position, so "where you start" and
-    // "where you can walk" are the same single place, not two numbers that
-    // can drift apart again later.
+    // Z: moved from -2.2 (the room's actual midpoint, never really "near
+    // the door") to 3.8 — just inside the walk clamp's own forward limit
+    // (clampPosition, below), genuinely near the entrance. A same-night
+    // detour moved this again to the click-to-walk zone's center (-1.4)
+    // — REVERTED, see clampPosition's own comment: that tighter zone
+    // itself got reverted after EK tried it live and found it too
+    // cramped, so 3.8 is back too, matching the zone it actually spawns
+    // into again.
     let yaw = savedCamera?.yaw ?? 0;
     let pitch = savedCamera?.pitch ?? 0;
     let targetYaw = yaw;
     let targetPitch = pitch;
     const NAV_PITCH_LIMIT = 0.32;
-    const cameraBody = new THREE.Vector3(savedCamera?.x ?? 0, savedCamera?.y ?? eyeHeight, savedCamera?.z ?? WALK_ZONE_Z_CENTER);
+    const cameraBody = new THREE.Vector3(savedCamera?.x ?? 0, savedCamera?.y ?? eyeHeight, savedCamera?.z ?? 3.8);
     const targetCameraBody = cameraBody.clone();
     let isDragging = false;
     let didDrag = false;
@@ -3047,23 +3038,28 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
     // always lands comfortably away from EVERY wall, corner or not — a
     // generous, room-interior stop, not a minimally-legal one.
     //
-    // EK's ask (2026-08-28), from the floor-plan reference diagram:
-    // "let's do the Amber walk patch" — WASD/scroll-zoom used to be
-    // governed by a much looser box (x ±7.5, z -9..4.72) than click-to-
-    // walk's tighter one (the "amber" box), which is exactly why walking
-    // could still put you right up against a wall even after click-to-walk
-    // was reined in. WASD/zoom now share the SAME bounds as click-to-walk —
-    // one walkable zone, not two — via the shared WALK_ZONE_* constants
-    // declared near the top of this effect (also used by the spawn point
-    // default, above).
+    // EK's ask (2026-08-28), from the floor-plan reference diagram: "let's
+    // do the Amber walk patch" — unifying WASD/zoom with click-to-walk's
+    // tighter box. REVERTED SAME NIGHT: tried live, EK: "I can't even
+    // scroll back in the door anymore... looked better on paper but not
+    // good in real life." The tighter box cut off real usable floor space
+    // (most of all, the ability to back off toward the door) that WASD/
+    // zoom genuinely needs and click-to-walk doesn't — click-to-walk's own
+    // tight bound exists so a single destination click can't strand you
+    // nose-to-wall (see the comment above), a concern that doesn't apply
+    // to gradual WASD stepping or scroll-zoom at all. Back to two
+    // independent bounds: this one (WASD/zoom) stays the original, looser
+    // room-wide box; clampWalkDestination below keeps its own tighter one.
     function clampPosition(position: THREE.Vector3) {
-      position.x = Math.max(-WALK_ZONE_X, Math.min(WALK_ZONE_X, position.x));
-      position.z = Math.max(WALK_ZONE_Z_MIN, Math.min(WALK_ZONE_Z_MAX, position.z));
+      position.x = Math.max(-7.5, Math.min(7.5, position.x));
+      position.z = Math.max(-9, Math.min(4.72, position.z));
       return position;
     }
 
     function clampWalkDestination(position: THREE.Vector3) {
-      return clampPosition(position);
+      position.x = Math.max(-3.5, Math.min(3.5, position.x));
+      position.z = Math.max(-4.6, Math.min(1.8, position.z));
+      return position;
     }
 
     function clampView(pitchLimit = NAV_PITCH_LIMIT) {
