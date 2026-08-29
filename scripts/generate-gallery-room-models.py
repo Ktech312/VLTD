@@ -292,8 +292,19 @@ def add_vault_door(mats):
     # this assembly is designed to show a gap there). Widened both plates
     # by 0.14 (symmetric, so 0.07 outward) so the inner edge now overlaps
     # the post by 0.02 instead of falling short of it.
-    cube("vault_plate_left", (-2.16, 2.48, 5.48 + DOOR_Z_SHIFT), (0.66, 4.9, 0.22), steel, 0.035)
-    cube("vault_plate_right", (2.16, 2.48, 5.48 + DOOR_Z_SHIFT), (0.66, 4.9, 0.22), steel, 0.035)
+    #
+    # EK, after that: "still the same gap" - the X fix alone wasn't enough.
+    # Pulled the plate's own full 3D bounding box directly from the
+    # exported GLB (not guessed) and found a SECOND, separate gap on the
+    # same joint: the plate's near (room-facing) surface sat at z=5.43
+    # while the post's far surface only reached z=5.38 - a 0.05 gap in
+    # DEPTH, invisible to the X-only check, which reads as the exact same
+    # dark seam from most viewing angles. Moved the plate's own z from
+    # 5.48 to 5.41 (base, before DOOR_Z_SHIFT) so its near face now
+    # overlaps the post's far face by 0.02, matching the X fix's own
+    # margin.
+    cube("vault_plate_left", (-2.16, 2.48, 5.41 + DOOR_Z_SHIFT), (0.66, 4.9, 0.22), steel, 0.035)
+    cube("vault_plate_right", (2.16, 2.48, 5.41 + DOOR_Z_SHIFT), (0.66, 4.9, 0.22), steel, 0.035)
     cube("vault_plate_top", (0, 5.02, 5.48 + DOOR_Z_SHIFT), (4.32, 0.3, 0.22), steel, 0.035)
     arch_curve("vault_arch_outer_trim", (0, 3.18, 5.19 + DOOR_Z_SHIFT), 2.0, steel, 0.08)
     arch_curve("vault_arch_inner_trim", (0, 3.18, 5.06 + DOOR_Z_SHIFT), 1.66, dark, 0.055)
