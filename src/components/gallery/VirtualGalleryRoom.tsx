@@ -1056,7 +1056,20 @@ function frontWallPosition(slot: number): RoomItemPosition {
 }
 
 function buildVaultWallPositions(layout: RoomLayout, count: number): RoomItemPosition[] {
-  const frontSlotCount = Math.min(8, count);
+  // Hero's row reservation (see distributeAcrossWalls' excludeSlot) trims
+  // exactly 1 slot off each side wall's normal 21, dropping the main-wall
+  // grid + Hero's own 3 dedicated slots from 66+3 down to a true capacity
+  // of 67. Carving out the same flat 8 front-wall slots every other
+  // layout uses left mainWallCount at 66 -- one short of that real 67 --
+  // so exactly one valid, on-wall grid slot never got a position at all
+  // (EK circled it live: an empty slot with no badge between two real
+  // neighbors). Spotlight sizes its own carve-out to its real capacity
+  // instead of borrowing the other layouts' flat number.
+  const spotlightMainWallCapacity = BACK_WALL_CAPACITY + (SIDE_WALL_CAPACITY - 1) * 2 + 3;
+  const frontSlotCount =
+    layout === "spotlight"
+      ? Math.min(8, Math.max(0, count - spotlightMainWallCapacity))
+      : Math.min(8, count);
   const mainWallCount = Math.max(0, count - frontSlotCount);
   return [
     ...buildWallPositions(layout, mainWallCount),
