@@ -285,8 +285,15 @@ def add_vault_door(mats):
     # assembly +0.06 in z so that piece meets the wall exactly, preserving
     # every other piece's relative depth/reveal-step spacing unchanged.
     DOOR_Z_SHIFT = 0.06
-    cube("vault_plate_left", (-2.16, 2.48, 5.48 + DOOR_Z_SHIFT), (0.52, 4.9, 0.22), steel, 0.035)
-    cube("vault_plate_right", (2.16, 2.48, 5.48 + DOOR_Z_SHIFT), (0.52, 4.9, 0.22), steel, 0.035)
+    # EK's ask (2026-08-28), a second real gap on the same screenshot: the
+    # outer decorative plate's inner edge (x -1.90 at the old 0.52 width)
+    # fell 0.05 units short of vault_left_post's own outer edge (x -1.85) -
+    # a real, measured seam, not an intentional reveal (nothing else in
+    # this assembly is designed to show a gap there). Widened both plates
+    # by 0.14 (symmetric, so 0.07 outward) so the inner edge now overlaps
+    # the post by 0.02 instead of falling short of it.
+    cube("vault_plate_left", (-2.16, 2.48, 5.48 + DOOR_Z_SHIFT), (0.66, 4.9, 0.22), steel, 0.035)
+    cube("vault_plate_right", (2.16, 2.48, 5.48 + DOOR_Z_SHIFT), (0.66, 4.9, 0.22), steel, 0.035)
     cube("vault_plate_top", (0, 5.02, 5.48 + DOOR_Z_SHIFT), (4.32, 0.3, 0.22), steel, 0.035)
     arch_curve("vault_arch_outer_trim", (0, 3.18, 5.19 + DOOR_Z_SHIFT), 2.0, steel, 0.08)
     arch_curve("vault_arch_inner_trim", (0, 3.18, 5.06 + DOOR_Z_SHIFT), 1.66, dark, 0.055)
