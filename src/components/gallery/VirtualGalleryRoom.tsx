@@ -1647,6 +1647,10 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
     const fallbackShell = new THREE.Group();
     roomGroup.add(fallbackShell);
     const shellObjects: THREE.Object3D[] = [];
+    // TEMPORARY debug hook (2026-08-28) — diagnosing a live report of a
+    // wall-trim piece rendering in front of the vault doorway that can't be
+    // reproduced from code reading alone. Remove once diagnosed.
+    (window as unknown as { __vltdDebug?: unknown }).__vltdDebug = { scene, roomGroup, fallbackShell, shellObjects, camera };
     function addShell(object: THREE.Object3D) {
       shellObjects.push(object);
       fallbackShell.add(object);
