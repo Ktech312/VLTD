@@ -172,7 +172,18 @@ const CABINET_SPOTS: Array<[number, number]> = [
   [2.1, 0.45],
 ];
 const CABINET_SLOT_COUNT = CABINET_SPOTS.length;
-const TOTAL_SLOT_COUNT = MAX_ROOM_ITEMS + CABINET_SLOT_COUNT;
+// +1 for vault+Hero's one extra real slot (see heroSupportingOverflowSlot
+// below) — Hero's row reservation leaves the main-wall grid able to hold
+// one more supporting item than the shared MAX_ROOM_ITEMS budget actually
+// requests from it. Growing the main-wall request itself to reach that
+// extra slot shifts every front-wall/cabinet index after it (confirmed
+// live: it moved a real front-wall item — EK: "you just moved one
+// over"). Appending it past the end of the WHOLE table instead needs its
+// own selectedIds slot to be real, not just decorative — hence +1 here,
+// harmless for every other layout/style (their own table stays exactly
+// MAX_ROOM_ITEMS + CABINET_SLOT_COUNT long; this last slot simply never
+// renders for them, same as Hero's own dedicated slots already don't).
+const TOTAL_SLOT_COUNT = MAX_ROOM_ITEMS + CABINET_SLOT_COUNT + 1;
 
 // `selectedIds` is always exactly TOTAL_SLOT_COUNT long, one entry per physical
 // slot (wall shelf or display case) — "" means that slot is empty. This is what
@@ -1055,6 +1066,29 @@ function frontWallPosition(slot: number): RoomItemPosition {
   };
 }
 
+// Hero's row reservation trims exactly 1 slot off each side wall's normal
+// capacity (see distributeAcrossWalls' excludeSlot), which drops the
+// main-wall grid's true capacity from 66 to 64 -- but ALSO means it can
+// hold 64 supporting items, one more than the 63 the shared 66-slot
+// main-wall budget (see MAX_ROOM_ITEMS) actually asks distributeAcrossWalls
+// for. Re-running the exact same call with 64 requested reproduces the
+// identical first 63 positions (the algorithm only ever looks forward,
+// never back) plus this one genuinely-extra 64th — appended past the end
+// of the whole table (see TOTAL_SLOT_COUNT's own +1) instead of by asking
+// the main-wall grid for 64 directly, which would shift every front-wall/
+// cabinet index after it.
+function heroSupportingOverflowSlot(): RoomItemPosition {
+  const spotlightClusterSpan = 2.1 * (SIDE_WALL_DEPTH_COUNT - 1);
+  const spotlightBaseZ =
+    SIDE_WALL_SAFE_BACK_Z + (SIDE_WALL_SAFE_FRONT_Z - SIDE_WALL_SAFE_BACK_Z - spotlightClusterSpan) / 2;
+  const full = distributeAcrossWalls(
+    BACK_WALL_CAPACITY + (SIDE_WALL_CAPACITY - 1) * 2,
+    { backZ: -11.78, backScale: MIN_ITEM_SCALE, sideBaseZ: spotlightBaseZ, sideZStep: 2.1, sideScale: MIN_ITEM_SCALE },
+    { left: 10, right: 10 }
+  );
+  return full[full.length - 1];
+}
+
 function buildVaultWallPositions(layout: RoomLayout, count: number): RoomItemPosition[] {
   const frontSlotCount = Math.min(8, count);
   const mainWallCount = Math.max(0, count - frontSlotCount);
@@ -1093,7 +1127,11 @@ function buildPositions(layout: RoomLayout, style: RoomStyle): RoomItemPosition[
     wall: "cabinet",
     flat: true,
   }));
-  return [...wallPositions, ...cabinetPositions];
+  // Only vault+Hero has the shortfall heroSupportingOverflowSlot fixes —
+  // non-vault styles never carve out a front wall at all, so their own
+  // spotlight shortfall is a different, larger gap, not this one.
+  const heroOverflow = style === "vault" && layout === "spotlight" ? [heroSupportingOverflowSlot()] : [];
+  return [...wallPositions, ...cabinetPositions, ...heroOverflow];
 }
 
 // EK's ask (2026-08-23): the builder had no concept of "who's looking" at
