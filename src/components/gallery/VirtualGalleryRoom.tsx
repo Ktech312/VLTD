@@ -2591,6 +2591,14 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
     // and didn't need this number to be right.
     const eyeHeight = 3.6;
     const savedCamera = cameraStateRef.current;
+    // The single walkable zone — WASD/zoom (clampPosition) and click-to-
+    // walk (clampWalkDestination) both clamp to this same box, and the
+    // fresh-spawn point (below) starts at its center. See clampPosition's
+    // own comment further down for the full "Amber walk patch" history.
+    const WALK_ZONE_X = 3.5;
+    const WALK_ZONE_Z_MIN = -4.6;
+    const WALK_ZONE_Z_MAX = 1.8;
+    const WALK_ZONE_Z_CENTER = (WALK_ZONE_Z_MIN + WALK_ZONE_Z_MAX) / 2;
     // EK's ask (2026-08-28), with a direct reference screenshot from
     // bingebrowse.net: their spawn looks STRAIGHT at the back wall, centered,
     // level — not angled toward a corner. The old default here deliberately
@@ -2603,23 +2611,21 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
     // it as a "fix" for staring-at-a-wall complaints; EK's own reference
     // proves centered/level is the wanted look.
     //
-    // Z (2026-08-28, same message): "this is where I stand on refresh, that's
-    // not in front of the door." The spawn Z here (-2.2) was never actually
-    // near the door — the front/door wall sits at z=5.54
-    // (frontWallPosition), the walkable area's own forward clamp stops at
-    // z=4.72 (clampPosition, below), and the back wall is at z=-11.78. -2.2
-    // sits almost exactly at the room's MIDPOINT (17.32-unit span, -2.2 is
-    // only ~1 unit off center) — a person standing there is already deep in
-    // the room, close enough to both the back wall and a side wall for items
-    // to fill the frame. Moved to z=3.8 — just inside the walkable clamp's
-    // own forward limit (4.72), genuinely near the entrance instead of the
-    // room's center.
+    // Z, corrected twice same day: first moved from -2.2 (the room's actual
+    // midpoint, never really "near the door") to 3.8 (just inside the OLD,
+    // looser walk clamp's forward limit). Then EK, from the floor-plan
+    // diagram: "let's do the Amber walk patch... you should start at the
+    // Amber circle" — now that WASD/click-to-walk share one tighter zone
+    // (WALK_ZONE_* above), spawn starts at that zone's own center instead
+    // of its own separately-reasoned position, so "where you start" and
+    // "where you can walk" are the same single place, not two numbers that
+    // can drift apart again later.
     let yaw = savedCamera?.yaw ?? 0;
     let pitch = savedCamera?.pitch ?? 0;
     let targetYaw = yaw;
     let targetPitch = pitch;
     const NAV_PITCH_LIMIT = 0.32;
-    const cameraBody = new THREE.Vector3(savedCamera?.x ?? 0, savedCamera?.y ?? eyeHeight, savedCamera?.z ?? 3.8);
+    const cameraBody = new THREE.Vector3(savedCamera?.x ?? 0, savedCamera?.y ?? eyeHeight, savedCamera?.z ?? WALK_ZONE_Z_CENTER);
     const targetCameraBody = cameraBody.clone();
     let isDragging = false;
     let didDrag = false;
@@ -3026,23 +3032,6 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
       // whichever face actually points at the camera.
     }
 
-    // Height is NOT force-reset to eye level here anymore — a focus-click needs to
-    // park the camera at the item's own height (see onPointerUp) for a level,
-    // face-on shot. moveCamera() below restores eye height on foot so walking
-    // around doesn't leave you stuck crouched/floating from an earlier focus.
-    // Walking or scroll-zooming has no collision detection at all — this
-    // clamp is the only thing keeping the camera out of the walls, and it
-    // used to allow getting within ~1.1 units of the shelf-mounted side/back
-    // walls. At that range, looking straight at a wall fills the entire
-    // frame with flat shelf trim and no floor/ceiling around it — which
-    // reads exactly like being "stuck behind a shelf," not just close to
-    // one. Pulled back to a ~3-unit margin so the wall never fills the view.
-    function clampPosition(position: THREE.Vector3) {
-      position.x = Math.max(-7.5, Math.min(7.5, position.x));
-      position.z = Math.max(-9, Math.min(4.72, position.z));
-      return position;
-    }
-
     // EK's ask (2026-08-23), then EK again (2026-08-22 later pass): a
     // ~4-unit margin still wasn't enough — screenshots showed a corner
     // click landing nose-to-wall, no floor or ceiling visible at all
@@ -3056,14 +3045,25 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
     // than chase that exactly (it would make click-to-walk barely move
     // you from a corner click), pulled the destination in hard so it
     // always lands comfortably away from EVERY wall, corner or not — a
-    // generous, room-interior stop, not a minimally-legal one. Zoom
-    // (scroll wheel -> moveCamera, still governed by the looser
-    // clampPosition above) is how you actually get close, same as EK
-    // asked.
-    function clampWalkDestination(position: THREE.Vector3) {
-      position.x = Math.max(-3.5, Math.min(3.5, position.x));
-      position.z = Math.max(-4.6, Math.min(1.8, position.z));
+    // generous, room-interior stop, not a minimally-legal one.
+    //
+    // EK's ask (2026-08-28), from the floor-plan reference diagram:
+    // "let's do the Amber walk patch" — WASD/scroll-zoom used to be
+    // governed by a much looser box (x ±7.5, z -9..4.72) than click-to-
+    // walk's tighter one (the "amber" box), which is exactly why walking
+    // could still put you right up against a wall even after click-to-walk
+    // was reined in. WASD/zoom now share the SAME bounds as click-to-walk —
+    // one walkable zone, not two — via the shared WALK_ZONE_* constants
+    // declared near the top of this effect (also used by the spawn point
+    // default, above).
+    function clampPosition(position: THREE.Vector3) {
+      position.x = Math.max(-WALK_ZONE_X, Math.min(WALK_ZONE_X, position.x));
+      position.z = Math.max(WALK_ZONE_Z_MIN, Math.min(WALK_ZONE_Z_MAX, position.z));
       return position;
+    }
+
+    function clampWalkDestination(position: THREE.Vector3) {
+      return clampPosition(position);
     }
 
     function clampView(pitchLimit = NAV_PITCH_LIMIT) {
