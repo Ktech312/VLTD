@@ -172,18 +172,20 @@ const CABINET_SPOTS: Array<[number, number]> = [
   [2.1, 0.45],
 ];
 const CABINET_SLOT_COUNT = CABINET_SPOTS.length;
-// +1 for vault+Hero's one extra real slot (see heroSupportingOverflowSlot
-// below) — Hero's row reservation leaves the main-wall grid able to hold
-// one more supporting item than the shared MAX_ROOM_ITEMS budget actually
-// requests from it. Growing the main-wall request itself to reach that
-// extra slot shifts every front-wall/cabinet index after it (confirmed
-// live: it moved a real front-wall item — EK: "you just moved one
-// over"). Appending it past the end of the WHOLE table instead needs its
-// own selectedIds slot to be real, not just decorative — hence +1 here,
-// harmless for every other layout/style (their own table stays exactly
-// MAX_ROOM_ITEMS + CABINET_SLOT_COUNT long; this last slot simply never
-// renders for them, same as Hero's own dedicated slots already don't).
-const TOTAL_SLOT_COUNT = MAX_ROOM_ITEMS + CABINET_SLOT_COUNT + 1;
+// +7 for vault+Hero's extra real slots appended past the end of the table
+// (see heroSupportingOverflowSlot and heroCornerFillSlots below): 1 slot
+// Hero's row reservation left unused within the shared main-wall budget,
+// plus 3 new slots per side wall (6) on real, already-baked shelf/wall
+// space past the grid's old last depth that the code never used. Growing
+// the main-wall request itself to reach these shifts every front-wall/
+// cabinet index after it (confirmed live: it moved a real front-wall
+// item — EK: "you just moved one over"). Appending them past the end of
+// the WHOLE table instead needs their own selectedIds slots to be real,
+// not decorative — hence +7 here, harmless for every other layout/style
+// (their own table stays exactly MAX_ROOM_ITEMS + CABINET_SLOT_COUNT
+// long; these last slots simply never render for them, same as Hero's
+// own dedicated slots already don't).
+const TOTAL_SLOT_COUNT = MAX_ROOM_ITEMS + CABINET_SLOT_COUNT + 7;
 
 // `selectedIds` is always exactly TOTAL_SLOT_COUNT long, one entry per physical
 // slot (wall shelf or display case) — "" means that slot is empty. This is what
@@ -1089,6 +1091,30 @@ function heroSupportingOverflowSlot(): RoomItemPosition {
   return full[full.length - 1];
 }
 
+// EK's ask: the side walls' far (front) end, past the grid's last coded
+// depth (z=3.5), reads as an unfinished dead zone next to the corner —
+// real baked shelf and wall material extend well past it (left_shelf_i /
+// right_shelf_i in generate-gallery-room-models.py run 23.2 units long,
+// centered at z=-3.15 -> out to z=8.45; the wall panels themselves run 26
+// units, out to z=9.8) and nothing else is built out there (the vestibule
+// wall and door rivets all sit within +/-2.35 of x=0, nowhere near
+// x=+/-10.22) — so one more real depth tier fits with room to spare
+// before the wall's own physical end, confirmed against the generator.
+function heroCornerFillSlots(): RoomItemPosition[] {
+  const extraZ = 3.5 + 2.1; // one more step past the grid's last depth, same 2.1 spacing
+  const walls: Array<"left" | "right"> = ["left", "right"];
+  return walls.flatMap((wall) =>
+    SHELF_ROW_Y.map((_, row) => ({
+      x: wall === "left" ? -10.22 : 10.22,
+      y: shelfItemY(row, MIN_ITEM_SCALE),
+      z: extraZ,
+      ry: wall === "left" ? Math.PI / 2 : -Math.PI / 2,
+      scale: MIN_ITEM_SCALE,
+      wall,
+    }))
+  );
+}
+
 function buildVaultWallPositions(layout: RoomLayout, count: number): RoomItemPosition[] {
   const frontSlotCount = Math.min(8, count);
   const mainWallCount = Math.max(0, count - frontSlotCount);
@@ -1130,7 +1156,8 @@ function buildPositions(layout: RoomLayout, style: RoomStyle): RoomItemPosition[
   // Only vault+Hero has the shortfall heroSupportingOverflowSlot fixes —
   // non-vault styles never carve out a front wall at all, so their own
   // spotlight shortfall is a different, larger gap, not this one.
-  const heroOverflow = style === "vault" && layout === "spotlight" ? [heroSupportingOverflowSlot()] : [];
+  const heroOverflow =
+    style === "vault" && layout === "spotlight" ? [heroSupportingOverflowSlot(), ...heroCornerFillSlots()] : [];
   return [...wallPositions, ...cabinetPositions, ...heroOverflow];
 }
 
