@@ -8,6 +8,14 @@ import bpy
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 OUT_DIR = os.path.join(ROOT, "public", "models", "gallery-rooms")
 
+# EK's ask (2026-08-28): vault's own front/door wall (and everything mounted
+# to it) got pushed this far further out to give the room real extra depth —
+# see add_vault_door()'s own comment for the full reasoning. Module-level
+# because add_wall_panels() also builds a front baseboard shared by every
+# style, and vault's copy of that piece needs to move with the wall too, or
+# it's left floating at the wall's OLD position.
+VAULT_FRONT_WALL_PUSH_BACK = 1.5
+
 
 def clear_scene():
     bpy.ops.object.select_all(action="SELECT")
@@ -167,8 +175,13 @@ def add_wall_panels(style, mats):
     # shell's own frontBaseboardLeft/frontBaseboardRight
     # (VirtualGalleryRoom.tsx) exactly (same 8.6 width, same +-6.13 center) so
     # the baked model and the shell finally agree here.
-    cube("baseboard_front_left", (-6.13, 0.22, 5.72), (8.6, 0.26, 0.14), trim, 0.025)
-    cube("baseboard_front_right", (6.13, 0.22, 5.72), (8.6, 0.26, 0.14), trim, 0.025)
+    # Vault's own front wall moved (VAULT_FRONT_WALL_PUSH_BACK, see top of
+    # file) — this baseboard has to move with it or it's left floating at
+    # the wall's old position. whitebox/arcade's front wall never moved, so
+    # their baseboard stays put.
+    front_baseboard_z = 5.72 + (VAULT_FRONT_WALL_PUSH_BACK if style == "vault" else 0)
+    cube("baseboard_front_left", (-6.13, 0.22, front_baseboard_z), (8.6, 0.26, 0.14), trim, 0.025)
+    cube("baseboard_front_right", (6.13, 0.22, front_baseboard_z), (8.6, 0.26, 0.14), trim, 0.025)
     cube("baseboard_left", (-10.36, 0.22, -3.05), (0.14, 0.26, 23.4), trim, 0.025)
     cube("baseboard_right", (10.36, 0.22, -3.05), (0.14, 0.26, 23.4), trim, 0.025)
 
@@ -261,18 +274,28 @@ def add_vault_door(mats):
     wall = mats["wall"]
     black = mats["black"]
 
+    # EK's ask (2026-08-28), the one thing that matters right now: the room
+    # reads as smaller since the door assembly was pulled flush with this
+    # wall earlier tonight (it used to float forward, into the room, which
+    # is what made the entrance feel deeper/more open even though it wasn't
+    # actually touching anything). Pushing the wall itself further out gives
+    # the room real extra depth instead of relying on a detached door for
+    # that feeling. DOOR_Z_SHIFT (below) carries the whole door assembly
+    # back with it by the same amount, so it stays flush with the wall's
+    # NEW position rather than reopening the gap that was just closed.
+    FRONT_WALL_PUSH_BACK = VAULT_FRONT_WALL_PUSH_BACK
     # Room-side vault entrance only. The heavy round vault door belongs outside
     # this room, so this model intentionally contains no interior round door.
-    cube("vault_front_wall_left", (-6.5, 4.55, 5.8), (8.0, 9.2, 0.18), wall, 0.012)
-    cube("vault_front_wall_right", (6.5, 4.55, 5.8), (8.0, 9.2, 0.18), wall, 0.012)
-    cube("vault_front_wall_top", (0, 7.0, 5.8), (4.98, 4.3, 0.18), wall, 0.012)
+    cube("vault_front_wall_left", (-6.5, 4.55, 5.8 + FRONT_WALL_PUSH_BACK), (8.0, 9.2, 0.18), wall, 0.012)
+    cube("vault_front_wall_right", (6.5, 4.55, 5.8 + FRONT_WALL_PUSH_BACK), (8.0, 9.2, 0.18), wall, 0.012)
+    cube("vault_front_wall_top", (0, 7.0, 5.8 + FRONT_WALL_PUSH_BACK), (4.98, 4.3, 0.18), wall, 0.012)
     # Continue the same panel system used on the other walls so the entrance
     # reads as part of the room instead of a separate decorative insert.
     for x in [-10.36, -7.0, -3.5, 3.5, 7.0, 10.36]:
-        cube(f"vault_front_panel_stile_{x}", (x, 4.45, 5.62), (0.055, 6.95, 0.1), mats["panel_seam"], 0.01)
+        cube(f"vault_front_panel_stile_{x}", (x, 4.45, 5.62 + FRONT_WALL_PUSH_BACK), (0.055, 6.95, 0.1), mats["panel_seam"], 0.01)
     for y in [1.2, 4.2, 7.2]:
-        cube(f"vault_front_panel_rail_left_{y}", (-6.48, y, 5.62), (7.75, 0.055, 0.1), mats["panel_seam"], 0.01)
-        cube(f"vault_front_panel_rail_right_{y}", (6.48, y, 5.62), (7.75, 0.055, 0.1), mats["panel_seam"], 0.01)
+        cube(f"vault_front_panel_rail_left_{y}", (-6.48, y, 5.62 + FRONT_WALL_PUSH_BACK), (7.75, 0.055, 0.1), mats["panel_seam"], 0.01)
+        cube(f"vault_front_panel_rail_right_{y}", (6.48, y, 5.62 + FRONT_WALL_PUSH_BACK), (7.75, 0.055, 0.1), mats["panel_seam"], 0.01)
     # EK's ask (2026-08-28): "the door is still off the wall." Confirmed via
     # a live scene query, not guessed: vault_front_wall_left/right/top (the
     # actual wall, with the door's cutout baked into it) sit at z=5.8, but
@@ -284,7 +307,7 @@ def add_vault_door(mats):
     # own 0.18 thickness = 5.71) — it fell 0.06 short. Shifted the WHOLE
     # assembly +0.06 in z so that piece meets the wall exactly, preserving
     # every other piece's relative depth/reveal-step spacing unchanged.
-    DOOR_Z_SHIFT = 0.06
+    DOOR_Z_SHIFT = 0.06 + FRONT_WALL_PUSH_BACK
     # EK's ask (2026-08-28), a second real gap on the same screenshot: the
     # outer decorative plate's inner edge (x -1.90 at the old 0.52 width)
     # fell 0.05 units short of vault_left_post's own outer edge (x -1.85) -
@@ -315,8 +338,8 @@ def add_vault_door(mats):
     cube("vault_rear_left_reveal", (-1.25, 1.7, 5.65 + DOOR_Z_SHIFT), (0.18, 3.4, 1.0), dark, 0.018)
     cube("vault_rear_right_reveal", (1.25, 1.7, 5.65 + DOOR_Z_SHIFT), (0.18, 3.4, 1.0), dark, 0.018)
     cube("vault_threshold", (0, 0.06, 5.2 + DOOR_Z_SHIFT), (3.65, 0.12, 0.36), dark, 0.018)
-    cube("vault_vestibule_floor", (0, 0.04, 6.35), (3.0, 0.08, 2.25), mats["floor"], 0.012)
-    cube("vault_vestibule_wall", (0, 2.6, 8.75), (3.5, 5.2, 0.16), mats["vestibule"], 0.012)
+    cube("vault_vestibule_floor", (0, 0.04, 6.35 + FRONT_WALL_PUSH_BACK), (3.0, 0.08, 2.25), mats["floor"], 0.012)
+    cube("vault_vestibule_wall", (0, 2.6, 8.75 + FRONT_WALL_PUSH_BACK), (3.5, 5.2, 0.16), mats["vestibule"], 0.012)
 
     for i in range(24):
         angle = math.pi * i / 23.0
@@ -324,9 +347,19 @@ def add_vault_door(mats):
         y = 3.25 + math.sin(angle) * 1.98
         if y >= 3.18:
             cyl(f"vault_arch_rivet_{i}", (x, y, 5.15 + DOOR_Z_SHIFT), 0.045, 0.06, brass, 16, (math.pi / 2, 0, 0), True)
-    for side, x in [("left", -2.58), ("right", 2.58)]:
+    # EK circled this same spot a 4th time: "still all the same issues." The
+    # actual visible element there is this rivet column, not the plate
+    # itself - pulled its real bounding box and found it was NEVER actually
+    # touching the plate, in either X or Z, since before any of tonight's
+    # fixes (x -2.58 sat 0.045 outside the plate's own edge; z 5.15 sat
+    # 0.105 short of the plate's near face). Moved the rivets onto the
+    # plate's actual surface: x=-2.35/2.35 (comfortably inside the plate's
+    # x -2.49..-1.83 span, near its outer edge) and z so they protrude
+    # 0.06 from the plate's own near face instead of floating in front of
+    # it with nothing behind them.
+    for side, x in [("left", -2.35), ("right", 2.35)]:
         for i in range(8):
-            cyl(f"vault_side_rivet_{side}_{i}", (x, 0.62 + i * 0.54, 5.15 + DOOR_Z_SHIFT), 0.045, 0.06, brass, 16, (math.pi / 2, 0, 0), True)
+            cyl(f"vault_side_rivet_{side}_{i}", (x, 0.62 + i * 0.54, 5.27 + DOOR_Z_SHIFT), 0.045, 0.06, brass, 16, (math.pi / 2, 0, 0), True)
 
 
 def style_mats(style):
