@@ -817,8 +817,15 @@ function shelfItemY(row: number, scale: number) {
   // top surface — EK: "it looks like the bottom of all the frames are
   // cut off."
   const shelfHalfThickness = 0.06;
+  // EK's ask (2026-08-30): sitting exactly flush with zero gap still read
+  // as "cut off" against the shelf — a real physical item resting on a
+  // shelf ledge shows a sliver of visible clearance, not perfect contact.
+  // Separate from shelfHalfThickness (that one has to stay the shelf's
+  // real measured thickness) so this can be tuned as a pure visual
+  // choice without relitigating the physical fix.
+  const restClearance = 0.03;
   const cardHalfHeight = (1.54 * scale) / 2;
-  return shelfY + shelfHalfThickness + cardHalfHeight;
+  return shelfY + shelfHalfThickness + restClearance + cardHalfHeight;
 }
 
 function wallGridPosition(
