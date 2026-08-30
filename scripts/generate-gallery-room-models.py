@@ -369,8 +369,15 @@ def add_vault_door(mats):
     cube("vault_plate_top", (0, 5.02, 5.51), (4.32, 0.3, 0.28), steel, 0.035, parent=door_anchor)
     arch_curve("vault_arch_outer_trim", (0, 3.18, 5.19), 2.0, steel, 0.08, parent=door_anchor)
     arch_curve("vault_arch_inner_trim", (0, 3.18, 5.06), 1.66, dark, 0.055, parent=door_anchor)
-    cube("vault_left_post", (-1.74, 1.58, 5.2), (0.22, 3.18, 0.24), steel, 0.028, parent=door_anchor)
-    cube("vault_right_post", (1.74, 1.58, 5.2), (0.22, 3.18, 0.24), steel, 0.028, parent=door_anchor)
+    # EK circled this same joint again after the plate fix: "still a small
+    # gap." Real measured gap, same cause as the plates: the posts' own
+    # back face only reached local z=5.32 (5.2 + half its 0.24 depth),
+    # short of the wall's near face at local z=5.65 (see the plate
+    # comment above for why that number is constant regardless of the
+    # wall's own push-back). Deepened each post the same way — back face
+    # now reaches 5.65, front face unchanged.
+    cube("vault_left_post", (-1.74, 1.58, 5.365), (0.22, 3.18, 0.57), steel, 0.028, parent=door_anchor)
+    cube("vault_right_post", (1.74, 1.58, 5.365), (0.22, 3.18, 0.57), steel, 0.028, parent=door_anchor)
     cube("vault_inner_left_reveal", (-1.48, 1.62, 4.95), (0.28, 3.25, 0.55), dark, 0.02, parent=door_anchor)
     cube("vault_inner_right_reveal", (1.48, 1.62, 4.95), (0.28, 3.25, 0.55), dark, 0.02, parent=door_anchor)
     cube("vault_rear_left_reveal", (-1.25, 1.7, 5.65), (0.18, 3.4, 1.0), dark, 0.018, parent=door_anchor)
