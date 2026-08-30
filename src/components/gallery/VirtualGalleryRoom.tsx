@@ -2531,7 +2531,7 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
 
         const normal = new THREE.Vector3(Math.sin(pos.ry), 0, Math.cos(pos.ry));
 
-        // Real wall planes: back z=-12, front z=5.8, left x=-10.5, right x=10.5. The frame used to
+        // Real wall planes: back z=-12, front z=5.8+VAULT_FRONT_WALL_PUSH_BACK, left x=-10.5, right x=10.5. The frame used to
         // be a fixed thin box floating ~0.045 behind the card, which left a visible
         // air gap (0.15-0.2 units) between the frame and the actual wall — reading as
         // the item hovering in front of the wall instead of mounted on it. Stretch the
@@ -2544,7 +2544,13 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
             pos.wall === "back"
               ? pos.z + 12
               : pos.wall === "front"
-                ? 5.8 - pos.z
+                ? // Was a bare "5.8 - pos.z" — went negative (clamping
+                  // frameDepth to a useless 0.06) once VAULT_FRONT_WALL_ITEM_Z
+                  // moved pos.z past the wall's OLD 5.8 reference to fix the
+                  // door-wall items floating bug. Same 5.8 + push-back the
+                  // wall/door geometry itself uses, so this stays correct
+                  // whenever that constant changes again.
+                  5.8 + VAULT_FRONT_WALL_PUSH_BACK - pos.z
                 : pos.wall === "left"
                   ? pos.x + 10.5
                   : 10.5 - pos.x;
