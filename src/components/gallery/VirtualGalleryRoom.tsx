@@ -2572,15 +2572,27 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
         // the sides; the bottom of the frame is flush with the bottom of
         // the card (like a framed piece resting directly on the shelf
         // ledge), so it can't dip into the board regardless of scale.
+        //
+        // EK's ask (2026-08-30): that fix was for items resting ON a
+        // shelf board — but "front" wall items HANG directly on the wall,
+        // nothing underneath them to sink into. Applying the same
+        // no-bottom-matting rule there just cut the white border off with
+        // nothing to show for it — EK: "the white section on the bottom
+        // of the frame is missing." Those get real symmetric matting back.
         const mattingTop = 0.065 * pos.scale;
         const mattingSide = 0.065 * pos.scale;
+        const mattingBottom = pos.wall === "front" ? mattingTop : 0;
         const frame = new THREE.Mesh(
-          new THREE.BoxGeometry(1.12 * pos.scale + mattingSide * 2, 1.54 * pos.scale + mattingTop, frameDepth),
+          new THREE.BoxGeometry(
+            1.12 * pos.scale + mattingSide * 2,
+            1.54 * pos.scale + mattingTop + mattingBottom,
+            frameDepth
+          ),
           frameMaterial
         );
         frame.position.set(
           pos.x - normal.x * centerOffset,
-          pos.y + mattingTop / 2,
+          pos.y + (mattingTop - mattingBottom) / 2,
           pos.z - normal.z * centerOffset
         );
         frame.rotation.y = pos.ry;
