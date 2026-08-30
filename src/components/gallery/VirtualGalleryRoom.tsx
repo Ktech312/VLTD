@@ -157,7 +157,7 @@ const MAX_ROOM_ITEMS = BACK_WALL_CAPACITY + SIDE_WALL_CAPACITY * 2 + 8;
 // "blue" has no entry — it's the hand-coded shell shown permanently, with
 // no GLB to load at all. See the RoomStyle type above for what that means.
 const ROOM_MODEL_URLS: Partial<Record<RoomStyle, string>> = {
-  vault: "/models/gallery-rooms/vault-room.glb?v=front-wall-pushed-back-again-2026-08-29",
+  vault: "/models/gallery-rooms/vault-room.glb?v=front-wall-pushed-back-2026-08-28",
   whitebox: "/models/gallery-rooms/whitebox-room.glb?v=door-baseboard-fix-2026-08-28",
   arcade: "/models/gallery-rooms/arcade-room.glb?v=door-baseboard-fix-2026-08-28",
 };
@@ -1060,14 +1060,13 @@ function frontWallPosition(slot: number): RoomItemPosition {
     y: pos.y,
     // Was 5.54, matching the front wall's own panel seam (5.62) minus a
     // 0.08 mount offset — from BEFORE the vault's front wall was pushed
-    // back (VAULT_FRONT_WALL_PUSH_BACK in generate-gallery-room-models.py)
-    // for real room depth. That JS-side offset never moved with it, so
-    // items hung short of the wall, floating in open air (EK: "they
-    // should be on the wall as hangers"). Push-back doubled from 1.5 to
-    // 3.0 (EK: "move the entire door frame back the same amount [again]")
-    // — new panel seam is 5.62+3=8.62 (confirmed via GLB parse), keeping
-    // the same 0.08 mount offset gives 8.54.
-    z: 8.54,
+    // back 1.5 units (VAULT_FRONT_WALL_PUSH_BACK in
+    // generate-gallery-room-models.py) for real room depth. That JS-side
+    // offset never moved with it, so items hung 1.5 units short of the
+    // wall, floating in open air (EK: "they should be on the wall as
+    // hangers"). New panel seam is 5.62+1.5=7.12; keeping the same 0.08
+    // mount offset gives 7.04.
+    z: 7.04,
     ry: Math.PI,
     // Was 0.6, a leftover below MIN_ITEM_SCALE that patching the 3 main
     // wall configs missed — this front-wall row is a normal wall mount
