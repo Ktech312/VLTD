@@ -145,6 +145,22 @@ const BACK_WALL_CAPACITY = 24;
 // real length — see BACK_WALL_COL_STEP / SIDE_WALL_STEP below, both
 // independently computed from these same safe bounds and landing within
 // 0.01 units of each other, not hand-tuned to match.
+// Single source of truth for the vault's front/door wall depth. This
+// group of constants MUST mirror generate-gallery-room-models.py's own
+// VAULT_FRONT_WALL_PUSH_BACK exactly — that Python script bakes the real
+// wall/door/panel geometry, and any JS code (like frontWallPosition
+// below) that places something ON that wall has to track wherever it
+// currently sits. EK's ask (2026-08-29), after the wall moved twice and
+// the item hangers were forgotten both times, floating in open air:
+// give this its own clearly-named constant instead of a bare literal
+// z value, so the NEXT push-back is a one-line change here, not a
+// silent, easy-to-forget drift between two files.
+const VAULT_FRONT_WALL_PUSH_BACK = 1.5; // mirrors generate-gallery-room-models.py's constant of the same name — keep both in sync
+const VAULT_FRONT_WALL_PANEL_SEAM_BASE_Z = 5.62; // the panel's own baked z BEFORE any push-back (matches the Python script's vault_front_panel_stile/rail base value)
+const VAULT_FRONT_WALL_ITEM_MOUNT_OFFSET = 0.08; // how far in front of the panel seam an item hangs, so its frame doesn't clip through
+const VAULT_FRONT_WALL_ITEM_Z =
+  VAULT_FRONT_WALL_PANEL_SEAM_BASE_Z + VAULT_FRONT_WALL_PUSH_BACK - VAULT_FRONT_WALL_ITEM_MOUNT_OFFSET;
+
 const BACK_WALL_HALF_WIDTH = 9.0;
 const BACK_WALL_COL_STEP = (BACK_WALL_HALF_WIDTH * 2) / 7; // 8 columns, 7 gaps
 const SIDE_WALL_SAFE_BACK_Z = -10.5;
@@ -157,7 +173,7 @@ const MAX_ROOM_ITEMS = BACK_WALL_CAPACITY + SIDE_WALL_CAPACITY * 2 + 8;
 // "blue" has no entry — it's the hand-coded shell shown permanently, with
 // no GLB to load at all. See the RoomStyle type above for what that means.
 const ROOM_MODEL_URLS: Partial<Record<RoomStyle, string>> = {
-  vault: "/models/gallery-rooms/vault-room.glb?v=front-wall-pushed-back-2026-08-28",
+  vault: "/models/gallery-rooms/vault-room.glb?v=door-frame-anchor-refactor-2026-08-29",
   whitebox: "/models/gallery-rooms/whitebox-room.glb?v=door-baseboard-fix-2026-08-28",
   arcade: "/models/gallery-rooms/arcade-room.glb?v=door-baseboard-fix-2026-08-28",
 };
@@ -1058,15 +1074,7 @@ function frontWallPosition(slot: number): RoomItemPosition {
   return {
     x: pos.x,
     y: pos.y,
-    // Was 5.54, matching the front wall's own panel seam (5.62) minus a
-    // 0.08 mount offset — from BEFORE the vault's front wall was pushed
-    // back 1.5 units (VAULT_FRONT_WALL_PUSH_BACK in
-    // generate-gallery-room-models.py) for real room depth. That JS-side
-    // offset never moved with it, so items hung 1.5 units short of the
-    // wall, floating in open air (EK: "they should be on the wall as
-    // hangers"). New panel seam is 5.62+1.5=7.12; keeping the same 0.08
-    // mount offset gives 7.04.
-    z: 7.04,
+    z: VAULT_FRONT_WALL_ITEM_Z,
     ry: Math.PI,
     // Was 0.6, a leftover below MIN_ITEM_SCALE that patching the 3 main
     // wall configs missed — this front-wall row is a normal wall mount
