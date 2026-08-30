@@ -809,7 +809,14 @@ const SHELF_ROW_Y = [4.72, 3.22, 1.72];
 
 function shelfItemY(row: number, scale: number) {
   const shelfY = SHELF_ROW_Y[row] ?? SHELF_ROW_Y[SHELF_ROW_Y.length - 1];
-  const shelfHalfThickness = 0.05;
+  // Was 0.05 — the actual baked shelf board (back_shelf_i/left_shelf_i/
+  // right_shelf_i in generate-gallery-room-models.py) is 0.12 units
+  // thick, i.e. a real half-thickness of 0.06, confirmed by reading the
+  // live GLB mesh's own bounding box (yMin/yMax +-0.06). The 0.01
+  // mismatch sank every item's frame 0.01 unit into the shelf's actual
+  // top surface — EK: "it looks like the bottom of all the frames are
+  // cut off."
+  const shelfHalfThickness = 0.06;
   const cardHalfHeight = (1.54 * scale) / 2;
   return shelfY + shelfHalfThickness + cardHalfHeight;
 }
