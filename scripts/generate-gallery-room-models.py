@@ -367,6 +367,19 @@ def add_vault_door(mats):
     cube("vault_plate_left", (-2.16, 2.48, 5.475), (0.66, 4.9, 0.35), steel, 0.035, parent=door_anchor)
     cube("vault_plate_right", (2.16, 2.48, 5.475), (0.66, 4.9, 0.35), steel, 0.035, parent=door_anchor)
     cube("vault_plate_top", (0, 5.02, 5.51), (4.32, 0.3, 0.28), steel, 0.035, parent=door_anchor)
+    # EK's ask (2026-08-29), after the plate/wall gap closed: "I can see
+    # the floor... different shades" running the full height of the
+    # post. Real cause, not a guess: making the plates deep enough to
+    # reach the wall (above) gave them real physical thickness, so their
+    # outer edge (x +-2.49) now shows a genuine visible SIDE face -- steel
+    # material, perpendicular to the front, receding back to the wall.
+    # That's not a hole, but raw exposed steel there reads as a seam
+    # against the adjacent wall. A thin wall-colored "return" spanning the
+    # same depth/height the plate does, using wall material instead of
+    # steel, makes that transition read as part of the wall's own recess
+    # instead of an exposed edge.
+    cube("vault_plate_left_return", (-2.5, 2.48, 5.475), (0.16, 4.9, 0.35), wall, parent=door_anchor)
+    cube("vault_plate_right_return", (2.5, 2.48, 5.475), (0.16, 4.9, 0.35), wall, parent=door_anchor)
     arch_curve("vault_arch_outer_trim", (0, 3.18, 5.19), 2.0, steel, 0.08, parent=door_anchor)
     arch_curve("vault_arch_inner_trim", (0, 3.18, 5.06), 1.66, dark, 0.055, parent=door_anchor)
     # EK circled this same joint again after the plate fix: "still a small
