@@ -825,7 +825,16 @@ function shelfItemY(row: number, scale: number) {
   // choice without relitigating the physical fix.
   const restClearance = 0.03;
   const cardHalfHeight = (1.54 * scale) / 2;
-  return shelfY + shelfHalfThickness + restClearance + cardHalfHeight;
+  // EK's ask (2026-08-30): "all the frames on the wall were not made the
+  // same [way] as the ones on the wall" — shelf items only got the
+  // door-wall matting fix's clearance, not its actual symmetric matting;
+  // that half of the fix got missed and never flagged. Every item now
+  // gets the same 0.065*scale matting on all 4 sides (see the frame
+  // construction below), so this has to lift the card by that same
+  // amount too, or the frame's newly-symmetric bottom border would sink
+  // right back into the shelf, undoing restClearance above.
+  const matchingFrameBottomMatting = 0.065 * scale;
+  return shelfY + shelfHalfThickness + restClearance + cardHalfHeight + matchingFrameBottomMatting;
 }
 
 function wallGridPosition(
@@ -2569,26 +2578,25 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
 
         // EK's ask (2026-08-22): the frame used to be centered on the same
         // Y as the card, symmetric matting extending equally above AND
-        // below it — but the card only has a fixed 0.05-unit clearance
-        // above the shelf board it rests on (shelfHalfThickness, doesn't
-        // scale with item size), while the frame's matting DOES scale
-        // with item size. At normal item scale that overhang already
-        // exceeds the clearance, so the frame's bottom edge sank into the
-        // shelf board itself — EK caught it live: "the bottom of the
-        // frame is in the shelf." Matting now only extends above and to
-        // the sides; the bottom of the frame is flush with the bottom of
-        // the card (like a framed piece resting directly on the shelf
-        // ledge), so it can't dip into the board regardless of scale.
+        // below it — but the card only had a fixed 0.05-unit clearance
+        // above the shelf board it rests on, while the frame's matting
+        // scales with item size, so at normal scale the frame's bottom
+        // edge sank into the shelf board — EK caught it live: "the bottom
+        // of the frame is in the shelf." The fix at the time removed
+        // bottom matting entirely instead of giving shelfItemY enough
+        // clearance to support it.
         //
-        // EK's ask (2026-08-30): that fix was for items resting ON a
-        // shelf board — but "front" wall items HANG directly on the wall,
-        // nothing underneath them to sink into. Applying the same
-        // no-bottom-matting rule there just cut the white border off with
-        // nothing to show for it — EK: "the white section on the bottom
-        // of the frame is missing." Those get real symmetric matting back.
+        // EK's ask (2026-08-30): that half-fix only ever got applied to
+        // "front" wall (door-hanging) items, and shelf items were quietly
+        // left asymmetric — never flagged, and EK caught it again in a
+        // fresh screenshot: "all the frames... were not made the same as
+        // the ones on the wall." Every item now gets real symmetric
+        // matting on all 4 sides; shelfItemY (see its own comment) lifts
+        // shelf-resting items by this same amount so the newly-added
+        // bottom border can't sink into the shelf either.
         const mattingTop = 0.065 * pos.scale;
         const mattingSide = 0.065 * pos.scale;
-        const mattingBottom = pos.wall === "front" ? mattingTop : 0;
+        const mattingBottom = mattingTop;
         const frame = new THREE.Mesh(
           new THREE.BoxGeometry(
             1.12 * pos.scale + mattingSide * 2,
