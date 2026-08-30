@@ -353,9 +353,20 @@ def add_vault_door(mats):
     # dark seam from most viewing angles. Moved the plate's own local z
     # from 5.48 to 5.41 so its near face now overlaps the post's far face
     # by 0.02, matching the X fix's own margin.
-    cube("vault_plate_left", (-2.16, 2.48, 5.41), (0.66, 4.9, 0.22), steel, 0.035, parent=door_anchor)
-    cube("vault_plate_right", (2.16, 2.48, 5.41), (0.66, 4.9, 0.22), steel, 0.035, parent=door_anchor)
-    cube("vault_plate_top", (0, 5.02, 5.48), (4.32, 0.3, 0.22), steel, 0.035, parent=door_anchor)
+    # EK's ask (2026-08-29): "the door frame is still off the wall." Real
+    # measured gap, not a guess: the plates' own back face only reached
+    # local z=5.52 (5.41 + half its 0.22 depth), while the wall's near
+    # face sits at local z=5.65 relative to this anchor (the wall's real
+    # z, 5.71 + FRONT_WALL_PUSH_BACK, minus the anchor's own 0.06+
+    # FRONT_WALL_PUSH_BACK offset — the anchor's math cancels the shared
+    # push-back term out, so this 5.65 stays correct no matter how far the
+    # wall moves in the future, exactly the point of building this as one
+    # anchored unit). Deepened each plate so its back face now reaches
+    # that same 5.65, closing the visible gap, while keeping its FRONT
+    # face (the visible surface) exactly where it was.
+    cube("vault_plate_left", (-2.16, 2.48, 5.475), (0.66, 4.9, 0.35), steel, 0.035, parent=door_anchor)
+    cube("vault_plate_right", (2.16, 2.48, 5.475), (0.66, 4.9, 0.35), steel, 0.035, parent=door_anchor)
+    cube("vault_plate_top", (0, 5.02, 5.51), (4.32, 0.3, 0.28), steel, 0.035, parent=door_anchor)
     arch_curve("vault_arch_outer_trim", (0, 3.18, 5.19), 2.0, steel, 0.08, parent=door_anchor)
     arch_curve("vault_arch_inner_trim", (0, 3.18, 5.06), 1.66, dark, 0.055, parent=door_anchor)
     cube("vault_left_post", (-1.74, 1.58, 5.2), (0.22, 3.18, 0.24), steel, 0.028, parent=door_anchor)
