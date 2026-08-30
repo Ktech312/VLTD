@@ -182,7 +182,15 @@ def add_wall_panels(style, mats):
 
     # Architectural trim and recessed wall panels create real depth instead of flat planes.
     panel = mats.get("panel_seam", trim)
-    cube("baseboard_back", (0, 0.22, -11.95), (20.7, 0.26, 0.14), trim, 0.025)
+    # EK's ask (2026-08-30): "the trim doesn't touch the floor... probably
+    # does in all the rooms but too hard to see in them" -- real, measured,
+    # and universal (this function is shared by every style): floor_slab's
+    # own top surface is at y=0 (center -0.08, height 0.16), but every
+    # baseboard piece below was centered at y=0.22 with height 0.26, so its
+    # bottom edge sat at y=0.09 -- a real 0.09-unit gap above the floor,
+    # not a lighting/visibility illusion. Centered at half its own height
+    # (0.13) instead so the bottom edge lands exactly on the floor (y=0).
+    cube("baseboard_back", (0, 0.13, -11.95), (20.7, 0.26, 0.14), trim, 0.025)
     # EK's ask (2026-08-28): "wall trim is going in front of the door."
     # This used to loop the SAME unbroken 20.7-wide baseboard over both the
     # back wall AND the front/door wall — but only the front wall has a real
@@ -196,10 +204,10 @@ def add_wall_panels(style, mats):
     # the wall's old position. whitebox/arcade's front wall never moved, so
     # their baseboard stays put.
     front_baseboard_z = 5.72 + (VAULT_FRONT_WALL_PUSH_BACK if style == "vault" else 0)
-    cube("baseboard_front_left", (-6.13, 0.22, front_baseboard_z), (8.6, 0.26, 0.14), trim, 0.025)
-    cube("baseboard_front_right", (6.13, 0.22, front_baseboard_z), (8.6, 0.26, 0.14), trim, 0.025)
-    cube("baseboard_left", (-10.36, 0.22, -3.05), (0.14, 0.26, 23.4), trim, 0.025)
-    cube("baseboard_right", (10.36, 0.22, -3.05), (0.14, 0.26, 23.4), trim, 0.025)
+    cube("baseboard_front_left", (-6.13, 0.13, front_baseboard_z), (8.6, 0.26, 0.14), trim, 0.025)
+    cube("baseboard_front_right", (6.13, 0.13, front_baseboard_z), (8.6, 0.26, 0.14), trim, 0.025)
+    cube("baseboard_left", (-10.36, 0.13, -3.05), (0.14, 0.26, 23.4), trim, 0.025)
+    cube("baseboard_right", (10.36, 0.13, -3.05), (0.14, 0.26, 23.4), trim, 0.025)
 
     for x in [-7.0, -3.5, 0.0, 3.5, 7.0]:
         cube(f"back_panel_stile_{x}", (x, 4.55, -11.88), (0.06, 7.1, 0.1), panel, 0.012)

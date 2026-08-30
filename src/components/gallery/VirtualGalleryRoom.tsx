@@ -173,9 +173,9 @@ const MAX_ROOM_ITEMS = BACK_WALL_CAPACITY + SIDE_WALL_CAPACITY * 2 + 8;
 // "blue" has no entry — it's the hand-coded shell shown permanently, with
 // no GLB to load at all. See the RoomStyle type above for what that means.
 const ROOM_MODEL_URLS: Partial<Record<RoomStyle, string>> = {
-  vault: "/models/gallery-rooms/vault-room.glb?v=door-return-no-overlap-2026-08-29",
-  whitebox: "/models/gallery-rooms/whitebox-room.glb?v=door-baseboard-fix-2026-08-28",
-  arcade: "/models/gallery-rooms/arcade-room.glb?v=door-baseboard-fix-2026-08-28",
+  vault: "/models/gallery-rooms/vault-room.glb?v=baseboard-touches-floor-2026-08-30",
+  whitebox: "/models/gallery-rooms/whitebox-room.glb?v=baseboard-touches-floor-2026-08-30",
+  arcade: "/models/gallery-rooms/arcade-room.glb?v=baseboard-touches-floor-2026-08-30",
 };
 
 // The 5 center display cases (built further down as decorative glass cabinets)
@@ -988,7 +988,6 @@ function buildWallPositions(layout: RoomLayout, count: number): RoomItemPosition
       { x: 10.22, y: HERO_Y, z: -3.2, ry: -Math.PI / 2, scale: 1.2, wall: "right" },
     ];
     const heroSlots = allHeroSlots.slice(0, count);
-    const remaining = Math.max(0, count - heroSlots.length);
     // Medium density (unchanged design intent — a step between Salon's
     // tight cluster and Store's full-width spread) — but now explicitly
     // CENTERED within the real safe range (SIDE_WALL_SAFE_BACK_Z ..
@@ -1010,6 +1009,22 @@ function buildWallPositions(layout: RoomLayout, count: number): RoomItemPosition
     const supportingExcludeSlot: Partial<Record<"back" | "left" | "right", number>> = {};
     if (heroWalls.has("left")) supportingExcludeSlot.left = 10;
     if (heroWalls.has("right")) supportingExcludeSlot.right = 10;
+    // EK's ask (2026-08-30): "you didn't carry over fixes to other rooms"
+    // — the badge-overflow bug (items flung past the wall) was only ever
+    // prevented for vault specifically, because vault's front-wall carve-
+    // out happened to bring its own requested count under real capacity.
+    // Every other style still requested the full uncarved count here,
+    // which exceeds capacity and hits the same broken overflow fallback
+    // vault used to hit. Capping the request at the wall set's real
+    // capacity (once Hero's row-exclusion is applied) makes this
+    // impossible for every style, not just the one that got lucky.
+    const trueCapacity = (["back", "left", "right"] as const).reduce((sum, w) => {
+      const caps = { back: BACK_WALL_CAPACITY, left: SIDE_WALL_CAPACITY, right: SIDE_WALL_CAPACITY };
+      // excludeSlot removes exactly one slot index per wall (see
+      // distributeAcrossWalls' own excludeSlot) — not a whole row.
+      return sum + caps[w] - (supportingExcludeSlot[w] !== undefined ? 1 : 0);
+    }, 0);
+    const remaining = Math.min(Math.max(0, count - heroSlots.length), trueCapacity);
     const supporting = distributeAcrossWalls(
       remaining,
       {
@@ -1192,11 +1207,26 @@ function buildPositions(layout: RoomLayout, style: RoomStyle): RoomItemPosition[
     wall: "cabinet",
     flat: true,
   }));
-  // Only vault+Hero has the shortfall heroSupportingOverflowSlot fixes —
-  // non-vault styles never carve out a front wall at all, so their own
-  // spotlight shortfall is a different, larger gap, not this one.
+  // EK's ask (2026-08-30): "you didn't carry over fixes to other rooms" —
+  // heroCornerFillSlots relies only on the side-wall/shelf dimensions,
+  // which generate-gallery-room-models.py bakes identically for every
+  // style (confirmed: left_wall/right_wall/left_shelf_i/right_shelf_i
+  // never branch on `style`), so it's safe for all of them, not just
+  // vault. heroSupportingOverflowSlot is different: it patches the ONE
+  // slot vault's front-wall carve-out (66 requested vs 64 real capacity)
+  // leaves short. Non-vault styles never carve out a front wall, so their
+  // own main-wall request (74) already exceeds capacity BEFORE this fix —
+  // buildWallPositions' own capacity cap (see its own comment) absorbs
+  // that by capping the request AT capacity, meaning the "missing 64th
+  // slot" this appends is already filled by that capped request for non-
+  // vault. Appending it again there would create an exact duplicate.
+  const mainWallCountForHero =
+    style === "vault" ? MAX_ROOM_ITEMS - Math.min(8, MAX_ROOM_ITEMS) : MAX_ROOM_ITEMS;
+  const heroHasSingleSlotShortfall = mainWallCountForHero - 3 < BACK_WALL_CAPACITY + (SIDE_WALL_CAPACITY - 1) * 2;
   const heroOverflow =
-    style === "vault" && layout === "spotlight" ? [heroSupportingOverflowSlot(), ...heroCornerFillSlots()] : [];
+    layout === "spotlight"
+      ? [...(heroHasSingleSlotShortfall ? [heroSupportingOverflowSlot()] : []), ...heroCornerFillSlots()]
+      : [];
   return [...wallPositions, ...cabinetPositions, ...heroOverflow];
 }
 
@@ -2211,7 +2241,12 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
     // of computing a rotation, and the placement below is chosen so the
     // disc's footprint (center + radius) never reaches the arch's x<=1.7
     // opening at all.
-    if ((roomStyle === "vault" || roomStyle === "blue")) {
+    // EK's ask (2026-08-30): "why would there be a Vault door on the Blue
+    // room?" — fair question, this heavy riveted disc is themed
+    // specifically for the vault style; Blue is its own distinct
+    // decorative style with no vault theming elsewhere, so it shouldn't
+    // share this one vault-specific prop. Vault-only now.
+    if (roomStyle === "vault") {
       const vaultDoorMaterial = new THREE.MeshStandardMaterial({
         color: 0x8b939a,
         roughness: 0.3,
@@ -2265,27 +2300,32 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
       addShell(doorGroup);
     }
 
+    // EK's ask (2026-08-30): "the trim doesn't touch the floor" — real,
+    // measured: the shell's own floor plane sits at y=-0.05, but every
+    // baseboard here was centered at y=0.08 with height 0.18, leaving its
+    // bottom edge at y=-0.01 — 0.04 above the floor. Centered so the
+    // bottom edge lands exactly on the floor (-0.05 + half-height 0.09).
     const backBaseboard = new THREE.Mesh(new THREE.BoxGeometry(20.7, 0.18, 0.12), baseboardMaterial);
-    backBaseboard.position.set(0, 0.08, -11.9);
+    backBaseboard.position.set(0, 0.04, -11.9);
     addShell(backBaseboard);
 
     const leftBaseboard = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.18, 23.4), baseboardMaterial);
-    leftBaseboard.position.set(-10.42, 0.08, -3.05);
+    leftBaseboard.position.set(-10.42, 0.04, -3.05);
     addShell(leftBaseboard);
 
     const rightBaseboard = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.18, 23.4), baseboardMaterial);
-    rightBaseboard.position.set(10.42, 0.08, -3.05);
+    rightBaseboard.position.set(10.42, 0.04, -3.05);
     addShell(rightBaseboard);
 
     // The entrance wall (either side of the doorway) had no baseboard at
     // all, so the door-frame posts appeared to just stop bare at the floor
     // instead of meeting the same trim line as the rest of the room.
     const frontBaseboardLeft = new THREE.Mesh(new THREE.BoxGeometry(8.6, 0.18, 0.12), baseboardMaterial);
-    frontBaseboardLeft.position.set(-6.13, 0.08, 5.7);
+    frontBaseboardLeft.position.set(-6.13, 0.04, 5.7);
     addShell(frontBaseboardLeft);
 
     const frontBaseboardRight = new THREE.Mesh(new THREE.BoxGeometry(8.6, 0.18, 0.12), baseboardMaterial);
-    frontBaseboardRight.position.set(6.13, 0.08, 5.7);
+    frontBaseboardRight.position.set(6.13, 0.04, 5.7);
     addShell(frontBaseboardRight);
 
     // EK's ask (2026-08-23): "the shelf design has to be custom for the
