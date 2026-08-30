@@ -1895,6 +1895,22 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
       });
     }
 
+    // Hero wall-notch flags: declared here (ahead of applyHeroNotchAndReveal's
+    // use below) rather than down near addBackRowBoard/addSideRowBoard where
+    // it's also read, because the cache-hit path below calls
+    // applyHeroNotchAndReveal SYNCHRONOUSLY — a later `const heroNotch` would
+    // throw "Cannot access before initialization" on any cache hit (the
+    // loader.load callback path is async so it never hit this, which is why
+    // the crash only showed up on repeat loads of the same style).
+    const heroNotch =
+      roomLayout === "spotlight"
+        ? {
+            back: selectedItems.length >= 1,
+            left: selectedItems.length >= 2,
+            right: selectedItems.length >= 3,
+          }
+        : { back: false, left: false, right: false };
+
     const modelUrl = ROOM_MODEL_URLS[roomStyle];
     if (inHub || !modelUrl) {
       // Nothing to wait for (hub view, or "blue"'s hand-coded shell with
@@ -2419,14 +2435,7 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
     // >=2 items; right once there are >=3 — mirrors allHeroSlots' own
     // back/left/right fill order), so Store/Salon and under-filled Hero
     // walls keep the plain unbroken board.
-    const heroNotch =
-      roomLayout === "spotlight"
-        ? {
-            back: selectedItems.length >= 1,
-            left: selectedItems.length >= 2,
-            right: selectedItems.length >= 3,
-          }
-        : { back: false, left: false, right: false };
+    // (heroNotch itself is declared earlier, before applyHeroNotchAndReveal.)
     // Half-width of the gap needed to clear Hero's own frame (1.12*1.2 +
     // 2*0.065*1.2 = 1.5 wide, half 0.75) plus a small margin — reused
     // as-is for the side walls too, since Hero's frame width becomes the
