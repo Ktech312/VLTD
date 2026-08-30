@@ -1709,6 +1709,17 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
     container.innerHTML = "";
     meshesRef.current = [];
     doorwayMeshesRef.current = [];
+    // EK's ask (2026-08-30): "why is it every time i open a room, its
+    // blue first and then changes color and design, its very noticable."
+    // Real cause: the fallback shell renders immediately (synchronously,
+    // below) while the real GLB loads in the background, so every style
+    // briefly shows the shell's own colors before the GLB's onLoad swaps
+    // in the real materials. Hiding the container until the model is
+    // ready (or immediately, for styles/hub views with no model to wait
+    // on) trades that visible color-swap for a plain hidden-then-shown
+    // reveal instead.
+    container.style.opacity = "0";
+    container.style.transition = "opacity 0.15s ease-out";
 
     // Item pickup/inspect (EK's ask, 2026-08-22/23) — populated per
     // wall-mounted item below, read from onPointerUp's item-click branch
@@ -1874,6 +1885,11 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
     }
 
     const modelUrl = ROOM_MODEL_URLS[roomStyle];
+    if (inHub || !modelUrl) {
+      // Nothing to wait for (hub view, or "blue"'s hand-coded shell with
+      // no GLB at all) — reveal immediately, no hidden wait needed.
+      container.style.opacity = "1";
+    }
     if (!inHub && modelUrl) {
       const loader = new GLTFLoader();
       loader.load(
@@ -1982,10 +1998,12 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
               roomGroup.add(segB);
             }
           });
+          container.style.opacity = "1";
         },
         undefined,
         () => {
           if (disposed) return;
+          container.style.opacity = "1";
           fallbackShell.visible = true;
         }
       );
@@ -2124,61 +2142,82 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
       rearWallShape.holes.push(holePath);
 
       const rearWall = new THREE.Mesh(new THREE.ShapeGeometry(rearWallShape, 48), doorSideMaterial);
-      rearWall.position.set(0, 0, 5.8);
+      rearWall.position.set(0, 0, 5.8 + FRONT_WALL_PUSH_BACK);
       rearWall.rotation.y = Math.PI;
       addShell(rearWall);
 
       // Riveted steel architrave tracing the arch — two posts up the
       // straight sides, a half-ring over the curved top.
+      //
+      // EK's ask (2026-08-30): "you fixed it on White and Arcade but not
+      // on Blue" — the corner-fill item slots (z=5.6, added earlier
+      // tonight, same physical shelf length on every style) sit only 0.1
+      // unit from this arch's old z=5.7, visibly clipping into it. White/
+      // Arcade's real walls moved clear of that zone when their push-back
+      // landed; Blue's shell (its own separate, hand-coded fallback with
+      // no GLB) never got the same treatment. Applying it here closes
+      // that gap AND makes the shell match each style's eventual loaded
+      // GLB position much more closely — directly helps the "blue flash"
+      // read as less of a jump when the real model swaps in.
       const archPostHeight = archStraightHeight;
       const archPostLeft = new THREE.Mesh(
         new THREE.BoxGeometry(0.16, archPostHeight, 0.18),
         doorFrameMaterial
       );
-      archPostLeft.position.set(-archHalfWidth - 0.08, archPostHeight / 2, 5.7);
+      archPostLeft.position.set(-archHalfWidth - 0.08, archPostHeight / 2, 5.7 + FRONT_WALL_PUSH_BACK);
       addShell(archPostLeft);
 
       const archPostRight = new THREE.Mesh(
         new THREE.BoxGeometry(0.16, archPostHeight, 0.18),
         doorFrameMaterial
       );
-      archPostRight.position.set(archHalfWidth + 0.08, archPostHeight / 2, 5.7);
+      archPostRight.position.set(archHalfWidth + 0.08, archPostHeight / 2, 5.7 + FRONT_WALL_PUSH_BACK);
       addShell(archPostRight);
 
       const archTop = new THREE.Mesh(
         new THREE.TorusGeometry(archHalfWidth + 0.08, 0.11, 12, 32, Math.PI),
         doorFrameMaterial
       );
-      archTop.position.set(0, archStraightHeight, 5.7);
+      archTop.position.set(0, archStraightHeight, 5.7 + FRONT_WALL_PUSH_BACK);
       addShell(archTop);
 
       // A heavier riveted hinge column at the right post — this is what the
-      // open door below visually reads as attached to.
-      const hingeColumn = new THREE.Mesh(
-        new THREE.BoxGeometry(0.4, archPostHeight + 0.6, 0.4),
-        doorFrameMaterial
-      );
-      hingeColumn.position.set(archHalfWidth + 0.3, (archPostHeight + 0.6) / 2, 5.72);
-      addShell(hingeColumn);
-      for (let i = 0; i < 6; i += 1) {
-        const rivet = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.045, 0.42, 8), trimMaterial);
-        rivet.rotation.x = Math.PI / 2;
-        rivet.position.set(archHalfWidth + 0.3, 0.4 + i * 0.55, 5.94);
-        addShell(rivet);
+      // open door below visually reads as attached to. Vault-only, same as
+      // the round door itself (see the door-disc block further down) — EK:
+      // "there is still a Gold Post where you removed the door but you
+      // didn't remove the post." This piece exists ONLY to support that
+      // door; with no door on Blue, it's an orphaned post with nothing to
+      // attach to.
+      if (roomStyle === "vault") {
+        const hingeColumn = new THREE.Mesh(
+          new THREE.BoxGeometry(0.4, archPostHeight + 0.6, 0.4),
+          doorFrameMaterial
+        );
+        hingeColumn.position.set(archHalfWidth + 0.3, (archPostHeight + 0.6) / 2, 5.72 + FRONT_WALL_PUSH_BACK);
+        addShell(hingeColumn);
+        for (let i = 0; i < 6; i += 1) {
+          const rivet = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.045, 0.42, 8), trimMaterial);
+          rivet.rotation.x = Math.PI / 2;
+          rivet.position.set(archHalfWidth + 0.3, 0.4 + i * 0.55, 5.94 + FRONT_WALL_PUSH_BACK);
+          addShell(rivet);
+        }
       }
     } else {
+      // Same push-back as the vault/blue arch above and as every GLB-backed
+      // style's own front wall now — keeps this fallback shell close to
+      // whatever the real model will show once it loads.
       const rearWallLeft = new THREE.Mesh(new THREE.PlaneGeometry(8.75, 9.2), doorSideMaterial);
-      rearWallLeft.position.set(-6.13, 4.55, 5.8);
+      rearWallLeft.position.set(-6.13, 4.55, 5.8 + FRONT_WALL_PUSH_BACK);
       rearWallLeft.rotation.y = Math.PI;
       addShell(rearWallLeft);
 
       const rearWallRight = new THREE.Mesh(new THREE.PlaneGeometry(8.75, 9.2), doorSideMaterial);
-      rearWallRight.position.set(6.13, 4.55, 5.8);
+      rearWallRight.position.set(6.13, 4.55, 5.8 + FRONT_WALL_PUSH_BACK);
       rearWallRight.rotation.y = Math.PI;
       addShell(rearWallRight);
 
       const rearWallTop = new THREE.Mesh(new THREE.PlaneGeometry(3.5, 4.25), doorSideMaterial);
-      rearWallTop.position.set(0, 7.08, 5.8);
+      rearWallTop.position.set(0, 7.08, 5.8 + FRONT_WALL_PUSH_BACK);
       rearWallTop.rotation.y = Math.PI;
       addShell(rearWallTop);
 
@@ -2188,15 +2227,15 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
       // doorways are open passages you can see straight through, not
       // blocked-off walls.
       const doorLeft = new THREE.Mesh(new THREE.BoxGeometry(0.16, 4.95, 0.18), doorFrameMaterial);
-      doorLeft.position.set(-1.85, 2.45, 5.64);
+      doorLeft.position.set(-1.85, 2.45, 5.64 + FRONT_WALL_PUSH_BACK);
       addShell(doorLeft);
 
       const doorRight = new THREE.Mesh(new THREE.BoxGeometry(0.16, 4.95, 0.18), doorFrameMaterial);
-      doorRight.position.set(1.85, 2.45, 5.64);
+      doorRight.position.set(1.85, 2.45, 5.64 + FRONT_WALL_PUSH_BACK);
       addShell(doorRight);
 
       const doorHeader = new THREE.Mesh(new THREE.BoxGeometry(3.85, 0.18, 0.18), doorFrameMaterial);
-      doorHeader.position.set(0, 4.92, 5.64);
+      doorHeader.position.set(0, 4.92, 5.64 + FRONT_WALL_PUSH_BACK);
       addShell(doorHeader);
     }
 
@@ -2210,17 +2249,17 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
       metalness: 0.02,
     });
     const beyondWall = new THREE.Mesh(new THREE.PlaneGeometry(3.6, 4.8), beyondMaterial);
-    beyondWall.position.set(0, 2.5, 8.6);
+    beyondWall.position.set(0, 2.5, 8.6 + FRONT_WALL_PUSH_BACK);
     beyondWall.rotation.y = Math.PI;
     addShell(beyondWall);
 
     const beyondFloor = new THREE.Mesh(new THREE.PlaneGeometry(3.6, 3), floorMaterial);
     beyondFloor.rotation.x = -Math.PI / 2;
-    beyondFloor.position.set(0, -0.04, 7.2);
+    beyondFloor.position.set(0, -0.04, 7.2 + FRONT_WALL_PUSH_BACK);
     addShell(beyondFloor);
 
     const beyondLight = new THREE.PointLight(palette.glow, 0.5, 6);
-    beyondLight.position.set(0, 3, 7.5);
+    beyondLight.position.set(0, 3, 7.5 + FRONT_WALL_PUSH_BACK);
     roomGroup.add(beyondLight);
 
     // Vault style only: a heavy riveted steel door, fully swung open and
@@ -2324,11 +2363,11 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
     // all, so the door-frame posts appeared to just stop bare at the floor
     // instead of meeting the same trim line as the rest of the room.
     const frontBaseboardLeft = new THREE.Mesh(new THREE.BoxGeometry(8.6, 0.18, 0.12), baseboardMaterial);
-    frontBaseboardLeft.position.set(-6.13, 0.04, 5.7);
+    frontBaseboardLeft.position.set(-6.13, 0.04, 5.7 + FRONT_WALL_PUSH_BACK);
     addShell(frontBaseboardLeft);
 
     const frontBaseboardRight = new THREE.Mesh(new THREE.BoxGeometry(8.6, 0.18, 0.12), baseboardMaterial);
-    frontBaseboardRight.position.set(6.13, 0.04, 5.7);
+    frontBaseboardRight.position.set(6.13, 0.04, 5.7 + FRONT_WALL_PUSH_BACK);
     addShell(frontBaseboardRight);
 
     // EK's ask (2026-08-23): "the shelf design has to be custom for the
@@ -2486,15 +2525,14 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
     // wall itself sat at 5.8. Mounting it on the wall's NEAR face instead,
     // using the exact same FRONT_WALL_ITEM_Z the item hangers already use
     // successfully on this same wall, rather than inventing a third
-    // offset. Applies to every GLB-backed style now (2026-08-30: "it
-    // doesn't look like you pushed the wall back on the other ones") —
-    // "blue" is still excluded because it's a hand-coded fallback shell
-    // with no GLB at all, a separate code path this push-back was never
-    // extended into; flagged, not silently skipped.
+    // offset. Applies to every style now (2026-08-30: "it doesn't look
+    // like you pushed the wall back on the other ones") — Blue's own
+    // fallback-shell arch got the same push-back applied above, so its
+    // wall sits at the same effective position as every GLB-backed style.
     buildDoorwaySign(
       0,
       (roomStyle === "vault" || roomStyle === "blue") && !inHub ? 5.85 : 5.55,
-      roomStyle !== "blue" ? FRONT_WALL_ITEM_Z : 5.9,
+      FRONT_WALL_ITEM_Z,
       inHub ? "Campus Map" : "Main Gallery",
       true,
       (roomStyle === "vault" || roomStyle === "blue") && !inHub ? { width: 1.65, height: 0.42 } : undefined
