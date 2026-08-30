@@ -378,8 +378,16 @@ def add_vault_door(mats):
     # same depth/height the plate does, using wall material instead of
     # steel, makes that transition read as part of the wall's own recess
     # instead of an exposed edge.
-    cube("vault_plate_left_return", (-2.5, 2.48, 5.475), (0.16, 4.9, 0.35), wall, parent=door_anchor)
-    cube("vault_plate_right_return", (2.5, 2.48, 5.475), (0.16, 4.9, 0.35), wall, parent=door_anchor)
+    #
+    # EK's ask (2026-08-29), immediately after: "keep flickering, this
+    # feels like a Band-Aid." Fair — the first version started at x=+-2.5
+    # with a 0.16 width, overlapping the plate's own volume by 0.07 with
+    # an IDENTICAL depth range, so both pieces had coincident faces at the
+    # exact same z fighting for the same pixels. Starting this exactly at
+    # the plate's own true edge (+-2.49) instead of overlapping it removes
+    # the coincident geometry entirely — touching, not sharing volume.
+    cube("vault_plate_left_return", (-2.535, 2.48, 5.475), (0.09, 4.9, 0.35), wall, parent=door_anchor)
+    cube("vault_plate_right_return", (2.535, 2.48, 5.475), (0.09, 4.9, 0.35), wall, parent=door_anchor)
     arch_curve("vault_arch_outer_trim", (0, 3.18, 5.19), 2.0, steel, 0.08, parent=door_anchor)
     arch_curve("vault_arch_inner_trim", (0, 3.18, 5.06), 1.66, dark, 0.055, parent=door_anchor)
     # EK circled this same joint again after the plate fix: "still a small

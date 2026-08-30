@@ -173,7 +173,7 @@ const MAX_ROOM_ITEMS = BACK_WALL_CAPACITY + SIDE_WALL_CAPACITY * 2 + 8;
 // "blue" has no entry — it's the hand-coded shell shown permanently, with
 // no GLB to load at all. See the RoomStyle type above for what that means.
 const ROOM_MODEL_URLS: Partial<Record<RoomStyle, string>> = {
-  vault: "/models/gallery-rooms/vault-room.glb?v=door-plate-wall-return-2026-08-29",
+  vault: "/models/gallery-rooms/vault-room.glb?v=door-return-no-overlap-2026-08-29",
   whitebox: "/models/gallery-rooms/whitebox-room.glb?v=door-baseboard-fix-2026-08-28",
   arcade: "/models/gallery-rooms/arcade-room.glb?v=door-baseboard-fix-2026-08-28",
 };
@@ -2411,18 +2411,20 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
       roomGroup.add(sign);
     }
 
-    // EK's ask (2026-08-29): tried tracking this sign's z with
-    // VAULT_FRONT_WALL_PUSH_BACK (like the item hangers) since it read as
-    // floating off the wall — but that pushed it back far enough that it
-    // stopped rendering from the room's own camera entirely ("still no
-    // visible sign"). Reverted to the original literal 5.9 that's
-    // confirmed to actually render — this sign is a smaller, separate
-    // problem from the item hangers and needs its own real diagnosis, not
-    // another guess grafted onto the push-back fix.
+    // EK's ask (2026-08-29): first tried mounting this sign on the wall's
+    // FAR (vestibule) face — too far back to render from the room's own
+    // camera at all ("still no visible sign"). Reverting to the original
+    // literal 5.9 fixed visibility but left it floating in open air once
+    // the wall moved to 7.3 (EK: "floating again... not on the wall") —
+    // 5.9 was only ever close to the wall by coincidence, back when the
+    // wall itself sat at 5.8. Mounting it on the wall's NEAR face instead,
+    // using the exact same VAULT_FRONT_WALL_ITEM_Z the item hangers
+    // already use successfully on this same wall, rather than inventing a
+    // third offset.
     buildDoorwaySign(
       0,
       (roomStyle === "vault" || roomStyle === "blue") && !inHub ? 5.85 : 5.55,
-      5.9,
+      roomStyle === "vault" ? VAULT_FRONT_WALL_ITEM_Z : 5.9,
       inHub ? "Campus Map" : "Main Gallery",
       true,
       (roomStyle === "vault" || roomStyle === "blue") && !inHub ? { width: 1.65, height: 0.42 } : undefined
