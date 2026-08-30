@@ -1910,6 +1910,10 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
             right: selectedItems.length >= 3,
           }
         : { back: false, left: false, right: false };
+    // Same reason as heroNotch above: also read synchronously inside
+    // applyHeroNotchAndReveal on a cache hit, so it must be declared
+    // before that function's first call, not down near addBackRowBoard.
+    const HERO_NOTCH_HALF = 0.9;
 
     const modelUrl = ROOM_MODEL_URLS[roomStyle];
     if (inHub || !modelUrl) {
@@ -2435,12 +2439,8 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
     // >=2 items; right once there are >=3 — mirrors allHeroSlots' own
     // back/left/right fill order), so Store/Salon and under-filled Hero
     // walls keep the plain unbroken board.
-    // (heroNotch itself is declared earlier, before applyHeroNotchAndReveal.)
-    // Half-width of the gap needed to clear Hero's own frame (1.12*1.2 +
-    // 2*0.065*1.2 = 1.5 wide, half 0.75) plus a small margin — reused
-    // as-is for the side walls too, since Hero's frame width becomes the
-    // along-wall (Z) extent there once rotated onto that wall.
-    const HERO_NOTCH_HALF = 0.9;
+    // (heroNotch and HERO_NOTCH_HALF are both declared earlier, before
+    // applyHeroNotchAndReveal, for the same cache-hit-synchronous-call reason.)
 
     function addBackRowBoard(y: number, notch: boolean) {
       if (!notch) {
