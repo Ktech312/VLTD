@@ -248,6 +248,52 @@ who owns a screen.** EK is aware of this.
 
 ---
 
+## ✅ 2026-08-30, later still same session — actual root cause of the "flashes
+several times" report found and fixed, commit `5215a50`. EK's own description
+of the flash sequence ("flashes, blue, blank, purple with no items and the
+purple with items") was the key: 4 distinct, describable visual states, not
+random flicker — meaning 3-4 REAL full scene rebuilds, not a rendering glitch.
+
+**Root cause:** the mount effect (`useEffect(() => {...}, [])` around line
+1387) restores state in real stages: `roomStyle` starts hardcoded `"vault"`,
+then a synchronous `localStorage` draft read sets the real saved
+style/items, then an async `syncVaultItemsFromSupabase()` call later
+replaces items again with the real cloud vault. Every one of those `setState`
+calls is a dependency of the giant scene-building effect two lines below in
+this same file's structure — so that effect fully tears down and rebuilds
+the ENTIRE Three.js scene (including a fresh room GLB fetch if the style
+changed) on EACH stage: vault-default (blue-tinted fallback shell colors,
+see `roomStyle === "vault" || "blue"` throughout) → real style, no items yet
+→ real style with real items. The commit `6ea1ced`/`6199812` crash-fix
+session's cache-hit work was real and still correct, but it only prevented
+RE-fetching the SAME style's GLB twice — it did nothing about the room
+legitimately becoming 3 different scenes in a row as data arrived in stages.
+
+**Fix:** added a `dataReady` state flag (declared next to `roomStyle`), only
+flipped true by the mount effect once its whole restore sequence has settled
+— either the cloud sync promise resolves (success or empty), or a 4s safety
+timeout fires first (never leave the room blank forever over one slow/failed
+request). The scene-building effect now checks `dataReady` first thing and,
+if false, just clears the container and returns — no renderer setup, no GLB
+fetch, no item meshes, nothing visible. Once `dataReady` flips true (added to
+that effect's dependency array), it runs ONE real build with final data.
+
+**Verified live** (fresh tab, hard navigation, not a stale cached bundle):
+- No console exceptions.
+- `performance.getEntriesByType('resource')` shows exactly ONE `.glb` fetch
+  for the whole load (previously two — a wasted `vault-room.glb` fetch for
+  the default style that was never actually shown, then the real style's).
+- Screenshot after load: room renders correctly with real items in place,
+  Hero/spotlight layout intact.
+- Not separately verified: the visual "how many distinct flashes does a
+  human eye see" — the mechanism that caused the 4 described stages
+  (multiple real rebuilds) is confirmed gone via the single-fetch check
+  above, but nobody has watched the actual load with a stopwatch/screen
+  recording. If EK still sees more than one blank-then-reveal transition,
+  that's a new, different report — don't assume this entry covers it.
+
+---
+
 ## ✅ 2026-08-30, later same session — the "flashes several times on load"
 model-cache fix (commit `5c0260d`, documented in the PROCESS FAILURE backfill
 below) shipped with a real crash bug, found and fixed same session, commits
