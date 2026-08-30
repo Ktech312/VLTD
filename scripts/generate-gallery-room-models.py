@@ -14,7 +14,14 @@ OUT_DIR = os.path.join(ROOT, "public", "models", "gallery-rooms")
 # because add_wall_panels() also builds a front baseboard shared by every
 # style, and vault's copy of that piece needs to move with the wall too, or
 # it's left floating at the wall's OLD position.
-VAULT_FRONT_WALL_PUSH_BACK = 1.5
+#
+# EK's ask (2026-08-29): doubled from 1.5 to 3.0 -- "move the entire door
+# frame back the same amount [again]" -- for even more room depth. Every
+# door/arch/plate/rivet piece in add_vault_door() is already parameterized
+# off this one constant via DOOR_Z_SHIFT, so this single change carries the
+# whole assembly back together, preserving every relative gap/reveal fixed
+# earlier tonight.
+VAULT_FRONT_WALL_PUSH_BACK = 3.0
 
 
 def clear_scene():
