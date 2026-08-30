@@ -8,13 +8,17 @@ import bpy
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 OUT_DIR = os.path.join(ROOT, "public", "models", "gallery-rooms")
 
-# EK's ask (2026-08-28): vault's own front/door wall (and everything mounted
-# to it) got pushed this far further out to give the room real extra depth —
+# EK's ask (2026-08-28): the front/door wall (and everything mounted to
+# it) got pushed this far further out to give the room real extra depth —
 # see add_vault_door()'s own comment for the full reasoning. Module-level
 # because add_wall_panels() also builds a front baseboard shared by every
-# style, and vault's copy of that piece needs to move with the wall too, or
-# it's left floating at the wall's OLD position.
-VAULT_FRONT_WALL_PUSH_BACK = 1.5
+# style, and each style's copy of that piece needs to move with its own
+# wall too, or it's left floating at the wall's OLD position.
+#
+# EK's ask (2026-08-30): "it doesn't look like you pushed the wall back on
+# the other ones" — true, this only ever applied to vault (hence the old
+# name). Applies to every style's front wall now, not just vault's.
+FRONT_WALL_PUSH_BACK = 1.5
 
 
 def clear_scene():
@@ -199,11 +203,10 @@ def add_wall_panels(style, mats):
     # shell's own frontBaseboardLeft/frontBaseboardRight
     # (VirtualGalleryRoom.tsx) exactly (same 8.6 width, same +-6.13 center) so
     # the baked model and the shell finally agree here.
-    # Vault's own front wall moved (VAULT_FRONT_WALL_PUSH_BACK, see top of
+    # Every style's front wall moves back (FRONT_WALL_PUSH_BACK, see top of
     # file) — this baseboard has to move with it or it's left floating at
-    # the wall's old position. whitebox/arcade's front wall never moved, so
-    # their baseboard stays put.
-    front_baseboard_z = 5.72 + (VAULT_FRONT_WALL_PUSH_BACK if style == "vault" else 0)
+    # the wall's old position.
+    front_baseboard_z = 5.72 + FRONT_WALL_PUSH_BACK
     cube("baseboard_front_left", (-6.13, 0.13, front_baseboard_z), (8.6, 0.26, 0.14), trim, 0.025)
     cube("baseboard_front_right", (6.13, 0.13, front_baseboard_z), (8.6, 0.26, 0.14), trim, 0.025)
     cube("baseboard_left", (-10.36, 0.13, -3.05), (0.14, 0.26, 23.4), trim, 0.025)
@@ -282,13 +285,17 @@ def add_cases(mats):
 def add_standard_door(mats):
     trim = mats["trim"]
     wall = mats["door_wall"]
-    cube("front_wall_left", (-6.13, 4.55, 5.8), (8.75, 9.2, 0.18), wall, 0.012)
-    cube("front_wall_right", (6.13, 4.55, 5.8), (8.75, 9.2, 0.18), wall, 0.012)
-    cube("front_wall_top", (0, 7.08, 5.8), (3.5, 4.25, 0.18), wall, 0.012)
-    cube("door_left", (-1.85, 2.45, 5.62), (0.18, 4.95, 0.22), trim, 0.025)
-    cube("door_right", (1.85, 2.45, 5.62), (0.18, 4.95, 0.22), trim, 0.025)
-    cube("door_header", (0, 4.92, 5.62), (3.85, 0.18, 0.22), trim, 0.025)
-    cube("vestibule_wall", (0, 2.5, 8.6), (3.6, 4.8, 0.16), mats["vestibule"], 0.012)
+    # EK's ask (2026-08-30): "it doesn't look like you pushed the wall back
+    # on the other ones" — true, FRONT_WALL_PUSH_BACK only ever applied to
+    # vault's own add_vault_door(). Applying the same push-back here gives
+    # whitebox/arcade the same real room depth vault already got.
+    cube("front_wall_left", (-6.13, 4.55, 5.8 + FRONT_WALL_PUSH_BACK), (8.75, 9.2, 0.18), wall, 0.012)
+    cube("front_wall_right", (6.13, 4.55, 5.8 + FRONT_WALL_PUSH_BACK), (8.75, 9.2, 0.18), wall, 0.012)
+    cube("front_wall_top", (0, 7.08, 5.8 + FRONT_WALL_PUSH_BACK), (3.5, 4.25, 0.18), wall, 0.012)
+    cube("door_left", (-1.85, 2.45, 5.62 + FRONT_WALL_PUSH_BACK), (0.18, 4.95, 0.22), trim, 0.025)
+    cube("door_right", (1.85, 2.45, 5.62 + FRONT_WALL_PUSH_BACK), (0.18, 4.95, 0.22), trim, 0.025)
+    cube("door_header", (0, 4.92, 5.62 + FRONT_WALL_PUSH_BACK), (3.85, 0.18, 0.22), trim, 0.025)
+    cube("vestibule_wall", (0, 2.5, 8.6 + FRONT_WALL_PUSH_BACK), (3.6, 4.8, 0.16), mats["vestibule"], 0.012)
 
 
 def add_vault_door(mats):
@@ -307,7 +314,6 @@ def add_vault_door(mats):
     # that feeling. door_anchor (below) carries the whole door assembly
     # back with it by the same amount, so it stays flush with the wall's
     # NEW position rather than reopening the gap that was just closed.
-    FRONT_WALL_PUSH_BACK = VAULT_FRONT_WALL_PUSH_BACK
     # Room-side vault entrance only. The heavy round vault door belongs outside
     # this room, so this model intentionally contains no interior round door.
     cube("vault_front_wall_left", (-6.5, 4.55, 5.8 + FRONT_WALL_PUSH_BACK), (8.0, 9.2, 0.18), wall, 0.012)

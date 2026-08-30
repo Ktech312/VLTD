@@ -145,21 +145,24 @@ const BACK_WALL_CAPACITY = 24;
 // real length — see BACK_WALL_COL_STEP / SIDE_WALL_STEP below, both
 // independently computed from these same safe bounds and landing within
 // 0.01 units of each other, not hand-tuned to match.
-// Single source of truth for the vault's front/door wall depth. This
-// group of constants MUST mirror generate-gallery-room-models.py's own
-// VAULT_FRONT_WALL_PUSH_BACK exactly — that Python script bakes the real
+// Single source of truth for the front/door wall's depth, every style.
+// This group of constants MUST mirror generate-gallery-room-models.py's
+// own FRONT_WALL_PUSH_BACK exactly — that Python script bakes the real
 // wall/door/panel geometry, and any JS code (like frontWallPosition
 // below) that places something ON that wall has to track wherever it
 // currently sits. EK's ask (2026-08-29), after the wall moved twice and
 // the item hangers were forgotten both times, floating in open air:
 // give this its own clearly-named constant instead of a bare literal
 // z value, so the NEXT push-back is a one-line change here, not a
-// silent, easy-to-forget drift between two files.
-const VAULT_FRONT_WALL_PUSH_BACK = 1.5; // mirrors generate-gallery-room-models.py's constant of the same name — keep both in sync
-const VAULT_FRONT_WALL_PANEL_SEAM_BASE_Z = 5.62; // the panel's own baked z BEFORE any push-back (matches the Python script's vault_front_panel_stile/rail base value)
-const VAULT_FRONT_WALL_ITEM_MOUNT_OFFSET = 0.08; // how far in front of the panel seam an item hangs, so its frame doesn't clip through
-const VAULT_FRONT_WALL_ITEM_Z =
-  VAULT_FRONT_WALL_PANEL_SEAM_BASE_Z + VAULT_FRONT_WALL_PUSH_BACK - VAULT_FRONT_WALL_ITEM_MOUNT_OFFSET;
+// silent, easy-to-forget drift between two files. EK's ask (2026-08-30):
+// "it doesn't look like you pushed the wall back on the other ones" —
+// this only ever applied to vault. 5.62 is also whitebox/arcade's own
+// door assembly base z (add_standard_door's door_left/right/header), so
+// the same formula applies to every style now, not just vault's.
+const FRONT_WALL_PUSH_BACK = 1.5; // mirrors generate-gallery-room-models.py's constant of the same name — keep both in sync
+const FRONT_WALL_PANEL_SEAM_BASE_Z = 5.62; // the panel/door assembly's own baked z BEFORE any push-back, shared by every style
+const FRONT_WALL_ITEM_MOUNT_OFFSET = 0.08; // how far in front of the panel seam an item hangs, so its frame doesn't clip through
+const FRONT_WALL_ITEM_Z = FRONT_WALL_PANEL_SEAM_BASE_Z + FRONT_WALL_PUSH_BACK - FRONT_WALL_ITEM_MOUNT_OFFSET;
 
 const BACK_WALL_HALF_WIDTH = 9.0;
 const BACK_WALL_COL_STEP = (BACK_WALL_HALF_WIDTH * 2) / 7; // 8 columns, 7 gaps
@@ -173,9 +176,9 @@ const MAX_ROOM_ITEMS = BACK_WALL_CAPACITY + SIDE_WALL_CAPACITY * 2 + 8;
 // "blue" has no entry — it's the hand-coded shell shown permanently, with
 // no GLB to load at all. See the RoomStyle type above for what that means.
 const ROOM_MODEL_URLS: Partial<Record<RoomStyle, string>> = {
-  vault: "/models/gallery-rooms/vault-room.glb?v=baseboard-touches-floor-2026-08-30",
-  whitebox: "/models/gallery-rooms/whitebox-room.glb?v=baseboard-touches-floor-2026-08-30",
-  arcade: "/models/gallery-rooms/arcade-room.glb?v=baseboard-touches-floor-2026-08-30",
+  vault: "/models/gallery-rooms/vault-room.glb?v=front-wall-pushback-all-styles-2026-08-30",
+  whitebox: "/models/gallery-rooms/whitebox-room.glb?v=front-wall-pushback-all-styles-2026-08-30",
+  arcade: "/models/gallery-rooms/arcade-room.glb?v=front-wall-pushback-all-styles-2026-08-30",
 };
 
 // The 5 center display cases (built further down as decorative glass cabinets)
@@ -1112,7 +1115,7 @@ function frontWallPosition(slot: number): RoomItemPosition {
   return {
     x: pos.x,
     y: pos.y,
-    z: VAULT_FRONT_WALL_ITEM_Z,
+    z: FRONT_WALL_ITEM_Z,
     ry: Math.PI,
     // Was 0.6, a leftover below MIN_ITEM_SCALE that patching the 3 main
     // wall configs missed — this front-wall row is a normal wall mount
@@ -2481,13 +2484,17 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
     // the wall moved to 7.3 (EK: "floating again... not on the wall") —
     // 5.9 was only ever close to the wall by coincidence, back when the
     // wall itself sat at 5.8. Mounting it on the wall's NEAR face instead,
-    // using the exact same VAULT_FRONT_WALL_ITEM_Z the item hangers
-    // already use successfully on this same wall, rather than inventing a
-    // third offset.
+    // using the exact same FRONT_WALL_ITEM_Z the item hangers already use
+    // successfully on this same wall, rather than inventing a third
+    // offset. Applies to every GLB-backed style now (2026-08-30: "it
+    // doesn't look like you pushed the wall back on the other ones") —
+    // "blue" is still excluded because it's a hand-coded fallback shell
+    // with no GLB at all, a separate code path this push-back was never
+    // extended into; flagged, not silently skipped.
     buildDoorwaySign(
       0,
       (roomStyle === "vault" || roomStyle === "blue") && !inHub ? 5.85 : 5.55,
-      roomStyle === "vault" ? VAULT_FRONT_WALL_ITEM_Z : 5.9,
+      roomStyle !== "blue" ? FRONT_WALL_ITEM_Z : 5.9,
       inHub ? "Campus Map" : "Main Gallery",
       true,
       (roomStyle === "vault" || roomStyle === "blue") && !inHub ? { width: 1.65, height: 0.42 } : undefined
@@ -2587,7 +2594,7 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
 
         const normal = new THREE.Vector3(Math.sin(pos.ry), 0, Math.cos(pos.ry));
 
-        // Real wall planes: back z=-12, front z=5.8+VAULT_FRONT_WALL_PUSH_BACK, left x=-10.5, right x=10.5. The frame used to
+        // Real wall planes: back z=-12, front z=5.8+FRONT_WALL_PUSH_BACK, left x=-10.5, right x=10.5. The frame used to
         // be a fixed thin box floating ~0.045 behind the card, which left a visible
         // air gap (0.15-0.2 units) between the frame and the actual wall — reading as
         // the item hovering in front of the wall instead of mounted on it. Stretch the
@@ -2601,12 +2608,12 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
               ? pos.z + 12
               : pos.wall === "front"
                 ? // Was a bare "5.8 - pos.z" — went negative (clamping
-                  // frameDepth to a useless 0.06) once VAULT_FRONT_WALL_ITEM_Z
+                  // frameDepth to a useless 0.06) once FRONT_WALL_ITEM_Z
                   // moved pos.z past the wall's OLD 5.8 reference to fix the
                   // door-wall items floating bug. Same 5.8 + push-back the
                   // wall/door geometry itself uses, so this stays correct
                   // whenever that constant changes again.
-                  5.8 + VAULT_FRONT_WALL_PUSH_BACK - pos.z
+                  5.8 + FRONT_WALL_PUSH_BACK - pos.z
                 : pos.wall === "left"
                   ? pos.x + 10.5
                   : 10.5 - pos.x;
