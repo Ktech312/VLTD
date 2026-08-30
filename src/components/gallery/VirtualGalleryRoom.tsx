@@ -1304,6 +1304,19 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
   // control doesn't do anything." Now every switch reports what happened.
   const [sourceStatus, setSourceStatus] = useState<{ ok: boolean; message: string } | null>(null);
   const [selectedIds, setSelectedIds] = useState<string[]>(() => fillSlots(DEMO_ITEMS.map((item) => item.id)));
+  // EK's ask (2026-08-30): "it flashes blue, blank, purple no items, purple
+  // with items" — the mount effect below restores state in real stages (the
+  // hardcoded "vault" default, then the localStorage draft's real style/items
+  // synchronously, then the actual cloud vault items async) and the 3D scene
+  // effect rebuilds + reveals itself from scratch on EVERY one of those
+  // changes, each one a real network-and-render cycle long enough to see.
+  // Root cause isn't "reveal too abruptly" (already fixed once) — it's
+  // revealing a legitimately different scene 3-4 times. Fix: don't reveal
+  // (or even start loading a room GLB / building items) at all until this
+  // flips true once, after the mount effect's whole restore sequence
+  // (sync draft + async cloud sync) has actually settled — see its own
+  // comment further down for how/when it flips.
+  const [dataReady, setDataReady] = useState(false);
   const [roomStyle, setRoomStyle] = useState<RoomStyle>("vault");
   const [roomLayout, setRoomLayout] = useState<RoomLayout>("storefront");
   const [viewMode, setViewMode] = useState<ViewMode>("room");
@@ -1397,6 +1410,19 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
     // promise's `.then()` ever gets a chance to run — a saved draft's own
     // layout should win over auto-placing the newly-synced real items.
     let draftAppliedSelectedIds = false;
+    // The 3D scene doesn't reveal anything until `dataReady` flips true (see
+    // its own comment up by useState) — so the room shows once, fully
+    // settled, instead of the vault-default -> draft-style -> synced-items
+    // sequence each visibly rendering in turn. `markDataReady` fires once,
+    // whichever comes first: the real cloud sync settling, or (defensively,
+    // in case that hangs) a 4s timeout — never leave the room blank forever
+    // over one slow/failed request.
+    let dataReadySettled = false;
+    const markDataReady = () => {
+      if (dataReadySettled) return;
+      dataReadySettled = true;
+      setDataReady(true);
+    };
     void syncVaultItemsFromSupabase().then((syncedItems) => {
       if (syncedItems.length === 0) return;
       setItems(syncedItems);
@@ -1407,7 +1433,8 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
       if (vaultItems.length === 0 && !draftAppliedSelectedIds) {
         setSelectedIds(fillSlots(syncedItems.slice(0, 12).map((item) => item.id)));
       }
-    });
+    }).finally(markDataReady);
+    const dataReadyFallback = window.setTimeout(markDataReady, 4000);
 
     try {
       const draft = safeDraft(JSON.parse(window.localStorage.getItem(DRAFT_KEY) || "{}"));
@@ -1450,6 +1477,8 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
     } catch {
       // Ignore malformed local drafts.
     }
+
+    return () => window.clearTimeout(dataReadyFallback);
   }, []);
 
   const slotItems = useMemo(() => {
@@ -1716,6 +1745,24 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
     const mount = mountRef.current;
     if (!mount) return;
     const container = mount;
+
+    // EK's ask (2026-08-30): "it flashes blue, blank, purple no items,
+    // purple with items" — each of those was a REAL scene, not a glitch:
+    // this effect faithfully rebuilds from scratch every time roomStyle or
+    // the item list changes, and the mount effect above sets those in
+    // stages (hardcoded "vault" default -> localStorage draft's real
+    // style/items, synchronously -> the actual cloud vault items, async).
+    // Nothing to fix in the rebuild logic itself — the fix is to not run it
+    // at all on the intermediate, not-yet-final states. `dataReady` (set by
+    // that mount effect once its whole restore sequence has settled) gates
+    // this: skip building/loading anything until the data behind it is the
+    // real, final data, so there's one hidden wait then one correct reveal
+    // instead of 3-4 visibly different ones.
+    if (!dataReady) {
+      container.innerHTML = "";
+      container.style.opacity = "0";
+      return;
+    }
 
     container.innerHTML = "";
     meshesRef.current = [];
@@ -3644,7 +3691,7 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
       renderer.dispose();
       container.innerHTML = "";
     };
-  }, [isOrganizing, palette.floor, palette.glow, palette.trim, palette.wall, roomLayout, roomStyle, showValues, slotDisplayNumber, slotItems, slotPositions, universeRoomsKey, viewMode, wallTextureUrl]);
+  }, [dataReady, isOrganizing, palette.floor, palette.glow, palette.trim, palette.wall, roomLayout, roomStyle, showValues, slotDisplayNumber, slotItems, slotPositions, universeRoomsKey, viewMode, wallTextureUrl]);
 
   function applyGallery(nextGalleryId: string) {
     setGalleryId(nextGalleryId);
