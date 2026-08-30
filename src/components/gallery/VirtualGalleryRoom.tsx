@@ -1255,6 +1255,17 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
   const roomGroupRef = useRef<THREE.Group | null>(null);
   const meshesRef = useRef<THREE.Mesh[]>([]);
   const doorwayMeshesRef = useRef<THREE.Mesh[]>([]);
+  // EK's ask (2026-08-30): "it still flashes several times like its
+  // loading." Real cause: the mount effect's own dependency list
+  // includes things that change more than once during a normal room
+  // load (slotItems/slotPositions as saved data arrives, palette,
+  // showValues, isOrganizing) — every change tears the whole scene down
+  // and re-fetches + re-parses the SAME GLB from scratch, each one its
+  // own hide-then-show flash. A ref (survives across re-runs, unlike
+  // effect-local state) caches the fully processed model per URL so
+  // every re-run after the first reuses it instantly instead of
+  // re-fetching, with no gap to flash during.
+  const loadedModelCacheRef = useRef<Map<string, THREE.Group>>(new Map());
   // Rearranging items (or flipping Values/Style/Wallpaper) rebuilds the whole
   // Three.js scene — without this, that rebuild silently reset the camera to the
   // default spawn every time, which is why one drag in Arrange used to throw you
@@ -1890,7 +1901,72 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
       // no GLB at all) — reveal immediately, no hidden wait needed.
       container.style.opacity = "1";
     }
+    // Applies the Hero-layout notched-shelf swap and reveals the room —
+    // shared by both the cache-hit and freshly-loaded paths below, so a
+    // cached model gets this re-applied fresh each time (heroNotch flags
+    // can differ between re-runs) instead of baking a stale notch state
+    // into the cache.
+    function applyHeroNotchAndReveal(model: THREE.Group) {
+      roomGroup.add(model);
+      shellObjects.forEach((object) => {
+        object.visible = false;
+      });
+
+      // EK's ask (2026-08-23): same "custom shelf for the Hero frame"
+      // fix as the shell (addBackRowBoard/addSideRowBoard above) —
+      // Vault/White/Arcade's top shelf board is BAKED into this GLB
+      // as one continuous mesh, so it can't be conditionally built
+      // notched at bake time (the same .glb serves every layout).
+      // Instead: find the baked top-row board by its exported name,
+      // hide it, and add the same notched pair as the shell does —
+      // reusing THIS mesh's own material so the replacement matches
+      // whatever this room style baked (steel/wood/whatever), not a
+      // guessed color.
+      const heroWallNotch: Array<["back" | "left" | "right", boolean]> = [
+        ["back", heroNotch.back],
+        ["left", heroNotch.left],
+        ["right", heroNotch.right],
+      ];
+      heroWallNotch.forEach(([wall, notch]) => {
+        if (!notch) return;
+        const boardName = `${wall}_shelf_0`;
+        const baked = model.getObjectByName(boardName);
+        if (!(baked instanceof THREE.Mesh)) return;
+        baked.visible = false;
+        const material = Array.isArray(baked.material) ? baked.material[0] : baked.material;
+        const y = SHELF_ROW_Y[0];
+        if (wall === "back") {
+          const half = 9.95;
+          const segWidth = half - HERO_NOTCH_HALF;
+          const segA = new THREE.Mesh(new THREE.BoxGeometry(segWidth, 0.1, 0.845), material);
+          segA.position.set(-(HERO_NOTCH_HALF + segWidth / 2), y, -11.6275);
+          roomGroup.add(segA);
+          const segB = new THREE.Mesh(new THREE.BoxGeometry(segWidth, 0.1, 0.845), material);
+          segB.position.set(HERO_NOTCH_HALF + segWidth / 2, y, -11.6275);
+          roomGroup.add(segB);
+        } else {
+          const x = wall === "left" ? -10.1275 : 10.1275;
+          const heroZ = -3.2;
+          const zStart = -3.15 - 11.6;
+          const zEnd = -3.15 + 11.6;
+          const segALen = heroZ - HERO_NOTCH_HALF - zStart;
+          const segBLen = zEnd - (heroZ + HERO_NOTCH_HALF);
+          const segA = new THREE.Mesh(new THREE.BoxGeometry(0.845, 0.1, segALen), material);
+          segA.position.set(x, y, zStart + segALen / 2);
+          roomGroup.add(segA);
+          const segB = new THREE.Mesh(new THREE.BoxGeometry(0.845, 0.1, segBLen), material);
+          segB.position.set(x, y, zEnd - segBLen / 2);
+          roomGroup.add(segB);
+        }
+      });
+      container.style.opacity = "1";
+    }
+
     if (!inHub && modelUrl) {
+      const cachedModel = loadedModelCacheRef.current.get(modelUrl);
+      if (cachedModel) {
+        applyHeroNotchAndReveal(cachedModel.clone(true));
+      } else {
       const loader = new GLTFLoader();
       loader.load(
         modelUrl,
@@ -1946,59 +2022,13 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
               });
             }
           });
-          roomGroup.add(model);
-          shellObjects.forEach((object) => {
-            object.visible = false;
-          });
-
-          // EK's ask (2026-08-23): same "custom shelf for the Hero frame"
-          // fix as the shell (addBackRowBoard/addSideRowBoard above) —
-          // Vault/White/Arcade's top shelf board is BAKED into this GLB
-          // as one continuous mesh, so it can't be conditionally built
-          // notched at bake time (the same .glb serves every layout).
-          // Instead: find the baked top-row board by its exported name,
-          // hide it, and add the same notched pair as the shell does —
-          // reusing THIS mesh's own material so the replacement matches
-          // whatever this room style baked (steel/wood/whatever), not a
-          // guessed color.
-          const heroWallNotch: Array<["back" | "left" | "right", boolean]> = [
-            ["back", heroNotch.back],
-            ["left", heroNotch.left],
-            ["right", heroNotch.right],
-          ];
-          heroWallNotch.forEach(([wall, notch]) => {
-            if (!notch) return;
-            const boardName = `${wall}_shelf_0`;
-            const baked = model.getObjectByName(boardName);
-            if (!(baked instanceof THREE.Mesh)) return;
-            baked.visible = false;
-            const material = Array.isArray(baked.material) ? baked.material[0] : baked.material;
-            const y = SHELF_ROW_Y[0];
-            if (wall === "back") {
-              const half = 9.95;
-              const segWidth = half - HERO_NOTCH_HALF;
-              const segA = new THREE.Mesh(new THREE.BoxGeometry(segWidth, 0.1, 0.845), material);
-              segA.position.set(-(HERO_NOTCH_HALF + segWidth / 2), y, -11.6275);
-              roomGroup.add(segA);
-              const segB = new THREE.Mesh(new THREE.BoxGeometry(segWidth, 0.1, 0.845), material);
-              segB.position.set(HERO_NOTCH_HALF + segWidth / 2, y, -11.6275);
-              roomGroup.add(segB);
-            } else {
-              const x = wall === "left" ? -10.1275 : 10.1275;
-              const heroZ = -3.2;
-              const zStart = -3.15 - 11.6;
-              const zEnd = -3.15 + 11.6;
-              const segALen = heroZ - HERO_NOTCH_HALF - zStart;
-              const segBLen = zEnd - (heroZ + HERO_NOTCH_HALF);
-              const segA = new THREE.Mesh(new THREE.BoxGeometry(0.845, 0.1, segALen), material);
-              segA.position.set(x, y, zStart + segALen / 2);
-              roomGroup.add(segA);
-              const segB = new THREE.Mesh(new THREE.BoxGeometry(0.845, 0.1, segBLen), material);
-              segB.position.set(x, y, zEnd - segBLen / 2);
-              roomGroup.add(segB);
-            }
-          });
-          container.style.opacity = "1";
+          // Cache a clean (untouched-visibility) clone BEFORE
+          // applyHeroNotchAndReveal mutates this model's own mesh
+          // visibility — future re-runs (same URL) clone this pristine,
+          // already-tinted copy instead of re-fetching the GLB, and get
+          // the notch logic re-applied fresh from current heroNotch flags.
+          loadedModelCacheRef.current.set(modelUrl, model.clone(true));
+          applyHeroNotchAndReveal(model);
         },
         undefined,
         () => {
@@ -2007,6 +2037,7 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
           fallbackShell.visible = true;
         }
       );
+      }
     }
 
     // Flat matte plaster/paint finish for the gallery walls — the old vault
