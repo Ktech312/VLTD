@@ -248,6 +248,59 @@ who owns a screen.** EK is aware of this.
 
 ---
 
+## ✅ 2026-08-30, later same session — the "flashes several times on load"
+model-cache fix (commit `5c0260d`, documented in the PROCESS FAILURE backfill
+below) shipped with a real crash bug, found and fixed same session, commits
+`6ea1ced` and `6199812`.
+
+**What broke:** `5c0260d` added `loadedModelCacheRef` so a room style's GLB is
+only fetched/parsed once, reusing a cached clone on repeat loads (switching
+styles back and forth, or the effect re-running for other reasons). The
+cache-hit path calls `applyHeroNotchAndReveal(cachedModel.clone(true))`
+**synchronously**, immediately, before the rest of the effect body below it
+has executed. But `applyHeroNotchAndReveal` reads `heroNotch` and
+`HERO_NOTCH_HALF`, both `const`s that were declared much later in the same
+effect (near `addBackRowBoard`/`addSideRowBoard`). The first-ever load of a
+style never hit this — the GLTFLoader callback is async, so by the time it
+fires the whole effect body (including those later `const`s) has already run
+once. Only a *second* load of the same style, same effect invocation, hit the
+cache-hit branch and threw `ReferenceError: Cannot access 'heroNotch'/
+'HERO_NOTCH_HALF' before initialization` — a full white-screen
+"Application error" crash, not a cosmetic flash. This is worse than the bug
+it was meant to fix.
+
+**Fix:** moved both `const heroNotch = ...` and `const HERO_NOTCH_HALF = 0.9`
+up to right before `applyHeroNotchAndReveal`'s definition (before the
+`modelUrl`/cache-check block), removed the old declarations from their
+original spot, left a comment at each site explaining why the ordering
+matters here specifically (it doesn't matter for most `const`s in a
+same-render effect, only for ones read by a function that can be called
+*synchronously* mid-effect).
+
+**Verified live** (fresh un-cached browser tab, not the same tab used for the
+earlier broken checks — that tab was still running JS bundled before either
+fix, which is why an earlier verification pass falsely still saw the crash;
+confirmed via `curl` that the live HTML no longer references those old chunk
+hashes at all):
+- Fresh load of `/museum/virtual-room` with Hero (spotlight) layout active,
+  Arcade style: no console exceptions, room renders correctly.
+- Switched style dropdown Arcade → Vault → Arcade (forces the cache-hit path
+  for Arcade's already-loaded model): no console exceptions, room re-rendered
+  correctly with Hero notches intact.
+- `performance.getEntriesByType('resource')` confirmed each style's `.glb` is
+  fetched exactly once per style per session (cache working as intended).
+
+**Not yet separately re-verified:** whether this also fully resolves EK's
+original "flashes several times, not just once" visual report — the crash
+was found and fixed first since it's strictly worse (a dead page beats a
+flash), and no crash + correct single-fetch-per-style is the mechanism the
+original fix was going for. If EK still sees multiple flashes with no crash
+now, that's a distinct/softer issue (likely the effect's dependency array
+still re-running the container-hide/reveal opacity toggle multiple times
+even on a cache hit) and needs its own fresh look, not assumed fixed by this.
+
+---
+
 ## ⚠⚠⚠ 2026-08-28/29/30 — PROCESS FAILURE: this file went unupdated for an
 entire multi-day session. EK caught it directly ("you must not being
 filling out the handoff doc after all changes like the rule specifies").
