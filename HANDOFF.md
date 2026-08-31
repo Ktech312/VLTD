@@ -285,12 +285,9 @@ that effect's dependency array), it runs ONE real build with final data.
   the default style that was never actually shown, then the real style's).
 - Screenshot after load: room renders correctly with real items in place,
   Hero/spotlight layout intact.
-- Not separately verified: the visual "how many distinct flashes does a
-  human eye see" — the mechanism that caused the 4 described stages
-  (multiple real rebuilds) is confirmed gone via the single-fetch check
-  above, but nobody has watched the actual load with a stopwatch/screen
-  recording. If EK still sees more than one blank-then-reveal transition,
-  that's a new, different report — don't assume this entry covers it.
+- **EK confirmed live, same session:** "that is much better than the
+  flickering." Closed — treat a fresh report of load flashing as a new,
+  different issue, not a regression of this one.
 
 ---
 
