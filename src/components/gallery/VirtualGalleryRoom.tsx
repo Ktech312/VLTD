@@ -2341,8 +2341,23 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
     // now-open doorway just showed flat scene.background through the gap,
     // which reads as a blank cutout/broken texture rather than a real
     // passage. This is only enough depth to avoid that, not a real room.
+    // EK's ask (2026-08-30): "background colors behind the door are not
+    // Right" — vault was sharing blue's own navy tone (0x0a1420) here,
+    // same "vault || blue" grouping mistake already fixed elsewhere this
+    // session in the other direction (vault's door/hinge post leaking onto
+    // blue). Navy suits blue's own theme; vault's is neutral steel/gray
+    // everywhere else (trim/case materials run 0x15191d-0x9ca3a4, no blue
+    // in them), so its vestibule gets its own dark neutral gray instead.
     const beyondMaterial = new THREE.MeshStandardMaterial({
-      color: inHub ? 0x0a0e14 : roomStyle === "whitebox" ? 0xcfc6ac : (roomStyle === "vault" || roomStyle === "blue") ? 0x0a1420 : 0x0d0a16,
+      color: inHub
+        ? 0x0a0e14
+        : roomStyle === "whitebox"
+          ? 0xcfc6ac
+          : roomStyle === "vault"
+            ? 0x14171a
+            : roomStyle === "blue"
+              ? 0x0a1420
+              : 0x0d0a16,
       roughness: 0.9,
       metalness: 0.02,
     });
