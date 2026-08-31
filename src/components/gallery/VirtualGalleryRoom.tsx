@@ -1184,9 +1184,14 @@ function buildVaultWallPositions(layout: RoomLayout, count: number): RoomItemPos
 // Full fixed-capacity slot table for a layout: MAX_ROOM_ITEMS wall slots plus
 // the CABINET_SLOT_COUNT display-case slots, always in this order — slot index
 // is a stable identity regardless of layout or how many items are placed.
-function buildPositions(layout: RoomLayout, style: RoomStyle): RoomItemPosition[] {
-  const wallPositions =
-    style === "vault" ? buildVaultWallPositions(layout, MAX_ROOM_ITEMS) : buildWallPositions(layout, MAX_ROOM_ITEMS);
+function buildPositions(layout: RoomLayout, _style: RoomStyle): RoomItemPosition[] {
+  // EK's ask (2026-08-30): "add the items to the door wall on all rooms,
+  // like the Vault" — the front-wall carve-out (frontWallPosition, 8 slots)
+  // used to be gated to `style === "vault"` only; every other style's door
+  // wall never got any item slots at all. Nothing about it is actually
+  // vault-specific (frontWallPosition/FRONT_WALL_ITEM_Z are already shared,
+  // style-agnostic constants), so it's unconditional now for every style.
+  const wallPositions = buildVaultWallPositions(layout, MAX_ROOM_ITEMS);
   const cabinetPositions: RoomItemPosition[] = CABINET_SPOTS.map(([x, z]) => ({
     x,
     // Was 1.98 — the case's own glass cap sits at y=1.85 (base at 0.31,
@@ -1215,16 +1220,11 @@ function buildPositions(layout: RoomLayout, style: RoomStyle): RoomItemPosition[
   // which generate-gallery-room-models.py bakes identically for every
   // style (confirmed: left_wall/right_wall/left_shelf_i/right_shelf_i
   // never branch on `style`), so it's safe for all of them, not just
-  // vault. heroSupportingOverflowSlot is different: it patches the ONE
-  // slot vault's front-wall carve-out (66 requested vs 64 real capacity)
-  // leaves short. Non-vault styles never carve out a front wall, so their
-  // own main-wall request (74) already exceeds capacity BEFORE this fix —
-  // buildWallPositions' own capacity cap (see its own comment) absorbs
-  // that by capping the request AT capacity, meaning the "missing 64th
-  // slot" this appends is already filled by that capped request for non-
-  // vault. Appending it again there would create an exact duplicate.
-  const mainWallCountForHero =
-    style === "vault" ? MAX_ROOM_ITEMS - Math.min(8, MAX_ROOM_ITEMS) : MAX_ROOM_ITEMS;
+  // vault. heroSupportingOverflowSlot patches the ONE slot the front-wall
+  // carve-out (66 requested vs 64 real capacity) leaves short — now that
+  // every style carves out a front wall (see buildPositions above,
+  // 2026-08-30), every style needs this same one-slot patch, not just vault.
+  const mainWallCountForHero = MAX_ROOM_ITEMS - Math.min(8, MAX_ROOM_ITEMS);
   const heroHasSingleSlotShortfall = mainWallCountForHero - 3 < BACK_WALL_CAPACITY + (SIDE_WALL_CAPACITY - 1) * 2;
   const heroOverflow =
     layout === "spotlight"
@@ -2367,8 +2367,9 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
     // opening, attached to a thick hinge column, face mostly toward the
     // viewer, nowhere near overlapping the passage). Not part of
     // meshesRef/doorwayMeshesRef, so it can't affect the doorway's
-    // click/raycast behavior (backDoorway, the plain invisible hit-target
-    // plane a bit further down, is unchanged and still covers this arch).
+    // click/raycast behavior (2026-08-30: navigation now hangs off the
+    // sign above the arch, not a plane covering the arch itself — see
+    // buildDoorwaySign's own comment).
     //
     // Two earlier passes both tried to make this door literally hinge/pivot
     // in place — first onto a rectangular opening (never matched, a round
@@ -2580,13 +2581,24 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
     // wall, and the Grand Hall additionally gets one freestanding archway per
     // populated universe room, each with a sign naming where it leads — so the
     // museum is actually navigated room-to-room instead of only via the flat map.
+    // EK's ask (2026-08-30): "clicking the door takes you to the other
+    // room and its very touchy, can you make it so that you have to click
+    // the sign above the door to move into that room" — navigation used to
+    // hang off a big invisible plane covering the whole door/archway
+    // (backDoorway / hitTarget below), so any click near the doorway fired
+    // it. The sign itself is a small, precise, already-visible target —
+    // moved doorwayTarget onto the sign mesh instead, and the two big door-
+    // shaped hit-planes are gone (nothing else used them). DoubleSide
+    // matches the "either raycast direction hits" fix already proven below
+    // for these same doorway clicks.
     function buildDoorwaySign(
       x: number,
       y: number,
       z: number,
       label: string,
       faceBack: boolean,
-      size: { width: number; height: number } = { width: 2.3, height: 0.58 }
+      size: { width: number; height: number } = { width: 2.3, height: 0.58 },
+      doorwayTarget?: string
     ) {
       const signTexture = drawDoorSignTexture(label);
       const sign = new THREE.Mesh(
@@ -2596,11 +2608,16 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
           emissive: 0x0c0f13,
           emissiveIntensity: 0.35,
           roughness: 0.5,
+          side: THREE.DoubleSide,
         })
       );
       sign.position.set(x, y, z);
       if (faceBack) sign.rotation.y = Math.PI;
       roomGroup.add(sign);
+      if (doorwayTarget) {
+        sign.userData.doorwayTarget = doorwayTarget;
+        doorwayMeshesRef.current.push(sign);
+      }
     }
 
     // EK's ask (2026-08-29): first tried mounting this sign on the wall's
@@ -2622,23 +2639,9 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
       FRONT_WALL_ITEM_Z,
       inHub ? "Campus Map" : "Main Gallery",
       true,
-      (roomStyle === "vault" || roomStyle === "blue") && !inHub ? { width: 1.65, height: 0.42 } : undefined
+      (roomStyle === "vault" || roomStyle === "blue") && !inHub ? { width: 1.65, height: 0.42 } : undefined,
+      inHub ? "__overview__" : "__hub__"
     );
-    // Two real bugs here, both silently killed every doorway click: (1)
-    // `visible: false` makes the raycaster skip the mesh entirely, not just hide
-    // it — fixed with transparent+opacity:0 instead. (2) this plane is never
-    // rotated, so it keeps PlaneGeometry's default +Z-facing normal — the room
-    // interior approaches it from -Z, hitting its BACK face, which a default
-    // FrontSide material silently ignores for raycasting. DoubleSide fixes that
-    // regardless of which way the plane happens to face.
-    const backDoorway = new THREE.Mesh(
-      new THREE.PlaneGeometry(3.5, 4.9),
-      new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false, side: THREE.DoubleSide })
-    );
-    backDoorway.position.set(0, 2.6, 5.55);
-    backDoorway.userData.doorwayTarget = inHub ? "__overview__" : "__hub__";
-    roomGroup.add(backDoorway);
-    doorwayMeshesRef.current.push(backDoorway);
 
     if (inHub) {
       const wingRooms = universeRooms.filter((room) => room.items.length > 0).slice(0, 6);
@@ -2664,16 +2667,7 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
         archGlow.position.set(x, doorHeight - 0.4, archZ + 0.3);
         roomGroup.add(archGlow);
 
-        buildDoorwaySign(x, doorHeight + 0.5, archZ, room.title, false);
-
-        const hitTarget = new THREE.Mesh(
-          new THREE.PlaneGeometry(doorWidth, doorHeight + 1),
-          new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false, side: THREE.DoubleSide })
-        );
-        hitTarget.position.set(x, (doorHeight + 1) / 2, archZ);
-        hitTarget.userData.doorwayTarget = room.id;
-        roomGroup.add(hitTarget);
-        doorwayMeshesRef.current.push(hitTarget);
+        buildDoorwaySign(x, doorHeight + 0.5, archZ, room.title, false, undefined, room.id);
       });
     }
 
