@@ -248,6 +248,45 @@ who owns a screen.** EK is aware of this.
 
 ---
 
+## ✅ 2026-08-30, next request same session — door-wall items on every style
+(not just Vault), and doorway navigation now requires clicking the sign,
+commit `2836ea6`.
+
+**Door-wall items:** `buildPositions` (the fixed-capacity slot table builder)
+only called `buildVaultWallPositions` — the version with the 8-slot front/
+door-wall carve-out — for `style === "vault"`. Every other style's door wall
+had zero item slots, ever, even though the door wall physically exists with
+plenty of flat wall space in every style's GLB (EK's screenshot: an Arcade-
+style room with the whole door wall bare, red-circled). Nothing about the
+carve-out is actually vault-specific (`frontWallPosition`/`FRONT_WALL_ITEM_Z`
+are already shared, style-agnostic), so made it unconditional for all styles.
+Also updated `mainWallCountForHero` (the Hero/spotlight capacity math a few
+lines below, which explicitly assumed "non-vault styles never carve out a
+front wall" in its own comment) to use the same math for every style now —
+left uncorrected, Hero layout would have been quietly wrong on non-vault
+styles. **Verified live:** switched to Arcade, rotated the camera to the
+door wall, screenshotted — items now mounted there exactly like Vault's.
+
+**Sign-only doorway navigation:** clicking anywhere near a doorway used to
+navigate — the click target was a big invisible plane covering the whole
+door/archway opening (`backDoorway`, 3.5×4.9 units, at the main entrance;
+`hitTarget`, 2.05×4.3, per hub archway), not just the door itself. EK: "its
+very touchy, can you make it so that you have to click the sign above the
+door." Moved `doorwayTarget` onto the sign mesh `buildDoorwaySign` already
+creates (now takes an optional target param and registers itself in
+`doorwayMeshesRef`), and deleted both big hit-planes entirely — nothing else
+used them. **Verified live** by traversing the live scene graph
+(`window.__vltdDebug`) for every object carrying `userData.doorwayTarget`:
+exactly ONE result, a 2.3×0.58 plane with a real texture map (the sign
+itself, not an invisible hit-box) — confirms the old door-sized planes are
+gone and only the sign is clickable now. Did not additionally confirm with a
+literal mouse click through the camera's orbit controls (fighting the drag-
+to-orbit gesture programmatically wasn't reliable) — if EK finds the sign
+itself unclickable (too small a target, or occluded), that's a distinct
+follow-up, not a sign this fix didn't take effect.
+
+---
+
 ## ✅ 2026-08-30, later still same session — actual root cause of the "flashes
 several times" report found and fixed, commit `5215a50`. EK's own description
 of the flash sequence ("flashes, blue, blank, purple with no items and the
