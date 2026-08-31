@@ -3574,29 +3574,17 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
             // old camera-focus behavior (scoped out, not forgotten).
             pickUpItem(itemId);
           }
-        } else {
-          // Click-to-walk floor navigation (EK's ask, matching bingebrowse.net's
-          // "click a shelf area to move" — their own hint text confirms it's a
-          // single click, not a hover-then-confirm, so this reuses the same
-          // didDrag gate every other click here already uses to tell a tap from
-          // a look-drag). No item/doorway was hit, so try the floor: intersect
-          // the click ray against the y=0 plane and clamp it into the walkable
-          // bounds — clampWalkDestination, not clampPosition, so a corner click
-          // can't wedge you within ~2.7 units of two walls at once (see that
-          // function's own comment). The journey is the two-phase walkTween
-          // above (turn to face the destination, then walk) — EK's ask,
-          // 2026-08-23: the walk used to ALSO force a final turn to face
-          // whichever wall was nearest the destination, which read as "it
-          // spins you to a position it thinks you want" right as you land up
-          // close to that wall. Removed — the walk just ends facing the
-          // direction you were walking.
-          const floorHit = new THREE.Vector3();
-          if (raycaster.ray.intersectPlane(floorPlane, floorHit)) {
-            clampWalkDestination(floorHit);
-            floorHit.y = eyeHeight;
-            startWalkTween(floorHit);
-          }
         }
+        // Click-to-walk floor navigation used to live here (any click that
+        // hit neither an item nor a doorway raycast against the floor and
+        // walked you there). EK's ask (2026-08-30): "if i'm just looking
+        // around the room and click something on accident, it just drags
+        // me to that location" — removed entirely; a click that hits
+        // nothing now genuinely does nothing. startWalkTween/
+        // clampWalkDestination/floorPlane are unused now (only this call
+        // site ever used them) but left in place rather than torn out —
+        // this was a request to stop the auto-walk trigger, not to gut
+        // the walk-tween system itself.
       }
       isDragging = false;
     }
