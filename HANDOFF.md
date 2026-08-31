@@ -248,6 +248,21 @@ who owns a screen.** EK is aware of this.
 
 ---
 
+## ✅ 2026-08-30, next request same session — removed click-to-walk floor
+navigation, commit `7b765db`. EK: "if i'm just looking around the room and
+click something on accident, it just drags me to that location." A click
+that hit neither an item nor a doorway sign used to raycast against the
+floor plane and auto-walk the camera to wherever it landed — removed that
+trigger entirely; a stray click now does nothing. `startWalkTween`/
+`clampWalkDestination`/`floorPlane` are unused now (their only caller was
+this trigger) but deliberately left in the file rather than torn out — this
+was a request to stop the auto-walk behavior, not to gut the walk-tween
+system; ESLint flags them as unused, that's expected and fine. **Verified
+live** via `window.__vltdDebug.camera.position` read before and after
+clicking an empty floor spot: identical `[0, 3.6, 3.8]` both times.
+
+---
+
 ## ✅ 2026-08-30, next request same session — door-wall items on every style
 (not just Vault), and doorway navigation now requires clicking the sign,
 commit `2836ea6`.
