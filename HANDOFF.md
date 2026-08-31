@@ -274,21 +274,27 @@ leaking onto Blue, 2026-08-30 entry above). Gave Vault its own dark neutral
 gray, `0x14171a`; Blue keeps `0x0a1420`. **Verified live**: vestibule plane's
 material color reads `#14171a` now.
 
-**Open question, not yet acted on:** Salon layout's left-wall items looked
-"a bit mixed up" compared to Store's (EK: "make sure the walls match Store,
-because they are good there"). Investigated live (Vault+Store vs Vault+Salon
-in this session's own test gallery) and found no difference in WHICH wall
-each item lands on — `distributeAcrossWalls`' per-wall capacity is the same
-regardless of layout, only Salon's along-wall spacing is tighter (a 2026-08-23
-deliberate, EK-confirmed design choice: "Salon's tight 1.5 step is a
-deliberate, kept design choice"). Salon's own cluster looked reasonable in
-this session's test data, just tighter than Store's — but EK's actual 19-item
-gallery may look different at a different fill level, which this session's
-test data can't reproduce exactly. Didn't guess further and change something
-that might already be correct — next session should ask EK to point at the
-live room again if this is still bothering them, rather than assume either
-"it's the deliberate tight-spacing design" or "it's a real bug" without
-seeing their actual gallery's left wall.
+**Follow-up, resolved same session, commit `d93bded`:** EK pushed back on
+the "deliberate design choice" framing — "this was before we made all the
+changes, we can leave it tighter but most the walls look empty and have to
+be fillable in the smaller tighter format." Root cause: `wallGridPosition`
+fills a wall's 3 shelf rows at one depth before ever advancing to the next
+depth (`row = slot % 3, depth = floor(slot / 3)`) — with a real collection's
+modest item count, Salon's old 1.5-step CENTERED cluster barely moved off
+the wall's middle before running out of items, leaving most of the wall's
+length bare on both sides. Store's own much wider step (~2.567, spanning the
+full safe range) doesn't hit this because the same handful of occupied
+depths already reaches meaningfully across the wall. Fix (deliberately NOT
+a capacity/distribution-algorithm change — this area has caused the most
+session pain by far, see the Hero-overflow saga below; kept to pure
+geometry): Salon's side-wall step raised 1.5 -> 2.0 (still visibly tighter
+than Store, not widened to match it) and its start point changed from
+centered to flush at `SIDE_WALL_SAFE_BACK_Z` — the same corner Store's own
+run starts from. **Verified live**: Vault+Salon's left wall, 7 real items,
+now spans z=-10.5 to z=1.5 (12 of the wall's ~15.4-unit safe range, reaching
+most of the way to the front) instead of a ~3-unit span centered in the
+middle — screenshot confirms items visibly spread end-to-end, matching
+Store's own coverage while staying a noticeably tighter cluster than Store.
 
 ---
 
