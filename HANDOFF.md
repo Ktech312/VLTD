@@ -248,6 +248,50 @@ who owns a screen.** EK is aware of this.
 
 ---
 
+## ✅ 2026-08-30, next request same session — two real Vault door bugs EK
+caught live (screenshot with the door X'd out and the arch circled), both
+fixed and verified, commits `fd9adb5` and `7681896`. Salon's left-wall item
+spacing ("a bit mixed up... make sure the walls match Store") from the same
+message is a THIRD, separate item — not fixed yet, see the open question
+below before touching it.
+
+**Door disc floating near the center pedestal:** `doorGroup.position.set(...)`
+still used the literal pre-`FRONT_WALL_PUSH_BACK` z (5.2) — never updated
+when that constant pushed the arch/hinge column back by 1.5 units earlier
+this session. The door had drifted 1.5 units further into the room than the
+arch it's supposed to stand beside, landing on/near the center display
+pedestal instead. Fixed: `5.2 + FRONT_WALL_PUSH_BACK`. **Verified live** via
+`window.__vltdDebug` scene traversal: door group now at z=6.7 (was 5.2),
+consistent with the arch/hinge column's own 5.7-5.72 + 1.5 push-back.
+
+**Vestibule background color wrong for Vault:** the dark fill visible
+through the door archway was `0x0a1420` — Blue's own navy tone, shared via
+a `roomStyle === "vault" || "blue"` grouping. Fits Blue's navy theme, clashes
+with Vault's neutral steel/gray palette (every other Vault material is gray,
+0x15191d-0x9ca3a4, no blue in it) — same style-sharing mistake already fixed
+elsewhere this session in the OTHER direction (vault's door disc/hinge post
+leaking onto Blue, 2026-08-30 entry above). Gave Vault its own dark neutral
+gray, `0x14171a`; Blue keeps `0x0a1420`. **Verified live**: vestibule plane's
+material color reads `#14171a` now.
+
+**Open question, not yet acted on:** Salon layout's left-wall items looked
+"a bit mixed up" compared to Store's (EK: "make sure the walls match Store,
+because they are good there"). Investigated live (Vault+Store vs Vault+Salon
+in this session's own test gallery) and found no difference in WHICH wall
+each item lands on — `distributeAcrossWalls`' per-wall capacity is the same
+regardless of layout, only Salon's along-wall spacing is tighter (a 2026-08-23
+deliberate, EK-confirmed design choice: "Salon's tight 1.5 step is a
+deliberate, kept design choice"). Salon's own cluster looked reasonable in
+this session's test data, just tighter than Store's — but EK's actual 19-item
+gallery may look different at a different fill level, which this session's
+test data can't reproduce exactly. Didn't guess further and change something
+that might already be correct — next session should ask EK to point at the
+live room again if this is still bothering them, rather than assume either
+"it's the deliberate tight-spacing design" or "it's a real bug" without
+seeing their actual gallery's left wall.
+
+---
+
 ## ✅ 2026-08-30, next request same session — removed click-to-walk floor
 navigation, commit `7b765db`. EK: "if i'm just looking around the room and
 click something on accident, it just drags me to that location." A click
