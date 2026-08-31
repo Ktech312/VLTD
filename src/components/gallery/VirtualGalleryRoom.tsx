@@ -2436,7 +2436,13 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
       // the hinge column, well inside the room (not the vestibule) on the
       // same side as the camera — matching the reference. A slight turn
       // (not a full 90°) keeps the riveted face visible rather than edge-on.
-      doorGroup.position.set(archHalfWidth + 0.3 + vaultDoorRadius + 0.35, vaultDoorRadius + 0.15, 5.2);
+      // EK's ask (2026-08-30): "the Vault door and background colors behind
+      // the door are not Right" — this z was still the literal pre-push-back
+      // number (5.2), never updated when FRONT_WALL_PUSH_BACK moved the
+      // arch/hinge column back by 1.5 units, so the door had drifted 1.5
+      // units further into the room than the arch it's supposed to stand
+      // beside — landing on/near the center display pedestal instead.
+      doorGroup.position.set(archHalfWidth + 0.3 + vaultDoorRadius + 0.35, vaultDoorRadius + 0.15, 5.2 + FRONT_WALL_PUSH_BACK);
       doorGroup.rotation.y = 0.3;
       addShell(doorGroup);
     }
