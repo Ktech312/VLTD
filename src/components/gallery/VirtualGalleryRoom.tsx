@@ -1057,20 +1057,37 @@ function buildWallPositions(layout: RoomLayout, count: number): RoomItemPosition
     // EK's ask (2026-08-23, 4th time raised): sideBaseZ/sideZStep here
     // were picked without checking them against the wall's real length —
     // see the SIDE_WALL_* constants' own comment for the actual geometry.
-    // Salon's tight 1.5 step is a deliberate, kept design choice (a small
+    // Salon's tight step is a deliberate, kept design choice (a small
     // collection reading as a dense little cluster rather than the same
-    // spacing as Store just with less of it used) — what's fixed is that
-    // the cluster is now explicitly CENTERED in the real safe range
-    // instead of starting flush at an ungeometry-checked -9.6, so the
-    // unused wall length splits evenly on both ends instead of piling up
-    // on one side.
+    // spacing as Store just with less of it used) — what's fixed here
+    // (2026-08-23) is that the cluster is explicitly CENTERED in the real
+    // safe range instead of starting flush at an ungeometry-checked -9.6.
+    //
+    // EK's ask (2026-08-30): "most the walls look empty and have to be
+    // fillable in the smaller tighter format." Root cause: wallGridPosition
+    // fills a wall's 3 shelf ROWS at one depth before ever advancing to the
+    // next depth (row = slot % 3, depth = floor(slot / 3)) — with a real
+    // collection's modest item count, that means the first several items
+    // stack 3-deep at the FIRST couple of depth positions before reaching a
+    // 3rd/4th depth at all. At 1.5 apart, centered, that stack barely moves
+    // off the middle of the wall, leaving most of its visible length bare
+    // on both sides. Store's own much wider step (~2.567, spanning the
+    // FULL safe range) doesn't have this problem because even the same
+    // small number of occupied depths already reaches meaningfully across
+    // the wall. Two changes, both keeping Salon visibly tighter/denser than
+    // Store (never widened all the way to Store's own step) while fixing
+    // the "empty wall" look: (1) step raised 1.5 -> 2.0 — still a real,
+    // noticeably tighter cluster, but the same handful of occupied depths
+    // now reaches ~30% further along the wall before running out of room;
+    // (2) starts flush at SIDE_WALL_SAFE_BACK_Z (Store's own starting
+    // corner) instead of centered — EK: "make sure the walls match Store,
+    // because they are good there" — matching where the run BEGINS is part
+    // of that, not just how tight the items are once it does.
     return distributeAcrossWalls(count, {
       backZ: -11.82,
       backScale: MIN_ITEM_SCALE,
-      sideBaseZ:
-        SIDE_WALL_SAFE_BACK_Z +
-        (SIDE_WALL_SAFE_FRONT_Z - SIDE_WALL_SAFE_BACK_Z - 1.5 * (SIDE_WALL_DEPTH_COUNT - 1)) / 2,
-      sideZStep: 1.5,
+      sideBaseZ: SIDE_WALL_SAFE_BACK_Z,
+      sideZStep: 2.0,
       sideScale: MIN_ITEM_SCALE,
     });
   }
