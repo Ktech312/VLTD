@@ -232,7 +232,8 @@ export default function VltdMuseumCampus() {
     // __vltdDebug — lets a live console check camera/collision state
     // directly instead of guessing from screenshots. Remove once the
     // walkthrough is confirmed solid.
-    (window as unknown as { __vltdCampusDebug?: unknown }).__vltdCampusDebug = { camera, keys, walkable, scene };
+    const debugState = { frameCount: 0, keysSnapshot: [] as string[], moveX: 0, moveZ: 0, mag: 0, delta: 0, yaw, pitch };
+    (window as unknown as { __vltdCampusDebug?: unknown }).__vltdCampusDebug = { camera, keys, walkable, scene, isWalkable, debugState };
 
     let lastRoomLabel = "";
     function currentRoomLabel(x: number, z: number) {
@@ -272,6 +273,15 @@ export default function VltdMuseumCampus() {
         if (isWalkable(pos.x + moveX, pos.z, walkable)) pos.x += moveX;
         if (isWalkable(pos.x, pos.z + moveZ, walkable)) pos.z += moveZ;
       }
+
+      debugState.frameCount += 1;
+      debugState.keysSnapshot = Array.from(keys);
+      debugState.moveX = moveX;
+      debugState.moveZ = moveZ;
+      debugState.mag = mag;
+      debugState.delta = delta;
+      debugState.yaw = yaw;
+      debugState.pitch = pitch;
 
       const label = currentRoomLabel(camera.position.x, camera.position.z);
       if (label !== lastRoomLabel) {
