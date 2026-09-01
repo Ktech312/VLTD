@@ -248,6 +248,69 @@ who owns a screen.** EK is aware of this.
 
 ---
 
+## 🆕 2026-08-31/09-01 overnight — VLTD Museum public campus, first
+functional pass. EK: "this is a good overnight task... Start to build this
+as a functional walk through, how much can you start to do on your own?"
+This is the SEPARATE public-campus project (top collectors/items across
+categories, a possible Store tie-in — see [[vltd-public-museum-vision]]),
+explicitly NOT the personal exhibition rooms above. Planning already existed
+as the "Museum Campus Blueprint" Claude artifact (real 10-room, 18-door
+floor plan, measured off the live campus Map view and anchored to the one
+already-built exhibition room's real size). Tonight's build turns that
+blueprint into an actual walkable Three.js space — new files, nothing in
+the existing single-room builder (`VirtualGalleryRoom.tsx`) was touched:
+
+- **`src/lib/campusLayout.ts`** — the 10 rooms + 18 doors as real world
+  coordinates, converted 1:1 from the blueprint's own SVG numbers (SVG x ->
+  world X, SVG y -> world Z, same ×1.3268 anchor-to-the-built-room scale
+  factor the blueprint uses). Also derives wall segments (each room's 4
+  walls, split around whichever doors touch that wall) and door-threshold
+  floor bridges (the ~1.1-2 unit real gap between adjacent room rects,
+  since they don't literally touch) purely from that data — no per-room
+  special-casing.
+- **`src/components/gallery/VltdMuseumCampus.tsx`** — a viewer (not a
+  builder: no drag/drop, no wallpaper picker, no draft persistence).
+  WASD + click-drag-look movement, slide collision against the walkable
+  areas (room interiors + door bridges) computed from campusLayout. Each
+  category room is populated with the SIGNED-IN USER'S OWN real vault items
+  (`loadItems()`, grouped by real universe) hung on the north wall — real
+  data per the "no fake data" rule, but a **placeholder content source**:
+  there's no cross-user "top collectors/items" feed yet, so for now you
+  just see your own vault reflected back at you in each room.
+- **`src/app/museum/vltd/page.tsx`** — new route, inherits the existing
+  `museum/layout.tsx` auth gate, nothing new needed there.
+- **Exhibitions page pill row** (`src/app/museum/page.tsx`): the old
+  single "3D Museum" beta button is now two — **"3D Gallery"** (unchanged
+  behavior, just renamed, still routes to `/museum/virtual-room`) and a new
+  **"VLTD Museum"** pill that routes straight to `/museum/vltd`. No beta
+  gate on the new button — there's nothing to protect access to yet, it's
+  a first pass, not a finished feature. (EK asked for this button pair
+  separately, before the "start building it" request — see the
+  2026-08-31 entry immediately below this one... actually same commit
+  range, both landed same session.)
+
+**Known placeholder / NOT decided by EK, flag before treating as final:**
+- Room-to-universe mapping for content: POP_CULTURE/TCG/BUILT_BOTANY/GAMES/
+  SPORTS/misc/Automobile map cleanly to their real taxonomy keys. Collection
+  and Cards (the blueprint's bottom-row rooms) don't have an obvious 1:1 real
+  category — I assigned Collection→JEWELRY_APPAREL and Cards→MUSIC as a
+  guess so every room has something in it, not a confirmed decision.
+- No Spotlight room, no Store room, no cross-user data — all explicitly
+  deferred per [[vltd-public-museum-vision]], same as the blueprint itself.
+- No exterior/entrance experience — the Hub's north-wall entrance gap is
+  cut into the geometry (matches the blueprint) but there's no "outside" to
+  walk in from; the walkthrough just spawns just inside the Hub.
+- Per-wall item layout is simple (evenly spaced flat frames on one wall per
+  room, no shelves/pedestals/cabinets like the real single-room builder) —
+  intentionally minimal so tonight's scope stayed geometry + navigation,
+  not a second full room-decorating engine.
+
+Build- and typecheck-clean (`tsc --noEmit`, `eslint`, `next build` all pass).
+**Live-verification status: [[fill in after the Claude-in-Chrome check below
+this same session — do not trust this line if it still says "pending"]].**
+
+---
+
 ## ✅ 2026-08-30, next request same session — two real Vault door bugs EK
 caught live (screenshot with the door X'd out and the arch circled), both
 fixed and verified, commits `fd9adb5` and `7681896`. Salon's left-wall item
