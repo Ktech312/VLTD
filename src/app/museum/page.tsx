@@ -190,6 +190,10 @@ export default function MuseumPage() {
   const [museumBetaStatus, setMuseumBetaStatus] = useState<MuseumBetaStatus>({ enabled: false, requestedAt: null });
   const [showMuseumBetaModal, setShowMuseumBetaModal] = useState(false);
   const [isSendingMuseumBetaRequest, setIsSendingMuseumBetaRequest] = useState(false);
+  // VLTD Museum — the separate public campus project (blueprint stage only,
+  // nothing built yet). Same Beta pill treatment as 3D Gallery, but there's
+  // no access to grant yet, so it's just a "coming soon" notice for now.
+  const [showVltdMuseumModal, setShowVltdMuseumModal] = useState(false);
   const coverInputRef = useRef<HTMLInputElement | null>(null);
   const selectedItemsDragRef = useRef({ active: false, dragged: false, startX: 0, scrollLeft: 0 });
   const [filter, setFilter] = useState<ExhibitionFilter>("ACTIVE");
@@ -494,7 +498,27 @@ export default function MuseumPage() {
             <path d="M3.27 6.96 12 12.01l8.73-5.05" />
             <path d="M12 22.08V12" />
           </svg>
-          3D Museum
+          3D Gallery
+        </button>
+        {/* EK's ask: a second Beta pill next to 3D Gallery — the home for
+            the separate public museum campus project (planning stage only
+            right now, see the Museum Campus Blueprint doc). */}
+        <button
+          type="button"
+          onClick={() => setShowVltdMuseumModal(true)}
+          className="inline-flex items-center gap-1.5 rounded-[8px] px-4 py-1.5 text-sm font-semibold ring-1 transition"
+          style={{ background: "var(--pill)", color: "var(--muted)", borderColor: "var(--border)" }}
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <path d="M3 21h18" />
+            <path d="M4 21V10" />
+            <path d="M20 21V10" />
+            <path d="M2 10 12 3l10 7" />
+            <path d="M8 21v-7" />
+            <path d="M12 21v-7" />
+            <path d="M16 21v-7" />
+          </svg>
+          VLTD Museum
         </button>
       </div>
     </>
@@ -1093,19 +1117,19 @@ export default function MuseumPage() {
         <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/70 px-4 backdrop-blur-sm">
           <div className="w-full max-w-md rounded-[26px] bg-[color:var(--surface)] p-6 ring-1 ring-[color:var(--border)] shadow-[0_30px_90px_rgba(0,0,0,0.42)]">
             <div className="text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">
-              3D MUSEUM — BETA
+              3D GALLERY — BETA
             </div>
             {museumBetaStatus.requestedAt ? (
               <>
                 <h2 className="mt-3 text-2xl font-semibold">Request sent</h2>
                 <p className="mt-3 text-sm leading-6 text-[color:var(--muted)]">
-                  You&apos;ve already asked to test the 3D Museum — we&apos;ll enable it for your
+                  You&apos;ve already asked to test the 3D Gallery — we&apos;ll enable it for your
                   account once a spot opens up.
                 </p>
               </>
             ) : (
               <>
-                <h2 className="mt-3 text-2xl font-semibold">Try the 3D Museum?</h2>
+                <h2 className="mt-3 text-2xl font-semibold">Try the 3D Gallery?</h2>
                 <p className="mt-3 text-sm leading-6 text-[color:var(--muted)]">
                   Build a walkable 3D room from your exhibitions. It&apos;s still in beta —
                   request access and we&apos;ll turn it on for your account.
@@ -1129,6 +1153,25 @@ export default function MuseumPage() {
                   </PillButton>
                 </>
               )}
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {showVltdMuseumModal ? (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/70 px-4 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-[26px] bg-[color:var(--surface)] p-6 ring-1 ring-[color:var(--border)] shadow-[0_30px_90px_rgba(0,0,0,0.42)]">
+            <div className="text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">
+              VLTD MUSEUM — BETA
+            </div>
+            <h2 className="mt-3 text-2xl font-semibold">Coming soon</h2>
+            <p className="mt-3 text-sm leading-6 text-[color:var(--muted)]">
+              VLTD Museum is a separate, larger project from your exhibitions — a public
+              campus that showcases top collectors and items across categories. It&apos;s
+              still in planning, and this is where it will live once it&apos;s built.
+            </p>
+            <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+              <PillButton onClick={() => setShowVltdMuseumModal(false)}>Got it</PillButton>
             </div>
           </div>
         </div>
