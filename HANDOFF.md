@@ -306,8 +306,52 @@ the existing single-room builder (`VirtualGalleryRoom.tsx`) was touched:
   not a second full room-decorating engine.
 
 Build- and typecheck-clean (`tsc --noEmit`, `eslint`, `next build` all pass).
-**Live-verification status: [[fill in after the Claude-in-Chrome check below
-this same session — do not trust this line if it still says "pending"]].**
+
+**Live-verified, same session, via Claude-in-Chrome on the deployed page —
+2 real bugs found and fixed in the process, not just a smoke test:**
+
+1. **Blank canvas (fixed, commit `b3d8a9c`):** `mount.clientHeight` read 0 —
+   `fixed inset-0` + Tailwind `h-full` silently collapsed to a 0-height box
+   (a transformed ancestor breaks fixed-position sizing; no console error).
+   Camera/renderer now size off `window.innerWidth/innerHeight` instead.
+2. **Camera stuck at every doorway (fixed, commit `88ba8a3`):** found via a
+   manual movement simulation run through the console (real WASD input
+   couldn't be tested reliably in this environment — the automated tab
+   reports `document.hidden = true`, which throttles `requestAnimationFrame`
+   almost to zero; replaying the exact same movement/collision math
+   directly proved the actual bug instead). Each room's walkable rect is
+   inset by `WALKABLE_MARGIN` (0.9) on all sides, but door bridges stopped
+   exactly at the rooms' true (un-inset) edges — leaving a ~0.9-unit dead
+   strip at every doorway where neither counted as walkable. Bridges now
+   extend past each room's true edge by the same margin so they overlap.
+
+**Confirmed working after both fixes**, via a faithful replay of the real
+`tick()` movement/collision code (not a shortcut — same math, same
+`isWalkable`, same walkable-areas data) plus screenshots:
+- Camera walks across the full Hub and correctly stops at solid walls
+  (tested against SPORTS's east wall, no door there — stopped within 0.07
+  units of the expected wall-inset boundary).
+- Camera crosses cleanly through a doorway from the Hub into SPORTS (the
+  exact case bug #2 broke) and the room label updates correctly to "SPORTS".
+- Real vault items render on room walls with textures loaded — SPORTS's
+  north wall showed 2 real cards (matching the "2 items" count), one
+  visibly a real Panini Select basketball rookie card from the signed-in
+  account's own vault. Confirms the "no fake data" rule is actually being
+  met, not just claimed.
+- Drag-look rotates the camera correctly (confirmed via screenshot, real
+  pointer drag).
+
+**Not independently confirmed:** real keyboard-driven WASD input specifically
+(as opposed to the underlying movement code, which IS confirmed) — the test
+environment's rAF throttling made this unreliable to observe directly. The
+movement code path real WASD calls is byte-for-byte the same path the
+manual replay exercised, so this should work, but if EK notices otherwise,
+start here.
+
+A TEMPORARY `window.__vltdCampusDebug` hook (camera/keys/walkable/isWalkable/
+pose) was added mid-session to do this diagnosis, then removed once both
+bugs were confirmed fixed (commit after `88ba8a3` — check `git log` on
+`VltdMuseumCampus.tsx` if a debug hook is needed again).
 
 ---
 

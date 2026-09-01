@@ -196,19 +196,7 @@ export default function VltdMuseumCampus() {
     let lastX = 0;
     let lastY = 0;
 
-    // debugState.yaw/pitch are the SINGLE source of truth for look
-    // direction (not a separate closure variable) so a console-driven
-    // test can set them directly and have tick() actually respect it.
-    const debugState = {
-      frameCount: 0,
-      keysSnapshot: [] as string[],
-      moveX: 0,
-      moveZ: 0,
-      mag: 0,
-      delta: 0,
-      yaw: CAMPUS_SPAWN.yaw,
-      pitch: 0,
-    };
+    const pose = { yaw: CAMPUS_SPAWN.yaw, pitch: 0 };
 
     function onKeyDown(e: KeyboardEvent) {
       keys.add(e.key.toLowerCase());
@@ -227,8 +215,8 @@ export default function VltdMuseumCampus() {
       const dy = e.clientY - lastY;
       lastX = e.clientX;
       lastY = e.clientY;
-      debugState.yaw -= dx * 0.0032;
-      debugState.pitch = Math.max(-1.1, Math.min(1.1, debugState.pitch - dy * 0.0032));
+      pose.yaw -= dx * 0.0032;
+      pose.pitch = Math.max(-1.1, Math.min(1.1, pose.pitch - dy * 0.0032));
     }
     function onPointerUp() {
       dragging = false;
@@ -239,12 +227,6 @@ export default function VltdMuseumCampus() {
     renderer.domElement.addEventListener("pointerdown", onPointerDown);
     window.addEventListener("pointermove", onPointerMove);
     window.addEventListener("pointerup", onPointerUp);
-
-    // TEMPORARY debug hook, same pattern as VirtualGalleryRoom.tsx's
-    // __vltdDebug — lets a live console check camera/collision state
-    // directly instead of guessing from screenshots. Remove once the
-    // walkthrough is confirmed solid.
-    (window as unknown as { __vltdCampusDebug?: unknown }).__vltdCampusDebug = { camera, keys, walkable, scene, isWalkable, debugState };
 
     let lastRoomLabel = "";
     function currentRoomLabel(x: number, z: number) {
@@ -263,10 +245,10 @@ export default function VltdMuseumCampus() {
       frameId = window.requestAnimationFrame(tick);
       const delta = Math.min(clock.getDelta(), 0.1);
 
-      camera.rotation.y = debugState.yaw;
-      camera.rotation.x = debugState.pitch;
+      camera.rotation.y = pose.yaw;
+      camera.rotation.x = pose.pitch;
 
-      const forward = new THREE.Vector3(-Math.sin(debugState.yaw), 0, -Math.cos(debugState.yaw));
+      const forward = new THREE.Vector3(-Math.sin(pose.yaw), 0, -Math.cos(pose.yaw));
       const right = new THREE.Vector3(forward.z, 0, -forward.x);
       let moveX = 0;
       let moveZ = 0;
@@ -284,13 +266,6 @@ export default function VltdMuseumCampus() {
         if (isWalkable(pos.x + moveX, pos.z, walkable)) pos.x += moveX;
         if (isWalkable(pos.x, pos.z + moveZ, walkable)) pos.z += moveZ;
       }
-
-      debugState.frameCount += 1;
-      debugState.keysSnapshot = Array.from(keys);
-      debugState.moveX = moveX;
-      debugState.moveZ = moveZ;
-      debugState.mag = mag;
-      debugState.delta = delta;
 
       const label = currentRoomLabel(camera.position.x, camera.position.z);
       if (label !== lastRoomLabel) {
