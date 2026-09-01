@@ -171,10 +171,17 @@ export function computeWallSegments(): WallSegment[] {
 
 export type DoorBridge = { x0: number; x1: number; z0: number; z1: number };
 
+const WALKABLE_MARGIN = 0.9; // keeps the camera from clipping into walls
+
 /** A small walkable floor patch spanning the physical gap between two
  * adjacent rooms at each door, so the corridor between two room rects
  * (they don't literally touch) is actually crossable. Skips the building
- * entrance (no room on the other side). */
+ * entrance (no room on the other side). Extended by WALKABLE_MARGIN past
+ * each room's true edge so it overlaps that room's own margin-inset
+ * walkable rect — without this, a real live-tested run found the camera
+ * getting stuck in a dead strip right at the threshold (the inset rect
+ * stopped short of the bridge, and the bridge stopped short of the inset
+ * rect, with neither overlapping the other). */
 export function computeDoorBridges(): DoorBridge[] {
   const bridges: DoorBridge[] = [];
 
@@ -188,18 +195,26 @@ export function computeDoorBridges(): DoorBridge[] {
     if (door.wall === "x") {
       const z0 = Math.min(a.z + a.d, b.z + b.d);
       const z1 = Math.max(a.z, b.z);
-      bridges.push({ x0: door.gapCenter - half, x1: door.gapCenter + half, z0: Math.min(z0, z1), z1: Math.max(z0, z1) });
+      bridges.push({
+        x0: door.gapCenter - half,
+        x1: door.gapCenter + half,
+        z0: Math.min(z0, z1) - WALKABLE_MARGIN,
+        z1: Math.max(z0, z1) + WALKABLE_MARGIN,
+      });
     } else {
       const x0 = Math.min(a.x + a.w, b.x + b.w);
       const x1 = Math.max(a.x, b.x);
-      bridges.push({ x0: Math.min(x0, x1), x1: Math.max(x0, x1), z0: door.gapCenter - half, z1: door.gapCenter + half });
+      bridges.push({
+        x0: Math.min(x0, x1) - WALKABLE_MARGIN,
+        x1: Math.max(x0, x1) + WALKABLE_MARGIN,
+        z0: door.gapCenter - half,
+        z1: door.gapCenter + half,
+      });
     }
   }
 
   return bridges;
 }
-
-const WALKABLE_MARGIN = 0.9; // keeps the camera from clipping into walls
 
 export function buildWalkableAreas() {
   const rooms = CAMPUS_ROOMS.map((room) => {
