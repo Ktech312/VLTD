@@ -74,13 +74,17 @@ export default function VltdMuseumCampus() {
     scene.background = new THREE.Color(0x081527);
     scene.fog = new THREE.Fog(0x081527, 40, 140);
 
-    const camera = new THREE.PerspectiveCamera(72, mount.clientWidth / mount.clientHeight, 0.1, 400);
+    // Size off window.innerWidth/Height, not mount.clientWidth/Height: a
+    // transformed ancestor (framer-motion page transitions, etc.) can make
+    // `fixed inset-0` + `h-full` resolve to a 0-height box, which silently
+    // zeroes the canvas and renders nothing with no console error.
+    const camera = new THREE.PerspectiveCamera(72, window.innerWidth / window.innerHeight, 0.1, 400);
     camera.rotation.order = "YXZ";
     camera.position.set(CAMPUS_SPAWN.x, EYE_HEIGHT, CAMPUS_SPAWN.z);
 
     const renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    renderer.setSize(mount.clientWidth, mount.clientHeight);
+    renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     mount.appendChild(renderer.domElement);
 
@@ -275,10 +279,9 @@ export default function VltdMuseumCampus() {
     const readyTimer = window.setTimeout(() => setReady(true), 0);
 
     function onResize() {
-      if (!mount) return;
-      camera.aspect = mount.clientWidth / mount.clientHeight;
+      camera.aspect = window.innerWidth / window.innerHeight;
       camera.updateProjectionMatrix();
-      renderer.setSize(mount.clientWidth, mount.clientHeight);
+      renderer.setSize(window.innerWidth, window.innerHeight);
     }
     window.addEventListener("resize", onResize);
 
@@ -306,7 +309,7 @@ export default function VltdMuseumCampus() {
 
   return (
     <div className="fixed inset-0 bg-[#081527]">
-      <div ref={mountRef} className="h-full w-full" />
+      <div ref={mountRef} style={{ width: "100vw", height: "100vh" }} />
 
       <div className="pointer-events-none absolute inset-0 flex flex-col justify-between p-4">
         <div className="flex items-start justify-between">
