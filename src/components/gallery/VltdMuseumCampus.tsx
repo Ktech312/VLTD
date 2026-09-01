@@ -228,6 +228,12 @@ export default function VltdMuseumCampus() {
     window.addEventListener("pointermove", onPointerMove);
     window.addEventListener("pointerup", onPointerUp);
 
+    // TEMPORARY debug hook, same pattern as VirtualGalleryRoom.tsx's
+    // __vltdDebug — lets a live console check camera/collision state
+    // directly instead of guessing from screenshots. Remove once the
+    // walkthrough is confirmed solid.
+    (window as unknown as { __vltdCampusDebug?: unknown }).__vltdCampusDebug = { camera, keys, walkable, scene };
+
     let lastRoomLabel = "";
     function currentRoomLabel(x: number, z: number) {
       const room = CAMPUS_ROOMS.find((r) => {
