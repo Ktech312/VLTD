@@ -24,10 +24,29 @@ import {
   computeWallSegments,
   isWalkable,
   roomBounds,
+  roomById,
   type CampusRoom,
 } from "@/lib/campusLayout";
 import { getPrimaryImageUrl, loadItems, type VaultItem } from "@/lib/vaultModel";
 import { isUniverseKey, type UniverseKey } from "@/lib/taxonomy";
+import { getActiveSpotlightPrograms, getEnabledStoreItems, getItemsPerRoom } from "@/lib/museumCampusConfig";
+
+function wrapText(ctx: CanvasRenderingContext2D, text: string, x: number, y: number, maxWidth: number, lineHeight: number) {
+  const words = text.split(" ");
+  let line = "";
+  let lineY = y;
+  for (const word of words) {
+    const test = line ? `${line} ${word}` : word;
+    if (ctx.measureText(test).width > maxWidth && line) {
+      ctx.fillText(line, x, lineY);
+      line = word;
+      lineY += lineHeight;
+    } else {
+      line = test;
+    }
+  }
+  if (line) ctx.fillText(line, x, lineY);
+}
 
 function itemUniverse(item: VaultItem) {
   const raw = typeof item.universe === "string" ? item.universe.trim().toUpperCase() : "";
@@ -153,10 +172,12 @@ export default function VltdMuseumCampus() {
       floor.position.set(x, 0, z);
       scene.add(floor);
 
-      const label = makeLabelSprite(room.label, room.id === "HUB" ? undefined : room.tierLabel);
-      if (label) {
-        label.position.set(x, WALL_HEIGHT - 1.4, z);
-        scene.add(label);
+      if (room.label) {
+        const label = makeLabelSprite(room.label, room.id === "HUB" ? undefined : room.tierLabel);
+        if (label) {
+          label.position.set(x, WALL_HEIGHT - 1.4, z);
+          scene.add(label);
+        }
       }
     }
 
@@ -192,59 +213,147 @@ export default function VltdMuseumCampus() {
       scene.add(wall);
     }
 
-    // Placeholder content: the signed-in user's own vault items, grouped by
-    // universe, hung on each room's north wall. Real "top items across all
-    // collectors" data doesn't exist yet — this is a stand-in so the
-    // walkthrough isn't empty, not the final content source.
-    const allItems = loadItems();
+    // Content is async (vault items are sync, but items-per-room, Spotlight
+    // programs and Store items all come from Supabase now), so it's
+    // populated after the room shells are already up and rendering rather
+    // than blocking the first frame — matches how item textures already
+    // load in after their frame appears.
     const textureLoader = new THREE.TextureLoader();
     textureLoader.setCrossOrigin("anonymous");
+    let contentCancelled = false;
 
-    const universeCounts: Partial<Record<UniverseKey, number>> = {};
-    for (const item of allItems) {
-      const universe = itemUniverse(item);
-      if (universe) universeCounts[universe] = (universeCounts[universe] ?? 0) + 1;
-    }
-    const swing = assignSwingRoomUniverses(universeCounts);
-    const roomUniverses: Partial<Record<CampusRoom["id"], UniverseKey[]>> = {
-      COLLECTION: swing.COLLECTION,
-      CARDS: swing.CARDS,
-      MISC: ["MISC", ...swing.MISC_EXTRA],
-    };
-
-    for (const room of CAMPUS_ROOMS) {
-      const universes = roomUniverses[room.id] ?? room.universes;
-      if (universes.length === 0) continue;
-      const items = allItems.filter((item) => {
-        const universe = itemUniverse(item);
-        return universe !== null && universes.includes(universe);
-      }).slice(0, 8);
-      if (items.length === 0) continue;
-
-      const bounds = roomBounds(room);
-      const usableWidth = room.w - 3;
-      const step = usableWidth / items.length;
-      const frameSize = Math.min(2.6, step * 0.72);
-
-      items.forEach((item, index) => {
-        const url = getPrimaryImageUrl(item);
-        if (!url) return;
-        const frameX = bounds.x0 + 1.5 + step * (index + 0.5);
-        const geometry = new THREE.PlaneGeometry(frameSize, frameSize);
-        const material = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.9 });
-        const frame = new THREE.Mesh(geometry, material);
-        frame.position.set(frameX, EYE_HEIGHT, bounds.z0 + WALL_THICKNESS + 0.03);
-        scene.add(frame);
-
-        textureLoader.load(url, (texture) => {
-          texture.colorSpace = THREE.SRGBColorSpace;
-          const artMaterial = new THREE.MeshStandardMaterial({ map: texture, roughness: 0.6 });
-          const art = new THREE.Mesh(new THREE.PlaneGeometry(frameSize * 0.88, frameSize * 0.88), artMaterial);
-          art.position.set(frameX, EYE_HEIGHT, bounds.z0 + WALL_THICKNESS + 0.05);
-          scene.add(art);
-        });
+    function hangFrame(x: number, z: number, size: number, url: string, yOffset = 0) {
+      const y = EYE_HEIGHT + yOffset;
+      const geometry = new THREE.PlaneGeometry(size, size);
+      const material = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.9 });
+      const frame = new THREE.Mesh(geometry, material);
+      frame.position.set(x, y, z + 0.03);
+      scene.add(frame);
+      textureLoader.load(url, (texture) => {
+        if (contentCancelled) return;
+        texture.colorSpace = THREE.SRGBColorSpace;
+        const artMaterial = new THREE.MeshStandardMaterial({ map: texture, roughness: 0.6 });
+        const art = new THREE.Mesh(new THREE.PlaneGeometry(size * 0.88, size * 0.88), artMaterial);
+        art.position.set(x, y, z + 0.05);
+        scene.add(art);
       });
     }
+
+    function hangPlaque(x: number, z: number, width: number, height: number, title: string, sub?: string, yOffset = 0) {
+      const canvas = document.createElement("canvas");
+      canvas.width = 512;
+      canvas.height = 256;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return;
+      ctx.fillStyle = "#12294a";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.textAlign = "center";
+      ctx.fillStyle = "#eaf2fb";
+      ctx.font = "700 34px Archivo, sans-serif";
+      wrapText(ctx, title, canvas.width / 2, 100, 460, 40);
+      if (sub) {
+        ctx.fillStyle = "#93b0cc";
+        ctx.font = "500 22px 'IBM Plex Mono', monospace";
+        wrapText(ctx, sub, canvas.width / 2, 170, 460, 28);
+      }
+      const texture = new THREE.CanvasTexture(canvas);
+      texture.colorSpace = THREE.SRGBColorSpace;
+      const material = new THREE.MeshStandardMaterial({ map: texture, roughness: 0.85 });
+      const plaque = new THREE.Mesh(new THREE.PlaneGeometry(width, height), material);
+      plaque.position.set(x, EYE_HEIGHT + yOffset, z + 0.03);
+      scene.add(plaque);
+    }
+
+    async function populateDynamicContent() {
+      const [itemsPerRoom, spotlightPrograms, storeItems] = await Promise.all([
+        getItemsPerRoom(),
+        getActiveSpotlightPrograms(),
+        getEnabledStoreItems(),
+      ]);
+      if (contentCancelled) return;
+
+      // Vault-item category rooms — the signed-in user's own items,
+      // grouped by universe, as placeholder content until a real
+      // cross-user "top items" feed exists.
+      const allItems = loadItems();
+      const universeCounts: Partial<Record<UniverseKey, number>> = {};
+      for (const item of allItems) {
+        const universe = itemUniverse(item);
+        if (universe) universeCounts[universe] = (universeCounts[universe] ?? 0) + 1;
+      }
+      const swing = assignSwingRoomUniverses(universeCounts);
+      const roomUniverses: Partial<Record<CampusRoom["id"], UniverseKey[]>> = {
+        COLLECTION: swing.COLLECTION,
+        CARDS: swing.CARDS,
+        MISC: ["MISC", ...swing.MISC_EXTRA],
+      };
+
+      for (const room of CAMPUS_ROOMS) {
+        const universes = roomUniverses[room.id] ?? room.universes;
+        if (universes.length === 0) continue;
+        const items = allItems.filter((item) => {
+          const universe = itemUniverse(item);
+          return universe !== null && universes.includes(universe);
+        }).slice(0, itemsPerRoom);
+        if (items.length === 0) continue;
+
+        const bounds = roomBounds(room);
+        const usableWidth = room.w - 3;
+        const step = usableWidth / items.length;
+        const frameSize = Math.min(2.6, step * 0.72);
+
+        items.forEach((item, index) => {
+          const url = getPrimaryImageUrl(item);
+          if (!url) return;
+          hangFrame(bounds.x0 + 1.5 + step * (index + 0.5), bounds.z0 + WALL_THICKNESS, frameSize, url);
+        });
+      }
+
+      // Spotlight room — admin-controlled rotating programs.
+      const spotlightBounds = roomBounds(roomById("SPOTLIGHT"));
+      if (spotlightPrograms.length === 0) {
+        hangPlaque(
+          spotlightBounds.x0 + (spotlightBounds.x1 - spotlightBounds.x0) / 2,
+          spotlightBounds.z0 + WALL_THICKNESS,
+          6,
+          3,
+          "Coming soon",
+          "Spotlight programs are managed from Admin Tools"
+        );
+      } else {
+        const usableWidth = 20 - 3;
+        const step = usableWidth / spotlightPrograms.length;
+        spotlightPrograms.forEach((program, index) => {
+          hangPlaque(
+            spotlightBounds.x0 + 1.5 + step * (index + 0.5),
+            spotlightBounds.z0 + WALL_THICKNESS,
+            Math.min(4.2, step * 0.85),
+            2.4,
+            program.title,
+            program.description ?? undefined
+          );
+        });
+      }
+
+      // Store room — admin-controlled physical products.
+      const storeBounds = roomBounds(roomById("STORE"));
+      if (storeItems.length === 0) {
+        hangPlaque(storeBounds.x0 + (storeBounds.x1 - storeBounds.x0) / 2, storeBounds.z0 + WALL_THICKNESS, 6, 3, "Coming soon", "Store items are managed from Admin Tools");
+      } else {
+        const usableWidth = 20 - 3;
+        const step = usableWidth / storeItems.length;
+        const frameSize = Math.min(2.6, step * 0.72);
+        storeItems.forEach((item, index) => {
+          const x = storeBounds.x0 + 1.5 + step * (index + 0.5);
+          const z = storeBounds.z0 + WALL_THICKNESS;
+          if (item.image_url) {
+            hangFrame(x, z, frameSize, item.image_url, frameSize * 0.35);
+          }
+          hangPlaque(x, z, frameSize + 0.4, 1.1, item.name, item.price_label ?? undefined, item.image_url ? -frameSize * 0.55 : 0);
+        });
+      }
+    }
+    void populateDynamicContent();
 
     // --- Movement: WASD walk + click-drag look, matching the built room's
     // existing input model (see VirtualGalleryRoom.tsx) rather than
@@ -345,6 +454,7 @@ export default function VltdMuseumCampus() {
     window.addEventListener("resize", onResize);
 
     return () => {
+      contentCancelled = true;
       window.clearTimeout(readyTimer);
       window.cancelAnimationFrame(frameId);
       window.removeEventListener("keydown", onKeyDown);

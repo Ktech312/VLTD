@@ -27,7 +27,10 @@ export type CampusRoomId =
   | "AUTOMOTIVE"
   | "COLLECTION"
   | "SPORTS"
-  | "CARDS";
+  | "CARDS"
+  | "SPOTLIGHT"
+  | "STORE"
+  | "PLAZA";
 
 export type CampusRoom = {
   id: CampusRoomId;
@@ -45,6 +48,10 @@ export type CampusRoom = {
   // assignSwingRoomUniverses() below, from the signed-in user's own real
   // item counts, instead of a guessed hardcoded split.
   universes: UniverseKey[];
+  // PLAZA (the entrance forecourt) is open-air — no wall meshes, just a
+  // floor and a walkable rect. Collision still respects its bounds either
+  // way; this only skips generating wall geometry for it.
+  noWalls?: boolean;
 };
 
 // Blueprint's pre-scale (px/8) room rects * 1.3268 scale factor, unrounded.
@@ -61,6 +68,15 @@ export const CAMPUS_ROOMS: CampusRoom[] = [
   { id: "COLLECTION", label: "Collection", tierLabel: "Gallery C · baseline", x: 16.9 * S, z: 42.25 * S, w: 15.4 * S, d: 12.6 * S, floorColor: 0x2a2418, universes: [] },
   { id: "SPORTS", label: "SPORTS", tierLabel: "Gallery F", x: 33.75 * S, z: 42.25 * S, w: 15.4 * S, d: 12.6 * S, floorColor: 0x18242a, universes: ["SPORTS"] },
   { id: "CARDS", label: "Cards", tierLabel: "Gallery G", x: 50.6 * S, z: 42.25 * S, w: 15.4 * S, d: 12.6 * S, floorColor: 0x241a2a, universes: [] },
+
+  // New wings, not in the original blueprint — EK's ask (2026-09-02):
+  // build the Spotlight and Store rooms now, flanking the Hub's entrance
+  // like a real museum's east/west wings. Content comes from
+  // museumCampusConfig.ts (admin-controlled), not vault items, so
+  // `universes` stays empty for all three.
+  { id: "SPOTLIGHT", label: "Spotlight", tierLabel: "Featured", x: 26, z: -19.5, w: 20, d: 18, floorColor: 0x3a2e18, universes: [] },
+  { id: "STORE", label: "Store", tierLabel: "Collector Shop", x: 64, z: -19.5, w: 20, d: 18, floorColor: 0x1a2e28, universes: [] },
+  { id: "PLAZA", label: "", tierLabel: "", x: 46, z: -19.5, w: 18, d: 18, floorColor: 0x585858, universes: [], noWalls: true },
 ];
 
 // The 3 real taxonomy keys with no dedicated room (Collection and Cards
@@ -118,11 +134,18 @@ export const CAMPUS_DOORS: CampusDoor[] = [
   { wall: "z", at: 49.05 * S, gapCenter: 48.55 * S, rooms: ["SPORTS", "CARDS"] },
   { wall: "x", at: 12.55 * S, gapCenter: 83.625 * S, rooms: ["BUILT_BOTANY", "GAMES"] },
   { wall: "x", at: 26.6 * S, gapCenter: 83.625 * S, rooms: ["GAMES", "AUTOMOTIVE"] },
-  { wall: "x", at: -2.8 * S, gapCenter: 40.65 * S, rooms: ["HUB", null] },
+
+  // New wings (not in the original blueprint) — see CAMPUS_ROOMS above.
+  { wall: "x", at: 0, gapCenter: 36, rooms: ["HUB", "SPOTLIGHT"] },
+  { wall: "x", at: 0, gapCenter: 74, rooms: ["HUB", "STORE"] },
+  // The Hub's entrance now opens onto a real walkable plaza instead of a void.
+  { wall: "x", at: 0, gapCenter: 40.65 * S, rooms: ["HUB", "PLAZA"] },
 ];
 
-// Spawn just inside the Hub, facing the entrance gap on its north wall.
-export const CAMPUS_SPAWN = { x: 41.45 * S, z: 6, yaw: Math.PI };
+// Spawn out in the plaza, facing the entrance facade — EK's ask
+// (2026-09-02) was for the exterior to be "some visual fun," so the
+// walkthrough now opens on it instead of starting already inside.
+export const CAMPUS_SPAWN = { x: 55, z: -15, yaw: Math.PI };
 
 export type WallSide = "north" | "south" | "east" | "west";
 export type WallSegment = {
@@ -155,6 +178,7 @@ export function computeWallSegments(): WallSegment[] {
   const segments: WallSegment[] = [];
 
   for (const room of CAMPUS_ROOMS) {
+    if (room.noWalls) continue;
     const bounds = roomBounds(room);
     const sides: { side: WallSide; fixed: number; from: number; to: number }[] = [
       { side: "north", fixed: bounds.z0, from: bounds.x0, to: bounds.x1 },
