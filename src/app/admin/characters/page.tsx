@@ -404,6 +404,8 @@ function AdminIcon({ name }: { name: string }) {
       return <svg {...p}><rect x="3" y="9" width="18" height="12" rx="1" /><path d="M3 9h18M12 9v12M12 9c-2-3-6-4-6-1s4 1 6 1M12 9c2-3 6-4 6-1s-4 1-6 1" /></svg>;
     case "star":
       return <svg {...p}><path d="M12 3l2.6 5.8 6.4.6-4.8 4.2 1.4 6.3L12 16.8 6.4 19.9l1.4-6.3-4.8-4.2 6.4-.6z" /></svg>;
+    case "landmark":
+      return <svg {...p}><path d="M3 21h18M4 21V10M20 21V10M2 10l10-7 10 7M6 21v-7M10 21v-7M14 21v-7M18 21v-7" /></svg>;
     default:
       return null;
   }
@@ -1687,7 +1689,7 @@ function CharacterDetail({ char }: { char: SeedCharacter }) {
 }
 
 // ── Main Page ─────────────────────────────────────────────────
-type AdminSection = "characters" | "coupons" | "admins" | "themes" | "waitlist" | "bugs" | "scan-limits" | "users" | "events" | "referrals" | "spotlights";
+type AdminSection = "characters" | "coupons" | "admins" | "themes" | "waitlist" | "bugs" | "scan-limits" | "users" | "events" | "referrals" | "spotlights" | "museum-campus";
 
 export default function AdminCharactersPage() {
   const [authState, setAuthState] = useState<"loading" | "signed-out" | "unauthorized" | "authorized">("loading");
@@ -1709,6 +1711,7 @@ export default function AdminCharactersPage() {
     events: false,
     referrals: false,
     spotlights: false,
+    "museum-campus": false,
   });
 
   function selectSection(section: AdminSection) {
@@ -1938,6 +1941,21 @@ export default function AdminCharactersPage() {
               Featured-collection spotlight picks. Opens on the right.
             </p>
           </SidebarSection>
+
+          {/* VLTD Museum campus — EK's ask (2026-09-02): control the
+              Spotlight room's rotating programs, the Store room's items,
+              and items-per-room, since these will change over time. */}
+          <SidebarSection
+            title="Museum Campus"
+            icon="landmark"
+            open={openSections["museum-campus"]}
+            active={activeSection === "museum-campus"}
+            onToggle={() => selectSection("museum-campus")}
+          >
+            <p className="text-[11px] leading-4 text-white/40">
+              Spotlight programs, Store items, items-per-room for the public museum campus. Opens on the right.
+            </p>
+          </SidebarSection>
         </div>
 
         <div className="shrink-0 p-3 border-t border-white/8 flex items-center justify-between">
@@ -2014,6 +2032,12 @@ export default function AdminCharactersPage() {
           <iframe
             src="/admin/spotlights"
             title="Spotlights"
+            className="h-full w-full border-0"
+          />
+        ) : activeSection === "museum-campus" ? (
+          <iframe
+            src="/admin/museum-campus"
+            title="Museum Campus"
             className="h-full w-full border-0"
           />
         ) : (
