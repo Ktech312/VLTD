@@ -15,7 +15,9 @@ import * as THREE from "three";
 import {
   CAMPUS_ROOMS,
   CAMPUS_SPAWN,
+  DOOR_WIDTH,
   EYE_HEIGHT,
+  S,
   WALL_HEIGHT,
   WALL_THICKNESS,
   assignSwingRoomUniverses,
@@ -313,6 +315,56 @@ export default function VltdMuseumCampus() {
       medallion.rotation.x = -Math.PI / 2;
       medallion.position.set(hubCenter.x, 0.02, hubCenter.z);
       scene.add(medallion);
+    }
+
+    // Display shelves flanking the Hub door — EK's ask (2026-09-02): "for
+    // some of the rooms that match in size, add the shelves around the
+    // new Door." The two size-matched groups (five rooms at 20.4x16.8:
+    // POP_CULTURE/TCG/COLLECTION/SPORTS/CARDS, and two at 42.8x16.8:
+    // BUILT_BOTANY/GAMES) each get a pair of shelves just inside their
+    // Hub-facing doorway, one on each side. First pass — plain shelf +
+    // a placeholder object, not real vault items yet.
+    {
+      const shelfMaterial = new THREE.MeshStandardMaterial({ color: 0x6b5636, roughness: 0.8 });
+      const pieceMaterial = new THREE.MeshStandardMaterial({ color: 0xe8b95e, roughness: 0.4, metalness: 0.3 });
+
+      function addShelfPair(
+        roomId: Parameters<typeof roomById>[0],
+        wall: "north" | "south" | "east" | "west",
+        gapCenter: number
+      ) {
+        const bounds = roomBounds(roomById(roomId));
+        const offset = DOOR_WIDTH / 2 + 1.3;
+        const positions: [number, number][] =
+          wall === "north" || wall === "south"
+            ? [[gapCenter - offset, wall === "north" ? bounds.z0 : bounds.z1], [gapCenter + offset, wall === "north" ? bounds.z0 : bounds.z1]]
+            : [[wall === "west" ? bounds.x0 : bounds.x1, gapCenter - offset], [wall === "west" ? bounds.x0 : bounds.x1, gapCenter + offset]];
+        const facingX = wall === "north" || wall === "south";
+
+        for (const [x, z] of positions) {
+          const depth = 0.6;
+          const zOffset = wall === "north" ? depth / 2 + WALL_THICKNESS / 2 : wall === "south" ? -(depth / 2 + WALL_THICKNESS / 2) : 0;
+          const xOffset = wall === "west" ? depth / 2 + WALL_THICKNESS / 2 : wall === "east" ? -(depth / 2 + WALL_THICKNESS / 2) : 0;
+          const shelfGeom = facingX
+            ? new THREE.BoxGeometry(1.6, 0.08, depth)
+            : new THREE.BoxGeometry(depth, 0.08, 1.6);
+          const shelf = new THREE.Mesh(shelfGeom, shelfMaterial);
+          shelf.position.set(x + xOffset, 1.4, z + zOffset);
+          scene.add(shelf);
+
+          const piece = new THREE.Mesh(new THREE.SphereGeometry(0.22, 16, 16), pieceMaterial);
+          piece.position.set(x + xOffset, 1.4 + 0.08 + 0.22, z + zOffset);
+          scene.add(piece);
+        }
+      }
+
+      addShelfPair("POP_CULTURE", "east", 6.3 * S);
+      addShelfPair("TCG", "east", 20.4 * S);
+      addShelfPair("COLLECTION", "north", 24.6 * S);
+      addShelfPair("SPORTS", "north", 41.45 * S);
+      addShelfPair("CARDS", "north", 58.3 * S);
+      addShelfPair("BUILT_BOTANY", "west", 6.3 * S);
+      addShelfPair("GAMES", "west", 20.4 * S);
     }
 
     // Content is async (vault items are sync, but items-per-room, Spotlight

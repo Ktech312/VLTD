@@ -55,7 +55,7 @@ export type CampusRoom = {
 };
 
 // Blueprint's pre-scale (px/8) room rects * 1.3268 scale factor, unrounded.
-const S = 1.3268;
+export const S = 1.3268;
 
 export const CAMPUS_ROOMS: CampusRoom[] = [
   { id: "POP_CULTURE", label: "POP_CULTURE", tierLabel: "North Rotunda", x: 0 * S, z: 0 * S, w: 15.4 * S, d: 12.6 * S, floorColor: 0x3a2a1a, universes: ["POP_CULTURE"] },
