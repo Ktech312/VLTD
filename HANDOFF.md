@@ -248,6 +248,76 @@ who owns a screen.** EK is aware of this.
 
 ---
 
+## 🆕 2026-09-02, same overnight session continued — EK answered the open
+questions from the previous entry (asked "what are the questions?", then
+gave direct answers), all pushed to main, all live-verified via
+Claude-in-Chrome:
+
+1. **Build Spotlight and Store rooms now — yes.** New wings flanking the
+   Hub's entrance (not in the original blueprint): `SPOTLIGHT` (west) and
+   `STORE` (east), each with its own door into the Hub. The Hub's entrance
+   also now opens onto a real walkable `PLAZA` room instead of a void —
+   see the exterior entry below. Commit `70435f3`.
+2. **Admin control over Spotlight/Store options — yes, EK: "I need to
+   control this."** New `/admin/museum-campus` page (same shape as the
+   existing `/admin/spotlights` page — see §0 rule about not duplicating
+   existing admin infra; this is a NEW, differently-scoped table, not a
+   reuse of the pre-existing `spotlights` table, which is a general
+   site-wide featured-profile carousel, not museum-room content). Wired
+   into the admin shell sidebar. Controls: Spotlight programs (title,
+   description, active toggle), Store items (name, price, image, link,
+   enabled toggle), and items-per-room. Commit `0e573f6`.
+
+   **⚠ NEEDS EK TO RUN A MIGRATION** — `supabase/migrations/
+   20260902_museum_campus_config.sql` creates 3 tables
+   (`museum_campus_config`, `museum_spotlight_programs`,
+   `museum_store_items`). Until run, the admin page shows a clear
+   "run this migration" notice, and the campus Spotlight/Store rooms show
+   a "managed from Admin Tools" placeholder plaque — nothing errors, it
+   just has no real content yet. Full SQL was pasted inline in chat per
+   the usual process.
+3. **Item-count-per-room control — yes, EK: "that will also need control
+   from somewhere."** Same migration/admin page — `items_per_room` in
+   `museum_campus_config`, read via `getItemsPerRoom()` in
+   `museumCampusConfig.ts`, replacing the old hardcoded `.slice(0, 8)`.
+   Defaults to 8 if the table doesn't exist yet.
+4. **Exterior facade + Grand Hall — yes, "some visual fun."** EK sent 6
+   reference photos (Art Institute of Chicago + Field Museum exteriors and
+   interiors) with an explicit instruction not to copy those two specific
+   real museums — read as: take the STYLE (classical columns, pediment,
+   stone steps, skylight, floor medallion), not the specific identifying
+   landmarks (no bronze lions, no literal replicas). Built: 6 columns +
+   capitals flanking the entrance, a triangular pediment (real 3D geometry
+   via `THREE.ExtrudeGeometry`, not a flat image), 3 shallow entrance
+   steps (purely decorative — the camera's Y never changes, so no
+   collision needed), a lit "skylight" ceiling accent in the Hub, and a
+   canvas-textured floor medallion. The walkthrough now SPAWNS in the new
+   plaza facing the facade instead of already inside the Hub, so this is
+   the first thing seen. Commit `27eada9`. **Live-verified**: screenshot
+   confirms the facade renders correctly from the spawn point and from a
+   look-up angle at the pediment; no console errors.
+5. **Shelves near doors in size-matched rooms — yes, "start... plenty to
+   review in the morning."** The two groups of rooms sharing identical
+   footprints (five at 20.4×16.8: POP_CULTURE/TCG/COLLECTION/SPORTS/
+   CARDS; two at 42.8×16.8: BUILT_BOTANY/GAMES) each get a pair of
+   wall-mounted shelves just inside their Hub-facing doorway. First pass
+   only — plain shelf + a placeholder sphere, not real vault items on the
+   shelves yet, matching EK's own "this will need work" expectation.
+   Commit `3133642`.
+
+Two questions from the previous entry were NOT answered and stay open:
+whether "highest item count" is the right rule for Collection/Cards
+(§ below still applies), and the fixed-vs-dynamic floor plan question.
+Don't assume an answer to either — ask before building on them.
+
+Build- and typecheck-clean at every commit above (`tsc --noEmit`,
+`eslint`, `next build` all pass before each push, per §0 rules). Each
+stage was deployed and checked live individually, not batched — if
+something here looks wrong, `git log` on `campusLayout.ts` and
+`VltdMuseumCampus.tsx` to find which specific commit to look at first.
+
+---
+
 ## 🆕 2026-08-31/09-01 overnight — VLTD Museum public campus, first
 functional pass. EK: "this is a good overnight task... Start to build this
 as a functional walk through, how much can you start to do on your own?"
