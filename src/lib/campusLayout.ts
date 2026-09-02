@@ -38,11 +38,12 @@ export type CampusRoom = {
   w: number; // width along X
   d: number; // depth along Z
   floorColor: number;
-  // Placeholder content mapping only — which real vault universes populate
-  // this room's walls. Collection and Cards don't have an obvious 1:1 real
-  // taxonomy match (the blueprint's own bottom-row naming came partly from
-  // filler labels, not measured category data), so this split is a guess
-  // for tonight's build, not a confirmed product decision.
+  // Static content mapping for the 7 rooms with an obvious 1:1 real
+  // taxonomy match. Collection and Cards don't have one (the blueprint's
+  // own bottom-row naming came partly from filler labels, not measured
+  // category data) — left empty here and resolved at runtime by
+  // assignSwingRoomUniverses() below, from the signed-in user's own real
+  // item counts, instead of a guessed hardcoded split.
   universes: UniverseKey[];
 };
 
@@ -52,15 +53,32 @@ const S = 1.3268;
 export const CAMPUS_ROOMS: CampusRoom[] = [
   { id: "POP_CULTURE", label: "POP_CULTURE", tierLabel: "North Rotunda", x: 0 * S, z: 0 * S, w: 15.4 * S, d: 12.6 * S, floorColor: 0x3a2a1a, universes: ["POP_CULTURE"] },
   { id: "TCG", label: "TCG", tierLabel: "South Rotunda", x: 0 * S, z: 14.1 * S, w: 15.4 * S, d: 12.6 * S, floorColor: 0x1a2a3a, universes: ["TCG"] },
-  { id: "MISC", label: "misc", tierLabel: "Gallery A", x: 0 * S, z: 28.1 * S, w: 15.4 * S, d: 26.6 * S, floorColor: 0x2a2a2a, universes: ["MISC", "ART"] },
+  { id: "MISC", label: "misc", tierLabel: "Gallery A", x: 0 * S, z: 28.1 * S, w: 15.4 * S, d: 26.6 * S, floorColor: 0x2a2a2a, universes: ["MISC"] },
   { id: "HUB", label: "VLTD Museum", tierLabel: "Grand hall", x: 16.9 * S, z: 0 * S, w: 49.1 * S, d: 40.75 * S, floorColor: 0x24211a, universes: [] },
   { id: "BUILT_BOTANY", label: "BUILT_BOTANY", tierLabel: "Gallery D", x: 67.5 * S, z: 0 * S, w: 32.25 * S, d: 12.6 * S, floorColor: 0x1a3323, universes: ["BUILT_BOTANY"] },
   { id: "GAMES", label: "GAMES", tierLabel: "Gallery E", x: 67.5 * S, z: 14.1 * S, w: 32.25 * S, d: 12.6 * S, floorColor: 0x2a1a3a, universes: ["GAMES"] },
   { id: "AUTOMOTIVE", label: "Automobile", tierLabel: "Garden Gallery", x: 67.5 * S, z: 28.1 * S, w: 32.25 * S, d: 26.6 * S, floorColor: 0x3a1a1a, universes: ["AUTOMOTIVE"] },
-  { id: "COLLECTION", label: "Collection", tierLabel: "Gallery C · baseline", x: 16.9 * S, z: 42.25 * S, w: 15.4 * S, d: 12.6 * S, floorColor: 0x2a2418, universes: ["JEWELRY_APPAREL"] },
+  { id: "COLLECTION", label: "Collection", tierLabel: "Gallery C · baseline", x: 16.9 * S, z: 42.25 * S, w: 15.4 * S, d: 12.6 * S, floorColor: 0x2a2418, universes: [] },
   { id: "SPORTS", label: "SPORTS", tierLabel: "Gallery F", x: 33.75 * S, z: 42.25 * S, w: 15.4 * S, d: 12.6 * S, floorColor: 0x18242a, universes: ["SPORTS"] },
-  { id: "CARDS", label: "Cards", tierLabel: "Gallery G", x: 50.6 * S, z: 42.25 * S, w: 15.4 * S, d: 12.6 * S, floorColor: 0x241a2a, universes: ["MUSIC"] },
+  { id: "CARDS", label: "Cards", tierLabel: "Gallery G", x: 50.6 * S, z: 42.25 * S, w: 15.4 * S, d: 12.6 * S, floorColor: 0x241a2a, universes: [] },
 ];
+
+// The 3 real taxonomy keys with no dedicated room (Collection and Cards
+// have no obvious 1:1 match). Resolved at runtime from the signed-in
+// user's own real item counts — highest count gets Collection, second
+// gets Cards, the leftover folds into misc — rather than a guessed
+// hardcoded split. See [[vltd-public-museum-vision]]: sizing/assignment
+// should track real data, not be pinned to today's placeholder choice.
+export const SWING_UNIVERSES: UniverseKey[] = ["JEWELRY_APPAREL", "MUSIC", "ART"];
+
+export function assignSwingRoomUniverses(
+  countByUniverse: Partial<Record<UniverseKey, number>>
+): { COLLECTION: UniverseKey[]; CARDS: UniverseKey[]; MISC_EXTRA: UniverseKey[] } {
+  const sorted = [...SWING_UNIVERSES].sort(
+    (a, b) => (countByUniverse[b] ?? 0) - (countByUniverse[a] ?? 0)
+  );
+  return { COLLECTION: [sorted[0]], CARDS: [sorted[1]], MISC_EXTRA: [sorted[2]] };
+}
 
 export function roomBounds(room: CampusRoom) {
   return { x0: room.x, x1: room.x + room.w, z0: room.z, z1: room.z + room.d };

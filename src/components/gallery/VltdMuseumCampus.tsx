@@ -18,6 +18,7 @@ import {
   EYE_HEIGHT,
   WALL_HEIGHT,
   WALL_THICKNESS,
+  assignSwingRoomUniverses,
   buildWalkableAreas,
   computeDoorBridges,
   computeWallSegments,
@@ -26,7 +27,7 @@ import {
   type CampusRoom,
 } from "@/lib/campusLayout";
 import { getPrimaryImageUrl, loadItems, type VaultItem } from "@/lib/vaultModel";
-import { isUniverseKey } from "@/lib/taxonomy";
+import { isUniverseKey, type UniverseKey } from "@/lib/taxonomy";
 
 function itemUniverse(item: VaultItem) {
   const raw = typeof item.universe === "string" ? item.universe.trim().toUpperCase() : "";
@@ -154,11 +155,24 @@ export default function VltdMuseumCampus() {
     const textureLoader = new THREE.TextureLoader();
     textureLoader.setCrossOrigin("anonymous");
 
+    const universeCounts: Partial<Record<UniverseKey, number>> = {};
+    for (const item of allItems) {
+      const universe = itemUniverse(item);
+      if (universe) universeCounts[universe] = (universeCounts[universe] ?? 0) + 1;
+    }
+    const swing = assignSwingRoomUniverses(universeCounts);
+    const roomUniverses: Partial<Record<CampusRoom["id"], UniverseKey[]>> = {
+      COLLECTION: swing.COLLECTION,
+      CARDS: swing.CARDS,
+      MISC: ["MISC", ...swing.MISC_EXTRA],
+    };
+
     for (const room of CAMPUS_ROOMS) {
-      if (room.universes.length === 0) continue;
+      const universes = roomUniverses[room.id] ?? room.universes;
+      if (universes.length === 0) continue;
       const items = allItems.filter((item) => {
         const universe = itemUniverse(item);
-        return universe !== null && room.universes.includes(universe);
+        return universe !== null && universes.includes(universe);
       }).slice(0, 8);
       if (items.length === 0) continue;
 
