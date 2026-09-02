@@ -289,12 +289,21 @@ the existing single-room builder (`VirtualGalleryRoom.tsx`) was touched:
   2026-08-31 entry immediately below this one... actually same commit
   range, both landed same session.)
 
-**Known placeholder / NOT decided by EK, flag before treating as final:**
-- Room-to-universe mapping for content: POP_CULTURE/TCG/BUILT_BOTANY/GAMES/
-  SPORTS/misc/Automobile map cleanly to their real taxonomy keys. Collection
-  and Cards (the blueprint's bottom-row rooms) don't have an obvious 1:1 real
-  category — I assigned Collection→JEWELRY_APPAREL and Cards→MUSIC as a
-  guess so every room has something in it, not a confirmed decision.
+**Update, same overnight session, commit `3a08eb7`:** the Collection/Cards
+guess above is fixed — `assignSwingRoomUniverses()` in `campusLayout.ts`
+now picks Collection/Cards' content from the signed-in user's own real item
+counts (highest of JEWELRY_APPAREL/MUSIC/ART gets Collection, second gets
+Cards, leftover folds into misc) instead of a hardcoded guess. For a
+zero-item account it falls back to the same JEWELRY_APPAREL/MUSIC/ART order
+as before (deterministic, not random), so nothing regresses for an empty
+vault. Live-verified: no console errors, canvas renders correctly, same
+Hub view as before. Still NOT a confirmed product decision — still a
+placeholder in the sense that "highest item count" may not be the right
+rule for a real public museum (that's a curation question, not just a data
+one) — just no longer an arbitrary hardcode.
+
+**Still-open placeholders / NOT decided by EK, flag before treating as
+final:**
 - No Spotlight room, no Store room, no cross-user data — all explicitly
   deferred per [[vltd-public-museum-vision]], same as the blueprint itself.
 - No exterior/entrance experience — the Hub's north-wall entrance gap is
@@ -304,6 +313,9 @@ the existing single-room builder (`VirtualGalleryRoom.tsx`) was touched:
   room, no shelves/pedestals/cabinets like the real single-room builder) —
   intentionally minimal so tonight's scope stayed geometry + navigation,
   not a second full room-decorating engine.
+- No mobile/touch controls — WASD + mouse-drag has no touch equivalent, not
+  tested on a small viewport. The rest of the site supports mobile; this
+  page likely doesn't yet.
 
 Build- and typecheck-clean (`tsc --noEmit`, `eslint`, `next build` all pass).
 

@@ -9,7 +9,7 @@
 // user's own vault items as placeholder content until there's a real
 // cross-user "top items" feed to show instead.
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import * as THREE from "three";
 
 import {
@@ -62,10 +62,55 @@ function roomCenter(room: CampusRoom) {
   return { x: room.x + room.w / 2, z: room.z + room.d / 2 };
 }
 
+// On-screen movement control for touch devices (no physical keyboard) —
+// presses/releases feed the exact same keys Set real WASD does, so tick()
+// doesn't need to know which input source triggered a move.
+function TouchPadButton({
+  label,
+  onDown,
+  onUp,
+  children,
+}: {
+  label: string;
+  onDown: () => void;
+  onUp: () => void;
+  children: ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      aria-label={label}
+      onPointerDown={(e) => { e.preventDefault(); onDown(); }}
+      onPointerUp={onUp}
+      onPointerLeave={onUp}
+      onPointerCancel={onUp}
+      className="flex h-12 w-12 items-center justify-center rounded-full bg-black/55 text-white ring-1 ring-white/15 backdrop-blur active:bg-black/75"
+      style={{ touchAction: "none" }}
+    >
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+        {children}
+      </svg>
+    </button>
+  );
+}
+
 export default function VltdMuseumCampus() {
   const mountRef = useRef<HTMLDivElement | null>(null);
   const roomLabelRef = useRef<HTMLDivElement | null>(null);
+  // Shared with the on-screen touch controls below (mobile has no
+  // keyboard) — same Set an on-screen button press adds/removes from, so
+  // tick()'s movement code doesn't need to know which input source it
+  // came from.
+  const keysRef = useRef<Set<string>>(new Set());
   const [ready, setReady] = useState(false);
+  const [showTouchControls, setShowTouchControls] = useState(false);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      setShowTouchControls(("ontouchstart" in window) || navigator.maxTouchPoints > 0);
+    }, 0);
+    return () => window.clearTimeout(timer);
+  }, []);
 
   useEffect(() => {
     const mount = mountRef.current;
@@ -205,7 +250,7 @@ export default function VltdMuseumCampus() {
     // existing input model (see VirtualGalleryRoom.tsx) rather than
     // reinventing a control scheme. ---
     const walkable = buildWalkableAreas();
-    const keys = new Set<string>();
+    const keys = keysRef.current;
     let dragging = false;
     let lastX = 0;
     let lastY = 0;
@@ -308,6 +353,7 @@ export default function VltdMuseumCampus() {
       window.removeEventListener("pointerup", onPointerUp);
       window.removeEventListener("resize", onResize);
       renderer.domElement.removeEventListener("pointerdown", onPointerDown);
+      keys.clear();
       scene.traverse((obj) => {
         if (obj instanceof THREE.Mesh) {
           obj.geometry.dispose();
@@ -320,6 +366,13 @@ export default function VltdMuseumCampus() {
       if (renderer.domElement.parentElement === mount) mount.removeChild(renderer.domElement);
     };
   }, []);
+
+  function pressKey(key: string) {
+    keysRef.current.add(key);
+  }
+  function releaseKey(key: string) {
+    keysRef.current.delete(key);
+  }
 
   return (
     <div className="fixed inset-0 bg-[#081527]">
@@ -339,8 +392,32 @@ export default function VltdMuseumCampus() {
           </div>
         </div>
 
-        <div className="mx-auto rounded-full bg-black/55 px-4 py-2 text-xs font-medium text-white/75 ring-1 ring-white/15 backdrop-blur">
-          WASD to walk · drag to look
+        <div className="flex items-end justify-between">
+          <div className="rounded-full bg-black/55 px-4 py-2 text-xs font-medium text-white/75 ring-1 ring-white/15 backdrop-blur">
+            {showTouchControls ? "Drag to look · pad to walk" : "WASD to walk · drag to look"}
+          </div>
+
+          {showTouchControls ? (
+            <div className="pointer-events-auto grid grid-cols-3 grid-rows-3 gap-1" style={{ touchAction: "none" }}>
+              <div />
+              <TouchPadButton label="Forward" onDown={() => pressKey("w")} onUp={() => releaseKey("w")}>
+                <path d="M12 5 5 14h14L12 5Z" />
+              </TouchPadButton>
+              <div />
+              <TouchPadButton label="Left" onDown={() => pressKey("a")} onUp={() => releaseKey("a")}>
+                <path d="M5 12 14 5v14L5 12Z" />
+              </TouchPadButton>
+              <div />
+              <TouchPadButton label="Right" onDown={() => pressKey("d")} onUp={() => releaseKey("d")}>
+                <path d="M19 12 10 5v14l9-7Z" />
+              </TouchPadButton>
+              <div />
+              <TouchPadButton label="Back" onDown={() => pressKey("s")} onUp={() => releaseKey("s")}>
+                <path d="M12 19 5 10h14l-7 9Z" />
+              </TouchPadButton>
+              <div />
+            </div>
+          ) : null}
         </div>
       </div>
 
