@@ -213,6 +213,108 @@ export default function VltdMuseumCampus() {
       scene.add(wall);
     }
 
+    // Exterior facade + entrance steps — EK's ask (2026-09-02), "just some
+    // visual fun," inspired by classical museum architecture (columns,
+    // pediment, stone steps) but NOT copying any specific real museum's
+    // exact look. Purely decorative: the camera's Y never changes, so the
+    // steps don't need real elevation collision, and the facade sits just
+    // outside the Hub's real north wall rather than replacing it.
+    {
+      const stoneMaterial = new THREE.MeshStandardMaterial({ color: 0xd9d0bd, roughness: 0.75 });
+      const facadeZ = -0.9;
+      const columnXs = [30, 38, 46, 62, 70, 78];
+      for (const x of columnXs) {
+        const column = new THREE.Mesh(new THREE.CylinderGeometry(0.55, 0.65, WALL_HEIGHT, 12), stoneMaterial);
+        column.position.set(x, WALL_HEIGHT / 2, facadeZ);
+        scene.add(column);
+        const capital = new THREE.Mesh(new THREE.BoxGeometry(1.5, 0.3, 1.5), stoneMaterial);
+        capital.position.set(x, WALL_HEIGHT + 0.15, facadeZ);
+        scene.add(capital);
+      }
+
+      const pedimentShape = new THREE.Shape();
+      pedimentShape.moveTo(-13, 0);
+      pedimentShape.lineTo(13, 0);
+      pedimentShape.lineTo(0, 4);
+      pedimentShape.closePath();
+      const pediment = new THREE.Mesh(
+        new THREE.ExtrudeGeometry(pedimentShape, { depth: 1.3, bevelEnabled: false }),
+        stoneMaterial
+      );
+      pediment.position.set(54.99, WALL_HEIGHT + 0.3, facadeZ - 0.65);
+      scene.add(pediment);
+
+      const stepSpecs = [
+        { width: 9, z: -2.6 },
+        { width: 6.5, z: -1.6 },
+        { width: 4, z: -0.6 },
+      ];
+      let stepY = 0;
+      for (const step of stepSpecs) {
+        const height = 0.16;
+        stepY += height;
+        const stepMesh = new THREE.Mesh(new THREE.BoxGeometry(step.width, height, 1.1), stoneMaterial);
+        stepMesh.position.set(54.99, stepY - height / 2, step.z);
+        scene.add(stepMesh);
+      }
+    }
+
+    // Grand Hall enhancement — a lit "skylight" ceiling accent and a floor
+    // medallion, so the Hub reads as a real grand hall rather than a plain box.
+    {
+      const hub = roomById("HUB");
+      const hubCenter = roomCenter(hub);
+
+      const skylight = new THREE.Mesh(
+        new THREE.PlaneGeometry(hub.w * 0.6, hub.d * 0.55),
+        new THREE.MeshStandardMaterial({ color: 0xfff6e0, emissive: 0xfff2d0, emissiveIntensity: 0.6, roughness: 1 })
+      );
+      skylight.rotation.x = Math.PI / 2;
+      skylight.position.set(hubCenter.x, WALL_HEIGHT - 0.05, hubCenter.z);
+      scene.add(skylight);
+      const skylightGlow = new THREE.PointLight(0xfff2d0, 0.8, 40, 2);
+      skylightGlow.position.set(hubCenter.x, WALL_HEIGHT - 1, hubCenter.z);
+      scene.add(skylightGlow);
+
+      const medallionCanvas = document.createElement("canvas");
+      medallionCanvas.width = 512;
+      medallionCanvas.height = 512;
+      const mctx = medallionCanvas.getContext("2d");
+      if (mctx) {
+        mctx.fillStyle = "#24211a";
+        mctx.fillRect(0, 0, 512, 512);
+        mctx.translate(256, 256);
+        for (let ring = 0; ring < 4; ring++) {
+          mctx.beginPath();
+          mctx.arc(0, 0, 230 - ring * 50, 0, Math.PI * 2);
+          mctx.strokeStyle = "rgba(232,185,94,0.55)";
+          mctx.lineWidth = 3;
+          mctx.stroke();
+        }
+        mctx.rotate(Math.PI / 8);
+        for (let i = 0; i < 8; i++) {
+          mctx.rotate(Math.PI / 4);
+          mctx.beginPath();
+          mctx.moveTo(0, -230);
+          mctx.lineTo(14, -170);
+          mctx.lineTo(0, -110);
+          mctx.lineTo(-14, -170);
+          mctx.closePath();
+          mctx.fillStyle = "rgba(232,185,94,0.35)";
+          mctx.fill();
+        }
+      }
+      const medallionTexture = new THREE.CanvasTexture(medallionCanvas);
+      medallionTexture.colorSpace = THREE.SRGBColorSpace;
+      const medallion = new THREE.Mesh(
+        new THREE.CircleGeometry(9, 48),
+        new THREE.MeshStandardMaterial({ map: medallionTexture, roughness: 0.9 })
+      );
+      medallion.rotation.x = -Math.PI / 2;
+      medallion.position.set(hubCenter.x, 0.02, hubCenter.z);
+      scene.add(medallion);
+    }
+
     // Content is async (vault items are sync, but items-per-room, Spotlight
     // programs and Store items all come from Supabase now), so it's
     // populated after the room shells are already up and rendering rather
