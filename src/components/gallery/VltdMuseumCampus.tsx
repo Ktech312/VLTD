@@ -671,7 +671,13 @@ export default function VltdMuseumCampus() {
       targetCameraBody.copy(destination);
     }
 
+    const debugCounts = { pointerdown: 0, pointermove: 0, pointerup: 0, mousedown: 0, mousemove: 0, mouseup: 0 };
+    window.addEventListener("mousedown", () => { debugCounts.mousedown++; });
+    window.addEventListener("mousemove", () => { debugCounts.mousemove++; });
+    window.addEventListener("mouseup", () => { debugCounts.mouseup++; });
+
     function onPointerDown(e: PointerEvent) {
+      debugCounts.pointerdown++;
       isDragging = true;
       didDrag = false;
       startX = e.clientX;
@@ -687,6 +693,7 @@ export default function VltdMuseumCampus() {
     }
 
     function onPointerMove(e: PointerEvent) {
+      debugCounts.pointermove++;
       // Hover highlight runs regardless of dragging, same as real hover
       // anywhere else on the page — this is what tells the player which
       // squares are clickable before they click one.
@@ -710,6 +717,7 @@ export default function VltdMuseumCampus() {
     // pointerdown) so a click elsewhere on the page (Exit link, etc.)
     // can't fall through into a raycast from that element's position.
     function onPointerUp() {
+      debugCounts.pointerup++;
       if (!isDragging) return;
       isDragging = false;
       if (didDrag) return;
@@ -748,7 +756,7 @@ export default function VltdMuseumCampus() {
     // assuming the ported sensitivity constant behaves correctly (EK
     // corrected this exact assumption). Remove once confirmed.
     (window as unknown as { __vltdCampusDebug?: unknown }).__vltdCampusDebug = {
-      getYaw: () => ({ yaw, pitch, targetYaw, targetPitch, camRotY: camera.rotation.y, fov: camera.fov }),
+      getYaw: () => ({ yaw, pitch, targetYaw, targetPitch, camRotY: camera.rotation.y, fov: camera.fov, isDragging, didDrag, counts: { ...debugCounts } }),
     };
 
     // A sentinel that can't equal any real room label (including the
