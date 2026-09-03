@@ -682,14 +682,6 @@ export default function VltdMuseumCampus() {
     window.addEventListener("pointermove", onPointerMove);
     window.addEventListener("pointerup", onPointerUp);
 
-    // TEMPORARY — verifying the FOV/wall-height fix actually deployed
-    // (static chunk-content checks couldn't find this file's numeric
-    // literals at all; this route's chunk loads dynamically, not via a
-    // static <script> tag). Remove once confirmed.
-    (window as unknown as { __vltdCampusDebug?: unknown }).__vltdCampusDebug = {
-      fov: camera.fov, wallHeight: WALL_HEIGHT, pitchLimit: PITCH_LIMIT,
-    };
-
     // A sentinel that can't equal any real room label (including the
     // empty-string PLAZA/corridor case) — spawning in an unlabeled area
     // otherwise leaves the overlay stuck on its initial "Loading…" text
