@@ -665,7 +665,21 @@ export default function VltdMuseumCampus() {
     window.addEventListener("pointermove", onPointerMove);
     window.addEventListener("pointerup", onPointerUp);
 
-    let lastRoomLabel = "";
+    // TEMPORARY debug hook, same pattern used earlier this session — lets
+    // a live console call onPointerUp/startWalkTween directly to verify
+    // the new click-to-walk raycast without depending on real frames
+    // advancing (this environment throttles rAF for a non-focused tab).
+    // Remove once click-to-walk is confirmed solid live.
+    (window as unknown as { __vltdCampusDebug?: unknown }).__vltdCampusDebug = {
+      camera, cameraBody, walkable, isWalkable, startWalkTween,
+      getState: () => ({ yaw, pitch, walkTween, cameraBody: cameraBody.clone() }),
+    };
+
+    // A sentinel that can't equal any real room label (including the
+    // empty-string PLAZA/corridor case) — spawning in an unlabeled area
+    // otherwise leaves the overlay stuck on its initial "Loading…" text
+    // forever, since "" !== "" never trips the update below.
+    let lastRoomLabel = "__unset__";
     function currentRoomLabel(x: number, z: number) {
       const room = CAMPUS_ROOMS.find((r) => {
         const b = roomBounds(r);
