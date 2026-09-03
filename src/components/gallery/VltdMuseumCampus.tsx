@@ -560,6 +560,12 @@ export default function VltdMuseumCampus() {
     const WALK_SPEED_SLOW = 1.73; // Shift
     const TURN_RATE = 1.7; // rad/sec, Left/Right arrow turning
     const PITCH_LIMIT = 0.32; // exact match to the single room's own limit — no campus-specific deviation
+    // Calibrated to "drag across the full screen width = rotate through
+    // one horizontal field of view" (~0.00079 rad/px at this FOV/aspect),
+    // not ported — see the onPointerMove comment below for the measured
+    // reasoning. Pitch keeps the same ratio to yaw the single room used.
+    const YAW_SENSITIVITY = 0.0008;
+    const PITCH_SENSITIVITY = 0.00036;
 
     let yaw = CAMPUS_SPAWN.yaw;
     let pitch = 0;
@@ -671,13 +677,7 @@ export default function VltdMuseumCampus() {
       targetCameraBody.copy(destination);
     }
 
-    const debugCounts = { pointerdown: 0, pointermove: 0, pointerup: 0, mousedown: 0, mousemove: 0, mouseup: 0 };
-    window.addEventListener("mousedown", () => { debugCounts.mousedown++; });
-    window.addEventListener("mousemove", () => { debugCounts.mousemove++; });
-    window.addEventListener("mouseup", () => { debugCounts.mouseup++; });
-
     function onPointerDown(e: PointerEvent) {
-      debugCounts.pointerdown++;
       isDragging = true;
       didDrag = false;
       startX = e.clientX;
@@ -693,7 +693,6 @@ export default function VltdMuseumCampus() {
     }
 
     function onPointerMove(e: PointerEvent) {
-      debugCounts.pointermove++;
       // Hover highlight runs regardless of dragging, same as real hover
       // anywhere else on the page — this is what tells the player which
       // squares are clickable before they click one.
@@ -706,8 +705,21 @@ export default function VltdMuseumCampus() {
         didDrag = true;
         walkTween = null; // a real manual look-drag interrupts an in-progress auto-walk
       }
-      targetYaw -= dx * 0.0035;
-      targetPitch = Math.max(-PITCH_LIMIT, Math.min(PITCH_LIMIT, targetPitch - dy * 0.0016));
+      // EK's ask (2026-09-02): "i slightly move the mouse and moves to
+      // the other side of the room... you still do not have the EXACT
+      // control." The single room's own 0.0035/0.0016 sensitivity, ported
+      // exactly, turned out to be a bad match here regardless — measured
+      // directly (a temporary debug hook driving the real onPointerMove
+      // code with realistic incremental deltas, not a guess): a 25px drag
+      // rotated the view 5 degrees, a 300px drag rotated it 60 degrees -
+      // both ~4.4x faster than "drag across the full screen width =
+      // rotate through one horizontal field of view," the natural feel
+      // of grabbing and panning the room rather than being flung through
+      // it. YAW_SENSITIVITY/PITCH_SENSITIVITY below are calibrated to
+      // that 1:1 screen-to-FOV feel instead, at the same yaw:pitch ratio
+      // the single room used.
+      targetYaw -= dx * YAW_SENSITIVITY;
+      targetPitch = Math.max(-PITCH_LIMIT, Math.min(PITCH_LIMIT, targetPitch - dy * PITCH_SENSITIVITY));
       startX = e.clientX;
       startY = e.clientY;
     }
@@ -717,7 +729,6 @@ export default function VltdMuseumCampus() {
     // pointerdown) so a click elsewhere on the page (Exit link, etc.)
     // can't fall through into a raycast from that element's position.
     function onPointerUp() {
-      debugCounts.pointerup++;
       if (!isDragging) return;
       isDragging = false;
       if (didDrag) return;
@@ -751,22 +762,6 @@ export default function VltdMuseumCampus() {
     window.addEventListener("pointermove", onPointerMove);
     window.addEventListener("pointerup", onPointerUp);
     renderer.domElement.addEventListener("wheel", onWheel, { passive: false });
-
-    // TEMPORARY — verifying real drag-look numbers directly instead of
-    // assuming the ported sensitivity constant behaves correctly (EK
-    // corrected this exact assumption). Remove once confirmed.
-    (window as unknown as { __vltdCampusDebug?: unknown }).__vltdCampusDebug = {
-      getYaw: () => ({ yaw, pitch, targetYaw, targetPitch, camRotY: camera.rotation.y, fov: camera.fov, isDragging, didDrag, counts: { ...debugCounts } }),
-      simulateDrag: (startClientX: number, startClientY: number, endClientX: number, endClientY: number, steps: number) => {
-        onPointerDown({ clientX: startClientX, clientY: startClientY } as PointerEvent);
-        for (let i = 1; i <= steps; i++) {
-          const x = startClientX + ((endClientX - startClientX) * i) / steps;
-          const y = startClientY + ((endClientY - startClientY) * i) / steps;
-          onPointerMove({ clientX: x, clientY: y } as PointerEvent);
-        }
-        onPointerUp();
-      },
-    };
 
     // A sentinel that can't equal any real room label (including the
     // empty-string PLAZA/corridor case) — spawning in an unlabeled area
