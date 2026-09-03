@@ -248,6 +248,49 @@ who owns a screen.** EK is aware of this.
 
 ---
 
+## 🆕 2026-09-02, same overnight session, yet later — the FOV/scale fix
+above wasn't enough. EK, second round, stronger: "when i click on
+something it still does this 'jerking' to a different direction and then
+where i think i want to go, i really hate this on the other pager also, i
+tried to get you to remove it." Plus scroll-to-zoom still missing, "its
+still taking my into room backwards," and "i slight move the mouse and
+moves to the other side of the room... you still do not have the EXACT
+control." Commit `1b420a4`.
+
+Re-read this file's own 2026-08-23ish history (search "Click-to-walk
+forced a final turn") — EK had ALREADY told a prior session the 2-phase
+turn-then-travel (no 3rd phase) "work[ed] well" in the single room. So
+porting that same 2-phase version into the campus wasn't wrong per se —
+it broke because of SCALE, not because the mechanic itself was ever
+disliked: the single room is small, so click-to-walk destinations are
+always close and the auto-turn is always small. The campus is much
+bigger — a click anywhere near the horizon raycasts a floor point that
+can be many rooms away, turning what should be "walk over there" into a
+huge spin plus a long teleport in one click. That combination is exactly
+"jerking," "backwards," and "the other side of the room" — three
+different-sounding complaints from ONE underlying cause.
+
+Fix, not another tuning pass: click-to-walk no longer rotates the camera
+at all — position glides to the destination in a straight line, view
+stays exactly wherever the player left it (no turn phase, no phases,
+`WalkTween` is now just `{fromPos, toPos, t, duration}`). Also added a
+hard cap, `MAX_CLICK_WALK_DISTANCE = 20` (roughly one room's width) — a
+click past that range is just ignored, same as clicking a wall. Also
+added the reference's scroll-wheel forward/back nudge (`onWheel`,
+0.42 units/notch), which was never ported at all in the first pass — a
+plain miss, not a bug.
+
+Build/typecheck/lint clean. **Not independently live-tested this round**
+— given how much back-and-forth this specific mechanic has already cost,
+did not spend more time on speculative Claude-in-Chrome verification of
+something that fundamentally needs EK's own hands-on feel-test to judge.
+If this still isn't right, the next debugging step should probably be EK
+describing (or screen-recording) ONE specific click, not another general
+"still feels off," so the exact raycast/destination can be checked
+directly rather than guessed at a third time.
+
+---
+
 ## 🆕 2026-09-02, same overnight session, still later — EK tried the
 click-to-walk/arrow-key fix above and pushed back again, harder: "it feel
 every strange still... The rooms are not the same size by vision, even if
