@@ -9,7 +9,7 @@
 // user's own vault items as placeholder content until there's a real
 // cross-user "top items" feed to show instead.
 import Link from "next/link";
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 
 import {
@@ -83,55 +83,10 @@ function roomCenter(room: CampusRoom) {
   return { x: room.x + room.w / 2, z: room.z + room.d / 2 };
 }
 
-// On-screen movement control for touch devices (no physical keyboard) —
-// presses/releases feed the exact same keys Set real WASD does, so tick()
-// doesn't need to know which input source triggered a move.
-function TouchPadButton({
-  label,
-  onDown,
-  onUp,
-  children,
-}: {
-  label: string;
-  onDown: () => void;
-  onUp: () => void;
-  children: ReactNode;
-}) {
-  return (
-    <button
-      type="button"
-      aria-label={label}
-      onPointerDown={(e) => { e.preventDefault(); onDown(); }}
-      onPointerUp={onUp}
-      onPointerLeave={onUp}
-      onPointerCancel={onUp}
-      className="flex h-12 w-12 items-center justify-center rounded-full bg-black/55 text-white ring-1 ring-white/15 backdrop-blur active:bg-black/75"
-      style={{ touchAction: "none" }}
-    >
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-        {children}
-      </svg>
-    </button>
-  );
-}
-
 export default function VltdMuseumCampus() {
   const mountRef = useRef<HTMLDivElement | null>(null);
   const roomLabelRef = useRef<HTMLDivElement | null>(null);
-  // Shared with the on-screen touch controls below (mobile has no
-  // keyboard) — same Set an on-screen button press adds/removes from, so
-  // tick()'s movement code doesn't need to know which input source it
-  // came from.
-  const keysRef = useRef<Set<string>>(new Set());
   const [ready, setReady] = useState(false);
-  const [showTouchControls, setShowTouchControls] = useState(false);
-
-  useEffect(() => {
-    const timer = window.setTimeout(() => {
-      setShowTouchControls(("ontouchstart" in window) || navigator.maxTouchPoints > 0);
-    }, 0);
-    return () => window.clearTimeout(timer);
-  }, []);
 
   useEffect(() => {
     const mount = mountRef.current;
@@ -509,43 +464,203 @@ export default function VltdMuseumCampus() {
     }
     void populateDynamicContent();
 
-    // --- Movement: WASD walk + click-drag look, matching the built room's
-    // existing input model (see VirtualGalleryRoom.tsx) rather than
-    // reinventing a control scheme. ---
+    // --- Movement: WASD + arrow-key walk, drag-to-look, and click-to-walk.
+    // Ported from VirtualGalleryRoom.tsx's own movement system (which was
+    // itself researched directly from bingebrowse.net's live bundle, not
+    // guessed) rather than reinvented — same walk/turn speeds, same
+    // two-phase click-to-walk tween (turn to face the destination, then
+    // travel), same drag-vs-click threshold. EK's ask (2026-09-02): "click
+    // through it and move that way, just like the original," arrow keys
+    // should turn (not strafe), and the old flat SPEED=15 instant-move
+    // felt "way too quickly." The single room's own on-screen touch pad
+    // was deliberately never added for guests either (see that file's
+    // "no bottom move/rotate pad" comment) — click-to-walk covers touch
+    // fine on its own, so this component doesn't have one either.
     const walkable = buildWalkableAreas();
-    const keys = keysRef.current;
-    let dragging = false;
-    let lastX = 0;
-    let lastY = 0;
+    const raycaster = new THREE.Raycaster();
+    const pointerNdc = new THREE.Vector2();
+    const floorPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
 
-    const pose = { yaw: CAMPUS_SPAWN.yaw, pitch: 0 };
+    const WALK_SPEED = 2.55; // units/sec — same real-world-calibrated speed as the single room
+    const WALK_SPEED_SLOW = 1.73; // Shift
+    const TURN_RATE = 1.7; // rad/sec, Left/Right arrow turning
+    const PITCH_LIMIT = 0.7; // looser than the single room's 0.32 - campus has tall exterior architecture worth tilting up for
 
+    let yaw = CAMPUS_SPAWN.yaw;
+    let pitch = 0;
+    let targetYaw = yaw;
+    let targetPitch = pitch;
+    const cameraBody = new THREE.Vector3(CAMPUS_SPAWN.x, EYE_HEIGHT, CAMPUS_SPAWN.z);
+    const targetCameraBody = cameraBody.clone();
+
+    const pressedKeys = new Set<string>();
+    let isDragging = false;
+    let didDrag = false;
+    let startX = 0;
+    let startY = 0;
+
+    function facingDirection() {
+      return new THREE.Vector3(Math.sin(targetYaw), 0, -Math.cos(targetYaw)).normalize();
+    }
+    function strafeDirection() {
+      return new THREE.Vector3(Math.cos(targetYaw), 0, Math.sin(targetYaw)).normalize();
+    }
+
+    // Slide collision: try the full move, then each axis alone — same
+    // approach as before, just driven by a velocity vector now instead of
+    // a normalized diagonal step.
+    function tryMove(candidateX: number, candidateZ: number) {
+      if (isWalkable(candidateX, candidateZ, walkable)) {
+        cameraBody.x = candidateX;
+        cameraBody.z = candidateZ;
+        return;
+      }
+      if (isWalkable(candidateX, cameraBody.z, walkable)) cameraBody.x = candidateX;
+      else if (isWalkable(cameraBody.x, candidateZ, walkable)) cameraBody.z = candidateZ;
+    }
+
+    function updateKeyboardMovement(dt: number) {
+      if (pressedKeys.size === 0) return;
+      walkTween = null; // a held movement/turn key interrupts click-to-walk
+      const speed = pressedKeys.has("shift") ? WALK_SPEED_SLOW : WALK_SPEED;
+      const move = new THREE.Vector3();
+      if (pressedKeys.has("forward")) move.add(facingDirection());
+      if (pressedKeys.has("back")) move.sub(facingDirection());
+      if (pressedKeys.has("left")) move.sub(strafeDirection());
+      if (pressedKeys.has("right")) move.add(strafeDirection());
+      if (move.lengthSq() > 0) {
+        move.normalize().multiplyScalar(speed * dt);
+        tryMove(cameraBody.x + move.x, cameraBody.z + move.z);
+        targetCameraBody.copy(cameraBody);
+      }
+      let turn = 0;
+      if (pressedKeys.has("turn-left")) turn += 1;
+      if (pressedKeys.has("turn-right")) turn -= 1;
+      if (turn !== 0) {
+        yaw += turn * TURN_RATE * dt;
+        targetYaw = yaw;
+      }
+    }
+
+    function movementKeyToken(e: KeyboardEvent): string | null {
+      if (e.key === "ArrowUp" || e.key.toLowerCase() === "w") return "forward";
+      if (e.key === "ArrowDown" || e.key.toLowerCase() === "s") return "back";
+      if (e.key.toLowerCase() === "a") return "left";
+      if (e.key.toLowerCase() === "d") return "right";
+      if (e.key === "ArrowLeft") return "turn-left";
+      if (e.key === "ArrowRight") return "turn-right";
+      if (e.key === "Shift") return "shift";
+      return null;
+    }
     function onKeyDown(e: KeyboardEvent) {
-      keys.add(e.key.toLowerCase());
+      const token = movementKeyToken(e);
+      if (token) {
+        e.preventDefault();
+        pressedKeys.add(token);
+      }
     }
     function onKeyUp(e: KeyboardEvent) {
-      keys.delete(e.key.toLowerCase());
+      const token = movementKeyToken(e);
+      if (token) pressedKeys.delete(token);
     }
+    // A held key's keyup can be missed if focus leaves the window while
+    // it's down (alt-tab, clicking browser chrome) — without this it
+    // would read as permanently "held."
+    function onWindowBlur() {
+      pressedKeys.clear();
+    }
+
+    function angleDelta(from: number, to: number) {
+      let d = (to - from) % (Math.PI * 2);
+      if (d > Math.PI) d -= Math.PI * 2;
+      if (d < -Math.PI) d += Math.PI * 2;
+      return d;
+    }
+    function smoothstep(q: number) {
+      return q * q * (3 - 2 * q);
+    }
+
+    type WalkTween = {
+      fromYaw: number; toYaw: number; travelYaw: number;
+      fromPitch: number; toPitch: number; travelPitch: number;
+      fromPos: THREE.Vector3; toPos: THREE.Vector3;
+      t: number; journeyDuration: number; firstTurnEnd: number; moveEnd: number;
+    };
+    let walkTween: WalkTween | null = null;
+
+    function startWalkTween(destination: THREE.Vector3) {
+      const fromPos = cameraBody.clone();
+      const travelDistance = fromPos.distanceTo(destination);
+      const dx = destination.x - fromPos.x;
+      const dz = destination.z - fromPos.z;
+      const wantTravelYaw = Math.atan2(dx, -dz);
+      const travelYaw = travelDistance > 0.01 ? yaw + angleDelta(yaw, wantTravelYaw) : yaw;
+      const travelPitch = pitch;
+
+      const firstTurnDuration = THREE.MathUtils.clamp(Math.abs(travelYaw - yaw) / 2.2, 0.18, 1.25);
+      const moveDuration = THREE.MathUtils.clamp(travelDistance / 4.8, 0.34, 1.65);
+      const journeyDuration = firstTurnDuration + moveDuration;
+
+      walkTween = {
+        fromYaw: yaw, toYaw: travelYaw, travelYaw,
+        fromPitch: pitch, toPitch: travelPitch, travelPitch,
+        fromPos, toPos: destination.clone(),
+        t: 0, journeyDuration,
+        firstTurnEnd: journeyDuration > 0 ? firstTurnDuration / journeyDuration : 1,
+        moveEnd: 1,
+      };
+      targetCameraBody.copy(destination);
+      targetYaw = travelYaw;
+      targetPitch = travelPitch;
+    }
+
     function onPointerDown(e: PointerEvent) {
-      dragging = true;
-      lastX = e.clientX;
-      lastY = e.clientY;
+      isDragging = true;
+      didDrag = false;
+      startX = e.clientX;
+      startY = e.clientY;
     }
     function onPointerMove(e: PointerEvent) {
-      if (!dragging) return;
-      const dx = e.clientX - lastX;
-      const dy = e.clientY - lastY;
-      lastX = e.clientX;
-      lastY = e.clientY;
-      pose.yaw -= dx * 0.0032;
-      pose.pitch = Math.max(-1.1, Math.min(1.1, pose.pitch - dy * 0.0032));
+      if (!isDragging) return;
+      const dx = e.clientX - startX;
+      const dy = e.clientY - startY;
+      if (Math.abs(dx) + Math.abs(dy) > 6) {
+        didDrag = true;
+        walkTween = null; // a real manual look-drag interrupts an in-progress auto-walk
+      }
+      targetYaw -= dx * 0.0035;
+      targetPitch = Math.max(-PITCH_LIMIT, Math.min(PITCH_LIMIT, targetPitch - dy * 0.0016));
+      startX = e.clientX;
+      startY = e.clientY;
     }
-    function onPointerUp() {
-      dragging = false;
+    // Deliberately on `window`, not the canvas, so a look-drag that
+    // started on the canvas still completes if the pointer drifts off it
+    // — but gated on `isDragging` (only ever set true by the canvas's OWN
+    // pointerdown) so a click elsewhere on the page (Exit link, etc.)
+    // can't fall through into a raycast from that element's position.
+    function onPointerUp(e: PointerEvent) {
+      if (!isDragging) return;
+      isDragging = false;
+      if (didDrag) return;
+
+      const rect = renderer.domElement.getBoundingClientRect();
+      pointerNdc.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+      pointerNdc.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+      raycaster.setFromCamera(pointerNdc, camera);
+      const destination = new THREE.Vector3();
+      const hit = raycaster.ray.intersectPlane(floorPlane, destination);
+      // A destination outside any walkable rect (clicked a wall, or off
+      // into empty space) is simply ignored rather than clamped to the
+      // nearest safe point — matches EK's original complaint about
+      // accidental clicks dragging the camera somewhere unwanted.
+      if (!hit || !isWalkable(destination.x, destination.z, walkable)) return;
+      destination.y = EYE_HEIGHT;
+      startWalkTween(destination);
     }
 
     window.addEventListener("keydown", onKeyDown);
     window.addEventListener("keyup", onKeyUp);
+    window.addEventListener("blur", onWindowBlur);
     renderer.domElement.addEventListener("pointerdown", onPointerDown);
     window.addEventListener("pointermove", onPointerMove);
     window.addEventListener("pointerup", onPointerUp);
@@ -561,35 +676,49 @@ export default function VltdMuseumCampus() {
 
     const clock = new THREE.Clock();
     let frameId = 0;
-    const SPEED = 15;
 
     function tick() {
       frameId = window.requestAnimationFrame(tick);
-      const delta = Math.min(clock.getDelta(), 0.1);
+      const dt = Math.min(clock.getDelta(), 0.05);
 
-      camera.rotation.y = pose.yaw;
-      camera.rotation.x = pose.pitch;
+      updateKeyboardMovement(dt);
 
-      const forward = new THREE.Vector3(-Math.sin(pose.yaw), 0, -Math.cos(pose.yaw));
-      const right = new THREE.Vector3(forward.z, 0, -forward.x);
-      let moveX = 0;
-      let moveZ = 0;
-      if (keys.has("w") || keys.has("arrowup")) { moveX += forward.x; moveZ += forward.z; }
-      if (keys.has("s") || keys.has("arrowdown")) { moveX -= forward.x; moveZ -= forward.z; }
-      if (keys.has("d") || keys.has("arrowright")) { moveX += right.x; moveZ += right.z; }
-      if (keys.has("a") || keys.has("arrowleft")) { moveX -= right.x; moveZ -= right.z; }
-
-      const mag = Math.hypot(moveX, moveZ);
-      if (mag > 0.001) {
-        moveX = (moveX / mag) * SPEED * delta;
-        moveZ = (moveZ / mag) * SPEED * delta;
-
-        const pos = camera.position;
-        if (isWalkable(pos.x + moveX, pos.z, walkable)) pos.x += moveX;
-        if (isWalkable(pos.x, pos.z + moveZ, walkable)) pos.z += moveZ;
+      if (walkTween) {
+        walkTween.t = Math.min(1, walkTween.t + dt / walkTween.journeyDuration);
+        const { t, firstTurnEnd, moveEnd } = walkTween;
+        if (t < firstTurnEnd) {
+          const k = smoothstep(firstTurnEnd > 0 ? t / firstTurnEnd : 1);
+          yaw = THREE.MathUtils.lerp(walkTween.fromYaw, walkTween.travelYaw, k);
+          pitch = THREE.MathUtils.lerp(walkTween.fromPitch, walkTween.travelPitch, k);
+          cameraBody.copy(walkTween.fromPos);
+        } else if (t < moveEnd) {
+          const k = smoothstep((t - firstTurnEnd) / (moveEnd - firstTurnEnd));
+          yaw = walkTween.travelYaw;
+          pitch = walkTween.travelPitch;
+          cameraBody.lerpVectors(walkTween.fromPos, walkTween.toPos, k);
+        } else {
+          yaw = walkTween.toYaw;
+          pitch = walkTween.toPitch;
+          cameraBody.copy(walkTween.toPos);
+        }
+        if (walkTween.t >= 1) {
+          yaw = walkTween.toYaw;
+          pitch = walkTween.toPitch;
+          cameraBody.copy(walkTween.toPos);
+          walkTween = null;
+        }
+      } else {
+        yaw += (targetYaw - yaw) * 0.12;
+        pitch += (targetPitch - pitch) * 0.12;
+        cameraBody.lerp(targetCameraBody, 0.15);
       }
+      cameraBody.y = EYE_HEIGHT;
 
-      const label = currentRoomLabel(camera.position.x, camera.position.z);
+      camera.position.copy(cameraBody);
+      camera.rotation.y = yaw;
+      camera.rotation.x = pitch;
+
+      const label = currentRoomLabel(cameraBody.x, cameraBody.z);
       if (label !== lastRoomLabel) {
         lastRoomLabel = label;
         if (roomLabelRef.current) roomLabelRef.current.textContent = label || "Corridor";
@@ -613,11 +742,12 @@ export default function VltdMuseumCampus() {
       window.cancelAnimationFrame(frameId);
       window.removeEventListener("keydown", onKeyDown);
       window.removeEventListener("keyup", onKeyUp);
+      window.removeEventListener("blur", onWindowBlur);
       window.removeEventListener("pointermove", onPointerMove);
       window.removeEventListener("pointerup", onPointerUp);
       window.removeEventListener("resize", onResize);
       renderer.domElement.removeEventListener("pointerdown", onPointerDown);
-      keys.clear();
+      pressedKeys.clear();
       scene.traverse((obj) => {
         if (obj instanceof THREE.Mesh) {
           obj.geometry.dispose();
@@ -630,13 +760,6 @@ export default function VltdMuseumCampus() {
       if (renderer.domElement.parentElement === mount) mount.removeChild(renderer.domElement);
     };
   }, []);
-
-  function pressKey(key: string) {
-    keysRef.current.add(key);
-  }
-  function releaseKey(key: string) {
-    keysRef.current.delete(key);
-  }
 
   return (
     <div className="fixed inset-0 bg-[#081527]">
@@ -656,32 +779,8 @@ export default function VltdMuseumCampus() {
           </div>
         </div>
 
-        <div className="flex items-end justify-between">
-          <div className="rounded-full bg-black/55 px-4 py-2 text-xs font-medium text-white/75 ring-1 ring-white/15 backdrop-blur">
-            {showTouchControls ? "Drag to look · pad to walk" : "WASD to walk · drag to look"}
-          </div>
-
-          {showTouchControls ? (
-            <div className="pointer-events-auto grid grid-cols-3 grid-rows-3 gap-1" style={{ touchAction: "none" }}>
-              <div />
-              <TouchPadButton label="Forward" onDown={() => pressKey("w")} onUp={() => releaseKey("w")}>
-                <path d="M12 5 5 14h14L12 5Z" />
-              </TouchPadButton>
-              <div />
-              <TouchPadButton label="Left" onDown={() => pressKey("a")} onUp={() => releaseKey("a")}>
-                <path d="M5 12 14 5v14L5 12Z" />
-              </TouchPadButton>
-              <div />
-              <TouchPadButton label="Right" onDown={() => pressKey("d")} onUp={() => releaseKey("d")}>
-                <path d="M19 12 10 5v14l9-7Z" />
-              </TouchPadButton>
-              <div />
-              <TouchPadButton label="Back" onDown={() => pressKey("s")} onUp={() => releaseKey("s")}>
-                <path d="M12 19 5 10h14l-7 9Z" />
-              </TouchPadButton>
-              <div />
-            </div>
-          ) : null}
+        <div className="mx-auto rounded-full bg-black/55 px-4 py-2 text-xs font-medium text-white/75 ring-1 ring-white/15 backdrop-blur">
+          WASD/arrows to walk · click floor to walk there · drag to look
         </div>
       </div>
 
