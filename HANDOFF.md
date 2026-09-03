@@ -248,6 +248,72 @@ who owns a screen.** EK is aware of this.
 
 ---
 
+## 🆕 2026-09-02, same overnight session, still later — EK tried the
+click-to-walk/arrow-key fix above and pushed back again, harder: "it feel
+every strange still... The rooms are not the same size by vision, even if
+they are the same by your dimensions... feel smaller than our original
+room. When i go from room to room, it spin me around and make me go
+backwards... it moves so quick that i cant control it, this does not
+function like the first 3d room we made. You are supposed to carry over
+all the rules we made from the first room we made to all of these rooms,
+otherwise that was 4 wasted days building one room." Commits `0065f9d`,
+`66266fe`, `6a0e871`.
+
+That last line is the important one: the prior fix ported the *movement
+algorithm* correctly but still left the campus's *camera/scale constants*
+as guesses instead of exact copies of the single room's own values. Found
+and fixed three real mismatches by re-reading `VirtualGalleryRoom.tsx`'s
+actual camera setup instead of assuming:
+
+1. **Camera FOV was 72° (a guess) vs the single room's real 47°** — by
+   far the biggest cause of "rooms feel smaller" (wide-angle distortion:
+   identically-dimensioned rooms look and feel further away/smaller
+   through a wider lens) and of drag-look "moving too quick" (the same
+   sensitivity constant reads faster through a wider FOV). Live
+   screenshot before/after this fix shows a dramatic difference — the
+   facade now fills the frame at the right scale instead of reading
+   small and distant.
+2. **`WALL_HEIGHT` was 8 (a guess) vs the single room's real ceiling
+   height of 9.15** (see that file's own `ceiling.position.set(0, 9.15,
+   ...)`).
+3. **Pitch clamp was deliberately widened to 0.7** "because the campus
+   has tall architecture" — reverted to the single room's exact 0.32.
+   EK's ask makes clear that kind of campus-specific deviation, even a
+   well-reasoned one, isn't wanted — match first, ask before diverging.
+
+Also found and fixed a real bug behind "it spin me around and make me go
+backwards": interrupting an in-progress click-to-walk tween with a WASD
+key only cleared the tween object itself, not its pending
+`targetYaw`/`targetPitch`. The smoothed look-lerp kept chasing that stale
+target (the click destination's facing) for several frames after the key
+press, fighting the player's own WASD input — reads exactly as an
+unwanted spin, worse in the campus than the single room simply because
+campus click-to-walk destinations are farther away and involve bigger
+turns to interrupt mid-way. Now resets both to the current yaw/pitch the
+moment a movement key interrupts a tween.
+
+**Live-verified**, same session: a temporary debug hook confirmed
+`camera.fov === 47`, `WALL_HEIGHT === 9.15`, `PITCH_LIMIT === 0.32` on
+the deployed page (a static content-search of the page's script tags
+could NOT find these — this route's client chunk loads dynamically, not
+via a static `<script src>` tag in the initial HTML, so that verification
+technique used earlier tonight doesn't work for this specific file;
+noting this for next time rather than re-discovering it). Debug hook
+removed after confirming. The spin-fix itself is a code-level correction
+verified by re-reading the logic, not separately live-tested (same
+rAF-throttled-background-tab limitation noted in every entry above).
+
+**Not yet addressed, EK's complaint not fully resolved:** "it is not like
+that site i showed you with the grid layout and the Zoom in to areas" —
+unclear whether this describes bingebrowse.net's departmental section
+labels (a style/organization comparison) or an actual request for a
+different navigation paradigm (discrete zone-to-zone jumps instead of
+continuous click-anywhere-on-floor walking). Did not guess at a rebuild
+of the whole navigation model without asking first — flag this specific
+point to EK before touching it further.
+
+---
+
 ## 🆕 2026-09-02, same overnight session, later — EK tried the walkthrough
 live and pushed back hard on movement: "why are we using arrows to move,
 it wove way to quickly also, looking left and right, i need to be able to
