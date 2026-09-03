@@ -471,18 +471,16 @@ export default function VltdMuseumCampus() {
     }
     void populateDynamicContent();
 
-    // --- Movement: WASD + arrow-key walk, drag-to-look, and click-to-walk.
-    // Ported from VirtualGalleryRoom.tsx's own movement system (which was
-    // itself researched directly from bingebrowse.net's live bundle, not
-    // guessed) rather than reinvented — same walk/turn speeds, same
-    // two-phase click-to-walk tween (turn to face the destination, then
-    // travel), same drag-vs-click threshold. EK's ask (2026-09-02): "click
-    // through it and move that way, just like the original," arrow keys
-    // should turn (not strafe), and the old flat SPEED=15 instant-move
-    // felt "way too quickly." The single room's own on-screen touch pad
-    // was deliberately never added for guests either (see that file's
-    // "no bottom move/rotate pad" comment) — click-to-walk covers touch
-    // fine on its own, so this component doesn't have one either.
+    // --- Movement: WASD + arrow-key walk, drag-to-look, click-to-walk,
+    // and scroll-to-nudge. Walk/turn speeds, drag-vs-click threshold, and
+    // drag-look sensitivity are ported exactly from VirtualGalleryRoom.tsx
+    // (itself researched directly from bingebrowse.net's live bundle, not
+    // guessed). Click-to-walk's own shape is NOT a straight port, though —
+    // see the MAX_CLICK_WALK_DISTANCE comment below for why. The single
+    // room's own on-screen touch pad was deliberately never added for
+    // guests either (see that file's "no bottom move/rotate pad" comment)
+    // — click-to-walk covers touch fine on its own, so this component
+    // doesn't have one either.
     const walkable = buildWalkableAreas();
     const raycaster = new THREE.Raycaster();
     const pointerNdc = new THREE.Vector2();
@@ -528,17 +526,7 @@ export default function VltdMuseumCampus() {
 
     function updateKeyboardMovement(dt: number) {
       if (pressedKeys.size === 0) return;
-      if (walkTween) {
-        // A held movement/turn key interrupts click-to-walk — but the
-        // tween's own target (the click destination's facing) must be
-        // discarded too, not just the tween object, or the smoothed
-        // look-lerp below keeps chasing that stale target on its own
-        // for several frames after the key press, fighting the player's
-        // WASD input and reading as an unwanted spin.
-        targetYaw = yaw;
-        targetPitch = pitch;
-        walkTween = null;
-      }
+      walkTween = null; // a held movement/turn key interrupts click-to-walk (view is never touched by the tween, so nothing else to reset)
       const speed = pressedKeys.has("shift") ? WALK_SPEED_SLOW : WALK_SPEED;
       const move = new THREE.Vector3();
       if (pressedKeys.has("forward")) move.add(facingDirection());
@@ -587,48 +575,37 @@ export default function VltdMuseumCampus() {
       pressedKeys.clear();
     }
 
-    function angleDelta(from: number, to: number) {
-      let d = (to - from) % (Math.PI * 2);
-      if (d > Math.PI) d -= Math.PI * 2;
-      if (d < -Math.PI) d += Math.PI * 2;
-      return d;
-    }
     function smoothstep(q: number) {
       return q * q * (3 - 2 * q);
     }
 
+    // EK's ask (2026-09-02), stated plainly and repeatedly ("it spin me
+    // around and make me go backwards," then next round "this jerking to
+    // a different direction... i really hate this... i tried to get you
+    // to remove it"): click-to-walk must NOT turn the camera at all —
+    // position only, view stays exactly where the player left it. The
+    // single room's own turn-then-travel was fine at ITS scale (small
+    // room, always-nearby destinations, small turns) but a click near the
+    // horizon in this much bigger campus can raycast a destination many
+    // rooms away, turning a small "walk over there" into a huge spin +
+    // teleport in one click — that combination is what read as "jerking"
+    // and "the other side of the room." Fixed two ways: no view rotation
+    // during the glide, and a hard cap on how far a single click can send
+    // you (roughly one room's width, not the whole campus).
+    const MAX_CLICK_WALK_DISTANCE = 20;
+
     type WalkTween = {
-      fromYaw: number; toYaw: number; travelYaw: number;
-      fromPitch: number; toPitch: number; travelPitch: number;
       fromPos: THREE.Vector3; toPos: THREE.Vector3;
-      t: number; journeyDuration: number; firstTurnEnd: number; moveEnd: number;
+      t: number; duration: number;
     };
     let walkTween: WalkTween | null = null;
 
     function startWalkTween(destination: THREE.Vector3) {
       const fromPos = cameraBody.clone();
       const travelDistance = fromPos.distanceTo(destination);
-      const dx = destination.x - fromPos.x;
-      const dz = destination.z - fromPos.z;
-      const wantTravelYaw = Math.atan2(dx, -dz);
-      const travelYaw = travelDistance > 0.01 ? yaw + angleDelta(yaw, wantTravelYaw) : yaw;
-      const travelPitch = pitch;
-
-      const firstTurnDuration = THREE.MathUtils.clamp(Math.abs(travelYaw - yaw) / 2.2, 0.18, 1.25);
-      const moveDuration = THREE.MathUtils.clamp(travelDistance / 4.8, 0.34, 1.65);
-      const journeyDuration = firstTurnDuration + moveDuration;
-
-      walkTween = {
-        fromYaw: yaw, toYaw: travelYaw, travelYaw,
-        fromPitch: pitch, toPitch: travelPitch, travelPitch,
-        fromPos, toPos: destination.clone(),
-        t: 0, journeyDuration,
-        firstTurnEnd: journeyDuration > 0 ? firstTurnDuration / journeyDuration : 1,
-        moveEnd: 1,
-      };
+      const duration = THREE.MathUtils.clamp(travelDistance / 4.8, 0.2, 1.65);
+      walkTween = { fromPos, toPos: destination.clone(), t: 0, duration };
       targetCameraBody.copy(destination);
-      targetYaw = travelYaw;
-      targetPitch = travelPitch;
     }
 
     function onPointerDown(e: PointerEvent) {
@@ -669,10 +646,22 @@ export default function VltdMuseumCampus() {
       // A destination outside any walkable rect (clicked a wall, or off
       // into empty space) is simply ignored rather than clamped to the
       // nearest safe point — matches EK's original complaint about
-      // accidental clicks dragging the camera somewhere unwanted.
-      if (!hit || !isWalkable(destination.x, destination.z, walkable)) return;
+      // accidental clicks dragging the camera somewhere unwanted. Same
+      // for anything past MAX_CLICK_WALK_DISTANCE (a near-horizon click
+      // can raycast a point many rooms away).
+      if (!hit) return;
+      if (cameraBody.distanceTo(destination) > MAX_CLICK_WALK_DISTANCE) return;
+      if (!isWalkable(destination.x, destination.z, walkable)) return;
       destination.y = EYE_HEIGHT;
       startWalkTween(destination);
+    }
+    function onWheel(e: WheelEvent) {
+      e.preventDefault();
+      walkTween = null;
+      const amount = (e.deltaY > 0 ? -1 : 1) * 0.42;
+      const move = facingDirection().multiplyScalar(amount);
+      tryMove(cameraBody.x + move.x, cameraBody.z + move.z);
+      targetCameraBody.copy(cameraBody);
     }
 
     window.addEventListener("keydown", onKeyDown);
@@ -681,6 +670,7 @@ export default function VltdMuseumCampus() {
     renderer.domElement.addEventListener("pointerdown", onPointerDown);
     window.addEventListener("pointermove", onPointerMove);
     window.addEventListener("pointerup", onPointerUp);
+    renderer.domElement.addEventListener("wheel", onWheel, { passive: false });
 
     // A sentinel that can't equal any real room label (including the
     // empty-string PLAZA/corridor case) — spawning in an unlabeled area
@@ -705,26 +695,12 @@ export default function VltdMuseumCampus() {
       updateKeyboardMovement(dt);
 
       if (walkTween) {
-        walkTween.t = Math.min(1, walkTween.t + dt / walkTween.journeyDuration);
-        const { t, firstTurnEnd, moveEnd } = walkTween;
-        if (t < firstTurnEnd) {
-          const k = smoothstep(firstTurnEnd > 0 ? t / firstTurnEnd : 1);
-          yaw = THREE.MathUtils.lerp(walkTween.fromYaw, walkTween.travelYaw, k);
-          pitch = THREE.MathUtils.lerp(walkTween.fromPitch, walkTween.travelPitch, k);
-          cameraBody.copy(walkTween.fromPos);
-        } else if (t < moveEnd) {
-          const k = smoothstep((t - firstTurnEnd) / (moveEnd - firstTurnEnd));
-          yaw = walkTween.travelYaw;
-          pitch = walkTween.travelPitch;
-          cameraBody.lerpVectors(walkTween.fromPos, walkTween.toPos, k);
-        } else {
-          yaw = walkTween.toYaw;
-          pitch = walkTween.toPitch;
-          cameraBody.copy(walkTween.toPos);
-        }
+        // Position only — no yaw/pitch change. See MAX_CLICK_WALK_DISTANCE
+        // comment above for why the old turn-then-travel got dropped.
+        walkTween.t = Math.min(1, walkTween.t + dt / walkTween.duration);
+        const k = smoothstep(walkTween.t);
+        cameraBody.lerpVectors(walkTween.fromPos, walkTween.toPos, k);
         if (walkTween.t >= 1) {
-          yaw = walkTween.toYaw;
-          pitch = walkTween.toPitch;
           cameraBody.copy(walkTween.toPos);
           walkTween = null;
         }
@@ -768,6 +744,7 @@ export default function VltdMuseumCampus() {
       window.removeEventListener("pointerup", onPointerUp);
       window.removeEventListener("resize", onResize);
       renderer.domElement.removeEventListener("pointerdown", onPointerDown);
+      renderer.domElement.removeEventListener("wheel", onWheel);
       pressedKeys.clear();
       scene.traverse((obj) => {
         if (obj instanceof THREE.Mesh) {
@@ -801,7 +778,7 @@ export default function VltdMuseumCampus() {
         </div>
 
         <div className="mx-auto rounded-full bg-black/55 px-4 py-2 text-xs font-medium text-white/75 ring-1 ring-white/15 backdrop-blur">
-          WASD/arrows to walk · click floor to walk there · drag to look
+          WASD/arrows to walk · click floor to walk there · drag to look · scroll to step
         </div>
       </div>
 
