@@ -283,3 +283,33 @@ export function isWalkable(
   }
   return false;
 }
+
+// EK's ask (2026-09-02), after watching bingebrowse.net's real behavior
+// with her: it doesn't let you click anywhere on the floor — it has
+// fixed, marked waypoints (small square floor markers that highlight on
+// hover, "these little squares are helpful to know where you can go and
+// look when you hover over them") that you click to glide between. A
+// raycast-anywhere click-to-walk landed on unpredictable, sometimes
+// awkward points; a curated waypoint always has a sensible spot to stand.
+// One per room center plus one per door bridge — walking WASD/arrows
+// still works freely in between, this only replaces "click empty floor."
+export type CampusWaypoint = { id: string; x: number; z: number };
+
+export function computeCampusWaypoints(): CampusWaypoint[] {
+  const waypoints: CampusWaypoint[] = [];
+
+  for (const room of CAMPUS_ROOMS) {
+    if (!room.label) continue; // PLAZA has no label; a plaza waypoint is added separately below via its doors
+    waypoints.push({ id: `room:${room.id}`, x: room.x + room.w / 2, z: room.z + room.d / 2 });
+  }
+
+  computeDoorBridges().forEach((bridge, index) => {
+    waypoints.push({
+      id: `door:${index}`,
+      x: (bridge.x0 + bridge.x1) / 2,
+      z: (bridge.z0 + bridge.z1) / 2,
+    });
+  });
+
+  return waypoints;
+}

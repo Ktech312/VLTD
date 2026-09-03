@@ -22,6 +22,7 @@ import {
   WALL_THICKNESS,
   assignSwingRoomUniverses,
   buildWalkableAreas,
+  computeCampusWaypoints,
   computeDoorBridges,
   computeWallSegments,
   isWalkable,
@@ -175,6 +176,75 @@ export default function VltdMuseumCampus() {
       const wall = new THREE.Mesh(geometry, material);
       wall.position.set(...position);
       scene.add(wall);
+    }
+
+    // Waypoint markers — EK watched bingebrowse.net with the walkthrough
+    // open and pointed out its floor markers directly: "these little
+    // squares are helpful to know where you can go and look when you
+    // hover over them." Click-to-walk is no longer "raycast wherever the
+    // floor was clicked" — it only responds to these curated spots (one
+    // per room, one per doorway), each with a sensible place to stand.
+    // Highlighted (bigger + brighter) on hover so it's clear what's
+    // clickable before you click it.
+    function makeWaypointTexture() {
+      const canvas = document.createElement("canvas");
+      canvas.width = 128;
+      canvas.height = 128;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return null;
+      ctx.strokeStyle = "#8fe0e6";
+      ctx.lineWidth = 7;
+      ctx.lineCap = "round";
+      const m = 20;
+      const len = 28;
+      const corners: [number, number, number, number][] = [
+        [m, m, 1, 1],
+        [128 - m, m, -1, 1],
+        [m, 128 - m, 1, -1],
+        [128 - m, 128 - m, -1, -1],
+      ];
+      for (const [cx, cy, sx, sy] of corners) {
+        ctx.beginPath();
+        ctx.moveTo(cx, cy + len * sy);
+        ctx.lineTo(cx, cy);
+        ctx.lineTo(cx + len * sx, cy);
+        ctx.stroke();
+      }
+      return new THREE.CanvasTexture(canvas);
+    }
+
+    const waypointTexture = makeWaypointTexture();
+    const waypointMeshes: THREE.Mesh[] = [];
+    for (const wp of computeCampusWaypoints()) {
+      const marker = new THREE.Mesh(
+        new THREE.PlaneGeometry(2.2, 2.2),
+        new THREE.MeshBasicMaterial({
+          map: waypointTexture,
+          transparent: true,
+          opacity: 0.55,
+          depthWrite: false,
+        })
+      );
+      marker.rotation.x = -Math.PI / 2;
+      marker.position.set(wp.x, 0.03, wp.z);
+      marker.userData.waypointX = wp.x;
+      marker.userData.waypointZ = wp.z;
+      scene.add(marker);
+      waypointMeshes.push(marker);
+    }
+    let hoveredMarker: THREE.Mesh | null = null;
+    function setMarkerHover(marker: THREE.Mesh | null) {
+      if (hoveredMarker === marker) return;
+      if (hoveredMarker) {
+        hoveredMarker.scale.set(1, 1, 1);
+        (hoveredMarker.material as THREE.MeshBasicMaterial).opacity = 0.55;
+      }
+      if (marker) {
+        marker.scale.set(1.35, 1.35, 1);
+        (marker.material as THREE.MeshBasicMaterial).opacity = 0.95;
+      }
+      hoveredMarker = marker;
+      renderer.domElement.style.cursor = marker ? "pointer" : "";
     }
 
     // Exterior facade + entrance steps — EK's ask (2026-09-02), "just some
@@ -471,20 +541,20 @@ export default function VltdMuseumCampus() {
     }
     void populateDynamicContent();
 
-    // --- Movement: WASD + arrow-key walk, drag-to-look, click-to-walk,
-    // and scroll-to-nudge. Walk/turn speeds, drag-vs-click threshold, and
-    // drag-look sensitivity are ported exactly from VirtualGalleryRoom.tsx
-    // (itself researched directly from bingebrowse.net's live bundle, not
-    // guessed). Click-to-walk's own shape is NOT a straight port, though —
-    // see the MAX_CLICK_WALK_DISTANCE comment below for why. The single
-    // room's own on-screen touch pad was deliberately never added for
-    // guests either (see that file's "no bottom move/rotate pad" comment)
-    // — click-to-walk covers touch fine on its own, so this component
-    // doesn't have one either.
+    // --- Movement: WASD + arrow-key walk, drag-to-look, click-a-waypoint-
+    // to-walk, and scroll-to-nudge. Walk/turn speeds, drag-vs-click
+    // threshold, and drag-look sensitivity are ported exactly from
+    // VirtualGalleryRoom.tsx (itself researched directly from
+    // bingebrowse.net's live bundle, not guessed). Click-to-walk's own
+    // shape is NOT a straight port — EK watched bingebrowse.net directly
+    // and found it uses fixed marked waypoints, not raycast-anywhere; see
+    // the waypoint-marker comment above. The single room's own on-screen
+    // touch pad was deliberately never added for guests either (see that
+    // file's "no bottom move/rotate pad" comment) — clicking a waypoint
+    // covers touch fine on its own, so this component doesn't have one.
     const walkable = buildWalkableAreas();
     const raycaster = new THREE.Raycaster();
     const pointerNdc = new THREE.Vector2();
-    const floorPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
 
     const WALK_SPEED = 2.55; // units/sec — same real-world-calibrated speed as the single room
     const WALK_SPEED_SLOW = 1.73; // Shift
@@ -583,17 +653,10 @@ export default function VltdMuseumCampus() {
     // around and make me go backwards," then next round "this jerking to
     // a different direction... i really hate this... i tried to get you
     // to remove it"): click-to-walk must NOT turn the camera at all —
-    // position only, view stays exactly where the player left it. The
-    // single room's own turn-then-travel was fine at ITS scale (small
-    // room, always-nearby destinations, small turns) but a click near the
-    // horizon in this much bigger campus can raycast a destination many
-    // rooms away, turning a small "walk over there" into a huge spin +
-    // teleport in one click — that combination is what read as "jerking"
-    // and "the other side of the room." Fixed two ways: no view rotation
-    // during the glide, and a hard cap on how far a single click can send
-    // you (roughly one room's width, not the whole campus).
-    const MAX_CLICK_WALK_DISTANCE = 20;
-
+    // position only, view stays exactly where the player left it. Now
+    // also only ever targets a curated waypoint (see the waypoint-marker
+    // comment above), so there's no arbitrary-distance destination to
+    // worry about either.
     type WalkTween = {
       fromPos: THREE.Vector3; toPos: THREE.Vector3;
       t: number; duration: number;
@@ -614,7 +677,21 @@ export default function VltdMuseumCampus() {
       startX = e.clientX;
       startY = e.clientY;
     }
+    function updateWaypointHover(clientX: number, clientY: number) {
+      const rect = renderer.domElement.getBoundingClientRect();
+      pointerNdc.x = ((clientX - rect.left) / rect.width) * 2 - 1;
+      pointerNdc.y = -((clientY - rect.top) / rect.height) * 2 + 1;
+      raycaster.setFromCamera(pointerNdc, camera);
+      const hit = raycaster.intersectObjects(waypointMeshes, false)[0];
+      setMarkerHover((hit?.object as THREE.Mesh | undefined) ?? null);
+    }
+
     function onPointerMove(e: PointerEvent) {
+      // Hover highlight runs regardless of dragging, same as real hover
+      // anywhere else on the page — this is what tells the player which
+      // squares are clickable before they click one.
+      updateWaypointHover(e.clientX, e.clientY);
+
       if (!isDragging) return;
       const dx = e.clientX - startX;
       const dy = e.clientY - startY;
@@ -632,27 +709,22 @@ export default function VltdMuseumCampus() {
     // — but gated on `isDragging` (only ever set true by the canvas's OWN
     // pointerdown) so a click elsewhere on the page (Exit link, etc.)
     // can't fall through into a raycast from that element's position.
-    function onPointerUp(e: PointerEvent) {
+    function onPointerUp() {
       if (!isDragging) return;
       isDragging = false;
       if (didDrag) return;
 
-      const rect = renderer.domElement.getBoundingClientRect();
-      pointerNdc.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
-      pointerNdc.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
-      raycaster.setFromCamera(pointerNdc, camera);
-      const destination = new THREE.Vector3();
-      const hit = raycaster.ray.intersectPlane(floorPlane, destination);
-      // A destination outside any walkable rect (clicked a wall, or off
-      // into empty space) is simply ignored rather than clamped to the
-      // nearest safe point — matches EK's original complaint about
-      // accidental clicks dragging the camera somewhere unwanted. Same
-      // for anything past MAX_CLICK_WALK_DISTANCE (a near-horizon click
-      // can raycast a point many rooms away).
-      if (!hit) return;
-      if (cameraBody.distanceTo(destination) > MAX_CLICK_WALK_DISTANCE) return;
-      if (!isWalkable(destination.x, destination.z, walkable)) return;
-      destination.y = EYE_HEIGHT;
+      // Click-to-walk only responds to a waypoint marker now, never an
+      // arbitrary floor point — see the waypoint-marker comment above for
+      // why (EK: bingebrowse.net has fixed, marked spots, not click-
+      // anywhere; a raycast-anywhere destination could be an awkward,
+      // unpredictable spot to end up standing).
+      if (!hoveredMarker) return;
+      const destination = new THREE.Vector3(
+        hoveredMarker.userData.waypointX as number,
+        EYE_HEIGHT,
+        hoveredMarker.userData.waypointZ as number
+      );
       startWalkTween(destination);
     }
     function onWheel(e: WheelEvent) {
@@ -671,6 +743,13 @@ export default function VltdMuseumCampus() {
     window.addEventListener("pointermove", onPointerMove);
     window.addEventListener("pointerup", onPointerUp);
     renderer.domElement.addEventListener("wheel", onWheel, { passive: false });
+
+    // TEMPORARY — verifying real drag-look numbers directly instead of
+    // assuming the ported sensitivity constant behaves correctly (EK
+    // corrected this exact assumption). Remove once confirmed.
+    (window as unknown as { __vltdCampusDebug?: unknown }).__vltdCampusDebug = {
+      getYaw: () => ({ yaw, pitch, targetYaw, targetPitch, camRotY: camera.rotation.y, fov: camera.fov }),
+    };
 
     // A sentinel that can't equal any real room label (including the
     // empty-string PLAZA/corridor case) — spawning in an unlabeled area
@@ -695,8 +774,7 @@ export default function VltdMuseumCampus() {
       updateKeyboardMovement(dt);
 
       if (walkTween) {
-        // Position only — no yaw/pitch change. See MAX_CLICK_WALK_DISTANCE
-        // comment above for why the old turn-then-travel got dropped.
+        // Position only — no yaw/pitch change (see the walkTween comment above).
         walkTween.t = Math.min(1, walkTween.t + dt / walkTween.duration);
         const k = smoothstep(walkTween.t);
         cameraBody.lerpVectors(walkTween.fromPos, walkTween.toPos, k);
@@ -778,7 +856,7 @@ export default function VltdMuseumCampus() {
         </div>
 
         <div className="mx-auto rounded-full bg-black/55 px-4 py-2 text-xs font-medium text-white/75 ring-1 ring-white/15 backdrop-blur">
-          WASD/arrows to walk · click floor to walk there · drag to look · scroll to step
+          WASD/arrows to walk · click a marker to walk there · drag to look · scroll to step
         </div>
       </div>
 
