@@ -11,7 +11,10 @@
 // dimension. If the blueprint's floor plan changes, mirror the change here.
 import type { UniverseKey } from "@/lib/taxonomy";
 
-export const WALL_HEIGHT = 8;
+// Exact match to the single room's own wall/ceiling height (9.15, see
+// VirtualGalleryRoom.tsx's own ceiling mesh) — EK's ask (2026-09-02):
+// "carry over all the rules we made from the first room." Was 8, a guess.
+export const WALL_HEIGHT = 9.15;
 export const WALL_THICKNESS = 0.3;
 export const DOOR_HEIGHT = 6.4;
 export const DOOR_WIDTH = 3; // wider than the blueprint's 1.6-unit door marker (2.12 scaled) — a real walkthrough needs a walkable gap, not just a legend dot

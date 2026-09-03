@@ -100,7 +100,14 @@ export default function VltdMuseumCampus() {
     // transformed ancestor (framer-motion page transitions, etc.) can make
     // `fixed inset-0` + `h-full` resolve to a 0-height box, which silently
     // zeroes the canvas and renders nothing with no console error.
-    const camera = new THREE.PerspectiveCamera(72, window.innerWidth / window.innerHeight, 0.1, 400);
+    //
+    // FOV matches the single room's own camera exactly (47deg, not a
+    // wider guess) — EK's ask (2026-09-02): "carry over all the rules we
+    // made from the first room." A wider FOV was making identically-
+    // dimensioned rooms look and feel smaller (classic wide-angle
+    // distortion) and made the same drag-look sensitivity feel faster
+    // than intended.
+    const camera = new THREE.PerspectiveCamera(47, window.innerWidth / window.innerHeight, 0.1, 400);
     camera.rotation.order = "YXZ";
     camera.position.set(CAMPUS_SPAWN.x, EYE_HEIGHT, CAMPUS_SPAWN.z);
 
@@ -484,7 +491,7 @@ export default function VltdMuseumCampus() {
     const WALK_SPEED = 2.55; // units/sec — same real-world-calibrated speed as the single room
     const WALK_SPEED_SLOW = 1.73; // Shift
     const TURN_RATE = 1.7; // rad/sec, Left/Right arrow turning
-    const PITCH_LIMIT = 0.7; // looser than the single room's 0.32 - campus has tall exterior architecture worth tilting up for
+    const PITCH_LIMIT = 0.32; // exact match to the single room's own limit — no campus-specific deviation
 
     let yaw = CAMPUS_SPAWN.yaw;
     let pitch = 0;
@@ -521,7 +528,17 @@ export default function VltdMuseumCampus() {
 
     function updateKeyboardMovement(dt: number) {
       if (pressedKeys.size === 0) return;
-      walkTween = null; // a held movement/turn key interrupts click-to-walk
+      if (walkTween) {
+        // A held movement/turn key interrupts click-to-walk — but the
+        // tween's own target (the click destination's facing) must be
+        // discarded too, not just the tween object, or the smoothed
+        // look-lerp below keeps chasing that stale target on its own
+        // for several frames after the key press, fighting the player's
+        // WASD input and reading as an unwanted spin.
+        targetYaw = yaw;
+        targetPitch = pitch;
+        walkTween = null;
+      }
       const speed = pressedKeys.has("shift") ? WALK_SPEED_SLOW : WALK_SPEED;
       const move = new THREE.Vector3();
       if (pressedKeys.has("forward")) move.add(facingDirection());
