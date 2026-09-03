@@ -248,6 +248,80 @@ who owns a screen.** EK is aware of this.
 
 ---
 
+## 🆕 2026-09-02/03, same overnight session, yet later — the click-to-walk
+rewrite above still wasn't it. EK: "when i click a spot in the room and
+move the mouse, to see it better, it take me off in that direction
+instead of basically moving the room... it not function like a human
+would use it. Thats why i keep saying to use that site as reference and
+keep refusing to so it that way." Then, after this session actually went
+and interacted with bingebrowse.net together with EK: "these little
+squares are helpful to know where you can go and look when you hover
+over them" (screenshot, yellow circle around a floor marker). Then, when
+this session asserted the ported drag-look sensitivity "was already
+correct" without re-checking it against the live build: "if you are
+saying it set up this way already, you not correct" — a fair correction;
+that claim was reasoning from the ported CONSTANT matching, not from
+actually testing this build's live behavior. Commits `5e2e4cc` through
+`c6e56c5`.
+
+**Two real, separate findings this round, both from actually going and
+checking rather than reasoning from the reference file alone:**
+
+1. **bingebrowse.net doesn't have click-anywhere navigation — it has
+   fixed, marked waypoints.** Confirmed two ways: EK pointed directly at
+   a floor marker in a screenshot, and this session tested the live site
+   itself (small drags there = pure look-rotation, matching what this
+   build already had; the earlier "took me to a totally different area"
+   result was a drag *release point* landing on one of those markers, not
+   a raycast-anywhere jump). Rebuilt accordingly —
+   `computeCampusWaypoints()` in `campusLayout.ts` (one per room center,
+   one per door bridge) plus visible corner-bracket floor markers in
+   `VltdMuseumCampus.tsx` that brighten and scale up on hover (cursor
+   becomes a pointer too). Click-to-walk now ONLY responds to a waypoint
+   marker — never an arbitrary floor point. WASD/arrows/drag-look/scroll
+   are for free movement in between, unchanged.
+
+2. **Drag-look sensitivity was measurably ~4.4x too fast** — not a vibe,
+   a number. Discovered a real testing-tool gap first: this session's
+   automated drag gesture (`left_click_drag`) never fires real
+   `pointerdown`/`pointerup` on this page — only `pointermove` — so
+   `isDragging` never becomes true and every earlier "I dragged and
+   nothing happened" result this session was the TEST failing to engage
+   the code, not the code being broken. Worked around it with a temporary
+   debug hook (`simulateDrag`) that called the real `onPointerDown`/
+   `onPointerMove`/`onPointerUp` functions directly with realistic
+   incremental deltas, bypassing the broken event simulation entirely.
+   Measured result: a 25px drag (a "slight" mouse move) rotated the view
+   5°; a 300px drag rotated it 60°. Both ~4.4x faster than "drag across
+   the full screen width = rotate through one horizontal field of view" —
+   the natural "grab and pan the room" feel, which is what EK described
+   wanting instead of what was happening. The single room's own
+   `0.0035`/`0.0016` sensitivity, ported exactly in an earlier pass, was
+   simply the wrong number for this build's resolution/FOV regardless of
+   matching the source file. Replaced with `YAW_SENSITIVITY = 0.0008` /
+   `PITCH_SENSITIVITY = 0.00036` (same yaw:pitch ratio as before),
+   calibrated from that 1:1 screen-to-FOV measurement, not a re-guess.
+
+**Lesson for future sessions on this specific page**: don't trust
+`left_click_drag` (or presumably any drag-style gesture) via
+Claude-in-Chrome to actually exercise this component's pointer-event
+handlers — check `pointerdown`/`pointerup` fire counts first (a debug
+hook, same pattern as `simulateDrag` above) before concluding a drag
+interaction does or doesn't work. Plain clicks (press+release, no
+intervening move) DID fire real events reliably all session — this gap
+is specific to the drag gesture, not automated interaction generally.
+
+All temporary debug instrumentation (event counters, `simulateDrag`,
+`getYaw`) removed after use. `tsc`/`eslint`/`npm run build` clean at
+every commit. Live-verified: canvas renders, no console errors, waypoint
+markers deployed and confirmed via chunk-content checks. The measured
+sensitivity fix itself was NOT re-verified with a real human drag after
+shipping (the tooling gap above makes that impossible from this session)
+— this is the one piece that genuinely needs EK's own hands-on test to
+close the loop.
+
+---
+
 ## 🆕 2026-09-02, same overnight session, yet later — the FOV/scale fix
 above wasn't enough. EK, second round, stronger: "when i click on
 something it still does this 'jerking' to a different direction and then
