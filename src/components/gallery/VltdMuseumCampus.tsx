@@ -757,6 +757,15 @@ export default function VltdMuseumCampus() {
     // corrected this exact assumption). Remove once confirmed.
     (window as unknown as { __vltdCampusDebug?: unknown }).__vltdCampusDebug = {
       getYaw: () => ({ yaw, pitch, targetYaw, targetPitch, camRotY: camera.rotation.y, fov: camera.fov, isDragging, didDrag, counts: { ...debugCounts } }),
+      simulateDrag: (startClientX: number, startClientY: number, endClientX: number, endClientY: number, steps: number) => {
+        onPointerDown({ clientX: startClientX, clientY: startClientY } as PointerEvent);
+        for (let i = 1; i <= steps; i++) {
+          const x = startClientX + ((endClientX - startClientX) * i) / steps;
+          const y = startClientY + ((endClientY - startClientY) * i) / steps;
+          onPointerMove({ clientX: x, clientY: y } as PointerEvent);
+        }
+        onPointerUp();
+      },
     };
 
     // A sentinel that can't equal any real room label (including the
