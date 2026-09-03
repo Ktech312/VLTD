@@ -248,6 +248,64 @@ who owns a screen.** EK is aware of this.
 
 ---
 
+## 🆕 2026-09-02, same overnight session, later — EK tried the walkthrough
+live and pushed back hard on movement: "why are we using arrows to move,
+it wove way to quickly also, looking left and right, i need to be able to
+click thought it and move that way, just like th original, the arrows on
+my keyboard should be functional also." Sent a bingebrowse.net URL and
+said "You have access to this site on windows tab" — an explicit
+instruction to go check the reference live rather than guess. Commits
+`0771279`, `5453526`, `31d1a64`.
+
+What was wrong: the on-screen touch D-pad (added earlier this session for
+mobile) was showing on EK's own desktop — its `ontouchstart`/
+`maxTouchPoints` feature-detect was true there too, not a mobile-only
+signal like assumed. Arrow keys strafed (same as A/D) instead of turning
+the view. There was no click-to-walk at all — the campus never had it,
+unlike the single room which had it built, then EK asked to have it
+REMOVED (2026-08-30 entry, this same file) after accidental clicks while
+just looking around dragged the camera somewhere unwanted.
+
+Fix: didn't reinvent movement from scratch. `VirtualGalleryRoom.tsx`
+already has this exact system, researched directly from bingebrowse.net's
+live bundle in an earlier session (see that file's own extensive comments
+citing exact constants) and live-tested by EK before the click-to-walk
+removal — ported it into `VltdMuseumCampus.tsx` almost verbatim:
+
+- **Click-to-walk restored**, campus-only (the single room still has it
+  removed, unchanged): a click (not a drag — 6px threshold) raycasts onto
+  the floor plane; a hit outside any walkable area is silently ignored,
+  never clamped to "nearest safe point." A valid hit starts a two-phase
+  tween (turn to face the destination, then travel in a straight line) —
+  turn rate ~2.2 rad/sec (clamped 0.18-1.25s), travel ~4.8 units/sec
+  (clamped 0.34-1.65s), same constants as the single room.
+- **WASD is real velocity movement now** (2.55 units/sec, Shift for
+  1.73), replacing the old flat `SPEED=15` instant-teleport-per-frame
+  that read as "way too quick."
+- **Arrow keys fixed**: Up/Down walk forward/back (same as W/S), Left/
+  Right now TURN the view (rotate yaw) instead of strafing — matches the
+  single room exactly. This was the literal complaint ("looking left and
+  right").
+- **Drag-to-look is smoothed** (lerp toward a target yaw/pitch each
+  frame) instead of writing rotation straight from the pointer delta.
+- **On-screen touch D-pad removed entirely.** The single room's own guest
+  view deliberately has no such pad either (see that file: "click-to-walk
+  + drag-look are the only navigation, matching the reference site's own
+  guest-facing experience") — a tap IS click-to-walk, so mobile is
+  already covered without one.
+
+**Live-verified**, same session, via Claude-in-Chrome: a temporary debug
+hook confirmed `isWalkable` correctly approves a real floor point and
+`startWalkTween` computes the exact expected tween (journey duration,
+turn/travel split, from/to positions) — matched the ported formula
+bit-for-bit. Real click-driven movement in the browser couldn't be
+watched frame-by-frame (same rAF-throttling-on-a-background-tab
+limitation as earlier tonight), but the algorithm itself is a verified
+match against already-live-tested code, not new/guessed logic. Debug hook
+removed after confirming.
+
+---
+
 ## 🆕 2026-09-02, same overnight session continued — EK answered the open
 questions from the previous entry (asked "what are the questions?", then
 gave direct answers), all pushed to main, all live-verified via
