@@ -322,6 +322,72 @@ close the loop.
 
 ---
 
+## 🆕 2026-09-04 — drag direction flip, WASD removed from copy, floor
+texture + wall trim, and a fix to the testing-tool gap noted above. EK,
+after the waypoint/sensitivity round above: "I don't know what WASD mean
+but whatever it is, i don't like it. Still not working like the other
+site and the room are still nowhere near near the size visually and
+functionally as the First 3D room we built. stop patching this and redo
+what needs to be done... HUG issue, when i click and drag the room to
+look around it moves the room the wrong way." Commit `c637850`.
+
+Three changes:
+1. **Flipped the sign on both `targetYaw` and `targetPitch` in
+   `onPointerMove`** (`+=` instead of `-=`) so drag feels like grabbing
+   and panning the room (content follows the cursor) instead of a
+   standard FPS mouselook (content moves opposite the cursor).
+2. **Removed "WASD/arrows" from the on-screen hint text** — it now reads
+   "Click a marker to walk there · drag to look around · scroll to step".
+   Arrow-key movement itself is UNCHANGED and still works; EK only
+   objected to seeing jargon, not to the keys functioning.
+3. **Added a tiled floor texture (`makeFloorTexture`, canvas-based
+   checkerboard) and gold rail trim strips on every wall**, after
+   comparing the campus directly against the single room's real guest
+   view and concluding the "rooms feel smaller" complaint was about
+   missing material detail, not a further camera-constant mismatch (FOV
+   and wall height were already matched in the prior round).
+
+**Testing-tool gap update — good news this time.** The prior entry above
+warned that `left_click_drag` via Claude-in-Chrome doesn't fire real
+`pointerdown`/`pointerup` on this page. This round found a reliable
+workaround that needs no debug hook and no code changes: dispatch real
+`PointerEvent`/`KeyboardEvent` objects directly via
+`javascript_tool`/`element.dispatchEvent(...)`, e.g.:
+```js
+const canvas = document.querySelector('canvas');
+const rect = canvas.getBoundingClientRect();
+const cx = rect.left + rect.width/2, cy = rect.top + rect.height/2;
+canvas.dispatchEvent(new PointerEvent('pointerdown', {clientX: cx, clientY: cy, bubbles:true, cancelable:true, pointerId:1, pointerType:'mouse'}));
+window.dispatchEvent(new PointerEvent('pointermove', {clientX: cx+150, clientY: cy, bubbles:true, cancelable:true, pointerId:1, pointerType:'mouse'}));
+window.dispatchEvent(new PointerEvent('pointerup', {clientX: cx+150, clientY: cy, bubbles:true, cancelable:true, pointerId:1, pointerType:'mouse'}));
+```
+This DOES reach the real `addEventListener`-based handlers (unlike the
+`computer` tool's OS-level `left_click_drag` action) and was used to
+empirically confirm the drag-direction fix live, on the deployed build —
+before/after screenshots showed a rightward drag shifts room content
+right on screen (grab-and-pan), and a downward drag shifts content down,
+both matching what EK asked for. **Also found:** the Claude-in-Chrome tab
+runs with `document.hidden === true` (fully backgrounded) whenever it's
+not the fronted tab, which fully pauses `requestAnimationFrame` — so
+anything relying on per-frame accumulation (WASD walking, the
+click-to-walk tween) will NOT progress during a real-time `setTimeout`
+wait, only during the brief forced repaint a `computer:screenshot` call
+triggers. Workaround: dispatch the `keydown` and leave it held (no
+`keyup`), then take several `computer:screenshot` calls back-to-back —
+each forces a repaint/frame and the movement visibly accumulates across
+them — then dispatch `keyup` once satisfied. A plain real-time wait
+between dispatching keydown and keyup does nothing useful on this page.
+
+Live-verified this round: deploy confirmed live (hint text has no WASD
+mention), floor tile texture and gold wall trim both visible in-scene
+(the trim reads faint against the gold Hub walls specifically, since both
+are close in hue — worth a look at higher contrast in a non-Hub room if
+EK still feels it's not "reading" enough), no console errors, drag
+direction empirically fixed on both axes as described above. Arrow-key
+walking confirmed still functional (just not advertised in copy).
+
+---
+
 ## 🆕 2026-09-02, same overnight session, yet later — the FOV/scale fix
 above wasn't enough. EK, second round, stronger: "when i click on
 something it still does this 'jerking' to a different direction and then
