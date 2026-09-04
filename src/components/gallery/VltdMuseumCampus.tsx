@@ -127,11 +127,56 @@ export default function VltdMuseumCampus() {
     const hubWallMaterial = new THREE.MeshStandardMaterial({ color: 0xe8b95e, roughness: 0.7, metalness: 0.05 });
 
     // Floors
+    // EK's ask (2026-09-04): "the room are still nowhere near the size
+    // visually and functionally as the First 3D room we built... stop
+    // patching this and redo what needs to be done." Compared this
+    // component's rooms directly against the single room's real guest
+    // view (VirtualGalleryRoom.tsx, /museum/virtual-room/guest) and found
+    // the gap isn't really a camera number anymore (FOV/wall-height
+    // already matched) — it's that the single room has real material
+    // detail (a gold shelf-rail lattice on every wall, a tiled floor,
+    // glowing pedestals) giving strong scale cues that a flat single-
+    // color box never gives, no matter how correct its literal
+    // dimensions are. Adding the same kind of detail here: a tiled floor
+    // texture and gold rail trim on every wall.
+    function makeFloorTexture(baseHex: number) {
+      const canvas = document.createElement("canvas");
+      canvas.width = 256;
+      canvas.height = 256;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return null;
+      const base = new THREE.Color(baseHex);
+      ctx.fillStyle = `#${base.getHexString()}`;
+      ctx.fillRect(0, 0, 256, 256);
+      const light = base.clone().offsetHSL(0, 0, 0.05);
+      const dark = base.clone().offsetHSL(0, 0, -0.06);
+      const tile = 32;
+      for (let row = 0; row < 256 / tile; row++) {
+        for (let col = 0; col < 256 / tile; col++) {
+          ctx.fillStyle = `#${((row + col) % 2 === 0 ? light : dark).getHexString()}`;
+          ctx.globalAlpha = 0.35;
+          ctx.fillRect(col * tile, row * tile, tile - 2, tile - 2);
+        }
+      }
+      ctx.globalAlpha = 1;
+      const texture = new THREE.CanvasTexture(canvas);
+      texture.wrapS = THREE.RepeatWrapping;
+      texture.wrapT = THREE.RepeatWrapping;
+      texture.colorSpace = THREE.SRGBColorSpace;
+      return texture;
+    }
+
     for (const room of CAMPUS_ROOMS) {
       const { x, z } = roomCenter(room);
+      const floorTexture = makeFloorTexture(room.floorColor);
+      if (floorTexture) floorTexture.repeat.set(room.w / 4, room.d / 4);
       const floor = new THREE.Mesh(
         new THREE.PlaneGeometry(room.w, room.d),
-        new THREE.MeshStandardMaterial({ color: room.floorColor, roughness: 0.95 })
+        new THREE.MeshStandardMaterial({
+          color: floorTexture ? 0xffffff : room.floorColor,
+          map: floorTexture,
+          roughness: 0.95,
+        })
       );
       floor.rotation.x = -Math.PI / 2;
       floor.position.set(x, 0, z);
@@ -159,7 +204,15 @@ export default function VltdMuseumCampus() {
       scene.add(patch);
     }
 
-    // Walls, split around door gaps
+    // Walls, split around door gaps, with the same gold rail trim the
+    // single room's own walls use (its shelf-rail lattice) — this is the
+    // single biggest thing missing that made identically-dimensioned
+    // rooms read as smaller/flatter than the original.
+    const trimMaterial = new THREE.MeshStandardMaterial({ color: 0xc9a24a, roughness: 0.5, metalness: 0.25 });
+    const trimHeights = [2.4, 5.2]; // rail heights, roughly matching the single room's own two visible rails
+    const trimDepth = 0.06;
+    const trimThickness = 0.12;
+
     for (const segment of computeWallSegments()) {
       const span = segment.to - segment.from;
       if (span <= 0.05) continue;
@@ -176,6 +229,21 @@ export default function VltdMuseumCampus() {
       const wall = new THREE.Mesh(geometry, material);
       wall.position.set(...position);
       scene.add(wall);
+
+      const facingSign = segment.side === "north" || segment.side === "west" ? 1 : -1;
+      for (const h of trimHeights) {
+        if (h >= WALL_HEIGHT - 0.5) continue;
+        const rail =
+          segment.side === "north" || segment.side === "south"
+            ? new THREE.Mesh(new THREE.BoxGeometry(span, trimThickness, trimDepth), trimMaterial)
+            : new THREE.Mesh(new THREE.BoxGeometry(trimDepth, trimThickness, span), trimMaterial);
+        if (segment.side === "north" || segment.side === "south") {
+          rail.position.set((segment.from + segment.to) / 2, h, segment.fixed + (facingSign * WALL_THICKNESS) / 2);
+        } else {
+          rail.position.set(segment.fixed + (facingSign * WALL_THICKNESS) / 2, h, (segment.from + segment.to) / 2);
+        }
+        scene.add(rail);
+      }
     }
 
     // Waypoint markers — EK watched bingebrowse.net with the walkthrough
@@ -705,21 +773,15 @@ export default function VltdMuseumCampus() {
         didDrag = true;
         walkTween = null; // a real manual look-drag interrupts an in-progress auto-walk
       }
-      // EK's ask (2026-09-02): "i slightly move the mouse and moves to
-      // the other side of the room... you still do not have the EXACT
-      // control." The single room's own 0.0035/0.0016 sensitivity, ported
-      // exactly, turned out to be a bad match here regardless — measured
-      // directly (a temporary debug hook driving the real onPointerMove
-      // code with realistic incremental deltas, not a guess): a 25px drag
-      // rotated the view 5 degrees, a 300px drag rotated it 60 degrees -
-      // both ~4.4x faster than "drag across the full screen width =
-      // rotate through one horizontal field of view," the natural feel
-      // of grabbing and panning the room rather than being flung through
-      // it. YAW_SENSITIVITY/PITCH_SENSITIVITY below are calibrated to
-      // that 1:1 screen-to-FOV feel instead, at the same yaw:pitch ratio
-      // the single room used.
-      targetYaw -= dx * YAW_SENSITIVITY;
-      targetPitch = Math.max(-PITCH_LIMIT, Math.min(PITCH_LIMIT, targetPitch - dy * PITCH_SENSITIVITY));
+      // EK's ask (2026-09-04), stated as a HUGE issue: "when i click and
+      // drag the room to look around it moves the room the wrong way."
+      // The sign here was backwards for the "grab and pan the room"
+      // metaphor EK has been describing this whole time — dragging right
+      // should carry the room's content right with the cursor (like
+      // dragging a photo), which means the sign is `+=`, not `-=`. Fixed
+      // on both axes together (pitch had the same class of bug).
+      targetYaw += dx * YAW_SENSITIVITY;
+      targetPitch = Math.max(-PITCH_LIMIT, Math.min(PITCH_LIMIT, targetPitch + dy * PITCH_SENSITIVITY));
       startX = e.clientX;
       startY = e.clientY;
     }
@@ -868,7 +930,7 @@ export default function VltdMuseumCampus() {
         </div>
 
         <div className="mx-auto rounded-full bg-black/55 px-4 py-2 text-xs font-medium text-white/75 ring-1 ring-white/15 backdrop-blur">
-          WASD/arrows to walk · click a marker to walk there · drag to look · scroll to step
+          Click a marker to walk there · drag to look around · scroll to step
         </div>
       </div>
 
