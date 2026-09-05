@@ -1,4 +1,4 @@
-# VLTD — Session Handoff (updated, twentieth pass — self-directed overnight audit (2026-08-27) found two real cloud-sync gaps, fixed both, BOTH migrations confirmed run by EK, both fully live: (1) ~110 VaultItem fields — nearly every per-universe detail field plus condition/pricing/comps core fields — never had a Supabase column at all, not just a missing mapping; (2) 3 gaps in the museum/Gallery sync (item notes never written, view-count dedup never synced, invite tokens written but never read back on a second device). Also generalized both the vault and gallery upsert schema-mismatch fallbacks to self-heal against a missing column instead of needing a new hardcoded check every time this bug class recurs — see the two 2026-08-27 entries in §2. Build-verified only, still nobody has visually confirmed it live in a browser. Prior (nineteenth) pass — Events tooling, admin console discovery + APP_MAP.md, Vault upload feature, a translucent-popover bug fixed 3x — also unverified live, read the 2026-08-24/25/26 entry before assuming it works visually. Older summary — full backend security audit (8 real RLS/RPC vulnerabilities), 3D Museum beta-access gating, Room Builder fixes — is a different session's work, still below.)
+# VLTD — Session Handoff (updated, twenty-first pass — 2026-08-27/28 overnight: Admin Users table redesign (tighter rows, @username + short internal ID, Tier as a dropdown, Account Type/Email as their own columns, a real `max-w-6xl` container bug fixed so the table needs zero horizontal scroll in its actual embedded admin-sidebar context), Account Rights panel fully retired (~275 lines deleted, not hidden) with Users promoted to the top of the sidebar — all live-verified in the real embedded view. Also: a same-night admin-MFA scare investigated and resolved — see the "Admin now requires 2FA" entry in §2 before assuming a missing Admin menu is a bug. Confirmed pushed, merged with two other concurrent sessions' work with no conflicts, Vercel deploy succeeded (commit `8524a8b`). Prior (twentieth) pass — self-directed overnight audit (2026-08-27) found two real cloud-sync gaps, fixed both, BOTH migrations confirmed run by EK, both fully live: (1) ~110 VaultItem fields — nearly every per-universe detail field plus condition/pricing/comps core fields — never had a Supabase column at all, not just a missing mapping; (2) 3 gaps in the museum/Gallery sync (item notes never written, view-count dedup never synced, invite tokens written but never read back on a second device). Also generalized both the vault and gallery upsert schema-mismatch fallbacks to self-heal against a missing column instead of needing a new hardcoded check every time this bug class recurs — see the two 2026-08-27 entries in §2. Prior (nineteenth) pass — Events tooling, admin console discovery + APP_MAP.md, Vault upload feature, a translucent-popover bug fixed 3x — read the 2026-08-24/25/26 entry before assuming it works visually. Older summary — full backend security audit (8 real RLS/RPC vulnerabilities), 3D Museum beta-access gating, Room Builder fixes — is a different session's work, still below.)
 
 Read this top to bottom, then start on **§2 "What's LEFT."** This is written so a
 brand-new chat can pick up with no prior context.
@@ -2924,6 +2924,35 @@ result before calling it done, the way EK's side-by-side did here.
 ---
 
 ## 2. What's LEFT to do (prioritized)
+
+### ✅ RESOLVED (2026-08-27/28) — "The admin section is now gone from my profile drop down" was a real change, not a bug — Admin access now requires 2FA
+Another concurrent session added a real MFA requirement to admin access
+(commit `c7c8aa2`, `src/lib/adminAuth.ts`): `getMyAdminRole()` now checks
+`supabase.auth.mfa.getAuthenticatorAssuranceLevel()` and returns `null`
+(no admin role, Admin menu item disappears) unless the session is at
+`aal2` — i.e. unless the account has 2FA enrolled **and** has completed an
+MFA challenge in the current session. The comment in that file attributes
+it to "EK's ask," which checked out — but it went live before EK had
+actually finished setting up 2FA, so EK hit a confusing lockout: the Admin
+option vanished from the profile dropdown with no explanation.
+
+**Two points of confusion cleared up, worth remembering if this comes up
+again:**
+1. **This is intentional, not a bug.** Once you enroll in 2FA and complete
+   one challenge (`aal2`), the Admin menu item comes back on its own —
+   nothing to build or fix.
+2. **2FA setup is NOT inside the admin page.** EK initially thought it was
+   ("i have nothing to scan because its in the admin page"). It's a normal,
+   always-reachable card at `/account/security`
+   ([TwoFactorAuthCard.tsx](src/components/account/TwoFactorAuthCard.tsx),
+   rendered from
+   [security/page.tsx](src/app/account/security/page.tsx)) — completely
+   unrelated to admin access, reachable with zero admin role. EK completed
+   enrollment there and confirmed the Admin menu reappeared.
+
+No code changes needed — this was pure investigation + explaining the flow
+to EK, who then successfully enrolled and got Admin access back the same
+night, before starting on the Users-table redesign below.
 
 ### DONE, LIVE-VERIFIED (2026-08-27/28) — Admin Users table redesign, Account Rights retired
 EK: rows too loose, missing info vs. the old Account Rights panel, the
