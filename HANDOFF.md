@@ -1,4 +1,4 @@
-# VLTD — Session Handoff (updated, twenty-first pass — 2026-08-27/28 overnight: Admin Users table redesign (tighter rows, @username + short internal ID, Tier as a dropdown, Account Type/Email as their own columns, a real `max-w-6xl` container bug fixed so the table needs zero horizontal scroll in its actual embedded admin-sidebar context), Account Rights panel fully retired (~275 lines deleted, not hidden) with Users promoted to the top of the sidebar — all live-verified in the real embedded view. Also: a same-night admin-MFA scare investigated and resolved — see the "Admin now requires 2FA" entry in §2 before assuming a missing Admin menu is a bug. Confirmed pushed, merged with two other concurrent sessions' work with no conflicts, Vercel deploy succeeded (commit `8524a8b`). Prior (twentieth) pass — self-directed overnight audit (2026-08-27) found two real cloud-sync gaps, fixed both, BOTH migrations confirmed run by EK, both fully live: (1) ~110 VaultItem fields — nearly every per-universe detail field plus condition/pricing/comps core fields — never had a Supabase column at all, not just a missing mapping; (2) 3 gaps in the museum/Gallery sync (item notes never written, view-count dedup never synced, invite tokens written but never read back on a second device). Also generalized both the vault and gallery upsert schema-mismatch fallbacks to self-heal against a missing column instead of needing a new hardcoded check every time this bug class recurs — see the two 2026-08-27 entries in §2. Prior (nineteenth) pass — Events tooling, admin console discovery + APP_MAP.md, Vault upload feature, a translucent-popover bug fixed 3x — read the 2026-08-24/25/26 entry before assuming it works visually. Older summary — full backend security audit (8 real RLS/RPC vulnerabilities), 3D Museum beta-access gating, Room Builder fixes — is a different session's work, still below.)
+# VLTD — Session Handoff (updated 2026-09-04 — active work is the VLTD Museum public campus, a separate project from EK's personal exhibition rooms; see the "🆕" dated entries starting just below this line, newest first. Latest round (2026-09-04, commits `c637850`/`c282435`): fixed an inverted click-and-drag look direction EK called a "HUGE issue," removed WASD/arrow-key jargon from the on-screen hint text (the keys themselves still work), and added a tiled floor texture + gold wall rail trim so rooms read closer to the original single-room builder's visual richness. Live-verified via real dispatched pointer/keyboard events (a reliable workaround for a Claude-in-Chrome testing-tool gap, documented in that entry) — no console errors, drag direction empirically confirmed correct on both axes. NOT yet verified by EK's own hands-on test, and wall-trim contrast in the gold-walled Hub specifically may still read as too subtle. Before this: waypoint-marker navigation rebuild + a measured 4.4x drag-sensitivity fix (2026-09-02/03), FOV/wall-height/pitch-limit matching to the original room (2026-09-02), and the campus's first pass — Spotlight/Store rooms, admin config tooling, exterior facade, shelf fixtures (2026-08-31/09-01). Read those entries in order before assuming the walkthrough behaves any particular way. Older work below in §2 (2026-08-27/28: Admin Users table redesign + Account Rights panel retired, plus a same-night admin-2FA lockout that was investigated and resolved — not a bug, see that entry before assuming a missing Admin menu means something's broken; ~110 VaultItem fields + 3 Gallery-sync gaps found and fixed 2026-08-27, both migrations confirmed run by EK; Events tooling, admin console/APP_MAP.md, Vault upload, 2026-08-24/25/26; a full backend security audit, 3D Museum beta-access gating, Room Builder fixes further below) is a different, unrelated part of the app — still valid, just not what's currently in progress.)
 
 Read this top to bottom, then start on **§2 "What's LEFT."** This is written so a
 brand-new chat can pick up with no prior context.
@@ -248,6 +248,84 @@ who owns a screen.** EK is aware of this.
 
 ---
 
+## 🆕 2026-09-04 — drag direction flip, WASD removed from copy, floor
+texture + wall trim, and a fix to the testing-tool gap noted in the entry
+below this one. EK, after the waypoint/sensitivity round below: "I don't
+know what WASD mean but whatever it is, i don't like it. Still not
+working like the other site and the room are still nowhere near near the
+size visually and functionally as the First 3D room we built. stop
+patching this and redo what needs to be done... HUG issue, when i click
+and drag the room to look around it moves the room the wrong way."
+Commits `c637850`, `c282435`.
+
+Three changes:
+1. **Flipped the sign on both `targetYaw` and `targetPitch` in
+   `onPointerMove`** (`+=` instead of `-=`) so drag feels like grabbing
+   and panning the room (content follows the cursor) instead of a
+   standard FPS mouselook (content moves opposite the cursor).
+2. **Removed "WASD/arrows" from the on-screen hint text** — it now reads
+   "Click a marker to walk there · drag to look around · scroll to step".
+   Arrow-key movement itself is UNCHANGED and still works; EK only
+   objected to seeing jargon, not to the keys functioning.
+3. **Added a tiled floor texture (`makeFloorTexture`, canvas-based
+   checkerboard) and gold rail trim strips on every wall**, after
+   comparing the campus directly against the single room's real guest
+   view and concluding the "rooms feel smaller" complaint was about
+   missing material detail, not a further camera-constant mismatch (FOV
+   and wall height were already matched in the prior round).
+
+**Testing-tool gap update — good news this time.** The entry below warns
+that `left_click_drag` via Claude-in-Chrome doesn't fire real
+`pointerdown`/`pointerup` on this page. This round found a reliable
+workaround that needs no debug hook and no code changes: dispatch real
+`PointerEvent`/`KeyboardEvent` objects directly via
+`javascript_tool`/`element.dispatchEvent(...)`, e.g.:
+```js
+const canvas = document.querySelector('canvas');
+const rect = canvas.getBoundingClientRect();
+const cx = rect.left + rect.width/2, cy = rect.top + rect.height/2;
+canvas.dispatchEvent(new PointerEvent('pointerdown', {clientX: cx, clientY: cy, bubbles:true, cancelable:true, pointerId:1, pointerType:'mouse'}));
+window.dispatchEvent(new PointerEvent('pointermove', {clientX: cx+150, clientY: cy, bubbles:true, cancelable:true, pointerId:1, pointerType:'mouse'}));
+window.dispatchEvent(new PointerEvent('pointerup', {clientX: cx+150, clientY: cy, bubbles:true, cancelable:true, pointerId:1, pointerType:'mouse'}));
+```
+This DOES reach the real `addEventListener`-based handlers (unlike the
+`computer` tool's OS-level `left_click_drag` action) and was used to
+empirically confirm the drag-direction fix live, on the deployed build —
+before/after screenshots showed a rightward drag shifts room content
+right on screen (grab-and-pan), and a downward drag shifts content down,
+both matching what EK asked for. **Also found:** the Claude-in-Chrome tab
+runs with `document.hidden === true` (fully backgrounded) whenever it's
+not the fronted tab, which fully pauses `requestAnimationFrame` — so
+anything relying on per-frame accumulation (WASD walking, the
+click-to-walk tween) will NOT progress during a real-time `setTimeout`
+wait, only during the brief forced repaint a `computer:screenshot` call
+triggers. Workaround: dispatch the `keydown` and leave it held (no
+`keyup`), then take several `computer:screenshot` calls back-to-back —
+each forces a repaint/frame and the movement visibly accumulates across
+them — then dispatch `keyup` once satisfied. A plain real-time wait
+between dispatching keydown and keyup does nothing useful on this page.
+
+Live-verified this round: deploy confirmed live (hint text has no WASD
+mention), floor tile texture and gold wall trim both visible in-scene
+(the trim reads faint against the gold Hub walls specifically, since both
+are close in hue — worth a look at higher contrast in a non-Hub room if
+EK still feels it's not "reading" enough), no console errors, drag
+direction empirically fixed on both axes as described above. Arrow-key
+walking confirmed still functional (just not advertised in copy).
+
+**What's still open after this round** (see §2 for the tracked list too):
+- The drag-direction fix was verified via dispatched synthetic events,
+  not a real human mouse — EK's own hands-on test is the one thing that
+  actually closes this loop.
+- Wall trim contrast in the Hub specifically (gold-on-gold) may still
+  read as "not there" to EK even though it's rendering — worth checking
+  in a white-walled category room instead, or upping the trim/wall
+  contrast if EK still says it's missing.
+- No fresh EK feedback yet on this round as of this writing — this entry
+  is a status report, not a closed loop.
+
+---
+
 ## 🆕 2026-09-02/03, same overnight session, yet later — the click-to-walk
 rewrite above still wasn't it. EK: "when i click a spot in the room and
 move the mouse, to see it better, it take me off in that direction
@@ -319,72 +397,6 @@ sensitivity fix itself was NOT re-verified with a real human drag after
 shipping (the tooling gap above makes that impossible from this session)
 — this is the one piece that genuinely needs EK's own hands-on test to
 close the loop.
-
----
-
-## 🆕 2026-09-04 — drag direction flip, WASD removed from copy, floor
-texture + wall trim, and a fix to the testing-tool gap noted above. EK,
-after the waypoint/sensitivity round above: "I don't know what WASD mean
-but whatever it is, i don't like it. Still not working like the other
-site and the room are still nowhere near near the size visually and
-functionally as the First 3D room we built. stop patching this and redo
-what needs to be done... HUG issue, when i click and drag the room to
-look around it moves the room the wrong way." Commit `c637850`.
-
-Three changes:
-1. **Flipped the sign on both `targetYaw` and `targetPitch` in
-   `onPointerMove`** (`+=` instead of `-=`) so drag feels like grabbing
-   and panning the room (content follows the cursor) instead of a
-   standard FPS mouselook (content moves opposite the cursor).
-2. **Removed "WASD/arrows" from the on-screen hint text** — it now reads
-   "Click a marker to walk there · drag to look around · scroll to step".
-   Arrow-key movement itself is UNCHANGED and still works; EK only
-   objected to seeing jargon, not to the keys functioning.
-3. **Added a tiled floor texture (`makeFloorTexture`, canvas-based
-   checkerboard) and gold rail trim strips on every wall**, after
-   comparing the campus directly against the single room's real guest
-   view and concluding the "rooms feel smaller" complaint was about
-   missing material detail, not a further camera-constant mismatch (FOV
-   and wall height were already matched in the prior round).
-
-**Testing-tool gap update — good news this time.** The prior entry above
-warned that `left_click_drag` via Claude-in-Chrome doesn't fire real
-`pointerdown`/`pointerup` on this page. This round found a reliable
-workaround that needs no debug hook and no code changes: dispatch real
-`PointerEvent`/`KeyboardEvent` objects directly via
-`javascript_tool`/`element.dispatchEvent(...)`, e.g.:
-```js
-const canvas = document.querySelector('canvas');
-const rect = canvas.getBoundingClientRect();
-const cx = rect.left + rect.width/2, cy = rect.top + rect.height/2;
-canvas.dispatchEvent(new PointerEvent('pointerdown', {clientX: cx, clientY: cy, bubbles:true, cancelable:true, pointerId:1, pointerType:'mouse'}));
-window.dispatchEvent(new PointerEvent('pointermove', {clientX: cx+150, clientY: cy, bubbles:true, cancelable:true, pointerId:1, pointerType:'mouse'}));
-window.dispatchEvent(new PointerEvent('pointerup', {clientX: cx+150, clientY: cy, bubbles:true, cancelable:true, pointerId:1, pointerType:'mouse'}));
-```
-This DOES reach the real `addEventListener`-based handlers (unlike the
-`computer` tool's OS-level `left_click_drag` action) and was used to
-empirically confirm the drag-direction fix live, on the deployed build —
-before/after screenshots showed a rightward drag shifts room content
-right on screen (grab-and-pan), and a downward drag shifts content down,
-both matching what EK asked for. **Also found:** the Claude-in-Chrome tab
-runs with `document.hidden === true` (fully backgrounded) whenever it's
-not the fronted tab, which fully pauses `requestAnimationFrame` — so
-anything relying on per-frame accumulation (WASD walking, the
-click-to-walk tween) will NOT progress during a real-time `setTimeout`
-wait, only during the brief forced repaint a `computer:screenshot` call
-triggers. Workaround: dispatch the `keydown` and leave it held (no
-`keyup`), then take several `computer:screenshot` calls back-to-back —
-each forces a repaint/frame and the movement visibly accumulates across
-them — then dispatch `keyup` once satisfied. A plain real-time wait
-between dispatching keydown and keyup does nothing useful on this page.
-
-Live-verified this round: deploy confirmed live (hint text has no WASD
-mention), floor tile texture and gold wall trim both visible in-scene
-(the trim reads faint against the gold Hub walls specifically, since both
-are close in hue — worth a look at higher contrast in a non-Hub room if
-EK still feels it's not "reading" enough), no console errors, drag
-direction empirically fixed on both axes as described above. Arrow-key
-walking confirmed still functional (just not advertised in copy).
 
 ---
 
