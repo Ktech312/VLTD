@@ -145,6 +145,25 @@ const BACK_WALL_CAPACITY = 24;
 // real length — see BACK_WALL_COL_STEP / SIDE_WALL_STEP below, both
 // independently computed from these same safe bounds and landing within
 // 0.01 units of each other, not hand-tuned to match.
+// Single source of truth for the front/door wall's depth, every style.
+// This group of constants MUST mirror generate-gallery-room-models.py's
+// own FRONT_WALL_PUSH_BACK exactly — that Python script bakes the real
+// wall/door/panel geometry, and any JS code (like frontWallPosition
+// below) that places something ON that wall has to track wherever it
+// currently sits. EK's ask (2026-08-29), after the wall moved twice and
+// the item hangers were forgotten both times, floating in open air:
+// give this its own clearly-named constant instead of a bare literal
+// z value, so the NEXT push-back is a one-line change here, not a
+// silent, easy-to-forget drift between two files. EK's ask (2026-08-30):
+// "it doesn't look like you pushed the wall back on the other ones" —
+// this only ever applied to vault. 5.62 is also whitebox/arcade's own
+// door assembly base z (add_standard_door's door_left/right/header), so
+// the same formula applies to every style now, not just vault's.
+const FRONT_WALL_PUSH_BACK = 1.5; // mirrors generate-gallery-room-models.py's constant of the same name — keep both in sync
+const FRONT_WALL_PANEL_SEAM_BASE_Z = 5.62; // the panel/door assembly's own baked z BEFORE any push-back, shared by every style
+const FRONT_WALL_ITEM_MOUNT_OFFSET = 0.08; // how far in front of the panel seam an item hangs, so its frame doesn't clip through
+const FRONT_WALL_ITEM_Z = FRONT_WALL_PANEL_SEAM_BASE_Z + FRONT_WALL_PUSH_BACK - FRONT_WALL_ITEM_MOUNT_OFFSET;
+
 const BACK_WALL_HALF_WIDTH = 9.0;
 const BACK_WALL_COL_STEP = (BACK_WALL_HALF_WIDTH * 2) / 7; // 8 columns, 7 gaps
 const SIDE_WALL_SAFE_BACK_Z = -10.5;
@@ -157,9 +176,9 @@ const MAX_ROOM_ITEMS = BACK_WALL_CAPACITY + SIDE_WALL_CAPACITY * 2 + 8;
 // "blue" has no entry — it's the hand-coded shell shown permanently, with
 // no GLB to load at all. See the RoomStyle type above for what that means.
 const ROOM_MODEL_URLS: Partial<Record<RoomStyle, string>> = {
-  vault: "/models/gallery-rooms/vault-room.glb?v=shelf-headroom-2026-08-22",
-  whitebox: "/models/gallery-rooms/whitebox-room.glb?v=off-white-not-tan-2026-08-22",
-  arcade: "/models/gallery-rooms/arcade-room.glb?v=shelf-headroom-2026-08-22",
+  vault: "/models/gallery-rooms/vault-room.glb?v=front-wall-pushback-all-styles-2026-08-30",
+  whitebox: "/models/gallery-rooms/whitebox-room.glb?v=front-wall-pushback-all-styles-2026-08-30",
+  arcade: "/models/gallery-rooms/arcade-room.glb?v=front-wall-pushback-all-styles-2026-08-30",
 };
 
 // The 5 center display cases (built further down as decorative glass cabinets)
@@ -172,7 +191,20 @@ const CABINET_SPOTS: Array<[number, number]> = [
   [2.1, 0.45],
 ];
 const CABINET_SLOT_COUNT = CABINET_SPOTS.length;
-const TOTAL_SLOT_COUNT = MAX_ROOM_ITEMS + CABINET_SLOT_COUNT;
+// +7 for vault+Hero's extra real slots appended past the end of the table
+// (see heroSupportingOverflowSlot and heroCornerFillSlots below): 1 slot
+// Hero's row reservation left unused within the shared main-wall budget,
+// plus 3 new slots per side wall (6) on real, already-baked shelf/wall
+// space past the grid's old last depth that the code never used. Growing
+// the main-wall request itself to reach these shifts every front-wall/
+// cabinet index after it (confirmed live: it moved a real front-wall
+// item — EK: "you just moved one over"). Appending them past the end of
+// the WHOLE table instead needs their own selectedIds slots to be real,
+// not decorative — hence +7 here, harmless for every other layout/style
+// (their own table stays exactly MAX_ROOM_ITEMS + CABINET_SLOT_COUNT
+// long; these last slots simply never render for them, same as Hero's
+// own dedicated slots already don't).
+const TOTAL_SLOT_COUNT = MAX_ROOM_ITEMS + CABINET_SLOT_COUNT + 7;
 
 // `selectedIds` is always exactly TOTAL_SLOT_COUNT long, one entry per physical
 // slot (wall shelf or display case) — "" means that slot is empty. This is what
@@ -780,9 +812,32 @@ const SHELF_ROW_Y = [4.72, 3.22, 1.72];
 
 function shelfItemY(row: number, scale: number) {
   const shelfY = SHELF_ROW_Y[row] ?? SHELF_ROW_Y[SHELF_ROW_Y.length - 1];
-  const shelfHalfThickness = 0.05;
+  // Was 0.05 — the actual baked shelf board (back_shelf_i/left_shelf_i/
+  // right_shelf_i in generate-gallery-room-models.py) is 0.12 units
+  // thick, i.e. a real half-thickness of 0.06, confirmed by reading the
+  // live GLB mesh's own bounding box (yMin/yMax +-0.06). The 0.01
+  // mismatch sank every item's frame 0.01 unit into the shelf's actual
+  // top surface — EK: "it looks like the bottom of all the frames are
+  // cut off."
+  const shelfHalfThickness = 0.06;
+  // EK's ask (2026-08-30): sitting exactly flush with zero gap still read
+  // as "cut off" against the shelf — a real physical item resting on a
+  // shelf ledge shows a sliver of visible clearance, not perfect contact.
+  // Separate from shelfHalfThickness (that one has to stay the shelf's
+  // real measured thickness) so this can be tuned as a pure visual
+  // choice without relitigating the physical fix.
+  const restClearance = 0.03;
   const cardHalfHeight = (1.54 * scale) / 2;
-  return shelfY + shelfHalfThickness + cardHalfHeight;
+  // EK's ask (2026-08-30): "all the frames on the wall were not made the
+  // same [way] as the ones on the wall" — shelf items only got the
+  // door-wall matting fix's clearance, not its actual symmetric matting;
+  // that half of the fix got missed and never flagged. Every item now
+  // gets the same 0.065*scale matting on all 4 sides (see the frame
+  // construction below), so this has to lift the card by that same
+  // amount too, or the frame's newly-symmetric bottom border would sink
+  // right back into the shelf, undoing restClearance above.
+  const matchingFrameBottomMatting = 0.065 * scale;
+  return shelfY + shelfHalfThickness + restClearance + cardHalfHeight + matchingFrameBottomMatting;
 }
 
 function wallGridPosition(
@@ -821,22 +876,19 @@ function wallGridPosition(
   };
 }
 
-function rowForWallSlot(wall: "back" | "left" | "right", slot: number): number {
-  if (wall === "back") return Math.floor(slot / 8) % SHELF_ROW_Y.length;
-  return slot % SHELF_ROW_Y.length;
-}
-
 function distributeAcrossWalls(
   count: number,
   config: { backZ: number; backScale: number; sideBaseZ: number; sideZStep: number; sideScale: number },
-  // Hero (spotlight layout) reserves its own row on whichever wall it sits
-  // on — a regular grid slot landing in that same row can sit close enough
-  // in depth to visually overlap Hero's much larger frame. EK caught this
-  // live: "you have an extra one behind it on each wall, this causes a
-  // conflict." Skipping the whole forbidden row on that wall (rather than
-  // dodging Hero's exact footprint by distance) is simple to reason about
-  // and can't be miscalculated the way a narrow exclusion zone could.
-  excludeRow: Partial<Record<"back" | "left" | "right", number>> = {}
+  // Hero (spotlight layout) sits at a fixed depth on whichever side wall it
+  // occupies — only the ONE regular grid slot landing at that same depth
+  // and shelf row can visually overlap Hero's much larger frame (EK caught
+  // this live: "you have an extra one behind it on each wall, this causes a
+  // conflict" — confirmed via the placement math: that one slot landed 0.4
+  // units from Hero's own position). Excluding a whole row to dodge it
+  // (the first attempt at this) removed 7 slots per wall instead of 1,
+  // which is what starved Hero's normal-grid capacity and caused items to
+  // overflow off the wall entirely — skip only the exact colliding slot.
+  excludeSlot: Partial<Record<"back" | "left" | "right", number>> = {}
 ): RoomItemPosition[] {
   // Keeps the WALL_CYCLE's early-spread behavior (see its own comment —
   // a small collection gets presence on every wall right away, not just
@@ -854,10 +906,7 @@ function distributeAcrossWalls(
   const wallSlot: Record<"back" | "left" | "right", number> = { back: 0, left: 0, right: 0 };
   function nextValidSlot(wall: "back" | "left" | "right"): number {
     let slot = wallSlot[wall];
-    const forbidden = excludeRow[wall];
-    if (forbidden !== undefined) {
-      while (slot < caps[wall] && rowForWallSlot(wall, slot) === forbidden) slot++;
-    }
+    if (slot < caps[wall] && slot === excludeSlot[wall]) slot++;
     return slot;
   }
   function hasRoom(wall: "back" | "left" | "right"): boolean {
@@ -942,7 +991,6 @@ function buildWallPositions(layout: RoomLayout, count: number): RoomItemPosition
       { x: 10.22, y: HERO_Y, z: -3.2, ry: -Math.PI / 2, scale: 1.2, wall: "right" },
     ];
     const heroSlots = allHeroSlots.slice(0, count);
-    const remaining = Math.max(0, count - heroSlots.length);
     // Medium density (unchanged design intent — a step between Salon's
     // tight cluster and Store's full-width spread) — but now explicitly
     // CENTERED within the real safe range (SIDE_WALL_SAFE_BACK_Z ..
@@ -952,16 +1000,34 @@ function buildWallPositions(layout: RoomLayout, count: number): RoomItemPosition
     const spotlightClusterSpan = 2.1 * (SIDE_WALL_DEPTH_COUNT - 1);
     const spotlightBaseZ =
       SIDE_WALL_SAFE_BACK_Z + (SIDE_WALL_SAFE_FRONT_Z - SIDE_WALL_SAFE_BACK_Z - spotlightClusterSpan) / 2;
-    // Only left/right need the reservation — back-wall Hero sits at x=0,
-    // which never lands on a back-wall column (columns run -9..9 in steps
-    // of BACK_WALL_COL_STEP, an even split with no column at the exact
+    // Only left/right need an exclusion — back-wall Hero sits at x=0, which
+    // never lands on a back-wall column (columns run -9..9 in steps of
+    // BACK_WALL_COL_STEP, an even split with no column at the exact
     // midpoint), so nothing is ever placed there to collide with. Left/
-    // right Hero sits at a FIXED x (every item on that wall shares the
-    // same x — only row/depth vary), so its own row must stay reserved.
+    // right Hero sits at a FIXED depth (z=-3.2) at the middle shelf row —
+    // with sideBaseZ/sideZStep above, that lands exactly on grid slot 10
+    // (depth 3, row 1: z=-2.8, only 0.4 units from Hero's own z=-3.2).
+    // That's the ONE slot that needs to be skipped, not the whole row.
     const heroWalls = new Set(heroSlots.map((slot) => slot.wall));
-    const supportingExcludeRow: Partial<Record<"back" | "left" | "right", number>> = {};
-    if (heroWalls.has("left")) supportingExcludeRow.left = 1;
-    if (heroWalls.has("right")) supportingExcludeRow.right = 1;
+    const supportingExcludeSlot: Partial<Record<"back" | "left" | "right", number>> = {};
+    if (heroWalls.has("left")) supportingExcludeSlot.left = 10;
+    if (heroWalls.has("right")) supportingExcludeSlot.right = 10;
+    // EK's ask (2026-08-30): "you didn't carry over fixes to other rooms"
+    // — the badge-overflow bug (items flung past the wall) was only ever
+    // prevented for vault specifically, because vault's front-wall carve-
+    // out happened to bring its own requested count under real capacity.
+    // Every other style still requested the full uncarved count here,
+    // which exceeds capacity and hits the same broken overflow fallback
+    // vault used to hit. Capping the request at the wall set's real
+    // capacity (once Hero's row-exclusion is applied) makes this
+    // impossible for every style, not just the one that got lucky.
+    const trueCapacity = (["back", "left", "right"] as const).reduce((sum, w) => {
+      const caps = { back: BACK_WALL_CAPACITY, left: SIDE_WALL_CAPACITY, right: SIDE_WALL_CAPACITY };
+      // excludeSlot removes exactly one slot index per wall (see
+      // distributeAcrossWalls' own excludeSlot) — not a whole row.
+      return sum + caps[w] - (supportingExcludeSlot[w] !== undefined ? 1 : 0);
+    }, 0);
+    const remaining = Math.min(Math.max(0, count - heroSlots.length), trueCapacity);
     const supporting = distributeAcrossWalls(
       remaining,
       {
@@ -971,7 +1037,7 @@ function buildWallPositions(layout: RoomLayout, count: number): RoomItemPosition
         sideZStep: 2.1,
         sideScale: MIN_ITEM_SCALE,
       },
-      supportingExcludeRow
+      supportingExcludeSlot
     );
     return [...heroSlots, ...supporting];
   }
@@ -991,20 +1057,37 @@ function buildWallPositions(layout: RoomLayout, count: number): RoomItemPosition
     // EK's ask (2026-08-23, 4th time raised): sideBaseZ/sideZStep here
     // were picked without checking them against the wall's real length —
     // see the SIDE_WALL_* constants' own comment for the actual geometry.
-    // Salon's tight 1.5 step is a deliberate, kept design choice (a small
+    // Salon's tight step is a deliberate, kept design choice (a small
     // collection reading as a dense little cluster rather than the same
-    // spacing as Store just with less of it used) — what's fixed is that
-    // the cluster is now explicitly CENTERED in the real safe range
-    // instead of starting flush at an ungeometry-checked -9.6, so the
-    // unused wall length splits evenly on both ends instead of piling up
-    // on one side.
+    // spacing as Store just with less of it used) — what's fixed here
+    // (2026-08-23) is that the cluster is explicitly CENTERED in the real
+    // safe range instead of starting flush at an ungeometry-checked -9.6.
+    //
+    // EK's ask (2026-08-30): "most the walls look empty and have to be
+    // fillable in the smaller tighter format." Root cause: wallGridPosition
+    // fills a wall's 3 shelf ROWS at one depth before ever advancing to the
+    // next depth (row = slot % 3, depth = floor(slot / 3)) — with a real
+    // collection's modest item count, that means the first several items
+    // stack 3-deep at the FIRST couple of depth positions before reaching a
+    // 3rd/4th depth at all. At 1.5 apart, centered, that stack barely moves
+    // off the middle of the wall, leaving most of its visible length bare
+    // on both sides. Store's own much wider step (~2.567, spanning the
+    // FULL safe range) doesn't have this problem because even the same
+    // small number of occupied depths already reaches meaningfully across
+    // the wall. Two changes, both keeping Salon visibly tighter/denser than
+    // Store (never widened all the way to Store's own step) while fixing
+    // the "empty wall" look: (1) step raised 1.5 -> 2.0 — still a real,
+    // noticeably tighter cluster, but the same handful of occupied depths
+    // now reaches ~30% further along the wall before running out of room;
+    // (2) starts flush at SIDE_WALL_SAFE_BACK_Z (Store's own starting
+    // corner) instead of centered — EK: "make sure the walls match Store,
+    // because they are good there" — matching where the run BEGINS is part
+    // of that, not just how tight the items are once it does.
     return distributeAcrossWalls(count, {
       backZ: -11.82,
       backScale: MIN_ITEM_SCALE,
-      sideBaseZ:
-        SIDE_WALL_SAFE_BACK_Z +
-        (SIDE_WALL_SAFE_FRONT_Z - SIDE_WALL_SAFE_BACK_Z - 1.5 * (SIDE_WALL_DEPTH_COUNT - 1)) / 2,
-      sideZStep: 1.5,
+      sideBaseZ: SIDE_WALL_SAFE_BACK_Z,
+      sideZStep: 2.0,
       sideScale: MIN_ITEM_SCALE,
     });
   }
@@ -1049,7 +1132,7 @@ function frontWallPosition(slot: number): RoomItemPosition {
   return {
     x: pos.x,
     y: pos.y,
-    z: 5.54,
+    z: FRONT_WALL_ITEM_Z,
     ry: Math.PI,
     // Was 0.6, a leftover below MIN_ITEM_SCALE that patching the 3 main
     // wall configs missed — this front-wall row is a normal wall mount
@@ -1059,11 +1142,54 @@ function frontWallPosition(slot: number): RoomItemPosition {
   };
 }
 
-function buildVaultWallPositions(layout: RoomLayout, count: number): RoomItemPosition[] {
-  if (layout === "spotlight") {
-    return buildWallPositions(layout, count);
-  }
+// Hero's row reservation trims exactly 1 slot off each side wall's normal
+// capacity (see distributeAcrossWalls' excludeSlot), which drops the
+// main-wall grid's true capacity from 66 to 64 -- but ALSO means it can
+// hold 64 supporting items, one more than the 63 the shared 66-slot
+// main-wall budget (see MAX_ROOM_ITEMS) actually asks distributeAcrossWalls
+// for. Re-running the exact same call with 64 requested reproduces the
+// identical first 63 positions (the algorithm only ever looks forward,
+// never back) plus this one genuinely-extra 64th — appended past the end
+// of the whole table (see TOTAL_SLOT_COUNT's own +1) instead of by asking
+// the main-wall grid for 64 directly, which would shift every front-wall/
+// cabinet index after it.
+function heroSupportingOverflowSlot(): RoomItemPosition {
+  const spotlightClusterSpan = 2.1 * (SIDE_WALL_DEPTH_COUNT - 1);
+  const spotlightBaseZ =
+    SIDE_WALL_SAFE_BACK_Z + (SIDE_WALL_SAFE_FRONT_Z - SIDE_WALL_SAFE_BACK_Z - spotlightClusterSpan) / 2;
+  const full = distributeAcrossWalls(
+    BACK_WALL_CAPACITY + (SIDE_WALL_CAPACITY - 1) * 2,
+    { backZ: -11.78, backScale: MIN_ITEM_SCALE, sideBaseZ: spotlightBaseZ, sideZStep: 2.1, sideScale: MIN_ITEM_SCALE },
+    { left: 10, right: 10 }
+  );
+  return full[full.length - 1];
+}
 
+// EK's ask: the side walls' far (front) end, past the grid's last coded
+// depth (z=3.5), reads as an unfinished dead zone next to the corner —
+// real baked shelf and wall material extend well past it (left_shelf_i /
+// right_shelf_i in generate-gallery-room-models.py run 23.2 units long,
+// centered at z=-3.15 -> out to z=8.45; the wall panels themselves run 26
+// units, out to z=9.8) and nothing else is built out there (the vestibule
+// wall and door rivets all sit within +/-2.35 of x=0, nowhere near
+// x=+/-10.22) — so one more real depth tier fits with room to spare
+// before the wall's own physical end, confirmed against the generator.
+function heroCornerFillSlots(): RoomItemPosition[] {
+  const extraZ = 3.5 + 2.1; // one more step past the grid's last depth, same 2.1 spacing
+  const walls: Array<"left" | "right"> = ["left", "right"];
+  return walls.flatMap((wall) =>
+    SHELF_ROW_Y.map((_, row) => ({
+      x: wall === "left" ? -10.22 : 10.22,
+      y: shelfItemY(row, MIN_ITEM_SCALE),
+      z: extraZ,
+      ry: wall === "left" ? Math.PI / 2 : -Math.PI / 2,
+      scale: MIN_ITEM_SCALE,
+      wall,
+    }))
+  );
+}
+
+function buildVaultWallPositions(layout: RoomLayout, count: number): RoomItemPosition[] {
   const frontSlotCount = Math.min(8, count);
   const mainWallCount = Math.max(0, count - frontSlotCount);
   return [
@@ -1075,9 +1201,14 @@ function buildVaultWallPositions(layout: RoomLayout, count: number): RoomItemPos
 // Full fixed-capacity slot table for a layout: MAX_ROOM_ITEMS wall slots plus
 // the CABINET_SLOT_COUNT display-case slots, always in this order — slot index
 // is a stable identity regardless of layout or how many items are placed.
-function buildPositions(layout: RoomLayout, style: RoomStyle): RoomItemPosition[] {
-  const wallPositions =
-    style === "vault" ? buildVaultWallPositions(layout, MAX_ROOM_ITEMS) : buildWallPositions(layout, MAX_ROOM_ITEMS);
+function buildPositions(layout: RoomLayout, _style: RoomStyle): RoomItemPosition[] {
+  // EK's ask (2026-08-30): "add the items to the door wall on all rooms,
+  // like the Vault" — the front-wall carve-out (frontWallPosition, 8 slots)
+  // used to be gated to `style === "vault"` only; every other style's door
+  // wall never got any item slots at all. Nothing about it is actually
+  // vault-specific (frontWallPosition/FRONT_WALL_ITEM_Z are already shared,
+  // style-agnostic constants), so it's unconditional now for every style.
+  const wallPositions = buildVaultWallPositions(layout, MAX_ROOM_ITEMS);
   const cabinetPositions: RoomItemPosition[] = CABINET_SPOTS.map(([x, z]) => ({
     x,
     // Was 1.98 — the case's own glass cap sits at y=1.85 (base at 0.31,
@@ -1101,7 +1232,22 @@ function buildPositions(layout: RoomLayout, style: RoomStyle): RoomItemPosition[
     wall: "cabinet",
     flat: true,
   }));
-  return [...wallPositions, ...cabinetPositions];
+  // EK's ask (2026-08-30): "you didn't carry over fixes to other rooms" —
+  // heroCornerFillSlots relies only on the side-wall/shelf dimensions,
+  // which generate-gallery-room-models.py bakes identically for every
+  // style (confirmed: left_wall/right_wall/left_shelf_i/right_shelf_i
+  // never branch on `style`), so it's safe for all of them, not just
+  // vault. heroSupportingOverflowSlot patches the ONE slot the front-wall
+  // carve-out (66 requested vs 64 real capacity) leaves short — now that
+  // every style carves out a front wall (see buildPositions above,
+  // 2026-08-30), every style needs this same one-slot patch, not just vault.
+  const mainWallCountForHero = MAX_ROOM_ITEMS - Math.min(8, MAX_ROOM_ITEMS);
+  const heroHasSingleSlotShortfall = mainWallCountForHero - 3 < BACK_WALL_CAPACITY + (SIDE_WALL_CAPACITY - 1) * 2;
+  const heroOverflow =
+    layout === "spotlight"
+      ? [...(heroHasSingleSlotShortfall ? [heroSupportingOverflowSlot()] : []), ...heroCornerFillSlots()]
+      : [];
+  return [...wallPositions, ...cabinetPositions, ...heroOverflow];
 }
 
 // EK's ask (2026-08-23): the builder had no concept of "who's looking" at
@@ -1126,6 +1272,17 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
   const roomGroupRef = useRef<THREE.Group | null>(null);
   const meshesRef = useRef<THREE.Mesh[]>([]);
   const doorwayMeshesRef = useRef<THREE.Mesh[]>([]);
+  // EK's ask (2026-08-30): "it still flashes several times like its
+  // loading." Real cause: the mount effect's own dependency list
+  // includes things that change more than once during a normal room
+  // load (slotItems/slotPositions as saved data arrives, palette,
+  // showValues, isOrganizing) — every change tears the whole scene down
+  // and re-fetches + re-parses the SAME GLB from scratch, each one its
+  // own hide-then-show flash. A ref (survives across re-runs, unlike
+  // effect-local state) caches the fully processed model per URL so
+  // every re-run after the first reuses it instantly instead of
+  // re-fetching, with no gap to flash during.
+  const loadedModelCacheRef = useRef<Map<string, THREE.Group>>(new Map());
   // Rearranging items (or flipping Values/Style/Wallpaper) rebuilds the whole
   // Three.js scene — without this, that rebuild silently reset the camera to the
   // default spawn every time, which is why one drag in Arrange used to throw you
@@ -1164,6 +1321,19 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
   // control doesn't do anything." Now every switch reports what happened.
   const [sourceStatus, setSourceStatus] = useState<{ ok: boolean; message: string } | null>(null);
   const [selectedIds, setSelectedIds] = useState<string[]>(() => fillSlots(DEMO_ITEMS.map((item) => item.id)));
+  // EK's ask (2026-08-30): "it flashes blue, blank, purple no items, purple
+  // with items" — the mount effect below restores state in real stages (the
+  // hardcoded "vault" default, then the localStorage draft's real style/items
+  // synchronously, then the actual cloud vault items async) and the 3D scene
+  // effect rebuilds + reveals itself from scratch on EVERY one of those
+  // changes, each one a real network-and-render cycle long enough to see.
+  // Root cause isn't "reveal too abruptly" (already fixed once) — it's
+  // revealing a legitimately different scene 3-4 times. Fix: don't reveal
+  // (or even start loading a room GLB / building items) at all until this
+  // flips true once, after the mount effect's whole restore sequence
+  // (sync draft + async cloud sync) has actually settled — see its own
+  // comment further down for how/when it flips.
+  const [dataReady, setDataReady] = useState(false);
   const [roomStyle, setRoomStyle] = useState<RoomStyle>("vault");
   const [roomLayout, setRoomLayout] = useState<RoomLayout>("storefront");
   const [viewMode, setViewMode] = useState<ViewMode>("room");
@@ -1257,6 +1427,19 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
     // promise's `.then()` ever gets a chance to run — a saved draft's own
     // layout should win over auto-placing the newly-synced real items.
     let draftAppliedSelectedIds = false;
+    // The 3D scene doesn't reveal anything until `dataReady` flips true (see
+    // its own comment up by useState) — so the room shows once, fully
+    // settled, instead of the vault-default -> draft-style -> synced-items
+    // sequence each visibly rendering in turn. `markDataReady` fires once,
+    // whichever comes first: the real cloud sync settling, or (defensively,
+    // in case that hangs) a 4s timeout — never leave the room blank forever
+    // over one slow/failed request.
+    let dataReadySettled = false;
+    const markDataReady = () => {
+      if (dataReadySettled) return;
+      dataReadySettled = true;
+      setDataReady(true);
+    };
     void syncVaultItemsFromSupabase().then((syncedItems) => {
       if (syncedItems.length === 0) return;
       setItems(syncedItems);
@@ -1267,7 +1450,8 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
       if (vaultItems.length === 0 && !draftAppliedSelectedIds) {
         setSelectedIds(fillSlots(syncedItems.slice(0, 12).map((item) => item.id)));
       }
-    });
+    }).finally(markDataReady);
+    const dataReadyFallback = window.setTimeout(markDataReady, 4000);
 
     try {
       const draft = safeDraft(JSON.parse(window.localStorage.getItem(DRAFT_KEY) || "{}"));
@@ -1310,6 +1494,8 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
     } catch {
       // Ignore malformed local drafts.
     }
+
+    return () => window.clearTimeout(dataReadyFallback);
   }, []);
 
   const slotItems = useMemo(() => {
@@ -1577,9 +1763,38 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
     if (!mount) return;
     const container = mount;
 
+    // EK's ask (2026-08-30): "it flashes blue, blank, purple no items,
+    // purple with items" — each of those was a REAL scene, not a glitch:
+    // this effect faithfully rebuilds from scratch every time roomStyle or
+    // the item list changes, and the mount effect above sets those in
+    // stages (hardcoded "vault" default -> localStorage draft's real
+    // style/items, synchronously -> the actual cloud vault items, async).
+    // Nothing to fix in the rebuild logic itself — the fix is to not run it
+    // at all on the intermediate, not-yet-final states. `dataReady` (set by
+    // that mount effect once its whole restore sequence has settled) gates
+    // this: skip building/loading anything until the data behind it is the
+    // real, final data, so there's one hidden wait then one correct reveal
+    // instead of 3-4 visibly different ones.
+    if (!dataReady) {
+      container.innerHTML = "";
+      container.style.opacity = "0";
+      return;
+    }
+
     container.innerHTML = "";
     meshesRef.current = [];
     doorwayMeshesRef.current = [];
+    // EK's ask (2026-08-30): "why is it every time i open a room, its
+    // blue first and then changes color and design, its very noticable."
+    // Real cause: the fallback shell renders immediately (synchronously,
+    // below) while the real GLB loads in the background, so every style
+    // briefly shows the shell's own colors before the GLB's onLoad swaps
+    // in the real materials. Hiding the container until the model is
+    // ready (or immediately, for styles/hub views with no model to wait
+    // on) trades that visible color-swap for a plain hidden-then-shown
+    // reveal instead.
+    container.style.opacity = "0";
+    container.style.transition = "opacity 0.15s ease-out";
 
     // Item pickup/inspect (EK's ask, 2026-08-22/23) — populated per
     // wall-mounted item below, read from onPointerUp's item-click branch
@@ -1647,6 +1862,10 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
     const fallbackShell = new THREE.Group();
     roomGroup.add(fallbackShell);
     const shellObjects: THREE.Object3D[] = [];
+    // TEMPORARY debug hook (2026-08-28, round 3) - diagnosing "item squares
+    // behind the wall" near the left wall's back corner. Remove once
+    // diagnosed.
+    (window as unknown as { __vltdDebug?: unknown }).__vltdDebug = { scene, roomGroup, fallbackShell, shellObjects, camera };
     function addShell(object: THREE.Object3D) {
       shellObjects.push(object);
       fallbackShell.add(object);
@@ -1740,8 +1959,98 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
       });
     }
 
+    // Hero wall-notch flags: declared here (ahead of applyHeroNotchAndReveal's
+    // use below) rather than down near addBackRowBoard/addSideRowBoard where
+    // it's also read, because the cache-hit path below calls
+    // applyHeroNotchAndReveal SYNCHRONOUSLY — a later `const heroNotch` would
+    // throw "Cannot access before initialization" on any cache hit (the
+    // loader.load callback path is async so it never hit this, which is why
+    // the crash only showed up on repeat loads of the same style).
+    const heroNotch =
+      roomLayout === "spotlight"
+        ? {
+            back: selectedItems.length >= 1,
+            left: selectedItems.length >= 2,
+            right: selectedItems.length >= 3,
+          }
+        : { back: false, left: false, right: false };
+    // Same reason as heroNotch above: also read synchronously inside
+    // applyHeroNotchAndReveal on a cache hit, so it must be declared
+    // before that function's first call, not down near addBackRowBoard.
+    const HERO_NOTCH_HALF = 0.9;
+
     const modelUrl = ROOM_MODEL_URLS[roomStyle];
+    if (inHub || !modelUrl) {
+      // Nothing to wait for (hub view, or "blue"'s hand-coded shell with
+      // no GLB at all) — reveal immediately, no hidden wait needed.
+      container.style.opacity = "1";
+    }
+    // Applies the Hero-layout notched-shelf swap and reveals the room —
+    // shared by both the cache-hit and freshly-loaded paths below, so a
+    // cached model gets this re-applied fresh each time (heroNotch flags
+    // can differ between re-runs) instead of baking a stale notch state
+    // into the cache.
+    function applyHeroNotchAndReveal(model: THREE.Group) {
+      roomGroup.add(model);
+      shellObjects.forEach((object) => {
+        object.visible = false;
+      });
+
+      // EK's ask (2026-08-23): same "custom shelf for the Hero frame"
+      // fix as the shell (addBackRowBoard/addSideRowBoard above) —
+      // Vault/White/Arcade's top shelf board is BAKED into this GLB
+      // as one continuous mesh, so it can't be conditionally built
+      // notched at bake time (the same .glb serves every layout).
+      // Instead: find the baked top-row board by its exported name,
+      // hide it, and add the same notched pair as the shell does —
+      // reusing THIS mesh's own material so the replacement matches
+      // whatever this room style baked (steel/wood/whatever), not a
+      // guessed color.
+      const heroWallNotch: Array<["back" | "left" | "right", boolean]> = [
+        ["back", heroNotch.back],
+        ["left", heroNotch.left],
+        ["right", heroNotch.right],
+      ];
+      heroWallNotch.forEach(([wall, notch]) => {
+        if (!notch) return;
+        const boardName = `${wall}_shelf_0`;
+        const baked = model.getObjectByName(boardName);
+        if (!(baked instanceof THREE.Mesh)) return;
+        baked.visible = false;
+        const material = Array.isArray(baked.material) ? baked.material[0] : baked.material;
+        const y = SHELF_ROW_Y[0];
+        if (wall === "back") {
+          const half = 9.95;
+          const segWidth = half - HERO_NOTCH_HALF;
+          const segA = new THREE.Mesh(new THREE.BoxGeometry(segWidth, 0.1, 0.845), material);
+          segA.position.set(-(HERO_NOTCH_HALF + segWidth / 2), y, -11.6275);
+          roomGroup.add(segA);
+          const segB = new THREE.Mesh(new THREE.BoxGeometry(segWidth, 0.1, 0.845), material);
+          segB.position.set(HERO_NOTCH_HALF + segWidth / 2, y, -11.6275);
+          roomGroup.add(segB);
+        } else {
+          const x = wall === "left" ? -10.1275 : 10.1275;
+          const heroZ = -3.2;
+          const zStart = -3.15 - 11.6;
+          const zEnd = -3.15 + 11.6;
+          const segALen = heroZ - HERO_NOTCH_HALF - zStart;
+          const segBLen = zEnd - (heroZ + HERO_NOTCH_HALF);
+          const segA = new THREE.Mesh(new THREE.BoxGeometry(0.845, 0.1, segALen), material);
+          segA.position.set(x, y, zStart + segALen / 2);
+          roomGroup.add(segA);
+          const segB = new THREE.Mesh(new THREE.BoxGeometry(0.845, 0.1, segBLen), material);
+          segB.position.set(x, y, zEnd - segBLen / 2);
+          roomGroup.add(segB);
+        }
+      });
+      container.style.opacity = "1";
+    }
+
     if (!inHub && modelUrl) {
+      const cachedModel = loadedModelCacheRef.current.get(modelUrl);
+      if (cachedModel) {
+        applyHeroNotchAndReveal(cachedModel.clone(true));
+      } else {
       const loader = new GLTFLoader();
       loader.load(
         modelUrl,
@@ -1797,65 +2106,22 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
               });
             }
           });
-          roomGroup.add(model);
-          shellObjects.forEach((object) => {
-            object.visible = false;
-          });
-
-          // EK's ask (2026-08-23): same "custom shelf for the Hero frame"
-          // fix as the shell (addBackRowBoard/addSideRowBoard above) —
-          // Vault/White/Arcade's top shelf board is BAKED into this GLB
-          // as one continuous mesh, so it can't be conditionally built
-          // notched at bake time (the same .glb serves every layout).
-          // Instead: find the baked top-row board by its exported name,
-          // hide it, and add the same notched pair as the shell does —
-          // reusing THIS mesh's own material so the replacement matches
-          // whatever this room style baked (steel/wood/whatever), not a
-          // guessed color.
-          const heroWallNotch: Array<["back" | "left" | "right", boolean]> = [
-            ["back", heroNotch.back],
-            ["left", heroNotch.left],
-            ["right", heroNotch.right],
-          ];
-          heroWallNotch.forEach(([wall, notch]) => {
-            if (!notch) return;
-            const boardName = `${wall}_shelf_0`;
-            const baked = model.getObjectByName(boardName);
-            if (!(baked instanceof THREE.Mesh)) return;
-            baked.visible = false;
-            const material = Array.isArray(baked.material) ? baked.material[0] : baked.material;
-            const y = SHELF_ROW_Y[0];
-            if (wall === "back") {
-              const half = 9.95;
-              const segWidth = half - HERO_NOTCH_HALF;
-              const segA = new THREE.Mesh(new THREE.BoxGeometry(segWidth, 0.1, 0.845), material);
-              segA.position.set(-(HERO_NOTCH_HALF + segWidth / 2), y, -11.6275);
-              roomGroup.add(segA);
-              const segB = new THREE.Mesh(new THREE.BoxGeometry(segWidth, 0.1, 0.845), material);
-              segB.position.set(HERO_NOTCH_HALF + segWidth / 2, y, -11.6275);
-              roomGroup.add(segB);
-            } else {
-              const x = wall === "left" ? -10.1275 : 10.1275;
-              const heroZ = -3.2;
-              const zStart = -3.15 - 11.6;
-              const zEnd = -3.15 + 11.6;
-              const segALen = heroZ - HERO_NOTCH_HALF - zStart;
-              const segBLen = zEnd - (heroZ + HERO_NOTCH_HALF);
-              const segA = new THREE.Mesh(new THREE.BoxGeometry(0.845, 0.1, segALen), material);
-              segA.position.set(x, y, zStart + segALen / 2);
-              roomGroup.add(segA);
-              const segB = new THREE.Mesh(new THREE.BoxGeometry(0.845, 0.1, segBLen), material);
-              segB.position.set(x, y, zEnd - segBLen / 2);
-              roomGroup.add(segB);
-            }
-          });
+          // Cache a clean (untouched-visibility) clone BEFORE
+          // applyHeroNotchAndReveal mutates this model's own mesh
+          // visibility — future re-runs (same URL) clone this pristine,
+          // already-tinted copy instead of re-fetching the GLB, and get
+          // the notch logic re-applied fresh from current heroNotch flags.
+          loadedModelCacheRef.current.set(modelUrl, model.clone(true));
+          applyHeroNotchAndReveal(model);
         },
         undefined,
         () => {
           if (disposed) return;
+          container.style.opacity = "1";
           fallbackShell.visible = true;
         }
       );
+      }
     }
 
     // Flat matte plaster/paint finish for the gallery walls — the old vault
@@ -1991,61 +2257,82 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
       rearWallShape.holes.push(holePath);
 
       const rearWall = new THREE.Mesh(new THREE.ShapeGeometry(rearWallShape, 48), doorSideMaterial);
-      rearWall.position.set(0, 0, 5.8);
+      rearWall.position.set(0, 0, 5.8 + FRONT_WALL_PUSH_BACK);
       rearWall.rotation.y = Math.PI;
       addShell(rearWall);
 
       // Riveted steel architrave tracing the arch — two posts up the
       // straight sides, a half-ring over the curved top.
+      //
+      // EK's ask (2026-08-30): "you fixed it on White and Arcade but not
+      // on Blue" — the corner-fill item slots (z=5.6, added earlier
+      // tonight, same physical shelf length on every style) sit only 0.1
+      // unit from this arch's old z=5.7, visibly clipping into it. White/
+      // Arcade's real walls moved clear of that zone when their push-back
+      // landed; Blue's shell (its own separate, hand-coded fallback with
+      // no GLB) never got the same treatment. Applying it here closes
+      // that gap AND makes the shell match each style's eventual loaded
+      // GLB position much more closely — directly helps the "blue flash"
+      // read as less of a jump when the real model swaps in.
       const archPostHeight = archStraightHeight;
       const archPostLeft = new THREE.Mesh(
         new THREE.BoxGeometry(0.16, archPostHeight, 0.18),
         doorFrameMaterial
       );
-      archPostLeft.position.set(-archHalfWidth - 0.08, archPostHeight / 2, 5.7);
+      archPostLeft.position.set(-archHalfWidth - 0.08, archPostHeight / 2, 5.7 + FRONT_WALL_PUSH_BACK);
       addShell(archPostLeft);
 
       const archPostRight = new THREE.Mesh(
         new THREE.BoxGeometry(0.16, archPostHeight, 0.18),
         doorFrameMaterial
       );
-      archPostRight.position.set(archHalfWidth + 0.08, archPostHeight / 2, 5.7);
+      archPostRight.position.set(archHalfWidth + 0.08, archPostHeight / 2, 5.7 + FRONT_WALL_PUSH_BACK);
       addShell(archPostRight);
 
       const archTop = new THREE.Mesh(
         new THREE.TorusGeometry(archHalfWidth + 0.08, 0.11, 12, 32, Math.PI),
         doorFrameMaterial
       );
-      archTop.position.set(0, archStraightHeight, 5.7);
+      archTop.position.set(0, archStraightHeight, 5.7 + FRONT_WALL_PUSH_BACK);
       addShell(archTop);
 
       // A heavier riveted hinge column at the right post — this is what the
-      // open door below visually reads as attached to.
-      const hingeColumn = new THREE.Mesh(
-        new THREE.BoxGeometry(0.4, archPostHeight + 0.6, 0.4),
-        doorFrameMaterial
-      );
-      hingeColumn.position.set(archHalfWidth + 0.3, (archPostHeight + 0.6) / 2, 5.72);
-      addShell(hingeColumn);
-      for (let i = 0; i < 6; i += 1) {
-        const rivet = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.045, 0.42, 8), trimMaterial);
-        rivet.rotation.x = Math.PI / 2;
-        rivet.position.set(archHalfWidth + 0.3, 0.4 + i * 0.55, 5.94);
-        addShell(rivet);
+      // open door below visually reads as attached to. Vault-only, same as
+      // the round door itself (see the door-disc block further down) — EK:
+      // "there is still a Gold Post where you removed the door but you
+      // didn't remove the post." This piece exists ONLY to support that
+      // door; with no door on Blue, it's an orphaned post with nothing to
+      // attach to.
+      if (roomStyle === "vault") {
+        const hingeColumn = new THREE.Mesh(
+          new THREE.BoxGeometry(0.4, archPostHeight + 0.6, 0.4),
+          doorFrameMaterial
+        );
+        hingeColumn.position.set(archHalfWidth + 0.3, (archPostHeight + 0.6) / 2, 5.72 + FRONT_WALL_PUSH_BACK);
+        addShell(hingeColumn);
+        for (let i = 0; i < 6; i += 1) {
+          const rivet = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.045, 0.42, 8), trimMaterial);
+          rivet.rotation.x = Math.PI / 2;
+          rivet.position.set(archHalfWidth + 0.3, 0.4 + i * 0.55, 5.94 + FRONT_WALL_PUSH_BACK);
+          addShell(rivet);
+        }
       }
     } else {
+      // Same push-back as the vault/blue arch above and as every GLB-backed
+      // style's own front wall now — keeps this fallback shell close to
+      // whatever the real model will show once it loads.
       const rearWallLeft = new THREE.Mesh(new THREE.PlaneGeometry(8.75, 9.2), doorSideMaterial);
-      rearWallLeft.position.set(-6.13, 4.55, 5.8);
+      rearWallLeft.position.set(-6.13, 4.55, 5.8 + FRONT_WALL_PUSH_BACK);
       rearWallLeft.rotation.y = Math.PI;
       addShell(rearWallLeft);
 
       const rearWallRight = new THREE.Mesh(new THREE.PlaneGeometry(8.75, 9.2), doorSideMaterial);
-      rearWallRight.position.set(6.13, 4.55, 5.8);
+      rearWallRight.position.set(6.13, 4.55, 5.8 + FRONT_WALL_PUSH_BACK);
       rearWallRight.rotation.y = Math.PI;
       addShell(rearWallRight);
 
       const rearWallTop = new THREE.Mesh(new THREE.PlaneGeometry(3.5, 4.25), doorSideMaterial);
-      rearWallTop.position.set(0, 7.08, 5.8);
+      rearWallTop.position.set(0, 7.08, 5.8 + FRONT_WALL_PUSH_BACK);
       rearWallTop.rotation.y = Math.PI;
       addShell(rearWallTop);
 
@@ -2055,15 +2342,15 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
       // doorways are open passages you can see straight through, not
       // blocked-off walls.
       const doorLeft = new THREE.Mesh(new THREE.BoxGeometry(0.16, 4.95, 0.18), doorFrameMaterial);
-      doorLeft.position.set(-1.85, 2.45, 5.64);
+      doorLeft.position.set(-1.85, 2.45, 5.64 + FRONT_WALL_PUSH_BACK);
       addShell(doorLeft);
 
       const doorRight = new THREE.Mesh(new THREE.BoxGeometry(0.16, 4.95, 0.18), doorFrameMaterial);
-      doorRight.position.set(1.85, 2.45, 5.64);
+      doorRight.position.set(1.85, 2.45, 5.64 + FRONT_WALL_PUSH_BACK);
       addShell(doorRight);
 
       const doorHeader = new THREE.Mesh(new THREE.BoxGeometry(3.85, 0.18, 0.18), doorFrameMaterial);
-      doorHeader.position.set(0, 4.92, 5.64);
+      doorHeader.position.set(0, 4.92, 5.64 + FRONT_WALL_PUSH_BACK);
       addShell(doorHeader);
     }
 
@@ -2071,23 +2358,38 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
     // now-open doorway just showed flat scene.background through the gap,
     // which reads as a blank cutout/broken texture rather than a real
     // passage. This is only enough depth to avoid that, not a real room.
+    // EK's ask (2026-08-30): "background colors behind the door are not
+    // Right" — vault was sharing blue's own navy tone (0x0a1420) here,
+    // same "vault || blue" grouping mistake already fixed elsewhere this
+    // session in the other direction (vault's door/hinge post leaking onto
+    // blue). Navy suits blue's own theme; vault's is neutral steel/gray
+    // everywhere else (trim/case materials run 0x15191d-0x9ca3a4, no blue
+    // in them), so its vestibule gets its own dark neutral gray instead.
     const beyondMaterial = new THREE.MeshStandardMaterial({
-      color: inHub ? 0x0a0e14 : roomStyle === "whitebox" ? 0xcfc6ac : (roomStyle === "vault" || roomStyle === "blue") ? 0x0a1420 : 0x0d0a16,
+      color: inHub
+        ? 0x0a0e14
+        : roomStyle === "whitebox"
+          ? 0xcfc6ac
+          : roomStyle === "vault"
+            ? 0x14171a
+            : roomStyle === "blue"
+              ? 0x0a1420
+              : 0x0d0a16,
       roughness: 0.9,
       metalness: 0.02,
     });
     const beyondWall = new THREE.Mesh(new THREE.PlaneGeometry(3.6, 4.8), beyondMaterial);
-    beyondWall.position.set(0, 2.5, 8.6);
+    beyondWall.position.set(0, 2.5, 8.6 + FRONT_WALL_PUSH_BACK);
     beyondWall.rotation.y = Math.PI;
     addShell(beyondWall);
 
     const beyondFloor = new THREE.Mesh(new THREE.PlaneGeometry(3.6, 3), floorMaterial);
     beyondFloor.rotation.x = -Math.PI / 2;
-    beyondFloor.position.set(0, -0.04, 7.2);
+    beyondFloor.position.set(0, -0.04, 7.2 + FRONT_WALL_PUSH_BACK);
     addShell(beyondFloor);
 
     const beyondLight = new THREE.PointLight(palette.glow, 0.5, 6);
-    beyondLight.position.set(0, 3, 7.5);
+    beyondLight.position.set(0, 3, 7.5 + FRONT_WALL_PUSH_BACK);
     roomGroup.add(beyondLight);
 
     // Vault style only: a heavy riveted steel door, fully swung open and
@@ -2097,8 +2399,9 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
     // opening, attached to a thick hinge column, face mostly toward the
     // viewer, nowhere near overlapping the passage). Not part of
     // meshesRef/doorwayMeshesRef, so it can't affect the doorway's
-    // click/raycast behavior (backDoorway, the plain invisible hit-target
-    // plane a bit further down, is unchanged and still covers this arch).
+    // click/raycast behavior (2026-08-30: navigation now hangs off the
+    // sign above the arch, not a plane covering the arch itself — see
+    // buildDoorwaySign's own comment).
     //
     // Two earlier passes both tried to make this door literally hinge/pivot
     // in place — first onto a rectangular opening (never matched, a round
@@ -2111,7 +2414,12 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
     // of computing a rotation, and the placement below is chosen so the
     // disc's footprint (center + radius) never reaches the arch's x<=1.7
     // opening at all.
-    if ((roomStyle === "vault" || roomStyle === "blue")) {
+    // EK's ask (2026-08-30): "why would there be a Vault door on the Blue
+    // room?" — fair question, this heavy riveted disc is themed
+    // specifically for the vault style; Blue is its own distinct
+    // decorative style with no vault theming elsewhere, so it shouldn't
+    // share this one vault-specific prop. Vault-only now.
+    if (roomStyle === "vault") {
       const vaultDoorMaterial = new THREE.MeshStandardMaterial({
         color: 0x8b939a,
         roughness: 0.3,
@@ -2160,32 +2468,43 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
       // the hinge column, well inside the room (not the vestibule) on the
       // same side as the camera — matching the reference. A slight turn
       // (not a full 90°) keeps the riveted face visible rather than edge-on.
-      doorGroup.position.set(archHalfWidth + 0.3 + vaultDoorRadius + 0.35, vaultDoorRadius + 0.15, 5.2);
+      // EK's ask (2026-08-30): "the Vault door and background colors behind
+      // the door are not Right" — this z was still the literal pre-push-back
+      // number (5.2), never updated when FRONT_WALL_PUSH_BACK moved the
+      // arch/hinge column back by 1.5 units, so the door had drifted 1.5
+      // units further into the room than the arch it's supposed to stand
+      // beside — landing on/near the center display pedestal instead.
+      doorGroup.position.set(archHalfWidth + 0.3 + vaultDoorRadius + 0.35, vaultDoorRadius + 0.15, 5.2 + FRONT_WALL_PUSH_BACK);
       doorGroup.rotation.y = 0.3;
       addShell(doorGroup);
     }
 
+    // EK's ask (2026-08-30): "the trim doesn't touch the floor" — real,
+    // measured: the shell's own floor plane sits at y=-0.05, but every
+    // baseboard here was centered at y=0.08 with height 0.18, leaving its
+    // bottom edge at y=-0.01 — 0.04 above the floor. Centered so the
+    // bottom edge lands exactly on the floor (-0.05 + half-height 0.09).
     const backBaseboard = new THREE.Mesh(new THREE.BoxGeometry(20.7, 0.18, 0.12), baseboardMaterial);
-    backBaseboard.position.set(0, 0.08, -11.9);
+    backBaseboard.position.set(0, 0.04, -11.9);
     addShell(backBaseboard);
 
     const leftBaseboard = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.18, 23.4), baseboardMaterial);
-    leftBaseboard.position.set(-10.42, 0.08, -3.05);
+    leftBaseboard.position.set(-10.42, 0.04, -3.05);
     addShell(leftBaseboard);
 
     const rightBaseboard = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.18, 23.4), baseboardMaterial);
-    rightBaseboard.position.set(10.42, 0.08, -3.05);
+    rightBaseboard.position.set(10.42, 0.04, -3.05);
     addShell(rightBaseboard);
 
     // The entrance wall (either side of the doorway) had no baseboard at
     // all, so the door-frame posts appeared to just stop bare at the floor
     // instead of meeting the same trim line as the rest of the room.
     const frontBaseboardLeft = new THREE.Mesh(new THREE.BoxGeometry(8.6, 0.18, 0.12), baseboardMaterial);
-    frontBaseboardLeft.position.set(-6.13, 0.08, 5.7);
+    frontBaseboardLeft.position.set(-6.13, 0.04, 5.7 + FRONT_WALL_PUSH_BACK);
     addShell(frontBaseboardLeft);
 
     const frontBaseboardRight = new THREE.Mesh(new THREE.BoxGeometry(8.6, 0.18, 0.12), baseboardMaterial);
-    frontBaseboardRight.position.set(6.13, 0.08, 5.7);
+    frontBaseboardRight.position.set(6.13, 0.04, 5.7 + FRONT_WALL_PUSH_BACK);
     addShell(frontBaseboardRight);
 
     // EK's ask (2026-08-23): "the shelf design has to be custom for the
@@ -2206,19 +2525,8 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
     // >=2 items; right once there are >=3 — mirrors allHeroSlots' own
     // back/left/right fill order), so Store/Salon and under-filled Hero
     // walls keep the plain unbroken board.
-    const heroNotch =
-      roomLayout === "spotlight"
-        ? {
-            back: selectedItems.length >= 1,
-            left: selectedItems.length >= 2,
-            right: selectedItems.length >= 3,
-          }
-        : { back: false, left: false, right: false };
-    // Half-width of the gap needed to clear Hero's own frame (1.12*1.2 +
-    // 2*0.065*1.2 = 1.5 wide, half 0.75) plus a small margin — reused
-    // as-is for the side walls too, since Hero's frame width becomes the
-    // along-wall (Z) extent there once rotated onto that wall.
-    const HERO_NOTCH_HALF = 0.9;
+    // (heroNotch and HERO_NOTCH_HALF are both declared earlier, before
+    // applyHeroNotchAndReveal, for the same cache-hit-synchronous-call reason.)
 
     function addBackRowBoard(y: number, notch: boolean) {
       if (!notch) {
@@ -2311,13 +2619,24 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
     // wall, and the Grand Hall additionally gets one freestanding archway per
     // populated universe room, each with a sign naming where it leads — so the
     // museum is actually navigated room-to-room instead of only via the flat map.
+    // EK's ask (2026-08-30): "clicking the door takes you to the other
+    // room and its very touchy, can you make it so that you have to click
+    // the sign above the door to move into that room" — navigation used to
+    // hang off a big invisible plane covering the whole door/archway
+    // (backDoorway / hitTarget below), so any click near the doorway fired
+    // it. The sign itself is a small, precise, already-visible target —
+    // moved doorwayTarget onto the sign mesh instead, and the two big door-
+    // shaped hit-planes are gone (nothing else used them). DoubleSide
+    // matches the "either raycast direction hits" fix already proven below
+    // for these same doorway clicks.
     function buildDoorwaySign(
       x: number,
       y: number,
       z: number,
       label: string,
       faceBack: boolean,
-      size: { width: number; height: number } = { width: 2.3, height: 0.58 }
+      size: { width: number; height: number } = { width: 2.3, height: 0.58 },
+      doorwayTarget?: string
     ) {
       const signTexture = drawDoorSignTexture(label);
       const sign = new THREE.Mesh(
@@ -2327,36 +2646,40 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
           emissive: 0x0c0f13,
           emissiveIntensity: 0.35,
           roughness: 0.5,
+          side: THREE.DoubleSide,
         })
       );
       sign.position.set(x, y, z);
       if (faceBack) sign.rotation.y = Math.PI;
       roomGroup.add(sign);
+      if (doorwayTarget) {
+        sign.userData.doorwayTarget = doorwayTarget;
+        doorwayMeshesRef.current.push(sign);
+      }
     }
 
+    // EK's ask (2026-08-29): first tried mounting this sign on the wall's
+    // FAR (vestibule) face — too far back to render from the room's own
+    // camera at all ("still no visible sign"). Reverting to the original
+    // literal 5.9 fixed visibility but left it floating in open air once
+    // the wall moved to 7.3 (EK: "floating again... not on the wall") —
+    // 5.9 was only ever close to the wall by coincidence, back when the
+    // wall itself sat at 5.8. Mounting it on the wall's NEAR face instead,
+    // using the exact same FRONT_WALL_ITEM_Z the item hangers already use
+    // successfully on this same wall, rather than inventing a third
+    // offset. Applies to every style now (2026-08-30: "it doesn't look
+    // like you pushed the wall back on the other ones") — Blue's own
+    // fallback-shell arch got the same push-back applied above, so its
+    // wall sits at the same effective position as every GLB-backed style.
     buildDoorwaySign(
       0,
       (roomStyle === "vault" || roomStyle === "blue") && !inHub ? 5.85 : 5.55,
-      5.9,
+      FRONT_WALL_ITEM_Z,
       inHub ? "Campus Map" : "Main Gallery",
       true,
-      (roomStyle === "vault" || roomStyle === "blue") && !inHub ? { width: 1.65, height: 0.42 } : undefined
+      (roomStyle === "vault" || roomStyle === "blue") && !inHub ? { width: 1.65, height: 0.42 } : undefined,
+      inHub ? "__overview__" : "__hub__"
     );
-    // Two real bugs here, both silently killed every doorway click: (1)
-    // `visible: false` makes the raycaster skip the mesh entirely, not just hide
-    // it — fixed with transparent+opacity:0 instead. (2) this plane is never
-    // rotated, so it keeps PlaneGeometry's default +Z-facing normal — the room
-    // interior approaches it from -Z, hitting its BACK face, which a default
-    // FrontSide material silently ignores for raycasting. DoubleSide fixes that
-    // regardless of which way the plane happens to face.
-    const backDoorway = new THREE.Mesh(
-      new THREE.PlaneGeometry(3.5, 4.9),
-      new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false, side: THREE.DoubleSide })
-    );
-    backDoorway.position.set(0, 2.6, 5.55);
-    backDoorway.userData.doorwayTarget = inHub ? "__overview__" : "__hub__";
-    roomGroup.add(backDoorway);
-    doorwayMeshesRef.current.push(backDoorway);
 
     if (inHub) {
       const wingRooms = universeRooms.filter((room) => room.items.length > 0).slice(0, 6);
@@ -2382,16 +2705,7 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
         archGlow.position.set(x, doorHeight - 0.4, archZ + 0.3);
         roomGroup.add(archGlow);
 
-        buildDoorwaySign(x, doorHeight + 0.5, archZ, room.title, false);
-
-        const hitTarget = new THREE.Mesh(
-          new THREE.PlaneGeometry(doorWidth, doorHeight + 1),
-          new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false, side: THREE.DoubleSide })
-        );
-        hitTarget.position.set(x, (doorHeight + 1) / 2, archZ);
-        hitTarget.userData.doorwayTarget = room.id;
-        roomGroup.add(hitTarget);
-        doorwayMeshesRef.current.push(hitTarget);
+        buildDoorwaySign(x, doorHeight + 0.5, archZ, room.title, false, undefined, room.id);
       });
     }
 
@@ -2437,7 +2751,7 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
 
         const normal = new THREE.Vector3(Math.sin(pos.ry), 0, Math.cos(pos.ry));
 
-        // Real wall planes: back z=-12, front z=5.8, left x=-10.5, right x=10.5. The frame used to
+        // Real wall planes: back z=-12, front z=5.8+FRONT_WALL_PUSH_BACK, left x=-10.5, right x=10.5. The frame used to
         // be a fixed thin box floating ~0.045 behind the card, which left a visible
         // air gap (0.15-0.2 units) between the frame and the actual wall — reading as
         // the item hovering in front of the wall instead of mounted on it. Stretch the
@@ -2450,7 +2764,13 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
             pos.wall === "back"
               ? pos.z + 12
               : pos.wall === "front"
-                ? 5.8 - pos.z
+                ? // Was a bare "5.8 - pos.z" — went negative (clamping
+                  // frameDepth to a useless 0.06) once FRONT_WALL_ITEM_Z
+                  // moved pos.z past the wall's OLD 5.8 reference to fix the
+                  // door-wall items floating bug. Same 5.8 + push-back the
+                  // wall/door geometry itself uses, so this stays correct
+                  // whenever that constant changes again.
+                  5.8 + FRONT_WALL_PUSH_BACK - pos.z
                 : pos.wall === "left"
                   ? pos.x + 10.5
                   : 10.5 - pos.x;
@@ -2462,25 +2782,36 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
 
         // EK's ask (2026-08-22): the frame used to be centered on the same
         // Y as the card, symmetric matting extending equally above AND
-        // below it — but the card only has a fixed 0.05-unit clearance
-        // above the shelf board it rests on (shelfHalfThickness, doesn't
-        // scale with item size), while the frame's matting DOES scale
-        // with item size. At normal item scale that overhang already
-        // exceeds the clearance, so the frame's bottom edge sank into the
-        // shelf board itself — EK caught it live: "the bottom of the
-        // frame is in the shelf." Matting now only extends above and to
-        // the sides; the bottom of the frame is flush with the bottom of
-        // the card (like a framed piece resting directly on the shelf
-        // ledge), so it can't dip into the board regardless of scale.
+        // below it — but the card only had a fixed 0.05-unit clearance
+        // above the shelf board it rests on, while the frame's matting
+        // scales with item size, so at normal scale the frame's bottom
+        // edge sank into the shelf board — EK caught it live: "the bottom
+        // of the frame is in the shelf." The fix at the time removed
+        // bottom matting entirely instead of giving shelfItemY enough
+        // clearance to support it.
+        //
+        // EK's ask (2026-08-30): that half-fix only ever got applied to
+        // "front" wall (door-hanging) items, and shelf items were quietly
+        // left asymmetric — never flagged, and EK caught it again in a
+        // fresh screenshot: "all the frames... were not made the same as
+        // the ones on the wall." Every item now gets real symmetric
+        // matting on all 4 sides; shelfItemY (see its own comment) lifts
+        // shelf-resting items by this same amount so the newly-added
+        // bottom border can't sink into the shelf either.
         const mattingTop = 0.065 * pos.scale;
         const mattingSide = 0.065 * pos.scale;
+        const mattingBottom = mattingTop;
         const frame = new THREE.Mesh(
-          new THREE.BoxGeometry(1.12 * pos.scale + mattingSide * 2, 1.54 * pos.scale + mattingTop, frameDepth),
+          new THREE.BoxGeometry(
+            1.12 * pos.scale + mattingSide * 2,
+            1.54 * pos.scale + mattingTop + mattingBottom,
+            frameDepth
+          ),
           frameMaterial
         );
         frame.position.set(
           pos.x - normal.x * centerOffset,
-          pos.y + mattingTop / 2,
+          pos.y + (mattingTop - mattingBottom) / 2,
           pos.z - normal.z * centerOffset
         );
         frame.rotation.y = pos.ry;
@@ -2591,19 +2922,32 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
     // and didn't need this number to be right.
     const eyeHeight = 3.6;
     const savedCamera = cameraStateRef.current;
-    // A fresh spawn (no saved camera) looks straight down -Z at yaw 0, which
-    // points dead-on at the back shelf wall — it fills the frame edge-to-edge
-    // with flat, unforeshortened shelf rows and leaves almost no floor/ceiling/
-    // side-wall visible, reading as "staring at a wall" instead of "entering a
-    // room." Angling the default view ~25° toward a corner (and tilting down
-    // slightly) shows the back wall AND a side wall together with real depth,
-    // the way a person glancing across a room on arrival actually would.
-    let yaw = savedCamera?.yaw ?? -0.45;
-    let pitch = savedCamera?.pitch ?? -0.08;
+    // EK's ask (2026-08-28), with a direct reference screenshot from
+    // bingebrowse.net: their spawn looks STRAIGHT at the back wall, centered,
+    // level — not angled toward a corner. The old default here deliberately
+    // angled the view ~25° toward a corner (see this block's own prior
+    // history) reasoning that a dead-center view "fills the frame edge-to-
+    // edge with flat shelf rows" — but EK's reference shows exactly that
+    // straight-on framing looking correct and normal, not flat/boring the
+    // way it was assumed to. Reverted to straight ahead (yaw=0) and level
+    // (pitch=0) to match. The corner-angle idea is gone — stop reintroducing
+    // it as a "fix" for staring-at-a-wall complaints; EK's own reference
+    // proves centered/level is the wanted look.
+    //
+    // Z: moved from -2.2 (the room's actual midpoint, never really "near
+    // the door") to 3.8 — just inside the walk clamp's own forward limit
+    // (clampPosition, below), genuinely near the entrance. A same-night
+    // detour moved this again to the click-to-walk zone's center (-1.4)
+    // — REVERTED, see clampPosition's own comment: that tighter zone
+    // itself got reverted after EK tried it live and found it too
+    // cramped, so 3.8 is back too, matching the zone it actually spawns
+    // into again.
+    let yaw = savedCamera?.yaw ?? 0;
+    let pitch = savedCamera?.pitch ?? 0;
     let targetYaw = yaw;
     let targetPitch = pitch;
     const NAV_PITCH_LIMIT = 0.32;
-    const cameraBody = new THREE.Vector3(savedCamera?.x ?? 0, savedCamera?.y ?? eyeHeight, savedCamera?.z ?? -2.2);
+    const cameraBody = new THREE.Vector3(savedCamera?.x ?? 0, savedCamera?.y ?? eyeHeight, savedCamera?.z ?? 3.8);
     const targetCameraBody = cameraBody.clone();
     let isDragging = false;
     let didDrag = false;
@@ -3010,23 +3354,6 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
       // whichever face actually points at the camera.
     }
 
-    // Height is NOT force-reset to eye level here anymore — a focus-click needs to
-    // park the camera at the item's own height (see onPointerUp) for a level,
-    // face-on shot. moveCamera() below restores eye height on foot so walking
-    // around doesn't leave you stuck crouched/floating from an earlier focus.
-    // Walking or scroll-zooming has no collision detection at all — this
-    // clamp is the only thing keeping the camera out of the walls, and it
-    // used to allow getting within ~1.1 units of the shelf-mounted side/back
-    // walls. At that range, looking straight at a wall fills the entire
-    // frame with flat shelf trim and no floor/ceiling around it — which
-    // reads exactly like being "stuck behind a shelf," not just close to
-    // one. Pulled back to a ~3-unit margin so the wall never fills the view.
-    function clampPosition(position: THREE.Vector3) {
-      position.x = Math.max(-7.5, Math.min(7.5, position.x));
-      position.z = Math.max(-9, Math.min(4.72, position.z));
-      return position;
-    }
-
     // EK's ask (2026-08-23), then EK again (2026-08-22 later pass): a
     // ~4-unit margin still wasn't enough — screenshots showed a corner
     // click landing nose-to-wall, no floor or ceiling visible at all
@@ -3040,10 +3367,26 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
     // than chase that exactly (it would make click-to-walk barely move
     // you from a corner click), pulled the destination in hard so it
     // always lands comfortably away from EVERY wall, corner or not — a
-    // generous, room-interior stop, not a minimally-legal one. Zoom
-    // (scroll wheel -> moveCamera, still governed by the looser
-    // clampPosition above) is how you actually get close, same as EK
-    // asked.
+    // generous, room-interior stop, not a minimally-legal one.
+    //
+    // EK's ask (2026-08-28), from the floor-plan reference diagram: "let's
+    // do the Amber walk patch" — unifying WASD/zoom with click-to-walk's
+    // tighter box. REVERTED SAME NIGHT: tried live, EK: "I can't even
+    // scroll back in the door anymore... looked better on paper but not
+    // good in real life." The tighter box cut off real usable floor space
+    // (most of all, the ability to back off toward the door) that WASD/
+    // zoom genuinely needs and click-to-walk doesn't — click-to-walk's own
+    // tight bound exists so a single destination click can't strand you
+    // nose-to-wall (see the comment above), a concern that doesn't apply
+    // to gradual WASD stepping or scroll-zoom at all. Back to two
+    // independent bounds: this one (WASD/zoom) stays the original, looser
+    // room-wide box; clampWalkDestination below keeps its own tighter one.
+    function clampPosition(position: THREE.Vector3) {
+      position.x = Math.max(-7.5, Math.min(7.5, position.x));
+      position.z = Math.max(-9, Math.min(4.72, position.z));
+      return position;
+    }
+
     function clampWalkDestination(position: THREE.Vector3) {
       position.x = Math.max(-3.5, Math.min(3.5, position.x));
       position.z = Math.max(-4.6, Math.min(1.8, position.z));
@@ -3269,29 +3612,17 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
             // old camera-focus behavior (scoped out, not forgotten).
             pickUpItem(itemId);
           }
-        } else {
-          // Click-to-walk floor navigation (EK's ask, matching bingebrowse.net's
-          // "click a shelf area to move" — their own hint text confirms it's a
-          // single click, not a hover-then-confirm, so this reuses the same
-          // didDrag gate every other click here already uses to tell a tap from
-          // a look-drag). No item/doorway was hit, so try the floor: intersect
-          // the click ray against the y=0 plane and clamp it into the walkable
-          // bounds — clampWalkDestination, not clampPosition, so a corner click
-          // can't wedge you within ~2.7 units of two walls at once (see that
-          // function's own comment). The journey is the two-phase walkTween
-          // above (turn to face the destination, then walk) — EK's ask,
-          // 2026-08-23: the walk used to ALSO force a final turn to face
-          // whichever wall was nearest the destination, which read as "it
-          // spins you to a position it thinks you want" right as you land up
-          // close to that wall. Removed — the walk just ends facing the
-          // direction you were walking.
-          const floorHit = new THREE.Vector3();
-          if (raycaster.ray.intersectPlane(floorPlane, floorHit)) {
-            clampWalkDestination(floorHit);
-            floorHit.y = eyeHeight;
-            startWalkTween(floorHit);
-          }
         }
+        // Click-to-walk floor navigation used to live here (any click that
+        // hit neither an item nor a doorway raycast against the floor and
+        // walked you there). EK's ask (2026-08-30): "if i'm just looking
+        // around the room and click something on accident, it just drags
+        // me to that location" — removed entirely; a click that hits
+        // nothing now genuinely does nothing. startWalkTween/
+        // clampWalkDestination/floorPlane are unused now (only this call
+        // site ever used them) but left in place rather than torn out —
+        // this was a request to stop the auto-walk trigger, not to gut
+        // the walk-tween system itself.
       }
       isDragging = false;
     }
@@ -3380,7 +3711,7 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
       renderer.dispose();
       container.innerHTML = "";
     };
-  }, [isOrganizing, palette.floor, palette.glow, palette.trim, palette.wall, roomLayout, roomStyle, showValues, slotDisplayNumber, slotItems, slotPositions, universeRoomsKey, viewMode, wallTextureUrl]);
+  }, [dataReady, isOrganizing, palette.floor, palette.glow, palette.trim, palette.wall, roomLayout, roomStyle, showValues, slotDisplayNumber, slotItems, slotPositions, universeRoomsKey, viewMode, wallTextureUrl]);
 
   function applyGallery(nextGalleryId: string) {
     setGalleryId(nextGalleryId);

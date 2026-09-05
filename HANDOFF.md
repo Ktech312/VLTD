@@ -248,6 +248,804 @@ who owns a screen.** EK is aware of this.
 
 ---
 
+## 🆕 2026-09-02/03, same overnight session, yet later — the click-to-walk
+rewrite above still wasn't it. EK: "when i click a spot in the room and
+move the mouse, to see it better, it take me off in that direction
+instead of basically moving the room... it not function like a human
+would use it. Thats why i keep saying to use that site as reference and
+keep refusing to so it that way." Then, after this session actually went
+and interacted with bingebrowse.net together with EK: "these little
+squares are helpful to know where you can go and look when you hover
+over them" (screenshot, yellow circle around a floor marker). Then, when
+this session asserted the ported drag-look sensitivity "was already
+correct" without re-checking it against the live build: "if you are
+saying it set up this way already, you not correct" — a fair correction;
+that claim was reasoning from the ported CONSTANT matching, not from
+actually testing this build's live behavior. Commits `5e2e4cc` through
+`c6e56c5`.
+
+**Two real, separate findings this round, both from actually going and
+checking rather than reasoning from the reference file alone:**
+
+1. **bingebrowse.net doesn't have click-anywhere navigation — it has
+   fixed, marked waypoints.** Confirmed two ways: EK pointed directly at
+   a floor marker in a screenshot, and this session tested the live site
+   itself (small drags there = pure look-rotation, matching what this
+   build already had; the earlier "took me to a totally different area"
+   result was a drag *release point* landing on one of those markers, not
+   a raycast-anywhere jump). Rebuilt accordingly —
+   `computeCampusWaypoints()` in `campusLayout.ts` (one per room center,
+   one per door bridge) plus visible corner-bracket floor markers in
+   `VltdMuseumCampus.tsx` that brighten and scale up on hover (cursor
+   becomes a pointer too). Click-to-walk now ONLY responds to a waypoint
+   marker — never an arbitrary floor point. WASD/arrows/drag-look/scroll
+   are for free movement in between, unchanged.
+
+2. **Drag-look sensitivity was measurably ~4.4x too fast** — not a vibe,
+   a number. Discovered a real testing-tool gap first: this session's
+   automated drag gesture (`left_click_drag`) never fires real
+   `pointerdown`/`pointerup` on this page — only `pointermove` — so
+   `isDragging` never becomes true and every earlier "I dragged and
+   nothing happened" result this session was the TEST failing to engage
+   the code, not the code being broken. Worked around it with a temporary
+   debug hook (`simulateDrag`) that called the real `onPointerDown`/
+   `onPointerMove`/`onPointerUp` functions directly with realistic
+   incremental deltas, bypassing the broken event simulation entirely.
+   Measured result: a 25px drag (a "slight" mouse move) rotated the view
+   5°; a 300px drag rotated it 60°. Both ~4.4x faster than "drag across
+   the full screen width = rotate through one horizontal field of view" —
+   the natural "grab and pan the room" feel, which is what EK described
+   wanting instead of what was happening. The single room's own
+   `0.0035`/`0.0016` sensitivity, ported exactly in an earlier pass, was
+   simply the wrong number for this build's resolution/FOV regardless of
+   matching the source file. Replaced with `YAW_SENSITIVITY = 0.0008` /
+   `PITCH_SENSITIVITY = 0.00036` (same yaw:pitch ratio as before),
+   calibrated from that 1:1 screen-to-FOV measurement, not a re-guess.
+
+**Lesson for future sessions on this specific page**: don't trust
+`left_click_drag` (or presumably any drag-style gesture) via
+Claude-in-Chrome to actually exercise this component's pointer-event
+handlers — check `pointerdown`/`pointerup` fire counts first (a debug
+hook, same pattern as `simulateDrag` above) before concluding a drag
+interaction does or doesn't work. Plain clicks (press+release, no
+intervening move) DID fire real events reliably all session — this gap
+is specific to the drag gesture, not automated interaction generally.
+
+All temporary debug instrumentation (event counters, `simulateDrag`,
+`getYaw`) removed after use. `tsc`/`eslint`/`npm run build` clean at
+every commit. Live-verified: canvas renders, no console errors, waypoint
+markers deployed and confirmed via chunk-content checks. The measured
+sensitivity fix itself was NOT re-verified with a real human drag after
+shipping (the tooling gap above makes that impossible from this session)
+— this is the one piece that genuinely needs EK's own hands-on test to
+close the loop.
+
+---
+
+## 🆕 2026-09-04 — drag direction flip, WASD removed from copy, floor
+texture + wall trim, and a fix to the testing-tool gap noted above. EK,
+after the waypoint/sensitivity round above: "I don't know what WASD mean
+but whatever it is, i don't like it. Still not working like the other
+site and the room are still nowhere near near the size visually and
+functionally as the First 3D room we built. stop patching this and redo
+what needs to be done... HUG issue, when i click and drag the room to
+look around it moves the room the wrong way." Commit `c637850`.
+
+Three changes:
+1. **Flipped the sign on both `targetYaw` and `targetPitch` in
+   `onPointerMove`** (`+=` instead of `-=`) so drag feels like grabbing
+   and panning the room (content follows the cursor) instead of a
+   standard FPS mouselook (content moves opposite the cursor).
+2. **Removed "WASD/arrows" from the on-screen hint text** — it now reads
+   "Click a marker to walk there · drag to look around · scroll to step".
+   Arrow-key movement itself is UNCHANGED and still works; EK only
+   objected to seeing jargon, not to the keys functioning.
+3. **Added a tiled floor texture (`makeFloorTexture`, canvas-based
+   checkerboard) and gold rail trim strips on every wall**, after
+   comparing the campus directly against the single room's real guest
+   view and concluding the "rooms feel smaller" complaint was about
+   missing material detail, not a further camera-constant mismatch (FOV
+   and wall height were already matched in the prior round).
+
+**Testing-tool gap update — good news this time.** The prior entry above
+warned that `left_click_drag` via Claude-in-Chrome doesn't fire real
+`pointerdown`/`pointerup` on this page. This round found a reliable
+workaround that needs no debug hook and no code changes: dispatch real
+`PointerEvent`/`KeyboardEvent` objects directly via
+`javascript_tool`/`element.dispatchEvent(...)`, e.g.:
+```js
+const canvas = document.querySelector('canvas');
+const rect = canvas.getBoundingClientRect();
+const cx = rect.left + rect.width/2, cy = rect.top + rect.height/2;
+canvas.dispatchEvent(new PointerEvent('pointerdown', {clientX: cx, clientY: cy, bubbles:true, cancelable:true, pointerId:1, pointerType:'mouse'}));
+window.dispatchEvent(new PointerEvent('pointermove', {clientX: cx+150, clientY: cy, bubbles:true, cancelable:true, pointerId:1, pointerType:'mouse'}));
+window.dispatchEvent(new PointerEvent('pointerup', {clientX: cx+150, clientY: cy, bubbles:true, cancelable:true, pointerId:1, pointerType:'mouse'}));
+```
+This DOES reach the real `addEventListener`-based handlers (unlike the
+`computer` tool's OS-level `left_click_drag` action) and was used to
+empirically confirm the drag-direction fix live, on the deployed build —
+before/after screenshots showed a rightward drag shifts room content
+right on screen (grab-and-pan), and a downward drag shifts content down,
+both matching what EK asked for. **Also found:** the Claude-in-Chrome tab
+runs with `document.hidden === true` (fully backgrounded) whenever it's
+not the fronted tab, which fully pauses `requestAnimationFrame` — so
+anything relying on per-frame accumulation (WASD walking, the
+click-to-walk tween) will NOT progress during a real-time `setTimeout`
+wait, only during the brief forced repaint a `computer:screenshot` call
+triggers. Workaround: dispatch the `keydown` and leave it held (no
+`keyup`), then take several `computer:screenshot` calls back-to-back —
+each forces a repaint/frame and the movement visibly accumulates across
+them — then dispatch `keyup` once satisfied. A plain real-time wait
+between dispatching keydown and keyup does nothing useful on this page.
+
+Live-verified this round: deploy confirmed live (hint text has no WASD
+mention), floor tile texture and gold wall trim both visible in-scene
+(the trim reads faint against the gold Hub walls specifically, since both
+are close in hue — worth a look at higher contrast in a non-Hub room if
+EK still feels it's not "reading" enough), no console errors, drag
+direction empirically fixed on both axes as described above. Arrow-key
+walking confirmed still functional (just not advertised in copy).
+
+---
+
+## 🆕 2026-09-02, same overnight session, yet later — the FOV/scale fix
+above wasn't enough. EK, second round, stronger: "when i click on
+something it still does this 'jerking' to a different direction and then
+where i think i want to go, i really hate this on the other pager also, i
+tried to get you to remove it." Plus scroll-to-zoom still missing, "its
+still taking my into room backwards," and "i slight move the mouse and
+moves to the other side of the room... you still do not have the EXACT
+control." Commit `1b420a4`.
+
+Re-read this file's own 2026-08-23ish history (search "Click-to-walk
+forced a final turn") — EK had ALREADY told a prior session the 2-phase
+turn-then-travel (no 3rd phase) "work[ed] well" in the single room. So
+porting that same 2-phase version into the campus wasn't wrong per se —
+it broke because of SCALE, not because the mechanic itself was ever
+disliked: the single room is small, so click-to-walk destinations are
+always close and the auto-turn is always small. The campus is much
+bigger — a click anywhere near the horizon raycasts a floor point that
+can be many rooms away, turning what should be "walk over there" into a
+huge spin plus a long teleport in one click. That combination is exactly
+"jerking," "backwards," and "the other side of the room" — three
+different-sounding complaints from ONE underlying cause.
+
+Fix, not another tuning pass: click-to-walk no longer rotates the camera
+at all — position glides to the destination in a straight line, view
+stays exactly wherever the player left it (no turn phase, no phases,
+`WalkTween` is now just `{fromPos, toPos, t, duration}`). Also added a
+hard cap, `MAX_CLICK_WALK_DISTANCE = 20` (roughly one room's width) — a
+click past that range is just ignored, same as clicking a wall. Also
+added the reference's scroll-wheel forward/back nudge (`onWheel`,
+0.42 units/notch), which was never ported at all in the first pass — a
+plain miss, not a bug.
+
+Build/typecheck/lint clean. **Not independently live-tested this round**
+— given how much back-and-forth this specific mechanic has already cost,
+did not spend more time on speculative Claude-in-Chrome verification of
+something that fundamentally needs EK's own hands-on feel-test to judge.
+If this still isn't right, the next debugging step should probably be EK
+describing (or screen-recording) ONE specific click, not another general
+"still feels off," so the exact raycast/destination can be checked
+directly rather than guessed at a third time.
+
+---
+
+## 🆕 2026-09-02, same overnight session, still later — EK tried the
+click-to-walk/arrow-key fix above and pushed back again, harder: "it feel
+every strange still... The rooms are not the same size by vision, even if
+they are the same by your dimensions... feel smaller than our original
+room. When i go from room to room, it spin me around and make me go
+backwards... it moves so quick that i cant control it, this does not
+function like the first 3d room we made. You are supposed to carry over
+all the rules we made from the first room we made to all of these rooms,
+otherwise that was 4 wasted days building one room." Commits `0065f9d`,
+`66266fe`, `6a0e871`.
+
+That last line is the important one: the prior fix ported the *movement
+algorithm* correctly but still left the campus's *camera/scale constants*
+as guesses instead of exact copies of the single room's own values. Found
+and fixed three real mismatches by re-reading `VirtualGalleryRoom.tsx`'s
+actual camera setup instead of assuming:
+
+1. **Camera FOV was 72° (a guess) vs the single room's real 47°** — by
+   far the biggest cause of "rooms feel smaller" (wide-angle distortion:
+   identically-dimensioned rooms look and feel further away/smaller
+   through a wider lens) and of drag-look "moving too quick" (the same
+   sensitivity constant reads faster through a wider FOV). Live
+   screenshot before/after this fix shows a dramatic difference — the
+   facade now fills the frame at the right scale instead of reading
+   small and distant.
+2. **`WALL_HEIGHT` was 8 (a guess) vs the single room's real ceiling
+   height of 9.15** (see that file's own `ceiling.position.set(0, 9.15,
+   ...)`).
+3. **Pitch clamp was deliberately widened to 0.7** "because the campus
+   has tall architecture" — reverted to the single room's exact 0.32.
+   EK's ask makes clear that kind of campus-specific deviation, even a
+   well-reasoned one, isn't wanted — match first, ask before diverging.
+
+Also found and fixed a real bug behind "it spin me around and make me go
+backwards": interrupting an in-progress click-to-walk tween with a WASD
+key only cleared the tween object itself, not its pending
+`targetYaw`/`targetPitch`. The smoothed look-lerp kept chasing that stale
+target (the click destination's facing) for several frames after the key
+press, fighting the player's own WASD input — reads exactly as an
+unwanted spin, worse in the campus than the single room simply because
+campus click-to-walk destinations are farther away and involve bigger
+turns to interrupt mid-way. Now resets both to the current yaw/pitch the
+moment a movement key interrupts a tween.
+
+**Live-verified**, same session: a temporary debug hook confirmed
+`camera.fov === 47`, `WALL_HEIGHT === 9.15`, `PITCH_LIMIT === 0.32` on
+the deployed page (a static content-search of the page's script tags
+could NOT find these — this route's client chunk loads dynamically, not
+via a static `<script src>` tag in the initial HTML, so that verification
+technique used earlier tonight doesn't work for this specific file;
+noting this for next time rather than re-discovering it). Debug hook
+removed after confirming. The spin-fix itself is a code-level correction
+verified by re-reading the logic, not separately live-tested (same
+rAF-throttled-background-tab limitation noted in every entry above).
+
+**Not yet addressed, EK's complaint not fully resolved:** "it is not like
+that site i showed you with the grid layout and the Zoom in to areas" —
+unclear whether this describes bingebrowse.net's departmental section
+labels (a style/organization comparison) or an actual request for a
+different navigation paradigm (discrete zone-to-zone jumps instead of
+continuous click-anywhere-on-floor walking). Did not guess at a rebuild
+of the whole navigation model without asking first — flag this specific
+point to EK before touching it further.
+
+---
+
+## 🆕 2026-09-02, same overnight session, later — EK tried the walkthrough
+live and pushed back hard on movement: "why are we using arrows to move,
+it wove way to quickly also, looking left and right, i need to be able to
+click thought it and move that way, just like th original, the arrows on
+my keyboard should be functional also." Sent a bingebrowse.net URL and
+said "You have access to this site on windows tab" — an explicit
+instruction to go check the reference live rather than guess. Commits
+`0771279`, `5453526`, `31d1a64`.
+
+What was wrong: the on-screen touch D-pad (added earlier this session for
+mobile) was showing on EK's own desktop — its `ontouchstart`/
+`maxTouchPoints` feature-detect was true there too, not a mobile-only
+signal like assumed. Arrow keys strafed (same as A/D) instead of turning
+the view. There was no click-to-walk at all — the campus never had it,
+unlike the single room which had it built, then EK asked to have it
+REMOVED (2026-08-30 entry, this same file) after accidental clicks while
+just looking around dragged the camera somewhere unwanted.
+
+Fix: didn't reinvent movement from scratch. `VirtualGalleryRoom.tsx`
+already has this exact system, researched directly from bingebrowse.net's
+live bundle in an earlier session (see that file's own extensive comments
+citing exact constants) and live-tested by EK before the click-to-walk
+removal — ported it into `VltdMuseumCampus.tsx` almost verbatim:
+
+- **Click-to-walk restored**, campus-only (the single room still has it
+  removed, unchanged): a click (not a drag — 6px threshold) raycasts onto
+  the floor plane; a hit outside any walkable area is silently ignored,
+  never clamped to "nearest safe point." A valid hit starts a two-phase
+  tween (turn to face the destination, then travel in a straight line) —
+  turn rate ~2.2 rad/sec (clamped 0.18-1.25s), travel ~4.8 units/sec
+  (clamped 0.34-1.65s), same constants as the single room.
+- **WASD is real velocity movement now** (2.55 units/sec, Shift for
+  1.73), replacing the old flat `SPEED=15` instant-teleport-per-frame
+  that read as "way too quick."
+- **Arrow keys fixed**: Up/Down walk forward/back (same as W/S), Left/
+  Right now TURN the view (rotate yaw) instead of strafing — matches the
+  single room exactly. This was the literal complaint ("looking left and
+  right").
+- **Drag-to-look is smoothed** (lerp toward a target yaw/pitch each
+  frame) instead of writing rotation straight from the pointer delta.
+- **On-screen touch D-pad removed entirely.** The single room's own guest
+  view deliberately has no such pad either (see that file: "click-to-walk
+  + drag-look are the only navigation, matching the reference site's own
+  guest-facing experience") — a tap IS click-to-walk, so mobile is
+  already covered without one.
+
+**Live-verified**, same session, via Claude-in-Chrome: a temporary debug
+hook confirmed `isWalkable` correctly approves a real floor point and
+`startWalkTween` computes the exact expected tween (journey duration,
+turn/travel split, from/to positions) — matched the ported formula
+bit-for-bit. Real click-driven movement in the browser couldn't be
+watched frame-by-frame (same rAF-throttling-on-a-background-tab
+limitation as earlier tonight), but the algorithm itself is a verified
+match against already-live-tested code, not new/guessed logic. Debug hook
+removed after confirming.
+
+---
+
+## 🆕 2026-09-02, same overnight session continued — EK answered the open
+questions from the previous entry (asked "what are the questions?", then
+gave direct answers), all pushed to main, all live-verified via
+Claude-in-Chrome:
+
+1. **Build Spotlight and Store rooms now — yes.** New wings flanking the
+   Hub's entrance (not in the original blueprint): `SPOTLIGHT` (west) and
+   `STORE` (east), each with its own door into the Hub. The Hub's entrance
+   also now opens onto a real walkable `PLAZA` room instead of a void —
+   see the exterior entry below. Commit `70435f3`.
+2. **Admin control over Spotlight/Store options — yes, EK: "I need to
+   control this."** New `/admin/museum-campus` page (same shape as the
+   existing `/admin/spotlights` page — see §0 rule about not duplicating
+   existing admin infra; this is a NEW, differently-scoped table, not a
+   reuse of the pre-existing `spotlights` table, which is a general
+   site-wide featured-profile carousel, not museum-room content). Wired
+   into the admin shell sidebar. Controls: Spotlight programs (title,
+   description, active toggle), Store items (name, price, image, link,
+   enabled toggle), and items-per-room. Commit `0e573f6`.
+
+   **⚠ NEEDS EK TO RUN A MIGRATION** — `supabase/migrations/
+   20260902_museum_campus_config.sql` creates 3 tables
+   (`museum_campus_config`, `museum_spotlight_programs`,
+   `museum_store_items`). Until run, the admin page shows a clear
+   "run this migration" notice, and the campus Spotlight/Store rooms show
+   a "managed from Admin Tools" placeholder plaque — nothing errors, it
+   just has no real content yet. Full SQL was pasted inline in chat per
+   the usual process.
+3. **Item-count-per-room control — yes, EK: "that will also need control
+   from somewhere."** Same migration/admin page — `items_per_room` in
+   `museum_campus_config`, read via `getItemsPerRoom()` in
+   `museumCampusConfig.ts`, replacing the old hardcoded `.slice(0, 8)`.
+   Defaults to 8 if the table doesn't exist yet.
+4. **Exterior facade + Grand Hall — yes, "some visual fun."** EK sent 6
+   reference photos (Art Institute of Chicago + Field Museum exteriors and
+   interiors) with an explicit instruction not to copy those two specific
+   real museums — read as: take the STYLE (classical columns, pediment,
+   stone steps, skylight, floor medallion), not the specific identifying
+   landmarks (no bronze lions, no literal replicas). Built: 6 columns +
+   capitals flanking the entrance, a triangular pediment (real 3D geometry
+   via `THREE.ExtrudeGeometry`, not a flat image), 3 shallow entrance
+   steps (purely decorative — the camera's Y never changes, so no
+   collision needed), a lit "skylight" ceiling accent in the Hub, and a
+   canvas-textured floor medallion. The walkthrough now SPAWNS in the new
+   plaza facing the facade instead of already inside the Hub, so this is
+   the first thing seen. Commit `27eada9`. **Live-verified**: screenshot
+   confirms the facade renders correctly from the spawn point and from a
+   look-up angle at the pediment; no console errors.
+5. **Shelves near doors in size-matched rooms — yes, "start... plenty to
+   review in the morning."** The two groups of rooms sharing identical
+   footprints (five at 20.4×16.8: POP_CULTURE/TCG/COLLECTION/SPORTS/
+   CARDS; two at 42.8×16.8: BUILT_BOTANY/GAMES) each get a pair of
+   wall-mounted shelves just inside their Hub-facing doorway. First pass
+   only — plain shelf + a placeholder sphere, not real vault items on the
+   shelves yet, matching EK's own "this will need work" expectation.
+   Commit `3133642`.
+
+Two questions from the previous entry were NOT answered and stay open:
+whether "highest item count" is the right rule for Collection/Cards
+(§ below still applies), and the fixed-vs-dynamic floor plan question.
+Don't assume an answer to either — ask before building on them.
+
+Build- and typecheck-clean at every commit above (`tsc --noEmit`,
+`eslint`, `next build` all pass before each push, per §0 rules). Each
+stage was deployed and checked live individually, not batched — if
+something here looks wrong, `git log` on `campusLayout.ts` and
+`VltdMuseumCampus.tsx` to find which specific commit to look at first.
+
+---
+
+## 🆕 2026-08-31/09-01 overnight — VLTD Museum public campus, first
+functional pass. EK: "this is a good overnight task... Start to build this
+as a functional walk through, how much can you start to do on your own?"
+This is the SEPARATE public-campus project (top collectors/items across
+categories, a possible Store tie-in — see [[vltd-public-museum-vision]]),
+explicitly NOT the personal exhibition rooms above. Planning already existed
+as the "Museum Campus Blueprint" Claude artifact (real 10-room, 18-door
+floor plan, measured off the live campus Map view and anchored to the one
+already-built exhibition room's real size). Tonight's build turns that
+blueprint into an actual walkable Three.js space — new files, nothing in
+the existing single-room builder (`VirtualGalleryRoom.tsx`) was touched:
+
+- **`src/lib/campusLayout.ts`** — the 10 rooms + 18 doors as real world
+  coordinates, converted 1:1 from the blueprint's own SVG numbers (SVG x ->
+  world X, SVG y -> world Z, same ×1.3268 anchor-to-the-built-room scale
+  factor the blueprint uses). Also derives wall segments (each room's 4
+  walls, split around whichever doors touch that wall) and door-threshold
+  floor bridges (the ~1.1-2 unit real gap between adjacent room rects,
+  since they don't literally touch) purely from that data — no per-room
+  special-casing.
+- **`src/components/gallery/VltdMuseumCampus.tsx`** — a viewer (not a
+  builder: no drag/drop, no wallpaper picker, no draft persistence).
+  WASD + click-drag-look movement, slide collision against the walkable
+  areas (room interiors + door bridges) computed from campusLayout. Each
+  category room is populated with the SIGNED-IN USER'S OWN real vault items
+  (`loadItems()`, grouped by real universe) hung on the north wall — real
+  data per the "no fake data" rule, but a **placeholder content source**:
+  there's no cross-user "top collectors/items" feed yet, so for now you
+  just see your own vault reflected back at you in each room.
+- **`src/app/museum/vltd/page.tsx`** — new route, inherits the existing
+  `museum/layout.tsx` auth gate, nothing new needed there.
+- **Exhibitions page pill row** (`src/app/museum/page.tsx`): the old
+  single "3D Museum" beta button is now two — **"3D Gallery"** (unchanged
+  behavior, just renamed, still routes to `/museum/virtual-room`) and a new
+  **"VLTD Museum"** pill that routes straight to `/museum/vltd`. No beta
+  gate on the new button — there's nothing to protect access to yet, it's
+  a first pass, not a finished feature. (EK asked for this button pair
+  separately, before the "start building it" request — see the
+  2026-08-31 entry immediately below this one... actually same commit
+  range, both landed same session.)
+
+**Update, same overnight session, commit `3a08eb7`:** the Collection/Cards
+guess above is fixed — `assignSwingRoomUniverses()` in `campusLayout.ts`
+now picks Collection/Cards' content from the signed-in user's own real item
+counts (highest of JEWELRY_APPAREL/MUSIC/ART gets Collection, second gets
+Cards, leftover folds into misc) instead of a hardcoded guess. For a
+zero-item account it falls back to the same JEWELRY_APPAREL/MUSIC/ART order
+as before (deterministic, not random), so nothing regresses for an empty
+vault. Live-verified: no console errors, canvas renders correctly, same
+Hub view as before. Still NOT a confirmed product decision — still a
+placeholder in the sense that "highest item count" may not be the right
+rule for a real public museum (that's a curation question, not just a data
+one) — just no longer an arbitrary hardcode.
+
+**Still-open placeholders / NOT decided by EK, flag before treating as
+final:**
+- No Spotlight room, no Store room, no cross-user data — all explicitly
+  deferred per [[vltd-public-museum-vision]], same as the blueprint itself.
+- No exterior/entrance experience — the Hub's north-wall entrance gap is
+  cut into the geometry (matches the blueprint) but there's no "outside" to
+  walk in from; the walkthrough just spawns just inside the Hub.
+- Per-wall item layout is simple (evenly spaced flat frames on one wall per
+  room, no shelves/pedestals/cabinets like the real single-room builder) —
+  intentionally minimal so tonight's scope stayed geometry + navigation,
+  not a second full room-decorating engine.
+- No mobile/touch controls — WASD + mouse-drag has no touch equivalent, not
+  tested on a small viewport. The rest of the site supports mobile; this
+  page likely doesn't yet.
+
+Build- and typecheck-clean (`tsc --noEmit`, `eslint`, `next build` all pass).
+
+**Live-verified, same session, via Claude-in-Chrome on the deployed page —
+2 real bugs found and fixed in the process, not just a smoke test:**
+
+1. **Blank canvas (fixed, commit `b3d8a9c`):** `mount.clientHeight` read 0 —
+   `fixed inset-0` + Tailwind `h-full` silently collapsed to a 0-height box
+   (a transformed ancestor breaks fixed-position sizing; no console error).
+   Camera/renderer now size off `window.innerWidth/innerHeight` instead.
+2. **Camera stuck at every doorway (fixed, commit `88ba8a3`):** found via a
+   manual movement simulation run through the console (real WASD input
+   couldn't be tested reliably in this environment — the automated tab
+   reports `document.hidden = true`, which throttles `requestAnimationFrame`
+   almost to zero; replaying the exact same movement/collision math
+   directly proved the actual bug instead). Each room's walkable rect is
+   inset by `WALKABLE_MARGIN` (0.9) on all sides, but door bridges stopped
+   exactly at the rooms' true (un-inset) edges — leaving a ~0.9-unit dead
+   strip at every doorway where neither counted as walkable. Bridges now
+   extend past each room's true edge by the same margin so they overlap.
+
+**Confirmed working after both fixes**, via a faithful replay of the real
+`tick()` movement/collision code (not a shortcut — same math, same
+`isWalkable`, same walkable-areas data) plus screenshots:
+- Camera walks across the full Hub and correctly stops at solid walls
+  (tested against SPORTS's east wall, no door there — stopped within 0.07
+  units of the expected wall-inset boundary).
+- Camera crosses cleanly through a doorway from the Hub into SPORTS (the
+  exact case bug #2 broke) and the room label updates correctly to "SPORTS".
+- Real vault items render on room walls with textures loaded — SPORTS's
+  north wall showed 2 real cards (matching the "2 items" count), one
+  visibly a real Panini Select basketball rookie card from the signed-in
+  account's own vault. Confirms the "no fake data" rule is actually being
+  met, not just claimed.
+- Drag-look rotates the camera correctly (confirmed via screenshot, real
+  pointer drag).
+
+**Not independently confirmed:** real keyboard-driven WASD input specifically
+(as opposed to the underlying movement code, which IS confirmed) — the test
+environment's rAF throttling made this unreliable to observe directly. The
+movement code path real WASD calls is byte-for-byte the same path the
+manual replay exercised, so this should work, but if EK notices otherwise,
+start here.
+
+A TEMPORARY `window.__vltdCampusDebug` hook (camera/keys/walkable/isWalkable/
+pose) was added mid-session to do this diagnosis, then removed once both
+bugs were confirmed fixed (commit after `88ba8a3` — check `git log` on
+`VltdMuseumCampus.tsx` if a debug hook is needed again).
+
+---
+
+## ✅ 2026-08-30, next request same session — two real Vault door bugs EK
+caught live (screenshot with the door X'd out and the arch circled), both
+fixed and verified, commits `fd9adb5` and `7681896`. Salon's left-wall item
+spacing ("a bit mixed up... make sure the walls match Store") from the same
+message is a THIRD, separate item — not fixed yet, see the open question
+below before touching it.
+
+**Door disc floating near the center pedestal:** `doorGroup.position.set(...)`
+still used the literal pre-`FRONT_WALL_PUSH_BACK` z (5.2) — never updated
+when that constant pushed the arch/hinge column back by 1.5 units earlier
+this session. The door had drifted 1.5 units further into the room than the
+arch it's supposed to stand beside, landing on/near the center display
+pedestal instead. Fixed: `5.2 + FRONT_WALL_PUSH_BACK`. **Verified live** via
+`window.__vltdDebug` scene traversal: door group now at z=6.7 (was 5.2),
+consistent with the arch/hinge column's own 5.7-5.72 + 1.5 push-back.
+
+**Vestibule background color wrong for Vault:** the dark fill visible
+through the door archway was `0x0a1420` — Blue's own navy tone, shared via
+a `roomStyle === "vault" || "blue"` grouping. Fits Blue's navy theme, clashes
+with Vault's neutral steel/gray palette (every other Vault material is gray,
+0x15191d-0x9ca3a4, no blue in it) — same style-sharing mistake already fixed
+elsewhere this session in the OTHER direction (vault's door disc/hinge post
+leaking onto Blue, 2026-08-30 entry above). Gave Vault its own dark neutral
+gray, `0x14171a`; Blue keeps `0x0a1420`. **Verified live**: vestibule plane's
+material color reads `#14171a` now.
+
+**Follow-up, resolved same session, commit `d93bded`:** EK pushed back on
+the "deliberate design choice" framing — "this was before we made all the
+changes, we can leave it tighter but most the walls look empty and have to
+be fillable in the smaller tighter format." Root cause: `wallGridPosition`
+fills a wall's 3 shelf rows at one depth before ever advancing to the next
+depth (`row = slot % 3, depth = floor(slot / 3)`) — with a real collection's
+modest item count, Salon's old 1.5-step CENTERED cluster barely moved off
+the wall's middle before running out of items, leaving most of the wall's
+length bare on both sides. Store's own much wider step (~2.567, spanning the
+full safe range) doesn't hit this because the same handful of occupied
+depths already reaches meaningfully across the wall. Fix (deliberately NOT
+a capacity/distribution-algorithm change — this area has caused the most
+session pain by far, see the Hero-overflow saga below; kept to pure
+geometry): Salon's side-wall step raised 1.5 -> 2.0 (still visibly tighter
+than Store, not widened to match it) and its start point changed from
+centered to flush at `SIDE_WALL_SAFE_BACK_Z` — the same corner Store's own
+run starts from. **Verified live**: Vault+Salon's left wall, 7 real items,
+now spans z=-10.5 to z=1.5 (12 of the wall's ~15.4-unit safe range, reaching
+most of the way to the front) instead of a ~3-unit span centered in the
+middle — screenshot confirms items visibly spread end-to-end, matching
+Store's own coverage while staying a noticeably tighter cluster than Store.
+
+---
+
+## ✅ 2026-08-30, next request same session — removed click-to-walk floor
+navigation, commit `7b765db`. EK: "if i'm just looking around the room and
+click something on accident, it just drags me to that location." A click
+that hit neither an item nor a doorway sign used to raycast against the
+floor plane and auto-walk the camera to wherever it landed — removed that
+trigger entirely; a stray click now does nothing. `startWalkTween`/
+`clampWalkDestination`/`floorPlane` are unused now (their only caller was
+this trigger) but deliberately left in the file rather than torn out — this
+was a request to stop the auto-walk behavior, not to gut the walk-tween
+system; ESLint flags them as unused, that's expected and fine. **Verified
+live** via `window.__vltdDebug.camera.position` read before and after
+clicking an empty floor spot: identical `[0, 3.6, 3.8]` both times.
+
+---
+
+## ✅ 2026-08-30, next request same session — door-wall items on every style
+(not just Vault), and doorway navigation now requires clicking the sign,
+commit `2836ea6`.
+
+**Door-wall items:** `buildPositions` (the fixed-capacity slot table builder)
+only called `buildVaultWallPositions` — the version with the 8-slot front/
+door-wall carve-out — for `style === "vault"`. Every other style's door wall
+had zero item slots, ever, even though the door wall physically exists with
+plenty of flat wall space in every style's GLB (EK's screenshot: an Arcade-
+style room with the whole door wall bare, red-circled). Nothing about the
+carve-out is actually vault-specific (`frontWallPosition`/`FRONT_WALL_ITEM_Z`
+are already shared, style-agnostic), so made it unconditional for all styles.
+Also updated `mainWallCountForHero` (the Hero/spotlight capacity math a few
+lines below, which explicitly assumed "non-vault styles never carve out a
+front wall" in its own comment) to use the same math for every style now —
+left uncorrected, Hero layout would have been quietly wrong on non-vault
+styles. **Verified live:** switched to Arcade, rotated the camera to the
+door wall, screenshotted — items now mounted there exactly like Vault's.
+
+**Sign-only doorway navigation:** clicking anywhere near a doorway used to
+navigate — the click target was a big invisible plane covering the whole
+door/archway opening (`backDoorway`, 3.5×4.9 units, at the main entrance;
+`hitTarget`, 2.05×4.3, per hub archway), not just the door itself. EK: "its
+very touchy, can you make it so that you have to click the sign above the
+door." Moved `doorwayTarget` onto the sign mesh `buildDoorwaySign` already
+creates (now takes an optional target param and registers itself in
+`doorwayMeshesRef`), and deleted both big hit-planes entirely — nothing else
+used them. **Verified live** by traversing the live scene graph
+(`window.__vltdDebug`) for every object carrying `userData.doorwayTarget`:
+exactly ONE result, a 2.3×0.58 plane with a real texture map (the sign
+itself, not an invisible hit-box) — confirms the old door-sized planes are
+gone and only the sign is clickable now. Did not additionally confirm with a
+literal mouse click through the camera's orbit controls (fighting the drag-
+to-orbit gesture programmatically wasn't reliable) — if EK finds the sign
+itself unclickable (too small a target, or occluded), that's a distinct
+follow-up, not a sign this fix didn't take effect.
+
+---
+
+## ✅ 2026-08-30, later still same session — actual root cause of the "flashes
+several times" report found and fixed, commit `5215a50`. EK's own description
+of the flash sequence ("flashes, blue, blank, purple with no items and the
+purple with items") was the key: 4 distinct, describable visual states, not
+random flicker — meaning 3-4 REAL full scene rebuilds, not a rendering glitch.
+
+**Root cause:** the mount effect (`useEffect(() => {...}, [])` around line
+1387) restores state in real stages: `roomStyle` starts hardcoded `"vault"`,
+then a synchronous `localStorage` draft read sets the real saved
+style/items, then an async `syncVaultItemsFromSupabase()` call later
+replaces items again with the real cloud vault. Every one of those `setState`
+calls is a dependency of the giant scene-building effect two lines below in
+this same file's structure — so that effect fully tears down and rebuilds
+the ENTIRE Three.js scene (including a fresh room GLB fetch if the style
+changed) on EACH stage: vault-default (blue-tinted fallback shell colors,
+see `roomStyle === "vault" || "blue"` throughout) → real style, no items yet
+→ real style with real items. The commit `6ea1ced`/`6199812` crash-fix
+session's cache-hit work was real and still correct, but it only prevented
+RE-fetching the SAME style's GLB twice — it did nothing about the room
+legitimately becoming 3 different scenes in a row as data arrived in stages.
+
+**Fix:** added a `dataReady` state flag (declared next to `roomStyle`), only
+flipped true by the mount effect once its whole restore sequence has settled
+— either the cloud sync promise resolves (success or empty), or a 4s safety
+timeout fires first (never leave the room blank forever over one slow/failed
+request). The scene-building effect now checks `dataReady` first thing and,
+if false, just clears the container and returns — no renderer setup, no GLB
+fetch, no item meshes, nothing visible. Once `dataReady` flips true (added to
+that effect's dependency array), it runs ONE real build with final data.
+
+**Verified live** (fresh tab, hard navigation, not a stale cached bundle):
+- No console exceptions.
+- `performance.getEntriesByType('resource')` shows exactly ONE `.glb` fetch
+  for the whole load (previously two — a wasted `vault-room.glb` fetch for
+  the default style that was never actually shown, then the real style's).
+- Screenshot after load: room renders correctly with real items in place,
+  Hero/spotlight layout intact.
+- **EK confirmed live, same session:** "that is much better than the
+  flickering." Closed — treat a fresh report of load flashing as a new,
+  different issue, not a regression of this one.
+
+---
+
+## ✅ 2026-08-30, later same session — the "flashes several times on load"
+model-cache fix (commit `5c0260d`, documented in the PROCESS FAILURE backfill
+below) shipped with a real crash bug, found and fixed same session, commits
+`6ea1ced` and `6199812`.
+
+**What broke:** `5c0260d` added `loadedModelCacheRef` so a room style's GLB is
+only fetched/parsed once, reusing a cached clone on repeat loads (switching
+styles back and forth, or the effect re-running for other reasons). The
+cache-hit path calls `applyHeroNotchAndReveal(cachedModel.clone(true))`
+**synchronously**, immediately, before the rest of the effect body below it
+has executed. But `applyHeroNotchAndReveal` reads `heroNotch` and
+`HERO_NOTCH_HALF`, both `const`s that were declared much later in the same
+effect (near `addBackRowBoard`/`addSideRowBoard`). The first-ever load of a
+style never hit this — the GLTFLoader callback is async, so by the time it
+fires the whole effect body (including those later `const`s) has already run
+once. Only a *second* load of the same style, same effect invocation, hit the
+cache-hit branch and threw `ReferenceError: Cannot access 'heroNotch'/
+'HERO_NOTCH_HALF' before initialization` — a full white-screen
+"Application error" crash, not a cosmetic flash. This is worse than the bug
+it was meant to fix.
+
+**Fix:** moved both `const heroNotch = ...` and `const HERO_NOTCH_HALF = 0.9`
+up to right before `applyHeroNotchAndReveal`'s definition (before the
+`modelUrl`/cache-check block), removed the old declarations from their
+original spot, left a comment at each site explaining why the ordering
+matters here specifically (it doesn't matter for most `const`s in a
+same-render effect, only for ones read by a function that can be called
+*synchronously* mid-effect).
+
+**Verified live** (fresh un-cached browser tab, not the same tab used for the
+earlier broken checks — that tab was still running JS bundled before either
+fix, which is why an earlier verification pass falsely still saw the crash;
+confirmed via `curl` that the live HTML no longer references those old chunk
+hashes at all):
+- Fresh load of `/museum/virtual-room` with Hero (spotlight) layout active,
+  Arcade style: no console exceptions, room renders correctly.
+- Switched style dropdown Arcade → Vault → Arcade (forces the cache-hit path
+  for Arcade's already-loaded model): no console exceptions, room re-rendered
+  correctly with Hero notches intact.
+- `performance.getEntriesByType('resource')` confirmed each style's `.glb` is
+  fetched exactly once per style per session (cache working as intended).
+
+**Not yet separately re-verified:** whether this also fully resolves EK's
+original "flashes several times, not just once" visual report — the crash
+was found and fixed first since it's strictly worse (a dead page beats a
+flash), and no crash + correct single-fetch-per-style is the mechanism the
+original fix was going for. If EK still sees multiple flashes with no crash
+now, that's a distinct/softer issue (likely the effect's dependency array
+still re-running the container-hide/reveal opacity toggle multiple times
+even on a cache hit) and needs its own fresh look, not assumed fixed by this.
+
+---
+
+## ⚠⚠⚠ 2026-08-28/29/30 — PROCESS FAILURE: this file went unupdated for an
+entire multi-day session. EK caught it directly ("you must not being
+filling out the handoff doc after all changes like the rule specifies").
+Below is the full backfill, written after the fact from `git log`, not
+written incrementally as the rule requires. **Going forward: update this
+file as each fix lands, not in one large catch-up entry at the end.**
+
+**Vault Hero (spotlight) layout — item overflow saga, 2026-08-28 23:12
+through 2026-08-29 15:38, commits `3384cec` through `838c44c`:**
+Started from a real bug: 2 badges visibly floating past the left wall's
+front boundary in Organize mode. Root cause, found only after two wrong
+attempts: `distributeAcrossWalls`'s overflow fallback let a wall's slot
+counter grow unbounded past its real capacity once every wall reported
+full, producing garbage world positions. First fix (`3384cec`) wrapped
+overflow onto already-used slots — caused items to overlap/disappear
+(reverted `bd768fe`). Second fix (`9dec6f5`) shrank the requested count —
+shifted which array index maps to which wall/position, silently moving a
+real saved item (reverted `0330064`). **Real fix** (`a832cea`): Hero's
+row-reservation (to avoid the feature item overlapping a regular item
+behind it) only needs to exclude the ONE colliding slot, not the whole
+row — excluding the whole row was what starved capacity and caused the
+overflow in the first place. Then closed the remaining shortfall for
+real: `1406f23` (vault's own front/door wall was never used as
+supporting-item space in Hero layout — an oversight, not a design
+choice), `8090c5b` (append Hero's last real slot past the end of the
+whole table instead of growing the main-wall segment — growing it shifts
+every front-wall/cabinet index after it, confirmed live it moved a real
+item, reverted `36a9d42`/`2d5179a`), `838c44c` (3 more real slots per
+side wall on already-baked, previously-unused shelf/wall space past the
+old grid's last depth). End state, live-verified via the debug scene
+query each step: 0 out-of-range badges, 0 duplicates, 0 gaps, every
+pre-existing real item still in its original slot.
+
+**Vault door-wall items floating + door frame gaps, 2026-08-29 16:49
+through 2026-08-30 00:48, commits `3f5a99f` through `1e0df8f`:**
+`frontWallPosition`'s item-hanger z was hardcoded and never updated when
+`VAULT_FRONT_WALL_PUSH_BACK` moved the actual wall — items hung in open
+air (`3f5a99f`). EK then asked to push the door frame back further
+(`4694299`); doubling the constant worked but is a bigger, separate ask —
+reverted (`5becab5`) per EK's explicit request to back out and dig into
+WHY the frame "wouldn't move" across ~7 prior attempts predating this
+session. Real finding: it HAD been moving correctly every time (proven
+via GLB parse + live world-position query) — what actually needed fixing
+was the door frame's own construction, not its position:
+- `ea4d463`: rebuilt the whole door-frame assembly (plate/posts/arch/
+  reveals/threshold/rivets, 52 pieces) as one real Blender parent-child
+  unit (`vault_door_anchor`) instead of each piece manually adding a
+  shared offset — the same manual-sync habit that caused the item-hanger
+  bug above. `cube()`/`cyl()`/`arch_curve()` in
+  `generate-gallery-room-models.py` all take an optional `parent` now.
+- `25b55a4`/`3a0792b`: the plate's and posts' own back faces fell short
+  of the wall's near face by 0.13–0.33 units (measured, not guessed) —
+  deepened both to close the gap exactly (GLB-parse-confirmed to the
+  millimeter).
+- `5a8adcb`: deepening the plate exposed its own side face (real steel,
+  not a hole) reading as a seam — first attempt at a wall-colored cover
+  piece overlapped the plate's own volume and caused visible z-fighting/
+  flicker ("this feels like a Band-Aid," fair) — `62a3577` fixed it by
+  starting the cover exactly at the plate's true edge instead of
+  overlapping it.
+- Doorway sign: went through 3 positions before landing right — tracking
+  the wall's far/vestibule face made it stop rendering from the room
+  camera entirely, the original literal z left it floating once the wall
+  moved, final version (`62a3577`) mounts it on the wall's NEAR face
+  using the same constant the item hangers use.
+- `3d46bd2`: the item-hanger frame-depth calc (separate from position)
+  still referenced the wall's pre-push-back z, producing a negative
+  number clamped to a useless minimum — frame floated short of the wall
+  and z-fought with the wall's own seam trim, visible as a black line
+  crossing through items. Fixed to reference the current wall position.
+- `6263c7f`/`7c66795`/`6b6f2f2`/`1e0df8f`: item frame matting was
+  asymmetric (no bottom border) system-wide, a leftover from an old fix
+  for shelf-resting items sinking into the shelf board. That old fix's
+  own math also had a small error (shelf board's real half-thickness is
+  0.06, code assumed 0.05). Real end state: shelf's real thickness fixed,
+  a small deliberate `restClearance` (0.03) added so items visibly rest
+  on the shelf rather than touch with zero gap, and EVERY item (shelf and
+  wall) now gets true symmetric matting on all 4 sides, with `shelfItemY`
+  accounting for the added bottom border so it can't re-sink into the
+  shelf. The first pass of this only fixed door-wall items and silently
+  left shelf items asymmetric — EK caught it unprompted in a fresh
+  screenshot ("all the frames... were not made the same").
+
+**Open/unresolved, do not assume closed:**
+- EK separately flagged wanting ALL item frames' DEPTH (how far the box
+  protrudes off the wall, currently ~0.295, stretched to physically
+  touch the wall on every side) made thinner across the board — explicitly
+  "on my list," not yet started. Do not touch frame depth without a
+  fresh explicit ask; the "stretch to touch wall" behavior is intentional
+  and pre-dates this session for back/left/right walls.
+- A live disagreement about whether items on the SAME door wall show a
+  visibly different white-frame thickness from each other. Every relevant
+  number was queried directly from the live scene twice (position, depth,
+  height, width, material color) and came back byte-identical across all
+  8 items — no data-level difference exists. EK still perceives a visual
+  difference and does not trust a "camera angle" explanation given past
+  history of being told things were fine when they weren't. Unresolved —
+  next step on this specific claim should be a straight-on (not angled)
+  comparison screenshot, not another live-data assertion.
+
+---
+
 ## ⚠⚠⚠ 2026-08-27/28 overnight — CORRECTION: the old "isolated branch"
 architecture description further down this file is STALE and was
 actively misleading. Read this before touching anything museum-related,
