@@ -46,7 +46,8 @@ import { UNIVERSE_LABEL, type UniverseKey } from "@/lib/taxonomy";
 import SocialExportSheet from "@/components/SocialExportSheet";
 import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment.js";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
-import { createGalleryFinishes } from "./galleryRoomFinishes";
+import { createGalleryFinishes, type GalleryFinishStyle } from "./galleryRoomFinishes";
+import { createGrainTexture, createHardwoodTexture } from "./galleryTextures";
 
 // The app's real theme blue — same tone/text pairing as the "Save Room
 // Draft" button's own gradient (`#79E7FB`→`#2CB1D1`) and dark text
@@ -467,100 +468,6 @@ function drawSlotBadgeTexture(n: number) {
   return texture;
 }
 
-// A seeded PRNG (not Math.random) so the plank layout is stable across
-// re-renders instead of reshuffling on every effect re-run.
-function mulberry32(seed: number) {
-  let a = seed;
-  return () => {
-    a |= 0;
-    a = (a + 0x6d2b79f5) | 0;
-    let t = Math.imul(a ^ (a >>> 15), 1 | a);
-    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-}
-
-function createHardwoodTexture() {
-  const canvas = document.createElement("canvas");
-  canvas.width = 768;
-  canvas.height = 768;
-  const ctx = canvas.getContext("2d");
-  if (!ctx) return new THREE.CanvasTexture(canvas);
-
-  const rand = mulberry32(20260815);
-  const plankHeight = 64;
-  // A deep walnut palette (was a flatter, more saturated rust-orange that
-  // read as plastic under render) — every plank below picks its own base
-  // tone from this set rather than every row sharing one identical
-  // gradient, which is what made the old floor look like a single tiled
-  // sprite instead of individual boards.
-  const tones = ["#4a3120", "#573823", "#3f2a1b", "#5c3d26", "#48301f", "#63432b"];
-
-  ctx.fillStyle = "#3f2a1b";
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-  for (let y = 0; y < canvas.height; y += plankHeight) {
-    let x = -Math.floor(rand() * 140);
-    while (x < canvas.width) {
-      const plankLength = 130 + rand() * 130;
-      const base = tones[Math.floor(rand() * tones.length)];
-      const grd = ctx.createLinearGradient(0, y, 0, y + plankHeight);
-      grd.addColorStop(0, shadeHex(base, 0.16));
-      grd.addColorStop(0.5, base);
-      grd.addColorStop(1, shadeHex(base, -0.12));
-      ctx.fillStyle = grd;
-      ctx.fillRect(x, y, plankLength, plankHeight);
-
-      // End-seam and long-edge lines around this specific board.
-      ctx.strokeStyle = "rgba(18,9,4,0.55)";
-      ctx.lineWidth = 1.5;
-      ctx.strokeRect(x, y + 0.75, plankLength, plankHeight - 1.5);
-
-      // A little brightness jitter per board so neighbors read as distinct
-      // pieces of wood, not one repeating swatch.
-      ctx.fillStyle = `rgba(255,235,205,${rand() * 0.05})`;
-      ctx.fillRect(x, y, plankLength, plankHeight);
-
-      x += plankLength;
-    }
-  }
-
-  for (let i = 0; i < 220; i += 1) {
-    const x = rand() * canvas.width;
-    const y = rand() * canvas.height;
-    const length = 20 + rand() * 70;
-    ctx.strokeStyle = `rgba(255,220,165,${0.04 + rand() * 0.07})`;
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-    ctx.moveTo(x, y);
-    ctx.bezierCurveTo(x + length * 0.32, y - 6, x + length * 0.68, y + 6, x + length, y);
-    ctx.stroke();
-  }
-
-  const texture = new THREE.CanvasTexture(canvas);
-  texture.colorSpace = THREE.SRGBColorSpace;
-  texture.wrapS = THREE.RepeatWrapping;
-  texture.wrapT = THREE.RepeatWrapping;
-  texture.repeat.set(3, 4.4);
-  texture.anisotropy = 8;
-  return texture;
-}
-
-// Lightens (positive amt) or darkens (negative amt) a hex color by a
-// fraction of the distance to white/black — used to build each plank's own
-// gradient from its randomly-picked base tone instead of one shared gradient.
-function shadeHex(hex: string, amt: number) {
-  const n = parseInt(hex.slice(1), 16);
-  const r = (n >> 16) & 255;
-  const g = (n >> 8) & 255;
-  const b = n & 255;
-  const mix = (channel: number) => {
-    const target = amt >= 0 ? 255 : 0;
-    return Math.round(channel + (target - channel) * Math.abs(amt));
-  };
-  return `rgb(${mix(r)},${mix(g)},${mix(b)})`;
-}
-
 function createHerringboneTexture() {
   const size = 512;
   const canvas = document.createElement("canvas");
@@ -660,9 +567,23 @@ function fileToRoomWallpaper(file: File) {
 }
 
 function getRoomPalette(style: RoomStyle) {
-  // "Blue" reuses the Vault hand-coded palette exactly — it's the same
-  // room, the only difference is Blue never swaps to the GLB overlay.
-  if (style === "blue") return getRoomPalette("vault");
+  // "Blue" used to alias Vault's palette exactly — same navy wall, but also
+  // Vault's own cool steel-gray trim (0xa8b0b8), which reads as a second
+  // steel room rather than its own identity. EK's refinement-pass ask
+  // (2026-09-06): "navy and warm accents for Blue." Keeps the navy wall and
+  // walnut floor (both already right for "navy"), gives it its own warm
+  // gold trim/glow instead of borrowing Vault's cool one — this is the one
+  // real difference between the two now, not a copy.
+  if (style === "blue") {
+    return {
+      wall: 0x24405f,
+      floor: 0x8a6238,
+      trim: 0xc9a24a,
+      glow: 0xf2d9a0,
+      textTone: "text-white",
+      shell: "bg-[radial-gradient(circle_at_50%_0%,rgba(201,162,74,0.14),transparent_34%),linear-gradient(180deg,#24405f,#0a1220)] text-white",
+    };
+  }
   if (style === "whitebox") {
     // "White" — a bright classical gallery: warm cream walls with painted
     // molding, honey wood floor, big airy daylight feel.
@@ -1774,7 +1695,15 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
     // screenshot, even with the material darkening above. Going lower than
     // vault's own value this time instead of just matching it, since
     // white's base materials start lighter to begin with.
-    renderer.toneMappingExposure = roomStyle === "whitebox" ? 0.68 : (roomStyle === "vault" || roomStyle === "blue") ? 0.92 : 0.98;
+    // Arcade's own ask (2026-09-06 refinement pass): "dark surfaces" — it
+    // was falling into the same bucket as vault/blue's "else" case at 0.98,
+    // actually the BRIGHTEST exposure of any style, which is backwards for
+    // a room whose own baked GLB materials are near-black on purpose (see
+    // style_mats() in generate-gallery-room-models.py — arcade's wall is
+    // (0.035, 0.025, 0.06), essentially black). Given its own branch instead
+    // of sharing arcade's old default with nothing else.
+    renderer.toneMappingExposure =
+      roomStyle === "whitebox" ? 0.68 : roomStyle === "arcade" ? 0.6 : (roomStyle === "vault" || roomStyle === "blue") ? 0.92 : 0.98;
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     container.appendChild(renderer.domElement);
@@ -1784,7 +1713,19 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
     // selected — a fixed "front door" impression rather than something users
     // reskin like a normal room.
     const inHub = selectedItems.length === 0;
-    const galleryFinishes = roomStyle === "whitebox" && !inHub ? createGalleryFinishes() : null;
+    // Vault and Arcade have real GLBs (same shared mesh-naming convention as
+    // White's — floor_slab/case_cap/glass/shelf/corner_post/wall/rail/
+    // baseboard — see generate-gallery-room-models.py's add_wall_panels(),
+    // "shared by every style"), so the exact same apply()/addCaseDetails()
+    // architecture that fixed White's flat textures and floating cases
+    // reuses cleanly here, just with each style's own palette (steel+walnut
+    // for Vault, dark surfaces + the arcade's own bronze/cyan accents for
+    // Arcade — see PALETTES in galleryRoomFinishes.ts). Blue has no GLB at
+    // all (ROOM_MODEL_URLS has no "blue" entry) — its fallback shell is
+    // hand-built directly below and gets its own inline treatment instead.
+    const finishStyle: GalleryFinishStyle | null =
+      roomStyle === "whitebox" || roomStyle === "vault" || roomStyle === "arcade" ? roomStyle : null;
+    const galleryFinishes = finishStyle && !inHub ? createGalleryFinishes(finishStyle) : null;
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
 
     const scene = new THREE.Scene();
@@ -1797,7 +1738,13 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
 
     const roomGroup = new THREE.Group();
     scene.add(roomGroup);
-    galleryFinishes?.addLighting(roomGroup);
+    // Vault/Arcade's GLBs already carry their own baked area lights (see
+    // add_lights() in the generation script) — calling addLighting() for
+    // them too would double up illumination on top of that, not fix
+    // anything. Only White (which has never had baked lights) gets the
+    // extra ceiling-track spotlight rig. addCaseDetails' contact shadows are
+    // independent of lighting, so every style with real cases gets those.
+    if (roomStyle === "whitebox") galleryFinishes?.addLighting(roomGroup);
     galleryFinishes?.addCaseDetails(roomGroup, CABINET_SPOTS);
     roomGroupRef.current = roomGroup;
 
@@ -1836,10 +1783,16 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
     // Cut again — 2.4 still read pale live. Going lower than the "matches
     // vault" instinct this round since that instinct already proved
     // insufficient once.
+    // Arcade gets its own (lower) branch here too, same reasoning as the
+    // exposure change above — it previously shared vault/blue's 3.9, which
+    // washes its own near-black baked materials and cyan/bronze accent
+    // lighting out to a flat pastel instead of a dark room with controlled
+    // colored light. Vault/blue are untouched (unverified whether they need
+    // the same treatment without their own live review first).
     const hemi = new THREE.HemisphereLight(
       0xffffff,
       0x3a3a3a,
-      inHub ? 2.6 : roomStyle === "whitebox" ? 1.5 : 3.9
+      inHub ? 2.6 : roomStyle === "whitebox" ? 1.5 : roomStyle === "arcade" ? 1.8 : 3.9
     );
     scene.add(hemi);
     // Both of these were left at vault's intensity for whitebox too (only
@@ -1852,7 +1805,7 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
     // would have caught this; it's a Three.js-side problem specifically.
     const key = new THREE.SpotLight(
       palette.glow,
-      inHub ? 9.5 : roomStyle === "whitebox" ? 1.7 : 7.2,
+      inHub ? 9.5 : roomStyle === "whitebox" ? 1.7 : roomStyle === "arcade" ? 2.2 : 7.2,
       26,
       Math.PI / 5,
       0.55,
@@ -1862,7 +1815,12 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
     scene.add(key);
     const warm = new THREE.PointLight(
       palette.trim,
-      roomStyle === "arcade" ? 3.5 : roomStyle === "whitebox" ? 0.35 : 1.8,
+      // Cut from 3.5 in the same pass as the exposure/hemi/key changes above
+      // — at the old brightness this alone was enough to wash the room pale
+      // regardless of the other three, since it sits close to the entrance
+      // and its color (palette.trim, arcade's own bronze) was overpowering
+      // the cooler cyan identity everywhere else in the room.
+      roomStyle === "arcade" ? 1.4 : roomStyle === "whitebox" ? 0.35 : 1.8,
       14
     );
     warm.position.set(-4.5, 2.4, 1.8);
@@ -2071,7 +2029,18 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
     // style had a noticeable metallic sheen (0.18) that read wrong once the
     // wall color moved from near-black to a painted sage. The Grand Hall
     // overrides to near-black navy regardless of style (see inHub above).
+    // Blue (the one style with no GLB — see ROOM_MODEL_URLS) is the only
+    // style whose walls are actually seen through this material long-term;
+    // White/Vault/Arcade all overwrite it via galleryFinishes.wall the
+    // moment their own finishes/GLB are ready. The grain texture here is
+    // the same hue-agnostic fine-grain layer that fixed White's flat-wall
+    // problem, reused so Blue isn't left with the plain flat color that
+    // every other style already moved past in the 2026-09-06 refinement pass.
+    const wallGrain = createGrainTexture();
     const wallMaterial = new THREE.MeshStandardMaterial({
+      map: wallGrain,
+      bumpMap: wallGrain,
+      bumpScale: 0.02,
       color: inHub ? 0x0c1118 : palette.wall,
       roughness: 0.72,
       metalness: 0.02,
@@ -2545,7 +2514,30 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
       roughness: 0.08,
       metalness: 0.08,
     });
+    // Cheap fake contact shadow under each case (a plane, not a light) —
+    // same fix as galleryRoomFinishes.ts's addCaseDetails, needed here too
+    // since Blue (the one style with no GLB) never calls into that module
+    // and was left with its cases floating with no shadow at all.
+    const shadowCanvas = document.createElement("canvas");
+    shadowCanvas.width = shadowCanvas.height = 128;
+    const shadowCtx = shadowCanvas.getContext("2d")!;
+    const shadowGradient = shadowCtx.createRadialGradient(64, 64, 0, 64, 64, 64);
+    shadowGradient.addColorStop(0, "rgba(20,18,14,0.42)");
+    shadowGradient.addColorStop(0.7, "rgba(20,18,14,0.22)");
+    shadowGradient.addColorStop(1, "rgba(20,18,14,0)");
+    shadowCtx.fillStyle = shadowGradient;
+    shadowCtx.fillRect(0, 0, 128, 128);
+    const shadowTexture = new THREE.CanvasTexture(shadowCanvas);
+    shadowTexture.colorSpace = THREE.SRGBColorSpace;
+    const shadowMaterial = new THREE.MeshBasicMaterial({
+      map: shadowTexture, transparent: true, depthWrite: false, toneMapped: false,
+    });
     CABINET_SPOTS.forEach(([x, z], index) => {
+      const shadow = new THREE.Mesh(new THREE.PlaneGeometry(2, 1.7), shadowMaterial);
+      shadow.rotation.x = -Math.PI / 2;
+      shadow.position.set(x, 0.006, z);
+      addShell(shadow);
+
       const base = new THREE.Mesh(new THREE.BoxGeometry(1.42, 0.72, 1.12), cabinetMaterial);
       base.position.set(x, 0.31, z);
       addShell(base);
@@ -4065,7 +4057,16 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
       <div className={effectiveGuest ? "h-full" : "min-h-[600px]"}>
         <div className={effectiveGuest ? "relative h-full" : "relative min-h-[600px]"}>
           {viewMode === "room" ? (
-            <div ref={mountRef} className="absolute inset-0" />
+            // touch-action: none — without it, a touch drag on the canvas is
+            // ALSO interpreted by the browser as a native page-scroll gesture
+            // (pointer events fire and the camera rotates, but the page
+            // scrolls underneath it at the same time), and a gesture the
+            // browser decides is a scroll can cut the pointermove stream
+            // short — which is why yaw dragging read as "doesn't just spin
+            // easily" on a touch device, not just the vertical-scroll
+            // symptom. Same fix already used for the thumbnail drag-reorder
+            // list elsewhere in this file.
+            <div ref={mountRef} className="absolute inset-0" style={{ touchAction: "none" }} />
           ) : (
             <MuseumCampusOverview rooms={universeRooms} onOpenRoom={openUniverseRoom} onOpenMainHall={openMainHall} />
           )}

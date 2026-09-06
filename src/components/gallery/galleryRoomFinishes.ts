@@ -1,96 +1,162 @@
 import * as THREE from "three";
 
-/** Finishes for the existing White room. No changes to its shell or slot geometry. */
-export function createGalleryFinishes() {
-  const canvas = document.createElement("canvas");
-  canvas.width = canvas.height = 512;
-  const ctx = canvas.getContext("2d")!;
-  let seed = 47;
-  const random = () => ((seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0) / 4294967296);
-  const pixels = ctx.createImageData(512, 512);
-  for (let y = 0; y < 512; y++) {
-    for (let x = 0; x < 512; x++) {
-      const i = (y * 512 + x) * 4;
-      // Two high-frequency wave layers (periods of a few pixels, many cycles
-      // across the 512px canvas) read as fine mineral grain, never as a
-      // repeating blob — that's what the old single low-frequency sine pair
-      // produced (~1-2 cycles across the whole canvas, tiled 5x3 across the
-      // wall, so it read as fuzzy fabric/clouds at real viewing distance).
-      // One very-low-frequency term is kept, but at low amplitude and a
-      // period longer than the canvas itself, so within any one tile it's
-      // only a gentle overall drift, not a visible blob.
-      const grain = Math.sin(x * 0.85 + y * 0.31) * 1.1 + Math.sin(x * 0.22 - y * 0.57) * 0.9;
-      const drift = Math.sin(x / 240 + y / 300) * 1.4;
-      const tone = 217 + grain + drift + (random() - 0.5) * 8;
-      pixels.data.set([tone, tone - 3, tone - 8, 255], i);
-    }
-  }
-  ctx.putImageData(pixels, 0, 0);
-  const plaster = new THREE.CanvasTexture(canvas);
-  plaster.colorSpace = THREE.SRGBColorSpace;
-  plaster.wrapS = plaster.wrapT = THREE.RepeatWrapping;
-  plaster.repeat.set(5, 3);
-  plaster.anisotropy = 4;
+import { createGrainTexture, createHardwoodTexture } from "./galleryTextures";
 
-  const stoneCanvas = document.createElement("canvas");
-  stoneCanvas.width = stoneCanvas.height = 512;
-  const stoneCtx = stoneCanvas.getContext("2d")!;
-  stoneCtx.drawImage(canvas, 0, 0);
-  // The old single border-per-repeat-unit joint was too thin/low-contrast to
-  // read at all once anisotropic filtering blurred it (confirmed live: the
-  // floor rendered as a flat, glossy-looking plane with no visible tiling).
-  // A visible-but-subdued cross join splits each repeat unit into 4 square
-  // slabs (same world-scale tile pitch as before — repeat.set() below is
-  // unchanged), plus a faint per-slab tone shift so slabs read as
-  // individual stone pieces without a bold checkerboard contrast.
-  let stoneSeed = 811;
-  const stoneRandom = () => ((stoneSeed = (Math.imul(stoneSeed, 1664525) + 1013904223) >>> 0) / 4294967296);
-  for (const qx of [0, 256]) {
-    for (const qy of [0, 256]) {
-      const shift = (stoneRandom() - 0.5) * 10;
-      stoneCtx.fillStyle = shift >= 0 ? `rgba(255,255,255,${shift / 255})` : `rgba(50,46,38,${-shift / 255})`;
-      stoneCtx.fillRect(qx, qy, 256, 256);
+export type GalleryFinishStyle = "whitebox" | "vault" | "arcade";
+
+interface FinishPalette {
+  wallColor: number;
+  wallRoughness: number;
+  accentColor: number; // the back-wall accent (White's charcoal, Vault/Arcade's own dark accent)
+  accentRoughness: number;
+  floorColor: number;
+  floorRoughness: number;
+  floorTreatment: "stone" | "wood";
+  jointColor: string; // stone-floor grout line color, ignored for wood floors
+  trimColor: number;
+  trimMetalness: number;
+  trimRoughness: number;
+  darkColor: number;
+  darkMetalness: number;
+  ceilingColor: number;
+  glassColor: number;
+  glassOpacity: number;
+  wallMetalness: number; // 0 = matte plaster/paint, higher = brushed metal
+}
+
+// One shared quality bar (material realism, grounded shadows, readable glass,
+// distinct trim) applied through three different palettes — Vault and Arcade
+// are not White reskinned, they keep their own already-established identity
+// (steel/walnut for Vault, dark surfaces + the arcade's own bronze/cyan
+// accents for Arcade), just no longer flat and untextured.
+const PALETTES: Record<GalleryFinishStyle, FinishPalette> = {
+  whitebox: {
+    wallColor: 0xe3ddd0, wallRoughness: 0.94, wallMetalness: 0,
+    accentColor: 0x454846, accentRoughness: 0.9,
+    floorColor: 0xaaa79e, floorRoughness: 0.82, floorTreatment: "stone", jointColor: "#928c7d",
+    trimColor: 0xa68b53, trimMetalness: 0.72, trimRoughness: 0.43,
+    darkColor: 0x303330, darkMetalness: 0.18,
+    ceilingColor: 0xbeb9af,
+    glassColor: 0xe6f0ee, glassOpacity: 0.12,
+  },
+  vault: {
+    // Steel + walnut, a real bank-vault feel. Trim reuses the exact brass
+    // (0xb08d3e) the vault door/architrave already use elsewhere in
+    // VirtualGalleryRoom.tsx, so the shelf rails read as the same fixture
+    // family as the door instead of a mismatched second metal.
+    wallColor: 0x9199a1, wallRoughness: 0.5, wallMetalness: 0.28,
+    accentColor: 0x565f66, accentRoughness: 0.48,
+    floorColor: 0xffffff, floorRoughness: 0.5, floorTreatment: "wood", jointColor: "",
+    trimColor: 0xb08d3e, trimMetalness: 0.72, trimRoughness: 0.35,
+    darkColor: 0x24282c, darkMetalness: 0.35,
+    ceilingColor: 0x8a9096,
+    glassColor: 0xdbe7ee, glassOpacity: 0.12,
+  },
+  arcade: {
+    // Dark surfaces + the arcade's own already-established bronze trim and
+    // cyan glass (see style_mats() in generate-gallery-room-models.py) —
+    // making that identity actually read instead of being washed out by
+    // generic bright fill light, not inventing a new color scheme.
+    wallColor: 0x1c1626, wallRoughness: 0.68, wallMetalness: 0,
+    accentColor: 0x120e19, accentRoughness: 0.62,
+    floorColor: 0x140f1d, floorRoughness: 0.5, floorTreatment: "stone", jointColor: "#3c3448",
+    trimColor: 0xe0973a, trimMetalness: 0.68, trimRoughness: 0.3,
+    darkColor: 0x14101c, darkMetalness: 0.25,
+    ceilingColor: 0x140f1d,
+    glassColor: 0x8fe6ff, glassOpacity: 0.16,
+  },
+};
+
+/** Finishes for the existing room styles. No changes to shell or slot geometry. */
+export function createGalleryFinishes(style: GalleryFinishStyle = "whitebox") {
+  const palette = PALETTES[style];
+
+  // Grayscale, hue-agnostic wall grain — shared with Blue's own hand-coded
+  // shell (galleryTextures.ts) so both paths use the one real fine-grain
+  // generator instead of a second copy.
+  const grain = createGrainTexture();
+
+  let floorTexture: THREE.Texture;
+  if (palette.floorTreatment === "wood") {
+    // Vault's floor reuses the same walnut-plank texture the fallback shell
+    // already uses (createHardwoodTexture in VirtualGalleryRoom.tsx) rather
+    // than a second, separately-authored wood texture — one real, detailed
+    // wood generator, shared, not duplicated.
+    floorTexture = createHardwoodTexture();
+  } else {
+    const stoneCanvas = document.createElement("canvas");
+    stoneCanvas.width = stoneCanvas.height = 512;
+    const stoneCtx = stoneCanvas.getContext("2d")!;
+    // Reuse the grain texture's own source canvas as the stone floor's base
+    // grain, same as before this was extracted into a shared generator.
+    stoneCtx.drawImage(grain.image as CanvasImageSource, 0, 0);
+    // A visible-but-subdued cross join splits each repeat unit into 4 square
+    // slabs (world-scale tile pitch/repeat() below unchanged) plus a faint
+    // per-slab tone shift so slabs read as individual stone/tile pieces
+    // without a bold checkerboard.
+    let stoneSeed = 811;
+    const stoneRandom = () => ((stoneSeed = (Math.imul(stoneSeed, 1664525) + 1013904223) >>> 0) / 4294967296);
+    for (const qx of [0, 256]) {
+      for (const qy of [0, 256]) {
+        const shift = (stoneRandom() - 0.5) * 10;
+        stoneCtx.fillStyle = shift >= 0 ? `rgba(255,255,255,${shift / 255})` : `rgba(50,46,38,${-shift / 255})`;
+        stoneCtx.fillRect(qx, qy, 256, 256);
+      }
     }
+    stoneCtx.strokeStyle = palette.jointColor;
+    stoneCtx.lineWidth = 3;
+    stoneCtx.strokeRect(1.5, 1.5, 509, 509);
+    stoneCtx.beginPath();
+    stoneCtx.moveTo(256, 0);
+    stoneCtx.lineTo(256, 512);
+    stoneCtx.moveTo(0, 256);
+    stoneCtx.lineTo(512, 256);
+    stoneCtx.stroke();
+    const stone = new THREE.CanvasTexture(stoneCanvas);
+    stone.colorSpace = THREE.SRGBColorSpace;
+    stone.wrapS = stone.wrapT = THREE.RepeatWrapping;
+    stone.repeat.set(10.5, 13);
+    stone.anisotropy = 8;
+    floorTexture = stone;
   }
-  stoneCtx.strokeStyle = "#928c7d";
-  stoneCtx.lineWidth = 3;
-  stoneCtx.strokeRect(1.5, 1.5, 509, 509);
-  stoneCtx.beginPath();
-  stoneCtx.moveTo(256, 0);
-  stoneCtx.lineTo(256, 512);
-  stoneCtx.moveTo(0, 256);
-  stoneCtx.lineTo(512, 256);
-  stoneCtx.stroke();
-  const stone = new THREE.CanvasTexture(stoneCanvas);
-  stone.colorSpace = THREE.SRGBColorSpace;
-  stone.wrapS = stone.wrapT = THREE.RepeatWrapping;
-  stone.repeat.set(10.5, 13);
-  stone.anisotropy = 8;
-  const wall = new THREE.MeshStandardMaterial({ map: plaster, bumpMap: plaster, bumpScale: 0.025, color: 0xe3ddd0, roughness: 0.94 });
-  const charcoal = new THREE.MeshStandardMaterial({ map: plaster, bumpMap: plaster, bumpScale: 0.025, color: 0x454846, roughness: 0.9 });
-  const floor = new THREE.MeshStandardMaterial({ map: stone, bumpMap: stone, bumpScale: 0.025, color: 0xaaa79e, roughness: 0.82 });
-  const brass = new THREE.MeshStandardMaterial({ color: 0xa68b53, metalness: 0.72, roughness: 0.43 });
-  const dark = new THREE.MeshStandardMaterial({ color: 0x303330, metalness: 0.18, roughness: 0.65 });
-  const ceiling = new THREE.MeshStandardMaterial({ color: 0xbeb9af, roughness: 0.98 });
+
+  const wall = new THREE.MeshStandardMaterial({
+    map: grain, bumpMap: grain, bumpScale: 0.025,
+    color: palette.wallColor, roughness: palette.wallRoughness, metalness: palette.wallMetalness,
+  });
+  const charcoal = new THREE.MeshStandardMaterial({
+    map: grain, bumpMap: grain, bumpScale: 0.025,
+    color: palette.accentColor, roughness: palette.accentRoughness, metalness: palette.wallMetalness,
+  });
+  const floor = new THREE.MeshStandardMaterial({
+    map: floorTexture,
+    bumpMap: palette.floorTreatment === "stone" ? floorTexture : undefined,
+    bumpScale: 0.025,
+    color: palette.floorColor, roughness: palette.floorRoughness,
+  });
+  const brass = new THREE.MeshStandardMaterial({ color: palette.trimColor, metalness: palette.trimMetalness, roughness: palette.trimRoughness });
+  const dark = new THREE.MeshStandardMaterial({ color: palette.darkColor, metalness: palette.darkMetalness, roughness: 0.65 });
+  const ceiling = new THREE.MeshStandardMaterial({ color: palette.ceilingColor, roughness: 0.98 });
   const glass = new THREE.MeshPhysicalMaterial({
-    color: 0xe6f0ee, transparent: true, opacity: 0.12, roughness: 0.12,
+    color: palette.glassColor, transparent: true, opacity: palette.glassOpacity, roughness: 0.12,
     metalness: 0, clearcoat: 1, depthWrite: false, side: THREE.DoubleSide,
   });
   const finishes = [wall, charcoal, floor, brass, dark, ceiling, glass];
   finishes.forEach((material) => { material.envMapIntensity = 0.35; });
   const materials: THREE.Material[] = [...finishes];
-  const textures: THREE.Texture[] = [plaster, stone];
+  const textures: THREE.Texture[] = [grain, floorTexture];
 
   function apply(model: THREE.Group) {
     model.traverse((object) => {
       if (!(object instanceof THREE.Mesh)) return;
       const name = object.name.toLowerCase();
       if (name.includes("floor")) {
-        // Replace the baked parquet overlay with one continuous stone surface.
+        // Replace the baked floor overlay with one continuous surface.
         object.visible = name === "floor_slab";
         object.material = floor;
         if (name === "floor_slab") {
-          // World-size UVs keep tiles square on the original 21 x 26 slab.
+          // World-size UVs keep tiles/planks square and consistently scaled
+          // on the original 21 x 26 slab.
           const geometry = object.geometry.clone();
           const position = geometry.getAttribute("position");
           const uv = geometry.getAttribute("uv");
@@ -103,8 +169,10 @@ export function createGalleryFinishes() {
           object.geometry = geometry;
         }
       } else if (name.includes("case_cap")) {
-        // The old solid lid hid objects viewed from above. The four-sided
-        // rim below keeps the case's outline while leaving its glass top clear.
+        // A solid lid hides objects viewed from above. The four-sided rim
+        // built in addCaseDetails keeps the case's outline while leaving its
+        // glass top clear — same fix, now applied to every style's cases,
+        // not just White's.
         object.visible = false;
       } else if (name.includes("glass")) {
         object.material = glass;
@@ -167,11 +235,10 @@ export function createGalleryFinishes() {
     });
   }
   function addCaseDetails(room: THREE.Group, spots: Array<[number, number]>) {
-    const edgeMaterial = new THREE.LineBasicMaterial({ color: 0xa99570, transparent: true, opacity: 0.6 });
+    const edgeMaterial = new THREE.LineBasicMaterial({ color: palette.trimColor, transparent: true, opacity: 0.6 });
     materials.push(edgeMaterial);
     // Cheap fake contact shadow: a soft radial-gradient decal on the floor
-    // under each case, instead of a real shadow-casting light per case (only
-    // the one center ceiling spot casts real shadows — see addLighting).
+    // under each case, instead of a real shadow-casting light per case.
     // Without this the cases' plinths read as floating just above the floor,
     // since nothing else in the scene darkens the floor directly beneath them.
     const shadowCanvas = document.createElement("canvas");
