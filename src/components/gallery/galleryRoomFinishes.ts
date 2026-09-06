@@ -324,10 +324,18 @@ export function createGalleryFinishes(style: GalleryFinishStyle = "whitebox") {
       // hierarchy): "Remove the continuous gold horizontal accent lines and
       // gold baseboard treatment from Vault... Shelf supports should
       // primarily read as dark steel... brass should catch light locally,
-      // not glow across the whole room." Vault/Loft only — White/Arcade keep
-      // their existing brass rail/baseboard, unchanged.
-      else if (name.includes("rail") || name.includes("baseboard")) object.material = (style === "vault" || style === "loft") ? dark : brass;
-      else if (name.includes("stile")) object.material = dark;
+      // not glow across the whole room." Loft only (frozen) keeps this dark
+      // treatment. Vault refinement handoff, SECOND correction: EK's live
+      // review found dark rails/stiles against the lighter wall still read
+      // as "a lot of lines... not large rectangle panels" — the reference
+      // vault door shows no visible internal rail/support-post lines at
+      // all, just the seam between two big plates. Blending rail/stile into
+      // the wall color for Vault removes that contrast without touching
+      // shelf boards (still dark — those need to read as functional
+      // shelves) or any position/geometry. White/Arcade keep their existing
+      // brass rail/dark stile, unchanged.
+      else if (name.includes("rail") || name.includes("baseboard")) object.material = style === "vault" ? wall : style === "loft" ? dark : brass;
+      else if (name.includes("stile")) object.material = style === "vault" ? wall : dark;
       object.receiveShadow = true;
     });
   }
