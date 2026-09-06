@@ -59,7 +59,12 @@ const THEME_BLUE_TEXT = "#06171d";
 // walnut floor) that used to BE the Vault look before the GLB pipeline —
 // it never loads a .glb, it's the fallback shell shown permanently. See
 // HANDOFF.md "Room styles" for the full vault/whitebox/arcade/blue map.
-type RoomStyle = "vault" | "whitebox" | "arcade" | "blue";
+// "loft" (Industrial Loft) is a frozen snapshot of Vault's own look as of
+// commit 4f64dff, saved as its own independent style per EK's 2026-09-06
+// handoff so Vault can keep evolving without moving the room EK already
+// approved — it shares Vault's real GLB (same file, see ROOM_MODEL_URLS)
+// but suppresses the model's baked ornate door surround.
+type RoomStyle = "vault" | "whitebox" | "arcade" | "blue" | "loft";
 type RoomLayout = "storefront" | "salon" | "spotlight";
 type ViewMode = "room" | "overview";
 type RoomDraft = {
@@ -181,6 +186,10 @@ const ROOM_MODEL_URLS: Partial<Record<RoomStyle, string>> = {
   vault: "/models/gallery-rooms/vault-room.glb?v=front-wall-pushback-all-styles-2026-08-30",
   whitebox: "/models/gallery-rooms/whitebox-room.glb?v=front-wall-pushback-all-styles-2026-08-30",
   arcade: "/models/gallery-rooms/arcade-room.glb?v=front-wall-pushback-all-styles-2026-08-30",
+  // Industrial Loft reuses Vault's exact GLB (same file, same cache entry) —
+  // its only geometry difference is hiding the baked door surround, done at
+  // render time below, not a separate model.
+  loft: "/models/gallery-rooms/vault-room.glb?v=front-wall-pushback-all-styles-2026-08-30",
 };
 
 // The 5 center display cases (built further down as decorative glass cabinets)
@@ -605,6 +614,20 @@ function getRoomPalette(style: RoomStyle) {
       glow: 0x4fd3ee,
       textTone: "text-white",
       shell: "bg-[radial-gradient(circle_at_50%_0%,rgba(240,162,58,0.16),transparent_32%),linear-gradient(180deg,#171122,#070913)] text-white",
+    };
+  }
+
+  if (style === "loft") {
+    // Industrial Loft — a frozen copy of Vault's own accent palette below
+    // (2026-09-06 handoff), independent on purpose so Vault's own entry can
+    // keep changing without moving Loft.
+    return {
+      wall: 0x24405f,
+      floor: 0x8a6238,
+      trim: 0xa8b0b8,
+      glow: 0xdfe8f0,
+      textTone: "text-white",
+      shell: "bg-[radial-gradient(circle_at_50%_0%,rgba(159,184,214,0.14),transparent_34%),linear-gradient(180deg,#24405f,#0a1220)] text-white",
     };
   }
 
@@ -1332,7 +1355,8 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
         draft.roomStyle === "vault" ||
         draft.roomStyle === "whitebox" ||
         draft.roomStyle === "arcade" ||
-        draft.roomStyle === "blue"
+        draft.roomStyle === "blue" ||
+        draft.roomStyle === "loft"
       ) {
         setRoomStyle(draft.roomStyle);
       }
@@ -1719,7 +1743,7 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
     // just nudged, now that Vault also gets its own addLighting() ceiling
     // rig (see below) to provide the deliberate exhibit pools instead.
     renderer.toneMappingExposure =
-      roomStyle === "whitebox" ? 0.68 : roomStyle === "vault" ? 0.62 : roomStyle === "arcade" ? 0.6 : roomStyle === "blue" ? 0.75 : 0.98;
+      roomStyle === "whitebox" ? 0.68 : roomStyle === "vault" ? 0.62 : roomStyle === "loft" ? 0.62 : roomStyle === "arcade" ? 0.6 : roomStyle === "blue" ? 0.75 : 0.98;
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     container.appendChild(renderer.domElement);
@@ -1740,7 +1764,7 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
     // all (ROOM_MODEL_URLS has no "blue" entry) — its fallback shell is
     // hand-built directly below and gets its own inline treatment instead.
     const finishStyle: GalleryFinishStyle | null =
-      roomStyle === "whitebox" || roomStyle === "vault" || roomStyle === "arcade" ? roomStyle : null;
+      roomStyle === "whitebox" || roomStyle === "vault" || roomStyle === "arcade" || roomStyle === "loft" ? roomStyle : null;
     const galleryFinishes = finishStyle && !inHub ? createGalleryFinishes(finishStyle) : null;
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
 
@@ -1765,7 +1789,7 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
     // "no convincing visible lighting system or localized exhibit pools,
     // unlike White" — so it gets addLighting() too now. Arcade is left
     // alone for this pass (not reviewed/approved yet — see the brief).
-    if (roomStyle === "whitebox" || roomStyle === "vault") galleryFinishes?.addLighting(roomGroup);
+    if (roomStyle === "whitebox" || roomStyle === "vault" || roomStyle === "loft") galleryFinishes?.addLighting(roomGroup);
     galleryFinishes?.addCaseDetails(roomGroup, CABINET_SPOTS);
     // EK's direct correction (2026-09-06, third round): the material-only
     // pass "still looks like the original gallery with different colors" —
@@ -1773,7 +1797,7 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
     // rivets, a recessed-bay outline, deeper jambs by the door, a glowing
     // ceiling pattern), not just recolored materials. Vault-only, doesn't
     // touch shelf/item/door geometry or hit targets.
-    if (roomStyle === "vault") galleryFinishes?.addVaultArmor(roomGroup);
+    if (roomStyle === "vault" || roomStyle === "loft") galleryFinishes?.addVaultArmor(roomGroup);
     roomGroupRef.current = roomGroup;
 
     const fallbackShell = new THREE.Group();
@@ -1827,7 +1851,7 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
     const hemi = new THREE.HemisphereLight(
       0xffffff,
       0x3a3a3a,
-      inHub ? 2.6 : roomStyle === "whitebox" ? 1.5 : roomStyle === "vault" ? 1.3 : roomStyle === "arcade" ? 1.8 : roomStyle === "blue" ? 2.2 : 3.9
+      inHub ? 2.6 : roomStyle === "whitebox" ? 1.5 : roomStyle === "vault" ? 1.3 : roomStyle === "loft" ? 1.3 : roomStyle === "arcade" ? 1.8 : roomStyle === "blue" ? 2.2 : 3.9
     );
     scene.add(hemi);
     // Both of these were left at vault's intensity for whitebox too (only
@@ -1841,7 +1865,7 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
     // Vault cut the same way as hemi above, same reasoning.
     const key = new THREE.SpotLight(
       palette.glow,
-      inHub ? 9.5 : roomStyle === "whitebox" ? 1.7 : roomStyle === "vault" ? 1.5 : roomStyle === "arcade" ? 2.2 : roomStyle === "blue" ? 3.4 : 7.2,
+      inHub ? 9.5 : roomStyle === "whitebox" ? 1.7 : roomStyle === "vault" ? 1.5 : roomStyle === "loft" ? 1.5 : roomStyle === "arcade" ? 2.2 : roomStyle === "blue" ? 3.4 : 7.2,
       26,
       Math.PI / 5,
       0.55,
@@ -1854,7 +1878,7 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
       // Cut from 3.5 in an earlier pass for Arcade; Vault's own 1.8 is cut
       // here for the same reason as hemi/key above — this sits close to
       // the entrance/door area and was adding to the same flattening wash.
-      roomStyle === "arcade" ? 1.4 : roomStyle === "whitebox" ? 0.35 : roomStyle === "vault" ? 0.75 : 1.8,
+      roomStyle === "arcade" ? 1.4 : roomStyle === "whitebox" ? 0.35 : roomStyle === "vault" ? 0.75 : roomStyle === "loft" ? 0.75 : 1.8,
       14
     );
     warm.position.set(-4.5, 2.4, 1.8);
@@ -1926,6 +1950,30 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
     // into the cache.
     function applyHeroNotchAndReveal(model: THREE.Group) {
       galleryFinishes?.apply(model);
+      // Industrial Loft handoff (2026-09-06): Loft shares Vault's exact GLB
+      // but must lose the model's own baked ornate door surround — the
+      // "vault_door_anchor" group (54 real meshes: arch trim, posts, plates,
+      // rivets, threshold, reveals, confirmed live via __vltdDebug this
+      // session) — in favor of a plain squared industrial portal. Hiding the
+      // one ancestor group is enough; Three.js skips every invisible
+      // object's descendants during render, so none of the 54 sub-meshes
+      // need to be found individually.
+      if (roomStyle === "loft") {
+        const doorAnchor = model.getObjectByName("vault_door_anchor");
+        if (doorAnchor) doorAnchor.visible = false;
+        if (galleryFinishes) {
+          const portalZ = FRONT_WALL_PANEL_SEAM_BASE_Z + FRONT_WALL_PUSH_BACK - 0.02;
+          const portalLeft = new THREE.Mesh(new THREE.BoxGeometry(0.16, 4.95, 0.18), galleryFinishes.dark);
+          portalLeft.position.set(-1.85, 2.45, portalZ);
+          roomGroup.add(portalLeft);
+          const portalRight = new THREE.Mesh(new THREE.BoxGeometry(0.16, 4.95, 0.18), galleryFinishes.dark);
+          portalRight.position.set(1.85, 2.45, portalZ);
+          roomGroup.add(portalRight);
+          const portalHeader = new THREE.Mesh(new THREE.BoxGeometry(3.85, 0.18, 0.18), galleryFinishes.dark);
+          portalHeader.position.set(0, 4.92, portalZ);
+          roomGroup.add(portalHeader);
+        }
+      }
       roomGroup.add(model);
       shellObjects.forEach((object) => {
         object.visible = false;
@@ -2000,7 +2048,7 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
               materials.forEach((material) => {
                 if (material instanceof THREE.MeshStandardMaterial || material instanceof THREE.MeshPhysicalMaterial) {
                   const name = material.name.toLowerCase();
-                  if (roomStyle === "vault") {
+                  if (roomStyle === "vault" || roomStyle === "loft") {
                     if (name.includes("floor")) {
                       material.color.setHex(0x24170f);
                       material.roughness = 0.62;
@@ -2104,8 +2152,8 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
     // plaster, Arcade keeps its polished-chrome look.
     const trimMaterial = new THREE.MeshStandardMaterial({
       color: palette.trim,
-      roughness: roomStyle === "arcade" ? 0.34 : (roomStyle === "vault" || roomStyle === "blue") ? 0.42 : 0.65,
-      metalness: roomStyle === "arcade" ? 0.72 : (roomStyle === "vault" || roomStyle === "blue") ? 0.55 : 0.08,
+      roughness: roomStyle === "arcade" ? 0.34 : (roomStyle === "vault" || roomStyle === "blue" || roomStyle === "loft") ? 0.42 : 0.65,
+      metalness: roomStyle === "arcade" ? 0.72 : (roomStyle === "vault" || roomStyle === "blue" || roomStyle === "loft") ? 0.55 : 0.08,
     });
     // EK's ask (2026-08-22): item frames used to share trimMaterial with
     // the wall trim AND the shelf boards — literally the same color as
@@ -2133,9 +2181,9 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
     addShell(floor);
 
     const baseboardMaterial = new THREE.MeshStandardMaterial({
-      color: roomStyle === "whitebox" ? 0xcfc6ac : (roomStyle === "vault" || roomStyle === "blue") ? 0x4a545c : 0x252a30,
+      color: roomStyle === "whitebox" ? 0xcfc6ac : (roomStyle === "vault" || roomStyle === "blue" || roomStyle === "loft") ? 0x4a545c : 0x252a30,
       roughness: 0.5,
-      metalness: (roomStyle === "vault" || roomStyle === "blue") ? 0.35 : 0.18,
+      metalness: (roomStyle === "vault" || roomStyle === "blue" || roomStyle === "loft") ? 0.35 : 0.18,
     });
 
     const backWall = new THREE.Mesh(new THREE.PlaneGeometry(21, 9.2), wallMaterial);
@@ -2174,9 +2222,9 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
     // steel-neutral tone here now — Blue (no GLB, so this ISN'T just a
     // brief flash for it, it's what actually stays on screen) keeps navy.
     const doorSideMaterial = new THREE.MeshStandardMaterial({
-      color: inHub ? 0x0a0e14 : roomStyle === "whitebox" ? 0xe0d9c4 : roomStyle === "vault" ? 0x8a9096 : roomStyle === "blue" ? 0x24405f : 0x111419,
+      color: inHub ? 0x0a0e14 : roomStyle === "whitebox" ? 0xe0d9c4 : (roomStyle === "vault" || roomStyle === "loft") ? 0x8a9096 : roomStyle === "blue" ? 0x24405f : 0x111419,
       roughness: 0.68,
-      metalness: roomStyle === "vault" ? 0.25 : roomStyle === "blue" ? 0.05 : 0.02,
+      metalness: (roomStyle === "vault" || roomStyle === "loft") ? 0.25 : roomStyle === "blue" ? 0.05 : 0.02,
     });
     if (wallTextureUrl) {
       void createImageTexture(wallTextureUrl, 1.4, 1).then((texture) => {
@@ -2324,7 +2372,7 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
         ? 0x0a0e14
         : roomStyle === "whitebox"
           ? 0xcfc6ac
-          : roomStyle === "vault"
+          : roomStyle === "vault" || roomStyle === "loft"
             ? 0x14171a
             : roomStyle === "blue"
               ? 0x0a1420
@@ -2584,11 +2632,11 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
     // wall sits at the same effective position as every GLB-backed style.
     buildDoorwaySign(
       0,
-      (roomStyle === "vault" || roomStyle === "blue") && !inHub ? 5.85 : 5.55,
+      (roomStyle === "vault" || roomStyle === "blue" || roomStyle === "loft") && !inHub ? 5.85 : 5.55,
       FRONT_WALL_ITEM_Z,
       inHub ? "Campus Map" : "Main Gallery",
       true,
-      (roomStyle === "vault" || roomStyle === "blue") && !inHub ? { width: 1.65, height: 0.42 } : undefined,
+      (roomStyle === "vault" || roomStyle === "blue" || roomStyle === "loft") && !inHub ? { width: 1.65, height: 0.42 } : undefined,
       inHub ? "__overview__" : "__hub__"
     );
 
@@ -3698,7 +3746,13 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
     }
     setCurrentHallId(hall.id);
     setGalleryId(hall.galleryId ?? "scratch");
-    if (hall.roomStyle === "vault" || hall.roomStyle === "whitebox" || hall.roomStyle === "arcade" || hall.roomStyle === "blue") {
+    if (
+      hall.roomStyle === "vault" ||
+      hall.roomStyle === "whitebox" ||
+      hall.roomStyle === "arcade" ||
+      hall.roomStyle === "blue" ||
+      hall.roomStyle === "loft"
+    ) {
       setRoomStyle(hall.roomStyle);
     }
     if (hall.roomLayout === "storefront" || hall.roomLayout === "salon" || hall.roomLayout === "spotlight") {
@@ -4413,6 +4467,7 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
                   className="h-6 w-auto rounded-[5px] bg-[color:var(--input)] px-2 text-[10px] font-black leading-none ring-1 ring-[color:var(--border)]"
                 >
                   <option value="vault">Vault</option>
+                  <option value="loft">Industrial Loft</option>
                   <option value="whitebox">White</option>
                   <option value="arcade">Arcade</option>
                   <option value="blue">Blue</option>

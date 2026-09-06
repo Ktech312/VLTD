@@ -2,7 +2,7 @@ import * as THREE from "three";
 
 import { createGrainTexture, createHardwoodTexture } from "./galleryTextures";
 
-export type GalleryFinishStyle = "whitebox" | "vault" | "arcade";
+export type GalleryFinishStyle = "whitebox" | "vault" | "arcade" | "loft";
 
 interface FinishPalette {
   wallColor: number;
@@ -11,7 +11,7 @@ interface FinishPalette {
   accentRoughness: number;
   floorColor: number;
   floorRoughness: number;
-  floorTreatment: "stone" | "wood";
+  floorTreatment: "stone" | "wood" | "concrete";
   jointColor: string; // stone-floor grout line color, ignored for wood floors
   trimColor: number;
   trimMetalness: number;
@@ -51,15 +51,21 @@ const PALETTES: Record<GalleryFinishStyle, FinishPalette> = {
     // much higher hemi/key/warm ambient (see VirtualGalleryRoom.tsx).
     // Deep gunmetal now instead of pale steel; less metalness so it reads
     // as a brushed/painted panel with weight, not a mirror-bright coating.
-    wallColor: 0x4b5158, wallRoughness: 0.58, wallMetalness: 0.16,
-    accentColor: 0x2e3237, accentRoughness: 0.55,
-    // Dark honed stone instead of the pale wood plank floor, which read as
-    // domestic against a steel vault shell. Same stone-joint technique as
-    // White's floor, tinted charcoal with a subdued (not bright) joint line.
+    // 2026-09-06, Industrial Loft/Vault refinement handoff, reference image
+    // 3 ("dark steel with subtle specular highlights"): roughness nudged
+    // down and metalness up slightly from the fourth pass — "increase the
+    // metal response modestly," not a return to the old mirror-bright
+    // coating this same comment originally moved away from.
+    wallColor: 0x4b5158, wallRoughness: 0.48, wallMetalness: 0.24,
+    accentColor: 0x2e3237, accentRoughness: 0.46,
+    // Dark honed stone gave way to a dedicated "concrete" treatment below
+    // (see floorTreatment) per the Industrial Loft/Vault handoff's
+    // reference image 3: "polished reflective concrete floor... avoid a
+    // tile grid."
     // 2026-09-06, fourth pass: EK's correction — "darken the floor to
     // graphite or nearly black... remove the current pale-gray floor
     // appearance." Cut further than the previous round's charcoal.
-    floorColor: 0x17181a, floorRoughness: 0.3, floorTreatment: "stone", jointColor: "#33363a",
+    floorColor: 0x17181a, floorRoughness: 0.22, floorTreatment: "concrete", jointColor: "#33363a",
     // Muted aged bronze — lower metalness/higher roughness than before so
     // it reads as brushed hardware catching light locally, not a glowing
     // chrome band running the length of the wall. Darkened and de-shined
@@ -68,6 +74,24 @@ const PALETTES: Record<GalleryFinishStyle, FinishPalette> = {
     trimColor: 0x83693c, trimMetalness: 0.42, trimRoughness: 0.58,
     // Darker case-base/plinth material too, same pass — EK: "darken the
     // display-case bases."
+    darkColor: 0x121416, darkMetalness: 0.3,
+    ceilingColor: 0x24272a,
+    glassColor: 0xd6dee2, glassOpacity: 0.1,
+  },
+  // Industrial Loft — EK's ask (2026-09-06 handoff): "the current Vault
+  // appearance is liked and must be preserved as a new room style... before
+  // Vault is changed further." A deliberate, independent COPY of Vault's
+  // palette values as they stood at commit 4f64dff, frozen here on purpose:
+  // Vault's own palette above is about to keep evolving (Stage 2 of the same
+  // handoff), and this object must NOT drift when that happens, or Loft
+  // would silently stop matching the version EK approved. Do not refactor
+  // this into a shared reference with `vault` — the whole point is that the
+  // two can diverge from here.
+  loft: {
+    wallColor: 0x4b5158, wallRoughness: 0.58, wallMetalness: 0.16,
+    accentColor: 0x2e3237, accentRoughness: 0.55,
+    floorColor: 0x17181a, floorRoughness: 0.3, floorTreatment: "stone", jointColor: "#33363a",
+    trimColor: 0x83693c, trimMetalness: 0.42, trimRoughness: 0.58,
     darkColor: 0x121416, darkMetalness: 0.3,
     ceilingColor: 0x24272a,
     glassColor: 0xd6dee2, glassOpacity: 0.1,
@@ -103,6 +127,42 @@ export function createGalleryFinishes(style: GalleryFinishStyle = "whitebox") {
     // than a second, separately-authored wood texture — one real, detailed
     // wood generator, shared, not duplicated.
     floorTexture = createHardwoodTexture();
+  } else if (palette.floorTreatment === "concrete") {
+    // Vault refinement handoff (2026-09-06), reference image 3: "dark
+    // polished-concrete floor with a smooth sealed finish... subtle
+    // concrete tonal variation and large-scale joints... avoid a tile
+    // grid." A few soft, irregular tonal blotches (not a per-tile shift)
+    // plus one large border join, at a texture repeat scale several times
+    // larger than the stone floor above — the whole point is FEWER, BIGGER
+    // joints, not the same small-slab pattern in a different color.
+    const concreteCanvas = document.createElement("canvas");
+    concreteCanvas.width = concreteCanvas.height = 512;
+    const concreteCtx = concreteCanvas.getContext("2d")!;
+    concreteCtx.drawImage(grain.image as CanvasImageSource, 0, 0);
+    let concreteSeed = 4051;
+    const concreteRandom = () => ((concreteSeed = (Math.imul(concreteSeed, 1664525) + 1013904223) >>> 0) / 4294967296);
+    for (let i = 0; i < 6; i++) {
+      const cx = concreteRandom() * 512;
+      const cy = concreteRandom() * 512;
+      const radius = 90 + concreteRandom() * 130;
+      const light = concreteRandom() > 0.5;
+      const gradient = concreteCtx.createRadialGradient(cx, cy, 0, cx, cy, radius);
+      gradient.addColorStop(0, light ? "rgba(255,255,255,0.035)" : "rgba(6,6,8,0.05)");
+      gradient.addColorStop(1, "rgba(0,0,0,0)");
+      concreteCtx.fillStyle = gradient;
+      concreteCtx.fillRect(0, 0, 512, 512);
+    }
+    concreteCtx.strokeStyle = palette.jointColor;
+    concreteCtx.lineWidth = 2;
+    concreteCtx.strokeRect(1, 1, 510, 510);
+    const concrete = new THREE.CanvasTexture(concreteCanvas);
+    concrete.colorSpace = THREE.SRGBColorSpace;
+    concrete.wrapS = concrete.wrapT = THREE.RepeatWrapping;
+    // A few times larger than the stone floor's repeat(10.5, 13) — large
+    // slabs read as poured concrete bays, not a tile grid.
+    concrete.repeat.set(2.5, 3);
+    concrete.anisotropy = 8;
+    floorTexture = concrete;
   } else {
     const stoneCanvas = document.createElement("canvas");
     stoneCanvas.width = stoneCanvas.height = 512;
@@ -150,7 +210,7 @@ export function createGalleryFinishes(style: GalleryFinishStyle = "whitebox") {
   });
   const floor = new THREE.MeshStandardMaterial({
     map: floorTexture,
-    bumpMap: palette.floorTreatment === "stone" ? floorTexture : undefined,
+    bumpMap: palette.floorTreatment === "stone" || palette.floorTreatment === "concrete" ? floorTexture : undefined,
     bumpScale: 0.025,
     color: palette.floorColor, roughness: palette.floorRoughness,
   });
@@ -162,7 +222,13 @@ export function createGalleryFinishes(style: GalleryFinishStyle = "whitebox") {
   // below — just enough structure that the ceiling doesn't read as one flat
   // plane, echoing the reference's "cool geometric ceiling light."
   let ceilingTexture: THREE.Texture | undefined;
-  if (style === "vault") {
+  // Vault refinement handoff (2026-09-06): the flat painted grid texture is
+  // superseded by a real recessed-light grid built as geometry in
+  // addVaultArmor below — a texture and actual glowing geometry occupying
+  // the same plane would double up/clash. Loft is a frozen snapshot of
+  // Vault's PRE-refinement look (commit 4f64dff, painted texture and all),
+  // so it alone keeps this exact code path unchanged.
+  if (style === "loft") {
     const ceilCanvas = document.createElement("canvas");
     ceilCanvas.width = ceilCanvas.height = 512;
     const ceilCtx = ceilCanvas.getContext("2d")!;
@@ -195,6 +261,16 @@ export function createGalleryFinishes(style: GalleryFinishStyle = "whitebox") {
   });
   const finishes = [wall, charcoal, floor, brass, dark, ceiling, glass];
   finishes.forEach((material) => { material.envMapIntensity = 0.35; });
+  // Vault refinement handoff, reference image 3: "polished reflective
+  // concrete floor" and "dark steel with... controlled environment
+  // reflection" — a modest bump over the shared baseline above, on the
+  // floor and wall specifically, not every surface (case glass/trim/dark
+  // stay at the shared baseline so this reads as two deliberately shinier
+  // surfaces, not a general room-wide reflectivity increase).
+  if (style === "vault") {
+    floor.envMapIntensity = 0.55;
+    wall.envMapIntensity = 0.5;
+  }
   const materials: THREE.Material[] = [...finishes];
   const textures: THREE.Texture[] = [grain, floorTexture];
   if (ceilingTexture) textures.push(ceilingTexture);
@@ -241,22 +317,64 @@ export function createGalleryFinishes(style: GalleryFinishStyle = "whitebox") {
       // dark stone/steel plinth, not the same pale color as the wall behind
       // it. White/Arcade are untouched (still the wall material, matching
       // their own already-approved look) — this is a Vault-only change.
-      else if (name.includes("case_base")) object.material = style === "vault" ? dark : wall;
+      else if (name.includes("case_base")) object.material = (style === "vault" || style === "loft") ? dark : wall;
       else if (name.includes("shelf") || name.includes("corner_post") || name.includes("door")) object.material = dark;
       else if (name.includes("wall")) object.material = name === "back_wall" ? charcoal : wall;
       // Design-chat brief (2026-09-06, guarded THIRD pass, reference-image
       // hierarchy): "Remove the continuous gold horizontal accent lines and
       // gold baseboard treatment from Vault... Shelf supports should
       // primarily read as dark steel... brass should catch light locally,
-      // not glow across the whole room." Vault-only — White/Arcade keep
+      // not glow across the whole room." Vault/Loft only — White/Arcade keep
       // their existing brass rail/baseboard, unchanged.
-      else if (name.includes("rail") || name.includes("baseboard")) object.material = style === "vault" ? dark : brass;
+      else if (name.includes("rail") || name.includes("baseboard")) object.material = (style === "vault" || style === "loft") ? dark : brass;
       else if (name.includes("stile")) object.material = dark;
       object.receiveShadow = true;
     });
   }
 
+  // Shared 7-point exhibit-pool target table — where every ceiling fixture
+  // (visible or hidden) aims, unchanged by the Stage 2 hardware rework
+  // below. Index 1 is the back-wall dead-center point that turned out to be
+  // the "washed-out central artwork" culprit (see the vaultIntensity note
+  // further down).
+  const LIGHT_TARGETS: Array<[number, number, number, number, number, number]> = [
+    [-6, 8.4, -8.9, -6, 3.7, -12], [0, 8.4, -8.9, 0, 3.7, -12], [6, 8.4, -8.9, 6, 3.7, -12],
+    [-7.4, 8.4, -6.5, -10.5, 3.7, -6.5], [-7.4, 8.4, 1.5, -10.5, 3.7, 1.5],
+    [7.4, 8.4, -6.5, 10.5, 3.7, -6.5], [7.4, 8.4, 1.5, 10.5, 3.7, 1.5],
+  ];
+
   function addLighting(room: THREE.Group) {
+    // Vault refinement handoff (2026-09-06): "remove the extra ceiling-light
+    // hardware from Vault: the separate bright white strip, hanging track,
+    // and visible spot housings... the grid may be supported by hidden
+    // economical lights so artwork remains readable, but it must visually
+    // appear to be the light source." Vault gets its own lighting path below
+    // with the SAME exhibit-pool targets/intensities but none of the
+    // visible fixture geometry — the grid glow built in addVaultArmor is
+    // the only visible ceiling hardware now. Loft is a frozen snapshot of
+    // Vault's pre-refinement look and keeps the full visible track/spot rig
+    // unchanged, same as White.
+    if (style === "vault") {
+      LIGHT_TARGETS.forEach(([x, y, z, tx, ty, tz], index) => {
+        const vaultIntensity = index === 1 ? 14 : 30;
+        const light = new THREE.SpotLight(0xffe6bd, vaultIntensity, 16, Math.PI / 4.6, 0.88, 1.25);
+        light.position.set(x, y - 0.2, z);
+        light.target.position.set(tx, ty, tz);
+        light.castShadow = index === 1;
+        if (light.castShadow) {
+          light.shadow.mapSize.set(1024, 1024);
+          light.shadow.bias = -0.0002;
+          light.shadow.normalBias = 0.035;
+        }
+        room.add(light, light.target);
+      });
+      const doorLight = new THREE.SpotLight(0xf3ead2, 22, 9, Math.PI / 6, 0.6, 1.3);
+      doorLight.position.set(-3.2, 4.2, 4.4);
+      doorLight.target.position.set(0, 2.2, 5.5);
+      room.add(doorLight, doorLight.target);
+      return;
+    }
+
     const fixture = new THREE.MeshStandardMaterial({ color: 0x242623, roughness: 0.5, metalness: 0.6 });
     const lens = new THREE.MeshBasicMaterial({ color: 0xffedcf, toneMapped: false });
     materials.push(fixture, lens);
@@ -268,12 +386,7 @@ export function createGalleryFinishes(style: GalleryFinishStyle = "whitebox") {
     box(17.2, 0.1, 0.12, 0, 8.65, -8.9);
     box(0.12, 0.1, 15, -7.4, 8.65, -1.6);
     box(0.12, 0.1, 15, 7.4, 8.65, -1.6);
-    const targets: Array<[number, number, number, number, number, number]> = [
-      [-6, 8.4, -8.9, -6, 3.7, -12], [0, 8.4, -8.9, 0, 3.7, -12], [6, 8.4, -8.9, 6, 3.7, -12],
-      [-7.4, 8.4, -6.5, -10.5, 3.7, -6.5], [-7.4, 8.4, 1.5, -10.5, 3.7, 1.5],
-      [7.4, 8.4, -6.5, 10.5, 3.7, -6.5], [7.4, 8.4, 1.5, 10.5, 3.7, 1.5],
-    ];
-    targets.forEach(([x, y, z, tx, ty, tz], index) => {
+    LIGHT_TARGETS.forEach(([x, y, z, tx, ty, tz], index) => {
       const direction = new THREE.Vector3(tx - x, ty - y, tz - z).normalize();
       const head = new THREE.Group();
       head.position.set(x, y, z);
@@ -290,17 +403,15 @@ export function createGalleryFinishes(style: GalleryFinishStyle = "whitebox") {
       // instead of leaving a visible dark seam between fixtures, and so no
       // single pool reads as a hard circular stamp. Intensity/distance/decay
       // are untouched: this broadens each pool's edge, it doesn't add light.
-      // Vault-only cut (2026-09-06, fourth pass): this same rig at White's
-      // full 55 was the actual source of EK's "washed-out central artwork"
-      // call-out — index 1's target sits exactly on the back-wall center
-      // (x=0, z=-12), dead-on and perpendicular to that piece's glass, which
-      // reads as a blown-out glare hotspot rather than even illumination.
-      // A uniform 30 across all 7 fixtures (first correction attempt) still
-      // left that one piece visibly washed out on live re-check — the other
-      // 6 pools looked right at 30, only the direct hit needed a further,
-      // separate cut. White keeps 55 everywhere (already reviewed/approved).
+      // Loft-only cut (frozen from Vault's own fourth pass, 2026-09-06):
+      // this same rig at White's full 55 was the actual source of EK's
+      // "washed-out central artwork" call-out — index 1's target sits
+      // exactly on the back-wall center (x=0, z=-12), dead-on and
+      // perpendicular to that piece's glass, which reads as a blown-out
+      // glare hotspot rather than even illumination. White keeps 55
+      // everywhere (already reviewed/approved).
       const vaultIntensity = index === 1 ? 14 : 30;
-      const light = new THREE.SpotLight(0xffe6bd, style === "vault" ? vaultIntensity : 55, 16, Math.PI / 4.6, 0.88, 1.25);
+      const light = new THREE.SpotLight(0xffe6bd, style === "loft" ? vaultIntensity : 55, 16, Math.PI / 4.6, 0.88, 1.25);
       light.position.set(x, y - 0.2, z);
       light.target.position.set(tx, ty, tz);
       // Only the central beam needs a shadow map: keep mobile fill cost bounded.
@@ -313,15 +424,12 @@ export function createGalleryFinishes(style: GalleryFinishStyle = "whitebox") {
       room.add(light, light.target);
     });
 
-    // Vault only: a dedicated angled side light on the door/arch assembly
-    // (the real GLB geometry sits roughly x=0, z≈5.2-5.7 — see
-    // "vault_plate_top"/"vault_left_post"/"vault_right_post" positions,
-    // confirmed live via __vltdDebug). EK's ask: "the door...needs
-    // form-defining side light and contact shadow" — raking light from one
-    // side reveals the recess/rings/bolts/thickness that flat overhead
-    // wash was flattening out. One modest, non-shadow-casting spot, not a
-    // second full fixture rig.
-    if (style === "vault") {
+    // Loft only (frozen from Vault): a dedicated angled side light on the
+    // door/arch assembly (the real GLB geometry sits roughly x=0,
+    // z≈5.2-5.7 — see "vault_plate_top"/"vault_left_post"/
+    // "vault_right_post" positions, confirmed live via __vltdDebug). One
+    // modest, non-shadow-casting spot, not a second full fixture rig.
+    if (style === "loft") {
       const doorLight = new THREE.SpotLight(0xf3ead2, 22, 9, Math.PI / 6, 0.6, 1.3);
       doorLight.position.set(-3.2, 4.2, 4.4);
       doorLight.target.position.set(0, 2.2, 5.5);
@@ -387,11 +495,19 @@ export function createGalleryFinishes(style: GalleryFinishStyle = "whitebox") {
   // the existing shell, the same additive pattern as addCaseDetails'
   // contact shadows.
   function addVaultArmor(room: THREE.Group) {
-    // Fourth pass (2026-09-06), EK's own review of the third pass, point
-    // by point: fewer/wider ribs (was too many thin scattered lines),
-    // rivets only at real panel junctions (was 2 arbitrary heights per
-    // rib — "scattered dots"), the back/side walls split into a few broad
-    // bays with real dividers (was one outline spanning the whole wall).
+    if (style === "loft") {
+      addLoftArmor(room);
+      return;
+    }
+    addVaultArmorRefined(room);
+  }
+
+  // Frozen, verbatim copy of Vault's fourth-pass armor geometry as it stood
+  // at commit 4f64dff — Industrial Loft's own independent copy (2026-09-06
+  // handoff) so it keeps EK's approved look no matter how addVaultArmorRefined
+  // below keeps changing for Vault itself. Do not edit this function when
+  // refining Vault; edit addVaultArmorRefined instead.
+  function addLoftArmor(room: THREE.Group) {
     const ribMaterial = new THREE.MeshStandardMaterial({ color: 0x24272a, metalness: 0.32, roughness: 0.52 });
     const dividerMaterial = new THREE.MeshStandardMaterial({ color: 0x1c1e20, metalness: 0.3, roughness: 0.55 });
     const seamMaterial = new THREE.MeshStandardMaterial({ color: 0x121314, metalness: 0.2, roughness: 0.65 });
@@ -540,7 +656,151 @@ export function createGalleryFinishes(style: GalleryFinishStyle = "whitebox") {
     room.add(glow);
   }
 
-  return { wall, floor, brass, apply, addLighting, addCaseDetails, addVaultArmor, dispose() {
+  // Vault refinement handoff (2026-09-06), correcting the fourth pass frozen
+  // above as `addLoftArmor`. EK's brief: keep the current grid of large wall
+  // panels (proportion/organization already approved) and the recessed
+  // seam/rib/rivet/jamb treatment unchanged; remove the bright outer bay
+  // OUTLINE so walls read as one continuous armored interior instead of
+  // framed rectangles; replace the flat painted ceiling texture and the
+  // old 2-segment diagonal glow with a real, coherent, axis-aligned grid of
+  // recessed icy blue-white luminaires (reference images 1 and 2) that
+  // reads as the room's actual light source.
+  function addVaultArmorRefined(room: THREE.Group) {
+    const ribMaterial = new THREE.MeshStandardMaterial({ color: 0x24272a, metalness: 0.32, roughness: 0.52 });
+    const dividerMaterial = new THREE.MeshStandardMaterial({ color: 0x1c1e20, metalness: 0.3, roughness: 0.55 });
+    const seamMaterial = new THREE.MeshStandardMaterial({ color: 0x121314, metalness: 0.2, roughness: 0.65 });
+    const rivetMaterial = new THREE.MeshStandardMaterial({ color: 0x767c81, metalness: 0.68, roughness: 0.4 });
+    materials.push(ribMaterial, dividerMaterial, seamMaterial, rivetMaterial);
+
+    const WALL_TOP = 8.9;
+    const WALL_BOTTOM = 0.25;
+    const RIB_DEPTH = 0.08;
+    const SEAM_Y = 6.6;
+
+    // Unchanged from the fourth pass — EK: "keep the current grid of large
+    // wall panels; their proportion and organization are approved."
+    function addWallRibs(wallAxis: "x" | "z", fixedCoord: number, faceSign: 1 | -1, positions: number[]) {
+      for (const pos of positions) {
+        const rib = new THREE.Mesh(
+          wallAxis === "x"
+            ? new THREE.BoxGeometry(0.16, WALL_TOP - WALL_BOTTOM, RIB_DEPTH)
+            : new THREE.BoxGeometry(RIB_DEPTH, WALL_TOP - WALL_BOTTOM, 0.16),
+          ribMaterial
+        );
+        const midY = (WALL_TOP + WALL_BOTTOM) / 2;
+        if (wallAxis === "x") rib.position.set(pos, midY, fixedCoord + faceSign * RIB_DEPTH * 0.5);
+        else rib.position.set(fixedCoord + faceSign * RIB_DEPTH * 0.5, midY, pos);
+        room.add(rib);
+        const rivet = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 0.06, 10), rivetMaterial);
+        rivet.rotation.x = wallAxis === "x" ? Math.PI / 2 : 0;
+        rivet.rotation.z = wallAxis === "x" ? 0 : Math.PI / 2;
+        if (wallAxis === "x") rivet.position.set(pos, SEAM_Y, fixedCoord + faceSign * (RIB_DEPTH + 0.035));
+        else rivet.position.set(fixedCoord + faceSign * (RIB_DEPTH + 0.035), SEAM_Y, pos);
+        room.add(rivet);
+      }
+    }
+    addWallRibs("x", -12, 1, [-7.5, -2.5, 2.5, 7.5]);
+    addWallRibs("z", -10.5, 1, [-11, -6, -1, 4]);
+    addWallRibs("z", 10.5, -1, [-11, -6, -1, 4]);
+
+    function addSeam(wallAxis: "x" | "z", fixedCoord: number, faceSign: 1 | -1, span: [number, number]) {
+      const length = span[1] - span[0];
+      const mid = (span[0] + span[1]) / 2;
+      const seam = new THREE.Mesh(
+        wallAxis === "x" ? new THREE.BoxGeometry(length, 0.05, 0.03) : new THREE.BoxGeometry(0.03, 0.05, length),
+        seamMaterial
+      );
+      if (wallAxis === "x") seam.position.set(mid, SEAM_Y, fixedCoord + faceSign * 0.02);
+      else seam.position.set(fixedCoord + faceSign * 0.02, SEAM_Y, mid);
+      room.add(seam);
+    }
+    addSeam("x", -12, 1, [-9.8, 9.8]);
+    addSeam("z", -10.5, 1, [-14.5, 8.5]);
+    addSeam("z", 10.5, -1, [-14.5, 8.5]);
+
+    // The dividers that organize each wall into a few broad panel groups
+    // stay — EK's ask this round is only to drop the bright OUTLINE drawn
+    // around each group (addBayOutline, removed below this function
+    // entirely), not the underlying panel organization itself: "walls
+    // should read as one continuous armored interior with fine recessed
+    // joints, rather than framed rectangles mounted inside another room."
+    function addDivider(wallAxis: "x" | "z", fixedCoord: number, faceSign: 1 | -1, pos: number) {
+      const divider = new THREE.Mesh(
+        wallAxis === "x"
+          ? new THREE.BoxGeometry(0.32, WALL_TOP - WALL_BOTTOM, RIB_DEPTH + 0.04)
+          : new THREE.BoxGeometry(RIB_DEPTH + 0.04, WALL_TOP - WALL_BOTTOM, 0.32),
+        dividerMaterial
+      );
+      const midY = (WALL_TOP + WALL_BOTTOM) / 2;
+      if (wallAxis === "x") divider.position.set(pos, midY, fixedCoord + faceSign * (RIB_DEPTH + 0.04) * 0.5);
+      else divider.position.set(fixedCoord + faceSign * (RIB_DEPTH + 0.04) * 0.5, midY, pos);
+      room.add(divider);
+    }
+    addDivider("x", -12, 1, -3.3);
+    addDivider("x", -12, 1, 3.3);
+    addDivider("z", -10.5, 1, -3);
+    addDivider("z", 10.5, -1, -3);
+
+    // Deeper wall returns flanking the existing archway — unchanged; the
+    // arch itself stays a secondary passage, not the main vault door.
+    for (const side of [-1, 1]) {
+      const jamb = new THREE.Mesh(new THREE.BoxGeometry(0.5, 6.4, 0.4), ribMaterial);
+      jamb.position.set(side * 2.35, 3.4, 5.5);
+      room.add(jamb);
+    }
+
+    // Ceiling grid — EK's correction: "keep the current grid pattern and
+    // turn those grid lines into the visible built-in luminaires... a thin,
+    // continuous, recessed pale icy blue-white grid similar to Image 2."
+    // A real axis-aligned lattice (3 lines running north-south crossed by 2
+    // running east-west) that meets at genuine intersections, so it reads
+    // as one coherent grid rather than disconnected fragments — replacing
+    // the previous single 2-segment diagonal path. Kept well inside the
+    // room (z from -9.5 to -2) so it stays framed by the entrance camera,
+    // the same z-range already confirmed visible from the entrance in the
+    // prior pass. Each strip sits in its own slightly wider dark recessed
+    // channel so it reads as built into the ceiling, not floating in front
+    // of it — same visual technique as before, just laid out as a full
+    // grid instead of one path.
+    const glowMaterial = new THREE.MeshBasicMaterial({ color: 0xcfe1e8, toneMapped: false });
+    const channelMaterial = new THREE.MeshStandardMaterial({ color: 0x101214, roughness: 0.8, metalness: 0.1 });
+    materials.push(glowMaterial, channelMaterial);
+    const GRID_Y_CHANNEL = 8.78;
+    const GRID_Y_LINE = 8.74;
+    function gridLineX(x: number, z1: number, z2: number) {
+      const length = Math.abs(z2 - z1);
+      const mid = (z1 + z2) / 2;
+      const channel = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.1, length + 0.3), channelMaterial);
+      channel.position.set(x, GRID_Y_CHANNEL, mid);
+      room.add(channel);
+      const line = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.05, length), glowMaterial);
+      line.position.set(x, GRID_Y_LINE, mid);
+      room.add(line);
+    }
+    function gridLineZ(z: number, x1: number, x2: number) {
+      const length = Math.abs(x2 - x1);
+      const mid = (x1 + x2) / 2;
+      const channel = new THREE.Mesh(new THREE.BoxGeometry(length + 0.3, 0.1, 0.32), channelMaterial);
+      channel.position.set(mid, GRID_Y_CHANNEL, z);
+      room.add(channel);
+      const line = new THREE.Mesh(new THREE.BoxGeometry(length, 0.05, 0.1), glowMaterial);
+      line.position.set(mid, GRID_Y_LINE, z);
+      room.add(line);
+    }
+    // 3 lines north-south, 2 crossing east-west — one connected lattice
+    // with 6 real intersections, not scattered segments.
+    for (const x of [-6, 0, 6]) gridLineX(x, -9.5, -2);
+    for (const z of [-8, -4]) gridLineZ(z, -8, 8);
+    // Restrained, low-intensity fill so the grid reads as the light source
+    // without spilling onto nearby artwork — "do not create a shadow-
+    // casting light for every line," so one soft point light near the
+    // grid's center is enough, not one per segment.
+    const glow = new THREE.PointLight(0xcfe1e8, 0.35, 8, 1.4);
+    glow.position.set(0, 8.5, -6);
+    room.add(glow);
+  }
+
+  return { wall, floor, brass, dark, apply, addLighting, addCaseDetails, addVaultArmor, dispose() {
     textures.forEach((texture) => texture.dispose());
     materials.forEach((material) => material.dispose());
   } };
