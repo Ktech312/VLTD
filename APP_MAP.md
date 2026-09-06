@@ -79,7 +79,7 @@ per Next.js App Router conventions.
 - `/museum/[galleryId]/guest` — Guest-facing rendering of a specific gallery for visitors (non-owner viewing experience with comments support).
 - `/museum/share/[token]` — Public share-link landing page that resolves a gallery by its public token and renders it for anonymous guests (with adult-content gating).
 - `/museum/invite/[token]` — Invite-only gallery access page that resolves and marks an invite token used, then shows the gated exhibition.
-- `/museum/virtual-room` — Builder for an interactive 3D/virtual VLTD gallery room assembled from vault items and exhibitions.
+- `/museum/virtual-room` — Builder for an interactive 3D/virtual VLTD gallery room assembled from vault items and exhibitions. Existing White style has the September 5 plaster/stone/brass material pass (`galleryRoomFinishes.ts`); room dimensions and navigation are shared with the other styles.
 - `/museum/virtual-room/guest` — Read-only guest walkthrough of a published virtual gallery room.
 - `/gallery/[galleryId]` — Public gallery viewer page showing a single exhibit's items (grid/swipe modes) with owner-only delete controls.
 

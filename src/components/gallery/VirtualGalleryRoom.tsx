@@ -46,6 +46,7 @@ import { UNIVERSE_LABEL, type UniverseKey } from "@/lib/taxonomy";
 import SocialExportSheet from "@/components/SocialExportSheet";
 import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment.js";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
+import { createGalleryFinishes } from "./galleryRoomFinishes";
 
 // The app's real theme blue — same tone/text pairing as the "Save Room
 // Draft" button's own gradient (`#79E7FB`→`#2CB1D1`) and dark text
@@ -221,69 +222,6 @@ function fillSlots(ids: string[]): string[] {
   });
   return slots;
 }
-
-const DEMO_ITEMS: VaultItem[] = [
-  {
-    id: "demo-comic",
-    title: "Signed Variant Comic",
-    subtitle: "Foil cover, limited run",
-    universe: "Comics",
-    category: "Comic Books",
-    currentValue: 420,
-    imageFrontUrl: "/collectibles/comic-slab.png",
-    notes: "Foil-cover variant, hand-signed by the cover artist at a convention signing. Limited print run, slabbed and graded shortly after release.",
-  },
-  {
-    id: "demo-card",
-    title: "Rookie Parallel",
-    subtitle: "Graded 10",
-    universe: "Sports",
-    category: "Trading Cards",
-    currentValue: 1850,
-    imageFrontUrl: "/collectibles/sports-slab.png",
-    notes: "Rookie-year parallel, numbered print run. Graded a perfect 10 with sharp corners and centering.",
-  },
-  {
-    id: "demo-record",
-    title: "First Press Vinyl",
-    subtitle: "Near mint sleeve",
-    universe: "Music",
-    category: "Vinyl",
-    currentValue: 260,
-    imageFrontUrl: "/collectibles/vinyl-record.png",
-    notes: "Original first pressing on the original label. Sleeve shows light shelf wear; the record itself plays near mint.",
-  },
-  {
-    id: "demo-figure",
-    title: "Designer Figure",
-    subtitle: "Artist proof",
-    universe: "Pop Culture",
-    category: "Figures",
-    currentValue: 700,
-    imageFrontUrl: "/collectibles/vinyl-figure.png",
-    notes: "Artist-proof edition, hand-numbered on the base. Never removed from its display stand.",
-  },
-  {
-    id: "demo-poster",
-    title: "Theater One Sheet",
-    subtitle: "Linen backed",
-    universe: "Film",
-    category: "Poster",
-    currentValue: 540,
-    imageFrontUrl: "/collectibles/movie-poster.png",
-    notes: "Original theatrical one-sheet from the film's release run. Professionally linen-backed for display.",
-  },
-  {
-    id: "demo-guitar",
-    title: "Tour Guitar",
-    subtitle: "Stage-played",
-    universe: "Music",
-    category: "Instruments",
-    currentValue: 3200,
-    imageFrontUrl: "/collectibles/guitar.png",
-    notes: "Played on tour, with visible fret wear and a repaired headstock crack. Comes with a signed certificate of authenticity.",
-  },
-];
 
 function formatMoney(value?: number) {
   if (typeof value !== "number" || !Number.isFinite(value) || value <= 0) return "";
@@ -1289,7 +1227,7 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
   // back to the entrance. Persists across rebuilds; only entering a genuinely
   // different room (openUniverseRoom/openMainHall) clears it back to a fresh spawn.
   const cameraStateRef = useRef<{ x: number; y: number; z: number; yaw: number; pitch: number } | null>(null);
-  const [items, setItems] = useState<VaultItem[]>(DEMO_ITEMS);
+  const [items, setItems] = useState<VaultItem[]>([]);
   const [galleries, setGalleries] = useState<Gallery[]>([]);
   const [galleryId, setGalleryId] = useState("scratch");
   // Real cloud-saved rooms ("Halls" in the UI) — EK's ask 2026-08-24, see
@@ -1320,7 +1258,7 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
   // ids didn't match anything in the loaded vault, which read as "this
   // control doesn't do anything." Now every switch reports what happened.
   const [sourceStatus, setSourceStatus] = useState<{ ok: boolean; message: string } | null>(null);
-  const [selectedIds, setSelectedIds] = useState<string[]>(() => fillSlots(DEMO_ITEMS.map((item) => item.id)));
+  const [selectedIds, setSelectedIds] = useState<string[]>(() => fillSlots([]));
   // EK's ask (2026-08-30): "it flashes blue, blank, purple no items, purple
   // with items" — the mount effect below restores state in real stages (the
   // hardcoded "vault" default, then the localStorage draft's real style/items
@@ -1422,7 +1360,7 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
     // half, so a browser/origin with nothing cached yet (this local dev
     // server is its own separate origin from the deployed site, with its
     // own empty localStorage) fell straight through to the hardcoded
-    // DEMO_ITEMS fallback and stayed there.
+    // empty-room fallback and stayed there.
     // `draftAppliedSelectedIds` is set below, synchronously, before this
     // promise's `.then()` ever gets a chance to run — a saved draft's own
     // layout should win over auto-placing the newly-synced real items.
@@ -1443,7 +1381,7 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
     void syncVaultItemsFromSupabase().then((syncedItems) => {
       if (syncedItems.length === 0) return;
       setItems(syncedItems);
-      // The synchronous load above only had DEMO_ITEMS to work with (cold
+      // The synchronous load above had no cached items to work with (cold
       // cache) and no draft restored its own layout — safe to plant the
       // room with the user's real items now, the same initial-fill this
       // effect already does above when the cache happens to be warm.
@@ -1846,6 +1784,8 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
     // selected — a fixed "front door" impression rather than something users
     // reskin like a normal room.
     const inHub = selectedItems.length === 0;
+    const galleryFinishes = roomStyle === "whitebox" && !inHub ? createGalleryFinishes() : null;
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
 
     const scene = new THREE.Scene();
     scene.background = new THREE.Color(inHub ? 0x04060a : roomStyle === "whitebox" ? 0xd5dbe1 : 0x05070b);
@@ -1857,6 +1797,8 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
 
     const roomGroup = new THREE.Group();
     scene.add(roomGroup);
+    galleryFinishes?.addLighting(roomGroup);
+    galleryFinishes?.addCaseDetails(roomGroup, CABINET_SPOTS);
     roomGroupRef.current = roomGroup;
 
     const fallbackShell = new THREE.Group();
@@ -1991,6 +1933,7 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
     // can differ between re-runs) instead of baking a stale notch state
     // into the cache.
     function applyHeroNotchAndReveal(model: THREE.Group) {
+      galleryFinishes?.apply(model);
       roomGroup.add(model);
       shellObjects.forEach((object) => {
         object.visible = false;
@@ -2148,6 +2091,11 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
       roughness: 0.46,
       metalness: 0.04,
     });
+    if (galleryFinishes) {
+      floorMaterial.map?.dispose();
+      floorMaterial.copy(galleryFinishes.floor);
+      if (!wallTextureUrl) wallMaterial.copy(galleryFinishes.wall);
+    }
     // Trim finish varies by style: Vault gets a real brushed-steel feel (it's
     // meant to evoke a bank vault door), White stays matte painted wood/
     // plaster, Arcade keeps its polished-chrome look.
@@ -2816,6 +2764,24 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
         );
         frame.rotation.y = pos.ry;
         roomGroup.add(frame);
+        if (galleryFinishes) {
+          // A thin raised brass lip around the existing mat: preserves the
+          // photo's contain-fit, shelf clearance, and pickup hit target.
+          const edgeGroup = new THREE.Group();
+          edgeGroup.position.copy(card.position).addScaledVector(normal, -0.012);
+          edgeGroup.rotation.y = pos.ry;
+          const w = 1.12 * pos.scale + mattingSide * 2;
+          const h = 1.54 * pos.scale + mattingTop + mattingBottom;
+          const lip = 0.018 * pos.scale;
+          for (const side of [-1, 1]) {
+            const horizontal = new THREE.Mesh(new THREE.BoxGeometry(w, lip, 0.025), galleryFinishes.brass);
+            horizontal.position.y = side * (h - lip) / 2;
+            const vertical = new THREE.Mesh(new THREE.BoxGeometry(lip, h, 0.025), galleryFinishes.brass);
+            vertical.position.x = side * (w - lip) / 2;
+            edgeGroup.add(horizontal, vertical);
+          }
+          roomGroup.add(edgeGroup);
+        }
 
         // Only wall-mounted items get pickup/inspect — display-case items
         // (flat, lying in glass) keep the existing camera-focus-only click,
@@ -3442,6 +3408,7 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
       updateHeldItem(dt);
       updateKeyboardMovement(dt);
       if (walkTween) {
+        if (reducedMotion.matches) walkTween.t = 1;
         walkTween.t = Math.min(1, walkTween.t + dt / walkTween.journeyDuration);
         const { t, firstTurnEnd, moveEnd } = walkTween;
         if (t < firstTurnEnd) {
@@ -3467,9 +3434,9 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
           walkTween = null;
         }
       } else {
-        yaw += (targetYaw - yaw) * 0.12;
-        pitch += (targetPitch - pitch) * 0.12;
-        cameraBody.lerp(targetCameraBody, 0.15);
+        yaw += (targetYaw - yaw) * (reducedMotion.matches ? 1 : 0.12);
+        pitch += (targetPitch - pitch) * (reducedMotion.matches ? 1 : 0.12);
+        cameraBody.lerp(targetCameraBody, reducedMotion.matches ? 1 : 0.15);
       }
 
       const lookDirection = new THREE.Vector3(
@@ -3697,6 +3664,7 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
       window.removeEventListener("blur", onWindowBlur);
       renderer.domElement.removeEventListener("wheel", onWheel);
       scene.traverse((object) => {
+        if (object instanceof THREE.LineSegments) object.geometry.dispose();
         if (object instanceof THREE.Mesh) {
           object.geometry.dispose();
           const materials = Array.isArray(object.material) ? object.material : [object.material];
@@ -3707,6 +3675,7 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
         }
       });
       environment.dispose();
+      galleryFinishes?.dispose();
       pmremGenerator.dispose();
       renderer.dispose();
       container.innerHTML = "";

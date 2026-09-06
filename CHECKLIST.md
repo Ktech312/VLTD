@@ -1,5 +1,15 @@
 # VLTD — Session Checklist (2026-08-05 night → ongoing, updated 2026-08-27)
 
+## 2026-09-05 — one exhibition room, White style
+- [x] Preserve existing room dimensions, slot positions and normal movement.
+- [x] Plaster/stone materials, charcoal accent wall, brass details and real track lighting.
+- [x] Clear glass cases, open brass rims and frame lips; preserve photo proportions.
+- [x] Real collection or empty hall, no invented sample contents.
+- [x] Reduced-motion automatic camera transitions.
+- [x] TypeScript and targeted lint; local empty state and GLB finish render inspected.
+- [ ] Full production build and live existing-exhibition walkthrough.
+- [ ] EK review and real-device mobile performance before extending to the campus.
+
 ## ✅ 2026-08-27 migrations — both confirmed run by EK, fully live
 ✅ `supabase/migrations/20260827_vault_items_full_field_sync.sql` — ~109 new
 columns on `vault_items`. Not yet live-verified visually. See HANDOFF.md

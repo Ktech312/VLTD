@@ -248,6 +248,37 @@ who owns a screen.** EK is aware of this.
 
 ---
 
+## 2026-09-05 — single exhibition room material review
+
+EK authorized one polished room within the existing Exhibitions builder before
+any larger museum rollout. This pass upgrades the existing **White** style at
+`/museum/virtual-room`; select an existing exhibition and White in Room settings.
+The saved style is not forced to change. Vault/Blue/Arcade and the separate
+`/museum/vltd` public campus are untouched.
+
+- `galleryRoomFinishes.ts` supplies deterministic plaster grain/bump, matte stone
+  tiles, a charcoal back wall, restrained brass rails and frame lips, modeled
+  ceiling tracks with seven aimed warm spotlights (only one 1024px shadow map),
+  and clear cases with narrow metal rims instead of opaque lids.
+- Existing shell dimensions, 47-degree FOV, eye height, entrance camera position,
+  walking speed, drag direction, slots, all three layouts, source selection,
+  room/map navigation, save/share and pickup inspection remain in place.
+  Photo contain-fit and existing image aspect handling are unchanged.
+- Reduced-motion preference skips automatic walk/turn interpolation. Normal
+  movement is unchanged. Manual movement and item inspection remain available.
+- Removed invented demo collectibles/values/provenance from the initial fallback;
+  an account with no cached/cloud items now sees an empty hall.
+- Build uncovered an existing Next 16 route-params typing error in
+  `registry/[subject]/page.tsx`; its redirect now awaits params, preserving its
+  existing destination.
+- Verification so far: TypeScript passes; targeted ESLint has zero errors and
+  seven existing warnings. Local app empty-state checked. Actual Three.js/GLB
+  finish render inspected at the original entrance viewpoint. Production build
+  passes with webpack (Turbopack cannot follow this isolated worktree dependency
+  junction). Live collection walkthrough still pending; do not call this live yet.
+- Remaining acceptance: EK's visual and movement review of this single room;
+  real-device mobile performance; larger rooms/campus remain a separate phase.
+
 ## 🆕 2026-09-04 — drag direction flip, WASD removed from copy, floor
 texture + wall trim, and a fix to the testing-tool gap noted in the entry
 below this one. EK, after the waypoint/sensitivity round below: "I don't
