@@ -151,8 +151,14 @@ export function createGalleryFinishes(style: GalleryFinishStyle = "whitebox") {
       if (!(object instanceof THREE.Mesh)) return;
       const name = object.name.toLowerCase();
       if (name.includes("floor")) {
-        // Replace the baked floor overlay with one continuous surface.
-        object.visible = name === "floor_slab";
+        // Replace the baked floor overlay with one continuous surface —
+        // but a real, separate floor piece like Vault's own
+        // "vault_vestibule_floor" isn't an overlay to hide, it's a real
+        // floor with nothing else underneath it. Found live (2026-09-06):
+        // this was hiding it outright since it isn't literally named
+        // "floor_slab", leaving a gap. Keep anything with "vestibule" in
+        // its name visible too.
+        object.visible = name === "floor_slab" || name.includes("vestibule");
         object.material = floor;
         if (name === "floor_slab") {
           // World-size UVs keep tiles/planks square and consistently scaled

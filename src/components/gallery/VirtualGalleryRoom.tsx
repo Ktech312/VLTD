@@ -2138,13 +2138,18 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
     ceiling.rotation.x = Math.PI / 2;
     addShell(ceiling);
 
+    // EK's ask (2026-09-06, live screenshot): "residual of blue behind" the
+    // vault entrance — this material was still sharing Blue's navy
+    // (0x24405f) for the brief fallback-shell flash before Vault's real GLB
+    // takes over, which read as a real bug once Vault's own materials
+    // became steel/neutral tonight instead of the old flat-gray-everywhere
+    // look that made the mismatch less noticeable. Vault gets its own
+    // steel-neutral tone here now — Blue (no GLB, so this ISN'T just a
+    // brief flash for it, it's what actually stays on screen) keeps navy.
     const doorSideMaterial = new THREE.MeshStandardMaterial({
-      // Was noticeably darker than the main wall for vault (0x0f1c2e vs the
-      // wall's 0x24405f) — same wall, different color right at the doorway
-      // read as a mismatched patch instead of one continuous room.
-      color: inHub ? 0x0a0e14 : roomStyle === "whitebox" ? 0xe0d9c4 : (roomStyle === "vault" || roomStyle === "blue") ? 0x24405f : 0x111419,
+      color: inHub ? 0x0a0e14 : roomStyle === "whitebox" ? 0xe0d9c4 : roomStyle === "vault" ? 0x8a9096 : roomStyle === "blue" ? 0x24405f : 0x111419,
       roughness: 0.68,
-      metalness: (roomStyle === "vault" || roomStyle === "blue") ? 0.05 : 0.02,
+      metalness: roomStyle === "vault" ? 0.25 : roomStyle === "blue" ? 0.05 : 0.02,
     });
     if (wallTextureUrl) {
       void createImageTexture(wallTextureUrl, 1.4, 1).then((texture) => {
@@ -2153,19 +2158,35 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
         doorSideMaterial.needsUpdate = true;
       });
     }
-    // Vault style: the entrance wall gets a floor-to-ceiling ARCH cutout
+    // Blue style: the entrance wall gets a floor-to-ceiling ARCH cutout
     // (straight sides + a rounded top, reaching the floor — a real walkable
-    // passage) instead of a full circle floating mid-wall. EK's reference
-    // photo (a real museum "Weapons Vault" exhibit) is unambiguous: the
-    // opening itself is arched, not round — the round part is only the
-    // door, which stands fully swung clear beside it. archHalfWidth/
-    // archStraightHeight define that arch; the door assembly below reuses
-    // them so the frame and the opening agree on size.
+    // passage) instead of a full circle floating mid-wall. Vault no longer
+    // uses this shape at all (see the removed-door comment below) — its
+    // real GLB bakes its own complete, correctly-positioned entrance.
     const archHalfWidth = 1.7;
     const archStraightHeight = 3.25;
-    const vaultDoorRadius = 1.5;
 
-    if ((roomStyle === "vault" || roomStyle === "blue")) {
+    // EK's ask (2026-09-06, live screenshot circling all three): the arched
+    // cutout + gold architrave + circular vault-door prop below were all
+    // built here as Vault's fallback-shell entrance, shown only briefly
+    // before Vault's real GLB loads and takes over. That GLB now bakes in
+    // its own COMPLETE, correctly-positioned entrance assembly (arch trim,
+    // posts, plates, rivets, threshold — confirmed live via the
+    // __vltdDebug hook: 54 real "vault_*" meshes under a "vault_door_anchor"
+    // group), so this whole fallback build is redundant for Vault and
+    // actively wrong now: differently positioned from the real GLB
+    // ("gold arch is half in the other room" — this fallback arch's z
+    // doesn't match the GLB's own), still using Blue's old navy tone until
+    // the fix above, and the round door disc below was already supposed to
+    // be gone (EK, weeks ago: "why would there be a Vault door on the Blue
+    // room?" — vault-only was the fix at the time, but the real fix is that
+    // the disc itself is dead weight once the real GLB has its own
+    // entrance). Blue has no GLB, so this fallback IS its permanent
+    // entrance, not a brief flash — it still needs the arch. Vault now
+    // falls through to the plain doorframe in the `else` branch below,
+    // same simpler shape White/Arcade already use for their own brief
+    // pre-load flash.
+    if (roomStyle === "blue") {
       const rearWallShape = new THREE.Shape();
       rearWallShape.moveTo(-10.5, -0.05);
       rearWallShape.lineTo(10.5, -0.05);
@@ -2219,28 +2240,10 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
       );
       archTop.position.set(0, archStraightHeight, 5.7 + FRONT_WALL_PUSH_BACK);
       addShell(archTop);
-
-      // A heavier riveted hinge column at the right post — this is what the
-      // open door below visually reads as attached to. Vault-only, same as
-      // the round door itself (see the door-disc block further down) — EK:
-      // "there is still a Gold Post where you removed the door but you
-      // didn't remove the post." This piece exists ONLY to support that
-      // door; with no door on Blue, it's an orphaned post with nothing to
-      // attach to.
-      if (roomStyle === "vault") {
-        const hingeColumn = new THREE.Mesh(
-          new THREE.BoxGeometry(0.4, archPostHeight + 0.6, 0.4),
-          doorFrameMaterial
-        );
-        hingeColumn.position.set(archHalfWidth + 0.3, (archPostHeight + 0.6) / 2, 5.72 + FRONT_WALL_PUSH_BACK);
-        addShell(hingeColumn);
-        for (let i = 0; i < 6; i += 1) {
-          const rivet = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.045, 0.42, 8), trimMaterial);
-          rivet.rotation.x = Math.PI / 2;
-          rivet.position.set(archHalfWidth + 0.3, 0.4 + i * 0.55, 5.94 + FRONT_WALL_PUSH_BACK);
-          addShell(rivet);
-        }
-      }
+      // The hinge column that used to stand here (support for the now-
+      // removed door disc, Vault-only) is gone too — this block only ever
+      // runs for Blue now (the outer condition above), which never had a
+      // door to hinge in the first place.
     } else {
       // Same push-back as the vault/blue arch above and as every GLB-backed
       // style's own front wall now — keeps this fallback shell close to
@@ -2316,92 +2319,16 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
     beyondLight.position.set(0, 3, 7.5 + FRONT_WALL_PUSH_BACK);
     roomGroup.add(beyondLight);
 
-    // Vault style only: a heavy riveted steel door, fully swung open and
-    // standing clear beside the arch — grounded near the floor, its full
-    // riveted face visible, exactly like EK's reference photo (a real
-    // "Weapons Vault" museum exhibit: the door stands to the right of the
-    // opening, attached to a thick hinge column, face mostly toward the
-    // viewer, nowhere near overlapping the passage). Not part of
-    // meshesRef/doorwayMeshesRef, so it can't affect the doorway's
-    // click/raycast behavior (2026-08-30: navigation now hangs off the
-    // sign above the arch, not a plane covering the arch itself — see
-    // buildDoorwaySign's own comment).
-    //
-    // Two earlier passes both tried to make this door literally hinge/pivot
-    // in place — first onto a rectangular opening (never matched, a round
-    // door swinging out of a square hole isn't a real design), then a
-    // second time with real hinge-rotation math onto a round hole, but the
-    // rotation only opened ~110° and the math showed the disc still
-    // clipping the opening at that angle. Reference photos show the door
-    // simply standing well clear, next to the frame, not mid-swing — so
-    // this version places it directly at its open resting position instead
-    // of computing a rotation, and the placement below is chosen so the
-    // disc's footprint (center + radius) never reaches the arch's x<=1.7
-    // opening at all.
-    // EK's ask (2026-08-30): "why would there be a Vault door on the Blue
-    // room?" — fair question, this heavy riveted disc is themed
-    // specifically for the vault style; Blue is its own distinct
-    // decorative style with no vault theming elsewhere, so it shouldn't
-    // share this one vault-specific prop. Vault-only now.
-    if (roomStyle === "vault") {
-      const vaultDoorMaterial = new THREE.MeshStandardMaterial({
-        color: 0x8b939a,
-        roughness: 0.3,
-        metalness: 0.88,
-      });
-      const doorThickness = 0.28;
-      const doorGroup = new THREE.Group();
-
-      const doorDisc = new THREE.Mesh(
-        new THREE.CylinderGeometry(vaultDoorRadius, vaultDoorRadius, doorThickness, 32),
-        vaultDoorMaterial
-      );
-      doorDisc.rotation.x = Math.PI / 2;
-      doorGroup.add(doorDisc);
-
-      const hub = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.34, 0.34, doorThickness + 0.05, 20),
-        trimMaterial
-      );
-      hub.rotation.x = Math.PI / 2;
-      doorGroup.add(hub);
-
-      for (let i = 0; i < 10; i += 1) {
-        const angle = (i / 10) * Math.PI * 2;
-        const spoke = new THREE.Mesh(new THREE.BoxGeometry(0.09, 0.09, doorThickness + 0.06), trimMaterial);
-        spoke.position.set(Math.cos(angle) * vaultDoorRadius * 0.8, Math.sin(angle) * vaultDoorRadius * 0.8, 0);
-        doorGroup.add(spoke);
-      }
-
-      for (let i = 0; i < 16; i += 1) {
-        const angle = (i / 16) * Math.PI * 2;
-        const rivet = new THREE.Mesh(
-          new THREE.CylinderGeometry(0.045, 0.045, doorThickness + 0.08, 8),
-          trimMaterial
-        );
-        rivet.rotation.x = Math.PI / 2;
-        rivet.position.set(
-          Math.cos(angle) * vaultDoorRadius * 0.94,
-          Math.sin(angle) * vaultDoorRadius * 0.94,
-          0
-        );
-        doorGroup.add(rivet);
-      }
-
-      // Grounded (bottom edge ~0.15 above the floor), standing just past
-      // the hinge column, well inside the room (not the vestibule) on the
-      // same side as the camera — matching the reference. A slight turn
-      // (not a full 90°) keeps the riveted face visible rather than edge-on.
-      // EK's ask (2026-08-30): "the Vault door and background colors behind
-      // the door are not Right" — this z was still the literal pre-push-back
-      // number (5.2), never updated when FRONT_WALL_PUSH_BACK moved the
-      // arch/hinge column back by 1.5 units, so the door had drifted 1.5
-      // units further into the room than the arch it's supposed to stand
-      // beside — landing on/near the center display pedestal instead.
-      doorGroup.position.set(archHalfWidth + 0.3 + vaultDoorRadius + 0.35, vaultDoorRadius + 0.15, 5.2 + FRONT_WALL_PUSH_BACK);
-      doorGroup.rotation.y = 0.3;
-      addShell(doorGroup);
-    }
+    // The heavy riveted swung-open door disc that used to live here
+    // (Vault-only fallback prop) is REMOVED as of the 2026-09-06 refinement
+    // pass — EK circled it live: "you used some old code on that vault
+    // because that door was removed weeks ago." It was never actually
+    // deleted, just gated to Vault only after an earlier round; the real
+    // fix is that Vault's GLB now bakes its own complete entrance assembly
+    // (confirmed live via __vltdDebug: "vault_door_anchor" with 54 real
+    // meshes — arch trim, posts, plates, rivets, threshold), so this
+    // fallback-only disc is dead weight regardless of which style shows it,
+    // not something to keep re-gating.
 
     // EK's ask (2026-08-30): "the trim doesn't touch the floor" — real,
     // measured: the shell's own floor plane sits at y=-0.05, but every
