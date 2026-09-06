@@ -56,7 +56,7 @@ const PALETTES: Record<GalleryFinishStyle, FinishPalette> = {
     // Dark honed stone instead of the pale wood plank floor, which read as
     // domestic against a steel vault shell. Same stone-joint technique as
     // White's floor, tinted charcoal with a subdued (not bright) joint line.
-    floorColor: 0x2c2e30, floorRoughness: 0.48, floorTreatment: "stone", jointColor: "#4a4e52",
+    floorColor: 0x2c2e30, floorRoughness: 0.38, floorTreatment: "stone", jointColor: "#4a4e52",
     // Muted aged bronze — lower metalness/higher roughness than before so
     // it reads as brushed hardware catching light locally, not a glowing
     // chrome band running the length of the wall.
@@ -356,7 +356,150 @@ export function createGalleryFinishes(style: GalleryFinishStyle = "whitebox") {
       }
     });
   }
-  return { wall, floor, brass, apply, addLighting, addCaseDetails, dispose() {
+  // Vault only: a genuine architectural pass, not another material swap.
+  // EK's direct correction (2026-09-06, third round): "it still looks like
+  // the original gallery with different colors... make a clearly visible
+  // Vault-specific architectural pass." Adds real geometry — protruding
+  // steel ribs, a recessed seam replacing the old rail's position, rivets,
+  // a recessed-bay outline framing each shelf wall, and a glowing
+  // geometric ceiling-light pattern (the reference image's actual neon
+  // lines, not a painted texture, since the ceiling texture from the prior
+  // round apparently wasn't "immediately obvious" from the entrance).
+  // Every shelf/slot/item position, the door's shape, and the room's
+  // dimensions are untouched — this is decorative geometry layered onto
+  // the existing shell, the same additive pattern as addCaseDetails'
+  // contact shadows.
+  function addVaultArmor(room: THREE.Group) {
+    const ribMaterial = new THREE.MeshStandardMaterial({ color: 0x2a2d30, metalness: 0.35, roughness: 0.5 });
+    const seamMaterial = new THREE.MeshStandardMaterial({ color: 0x18191b, metalness: 0.25, roughness: 0.6 });
+    const rivetMaterial = new THREE.MeshStandardMaterial({ color: 0x8a9096, metalness: 0.7, roughness: 0.35 });
+    const bayEdgeMaterial = new THREE.LineBasicMaterial({ color: 0x53585d, transparent: true, opacity: 0.55 });
+    materials.push(ribMaterial, seamMaterial, rivetMaterial, bayEdgeMaterial);
+
+    const WALL_TOP = 8.9;
+    const WALL_BOTTOM = 0.25;
+    const RIB_DEPTH = 0.07;
+
+    // One protruding vertical rib + a couple of rivets near its seam
+    // crossings, on a real wall face. `axis` says which coordinate is
+    // fixed (the wall plane) vs which one the rib walks along.
+    function addWallRibs(
+      wallAxis: "x" | "z",
+      fixedCoord: number,
+      faceSign: 1 | -1,
+      positions: number[]
+    ) {
+      for (const pos of positions) {
+        const rib = new THREE.Mesh(
+          wallAxis === "x"
+            ? new THREE.BoxGeometry(0.1, WALL_TOP - WALL_BOTTOM, RIB_DEPTH)
+            : new THREE.BoxGeometry(RIB_DEPTH, WALL_TOP - WALL_BOTTOM, 0.1),
+          ribMaterial
+        );
+        const midY = (WALL_TOP + WALL_BOTTOM) / 2;
+        if (wallAxis === "x") rib.position.set(pos, midY, fixedCoord + faceSign * RIB_DEPTH * 0.5);
+        else rib.position.set(fixedCoord + faceSign * RIB_DEPTH * 0.5, midY, pos);
+        room.add(rib);
+        for (const y of [6.6, 2.4]) {
+          const rivet = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.05, 10), rivetMaterial);
+          rivet.rotation.x = wallAxis === "x" ? Math.PI / 2 : 0;
+          rivet.rotation.z = wallAxis === "x" ? 0 : Math.PI / 2;
+          if (wallAxis === "x") rivet.position.set(pos, y, fixedCoord + faceSign * (RIB_DEPTH + 0.03));
+          else rivet.position.set(fixedCoord + faceSign * (RIB_DEPTH + 0.03), y, pos);
+          room.add(rivet);
+        }
+      }
+    }
+    // Back wall (x runs -10.5..10.5, faces +z into the room).
+    addWallRibs("x", -12, 1, [-9, -6, -3, 0, 3, 6, 9]);
+    // Left/right walls (z runs roughly -14..8, face +x / -x into the room).
+    addWallRibs("z", -10.5, 1, [-13, -10, -7, -4, -1, 2, 5, 8]);
+    addWallRibs("z", 10.5, -1, [-13, -10, -7, -4, -1, 2, 5, 8]);
+
+    // A second, darker recessed seam line above the (now dark) rail —
+    // reads as a shadow gap/panel joint rather than an accent, replacing
+    // what used to be one continuous bright band.
+    function addSeam(wallAxis: "x" | "z", fixedCoord: number, faceSign: 1 | -1, span: [number, number], y: number) {
+      const length = span[1] - span[0];
+      const mid = (span[0] + span[1]) / 2;
+      const seam = new THREE.Mesh(
+        wallAxis === "x"
+          ? new THREE.BoxGeometry(length, 0.05, 0.03)
+          : new THREE.BoxGeometry(0.03, 0.05, length),
+        seamMaterial
+      );
+      if (wallAxis === "x") seam.position.set(mid, y, fixedCoord + faceSign * 0.02);
+      else seam.position.set(fixedCoord + faceSign * 0.02, y, mid);
+      room.add(seam);
+    }
+    addSeam("x", -12, 1, [-9.8, 9.8], 6.9);
+    addSeam("z", -10.5, 1, [-14.5, 8.5], 6.9);
+    addSeam("z", 10.5, -1, [-14.5, 8.5], 6.9);
+
+    // A recessed-bay outline framing each shelf wall — visually integrates
+    // the required shelves into a "cut into the armor" bay instead of an
+    // open shelf on a flat panel. Pure outline (LineSegments), doesn't
+    // touch shelf/item geometry or hit targets at all.
+    function addBayOutline(wallAxis: "x" | "z", fixedCoord: number, faceSign: 1 | -1, span: [number, number]) {
+      const length = span[1] - span[0];
+      const mid = (span[0] + span[1]) / 2;
+      const height = 4.3;
+      const midY = 3.45;
+      const box =
+        wallAxis === "x"
+          ? new THREE.BoxGeometry(length, height, 0.02)
+          : new THREE.BoxGeometry(0.02, height, length);
+      const edges = new THREE.LineSegments(new THREE.EdgesGeometry(box), bayEdgeMaterial);
+      box.dispose();
+      if (wallAxis === "x") edges.position.set(mid, midY, fixedCoord + faceSign * 0.05);
+      else edges.position.set(fixedCoord + faceSign * 0.05, midY, mid);
+      room.add(edges);
+    }
+    addBayOutline("x", -12, 1, [-9.5, 9.5]);
+    addBayOutline("z", -10.5, 1, [-14, 8]);
+    addBayOutline("z", 10.5, -1, [-14, 8]);
+
+    // Deeper wall returns flanking the existing archway — EK: "give the
+    // existing door more visual mass... layered steel, darker recesses."
+    // Two stepped dark panels just outside the arch posts, at a slightly
+    // different depth than the main wall, reading as a thicker jamb
+    // without touching the arch/door geometry itself (still the same
+    // shape, same position — see the arch's own real position confirmed
+    // live earlier, x=0 z≈5.2-5.7).
+    for (const side of [-1, 1]) {
+      const jamb = new THREE.Mesh(new THREE.BoxGeometry(0.5, 6.4, 0.4), ribMaterial);
+      jamb.position.set(side * 2.35, 3.4, 5.5);
+      room.add(jamb);
+    }
+
+    // A restrained geometric ceiling-light pattern, visible from the
+    // entrance — the reference image's actual glowing lines, not a
+    // painted texture (the prior round's canvas grid on the ceiling
+    // material wasn't "immediately obvious" enough). Genuinely emissive
+    // (toneMapped: false keeps it a clean bright line regardless of the
+    // room's own low exposure), thin, angular, sparse — mood lighting, not
+    // wall-to-wall neon.
+    const glowMaterial = new THREE.MeshBasicMaterial({ color: 0x8fe0f2, toneMapped: false });
+    materials.push(glowMaterial);
+    function glowLine(x1: number, z1: number, x2: number, z2: number) {
+      const dx = x2 - x1;
+      const dz = z2 - z1;
+      const length = Math.sqrt(dx * dx + dz * dz);
+      const line = new THREE.Mesh(new THREE.BoxGeometry(length, 0.03, 0.05), glowMaterial);
+      line.position.set((x1 + x2) / 2, 9.05, (z1 + z2) / 2);
+      line.rotation.y = -Math.atan2(dz, dx);
+      room.add(line);
+      const glow = new THREE.PointLight(0x8fe0f2, 0.35, 5);
+      glow.position.set((x1 + x2) / 2, 8.85, (z1 + z2) / 2);
+      room.add(glow);
+    }
+    glowLine(-8, -9, -1, -2);
+    glowLine(-1, -2, 6, -6);
+    glowLine(-8, 2, -2, -1);
+    glowLine(2, -8, 8, 1);
+  }
+
+  return { wall, floor, brass, apply, addLighting, addCaseDetails, addVaultArmor, dispose() {
     textures.forEach((texture) => texture.dispose());
     materials.forEach((material) => material.dispose());
   } };

@@ -1767,6 +1767,13 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
     // alone for this pass (not reviewed/approved yet — see the brief).
     if (roomStyle === "whitebox" || roomStyle === "vault") galleryFinishes?.addLighting(roomGroup);
     galleryFinishes?.addCaseDetails(roomGroup, CABINET_SPOTS);
+    // EK's direct correction (2026-09-06, third round): the material-only
+    // pass "still looks like the original gallery with different colors" —
+    // a real architectural pass needed actual added geometry (ribs, seams,
+    // rivets, a recessed-bay outline, deeper jambs by the door, a glowing
+    // ceiling pattern), not just recolored materials. Vault-only, doesn't
+    // touch shelf/item/door geometry or hit targets.
+    if (roomStyle === "vault") galleryFinishes?.addVaultArmor(roomGroup);
     roomGroupRef.current = roomGroup;
 
     const fallbackShell = new THREE.Group();
