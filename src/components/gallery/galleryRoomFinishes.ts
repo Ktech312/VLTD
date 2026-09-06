@@ -149,7 +149,39 @@ export function createGalleryFinishes(style: GalleryFinishStyle = "whitebox") {
   });
   const brass = new THREE.MeshStandardMaterial({ color: palette.trimColor, metalness: palette.trimMetalness, roughness: palette.trimRoughness });
   const dark = new THREE.MeshStandardMaterial({ color: palette.darkColor, metalness: palette.darkMetalness, roughness: 0.65 });
-  const ceiling = new THREE.MeshStandardMaterial({ color: palette.ceilingColor, roughness: 0.98 });
+  // Vault only: "a restrained cool ceiling pattern may help distinguish the
+  // room" (design-chat reference brief, 2026-09-06). A quiet geometric grid
+  // in a cool blue-gray, not a decorative addition competing with the art
+  // below — just enough structure that the ceiling doesn't read as one flat
+  // plane, echoing the reference's "cool geometric ceiling light."
+  let ceilingTexture: THREE.Texture | undefined;
+  if (style === "vault") {
+    const ceilCanvas = document.createElement("canvas");
+    ceilCanvas.width = ceilCanvas.height = 512;
+    const ceilCtx = ceilCanvas.getContext("2d")!;
+    ceilCtx.fillStyle = "#2c3136";
+    ceilCtx.fillRect(0, 0, 512, 512);
+    ceilCtx.strokeStyle = "rgba(160,180,196,0.22)";
+    ceilCtx.lineWidth = 2;
+    const cell = 128;
+    for (let i = 0; i <= 512; i += cell) {
+      ceilCtx.beginPath();
+      ceilCtx.moveTo(i, 0);
+      ceilCtx.lineTo(i, 512);
+      ceilCtx.stroke();
+      ceilCtx.beginPath();
+      ceilCtx.moveTo(0, i);
+      ceilCtx.lineTo(512, i);
+      ceilCtx.stroke();
+    }
+    ceilingTexture = new THREE.CanvasTexture(ceilCanvas);
+    ceilingTexture.colorSpace = THREE.SRGBColorSpace;
+    ceilingTexture.wrapS = ceilingTexture.wrapT = THREE.RepeatWrapping;
+    ceilingTexture.repeat.set(4, 5);
+  }
+  const ceiling = new THREE.MeshStandardMaterial({
+    map: ceilingTexture, color: ceilingTexture ? 0xffffff : palette.ceilingColor, roughness: 0.98,
+  });
   const glass = new THREE.MeshPhysicalMaterial({
     color: palette.glassColor, transparent: true, opacity: palette.glassOpacity, roughness: 0.12,
     metalness: 0, clearcoat: 1, depthWrite: false, side: THREE.DoubleSide,
@@ -158,6 +190,7 @@ export function createGalleryFinishes(style: GalleryFinishStyle = "whitebox") {
   finishes.forEach((material) => { material.envMapIntensity = 0.35; });
   const materials: THREE.Material[] = [...finishes];
   const textures: THREE.Texture[] = [grain, floorTexture];
+  if (ceilingTexture) textures.push(ceilingTexture);
 
   function apply(model: THREE.Group) {
     model.traverse((object) => {
@@ -204,7 +237,13 @@ export function createGalleryFinishes(style: GalleryFinishStyle = "whitebox") {
       else if (name.includes("case_base")) object.material = style === "vault" ? dark : wall;
       else if (name.includes("shelf") || name.includes("corner_post") || name.includes("door")) object.material = dark;
       else if (name.includes("wall")) object.material = name === "back_wall" ? charcoal : wall;
-      else if (name.includes("rail") || name.includes("baseboard")) object.material = brass;
+      // Design-chat brief (2026-09-06, guarded THIRD pass, reference-image
+      // hierarchy): "Remove the continuous gold horizontal accent lines and
+      // gold baseboard treatment from Vault... Shelf supports should
+      // primarily read as dark steel... brass should catch light locally,
+      // not glow across the whole room." Vault-only — White/Arcade keep
+      // their existing brass rail/baseboard, unchanged.
+      else if (name.includes("rail") || name.includes("baseboard")) object.material = style === "vault" ? dark : brass;
       else if (name.includes("stile")) object.material = dark;
       object.receiveShadow = true;
     });
