@@ -11,8 +11,17 @@ export function createGalleryFinishes() {
   for (let y = 0; y < 512; y++) {
     for (let x = 0; x < 512; x++) {
       const i = (y * 512 + x) * 4;
-      const cloud = Math.sin(x / 38 + Math.sin(y / 47)) * 3 + Math.cos(y / 61) * 2;
-      const tone = 216 + cloud + (random() - 0.5) * 13;
+      // Two high-frequency wave layers (periods of a few pixels, many cycles
+      // across the 512px canvas) read as fine mineral grain, never as a
+      // repeating blob — that's what the old single low-frequency sine pair
+      // produced (~1-2 cycles across the whole canvas, tiled 5x3 across the
+      // wall, so it read as fuzzy fabric/clouds at real viewing distance).
+      // One very-low-frequency term is kept, but at low amplitude and a
+      // period longer than the canvas itself, so within any one tile it's
+      // only a gentle overall drift, not a visible blob.
+      const grain = Math.sin(x * 0.85 + y * 0.31) * 1.1 + Math.sin(x * 0.22 - y * 0.57) * 0.9;
+      const drift = Math.sin(x / 240 + y / 300) * 1.4;
+      const tone = 217 + grain + drift + (random() - 0.5) * 8;
       pixels.data.set([tone, tone - 3, tone - 8, 255], i);
     }
   }
@@ -27,10 +36,31 @@ export function createGalleryFinishes() {
   stoneCanvas.width = stoneCanvas.height = 512;
   const stoneCtx = stoneCanvas.getContext("2d")!;
   stoneCtx.drawImage(canvas, 0, 0);
-  // Fine joints, with mineral grain rather than a high-contrast checkerboard.
-  stoneCtx.strokeStyle = "#aaa59b";
-  stoneCtx.lineWidth = 2;
-  stoneCtx.strokeRect(0, 0, 512, 512);
+  // The old single border-per-repeat-unit joint was too thin/low-contrast to
+  // read at all once anisotropic filtering blurred it (confirmed live: the
+  // floor rendered as a flat, glossy-looking plane with no visible tiling).
+  // A visible-but-subdued cross join splits each repeat unit into 4 square
+  // slabs (same world-scale tile pitch as before — repeat.set() below is
+  // unchanged), plus a faint per-slab tone shift so slabs read as
+  // individual stone pieces without a bold checkerboard contrast.
+  let stoneSeed = 811;
+  const stoneRandom = () => ((stoneSeed = (Math.imul(stoneSeed, 1664525) + 1013904223) >>> 0) / 4294967296);
+  for (const qx of [0, 256]) {
+    for (const qy of [0, 256]) {
+      const shift = (stoneRandom() - 0.5) * 10;
+      stoneCtx.fillStyle = shift >= 0 ? `rgba(255,255,255,${shift / 255})` : `rgba(50,46,38,${-shift / 255})`;
+      stoneCtx.fillRect(qx, qy, 256, 256);
+    }
+  }
+  stoneCtx.strokeStyle = "#928c7d";
+  stoneCtx.lineWidth = 3;
+  stoneCtx.strokeRect(1.5, 1.5, 509, 509);
+  stoneCtx.beginPath();
+  stoneCtx.moveTo(256, 0);
+  stoneCtx.lineTo(256, 512);
+  stoneCtx.moveTo(0, 256);
+  stoneCtx.lineTo(512, 256);
+  stoneCtx.stroke();
   const stone = new THREE.CanvasTexture(stoneCanvas);
   stone.colorSpace = THREE.SRGBColorSpace;
   stone.wrapS = stone.wrapT = THREE.RepeatWrapping;
@@ -49,6 +79,7 @@ export function createGalleryFinishes() {
   const finishes = [wall, charcoal, floor, brass, dark, ceiling, glass];
   finishes.forEach((material) => { material.envMapIntensity = 0.35; });
   const materials: THREE.Material[] = [...finishes];
+  const textures: THREE.Texture[] = [plaster, stone];
 
   function apply(model: THREE.Group) {
     model.traverse((object) => {
@@ -117,7 +148,12 @@ export function createGalleryFinishes() {
       head.add(face);
       room.add(head);
       box(0.055, 0.24, 0.055, x, 8.55, z);
-      const light = new THREE.SpotLight(0xffe6bd, 55, 16, Math.PI / 5.4, 0.75, 1.25);
+      // Wider cone + higher penumbra than a "spot on a wall" needs on their
+      // own — deliberately so neighboring pools soften into each other
+      // instead of leaving a visible dark seam between fixtures, and so no
+      // single pool reads as a hard circular stamp. Intensity/distance/decay
+      // are untouched: this broadens each pool's edge, it doesn't add light.
+      const light = new THREE.SpotLight(0xffe6bd, 55, 16, Math.PI / 4.6, 0.88, 1.25);
       light.position.set(x, y - 0.2, z);
       light.target.position.set(tx, ty, tz);
       // Only the central beam needs a shadow map: keep mobile fill cost bounded.
@@ -133,7 +169,32 @@ export function createGalleryFinishes() {
   function addCaseDetails(room: THREE.Group, spots: Array<[number, number]>) {
     const edgeMaterial = new THREE.LineBasicMaterial({ color: 0xa99570, transparent: true, opacity: 0.6 });
     materials.push(edgeMaterial);
+    // Cheap fake contact shadow: a soft radial-gradient decal on the floor
+    // under each case, instead of a real shadow-casting light per case (only
+    // the one center ceiling spot casts real shadows — see addLighting).
+    // Without this the cases' plinths read as floating just above the floor,
+    // since nothing else in the scene darkens the floor directly beneath them.
+    const shadowCanvas = document.createElement("canvas");
+    shadowCanvas.width = shadowCanvas.height = 128;
+    const shadowCtx = shadowCanvas.getContext("2d")!;
+    const gradient = shadowCtx.createRadialGradient(64, 64, 0, 64, 64, 64);
+    gradient.addColorStop(0, "rgba(20,18,14,0.42)");
+    gradient.addColorStop(0.7, "rgba(20,18,14,0.22)");
+    gradient.addColorStop(1, "rgba(20,18,14,0)");
+    shadowCtx.fillStyle = gradient;
+    shadowCtx.fillRect(0, 0, 128, 128);
+    const shadowTexture = new THREE.CanvasTexture(shadowCanvas);
+    shadowTexture.colorSpace = THREE.SRGBColorSpace;
+    textures.push(shadowTexture);
+    const shadowMaterial = new THREE.MeshBasicMaterial({
+      map: shadowTexture, transparent: true, depthWrite: false, toneMapped: false,
+    });
+    materials.push(shadowMaterial);
     spots.forEach(([x, z]) => {
+      const shadow = new THREE.Mesh(new THREE.PlaneGeometry(2, 1.7), shadowMaterial);
+      shadow.rotation.x = -Math.PI / 2;
+      shadow.position.set(x, 0.006, z);
+      room.add(shadow);
       const box = new THREE.BoxGeometry(1.3, 1.15, 1);
       const edges = new THREE.LineSegments(new THREE.EdgesGeometry(box), edgeMaterial);
       box.dispose();
@@ -152,6 +213,7 @@ export function createGalleryFinishes() {
     });
   }
   return { wall, floor, brass, apply, addLighting, addCaseDetails, dispose() {
-    plaster.dispose(); stone.dispose(); materials.forEach((material) => material.dispose());
+    textures.forEach((texture) => texture.dispose());
+    materials.forEach((material) => material.dispose());
   } };
 }
