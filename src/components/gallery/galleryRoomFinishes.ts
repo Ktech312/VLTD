@@ -293,11 +293,14 @@ export function createGalleryFinishes(style: GalleryFinishStyle = "whitebox") {
       // Vault-only cut (2026-09-06, fourth pass): this same rig at White's
       // full 55 was the actual source of EK's "washed-out central artwork"
       // call-out — index 1's target sits exactly on the back-wall center
-      // (x=0, z=-12), so that fixture alone floods the centerpiece harder
-      // than any other light in the room. White keeps 55 (already reviewed
-      // and approved at that level); Vault gets a real cut so exhibit pools
-      // read as focused light, not a flood.
-      const light = new THREE.SpotLight(0xffe6bd, style === "vault" ? 30 : 55, 16, Math.PI / 4.6, 0.88, 1.25);
+      // (x=0, z=-12), dead-on and perpendicular to that piece's glass, which
+      // reads as a blown-out glare hotspot rather than even illumination.
+      // A uniform 30 across all 7 fixtures (first correction attempt) still
+      // left that one piece visibly washed out on live re-check — the other
+      // 6 pools looked right at 30, only the direct hit needed a further,
+      // separate cut. White keeps 55 everywhere (already reviewed/approved).
+      const vaultIntensity = index === 1 ? 14 : 30;
+      const light = new THREE.SpotLight(0xffe6bd, style === "vault" ? vaultIntensity : 55, 16, Math.PI / 4.6, 0.88, 1.25);
       light.position.set(x, y - 0.2, z);
       light.target.position.set(tx, ty, tz);
       // Only the central beam needs a shadow map: keep mobile fill cost bounded.
