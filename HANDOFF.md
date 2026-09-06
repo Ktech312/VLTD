@@ -1,4 +1,4 @@
-# VLTD — Session Handoff (updated 2026-09-06 overnight — active work is the single-exhibition-room builder at `/museum/virtual-room` (all 4 room styles now: White/Vault/Arcade/Blue). Separate from the VLTD Museum public campus below. **Overnight pass while EK slept, commits `10e8bc7` + `0f5c444` on `main`, LIVE and spot-checked, EK to do the real review in the morning:** after White's own material refinement earlier the same day (commit `c61e600`), EK asked for the same quality bar (believable materials, grounded contact shadows, readable lighting, distinct trim, no reskin) applied to Vault/Arcade/Blue, plus a real mobile bug fix EK found hands-on. What shipped:
+# VLTD — Session Handoff (updated 2026-09-06 — active work is the single-exhibition-room builder at `/museum/virtual-room` (all 4 room styles now: White/Vault/Arcade/Blue). Separate from the VLTD Museum public campus below. **LATEST (commit `b88a154`, live, EK-reported bug from testing the overnight pass): Vault's entrance had leftover fallback-shell junk from before its real GLB got its own detailed entrance model — a circular vault-door prop that was supposed to be gone weeks ago, a blue-tinted rear wall (still sharing Blue's navy), and a wrongly-positioned gold arch. Root cause confirmed live via the `__vltdDebug` hook (not guessed): Vault's GLB now bakes a complete 54-mesh entrance assembly of its own, but old JS fallback code (shown briefly before that GLB finishes loading) was still building a second, stale, mis-colored version for Vault too. Deleted the door prop outright, made the arch/architrave fallback Blue-only (Vault falls through to the same plain doorframe White/Arcade use for their own brief flash), gave Vault's fallback rear wall its own steel tone instead of Blue's navy. Also fixed a related bug found in the same investigation: `apply()` was hiding any floor-named mesh that wasn't literally "floor_slab," including Vault's real, separate vestibule floor. Live-verified: door gone, blue gone, arch clean in Vault; Blue's own entrance (which still needs this fallback, having no GLB) unaffected — confirmed via diff (its color branch is untouched) and a live look. See the 2026-09-06 dated entry (top of the log below) for full detail. Before this — the overnight pass itself, commits `10e8bc7` + `0f5c444` on `main`, LIVE and spot-checked by this session, EK's own review still the real acceptance gate:** after White's own material refinement earlier the same day (commit `c61e600`), EK asked for the same quality bar (believable materials, grounded contact shadows, readable lighting, distinct trim, no reskin) applied to Vault/Arcade/Blue, plus a real mobile bug fix EK found hands-on. What shipped:
 - **Vault**: generalized `galleryRoomFinishes.ts` (now takes a style param) to cover Vault's real GLB the same way White's already was — fine steel wall grain, real walnut-plank floor (reused the existing detailed hardwood generator), open glass cases instead of solid lids, contact shadows, brass trim matching the vault door's own brass. Live-checked: dramatic, clearly-correct improvement over the previous flat gray walls/plain floor/lidded cases.
 - **Arcade**: same generalized architecture, own palette (dark surfaces + its established bronze/cyan accents) — plus its own isolated exposure/hemi/key/warm lighting branch, since it was previously sharing Vault/Blue's much-brighter values and rendering as a washed-out pastel purple instead of "dark surfaces" (its own baked GLB materials are near-black on purpose). Live-checked: dramatic, clearly-correct improvement.
 - **Blue** (the one style with no GLB at all — confirmed via `ROOM_MODEL_URLS`): improved inline instead — its own warm gold trim (was aliasing Vault's cool steel-gray trim exactly), wall grain texture, contact shadows under its hand-built cases, and (after a live check caught a real regression — see the 2026-09-06 dated entry) an open-rim case top replacing a solid lid that had become much MORE visible once it turned gold. Blue's own isolated (lower) lighting branch too. **Live-checked but the wall still reads as a brighter medium blue than a strict "navy"** — a real, disclosed limitation, not a false "done," see the dated entry for why (its mid-tone base color doesn't hide brightness the way Arcade's near-black or Vault's light steel do).
@@ -250,6 +250,90 @@ who owns a screen.** EK is aware of this.
   3) public/searchable rooms by universe,
   4) paid room sizes/templates/convention placement,
   5) later freeform room editing if usage justifies it.
+
+---
+
+## 2026-09-06 — Vault entrance: removed leftover fallback door/arch, fixed blue-flash color
+
+EK reviewed the overnight Vault/Arcade/Blue pass (entry below) and sent a
+live screenshot of Vault's entrance with three things circled: a circular
+riveted vault-door prop ("you used some old code on that vault because that
+door was removed weeks ago"), blue color visible around/behind the arch
+("there is residual of blue behind it"), and "Gold arch is half in the
+other room." Commit `b88a154`.
+
+**Investigated live before touching anything**, since the code I'd just
+written the same night looked correct on paper and I didn't want to guess
+wrong twice in one session:
+- Checked the deployed page's own `window.__vltdDebug` hook (a pre-existing
+  debug export: `{ scene, roomGroup, fallbackShell, shellObjects, camera }`)
+  to see the ACTUAL live scene graph rather than reason from the source
+  alone.
+- First confirmed the JS fallback-shell objects (which is where the old
+  door-disc code lives) were correctly `visible: false` (0 of 71 visible) —
+  ruling out "the hide-on-load mechanism broke." So whatever EK saw wasn't
+  the shell staying permanently visible.
+- Then dumped every named mesh in the loaded scene and found the real
+  cause: Vault's actual GLB (`vault-room.glb`) now bakes a COMPLETE,
+  separate entrance assembly of its own — a `vault_door_anchor` group
+  containing 54 real meshes (`vault_arch_inner_trim`, `vault_plate_left/
+  right/top`, `vault_left_post`/`vault_right_post`, `vault_threshold`,
+  rivets, reveals) — none of which existed when the OLD JS fallback
+  arch/door code was originally written. That old code (shared with Blue
+  via `roomStyle === "vault" || "blue"` conditions) still runs and renders
+  for a brief moment before the GLB finishes loading and hides it — a
+  "flash" that was apparently unnoticeable back when Vault's real materials
+  were flat gray-on-gray, but became a real, visible bug the moment
+  tonight's earlier pass made Vault's actual materials clean and detailed
+  (steel walls, walnut floor) while this stale flash still showed the OLD
+  navy-blue rear wall and gold arch at the OLD (pre-`FRONT_WALL_PUSH_BACK`)
+  position.
+
+**Fixes, all in `VirtualGalleryRoom.tsx` and `galleryRoomFinishes.ts`:**
+1. **Deleted the circular vault-door prop outright** (`doorGroup`: disc +
+   hub + spokes + rivets, ~85 lines) — it was already gated Vault-only from
+   an earlier round ("why is there a vault door on Blue"), but the actual
+   fix is that it's dead weight now that the real GLB has its own complete
+   entrance, not something to keep re-gating between styles.
+2. **The arch-cutout/architrave/hinge-column fallback block is now
+   Blue-only** (was `vault || blue`) — Blue still needs it (no GLB at all,
+   this fallback IS its permanent entrance, not a brief flash). Vault now
+   falls through to the plain doorframe shape in the `else` branch, the
+   same simple shape White/Arcade already use for their own brief pre-load
+   flash — no more separate, differently-positioned arch for Vault at all,
+   which is what "solved" the "gold arch half in the other room" complaint
+   (by removing the redundant shape, not by repositioning it).
+3. **`doorSideMaterial`** (the fallback rear wall around the doorway) no
+   longer shares Blue's navy `0x24405f` for Vault — Vault gets its own
+   steel-neutral `0x8a9096` instead. Blue's own value is untouched.
+4. **Also fixed, found in the same investigation**: `galleryRoomFinishes.ts`'s
+   `apply()` was hiding any floor-named mesh that wasn't literally
+   `"floor_slab"` — collateral damage on Vault's real, separate
+   `"vault_vestibule_floor"` mesh (confirmed `visible: false` via the debug
+   hook), leaving a gap. Now also keeps anything with `"vestibule"` in its
+   name visible.
+
+**Live verification after deploy** (confirmed via GitHub's commit-status
+API, then visually): turned the camera 180° in Vault (dispatched a real
+drag via `PointerEvent`s, same technique proven earlier this session) to
+face the entrance directly, matching EK's screenshot framing almost
+exactly (MAIN GALLERY sign, arch, frames both sides) — no door disc
+anywhere, no blue tint on or around the arch, arch reads as clean
+consistent steel with no positioning artifact. Checked Blue's own entrance
+too (still needs and still shows its own arch) — navy interior, gold trim,
+unaffected, exactly as before; confirmed both from the live look and from
+the diff itself (Blue's own color branch was never touched). No console
+errors. `tsc`/`eslint` clean (same 7 pre-existing warnings, zero new),
+production build clean.
+
+**Lesson for future sessions on this file**: when a GLB gets richer/more
+complete over time, check whether the OLD JS fallback-shell code built for
+that same style before the GLB existed is still doing anything useful, or
+is now just a stale, briefly-visible duplicate — this bit twice in one
+project (Blue's own "why is there a vault door here" fix earlier, and now
+this). The `window.__vltdDebug` hook (already present, not new) is the
+fast way to check what a style's fallback vs. real GLB content actually
+looks like live, without guessing from source alone.
 
 ---
 

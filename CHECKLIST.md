@@ -26,6 +26,18 @@
 - [ ] **Narrow-viewport control check — attempted, blocked by a tooling gap, not skipped.** `resize_window` (Claude-in-Chrome) reported success at 390×844 and 900×700 but had no actual effect on this tab — `window.innerWidth`/`innerHeight` stayed at 1920×855 through all three attempts, confirmed via JS after each one. No device-emulation alternative is available on an authenticated tab in this session. Code-review fallback: this pass touched only `galleryRoomFinishes.ts` (materials/lighting, no DOM/CSS/layout), and the room's canvas already resizes via a pre-existing `ResizeObserver` (`VirtualGalleryRoom.tsx:3642`) untouched by this pass — so a regression here is unlikely, but the actual narrow-width layout was not visually confirmed. Needs either a working device-emulation tool or a real narrow browser window/phone.
 - [x] Console error check — only pre-existing generic WebGL driver shader-precision warnings (same warning, seen both before and after this pass, unrelated to these changes). No real errors.
 
+## 2026-09-06 — Vault entrance: removed leftover fallback door/arch (EK-reported, live)
+EK reviewed the overnight pass below and sent a live screenshot circling 3 issues on Vault's entrance.
+- [x] Investigated live via `window.__vltdDebug` before changing anything — confirmed the fallback shell WAS correctly hidden (0/71 visible), then found the real cause: Vault's GLB now bakes its own complete 54-mesh entrance assembly, but old JS fallback code (shared with Blue, shown briefly pre-load) was still building a second, stale, wrongly-colored one for Vault too.
+- [x] "Remove door" — deleted the circular riveted vault-door prop outright (was already Vault-only from an earlier round; real fix is it's dead weight now, not something to keep re-gating).
+- [x] "Gold arch is half in the other room" — fixed by removal: the arch/architrave fallback is now Blue-only (Blue has no GLB, still needs it); Vault falls through to the same plain doorframe White/Arcade use, so there's no separate mispositioned arch for Vault at all.
+- [x] "Remove blue" — Vault's fallback rear wall no longer shares Blue's navy `0x24405f`; gets its own steel-neutral tone.
+- [x] Also fixed in the same investigation: `apply()` was hiding any floor-named mesh not literally `"floor_slab"`, including Vault's real separate vestibule floor. Now keeps `"vestibule"`-named meshes visible too.
+- [x] tsc/eslint clean (same 7 pre-existing warnings, zero new), production build clean.
+- [x] Pushed and deployed (`b88a154`), confirmed via GitHub commit-status API.
+- [x] Live-verified: turned the camera 180° in Vault to face the entrance directly (matching EK's screenshot framing) — no door, no blue, clean steel arch. No console errors.
+- [x] Regression-checked Blue's own entrance (still uses this fallback permanently) — navy + gold trim unaffected, confirmed both live and via diff (its own color branch untouched).
+
 ## 2026-09-06 overnight — Vault/Arcade/Blue material refinement + mobile drag/scroll fix
 EK's ask, autonomous overnight while EK slept — **EK has not reviewed any of this yet, review in the morning is still the actual acceptance gate.**
 - [x] Generalized `galleryRoomFinishes.ts` to a per-style palette (Vault, Arcade, White) — real GLBs confirmed sharing White's exact mesh-naming convention, same fix architecture reused, not rebuilt.
