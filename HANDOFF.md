@@ -1,4 +1,4 @@
-# VLTD — Session Handoff (updated 2026-09-06 — active work is the single-exhibition-room builder at `/museum/virtual-room` (all 4 room styles now: White/Vault/Arcade/Blue). Separate from the VLTD Museum public campus below. **LATEST (commit `b88a154`, live, EK-reported bug from testing the overnight pass): Vault's entrance had leftover fallback-shell junk from before its real GLB got its own detailed entrance model — a circular vault-door prop that was supposed to be gone weeks ago, a blue-tinted rear wall (still sharing Blue's navy), and a wrongly-positioned gold arch. Root cause confirmed live via the `__vltdDebug` hook (not guessed): Vault's GLB now bakes a complete 54-mesh entrance assembly of its own, but old JS fallback code (shown briefly before that GLB finishes loading) was still building a second, stale, mis-colored version for Vault too. Deleted the door prop outright, made the arch/architrave fallback Blue-only (Vault falls through to the same plain doorframe White/Arcade use for their own brief flash), gave Vault's fallback rear wall its own steel tone instead of Blue's navy. Also fixed a related bug found in the same investigation: `apply()` was hiding any floor-named mesh that wasn't literally "floor_slab," including Vault's real, separate vestibule floor. Live-verified: door gone, blue gone, arch clean in Vault; Blue's own entrance (which still needs this fallback, having no GLB) unaffected — confirmed via diff (its color branch is untouched) and a live look. See the 2026-09-06 dated entry (top of the log below) for full detail. Before this — the overnight pass itself, commits `10e8bc7` + `0f5c444` on `main`, LIVE and spot-checked by this session, EK's own review still the real acceptance gate:** after White's own material refinement earlier the same day (commit `c61e600`), EK asked for the same quality bar (believable materials, grounded contact shadows, readable lighting, distinct trim, no reskin) applied to Vault/Arcade/Blue, plus a real mobile bug fix EK found hands-on. What shipped:
+# VLTD — Session Handoff (updated 2026-09-06 — active work is the single-exhibition-room builder at `/museum/virtual-room` (all 4 room styles now: White/Vault/Arcade/Blue). Separate from the VLTD Museum public campus below. **LATEST — guarded Vault-only second pass (commit `e462771`, live), from a design-chat brief after a live desktop review of all 4 styles: Vault read as "a bright gray utility room," not a secure museum vault. Investigated live via `__vltdDebug` before touching anything and found the real cause — White and Vault's GLBs bake in the EXACT SAME 3 wall-wash spotlights (intensity 12 each); White works fine with them because White keeps its own ambient (hemi/key/warm) low AND calls its `addLighting()` ceiling-track rig on top, while Vault had neither (ambient left at old high shared values, no ceiling rig at all). Fixed per the brief's 6 priorities: cut Vault's own hemi/key/warm/exposure close to White's, enabled `addLighting()` for Vault too, added one dedicated angled light on the door/arch for form-defining side light; darkened the wall to deep gunmetal (was pale steel) with less metalness; switched the floor from pale hardwood to dark charcoal stone (same joint technique as White's floor); muted the brass trim (lower metalness, higher roughness, less saturated bronze); gave Vault's case bases their own dark plinth material instead of the pale wall color. White/Arcade/Blue untouched — confirmed live (no leakage, no blank-viewport regression, console clean, item pickup/rotate/return still works). See the 2026-09-06 dated entry (top of the log below) for full detail and screenshots-in-words. EK's own review is still the real acceptance gate — this is reported, not declared final. Before this — the entrance-fix round (commit `b88a154`, live, EK-reported bug from testing the overnight pass): Vault's entrance had leftover fallback-shell junk from before its real GLB got its own detailed entrance model — a circular vault-door prop that was supposed to be gone weeks ago, a blue-tinted rear wall (still sharing Blue's navy), and a wrongly-positioned gold arch. Root cause confirmed live via the `__vltdDebug` hook (not guessed): Vault's GLB now bakes a complete 54-mesh entrance assembly of its own, but old JS fallback code (shown briefly before that GLB finishes loading) was still building a second, stale, mis-colored version for Vault too. Deleted the door prop outright, made the arch/architrave fallback Blue-only (Vault falls through to the same plain doorframe White/Arcade use for their own brief flash), gave Vault's fallback rear wall its own steel tone instead of Blue's navy. Also fixed a related bug found in the same investigation: `apply()` was hiding any floor-named mesh that wasn't literally "floor_slab," including Vault's real, separate vestibule floor. Live-verified: door gone, blue gone, arch clean in Vault; Blue's own entrance (which still needs this fallback, having no GLB) unaffected — confirmed via diff (its color branch is untouched) and a live look. See the 2026-09-06 dated entry (top of the log below) for full detail. Before this — the overnight pass itself, commits `10e8bc7` + `0f5c444` on `main`, LIVE and spot-checked by this session, EK's own review still the real acceptance gate:** after White's own material refinement earlier the same day (commit `c61e600`), EK asked for the same quality bar (believable materials, grounded contact shadows, readable lighting, distinct trim, no reskin) applied to Vault/Arcade/Blue, plus a real mobile bug fix EK found hands-on. What shipped:
 - **Vault**: generalized `galleryRoomFinishes.ts` (now takes a style param) to cover Vault's real GLB the same way White's already was — fine steel wall grain, real walnut-plank floor (reused the existing detailed hardwood generator), open glass cases instead of solid lids, contact shadows, brass trim matching the vault door's own brass. Live-checked: dramatic, clearly-correct improvement over the previous flat gray walls/plain floor/lidded cases.
 - **Arcade**: same generalized architecture, own palette (dark surfaces + its established bronze/cyan accents) — plus its own isolated exposure/hemi/key/warm lighting branch, since it was previously sharing Vault/Blue's much-brighter values and rendering as a washed-out pastel purple instead of "dark surfaces" (its own baked GLB materials are near-black on purpose). Live-checked: dramatic, clearly-correct improvement.
 - **Blue** (the one style with no GLB at all — confirmed via `ROOM_MODEL_URLS`): improved inline instead — its own warm gold trim (was aliasing Vault's cool steel-gray trim exactly), wall grain texture, contact shadows under its hand-built cases, and (after a live check caught a real regression — see the 2026-09-06 dated entry) an open-rim case top replacing a solid lid that had become much MORE visible once it turned gold. Blue's own isolated (lower) lighting branch too. **Live-checked but the wall still reads as a brighter medium blue than a strict "navy"** — a real, disclosed limitation, not a false "done," see the dated entry for why (its mid-tone base color doesn't hide brightness the way Arcade's near-black or Vault's light steel do).
@@ -250,6 +250,120 @@ who owns a screen.** EK is aware of this.
   3) public/searchable rooms by universe,
   4) paid room sizes/templates/convention placement,
   5) later freeform room editing if usage justifies it.
+
+---
+
+## 2026-09-06 — Vault guarded second pass: real light hierarchy, gunmetal shell, dark stone floor
+
+A design chat did a live desktop review of White, Vault, Arcade, and Blue
+at the real `7/8 Test`/Hero exhibition and wrote a detailed brief:
+Vault-only, in priority order, White/Arcade/Blue explicitly held for a
+later approved pass. Commit `e462771`.
+
+**Brief's observed problems**: very strong global light flattening
+everything to one brightness; pale, lightly-metallic walls reading as
+"sprayed or galvanized" rather than real steel; a pale pink/white wood
+floor conflicting with a steel vault and feeling domestic; brass as long
+bright glowing stripes rather than believable hardware; light, floating-
+looking display cases; the door recognizable but flattened by uniform
+light, no side-light revealing its recess/rings/bolts; no visible
+lighting system or exhibit pools, unlike White. Target: "a private
+collection inside a real secure museum vault... heavy, controlled,
+precise, valuable, and human-scale."
+
+**Investigated live before writing any code** (same discipline as the
+entrance-fix round — this brief's own credit-efficient-verification ask
+plus the prior round's own lesson about not guessing from source alone):
+- Baseline: switched to Vault (7/8 Test, Hero, room settings collapsed),
+  screenshotted the entrance, zoomed on the wall/floor/case/door. Confirmed
+  every problem in the brief firsthand — pale galvanized-looking wall, pink
+  wood floor, glowing gold rail stripe, pale near-transparent case with a
+  flat white base, flat uniform-gray door with barely-visible rivets.
+- Used `window.__vltdDebug` to dump every real `THREE.Light` in the scene
+  for Vault, then again for White. Found both share the EXACT SAME 3 baked
+  wall-wash `SpotLight`s at intensity 12 (positioned at ceiling height,
+  aimed at the back/left/right walls) — these are shared GLB
+  infrastructure present in every GLB-based style equally, not something
+  vault-specific or something any earlier pass introduced. This
+  overturned an assumption from the OVERNIGHT pass (which reasoned "Vault
+  already has its own baked lights, don't add addLighting() or it'll
+  double up") — that reasoning was never verified live, and turned out
+  backwards: White proves this exact combination (baked wall-wash +
+  addLighting()'s ceiling rig + LOW ambient) reads great; Vault had the
+  baked lights and Vault's own much-higher ambient, but never got the
+  ceiling rig, which is exactly "no convincing visible lighting system...
+  unlike White."
+- Also pulled the real position of the door/arch assembly
+  (`vault_plate_top`/`vault_left_post`/`vault_right_post`, all around
+  x=0, z≈5.2-5.7) to aim a new light at the right spot instead of guessing.
+
+**Changes, all Vault-only** (`galleryRoomFinishes.ts` PALETTES.vault +
+`apply()`'s case_base branch; a few explicitly `roomStyle === "vault"`
+branches in `VirtualGalleryRoom.tsx`'s shared hemi/key/warm/exposure/
+addLighting lines — White/Arcade/Blue's own branches in those same lines
+are untouched):
+
+1. **Light hierarchy**: cut Vault's hemi/key/warm/exposure from
+   (3.9/7.2/1.8/0.92) to (1.7/2.0/0.6/0.7) — close to White's own
+   (1.5/1.7/0.35/0.68) rather than just nudged, now that Vault also gets
+   real exhibit lighting to do the actual work. Enabled `addLighting()`
+   (the ceiling-track ✕7-spotlight rig, previously White-only) for Vault
+   too, on the corrected understanding above. Added one dedicated angled
+   `SpotLight` (modest, no shadow map) aimed at the real door assembly for
+   raking side light — confirmed live: the left jamb now reads visibly lit
+   against a shadowed right side, real dimensional depth on the rivets/
+   recess that was completely flat before.
+2. **Shell weight**: wall color `0x9199a1` (pale steel) → `0x4b5158` (deep
+   gunmetal), metalness `0.28` → `0.16` so it reads as a brushed/painted
+   panel, not a mirror coating. Back-wall accent and ceiling both darkened
+   too (both were still light enough to keep contributing to the flat-
+   brightness problem even after the light-source cuts).
+3. **Floor**: switched Vault from the pale hardwood-plank texture to the
+   same stone-joint technique White's floor already uses, tinted dark
+   charcoal (`0x2c2e30`) with a subdued joint line — replaces the
+   pink/white plank floor that read as domestic against a steel vault.
+4. **Brass restraint**: trim metalness `0.72`→`0.55`, roughness
+   `0.35`→`0.48`, hue pulled toward a more muted aged bronze
+   (`0xb08d3e`→`0x9c7a44`) — reads as brushed hardware catching light
+   locally now, not a glowing chrome band running wall-to-wall.
+5. **Case grounding**: `case_base` meshes now use the `dark` material
+   instead of `wall`, Vault-only (White/Arcade keep their existing
+   wall-colored base, untouched) — a visibly distinct dark plinth instead
+   of the same pale tone as the wall behind it.
+6. **Collection protection**: no changes needed here beyond getting 1-5
+   right — confirmed live by picking up a real item (a TCG card, foil/
+   holographic treatment) and checking it read vividly, not washed out.
+
+**Live verification after deploy** (GitHub commit-status API, then
+visual — same reliable pattern as the entrance-fix round): entrance view
+now shows real light pools (a visible brighter patch centered on the
+middle frame, softly falling off toward the edges) against genuinely dark
+gunmetal walls; floor is dark charcoal stone with visible subdued joints;
+a case close-up shows a real dark plinth base under the glass, not a pale
+floating box; the door assembly shows real form — lit left jamb, shadowed
+right, visible rivet definition. Switched to White (unaffected — plaster/
+floor-tile/rail/contact-shadow/plain doorframe all exactly as before this
+pass), Arcade (own dark/bronze look intact, no gunmetal leakage, no
+sustained blank viewport on switch — the brief flagged this as something
+to re-check, not reproduced here), and Blue (navy + gold arch intact) —
+all three read correctly and independently. Picked up a real TCG card,
+confirmed vivid/non-washed-out artwork, confirmed it returned to its
+exact slot on release. Console clean on every style checked. `tsc`/
+`eslint` clean (same 7 pre-existing warnings, zero new), production build
+clean.
+
+**Not attempted this pass, per the brief's own scope**: Arcade and Blue's
+own held-for-later refinement notes (both documented in the brief itself
+for whoever picks up that phase); campus-wide room-dimension matching;
+any change to `/museum/vltd`.
+
+**Live URL**: `https://vltd.vercel.app/museum/virtual-room` (Vault style,
+`7/8 Test` source, Hero layout). **Commit**: `e462771`. **Files changed**:
+`src/components/gallery/galleryRoomFinishes.ts`,
+`src/components/gallery/VirtualGalleryRoom.tsx`. **Remaining limitation**:
+this session's own live spot-check is not a substitute for EK's and the
+design chat's actual review, per the brief's own explicit instruction to
+stop here.
 
 ---
 

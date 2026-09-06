@@ -26,6 +26,23 @@
 - [ ] **Narrow-viewport control check — attempted, blocked by a tooling gap, not skipped.** `resize_window` (Claude-in-Chrome) reported success at 390×844 and 900×700 but had no actual effect on this tab — `window.innerWidth`/`innerHeight` stayed at 1920×855 through all three attempts, confirmed via JS after each one. No device-emulation alternative is available on an authenticated tab in this session. Code-review fallback: this pass touched only `galleryRoomFinishes.ts` (materials/lighting, no DOM/CSS/layout), and the room's canvas already resizes via a pre-existing `ResizeObserver` (`VirtualGalleryRoom.tsx:3642`) untouched by this pass — so a regression here is unlikely, but the actual narrow-width layout was not visually confirmed. Needs either a working device-emulation tool or a real narrow browser window/phone.
 - [x] Console error check — only pre-existing generic WebGL driver shader-precision warnings (same warning, seen both before and after this pass, unrelated to these changes). No real errors.
 
+## 2026-09-06 — Vault guarded second pass (design-chat brief, live desktop review)
+Vault-only per the brief; Arcade/Blue explicitly held for a later approved pass.
+- [x] Baseline captured live: Vault, 7/8 Test, Hero, room settings collapsed — confirmed every problem in the brief firsthand (pale galvanized wall, pink wood floor, glowing gold rail, pale floating case, flat uniform door).
+- [x] Investigated via `__vltdDebug` before coding: found White and Vault share the EXACT SAME 3 baked wall-wash spotlights (intensity 12) — not vault-specific as an earlier pass assumed. White works because its own ambient stays low AND it calls `addLighting()`; Vault had neither.
+- [x] Priority 1 (light hierarchy): cut Vault's hemi/key/warm/exposure close to White's; enabled `addLighting()` for Vault (corrects the overnight pass's unverified "don't double-light" assumption); added a dedicated angled light on the door — confirmed live: visible lit-left/shadowed-right depth on the door.
+- [x] Priority 2 (shell weight): wall color → deep gunmetal, metalness reduced, back wall/ceiling darkened too.
+- [x] Priority 3 (floor): switched from pale hardwood to White's own dark-stone-joint technique, tinted charcoal.
+- [x] Priority 4 (brass restraint): trim metalness down, roughness up, hue muted toward aged bronze.
+- [x] Priority 5 (case grounding): case_base now uses the dark material for Vault only — White/Arcade untouched.
+- [x] Priority 6 (protect the collection): confirmed via a real item pickup — vivid/non-washed-out artwork.
+- [x] tsc/eslint clean (same 7 pre-existing warnings, zero new), production build clean.
+- [x] Pushed and deployed (`e462771`), confirmed via GitHub commit-status API.
+- [x] Live-verified entrance view, one case close-up, one door close-up — light pools visible, real material weight, form-defining door light.
+- [x] Regression-checked White (unaffected), Arcade (own look intact, no blank-viewport reproduced), Blue (own look intact) — all live, console clean on each.
+- [x] Item pickup/rotate/return re-confirmed in Vault with the new materials/lighting.
+- [ ] EK's and the design chat's actual review — the real acceptance gate, not this session's own spot-check.
+
 ## 2026-09-06 — Vault entrance: removed leftover fallback door/arch (EK-reported, live)
 EK reviewed the overnight pass below and sent a live screenshot circling 3 issues on Vault's entrance.
 - [x] Investigated live via `window.__vltdDebug` before changing anything — confirmed the fallback shell WAS correctly hidden (0/71 visible), then found the real cause: Vault's GLB now bakes its own complete 54-mesh entrance assembly, but old JS fallback code (shared with Blue, shown briefly pre-load) was still building a second, stale, wrongly-colored one for Vault too.
