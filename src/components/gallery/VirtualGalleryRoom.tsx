@@ -1719,7 +1719,7 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
     // just nudged, now that Vault also gets its own addLighting() ceiling
     // rig (see below) to provide the deliberate exhibit pools instead.
     renderer.toneMappingExposure =
-      roomStyle === "whitebox" ? 0.68 : roomStyle === "vault" ? 0.7 : roomStyle === "arcade" ? 0.6 : roomStyle === "blue" ? 0.75 : 0.98;
+      roomStyle === "whitebox" ? 0.68 : roomStyle === "vault" ? 0.62 : roomStyle === "arcade" ? 0.6 : roomStyle === "blue" ? 0.75 : 0.98;
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     container.appendChild(renderer.domElement);
@@ -1827,7 +1827,7 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
     const hemi = new THREE.HemisphereLight(
       0xffffff,
       0x3a3a3a,
-      inHub ? 2.6 : roomStyle === "whitebox" ? 1.5 : roomStyle === "vault" ? 1.7 : roomStyle === "arcade" ? 1.8 : roomStyle === "blue" ? 2.2 : 3.9
+      inHub ? 2.6 : roomStyle === "whitebox" ? 1.5 : roomStyle === "vault" ? 1.3 : roomStyle === "arcade" ? 1.8 : roomStyle === "blue" ? 2.2 : 3.9
     );
     scene.add(hemi);
     // Both of these were left at vault's intensity for whitebox too (only
@@ -1841,7 +1841,7 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
     // Vault cut the same way as hemi above, same reasoning.
     const key = new THREE.SpotLight(
       palette.glow,
-      inHub ? 9.5 : roomStyle === "whitebox" ? 1.7 : roomStyle === "vault" ? 2.0 : roomStyle === "arcade" ? 2.2 : roomStyle === "blue" ? 3.4 : 7.2,
+      inHub ? 9.5 : roomStyle === "whitebox" ? 1.7 : roomStyle === "vault" ? 1.5 : roomStyle === "arcade" ? 2.2 : roomStyle === "blue" ? 3.4 : 7.2,
       26,
       Math.PI / 5,
       0.55,
@@ -1854,7 +1854,7 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
       // Cut from 3.5 in an earlier pass for Arcade; Vault's own 1.8 is cut
       // here for the same reason as hemi/key above — this sits close to
       // the entrance/door area and was adding to the same flattening wash.
-      roomStyle === "arcade" ? 1.4 : roomStyle === "whitebox" ? 0.35 : roomStyle === "vault" ? 0.6 : 1.8,
+      roomStyle === "arcade" ? 1.4 : roomStyle === "whitebox" ? 0.35 : roomStyle === "vault" ? 0.75 : 1.8,
       14
     );
     warm.position.set(-4.5, 2.4, 1.8);

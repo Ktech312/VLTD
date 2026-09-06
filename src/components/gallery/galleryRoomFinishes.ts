@@ -56,13 +56,20 @@ const PALETTES: Record<GalleryFinishStyle, FinishPalette> = {
     // Dark honed stone instead of the pale wood plank floor, which read as
     // domestic against a steel vault shell. Same stone-joint technique as
     // White's floor, tinted charcoal with a subdued (not bright) joint line.
-    floorColor: 0x2c2e30, floorRoughness: 0.38, floorTreatment: "stone", jointColor: "#4a4e52",
+    // 2026-09-06, fourth pass: EK's correction — "darken the floor to
+    // graphite or nearly black... remove the current pale-gray floor
+    // appearance." Cut further than the previous round's charcoal.
+    floorColor: 0x17181a, floorRoughness: 0.3, floorTreatment: "stone", jointColor: "#33363a",
     // Muted aged bronze — lower metalness/higher roughness than before so
     // it reads as brushed hardware catching light locally, not a glowing
-    // chrome band running the length of the wall.
-    trimColor: 0x9c7a44, trimMetalness: 0.55, trimRoughness: 0.48,
-    darkColor: 0x1e2124, darkMetalness: 0.3,
-    ceilingColor: 0x35393d,
+    // chrome band running the length of the wall. Darkened and de-shined
+    // again in the fourth pass — EK: "reduce the brightness of their brass
+    // rims" (the case edge trim reuses this same color/metalness).
+    trimColor: 0x83693c, trimMetalness: 0.42, trimRoughness: 0.58,
+    // Darker case-base/plinth material too, same pass — EK: "darken the
+    // display-case bases."
+    darkColor: 0x121416, darkMetalness: 0.3,
+    ceilingColor: 0x24272a,
     glassColor: 0xd6dee2, glassOpacity: 0.1,
   },
   arcade: {
@@ -370,145 +377,157 @@ export function createGalleryFinishes(style: GalleryFinishStyle = "whitebox") {
   // the existing shell, the same additive pattern as addCaseDetails'
   // contact shadows.
   function addVaultArmor(room: THREE.Group) {
-    const ribMaterial = new THREE.MeshStandardMaterial({ color: 0x2a2d30, metalness: 0.35, roughness: 0.5 });
-    const seamMaterial = new THREE.MeshStandardMaterial({ color: 0x18191b, metalness: 0.25, roughness: 0.6 });
-    const rivetMaterial = new THREE.MeshStandardMaterial({ color: 0x8a9096, metalness: 0.7, roughness: 0.35 });
-    const bayEdgeMaterial = new THREE.LineBasicMaterial({ color: 0x53585d, transparent: true, opacity: 0.55 });
-    materials.push(ribMaterial, seamMaterial, rivetMaterial, bayEdgeMaterial);
+    // Fourth pass (2026-09-06), EK's own review of the third pass, point
+    // by point: fewer/wider ribs (was too many thin scattered lines),
+    // rivets only at real panel junctions (was 2 arbitrary heights per
+    // rib — "scattered dots"), the back/side walls split into a few broad
+    // bays with real dividers (was one outline spanning the whole wall).
+    const ribMaterial = new THREE.MeshStandardMaterial({ color: 0x24272a, metalness: 0.32, roughness: 0.52 });
+    const dividerMaterial = new THREE.MeshStandardMaterial({ color: 0x1c1e20, metalness: 0.3, roughness: 0.55 });
+    const seamMaterial = new THREE.MeshStandardMaterial({ color: 0x121314, metalness: 0.2, roughness: 0.65 });
+    const rivetMaterial = new THREE.MeshStandardMaterial({ color: 0x767c81, metalness: 0.68, roughness: 0.4 });
+    const bayEdgeMaterial = new THREE.LineBasicMaterial({ color: 0x45494d, transparent: true, opacity: 0.5 });
+    materials.push(ribMaterial, dividerMaterial, seamMaterial, rivetMaterial, bayEdgeMaterial);
 
     const WALL_TOP = 8.9;
     const WALL_BOTTOM = 0.25;
-    const RIB_DEPTH = 0.07;
+    const RIB_DEPTH = 0.08;
+    const SEAM_Y = 6.6;
 
-    // One protruding vertical rib + a couple of rivets near its seam
-    // crossings, on a real wall face. `axis` says which coordinate is
-    // fixed (the wall plane) vs which one the rib walks along.
-    function addWallRibs(
-      wallAxis: "x" | "z",
-      fixedCoord: number,
-      faceSign: 1 | -1,
-      positions: number[]
-    ) {
+    // Shallow structural ribs — fewer and slightly wider than the third
+    // pass ("large armored panels", not many thin scattered lines). A
+    // rivet sits only where a rib actually crosses the horizontal seam —
+    // one believable fastener per junction, not two arbitrary dots.
+    function addWallRibs(wallAxis: "x" | "z", fixedCoord: number, faceSign: 1 | -1, positions: number[]) {
       for (const pos of positions) {
         const rib = new THREE.Mesh(
           wallAxis === "x"
-            ? new THREE.BoxGeometry(0.1, WALL_TOP - WALL_BOTTOM, RIB_DEPTH)
-            : new THREE.BoxGeometry(RIB_DEPTH, WALL_TOP - WALL_BOTTOM, 0.1),
+            ? new THREE.BoxGeometry(0.16, WALL_TOP - WALL_BOTTOM, RIB_DEPTH)
+            : new THREE.BoxGeometry(RIB_DEPTH, WALL_TOP - WALL_BOTTOM, 0.16),
           ribMaterial
         );
         const midY = (WALL_TOP + WALL_BOTTOM) / 2;
         if (wallAxis === "x") rib.position.set(pos, midY, fixedCoord + faceSign * RIB_DEPTH * 0.5);
         else rib.position.set(fixedCoord + faceSign * RIB_DEPTH * 0.5, midY, pos);
         room.add(rib);
-        for (const y of [6.6, 2.4]) {
-          const rivet = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.05, 10), rivetMaterial);
-          rivet.rotation.x = wallAxis === "x" ? Math.PI / 2 : 0;
-          rivet.rotation.z = wallAxis === "x" ? 0 : Math.PI / 2;
-          if (wallAxis === "x") rivet.position.set(pos, y, fixedCoord + faceSign * (RIB_DEPTH + 0.03));
-          else rivet.position.set(fixedCoord + faceSign * (RIB_DEPTH + 0.03), y, pos);
-          room.add(rivet);
-        }
+        const rivet = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 0.06, 10), rivetMaterial);
+        rivet.rotation.x = wallAxis === "x" ? Math.PI / 2 : 0;
+        rivet.rotation.z = wallAxis === "x" ? 0 : Math.PI / 2;
+        if (wallAxis === "x") rivet.position.set(pos, SEAM_Y, fixedCoord + faceSign * (RIB_DEPTH + 0.035));
+        else rivet.position.set(fixedCoord + faceSign * (RIB_DEPTH + 0.035), SEAM_Y, pos);
+        room.add(rivet);
       }
     }
-    // Back wall (x runs -10.5..10.5, faces +z into the room).
-    addWallRibs("x", -12, 1, [-9, -6, -3, 0, 3, 6, 9]);
-    // Left/right walls (z runs roughly -14..8, face +x / -x into the room).
-    addWallRibs("z", -10.5, 1, [-13, -10, -7, -4, -1, 2, 5, 8]);
-    addWallRibs("z", 10.5, -1, [-13, -10, -7, -4, -1, 2, 5, 8]);
+    addWallRibs("x", -12, 1, [-7.5, -2.5, 2.5, 7.5]);
+    addWallRibs("z", -10.5, 1, [-11, -6, -1, 4]);
+    addWallRibs("z", 10.5, -1, [-11, -6, -1, 4]);
 
-    // A second, darker recessed seam line above the (now dark) rail —
-    // reads as a shadow gap/panel joint rather than an accent, replacing
-    // what used to be one continuous bright band.
-    function addSeam(wallAxis: "x" | "z", fixedCoord: number, faceSign: 1 | -1, span: [number, number], y: number) {
+    // The recessed seam replacing the old bright rail's position — kept
+    // from the third pass, unchanged.
+    function addSeam(wallAxis: "x" | "z", fixedCoord: number, faceSign: 1 | -1, span: [number, number]) {
       const length = span[1] - span[0];
       const mid = (span[0] + span[1]) / 2;
       const seam = new THREE.Mesh(
-        wallAxis === "x"
-          ? new THREE.BoxGeometry(length, 0.05, 0.03)
-          : new THREE.BoxGeometry(0.03, 0.05, length),
+        wallAxis === "x" ? new THREE.BoxGeometry(length, 0.05, 0.03) : new THREE.BoxGeometry(0.03, 0.05, length),
         seamMaterial
       );
-      if (wallAxis === "x") seam.position.set(mid, y, fixedCoord + faceSign * 0.02);
-      else seam.position.set(fixedCoord + faceSign * 0.02, y, mid);
+      if (wallAxis === "x") seam.position.set(mid, SEAM_Y, fixedCoord + faceSign * 0.02);
+      else seam.position.set(fixedCoord + faceSign * 0.02, SEAM_Y, mid);
       room.add(seam);
     }
-    addSeam("x", -12, 1, [-9.8, 9.8], 6.9);
-    addSeam("z", -10.5, 1, [-14.5, 8.5], 6.9);
-    addSeam("z", 10.5, -1, [-14.5, 8.5], 6.9);
+    addSeam("x", -12, 1, [-9.8, 9.8]);
+    addSeam("z", -10.5, 1, [-14.5, 8.5]);
+    addSeam("z", 10.5, -1, [-14.5, 8.5]);
 
-    // A recessed-bay outline framing each shelf wall — visually integrates
-    // the required shelves into a "cut into the armor" bay instead of an
-    // open shelf on a flat panel. Pure outline (LineSegments), doesn't
-    // touch shelf/item geometry or hit targets at all.
+    // A FEW broad recessed display bays, not one long outline across a
+    // flat wall — EK: "organize the back wall into a few broad recessed
+    // display bays." A wide divider panel splits each wall into 2-3
+    // sections; each section gets its own bay outline. Every shelf/item
+    // position underneath is completely untouched — these bays are simply
+    // drawn around the existing layout, not built to move it.
     function addBayOutline(wallAxis: "x" | "z", fixedCoord: number, faceSign: 1 | -1, span: [number, number]) {
       const length = span[1] - span[0];
       const mid = (span[0] + span[1]) / 2;
-      const height = 4.3;
-      const midY = 3.45;
+      const height = 4.5;
+      const midY = 3.4;
       const box =
-        wallAxis === "x"
-          ? new THREE.BoxGeometry(length, height, 0.02)
-          : new THREE.BoxGeometry(0.02, height, length);
+        wallAxis === "x" ? new THREE.BoxGeometry(length, height, 0.02) : new THREE.BoxGeometry(0.02, height, length);
       const edges = new THREE.LineSegments(new THREE.EdgesGeometry(box), bayEdgeMaterial);
       box.dispose();
       if (wallAxis === "x") edges.position.set(mid, midY, fixedCoord + faceSign * 0.05);
       else edges.position.set(fixedCoord + faceSign * 0.05, midY, mid);
       room.add(edges);
     }
-    addBayOutline("x", -12, 1, [-9.5, 9.5]);
-    addBayOutline("z", -10.5, 1, [-14, 8]);
-    addBayOutline("z", 10.5, -1, [-14, 8]);
+    function addDivider(wallAxis: "x" | "z", fixedCoord: number, faceSign: 1 | -1, pos: number) {
+      const divider = new THREE.Mesh(
+        wallAxis === "x"
+          ? new THREE.BoxGeometry(0.32, WALL_TOP - WALL_BOTTOM, RIB_DEPTH + 0.04)
+          : new THREE.BoxGeometry(RIB_DEPTH + 0.04, WALL_TOP - WALL_BOTTOM, 0.32),
+        dividerMaterial
+      );
+      const midY = (WALL_TOP + WALL_BOTTOM) / 2;
+      if (wallAxis === "x") divider.position.set(pos, midY, fixedCoord + faceSign * (RIB_DEPTH + 0.04) * 0.5);
+      else divider.position.set(fixedCoord + faceSign * (RIB_DEPTH + 0.04) * 0.5, midY, pos);
+      room.add(divider);
+    }
+    // Back wall: 2 dividers → 3 bays.
+    addDivider("x", -12, 1, -3.3);
+    addDivider("x", -12, 1, 3.3);
+    addBayOutline("x", -12, 1, [-9.5, -3.6]);
+    addBayOutline("x", -12, 1, [-3, 3]);
+    addBayOutline("x", -12, 1, [3.6, 9.5]);
+    // Side walls: 1 divider → 2 bays each.
+    addDivider("z", -10.5, 1, -3);
+    addBayOutline("z", -10.5, 1, [-14, -3.3]);
+    addBayOutline("z", -10.5, 1, [-2.7, 8]);
+    addDivider("z", 10.5, -1, -3);
+    addBayOutline("z", 10.5, -1, [-14, -3.3]);
+    addBayOutline("z", 10.5, -1, [-2.7, 8]);
 
-    // Deeper wall returns flanking the existing archway — EK: "give the
-    // existing door more visual mass... layered steel, darker recesses."
-    // Two stepped dark panels just outside the arch posts, at a slightly
-    // different depth than the main wall, reading as a thicker jamb
-    // without touching the arch/door geometry itself (still the same
-    // shape, same position — see the arch's own real position confirmed
-    // live earlier, x=0 z≈5.2-5.7).
+    // Deeper wall returns flanking the existing archway (unchanged from
+    // the third pass) — the arch's own shape/position stays exactly as
+    // is; EK's explicit correction this round: it stays a secondary
+    // passage, not the main vault door.
     for (const side of [-1, 1]) {
       const jamb = new THREE.Mesh(new THREE.BoxGeometry(0.5, 6.4, 0.4), ribMaterial);
       jamb.position.set(side * 2.35, 3.4, 5.5);
       room.add(jamb);
     }
 
-    // A restrained geometric ceiling-light pattern, visible from the
-    // entrance — the reference image's actual glowing lines, not a
-    // painted texture (the prior round's canvas grid on the ceiling
-    // material wasn't "immediately obvious" enough). Genuinely emissive
-    // (toneMapped: false keeps it a clean bright line regardless of the
-    // room's own low exposure), thin, angular, sparse — mood lighting, not
-    // wall-to-wall neon.
-    // First deploy of this correction was barely visible: 0.03-tall lines
-    // right at the 9.15 ceiling plane, at coordinates that put most of them
-    // outside the standard entrance camera's frame entirely (confirmed via
-    // a zoomed screenshot of the live result — only a faint sliver was
-    // visible at the very top edge). "Immediately obvious from the
-    // entrance" needed a much bigger correction, not a bigger guess:
-    // thicker/brighter lines, hung further below the ceiling plane (more
-    // likely to actually be inside the camera's vertical FOV from a normal
-    // standing eye height), and routed through the z range the entrance
-    // camera actually looks across (spawn is z≈-2.2 facing the back wall
-    // at z=-12), not an arbitrary zigzag anywhere in the room.
-    const glowMaterial = new THREE.MeshBasicMaterial({ color: 0xa9ecff, toneMapped: false });
-    materials.push(glowMaterial);
-    function glowLine(x1: number, z1: number, x2: number, z2: number) {
+    // Ceiling light, redone per EK's explicit correction: "reduce the
+    // brightness substantially... from vivid neon cyan to a restrained
+    // icy blue-white... recess the lines into dark ceiling channels...
+    // fewer, longer connected lines positioned far enough inside the room
+    // to remain readable." One connected 3-point path (not scattered
+    // separate zigzags), routed well inside the room (z from -10 to -4,
+    // clear of the entrance edge where the third pass's fragments got
+    // clipped), each segment sunk into a wider dark recessed channel box
+    // so the light reads as coming FROM the ceiling, not floating in
+    // front of it. Point-light intensity cut hard (2.2→0.3) — that spill
+    // was very likely a real contributor to "washed-out central artwork,"
+    // on top of it just being too much light for a "restrained" fixture.
+    const glowMaterial = new THREE.MeshBasicMaterial({ color: 0xcfe1e8, toneMapped: false });
+    const channelMaterial = new THREE.MeshStandardMaterial({ color: 0x101214, roughness: 0.8, metalness: 0.1 });
+    materials.push(glowMaterial, channelMaterial);
+    function glowSegment(x1: number, z1: number, x2: number, z2: number) {
       const dx = x2 - x1;
       const dz = z2 - z1;
       const length = Math.sqrt(dx * dx + dz * dz);
-      const line = new THREE.Mesh(new THREE.BoxGeometry(length, 0.14, 0.16), glowMaterial);
-      line.position.set((x1 + x2) / 2, 8.7, (z1 + z2) / 2);
-      line.rotation.y = -Math.atan2(dz, dx);
+      const angle = -Math.atan2(dz, dx);
+      const channel = new THREE.Mesh(new THREE.BoxGeometry(length + 0.3, 0.1, 0.32), channelMaterial);
+      channel.position.set((x1 + x2) / 2, 8.78, (z1 + z2) / 2);
+      channel.rotation.y = angle;
+      room.add(channel);
+      const line = new THREE.Mesh(new THREE.BoxGeometry(length, 0.05, 0.1), glowMaterial);
+      line.position.set((x1 + x2) / 2, 8.74, (z1 + z2) / 2);
+      line.rotation.y = angle;
       room.add(line);
-      const glow = new THREE.PointLight(0xa9ecff, 2.2, 9, 1.4);
-      glow.position.set((x1 + x2) / 2, 8.4, (z1 + z2) / 2);
-      room.add(glow);
     }
-    glowLine(-8, -3, -2, -9);
-    glowLine(-2, -9, 5, -4);
-    glowLine(5, -4, 8, -10);
-    glowLine(-8, -3, 0, -1.5);
-    glowLine(0, -1.5, 5, -4);
+    glowSegment(-6, -4, -1, -8);
+    glowSegment(-1, -8, 6, -5);
+    const glow = new THREE.PointLight(0xcfe1e8, 0.3, 7, 1.4);
+    glow.position.set(-1, 8.5, -6);
+    room.add(glow);
   }
 
   return { wall, floor, brass, apply, addLighting, addCaseDetails, addVaultArmor, dispose() {
