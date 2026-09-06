@@ -479,24 +479,36 @@ export function createGalleryFinishes(style: GalleryFinishStyle = "whitebox") {
     // (toneMapped: false keeps it a clean bright line regardless of the
     // room's own low exposure), thin, angular, sparse — mood lighting, not
     // wall-to-wall neon.
-    const glowMaterial = new THREE.MeshBasicMaterial({ color: 0x8fe0f2, toneMapped: false });
+    // First deploy of this correction was barely visible: 0.03-tall lines
+    // right at the 9.15 ceiling plane, at coordinates that put most of them
+    // outside the standard entrance camera's frame entirely (confirmed via
+    // a zoomed screenshot of the live result — only a faint sliver was
+    // visible at the very top edge). "Immediately obvious from the
+    // entrance" needed a much bigger correction, not a bigger guess:
+    // thicker/brighter lines, hung further below the ceiling plane (more
+    // likely to actually be inside the camera's vertical FOV from a normal
+    // standing eye height), and routed through the z range the entrance
+    // camera actually looks across (spawn is z≈-2.2 facing the back wall
+    // at z=-12), not an arbitrary zigzag anywhere in the room.
+    const glowMaterial = new THREE.MeshBasicMaterial({ color: 0xa9ecff, toneMapped: false });
     materials.push(glowMaterial);
     function glowLine(x1: number, z1: number, x2: number, z2: number) {
       const dx = x2 - x1;
       const dz = z2 - z1;
       const length = Math.sqrt(dx * dx + dz * dz);
-      const line = new THREE.Mesh(new THREE.BoxGeometry(length, 0.03, 0.05), glowMaterial);
-      line.position.set((x1 + x2) / 2, 9.05, (z1 + z2) / 2);
+      const line = new THREE.Mesh(new THREE.BoxGeometry(length, 0.14, 0.16), glowMaterial);
+      line.position.set((x1 + x2) / 2, 8.7, (z1 + z2) / 2);
       line.rotation.y = -Math.atan2(dz, dx);
       room.add(line);
-      const glow = new THREE.PointLight(0x8fe0f2, 0.35, 5);
-      glow.position.set((x1 + x2) / 2, 8.85, (z1 + z2) / 2);
+      const glow = new THREE.PointLight(0xa9ecff, 2.2, 9, 1.4);
+      glow.position.set((x1 + x2) / 2, 8.4, (z1 + z2) / 2);
       room.add(glow);
     }
-    glowLine(-8, -9, -1, -2);
-    glowLine(-1, -2, 6, -6);
-    glowLine(-8, 2, -2, -1);
-    glowLine(2, -8, 8, 1);
+    glowLine(-8, -3, -2, -9);
+    glowLine(-2, -9, 5, -4);
+    glowLine(5, -4, 8, -10);
+    glowLine(-8, -3, 0, -1.5);
+    glowLine(0, -1.5, 5, -4);
   }
 
   return { wall, floor, brass, apply, addLighting, addCaseDetails, addVaultArmor, dispose() {
