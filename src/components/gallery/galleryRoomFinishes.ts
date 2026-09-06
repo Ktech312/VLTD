@@ -325,17 +325,29 @@ export function createGalleryFinishes(style: GalleryFinishStyle = "whitebox") {
       // gold baseboard treatment from Vault... Shelf supports should
       // primarily read as dark steel... brass should catch light locally,
       // not glow across the whole room." Loft only (frozen) keeps this dark
-      // treatment. Vault refinement handoff, SECOND correction: EK's live
-      // review found dark rails/stiles against the lighter wall still read
-      // as "a lot of lines... not large rectangle panels" — the reference
-      // vault door shows no visible internal rail/support-post lines at
-      // all, just the seam between two big plates. Blending rail/stile into
-      // the wall color for Vault removes that contrast without touching
-      // shelf boards (still dark — those need to read as functional
-      // shelves) or any position/geometry. White/Arcade keep their existing
-      // brass rail/dark stile, unchanged.
-      else if (name.includes("rail") || name.includes("baseboard")) object.material = style === "vault" ? wall : style === "loft" ? dark : brass;
-      else if (name.includes("stile")) object.material = style === "vault" ? wall : dark;
+      // treatment. Vault refinement handoff, THIRD correction: matching the
+      // wall's color (second correction) still left visible relief lines —
+      // these are raised/recessed 3D geometry, not a flat decal, so they
+      // keep a shadow edge under the room's directional lights regardless
+      // of color. The reference vault door shows no visible internal
+      // rail/support-post lines at all, just the seam between two big
+      // plates. Rail and stile are decorative trim independent of shelf
+      // function (their own y-heights don't even line up with
+      // SHELF_ROW_Y), so hiding them outright for Vault is safe — every
+      // item's actual position/shelf capacity is untouched, only this
+      // baked cosmetic hardware disappears. Shelf boards stay fully
+      // visible everywhere (still needed so items read as resting on
+      // something). White/Arcade keep their existing brass rail/dark
+      // stile, unchanged.
+      else if (name.includes("baseboard")) object.material = (style === "vault" || style === "loft") ? dark : brass;
+      else if (name.includes("rail")) {
+        if (style === "vault") object.visible = false;
+        else object.material = style === "loft" ? dark : brass;
+      }
+      else if (name.includes("stile")) {
+        if (style === "vault") object.visible = false;
+        else object.material = dark;
+      }
       object.receiveShadow = true;
     });
   }
