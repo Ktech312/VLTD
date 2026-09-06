@@ -1702,8 +1702,15 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
     // style_mats() in generate-gallery-room-models.py — arcade's wall is
     // (0.035, 0.025, 0.06), essentially black). Given its own branch instead
     // of sharing arcade's old default with nothing else.
+    // Blue gets its own branch too now (2026-09-06 refinement pass): its
+    // navy base color (0x24405f) is much darker than Vault's light steel
+    // gray (0x9199a1), so the SAME bright shared exposure/hemi/key that
+    // still reads fine as "steel" on Vault renders Blue as a bright medium
+    // blue instead of navy — a base-color effect, not something Vault's own
+    // (already-live-checked-good) values needed to change for. Vault stays
+    // on its original 0.92.
     renderer.toneMappingExposure =
-      roomStyle === "whitebox" ? 0.68 : roomStyle === "arcade" ? 0.6 : (roomStyle === "vault" || roomStyle === "blue") ? 0.92 : 0.98;
+      roomStyle === "whitebox" ? 0.68 : roomStyle === "arcade" ? 0.6 : roomStyle === "blue" ? 0.75 : roomStyle === "vault" ? 0.92 : 0.98;
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     container.appendChild(renderer.domElement);
@@ -1783,16 +1790,16 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
     // Cut again — 2.4 still read pale live. Going lower than the "matches
     // vault" instinct this round since that instinct already proved
     // insufficient once.
-    // Arcade gets its own (lower) branch here too, same reasoning as the
-    // exposure change above — it previously shared vault/blue's 3.9, which
-    // washes its own near-black baked materials and cyan/bronze accent
-    // lighting out to a flat pastel instead of a dark room with controlled
-    // colored light. Vault/blue are untouched (unverified whether they need
-    // the same treatment without their own live review first).
+    // Arcade and Blue each get their own (lower) branch here now, same
+    // reasoning as the exposure change above — they previously shared
+    // vault/blue's 3.9, which washed Arcade's near-black baked materials
+    // and Blue's navy wall out toward a flat pastel instead of dark/moody.
+    // Vault's own 3.9 is untouched — its light steel base already read
+    // fine under it (live-checked).
     const hemi = new THREE.HemisphereLight(
       0xffffff,
       0x3a3a3a,
-      inHub ? 2.6 : roomStyle === "whitebox" ? 1.5 : roomStyle === "arcade" ? 1.8 : 3.9
+      inHub ? 2.6 : roomStyle === "whitebox" ? 1.5 : roomStyle === "arcade" ? 1.8 : roomStyle === "blue" ? 2.2 : 3.9
     );
     scene.add(hemi);
     // Both of these were left at vault's intensity for whitebox too (only
@@ -1805,7 +1812,7 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
     // would have caught this; it's a Three.js-side problem specifically.
     const key = new THREE.SpotLight(
       palette.glow,
-      inHub ? 9.5 : roomStyle === "whitebox" ? 1.7 : roomStyle === "arcade" ? 2.2 : 7.2,
+      inHub ? 9.5 : roomStyle === "whitebox" ? 1.7 : roomStyle === "arcade" ? 2.2 : roomStyle === "blue" ? 3.4 : 7.2,
       26,
       Math.PI / 5,
       0.55,
@@ -2546,9 +2553,19 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
       glass.position.set(x, 1.25, z);
       addShell(glass);
 
-      const cap = new THREE.Mesh(new THREE.BoxGeometry(1.48, 0.08, 1.18), trimMaterial);
-      cap.position.set(x, 1.85, z);
-      addShell(cap);
+      // An open rim instead of a solid lid — same fix as
+      // galleryRoomFinishes.ts's addCaseDetails/apply() (hiding case_cap):
+      // a solid top blocks viewing a flat-lying item from above. This is
+      // Blue's own hand-built case (no GLB, so no case_cap mesh to hide),
+      // but the same problem, so the same open-top treatment.
+      for (const side of [-1, 1]) {
+        const across = new THREE.Mesh(new THREE.BoxGeometry(1.48, 0.04, 0.035), trimMaterial);
+        across.position.set(x, 1.85, z + side * 0.5725);
+        const along = new THREE.Mesh(new THREE.BoxGeometry(0.035, 0.04, 1.18), trimMaterial);
+        along.position.set(x + side * 0.7225, 1.85, z);
+        addShell(across);
+        addShell(along);
+      }
 
       const glow = new THREE.PointLight(palette.glow, 0.55, 4);
       glow.position.set(x, 2.2, z + (index % 2 === 0 ? 0.25 : -0.25));
