@@ -1,4 +1,4 @@
-# VLTD — Session Handoff (updated 2026-09-04 — active work is the VLTD Museum public campus, a separate project from EK's personal exhibition rooms; see the "🆕" dated entries starting just below this line, newest first. Latest round (2026-09-04, commits `c637850`/`c282435`): fixed an inverted click-and-drag look direction EK called a "HUGE issue," removed WASD/arrow-key jargon from the on-screen hint text (the keys themselves still work), and added a tiled floor texture + gold wall rail trim so rooms read closer to the original single-room builder's visual richness. Live-verified via real dispatched pointer/keyboard events (a reliable workaround for a Claude-in-Chrome testing-tool gap, documented in that entry) — no console errors, drag direction empirically confirmed correct on both axes. NOT yet verified by EK's own hands-on test, and wall-trim contrast in the gold-walled Hub specifically may still read as too subtle. Before this: waypoint-marker navigation rebuild + a measured 4.4x drag-sensitivity fix (2026-09-02/03), FOV/wall-height/pitch-limit matching to the original room (2026-09-02), and the campus's first pass — Spotlight/Store rooms, admin config tooling, exterior facade, shelf fixtures (2026-08-31/09-01). Read those entries in order before assuming the walkthrough behaves any particular way. Older work below in §2 (2026-08-27/28: Admin Users table redesign + Account Rights panel retired, plus a same-night admin-2FA lockout that was investigated and resolved — not a bug, see that entry before assuming a missing Admin menu means something's broken; ~110 VaultItem fields + 3 Gallery-sync gaps found and fixed 2026-08-27, both migrations confirmed run by EK; Events tooling, admin console/APP_MAP.md, Vault upload, 2026-08-24/25/26; a full backend security audit, 3D Museum beta-access gating, Room Builder fixes further below) is a different, unrelated part of the app — still valid, just not what's currently in progress.)
+# VLTD — Session Handoff (updated 2026-09-06 — active work is a material/lighting refinement pass on the existing single-exhibition-room "White" style at `/museum/virtual-room` (a design-chat brief; separate from the VLTD Museum public campus below). Latest round (2026-09-06, commit `b34673e` on branch `white-room-material-refinement`, off `main`): fixed a visible "cloud"-banding bug in the plaster/charcoal wall texture, added subdued-but-visible floor-tile joints (the floor previously showed none), added cheap fake contact shadows under the 5 display cases (were floating with zero shadow), and softened the ceiling spotlight cone overlap — all confined to `galleryRoomFinishes.ts`. TypeScript/ESLint/production build all clean in this checkout. **NOT yet pushed to `main` / deployed** — this session's own push permission gate blocked it; someone needs to push branch `white-room-material-refinement` to `main` (or grant that push) before it's live, and it has NOT been visually confirmed in a browser yet as a result. See the 2026-09-06 entry (top of the dated log below) for the full verification list still outstanding once deployed. Before this: the first White-room material pass itself (2026-09-05, commit `f346d18`) — READY on Vercel and live-visually-confirmed with the real 7/8 Test/Hero exhibition, extended interaction/mobile checks deferred at EK's request. Below that: the VLTD Museum public campus work (2026-08-31 through 09-04) — a separate, unrelated part of the app, still valid but not currently in progress. Read the dated "🆕"/dated entries below in order, newest first, before assuming either room behaves a particular way. Older work further down in §2 (2026-08-27/28 Admin Users redesign; ~110 VaultItem fields + 3 Gallery-sync gaps, both migrations confirmed run by EK; Events tooling, admin console/APP_MAP.md, Vault upload; a full backend security audit, 3D Museum beta-access gating, Room Builder fixes) is unrelated to either of the above.)
 
 Read this top to bottom, then start on **§2 "What's LEFT."** This is written so a
 brand-new chat can pick up with no prior context.
@@ -248,6 +248,107 @@ who owns a screen.** EK is aware of this.
 
 ---
 
+## 2026-09-06 — White room material/lighting refinement pass, IMPLEMENTED + BUILD-VERIFIED, NOT YET DEPLOYED
+
+A separate design chat wrote a detailed task brief asking for one more
+material-and-lighting pass on the same White room from the entry below —
+explicitly a refinement, not another redesign: ground the display cases with
+contact shadows, fix the plaster/stone textures at real viewing distance,
+balance the ceiling light pools, and touch up frame/case materials, all
+while preserving the shell, slots, camera, movement, layouts, and every
+other style. Full brief is in this session's transcript, not reproduced here.
+
+**Baseline confirmed first, live** (Claude-in-Chrome, already-authed tab):
+opened `/museum/virtual-room`, Source already on **7/8 Test**, Hero layout;
+switched Room style to **White** (was Arcade) — 19 real items rendered
+correctly, matching the brief's historical verification snapshot. Zoomed in
+on the display cases, back wall, ceiling tracks, and floor before touching
+any code:
+- The plaster/charcoal wall texture showed real, visible blob-like patches
+  at render distance — not fine grain, closer to the "fuzzy fabric/clouds"
+  failure mode the brief specifically warned against.
+- The floor showed **no visible tile joints at all** — flat, glossy-looking,
+  not read as stone.
+- The 3 visible display cases had zero shadow of any kind where their
+  plinths meet the floor — visibly floating furniture.
+- Frames, brass trim, and glass already looked reasonable (frames already
+  have real box-geometry depth reaching back to the wall, brass already
+  reads as brushed metal, not painted) — deliberately left these alone
+  rather than fixing what wasn't broken.
+
+**Changes made, entirely in `src/components/gallery/galleryRoomFinishes.ts`**
+(no other file touched this pass):
+1. **Plaster/charcoal wall texture** — the old pattern used two
+   low-frequency sine terms producing only ~1-2 visible cycles across the
+   whole 512px canvas (tiled 5x3 across the wall) — that's the literal cause
+   of the cloud-like blobs. Replaced with two high-frequency wave layers
+   (many cycles per canvas → reads as fine mineral grain, not a repeating
+   shape) plus one very-low-amplitude, longer-than-canvas drift for gentle
+   overall tonal variation. Same base warm off-white hue, untouched.
+2. **Stone floor texture** — the old single border-per-repeat-unit joint was
+   too thin/low-contrast to survive anisotropic filtering at real render
+   distance. Added a subdued-but-visible cross join splitting each repeat
+   unit into 4 square slabs (world-scale tile pitch/`repeat()` unchanged —
+   still the same real-world tile size, just internally subdivided) plus a
+   faint per-slab tone shift so slabs read as individual stone, not a bold
+   checkerboard.
+3. **Contact shadows under the 5 display cases** — a cheap radial-gradient
+   shadow decal (one shared canvas texture, a plane per case, not a light)
+   placed just above the floor under each case's plinth. No new
+   shadow-casting lights added — still only the one center ceiling spot
+   casts real shadows, per the brief's explicit cost constraint. Confirmed
+   this can't interfere with click-to-walk or item selection: this file's
+   only raycast hit-test (`VirtualGalleryRoom.tsx` line ~3530) intersects an
+   explicit whitelist (`meshesRef.current` + `doorwayMeshesRef.current`),
+   never the roomGroup broadly — the same reason the existing case
+   edges/foot/trim meshes (already shipped, same `room.add()` pattern)
+   don't interfere either.
+4. **Ceiling spotlight cone widened slightly** (angle `π/5.4` → `π/4.6`,
+   penumbra `0.75` → `0.88`) so neighboring light pools soften into each
+   other instead of leaving a visible dark seam between fixtures.
+   Intensity/distance/decay untouched — this broadens each pool's edge, it
+   does not add light, and `renderer.toneMappingExposure` (the global
+   brightness knob, set in `VirtualGalleryRoom.tsx`, outside this file) was
+   deliberately never touched, per the brief's explicit instruction not to
+   fix darkness by raising global exposure.
+
+**Not changed, deliberately**: frame rims/matting/depth, brass/glass
+material params, camera/FOV/eye-height/spawn/walk-speed/drag/pitch/collision
+constants, front-wall pushback, shell geometry, slot positions, all three
+layouts, source selection, save/share, reduced-motion handling — all
+confirmed already present and correct by reading the code, none of it
+touched.
+
+**Verification in this checkout**: `npx tsc --noEmit` clean. `npx eslint
+src/components/gallery/galleryRoomFinishes.ts` clean, zero warnings.
+`npm run build` — compiled successfully under Turbopack in this worktree (no
+node_modules junction issue here, unlike the worktree that authored the
+2026-09-05 pass below — an environment difference between checkouts, not a
+regression). Committed in isolation on branch
+`white-room-material-refinement` (commit `b34673e`) off an up-to-date
+`main`, so it can be reverted on its own without touching the accepted
+2026-09-05 baseline or anything else.
+
+**NOT yet deployed.** Pushing this branch to `main` (which would trigger the
+real Vercel production deploy per this repo's normal workflow) was blocked
+by this session's own permission gate — production pushes need explicit
+sign-off here, not an automatic follow-through. **Also not yet
+live-visually-confirmed** as a result: the texture/shadow/lighting changes
+above are code-reviewed and build-verified, not yet seen rendering in a
+browser. Per the brief's own minimum-verification list, still outstanding
+once deployed: re-check the White entrance view and a close-up for depth
+without wash-out, pick up/rotate/return a real wall item, confirm drag-look
+and walking still feel unchanged, switch away from White and back (no
+material leakage), a narrow-viewport control check, and a console-error
+check.
+
+**Next step for whoever picks this up**: push branch
+`white-room-material-refinement` to `main` (or ask EK to do it / grant the
+push), wait for Vercel READY, then run the minimum verification list above
+before reporting this live.
+
+---
+
 ## 2026-09-05 — single exhibition room material review
 
 EK authorized one polished room within the existing Exhibitions builder before
@@ -271,13 +372,20 @@ The saved style is not forced to change. Vault/Blue/Arcade and the separate
 - Build uncovered an existing Next 16 route-params typing error in
   `registry/[subject]/page.tsx`; its redirect now awaits params, preserving its
   existing destination.
-- Verification so far: TypeScript passes; targeted ESLint has zero errors and
-  seven existing warnings. Local app empty-state checked. Actual Three.js/GLB
-  finish render inspected at the original entrance viewpoint. Production build
-  passes with webpack (Turbopack cannot follow this isolated worktree dependency
-  junction). Live collection walkthrough still pending; do not call this live yet.
-- Remaining acceptance: EK's visual and movement review of this single room;
-  real-device mobile performance; larger rooms/campus remain a separate phase.
+- Verification: TypeScript passes; targeted ESLint has zero errors and seven
+  existing warnings. Local app empty-state checked. Actual Three.js/GLB finish
+  render inspected at the original entrance viewpoint. Production build passes
+  with webpack in the worktree that authored this pass (Turbopack couldn't
+  follow that isolated worktree's node_modules junction — an environment
+  detail of that checkout, not a repo-wide requirement; see the 2026-09-06
+  entry below, whose own checkout builds clean under Turbopack with no
+  workaround needed). **Commit `f346d18` is READY on Vercel and the deployed
+  White/Hero room was visually checked live** with the real 7/8 Test
+  exhibition (19 items) — this is genuinely live, not just build-verified.
+- Remaining acceptance: extended interaction and real-device mobile checks
+  were deliberately deferred at EK's request to reduce credit use (not
+  skipped by oversight) — see the 2026-09-06 follow-up entry for what that
+  pass covered instead. Larger rooms/campus remain a separate phase.
 
 ## 🆕 2026-09-04 — drag direction flip, WASD removed from copy, floor
 texture + wall trim, and a fix to the testing-tool gap noted in the entry

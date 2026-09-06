@@ -7,8 +7,24 @@
 - [x] Real collection or empty hall, no invented sample contents.
 - [x] Reduced-motion automatic camera transitions.
 - [x] TypeScript and targeted lint; local empty state and GLB finish render inspected.
-- [ ] Full production build and live existing-exhibition walkthrough.
+- [x] Production build and Vercel deployment; live White/Hero appearance checked with 7/8 Test (commit `f346d18`).
+- [ ] Extended interaction/mobile checks deferred at EK request to reduce credit use.
 - [ ] EK review and real-device mobile performance before extending to the campus.
+
+## 2026-09-06 — White room material/lighting refinement pass (design-chat brief)
+- [x] Fixed visible "cloud"-banding in the plaster/charcoal wall texture (was low-frequency, now fine grain).
+- [x] Added subdued but visible floor-tile joints (previously none rendered at all).
+- [x] Added cheap fake contact shadows under the 5 display cases (were floating).
+- [x] Softened ceiling spotlight cone overlap (angle/penumbra only, no intensity/exposure change).
+- [x] TypeScript, targeted ESLint, and `npm run build` all clean in this checkout (Turbopack, no junction workaround needed here).
+- [x] Isolated commit (`b34673e` on branch `white-room-material-refinement`), reviewed against the raycast hit-test whitelist to confirm the new shadow decals can't interfere with click-to-walk or item selection.
+- [ ] **BLOCKED: push to `main` denied by this session's permission gate** — not yet deployed, not yet live-visually-confirmed. Needs someone to push the branch (or grant the push) before any of the minimum verification below can run.
+- [ ] White entrance view + close-up show improved depth without washed-out art (live).
+- [ ] Pick up/rotate/return a real wall item; slot persists.
+- [ ] Drag-look and walking unchanged.
+- [ ] Switch away from White and back — no material leakage.
+- [ ] Narrow-viewport control check.
+- [ ] Console error check.
 
 ## ✅ 2026-08-27 migrations — both confirmed run by EK, fully live
 ✅ `supabase/migrations/20260827_vault_items_full_field_sync.sql` — ~109 new
