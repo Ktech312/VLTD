@@ -40,17 +40,30 @@ const PALETTES: Record<GalleryFinishStyle, FinishPalette> = {
     glassColor: 0xe6f0ee, glassOpacity: 0.12,
   },
   vault: {
-    // Steel + walnut, a real bank-vault feel. Trim reuses the exact brass
-    // (0xb08d3e) the vault door/architrave already use elsewhere in
-    // VirtualGalleryRoom.tsx, so the shelf rails read as the same fixture
-    // family as the door instead of a mismatched second metal.
-    wallColor: 0x9199a1, wallRoughness: 0.5, wallMetalness: 0.28,
-    accentColor: 0x565f66, accentRoughness: 0.48,
-    floorColor: 0xffffff, floorRoughness: 0.5, floorTreatment: "wood", jointColor: "",
-    trimColor: 0xb08d3e, trimMetalness: 0.72, trimRoughness: 0.35,
-    darkColor: 0x24282c, darkMetalness: 0.35,
-    ceilingColor: 0x8a9096,
-    glassColor: 0xdbe7ee, glassOpacity: 0.12,
+    // 2026-09-06 guarded second pass: the first Vault pass read as "a
+    // bright gray utility room," not a secure museum vault — confirmed
+    // live via the __vltdDebug hook that White and Vault share the exact
+    // same 3 baked wall-wash spotlights (intensity 12 each, present in
+    // BOTH styles' GLBs equally), so the difference isn't those — it's
+    // that Vault's wall base was much lighter and more reflective
+    // (0x9199a1, metalness 0.28) than White's matte plaster, amplifying
+    // every light source instead of absorbing it, on top of Vault's own
+    // much higher hemi/key/warm ambient (see VirtualGalleryRoom.tsx).
+    // Deep gunmetal now instead of pale steel; less metalness so it reads
+    // as a brushed/painted panel with weight, not a mirror-bright coating.
+    wallColor: 0x4b5158, wallRoughness: 0.58, wallMetalness: 0.16,
+    accentColor: 0x2e3237, accentRoughness: 0.55,
+    // Dark honed stone instead of the pale wood plank floor, which read as
+    // domestic against a steel vault shell. Same stone-joint technique as
+    // White's floor, tinted charcoal with a subdued (not bright) joint line.
+    floorColor: 0x2c2e30, floorRoughness: 0.48, floorTreatment: "stone", jointColor: "#4a4e52",
+    // Muted aged bronze — lower metalness/higher roughness than before so
+    // it reads as brushed hardware catching light locally, not a glowing
+    // chrome band running the length of the wall.
+    trimColor: 0x9c7a44, trimMetalness: 0.55, trimRoughness: 0.48,
+    darkColor: 0x1e2124, darkMetalness: 0.3,
+    ceilingColor: 0x35393d,
+    glassColor: 0xd6dee2, glassOpacity: 0.1,
   },
   arcade: {
     // Dark surfaces + the arcade's own already-established bronze trim and
@@ -184,7 +197,11 @@ export function createGalleryFinishes(style: GalleryFinishStyle = "whitebox") {
         object.material = glass;
         object.castShadow = false;
       } else if (name.includes("ceiling")) object.material = ceiling;
-      else if (name.includes("case_base")) object.material = wall;
+      // Vault's case brief (2026-09-06): "case bases need more weight" — a
+      // dark stone/steel plinth, not the same pale color as the wall behind
+      // it. White/Arcade are untouched (still the wall material, matching
+      // their own already-approved look) — this is a Vault-only change.
+      else if (name.includes("case_base")) object.material = style === "vault" ? dark : wall;
       else if (name.includes("shelf") || name.includes("corner_post") || name.includes("door")) object.material = dark;
       else if (name.includes("wall")) object.material = name === "back_wall" ? charcoal : wall;
       else if (name.includes("rail") || name.includes("baseboard")) object.material = brass;
@@ -239,6 +256,21 @@ export function createGalleryFinishes(style: GalleryFinishStyle = "whitebox") {
       }
       room.add(light, light.target);
     });
+
+    // Vault only: a dedicated angled side light on the door/arch assembly
+    // (the real GLB geometry sits roughly x=0, z≈5.2-5.7 — see
+    // "vault_plate_top"/"vault_left_post"/"vault_right_post" positions,
+    // confirmed live via __vltdDebug). EK's ask: "the door...needs
+    // form-defining side light and contact shadow" — raking light from one
+    // side reveals the recess/rings/bolts/thickness that flat overhead
+    // wash was flattening out. One modest, non-shadow-casting spot, not a
+    // second full fixture rig.
+    if (style === "vault") {
+      const doorLight = new THREE.SpotLight(0xf3ead2, 22, 9, Math.PI / 6, 0.6, 1.3);
+      doorLight.position.set(-3.2, 4.2, 4.4);
+      doorLight.target.position.set(0, 2.2, 5.5);
+      room.add(doorLight, doorLight.target);
+    }
   }
   function addCaseDetails(room: THREE.Group, spots: Array<[number, number]>) {
     const edgeMaterial = new THREE.LineBasicMaterial({ color: palette.trimColor, transparent: true, opacity: 0.6 });

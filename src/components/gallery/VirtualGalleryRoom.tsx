@@ -1702,15 +1702,24 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
     // style_mats() in generate-gallery-room-models.py — arcade's wall is
     // (0.035, 0.025, 0.06), essentially black). Given its own branch instead
     // of sharing arcade's old default with nothing else.
-    // Blue gets its own branch too now (2026-09-06 refinement pass): its
-    // navy base color (0x24405f) is much darker than Vault's light steel
-    // gray (0x9199a1), so the SAME bright shared exposure/hemi/key that
-    // still reads fine as "steel" on Vault renders Blue as a bright medium
-    // blue instead of navy — a base-color effect, not something Vault's own
-    // (already-live-checked-good) values needed to change for. Vault stays
-    // on its original 0.92.
+    // Blue got its own branch in an earlier pass: its navy base color
+    // (0x24405f) is much darker than Vault's, so the same bright shared
+    // value that once read fine as "steel" on Vault renders Blue as a
+    // bright medium blue instead of navy.
+    //
+    // Vault's own value is cut again here (2026-09-06 guarded second pass,
+    // live desktop review): "very strong global light flattens the walls,
+    // door, shelving, and artwork into nearly the same brightness... little
+    // light hierarchy." Confirmed live via __vltdDebug that Vault and White
+    // share the exact same 3 baked wall-wash spotlights (intensity 12
+    // each) — White works fine with them because its own exposure/hemi/
+    // key/warm stay low; Vault's were left much higher, compounding with
+    // Vault's own (also darkened this pass) but still somewhat reflective
+    // wall material. Brought down close to White's own values rather than
+    // just nudged, now that Vault also gets its own addLighting() ceiling
+    // rig (see below) to provide the deliberate exhibit pools instead.
     renderer.toneMappingExposure =
-      roomStyle === "whitebox" ? 0.68 : roomStyle === "arcade" ? 0.6 : roomStyle === "blue" ? 0.75 : roomStyle === "vault" ? 0.92 : 0.98;
+      roomStyle === "whitebox" ? 0.68 : roomStyle === "vault" ? 0.7 : roomStyle === "arcade" ? 0.6 : roomStyle === "blue" ? 0.75 : 0.98;
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     container.appendChild(renderer.domElement);
@@ -1745,13 +1754,18 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
 
     const roomGroup = new THREE.Group();
     scene.add(roomGroup);
-    // Vault/Arcade's GLBs already carry their own baked area lights (see
-    // add_lights() in the generation script) — calling addLighting() for
-    // them too would double up illumination on top of that, not fix
-    // anything. Only White (which has never had baked lights) gets the
-    // extra ceiling-track spotlight rig. addCaseDetails' contact shadows are
-    // independent of lighting, so every style with real cases gets those.
-    if (roomStyle === "whitebox") galleryFinishes?.addLighting(roomGroup);
+    // Correction (2026-09-06 guarded Vault pass): checked live via
+    // __vltdDebug rather than assuming — White and Vault's GLBs both bake
+    // in the SAME 3 wall-wash spotlights (intensity 12 each), so those
+    // aren't vault-specific "already has its own lights" — they're shared
+    // infrastructure present in every GLB-based style. White already
+    // proves this combination works: those 3 baked lights PLUS its own
+    // addLighting() ceiling-track rig, on top of White's own low ambient.
+    // Vault was missing that same deliberate ceiling-track rig entirely —
+    // "no convincing visible lighting system or localized exhibit pools,
+    // unlike White" — so it gets addLighting() too now. Arcade is left
+    // alone for this pass (not reviewed/approved yet — see the brief).
+    if (roomStyle === "whitebox" || roomStyle === "vault") galleryFinishes?.addLighting(roomGroup);
     galleryFinishes?.addCaseDetails(roomGroup, CABINET_SPOTS);
     roomGroupRef.current = roomGroup;
 
@@ -1790,16 +1804,23 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
     // Cut again — 2.4 still read pale live. Going lower than the "matches
     // vault" instinct this round since that instinct already proved
     // insufficient once.
-    // Arcade and Blue each get their own (lower) branch here now, same
-    // reasoning as the exposure change above — they previously shared
-    // vault/blue's 3.9, which washed Arcade's near-black baked materials
-    // and Blue's navy wall out toward a flat pastel instead of dark/moody.
-    // Vault's own 3.9 is untouched — its light steel base already read
-    // fine under it (live-checked).
+    // Arcade and Blue each got their own (lower) branch in an earlier
+    // pass, for the same reason Vault gets one now below — they previously
+    // shared a bucket that washed their own materials out toward flat
+    // pastel instead of dark/moody.
+    //
+    // Vault's own 3.9 is CUT here (2026-09-06 guarded second pass) — it
+    // was left untouched in the overnight pass on the assumption Vault's
+    // light steel base "already read fine" under it, but the guarded
+    // live review found the opposite: this generic hemisphere fill,
+    // combined with the shared baked wall-wash lights every GLB style has,
+    // was flattening the whole room to one brightness with "little light
+    // hierarchy." Brought down near White's own value; Vault keeps a touch
+    // more than White (1.7 vs 1.5) for a slightly cooler, less airy feel.
     const hemi = new THREE.HemisphereLight(
       0xffffff,
       0x3a3a3a,
-      inHub ? 2.6 : roomStyle === "whitebox" ? 1.5 : roomStyle === "arcade" ? 1.8 : roomStyle === "blue" ? 2.2 : 3.9
+      inHub ? 2.6 : roomStyle === "whitebox" ? 1.5 : roomStyle === "vault" ? 1.7 : roomStyle === "arcade" ? 1.8 : roomStyle === "blue" ? 2.2 : 3.9
     );
     scene.add(hemi);
     // Both of these were left at vault's intensity for whitebox too (only
@@ -1810,9 +1831,10 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
     // out the contrast I baked into the GLB — Blender's renderer doesn't
     // share this lighting rig at all, so a clean Blender render never
     // would have caught this; it's a Three.js-side problem specifically.
+    // Vault cut the same way as hemi above, same reasoning.
     const key = new THREE.SpotLight(
       palette.glow,
-      inHub ? 9.5 : roomStyle === "whitebox" ? 1.7 : roomStyle === "arcade" ? 2.2 : roomStyle === "blue" ? 3.4 : 7.2,
+      inHub ? 9.5 : roomStyle === "whitebox" ? 1.7 : roomStyle === "vault" ? 2.0 : roomStyle === "arcade" ? 2.2 : roomStyle === "blue" ? 3.4 : 7.2,
       26,
       Math.PI / 5,
       0.55,
@@ -1822,12 +1844,10 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
     scene.add(key);
     const warm = new THREE.PointLight(
       palette.trim,
-      // Cut from 3.5 in the same pass as the exposure/hemi/key changes above
-      // — at the old brightness this alone was enough to wash the room pale
-      // regardless of the other three, since it sits close to the entrance
-      // and its color (palette.trim, arcade's own bronze) was overpowering
-      // the cooler cyan identity everywhere else in the room.
-      roomStyle === "arcade" ? 1.4 : roomStyle === "whitebox" ? 0.35 : 1.8,
+      // Cut from 3.5 in an earlier pass for Arcade; Vault's own 1.8 is cut
+      // here for the same reason as hemi/key above — this sits close to
+      // the entrance/door area and was adding to the same flattening wash.
+      roomStyle === "arcade" ? 1.4 : roomStyle === "whitebox" ? 0.35 : roomStyle === "vault" ? 0.6 : 1.8,
       14
     );
     warm.position.set(-4.5, 2.4, 1.8);
