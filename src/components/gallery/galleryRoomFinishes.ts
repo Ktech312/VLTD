@@ -360,12 +360,14 @@ export function createGalleryFinishes(style: GalleryFinishStyle = "whitebox") {
         const light = new THREE.SpotLight(0xffe6bd, vaultIntensity, 16, Math.PI / 4.6, 0.88, 1.25);
         light.position.set(x, y - 0.2, z);
         light.target.position.set(tx, ty, tz);
-        light.castShadow = index === 1;
-        if (light.castShadow) {
-          light.shadow.mapSize.set(1024, 1024);
-          light.shadow.bias = -0.0002;
-          light.shadow.normalBias = 0.035;
-        }
+        // EK reported the display cases flickering — the classic cause is a
+        // shadow map recomputing every frame against the render loop's own
+        // continuous camera lerp (VirtualGalleryRoom.tsx's render() never
+        // fully settles, always nudging cameraBody toward its target by a
+        // fraction each frame), which reads as shimmer on nearby glass.
+        // This was the only shadow-casting light in the scene; turning it
+        // off removes that source outright. The visible fixture hardware
+        // this light used to help ground is gone anyway in this pass.
         room.add(light, light.target);
       });
       const doorLight = new THREE.SpotLight(0xf3ead2, 22, 9, Math.PI / 6, 0.6, 1.3);
@@ -656,147 +658,118 @@ export function createGalleryFinishes(style: GalleryFinishStyle = "whitebox") {
     room.add(glow);
   }
 
-  // Vault refinement handoff (2026-09-06), correcting the fourth pass frozen
-  // above as `addLoftArmor`. EK's brief: keep the current grid of large wall
-  // panels (proportion/organization already approved) and the recessed
-  // seam/rib/rivet/jamb treatment unchanged; remove the bright outer bay
-  // OUTLINE so walls read as one continuous armored interior instead of
-  // framed rectangles; replace the flat painted ceiling texture and the
-  // old 2-segment diagonal glow with a real, coherent, axis-aligned grid of
-  // recessed icy blue-white luminaires (reference images 1 and 2) that
-  // reads as the room's actual light source.
+  // Vault refinement handoff (2026-09-06) — SECOND correction after EK's
+  // live review of the first attempt found it still didn't match the
+  // reference image: walls read as a busy grid of many thin ribs/seams
+  // instead of large steel panels with corner bolts, and the ceiling grid
+  // was rebuilt from scratch as an axis-aligned lattice in a pale near-
+  // white color instead of enhancing the room's existing DIAGONAL glow
+  // path in a clearly saturated blue like the reference. This version
+  // fixes both directly against the reference image rather than the
+  // earlier (wrong) reading of the text brief.
   function addVaultArmorRefined(room: THREE.Group) {
-    const ribMaterial = new THREE.MeshStandardMaterial({ color: 0x24272a, metalness: 0.32, roughness: 0.52 });
     const dividerMaterial = new THREE.MeshStandardMaterial({ color: 0x1c1e20, metalness: 0.3, roughness: 0.55 });
-    const seamMaterial = new THREE.MeshStandardMaterial({ color: 0x121314, metalness: 0.2, roughness: 0.65 });
-    const rivetMaterial = new THREE.MeshStandardMaterial({ color: 0x767c81, metalness: 0.68, roughness: 0.4 });
-    materials.push(ribMaterial, dividerMaterial, seamMaterial, rivetMaterial);
+    const rivetMaterial = new THREE.MeshStandardMaterial({ color: 0x8a9096, metalness: 0.72, roughness: 0.35 });
+    materials.push(dividerMaterial, rivetMaterial);
 
     const WALL_TOP = 8.9;
     const WALL_BOTTOM = 0.25;
-    const RIB_DEPTH = 0.08;
-    const SEAM_Y = 6.6;
+    const RIVET_INSET = 0.4;
 
-    // Unchanged from the fourth pass — EK: "keep the current grid of large
-    // wall panels; their proportion and organization are approved."
-    function addWallRibs(wallAxis: "x" | "z", fixedCoord: number, faceSign: 1 | -1, positions: number[]) {
-      for (const pos of positions) {
-        const rib = new THREE.Mesh(
-          wallAxis === "x"
-            ? new THREE.BoxGeometry(0.16, WALL_TOP - WALL_BOTTOM, RIB_DEPTH)
-            : new THREE.BoxGeometry(RIB_DEPTH, WALL_TOP - WALL_BOTTOM, 0.16),
-          ribMaterial
-        );
-        const midY = (WALL_TOP + WALL_BOTTOM) / 2;
-        if (wallAxis === "x") rib.position.set(pos, midY, fixedCoord + faceSign * RIB_DEPTH * 0.5);
-        else rib.position.set(fixedCoord + faceSign * RIB_DEPTH * 0.5, midY, pos);
-        room.add(rib);
-        const rivet = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 0.06, 10), rivetMaterial);
-        rivet.rotation.x = wallAxis === "x" ? Math.PI / 2 : 0;
-        rivet.rotation.z = wallAxis === "x" ? 0 : Math.PI / 2;
-        if (wallAxis === "x") rivet.position.set(pos, SEAM_Y, fixedCoord + faceSign * (RIB_DEPTH + 0.035));
-        else rivet.position.set(fixedCoord + faceSign * (RIB_DEPTH + 0.035), SEAM_Y, pos);
-        room.add(rivet);
+    // Large steel panels, floor to ceiling, with a bolt near each of the 4
+    // corners — the reference image's vault-door look, not a grid of many
+    // thin ribs and a horizontal seam. EK's direct correction: "they
+    // should be large rectangle panels with rivets in the corners from
+    // floor to ceiling."
+    function addPanelCorners(wallAxis: "x" | "z", fixedCoord: number, faceSign: 1 | -1, span: [number, number]) {
+      const [a, b] = span;
+      for (const pos of [a + RIVET_INSET, b - RIVET_INSET]) {
+        for (const y of [WALL_TOP - RIVET_INSET, WALL_BOTTOM + RIVET_INSET]) {
+          const rivet = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, 0.06, 10), rivetMaterial);
+          rivet.rotation.x = wallAxis === "x" ? Math.PI / 2 : 0;
+          rivet.rotation.z = wallAxis === "x" ? 0 : Math.PI / 2;
+          if (wallAxis === "x") rivet.position.set(pos, y, fixedCoord + faceSign * 0.035);
+          else rivet.position.set(fixedCoord + faceSign * 0.035, y, pos);
+          room.add(rivet);
+        }
       }
     }
-    addWallRibs("x", -12, 1, [-7.5, -2.5, 2.5, 7.5]);
-    addWallRibs("z", -10.5, 1, [-11, -6, -1, 4]);
-    addWallRibs("z", 10.5, -1, [-11, -6, -1, 4]);
-
-    function addSeam(wallAxis: "x" | "z", fixedCoord: number, faceSign: 1 | -1, span: [number, number]) {
-      const length = span[1] - span[0];
-      const mid = (span[0] + span[1]) / 2;
-      const seam = new THREE.Mesh(
-        wallAxis === "x" ? new THREE.BoxGeometry(length, 0.05, 0.03) : new THREE.BoxGeometry(0.03, 0.05, length),
-        seamMaterial
-      );
-      if (wallAxis === "x") seam.position.set(mid, SEAM_Y, fixedCoord + faceSign * 0.02);
-      else seam.position.set(fixedCoord + faceSign * 0.02, SEAM_Y, mid);
-      room.add(seam);
-    }
-    addSeam("x", -12, 1, [-9.8, 9.8]);
-    addSeam("z", -10.5, 1, [-14.5, 8.5]);
-    addSeam("z", 10.5, -1, [-14.5, 8.5]);
-
-    // The dividers that organize each wall into a few broad panel groups
-    // stay — EK's ask this round is only to drop the bright OUTLINE drawn
-    // around each group (addBayOutline, removed below this function
-    // entirely), not the underlying panel organization itself: "walls
-    // should read as one continuous armored interior with fine recessed
-    // joints, rather than framed rectangles mounted inside another room."
+    // A single divider between adjacent panels reads as the seam where two
+    // large plates meet — the room's actual panel organization, not a
+    // decorative frame.
     function addDivider(wallAxis: "x" | "z", fixedCoord: number, faceSign: 1 | -1, pos: number) {
       const divider = new THREE.Mesh(
         wallAxis === "x"
-          ? new THREE.BoxGeometry(0.32, WALL_TOP - WALL_BOTTOM, RIB_DEPTH + 0.04)
-          : new THREE.BoxGeometry(RIB_DEPTH + 0.04, WALL_TOP - WALL_BOTTOM, 0.32),
+          ? new THREE.BoxGeometry(0.3, WALL_TOP - WALL_BOTTOM, 0.1)
+          : new THREE.BoxGeometry(0.1, WALL_TOP - WALL_BOTTOM, 0.3),
         dividerMaterial
       );
       const midY = (WALL_TOP + WALL_BOTTOM) / 2;
-      if (wallAxis === "x") divider.position.set(pos, midY, fixedCoord + faceSign * (RIB_DEPTH + 0.04) * 0.5);
-      else divider.position.set(fixedCoord + faceSign * (RIB_DEPTH + 0.04) * 0.5, midY, pos);
+      if (wallAxis === "x") divider.position.set(pos, midY, fixedCoord + faceSign * 0.07);
+      else divider.position.set(fixedCoord + faceSign * 0.07, midY, pos);
       room.add(divider);
     }
+    // Back wall: 2 dividers -> 3 large panels.
     addDivider("x", -12, 1, -3.3);
     addDivider("x", -12, 1, 3.3);
+    addPanelCorners("x", -12, 1, [-9.8, -3.3]);
+    addPanelCorners("x", -12, 1, [-3.3, 3.3]);
+    addPanelCorners("x", -12, 1, [3.3, 9.8]);
+    // Side walls: 1 divider -> 2 large panels each.
     addDivider("z", -10.5, 1, -3);
+    addPanelCorners("z", -10.5, 1, [-14.5, -3]);
+    addPanelCorners("z", -10.5, 1, [-3, 8.5]);
     addDivider("z", 10.5, -1, -3);
+    addPanelCorners("z", 10.5, -1, [-14.5, -3]);
+    addPanelCorners("z", 10.5, -1, [-3, 8.5]);
 
     // Deeper wall returns flanking the existing archway — unchanged; the
     // arch itself stays a secondary passage, not the main vault door.
     for (const side of [-1, 1]) {
-      const jamb = new THREE.Mesh(new THREE.BoxGeometry(0.5, 6.4, 0.4), ribMaterial);
+      const jamb = new THREE.Mesh(new THREE.BoxGeometry(0.5, 6.4, 0.4), dividerMaterial);
       jamb.position.set(side * 2.35, 3.4, 5.5);
       room.add(jamb);
     }
 
-    // Ceiling grid — EK's correction: "keep the current grid pattern and
-    // turn those grid lines into the visible built-in luminaires... a thin,
-    // continuous, recessed pale icy blue-white grid similar to Image 2."
-    // A real axis-aligned lattice (3 lines running north-south crossed by 2
-    // running east-west) that meets at genuine intersections, so it reads
-    // as one coherent grid rather than disconnected fragments — replacing
-    // the previous single 2-segment diagonal path. Kept well inside the
-    // room (z from -9.5 to -2) so it stays framed by the entrance camera,
-    // the same z-range already confirmed visible from the entrance in the
-    // prior pass. Each strip sits in its own slightly wider dark recessed
-    // channel so it reads as built into the ceiling, not floating in front
-    // of it — same visual technique as before, just laid out as a full
-    // grid instead of one path.
-    const glowMaterial = new THREE.MeshBasicMaterial({ color: 0xcfe1e8, toneMapped: false });
+    // Ceiling grid — SECOND correction: EK pointed out the room already had
+    // diagonal glow lines before this handoff, and asked to enhance those,
+    // not delete them and build an axis-aligned grid from scratch. Restored
+    // the diagonal crisscross (matching the reference image's diamond
+    // lattice), extended into a fuller 6-segment lattice with real
+    // intersections, and recolored to a clearly saturated blue — the
+    // previous 0xcfe1e8 read as near-white, not blue, on EK's live review.
+    // Reaches closer to the entrance (z up to -1, was -2) so more of the
+    // lattice is actually inside the standard camera's frame.
+    const glowMaterial = new THREE.MeshBasicMaterial({ color: 0x38d2f2, toneMapped: false });
     const channelMaterial = new THREE.MeshStandardMaterial({ color: 0x101214, roughness: 0.8, metalness: 0.1 });
     materials.push(glowMaterial, channelMaterial);
-    const GRID_Y_CHANNEL = 8.78;
-    const GRID_Y_LINE = 8.74;
-    function gridLineX(x: number, z1: number, z2: number) {
-      const length = Math.abs(z2 - z1);
-      const mid = (z1 + z2) / 2;
-      const channel = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.1, length + 0.3), channelMaterial);
-      channel.position.set(x, GRID_Y_CHANNEL, mid);
-      room.add(channel);
-      const line = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.05, length), glowMaterial);
-      line.position.set(x, GRID_Y_LINE, mid);
-      room.add(line);
-    }
-    function gridLineZ(z: number, x1: number, x2: number) {
-      const length = Math.abs(x2 - x1);
-      const mid = (x1 + x2) / 2;
+    function glowSegment(x1: number, z1: number, x2: number, z2: number) {
+      const dx = x2 - x1;
+      const dz = z2 - z1;
+      const length = Math.sqrt(dx * dx + dz * dz);
+      const angle = -Math.atan2(dz, dx);
       const channel = new THREE.Mesh(new THREE.BoxGeometry(length + 0.3, 0.1, 0.32), channelMaterial);
-      channel.position.set(mid, GRID_Y_CHANNEL, z);
+      channel.position.set((x1 + x2) / 2, 8.78, (z1 + z2) / 2);
+      channel.rotation.y = angle;
       room.add(channel);
-      const line = new THREE.Mesh(new THREE.BoxGeometry(length, 0.05, 0.1), glowMaterial);
-      line.position.set(mid, GRID_Y_LINE, z);
+      const line = new THREE.Mesh(new THREE.BoxGeometry(length, 0.05, 0.11), glowMaterial);
+      line.position.set((x1 + x2) / 2, 8.74, (z1 + z2) / 2);
+      line.rotation.y = angle;
       room.add(line);
     }
-    // 3 lines north-south, 2 crossing east-west — one connected lattice
-    // with 6 real intersections, not scattered segments.
-    for (const x of [-6, 0, 6]) gridLineX(x, -9.5, -2);
-    for (const z of [-8, -4]) gridLineZ(z, -8, 8);
-    // Restrained, low-intensity fill so the grid reads as the light source
-    // without spilling onto nearby artwork — "do not create a shadow-
-    // casting light for every line," so one soft point light near the
-    // grid's center is enough, not one per segment.
-    const glow = new THREE.PointLight(0xcfe1e8, 0.35, 8, 1.4);
-    glow.position.set(0, 8.5, -6);
+    // Diamond lattice: 3 segments rising left-to-right, 3 falling
+    // left-to-right, crossing at 6 real intersections — the reference
+    // image's diagonal grid, not an axis-aligned window-pane.
+    glowSegment(-8, -11, -1, -4);
+    glowSegment(-3, -11, 5, -3);
+    glowSegment(0, -9, 7, -2);
+    glowSegment(-8, -3, -1, -10);
+    glowSegment(-2, -2, 6, -10);
+    glowSegment(2, -1, 8, -7);
+    // Restrained fill so the grid reads as the light source without
+    // spilling onto nearby artwork.
+    const glow = new THREE.PointLight(0x38d2f2, 0.4, 9, 1.4);
+    glow.position.set(-1, 8.5, -6);
     room.add(glow);
   }
 
