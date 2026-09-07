@@ -64,6 +64,18 @@ function wallEdgePoint(bounds: ReturnType<typeof roomBounds>, side: WallSide, fr
   }
 }
 
+// The unit direction a header mounted on this wall must face to be read by
+// someone standing inside the room that owns it (see wallRotationY, whose
+// rotation produces exactly this normal).
+function intoRoomNormal(side: WallSide): { x: number; z: number } {
+  switch (side) {
+    case "north": return { x: 0, z: 1 };
+    case "south": return { x: 0, z: -1 };
+    case "west": return { x: 1, z: 0 };
+    case "east": return { x: -1, z: 0 };
+  }
+}
+
 /** Room floor, ceiling, walls (from the campus's own computeWallSegments —
  * the one source of truth for door-gap positions, so this can't drift out
  * of sync with collision), baseboards, and a small directional light rig
@@ -197,16 +209,23 @@ export function buildDoorways(scene: THREE.Scene, module: RoomModule) {
     frame.position.set(framePos.x, 0, framePos.z);
     scene.add(frame);
 
-    const near = wallEdgePoint(bounds, doorway.side, doorway.gapCenter, 0.3);
-    buildHeader(near.x, near.z, wallRotationY(doorway.side), neighbor.label);
+    // EK's review of a5f2f19: both headers were floating disconnected from
+    // the frame — the "far" one landed in the doorway's own wall gap (no
+    // wall behind it, so it read as a sign hanging in a void). Both headers
+    // now mount at the frame's own centerline, directly above its header
+    // bar, back-to-back — a small epsilon nudge along each one's own
+    // facing normal (not a 0.3 inset into a separate wall) just keeps the
+    // two planes from z-fighting.
+    const epsilon = 0.06;
+    const nearNormal = intoRoomNormal(doorway.side);
+    buildHeader(framePos.x + nearNormal.x * epsilon, framePos.z + nearNormal.z * epsilon, wallRotationY(doorway.side), neighbor.label);
 
-    const farPoint = wallEdgePoint(neighborBounds, far, doorway.gapCenter, 0.3);
-    buildHeader(farPoint.x, farPoint.z, wallRotationY(far), room.label);
+    const farNormal = intoRoomNormal(far);
+    buildHeader(framePos.x + farNormal.x * epsilon, framePos.z + farNormal.z * epsilon, wallRotationY(far), room.label);
 
-    const revealNear = wallEdgePoint(bounds, doorway.side, doorway.gapCenter, 0);
     const revealFar = wallEdgePoint(neighborBounds, far, doorway.gapCenter, 0);
     const reveal = new THREE.PointLight(0xfff2d0, 0.6, 9, 2);
-    reveal.position.set((revealNear.x + revealFar.x) / 2, eyeHeight, (revealNear.z + revealFar.z) / 2);
+    reveal.position.set((framePos.x + revealFar.x) / 2, eyeHeight, (framePos.z + revealFar.z) / 2);
     scene.add(reveal);
   }
 }
