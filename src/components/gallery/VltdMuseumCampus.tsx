@@ -34,11 +34,14 @@ import { getPrimaryImageUrl, loadItems, type VaultItem } from "@/lib/vaultModel"
 import { isUniverseKey, type UniverseKey } from "@/lib/taxonomy";
 import { getActiveSpotlightPrograms, getEnabledStoreItems, getItemsPerRoom } from "@/lib/museumCampusConfig";
 import {
+  DOORWAY_HEADER_Y,
+  DOORWAY_NO_DISPLAY_HALF_WIDTH,
   MUSEUM_CAMERA_FOV,
   MUSEUM_PITCH_LIMIT,
   MUSEUM_WALK_SPEED,
   MUSEUM_WALK_SPEED_SLOW,
 } from "@/lib/museumStandard";
+import { buildDoorwayFrame } from "@/lib/doorwayKit";
 import {
   aimCamera,
   applyDrag,
@@ -47,6 +50,7 @@ import {
   facingDirection,
   WHEEL_STEP,
 } from "@/lib/visitorController";
+import { createGrainTexture } from "./galleryTextures";
 
 function wrapText(ctx: CanvasRenderingContext2D, text: string, x: number, y: number, maxWidth: number, lineHeight: number) {
   const words = text.split(" ");
@@ -181,6 +185,11 @@ export default function VltdMuseumCampus() {
     }
 
     for (const room of CAMPUS_ROOMS) {
+      // POP_CULTURE gets its own neutral-finish shell (floor, ceiling,
+      // walls, doorways) below instead of the generic checkerboard-floor +
+      // center-name-sprite treatment every other room still uses this pass.
+      if (room.id === "POP_CULTURE") continue;
+
       const { x, z } = roomCenter(room);
       const floorTexture = makeFloorTexture(room.floorColor);
       if (floorTexture) floorTexture.repeat.set(room.w / 4, room.d / 4);
@@ -228,6 +237,10 @@ export default function VltdMuseumCampus() {
     const trimThickness = 0.12;
 
     for (const segment of computeWallSegments()) {
+      // POP_CULTURE builds its own 4 walls (neutral finish + real doorway
+      // frames) below — its neighbors (HUB, TCG) still get their normal
+      // wall segment on their own side of the shared boundary here.
+      if (segment.room === "POP_CULTURE") continue;
       const span = segment.to - segment.from;
       if (span <= 0.05) continue;
       const material = segment.room === "HUB" ? hubWallMaterial : wallMaterial;
@@ -472,13 +485,186 @@ export default function VltdMuseumCampus() {
         }
       }
 
-      addShelfPair("POP_CULTURE", "east", 6.3 * S);
-      addShelfPair("TCG", "east", 20.4 * S);
+      // POP_CULTURE no longer gets a generic shelf pair — its two doorways
+      // now carry the real doorwayKit.ts frame + header instead (see the
+      // POP_CULTURE room-shell block below).
+      addShelfPair("TCG", "east", 36.36);
       addShelfPair("COLLECTION", "north", 24.6 * S);
       addShelfPair("SPORTS", "north", 41.45 * S);
       addShelfPair("CARDS", "north", 58.3 * S);
       addShelfPair("BUILT_BOTANY", "west", 6.3 * S);
       addShelfPair("GAMES", "west", 20.4 * S);
+    }
+
+    // Next-pass handoff (2026-09-07), Stage 2/3: POP_CULTURE is the first
+    // real campus room built to the exact standard module with its own
+    // neutral finish, a real ceiling, and the shared doorwayKit.ts frame on
+    // both openings (each with a destination header on both sides and a
+    // lit threshold instead of a black void). Every other room keeps its
+    // current plain-gap/checkerboard/shelf-pair treatment until EK approves
+    // this one — see CAMPUS_ROOMS/CAMPUS_DOORS in campusLayout.ts for the
+    // sizing/reflow this room's resize forced on its neighbors.
+    type WallSpan = { wall: "north" | "south" | "east" | "west"; from: number; to: number; fixed: number; rotationY: number };
+    let popWallSpans: WallSpan[] = [];
+    {
+      const pop = roomById("POP_CULTURE");
+      const bounds = roomBounds(pop);
+      const center = roomCenter(pop);
+      const hubBounds = roomBounds(roomById("HUB"));
+      const tcgBounds = roomBounds(roomById("TCG"));
+      // Must match this room's own gapCenter values in campusLayout.ts's
+      // CAMPUS_DOORS (POP_CULTURE<->HUB and POP_CULTURE<->TCG).
+      const hubDoorZ = 13;
+      const tcgDoorX = 10.22;
+
+      // Reuse the exact same grain-texture generator the accepted room's
+      // own White/whitebox style uses (galleryTextures.ts) rather than a
+      // fresh wall texture — "reuse the White Gallery's neutral wall and
+      // ceiling material approach," not a new recipe.
+      const wallGrain = createGrainTexture();
+      wallGrain.repeat.set(pop.w / 5, WALL_HEIGHT / 3);
+      const neutralWallMaterial = new THREE.MeshStandardMaterial({
+        color: 0xe3ddd0, map: wallGrain, bumpMap: wallGrain, bumpScale: 0.025, roughness: 0.94, metalness: 0,
+      });
+      const ceilingGrain = createGrainTexture();
+      ceilingGrain.repeat.set(pop.w / 5, pop.d / 5);
+      const ceilingMaterial = new THREE.MeshStandardMaterial({ color: 0xcfc9ba, map: ceilingGrain, roughness: 0.98 });
+      const floorMaterial = new THREE.MeshStandardMaterial({ color: 0x8f8a7c, roughness: 0.88 });
+      const baseboardMaterial = new THREE.MeshStandardMaterial({ color: 0x454846, roughness: 0.85 });
+      const frameMaterial = new THREE.MeshStandardMaterial({ color: 0xd8cfb8, roughness: 0.5, metalness: 0.1 });
+
+      // Real floor + ceiling — the audit's #1 structural defect was the
+      // dark scene background visible overhead with no ceiling mesh at all.
+      const popFloor = new THREE.Mesh(new THREE.PlaneGeometry(pop.w, pop.d), floorMaterial);
+      popFloor.rotation.x = -Math.PI / 2;
+      popFloor.position.set(center.x, 0, center.z);
+      scene.add(popFloor);
+
+      const popCeiling = new THREE.Mesh(new THREE.PlaneGeometry(pop.w, pop.d), ceilingMaterial);
+      popCeiling.rotation.x = Math.PI / 2;
+      popCeiling.position.set(center.x, WALL_HEIGHT, center.z);
+      scene.add(popCeiling);
+
+      // Walls + a restrained baseboard, from the campus's own
+      // computeWallSegments() — the one source of truth for door-gap
+      // positions — so this can't drift out of sync with collision.
+      const baseboardHeight = 0.22;
+      for (const segment of computeWallSegments()) {
+        if (segment.room !== "POP_CULTURE") continue;
+        const span = segment.to - segment.from;
+        if (span <= 0.05) continue;
+        const isNS = segment.side === "north" || segment.side === "south";
+        const wall = new THREE.Mesh(
+          isNS ? new THREE.BoxGeometry(span, WALL_HEIGHT, WALL_THICKNESS) : new THREE.BoxGeometry(WALL_THICKNESS, WALL_HEIGHT, span),
+          neutralWallMaterial
+        );
+        const facingSign = segment.side === "north" || segment.side === "west" ? 1 : -1;
+        if (isNS) wall.position.set((segment.from + segment.to) / 2, WALL_HEIGHT / 2, segment.fixed);
+        else wall.position.set(segment.fixed, WALL_HEIGHT / 2, (segment.from + segment.to) / 2);
+        scene.add(wall);
+
+        const baseboard = new THREE.Mesh(
+          isNS ? new THREE.BoxGeometry(span, baseboardHeight, 0.05) : new THREE.BoxGeometry(0.05, baseboardHeight, span),
+          baseboardMaterial
+        );
+        if (isNS) baseboard.position.set((segment.from + segment.to) / 2, baseboardHeight / 2, segment.fixed + (facingSign * WALL_THICKNESS) / 2);
+        else baseboard.position.set(segment.fixed + (facingSign * WALL_THICKNESS) / 2, baseboardHeight / 2, (segment.from + segment.to) / 2);
+        scene.add(baseboard);
+      }
+
+      // A small repeated ceiling-light rig (2x3 grid) instead of one global
+      // wash light that flattens every wall evenly.
+      for (const lx of [bounds.x0 + pop.w * 0.25, bounds.x0 + pop.w * 0.75]) {
+        for (const lz of [bounds.z0 + pop.d * 0.17, bounds.z0 + pop.d * 0.5, bounds.z0 + pop.d * 0.83]) {
+          const fixture = new THREE.Mesh(
+            new THREE.CircleGeometry(0.35, 20),
+            new THREE.MeshStandardMaterial({ color: 0xfff6e0, emissive: 0xfff2d0, emissiveIntensity: 0.7 })
+          );
+          fixture.rotation.x = Math.PI / 2;
+          fixture.position.set(lx, WALL_HEIGHT - 0.03, lz);
+          scene.add(fixture);
+          const light = new THREE.PointLight(0xfff2d0, 0.55, 14, 2);
+          light.position.set(lx, WALL_HEIGHT - 0.5, lz);
+          scene.add(light);
+        }
+      }
+
+      // One restrained wall title (replaces the removed giant center-room
+      // name sprite — wayfinding now lives on the doorway headers below).
+      const titleLabel = makeLabelSprite(pop.label, pop.tierLabel);
+      if (titleLabel) {
+        titleLabel.scale.set(4.5, 1.1, 1);
+        titleLabel.position.set(bounds.x0 + 0.05, WALL_HEIGHT - 1.6, center.z);
+        scene.add(titleLabel);
+      }
+
+      function buildHeader(x: number, y: number, z: number, rotationY: number, text: string) {
+        const canvas = document.createElement("canvas");
+        canvas.width = 512;
+        canvas.height = 128;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) return;
+        ctx.fillStyle = "#20242a";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillStyle = "#f2ead9";
+        ctx.font = "700 50px Archivo, sans-serif";
+        ctx.fillText(text.toUpperCase(), canvas.width / 2, canvas.height / 2);
+        const texture = new THREE.CanvasTexture(canvas);
+        texture.colorSpace = THREE.SRGBColorSpace;
+        const material = new THREE.MeshStandardMaterial({ map: texture, roughness: 0.7 });
+        const plaque = new THREE.Mesh(new THREE.PlaneGeometry(2.6, 0.65), material);
+        plaque.position.set(x, y, z);
+        plaque.rotation.y = rotationY;
+        scene.add(plaque);
+      }
+
+      // Doorway assemblies: the real post+header frame on both openings,
+      // a destination header readable from both sides (the text seen when
+      // approaching names what's on the far side), and a lit threshold so
+      // looking through either opening isn't a black void.
+      const doorways = [
+        {
+          frameX: bounds.x1, frameZ: hubDoorZ, frameRotationY: Math.PI / 2,
+          nearHeader: { x: bounds.x1 - 0.3, z: hubDoorZ, rotationY: -Math.PI / 2, text: roomById("HUB").label },
+          farHeader: { x: hubBounds.x0 + 0.3, z: hubDoorZ, rotationY: Math.PI / 2, text: pop.label },
+          revealX: (bounds.x1 + hubBounds.x0) / 2, revealZ: hubDoorZ,
+        },
+        {
+          frameX: tcgDoorX, frameZ: bounds.z1, frameRotationY: 0,
+          nearHeader: { x: tcgDoorX, z: bounds.z1 - 0.3, rotationY: Math.PI, text: roomById("TCG").label },
+          farHeader: { x: tcgDoorX, z: tcgBounds.z0 + 0.3, rotationY: 0, text: pop.label },
+          revealX: tcgDoorX, revealZ: (bounds.z1 + tcgBounds.z0) / 2,
+        },
+      ];
+      for (const doorway of doorways) {
+        const frame = buildDoorwayFrame(frameMaterial);
+        frame.rotation.y = doorway.frameRotationY;
+        frame.position.set(doorway.frameX, 0, doorway.frameZ);
+        scene.add(frame);
+
+        buildHeader(doorway.nearHeader.x, DOORWAY_HEADER_Y + 0.55, doorway.nearHeader.z, doorway.nearHeader.rotationY, doorway.nearHeader.text);
+        buildHeader(doorway.farHeader.x, DOORWAY_HEADER_Y + 0.55, doorway.farHeader.z, doorway.farHeader.rotationY, doorway.farHeader.text);
+
+        const reveal = new THREE.PointLight(0xfff2d0, 0.6, 9, 2);
+        reveal.position.set(doorway.revealX, EYE_HEIGHT, doorway.revealZ);
+        scene.add(reveal);
+      }
+
+      // Usable wall spans for item placement — full length on the two
+      // doorless walls, split around each door's DOORWAY_NO_DISPLAY_HALF_WIDTH
+      // exclusion zone on the other two, so no item/rail/panel can cross an
+      // opening.
+      const spans: WallSpan[] = [
+        { wall: "north", from: bounds.x0, to: bounds.x1, fixed: bounds.z0, rotationY: 0 },
+        { wall: "south", from: bounds.x0, to: tcgDoorX - DOORWAY_NO_DISPLAY_HALF_WIDTH, fixed: bounds.z1, rotationY: Math.PI },
+        { wall: "south", from: tcgDoorX + DOORWAY_NO_DISPLAY_HALF_WIDTH, to: bounds.x1, fixed: bounds.z1, rotationY: Math.PI },
+        { wall: "west", from: bounds.z0, to: bounds.z1, fixed: bounds.x0, rotationY: Math.PI / 2 },
+        { wall: "east", from: bounds.z0, to: hubDoorZ - DOORWAY_NO_DISPLAY_HALF_WIDTH, fixed: bounds.x1, rotationY: -Math.PI / 2 },
+        { wall: "east", from: hubDoorZ + DOORWAY_NO_DISPLAY_HALF_WIDTH, to: bounds.z1, fixed: bounds.x1, rotationY: -Math.PI / 2 },
+      ];
+      popWallSpans = spans.filter((span) => span.to - span.from > 1);
     }
 
     // Content is async (vault items are sync, but items-per-room, Spotlight
@@ -532,6 +718,71 @@ export default function VltdMuseumCampus() {
       scene.add(plaque);
     }
 
+    // POP_CULTURE only: places art at natural aspect ratio (bounded within a
+    // max box) instead of forcing every image onto a square plane, and
+    // spaces items across the room's real usable wall spans (popWallSpans,
+    // already excludes both doorways' no-display zones) instead of the
+    // generic north-wall-only strip every other room still uses.
+    function popWallPoint(span: WallSpan, t: number) {
+      const wallInset = WALL_THICKNESS / 2 + 0.04;
+      if (span.wall === "north" || span.wall === "south") {
+        const sign = span.wall === "north" ? 1 : -1;
+        return { x: t, y: EYE_HEIGHT, z: span.fixed + sign * wallInset };
+      }
+      const sign = span.wall === "west" ? 1 : -1;
+      return { x: span.fixed + sign * wallInset, y: EYE_HEIGHT, z: t };
+    }
+
+    function hangArtPreservingAspect(x: number, y: number, z: number, rotationY: number, url: string, maxW: number, maxH: number) {
+      textureLoader.load(url, (texture) => {
+        if (contentCancelled) return;
+        texture.colorSpace = THREE.SRGBColorSpace;
+        const naturalW = texture.image?.width || 1;
+        const naturalH = texture.image?.height || 1;
+        const scale = Math.min(maxW / naturalW, maxH / naturalH);
+        const artW = naturalW * scale;
+        const artH = naturalH * scale;
+
+        const mat = new THREE.Mesh(
+          new THREE.PlaneGeometry(artW + 0.12, artH + 0.12),
+          new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.9 })
+        );
+        mat.position.set(x, y, z);
+        mat.rotation.y = rotationY;
+        scene.add(mat);
+
+        const normal = new THREE.Vector3(0, 0, 1).applyEuler(new THREE.Euler(0, rotationY, 0));
+        const art = new THREE.Mesh(new THREE.PlaneGeometry(artW, artH), new THREE.MeshStandardMaterial({ map: texture, roughness: 0.6 }));
+        art.position.set(x + normal.x * 0.02, y, z + normal.z * 0.02);
+        art.rotation.y = rotationY;
+        scene.add(art);
+      });
+    }
+
+    function placePopCultureItems(items: VaultItem[]) {
+      const totalLength = popWallSpans.reduce((sum, span) => sum + (span.to - span.from), 0);
+      if (totalLength <= 0 || items.length === 0) return;
+      const margin = 0.9;
+      let itemIndex = 0;
+      for (const span of popWallSpans) {
+        const spanLength = span.to - span.from;
+        const share = Math.max(1, Math.round((spanLength / totalLength) * items.length));
+        const count = Math.min(share, items.length - itemIndex);
+        if (count <= 0) continue;
+        const usable = spanLength - margin * 2;
+        const step = usable / count;
+        for (let i = 0; i < count && itemIndex < items.length; i += 1, itemIndex += 1) {
+          const item = items[itemIndex];
+          const url = getPrimaryImageUrl(item);
+          if (!url) continue;
+          const t = span.from + margin + step * (i + 0.5);
+          const point = popWallPoint(span, t);
+          const maxSlot = Math.min(2.6, step * 0.8);
+          hangArtPreservingAspect(point.x, point.y, point.z, span.rotationY, url, maxSlot, 2.2);
+        }
+      }
+    }
+
     async function populateDynamicContent() {
       const [itemsPerRoom, spotlightPrograms, storeItems] = await Promise.all([
         getItemsPerRoom(),
@@ -557,6 +808,10 @@ export default function VltdMuseumCampus() {
       };
 
       for (const room of CAMPUS_ROOMS) {
+        // POP_CULTURE places its own items with aspect-ratio-preserving
+        // slots (see placePopCultureItems below) instead of the generic
+        // north-wall-only, forced-square treatment every other room uses.
+        if (room.id === "POP_CULTURE") continue;
         const universes = roomUniverses[room.id] ?? room.universes;
         if (universes.length === 0) continue;
         const items = allItems.filter((item) => {
@@ -576,6 +831,11 @@ export default function VltdMuseumCampus() {
           hangFrame(bounds.x0 + 1.5 + step * (index + 0.5), bounds.z0 + WALL_THICKNESS, frameSize, url);
         });
       }
+
+      const popItems = allItems
+        .filter((item) => itemUniverse(item) === "POP_CULTURE")
+        .slice(0, itemsPerRoom);
+      placePopCultureItems(popItems);
 
       // Spotlight room — admin-controlled rotating programs.
       const spotlightBounds = roomBounds(roomById("SPOTLIGHT"));
@@ -656,14 +916,17 @@ export default function VltdMuseumCampus() {
     let startX = 0;
     let startY = 0;
 
-    // Museum Controls Correction Addendum (2026-09-06): movement basis is
-    // `targetYaw` — the accepted personal room's own
-    // facingDirection()/strafeDirection() (now shared via
-    // src/lib/visitorController.ts) have always used `targetYaw`, not the
-    // eased `yaw`. An earlier pass here assumed that was a bug and switched
-    // to `yaw`; that assumption was wrong and is superseded — matching the
-    // accepted room exactly means matching its actual basis, not a
-    // theoretical "always match the rendered frame" model it doesn't use.
+    // Next-pass handoff (2026-09-07), Stage 1: the campus (not the accepted
+    // personal room) computes wheel/keyboard movement direction from the
+    // currently RENDERED `yaw` — the same heading `aimCamera()` used to draw
+    // the frame you're looking at — not `targetYaw`. Right after a drag,
+    // `targetYaw` can be ahead of what's still easing into view; the campus
+    // is large and fast enough (2.55 units/sec, big open rooms) that acting
+    // on that not-yet-visible target reads as "forward travels right of
+    // center." The accepted Gallery keeps its own `targetYaw` basis
+    // unchanged (src/lib/visitorController.ts itself is untouched, and
+    // VirtualGalleryRoom.tsx's call sites still pass `targetYaw`) — this is
+    // a campus-only call-site change, not a second controller.
     //
     // Collision must shorten or stop the requested motion, never redirect
     // it — the old tryMove() retried a blocked move's world-X and world-Z
@@ -704,7 +967,7 @@ export default function VltdMuseumCampus() {
           left: pressedKeys.has("left"),
           right: pressedKeys.has("right"),
         },
-        targetYaw
+        yaw
       );
       if (move.lengthSq() > 0) {
         move.multiplyScalar(speed * dt);
@@ -843,9 +1106,10 @@ export default function VltdMuseumCampus() {
       // Matches the accepted room's own wheel handler: nudges
       // targetCameraBody (not cameraBody directly), so the actual camera
       // glides toward it over the next few frames via the same easing used
-      // for drag-look.
+      // for drag-look. Direction uses the rendered `yaw`, not `targetYaw` —
+      // see the Stage 1 comment above updateKeyboardMovement.
       const signedDistance = e.deltaY > 0 ? -WHEEL_STEP : WHEEL_STEP;
-      const delta = facingDirection(targetYaw).multiplyScalar(signedDistance);
+      const delta = facingDirection(yaw).multiplyScalar(signedDistance);
       moveWithCollision(targetCameraBody, delta);
       targetCameraBody.y = EYE_HEIGHT;
     }

@@ -10,7 +10,7 @@
 // layout EK already approved in the blueprint, just given a third
 // dimension. If the blueprint's floor plan changes, mirror the change here.
 import type { UniverseKey } from "@/lib/taxonomy";
-import { MUSEUM_EYE_HEIGHT, STANDARD_ROOM_HEIGHT } from "./museumStandard";
+import { DOORWAY_WALL_GAP, MUSEUM_EYE_HEIGHT, STANDARD_ROOM_DEPTH, STANDARD_ROOM_HEIGHT, STANDARD_ROOM_WIDTH } from "./museumStandard";
 
 // Full Museum Scale handoff (2026-09-06), Phase 1: "put shared values in one
 // source of truth; the public campus and personal room must not drift apart
@@ -63,17 +63,27 @@ export type CampusRoom = {
 // Blueprint's pre-scale (px/8) room rects * 1.3268 scale factor, unrounded.
 export const S = 1.3268;
 
+// Next-pass handoff (2026-09-07): resize ONE real room (POP_CULTURE) to the
+// exact standard module and stop for EK's review before touching the other
+// nominal-standard rooms (TCG/COLLECTION/SPORTS/CARDS) or deciding MISC.
+// POP_CULTURE's depth grows from 12.6*S (16.72) to STANDARD_ROOM_DEPTH (26),
+// which no longer fits before TCG at its old position — TCG and, in turn,
+// MISC shift south by just enough to clear it (their own w/d are untouched,
+// this is a position-only reflow, not a resize). HUB grows deep enough to
+// still have a valid door to MISC's new position, which pushes the south
+// row (COLLECTION/SPORTS/CARDS) south by the same amount HUB grew. See
+// CAMPUS_DOORS below for the door positions this reflow forces to update.
 export const CAMPUS_ROOMS: CampusRoom[] = [
-  { id: "POP_CULTURE", label: "POP_CULTURE", tierLabel: "North Rotunda", x: 0 * S, z: 0 * S, w: 15.4 * S, d: 12.6 * S, floorColor: 0x3a2a1a, universes: ["POP_CULTURE"] },
-  { id: "TCG", label: "TCG", tierLabel: "South Rotunda", x: 0 * S, z: 14.1 * S, w: 15.4 * S, d: 12.6 * S, floorColor: 0x1a2a3a, universes: ["TCG"] },
-  { id: "MISC", label: "misc", tierLabel: "Gallery A", x: 0 * S, z: 28.1 * S, w: 15.4 * S, d: 26.6 * S, floorColor: 0x2a2a2a, universes: ["MISC"] },
-  { id: "HUB", label: "VLTD Museum", tierLabel: "Grand hall", x: 16.9 * S, z: 0 * S, w: 49.1 * S, d: 40.75 * S, floorColor: 0x24211a, universes: [] },
+  { id: "POP_CULTURE", label: "POP_CULTURE", tierLabel: "North Rotunda", x: 0, z: 0, w: STANDARD_ROOM_WIDTH, d: STANDARD_ROOM_DEPTH, floorColor: 0x3a2a1a, universes: ["POP_CULTURE"] },
+  { id: "TCG", label: "TCG", tierLabel: "South Rotunda", x: 0 * S, z: 28, w: 15.4 * S, d: 12.6 * S, floorColor: 0x1a2a3a, universes: ["TCG"] },
+  { id: "MISC", label: "misc", tierLabel: "Gallery A", x: 0 * S, z: 46.72, w: 15.4 * S, d: 26.6 * S, floorColor: 0x2a2a2a, universes: ["MISC"] },
+  { id: "HUB", label: "VLTD Museum", tierLabel: "Grand hall", x: 16.9 * S, z: 0 * S, w: 49.1 * S, d: 66, floorColor: 0x24211a, universes: [] },
   { id: "BUILT_BOTANY", label: "BUILT_BOTANY", tierLabel: "Gallery D", x: 67.5 * S, z: 0 * S, w: 32.25 * S, d: 12.6 * S, floorColor: 0x1a3323, universes: ["BUILT_BOTANY"] },
   { id: "GAMES", label: "GAMES", tierLabel: "Gallery E", x: 67.5 * S, z: 14.1 * S, w: 32.25 * S, d: 12.6 * S, floorColor: 0x2a1a3a, universes: ["GAMES"] },
   { id: "AUTOMOTIVE", label: "Automobile", tierLabel: "Garden Gallery", x: 67.5 * S, z: 28.1 * S, w: 32.25 * S, d: 26.6 * S, floorColor: 0x3a1a1a, universes: ["AUTOMOTIVE"] },
-  { id: "COLLECTION", label: "Collection", tierLabel: "Gallery C · baseline", x: 16.9 * S, z: 42.25 * S, w: 15.4 * S, d: 12.6 * S, floorColor: 0x2a2418, universes: [] },
-  { id: "SPORTS", label: "SPORTS", tierLabel: "Gallery F", x: 33.75 * S, z: 42.25 * S, w: 15.4 * S, d: 12.6 * S, floorColor: 0x18242a, universes: ["SPORTS"] },
-  { id: "CARDS", label: "Cards", tierLabel: "Gallery G", x: 50.6 * S, z: 42.25 * S, w: 15.4 * S, d: 12.6 * S, floorColor: 0x241a2a, universes: [] },
+  { id: "COLLECTION", label: "Collection", tierLabel: "Gallery C · baseline", x: 16.9 * S, z: 68, w: 15.4 * S, d: 12.6 * S, floorColor: 0x2a2418, universes: [] },
+  { id: "SPORTS", label: "SPORTS", tierLabel: "Gallery F", x: 33.75 * S, z: 68, w: 15.4 * S, d: 12.6 * S, floorColor: 0x18242a, universes: ["SPORTS"] },
+  { id: "CARDS", label: "Cards", tierLabel: "Gallery G", x: 50.6 * S, z: 68, w: 15.4 * S, d: 12.6 * S, floorColor: 0x241a2a, universes: [] },
 
   // New wings, not in the original blueprint — EK's ask (2026-09-02):
   // build the Spotlight and Store rooms now, flanking the Hub's entrance
@@ -120,28 +130,35 @@ export type CampusDoor = {
   at: number; // the wall's fixed coordinate (z for an 'x' wall, x for a 'z' wall)
   gapCenter: number; // position of the gap's center along the wall's free axis
   rooms: [CampusRoomId, CampusRoomId | null]; // second is null for the building entrance
+  // Wall-gap width for this door, if wider than the campus default DOOR_WIDTH
+  // — used for the two POP_CULTURE doors now that they install the real
+  // doorwayKit.ts frame, which needs DOORWAY_WALL_GAP of clearance so its
+  // posts don't clip the solid wall on either side.
+  width?: number;
 };
 
 export const CAMPUS_DOORS: CampusDoor[] = [
-  { wall: "x", at: 13.35 * S, gapCenter: 7.7 * S, rooms: ["POP_CULTURE", "TCG"] },
-  { wall: "x", at: 27.4 * S, gapCenter: 7.7 * S, rooms: ["TCG", "MISC"] },
-  { wall: "z", at: 16.15 * S, gapCenter: 6.3 * S, rooms: ["POP_CULTURE", "HUB"] },
-  { wall: "z", at: 16.15 * S, gapCenter: 20.4 * S, rooms: ["TCG", "HUB"] },
-  { wall: "z", at: 16.15 * S, gapCenter: 34.425 * S, rooms: ["MISC", "HUB"] },
-  { wall: "z", at: 16.15 * S, gapCenter: 48.475 * S, rooms: ["MISC", "COLLECTION"] },
+  { wall: "x", at: 27, gapCenter: 10.22, rooms: ["POP_CULTURE", "TCG"], width: DOORWAY_WALL_GAP },
+  { wall: "x", at: 45.72, gapCenter: 10.22, rooms: ["TCG", "MISC"] },
+  { wall: "z", at: 21.71, gapCenter: 13, rooms: ["POP_CULTURE", "HUB"], width: DOORWAY_WALL_GAP },
+  { wall: "z", at: 16.15 * S, gapCenter: 36.36, rooms: ["TCG", "HUB"] },
+  { wall: "z", at: 16.15 * S, gapCenter: 64.37, rooms: ["MISC", "HUB"] },
+  { wall: "z", at: 16.15 * S, gapCenter: 75, rooms: ["MISC", "COLLECTION"] },
   { wall: "z", at: 65.95 * S, gapCenter: 6.3 * S, rooms: ["HUB", "BUILT_BOTANY"] },
   { wall: "z", at: 65.95 * S, gapCenter: 20.4 * S, rooms: ["HUB", "GAMES"] },
   { wall: "z", at: 65.95 * S, gapCenter: 34.4 * S, rooms: ["HUB", "AUTOMOTIVE"] },
-  { wall: "z", at: 65.95 * S, gapCenter: 47.675 * S, rooms: ["CARDS", "AUTOMOTIVE"] },
-  { wall: "x", at: 40.7 * S, gapCenter: 24.6 * S, rooms: ["HUB", "COLLECTION"] },
-  { wall: "x", at: 40.7 * S, gapCenter: 41.45 * S, rooms: ["HUB", "SPORTS"] },
-  { wall: "x", at: 40.7 * S, gapCenter: 58.3 * S, rooms: ["HUB", "CARDS"] },
-  { wall: "z", at: 32.2 * S, gapCenter: 48.55 * S, rooms: ["COLLECTION", "SPORTS"] },
-  { wall: "z", at: 49.05 * S, gapCenter: 48.55 * S, rooms: ["SPORTS", "CARDS"] },
+  { wall: "z", at: 65.95 * S, gapCenter: 70.3, rooms: ["CARDS", "AUTOMOTIVE"] },
+  { wall: "x", at: 67, gapCenter: 24.6 * S, rooms: ["HUB", "COLLECTION"] },
+  { wall: "x", at: 67, gapCenter: 41.45 * S, rooms: ["HUB", "SPORTS"] },
+  { wall: "x", at: 67, gapCenter: 58.3 * S, rooms: ["HUB", "CARDS"] },
+  { wall: "z", at: 32.2 * S, gapCenter: 76.36, rooms: ["COLLECTION", "SPORTS"] },
+  { wall: "z", at: 49.05 * S, gapCenter: 76.36, rooms: ["SPORTS", "CARDS"] },
   { wall: "x", at: 12.55 * S, gapCenter: 83.625 * S, rooms: ["BUILT_BOTANY", "GAMES"] },
   { wall: "x", at: 26.6 * S, gapCenter: 83.625 * S, rooms: ["GAMES", "AUTOMOTIVE"] },
 
   // New wings (not in the original blueprint) — see CAMPUS_ROOMS above.
+  // Unaffected by the reflow: the entrance wing attaches to HUB's north
+  // wall (z=0, unchanged) and HUB's x-range didn't move.
   { wall: "x", at: 0, gapCenter: 36, rooms: ["HUB", "SPOTLIGHT"] },
   { wall: "x", at: 0, gapCenter: 74, rooms: ["HUB", "STORE"] },
   // The Hub's entrance now opens onto a real walkable plaza instead of a void.
@@ -198,7 +215,10 @@ export function computeWallSegments(): WallSegment[] {
       const gaps = CAMPUS_DOORS
         .filter((door) => door.wall === wallAxis && door.rooms.includes(room.id))
         .filter((door) => doorNeighborSide(door, room) === wallSide.side)
-        .map((door) => ({ from: door.gapCenter - DOOR_WIDTH / 2, to: door.gapCenter + DOOR_WIDTH / 2 }))
+        .map((door) => {
+          const half = (door.width ?? DOOR_WIDTH) / 2;
+          return { from: door.gapCenter - half, to: door.gapCenter + half };
+        })
         .sort((a, b) => a.from - b.from);
 
       let cursor = wallSide.from;
@@ -238,7 +258,7 @@ export function computeDoorBridges(): DoorBridge[] {
     if (!bId) continue;
     const a = roomById(aId);
     const b = roomById(bId);
-    const half = DOOR_WIDTH / 2;
+    const half = (door.width ?? DOOR_WIDTH) / 2;
 
     if (door.wall === "x") {
       const z0 = Math.min(a.z + a.d, b.z + b.d);

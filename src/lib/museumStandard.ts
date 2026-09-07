@@ -56,3 +56,13 @@ export const DOORWAY_CLEAR_HEIGHT = DOORWAY_HEADER_Y - DOORWAY_HEADER_HEIGHT / 2
 // and camera-collision clearance (handoff requirement 5 under "Two-door
 // standard room").
 export const DOORWAY_NO_DISPLAY_HALF_WIDTH = 2.2;
+
+// The wall-gap width a real doorwayKit.ts frame needs to sit in without its
+// posts clipping into the solid wall on either side: outer face of each post
+// is DOORWAY_POST_HALF_SPACING + DOORWAY_POST_WIDTH / 2 (1.93) from center,
+// so the full footprint is 3.86; +0.24 total clearance rounds to 4.1. Campus
+// rooms using the plain rectangular gap (no kit) keep the campus's own
+// narrower DOOR_WIDTH — this constant is only for doors that install the
+// real frame.
+export const DOORWAY_WALL_GAP =
+  (DOORWAY_POST_HALF_SPACING + DOORWAY_POST_WIDTH / 2) * 2 + 0.24;
