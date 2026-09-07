@@ -1054,6 +1054,25 @@ export default function VltdMuseumCampus() {
           targetYaw = newYaw;
         }
       },
+      // EK's review of 9d7c122: "total light count in the Three.js scene,
+      // light count owned by each converted room, and which room groups
+      // are enabled" — required evidence for the room-light-group work,
+      // queryable live instead of a source-code estimate.
+      getLightCounts: () => {
+        let totalLights = 0;
+        scene.traverse((obj) => {
+          if ((obj as THREE.Light).isLight) totalLights += 1;
+        });
+        const perRoom: Record<string, { lightCount: number; active: boolean }> = {};
+        for (const [roomId, group] of Object.entries(roomLightGroups)) {
+          let count = 0;
+          group.traverse((obj) => {
+            if ((obj as THREE.Light).isLight) count += 1;
+          });
+          perRoom[roomId] = { lightCount: count, active: group.visible };
+        }
+        return { totalLights, perRoom, currentRoomId: lastActiveRoomId };
+      },
     };
 
     function onResize() {
