@@ -910,6 +910,7 @@ export default function VltdMuseumCampus() {
       getCameraBody: () => cameraBody.clone(),
       getYawPitch: () => ({ yaw, pitch, targetYaw, targetPitch }),
       hasActiveWalkTween: () => walkTween !== null,
+      triggerWalkTween: (x: number, z: number) => startWalkTween(new THREE.Vector3(x, EYE_HEIGHT, z)),
       setCameraBody: (x: number, z: number, newYaw?: number) => {
         cameraBody.set(x, EYE_HEIGHT, z);
         targetCameraBody.copy(cameraBody);
