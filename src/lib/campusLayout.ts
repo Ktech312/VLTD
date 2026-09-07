@@ -139,6 +139,17 @@ export function doorGapCenter(a: CampusRoomId, b: CampusRoomId): number {
   return door.gapCenter;
 }
 
+/** The actual wall-gap width a door was cut with (its own `width`, or the
+ * campus default DOOR_WIDTH) — a room module needs this to size a transom
+ * panel that exactly closes the gap above the door header. */
+export function doorWallWidth(a: CampusRoomId, b: CampusRoomId): number {
+  const door = CAMPUS_DOORS.find(
+    (d) => (d.rooms[0] === a && d.rooms[1] === b) || (d.rooms[0] === b && d.rooms[1] === a)
+  );
+  if (!door) throw new Error(`No door between ${a} and ${b}`);
+  return door.width ?? DOOR_WIDTH;
+}
+
 export type CampusDoor = {
   // Which wall the gap is cut into: 'x' = a wall running along the X axis
   // (rooms stacked along Z, gap position measured in X); 'z' = a wall

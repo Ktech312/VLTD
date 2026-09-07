@@ -25,6 +25,7 @@ import {
   computeDoorBridges,
   computeWallSegments,
   doorGapCenter,
+  doorWallWidth,
   isWalkable,
   roomBounds,
   roomById,
@@ -516,8 +517,8 @@ export default function VltdMuseumCampus() {
       wallThickness: WALL_THICKNESS,
       eyeHeight: EYE_HEIGHT,
       doorways: [
-        { side: "east", gapCenter: doorGapCenter("POP_CULTURE", "HUB"), neighborId: "HUB" },
-        { side: "south", gapCenter: doorGapCenter("POP_CULTURE", "TCG"), neighborId: "TCG" },
+        { side: "east", gapCenter: doorGapCenter("POP_CULTURE", "HUB"), neighborId: "HUB", width: doorWallWidth("POP_CULTURE", "HUB") },
+        { side: "south", gapCenter: doorGapCenter("POP_CULTURE", "TCG"), neighborId: "TCG", width: doorWallWidth("POP_CULTURE", "TCG") },
       ],
     };
     buildRoomShell(scene, popCultureModule);
