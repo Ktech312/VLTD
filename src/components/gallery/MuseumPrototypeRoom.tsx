@@ -390,13 +390,17 @@ export default function MuseumPrototypeRoom() {
     const YAW_SENSITIVITY = 0.0008;
     const PITCH_SENSITIVITY = 0.00036;
 
-    let yaw = 0;
+    // Spawn facing back into the room from the next-room stub. Set BEFORE
+    // targetYaw is captured — assigning it after would leave targetYaw at
+    // the stale 0, and the tick loop's `yaw += (targetYaw - yaw) * 0.12`
+    // would then visibly ease the spawn view back toward 0 over the first
+    // second or so.
+    let yaw = Math.PI;
     let pitch = 0;
     let targetYaw = yaw;
     let targetPitch = pitch;
     const cameraBody = new THREE.Vector3(0, MUSEUM_EYE_HEIGHT, HALF_D + NEXT_ROOM_DEPTH - 2);
     const targetCameraBody = cameraBody.clone();
-    yaw = Math.PI; // spawn facing back into the room from the next-room stub
 
     const pressedKeys = new Set<string>();
     let isDragging = false;
