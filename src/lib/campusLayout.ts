@@ -63,27 +63,32 @@ export type CampusRoom = {
 // Blueprint's pre-scale (px/8) room rects * 1.3268 scale factor, unrounded.
 export const S = 1.3268;
 
-// Next-pass handoff (2026-09-07): resize ONE real room (POP_CULTURE) to the
-// exact standard module and stop for EK's review before touching the other
-// nominal-standard rooms (TCG/COLLECTION/SPORTS/CARDS) or deciding MISC.
-// POP_CULTURE's depth grows from 12.6*S (16.72) to STANDARD_ROOM_DEPTH (26),
-// which no longer fits before TCG at its old position — TCG and, in turn,
-// MISC shift south by just enough to clear it (their own w/d are untouched,
-// this is a position-only reflow, not a resize). HUB grows deep enough to
-// still have a valid door to MISC's new position, which pushes the south
-// row (COLLECTION/SPORTS/CARDS) south by the same amount HUB grew. See
-// CAMPUS_DOORS below for the door positions this reflow forces to update.
+// Next-pass handoff (2026-09-07), corrected per EK's review of 5820b85:
+// resize ONLY POP_CULTURE to the exact standard module and stop for review
+// before touching the other nominal-standard rooms (TCG/COLLECTION/SPORTS/
+// CARDS) or deciding MISC. POP_CULTURE's depth grows from 12.6*S (16.72) to
+// STANDARD_ROOM_DEPTH (26), which no longer fits before TCG at its old
+// position — TCG and, in turn, MISC shift south by just enough to clear it
+// (their own w/d are untouched, this is a position-only reflow). HUB and
+// the south row (COLLECTION/SPORTS/CARDS) do NOT grow or move — an earlier
+// version of this pass grew HUB's depth by ~22% to keep a straight-line
+// door to MISC's new position, which EK correctly flagged as an unreported
+// scope violation (the report claimed HUB only shifted position, which was
+// false). HUB is restored to its exact pre-pass footprint; the MISC<->HUB
+// and MISC<->COLLECTION doors below are recomputed against the real, much
+// smaller overlap this creates, instead of growing rooms to preserve the
+// old overlap.
 export const CAMPUS_ROOMS: CampusRoom[] = [
   { id: "POP_CULTURE", label: "POP_CULTURE", tierLabel: "North Rotunda", x: 0, z: 0, w: STANDARD_ROOM_WIDTH, d: STANDARD_ROOM_DEPTH, floorColor: 0x3a2a1a, universes: ["POP_CULTURE"] },
   { id: "TCG", label: "TCG", tierLabel: "South Rotunda", x: 0 * S, z: 28, w: 15.4 * S, d: 12.6 * S, floorColor: 0x1a2a3a, universes: ["TCG"] },
   { id: "MISC", label: "misc", tierLabel: "Gallery A", x: 0 * S, z: 46.72, w: 15.4 * S, d: 26.6 * S, floorColor: 0x2a2a2a, universes: ["MISC"] },
-  { id: "HUB", label: "VLTD Museum", tierLabel: "Grand hall", x: 16.9 * S, z: 0 * S, w: 49.1 * S, d: 66, floorColor: 0x24211a, universes: [] },
+  { id: "HUB", label: "VLTD Museum", tierLabel: "Grand hall", x: 16.9 * S, z: 0 * S, w: 49.1 * S, d: 40.75 * S, floorColor: 0x24211a, universes: [] },
   { id: "BUILT_BOTANY", label: "BUILT_BOTANY", tierLabel: "Gallery D", x: 67.5 * S, z: 0 * S, w: 32.25 * S, d: 12.6 * S, floorColor: 0x1a3323, universes: ["BUILT_BOTANY"] },
   { id: "GAMES", label: "GAMES", tierLabel: "Gallery E", x: 67.5 * S, z: 14.1 * S, w: 32.25 * S, d: 12.6 * S, floorColor: 0x2a1a3a, universes: ["GAMES"] },
   { id: "AUTOMOTIVE", label: "Automobile", tierLabel: "Garden Gallery", x: 67.5 * S, z: 28.1 * S, w: 32.25 * S, d: 26.6 * S, floorColor: 0x3a1a1a, universes: ["AUTOMOTIVE"] },
-  { id: "COLLECTION", label: "Collection", tierLabel: "Gallery C · baseline", x: 16.9 * S, z: 68, w: 15.4 * S, d: 12.6 * S, floorColor: 0x2a2418, universes: [] },
-  { id: "SPORTS", label: "SPORTS", tierLabel: "Gallery F", x: 33.75 * S, z: 68, w: 15.4 * S, d: 12.6 * S, floorColor: 0x18242a, universes: ["SPORTS"] },
-  { id: "CARDS", label: "Cards", tierLabel: "Gallery G", x: 50.6 * S, z: 68, w: 15.4 * S, d: 12.6 * S, floorColor: 0x241a2a, universes: [] },
+  { id: "COLLECTION", label: "Collection", tierLabel: "Gallery C · baseline", x: 16.9 * S, z: 42.25 * S, w: 15.4 * S, d: 12.6 * S, floorColor: 0x2a2418, universes: [] },
+  { id: "SPORTS", label: "SPORTS", tierLabel: "Gallery F", x: 33.75 * S, z: 42.25 * S, w: 15.4 * S, d: 12.6 * S, floorColor: 0x18242a, universes: ["SPORTS"] },
+  { id: "CARDS", label: "Cards", tierLabel: "Gallery G", x: 50.6 * S, z: 42.25 * S, w: 15.4 * S, d: 12.6 * S, floorColor: 0x241a2a, universes: [] },
 
   // New wings, not in the original blueprint — EK's ask (2026-09-02):
   // build the Spotlight and Store rooms now, flanking the Hub's entrance
@@ -122,6 +127,18 @@ export function roomById(id: CampusRoomId) {
   return room;
 }
 
+/** Looks up the gapCenter of the door between two rooms, so callers (shelf
+ * placement, room-shell doorway data) never have to re-type a value that
+ * CAMPUS_DOORS already computes — see the door-derivation comment above
+ * CAMPUS_DOORS for why typed-in duplicates of these values are a problem. */
+export function doorGapCenter(a: CampusRoomId, b: CampusRoomId): number {
+  const door = CAMPUS_DOORS.find(
+    (d) => (d.rooms[0] === a && d.rooms[1] === b) || (d.rooms[0] === b && d.rooms[1] === a)
+  );
+  if (!door) throw new Error(`No door between ${a} and ${b}`);
+  return door.gapCenter;
+}
+
 export type CampusDoor = {
   // Which wall the gap is cut into: 'x' = a wall running along the X axis
   // (rooms stacked along Z, gap position measured in X); 'z' = a wall
@@ -137,32 +154,57 @@ export type CampusDoor = {
   width?: number;
 };
 
+// EK's review of 5820b85: "Do not use manually typed values... when they can
+// be derived from room bounds... These literals will drift again when the
+// next room changes size." Every door below now computes its own gapCenter
+// (and, where it means anything physical, its `at`) from the two rooms'
+// live CAMPUS_ROOMS entries instead of a typed-in number, so resizing or
+// repositioning a room automatically keeps every door touching it correct.
+function overlapCenterAlongX(a: CampusRoom, b: CampusRoom): number {
+  return (Math.max(a.x, b.x) + Math.min(a.x + a.w, b.x + b.w)) / 2;
+}
+function overlapCenterAlongZ(a: CampusRoom, b: CampusRoom): number {
+  return (Math.max(a.z, b.z) + Math.min(a.z + a.d, b.z + b.d)) / 2;
+}
+// The wall's fixed coordinate is documentation only (see doorNeighborSide,
+// which infers the side from the rooms' relative positions, not from `at`)
+// — still derived here, not typed, so it stays accurate as a comment value.
+function sharedBoundaryAlongX(a: CampusRoom, b: CampusRoom): number {
+  const [west, east] = a.x <= b.x ? [a, b] : [b, a];
+  return (west.x + west.w + east.x) / 2;
+}
+function sharedBoundaryAlongZ(a: CampusRoom, b: CampusRoom): number {
+  const [north, south] = a.z <= b.z ? [a, b] : [b, a];
+  return (north.z + north.d + south.z) / 2;
+}
+
 export const CAMPUS_DOORS: CampusDoor[] = [
-  { wall: "x", at: 27, gapCenter: 10.22, rooms: ["POP_CULTURE", "TCG"], width: DOORWAY_WALL_GAP },
-  { wall: "x", at: 45.72, gapCenter: 10.22, rooms: ["TCG", "MISC"] },
-  { wall: "z", at: 21.71, gapCenter: 13, rooms: ["POP_CULTURE", "HUB"], width: DOORWAY_WALL_GAP },
-  { wall: "z", at: 16.15 * S, gapCenter: 36.36, rooms: ["TCG", "HUB"] },
-  { wall: "z", at: 16.15 * S, gapCenter: 64.37, rooms: ["MISC", "HUB"] },
-  { wall: "z", at: 16.15 * S, gapCenter: 75, rooms: ["MISC", "COLLECTION"] },
-  { wall: "z", at: 65.95 * S, gapCenter: 6.3 * S, rooms: ["HUB", "BUILT_BOTANY"] },
-  { wall: "z", at: 65.95 * S, gapCenter: 20.4 * S, rooms: ["HUB", "GAMES"] },
-  { wall: "z", at: 65.95 * S, gapCenter: 34.4 * S, rooms: ["HUB", "AUTOMOTIVE"] },
-  { wall: "z", at: 65.95 * S, gapCenter: 70.3, rooms: ["CARDS", "AUTOMOTIVE"] },
-  { wall: "x", at: 67, gapCenter: 24.6 * S, rooms: ["HUB", "COLLECTION"] },
-  { wall: "x", at: 67, gapCenter: 41.45 * S, rooms: ["HUB", "SPORTS"] },
-  { wall: "x", at: 67, gapCenter: 58.3 * S, rooms: ["HUB", "CARDS"] },
-  { wall: "z", at: 32.2 * S, gapCenter: 76.36, rooms: ["COLLECTION", "SPORTS"] },
-  { wall: "z", at: 49.05 * S, gapCenter: 76.36, rooms: ["SPORTS", "CARDS"] },
-  { wall: "x", at: 12.55 * S, gapCenter: 83.625 * S, rooms: ["BUILT_BOTANY", "GAMES"] },
-  { wall: "x", at: 26.6 * S, gapCenter: 83.625 * S, rooms: ["GAMES", "AUTOMOTIVE"] },
+  { wall: "x", at: sharedBoundaryAlongZ(roomById("POP_CULTURE"), roomById("TCG")), gapCenter: overlapCenterAlongX(roomById("POP_CULTURE"), roomById("TCG")), rooms: ["POP_CULTURE", "TCG"], width: DOORWAY_WALL_GAP },
+  { wall: "x", at: sharedBoundaryAlongZ(roomById("TCG"), roomById("MISC")), gapCenter: overlapCenterAlongX(roomById("TCG"), roomById("MISC")), rooms: ["TCG", "MISC"] },
+  { wall: "z", at: sharedBoundaryAlongX(roomById("POP_CULTURE"), roomById("HUB")), gapCenter: overlapCenterAlongZ(roomById("POP_CULTURE"), roomById("HUB")), rooms: ["POP_CULTURE", "HUB"], width: DOORWAY_WALL_GAP },
+  { wall: "z", at: sharedBoundaryAlongX(roomById("TCG"), roomById("HUB")), gapCenter: overlapCenterAlongZ(roomById("TCG"), roomById("HUB")), rooms: ["TCG", "HUB"] },
+  // MISC<->HUB: HUB was NOT grown to keep the old, larger overlap this door
+  // used to have — the overlap is now just the narrow band where MISC's
+  // (shifted-south) range still reaches into HUB's (unchanged) z-range.
+  { wall: "z", at: sharedBoundaryAlongX(roomById("MISC"), roomById("HUB")), gapCenter: overlapCenterAlongZ(roomById("MISC"), roomById("HUB")), rooms: ["MISC", "HUB"] },
+  { wall: "z", at: sharedBoundaryAlongX(roomById("MISC"), roomById("COLLECTION")), gapCenter: overlapCenterAlongZ(roomById("MISC"), roomById("COLLECTION")), rooms: ["MISC", "COLLECTION"] },
+  { wall: "z", at: sharedBoundaryAlongX(roomById("HUB"), roomById("BUILT_BOTANY")), gapCenter: overlapCenterAlongZ(roomById("HUB"), roomById("BUILT_BOTANY")), rooms: ["HUB", "BUILT_BOTANY"] },
+  { wall: "z", at: sharedBoundaryAlongX(roomById("HUB"), roomById("GAMES")), gapCenter: overlapCenterAlongZ(roomById("HUB"), roomById("GAMES")), rooms: ["HUB", "GAMES"] },
+  { wall: "z", at: sharedBoundaryAlongX(roomById("HUB"), roomById("AUTOMOTIVE")), gapCenter: overlapCenterAlongZ(roomById("HUB"), roomById("AUTOMOTIVE")), rooms: ["HUB", "AUTOMOTIVE"] },
+  { wall: "z", at: sharedBoundaryAlongX(roomById("CARDS"), roomById("AUTOMOTIVE")), gapCenter: overlapCenterAlongZ(roomById("CARDS"), roomById("AUTOMOTIVE")), rooms: ["CARDS", "AUTOMOTIVE"] },
+  { wall: "x", at: sharedBoundaryAlongZ(roomById("HUB"), roomById("COLLECTION")), gapCenter: overlapCenterAlongX(roomById("HUB"), roomById("COLLECTION")), rooms: ["HUB", "COLLECTION"] },
+  { wall: "x", at: sharedBoundaryAlongZ(roomById("HUB"), roomById("SPORTS")), gapCenter: overlapCenterAlongX(roomById("HUB"), roomById("SPORTS")), rooms: ["HUB", "SPORTS"] },
+  { wall: "x", at: sharedBoundaryAlongZ(roomById("HUB"), roomById("CARDS")), gapCenter: overlapCenterAlongX(roomById("HUB"), roomById("CARDS")), rooms: ["HUB", "CARDS"] },
+  { wall: "z", at: sharedBoundaryAlongX(roomById("COLLECTION"), roomById("SPORTS")), gapCenter: overlapCenterAlongZ(roomById("COLLECTION"), roomById("SPORTS")), rooms: ["COLLECTION", "SPORTS"] },
+  { wall: "z", at: sharedBoundaryAlongX(roomById("SPORTS"), roomById("CARDS")), gapCenter: overlapCenterAlongZ(roomById("SPORTS"), roomById("CARDS")), rooms: ["SPORTS", "CARDS"] },
+  { wall: "x", at: sharedBoundaryAlongZ(roomById("BUILT_BOTANY"), roomById("GAMES")), gapCenter: overlapCenterAlongX(roomById("BUILT_BOTANY"), roomById("GAMES")), rooms: ["BUILT_BOTANY", "GAMES"] },
+  { wall: "x", at: sharedBoundaryAlongZ(roomById("GAMES"), roomById("AUTOMOTIVE")), gapCenter: overlapCenterAlongX(roomById("GAMES"), roomById("AUTOMOTIVE")), rooms: ["GAMES", "AUTOMOTIVE"] },
 
   // New wings (not in the original blueprint) — see CAMPUS_ROOMS above.
-  // Unaffected by the reflow: the entrance wing attaches to HUB's north
-  // wall (z=0, unchanged) and HUB's x-range didn't move.
-  { wall: "x", at: 0, gapCenter: 36, rooms: ["HUB", "SPOTLIGHT"] },
-  { wall: "x", at: 0, gapCenter: 74, rooms: ["HUB", "STORE"] },
+  { wall: "x", at: roomById("HUB").z, gapCenter: overlapCenterAlongX(roomById("HUB"), roomById("SPOTLIGHT")), rooms: ["HUB", "SPOTLIGHT"] },
+  { wall: "x", at: roomById("HUB").z, gapCenter: overlapCenterAlongX(roomById("HUB"), roomById("STORE")), rooms: ["HUB", "STORE"] },
   // The Hub's entrance now opens onto a real walkable plaza instead of a void.
-  { wall: "x", at: 0, gapCenter: 40.65 * S, rooms: ["HUB", "PLAZA"] },
+  { wall: "x", at: roomById("HUB").z, gapCenter: overlapCenterAlongX(roomById("HUB"), roomById("PLAZA")), rooms: ["HUB", "PLAZA"] },
 ];
 
 // Spawn out in the plaza, facing the entrance facade — EK's ask
@@ -237,7 +279,7 @@ export function computeWallSegments(): WallSegment[] {
   return segments;
 }
 
-export type DoorBridge = { x0: number; x1: number; z0: number; z1: number };
+export type DoorBridge = { doorIndex: number; x0: number; x1: number; z0: number; z1: number };
 
 const WALKABLE_MARGIN = 0.9; // keeps the camera from clipping into walls
 
@@ -253,9 +295,9 @@ const WALKABLE_MARGIN = 0.9; // keeps the camera from clipping into walls
 export function computeDoorBridges(): DoorBridge[] {
   const bridges: DoorBridge[] = [];
 
-  for (const door of CAMPUS_DOORS) {
+  CAMPUS_DOORS.forEach((door, doorIndex) => {
     const [aId, bId] = door.rooms;
-    if (!bId) continue;
+    if (!bId) return;
     const a = roomById(aId);
     const b = roomById(bId);
     const half = (door.width ?? DOOR_WIDTH) / 2;
@@ -264,6 +306,7 @@ export function computeDoorBridges(): DoorBridge[] {
       const z0 = Math.min(a.z + a.d, b.z + b.d);
       const z1 = Math.max(a.z, b.z);
       bridges.push({
+        doorIndex,
         x0: door.gapCenter - half,
         x1: door.gapCenter + half,
         z0: Math.min(z0, z1) - WALKABLE_MARGIN,
@@ -273,13 +316,14 @@ export function computeDoorBridges(): DoorBridge[] {
       const x0 = Math.min(a.x + a.w, b.x + b.w);
       const x1 = Math.max(a.x, b.x);
       bridges.push({
+        doorIndex,
         x0: Math.min(x0, x1) - WALKABLE_MARGIN,
         x1: Math.max(x0, x1) + WALKABLE_MARGIN,
         z0: door.gapCenter - half,
         z1: door.gapCenter + half,
       });
     }
-  }
+  });
 
   return bridges;
 }
@@ -335,4 +379,92 @@ export function computeCampusWaypoints(): CampusWaypoint[] {
   });
 
   return waypoints;
+}
+
+// EK's review of 5820b85, required layout correction item 8: a validator
+// that rejects a door unless (a) its gap center lies inside both rooms'
+// shared wall span, (b) the two rooms are actually adjacent on the axis the
+// door claims (not overlapping, not disjoint on the wrong axis), and (c)
+// its bridge overlaps both rooms' own margin-inset walkable rects (the
+// exact dead-strip failure mode a real live-tested run hit once already —
+// see the computeDoorBridges comment above). Every campus door must pass
+// this with zero issues before a deploy; run it as part of the pre-push
+// check, the same way tsc/eslint/build already are.
+export type DoorValidationIssue = { doorIndex: number; rooms: string; message: string };
+
+function rangesOverlap(a0: number, a1: number, b0: number, b1: number): boolean {
+  return Math.max(a0, b0) < Math.min(a1, b1);
+}
+
+// The bridge/inset-rect check below wants "touching or overlapping," not
+// strict interior overlap: a bridge is deliberately built to expand by
+// exactly WALKABLE_MARGIN — the same margin the room's own inset rect is
+// shrunk by — so a correctly-built bridge lands EXACTLY tangent to the
+// room's inset edge, not strictly past it. isWalkable() itself uses
+// inclusive >=/<= comparisons, so a tangent bridge already walks fine in
+// the real app; using strict rangesOverlap here would flag every
+// correctly-built door as broken (confirmed by running this validator and
+// finding all 20 doors "failing," including ones that have worked in
+// production for weeks).
+function rangesConnect(a0: number, a1: number, b0: number, b1: number): boolean {
+  return Math.max(a0, b0) <= Math.min(a1, b1);
+}
+
+export function validateCampusDoors(): DoorValidationIssue[] {
+  const issues: DoorValidationIssue[] = [];
+  const clearance = 0.05;
+
+  CAMPUS_DOORS.forEach((door, doorIndex) => {
+    const [aId, bId] = door.rooms;
+    const a = roomById(aId);
+    const label = `${aId}<->${bId ?? "entrance"}`;
+    if (!bId) return; // building-entrance doors have no second room to check against
+
+    const b = roomById(bId);
+    const half = (door.width ?? DOOR_WIDTH) / 2;
+
+    if (door.wall === "x") {
+      if (rangesOverlap(a.z, a.z + a.d, b.z, b.z + b.d)) {
+        issues.push({ doorIndex, rooms: label, message: "wall:x door but the two rooms overlap in Z instead of being stacked" });
+      }
+      const lo = Math.max(a.x, b.x);
+      const hi = Math.min(a.x + a.w, b.x + b.w);
+      if (lo >= hi) {
+        issues.push({ doorIndex, rooms: label, message: "wall:x door but the rooms have no X overlap at all" });
+      } else if (door.gapCenter - half < lo + clearance || door.gapCenter + half > hi - clearance) {
+        issues.push({ doorIndex, rooms: label, message: `gapCenter ${door.gapCenter.toFixed(2)} +-${half.toFixed(2)} doesn't fit inside the shared X span [${lo.toFixed(2)}, ${hi.toFixed(2)}]` });
+      }
+    } else {
+      if (rangesOverlap(a.x, a.x + a.w, b.x, b.x + b.w)) {
+        issues.push({ doorIndex, rooms: label, message: "wall:z door but the two rooms overlap in X instead of being side by side" });
+      }
+      const lo = Math.max(a.z, b.z);
+      const hi = Math.min(a.z + a.d, b.z + b.d);
+      if (lo >= hi) {
+        issues.push({ doorIndex, rooms: label, message: "wall:z door but the rooms have no Z overlap at all" });
+      } else if (door.gapCenter - half < lo + clearance || door.gapCenter + half > hi - clearance) {
+        issues.push({ doorIndex, rooms: label, message: `gapCenter ${door.gapCenter.toFixed(2)} +-${half.toFixed(2)} doesn't fit inside the shared Z span [${lo.toFixed(2)}, ${hi.toFixed(2)}]` });
+      }
+    }
+  });
+
+  const areas = buildWalkableAreas();
+  computeDoorBridges().forEach((bridge) => {
+    const door = CAMPUS_DOORS[bridge.doorIndex];
+    const [aId, bId] = door.rooms;
+    const label = `${aId}<->${bId ?? "entrance"}`;
+    const aIndex = CAMPUS_ROOMS.findIndex((r) => r.id === aId);
+    const bIndex = bId ? CAMPUS_ROOMS.findIndex((r) => r.id === bId) : -1;
+    const aInset = areas.rooms[aIndex];
+    const bInset = bIndex >= 0 ? areas.rooms[bIndex] : null;
+
+    if (!(rangesConnect(bridge.x0, bridge.x1, aInset.x0, aInset.x1) && rangesConnect(bridge.z0, bridge.z1, aInset.z0, aInset.z1))) {
+      issues.push({ doorIndex: bridge.doorIndex, rooms: label, message: `bridge does not reach ${aId}'s inset walkable rect (dead-strip risk)` });
+    }
+    if (bInset && !(rangesConnect(bridge.x0, bridge.x1, bInset.x0, bInset.x1) && rangesConnect(bridge.z0, bridge.z1, bInset.z0, bInset.z1))) {
+      issues.push({ doorIndex: bridge.doorIndex, rooms: label, message: `bridge does not reach ${bId}'s inset walkable rect (dead-strip risk)` });
+    }
+  });
+
+  return issues;
 }
