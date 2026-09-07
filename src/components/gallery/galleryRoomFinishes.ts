@@ -65,7 +65,7 @@ const PALETTES: Record<GalleryFinishStyle, FinishPalette> = {
     // 2026-09-06, fourth pass: EK's correction — "darken the floor to
     // graphite or nearly black... remove the current pale-gray floor
     // appearance." Cut further than the previous round's charcoal.
-    floorColor: 0x17181a, floorRoughness: 0.22, floorTreatment: "concrete", jointColor: "#33363a",
+    floorColor: 0x17181a, floorRoughness: 0.18, floorTreatment: "concrete", jointColor: "#33363a",
     // Muted aged bronze — lower metalness/higher roughness than before so
     // it reads as brushed hardware catching light locally, not a glowing
     // chrome band running the length of the wall. Darkened and de-shined
@@ -268,7 +268,7 @@ export function createGalleryFinishes(style: GalleryFinishStyle = "whitebox") {
   // stay at the shared baseline so this reads as two deliberately shinier
   // surfaces, not a general room-wide reflectivity increase).
   if (style === "vault") {
-    floor.envMapIntensity = 0.55;
+    floor.envMapIntensity = 0.62;
     wall.envMapIntensity = 0.5;
   }
   const materials: THREE.Material[] = [...finishes];
@@ -375,9 +375,16 @@ export function createGalleryFinishes(style: GalleryFinishStyle = "whitebox") {
     // Vault's pre-refinement look and keeps the full visible track/spot rig
     // unchanged, same as White.
     if (style === "vault") {
+      // Third correction: EK's live review found visible circular hotspots
+      // landing on bare wall between items — "remove the isolated circular
+      // spotlight reflections... use broad hidden wall-washing across the
+      // occupied shelf zones." A much wider cone with maximum penumbra
+      // softness makes neighboring pools overlap into one continuous wash
+      // instead of 7 separate discs; intensity/targets are unchanged so the
+      // exhibit walls get the same total light, just blended together.
       LIGHT_TARGETS.forEach(([x, y, z, tx, ty, tz], index) => {
         const vaultIntensity = index === 1 ? 14 : 30;
-        const light = new THREE.SpotLight(0xffe6bd, vaultIntensity, 16, Math.PI / 4.6, 0.88, 1.25);
+        const light = new THREE.SpotLight(0xffe6bd, vaultIntensity, 16, Math.PI / 2.6, 1, 1.1);
         light.position.set(x, y - 0.2, z);
         light.target.position.set(tx, ty, tz);
         // EK reported the display cases flickering — the classic cause is a
@@ -716,17 +723,20 @@ export function createGalleryFinishes(style: GalleryFinishStyle = "whitebox") {
     }
     // A single divider between adjacent panels reads as the seam where two
     // large plates meet — the room's actual panel organization, not a
-    // decorative frame.
+    // decorative frame. THIRD correction: EK's direct ask — "make their
+    // seams much thinner. Use narrow recessed joints" — cut from a 0.3-wide
+    // slab (itself read as another thick line) down to a genuinely narrow
+    // groove.
     function addDivider(wallAxis: "x" | "z", fixedCoord: number, faceSign: 1 | -1, pos: number) {
       const divider = new THREE.Mesh(
         wallAxis === "x"
-          ? new THREE.BoxGeometry(0.3, WALL_TOP - WALL_BOTTOM, 0.1)
-          : new THREE.BoxGeometry(0.1, WALL_TOP - WALL_BOTTOM, 0.3),
+          ? new THREE.BoxGeometry(0.07, WALL_TOP - WALL_BOTTOM, 0.06)
+          : new THREE.BoxGeometry(0.06, WALL_TOP - WALL_BOTTOM, 0.07),
         dividerMaterial
       );
       const midY = (WALL_TOP + WALL_BOTTOM) / 2;
-      if (wallAxis === "x") divider.position.set(pos, midY, fixedCoord + faceSign * 0.07);
-      else divider.position.set(fixedCoord + faceSign * 0.07, midY, pos);
+      if (wallAxis === "x") divider.position.set(pos, midY, fixedCoord + faceSign * 0.04);
+      else divider.position.set(fixedCoord + faceSign * 0.04, midY, pos);
       room.add(divider);
     }
     // Back wall: 2 dividers -> 3 large panels.
@@ -743,53 +753,75 @@ export function createGalleryFinishes(style: GalleryFinishStyle = "whitebox") {
     addPanelCorners("z", 10.5, -1, [-14.5, -3]);
     addPanelCorners("z", 10.5, -1, [-3, 8.5]);
 
-    // Deeper wall returns flanking the existing archway — unchanged; the
-    // arch itself stays a secondary passage, not the main vault door.
-    for (const side of [-1, 1]) {
-      const jamb = new THREE.Mesh(new THREE.BoxGeometry(0.5, 6.4, 0.4), dividerMaterial);
-      jamb.position.set(side * 2.35, 3.4, 5.5);
-      room.add(jamb);
-    }
+    // The two jamb boxes that used to flank the archway here are REMOVED —
+    // EK's direct correction, third round, pointing at a live screenshot:
+    // "two thick black pillars in front of the arched passage... remove
+    // them completely. They obscure the existing metal surround and have
+    // no useful visual purpose. Do not replace them with another
+    // foreground frame." The GLB's own baked arch/door assembly
+    // ("vault_door_anchor") already has its own real surround — these
+    // boxes were redundant armor sitting in front of it, not structural.
 
-    // Ceiling grid — SECOND correction: EK pointed out the room already had
-    // diagonal glow lines before this handoff, and asked to enhance those,
-    // not delete them and build an axis-aligned grid from scratch. Restored
-    // the diagonal crisscross (matching the reference image's diamond
-    // lattice), extended into a fuller 6-segment lattice with real
-    // intersections, and recolored to a clearly saturated blue — the
-    // previous 0xcfe1e8 read as near-white, not blue, on EK's live review.
-    // Reaches closer to the entrance (z up to -1, was -2) so more of the
-    // lattice is actually inside the standard camera's frame.
-    const glowMaterial = new THREE.MeshBasicMaterial({ color: 0x38d2f2, toneMapped: false });
-    const channelMaterial = new THREE.MeshStandardMaterial({ color: 0x101214, roughness: 0.8, metalness: 0.1 });
-    materials.push(glowMaterial, channelMaterial);
+    // Ceiling grid — THIRD correction, fixed IN PLACE per EK's explicit
+    // instruction ("keep the existing ceiling-grid geometry and correct it
+    // in place, do not delete it and construct another replacement"). Two
+    // real problems with the prior version, both fixed without touching
+    // the overall diagonal-lattice concept:
+    // 1. Endpoints were arbitrary interior points, not real boundaries —
+    //    "every illuminated line must span from one ceiling boundary to
+    //    another." Recomputed the same 6-line diamond lattice so each line
+    //    starts and ends exactly on a real wall (left x=-10.5, right
+    //    x=10.5, back z=-12, front z=7 — the front wall's own real
+    //    position). No line floats mid-ceiling anymore.
+    // 2. The single flat-color line sitting inside a WIDER, taller,
+    //    OVERHANGING channel (length+0.3, hanging 0.37 below the actual
+    //    9.15 ceiling plane) read as "protruding dark backing rail" / a
+    //    hanging fluorescent tube, not a recessed light. Channel now sits
+    //    flush against the ceiling (y=9.08, just 0.07 below the true
+    //    ceiling plane) and is sized to the line's own length, no overhang.
+    //    The glow itself is now two layers — a narrow blue-white core plus
+    //    a soft, wider, additive-blended cyan edge glow — instead of one
+    //    flat-color box, closer to Image 1/2's actual look.
+    const coreMaterial = new THREE.MeshBasicMaterial({ color: 0xdff7ff, toneMapped: false });
+    const edgeGlowMaterial = new THREE.MeshBasicMaterial({
+      color: 0x38d2f2, transparent: true, opacity: 0.5, depthWrite: false,
+      blending: THREE.AdditiveBlending, toneMapped: false,
+    });
+    const channelMaterial = new THREE.MeshStandardMaterial({ color: 0x0c0e10, roughness: 0.85, metalness: 0.1 });
+    materials.push(coreMaterial, edgeGlowMaterial, channelMaterial);
     function glowSegment(x1: number, z1: number, x2: number, z2: number) {
       const dx = x2 - x1;
       const dz = z2 - z1;
       const length = Math.sqrt(dx * dx + dz * dz);
       const angle = -Math.atan2(dz, dx);
-      const channel = new THREE.Mesh(new THREE.BoxGeometry(length + 0.3, 0.1, 0.32), channelMaterial);
-      channel.position.set((x1 + x2) / 2, 8.78, (z1 + z2) / 2);
+      const midX = (x1 + x2) / 2;
+      const midZ = (z1 + z2) / 2;
+      const channel = new THREE.Mesh(new THREE.BoxGeometry(length, 0.04, 0.26), channelMaterial);
+      channel.position.set(midX, 9.08, midZ);
       channel.rotation.y = angle;
       room.add(channel);
-      const line = new THREE.Mesh(new THREE.BoxGeometry(length, 0.05, 0.11), glowMaterial);
-      line.position.set((x1 + x2) / 2, 8.74, (z1 + z2) / 2);
-      line.rotation.y = angle;
-      room.add(line);
+      const edge = new THREE.Mesh(new THREE.BoxGeometry(length, 0.03, 0.2), edgeGlowMaterial);
+      edge.position.set(midX, 9.06, midZ);
+      edge.rotation.y = angle;
+      room.add(edge);
+      const core = new THREE.Mesh(new THREE.BoxGeometry(length, 0.02, 0.045), coreMaterial);
+      core.position.set(midX, 9.055, midZ);
+      core.rotation.y = angle;
+      room.add(core);
     }
-    // Diamond lattice: 3 segments rising left-to-right, 3 falling
-    // left-to-right, crossing at 6 real intersections — the reference
-    // image's diagonal grid, not an axis-aligned window-pane.
-    glowSegment(-8, -11, -1, -4);
-    glowSegment(-3, -11, 5, -3);
-    glowSegment(0, -9, 7, -2);
-    glowSegment(-8, -3, -1, -10);
-    glowSegment(-2, -2, 6, -10);
-    glowSegment(2, -1, 8, -7);
+    // Diamond lattice, every line running wall to wall: 3 rising
+    // left-to-right, 3 falling left-to-right, crossing at 6 real
+    // intersections inside the room.
+    glowSegment(-4, -12, 10.5, 2.5); // back wall -> right wall
+    glowSegment(-10, -12, 9, 7); // back wall -> front wall
+    glowSegment(-10.5, -6.5, 3, 7); // left wall -> front wall
+    glowSegment(-10.5, 2.5, 4, -12); // left wall -> back wall
+    glowSegment(-9, 7, 10, -12); // front wall -> back wall
+    glowSegment(-3, 7, 10.5, -6.5); // front wall -> right wall
     // Restrained fill so the grid reads as the light source without
     // spilling onto nearby artwork.
     const glow = new THREE.PointLight(0x38d2f2, 0.4, 9, 1.4);
-    glow.position.set(-1, 8.5, -6);
+    glow.position.set(-1, 8.9, -6);
     room.add(glow);
   }
 

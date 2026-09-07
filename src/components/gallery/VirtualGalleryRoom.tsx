@@ -2058,9 +2058,13 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
                       material.roughness = 0.38;
                       material.metalness = 0.78;
                     } else if (name.includes("seam")) {
-                      material.color.setHex(0x202729);
-                      material.roughness = 0.58;
-                      material.metalness = 0.72;
+                      // Vault refinement handoff, THIRD correction — image 1
+                      // reference: "darker recesses" on the arch surround.
+                      // Darkened and de-metaled slightly so the seam reads
+                      // as a shadowed gap, not another shiny groove.
+                      material.color.setHex(0x16181a);
+                      material.roughness = 0.62;
+                      material.metalness = 0.6;
                     } else if (name.includes("vestibule")) {
                       material.color.setHex(0x303636);
                       material.roughness = 0.58;
@@ -2070,13 +2074,20 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
                       material.roughness = 0.82;
                       material.metalness = 0.18;
                     } else if (name.includes("rivet")) {
-                      material.color.setHex(0xb8c1c2);
-                      material.roughness = 0.3;
-                      material.metalness = 0.9;
+                      // "Clearer bolt heads" — lower roughness for a
+                      // sharper specular catch, slightly brighter base.
+                      material.color.setHex(0xc4cdce);
+                      material.roughness = 0.22;
+                      material.metalness = 0.92;
                     } else if (name.includes("steel") || name.includes("trim")) {
-                      material.color.setHex(0x9ca3a4);
-                      material.roughness = 0.32;
-                      material.metalness = 0.88;
+                      // "Brushed stainless or gunmetal... brighter curved
+                      // edge highlights... controlled reflections that
+                      // reveal its thickness" — cooler gunmetal tone, lower
+                      // roughness than before for a sharper, more defined
+                      // highlight along the arch's curved trim.
+                      material.color.setHex(0x8f9799);
+                      material.roughness = 0.24;
+                      material.metalness = 0.9;
                     } else if (name.includes("case")) {
                       material.color.setHex(0x15191d);
                       material.roughness = 0.5;
