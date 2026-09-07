@@ -537,7 +537,13 @@ export default function MuseumPrototypeRoom() {
         fromPos: entry.mesh.position.clone(),
         toPos: focalPoint(),
         fromRotY: entry.mesh.rotation.y,
-        toRotY: yaw + Math.PI,
+        // A PlaneGeometry's default normal is +Z; for it to face BACK
+        // toward the camera (not away, which single-sided MeshStandard
+        // culls to invisible) at rotation.y=theta its normal is
+        // (sin theta, 0, cos theta). Solving for that to equal -forward
+        // gives theta = -yaw, not yaw + PI (which pointed the item's face
+        // the same direction the camera itself is looking — away from it).
+        toRotY: -yaw,
         fromScale: entry.mesh.scale.x,
         toScale: 1.8,
         t: 0,
