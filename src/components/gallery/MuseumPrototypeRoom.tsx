@@ -369,17 +369,31 @@ export default function MuseumPrototypeRoom() {
     });
 
     // --- Movement: the same corrected pattern as VltdMuseumCampus.tsx. ---
-    const roomHalf = { x: HALF_W - 0.9, z: HALF_D - 0.9 };
-    const hallHalf = { x: (STANDARD_ROOM_WIDTH * 1.6) / 2 - 0.9, zNear: -HALF_D, zFar: -HALF_D - GRAND_HALL_DEPTH + 0.9 };
-    const nextHalf = { x: (STANDARD_ROOM_WIDTH * 0.5) / 2 - 0.9, zNear: HALF_D, zFar: HALF_D + NEXT_ROOM_DEPTH - 0.9 };
+    // First live test found the camera getting stuck in a dead strip right
+    // at each threshold — the exact same class of bug computeDoorBridges()
+    // in campusLayout.ts already has a comment about: the room's own
+    // margin-inset rect stopped a hair short of where the door-gap rect
+    // began, with neither overlapping the other, so isWalkable() returned
+    // false for a thin sliver right at the wall. Fixed by making the two
+    // walkable rects for each connection (main room, and the stub +
+    // doorway crossing merged into ONE rect) overlap by a full unit at the
+    // seam instead of merely touching.
+    const MARGIN = 0.9;
+    const roomHalf = { x: HALF_W - MARGIN, z: HALF_D - MARGIN }; // 9.6, 12.1
+    const hallStub = {
+      x: (STANDARD_ROOM_WIDTH * 1.6) / 2 - MARGIN,
+      z0: -HALF_D - GRAND_HALL_DEPTH + MARGIN, // far wall, inset
+      z1: -HALF_D + MARGIN + 1, // overlaps roomHalf.z's -12.1 boundary by 1 unit
+    };
+    const nextStub = {
+      x: (STANDARD_ROOM_WIDTH * 0.5) / 2 - MARGIN,
+      z0: HALF_D - MARGIN - 1, // overlaps roomHalf.z's 12.1 boundary by 1 unit
+      z1: HALF_D + NEXT_ROOM_DEPTH - MARGIN, // far wall, inset
+    };
     function isWalkable(x: number, z: number) {
       if (Math.abs(x) <= roomHalf.x && Math.abs(z) <= roomHalf.z) return true;
-      if (z <= hallHalf.zNear + 0.5 && z >= hallHalf.zFar && Math.abs(x) <= hallHalf.x) return true;
-      if (z >= nextHalf.zNear - 0.5 && z <= nextHalf.zFar && Math.abs(x) <= nextHalf.x) return true;
-      // Door gaps themselves (bridging the small step between the room's
-      // own margin-inset bound and the stub's).
-      if (Math.abs(x) <= WALL_GAP_HALF_WIDTH && z <= -HALF_D + 0.5 && z >= -HALF_D - 1) return true;
-      if (Math.abs(x) <= WALL_GAP_HALF_WIDTH && z >= HALF_D - 0.5 && z <= HALF_D + 1) return true;
+      if (Math.abs(x) <= hallStub.x && z >= hallStub.z0 && z <= hallStub.z1) return true;
+      if (Math.abs(x) <= nextStub.x && z >= nextStub.z0 && z <= nextStub.z1) return true;
       return false;
     }
 
