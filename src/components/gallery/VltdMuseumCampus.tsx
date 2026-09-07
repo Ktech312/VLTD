@@ -39,6 +39,14 @@ import {
   MUSEUM_WALK_SPEED,
   MUSEUM_WALK_SPEED_SLOW,
 } from "@/lib/museumStandard";
+import {
+  aimCamera,
+  applyDrag,
+  buildKeyboardMoveDirection,
+  easeTowardTargets,
+  facingDirection,
+  WHEEL_STEP,
+} from "@/lib/visitorController";
 
 function wrapText(ctx: CanvasRenderingContext2D, text: string, x: number, y: number, maxWidth: number, lineHeight: number) {
   const words = text.split(" ");
@@ -634,12 +642,6 @@ export default function VltdMuseumCampus() {
     const WALK_SPEED_SLOW = MUSEUM_WALK_SPEED_SLOW;
     const TURN_RATE = 1.7; // rad/sec, Left/Right arrow turning
     const PITCH_LIMIT = MUSEUM_PITCH_LIMIT;
-    // Calibrated to "drag across the full screen width = rotate through
-    // one horizontal field of view" (~0.00079 rad/px at this FOV/aspect),
-    // not ported — see the onPointerMove comment below for the measured
-    // reasoning. Pitch keeps the same ratio to yaw the single room used.
-    const YAW_SENSITIVITY = 0.0008;
-    const PITCH_SENSITIVITY = 0.00036;
 
     let yaw = CAMPUS_SPAWN.yaw;
     let pitch = 0;
@@ -654,27 +656,26 @@ export default function VltdMuseumCampus() {
     let startX = 0;
     let startY = 0;
 
-    // Full Museum Scale handoff (2026-09-06), Phase 1 — required free-form
-    // movement correction. `facingDirection()`/`strafeDirection()` used to
-    // read `targetYaw`, but the RENDERED camera uses the eased `yaw` —
-    // immediately after a drag-turn those two can point in different
-    // directions, so scroll/W/S could visibly move somewhere other than
-    // where the camera is actually facing that frame. Forward/back/strafe
-    // now always read the visible `yaw`, never the easing target.
-    function forwardFromVisibleView() {
-      return new THREE.Vector3(Math.sin(yaw), 0, -Math.cos(yaw)).normalize();
-    }
-    function rightFromVisibleView() {
-      return new THREE.Vector3(Math.cos(yaw), 0, Math.sin(yaw)).normalize();
-    }
-
+    // Museum Controls Correction Addendum (2026-09-06): movement basis is
+    // `targetYaw` — the accepted personal room's own
+    // facingDirection()/strafeDirection() (now shared via
+    // src/lib/visitorController.ts) have always used `targetYaw`, not the
+    // eased `yaw`. An earlier pass here assumed that was a bug and switched
+    // to `yaw`; that assumption was wrong and is superseded — matching the
+    // accepted room exactly means matching its actual basis, not a
+    // theoretical "always match the rendered frame" model it doesn't use.
+    //
     // Collision must shorten or stop the requested motion, never redirect
-    // it — the old tryMove() retried the blocked move's world-X and world-Z
+    // it — the old tryMove() retried a blocked move's world-X and world-Z
     // components separately, which could turn a blocked forward/backward
     // press into sideways sliding along a wall. Substeps (instead of one
     // big jump) stop a fast wheel nudge from tunneling across a thin
-    // doorway threshold.
-    function movePreservingDirection(delta: THREE.Vector3) {
+    // doorway threshold. Reusable for both the continuous WASD path
+    // (mutates `cameraBody` directly, same as the accepted room) and the
+    // discrete wheel path (mutates `targetCameraBody`, same as the accepted
+    // room's own moveCamera) — the position mutated is the caller's choice,
+    // matching whichever one the accepted room itself moves for that input.
+    function moveWithCollision(position: THREE.Vector3, delta: THREE.Vector3) {
       const distance = delta.length();
       if (distance === 0) return;
 
@@ -684,30 +685,32 @@ export default function VltdMuseumCampus() {
       const step = direction.multiplyScalar(distance / steps);
 
       for (let index = 0; index < steps; index += 1) {
-        const nextX = cameraBody.x + step.x;
-        const nextZ = cameraBody.z + step.z;
+        const nextX = position.x + step.x;
+        const nextZ = position.z + step.z;
         if (!isWalkable(nextX, nextZ, walkable)) break;
-        cameraBody.x = nextX;
-        cameraBody.z = nextZ;
+        position.x = nextX;
+        position.z = nextZ;
       }
-
-      targetCameraBody.copy(cameraBody);
     }
 
     function updateKeyboardMovement(dt: number) {
       if (pressedKeys.size === 0) return;
       walkTween = null; // a held movement/turn key interrupts click-to-walk (view is never touched by the tween, so nothing else to reset)
       const speed = pressedKeys.has("shift") ? WALK_SPEED_SLOW : WALK_SPEED;
-      const move = new THREE.Vector3();
-      const forward = forwardFromVisibleView();
-      const right = rightFromVisibleView();
-      if (pressedKeys.has("forward")) move.add(forward);
-      if (pressedKeys.has("back")) move.sub(forward);
-      if (pressedKeys.has("left")) move.sub(right);
-      if (pressedKeys.has("right")) move.add(right);
+      const move = buildKeyboardMoveDirection(
+        {
+          forward: pressedKeys.has("forward"),
+          back: pressedKeys.has("back"),
+          left: pressedKeys.has("left"),
+          right: pressedKeys.has("right"),
+        },
+        targetYaw
+      );
       if (move.lengthSq() > 0) {
-        move.normalize().multiplyScalar(speed * dt);
-        movePreservingDirection(move);
+        move.multiplyScalar(speed * dt);
+        moveWithCollision(cameraBody, move);
+        cameraBody.y = EYE_HEIGHT;
+        targetCameraBody.copy(cameraBody);
       }
       let turn = 0;
       if (pressedKeys.has("turn-left")) turn += 1;
@@ -800,15 +803,14 @@ export default function VltdMuseumCampus() {
         didDrag = true;
         walkTween = null; // a real manual look-drag interrupts an in-progress auto-walk
       }
-      // EK's ask (2026-09-04), stated as a HUGE issue: "when i click and
-      // drag the room to look around it moves the room the wrong way."
-      // The sign here was backwards for the "grab and pan the room"
-      // metaphor EK has been describing this whole time — dragging right
-      // should carry the room's content right with the cursor (like
-      // dragging a photo), which means the sign is `+=`, not `-=`. Fixed
-      // on both axes together (pitch had the same class of bug).
-      targetYaw += dx * YAW_SENSITIVITY;
-      targetPitch = Math.max(-PITCH_LIMIT, Math.min(PITCH_LIMIT, targetPitch + dy * PITCH_SENSITIVITY));
+      // Museum Controls Correction Addendum (2026-09-06): this used to
+      // have its own invented sign/sensitivity (`+= dx * 0.0008`), which
+      // both pointed the wrong way and was ~23% as sensitive as the
+      // accepted room's real drag. Now the same shared applyDrag() the
+      // personal room itself uses — same sign (`-=`), same sensitivity.
+      const dragged = applyDrag(dx, dy, targetYaw, targetPitch, PITCH_LIMIT);
+      targetYaw = dragged.targetYaw;
+      targetPitch = dragged.targetPitch;
       startX = e.clientX;
       startY = e.clientY;
     }
@@ -838,8 +840,14 @@ export default function VltdMuseumCampus() {
     function onWheel(e: WheelEvent) {
       e.preventDefault();
       walkTween = null;
-      const signedDistance = e.deltaY > 0 ? -0.42 : 0.42;
-      movePreservingDirection(forwardFromVisibleView().multiplyScalar(signedDistance));
+      // Matches the accepted room's own wheel handler: nudges
+      // targetCameraBody (not cameraBody directly), so the actual camera
+      // glides toward it over the next few frames via the same easing used
+      // for drag-look.
+      const signedDistance = e.deltaY > 0 ? -WHEEL_STEP : WHEEL_STEP;
+      const delta = facingDirection(targetYaw).multiplyScalar(signedDistance);
+      moveWithCollision(targetCameraBody, delta);
+      targetCameraBody.y = EYE_HEIGHT;
     }
 
     window.addEventListener("keydown", onKeyDown);
@@ -882,15 +890,16 @@ export default function VltdMuseumCampus() {
           walkTween = null;
         }
       } else {
-        yaw += (targetYaw - yaw) * 0.12;
-        pitch += (targetPitch - pitch) * 0.12;
-        cameraBody.lerp(targetCameraBody, 0.15);
+        const eased = easeTowardTargets(yaw, targetYaw, pitch, targetPitch, cameraBody, targetCameraBody);
+        yaw = eased.yaw;
+        pitch = eased.pitch;
       }
       cameraBody.y = EYE_HEIGHT;
 
-      camera.position.copy(cameraBody);
-      camera.rotation.y = yaw;
-      camera.rotation.x = pitch;
+      // Museum Controls Correction Addendum: the accepted room aims its
+      // camera via a calculated lookDirection + camera.lookAt(), never a
+      // direct rotation assignment — same shared aimCamera() now.
+      aimCamera(camera, cameraBody, yaw, pitch);
 
       const label = currentRoomLabel(cameraBody.x, cameraBody.z);
       if (label !== lastRoomLabel) {

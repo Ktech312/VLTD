@@ -48,6 +48,14 @@ import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { createGalleryFinishes, type GalleryFinishStyle } from "./galleryRoomFinishes";
 import { createGrainTexture, createHardwoodTexture } from "./galleryTextures";
+import {
+  aimCamera,
+  applyDrag,
+  easeTowardTargets,
+  facingDirection as sharedFacingDirection,
+  strafeDirection as sharedStrafeDirection,
+  WHEEL_STEP,
+} from "@/lib/visitorController";
 
 // The app's real theme blue — same tone/text pairing as the "Save Room
 // Draft" button's own gradient (`#79E7FB`→`#2CB1D1`) and dark text
@@ -3386,12 +3394,17 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
       clampPosition(targetCameraBody);
     }
 
+    // Full Museum Scale controls addendum (2026-09-06): these two now
+    // delegate to the shared visitorController module so the campus and
+    // the prototype room use the literal same math, instead of each
+    // surface keeping its own copy that can drift. Behavior is unchanged —
+    // still `targetYaw`-based, exactly as before.
     function facingDirection() {
-      return new THREE.Vector3(Math.sin(targetYaw), 0, -Math.cos(targetYaw)).normalize();
+      return sharedFacingDirection(targetYaw);
     }
 
     function strafeDirection() {
-      return new THREE.Vector3(Math.cos(targetYaw), 0, Math.sin(targetYaw)).normalize();
+      return sharedStrafeDirection(targetYaw);
     }
 
     function moveCamera(command: string, amount = 0.54) {
@@ -3456,18 +3469,12 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
           walkTween = null;
         }
       } else {
-        yaw += (targetYaw - yaw) * (reducedMotion.matches ? 1 : 0.12);
-        pitch += (targetPitch - pitch) * (reducedMotion.matches ? 1 : 0.12);
-        cameraBody.lerp(targetCameraBody, reducedMotion.matches ? 1 : 0.15);
+        const eased = easeTowardTargets(yaw, targetYaw, pitch, targetPitch, cameraBody, targetCameraBody, reducedMotion.matches);
+        yaw = eased.yaw;
+        pitch = eased.pitch;
       }
 
-      const lookDirection = new THREE.Vector3(
-        Math.sin(yaw),
-        Math.sin(pitch),
-        -Math.cos(yaw)
-      ).normalize();
-      camera.position.copy(cameraBody);
-      camera.lookAt(cameraBody.clone().add(lookDirection.multiplyScalar(6)));
+      aimCamera(camera, cameraBody, yaw, pitch);
       renderer.render(scene, camera);
       raf = window.requestAnimationFrame(render);
     }
@@ -3512,8 +3519,9 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
         didDrag = true;
         walkTween = null; // a real manual look-drag interrupts an in-progress auto-walk
       }
-      targetYaw -= dx * 0.0035;
-      targetPitch += dy * 0.0016;
+      const dragged = applyDrag(dx, dy, targetYaw, targetPitch, NAV_PITCH_LIMIT);
+      targetYaw = dragged.targetYaw;
+      targetPitch = dragged.targetPitch;
       clampView();
       startX = event.clientX;
       startY = event.clientY;
@@ -3623,7 +3631,7 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
 
     function onWheel(event: WheelEvent) {
       event.preventDefault();
-      moveCamera(event.deltaY > 0 ? "back" : "forward", 0.42);
+      moveCamera(event.deltaY > 0 ? "back" : "forward", WHEEL_STEP);
     }
 
     function movementKeyToken(event: KeyboardEvent): string | null {

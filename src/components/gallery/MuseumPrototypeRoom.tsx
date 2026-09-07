@@ -19,12 +19,13 @@
 // VltdMuseumCampus.tsx (other than the shared movement-correction fix,
 // which is a behavior fix, not a room resize) is touched by this file.
 //
-// Movement here is the SAME corrected pattern just applied to
-// VltdMuseumCampus.tsx (forwardFromVisibleView/rightFromVisibleView reading
-// the rendered `yaw`, movePreservingDirection stopping instead of
-// redirecting on collision) — duplicated rather than imported because it
-// closes over this component's own local camera state, same as the
-// campus's copy does.
+// Movement/drag/camera-aim math comes from the shared
+// src/lib/visitorController.ts module — the same one VirtualGalleryRoom.tsx
+// and VltdMuseumCampus.tsx use (Museum Controls Correction Addendum,
+// 2026-09-06: no third independent controller). Only the collision
+// predicate (isWalkable, this room's own geometry) and the substep/stop
+// loop around it are local, since collision shape is necessarily
+// per-surface.
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
@@ -43,6 +44,14 @@ import {
   STANDARD_ROOM_HEIGHT,
   STANDARD_ROOM_WIDTH,
 } from "@/lib/museumStandard";
+import {
+  aimCamera,
+  applyDrag,
+  buildKeyboardMoveDirection,
+  easeTowardTargets,
+  facingDirection,
+  WHEEL_STEP,
+} from "@/lib/visitorController";
 import { getPrimaryImageUrl, loadItems } from "@/lib/vaultModel";
 
 // Room centered on the world origin: x in [-W/2, W/2], z in [-D/2, D/2].
@@ -401,16 +410,13 @@ export default function MuseumPrototypeRoom() {
     const WALK_SPEED_SLOW = MUSEUM_WALK_SPEED_SLOW;
     const TURN_RATE = 1.7;
     const PITCH_LIMIT = MUSEUM_PITCH_LIMIT;
-    const YAW_SENSITIVITY = 0.0008;
-    const PITCH_SENSITIVITY = 0.00036;
 
     // Spawn facing back into the room from the next-room stub. Set BEFORE
     // targetYaw is captured — assigning it after would leave targetYaw at
-    // the stale 0, and the tick loop's `yaw += (targetYaw - yaw) * 0.12`
-    // would then visibly ease the spawn view back toward 0 over the first
-    // second or so.
-    // forwardFromVisibleView() at yaw=0 is (0,0,-1) — facing -Z, i.e. back
-    // toward the room from this stub's spawn point (z=21, room is z<13).
+    // the stale 0, and the tick loop's yaw-easing would then visibly ease
+    // the spawn view back toward 0 over the first second or so.
+    // facingDirection(0) is (0,0,-1) — facing -Z, i.e. back toward the room
+    // from this stub's spawn point (z=21, room is z<13).
     let yaw = 0;
     let pitch = 0;
     let targetYaw = yaw;
@@ -424,14 +430,12 @@ export default function MuseumPrototypeRoom() {
     let startX = 0;
     let startY = 0;
 
-    function forwardFromVisibleView() {
-      return new THREE.Vector3(Math.sin(yaw), 0, -Math.cos(yaw)).normalize();
-    }
-    function rightFromVisibleView() {
-      return new THREE.Vector3(Math.cos(yaw), 0, Math.sin(yaw)).normalize();
-    }
-
-    function movePreservingDirection(delta: THREE.Vector3) {
+    // Museum Controls Correction Addendum (2026-09-06): same shared
+    // controller as the accepted personal room and the public campus — no
+    // third independent implementation. Movement basis is `targetYaw`
+    // (matching the accepted room's own facingDirection()/strafeDirection()
+    // exactly), not the previously-assumed "visible yaw."
+    function moveWithCollision(position: THREE.Vector3, delta: THREE.Vector3) {
       const distance = delta.length();
       if (distance === 0) return;
       const direction = delta.clone().normalize();
@@ -439,28 +443,31 @@ export default function MuseumPrototypeRoom() {
       const steps = Math.max(1, Math.ceil(distance / maxSubstep));
       const step = direction.multiplyScalar(distance / steps);
       for (let index = 0; index < steps; index += 1) {
-        const nextX = cameraBody.x + step.x;
-        const nextZ = cameraBody.z + step.z;
+        const nextX = position.x + step.x;
+        const nextZ = position.z + step.z;
         if (!isWalkable(nextX, nextZ)) break;
-        cameraBody.x = nextX;
-        cameraBody.z = nextZ;
+        position.x = nextX;
+        position.z = nextZ;
       }
-      targetCameraBody.copy(cameraBody);
     }
 
     function updateKeyboardMovement(dt: number) {
       if (pressedKeys.size === 0) return;
       const speed = pressedKeys.has("shift") ? WALK_SPEED_SLOW : WALK_SPEED;
-      const move = new THREE.Vector3();
-      const forward = forwardFromVisibleView();
-      const right = rightFromVisibleView();
-      if (pressedKeys.has("forward")) move.add(forward);
-      if (pressedKeys.has("back")) move.sub(forward);
-      if (pressedKeys.has("left")) move.sub(right);
-      if (pressedKeys.has("right")) move.add(right);
+      const move = buildKeyboardMoveDirection(
+        {
+          forward: pressedKeys.has("forward"),
+          back: pressedKeys.has("back"),
+          left: pressedKeys.has("left"),
+          right: pressedKeys.has("right"),
+        },
+        targetYaw
+      );
       if (move.lengthSq() > 0) {
-        move.normalize().multiplyScalar(speed * dt);
-        movePreservingDirection(move);
+        move.multiplyScalar(speed * dt);
+        moveWithCollision(cameraBody, move);
+        cameraBody.y = MUSEUM_EYE_HEIGHT;
+        targetCameraBody.copy(cameraBody);
       }
       let turn = 0;
       if (pressedKeys.has("turn-left")) turn += 1;
@@ -512,8 +519,9 @@ export default function MuseumPrototypeRoom() {
       const dx = e.clientX - startX;
       const dy = e.clientY - startY;
       if (Math.abs(dx) + Math.abs(dy) > 6) didDrag = true;
-      targetYaw += dx * YAW_SENSITIVITY;
-      targetPitch = Math.max(-PITCH_LIMIT, Math.min(PITCH_LIMIT, targetPitch + dy * PITCH_SENSITIVITY));
+      const dragged = applyDrag(dx, dy, targetYaw, targetPitch, PITCH_LIMIT);
+      targetYaw = dragged.targetYaw;
+      targetPitch = dragged.targetPitch;
       startX = e.clientX;
       startY = e.clientY;
     }
@@ -612,8 +620,12 @@ export default function MuseumPrototypeRoom() {
     renderer.domElement.addEventListener("wheel", onWheel, { passive: false });
     function onWheel(e: WheelEvent) {
       e.preventDefault();
-      const signedDistance = e.deltaY > 0 ? -0.42 : 0.42;
-      movePreservingDirection(forwardFromVisibleView().multiplyScalar(signedDistance));
+      // Matches the accepted room's own wheel handler: nudges
+      // targetCameraBody, not cameraBody directly.
+      const signedDistance = e.deltaY > 0 ? -WHEEL_STEP : WHEEL_STEP;
+      const delta = facingDirection(targetYaw).multiplyScalar(signedDistance);
+      moveWithCollision(targetCameraBody, delta);
+      targetCameraBody.y = MUSEUM_EYE_HEIGHT;
     }
 
     const clock = new THREE.Clock();
@@ -623,14 +635,14 @@ export default function MuseumPrototypeRoom() {
       const dt = Math.min(clock.getDelta(), 0.05);
 
       updateKeyboardMovement(dt);
-      yaw += (targetYaw - yaw) * 0.12;
-      pitch += (targetPitch - pitch) * 0.12;
-      cameraBody.lerp(targetCameraBody, 0.15);
+      const eased = easeTowardTargets(yaw, targetYaw, pitch, targetPitch, cameraBody, targetCameraBody);
+      yaw = eased.yaw;
+      pitch = eased.pitch;
       cameraBody.y = MUSEUM_EYE_HEIGHT;
 
-      camera.position.copy(cameraBody);
-      camera.rotation.y = yaw;
-      camera.rotation.x = pitch;
+      // Museum Controls Correction Addendum: same shared aimCamera() as the
+      // accepted room and the campus — never a direct rotation assignment.
+      aimCamera(camera, cameraBody, yaw, pitch);
 
       if (anim) {
         anim.t = Math.min(1, anim.t + dt / 0.35);
