@@ -65,7 +65,7 @@ const PALETTES: Record<GalleryFinishStyle, FinishPalette> = {
     // 2026-09-06, fourth pass: EK's correction — "darken the floor to
     // graphite or nearly black... remove the current pale-gray floor
     // appearance." Cut further than the previous round's charcoal.
-    floorColor: 0x17181a, floorRoughness: 0.18, floorTreatment: "concrete", jointColor: "#33363a",
+    floorColor: 0x17181a, floorRoughness: 0.3, floorTreatment: "concrete", jointColor: "#33363a",
     // Muted aged bronze — lower metalness/higher roughness than before so
     // it reads as brushed hardware catching light locally, not a glowing
     // chrome band running the length of the wall. Darkened and de-shined
@@ -268,7 +268,13 @@ export function createGalleryFinishes(style: GalleryFinishStyle = "whitebox") {
   // stay at the shared baseline so this reads as two deliberately shinier
   // surfaces, not a general room-wide reflectivity increase).
   if (style === "vault") {
-    floor.envMapIntensity = 0.62;
+    // FOURTH correction: EK's live review — "the floor look metal now with
+    // a giant white light on it... not like the image." The prior bump
+    // (0.55->0.62, plus roughness down to 0.18) made the floor reflect the
+    // environment map's own bright area as a blown-out hotspot instead of
+    // the reference's soft, even sheen. Pulled back below the original
+    // baseline, not just back to it.
+    floor.envMapIntensity = 0.4;
     wall.envMapIntensity = 0.5;
   }
   const materials: THREE.Material[] = [...finishes];
@@ -375,16 +381,23 @@ export function createGalleryFinishes(style: GalleryFinishStyle = "whitebox") {
     // Vault's pre-refinement look and keeps the full visible track/spot rig
     // unchanged, same as White.
     if (style === "vault") {
-      // Third correction: EK's live review found visible circular hotspots
-      // landing on bare wall between items — "remove the isolated circular
-      // spotlight reflections... use broad hidden wall-washing across the
-      // occupied shelf zones." A much wider cone with maximum penumbra
-      // softness makes neighboring pools overlap into one continuous wash
-      // instead of 7 separate discs; intensity/targets are unchanged so the
-      // exhibit walls get the same total light, just blended together.
+      // FOURTH correction, undoing part of the third: widening the cone to
+      // Math.PI/2.6 to blend the pools together made several wide cones
+      // overlap directly over the display cases, and EK reported the case
+      // flicker coming back — the most likely cause, since nothing else
+      // touching lights or shadows changed this round. It also didn't even
+      // solve the original complaint: EK's live review still called it
+      // "a lot of spot lights... no actual spot light in the room," i.e.
+      // still reading as individual lit pools rather than a wash. Fixing
+      // both by going the other direction — a much LOWER intensity (so no
+      // pool is bright enough to read as "a spotlight" or to visibly
+      // overlap-flicker on the cases) plus a moderate, not extreme, cone
+      // widening. The ceiling grid and general room fill carry more of the
+      // visible light character now, matching "the grid... must visually
+      // appear to be the light source."
       LIGHT_TARGETS.forEach(([x, y, z, tx, ty, tz], index) => {
-        const vaultIntensity = index === 1 ? 14 : 30;
-        const light = new THREE.SpotLight(0xffe6bd, vaultIntensity, 16, Math.PI / 2.6, 1, 1.1);
+        const vaultIntensity = index === 1 ? 7 : 15;
+        const light = new THREE.SpotLight(0xffe6bd, vaultIntensity, 16, Math.PI / 3.6, 1, 1.3);
         light.position.set(x, y - 0.2, z);
         light.target.position.set(tx, ty, tz);
         // EK reported the display cases flickering — the classic cause is a
@@ -739,19 +752,24 @@ export function createGalleryFinishes(style: GalleryFinishStyle = "whitebox") {
       else divider.position.set(fixedCoord + faceSign * 0.04, midY, pos);
       room.add(divider);
     }
-    // Back wall: 2 dividers -> 3 large panels.
-    addDivider("x", -12, 1, -3.3);
-    addDivider("x", -12, 1, 3.3);
-    addPanelCorners("x", -12, 1, [-9.8, -3.3]);
-    addPanelCorners("x", -12, 1, [-3.3, 3.3]);
-    addPanelCorners("x", -12, 1, [3.3, 9.8]);
-    // Side walls: 1 divider -> 2 large panels each.
-    addDivider("z", -10.5, 1, -3);
-    addPanelCorners("z", -10.5, 1, [-14.5, -3]);
-    addPanelCorners("z", -10.5, 1, [-3, 8.5]);
-    addDivider("z", 10.5, -1, -3);
-    addPanelCorners("z", 10.5, -1, [-14.5, -3]);
-    addPanelCorners("z", 10.5, -1, [-3, 8.5]);
+    // FOURTH correction: EK's direct count — "you only made two on each
+    // wall and didn't leave the 4 on each wall." 3 dividers -> 4 equal
+    // panels, back wall and both side walls alike.
+    for (const pos of [-4.9, 0, 4.9]) addDivider("x", -12, 1, pos);
+    addPanelCorners("x", -12, 1, [-9.8, -4.9]);
+    addPanelCorners("x", -12, 1, [-4.9, 0]);
+    addPanelCorners("x", -12, 1, [0, 4.9]);
+    addPanelCorners("x", -12, 1, [4.9, 9.8]);
+    for (const pos of [-8.75, -3, 2.75]) addDivider("z", -10.5, 1, pos);
+    addPanelCorners("z", -10.5, 1, [-14.5, -8.75]);
+    addPanelCorners("z", -10.5, 1, [-8.75, -3]);
+    addPanelCorners("z", -10.5, 1, [-3, 2.75]);
+    addPanelCorners("z", -10.5, 1, [2.75, 8.5]);
+    for (const pos of [-8.75, -3, 2.75]) addDivider("z", 10.5, -1, pos);
+    addPanelCorners("z", 10.5, -1, [-14.5, -8.75]);
+    addPanelCorners("z", 10.5, -1, [-8.75, -3]);
+    addPanelCorners("z", 10.5, -1, [-3, 2.75]);
+    addPanelCorners("z", 10.5, -1, [2.75, 8.5]);
 
     // The two jamb boxes that used to flank the archway here are REMOVED —
     // EK's direct correction, third round, pointing at a live screenshot:
@@ -779,12 +797,15 @@ export function createGalleryFinishes(style: GalleryFinishStyle = "whitebox") {
     //    hanging fluorescent tube, not a recessed light. Channel now sits
     //    flush against the ceiling (y=9.08, just 0.07 below the true
     //    ceiling plane) and is sized to the line's own length, no overhang.
-    //    The glow itself is now two layers — a narrow blue-white core plus
-    //    a soft, wider, additive-blended cyan edge glow — instead of one
-    //    flat-color box, closer to Image 1/2's actual look.
-    const coreMaterial = new THREE.MeshBasicMaterial({ color: 0xdff7ff, toneMapped: false });
+    //    FOURTH correction: the previous version's bright near-white core
+    //    inside the blue glow read as an unexplained "white line in the
+    //    middle of the blue lights," not an intentional highlight. Both
+    //    layers are now the SAME blue hue — a more opaque core plus a
+    //    softer, wider, transparent glow of that identical color for the
+    //    edge falloff — never a different color.
+    const coreMaterial = new THREE.MeshBasicMaterial({ color: 0x38d2f2, toneMapped: false });
     const edgeGlowMaterial = new THREE.MeshBasicMaterial({
-      color: 0x38d2f2, transparent: true, opacity: 0.5, depthWrite: false,
+      color: 0x38d2f2, transparent: true, opacity: 0.4, depthWrite: false,
       blending: THREE.AdditiveBlending, toneMapped: false,
     });
     const channelMaterial = new THREE.MeshStandardMaterial({ color: 0x0c0e10, roughness: 0.85, metalness: 0.1 });
@@ -804,7 +825,7 @@ export function createGalleryFinishes(style: GalleryFinishStyle = "whitebox") {
       edge.position.set(midX, 9.06, midZ);
       edge.rotation.y = angle;
       room.add(edge);
-      const core = new THREE.Mesh(new THREE.BoxGeometry(length, 0.02, 0.045), coreMaterial);
+      const core = new THREE.Mesh(new THREE.BoxGeometry(length, 0.02, 0.06), coreMaterial);
       core.position.set(midX, 9.055, midZ);
       core.rotation.y = angle;
       room.add(core);
