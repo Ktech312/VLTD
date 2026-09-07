@@ -3495,7 +3495,12 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
         // this is what reveals the back past the edge-on point.
         const dx = event.clientX - startX;
         if (Math.abs(dx) > 6) didDrag = true;
-        heldDragYaw -= dx * 0.008;
+        // EK's ask: dragging to spin a held item was turning it the
+        // opposite way from a natural "grab and drag" feel — dragging
+        // right should bring the near face rightward (a positive
+        // rotation.y move in Three's convention), which needs heldDragYaw
+        // to increase with a rightward drag, not decrease.
+        heldDragYaw += dx * 0.008;
         startX = event.clientX;
         startY = event.clientY;
         return;
