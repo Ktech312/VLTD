@@ -78,10 +78,21 @@ export const S = 1.3268;
 // and MISC<->COLLECTION doors below are recomputed against the real, much
 // smaller overlap this creates, instead of growing rooms to preserve the
 // old overlap.
+//
+// TCG pass (2026-09-07): TCG is now resized to the exact standard module
+// too (EK: "give TCG the same 21 x 26 x 9.15 shell"), growing its depth the
+// same way POP_CULTURE's did. MISC shifts south again to clear it (still
+// untouched in its own w/d — EK: do not resize MISC this pass). HUB is
+// preserved at its exact current footprint per EK's explicit instruction,
+// which means MISC's z-range no longer overlaps HUB's at all once MISC
+// moves this far south — the MISC<->HUB door below is dropped rather than
+// keeping an invalid door or growing HUB again. MISC<->COLLECTION stays
+// valid (COLLECTION's own range still sits entirely inside MISC's new
+// range) and needed no manual edit — it's derived from live bounds.
 export const CAMPUS_ROOMS: CampusRoom[] = [
   { id: "POP_CULTURE", label: "POP_CULTURE", tierLabel: "North Rotunda", x: 0, z: 0, w: STANDARD_ROOM_WIDTH, d: STANDARD_ROOM_DEPTH, floorColor: 0x3a2a1a, universes: ["POP_CULTURE"] },
-  { id: "TCG", label: "TCG", tierLabel: "South Rotunda", x: 0 * S, z: 28, w: 15.4 * S, d: 12.6 * S, floorColor: 0x1a2a3a, universes: ["TCG"] },
-  { id: "MISC", label: "misc", tierLabel: "Gallery A", x: 0 * S, z: 46.72, w: 15.4 * S, d: 26.6 * S, floorColor: 0x2a2a2a, universes: ["MISC"] },
+  { id: "TCG", label: "TCG", tierLabel: "South Rotunda", x: 0, z: 28, w: STANDARD_ROOM_WIDTH, d: STANDARD_ROOM_DEPTH, floorColor: 0x1a2a3a, universes: ["TCG"] },
+  { id: "MISC", label: "misc", tierLabel: "Gallery A", x: 0 * S, z: 56, w: 15.4 * S, d: 26.6 * S, floorColor: 0x2a2a2a, universes: ["MISC"] },
   { id: "HUB", label: "VLTD Museum", tierLabel: "Grand hall", x: 16.9 * S, z: 0 * S, w: 49.1 * S, d: 40.75 * S, floorColor: 0x24211a, universes: [] },
   { id: "BUILT_BOTANY", label: "BUILT_BOTANY", tierLabel: "Gallery D", x: 67.5 * S, z: 0 * S, w: 32.25 * S, d: 12.6 * S, floorColor: 0x1a3323, universes: ["BUILT_BOTANY"] },
   { id: "GAMES", label: "GAMES", tierLabel: "Gallery E", x: 67.5 * S, z: 14.1 * S, w: 32.25 * S, d: 12.6 * S, floorColor: 0x2a1a3a, universes: ["GAMES"] },
@@ -150,6 +161,20 @@ export function doorWallWidth(a: CampusRoomId, b: CampusRoomId): number {
   return door.width ?? DOOR_WIDTH;
 }
 
+/** Every room directly connected to `id` by a door — used to decide which
+ * rooms' lights should stay on (the visitor's current room plus its direct
+ * neighbors) instead of every converted room's lights running all the
+ * time. Pure graph lookup over CAMPUS_DOORS, defined after it below. */
+export function adjacentRoomIds(id: CampusRoomId): CampusRoomId[] {
+  const neighbors: CampusRoomId[] = [];
+  for (const door of CAMPUS_DOORS) {
+    const [a, b] = door.rooms;
+    if (a === id && b) neighbors.push(b);
+    else if (b === id) neighbors.push(a);
+  }
+  return neighbors;
+}
+
 export type CampusDoor = {
   // Which wall the gap is cut into: 'x' = a wall running along the X axis
   // (rooms stacked along Z, gap position measured in X); 'z' = a wall
@@ -191,13 +216,17 @@ function sharedBoundaryAlongZ(a: CampusRoom, b: CampusRoom): number {
 
 export const CAMPUS_DOORS: CampusDoor[] = [
   { wall: "x", at: sharedBoundaryAlongZ(roomById("POP_CULTURE"), roomById("TCG")), gapCenter: overlapCenterAlongX(roomById("POP_CULTURE"), roomById("TCG")), rooms: ["POP_CULTURE", "TCG"], width: DOORWAY_WALL_GAP },
-  { wall: "x", at: sharedBoundaryAlongZ(roomById("TCG"), roomById("MISC")), gapCenter: overlapCenterAlongX(roomById("TCG"), roomById("MISC")), rooms: ["TCG", "MISC"] },
+  { wall: "x", at: sharedBoundaryAlongZ(roomById("TCG"), roomById("MISC")), gapCenter: overlapCenterAlongX(roomById("TCG"), roomById("MISC")), rooms: ["TCG", "MISC"], width: DOORWAY_WALL_GAP },
   { wall: "z", at: sharedBoundaryAlongX(roomById("POP_CULTURE"), roomById("HUB")), gapCenter: overlapCenterAlongZ(roomById("POP_CULTURE"), roomById("HUB")), rooms: ["POP_CULTURE", "HUB"], width: DOORWAY_WALL_GAP },
-  { wall: "z", at: sharedBoundaryAlongX(roomById("TCG"), roomById("HUB")), gapCenter: overlapCenterAlongZ(roomById("TCG"), roomById("HUB")), rooms: ["TCG", "HUB"] },
-  // MISC<->HUB: HUB was NOT grown to keep the old, larger overlap this door
-  // used to have — the overlap is now just the narrow band where MISC's
-  // (shifted-south) range still reaches into HUB's (unchanged) z-range.
-  { wall: "z", at: sharedBoundaryAlongX(roomById("MISC"), roomById("HUB")), gapCenter: overlapCenterAlongZ(roomById("MISC"), roomById("HUB")), rooms: ["MISC", "HUB"] },
+  { wall: "z", at: sharedBoundaryAlongX(roomById("TCG"), roomById("HUB")), gapCenter: overlapCenterAlongZ(roomById("TCG"), roomById("HUB")), rooms: ["TCG", "HUB"], width: DOORWAY_WALL_GAP },
+  // MISC<->HUB dropped (TCG pass, 2026-09-07): TCG's growth pushes MISC's
+  // north edge to z=56, past HUB's preserved south edge at z=54.067 — the
+  // two rooms no longer share any Z overlap at all, so this door has no
+  // valid gap position to compute (confirmed by validateCampusDoors()).
+  // Growing HUB again to keep the old overlap is exactly what EK rejected
+  // in the previous pass. MISC stays reachable from HUB via TCG instead
+  // (HUB<->TCG<->MISC) — a layout/circulation question for a later pass,
+  // not something to patch with another room resize here.
   { wall: "z", at: sharedBoundaryAlongX(roomById("MISC"), roomById("COLLECTION")), gapCenter: overlapCenterAlongZ(roomById("MISC"), roomById("COLLECTION")), rooms: ["MISC", "COLLECTION"] },
   { wall: "z", at: sharedBoundaryAlongX(roomById("HUB"), roomById("BUILT_BOTANY")), gapCenter: overlapCenterAlongZ(roomById("HUB"), roomById("BUILT_BOTANY")), rooms: ["HUB", "BUILT_BOTANY"] },
   { wall: "z", at: sharedBoundaryAlongX(roomById("HUB"), roomById("GAMES")), gapCenter: overlapCenterAlongZ(roomById("HUB"), roomById("GAMES")), rooms: ["HUB", "GAMES"] },

@@ -19,6 +19,7 @@ import {
   EYE_HEIGHT,
   WALL_HEIGHT,
   WALL_THICKNESS,
+  adjacentRoomIds,
   assignSwingRoomUniverses,
   buildWalkableAreas,
   computeCampusWaypoints,
@@ -30,6 +31,7 @@ import {
   roomBounds,
   roomById,
   type CampusRoom,
+  type CampusRoomId,
 } from "@/lib/campusLayout";
 import { getPrimaryImageUrl, loadItems, type VaultItem } from "@/lib/vaultModel";
 import { isUniverseKey, type UniverseKey } from "@/lib/taxonomy";
@@ -44,6 +46,7 @@ import {
   buildDoorways,
   buildRoomShell,
   computeUsableWallSpans,
+  NEUTRAL_PREVIEW_FINISH,
   placeArtwork,
   type RoomModule,
 } from "@/lib/campusRoomBuilder";
@@ -189,10 +192,11 @@ export default function VltdMuseumCampus() {
     }
 
     for (const room of CAMPUS_ROOMS) {
-      // POP_CULTURE gets its own neutral-finish shell (floor, ceiling,
-      // walls, doorways) below instead of the generic checkerboard-floor +
-      // center-name-sprite treatment every other room still uses this pass.
-      if (room.id === "POP_CULTURE") continue;
+      // POP_CULTURE and TCG get their own neutral-finish shell (floor,
+      // ceiling, walls, doorways) below instead of the generic
+      // checkerboard-floor + center-name-sprite treatment every other room
+      // still uses this pass.
+      if (room.id === "POP_CULTURE" || room.id === "TCG") continue;
 
       const { x, z } = roomCenter(room);
       const floorTexture = makeFloorTexture(room.floorColor);
@@ -241,10 +245,11 @@ export default function VltdMuseumCampus() {
     const trimThickness = 0.12;
 
     for (const segment of computeWallSegments()) {
-      // POP_CULTURE builds its own 4 walls (neutral finish + real doorway
-      // frames) below — its neighbors (HUB, TCG) still get their normal
-      // wall segment on their own side of the shared boundary here.
-      if (segment.room === "POP_CULTURE") continue;
+      // POP_CULTURE and TCG build their own 4 walls each (neutral finish +
+      // real doorway frames) below — their other neighbors (HUB, MISC)
+      // still get their normal wall segment on their own side of each
+      // shared boundary here.
+      if (segment.room === "POP_CULTURE" || segment.room === "TCG") continue;
       const span = segment.to - segment.from;
       if (span <= 0.05) continue;
       const material = segment.room === "HUB" ? hubWallMaterial : wallMaterial;
@@ -489,13 +494,12 @@ export default function VltdMuseumCampus() {
         }
       }
 
-      // POP_CULTURE no longer gets a generic shelf pair — its two doorways
-      // now carry the real doorwayKit.ts frame + header instead (see the
-      // POP_CULTURE room-shell block below). Every gapCenter here comes
-      // from the door data itself (doorGapCenter), not a re-typed copy of
-      // it, so a future resize can't leave a shelf pair floating away from
-      // its actual doorway.
-      addShelfPair("TCG", "east", doorGapCenter("TCG", "HUB"));
+      // POP_CULTURE and TCG no longer get a generic shelf pair — all of
+      // their doorways now carry the real doorwayKit.ts frame + header
+      // instead (see the room-shell blocks below). Every gapCenter here
+      // comes from the door data itself (doorGapCenter), not a re-typed
+      // copy of it, so a future resize can't leave a shelf pair floating
+      // away from its actual doorway.
       addShelfPair("COLLECTION", "north", doorGapCenter("COLLECTION", "HUB"));
       addShelfPair("SPORTS", "north", doorGapCenter("SPORTS", "HUB"));
       addShelfPair("CARDS", "north", doorGapCenter("CARDS", "HUB"));
@@ -508,22 +512,67 @@ export default function VltdMuseumCampus() {
     // module, but now through the reusable src/lib/campusRoomBuilder.ts
     // module instead of a one-off inline block — "copying it four more
     // times will make the campus fragile... the next room should be a
-    // second data entry, not another large `if` block." Every other room
-    // keeps its current plain-gap/checkerboard/shelf-pair treatment until
-    // EK approves this one.
+    // second data entry, not another large `if` block." TCG pass
+    // (2026-09-07): TCG is the second room through the same builder, proving
+    // it as a real second data entry rather than a copy-pasted block. TCG
+    // has three real campus doors (POP_CULTURE, MISC, HUB), not the
+    // two-door module's usual two — all three get the same real doorway
+    // treatment for consistency rather than leaving one plain. Every other
+    // room keeps its current plain-gap/checkerboard/shelf-pair treatment
+    // until EK approves this pass too.
     const popCultureModule: RoomModule = {
       room: roomById("POP_CULTURE"),
       wallHeight: WALL_HEIGHT,
       wallThickness: WALL_THICKNESS,
       eyeHeight: EYE_HEIGHT,
+      finish: NEUTRAL_PREVIEW_FINISH,
       doorways: [
         { side: "east", gapCenter: doorGapCenter("POP_CULTURE", "HUB"), neighborId: "HUB", width: doorWallWidth("POP_CULTURE", "HUB") },
         { side: "south", gapCenter: doorGapCenter("POP_CULTURE", "TCG"), neighborId: "TCG", width: doorWallWidth("POP_CULTURE", "TCG") },
       ],
     };
-    buildRoomShell(scene, popCultureModule);
-    buildDoorways(scene, popCultureModule);
+    const tcgModule: RoomModule = {
+      room: roomById("TCG"),
+      wallHeight: WALL_HEIGHT,
+      wallThickness: WALL_THICKNESS,
+      eyeHeight: EYE_HEIGHT,
+      finish: NEUTRAL_PREVIEW_FINISH,
+      doorways: [
+        { side: "north", gapCenter: doorGapCenter("TCG", "POP_CULTURE"), neighborId: "POP_CULTURE", width: doorWallWidth("TCG", "POP_CULTURE") },
+        { side: "south", gapCenter: doorGapCenter("TCG", "MISC"), neighborId: "MISC", width: doorWallWidth("TCG", "MISC") },
+        { side: "east", gapCenter: doorGapCenter("TCG", "HUB"), neighborId: "HUB", width: doorWallWidth("TCG", "HUB") },
+      ],
+    };
+
+    const popCultureLights = buildRoomShell(scene, popCultureModule);
+    buildDoorways(scene, popCultureModule, popCultureLights);
     const popCultureWallSpans = computeUsableWallSpans(popCultureModule);
+
+    const tcgLights = buildRoomShell(scene, tcgModule);
+    buildDoorways(scene, tcgModule, tcgLights);
+    const tcgWallSpans = computeUsableWallSpans(tcgModule);
+
+    // Room-level light activation — EK's review of 9d7c122: "make each
+    // room's lights controllable as a group. Keep lights enabled for the
+    // visitor's current room and... immediately connected rooms. Disable
+    // distant-room lights." Meshes (walls/floor/ceiling/doorway/artwork)
+    // always render regardless — only each room's own light GROUP is
+    // toggled, so a room seen at a distance through a doorway still looks
+    // like a room, just without its own lights contributing when nobody's
+    // near it.
+    const roomLightGroups: Partial<Record<CampusRoomId, THREE.Group>> = {
+      POP_CULTURE: popCultureLights,
+      TCG: tcgLights,
+    };
+    let lastActiveRoomId: CampusRoomId | null | "__unset__" = "__unset__";
+    function updateRoomLightActivation(currentId: CampusRoomId | null) {
+      if (currentId === lastActiveRoomId) return;
+      lastActiveRoomId = currentId;
+      const active = new Set<CampusRoomId>(currentId ? [currentId, ...adjacentRoomIds(currentId)] : []);
+      for (const [roomId, group] of Object.entries(roomLightGroups) as [CampusRoomId, THREE.Group][]) {
+        group.visible = active.has(roomId);
+      }
+    }
 
     // Content is async (vault items are sync, but items-per-room, Spotlight
     // programs and Store items all come from Supabase now), so it's
@@ -576,15 +625,17 @@ export default function VltdMuseumCampus() {
       scene.add(plaque);
     }
 
-    // POP_CULTURE only: places art at natural aspect ratio (bounded within a
-    // max box) instead of forcing every image onto a square plane, spaced
-    // across the room's real usable wall spans (popCultureWallSpans, from
-    // the shared campusRoomBuilder module — already excludes both
-    // doorways' no-display zones) instead of the generic north-wall-only
-    // strip every other room still uses.
-    function placePopCultureItems(items: VaultItem[]) {
+    // POP_CULTURE and TCG only: places art at natural aspect ratio (bounded
+    // within a max box) instead of forcing every image onto a square plane,
+    // spaced across the room's real usable wall spans (from the shared
+    // campusRoomBuilder module — already excludes every doorway's
+    // no-display zone) instead of the generic north-wall-only strip every
+    // other room still uses. Each room's picture lights join that room's
+    // own light group so they turn off with the rest of the room's lights
+    // when the visitor is elsewhere.
+    function placeRoomItems(wallSpans: ReturnType<typeof computeUsableWallSpans>, lightGroup: THREE.Group, items: VaultItem[]) {
       const urls = items.map((item) => ({ url: getPrimaryImageUrl(item) })).filter((it): it is { url: string } => Boolean(it.url));
-      placeArtwork(scene, textureLoader, popCultureWallSpans, urls, WALL_THICKNESS, EYE_HEIGHT, () => contentCancelled);
+      placeArtwork(scene, textureLoader, lightGroup, wallSpans, urls, WALL_THICKNESS, EYE_HEIGHT, () => contentCancelled);
     }
 
     async function populateDynamicContent() {
@@ -612,10 +663,11 @@ export default function VltdMuseumCampus() {
       };
 
       for (const room of CAMPUS_ROOMS) {
-        // POP_CULTURE places its own items with aspect-ratio-preserving
-        // slots (see placePopCultureItems below) instead of the generic
-        // north-wall-only, forced-square treatment every other room uses.
-        if (room.id === "POP_CULTURE") continue;
+        // POP_CULTURE and TCG place their own items with aspect-ratio-
+        // preserving slots (see placeRoomItems below) instead of the
+        // generic north-wall-only, forced-square treatment every other
+        // room uses.
+        if (room.id === "POP_CULTURE" || room.id === "TCG") continue;
         const universes = roomUniverses[room.id] ?? room.universes;
         if (universes.length === 0) continue;
         const items = allItems.filter((item) => {
@@ -639,7 +691,12 @@ export default function VltdMuseumCampus() {
       const popItems = allItems
         .filter((item) => itemUniverse(item) === "POP_CULTURE")
         .slice(0, itemsPerRoom);
-      placePopCultureItems(popItems);
+      placeRoomItems(popCultureWallSpans, popCultureLights, popItems);
+
+      const tcgItems = allItems
+        .filter((item) => itemUniverse(item) === "TCG")
+        .slice(0, itemsPerRoom);
+      placeRoomItems(tcgWallSpans, tcgLights, tcgItems);
 
       // Spotlight room — admin-controlled rotating programs.
       const spotlightBounds = roomBounds(roomById("SPOTLIGHT"));
@@ -931,12 +988,11 @@ export default function VltdMuseumCampus() {
     // otherwise leaves the overlay stuck on its initial "Loading…" text
     // forever, since "" !== "" never trips the update below.
     let lastRoomLabel = "__unset__";
-    function currentRoomLabel(x: number, z: number) {
-      const room = CAMPUS_ROOMS.find((r) => {
+    function currentRoom(x: number, z: number): CampusRoom | undefined {
+      return CAMPUS_ROOMS.find((r) => {
         const b = roomBounds(r);
         return x >= b.x0 && x <= b.x1 && z >= b.z0 && z <= b.z1;
       });
-      return room ? room.label : "";
     }
 
     const clock = new THREE.Clock();
@@ -969,11 +1025,13 @@ export default function VltdMuseumCampus() {
       // direct rotation assignment — same shared aimCamera() now.
       aimCamera(camera, cameraBody, yaw, pitch);
 
-      const label = currentRoomLabel(cameraBody.x, cameraBody.z);
+      const room = currentRoom(cameraBody.x, cameraBody.z);
+      const label = room ? room.label : "";
       if (label !== lastRoomLabel) {
         lastRoomLabel = label;
         if (roomLabelRef.current) roomLabelRef.current.textContent = label || "Corridor";
       }
+      updateRoomLightActivation(room ? room.id : null);
 
       renderer.render(scene, camera);
     }

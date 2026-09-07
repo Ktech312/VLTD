@@ -32,12 +32,44 @@ export type RoomDoorway = {
   width: number;
 };
 
+// EK's review of 9d7c122: "parameterize finishes so TCG can later gain its
+// own identity. Reuse the POP structure, not an identical final color
+// scheme for every room." Every color/tone POP_CULTURE's build used is now
+// a field here instead of a literal inside the builder functions, so a
+// future room can pass its own palette without touching this file's logic.
+// TCG this pass reuses the same neutral palette verbatim — this is about
+// making a different one possible later, not designing TCG's identity now.
+export type RoomFinish = {
+  wallColor: number;
+  ceilingColor: number;
+  floorJointColor: string;
+  baseboardColor: number;
+  ceilingTrimColor: number;
+  railColor: number;
+  frameColor: number;
+  transomColor: number;
+  lightColor: number;
+};
+
+export const NEUTRAL_PREVIEW_FINISH: RoomFinish = {
+  wallColor: 0xe3ddd0,
+  ceilingColor: 0xd6d0c1,
+  floorJointColor: "#928c7d",
+  baseboardColor: 0x454846,
+  ceilingTrimColor: 0x3a3a38,
+  railColor: 0xa68b53,
+  frameColor: 0xdad4c6,
+  transomColor: 0xe3ddd0,
+  lightColor: 0xfff2d0,
+};
+
 export type RoomModule = {
   room: CampusRoom;
   doorways: RoomDoorway[];
   wallHeight: number;
   wallThickness: number;
   eyeHeight: number;
+  finish: RoomFinish;
 };
 
 export type WallSpan = { wall: WallSide; from: number; to: number; fixed: number; rotationY: number };
@@ -88,11 +120,20 @@ function intoRoomNormal(side: WallSide): { x: number; z: number } {
  * wall-wash spotlight per wall (4 total, one per side) — not a flat grid of
  * omnidirectional point lights, and not fewer walls washed than exist. No
  * wall title sprite — the doorway headers carry wayfinding, per EK's
- * review: "Door headers should carry the main wayfinding." */
-export function buildRoomShell(scene: THREE.Scene, module: RoomModule) {
-  const { room, wallHeight, wallThickness } = module;
+ * review: "Door headers should carry the main wayfinding." Meshes go
+ * straight into `scene` (always visible, even from an adjacent room looking
+ * through a doorway); every light this room owns goes into the returned
+ * THREE.Group instead, so the caller can toggle the whole room's lights on
+ * or off as one unit (EK's review of 9d7c122: "make each room's lights
+ * controllable as a group... keep lights enabled for the visitor's current
+ * room and... immediately connected rooms"). */
+export function buildRoomShell(scene: THREE.Scene, module: RoomModule): THREE.Group {
+  const { room, wallHeight, wallThickness, finish } = module;
   const bounds = roomBounds(room);
   const center = { x: room.x + room.w / 2, z: room.z + room.d / 2 };
+  const lights = new THREE.Group();
+  lights.name = `room-lights:${room.id}`;
+  scene.add(lights);
 
   // EK's review of d61a885: wall grain/wash were "too subtle to establish
   // material depth" — bump scale roughly doubled and roughness nudged down
@@ -101,22 +142,22 @@ export function buildRoomShell(scene: THREE.Scene, module: RoomModule) {
   const wallGrain = createGrainTexture();
   wallGrain.repeat.set(room.w / 5, wallHeight / 3);
   const neutralWallMaterial = new THREE.MeshStandardMaterial({
-    color: 0xe3ddd0, map: wallGrain, bumpMap: wallGrain, bumpScale: 0.045, roughness: 0.88, metalness: 0,
+    color: finish.wallColor, map: wallGrain, bumpMap: wallGrain, bumpScale: 0.045, roughness: 0.88, metalness: 0,
   });
   const ceilingGrain = createGrainTexture();
   ceilingGrain.repeat.set(room.w / 5, room.d / 5);
-  const ceilingMaterial = new THREE.MeshStandardMaterial({ color: 0xd6d0c1, map: ceilingGrain, roughness: 0.92 });
+  const ceilingMaterial = new THREE.MeshStandardMaterial({ color: finish.ceilingColor, map: ceilingGrain, roughness: 0.92 });
   // EK's review of d61a885: the floor's own fine grain-noise texture was
   // "almost invisible at normal visitor distance." Swapped for the shared
   // stone-tile-with-grout-lines generator (galleryTextures.ts,
   // createStoneFloorTexture) — the exact same one the accepted Gallery's
   // own whitebox style installs — at the same repeat(10.5, 13) tuned for
   // that same 21x26 room shell, instead of a fresh, fainter recipe.
-  const floorTexture = createStoneFloorTexture("#928c7d", 10.5, 13);
+  const floorTexture = createStoneFloorTexture(finish.floorJointColor, 10.5, 13);
   const floorMaterial = new THREE.MeshStandardMaterial({ color: 0xffffff, map: floorTexture, roughness: 0.62 });
-  const baseboardMaterial = new THREE.MeshStandardMaterial({ color: 0x454846, roughness: 0.85 });
-  const ceilingTrimMaterial = new THREE.MeshStandardMaterial({ color: 0x3a3a38, roughness: 0.7 });
-  const railMaterial = new THREE.MeshStandardMaterial({ color: 0xa68b53, roughness: 0.5, metalness: 0.35 });
+  const baseboardMaterial = new THREE.MeshStandardMaterial({ color: finish.baseboardColor, roughness: 0.85 });
+  const ceilingTrimMaterial = new THREE.MeshStandardMaterial({ color: finish.ceilingTrimColor, roughness: 0.7 });
+  const railMaterial = new THREE.MeshStandardMaterial({ color: finish.railColor, roughness: 0.5, metalness: 0.35 });
 
   const floor = new THREE.Mesh(new THREE.PlaneGeometry(room.w, room.d), floorMaterial);
   floor.rotation.x = -Math.PI / 2;
@@ -195,16 +236,16 @@ export function buildRoomShell(scene: THREE.Scene, module: RoomModule) {
     const lx = center.x;
     const fixture = new THREE.Mesh(
       new THREE.CircleGeometry(0.34, 20),
-      new THREE.MeshStandardMaterial({ color: 0xfff6e0, emissive: 0xfff2d0, emissiveIntensity: 0.7 })
+      new THREE.MeshStandardMaterial({ color: 0xfff6e0, emissive: finish.lightColor, emissiveIntensity: 0.7 })
     );
     fixture.rotation.x = Math.PI / 2;
     fixture.position.set(lx, wallHeight - 0.03, lz);
     scene.add(fixture);
-    const down = new THREE.SpotLight(0xfff2d0, 1.1, 14, Math.PI / 4, 0.55, 1.3);
+    const down = new THREE.SpotLight(finish.lightColor, 1.1, 14, Math.PI / 4, 0.55, 1.3);
     down.position.set(lx, wallHeight - 0.4, lz);
     down.target.position.set(lx, 0, lz);
-    scene.add(down);
-    scene.add(down.target);
+    lights.add(down);
+    lights.add(down.target);
 
     // EK's review of d61a885: the ceiling "renders nearly black from
     // inside the room" — it receives almost no light because the downward
@@ -213,9 +254,9 @@ export function buildRoomShell(scene: THREE.Scene, module: RoomModule) {
     // omnidirectional light near each fixture naturally throws some light
     // upward onto the ceiling's underside too, the way a real flush-mount
     // fixture's housing glow does.
-    const upglow = new THREE.PointLight(0xfff2d0, 0.5, 9, 2);
+    const upglow = new THREE.PointLight(finish.lightColor, 0.5, 9, 2);
     upglow.position.set(lx, wallHeight - 0.15, lz);
-    scene.add(upglow);
+    lights.add(upglow);
   }
 
   const washSpecs: { pos: [number, number, number]; target: [number, number, number] }[] = [
@@ -227,12 +268,14 @@ export function buildRoomShell(scene: THREE.Scene, module: RoomModule) {
   for (const wash of washSpecs) {
     // Intensity roughly doubled from the previous pass — EK's review of
     // d61a885: "the wall washes are too subtle to establish material depth."
-    const light = new THREE.SpotLight(0xfff2d0, 1.3, 20, Math.PI / 3.5, 0.65, 1.4);
+    const light = new THREE.SpotLight(finish.lightColor, 1.3, 20, Math.PI / 3.5, 0.65, 1.4);
     light.position.set(...wash.pos);
     light.target.position.set(...wash.target);
-    scene.add(light);
-    scene.add(light.target);
+    lights.add(light);
+    lights.add(light.target);
   }
+
+  return lights;
 }
 
 /** Doorway assemblies: the real post+header frame on every opening, a solid
@@ -243,16 +286,16 @@ export function buildRoomShell(scene: THREE.Scene, module: RoomModule) {
  * sign mounted flush on each face of that transom (readable from whichever
  * room you're approaching from, naming what's on the far side), and a warm
  * reveal light so looking through an opening isn't a black void. */
-export function buildDoorways(scene: THREE.Scene, module: RoomModule) {
-  const { room, eyeHeight, wallThickness, wallHeight } = module;
+export function buildDoorways(scene: THREE.Scene, module: RoomModule, lights: THREE.Group) {
+  const { room, eyeHeight, wallThickness, wallHeight, finish } = module;
   const bounds = roomBounds(room);
   // Toned down from an earlier, more contrasty beige — the posts/header
   // read as a separate scaffold-like structure standing in an open gap
   // when they stood out sharply against the wall; closer to the wall's own
   // tone (with the transom now finishing the opening around them) lets
   // them read as trim on a real doorway instead.
-  const frameMaterial = new THREE.MeshStandardMaterial({ color: 0xdad4c6, roughness: 0.65, metalness: 0.04 });
-  const transomMaterial = new THREE.MeshStandardMaterial({ color: 0xe3ddd0, roughness: 0.9, metalness: 0 });
+  const frameMaterial = new THREE.MeshStandardMaterial({ color: finish.frameColor, roughness: 0.65, metalness: 0.04 });
+  const transomMaterial = new THREE.MeshStandardMaterial({ color: finish.transomColor, roughness: 0.9, metalness: 0 });
   const transomBottom = DOORWAY_HEADER_Y + DOORWAY_HEADER_HEIGHT / 2 + 0.02;
 
   function buildHeader(x: number, y: number, z: number, rotationY: number, text: string) {
@@ -332,9 +375,9 @@ export function buildDoorways(scene: THREE.Scene, module: RoomModule) {
     );
 
     const revealFar = wallEdgePoint(neighborBounds, far, doorway.gapCenter, 0);
-    const reveal = new THREE.PointLight(0xfff2d0, 0.6, 9, 2);
+    const reveal = new THREE.PointLight(finish.lightColor, 0.6, 9, 2);
     reveal.position.set((framePos.x + revealFar.x) / 2, eyeHeight, (framePos.z + revealFar.z) / 2);
-    scene.add(reveal);
+    lights.add(reveal);
   }
 }
 
@@ -372,6 +415,7 @@ export function computeUsableWallSpans(module: RoomModule): WallSpan[] {
 function hangArtPreservingAspect(
   scene: THREE.Scene,
   textureLoader: THREE.TextureLoader,
+  lights: THREE.Group,
   x: number, y: number, z: number,
   rotationY: number,
   url: string,
@@ -419,8 +463,8 @@ function hangArtPreservingAspect(
       const pictureLight = new THREE.SpotLight(0xfff4e2, 0.7, 6, Math.PI / 6, 0.5, 1.2);
       pictureLight.position.set(x + normal.x * 1.1, y + artH / 2 + 0.3, z + normal.z * 1.1);
       pictureLight.target.position.set(x, y, z);
-      scene.add(pictureLight);
-      scene.add(pictureLight.target);
+      lights.add(pictureLight);
+      lights.add(pictureLight.target);
     }
   });
 }
@@ -437,6 +481,7 @@ const MAX_PICTURE_LIGHTS_PER_ROOM = 6;
 export function placeArtwork(
   scene: THREE.Scene,
   textureLoader: THREE.TextureLoader,
+  lights: THREE.Group,
   spans: WallSpan[],
   items: { url: string }[],
   wallThickness: number,
@@ -463,7 +508,7 @@ export function placeArtwork(
         : { x: span.fixed + (span.wall === "west" ? 1 : -1) * wallInset, y: eyeHeight, z: t };
       const maxSlot = Math.min(2.6, step * 0.8);
       const withRealLight = itemIndex < MAX_PICTURE_LIGHTS_PER_ROOM;
-      hangArtPreservingAspect(scene, textureLoader, point.x, point.y, point.z, span.rotationY, item.url, maxSlot, 2.2, isCancelled, withRealLight);
+      hangArtPreservingAspect(scene, textureLoader, lights, point.x, point.y, point.z, span.rotationY, item.url, maxSlot, 2.2, isCancelled, withRealLight);
     }
   }
 }
