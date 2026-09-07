@@ -19,7 +19,7 @@ import {
   type CampusRoomId,
   type WallSide,
 } from "./campusLayout";
-import { createGrainTexture } from "../components/gallery/galleryTextures";
+import { createGrainTexture, createStoneFloorTexture } from "../components/gallery/galleryTextures";
 
 export type RoomDoorway = {
   side: WallSide;
@@ -94,23 +94,29 @@ export function buildRoomShell(scene: THREE.Scene, module: RoomModule) {
   const bounds = roomBounds(room);
   const center = { x: room.x + room.w / 2, z: room.z + room.d / 2 };
 
+  // EK's review of d61a885: wall grain/wash were "too subtle to establish
+  // material depth" — bump scale roughly doubled and roughness nudged down
+  // so the same grain actually catches the wall-wash light instead of
+  // absorbing it flat.
   const wallGrain = createGrainTexture();
   wallGrain.repeat.set(room.w / 5, wallHeight / 3);
   const neutralWallMaterial = new THREE.MeshStandardMaterial({
-    color: 0xe3ddd0, map: wallGrain, bumpMap: wallGrain, bumpScale: 0.025, roughness: 0.94, metalness: 0,
+    color: 0xe3ddd0, map: wallGrain, bumpMap: wallGrain, bumpScale: 0.045, roughness: 0.88, metalness: 0,
   });
   const ceilingGrain = createGrainTexture();
   ceilingGrain.repeat.set(room.w / 5, room.d / 5);
-  const ceilingMaterial = new THREE.MeshStandardMaterial({ color: 0xcfc9ba, map: ceilingGrain, roughness: 0.98 });
-  // EK's review of 5ff3bdc: "a nearly featureless gray floor" — a flat
-  // color with no texture at all read as a placeholder. Same grain
-  // generator as the walls, tuned lower-roughness so it actually picks up
-  // the room's own lights instead of absorbing them flat.
-  const floorGrain = createGrainTexture();
-  floorGrain.repeat.set(room.w / 3, room.d / 3);
-  const floorMaterial = new THREE.MeshStandardMaterial({ color: 0x8f8a7c, map: floorGrain, bumpMap: floorGrain, bumpScale: 0.02, roughness: 0.6 });
+  const ceilingMaterial = new THREE.MeshStandardMaterial({ color: 0xd6d0c1, map: ceilingGrain, roughness: 0.92 });
+  // EK's review of d61a885: the floor's own fine grain-noise texture was
+  // "almost invisible at normal visitor distance." Swapped for the shared
+  // stone-tile-with-grout-lines generator (galleryTextures.ts,
+  // createStoneFloorTexture) — the exact same one the accepted Gallery's
+  // own whitebox style installs — at the same repeat(10.5, 13) tuned for
+  // that same 21x26 room shell, instead of a fresh, fainter recipe.
+  const floorTexture = createStoneFloorTexture("#928c7d", 10.5, 13);
+  const floorMaterial = new THREE.MeshStandardMaterial({ color: 0xffffff, map: floorTexture, roughness: 0.62 });
   const baseboardMaterial = new THREE.MeshStandardMaterial({ color: 0x454846, roughness: 0.85 });
   const ceilingTrimMaterial = new THREE.MeshStandardMaterial({ color: 0x3a3a38, roughness: 0.7 });
+  const railMaterial = new THREE.MeshStandardMaterial({ color: 0xa68b53, roughness: 0.5, metalness: 0.35 });
 
   const floor = new THREE.Mesh(new THREE.PlaneGeometry(room.w, room.d), floorMaterial);
   floor.rotation.x = -Math.PI / 2;
@@ -162,6 +168,21 @@ export function buildRoomShell(scene: THREE.Scene, module: RoomModule) {
     if (isNS) baseboard.position.set((segment.from + segment.to) / 2, baseboardHeight / 2, segment.fixed + (facingSign * wallThickness) / 2);
     else baseboard.position.set(segment.fixed + (facingSign * wallThickness) / 2, baseboardHeight / 2, (segment.from + segment.to) / 2);
     scene.add(baseboard);
+
+    // One restrained picture rail — EK's review of d61a885: "one restrained
+    // picture rail or trim datum... Do not add multiple decorative
+    // horizontal lines" (the Vault treatment this deliberately avoids
+    // repeating). A single band well above the doorway signs (~5.6) and
+    // below the ceiling trim, at a consistent height on every wall.
+    const railHeight = 0.06;
+    const railY = wallHeight - 2.2;
+    const rail = new THREE.Mesh(
+      isNS ? new THREE.BoxGeometry(span, railHeight, 0.04) : new THREE.BoxGeometry(0.04, railHeight, span),
+      railMaterial
+    );
+    if (isNS) rail.position.set((segment.from + segment.to) / 2, railY, segment.fixed + (facingSign * wallThickness) / 2);
+    else rail.position.set(segment.fixed + (facingSign * wallThickness) / 2, railY, (segment.from + segment.to) / 2);
+    scene.add(rail);
   }
 
   // Light rig — EK's review of 5ff3bdc: the comment said "2 downward + 2
@@ -184,6 +205,17 @@ export function buildRoomShell(scene: THREE.Scene, module: RoomModule) {
     down.target.position.set(lx, 0, lz);
     scene.add(down);
     scene.add(down.target);
+
+    // EK's review of d61a885: the ceiling "renders nearly black from
+    // inside the room" — it receives almost no light because the downward
+    // spotlights point away from it and the scene's own HemisphereLight
+    // gives a downward-facing surface mostly its dark ground color. An
+    // omnidirectional light near each fixture naturally throws some light
+    // upward onto the ceiling's underside too, the way a real flush-mount
+    // fixture's housing glow does.
+    const upglow = new THREE.PointLight(0xfff2d0, 0.5, 9, 2);
+    upglow.position.set(lx, wallHeight - 0.15, lz);
+    scene.add(upglow);
   }
 
   const washSpecs: { pos: [number, number, number]; target: [number, number, number] }[] = [
@@ -193,7 +225,9 @@ export function buildRoomShell(scene: THREE.Scene, module: RoomModule) {
     { pos: [bounds.x0 + room.w * 0.15, wallHeight - 1.1, center.z], target: [bounds.x1, wallHeight * 0.35, center.z] },
   ];
   for (const wash of washSpecs) {
-    const light = new THREE.SpotLight(0xfff2d0, 0.65, 18, Math.PI / 4, 0.7, 1.5);
+    // Intensity roughly doubled from the previous pass — EK's review of
+    // d61a885: "the wall washes are too subtle to establish material depth."
+    const light = new THREE.SpotLight(0xfff2d0, 1.3, 20, Math.PI / 3.5, 0.65, 1.4);
     light.position.set(...wash.pos);
     light.target.position.set(...wash.target);
     scene.add(light);
@@ -236,7 +270,12 @@ export function buildDoorways(scene: THREE.Scene, module: RoomModule) {
     ctx.fillText(text.toUpperCase(), canvas.width / 2, canvas.height / 2);
     const texture = new THREE.CanvasTexture(canvas);
     texture.colorSpace = THREE.SRGBColorSpace;
-    const material = new THREE.MeshStandardMaterial({ map: texture, roughness: 0.7 });
+    // EK's review of d61a885: the cream-on-black canvas text was drawn with
+    // a lit MeshStandardMaterial, so the scene's own lighting darkened the
+    // whole sign to gray-on-black. MeshBasicMaterial is unlit — the canvas
+    // colors render exactly as authored regardless of nearby light — fixing
+    // the material is the right layer, not raising the room's exposure.
+    const material = new THREE.MeshBasicMaterial({ map: texture });
     const plaque = new THREE.Mesh(new THREE.PlaneGeometry(2.6, 0.65), material);
     plaque.position.set(x, y, z);
     plaque.rotation.y = rotationY;
@@ -337,7 +376,8 @@ function hangArtPreservingAspect(
   rotationY: number,
   url: string,
   maxW: number, maxH: number,
-  isCancelled: () => boolean
+  isCancelled: () => boolean,
+  withRealLight: boolean
 ) {
   textureLoader.load(url, (texture) => {
     if (isCancelled()) return;
@@ -357,22 +397,39 @@ function hangArtPreservingAspect(
     scene.add(mat);
 
     const normal = new THREE.Vector3(0, 0, 1).applyEuler(new THREE.Euler(0, rotationY, 0));
-    const art = new THREE.Mesh(new THREE.PlaneGeometry(artW, artH), new THREE.MeshStandardMaterial({ map: texture, roughness: 0.6 }));
+    // EK's review of d61a885: "one real THREE.SpotLight plus a target for
+    // every item... should not become the permanent campus pattern before
+    // measuring performance." Only a capped number of "featured" pieces per
+    // room (see placeArtwork) get a real picture spotlight; the rest get a
+    // cheap material-level brightness/emissive boost instead of a second
+    // dynamic light — visible under the room's own wall-wash light, no
+    // extra light object.
+    const artMaterial = withRealLight
+      ? new THREE.MeshStandardMaterial({ map: texture, roughness: 0.6 })
+      : new THREE.MeshStandardMaterial({ map: texture, roughness: 0.55, emissive: 0xffffff, emissiveMap: texture, emissiveIntensity: 0.22 });
+    const art = new THREE.Mesh(new THREE.PlaneGeometry(artW, artH), artMaterial);
     art.position.set(x + normal.x * 0.02, y, z + normal.z * 0.02);
     art.rotation.y = rotationY;
     scene.add(art);
 
-    // A small accent light per piece — EK's review of 5ff3bdc: "the
-    // artwork remains dark" under generic room lighting alone. Mounted out
-    // from the wall and slightly above, aimed back at the piece, like a
-    // real picture light rather than relying on ambient room spill.
-    const pictureLight = new THREE.SpotLight(0xfff4e2, 0.7, 6, Math.PI / 6, 0.5, 1.2);
-    pictureLight.position.set(x + normal.x * 1.1, y + artH / 2 + 0.3, z + normal.z * 1.1);
-    pictureLight.target.position.set(x, y, z);
-    scene.add(pictureLight);
-    scene.add(pictureLight.target);
+    if (withRealLight) {
+      // A small accent light for featured pieces — mounted out from the
+      // wall and slightly above, aimed back at the piece, like a real
+      // picture light rather than relying on ambient room spill.
+      const pictureLight = new THREE.SpotLight(0xfff4e2, 0.7, 6, Math.PI / 6, 0.5, 1.2);
+      pictureLight.position.set(x + normal.x * 1.1, y + artH / 2 + 0.3, z + normal.z * 1.1);
+      pictureLight.target.position.set(x, y, z);
+      scene.add(pictureLight);
+      scene.add(pictureLight.target);
+    }
   });
 }
+
+// Real per-item SpotLights are capped per room — beyond this many, items
+// get the cheap emissive-boost material instead. Keeps a room's dynamic
+// light count bounded as more items/rooms adopt this builder, per EK's
+// review of d61a885: "do not copy an unlimited per-item light allocation."
+const MAX_PICTURE_LIGHTS_PER_ROOM = 6;
 
 /** Places items across the given usable wall spans, proportionally by span
  * length, evenly spaced within each span, sizing each to its natural
@@ -405,7 +462,8 @@ export function placeArtwork(
         ? { x: t, y: eyeHeight, z: span.fixed + (span.wall === "north" ? 1 : -1) * wallInset }
         : { x: span.fixed + (span.wall === "west" ? 1 : -1) * wallInset, y: eyeHeight, z: t };
       const maxSlot = Math.min(2.6, step * 0.8);
-      hangArtPreservingAspect(scene, textureLoader, point.x, point.y, point.z, span.rotationY, item.url, maxSlot, 2.2, isCancelled);
+      const withRealLight = itemIndex < MAX_PICTURE_LIGHTS_PER_ROOM;
+      hangArtPreservingAspect(scene, textureLoader, point.x, point.y, point.z, span.rotationY, item.url, maxSlot, 2.2, isCancelled, withRealLight);
     }
   }
 }

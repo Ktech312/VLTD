@@ -1,6 +1,6 @@
 import * as THREE from "three";
 
-import { createGrainTexture, createHardwoodTexture } from "./galleryTextures";
+import { createGrainTexture, createHardwoodTexture, createStoneFloorTexture } from "./galleryTextures";
 
 export type GalleryFinishStyle = "whitebox" | "vault" | "arcade" | "loft";
 
@@ -164,40 +164,10 @@ export function createGalleryFinishes(style: GalleryFinishStyle = "whitebox") {
     concrete.anisotropy = 8;
     floorTexture = concrete;
   } else {
-    const stoneCanvas = document.createElement("canvas");
-    stoneCanvas.width = stoneCanvas.height = 512;
-    const stoneCtx = stoneCanvas.getContext("2d")!;
-    // Reuse the grain texture's own source canvas as the stone floor's base
-    // grain, same as before this was extracted into a shared generator.
-    stoneCtx.drawImage(grain.image as CanvasImageSource, 0, 0);
-    // A visible-but-subdued cross join splits each repeat unit into 4 square
-    // slabs (world-scale tile pitch/repeat() below unchanged) plus a faint
-    // per-slab tone shift so slabs read as individual stone/tile pieces
-    // without a bold checkerboard.
-    let stoneSeed = 811;
-    const stoneRandom = () => ((stoneSeed = (Math.imul(stoneSeed, 1664525) + 1013904223) >>> 0) / 4294967296);
-    for (const qx of [0, 256]) {
-      for (const qy of [0, 256]) {
-        const shift = (stoneRandom() - 0.5) * 10;
-        stoneCtx.fillStyle = shift >= 0 ? `rgba(255,255,255,${shift / 255})` : `rgba(50,46,38,${-shift / 255})`;
-        stoneCtx.fillRect(qx, qy, 256, 256);
-      }
-    }
-    stoneCtx.strokeStyle = palette.jointColor;
-    stoneCtx.lineWidth = 3;
-    stoneCtx.strokeRect(1.5, 1.5, 509, 509);
-    stoneCtx.beginPath();
-    stoneCtx.moveTo(256, 0);
-    stoneCtx.lineTo(256, 512);
-    stoneCtx.moveTo(0, 256);
-    stoneCtx.lineTo(512, 256);
-    stoneCtx.stroke();
-    const stone = new THREE.CanvasTexture(stoneCanvas);
-    stone.colorSpace = THREE.SRGBColorSpace;
-    stone.wrapS = stone.wrapT = THREE.RepeatWrapping;
-    stone.repeat.set(10.5, 13);
-    stone.anisotropy = 8;
-    floorTexture = stone;
+    // Extracted into galleryTextures.ts's createStoneFloorTexture — the
+    // campus room builder now installs the exact same generator for
+    // POP_CULTURE's floor instead of a separately-authored one.
+    floorTexture = createStoneFloorTexture(palette.jointColor);
   }
 
   const wall = new THREE.MeshStandardMaterial({

@@ -68,6 +68,45 @@ export function createGrainTexture() {
   return texture;
 }
 
+// Extracted from galleryRoomFinishes.ts's own whitebox floor generator (the
+// default "stone" floorTreatment) so the campus room builder can install the
+// exact same restrained tile-with-grout-lines floor instead of a fresh
+// recipe — "one real generator, shared, not duplicated," same rule as the
+// grain texture above. A visible-but-subdued cross join splits each repeat
+// unit into 4 square slabs plus a faint per-slab tone shift, so slabs read
+// as individual stone/tile pieces without a bold checkerboard.
+export function createStoneFloorTexture(jointColor = "#928c7d", repeatX = 10.5, repeatY = 13) {
+  const grain = createGrainTexture();
+  const stoneCanvas = document.createElement("canvas");
+  stoneCanvas.width = stoneCanvas.height = 512;
+  const stoneCtx = stoneCanvas.getContext("2d")!;
+  stoneCtx.drawImage(grain.image as CanvasImageSource, 0, 0);
+  let stoneSeed = 811;
+  const stoneRandom = () => ((stoneSeed = (Math.imul(stoneSeed, 1664525) + 1013904223) >>> 0) / 4294967296);
+  for (const qx of [0, 256]) {
+    for (const qy of [0, 256]) {
+      const shift = (stoneRandom() - 0.5) * 10;
+      stoneCtx.fillStyle = shift >= 0 ? `rgba(255,255,255,${shift / 255})` : `rgba(50,46,38,${-shift / 255})`;
+      stoneCtx.fillRect(qx, qy, 256, 256);
+    }
+  }
+  stoneCtx.strokeStyle = jointColor;
+  stoneCtx.lineWidth = 3;
+  stoneCtx.strokeRect(1.5, 1.5, 509, 509);
+  stoneCtx.beginPath();
+  stoneCtx.moveTo(256, 0);
+  stoneCtx.lineTo(256, 512);
+  stoneCtx.moveTo(0, 256);
+  stoneCtx.lineTo(512, 256);
+  stoneCtx.stroke();
+  const stone = new THREE.CanvasTexture(stoneCanvas);
+  stone.colorSpace = THREE.SRGBColorSpace;
+  stone.wrapS = stone.wrapT = THREE.RepeatWrapping;
+  stone.repeat.set(repeatX, repeatY);
+  stone.anisotropy = 8;
+  return stone;
+}
+
 export function createHardwoodTexture() {
   const canvas = document.createElement("canvas");
   canvas.width = 768;
