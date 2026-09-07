@@ -903,6 +903,23 @@ export default function VltdMuseumCampus() {
     tick();
     const readyTimer = window.setTimeout(() => setReady(true), 0);
 
+    // Full Museum Scale handoff, Phase 1: a debug hook for live-verifying
+    // the required movement correction, same pattern as the accepted
+    // personal room's own window.__vltdDebug.
+    (window as unknown as { __vltdCampusMoveDebug?: unknown }).__vltdCampusMoveDebug = {
+      getCameraBody: () => cameraBody.clone(),
+      getYawPitch: () => ({ yaw, pitch, targetYaw, targetPitch }),
+      hasActiveWalkTween: () => walkTween !== null,
+      setCameraBody: (x: number, z: number, newYaw?: number) => {
+        cameraBody.set(x, EYE_HEIGHT, z);
+        targetCameraBody.copy(cameraBody);
+        if (typeof newYaw === "number") {
+          yaw = newYaw;
+          targetYaw = newYaw;
+        }
+      },
+    };
+
     function onResize() {
       camera.aspect = window.innerWidth / window.innerHeight;
       camera.updateProjectionMatrix();
