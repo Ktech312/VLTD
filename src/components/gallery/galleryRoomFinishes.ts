@@ -457,7 +457,12 @@ export function createGalleryFinishes(style: GalleryFinishStyle = "whitebox") {
       light.position.set(x, y - 0.2, z);
       light.target.position.set(tx, ty, tz);
       // Only the central beam needs a shadow map: keep mobile fill cost bounded.
-      light.castShadow = index === 1;
+      // Loft correction: EK confirmed the same shadow-map flicker (fixed in
+      // Vault by dropping this light's shadow entirely) shows up in
+      // Industrial Loft too, on the same light in the same shared render
+      // loop — same root cause, same fix, scoped to loft only (not
+      // touching whitebox, which hasn't been reported).
+      light.castShadow = index === 1 && style !== "loft";
       if (light.castShadow) {
         light.shadow.mapSize.set(1024, 1024);
         light.shadow.bias = -0.0002;
@@ -691,11 +696,25 @@ export function createGalleryFinishes(style: GalleryFinishStyle = "whitebox") {
       line.rotation.y = angle;
       room.add(line);
     }
-    glowSegment(-6, -4, -1, -8);
-    glowSegment(-1, -8, 6, -5);
-    const glow = new THREE.PointLight(0xcfe1e8, 0.3, 7, 1.4);
-    glow.position.set(-1, 8.5, -6);
-    room.add(glow);
+    // EK's ask (Industrial Loft follow-up, 2026-09-06): "you have this...
+    // Arrow light bar, but only one... can you do 4, each one facing a
+    // different wall like the existing one is now?" The original bent
+    // 2-segment path is a chevron whose vertex points at the back wall,
+    // arms opening toward the room's center. addArrow reproduces that same
+    // vertex+2-arms shape, then places one copy aimed at each of the 4
+    // walls (back, front, left, right) by rotating which axis the vertex
+    // sits furthest along.
+    function addArrow(vertex: [number, number], arm1: [number, number], arm2: [number, number]) {
+      glowSegment(vertex[0], vertex[1], arm1[0], arm1[1]);
+      glowSegment(vertex[0], vertex[1], arm2[0], arm2[1]);
+      const light = new THREE.PointLight(0xcfe1e8, 0.22, 7, 1.4);
+      light.position.set(vertex[0], 8.5, vertex[1]);
+      room.add(light);
+    }
+    addArrow([0, -9], [-4, -5], [4, -5]); // points at the back wall
+    addArrow([0, 2], [-4, -2], [4, -2]); // points at the front/entrance wall
+    addArrow([-8, -3], [-4, -7], [-4, 1]); // points at the left wall
+    addArrow([8, -3], [4, -7], [4, 1]); // points at the right wall
   }
 
   // Vault refinement handoff (2026-09-06) — SECOND correction after EK's
