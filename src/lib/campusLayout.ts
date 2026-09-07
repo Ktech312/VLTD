@@ -10,15 +10,18 @@
 // layout EK already approved in the blueprint, just given a third
 // dimension. If the blueprint's floor plan changes, mirror the change here.
 import type { UniverseKey } from "@/lib/taxonomy";
+import { MUSEUM_EYE_HEIGHT, STANDARD_ROOM_HEIGHT } from "./museumStandard";
 
-// Exact match to the single room's own wall/ceiling height (9.15, see
-// VirtualGalleryRoom.tsx's own ceiling mesh) — EK's ask (2026-09-02):
-// "carry over all the rules we made from the first room." Was 8, a guess.
-export const WALL_HEIGHT = 9.15;
+// Full Museum Scale handoff (2026-09-06), Phase 1: "put shared values in one
+// source of truth; the public campus and personal room must not drift apart
+// again." WALL_HEIGHT/EYE_HEIGHT now read from museumStandard.ts (itself
+// confirmed against VirtualGalleryRoom.tsx's own source) instead of each
+// keeping its own hardcoded copy — same values as before, single owner now.
+export const WALL_HEIGHT = STANDARD_ROOM_HEIGHT;
 export const WALL_THICKNESS = 0.3;
 export const DOOR_HEIGHT = 6.4;
 export const DOOR_WIDTH = 3; // wider than the blueprint's 1.6-unit door marker (2.12 scaled) — a real walkthrough needs a walkable gap, not just a legend dot
-export const EYE_HEIGHT = 3.6; // matches the built single room's camera eye height
+export const EYE_HEIGHT = MUSEUM_EYE_HEIGHT;
 
 export type CampusRoomId =
   | "HUB"

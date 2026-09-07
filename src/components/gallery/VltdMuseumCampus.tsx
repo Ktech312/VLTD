@@ -33,6 +33,12 @@ import {
 import { getPrimaryImageUrl, loadItems, type VaultItem } from "@/lib/vaultModel";
 import { isUniverseKey, type UniverseKey } from "@/lib/taxonomy";
 import { getActiveSpotlightPrograms, getEnabledStoreItems, getItemsPerRoom } from "@/lib/museumCampusConfig";
+import {
+  MUSEUM_CAMERA_FOV,
+  MUSEUM_PITCH_LIMIT,
+  MUSEUM_WALK_SPEED,
+  MUSEUM_WALK_SPEED_SLOW,
+} from "@/lib/museumStandard";
 
 function wrapText(ctx: CanvasRenderingContext2D, text: string, x: number, y: number, maxWidth: number, lineHeight: number) {
   const words = text.split(" ");
@@ -108,7 +114,7 @@ export default function VltdMuseumCampus() {
     // dimensioned rooms look and feel smaller (classic wide-angle
     // distortion) and made the same drag-look sensitivity feel faster
     // than intended.
-    const camera = new THREE.PerspectiveCamera(47, window.innerWidth / window.innerHeight, 0.1, 400);
+    const camera = new THREE.PerspectiveCamera(MUSEUM_CAMERA_FOV, window.innerWidth / window.innerHeight, 0.1, 400);
     camera.rotation.order = "YXZ";
     camera.position.set(CAMPUS_SPAWN.x, EYE_HEIGHT, CAMPUS_SPAWN.z);
 
@@ -624,10 +630,10 @@ export default function VltdMuseumCampus() {
     const raycaster = new THREE.Raycaster();
     const pointerNdc = new THREE.Vector2();
 
-    const WALK_SPEED = 2.55; // units/sec — same real-world-calibrated speed as the single room
-    const WALK_SPEED_SLOW = 1.73; // Shift
+    const WALK_SPEED = MUSEUM_WALK_SPEED;
+    const WALK_SPEED_SLOW = MUSEUM_WALK_SPEED_SLOW;
     const TURN_RATE = 1.7; // rad/sec, Left/Right arrow turning
-    const PITCH_LIMIT = 0.32; // exact match to the single room's own limit — no campus-specific deviation
+    const PITCH_LIMIT = MUSEUM_PITCH_LIMIT;
     // Calibrated to "drag across the full screen width = rotate through
     // one horizontal field of view" (~0.00079 rad/px at this FOV/aspect),
     // not ported — see the onPointerMove comment below for the measured
@@ -648,24 +654,44 @@ export default function VltdMuseumCampus() {
     let startX = 0;
     let startY = 0;
 
-    function facingDirection() {
-      return new THREE.Vector3(Math.sin(targetYaw), 0, -Math.cos(targetYaw)).normalize();
+    // Full Museum Scale handoff (2026-09-06), Phase 1 — required free-form
+    // movement correction. `facingDirection()`/`strafeDirection()` used to
+    // read `targetYaw`, but the RENDERED camera uses the eased `yaw` —
+    // immediately after a drag-turn those two can point in different
+    // directions, so scroll/W/S could visibly move somewhere other than
+    // where the camera is actually facing that frame. Forward/back/strafe
+    // now always read the visible `yaw`, never the easing target.
+    function forwardFromVisibleView() {
+      return new THREE.Vector3(Math.sin(yaw), 0, -Math.cos(yaw)).normalize();
     }
-    function strafeDirection() {
-      return new THREE.Vector3(Math.cos(targetYaw), 0, Math.sin(targetYaw)).normalize();
+    function rightFromVisibleView() {
+      return new THREE.Vector3(Math.cos(yaw), 0, Math.sin(yaw)).normalize();
     }
 
-    // Slide collision: try the full move, then each axis alone — same
-    // approach as before, just driven by a velocity vector now instead of
-    // a normalized diagonal step.
-    function tryMove(candidateX: number, candidateZ: number) {
-      if (isWalkable(candidateX, candidateZ, walkable)) {
-        cameraBody.x = candidateX;
-        cameraBody.z = candidateZ;
-        return;
+    // Collision must shorten or stop the requested motion, never redirect
+    // it — the old tryMove() retried the blocked move's world-X and world-Z
+    // components separately, which could turn a blocked forward/backward
+    // press into sideways sliding along a wall. Substeps (instead of one
+    // big jump) stop a fast wheel nudge from tunneling across a thin
+    // doorway threshold.
+    function movePreservingDirection(delta: THREE.Vector3) {
+      const distance = delta.length();
+      if (distance === 0) return;
+
+      const direction = delta.clone().normalize();
+      const maxSubstep = 0.14;
+      const steps = Math.max(1, Math.ceil(distance / maxSubstep));
+      const step = direction.multiplyScalar(distance / steps);
+
+      for (let index = 0; index < steps; index += 1) {
+        const nextX = cameraBody.x + step.x;
+        const nextZ = cameraBody.z + step.z;
+        if (!isWalkable(nextX, nextZ, walkable)) break;
+        cameraBody.x = nextX;
+        cameraBody.z = nextZ;
       }
-      if (isWalkable(candidateX, cameraBody.z, walkable)) cameraBody.x = candidateX;
-      else if (isWalkable(cameraBody.x, candidateZ, walkable)) cameraBody.z = candidateZ;
+
+      targetCameraBody.copy(cameraBody);
     }
 
     function updateKeyboardMovement(dt: number) {
@@ -673,14 +699,15 @@ export default function VltdMuseumCampus() {
       walkTween = null; // a held movement/turn key interrupts click-to-walk (view is never touched by the tween, so nothing else to reset)
       const speed = pressedKeys.has("shift") ? WALK_SPEED_SLOW : WALK_SPEED;
       const move = new THREE.Vector3();
-      if (pressedKeys.has("forward")) move.add(facingDirection());
-      if (pressedKeys.has("back")) move.sub(facingDirection());
-      if (pressedKeys.has("left")) move.sub(strafeDirection());
-      if (pressedKeys.has("right")) move.add(strafeDirection());
+      const forward = forwardFromVisibleView();
+      const right = rightFromVisibleView();
+      if (pressedKeys.has("forward")) move.add(forward);
+      if (pressedKeys.has("back")) move.sub(forward);
+      if (pressedKeys.has("left")) move.sub(right);
+      if (pressedKeys.has("right")) move.add(right);
       if (move.lengthSq() > 0) {
         move.normalize().multiplyScalar(speed * dt);
-        tryMove(cameraBody.x + move.x, cameraBody.z + move.z);
-        targetCameraBody.copy(cameraBody);
+        movePreservingDirection(move);
       }
       let turn = 0;
       if (pressedKeys.has("turn-left")) turn += 1;
@@ -811,10 +838,8 @@ export default function VltdMuseumCampus() {
     function onWheel(e: WheelEvent) {
       e.preventDefault();
       walkTween = null;
-      const amount = (e.deltaY > 0 ? -1 : 1) * 0.42;
-      const move = facingDirection().multiplyScalar(amount);
-      tryMove(cameraBody.x + move.x, cameraBody.z + move.z);
-      targetCameraBody.copy(cameraBody);
+      const signedDistance = e.deltaY > 0 ? -0.42 : 0.42;
+      movePreservingDirection(forwardFromVisibleView().multiplyScalar(signedDistance));
     }
 
     window.addEventListener("keydown", onKeyDown);
