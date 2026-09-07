@@ -49,6 +49,7 @@ import {
   computeUsableWallSpans,
   NEUTRAL_PREVIEW_FINISH,
   placeArtwork,
+  type RoomLightGroups,
   type RoomModule,
 } from "@/lib/campusRoomBuilder";
 import {
@@ -553,15 +554,19 @@ export default function VltdMuseumCampus() {
     buildDoorways(scene, tcgModule, tcgLights);
     const tcgWallSpans = computeUsableWallSpans(tcgModule);
 
-    // Room-level light activation — EK's review of 9d7c122: "make each
-    // room's lights controllable as a group. Keep lights enabled for the
-    // visitor's current room and... immediately connected rooms. Disable
-    // distant-room lights." Meshes (walls/floor/ceiling/doorway/artwork)
-    // always render regardless — only each room's own light GROUP is
-    // toggled, so a room seen at a distance through a doorway still looks
-    // like a room, just without its own lights contributing when nobody's
-    // near it.
-    const roomLightGroups: Partial<Record<CampusRoomId, THREE.Group>> = {
+    // Two-tier room light activation — EK's review of 9796c72: room-level
+    // activation alone doesn't scale through HUB, since HUB is adjacent to
+    // nearly every room — enabling "current room's neighbors" at FULL
+    // brightness meant a HUB-adjacent bridge could eventually light every
+    // converted room's complete rig. Each converted room now owns two
+    // groups (RoomLightGroups from campusRoomBuilder.ts):
+    //   - full: the real room lighting — on only when the visitor is
+    //     actually inside this room, or inside a bridge this room is an
+    //     endpoint of.
+    //   - preview: the cheap "don't read as black" doorway-reveal lights —
+    //     on whenever this room is a graph neighbor of the visitor's
+    //     current room/bridge endpoints, in addition to whenever full is on.
+    const roomLightGroups: Partial<Record<CampusRoomId, RoomLightGroups>> = {
       POP_CULTURE: popCultureLights,
       TCG: tcgLights,
     };
@@ -569,12 +574,11 @@ export default function VltdMuseumCampus() {
     // EK's review of 751361a: the room-only check went blank (every light
     // group off) whenever the visitor was in a door bridge — a real,
     // legitimately walkable spot between two room rects that belongs to no
-    // room. Bridges are now a first-class location: standing in one
-    // activates BOTH endpoint rooms (and their own neighbors, so the view
-    // through a further doorway from inside the bridge doesn't go dark
-    // either). A true "none" — outside every room and every bridge, which
-    // shouldn't happen during normal collision-bounded movement — keeps
-    // whatever was last active instead of blanking everything.
+    // room. Bridges are a first-class location: standing in one puts BOTH
+    // endpoint rooms in the "full" set. A true "none" — outside every room
+    // and every bridge, which shouldn't happen during normal collision-
+    // bounded movement — keeps whatever was last active instead of
+    // blanking everything.
     type LightLocation =
       | { kind: "room"; roomId: CampusRoomId }
       | { kind: "bridge"; doorIndex: number; rooms: [CampusRoomId, CampusRoomId] }
@@ -597,7 +601,8 @@ export default function VltdMuseumCampus() {
     }
 
     let lastLightLocation: LightLocation = { kind: "none" };
-    let lastActiveRoomIds: CampusRoomId[] = [];
+    let lastFullRoomIds: CampusRoomId[] = [];
+    let lastPreviewRoomIds: CampusRoomId[] = [];
     function updateRoomLightActivation(x: number, z: number) {
       const location = resolveLightLocation(x, z);
       if (location.kind === "none") return;
@@ -608,17 +613,25 @@ export default function VltdMuseumCampus() {
       if (unchanged) return;
       lastLightLocation = location;
 
-      const activeIds =
-        location.kind === "room"
-          ? [location.roomId, ...adjacentRoomIds(location.roomId)]
-          : [
-              location.rooms[0], ...adjacentRoomIds(location.rooms[0]),
-              location.rooms[1], ...adjacentRoomIds(location.rooms[1]),
-            ];
-      lastActiveRoomIds = activeIds;
-      const active = new Set<CampusRoomId>(activeIds);
-      for (const [roomId, group] of Object.entries(roomLightGroups) as [CampusRoomId, THREE.Group][]) {
-        group.visible = active.has(roomId);
+      // fullSet: the room(s) the visitor is actually standing in (or, in a
+      // bridge, both endpoints). previewSet: everything one hop out from
+      // fullSet — never promoted to full merely for being a neighbor of a
+      // neighbor (e.g. HUB), which is exactly the scaling problem this
+      // corrects.
+      const fullSet = new Set<CampusRoomId>(
+        location.kind === "room" ? [location.roomId] : [location.rooms[0], location.rooms[1]]
+      );
+      const previewSet = new Set<CampusRoomId>();
+      for (const roomId of fullSet) {
+        for (const neighbor of adjacentRoomIds(roomId)) previewSet.add(neighbor);
+      }
+
+      lastFullRoomIds = [...fullSet];
+      lastPreviewRoomIds = [...previewSet].filter((id) => !fullSet.has(id));
+      for (const [roomId, groups] of Object.entries(roomLightGroups) as [CampusRoomId, RoomLightGroups][]) {
+        const full = fullSet.has(roomId);
+        groups.full.visible = full;
+        groups.preview.visible = full || previewSet.has(roomId);
       }
     }
 
@@ -681,9 +694,9 @@ export default function VltdMuseumCampus() {
     // other room still uses. Each room's picture lights join that room's
     // own light group so they turn off with the rest of the room's lights
     // when the visitor is elsewhere.
-    function placeRoomItems(wallSpans: ReturnType<typeof computeUsableWallSpans>, lightGroup: THREE.Group, items: VaultItem[]) {
+    function placeRoomItems(wallSpans: ReturnType<typeof computeUsableWallSpans>, lightGroups: RoomLightGroups, items: VaultItem[]) {
       const urls = items.map((item) => ({ url: getPrimaryImageUrl(item) })).filter((it): it is { url: string } => Boolean(it.url));
-      placeArtwork(scene, textureLoader, lightGroup, wallSpans, urls, WALL_THICKNESS, EYE_HEIGHT, () => contentCancelled);
+      placeArtwork(scene, textureLoader, lightGroups, wallSpans, urls, WALL_THICKNESS, EYE_HEIGHT, () => contentCancelled);
     }
 
     async function populateDynamicContent() {
@@ -1102,11 +1115,13 @@ export default function VltdMuseumCampus() {
           targetYaw = newYaw;
         }
       },
-      // EK's review of 9d7c122 and 751361a: "total light count in the
-      // Three.js scene, light count owned by each converted room, and
-      // which room groups are enabled" plus bridge location, so evidence
-      // can identify an active bridge and its endpoint rooms instead of
-      // just "currentRoomId: null" — queryable live, not a source estimate.
+      // EK's review of 9d7c122, 751361a, and 9796c72: total/enabled scene
+      // lights, each converted room's FULL and PREVIEW group counts and
+      // active state separately, deduplicated active-room-id lists (the
+      // previous version pushed duplicates before building a Set — didn't
+      // change behavior, but made the evidence harder to read), and the
+      // current room-or-bridge location — all queryable live, not a
+      // source-code estimate.
       getLightCounts: () => {
         function isAncestorVisible(o: THREE.Object3D): boolean {
           let node: THREE.Object3D | null = o;
@@ -1116,6 +1131,13 @@ export default function VltdMuseumCampus() {
           }
           return true;
         }
+        function countLights(root: THREE.Object3D): number {
+          let count = 0;
+          root.traverse((obj) => {
+            if ((obj as THREE.Light).isLight) count += 1;
+          });
+          return count;
+        }
         let totalLights = 0;
         let enabledLights = 0;
         scene.traverse((obj) => {
@@ -1123,20 +1145,23 @@ export default function VltdMuseumCampus() {
           totalLights += 1;
           if (isAncestorVisible(obj)) enabledLights += 1;
         });
-        const perRoom: Record<string, { lightCount: number; active: boolean }> = {};
-        for (const [roomId, group] of Object.entries(roomLightGroups)) {
-          let count = 0;
-          group.traverse((obj) => {
-            if ((obj as THREE.Light).isLight) count += 1;
-          });
-          perRoom[roomId] = { lightCount: count, active: group.visible };
+        const perRoom: Record<string, {
+          full: { lightCount: number; active: boolean };
+          preview: { lightCount: number; active: boolean };
+        }> = {};
+        for (const [roomId, groups] of Object.entries(roomLightGroups) as [CampusRoomId, RoomLightGroups][]) {
+          perRoom[roomId] = {
+            full: { lightCount: countLights(groups.full), active: groups.full.visible },
+            preview: { lightCount: countLights(groups.preview), active: groups.preview.visible },
+          };
         }
         return {
           totalLights,
           enabledLights,
           perRoom,
           location: lastLightLocation,
-          activeRoomIds: lastActiveRoomIds,
+          fullRoomIds: lastFullRoomIds,
+          previewRoomIds: lastPreviewRoomIds,
         };
       },
     };

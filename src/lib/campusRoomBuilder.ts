@@ -72,6 +72,20 @@ export type RoomModule = {
   finish: RoomFinish;
 };
 
+// EK's review of 9796c72: room-level activation alone doesn't scale through
+// HUB — HUB is adjacent to nearly every room, so enabling "current room's
+// neighbors" at full brightness meant a HUB-adjacent bridge could light
+// every converted room's complete rig. Each room now owns TWO groups
+// instead of one:
+//   - full: the real room lighting (downward fixtures, ceiling up-glow,
+//     wall washes, featured picture spotlights) — only on when the visitor
+//     is actually inside this room or a bridge this room is an endpoint of.
+//   - preview: the cheap "don't read as a black box" treatment (currently
+//     just the doorway reveal lights) — on whenever this room is merely a
+//     graph neighbor of wherever the visitor is, so a room glimpsed through
+//     an opening isn't pitch dark without paying for its full rig.
+export type RoomLightGroups = { full: THREE.Group; preview: THREE.Group };
+
 export type WallSpan = { wall: WallSide; from: number; to: number; fixed: number; rotationY: number };
 
 function wallRotationY(side: WallSide): number {
@@ -127,13 +141,16 @@ function intoRoomNormal(side: WallSide): { x: number; z: number } {
  * or off as one unit (EK's review of 9d7c122: "make each room's lights
  * controllable as a group... keep lights enabled for the visitor's current
  * room and... immediately connected rooms"). */
-export function buildRoomShell(scene: THREE.Scene, module: RoomModule): THREE.Group {
+export function buildRoomShell(scene: THREE.Scene, module: RoomModule): RoomLightGroups {
   const { room, wallHeight, wallThickness, finish } = module;
   const bounds = roomBounds(room);
   const center = { x: room.x + room.w / 2, z: room.z + room.d / 2 };
   const lights = new THREE.Group();
-  lights.name = `room-lights:${room.id}`;
+  lights.name = `room-full:${room.id}`;
   scene.add(lights);
+  const preview = new THREE.Group();
+  preview.name = `room-preview:${room.id}`;
+  scene.add(preview);
 
   // EK's review of d61a885: wall grain/wash were "too subtle to establish
   // material depth" — bump scale roughly doubled and roughness nudged down
@@ -275,7 +292,7 @@ export function buildRoomShell(scene: THREE.Scene, module: RoomModule): THREE.Gr
     lights.add(light.target);
   }
 
-  return lights;
+  return { full: lights, preview };
 }
 
 /** Doorway assemblies: the real post+header frame on every opening, a solid
@@ -286,7 +303,7 @@ export function buildRoomShell(scene: THREE.Scene, module: RoomModule): THREE.Gr
  * sign mounted flush on each face of that transom (readable from whichever
  * room you're approaching from, naming what's on the far side), and a warm
  * reveal light so looking through an opening isn't a black void. */
-export function buildDoorways(scene: THREE.Scene, module: RoomModule, lights: THREE.Group) {
+export function buildDoorways(scene: THREE.Scene, module: RoomModule, groups: RoomLightGroups) {
   const { room, eyeHeight, wallThickness, wallHeight, finish } = module;
   const bounds = roomBounds(room);
   // Toned down from an earlier, more contrasty beige — the posts/header
@@ -374,10 +391,14 @@ export function buildDoorways(scene: THREE.Scene, module: RoomModule, lights: TH
       room.label
     );
 
+    // The reveal light is the room's "doorway preview" treatment — cheap
+    // enough to stay on whenever this room is merely a graph neighbor of
+    // wherever the visitor is (see the RoomLightGroups comment above), so
+    // it lives in the preview group, not the full room rig.
     const revealFar = wallEdgePoint(neighborBounds, far, doorway.gapCenter, 0);
     const reveal = new THREE.PointLight(finish.lightColor, 0.6, 9, 2);
     reveal.position.set((framePos.x + revealFar.x) / 2, eyeHeight, (framePos.z + revealFar.z) / 2);
-    lights.add(reveal);
+    groups.preview.add(reveal);
   }
 }
 
@@ -415,7 +436,7 @@ export function computeUsableWallSpans(module: RoomModule): WallSpan[] {
 function hangArtPreservingAspect(
   scene: THREE.Scene,
   textureLoader: THREE.TextureLoader,
-  lights: THREE.Group,
+  groups: RoomLightGroups,
   x: number, y: number, z: number,
   rotationY: number,
   url: string,
@@ -463,8 +484,8 @@ function hangArtPreservingAspect(
       const pictureLight = new THREE.SpotLight(0xfff4e2, 0.7, 6, Math.PI / 6, 0.5, 1.2);
       pictureLight.position.set(x + normal.x * 1.1, y + artH / 2 + 0.3, z + normal.z * 1.1);
       pictureLight.target.position.set(x, y, z);
-      lights.add(pictureLight);
-      lights.add(pictureLight.target);
+      groups.full.add(pictureLight);
+      groups.full.add(pictureLight.target);
     }
   });
 }
@@ -481,7 +502,7 @@ const MAX_PICTURE_LIGHTS_PER_ROOM = 6;
 export function placeArtwork(
   scene: THREE.Scene,
   textureLoader: THREE.TextureLoader,
-  lights: THREE.Group,
+  groups: RoomLightGroups,
   spans: WallSpan[],
   items: { url: string }[],
   wallThickness: number,
@@ -508,7 +529,7 @@ export function placeArtwork(
         : { x: span.fixed + (span.wall === "west" ? 1 : -1) * wallInset, y: eyeHeight, z: t };
       const maxSlot = Math.min(2.6, step * 0.8);
       const withRealLight = itemIndex < MAX_PICTURE_LIGHTS_PER_ROOM;
-      hangArtPreservingAspect(scene, textureLoader, lights, point.x, point.y, point.z, span.rotationY, item.url, maxSlot, 2.2, isCancelled, withRealLight);
+      hangArtPreservingAspect(scene, textureLoader, groups, point.x, point.y, point.z, span.rotationY, item.url, maxSlot, 2.2, isCancelled, withRealLight);
     }
   }
 }
