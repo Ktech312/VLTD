@@ -395,7 +395,9 @@ export default function MuseumPrototypeRoom() {
     // the stale 0, and the tick loop's `yaw += (targetYaw - yaw) * 0.12`
     // would then visibly ease the spawn view back toward 0 over the first
     // second or so.
-    let yaw = Math.PI;
+    // forwardFromVisibleView() at yaw=0 is (0,0,-1) — facing -Z, i.e. back
+    // toward the room from this stub's spawn point (z=21, room is z<13).
+    let yaw = 0;
     let pitch = 0;
     let targetYaw = yaw;
     let targetPitch = pitch;
