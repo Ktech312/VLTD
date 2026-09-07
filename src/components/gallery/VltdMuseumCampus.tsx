@@ -13,6 +13,7 @@ import { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 
 import {
+  CAMPUS_DOORS,
   CAMPUS_ROOMS,
   CAMPUS_SPAWN,
   DOOR_WIDTH,
@@ -564,11 +565,58 @@ export default function VltdMuseumCampus() {
       POP_CULTURE: popCultureLights,
       TCG: tcgLights,
     };
-    let lastActiveRoomId: CampusRoomId | null | "__unset__" = "__unset__";
-    function updateRoomLightActivation(currentId: CampusRoomId | null) {
-      if (currentId === lastActiveRoomId) return;
-      lastActiveRoomId = currentId;
-      const active = new Set<CampusRoomId>(currentId ? [currentId, ...adjacentRoomIds(currentId)] : []);
+
+    // EK's review of 751361a: the room-only check went blank (every light
+    // group off) whenever the visitor was in a door bridge — a real,
+    // legitimately walkable spot between two room rects that belongs to no
+    // room. Bridges are now a first-class location: standing in one
+    // activates BOTH endpoint rooms (and their own neighbors, so the view
+    // through a further doorway from inside the bridge doesn't go dark
+    // either). A true "none" — outside every room and every bridge, which
+    // shouldn't happen during normal collision-bounded movement — keeps
+    // whatever was last active instead of blanking everything.
+    type LightLocation =
+      | { kind: "room"; roomId: CampusRoomId }
+      | { kind: "bridge"; doorIndex: number; rooms: [CampusRoomId, CampusRoomId] }
+      | { kind: "none" };
+
+    function resolveLightLocation(x: number, z: number): LightLocation {
+      const room = CAMPUS_ROOMS.find((r) => {
+        const b = roomBounds(r);
+        return x >= b.x0 && x <= b.x1 && z >= b.z0 && z <= b.z1;
+      });
+      if (room) return { kind: "room", roomId: room.id };
+
+      for (const bridge of computeDoorBridges()) {
+        if (x >= bridge.x0 && x <= bridge.x1 && z >= bridge.z0 && z <= bridge.z1) {
+          const [a, b] = CAMPUS_DOORS[bridge.doorIndex].rooms;
+          if (a && b) return { kind: "bridge", doorIndex: bridge.doorIndex, rooms: [a, b] };
+        }
+      }
+      return { kind: "none" };
+    }
+
+    let lastLightLocation: LightLocation = { kind: "none" };
+    let lastActiveRoomIds: CampusRoomId[] = [];
+    function updateRoomLightActivation(x: number, z: number) {
+      const location = resolveLightLocation(x, z);
+      if (location.kind === "none") return;
+
+      const unchanged =
+        (location.kind === "room" && lastLightLocation.kind === "room" && location.roomId === lastLightLocation.roomId) ||
+        (location.kind === "bridge" && lastLightLocation.kind === "bridge" && location.doorIndex === lastLightLocation.doorIndex);
+      if (unchanged) return;
+      lastLightLocation = location;
+
+      const activeIds =
+        location.kind === "room"
+          ? [location.roomId, ...adjacentRoomIds(location.roomId)]
+          : [
+              location.rooms[0], ...adjacentRoomIds(location.rooms[0]),
+              location.rooms[1], ...adjacentRoomIds(location.rooms[1]),
+            ];
+      lastActiveRoomIds = activeIds;
+      const active = new Set<CampusRoomId>(activeIds);
       for (const [roomId, group] of Object.entries(roomLightGroups) as [CampusRoomId, THREE.Group][]) {
         group.visible = active.has(roomId);
       }
@@ -1031,7 +1079,7 @@ export default function VltdMuseumCampus() {
         lastRoomLabel = label;
         if (roomLabelRef.current) roomLabelRef.current.textContent = label || "Corridor";
       }
-      updateRoomLightActivation(room ? room.id : null);
+      updateRoomLightActivation(cameraBody.x, cameraBody.z);
 
       renderer.render(scene, camera);
     }
@@ -1054,14 +1102,26 @@ export default function VltdMuseumCampus() {
           targetYaw = newYaw;
         }
       },
-      // EK's review of 9d7c122: "total light count in the Three.js scene,
-      // light count owned by each converted room, and which room groups
-      // are enabled" — required evidence for the room-light-group work,
-      // queryable live instead of a source-code estimate.
+      // EK's review of 9d7c122 and 751361a: "total light count in the
+      // Three.js scene, light count owned by each converted room, and
+      // which room groups are enabled" plus bridge location, so evidence
+      // can identify an active bridge and its endpoint rooms instead of
+      // just "currentRoomId: null" — queryable live, not a source estimate.
       getLightCounts: () => {
+        function isAncestorVisible(o: THREE.Object3D): boolean {
+          let node: THREE.Object3D | null = o;
+          while (node) {
+            if (!node.visible) return false;
+            node = node.parent;
+          }
+          return true;
+        }
         let totalLights = 0;
+        let enabledLights = 0;
         scene.traverse((obj) => {
-          if ((obj as THREE.Light).isLight) totalLights += 1;
+          if (!(obj as THREE.Light).isLight) return;
+          totalLights += 1;
+          if (isAncestorVisible(obj)) enabledLights += 1;
         });
         const perRoom: Record<string, { lightCount: number; active: boolean }> = {};
         for (const [roomId, group] of Object.entries(roomLightGroups)) {
@@ -1071,7 +1131,13 @@ export default function VltdMuseumCampus() {
           });
           perRoom[roomId] = { lightCount: count, active: group.visible };
         }
-        return { totalLights, perRoom, currentRoomId: lastActiveRoomId };
+        return {
+          totalLights,
+          enabledLights,
+          perRoom,
+          location: lastLightLocation,
+          activeRoomIds: lastActiveRoomIds,
+        };
       },
     };
 
