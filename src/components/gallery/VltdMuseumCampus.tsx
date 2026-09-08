@@ -83,6 +83,74 @@ function itemUniverse(item: VaultItem) {
   return isUniverseKey(raw) ? raw : null;
 }
 
+function hasUsableImage(item: VaultItem) {
+  return Boolean(getPrimaryImageUrl(item));
+}
+
+// Round-robins items across their universes so one dominant category can't
+// crowd out the rest of a fill-in pass (used only for COLLECTION's "whatever
+// doesn't have a slot yet" tier below).
+function balancedByUniverse(items: VaultItem[]): VaultItem[] {
+  const groups = new Map<string, VaultItem[]>();
+  for (const item of items) {
+    const key = itemUniverse(item) ?? "";
+    const bucket = groups.get(key);
+    if (bucket) bucket.push(item);
+    else groups.set(key, [item]);
+  }
+  const buckets = [...groups.values()];
+  const out: VaultItem[] = [];
+  for (let i = 0; out.length < items.length; i++) {
+    let addedAny = false;
+    for (const bucket of buckets) {
+      if (i < bucket.length) {
+        out.push(bucket[i]);
+        addedAny = true;
+      }
+    }
+    if (!addedAny) break;
+  }
+  return out;
+}
+
+// COLLECTION has no dedicated universe of its own — it's the campus's
+// general room for whatever doesn't have one. Priority order: uncategorized
+// real items first (they have nowhere else to go), then COLLECTION's
+// assigned swing universe (caller has already dropped it if that universe's
+// real count is zero — assignSwingRoomUniverses() always names one even
+// when every swing count is tied), then a balanced fill from everything
+// else. Dedupes by item id, never counts an image-less item toward
+// itemsPerRoom, and never substitutes seed/demo art.
+function selectCollectionItems(
+  allItems: VaultItem[],
+  collectionUniverses: UniverseKey[],
+  itemsPerRoom: number
+): VaultItem[] {
+  const seen = new Set<string>();
+  const picked: VaultItem[] = [];
+  function addAll(candidates: VaultItem[]) {
+    for (const item of candidates) {
+      if (picked.length >= itemsPerRoom) return;
+      if (seen.has(item.id) || !hasUsableImage(item)) continue;
+      seen.add(item.id);
+      picked.push(item);
+    }
+  }
+  addAll(allItems.filter((item) => itemUniverse(item) === null));
+  if (picked.length < itemsPerRoom) {
+    addAll(
+      allItems.filter((item) => {
+        const universe = itemUniverse(item);
+        return universe !== null && collectionUniverses.includes(universe);
+      })
+    );
+  }
+  if (picked.length < itemsPerRoom) {
+    addAll(balancedByUniverse(allItems.filter((item) => itemUniverse(item) !== null)));
+  }
+  return picked;
+}
+
 function makeLabelSprite(text: string, sub?: string) {
   const canvas = document.createElement("canvas");
   canvas.width = 512;
@@ -684,7 +752,17 @@ export default function VltdMuseumCampus() {
       });
     }
 
-    function hangPlaque(x: number, z: number, width: number, height: number, title: string, sub?: string, yOffset = 0) {
+    function hangPlaque(
+      x: number,
+      z: number,
+      width: number,
+      height: number,
+      title: string,
+      sub?: string,
+      yOffset = 0,
+      rotationY = 0,
+      depthSign = 1
+    ) {
       const canvas = document.createElement("canvas");
       canvas.width = 512;
       canvas.height = 256;
@@ -705,7 +783,8 @@ export default function VltdMuseumCampus() {
       texture.colorSpace = THREE.SRGBColorSpace;
       const material = new THREE.MeshStandardMaterial({ map: texture, roughness: 0.85 });
       const plaque = new THREE.Mesh(new THREE.PlaneGeometry(width, height), material);
-      plaque.position.set(x, EYE_HEIGHT + yOffset, z + 0.03);
+      plaque.position.set(x, EYE_HEIGHT + yOffset, z + depthSign * 0.03);
+      plaque.rotation.y = rotationY;
       scene.add(plaque);
     }
 
@@ -782,12 +861,31 @@ export default function VltdMuseumCampus() {
         .slice(0, itemsPerRoom);
       placeRoomItems(tcgWallSpans, tcgLights, tcgItems);
 
-      const collectionUniverses = roomUniverses.COLLECTION ?? [];
-      const collectionItems = allItems.filter((item) => {
-        const universe = itemUniverse(item);
-        return universe !== null && collectionUniverses.includes(universe);
-      }).slice(0, itemsPerRoom);
+      // assignSwingRoomUniverses() always names a universe for COLLECTION,
+      // even when every swing universe's real count is tied at zero — only
+      // trust that assignment here if it actually has real items behind it.
+      const collectionUniverses = (roomUniverses.COLLECTION ?? []).filter(
+        (universe) => (universeCounts[universe] ?? 0) > 0
+      );
+      const collectionItems = selectCollectionItems(allItems, collectionUniverses, itemsPerRoom);
       placeRoomItems(collectionWallSpans, collectionLights, collectionItems);
+      if (collectionItems.length === 0) {
+        // No usable image-bearing items anywhere in the signed-in vault —
+        // an honest empty-state instead of a silent blank room. Mounted on
+        // COLLECTION's south wall, the one side with no doorway.
+        const collectionBounds = roomBounds(roomById("COLLECTION"));
+        hangPlaque(
+          collectionBounds.x0 + (collectionBounds.x1 - collectionBounds.x0) / 2,
+          collectionBounds.z1 - WALL_THICKNESS,
+          6,
+          3,
+          "Collection fills from your vault",
+          "Add real items with photos to your vault to see them displayed here.",
+          0,
+          Math.PI,
+          -1
+        );
+      }
 
       // Spotlight room — admin-controlled rotating programs.
       const spotlightBounds = roomBounds(roomById("SPOTLIGHT"));
