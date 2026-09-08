@@ -449,15 +449,19 @@ export function buildDoorConnection(
     farTransom.position.set(farCenter.x, transomBottom + transomHeight / 2, farCenter.z);
     scene.add(farTransom);
 
-    // Signs mount flush at each room's own wall plane (not floating
-    // mid-gap, and not doubled the way two independent per-room calls used
-    // to) and name the far side from wherever you're standing.
+    // Signs mount flush at each room's own wall plane, on that room's own
+    // INTERIOR side (not floating mid-gap, and not doubled the way two
+    // independent per-room calls used to) and name the far side from
+    // wherever you're standing. Offset AWAY from the vestibule (near room's
+    // interior is z < depth0, far room's is z > depth1) — offsetting INTO
+    // the vestibule instead would embed the sign inside the solid transom
+    // box built just above, hiding it completely from every angle.
     const signY = transomBottom + 0.55;
     const nearRotation = isNS ? Math.PI : -Math.PI / 2;
     const farRotation = isNS ? 0 : Math.PI / 2;
-    const nearSignPos = point(door.gapCenter, depth0 + 0.03);
+    const nearSignPos = point(door.gapCenter, depth0 - 0.03);
     buildDestinationSign(scene, nearSignPos.x, signY, nearSignPos.z, nearRotation, far.room.label);
-    const farSignPos = point(door.gapCenter, depth1 - 0.03);
+    const farSignPos = point(door.gapCenter, depth1 + 0.03);
     buildDestinationSign(scene, farSignPos.x, signY, farSignPos.z, farRotation, near.room.label);
   }
 
