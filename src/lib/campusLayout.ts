@@ -289,20 +289,21 @@ export function computeCampusWallSegments(): CampusWallSegment[] {
         if (!high && !low) continue;
 
         if (high && low) {
-          // PLAZA (noWalls) still gets a real wall+door where one actually
-          // exists — HUB<->PLAZA is the building's real entrance, and a
-          // real wall with a real opening there is more consistent with
-          // the already-accepted exterior facade (columns, pediment) than
-          // an unexplained void would be. Only a PLAZA boundary with NO
-          // door (SPOTLIGHT<->PLAZA, PLAZA<->STORE) stays fully open, per
-          // "open forecourt."
-          if ((high.noWalls || low.noWalls) && !findDoor(high.id, low.id)) continue;
+          // A `noWalls` room (PLAZA) still gets a normal shared wall
+          // wherever it borders a REAL room — noWalls only ever means "this
+          // room doesn't generate a wall of its own reaching into a shared
+          // boundary," never "leave the neighbor's own enclosure open."
+          // SPOTLIGHT and STORE keep their own full enclosure (one door
+          // each, to HUB) exactly as before; their plaza-facing sides are
+          // solid, just built once, on their own account, rather than
+          // independently by each room. HUB<->PLAZA (the real entrance)
+          // gets the same real wall+door treatment as any other door.
           segments.push({ wall, fixed, from, to, roomA: high.id, roomB: low.id });
           continue;
         }
 
         const only = high ?? low!;
-        if (only.noWalls) continue; // PLAZA's true exterior edge (no neighbor at all): open
+        if (only.noWalls) continue; // PLAZA's true exterior edge (no neighbor at all, facing the facade): open
         segments.push({ wall, fixed, from, to, roomA: only.id, roomB: null });
       }
     }
