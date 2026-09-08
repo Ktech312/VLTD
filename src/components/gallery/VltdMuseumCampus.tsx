@@ -16,21 +16,21 @@ import {
   CAMPUS_DOORS,
   CAMPUS_ROOMS,
   CAMPUS_SPAWN,
-  DOOR_WIDTH,
   EYE_HEIGHT,
   WALL_HEIGHT,
   WALL_THICKNESS,
   adjacentRoomIds,
   assignSwingRoomUniverses,
   buildWalkableAreas,
+  computeCampusWallSegments,
   computeCampusWaypoints,
   computeDoorBridges,
-  computeWallSegments,
   doorGapCenter,
   doorWallWidth,
   isWalkable,
   roomBounds,
   roomById,
+  splitSegmentForDoor,
   type CampusRoom,
   type CampusRoomId,
 } from "@/lib/campusLayout";
@@ -44,13 +44,13 @@ import {
   MUSEUM_WALK_SPEED_SLOW,
 } from "@/lib/museumStandard";
 import {
-  buildDoorConnection,
   buildRoomShell,
+  buildRoomTrim,
+  buildSharedWall,
   computeUsableWallSpans,
   createWallMaterial,
   NEUTRAL_PREVIEW_FINISH,
   placeArtwork,
-  type ConnectionEndpoint,
   type RoomLightGroups,
   type RoomModule,
 } from "@/lib/campusRoomBuilder";
@@ -294,98 +294,90 @@ export default function VltdMuseumCampus() {
       }
     }
 
-    // 2026-09-08 architecture reset: the flat navy floor patch that used to
-    // stand in for "the physical gap between adjacent rooms" is gone —
-    // buildDoorConnection() below builds a real enclosed vestibule (floor,
-    // ceiling, side returns, frame/transom/signs) once per CAMPUS_DOORS
-    // entry instead. See the connection-building loop after the wall
-    // segments below, which needs `wallMaterial`/`hubWallMaterial` (defined
-    // above) already in scope.
-
-    // Walls, split around door gaps, with the same gold rail trim the
-    // single room's own walls use (its shelf-rail lattice) — this is the
-    // single biggest thing missing that made identically-dimensioned
-    // rooms read as smaller/flatter than the original.
-    const trimMaterial = new THREE.MeshStandardMaterial({ color: 0xc9a24a, roughness: 0.5, metalness: 0.25 });
-    const trimHeights = [2.4, 5.2]; // rail heights, roughly matching the single room's own two visible rails
-    const trimDepth = 0.06;
-    const trimThickness = 0.12;
-
-    for (const segment of computeWallSegments()) {
-      // POP_CULTURE and TCG build their own 4 walls each (neutral finish +
-      // real doorway frames) below — their other neighbors (HUB, MISC)
-      // still get their normal wall segment on their own side of each
-      // shared boundary here.
-      if (segment.room === "POP_CULTURE" || segment.room === "TCG" || segment.room === "COLLECTION") continue;
-      const span = segment.to - segment.from;
-      if (span <= 0.05) continue;
-      const material = segment.room === "HUB" ? hubWallMaterial : wallMaterial;
-      let geometry: THREE.BoxGeometry;
-      let position: [number, number, number];
-      if (segment.side === "north" || segment.side === "south") {
-        geometry = new THREE.BoxGeometry(span, WALL_HEIGHT, WALL_THICKNESS);
-        position = [(segment.from + segment.to) / 2, WALL_HEIGHT / 2, segment.fixed];
-      } else {
-        geometry = new THREE.BoxGeometry(WALL_THICKNESS, WALL_HEIGHT, span);
-        position = [segment.fixed, WALL_HEIGHT / 2, (segment.from + segment.to) / 2];
-      }
-      const wall = new THREE.Mesh(geometry, material);
-      wall.position.set(...position);
-      scene.add(wall);
-
-      const facingSign = segment.side === "north" || segment.side === "west" ? 1 : -1;
-      for (const h of trimHeights) {
-        if (h >= WALL_HEIGHT - 0.5) continue;
-        const rail =
-          segment.side === "north" || segment.side === "south"
-            ? new THREE.Mesh(new THREE.BoxGeometry(span, trimThickness, trimDepth), trimMaterial)
-            : new THREE.Mesh(new THREE.BoxGeometry(trimDepth, trimThickness, span), trimMaterial);
-        if (segment.side === "north" || segment.side === "south") {
-          rail.position.set((segment.from + segment.to) / 2, h, segment.fixed + (facingSign * WALL_THICKNESS) / 2);
-        } else {
-          rail.position.set(segment.fixed + (facingSign * WALL_THICKNESS) / 2, h, (segment.from + segment.to) / 2);
-        }
-        scene.add(rail);
-      }
-    }
-
-    // Connection-owned doorway architecture (2026-09-08 architecture
-    // reset): every CAMPUS_DOORS entry is now built exactly ONCE here,
-    // regardless of whether either room it connects has been converted to
-    // the standard-module builder — replacing the old approach where each
-    // converted room's own module called buildDoorways() independently,
-    // doubling the assembly across a real gap for two converted rooms and
-    // leaving the legacy side bare for a converted<->legacy pair. See
-    // buildDoorConnection() in campusRoomBuilder.ts for the full design.
+    // Shared-Wall Grid Plan (2026-09-08, replacing the rejected connection-
+    // owned vestibule architecture): every room now sits on an exact module
+    // grid, so adjacent rooms share the identical boundary coordinate —
+    // computeCampusWallSegments() returns exactly ONE physical wall per
+    // shared boundary (not one per room, not a vestibule spanning a
+    // coordinate gap that no longer exists). buildSharedWall() below builds
+    // that one wall, finished on each face with whichever room's material
+    // faces it, and — wherever CAMPUS_DOORS calls for it — cuts one opening
+    // with one casing, contained entirely within the wall's own thickness.
     //
-    // Each endpoint supplies the wall material a visitor would see if they
-    // were standing in ITS room looking at the shared wall — the exact
-    // same factory a converted room's own buildRoomShell used
-    // (createWallMaterial), or the exact same shared instance a legacy room
-    // already uses (wallMaterial/hubWallMaterial, defined above) — so the
-    // connection's transom reads as a continuation of that wall, not a
-    // separate flat-colored patch.
-    function connectionWallMaterial(roomId: CampusRoomId): THREE.Material {
-      if (roomId === "POP_CULTURE" || roomId === "TCG" || roomId === "COLLECTION") {
-        return createWallMaterial(NEUTRAL_PREVIEW_FINISH, roomById(roomId), WALL_HEIGHT);
-      }
-      return roomId === "HUB" ? hubWallMaterial : wallMaterial;
+    // Wall materials are cached per room (not rebuilt per segment): all
+    // three converted rooms share the SAME neutral material instance (they
+    // share the same finish and, now, the same 21x26 module size), and
+    // every legacy room keeps sharing wallMaterial/hubWallMaterial exactly
+    // as before — "share wall finish materials/textures by finish identity"
+    // from the approved plan's performance-correction section.
+    const roomWallMaterialCache = new Map<CampusRoomId, THREE.Material>();
+    const sharedNeutralWallMaterial = createWallMaterial(NEUTRAL_PREVIEW_FINISH, roomById("POP_CULTURE"), WALL_HEIGHT);
+    function roomWallMaterial(roomId: CampusRoomId): THREE.Material {
+      const cached = roomWallMaterialCache.get(roomId);
+      if (cached) return cached;
+      const material =
+        roomId === "POP_CULTURE" || roomId === "TCG" || roomId === "COLLECTION"
+          ? sharedNeutralWallMaterial
+          : roomId === "HUB" ? hubWallMaterial : wallMaterial;
+      roomWallMaterialCache.set(roomId, material);
+      return material;
     }
 
-    const connectionReveals: { rooms: [CampusRoomId, CampusRoomId]; light: THREE.PointLight }[] = [];
-    CAMPUS_DOORS.forEach((door) => {
-      const [aId, bId] = door.rooms;
-      if (!bId) return; // no second room to connect to (unused today, kept safe)
-      const a: ConnectionEndpoint = { room: roomById(aId), wallMaterial: connectionWallMaterial(aId) };
-      const b: ConnectionEndpoint = { room: roomById(bId), wallMaterial: connectionWallMaterial(bId) };
-      const reveal = buildDoorConnection(scene, door, a, b, {
+    // One shared frame material for every door — "share frame geometry and
+    // materials rather than cloning unique resources per door." (Frame
+    // geometry itself still comes fresh from doorwayKit.ts per call, same
+    // as the accepted personal room and the campus prototype both already
+    // do — that file is shared with those other consumers and isn't part
+    // of this pass.)
+    const doorFrameMaterial = new THREE.MeshStandardMaterial({ color: NEUTRAL_PREVIEW_FINISH.frameColor, roughness: 0.65, metalness: 0.04 });
+
+    const wallSegments = computeCampusWallSegments();
+    for (const segment of wallSegments) {
+      const materialA = roomWallMaterial(segment.roomA);
+      const materialB = segment.roomB ? roomWallMaterial(segment.roomB) : null;
+      buildSharedWall(scene, segment, materialA, materialB, doorFrameMaterial, {
         wallHeight: WALL_HEIGHT,
         wallThickness: WALL_THICKNESS,
-        eyeHeight: EYE_HEIGHT,
-        installFrame: true,
       });
-      if (reveal) connectionReveals.push({ rooms: [aId, bId], light: reveal });
-    });
+    }
+
+    // Baseboard + picture rail for the three converted rooms (their own
+    // finish, still per-room decoration even though the wall itself is now
+    // shared structure).
+    for (const convertedId of ["POP_CULTURE", "TCG", "COLLECTION"] as const) {
+      buildRoomTrim(scene, roomById(convertedId), wallSegments, NEUTRAL_PREVIEW_FINISH, WALL_HEIGHT, WALL_THICKNESS);
+    }
+
+    // Every legacy room keeps its own existing gold rail-lattice trim (two
+    // heights, no baseboard) — unchanged visual identity, just driven by
+    // the new shared-wall segment list instead of the old per-room one, so
+    // it still terminates cleanly at every door casing.
+    const trimMaterial = new THREE.MeshStandardMaterial({ color: 0xc9a24a, roughness: 0.5, metalness: 0.25 });
+    const trimHeights = [2.4, 5.2];
+    const trimDepth = 0.06;
+    const trimThickness = 0.12;
+    for (const room of CAMPUS_ROOMS) {
+      if (room.id === "POP_CULTURE" || room.id === "TCG" || room.id === "COLLECTION" || room.noWalls) continue;
+      for (const segment of wallSegments) {
+        if (segment.roomA !== room.id && segment.roomB !== room.id) continue;
+        const isNS = segment.wall === "x";
+        const facingSign = segment.roomA === room.id ? -1 : 1;
+        const { solid } = splitSegmentForDoor(segment);
+        for (const piece of solid) {
+          const span = piece.to - piece.from;
+          if (span <= 0.05) continue;
+          for (const h of trimHeights) {
+            if (h >= WALL_HEIGHT - 0.5) continue;
+            const rail = isNS
+              ? new THREE.Mesh(new THREE.BoxGeometry(span, trimThickness, trimDepth), trimMaterial)
+              : new THREE.Mesh(new THREE.BoxGeometry(trimDepth, trimThickness, span), trimMaterial);
+            if (isNS) rail.position.set((piece.from + piece.to) / 2, h, segment.fixed + (facingSign * WALL_THICKNESS) / 2);
+            else rail.position.set(segment.fixed + (facingSign * WALL_THICKNESS) / 2, h, (piece.from + piece.to) / 2);
+            scene.add(rail);
+          }
+        }
+      }
+    }
 
     // Waypoint markers — EK watched bingebrowse.net with the walkthrough
     // open and pointed out its floor markers directly: "these little
@@ -558,59 +550,11 @@ export default function VltdMuseumCampus() {
       scene.add(medallion);
     }
 
-    // Display shelves flanking the Hub door — EK's ask (2026-09-02): "for
-    // some of the rooms that match in size, add the shelves around the
-    // new Door." The two size-matched groups (five rooms at 20.4x16.8:
-    // POP_CULTURE/TCG/COLLECTION/SPORTS/CARDS, and two at 42.8x16.8:
-    // BUILT_BOTANY/GAMES) each get a pair of shelves just inside their
-    // Hub-facing doorway, one on each side. First pass — plain shelf +
-    // a placeholder object, not real vault items yet.
-    {
-      const shelfMaterial = new THREE.MeshStandardMaterial({ color: 0x6b5636, roughness: 0.8 });
-      const pieceMaterial = new THREE.MeshStandardMaterial({ color: 0xe8b95e, roughness: 0.4, metalness: 0.3 });
-
-      function addShelfPair(
-        roomId: Parameters<typeof roomById>[0],
-        wall: "north" | "south" | "east" | "west",
-        gapCenter: number
-      ) {
-        const bounds = roomBounds(roomById(roomId));
-        const offset = DOOR_WIDTH / 2 + 1.3;
-        const positions: [number, number][] =
-          wall === "north" || wall === "south"
-            ? [[gapCenter - offset, wall === "north" ? bounds.z0 : bounds.z1], [gapCenter + offset, wall === "north" ? bounds.z0 : bounds.z1]]
-            : [[wall === "west" ? bounds.x0 : bounds.x1, gapCenter - offset], [wall === "west" ? bounds.x0 : bounds.x1, gapCenter + offset]];
-        const facingX = wall === "north" || wall === "south";
-
-        for (const [x, z] of positions) {
-          const depth = 0.6;
-          const zOffset = wall === "north" ? depth / 2 + WALL_THICKNESS / 2 : wall === "south" ? -(depth / 2 + WALL_THICKNESS / 2) : 0;
-          const xOffset = wall === "west" ? depth / 2 + WALL_THICKNESS / 2 : wall === "east" ? -(depth / 2 + WALL_THICKNESS / 2) : 0;
-          const shelfGeom = facingX
-            ? new THREE.BoxGeometry(1.6, 0.08, depth)
-            : new THREE.BoxGeometry(depth, 0.08, 1.6);
-          const shelf = new THREE.Mesh(shelfGeom, shelfMaterial);
-          shelf.position.set(x + xOffset, 1.4, z + zOffset);
-          scene.add(shelf);
-
-          const piece = new THREE.Mesh(new THREE.SphereGeometry(0.22, 16, 16), pieceMaterial);
-          piece.position.set(x + xOffset, 1.4 + 0.08 + 0.22, z + zOffset);
-          scene.add(piece);
-        }
-      }
-
-      // POP_CULTURE and TCG no longer get a generic shelf pair — all of
-      // their doorways now carry the real doorwayKit.ts frame + header
-      // instead (see the room-shell blocks below). Every gapCenter here
-      // comes from the door data itself (doorGapCenter), not a re-typed
-      // copy of it, so a future resize can't leave a shelf pair floating
-      // away from its actual doorway. COLLECTION dropped too — its three
-      // doorways now carry the real frame/transom/sign treatment instead.
-      addShelfPair("SPORTS", "north", doorGapCenter("SPORTS", "HUB"));
-      addShelfPair("CARDS", "north", doorGapCenter("CARDS", "HUB"));
-      addShelfPair("BUILT_BOTANY", "west", doorGapCenter("BUILT_BOTANY", "HUB"));
-      addShelfPair("GAMES", "west", doorGapCenter("GAMES", "HUB"));
-    }
+    // Display shelves flanking a doorway (EK's ask, 2026-09-02) are gone —
+    // every campus door, including SPORTS/CARDS/BUILT_BOTANY/GAMES's own
+    // HUB connections, now carries the real doorwayKit.ts frame + casing +
+    // signs from the shared-wall pass above instead of a plain gap with a
+    // decorative shelf pair either side of it.
 
     // Next-pass handoff (2026-09-07), corrected per EK's review of 5820b85:
     // POP_CULTURE is the first real campus room built to the exact standard
@@ -667,11 +611,11 @@ export default function VltdMuseumCampus() {
       ],
     };
 
-    // buildDoorways() per room is gone — the connection loop above already
-    // built every doorway (POP_CULTURE's, TCG's, and COLLECTION's included)
-    // exactly once each. These three still call buildRoomShell for their
-    // own floor/ceiling/walls/baseboards/light rig, and still need their
-    // own usable wall spans for item placement.
+    // The shared-wall pass above already built every doorway (POP_CULTURE's,
+    // TCG's, and COLLECTION's included) exactly once each, as part of the
+    // wall segment that carries it. These three still call buildRoomShell
+    // for their own floor/ceiling/light rig, and still need their own
+    // usable wall spans for item placement.
     const popCultureLights = buildRoomShell(scene, popCultureModule);
     const popCultureWallSpans = computeUsableWallSpans(popCultureModule);
 
@@ -761,14 +705,10 @@ export default function VltdMuseumCampus() {
         groups.full.visible = full;
         groups.preview.visible = full || previewSet.has(roomId);
       }
-      // A connection's own reveal light (one per CAMPUS_DOORS entry, see
-      // the connection-building loop above) follows the same rule a room's
-      // preview group does — on whenever either of its two rooms is full or
-      // preview, i.e. whenever the connection is actually relevant to what
-      // the visitor can currently see.
-      for (const { rooms, light } of connectionReveals) {
-        light.visible = rooms.some((id) => fullSet.has(id) || previewSet.has(id));
-      }
+      // No per-connection reveal light to toggle anymore — the Shared-Wall
+      // Grid Plan removed it entirely ("remove... connection reveal lights
+      // made obsolete by shared walls"); ordinary room lighting reaches a
+      // same-wall opening the way it does in the accepted personal room.
     }
 
     // Content is async (vault items are sync, but items-per-room, Spotlight
@@ -1195,53 +1135,97 @@ export default function VltdMuseumCampus() {
       );
       startWalkTween(destination);
     }
-    // EK's live foreground report on the first version of this fix: "I
-    // scroll forward, sometimes it reacts right away, sometimes it doesn't
-    // and then lags and over-moves." Root cause the automated single-event
-    // test couldn't see: a real wheel/trackpad fires MULTIPLE native wheel
-    // events per gesture (a mouse can send several in a burst; a trackpad
-    // sends many small ones per swipe), and the previous version applied a
-    // full WHEEL_STEP move to cameraBody synchronously inside EVERY one of
-    // those events. Nothing is visible until the next rendered frame — so
-    // if several events land before that frame paints (routine whenever the
-    // event rate outpaces requestAnimationFrame, more likely on this
-    // heavier campus scene than the single accepted room), their moves all
-    // apply invisibly, and the next paint shows one sudden multi-step jump
-    // instead of a steady walk. That's exactly "sometimes it reacts right
-    // away [single isolated event, one frame each], sometimes it doesn't
-    // and then lags and over-moves [several events silently piled up
-    // before a frame caught up]."
+    // EK's live foreground report on the frame-accumulated version of this
+    // fix: "it is better but not smooth... it doesn't get locked up and
+    // then over advance but now it's just more jittery but consistent
+    // moving forward." Root cause of the JITTER specifically (distinct from
+    // the earlier lockup-then-jump, which the per-frame accumulation
+    // already fixed): onWheel treated every raw wheel event as a FULL
+    // WHEEL_STEP regardless of its actual deltaY magnitude. A high-
+    // resolution wheel or trackpad emits several small-magnitude events per
+    // physical notch/swipe — treating each of THOSE as a full 0.42 step
+    // means one real notch becomes several full-size steps summed together,
+    // an uneven, disproportionate increment rather than one smooth motion
+    // sized to how far the input device actually reported moving.
     //
-    // Fix: onWheel no longer touches cameraBody at all — it only
-    // accumulates a pending distance (capped so one runaway trackpad fling
-    // can't request an enormous single move). tick() below consumes and
-    // applies the WHOLE accumulated amount exactly once per rendered frame,
-    // right alongside the continuous WASD path. However many raw events
-    // fired since the last frame, the visible camera advances by their sum
-    // in one smooth step tied to the actual paint rate — not once per
-    // event, and never queued across frames.
+    // normalizedWheelDistance() below scales each event's contribution
+    // proportionally to its own deltaY (normalized across deltaMode, since
+    // "line" and "page" mode report wildly different raw numbers than
+    // "pixel" mode), calibrated so a traditional single wheel notch
+    // (~100px, or ~3 lines) still maps to about one WHEEL_STEP. Several
+    // small events from one high-res notch now sum to roughly that same one
+    // step, not several. onWheel still only accumulates (never touches
+    // cameraBody directly) and tick() still applies the whole accumulated
+    // amount exactly once per rendered frame — the per-frame-accumulation
+    // fix for the earlier lockup-then-jump defect is unchanged.
     let pendingWheelDistance = 0;
     const MAX_PENDING_WHEEL_DISTANCE = WHEEL_STEP * 4;
+
+    function normalizedWheelDistance(e: WheelEvent): number {
+      let pixels = e.deltaY;
+      if (e.deltaMode === 1) pixels *= 34; // WheelEvent.DOM_DELTA_LINE -> approx px
+      else if (e.deltaMode === 2) pixels *= 800; // WheelEvent.DOM_DELTA_PAGE -> approx px
+      return -(pixels / 100) * WHEEL_STEP;
+    }
+
+    // Shared-Wall Grid Plan, mouse-wheel correction: "Add temporary
+    // diagnostics that record physical wheel event arrival time, the next
+    // rendered frame time, event count, normalized deltaY, camera position
+    // before/after, rendered yaw, and current FPS/frame time." Exposed only
+    // through the existing debug hook (getWheelDiagnostics below) — never
+    // rendered on screen, and safe to leave in place since it costs nothing
+    // when nobody's reading it.
+    const wheelDiagnostics: {
+      pendingEvents: { eventTime: number; rawDeltaY: number; deltaMode: number; normalizedDistance: number; yawAtEvent: number }[];
+      log: {
+        frameTime: number; frameDurationMs: number; eventCount: number;
+        events: { eventTime: number; rawDeltaY: number; deltaMode: number; normalizedDistance: number; yawAtEvent: number }[];
+        appliedDistance: number; yaw: number; before: { x: number; z: number }; after: { x: number; z: number };
+      }[];
+    } = { pendingEvents: [], log: [] };
+    const frameTimesMs: number[] = [];
 
     function onWheel(e: WheelEvent) {
       e.preventDefault();
       walkTween = null;
-      const signedDistance = e.deltaY > 0 ? -WHEEL_STEP : WHEEL_STEP;
+      const signedDistance = normalizedWheelDistance(e);
       pendingWheelDistance = THREE.MathUtils.clamp(
         pendingWheelDistance + signedDistance,
         -MAX_PENDING_WHEEL_DISTANCE,
         MAX_PENDING_WHEEL_DISTANCE
       );
+      wheelDiagnostics.pendingEvents.push({
+        eventTime: performance.now(),
+        rawDeltaY: e.deltaY,
+        deltaMode: e.deltaMode,
+        normalizedDistance: signedDistance,
+        yawAtEvent: yaw,
+      });
     }
 
     function applyPendingWheelMovement() {
-      if (pendingWheelDistance === 0) return;
+      if (wheelDiagnostics.pendingEvents.length === 0) return;
+      if (pendingWheelDistance === 0) { wheelDiagnostics.pendingEvents = []; return; }
+      const before = { x: cameraBody.x, z: cameraBody.z };
       // Direction still uses the rendered `yaw`, not `targetYaw` — see the
       // Stage 1 comment above updateKeyboardMovement.
       const delta = facingDirection(yaw).multiplyScalar(pendingWheelDistance);
       moveWithCollision(cameraBody, delta);
       cameraBody.y = EYE_HEIGHT;
       targetCameraBody.copy(cameraBody);
+
+      wheelDiagnostics.log.push({
+        frameTime: performance.now(),
+        frameDurationMs: frameTimesMs[frameTimesMs.length - 1] ?? 0,
+        eventCount: wheelDiagnostics.pendingEvents.length,
+        events: wheelDiagnostics.pendingEvents,
+        appliedDistance: pendingWheelDistance,
+        yaw,
+        before,
+        after: { x: cameraBody.x, z: cameraBody.z },
+      });
+      if (wheelDiagnostics.log.length > 40) wheelDiagnostics.log.shift();
+      wheelDiagnostics.pendingEvents = [];
       pendingWheelDistance = 0;
     }
 
@@ -1271,6 +1255,8 @@ export default function VltdMuseumCampus() {
     function tick() {
       frameId = window.requestAnimationFrame(tick);
       const dt = Math.min(clock.getDelta(), 0.05);
+      frameTimesMs.push(dt * 1000);
+      if (frameTimesMs.length > 120) frameTimesMs.shift();
 
       updateKeyboardMovement(dt);
       applyPendingWheelMovement();
@@ -1369,19 +1355,56 @@ export default function VltdMuseumCampus() {
           totalLights,
           enabledLights,
           perRoom,
-          // 2026-09-08 architecture reset: one reveal light per CAMPUS_DOORS
-          // connection now (was up to two, independently, for a
-          // converted<->converted pair) — surfaced separately from
-          // perRoom's counts since a connection belongs to the door, not to
-          // either room.
-          connectionLights: {
-            total: connectionReveals.length,
-            enabled: connectionReveals.filter((c) => c.light.visible).length,
-          },
+          // Shared-Wall Grid Plan: no more per-connection reveal lights to
+          // report separately — every door opening is lit by ordinary room
+          // lighting now, same as the accepted personal room.
           location: lastLightLocation,
           fullRoomIds: lastFullRoomIds,
           previewRoomIds: lastPreviewRoomIds,
         };
+      },
+      // Shared-Wall Grid Plan, mouse-wheel correction: real wheel-event
+      // timing/magnitude plus current frame timing, for EK's own physical
+      // mouse test — not a substitute for it. `log` entries are one per
+      // rendered frame that actually applied wheel movement, each carrying
+      // every raw event folded into that frame's single move.
+      getWheelDiagnostics: () => {
+        const recent = frameTimesMs.slice(-60);
+        const avgFrameMs = recent.length ? recent.reduce((sum, v) => sum + v, 0) / recent.length : 0;
+        return {
+          log: wheelDiagnostics.log.slice(-20),
+          recentFrameTimesMs: recent,
+          avgFrameMs,
+          avgFps: avgFrameMs > 0 ? 1000 / avgFrameMs : 0,
+        };
+      },
+      // Shared-Wall Grid Plan, required evidence: "mesh, material, texture,
+      // and light counts before and after." Walks the live scene graph
+      // directly rather than estimating from source, since materials/
+      // textures can be shared instances (counted once) or per-mesh
+      // (counted per mesh) depending on the call site.
+      getSceneStats: () => {
+        let meshCount = 0;
+        let lightCount = 0;
+        const materials = new Set<THREE.Material>();
+        const textures = new Set<THREE.Texture>();
+        let geometryCount = 0;
+        scene.traverse((obj) => {
+          if ((obj as THREE.Light).isLight) lightCount += 1;
+          if (obj instanceof THREE.Mesh) {
+            meshCount += 1;
+            geometryCount += 1;
+            const mats = Array.isArray(obj.material) ? obj.material : [obj.material];
+            for (const m of mats) {
+              materials.add(m);
+              for (const key of ["map", "bumpMap", "emissiveMap"] as const) {
+                const tex = (m as THREE.MeshStandardMaterial)[key as keyof THREE.MeshStandardMaterial];
+                if (tex instanceof THREE.Texture) textures.add(tex);
+              }
+            }
+          }
+        });
+        return { meshCount, geometryCount, materialCount: materials.size, textureCount: textures.size, lightCount };
       },
     };
 
