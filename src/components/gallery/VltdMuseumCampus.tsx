@@ -194,11 +194,11 @@ export default function VltdMuseumCampus() {
     }
 
     for (const room of CAMPUS_ROOMS) {
-      // POP_CULTURE and TCG get their own neutral-finish shell (floor,
-      // ceiling, walls, doorways) below instead of the generic
+      // POP_CULTURE, TCG, and COLLECTION get their own neutral-finish shell
+      // (floor, ceiling, walls, doorways) below instead of the generic
       // checkerboard-floor + center-name-sprite treatment every other room
       // still uses this pass.
-      if (room.id === "POP_CULTURE" || room.id === "TCG") continue;
+      if (room.id === "POP_CULTURE" || room.id === "TCG" || room.id === "COLLECTION") continue;
 
       const { x, z } = roomCenter(room);
       const floorTexture = makeFloorTexture(room.floorColor);
@@ -251,7 +251,7 @@ export default function VltdMuseumCampus() {
       // real doorway frames) below — their other neighbors (HUB, MISC)
       // still get their normal wall segment on their own side of each
       // shared boundary here.
-      if (segment.room === "POP_CULTURE" || segment.room === "TCG") continue;
+      if (segment.room === "POP_CULTURE" || segment.room === "TCG" || segment.room === "COLLECTION") continue;
       const span = segment.to - segment.from;
       if (span <= 0.05) continue;
       const material = segment.room === "HUB" ? hubWallMaterial : wallMaterial;
@@ -501,8 +501,8 @@ export default function VltdMuseumCampus() {
       // instead (see the room-shell blocks below). Every gapCenter here
       // comes from the door data itself (doorGapCenter), not a re-typed
       // copy of it, so a future resize can't leave a shelf pair floating
-      // away from its actual doorway.
-      addShelfPair("COLLECTION", "north", doorGapCenter("COLLECTION", "HUB"));
+      // away from its actual doorway. COLLECTION dropped too — its three
+      // doorways now carry the real frame/transom/sign treatment instead.
       addShelfPair("SPORTS", "north", doorGapCenter("SPORTS", "HUB"));
       addShelfPair("CARDS", "north", doorGapCenter("CARDS", "HUB"));
       addShelfPair("BUILT_BOTANY", "west", doorGapCenter("BUILT_BOTANY", "HUB"));
@@ -545,6 +545,24 @@ export default function VltdMuseumCampus() {
         { side: "east", gapCenter: doorGapCenter("TCG", "HUB"), neighborId: "HUB", width: doorWallWidth("TCG", "HUB") },
       ],
     };
+    // COLLECTION pass (2026-09-07): the third room through the same
+    // builder, resized in place from its own north-west anchor (see
+    // campusLayout.ts) — no other room moved. Its three real connections
+    // (HUB north, MISC west, SPORTS east) all get the same real doorway
+    // treatment, matching TCG's three-door precedent rather than leaving
+    // one plain.
+    const collectionModule: RoomModule = {
+      room: roomById("COLLECTION"),
+      wallHeight: WALL_HEIGHT,
+      wallThickness: WALL_THICKNESS,
+      eyeHeight: EYE_HEIGHT,
+      finish: NEUTRAL_PREVIEW_FINISH,
+      doorways: [
+        { side: "north", gapCenter: doorGapCenter("COLLECTION", "HUB"), neighborId: "HUB", width: doorWallWidth("COLLECTION", "HUB") },
+        { side: "west", gapCenter: doorGapCenter("COLLECTION", "MISC"), neighborId: "MISC", width: doorWallWidth("COLLECTION", "MISC") },
+        { side: "east", gapCenter: doorGapCenter("COLLECTION", "SPORTS"), neighborId: "SPORTS", width: doorWallWidth("COLLECTION", "SPORTS") },
+      ],
+    };
 
     const popCultureLights = buildRoomShell(scene, popCultureModule);
     buildDoorways(scene, popCultureModule, popCultureLights);
@@ -553,6 +571,10 @@ export default function VltdMuseumCampus() {
     const tcgLights = buildRoomShell(scene, tcgModule);
     buildDoorways(scene, tcgModule, tcgLights);
     const tcgWallSpans = computeUsableWallSpans(tcgModule);
+
+    const collectionLights = buildRoomShell(scene, collectionModule);
+    buildDoorways(scene, collectionModule, collectionLights);
+    const collectionWallSpans = computeUsableWallSpans(collectionModule);
 
     // Two-tier room light activation — EK's review of 9796c72: room-level
     // activation alone doesn't scale through HUB, since HUB is adjacent to
@@ -569,6 +591,7 @@ export default function VltdMuseumCampus() {
     const roomLightGroups: Partial<Record<CampusRoomId, RoomLightGroups>> = {
       POP_CULTURE: popCultureLights,
       TCG: tcgLights,
+      COLLECTION: collectionLights,
     };
 
     // EK's review of 751361a: the room-only check went blank (every light
@@ -724,11 +747,11 @@ export default function VltdMuseumCampus() {
       };
 
       for (const room of CAMPUS_ROOMS) {
-        // POP_CULTURE and TCG place their own items with aspect-ratio-
-        // preserving slots (see placeRoomItems below) instead of the
-        // generic north-wall-only, forced-square treatment every other
-        // room uses.
-        if (room.id === "POP_CULTURE" || room.id === "TCG") continue;
+        // POP_CULTURE, TCG, and COLLECTION place their own items with
+        // aspect-ratio-preserving slots (see placeRoomItems below) instead
+        // of the generic north-wall-only, forced-square treatment every
+        // other room uses.
+        if (room.id === "POP_CULTURE" || room.id === "TCG" || room.id === "COLLECTION") continue;
         const universes = roomUniverses[room.id] ?? room.universes;
         if (universes.length === 0) continue;
         const items = allItems.filter((item) => {
@@ -758,6 +781,13 @@ export default function VltdMuseumCampus() {
         .filter((item) => itemUniverse(item) === "TCG")
         .slice(0, itemsPerRoom);
       placeRoomItems(tcgWallSpans, tcgLights, tcgItems);
+
+      const collectionUniverses = roomUniverses.COLLECTION ?? [];
+      const collectionItems = allItems.filter((item) => {
+        const universe = itemUniverse(item);
+        return universe !== null && collectionUniverses.includes(universe);
+      }).slice(0, itemsPerRoom);
+      placeRoomItems(collectionWallSpans, collectionLights, collectionItems);
 
       // Spotlight room — admin-controlled rotating programs.
       const spotlightBounds = roomBounds(roomById("SPOTLIGHT"));
