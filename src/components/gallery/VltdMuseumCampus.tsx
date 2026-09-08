@@ -1195,29 +1195,54 @@ export default function VltdMuseumCampus() {
       );
       startWalkTween(destination);
     }
+    // EK's live foreground report on the first version of this fix: "I
+    // scroll forward, sometimes it reacts right away, sometimes it doesn't
+    // and then lags and over-moves." Root cause the automated single-event
+    // test couldn't see: a real wheel/trackpad fires MULTIPLE native wheel
+    // events per gesture (a mouse can send several in a burst; a trackpad
+    // sends many small ones per swipe), and the previous version applied a
+    // full WHEEL_STEP move to cameraBody synchronously inside EVERY one of
+    // those events. Nothing is visible until the next rendered frame — so
+    // if several events land before that frame paints (routine whenever the
+    // event rate outpaces requestAnimationFrame, more likely on this
+    // heavier campus scene than the single accepted room), their moves all
+    // apply invisibly, and the next paint shows one sudden multi-step jump
+    // instead of a steady walk. That's exactly "sometimes it reacts right
+    // away [single isolated event, one frame each], sometimes it doesn't
+    // and then lags and over-moves [several events silently piled up
+    // before a frame caught up]."
+    //
+    // Fix: onWheel no longer touches cameraBody at all — it only
+    // accumulates a pending distance (capped so one runaway trackpad fling
+    // can't request an enormous single move). tick() below consumes and
+    // applies the WHOLE accumulated amount exactly once per rendered frame,
+    // right alongside the continuous WASD path. However many raw events
+    // fired since the last frame, the visible camera advances by their sum
+    // in one smooth step tied to the actual paint rate — not once per
+    // event, and never queued across frames.
+    let pendingWheelDistance = 0;
+    const MAX_PENDING_WHEEL_DISTANCE = WHEEL_STEP * 4;
+
     function onWheel(e: WheelEvent) {
       e.preventDefault();
       walkTween = null;
-      // 2026-09-08 architecture reset, defect 4 ("mouse-wheel movement is
-      // delayed"): this used to nudge targetCameraBody and let the
-      // per-frame 0.15 lerp in easeTowardTargets() chase it toward the
-      // rendered cameraBody — the same treatment drag-look's yaw/pitch use.
-      // For position, that meant repeated wheel notches could queue
-      // targetCameraBody well ahead of what's actually on screen, since
-      // each notch's own collision check ran against wherever the TARGET
-      // already was, not wherever the visible camera was — a real, visible
-      // lag/glide queue, worse as the notches pile up. Movement now applies
-      // straight to the visible cameraBody, exactly like the continuous
-      // WASD path in updateKeyboardMovement, then syncs targetCameraBody to
-      // match — no backlog, because there's nothing left for a subsequent
-      // frame to still be chasing. Direction still uses the rendered `yaw`,
-      // not `targetYaw` — see the Stage 1 comment above
-      // updateKeyboardMovement.
       const signedDistance = e.deltaY > 0 ? -WHEEL_STEP : WHEEL_STEP;
-      const delta = facingDirection(yaw).multiplyScalar(signedDistance);
+      pendingWheelDistance = THREE.MathUtils.clamp(
+        pendingWheelDistance + signedDistance,
+        -MAX_PENDING_WHEEL_DISTANCE,
+        MAX_PENDING_WHEEL_DISTANCE
+      );
+    }
+
+    function applyPendingWheelMovement() {
+      if (pendingWheelDistance === 0) return;
+      // Direction still uses the rendered `yaw`, not `targetYaw` — see the
+      // Stage 1 comment above updateKeyboardMovement.
+      const delta = facingDirection(yaw).multiplyScalar(pendingWheelDistance);
       moveWithCollision(cameraBody, delta);
       cameraBody.y = EYE_HEIGHT;
       targetCameraBody.copy(cameraBody);
+      pendingWheelDistance = 0;
     }
 
     window.addEventListener("keydown", onKeyDown);
@@ -1248,6 +1273,7 @@ export default function VltdMuseumCampus() {
       const dt = Math.min(clock.getDelta(), 0.05);
 
       updateKeyboardMovement(dt);
+      applyPendingWheelMovement();
 
       if (walkTween) {
         // Position only — no yaw/pitch change (see the walkTween comment above).
