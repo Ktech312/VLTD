@@ -237,24 +237,32 @@ export const CAMPUS_DOORS: CampusDoor[] = [
   // (HUB<->TCG<->MISC) — a layout/circulation question for a later pass,
   // not something to patch with another room resize here.
   { wall: "z", at: sharedBoundaryAlongX(roomById("MISC"), roomById("COLLECTION")), gapCenter: overlapCenterAlongZ(roomById("MISC"), roomById("COLLECTION")), rooms: ["MISC", "COLLECTION"], width: DOORWAY_WALL_GAP },
-  { wall: "z", at: sharedBoundaryAlongX(roomById("HUB"), roomById("BUILT_BOTANY")), gapCenter: overlapCenterAlongZ(roomById("HUB"), roomById("BUILT_BOTANY")), rooms: ["HUB", "BUILT_BOTANY"] },
-  { wall: "z", at: sharedBoundaryAlongX(roomById("HUB"), roomById("GAMES")), gapCenter: overlapCenterAlongZ(roomById("HUB"), roomById("GAMES")), rooms: ["HUB", "GAMES"] },
-  { wall: "z", at: sharedBoundaryAlongX(roomById("HUB"), roomById("AUTOMOTIVE")), gapCenter: overlapCenterAlongZ(roomById("HUB"), roomById("AUTOMOTIVE")), rooms: ["HUB", "AUTOMOTIVE"] },
-  { wall: "z", at: sharedBoundaryAlongX(roomById("CARDS"), roomById("AUTOMOTIVE")), gapCenter: overlapCenterAlongZ(roomById("CARDS"), roomById("AUTOMOTIVE")), rooms: ["CARDS", "AUTOMOTIVE"] },
+  { wall: "z", at: sharedBoundaryAlongX(roomById("HUB"), roomById("BUILT_BOTANY")), gapCenter: overlapCenterAlongZ(roomById("HUB"), roomById("BUILT_BOTANY")), rooms: ["HUB", "BUILT_BOTANY"], width: DOORWAY_WALL_GAP },
+  { wall: "z", at: sharedBoundaryAlongX(roomById("HUB"), roomById("GAMES")), gapCenter: overlapCenterAlongZ(roomById("HUB"), roomById("GAMES")), rooms: ["HUB", "GAMES"], width: DOORWAY_WALL_GAP },
+  { wall: "z", at: sharedBoundaryAlongX(roomById("HUB"), roomById("AUTOMOTIVE")), gapCenter: overlapCenterAlongZ(roomById("HUB"), roomById("AUTOMOTIVE")), rooms: ["HUB", "AUTOMOTIVE"], width: DOORWAY_WALL_GAP },
+  { wall: "z", at: sharedBoundaryAlongX(roomById("CARDS"), roomById("AUTOMOTIVE")), gapCenter: overlapCenterAlongZ(roomById("CARDS"), roomById("AUTOMOTIVE")), rooms: ["CARDS", "AUTOMOTIVE"], width: DOORWAY_WALL_GAP },
   { wall: "x", at: sharedBoundaryAlongZ(roomById("HUB"), roomById("COLLECTION")), gapCenter: overlapCenterAlongX(roomById("HUB"), roomById("COLLECTION")), rooms: ["HUB", "COLLECTION"], width: DOORWAY_WALL_GAP },
-  { wall: "x", at: sharedBoundaryAlongZ(roomById("HUB"), roomById("SPORTS")), gapCenter: overlapCenterAlongX(roomById("HUB"), roomById("SPORTS")), rooms: ["HUB", "SPORTS"] },
-  { wall: "x", at: sharedBoundaryAlongZ(roomById("HUB"), roomById("CARDS")), gapCenter: overlapCenterAlongX(roomById("HUB"), roomById("CARDS")), rooms: ["HUB", "CARDS"] },
+  { wall: "x", at: sharedBoundaryAlongZ(roomById("HUB"), roomById("SPORTS")), gapCenter: overlapCenterAlongX(roomById("HUB"), roomById("SPORTS")), rooms: ["HUB", "SPORTS"], width: DOORWAY_WALL_GAP },
+  { wall: "x", at: sharedBoundaryAlongZ(roomById("HUB"), roomById("CARDS")), gapCenter: overlapCenterAlongX(roomById("HUB"), roomById("CARDS")), rooms: ["HUB", "CARDS"], width: DOORWAY_WALL_GAP },
   { wall: "z", at: sharedBoundaryAlongX(roomById("COLLECTION"), roomById("SPORTS")), gapCenter: overlapCenterAlongZ(roomById("COLLECTION"), roomById("SPORTS")), rooms: ["COLLECTION", "SPORTS"], width: DOORWAY_WALL_GAP },
-  { wall: "z", at: sharedBoundaryAlongX(roomById("SPORTS"), roomById("CARDS")), gapCenter: overlapCenterAlongZ(roomById("SPORTS"), roomById("CARDS")), rooms: ["SPORTS", "CARDS"] },
-  { wall: "x", at: sharedBoundaryAlongZ(roomById("BUILT_BOTANY"), roomById("GAMES")), gapCenter: overlapCenterAlongX(roomById("BUILT_BOTANY"), roomById("GAMES")), rooms: ["BUILT_BOTANY", "GAMES"] },
-  { wall: "x", at: sharedBoundaryAlongZ(roomById("GAMES"), roomById("AUTOMOTIVE")), gapCenter: overlapCenterAlongX(roomById("GAMES"), roomById("AUTOMOTIVE")), rooms: ["GAMES", "AUTOMOTIVE"] },
+  { wall: "z", at: sharedBoundaryAlongX(roomById("SPORTS"), roomById("CARDS")), gapCenter: overlapCenterAlongZ(roomById("SPORTS"), roomById("CARDS")), rooms: ["SPORTS", "CARDS"], width: DOORWAY_WALL_GAP },
+  { wall: "x", at: sharedBoundaryAlongZ(roomById("BUILT_BOTANY"), roomById("GAMES")), gapCenter: overlapCenterAlongX(roomById("BUILT_BOTANY"), roomById("GAMES")), rooms: ["BUILT_BOTANY", "GAMES"], width: DOORWAY_WALL_GAP },
+  { wall: "x", at: sharedBoundaryAlongZ(roomById("GAMES"), roomById("AUTOMOTIVE")), gapCenter: overlapCenterAlongX(roomById("GAMES"), roomById("AUTOMOTIVE")), rooms: ["GAMES", "AUTOMOTIVE"], width: DOORWAY_WALL_GAP },
 
   // New wings (not in the original blueprint) — see CAMPUS_ROOMS above.
-  { wall: "x", at: roomById("HUB").z, gapCenter: overlapCenterAlongX(roomById("HUB"), roomById("SPOTLIGHT")), rooms: ["HUB", "SPOTLIGHT"] },
-  { wall: "x", at: roomById("HUB").z, gapCenter: overlapCenterAlongX(roomById("HUB"), roomById("STORE")), rooms: ["HUB", "STORE"] },
+  { wall: "x", at: roomById("HUB").z, gapCenter: overlapCenterAlongX(roomById("HUB"), roomById("SPOTLIGHT")), rooms: ["HUB", "SPOTLIGHT"], width: DOORWAY_WALL_GAP },
+  { wall: "x", at: roomById("HUB").z, gapCenter: overlapCenterAlongX(roomById("HUB"), roomById("STORE")), rooms: ["HUB", "STORE"], width: DOORWAY_WALL_GAP },
   // The Hub's entrance now opens onto a real walkable plaza instead of a void.
-  { wall: "x", at: roomById("HUB").z, gapCenter: overlapCenterAlongX(roomById("HUB"), roomById("PLAZA")), rooms: ["HUB", "PLAZA"] },
+  { wall: "x", at: roomById("HUB").z, gapCenter: overlapCenterAlongX(roomById("HUB"), roomById("PLAZA")), rooms: ["HUB", "PLAZA"], width: DOORWAY_WALL_GAP },
 ];
+
+// 2026-09-08 architecture reset: every door above now carries
+// width: DOORWAY_WALL_GAP (previously only the doors touching a converted
+// room did, leaving the rest at the narrower campus-default DOOR_WIDTH).
+// "Every current connection should finish with the same construction
+// rules" (buildDoorConnection in campusRoomBuilder.ts) needs the same real
+// doorwayKit.ts frame footprint everywhere it installs the frame, not just
+// where a room happened to be converted first.
 
 // Spawn out in the plaza, facing the entrance facade — EK's ask
 // (2026-09-02) was for the exterior to be "some visual fun," so the

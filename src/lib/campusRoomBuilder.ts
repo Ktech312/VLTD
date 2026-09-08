@@ -13,8 +13,9 @@ import { buildDoorwayFrame } from "./doorwayKit";
 import { DOORWAY_HEADER_HEIGHT, DOORWAY_HEADER_Y, DOORWAY_NO_DISPLAY_HALF_WIDTH } from "./museumStandard";
 import {
   computeWallSegments,
+  DOOR_WIDTH,
   roomBounds,
-  roomById,
+  type CampusDoor,
   type CampusRoom,
   type CampusRoomId,
   type WallSide,
@@ -88,42 +89,28 @@ export type RoomLightGroups = { full: THREE.Group; preview: THREE.Group };
 
 export type WallSpan = { wall: WallSide; from: number; to: number; fixed: number; rotationY: number };
 
+// 2026-09-08 architecture reset, defect 1 ("the transom is visibly a
+// separate patch"): buildRoomShell built a room's wall material inline as a
+// local variable, and the old per-room buildDoorways() built its transom
+// from a SEPARATE flat MeshStandardMaterial — same numeric color, but no
+// grain map, no bump map, so it responds to light differently and can never
+// match. Extracted as one factory so a room's own wall AND anything else
+// that needs to read as "this room's wall material" (a connection's transom
+// half, see buildDoorConnection below) come from the exact same recipe.
+export function createWallMaterial(finish: RoomFinish, room: CampusRoom, wallHeight: number): THREE.MeshStandardMaterial {
+  const grain = createGrainTexture();
+  grain.repeat.set(room.w / 5, wallHeight / 3);
+  return new THREE.MeshStandardMaterial({
+    color: finish.wallColor, map: grain, bumpMap: grain, bumpScale: 0.045, roughness: 0.88, metalness: 0,
+  });
+}
+
 function wallRotationY(side: WallSide): number {
   switch (side) {
     case "north": return 0;
     case "south": return Math.PI;
     case "west": return Math.PI / 2;
     case "east": return -Math.PI / 2;
-  }
-}
-
-function oppositeSide(side: WallSide): WallSide {
-  switch (side) {
-    case "north": return "south";
-    case "south": return "north";
-    case "west": return "east";
-    case "east": return "west";
-  }
-}
-
-function wallEdgePoint(bounds: ReturnType<typeof roomBounds>, side: WallSide, freeAxisValue: number, inset: number) {
-  switch (side) {
-    case "north": return { x: freeAxisValue, z: bounds.z0 + inset };
-    case "south": return { x: freeAxisValue, z: bounds.z1 - inset };
-    case "west": return { x: bounds.x0 + inset, z: freeAxisValue };
-    case "east": return { x: bounds.x1 - inset, z: freeAxisValue };
-  }
-}
-
-// The unit direction a header mounted on this wall must face to be read by
-// someone standing inside the room that owns it (see wallRotationY, whose
-// rotation produces exactly this normal).
-function intoRoomNormal(side: WallSide): { x: number; z: number } {
-  switch (side) {
-    case "north": return { x: 0, z: 1 };
-    case "south": return { x: 0, z: -1 };
-    case "west": return { x: 1, z: 0 };
-    case "east": return { x: -1, z: 0 };
   }
 }
 
@@ -155,12 +142,9 @@ export function buildRoomShell(scene: THREE.Scene, module: RoomModule): RoomLigh
   // EK's review of d61a885: wall grain/wash were "too subtle to establish
   // material depth" — bump scale roughly doubled and roughness nudged down
   // so the same grain actually catches the wall-wash light instead of
-  // absorbing it flat.
-  const wallGrain = createGrainTexture();
-  wallGrain.repeat.set(room.w / 5, wallHeight / 3);
-  const neutralWallMaterial = new THREE.MeshStandardMaterial({
-    color: finish.wallColor, map: wallGrain, bumpMap: wallGrain, bumpScale: 0.045, roughness: 0.88, metalness: 0,
-  });
+  // absorbing it flat. Baked into createWallMaterial() now (see above) so a
+  // connection's transom can reuse the exact same recipe for this room.
+  const neutralWallMaterial = createWallMaterial(finish, room, wallHeight);
   const ceilingGrain = createGrainTexture();
   ceilingGrain.repeat.set(room.w / 5, room.d / 5);
   const ceilingMaterial = new THREE.MeshStandardMaterial({ color: finish.ceilingColor, map: ceilingGrain, roughness: 0.92 });
@@ -295,111 +279,193 @@ export function buildRoomShell(scene: THREE.Scene, module: RoomModule): RoomLigh
   return { full: lights, preview };
 }
 
-/** Doorway assemblies: the real post+header frame on every opening, a solid
- * transom panel closing the wall from the header up to the ceiling (EK's
- * review of 5ff3bdc: the wall segment cutter removes the FULL wall height
- * for a door gap, which left a floor-to-ceiling hole with a frame floating
- * in it instead of a real doorway cut into a solid wall), a destination
- * sign mounted flush on each face of that transom (readable from whichever
- * room you're approaching from, naming what's on the far side), and a warm
- * reveal light so looking through an opening isn't a black void. */
-export function buildDoorways(scene: THREE.Scene, module: RoomModule, groups: RoomLightGroups) {
-  const { room, eyeHeight, wallThickness, wallHeight, finish } = module;
-  const bounds = roomBounds(room);
-  // Toned down from an earlier, more contrasty beige — the posts/header
-  // read as a separate scaffold-like structure standing in an open gap
-  // when they stood out sharply against the wall; closer to the wall's own
-  // tone (with the transom now finishing the opening around them) lets
-  // them read as trim on a real doorway instead.
-  const frameMaterial = new THREE.MeshStandardMaterial({ color: finish.frameColor, roughness: 0.65, metalness: 0.04 });
-  const transomMaterial = new THREE.MeshStandardMaterial({ color: finish.transomColor, roughness: 0.9, metalness: 0 });
-  const transomBottom = DOORWAY_HEADER_Y + DOORWAY_HEADER_HEIGHT / 2 + 0.02;
+/** A destination sign plaque — unlit (MeshBasicMaterial, so scene lighting
+ * can't darken it, EK's review of d61a885), mounted flush at the given
+ * point/rotation, naming whatever's on the far side of an opening from
+ * here. Extracted from the old per-room buildDoorways() so a connection
+ * (which draws exactly two signs, once, per CAMPUS_DOORS entry) and any
+ * future caller share one implementation. */
+export function buildDestinationSign(scene: THREE.Scene, x: number, y: number, z: number, rotationY: number, text: string) {
+  const canvas = document.createElement("canvas");
+  canvas.width = 512;
+  canvas.height = 128;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return;
+  ctx.fillStyle = "#20242a";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillStyle = "#f2ead9";
+  ctx.font = "700 50px Archivo, sans-serif";
+  ctx.fillText(text.toUpperCase(), canvas.width / 2, canvas.height / 2);
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  const material = new THREE.MeshBasicMaterial({ map: texture });
+  const plaque = new THREE.Mesh(new THREE.PlaneGeometry(2.6, 0.65), material);
+  plaque.position.set(x, y, z);
+  plaque.rotation.y = rotationY;
+  scene.add(plaque);
+}
 
-  function buildHeader(x: number, y: number, z: number, rotationY: number, text: string) {
-    const canvas = document.createElement("canvas");
-    canvas.width = 512;
-    canvas.height = 128;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-    ctx.fillStyle = "#20242a";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-    ctx.fillStyle = "#f2ead9";
-    ctx.font = "700 50px Archivo, sans-serif";
-    ctx.fillText(text.toUpperCase(), canvas.width / 2, canvas.height / 2);
-    const texture = new THREE.CanvasTexture(canvas);
-    texture.colorSpace = THREE.SRGBColorSpace;
-    // EK's review of d61a885: the cream-on-black canvas text was drawn with
-    // a lit MeshStandardMaterial, so the scene's own lighting darkened the
-    // whole sign to gray-on-black. MeshBasicMaterial is unlit — the canvas
-    // colors render exactly as authored regardless of nearby light — fixing
-    // the material is the right layer, not raising the room's exposure.
-    const material = new THREE.MeshBasicMaterial({ map: texture });
-    const plaque = new THREE.Mesh(new THREE.PlaneGeometry(2.6, 0.65), material);
-    plaque.position.set(x, y, z);
-    plaque.rotation.y = rotationY;
-    scene.add(plaque);
+export type ConnectionEndpoint = { room: CampusRoom; wallMaterial: THREE.Material };
+
+/** 2026-09-08 architecture reset — replaces the old per-room buildDoorways().
+ * That function built a full frame+transom+signs assembly independently
+ * from EACH room module that owned a doorway: for two converted rooms
+ * (POP_CULTURE<->TCG) this doubled the whole assembly across the real
+ * coordinate gap between them (EK's screenshots 2/3: "complete room walls
+ * standing in front of other complete room walls... accidental mini-
+ * hallways"); for a converted<->legacy pair (COLLECTION<->MISC) only the
+ * converted side got the treatment, leaving the legacy side bare.
+ *
+ * A physical connection now belongs to CAMPUS_DOORS, not independently to
+ * both rooms: this is called exactly ONCE per door, building one enclosed
+ * "vestibule" spanning the real coordinate gap between the two rooms —
+ * floor, ceiling, and two side-return walls closing it along its depth (the
+ * fix for "no exposed wall edge... unexplained narrow passage"), with the
+ * frame/transom/signs at its mid-depth. The transom's own ceiling-height
+ * infill is split into two halves along the depth axis, each built from
+ * that side's own room's wall material (createWallMaterial's factory, or
+ * the exact shared instance a legacy room already uses) — the fix for "the
+ * transom doesn't read as part of the wall": same recipe, not a flat
+ * lookalike color. The vestibule's own interior (its floor/ceiling/sides)
+ * stays neutral and deliberate on purpose — it's the connection's own
+ * architecture, not either room's identity.
+ *
+ * Returns the connection's reveal PointLight (already added to `scene`) so
+ * the caller can toggle its visibility with the two rooms' own light
+ * activation — or null if the two rooms' bounds already meet directly
+ * (no gap to fill; not the case for any current campus door, but handled
+ * safely rather than assumed away). */
+export function buildDoorConnection(
+  scene: THREE.Scene,
+  door: CampusDoor,
+  a: ConnectionEndpoint,
+  b: ConnectionEndpoint,
+  opts: { wallHeight: number; wallThickness: number; eyeHeight: number; installFrame: boolean }
+): THREE.PointLight | null {
+  const { wallHeight, wallThickness, eyeHeight, installFrame } = opts;
+  const boundsA = roomBounds(a.room);
+  const boundsB = roomBounds(b.room);
+  const half = (door.width ?? DOOR_WIDTH) / 2;
+  const isNS = door.wall === "x"; // rooms stacked along Z -> opening cut into north/south walls
+
+  // `near` always ends up the smaller-z (isNS) or smaller-x (!isNS) room,
+  // regardless of which of a/b that turns out to be — so `near`'s own
+  // doorway is always on its south (isNS) or east (!isNS) wall, and `far`'s
+  // is always on its north/west wall. Used below to get sign/transom
+  // orientation right without re-deriving it per call site.
+  let near: ConnectionEndpoint;
+  let far: ConnectionEndpoint;
+  let depth0: number;
+  let depth1: number;
+  if (isNS) {
+    if (boundsA.z1 <= boundsB.z0) { near = a; far = b; depth0 = boundsA.z1; depth1 = boundsB.z0; }
+    else { near = b; far = a; depth0 = boundsB.z1; depth1 = boundsA.z0; }
+  } else {
+    if (boundsA.x1 <= boundsB.x0) { near = a; far = b; depth0 = boundsA.x1; depth1 = boundsB.x0; }
+    else { near = b; far = a; depth0 = boundsB.x1; depth1 = boundsA.x0; }
+  }
+  const depth = depth1 - depth0;
+  if (depth <= 0.02) return null;
+
+  const freeLo = door.gapCenter - half;
+  const freeHi = door.gapCenter + half;
+  const openingWidth = freeHi - freeLo;
+  const mid = (depth0 + depth1) / 2;
+
+  // point(freeAxisValue, depthAxisValue) -> world {x, z}, whichever axis is
+  // "free" (the opening's own width direction) vs "depth" (the direction
+  // you walk through the connection) for this door's orientation.
+  function point(freeAxisValue: number, depthAxisValue: number) {
+    return isNS ? { x: freeAxisValue, z: depthAxisValue } : { x: depthAxisValue, z: freeAxisValue };
   }
 
-  for (const doorway of module.doorways) {
-    const neighbor = roomById(doorway.neighborId);
-    const neighborBounds = roomBounds(neighbor);
-    const far = oppositeSide(doorway.side);
-    const isNS = doorway.side === "north" || doorway.side === "south";
+  const revealWallMaterial = new THREE.MeshStandardMaterial({ color: NEUTRAL_PREVIEW_FINISH.wallColor, roughness: 0.85 });
+  const revealCeilingMaterial = new THREE.MeshStandardMaterial({ color: NEUTRAL_PREVIEW_FINISH.ceilingColor, roughness: 0.9 });
+  // A deliberately distinct threshold slab, not either room's own floor
+  // continued (their tiling/rotation wouldn't line up anyway) and not the
+  // old flat navy "accidental gap" patch — EK's review: "without a blue or
+  // black uncovered strip unless a deliberately designed threshold material
+  // occupies it."
+  const thresholdMaterial = new THREE.MeshStandardMaterial({ color: 0x8b8474, roughness: 0.78 });
 
-    const framePos = wallEdgePoint(bounds, doorway.side, doorway.gapCenter, 0);
+  // Threshold floor + ceiling, spanning the connection's full real depth —
+  // closes "black ceiling void visible through connections."
+  const floorCenter = point(door.gapCenter, mid);
+  const floorGeom = isNS ? new THREE.PlaneGeometry(openingWidth, depth) : new THREE.PlaneGeometry(depth, openingWidth);
+  const floor = new THREE.Mesh(floorGeom, thresholdMaterial);
+  floor.rotation.x = -Math.PI / 2;
+  floor.position.set(floorCenter.x, 0.01, floorCenter.z);
+  scene.add(floor);
+
+  const ceiling = new THREE.Mesh(floorGeom.clone(), revealCeilingMaterial);
+  ceiling.rotation.x = Math.PI / 2;
+  ceiling.position.set(floorCenter.x, wallHeight, floorCenter.z);
+  scene.add(ceiling);
+
+  // Two side-return walls, spanning the connection's full depth, closing
+  // off its sides so nothing is visible past the opening's own width —
+  // the fix for "exposed wall edge, freestanding slab... unexplained
+  // narrow passage."
+  const sideGeom = isNS
+    ? new THREE.BoxGeometry(wallThickness, wallHeight, depth)
+    : new THREE.BoxGeometry(depth, wallHeight, wallThickness);
+  const sideLo = point(freeLo, mid);
+  const sideLoMesh = new THREE.Mesh(sideGeom, revealWallMaterial);
+  sideLoMesh.position.set(sideLo.x, wallHeight / 2, sideLo.z);
+  scene.add(sideLoMesh);
+  const sideHi = point(freeHi, mid);
+  const sideHiMesh = new THREE.Mesh(sideGeom.clone(), revealWallMaterial);
+  sideHiMesh.position.set(sideHi.x, wallHeight / 2, sideHi.z);
+  scene.add(sideHiMesh);
+
+  if (installFrame) {
+    const frameMaterial = new THREE.MeshStandardMaterial({ color: NEUTRAL_PREVIEW_FINISH.frameColor, roughness: 0.65, metalness: 0.04 });
     const frame = buildDoorwayFrame(frameMaterial);
     frame.rotation.y = isNS ? 0 : Math.PI / 2;
+    const framePos = point(door.gapCenter, mid);
     frame.position.set(framePos.x, 0, framePos.z);
     scene.add(frame);
 
-    // Transom: closes the wall from just above the frame's own header up to
-    // the ceiling, exactly as wide as this door's wall gap, so it reads as
-    // a doorway cut through a solid wall rather than a full-height opening.
+    const transomBottom = DOORWAY_HEADER_Y + DOORWAY_HEADER_HEIGHT / 2 + 0.02;
     const transomHeight = wallHeight - transomBottom;
-    const transom = new THREE.Mesh(
-      isNS
-        ? new THREE.BoxGeometry(doorway.width, transomHeight, wallThickness)
-        : new THREE.BoxGeometry(wallThickness, transomHeight, doorway.width),
-      transomMaterial
-    );
-    transom.position.set(framePos.x, transomBottom + transomHeight / 2, framePos.z);
-    scene.add(transom);
+    const nearDepth = mid - depth0;
+    const farDepth = depth1 - mid;
 
-    // Destination signs mount flush on the transom's own two faces (the
-    // same wallThickness/2 offset the baseboards use), just above the
-    // opening — not floating in the open air of the gap, and not two
-    // separate plaques competing with the transom for "the doorway's
-    // architecture." Text still names the far side from wherever you are.
+    const nearGeom = isNS
+      ? new THREE.BoxGeometry(openingWidth, transomHeight, nearDepth)
+      : new THREE.BoxGeometry(nearDepth, transomHeight, openingWidth);
+    const nearCenter = point(door.gapCenter, depth0 + nearDepth / 2);
+    const nearTransom = new THREE.Mesh(nearGeom, near.wallMaterial);
+    nearTransom.position.set(nearCenter.x, transomBottom + transomHeight / 2, nearCenter.z);
+    scene.add(nearTransom);
+
+    const farGeom = isNS
+      ? new THREE.BoxGeometry(openingWidth, transomHeight, farDepth)
+      : new THREE.BoxGeometry(farDepth, transomHeight, openingWidth);
+    const farCenter = point(door.gapCenter, mid + farDepth / 2);
+    const farTransom = new THREE.Mesh(farGeom, far.wallMaterial);
+    farTransom.position.set(farCenter.x, transomBottom + transomHeight / 2, farCenter.z);
+    scene.add(farTransom);
+
+    // Signs mount flush at each room's own wall plane (not floating
+    // mid-gap, and not doubled the way two independent per-room calls used
+    // to) and name the far side from wherever you're standing.
     const signY = transomBottom + 0.55;
-    const nearNormal = intoRoomNormal(doorway.side);
-    buildHeader(
-      framePos.x + nearNormal.x * (wallThickness / 2 + 0.02),
-      signY,
-      framePos.z + nearNormal.z * (wallThickness / 2 + 0.02),
-      wallRotationY(doorway.side),
-      neighbor.label
-    );
-
-    const farNormal = intoRoomNormal(far);
-    buildHeader(
-      framePos.x + farNormal.x * (wallThickness / 2 + 0.02),
-      signY,
-      framePos.z + farNormal.z * (wallThickness / 2 + 0.02),
-      wallRotationY(far),
-      room.label
-    );
-
-    // The reveal light is the room's "doorway preview" treatment — cheap
-    // enough to stay on whenever this room is merely a graph neighbor of
-    // wherever the visitor is (see the RoomLightGroups comment above), so
-    // it lives in the preview group, not the full room rig.
-    const revealFar = wallEdgePoint(neighborBounds, far, doorway.gapCenter, 0);
-    const reveal = new THREE.PointLight(finish.lightColor, 0.6, 9, 2);
-    reveal.position.set((framePos.x + revealFar.x) / 2, eyeHeight, (framePos.z + revealFar.z) / 2);
-    groups.preview.add(reveal);
+    const nearRotation = isNS ? Math.PI : -Math.PI / 2;
+    const farRotation = isNS ? 0 : Math.PI / 2;
+    const nearSignPos = point(door.gapCenter, depth0 + 0.03);
+    buildDestinationSign(scene, nearSignPos.x, signY, nearSignPos.z, nearRotation, far.room.label);
+    const farSignPos = point(door.gapCenter, depth1 - 0.03);
+    buildDestinationSign(scene, farSignPos.x, signY, farSignPos.z, farRotation, near.room.label);
   }
+
+  const revealCenter = point(door.gapCenter, mid);
+  const reveal = new THREE.PointLight(NEUTRAL_PREVIEW_FINISH.lightColor, 0.6, 9, 2);
+  reveal.position.set(revealCenter.x, eyeHeight, revealCenter.z);
+  scene.add(reveal);
+  return reveal;
 }
 
 /** Usable wall spans for item placement — full length on doorless walls,

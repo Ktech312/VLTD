@@ -44,11 +44,13 @@ import {
   MUSEUM_WALK_SPEED_SLOW,
 } from "@/lib/museumStandard";
 import {
-  buildDoorways,
+  buildDoorConnection,
   buildRoomShell,
   computeUsableWallSpans,
+  createWallMaterial,
   NEUTRAL_PREVIEW_FINISH,
   placeArtwork,
+  type ConnectionEndpoint,
   type RoomLightGroups,
   type RoomModule,
 } from "@/lib/campusRoomBuilder";
@@ -292,18 +294,13 @@ export default function VltdMuseumCampus() {
       }
     }
 
-    // Door-threshold floor patches (the physical gap between adjacent rooms)
-    for (const bridge of computeDoorBridges()) {
-      const w = bridge.x1 - bridge.x0;
-      const d = bridge.z1 - bridge.z0;
-      const patch = new THREE.Mesh(
-        new THREE.PlaneGeometry(w, d),
-        new THREE.MeshStandardMaterial({ color: 0x162944, roughness: 0.95 })
-      );
-      patch.rotation.x = -Math.PI / 2;
-      patch.position.set((bridge.x0 + bridge.x1) / 2, 0.01, (bridge.z0 + bridge.z1) / 2);
-      scene.add(patch);
-    }
+    // 2026-09-08 architecture reset: the flat navy floor patch that used to
+    // stand in for "the physical gap between adjacent rooms" is gone —
+    // buildDoorConnection() below builds a real enclosed vestibule (floor,
+    // ceiling, side returns, frame/transom/signs) once per CAMPUS_DOORS
+    // entry instead. See the connection-building loop after the wall
+    // segments below, which needs `wallMaterial`/`hubWallMaterial` (defined
+    // above) already in scope.
 
     // Walls, split around door gaps, with the same gold rail trim the
     // single room's own walls use (its shelf-rail lattice) — this is the
@@ -351,6 +348,44 @@ export default function VltdMuseumCampus() {
         scene.add(rail);
       }
     }
+
+    // Connection-owned doorway architecture (2026-09-08 architecture
+    // reset): every CAMPUS_DOORS entry is now built exactly ONCE here,
+    // regardless of whether either room it connects has been converted to
+    // the standard-module builder — replacing the old approach where each
+    // converted room's own module called buildDoorways() independently,
+    // doubling the assembly across a real gap for two converted rooms and
+    // leaving the legacy side bare for a converted<->legacy pair. See
+    // buildDoorConnection() in campusRoomBuilder.ts for the full design.
+    //
+    // Each endpoint supplies the wall material a visitor would see if they
+    // were standing in ITS room looking at the shared wall — the exact
+    // same factory a converted room's own buildRoomShell used
+    // (createWallMaterial), or the exact same shared instance a legacy room
+    // already uses (wallMaterial/hubWallMaterial, defined above) — so the
+    // connection's transom reads as a continuation of that wall, not a
+    // separate flat-colored patch.
+    function connectionWallMaterial(roomId: CampusRoomId): THREE.Material {
+      if (roomId === "POP_CULTURE" || roomId === "TCG" || roomId === "COLLECTION") {
+        return createWallMaterial(NEUTRAL_PREVIEW_FINISH, roomById(roomId), WALL_HEIGHT);
+      }
+      return roomId === "HUB" ? hubWallMaterial : wallMaterial;
+    }
+
+    const connectionReveals: { rooms: [CampusRoomId, CampusRoomId]; light: THREE.PointLight }[] = [];
+    CAMPUS_DOORS.forEach((door) => {
+      const [aId, bId] = door.rooms;
+      if (!bId) return; // no second room to connect to (unused today, kept safe)
+      const a: ConnectionEndpoint = { room: roomById(aId), wallMaterial: connectionWallMaterial(aId) };
+      const b: ConnectionEndpoint = { room: roomById(bId), wallMaterial: connectionWallMaterial(bId) };
+      const reveal = buildDoorConnection(scene, door, a, b, {
+        wallHeight: WALL_HEIGHT,
+        wallThickness: WALL_THICKNESS,
+        eyeHeight: EYE_HEIGHT,
+        installFrame: true,
+      });
+      if (reveal) connectionReveals.push({ rooms: [aId, bId], light: reveal });
+    });
 
     // Waypoint markers — EK watched bingebrowse.net with the walkthrough
     // open and pointed out its floor markers directly: "these little
@@ -632,16 +667,18 @@ export default function VltdMuseumCampus() {
       ],
     };
 
+    // buildDoorways() per room is gone — the connection loop above already
+    // built every doorway (POP_CULTURE's, TCG's, and COLLECTION's included)
+    // exactly once each. These three still call buildRoomShell for their
+    // own floor/ceiling/walls/baseboards/light rig, and still need their
+    // own usable wall spans for item placement.
     const popCultureLights = buildRoomShell(scene, popCultureModule);
-    buildDoorways(scene, popCultureModule, popCultureLights);
     const popCultureWallSpans = computeUsableWallSpans(popCultureModule);
 
     const tcgLights = buildRoomShell(scene, tcgModule);
-    buildDoorways(scene, tcgModule, tcgLights);
     const tcgWallSpans = computeUsableWallSpans(tcgModule);
 
     const collectionLights = buildRoomShell(scene, collectionModule);
-    buildDoorways(scene, collectionModule, collectionLights);
     const collectionWallSpans = computeUsableWallSpans(collectionModule);
 
     // Two-tier room light activation — EK's review of 9796c72: room-level
@@ -723,6 +760,14 @@ export default function VltdMuseumCampus() {
         const full = fullSet.has(roomId);
         groups.full.visible = full;
         groups.preview.visible = full || previewSet.has(roomId);
+      }
+      // A connection's own reveal light (one per CAMPUS_DOORS entry, see
+      // the connection-building loop above) follows the same rule a room's
+      // preview group does — on whenever either of its two rooms is full or
+      // preview, i.e. whenever the connection is actually relevant to what
+      // the visitor can currently see.
+      for (const { rooms, light } of connectionReveals) {
+        light.visible = rooms.some((id) => fullSet.has(id) || previewSet.has(id));
       }
     }
 
@@ -1153,15 +1198,26 @@ export default function VltdMuseumCampus() {
     function onWheel(e: WheelEvent) {
       e.preventDefault();
       walkTween = null;
-      // Matches the accepted room's own wheel handler: nudges
-      // targetCameraBody (not cameraBody directly), so the actual camera
-      // glides toward it over the next few frames via the same easing used
-      // for drag-look. Direction uses the rendered `yaw`, not `targetYaw` —
-      // see the Stage 1 comment above updateKeyboardMovement.
+      // 2026-09-08 architecture reset, defect 4 ("mouse-wheel movement is
+      // delayed"): this used to nudge targetCameraBody and let the
+      // per-frame 0.15 lerp in easeTowardTargets() chase it toward the
+      // rendered cameraBody — the same treatment drag-look's yaw/pitch use.
+      // For position, that meant repeated wheel notches could queue
+      // targetCameraBody well ahead of what's actually on screen, since
+      // each notch's own collision check ran against wherever the TARGET
+      // already was, not wherever the visible camera was — a real, visible
+      // lag/glide queue, worse as the notches pile up. Movement now applies
+      // straight to the visible cameraBody, exactly like the continuous
+      // WASD path in updateKeyboardMovement, then syncs targetCameraBody to
+      // match — no backlog, because there's nothing left for a subsequent
+      // frame to still be chasing. Direction still uses the rendered `yaw`,
+      // not `targetYaw` — see the Stage 1 comment above
+      // updateKeyboardMovement.
       const signedDistance = e.deltaY > 0 ? -WHEEL_STEP : WHEEL_STEP;
       const delta = facingDirection(yaw).multiplyScalar(signedDistance);
-      moveWithCollision(targetCameraBody, delta);
-      targetCameraBody.y = EYE_HEIGHT;
+      moveWithCollision(cameraBody, delta);
+      cameraBody.y = EYE_HEIGHT;
+      targetCameraBody.copy(cameraBody);
     }
 
     window.addEventListener("keydown", onKeyDown);
@@ -1287,6 +1343,15 @@ export default function VltdMuseumCampus() {
           totalLights,
           enabledLights,
           perRoom,
+          // 2026-09-08 architecture reset: one reveal light per CAMPUS_DOORS
+          // connection now (was up to two, independently, for a
+          // converted<->converted pair) — surfaced separately from
+          // perRoom's counts since a connection belongs to the door, not to
+          // either room.
+          connectionLights: {
+            total: connectionReveals.length,
+            enabled: connectionReveals.filter((c) => c.light.visible).length,
+          },
           location: lastLightLocation,
           fullRoomIds: lastFullRoomIds,
           previewRoomIds: lastPreviewRoomIds,
