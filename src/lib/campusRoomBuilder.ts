@@ -172,7 +172,19 @@ export function buildRoomShell(scene: THREE.Scene, module: RoomModule): RoomLigh
 
   const ceilingGrain = createGrainTexture();
   ceilingGrain.repeat.set(room.w / 5, room.d / 5);
-  const ceilingMaterial = new THREE.MeshStandardMaterial({ color: finish.ceilingColor, map: ceilingGrain, roughness: 0.92 });
+  // Live-verified fix (2026-09-09): a downward-facing ceiling plane gets
+  // almost no incident light in this scene — the "sun" DirectionalLight
+  // shines down onto upward faces only (a downward normal can't receive a
+  // downward light), and the HemisphereLight's dim "ground" color is the
+  // only ambient contribution — so even a light base color rendered as a
+  // solid black band across HUB's ceiling once it (correctly) got a real
+  // mesh. A small self-illumination (not a new Light object — no new
+  // entries in getSceneStats' light count) keeps every ceiling visibly lit
+  // regardless of viewing angle or room size, without adding fixtures.
+  const ceilingMaterial = new THREE.MeshStandardMaterial({
+    color: finish.ceilingColor, map: ceilingGrain, roughness: 0.92,
+    emissive: finish.ceilingColor, emissiveIntensity: 0.22,
+  });
   // Overnight Polish pass: repeat scaled to this room's own size (was a
   // fixed 10.5x13 that only happened to fit POP_CULTURE/TCG/COLLECTION,
   // all 21x26 — "no stretched texture spanning several module bays" once
@@ -276,7 +288,19 @@ export function buildNeutralShell(
 
   const ceilingGrain = createGrainTexture();
   ceilingGrain.repeat.set(room.w / 5, room.d / 5);
-  const ceilingMaterial = new THREE.MeshStandardMaterial({ color: finish.ceilingColor, map: ceilingGrain, roughness: 0.92 });
+  // Live-verified fix (2026-09-09): a downward-facing ceiling plane gets
+  // almost no incident light in this scene — the "sun" DirectionalLight
+  // shines down onto upward faces only (a downward normal can't receive a
+  // downward light), and the HemisphereLight's dim "ground" color is the
+  // only ambient contribution — so even a light base color rendered as a
+  // solid black band across HUB's ceiling once it (correctly) got a real
+  // mesh. A small self-illumination (not a new Light object — no new
+  // entries in getSceneStats' light count) keeps every ceiling visibly lit
+  // regardless of viewing angle or room size, without adding fixtures.
+  const ceilingMaterial = new THREE.MeshStandardMaterial({
+    color: finish.ceilingColor, map: ceilingGrain, roughness: 0.92,
+    emissive: finish.ceilingColor, emissiveIntensity: 0.22,
+  });
   const ceilingTrimMaterial = new THREE.MeshStandardMaterial({ color: finish.ceilingTrimColor, roughness: 0.7 });
 
   const ceiling = new THREE.Mesh(new THREE.PlaneGeometry(room.w, room.d), ceilingMaterial);
