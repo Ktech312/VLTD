@@ -928,29 +928,68 @@ export default function VltdMuseumCampus() {
     // Collision must shorten or stop the requested motion, never redirect
     // it — the old tryMove() retried a blocked move's world-X and world-Z
     // components separately, which could turn a blocked forward/backward
-    // press into sideways sliding along a wall. Substeps (instead of one
-    // big jump) stop a fast wheel nudge from tunneling across a thin
-    // doorway threshold. Reusable for both the continuous WASD path
-    // (mutates `cameraBody` directly, same as the accepted room) and the
-    // discrete wheel path (mutates `targetCameraBody`, same as the accepted
-    // room's own moveCamera) — the position mutated is the caller's choice,
-    // matching whichever one the accepted room itself moves for that input.
+    // press into sideways sliding along a wall. Reusable for both the
+    // continuous WASD path (mutates `cameraBody` directly, same as the
+    // accepted room) and the discrete wheel path (mutates
+    // `targetCameraBody`, same as the accepted room's own moveCamera) — the
+    // position mutated is the caller's choice, matching whichever one the
+    // accepted room itself moves for that input.
+    //
+    // MISC movement-defect fix (2026-09-09): EK physically reproduced
+    // sideways drift specifically entering/moving around MISC and asked for
+    // a swept/binary-searched distance instead of the old fixed-0.14
+    // substep march. Replaced: binary search now finds the maximum valid
+    // distance along the EXACT requested `direction` — the applied vector
+    // is always `direction * validDistance` (mathematically collinear with
+    // the request by construction, never a different heading), just with
+    // far finer stopping precision than a 0.14-unit substep could give
+    // (old worst case: up to 0.14 units of slop AT the stopping point,
+    // which — right at a jamb, in a room with two closely-set doorways
+    // like MISC — was enough to land somewhere the true contact point
+    // wasn't, feeding a still-off-axis position into the NEXT wheel event's
+    // walkability check). Logged per call so this is verified against real
+    // intended-vs-applied vectors, not assumed.
+    type MovementLogEntry = {
+      frameTime: number; yawAtCall: number;
+      intended: { x: number; z: number }; applied: { x: number; z: number };
+      requestedDistance: number; appliedDistance: number;
+      positionBefore: { x: number; z: number }; positionAfter: { x: number; z: number };
+    };
+    const movementLog: MovementLogEntry[] = [];
+
     function moveWithCollision(position: THREE.Vector3, delta: THREE.Vector3) {
       const distance = delta.length();
       if (distance === 0) return;
-
+      const before = { x: position.x, z: position.z };
       const direction = delta.clone().normalize();
-      const maxSubstep = 0.14;
-      const steps = Math.max(1, Math.ceil(distance / maxSubstep));
-      const step = direction.multiplyScalar(distance / steps);
 
-      for (let index = 0; index < steps; index += 1) {
-        const nextX = position.x + step.x;
-        const nextZ = position.z + step.z;
-        if (!isWalkable(nextX, nextZ, walkable)) break;
-        position.x = nextX;
-        position.z = nextZ;
+      let validDistance: number;
+      if (isWalkable(position.x + direction.x * distance, position.z + direction.z * distance, walkable)) {
+        validDistance = distance;
+      } else {
+        let lo = 0;
+        let hi = distance;
+        for (let i = 0; i < 20; i += 1) {
+          const mid = (lo + hi) / 2;
+          if (isWalkable(position.x + direction.x * mid, position.z + direction.z * mid, walkable)) lo = mid;
+          else hi = mid;
+        }
+        validDistance = lo;
       }
+      position.x += direction.x * validDistance;
+      position.z += direction.z * validDistance;
+
+      movementLog.push({
+        frameTime: performance.now(),
+        yawAtCall: yaw,
+        intended: { x: delta.x, z: delta.z },
+        applied: { x: position.x - before.x, z: position.z - before.z },
+        requestedDistance: distance,
+        appliedDistance: validDistance,
+        positionBefore: before,
+        positionAfter: { x: position.x, z: position.z },
+      });
+      if (movementLog.length > 300) movementLog.shift();
     }
 
     function updateKeyboardMovement(dt: number) {
@@ -1353,6 +1392,14 @@ export default function VltdMuseumCampus() {
           avgFps: avgFrameMs > 0 ? 1000 / avgFrameMs : 0,
         };
       },
+      // MISC movement-defect investigation (2026-09-09): "Log the intended
+      // movement vector and actual applied vector for each frame." Every
+      // moveWithCollision() call (both the continuous WASD path and the
+      // discrete wheel path funnel through it) pushes one entry here — the
+      // exact requested delta, the exact applied delta, and the yaw at that
+      // moment, so a divergence between intended and applied HEADING (not
+      // just magnitude) can be checked directly instead of inferred.
+      getMovementLog: () => movementLog.slice(-100),
       // EK's review of the "three gray tiers at the entrance" report: "Your
       // audit based on local position.y and expected mesh names is
       // insufficient. Inspect every rendered mesh... using world-space
