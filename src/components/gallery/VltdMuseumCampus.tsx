@@ -61,9 +61,9 @@ import {
 import {
   aimCamera,
   applyDrag,
+  buildKeyboardMoveDirection,
   easeTowardTargets,
   facingDirection,
-  strafeDirection,
   WHEEL_STEP,
 } from "@/lib/visitorController";
 
@@ -950,17 +950,22 @@ export default function VltdMuseumCampus() {
     // walkability check). Logged per call so this is verified against real
     // intended-vs-applied vectors, not assumed.
     //
-    // Heading-source fix (2026-09-09): EK's physical test — spawn exactly
-    // on a waypoint, zero mouse drag, scroll forward — showed a consistent
-    // rightward veer in every room. Her diagnosis: the intended-vs-applied
-    // check above only proves collision never redirects a movement vector;
-    // it says nothing about whether the movement vector ITSELF (derived
-    // from `yaw`) matches what the camera actually renders as forward.
-    // "The visitor's actual rendered camera-forward vector is authoritative
-    // ... use that projected vector for wheel forward/backward and W/S
-    // movement if the yaw-derived vector differs." This reads the camera's
-    // real world-space forward (after updateMatrixWorld, so it can't be
-    // stale) instead of trusting `facingDirection(yaw)` to match it.
+    // Heading-source investigation (2026-09-09), REVERTED — do not use this
+    // for movement: EK's physical test suggested checking whether the
+    // camera's own rendered forward matches facingDirection(yaw). Deployed
+    // that as the movement source (ad38f72), then live-verified it against
+    // ground truth: at yaw=PI/2, a screenshot confirms the camera visually
+    // renders facing east (HUB's real east-wall doors, BUILT_BOTANY/GAMES/
+    // AUTOMOTIVE) — exactly matching facingDirection(yaw). But
+    // camera.getWorldDirection() (below) returned a vector 90 degrees off
+    // from that same ground truth. facingDirection(yaw) is proven correct;
+    // this function is proven wrong (root cause not yet found — possibly a
+    // getWorldDirection()/lookAt() convention mismatch specific to this
+    // camera setup). Movement below uses the shared buildKeyboardMoveDirection
+    // / facingDirection(yaw) again, unchanged from before ad38f72. Kept
+    // ONLY as a diagnostic comparison in the wheel event log — never as a
+    // movement source — since its own wrongness might still be useful
+    // evidence for finding the real bug.
     function renderedForwardXZ(): THREE.Vector3 {
       camera.updateMatrixWorld(true);
       const world = new THREE.Vector3();
@@ -1017,19 +1022,20 @@ export default function VltdMuseumCampus() {
       if (pressedKeys.size === 0) return;
       walkTween = null; // a held movement/turn key interrupts click-to-walk (view is never touched by the tween, so nothing else to reset)
       const speed = pressedKeys.has("shift") ? WALK_SPEED_SLOW : WALK_SPEED;
-      // Forward/back now come from the camera's own rendered direction
-      // (renderedForwardXZ), not facingDirection(yaw) — see the heading-
-      // source fix comment above moveWithCollision. Strafe (left/right)
-      // is unchanged (still yaw-derived; EK's report and fix request were
-      // specific to forward/backward).
-      const forwardVec = renderedForwardXZ();
-      const strafeVec = strafeDirection(yaw);
-      const move = new THREE.Vector3();
-      if (pressedKeys.has("forward")) move.add(forwardVec);
-      if (pressedKeys.has("back")) move.sub(forwardVec);
-      if (pressedKeys.has("left")) move.sub(strafeVec);
-      if (pressedKeys.has("right")) move.add(strafeVec);
-      if (move.lengthSq() > 0) move.normalize();
+      // Reverted to facingDirection(yaw)-based movement (via the shared
+      // buildKeyboardMoveDirection) — see the heading-source investigation
+      // comment above moveWithCollision. renderedForwardXZ() (camera.
+      // getWorldDirection()) was proven wrong against ground truth; yaw-
+      // derived direction is proven correct.
+      const move = buildKeyboardMoveDirection(
+        {
+          forward: pressedKeys.has("forward"),
+          back: pressedKeys.has("back"),
+          left: pressedKeys.has("left"),
+          right: pressedKeys.has("right"),
+        },
+        yaw
+      );
       if (move.lengthSq() > 0) {
         move.multiplyScalar(speed * dt);
         moveWithCollision(cameraBody, move);
@@ -1227,16 +1233,18 @@ export default function VltdMuseumCampus() {
       const signedStep = e.deltaY > 0 ? -WHEEL_STEP : WHEEL_STEP;
       const beforeTarget = targetCameraBody.clone();
 
-      // Heading diagnostic — captured on every event, per EK's spec: the
-      // camera's actual rendered forward vs the yaw-derived one, angle
-      // between them, and their cross product (sign tells which side).
+      // Heading diagnostic — logged for visibility, NOT used for movement
+      // (renderedForwardXZ/camera.getWorldDirection() was proven wrong
+      // against ground truth — see the comment above moveWithCollision).
+      // yawDerivedFwd is what actually drives movement below, same as
+      // before ad38f72.
       const renderedFwd = renderedForwardXZ();
       const yawDerivedFwd = facingDirection(yaw);
       const headingDot = THREE.MathUtils.clamp(renderedFwd.x * yawDerivedFwd.x + renderedFwd.z * yawDerivedFwd.z, -1, 1);
       const headingAngleDeg = (Math.acos(headingDot) * 180) / Math.PI;
       const headingCross = renderedFwd.x * yawDerivedFwd.z - renderedFwd.z * yawDerivedFwd.x;
 
-      const delta = renderedFwd.clone().multiplyScalar(signedStep);
+      const delta = yawDerivedFwd.clone().multiplyScalar(signedStep);
       moveWithCollision(targetCameraBody, delta);
       targetCameraBody.y = EYE_HEIGHT;
       const appliedDistance = beforeTarget.distanceTo(targetCameraBody);
