@@ -61,9 +61,9 @@ import {
 import {
   aimCamera,
   applyDrag,
-  buildKeyboardMoveDirection,
   easeTowardTargets,
   facingDirection,
+  strafeDirection,
   WHEEL_STEP,
 } from "@/lib/visitorController";
 
@@ -949,6 +949,27 @@ export default function VltdMuseumCampus() {
     // wasn't, feeding a still-off-axis position into the NEXT wheel event's
     // walkability check). Logged per call so this is verified against real
     // intended-vs-applied vectors, not assumed.
+    //
+    // Heading-source fix (2026-09-09): EK's physical test — spawn exactly
+    // on a waypoint, zero mouse drag, scroll forward — showed a consistent
+    // rightward veer in every room. Her diagnosis: the intended-vs-applied
+    // check above only proves collision never redirects a movement vector;
+    // it says nothing about whether the movement vector ITSELF (derived
+    // from `yaw`) matches what the camera actually renders as forward.
+    // "The visitor's actual rendered camera-forward vector is authoritative
+    // ... use that projected vector for wheel forward/backward and W/S
+    // movement if the yaw-derived vector differs." This reads the camera's
+    // real world-space forward (after updateMatrixWorld, so it can't be
+    // stale) instead of trusting `facingDirection(yaw)` to match it.
+    function renderedForwardXZ(): THREE.Vector3 {
+      camera.updateMatrixWorld(true);
+      const world = new THREE.Vector3();
+      camera.getWorldDirection(world);
+      world.y = 0;
+      if (world.lengthSq() < 1e-8) return facingDirection(yaw); // near-vertical look — fall back rather than divide by ~0
+      return world.normalize();
+    }
+
     type MovementLogEntry = {
       frameTime: number; yawAtCall: number;
       intended: { x: number; z: number }; applied: { x: number; z: number };
@@ -996,15 +1017,19 @@ export default function VltdMuseumCampus() {
       if (pressedKeys.size === 0) return;
       walkTween = null; // a held movement/turn key interrupts click-to-walk (view is never touched by the tween, so nothing else to reset)
       const speed = pressedKeys.has("shift") ? WALK_SPEED_SLOW : WALK_SPEED;
-      const move = buildKeyboardMoveDirection(
-        {
-          forward: pressedKeys.has("forward"),
-          back: pressedKeys.has("back"),
-          left: pressedKeys.has("left"),
-          right: pressedKeys.has("right"),
-        },
-        yaw
-      );
+      // Forward/back now come from the camera's own rendered direction
+      // (renderedForwardXZ), not facingDirection(yaw) — see the heading-
+      // source fix comment above moveWithCollision. Strafe (left/right)
+      // is unchanged (still yaw-derived; EK's report and fix request were
+      // specific to forward/backward).
+      const forwardVec = renderedForwardXZ();
+      const strafeVec = strafeDirection(yaw);
+      const move = new THREE.Vector3();
+      if (pressedKeys.has("forward")) move.add(forwardVec);
+      if (pressedKeys.has("back")) move.sub(forwardVec);
+      if (pressedKeys.has("left")) move.sub(strafeVec);
+      if (pressedKeys.has("right")) move.add(strafeVec);
+      if (move.lengthSq() > 0) move.normalize();
       if (move.lengthSq() > 0) {
         move.multiplyScalar(speed * dt);
         moveWithCollision(cameraBody, move);
@@ -1183,7 +1208,10 @@ export default function VltdMuseumCampus() {
     type WheelEventLogEntry = {
       eventTimestamp: number; rawDeltaY: number; normalizedDelta: number;
       requestedDistance: number; appliedDistance: number; collisionAdjustment: number;
-      yawAtEvent: number; firstChangedFrameLatencyMs: number | null;
+      yawAtEvent: number; targetYawAtEvent: number;
+      renderedForwardXZ: { x: number; z: number }; yawDerivedForwardXZ: { x: number; z: number };
+      headingAngleDeg: number; headingCross: number;
+      firstChangedFrameLatencyMs: number | null;
     };
     const wheelEventLog: WheelEventLogEntry[] = [];
     const pendingLatencyProbes: { eventTimestamp: number; beforeCameraBody: THREE.Vector3 }[] = [];
@@ -1198,7 +1226,17 @@ export default function VltdMuseumCampus() {
       const requestedDistance = WHEEL_STEP;
       const signedStep = e.deltaY > 0 ? -WHEEL_STEP : WHEEL_STEP;
       const beforeTarget = targetCameraBody.clone();
-      const delta = facingDirection(yaw).multiplyScalar(signedStep);
+
+      // Heading diagnostic — captured on every event, per EK's spec: the
+      // camera's actual rendered forward vs the yaw-derived one, angle
+      // between them, and their cross product (sign tells which side).
+      const renderedFwd = renderedForwardXZ();
+      const yawDerivedFwd = facingDirection(yaw);
+      const headingDot = THREE.MathUtils.clamp(renderedFwd.x * yawDerivedFwd.x + renderedFwd.z * yawDerivedFwd.z, -1, 1);
+      const headingAngleDeg = (Math.acos(headingDot) * 180) / Math.PI;
+      const headingCross = renderedFwd.x * yawDerivedFwd.z - renderedFwd.z * yawDerivedFwd.x;
+
+      const delta = renderedFwd.clone().multiplyScalar(signedStep);
       moveWithCollision(targetCameraBody, delta);
       targetCameraBody.y = EYE_HEIGHT;
       const appliedDistance = beforeTarget.distanceTo(targetCameraBody);
@@ -1211,6 +1249,11 @@ export default function VltdMuseumCampus() {
         appliedDistance,
         collisionAdjustment: requestedDistance - appliedDistance,
         yawAtEvent: yaw,
+        targetYawAtEvent: targetYaw,
+        renderedForwardXZ: { x: renderedFwd.x, z: renderedFwd.z },
+        yawDerivedForwardXZ: { x: yawDerivedFwd.x, z: yawDerivedFwd.z },
+        headingAngleDeg,
+        headingCross,
         firstChangedFrameLatencyMs: null,
       });
       if (wheelEventLog.length > 40) wheelEventLog.shift();
