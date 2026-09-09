@@ -478,19 +478,18 @@ export default function VltdMuseumCampus() {
       pediment.position.set(54.99, WALL_HEIGHT + 0.3, facadeZ - 0.65);
       scene.add(pediment);
 
-      const stepSpecs = [
-        { width: 9, z: -2.6 },
-        { width: 6.5, z: -1.6 },
-        { width: 4, z: -0.6 },
-      ];
-      let stepY = 0;
-      for (const step of stepSpecs) {
-        const height = 0.16;
-        stepY += height;
-        const stepMesh = new THREE.Mesh(new THREE.BoxGeometry(step.width, height, 1.1), stoneMaterial);
-        stepMesh.position.set(54.99, stepY - height / 2, step.z);
-        scene.add(stepMesh);
-      }
+      // The 3 stacked stone step boxes that used to sit here are removed —
+      // EK's review of the current Shared-Wall Grid Plan spawn view: "Three
+      // wide gray horizontal tiers appear across the floor in front of the
+      // opening, heavily offset to the left." Confirmed via world-space
+      // Box3 (debugMeshesInRegion below), not by source name: these boxes
+      // (real height, stacked 0.16/0.32/0.48 off the floor) sat at x=54.99 —
+      // calibrated to this facade's own pre-grid layout, never updated when
+      // the Shared-Wall Grid Plan moved the actual PLAZA-HUB door to its
+      // exact-module center at x=52.5, a 2.49-unit mismatch. They were
+      // purely decorative ("just some visual fun," 2026-09-02) and directly
+      // violate "one continuous flush floor through every shared doorway" —
+      // removed rather than recentered.
     }
 
     // Grand Hall enhancement — a lit "skylight" ceiling accent and a floor
@@ -1408,6 +1407,34 @@ export default function VltdMuseumCampus() {
           avgFrameMs,
           avgFps: avgFrameMs > 0 ? 1000 / avgFrameMs : 0,
         };
+      },
+      // EK's review of the "three gray tiers at the entrance" report: "Your
+      // audit based on local position.y and expected mesh names is
+      // insufficient. Inspect every rendered mesh... using world-space
+      // bounding boxes." This is exactly that — updateWorldMatrix + Box3 per
+      // mesh, filtered to whatever region is passed in, so the offending
+      // geometry is identified by where it actually renders, not by what it
+      // was named when it was built.
+      debugMeshesInRegion: (x0: number, x1: number, y0: number, y1: number, z0: number, z1: number) => {
+        const results: { name: string; geometry: string; color: string | null; min: { x: number; y: number; z: number }; max: { x: number; y: number; z: number } }[] = [];
+        scene.traverse((obj) => {
+          if (!(obj instanceof THREE.Mesh)) return;
+          obj.updateWorldMatrix(true, false);
+          const box = new THREE.Box3().setFromObject(obj);
+          if (box.max.x < x0 || box.min.x > x1) return;
+          if (box.max.y < y0 || box.min.y > y1) return;
+          if (box.max.z < z0 || box.min.z > z1) return;
+          const mat = Array.isArray(obj.material) ? obj.material[0] : obj.material;
+          const color = mat && "color" in mat ? `#${(mat as THREE.MeshStandardMaterial).color.getHexString()}` : null;
+          results.push({
+            name: obj.name || "(unnamed)",
+            geometry: obj.geometry.type,
+            color,
+            min: { x: box.min.x, y: box.min.y, z: box.min.z },
+            max: { x: box.max.x, y: box.max.y, z: box.max.z },
+          });
+        });
+        return results;
       },
       // Shared-Wall Grid Plan, required evidence: "mesh, material, texture,
       // and light counts before and after." Walks the live scene graph
