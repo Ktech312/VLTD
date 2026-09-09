@@ -77,9 +77,16 @@ export const NEUTRAL_PREVIEW_FINISH: RoomFinish = {
 // keeps its own already-accepted Grand Hall gold, set where it's built) —
 // same wall-grain/ceiling/baseboard technique as the converted rooms' own
 // finish, just a cooler, plainer palette so nothing reads as a new theme.
+// Live-verified fix (2026-09-09): the first pass used a near-black
+// ceilingColor (0x1c222c) here, which read as a solid black band through
+// every legacy doorway — not a missing mesh (there's a real ceiling plane),
+// but a downward-facing surface under this scene's HemisphereLight gets lit
+// mostly by its dark "ground" color, not the bright "sky" one, so a dark
+// base color reads as near-black. NEUTRAL_PREVIEW_FINISH's own light
+// ceiling (0xd6d0c1) already accounts for this; matched here.
 export const NEUTRAL_LEGACY_FINISH: RoomFinish = {
   wallColor: 0xd7d9d6,
-  ceilingColor: 0x1c222c,
+  ceilingColor: 0xc9cbc6,
   floorJointColor: "#7c7468",
   baseboardColor: 0x3a3c3a,
   ceilingTrimColor: 0x2c2f2c,
@@ -96,7 +103,7 @@ export const NEUTRAL_LEGACY_FINISH: RoomFinish = {
 // real ceiling and a restrained (rail-free) baseboard like everything else.
 export const HUB_FINISH: RoomFinish = {
   wallColor: 0xe8b95e,
-  ceilingColor: 0x201a12,
+  ceilingColor: 0xcbb582,
   floorJointColor: "#6b5a3a",
   baseboardColor: 0x3a2f18,
   ceilingTrimColor: 0x2a2015,
