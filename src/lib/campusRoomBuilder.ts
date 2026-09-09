@@ -551,20 +551,40 @@ export function buildSharedWall(
     return;
   }
 
-  // Signs: one per face, integrated into the transom band at a restrained
-  // size, each naming the room on the OTHER side. Skipped on whichever face
-  // would otherwise name an unlabeled room (PLAZA, the one noWalls room that
-  // still gets a real door here — HUB's entrance) rather than mount a blank
-  // plaque.
-  const signY = transomBottom + Math.min(0.22, Math.max(transomHeight / 2, 0.1));
+  // Signs: one per face, integrated into the transom band, each naming the
+  // room on the OTHER side. Skipped on whichever face would otherwise name
+  // an unlabeled room (PLAZA, the one noWalls room that still gets a real
+  // door here — HUB's entrance) rather than mount a blank plaque.
+  //
+  // Overnight Polish pass, wayfinding addition (2026-09-09): "enlarge
+  // ordinary destination signs so they can be read from across HUB and
+  // from normal room-center distance... roughly 1.6-1.8x... smaller than
+  // the main VLTD MUSEUM entrance sign." Was 1.5x0.34; 2.6x0.6 is ~1.73x/
+  // 1.76x that (the entrance sign is up to 3.4 wide, so this stays
+  // smaller). buildDestinationSign's own canvas-aspect-matching + auto-fit
+  // font (the earlier clipping fix) means padding/no-clipping hold at any
+  // size, so this is a pure size change. signY raised so the taller sign
+  // still sits inside the transom band, not overlapping the head casing.
+  const ORDINARY_SIGN_WIDTH = 2.6;
+  const ORDINARY_SIGN_HEIGHT = 0.6;
+  const signY = transomBottom + Math.min(0.4, Math.max(transomHeight / 2, 0.1));
   if (roomB.label) {
     const faceAPos = point(door.gapCenter, -(wallThickness / 2 + 0.01));
-    buildDestinationSign(scene, faceAPos.x, signY, faceAPos.z, rotationTowardA, roomB.label, 1.5, 0.34);
+    buildDestinationSign(scene, faceAPos.x, signY, faceAPos.z, rotationTowardA, visitorFacingRoomName(roomB.label), ORDINARY_SIGN_WIDTH, ORDINARY_SIGN_HEIGHT);
   }
   if (roomA.label) {
     const faceBPos = point(door.gapCenter, wallThickness / 2 + 0.01);
-    buildDestinationSign(scene, faceBPos.x, signY, faceBPos.z, rotationTowardB, roomA.label, 1.5, 0.34);
+    buildDestinationSign(scene, faceBPos.x, signY, faceBPos.z, rotationTowardB, visitorFacingRoomName(roomA.label), ORDINARY_SIGN_WIDTH, ORDINARY_SIGN_HEIGHT);
   }
+}
+
+// EK: "Display visitor-facing names: replace underscores with spaces and
+// show BUILT_BOTANY as BOTANY; do not expose internal identifiers." Applies
+// only to destination-sign TEXT — room.label itself (used for the top-of-
+// screen overlay, adjacency lookups, etc.) is untouched.
+function visitorFacingRoomName(label: string): string {
+  if (label === "BUILT_BOTANY") return "BOTANY";
+  return label.replace(/_/g, " ");
 }
 
 /** A room's own baseboard + (optionally) picture rail along every wall
