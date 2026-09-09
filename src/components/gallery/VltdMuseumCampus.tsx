@@ -447,16 +447,27 @@ export default function VltdMuseumCampus() {
       renderer.domElement.style.cursor = marker ? "pointer" : "";
     }
 
-    // Exterior facade + entrance steps — EK's ask (2026-09-02), "just some
-    // visual fun," inspired by classical museum architecture (columns,
-    // pediment, stone steps) but NOT copying any specific real museum's
-    // exact look. Purely decorative: the camera's Y never changes, so the
-    // steps don't need real elevation collision, and the facade sits just
-    // outside the Hub's real north wall rather than replacing it.
+    // Exterior facade — EK's ask (2026-09-02), "just some visual fun,"
+    // inspired by classical museum architecture (columns, pediment) but NOT
+    // copying any specific real museum's exact look. Purely decorative: the
+    // facade sits just outside the Hub's real north wall rather than
+    // replacing it.
+    //
+    // Recentered 2026-09-09: this facade predates the Shared-Wall Grid Plan
+    // and was built symmetric around x=54 (columns) / x=54.99 (pediment) —
+    // whatever the PLAZA-HUB door's coordinate happened to be before the
+    // grid rewrite. The grid moved that door to its exact-module center at
+    // x=52.5 without this facade being updated, which is also what caused
+    // the entrance-step tiles removed above to read as "heavily offset."
+    // Same fix applied here: recentered on the door's real x=52.5 (PLAZA's
+    // own center — see CAMPUS_SPAWN), same relative column spacing as
+    // before (+-8/16/24), so the columns/pediment actually frame the
+    // opening beneath them instead of standing off to one side of it.
     {
       const stoneMaterial = new THREE.MeshStandardMaterial({ color: 0xd9d0bd, roughness: 0.75 });
       const facadeZ = -0.9;
-      const columnXs = [30, 38, 46, 62, 70, 78];
+      const doorwayCenterX = 52.5;
+      const columnXs = [-24, -16, -8, 8, 16, 24].map((offset) => doorwayCenterX + offset);
       for (const x of columnXs) {
         const column = new THREE.Mesh(new THREE.CylinderGeometry(0.55, 0.65, WALL_HEIGHT, 12), stoneMaterial);
         column.position.set(x, WALL_HEIGHT / 2, facadeZ);
@@ -475,7 +486,7 @@ export default function VltdMuseumCampus() {
         new THREE.ExtrudeGeometry(pedimentShape, { depth: 1.3, bevelEnabled: false }),
         stoneMaterial
       );
-      pediment.position.set(54.99, WALL_HEIGHT + 0.3, facadeZ - 0.65);
+      pediment.position.set(doorwayCenterX, WALL_HEIGHT + 0.3, facadeZ - 0.65);
       scene.add(pediment);
 
       // The 3 stacked stone step boxes that used to sit here are removed —
