@@ -37,6 +37,7 @@ import { getPrimaryImageUrl, loadItems, type VaultItem } from "@/lib/vaultModel"
 import { isUniverseKey, type UniverseKey } from "@/lib/taxonomy";
 import { getActiveSpotlightPrograms, getEnabledStoreItems, getItemsPerRoom } from "@/lib/museumCampusConfig";
 import {
+  DOORWAY_NO_DISPLAY_HALF_WIDTH,
   MUSEUM_CAMERA_FOV,
   MUSEUM_PITCH_LIMIT,
   MUSEUM_WALK_SPEED,
@@ -737,15 +738,45 @@ export default function VltdMuseumCampus() {
         if (items.length === 0) continue;
 
         const bounds = roomBounds(room);
-        const usableWidth = room.w - 3;
-        const step = usableWidth / items.length;
-        const frameSize = Math.min(2.6, step * 0.72);
+        // Live-verified fix (2026-09-09): this loop used to space items
+        // evenly across the room's FULL north-wall width regardless of a
+        // door sitting on it — caught hanging artwork directly across the
+        // GAMES<->BUILT_BOTANY opening ("no artwork may overlap a doorway
+        // or its casing"). Exclude any door's DOORWAY_NO_DISPLAY_HALF_WIDTH
+        // zone on this wall first, then distribute items only within the
+        // remaining safe segments (same margin/exclusion technique
+        // computeUsableWallSpans already uses for the 3 converted rooms).
+        const northDoorGaps = CAMPUS_DOORS
+          .filter((d) => d.wall === "x" && d.at === bounds.z0 && d.rooms.includes(room.id))
+          .map((d) => ({ from: d.gapCenter - DOORWAY_NO_DISPLAY_HALF_WIDTH, to: d.gapCenter + DOORWAY_NO_DISPLAY_HALF_WIDTH }))
+          .sort((a, b) => a.from - b.from);
 
-        items.forEach((item, index) => {
-          const url = getPrimaryImageUrl(item);
-          if (!url) return;
-          hangFrame(bounds.x0 + 1.5 + step * (index + 0.5), bounds.z0 + WALL_THICKNESS, frameSize, url);
-        });
+        const margin = 1.5;
+        const rawSegments: { from: number; to: number }[] = [];
+        let cursor = bounds.x0 + margin;
+        for (const gap of northDoorGaps) {
+          if (gap.from > cursor) rawSegments.push({ from: cursor, to: Math.min(gap.from, bounds.x1 - margin) });
+          cursor = Math.max(cursor, gap.to);
+        }
+        if (cursor < bounds.x1 - margin) rawSegments.push({ from: cursor, to: bounds.x1 - margin });
+        const usableSegments = rawSegments.filter((s) => s.to - s.from > 0.5);
+        const totalWidth = usableSegments.reduce((sum, s) => sum + (s.to - s.from), 0);
+        if (totalWidth <= 0) continue;
+
+        let itemIndex = 0;
+        for (const segment of usableSegments) {
+          const segWidth = segment.to - segment.from;
+          const share = Math.max(1, Math.round((segWidth / totalWidth) * items.length));
+          const count = Math.min(share, items.length - itemIndex);
+          if (count <= 0) continue;
+          const step = segWidth / count;
+          const frameSize = Math.min(2.6, step * 0.72);
+          for (let i = 0; i < count && itemIndex < items.length; i += 1, itemIndex += 1) {
+            const url = getPrimaryImageUrl(items[itemIndex]);
+            if (!url) continue;
+            hangFrame(segment.from + step * (i + 0.5), bounds.z0 + WALL_THICKNESS, frameSize, url);
+          }
+        }
       }
 
       const popItems = allItems
