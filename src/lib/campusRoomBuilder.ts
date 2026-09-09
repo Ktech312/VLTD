@@ -15,7 +15,7 @@
 // coordinate, so there's no gap left to enclose, and no vestibule to build.
 import * as THREE from "three";
 
-import { DOORWAY_NO_DISPLAY_HALF_WIDTH } from "./museumStandard";
+import { DOORWAY_CLEAR_HEIGHT, DOORWAY_NO_DISPLAY_HALF_WIDTH } from "./museumStandard";
 import {
   DOOR_WIDTH,
   roomBounds,
@@ -48,6 +48,13 @@ export type RoomFinish = {
   frameColor: number;
   transomColor: number;
   lightColor: number;
+  // Overnight Polish pass (2026-09-09): floor tint for the neutral shared
+  // shell — lets each legacy room keep its own subtle floorColor identity
+  // (CAMPUS_ROOMS' existing per-room tint) under the same stone-floor
+  // technique, instead of every room reading identically blank. Optional so
+  // NEUTRAL_PREVIEW_FINISH's existing rooms (which never set it) keep their
+  // current plain-white-tinted floor unchanged.
+  floorTintColor?: number;
 };
 
 export const NEUTRAL_PREVIEW_FINISH: RoomFinish = {
@@ -59,6 +66,43 @@ export const NEUTRAL_PREVIEW_FINISH: RoomFinish = {
   railColor: 0xa68b53,
   frameColor: 0xdad4c6,
   transomColor: 0xe3ddd0,
+  lightColor: 0xfff2d0,
+};
+
+// Overnight Polish pass (2026-09-09): "make the campus look like a
+// coherent, intentionally unfinished museum shell rather than a collection
+// of gray boxes... Unconverted rooms should receive only this neutral
+// structural finish... Do not turn [any legacy room] into a new themed
+// identity." One shared finish for every legacy room except HUB (which
+// keeps its own already-accepted Grand Hall gold, set where it's built) —
+// same wall-grain/ceiling/baseboard technique as the converted rooms' own
+// finish, just a cooler, plainer palette so nothing reads as a new theme.
+export const NEUTRAL_LEGACY_FINISH: RoomFinish = {
+  wallColor: 0xd7d9d6,
+  ceilingColor: 0x1c222c,
+  floorJointColor: "#7c7468",
+  baseboardColor: 0x3a3c3a,
+  ceilingTrimColor: 0x2c2f2c,
+  railColor: 0x8a8d87,
+  frameColor: 0xc7c9c4,
+  transomColor: 0xd7d9d6,
+  lightColor: 0xeef0f2,
+};
+
+// HUB keeps its existing "Grand Hall enhancement" gold — an already-
+// accepted style from an earlier pass, not a new theme introduced by this
+// one — but now goes through the same shared shell/trim technique as every
+// other room instead of its own bespoke floor/ceiling code, so it gets a
+// real ceiling and a restrained (rail-free) baseboard like everything else.
+export const HUB_FINISH: RoomFinish = {
+  wallColor: 0xe8b95e,
+  ceilingColor: 0x201a12,
+  floorJointColor: "#6b5a3a",
+  baseboardColor: 0x3a2f18,
+  ceilingTrimColor: 0x2a2015,
+  railColor: 0xc9a24a,
+  frameColor: 0xdad4c6,
+  transomColor: 0xe8b95e,
   lightColor: 0xfff2d0,
 };
 
@@ -122,8 +166,12 @@ export function buildRoomShell(scene: THREE.Scene, module: RoomModule): RoomLigh
   const ceilingGrain = createGrainTexture();
   ceilingGrain.repeat.set(room.w / 5, room.d / 5);
   const ceilingMaterial = new THREE.MeshStandardMaterial({ color: finish.ceilingColor, map: ceilingGrain, roughness: 0.92 });
-  const floorTexture = createStoneFloorTexture(finish.floorJointColor, 10.5, 13);
-  const floorMaterial = new THREE.MeshStandardMaterial({ color: 0xffffff, map: floorTexture, roughness: 0.62 });
+  // Overnight Polish pass: repeat scaled to this room's own size (was a
+  // fixed 10.5x13 that only happened to fit POP_CULTURE/TCG/COLLECTION,
+  // all 21x26 — "no stretched texture spanning several module bays" once
+  // this floor technique is reused for rooms of other sizes below).
+  const floorTexture = createStoneFloorTexture(finish.floorJointColor, room.w / 2, room.d / 2);
+  const floorMaterial = new THREE.MeshStandardMaterial({ color: finish.floorTintColor ?? 0xffffff, map: floorTexture, roughness: 0.62 });
   const ceilingTrimMaterial = new THREE.MeshStandardMaterial({ color: finish.ceilingTrimColor, roughness: 0.7 });
 
   const floor = new THREE.Mesh(new THREE.PlaneGeometry(room.w, room.d), floorMaterial);
@@ -189,25 +237,107 @@ export function buildRoomShell(scene: THREE.Scene, module: RoomModule): RoomLigh
   return { full: lights, preview };
 }
 
+/** Overnight Polish pass (2026-09-09): floor, ceiling, and a wall-to-ceiling
+ * trim band for a room that is NOT going through the full buildRoomShell
+ * rig — every unconverted legacy room plus HUB. Deliberately does not add
+ * any dynamic lights: these rooms already read fine under the scene's
+ * always-on ambient/directional lighting (no full/preview activation gap to
+ * fill), and "do not add a new light for every architectural detail...
+ * prefer bounded room-level lighting" argues against giving all 10 of them
+ * their own 8-light activation rig just to reach parity with the 3
+ * converted rooms. Fixes the two structural gaps EK's review found: no
+ * ceiling at all above these rooms (visible as a black void through any
+ * opening into one), and a checkerboard floor where "one coherent neutral
+ * floor family" was called for. `includeCeiling` defaults true; PLAZA (the
+ * one intentionally open-air forecourt, `noWalls` on its true exterior
+ * edge) passes false to keep its existing open-sky character instead of
+ * capping it like every fully enclosed room. */
+export function buildNeutralShell(
+  scene: THREE.Scene, room: CampusRoom, wallHeight: number, finish: RoomFinish, includeCeiling = true
+): void {
+  const bounds = roomBounds(room);
+  const center = { x: room.x + room.w / 2, z: room.z + room.d / 2 };
+
+  const floorTexture = createStoneFloorTexture(finish.floorJointColor, room.w / 2, room.d / 2);
+  const floorMaterial = new THREE.MeshStandardMaterial({ color: finish.floorTintColor ?? 0xffffff, map: floorTexture, roughness: 0.68 });
+  const floor = new THREE.Mesh(new THREE.PlaneGeometry(room.w, room.d), floorMaterial);
+  floor.rotation.x = -Math.PI / 2;
+  floor.position.set(center.x, 0, center.z);
+  scene.add(floor);
+
+  if (!includeCeiling) return;
+
+  const ceilingGrain = createGrainTexture();
+  ceilingGrain.repeat.set(room.w / 5, room.d / 5);
+  const ceilingMaterial = new THREE.MeshStandardMaterial({ color: finish.ceilingColor, map: ceilingGrain, roughness: 0.92 });
+  const ceilingTrimMaterial = new THREE.MeshStandardMaterial({ color: finish.ceilingTrimColor, roughness: 0.7 });
+
+  const ceiling = new THREE.Mesh(new THREE.PlaneGeometry(room.w, room.d), ceilingMaterial);
+  ceiling.rotation.x = Math.PI / 2;
+  ceiling.position.set(center.x, wallHeight, center.z);
+  scene.add(ceiling);
+
+  const trimHeight = 0.12;
+  const trimNS = new THREE.BoxGeometry(room.w, trimHeight, 0.1);
+  const trimEW = new THREE.BoxGeometry(0.1, trimHeight, room.d);
+  const trimNorth = new THREE.Mesh(trimNS, ceilingTrimMaterial);
+  trimNorth.position.set(center.x, wallHeight - trimHeight / 2, bounds.z0);
+  scene.add(trimNorth);
+  const trimSouth = new THREE.Mesh(trimNS.clone(), ceilingTrimMaterial);
+  trimSouth.position.set(center.x, wallHeight - trimHeight / 2, bounds.z1);
+  scene.add(trimSouth);
+  const trimWest = new THREE.Mesh(trimEW, ceilingTrimMaterial);
+  trimWest.position.set(bounds.x0, wallHeight - trimHeight / 2, center.z);
+  scene.add(trimWest);
+  const trimEast = new THREE.Mesh(trimEW.clone(), ceilingTrimMaterial);
+  trimEast.position.set(bounds.x1, wallHeight - trimHeight / 2, center.z);
+  scene.add(trimEast);
+}
+
 /** A destination sign plaque — unlit (MeshBasicMaterial, so scene lighting
  * can't darken it), mounted flush at the given point/rotation, naming
  * whatever's on the far side of an opening from here. */
+// Overnight Polish pass (2026-09-09): "Correct the clipped VLTD MUSEUM
+// entrance text. Give the sign canvas adequate top/bottom padding and
+// vertically center the type." Root cause: the canvas was always drawn at a
+// fixed 512x128 (4:1), but the entrance sign requested a plane far wider
+// than 4:1 (a stretched-out header band) — mapping that 4:1 texture onto a
+// much-wider-than-4:1 plane squashed the text vertically until it read as
+// clipped. The canvas is now sized to the SAME aspect ratio as the
+// requested plane, so the texture is never stretched, and the font size
+// auto-shrinks to fit within a real padding margin instead of a fixed
+// guess — safe for any sign's width/height combination, not just the two
+// sizes this file happens to call today.
 export function buildDestinationSign(
   scene: THREE.Scene, x: number, y: number, z: number, rotationY: number, text: string,
   width = 2.6, height = 0.65
 ) {
+  const canvasHeight = 256;
+  const canvasWidth = Math.max(64, Math.round(canvasHeight * (width / height)));
   const canvas = document.createElement("canvas");
-  canvas.width = 512;
-  canvas.height = 128;
+  canvas.width = canvasWidth;
+  canvas.height = canvasHeight;
   const ctx = canvas.getContext("2d");
   if (!ctx) return;
   ctx.fillStyle = "#20242a";
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.fillRect(0, 0, canvasWidth, canvasHeight);
+
+  const label = text.toUpperCase();
+  const paddingX = canvasWidth * 0.1;
+  const paddingY = canvasHeight * 0.22;
+  const maxTextWidth = canvasWidth - paddingX * 2;
+  const maxTextHeight = canvasHeight - paddingY * 2;
+  let fontSize = maxTextHeight;
+  ctx.font = `700 ${fontSize}px Archivo, sans-serif`;
+  while (fontSize > 8 && ctx.measureText(label).width > maxTextWidth) {
+    fontSize -= 2;
+    ctx.font = `700 ${fontSize}px Archivo, sans-serif`;
+  }
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
   ctx.fillStyle = "#f2ead9";
-  ctx.font = "700 50px Archivo, sans-serif";
-  ctx.fillText(text.toUpperCase(), canvas.width / 2, canvas.height / 2);
+  ctx.fillText(label, canvasWidth / 2, canvasHeight / 2);
+
   const texture = new THREE.CanvasTexture(canvas);
   texture.colorSpace = THREE.SRGBColorSpace;
   const material = new THREE.MeshBasicMaterial({ map: texture });
@@ -231,7 +361,18 @@ export function buildDestinationSign(
 const CASING_TRIM_WIDTH = 0.1;
 const CASING_TRIM_DEPTH = 0.04; // projection past each wall face — subtle trim, not a post depth
 const CASING_HEAD_HEIGHT = 0.12;
-const CASING_HEADROOM = 1.0; // ceiling clearance reserved for the head casing + transom band
+// Overnight Polish pass (2026-09-09): EK's foreground review of the first
+// shared-wall doorway rollout: "The current shared openings are
+// approximately 8.21 units high in a 9.15-unit room. In production they
+// read as tall, narrow elevator shafts... Restore the accepted personal
+// Gallery clear-opening proportion: approximately 4.83 units high. Use the
+// exact shared constant." DOORWAY_CLEAR_HEIGHT (museumStandard.ts) IS that
+// constant — the same 4.83 the accepted personal room and prototype room
+// both build to. Using it directly here (instead of a headroom-from-
+// ceiling offset) means the opening's actual height matches the accepted
+// room regardless of wallHeight, and the transom above it grows to fill
+// whatever's left up to the ceiling — still built by the same wall system
+// (the `materials` array, not a separate patch), just taller now.
 
 // PLAZA<->HUB entrance (2026-09-09 doorway-refinement pass): EK split
 // doorways into two kinds — every ordinary connection keeps the thin kit
@@ -321,7 +462,7 @@ export function buildSharedWall(
   // (resolved above) but the exact same construction — "build the entrance
   // from the shared opening itself," not a separate structure.
   const framePos = point(door.gapCenter, 0);
-  const openingClearHeight = wallHeight - CASING_HEADROOM;
+  const openingClearHeight = DOORWAY_CLEAR_HEIGHT;
   const jambHeight = openingClearHeight + headHeight / 2;
   const casingDepth = wallThickness + trimDepth * 2;
   const jambGeom = isNS
@@ -362,14 +503,20 @@ export function buildSharedWall(
   const rotationTowardB = isNS ? 0 : Math.PI / 2;
 
   if (isEntrance) {
-    // One identity sign, integrated into the header (mounted flush on its
-    // own face, not floating apart from it), on the approach face only —
-    // "restrained," not a sign on every face like an ordinary connection.
+    // One identity sign per face, integrated into the header (mounted flush
+    // on its own face, not floating apart from it) — "show the destination
+    // room from both approaches" applies to the entrance too, so both the
+    // approach from PLAZA and the view back from HUB carry the same "VLTD
+    // MUSEUM" identity. A restrained ~5:1 sign, not the header's own full
+    // (much wider) span — buildDestinationSign now matches its canvas to
+    // whatever aspect ratio it's given, so this no longer clips.
+    const signWidth = Math.min(headWidth * 0.72, 3.4);
+    const signHeight = signWidth / 5.2;
+    const entranceSignY = openingClearHeight + headHeight / 2;
     const faceAPos = point(door.gapCenter, -(casingDepth / 2 + 0.02));
-    buildDestinationSign(
-      scene, faceAPos.x, openingClearHeight + headHeight / 2, faceAPos.z,
-      rotationTowardA, ENTRANCE_LABEL, headWidth * 0.82, headHeight * 0.72
-    );
+    buildDestinationSign(scene, faceAPos.x, entranceSignY, faceAPos.z, rotationTowardA, ENTRANCE_LABEL, signWidth, signHeight);
+    const faceBPos = point(door.gapCenter, casingDepth / 2 + 0.02);
+    buildDestinationSign(scene, faceBPos.x, entranceSignY, faceBPos.z, rotationTowardB, ENTRANCE_LABEL, signWidth, signHeight);
     return;
   }
 
@@ -389,17 +536,23 @@ export function buildSharedWall(
   }
 }
 
-/** A room's own baseboard + picture rail along every wall segment that
- * touches it (on its own face), terminating at each door casing exactly
- * like the wall itself does — still per-room decoration, not shared
- * structure, since two adjoining rooms can carry different finishes. */
+/** A room's own baseboard + (optionally) picture rail along every wall
+ * segment that touches it (on its own face), terminating at each door
+ * casing exactly like the wall itself does — still per-room decoration,
+ * not shared structure, since two adjoining rooms can carry different
+ * finishes. `includeRail` defaults true for the converted rooms' own call
+ * sites (unchanged); Overnight Polish pass (2026-09-09) calls this with
+ * `false` for every legacy room and HUB — "restrained baseboards" without
+ * a rail line, replacing their old two-height gold rail-lattice loop
+ * ("no broad gold stripes or repeated decorative wall lines"). */
 export function buildRoomTrim(
   scene: THREE.Scene,
   room: CampusRoom,
   segments: CampusWallSegment[],
   finish: RoomFinish,
   wallHeight: number,
-  wallThickness: number
+  wallThickness: number,
+  includeRail = true
 ): void {
   const baseboardMaterial = new THREE.MeshStandardMaterial({ color: finish.baseboardColor, roughness: 0.85 });
   const railMaterial = new THREE.MeshStandardMaterial({ color: finish.railColor, roughness: 0.5, metalness: 0.35 });
@@ -424,6 +577,7 @@ export function buildRoomTrim(
       else baseboard.position.set(segment.fixed + (facingSign * wallThickness) / 2, baseboardHeight / 2, (piece.from + piece.to) / 2);
       scene.add(baseboard);
 
+      if (!includeRail) continue;
       const rail = new THREE.Mesh(
         isNS ? new THREE.BoxGeometry(span, railHeight, 0.04) : new THREE.BoxGeometry(0.04, railHeight, span),
         railMaterial

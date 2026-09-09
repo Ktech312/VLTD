@@ -30,7 +30,6 @@ import {
   isWalkable,
   roomBounds,
   roomById,
-  splitSegmentForDoor,
   type CampusRoom,
   type CampusRoomId,
 } from "@/lib/campusLayout";
@@ -44,13 +43,17 @@ import {
   MUSEUM_WALK_SPEED_SLOW,
 } from "@/lib/museumStandard";
 import {
+  buildNeutralShell,
   buildRoomShell,
   buildRoomTrim,
   buildSharedWall,
   computeUsableWallSpans,
   createWallMaterial,
+  HUB_FINISH,
+  NEUTRAL_LEGACY_FINISH,
   NEUTRAL_PREVIEW_FINISH,
   placeArtwork,
+  type RoomFinish,
   type RoomLightGroups,
   type RoomModule,
 } from "@/lib/campusRoomBuilder";
@@ -153,29 +156,17 @@ function selectCollectionItems(
   return picked;
 }
 
-function makeLabelSprite(text: string, sub?: string) {
-  const canvas = document.createElement("canvas");
-  canvas.width = 512;
-  canvas.height = 128;
-  const ctx = canvas.getContext("2d");
-  if (!ctx) return null;
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  ctx.textAlign = "center";
-  ctx.fillStyle = "rgba(234,242,251,0.92)";
-  ctx.font = "700 46px Archivo, sans-serif";
-  ctx.fillText(text, canvas.width / 2, sub ? 56 : 76);
-  if (sub) {
-    ctx.fillStyle = "rgba(147,176,204,0.85)";
-    ctx.font = "600 26px 'IBM Plex Mono', monospace";
-    ctx.fillText(sub, canvas.width / 2, 96);
-  }
-  const texture = new THREE.CanvasTexture(canvas);
-  texture.colorSpace = THREE.SRGBColorSpace;
-  const material = new THREE.SpriteMaterial({ map: texture, transparent: true, depthWrite: false });
-  const sprite = new THREE.Sprite(material);
-  sprite.scale.set(9, 2.25, 1);
-  return sprite;
-}
+// makeLabelSprite() (a 9x2.25-unit room-center billboard sprite) is removed
+// — Overnight Polish pass (2026-09-09): "Eliminate obsolete room-center
+// title sprites and other duplicate wayfinding that appears through
+// several rooms" and "The production view contains a distance-invariant
+// 'VLTD Museum' label that appears to float through doorways." Investigated
+// live: it was this sprite, called for every legacy room including HUB
+// (whose own `label` IS "VLTD Museum") — a large always-camera-facing
+// billboard near the ceiling read as "floating" through long sightlines
+// regardless of how far away it was. Doorway destination signs (built into
+// each shared wall) plus the top-of-screen room-label overlay now cover
+// wayfinding without a second, competing, oversized in-scene label.
 
 function roomCenter(room: CampusRoom) {
   return { x: room.x + room.w / 2, z: room.z + room.d / 2 };
@@ -220,78 +211,26 @@ export default function VltdMuseumCampus() {
     sun.position.set(40, 60, 20);
     scene.add(sun);
 
-    const wallMaterial = new THREE.MeshStandardMaterial({ color: 0xeef5fc, roughness: 0.85, metalness: 0.02 });
-    const hubWallMaterial = new THREE.MeshStandardMaterial({ color: 0xe8b95e, roughness: 0.7, metalness: 0.05 });
-
-    // Floors
-    // EK's ask (2026-09-04): "the room are still nowhere near the size
-    // visually and functionally as the First 3D room we built... stop
-    // patching this and redo what needs to be done." Compared this
-    // component's rooms directly against the single room's real guest
-    // view (VirtualGalleryRoom.tsx, /museum/virtual-room/guest) and found
-    // the gap isn't really a camera number anymore (FOV/wall-height
-    // already matched) — it's that the single room has real material
-    // detail (a gold shelf-rail lattice on every wall, a tiled floor,
-    // glowing pedestals) giving strong scale cues that a flat single-
-    // color box never gives, no matter how correct its literal
-    // dimensions are. Adding the same kind of detail here: a tiled floor
-    // texture and gold rail trim on every wall.
-    function makeFloorTexture(baseHex: number) {
-      const canvas = document.createElement("canvas");
-      canvas.width = 256;
-      canvas.height = 256;
-      const ctx = canvas.getContext("2d");
-      if (!ctx) return null;
-      const base = new THREE.Color(baseHex);
-      ctx.fillStyle = `#${base.getHexString()}`;
-      ctx.fillRect(0, 0, 256, 256);
-      const light = base.clone().offsetHSL(0, 0, 0.05);
-      const dark = base.clone().offsetHSL(0, 0, -0.06);
-      const tile = 32;
-      for (let row = 0; row < 256 / tile; row++) {
-        for (let col = 0; col < 256 / tile; col++) {
-          ctx.fillStyle = `#${((row + col) % 2 === 0 ? light : dark).getHexString()}`;
-          ctx.globalAlpha = 0.35;
-          ctx.fillRect(col * tile, row * tile, tile - 2, tile - 2);
-        }
-      }
-      ctx.globalAlpha = 1;
-      const texture = new THREE.CanvasTexture(canvas);
-      texture.wrapS = THREE.RepeatWrapping;
-      texture.wrapT = THREE.RepeatWrapping;
-      texture.colorSpace = THREE.SRGBColorSpace;
-      return texture;
-    }
-
+    // Overnight Polish pass (2026-09-09), neutral architectural finish:
+    // "make the campus look like a coherent, intentionally unfinished
+    // museum shell rather than a collection of gray boxes... a real
+    // ceiling plane in every enclosed room... one coherent neutral floor
+    // family... no checkerboard developer-looking floor." Replaces the old
+    // per-room checkerboard-floor-only loop (no ceiling at all, hence the
+    // black voids visible through every legacy doorway) with the same
+    // stone-floor/ceiling/trim technique the 3 converted rooms already use
+    // — buildNeutralShell() below, campus-wide, each room keeping its own
+    // existing floorColor as a subtle tint rather than a bold checker tone.
+    // HUB keeps its own already-accepted gold finish (HUB_FINISH) instead
+    // of the shared neutral one — "different rooms may retain their
+    // existing accepted styles" — but goes through the exact same builder
+    // so it also gets a real ceiling and restrained trim instead of its own
+    // bespoke gap. PLAZA (the one intentionally open-air room) skips the
+    // ceiling to keep its open-sky forecourt character.
     for (const room of CAMPUS_ROOMS) {
-      // POP_CULTURE, TCG, and COLLECTION get their own neutral-finish shell
-      // (floor, ceiling, walls, doorways) below instead of the generic
-      // checkerboard-floor + center-name-sprite treatment every other room
-      // still uses this pass.
       if (room.id === "POP_CULTURE" || room.id === "TCG" || room.id === "COLLECTION") continue;
-
-      const { x, z } = roomCenter(room);
-      const floorTexture = makeFloorTexture(room.floorColor);
-      if (floorTexture) floorTexture.repeat.set(room.w / 4, room.d / 4);
-      const floor = new THREE.Mesh(
-        new THREE.PlaneGeometry(room.w, room.d),
-        new THREE.MeshStandardMaterial({
-          color: floorTexture ? 0xffffff : room.floorColor,
-          map: floorTexture,
-          roughness: 0.95,
-        })
-      );
-      floor.rotation.x = -Math.PI / 2;
-      floor.position.set(x, 0, z);
-      scene.add(floor);
-
-      if (room.label) {
-        const label = makeLabelSprite(room.label, room.id === "HUB" ? undefined : room.tierLabel);
-        if (label) {
-          label.position.set(x, WALL_HEIGHT - 1.4, z);
-          scene.add(label);
-        }
-      }
+      const finish: RoomFinish = room.id === "HUB" ? HUB_FINISH : { ...NEUTRAL_LEGACY_FINISH, floorTintColor: room.floorColor };
+      buildNeutralShell(scene, room, WALL_HEIGHT, finish, room.id !== "PLAZA");
     }
 
     // Shared-Wall Grid Plan (2026-09-08, replacing the rejected connection-
@@ -307,9 +246,14 @@ export default function VltdMuseumCampus() {
     // Wall materials are cached per room (not rebuilt per segment): all
     // three converted rooms share the SAME neutral material instance (they
     // share the same finish and, now, the same 21x26 module size), and
-    // every legacy room keeps sharing wallMaterial/hubWallMaterial exactly
-    // as before — "share wall finish materials/textures by finish identity"
-    // from the approved plan's performance-correction section.
+    // every legacy room gets its own createWallMaterial() instance sized to
+    // ITS OWN room.w/wallHeight — Overnight Polish pass (2026-09-09):
+    // legacy walls used to be one flat, ungrained color, which is what this
+    // pass's "subtle plaster/paint wall variation with correctly scaled
+    // texture detail" replaces. One shared instance (like the converted
+    // rooms' own) isn't safe here because legacy room sizes vary widely
+    // (21x26 up to 42x52) — grain repeat is scaled to room.w, so a single
+    // shared material would stretch on the larger ones.
     const roomWallMaterialCache = new Map<CampusRoomId, THREE.Material>();
     const sharedNeutralWallMaterial = createWallMaterial(NEUTRAL_PREVIEW_FINISH, roomById("POP_CULTURE"), WALL_HEIGHT);
     function roomWallMaterial(roomId: CampusRoomId): THREE.Material {
@@ -318,7 +262,7 @@ export default function VltdMuseumCampus() {
       const material =
         roomId === "POP_CULTURE" || roomId === "TCG" || roomId === "COLLECTION"
           ? sharedNeutralWallMaterial
-          : roomId === "HUB" ? hubWallMaterial : wallMaterial;
+          : createWallMaterial(roomId === "HUB" ? HUB_FINISH : NEUTRAL_LEGACY_FINISH, roomById(roomId), WALL_HEIGHT);
       roomWallMaterialCache.set(roomId, material);
       return material;
     }
@@ -359,35 +303,17 @@ export default function VltdMuseumCampus() {
       buildRoomTrim(scene, roomById(convertedId), wallSegments, NEUTRAL_PREVIEW_FINISH, WALL_HEIGHT, WALL_THICKNESS);
     }
 
-    // Every legacy room keeps its own existing gold rail-lattice trim (two
-    // heights, no baseboard) — unchanged visual identity, just driven by
-    // the new shared-wall segment list instead of the old per-room one, so
-    // it still terminates cleanly at every door casing.
-    const trimMaterial = new THREE.MeshStandardMaterial({ color: 0xc9a24a, roughness: 0.5, metalness: 0.25 });
-    const trimHeights = [2.4, 5.2];
-    const trimDepth = 0.06;
-    const trimThickness = 0.12;
+    // Overnight Polish pass (2026-09-09): every legacy room's old two-height
+    // gold rail-lattice trim is gone — "no broad gold stripes or repeated
+    // decorative wall lines... restrained baseboards that terminate at
+    // openings." Same buildRoomTrim() the 3 converted rooms use, with
+    // `includeRail: false` (baseboard only), applied to every enclosed
+    // legacy room and to HUB (its own finish, still rail-free). PLAZA keeps
+    // its existing exemption — an open forecourt, not a decorated room.
     for (const room of CAMPUS_ROOMS) {
       if (room.id === "POP_CULTURE" || room.id === "TCG" || room.id === "COLLECTION" || room.noWalls) continue;
-      for (const segment of wallSegments) {
-        if (segment.roomA !== room.id && segment.roomB !== room.id) continue;
-        const isNS = segment.wall === "x";
-        const facingSign = segment.roomA === room.id ? -1 : 1;
-        const { solid } = splitSegmentForDoor(segment);
-        for (const piece of solid) {
-          const span = piece.to - piece.from;
-          if (span <= 0.05) continue;
-          for (const h of trimHeights) {
-            if (h >= WALL_HEIGHT - 0.5) continue;
-            const rail = isNS
-              ? new THREE.Mesh(new THREE.BoxGeometry(span, trimThickness, trimDepth), trimMaterial)
-              : new THREE.Mesh(new THREE.BoxGeometry(trimDepth, trimThickness, span), trimMaterial);
-            if (isNS) rail.position.set((piece.from + piece.to) / 2, h, segment.fixed + (facingSign * WALL_THICKNESS) / 2);
-            else rail.position.set(segment.fixed + (facingSign * WALL_THICKNESS) / 2, h, (piece.from + piece.to) / 2);
-            scene.add(rail);
-          }
-        }
-      }
+      const finish = room.id === "HUB" ? HUB_FINISH : NEUTRAL_LEGACY_FINISH;
+      buildRoomTrim(scene, room, wallSegments, finish, WALL_HEIGHT, WALL_THICKNESS, false);
     }
 
     // Waypoint markers — EK watched bingebrowse.net with the walkthrough
