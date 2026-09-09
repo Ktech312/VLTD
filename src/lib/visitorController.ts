@@ -68,7 +68,19 @@ export function aimCamera(camera: THREE.PerspectiveCamera, cameraBody: THREE.Vec
 
 /** Per-frame easing of yaw/pitch toward their targets, and cameraBody
  * toward targetCameraBody. Mutates cameraBody in place (Vector3.lerp does);
- * returns the new yaw/pitch since those are plain numbers. */
+ * returns the new yaw/pitch since those are plain numbers.
+ *
+ * `positionRateOverride` (2026-09-09, campus wheel-glide tuning): optional,
+ * defaults to POSITION_EASE_RATE so the accepted Gallery/prototype (which
+ * never pass it) are byte-for-byte unchanged. EK's own physical mouse test
+ * measured the campus's wheel pipeline as applying every event immediately
+ * with no queue/backlog/delay (sub-15ms first-frame latency, steady 60fps) —
+ * the remaining "stop, then a jump" feel she reported is POSITION_EASE_RATE
+ * itself: each notch's motion is ~95% decayed within ~300ms, so a gap of
+ * 100-150ms between notches (which her real scroll cadence produced) reads
+ * as the camera settling before the next notch "kicks" it again. The campus
+ * is a much larger space than the Gallery's one room, so it's the one
+ * consumer where this override applies — see VltdMuseumCampus.tsx. */
 export function easeTowardTargets(
   yaw: number,
   targetYaw: number,
@@ -76,10 +88,11 @@ export function easeTowardTargets(
   targetPitch: number,
   cameraBody: THREE.Vector3,
   targetCameraBody: THREE.Vector3,
-  immediate = false
+  immediate = false,
+  positionRateOverride?: number
 ): { yaw: number; pitch: number } {
   const yawPitchRate = immediate ? 1 : YAW_EASE_RATE;
-  const positionRate = immediate ? 1 : POSITION_EASE_RATE;
+  const positionRate = immediate ? 1 : positionRateOverride ?? POSITION_EASE_RATE;
   const nextYaw = yaw + (targetYaw - yaw) * yawPitchRate;
   const nextPitch = pitch + (targetPitch - pitch) * yawPitchRate;
   cameraBody.lerp(targetCameraBody, positionRate);

@@ -937,6 +937,25 @@ export default function VltdMuseumCampus() {
     const TURN_RATE = 1.7; // rad/sec, Left/Right arrow turning
     const PITCH_LIMIT = MUSEUM_PITCH_LIMIT;
 
+    // EK's physical mouse test, 2026-09-09: real wheel-event diagnostics
+    // showed every notch applying immediately with no queue/backlog
+    // (sub-15ms first-frame latency, steady 60fps) — the "stop, then a
+    // jump" she still felt is POSITION_EASE_RATE (0.15/frame) itself: a
+    // single notch's motion is ~95% decayed within ~300ms, so her actual
+    // notch spacing (real gaps measured at 100-140ms) reads as the camera
+    // settling before the next notch kicks it again. Keyboard/walkTween
+    // never lag behind a target on the campus (see the comments above
+    // updateKeyboardMovement/tick), so wheel-driven position easing is the
+    // ONLY thing this rate governs here — safe to slow it without touching
+    // the shared POSITION_EASE_RATE the Gallery/prototype still use.
+    // Chosen so a notch's motion is still ~95% resolved by ~600ms (roughly
+    // double the shared rate's ~300ms), so consecutive notches up to
+    // ~150ms apart overlap into continuous motion instead of visibly
+    // settling between them. First-frame response is unchanged — this only
+    // stretches how long each notch's motion stays visible, never how soon
+    // it starts.
+    const WHEEL_POSITION_EASE_RATE = 0.08;
+
     let yaw = CAMPUS_SPAWN.yaw;
     let pitch = 0;
     let targetYaw = yaw;
@@ -1255,7 +1274,7 @@ export default function VltdMuseumCampus() {
           walkTween = null;
         }
       } else {
-        const eased = easeTowardTargets(yaw, targetYaw, pitch, targetPitch, cameraBody, targetCameraBody);
+        const eased = easeTowardTargets(yaw, targetYaw, pitch, targetPitch, cameraBody, targetCameraBody, false, WHEEL_POSITION_EASE_RATE);
         yaw = eased.yaw;
         pitch = eased.pitch;
       }
