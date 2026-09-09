@@ -227,9 +227,21 @@ export default function VltdMuseumCampus() {
     // so it also gets a real ceiling and restrained trim instead of its own
     // bespoke gap. PLAZA (the one intentionally open-air room) skips the
     // ceiling to keep its open-sky forecourt character.
+    // Live-verified fix: each room's floorColor was picked years ago as a
+    // CHECKERBOARD base tone (dark tiles alternating with slightly lighter
+    // ones), which reads fine as a two-tone pattern but goes near-black
+    // when reused as a flat multiplicative tint over the new stone floor
+    // texture — confirmed live in MISC (floorColor 0x2a2a2a, ~16% gray).
+    // Lightened 65% toward white here so every room keeps a whisper of its
+    // own color identity without losing the floor to darkness.
+    function lightenedFloorTint(hex: number): number {
+      return new THREE.Color(hex).lerp(new THREE.Color(0xffffff), 0.65).getHex();
+    }
     for (const room of CAMPUS_ROOMS) {
       if (room.id === "POP_CULTURE" || room.id === "TCG" || room.id === "COLLECTION") continue;
-      const finish: RoomFinish = room.id === "HUB" ? HUB_FINISH : { ...NEUTRAL_LEGACY_FINISH, floorTintColor: room.floorColor };
+      const finish: RoomFinish = room.id === "HUB"
+        ? HUB_FINISH
+        : { ...NEUTRAL_LEGACY_FINISH, floorTintColor: lightenedFloorTint(room.floorColor) };
       buildNeutralShell(scene, room, WALL_HEIGHT, finish, room.id !== "PLAZA");
     }
 
