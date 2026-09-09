@@ -323,12 +323,11 @@ export default function VltdMuseumCampus() {
       return material;
     }
 
-    // One shared frame material for every door — "share frame geometry and
-    // materials rather than cloning unique resources per door." (Frame
-    // geometry itself still comes fresh from doorwayKit.ts per call, same
-    // as the accepted personal room and the campus prototype both already
-    // do — that file is shared with those other consumers and isn't part
-    // of this pass.)
+    // One shared casing material for every door — "share frame geometry and
+    // materials rather than cloning unique resources per door." Campus doors
+    // build their own thin casing in campusRoomBuilder.ts's buildSharedWall()
+    // now (2026-09-08 doorway redesign); doorwayKit.ts's thicker frame is
+    // untouched and still serves the protected personal room/prototype.
     const doorFrameMaterial = new THREE.MeshStandardMaterial({ color: NEUTRAL_PREVIEW_FINISH.frameColor, roughness: 0.65, metalness: 0.04 });
 
     const wallSegments = computeCampusWallSegments();
@@ -552,8 +551,8 @@ export default function VltdMuseumCampus() {
 
     // Display shelves flanking a doorway (EK's ask, 2026-09-02) are gone —
     // every campus door, including SPORTS/CARDS/BUILT_BOTANY/GAMES's own
-    // HUB connections, now carries the real doorwayKit.ts frame + casing +
-    // signs from the shared-wall pass above instead of a plain gap with a
+    // HUB connections, now carries the thin campus casing + transom + signs
+    // from the shared-wall pass above instead of a plain gap with a
     // decorative shelf pair either side of it.
 
     // Next-pass handoff (2026-09-07), corrected per EK's review of 5820b85:
@@ -1135,98 +1134,85 @@ export default function VltdMuseumCampus() {
       );
       startWalkTween(destination);
     }
-    // EK's live foreground report on the frame-accumulated version of this
-    // fix: "it is better but not smooth... it doesn't get locked up and
-    // then over advance but now it's just more jittery but consistent
-    // moving forward." Root cause of the JITTER specifically (distinct from
-    // the earlier lockup-then-jump, which the per-frame accumulation
-    // already fixed): onWheel treated every raw wheel event as a FULL
-    // WHEEL_STEP regardless of its actual deltaY magnitude. A high-
-    // resolution wheel or trackpad emits several small-magnitude events per
-    // physical notch/swipe — treating each of THOSE as a full 0.42 step
-    // means one real notch becomes several full-size steps summed together,
-    // an uneven, disproportionate increment rather than one smooth motion
-    // sized to how far the input device actually reported moving.
+    // EK's foreground rejection of the frame-accumulated version of this
+    // fix: "Synthetic WheelEvent accumulation does not establish usability
+    // ... Remove the behavior where wheel input waits, accumulates, and
+    // then arrives as a capped jump ... Compare the campus controller
+    // directly with the accepted 3D Gallery controller, including event
+    // registration, delta normalization, animation timing, damping, frame
+    // updates, and collision application." The prior two attempts
+    // (mutating `cameraBody` directly per raw event, then accumulating a
+    // capped distance and applying it once per frame) both diverged from
+    // what the accepted room (VirtualGalleryRoom.tsx) actually does. Its
+    // moveCamera(): (1) is called once per raw wheel event, no
+    // accumulation/queue/cap of any kind; (2) does NOT scale by the event's
+    // deltaY magnitude at all — it's a fixed WHEEL_STEP per event, sign only
+    // (`event.deltaY > 0 ? "back" : "forward"`); (3) mutates
+    // `targetCameraBody` immediately and synchronously inside the handler,
+    // never `cameraBody`; (4) clamps that target with a simple synchronous
+    // bounds check; (5) leaves the RENDERED `cameraBody` untouched — the
+    // existing per-frame easeTowardTargets() (already running unconditionally
+    // in tick()'s `else` branch below) is what visibly moves the camera,
+    // chasing whatever `targetCameraBody` currently is.
     //
-    // normalizedWheelDistance() below scales each event's contribution
-    // proportionally to its own deltaY (normalized across deltaMode, since
-    // "line" and "page" mode report wildly different raw numbers than
-    // "pixel" mode), calibrated so a traditional single wheel notch
-    // (~100px, or ~3 lines) still maps to about one WHEEL_STEP. Several
-    // small events from one high-res notch now sum to roughly that same one
-    // step, not several. onWheel still only accumulates (never touches
-    // cameraBody directly) and tick() still applies the whole accumulated
-    // amount exactly once per rendered frame — the per-frame-accumulation
-    // fix for the earlier lockup-then-jump defect is unchanged.
-    let pendingWheelDistance = 0;
-    const MAX_PENDING_WHEEL_DISTANCE = WHEEL_STEP * 4;
+    // This is now that same model, one-for-one: onWheel mutates
+    // `targetCameraBody` directly, once per raw event, with a fixed
+    // WHEEL_STEP magnitude and no accumulation/cap/queue. The one deliberate
+    // campus-specific difference (kept, not something to "fix" here) is
+    // using `moveWithCollision` — a room-graph substep sweep — in place of
+    // the Gallery's simple box `clampPosition`, since the campus's walkable
+    // area isn't one rectangle; and using the rendered `yaw` for direction
+    // instead of `targetYaw`, per the Stage 1 comment above
+    // updateKeyboardMovement (a prior, already-accepted correction — not
+    // "merely the calculated direction," but the actual basis the Gallery
+    // itself doesn't need to diverge on since its single room has no
+    // multi-room heading lag to worry about). Because the mutation is
+    // immediate and synchronous, no input is ever queued or released later:
+    // each event's motion begins easing on the very next rendered frame from
+    // the position that event immediately advanced.
+    //
+    // Live diagnostics for EK's own physical foreground test — per her
+    // instruction, these exist so SHE can see the experienced behavior
+    // measured, not as a substitute for her testing it. One entry per raw
+    // wheel event (below) plus one entry per rendered frame (pushed in
+    // tick()), so "time until the first changed camera frame," "distance
+    // applied per frame," and "queued movement remaining" are all real
+    // measurements off the live scene graph, not estimates.
+    type WheelEventLogEntry = {
+      eventTimestamp: number; rawDeltaY: number; normalizedDelta: number;
+      requestedDistance: number; appliedDistance: number; collisionAdjustment: number;
+      yawAtEvent: number; firstChangedFrameLatencyMs: number | null;
+    };
+    const wheelEventLog: WheelEventLogEntry[] = [];
+    const pendingLatencyProbes: { eventTimestamp: number; beforeCameraBody: THREE.Vector3 }[] = [];
 
-    function normalizedWheelDistance(e: WheelEvent): number {
-      let pixels = e.deltaY;
-      if (e.deltaMode === 1) pixels *= 34; // WheelEvent.DOM_DELTA_LINE -> approx px
-      else if (e.deltaMode === 2) pixels *= 800; // WheelEvent.DOM_DELTA_PAGE -> approx px
-      return -(pixels / 100) * WHEEL_STEP;
-    }
-
-    // Shared-Wall Grid Plan, mouse-wheel correction: "Add temporary
-    // diagnostics that record physical wheel event arrival time, the next
-    // rendered frame time, event count, normalized deltaY, camera position
-    // before/after, rendered yaw, and current FPS/frame time." Exposed only
-    // through the existing debug hook (getWheelDiagnostics below) — never
-    // rendered on screen, and safe to leave in place since it costs nothing
-    // when nobody's reading it.
-    const wheelDiagnostics: {
-      pendingEvents: { eventTime: number; rawDeltaY: number; deltaMode: number; normalizedDistance: number; yawAtEvent: number }[];
-      log: {
-        frameTime: number; frameDurationMs: number; eventCount: number;
-        events: { eventTime: number; rawDeltaY: number; deltaMode: number; normalizedDistance: number; yawAtEvent: number }[];
-        appliedDistance: number; yaw: number; before: { x: number; z: number }; after: { x: number; z: number };
-      }[];
-    } = { pendingEvents: [], log: [] };
-    const frameTimesMs: number[] = [];
+    type FrameLogEntry = { frameTime: number; frameDeltaMs: number; distanceApplied: number; queuedMovementRemaining: number };
+    const frameLog: FrameLogEntry[] = [];
 
     function onWheel(e: WheelEvent) {
       e.preventDefault();
       walkTween = null;
-      const signedDistance = normalizedWheelDistance(e);
-      pendingWheelDistance = THREE.MathUtils.clamp(
-        pendingWheelDistance + signedDistance,
-        -MAX_PENDING_WHEEL_DISTANCE,
-        MAX_PENDING_WHEEL_DISTANCE
-      );
-      wheelDiagnostics.pendingEvents.push({
-        eventTime: performance.now(),
+      const eventTimestamp = performance.now();
+      const requestedDistance = WHEEL_STEP;
+      const signedStep = e.deltaY > 0 ? -WHEEL_STEP : WHEEL_STEP;
+      const beforeTarget = targetCameraBody.clone();
+      const delta = facingDirection(yaw).multiplyScalar(signedStep);
+      moveWithCollision(targetCameraBody, delta);
+      targetCameraBody.y = EYE_HEIGHT;
+      const appliedDistance = beforeTarget.distanceTo(targetCameraBody);
+
+      wheelEventLog.push({
+        eventTimestamp,
         rawDeltaY: e.deltaY,
-        deltaMode: e.deltaMode,
-        normalizedDistance: signedDistance,
+        normalizedDelta: signedStep,
+        requestedDistance,
+        appliedDistance,
+        collisionAdjustment: requestedDistance - appliedDistance,
         yawAtEvent: yaw,
+        firstChangedFrameLatencyMs: null,
       });
-    }
-
-    function applyPendingWheelMovement() {
-      if (wheelDiagnostics.pendingEvents.length === 0) return;
-      if (pendingWheelDistance === 0) { wheelDiagnostics.pendingEvents = []; return; }
-      const before = { x: cameraBody.x, z: cameraBody.z };
-      // Direction still uses the rendered `yaw`, not `targetYaw` — see the
-      // Stage 1 comment above updateKeyboardMovement.
-      const delta = facingDirection(yaw).multiplyScalar(pendingWheelDistance);
-      moveWithCollision(cameraBody, delta);
-      cameraBody.y = EYE_HEIGHT;
-      targetCameraBody.copy(cameraBody);
-
-      wheelDiagnostics.log.push({
-        frameTime: performance.now(),
-        frameDurationMs: frameTimesMs[frameTimesMs.length - 1] ?? 0,
-        eventCount: wheelDiagnostics.pendingEvents.length,
-        events: wheelDiagnostics.pendingEvents,
-        appliedDistance: pendingWheelDistance,
-        yaw,
-        before,
-        after: { x: cameraBody.x, z: cameraBody.z },
-      });
-      if (wheelDiagnostics.log.length > 40) wheelDiagnostics.log.shift();
-      wheelDiagnostics.pendingEvents = [];
-      pendingWheelDistance = 0;
+      if (wheelEventLog.length > 40) wheelEventLog.shift();
+      pendingLatencyProbes.push({ eventTimestamp, beforeCameraBody: cameraBody.clone() });
     }
 
     window.addEventListener("keydown", onKeyDown);
@@ -1255,11 +1241,9 @@ export default function VltdMuseumCampus() {
     function tick() {
       frameId = window.requestAnimationFrame(tick);
       const dt = Math.min(clock.getDelta(), 0.05);
-      frameTimesMs.push(dt * 1000);
-      if (frameTimesMs.length > 120) frameTimesMs.shift();
+      const frameStartBody = cameraBody.clone();
 
       updateKeyboardMovement(dt);
-      applyPendingWheelMovement();
 
       if (walkTween) {
         // Position only — no yaw/pitch change (see the walkTween comment above).
@@ -1276,6 +1260,30 @@ export default function VltdMuseumCampus() {
         pitch = eased.pitch;
       }
       cameraBody.y = EYE_HEIGHT;
+
+      // Diagnostics: one record per rendered frame — "frame delta,"
+      // "distance applied per frame" (however it happened: keyboard step or
+      // wheel-driven easing), and "queued movement remaining" (how far the
+      // rendered body still trails whatever the wheel/keyboard target is).
+      const frameTime = performance.now();
+      frameLog.push({
+        frameTime,
+        frameDeltaMs: dt * 1000,
+        distanceApplied: cameraBody.distanceTo(frameStartBody),
+        queuedMovementRemaining: cameraBody.distanceTo(targetCameraBody),
+      });
+      if (frameLog.length > 120) frameLog.shift();
+
+      // Resolve "time until the first changed camera frame" for any wheel
+      // event still waiting on one: the first tick where the rendered body
+      // actually differs from what it was the instant that event fired.
+      for (let i = pendingLatencyProbes.length - 1; i >= 0; i -= 1) {
+        const probe = pendingLatencyProbes[i];
+        if (cameraBody.equals(probe.beforeCameraBody)) continue;
+        const entry = wheelEventLog.find((w) => w.eventTimestamp === probe.eventTimestamp);
+        if (entry) entry.firstChangedFrameLatencyMs = frameTime - probe.eventTimestamp;
+        pendingLatencyProbes.splice(i, 1);
+      }
 
       // Museum Controls Correction Addendum: the accepted room aims its
       // camera via a calculated lookDirection + camera.lookAt(), never a
@@ -1363,17 +1371,21 @@ export default function VltdMuseumCampus() {
           previewRoomIds: lastPreviewRoomIds,
         };
       },
-      // Shared-Wall Grid Plan, mouse-wheel correction: real wheel-event
-      // timing/magnitude plus current frame timing, for EK's own physical
-      // mouse test — not a substitute for it. `log` entries are one per
-      // rendered frame that actually applied wheel movement, each carrying
-      // every raw event folded into that frame's single move.
+      // EK's foreground rejection: "The acceptance test is the experienced
+      // behavior, not successful synthetic event dispatch." These are for
+      // HER own physical mouse test, not a substitute for it — event
+      // timestamp, normalized delta, time until the first changed camera
+      // frame, distance applied per frame, queued movement remaining, frame
+      // delta, and collision adjustment, all measured off the live scene
+      // graph as they actually happened.
       getWheelDiagnostics: () => {
-        const recent = frameTimesMs.slice(-60);
-        const avgFrameMs = recent.length ? recent.reduce((sum, v) => sum + v, 0) / recent.length : 0;
+        const recentFrames = frameLog.slice(-60);
+        const avgFrameMs = recentFrames.length
+          ? recentFrames.reduce((sum, f) => sum + f.frameDeltaMs, 0) / recentFrames.length
+          : 0;
         return {
-          log: wheelDiagnostics.log.slice(-20),
-          recentFrameTimesMs: recent,
+          wheelEvents: wheelEventLog.slice(-20),
+          recentFrames,
           avgFrameMs,
           avgFps: avgFrameMs > 0 ? 1000 / avgFrameMs : 0,
         };
