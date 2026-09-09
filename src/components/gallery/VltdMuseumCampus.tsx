@@ -330,6 +330,17 @@ export default function VltdMuseumCampus() {
     // untouched and still serves the protected personal room/prototype.
     const doorFrameMaterial = new THREE.MeshStandardMaterial({ color: NEUTRAL_PREVIEW_FINISH.frameColor, roughness: 0.65, metalness: 0.04 });
 
+    // EK's doorway-refinement pass (2026-09-09): the campus has exactly one
+    // "museum entrance" — PLAZA<->HUB — which gets its own restrained,
+    // wider casing + integrated "VLTD MUSEUM" header instead of the
+    // ordinary per-room destination-sign kit every other connection uses.
+    function isMuseumEntrance(segment: { roomA: CampusRoomId; roomB: CampusRoomId | null }): boolean {
+      return (
+        (segment.roomA === "PLAZA" && segment.roomB === "HUB") ||
+        (segment.roomA === "HUB" && segment.roomB === "PLAZA")
+      );
+    }
+
     const wallSegments = computeCampusWallSegments();
     for (const segment of wallSegments) {
       const materialA = roomWallMaterial(segment.roomA);
@@ -337,6 +348,7 @@ export default function VltdMuseumCampus() {
       buildSharedWall(scene, segment, materialA, materialB, doorFrameMaterial, {
         wallHeight: WALL_HEIGHT,
         wallThickness: WALL_THICKNESS,
+        style: isMuseumEntrance(segment) ? "entrance" : "ordinary",
       });
     }
 
@@ -447,61 +459,14 @@ export default function VltdMuseumCampus() {
       renderer.domElement.style.cursor = marker ? "pointer" : "";
     }
 
-    // Exterior facade — EK's ask (2026-09-02), "just some visual fun,"
-    // inspired by classical museum architecture (columns, pediment) but NOT
-    // copying any specific real museum's exact look. Purely decorative: the
-    // facade sits just outside the Hub's real north wall rather than
-    // replacing it.
-    //
-    // Recentered 2026-09-09: this facade predates the Shared-Wall Grid Plan
-    // and was built symmetric around x=54 (columns) / x=54.99 (pediment) —
-    // whatever the PLAZA-HUB door's coordinate happened to be before the
-    // grid rewrite. The grid moved that door to its exact-module center at
-    // x=52.5 without this facade being updated, which is also what caused
-    // the entrance-step tiles removed above to read as "heavily offset."
-    // Same fix applied here: recentered on the door's real x=52.5 (PLAZA's
-    // own center — see CAMPUS_SPAWN), same relative column spacing as
-    // before (+-8/16/24), so the columns/pediment actually frame the
-    // opening beneath them instead of standing off to one side of it.
-    {
-      const stoneMaterial = new THREE.MeshStandardMaterial({ color: 0xd9d0bd, roughness: 0.75 });
-      const facadeZ = -0.9;
-      const doorwayCenterX = 52.5;
-      const columnXs = [-24, -16, -8, 8, 16, 24].map((offset) => doorwayCenterX + offset);
-      for (const x of columnXs) {
-        const column = new THREE.Mesh(new THREE.CylinderGeometry(0.55, 0.65, WALL_HEIGHT, 12), stoneMaterial);
-        column.position.set(x, WALL_HEIGHT / 2, facadeZ);
-        scene.add(column);
-        const capital = new THREE.Mesh(new THREE.BoxGeometry(1.5, 0.3, 1.5), stoneMaterial);
-        capital.position.set(x, WALL_HEIGHT + 0.15, facadeZ);
-        scene.add(capital);
-      }
-
-      const pedimentShape = new THREE.Shape();
-      pedimentShape.moveTo(-13, 0);
-      pedimentShape.lineTo(13, 0);
-      pedimentShape.lineTo(0, 4);
-      pedimentShape.closePath();
-      const pediment = new THREE.Mesh(
-        new THREE.ExtrudeGeometry(pedimentShape, { depth: 1.3, bevelEnabled: false }),
-        stoneMaterial
-      );
-      pediment.position.set(doorwayCenterX, WALL_HEIGHT + 0.3, facadeZ - 0.65);
-      scene.add(pediment);
-
-      // The 3 stacked stone step boxes that used to sit here are removed —
-      // EK's review of the current Shared-Wall Grid Plan spawn view: "Three
-      // wide gray horizontal tiers appear across the floor in front of the
-      // opening, heavily offset to the left." Confirmed via world-space
-      // Box3 (debugMeshesInRegion below), not by source name: these boxes
-      // (real height, stacked 0.16/0.32/0.48 off the floor) sat at x=54.99 —
-      // calibrated to this facade's own pre-grid layout, never updated when
-      // the Shared-Wall Grid Plan moved the actual PLAZA-HUB door to its
-      // exact-module center at x=52.5, a 2.49-unit mismatch. They were
-      // purely decorative ("just some visual fun," 2026-09-02) and directly
-      // violate "one continuous flush floor through every shared doorway" —
-      // removed rather than recentered.
-    }
+    // The freestanding exterior facade (6 columns/capitals + pediment, EK's
+    // "just some visual fun" ask from 2026-09-02, recentered 2026-09-09) is
+    // removed entirely — EK's doorway-refinement pass: "Remove the two
+    // widely separated legacy columns. They currently read as unrelated
+    // leftover geometry. Build the entrance from the shared opening itself."
+    // The PLAZA-HUB entrance's identity ("VLTD MUSEUM") now comes from that
+    // door's own casing/header — see buildSharedWall's `style: "entrance"`
+    // call below — not a separate structure standing apart from the wall.
 
     // Grand Hall enhancement — a lit "skylight" ceiling accent and a floor
     // medallion, so the Hub reads as a real grand hall rather than a plain box.

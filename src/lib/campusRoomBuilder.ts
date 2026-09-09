@@ -233,6 +233,23 @@ const CASING_TRIM_DEPTH = 0.04; // projection past each wall face — subtle tri
 const CASING_HEAD_HEIGHT = 0.12;
 const CASING_HEADROOM = 1.0; // ceiling clearance reserved for the head casing + transom band
 
+// PLAZA<->HUB entrance (2026-09-09 doorway-refinement pass): EK split
+// doorways into two kinds — every ordinary connection keeps the thin kit
+// above unchanged, but the one campus entrance gets its own restrained
+// treatment: "a slightly wider, more substantial casing and integrated
+// header," "VLTD MUSEUM" as the entrance identity built into that header,
+// no freestanding columns/pediment ("build the entrance from the shared
+// opening itself"). Still the same jamb+head+transom shape as the ordinary
+// kit below, just larger and carrying one identity sign instead of the
+// usual per-room destination plaques — "restrained... the final Main Hall
+// theme has not been designed yet."
+const ENTRANCE_CASING_TRIM_WIDTH = 0.22;
+const ENTRANCE_CASING_TRIM_DEPTH = 0.07;
+const ENTRANCE_CASING_HEAD_HEIGHT = 0.34;
+const ENTRANCE_LABEL = "VLTD MUSEUM";
+
+export type DoorwayStyle = "ordinary" | "entrance";
+
 /** Shared-Wall Grid Plan: builds ONE physical wall for a campusLayout.ts
  * CampusWallSegment — the segment's roomA face gets `materialA`, its roomB
  * face (if any) gets `materialB`; an exterior segment (`segment.roomB ===
@@ -252,9 +269,13 @@ export function buildSharedWall(
   materialA: THREE.Material,
   materialB: THREE.Material | null,
   frameMaterial: THREE.Material,
-  opts: { wallHeight: number; wallThickness: number }
+  opts: { wallHeight: number; wallThickness: number; style?: DoorwayStyle }
 ): void {
   const { wallHeight, wallThickness } = opts;
+  const isEntrance = opts.style === "entrance";
+  const trimWidth = isEntrance ? ENTRANCE_CASING_TRIM_WIDTH : CASING_TRIM_WIDTH;
+  const trimDepth = isEntrance ? ENTRANCE_CASING_TRIM_DEPTH : CASING_TRIM_DEPTH;
+  const headHeight = isEntrance ? ENTRANCE_CASING_HEAD_HEIGHT : CASING_HEAD_HEIGHT;
   const isNS = segment.wall === "x";
   const faceB = materialB ?? materialA;
   // BoxGeometry face order: [+x,-x,+y,-y,+z,-z]. For an 'x' wall (fixed Z),
@@ -296,31 +317,34 @@ export function buildSharedWall(
   // Thin jamb+head casing, centered on the seam between the solid wall and
   // the cut opening so it covers that seam instead of standing off from it —
   // "fitted architectural casing," not the old thick freestanding posts.
+  // The one entrance door uses larger trimWidth/trimDepth/headHeight
+  // (resolved above) but the exact same construction — "build the entrance
+  // from the shared opening itself," not a separate structure.
   const framePos = point(door.gapCenter, 0);
   const openingClearHeight = wallHeight - CASING_HEADROOM;
-  const jambHeight = openingClearHeight + CASING_HEAD_HEIGHT / 2;
-  const casingDepth = wallThickness + CASING_TRIM_DEPTH * 2;
+  const jambHeight = openingClearHeight + headHeight / 2;
+  const casingDepth = wallThickness + trimDepth * 2;
   const jambGeom = isNS
-    ? new THREE.BoxGeometry(CASING_TRIM_WIDTH, jambHeight, casingDepth)
-    : new THREE.BoxGeometry(casingDepth, jambHeight, CASING_TRIM_WIDTH);
+    ? new THREE.BoxGeometry(trimWidth, jambHeight, casingDepth)
+    : new THREE.BoxGeometry(casingDepth, jambHeight, trimWidth);
   for (const side of [-1, 1]) {
     const jamb = new THREE.Mesh(jambGeom.clone(), frameMaterial);
-    const jambPos = point(door.gapCenter + side * (half + CASING_TRIM_WIDTH / 2), 0);
+    const jambPos = point(door.gapCenter + side * (half + trimWidth / 2), 0);
     jamb.position.set(jambPos.x, jambHeight / 2, jambPos.z);
     scene.add(jamb);
   }
-  const headWidth = openingWidth + CASING_TRIM_WIDTH * 2;
+  const headWidth = openingWidth + trimWidth * 2;
   const headGeom = isNS
-    ? new THREE.BoxGeometry(headWidth, CASING_HEAD_HEIGHT, casingDepth)
-    : new THREE.BoxGeometry(casingDepth, CASING_HEAD_HEIGHT, headWidth);
+    ? new THREE.BoxGeometry(headWidth, headHeight, casingDepth)
+    : new THREE.BoxGeometry(casingDepth, headHeight, headWidth);
   const head = new THREE.Mesh(headGeom, frameMaterial);
-  head.position.set(framePos.x, openingClearHeight + CASING_HEAD_HEIGHT / 2, framePos.z);
+  head.position.set(framePos.x, openingClearHeight + headHeight / 2, framePos.z);
   scene.add(head);
 
   // Transom: closes the gap from the casing head to the ceiling using the
   // SAME per-face materials as the rest of this wall — a short band that
   // reads as the wall continuing over the door, not a separate block.
-  const transomBottom = openingClearHeight + CASING_HEAD_HEIGHT;
+  const transomBottom = openingClearHeight + headHeight;
   const transomHeight = wallHeight - transomBottom;
   if (transomHeight > 0.02) {
     const transomGeom = isNS
@@ -334,14 +358,27 @@ export function buildSharedWall(
   // No threshold mesh — the two rooms' own floor planes already meet flush
   // at this exact shared-wall coordinate, so there's nothing to insert.
 
+  const rotationTowardA = isNS ? Math.PI : -Math.PI / 2;
+  const rotationTowardB = isNS ? 0 : Math.PI / 2;
+
+  if (isEntrance) {
+    // One identity sign, integrated into the header (mounted flush on its
+    // own face, not floating apart from it), on the approach face only —
+    // "restrained," not a sign on every face like an ordinary connection.
+    const faceAPos = point(door.gapCenter, -(casingDepth / 2 + 0.02));
+    buildDestinationSign(
+      scene, faceAPos.x, openingClearHeight + headHeight / 2, faceAPos.z,
+      rotationTowardA, ENTRANCE_LABEL, headWidth * 0.82, headHeight * 0.72
+    );
+    return;
+  }
+
   // Signs: one per face, integrated into the transom band at a restrained
   // size, each naming the room on the OTHER side. Skipped on whichever face
   // would otherwise name an unlabeled room (PLAZA, the one noWalls room that
   // still gets a real door here — HUB's entrance) rather than mount a blank
   // plaque.
   const signY = transomBottom + Math.min(0.22, Math.max(transomHeight / 2, 0.1));
-  const rotationTowardA = isNS ? Math.PI : -Math.PI / 2;
-  const rotationTowardB = isNS ? 0 : Math.PI / 2;
   if (roomB.label) {
     const faceAPos = point(door.gapCenter, -(wallThickness / 2 + 0.01));
     buildDestinationSign(scene, faceAPos.x, signY, faceAPos.z, rotationTowardA, roomB.label, 1.5, 0.34);
