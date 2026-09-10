@@ -26,7 +26,7 @@ import {
   type CampusWallSegment,
   type WallSide,
 } from "./campusLayout";
-import { createGrainTexture, createStoneFloorTexture } from "../components/gallery/galleryTextures";
+import { createStoneFloorTexture } from "../components/gallery/galleryTextures";
 
 export type RoomDoorway = {
   side: WallSide;
@@ -133,14 +133,76 @@ export type RoomLightGroups = { full: THREE.Group; preview: THREE.Group };
 
 export type WallSpan = { wall: WallSide; from: number; to: number; fixed: number; rotationY: number };
 
+// Visual Overnight Pass (2026-09-10): live review found every campus wall
+// reading as flat "game-gray" regardless of room — the shared grain texture
+// (galleryTextures.ts, still untouched here and unaffected by this change)
+// is real but low-amplitude, tuned for the Gallery's own single 21x26 room,
+// and its `repeat` was being scaled by TILE COUNT (room.w / 5): the wider
+// the wall, the more that already-subtle noise gets stretched per tile,
+// until it's imperceptible on HUB's 63-unit span. A zoomed screenshot of a
+// bare HUB/AUTOMOTIVE wall showed literally zero visible variation.
+// Campus-only (this file, not galleryTextures.ts, so the accepted personal
+// Gallery/prototype rooms are byte-for-byte unaffected) architectural panel
+// texture below: one vertical reveal per PANEL_WIDTH of REAL WORLD UNITS,
+// not per fixed tile count — a panel reads at the same physical scale on a
+// 21-unit room and a 63-unit one, so "enlarge the spacing and rhythm of
+// architectural details" for large rooms falls out for free rather than
+// needing a second large-room code path.
+const PANEL_WIDTH = 4.2; // world units per panel bay
+
+function createArchitecturalPanelTexture(): THREE.CanvasTexture {
+  const width = 256;
+  const height = 560;
+  const canvas = document.createElement("canvas");
+  canvas.width = width;
+  canvas.height = height;
+  const ctx = canvas.getContext("2d")!;
+
+  // Same fine multiplicative grain formula as the shared texture generator
+  // (kept inline rather than imported, so this stays one self-contained
+  // campus-only texture) — subtle paint/plaster variation underneath the
+  // panel reveal, not the main read on its own.
+  let seed = 47;
+  const random = () => ((seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0) / 4294967296);
+  const pixels = ctx.createImageData(width, height);
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      const i = (y * width + x) * 4;
+      const grain = Math.sin(x * 0.85 + y * 0.31) * 1.1 + Math.sin(x * 0.22 - y * 0.57) * 0.9;
+      const tone = 217 + grain + (random() - 0.5) * 8;
+      pixels.data.set([tone, tone - 3, tone - 8, 255], i);
+    }
+  }
+  ctx.putImageData(pixels, 0, 0);
+
+  // One vertical reveal, centered in the tile — a soft shadow/highlight
+  // pair reading as a shallow architectural panel seam (not a hard line),
+  // restrained enough to avoid "busy repeated lines."
+  const cx = width / 2;
+  const reveal = ctx.createLinearGradient(cx - 11, 0, cx + 11, 0);
+  reveal.addColorStop(0, "rgba(0,0,0,0)");
+  reveal.addColorStop(0.4, "rgba(18,14,9,0.18)");
+  reveal.addColorStop(0.52, "rgba(255,250,240,0.12)");
+  reveal.addColorStop(0.64, "rgba(18,14,9,0.12)");
+  reveal.addColorStop(1, "rgba(0,0,0,0)");
+  ctx.fillStyle = reveal;
+  ctx.fillRect(cx - 11, 0, 22, height);
+
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
+  texture.anisotropy = 4;
+  return texture;
+}
+
 // 2026-09-08: one factory for "this room's own wall material," used both by
 // its own wall faces and reused by name for continuity — no separate flat
 // lookalike material anywhere a wall face needs to read as this room's wall.
-export function createWallMaterial(finish: RoomFinish, room: CampusRoom, wallHeight: number): THREE.MeshStandardMaterial {
-  const grain = createGrainTexture();
-  grain.repeat.set(room.w / 5, wallHeight / 3);
+export function createWallMaterial(finish: RoomFinish, room: CampusRoom): THREE.MeshStandardMaterial {
+  const panel = createArchitecturalPanelTexture();
+  panel.repeat.set(Math.max(1, Math.round(room.w / PANEL_WIDTH)), 1);
   return new THREE.MeshStandardMaterial({
-    color: finish.wallColor, map: grain, bumpMap: grain, bumpScale: 0.045, roughness: 0.88, metalness: 0,
+    color: finish.wallColor, map: panel, bumpMap: panel, bumpScale: 0.05, roughness: 0.85, metalness: 0,
   });
 }
 
@@ -159,19 +221,62 @@ function wallRotationY(side: WallSide): number {
  * see buildSharedWall() and buildRoomTrim() below, both driven by
  * campusLayout.ts's computeCampusWallSegments() instead of a per-room
  * accounting. */
-export function buildRoomShell(scene: THREE.Scene, module: RoomModule): RoomLightGroups {
-  const { room, wallHeight, finish } = module;
+// Visual Overnight Pass (2026-09-10): ceilings previously read as one flat,
+// undecorated plane — no rhythm at any room size, most noticeable in HUB and
+// the other large legacy rooms where a single unbroken 63x78 plane has
+// nothing to suggest real architecture. `createCeilingBayTexture()` draws
+// one restrained seam per bay tile, repeat scaled to THIS room's own span
+// (world units, same approach as the wall panel texture above) so a small
+// room gets a tight bay rhythm and a large one gets a proportionally wider
+// one — "enlarge the spacing and rhythm of architectural details" for large
+// rooms, without a separate large-room code path.
+//
+// buildRoomShell() and buildNeutralShell() previously duplicated this exact
+// ceiling+trim block verbatim (drifting only in the removed light-fixture
+// code around them) — extracted into one shared function both now call, so
+// the ceiling technique can't drift between "converted" and "legacy" rooms
+// again, and there's one texture generator to tune instead of two.
+const CEILING_BAY_SIZE = 7.8; // world units per ceiling bay
+
+function createCeilingBayTexture(roomWidth: number, roomDepth: number): THREE.CanvasTexture {
+  const canvas = document.createElement("canvas");
+  canvas.width = canvas.height = 512;
+  const ctx = canvas.getContext("2d")!;
+
+  let seed = 211;
+  const random = () => ((seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0) / 4294967296);
+  const pixels = ctx.createImageData(512, 512);
+  for (let y = 0; y < 512; y++) {
+    for (let x = 0; x < 512; x++) {
+      const i = (y * 512 + x) * 4;
+      const grain = Math.sin(x * 0.6 + y * 0.4) * 1.0 + Math.sin(x * 0.18 - y * 0.5) * 0.8;
+      const tone = 222 + grain + (random() - 0.5) * 6;
+      pixels.data.set([tone, tone - 2, tone - 6, 255], i);
+    }
+  }
+  ctx.putImageData(pixels, 0, 0);
+
+  // One restrained seam per bay edge — a thin, soft line forming a grid once
+  // tiled, not a bold coffer pattern.
+  ctx.strokeStyle = "rgba(20,16,10,0.14)";
+  ctx.lineWidth = 2;
+  ctx.strokeRect(1, 1, 510, 510);
+
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
+  texture.repeat.set(
+    Math.max(1, Math.round(roomWidth / CEILING_BAY_SIZE)),
+    Math.max(1, Math.round(roomDepth / CEILING_BAY_SIZE))
+  );
+  texture.anisotropy = 4;
+  return texture;
+}
+
+function buildCeilingAndTrim(scene: THREE.Scene, room: CampusRoom, wallHeight: number, finish: RoomFinish): void {
   const bounds = roomBounds(room);
   const center = { x: room.x + room.w / 2, z: room.z + room.d / 2 };
-  const lights = new THREE.Group();
-  lights.name = `room-full:${room.id}`;
-  scene.add(lights);
-  const preview = new THREE.Group();
-  preview.name = `room-preview:${room.id}`;
-  scene.add(preview);
 
-  const ceilingGrain = createGrainTexture();
-  ceilingGrain.repeat.set(room.w / 5, room.d / 5);
   // Live-verified fix (2026-09-09): a downward-facing ceiling plane gets
   // almost no incident light in this scene — the "sun" DirectionalLight
   // shines down onto upward faces only (a downward normal can't receive a
@@ -181,22 +286,12 @@ export function buildRoomShell(scene: THREE.Scene, module: RoomModule): RoomLigh
   // mesh. A small self-illumination (not a new Light object — no new
   // entries in getSceneStats' light count) keeps every ceiling visibly lit
   // regardless of viewing angle or room size, without adding fixtures.
+  const ceilingTexture = createCeilingBayTexture(room.w, room.d);
   const ceilingMaterial = new THREE.MeshStandardMaterial({
-    color: finish.ceilingColor, map: ceilingGrain, roughness: 0.92,
+    color: finish.ceilingColor, map: ceilingTexture, roughness: 0.92,
     emissive: finish.ceilingColor, emissiveIntensity: 0.22,
   });
-  // Overnight Polish pass: repeat scaled to this room's own size (was a
-  // fixed 10.5x13 that only happened to fit POP_CULTURE/TCG/COLLECTION,
-  // all 21x26 — "no stretched texture spanning several module bays" once
-  // this floor technique is reused for rooms of other sizes below).
-  const floorTexture = createStoneFloorTexture(finish.floorJointColor, room.w / 2, room.d / 2);
-  const floorMaterial = new THREE.MeshStandardMaterial({ color: finish.floorTintColor ?? 0xffffff, map: floorTexture, roughness: 0.62 });
   const ceilingTrimMaterial = new THREE.MeshStandardMaterial({ color: finish.ceilingTrimColor, roughness: 0.7 });
-
-  const floor = new THREE.Mesh(new THREE.PlaneGeometry(room.w, room.d), floorMaterial);
-  floor.rotation.x = -Math.PI / 2;
-  floor.position.set(center.x, 0, center.z);
-  scene.add(floor);
 
   const ceiling = new THREE.Mesh(new THREE.PlaneGeometry(room.w, room.d), ceilingMaterial);
   ceiling.rotation.x = Math.PI / 2;
@@ -218,6 +313,32 @@ export function buildRoomShell(scene: THREE.Scene, module: RoomModule): RoomLigh
   const trimEast = new THREE.Mesh(trimEW.clone(), ceilingTrimMaterial);
   trimEast.position.set(bounds.x1, wallHeight - trimHeight / 2, center.z);
   scene.add(trimEast);
+}
+
+export function buildRoomShell(scene: THREE.Scene, module: RoomModule): RoomLightGroups {
+  const { room, wallHeight, finish } = module;
+  const bounds = roomBounds(room);
+  const center = { x: room.x + room.w / 2, z: room.z + room.d / 2 };
+  const lights = new THREE.Group();
+  lights.name = `room-full:${room.id}`;
+  scene.add(lights);
+  const preview = new THREE.Group();
+  preview.name = `room-preview:${room.id}`;
+  scene.add(preview);
+
+  // Overnight Polish pass: repeat scaled to this room's own size (was a
+  // fixed 10.5x13 that only happened to fit POP_CULTURE/TCG/COLLECTION,
+  // all 21x26 — "no stretched texture spanning several module bays" once
+  // this floor technique is reused for rooms of other sizes below).
+  const floorTexture = createStoneFloorTexture(finish.floorJointColor, room.w / 2, room.d / 2);
+  const floorMaterial = new THREE.MeshStandardMaterial({ color: finish.floorTintColor ?? 0xffffff, map: floorTexture, roughness: 0.62 });
+
+  const floor = new THREE.Mesh(new THREE.PlaneGeometry(room.w, room.d), floorMaterial);
+  floor.rotation.x = -Math.PI / 2;
+  floor.position.set(center.x, 0, center.z);
+  scene.add(floor);
+
+  buildCeilingAndTrim(scene, room, wallHeight, finish);
 
   for (const lz of [bounds.z0 + room.d * 0.3, bounds.z0 + room.d * 0.7]) {
     const lx = center.x;
@@ -274,7 +395,6 @@ export function buildRoomShell(scene: THREE.Scene, module: RoomModule): RoomLigh
 export function buildNeutralShell(
   scene: THREE.Scene, room: CampusRoom, wallHeight: number, finish: RoomFinish, includeCeiling = true
 ): void {
-  const bounds = roomBounds(room);
   const center = { x: room.x + room.w / 2, z: room.z + room.d / 2 };
 
   const floorTexture = createStoneFloorTexture(finish.floorJointColor, room.w / 2, room.d / 2);
@@ -285,44 +405,7 @@ export function buildNeutralShell(
   scene.add(floor);
 
   if (!includeCeiling) return;
-
-  const ceilingGrain = createGrainTexture();
-  ceilingGrain.repeat.set(room.w / 5, room.d / 5);
-  // Live-verified fix (2026-09-09): a downward-facing ceiling plane gets
-  // almost no incident light in this scene — the "sun" DirectionalLight
-  // shines down onto upward faces only (a downward normal can't receive a
-  // downward light), and the HemisphereLight's dim "ground" color is the
-  // only ambient contribution — so even a light base color rendered as a
-  // solid black band across HUB's ceiling once it (correctly) got a real
-  // mesh. A small self-illumination (not a new Light object — no new
-  // entries in getSceneStats' light count) keeps every ceiling visibly lit
-  // regardless of viewing angle or room size, without adding fixtures.
-  const ceilingMaterial = new THREE.MeshStandardMaterial({
-    color: finish.ceilingColor, map: ceilingGrain, roughness: 0.92,
-    emissive: finish.ceilingColor, emissiveIntensity: 0.22,
-  });
-  const ceilingTrimMaterial = new THREE.MeshStandardMaterial({ color: finish.ceilingTrimColor, roughness: 0.7 });
-
-  const ceiling = new THREE.Mesh(new THREE.PlaneGeometry(room.w, room.d), ceilingMaterial);
-  ceiling.rotation.x = Math.PI / 2;
-  ceiling.position.set(center.x, wallHeight, center.z);
-  scene.add(ceiling);
-
-  const trimHeight = 0.12;
-  const trimNS = new THREE.BoxGeometry(room.w, trimHeight, 0.1);
-  const trimEW = new THREE.BoxGeometry(0.1, trimHeight, room.d);
-  const trimNorth = new THREE.Mesh(trimNS, ceilingTrimMaterial);
-  trimNorth.position.set(center.x, wallHeight - trimHeight / 2, bounds.z0);
-  scene.add(trimNorth);
-  const trimSouth = new THREE.Mesh(trimNS.clone(), ceilingTrimMaterial);
-  trimSouth.position.set(center.x, wallHeight - trimHeight / 2, bounds.z1);
-  scene.add(trimSouth);
-  const trimWest = new THREE.Mesh(trimEW, ceilingTrimMaterial);
-  trimWest.position.set(bounds.x0, wallHeight - trimHeight / 2, center.z);
-  scene.add(trimWest);
-  const trimEast = new THREE.Mesh(trimEW.clone(), ceilingTrimMaterial);
-  trimEast.position.set(bounds.x1, wallHeight - trimHeight / 2, center.z);
-  scene.add(trimEast);
+  buildCeilingAndTrim(scene, room, wallHeight, finish);
 }
 
 const destinationSignFaceTextures = new WeakMap<THREE.Scene, THREE.Texture>();

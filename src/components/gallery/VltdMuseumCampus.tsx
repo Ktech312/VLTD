@@ -183,8 +183,33 @@ export default function VltdMuseumCampus() {
     const mount = mountRef.current;
     if (!mount) return;
 
+    // Visual Overnight Pass (2026-09-10): a flat scene.background color read
+    // as a solid dark panel wherever it was actually visible — most
+    // noticeably standing in HUB facing the PLAZA entrance, since PLAZA is
+    // the one intentionally open-air room (no ceiling): with nothing above
+    // its floor but this flat fill, the "open forecourt" reads as a wall of
+    // solid navy blocking the doorway rather than open sky. A cheap gradient
+    // texture (no skybox mesh, no new geometry) gives it atmospheric depth
+    // instead — the bottom stop matches the existing fog color exactly so
+    // distant geometry still fades seamlessly into it.
+    function createSkyGradientTexture(): THREE.CanvasTexture {
+      const canvas = document.createElement("canvas");
+      canvas.width = 8;
+      canvas.height = 256;
+      const ctx = canvas.getContext("2d")!;
+      const gradient = ctx.createLinearGradient(0, 0, 0, 256);
+      gradient.addColorStop(0, "#1c3352");
+      gradient.addColorStop(0.55, "#102240");
+      gradient.addColorStop(1, "#081527");
+      ctx.fillStyle = gradient;
+      ctx.fillRect(0, 0, 8, 256);
+      const texture = new THREE.CanvasTexture(canvas);
+      texture.colorSpace = THREE.SRGBColorSpace;
+      return texture;
+    }
+
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x081527);
+    scene.background = createSkyGradientTexture();
     scene.fog = new THREE.Fog(0x081527, 40, 140);
 
     // Size off window.innerWidth/Height, not mount.clientWidth/Height: a
@@ -269,14 +294,14 @@ export default function VltdMuseumCampus() {
     // (21x26 up to 42x52) — grain repeat is scaled to room.w, so a single
     // shared material would stretch on the larger ones.
     const roomWallMaterialCache = new Map<CampusRoomId, THREE.Material>();
-    const sharedNeutralWallMaterial = createWallMaterial(NEUTRAL_PREVIEW_FINISH, roomById("POP_CULTURE"), WALL_HEIGHT);
+    const sharedNeutralWallMaterial = createWallMaterial(NEUTRAL_PREVIEW_FINISH, roomById("POP_CULTURE"));
     function roomWallMaterial(roomId: CampusRoomId): THREE.Material {
       const cached = roomWallMaterialCache.get(roomId);
       if (cached) return cached;
       const material =
         roomId === "POP_CULTURE" || roomId === "TCG" || roomId === "COLLECTION"
           ? sharedNeutralWallMaterial
-          : createWallMaterial(roomId === "HUB" ? HUB_FINISH : NEUTRAL_LEGACY_FINISH, roomById(roomId), WALL_HEIGHT);
+          : createWallMaterial(roomId === "HUB" ? HUB_FINISH : NEUTRAL_LEGACY_FINISH, roomById(roomId));
       roomWallMaterialCache.set(roomId, material);
       return material;
     }
@@ -606,7 +631,20 @@ export default function VltdMuseumCampus() {
       textureLoader.load(url, (texture) => {
         if (contentCancelled) return;
         texture.colorSpace = THREE.SRGBColorSpace;
-        const artMaterial = new THREE.MeshStandardMaterial({ map: texture, roughness: 0.6 });
+        // Visual Overnight Pass (2026-09-10): every legacy room's artwork
+        // goes through this function, and none of it has ever had a
+        // dedicated picture light — only whatever ambient/hemisphere light
+        // reaches that wall. campusRoomBuilder.ts's own placeArtwork()
+        // (the 3 converted rooms) already has an accepted fallback for
+        // exactly this case (`withRealLight: false`): a modest emissive
+        // self-lift keyed off the artwork's own texture, not a new Light
+        // object — "remove overlapping or redundant lights where material
+        // emissive lift can do the same job" applies just as well in the
+        // other direction here, where there was no light to begin with.
+        const artMaterial = new THREE.MeshStandardMaterial({
+          map: texture, roughness: 0.6,
+          emissive: 0xffffff, emissiveMap: texture, emissiveIntensity: 0.2,
+        });
         const art = new THREE.Mesh(new THREE.PlaneGeometry(size * 0.88, size * 0.88), artMaterial);
         art.position.set(x, y, z + 0.05);
         scene.add(art);
