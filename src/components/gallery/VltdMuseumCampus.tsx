@@ -1610,14 +1610,33 @@ export default function VltdMuseumCampus() {
       renderer.domElement.removeEventListener("pointerdown", onPointerDown);
       renderer.domElement.removeEventListener("wheel", onWheel);
       pressedKeys.clear();
+      // Visual Overnight Pass (2026-09-10): every room material here carries
+      // at least one generated CanvasTexture (wall panels, ceiling bays,
+      // floor stone, sign faces/labels, artwork) — material.dispose() alone
+      // does not release the textures assigned to it, only the material
+      // object itself. Disposing every known texture slot alongside each
+      // material closes that gap.
+      function disposeMaterialTextures(material: THREE.Material) {
+        const maps = material as Partial<
+          Record<"map" | "bumpMap" | "emissiveMap" | "alphaMap" | "roughnessMap" | "metalnessMap" | "normalMap", THREE.Texture | null>
+        >;
+        maps.map?.dispose();
+        maps.bumpMap?.dispose();
+        maps.emissiveMap?.dispose();
+        maps.alphaMap?.dispose();
+        maps.roughnessMap?.dispose();
+        maps.metalnessMap?.dispose();
+        maps.normalMap?.dispose();
+      }
       scene.traverse((obj) => {
         if (obj instanceof THREE.Mesh) {
           obj.geometry.dispose();
           const material = obj.material;
-          if (Array.isArray(material)) material.forEach((m) => m.dispose());
-          else material.dispose();
+          if (Array.isArray(material)) material.forEach((m) => { disposeMaterialTextures(m); m.dispose(); });
+          else { disposeMaterialTextures(material); material.dispose(); }
         }
       });
+      if (scene.background instanceof THREE.Texture) scene.background.dispose();
       renderer.dispose();
       if (renderer.domElement.parentElement === mount) mount.removeChild(renderer.domElement);
     };

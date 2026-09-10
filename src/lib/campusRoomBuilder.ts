@@ -286,10 +286,19 @@ function buildCeilingAndTrim(scene: THREE.Scene, room: CampusRoom, wallHeight: n
   // mesh. A small self-illumination (not a new Light object — no new
   // entries in getSceneStats' light count) keeps every ceiling visibly lit
   // regardless of viewing angle or room size, without adding fixtures.
+  // Visual Overnight Pass (2026-09-10), live-verified: the bay texture's
+  // lines were invisible in production — `map` only modulates the LIT
+  // contribution, which is nearly zero on a downward face for the exact
+  // reason above, so the flat, unmodulated `emissive` fill was the only
+  // thing actually visible, washing the pattern out completely. Setting
+  // `emissiveMap` to the same texture (same technique already used for
+  // legacy-room artwork elsewhere in this pass) puts the bay lines into the
+  // self-illumination itself, so they're visible regardless of how little
+  // real light the ceiling receives.
   const ceilingTexture = createCeilingBayTexture(room.w, room.d);
   const ceilingMaterial = new THREE.MeshStandardMaterial({
     color: finish.ceilingColor, map: ceilingTexture, roughness: 0.92,
-    emissive: finish.ceilingColor, emissiveIntensity: 0.22,
+    emissive: finish.ceilingColor, emissiveMap: ceilingTexture, emissiveIntensity: 0.22,
   });
   const ceilingTrimMaterial = new THREE.MeshStandardMaterial({ color: finish.ceilingTrimColor, roughness: 0.7 });
 
