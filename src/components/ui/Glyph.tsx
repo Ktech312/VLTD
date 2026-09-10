@@ -50,7 +50,8 @@ export type GlyphName =
   | "globe"
   | "book"
   | "wrench"
-  | "scan";
+  | "scan"
+  | "upload";
 
 const PATHS: Record<GlyphName, ReactNode> = {
   bell: (<><path d="M6 16v-5a6 6 0 0 1 12 0v5" /><path d="M4.5 16h15" /><path d="M10.4 19a1.7 1.7 0 0 0 3.2 0" /></>),
@@ -101,6 +102,9 @@ const PATHS: Record<GlyphName, ReactNode> = {
   // Viewfinder corner-brackets — the universal "scan" symbol (matches the
   // camera panels' own frame-corner guide styling, not a generic barcode icon).
   scan: (<><path d="M4 8V5.5A1.5 1.5 0 0 1 5.5 4H8M16 4h2.5A1.5 1.5 0 0 1 20 5.5V8M20 16v2.5a1.5 1.5 0 0 1-1.5 1.5H16M8 20H5.5A1.5 1.5 0 0 1 4 18.5V16" /><path d="M4 12h16" /></>),
+  // A file/photo rising up out of a tray — "add from your device," distinct
+  // from the camera glyph used for "add by taking a new photo."
+  upload: (<><path d="M12 15.5V5M8 9l4-4 4 4" /><path d="M5 16v1.5A2.5 2.5 0 0 0 7.5 20h9a2.5 2.5 0 0 0 2.5-2.5V16" /></>),
 };
 
 // Map a common emoji to the closest themed glyph (for legacy emoji lookups).

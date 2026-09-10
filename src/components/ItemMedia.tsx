@@ -5,6 +5,7 @@ import { createPortal } from "react-dom";
 
 import ImageViewer from "@/components/ImageViewer";
 import ScanCropEditor from "@/components/ScanCropEditor";
+import { Glyph } from "@/components/ui/Glyph";
 import { cropImageFile, type ScanCropRect } from "@/lib/scanners/cropImageFile";
 import { showToast } from "@/lib/toast";
 
@@ -425,13 +426,31 @@ export default function ItemMedia({
             </div>
           ))}
 
-          <button
-            type="button"
-            onClick={() => fileRef.current?.click()}
-            className="flex h-[96px] w-[96px] shrink-0 items-center justify-center rounded-2xl bg-[color:var(--pill)] text-sm ring-1 ring-[color:var(--border)]"
-          >
-            + Add
-          </button>
+          <div className="flex h-[96px] w-[96px] shrink-0 flex-col overflow-hidden rounded-2xl ring-1 ring-[color:var(--border)]">
+            <div className="flex items-center justify-center bg-[color:var(--pill)] py-1.5 text-xs font-semibold text-text-primary">
+              + Add
+            </div>
+            <div className="flex flex-1">
+              <button
+                type="button"
+                onClick={() => cameraRef.current?.click()}
+                aria-label="Add photo with camera"
+                title="Camera"
+                className="flex flex-1 items-center justify-center border-t border-r border-[color:var(--border)] bg-[color:var(--pill)] text-[color:var(--fg)] transition hover:bg-[color:var(--pill-hover)]"
+              >
+                <Glyph name="camera" size={20} />
+              </button>
+              <button
+                type="button"
+                onClick={() => fileRef.current?.click()}
+                aria-label="Upload photo from device"
+                title="Upload"
+                className="flex flex-1 items-center justify-center border-t border-[color:var(--border)] bg-[color:var(--pill)] text-[color:var(--fg)] transition hover:bg-[color:var(--pill-hover)]"
+              >
+                <Glyph name="upload" size={20} />
+              </button>
+            </div>
+          </div>
         </div>
 
         <div className="order-1 lg:order-2">
