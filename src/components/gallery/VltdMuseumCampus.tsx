@@ -963,11 +963,21 @@ export default function VltdMuseumCampus() {
     // getWorldDirection()/lookAt() convention mismatch specific to this
     // camera setup). Movement below uses the shared buildKeyboardMoveDirection
     // / facingDirection(yaw) again, unchanged from before ad38f72. Kept
-    // ONLY as a diagnostic comparison in the wheel event log — never as a
+    // ONLY as a diagnostic comparison in the movement log — never as a
     // movement source — since its own wrongness might still be useful
     // evidence for finding the real bug.
+    //
+    // EK's foreground finding (2026-09-09, second round): a genuinely fresh
+    // spawn, no drag, including clicking the entrance waypoint, stayed
+    // exactly centered — "the rightward behavior therefore develops later
+    // during navigation." She asked for the full raw comparison recorded
+    // per movement call (not just the already-normalized renderedForwardXZ
+    // vs facingDirection(yaw) figures) plus whether each move follows a
+    // waypoint arrival or a prior manual step, so a heading drift that only
+    // appears after waypoint travel can be told apart from a real rendering
+    // mismatch.
     function renderedForwardXZ(): THREE.Vector3 {
-      camera.updateMatrixWorld(true);
+      camera.updateWorldMatrix(true, false);
       const world = new THREE.Vector3();
       camera.getWorldDirection(world);
       world.y = 0;
@@ -975,11 +985,23 @@ export default function VltdMuseumCampus() {
       return world.normalize();
     }
 
+    // Set true the instant a walkTween finishes (see the tick() completion
+    // branch below); read-and-reset to false by the next manual move logged
+    // in moveWithCollision — so a log entry's `precedingMovementSource`
+    // tells you whether THIS move started from a position just reached by
+    // waypoint travel, or from a prior manual (wheel/keyboard) step.
+    let justArrivedViaWaypoint = false;
+
     type MovementLogEntry = {
-      frameTime: number; yawAtCall: number;
+      frameTime: number; yawAtCall: number; targetYawAtCall: number;
+      renderedQuaternion: { x: number; y: number; z: number; w: number };
+      renderedWorldDirection: { x: number; y: number; z: number };
+      renderedForwardXZ: { x: number; z: number };
       intended: { x: number; z: number }; applied: { x: number; z: number };
+      signedHeadingAngleDeg: number;
       requestedDistance: number; appliedDistance: number;
       positionBefore: { x: number; z: number }; positionAfter: { x: number; z: number };
+      hasActiveWalkTween: boolean; precedingMovementSource: "waypoint" | "manual" | "none";
     };
     const movementLog: MovementLogEntry[] = [];
 
@@ -988,6 +1010,21 @@ export default function VltdMuseumCampus() {
       if (distance === 0) return;
       const before = { x: position.x, z: position.z };
       const direction = delta.clone().normalize();
+
+      // Raw rendered-camera comparison, captured on every call, exactly as
+      // requested: the quaternion itself, the raw getWorldDirection()
+      // vector, its XZ projection normalized, and a SIGNED angle (atan2 of
+      // the cross/dot product, not just acos of the dot) against the
+      // intended movement direction so left/right is distinguishable, not
+      // just magnitude of mismatch.
+      camera.updateWorldMatrix(true, false);
+      const worldDir = new THREE.Vector3();
+      camera.getWorldDirection(worldDir);
+      const renderedXZLen = Math.hypot(worldDir.x, worldDir.z);
+      const renderedXZ = renderedXZLen > 1e-6 ? { x: worldDir.x / renderedXZLen, z: worldDir.z / renderedXZLen } : { x: 0, z: 0 };
+      const dot = renderedXZ.x * direction.x + renderedXZ.z * direction.z;
+      const cross = renderedXZ.x * direction.z - renderedXZ.z * direction.x;
+      const signedHeadingAngleDeg = (Math.atan2(cross, dot) * 180) / Math.PI;
 
       let validDistance: number;
       if (isWalkable(position.x + direction.x * distance, position.z + direction.z * distance, walkable)) {
@@ -1008,13 +1045,21 @@ export default function VltdMuseumCampus() {
       movementLog.push({
         frameTime: performance.now(),
         yawAtCall: yaw,
+        targetYawAtCall: targetYaw,
+        renderedQuaternion: { x: camera.quaternion.x, y: camera.quaternion.y, z: camera.quaternion.z, w: camera.quaternion.w },
+        renderedWorldDirection: { x: worldDir.x, y: worldDir.y, z: worldDir.z },
+        renderedForwardXZ: renderedXZ,
         intended: { x: delta.x, z: delta.z },
         applied: { x: position.x - before.x, z: position.z - before.z },
+        signedHeadingAngleDeg,
         requestedDistance: distance,
         appliedDistance: validDistance,
         positionBefore: before,
         positionAfter: { x: position.x, z: position.z },
+        hasActiveWalkTween: walkTween !== null,
+        precedingMovementSource: justArrivedViaWaypoint ? "waypoint" : movementLog.length > 0 ? "manual" : "none",
       });
+      justArrivedViaWaypoint = false;
       if (movementLog.length > 300) movementLog.shift();
     }
 
@@ -1306,6 +1351,7 @@ export default function VltdMuseumCampus() {
         if (walkTween.t >= 1) {
           cameraBody.copy(walkTween.toPos);
           walkTween = null;
+          justArrivedViaWaypoint = true;
         }
       } else {
         const eased = easeTowardTargets(yaw, targetYaw, pitch, targetPitch, cameraBody, targetCameraBody, false, WHEEL_POSITION_EASE_RATE);
