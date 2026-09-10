@@ -1174,7 +1174,28 @@ export default function VltdMuseumCampus() {
       if (!isDragging) return;
       const dx = e.clientX - startX;
       const dy = e.clientY - startY;
-      if (Math.abs(dx) + Math.abs(dy) > 6) {
+      // EK's "rightward veer develops later during navigation" investigation
+      // (2026-09-09): this used to call applyDrag() unconditionally for
+      // EVERY pointermove while the button was down, resetting startX/
+      // startY every time regardless of the 6px didDrag threshold below —
+      // so that threshold only ever compared one event's delta against the
+      // next, never true displacement since the click began, and a plain
+      // click's near-inevitable sub-pixel jitter (real mice/trackpads
+      // essentially never report exactly zero movement between button-down
+      // and button-up) still nudged targetYaw a tiny, invisible amount on
+      // EVERY waypoint click. One click's nudge is imperceptible; dozens of
+      // them navigating through a large multi-room campus accumulate —
+      // matching "develops later," not on a fresh spawn or a single click.
+      // The accepted personal Gallery has this identical pattern (same
+      // shared applyDrag() call, same unconditional-until-threshold
+      // structure) but never surfaced it, since one small room never
+      // demands anywhere near this many waypoint clicks in a row. Fixed
+      // here (campus-only — VirtualGalleryRoom.tsx is untouched): rotation
+      // is now withheld entirely until cumulative movement since the click
+      // began actually crosses the threshold, so a plain click can never
+      // rotate the view by any amount, however small.
+      if (!didDrag) {
+        if (Math.abs(dx) + Math.abs(dy) <= 6) return;
         didDrag = true;
         walkTween = null; // a real manual look-drag interrupts an in-progress auto-walk
       }
