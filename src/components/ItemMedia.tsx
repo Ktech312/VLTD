@@ -426,30 +426,32 @@ export default function ItemMedia({
             </div>
           ))}
 
-          <div className="flex h-[96px] w-[96px] shrink-0 flex-col overflow-hidden rounded-2xl ring-1 ring-[color:var(--border)]">
-            <div className="flex items-center justify-center bg-[color:var(--pill)] py-1.5 text-xs font-semibold text-text-primary">
-              + Add
-            </div>
-            <div className="flex flex-1">
-              <button
-                type="button"
-                onClick={() => cameraRef.current?.click()}
-                aria-label="Add photo with camera"
-                title="Camera"
-                className="flex flex-1 items-center justify-center border-t border-r border-[color:var(--border)] bg-[color:var(--pill)] text-[color:var(--fg)] transition hover:bg-[color:var(--pill-hover)]"
-              >
-                <Glyph name="camera" size={20} />
-              </button>
-              <button
-                type="button"
-                onClick={() => fileRef.current?.click()}
-                aria-label="Upload photo from device"
-                title="Upload"
-                className="flex flex-1 items-center justify-center border-t border-[color:var(--border)] bg-[color:var(--pill)] text-[color:var(--fg)] transition hover:bg-[color:var(--pill-hover)]"
-              >
-                <Glyph name="upload" size={20} />
-              </button>
-            </div>
+          <div className="relative flex h-[96px] w-[96px] shrink-0 overflow-hidden rounded-2xl bg-[color:var(--pill)] ring-1 ring-[color:var(--border)]">
+            <span
+              aria-hidden="true"
+              className="pointer-events-none absolute inset-0 flex items-center justify-center text-5xl font-black leading-none text-[color:var(--theme-gold,#C8CDD2)]"
+              style={{ opacity: 0.16 }}
+            >
+              +
+            </span>
+            <button
+              type="button"
+              onClick={() => cameraRef.current?.click()}
+              aria-label="Add photo with camera"
+              title="Camera"
+              className="relative z-10 flex flex-1 items-center justify-center border-r border-[color:var(--border)] text-[color:var(--fg)] transition hover:bg-[color:var(--pill-hover)]"
+            >
+              <Glyph name="camera" size={20} />
+            </button>
+            <button
+              type="button"
+              onClick={() => fileRef.current?.click()}
+              aria-label="Upload photo from device"
+              title="Upload"
+              className="relative z-10 flex flex-1 items-center justify-center text-[color:var(--fg)] transition hover:bg-[color:var(--pill-hover)]"
+            >
+              <Glyph name="upload" size={20} />
+            </button>
           </div>
         </div>
 
