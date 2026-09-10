@@ -195,15 +195,48 @@ function createArchitecturalPanelTexture(): THREE.CanvasTexture {
   return texture;
 }
 
-// 2026-09-08: one factory for "this room's own wall material," used both by
-// its own wall faces and reused by name for continuity — no separate flat
-// lookalike material anywhere a wall face needs to read as this room's wall.
-export function createWallMaterial(finish: RoomFinish, room: CampusRoom): THREE.MeshStandardMaterial {
+// EK's review (2026-09-10): repeat was being scaled by ROOM WIDTH
+// (room.w / PANEL_WIDTH) and that ONE material then reused, unchanged, on
+// every wall face touching this room — north/south walls really do span
+// room.w, but east/west walls span room.d, and any wall split around a
+// doorway is shorter than either. On a rectangular room (MISC 21x52,
+// AUTOMOTIVE 42x52) or a short doorway-adjacent segment, the panel rhythm
+// stretched or compressed away from its real PANEL_WIDTH. The material
+// itself no longer sets any repeat at all (stays 1x1) — buildSharedWall()'s
+// buildWallBox() below scales the GEOMETRY's own UVs per box, using that
+// box's real world-space span, so the same shared material/texture reads
+// at the correct physical scale on every wall segment simultaneously,
+// regardless of that segment's own length or the room's shape.
+export function createWallMaterial(finish: RoomFinish): THREE.MeshStandardMaterial {
   const panel = createArchitecturalPanelTexture();
-  panel.repeat.set(Math.max(1, Math.round(room.w / PANEL_WIDTH)), 1);
   return new THREE.MeshStandardMaterial({
     color: finish.wallColor, map: panel, bumpMap: panel, bumpScale: 0.05, roughness: 0.85, metalness: 0,
   });
+}
+
+// BoxGeometry's default UV already runs 0..1 across the face's own U axis
+// regardless of that box's actual size — verified directly against
+// three/src/geometries/BoxGeometry.js's buildPlane() calls: for a
+// BoxGeometry(width, height, depth), the +z/-z faces (index 4/5) map U to
+// `width` and the +x/-x faces (index 0/1) map U to `depth`. buildWallBox()
+// below always puts the wall's real-world SPAN in exactly that parameter
+// (`width` for an NS wall, `depth` for an EW wall) — so face 4/5 (NS) or
+// face 0/1 (EW) already have U proportional to the span; multiplying just
+// those faces' U by `span / PANEL_WIDTH` converts "0..1 across this one
+// box" into "world-space panel-widths across this one box," which is
+// exactly what a fixed 1x1 texture.repeat needs to read at a consistent
+// physical scale from one box to the next.
+function scaleWallPanelU(geometry: THREE.BoxGeometry, isNS: boolean, span: number) {
+  const uv = geometry.attributes.uv;
+  const uScale = span / PANEL_WIDTH;
+  const faces = isNS ? [4, 5] : [0, 1];
+  for (const face of faces) {
+    for (let i = 0; i < 4; i += 1) {
+      const idx = face * 4 + i;
+      uv.setX(idx, uv.getX(idx) * uScale);
+    }
+  }
+  uv.needsUpdate = true;
 }
 
 function wallRotationY(side: WallSide): number {
@@ -597,6 +630,7 @@ export function buildSharedWall(
     const geometry = isNS
       ? new THREE.BoxGeometry(span, wallHeight, wallThickness)
       : new THREE.BoxGeometry(wallThickness, wallHeight, span);
+    scaleWallPanelU(geometry, isNS, span);
     const wall = new THREE.Mesh(geometry, materials);
     if (isNS) wall.position.set((from + to) / 2, wallHeight / 2, segment.fixed);
     else wall.position.set(segment.fixed, wallHeight / 2, (from + to) / 2);

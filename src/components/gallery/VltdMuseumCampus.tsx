@@ -282,28 +282,30 @@ export default function VltdMuseumCampus() {
     // faces it, and — wherever CAMPUS_DOORS calls for it — cuts one opening
     // with one casing, contained entirely within the wall's own thickness.
     //
-    // Wall materials are cached per room (not rebuilt per segment): all
-    // three converted rooms share the SAME neutral material instance (they
-    // share the same finish and, now, the same 21x26 module size), and
-    // every legacy room gets its own createWallMaterial() instance sized to
-    // ITS OWN room.w/wallHeight — Overnight Polish pass (2026-09-09):
-    // legacy walls used to be one flat, ungrained color, which is what this
-    // pass's "subtle plaster/paint wall variation with correctly scaled
-    // texture detail" replaces. One shared instance (like the converted
-    // rooms' own) isn't safe here because legacy room sizes vary widely
-    // (21x26 up to 42x52) — grain repeat is scaled to room.w, so a single
-    // shared material would stretch on the larger ones.
-    const roomWallMaterialCache = new Map<CampusRoomId, THREE.Material>();
-    const sharedNeutralWallMaterial = createWallMaterial(NEUTRAL_PREVIEW_FINISH, roomById("POP_CULTURE"));
-    function roomWallMaterial(roomId: CampusRoomId): THREE.Material {
-      const cached = roomWallMaterialCache.get(roomId);
+    // Wall materials are cached by FINISH IDENTITY, not per room — EK's
+    // world-space wall-panel fix (2026-09-10) moved all size-dependent
+    // texture scaling onto each wall SEGMENT's own geometry (see
+    // buildSharedWall's scaleWallPanelU()), so createWallMaterial() no
+    // longer varies by room size at all; two rooms sharing a finish now
+    // produce byte-identical materials, so there's no reason to build one
+    // per room anymore ("share wall finish materials/textures by finish
+    // identity" from the original approved plan's performance-correction
+    // section — previously blocked by the old per-room texture scaling,
+    // now unblocked by the same fix). Collapses 9 separate
+    // NEUTRAL_LEGACY_FINISH materials/textures (one per legacy room) into 1.
+    const wallMaterialByFinish = new Map<RoomFinish, THREE.Material>();
+    function wallMaterialFor(finish: RoomFinish): THREE.Material {
+      const cached = wallMaterialByFinish.get(finish);
       if (cached) return cached;
-      const material =
-        roomId === "POP_CULTURE" || roomId === "TCG" || roomId === "COLLECTION"
-          ? sharedNeutralWallMaterial
-          : createWallMaterial(roomId === "HUB" ? HUB_FINISH : NEUTRAL_LEGACY_FINISH, roomById(roomId));
-      roomWallMaterialCache.set(roomId, material);
+      const material = createWallMaterial(finish);
+      wallMaterialByFinish.set(finish, material);
       return material;
+    }
+    function roomWallMaterial(roomId: CampusRoomId): THREE.Material {
+      if (roomId === "POP_CULTURE" || roomId === "TCG" || roomId === "COLLECTION") {
+        return wallMaterialFor(NEUTRAL_PREVIEW_FINISH);
+      }
+      return wallMaterialFor(roomId === "HUB" ? HUB_FINISH : NEUTRAL_LEGACY_FINISH);
     }
 
     // One shared casing material for every door — "share frame geometry and
