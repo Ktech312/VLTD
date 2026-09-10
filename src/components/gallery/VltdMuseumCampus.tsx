@@ -1411,13 +1411,27 @@ export default function VltdMuseumCampus() {
         startWalkTween(new THREE.Vector3(pad.x, EYE_HEIGHT, pad.z), pad.yaw);
         return true;
       },
-      setCameraBody: (x: number, z: number, newYaw?: number) => {
+      setCameraBody: (x: number, z: number, newYaw?: number, newPitch?: number) => {
+        walkTween = null;
         cameraBody.set(x, EYE_HEIGHT, z);
         targetCameraBody.copy(cameraBody);
         if (typeof newYaw === "number") {
           yaw = newYaw;
           targetYaw = newYaw;
         }
+        if (typeof newPitch === "number") {
+          pitch = newPitch;
+          targetPitch = newPitch;
+        }
+      },
+      // Verification-only: forces one synchronous repaint, bypassing
+      // requestAnimationFrame entirely. A backgrounded automation tab can
+      // have rAF throttled to near-zero (documented above the movement
+      // code in this file), which otherwise leaves a screenshot showing a
+      // stale frame no matter how long the test waits after a debug call.
+      forceRender: () => {
+        aimCamera(camera, cameraBody, yaw, pitch);
+        renderer.render(scene, camera);
       },
       // EK's review of 9d7c122, 751361a, and 9796c72: total/enabled scene
       // lights, each converted room's FULL and PREVIEW group counts and
