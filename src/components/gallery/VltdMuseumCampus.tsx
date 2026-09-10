@@ -886,13 +886,21 @@ export default function VltdMuseumCampus() {
 
     const roomTargetTexture = makeRoomTargetTexture();
     const waypointMeshes: THREE.Mesh[] = [];
+    // HUB's room-center target sits exactly on the Grand Hall's VLTD floor
+    // seal (a 2.7-radius medallion centered on the same point) — the
+    // standard 2.2-unit target's corner brackets land inside that circle
+    // and cover part of the logo. Sized up just for this one target so its
+    // brackets clear the seal's edge and frame it instead of sitting on
+    // top of it; every other room keeps the standard size.
+    const HUB_TARGET_SIZE = 6.4;
     for (const waypoint of computeCampusWaypoints()) {
       if (!isWalkable(waypoint.x, waypoint.z, walkable)) {
         console.warn(`Room target ${waypoint.id} lands outside the walkable area — skipped`, waypoint);
         continue;
       }
+      const targetSize = waypoint.roomId === "HUB" ? HUB_TARGET_SIZE : 2.2;
       const marker = new THREE.Mesh(
-        new THREE.PlaneGeometry(2.2, 2.2),
+        new THREE.PlaneGeometry(targetSize, targetSize),
         new THREE.MeshBasicMaterial({
           map: roomTargetTexture ?? undefined,
           transparent: true,
