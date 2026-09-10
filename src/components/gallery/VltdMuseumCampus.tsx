@@ -1410,6 +1410,19 @@ export default function VltdMuseumCampus() {
       getYawPitch: () => ({ yaw, pitch, targetYaw, targetPitch }),
       hasActiveWalkTween: () => walkTween !== null,
       triggerWalkTween: (x: number, z: number) => startWalkTween(new THREE.Vector3(x, EYE_HEIGHT, z)),
+      // Debug-only: simulates an INSTANTLY completed waypoint arrival
+      // (position only, no yaw/pitch change — same as a real walkTween
+      // finishing) without needing real animation frames to elapse. Added
+      // to test EK's "waypoint completion might leave a slight unintended
+      // heading" hypothesis in this automation tab, where a backgrounded
+      // tab's throttled requestAnimationFrame means triggerWalkTween's real
+      // interpolation often never actually progresses.
+      completeWaypointArrival: (x: number, z: number) => {
+        walkTween = null;
+        cameraBody.set(x, EYE_HEIGHT, z);
+        targetCameraBody.copy(cameraBody);
+        justArrivedViaWaypoint = true;
+      },
       setCameraBody: (x: number, z: number, newYaw?: number) => {
         cameraBody.set(x, EYE_HEIGHT, z);
         targetCameraBody.copy(cameraBody);
