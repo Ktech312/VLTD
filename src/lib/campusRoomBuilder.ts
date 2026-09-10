@@ -325,37 +325,67 @@ export function buildNeutralShell(
   scene.add(trimEast);
 }
 
-/** A destination sign plaque — unlit (MeshBasicMaterial, so scene lighting
- * can't darken it), mounted flush at the given point/rotation, naming
- * whatever's on the far side of an opening from here. */
-// Overnight Polish pass (2026-09-09): "Correct the clipped VLTD MUSEUM
-// entrance text. Give the sign canvas adequate top/bottom padding and
-// vertically center the type." Root cause: the canvas was always drawn at a
-// fixed 512x128 (4:1), but the entrance sign requested a plane far wider
-// than 4:1 (a stretched-out header band) — mapping that 4:1 texture onto a
-// much-wider-than-4:1 plane squashed the text vertically until it read as
-// clipped. The canvas is now sized to the SAME aspect ratio as the
-// requested plane, so the texture is never stretched, and the font size
-// auto-shrinks to fit within a real padding margin instead of a fixed
-// guess — safe for any sign's width/height combination, not just the two
-// sizes this file happens to call today.
+const destinationSignFaceTextures = new WeakMap<THREE.Scene, THREE.Texture>();
+
+function destinationSignFaceTexture(scene: THREE.Scene): THREE.Texture {
+  const cached = destinationSignFaceTextures.get(scene);
+  if (cached) return cached;
+
+  const texture = new THREE.TextureLoader().load("/brand/vltd-museum-door-sign-face-v1.png");
+  texture.colorSpace = THREE.SRGBColorSpace;
+  texture.wrapS = THREE.ClampToEdgeWrapping;
+  texture.wrapT = THREE.ClampToEdgeWrapping;
+  // Image generation returned the exact 5:1 plaque centered inside a taller
+  // transparent canvas. Sample only that authored plaque area so the brass
+  // circles and borders keep their intended proportions on the 5:1 mesh.
+  texture.repeat.set(1, 0.604);
+  texture.offset.set(0, 0.178);
+  destinationSignFaceTextures.set(scene, texture);
+  return texture;
+}
+
+/**
+ * Build one medallion-inspired doorway sign from two independent layers:
+ *
+ * 1. a static charcoal/brass architectural face, shared visually by every
+ *    doorway; and
+ * 2. a transparent label texture generated from the current room data.
+ *
+ * Keeping the label off the decorative face is intentional. Room names can
+ * change later without redesigning or replacing the sign itself. Both layers
+ * use unlit materials so the lettering remains readable in rooms whose light
+ * groups are currently in preview mode.
+ */
 export function buildDestinationSign(
   scene: THREE.Scene, x: number, y: number, z: number, rotationY: number, text: string,
-  width = 2.6, height = 0.65
+  width = 2.8, height = 0.56
 ) {
   const canvasHeight = 256;
   const canvasWidth = Math.max(64, Math.round(canvasHeight * (width / height)));
-  const canvas = document.createElement("canvas");
-  canvas.width = canvasWidth;
-  canvas.height = canvasHeight;
-  const ctx = canvas.getContext("2d");
+  const faceMaterial = new THREE.MeshBasicMaterial({
+    map: destinationSignFaceTexture(scene),
+    transparent: true,
+    alphaTest: 0.02,
+  });
+  const group = new THREE.Group();
+  group.position.set(x, y, z);
+  group.rotation.y = rotationY;
+  group.userData.kind = "museum-destination-sign";
+  group.userData.label = text;
+
+  const plaque = new THREE.Mesh(new THREE.PlaneGeometry(width, height), faceMaterial);
+  plaque.userData.kind = "museum-destination-sign-face";
+  group.add(plaque);
+
+  const labelCanvas = document.createElement("canvas");
+  labelCanvas.width = canvasWidth;
+  labelCanvas.height = canvasHeight;
+  const ctx = labelCanvas.getContext("2d");
   if (!ctx) return;
-  ctx.fillStyle = "#20242a";
-  ctx.fillRect(0, 0, canvasWidth, canvasHeight);
 
   const label = text.toUpperCase();
-  const paddingX = canvasWidth * 0.1;
-  const paddingY = canvasHeight * 0.22;
+  const paddingX = canvasWidth * 0.16;
+  const paddingY = canvasHeight * 0.25;
   const maxTextWidth = canvasWidth - paddingX * 2;
   const maxTextHeight = canvasHeight - paddingY * 2;
   let fontSize = maxTextHeight;
@@ -366,16 +396,27 @@ export function buildDestinationSign(
   }
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
-  ctx.fillStyle = "#f2ead9";
+  ctx.shadowColor = "rgba(0, 0, 0, 0.9)";
+  ctx.shadowBlur = Math.max(2, canvasHeight * 0.025);
+  ctx.shadowOffsetY = Math.max(1, canvasHeight * 0.01);
+  ctx.fillStyle = "#f3d78e";
   ctx.fillText(label, canvasWidth / 2, canvasHeight / 2);
 
-  const texture = new THREE.CanvasTexture(canvas);
-  texture.colorSpace = THREE.SRGBColorSpace;
-  const material = new THREE.MeshBasicMaterial({ map: texture });
-  const plaque = new THREE.Mesh(new THREE.PlaneGeometry(width, height), material);
-  plaque.position.set(x, y, z);
-  plaque.rotation.y = rotationY;
-  scene.add(plaque);
+  const labelTexture = new THREE.CanvasTexture(labelCanvas);
+  labelTexture.colorSpace = THREE.SRGBColorSpace;
+  const labelMaterial = new THREE.MeshBasicMaterial({
+    map: labelTexture,
+    transparent: true,
+    depthWrite: false,
+  });
+  const labelPlane = new THREE.Mesh(new THREE.PlaneGeometry(width, height), labelMaterial);
+  labelPlane.position.z = 0.006;
+  labelPlane.renderOrder = 2;
+  labelPlane.userData.kind = "museum-destination-sign-label";
+  labelPlane.userData.label = text;
+  group.add(labelPlane);
+
+  scene.add(group);
 }
 
 // Doorway casing (2026-09-08 redesign): EK's foreground review of the first
@@ -537,16 +578,12 @@ export function buildSharedWall(
   const rotationTowardB = isNS ? 0 : Math.PI / 2;
 
   if (isEntrance) {
-    // One identity sign per face, integrated into the header (mounted flush
-    // on its own face, not floating apart from it) — "show the destination
-    // room from both approaches" applies to the entrance too, so both the
-    // approach from PLAZA and the view back from HUB carry the same "VLTD
-    // MUSEUM" identity. A restrained ~5:1 sign, not the header's own full
-    // (much wider) span — buildDestinationSign now matches its canvas to
-    // whatever aspect ratio it's given, so this no longer clips.
+    // One identity sign per face, mounted on the transom directly above the
+    // fitted header. Both the approach from PLAZA and the view back from HUB
+    // carry the same "VLTD MUSEUM" identity.
     const signWidth = Math.min(headWidth * 0.72, 3.4);
-    const signHeight = signWidth / 5.2;
-    const entranceSignY = openingClearHeight + headHeight / 2;
+    const signHeight = signWidth / 5;
+    const entranceSignY = transomBottom + signHeight / 2 + 0.12;
     const faceAPos = point(door.gapCenter, -(casingDepth / 2 + 0.02));
     buildDestinationSign(scene, faceAPos.x, entranceSignY, faceAPos.z, rotationTowardA, ENTRANCE_LABEL, signWidth, signHeight);
     const faceBPos = point(door.gapCenter, casingDepth / 2 + 0.02);
@@ -562,15 +599,13 @@ export function buildSharedWall(
   // Overnight Polish pass, wayfinding addition (2026-09-09): "enlarge
   // ordinary destination signs so they can be read from across HUB and
   // from normal room-center distance... roughly 1.6-1.8x... smaller than
-  // the main VLTD MUSEUM entrance sign." Was 1.5x0.34; 2.6x0.6 is ~1.73x/
-  // 1.76x that (the entrance sign is up to 3.4 wide, so this stays
-  // smaller). buildDestinationSign's own canvas-aspect-matching + auto-fit
-  // font (the earlier clipping fix) means padding/no-clipping hold at any
-  // size, so this is a pure size change. signY raised so the taller sign
-  // still sits inside the transom band, not overlapping the head casing.
-  const ORDINARY_SIGN_WIDTH = 2.6;
-  const ORDINARY_SIGN_HEIGHT = 0.6;
-  const signY = transomBottom + Math.min(0.4, Math.max(transomHeight / 2, 0.1));
+  // the main VLTD MUSEUM entrance sign." The 2.8-wide ordinary sign stays
+  // smaller than the entrance sign (up to 3.4 wide). The 5:1 plaque keeps
+  // the medallion-derived border and bosses in their authored proportions,
+  // and its bottom clears the casing head.
+  const ORDINARY_SIGN_WIDTH = 2.8;
+  const ORDINARY_SIGN_HEIGHT = ORDINARY_SIGN_WIDTH / 5;
+  const signY = transomBottom + ORDINARY_SIGN_HEIGHT / 2 + 0.12;
   if (roomB.label) {
     const faceAPos = point(door.gapCenter, -(wallThickness / 2 + 0.01));
     buildDestinationSign(scene, faceAPos.x, signY, faceAPos.z, rotationTowardA, visitorFacingRoomName(roomB.label), ORDINARY_SIGN_WIDTH, ORDINARY_SIGN_HEIGHT);
