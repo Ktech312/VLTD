@@ -494,7 +494,10 @@ export function buildSharedWall(
   // from the shared opening itself," not a separate structure.
   const framePos = point(door.gapCenter, 0);
   const openingClearHeight = DOORWAY_CLEAR_HEIGHT;
-  const jambHeight = openingClearHeight + headHeight / 2;
+  // End the jambs exactly at the header. The earlier extra half-header of
+  // height made the jamb and head occupy the same front/back surface at
+  // both upper corners, which could shimmer as the camera moved.
+  const jambHeight = openingClearHeight;
   const casingDepth = wallThickness + trimDepth * 2;
   const jambGeom = isNS
     ? new THREE.BoxGeometry(trimWidth, jambHeight, casingDepth)

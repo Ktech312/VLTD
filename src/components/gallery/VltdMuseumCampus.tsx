@@ -22,17 +22,17 @@ import {
   adjacentRoomIds,
   assignSwingRoomUniverses,
   buildWalkableAreas,
+  computeCampusWaypoints,
   computeCampusWallSegments,
   computeDoorBridges,
-  computeDoorwayPads,
   doorGapCenter,
   doorWallWidth,
   isWalkable,
   roomBounds,
   roomById,
+  type CampusWaypoint,
   type CampusRoom,
   type CampusRoomId,
-  type DoorwayPad,
 } from "@/lib/campusLayout";
 import { getPrimaryImageUrl, loadItems, type VaultItem } from "@/lib/vaultModel";
 import { isUniverseKey, type UniverseKey } from "@/lib/taxonomy";
@@ -55,7 +55,6 @@ import {
   NEUTRAL_LEGACY_FINISH,
   NEUTRAL_PREVIEW_FINISH,
   placeArtwork,
-  visitorFacingRoomName,
   type RoomFinish,
   type RoomLightGroups,
   type RoomModule,
@@ -331,11 +330,9 @@ export default function VltdMuseumCampus() {
       buildRoomTrim(scene, room, wallSegments, finish, WALL_HEIGHT, WALL_THICKNESS, false);
     }
 
-    // Directional alignment pads (2026-09-09) — generated further below,
-    // once `walkable` exists, from computeDoorwayPads(); see that block for
-    // the full account of why the old generic waypoint squares were
-    // replaced. Waypoint interaction state (`waypointMeshes`, hover
-    // handling) is declared there too, right next to the geometry it reads.
+    // Glowing room-center targets are generated further below once the
+    // walkable areas exist. They restore the simple four-corner target
+    // appearance and keep doorway openings visually clear.
 
     // The freestanding exterior facade (6 columns/capitals + pediment, EK's
     // "just some visual fun" ask from 2026-09-02, recentered 2026-09-09) is
@@ -842,115 +839,70 @@ export default function VltdMuseumCampus() {
     const raycaster = new THREE.Raycaster();
     const pointerNdc = new THREE.Vector2();
 
-    // Directional alignment pads (2026-09-09), replacing the earlier
-    // generic waypoint squares — EK's physical test: standing centered on a
-    // square, the GAMES doorway was still substantially left of the view
-    // centerline, so scrolling forward from that square gave no
-    // predictable route. A pad is no longer a generic "you can stand here"
-    // marker; it's an authored alignment target generated straight from
-    // CAMPUS_DOORS (never a separately-typed coordinate, per
-    // computeDoorwayPads()) — its position sits exactly on the door's own
-    // gapCenter, and its facing yaw points straight through that door's
-    // center, so a click both moves AND aims the camera, and the very next
-    // scroll travels the doorway's centerline.
-    function isMuseumEntranceDoor(aId: CampusRoomId, bId: CampusRoomId): boolean {
-      return (aId === "PLAZA" && bId === "HUB") || (aId === "HUB" && bId === "PLAZA");
-    }
-
-    function makeDirectionalPadTexture(label: string) {
+    // The original target language was a compact set of four corner
+    // brackets. Draw a soft cyan halo underneath the crisp strokes so the
+    // marker reads against both pale and dark floors without a backing
+    // plate, arrow, or destination label.
+    function makeRoomTargetTexture() {
       const canvas = document.createElement("canvas");
-      canvas.width = 256;
-      canvas.height = 256;
+      canvas.width = 128;
+      canvas.height = 128;
       const ctx = canvas.getContext("2d");
       if (!ctx) return null;
-      ctx.clearRect(0, 0, 256, 256);
+      const margin = 20;
+      const length = 28;
+      const corners: [number, number, number, number][] = [
+        [margin, margin, 1, 1],
+        [128 - margin, margin, -1, 1],
+        [margin, 128 - margin, 1, -1],
+        [128 - margin, 128 - margin, -1, -1],
+      ];
+      const drawCorners = () => {
+        for (const [cx, cy, sx, sy] of corners) {
+          ctx.beginPath();
+          ctx.moveTo(cx, cy + length * sy);
+          ctx.lineTo(cx, cy);
+          ctx.lineTo(cx + length * sx, cy);
+          ctx.stroke();
+        }
+      };
 
-      // Backing plate, so the pad reads clearly against any floor tone.
-      ctx.fillStyle = "rgba(8,18,24,0.42)";
-      ctx.beginPath();
-      ctx.roundRect(14, 14, 228, 228, 22);
-      ctx.fill();
-      ctx.strokeStyle = "rgba(143,224,230,0.55)";
-      ctx.lineWidth = 3;
-      ctx.stroke();
-
-      // Chevron arrow, drawn pointing toward canvas TOP, and label drawn
-      // reading normally left-to-right. At runtime the mesh's orientation
-      // is built from an explicit basis (see the pad-creation loop below):
-      // canvas-up -> facingDirection(pad.yaw), canvas-right -> that
-      // direction's real-world right-hand side, canvas-normal -> world up.
-      // (An earlier version chained rotation.x/rotation.y Euler angles by
-      // hand and got Three's actual XYZ composition order backwards —
-      // caught live: the label rendered sideways. An explicit basis matrix
-      // has no composition-order ambiguity to get wrong.)
-      ctx.fillStyle = "rgba(143,224,230,0.92)";
-      ctx.strokeStyle = "#eaf9fb";
-      ctx.lineWidth = 6;
+      ctx.lineCap = "round";
       ctx.lineJoin = "round";
-      ctx.beginPath();
-      ctx.moveTo(128, 26);
-      ctx.lineTo(196, 100);
-      ctx.lineTo(154, 100);
-      ctx.lineTo(154, 168);
-      ctx.lineTo(102, 168);
-      ctx.lineTo(102, 100);
-      ctx.lineTo(60, 100);
-      ctx.closePath();
-      ctx.fill();
-      ctx.stroke();
-
-      // Destination label, upright in the same orientation as the arrow.
-      ctx.fillStyle = "rgba(6,14,18,0.85)";
-      ctx.beginPath();
-      ctx.roundRect(24, 182, 208, 46);
-      ctx.fill();
-      ctx.fillStyle = "#eaf2fb";
-      ctx.font = "700 26px Archivo, sans-serif";
-      ctx.textAlign = "center";
-      ctx.textBaseline = "middle";
-      ctx.fillText(label.toUpperCase(), 128, 206);
+      ctx.strokeStyle = "rgba(49,205,255,0.72)";
+      ctx.lineWidth = 13;
+      ctx.shadowColor = "rgba(25,190,255,0.95)";
+      ctx.shadowBlur = 18;
+      drawCorners();
+      ctx.shadowBlur = 0;
+      ctx.strokeStyle = "#8fe8ff";
+      ctx.lineWidth = 6;
+      drawCorners();
 
       const texture = new THREE.CanvasTexture(canvas);
       texture.colorSpace = THREE.SRGBColorSpace;
       return texture;
     }
 
+    const roomTargetTexture = makeRoomTargetTexture();
     const waypointMeshes: THREE.Mesh[] = [];
-    for (const pad of computeDoorwayPads()) {
-      // "Enough clearance from walls and jambs to prevent spawning in
-      // collision": DOORWAY_PAD_SETBACK is chosen well past WALKABLE_MARGIN
-      // for every current room size, but this is verified live rather than
-      // assumed — a pad that somehow lands outside the walkable area is
-      // skipped and logged instead of silently offered as a click target.
-      if (!isWalkable(pad.x, pad.z, walkable)) {
-        console.warn(`Directional pad ${pad.id} lands outside the walkable area — skipped`, pad);
+    for (const waypoint of computeCampusWaypoints()) {
+      if (!isWalkable(waypoint.x, waypoint.z, walkable)) {
+        console.warn(`Room target ${waypoint.id} lands outside the walkable area — skipped`, waypoint);
         continue;
       }
-      const destinationLabel = isMuseumEntranceDoor(pad.roomId, pad.destinationRoomId)
-        ? "VLTD MUSEUM"
-        : visitorFacingRoomName(roomById(pad.destinationRoomId).label);
-      const texture = makeDirectionalPadTexture(destinationLabel);
       const marker = new THREE.Mesh(
-        new THREE.PlaneGeometry(2.6, 2.6),
+        new THREE.PlaneGeometry(2.2, 2.2),
         new THREE.MeshBasicMaterial({
-          map: texture ?? undefined,
+          map: roomTargetTexture ?? undefined,
           transparent: true,
-          opacity: 0.85,
+          opacity: 0.72,
           depthWrite: false,
         })
       );
-      // Explicit basis, not chained Euler rotations (see the texture
-      // comment above for why): local +Y (canvas up) -> the direction this
-      // pad points through the doorway; local +Z (the plane's normal) ->
-      // world up, so it lies flat and faces the sky; local +X (canvas
-      // right) -> that direction's real right-hand side, so the label
-      // reads normally instead of sideways to an approaching viewer.
-      const padForward = facingDirection(pad.yaw);
-      const padUp = new THREE.Vector3(0, 1, 0);
-      const padRight = new THREE.Vector3().crossVectors(padForward, padUp).normalize();
-      marker.quaternion.setFromRotationMatrix(new THREE.Matrix4().makeBasis(padRight, padForward, padUp));
-      marker.position.set(pad.x, 0.03, pad.z);
-      marker.userData.pad = pad;
+      marker.rotation.x = -Math.PI / 2;
+      marker.position.set(waypoint.x, 0.03, waypoint.z);
+      marker.userData.waypoint = waypoint;
       scene.add(marker);
       waypointMeshes.push(marker);
     }
@@ -960,10 +912,10 @@ export default function VltdMuseumCampus() {
       if (hoveredMarker === marker) return;
       if (hoveredMarker) {
         hoveredMarker.scale.set(1, 1, 1);
-        (hoveredMarker.material as THREE.MeshBasicMaterial).opacity = 0.85;
+        (hoveredMarker.material as THREE.MeshBasicMaterial).opacity = 0.72;
       }
       if (marker) {
-        marker.scale.set(1.2, 1.2, 1);
+        marker.scale.set(1.3, 1.3, 1);
         (marker.material as THREE.MeshBasicMaterial).opacity = 1;
       }
       hoveredMarker = marker;
@@ -1107,13 +1059,9 @@ export default function VltdMuseumCampus() {
       return q * q * (3 - 2 * q);
     }
 
-    // Directional-pad click behavior (2026-09-09): a click now both moves
-    // AND aims the camera — EK's explicit request, superseding the earlier
-    // "click-to-walk must never turn the camera" rule FOR THIS ACTION ONLY.
-    // That earlier rule still holds for every other input: free-form
-    // dragging (onPointerMove below) and WASD (updateKeyboardMovement) are
-    // untouched and never snap or rotate on their own. Clicking a pad is
-    // the one explicit action that requests alignment.
+    // A room-center target moves and gently aims the camera along the path
+    // into that room. Free dragging, wheel input, and WASD remain untouched
+    // and never snap or rotate on their own.
     type PadAlignTween = {
       fromPos: THREE.Vector3; toPos: THREE.Vector3;
       fromYaw: number; toYaw: number;
@@ -1132,15 +1080,36 @@ export default function VltdMuseumCampus() {
       return delta;
     }
 
+    // EK's physical report (2026-09-09): target-click movement felt
+    // "choppy" — specifically a brief freeze then a jump partway, not a
+    // glide the whole way. Root cause: duration was sized ONLY from travel
+    // distance, never from how much the view had to turn. A target clicked
+    // from nearby (an explicitly supported recenter/realign — "click a pad
+    // you're already standing near") could still require close to a full
+    // 180-degree turn, and that turn was being squeezed into the SAME
+    // ~0.4s floor meant for a barely-moving click. smoothstep's eased
+    // start is slow by design; compressed into ~0.4s a big turn spends
+    // most of that time barely moving, then most of the rotation happens
+    // in the last few frames — which reads exactly as "pause, then jump."
+    // Duration now also scales with the actual turn size, so a big
+    // reorientation always gets time proportional to how far it turns.
+    const ALIGN_TURN_SPEED = Math.PI / 1.1; // rad/sec — a full 180-degree turn takes ~1.1s
+
     function startWalkTween(destination: THREE.Vector3, destinationYaw: number) {
       const fromPos = cameraBody.clone();
       const travelDistance = fromPos.distanceTo(destination);
-      // Minimum duration is deliberately not ~0 even for a same-spot click
-      // ("click a pad while already standing near it... recenter and
-      // realign" — EK's requirement (7)): the realignment should always be
-      // visibly smooth, never an instant unexplained snap.
-      const duration = THREE.MathUtils.clamp(travelDistance / 4.8, 0.4, 1.65);
-      const toYaw = yaw + shortestYawDelta(yaw, destinationYaw);
+      const yawDelta = shortestYawDelta(yaw, destinationYaw);
+      const toYaw = yaw + yawDelta;
+      const turnAmount = Math.abs(yawDelta) + Math.abs(pitch - 0);
+      // Minimum duration is deliberately not ~0 even for a same-spot,
+      // no-turn click ("click a pad while already standing near it...
+      // recenter and realign" — EK's requirement (7)): the realignment
+      // should always be visibly smooth, never an instant unexplained snap.
+      const duration = THREE.MathUtils.clamp(
+        Math.max(travelDistance / 4.8, turnAmount / ALIGN_TURN_SPEED),
+        0.45,
+        2.2
+      );
       walkTween = {
         fromPos, toPos: destination.clone(),
         fromYaw: yaw, toYaw,
@@ -1201,11 +1170,10 @@ export default function VltdMuseumCampus() {
       isDragging = false;
       if (didDrag) return;
 
-      // Click-to-walk only responds to a directional pad, never an
-      // arbitrary floor point — each pad is an authored alignment target
-      // (see computeDoorwayPads()), not a raycast-anywhere destination.
+      // Click-to-walk only responds to a room-center target, never an
+      // arbitrary floor point.
       if (!hoveredMarker) return;
-      const pad = hoveredMarker.userData.pad as DoorwayPad;
+      const waypoint = hoveredMarker.userData.waypoint as CampusWaypoint;
 
       // "Clear all prior waypoint, drag, and movement state" (EK's
       // requirement (4)) — a pad click is a clean reset, not a blend with
@@ -1213,8 +1181,11 @@ export default function VltdMuseumCampus() {
       pressedKeys.clear();
       didDrag = false;
 
-      const destination = new THREE.Vector3(pad.x, EYE_HEIGHT, pad.z);
-      startWalkTween(destination, pad.yaw);
+      const destination = new THREE.Vector3(waypoint.x, EYE_HEIGHT, waypoint.z);
+      const dx = destination.x - cameraBody.x;
+      const dz = destination.z - cameraBody.z;
+      const destinationYaw = Math.hypot(dx, dz) > 0.05 ? Math.atan2(dx, -dz) : yaw;
+      startWalkTween(destination, destinationYaw);
     }
     // EK's foreground rejection of the frame-accumulated version of this
     // fix: "Synthetic WheelEvent accumulation does not establish usability
@@ -1328,9 +1299,9 @@ export default function VltdMuseumCampus() {
       updateKeyboardMovement(dt);
 
       if (walkTween) {
-        // Position AND yaw/pitch ease together toward the pad's authored
-        // alignment (see the PadAlignTween comment above) — a pad click is
-        // the one input allowed to move the view; every other input path
+        // Position and yaw/pitch ease together toward the selected room
+        // center — a target click is the one input allowed to move the view;
+        // every other input path
         // (drag, WASD) is untouched and still never rotates on its own.
         walkTween.t = Math.min(1, walkTween.t + dt / walkTween.duration);
         const k = smoothstep(walkTween.t);
@@ -1406,20 +1377,20 @@ export default function VltdMuseumCampus() {
       hasActiveWalkTween: () => walkTween !== null,
       triggerWalkTween: (x: number, z: number, destYaw?: number) =>
         startWalkTween(new THREE.Vector3(x, EYE_HEIGHT, z), destYaw ?? yaw),
-      // Directional-pad verification (2026-09-09): "validate all 19
-      // connections from both sides." Lets each of the 38 pads (19 doors x
-      // 2 sides) be inspected and triggered by id without needing to
-      // compute its exact on-screen raycast position first.
-      getDoorwayPads: () =>
-        waypointMeshes.map((m) => ({ ...(m.userData.pad as DoorwayPad) })),
-      triggerPadAlign: (padId: string) => {
-        const pad = waypointMeshes.find((m) => (m.userData.pad as DoorwayPad).id === padId)?.userData.pad as
-          | DoorwayPad
-          | undefined;
-        if (!pad) return false;
+      getRoomWaypoints: () =>
+        waypointMeshes.map((m) => ({ ...(m.userData.waypoint as CampusWaypoint) })),
+      triggerWaypointAlign: (waypointId: string) => {
+        const waypoint = waypointMeshes.find(
+          (m) => (m.userData.waypoint as CampusWaypoint).id === waypointId
+        )?.userData.waypoint as CampusWaypoint | undefined;
+        if (!waypoint) return false;
         pressedKeys.clear();
         didDrag = false;
-        startWalkTween(new THREE.Vector3(pad.x, EYE_HEIGHT, pad.z), pad.yaw);
+        const destination = new THREE.Vector3(waypoint.x, EYE_HEIGHT, waypoint.z);
+        const dx = destination.x - cameraBody.x;
+        const dz = destination.z - cameraBody.z;
+        const destinationYaw = Math.hypot(dx, dz) > 0.05 ? Math.atan2(dx, -dz) : yaw;
+        startWalkTween(destination, destinationYaw);
         return true;
       },
       setCameraBody: (x: number, z: number, newYaw?: number, newPitch?: number) => {
@@ -1634,7 +1605,7 @@ export default function VltdMuseumCampus() {
         </div>
 
         <div className="mx-auto rounded-full bg-black/55 px-4 py-2 text-xs font-medium text-white/75 ring-1 ring-white/15 backdrop-blur">
-          Click a directional pad to align and step through · drag to look around · scroll to step
+          Click a glowing target to move to a room center · drag to look around · scroll to step
         </div>
       </div>
 
