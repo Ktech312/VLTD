@@ -874,13 +874,15 @@ export default function VltdMuseumCampus() {
       ctx.lineWidth = 3;
       ctx.stroke();
 
-      // Chevron arrow, drawn pointing toward canvas TOP. At runtime the
-      // mesh is flattened (rotation.x = -PI/2) then spun around its own
-      // now-vertical normal (rotation.y = -pad.yaw) — verified: Rx(-PI/2)
-      // carries local +Y to world (0,0,-1), and a further Ry(-yaw) carries
-      // THAT to (sin(yaw), 0, -cos(yaw)), which is exactly
-      // facingDirection(yaw). So "canvas up" always ends up pointing
-      // through the real doorway this pad targets, never a generic mark.
+      // Chevron arrow, drawn pointing toward canvas TOP, and label drawn
+      // reading normally left-to-right. At runtime the mesh's orientation
+      // is built from an explicit basis (see the pad-creation loop below):
+      // canvas-up -> facingDirection(pad.yaw), canvas-right -> that
+      // direction's real-world right-hand side, canvas-normal -> world up.
+      // (An earlier version chained rotation.x/rotation.y Euler angles by
+      // hand and got Three's actual XYZ composition order backwards —
+      // caught live: the label rendered sideways. An explicit basis matrix
+      // has no composition-order ambiguity to get wrong.)
       ctx.fillStyle = "rgba(143,224,230,0.92)";
       ctx.strokeStyle = "#eaf9fb";
       ctx.lineWidth = 6;
@@ -937,7 +939,16 @@ export default function VltdMuseumCampus() {
           depthWrite: false,
         })
       );
-      marker.rotation.set(-Math.PI / 2, -pad.yaw, 0);
+      // Explicit basis, not chained Euler rotations (see the texture
+      // comment above for why): local +Y (canvas up) -> the direction this
+      // pad points through the doorway; local +Z (the plane's normal) ->
+      // world up, so it lies flat and faces the sky; local +X (canvas
+      // right) -> that direction's real right-hand side, so the label
+      // reads normally instead of sideways to an approaching viewer.
+      const padForward = facingDirection(pad.yaw);
+      const padUp = new THREE.Vector3(0, 1, 0);
+      const padRight = new THREE.Vector3().crossVectors(padForward, padUp).normalize();
+      marker.quaternion.setFromRotationMatrix(new THREE.Matrix4().makeBasis(padRight, padForward, padUp));
       marker.position.set(pad.x, 0.03, pad.z);
       marker.userData.pad = pad;
       scene.add(marker);
