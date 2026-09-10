@@ -4337,19 +4337,27 @@ not a guess:
      cutout onto a colored backdrop from `CAPTURE_BACKGROUNDS`
      (Vault/Gold/Slate/Ruby/Cobalt/Black/White/transparent) — exactly
      matching EK's memory of it "giving a different color background."
-  **Fix**: rewired `handleRemoveBackground()` in
-  `src/app/vault/item/[id]/page.tsx` to use implementation #2 instead of
-  #1 — no env var needed at all. Also fixed a second, quieter bug in the
-  old code while at it: it saved the result as a `blob:` URL directly on
-  the item, which `sanitizeRemoteImages()` in `vaultCloud.ts` filters out
-  of every cloud sync as local-only — so even with a working API key, the
-  background-removed image would never have actually reached Supabase.
-  The new version properly uploads the result to Supabase Storage and
-  persists a real hosted URL, mirroring `handleReplaceImage()`'s pattern.
-  **`REMOVE_BG_API_KEY` is no longer needed for this feature** — implementation
-  #1 (`/api/remove-bg`, `imageAI.ts`) is now fully dead code, left in
-  place but unused; worth deleting outright if nobody ever wants the paid
-  remove.bg path back.
+  **First fix (rewiring only) got called out, correctly**: EK's actual
+  objection wasn't just "point it at the working one" — it was "these are
+  supposed to be the same feature; if one changes the other should too,
+  it's bad coding to let them drift apart." Fair, and the first pass
+  (auto-picks "Vault" backdrop, no picker) still fell short of that bar.
+  **Real fix, done properly**:
+  - New shared `src/components/capture/BackgroundSwatchPicker.tsx` —
+    renders the Clear/Black/White/Vault/Gold/Slate/Ruby/Cobalt swatch row.
+    `CameraCapturePanel.tsx` now renders THIS component instead of its
+    own inline copy of the same JSX (which is what had let the two
+    surfaces diverge in the first place).
+  - `ItemMedia.tsx`'s "Remove BG" now runs the real removal, shows the
+    SAME `BackgroundSwatchPicker` with a **live composited preview** (an
+    effect recomposites onto the chosen backdrop as you pick), and saves
+    via the existing `onReplaceImage` upload path — full feature parity
+    with the camera flow, not just a hardcoded default.
+  - **Deleted the now fully-dead paid path outright** —
+    `src/lib/imageAI.ts` and `src/app/api/remove-bg/route.ts` are gone,
+    not just unused. There is exactly ONE background-removal
+    implementation in this codebase now; nothing left to drift.
+    `REMOVE_BG_API_KEY` is not needed for anything.
 - Separately, per EK's ask, the Media panel's "+ Add" tile
   (`src/components/ItemMedia.tsx`) now shows "+ Add" on top with the box
   split into a Camera half and an Upload half (new "upload" glyph added
