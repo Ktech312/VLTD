@@ -15,7 +15,6 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 import CameraCapturePanel from "@/components/CameraCapturePanel";
 import { analyzeImageWithVision, type VisionAnalysisResult } from "@/lib/ai/openaiVision";
-import { resolveVisionTaxonomy } from "@/lib/visionTaxonomy";
 import { newId } from "@/lib/id";
 import { appendItems, type VaultImage, type VaultItem } from "@/lib/vaultModel";
 import { emitVaultUpdate } from "@/lib/vaultEvents";
@@ -45,8 +44,6 @@ type BulkDraft = {
   file: File;
   previewUrl: string;
   title: string;
-  categoryLabel: string;
-  subcategoryLabel: string;
   currentValue: string;
   scanned: boolean;
   confidence: number;
@@ -102,22 +99,13 @@ async function persistBulkImage(itemId: string, file: File): Promise<Partial<Vau
   return { images: [image], primaryImageKey: image.storageKey, imageFrontStoragePath: image.storageKey };
 }
 
-/* ── Map an AI vision result onto a draft, constrained to the batch Universe ─ */
-function visionToDraftPatch(vision: VisionAnalysisResult, universe: UniverseKey): Partial<BulkDraft> {
-  const validCats = getCategories(universe);
-  const taxo = resolveVisionTaxonomy({
-    universe,
-    category: vision.categoryLabel || vision.category || "",
-    subcategory: vision.subcategoryLabel || "",
-  });
-  // Keep the batch's chosen Universe; only accept AI category/sub if valid there.
-  const categoryLabel = validCats.includes(taxo.categoryLabel) ? taxo.categoryLabel : "";
-  const subs = categoryLabel ? getSubcategories(universe, categoryLabel) : [];
-  const subcategoryLabel = subs.includes(taxo.subcategoryLabel) ? taxo.subcategoryLabel : "";
+/* ── Map an AI vision result onto a draft ─────────────────────────
+   Category/Subcategory are chosen ONCE for the whole batch (Step 1), so the
+   AI is only asked to fill in what's genuinely different per item: title and
+   estimated value. */
+function visionToDraftPatch(vision: VisionAnalysisResult): Partial<BulkDraft> {
   return {
     title: vision.title || "",
-    categoryLabel,
-    subcategoryLabel,
     currentValue: vision.estimatedValue ? String(vision.estimatedValue) : "",
     scanned: true,
     confidence: vision.confidence ?? 0,
@@ -132,6 +120,8 @@ export default function BulkUploadPage() {
 
   const [phase, setPhase] = useState<Phase>("pick");
   const [universe, setUniverse] = useState<UniverseKey | "">("");
+  const [category, setCategory] = useState("");
+  const [subcategory, setSubcategory] = useState("");
   const [drafts, setDrafts] = useState<BulkDraft[]>([]);
   const [status, setStatus] = useState("");
   const [committing, setCommitting] = useState(false);
@@ -171,6 +161,19 @@ export default function BulkUploadPage() {
   }, []);
 
   const catOptions = universe && isUniverseKey(universe) ? getCategories(universe) : [];
+  const subOptions =
+    universe && isUniverseKey(universe) && category ? getSubcategories(universe, category) : [];
+
+  const changeUniverse = useCallback((next: UniverseKey | "") => {
+    setUniverse(next);
+    setCategory("");
+    setSubcategory("");
+  }, []);
+
+  const changeCategory = useCallback((next: string) => {
+    setCategory(next);
+    setSubcategory("");
+  }, []);
 
   /* ── Add files (from the device picker or the camera) ── */
   const addFiles = useCallback((files: File[]) => {
@@ -184,8 +187,6 @@ export default function BulkUploadPage() {
         file,
         previewUrl,
         title: "",
-        categoryLabel: "",
-        subcategoryLabel: "",
         currentValue: "",
         scanned: false,
         confidence: 0,
@@ -213,7 +214,7 @@ export default function BulkUploadPage() {
 
   /* ── AI scan (metered) ── */
   const runScan = useCallback(async () => {
-    if (!universe || !isUniverseKey(universe)) return;
+    if (!universe || !isUniverseKey(universe) || !category) return;
     if (drafts.length === 0) return;
 
     setPhase("scanning");
@@ -233,7 +234,7 @@ export default function BulkUploadPage() {
       }
 
       try {
-        const vision = await analyzeImageWithVision(draft.file, { universe });
+        const vision = await analyzeImageWithVision(draft.file, { universe, category, subcategory });
 
         // Only charge the quota for a scan that actually produced a result.
         if (profileId) {
@@ -249,7 +250,7 @@ export default function BulkUploadPage() {
           }
         }
 
-        patchDraft(draft.id, visionToDraftPatch(vision, universe));
+        patchDraft(draft.id, visionToDraftPatch(vision));
       } catch (err) {
         console.error("[Bulk] Scan failed for one image:", err);
         // Leave the draft as-is for manual entry.
@@ -258,12 +259,12 @@ export default function BulkUploadPage() {
 
     setScanDone(drafts.length);
     setPhase("review");
-  }, [universe, drafts, remaining, profileId, patchDraft]);
+  }, [universe, category, subcategory, drafts, remaining, profileId, patchDraft]);
 
   const skipToManual = useCallback(() => {
-    if (!universe) return;
+    if (!universe || !category) return;
     setPhase("review");
-  }, [universe]);
+  }, [universe, category]);
 
   /* ── Rescan a single card (metered) ── */
   const rescanOne = useCallback(
@@ -277,7 +278,7 @@ export default function BulkUploadPage() {
       setScanningId(draft.id);
       setStatus("");
       try {
-        const vision = await analyzeImageWithVision(draft.file, { universe });
+        const vision = await analyzeImageWithVision(draft.file, { universe, category, subcategory });
         if (profileId) {
           const res = await consumeBulkScans(profileId, 1);
           if (res) {
@@ -288,7 +289,7 @@ export default function BulkUploadPage() {
             }
           }
         }
-        patchDraft(draft.id, visionToDraftPatch(vision, universe));
+        patchDraft(draft.id, visionToDraftPatch(vision));
       } catch (err) {
         console.error("[Bulk] Rescan failed:", err);
         setStatus("Couldn't identify that one — try again or fill it in by hand.");
@@ -296,7 +297,7 @@ export default function BulkUploadPage() {
         setScanningId(null);
       }
     },
-    [universe, scanningId, profileId, remaining, patchDraft]
+    [universe, category, subcategory, scanningId, profileId, remaining, patchDraft]
   );
 
   /* ── Commit ── */
@@ -313,8 +314,8 @@ export default function BulkUploadPage() {
           id,
           title: d.title.trim() || "Untitled Item",
           universe,
-          categoryLabel: d.categoryLabel || undefined,
-          subcategoryLabel: d.subcategoryLabel || undefined,
+          categoryLabel: category || undefined,
+          subcategoryLabel: subcategory || undefined,
           currentValue: d.currentValue ? Number(d.currentValue) : undefined,
           status: "COLLECTION",
           createdAt: Date.now(),
@@ -335,7 +336,7 @@ export default function BulkUploadPage() {
       setStatus("Something went wrong saving the batch. Please try again.");
       setCommitting(false);
     }
-  }, [drafts, universe, router]);
+  }, [drafts, universe, category, subcategory, router]);
 
   const scannedCount = drafts.filter((d) => d.scanned).length;
 
@@ -375,7 +376,7 @@ export default function BulkUploadPage() {
         {/* ── PICK ─────────────────────────────────────────────── */}
         {phase === "pick" && (
           <section className="mt-5 flex flex-col gap-5">
-            {/* Step 1: Universe first (tip) */}
+            {/* Step 1: Universe, Category & Subcategory — picked ONCE for the whole batch */}
             <div
               className="rounded-2xl border p-4"
               style={{ borderColor: "var(--theme-gold-border, rgba(203,208,213,0.2))", background: "var(--theme-card, rgba(15,25,45,0.6))" }}
@@ -385,16 +386,50 @@ export default function BulkUploadPage() {
                 className={INPUT_CLS}
                 style={INPUT_STYLE}
                 value={universe}
-                onChange={(e) => setUniverse(e.target.value as UniverseKey | "")}
+                onChange={(e) => changeUniverse(e.target.value as UniverseKey | "")}
               >
                 <option value="">— Select —</option>
                 {UNIVERSES.map((u) => (
                   <option key={u} value={u}>{UNIVERSE_LABEL[u]}</option>
                 ))}
               </select>
+
+              {universe ? (
+                <div className="mt-3">
+                  <label className={LABEL_CLS}>Category — applies to every item in this batch</label>
+                  <select
+                    className={INPUT_CLS}
+                    style={INPUT_STYLE}
+                    value={category}
+                    onChange={(e) => changeCategory(e.target.value)}
+                  >
+                    <option value="">— Select —</option>
+                    {catOptions.map((c) => <option key={c} value={c}>{c}</option>)}
+                  </select>
+                </div>
+              ) : null}
+
+              {category ? (
+                <div className="mt-3">
+                  <label className={LABEL_CLS}>Subcategory — also applies to every item (optional)</label>
+                  <select
+                    className={INPUT_CLS}
+                    style={INPUT_STYLE}
+                    value={subcategory}
+                    onChange={(e) => setSubcategory(e.target.value)}
+                    disabled={subOptions.length === 0}
+                  >
+                    <option value="">— None —</option>
+                    {subOptions.map((s) => <option key={s} value={s}>{s}</option>)}
+                  </select>
+                </div>
+              ) : null}
+
               <p className="mt-2 text-[11px] leading-4 text-[color:var(--muted2)]">
-                One batch = one Universe. Choosing it first makes the AI more accurate and saves you
-                effort. Uploading a different Universe? Finish this batch, then start another.
+                One batch = one Universe, Category, and Subcategory — picked once here, they carry
+                through to every photo you add below, no repeating per item. Choosing them first also
+                makes the AI more accurate. Only the title (and value) differ per item. Uploading a
+                different Universe or Category? Finish this batch, then start another.
               </p>
             </div>
 
@@ -446,24 +481,36 @@ export default function BulkUploadPage() {
 
               {drafts.length > 0 ? (
                 <div className="mt-4">
-                  <div className="mb-2 text-xs text-[color:var(--muted)]">{drafts.length} photo{drafts.length === 1 ? "" : "s"} selected</div>
+                  <div className="mb-2 text-xs text-[color:var(--muted)]">
+                    {drafts.length} photo{drafts.length === 1 ? "" : "s"} selected — type a title now if
+                    you want, or leave blank and fill titles in during review.
+                  </div>
                   <div className="grid grid-cols-3 gap-2 sm:grid-cols-5 md:grid-cols-6">
                     {drafts.map((d) => (
-                      <div
-                        key={d.id}
-                        className="group relative aspect-square overflow-hidden rounded-xl border"
-                        style={{ borderColor: "var(--theme-gold-border, rgba(203,208,213,0.18))" }}
-                      >
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src={d.previewUrl} alt="" className="h-full w-full object-cover" />
-                        <button
-                          type="button"
-                          onClick={() => removeDraft(d.id)}
-                          aria-label="Remove photo"
-                          className="absolute right-1 top-1 flex h-6 w-6 items-center justify-center rounded-full bg-black/70 text-white opacity-0 transition group-hover:opacity-100"
+                      <div key={d.id} className="group flex flex-col gap-1">
+                        <div
+                          className="relative aspect-square overflow-hidden rounded-xl border"
+                          style={{ borderColor: "var(--theme-gold-border, rgba(203,208,213,0.18))" }}
                         >
-                          ×
-                        </button>
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img src={d.previewUrl} alt="" className="h-full w-full object-cover" />
+                          <button
+                            type="button"
+                            onClick={() => removeDraft(d.id)}
+                            aria-label="Remove photo"
+                            className="absolute right-1 top-1 flex h-6 w-6 items-center justify-center rounded-full bg-black/70 text-white opacity-0 transition group-hover:opacity-100"
+                          >
+                            ×
+                          </button>
+                        </div>
+                        <input
+                          type="text"
+                          value={d.title}
+                          onChange={(e) => patchDraft(d.id, { title: e.target.value })}
+                          placeholder="Title (optional)"
+                          className="w-full rounded-md border bg-vault-card px-1.5 py-1 text-[10px] font-semibold text-text-primary outline-none transition focus:border-[color:var(--theme-gold-border)]"
+                          style={INPUT_STYLE}
+                        />
                       </div>
                     ))}
                   </div>
@@ -481,7 +528,7 @@ export default function BulkUploadPage() {
                 <div className="mt-3 flex flex-wrap gap-3">
                   <button
                     type="button"
-                    disabled={!universe || (profileId !== "" && remaining === 0)}
+                    disabled={!universe || !category || (profileId !== "" && remaining === 0)}
                     onClick={() => void runScan()}
                     className="inline-flex min-h-11 items-center justify-center rounded-[8px] px-6 text-sm font-black text-[#0B0B0B] disabled:opacity-40"
                     style={{ background: "var(--theme-gold-gradient)", boxShadow: "var(--theme-gold-glow)" }}
@@ -490,7 +537,7 @@ export default function BulkUploadPage() {
                   </button>
                   <button
                     type="button"
-                    disabled={!universe}
+                    disabled={!universe || !category}
                     onClick={skipToManual}
                     className="inline-flex min-h-11 items-center justify-center rounded-[8px] border px-6 text-sm font-semibold text-[color:var(--muted)] transition hover:text-text-primary disabled:opacity-40"
                     style={{ borderColor: "var(--theme-gold-border, rgba(203,208,213,0.3))" }}
@@ -498,8 +545,8 @@ export default function BulkUploadPage() {
                     Skip — I&apos;ll fill in by hand
                   </button>
                 </div>
-                {!universe ? (
-                  <p className="mt-2 text-[11px] text-[#EF4444]">Pick a Universe above first.</p>
+                {!universe || !category ? (
+                  <p className="mt-2 text-[11px] text-[#EF4444]">Pick a Universe and Category above first.</p>
                 ) : profileId && remaining === 0 ? (
                   <p className="mt-2 text-[11px] text-[color:var(--muted2)]">
                     No AI scans left this cycle — you can still add everything by hand.
@@ -544,8 +591,18 @@ export default function BulkUploadPage() {
                 {drafts.length === 1 ? "" : "s"} · all filed under{" "}
                 <span className="font-semibold text-text-primary">
                   {universe ? UNIVERSE_LABEL[universe as UniverseKey] : ""}
+                  {category ? ` → ${category}` : ""}
+                  {subcategory ? ` → ${subcategory}` : ""}
                 </span>
                 {scannedCount > 0 ? ` · ${scannedCount} AI-identified` : ""}
+                {" · "}
+                <button
+                  type="button"
+                  onClick={() => setPhase("pick")}
+                  className="underline-offset-2 hover:text-text-primary hover:underline"
+                >
+                  change
+                </button>
               </div>
               <button
                 type="button"
@@ -562,100 +619,69 @@ export default function BulkUploadPage() {
             </p>
 
             <div className="mt-4 grid gap-3">
-              {drafts.map((d) => {
-                const subOptions =
-                  universe && isUniverseKey(universe) && d.categoryLabel
-                    ? getSubcategories(universe, d.categoryLabel)
-                    : [];
-                return (
-                  <div
-                    key={d.id}
-                    className="flex flex-wrap items-start gap-4 rounded-2xl border p-3 sm:flex-nowrap"
-                    style={{ borderColor: "var(--theme-gold-border, rgba(203,208,213,0.18))", background: "var(--theme-card, rgba(15,25,45,0.5))" }}
-                  >
-                    <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-xl border" style={{ borderColor: "var(--theme-gold-border, rgba(203,208,213,0.18))" }}>
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={d.previewUrl} alt="" className="h-full w-full object-cover" />
-                    </div>
+              {drafts.map((d) => (
+                <div
+                  key={d.id}
+                  className="flex flex-wrap items-start gap-4 rounded-2xl border p-3 sm:flex-nowrap"
+                  style={{ borderColor: "var(--theme-gold-border, rgba(203,208,213,0.18))", background: "var(--theme-card, rgba(15,25,45,0.5))" }}
+                >
+                  <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-xl border" style={{ borderColor: "var(--theme-gold-border, rgba(203,208,213,0.18))" }}>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={d.previewUrl} alt="" className="h-full w-full object-cover" />
+                  </div>
 
-                    <div className="grid min-w-0 flex-1 gap-2 sm:grid-cols-2">
-                      <div className="sm:col-span-2">
-                        <label className={LABEL_CLS}>Item name</label>
-                        <input
-                          className={INPUT_CLS}
-                          style={INPUT_STYLE}
-                          value={d.title}
-                          onChange={(e) => patchDraft(d.id, { title: e.target.value })}
-                          placeholder="Untitled Item"
-                        />
-                      </div>
-                      <div>
-                        <label className={LABEL_CLS}>Category</label>
-                        <select
-                          className={INPUT_CLS}
-                          style={INPUT_STYLE}
-                          value={d.categoryLabel}
-                          onChange={(e) => patchDraft(d.id, { categoryLabel: e.target.value, subcategoryLabel: "" })}
-                        >
-                          <option value="">— Select —</option>
-                          {catOptions.map((c) => <option key={c} value={c}>{c}</option>)}
-                        </select>
-                      </div>
-                      <div>
-                        <label className={LABEL_CLS}>Subcategory</label>
-                        <select
-                          className={INPUT_CLS}
-                          style={INPUT_STYLE}
-                          value={d.subcategoryLabel}
-                          onChange={(e) => patchDraft(d.id, { subcategoryLabel: e.target.value })}
-                          disabled={subOptions.length === 0}
-                        >
-                          <option value="">— Select —</option>
-                          {subOptions.map((s) => <option key={s} value={s}>{s}</option>)}
-                        </select>
-                      </div>
-                      <div>
-                        <label className={LABEL_CLS}>Current value ($)</label>
-                        <input
-                          type="number"
-                          inputMode="decimal"
-                          className={INPUT_CLS}
-                          style={INPUT_STYLE}
-                          value={d.currentValue}
-                          onChange={(e) => patchDraft(d.id, { currentValue: e.target.value })}
-                          placeholder="0"
-                        />
-                      </div>
-                      <div className="flex items-end justify-between gap-2">
-                        <button
-                          type="button"
-                          disabled={scanningId !== null || (profileId !== "" && (remaining ?? 0) <= 0)}
-                          onClick={() => void rescanOne(d)}
-                          className="inline-flex items-center gap-1.5 text-xs font-semibold text-[color:var(--theme-gold,#C8CDD2)] underline-offset-2 hover:underline disabled:opacity-40 disabled:no-underline"
-                        >
-                          {scanningId === d.id ? (
-                            <>
-                              <span className="h-3 w-3 animate-spin rounded-full border-2 border-current border-t-transparent" />
-                              Scanning…
-                            </>
-                          ) : d.scanned ? (
-                            "Rescan"
-                          ) : (
-                            "Scan with AI"
-                          )}
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => removeDraft(d.id)}
-                          className="text-xs font-semibold text-[color:var(--muted)] underline-offset-2 hover:text-[#EF4444] hover:underline"
-                        >
-                          Remove
-                        </button>
-                      </div>
+                  <div className="grid min-w-0 flex-1 gap-2 sm:grid-cols-2">
+                    <div className="sm:col-span-2">
+                      <label className={LABEL_CLS}>Item name</label>
+                      <input
+                        className={INPUT_CLS}
+                        style={INPUT_STYLE}
+                        value={d.title}
+                        onChange={(e) => patchDraft(d.id, { title: e.target.value })}
+                        placeholder="Untitled Item"
+                      />
+                    </div>
+                    <div>
+                      <label className={LABEL_CLS}>Current value ($)</label>
+                      <input
+                        type="number"
+                        inputMode="decimal"
+                        className={INPUT_CLS}
+                        style={INPUT_STYLE}
+                        value={d.currentValue}
+                        onChange={(e) => patchDraft(d.id, { currentValue: e.target.value })}
+                        placeholder="0"
+                      />
+                    </div>
+                    <div className="flex items-end justify-between gap-2">
+                      <button
+                        type="button"
+                        disabled={scanningId !== null || (profileId !== "" && (remaining ?? 0) <= 0)}
+                        onClick={() => void rescanOne(d)}
+                        className="inline-flex items-center gap-1.5 text-xs font-semibold text-[color:var(--theme-gold,#C8CDD2)] underline-offset-2 hover:underline disabled:opacity-40 disabled:no-underline"
+                      >
+                        {scanningId === d.id ? (
+                          <>
+                            <span className="h-3 w-3 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                            Scanning…
+                          </>
+                        ) : d.scanned ? (
+                          "Rescan"
+                        ) : (
+                          "Scan with AI"
+                        )}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => removeDraft(d.id)}
+                        className="text-xs font-semibold text-[color:var(--muted)] underline-offset-2 hover:text-[#EF4444] hover:underline"
+                      >
+                        Remove
+                      </button>
                     </div>
                   </div>
-                );
-              })}
+                </div>
+              ))}
             </div>
 
             {drafts.length === 0 ? (
