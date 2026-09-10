@@ -1080,15 +1080,36 @@ export default function VltdMuseumCampus() {
       return delta;
     }
 
+    // EK's physical report (2026-09-09): target-click movement felt
+    // "choppy" — specifically a brief freeze then a jump partway, not a
+    // glide the whole way. Root cause: duration was sized ONLY from travel
+    // distance, never from how much the view had to turn. A target clicked
+    // from nearby (an explicitly supported recenter/realign — "click a pad
+    // you're already standing near") could still require close to a full
+    // 180-degree turn, and that turn was being squeezed into the SAME
+    // ~0.4s floor meant for a barely-moving click. smoothstep's eased
+    // start is slow by design; compressed into ~0.4s a big turn spends
+    // most of that time barely moving, then most of the rotation happens
+    // in the last few frames — which reads exactly as "pause, then jump."
+    // Duration now also scales with the actual turn size, so a big
+    // reorientation always gets time proportional to how far it turns.
+    const ALIGN_TURN_SPEED = Math.PI / 1.1; // rad/sec — a full 180-degree turn takes ~1.1s
+
     function startWalkTween(destination: THREE.Vector3, destinationYaw: number) {
       const fromPos = cameraBody.clone();
       const travelDistance = fromPos.distanceTo(destination);
-      // Minimum duration is deliberately not ~0 even for a same-spot click
-      // ("click a pad while already standing near it... recenter and
-      // realign" — EK's requirement (7)): the realignment should always be
-      // visibly smooth, never an instant unexplained snap.
-      const duration = THREE.MathUtils.clamp(travelDistance / 4.8, 0.4, 1.65);
-      const toYaw = yaw + shortestYawDelta(yaw, destinationYaw);
+      const yawDelta = shortestYawDelta(yaw, destinationYaw);
+      const toYaw = yaw + yawDelta;
+      const turnAmount = Math.abs(yawDelta) + Math.abs(pitch - 0);
+      // Minimum duration is deliberately not ~0 even for a same-spot,
+      // no-turn click ("click a pad while already standing near it...
+      // recenter and realign" — EK's requirement (7)): the realignment
+      // should always be visibly smooth, never an instant unexplained snap.
+      const duration = THREE.MathUtils.clamp(
+        Math.max(travelDistance / 4.8, turnAmount / ALIGN_TURN_SPEED),
+        0.45,
+        2.2
+      );
       walkTween = {
         fromPos, toPos: destination.clone(),
         fromYaw: yaw, toYaw,
