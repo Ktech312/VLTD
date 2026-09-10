@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import ScanCropEditor from "@/components/ScanCropEditor";
+import BackgroundSwatchPicker from "@/components/capture/BackgroundSwatchPicker";
 import { DropdownPill } from "@/components/ui/DropdownPill";
 import { Glyph } from "@/components/ui/Glyph";
 import { PillButton } from "@/components/ui/PillButton";
@@ -1057,33 +1058,8 @@ export default function CameraCapturePanel({
               ) : null}
 
               {isBackgroundRemoved ? (
-                <div className="mt-2 flex gap-2 overflow-x-auto pb-1">
-                  <span className="shrink-0 self-center text-[10px] font-semibold uppercase tracking-[0.14em] text-[color:var(--muted2)]">Backdrop</span>
-                  {CAPTURE_BACKGROUNDS.map((background) => (
-                    <button
-                      key={background.id}
-                      type="button"
-                      onClick={() => setSelectedBackgroundId(background.id)}
-                      className="shrink-0 rounded-xl px-2 py-1.5 text-[10px] font-semibold uppercase tracking-[0.08em] ring-1"
-                      style={{
-                        background: selectedBackgroundId === background.id
-                          ? "var(--theme-gold-subtle, rgba(203,208,213,0.12))"
-                          : "var(--surface)",
-                        borderColor: selectedBackgroundId === background.id
-                          ? "var(--theme-gold-border, rgba(203,208,213,0.38))"
-                          : "var(--border)",
-                        color: selectedBackgroundId === background.id
-                          ? "var(--theme-gold, #C8CDD2)"
-                          : "var(--muted)",
-                      }}
-                    >
-                      <span
-                        className="mb-1 block h-8 w-12 rounded-lg ring-1 ring-white/10"
-                        style={{ background: background.swatch }}
-                      />
-                      {background.label}
-                    </button>
-                  ))}
+                <div className="mt-2">
+                  <BackgroundSwatchPicker selectedId={selectedBackgroundId} onSelect={setSelectedBackgroundId} />
                 </div>
               ) : null}
             </div>

@@ -5,6 +5,7 @@ import { createPortal } from "react-dom";
 
 import ImageViewer from "@/components/ImageViewer";
 import ScanCropEditor from "@/components/ScanCropEditor";
+import BackgroundSwatchPicker from "@/components/capture/BackgroundSwatchPicker";
 import { Glyph } from "@/components/ui/Glyph";
 import { cropImageFile, type ScanCropRect } from "@/lib/scanners/cropImageFile";
 import { showToast } from "@/lib/toast";
@@ -132,10 +133,7 @@ export default function ItemMedia({
   onMoveImage,
   onDeleteImage,
   onReplaceImage,
-  onRemoveBackground,
-  onRevertBackground,
   onSetImageRole,
-  canRevertBackground,
 }: {
   item?: { images?: ItemMediaImageMeta[] } | null;
   images: string[];
@@ -145,10 +143,7 @@ export default function ItemMedia({
   onMoveImage: (fromIndex: number, toIndex: number) => void;
   onDeleteImage: (index: number) => void;
   onReplaceImage?: (index: number, file: File) => Promise<void> | void;
-  onRemoveBackground?: (index: number) => void;
-  onRevertBackground?: (index: number) => void;
   onSetImageRole?: (imageId: string, role: ImageRole) => void;
-  canRevertBackground?: boolean;
 }) {
   const fileRef = useRef<HTMLInputElement | null>(null);
   const cameraRef = useRef<HTMLInputElement | null>(null);
@@ -163,6 +158,15 @@ export default function ItemMedia({
   const [viewerIndex, setViewerIndex] = useState(0);
   const [editTarget, setEditTarget] = useState<{ index: number; url: string; crop: ScanCropRect } | null>(null);
   const [isEditingImage, setIsEditingImage] = useState(false);
+
+  // Remove Background — same free, client-side pipeline and backdrop
+  // choices as the camera capture flow (src/components/capture/
+  // captureUtils.ts), so the two never drift apart again.
+  const [bgTarget, setBgTarget] = useState<{ index: number; cutoutFile: File; backgroundId: string } | null>(null);
+  const [bgPreviewUrl, setBgPreviewUrl] = useState("");
+  const [isPreparingBg, setIsPreparingBg] = useState(false);
+  const [isSavingBg, setIsSavingBg] = useState(false);
+  const [bgError, setBgError] = useState("");
 
   const imageMeta = useMemo(() => {
     return Array.isArray(item?.images) ? item!.images! : [];
@@ -210,6 +214,38 @@ export default function ItemMedia({
       }
     };
   }, [draftPreviewUrl]);
+
+  useEffect(() => {
+    return () => {
+      if (bgPreviewUrl.startsWith("blob:")) {
+        URL.revokeObjectURL(bgPreviewUrl);
+      }
+    };
+  }, [bgPreviewUrl]);
+
+  // Recomposite the live preview any time the chosen backdrop changes.
+  useEffect(() => {
+    if (!bgTarget) return;
+    let cancelled = false;
+    void (async () => {
+      const { compositeBackgroundToFile, CAPTURE_BACKGROUNDS } = await import(
+        "@/components/capture/captureUtils"
+      );
+      const background =
+        CAPTURE_BACKGROUNDS.find((entry) => entry.id === bgTarget.backgroundId) ?? CAPTURE_BACKGROUNDS[0];
+      const composited = await compositeBackgroundToFile(bgTarget.cutoutFile, background);
+      if (cancelled) return;
+      const url = URL.createObjectURL(composited);
+      setBgPreviewUrl((prev) => {
+        if (prev.startsWith("blob:")) URL.revokeObjectURL(prev);
+        return url;
+      });
+    })();
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [bgTarget?.backgroundId, bgTarget?.cutoutFile]);
 
   function clearDraft() {
     if (draftPreviewUrl.startsWith("blob:")) {
@@ -303,6 +339,53 @@ export default function ItemMedia({
       if (!ok) return;
     }
     setEditTarget(null);
+  }
+
+  async function openBackgroundRemoval(entry: ImageEntry) {
+    if (!onReplaceImage || isPreparingBg) return;
+    setBgError("");
+    setIsPreparingBg(true);
+    try {
+      const file = await imageUrlToFile(entry.url, entry.originalIndex);
+      const { removeBackgroundFromFile } = await import("@/components/capture/captureUtils");
+      const cutout = await removeBackgroundFromFile(file);
+      setBgTarget({ index: entry.originalIndex, cutoutFile: cutout, backgroundId: "vault" });
+    } catch (error) {
+      showToast(
+        error instanceof Error
+          ? error.message
+          : "Background removal could not finish in this browser. The photo is still usable."
+      );
+    } finally {
+      setIsPreparingBg(false);
+    }
+  }
+
+  function closeBackgroundRemoval() {
+    if (bgPreviewUrl.startsWith("blob:")) URL.revokeObjectURL(bgPreviewUrl);
+    setBgPreviewUrl("");
+    setBgTarget(null);
+    setBgError("");
+  }
+
+  async function saveBackgroundRemoval() {
+    if (!bgTarget || !onReplaceImage) return;
+    setIsSavingBg(true);
+    setBgError("");
+    try {
+      const { compositeBackgroundToFile, CAPTURE_BACKGROUNDS } = await import(
+        "@/components/capture/captureUtils"
+      );
+      const background =
+        CAPTURE_BACKGROUNDS.find((entry) => entry.id === bgTarget.backgroundId) ?? CAPTURE_BACKGROUNDS[0];
+      const finalFile = await compositeBackgroundToFile(bgTarget.cutoutFile, background);
+      await onReplaceImage(bgTarget.index, finalFile);
+      closeBackgroundRemoval();
+    } catch (error) {
+      setBgError(error instanceof Error ? error.message : "Could not save this background.");
+    } finally {
+      setIsSavingBg(false);
+    }
   }
 
   function renderRoleControls(entry: ImageEntry) {
@@ -473,22 +556,14 @@ export default function ItemMedia({
             >
               Camera
             </button>
-            {onRemoveBackground && activeVisibleEntry ? (
+            {onReplaceImage && activeVisibleEntry ? (
               <button
                 type="button"
-                onClick={() => onRemoveBackground(activeVisibleEntry.originalIndex)}
-                className="rounded-full bg-[color:var(--pill)] px-3 py-2 text-xs text-text-primary ring-1 ring-[color:var(--border)]"
+                disabled={isPreparingBg}
+                onClick={() => void openBackgroundRemoval(activeVisibleEntry)}
+                className="rounded-full bg-[color:var(--pill)] px-3 py-2 text-xs text-text-primary ring-1 ring-[color:var(--border)] disabled:opacity-50"
               >
-                Remove BG
-              </button>
-            ) : null}
-            {onRevertBackground && canRevertBackground && activeVisibleEntry ? (
-              <button
-                type="button"
-                onClick={() => onRevertBackground(activeVisibleEntry.originalIndex)}
-                className="rounded-full bg-[color:var(--pill)] px-3 py-2 text-xs text-text-primary ring-1 ring-[color:var(--border)]"
-              >
-                Revert
+                {isPreparingBg ? "Removing…" : "Remove BG"}
               </button>
             ) : null}
           </div>
@@ -692,16 +767,17 @@ export default function ItemMedia({
                   >
                     Add Image
                   </button>
-                  {onRemoveBackground ? (
+                  {onReplaceImage ? (
                     <button
                       type="button"
+                      disabled={isPreparingBg}
                       onClick={() => {
                         setPreviewOpen(false);
-                        onRemoveBackground(activeVisibleEntry.originalIndex);
+                        void openBackgroundRemoval(activeVisibleEntry);
                       }}
-                      className="inline-flex h-10 items-center gap-1.5 rounded-[8px] bg-[color:var(--pill)] px-4 text-sm font-medium ring-1 ring-[color:var(--border)]"
+                      className="inline-flex h-10 items-center gap-1.5 rounded-[8px] bg-[color:var(--pill)] px-4 text-sm font-medium ring-1 ring-[color:var(--border)] disabled:opacity-50"
                     >
-                      Remove BG
+                      {isPreparingBg ? "Removing…" : "Remove BG"}
                     </button>
                   ) : null}
                   <button
@@ -743,6 +819,77 @@ export default function ItemMedia({
                   applyLabel="Save Photo"
                   compact
                 />
+              </div>
+            </div>,
+            document.body
+          )
+        : null}
+
+      {mounted && bgTarget && typeof document !== "undefined"
+        ? createPortal(
+            <div
+              className="fixed inset-0 z-[95] flex h-[100dvh] w-[100dvw] items-center justify-center overflow-y-auto bg-black/90 px-3 py-4 backdrop-blur-sm sm:px-4"
+              role="dialog"
+              aria-modal="true"
+              aria-label="Remove background"
+              onMouseDown={(event) => {
+                if (event.target === event.currentTarget && !isSavingBg) closeBackgroundRemoval();
+              }}
+            >
+              <div className="w-full max-w-[min(94dvw,560px)] rounded-[22px] bg-[color:var(--surface)] p-4 ring-1 ring-[color:var(--border)]">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <div className="text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">REMOVE BACKGROUND</div>
+                    <div className="mt-1 text-xs text-[color:var(--muted)]">Pick a backdrop for the cutout. Saves as a new photo.</div>
+                  </div>
+                  <button
+                    type="button"
+                    disabled={isSavingBg}
+                    onClick={closeBackgroundRemoval}
+                    className="rounded-full bg-[color:var(--pill)] px-3 py-1.5 text-xs ring-1 ring-[color:var(--border)] disabled:opacity-50"
+                  >
+                    Cancel
+                  </button>
+                </div>
+
+                <div className="mt-3 flex aspect-square items-center justify-center overflow-hidden rounded-[16px] bg-[color:var(--pill)] ring-1 ring-[color:var(--border)]">
+                  {bgPreviewUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={bgPreviewUrl} alt="" className="h-full w-full object-contain p-3" draggable={false} />
+                  ) : (
+                    <span className="h-6 w-6 animate-spin rounded-full border-2 border-current border-t-transparent text-[color:var(--muted)]" />
+                  )}
+                </div>
+
+                <div className="mt-3">
+                  <BackgroundSwatchPicker
+                    selectedId={bgTarget.backgroundId}
+                    onSelect={(id) => setBgTarget((prev) => (prev ? { ...prev, backgroundId: id } : prev))}
+                  />
+                </div>
+
+                {bgError ? (
+                  <div className="mt-2 text-xs text-[#EF4444]">{bgError}</div>
+                ) : null}
+
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    disabled={isSavingBg || !bgPreviewUrl}
+                    onClick={() => void saveBackgroundRemoval()}
+                    className="rounded-full bg-[color:var(--pill-active-bg)] px-4 py-2 text-sm font-medium text-[color:var(--fg)] ring-1 ring-[color:var(--pill-active-bg)] disabled:opacity-50"
+                  >
+                    {isSavingBg ? "Saving…" : "Save Photo"}
+                  </button>
+                  <button
+                    type="button"
+                    disabled={isSavingBg}
+                    onClick={closeBackgroundRemoval}
+                    className="rounded-full bg-[color:var(--pill)] px-4 py-2 text-sm ring-1 ring-[color:var(--border)] disabled:opacity-50"
+                  >
+                    Cancel
+                  </button>
+                </div>
               </div>
             </div>,
             document.body

@@ -655,108 +655,6 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
     }
   }
 
-  async function handleRemoveBackground(index: number) {
-    if (!item || !images[index]) return;
-
-    const orderedImages = getOrderedImages(item);
-    const target = orderedImages[index];
-    if (!target) return;
-
-    setUploading(true);
-    setMediaMessage("Removing background...");
-
-    try {
-      const { removeBackgroundFromFile, compositeBackgroundToFile, CAPTURE_BACKGROUNDS } = await import(
-        "@/components/capture/captureUtils"
-      );
-
-      const response = await fetch(images[index]);
-      if (!response.ok) throw new Error("Could not load this image.");
-      const sourceBlob = await response.blob();
-      const sourceFile = new File([sourceBlob], `item-photo-${index + 1}.jpg`, {
-        type: sourceBlob.type || "image/jpeg",
-        lastModified: Date.now(),
-      });
-
-      const cutout = await removeBackgroundFromFile(sourceFile);
-      // Same default backdrop the camera capture flow lands on after a
-      // removal — a plain transparent PNG reads as "broken" on most
-      // collector photos, so give it a real background instead of nothing.
-      const vaultBackground =
-        CAPTURE_BACKGROUNDS.find((background) => background.id === "vault") ?? CAPTURE_BACKGROUNDS[0];
-      const finalFile = await compositeBackgroundToFile(cutout, vaultBackground);
-
-      let replacement: VaultImage;
-
-      try {
-        if (hasSupabaseEnv()) {
-          const uploaded = await uploadVaultImageToSupabase({
-            itemId: item.id,
-            file: finalFile,
-            fileName: "background-removed.png",
-          });
-          replacement = {
-            ...target,
-            id: uploaded.path,
-            storageKey: uploaded.path,
-            url: uploaded.publicUrl,
-            localOnly: false,
-          };
-        } else {
-          const durableBlob = await prepareImageBlob(finalFile);
-          const storageKey = generateVaultImageKey(item.id, index);
-          await saveImageBlobToIndexedDb(durableBlob, storageKey);
-          const localUrl = URL.createObjectURL(durableBlob);
-          replacement = { ...target, id: storageKey, storageKey, url: localUrl, localOnly: true };
-        }
-      } catch (uploadError) {
-        const durableBlob = await prepareImageBlob(finalFile).catch(() => finalFile);
-        const storageKey = generateVaultImageKey(item.id, index);
-        await saveImageBlobToIndexedDb(durableBlob, storageKey);
-        const localUrl = URL.createObjectURL(durableBlob);
-        replacement = { ...target, id: storageKey, storageKey, url: localUrl, localOnly: true };
-        setMediaMessage(
-          uploadError instanceof Error
-            ? `${uploadError.message} Background-removed photo saved locally on this device.`
-            : "Cloud upload failed. Background-removed photo saved locally on this device."
-        );
-      }
-
-      const nextImages = orderedImages.map((image, imageIndex) =>
-        imageIndex === index ? { ...replacement, order: imageIndex } : { ...image, order: imageIndex }
-      );
-      const replacingPrimary =
-        target.storageKey === item.primaryImageKey || target.url === item.imageFrontUrl || index === 0;
-      const nextItem: VaultItem = {
-        ...item,
-        images: nextImages,
-        primaryImageKey: replacingPrimary ? replacement.storageKey : item.primaryImageKey,
-        imageFrontUrl: replacingPrimary ? replacement.url : item.imageFrontUrl,
-        imageFrontStoragePath: replacingPrimary ? replacement.storageKey : item.imageFrontStoragePath,
-      };
-
-      await persist(nextItem);
-
-      if (hasSupabaseEnv() && target.storageKey && !target.localOnly && target.storageKey !== replacement.storageKey) {
-        try {
-          await deleteVaultImageFromSupabase(target.storageKey);
-        } catch {
-          // The new image is saved; old-file cleanup can fail safely.
-        }
-      }
-
-      setMediaMessage("Background removed.");
-    } catch (error) {
-      setMediaMessage(
-        error instanceof Error
-          ? error.message
-          : "Background removal could not finish in this browser. Try again."
-      );
-    } finally {
-      setUploading(false);
-    }
-  }
-
   async function handleSavePricing(patch: PricingMvpFields) {
     if (!item) return;
 
@@ -997,7 +895,6 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
                   onMoveImage={handleMoveImage}
                   onDeleteImage={handleDeleteImage}
                   onReplaceImage={handleReplaceImage}
-                  onRemoveBackground={handleRemoveBackground}
                 />
 
                 {(uploading || mediaMessage) && (
