@@ -4272,6 +4272,64 @@ result before calling it done, the way EK's side-by-side did here.
 
 ## 2. What's LEFT to do (prioritized)
 
+### ⚠ MIGRATION PENDING (2026-09-09) — SEVERE: every vault item save/create to Supabase has been silently failing since 2026-08-19
+EK saw a raw `operator does not exist: uuid = text` toast after cropping
+and saving an existing item's photo (Edit Photo → Save Photo), then
+reported the crop reverted after navigating away and back. Root-caused,
+not a guess:
+
+- `enforce_vault_item_limit()` (added in `20260819_server_side_tier_limits.sql`
+  to close a client-side tier-limit bypass) runs `select tier from
+  public.profiles where id = new.profile_id` — but `vault_items.profile_id`
+  is **text** and `profiles.id` is **uuid**, and Postgres has no `uuid =
+  text` operator. Two OTHER functions in this codebase already knew about
+  and guarded against this exact gotcha (`is_profile_member_text()` in
+  `20260707_profile_members.sql`, `tg_assign_item_code()` in
+  `20260718_internal_ids_triggers.sql`) — this migration was the one place
+  that missed the `::uuid` cast.
+- It's a `BEFORE INSERT` trigger on `vault_items`, and Postgres fires
+  `BEFORE INSERT` triggers for the INSERT half of `INSERT ... ON CONFLICT
+  DO UPDATE` even when the row ends up being an update, before the
+  conflict is even detected. `upsertVaultItemToSupabase()` in
+  `src/lib/vaultCloud.ts` uses exactly that upsert shape. Net effect:
+  **this trigger has been throwing on every single vault_items INSERT and
+  UPDATE since 2026-08-19** — brand-new items never actually reaching
+  Supabase, and every edit to an existing item (title, price, photos,
+  anything routed through `persist()`) silently failing to sync to the
+  cloud.
+- Why it wasn't caught sooner: `persist()` in
+  `src/app/vault/item/[id]/page.tsx` calls `saveItem(nextItem)` (the local
+  device copy) BEFORE the Supabase call, so edits *look* like they worked
+  in the moment. Most callers of `persist()` don't have a catch block that
+  surfaces the thrown error, so it silently became an unhandled promise
+  rejection — invisible in the UI. `ItemMedia.tsx`'s `applyImageEdit()` is
+  one of the few call sites that DOES catch and `showToast()` the error,
+  which is why photo-crop-save is where EK actually saw it. The "crop
+  reverted after changing pages" EK reported is the same bug: the item
+  reloads from Supabase on navigation, and the server row was never
+  actually updated, so the stale pre-crop image wins.
+- **Fix written, NOT yet run** — `supabase/migrations/20260909_fix_vault_item_limit_type_mismatch.sql`
+  (`create or replace function public.enforce_vault_item_limit()` with the
+  `::uuid` cast added, plus the same defensive "only proceed if
+  `new.profile_id` looks like a real uuid" guard already used elsewhere).
+  **EK needs to run this in the Supabase SQL editor** — full SQL is in the
+  file (paste-ready, safe to re-run). Until it's run, every vault item
+  save/create keeps silently failing to reach the cloud (local-only data
+  is NOT at risk, but nothing is syncing).
+- Also found while investigating: **Remove BG has stopped working** — the
+  server route (`src/app/api/remove-bg/route.ts`) needs `REMOVE_BG_API_KEY`,
+  and `vercel env ls` (run this session, first time this session had
+  Vercel CLI access) shows that variable **does not exist at all** in the
+  Vercel project — not rotated, not renamed, just never present in the
+  current env list. EK needs to add it via the Vercel dashboard or `vercel
+  env add REMOVE_BG_API_KEY` (their own remove.bg API key) for Preview +
+  Production, then trigger a redeploy for it to take effect.
+- Separately, per EK's ask, the Media panel's "+ Add" tile
+  (`src/components/ItemMedia.tsx`) now shows "+ Add" on top with the box
+  split into a Camera half and an Upload half (new "upload" glyph added
+  to `src/components/ui/Glyph.tsx`) instead of one plain button — pushed,
+  live, no migration needed for this part.
+
 ### ✅ DONE, LIVE (2026-09-09) — Bulk upload: Category + Subcategory now picked ONCE for the whole batch, not per item
 EK: uploaded 10 comics at once and had to re-pick Category/Subcategory
 on every single one in the review grid — "too much work for doing
