@@ -4316,19 +4316,47 @@ not a guess:
   file (paste-ready, safe to re-run). Until it's run, every vault item
   save/create keeps silently failing to reach the cloud (local-only data
   is NOT at risk, but nothing is syncing).
-- Also found while investigating: **Remove BG has stopped working** — the
-  server route (`src/app/api/remove-bg/route.ts`) needs `REMOVE_BG_API_KEY`,
-  and `vercel env ls` (run this session, first time this session had
-  Vercel CLI access) shows that variable **does not exist at all** in the
-  Vercel project — not rotated, not renamed, just never present in the
-  current env list. EK needs to add it via the Vercel dashboard or `vercel
-  env add REMOVE_BG_API_KEY` (their own remove.bg API key) for Preview +
-  Production, then trigger a redeploy for it to take effect.
+- **✅ FIXED, LIVE — Remove BG.** First pass wrongly concluded this
+  needed a `REMOVE_BG_API_KEY` Vercel env var (that var genuinely is
+  missing, confirmed via `vercel env ls`) — but EK correctly pushed back:
+  a working, DIFFERENT background-removal feature already existed in this
+  codebase and she'd used it before. She was right. There are TWO
+  separate background-removal implementations in this app:
+  1. `src/app/api/remove-bg/route.ts` + `src/lib/imageAI.ts`
+     (`removeBackgroundStub`) — a server route calling the paid remove.bg
+     API, gated on `REMOVE_BG_API_KEY`, which has in fact never been
+     configured. This was the ONE wired into the vault item edit page's
+     "Remove BG" button — hence it never worked there.
+  2. `src/components/capture/captureUtils.ts`
+     (`removeBackgroundFromFile()` / `compositeBackgroundToFile()`) — a
+     real, FREE, client-side implementation using the already-installed
+     `@imgly/background-removal` npm package (runs entirely in-browser via
+     WASM, no API key, no server round-trip). This is what the camera
+     capture flow (`CameraCapturePanel.tsx`, used by `/capture`,
+     `/vault/add`, `/vault/bulk`) has always used, and composites the
+     cutout onto a colored backdrop from `CAPTURE_BACKGROUNDS`
+     (Vault/Gold/Slate/Ruby/Cobalt/Black/White/transparent) — exactly
+     matching EK's memory of it "giving a different color background."
+  **Fix**: rewired `handleRemoveBackground()` in
+  `src/app/vault/item/[id]/page.tsx` to use implementation #2 instead of
+  #1 — no env var needed at all. Also fixed a second, quieter bug in the
+  old code while at it: it saved the result as a `blob:` URL directly on
+  the item, which `sanitizeRemoteImages()` in `vaultCloud.ts` filters out
+  of every cloud sync as local-only — so even with a working API key, the
+  background-removed image would never have actually reached Supabase.
+  The new version properly uploads the result to Supabase Storage and
+  persists a real hosted URL, mirroring `handleReplaceImage()`'s pattern.
+  **`REMOVE_BG_API_KEY` is no longer needed for this feature** — implementation
+  #1 (`/api/remove-bg`, `imageAI.ts`) is now fully dead code, left in
+  place but unused; worth deleting outright if nobody ever wants the paid
+  remove.bg path back.
 - Separately, per EK's ask, the Media panel's "+ Add" tile
   (`src/components/ItemMedia.tsx`) now shows "+ Add" on top with the box
   split into a Camera half and an Upload half (new "upload" glyph added
   to `src/components/ui/Glyph.tsx`) instead of one plain button — pushed,
-  live, no migration needed for this part.
+  live, no migration needed for this part. Second pass (EK: "now it looks
+  like 3 different things"): dropped the label pill entirely, now it's
+  one tile with a large low-opacity "+" watermarked behind the two icons.
 
 ### ✅ DONE, LIVE (2026-09-09) — Bulk upload: Category + Subcategory now picked ONCE for the whole batch, not per item
 EK: uploaded 10 comics at once and had to re-pick Category/Subcategory
