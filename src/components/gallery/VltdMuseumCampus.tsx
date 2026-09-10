@@ -400,6 +400,33 @@ export default function VltdMuseumCampus() {
       medallion.rotation.x = -Math.PI / 2;
       medallion.position.set(hubCenter.x, 0.02, hubCenter.z);
       scene.add(medallion);
+
+      // The compass was designed with an open center. Place the VLTD seal in
+      // that field as a separate, transparent floor inlay so the surrounding
+      // rings and eight-point compass remain visible. This is visual only and
+      // sits flush enough to avoid affecting movement or collision.
+      const vltdSealTexture = new THREE.TextureLoader().load(
+        "/brand/vltd-museum-floor-medallion-v1.png"
+      );
+      vltdSealTexture.colorSpace = THREE.SRGBColorSpace;
+      vltdSealTexture.anisotropy = renderer.capabilities.getMaxAnisotropy();
+      const vltdSeal = new THREE.Mesh(
+        new THREE.CircleGeometry(2.7, 96),
+        new THREE.MeshStandardMaterial({
+          map: vltdSealTexture,
+          transparent: true,
+          alphaTest: 0.02,
+          roughness: 0.82,
+          metalness: 0.08,
+          depthWrite: false,
+          polygonOffset: true,
+          polygonOffsetFactor: -1,
+        })
+      );
+      vltdSeal.name = "hub_vltd_floor_seal";
+      vltdSeal.rotation.x = -Math.PI / 2;
+      vltdSeal.position.set(hubCenter.x, 0.028, hubCenter.z);
+      scene.add(vltdSeal);
     }
 
     // Display shelves flanking a doorway (EK's ask, 2026-09-02) are gone —
