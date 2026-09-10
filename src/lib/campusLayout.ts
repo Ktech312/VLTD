@@ -2,23 +2,24 @@
 // not-yet-built "bigger business plan" project — see the Museum Campus
 // Blueprint artifact, https://claude.ai/code/artifact/7c87a20a-cb50-4bfb-891d-fb2d111040f0).
 //
-// Every number below is the blueprint's own real-anchored floor plan
-// (measured off the live campus Map view's getBoundingClientRect(), then
-// scaled so Gallery C matches the one already-built exhibition room's real
-// size) converted 1:1 into Three.js world units — SVG x -> world X, SVG y ->
-// world Z. Nothing here is re-invented; it's the same 10-room, 18-door
-// layout EK already approved in the blueprint, just given a third
-// dimension. If the blueprint's floor plan changes, mirror the change here.
+// Shared-Wall Grid Plan (2026-09-08, EK-approved after rejecting the
+// connection-owned vestibule architecture): every room now sits on an exact
+// module grid — a 21x26 base module (COLLECTION's own accepted size) — so
+// adjacent rooms share the IDENTICAL boundary coordinate. There is no
+// coordinate gap between any two adjoining rooms anymore, and therefore no
+// vestibule, no bridge-through-empty-space, no double wall. A room's wall on
+// a shared boundary IS the neighbor's wall on that boundary — one physical
+// structure, not two. See campusRoomBuilder.ts's buildSharedWall() for how
+// that one wall gets built, finished on each face, and (where CAMPUS_DOORS
+// calls for it) cut into a doorway.
 import type { UniverseKey } from "@/lib/taxonomy";
+import { DOORWAY_WALL_GAP, MUSEUM_EYE_HEIGHT, STANDARD_ROOM_HEIGHT } from "./museumStandard";
 
-// Exact match to the single room's own wall/ceiling height (9.15, see
-// VirtualGalleryRoom.tsx's own ceiling mesh) — EK's ask (2026-09-02):
-// "carry over all the rules we made from the first room." Was 8, a guess.
-export const WALL_HEIGHT = 9.15;
+export const WALL_HEIGHT = STANDARD_ROOM_HEIGHT;
 export const WALL_THICKNESS = 0.3;
 export const DOOR_HEIGHT = 6.4;
-export const DOOR_WIDTH = 3; // wider than the blueprint's 1.6-unit door marker (2.12 scaled) — a real walkthrough needs a walkable gap, not just a legend dot
-export const EYE_HEIGHT = 3.6; // matches the built single room's camera eye height
+export const DOOR_WIDTH = 3; // campus default for any door that doesn't install the real doorwayKit frame (none currently — every door below carries DOORWAY_WALL_GAP)
+export const EYE_HEIGHT = MUSEUM_EYE_HEIGHT;
 
 export type CampusRoomId =
   | "HUB"
@@ -45,41 +46,38 @@ export type CampusRoom = {
   d: number; // depth along Z
   floorColor: number;
   // Static content mapping for the 7 rooms with an obvious 1:1 real
-  // taxonomy match. Collection and Cards don't have one (the blueprint's
-  // own bottom-row naming came partly from filler labels, not measured
-  // category data) — left empty here and resolved at runtime by
-  // assignSwingRoomUniverses() below, from the signed-in user's own real
-  // item counts, instead of a guessed hardcoded split.
+  // taxonomy match. Collection and Cards don't have one — resolved at
+  // runtime by assignSwingRoomUniverses() below, from the signed-in user's
+  // own real item counts, instead of a guessed hardcoded split.
   universes: UniverseKey[];
-  // PLAZA (the entrance forecourt) is open-air — no wall meshes, just a
-  // floor and a walkable rect. Collision still respects its bounds either
-  // way; this only skips generating wall geometry for it.
+  // PLAZA (the entrance forecourt) is open-air — no wall meshes on any of
+  // its boundaries, including the ones it shares with SPOTLIGHT/STORE/HUB.
+  // Collision still respects its bounds either way; this only skips wall
+  // generation.
   noWalls?: boolean;
 };
 
-// Blueprint's pre-scale (px/8) room rects * 1.3268 scale factor, unrounded.
-export const S = 1.3268;
+// Shared-Wall Grid Plan module unit — every room's w/d is a whole multiple
+// of this, and every adjoining pair's shared edge lands on the same exact
+// coordinate by construction (verified pairwise for overlap-free tiling
+// before this pass shipped).
+export const MODULE_WIDTH = 21;
+export const MODULE_DEPTH = 26;
 
 export const CAMPUS_ROOMS: CampusRoom[] = [
-  { id: "POP_CULTURE", label: "POP_CULTURE", tierLabel: "North Rotunda", x: 0 * S, z: 0 * S, w: 15.4 * S, d: 12.6 * S, floorColor: 0x3a2a1a, universes: ["POP_CULTURE"] },
-  { id: "TCG", label: "TCG", tierLabel: "South Rotunda", x: 0 * S, z: 14.1 * S, w: 15.4 * S, d: 12.6 * S, floorColor: 0x1a2a3a, universes: ["TCG"] },
-  { id: "MISC", label: "misc", tierLabel: "Gallery A", x: 0 * S, z: 28.1 * S, w: 15.4 * S, d: 26.6 * S, floorColor: 0x2a2a2a, universes: ["MISC"] },
-  { id: "HUB", label: "VLTD Museum", tierLabel: "Grand hall", x: 16.9 * S, z: 0 * S, w: 49.1 * S, d: 40.75 * S, floorColor: 0x24211a, universes: [] },
-  { id: "BUILT_BOTANY", label: "BUILT_BOTANY", tierLabel: "Gallery D", x: 67.5 * S, z: 0 * S, w: 32.25 * S, d: 12.6 * S, floorColor: 0x1a3323, universes: ["BUILT_BOTANY"] },
-  { id: "GAMES", label: "GAMES", tierLabel: "Gallery E", x: 67.5 * S, z: 14.1 * S, w: 32.25 * S, d: 12.6 * S, floorColor: 0x2a1a3a, universes: ["GAMES"] },
-  { id: "AUTOMOTIVE", label: "Automobile", tierLabel: "Garden Gallery", x: 67.5 * S, z: 28.1 * S, w: 32.25 * S, d: 26.6 * S, floorColor: 0x3a1a1a, universes: ["AUTOMOTIVE"] },
-  { id: "COLLECTION", label: "Collection", tierLabel: "Gallery C · baseline", x: 16.9 * S, z: 42.25 * S, w: 15.4 * S, d: 12.6 * S, floorColor: 0x2a2418, universes: [] },
-  { id: "SPORTS", label: "SPORTS", tierLabel: "Gallery F", x: 33.75 * S, z: 42.25 * S, w: 15.4 * S, d: 12.6 * S, floorColor: 0x18242a, universes: ["SPORTS"] },
-  { id: "CARDS", label: "Cards", tierLabel: "Gallery G", x: 50.6 * S, z: 42.25 * S, w: 15.4 * S, d: 12.6 * S, floorColor: 0x241a2a, universes: [] },
-
-  // New wings, not in the original blueprint — EK's ask (2026-09-02):
-  // build the Spotlight and Store rooms now, flanking the Hub's entrance
-  // like a real museum's east/west wings. Content comes from
-  // museumCampusConfig.ts (admin-controlled), not vault items, so
-  // `universes` stays empty for all three.
-  { id: "SPOTLIGHT", label: "Spotlight", tierLabel: "Featured", x: 26, z: -19.5, w: 20, d: 18, floorColor: 0x3a2e18, universes: [] },
-  { id: "STORE", label: "Store", tierLabel: "Collector Shop", x: 64, z: -19.5, w: 20, d: 18, floorColor: 0x1a2e28, universes: [] },
-  { id: "PLAZA", label: "", tierLabel: "", x: 46, z: -19.5, w: 18, d: 18, floorColor: 0x585858, universes: [], noWalls: true },
+  { id: "POP_CULTURE", label: "POP_CULTURE", tierLabel: "North Rotunda", x: 0, z: 0, w: 21, d: 26, floorColor: 0x3a2a1a, universes: ["POP_CULTURE"] },
+  { id: "TCG", label: "TCG", tierLabel: "South Rotunda", x: 0, z: 26, w: 21, d: 26, floorColor: 0x1a2a3a, universes: ["TCG"] },
+  { id: "MISC", label: "misc", tierLabel: "Gallery A", x: 0, z: 52, w: 21, d: 52, floorColor: 0x2a2a2a, universes: ["MISC"] },
+  { id: "HUB", label: "VLTD Museum", tierLabel: "Grand hall", x: 21, z: 0, w: 63, d: 78, floorColor: 0x24211a, universes: [] },
+  { id: "BUILT_BOTANY", label: "BUILT_BOTANY", tierLabel: "Gallery D", x: 84, z: 0, w: 42, d: 26, floorColor: 0x1a3323, universes: ["BUILT_BOTANY"] },
+  { id: "GAMES", label: "GAMES", tierLabel: "Gallery E", x: 84, z: 26, w: 42, d: 26, floorColor: 0x2a1a3a, universes: ["GAMES"] },
+  { id: "AUTOMOTIVE", label: "Automobile", tierLabel: "Garden Gallery", x: 84, z: 52, w: 42, d: 52, floorColor: 0x3a1a1a, universes: ["AUTOMOTIVE"] },
+  { id: "COLLECTION", label: "Collection", tierLabel: "Gallery C · baseline", x: 21, z: 78, w: 21, d: 26, floorColor: 0x2a2418, universes: [] },
+  { id: "SPORTS", label: "SPORTS", tierLabel: "Gallery F", x: 42, z: 78, w: 21, d: 26, floorColor: 0x18242a, universes: ["SPORTS"] },
+  { id: "CARDS", label: "Cards", tierLabel: "Gallery G", x: 63, z: 78, w: 21, d: 26, floorColor: 0x241a2a, universes: [] },
+  { id: "SPOTLIGHT", label: "Spotlight", tierLabel: "Featured", x: 21, z: -26, w: 21, d: 26, floorColor: 0x3a2e18, universes: [] },
+  { id: "PLAZA", label: "", tierLabel: "", x: 42, z: -26, w: 21, d: 26, floorColor: 0x585858, universes: [], noWalls: true },
+  { id: "STORE", label: "Store", tierLabel: "Collector Shop", x: 63, z: -26, w: 21, d: 26, floorColor: 0x1a2e28, universes: [] },
 ];
 
 // The 3 real taxonomy keys with no dedicated room (Collection and Cards
@@ -109,154 +107,267 @@ export function roomById(id: CampusRoomId) {
   return room;
 }
 
+/** Looks up the gapCenter of the door between two rooms, so callers (room
+ * doorway data, item placement) never have to re-type a value CAMPUS_DOORS
+ * already computes. */
+export function doorGapCenter(a: CampusRoomId, b: CampusRoomId): number {
+  const door = CAMPUS_DOORS.find(
+    (d) => (d.rooms[0] === a && d.rooms[1] === b) || (d.rooms[0] === b && d.rooms[1] === a)
+  );
+  if (!door) throw new Error(`No door between ${a} and ${b}`);
+  return door.gapCenter;
+}
+
+/** The actual wall-gap width a door was cut with (its own `width`, or the
+ * campus default DOOR_WIDTH). */
+export function doorWallWidth(a: CampusRoomId, b: CampusRoomId): number {
+  const door = CAMPUS_DOORS.find(
+    (d) => (d.rooms[0] === a && d.rooms[1] === b) || (d.rooms[0] === b && d.rooms[1] === a)
+  );
+  if (!door) throw new Error(`No door between ${a} and ${b}`);
+  return door.width ?? DOOR_WIDTH;
+}
+
+/** Every room directly connected to `id` by a door — used to decide which
+ * rooms' lights should stay on (the visitor's current room plus its direct
+ * neighbors). Pure graph lookup over CAMPUS_DOORS. */
+export function adjacentRoomIds(id: CampusRoomId): CampusRoomId[] {
+  const neighbors: CampusRoomId[] = [];
+  for (const door of CAMPUS_DOORS) {
+    const [a, b] = door.rooms;
+    if (a === id && b) neighbors.push(b);
+    else if (b === id) neighbors.push(a);
+  }
+  return neighbors;
+}
+
 export type CampusDoor = {
   // Which wall the gap is cut into: 'x' = a wall running along the X axis
   // (rooms stacked along Z, gap position measured in X); 'z' = a wall
   // running along the Z axis (rooms side by side along X, gap in Z).
   wall: "x" | "z";
-  at: number; // the wall's fixed coordinate (z for an 'x' wall, x for a 'z' wall)
+  at: number; // the wall's fixed coordinate (z for an 'x' wall, x for a 'z' wall) — now the two rooms' real, exactly-shared boundary
   gapCenter: number; // position of the gap's center along the wall's free axis
   rooms: [CampusRoomId, CampusRoomId | null]; // second is null for the building entrance
+  width?: number; // wall-gap width, if wider than the campus default DOOR_WIDTH
 };
 
-export const CAMPUS_DOORS: CampusDoor[] = [
-  { wall: "x", at: 13.35 * S, gapCenter: 7.7 * S, rooms: ["POP_CULTURE", "TCG"] },
-  { wall: "x", at: 27.4 * S, gapCenter: 7.7 * S, rooms: ["TCG", "MISC"] },
-  { wall: "z", at: 16.15 * S, gapCenter: 6.3 * S, rooms: ["POP_CULTURE", "HUB"] },
-  { wall: "z", at: 16.15 * S, gapCenter: 20.4 * S, rooms: ["TCG", "HUB"] },
-  { wall: "z", at: 16.15 * S, gapCenter: 34.425 * S, rooms: ["MISC", "HUB"] },
-  { wall: "z", at: 16.15 * S, gapCenter: 48.475 * S, rooms: ["MISC", "COLLECTION"] },
-  { wall: "z", at: 65.95 * S, gapCenter: 6.3 * S, rooms: ["HUB", "BUILT_BOTANY"] },
-  { wall: "z", at: 65.95 * S, gapCenter: 20.4 * S, rooms: ["HUB", "GAMES"] },
-  { wall: "z", at: 65.95 * S, gapCenter: 34.4 * S, rooms: ["HUB", "AUTOMOTIVE"] },
-  { wall: "z", at: 65.95 * S, gapCenter: 47.675 * S, rooms: ["CARDS", "AUTOMOTIVE"] },
-  { wall: "x", at: 40.7 * S, gapCenter: 24.6 * S, rooms: ["HUB", "COLLECTION"] },
-  { wall: "x", at: 40.7 * S, gapCenter: 41.45 * S, rooms: ["HUB", "SPORTS"] },
-  { wall: "x", at: 40.7 * S, gapCenter: 58.3 * S, rooms: ["HUB", "CARDS"] },
-  { wall: "z", at: 32.2 * S, gapCenter: 48.55 * S, rooms: ["COLLECTION", "SPORTS"] },
-  { wall: "z", at: 49.05 * S, gapCenter: 48.55 * S, rooms: ["SPORTS", "CARDS"] },
-  { wall: "x", at: 12.55 * S, gapCenter: 83.625 * S, rooms: ["BUILT_BOTANY", "GAMES"] },
-  { wall: "x", at: 26.6 * S, gapCenter: 83.625 * S, rooms: ["GAMES", "AUTOMOTIVE"] },
-
-  // New wings (not in the original blueprint) — see CAMPUS_ROOMS above.
-  { wall: "x", at: 0, gapCenter: 36, rooms: ["HUB", "SPOTLIGHT"] },
-  { wall: "x", at: 0, gapCenter: 74, rooms: ["HUB", "STORE"] },
-  // The Hub's entrance now opens onto a real walkable plaza instead of a void.
-  { wall: "x", at: 0, gapCenter: 40.65 * S, rooms: ["HUB", "PLAZA"] },
-];
-
-// Spawn out in the plaza, facing the entrance facade — EK's ask
-// (2026-09-02) was for the exterior to be "some visual fun," so the
-// walkthrough now opens on it instead of starting already inside.
-export const CAMPUS_SPAWN = { x: 55, z: -15, yaw: Math.PI };
-
-export type WallSide = "north" | "south" | "east" | "west";
-export type WallSegment = {
-  room: CampusRoomId;
-  side: WallSide;
-  fixed: number; // the wall's fixed coordinate (z for north/south, x for east/west)
-  from: number; // span start along the wall's free axis
-  to: number; // span end along the wall's free axis
-};
-
-function doorNeighborSide(door: CampusDoor, room: CampusRoom): WallSide {
-  const neighborId = door.rooms[0] === room.id ? door.rooms[1] : door.rooms[0];
-  if (door.wall === "x") {
-    // rooms stacked along Z: neighbor's z tells us if this is the room's
-    // north (smaller z) or south (larger z) wall. No neighbor (entrance) ->
-    // compare the door's own recorded z against this room's edges.
-    const neighborZ = neighborId ? roomById(neighborId).z : door.at;
-    return neighborZ >= room.z + room.d / 2 ? "south" : "north";
-  }
-  const neighborX = door.rooms[1] === null || door.rooms[1] === undefined
-    ? door.at
-    : roomById(door.rooms[0] === room.id ? door.rooms[1]! : door.rooms[0]).x;
-  return neighborX >= room.x + room.w / 2 ? "east" : "west";
+// Every door's gapCenter (and `at`) is still derived from the two rooms'
+// live CAMPUS_ROOMS entries, not typed in — EK's review of 5820b85, still
+// the rule. Under the shared-wall grid, `at` (sharedBoundaryAlongX/Z below)
+// is no longer just documentation: it's the exact coordinate of the one
+// wall both rooms share, and it's what buildSharedWall() actually cuts.
+function overlapCenterAlongX(a: CampusRoom, b: CampusRoom): number {
+  return (Math.max(a.x, b.x) + Math.min(a.x + a.w, b.x + b.w)) / 2;
+}
+function overlapCenterAlongZ(a: CampusRoom, b: CampusRoom): number {
+  return (Math.max(a.z, b.z) + Math.min(a.z + a.d, b.z + b.d)) / 2;
+}
+function sharedBoundaryAlongX(a: CampusRoom, b: CampusRoom): number {
+  const [west, east] = a.x <= b.x ? [a, b] : [b, a];
+  return (west.x + west.w + east.x) / 2;
+}
+function sharedBoundaryAlongZ(a: CampusRoom, b: CampusRoom): number {
+  const [north, south] = a.z <= b.z ? [a, b] : [b, a];
+  return (north.z + north.d + south.z) / 2;
 }
 
-/** Every room's 4 walls, split into segments that leave a DOOR_WIDTH gap
- * wherever a door touches that wall. A room side with no doors comes back
- * as a single full-length segment (a solid exterior/interior wall). */
-export function computeWallSegments(): WallSegment[] {
-  const segments: WallSegment[] = [];
+export const CAMPUS_DOORS: CampusDoor[] = [
+  { wall: "x", at: sharedBoundaryAlongZ(roomById("POP_CULTURE"), roomById("TCG")), gapCenter: overlapCenterAlongX(roomById("POP_CULTURE"), roomById("TCG")), rooms: ["POP_CULTURE", "TCG"], width: DOORWAY_WALL_GAP },
+  { wall: "x", at: sharedBoundaryAlongZ(roomById("TCG"), roomById("MISC")), gapCenter: overlapCenterAlongX(roomById("TCG"), roomById("MISC")), rooms: ["TCG", "MISC"], width: DOORWAY_WALL_GAP },
+  { wall: "z", at: sharedBoundaryAlongX(roomById("POP_CULTURE"), roomById("HUB")), gapCenter: overlapCenterAlongZ(roomById("POP_CULTURE"), roomById("HUB")), rooms: ["POP_CULTURE", "HUB"], width: DOORWAY_WALL_GAP },
+  { wall: "z", at: sharedBoundaryAlongX(roomById("TCG"), roomById("HUB")), gapCenter: overlapCenterAlongZ(roomById("TCG"), roomById("HUB")), rooms: ["TCG", "HUB"], width: DOORWAY_WALL_GAP },
+  { wall: "z", at: sharedBoundaryAlongX(roomById("MISC"), roomById("COLLECTION")), gapCenter: overlapCenterAlongZ(roomById("MISC"), roomById("COLLECTION")), rooms: ["MISC", "COLLECTION"], width: DOORWAY_WALL_GAP },
+  { wall: "z", at: sharedBoundaryAlongX(roomById("HUB"), roomById("BUILT_BOTANY")), gapCenter: overlapCenterAlongZ(roomById("HUB"), roomById("BUILT_BOTANY")), rooms: ["HUB", "BUILT_BOTANY"], width: DOORWAY_WALL_GAP },
+  { wall: "z", at: sharedBoundaryAlongX(roomById("HUB"), roomById("GAMES")), gapCenter: overlapCenterAlongZ(roomById("HUB"), roomById("GAMES")), rooms: ["HUB", "GAMES"], width: DOORWAY_WALL_GAP },
+  { wall: "z", at: sharedBoundaryAlongX(roomById("HUB"), roomById("AUTOMOTIVE")), gapCenter: overlapCenterAlongZ(roomById("HUB"), roomById("AUTOMOTIVE")), rooms: ["HUB", "AUTOMOTIVE"], width: DOORWAY_WALL_GAP },
+  { wall: "z", at: sharedBoundaryAlongX(roomById("CARDS"), roomById("AUTOMOTIVE")), gapCenter: overlapCenterAlongZ(roomById("CARDS"), roomById("AUTOMOTIVE")), rooms: ["CARDS", "AUTOMOTIVE"], width: DOORWAY_WALL_GAP },
+  { wall: "x", at: sharedBoundaryAlongZ(roomById("HUB"), roomById("COLLECTION")), gapCenter: overlapCenterAlongX(roomById("HUB"), roomById("COLLECTION")), rooms: ["HUB", "COLLECTION"], width: DOORWAY_WALL_GAP },
+  { wall: "x", at: sharedBoundaryAlongZ(roomById("HUB"), roomById("SPORTS")), gapCenter: overlapCenterAlongX(roomById("HUB"), roomById("SPORTS")), rooms: ["HUB", "SPORTS"], width: DOORWAY_WALL_GAP },
+  { wall: "x", at: sharedBoundaryAlongZ(roomById("HUB"), roomById("CARDS")), gapCenter: overlapCenterAlongX(roomById("HUB"), roomById("CARDS")), rooms: ["HUB", "CARDS"], width: DOORWAY_WALL_GAP },
+  { wall: "z", at: sharedBoundaryAlongX(roomById("COLLECTION"), roomById("SPORTS")), gapCenter: overlapCenterAlongZ(roomById("COLLECTION"), roomById("SPORTS")), rooms: ["COLLECTION", "SPORTS"], width: DOORWAY_WALL_GAP },
+  { wall: "z", at: sharedBoundaryAlongX(roomById("SPORTS"), roomById("CARDS")), gapCenter: overlapCenterAlongZ(roomById("SPORTS"), roomById("CARDS")), rooms: ["SPORTS", "CARDS"], width: DOORWAY_WALL_GAP },
+  { wall: "x", at: sharedBoundaryAlongZ(roomById("BUILT_BOTANY"), roomById("GAMES")), gapCenter: overlapCenterAlongX(roomById("BUILT_BOTANY"), roomById("GAMES")), rooms: ["BUILT_BOTANY", "GAMES"], width: DOORWAY_WALL_GAP },
+  { wall: "x", at: sharedBoundaryAlongZ(roomById("GAMES"), roomById("AUTOMOTIVE")), gapCenter: overlapCenterAlongX(roomById("GAMES"), roomById("AUTOMOTIVE")), rooms: ["GAMES", "AUTOMOTIVE"], width: DOORWAY_WALL_GAP },
+  { wall: "x", at: sharedBoundaryAlongZ(roomById("SPOTLIGHT"), roomById("HUB")), gapCenter: overlapCenterAlongX(roomById("SPOTLIGHT"), roomById("HUB")), rooms: ["SPOTLIGHT", "HUB"], width: DOORWAY_WALL_GAP },
+  { wall: "x", at: sharedBoundaryAlongZ(roomById("PLAZA"), roomById("HUB")), gapCenter: overlapCenterAlongX(roomById("PLAZA"), roomById("HUB")), rooms: ["PLAZA", "HUB"], width: DOORWAY_WALL_GAP },
+  { wall: "x", at: sharedBoundaryAlongZ(roomById("STORE"), roomById("HUB")), gapCenter: overlapCenterAlongX(roomById("STORE"), roomById("HUB")), rooms: ["STORE", "HUB"], width: DOORWAY_WALL_GAP },
+];
 
-  for (const room of CAMPUS_ROOMS) {
-    if (room.noWalls) continue;
-    const bounds = roomBounds(room);
-    const sides: { side: WallSide; fixed: number; from: number; to: number }[] = [
-      { side: "north", fixed: bounds.z0, from: bounds.x0, to: bounds.x1 },
-      { side: "south", fixed: bounds.z1, from: bounds.x0, to: bounds.x1 },
-      { side: "west", fixed: bounds.x0, from: bounds.z0, to: bounds.z1 },
-      { side: "east", fixed: bounds.x1, from: bounds.z0, to: bounds.z1 },
-    ];
+// Shared boundaries with no door — the wall is still real and still built
+// (one structural wall, finished on each face), it just has no opening cut
+// into it. MISC<->HUB: a real touching boundary in this grid (MISC spans
+// z=52..104, HUB spans z=0..78, so they share x=21 for z=52..78) that isn't
+// one of the campus's existing doors — kept solid per the approved plan
+// ("leave that shared wall solid unless EK later restores the MISC<->HUB
+// shortcut. Do not add a door merely because the geometry permits one").
+// SPOTLIGHT<->PLAZA and PLAZA<->STORE are also touching boundaries with no
+// door, but PLAZA is `noWalls` — computeCampusWallSegments() below skips
+// wall generation on any segment touching a noWalls room entirely, so
+// those two need no entry here.
+export const CAMPUS_SOLID_ADJACENCIES: [CampusRoomId, CampusRoomId][] = [
+  ["MISC", "HUB"],
+];
 
-    for (const wallSide of sides) {
-      const wallAxis = wallSide.side === "north" || wallSide.side === "south" ? "x" : "z";
-      const gaps = CAMPUS_DOORS
-        .filter((door) => door.wall === wallAxis && door.rooms.includes(room.id))
-        .filter((door) => doorNeighborSide(door, room) === wallSide.side)
-        .map((door) => ({ from: door.gapCenter - DOOR_WIDTH / 2, to: door.gapCenter + DOOR_WIDTH / 2 }))
-        .sort((a, b) => a.from - b.from);
+// Spawn in the plaza, facing the entrance facade — EK's ask (2026-09-02).
+export const CAMPUS_SPAWN = { x: roomById("PLAZA").x + roomById("PLAZA").w / 2, z: roomById("PLAZA").z + roomById("PLAZA").d / 2, yaw: Math.PI };
 
-      let cursor = wallSide.from;
-      for (const gap of gaps) {
-        if (gap.from > cursor) {
-          segments.push({ room: room.id, side: wallSide.side, fixed: wallSide.fixed, from: cursor, to: gap.from });
-        }
-        cursor = Math.max(cursor, gap.to);
+export type WallSide = "north" | "south" | "east" | "west";
+
+/** One physical wall segment, owned by the shared boundary it sits on, not
+ * by either room individually. `roomA` is the room on the smaller-Z (for an
+ * 'x' wall) or smaller-X (for a 'z' wall) side; `roomB` is the room on the
+ * other side, or null if this segment faces open exterior space (campus
+ * boundary, or a neighbor that turned out to be a `noWalls` room). Replaces
+ * the old per-room WallSegment/computeWallSegments — a shared boundary now
+ * produces exactly ONE segment here, not one from each adjoining room's own
+ * accounting. */
+export type CampusWallSegment = {
+  wall: "x" | "z";
+  fixed: number;
+  from: number;
+  to: number;
+  roomA: CampusRoomId;
+  roomB: CampusRoomId | null;
+};
+
+function findDoor(a: CampusRoomId, b: CampusRoomId): CampusDoor | undefined {
+  return CAMPUS_DOORS.find(
+    (d) => (d.rooms[0] === a && d.rooms[1] === b) || (d.rooms[0] === b && d.rooms[1] === a)
+  );
+}
+
+/** Every wall boundary in the campus, computed once from room bounds —
+ * shared segments where two rooms' edges coincide, exterior segments where
+ * they don't, and door gaps cut wherever CAMPUS_DOORS calls for one. A room
+ * whose edge borders MULTIPLE neighbors along its length (HUB borders
+ * POP_CULTURE, TCG, and MISC along its whole west edge) is split at each
+ * neighbor's own boundary, not treated as one continuous wall — the
+ * partition below adds every touching room's own edge coordinates as break
+ * points before grouping, so this falls out automatically instead of being
+ * hand-curated per room. */
+export function computeCampusWallSegments(): CampusWallSegment[] {
+  const segments: CampusWallSegment[] = [];
+
+  function processAxis(wall: "x" | "z") {
+    const lines = new Set<number>();
+    for (const room of CAMPUS_ROOMS) {
+      const b = roomBounds(room);
+      if (wall === "x") { lines.add(b.z0); lines.add(b.z1); }
+      else { lines.add(b.x0); lines.add(b.x1); }
+    }
+
+    for (const fixed of lines) {
+      // "high" = rooms whose far edge sits on this line (north/west side of
+      // the line, for an 'x'/'z' wall respectively); "low" = rooms whose
+      // near edge sits on this line (south/east side).
+      const highSide = CAMPUS_ROOMS.filter((r) => { const b = roomBounds(r); return wall === "x" ? b.z1 === fixed : b.x1 === fixed; });
+      const lowSide = CAMPUS_ROOMS.filter((r) => { const b = roomBounds(r); return wall === "x" ? b.z0 === fixed : b.x0 === fixed; });
+      if (highSide.length === 0 && lowSide.length === 0) continue;
+
+      const breakpoints = new Set<number>();
+      for (const r of [...highSide, ...lowSide]) {
+        const b = roomBounds(r);
+        breakpoints.add(wall === "x" ? b.x0 : b.z0);
+        breakpoints.add(wall === "x" ? b.x1 : b.z1);
       }
-      if (cursor < wallSide.to) {
-        segments.push({ room: room.id, side: wallSide.side, fixed: wallSide.fixed, from: cursor, to: wallSide.to });
+      const sorted = [...breakpoints].sort((a, b) => a - b);
+
+      for (let i = 0; i < sorted.length - 1; i += 1) {
+        const from = sorted[i];
+        const to = sorted[i + 1];
+        if (to - from < 1e-6) continue;
+        const mid = (from + to) / 2;
+        const inSpan = (r: CampusRoom) => {
+          const b = roomBounds(r);
+          const lo = wall === "x" ? b.x0 : b.z0;
+          const hi = wall === "x" ? b.x1 : b.z1;
+          return mid > lo && mid < hi;
+        };
+        const high = highSide.find(inSpan);
+        const low = lowSide.find(inSpan);
+        if (!high && !low) continue;
+
+        if (high && low) {
+          // A `noWalls` room (PLAZA) still gets a normal shared wall
+          // wherever it borders a REAL room — noWalls only ever means "this
+          // room doesn't generate a wall of its own reaching into a shared
+          // boundary," never "leave the neighbor's own enclosure open."
+          // SPOTLIGHT and STORE keep their own full enclosure (one door
+          // each, to HUB) exactly as before; their plaza-facing sides are
+          // solid, just built once, on their own account, rather than
+          // independently by each room. HUB<->PLAZA (the real entrance)
+          // gets the same real wall+door treatment as any other door.
+          segments.push({ wall, fixed, from, to, roomA: high.id, roomB: low.id });
+          continue;
+        }
+
+        const only = high ?? low!;
+        if (only.noWalls) continue; // PLAZA's true exterior edge (no neighbor at all, facing the facade): open
+        segments.push({ wall, fixed, from, to, roomA: only.id, roomB: null });
       }
     }
   }
 
+  processAxis("x");
+  processAxis("z");
   return segments;
 }
 
-export type DoorBridge = { x0: number; x1: number; z0: number; z1: number };
+/** Cuts a door's gap (if any) out of a shared-wall segment, returning the
+ * solid piece(s) that remain. A segment can carry at most one door, since
+ * CAMPUS_DOORS only ever lists one connection per room pair. */
+export function splitSegmentForDoor(segment: CampusWallSegment): { solid: { from: number; to: number }[]; door: CampusDoor | null } {
+  if (!segment.roomB) return { solid: [{ from: segment.from, to: segment.to }], door: null };
+  const door = findDoor(segment.roomA, segment.roomB);
+  if (!door) return { solid: [{ from: segment.from, to: segment.to }], door: null };
+
+  const half = (door.width ?? DOOR_WIDTH) / 2;
+  const gapFrom = door.gapCenter - half;
+  const gapTo = door.gapCenter + half;
+  const solid: { from: number; to: number }[] = [];
+  if (gapFrom > segment.from) solid.push({ from: segment.from, to: Math.min(gapFrom, segment.to) });
+  if (gapTo < segment.to) solid.push({ from: Math.max(gapTo, segment.from), to: segment.to });
+  return { solid, door };
+}
+
+export type DoorBridge = { doorIndex: number; x0: number; x1: number; z0: number; z1: number };
 
 const WALKABLE_MARGIN = 0.9; // keeps the camera from clipping into walls
 
-/** A small walkable floor patch spanning the physical gap between two
- * adjacent rooms at each door, so the corridor between two room rects
- * (they don't literally touch) is actually crossable. Skips the building
- * entrance (no room on the other side). Extended by WALKABLE_MARGIN past
- * each room's true edge so it overlaps that room's own margin-inset
- * walkable rect — without this, a real live-tested run found the camera
- * getting stuck in a dead strip right at the threshold (the inset rect
- * stopped short of the bridge, and the bridge stopped short of the inset
- * rect, with neither overlapping the other). */
+/** A small walkable strip spanning a doorway threshold, so the two rooms'
+ * own margin-inset walkable rects (each stopping WALKABLE_MARGIN short of
+ * the real, now-shared wall) actually connect. Under the shared-wall grid
+ * there's no real coordinate gap between rooms anymore — this bridge only
+ * needs to cross the margin insets themselves (2*WALKABLE_MARGIN deep,
+ * centered exactly on the shared boundary), not a real room-to-room gap
+ * plus margin the way the old vestibule-era bridges did. */
 export function computeDoorBridges(): DoorBridge[] {
   const bridges: DoorBridge[] = [];
 
-  for (const door of CAMPUS_DOORS) {
-    const [aId, bId] = door.rooms;
-    if (!bId) continue;
-    const a = roomById(aId);
-    const b = roomById(bId);
-    const half = DOOR_WIDTH / 2;
+  CAMPUS_DOORS.forEach((door, doorIndex) => {
+    const [, bId] = door.rooms;
+    if (!bId) return;
+    const half = (door.width ?? DOOR_WIDTH) / 2;
 
     if (door.wall === "x") {
-      const z0 = Math.min(a.z + a.d, b.z + b.d);
-      const z1 = Math.max(a.z, b.z);
       bridges.push({
+        doorIndex,
         x0: door.gapCenter - half,
         x1: door.gapCenter + half,
-        z0: Math.min(z0, z1) - WALKABLE_MARGIN,
-        z1: Math.max(z0, z1) + WALKABLE_MARGIN,
+        z0: door.at - WALKABLE_MARGIN,
+        z1: door.at + WALKABLE_MARGIN,
       });
     } else {
-      const x0 = Math.min(a.x + a.w, b.x + b.w);
-      const x1 = Math.max(a.x, b.x);
       bridges.push({
-        x0: Math.min(x0, x1) - WALKABLE_MARGIN,
-        x1: Math.max(x0, x1) + WALKABLE_MARGIN,
+        doorIndex,
+        x0: door.at - WALKABLE_MARGIN,
+        x1: door.at + WALKABLE_MARGIN,
         z0: door.gapCenter - half,
         z1: door.gapCenter + half,
       });
     }
-  }
+  });
 
   return bridges;
 }
@@ -284,32 +395,161 @@ export function isWalkable(
   return false;
 }
 
-// EK's ask (2026-09-02), after watching bingebrowse.net's real behavior
-// with her: it doesn't let you click anywhere on the floor — it has
-// fixed, marked waypoints (small square floor markers that highlight on
-// hover, "these little squares are helpful to know where you can go and
-// look when you hover over them") that you click to glide between. A
-// raycast-anywhere click-to-walk landed on unpredictable, sometimes
-// awkward points; a curated waypoint always has a sensible spot to stand.
-// One per room center plus one per door bridge — walking WASD/arrows
-// still works freely in between, this only replaces "click empty floor."
-export type CampusWaypoint = { id: string; x: number; z: number };
+// Directional alignment pads (2026-09-09), replacing the earlier generic
+// room-center/door-bridge squares: EK's physical test showed a square could
+// sit visibly off a doorway's real centerline (a square was placed by ROOM
+// geometry — its center, or a bridge midpoint — never by the specific door
+// a player meant to use), so scrolling forward from one gave no reliable
+// route through the opening it looked closest to. Every pad here is
+// generated directly from one CAMPUS_DOORS entry and stands exactly on that
+// door's own `gapCenter` — never a separately-typed coordinate — so its
+// authored facing yaw points straight through the opening with zero
+// cross-axis offset, on every door, regardless of room size. Two pads per
+// door (one per room it opens into), each labeled with the OTHER room as
+// its destination — multi-door rooms get one pad per available exit.
+export type DoorwayPad = {
+  id: string;
+  doorIndex: number;
+  roomId: CampusRoomId; // the room this pad stands in
+  destinationRoomId: CampusRoomId; // the room reached by walking through this door
+  x: number;
+  z: number;
+  yaw: number; // authored facing yaw, aimed through the doorway's exact center
+};
 
-export function computeCampusWaypoints(): CampusWaypoint[] {
-  const waypoints: CampusWaypoint[] = [];
+// Stand-back distance from the shared wall, into the room: comfortably past
+// WALKABLE_MARGIN (0.9) so a pad's own position can never be a collision
+// spot, and short enough that the doorway it targets stays close and
+// prominent in view rather than a long walk away.
+const DOORWAY_PAD_SETBACK = 3.2;
 
-  for (const room of CAMPUS_ROOMS) {
-    if (!room.label) continue; // PLAZA has no label; a plaza waypoint is added separately below via its doors
-    waypoints.push({ id: `room:${room.id}`, x: room.x + room.w / 2, z: room.z + room.d / 2 });
-  }
+export function computeDoorwayPads(): DoorwayPad[] {
+  const pads: DoorwayPad[] = [];
 
-  computeDoorBridges().forEach((bridge, index) => {
-    waypoints.push({
-      id: `door:${index}`,
-      x: (bridge.x0 + bridge.x1) / 2,
-      z: (bridge.z0 + bridge.z1) / 2,
-    });
+  CAMPUS_DOORS.forEach((door, doorIndex) => {
+    const [aId, bId] = door.rooms;
+    if (!bId) return; // no purely one-sided door currently exists, but guard rather than assume
+    const a = roomById(aId);
+
+    if (door.wall === "x") {
+      // Rooms stacked along Z: whichever has its south edge (z+d) on the
+      // shared boundary is the "north" room; facing south (yaw=PI) walks
+      // through the door into the other room, and vice versa.
+      const aIsNorth = Math.abs(a.z + a.d - door.at) < 1e-6;
+      const northId = aIsNorth ? aId : bId;
+      const southId = aIsNorth ? bId : aId;
+      pads.push({ id: `${doorIndex}:${northId}`, doorIndex, roomId: northId, destinationRoomId: southId, x: door.gapCenter, z: door.at - DOORWAY_PAD_SETBACK, yaw: Math.PI });
+      pads.push({ id: `${doorIndex}:${southId}`, doorIndex, roomId: southId, destinationRoomId: northId, x: door.gapCenter, z: door.at + DOORWAY_PAD_SETBACK, yaw: 0 });
+    } else {
+      // Rooms side by side along X: whichever has its east edge (x+w) on
+      // the shared boundary is the "west" room.
+      const aIsWest = Math.abs(a.x + a.w - door.at) < 1e-6;
+      const westId = aIsWest ? aId : bId;
+      const eastId = aIsWest ? bId : aId;
+      pads.push({ id: `${doorIndex}:${westId}`, doorIndex, roomId: westId, destinationRoomId: eastId, x: door.at - DOORWAY_PAD_SETBACK, z: door.gapCenter, yaw: Math.PI / 2 });
+      pads.push({ id: `${doorIndex}:${eastId}`, doorIndex, roomId: eastId, destinationRoomId: westId, x: door.at + DOORWAY_PAD_SETBACK, z: door.gapCenter, yaw: -Math.PI / 2 });
+    }
   });
 
-  return waypoints;
+  return pads;
+}
+
+// A validator that rejects a door unless (a) its gap center lies inside
+// both rooms' shared wall span, (b) the two rooms are actually adjacent on
+// the axis the door claims, and (c) its bridge overlaps both rooms' own
+// margin-inset walkable rects. Every campus door must pass this with zero
+// issues before a deploy — run as part of the pre-push check, the same way
+// tsc/eslint/build already are.
+export type DoorValidationIssue = { doorIndex: number; rooms: string; message: string };
+
+function rangesOverlap(a0: number, a1: number, b0: number, b1: number): boolean {
+  return Math.max(a0, b0) < Math.min(a1, b1);
+}
+
+// The bridge/inset-rect check wants "touching or overlapping," not strict
+// interior overlap: a bridge is deliberately built to expand by exactly
+// WALKABLE_MARGIN — the same margin the room's own inset rect is shrunk by
+// — so a correctly-built bridge lands EXACTLY tangent to the room's inset
+// edge, not strictly past it.
+function rangesConnect(a0: number, a1: number, b0: number, b1: number): boolean {
+  return Math.max(a0, b0) <= Math.min(a1, b1);
+}
+
+export function validateCampusDoors(): DoorValidationIssue[] {
+  const issues: DoorValidationIssue[] = [];
+  const clearance = 0.05;
+
+  CAMPUS_DOORS.forEach((door, doorIndex) => {
+    const [aId, bId] = door.rooms;
+    const a = roomById(aId);
+    const label = `${aId}<->${bId ?? "entrance"}`;
+    if (!bId) return;
+
+    const b = roomById(bId);
+    const half = (door.width ?? DOOR_WIDTH) / 2;
+
+    if (door.wall === "x") {
+      if (rangesOverlap(a.z, a.z + a.d, b.z, b.z + b.d)) {
+        issues.push({ doorIndex, rooms: label, message: "wall:x door but the two rooms overlap in Z instead of being stacked" });
+      }
+      if (a.z + a.d !== b.z && b.z + b.d !== a.z) {
+        issues.push({ doorIndex, rooms: label, message: `wall:x door but the rooms' edges don't coincide (expected a shared boundary, not a gap or overlap)` });
+      }
+      const lo = Math.max(a.x, b.x);
+      const hi = Math.min(a.x + a.w, b.x + b.w);
+      if (lo >= hi) {
+        issues.push({ doorIndex, rooms: label, message: "wall:x door but the rooms have no X overlap at all" });
+      } else if (door.gapCenter - half < lo + clearance || door.gapCenter + half > hi - clearance) {
+        issues.push({ doorIndex, rooms: label, message: `gapCenter ${door.gapCenter.toFixed(2)} +-${half.toFixed(2)} doesn't fit inside the shared X span [${lo.toFixed(2)}, ${hi.toFixed(2)}]` });
+      }
+    } else {
+      if (rangesOverlap(a.x, a.x + a.w, b.x, b.x + b.w)) {
+        issues.push({ doorIndex, rooms: label, message: "wall:z door but the two rooms overlap in X instead of being side by side" });
+      }
+      if (a.x + a.w !== b.x && b.x + b.w !== a.x) {
+        issues.push({ doorIndex, rooms: label, message: `wall:z door but the rooms' edges don't coincide (expected a shared boundary, not a gap or overlap)` });
+      }
+      const lo = Math.max(a.z, b.z);
+      const hi = Math.min(a.z + a.d, b.z + b.d);
+      if (lo >= hi) {
+        issues.push({ doorIndex, rooms: label, message: "wall:z door but the rooms have no Z overlap at all" });
+      } else if (door.gapCenter - half < lo + clearance || door.gapCenter + half > hi - clearance) {
+        issues.push({ doorIndex, rooms: label, message: `gapCenter ${door.gapCenter.toFixed(2)} +-${half.toFixed(2)} doesn't fit inside the shared Z span [${lo.toFixed(2)}, ${hi.toFixed(2)}]` });
+      }
+    }
+  });
+
+  const areas = buildWalkableAreas();
+  computeDoorBridges().forEach((bridge) => {
+    const door = CAMPUS_DOORS[bridge.doorIndex];
+    const [aId, bId] = door.rooms;
+    const label = `${aId}<->${bId ?? "entrance"}`;
+    const aIndex = CAMPUS_ROOMS.findIndex((r) => r.id === aId);
+    const bIndex = bId ? CAMPUS_ROOMS.findIndex((r) => r.id === bId) : -1;
+    const aInset = areas.rooms[aIndex];
+    const bInset = bIndex >= 0 ? areas.rooms[bIndex] : null;
+
+    if (!(rangesConnect(bridge.x0, bridge.x1, aInset.x0, aInset.x1) && rangesConnect(bridge.z0, bridge.z1, aInset.z0, aInset.z1))) {
+      issues.push({ doorIndex: bridge.doorIndex, rooms: label, message: `bridge does not reach ${aId}'s inset walkable rect (dead-strip risk)` });
+    }
+    if (bInset && !(rangesConnect(bridge.x0, bridge.x1, bInset.x0, bInset.x1) && rangesConnect(bridge.z0, bridge.z1, bInset.z0, bInset.z1))) {
+      issues.push({ doorIndex: bridge.doorIndex, rooms: label, message: `bridge does not reach ${bId}'s inset walkable rect (dead-strip risk)` });
+    }
+  });
+
+  // Grid-tiling check: no two rooms may overlap in both axes at once
+  // (a genuine overlap, not a shared edge — touching is fine and expected).
+  for (let i = 0; i < CAMPUS_ROOMS.length; i += 1) {
+    for (let j = i + 1; j < CAMPUS_ROOMS.length; j += 1) {
+      const a = roomBounds(CAMPUS_ROOMS[i]);
+      const b = roomBounds(CAMPUS_ROOMS[j]);
+      const overlapsX = a.x0 < b.x1 && b.x0 < a.x1;
+      const overlapsZ = a.z0 < b.z1 && b.z0 < a.z1;
+      if (overlapsX && overlapsZ) {
+        issues.push({ doorIndex: -1, rooms: `${CAMPUS_ROOMS[i].id}<->${CAMPUS_ROOMS[j].id}`, message: "rooms overlap in both axes — invalid grid tiling" });
+      }
+    }
+  }
+
+  return issues;
 }

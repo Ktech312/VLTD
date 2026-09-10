@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
-export default function RegistrySubjectRedirect({ params }: { params: { subject: string } }) {
-  redirect(`/community-board/${params.subject}`);
+export default async function RegistrySubjectRedirect({ params }: { params: Promise<{ subject: string }> }) {
+  const { subject } = await params;
+  redirect(`/community-board/${subject}`);
 }

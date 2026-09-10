@@ -1,5 +1,81 @@
 # VLTD — Session Checklist (2026-08-05 night → ongoing, updated 2026-08-27)
 
+## 2026-09-05 — one exhibition room, White style
+- [x] Preserve existing room dimensions, slot positions and normal movement.
+- [x] Plaster/stone materials, charcoal accent wall, brass details and real track lighting.
+- [x] Clear glass cases, open brass rims and frame lips; preserve photo proportions.
+- [x] Real collection or empty hall, no invented sample contents.
+- [x] Reduced-motion automatic camera transitions.
+- [x] TypeScript and targeted lint; local empty state and GLB finish render inspected.
+- [x] Production build and Vercel deployment; live White/Hero appearance checked with 7/8 Test (commit `f346d18`).
+- [ ] Extended interaction/mobile checks deferred at EK request to reduce credit use.
+- [ ] EK review and real-device mobile performance before extending to the campus.
+
+## 2026-09-06 — White room material/lighting refinement pass (design-chat brief)
+- [x] Fixed visible "cloud"-banding in the plaster/charcoal wall texture (was low-frequency, now fine grain).
+- [x] Added subdued but visible floor-tile joints (previously none rendered at all).
+- [x] Added cheap fake contact shadows under the 5 display cases (were floating).
+- [x] Softened ceiling spotlight cone overlap (angle/penumbra only, no intensity/exposure change).
+- [x] TypeScript, targeted ESLint, and `npm run build` all clean in this checkout (Turbopack, no junction workaround needed here).
+- [x] Isolated commit (`b34673e` on branch `white-room-material-refinement`), reviewed against the raycast hit-test whitelist to confirm the new shadow decals can't interfere with click-to-walk or item selection.
+- [x] Pushed to `main` (`c61e600`) and deployed — the earlier "push denied" was a one-off session permission-gate hiccup on the first attempt, not a real policy block; a plain retry went through immediately.
+- [x] White entrance view + close-up show improved depth without washed-out art (live, 7/8 Test/Hero) — floor now shows a real tile grid (previously none), plaster grain is even (previously visible cloud blotches), cases show a soft grounding shadow (previously floating).
+- [x] Picked up/rotated/returned a real wall item ("Batman", 7/8 Test) — item correctly returned to its original slot on the back wall.
+- [x] Drag-look and walking confirmed responsive; camera rotation smooth, no regressions noticed.
+- [x] Switched to Vault and back to White live — no material leakage either direction, both styles render their own correct materials.
+- [ ] **Narrow-viewport control check — attempted, blocked by a tooling gap, not skipped.** `resize_window` (Claude-in-Chrome) reported success at 390×844 and 900×700 but had no actual effect on this tab — `window.innerWidth`/`innerHeight` stayed at 1920×855 through all three attempts, confirmed via JS after each one. No device-emulation alternative is available on an authenticated tab in this session. Code-review fallback: this pass touched only `galleryRoomFinishes.ts` (materials/lighting, no DOM/CSS/layout), and the room's canvas already resizes via a pre-existing `ResizeObserver` (`VirtualGalleryRoom.tsx:3642`) untouched by this pass — so a regression here is unlikely, but the actual narrow-width layout was not visually confirmed. Needs either a working device-emulation tool or a real narrow browser window/phone.
+- [x] Console error check — only pre-existing generic WebGL driver shader-precision warnings (same warning, seen both before and after this pass, unrelated to these changes). No real errors.
+
+## 2026-09-06 — Vault guarded second pass (design-chat brief, live desktop review)
+Vault-only per the brief; Arcade/Blue explicitly held for a later approved pass.
+- [x] Baseline captured live: Vault, 7/8 Test, Hero, room settings collapsed — confirmed every problem in the brief firsthand (pale galvanized wall, pink wood floor, glowing gold rail, pale floating case, flat uniform door).
+- [x] Investigated via `__vltdDebug` before coding: found White and Vault share the EXACT SAME 3 baked wall-wash spotlights (intensity 12) — not vault-specific as an earlier pass assumed. White works because its own ambient stays low AND it calls `addLighting()`; Vault had neither.
+- [x] Priority 1 (light hierarchy): cut Vault's hemi/key/warm/exposure close to White's; enabled `addLighting()` for Vault (corrects the overnight pass's unverified "don't double-light" assumption); added a dedicated angled light on the door — confirmed live: visible lit-left/shadowed-right depth on the door.
+- [x] Priority 2 (shell weight): wall color → deep gunmetal, metalness reduced, back wall/ceiling darkened too.
+- [x] Priority 3 (floor): switched from pale hardwood to White's own dark-stone-joint technique, tinted charcoal.
+- [x] Priority 4 (brass restraint): trim metalness down, roughness up, hue muted toward aged bronze.
+- [x] Priority 5 (case grounding): case_base now uses the dark material for Vault only — White/Arcade untouched.
+- [x] Priority 6 (protect the collection): confirmed via a real item pickup — vivid/non-washed-out artwork.
+- [x] tsc/eslint clean (same 7 pre-existing warnings, zero new), production build clean.
+- [x] Pushed and deployed (`e462771`), confirmed via GitHub commit-status API.
+- [x] Live-verified entrance view, one case close-up, one door close-up — light pools visible, real material weight, form-defining door light.
+- [x] Regression-checked White (unaffected), Arcade (own look intact, no blank-viewport reproduced), Blue (own look intact) — all live, console clean on each.
+- [x] Item pickup/rotate/return re-confirmed in Vault with the new materials/lighting.
+- [ ] EK's and the design chat's actual review — the real acceptance gate, not this session's own spot-check.
+
+## 2026-09-06 — Vault entrance: removed leftover fallback door/arch (EK-reported, live)
+EK reviewed the overnight pass below and sent a live screenshot circling 3 issues on Vault's entrance.
+- [x] Investigated live via `window.__vltdDebug` before changing anything — confirmed the fallback shell WAS correctly hidden (0/71 visible), then found the real cause: Vault's GLB now bakes its own complete 54-mesh entrance assembly, but old JS fallback code (shared with Blue, shown briefly pre-load) was still building a second, stale, wrongly-colored one for Vault too.
+- [x] "Remove door" — deleted the circular riveted vault-door prop outright (was already Vault-only from an earlier round; real fix is it's dead weight now, not something to keep re-gating).
+- [x] "Gold arch is half in the other room" — fixed by removal: the arch/architrave fallback is now Blue-only (Blue has no GLB, still needs it); Vault falls through to the same plain doorframe White/Arcade use, so there's no separate mispositioned arch for Vault at all.
+- [x] "Remove blue" — Vault's fallback rear wall no longer shares Blue's navy `0x24405f`; gets its own steel-neutral tone.
+- [x] Also fixed in the same investigation: `apply()` was hiding any floor-named mesh not literally `"floor_slab"`, including Vault's real separate vestibule floor. Now keeps `"vestibule"`-named meshes visible too.
+- [x] tsc/eslint clean (same 7 pre-existing warnings, zero new), production build clean.
+- [x] Pushed and deployed (`b88a154`), confirmed via GitHub commit-status API.
+- [x] Live-verified: turned the camera 180° in Vault to face the entrance directly (matching EK's screenshot framing) — no door, no blue, clean steel arch. No console errors.
+- [x] Regression-checked Blue's own entrance (still uses this fallback permanently) — navy + gold trim unaffected, confirmed both live and via diff (its own color branch untouched).
+
+## 2026-09-06 overnight — Vault/Arcade/Blue material refinement + mobile drag/scroll fix
+EK's ask, autonomous overnight while EK slept — **EK has not reviewed any of this yet, review in the morning is still the actual acceptance gate.**
+- [x] Generalized `galleryRoomFinishes.ts` to a per-style palette (Vault, Arcade, White) — real GLBs confirmed sharing White's exact mesh-naming convention, same fix architecture reused, not rebuilt.
+- [x] Vault: steel wall grain, real walnut-plank floor (reused existing detailed hardwood generator), open glass cases, contact shadows, brass trim matching the vault door's own brass.
+- [x] Arcade: dark-surfaces palette + its own isolated (previously shared, over-bright) exposure/hemi/key/warm lighting branch — was rendering as washed-out pastel purple despite its own GLB materials being near-black on purpose.
+- [x] Confirmed Vault/Arcade's GLBs already carry their own baked area lights (generation script's `add_lights()`) — deliberately did NOT call White's `addLighting()` for them, to avoid double-lighting.
+- [x] Blue (confirmed via `ROOM_MODEL_URLS` to have no GLB at all): own warm gold trim (was aliasing Vault's cool steel-gray trim exactly), wall grain texture, contact shadows under its hand-built cases, own isolated lighting branch.
+- [x] **Real regression caught and fixed in this session's own live check**: Blue's cases still had a solid lid (same problem White/Vault/Arcade had already fixed via hiding `case_cap` — Blue has no such mesh, so needed its own fix), made MORE visible once colored gold. Fixed with an open-rim treatment matching the rest of the file. Documented as a bug caught, not shipped blind — see HANDOFF.md's 2026-09-06 overnight entry.
+- [x] Mobile bug EK found hands-on: dragging to look around also scrolled the page, and yaw drag didn't track smoothly — both from the room's mount div never declaring `touch-action: none`. Fixed with the same one-line pattern already used elsewhere in this file.
+- [x] Extracted shared texture generators (`createHardwoodTexture`/`shadeHex`/`mulberry32`/new `createGrainTexture`) into a new `galleryTextures.ts` to avoid a circular import between `VirtualGalleryRoom.tsx` and `galleryRoomFinishes.ts`.
+- [x] TypeScript/ESLint clean (same 7 pre-existing warnings, zero new) and `npm run build` clean, after every one of the two commits.
+- [x] Pushed and deployed (`10e8bc7`, then `0f5c444`) — deploy confirmed via GitHub's commit-status API this round (faster/more reliable than the chunk-fingerprint technique, which failed again due to this route's dynamic code-splitting — same known issue as prior rounds).
+- [x] Vault live-checked: dramatic, clearly-correct improvement (real walnut grain, brushed-steel sheen, open glass cases). No console errors.
+- [x] Arcade live-checked: dramatic, clearly-correct improvement (genuinely dark now, open glass cases, gold rails read clearly). No console errors. Item pickup/rotate/return re-confirmed working here too.
+- [x] Blue live-checked: open-rim case fix confirmed, warm gold trim and wall grain both visible.
+- [ ] **Blue's wall still reads as a brighter medium blue than a strict "navy"**, even after its own lower lighting branch — a real, disclosed limitation (likely its mid-tone base color doesn't hide brightness the way Arcade's near-black or Vault's light steel do), not something to keep blindly tuning without EK's own eyes on it live.
+- [x] White regression check: switched back live, plaster/floor-tile/rail/contact-shadow all still exactly right, nothing leaked from the shared-code changes.
+- [ ] **Mobile touch-action fix — code-verified and reasoned through, NOT tested with real touch input.** No tool in this session can produce genuine touch events; needs EK's own phone/tablet.
+- [ ] Campus room-dimension matching (EK's point 4) — not started, deliberately, per EK's own point 3 ("review those rooms before changing the campus").
+- [ ] EK's actual review of all of the above, in the morning — the real acceptance gate for this whole pass.
+
 ## ✅ 2026-08-27 migrations — both confirmed run by EK, fully live
 ✅ `supabase/migrations/20260827_vault_items_full_field_sync.sql` — ~109 new
 columns on `vault_items`. Not yet live-verified visually. See HANDOFF.md
