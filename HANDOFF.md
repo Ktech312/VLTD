@@ -4272,6 +4272,54 @@ result before calling it done, the way EK's side-by-side did here.
 
 ## 2. What's LEFT to do (prioritized)
 
+### ✅ DONE, LIVE (2026-09-09) — Bulk upload: Category + Subcategory now picked ONCE for the whole batch, not per item
+EK: uploaded 10 comics at once and had to re-pick Category/Subcategory
+on every single one in the review grid — "too much work for doing
+batch... all the categories should carry through... the only difference
+would be the title." Fixed in `src/app/vault/bulk/page.tsx` (commit
+`0788285`).
+
+- **Step 1 is now a progressive Q&A, batch-wide**: Universe → (once
+  chosen) Category appears → (once chosen) Subcategory appears
+  (optional). Whatever's picked here now applies to **every photo added
+  to the batch**, automatically — removed entirely from the per-item
+  review grid, which now only shows Title and Current value ($) per
+  item, plus Scan/Remove.
+- `BulkDraft` no longer carries its own `categoryLabel`/`subcategoryLabel`
+  at all — there's one source of truth (the batch-level `category`/
+  `subcategory` state), used directly when building each `VaultItem` at
+  commit time. No more staleness risk from per-item copies drifting from
+  the batch choice.
+- **Titles can now be typed right on the photo thumbnail during upload**
+  (Step 2), not just later in review — EK asked for the option to fill
+  titles in "right away or after." Leaving a thumbnail's title blank
+  still works fine; it's picked up in the review grid same as before.
+- AI scan (`analyzeImageWithVision`) is now handed the batch's known
+  Category/Subcategory as hints (the function already supported this,
+  just wasn't being passed them) — should make per-item AI identification
+  more accurate, and the AI is no longer asked to guess Category/
+  Subcategory at all since that's fixed up front now.
+- Review header now reads e.g. "12 items · all filed under Pop Culture →
+  Comics → Book" with a "change" link back to Step 1 if EK wants to
+  correct the batch-wide choice without losing already-added photos.
+- Verified via `tsc`/`eslint` (clean, no new warnings) and a full
+  production build. **Not live-clicked by EK yet** — the local dev
+  server needs its own separate login (different session than
+  production), so this session couldn't click through it live; worth a
+  real 10-item batch test next time EK's in the app.
+- **Pushed carefully around heavy concurrent museum-campus work**:
+  EK asked to hold the push until "clear" since another session was
+  actively landing many rapid `Campus:` commits on `main` at the same
+  time. Confirmed zero file overlap between this change and every
+  museum commit that landed before pushing (`src/app/vault/bulk/page.tsx`
+  vs. their 21+ changed files, all under `gallery`/`campus`/`museum`
+  paths), merged origin/main in twice (it moved twice mid-verification)
+  with no conflicts, re-ran `tsc` after each merge, then pushed. If this
+  pattern comes up again — a small, isolated change needing to go out
+  while another session is mid-flight on unrelated files — diffing the
+  two commit ranges' file lists first is the fast way to confirm it's
+  safe, instead of guessing from commit messages alone.
+
 ### ✅ RESOLVED (2026-08-27/28) — "The admin section is now gone from my profile drop down" was a real change, not a bug — Admin access now requires 2FA
 Another concurrent session added a real MFA requirement to admin access
 (commit `c7c8aa2`, `src/lib/adminAuth.ts`): `getMyAdminRole()` now checks
