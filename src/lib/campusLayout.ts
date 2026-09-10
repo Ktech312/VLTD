@@ -395,29 +395,63 @@ export function isWalkable(
   return false;
 }
 
-// EK's ask (2026-09-02), after watching bingebrowse.net's real behavior
-// with her: fixed, marked waypoints (small square floor markers) instead of
-// a raycast-anywhere click-to-walk. One per room center plus one per door
-// bridge — walking WASD/arrows still works freely in between.
-export type CampusWaypoint = { id: string; x: number; z: number };
+// Directional alignment pads (2026-09-09), replacing the earlier generic
+// room-center/door-bridge squares: EK's physical test showed a square could
+// sit visibly off a doorway's real centerline (a square was placed by ROOM
+// geometry — its center, or a bridge midpoint — never by the specific door
+// a player meant to use), so scrolling forward from one gave no reliable
+// route through the opening it looked closest to. Every pad here is
+// generated directly from one CAMPUS_DOORS entry and stands exactly on that
+// door's own `gapCenter` — never a separately-typed coordinate — so its
+// authored facing yaw points straight through the opening with zero
+// cross-axis offset, on every door, regardless of room size. Two pads per
+// door (one per room it opens into), each labeled with the OTHER room as
+// its destination — multi-door rooms get one pad per available exit.
+export type DoorwayPad = {
+  id: string;
+  doorIndex: number;
+  roomId: CampusRoomId; // the room this pad stands in
+  destinationRoomId: CampusRoomId; // the room reached by walking through this door
+  x: number;
+  z: number;
+  yaw: number; // authored facing yaw, aimed through the doorway's exact center
+};
 
-export function computeCampusWaypoints(): CampusWaypoint[] {
-  const waypoints: CampusWaypoint[] = [];
+// Stand-back distance from the shared wall, into the room: comfortably past
+// WALKABLE_MARGIN (0.9) so a pad's own position can never be a collision
+// spot, and short enough that the doorway it targets stays close and
+// prominent in view rather than a long walk away.
+const DOORWAY_PAD_SETBACK = 3.2;
 
-  for (const room of CAMPUS_ROOMS) {
-    if (!room.label) continue; // PLAZA has no label; a plaza waypoint is added separately below via its doors
-    waypoints.push({ id: `room:${room.id}`, x: room.x + room.w / 2, z: room.z + room.d / 2 });
-  }
+export function computeDoorwayPads(): DoorwayPad[] {
+  const pads: DoorwayPad[] = [];
 
-  computeDoorBridges().forEach((bridge, index) => {
-    waypoints.push({
-      id: `door:${index}`,
-      x: (bridge.x0 + bridge.x1) / 2,
-      z: (bridge.z0 + bridge.z1) / 2,
-    });
+  CAMPUS_DOORS.forEach((door, doorIndex) => {
+    const [aId, bId] = door.rooms;
+    if (!bId) return; // no purely one-sided door currently exists, but guard rather than assume
+    const a = roomById(aId);
+
+    if (door.wall === "x") {
+      // Rooms stacked along Z: whichever has its south edge (z+d) on the
+      // shared boundary is the "north" room; facing south (yaw=PI) walks
+      // through the door into the other room, and vice versa.
+      const aIsNorth = Math.abs(a.z + a.d - door.at) < 1e-6;
+      const northId = aIsNorth ? aId : bId;
+      const southId = aIsNorth ? bId : aId;
+      pads.push({ id: `${doorIndex}:${northId}`, doorIndex, roomId: northId, destinationRoomId: southId, x: door.gapCenter, z: door.at - DOORWAY_PAD_SETBACK, yaw: Math.PI });
+      pads.push({ id: `${doorIndex}:${southId}`, doorIndex, roomId: southId, destinationRoomId: northId, x: door.gapCenter, z: door.at + DOORWAY_PAD_SETBACK, yaw: 0 });
+    } else {
+      // Rooms side by side along X: whichever has its east edge (x+w) on
+      // the shared boundary is the "west" room.
+      const aIsWest = Math.abs(a.x + a.w - door.at) < 1e-6;
+      const westId = aIsWest ? aId : bId;
+      const eastId = aIsWest ? bId : aId;
+      pads.push({ id: `${doorIndex}:${westId}`, doorIndex, roomId: westId, destinationRoomId: eastId, x: door.at - DOORWAY_PAD_SETBACK, z: door.gapCenter, yaw: Math.PI / 2 });
+      pads.push({ id: `${doorIndex}:${eastId}`, doorIndex, roomId: eastId, destinationRoomId: westId, x: door.at + DOORWAY_PAD_SETBACK, z: door.gapCenter, yaw: -Math.PI / 2 });
+    }
   });
 
-  return waypoints;
+  return pads;
 }
 
 // A validator that rejects a door unless (a) its gap center lies inside

@@ -582,7 +582,7 @@ export function buildSharedWall(
 // show BUILT_BOTANY as BOTANY; do not expose internal identifiers." Applies
 // only to destination-sign TEXT — room.label itself (used for the top-of-
 // screen overlay, adjacency lookups, etc.) is untouched.
-function visitorFacingRoomName(label: string): string {
+export function visitorFacingRoomName(label: string): string {
   if (label === "BUILT_BOTANY") return "BOTANY";
   return label.replace(/_/g, " ");
 }
