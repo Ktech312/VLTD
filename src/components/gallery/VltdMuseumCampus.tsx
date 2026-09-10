@@ -928,150 +928,35 @@ export default function VltdMuseumCampus() {
     // Collision must shorten or stop the requested motion, never redirect
     // it — the old tryMove() retried a blocked move's world-X and world-Z
     // components separately, which could turn a blocked forward/backward
-    // press into sideways sliding along a wall. Reusable for both the
-    // continuous WASD path (mutates `cameraBody` directly, same as the
-    // accepted room) and the discrete wheel path (mutates
-    // `targetCameraBody`, same as the accepted room's own moveCamera) — the
-    // position mutated is the caller's choice, matching whichever one the
-    // accepted room itself moves for that input.
-    //
-    // MISC movement-defect fix (2026-09-09): EK physically reproduced
-    // sideways drift specifically entering/moving around MISC and asked for
-    // a swept/binary-searched distance instead of the old fixed-0.14
-    // substep march. Replaced: binary search now finds the maximum valid
-    // distance along the EXACT requested `direction` — the applied vector
-    // is always `direction * validDistance` (mathematically collinear with
-    // the request by construction, never a different heading), just with
-    // far finer stopping precision than a 0.14-unit substep could give
-    // (old worst case: up to 0.14 units of slop AT the stopping point,
-    // which — right at a jamb, in a room with two closely-set doorways
-    // like MISC — was enough to land somewhere the true contact point
-    // wasn't, feeding a still-off-axis position into the NEXT wheel event's
-    // walkability check). Logged per call so this is verified against real
-    // intended-vs-applied vectors, not assumed.
-    //
-    // Heading-source investigation (2026-09-09), REVERTED — do not use this
-    // for movement: EK's physical test suggested checking whether the
-    // camera's own rendered forward matches facingDirection(yaw). Deployed
-    // that as the movement source (ad38f72), then live-verified it against
-    // ground truth: at yaw=PI/2, a screenshot confirms the camera visually
-    // renders facing east (HUB's real east-wall doors, BUILT_BOTANY/GAMES/
-    // AUTOMOTIVE) — exactly matching facingDirection(yaw). But
-    // camera.getWorldDirection() (below) returned a vector 90 degrees off
-    // from that same ground truth. facingDirection(yaw) is proven correct;
-    // this function is proven wrong (root cause not yet found — possibly a
-    // getWorldDirection()/lookAt() convention mismatch specific to this
-    // camera setup). Movement below uses the shared buildKeyboardMoveDirection
-    // / facingDirection(yaw) again, unchanged from before ad38f72. Kept
-    // ONLY as a diagnostic comparison in the movement log — never as a
-    // movement source — since its own wrongness might still be useful
-    // evidence for finding the real bug.
-    //
-    // EK's foreground finding (2026-09-09, second round): a genuinely fresh
-    // spawn, no drag, including clicking the entrance waypoint, stayed
-    // exactly centered — "the rightward behavior therefore develops later
-    // during navigation." She asked for the full raw comparison recorded
-    // per movement call (not just the already-normalized renderedForwardXZ
-    // vs facingDirection(yaw) figures) plus whether each move follows a
-    // waypoint arrival or a prior manual step, so a heading drift that only
-    // appears after waypoint travel can be told apart from a real rendering
-    // mismatch.
-    function renderedForwardXZ(): THREE.Vector3 {
-      camera.updateWorldMatrix(true, false);
-      const world = new THREE.Vector3();
-      camera.getWorldDirection(world);
-      world.y = 0;
-      if (world.lengthSq() < 1e-8) return facingDirection(yaw); // near-vertical look — fall back rather than divide by ~0
-      return world.normalize();
-    }
-
-    // Set true the instant a walkTween finishes (see the tick() completion
-    // branch below); read-and-reset to false by the next manual move logged
-    // in moveWithCollision — so a log entry's `precedingMovementSource`
-    // tells you whether THIS move started from a position just reached by
-    // waypoint travel, or from a prior manual (wheel/keyboard) step.
-    let justArrivedViaWaypoint = false;
-
-    type MovementLogEntry = {
-      frameTime: number; yawAtCall: number; targetYawAtCall: number;
-      renderedQuaternion: { x: number; y: number; z: number; w: number };
-      renderedWorldDirection: { x: number; y: number; z: number };
-      renderedForwardXZ: { x: number; z: number };
-      intended: { x: number; z: number }; applied: { x: number; z: number };
-      signedHeadingAngleDeg: number;
-      requestedDistance: number; appliedDistance: number;
-      positionBefore: { x: number; z: number }; positionAfter: { x: number; z: number };
-      hasActiveWalkTween: boolean; precedingMovementSource: "waypoint" | "manual" | "none";
-    };
-    const movementLog: MovementLogEntry[] = [];
-
+    // press into sideways sliding along a wall. Substeps (instead of one
+    // big jump) stop a fast wheel nudge from tunneling across a thin
+    // doorway threshold. Reusable for both the continuous WASD path
+    // (mutates `cameraBody` directly, same as the accepted room) and the
+    // discrete wheel path (mutates `targetCameraBody`, same as the accepted
+    // room's own moveCamera) — the position mutated is the caller's choice,
+    // matching whichever one the accepted room itself moves for that input.
     function moveWithCollision(position: THREE.Vector3, delta: THREE.Vector3) {
       const distance = delta.length();
       if (distance === 0) return;
-      const before = { x: position.x, z: position.z };
+
       const direction = delta.clone().normalize();
+      const maxSubstep = 0.14;
+      const steps = Math.max(1, Math.ceil(distance / maxSubstep));
+      const step = direction.multiplyScalar(distance / steps);
 
-      // Raw rendered-camera comparison, captured on every call, exactly as
-      // requested: the quaternion itself, the raw getWorldDirection()
-      // vector, its XZ projection normalized, and a SIGNED angle (atan2 of
-      // the cross/dot product, not just acos of the dot) against the
-      // intended movement direction so left/right is distinguishable, not
-      // just magnitude of mismatch.
-      camera.updateWorldMatrix(true, false);
-      const worldDir = new THREE.Vector3();
-      camera.getWorldDirection(worldDir);
-      const renderedXZLen = Math.hypot(worldDir.x, worldDir.z);
-      const renderedXZ = renderedXZLen > 1e-6 ? { x: worldDir.x / renderedXZLen, z: worldDir.z / renderedXZLen } : { x: 0, z: 0 };
-      const dot = renderedXZ.x * direction.x + renderedXZ.z * direction.z;
-      const cross = renderedXZ.x * direction.z - renderedXZ.z * direction.x;
-      const signedHeadingAngleDeg = (Math.atan2(cross, dot) * 180) / Math.PI;
-
-      let validDistance: number;
-      if (isWalkable(position.x + direction.x * distance, position.z + direction.z * distance, walkable)) {
-        validDistance = distance;
-      } else {
-        let lo = 0;
-        let hi = distance;
-        for (let i = 0; i < 20; i += 1) {
-          const mid = (lo + hi) / 2;
-          if (isWalkable(position.x + direction.x * mid, position.z + direction.z * mid, walkable)) lo = mid;
-          else hi = mid;
-        }
-        validDistance = lo;
+      for (let index = 0; index < steps; index += 1) {
+        const nextX = position.x + step.x;
+        const nextZ = position.z + step.z;
+        if (!isWalkable(nextX, nextZ, walkable)) break;
+        position.x = nextX;
+        position.z = nextZ;
       }
-      position.x += direction.x * validDistance;
-      position.z += direction.z * validDistance;
-
-      movementLog.push({
-        frameTime: performance.now(),
-        yawAtCall: yaw,
-        targetYawAtCall: targetYaw,
-        renderedQuaternion: { x: camera.quaternion.x, y: camera.quaternion.y, z: camera.quaternion.z, w: camera.quaternion.w },
-        renderedWorldDirection: { x: worldDir.x, y: worldDir.y, z: worldDir.z },
-        renderedForwardXZ: renderedXZ,
-        intended: { x: delta.x, z: delta.z },
-        applied: { x: position.x - before.x, z: position.z - before.z },
-        signedHeadingAngleDeg,
-        requestedDistance: distance,
-        appliedDistance: validDistance,
-        positionBefore: before,
-        positionAfter: { x: position.x, z: position.z },
-        hasActiveWalkTween: walkTween !== null,
-        precedingMovementSource: justArrivedViaWaypoint ? "waypoint" : movementLog.length > 0 ? "manual" : "none",
-      });
-      justArrivedViaWaypoint = false;
-      if (movementLog.length > 300) movementLog.shift();
     }
 
     function updateKeyboardMovement(dt: number) {
       if (pressedKeys.size === 0) return;
       walkTween = null; // a held movement/turn key interrupts click-to-walk (view is never touched by the tween, so nothing else to reset)
       const speed = pressedKeys.has("shift") ? WALK_SPEED_SLOW : WALK_SPEED;
-      // Reverted to facingDirection(yaw)-based movement (via the shared
-      // buildKeyboardMoveDirection) — see the heading-source investigation
-      // comment above moveWithCollision. renderedForwardXZ() (camera.
-      // getWorldDirection()) was proven wrong against ground truth; yaw-
-      // derived direction is proven correct.
       const move = buildKeyboardMoveDirection(
         {
           forward: pressedKeys.has("forward"),
@@ -1174,28 +1059,7 @@ export default function VltdMuseumCampus() {
       if (!isDragging) return;
       const dx = e.clientX - startX;
       const dy = e.clientY - startY;
-      // EK's "rightward veer develops later during navigation" investigation
-      // (2026-09-09): this used to call applyDrag() unconditionally for
-      // EVERY pointermove while the button was down, resetting startX/
-      // startY every time regardless of the 6px didDrag threshold below —
-      // so that threshold only ever compared one event's delta against the
-      // next, never true displacement since the click began, and a plain
-      // click's near-inevitable sub-pixel jitter (real mice/trackpads
-      // essentially never report exactly zero movement between button-down
-      // and button-up) still nudged targetYaw a tiny, invisible amount on
-      // EVERY waypoint click. One click's nudge is imperceptible; dozens of
-      // them navigating through a large multi-room campus accumulate —
-      // matching "develops later," not on a fresh spawn or a single click.
-      // The accepted personal Gallery has this identical pattern (same
-      // shared applyDrag() call, same unconditional-until-threshold
-      // structure) but never surfaced it, since one small room never
-      // demands anywhere near this many waypoint clicks in a row. Fixed
-      // here (campus-only — VirtualGalleryRoom.tsx is untouched): rotation
-      // is now withheld entirely until cumulative movement since the click
-      // began actually crosses the threshold, so a plain click can never
-      // rotate the view by any amount, however small.
-      if (!didDrag) {
-        if (Math.abs(dx) + Math.abs(dy) <= 6) return;
+      if (Math.abs(dx) + Math.abs(dy) > 6) {
         didDrag = true;
         walkTween = null; // a real manual look-drag interrupts an in-progress auto-walk
       }
@@ -1280,10 +1144,7 @@ export default function VltdMuseumCampus() {
     type WheelEventLogEntry = {
       eventTimestamp: number; rawDeltaY: number; normalizedDelta: number;
       requestedDistance: number; appliedDistance: number; collisionAdjustment: number;
-      yawAtEvent: number; targetYawAtEvent: number;
-      renderedForwardXZ: { x: number; z: number }; yawDerivedForwardXZ: { x: number; z: number };
-      headingAngleDeg: number; headingCross: number;
-      firstChangedFrameLatencyMs: number | null;
+      yawAtEvent: number; firstChangedFrameLatencyMs: number | null;
     };
     const wheelEventLog: WheelEventLogEntry[] = [];
     const pendingLatencyProbes: { eventTimestamp: number; beforeCameraBody: THREE.Vector3 }[] = [];
@@ -1298,19 +1159,7 @@ export default function VltdMuseumCampus() {
       const requestedDistance = WHEEL_STEP;
       const signedStep = e.deltaY > 0 ? -WHEEL_STEP : WHEEL_STEP;
       const beforeTarget = targetCameraBody.clone();
-
-      // Heading diagnostic — logged for visibility, NOT used for movement
-      // (renderedForwardXZ/camera.getWorldDirection() was proven wrong
-      // against ground truth — see the comment above moveWithCollision).
-      // yawDerivedFwd is what actually drives movement below, same as
-      // before ad38f72.
-      const renderedFwd = renderedForwardXZ();
-      const yawDerivedFwd = facingDirection(yaw);
-      const headingDot = THREE.MathUtils.clamp(renderedFwd.x * yawDerivedFwd.x + renderedFwd.z * yawDerivedFwd.z, -1, 1);
-      const headingAngleDeg = (Math.acos(headingDot) * 180) / Math.PI;
-      const headingCross = renderedFwd.x * yawDerivedFwd.z - renderedFwd.z * yawDerivedFwd.x;
-
-      const delta = yawDerivedFwd.clone().multiplyScalar(signedStep);
+      const delta = facingDirection(yaw).multiplyScalar(signedStep);
       moveWithCollision(targetCameraBody, delta);
       targetCameraBody.y = EYE_HEIGHT;
       const appliedDistance = beforeTarget.distanceTo(targetCameraBody);
@@ -1323,11 +1172,6 @@ export default function VltdMuseumCampus() {
         appliedDistance,
         collisionAdjustment: requestedDistance - appliedDistance,
         yawAtEvent: yaw,
-        targetYawAtEvent: targetYaw,
-        renderedForwardXZ: { x: renderedFwd.x, z: renderedFwd.z },
-        yawDerivedForwardXZ: { x: yawDerivedFwd.x, z: yawDerivedFwd.z },
-        headingAngleDeg,
-        headingCross,
         firstChangedFrameLatencyMs: null,
       });
       if (wheelEventLog.length > 40) wheelEventLog.shift();
@@ -1372,7 +1216,6 @@ export default function VltdMuseumCampus() {
         if (walkTween.t >= 1) {
           cameraBody.copy(walkTween.toPos);
           walkTween = null;
-          justArrivedViaWaypoint = true;
         }
       } else {
         const eased = easeTowardTargets(yaw, targetYaw, pitch, targetPitch, cameraBody, targetCameraBody, false, WHEEL_POSITION_EASE_RATE);
@@ -1431,19 +1274,6 @@ export default function VltdMuseumCampus() {
       getYawPitch: () => ({ yaw, pitch, targetYaw, targetPitch }),
       hasActiveWalkTween: () => walkTween !== null,
       triggerWalkTween: (x: number, z: number) => startWalkTween(new THREE.Vector3(x, EYE_HEIGHT, z)),
-      // Debug-only: simulates an INSTANTLY completed waypoint arrival
-      // (position only, no yaw/pitch change — same as a real walkTween
-      // finishing) without needing real animation frames to elapse. Added
-      // to test EK's "waypoint completion might leave a slight unintended
-      // heading" hypothesis in this automation tab, where a backgrounded
-      // tab's throttled requestAnimationFrame means triggerWalkTween's real
-      // interpolation often never actually progresses.
-      completeWaypointArrival: (x: number, z: number) => {
-        walkTween = null;
-        cameraBody.set(x, EYE_HEIGHT, z);
-        targetCameraBody.copy(cameraBody);
-        justArrivedViaWaypoint = true;
-      },
       setCameraBody: (x: number, z: number, newYaw?: number) => {
         cameraBody.set(x, EYE_HEIGHT, z);
         targetCameraBody.copy(cameraBody);
@@ -1523,14 +1353,6 @@ export default function VltdMuseumCampus() {
           avgFps: avgFrameMs > 0 ? 1000 / avgFrameMs : 0,
         };
       },
-      // MISC movement-defect investigation (2026-09-09): "Log the intended
-      // movement vector and actual applied vector for each frame." Every
-      // moveWithCollision() call (both the continuous WASD path and the
-      // discrete wheel path funnel through it) pushes one entry here — the
-      // exact requested delta, the exact applied delta, and the yaw at that
-      // moment, so a divergence between intended and applied HEADING (not
-      // just magnitude) can be checked directly instead of inferred.
-      getMovementLog: () => movementLog.slice(-100),
       // EK's review of the "three gray tiers at the entrance" report: "Your
       // audit based on local position.y and expected mesh names is
       // insufficient. Inspect every rendered mesh... using world-space
