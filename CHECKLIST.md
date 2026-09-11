@@ -1,5 +1,17 @@
 # VLTD — Session Checklist (2026-08-05 night → ongoing, updated 2026-08-27)
 
+# 2026-09-11 — Gallery Builder Map + in-room organization overnight work order
+- [ ] Read and complete `docs/GALLERY-MAP-ROOM-EDITING-OVERNIGHT-PASS-2026-09-11.md` as one consolidated pass on `/museum/virtual-room`.
+- [ ] Expand the outer map workspace to EK's blue-line boundaries; horizontal plan, entrance left, no internal scrolling.
+- [ ] Remove Arrange Shelf Order, the `13 rooms · 20 doors` badge, and the full right Floorplan/Universe Rooms panel; reclaim both columns.
+- [ ] Keep each map room clean: dynamic room name plus truthful `occupied / capacity items` from canonical room slots.
+- [ ] Add the room-focused Edit Room flow without creating a second layout or save model.
+- [ ] Make real 3D Organize slots support add, select, move, confirm-before-replace, and room-only removal.
+- [ ] Autosave successful edits; Done waits for save. Preserve the explicit first Save Hall step when creating a new Hall.
+- [ ] Provide keyboard, tablet, and phone fallbacks with large touch targets and no camera movement during item drag.
+- [ ] Do not modify `/museum/vltd`, campus geometry/navigation, room themes, or vault-item records.
+- [ ] Deploy one complete result and return the evidence matrix required by the brief; EK review remains final acceptance.
+
 ## 2026-09-10 — VLTD Museum public campus: Visual Overnight Pass + 3 rounds of EK-caught fixes — NOT ACCEPTED
 Separate part of the app from the exhibition-room entries below (`/museum/vltd`). Full detail in `docs/FULL-MUSEUM-VISUAL-OVERNIGHT-PASS-2026-09-10.md`'s STATUS ADDENDUM and the matching HANDOFF.md entry (same date) — read those before touching this area again.
 - [x] Work order round 1 (`35b7fe9`): campus-only wall panel texture, ceiling bay texture, gradient sky background (fixes PLAZA reading as a flat navy wall), emissive lift on legacy-room artwork (previously zero dedicated light).
