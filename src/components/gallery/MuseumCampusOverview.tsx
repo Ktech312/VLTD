@@ -48,6 +48,22 @@ const MAP_BOUNDS = CAMPUS_ROOMS.reduce(
   { x0: Infinity, x1: -Infinity, z0: Infinity, z1: -Infinity }
 );
 
+// The campus is authored in world X/Z coordinates with the entrance along its
+// north edge. The builder's map panel is landscape, so present the same plan a
+// quarter-turn clockwise: north/entrance moves to the left and the Grand Hall
+// runs across the panel. A modest horizontal presentation scale uses the map's
+// available width without stretching its text or doorway symbols.
+const MAP_HORIZONTAL_SCALE = 1.65;
+
+function mapRect(x: number, z: number, width: number, depth: number) {
+  return {
+    x: (z - MAP_BOUNDS.z0) * MAP_HORIZONTAL_SCALE,
+    y: x - MAP_BOUNDS.x0,
+    width: depth * MAP_HORIZONTAL_SCALE,
+    height: width,
+  };
+}
+
 function itemUniverse(item: VaultItem): UniverseKey {
   const raw = String(item.universe || item.category || "MISC").trim().toUpperCase();
   return raw && UNIVERSE_LABEL[raw as UniverseKey] ? raw as UniverseKey : "MISC";
@@ -117,8 +133,8 @@ export default function MuseumCampusOverview({
   }
 
   const mapRooms = CAMPUS_ROOMS.map((layout) => ({ layout, content: contentFor(layout) }));
-  const mapWidth = MAP_BOUNDS.x1 - MAP_BOUNDS.x0;
-  const mapHeight = MAP_BOUNDS.z1 - MAP_BOUNDS.z0;
+  const mapWidth = (MAP_BOUNDS.z1 - MAP_BOUNDS.z0) * MAP_HORIZONTAL_SCALE;
+  const mapHeight = MAP_BOUNDS.x1 - MAP_BOUNDS.x0;
 
   function open(layout: CampusRoom, content: MuseumMapRoom | null) {
     if (layout.id === "HUB") onOpenMainHall();
@@ -137,7 +153,7 @@ export default function MuseumCampusOverview({
 
           <div className="min-h-0 flex-1">
             <svg
-              viewBox={`${MAP_BOUNDS.x0 - 3} ${MAP_BOUNDS.z0 - 3} ${mapWidth + 6} ${mapHeight + 6}`}
+              viewBox={`-3 -3 ${mapWidth + 6} ${mapHeight + 6}`}
               preserveAspectRatio="xMidYMid meet"
               className="block h-full w-full"
               role="group"
@@ -156,10 +172,11 @@ export default function MuseumCampusOverview({
                 const enabled = isHub || Boolean(content?.items.length);
                 const label = ROOM_LABELS[layout.id];
                 const subtitle = isHub ? "Grand Hall" : isPlaza ? "Main Entrance" : layout.id === "SPOTLIGHT" || layout.id === "STORE" ? "Coming soon" : layout.tierLabel.replace(" · baseline", "");
-                const centerX = layout.x + layout.w / 2;
-                const titleY = layout.z + Math.min(9, layout.d * 0.38);
-                const compact = layout.w <= 21;
-                const titleSize = isHub ? 5 : Math.min(compact ? 2.55 : 3.2, (layout.w - 3) / Math.max(1, label.length * 0.62));
+                const mapped = mapRect(layout.x, layout.z, layout.w, layout.d);
+                const centerX = mapped.x + mapped.width / 2;
+                const titleY = mapped.y + Math.min(9, mapped.height * 0.38);
+                const compact = mapped.height <= 21;
+                const titleSize = isHub ? 5 : Math.min(compact ? 2.55 : 3.2, (mapped.width - 3) / Math.max(1, label.length * 0.62));
                 return (
                   <g
                     key={layout.id}
@@ -170,11 +187,11 @@ export default function MuseumCampusOverview({
                     onKeyDown={(event) => enabled && (event.key === "Enter" || event.key === " ") && open(layout, content)}
                     className={enabled ? "cursor-pointer outline-none" : "cursor-default"}
                   >
-                    <rect x={layout.x + 0.55} y={layout.z + 0.55} width={layout.w - 1.1} height={layout.d - 1.1} rx={1.5} fill={isHub ? "url(#museum-map-hub)" : enabled ? "url(#museum-map-room)" : "url(#museum-map-empty)"} stroke={isHub ? "#9a7a3a" : enabled ? "#dce3e7" : "#303840"} strokeWidth={0.45} className="transition hover:brightness-110" />
-                    {isHub && <><circle cx={centerX} cy={layout.z + layout.d / 2 - 3.2} r={5.2} fill="#090c0f" stroke="#92743a" strokeWidth={0.45} /><circle cx={centerX} cy={layout.z + layout.d / 2 - 3.2} r={3.8} fill="none" stroke="#5f4e2d" strokeWidth={0.3} /><text x={centerX} y={layout.z + layout.d / 2 - 2.2} textAnchor="middle" fill="#d7bd77" fontSize={3.1} fontWeight={900}>VLTD</text></>}
+                    <rect x={mapped.x + 0.55} y={mapped.y + 0.55} width={mapped.width - 1.1} height={mapped.height - 1.1} rx={1.5} fill={isHub ? "url(#museum-map-hub)" : enabled ? "url(#museum-map-room)" : "url(#museum-map-empty)"} stroke={isHub ? "#9a7a3a" : enabled ? "#dce3e7" : "#303840"} strokeWidth={0.45} className="transition hover:brightness-110" />
+                    {isHub && <><circle cx={centerX} cy={mapped.y + mapped.height / 2 - 3.2} r={5.2} fill="#090c0f" stroke="#92743a" strokeWidth={0.45} /><circle cx={centerX} cy={mapped.y + mapped.height / 2 - 3.2} r={3.8} fill="none" stroke="#5f4e2d" strokeWidth={0.3} /><text x={centerX} y={mapped.y + mapped.height / 2 - 2.2} textAnchor="middle" fill="#d7bd77" fontSize={3.1} fontWeight={900}>VLTD</text></>}
                     <text x={centerX} y={titleY} textAnchor="middle" fill={isHub ? "#f4e4b3" : enabled ? "#111820" : "#d8dde2"} fontSize={titleSize} fontWeight={900} letterSpacing={compact ? 0.05 : 0.12}>{label.toUpperCase()}</text>
                     <text x={centerX} y={titleY + (isHub ? 4.3 : 3.4)} textAnchor="middle" fill={isHub ? "#9ba6ae" : enabled ? "#59636b" : "#737d85"} fontSize={compact ? 1.85 : 2.25} fontWeight={700}>{subtitle.toUpperCase()}</text>
-                    {content?.items.length ? <text x={centerX} y={layout.z + layout.d - 3.5} textAnchor="middle" fill={isHub ? "#9fddeb" : "#26323a"} fontSize={compact ? 1.85 : 2.15} fontWeight={800}>{`${content.items.length} PCS · ${content.tier.toUpperCase()}`}</text> : null}
+                    {content?.items.length ? <text x={centerX} y={mapped.y + mapped.height - 3.5} textAnchor="middle" fill={isHub ? "#9fddeb" : "#26323a"} fontSize={compact ? 1.85 : 2.15} fontWeight={800}>{`${content.items.length} PCS · ${content.tier.toUpperCase()}`}</text> : null}
                   </g>
                 );
               })}
@@ -182,7 +199,10 @@ export default function MuseumCampusOverview({
               {CAMPUS_DOORS.map((door, index) => {
                 const width = door.width ?? 3;
                 const horizontal = door.wall === "x";
-                return <rect key={`${door.rooms[0]}-${door.rooms[1] ?? "entry"}-${index}`} x={horizontal ? door.gapCenter - width / 2 : door.at - 0.72} y={horizontal ? door.at - 0.72 : door.gapCenter - width / 2} width={horizontal ? width : 1.44} height={horizontal ? 1.44 : width} rx={0.42} fill="#153c50" stroke="#79e7fb" strokeWidth={0.42} filter="url(#museum-map-glow)" pointerEvents="none" />;
+                const mapped = horizontal
+                  ? mapRect(door.gapCenter - width / 2, door.at - 0.72, width, 1.44)
+                  : mapRect(door.at - 0.72, door.gapCenter - width / 2, 1.44, width);
+                return <rect key={`${door.rooms[0]}-${door.rooms[1] ?? "entry"}-${index}`} x={mapped.x} y={mapped.y} width={mapped.width} height={mapped.height} rx={0.42} fill="#153c50" stroke="#79e7fb" strokeWidth={0.42} filter="url(#museum-map-glow)" pointerEvents="none" />;
               })}
             </svg>
           </div>
@@ -190,7 +210,7 @@ export default function MuseumCampusOverview({
           <div className="mt-2 flex shrink-0 items-center justify-center gap-4 rounded-[6px] border border-white/10 bg-black/30 px-4 py-2 text-[10px] font-black uppercase tracking-[0.14em] text-white/55">
             <span className="inline-flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-[2px] bg-[#d9dde0]" /> Active room</span>
             <span className="inline-flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-[2px] border border-[#79e7fb] bg-[#153c50] shadow-[0_0_8px_rgba(121,231,251,0.5)]" /> Doorway</span>
-            <span className="inline-flex items-center gap-1.5"><DoorOpen size={13} /> Entrance at top</span>
+            <span className="inline-flex items-center gap-1.5"><DoorOpen size={13} /> Entrance at left</span>
           </div>
         </section>
 
