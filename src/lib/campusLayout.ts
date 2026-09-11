@@ -192,22 +192,25 @@ export const CAMPUS_DOORS: CampusDoor[] = [
   { wall: "x", at: sharedBoundaryAlongZ(roomById("SPOTLIGHT"), roomById("HUB")), gapCenter: overlapCenterAlongX(roomById("SPOTLIGHT"), roomById("HUB")), rooms: ["SPOTLIGHT", "HUB"], width: DOORWAY_WALL_GAP },
   { wall: "x", at: sharedBoundaryAlongZ(roomById("PLAZA"), roomById("HUB")), gapCenter: overlapCenterAlongX(roomById("PLAZA"), roomById("HUB")), rooms: ["PLAZA", "HUB"], width: DOORWAY_WALL_GAP },
   { wall: "x", at: sharedBoundaryAlongZ(roomById("STORE"), roomById("HUB")), gapCenter: overlapCenterAlongX(roomById("STORE"), roomById("HUB")), rooms: ["STORE", "HUB"], width: DOORWAY_WALL_GAP },
+  // EK's ask (2026-09-10), restoring the MISC<->HUB shortcut the earlier
+  // plan left for her to decide on: same computed-not-hardcoded pattern as
+  // every other door above, no special-casing. Its gapCenter lands at
+  // z=65 by the exact same overlapCenterAlongZ() math every other door
+  // uses — which happens to be the same z as the HUB<->AUTOMOTIVE door
+  // (door 7 below), since MISC and AUTOMOTIVE share the identical z=52..104
+  // span. That's what puts it "in line with Automobile across the way," not
+  // a hand-picked coordinate.
+  { wall: "z", at: sharedBoundaryAlongX(roomById("MISC"), roomById("HUB")), gapCenter: overlapCenterAlongZ(roomById("MISC"), roomById("HUB")), rooms: ["MISC", "HUB"], width: DOORWAY_WALL_GAP },
 ];
 
 // Shared boundaries with no door — the wall is still real and still built
 // (one structural wall, finished on each face), it just has no opening cut
-// into it. MISC<->HUB: a real touching boundary in this grid (MISC spans
-// z=52..104, HUB spans z=0..78, so they share x=21 for z=52..78) that isn't
-// one of the campus's existing doors — kept solid per the approved plan
-// ("leave that shared wall solid unless EK later restores the MISC<->HUB
-// shortcut. Do not add a door merely because the geometry permits one").
-// SPOTLIGHT<->PLAZA and PLAZA<->STORE are also touching boundaries with no
-// door, but PLAZA is `noWalls` — computeCampusWallSegments() below skips
+// into it. SPOTLIGHT<->PLAZA and PLAZA<->STORE are touching boundaries with
+// no door, but PLAZA is `noWalls` — computeCampusWallSegments() below skips
 // wall generation on any segment touching a noWalls room entirely, so
-// those two need no entry here.
-export const CAMPUS_SOLID_ADJACENCIES: [CampusRoomId, CampusRoomId][] = [
-  ["MISC", "HUB"],
-];
+// those two need no entry here. MISC<->HUB (the one shared boundary that
+// used to be listed here) now has a real door — see CAMPUS_DOORS above.
+export const CAMPUS_SOLID_ADJACENCIES: [CampusRoomId, CampusRoomId][] = [];
 
 // Spawn in the plaza, facing the entrance facade — EK's ask (2026-09-02).
 export const CAMPUS_SPAWN = { x: roomById("PLAZA").x + roomById("PLAZA").w / 2, z: roomById("PLAZA").z + roomById("PLAZA").d / 2, yaw: Math.PI };
@@ -401,7 +404,13 @@ export function isWalkable(
 export type CampusWaypoint = { id: string; roomId: CampusRoomId; x: number; z: number };
 
 export function computeCampusWaypoints(): CampusWaypoint[] {
-  return CAMPUS_ROOMS.filter((room) => Boolean(room.label)).map((room) => ({
+  // EK's ask (2026-09-10): "most [rooms] have them" — every room gets a
+  // target, including PLAZA. PLAZA was the one room this used to skip,
+  // purely because its `label` is empty (it has no destination-sign
+  // identity of its own) — but the target here never displays that label,
+  // so there was no real reason to exclude it. PLAZA's floor and center
+  // are already walkable like any other room's.
+  return CAMPUS_ROOMS.map((room) => ({
     id: `room:${room.id}`,
     roomId: room.id,
     x: room.x + room.w / 2,
