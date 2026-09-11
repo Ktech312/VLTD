@@ -192,4 +192,146 @@ Return one consolidated report containing:
 - Items requiring EK's physical mouse or visual judgment.
 - Any remaining defects, with exact room/door locations.
 
+---
+
+## STATUS ADDENDUM (written 2026-09-10 evening, for a new chat picking this up)
+
+**Not accepted yet.** EK has not done her own physical-input pass. Everything
+below is this session's own live verification, which caught real mistakes of
+its own along the way — read the "self-corrections" list, not just the
+"shipped" list, before assuming any approach here is settled.
+
+**Deployed commit:** `1546288` on `main` (production:
+`https://vltd.vercel.app/museum/vltd`). Five commits, in order:
+`35b7fe9` → `af3a0f3` → `0cecd8a` → `4a0cb01` → `1546288`.
+
+### What shipped, in order
+
+1. **`35b7fe9` — first pass at this work order.** Campus-only architectural
+   wall panel texture (`createArchitecturalPanelTexture()` in
+   `campusRoomBuilder.ts` — the shared `galleryTextures.ts` used by the
+   accepted personal Gallery/prototype is untouched), a ceiling bay texture,
+   a gradient sky background (`scene.background`, fixes PLAZA reading as a
+   flat solid-navy wall instead of open sky), and an emissive self-lift on
+   every legacy room's artwork (`hangFrame()` in `VltdMuseumCampus.tsx`,
+   which previously had zero dedicated light).
+2. **`af3a0f3` — self-caught bug from (1).** The ceiling bay lines were
+   invisible in production: `MeshStandardMaterial.emissive` is NOT modulated
+   by `map`, so the flat emissive fill (needed because a downward-facing
+   ceiling gets almost no real light in this scene) completely washed out
+   the pattern. Fixed with `emissiveMap` on the same texture. Also added
+   texture disposal in the scene teardown (`material.dispose()` doesn't
+   cascade to its textures — was a real, pre-existing gap, not new).
+3. **`0cecd8a` — EK-reported bug, real one.** The wall panel texture from
+   (1) scaled its repeat from `room.w` and reused ONE material across every
+   wall face of a room — badly stretched on rectangular rooms (MISC 21×52,
+   AUTOMOTIVE 42×52) since their east/west walls actually span `room.d`, not
+   `room.w`. **Root fix, not a band-aid:** moved the scaling onto each wall
+   *segment's own geometry* (`scaleWallPanelU()`), verified directly against
+   `BoxGeometry`'s own UV generation in the Three.js source, not guessed.
+   Verified with a throwaway offline script (raw UV buffer values) before
+   ever deploying, then live at the exact same camera position before/after.
+   Side effect: `createWallMaterial()` no longer depends on room size at
+   all, so wall materials are now cached by **finish identity** instead of
+   per room — collapsed 9 duplicate materials/textures into 1 (confirmed via
+   `getSceneStats()`: 219→211 materials, 108→100 textures).
+   **If you're re-touching wall materials: do NOT go back to `room.w`-based
+   texture.repeat scaling — that's the exact bug this fixed.**
+4. **`4a0cb01` — EK-reported bug, sent as screenshots with the flicker
+   marked in blue at door jambs.** Real z-fighting, not caught by this
+   session's own earlier static screenshots (z-fighting is a per-frame
+   depth-buffer phenomenon; a still image can miss it entirely, or show it
+   as faint noise instead of the flicker a moving camera actually sees —
+   **lesson for next time: a single screenshot from a fixed pose is not a
+   moving-camera check, however many times you retake it**). Root cause:
+   `buildSharedWall()`'s jamb/head casing boxes are deliberately centered ON
+   the seam between the solid wall and the door opening (so the casing
+   "covers the seam"), but the adjacent solid wall piece was never
+   shortened to make room — two opaque boxes occupied the identical
+   footprint, one only 0.04–0.07 units proud of the other. Fixed by
+   trimming the solid wall piece back by the casing's own `trimWidth`
+   wherever its edge sits exactly on the door gap. Verified by querying the
+   actual mesh bounding boxes live (`debugMeshesInRegion`), not just a
+   screenshot: wall and jamb now meet at the identical coordinate, zero
+   overlap.
+5. **`1546288` — EK's own map review, two small additions, nothing else
+   touched.** A new MISC↔HUB door (using the *exact same* computed formula
+   as every other `CAMPUS_DOORS` entry — no hand-picked coordinates; its
+   `gapCenter` lands at z=65 by that formula alone, which happens to exactly
+   match the HUB↔AUTOMOTIVE door's own z=65, giving the straight sightline
+   EK asked for "in line with Automobile across the way" — confirmed live
+   from both directions in HUB). And `computeCampusWaypoints()` was skipping
+   PLAZA's room-center target solely because PLAZA's `label` field is empty
+   — that field isn't used for anything else in the function, so there was
+   no real reason to exclude it. Every room has a target now.
+
+### Self-corrections this session made on its own work (read before trusting anything above blindly)
+
+- Wall panel scaling: shipped wrong in (1), EK caught it, root-caused and
+  fixed properly in (3) — see the warning above.
+- Ceiling bay texture: shipped invisible in (1), caught by this session's
+  own live re-check (not EK) before it was ever reported, fixed in (2).
+- Door jamb/head z-fighting: this is the one that should have been caught
+  earlier. It's a pre-existing defect from the original 2026-09-08 doorway
+  casing design (`buildSharedWall`), not something introduced this session
+  — but this session's "moving camera check" for it (2 static screenshots
+  from slightly different angles) was NOT actually adequate to catch
+  z-fighting, and said so. EK caught it for real with an annotated
+  screenshot. **If asked to verify flicker/shimmer again: query mesh
+  bounding boxes directly (`debugMeshesInRegion`) for overlapping volumes,
+  don't rely on screenshots at all** — that's the reliable method now.
+
+### Interactive overview map
+
+Built twice in-chat via the `visualize` MCP tool (an inline SVG floor-plan
+diagram, room rects + a colored box per doorway) to help EK point at
+specific connections. **This is an ephemeral chat widget, not saved
+anywhere in the repo or as a durable artifact.** If a future session needs
+it again: regenerate from `CAMPUS_ROOMS`/`CAMPUS_DOORS` in
+`src/lib/campusLayout.ts` (a small tsx script can print exact screen
+coordinates — see the git history of this session's scratch scripts under
+`scripts/` for the pattern, though the scratch files themselves were
+deleted after use since they duplicated layout logic rather than importing
+it long-term).
+
+### Verified this session (live, this round)
+
+- All 20 doors (19 + the new MISC↔HUB one), both sides — no gaps, doubled
+  surfaces, clipping, wrong signs, or finish mismatches found, after the
+  jamb/head fix.
+- All 13 rooms visited live at least once.
+- Wall panel scale correct on both short and long walls of MISC and
+  AUTOMOTIVE specifically (the two rooms EK named).
+- Corner seams (checked one, AUTOMOTIVE's NW corner) — clean, no gap or
+  overlap.
+- `validateCampusDoors()`: 0 issues, 13 rooms, 20 doors.
+- `tsc --noEmit` / ESLint / `next build --webpack`: clean on every commit
+  above.
+- No console errors live (one pre-existing, unrelated `THREE.Clock`
+  deprecation warning only).
+- Scene stats stayed sane throughout (mesh/geometry/light counts unchanged
+  except the expected −8/−8 material/texture drop from finish-identity
+  sharing).
+
+### Still needs EK, or a future session, to check
+
+- **The physical-input acceptance test itself** — click a target, scroll
+  through a doorway, turn, cross the new MISC↔HUB door. Not re-run with
+  real input by this session since the movement code was never touched.
+- Whether the panel/ceiling texture contrast and scale actually look right
+  to EK on her own display — tuned by eye against this session's own
+  screenshots (`PANEL_WIDTH = 4.2`, `CEILING_BAY_SIZE = 7.8` in
+  `campusRoomBuilder.ts` if it needs a numeric tweak).
+- One unrelated, out-of-scope, not-fixed observation: BUILT_BOTANY's
+  top-of-screen room label shows the raw internal id `"BUILT_BOTANY"`
+  instead of a display name, because `CAMPUS_ROOMS`'s `label` field for that
+  room was never given a human-friendly value (unlike e.g. `AUTOMOTIVE`,
+  whose `label` is `"Automobile"`). Purely a data/copy fix if EK wants it —
+  one line in `campusLayout.ts`.
+- The doorway/room checklist above is real coverage from this session, but
+  it was reactive (kept expanding because EK kept finding gaps in earlier,
+  smaller sweeps) — don't assume "19/19 confirmed clean" from an earlier
+  round in this same day means the CURRENT deployed commit is still clean
+  without a fresh look, since more fixes landed after that claim.
+
 Do not describe the museum as finished or accepted. EK's foreground visual and physical-input review remains the acceptance gate.

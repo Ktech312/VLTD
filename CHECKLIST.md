@@ -1,5 +1,18 @@
 # VLTD — Session Checklist (2026-08-05 night → ongoing, updated 2026-08-27)
 
+## 2026-09-10 — VLTD Museum public campus: Visual Overnight Pass + 3 rounds of EK-caught fixes — NOT ACCEPTED
+Separate part of the app from the exhibition-room entries below (`/museum/vltd`). Full detail in `docs/FULL-MUSEUM-VISUAL-OVERNIGHT-PASS-2026-09-10.md`'s STATUS ADDENDUM and the matching HANDOFF.md entry (same date) — read those before touching this area again.
+- [x] Work order round 1 (`35b7fe9`): campus-only wall panel texture, ceiling bay texture, gradient sky background (fixes PLAZA reading as a flat navy wall), emissive lift on legacy-room artwork (previously zero dedicated light).
+- [x] Self-caught (`af3a0f3`): new ceiling bay lines were invisible live — `emissive` isn't modulated by `map`, fixed with `emissiveMap`. Also added texture disposal on scene teardown (pre-existing gap).
+- [x] EK-reported real bug, fixed at the root (`0cecd8a`): wall panel texture stretched badly on rectangular rooms (MISC, AUTOMOTIVE) because repeat was scaled from `room.w` and shared across every wall face. Moved scaling onto each wall segment's own geometry UVs; verified against Three.js's `BoxGeometry` UV source and a raw-buffer offline check before deploying. **Do not reintroduce room-width-based texture.repeat scaling on campus walls.**
+- [x] EK-reported real bug, sent as annotated screenshots (`4a0cb01`): door jamb/head z-fighting/flicker, a pre-existing defect from the original doorway casing design. Fixed by trimming the solid wall piece back by the casing's own width at every door gap so they no longer occupy the same volume. Verified via live mesh-bounding-box query, not screenshots — **this session's earlier "moving camera check" (2 static screenshots) was NOT adequate for z-fighting; use `debugMeshesInRegion` for overlap checks instead.**
+- [x] EK's annotated map review (`1546288`): added MISC↔HUB door (same formula as every other door, no hand-picked coordinates — lands in a straight line with HUB↔AUTOMOTIVE "across the way" as asked, confirmed live both directions); gave PLAZA its missing room-center target (was skipped only because its `label` is empty).
+- [x] All 20 doors, both sides, live-checked after the jamb fix — no gaps/doubled surfaces/clipping/wrong signs. All 13 rooms visited live.
+- [x] `validateCampusDoors()` 0 issues (20 doors); tsc/eslint/build clean on every commit; scene stats sane; no new console errors.
+- [ ] **EK's own physical-input pass** — click a target, scroll through a door (including the new MISC↔HUB one), turn — not done by this session, real acceptance gate.
+- [ ] Whether panel/ceiling texture scale and contrast actually look right on EK's own display (numeric knobs: `PANEL_WIDTH`, `CEILING_BAY_SIZE` in `campusRoomBuilder.ts`).
+- [ ] Not fixed, flagged only: BUILT_BOTANY's top-of-screen label shows the raw id, not a display name (`campusLayout.ts` data gap, one line if EK wants it).
+
 ## 2026-09-05 — one exhibition room, White style
 - [x] Preserve existing room dimensions, slot positions and normal movement.
 - [x] Plaster/stone materials, charcoal accent wall, brass details and real track lighting.

@@ -3,7 +3,7 @@
 - **Arcade**: same generalized architecture, own palette (dark surfaces + its established bronze/cyan accents) — plus its own isolated exposure/hemi/key/warm lighting branch, since it was previously sharing Vault/Blue's much-brighter values and rendering as a washed-out pastel purple instead of "dark surfaces" (its own baked GLB materials are near-black on purpose). Live-checked: dramatic, clearly-correct improvement.
 - **Blue** (the one style with no GLB at all — confirmed via `ROOM_MODEL_URLS`): improved inline instead — its own warm gold trim (was aliasing Vault's cool steel-gray trim exactly), wall grain texture, contact shadows under its hand-built cases, and (after a live check caught a real regression — see the 2026-09-06 dated entry) an open-rim case top replacing a solid lid that had become much MORE visible once it turned gold. Blue's own isolated (lower) lighting branch too. **Live-checked but the wall still reads as a brighter medium blue than a strict "navy"** — a real, disclosed limitation, not a false "done," see the dated entry for why (its mid-tone base color doesn't hide brightness the way Arcade's near-black or Vault's light steel do).
 - **Mobile drag/scroll bug** (EK found this hands-on, unrelated to the above): dragging to look around also scrolled the whole page on a touch device, and yaw drag didn't track smoothly — both caused by the room's mount div never declaring `touch-action: none`. Fixed with the same one-line fix already used elsewhere in this file. Code-verified and reasoned through; genuinely NOT tested with a real touch input (no tool in this session can produce one) — needs EK's own phone to close the loop.
-Regression-checked live: White unaffected (still looks exactly right), pickup/rotate/return still works, no console errors anywhere. See the 2026-09-06 dated entries (top of the log below) for full detail, including the one real bug this session found and fixed in its own live check (Blue's case lids) before calling any of this done. Before tonight: the first White-room material pass (2026-09-05, commit `c61e600`/`f346d18`) — also READY on Vercel and live-verified. Below that: the VLTD Museum public campus work (2026-08-31 through 09-04) — a separate, unrelated part of the app, still valid but not currently in progress. Read the dated entries below in order, newest first, before assuming any room behaves a particular way. Older work further down in §2 (2026-08-27/28 Admin Users redesign; ~110 VaultItem fields + 3 Gallery-sync gaps, both migrations confirmed run by EK; Events tooling, admin console/APP_MAP.md, Vault upload; a full backend security audit, 3D Museum beta-access gating, Room Builder fixes) is unrelated to either of the above.)
+Regression-checked live: White unaffected (still looks exactly right), pickup/rotate/return still works, no console errors anywhere. See the 2026-09-06 dated entries (top of the log below) for full detail, including the one real bug this session found and fixed in its own live check (Blue's case lids) before calling any of this done. Before tonight: the first White-room material pass (2026-09-05, commit `c61e600`/`f346d18`) — also READY on Vercel and live-verified. Below that: the VLTD Museum public campus work (2026-08-31 through 09-04, then resumed and heavily active again 2026-09-08 through 09-10 — see the 2026-09-10 dated entry, TOP of the dated list below, for the current state: NOT accepted yet, EK's own physical-input pass still pending). Read the dated entries below in order, newest first, before assuming any room behaves a particular way. Older work further down in §2 (2026-08-27/28 Admin Users redesign; ~110 VaultItem fields + 3 Gallery-sync gaps, both migrations confirmed run by EK; Events tooling, admin console/APP_MAP.md, Vault upload; a full backend security audit, 3D Museum beta-access gating, Room Builder fixes) is unrelated to either of the above.)
 
 Read this top to bottom, then start on **§2 "What's LEFT."** This is written so a
 brand-new chat can pick up with no prior context.
@@ -252,6 +252,68 @@ who owns a screen.** EK is aware of this.
   5) later freeform room editing if usage justifies it.
 
 ---
+
+## 2026-09-10 — VLTD Museum public campus: Full Visual Overnight Pass + 3 rounds of EK-caught corrections. NOT ACCEPTED — EK's physical-input pass still pending.
+
+Separate, unrelated part of the app from the exhibition-room work above (public
+campus at `/museum/vltd`, component `src/components/gallery/VltdMuseumCampus.tsx`,
+shared builder `src/lib/campusRoomBuilder.ts`, layout data
+`src/lib/campusLayout.ts`). Read `docs/FULL-MUSEUM-VISUAL-OVERNIGHT-PASS-2026-09-10.md`
+in full before touching any of this again — the work order at the top plus a
+detailed STATUS ADDENDUM at the bottom (written this session) covering exactly
+what shipped, what this session got wrong on its own first try and had to
+self-correct, and what still needs EK. Short version below; that file has the
+real detail.
+
+Deployed commit `1546288` on `main`, five commits in order: `35b7fe9` (first
+pass at the work order: campus-only wall panel texture, ceiling bay texture,
+gradient sky background so PLAZA reads as open sky instead of a flat navy
+wall, emissive lift on legacy-room artwork which previously had zero
+dedicated light) → `af3a0f3` (self-caught: the new ceiling bay lines were
+invisible in production because `MeshStandardMaterial.emissive` isn't
+modulated by `map` — fixed with `emissiveMap`; also added texture disposal
+in scene teardown, a real pre-existing gap) → `0cecd8a` (**EK-reported real
+bug**: the wall panel texture scaled its repeat from `room.w` and reused one
+material across every wall face of a room, badly stretching on rectangular
+rooms like MISC 21×52 and AUTOMOTIVE 42×52 whose east/west walls actually
+span `room.d`; root-fixed by moving the scaling onto each wall segment's own
+geometry UVs instead of the shared material, verified against Three.js's own
+`BoxGeometry` UV source before deploying, not guessed — **do not revert to
+room-width-based texture.repeat scaling, that's this exact bug**) → `4a0cb01`
+(**EK-reported real bug, sent as annotated screenshots**: door jambs/heads
+z-fighting/flickering — a pre-existing defect from the original 2026-09-08
+doorway casing design, not introduced this session, but this session's own
+"moving camera check" for it earlier — 2 static screenshots from slightly
+different angles — was NOT adequate to actually catch z-fighting and said so
+at the time; fixed by trimming the solid wall piece back by the casing's own
+width wherever it meets a door gap, so the wall and casing no longer occupy
+the same volume; verified by querying live mesh bounding boxes directly, not
+by screenshot) → `1546288` (EK's own annotated map review: added a new
+MISC↔HUB door using the exact same formula every other door uses, no
+hand-picked coordinates — its position lands in a straight line with the
+HUB↔AUTOMOTIVE door "across the way" as EK asked, confirmed live from both
+directions; and gave PLAZA the room-center target every other room already
+had, which it had been skipping only because its `label` field is empty).
+
+`validateCampusDoors()`: 0 issues, 13 rooms, 20 doors (was 19 before the new
+door). tsc/eslint/build clean on every commit. Scene stats sane throughout.
+All 20 doors and all 13 rooms live-checked this session, both sides of every
+door, after the jamb fix — no gaps/doubled surfaces/clipping/wrong signs
+found. **None of that is EK's own acceptance** — she has not done her own
+physical-input pass (click a target, scroll through a door, turn, cross the
+new door) since any of this shipped.
+
+One unrelated, not-fixed, flagged-not-touched item: BUILT_BOTANY's
+top-of-screen room label shows the raw id `"BUILT_BOTANY"` (its
+`CAMPUS_ROOMS.label` was never given a human name, unlike e.g. `AUTOMOTIVE` →
+`"Automobile"`) — a one-line data fix in `campusLayout.ts` if EK wants it,
+intentionally not done since it wasn't asked for.
+
+An inline overview-map SVG was built twice via the `visualize` MCP tool this
+session to let EK point at specific doorways — it is an ephemeral chat
+widget, NOT saved in the repo. Regenerate from `CAMPUS_ROOMS`/`CAMPUS_DOORS`
+in `campusLayout.ts` if a future session needs it again (see the doc's
+addendum for the exact approach used).
 
 ## 2026-09-06 — Vault guarded second pass: real light hierarchy, gunmetal shell, dark stone floor
 
