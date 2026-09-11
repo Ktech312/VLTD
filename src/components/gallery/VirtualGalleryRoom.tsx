@@ -8,13 +8,11 @@ import {
   Boxes,
   ChevronDown,
   ChevronUp,
-  CircleDollarSign,
   DoorOpen,
   ExternalLink,
   Eye,
   GalleryHorizontalEnd,
   Grid3X3,
-  Landmark,
   Layers3,
   Map as MapIcon,
   MonitorUp,
@@ -44,6 +42,7 @@ import {
 import { getPrimaryImageUrl, loadItems, syncVaultItemsFromSupabase, type VaultItem } from "@/lib/vaultModel";
 import { UNIVERSE_LABEL, type UniverseKey } from "@/lib/taxonomy";
 import SocialExportSheet from "@/components/SocialExportSheet";
+import MuseumCampusOverview from "./MuseumCampusOverview";
 import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment.js";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { createGalleryFinishes, type GalleryFinishStyle } from "./galleryRoomFinishes";
@@ -247,13 +246,6 @@ function formatMoney(value?: number) {
     style: "currency",
     currency: "USD",
     maximumFractionDigits: 0,
-  }).format(value);
-}
-
-function formatCompactNumber(value: number) {
-  return new Intl.NumberFormat("en-US", {
-    notation: "compact",
-    maximumFractionDigits: 1,
   }).format(value);
 }
 
@@ -5174,221 +5166,6 @@ function Segmented({
         </button>
       ))}
     </div>
-  );
-}
-
-const CAMPUS_GRID_AREAS =
-  '"rotN main main main dgal dgal" ' +
-  '"rotS main main main egal egal" ' +
-  '"galA main main main garden garden" ' +
-  '"galA galC galF galG garden garden"';
-
-function MuseumCampusOverview({
-  rooms,
-  onOpenRoom,
-  onOpenMainHall,
-}: {
-  rooms: MuseumUniverseRoom[];
-  onOpenRoom: (room: MuseumUniverseRoom) => void;
-  onOpenMainHall: () => void;
-}) {
-  const featuredRooms = rooms.slice(0, 9);
-  const totalItems = rooms.reduce((sum, room) => sum + room.items.length, 0);
-  const totalValue = rooms.reduce((sum, room) => sum + room.value, 0);
-  const paddedRooms = [
-    ...featuredRooms,
-    ...Array.from({ length: Math.max(0, 9 - featuredRooms.length) }, (_, index) => ({
-      id: `future-${index}`,
-      title: ["Automobile", "Cards", "Comics", "Music", "Art", "Cinema", "Games", "Vault", "Exotics"][index] ?? "Future",
-      items: [],
-      value: 0,
-      tier: index > 4 ? "Hall" : "Starter",
-      wing: index % 4 === 0 ? "North" : index % 4 === 1 ? "South" : index % 4 === 2 ? "Main" : "Garden",
-    } satisfies MuseumUniverseRoom)),
-  ];
-
-  return (
-    <div className="absolute inset-0 overflow-auto bg-[radial-gradient(circle_at_50%_0%,rgba(79,211,238,0.10),transparent_30%),linear-gradient(180deg,#12151a,#07090d)] p-4 pt-16 text-white">
-      <div className="mx-auto grid min-h-full max-w-[1180px] gap-4 xl:grid-cols-[minmax(0,1fr)_250px]">
-        <div className="relative min-h-[520px] overflow-hidden rounded-[8px] border border-white/10 bg-[#0b0e12] shadow-[inset_0_0_0_1px_rgba(255,255,255,0.03)]">
-          <div className="h-full overflow-x-auto overflow-y-hidden p-3 sm:p-4">
-            <div className="min-w-[640px]">
-              <div className="mb-3 grid grid-cols-[1fr_auto_1fr] items-center gap-2">
-                <span className="inline-flex w-fit items-center rounded-[6px] border border-amber-200/20 bg-amber-300/8 px-2.5 py-1.5 text-[10px] font-black uppercase tracking-[0.14em] text-amber-100/72">
-                  Store
-                </span>
-                <span className="text-center text-[10px] font-black uppercase tracking-[0.22em] text-white/28">
-                  VLTD Museum Campus
-                </span>
-                <span className="ml-auto inline-flex w-fit items-center rounded-[6px] border border-white/10 bg-white/[0.04] px-2.5 py-1.5 text-[10px] font-black uppercase tracking-[0.14em] text-white/40">
-                  Elevator
-                </span>
-              </div>
-
-              <div
-                className="grid gap-2.5 sm:gap-3"
-                style={{
-                  gridTemplateColumns: "repeat(6, minmax(0, 1fr))",
-                  gridTemplateRows: "repeat(4, minmax(80px, 1fr))",
-                  gridTemplateAreas: CAMPUS_GRID_AREAS,
-                }}
-              >
-                <CampusRoomButton room={paddedRooms[0]} onOpenRoom={onOpenRoom} label="North Rotunda" area="rotN" size="sm" />
-                <CampusRoomButton room={paddedRooms[1]} onOpenRoom={onOpenRoom} label="South Rotunda" area="rotS" size="sm" />
-                <CampusRoomButton room={paddedRooms[2]} onOpenRoom={onOpenRoom} label="Gallery A" area="galA" size="md" />
-                <CampusRoomButton room={paddedRooms[3]} onOpenRoom={onOpenRoom} label="Gallery C" area="galC" size="sm" />
-                <CampusRoomButton room={paddedRooms[4]} onOpenRoom={onOpenRoom} label="Gallery F" area="galF" size="sm" />
-                <CampusRoomButton room={paddedRooms[5]} onOpenRoom={onOpenRoom} label="Gallery D" area="dgal" size="sm" />
-                <CampusRoomButton room={paddedRooms[6]} onOpenRoom={onOpenRoom} label="Gallery E" area="egal" size="sm" />
-                <CampusRoomButton room={paddedRooms[8]} onOpenRoom={onOpenRoom} label="Gallery G" area="galG" size="sm" />
-                <CampusRoomButton room={paddedRooms[7]} onOpenRoom={onOpenRoom} label="Garden Gallery" area="garden" size="lg" />
-
-                <button
-                  type="button"
-                  style={{ gridArea: "main" }}
-                  onClick={onOpenMainHall}
-                  className="grid min-w-0 place-items-center rounded-[10px] border border-cyan-200/22 bg-[linear-gradient(180deg,rgba(79,211,238,0.12),rgba(255,255,255,0.03))] p-4 text-center shadow-[0_0_30px_rgba(79,211,238,0.08)] transition hover:border-cyan-200/42 hover:bg-cyan-300/10"
-                >
-                  <span className="flex flex-col items-center justify-center">
-                    <span className="grid h-11 w-11 place-items-center rounded-[8px] bg-black/28 ring-1 ring-white/12">
-                      <Landmark size={24} />
-                    </span>
-                    <span className="mt-3 block text-[10px] font-black uppercase tracking-[0.18em] text-cyan-100/60">
-                      Main Gallery
-                    </span>
-                    <span className="mt-1.5 block text-2xl sm:text-3xl font-black tracking-normal">VLTD Museum</span>
-                    <span className="mt-1.5 block text-xs sm:text-sm font-semibold text-white/55">
-                      Grand hall - exhibitions coming soon
-                    </span>
-                  </span>
-                </button>
-              </div>
-
-              <div className="mt-3 flex items-center justify-center gap-2 rounded-[6px] border border-white/10 bg-black/30 px-4 py-2.5 text-[11px] font-black uppercase tracking-[0.16em] text-white/55">
-                <DoorOpen size={16} />
-                Entrance
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="grid content-start gap-3">
-          <div className="rounded-[8px] border border-white/10 bg-black/24 p-4">
-            <div className="flex items-center gap-2 text-[11px] font-black uppercase tracking-[0.16em] text-white/42">
-              <MapIcon size={15} />
-              Floorplan
-            </div>
-            <h2 className="mt-2 text-xl font-black tracking-normal">Universe Rooms</h2>
-            <div className="mt-3 grid grid-cols-2 gap-2">
-              <Metric icon={<Boxes size={15} />} label="Vault Pieces" value={String(totalItems)} inverse />
-              <Metric icon={<BadgeDollarSign size={15} />} label="Vault Value" value={totalValue > 0 ? `$${formatCompactNumber(totalValue)}` : "$0"} inverse />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-3 gap-2 rounded-[8px] border border-white/10 bg-black/24 p-2">
-            <button type="button" className="rounded-[6px] bg-cyan-300/14 px-2 py-2 text-xs font-black text-cyan-100 ring-1 ring-cyan-200/22">Overview</button>
-            <button type="button" className="rounded-[6px] bg-white/6 px-2 py-2 text-xs font-black text-white/54 ring-1 ring-white/8">Rooms</button>
-            <button type="button" className="rounded-[6px] bg-white/6 px-2 py-2 text-xs font-black text-white/54 ring-1 ring-white/8">Public</button>
-          </div>
-
-          {rooms.slice(0, 6).map((room) => (
-            <button
-              key={room.id}
-              type="button"
-              onClick={() => onOpenRoom(room)}
-              className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 rounded-[8px] border border-white/10 bg-white/5 px-3 py-2.5 text-left transition hover:border-cyan-200/36 hover:bg-cyan-300/10"
-            >
-              <span className="min-w-0">
-                <span className="block truncate text-sm font-black">{room.title}</span>
-                <span className="mt-0.5 block text-xs font-semibold text-white/48">
-                  {room.items.length} items - {room.tier} - {room.wing}
-                </span>
-              </span>
-              <ExternalLink size={16} className="text-white/46" />
-            </button>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-const CAMPUS_ROOM_SIZING = {
-  sm: {
-    icon: 13,
-    box: "h-6 w-6 rounded-[5px]",
-    label: "text-[8px]",
-    title: "text-xs",
-    pad: "p-2",
-    pillGap: "mt-1.5 gap-1",
-    pill: "rounded-[4px] px-1.5 py-0.5 text-[8px]",
-  },
-  md: {
-    icon: 15,
-    box: "h-7 w-7 rounded-[6px]",
-    label: "text-[9px]",
-    title: "text-sm",
-    pad: "p-2.5",
-    pillGap: "mt-2 gap-1.5",
-    pill: "rounded-[5px] px-1.5 py-1 text-[9px]",
-  },
-  lg: {
-    icon: 18,
-    box: "h-8 w-8 rounded-[7px]",
-    label: "text-[10px]",
-    title: "text-base",
-    pad: "p-3",
-    pillGap: "mt-2.5 gap-2",
-    pill: "rounded-[5px] px-2 py-1 text-[10px]",
-  },
-} as const;
-
-function CampusRoomButton({
-  room,
-  onOpenRoom,
-  label,
-  area,
-  size = "sm",
-}: {
-  room: MuseumUniverseRoom;
-  onOpenRoom: (room: MuseumUniverseRoom) => void;
-  label: string;
-  area: string;
-  size?: keyof typeof CAMPUS_ROOM_SIZING;
-}) {
-  const disabled = room.items.length === 0;
-  const sizing = CAMPUS_ROOM_SIZING[size];
-
-  return (
-    <button
-      type="button"
-      disabled={disabled}
-      onClick={() => !disabled && onOpenRoom(room)}
-      style={{ gridArea: area }}
-      className={[
-        "min-w-0 overflow-hidden rounded-[8px] border text-left transition",
-        sizing.pad,
-        disabled
-          ? "border-white/6 bg-black/20 text-white/25"
-          : "border-white/12 bg-[linear-gradient(180deg,rgba(255,255,255,0.05),rgba(255,255,255,0.015))] text-white hover:border-cyan-200/40 hover:bg-cyan-300/10",
-      ].join(" ")}
-    >
-      <span className="flex h-full flex-col justify-between">
-        <span className="min-w-0">
-          <span className={["inline-flex items-center justify-center bg-black/24 ring-1 ring-white/10", sizing.box].join(" ")}>
-            {room.tier === "Hall" ? <CircleDollarSign size={sizing.icon} /> : <Landmark size={sizing.icon} />}
-          </span>
-          <span className={["mt-1.5 block truncate font-black uppercase tracking-[0.1em] text-white/34", sizing.label].join(" ")}>
-            {label}
-          </span>
-          <span className={["mt-0.5 block truncate font-black tracking-normal", sizing.title].join(" ")}>{room.title}</span>
-        </span>
-        <span className={["flex flex-wrap font-black", sizing.pillGap].join(" ")}>
-          <span className={["bg-black/22 ring-1 ring-white/8", sizing.pill].join(" ")}>{room.items.length} pcs</span>
-          <span className={["bg-black/22 ring-1 ring-white/8", sizing.pill].join(" ")}>{room.tier}</span>
-        </span>
-      </span>
-    </button>
   );
 }
 
