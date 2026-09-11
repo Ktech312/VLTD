@@ -638,13 +638,39 @@ export function buildSharedWall(
   }
 
   const { solid, door } = splitSegmentForDoor(segment);
-  for (const piece of solid) buildWallBox(piece.from, piece.to);
+  // EK's live report (2026-09-10, screenshots with the flicker marked in
+  // blue at door jambs, plus a wavy wall-trim line near a head): the jamb
+  // and head casing boxes below are deliberately centered ON the seam
+  // between the solid wall and the cut opening, so each one's FOOTPRINT
+  // (trimWidth wide, running the casing's own casingDepth — wider than the
+  // wall's own wallThickness) sat entirely inside the adjacent solid wall
+  // piece's own volume, which still extended the full width right up to the
+  // door gap. Two opaque boxes occupying the exact same space, one only
+  // ~0.04-0.07 units proud of the other's face (trimDepth), is textbook
+  // z-fighting — visible as flicker/shimmer at both jambs and at the head,
+  // worse at oblique angles (i.e., from most real standing positions, not
+  // straight-on) and easy to miss in a single static screenshot. Fix: trim
+  // the solid piece back by trimWidth wherever its own edge sits exactly on
+  // the door gap, so the casing's footprint is carved OUT of the wall
+  // rather than layered on top of it — the two now meet edge-to-edge with
+  // zero overlapping volume.
+  const doorHalfWidth = door ? (door.width ?? DOOR_WIDTH) / 2 : 0;
+  const gapFrom = door ? door.gapCenter - doorHalfWidth : 0;
+  const gapTo = door ? door.gapCenter + doorHalfWidth : 0;
+  for (const piece of solid) {
+    let { from, to } = piece;
+    if (door) {
+      if (Math.abs(to - gapFrom) < 1e-6) to -= trimWidth;
+      if (Math.abs(from - gapTo) < 1e-6) from += trimWidth;
+    }
+    buildWallBox(from, to);
+  }
 
   if (!door || !segment.roomB) return;
 
   const roomA = roomById(segment.roomA);
   const roomB = roomById(segment.roomB);
-  const half = (door.width ?? DOOR_WIDTH) / 2;
+  const half = doorHalfWidth;
   const openingWidth = half * 2;
 
   function point(freeAxisValue: number, offsetOnFixedAxis: number) {
