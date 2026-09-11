@@ -100,7 +100,10 @@ export async function createHall(title: string, input: HallSaveInput): Promise<V
   return rowToHall(data as Record<string, unknown>);
 }
 
-/** Quietly updates an already-saved Hall in place — never touches its title. */
+/** Quietly updates an already-saved Hall in place — never touches its title.
+ * Use `renameHall` below for the title itself (a separate, explicit call so
+ * a routine autosave can never accidentally overwrite a name edit that's
+ * still in flight, or vice versa). */
 export async function updateHall(id: string, input: HallSaveInput): Promise<boolean> {
   const supabase = getSupabaseBrowserClient();
   if (!supabase) return false;
@@ -118,6 +121,22 @@ export async function updateHall(id: string, input: HallSaveInput): Promise<bool
     })
     .eq("id", id);
 
+  return !error;
+}
+
+// 2026-09-11 Gallery Map/Room-Editing pass: the Map's Edit Room flow lets an
+// owner rename an already-saved Hall — `title` is a real, already-existing
+// column (see HALL_COLUMNS above), it just had no update path yet because
+// nothing needed one before now. This is a plain column write (no schema
+// change), scoped to `title` only so it never races with updateHall's own
+// field set.
+export async function renameHall(id: string, title: string): Promise<boolean> {
+  const trimmed = title.trim();
+  if (!trimmed) return false;
+  const supabase = getSupabaseBrowserClient();
+  if (!supabase) return false;
+
+  const { error } = await supabase.from("virtual_rooms").update({ title: trimmed }).eq("id", id);
   return !error;
 }
 

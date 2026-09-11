@@ -35,14 +35,16 @@ import {
 import {
   createHall,
   listMyHalls,
+  renameHall,
   updateHall,
   uploadHallWallpaper,
   type VirtualRoomRow,
 } from "@/lib/virtualRooms";
+import type { CampusRoomId } from "@/lib/campusLayout";
 import { getPrimaryImageUrl, loadItems, syncVaultItemsFromSupabase, type VaultItem } from "@/lib/vaultModel";
 import { UNIVERSE_LABEL, type UniverseKey } from "@/lib/taxonomy";
 import SocialExportSheet from "@/components/SocialExportSheet";
-import MuseumCampusOverview from "./MuseumCampusOverview";
+import MuseumCampusOverview, { type CampusRoomAssignment } from "./MuseumCampusOverview";
 import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment.js";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { createGalleryFinishes, type GalleryFinishStyle } from "./galleryRoomFinishes";
@@ -55,6 +57,22 @@ import {
   strafeDirection as sharedStrafeDirection,
   WHEEL_STEP,
 } from "@/lib/visitorController";
+import {
+  CABINET_SPOTS,
+  FRONT_WALL_ITEM_Z,
+  FRONT_WALL_PANEL_SEAM_BASE_Z,
+  FRONT_WALL_PUSH_BACK,
+  SHELF_ROW_Y,
+  TOTAL_SLOT_COUNT,
+  buildPositions,
+  fillSlots,
+  makeEmptySlots,
+  parseRoomLayout,
+  roomCapacity,
+  shelfItemY,
+  type RoomItemPosition,
+  type RoomLayout,
+} from "@/lib/galleryRoomSlots";
 
 // The app's real theme blue — same tone/text pairing as the "Save Room
 // Draft" button's own gradient (`#79E7FB`→`#2CB1D1`) and dark text
@@ -72,7 +90,6 @@ const THEME_BLUE_TEXT = "#06171d";
 // approved — it shares Vault's real GLB (same file, see ROOM_MODEL_URLS)
 // but suppresses the model's baked ornate door surround.
 type RoomStyle = "vault" | "whitebox" | "arcade" | "blue" | "loft";
-type RoomLayout = "storefront" | "salon" | "spotlight";
 type ViewMode = "room" | "overview";
 type RoomDraft = {
   galleryId: string;
@@ -82,16 +99,6 @@ type RoomDraft = {
   viewMode?: ViewMode;
   showValues: boolean;
   wallTextureUrl?: string;
-};
-type RoomItemPosition = {
-  x: number;
-  y: number;
-  z: number;
-  ry: number;
-  scale: number;
-  wall: "back" | "left" | "right" | "front" | "center" | "cabinet";
-  /** Lying flat in a display case (rotated onto the horizontal plane) instead of wall-mounted upright. */
-  flat?: boolean;
 };
 type MuseumUniverseRoom = {
   id: string;
@@ -104,89 +111,6 @@ type MuseumUniverseRoom = {
 
 const DRAFT_KEY = "vltd_virtual_gallery_room_draft_v1";
 const WALLPAPER_KEY = "vltd_virtual_gallery_wallpaper_v1";
-// EK: "finish and renumber the wall spaces, there are many not filled" —
-// real gap, confirmed against the room generator script
-// (scripts/generate-gallery-room-models.py): the shelf boards are single
-// continuous planks with no baked physical dividers, so "8 columns x 3
-// rows = 24" for the back wall is a placement CONVENTION already coded
-// in wallGridPosition, not a hard limit — but the OLD MAX_ROOM_ITEMS=32
-// budget (minus 8 for the vault style's front/door wall) only left 24
-// "main wall" slots total for back+left+right COMBINED, so the 2:1:1
-// WALL_CYCLE ratio gave back only 12 of its own real 24 positions, and
-// left/right only 6 each (2 of their own real depth-steps) — the other
-// 12 back-wall positions and the deeper side-wall rows never got a
-// slot index at all, which is exactly the badge-less gaps EK circled.
-// Raised to fit BACK_WALL_CAPACITY (24) + SIDE_WALL_CAPACITY for both
-// sides, plus the vault style's existing 8-slot front/door wall.
-const BACK_WALL_CAPACITY = 24;
-// EK's ask (2026-08-23, 4th time raised) — side-wall items sat much
-// farther apart than back-wall items AND stopped well short of the far
-// corner, wasting real shelf length. Root cause: the 12-slot side-wall
-// capacity (4 depth-steps x 3 rows) was never sized against the wall's
-// own real length — the old "4 depth-steps" comment only checked that
-// its deepest point (z=-0.25) stayed clear of an unrelated feature
-// (the vault style's own front/door-wall row at z=5.54), not how much
-// of the actual side shelf that left unused. Read the real numbers from
-// the room generator instead of guessing again:
-//   left_shelf_i / right_shelf_i: depth 23.2, centered z=-3.15
-//     -> real board spans z in [-14.75, 8.45]
-//     (scripts/generate-gallery-room-models.py add_wall_panels(); the
-//     procedural whitebox/arcade shelves in this file's own
-//     addSideRowBoard use the identical -14.75..8.45 span, so this
-//     applies to every room style, not just the baked vault GLB)
-//   back_corner_post_x: (1.3, 9.15, 1.3) centered z=-11.87
-//     -> forward face at z=-11.22; the back wall's own face sits at
-//     z~=-12.17..-11.99, so nothing should be centered any closer to
-//     the back corner than that post's forward face
-//   front_wall_left/right (the door wall): depth 0.18, centered z=5.8
-//     -> near face at z=5.71
-// An item's own footprint along the wall (frame width 1.12*scale plus
-// matting on both sides, at MIN_ITEM_SCALE=0.78) is ~0.975 wide, so a
-// safe CENTER position needs ~0.49 clearance from either limit:
-// SIDE_WALL_SAFE_BACK_Z (-10.5) sits comfortably past the corner post's
-// -11.22 forward face; SIDE_WALL_SAFE_FRONT_Z (4.9) sits comfortably
-// short of the door wall's 5.71 near face. Real safe usable run: 15.4.
-// Back wall gets the same treatment: real back_shelf_i is 19.9 wide
-// (half-width 9.95), but the back_corner_post_x pieces (half-width 0.65,
-// centered x=+-10.36) put their inner face at x=+-9.71 — BACK_WALL_HALF_WIDTH
-// (9.0) leaves the same ~0.49-unit item-footprint clearance from that,
-// same math as the side walls above.
-//
-// With both walls' safe usable lengths now real numbers, side-wall
-// capacity is raised from 12 to 21 (7 depth-steps x 3 rows, still
-// SHELF_ROW_Y.length rows) so its density can actually MATCH the back
-// wall's instead of being forced sparser by too few slots for the same
-// real length — see BACK_WALL_COL_STEP / SIDE_WALL_STEP below, both
-// independently computed from these same safe bounds and landing within
-// 0.01 units of each other, not hand-tuned to match.
-// Single source of truth for the front/door wall's depth, every style.
-// This group of constants MUST mirror generate-gallery-room-models.py's
-// own FRONT_WALL_PUSH_BACK exactly — that Python script bakes the real
-// wall/door/panel geometry, and any JS code (like frontWallPosition
-// below) that places something ON that wall has to track wherever it
-// currently sits. EK's ask (2026-08-29), after the wall moved twice and
-// the item hangers were forgotten both times, floating in open air:
-// give this its own clearly-named constant instead of a bare literal
-// z value, so the NEXT push-back is a one-line change here, not a
-// silent, easy-to-forget drift between two files. EK's ask (2026-08-30):
-// "it doesn't look like you pushed the wall back on the other ones" —
-// this only ever applied to vault. 5.62 is also whitebox/arcade's own
-// door assembly base z (add_standard_door's door_left/right/header), so
-// the same formula applies to every style now, not just vault's.
-const FRONT_WALL_PUSH_BACK = 1.5; // mirrors generate-gallery-room-models.py's constant of the same name — keep both in sync
-const FRONT_WALL_PANEL_SEAM_BASE_Z = 5.62; // the panel/door assembly's own baked z BEFORE any push-back, shared by every style
-const FRONT_WALL_ITEM_MOUNT_OFFSET = 0.08; // how far in front of the panel seam an item hangs, so its frame doesn't clip through
-const FRONT_WALL_ITEM_Z = FRONT_WALL_PANEL_SEAM_BASE_Z + FRONT_WALL_PUSH_BACK - FRONT_WALL_ITEM_MOUNT_OFFSET;
-
-const BACK_WALL_HALF_WIDTH = 9.0;
-const BACK_WALL_COL_STEP = (BACK_WALL_HALF_WIDTH * 2) / 7; // 8 columns, 7 gaps
-const SIDE_WALL_SAFE_BACK_Z = -10.5;
-const SIDE_WALL_SAFE_FRONT_Z = 4.9;
-const SIDE_WALL_DEPTH_COUNT = 7;
-const SIDE_WALL_STEP =
-  (SIDE_WALL_SAFE_FRONT_Z - SIDE_WALL_SAFE_BACK_Z) / (SIDE_WALL_DEPTH_COUNT - 1); // full safe range, 6 gaps
-const SIDE_WALL_CAPACITY = SIDE_WALL_DEPTH_COUNT * 3; // 3 = SHELF_ROW_Y.length, fixed elsewhere below
-const MAX_ROOM_ITEMS = BACK_WALL_CAPACITY + SIDE_WALL_CAPACITY * 2 + 8;
 // "blue" has no entry — it's the hand-coded shell shown permanently, with
 // no GLB to load at all. See the RoomStyle type above for what that means.
 const ROOM_MODEL_URLS: Partial<Record<RoomStyle, string>> = {
@@ -199,46 +123,18 @@ const ROOM_MODEL_URLS: Partial<Record<RoomStyle, string>> = {
   loft: "/models/gallery-rooms/vault-room.glb?v=front-wall-pushback-all-styles-2026-08-30",
 };
 
-// The 5 center display cases (built further down as decorative glass cabinets)
-// are also real, numbered, assignable slots — appended after the wall slots.
-const CABINET_SPOTS: Array<[number, number]> = [
-  [-3.4, -3.5],
-  [0, -4.55],
-  [3.4, -3.5],
-  [-2.1, 0.45],
-  [2.1, 0.45],
+// 2026-09-11 Gallery Map / Room-Editing overnight pass: the Map's 13 room
+// shapes are generated from CAMPUS_ROOMS (shared with the public campus,
+// untouched by this pass) — HUB is always the room currently open in the
+// builder (real, live counts), PLAZA is the open-air entrance (no room),
+// SPOTLIGHT/STORE stay "Coming soon" (no editable content yet). These 9 are
+// the only shapes that can ever show a REAL saved Hall's occupied/capacity —
+// assigned in a stable order from the user's own `virtual_rooms` rows (see
+// campusAssignments below), never invented, never a vault-item-by-universe
+// guess.
+const EDITABLE_CAMPUS_ROOM_IDS: CampusRoomId[] = [
+  "POP_CULTURE", "TCG", "MISC", "BUILT_BOTANY", "GAMES", "AUTOMOTIVE", "COLLECTION", "SPORTS", "CARDS",
 ];
-const CABINET_SLOT_COUNT = CABINET_SPOTS.length;
-// +7 for vault+Hero's extra real slots appended past the end of the table
-// (see heroSupportingOverflowSlot and heroCornerFillSlots below): 1 slot
-// Hero's row reservation left unused within the shared main-wall budget,
-// plus 3 new slots per side wall (6) on real, already-baked shelf/wall
-// space past the grid's old last depth that the code never used. Growing
-// the main-wall request itself to reach these shifts every front-wall/
-// cabinet index after it (confirmed live: it moved a real front-wall
-// item — EK: "you just moved one over"). Appending them past the end of
-// the WHOLE table instead needs their own selectedIds slots to be real,
-// not decorative — hence +7 here, harmless for every other layout/style
-// (their own table stays exactly MAX_ROOM_ITEMS + CABINET_SLOT_COUNT
-// long; these last slots simply never render for them, same as Hero's
-// own dedicated slots already don't).
-const TOTAL_SLOT_COUNT = MAX_ROOM_ITEMS + CABINET_SLOT_COUNT + 7;
-
-// `selectedIds` is always exactly TOTAL_SLOT_COUNT long, one entry per physical
-// slot (wall shelf or display case) — "" means that slot is empty. This is what
-// makes an item's position independently assignable (drag it onto any slot,
-// occupied or not) instead of just reorderable relative to its neighbors.
-function makeEmptySlots(): string[] {
-  return Array.from({ length: TOTAL_SLOT_COUNT }, () => "");
-}
-
-function fillSlots(ids: string[]): string[] {
-  const slots = makeEmptySlots();
-  ids.slice(0, TOTAL_SLOT_COUNT).forEach((id, index) => {
-    slots[index] = id;
-  });
-  return slots;
-}
 
 function formatMoney(value?: number) {
   if (typeof value !== "number" || !Number.isFinite(value) || value <= 0) return "";
@@ -646,491 +542,6 @@ function getRoomPalette(style: RoomStyle) {
   };
 }
 
-// Back wall gets 2 of every 4 items, left/right get 1 each — the back wall stays the
-// visual anchor, but both side walls start filling from item #1 instead of only once
-// the back wall's own full grid is already used up (which left a small collection's
-// side walls bare while the back wall did all the work).
-const WALL_CYCLE: Array<"back" | "left" | "right"> = ["back", "left", "back", "right"];
-
-// The physical shelf boards (built further down, same 4 heights) and every item's
-// vertical position both read from this one table — they used to be two separately
-// hand-tuned numbers (4.72 for the boards, 5.42/4.75 for items) that drifted out of
-// sync, so items floated well above their shelf instead of resting on it.
-//
-// EK's ask (2026-08-21), corrected TWICE same day:
-// 1st pass shifted all 4 rows down to sit near a "fixed" eyeHeight of 1.7
-// — wrong on two counts: the eyeHeight change itself was based on a bad
-// unit assumption and got reverted (see eyeHeight's own comment), and
-// shifting the whole band down put a row right near the floor, which EK
-// had explicitly said not to do ("I don't want a row on the floor like
-// [bingebrowse.net] do[es]").
-// 2nd pass cut to 3 rows and re-centered around the (still-wrong) 1.7 —
-// same mistake, different shape.
-// Corrected: back to the ORIGINAL 4-row heights — [4.72, 3.47, 2.22,
-// 0.97] — with the genuinely-too-low bottom row (0.97) simply dropped,
-// not the whole band reshuffled. The top 3 rows were never the problem;
-// only the bottom one was. With eyeHeight reverted to 3.6, these 3 rows
-// land close to evenly split around eye level (top row ~1.8 above eye,
-// bottom row ~0.7 below) — no new number invented, just the one bad row
-// removed.
-//
-// EK's ask (2026-08-21), a 4th correction: the 1.25 spacing above was
-// exactly the item card's own height at MIN_ITEM_SCALE=0.78 (1.2 units)
-// plus the board's half-thickness (0.05) — zero headroom, so an item's
-// own top edge sat flush against the shelf board mounted above it,
-// visibly clipping into it. EK: "do not change the size of the items"
-// — so the fix is spacing, not scale. Top row (4.72) is untouched — it
-// only needs clearance to the wall rail well above it. Middle and bottom
-// rows moved down to open a real ~0.25-unit gap above every item:
-// 1.5 spacing instead of 1.25 (3.47 -> 3.22, 2.22 -> 1.72).
-//
-// ⚠ These values are duplicated in scripts/generate-gallery-room-models.py
-// (`shelf_y`, in add_wall_panels()) for the baked GLB's own shelf-board
-// mesh positions — vault/whitebox/arcade need that regenerated to match, or
-// items float off the physical shelf again (same bug as the display-case
-// fix earlier this session). Kept in sync as part of this change — see
-// HANDOFF for the exact regen command if it needs re-running.
-const SHELF_ROW_Y = [4.72, 3.22, 1.72];
-
-function shelfItemY(row: number, scale: number) {
-  const shelfY = SHELF_ROW_Y[row] ?? SHELF_ROW_Y[SHELF_ROW_Y.length - 1];
-  // Was 0.05 — the actual baked shelf board (back_shelf_i/left_shelf_i/
-  // right_shelf_i in generate-gallery-room-models.py) is 0.12 units
-  // thick, i.e. a real half-thickness of 0.06, confirmed by reading the
-  // live GLB mesh's own bounding box (yMin/yMax +-0.06). The 0.01
-  // mismatch sank every item's frame 0.01 unit into the shelf's actual
-  // top surface — EK: "it looks like the bottom of all the frames are
-  // cut off."
-  const shelfHalfThickness = 0.06;
-  // EK's ask (2026-08-30): sitting exactly flush with zero gap still read
-  // as "cut off" against the shelf — a real physical item resting on a
-  // shelf ledge shows a sliver of visible clearance, not perfect contact.
-  // Separate from shelfHalfThickness (that one has to stay the shelf's
-  // real measured thickness) so this can be tuned as a pure visual
-  // choice without relitigating the physical fix.
-  const restClearance = 0.03;
-  const cardHalfHeight = (1.54 * scale) / 2;
-  // EK's ask (2026-08-30): "all the frames on the wall were not made the
-  // same [way] as the ones on the wall" — shelf items only got the
-  // door-wall matting fix's clearance, not its actual symmetric matting;
-  // that half of the fix got missed and never flagged. Every item now
-  // gets the same 0.065*scale matting on all 4 sides (see the frame
-  // construction below), so this has to lift the card by that same
-  // amount too, or the frame's newly-symmetric bottom border would sink
-  // right back into the shelf, undoing restClearance above.
-  const matchingFrameBottomMatting = 0.065 * scale;
-  return shelfY + shelfHalfThickness + restClearance + cardHalfHeight + matchingFrameBottomMatting;
-}
-
-function wallGridPosition(
-  wall: "back" | "left" | "right",
-  slot: number,
-  config: { backZ: number; backScale: number; sideBaseZ: number; sideZStep: number; sideScale: number }
-): RoomItemPosition {
-  if (wall === "back") {
-    const col = slot % 8;
-    // Was `Math.floor(slot / 8)` with an implicit assumption of exactly 4
-    // rows — silently correct only because the array happened to have 4
-    // entries. Deriving the row count from SHELF_ROW_Y.length instead
-    // means changing the row count again later can't silently desync this
-    // from the array the way the hardcoded "4" below already had to be
-    // caught and fixed just now.
-    const row = Math.floor(slot / 8) % SHELF_ROW_Y.length;
-    return {
-      x: -BACK_WALL_HALF_WIDTH + col * BACK_WALL_COL_STEP,
-      y: shelfItemY(row, config.backScale),
-      z: config.backZ,
-      ry: 0,
-      scale: config.backScale,
-      wall: "back",
-    };
-  }
-
-  const row = slot % SHELF_ROW_Y.length;
-  const depth = Math.floor(slot / SHELF_ROW_Y.length);
-  return {
-    x: wall === "left" ? -10.22 : 10.22,
-    y: shelfItemY(row, config.sideScale),
-    z: config.sideBaseZ + depth * config.sideZStep,
-    ry: wall === "left" ? Math.PI / 2 : -Math.PI / 2,
-    scale: config.sideScale,
-    wall,
-  };
-}
-
-function distributeAcrossWalls(
-  count: number,
-  config: { backZ: number; backScale: number; sideBaseZ: number; sideZStep: number; sideScale: number },
-  // Hero (spotlight layout) sits at a fixed depth on whichever side wall it
-  // occupies — only the ONE regular grid slot landing at that same depth
-  // and shelf row can visually overlap Hero's much larger frame (EK caught
-  // this live: "you have an extra one behind it on each wall, this causes a
-  // conflict" — confirmed via the placement math: that one slot landed 0.4
-  // units from Hero's own position). Excluding a whole row to dodge it
-  // (the first attempt at this) removed 7 slots per wall instead of 1,
-  // which is what starved Hero's normal-grid capacity and caused items to
-  // overflow off the wall entirely — skip only the exact colliding slot.
-  excludeSlot: Partial<Record<"back" | "left" | "right", number>> = {}
-): RoomItemPosition[] {
-  // Keeps the WALL_CYCLE's early-spread behavior (see its own comment —
-  // a small collection gets presence on every wall right away, not just
-  // the back wall) while ALSO making sure every wall's own full capacity
-  // eventually gets a real slot once `count` is big enough to reach it —
-  // the previous version just cycled blindly and stopped at whatever
-  // count/ratio math it landed on, which is what left the back wall's
-  // own upper rows and the side walls' deeper rows with no slot index
-  // at all (EK circled the exact gaps in a screenshot).
-  const caps: Record<"back" | "left" | "right", number> = {
-    back: BACK_WALL_CAPACITY,
-    left: SIDE_WALL_CAPACITY,
-    right: SIDE_WALL_CAPACITY,
-  };
-  const wallSlot: Record<"back" | "left" | "right", number> = { back: 0, left: 0, right: 0 };
-  function nextValidSlot(wall: "back" | "left" | "right"): number {
-    let slot = wallSlot[wall];
-    if (slot < caps[wall] && slot === excludeSlot[wall]) slot++;
-    return slot;
-  }
-  function hasRoom(wall: "back" | "left" | "right"): boolean {
-    return nextValidSlot(wall) < caps[wall];
-  }
-  const positions: RoomItemPosition[] = [];
-  let cycleIndex = 0;
-  // `count` is always MAX_ROOM_ITEMS (or that minus the vault-only front
-  // wall's 8) — for vault that exactly equals the 3 caps' sum, so this
-  // never overflows in practice. Non-vault styles skip the front-wall
-  // carve-out and pass the full MAX_ROOM_ITEMS straight through, which
-  // DOES exceed the 3 caps' sum by exactly the front wall's 8 — rather
-  // than under-fill the array (breaking the fixed-length contract every
-  // caller relies on), any genuine overflow keeps cycling past each
-  // wall's normal cap once every wall has reached it, spread evenly
-  // rather than dumped on one wall.
-  while (positions.length < count) {
-    let wall = WALL_CYCLE[cycleIndex % WALL_CYCLE.length];
-    let skipped = 0;
-    const allAtCap = (["back", "left", "right"] as const).every((w) => !hasRoom(w));
-    if (!allAtCap) {
-      while (!hasRoom(wall) && skipped < WALL_CYCLE.length) {
-        cycleIndex++;
-        wall = WALL_CYCLE[cycleIndex % WALL_CYCLE.length];
-        skipped++;
-      }
-    }
-    const slot = nextValidSlot(wall);
-    wallSlot[wall] = slot + 1;
-    positions.push(wallGridPosition(wall, slot, config));
-    cycleIndex++;
-  }
-  return positions;
-}
-
-// EK's ask (2026-08-21): checked bingebrowse.net's own source (their
-// rental-case mesh is a real 0.235 x ~0.165 world-unit DVD case, viewed at
-// a close ~1.2-1.4 unit aisle distance with a 58-75deg camera) against ours
-// (47deg FOV) and found our items were legible in the *focused* click-in
-// view but not at normal walking-past distance — Salon's old 0.52/0.58
-// scale read as illegible exactly where EK flagged it. This is the floor:
-// no wall item (Store or Salon) renders smaller than this scale, ever.
-// Hero's dedicated feature slots (1.2, below) are explicitly allowed to
-// exceed it — EK: "hero images we can do larger."
-const MIN_ITEM_SCALE = 0.78;
-
-function buildWallPositions(layout: RoomLayout, count: number): RoomItemPosition[] {
-  if (layout === "spotlight") {
-    // EK's redesign: one big feature piece per wall (back/left/right),
-    // not one feature for the whole room with everything else sidelined —
-    // that read as "one picture and not much else." First pass positioned
-    // these pulled 0.55-2.45 units off the wall for presence — but the
-    // frame mesh below stretches its own depth to reach the actual wall,
-    // assuming items sit close to it (see the frameDepth comment further
-    // down). Pulled that far off the wall, it stretched into a genuinely
-    // deep box (EK: "now it's a huge box"), and because that box's depth
-    // spans all the way back to the wall, it occupies the same space as
-    // the shelf boards mounted there — which is what read as shelf rails
-    // crossing in front of the picture. Fix: keep the hero flush with the
-    // wall like a normal item (small, normal frame depth).
-    //
-    // EK's ask (2026-08-22/23), a real fix not a guess: was y=5.96, jammed
-    // into the gap between the top shelf row and the wall rail — the math
-    // says that gap (~1.23 units) is smaller than Hero's own frame height
-    // at scale 1.2 (~2.0 units), so no Y value up there could ever fully
-    // clear both boundaries; 5.96 was always going to read as "crammed in
-    // above the shelf," not "centered." Moved to the SAME height as
-    // shelfItemY's middle row (row 1) instead — reuses a position that's
-    // already proven to have real clearance (regular items sit there on
-    // every other layout without incident), and lands much closer to eye
-    // level (deviation from eyeHeight=3.6 drops from +2.36 to +0.594).
-    // Vertically it now spans slightly past where row-0/row-2 items would
-    // sit at this same x — that's fine, x=0/±10.22 sit BETWEEN the regular
-    // grid's own column positions (columns are at -BACK_WALL_HALF_WIDTH +
-    // col*BACK_WALL_COL_STEP, i.e. -9..9 in steps of ~2.57 — 0 and ±10.22
-    // are never one of them), so nothing is ever placed there for Hero to
-    // actually collide with.
-    const HERO_Y = shelfItemY(1, 1.2); // the middle shelf row's own height, at hero scale — see comment above
-    const allHeroSlots: RoomItemPosition[] = [
-      { x: 0, y: HERO_Y, z: -11.78, ry: 0, scale: 1.2, wall: "back" },
-      { x: -10.22, y: HERO_Y, z: -3.2, ry: Math.PI / 2, scale: 1.2, wall: "left" },
-      { x: 10.22, y: HERO_Y, z: -3.2, ry: -Math.PI / 2, scale: 1.2, wall: "right" },
-    ];
-    const heroSlots = allHeroSlots.slice(0, count);
-    // Medium density (unchanged design intent — a step between Salon's
-    // tight cluster and Store's full-width spread) — but now explicitly
-    // CENTERED within the real safe range (SIDE_WALL_SAFE_BACK_Z ..
-    // SIDE_WALL_SAFE_FRONT_Z) instead of starting flush at an old,
-    // ungeometry-checked -9.25, so the unused slack lands evenly on both
-    // ends rather than looking lopsided toward one corner.
-    const spotlightClusterSpan = 2.1 * (SIDE_WALL_DEPTH_COUNT - 1);
-    const spotlightBaseZ =
-      SIDE_WALL_SAFE_BACK_Z + (SIDE_WALL_SAFE_FRONT_Z - SIDE_WALL_SAFE_BACK_Z - spotlightClusterSpan) / 2;
-    // Only left/right need an exclusion — back-wall Hero sits at x=0, which
-    // never lands on a back-wall column (columns run -9..9 in steps of
-    // BACK_WALL_COL_STEP, an even split with no column at the exact
-    // midpoint), so nothing is ever placed there to collide with. Left/
-    // right Hero sits at a FIXED depth (z=-3.2) at the middle shelf row —
-    // with sideBaseZ/sideZStep above, that lands exactly on grid slot 10
-    // (depth 3, row 1: z=-2.8, only 0.4 units from Hero's own z=-3.2).
-    // That's the ONE slot that needs to be skipped, not the whole row.
-    const heroWalls = new Set(heroSlots.map((slot) => slot.wall));
-    const supportingExcludeSlot: Partial<Record<"back" | "left" | "right", number>> = {};
-    if (heroWalls.has("left")) supportingExcludeSlot.left = 10;
-    if (heroWalls.has("right")) supportingExcludeSlot.right = 10;
-    // EK's ask (2026-08-30): "you didn't carry over fixes to other rooms"
-    // — the badge-overflow bug (items flung past the wall) was only ever
-    // prevented for vault specifically, because vault's front-wall carve-
-    // out happened to bring its own requested count under real capacity.
-    // Every other style still requested the full uncarved count here,
-    // which exceeds capacity and hits the same broken overflow fallback
-    // vault used to hit. Capping the request at the wall set's real
-    // capacity (once Hero's row-exclusion is applied) makes this
-    // impossible for every style, not just the one that got lucky.
-    const trueCapacity = (["back", "left", "right"] as const).reduce((sum, w) => {
-      const caps = { back: BACK_WALL_CAPACITY, left: SIDE_WALL_CAPACITY, right: SIDE_WALL_CAPACITY };
-      // excludeSlot removes exactly one slot index per wall (see
-      // distributeAcrossWalls' own excludeSlot) — not a whole row.
-      return sum + caps[w] - (supportingExcludeSlot[w] !== undefined ? 1 : 0);
-    }, 0);
-    const remaining = Math.min(Math.max(0, count - heroSlots.length), trueCapacity);
-    const supporting = distributeAcrossWalls(
-      remaining,
-      {
-        backZ: -11.78,
-        backScale: MIN_ITEM_SCALE,
-        sideBaseZ: spotlightBaseZ,
-        sideZStep: 2.1,
-        sideScale: MIN_ITEM_SCALE,
-      },
-      supportingExcludeSlot
-    );
-    return [...heroSlots, ...supporting];
-  }
-
-  if (layout === "salon") {
-    // First darkening pass (0.48 scale, 1.55 step) still read as "the same
-    // as Store" per EK — because with only a handful of items in a real
-    // collection, tighter spacing along the wall barely shows (there
-    // aren't enough items to even fill one row), so shrinking Salon was
-    // the only thing that actually changed, and it just made pieces
-    // harder to see rather than reading as "densely packed." A follow-up
-    // pass brought scale back up but was still below MIN_ITEM_SCALE and
-    // EK called it out again as illegible — Salon's item SIZE is now
-    // locked to the same floor as Store; only the tight step (spacing)
-    // differentiates the two, not size.
-    //
-    // EK's ask (2026-08-23, 4th time raised): sideBaseZ/sideZStep here
-    // were picked without checking them against the wall's real length —
-    // see the SIDE_WALL_* constants' own comment for the actual geometry.
-    // Salon's tight step is a deliberate, kept design choice (a small
-    // collection reading as a dense little cluster rather than the same
-    // spacing as Store just with less of it used) — what's fixed here
-    // (2026-08-23) is that the cluster is explicitly CENTERED in the real
-    // safe range instead of starting flush at an ungeometry-checked -9.6.
-    //
-    // EK's ask (2026-08-30): "most the walls look empty and have to be
-    // fillable in the smaller tighter format." Root cause: wallGridPosition
-    // fills a wall's 3 shelf ROWS at one depth before ever advancing to the
-    // next depth (row = slot % 3, depth = floor(slot / 3)) — with a real
-    // collection's modest item count, that means the first several items
-    // stack 3-deep at the FIRST couple of depth positions before reaching a
-    // 3rd/4th depth at all. At 1.5 apart, centered, that stack barely moves
-    // off the middle of the wall, leaving most of its visible length bare
-    // on both sides. Store's own much wider step (~2.567, spanning the
-    // FULL safe range) doesn't have this problem because even the same
-    // small number of occupied depths already reaches meaningfully across
-    // the wall. Two changes, both keeping Salon visibly tighter/denser than
-    // Store (never widened all the way to Store's own step) while fixing
-    // the "empty wall" look: (1) step raised 1.5 -> 2.0 — still a real,
-    // noticeably tighter cluster, but the same handful of occupied depths
-    // now reaches ~30% further along the wall before running out of room;
-    // (2) starts flush at SIDE_WALL_SAFE_BACK_Z (Store's own starting
-    // corner) instead of centered — EK: "make sure the walls match Store,
-    // because they are good there" — matching where the run BEGINS is part
-    // of that, not just how tight the items are once it does.
-    return distributeAcrossWalls(count, {
-      backZ: -11.82,
-      backScale: MIN_ITEM_SCALE,
-      sideBaseZ: SIDE_WALL_SAFE_BACK_Z,
-      sideZStep: 2.0,
-      sideScale: MIN_ITEM_SCALE,
-    });
-  }
-
-  // Store: pushed wider/bigger than before (was backScale 0.58, sideZStep
-  // 2.35, sideScale 0.66) for real contrast against Salon's tight density
-  // — a boutique, generously-spaced feel with fewer, larger pieces per
-  // wall length, instead of two layouts occupying the same middle ground.
-  //
-  // EK's ask (2026-08-23, 4th time raised) — the real bug this session:
-  // the old sideZStep (3.0) was picked without checking it against
-  // either (a) the real usable side-wall length or (b) the back wall's
-  // own column spacing, so side-wall items landed both MUCH farther
-  // apart than back-wall items AND stopped a good ways short of the far
-  // corner — both true at once, which is exactly what got circled twice.
-  // SIDE_WALL_SAFE_BACK_Z/SIDE_WALL_STEP (see their own comment, real
-  // numbers from the room generator) now span the entire real safe
-  // side-wall run, at a step independently computed to land within 0.01
-  // units of BACK_WALL_COL_STEP — Store's side walls now read at the
-  // same density as its own back wall, using the real wall end to end.
-  return distributeAcrossWalls(count, {
-    backZ: -11.78,
-    backScale: MIN_ITEM_SCALE,
-    sideBaseZ: SIDE_WALL_SAFE_BACK_Z,
-    sideZStep: SIDE_WALL_STEP,
-    sideScale: MIN_ITEM_SCALE,
-  });
-}
-
-function frontWallPosition(slot: number): RoomItemPosition {
-  const positions = [
-    { x: -6.6, y: 4.65 },
-    { x: -4.65, y: 4.65 },
-    { x: 4.65, y: 4.65 },
-    { x: 6.6, y: 4.65 },
-    { x: -6.6, y: 2.35 },
-    { x: -4.65, y: 2.35 },
-    { x: 4.65, y: 2.35 },
-    { x: 6.6, y: 2.35 },
-  ];
-  const pos = positions[slot % positions.length];
-  return {
-    x: pos.x,
-    y: pos.y,
-    z: FRONT_WALL_ITEM_Z,
-    ry: Math.PI,
-    // Was 0.6, a leftover below MIN_ITEM_SCALE that patching the 3 main
-    // wall configs missed — this front-wall row is a normal wall mount
-    // like every other item, so it gets the same floor, no exception.
-    scale: MIN_ITEM_SCALE,
-    wall: "front",
-  };
-}
-
-// Hero's row reservation trims exactly 1 slot off each side wall's normal
-// capacity (see distributeAcrossWalls' excludeSlot), which drops the
-// main-wall grid's true capacity from 66 to 64 -- but ALSO means it can
-// hold 64 supporting items, one more than the 63 the shared 66-slot
-// main-wall budget (see MAX_ROOM_ITEMS) actually asks distributeAcrossWalls
-// for. Re-running the exact same call with 64 requested reproduces the
-// identical first 63 positions (the algorithm only ever looks forward,
-// never back) plus this one genuinely-extra 64th — appended past the end
-// of the whole table (see TOTAL_SLOT_COUNT's own +1) instead of by asking
-// the main-wall grid for 64 directly, which would shift every front-wall/
-// cabinet index after it.
-function heroSupportingOverflowSlot(): RoomItemPosition {
-  const spotlightClusterSpan = 2.1 * (SIDE_WALL_DEPTH_COUNT - 1);
-  const spotlightBaseZ =
-    SIDE_WALL_SAFE_BACK_Z + (SIDE_WALL_SAFE_FRONT_Z - SIDE_WALL_SAFE_BACK_Z - spotlightClusterSpan) / 2;
-  const full = distributeAcrossWalls(
-    BACK_WALL_CAPACITY + (SIDE_WALL_CAPACITY - 1) * 2,
-    { backZ: -11.78, backScale: MIN_ITEM_SCALE, sideBaseZ: spotlightBaseZ, sideZStep: 2.1, sideScale: MIN_ITEM_SCALE },
-    { left: 10, right: 10 }
-  );
-  return full[full.length - 1];
-}
-
-// EK's ask: the side walls' far (front) end, past the grid's last coded
-// depth (z=3.5), reads as an unfinished dead zone next to the corner —
-// real baked shelf and wall material extend well past it (left_shelf_i /
-// right_shelf_i in generate-gallery-room-models.py run 23.2 units long,
-// centered at z=-3.15 -> out to z=8.45; the wall panels themselves run 26
-// units, out to z=9.8) and nothing else is built out there (the vestibule
-// wall and door rivets all sit within +/-2.35 of x=0, nowhere near
-// x=+/-10.22) — so one more real depth tier fits with room to spare
-// before the wall's own physical end, confirmed against the generator.
-function heroCornerFillSlots(): RoomItemPosition[] {
-  const extraZ = 3.5 + 2.1; // one more step past the grid's last depth, same 2.1 spacing
-  const walls: Array<"left" | "right"> = ["left", "right"];
-  return walls.flatMap((wall) =>
-    SHELF_ROW_Y.map((_, row) => ({
-      x: wall === "left" ? -10.22 : 10.22,
-      y: shelfItemY(row, MIN_ITEM_SCALE),
-      z: extraZ,
-      ry: wall === "left" ? Math.PI / 2 : -Math.PI / 2,
-      scale: MIN_ITEM_SCALE,
-      wall,
-    }))
-  );
-}
-
-function buildVaultWallPositions(layout: RoomLayout, count: number): RoomItemPosition[] {
-  const frontSlotCount = Math.min(8, count);
-  const mainWallCount = Math.max(0, count - frontSlotCount);
-  return [
-    ...buildWallPositions(layout, mainWallCount),
-    ...Array.from({ length: frontSlotCount }, (_, index) => frontWallPosition(index)),
-  ];
-}
-
-// Full fixed-capacity slot table for a layout: MAX_ROOM_ITEMS wall slots plus
-// the CABINET_SLOT_COUNT display-case slots, always in this order — slot index
-// is a stable identity regardless of layout or how many items are placed.
-function buildPositions(layout: RoomLayout, _style: RoomStyle): RoomItemPosition[] {
-  // EK's ask (2026-08-30): "add the items to the door wall on all rooms,
-  // like the Vault" — the front-wall carve-out (frontWallPosition, 8 slots)
-  // used to be gated to `style === "vault"` only; every other style's door
-  // wall never got any item slots at all. Nothing about it is actually
-  // vault-specific (frontWallPosition/FRONT_WALL_ITEM_Z are already shared,
-  // style-agnostic constants), so it's unconditional now for every style.
-  const wallPositions = buildVaultWallPositions(layout, MAX_ROOM_ITEMS);
-  const cabinetPositions: RoomItemPosition[] = CABINET_SPOTS.map(([x, z]) => ({
-    x,
-    // Was 1.98 — the case's own glass cap sits at y=1.85 (base at 0.31,
-    // glass spanning roughly 0.67 to 1.83), so the item was resting ON TOP
-    // of the closed case, above the glass, not inside it at all — that's
-    // what read as "a flat piece of paper just sitting there" instead of a
-    // real display. 0.85 sits it just above the base, inside the glass.
-    y: 0.85,
-    z,
-    ry: -Math.PI / 2,
-    // Can't use MIN_ITEM_SCALE (0.78) here — this is a real physical
-    // constraint, not a stylistic choice like the wall items were. The
-    // case's own glass interior is baked at 1.3 x 1.0 world units
-    // (add_cases() in generate-gallery-room-models.py); at 0.78 the card's
-    // long edge (1.54 * 0.78 = 1.20) would clip straight through the glass
-    // wall (1.0 clearance). 0.58 is the largest scale that still clears
-    // the glass with a small margin (1.54 * 0.58 = 0.89 < 1.0). Reaching
-    // true parity with wall items would mean enlarging the baked case
-    // glass itself (a GLB regen) — flagged to EK, not done here.
-    scale: 0.58,
-    wall: "cabinet",
-    flat: true,
-  }));
-  // EK's ask (2026-08-30): "you didn't carry over fixes to other rooms" —
-  // heroCornerFillSlots relies only on the side-wall/shelf dimensions,
-  // which generate-gallery-room-models.py bakes identically for every
-  // style (confirmed: left_wall/right_wall/left_shelf_i/right_shelf_i
-  // never branch on `style`), so it's safe for all of them, not just
-  // vault. heroSupportingOverflowSlot patches the ONE slot the front-wall
-  // carve-out (66 requested vs 64 real capacity) leaves short — now that
-  // every style carves out a front wall (see buildPositions above,
-  // 2026-08-30), every style needs this same one-slot patch, not just vault.
-  const mainWallCountForHero = MAX_ROOM_ITEMS - Math.min(8, MAX_ROOM_ITEMS);
-  const heroHasSingleSlotShortfall = mainWallCountForHero - 3 < BACK_WALL_CAPACITY + (SIDE_WALL_CAPACITY - 1) * 2;
-  const heroOverflow =
-    layout === "spotlight"
-      ? [...(heroHasSingleSlotShortfall ? [heroSupportingOverflowSlot()] : []), ...heroCornerFillSlots()]
-      : [];
-  return [...wallPositions, ...cabinetPositions, ...heroOverflow];
-}
 
 // EK's ask (2026-08-23): the builder had no concept of "who's looking" at
 // all — anyone, signed in or not, owner or not, got the full edit chrome
@@ -1186,6 +597,22 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
   >(null);
   const [hallNameInput, setHallNameInput] = useState("");
   const [isSavingHall, setIsSavingHall] = useState(false);
+  // 2026-09-11 Gallery Map / Room-Editing pass: set only when a room was
+  // entered by clicking a real shape on the Map (not HUB, not the Source
+  // dropdown, not "Back to Room") — this is what makes the Organize toggle's
+  // "Done" state also flush a pending save and return to the Map, instead
+  // of just leaving Organize mode in place the way it does for a room
+  // entered any other way. Cleared on Done/Exit back to the Map.
+  const [editRoomContext, setEditRoomContext] = useState<{ hallId: string } | null>(null);
+  const [nameSaveState, setNameSaveState] = useState<"idle" | "saving" | "saved" | "error">("idle");
+  const nameSaveTimerRef = useRef<number | null>(null);
+  const [liveAnnouncement, setLiveAnnouncement] = useState("");
+  function announce(message: string) {
+    // Re-announce the same text reliably even if it repeats (e.g. two
+    // removals in a row) — a live region only fires for screen readers on
+    // an actual text change, so a leading space forces that.
+    setLiveAnnouncement((current) => (current === message ? `${message} ` : message));
+  }
   // Held-item panel: a viewer clicking "View item" on a private (non-public)
   // item shows this inline notice instead of navigating anywhere.
   const [privateItemNotice, setPrivateItemNotice] = useState(false);
@@ -1242,13 +669,32 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
     selectedItemIdRef.current = selectedItemId;
   }, [selectedItemId]);
   const [socialShareOpen, setSocialShareOpen] = useState(false);
-  const [saveState, setSaveState] = useState<"idle" | "saved" | "error">("idle");
+  const [saveState, setSaveState] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const [isOrganizing, setIsOrganizing] = useState(false);
   const [roomPanelOpen, setRoomPanelOpen] = useState(true);
   const [hallNoticeDismissed, setHallNoticeDismissed] = useState(false);
   const [roomSwitcherOpen, setRoomSwitcherOpen] = useState(false);
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
+  // 2026-09-11 in-room Organize overlay — replaces the old flat "Arrange
+  // Shelf Order" sidebar. `organizeSelectedSlot` is the occupied slot a
+  // click/tap or Tab+Enter most recently selected (reveals its Remove/Move
+  // controls); `moveMenuFor` opens the keyboard/phone "Move to position…"
+  // destination list for that same slot; `replaceConfirm` is the
+  // Replace/Cancel prompt for dropping onto an occupied destination.
+  const [organizeSelectedSlot, setOrganizeSelectedSlot] = useState<number | null>(null);
+  const [moveMenuFor, setMoveMenuFor] = useState<number | null>(null);
+  const [replaceConfirm, setReplaceConfirm] = useState<{
+    fromIdx: number;
+    toIdx: number;
+    itemTitle: string;
+    destTitle: string;
+  } | null>(null);
+  const organizeSlotRefs = useRef<Map<number, HTMLDivElement | null>>(new Map());
+  const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
+  // Touch press-and-hold-to-drag bookkeeping for the Organize overlay (a
+  // normal tap must stay a tap — only a deliberate hold arms dragging).
+  const organizeTouchRef = useRef<{ idx: number; x: number; y: number; armed: boolean; overIdx: number | null; timer: number | null } | null>(null);
   // EK's ask: an empty slot's "+" opens a picker built to match the Vault's
   // own "Wall" view (search + universe filter pills w/ counts + A-Z jump +
   // size slider — see VaultWallView.tsx). Multi-select fills the clicked
@@ -1269,13 +715,10 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
   }
 
   function closeSlotPicker() {
+    if (pickerSlotIdx !== null) focusSlot(pickerSlotIdx);
     setPickerSlotIdx(null);
     setPickerSelection([]);
   }
-  const touchFromRef = useRef<number | null>(null);
-  const touchOverRef = useRef<number | null>(null);
-  const touchCloneRef = useRef<HTMLElement | null>(null);
-
   // Separate from the vault-items/galleries mount effect below (those are
   // synchronous local-cache reads; this is a real network round trip) —
   // populates the Source dropdown's "My Halls" group.
@@ -1473,7 +916,19 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
   // computed at full capacity (not `selectedItems.length`) so slot index i always
   // means the same physical spot, whether or not it's currently occupied. Shared
   // by the 3D scene build and the Arrange panel, so both agree on where slot i is.
-  const slotPositions = useMemo(() => buildPositions(roomLayout, roomStyle), [roomLayout, roomStyle]);
+  const slotPositions = useMemo(() => buildPositions(roomLayout), [roomLayout]);
+  // Occupied count bounded to this room's REAL current capacity — used by
+  // the Map's HUB figure. `selectedItems.length` (above) intentionally
+  // counts every non-empty slot in the full TOTAL_SLOT_COUNT-length array
+  // regardless of the current layout's real capacity (it feeds the Items/
+  // Value metrics, which should reflect everything actually placed even if
+  // a layout change temporarily left something past the new capacity) —
+  // the Map's occupied/capacity line needs the two numbers on the same
+  // basis, or a stale extra item could read as "26 / 25 items."
+  const roomOccupiedWithinCapacity = useMemo(
+    () => slotItems.slice(0, slotPositions.length).filter(Boolean).length,
+    [slotItems, slotPositions]
+  );
   // Groups slot indices by which physical wall they're on, in shelf-reading
   // order (top row first, left-to-right/front-to-back within a row) — this is
   // what lets the Arrange panel show real "Back Wall" / "Left Wall" / "Right
@@ -1775,6 +1230,10 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
 
     const camera = new THREE.PerspectiveCamera(47, 1, 0.1, 80);
     camera.position.set(0, 3.6, -2.2);
+    // Exposed so the Organize overlay's own (separate, lightweight) rAF
+    // loop can project each slot's real 3D position to screen space every
+    // frame without depending on this whole scene-rebuild effect.
+    cameraRef.current = camera;
 
     const roomGroup = new THREE.Group();
     scene.add(roomGroup);
@@ -3581,7 +3040,12 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
             const targetRoom = universeRooms.find((room) => room.id === target);
             if (targetRoom) openUniverseRoom(targetRoom);
           }
-        } else if (hit?.object.userData.itemId) {
+        } else if (hit?.object.userData.itemId && !isOrganizing) {
+          // While Organize is on, the HTML overlay (rendered in React,
+          // projected onto these same slot positions) is the interactive
+          // surface for occupied/empty slots — a raw 3D click here would
+          // otherwise still lift the item into the held/inspect view
+          // underneath the overlay's own select/move/remove controls.
           const itemId = String(hit.object.userData.itemId);
           const worldPosition = hit.object.getWorldPosition(new THREE.Vector3());
 
@@ -3681,6 +3145,7 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
     return () => {
       disposed = true;
       cameraStateRef.current = { x: cameraBody.x, y: cameraBody.y, z: cameraBody.z, yaw, pitch };
+      if (cameraRef.current === camera) cameraRef.current = null;
       window.cancelAnimationFrame(raf);
       observer.disconnect();
       renderer.domElement.removeEventListener("pointerdown", onPointerDown);
@@ -3708,6 +3173,49 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
       container.innerHTML = "";
     };
   }, [dataReady, isOrganizing, palette.floor, palette.glow, palette.trim, palette.wall, roomLayout, roomStyle, showValues, slotDisplayNumber, slotItems, slotPositions, universeRoomsKey, viewMode, wallTextureUrl]);
+
+  // 2026-09-11 Gallery Map / Room-Editing pass: a small, independent rAF
+  // loop that projects every real slot position to on-screen coordinates
+  // every frame, so the React-rendered Organize overlay buttons below sit
+  // exactly over their real 3D shelf/case position — the numbered badges
+  // and ghost outlines the big scene effect above already draws stay the
+  // pure visual layer; this is what makes them a real interactive surface
+  // (click/tap/drag/keyboard), without tying overlay position updates to
+  // that much heavier effect's own rebuild cycle.
+  useEffect(() => {
+    if (viewMode !== "room" || !isOrganizing) return undefined;
+    let raf = 0;
+    const tmp = new THREE.Vector3();
+    function tick() {
+      const camera = cameraRef.current;
+      const mount = mountRef.current;
+      if (camera && mount) {
+        const rect = mount.getBoundingClientRect();
+        organizeSlotRefs.current.forEach((el, index) => {
+          const pos = slotPositions[index];
+          if (!el) return;
+          if (!pos) {
+            el.style.display = "none";
+            return;
+          }
+          tmp.set(pos.x, pos.flat ? pos.y + 0.32 : pos.y, pos.z);
+          tmp.project(camera);
+          const behind = tmp.z > 1 || tmp.z < -1;
+          if (behind) {
+            el.style.display = "none";
+          } else {
+            const x = (tmp.x * 0.5 + 0.5) * rect.width;
+            const y = (-tmp.y * 0.5 + 0.5) * rect.height;
+            el.style.display = "";
+            el.style.transform = `translate3d(${x}px, ${y}px, 0) translate(-50%, -50%)`;
+          }
+        });
+      }
+      raf = window.requestAnimationFrame(tick);
+    }
+    raf = window.requestAnimationFrame(tick);
+    return () => window.cancelAnimationFrame(raf);
+  }, [viewMode, isOrganizing, slotPositions]);
 
   function applyGallery(nextGalleryId: string) {
     setGalleryId(nextGalleryId);
@@ -3786,6 +3294,53 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
     setSourceStatus({ ok: true, message: `Loaded "${hall.title}".` });
   }
 
+  // 2026-09-11 Gallery Map / Room-Editing pass: clicking a real shape on the
+  // Map loads that Hall (same restore applyHall already does for the Source
+  // dropdown) and lands straight in the 3D room with Organize already on —
+  // the whole reason to open a room from the Map is to work on its items.
+  // `editRoomContext` is what lets Done (below) know to flush-save and
+  // return to the Map instead of just closing Organize in place.
+  function openHallFromMap(hallId: string) {
+    cameraStateRef.current = null;
+    setSelectedItemId("");
+    applyHall(hallId);
+    setEditRoomContext({ hallId });
+    setViewMode("room");
+    setIsOrganizing(true);
+    setHallNoticeDismissed(true);
+  }
+
+  // Every non-HUB, non-entrance, non-"coming soon" Map shape gets one of the
+  // user's OWN saved Halls, in a stable order (oldest first) — never the
+  // room currently open (that one is already HUB), never a vault-item count.
+  // A shape past the end of the user's real Hall list simply has nothing
+  // assigned — MuseumCampusOverview renders that as "Not set up yet," not an
+  // invented capacity.
+  const campusAssignments = useMemo(() => {
+    const assignable = halls
+      .filter((hall) => hall.id !== currentHallId)
+      .slice()
+      .sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+    const map: Partial<Record<CampusRoomId, CampusRoomAssignment>> = {};
+    EDITABLE_CAMPUS_ROOM_IDS.forEach((campusId, index) => {
+      const hall = assignable[index];
+      if (!hall) return;
+      const layout = parseRoomLayout(hall.roomLayout);
+      const capacity = roomCapacity(layout);
+      map[campusId] = {
+        hallId: hall.id,
+        title: hall.title,
+        // Bounded to this Hall's own real current capacity — same reason
+        // as roomOccupiedWithinCapacity above (a stale slot past a later
+        // layout change must not read as occupying a position that no
+        // longer exists).
+        occupied: hall.selectedIds.slice(0, capacity).filter(Boolean).length,
+        capacity,
+      };
+    });
+    return map;
+  }, [halls, currentHallId]);
+
   // The Source dropdown's single onChange — EK's ask (2026-08-24) put "My
   // Halls" in the same dropdown as Empty Hall/Exhibitions rather than a
   // separate picker, so this is the one place that decides which of the
@@ -3834,8 +3389,13 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
     }
   }
 
-  async function persistHall(hallId: string | null, title: string | null, linkGalleryId: string | null) {
+  // Returns whether the save actually succeeded — autosave and the
+  // Organize/Done "wait for a pending save, confirm success" flow both need
+  // a real answer, not just a fire-and-forget call, before they can safely
+  // exit Organize or navigate back to the Map.
+  async function persistHall(hallId: string | null, title: string | null, linkGalleryId: string | null): Promise<boolean> {
     setIsSavingHall(true);
+    setSaveState("saving");
     try {
       let wallpaperUrl: string | null = wallTextureUrl || null;
       if (wallpaperUrl && wallpaperUrl.startsWith("data:")) {
@@ -3859,26 +3419,131 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
       if (hallId) {
         const ok = await updateHall(hallId, input);
         setSaveState(ok ? "saved" : "error");
+        announce(ok ? "Room saved." : "Save failed. Your changes are kept — tap Retry.");
         if (ok) {
           setHalls((current) =>
             current.map((h) => (h.id === hallId ? { ...h, ...input, updatedAt: new Date().toISOString() } : h))
           );
         }
+        return ok;
       } else if (title) {
         const created = await createHall(title, input);
         if (created) {
           setCurrentHallId(created.id);
           setHalls((current) => [created, ...current.filter((h) => h.id !== created.id)]);
           setSaveState("saved");
-        } else {
-          setSaveState("error");
+          announce("Room saved.");
+          return true;
         }
+        setSaveState("error");
+        announce("Save failed. Your changes are kept — tap Retry.");
+        return false;
       }
+      setSaveState("idle");
+      return true;
+    } catch {
+      setSaveState("error");
+      return false;
     } finally {
       setIsSavingHall(false);
       setSaveModal(null);
-      window.setTimeout(() => setSaveState("idle"), 1800);
+      window.setTimeout(() => setSaveState((current) => (current === "saved" ? "idle" : current)), 1800);
     }
+  }
+
+  // 2026-09-11 autosave: coalesces every successful add/move/replace/
+  // remove/wallpaper/style edit into one debounced write per saved Hall,
+  // instead of one write per click — "Coalesce rapid edits so they do not
+  // create overlapping or out-of-order writes." A brand-new, never-named
+  // room (`currentHallId` still null) is NOT autosaved — Save Hall's naming
+  // step stays the explicit first save, same as before.
+  const autosaveTimerRef = useRef<number | null>(null);
+  const lastAutosaveHallIdRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!dataReady || !currentHallId) return undefined;
+    if (lastAutosaveHallIdRef.current !== currentHallId) {
+      // Just loaded/created this Hall (applyHall, or persistHall's own
+      // create branch) — these are the values that were just loaded, not a
+      // fresh edit, so this run must not schedule a save of its own load.
+      lastAutosaveHallIdRef.current = currentHallId;
+      return undefined;
+    }
+    setSaveState("saving");
+    autosaveTimerRef.current = window.setTimeout(() => {
+      autosaveTimerRef.current = null;
+      void persistHall(currentHallId, null, galleryId === "scratch" ? null : galleryId);
+    }, 900);
+    return () => {
+      if (autosaveTimerRef.current) {
+        window.clearTimeout(autosaveTimerRef.current);
+        autosaveTimerRef.current = null;
+      }
+    };
+  }, [selectedIds, roomStyle, roomLayout, showValues, wallTextureUrl, dataReady, galleryId, currentHallId]);
+
+  // Flushes any pending debounced autosave immediately and waits for the
+  // real result — used by Done/Exit so "waits for a pending save, confirms
+  // success" is a real await, not a hope that the debounce already fired.
+  async function flushPendingSave(): Promise<boolean> {
+    if (autosaveTimerRef.current) {
+      window.clearTimeout(autosaveTimerRef.current);
+      autosaveTimerRef.current = null;
+    }
+    if (!currentHallId) return true; // nothing persisted yet to flush — never blocks navigation
+    return persistHall(currentHallId, null, galleryId === "scratch" ? null : galleryId);
+  }
+
+  // Shared by the toolbar's "Exit" button and Organize's "Done" (when it
+  // was opened from the Map) — "Navigating away while a save is pending
+  // must not silently discard changes": wait for the real result before
+  // leaving, and stay put with the Save Failed state visible on failure
+  // rather than bouncing back to the Map as if nothing was wrong.
+  async function leaveRoomToMap() {
+    const ok = await flushPendingSave();
+    if (!ok) return;
+    setIsOrganizing(false);
+    setEditRoomContext(null);
+    setViewMode("overview");
+  }
+
+  async function handleOrganizeToggle() {
+    if (isOrganizing && editRoomContext) {
+      setDragIndex(null);
+      setDragOverIndex(null);
+      setSelectedItemId("");
+      setOrganizeSelectedSlot(null);
+      const ok = await flushPendingSave();
+      if (!ok) return; // stay in Organize with the Save Failed pill visible — nothing is discarded, just retry
+      setIsOrganizing(false);
+      setEditRoomContext(null);
+      setViewMode("overview");
+      return;
+    }
+    setIsOrganizing((current) => !current);
+    setDragIndex(null);
+    setDragOverIndex(null);
+    setSelectedItemId("");
+    setOrganizeSelectedSlot(null);
+  }
+
+  // Room name (Hall title) editing — section 4 of the work order. `title`
+  // is a real, already-existing column (see virtualRooms.ts's renameHall);
+  // this is a plain debounced write, same coalescing spirit as autosave
+  // above, just scoped to one field so it can never race a routine
+  // selectedIds/style autosave.
+  function renameCurrentHall(nextTitle: string) {
+    if (!currentHallId) return;
+    setHalls((current) => current.map((h) => (h.id === currentHallId ? { ...h, title: nextTitle } : h)));
+    if (nameSaveTimerRef.current) window.clearTimeout(nameSaveTimerRef.current);
+    setNameSaveState("saving");
+    nameSaveTimerRef.current = window.setTimeout(() => {
+      nameSaveTimerRef.current = null;
+      void renameHall(currentHallId, nextTitle).then((ok) => {
+        setNameSaveState(ok ? "saved" : "error");
+        if (ok) announce("Room name saved.");
+        window.setTimeout(() => setNameSaveState((current) => (current === "saved" ? "idle" : current)), 1800);
+      });
+    }, 700);
   }
 
   function confirmSaveToExhibition() {
@@ -3894,34 +3559,150 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
     void persistHall(null, title, linkGalleryId);
   }
 
-  function toggleItem(itemId: string) {
+  // Shared room-edit commands for the in-3D Organize overlay — desktop
+  // drag, touch press-and-hold, and the keyboard Move menu all call these
+  // same functions, so every input path saves through the exact same
+  // canonical selectedIds mutation (work order §10: "the desktop drag flow,
+  // touch flow, keyboard flow... must all call these same commands").
+  //
+  // Dropping onto an EMPTY valid slot moves the item there outright.
+  // Dropping onto an OCCUPIED valid slot never silently swaps or overwrites
+  // — it opens the Replace/Cancel prompt (replaceConfirm state) instead.
+  function moveItemToSlot(fromIdx: number, toIdx: number) {
+    if (fromIdx === toIdx) return;
+    const fromItem = slotItems[fromIdx];
+    if (!fromItem) return;
+    const destItem = slotItems[toIdx];
+    if (destItem) {
+      setReplaceConfirm({ fromIdx, toIdx, itemTitle: fromItem.title || "This item", destTitle: destItem.title || "this item" });
+      return;
+    }
     setSelectedIds((current) => {
-      const existingIdx = current.indexOf(itemId);
-      if (existingIdx !== -1) {
-        const next = [...current];
-        next[existingIdx] = "";
-        return next;
-      }
-      const emptyIdx = current.indexOf("");
-      if (emptyIdx === -1) return current;
       const next = [...current];
-      next[emptyIdx] = itemId;
+      next[toIdx] = next[fromIdx];
+      next[fromIdx] = "";
       return next;
     });
-    setSelectedItemId(itemId);
+    setOrganizeSelectedSlot(null);
+    setMoveMenuFor(null);
+    announce(`Moved to position ${slotDisplayNumber.get(toIdx) ?? toIdx + 1}.`);
+    focusSlot(toIdx);
   }
 
-  // Swaps whatever occupies two shelf slots (an item, or nothing) — since
-  // `positions[i]` is a fixed physical spot regardless of what's in it, this is
-  // what makes a slot independently assignable: swap onto an empty slot to move
-  // an item there, or onto an occupied one to trade places.
-  function swapSlots(fromIdx: number, toIdx: number) {
-    if (fromIdx === toIdx) return;
+  // "Focus returns predictably after picker, confirmation, save, or
+  // cancellation" — a `setTimeout(0)` waits for the DOM to actually
+  // reflect the state change before focusing (the target slot's control
+  // may not exist yet, or may have just been replaced, in the same tick).
+  function focusSlot(idx: number) {
+    window.setTimeout(() => {
+      organizeSlotRefs.current.get(idx)?.querySelector("button")?.focus();
+    }, 0);
+  }
+
+  // On Replace: the dragged item takes the destination slot; the item that
+  // was there returns to the vault/unassigned pool — it is NOT deleted,
+  // just no longer placed in any slot of THIS room (its own vault_items row
+  // is never touched, same as any other remove-from-room below).
+  function confirmReplace() {
+    if (!replaceConfirm) return;
+    const { fromIdx, toIdx } = replaceConfirm;
     setSelectedIds((current) => {
       const next = [...current];
-      [next[fromIdx], next[toIdx]] = [next[toIdx], next[fromIdx]];
+      next[toIdx] = next[fromIdx];
+      next[fromIdx] = "";
       return next;
     });
+    announce(`Replaced. ${replaceConfirm.destTitle} was removed from this room only — it is still in your vault.`);
+    setReplaceConfirm(null);
+    setOrganizeSelectedSlot(null);
+    setMoveMenuFor(null);
+    focusSlot(toIdx);
+  }
+
+  function cancelReplace() {
+    if (replaceConfirm) focusSlot(replaceConfirm.fromIdx);
+    setReplaceConfirm(null);
+  }
+
+  // Removing from a room clears only this slot's id reference — the real
+  // vault item, its media, and its metadata are never touched.
+  function removeFromSlot(idx: number) {
+    const item = slotItems[idx];
+    setSelectedIds((current) => {
+      const next = [...current];
+      next[idx] = "";
+      return next;
+    });
+    setOrganizeSelectedSlot(null);
+    announce(`${item?.title || "Item"} removed from this room. It is still in your vault.`);
+    focusSlot(idx);
+  }
+
+  // Touch press-and-hold-to-drag for the Organize overlay — "a short,
+  // intentional press-and-hold starts item dragging... a normal tap does
+  // not become a drag." A tap that never holds long enough (or that moves
+  // too far before the hold timer fires) falls through as a plain
+  // select/no-op instead — see handleOrganizeTouchEnd/Move below.
+  const ORGANIZE_HOLD_MS = 260;
+  const ORGANIZE_MOVE_TOLERANCE = 10;
+
+  function startOrganizeTouchHold(event: React.TouchEvent, index: number) {
+    const touch = event.touches[0];
+    if (!touch) return;
+    const timer = window.setTimeout(() => {
+      if (organizeTouchRef.current?.idx === index) {
+        organizeTouchRef.current.armed = true;
+        setDragIndex(index);
+      }
+    }, ORGANIZE_HOLD_MS);
+    organizeTouchRef.current = { idx: index, x: touch.clientX, y: touch.clientY, armed: false, overIdx: null, timer };
+  }
+
+  function handleOrganizeTouchMove(event: React.TouchEvent) {
+    const ref = organizeTouchRef.current;
+    if (!ref) return;
+    const touch = event.touches[0];
+    if (!touch) return;
+    const dx = touch.clientX - ref.x;
+    const dy = touch.clientY - ref.y;
+    if (!ref.armed) {
+      if (Math.abs(dx) > ORGANIZE_MOVE_TOLERANCE || Math.abs(dy) > ORGANIZE_MOVE_TOLERANCE) {
+        // Moved before the hold armed — a normal drag-to-look gesture,
+        // not an item drag. Cancel and let it go (this handler never
+        // called preventDefault, so the camera's own drag-look still
+        // tracks this same gesture underneath).
+        if (ref.timer) window.clearTimeout(ref.timer);
+        organizeTouchRef.current = null;
+      }
+      return;
+    }
+    let el: Element | null = document.elementFromPoint(touch.clientX, touch.clientY);
+    let toIdx: number | null = null;
+    while (el && toIdx === null) {
+      const attr = el.getAttribute?.("data-organize-idx");
+      if (attr !== null && attr !== undefined) toIdx = parseInt(attr, 10);
+      el = el.parentElement;
+    }
+    const resolved = toIdx !== null && toIdx !== ref.idx ? toIdx : null;
+    ref.overIdx = resolved;
+    setDragOverIndex(resolved);
+  }
+
+  function handleOrganizeTouchEnd() {
+    const ref = organizeTouchRef.current;
+    organizeTouchRef.current = null;
+    if (!ref) return;
+    if (ref.timer) window.clearTimeout(ref.timer);
+    if (!ref.armed) {
+      // Never armed into a drag — a plain tap selects/deselects this slot.
+      setOrganizeSelectedSlot((current) => (current === ref.idx ? null : ref.idx));
+      setDragIndex(null);
+      setDragOverIndex(null);
+      return;
+    }
+    setDragIndex(null);
+    setDragOverIndex(null);
+    if (ref.overIdx !== null && ref.overIdx !== ref.idx) moveItemToSlot(ref.idx, ref.overIdx);
   }
 
   // EK's ask: the first item picked goes into the exact slot whose "+"
@@ -4085,18 +3866,29 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
   // sits at its own natural height instead of stretching); adding the
   // same here makes this section do the same instead of matching the
   // sidebar's height.
+  // 2026-09-11 Gallery Map / Room-Editing pass: Map mode gets a tall,
+  // viewport-driven workspace (EK's marked boundaries — below the top
+  // controls, the full former sidebar+panel width, close to the bottom of
+  // the visible viewport, no internal scrolling) instead of the same fixed
+  // ~600px box Room mode uses. Room mode's own sizing is untouched — the
+  // work order is explicit that normal Room mode stays visually intact.
+  const roomBoxHeightClass = effectiveGuest
+    ? "h-full"
+    : viewMode === "overview"
+      ? "h-[calc(100dvh-var(--topnav-h,0px)-228px)] min-h-[560px]"
+      : "min-h-[600px]";
   const roomView = (
     <section
       className={[
         effectiveGuest
           ? "h-full overflow-hidden"
-          : "min-h-[600px] overflow-hidden rounded-[8px] border shadow-[0_30px_90px_rgba(0,0,0,0.34)] xl:self-start",
+          : ["overflow-hidden rounded-[8px] border shadow-[0_30px_90px_rgba(0,0,0,0.34)] xl:self-start", roomBoxHeightClass].join(" "),
         palette.shell,
       ].join(" ")}
       style={effectiveGuest ? undefined : { borderColor: "var(--theme-border)" }}
     >
-      <div className={effectiveGuest ? "h-full" : "min-h-[600px]"}>
-        <div className={effectiveGuest ? "relative h-full" : "relative min-h-[600px]"}>
+      <div className={effectiveGuest ? "h-full" : roomBoxHeightClass}>
+        <div className={effectiveGuest ? "relative h-full" : ["relative", roomBoxHeightClass].join(" ")}>
           {viewMode === "room" ? (
             // touch-action: none — without it, a touch drag on the canvas is
             // ALSO interpreted by the browser as a native page-scroll gesture
@@ -4109,8 +3901,138 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
             // list elsewhere in this file.
             <div ref={mountRef} className="absolute inset-0" style={{ touchAction: "none" }} />
           ) : (
-            <MuseumCampusOverview rooms={universeRooms} onOpenRoom={openUniverseRoom} onOpenMainHall={openMainHall} />
+            <MuseumCampusOverview
+              assignments={campusAssignments}
+              hubOccupied={roomOccupiedWithinCapacity}
+              hubCapacity={slotPositions.length}
+              onOpenHall={openHallFromMap}
+              onOpenMainHall={openMainHall}
+            />
           )}
+          {viewMode === "room" && isOrganizing && !effectiveGuest ? (
+            // 2026-09-11 Gallery Map / Room-Editing pass: the in-room
+            // Organize overlay — real, tabbable HTML controls projected
+            // every frame onto each slot's actual 3D position (see the
+            // small rAF effect above `applyGallery`), so this is the same
+            // "numbered overlays in the actual 3D room" the work order
+            // asks for, just implemented as an accessible DOM layer over
+            // the canvas rather than unreachable WebGL-only geometry.
+            // Empty slots show a real "+"; occupied slots select on
+            // click/tap and reveal Remove/Move; desktop drag and a
+            // press-and-hold touch drag both call the same moveItemToSlot
+            // command as the keyboard Move menu below.
+            <div className="pointer-events-none absolute inset-0 z-[5]">
+              {slotPositions.map((pos, index) => {
+                const item = slotItems[index];
+                const label = slotDisplayNumber.get(index) ?? index + 1;
+                const isSelected = organizeSelectedSlot === index;
+                const isDragSource = dragIndex === index;
+                const isDragOver = dragOverIndex === index && dragIndex !== null && dragIndex !== index;
+                return (
+                  <div
+                    key={index}
+                    ref={(el) => {
+                      organizeSlotRefs.current.set(index, el);
+                    }}
+                    className="pointer-events-none absolute left-0 top-0"
+                  >
+                    {item ? (
+                      <div className="pointer-events-auto relative">
+                        <button
+                          type="button"
+                          data-organize-idx={index}
+                          draggable
+                          style={{ touchAction: "none" }}
+                          onDragStart={(event) => {
+                            event.dataTransfer.effectAllowed = "move";
+                            setDragIndex(index);
+                          }}
+                          onDragOver={(event) => {
+                            if (dragIndex === null) return;
+                            event.preventDefault();
+                            if (dragIndex !== index) setDragOverIndex(index);
+                          }}
+                          onDrop={(event) => {
+                            event.preventDefault();
+                            const fromIdx = dragIndex;
+                            setDragIndex(null);
+                            setDragOverIndex(null);
+                            if (fromIdx !== null && fromIdx !== index) moveItemToSlot(fromIdx, index);
+                          }}
+                          onDragEnd={() => {
+                            setDragIndex(null);
+                            setDragOverIndex(null);
+                          }}
+                          onTouchStart={(event) => startOrganizeTouchHold(event, index)}
+                          onTouchMove={handleOrganizeTouchMove}
+                          onTouchEnd={handleOrganizeTouchEnd}
+                          onTouchCancel={handleOrganizeTouchEnd}
+                          onClick={() => setOrganizeSelectedSlot((current) => (current === index ? null : index))}
+                          aria-label={`${item.title || "Item"}, position ${label}${isSelected ? ", selected" : ""}`}
+                          aria-pressed={isSelected}
+                          title={item.title}
+                          className={[
+                            "grid h-11 w-11 place-items-center rounded-full text-[12px] font-black shadow-[0_2px_12px_rgba(0,0,0,0.55)] ring-2 transition",
+                            isSelected ? "bg-[#4FD3EE] text-[#06171d] ring-white" : "bg-black/55 text-white ring-white/70 hover:ring-[#4FD3EE]",
+                            isDragOver ? "scale-125 bg-[rgba(79,211,238,0.35)] ring-[#4FD3EE]" : "",
+                            isDragSource ? "opacity-40" : "",
+                          ].join(" ")}
+                        >
+                          {label}
+                        </button>
+                        {isSelected ? (
+                          <div className="absolute left-1/2 top-full z-10 mt-1.5 flex -translate-x-1/2 items-center gap-1.5 whitespace-nowrap">
+                            <button
+                              type="button"
+                              onClick={() => removeFromSlot(index)}
+                              aria-label={`Remove ${item.title || "this item"} from this room`}
+                              className="grid h-9 w-9 place-items-center rounded-full bg-red-500/90 text-base font-black leading-none text-white ring-1 ring-white/40 transition hover:bg-red-500"
+                            >
+                              <span aria-hidden>−</span>
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setMoveMenuFor(index)}
+                              className="rounded-full bg-black/85 px-3 py-2 text-[10px] font-black uppercase tracking-wider text-white ring-1 ring-white/25 transition hover:bg-black"
+                            >
+                              Move
+                            </button>
+                          </div>
+                        ) : null}
+                      </div>
+                    ) : (
+                      <button
+                        type="button"
+                        data-organize-idx={index}
+                        onClick={() => openSlotPicker(index)}
+                        onDragOver={(event) => {
+                          if (dragIndex === null) return;
+                          event.preventDefault();
+                          setDragOverIndex(index);
+                        }}
+                        onDrop={(event) => {
+                          event.preventDefault();
+                          const fromIdx = dragIndex;
+                          setDragIndex(null);
+                          setDragOverIndex(null);
+                          if (fromIdx !== null) moveItemToSlot(fromIdx, index);
+                        }}
+                        aria-label={`Empty position ${label}, add an item`}
+                        className={[
+                          "pointer-events-auto grid h-11 w-11 place-items-center rounded-full border-2 border-dashed text-white/70 transition",
+                          isDragOver
+                            ? "scale-125 border-[#4FD3EE] bg-[rgba(79,211,238,0.25)] text-[#4FD3EE]"
+                            : "border-white/40 bg-black/30 hover:border-[#4FD3EE] hover:text-[#4FD3EE]",
+                        ].join(" ")}
+                      >
+                        <Plus size={16} />
+                      </button>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          ) : null}
           <div className="absolute left-3 top-3 flex items-center gap-2">
             <div className="pointer-events-none flex items-center gap-2 rounded-[6px] bg-black/42 px-3 py-2 text-xs font-black uppercase tracking-[0.14em] text-white ring-1 ring-white/12 backdrop-blur">
               {viewMode === "room" ? <Sparkles size={14} /> : <MapIcon size={14} />}
@@ -4137,9 +4059,9 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
             {viewMode === "room" ? (
               <button
                 type="button"
-                onClick={() => setViewMode("overview")}
+                onClick={() => void leaveRoomToMap()}
                 className="flex items-center gap-1.5 rounded-[6px] bg-black/42 px-3 py-2 text-xs font-black uppercase tracking-[0.14em] text-white ring-1 ring-white/12 backdrop-blur transition hover:bg-black/60"
-                title="Exit to the campus map"
+                title="Save and exit to the campus map"
               >
                 <MapIcon size={14} />
                 Exit
@@ -4201,12 +4123,7 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
             {viewMode === "room" && !effectiveGuest ? (
               <button
                 type="button"
-                onClick={() => {
-                  setIsOrganizing((current) => !current);
-                  setDragIndex(null);
-                  setDragOverIndex(null);
-                  setSelectedItemId("");
-                }}
+                onClick={() => void handleOrganizeToggle()}
                 aria-pressed={isOrganizing}
                 className={[
                   "flex items-center gap-1.5 rounded-[6px] px-3 py-2 text-xs font-black uppercase tracking-[0.14em] backdrop-blur transition",
@@ -4214,11 +4131,51 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
                     ? "bg-[#4FD3EE] text-[#06171d]"
                     : "bg-black/42 text-white ring-1 ring-white/12 hover:bg-black/60",
                 ].join(" ")}
-                title="Show slot numbers and rearrange shelves"
+                title={editRoomContext ? "Rearrange, then save and return to the Map" : "Show slot numbers and rearrange shelves"}
               >
                 <Grid3X3 size={14} />
                 {isOrganizing ? "Done" : "Organize"}
               </button>
+            ) : null}
+            {/* 2026-09-11 pass: the old always-visible sidebar "Save Hall"
+                button moved here, next to Organize/Done — a brand-new,
+                never-named room still needs this explicit first save
+                (creating the Hall row); once one exists, autosave takes
+                over and this becomes a quiet status pill instead (tap to
+                retry on failure). */}
+            {viewMode === "room" && !effectiveGuest ? (
+              currentHallId ? (
+                <button
+                  type="button"
+                  disabled={saveState !== "error"}
+                  onClick={
+                    saveState === "error"
+                      ? () => void persistHall(currentHallId, null, galleryId === "scratch" ? null : galleryId)
+                      : undefined
+                  }
+                  className={[
+                    "flex items-center gap-1.5 rounded-[6px] px-3 py-2 text-xs font-black uppercase tracking-[0.14em] backdrop-blur transition",
+                    saveState === "error"
+                      ? "bg-red-500/85 text-white hover:bg-red-500"
+                      : "cursor-default bg-black/42 text-white ring-1 ring-white/12",
+                  ].join(" ")}
+                  title={saveState === "error" ? "Save failed — tap to retry" : "Autosave status"}
+                >
+                  <Save size={14} />
+                  {saveState === "saving" ? "Saving…" : saveState === "error" ? "Save Failed — Retry" : "Saved"}
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={handleSaveClick}
+                  disabled={isSavingHall}
+                  className="flex items-center gap-1.5 rounded-[6px] bg-black/42 px-3 py-2 text-xs font-black uppercase tracking-[0.14em] text-white ring-1 ring-white/12 backdrop-blur transition hover:bg-black/60 disabled:opacity-60"
+                  title="Name and save this room so it can autosave"
+                >
+                  <Save size={14} />
+                  Save Hall
+                </button>
+              )
             ) : null}
           </div>
           {viewMode === "room" && selectedItems.length === 0 && !hallNoticeDismissed ? (
@@ -4437,6 +4394,39 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
                   {sourceStatus.message}
                 </div>
               ) : null}
+              {/* 2026-09-11 pass, work order §4 "editing the room's display
+                  name": `title` is a real persisted column on the Hall row
+                  (see virtualRooms.ts's renameHall) — a brand-new, never-
+                  saved room has no row yet to rename, so this stays a
+                  plain explanatory line until Save Hall creates one. */}
+              {currentHallId ? (
+                <div className="mt-1">
+                  <label htmlFor="vltd-room-name" className="mb-1 block text-[10px] font-black uppercase tracking-[0.14em] text-[color:var(--muted2)]">
+                    Room name
+                  </label>
+                  <input
+                    id="vltd-room-name"
+                    value={halls.find((h) => h.id === currentHallId)?.title ?? ""}
+                    onChange={(event) => renameCurrentHall(event.target.value)}
+                    maxLength={60}
+                    className="h-8 w-full rounded-[6px] bg-[color:var(--input)] px-2.5 text-xs ring-1 ring-[color:var(--border)]"
+                  />
+                  {nameSaveState !== "idle" ? (
+                    <div
+                      className={[
+                        "mt-1 text-[11px] font-semibold",
+                        nameSaveState === "error" ? "text-amber-300" : "text-[color:var(--muted)]",
+                      ].join(" ")}
+                    >
+                      {nameSaveState === "saving" ? "Saving name…" : nameSaveState === "error" ? "Couldn't save the name — try again." : "Name saved."}
+                    </div>
+                  ) : null}
+                </div>
+              ) : (
+                <p className="mt-1 text-[11px] leading-4 text-[color:var(--muted)]">
+                  Save this room as a Hall to give it its own name.
+                </p>
+              )}
             </ControlPanel>
           </div>
 
@@ -4527,247 +4517,13 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
           </ControlPanel>
         </div>
 
-        {/* Below the top bar: Items sidebar (narrower) + the 3D room, which now
-            gets the majority of the width instead of sitting beside a tall
-            stacked sidebar for the room's full height. */}
-        <div className="grid gap-4 xl:grid-cols-[300px_minmax(0,1fr)]">
-        <aside className="grid gap-3 xl:sticky xl:top-4 xl:self-start">
-          <ControlPanel
-            // EK's ask (2026-08-23): "I really don't see the use for the
-            // Items Pill... that can be done in the organize window in an
-            // easier less space taking way" — real gap check first, not
-            // just agreeing: the ONE thing the flat on/off list did that
-            // this grid didn't was let you pull an item off a shelf
-            // WITHOUT immediately putting something else there. Added that
-            // as a real "×" remove control on every filled cell below
-            // instead of keeping a whole separate list around for it — the
-            // grid (add via "+", move via drag, remove via "×") now covers
-            // everything the flat list did, so it's retired for good, not
-            // just hidden. The Organize/Done toggle itself moved to the
-            // room's own toolbar (it only ever affected the 3D badges +
-            // this always-visible grid, not two different sidebar views).
-            title="Arrange Shelf Order"
-            icon={<PackagePlus size={15} />}
-          >
-            <p className="text-xs leading-5 text-[color:var(--muted)]">
-              Sections below match the room&apos;s actual walls. Drag a piece onto any
-              square — filled or empty — to put it on that exact shelf.
-            </p>
-            <div className="grid max-h-[520px] gap-4 overflow-y-auto pr-1">
-                  {slotGroups.map((group) => (
-                    <div key={group.wall}>
-                      <div className="mb-1.5 flex items-center justify-between text-[10px] font-black uppercase tracking-[0.14em] text-[color:var(--muted2)]">
-                        <span>{group.label}</span>
-                        <span className="text-[color:var(--muted)]">
-                          {group.indices.filter((i) => slotItems[i]).length}/{group.indices.length}
-                        </span>
-                      </div>
-                      <div
-                        className={
-                          group.wall === "back"
-                            ? "grid grid-cols-8 gap-1"
-                            : group.wall === "center"
-                              ? "grid grid-cols-3 gap-1.5"
-                              : group.wall === "cabinet"
-                                ? "grid grid-cols-5 gap-1.5"
-                                : "grid grid-cols-4 gap-1.5"
-                        }
-                      >
-                        {group.indices.map((idx) => {
-                          const item = slotItems[idx];
-                          const isBeingDragged = dragIndex === idx;
-                          const isDragOver = dragOverIndex === idx && dragIndex !== idx;
-                          const showLabel = group.wall !== "back";
-                          return (
-                            <div
-                              key={idx}
-                              data-arrange-idx={idx}
-                              draggable={Boolean(item)}
-                              title={item?.title}
-                              style={{ touchAction: "none" }}
-                              onDragStart={(e) => {
-                                if (!item) return;
-                                e.dataTransfer.setData("text/plain", String(idx));
-                                e.dataTransfer.effectAllowed = "move";
-                                setDragIndex(idx);
-                                const imgEl = e.currentTarget.querySelector("img");
-                                if (imgEl) e.dataTransfer.setDragImage(imgEl, imgEl.clientWidth / 2, imgEl.clientHeight / 2);
-                              }}
-                              onDragOver={(e) => {
-                                if (dragIndex === null) return;
-                                e.preventDefault();
-                                if (dragIndex !== idx) setDragOverIndex(idx);
-                              }}
-                              onDrop={(e) => {
-                                e.preventDefault();
-                                const fromIdx = dragIndex ?? parseInt(e.dataTransfer.getData("text/plain"), 10);
-                                if (!Number.isNaN(fromIdx) && fromIdx !== idx) swapSlots(fromIdx, idx);
-                                setDragIndex(null);
-                                setDragOverIndex(null);
-                              }}
-                              onDragEnd={() => {
-                                setDragIndex(null);
-                                setDragOverIndex(null);
-                              }}
-                              onTouchStart={
-                                item
-                                  ? (e) => {
-                                      e.stopPropagation();
-                                      touchFromRef.current = idx;
-                                      touchOverRef.current = null;
-                                      setDragIndex(idx);
-                                      const imgEl = e.currentTarget.querySelector("img");
-                                      if (imgEl) {
-                                        const clone = imgEl.cloneNode(true) as HTMLImageElement;
-                                        Object.assign(clone.style, {
-                                          position: "fixed",
-                                          width: "56px",
-                                          height: "56px",
-                                          objectFit: "cover",
-                                          borderRadius: "6px",
-                                          opacity: "0.88",
-                                          pointerEvents: "none",
-                                          zIndex: "9999",
-                                          transform: "scale(1.1)",
-                                          boxShadow: "0 0 0 2px rgba(79,211,238,0.8), 0 8px 24px rgba(0,0,0,0.5)",
-                                        });
-                                        const touch = e.touches[0];
-                                        clone.style.left = `${touch.clientX - 28}px`;
-                                        clone.style.top = `${touch.clientY - 28}px`;
-                                        document.body.appendChild(clone);
-                                        touchCloneRef.current = clone;
-                                      }
-                                    }
-                                  : undefined
-                              }
-                              onTouchMove={
-                                item
-                                  ? (e) => {
-                                      if (touchFromRef.current === null) return;
-                                      const touch = e.touches[0];
-                                      if (touchCloneRef.current) {
-                                        touchCloneRef.current.style.left = `${touch.clientX - 28}px`;
-                                        touchCloneRef.current.style.top = `${touch.clientY - 28}px`;
-                                      }
-                                      const clone = touchCloneRef.current;
-                                      if (clone) clone.style.visibility = "hidden";
-                                      let el: Element | null = document.elementFromPoint(touch.clientX, touch.clientY);
-                                      if (clone) clone.style.visibility = "";
-                                      let toIdx: number | null = null;
-                                      while (el && toIdx === null) {
-                                        const attr = el.getAttribute("data-arrange-idx");
-                                        if (attr !== null) toIdx = parseInt(attr, 10);
-                                        el = el.parentElement;
-                                      }
-                                      if (toIdx !== null && toIdx !== touchFromRef.current) {
-                                        touchOverRef.current = toIdx;
-                                        setDragOverIndex(toIdx);
-                                      }
-                                    }
-                                  : undefined
-                              }
-                              onTouchEnd={
-                                item
-                                  ? () => {
-                                      const fromIdx = touchFromRef.current;
-                                      const toIdx = touchOverRef.current;
-                                      touchFromRef.current = null;
-                                      touchOverRef.current = null;
-                                      touchCloneRef.current?.remove();
-                                      touchCloneRef.current = null;
-                                      if (fromIdx !== null && toIdx !== null && fromIdx !== toIdx) {
-                                        swapSlots(fromIdx, toIdx);
-                                      }
-                                      setDragIndex(null);
-                                      setDragOverIndex(null);
-                                    }
-                                  : undefined
-                              }
-                              className={[
-                                "relative min-w-0 select-none overflow-hidden rounded-[5px] transition",
-                                item ? "cursor-grab bg-[color:var(--input)] ring-1 ring-[color:var(--border)] active:cursor-grabbing" : "bg-black/10 ring-1 ring-dashed ring-[color:var(--border)]",
-                                isDragOver ? "z-10 scale-110 bg-[rgba(79,211,238,0.22)] ring-2 ring-[#4FD3EE]" : "",
-                                isBeingDragged ? "opacity-30" : "opacity-100",
-                              ].join(" ")}
-                            >
-                              <span className="absolute left-0.5 top-0.5 z-[1] grid h-3.5 min-w-[14px] place-items-center rounded-[3px] bg-black/70 px-0.5 text-[8px] font-black leading-none text-white/85">
-                                {slotDisplayNumber.get(idx) ?? idx + 1}
-                              </span>
-                              <span className="block aspect-square overflow-hidden bg-black/20">
-                                {item && itemImage(item) ? (
-                                  // eslint-disable-next-line @next/next/no-img-element
-                                  <img src={itemImage(item)} alt="" className="h-full w-full object-cover" draggable={false} />
-                                ) : null}
-                              </span>
-                              {showLabel && item ? (
-                                <span className="block truncate px-1 py-0.5 text-[9px] font-bold">{item.title}</span>
-                              ) : null}
-                              {!item ? (
-                                <button
-                                  type="button"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    openSlotPicker(idx);
-                                  }}
-                                  aria-label="Add an item to this spot"
-                                  className="absolute inset-0 grid place-items-center text-[color:var(--muted2)] transition hover:bg-[rgba(79,211,238,0.12)] hover:text-[#4FD3EE]"
-                                >
-                                  <Plus size={14} />
-                                </button>
-                              ) : (
-                                // The one real job the old flat Items on/off
-                                // list did that this grid didn't: pull an
-                                // item off its shelf without also having to
-                                // put something else there. toggleItem
-                                // already clears a slot when the id is
-                                // already present — same call the old list's
-                                // own "ON" pill made.
-                                <button
-                                  type="button"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    toggleItem(item.id);
-                                  }}
-                                  aria-label={`Remove ${item.title} from this spot`}
-                                  className="absolute right-0.5 top-0.5 z-[1] grid h-4 w-4 place-items-center rounded-full bg-black/70 text-white/70 opacity-0 transition hover:bg-red-500/80 hover:text-white group-hover:opacity-100 focus-visible:opacity-100"
-                                  style={{ opacity: undefined }}
-                                >
-                                  <span aria-hidden className="text-[10px] leading-none">✕</span>
-                                </button>
-                              )}
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  ))}
-            </div>
-          </ControlPanel>
-
-          <button
-            type="button"
-            onClick={handleSaveClick}
-            disabled={isSavingHall}
-            className={[
-              "inline-flex min-h-11 items-center justify-center gap-2 rounded-[6px] px-4 text-sm font-black shadow-[0_0_18px_rgba(79,211,238,0.22)] disabled:opacity-60",
-              saveState === "error"
-                ? "bg-red-400 text-[#2a0505]"
-                : "bg-[linear-gradient(180deg,#79E7FB,#2CB1D1)] text-[#06171d]",
-            ].join(" ")}
-          >
-            <Save size={16} />
-            {saveState === "saved"
-              ? "Saved"
-              : saveState === "error"
-                ? "Save Failed"
-                : currentHallId
-                  ? "Update Hall"
-                  : "Save Hall"}
-          </button>
-        </aside>
-
+        {/* 2026-09-11 Gallery Map / Room-Editing pass: the old "Arrange Shelf
+            Order" sidebar is retired — its add/move/remove behavior now
+            lives in the 3D room's own Organize overlay (see the
+            organizeOverlay block below, in roomView), and its explicit Save
+            action moved next to Organize/Done in the room's own toolbar.
+            The 3D room/map now gets the entire workspace width. */}
         {roomView}
-        </div>
       </div>
       {pickerSlotIdx !== null
         ? createPortal(
@@ -5107,6 +4863,139 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
             document.body
           )
         : null}
+      {/* Keyboard/phone fallback for moving a selected item — "Move" opens
+          a list of valid destination slot numbers using the same canonical
+          IDs and grouping the room's own Arrange panel used to show.
+          Occupied destinations are identified and still go through the
+          same Replace/Cancel confirmation as a drag drop. */}
+      {moveMenuFor !== null
+        ? createPortal(
+            <div
+              className="flex items-end justify-center p-0 sm:items-center sm:p-4"
+              style={{ position: "fixed", top: 0, right: 0, bottom: 0, left: 0, zIndex: 97 }}
+            >
+              <button
+                type="button"
+                onClick={() => {
+                  if (moveMenuFor !== null) focusSlot(moveMenuFor);
+                  setMoveMenuFor(null);
+                }}
+                aria-label="Close"
+                className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+              />
+              <div
+                className="relative flex max-h-[80dvh] w-full flex-col overflow-hidden rounded-t-3xl ring-1 sm:max-w-sm sm:rounded-3xl"
+                style={{ background: "var(--bg, #060a13)", borderColor: "var(--theme-border)" }}
+              >
+                <div className="flex justify-center pb-1 pt-3 sm:hidden">
+                  <div className="h-1 w-12 rounded-full bg-[color:var(--border)]" />
+                </div>
+                <div className="p-4 pb-2">
+                  <div className="text-sm font-black">Move to position…</div>
+                  <p className="mt-1 text-xs text-[color:var(--muted)]">
+                    Positions marked <span className="text-amber-200">•</span> already hold an item — you&apos;ll be
+                    asked before replacing it.
+                  </p>
+                </div>
+                <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-4">
+                  {slotGroups.map((group) => (
+                    <div key={group.wall} className="mb-3">
+                      <div className="mb-1 text-[10px] font-black uppercase tracking-[0.14em] text-[color:var(--muted2)]">
+                        {group.label}
+                      </div>
+                      <div className="grid grid-cols-4 gap-1.5">
+                        {group.indices.map((idx) => {
+                          const destItem = slotItems[idx];
+                          const isSelf = idx === moveMenuFor;
+                          return (
+                            <button
+                              key={idx}
+                              type="button"
+                              disabled={isSelf}
+                              onClick={() => {
+                                const from = moveMenuFor;
+                                setMoveMenuFor(null);
+                                if (from !== null) moveItemToSlot(from, idx);
+                              }}
+                              aria-label={`Move to position ${slotDisplayNumber.get(idx) ?? idx + 1}${destItem ? `, currently ${destItem.title}` : ", empty"}`}
+                              className={[
+                                "min-h-11 rounded-[6px] px-1.5 py-2 text-[11px] font-bold ring-1 transition",
+                                isSelf
+                                  ? "cursor-default bg-white/5 text-white/25 ring-white/10"
+                                  : destItem
+                                    ? "bg-amber-300/10 text-amber-100 ring-amber-200/30 hover:bg-amber-300/20"
+                                    : "bg-white/5 text-white/80 ring-white/15 hover:bg-[rgba(79,211,238,0.14)]",
+                              ].join(" ")}
+                            >
+                              #{slotDisplayNumber.get(idx) ?? idx + 1}
+                              {destItem ? " •" : ""}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>,
+            document.body
+          )
+        : null}
+      {/* Replace/Cancel — required whenever a move/drop targets an occupied
+          slot, from any input path (drag, touch, or the Move menu above).
+          Neither item is ever lost: Cancel leaves both exactly where they
+          were; Replace only clears the destination item's slot reference
+          (its vault_items row is untouched either way). */}
+      {replaceConfirm
+        ? createPortal(
+            <div
+              className="flex items-center justify-center p-4"
+              style={{ position: "fixed", top: 0, right: 0, bottom: 0, left: 0, zIndex: 98 }}
+            >
+              <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
+              <div
+                role="alertdialog"
+                aria-modal="true"
+                aria-labelledby="vltd-replace-confirm-title"
+                className="relative w-full max-w-sm rounded-2xl p-5 ring-1"
+                style={{ background: "var(--bg, #060a13)", borderColor: "var(--theme-border)" }}
+              >
+                <div id="vltd-replace-confirm-title" className="text-sm font-black leading-5">
+                  This position already contains {replaceConfirm.destTitle}. Replace it?
+                </div>
+                <p className="mt-2 text-xs leading-5 text-[color:var(--muted)]">
+                  {replaceConfirm.destTitle} will be removed from this room only — it stays in your vault, unchanged.
+                </p>
+                <div className="mt-4 flex gap-2">
+                  <button
+                    type="button"
+                    onClick={cancelReplace}
+                    className="flex-1 rounded-[6px] border py-2.5 text-sm font-black"
+                    style={{ borderColor: "var(--theme-border)", color: "var(--fg)" }}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={confirmReplace}
+                    className="flex-1 rounded-[6px] py-2.5 text-sm font-black"
+                    style={{ background: "linear-gradient(180deg,#79E7FB,#2CB1D1)", color: "#06171d" }}
+                  >
+                    Replace
+                  </button>
+                </div>
+              </div>
+            </div>,
+            document.body
+          )
+        : null}
+      {/* Screen-reader live region for save results and room-only removals —
+          "Announce save results and room-only removals with a polite live
+          region." Visually hidden, always present so a text change (even a
+          repeat) is reliably announced. */}
+      <div aria-live="polite" className="sr-only">
+        {liveAnnouncement}
+      </div>
     </main>
   );
 }
