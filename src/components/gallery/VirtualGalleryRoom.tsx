@@ -4169,17 +4169,29 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
                   type="button"
                   onClick={handleSaveClick}
                   disabled={isSavingHall}
-                  className="flex items-center gap-1.5 rounded-[6px] bg-black/42 px-3 py-2 text-xs font-black uppercase tracking-[0.14em] text-white ring-1 ring-white/12 backdrop-blur transition hover:bg-black/60 disabled:opacity-60"
+                  className={[
+                    "flex items-center gap-1.5 rounded-[6px] px-3 py-2 text-xs font-black uppercase tracking-[0.14em] backdrop-blur transition disabled:opacity-60",
+                    saveState === "error"
+                      ? "bg-red-500/85 text-white hover:bg-red-500"
+                      : "bg-black/42 text-white ring-1 ring-white/12 hover:bg-black/60",
+                  ].join(" ")}
                   title="Name and save this room so it can autosave"
                 >
                   <Save size={14} />
-                  Save Hall
+                  {saveState === "saving" ? "Saving…" : saveState === "error" ? "Save Failed — Try Again" : "Save Hall"}
                 </button>
               )
             ) : null}
           </div>
           {viewMode === "room" && selectedItems.length === 0 && !hallNoticeDismissed ? (
-            <div className="absolute inset-0 grid place-items-center px-6 text-center">
+            // Found live during this pass's own verification (pre-existing,
+            // not introduced here): this full-screen wrapper had no
+            // pointer-events-none, so it silently absorbed every click
+            // anywhere on screen — including the toolbar's Exit/Organize
+            // buttons above it — whenever an empty room's notice was
+            // showing, until Dismiss was clicked. Only the visible card
+            // itself needs pointer-events-auto.
+            <div className="pointer-events-none absolute inset-0 grid place-items-center px-6 text-center">
               <div className="pointer-events-auto relative rounded-[10px] bg-black/38 px-6 py-5 ring-1 ring-white/12 backdrop-blur">
                 <button
                   type="button"
