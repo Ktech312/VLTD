@@ -1,5 +1,20 @@
 # VLTD — Session Checklist (2026-08-05 night → ongoing, updated 2026-08-27)
 
+## 2026-09-11 (later still, same day) — fixed the layout regression from the fix directly below, small patch
+The previous fix removed the wrong Hall-assignment data correctly but also
+collapsed the left control column and shrank the map. Restored as a
+targeted patch, not a rewrite — full detail in the matching HANDOFF.md
+entry (same date, near the top).
+- [x] Left control column (aside) restored: Universe Map label, Back to Room, Enter VLTD Museum, legend — all in one place, not scattered.
+- [x] Legend back to a vertical stack in the lower-left, full-width bottom bar removed.
+- [x] Map/SVG section reclaims the space the removed full-width header/footer bars were taking.
+- [x] Every completed room (all but PLAZA/SPOTLIGHT/STORE) is a real link to `/museum/vltd` — clicking does something now.
+- [x] SPOTLIGHT/STORE show a visibly muted fill + native tooltip instead of silently ignoring the click.
+- [x] Still shared-data-only — no personal Hall names/assignments/counts anywhere on the map.
+- [x] New: `/museum/vltd` itself is now admin/owner-gated directly (`VltdMuseumAdminGate.tsx`), not just the Map tab.
+- [x] `tsc`/targeted ESLint/`npm run build` all clean.
+- [ ] **Not visually verified** — no reference screenshot was ever attached to this chat, and no browser connection was available; this is a code-level reconstruction of what EK described, not a confirmed pixel match.
+
 ## 2026-09-11 (later same day) — reverted the personal-campus direction, map is admin-only again
 `fe56c33` ("Make museum map assignments explicit") let each account place its
 own saved Halls onto the Map's room shapes — effectively a private 13-room

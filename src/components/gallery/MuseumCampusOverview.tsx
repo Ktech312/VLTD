@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { DoorOpen, Map as MapIcon } from "lucide-react";
+import { DoorOpen, Map as MapIcon, Sparkles } from "lucide-react";
 
 import { CAMPUS_DOORS, CAMPUS_ROOMS, type CampusRoomId } from "@/lib/campusLayout";
 
@@ -12,9 +12,22 @@ import { CAMPUS_DOORS, CAMPUS_ROOMS, type CampusRoomId } from "@/lib/campusLayou
 // private 13-room museum — that direction was wrong and has been removed
 // (see HANDOFF.md). This component is now a pure, read-only floor plan
 // rendered straight from CAMPUS_ROOMS/CAMPUS_DOORS — the same shared layout
-// data the real museum itself is built from — plus one link into that real
-// museum. It never reads or writes any per-user Hall data, and clicking a
-// room does nothing; the only interactive element is the Enter link.
+// data the real museum itself is built from — plus links into that real
+// museum. It never reads or writes any per-user Hall data.
+//
+// 2026-09-11, second correction same day: the first version of this
+// rewrite over-corrected the layout along with the data — it collapsed the
+// left control column into a full-width header, shrank the map, and left
+// every room non-interactive. Restored (same left-column/aside structure
+// fe56c33 also had, minus its per-Hall content): Universe Map label, Back
+// to Room, and Enter VLTD Museum all live in the left column now, with the
+// legend beneath them; the SVG section gets back the space that column
+// leaves it. Every completed room (all but PLAZA/SPOTLIGHT/STORE) is a real
+// link to /museum/vltd — there's no per-room deep link into the museum
+// scene itself (that file stays untouched, per repeated instruction), so
+// every completed room's click destination is the museum's own single
+// entry point. SPOTLIGHT/STORE get a visibly muted fill plus a native
+// tooltip instead of silently doing nothing.
 const ROOM_LABELS: Record<CampusRoomId, string> = {
   HUB: "VLTD Museum",
   POP_CULTURE: "Pop Culture",
@@ -57,26 +70,40 @@ function mapRect(x: number, z: number, width: number, depth: number) {
   };
 }
 
-export default function MuseumCampusOverview() {
+export default function MuseumCampusOverview({ onBackToRoom }: { onBackToRoom: () => void }) {
   const mapWidth = (MAP_BOUNDS.z1 - MAP_BOUNDS.z0) * MAP_HORIZONTAL_SCALE;
   const mapHeight = MAP_BOUNDS.x1 - MAP_BOUNDS.x0;
 
   return (
     <div className="absolute inset-0 overflow-hidden bg-[radial-gradient(circle_at_58%_0%,rgba(79,211,238,0.09),transparent_34%),linear-gradient(180deg,#12151a,#07090d)] p-3 text-white sm:p-4">
-      <div className="mx-auto grid h-full min-h-0 max-w-[1680px] grid-rows-[auto_minmax(0,1fr)_auto] gap-2 sm:gap-3">
-        <div className="flex flex-wrap items-center justify-between gap-2 px-1">
-          <div className="flex items-center gap-2 text-xs font-black uppercase tracking-[0.14em] text-white/72">
+      <div className="mx-auto grid h-full min-h-0 max-w-[1680px] grid-rows-[auto_minmax(0,1fr)] gap-2 sm:grid-cols-[168px_minmax(0,1fr)] sm:grid-rows-1 sm:gap-3">
+        <aside className="z-10 flex items-center gap-2 sm:flex-col sm:items-stretch sm:pt-2">
+          <div className="flex min-h-10 items-center gap-2 px-2 text-xs font-black uppercase tracking-[0.14em] text-white/82">
             <MapIcon size={14} />
-            VLTD Museum Floorplan
+            Universe Map
           </div>
+          <button
+            type="button"
+            onClick={onBackToRoom}
+            className="flex min-h-10 items-center gap-2 rounded-[6px] bg-black/28 px-3 text-xs font-black uppercase tracking-[0.12em] text-white ring-1 ring-white/14 transition hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#79e7fb]"
+          >
+            <Sparkles size={14} />
+            Back to Room
+          </button>
           <Link
             href="/museum/vltd"
-            className="flex min-h-10 items-center gap-2 rounded-[6px] bg-[#4FD3EE] px-3.5 text-xs font-black uppercase tracking-[0.12em] text-[#06171d] transition hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+            className="flex min-h-10 items-center gap-2 rounded-[6px] bg-[#4FD3EE] px-3 text-xs font-black uppercase tracking-[0.12em] text-[#06171d] transition hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
           >
             <DoorOpen size={14} />
             Enter VLTD Museum
           </Link>
-        </div>
+
+          <div className="mt-auto hidden gap-3 px-2 pb-4 text-[10px] font-black uppercase tracking-[0.12em] text-white/48 sm:grid">
+            <span className="inline-flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-[2px] bg-[#d9dde0]" /> Room</span>
+            <span className="inline-flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-[2px] border border-[#79e7fb] bg-[#153c50] shadow-[0_0_8px_rgba(121,231,251,0.5)]" /> Doorway</span>
+            <span className="inline-flex items-center gap-2"><DoorOpen size={13} /> Entrance at left</span>
+          </div>
+        </aside>
 
         <section className="relative min-h-0 overflow-hidden">
           <svg
@@ -88,6 +115,7 @@ export default function MuseumCampusOverview() {
           >
             <defs>
               <linearGradient id="museum-map-room" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stopColor="#f3f5f6" /><stop offset="0.55" stopColor="#d9dde0" /><stop offset="1" stopColor="#b8bec3" /></linearGradient>
+              <linearGradient id="museum-map-empty" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stopColor="#20252b" /><stop offset="1" stopColor="#0f1318" /></linearGradient>
               <linearGradient id="museum-map-hub" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stopColor="#282116" /><stop offset="0.55" stopColor="#15191d" /><stop offset="1" stopColor="#0b1014" /></linearGradient>
               <filter id="museum-map-glow" x="-80%" y="-80%" width="260%" height="260%"><feGaussianBlur stdDeviation="0.8" result="blur" /><feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge></filter>
             </defs>
@@ -96,6 +124,12 @@ export default function MuseumCampusOverview() {
               const isHub = layout.id === "HUB";
               const isPlaza = layout.id === "PLAZA";
               const isComingSoon = layout.id === "SPOTLIGHT" || layout.id === "STORE";
+              // Same interactive rule fe56c33 used (HUB always; every other
+              // room except the entrance and the two not-yet-populated
+              // rooms) — only what each click DOES has changed, from
+              // opening a personal-Hall panel to linking into the one real
+              // museum.
+              const interactive = isHub || (!isPlaza && !isComingSoon);
               const label = ROOM_LABELS[layout.id];
               const subtitle = isHub
                 ? "Grand Hall"
@@ -109,17 +143,18 @@ export default function MuseumCampusOverview() {
               const titleY = mapped.y + Math.min(9, mapped.height * 0.38);
               const compact = mapped.height <= 21;
               const titleSize = isHub ? 5 : Math.min(compact ? 2.55 : 3.2, (mapped.width - 3) / Math.max(1, label.length * 0.62));
-              return (
-                <g key={layout.id}>
+              const content = (
+                <>
                   <rect
                     x={mapped.x + 0.55}
                     y={mapped.y + 0.55}
                     width={mapped.width - 1.1}
                     height={mapped.height - 1.1}
                     rx={1.5}
-                    fill={isHub ? "url(#museum-map-hub)" : "url(#museum-map-room)"}
-                    stroke={isHub ? "#9a7a3a" : "#dce3e7"}
+                    fill={isHub ? "url(#museum-map-hub)" : isComingSoon ? "url(#museum-map-empty)" : "url(#museum-map-room)"}
+                    stroke={isHub ? "#9a7a3a" : isComingSoon ? "#303840" : "#dce3e7"}
                     strokeWidth={0.45}
+                    className={interactive ? "transition hover:brightness-110" : undefined}
                   />
                   {isHub ? (
                     <>
@@ -128,8 +163,18 @@ export default function MuseumCampusOverview() {
                       <text x={centerX} y={mapped.y + mapped.height / 2 - 2.2} textAnchor="middle" fill="#d7bd77" fontSize={3.1} fontWeight={900}>VLTD</text>
                     </>
                   ) : null}
-                  <text x={centerX} y={titleY} textAnchor="middle" fill={isHub ? "#f4e4b3" : "#111820"} fontSize={titleSize} fontWeight={900} letterSpacing={compact ? 0.05 : 0.12}>{label.toUpperCase()}</text>
-                  <text x={centerX} y={titleY + (isHub ? 4.3 : 3.4)} textAnchor="middle" fill={isHub ? "#9ba6ae" : "#59636b"} fontSize={compact ? 1.85 : 2.25} fontWeight={700}>{subtitle.toUpperCase()}</text>
+                  <text x={centerX} y={titleY} textAnchor="middle" fill={isHub ? "#f4e4b3" : isComingSoon ? "#d8dde2" : "#111820"} fontSize={titleSize} fontWeight={900} letterSpacing={compact ? 0.05 : 0.12}>{label.toUpperCase()}</text>
+                  <text x={centerX} y={titleY + (isHub ? 4.3 : 3.4)} textAnchor="middle" fill={isHub ? "#9ba6ae" : isComingSoon ? "#737d85" : "#59636b"} fontSize={compact ? 1.85 : 2.25} fontWeight={700}>{subtitle.toUpperCase()}</text>
+                  {isComingSoon ? <title>{`${label} — coming soon, not open yet`}</title> : null}
+                </>
+              );
+              return interactive ? (
+                <Link key={layout.id} href="/museum/vltd" aria-label={`${label} — opens the VLTD Museum`} className="cursor-pointer outline-none">
+                  {content}
+                </Link>
+              ) : (
+                <g key={layout.id} aria-label={isComingSoon ? `${label}, coming soon` : label} className={isComingSoon ? "cursor-not-allowed" : "cursor-default"}>
+                  {content}
                 </g>
               );
             })}
@@ -158,12 +203,6 @@ export default function MuseumCampusOverview() {
             })}
           </svg>
         </section>
-
-        <div className="hidden shrink-0 items-center justify-center gap-4 rounded-[6px] border border-white/10 bg-black/30 px-4 py-2 text-[10px] font-black uppercase tracking-[0.14em] text-white/55 sm:flex">
-          <span className="inline-flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-[2px] bg-[#d9dde0]" /> Room</span>
-          <span className="inline-flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-[2px] border border-[#79e7fb] bg-[#153c50] shadow-[0_0_8px_rgba(121,231,251,0.5)]" /> Doorway</span>
-          <span className="inline-flex items-center gap-1.5"><DoorOpen size={13} /> Entrance at left</span>
-        </div>
       </div>
     </div>
   );

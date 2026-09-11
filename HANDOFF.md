@@ -5,6 +5,64 @@
 - **Mobile drag/scroll bug** (EK found this hands-on, unrelated to the above): dragging to look around also scrolled the whole page on a touch device, and yaw drag didn't track smoothly — both caused by the room's mount div never declaring `touch-action: none`. Fixed with the same one-line fix already used elsewhere in this file. Code-verified and reasoned through; genuinely NOT tested with a real touch input (no tool in this session can produce one) — needs EK's own phone to close the loop.
 Regression-checked live: White unaffected (still looks exactly right), pickup/rotate/return still works, no console errors anywhere. See the 2026-09-06 dated entries (top of the log below) for full detail, including the one real bug this session found and fixed in its own live check (Blue's case lids) before calling any of this done. Before tonight: the first White-room material pass (2026-09-05, commit `c61e600`/`f346d18`) — also READY on Vercel and live-verified. Below that: the VLTD Museum public campus work (2026-08-31 through 09-04, then resumed and heavily active again 2026-09-08 through 09-10 — see the 2026-09-10 dated entry, TOP of the dated list below, for the current state: NOT accepted yet, EK's own physical-input pass still pending). Read the dated entries below in order, newest first, before assuming any room behaves a particular way. Older work further down in §2 (2026-08-27/28 Admin Users redesign; ~110 VaultItem fields + 3 Gallery-sync gaps, both migrations confirmed run by EK; Events tooling, admin console/APP_MAP.md, Vault upload; a full backend security audit, 3D Museum beta-access gating, Room Builder fixes) is unrelated to either of the above.)
 
+# 2026-09-11 (later still, same day) — Gallery Builder Map: layout regression from the previous fix, corrected as a small patch
+
+The prior fix (below) removed the wrong DATA (personal Hall assignments)
+correctly, but over-corrected the LAYOUT along with it: it collapsed the
+map's left control column into a full-width header row, which shrank the
+map, left empty space, and stranded "Enter VLTD Museum" alone at the
+upper-right. EK caught this against an "approved before" screenshot this
+session never had access to (nothing was attached in chat) — the
+restoration below was reconstructed from the last known-good CODE state
+(the `fe56c33`-era JSX structure, minus its personal-Hall content), which
+matched every element EK described. **Not visually confirmed against her
+actual reference image** — worth EK double-checking the exact spacing once
+she can look at it live.
+
+**What changed, `MuseumCampusOverview.tsx` + `VirtualGalleryRoom.tsx`:**
+- Restored the `sm:grid-cols-[168px_minmax(0,1fr)]` aside/section split (was
+  a single full-width column). The aside holds, top to bottom: "Universe
+  Map" label, "Back to Room" button (now a prop again —
+  `onBackToRoom={enterRoomFresh}`, passed back from `VirtualGalleryRoom.tsx`),
+  "Enter VLTD Museum" (moved here from the old upper-right header), and the
+  legend (`mt-auto`, vertical stack — was a separate full-width bar at the
+  page bottom, now removed).
+- The SVG `<section>` gets back the space the old full-width header/footer
+  bars were taking, which should make the map noticeably larger — this
+  matches the aside/section proportions the map already had before either
+  of today's changes.
+- **Room interaction restored, data still shared-only:** every room except
+  PLAZA/SPOTLIGHT/STORE (same `interactive` rule `fe56c33` used) is now a
+  real `next/link` Link to `/museum/vltd` — clicking a room is no longer a
+  no-op. There is no per-room deep link INTO the museum scene itself
+  (`VltdMuseumCampus.tsx` stays untouched, so every completed room's click
+  destination is the museum's one entry point, not that specific room's
+  coordinates) — flagged as a judgment call, not silently decided: adding
+  real per-room spawn points would mean touching the museum scene, which is
+  explicitly off-limits. SPOTLIGHT/STORE get a visibly muted fill
+  (restored `museum-map-empty` gradient) plus a native `<title>` tooltip
+  instead of doing nothing on click.
+- **New: the direct `/museum/vltd` route is now admin/owner-gated too**
+  (previously only the Gallery Builder's Map tab was). Added
+  `src/components/gallery/VltdMuseumAdminGate.tsx` — a small new client
+  component doing the same `getMyAdminRole()` check + Checking-access/
+  Not-authorized states already used by `admin/museum-campus/page.tsx` and
+  every other admin page — and pointed `src/app/museum/vltd/page.tsx` at it
+  instead of `VltdMuseumCampus` directly. `page.tsx` stays a Server
+  Component (keeps its `metadata` export); `VltdMuseumCampus.tsx` itself is
+  completely unchanged.
+- Verified via `tsc --noEmit` (clean), targeted ESLint on every changed/new
+  file (0 errors — one `<a>`-vs-`Link` warning caught and fixed by
+  switching to `next/link`, since it renders fine nested inside `<svg>`),
+  and a full `npm run build` (clean).
+- **Genuinely could not verify this session:** any screenshot comparison
+  (Claude-in-Chrome never connected, and no reference image was ever
+  attached to this chat) — this whole restoration is a code-level
+  reconstruction against EK's written description and the prior known-good
+  code, not a pixel comparison. Also unverified: the actual click-through to
+  `/museum/vltd` and the admin gate's real behavior for a signed-in
+  non-admin account.
+
 # 2026-09-11 (later same day) — Gallery Builder Map: reverted the personal-campus direction, restored the shared-museum floor plan, admin-gated
 
 **EK's correction, same day as the entry below:** after the overnight pass

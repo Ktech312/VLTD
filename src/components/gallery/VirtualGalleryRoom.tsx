@@ -3866,7 +3866,7 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
             // this still renders the room, never the museum map.
             <div ref={mountRef} className="absolute inset-0" style={{ touchAction: "none" }} />
           ) : (
-            <MuseumCampusOverview />
+            <MuseumCampusOverview onBackToRoom={enterRoomFresh} />
           )}
           {viewMode === "room" && isOrganizing && !effectiveGuest ? (
             // 2026-09-11 Gallery Map / Room-Editing pass: the in-room

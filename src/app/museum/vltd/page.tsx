@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 
-import VltdMuseumCampus from "@/components/gallery/VltdMuseumCampus";
+import VltdMuseumAdminGate from "@/components/gallery/VltdMuseumAdminGate";
 
 export const metadata: Metadata = {
   title: "VLTD Museum",
@@ -8,5 +8,5 @@ export const metadata: Metadata = {
 };
 
 export default function VltdMuseumPage() {
-  return <VltdMuseumCampus />;
+  return <VltdMuseumAdminGate />;
 }
