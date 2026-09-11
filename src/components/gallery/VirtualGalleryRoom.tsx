@@ -3907,6 +3907,7 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
               hubCapacity={slotPositions.length}
               onOpenHall={openHallFromMap}
               onOpenMainHall={openMainHall}
+              onBackToRoom={enterRoomFresh}
             />
           )}
           {viewMode === "room" && isOrganizing && !effectiveGuest ? (
@@ -4033,7 +4034,7 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
               })}
             </div>
           ) : null}
-          <div className="absolute left-3 right-3 top-3 flex flex-wrap items-center gap-2">
+          <div className={viewMode === "overview" ? "hidden" : "absolute left-3 right-3 top-3 flex flex-wrap items-center gap-2"}>
             <div className="pointer-events-none flex items-center gap-2 rounded-[6px] bg-black/42 px-3 py-2 text-xs font-black uppercase tracking-[0.14em] text-white ring-1 ring-white/12 backdrop-blur">
               {viewMode === "room" ? <Sparkles size={14} /> : <MapIcon size={14} />}
               {viewMode === "room" ? "VLTD Room" : "Universe Map"}

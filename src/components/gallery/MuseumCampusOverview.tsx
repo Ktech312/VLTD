@@ -1,6 +1,6 @@
 "use client";
 
-import { DoorOpen } from "lucide-react";
+import { DoorOpen, Map as MapIcon, Sparkles } from "lucide-react";
 
 import { CAMPUS_DOORS, CAMPUS_ROOMS, type CampusRoom, type CampusRoomId } from "@/lib/campusLayout";
 
@@ -55,7 +55,7 @@ const MAP_BOUNDS = CAMPUS_ROOMS.reduce(
 // north edge. The builder's map panel is landscape, so present the same plan a
 // quarter-turn clockwise: north/entrance moves to the left and the Grand Hall
 // runs across the panel.
-const MAP_HORIZONTAL_SCALE = 1.65;
+const MAP_HORIZONTAL_SCALE = 2;
 
 function mapRect(x: number, z: number, width: number, depth: number) {
   return {
@@ -72,6 +72,7 @@ export default function MuseumCampusOverview({
   hubCapacity,
   onOpenHall,
   onOpenMainHall,
+  onBackToRoom,
 }: {
   /** The up-to-9 non-HUB shapes that have a real saved Hall behind them. */
   assignments: Partial<Record<CampusRoomId, CampusRoomAssignment>>;
@@ -80,6 +81,7 @@ export default function MuseumCampusOverview({
   hubCapacity: number;
   onOpenHall: (hallId: string) => void;
   onOpenMainHall: () => void;
+  onBackToRoom: () => void;
 }) {
   const mapRooms = CAMPUS_ROOMS.map((layout) => ({ layout, assignment: assignments[layout.id] ?? null }));
   const mapWidth = (MAP_BOUNDS.z1 - MAP_BOUNDS.z0) * MAP_HORIZONTAL_SCALE;
@@ -91,14 +93,30 @@ export default function MuseumCampusOverview({
   }
 
   return (
-    <div className="absolute inset-0 overflow-hidden bg-[radial-gradient(circle_at_50%_0%,rgba(79,211,238,0.10),transparent_30%),linear-gradient(180deg,#12151a,#07090d)] p-4 pt-16 text-white">
-      <div className="mx-auto flex h-full min-h-0 max-w-[1680px] flex-col gap-2">
-        <section className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-[8px] border border-white/10 bg-[#0b0e12] p-3 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.03)] sm:p-4">
-          <div className="mb-2 flex shrink-0 items-center justify-center">
-            <span className="text-center text-[10px] font-black uppercase tracking-[0.22em] text-white/38">VLTD Museum Floorplan</span>
+    <div className="absolute inset-0 overflow-hidden bg-[radial-gradient(circle_at_58%_0%,rgba(79,211,238,0.09),transparent_34%),linear-gradient(180deg,#12151a,#07090d)] p-3 text-white sm:p-4">
+      <div className="mx-auto grid h-full min-h-0 max-w-[1680px] grid-rows-[auto_minmax(0,1fr)] gap-2 sm:grid-cols-[168px_minmax(0,1fr)] sm:grid-rows-1 sm:gap-3">
+        <aside className="z-10 flex items-center gap-2 sm:flex-col sm:items-stretch sm:pt-2">
+          <div className="flex min-h-10 items-center gap-2 px-2 text-xs font-black uppercase tracking-[0.14em] text-white/82">
+            <MapIcon size={14} />
+            Universe Map
           </div>
+          <button
+            type="button"
+            onClick={onBackToRoom}
+            className="flex min-h-10 items-center gap-2 rounded-[6px] bg-black/28 px-3 text-xs font-black uppercase tracking-[0.12em] text-white ring-1 ring-white/14 transition hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#79e7fb]"
+          >
+            <Sparkles size={14} />
+            Back to Room
+          </button>
 
-          <div className="min-h-0 flex-1">
+          <div className="mt-auto hidden gap-3 px-2 pb-4 text-[10px] font-black uppercase tracking-[0.12em] text-white/48 sm:grid">
+            <span className="inline-flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-[2px] bg-[#d9dde0]" /> Active room</span>
+            <span className="inline-flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-[2px] border border-[#79e7fb] bg-[#153c50] shadow-[0_0_8px_rgba(121,231,251,0.5)]" /> Doorway</span>
+            <span className="inline-flex items-center gap-2"><DoorOpen size={13} /> Entrance at left</span>
+          </div>
+        </aside>
+
+        <section className="relative min-h-0 overflow-hidden">
             <svg
               viewBox={`-3 -3 ${mapWidth + 6} ${mapHeight + 6}`}
               preserveAspectRatio="xMidYMid meet"
@@ -171,13 +189,6 @@ export default function MuseumCampusOverview({
                 return <rect key={`${door.rooms[0]}-${door.rooms[1] ?? "entry"}-${index}`} x={mapped.x} y={mapped.y} width={mapped.width} height={mapped.height} rx={0.42} fill="#153c50" stroke="#79e7fb" strokeWidth={0.42} filter="url(#museum-map-glow)" pointerEvents="none" />;
               })}
             </svg>
-          </div>
-
-          <div className="mt-2 flex shrink-0 items-center justify-center gap-4 rounded-[6px] border border-white/10 bg-black/30 px-4 py-2 text-[10px] font-black uppercase tracking-[0.14em] text-white/55">
-            <span className="inline-flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-[2px] bg-[#d9dde0]" /> Active room</span>
-            <span className="inline-flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-[2px] border border-[#79e7fb] bg-[#153c50] shadow-[0_0_8px_rgba(121,231,251,0.5)]" /> Doorway</span>
-            <span className="inline-flex items-center gap-1.5"><DoorOpen size={13} /> Entrance at left</span>
-          </div>
         </section>
       </div>
     </div>
