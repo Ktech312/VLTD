@@ -36,6 +36,7 @@ import {
   createHall,
   listMyHalls,
   renameHall,
+  setHallCampusRoom,
   updateHall,
   uploadHallWallpaper,
   type VirtualRoomRow,
@@ -3310,21 +3311,14 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
     setHallNoticeDismissed(true);
   }
 
-  // Every non-HUB, non-entrance, non-"coming soon" Map shape gets one of the
-  // user's OWN saved Halls, in a stable order (oldest first) — never the
-  // room currently open (that one is already HUB), never a vault-item count.
-  // A shape past the end of the user's real Hall list simply has nothing
-  // assigned — MuseumCampusOverview renders that as "Not set up yet," not an
-  // invented capacity.
+  // A saved Hall appears on the personal campus only after the owner explicitly
+  // places it. Legacy Halls have campusRoomId=null, which deliberately prevents
+  // one similarly named Hall from being repeated around the map by list order.
   const campusAssignments = useMemo(() => {
-    const assignable = halls
-      .filter((hall) => hall.id !== currentHallId)
-      .slice()
-      .sort((a, b) => a.createdAt.localeCompare(b.createdAt));
     const map: Partial<Record<CampusRoomId, CampusRoomAssignment>> = {};
-    EDITABLE_CAMPUS_ROOM_IDS.forEach((campusId, index) => {
-      const hall = assignable[index];
-      if (!hall) return;
+    for (const hall of halls) {
+      const campusId = hall.campusRoomId as CampusRoomId | null;
+      if (!campusId || !EDITABLE_CAMPUS_ROOM_IDS.includes(campusId) || map[campusId]) continue;
       const layout = parseRoomLayout(hall.roomLayout);
       const capacity = roomCapacity(layout);
       map[campusId] = {
@@ -3337,9 +3331,9 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
         occupied: hall.selectedIds.slice(0, capacity).filter(Boolean).length,
         capacity,
       };
-    });
+    }
     return map;
-  }, [halls, currentHallId]);
+  }, [halls]);
 
   // The Source dropdown's single onChange — EK's ask (2026-08-24) put "My
   // Halls" in the same dropdown as Empty Hall/Exhibitions rather than a
@@ -3412,6 +3406,7 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
         roomStyle,
         roomLayout,
         viewMode,
+        campusRoomId: hallId ? halls.find((hall) => hall.id === hallId)?.campusRoomId ?? null : null,
         showValues,
         selectedIds,
         wallpaperUrl,
@@ -3531,19 +3526,54 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
   // this is a plain debounced write, same coalescing spirit as autosave
   // above, just scoped to one field so it can never race a routine
   // selectedIds/style autosave.
-  function renameCurrentHall(nextTitle: string) {
-    if (!currentHallId) return;
-    setHalls((current) => current.map((h) => (h.id === currentHallId ? { ...h, title: nextTitle } : h)));
+  function renameMapHall(hallId: string, nextTitle: string) {
+    setHalls((current) => current.map((h) => (h.id === hallId ? { ...h, title: nextTitle } : h)));
     if (nameSaveTimerRef.current) window.clearTimeout(nameSaveTimerRef.current);
     setNameSaveState("saving");
     nameSaveTimerRef.current = window.setTimeout(() => {
       nameSaveTimerRef.current = null;
-      void renameHall(currentHallId, nextTitle).then((ok) => {
+      void renameHall(hallId, nextTitle).then((ok) => {
         setNameSaveState(ok ? "saved" : "error");
         if (ok) announce("Room name saved.");
         window.setTimeout(() => setNameSaveState((current) => (current === "saved" ? "idle" : current)), 1800);
       });
     }, 700);
+  }
+
+  function renameCurrentHall(nextTitle: string) {
+    if (currentHallId) renameMapHall(currentHallId, nextTitle);
+  }
+
+  async function assignCurrentHallToCampus(campusRoomId: CampusRoomId) {
+    if (!currentHallId) return;
+    const hall = halls.find((entry) => entry.id === currentHallId);
+    if (!hall) return;
+    const displaced = halls.find((entry) => entry.id !== hall.id && entry.campusRoomId === campusRoomId);
+    setNameSaveState("saving");
+    const results = await Promise.all([
+      setHallCampusRoom(hall.id, hall.viewMode, campusRoomId),
+      displaced ? setHallCampusRoom(displaced.id, displaced.viewMode, null) : Promise.resolve(true),
+    ]);
+    const ok = results.every(Boolean);
+    setNameSaveState(ok ? "saved" : "error");
+    if (!ok) return;
+    setHalls((current) => current.map((entry) => {
+      if (entry.id === hall.id) return { ...entry, campusRoomId };
+      if (entry.id === displaced?.id) return { ...entry, campusRoomId: null };
+      return entry;
+    }));
+    announce(`${hall.title} placed on the museum map.`);
+  }
+
+  async function unassignHallFromCampus(hallId: string) {
+    const hall = halls.find((entry) => entry.id === hallId);
+    if (!hall) return;
+    setNameSaveState("saving");
+    const ok = await setHallCampusRoom(hall.id, hall.viewMode, null);
+    setNameSaveState(ok ? "saved" : "error");
+    if (!ok) return;
+    setHalls((current) => current.map((entry) => entry.id === hall.id ? { ...entry, campusRoomId: null } : entry));
+    announce(`${hall.title} removed from the museum map.`);
   }
 
   function confirmSaveToExhibition() {
@@ -3908,6 +3938,12 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
               onOpenHall={openHallFromMap}
               onOpenMainHall={openMainHall}
               onBackToRoom={enterRoomFresh}
+              currentHallTitle={halls.find((hall) => hall.id === currentHallId)?.title ?? "this Hall"}
+              canAssignCurrentHall={Boolean(currentHallId)}
+              onAssignCurrentHall={(campusRoomId) => void assignCurrentHallToCampus(campusRoomId)}
+              onUnassignHall={(hallId) => void unassignHallFromCampus(hallId)}
+              onRenameHall={renameMapHall}
+              nameSaveState={nameSaveState}
             />
           )}
           {viewMode === "room" && isOrganizing && !effectiveGuest ? (

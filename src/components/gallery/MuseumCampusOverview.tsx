@@ -1,6 +1,7 @@
 "use client";
 
-import { DoorOpen, Map as MapIcon, Sparkles } from "lucide-react";
+import { DoorOpen, Map as MapIcon, Pencil, Sparkles, Unlink } from "lucide-react";
+import { useState } from "react";
 
 import { CAMPUS_DOORS, CAMPUS_ROOMS, type CampusRoom, type CampusRoomId } from "@/lib/campusLayout";
 
@@ -55,7 +56,7 @@ const MAP_BOUNDS = CAMPUS_ROOMS.reduce(
 // north edge. The builder's map panel is landscape, so present the same plan a
 // quarter-turn clockwise: north/entrance moves to the left and the Grand Hall
 // runs across the panel.
-const MAP_HORIZONTAL_SCALE = 2;
+const MAP_HORIZONTAL_SCALE = 1.42;
 
 function mapRect(x: number, z: number, width: number, depth: number) {
   return {
@@ -73,6 +74,12 @@ export default function MuseumCampusOverview({
   onOpenHall,
   onOpenMainHall,
   onBackToRoom,
+  currentHallTitle,
+  canAssignCurrentHall,
+  onAssignCurrentHall,
+  onUnassignHall,
+  onRenameHall,
+  nameSaveState,
 }: {
   /** The up-to-9 non-HUB shapes that have a real saved Hall behind them. */
   assignments: Partial<Record<CampusRoomId, CampusRoomAssignment>>;
@@ -82,15 +89,25 @@ export default function MuseumCampusOverview({
   onOpenHall: (hallId: string) => void;
   onOpenMainHall: () => void;
   onBackToRoom: () => void;
+  currentHallTitle: string;
+  canAssignCurrentHall: boolean;
+  onAssignCurrentHall: (campusRoomId: CampusRoomId) => void;
+  onUnassignHall: (hallId: string) => void;
+  onRenameHall: (hallId: string, title: string) => void;
+  nameSaveState: "idle" | "saving" | "saved" | "error";
 }) {
+  const [selectedRoomId, setSelectedRoomId] = useState<CampusRoomId | null>(null);
   const mapRooms = CAMPUS_ROOMS.map((layout) => ({ layout, assignment: assignments[layout.id] ?? null }));
   const mapWidth = (MAP_BOUNDS.z1 - MAP_BOUNDS.z0) * MAP_HORIZONTAL_SCALE;
   const mapHeight = MAP_BOUNDS.x1 - MAP_BOUNDS.x0;
 
-  function open(layout: CampusRoom, assignment: CampusRoomAssignment | null) {
+  function open(layout: CampusRoom) {
     if (layout.id === "HUB") onOpenMainHall();
-    else if (assignment) onOpenHall(assignment.hallId);
+    else setSelectedRoomId(layout.id);
   }
+
+  const selectedAssignment = selectedRoomId ? assignments[selectedRoomId] ?? null : null;
+  const selectedLayout = selectedRoomId ? CAMPUS_ROOMS.find((room) => room.id === selectedRoomId) ?? null : null;
 
   return (
     <div className="absolute inset-0 overflow-hidden bg-[radial-gradient(circle_at_58%_0%,rgba(79,211,238,0.09),transparent_34%),linear-gradient(180deg,#12151a,#07090d)] p-3 text-white sm:p-4">
@@ -108,6 +125,41 @@ export default function MuseumCampusOverview({
             <Sparkles size={14} />
             Back to Room
           </button>
+
+          {selectedLayout && selectedLayout.id !== "HUB" && selectedLayout.id !== "PLAZA" && selectedLayout.id !== "SPOTLIGHT" && selectedLayout.id !== "STORE" ? (
+            <div className="grid gap-2 border-t border-white/10 px-2 pt-3">
+              <div className="text-[10px] font-black uppercase tracking-[0.14em] text-white/45">Selected room</div>
+              {selectedAssignment ? (
+                <>
+                  <label className="grid gap-1 text-[10px] font-black uppercase tracking-[0.12em] text-white/55">
+                    Room name
+                    <span className="relative">
+                      <Pencil size={12} className="pointer-events-none absolute left-2.5 top-2.5 text-white/40" />
+                      <input
+                        value={selectedAssignment.title}
+                        onChange={(event) => onRenameHall(selectedAssignment.hallId, event.target.value)}
+                        maxLength={60}
+                        className="h-9 w-full rounded-[6px] bg-black/30 pl-8 pr-2 text-xs font-bold normal-case tracking-normal text-white ring-1 ring-white/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#79e7fb]"
+                      />
+                    </span>
+                  </label>
+                  <div className="min-h-4 text-[10px] font-bold text-white/45">
+                    {nameSaveState === "saving" ? "Saving name…" : nameSaveState === "saved" ? "Name saved." : nameSaveState === "error" ? "Name could not be saved." : ""}
+                  </div>
+                  <button type="button" onClick={() => onOpenHall(selectedAssignment.hallId)} className="min-h-9 rounded-[6px] bg-[#4FD3EE] px-3 text-[10px] font-black uppercase tracking-[0.12em] text-[#06171d]">Edit room</button>
+                  <button type="button" onClick={() => onUnassignHall(selectedAssignment.hallId)} className="flex min-h-9 items-center justify-center gap-2 rounded-[6px] bg-black/25 px-3 text-[10px] font-black uppercase tracking-[0.12em] text-white/70 ring-1 ring-white/12"><Unlink size={12} /> Remove from map</button>
+                </>
+              ) : (
+                <>
+                  <div className="text-xs font-bold text-white">{ROOM_LABELS[selectedLayout.id]}</div>
+                  <div className="text-[11px] leading-4 text-white/48">No Hall is linked to this room.</div>
+                  <button type="button" disabled={!canAssignCurrentHall} onClick={() => onAssignCurrentHall(selectedLayout.id)} className="min-h-10 rounded-[6px] bg-[#4FD3EE] px-3 text-[10px] font-black uppercase tracking-[0.1em] text-[#06171d] disabled:cursor-not-allowed disabled:bg-white/8 disabled:text-white/35">
+                    {canAssignCurrentHall ? `Place “${currentHallTitle}” here` : "Save a Hall first"}
+                  </button>
+                </>
+              )}
+            </div>
+          ) : null}
 
           <div className="mt-auto hidden gap-3 px-2 pb-4 text-[10px] font-black uppercase tracking-[0.12em] text-white/48 sm:grid">
             <span className="inline-flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-[2px] bg-[#d9dde0]" /> Active room</span>
@@ -136,6 +188,7 @@ export default function MuseumCampusOverview({
                 const isPlaza = layout.id === "PLAZA";
                 const isComingSoon = layout.id === "SPOTLIGHT" || layout.id === "STORE";
                 const enabled = isHub || Boolean(assignment);
+                const interactive = isHub || (!isPlaza && !isComingSoon);
                 const label = ROOM_LABELS[layout.id];
                 const subtitle = isHub
                   ? "Grand Hall"
@@ -164,12 +217,12 @@ export default function MuseumCampusOverview({
                 return (
                   <g
                     key={layout.id}
-                    role={enabled ? "button" : undefined}
-                    tabIndex={enabled ? 0 : -1}
+                    role={interactive ? "button" : undefined}
+                    tabIndex={interactive ? 0 : -1}
                     aria-label={accessibleLabel}
-                    onClick={() => enabled && open(layout, assignment)}
-                    onKeyDown={(event) => enabled && (event.key === "Enter" || event.key === " ") && open(layout, assignment)}
-                    className={enabled ? "cursor-pointer outline-none" : "cursor-default"}
+                    onClick={() => interactive && open(layout)}
+                    onKeyDown={(event) => interactive && (event.key === "Enter" || event.key === " ") && open(layout)}
+                    className={interactive ? "cursor-pointer outline-none" : "cursor-default"}
                   >
                     <rect x={mapped.x + 0.55} y={mapped.y + 0.55} width={mapped.width - 1.1} height={mapped.height - 1.1} rx={1.5} fill={isHub ? "url(#museum-map-hub)" : enabled ? "url(#museum-map-room)" : "url(#museum-map-empty)"} stroke={isHub ? "#9a7a3a" : enabled ? "#dce3e7" : "#303840"} strokeWidth={0.45} className="transition hover:brightness-110" />
                     {isHub && <><circle cx={centerX} cy={mapped.y + mapped.height / 2 - 3.2} r={5.2} fill="#090c0f" stroke="#92743a" strokeWidth={0.45} /><circle cx={centerX} cy={mapped.y + mapped.height / 2 - 3.2} r={3.8} fill="none" stroke="#5f4e2d" strokeWidth={0.3} /><text x={centerX} y={mapped.y + mapped.height / 2 - 2.2} textAnchor="middle" fill="#d7bd77" fontSize={3.1} fontWeight={900}>VLTD</text></>}
