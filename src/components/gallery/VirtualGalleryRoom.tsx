@@ -36,16 +36,15 @@ import {
   createHall,
   listMyHalls,
   renameHall,
-  setHallCampusRoom,
   updateHall,
   uploadHallWallpaper,
   type VirtualRoomRow,
 } from "@/lib/virtualRooms";
-import type { CampusRoomId } from "@/lib/campusLayout";
 import { getPrimaryImageUrl, loadItems, syncVaultItemsFromSupabase, type VaultItem } from "@/lib/vaultModel";
 import { UNIVERSE_LABEL, type UniverseKey } from "@/lib/taxonomy";
 import SocialExportSheet from "@/components/SocialExportSheet";
-import MuseumCampusOverview, { type CampusRoomAssignment } from "./MuseumCampusOverview";
+import MuseumCampusOverview from "./MuseumCampusOverview";
+import { getMyAdminRole } from "@/lib/adminAuth";
 import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment.js";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { createGalleryFinishes, type GalleryFinishStyle } from "./galleryRoomFinishes";
@@ -68,8 +67,6 @@ import {
   buildPositions,
   fillSlots,
   makeEmptySlots,
-  parseRoomLayout,
-  roomCapacity,
   shelfItemY,
   type RoomItemPosition,
   type RoomLayout,
@@ -123,19 +120,6 @@ const ROOM_MODEL_URLS: Partial<Record<RoomStyle, string>> = {
   // render time below, not a separate model.
   loft: "/models/gallery-rooms/vault-room.glb?v=front-wall-pushback-all-styles-2026-08-30",
 };
-
-// 2026-09-11 Gallery Map / Room-Editing overnight pass: the Map's 13 room
-// shapes are generated from CAMPUS_ROOMS (shared with the public campus,
-// untouched by this pass) — HUB is always the room currently open in the
-// builder (real, live counts), PLAZA is the open-air entrance (no room),
-// SPOTLIGHT/STORE stay "Coming soon" (no editable content yet). These 9 are
-// the only shapes that can ever show a REAL saved Hall's occupied/capacity —
-// assigned in a stable order from the user's own `virtual_rooms` rows (see
-// campusAssignments below), never invented, never a vault-item-by-universe
-// guess.
-const EDITABLE_CAMPUS_ROOM_IDS: CampusRoomId[] = [
-  "POP_CULTURE", "TCG", "MISC", "BUILT_BOTANY", "GAMES", "AUTOMOTIVE", "COLLECTION", "SPORTS", "CARDS",
-];
 
 function formatMoney(value?: number) {
   if (typeof value !== "number" || !Number.isFinite(value) || value <= 0) return "";
@@ -593,6 +577,11 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
   // new one.
   const [halls, setHalls] = useState<VirtualRoomRow[]>([]);
   const [currentHallId, setCurrentHallId] = useState<string | null>(null);
+  // The Map now shows the real, shared VLTD Museum (see MuseumCampusOverview's
+  // own comment) — per EK's 2026-09-11 correction, that shared museum and its
+  // map stay admin/owner-only for now, same gate already used across every
+  // other admin surface in this app. Ordinary accounts keep Room mode only.
+  const [isMuseumMapAdmin, setIsMuseumMapAdmin] = useState(false);
   const [saveModal, setSaveModal] = useState<
     { step: "name" } | { step: "exhibition-choice"; galleryId: string; galleryTitle: string } | null
   >(null);
@@ -669,6 +658,13 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
   useEffect(() => {
     selectedItemIdRef.current = selectedItemId;
   }, [selectedItemId]);
+  // Same stale-closure reasoning as selectedItemIdRef above — the Three.js
+  // scene's own click/raycast handler is set up once and does not have
+  // isMuseumMapAdmin in its effect deps.
+  const isMuseumMapAdminRef = useRef(isMuseumMapAdmin);
+  useEffect(() => {
+    isMuseumMapAdminRef.current = isMuseumMapAdmin;
+  }, [isMuseumMapAdmin]);
   const [socialShareOpen, setSocialShareOpen] = useState(false);
   const [saveState, setSaveState] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const [isOrganizing, setIsOrganizing] = useState(false);
@@ -725,6 +721,10 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
   // populates the Source dropdown's "My Halls" group.
   useEffect(() => {
     void listMyHalls().then(setHalls);
+  }, []);
+
+  useEffect(() => {
+    getMyAdminRole().then((role) => setIsMuseumMapAdmin(role !== null));
   }, []);
 
   useEffect(() => {
@@ -807,7 +807,13 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
       if (draft.roomLayout === "storefront" || draft.roomLayout === "salon" || draft.roomLayout === "spotlight") {
         setRoomLayout(draft.roomLayout);
       }
-      if (draft.viewMode === "room" || draft.viewMode === "overview") setViewMode(draft.viewMode);
+      if (draft.viewMode === "room" || draft.viewMode === "overview") {
+        // The Map is the real, shared VLTD Museum — admin/owner only for now.
+        // isMuseumMapAdmin may not have resolved yet this early (async), so
+        // this can under-admit a genuine admin back into Room instead of Map
+        // on load — safe direction to be wrong in; it never over-admits.
+        setViewMode(draft.viewMode === "overview" && !isMuseumMapAdmin ? "room" : draft.viewMode);
+      }
       if (typeof draft.showValues === "boolean") setShowValues(draft.showValues);
       // Wallpaper is saved under its own key (see saveDraft) since it's the one
       // field big enough to blow past localStorage's quota — read that first,
@@ -918,18 +924,6 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
   // means the same physical spot, whether or not it's currently occupied. Shared
   // by the 3D scene build and the Arrange panel, so both agree on where slot i is.
   const slotPositions = useMemo(() => buildPositions(roomLayout), [roomLayout]);
-  // Occupied count bounded to this room's REAL current capacity — used by
-  // the Map's HUB figure. `selectedItems.length` (above) intentionally
-  // counts every non-empty slot in the full TOTAL_SLOT_COUNT-length array
-  // regardless of the current layout's real capacity (it feeds the Items/
-  // Value metrics, which should reflect everything actually placed even if
-  // a layout change temporarily left something past the new capacity) —
-  // the Map's occupied/capacity line needs the two numbers on the same
-  // basis, or a stale extra item could read as "26 / 25 items."
-  const roomOccupiedWithinCapacity = useMemo(
-    () => slotItems.slice(0, slotPositions.length).filter(Boolean).length,
-    [slotItems, slotPositions]
-  );
   // Groups slot indices by which physical wall they're on, in shelf-reading
   // order (top row first, left-to-right/front-to-back within a row) — this is
   // what lets the Arrange panel show real "Back Wall" / "Left Wall" / "Right
@@ -3034,7 +3028,8 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
         if (hit?.object.userData.doorwayTarget) {
           const target = String(hit.object.userData.doorwayTarget);
           if (target === "__overview__") {
-            setViewMode("overview");
+            // Map = the real, shared VLTD Museum — admin/owner only for now.
+            if (isMuseumMapAdminRef.current) setViewMode("overview");
           } else if (target === "__hub__") {
             openMainHall();
           } else {
@@ -3283,7 +3278,10 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
     if (hall.roomLayout === "storefront" || hall.roomLayout === "salon" || hall.roomLayout === "spotlight") {
       setRoomLayout(hall.roomLayout);
     }
-    if (hall.viewMode === "room" || hall.viewMode === "overview") setViewMode(hall.viewMode);
+    if (hall.viewMode === "room" || hall.viewMode === "overview") {
+      // Map = the real, shared VLTD Museum — admin/owner only for now.
+      setViewMode(hall.viewMode === "overview" && !isMuseumMapAdmin ? "room" : hall.viewMode);
+    }
     setShowValues(hall.showValues);
     setWallTextureUrl(hall.wallpaperUrl ?? "");
     // fillSlots is a plain positional copy (see its own definition) — safe
@@ -3294,46 +3292,6 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
     // Same reasoning as applyGallery just above — no auto-selected item on load.
     setSourceStatus({ ok: true, message: `Loaded "${hall.title}".` });
   }
-
-  // 2026-09-11 Gallery Map / Room-Editing pass: clicking a real shape on the
-  // Map loads that Hall (same restore applyHall already does for the Source
-  // dropdown) and lands straight in the 3D room with Organize already on —
-  // the whole reason to open a room from the Map is to work on its items.
-  // `editRoomContext` is what lets Done (below) know to flush-save and
-  // return to the Map instead of just closing Organize in place.
-  function openHallFromMap(hallId: string) {
-    cameraStateRef.current = null;
-    setSelectedItemId("");
-    applyHall(hallId);
-    setEditRoomContext({ hallId });
-    setViewMode("room");
-    setIsOrganizing(true);
-    setHallNoticeDismissed(true);
-  }
-
-  // A saved Hall appears on the personal campus only after the owner explicitly
-  // places it. Legacy Halls have campusRoomId=null, which deliberately prevents
-  // one similarly named Hall from being repeated around the map by list order.
-  const campusAssignments = useMemo(() => {
-    const map: Partial<Record<CampusRoomId, CampusRoomAssignment>> = {};
-    for (const hall of halls) {
-      const campusId = hall.campusRoomId as CampusRoomId | null;
-      if (!campusId || !EDITABLE_CAMPUS_ROOM_IDS.includes(campusId) || map[campusId]) continue;
-      const layout = parseRoomLayout(hall.roomLayout);
-      const capacity = roomCapacity(layout);
-      map[campusId] = {
-        hallId: hall.id,
-        title: hall.title,
-        // Bounded to this Hall's own real current capacity — same reason
-        // as roomOccupiedWithinCapacity above (a stale slot past a later
-        // layout change must not read as occupying a position that no
-        // longer exists).
-        occupied: hall.selectedIds.slice(0, capacity).filter(Boolean).length,
-        capacity,
-      };
-    }
-    return map;
-  }, [halls]);
 
   // The Source dropdown's single onChange — EK's ask (2026-08-24) put "My
   // Halls" in the same dropdown as Empty Hall/Exhibitions rather than a
@@ -3406,7 +3364,6 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
         roomStyle,
         roomLayout,
         viewMode,
-        campusRoomId: hallId ? halls.find((hall) => hall.id === hallId)?.campusRoomId ?? null : null,
         showValues,
         selectedIds,
         wallpaperUrl,
@@ -3498,7 +3455,11 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
     if (!ok) return;
     setIsOrganizing(false);
     setEditRoomContext(null);
-    setViewMode("overview");
+    // The Map is the real, shared VLTD Museum floor plan now — admin/owner
+    // only for now (see isMuseumMapAdmin above). An ordinary account's
+    // "Exit" just closes Organize; there is nothing else here for them to
+    // land on yet.
+    if (isMuseumMapAdmin) setViewMode("overview");
   }
 
   async function handleOrganizeToggle() {
@@ -3542,38 +3503,6 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
 
   function renameCurrentHall(nextTitle: string) {
     if (currentHallId) renameMapHall(currentHallId, nextTitle);
-  }
-
-  async function assignCurrentHallToCampus(campusRoomId: CampusRoomId) {
-    if (!currentHallId) return;
-    const hall = halls.find((entry) => entry.id === currentHallId);
-    if (!hall) return;
-    const displaced = halls.find((entry) => entry.id !== hall.id && entry.campusRoomId === campusRoomId);
-    setNameSaveState("saving");
-    const results = await Promise.all([
-      setHallCampusRoom(hall.id, hall.viewMode, campusRoomId),
-      displaced ? setHallCampusRoom(displaced.id, displaced.viewMode, null) : Promise.resolve(true),
-    ]);
-    const ok = results.every(Boolean);
-    setNameSaveState(ok ? "saved" : "error");
-    if (!ok) return;
-    setHalls((current) => current.map((entry) => {
-      if (entry.id === hall.id) return { ...entry, campusRoomId };
-      if (entry.id === displaced?.id) return { ...entry, campusRoomId: null };
-      return entry;
-    }));
-    announce(`${hall.title} placed on the museum map.`);
-  }
-
-  async function unassignHallFromCampus(hallId: string) {
-    const hall = halls.find((entry) => entry.id === hallId);
-    if (!hall) return;
-    setNameSaveState("saving");
-    const ok = await setHallCampusRoom(hall.id, hall.viewMode, null);
-    setNameSaveState(ok ? "saved" : "error");
-    if (!ok) return;
-    setHalls((current) => current.map((entry) => entry.id === hall.id ? { ...entry, campusRoomId: null } : entry));
-    announce(`${hall.title} removed from the museum map.`);
   }
 
   function confirmSaveToExhibition() {
@@ -3919,7 +3848,7 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
     >
       <div className={effectiveGuest ? "h-full" : roomBoxHeightClass}>
         <div className={effectiveGuest ? "relative h-full" : ["relative", roomBoxHeightClass].join(" ")}>
-          {viewMode === "room" ? (
+          {viewMode === "room" || !isMuseumMapAdmin ? (
             // touch-action: none — without it, a touch drag on the canvas is
             // ALSO interpreted by the browser as a native page-scroll gesture
             // (pointer events fire and the camera rotates, but the page
@@ -3929,22 +3858,15 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
             // easily" on a touch device, not just the vertical-scroll
             // symptom. Same fix already used for the thumbnail drag-reorder
             // list elsewhere in this file.
+            // The `|| !isMuseumMapAdmin` half of this condition is the real
+            // access-control point for the Map: the shared VLTD Museum floor
+            // plan is admin/owner-only for now (EK, 2026-09-11), so even if
+            // viewMode somehow reads "overview" for an ordinary account (a
+            // legacy saved Hall's stored view_mode, an in-room doorway click),
+            // this still renders the room, never the museum map.
             <div ref={mountRef} className="absolute inset-0" style={{ touchAction: "none" }} />
           ) : (
-            <MuseumCampusOverview
-              assignments={campusAssignments}
-              hubOccupied={roomOccupiedWithinCapacity}
-              hubCapacity={slotPositions.length}
-              onOpenHall={openHallFromMap}
-              onOpenMainHall={openMainHall}
-              onBackToRoom={enterRoomFresh}
-              currentHallTitle={halls.find((hall) => hall.id === currentHallId)?.title ?? "this Hall"}
-              canAssignCurrentHall={Boolean(currentHallId)}
-              onAssignCurrentHall={(campusRoomId) => void assignCurrentHallToCampus(campusRoomId)}
-              onUnassignHall={(hallId) => void unassignHallFromCampus(hallId)}
-              onRenameHall={renameMapHall}
-              nameSaveState={nameSaveState}
-            />
+            <MuseumCampusOverview />
           )}
           {viewMode === "room" && isOrganizing && !effectiveGuest ? (
             // 2026-09-11 Gallery Map / Room-Editing pass: the in-room
@@ -4094,15 +4016,20 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
               </Link>
             ) : null}
             {viewMode === "room" ? (
-              <button
-                type="button"
-                onClick={() => void leaveRoomToMap()}
-                className="flex items-center gap-1.5 rounded-[6px] bg-black/42 px-3 py-2 text-xs font-black uppercase tracking-[0.14em] text-white ring-1 ring-white/12 backdrop-blur transition hover:bg-black/60"
-                title="Save and exit to the campus map"
-              >
-                <MapIcon size={14} />
-                Exit
-              </button>
+              // The Map is the real, shared VLTD Museum — admin/owner only for
+              // now, so an ordinary account has nowhere for "Exit" to lead;
+              // hide it rather than show a button that visibly does nothing.
+              isMuseumMapAdmin ? (
+                <button
+                  type="button"
+                  onClick={() => void leaveRoomToMap()}
+                  className="flex items-center gap-1.5 rounded-[6px] bg-black/42 px-3 py-2 text-xs font-black uppercase tracking-[0.14em] text-white ring-1 ring-white/12 backdrop-blur transition hover:bg-black/60"
+                  title="Save and exit to the campus map"
+                >
+                  <MapIcon size={14} />
+                  Exit
+                </button>
+              ) : null
             ) : (
               // Was missing entirely — landing in the map with no way back
               // into the room, worst in guest view where there's no
@@ -4495,16 +4422,21 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
           >
             {roomPanelOpen ? (
               <div className="flex flex-wrap items-center gap-1.5">
-                <div className="w-[92px] min-w-[92px]">
-                  <Segmented
-                    value={viewMode}
-                    options={[
-                      ["room", "Room"],
-                      ["overview", "Map"],
-                    ]}
-                    onChange={(value) => (value === "room" ? enterRoomFresh() : setViewMode(value as ViewMode))}
-                  />
-                </div>
+                {isMuseumMapAdmin ? (
+                  // Map = the real, shared VLTD Museum floor plan — admin/owner
+                  // only for now (EK, 2026-09-11). An ordinary account only has
+                  // Room mode, so there's nothing to toggle for them.
+                  <div className="w-[92px] min-w-[92px]">
+                    <Segmented
+                      value={viewMode}
+                      options={[
+                        ["room", "Room"],
+                        ["overview", "Map"],
+                      ]}
+                      onChange={(value) => (value === "room" ? enterRoomFresh() : setViewMode(value as ViewMode))}
+                    />
+                  </div>
+                ) : null}
                 <div className="w-[136px] min-w-[136px]">
                   <Segmented
                     value={roomLayout}

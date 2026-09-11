@@ -1,31 +1,20 @@
 "use client";
 
-import { DoorOpen, Map as MapIcon, Pencil, Sparkles, Unlink } from "lucide-react";
-import { useState } from "react";
+import Link from "next/link";
+import { DoorOpen, Map as MapIcon } from "lucide-react";
 
-import { CAMPUS_DOORS, CAMPUS_ROOMS, type CampusRoom, type CampusRoomId } from "@/lib/campusLayout";
+import { CAMPUS_DOORS, CAMPUS_ROOMS, type CampusRoomId } from "@/lib/campusLayout";
 
-// 2026-09-11 Gallery Map / Room-Editing overnight pass
-// (docs/GALLERY-MAP-ROOM-EDITING-OVERNIGHT-PASS-2026-09-11.md): this map used
-// to group the signed-in user's own vault items by `universe` into synthetic
-// "rooms" and show vault-item counts/value for them — that's an item COUNT,
-// never a real slot template, so it could never honestly answer "how many of
-// this room's real positions are filled." Replaced with real Halls: each
-// shape below is either the room currently open in the builder (HUB —
-// unchanged, still always enterable) or one of the user's own saved Halls
-// (`virtual_rooms` rows), assigned to a shape by `VirtualGalleryRoom.tsx`.
-// occupied/capacity here are exactly what's passed in — this component never
-// invents a count, it only renders what its caller already computed from
-// that Hall's own `selectedIds` and `buildPositions()` (the same slot table
-// the 3D room itself uses). A shape with no assigned Hall yet shows a plain,
-// truthful "Not set up" state instead of a made-up number.
-export type CampusRoomAssignment = {
-  hallId: string;
-  title: string;
-  occupied: number;
-  capacity: number;
-};
-
+// 2026-09-11, corrected same day: this map represents the ONE real, shared
+// VLTD Museum at /museum/vltd — not a personal campus. An earlier pass the
+// same day (commit fe56c33) let each account "place" its own saved Halls
+// onto these room shapes, which meant every user effectively got their own
+// private 13-room museum — that direction was wrong and has been removed
+// (see HANDOFF.md). This component is now a pure, read-only floor plan
+// rendered straight from CAMPUS_ROOMS/CAMPUS_DOORS — the same shared layout
+// data the real museum itself is built from — plus one link into that real
+// museum. It never reads or writes any per-user Hall data, and clicking a
+// room does nothing; the only interactive element is the Enter link.
 const ROOM_LABELS: Record<CampusRoomId, string> = {
   HUB: "VLTD Museum",
   POP_CULTURE: "Pop Culture",
@@ -53,9 +42,10 @@ const MAP_BOUNDS = CAMPUS_ROOMS.reduce(
 );
 
 // The campus is authored in world X/Z coordinates with the entrance along its
-// north edge. The builder's map panel is landscape, so present the same plan a
-// quarter-turn clockwise: north/entrance moves to the left and the Grand Hall
-// runs across the panel.
+// north edge. This panel is landscape, so present the same plan a quarter-turn
+// clockwise: north/entrance moves to the left and the Grand Hall runs across
+// the panel. Scale kept from the 2026-09-11 "use full workspace" pass — do
+// not revert to a smaller/more-stretched value.
 const MAP_HORIZONTAL_SCALE = 1.42;
 
 function mapRect(x: number, z: number, width: number, depth: number) {
@@ -67,182 +57,113 @@ function mapRect(x: number, z: number, width: number, depth: number) {
   };
 }
 
-export default function MuseumCampusOverview({
-  assignments,
-  hubOccupied,
-  hubCapacity,
-  onOpenHall,
-  onOpenMainHall,
-  onBackToRoom,
-  currentHallTitle,
-  canAssignCurrentHall,
-  onAssignCurrentHall,
-  onUnassignHall,
-  onRenameHall,
-  nameSaveState,
-}: {
-  /** The up-to-9 non-HUB shapes that have a real saved Hall behind them. */
-  assignments: Partial<Record<CampusRoomId, CampusRoomAssignment>>;
-  /** HUB always represents whatever room is currently open in the builder — real, live counts, not a separate Hall lookup. */
-  hubOccupied: number;
-  hubCapacity: number;
-  onOpenHall: (hallId: string) => void;
-  onOpenMainHall: () => void;
-  onBackToRoom: () => void;
-  currentHallTitle: string;
-  canAssignCurrentHall: boolean;
-  onAssignCurrentHall: (campusRoomId: CampusRoomId) => void;
-  onUnassignHall: (hallId: string) => void;
-  onRenameHall: (hallId: string, title: string) => void;
-  nameSaveState: "idle" | "saving" | "saved" | "error";
-}) {
-  const [selectedRoomId, setSelectedRoomId] = useState<CampusRoomId | null>(null);
-  const mapRooms = CAMPUS_ROOMS.map((layout) => ({ layout, assignment: assignments[layout.id] ?? null }));
+export default function MuseumCampusOverview() {
   const mapWidth = (MAP_BOUNDS.z1 - MAP_BOUNDS.z0) * MAP_HORIZONTAL_SCALE;
   const mapHeight = MAP_BOUNDS.x1 - MAP_BOUNDS.x0;
 
-  function open(layout: CampusRoom) {
-    if (layout.id === "HUB") onOpenMainHall();
-    else setSelectedRoomId(layout.id);
-  }
-
-  const selectedAssignment = selectedRoomId ? assignments[selectedRoomId] ?? null : null;
-  const selectedLayout = selectedRoomId ? CAMPUS_ROOMS.find((room) => room.id === selectedRoomId) ?? null : null;
-
   return (
     <div className="absolute inset-0 overflow-hidden bg-[radial-gradient(circle_at_58%_0%,rgba(79,211,238,0.09),transparent_34%),linear-gradient(180deg,#12151a,#07090d)] p-3 text-white sm:p-4">
-      <div className="mx-auto grid h-full min-h-0 max-w-[1680px] grid-rows-[auto_minmax(0,1fr)] gap-2 sm:grid-cols-[168px_minmax(0,1fr)] sm:grid-rows-1 sm:gap-3">
-        <aside className="z-10 flex items-center gap-2 sm:flex-col sm:items-stretch sm:pt-2">
-          <div className="flex min-h-10 items-center gap-2 px-2 text-xs font-black uppercase tracking-[0.14em] text-white/82">
+      <div className="mx-auto grid h-full min-h-0 max-w-[1680px] grid-rows-[auto_minmax(0,1fr)_auto] gap-2 sm:gap-3">
+        <div className="flex flex-wrap items-center justify-between gap-2 px-1">
+          <div className="flex items-center gap-2 text-xs font-black uppercase tracking-[0.14em] text-white/72">
             <MapIcon size={14} />
-            Universe Map
+            VLTD Museum Floorplan
           </div>
-          <button
-            type="button"
-            onClick={onBackToRoom}
-            className="flex min-h-10 items-center gap-2 rounded-[6px] bg-black/28 px-3 text-xs font-black uppercase tracking-[0.12em] text-white ring-1 ring-white/14 transition hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#79e7fb]"
+          <Link
+            href="/museum/vltd"
+            className="flex min-h-10 items-center gap-2 rounded-[6px] bg-[#4FD3EE] px-3.5 text-xs font-black uppercase tracking-[0.12em] text-[#06171d] transition hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
           >
-            <Sparkles size={14} />
-            Back to Room
-          </button>
-
-          {selectedLayout && selectedLayout.id !== "HUB" && selectedLayout.id !== "PLAZA" && selectedLayout.id !== "SPOTLIGHT" && selectedLayout.id !== "STORE" ? (
-            <div className="grid gap-2 border-t border-white/10 px-2 pt-3">
-              <div className="text-[10px] font-black uppercase tracking-[0.14em] text-white/45">Selected room</div>
-              {selectedAssignment ? (
-                <>
-                  <label className="grid gap-1 text-[10px] font-black uppercase tracking-[0.12em] text-white/55">
-                    Room name
-                    <span className="relative">
-                      <Pencil size={12} className="pointer-events-none absolute left-2.5 top-2.5 text-white/40" />
-                      <input
-                        value={selectedAssignment.title}
-                        onChange={(event) => onRenameHall(selectedAssignment.hallId, event.target.value)}
-                        maxLength={60}
-                        className="h-9 w-full rounded-[6px] bg-black/30 pl-8 pr-2 text-xs font-bold normal-case tracking-normal text-white ring-1 ring-white/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#79e7fb]"
-                      />
-                    </span>
-                  </label>
-                  <div className="min-h-4 text-[10px] font-bold text-white/45">
-                    {nameSaveState === "saving" ? "Saving name…" : nameSaveState === "saved" ? "Name saved." : nameSaveState === "error" ? "Name could not be saved." : ""}
-                  </div>
-                  <button type="button" onClick={() => onOpenHall(selectedAssignment.hallId)} className="min-h-9 rounded-[6px] bg-[#4FD3EE] px-3 text-[10px] font-black uppercase tracking-[0.12em] text-[#06171d]">Edit room</button>
-                  <button type="button" onClick={() => onUnassignHall(selectedAssignment.hallId)} className="flex min-h-9 items-center justify-center gap-2 rounded-[6px] bg-black/25 px-3 text-[10px] font-black uppercase tracking-[0.12em] text-white/70 ring-1 ring-white/12"><Unlink size={12} /> Remove from map</button>
-                </>
-              ) : (
-                <>
-                  <div className="text-xs font-bold text-white">{ROOM_LABELS[selectedLayout.id]}</div>
-                  <div className="text-[11px] leading-4 text-white/48">No Hall is linked to this room.</div>
-                  <button type="button" disabled={!canAssignCurrentHall} onClick={() => onAssignCurrentHall(selectedLayout.id)} className="min-h-10 rounded-[6px] bg-[#4FD3EE] px-3 text-[10px] font-black uppercase tracking-[0.1em] text-[#06171d] disabled:cursor-not-allowed disabled:bg-white/8 disabled:text-white/35">
-                    {canAssignCurrentHall ? `Place “${currentHallTitle}” here` : "Save a Hall first"}
-                  </button>
-                </>
-              )}
-            </div>
-          ) : null}
-
-          <div className="mt-auto hidden gap-3 px-2 pb-4 text-[10px] font-black uppercase tracking-[0.12em] text-white/48 sm:grid">
-            <span className="inline-flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-[2px] bg-[#d9dde0]" /> Active room</span>
-            <span className="inline-flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-[2px] border border-[#79e7fb] bg-[#153c50] shadow-[0_0_8px_rgba(121,231,251,0.5)]" /> Doorway</span>
-            <span className="inline-flex items-center gap-2"><DoorOpen size={13} /> Entrance at left</span>
-          </div>
-        </aside>
+            <DoorOpen size={14} />
+            Enter VLTD Museum
+          </Link>
+        </div>
 
         <section className="relative min-h-0 overflow-hidden">
-            <svg
-              viewBox={`-3 -3 ${mapWidth + 6} ${mapHeight + 6}`}
-              preserveAspectRatio="xMidYMid meet"
-              className="block h-full w-full"
-              role="group"
-              aria-label="Interactive floor plan of the VLTD Museum campus"
-            >
-              <defs>
-                <linearGradient id="museum-map-room" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stopColor="#f3f5f6" /><stop offset="0.55" stopColor="#d9dde0" /><stop offset="1" stopColor="#b8bec3" /></linearGradient>
-                <linearGradient id="museum-map-empty" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stopColor="#20252b" /><stop offset="1" stopColor="#0f1318" /></linearGradient>
-                <linearGradient id="museum-map-hub" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stopColor="#282116" /><stop offset="0.55" stopColor="#15191d" /><stop offset="1" stopColor="#0b1014" /></linearGradient>
-                <filter id="museum-map-glow" x="-80%" y="-80%" width="260%" height="260%"><feGaussianBlur stdDeviation="0.8" result="blur" /><feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge></filter>
-              </defs>
+          <svg
+            viewBox={`-3 -3 ${mapWidth + 6} ${mapHeight + 6}`}
+            preserveAspectRatio="xMidYMid meet"
+            className="block h-full w-full"
+            role="img"
+            aria-label="Floor plan of the real VLTD Museum"
+          >
+            <defs>
+              <linearGradient id="museum-map-room" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stopColor="#f3f5f6" /><stop offset="0.55" stopColor="#d9dde0" /><stop offset="1" stopColor="#b8bec3" /></linearGradient>
+              <linearGradient id="museum-map-hub" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stopColor="#282116" /><stop offset="0.55" stopColor="#15191d" /><stop offset="1" stopColor="#0b1014" /></linearGradient>
+              <filter id="museum-map-glow" x="-80%" y="-80%" width="260%" height="260%"><feGaussianBlur stdDeviation="0.8" result="blur" /><feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge></filter>
+            </defs>
 
-              {mapRooms.map(({ layout, assignment }) => {
-                const isHub = layout.id === "HUB";
-                const isPlaza = layout.id === "PLAZA";
-                const isComingSoon = layout.id === "SPOTLIGHT" || layout.id === "STORE";
-                const enabled = isHub || Boolean(assignment);
-                const interactive = isHub || (!isPlaza && !isComingSoon);
-                const label = ROOM_LABELS[layout.id];
-                const subtitle = isHub
-                  ? "Grand Hall"
-                  : isPlaza
-                    ? "Main Entrance"
-                    : isComingSoon
-                      ? "Coming soon"
-                      : assignment
-                        ? "Saved Hall"
-                        : "Not set up yet";
-                const mapped = mapRect(layout.x, layout.z, layout.w, layout.d);
-                const centerX = mapped.x + mapped.width / 2;
-                const titleY = mapped.y + Math.min(9, mapped.height * 0.38);
-                const compact = mapped.height <= 21;
-                const titleSize = isHub ? 5 : Math.min(compact ? 2.55 : 3.2, (mapped.width - 3) / Math.max(1, label.length * 0.62));
-                const occupancyText = isHub
-                  ? `${hubOccupied} / ${hubCapacity} ITEMS`
-                  : assignment
-                    ? `${assignment.occupied} / ${assignment.capacity} ITEMS`
-                    : null;
-                const accessibleLabel = isHub
-                  ? `${label}, the room currently open, ${hubOccupied} of ${hubCapacity} items`
-                  : assignment
-                    ? `${assignment.title}, ${assignment.occupied} of ${assignment.capacity} items`
-                    : `${label}, ${subtitle}`;
-                return (
-                  <g
-                    key={layout.id}
-                    role={interactive ? "button" : undefined}
-                    tabIndex={interactive ? 0 : -1}
-                    aria-label={accessibleLabel}
-                    onClick={() => interactive && open(layout)}
-                    onKeyDown={(event) => interactive && (event.key === "Enter" || event.key === " ") && open(layout)}
-                    className={interactive ? "cursor-pointer outline-none" : "cursor-default"}
-                  >
-                    <rect x={mapped.x + 0.55} y={mapped.y + 0.55} width={mapped.width - 1.1} height={mapped.height - 1.1} rx={1.5} fill={isHub ? "url(#museum-map-hub)" : enabled ? "url(#museum-map-room)" : "url(#museum-map-empty)"} stroke={isHub ? "#9a7a3a" : enabled ? "#dce3e7" : "#303840"} strokeWidth={0.45} className="transition hover:brightness-110" />
-                    {isHub && <><circle cx={centerX} cy={mapped.y + mapped.height / 2 - 3.2} r={5.2} fill="#090c0f" stroke="#92743a" strokeWidth={0.45} /><circle cx={centerX} cy={mapped.y + mapped.height / 2 - 3.2} r={3.8} fill="none" stroke="#5f4e2d" strokeWidth={0.3} /><text x={centerX} y={mapped.y + mapped.height / 2 - 2.2} textAnchor="middle" fill="#d7bd77" fontSize={3.1} fontWeight={900}>VLTD</text></>}
-                    <text x={centerX} y={titleY} textAnchor="middle" fill={isHub ? "#f4e4b3" : enabled ? "#111820" : "#d8dde2"} fontSize={titleSize} fontWeight={900} letterSpacing={compact ? 0.05 : 0.12}>{(assignment?.title ?? label).toUpperCase()}</text>
-                    <text x={centerX} y={titleY + (isHub ? 4.3 : 3.4)} textAnchor="middle" fill={isHub ? "#9ba6ae" : enabled ? "#59636b" : "#737d85"} fontSize={compact ? 1.85 : 2.25} fontWeight={700}>{subtitle.toUpperCase()}</text>
-                    {occupancyText ? <text x={centerX} y={mapped.y + mapped.height - 3.5} textAnchor="middle" fill={isHub ? "#9fddeb" : "#26323a"} fontSize={compact ? 1.85 : 2.15} fontWeight={800}>{occupancyText}</text> : null}
-                  </g>
-                );
-              })}
+            {CAMPUS_ROOMS.map((layout) => {
+              const isHub = layout.id === "HUB";
+              const isPlaza = layout.id === "PLAZA";
+              const isComingSoon = layout.id === "SPOTLIGHT" || layout.id === "STORE";
+              const label = ROOM_LABELS[layout.id];
+              const subtitle = isHub
+                ? "Grand Hall"
+                : isPlaza
+                  ? "Main Entrance"
+                  : isComingSoon
+                    ? "Coming soon"
+                    : layout.tierLabel.replace(" · baseline", "");
+              const mapped = mapRect(layout.x, layout.z, layout.w, layout.d);
+              const centerX = mapped.x + mapped.width / 2;
+              const titleY = mapped.y + Math.min(9, mapped.height * 0.38);
+              const compact = mapped.height <= 21;
+              const titleSize = isHub ? 5 : Math.min(compact ? 2.55 : 3.2, (mapped.width - 3) / Math.max(1, label.length * 0.62));
+              return (
+                <g key={layout.id}>
+                  <rect
+                    x={mapped.x + 0.55}
+                    y={mapped.y + 0.55}
+                    width={mapped.width - 1.1}
+                    height={mapped.height - 1.1}
+                    rx={1.5}
+                    fill={isHub ? "url(#museum-map-hub)" : "url(#museum-map-room)"}
+                    stroke={isHub ? "#9a7a3a" : "#dce3e7"}
+                    strokeWidth={0.45}
+                  />
+                  {isHub ? (
+                    <>
+                      <circle cx={centerX} cy={mapped.y + mapped.height / 2 - 3.2} r={5.2} fill="#090c0f" stroke="#92743a" strokeWidth={0.45} />
+                      <circle cx={centerX} cy={mapped.y + mapped.height / 2 - 3.2} r={3.8} fill="none" stroke="#5f4e2d" strokeWidth={0.3} />
+                      <text x={centerX} y={mapped.y + mapped.height / 2 - 2.2} textAnchor="middle" fill="#d7bd77" fontSize={3.1} fontWeight={900}>VLTD</text>
+                    </>
+                  ) : null}
+                  <text x={centerX} y={titleY} textAnchor="middle" fill={isHub ? "#f4e4b3" : "#111820"} fontSize={titleSize} fontWeight={900} letterSpacing={compact ? 0.05 : 0.12}>{label.toUpperCase()}</text>
+                  <text x={centerX} y={titleY + (isHub ? 4.3 : 3.4)} textAnchor="middle" fill={isHub ? "#9ba6ae" : "#59636b"} fontSize={compact ? 1.85 : 2.25} fontWeight={700}>{subtitle.toUpperCase()}</text>
+                </g>
+              );
+            })}
 
-              {CAMPUS_DOORS.map((door, index) => {
-                const width = door.width ?? 3;
-                const horizontal = door.wall === "x";
-                const mapped = horizontal
-                  ? mapRect(door.gapCenter - width / 2, door.at - 0.72, width, 1.44)
-                  : mapRect(door.at - 0.72, door.gapCenter - width / 2, 1.44, width);
-                return <rect key={`${door.rooms[0]}-${door.rooms[1] ?? "entry"}-${index}`} x={mapped.x} y={mapped.y} width={mapped.width} height={mapped.height} rx={0.42} fill="#153c50" stroke="#79e7fb" strokeWidth={0.42} filter="url(#museum-map-glow)" pointerEvents="none" />;
-              })}
-            </svg>
+            {CAMPUS_DOORS.map((door, index) => {
+              const width = door.width ?? 3;
+              const horizontal = door.wall === "x";
+              const mapped = horizontal
+                ? mapRect(door.gapCenter - width / 2, door.at - 0.72, width, 1.44)
+                : mapRect(door.at - 0.72, door.gapCenter - width / 2, 1.44, width);
+              return (
+                <rect
+                  key={`${door.rooms[0]}-${door.rooms[1] ?? "entry"}-${index}`}
+                  x={mapped.x}
+                  y={mapped.y}
+                  width={mapped.width}
+                  height={mapped.height}
+                  rx={0.42}
+                  fill="#153c50"
+                  stroke="#79e7fb"
+                  strokeWidth={0.42}
+                  filter="url(#museum-map-glow)"
+                  pointerEvents="none"
+                />
+              );
+            })}
+          </svg>
         </section>
+
+        <div className="hidden shrink-0 items-center justify-center gap-4 rounded-[6px] border border-white/10 bg-black/30 px-4 py-2 text-[10px] font-black uppercase tracking-[0.14em] text-white/55 sm:flex">
+          <span className="inline-flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-[2px] bg-[#d9dde0]" /> Room</span>
+          <span className="inline-flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-[2px] border border-[#79e7fb] bg-[#153c50] shadow-[0_0_8px_rgba(121,231,251,0.5)]" /> Doorway</span>
+          <span className="inline-flex items-center gap-1.5"><DoorOpen size={13} /> Entrance at left</span>
+        </div>
       </div>
     </div>
   );

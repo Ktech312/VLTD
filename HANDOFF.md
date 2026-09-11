@@ -5,6 +5,86 @@
 - **Mobile drag/scroll bug** (EK found this hands-on, unrelated to the above): dragging to look around also scrolled the whole page on a touch device, and yaw drag didn't track smoothly — both caused by the room's mount div never declaring `touch-action: none`. Fixed with the same one-line fix already used elsewhere in this file. Code-verified and reasoned through; genuinely NOT tested with a real touch input (no tool in this session can produce one) — needs EK's own phone to close the loop.
 Regression-checked live: White unaffected (still looks exactly right), pickup/rotate/return still works, no console errors anywhere. See the 2026-09-06 dated entries (top of the log below) for full detail, including the one real bug this session found and fixed in its own live check (Blue's case lids) before calling any of this done. Before tonight: the first White-room material pass (2026-09-05, commit `c61e600`/`f346d18`) — also READY on Vercel and live-verified. Below that: the VLTD Museum public campus work (2026-08-31 through 09-04, then resumed and heavily active again 2026-09-08 through 09-10 — see the 2026-09-10 dated entry, TOP of the dated list below, for the current state: NOT accepted yet, EK's own physical-input pass still pending). Read the dated entries below in order, newest first, before assuming any room behaves a particular way. Older work further down in §2 (2026-08-27/28 Admin Users redesign; ~110 VaultItem fields + 3 Gallery-sync gaps, both migrations confirmed run by EK; Events tooling, admin console/APP_MAP.md, Vault upload; a full backend security audit, 3D Museum beta-access gating, Room Builder fixes) is unrelated to either of the above.)
 
+# 2026-09-11 (later same day) — Gallery Builder Map: reverted the personal-campus direction, restored the shared-museum floor plan, admin-gated
+
+**EK's correction, same day as the entry below:** after the overnight pass
+below shipped, a follow-up commit `fe56c33` ("Make museum map assignments
+explicit") let each account "place" its own saved Halls onto the Map's room
+shapes — HUB became "whatever room you currently have open," and clicking any
+other room shape opened a setup panel to link/rename/unlink a personal Hall
+there. EK caught this as the wrong direction: it meant every account got its
+own simulated private 13-room museum, when there is supposed to be exactly
+ONE real, shared VLTD Museum (`/museum/vltd`) that only she/admins can enter
+for now. She had also discarded an in-progress, uncommitted attempt at fixing
+this in a separate Codex worktree before handing the correction to this
+session — that WIP is gone, this is a clean rewrite from `fe56c33`.
+
+**What changed, all same day:**
+- `src/lib/virtualRooms.ts` reverted to its pre-`fe56c33` shape — no
+  `campusRoomId` field, no `setHallCampusRoom()`, no view-mode-suffix
+  encode/decode. `fe56c33` never added a real database column (it packed the
+  placement into the existing `view_mode` text column via a `|campus:ID`
+  suffix), so this revert needed no migration and touches no schema.
+- `src/components/gallery/MuseumCampusOverview.tsx` rewritten as a pure,
+  read-only floor plan generated straight from `CAMPUS_ROOMS`/`CAMPUS_DOORS`
+  (the same shared layout data the real museum itself is built from) — no
+  props, no per-Hall data, no click-to-open-a-panel behavior. Its only
+  interactive element is a new **Enter VLTD Museum** link to `/museum/vltd`.
+  Kept the 2026-09-11 "use full workspace"/`MAP_HORIZONTAL_SCALE = 1.42`
+  proportions from earlier the same day — those were a real improvement,
+  unrelated to the wrong-direction part.
+- `src/components/gallery/VirtualGalleryRoom.tsx`: removed
+  `campusAssignments`, `openHallFromMap`, `assignCurrentHallToCampus`,
+  `unassignHallFromCampus`, `EDITABLE_CAMPUS_ROOM_IDS`, and the now-dead
+  `roomOccupiedWithinCapacity` — all of it was only reachable through the
+  removed per-room setup panel. `editRoomContext` is left in place but is
+  now permanently `null` (its only setter was `openHallFromMap`) — a
+  genuinely dead branch in `handleOrganizeToggle`, not a bug, left alone
+  rather than doing a second, riskier surgical pass on Done/Organize.
+- **Admin-only gate, per EK's explicit ask** ("the full VLTD Museum and its
+  map are available only to EK and admins using the existing admin/owner
+  authorization system"): added `isMuseumMapAdmin` via the same
+  `getMyAdminRole()` used by every other admin surface in this app. Every
+  path that could set `viewMode` to `"overview"` (the Map's toggle button, a
+  restored local draft, a loaded Hall's saved view mode, the in-room 3D
+  `"__overview__"` doorway hotspot, the toolbar's Exit button) now checks
+  this first; the actual render is additionally guarded a second time at the
+  final `viewMode === "room" || !isMuseumMapAdmin` decision point, so even an
+  edge case that slips past one of those checks still can't render the
+  museum map for a non-admin. The "Map" segmented-toggle option and the
+  "Exit" button are hidden entirely for non-admins rather than left as
+  buttons that visibly do nothing. An admin-role check inside the Three.js
+  scene's own click handler goes through a ref
+  (`isMuseumMapAdminRef`, same pattern as the existing `selectedItemIdRef`)
+  to avoid a stale-closure bug, since that handler is set up once and
+  doesn't have `isMuseumMapAdmin` in its effect deps.
+- Ordinary (non-admin) accounts are unaffected otherwise — they keep their
+  one personal Gallery/Room with all its existing Exhibits and item-editing
+  features exactly as before; they just no longer see a Map tab at all.
+- Confirmed via `git diff` that `VltdMuseumCampus.tsx`, `campusRoomBuilder.ts`,
+  `campusLayout.ts`, and everything under `src/app/museum/vltd/` are
+  byte-identical to the last accepted state (`071d321`) — nothing in this
+  correction, or in the wrong-direction commit it undoes, ever touched the
+  real museum's own rooms, doors, themes, movement, or layout.
+- Verified via `tsc --noEmit` (clean), targeted ESLint on the three changed
+  files (0 errors; one new, intentional `exhaustive-deps` warning on the
+  draft-restore effect reading `isMuseumMapAdmin`, matching this file's
+  existing tolerance for the same pattern elsewhere), and a full
+  `npm run build -- ` production build (clean). **Not live-verified this
+  session** (Claude-in-Chrome not connected) — worth EK confirming live:
+  the Map shows the real 13-room/20-door floor plan with no personal Hall
+  names on it, clicking a room does nothing, Enter VLTD Museum opens the
+  real museum, and an ordinary (non-admin) test account has no Map tab at
+  all.
+- ⚠ Separately noticed while reading this file, **not touched, not part of
+  this task**: the still-open `20260909_fix_vault_item_limit_type_mismatch.sql`
+  entry a few sections below — every vault item save has reportedly been
+  silently failing to reach Supabase since 2026-08-19 until that migration is
+  run. Flagging it again here since it's severe and easy to lose track of
+  amid the museum work.
+
+---
+
 # 2026-09-11 — Gallery Builder Map cleanup and in-room organization — overnight pass SHIPPED, EK's own review still pending
 
 **Update, same night, after the work order below was completed:** all of it shipped to `main`/production across three commits — `5da4cda` (the main pass: Map now shows real saved Halls with real occupied/capacity from `buildPositions()`, not a vault-item-by-universe guess; the old "Arrange Shelf Order" sidebar is gone, replaced by a real HTML overlay projected onto each shelf/case's actual 3D position — click/tap to select, drag or press-and-hold to move, `+`/`−`, Replace/Cancel confirmation, a keyboard Move-to-position menu, a live region; debounced autosave once a room is a saved Hall; `virtualRooms.ts` gained `renameHall` since `title` had no update path before), `2b38ece` and `140ec56` (two small bugs this same pass's own live verification caught: a pre-existing full-screen click-blocker on the empty-room notice that had nothing to do with tonight's feature work but happened to sit on top of the very toolbar being shipped, and a save-status regression from the toolbar refactor itself where a first-time Save Hall failure showed no visible error). New shared module: `src/lib/galleryRoomSlots.ts` (the slot-geometry math extracted out of `VirtualGalleryRoom.tsx` so the Map can compute real capacity without a circular import).

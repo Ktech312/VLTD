@@ -1,16 +1,29 @@
 # VLTD — Session Checklist (2026-08-05 night → ongoing, updated 2026-08-27)
 
+## 2026-09-11 (later same day) — reverted the personal-campus direction, map is admin-only again
+`fe56c33` ("Make museum map assignments explicit") let each account place its
+own saved Halls onto the Map's room shapes — effectively a private 13-room
+museum per user. EK caught it and asked for a correction; full detail in the
+matching HANDOFF.md entry (same date, near the top of the file).
+- [x] Map is a pure, read-only floor plan from `CAMPUS_ROOMS`/`CAMPUS_DOORS` — no personal Hall data, no click-to-open-a-panel.
+- [x] Removed `campusRoomId`/`setHallCampusRoom` and all Hall↔museum-room linking (no migration needed — it was never a real DB column).
+- [x] Added one **Enter VLTD Museum** link to `/museum/vltd`; kept the 1.42 map-scale improvement from earlier the same day.
+- [x] Map (and the real museum) gated to admin/owner only via the existing `getMyAdminRole()` — ordinary accounts keep one personal Gallery/Room, no Map tab at all.
+- [x] Confirmed `VltdMuseumCampus.tsx`/`campusRoomBuilder.ts`/`campusLayout.ts`/`src/app/museum/vltd/` byte-identical to `071d321` — the real museum was never touched by either the wrong turn or this fix.
+- [x] `tsc`/targeted ESLint/`npm run build` all clean.
+- [ ] **Not live-verified this session** (no browser connection) — EK to confirm: no personal Hall names appear anywhere on the map, clicking a room does nothing, Enter VLTD Museum works, a non-admin test account has no Map tab.
+
 # 2026-09-11 — Gallery Builder Map + in-room organization overnight work order
-- [ ] Read and complete `docs/GALLERY-MAP-ROOM-EDITING-OVERNIGHT-PASS-2026-09-11.md` as one consolidated pass on `/museum/virtual-room`.
-- [ ] Expand the outer map workspace to EK's blue-line boundaries; horizontal plan, entrance left, no internal scrolling.
-- [ ] Remove Arrange Shelf Order, the `13 rooms · 20 doors` badge, and the full right Floorplan/Universe Rooms panel; reclaim both columns.
-- [ ] Keep each map room clean: dynamic room name plus truthful `occupied / capacity items` from canonical room slots.
-- [ ] Add the room-focused Edit Room flow without creating a second layout or save model.
-- [ ] Make real 3D Organize slots support add, select, move, confirm-before-replace, and room-only removal.
-- [ ] Autosave successful edits; Done waits for save. Preserve the explicit first Save Hall step when creating a new Hall.
-- [ ] Provide keyboard, tablet, and phone fallbacks with large touch targets and no camera movement during item drag.
-- [ ] Do not modify `/museum/vltd`, campus geometry/navigation, room themes, or vault-item records.
-- [ ] Deploy one complete result and return the evidence matrix required by the brief; EK review remains final acceptance.
+- [x] Read and complete `docs/GALLERY-MAP-ROOM-EDITING-OVERNIGHT-PASS-2026-09-11.md` as one consolidated pass on `/museum/virtual-room`. (shipped `5da4cda`/`2b38ece`/`140ec56`, see HANDOFF.md)
+- [x] Expand the outer map workspace to EK's blue-line boundaries; horizontal plan, entrance left, no internal scrolling.
+- [x] Remove Arrange Shelf Order, the `13 rooms · 20 doors` badge, and the full right Floorplan/Universe Rooms panel; reclaim both columns.
+- [x] Keep each map room clean: dynamic room name plus truthful `occupied / capacity items` from canonical room slots. (superseded same day — see the entry directly above: the map no longer shows per-account Hall data at all, occupancy/capacity does not apply to the real shared museum)
+- [ ] ~~Add the room-focused Edit Room flow without creating a second layout or save model.~~ **Reverted same day** (see entry above) — this was the personal Hall↔museum-room setup panel EK asked to remove.
+- [x] Make real 3D Organize slots support add, select, move, confirm-before-replace, and room-only removal. (this part of the pass is unaffected by the correction above — it's inside a user's own personal room, not the map)
+- [x] Autosave successful edits; Done waits for save. Preserve the explicit first Save Hall step when creating a new Hall.
+- [x] Provide keyboard, tablet, and phone fallbacks with large touch targets and no camera movement during item drag.
+- [x] Do not modify `/museum/vltd`, campus geometry/navigation, room themes, or vault-item records.
+- [x] Deploy one complete result and return the evidence matrix required by the brief; EK review remains final acceptance.
 
 ## 2026-09-10 — VLTD Museum public campus: Visual Overnight Pass + 3 rounds of EK-caught fixes — NOT ACCEPTED
 Separate part of the app from the exhibition-room entries below (`/museum/vltd`). Full detail in `docs/FULL-MUSEUM-VISUAL-OVERNIGHT-PASS-2026-09-10.md`'s STATUS ADDENDUM and the matching HANDOFF.md entry (same date) — read those before touching this area again.

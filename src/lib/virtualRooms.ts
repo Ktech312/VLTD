@@ -19,8 +19,6 @@ export type VirtualRoomRow = {
   roomStyle: string;
   roomLayout: string;
   viewMode: string;
-  /** Explicit personal-campus placement. Legacy Halls have no placement. */
-  campusRoomId: string | null;
   showValues: boolean;
   selectedIds: string[];
   wallpaperUrl: string | null;
@@ -28,27 +26,10 @@ export type VirtualRoomRow = {
   updatedAt: string;
 };
 
-const CAMPUS_VIEW_MODE_SEPARATOR = "|campus:";
-
-function decodeViewMode(rawValue: unknown): { viewMode: string; campusRoomId: string | null } {
-  const raw = String(rawValue ?? "room");
-  const separatorIndex = raw.indexOf(CAMPUS_VIEW_MODE_SEPARATOR);
-  if (separatorIndex < 0) return { viewMode: raw === "overview" ? "overview" : "room", campusRoomId: null };
-  const viewMode = raw.slice(0, separatorIndex) === "overview" ? "overview" : "room";
-  const campusRoomId = raw.slice(separatorIndex + CAMPUS_VIEW_MODE_SEPARATOR.length).trim();
-  return { viewMode, campusRoomId: campusRoomId || null };
-}
-
-function encodeViewMode(viewMode: string, campusRoomId: string | null | undefined) {
-  const normalized = viewMode === "overview" ? "overview" : "room";
-  return campusRoomId ? `${normalized}${CAMPUS_VIEW_MODE_SEPARATOR}${campusRoomId}` : normalized;
-}
-
 const HALL_COLUMNS =
   "id, profile_id, gallery_id, title, room_style, room_layout, view_mode, show_values, selected_ids, wallpaper_url, created_at, updated_at";
 
 function rowToHall(row: Record<string, unknown>): VirtualRoomRow {
-  const decodedViewMode = decodeViewMode(row.view_mode);
   return {
     id: String(row.id),
     profileId: String(row.profile_id ?? ""),
@@ -56,8 +37,7 @@ function rowToHall(row: Record<string, unknown>): VirtualRoomRow {
     title: String(row.title ?? "Untitled Hall"),
     roomStyle: String(row.room_style ?? "vault"),
     roomLayout: String(row.room_layout ?? "storefront"),
-    viewMode: decodedViewMode.viewMode,
-    campusRoomId: decodedViewMode.campusRoomId,
+    viewMode: String(row.view_mode ?? "room"),
     showValues: !!row.show_values,
     selectedIds: Array.isArray(row.selected_ids) ? (row.selected_ids as string[]) : [],
     wallpaperUrl: row.wallpaper_url ? String(row.wallpaper_url) : null,
@@ -88,7 +68,6 @@ export type HallSaveInput = {
   roomStyle: string;
   roomLayout: string;
   viewMode: string;
-  campusRoomId?: string | null;
   showValues: boolean;
   selectedIds: string[];
   wallpaperUrl: string | null;
@@ -109,7 +88,7 @@ export async function createHall(title: string, input: HallSaveInput): Promise<V
       title,
       room_style: input.roomStyle,
       room_layout: input.roomLayout,
-      view_mode: encodeViewMode(input.viewMode, input.campusRoomId),
+      view_mode: input.viewMode,
       show_values: input.showValues,
       selected_ids: input.selectedIds,
       wallpaper_url: input.wallpaperUrl,
@@ -135,7 +114,7 @@ export async function updateHall(id: string, input: HallSaveInput): Promise<bool
       gallery_id: input.galleryId,
       room_style: input.roomStyle,
       room_layout: input.roomLayout,
-      view_mode: encodeViewMode(input.viewMode, input.campusRoomId),
+      view_mode: input.viewMode,
       show_values: input.showValues,
       selected_ids: input.selectedIds,
       wallpaper_url: input.wallpaperUrl,
@@ -158,24 +137,6 @@ export async function renameHall(id: string, title: string): Promise<boolean> {
   if (!supabase) return false;
 
   const { error } = await supabase.from("virtual_rooms").update({ title: trimmed }).eq("id", id);
-  return !error;
-}
-
-/** Places or removes a Hall on the owner's personal campus map. The existing
- * view_mode column already stores presentation state; the small suffix keeps
- * the placement cloud-synced without inventing a local-only map or requiring
- * a database migration. rowToHall hides the suffix from the rest of the app. */
-export async function setHallCampusRoom(
-  id: string,
-  viewMode: string,
-  campusRoomId: string | null
-): Promise<boolean> {
-  const supabase = getSupabaseBrowserClient();
-  if (!supabase) return false;
-  const { error } = await supabase
-    .from("virtual_rooms")
-    .update({ view_mode: encodeViewMode(viewMode, campusRoomId) })
-    .eq("id", id);
   return !error;
 }
 
