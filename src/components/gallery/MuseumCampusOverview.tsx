@@ -22,12 +22,24 @@ import { CAMPUS_DOORS, CAMPUS_ROOMS, type CampusRoomId } from "@/lib/campusLayou
 // fe56c33 also had, minus its per-Hall content): Universe Map label, Back
 // to Room, and Enter VLTD Museum all live in the left column now, with the
 // legend beneath them; the SVG section gets back the space that column
-// leaves it. Every completed room (all but PLAZA/SPOTLIGHT/STORE) is a real
-// link to /museum/vltd — there's no per-room deep link into the museum
-// scene itself (that file stays untouched, per repeated instruction), so
-// every completed room's click destination is the museum's own single
-// entry point. SPOTLIGHT/STORE get a visibly muted fill plus a native
-// tooltip instead of silently doing nothing.
+// leaves it.
+//
+// 2026-09-12, EK's review of a real production screenshot: every real
+// gallery room (including SPOTLIGHT/STORE, previously shown muted/dark as
+// if disabled — "not sure why you made it different," fair, that read as
+// broken rather than intentional) is now the same light fill and is
+// clickable, opening the shared museum — there's no per-room deep link
+// into the museum scene itself (that file stays untouched), so every
+// room's click destination is the museum's one entry point for now. PLAZA
+// (the open-air entrance forecourt, not a gallery) is the one shape kept
+// visually and functionally distinct — dark fill, not clickable. Each real
+// gallery room also gets a small separate edit-icon badge (top-right,
+// matching EK's marked screenshot) — deliberately NOT wired to a
+// destination yet: "the edit page" she described (per-room item
+// organize + title/description) is a real, separate feature that doesn't
+// exist yet (the future room editor, explicitly out of scope for the
+// recovery pass this map came out of). The badge is visible and its
+// tooltip says so plainly rather than silently linking somewhere wrong.
 const ROOM_LABELS: Record<CampusRoomId, string> = {
   HUB: "VLTD Museum",
   POP_CULTURE: "Pop Culture",
@@ -124,12 +136,13 @@ export default function MuseumCampusOverview({ onBackToRoom }: { onBackToRoom: (
               const isHub = layout.id === "HUB";
               const isPlaza = layout.id === "PLAZA";
               const isComingSoon = layout.id === "SPOTLIGHT" || layout.id === "STORE";
-              // Same interactive rule fe56c33 used (HUB always; every other
-              // room except the entrance and the two not-yet-populated
-              // rooms) — only what each click DOES has changed, from
-              // opening a personal-Hall panel to linking into the one real
-              // museum.
-              const interactive = isHub || (!isPlaza && !isComingSoon);
+              // EK's review, 2026-09-12: every real gallery room reads the
+              // same regardless of content status — SPOTLIGHT/STORE are no
+              // longer visually muted, and are clickable like every other
+              // room. PLAZA (the open-air entrance, not a gallery) is the
+              // only shape kept dark and non-interactive.
+              const interactive = isHub || !isPlaza;
+              const isEditableRoom = interactive && !isHub;
               const label = ROOM_LABELS[layout.id];
               const subtitle = isHub
                 ? "Grand Hall"
@@ -151,8 +164,8 @@ export default function MuseumCampusOverview({ onBackToRoom }: { onBackToRoom: (
                     width={mapped.width - 1.1}
                     height={mapped.height - 1.1}
                     rx={1.5}
-                    fill={isHub ? "url(#museum-map-hub)" : isComingSoon ? "url(#museum-map-empty)" : "url(#museum-map-room)"}
-                    stroke={isHub ? "#9a7a3a" : isComingSoon ? "#303840" : "#dce3e7"}
+                    fill={isHub ? "url(#museum-map-hub)" : isPlaza ? "url(#museum-map-empty)" : "url(#museum-map-room)"}
+                    stroke={isHub ? "#9a7a3a" : isPlaza ? "#303840" : "#dce3e7"}
                     strokeWidth={0.45}
                     className={interactive ? "transition hover:brightness-110" : undefined}
                   />
@@ -163,18 +176,41 @@ export default function MuseumCampusOverview({ onBackToRoom }: { onBackToRoom: (
                       <text x={centerX} y={mapped.y + mapped.height / 2 - 2.2} textAnchor="middle" fill="#d7bd77" fontSize={3.1} fontWeight={900}>VLTD</text>
                     </>
                   ) : null}
-                  <text x={centerX} y={titleY} textAnchor="middle" fill={isHub ? "#f4e4b3" : isComingSoon ? "#d8dde2" : "#111820"} fontSize={titleSize} fontWeight={900} letterSpacing={compact ? 0.05 : 0.12}>{label.toUpperCase()}</text>
-                  <text x={centerX} y={titleY + (isHub ? 4.3 : 3.4)} textAnchor="middle" fill={isHub ? "#9ba6ae" : isComingSoon ? "#737d85" : "#59636b"} fontSize={compact ? 1.85 : 2.25} fontWeight={700}>{subtitle.toUpperCase()}</text>
-                  {isComingSoon ? <title>{`${label} — coming soon, not open yet`}</title> : null}
+                  <text x={centerX} y={titleY} textAnchor="middle" fill={isHub ? "#f4e4b3" : isPlaza ? "#d8dde2" : "#111820"} fontSize={titleSize} fontWeight={900} letterSpacing={compact ? 0.05 : 0.12}>{label.toUpperCase()}</text>
+                  <text x={centerX} y={titleY + (isHub ? 4.3 : 3.4)} textAnchor="middle" fill={isHub ? "#9ba6ae" : isPlaza ? "#737d85" : "#59636b"} fontSize={compact ? 1.85 : 2.25} fontWeight={700}>{subtitle.toUpperCase()}</text>
                 </>
               );
-              return interactive ? (
-                <Link key={layout.id} href="/museum/vltd" aria-label={`${label} — opens the VLTD Museum`} className="cursor-pointer outline-none">
-                  {content}
-                </Link>
-              ) : (
-                <g key={layout.id} aria-label={isComingSoon ? `${label}, coming soon` : label} className={isComingSoon ? "cursor-not-allowed" : "cursor-default"}>
-                  {content}
+              // Edit badge — a separate clickable target from the room body
+              // (never nested inside the room's own Link — two interactive
+              // elements, one for "view," one for "edit," matching EK's
+              // marked screenshot). Deliberately NOT wired to a destination
+              // yet: the per-room editor it should open doesn't exist yet.
+              const editBadge = isEditableRoom ? (
+                <g
+                  key={`${layout.id}-edit`}
+                  aria-label={`Edit ${label} — room editor coming soon`}
+                  className="cursor-not-allowed"
+                >
+                  <circle cx={mapped.x + mapped.width - 2.6} cy={mapped.y + 2.6} r={1.6} fill="rgba(20,23,28,0.55)" stroke="rgba(255,255,255,0.4)" strokeWidth={0.15} />
+                  <g transform={`translate(${mapped.x + mapped.width - 2.6} ${mapped.y + 2.6}) rotate(45)`}>
+                    <rect x={-0.17} y={-0.95} width={0.34} height={1.5} rx={0.1} fill="#eef1f3" />
+                    <polygon points="-0.17,0.55 0.17,0.55 0,1.05" fill="#eef1f3" />
+                  </g>
+                  <title>{`Edit ${label} — room editor coming soon`}</title>
+                </g>
+              ) : null;
+              return (
+                <g key={layout.id}>
+                  {interactive ? (
+                    <Link href="/museum/vltd" aria-label={`${label} — opens the VLTD Museum`} className="cursor-pointer outline-none">
+                      {content}
+                    </Link>
+                  ) : (
+                    <g aria-label={label} className="cursor-default">
+                      {content}
+                    </g>
+                  )}
+                  {editBadge}
                 </g>
               );
             })}

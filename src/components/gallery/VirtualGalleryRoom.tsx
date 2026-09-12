@@ -4293,8 +4293,13 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
             keeps the 3D room from being squeezed next to a tall stacked sidebar.
             flex, not grid-with-1fr: the Room card sizes to its own pill row
             instead of stretching to fill the leftover row width, which just
-            left a huge empty gap next to a small cluster of pills. */}
-        <div className="flex flex-wrap items-start gap-3">
+            left a huge empty gap next to a small cluster of pills.
+            items-stretch (EK's ask, 2026-09-12): the three panels had visibly
+            different heights since each shrink-wrapped its own content —
+            stretching them to the row's tallest is a pure cross-axis change,
+            independent of the width behavior the comment above already
+            covers. */}
+        <div className="flex flex-wrap items-stretch gap-3">
           <div className="w-[300px] shrink-0 rounded-[8px] border bg-[color:var(--theme-card)] p-3 shadow-[var(--shadow-soft)]" style={{ borderColor: "var(--theme-border)" }}>
             <div className="flex items-center justify-between gap-3">
               <div>
