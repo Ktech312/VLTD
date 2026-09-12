@@ -5,6 +5,50 @@
 - **Mobile drag/scroll bug** (EK found this hands-on, unrelated to the above): dragging to look around also scrolled the whole page on a touch device, and yaw drag didn't track smoothly — both caused by the room's mount div never declaring `touch-action: none`. Fixed with the same one-line fix already used elsewhere in this file. Code-verified and reasoned through; genuinely NOT tested with a real touch input (no tool in this session can produce one) — needs EK's own phone to close the loop.
 Regression-checked live: White unaffected (still looks exactly right), pickup/rotate/return still works, no console errors anywhere. See the 2026-09-06 dated entries (top of the log below) for full detail, including the one real bug this session found and fixed in its own live check (Blue's case lids) before calling any of this done. Before tonight: the first White-room material pass (2026-09-05, commit `c61e600`/`f346d18`) — also READY on Vercel and live-verified. Below that: the VLTD Museum public campus work (2026-08-31 through 09-04, then resumed and heavily active again 2026-09-08 through 09-10 — see the 2026-09-10 dated entry, TOP of the dated list below, for the current state: NOT accepted yet, EK's own physical-input pass still pending). Read the dated entries below in order, newest first, before assuming any room behaves a particular way. Older work further down in §2 (2026-08-27/28 Admin Users redesign; ~110 VaultItem fields + 3 Gallery-sync gaps, both migrations confirmed run by EK; Events tooling, admin console/APP_MAP.md, Vault upload; a full backend security audit, 3D Museum beta-access gating, Room Builder fixes) is unrelated to either of the above.)
 
+# 2026-09-11 (still later, same day) — VLTD Museum campus: transom-width fix for the vertical openings above every doorway jamb
+
+The 4a0cb01 anti-flicker fix trimmed the solid wall pieces beside every door
+back by `trimWidth` on each side, for the piece's FULL height (floor to
+ceiling) — but the transom (the wall infill from the head casing up to the
+ceiling, directly above the door) was left at its old width, exactly
+`openingWidth`. The head casing right below it had already been widened to
+`openingWidth + trimWidth * 2` to meet the trimmed walls; the transom never
+got the same treatment. Net effect: a `trimWidth`-wide open vertical strip
+on each side, running from the head casing up to the ceiling, at every
+single door on the campus — exactly the "vertical openings above every
+doorway jamb" EK described as still unfinished from the same assigned task
+4a0cb01 came from.
+
+**Fix, `src/lib/campusRoomBuilder.ts`, `buildSharedWall()`:** the transom's
+`BoxGeometry` width changed from `openingWidth` to `headWidth` (already
+computed a few lines above as `openingWidth + trimWidth * 2` for the head
+casing) — same two-line change as the isNS/not-isNS branches. Nothing else
+touched: targets, map UI, room geometry, signs, movement, lighting,
+artwork, and materials are all untouched, per the explicit instruction.
+
+**Verified, code-level (world-space bounding boxes — the same method
+4a0cb01 itself established as reliable for this exact bug class, since a
+static screenshot can miss z-fighting/gaps entirely):** ran
+`computeCampusWallSegments()` + `buildSharedWall()` directly in a headless
+scene (no renderer needed for pure geometry/position math) for both the
+`PLAZA<->HUB` entrance and an ordinary door (`POP_CULTURE<->TCG`), then
+compared each transom's world bounding box against its two flanking solid
+wall pieces. Both cases: **exact 0.0000 gap** between the transom's edge
+and the trimmed wall's edge, both sides, both doors — the fix closes the
+gap completely, confirmed by construction, not by eye. (Sign-face texture
+creation, later in the same function, throws in this Node-only check since
+it needs a DOM canvas — expected and irrelevant here, since signs are
+untouched and the transom/wall meshes are already in the scene before that
+point.)
+
+**Not verified — genuinely could not do this part:** EK explicitly asked
+for confirmation "from moving angled views" at the PLAZA↔HUB entrance and
+representative ordinary doors. No browser connection was available this
+session (repeatedly retried), so no live/moving-camera check happened. The
+bounding-box check above is strong evidence the geometry is now correct,
+but it is not the same thing as watching it not flicker — that still needs
+either EK's own look or a reconnected browser tool.
+
 # 2026-09-11 (yet later, same day) — VLTD Museum campus: multi-target rooms (HUB/MISC/AUTOMOTIVE) from EK's marked-up floor plan
 
 **This one IS a change to `/museum/vltd` itself** — explicitly authorized

@@ -1,5 +1,13 @@
 # VLTD — Session Checklist (2026-08-05 night → ongoing, updated 2026-08-27)
 
+## 2026-09-11 (still later, same day) — VLTD Museum: transom-width fix (vertical openings above doorway jambs)
+Left over from the same assigned task 4a0cb01 came from. Full detail in the
+matching HANDOFF.md entry (same date, near the top).
+- [x] Transom width changed from `openingWidth` to `headWidth` (`openingWidth + trimWidth*2`) in `buildSharedWall()`, `campusRoomBuilder.ts` — one two-branch edit, nothing else touched.
+- [x] `tsc`/targeted ESLint/`npm run build` clean; `validateCampusDoors()` still 0 issues.
+- [x] Verified at the geometry level: world-space bounding-box check of the transom against its flanking trimmed wall pieces shows an exact 0.0000 gap, both sides, at both the PLAZA↔HUB entrance and an ordinary door (POP_CULTURE↔TCG).
+- [ ] **Not verified from moving angled views** — no browser connection available this session; EK's explicit ask for a live moving-camera check at the entrance and ordinary doors still needs to happen.
+
 ## 2026-09-11 (yet later, same day) — VLTD Museum: multi-target rooms (HUB 3, MISC 2, AUTOMOTIVE 2)
 Explicitly authorized change to `/museum/vltd` itself this time (from EK's
 marked-up floor plan). Full detail in the matching HANDOFF.md entry (same

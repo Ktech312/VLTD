@@ -712,12 +712,19 @@ export function buildSharedWall(
   // Transom: closes the gap from the casing head to the ceiling using the
   // SAME per-face materials as the rest of this wall — a short band that
   // reads as the wall continuing over the door, not a separate block.
+  // Width must match headWidth (openingWidth + trimWidth*2), not the bare
+  // opening width: the solid wall pieces above are trimmed back by
+  // trimWidth on each side for their full height (the 4a0cb01 anti-flicker
+  // fix), so a transom only as wide as the opening itself left a
+  // trimWidth-wide vertical strip open on each side, above the head casing,
+  // all the way to the ceiling. The head casing already used the correct
+  // (wider) span; the transom just hadn't matched it.
   const transomBottom = openingClearHeight + headHeight;
   const transomHeight = wallHeight - transomBottom;
   if (transomHeight > 0.02) {
     const transomGeom = isNS
-      ? new THREE.BoxGeometry(openingWidth, transomHeight, wallThickness)
-      : new THREE.BoxGeometry(wallThickness, transomHeight, openingWidth);
+      ? new THREE.BoxGeometry(headWidth, transomHeight, wallThickness)
+      : new THREE.BoxGeometry(wallThickness, transomHeight, headWidth);
     const transom = new THREE.Mesh(transomGeom, materials);
     transom.position.set(framePos.x, transomBottom + transomHeight / 2, framePos.z);
     scene.add(transom);
