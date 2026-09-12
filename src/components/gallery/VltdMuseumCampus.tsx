@@ -9,6 +9,7 @@
 // user's own vault items as placeholder content until there's a real
 // cross-user "top items" feed to show instead.
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 
@@ -180,6 +181,19 @@ export default function VltdMuseumCampus() {
   const roomLabelRef = useRef<HTMLDivElement | null>(null);
   const [ready, setReady] = useState(false);
 
+  // EK's ask (2026-09-12): clicking a room on the Gallery Map should spawn
+  // in that room, not always at the entrance. This only changes WHERE the
+  // visitor starts standing — CAMPUS_SPAWN itself, room geometry, doors,
+  // movement, and every other accepted behavior are untouched. Falls back
+  // to the normal PLAZA entrance spawn for a plain /museum/vltd visit or an
+  // unrecognized ?room= value.
+  const searchParams = useSearchParams();
+  const requestedRoomId = searchParams.get("room");
+  const spawnRoom = requestedRoomId ? CAMPUS_ROOMS.find((room) => room.id === requestedRoomId) : undefined;
+  const spawn = spawnRoom
+    ? { x: spawnRoom.x + spawnRoom.w / 2, z: spawnRoom.z + spawnRoom.d / 2, yaw: CAMPUS_SPAWN.yaw }
+    : CAMPUS_SPAWN;
+
   useEffect(() => {
     const mount = mountRef.current;
     if (!mount) return;
@@ -226,7 +240,7 @@ export default function VltdMuseumCampus() {
     // than intended.
     const camera = new THREE.PerspectiveCamera(MUSEUM_CAMERA_FOV, window.innerWidth / window.innerHeight, 0.1, 400);
     camera.rotation.order = "YXZ";
-    camera.position.set(CAMPUS_SPAWN.x, EYE_HEIGHT, CAMPUS_SPAWN.z);
+    camera.position.set(spawn.x, EYE_HEIGHT, spawn.z);
 
     const renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
@@ -1103,11 +1117,11 @@ export default function VltdMuseumCampus() {
     // it starts.
     const WHEEL_POSITION_EASE_RATE = 0.08;
 
-    let yaw = CAMPUS_SPAWN.yaw;
+    let yaw = spawn.yaw;
     let pitch = 0;
     let targetYaw = yaw;
     let targetPitch = pitch;
-    const cameraBody = new THREE.Vector3(CAMPUS_SPAWN.x, EYE_HEIGHT, CAMPUS_SPAWN.z);
+    const cameraBody = new THREE.Vector3(spawn.x, EYE_HEIGHT, spawn.z);
     const targetCameraBody = cameraBody.clone();
 
     const pressedKeys = new Set<string>();

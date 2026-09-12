@@ -185,11 +185,29 @@ export default function MuseumCampusOverview({ onBackToRoom }: { onBackToRoom: (
               // elements, one for "view," one for "edit," matching EK's
               // marked screenshot). Deliberately NOT wired to a destination
               // yet: the per-room editor it should open doesn't exist yet.
+              // A hover-only tooltip wasn't enough feedback (EK: "the edit
+              // button does not work") — it now answers a real click with a
+              // plain, honest message instead of doing nothing.
               const editBadge = isEditableRoom ? (
                 <g
                   key={`${layout.id}-edit`}
+                  role="button"
+                  tabIndex={0}
                   aria-label={`Edit ${label} — room editor coming soon`}
-                  className="cursor-not-allowed"
+                  className="cursor-pointer"
+                  onClick={() =>
+                    window.alert(
+                      `Room editor coming soon.\n\nThis will let you add/organize ${label}'s items and edit its title and description.`
+                    )
+                  }
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter" || event.key === " ") {
+                      event.preventDefault();
+                      window.alert(
+                        `Room editor coming soon.\n\nThis will let you add/organize ${label}'s items and edit its title and description.`
+                      );
+                    }
+                  }}
                 >
                   <circle cx={mapped.x + mapped.width - 2.6} cy={mapped.y + 2.6} r={1.6} fill="rgba(20,23,28,0.55)" stroke="rgba(255,255,255,0.4)" strokeWidth={0.15} />
                   <g transform={`translate(${mapped.x + mapped.width - 2.6} ${mapped.y + 2.6}) rotate(45)`}>
@@ -202,7 +220,7 @@ export default function MuseumCampusOverview({ onBackToRoom }: { onBackToRoom: (
               return (
                 <g key={layout.id}>
                   {interactive ? (
-                    <Link href="/museum/vltd" aria-label={`${label} — opens the VLTD Museum`} className="cursor-pointer outline-none">
+                    <Link href={`/museum/vltd?room=${layout.id}`} aria-label={`${label} — opens this room in the VLTD Museum`} className="cursor-pointer outline-none">
                       {content}
                     </Link>
                   ) : (

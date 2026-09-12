@@ -4338,7 +4338,15 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
             </div>
           </div>
 
-          <div className="w-[260px] shrink-0">
+          {/* flex (not just w-[260px]): the outer flex row's items-stretch
+              only stretches its DIRECT children — this wrapper was a plain
+              block div, so it grew invisibly while ControlPanel's own
+              bordered box inside it stayed shrink-wrapped to its content,
+              which is why Source still looked shorter than Room (EK's
+              report, 2026-09-12). Making the wrapper itself `flex` makes
+              its single child a flex item too, stretching (the flex
+              default) to fill the wrapper's now-equal height. */}
+          <div className="flex w-[260px] shrink-0">
             <ControlPanel title="Source" icon={<Grid3X3 size={15} />}>
               <select
                 value={currentHallId ? `hall:${currentHallId}` : galleryId}
