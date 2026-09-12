@@ -87,7 +87,19 @@ function mapRect(x: number, z: number, width: number, depth: number) {
   };
 }
 
-export default function MuseumCampusOverview({ onBackToRoom }: { onBackToRoom: () => void }) {
+export default function MuseumCampusOverview({
+  onBackToRoom,
+  onSelectRoom,
+}: {
+  onBackToRoom: () => void;
+  /** Museum Builder pass (2026-09-12): when provided, clicking a room calls
+   * this instead of navigating to /museum/vltd — lets Museum Builder embed
+   * this same floor plan as its own "Map" view and switch which room it's
+   * editing in place, without leaving the page. Omitted (as the Gallery
+   * Builder's own usage always does), this component's behavior is
+   * completely unchanged — same Link navigation, same edit badge. */
+  onSelectRoom?: (roomId: CampusRoomId) => void;
+}) {
   const mapWidth = (MAP_BOUNDS.z1 - MAP_BOUNDS.z0) * MAP_HORIZONTAL_SCALE;
   const mapHeight = MAP_BOUNDS.x1 - MAP_BOUNDS.x0;
 
@@ -222,7 +234,23 @@ export default function MuseumCampusOverview({ onBackToRoom }: { onBackToRoom: (
               ) : null;
               return (
                 <g key={layout.id}>
-                  {interactive ? (
+                  {interactive && onSelectRoom ? (
+                    <g
+                      role="button"
+                      tabIndex={0}
+                      aria-label={`${label} — edit this room`}
+                      className="cursor-pointer outline-none"
+                      onClick={() => onSelectRoom(layout.id)}
+                      onKeyDown={(event) => {
+                        if (event.key === "Enter" || event.key === " ") {
+                          event.preventDefault();
+                          onSelectRoom(layout.id);
+                        }
+                      }}
+                    >
+                      {content}
+                    </g>
+                  ) : interactive ? (
                     <Link href={`/museum/vltd?room=${layout.id}`} aria-label={`${label} — opens this room in the VLTD Museum`} className="cursor-pointer outline-none">
                       {content}
                     </Link>
@@ -231,7 +259,7 @@ export default function MuseumCampusOverview({ onBackToRoom }: { onBackToRoom: (
                       {content}
                     </g>
                   )}
-                  {editBadge}
+                  {onSelectRoom ? null : editBadge}
                 </g>
               );
             })}

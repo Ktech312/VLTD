@@ -97,38 +97,42 @@ export type MuseumRoomItem = {
   // via the existing automatic proportional layout (selectRoomItems below
   // falls back to a plain select without this column if it 404s).
   slot_id?: string | null;
+  // Museum Builder pass (2026-09-12): EK — "This should be an option of the
+  // items in the room," a PER-ITEM toggle, not the personal Gallery's
+  // room-wide Values checkbox. A shared public museum room can show some
+  // items' value and not others. `estimated_value` is a snapshot of the
+  // vault item's own value at the moment it was placed here (same
+  // "curated copy, never live vault data" rule as title/image_url), null
+  // if the item had none. `show_value` defaults to false — showing a
+  // price is an explicit per-item choice, never automatic. Undefined for
+  // any row saved before 20260912_museum_room_item_value.sql runs.
+  estimated_value?: number | null;
+  show_value?: boolean;
 };
 
-// Fails-soft column gate (2026-09-12): tries the extended select (with
-// slot_id) first; if that column doesn't exist yet (this migration hasn't
-// been run), retries the ORIGINAL select so the already-live SPORTS display
-// never breaks because of a column this app added but EK hasn't migrated
-// yet. Same "assume nothing has run" rule as every other fetch in this file.
+// Fails-soft column gate (extended 2026-09-12): tries every column this
+// file knows about, then retries with progressively fewer on a Postgrest
+// "column does not exist" error, down to the original bare select — so
+// this never breaks regardless of which migration EK has actually run yet.
+const ROOM_ITEM_COLUMNS_FULL = "id, room_id, title, image_url, enabled, sort_order, slot_id, estimated_value, show_value";
+const ROOM_ITEM_COLUMNS_WITH_SLOT = "id, room_id, title, image_url, enabled, sort_order, slot_id";
+const ROOM_ITEM_COLUMNS_BASE = "id, room_id, title, image_url, enabled, sort_order";
+
 async function selectRoomItems(roomId: string, onlyEnabled: boolean): Promise<MuseumRoomItem[]> {
   const supabase = getSupabaseBrowserClient();
   if (!supabase) return [];
-  try {
-    let query = supabase
-      .from("museum_room_items")
-      .select("id, room_id, title, image_url, enabled, sort_order, slot_id")
-      .eq("room_id", roomId);
-    if (onlyEnabled) query = query.eq("enabled", true);
-    const { data, error } = await query.order("sort_order", { ascending: true });
-    if (error) throw error;
-    return (data ?? []) as MuseumRoomItem[];
-  } catch {
+  for (const columns of [ROOM_ITEM_COLUMNS_FULL, ROOM_ITEM_COLUMNS_WITH_SLOT, ROOM_ITEM_COLUMNS_BASE]) {
     try {
-      let query = supabase
-        .from("museum_room_items")
-        .select("id, room_id, title, image_url, enabled, sort_order")
-        .eq("room_id", roomId);
+      let query = supabase.from("museum_room_items").select(columns).eq("room_id", roomId);
       if (onlyEnabled) query = query.eq("enabled", true);
-      const { data } = await query.order("sort_order", { ascending: true });
-      return (data ?? []) as MuseumRoomItem[];
+      const { data, error } = await query.order("sort_order", { ascending: true });
+      if (error) throw error;
+      return (data ?? []) as unknown as MuseumRoomItem[];
     } catch {
-      return [];
+      continue;
     }
   }
+  return [];
 }
 
 export async function getEnabledRoomItems(roomId: string): Promise<MuseumRoomItem[]> {
@@ -153,12 +157,12 @@ export async function getAllRoomItems(roomId: string): Promise<MuseumRoomItem[]>
 export async function setRoomItemSlot(
   roomId: string,
   slotId: string,
-  item: { title: string; image_url: string },
+  item: { title: string; image_url: string; estimated_value?: number | null },
   sortOrder: number
 ): Promise<{ ok: boolean; error?: string }> {
   const supabase = getSupabaseBrowserClient();
   if (!supabase) return { ok: false, error: "Not signed in." };
-  const payload = {
+  const basePayload = {
     room_id: roomId,
     slot_id: slotId,
     title: item.title,
@@ -167,12 +171,31 @@ export async function setRoomItemSlot(
     sort_order: sortOrder,
     updated_at: new Date().toISOString(),
   };
-  const { error } = await supabase.from("museum_room_items").upsert(payload, { onConflict: "room_id,slot_id" });
-  if (!error) return { ok: true };
-  // onConflict target doesn't exist yet (migration not run) — degrade to a
-  // plain insert rather than fail the save outright.
-  const { error: insertError } = await supabase.from("museum_room_items").insert(payload);
-  if (insertError) return { ok: false, error: insertError.message };
+  // estimated_value is snapshotted whenever the migration allows it; a
+  // "column does not exist" error here degrades to the base payload rather
+  // than failing the whole placement, same fails-soft rule as every other
+  // optional column in this file.
+  const withValue = { ...basePayload, estimated_value: item.estimated_value ?? null };
+  for (const payload of [withValue, basePayload]) {
+    const { error } = await supabase.from("museum_room_items").upsert(payload, { onConflict: "room_id,slot_id" });
+    if (!error) return { ok: true };
+    // onConflict target doesn't exist yet (migration not run) — degrade to
+    // a plain insert rather than fail the save outright.
+    const { error: insertError } = await supabase.from("museum_room_items").insert(payload);
+    if (!insertError) return { ok: true };
+  }
+  return { ok: false, error: "Couldn't save this item — try again." };
+}
+
+/** Toggles whether a placed item's value is actually shown under its frame
+ * — EK's ask that this be a per-item choice, not a room-wide setting.
+ * Fails soft (returns ok:false with a message) if
+ * 20260912_museum_room_item_value.sql hasn't been run yet. */
+export async function setItemShowValue(itemId: string, showValue: boolean): Promise<{ ok: boolean; error?: string }> {
+  const supabase = getSupabaseBrowserClient();
+  if (!supabase) return { ok: false, error: "Not signed in." };
+  const { error } = await supabase.from("museum_room_items").update({ show_value: showValue }).eq("id", itemId);
+  if (error) return { ok: false, error: error.message };
   return { ok: true };
 }
 

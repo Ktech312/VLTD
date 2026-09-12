@@ -105,6 +105,8 @@ import {
   getEnabledRoomItems,
   getItemsPerRoom,
   getRoomMeta,
+  setItemShowValue,
+  setRoomBackground,
   setRoomBackgroundImage,
   setRoomCapacities,
   setRoomItemSlot,
@@ -112,6 +114,8 @@ import {
   type MuseumRoomItem,
 } from "@/lib/museumCampusConfig";
 import {
+  ROOM_BACKGROUND_OPTIONS,
+  backgroundWallColorHex,
   buildNeutralShell,
   buildRoomShell,
   buildRoomTrim,
@@ -147,6 +151,7 @@ import { uploadHallWallpaper } from "@/lib/virtualRooms";
 import { getPrimaryImageUrl, loadItems, syncVaultItemsFromSupabase, type VaultItem } from "@/lib/vaultModel";
 import { OrganizeMoveMenu, OrganizeReplaceConfirm, OrganizeSlotOverlay, useSlotOrganizer, type OrganizeSlotGroup } from "./organizeSlots";
 import { ItemPickerSheet } from "./ItemPickerSheet";
+import MuseumCampusOverview from "./MuseumCampusOverview";
 
 // Same per-room finish/focal-wall mapping MuseumRoomPopup.tsx and
 // VltdMuseumCampus.tsx both already use — kept as its own tiny local copy
@@ -241,11 +246,30 @@ export default function MuseumBuilder() {
   const [backgroundSaveState, setBackgroundSaveState] = useState<SaveState>("idle");
   const [backgroundUploading, setBackgroundUploading] = useState(false);
   const [backgroundError, setBackgroundError] = useState("");
+  // EK's correction (2026-09-12): "I need the background colors, i said
+  // this from the begging" — the preset color-swatch picker this file
+  // removed in the prior fixes pass should not have been dropped; the
+  // custom-image Wallpaper upload and the preset colors are two separate,
+  // both-real options (a preset applies instantly with no upload; a
+  // custom image overrides it when set — same "wallpaper wins" order the
+  // live museum's own material code already resolves in). Reuses
+  // ROOM_BACKGROUND_OPTIONS/backgroundWallColorHex/setRoomBackground
+  // unchanged — this infrastructure already existed and already drives the
+  // live museum's own per-room wall tint; only the picker UI was missing.
+  const [backgroundId, setBackgroundId] = useState<string | null>(null);
+  const [presetSaveState, setPresetSaveState] = useState<SaveState>("idle");
 
   const [pickerSlotIdx, setPickerSlotIdx] = useState<number | null>(null);
   const [itemSaveState, setItemSaveState] = useState<SaveState>("idle");
   const [isOrganizing, setIsOrganizing] = useState(false);
   const [roomPanelOpen, setRoomPanelOpen] = useState(true);
+  // Room/Map toggle (2026-09-12) — EK's "copied over exactly" ask, matching
+  // the personal Gallery Builder's own Room/Map segmented control. "Map"
+  // renders the exact same shared floor plan (MuseumCampusOverview.tsx),
+  // extended with an optional onSelectRoom prop so clicking a room switches
+  // roomId in place instead of navigating away — the Gallery Builder's own
+  // usage never passes that prop, so its behavior there is unchanged.
+  const [viewMode, setViewMode] = useState<"room" | "map">("room");
   const [liveAnnouncement, setLiveAnnouncement] = useState("");
 
   function announce(message: string) {
@@ -303,6 +327,7 @@ export default function MuseumBuilder() {
       setShelfCapacity(nextShelf);
       setCaseCapacity(nextCase);
       setBackgroundImageUrl(meta?.background_image_url ?? null);
+      setBackgroundId(meta?.background_id ?? null);
       const savedRowCount = meta?.wall_row_count;
       const nextRowCount: RoomRowCount = savedRowCount === 1 || savedRowCount === 2 || savedRowCount === 3 ? savedRowCount : 3;
       const nextShelvesEnabled = meta?.wall_shelves_enabled ?? false;
@@ -413,6 +438,14 @@ export default function MuseumBuilder() {
     if (result.ok) window.setTimeout(() => setBackgroundSaveState((s) => (s === "saved" ? "idle" : s)), 1600);
   }
 
+  async function handleBackgroundPresetChange(nextId: string) {
+    setBackgroundId(nextId);
+    setPresetSaveState("saving");
+    const result = await setRoomBackground(roomId, nextId === "neutral" ? null : nextId);
+    setPresetSaveState(result.ok ? "saved" : "error");
+    if (result.ok) window.setTimeout(() => setPresetSaveState((s) => (s === "saved" ? "idle" : s)), 1600);
+  }
+
   // Combined, ordered slot list — wall, then shelf, then case — the single
   // fixed order both the Organize overlay's numbering and the 3D scene's
   // own item placement below agree on.
@@ -476,6 +509,26 @@ export default function MuseumBuilder() {
     onRemove: (idx) => void persistRemove(idx),
   });
 
+  // EK: "This should be an option of the items in the room" — a per-item
+  // Show value toggle, surfaced here (rather than inside the shared
+  // organizeSlots.tsx overlay, which stays museum-agnostic) whenever the
+  // currently-selected slot is occupied by a real, curated item with a
+  // snapshotted value to show.
+  const selectedSlot = organizer.organizeSelectedSlot !== null ? allSlots[organizer.organizeSelectedSlot] : null;
+  const selectedItem = selectedSlot ? assignments[selectedSlot.id] : null;
+  const [showValueSaveState, setShowValueSaveState] = useState<SaveState>("idle");
+
+  async function handleToggleShowValue(checked: boolean) {
+    if (!selectedItem) return;
+    setShowValueSaveState("saving");
+    const result = await setItemShowValue(selectedItem.id, checked);
+    setShowValueSaveState(result.ok ? "saved" : "error");
+    if (result.ok) {
+      await refreshAssignments(allSlots);
+      window.setTimeout(() => setShowValueSaveState((s) => (s === "saved" ? "idle" : s)), 1600);
+    }
+  }
+
   // Scene setup — real room shell + trim (only the wall segments touching
   // THIS room, same as MuseumRoomPopup.tsx), a drag-to-look + WASD/scroll
   // walking camera, shelf/case furniture, and the currently-assigned items.
@@ -523,6 +576,12 @@ export default function MuseumBuilder() {
 
     const doorFrameMaterial = new THREE.MeshStandardMaterial({ color: NEUTRAL_PREVIEW_FINISH.frameColor, roughness: 0.65, metalness: 0.04 });
     const ownMaterial = createWallMaterial(finish);
+    // Same fix already applied to the live museum's own material code
+    // (VltdMuseumCampus.tsx) — ownMaterial is a real, per-room-id instance
+    // (not shared with any neighbor), so tinting it here can never leak
+    // into another room's wall.
+    const ownColorHex = backgroundWallColorHex(backgroundId);
+    if (ownColorHex !== null) (ownMaterial as THREE.MeshStandardMaterial).color.setHex(ownColorHex);
     const neighborMaterials = new Map<CampusRoomId, THREE.Material>();
     function materialFor(id: CampusRoomId): THREE.Material {
       if (id === roomId) return ownMaterial;
@@ -596,7 +655,17 @@ export default function MuseumBuilder() {
     let cancelled = false;
     const textureLoader = new THREE.TextureLoader();
     const bySlot = new Map<string, { url: string; label?: string }>();
-    for (const [slotId, item] of Object.entries(assignments)) bySlot.set(slotId, { url: item.image_url, label: item.title });
+    for (const [slotId, item] of Object.entries(assignments)) {
+      // EK: "This should be an option of the items in the room" — per-item,
+      // not a room-wide toggle. Appends the value onto the existing title
+      // placard rather than a second plaque, only when this specific item
+      // has both a real snapshotted value and show_value explicitly on.
+      const label =
+        item.show_value && typeof item.estimated_value === "number"
+          ? `${item.title} — $${Math.round(item.estimated_value).toLocaleString()}`
+          : item.title;
+      bySlot.set(slotId, { url: item.image_url, label });
+    }
     // Wall + shelf slots both hang as framed pieces — placeItemsAtSlots is
     // the protected live-museum read path (untouched here, just reused);
     // case items are visually different (lying flat under glass), placed
@@ -780,7 +849,7 @@ export default function MuseumBuilder() {
       renderer.dispose();
       if (renderer.domElement.parentElement === mount) mount.removeChild(renderer.domElement);
     };
-  }, [roomId, wallSlots, shelfSlots, caseSlots, assignments, backgroundImageUrl, allSlots.length, rowCount, wallShelvesEnabled]);
+  }, [roomId, wallSlots, shelfSlots, caseSlots, assignments, backgroundImageUrl, backgroundId, allSlots.length, rowCount, wallShelvesEnabled]);
 
   // Same rAF projection technique MuseumRoomPopup.tsx/VirtualGalleryRoom.tsx
   // both already use for their own Organize overlays.
@@ -830,7 +899,12 @@ export default function MuseumBuilder() {
       return;
     }
     setItemSaveState("saving");
-    const result = await setRoomItemSlot(roomId, slot.id, { title: item.title, image_url: image }, 0);
+    const result = await setRoomItemSlot(
+      roomId,
+      slot.id,
+      { title: item.title, image_url: image, estimated_value: item.estimatedValue ?? null },
+      0
+    );
     setItemSaveState(result.ok ? "saved" : "error");
     setPickerSlotIdx(null);
     organizer.setOrganizeSelectedSlot(null);
@@ -899,6 +973,16 @@ export default function MuseumBuilder() {
             {roomPanelOpen ? (
               <div className="flex flex-col gap-2.5">
                 <div className="flex flex-wrap items-center gap-3">
+                  <div className="w-[92px] min-w-[92px]">
+                    <Segmented
+                      value={viewMode}
+                      options={[
+                        ["room", "Room"],
+                        ["map", "Map"],
+                      ]}
+                      onChange={(value) => setViewMode(value as "room" | "map")}
+                    />
+                  </div>
                   <CapacitySlider label="Wall items" value={itemCapacity} min={MIN_ITEM_CAPACITY} max={MAX_ITEM_CAPACITY} onChange={setItemCapacity} />
                   <CapacitySlider label="Shelf items" value={shelfCapacity} min={0} max={MAX_SHELF_CAPACITY} onChange={setShelfCapacity} />
                   {caseEligible ? (
@@ -940,6 +1024,51 @@ export default function MuseumBuilder() {
                   {rowSaveState === "saved" ? <span className="text-[11px] font-semibold text-emerald-300">Saved</span> : null}
                   {rowSaveState === "error" ? <span className="text-[11px] font-semibold text-red-300">Save failed</span> : null}
                 </div>
+                {selectedItem ? (
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    <label className="flex h-6 cursor-pointer items-center gap-1.5 rounded-[5px] bg-[color:var(--input)] px-2 text-[11px] font-bold ring-1 ring-[color:var(--border)]">
+                      <input
+                        type="checkbox"
+                        checked={Boolean(selectedItem.show_value)}
+                        disabled={typeof selectedItem.estimated_value !== "number"}
+                        onChange={(event) => void handleToggleShowValue(event.target.checked)}
+                        className="h-3 w-3 accent-cyan-400"
+                      />
+                      Show value for &quot;{selectedItem.title}&quot;
+                    </label>
+                    {typeof selectedItem.estimated_value !== "number" ? (
+                      <span className="text-[10px] font-semibold text-[color:var(--muted)]">This item has no saved value</span>
+                    ) : null}
+                    {showValueSaveState === "saving" ? <span className="text-[11px] font-semibold text-cyan-300">Saving…</span> : null}
+                    {showValueSaveState === "saved" ? <span className="text-[11px] font-semibold text-emerald-300">Saved</span> : null}
+                    {showValueSaveState === "error" ? <span className="text-[11px] font-semibold text-red-300">Save failed</span> : null}
+                  </div>
+                ) : null}
+                <div className="flex flex-wrap items-center gap-1.5">
+                  <span className="text-[10px] font-black uppercase tracking-[0.1em] text-[color:var(--muted2)]">Background</span>
+                  {ROOM_BACKGROUND_OPTIONS.map((option) => {
+                    const active = (backgroundId ?? "neutral") === option.id;
+                    return (
+                      <button
+                        key={option.id}
+                        type="button"
+                        onClick={() => void handleBackgroundPresetChange(option.id)}
+                        aria-pressed={active}
+                        title={option.label}
+                        className={[
+                          "flex h-6 items-center gap-1 rounded-[5px] px-2 text-[11px] font-bold ring-1 transition",
+                          active ? "bg-[color:var(--input)] ring-cyan-400" : "bg-[color:var(--input)] ring-[color:var(--border)] hover:bg-black/10",
+                        ].join(" ")}
+                      >
+                        <span className="h-2.5 w-2.5 rounded-full ring-1 ring-white/30" style={{ background: option.swatch }} />
+                        {option.label}
+                      </button>
+                    );
+                  })}
+                  {presetSaveState === "saving" ? <span className="text-[11px] font-semibold text-cyan-300">Saving…</span> : null}
+                  {presetSaveState === "saved" ? <span className="text-[11px] font-semibold text-emerald-300">Saved</span> : null}
+                  {presetSaveState === "error" ? <span className="text-[11px] font-semibold text-red-300">Save failed</span> : null}
+                </div>
                 <div className="flex flex-wrap items-center gap-1.5">
                   <label className="flex h-6 cursor-pointer items-center gap-1.5 rounded-[5px] bg-[color:var(--input)] px-2 text-[11px] font-bold ring-1 ring-[color:var(--border)] transition hover:bg-black/10">
                     <Paintbrush size={12} />
@@ -977,6 +1106,16 @@ export default function MuseumBuilder() {
           style={{ borderColor: "var(--theme-border)" }}
         >
           <div className="relative min-h-[600px]">
+            {viewMode === "map" ? (
+              <MuseumCampusOverview
+                onBackToRoom={() => setViewMode("room")}
+                onSelectRoom={(id) => {
+                  setRoomId(id);
+                  setViewMode("room");
+                }}
+              />
+            ) : (
+              <>
             <div ref={mountRef} className="absolute inset-0" style={{ touchAction: "none" }} />
 
             {!ready ? (
@@ -1026,6 +1165,8 @@ export default function MuseumBuilder() {
                 {itemSaveState === "saving" ? "Saving…" : itemSaveState === "error" ? "Save Failed" : "Autosaved"}
               </div>
             </div>
+              </>
+            )}
           </div>
         </section>
       </div>
