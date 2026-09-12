@@ -44,6 +44,7 @@ import {
   DEFAULT_ITEMS_PER_ROOM,
   clearRoomItemSlot,
   getActiveSpotlightPrograms,
+  getAllRoomMeta,
   getEnabledRoomItems,
   getEnabledStoreItems,
   getItemsPerRoom,
@@ -70,6 +71,7 @@ import {
   NEUTRAL_PREVIEW_FINISH,
   placeArtwork,
   placeItemsAtSlots,
+  retitleDestinationSign,
   type PlacementSlot,
   type RoomFinish,
   type RoomLightGroups,
@@ -944,12 +946,35 @@ export default function VltdMuseumCampus() {
     }
 
     async function populateDynamicContent() {
-      const [itemsPerRoom, spotlightPrograms, storeItems] = await Promise.all([
+      const [itemsPerRoom, spotlightPrograms, storeItems, roomMeta] = await Promise.all([
         getItemsPerRoom(),
         getActiveSpotlightPrograms(),
         getEnabledStoreItems(),
+        getAllRoomMeta(),
       ]);
       if (contentCancelled) return;
+
+      // Shared Museum Room Editor pass (2026-09-12): an admin-renamed room
+      // (museum_room_meta.title) updates the top-of-screen room label (via
+      // roomTitleOverrides, read every frame in tick() below) and every
+      // destination sign naming that room — each sign was tagged with the
+      // stable room id it names at build time (buildSharedWall's
+      // buildDestinationSign calls), so this finds and retitles them
+      // without re-deriving anything from the (possibly stale) label text
+      // already baked into their texture.
+      const titleOverrides: Record<string, string> = {};
+      for (const [roomId, meta] of Object.entries(roomMeta)) {
+        if (meta.title) titleOverrides[roomId] = meta.title;
+      }
+      roomTitleOverrides = titleOverrides;
+      if (Object.keys(titleOverrides).length > 0) {
+        scene.traverse((obj) => {
+          if (obj.userData?.kind !== "museum-destination-sign") return;
+          const roomId = obj.userData.roomId as string | undefined;
+          const override = roomId ? titleOverrides[roomId] : undefined;
+          if (override) retitleDestinationSign(obj, override);
+        });
+      }
 
       // Shared Museum Room Editor pass (2026-09-12): fetch every gallery
       // room's admin-curated content once, generically — replacing the old
@@ -1647,6 +1672,13 @@ export default function VltdMuseumCampus() {
     window.addEventListener("pointerup", onPointerUp);
     renderer.domElement.addEventListener("wheel", onWheel, { passive: false });
 
+    // Shared Museum Room Editor pass (2026-09-12): admin-renamed room
+    // titles (museum_room_meta.title, fetched inside populateDynamicContent
+    // below) — read by the top-of-screen room-label overlay so a rename
+    // shows up there too, not just on the Map. Starts empty (every room
+    // keeps its normal static label until the async fetch resolves).
+    let roomTitleOverrides: Record<string, string> = {};
+
     // A sentinel that can't equal any real room label (including the
     // empty-string PLAZA/corridor case) — spawning in an unlabeled area
     // otherwise leaves the overlay stuck on its initial "Loading…" text
@@ -1727,7 +1759,7 @@ export default function VltdMuseumCampus() {
       aimCamera(camera, cameraBody, yaw, pitch);
 
       const room = currentRoom(cameraBody.x, cameraBody.z);
-      const label = room ? room.label : "";
+      const label = room ? (roomTitleOverrides[room.id] || room.label) : "";
       if (label !== lastRoomLabel) {
         lastRoomLabel = label;
         if (roomLabelRef.current) roomLabelRef.current.textContent = label || "Corridor";

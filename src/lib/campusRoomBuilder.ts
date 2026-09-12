@@ -500,32 +500,17 @@ function destinationSignFaceTexture(scene: THREE.Scene): THREE.Texture {
  * use unlit materials so the lettering remains readable in rooms whose light
  * groups are currently in preview mode.
  */
-export function buildDestinationSign(
-  scene: THREE.Scene, x: number, y: number, z: number, rotationY: number, text: string,
-  width = 2.8, height = 0.56
-) {
-  const canvasHeight = 256;
-  const canvasWidth = Math.max(64, Math.round(canvasHeight * (width / height)));
-  const faceMaterial = new THREE.MeshBasicMaterial({
-    map: destinationSignFaceTexture(scene),
-    transparent: true,
-    alphaTest: 0.02,
-  });
-  const group = new THREE.Group();
-  group.position.set(x, y, z);
-  group.rotation.y = rotationY;
-  group.userData.kind = "museum-destination-sign";
-  group.userData.label = text;
-
-  const plaque = new THREE.Mesh(new THREE.PlaneGeometry(width, height), faceMaterial);
-  plaque.userData.kind = "museum-destination-sign-face";
-  group.add(plaque);
-
+// Extracted from buildDestinationSign() (2026-09-12, Shared Museum Room
+// Editor pass) so a sign's label can be regenerated later — from
+// retitleDestinationSign() below — with the exact same rendering the sign
+// was built with, once an admin's museum_room_meta title override loads in
+// (asynchronously, after every sign has already been built synchronously
+// during the scene's initial construction).
+function renderDestinationSignLabelTexture(text: string, canvasWidth: number, canvasHeight: number): THREE.CanvasTexture {
   const labelCanvas = document.createElement("canvas");
   labelCanvas.width = canvasWidth;
   labelCanvas.height = canvasHeight;
-  const ctx = labelCanvas.getContext("2d");
-  if (!ctx) return;
+  const ctx = labelCanvas.getContext("2d")!;
 
   const label = text.toUpperCase();
   const paddingX = canvasWidth * 0.16;
@@ -546,8 +531,41 @@ export function buildDestinationSign(
   ctx.fillStyle = "#f3d78e";
   ctx.fillText(label, canvasWidth / 2, canvasHeight / 2);
 
-  const labelTexture = new THREE.CanvasTexture(labelCanvas);
-  labelTexture.colorSpace = THREE.SRGBColorSpace;
+  const texture = new THREE.CanvasTexture(labelCanvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  return texture;
+}
+
+export function buildDestinationSign(
+  scene: THREE.Scene, x: number, y: number, z: number, rotationY: number, text: string,
+  width = 2.8, height = 0.56,
+  // Shared Museum Room Editor pass (2026-09-12): the STABLE room id this
+  // sign names (the room on the far side of the doorway) — undefined for
+  // the one entrance sign, which never gets an admin-renamed title. Tagged
+  // on the group's userData so retitleDestinationSign() can find every
+  // sign naming a given room later, without re-deriving it from the
+  // (possibly already-renamed) label text.
+  roomId?: string
+) {
+  const canvasHeight = 256;
+  const canvasWidth = Math.max(64, Math.round(canvasHeight * (width / height)));
+  const faceMaterial = new THREE.MeshBasicMaterial({
+    map: destinationSignFaceTexture(scene),
+    transparent: true,
+    alphaTest: 0.02,
+  });
+  const group = new THREE.Group();
+  group.position.set(x, y, z);
+  group.rotation.y = rotationY;
+  group.userData.kind = "museum-destination-sign";
+  group.userData.label = text;
+  group.userData.roomId = roomId;
+
+  const plaque = new THREE.Mesh(new THREE.PlaneGeometry(width, height), faceMaterial);
+  plaque.userData.kind = "museum-destination-sign-face";
+  group.add(plaque);
+
+  const labelTexture = renderDestinationSignLabelTexture(text, canvasWidth, canvasHeight);
   const labelMaterial = new THREE.MeshBasicMaterial({
     map: labelTexture,
     transparent: true,
@@ -558,9 +576,34 @@ export function buildDestinationSign(
   labelPlane.renderOrder = 2;
   labelPlane.userData.kind = "museum-destination-sign-label";
   labelPlane.userData.label = text;
+  labelPlane.userData.canvasWidth = canvasWidth;
+  labelPlane.userData.canvasHeight = canvasHeight;
   group.add(labelPlane);
 
   scene.add(group);
+}
+
+/** Shared Museum Room Editor pass (2026-09-12): regenerates one destination
+ * sign's label texture in place — used once an admin's museum_room_meta
+ * title override loads in, after every sign has already been built
+ * synchronously. Disposes the old CanvasTexture (same cleanup discipline
+ * the rest of this file already follows for generated textures) before
+ * swapping in the new one. No-op if the group doesn't carry the expected
+ * label child (defensive — should never happen for a real sign group). */
+export function retitleDestinationSign(signGroup: THREE.Object3D, newText: string): void {
+  const labelMesh = signGroup.children.find(
+    (child): child is THREE.Mesh => child instanceof THREE.Mesh && child.userData.kind === "museum-destination-sign-label"
+  );
+  if (!labelMesh) return;
+  const material = labelMesh.material as THREE.MeshBasicMaterial;
+  const oldTexture = material.map;
+  const canvasWidth = (labelMesh.userData.canvasWidth as number) ?? 256;
+  const canvasHeight = (labelMesh.userData.canvasHeight as number) ?? 256;
+  material.map = renderDestinationSignLabelTexture(newText, canvasWidth, canvasHeight);
+  material.needsUpdate = true;
+  oldTexture?.dispose();
+  labelMesh.userData.label = newText;
+  signGroup.userData.label = newText;
 }
 
 // Doorway casing (2026-09-08 redesign): EK's foreground review of the first
@@ -786,11 +829,11 @@ export function buildSharedWall(
   const signY = transomBottom + ORDINARY_SIGN_HEIGHT / 2 + 0.12;
   if (roomB.label) {
     const faceAPos = point(door.gapCenter, -(wallThickness / 2 + 0.01));
-    buildDestinationSign(scene, faceAPos.x, signY, faceAPos.z, rotationTowardA, visitorFacingRoomName(roomB.label), ORDINARY_SIGN_WIDTH, ORDINARY_SIGN_HEIGHT);
+    buildDestinationSign(scene, faceAPos.x, signY, faceAPos.z, rotationTowardA, visitorFacingRoomName(roomB.label), ORDINARY_SIGN_WIDTH, ORDINARY_SIGN_HEIGHT, roomB.id);
   }
   if (roomA.label) {
     const faceBPos = point(door.gapCenter, wallThickness / 2 + 0.01);
-    buildDestinationSign(scene, faceBPos.x, signY, faceBPos.z, rotationTowardB, visitorFacingRoomName(roomA.label), ORDINARY_SIGN_WIDTH, ORDINARY_SIGN_HEIGHT);
+    buildDestinationSign(scene, faceBPos.x, signY, faceBPos.z, rotationTowardB, visitorFacingRoomName(roomA.label), ORDINARY_SIGN_WIDTH, ORDINARY_SIGN_HEIGHT, roomA.id);
   }
 }
 
