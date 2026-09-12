@@ -1,5 +1,15 @@
 # VLTD — Session Checklist (2026-08-05 night → ongoing, updated 2026-08-27)
 
+## 2026-09-12 (later, same day) — Gallery Map: real in-context Room Editor, replacing the wrong Admin Tools location
+Full detail in the matching HANDOFF.md entry (same date, near the top).
+- [x] Removed the SPORTS-only admin CRUD section from `admin/museum-campus/page.tsx` — EK: "it should have never been there."
+- [x] New `RoomEditorModal.tsx`, opened from each room's edit badge on the Map — edits room title/description (`museum_room_meta`, optional override) and curates the room's real items (`museum_room_items`: add/edit/enable/disable/delete).
+- [x] `MuseumCampusOverview.tsx` edit badge wired to open the modal (was a "coming soon" `window.alert`); room label now uses the meta override when set.
+- [x] `tsc`/targeted ESLint/`npm run build` clean.
+- [ ] **New migration `20260912_museum_room_meta.sql` not yet run by EK** — paste inline before she runs it.
+- [ ] **Not live-verified** — no browser connection this session; the modal's real Supabase reads/writes haven't been exercised live yet.
+- [ ] Once the migration's run: EK uses the editor live on SPORTS (the one room with real curated content already), then the earlier-deferred "review SPORTS from all 3 doors + room center, approve as the standard" step from the entry below can actually happen.
+
 ## 2026-09-11 (yet still later, same day) — VLTD Museum: SPORTS is the first proof room (real curated content + real placement)
 Full detail in the matching HANDOFF.md entry (same date, near the top).
 - [x] New `museum_room_items` table (generic `room_id`, only SPORTS wired up) + `getEnabledRoomItems()` + a "SPORTS items" admin CRUD section — real curated content instead of the signed-in personal vault.
@@ -9,7 +19,7 @@ Full detail in the matching HANDOFF.md entry (same date, near the top).
 - [x] Verified the south-focal/door-supporting allocation directly (a throwaway script) after finding the naive proportional-by-span approach actually gave south a minority of items — fixed by calling `placeArtwork()` twice instead of modifying it.
 - [x] `tsc`/targeted ESLint/`npm run build` clean.
 - [x] Migration `20260911_museum_room_items.sql` confirmed run by EK.
-- [ ] **Real SPORTS items not yet curated** — Admin Tools > Museum Campus > SPORTS items, EK's/content owner's step, 7-8 real pieces.
+- [ ] **Real SPORTS items not yet curated** — 7-8 real pieces, curated via the Map's Room Editor now (see the 2026-09-12 entry above; the old "Admin Tools > Museum Campus > SPORTS items" location has been removed).
 - [ ] **Not live-verified** — no browser connection this session. Review from HUB door, COLLECTION door, CARDS door, and room center still needed before SPORTS is approved as the standard.
 
 ## 2026-09-11 (still later, same day) — VLTD Museum: transom-width fix (vertical openings above doorway jambs)

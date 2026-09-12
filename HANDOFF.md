@@ -5,6 +5,43 @@
 - **Mobile drag/scroll bug** (EK found this hands-on, unrelated to the above): dragging to look around also scrolled the whole page on a touch device, and yaw drag didn't track smoothly — both caused by the room's mount div never declaring `touch-action: none`. Fixed with the same one-line fix already used elsewhere in this file. Code-verified and reasoned through; genuinely NOT tested with a real touch input (no tool in this session can produce one) — needs EK's own phone to close the loop.
 Regression-checked live: White unaffected (still looks exactly right), pickup/rotate/return still works, no console errors anywhere. See the 2026-09-06 dated entries (top of the log below) for full detail, including the one real bug this session found and fixed in its own live check (Blue's case lids) before calling any of this done. Before tonight: the first White-room material pass (2026-09-05, commit `c61e600`/`f346d18`) — also READY on Vercel and live-verified. Below that: the VLTD Museum public campus work (2026-08-31 through 09-04, then resumed and heavily active again 2026-09-08 through 09-10 — see the 2026-09-10 dated entry, TOP of the dated list below, for the current state: NOT accepted yet, EK's own physical-input pass still pending). Read the dated entries below in order, newest first, before assuming any room behaves a particular way. Older work further down in §2 (2026-08-27/28 Admin Users redesign; ~110 VaultItem fields + 3 Gallery-sync gaps, both migrations confirmed run by EK; Events tooling, admin console/APP_MAP.md, Vault upload; a full backend security audit, 3D Museum beta-access gating, Room Builder fixes) is unrelated to either of the above.)
 
+# 2026-09-12 (later, same day) — Gallery Map: real in-context Room Editor (commit `6be58c0`), replacing the wrong Admin Tools location
+
+EK tested the edit badge live (the "coming soon" alert from the entry
+below worked correctly) and said, verbatim: "not sure why this doesn't
+just take me to the edit page. you said earlier you built a edit page in
+Admin setting but it should have never been there, it should work here."
+Two changes:
+
+- **Removed** the SPORTS-only admin section from
+  `src/app/admin/museum-campus/page.tsx` entirely — that page is back to
+  Campus settings / Spotlight programs / Store items only, matching its
+  shape before SPORTS was ever added there.
+- **Added** a real `RoomEditorModal`
+  (`src/components/gallery/RoomEditorModal.tsx`), opened directly from
+  each room's edit badge on the Gallery Builder's Map
+  (`MuseumCampusOverview.tsx`) instead of the old `window.alert`
+  placeholder. It edits:
+  - the room's display title/description — an **optional** override
+    stored in the new `museum_room_meta` table (room with no row just
+    keeps its normal static `ROOM_LABELS` name); this only affects the
+    Map's own label, never the real museum scene's destination signs
+    (`campusLayout.ts`'s static `room.label`, untouched).
+  - the room's real items (`museum_room_items`, the same table SPORTS's
+    museum display already reads from) — add / edit / enable-disable /
+    delete, all fields the museum display needs (title, image URL, sort
+    order, enabled).
+
+New pending migration, **not yet run**:
+`supabase/migrations/20260912_museum_room_meta.sql` — paste in chat
+before EK runs it, per the standing rule.
+
+Verified via `tsc`/targeted `eslint`/`build` only — still no browser
+connection this session, so the actual Supabase reads/writes from the
+new modal haven't been seen live yet. Next real step is EK using the
+edit badge live once the migration's run, on SPORTS first since it's the
+one room with real curated content already in `museum_room_items`.
+
 # 2026-09-12 — Vercel deploy queue was stuck; Gallery Map visual fixes from a real screenshot
 
 **Infra note, check this first if a deploy ever looks stalled again:** EK's
