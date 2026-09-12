@@ -88,6 +88,19 @@ export const CAMPUS_ROOMS: CampusRoom[] = [
 // should track real data, not be pinned to today's placeholder choice.
 export const SWING_UNIVERSES: UniverseKey[] = ["JEWELRY_APPAREL", "MUSIC", "ART"];
 
+// Shared Museum Room Editor pass (2026-09-12): every real "gallery" room —
+// one with actual hangable wall geometry — that the new in-3D room editor
+// (numbered wall-position +/- overlay) supports. Deliberately excludes HUB
+// (the Grand Hall, no edit badge at all), SPOTLIGHT/STORE (their own
+// separate admin-curated content types — rotating programs / physical
+// products, not wall-hung vault-style items), and PLAZA (not a room). Used
+// both to validate VltdMuseumCampus.tsx's own `?edit=` query param and to
+// decide, from the Map, which rooms get an "Add Items / Edit Room" control
+// versus a room whose curation lives elsewhere.
+export const EDITABLE_ROOM_IDS: CampusRoomId[] = [
+  "POP_CULTURE", "TCG", "MISC", "BUILT_BOTANY", "GAMES", "AUTOMOTIVE", "COLLECTION", "SPORTS", "CARDS",
+];
+
 export function assignSwingRoomUniverses(
   countByUniverse: Partial<Record<UniverseKey, number>>
 ): { COLLECTION: UniverseKey[]; CARDS: UniverseKey[]; MISC_EXTRA: UniverseKey[] } {
@@ -139,6 +152,33 @@ export function adjacentRoomIds(id: CampusRoomId): CampusRoomId[] {
     else if (b === id) neighbors.push(a);
   }
   return neighbors;
+}
+
+/** Shared Museum Room Editor pass (2026-09-12): derives a room's own
+ * doorways (side/gapCenter/neighborId/width) straight from CAMPUS_DOORS,
+ * the single source of truth every door already comes from — instead of
+ * re-typing a manual RoomDoorway[] literal per room the way
+ * VltdMuseumCampus.tsx's own POP_CULTURE/TCG/COLLECTION/SPORTS RoomModule
+ * blocks still do. Used by the new per-room placement-slot generator
+ * (campusRoomBuilder.ts's computeRoomPlacementSlots) so every campus room —
+ * not just the 4 with a hand-written doorway list — can compute real usable
+ * wall spans without a second, drifting copy of this lookup. */
+export function deriveRoomDoorways(
+  roomId: CampusRoomId
+): { side: WallSide; gapCenter: number; neighborId: CampusRoomId; width: number }[] {
+  const bounds = roomBounds(roomById(roomId));
+  const doorways: { side: WallSide; gapCenter: number; neighborId: CampusRoomId; width: number }[] = [];
+  for (const door of CAMPUS_DOORS) {
+    const [a, b] = door.rooms;
+    if (a !== roomId && b !== roomId) continue;
+    const neighborId = a === roomId ? b : a;
+    if (!neighborId) continue; // the one entrance door (PLAZA<->HUB side) has no "other room" for HUB/PLAZA's own accounting here
+    const side: WallSide = door.wall === "x"
+      ? (Math.abs(bounds.z0 - door.at) < 1e-6 ? "north" : "south")
+      : (Math.abs(bounds.x0 - door.at) < 1e-6 ? "west" : "east");
+    doorways.push({ side, gapCenter: door.gapCenter, neighborId, width: door.width ?? DOOR_WIDTH });
+  }
+  return doorways;
 }
 
 export type CampusDoor = {

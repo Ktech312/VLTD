@@ -10,8 +10,17 @@
 // reads from). Only ever rendered for an admin — MuseumCampusOverview's
 // edit badge only exists on the already admin-gated Map.
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
-import { getAllRoomItems, getRoomMeta, type MuseumRoomItem } from "@/lib/museumCampusConfig";
+import {
+  getAllRoomItems,
+  getItemsPerRoom,
+  getRoomMeta,
+  setRoomBackground,
+  type MuseumRoomItem,
+} from "@/lib/museumCampusConfig";
+import { EDITABLE_ROOM_IDS } from "@/lib/campusLayout";
+import { ROOM_BACKGROUND_OPTIONS } from "@/lib/campusRoomBuilder";
 
 type ItemForm = { title: string; image_url: string; enabled: boolean; sort_order: number };
 const EMPTY_ITEM_FORM: ItemForm = { title: "", image_url: "", enabled: true, sort_order: 0 };
@@ -44,12 +53,34 @@ export default function RoomEditorModal({
   const [showItemForm, setShowItemForm] = useState(false);
   const [itemError, setItemError] = useState("");
 
+  // Shared Museum Room Editor pass (2026-09-12): capacity (for the "N / cap"
+  // display) and the room's saved background choice.
+  const [capacity, setCapacity] = useState(8);
+  const [backgroundId, setBackgroundId] = useState<string | null>(null);
+  const [backgroundSaveState, setBackgroundSaveState] = useState<"idle" | "saving" | "saved" | "error">("idle");
+  const isEditableRoom = (EDITABLE_ROOM_IDS as string[]).includes(roomId);
+  const enabledCount = items.filter((item) => item.enabled).length;
+
   async function fetchAll() {
-    const [meta, roomItems] = await Promise.all([getRoomMeta(roomId), getAllRoomItems(roomId)]);
+    const [meta, roomItems, itemsPerRoom] = await Promise.all([getRoomMeta(roomId), getAllRoomItems(roomId), getItemsPerRoom()]);
     setTitle(meta?.title ?? "");
     setDescription(meta?.description ?? "");
+    setBackgroundId(meta?.background_id ?? null);
     setItems(roomItems);
+    setCapacity(itemsPerRoom);
     setLoading(false);
+  }
+
+  async function saveBackground(nextId: string | null) {
+    setBackgroundSaveState("saving");
+    const result = await setRoomBackground(roomId, nextId);
+    if (result.ok) {
+      setBackgroundId(nextId);
+      setBackgroundSaveState("saved");
+      window.setTimeout(() => setBackgroundSaveState((s) => (s === "saved" ? "idle" : s)), 1800);
+    } else {
+      setBackgroundSaveState("error");
+    }
   }
 
   useEffect(() => {
@@ -173,16 +204,70 @@ export default function RoomEditorModal({
               </div>
             </section>
 
+            {isEditableRoom ? (
+              <section className="mb-5 rounded-[10px] bg-white/[0.04] p-3.5 ring-1 ring-white/10">
+                <div className="mb-2 flex items-center justify-between gap-2">
+                  <div className="text-[10px] font-black uppercase tracking-[0.14em] text-white/50">Placement</div>
+                  <span className="text-xs font-bold text-white/70">{enabledCount} / {capacity} placed</span>
+                </div>
+                <div className="mb-3 flex flex-wrap gap-2">
+                  <Link
+                    href={`/museum/vltd?edit=${roomId}`}
+                    target="_blank"
+                    className="rounded-[6px] bg-[#4FD3EE] px-3 py-1.5 text-xs font-black uppercase tracking-[0.1em] text-[#06171d] transition hover:brightness-110"
+                  >
+                    Add Items / Edit Room
+                  </Link>
+                  <Link
+                    href={`/museum/vltd?room=${roomId}`}
+                    target="_blank"
+                    className="rounded-[6px] bg-white/10 px-3 py-1.5 text-xs font-black uppercase tracking-[0.1em] text-white transition hover:bg-white/20"
+                  >
+                    Enter Museum
+                  </Link>
+                </div>
+
+                <div className="mb-2 text-[10px] font-black uppercase tracking-[0.14em] text-white/50">Background</div>
+                <div className="mb-2 flex flex-wrap gap-2">
+                  {ROOM_BACKGROUND_OPTIONS.map((option) => {
+                    const active = (backgroundId ?? "neutral") === option.id;
+                    return (
+                      <button
+                        key={option.id}
+                        type="button"
+                        onClick={() => void saveBackground(option.id === "neutral" ? null : option.id)}
+                        aria-pressed={active}
+                        className={[
+                          "flex items-center gap-1.5 rounded-[6px] px-2.5 py-1.5 text-[10px] font-bold ring-1 transition",
+                          active ? "bg-white/15 text-white ring-[#79e7fb]" : "bg-black/25 text-white/70 ring-white/10 hover:bg-white/10",
+                        ].join(" ")}
+                      >
+                        <span className="h-3 w-3 rounded-full ring-1 ring-white/30" style={{ background: option.swatch }} />
+                        {option.label}
+                      </button>
+                    );
+                  })}
+                </div>
+                {backgroundSaveState === "saving" ? <span className="text-xs font-semibold text-cyan-200">Saving…</span> : null}
+                {backgroundSaveState === "saved" ? <span className="text-xs font-semibold text-emerald-300">Saved.</span> : null}
+                {backgroundSaveState === "error" ? <span className="text-xs font-semibold text-red-300">Couldn&apos;t save — try again.</span> : null}
+              </section>
+            ) : null}
+
             <section className="rounded-[10px] bg-white/[0.04] p-3.5 ring-1 ring-white/10">
               <div className="mb-2 flex items-center justify-between gap-2">
                 <div className="text-[10px] font-black uppercase tracking-[0.14em] text-white/50">Items</div>
-                <button
-                  type="button"
-                  onClick={startNewItem}
-                  className="rounded-[6px] bg-white/10 px-2.5 py-1.5 text-[10px] font-black uppercase tracking-[0.1em] transition hover:bg-white/20"
-                >
-                  + Add item
-                </button>
+                {isEditableRoom ? (
+                  <span className="text-[10px] font-semibold text-white/45">Managed from the 3D editor above</span>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={startNewItem}
+                    className="rounded-[6px] bg-white/10 px-2.5 py-1.5 text-[10px] font-black uppercase tracking-[0.1em] transition hover:bg-white/20"
+                  >
+                    + Add item
+                  </button>
+                )}
               </div>
 
               {itemError ? <div className="mb-2 rounded-[6px] bg-red-500/15 px-2.5 py-1.5 text-xs text-red-300">{itemError}</div> : null}

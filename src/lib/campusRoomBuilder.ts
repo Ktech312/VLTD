@@ -113,6 +113,25 @@ export const HUB_FINISH: RoomFinish = {
   lightColor: 0xfff2d0,
 };
 
+// Shared Museum Room Editor pass (2026-09-12): the room editor's Background
+// control choices. Persisted per room via museum_room_meta.background_id
+// (src/lib/museumCampusConfig.ts's setRoomBackground/getRoomMeta) — a plain
+// enum id rather than an uploaded image, since the shared museum's rooms
+// are built procedurally (this file's own createWallMaterial/RoomFinish
+// system), not from the personal Gallery's GLB-based room styles, so there
+// is no single literal "wallpaper" asset to reuse across both. NOTE: this
+// pass ships the data layer and the editor's picker UI for these choices;
+// wiring a saved choice into VltdMuseumCampus.tsx's own live wall-material
+// build (currently one shared material per FINISH identity, cached by
+// object reference — see roomWallMaterial() there) is tracked as follow-up
+// work, not yet applied to the rendered scene.
+export const ROOM_BACKGROUND_OPTIONS: { id: string; label: string; swatch: string }[] = [
+  { id: "neutral", label: "Neutral (default)", swatch: "#d7d9d6" },
+  { id: "warm", label: "Warm Ivory", swatch: "#e6d8bd" },
+  { id: "cool_slate", label: "Cool Slate", swatch: "#c7ccd1" },
+  { id: "charcoal", label: "Charcoal", swatch: "#33363b" },
+];
+
 export type RoomModule = {
   room: CampusRoom;
   doorways: RoomDoorway[];
@@ -864,6 +883,162 @@ export function computeUsableWallSpans(module: RoomModule): WallSpan[] {
     if (cursor < s.to) spans.push({ wall: s.side, from: cursor, to: s.to, fixed: s.fixed, rotationY: wallRotationY(s.side) });
   }
   return spans.filter((s) => s.to - s.from > 1);
+}
+
+// Shared Museum Room Editor pass (2026-09-12): a STABLE, numbered set of
+// placement positions generated from a room's real geometry — the exact
+// same usable-wall-span walk placeArtwork() itself uses (so a doorway,
+// its casing, and every other exclusion computeUsableWallSpans() already
+// respects are respected here too), just distributed as a FIXED layout
+// sized to `capacity` instead of to however many items currently exist.
+// This is the one function both the new in-3D room editor (numbered +/-
+// overlay) and the museum's own display consult, so the two can never
+// disagree about where "position #4 on SPORTS's south wall" physically is.
+// Slot ids are stable — `{roomId}#{wall}#{index}` — as long as `capacity`
+// and the room's own doors/dimensions don't change.
+export type PlacementSlot = {
+  id: string;
+  wall: WallSide;
+  index: number;
+  x: number;
+  y: number;
+  z: number;
+  rotationY: number;
+  maxWidth: number;
+  maxHeight: number;
+};
+
+// Same proportional-by-span-length distribution placeArtwork() itself uses
+// (a floor of 1 slot per span so no usable span goes completely unused),
+// just returning per-span COUNTS instead of hanging anything.
+function distributeAcrossSpans(spans: WallSpan[], count: number): number[] {
+  const totalLength = spans.reduce((sum, s) => sum + (s.to - s.from), 0);
+  const counts: number[] = [];
+  let used = 0;
+  if (totalLength <= 0) return spans.map(() => 0);
+  for (const span of spans) {
+    const share = Math.max(1, Math.round(((span.to - span.from) / totalLength) * count));
+    const c = Math.max(0, Math.min(share, count - used));
+    counts.push(c);
+    used += c;
+  }
+  return counts;
+}
+
+export function computeRoomPlacementSlots(
+  roomId: CampusRoomId,
+  doorways: RoomDoorway[],
+  wallThickness: number,
+  eyeHeight: number,
+  capacity: number,
+  // Optional dedicated "main" wall (SPORTS's south wall today: the one side
+  // with no doorway) that should get the bulk of the room's capacity rather
+  // than an even proportional split. Ported from SPORTS's own hand-tuned
+  // fix (2026-09-11): a flat per-span proportional split, floored to a
+  // minimum of 1 slot per span, lets several short door-flanking spans
+  // collectively outweigh one long, doorless focal wall. Mirrors SPORTS's
+  // exact existing rule (a supporting slot per flanking span only once
+  // there's enough capacity to spare one) so this generalizes SPORTS's
+  // proof-room layout into the shared engine instead of discarding it.
+  focalWall?: WallSide
+): PlacementSlot[] {
+  if (capacity <= 0) return [];
+  const roomModule: RoomModule = {
+    room: roomById(roomId),
+    doorways,
+    wallHeight: 0, // unused by computeUsableWallSpans — only room+doorways matter here
+    wallThickness,
+    eyeHeight,
+    finish: NEUTRAL_LEGACY_FINISH,
+  };
+  const spans = computeUsableWallSpans(roomModule);
+  if (spans.length === 0) return [];
+
+  const focal = focalWall ? spans.filter((s) => s.wall === focalWall) : [];
+  const supporting = focalWall ? spans.filter((s) => s.wall !== focalWall) : [];
+  const useFocalSplit = focalWall !== undefined && focal.length > 0 && supporting.length > 0;
+
+  const groups: { spans: WallSpan[]; capacity: number }[] = useFocalSplit
+    ? (() => {
+        const perSupporting = capacity >= 5 ? 1 : 0;
+        const supportingCapacity = Math.min(perSupporting * supporting.length, Math.max(0, capacity - 1));
+        return [
+          { spans: focal, capacity: capacity - supportingCapacity },
+          { spans: supporting, capacity: supportingCapacity },
+        ];
+      })()
+    : [{ spans, capacity }];
+
+  const margin = 0.9;
+  const slots: PlacementSlot[] = [];
+  // Continuous per-WALL-SIDE counter for stable ids — a wall side can carry
+  // MULTIPLE spans (e.g. "north" split into two shorter pieces flanking a
+  // doorway); indexing must run across all of that side's spans, not reset
+  // per span, or two different spans on the same side would both mint id
+  // `#north#0`.
+  const sideCounters = new Map<WallSide, number>();
+
+  for (const group of groups) {
+    const counts = distributeAcrossSpans(group.spans, group.capacity);
+    group.spans.forEach((span, spanIdx) => {
+      const count = counts[spanIdx];
+      if (count <= 0) return;
+      const spanLength = span.to - span.from;
+      const usable = spanLength - margin * 2;
+      const step = usable / count;
+      const maxSlot = Math.min(2.6, step * 0.8);
+      for (let i = 0; i < count; i += 1) {
+        const t = span.from + margin + step * (i + 0.5);
+        const wallInset = wallThickness / 2 + 0.04;
+        const point = span.wall === "north" || span.wall === "south"
+          ? { x: t, z: span.fixed + (span.wall === "north" ? 1 : -1) * wallInset }
+          : { x: span.fixed + (span.wall === "west" ? 1 : -1) * wallInset, z: t };
+        const sideIndex = sideCounters.get(span.wall) ?? 0;
+        sideCounters.set(span.wall, sideIndex + 1);
+        slots.push({
+          id: `${roomId}#${span.wall}#${sideIndex}`,
+          wall: span.wall,
+          index: sideIndex,
+          x: point.x,
+          y: eyeHeight,
+          z: point.z,
+          rotationY: span.rotationY,
+          maxWidth: maxSlot,
+          maxHeight: 2.2,
+        });
+      }
+    });
+  }
+  return slots;
+}
+
+/** Places a room's curated items at their explicitly assigned slots (from
+ * computeRoomPlacementSlots), instead of placeArtwork()'s proportional
+ * auto-fill — used once an admin has assigned at least one slot via the new
+ * room editor. Any slot with no assigned item is simply left empty (the
+ * editor is what shows an empty slot's numbered "+" — the live museum
+ * display just doesn't render anything there). */
+export function placeItemsAtSlots(
+  scene: THREE.Scene,
+  textureLoader: THREE.TextureLoader,
+  groups: RoomLightGroups,
+  slots: PlacementSlot[],
+  itemsBySlot: Map<string, { url: string; label?: string }>,
+  isCancelled: () => boolean
+): void {
+  let lit = 0;
+  for (const slot of slots) {
+    const item = itemsBySlot.get(slot.id);
+    if (!item) continue;
+    const withRealLight = lit < MAX_PICTURE_LIGHTS_PER_ROOM;
+    lit += 1;
+    hangArtPreservingAspect(
+      scene, textureLoader, groups,
+      slot.x, slot.y, slot.z, slot.rotationY,
+      item.url, slot.maxWidth, slot.maxHeight,
+      isCancelled, withRealLight, item.label
+    );
+  }
 }
 
 // Compact museum-placard label under a piece of artwork — deliberately its

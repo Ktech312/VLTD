@@ -9,7 +9,7 @@
 // user's own vault items as placeholder content until there's a real
 // cross-user "top items" feed to show instead.
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 
@@ -17,6 +17,7 @@ import {
   CAMPUS_DOORS,
   CAMPUS_ROOMS,
   CAMPUS_SPAWN,
+  EDITABLE_ROOM_IDS,
   EYE_HEIGHT,
   WALL_HEIGHT,
   WALL_THICKNESS,
@@ -26,6 +27,7 @@ import {
   computeCampusWaypoints,
   computeCampusWallSegments,
   computeDoorBridges,
+  deriveRoomDoorways,
   doorGapCenter,
   doorWallWidth,
   isWalkable,
@@ -37,7 +39,17 @@ import {
 } from "@/lib/campusLayout";
 import { getPrimaryImageUrl, loadItems, type VaultItem } from "@/lib/vaultModel";
 import { isUniverseKey, type UniverseKey } from "@/lib/taxonomy";
-import { getActiveSpotlightPrograms, getEnabledRoomItems, getEnabledStoreItems, getItemsPerRoom } from "@/lib/museumCampusConfig";
+import { getMyAdminRole } from "@/lib/adminAuth";
+import {
+  DEFAULT_ITEMS_PER_ROOM,
+  clearRoomItemSlot,
+  getActiveSpotlightPrograms,
+  getEnabledRoomItems,
+  getEnabledStoreItems,
+  getItemsPerRoom,
+  setRoomItemSlot,
+  type MuseumRoomItem,
+} from "@/lib/museumCampusConfig";
 import {
   DOORWAY_NO_DISPLAY_HALF_WIDTH,
   MUSEUM_CAMERA_FOV,
@@ -50,16 +62,18 @@ import {
   buildRoomShell,
   buildRoomTrim,
   buildSharedWall,
+  computeRoomPlacementSlots,
   computeUsableWallSpans,
   createWallMaterial,
   HUB_FINISH,
   NEUTRAL_LEGACY_FINISH,
   NEUTRAL_PREVIEW_FINISH,
   placeArtwork,
+  placeItemsAtSlots,
+  type PlacementSlot,
   type RoomFinish,
   type RoomLightGroups,
   type RoomModule,
-  type WallSpan,
 } from "@/lib/campusRoomBuilder";
 import {
   aimCamera,
@@ -69,6 +83,7 @@ import {
   facingDirection,
   WHEEL_STEP,
 } from "@/lib/visitorController";
+import MuseumRoomItemPicker from "./MuseumRoomItemPicker";
 
 function wrapText(ctx: CanvasRenderingContext2D, text: string, x: number, y: number, maxWidth: number, lineHeight: number) {
   const words = text.split(" ");
@@ -176,6 +191,48 @@ function roomCenter(room: CampusRoom) {
   return { x: room.x + room.w / 2, z: room.z + room.d / 2 };
 }
 
+// Shared Museum Room Editor pass (2026-09-12): merges a room's curated
+// museum_room_items into its full set of generated placement slots — an
+// item explicitly pinned to a slot (slot_id) always keeps that exact
+// position; anything else (older rows saved before this pass, or simply
+// more curated items than assigned slots) auto-fills whatever slots are
+// still empty, in slot order. This is what makes "the automatic layout is
+// the default arrangement, and the editor lets an admin override individual
+// positions on top of it" literally true — both this function and the
+// room editor overlay below read the exact same slot list.
+function buildSlotAssignments(
+  slots: PlacementSlot[],
+  items: MuseumRoomItem[]
+): Map<string, { url: string; label?: string }> {
+  const validIds = new Set(slots.map((s) => s.id));
+  const bySlot = new Map<string, { url: string; label?: string }>();
+  const unassigned: MuseumRoomItem[] = [];
+  for (const item of items) {
+    if (item.slot_id && validIds.has(item.slot_id) && !bySlot.has(item.slot_id)) {
+      bySlot.set(item.slot_id, { url: item.image_url, label: item.title });
+    } else {
+      unassigned.push(item);
+    }
+  }
+  let cursor = 0;
+  for (const slot of slots) {
+    if (bySlot.has(slot.id)) continue;
+    if (cursor >= unassigned.length) break;
+    bySlot.set(slot.id, { url: unassigned[cursor].image_url, label: unassigned[cursor].title });
+    cursor += 1;
+  }
+  return bySlot;
+}
+
+// The 9 rooms EDITABLE_ROOM_IDS lists; SPORTS alone keeps its own
+// hand-tuned "south wall is the focal wall" weighting (see
+// computeRoomPlacementSlots' focalWall param) — its south wall is the one
+// side with no doorway, exactly the case that rule was built for. No other
+// current room has an equivalent single doorless wall worth favoring yet.
+function focalWallFor(roomId: CampusRoomId) {
+  return roomId === "SPORTS" ? ("south" as const) : undefined;
+}
+
 export default function VltdMuseumCampus() {
   const mountRef = useRef<HTMLDivElement | null>(null);
   const roomLabelRef = useRef<HTMLDivElement | null>(null);
@@ -187,12 +244,115 @@ export default function VltdMuseumCampus() {
   // movement, and every other accepted behavior are untouched. Falls back
   // to the normal PLAZA entrance spawn for a plain /museum/vltd visit or an
   // unrecognized ?room= value.
+  const router = useRouter();
   const searchParams = useSearchParams();
-  const requestedRoomId = searchParams.get("room");
+  // Shared Museum Room Editor pass (2026-09-12): `?edit=<roomId>` opens the
+  // SAME real room, spawned at its center exactly like `?room=`, with the
+  // numbered placement-slot overlay turned on. Admin-only in effect (the
+  // Map link that produces this URL only renders for an admin, and the
+  // overlay below never shows/mutates anything until getMyAdminRole()
+  // resolves truthy for the current session) — same defense-in-depth model
+  // already used for museum_room_items/museum_room_meta's own RLS.
+  const requestedEditRoomId = searchParams.get("edit");
+  const editRoomId: CampusRoomId | null =
+    requestedEditRoomId && (EDITABLE_ROOM_IDS as string[]).includes(requestedEditRoomId)
+      ? (requestedEditRoomId as CampusRoomId)
+      : null;
+  const requestedRoomId = searchParams.get("room") ?? editRoomId ?? undefined;
   const spawnRoom = requestedRoomId ? CAMPUS_ROOMS.find((room) => room.id === requestedRoomId) : undefined;
   const spawn = spawnRoom
     ? { x: spawnRoom.x + spawnRoom.w / 2, z: spawnRoom.z + spawnRoom.d / 2, yaw: CAMPUS_SPAWN.yaw }
     : CAMPUS_SPAWN;
+
+  const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
+  const editSlotElsRef = useRef<Map<string, HTMLButtonElement>>(new Map());
+  const [editorAdminOk, setEditorAdminOk] = useState<boolean | null>(null);
+  const [editorSlots, setEditorSlots] = useState<PlacementSlot[]>([]);
+  const [editorAssignments, setEditorAssignments] = useState<Record<string, MuseumRoomItem>>({});
+  const [editorSelectedSlotId, setEditorSelectedSlotId] = useState<string | null>(null);
+  const [editorMoveArmed, setEditorMoveArmed] = useState(false);
+  const [editorPickerSlotId, setEditorPickerSlotId] = useState<string | null>(null);
+  const [editorSaveState, setEditorSaveState] = useState<"idle" | "saving" | "saved" | "error">("idle");
+  const editorCapacityRef = useRef(DEFAULT_ITEMS_PER_ROOM);
+
+  useEffect(() => {
+    if (!editRoomId) return;
+    let cancelled = false;
+    void getMyAdminRole().then((role) => {
+      if (!cancelled) setEditorAdminOk(role !== null);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [editRoomId]);
+
+  async function refreshEditorAssignments(roomId: CampusRoomId, slots: PlacementSlot[]) {
+    const items = await getEnabledRoomItems(roomId);
+    const bySlot: Record<string, MuseumRoomItem> = {};
+    for (const item of items) {
+      if (item.slot_id && slots.some((s) => s.id === item.slot_id)) bySlot[item.slot_id] = item;
+    }
+    setEditorAssignments(bySlot);
+  }
+
+  async function handlePickItem(item: { title: string; image_url: string }) {
+    if (!editRoomId || !editorPickerSlotId) return;
+    setEditorSaveState("saving");
+    const result = await setRoomItemSlot(editRoomId, editorPickerSlotId, item, 0);
+    setEditorSaveState(result.ok ? "saved" : "error");
+    setEditorPickerSlotId(null);
+    setEditorSelectedSlotId(null);
+    if (result.ok) await refreshEditorAssignments(editRoomId, editorSlots);
+    if (result.ok) window.setTimeout(() => setEditorSaveState((s) => (s === "saved" ? "idle" : s)), 1600);
+  }
+
+  async function handleRemoveSlot(slotId: string) {
+    if (!editRoomId) return;
+    if (!window.confirm("Remove this item from the museum room? It stays in the vault untouched.")) return;
+    setEditorSaveState("saving");
+    const result = await clearRoomItemSlot(editRoomId, slotId);
+    setEditorSaveState(result.ok ? "saved" : "error");
+    setEditorSelectedSlotId(null);
+    setEditorMoveArmed(false);
+    if (result.ok) await refreshEditorAssignments(editRoomId, editorSlots);
+    if (result.ok) window.setTimeout(() => setEditorSaveState((s) => (s === "saved" ? "idle" : s)), 1600);
+  }
+
+  async function handleMoveTo(targetSlotId: string) {
+    if (!editRoomId || !editorSelectedSlotId || editorSelectedSlotId === targetSlotId) {
+      setEditorMoveArmed(false);
+      return;
+    }
+    const source = editorAssignments[editorSelectedSlotId];
+    if (!source) {
+      setEditorMoveArmed(false);
+      return;
+    }
+    const destination = editorAssignments[targetSlotId];
+    if (destination && !window.confirm("A different item is already in that position. Replace it?")) return;
+    setEditorSaveState("saving");
+    const placed = await setRoomItemSlot(editRoomId, targetSlotId, { title: source.title, image_url: source.image_url }, 0);
+    const cleared = placed.ok ? await clearRoomItemSlot(editRoomId, editorSelectedSlotId) : { ok: false };
+    setEditorSaveState(placed.ok && cleared.ok ? "saved" : "error");
+    setEditorMoveArmed(false);
+    setEditorSelectedSlotId(null);
+    if (placed.ok) await refreshEditorAssignments(editRoomId, editorSlots);
+    if (placed.ok) window.setTimeout(() => setEditorSaveState((s) => (s === "saved" ? "idle" : s)), 1600);
+  }
+
+  function handleSlotActivate(slotId: string) {
+    if (editorMoveArmed) {
+      void handleMoveTo(slotId);
+      return;
+    }
+    const occupied = Boolean(editorAssignments[slotId]);
+    if (!occupied) {
+      setEditorSelectedSlotId(slotId);
+      setEditorPickerSlotId(slotId);
+      return;
+    }
+    setEditorSelectedSlotId((current) => (current === slotId ? null : slotId));
+  }
 
   useEffect(() => {
     const mount = mountRef.current;
@@ -241,6 +401,22 @@ export default function VltdMuseumCampus() {
     const camera = new THREE.PerspectiveCamera(MUSEUM_CAMERA_FOV, window.innerWidth / window.innerHeight, 0.1, 400);
     camera.rotation.order = "YXZ";
     camera.position.set(spawn.x, EYE_HEIGHT, spawn.z);
+    cameraRef.current = camera;
+
+    // Shared Museum Room Editor pass: the numbered placement-slot overlay
+    // needs a stable slot list as soon as possible (the projection effect
+    // below starts on mount, independent of this effect's own async data
+    // fetch) — computed here from real geometry only (no network round
+    // trip needed), refined once the real admin-configured itemsPerRoom
+    // resolves inside populateDynamicContent below.
+    if (editRoomId) {
+      const doorways = deriveRoomDoorways(editRoomId);
+      const slots = computeRoomPlacementSlots(
+        editRoomId, doorways, WALL_THICKNESS, EYE_HEIGHT, editorCapacityRef.current, focalWallFor(editRoomId)
+      );
+      setEditorSlots(slots);
+      void refreshEditorAssignments(editRoomId, slots);
+    }
 
     const renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
@@ -545,37 +721,23 @@ export default function VltdMuseumCampus() {
 
     // SPORTS proof-room pass (2026-09-11): first room to get real,
     // admin-curated artwork placed across every usable wall (south wall as
-    // the focal wall, since it's the one side with no doorway — see the
-    // three doorways below) instead of the generic north-wall-only,
-    // forced-square treatment every other legacy room still uses. This is
-    // ARTWORK PLACEMENT ONLY — SPORTS's shell (floor/ceiling/walls/trim)
-    // deliberately still goes through the exact same buildNeutralShell() +
-    // NEUTRAL_LEGACY_FINISH loop every other legacy room uses, below,
-    // completely unchanged: "keep its existing neutral finish, no new room
-    // theme." sportsModule exists only to feed computeUsableWallSpans() —
-    // it is never passed to buildRoomShell, so it never touches SPORTS's
-    // actual floor/ceiling/wall materials or adds buildRoomShell's own
-    // ambient light rig.
-    const sportsModule: RoomModule = {
-      room: roomById("SPORTS"),
-      wallHeight: WALL_HEIGHT,
-      wallThickness: WALL_THICKNESS,
-      eyeHeight: EYE_HEIGHT,
-      finish: NEUTRAL_LEGACY_FINISH,
-      doorways: [
-        { side: "north", gapCenter: doorGapCenter("SPORTS", "HUB"), neighborId: "HUB", width: doorWallWidth("SPORTS", "HUB") },
-        { side: "west", gapCenter: doorGapCenter("SPORTS", "COLLECTION"), neighborId: "COLLECTION", width: doorWallWidth("SPORTS", "COLLECTION") },
-        { side: "east", gapCenter: doorGapCenter("SPORTS", "CARDS"), neighborId: "CARDS", width: doorWallWidth("SPORTS", "CARDS") },
-      ],
-    };
-    const sportsWallSpans = computeUsableWallSpans(sportsModule);
-    // A dedicated (but otherwise empty) light group, added only so the new
-    // picture lights on SPORTS's real artwork can join the existing
-    // full/preview room-occupancy activation system below, the same way the
-    // 3 converted rooms' picture lights already do — real photographic
-    // items need real light to actually read, unlike the flat ambient wash
-    // every other legacy room relies on. Nothing else about SPORTS's
-    // lighting changes.
+    // the focal wall, since it's the one side with no doorway) instead of
+    // the generic north-wall-only, forced-square treatment every other
+    // legacy room still uses. This is ARTWORK PLACEMENT ONLY — SPORTS's
+    // shell (floor/ceiling/walls/trim) deliberately still goes through the
+    // exact same buildNeutralShell() + NEUTRAL_LEGACY_FINISH loop every
+    // other legacy room uses, below, completely unchanged: "keep its
+    // existing neutral finish, no new room theme."
+    //
+    // Shared Museum Room Editor pass (2026-09-12): the placement math itself
+    // (south-focal-wall weighting + usable-wall-span computation) moved into
+    // the shared, reusable computeRoomPlacementSlots()/deriveRoomDoorways()
+    // (campusRoomBuilder.ts / campusLayout.ts) — the same generator the new
+    // room editor's numbered overlay uses — so this file no longer needs its
+    // own one-off sportsModule/sportsWallSpans. SPORTS's dedicated light
+    // group stays (still needed so its picture lights join the two-tier
+    // room-occupancy activation system below, same as every converted
+    // room's).
     const sportsLightsFull = new THREE.Group();
     sportsLightsFull.name = "room-full:SPORTS";
     scene.add(sportsLightsFull);
@@ -602,6 +764,28 @@ export default function VltdMuseumCampus() {
       COLLECTION: collectionLights,
       SPORTS: sportsLights,
     };
+
+    // Shared Museum Room Editor pass (2026-09-12): any OTHER gallery room
+    // that gets admin-curated content for the first time (via the new room
+    // editor) needs its own full/preview light pair too, so its picture
+    // lights join the same two-tier occupancy activation every converted
+    // room already uses — created on demand, the first time
+    // populateDynamicContent below finds curated items for a room with no
+    // group yet, rather than pre-building 5 more always-present-but-usually-
+    // empty groups up front.
+    function ensureRoomLightGroups(roomId: CampusRoomId): RoomLightGroups {
+      const existing = roomLightGroups[roomId];
+      if (existing) return existing;
+      const full = new THREE.Group();
+      full.name = `room-full:${roomId}`;
+      scene.add(full);
+      const preview = new THREE.Group();
+      preview.name = `room-preview:${roomId}`;
+      scene.add(preview);
+      const created: RoomLightGroups = { full, preview };
+      roomLightGroups[roomId] = created;
+      return created;
+    }
 
     // EK's review of 751361a: the room-only check went blank (every light
     // group off) whenever the visitor was in a door bridge — a real,
@@ -760,13 +944,61 @@ export default function VltdMuseumCampus() {
     }
 
     async function populateDynamicContent() {
-      const [itemsPerRoom, spotlightPrograms, storeItems, sportsItems] = await Promise.all([
+      const [itemsPerRoom, spotlightPrograms, storeItems] = await Promise.all([
         getItemsPerRoom(),
         getActiveSpotlightPrograms(),
         getEnabledStoreItems(),
-        getEnabledRoomItems("SPORTS"),
       ]);
       if (contentCancelled) return;
+
+      // Shared Museum Room Editor pass (2026-09-12): fetch every gallery
+      // room's admin-curated content once, generically — replacing the old
+      // SPORTS-only special case. A room with zero enabled
+      // museum_room_items rows keeps today's vault-placeholder fallback
+      // below completely unchanged; a room with at least one is rendered at
+      // its exact numbered slot positions instead
+      // (computeRoomPlacementSlots/placeItemsAtSlots) — the SAME engine the
+      // new in-3D room editor's overlay uses, so the two can never
+      // disagree about where a curated item actually sits.
+      const curatedItemsByRoom = new Map<CampusRoomId, MuseumRoomItem[]>();
+      await Promise.all(
+        EDITABLE_ROOM_IDS.map(async (id) => {
+          const roomItems = await getEnabledRoomItems(id);
+          if (roomItems.length > 0) curatedItemsByRoom.set(id, roomItems);
+        })
+      );
+      if (contentCancelled) return;
+
+      if (editRoomId) {
+        // Refine the editor's slot list/capacity now that the real
+        // admin-configured itemsPerRoom is known (the pre-fetch pass at
+        // mount used the DEFAULT_ITEMS_PER_ROOM estimate so the overlay had
+        // something to project immediately).
+        editorCapacityRef.current = itemsPerRoom;
+        const doorways = deriveRoomDoorways(editRoomId);
+        const refreshedSlots = computeRoomPlacementSlots(
+          editRoomId, doorways, WALL_THICKNESS, EYE_HEIGHT, itemsPerRoom, focalWallFor(editRoomId)
+        );
+        setEditorSlots(refreshedSlots);
+        void refreshEditorAssignments(editRoomId, refreshedSlots);
+      }
+
+      for (const roomId of EDITABLE_ROOM_IDS) {
+        const curated = curatedItemsByRoom.get(roomId);
+        if (!curated) continue;
+        const doorways = deriveRoomDoorways(roomId);
+        const slots = computeRoomPlacementSlots(roomId, doorways, WALL_THICKNESS, EYE_HEIGHT, itemsPerRoom, focalWallFor(roomId));
+        const groups = ensureRoomLightGroups(roomId);
+        const bySlot = buildSlotAssignments(slots, curated);
+        placeItemsAtSlots(scene, textureLoader, groups, slots, bySlot, () => contentCancelled);
+      }
+      // Newly-created light groups (any room curated here for the first
+      // time) need their visibility resolved against the visitor's CURRENT
+      // position — the per-frame activation check only re-runs on a
+      // location CHANGE, which already happened before this async content
+      // arrived.
+      lastLightLocation = { kind: "none" };
+      updateRoomLightActivation(cameraBody.x, cameraBody.z);
 
       // Vault-item category rooms — the signed-in user's own items,
       // grouped by universe, as placeholder content until a real
@@ -788,9 +1020,12 @@ export default function VltdMuseumCampus() {
         // POP_CULTURE, TCG, and COLLECTION place their own items with
         // aspect-ratio-preserving slots (see placeRoomItems below) instead
         // of the generic north-wall-only, forced-square treatment every
-        // other room uses. SPORTS is the new proof room (below,
-        // admin-curated content across sportsWallSpans) — also skipped here.
+        // other room uses. SPORTS has never had a vault-placeholder path at
+        // all. Any OTHER room the admin has already curated above
+        // (curatedItemsByRoom) is also skipped here — its display now comes
+        // entirely from the curated slot pass, not the vault placeholder.
         if (room.id === "POP_CULTURE" || room.id === "TCG" || room.id === "COLLECTION" || room.id === "SPORTS") continue;
+        if (curatedItemsByRoom.has(room.id)) continue;
         const universes = roomUniverses[room.id] ?? room.universes;
         if (universes.length === 0) continue;
         const items = allItems.filter((item) => {
@@ -841,92 +1076,54 @@ export default function VltdMuseumCampus() {
         }
       }
 
-      const popItems = allItems
-        .filter((item) => itemUniverse(item) === "POP_CULTURE")
-        .slice(0, itemsPerRoom);
-      placeRoomItems(popCultureWallSpans, popCultureLights, popItems);
+      if (!curatedItemsByRoom.has("POP_CULTURE")) {
+        const popItems = allItems
+          .filter((item) => itemUniverse(item) === "POP_CULTURE")
+          .slice(0, itemsPerRoom);
+        placeRoomItems(popCultureWallSpans, popCultureLights, popItems);
+      }
 
-      const tcgItems = allItems
-        .filter((item) => itemUniverse(item) === "TCG")
-        .slice(0, itemsPerRoom);
-      placeRoomItems(tcgWallSpans, tcgLights, tcgItems);
+      if (!curatedItemsByRoom.has("TCG")) {
+        const tcgItems = allItems
+          .filter((item) => itemUniverse(item) === "TCG")
+          .slice(0, itemsPerRoom);
+        placeRoomItems(tcgWallSpans, tcgLights, tcgItems);
+      }
 
-      // assignSwingRoomUniverses() always names a universe for COLLECTION,
-      // even when every swing universe's real count is tied at zero — only
-      // trust that assignment here if it actually has real items behind it.
-      const collectionUniverses = (roomUniverses.COLLECTION ?? []).filter(
-        (universe) => (universeCounts[universe] ?? 0) > 0
-      );
-      const collectionItems = selectCollectionItems(allItems, collectionUniverses, itemsPerRoom);
-      placeRoomItems(collectionWallSpans, collectionLights, collectionItems);
-      if (collectionItems.length === 0) {
-        // No usable image-bearing items anywhere in the signed-in vault —
-        // an honest empty-state instead of a silent blank room. Mounted on
-        // COLLECTION's south wall, the one side with no doorway.
-        const collectionBounds = roomBounds(roomById("COLLECTION"));
-        hangPlaque(
-          collectionBounds.x0 + (collectionBounds.x1 - collectionBounds.x0) / 2,
-          collectionBounds.z1 - WALL_THICKNESS,
-          6,
-          3,
-          "Collection fills from your vault",
-          "Add real items with photos to your vault to see them displayed here.",
-          0,
-          Math.PI,
-          -1
+      if (!curatedItemsByRoom.has("COLLECTION")) {
+        // assignSwingRoomUniverses() always names a universe for COLLECTION,
+        // even when every swing universe's real count is tied at zero — only
+        // trust that assignment here if it actually has real items behind it.
+        const collectionUniverses = (roomUniverses.COLLECTION ?? []).filter(
+          (universe) => (universeCounts[universe] ?? 0) > 0
         );
+        const collectionItems = selectCollectionItems(allItems, collectionUniverses, itemsPerRoom);
+        placeRoomItems(collectionWallSpans, collectionLights, collectionItems);
+        if (collectionItems.length === 0) {
+          // No usable image-bearing items anywhere in the signed-in vault —
+          // an honest empty-state instead of a silent blank room. Mounted on
+          // COLLECTION's south wall, the one side with no doorway.
+          const collectionBounds = roomBounds(roomById("COLLECTION"));
+          hangPlaque(
+            collectionBounds.x0 + (collectionBounds.x1 - collectionBounds.x0) / 2,
+            collectionBounds.z1 - WALL_THICKNESS,
+            6,
+            3,
+            "Collection fills from your vault",
+            "Add real items with photos to your vault to see them displayed here.",
+            0,
+            Math.PI,
+            -1
+          );
+        }
       }
 
-      // SPORTS — the first proof room for real, admin-curated content
-      // (Admin Tools > Museum Campus), not whichever personal vault
-      // happens to be signed in. Each item carries its curated title as a
-      // compact label under the frame.
-      //
-      // South is the focal wall (the one side with no doorway); north/
-      // west/east each flank a real door (HUB/COLLECTION/CARDS) and are
-      // split by computeUsableWallSpans into two shorter segments each.
-      // placeArtwork()'s own distribution is proportional purely by RAW
-      // SPAN LENGTH with a floor of 1 item per span — with 6 small door-
-      // flanking segments plus 1 long south segment, that floor means the
-      // 6 short segments collectively soak up most of the items and south
-      // ends up a minority, backwards from "south as the main focal wall."
-      // Fixed by calling placeArtwork() twice instead of changing it (it's
-      // shared with 3 other rooms, unmodified): once for south alone with
-      // the majority of items, once for one supporting piece per door wall
-      // (its larger flanking segment — the two are equal length here since
-      // SPORTS's doors are centered, so "larger" is just a stable pick).
-      // Capped to itemsPerRoom (default 8, same admin-configured value every
-      // other converted room already caps to) — "limit the first
-      // composition to roughly 7-8 pieces." sportsItems is already ordered
-      // by the admin's own sort_order, so this keeps whichever items they
-      // put first.
-      const sportsUrls = sportsItems
-        .filter((item) => item.image_url)
-        .slice(0, itemsPerRoom)
-        .map((item) => ({ url: item.image_url, label: item.title }));
-      const sportsSouthSpans = sportsWallSpans.filter((s) => s.wall === "south");
-      const sportsSupportingSpans = (["north", "west", "east"] as const)
-        .map((side) =>
-          sportsWallSpans
-            .filter((s) => s.wall === side)
-            .sort((a, b) => b.to - b.from - (a.to - a.from))[0]
-        )
-        .filter((s): s is WallSpan => Boolean(s));
-      // Only add supporting pieces once there's enough curated content to
-      // spare — with fewer than 5 items, everything stays on the focal wall
-      // rather than stranding one lonely piece per door.
-      const supportingPerWall = sportsUrls.length >= 5 ? 1 : 0;
-      const supportingCount = supportingPerWall * sportsSupportingSpans.length;
-      const sportsFocalItems = sportsUrls.slice(0, Math.max(0, sportsUrls.length - supportingCount));
-      const sportsSupportingItems = sportsUrls.slice(sportsFocalItems.length);
-      placeArtwork(scene, textureLoader, sportsLights, sportsSouthSpans, sportsFocalItems, WALL_THICKNESS, EYE_HEIGHT, () => contentCancelled);
-      if (sportsSupportingItems.length > 0) {
-        placeArtwork(scene, textureLoader, sportsLights, sportsSupportingSpans, sportsSupportingItems, WALL_THICKNESS, EYE_HEIGHT, () => contentCancelled);
-      }
-      if (sportsUrls.length === 0) {
-        // Honest empty state, same pattern as COLLECTION/Spotlight/Store —
-        // never a fake/demo item to make the room look populated. Mounted
-        // on SPORTS's own south wall, its one side with no doorway.
+      if (!curatedItemsByRoom.has("SPORTS")) {
+        // SPORTS has never had a vault-placeholder fallback (it's the first
+        // room built for admin-curated content only) — an honest empty
+        // state, same pattern as COLLECTION/Spotlight/Store, mounted on its
+        // south wall (the one side with no doorway), until the Museum Map's
+        // room editor has at least one item placed.
         const sportsBounds = roomBounds(roomById("SPORTS"));
         hangPlaque(
           sportsBounds.x0 + (sportsBounds.x1 - sportsBounds.x0) / 2,
@@ -934,7 +1131,7 @@ export default function VltdMuseumCampus() {
           6,
           3,
           "Coming soon",
-          "SPORTS items are managed from Admin Tools",
+          "SPORTS items are curated from the Museum Map",
           0,
           Math.PI,
           -1
@@ -1770,7 +1967,55 @@ export default function VltdMuseumCampus() {
       renderer.dispose();
       if (renderer.domElement.parentElement === mount) mount.removeChild(renderer.domElement);
     };
+    // Deliberately mount-only — `spawn`/`editRoomId` are read once to place
+    // the camera and compute the editor's initial slot list; re-running this
+    // multi-second scene-build effect on every searchParams change would
+    // rebuild the entire campus, which is never the intent here (matches
+    // this effect's existing pre-2026-09-12 captured-at-mount behavior for
+    // `spawn`).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Shared Museum Room Editor pass (2026-09-12): a small, independent rAF
+  // loop that projects every real placement-slot position to on-screen
+  // coordinates every frame — the exact same technique the personal
+  // Gallery's own Organize overlay uses (VirtualGalleryRoom.tsx) — so the
+  // numbered +/- buttons below sit exactly over their real 3D wall position
+  // without tying overlay position updates to the much heavier scene-build
+  // effect's own lifecycle.
+  useEffect(() => {
+    if (!editRoomId || !editorAdminOk) return undefined;
+    let raf = 0;
+    const tmp = new THREE.Vector3();
+    function tick() {
+      const camera = cameraRef.current;
+      const mount = mountRef.current;
+      if (camera && mount) {
+        const rect = mount.getBoundingClientRect();
+        editSlotElsRef.current.forEach((el, slotId) => {
+          const slot = editorSlots.find((s) => s.id === slotId);
+          if (!slot) {
+            el.style.display = "none";
+            return;
+          }
+          tmp.set(slot.x, slot.y, slot.z);
+          tmp.project(camera);
+          const behind = tmp.z > 1 || tmp.z < -1;
+          if (behind) {
+            el.style.display = "none";
+          } else {
+            const x = (tmp.x * 0.5 + 0.5) * rect.width;
+            const y = (-tmp.y * 0.5 + 0.5) * rect.height;
+            el.style.display = "";
+            el.style.transform = `translate3d(${x}px, ${y}px, 0) translate(-50%, -50%)`;
+          }
+        });
+      }
+      raf = window.requestAnimationFrame(tick);
+    }
+    raf = window.requestAnimationFrame(tick);
+    return () => window.cancelAnimationFrame(raf);
+  }, [editRoomId, editorAdminOk, editorSlots]);
 
   return (
     <div className="fixed inset-0 bg-[#081527]">
@@ -1808,6 +2053,157 @@ export default function VltdMuseumCampus() {
         <div className="pointer-events-none absolute inset-0 flex items-center justify-center text-sm font-medium text-white/70">
           Building the campus…
         </div>
+      ) : null}
+
+      {/* Shared Museum Room Editor pass (2026-09-12): numbered +/- overlay,
+          one real (focusable, keyboard-activatable) button per generated
+          placement slot, projected onto its exact real 3D wall position by
+          the rAF effect above — mirrors the personal Gallery's own Organize
+          overlay pattern. Renders nothing (and mutates nothing) until
+          getMyAdminRole() has actually resolved truthy for this session. */}
+      {editRoomId && editorAdminOk
+        ? editorSlots.map((slot, idx) => {
+            const item = editorAssignments[slot.id];
+            const isSelected = editorSelectedSlotId === slot.id;
+            return (
+              <button
+                key={slot.id}
+                ref={(el) => {
+                  if (el) editSlotElsRef.current.set(slot.id, el);
+                  else editSlotElsRef.current.delete(slot.id);
+                }}
+                type="button"
+                onClick={() => handleSlotActivate(slot.id)}
+                aria-label={
+                  editorMoveArmed
+                    ? `Position ${idx + 1}: place here`
+                    : item
+                      ? `Position ${idx + 1}: ${item.title} — select to replace, move, or remove`
+                      : `Position ${idx + 1}: empty — select to add an item`
+                }
+                className="pointer-events-auto absolute left-0 top-0 flex -translate-x-1/2 -translate-y-1/2 flex-col items-center gap-1"
+                style={{ willChange: "transform" }}
+              >
+                {item?.image_url ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={item.image_url}
+                    alt=""
+                    className={[
+                      "h-10 w-10 rounded-md object-cover ring-2",
+                      isSelected ? "ring-[#4FD3EE]" : "ring-white/70",
+                    ].join(" ")}
+                  />
+                ) : (
+                  <span
+                    className={[
+                      "flex h-9 w-9 items-center justify-center rounded-full text-base font-black ring-2 transition",
+                      isSelected ? "bg-[#4FD3EE] text-[#06171d] ring-white" : "bg-black/70 text-white ring-white/60",
+                    ].join(" ")}
+                  >
+                    +
+                  </span>
+                )}
+                <span className="rounded-full bg-black/75 px-1.5 py-0.5 text-[10px] font-black text-white/85">
+                  {item ? "−" : idx + 1}
+                </span>
+              </button>
+            );
+          })
+        : null}
+
+      {editRoomId ? (
+        <div className="pointer-events-none absolute inset-x-0 bottom-4 z-20 flex flex-col items-center gap-2 px-4">
+          {editorAdminOk === null ? (
+            <div className="pointer-events-auto rounded-full bg-black/70 px-4 py-2 text-xs font-medium text-white/60 ring-1 ring-white/15">
+              Checking admin access…
+            </div>
+          ) : editorAdminOk === false ? (
+            <div className="pointer-events-auto rounded-full bg-black/70 px-4 py-2 text-xs font-semibold text-red-300 ring-1 ring-red-400/40">
+              Admin sign-in required to edit this room.
+            </div>
+          ) : (
+            <>
+              <div className="pointer-events-auto flex max-w-full flex-wrap items-center justify-center gap-2 rounded-2xl bg-black/70 px-4 py-2.5 ring-1 ring-white/15 backdrop-blur">
+                <span className="text-xs font-black uppercase tracking-[0.1em] text-white/70">
+                  Editing {editRoomId} · {Object.keys(editorAssignments).length}/{editorSlots.length}
+                </span>
+                {editorSaveState === "saving" ? <span className="text-xs font-semibold text-cyan-200">Saving…</span> : null}
+                {editorSaveState === "saved" ? <span className="text-xs font-semibold text-emerald-300">Saved</span> : null}
+                {editorSaveState === "error" ? <span className="text-xs font-semibold text-red-300">Save failed — try again</span> : null}
+                {editorSelectedSlotId ? (
+                  <>
+                    {editorAssignments[editorSelectedSlotId] ? (
+                      <>
+                        <button
+                          type="button"
+                          onClick={() => setEditorPickerSlotId(editorSelectedSlotId)}
+                          className="rounded-full bg-white/10 px-3 py-1.5 text-[11px] font-black uppercase tracking-[0.08em] text-white transition hover:bg-white/20"
+                        >
+                          Replace
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setEditorMoveArmed(true)}
+                          className={[
+                            "rounded-full px-3 py-1.5 text-[11px] font-black uppercase tracking-[0.08em] transition",
+                            editorMoveArmed ? "bg-[#4FD3EE] text-[#06171d]" : "bg-white/10 text-white hover:bg-white/20",
+                          ].join(" ")}
+                        >
+                          {editorMoveArmed ? "Choose destination…" : "Move"}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => void handleRemoveSlot(editorSelectedSlotId)}
+                          className="rounded-full bg-red-500/20 px-3 py-1.5 text-[11px] font-black uppercase tracking-[0.08em] text-red-300 transition hover:bg-red-500/30"
+                        >
+                          Remove
+                        </button>
+                      </>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => setEditorPickerSlotId(editorSelectedSlotId)}
+                        className="rounded-full bg-[#4FD3EE] px-3 py-1.5 text-[11px] font-black uppercase tracking-[0.08em] text-[#06171d] transition hover:brightness-110"
+                      >
+                        Add item
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setEditorSelectedSlotId(null);
+                        setEditorMoveArmed(false);
+                      }}
+                      className="rounded-full bg-white/10 px-3 py-1.5 text-[11px] font-bold text-white/70 transition hover:bg-white/20"
+                    >
+                      Cancel
+                    </button>
+                  </>
+                ) : (
+                  <span className="text-[11px] font-medium text-white/50">
+                    Click a numbered position to add, move, or remove an item
+                  </span>
+                )}
+              </div>
+              <button
+                type="button"
+                onClick={() => router.back()}
+                className="pointer-events-auto rounded-full bg-[#4FD3EE] px-5 py-2 text-xs font-black uppercase tracking-[0.1em] text-[#06171d] transition hover:brightness-110"
+              >
+                Done
+              </button>
+            </>
+          )}
+        </div>
+      ) : null}
+
+      {editRoomId && editorPickerSlotId ? (
+        <MuseumRoomItemPicker
+          title={`${editRoomId} — position ${editorSlots.findIndex((s) => s.id === editorPickerSlotId) + 1}`}
+          onPick={(item) => void handlePickItem(item)}
+          onClose={() => setEditorPickerSlotId(null)}
+        />
       ) : null}
     </div>
   );
