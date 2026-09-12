@@ -24,15 +24,16 @@ dimensions/doors are untouched, satisfying "buildRoomShell() must only
 support proper artwork placement; it must not visually convert the room"
 literally, since it isn't called for scene construction on SPORTS at all.
 
-**Still true, restated plainly:** the live 4-vantage-point check EK asked
-for (HUB entrance, both side-door approaches, room center) has not
-happened and cannot yet, for two independent reasons — no browser
-connection was available to this session all day, and separately, the
-migration (`20260911_museum_room_items.sql`) has not been run and no real
-items have been curated through the new admin section yet, so there is
-nothing populated to look at even once a browser reconnects. Per EK's own
-instruction, do not treat SPORTS as finished or move on to another room
-until this is actually seen working.
+**Update:** `20260911_museum_room_items.sql` **confirmed run by EK**
+("Success. No rows returned"). One of the two blockers on the live
+4-vantage-point check is cleared. Still blocking: no real SPORTS items
+have been curated through the new admin section yet (that's EK's/the
+content owner's step — this session has no real SPORTS photos and won't
+substitute fake ones), and Claude-in-Chrome still has not reconnected in
+this session, so even once items exist, live review depends on either
+that reconnecting or EK's own look. Per EK's own instruction, do not treat
+SPORTS as finished or move on to another room until it's actually seen
+working from all four vantage points.
 
 # 2026-09-11 (yet still later, same day) — VLTD Museum campus: SPORTS is the first "proof room" — real admin-curated artwork, south wall as focal wall
 

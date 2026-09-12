@@ -8,8 +8,9 @@ Full detail in the matching HANDOFF.md entry (same date, near the top).
 - [x] `placeArtwork()`/`hangArtPreservingAspect()` gained an optional, backward-compatible `label` for a compact placard under each frame — the 3 existing rooms using it are unaffected.
 - [x] Verified the south-focal/door-supporting allocation directly (a throwaway script) after finding the naive proportional-by-span approach actually gave south a minority of items — fixed by calling `placeArtwork()` twice instead of modifying it.
 - [x] `tsc`/targeted ESLint/`npm run build` clean.
-- [ ] **New migration pending** — `20260911_museum_room_items.sql`, EK to run.
-- [ ] **Not live-verified** — no browser connection this session. Also can't be truly end-to-end tested until EK runs the migration and curates a few real SPORTS items through the new admin section.
+- [x] Migration `20260911_museum_room_items.sql` confirmed run by EK.
+- [ ] **Real SPORTS items not yet curated** — Admin Tools > Museum Campus > SPORTS items, EK's/content owner's step, 7-8 real pieces.
+- [ ] **Not live-verified** — no browser connection this session. Review from HUB door, COLLECTION door, CARDS door, and room center still needed before SPORTS is approved as the standard.
 
 ## 2026-09-11 (still later, same day) — VLTD Museum: transom-width fix (vertical openings above doorway jambs)
 Left over from the same assigned task 4a0cb01 came from. Full detail in the
