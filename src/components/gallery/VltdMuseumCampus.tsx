@@ -881,8 +881,14 @@ export default function VltdMuseumCampus() {
       // the majority of items, once for one supporting piece per door wall
       // (its larger flanking segment — the two are equal length here since
       // SPORTS's doors are centered, so "larger" is just a stable pick).
+      // Capped to itemsPerRoom (default 8, same admin-configured value every
+      // other converted room already caps to) — "limit the first
+      // composition to roughly 7-8 pieces." sportsItems is already ordered
+      // by the admin's own sort_order, so this keeps whichever items they
+      // put first.
       const sportsUrls = sportsItems
         .filter((item) => item.image_url)
+        .slice(0, itemsPerRoom)
         .map((item) => ({ url: item.image_url, label: item.title }));
       const sportsSouthSpans = sportsWallSpans.filter((s) => s.wall === "south");
       const sportsSupportingSpans = (["north", "west", "east"] as const)

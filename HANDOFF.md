@@ -5,6 +5,35 @@
 - **Mobile drag/scroll bug** (EK found this hands-on, unrelated to the above): dragging to look around also scrolled the whole page on a touch device, and yaw drag didn't track smoothly — both caused by the room's mount div never declaring `touch-action: none`. Fixed with the same one-line fix already used elsewhere in this file. Code-verified and reasoned through; genuinely NOT tested with a real touch input (no tool in this session can produce one) — needs EK's own phone to close the loop.
 Regression-checked live: White unaffected (still looks exactly right), pickup/rotate/return still works, no console errors anywhere. See the 2026-09-06 dated entries (top of the log below) for full detail, including the one real bug this session found and fixed in its own live check (Blue's case lids) before calling any of this done. Before tonight: the first White-room material pass (2026-09-05, commit `c61e600`/`f346d18`) — also READY on Vercel and live-verified. Below that: the VLTD Museum public campus work (2026-08-31 through 09-04, then resumed and heavily active again 2026-09-08 through 09-10 — see the 2026-09-10 dated entry, TOP of the dated list below, for the current state: NOT accepted yet, EK's own physical-input pass still pending). Read the dated entries below in order, newest first, before assuming any room behaves a particular way. Older work further down in §2 (2026-08-27/28 Admin Users redesign; ~110 VaultItem fields + 3 Gallery-sync gaps, both migrations confirmed run by EK; Events tooling, admin console/APP_MAP.md, Vault upload; a full backend security audit, 3D Museum beta-access gating, Room Builder fixes) is unrelated to either of the above.)
 
+# 2026-09-11 (one more pass, same day) — SPORTS: capped to itemsPerRoom, confirmed nothing else needed changing
+
+EK re-stated the SPORTS requirements as an explicit checklist. Everything on
+it was already true of the entry directly below except one real gap: SPORTS
+items were never capped to a count, so an admin adding, say, 20 items would
+have tried to place all 20. Fixed: `sportsUrls` now slices to `itemsPerRoom`
+(the same shared admin-configured value — default 8 — every other converted
+room already caps to) before the focal/supporting split, keeping whichever
+items the admin's own `sort_order` puts first. "Limit the first composition
+to roughly 7-8 pieces" is now actually enforced, not just typically true if
+an admin happens to add exactly that many.
+
+Re-confirmed the rest by re-reading the code rather than re-doing it:
+`sportsModule` is still only ever passed to `computeUsableWallSpans()`,
+never to `buildRoomShell()` — SPORTS's shell/finish/floor/lighting/
+dimensions/doors are untouched, satisfying "buildRoomShell() must only
+support proper artwork placement; it must not visually convert the room"
+literally, since it isn't called for scene construction on SPORTS at all.
+
+**Still true, restated plainly:** the live 4-vantage-point check EK asked
+for (HUB entrance, both side-door approaches, room center) has not
+happened and cannot yet, for two independent reasons — no browser
+connection was available to this session all day, and separately, the
+migration (`20260911_museum_room_items.sql`) has not been run and no real
+items have been curated through the new admin section yet, so there is
+nothing populated to look at even once a browser reconnects. Per EK's own
+instruction, do not treat SPORTS as finished or move on to another room
+until this is actually seen working.
+
 # 2026-09-11 (yet still later, same day) — VLTD Museum campus: SPORTS is the first "proof room" — real admin-curated artwork, south wall as focal wall
 
 Explicitly authorized change to `/museum/vltd` — SPORTS was picked to prove
