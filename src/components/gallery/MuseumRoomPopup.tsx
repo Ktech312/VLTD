@@ -383,6 +383,47 @@ export default function MuseumRoomPopup({
     onRemove: (idx) => void persistRemove(idx),
   });
 
+  // Same rAF projection technique VirtualGalleryRoom.tsx uses for its own
+  // Organize overlay (organizeSlots.tsx has no idea it's looking at a 3D
+  // scene — projecting each slot's real 3D position onto the screen every
+  // frame is the host's job). Without this, OrganizeSlotOverlay's numbered
+  // buttons exist in the DOM but never get positioned, so nothing shows up
+  // over the room at all.
+  useEffect(() => {
+    if (!ready || slots.length === 0) return undefined;
+    let raf = 0;
+    const tmp = new THREE.Vector3();
+    function tick() {
+      const camera = cameraRef.current;
+      const mount = mountRef.current;
+      if (camera && mount) {
+        const rect = mount.getBoundingClientRect();
+        organizer.slotRefs.current.forEach((el, index) => {
+          const slot = slots[index];
+          if (!el) return;
+          if (!slot) {
+            el.style.display = "none";
+            return;
+          }
+          tmp.set(slot.x, slot.y, slot.z);
+          tmp.project(camera);
+          const behind = tmp.z > 1 || tmp.z < -1;
+          if (behind) {
+            el.style.display = "none";
+          } else {
+            const x = (tmp.x * 0.5 + 0.5) * rect.width;
+            const y = (-tmp.y * 0.5 + 0.5) * rect.height;
+            el.style.display = "";
+            el.style.transform = `translate3d(${x}px, ${y}px, 0) translate(-50%, -50%)`;
+          }
+        });
+      }
+      raf = window.requestAnimationFrame(tick);
+    }
+    raf = window.requestAnimationFrame(tick);
+    return () => window.cancelAnimationFrame(raf);
+  }, [ready, slots, organizer.slotRefs]);
+
   async function handlePickItem(ids: string[]) {
     if (pickerSlotIdx === null) return;
     const slot = slots[pickerSlotIdx];
@@ -413,6 +454,14 @@ export default function MuseumRoomPopup({
       role="dialog"
       aria-modal="true"
       aria-label={`Add items / edit ${roomLabel}`}
+      // This popup is rendered nested inside RoomEditorModal's own backdrop,
+      // whose outer div closes on any click (onClick={onClose}) — without
+      // stopping propagation here, every click anywhere in this room (walls,
+      // Done button, numbered slots) bubbled up and closed the whole thing
+      // instead of just interacting with the room. This popup owns its own
+      // full-screen surface and its own explicit Done button, so nothing in
+      // it should ever fall through to whatever's behind/around it.
+      onClick={(event) => event.stopPropagation()}
     >
       <div ref={mountRef} className="absolute inset-0" style={{ touchAction: "none" }} />
 
