@@ -1,0 +1,32 @@
+-- Museum Builder fixes pass (2026-09-12): per-room overrides for the two
+-- new wall-item display controls EK asked for after her first live test of
+-- /museum/builder:
+--
+--   - wall_row_count: Single (1) / Dual (2) / Three (3) row selector for how
+--     the room's wall-hung items are vertically arranged (see
+--     src/lib/campusRoomBuilder.ts's computeRoomPlacementSlots `rowCount`
+--     argument and its SHELF_ROW_Y-derived row heights, reused directly from
+--     src/lib/galleryRoomSlots.ts). Null/absent means the Museum Builder
+--     page's own default (3 — "looks like the 3D gallery"), never a broken
+--     or missing layout.
+--   - wall_shelves_enabled: whether a physical shelf board (the same
+--     furniture already ported into src/lib/museumRoomFurniture.ts) renders
+--     under every row of wall items. Null/absent/false means items are
+--     mounted flat on the wall with no board, matching this column's own
+--     default.
+--
+-- This ONLY affects Museum Builder's own owner-only editing page
+-- (src/components/gallery/MuseumBuilder.tsx) — it does not change how any
+-- item is actually stored (museum_room_items keeps storing a stable
+-- slot_id, never a row count or a Y coordinate), and the live public
+-- museum's own display (VltdMuseumCampus.tsx) and MuseumRoomPopup.tsx never
+-- read these two columns at all, so this migration has zero effect on
+-- either even once it's run.
+--
+-- Same fails-soft rule as every other column added to museum_room_meta in
+-- this app: src/lib/museumCampusConfig.ts's selectRoomMeta/getAllRoomMeta
+-- retry with progressively fewer columns on a Postgrest "column does not
+-- exist" error, so nothing breaks before EK runs this by hand.
+
+alter table public.museum_room_meta add column if not exists wall_row_count smallint;
+alter table public.museum_room_meta add column if not exists wall_shelves_enabled boolean;

@@ -11,33 +11,78 @@
 // Reused, not reinvented:
 //   - MuseumRoomPopup.tsx's real-room-rendering approach: the same
 //     buildRoomShell/buildNeutralShell/buildSharedWall/buildRoomTrim shell
-//     construction, the same drag-to-look-only camera
-//     (visitorController.ts's applyDrag/aimCamera), and the same
-//     "only build wall segments touching this one room" scoping. Not a
-//     literal import of MuseumRoomPopup itself (that component is its own
-//     full-screen popup with its own Done button/bottom bar — this page
-//     needs the Gallery Builder's identity-card/Source/Room/toolbar shell
-//     around the same 3D view instead), so the scene-setup effect below is
-//     a parallel copy of that approach, not a modification of that file —
-//     MuseumRoomPopup.tsx itself is completely untouched.
+//     construction and the same "only build wall segments touching this one
+//     room" scoping. Not a literal import of MuseumRoomPopup itself (that
+//     component is its own full-screen popup with its own Done button/
+//     bottom bar — this page needs the Gallery Builder's identity-card/
+//     Source/Room/toolbar shell around the same 3D view instead), so the
+//     scene-setup effect below is a parallel copy of that approach, not a
+//     modification of that file — MuseumRoomPopup.tsx itself is completely
+//     untouched.
+//   - First-round-fixes pass (2026-09-12): EK's first live test found the
+//     popup's drag-to-look-only camera (fine for that smaller popup) not
+//     enough here — she needs to actually move around the room. Camera is
+//     now real drag-to-look PLUS scroll-to-step and WASD movement, built
+//     from visitorController.ts's own shared math — applyDrag/aimCamera
+//     (unchanged from the original pass), plus buildKeyboardMoveDirection/
+//     easeTowardTargets/WHEEL_STEP/facingDirection, the exact same
+//     functions VltdMuseumCampus.tsx's real walkable campus and
+//     VirtualGalleryRoom.tsx's own accepted room both already use — not a
+//     second movement implementation. Collision is a simple rectangular
+//     clamp against this room's own real bounds (campusLayout.ts's
+//     roomBounds), the same technique VirtualGalleryRoom.tsx's own
+//     clampPosition uses for its single room (a fixed box, not the
+//     walkable campus's room-graph isWalkable() check) — enough to keep the
+//     camera from clipping through this one room's own walls, which is all
+//     a single-room editor needs; no doorway-to-doorway campus navigation.
 //   - organizeSlots.tsx's Organize system (useSlotOrganizer,
 //     OrganizeSlotOverlay, OrganizeMoveMenu, OrganizeReplaceConfirm) —
 //     completely unchanged, exactly like MuseumRoomPopup.tsx already uses.
-//   - campusRoomBuilder.ts's computeRoomPlacementSlots() (unchanged) for
-//     wall-hung capacity, plus two new, additive sibling functions this
-//     pass adds there — computeRoomShelfSlots()/computeRoomCaseSlots() —
-//     for the shelf/case feature-parity gap, reusing the exact same
-//     computeUsableWallSpans()/distributeAcrossSpans() distribution math.
+//   - campusRoomBuilder.ts's computeRoomPlacementSlots() for wall-hung
+//     capacity, plus two additive sibling functions from the original pass —
+//     computeRoomShelfSlots()/computeRoomCaseSlots() — for the shelf/case
+//     feature-parity gap, reusing the exact same computeUsableWallSpans()/
+//     distributeAcrossSpans() distribution math.
+//   - First-round-fixes pass (2026-09-12), row-alignment fix: EK's screenshot
+//     showed wall items stacked with mismatched height/sizing — root cause
+//     was that computeRoomPlacementSlots' own per-wall horizontal
+//     distribution (correct, kept as-is) was never combined with a real
+//     fixed VERTICAL row system. computeRoomPlacementSlots now takes an
+//     optional `rowCount` argument (1/2/3) that this page alone passes —
+//     every row height is the personal Gallery Builder's own hand-tuned
+//     SHELF_ROW_Y table and shelfItemY() (src/lib/galleryRoomSlots.ts),
+//     reused directly, not re-derived (museumStandard.ts's MUSEUM_EYE_HEIGHT
+//     is the exact same 3.6 the personal room's own eyeHeight uses, so no
+//     unit conversion was needed). Every other existing caller of this
+//     function (VltdMuseumCampus.tsx's real live museum, MuseumRoomPopup.tsx)
+//     never passes `rowCount` and is byte-for-byte unaffected — see that
+//     argument's own comment in campusRoomBuilder.ts.
 //   - VirtualGalleryRoom.tsx's own shelf-board/display-case furniture
 //     recipe — ported (not redesigned) into src/lib/museumRoomFurniture.ts,
 //     generalized to any room's own real wall coordinates instead of the
-//     personal room's fixed ones.
+//     personal room's fixed ones. The new Shelves checkbox (this pass)
+//     draws one more of these same boards (buildShelfBoard, unchanged) per
+//     wall-item row via campusRoomBuilder.ts's new wallRowBoardHeights() —
+//     a pure visual toggle on the existing wall slots, not a new slot kind
+//     and not the separate Shelf-items/Case-items capacity sliders.
+//   - The personal Gallery Builder's real Wallpaper upload flow
+//     (handleWallpaperUpload/fileToRoomWallpaper/uploadHallWallpaper in
+//     VirtualGalleryRoom.tsx) is what the Background control mirrors now.
+//     The original pass's invented "BACKGROUND: Neutral/Warm Ivory/Cool
+//     Slate/Charcoal" swatch dropdown (campusRoomBuilder.ts's
+//     ROOM_BACKGROUND_OPTIONS/backgroundWallColorHex — a real, separate,
+//     already-accepted feature of the Map's own RoomEditorModal.tsx, not
+//     invented there) has been removed from THIS page entirely; this page
+//     no longer imports either. Only the real custom-wallpaper-image upload
+//     remains, unchanged: it already called uploadHallWallpaper() into the
+//     same "room-wallpapers" Storage bucket the personal Hall's own
+//     Wallpaper button uses.
 //   - museum_room_items/museum_room_meta via the SAME existing functions
 //     MuseumRoomPopup.tsx and RoomEditorModal.tsx already call
 //     (getEnabledRoomItems/setRoomItemSlot/clearRoomItemSlot/getRoomMeta) —
 //     none of those are modified, only new sibling setters are added
-//     (setRoomCapacities/setRoomBackgroundImage) for the two new per-room
-//     settings this page introduces.
+//     (setRoomCapacities/setRoomBackgroundImage/setRoomWallLayout) for the
+//     per-room settings this page introduces.
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import Link from "next/link";
 import * as THREE from "three";
@@ -46,6 +91,7 @@ import { ChevronDown, ChevronUp, DoorOpen, Grid3X3, Layers3, MonitorUp, Paintbru
 import {
   computeCampusWallSegments,
   deriveRoomDoorways,
+  roomBounds,
   roomById,
   EDITABLE_ROOM_IDS,
   EYE_HEIGHT,
@@ -59,15 +105,13 @@ import {
   getEnabledRoomItems,
   getItemsPerRoom,
   getRoomMeta,
-  setRoomBackground,
   setRoomBackgroundImage,
   setRoomCapacities,
   setRoomItemSlot,
+  setRoomWallLayout,
   type MuseumRoomItem,
 } from "@/lib/museumCampusConfig";
 import {
-  ROOM_BACKGROUND_OPTIONS,
-  backgroundWallColorHex,
   buildNeutralShell,
   buildRoomShell,
   buildRoomTrim,
@@ -79,6 +123,7 @@ import {
   createWallMaterial,
   placeItemsAtSlots,
   visitorFacingRoomName,
+  wallRowBoardHeights,
   HUB_FINISH,
   NEUTRAL_LEGACY_FINISH,
   NEUTRAL_PREVIEW_FINISH,
@@ -86,10 +131,18 @@ import {
   type RoomFinish,
   type RoomLightGroups,
   type RoomModule,
+  type RoomRowCount,
 } from "@/lib/campusRoomBuilder";
 import { buildDisplayCase, buildShelfBoard, createShelfMaterial, placeItemsInCases } from "@/lib/museumRoomFurniture";
-import { MUSEUM_PITCH_LIMIT } from "@/lib/museumStandard";
-import { applyDrag, aimCamera, YAW_EASE_RATE } from "@/lib/visitorController";
+import { MUSEUM_PITCH_LIMIT, MUSEUM_WALK_SPEED } from "@/lib/museumStandard";
+import {
+  aimCamera,
+  applyDrag,
+  buildKeyboardMoveDirection,
+  easeTowardTargets,
+  facingDirection,
+  WHEEL_STEP,
+} from "@/lib/visitorController";
 import { uploadHallWallpaper } from "@/lib/virtualRooms";
 import { getPrimaryImageUrl, loadItems, syncVaultItemsFromSupabase, type VaultItem } from "@/lib/vaultModel";
 import { OrganizeMoveMenu, OrganizeReplaceConfirm, OrganizeSlotOverlay, useSlotOrganizer, type OrganizeSlotGroup } from "./organizeSlots";
@@ -174,7 +227,16 @@ export default function MuseumBuilder() {
   const [caseCapacity, setCaseCapacity] = useState(0);
   const [capacitySaveState, setCapacitySaveState] = useState<SaveState>("idle");
 
-  const [backgroundId, setBackgroundId] = useState<string>("neutral");
+  // First-round-fixes pass (2026-09-12): the new Single/Dual/Three-row wall-
+  // item selector and Shelves-board checkbox — independent of the capacity
+  // sliders above (those control HOW MANY items; these control how the wall
+  // ones are arranged/furnished). Defaults match Museum Builder's own
+  // existing look (3 rows, no shelf board) so a room nobody has touched yet
+  // renders exactly as it always has.
+  const [rowCount, setRowCount] = useState<RoomRowCount>(3);
+  const [wallShelvesEnabled, setWallShelvesEnabled] = useState(false);
+  const [rowSaveState, setRowSaveState] = useState<SaveState>("idle");
+
   const [backgroundImageUrl, setBackgroundImageUrl] = useState<string | null>(null);
   const [backgroundSaveState, setBackgroundSaveState] = useState<SaveState>("idle");
   const [backgroundUploading, setBackgroundUploading] = useState(false);
@@ -217,11 +279,16 @@ export default function MuseumBuilder() {
   // change, so a flag-based "skip the next persist" would stay armed and
   // silently eat the NEXT real edit instead).
   const lastKnownCapacityRef = useRef<{ roomId: CampusRoomId; item: number; shelf: number; caseCap: number } | null>(null);
+  // Same "known-good vs. just-loaded-vs-just-edited" tracking as
+  // lastKnownCapacityRef above, for the new row/shelf settings — kept as its
+  // own ref (not folded into lastKnownCapacityRef) since they save through
+  // their own setRoomWallLayout() call, independent of the capacity sliders.
+  const lastKnownRowSettingsRef = useRef<{ roomId: CampusRoomId; row: RoomRowCount; shelves: boolean } | null>(null);
 
-  // Loads this room's own capacity/background overrides on room switch.
+  // Loads this room's own capacity/background/row overrides on room switch.
   // Slot geometry itself is recomputed by the effect right below, which
-  // reacts to these same capacity state values — so loading and a live
-  // slider edit both flow through one single place that turns capacity
+  // reacts to these same capacity/row state values — so loading and a live
+  // slider/control edit both flow through one single place that turns them
   // into slots, instead of two separate copies of that math.
   useEffect(() => {
     let cancelled = false;
@@ -235,8 +302,13 @@ export default function MuseumBuilder() {
       setItemCapacity(nextItem);
       setShelfCapacity(nextShelf);
       setCaseCapacity(nextCase);
-      setBackgroundId(meta?.background_id ?? "neutral");
       setBackgroundImageUrl(meta?.background_image_url ?? null);
+      const savedRowCount = meta?.wall_row_count;
+      const nextRowCount: RoomRowCount = savedRowCount === 1 || savedRowCount === 2 || savedRowCount === 3 ? savedRowCount : 3;
+      const nextShelvesEnabled = meta?.wall_shelves_enabled ?? false;
+      lastKnownRowSettingsRef.current = { roomId, row: nextRowCount, shelves: nextShelvesEnabled };
+      setRowCount(nextRowCount);
+      setWallShelvesEnabled(nextShelvesEnabled);
     }
     void load();
     return () => {
@@ -244,13 +316,14 @@ export default function MuseumBuilder() {
     };
   }, [roomId]);
 
-  // The one place capacity (loaded OR slider-edited) turns into real slot
-  // geometry — computeRoomPlacementSlots/computeRoomShelfSlots/
-  // computeRoomCaseSlots are all pure functions of capacity, so this is
-  // what makes the slider live: drag it, slots redistribute immediately.
+  // The one place capacity/row-count (loaded OR edited) turns into real
+  // slot geometry — computeRoomPlacementSlots/computeRoomShelfSlots/
+  // computeRoomCaseSlots are all pure functions of these inputs, so this is
+  // what makes the sliders AND the row selector live: change either, slots
+  // redistribute immediately.
   useEffect(() => {
     const doorways = deriveRoomDoorways(roomId);
-    const nextWallSlots = computeRoomPlacementSlots(roomId, doorways, WALL_THICKNESS, EYE_HEIGHT, itemCapacity, focalWallFor(roomId));
+    const nextWallSlots = computeRoomPlacementSlots(roomId, doorways, WALL_THICKNESS, EYE_HEIGHT, itemCapacity, focalWallFor(roomId), rowCount);
     const nextShelfSlots = shelfCapacity > 0 ? computeRoomShelfSlots(roomId, doorways, WALL_THICKNESS, EYE_HEIGHT, shelfCapacity) : [];
     const eligible = computeRoomCaseSlots(roomId, doorways, WALL_THICKNESS, 1).length > 0;
     const nextCaseSlots = eligible && caseCapacity > 0 ? computeRoomCaseSlots(roomId, doorways, WALL_THICKNESS, caseCapacity) : [];
@@ -260,7 +333,7 @@ export default function MuseumBuilder() {
     setCaseSlots(nextCaseSlots);
     void refreshAssignments([...nextWallSlots, ...nextShelfSlots, ...nextCaseSlots]);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [roomId, itemCapacity, shelfCapacity, caseCapacity]);
+  }, [roomId, itemCapacity, shelfCapacity, caseCapacity, rowCount]);
 
   // Debounced persist of capacity changes — same "one debounced write"
   // convention already used elsewhere in this app's autosave flows, so
@@ -284,13 +357,24 @@ export default function MuseumBuilder() {
     return () => window.clearTimeout(timer);
   }, [roomId, itemCapacity, shelfCapacity, caseCapacity]);
 
-  async function handleBackgroundPresetChange(nextId: string) {
-    setBackgroundId(nextId);
-    setBackgroundSaveState("saving");
-    const result = await setRoomBackground(roomId, nextId === "neutral" ? null : nextId);
-    setBackgroundSaveState(result.ok ? "saved" : "error");
-    if (result.ok) window.setTimeout(() => setBackgroundSaveState((s) => (s === "saved" ? "idle" : s)), 1600);
-  }
+  // Debounced persist of the row selector / Shelves checkbox — same
+  // convention as the capacity debounce above, its own independent ref/save
+  // state so the two never race or skip each other's writes.
+  useEffect(() => {
+    const last = lastKnownRowSettingsRef.current;
+    if (last && last.roomId === roomId && last.row === rowCount && last.shelves === wallShelvesEnabled) {
+      return undefined;
+    }
+    const timer = window.setTimeout(() => {
+      setRowSaveState("saving");
+      void setRoomWallLayout(roomId, { wall_row_count: rowCount, wall_shelves_enabled: wallShelvesEnabled }).then((result) => {
+        if (result.ok) lastKnownRowSettingsRef.current = { roomId, row: rowCount, shelves: wallShelvesEnabled };
+        setRowSaveState(result.ok ? "saved" : "error");
+        if (result.ok) window.setTimeout(() => setRowSaveState((s) => (s === "saved" ? "idle" : s)), 1600);
+      });
+    }, 500);
+    return () => window.clearTimeout(timer);
+  }, [roomId, rowCount, wallShelvesEnabled]);
 
   async function handleBackgroundUpload(file?: File | null) {
     if (!file) return;
@@ -393,8 +477,8 @@ export default function MuseumBuilder() {
   });
 
   // Scene setup — real room shell + trim (only the wall segments touching
-  // THIS room, same as MuseumRoomPopup.tsx), a fixed drag-to-look camera,
-  // shelf/case furniture (new), and the currently-assigned items.
+  // THIS room, same as MuseumRoomPopup.tsx), a drag-to-look + WASD/scroll
+  // walking camera, shelf/case furniture, and the currently-assigned items.
   useEffect(() => {
     const mount = mountRef.current;
     if (!mount || allSlots.length === 0) return undefined;
@@ -439,13 +523,6 @@ export default function MuseumBuilder() {
 
     const doorFrameMaterial = new THREE.MeshStandardMaterial({ color: NEUTRAL_PREVIEW_FINISH.frameColor, roughness: 0.65, metalness: 0.04 });
     const ownMaterial = createWallMaterial(finish);
-    // Preset background color, if one is set — same backgroundWallColorHex
-    // resolver VltdMuseumCampus.tsx's live rendering already uses for
-    // background_id, applied here to THIS room's own material only (this
-    // scene only ever builds one room, so there's no cross-room cache to
-    // worry about the way the live campus had to fix).
-    const presetHex = backgroundWallColorHex(backgroundId);
-    if (presetHex !== null) ownMaterial.color.setHex(presetHex);
     const neighborMaterials = new Map<CampusRoomId, THREE.Material>();
     function materialFor(id: CampusRoomId): THREE.Material {
       if (id === roomId) return ownMaterial;
@@ -479,15 +556,37 @@ export default function MuseumBuilder() {
       });
     }
 
-    // Shelf furniture — one board per usable wall span, whenever shelves
-    // are enabled for this room (ported box/material recipe, see
-    // museumRoomFurniture.ts).
+    // Shelf furniture — one board per usable wall span, whenever the
+    // separate "Shelf items" capacity slider is in use for this room (ported
+    // box/material recipe, see museumRoomFurniture.ts). Unrelated to the
+    // Shelves checkbox below — this is the already-working shelf-resting-
+    // item feature, untouched.
     if (shelfSlots.length > 0) {
       const shelfMaterial = createShelfMaterial();
       const shelfY = EYE_HEIGHT * 0.42;
       const doorways = deriveRoomDoorways(roomId);
       for (const span of computeRoomShelfSpans(roomId, doorways, WALL_THICKNESS, EYE_HEIGHT)) {
         buildShelfBoard(scene, span, shelfY, WALL_THICKNESS, shelfMaterial);
+      }
+    }
+
+    // Shelves checkbox (2026-09-12 fixes pass) — a pure visual toggle on the
+    // EXISTING wall-item slots (wallSlots), not a different slot system: one
+    // more board per usable wall span per row currently in use, drawn at
+    // that row's own real shelf-board height (wallRowBoardHeights(), the
+    // SHELF_ROW_Y values themselves — see campusRoomBuilder.ts) so it sits
+    // directly under the items already hanging at that row. Same
+    // buildShelfBoard/createShelfMaterial furniture as the Shelf-items
+    // feature above, just called at the wall-row heights instead of the
+    // fixed shelf-item height.
+    if (wallShelvesEnabled && wallSlots.length > 0) {
+      const wallShelfMaterial = createShelfMaterial();
+      const doorways = deriveRoomDoorways(roomId);
+      const wallSpans = computeRoomShelfSpans(roomId, doorways, WALL_THICKNESS, EYE_HEIGHT);
+      for (const boardY of wallRowBoardHeights(rowCount)) {
+        for (const span of wallSpans) {
+          buildShelfBoard(scene, span, boardY, WALL_THICKNESS, wallShelfMaterial);
+        }
       }
     }
 
@@ -505,8 +604,19 @@ export default function MuseumBuilder() {
     placeItemsAtSlots(scene, textureLoader, groups, [...wallSlots, ...shelfSlots], bySlot, () => cancelled);
     placeItemsInCases(scene, textureLoader, caseSlots, bySlot, () => cancelled);
 
-    // Drag-to-look only — same visitorController.ts math MuseumRoomPopup.tsx
-    // and the walkable campus both already use.
+    // Camera (first-round-fixes pass, 2026-09-12): drag-to-look PLUS real
+    // movement — scroll-to-step and WASD — built from visitorController.ts's
+    // own shared functions, the exact ones VltdMuseumCampus.tsx's walkable
+    // campus and VirtualGalleryRoom.tsx's accepted room already use (applyDrag/
+    // aimCamera unchanged from the original pass; buildKeyboardMoveDirection/
+    // easeTowardTargets/WHEEL_STEP/facingDirection new to this page). Collision
+    // is a simple rectangular clamp against THIS room's own real bounds
+    // (roomBounds) — the same technique the accepted personal room's own
+    // clampPosition uses for its one fixed-size room, adapted here to whatever
+    // size the current museum room actually is, since every campus room is a
+    // different footprint — enough to keep the camera from clipping through
+    // this room's own walls; no doorway-to-doorway campus walkability needed
+    // for a single-room editor.
     let yaw = 0;
     let targetYaw = 0;
     let pitch = 0;
@@ -514,6 +624,19 @@ export default function MuseumBuilder() {
     let dragging = false;
     let lastX = 0;
     let lastY = 0;
+    const targetCameraBody = cameraBody.clone();
+    const pressedKeys = new Set<string>();
+    const bounds = roomBounds(room);
+    // Keeps the camera's eye point (not its feet) at least this far inside
+    // each wall face — comfortably clear of both the wall itself and any
+    // furniture (shelf boards/display cases) built flush against it.
+    const CAMERA_WALL_MARGIN = 0.8;
+
+    function clampToRoom(position: THREE.Vector3) {
+      position.x = Math.max(bounds.x0 + CAMERA_WALL_MARGIN, Math.min(bounds.x1 - CAMERA_WALL_MARGIN, position.x));
+      position.z = Math.max(bounds.z0 + CAMERA_WALL_MARGIN, Math.min(bounds.z1 - CAMERA_WALL_MARGIN, position.z));
+      return position;
+    }
 
     function onPointerDown(event: PointerEvent) {
       dragging = true;
@@ -538,6 +661,53 @@ export default function MuseumBuilder() {
     window.addEventListener("pointermove", onPointerMove);
     window.addEventListener("pointerup", onPointerUp);
 
+    // Scroll-to-step forward/back — same fixed WHEEL_STEP-per-event nudge to
+    // targetCameraBody the accepted room's own onWheel/moveCamera use (eases
+    // in over subsequent frames via easeTowardTargets below), not the raw
+    // deltaY magnitude.
+    function onWheel(event: WheelEvent) {
+      event.preventDefault();
+      const amount = event.deltaY > 0 ? -WHEEL_STEP : WHEEL_STEP;
+      targetCameraBody.add(facingDirection(targetYaw).multiplyScalar(amount));
+      targetCameraBody.y = EYE_HEIGHT;
+      clampToRoom(targetCameraBody);
+    }
+    renderer.domElement.addEventListener("wheel", onWheel, { passive: false });
+
+    // WASD — continuous, held-key movement. Mutates cameraBody directly each
+    // frame (no easing lag, same as the accepted room's own continuous WASD),
+    // then syncs targetCameraBody to match so a subsequent wheel nudge eases
+    // from wherever WASD left off instead of snapping back to a stale target.
+    function movementKeyToken(event: KeyboardEvent): string | null {
+      if (event.key === "ArrowUp" || event.key.toLowerCase() === "w") return "forward";
+      if (event.key === "ArrowDown" || event.key.toLowerCase() === "s") return "back";
+      if (event.key.toLowerCase() === "a") return "left";
+      if (event.key.toLowerCase() === "d") return "right";
+      return null;
+    }
+    function onKeyDown(event: KeyboardEvent) {
+      const target = event.target as HTMLElement | null;
+      if (target?.tagName === "INPUT" || target?.tagName === "TEXTAREA" || target?.tagName === "SELECT") return;
+      const token = movementKeyToken(event);
+      if (token) {
+        event.preventDefault();
+        pressedKeys.add(token);
+      }
+    }
+    function onKeyUp(event: KeyboardEvent) {
+      const token = movementKeyToken(event);
+      if (token) pressedKeys.delete(token);
+    }
+    // A held key's keyup can be missed if focus leaves the window while it's
+    // down (alt-tab, clicking browser chrome) — without this it would read
+    // as permanently "held," same fix the accepted room/campus both apply.
+    function onWindowBlur() {
+      pressedKeys.clear();
+    }
+    window.addEventListener("keydown", onKeyDown);
+    window.addEventListener("keyup", onKeyUp);
+    window.addEventListener("blur", onWindowBlur);
+
     function onResize() {
       if (!mount) return;
       camera.aspect = mount.clientWidth / Math.max(1, mount.clientHeight);
@@ -547,9 +717,34 @@ export default function MuseumBuilder() {
     window.addEventListener("resize", onResize);
 
     let raf = 0;
+    let lastFrameTime = performance.now();
     function tick() {
-      yaw += (targetYaw - yaw) * YAW_EASE_RATE;
-      pitch += (targetPitch - pitch) * YAW_EASE_RATE;
+      const now = performance.now();
+      const dt = Math.min((now - lastFrameTime) / 1000, 0.05);
+      lastFrameTime = now;
+
+      if (pressedKeys.size > 0) {
+        const move = buildKeyboardMoveDirection(
+          {
+            forward: pressedKeys.has("forward"),
+            back: pressedKeys.has("back"),
+            left: pressedKeys.has("left"),
+            right: pressedKeys.has("right"),
+          },
+          targetYaw
+        );
+        if (move.lengthSq() > 0) {
+          move.multiplyScalar(MUSEUM_WALK_SPEED * dt);
+          cameraBody.add(move);
+          cameraBody.y = EYE_HEIGHT;
+          clampToRoom(cameraBody);
+          targetCameraBody.copy(cameraBody);
+        }
+      }
+
+      const eased = easeTowardTargets(yaw, targetYaw, pitch, targetPitch, cameraBody, targetCameraBody);
+      yaw = eased.yaw;
+      pitch = eased.pitch;
       aimCamera(camera, cameraBody, yaw, pitch);
       renderer.render(scene, camera);
       raf = window.requestAnimationFrame(tick);
@@ -563,8 +758,12 @@ export default function MuseumBuilder() {
       window.cancelAnimationFrame(raf);
       window.removeEventListener("pointermove", onPointerMove);
       window.removeEventListener("pointerup", onPointerUp);
+      window.removeEventListener("keydown", onKeyDown);
+      window.removeEventListener("keyup", onKeyUp);
+      window.removeEventListener("blur", onWindowBlur);
       window.removeEventListener("resize", onResize);
       renderer.domElement.removeEventListener("pointerdown", onPointerDown);
+      renderer.domElement.removeEventListener("wheel", onWheel);
       scene.traverse((object) => {
         if (object instanceof THREE.Mesh) {
           object.geometry.dispose();
@@ -581,7 +780,7 @@ export default function MuseumBuilder() {
       renderer.dispose();
       if (renderer.domElement.parentElement === mount) mount.removeChild(renderer.domElement);
     };
-  }, [roomId, wallSlots, shelfSlots, caseSlots, assignments, backgroundId, backgroundImageUrl, allSlots.length]);
+  }, [roomId, wallSlots, shelfSlots, caseSlots, assignments, backgroundImageUrl, allSlots.length, rowCount, wallShelvesEnabled]);
 
   // Same rAF projection technique MuseumRoomPopup.tsx/VirtualGalleryRoom.tsx
   // both already use for their own Organize overlays.
@@ -713,20 +912,38 @@ export default function MuseumBuilder() {
                   {capacitySaveState === "saved" ? <span className="text-[11px] font-semibold text-emerald-300">Saved</span> : null}
                   {capacitySaveState === "error" ? <span className="text-[11px] font-semibold text-red-300">Save failed</span> : null}
                 </div>
+                <div className="flex flex-wrap items-center gap-3">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[10px] font-black uppercase tracking-[0.1em] text-[color:var(--muted2)]">Rows</span>
+                    <div className="w-[168px]">
+                      <Segmented
+                        value={String(rowCount)}
+                        options={[
+                          ["1", "Single"],
+                          ["2", "Dual"],
+                          ["3", "Three"],
+                        ]}
+                        onChange={(value) => setRowCount(Number(value) as RoomRowCount)}
+                      />
+                    </div>
+                  </div>
+                  <label className="flex h-6 cursor-pointer items-center gap-1.5 rounded-[5px] bg-[color:var(--input)] px-2 text-[11px] font-bold ring-1 ring-[color:var(--border)]">
+                    <input
+                      type="checkbox"
+                      checked={wallShelvesEnabled}
+                      onChange={(event) => setWallShelvesEnabled(event.target.checked)}
+                      className="h-3 w-3 accent-cyan-400"
+                    />
+                    Shelves
+                  </label>
+                  {rowSaveState === "saving" ? <span className="text-[11px] font-semibold text-cyan-300">Saving…</span> : null}
+                  {rowSaveState === "saved" ? <span className="text-[11px] font-semibold text-emerald-300">Saved</span> : null}
+                  {rowSaveState === "error" ? <span className="text-[11px] font-semibold text-red-300">Save failed</span> : null}
+                </div>
                 <div className="flex flex-wrap items-center gap-1.5">
-                  <span className="text-[10px] font-black uppercase tracking-[0.14em] text-[color:var(--muted2)]">Background</span>
-                  <select
-                    value={backgroundId}
-                    onChange={(event) => void handleBackgroundPresetChange(event.target.value)}
-                    className="h-6 w-auto rounded-[5px] bg-[color:var(--input)] px-2 text-[10px] font-black leading-none ring-1 ring-[color:var(--border)]"
-                  >
-                    {ROOM_BACKGROUND_OPTIONS.map((option) => (
-                      <option key={option.id} value={option.id}>{option.label}</option>
-                    ))}
-                  </select>
                   <label className="flex h-6 cursor-pointer items-center gap-1.5 rounded-[5px] bg-[color:var(--input)] px-2 text-[11px] font-bold ring-1 ring-[color:var(--border)] transition hover:bg-black/10">
                     <Paintbrush size={12} />
-                    {backgroundUploading ? "Uploading…" : "Custom image"}
+                    {backgroundUploading ? "Uploading…" : "Wallpaper"}
                     <input
                       type="file"
                       accept="image/*"
@@ -863,6 +1080,38 @@ function MetricTile({ label, value }: { label: string; value: string }) {
     <div className="rounded-[6px] bg-[color:var(--input)] p-2 ring-1 ring-[color:var(--border)]">
       <div className="text-[9px] font-black uppercase tracking-[0.12em] text-[color:var(--muted2)]">{label}</div>
       <div className="truncate text-sm font-black">{value}</div>
+    </div>
+  );
+}
+
+// Same segmented-control look/behavior as VirtualGalleryRoom.tsx's own
+// (unexported) Segmented — duplicated here per this file's own header note
+// rather than imported, since that's a private function in a file this work
+// order requires stay untouched. Used for the new Rows selector (Single/
+// Dual/Three) below.
+function Segmented({
+  value, options, onChange,
+}: { value: string; options: [string, string][]; onChange: (value: string) => void }) {
+  return (
+    <div
+      className="grid h-6 rounded-[5px] bg-[color:var(--input)] p-0.5 ring-1 ring-[color:var(--border)]"
+      style={{ gridTemplateColumns: `repeat(${options.length}, minmax(0, 1fr))` }}
+    >
+      {options.map(([optionValue, label]) => (
+        <button
+          key={optionValue}
+          type="button"
+          onClick={() => onChange(optionValue)}
+          className={[
+            "rounded-[4px] px-1 text-[10px] font-black leading-none transition",
+            optionValue === value
+              ? "bg-[rgba(79,211,238,0.18)] text-[#67E8F9] shadow-[0_0_12px_rgba(79,211,238,0.16)]"
+              : "text-[color:var(--muted)]",
+          ].join(" ")}
+        >
+          {label}
+        </button>
+      ))}
     </div>
   );
 }

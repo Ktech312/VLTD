@@ -5,6 +5,110 @@
 - **Mobile drag/scroll bug** (EK found this hands-on, unrelated to the above): dragging to look around also scrolled the whole page on a touch device, and yaw drag didn't track smoothly — both caused by the room's mount div never declaring `touch-action: none`. Fixed with the same one-line fix already used elsewhere in this file. Code-verified and reasoned through; genuinely NOT tested with a real touch input (no tool in this session can produce one) — needs EK's own phone to close the loop.
 Regression-checked live: White unaffected (still looks exactly right), pickup/rotate/return still works, no console errors anywhere. See the 2026-09-06 dated entries (top of the log below) for full detail, including the one real bug this session found and fixed in its own live check (Blue's case lids) before calling any of this done. Before tonight: the first White-room material pass (2026-09-05, commit `c61e600`/`f346d18`) — also READY on Vercel and live-verified. Below that: the VLTD Museum public campus work (2026-08-31 through 09-04, then resumed and heavily active again 2026-09-08 through 09-10 — see the 2026-09-10 dated entry, TOP of the dated list below, for the current state: NOT accepted yet, EK's own physical-input pass still pending). Read the dated entries below in order, newest first, before assuming any room behaves a particular way. Older work further down in §2 (2026-08-27/28 Admin Users redesign; ~110 VaultItem fields + 3 Gallery-sync gaps, both migrations confirmed run by EK; Events tooling, admin console/APP_MAP.md, Vault upload; a full backend security audit, 3D Museum beta-access gating, Room Builder fixes) is unrelated to either of the above.)
 
+# 2026-09-12 (fixes pass) — Museum Builder: real camera movement, row-aligned wall items, a Single/Dual/Three-row selector, a Shelves checkbox, and the invented Background swatch dropdown replaced by the real Wallpaper flow
+
+EK's itemized feedback after her first live test of `/museum/builder` (the
+new page directly below), from `docs/MUSEUM-BUILDER-FIXES-2026-09-12.md`.
+Correction pass on `src/components/gallery/MuseumBuilder.tsx` only — same
+do-not-touch list as the original page (`/museum/virtual-room`,
+`MuseumRoomPopup.tsx`, the walkable public museum's real geometry/doors/
+lighting/camera, `museum_room_items`/`museum_room_meta`'s existing rows and
+read path, the owner-only gate).
+
+- **Camera can now actually move**, not just drag-to-look: scroll-to-step
+  forward/back and WASD, built from `src/lib/visitorController.ts`'s own
+  shared functions — `applyDrag`/`aimCamera` (unchanged, carried over from
+  the original pass) plus `buildKeyboardMoveDirection`/`easeTowardTargets`/
+  `WHEEL_STEP`/`facingDirection`, the exact same functions
+  `VltdMuseumCampus.tsx`'s walkable campus and `VirtualGalleryRoom.tsx`'s
+  accepted personal room already use — no second movement implementation.
+  Collision is a simple rectangular clamp against the current room's own
+  real bounds (`campusLayout.ts`'s `roomBounds`), the same technique the
+  accepted personal room's own `clampPosition` uses for its one fixed room,
+  adapted here since every campus room is a different footprint. Enough to
+  keep the camera from clipping through this one room's own walls — no
+  doorway-to-doorway campus walkability needed for a single-room editor.
+- **Wall items now line up in real rows.** Root cause of EK's GAMES-room
+  screenshot (two items stacked with mismatched height/sizing): the
+  existing per-wall horizontal distribution (`computeRoomPlacementSlots`'s
+  `distributeAcrossSpans` walk — correct, kept as-is) had never been
+  combined with a real fixed VERTICAL row system, so items landed at
+  whatever height the math happened to produce. Fixed by giving
+  `computeRoomPlacementSlots` (`src/lib/campusRoomBuilder.ts`) a new
+  optional `rowCount` argument (1/2/3) that lays each wall span's own item
+  count out as a real column x row grid (row-major fill, same `col = i %
+  columns, row = floor(i / columns)` approach the personal Gallery's own
+  `wallGridPosition` already uses) instead of one continuous single-height
+  run. Every row height is the personal Gallery Builder's own hand-tuned
+  `SHELF_ROW_Y`/`shelfItemY()` (`src/lib/galleryRoomSlots.ts`), reused
+  directly — not re-derived — since `museumStandard.ts`'s
+  `MUSEUM_EYE_HEIGHT` is the exact same `3.6` the personal room's own
+  `eyeHeight` already uses, so no unit conversion was needed. `maxHeight`
+  per slot is now also keyed to how many rows are stacked (1.3 for Three,
+  1.9 for Dual, 2.2 for Single) so neighboring rows can't visually overlap
+  — the other, EK-flagged half of "inconsistent sizing."
+  **`rowCount` is optional and left undefined by every OTHER existing
+  caller** (`VltdMuseumCampus.tsx`'s real live museum display,
+  `MuseumRoomPopup.tsx`) — neither passes it, so this shared function's
+  original single-height-per-wall output is byte-for-byte unchanged for
+  both. Only Museum Builder passes a real row count.
+- **New Single/Dual/Three-row selector**, Museum Builder only, independent
+  of the existing Wall/Shelf/Case capacity sliders (those control HOW MANY
+  items; this controls how the wall ones are arranged). Single uses the
+  middle `SHELF_ROW_Y` height alone (same height the personal Gallery's own
+  Hero/spotlight layout already treats as its one centered feature row);
+  Dual uses the top+bottom of the same 3; Three is every one of them — "the
+  looks like the 3D gallery" option EK asked for.
+- **New Shelves checkbox** — a pure visual toggle on the EXISTING wall-item
+  slots, not a new slot system and not the same thing as the already-
+  working Shelf-items/Case-items capacity sliders (left alone). Draws one
+  more shelf board (`museumRoomFurniture.ts`'s `buildShelfBoard`, unchanged
+  — same board mesh/material as the Shelf-items feature) per usable wall
+  span per row currently in use, at that row's own real `SHELF_ROW_Y`
+  height (`campusRoomBuilder.ts`'s new `wallRowBoardHeights()`), so it sits
+  directly under whichever row of items is showing.
+- **Removed the invented "Background: Neutral/Warm Ivory/Cool Slate/
+  Charcoal" swatch dropdown entirely** — deleted from `MuseumBuilder.tsx`
+  along with its `backgroundId` state, `handleBackgroundPresetChange`, and
+  its imports of `ROOM_BACKGROUND_OPTIONS`/`backgroundWallColorHex`/
+  `setRoomBackground` (that preset system itself is untouched and stays a
+  real, separate, already-accepted feature of the Map's own
+  `RoomEditorModal.tsx` — not invented there, just wrongly duplicated here).
+  What's left is only the real background mechanism, relabeled and
+  restyled to match the personal Gallery Builder's own actual "Wallpaper"
+  button/flow (`handleWallpaperUpload`/`fileToRoomWallpaper`/
+  `uploadHallWallpaper` in `VirtualGalleryRoom.tsx`) — Museum Builder's
+  upload already called the same `uploadHallWallpaper()` into the same
+  `room-wallpapers` Storage bucket; only the redundant preset UI sitting
+  next to it needed to go. `museum_room_meta.background_id` column/
+  migration is untouched (still real, still used by `RoomEditorModal.tsx`).
+
+**New migration (not run — EK runs by hand):**
+`supabase/migrations/20260912_museum_room_wall_rows_and_shelves.sql` adds
+`museum_room_meta.wall_row_count` (smallint, nullable) and
+`wall_shelves_enabled` (boolean, nullable) — the new Rows selector/Shelves
+checkbox persist here via a new `setRoomWallLayout()` in
+`museumCampusConfig.ts`, same debounced-autosave convention as the existing
+capacity sliders. Fails soft the same way every other `museum_room_meta`
+column in this file already does — `selectRoomMeta`/`getAllRoomMeta` now
+cascade FULL (10 columns) → WITH_CAPACITY (8, the prior migration's set) →
+WITH_BACKGROUND (4) → BASE (3) on a "column does not exist" error, so
+nothing here is required for `20260912_museum_room_capacity_and_background.sql`
+(still possibly not run either) to keep working, or for the museum's live
+display/MuseumRoomPopup.tsx/RoomEditorModal.tsx.
+
+**Untouched, per the work order:** `/museum/virtual-room` (the Gallery
+Builder) and `MuseumRoomPopup.tsx` — neither file touched (zero diff).
+`campusRoomBuilder.ts` only gained new, additive exports (`RoomRowCount`,
+`wallRowBoardHeights`, an optional `rowCount` parameter) — every existing
+export's behavior for every other caller is unchanged. Real campus
+geometry/doors/lighting/camera/collision in the walkable `/museum/vltd`
+untouched.
+
+**Not live-verified** — no authenticated browser session available to this
+pass for the owner-gated `/museum/builder` route. Not declared accepted or
+ready for EK's test.
+
 # 2026-09-12 (new page) — Museum Builder: a separate, owner-only page (`/museum/builder`) for editing the real shared VLTD Museum's rooms, plus shelf/case furniture and per-room capacity sliders
 
 EK's direct instruction after using the in-Gallery-Builder museum room popup

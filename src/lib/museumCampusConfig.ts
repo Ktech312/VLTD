@@ -224,6 +224,15 @@ export type MuseumRoomMeta = {
   // Undefined/null means "use background_id (or the room's default finish)
   // instead," same safe-default rule as background_id itself.
   background_image_url?: string | null;
+  // Museum Builder fixes pass (2026-09-12): the new Single/Dual/Three-row
+  // wall-item selector and Shelves-board checkbox. Undefined/null for
+  // either — no override, or 20260912_museum_room_wall_rows_and_shelves.sql
+  // hasn't been run yet — always falls back to Museum Builder's own default
+  // (3 rows, shelves off), same safe-default rule as every other override
+  // in this type. See campusRoomBuilder.ts's computeRoomPlacementSlots
+  // `rowCount` argument and wallRowBoardHeights().
+  wall_row_count?: number | null;
+  wall_shelves_enabled?: boolean | null;
 };
 
 // Fails-soft column cascade (extended 2026-09-12, Museum Builder pass): try
@@ -233,6 +242,8 @@ export type MuseumRoomMeta = {
 // breaks regardless of which of the columns below EK has actually migrated
 // yet, in any order.
 const ROOM_META_COLUMNS_FULL =
+  "room_id, title, description, background_id, item_capacity, shelf_capacity, case_capacity, background_image_url, wall_row_count, wall_shelves_enabled";
+const ROOM_META_COLUMNS_WITH_CAPACITY =
   "room_id, title, description, background_id, item_capacity, shelf_capacity, case_capacity, background_image_url";
 const ROOM_META_COLUMNS_WITH_BACKGROUND = "room_id, title, description, background_id";
 const ROOM_META_COLUMNS_BASE = "room_id, title, description";
@@ -240,7 +251,7 @@ const ROOM_META_COLUMNS_BASE = "room_id, title, description";
 async function selectRoomMeta(roomId: string): Promise<MuseumRoomMeta | null> {
   const supabase = getSupabaseBrowserClient();
   if (!supabase) return null;
-  for (const columns of [ROOM_META_COLUMNS_FULL, ROOM_META_COLUMNS_WITH_BACKGROUND, ROOM_META_COLUMNS_BASE]) {
+  for (const columns of [ROOM_META_COLUMNS_FULL, ROOM_META_COLUMNS_WITH_CAPACITY, ROOM_META_COLUMNS_WITH_BACKGROUND, ROOM_META_COLUMNS_BASE]) {
     try {
       const { data, error } = await supabase
         .from("museum_room_meta")
@@ -271,7 +282,7 @@ export async function getAllRoomMeta(): Promise<Record<string, MuseumRoomMeta>> 
     if (error) throw error;
     return (data ?? []) as unknown as MuseumRoomMeta[];
   }
-  for (const columns of [ROOM_META_COLUMNS_FULL, ROOM_META_COLUMNS_WITH_BACKGROUND, ROOM_META_COLUMNS_BASE]) {
+  for (const columns of [ROOM_META_COLUMNS_FULL, ROOM_META_COLUMNS_WITH_CAPACITY, ROOM_META_COLUMNS_WITH_BACKGROUND, ROOM_META_COLUMNS_BASE]) {
     try {
       const rows = await fetchAll(columns);
       const byRoomId: Record<string, MuseumRoomMeta> = {};
@@ -299,6 +310,23 @@ export async function setRoomCapacities(
   const { error } = await supabase
     .from("museum_room_meta")
     .upsert({ room_id: roomId, ...capacities, updated_at: new Date().toISOString() });
+  if (error) return { ok: false, error: error.message };
+  return { ok: true };
+}
+
+/** Saves a room's wall-item row arrangement (Single/Dual/Three) and Shelves
+ * board toggle — same one-row-upserted-by-room_id shape as setRoomCapacities.
+ * Pass `null` for either field to clear it back to Museum Builder's own
+ * default (3 rows, shelves off). */
+export async function setRoomWallLayout(
+  roomId: string,
+  layout: { wall_row_count?: number | null; wall_shelves_enabled?: boolean | null }
+): Promise<{ ok: boolean; error?: string }> {
+  const supabase = getSupabaseBrowserClient();
+  if (!supabase) return { ok: false, error: "Not signed in." };
+  const { error } = await supabase
+    .from("museum_room_meta")
+    .upsert({ room_id: roomId, ...layout, updated_at: new Date().toISOString() });
   if (error) return { ok: false, error: error.message };
   return { ok: true };
 }

@@ -27,6 +27,14 @@ import {
   type WallSide,
 } from "./campusLayout";
 import { createStoneFloorTexture } from "../components/gallery/galleryTextures";
+// Museum Builder row-control fix (2026-09-12): SHELF_ROW_Y/shelfItemY/
+// MIN_ITEM_SCALE are the personal Gallery Builder's own hand-tuned fixed
+// row heights (src/lib/galleryRoomSlots.ts) — reused directly here, not
+// re-derived, per the work order's explicit reuse mandate. campusLayout.ts's
+// EYE_HEIGHT (MUSEUM_EYE_HEIGHT, 3.6) is the exact same value as the
+// personal room's own `eyeHeight` constant, so these heights need no unit
+// conversion to apply to the museum's rooms.
+import { MIN_ITEM_SCALE, SHELF_ROW_Y, shelfItemY } from "./galleryRoomSlots";
 
 export type RoomDoorway = {
   side: WallSide;
@@ -1009,6 +1017,51 @@ export function distributeAcrossSpans(spans: WallSpan[], count: number): number[
   return counts;
 }
 
+// Museum Builder row-control fix (2026-09-12): EK's Single/Dual/Three-row
+// ask. Row HEIGHTS themselves are never re-derived — every one of these maps
+// straight onto SHELF_ROW_Y's 3 hand-tuned entries ([4.72, 3.22, 1.72] —
+// read that file's own comments for why those specific numbers), so a room
+// built at "Three row" looks pixel-for-pixel like the personal Gallery's own
+// current 3-row wall. "Single" reuses the MIDDLE height alone (the same
+// height the personal Gallery's own spotlight/Hero layout already treats as
+// its one centered feature row — see galleryRoomSlots.ts's `HERO_Y =
+// shelfItemY(1, ...)`); "Dual" reuses the top+bottom of that same table.
+export type RoomRowCount = 1 | 2 | 3;
+
+const WALL_ROW_INDEX_SETS: Record<RoomRowCount, number[]> = {
+  1: [1],
+  2: [0, 2],
+  3: [0, 1, 2],
+};
+
+// Every wall item's vertical position, regardless of whether the new
+// Shelves checkbox is drawing a board underneath it — a representative
+// MIN_ITEM_SCALE (the personal Gallery's own floor scale for ordinary wall
+// items) stands in for shelfItemY()'s per-item `scale` argument, since a
+// museum wall item's real render scale comes from its own image's aspect
+// ratio (hangArtPreservingAspect below), not one fixed number the way the
+// personal room's own grid items use. This only affects the row BAND every
+// item in that row shares, not that item's own final on-screen size.
+function wallRowItemHeights(rowCount: RoomRowCount): number[] {
+  return WALL_ROW_INDEX_SETS[rowCount].map((row) => shelfItemY(row, MIN_ITEM_SCALE));
+}
+
+/** The same rows' RAW shelf-board heights — SHELF_ROW_Y itself, before
+ * shelfItemY()'s "item resting on top of the board" offset — for
+ * MuseumBuilder.tsx's new Shelves checkbox, which draws one physical board
+ * (museumRoomFurniture.ts's buildShelfBoard, unchanged) directly under each
+ * row of wall items currently in use. */
+export function wallRowBoardHeights(rowCount: RoomRowCount): number[] {
+  return WALL_ROW_INDEX_SETS[rowCount].map((row) => SHELF_ROW_Y[row] ?? SHELF_ROW_Y[SHELF_ROW_Y.length - 1]);
+}
+
+// A tighter maxHeight the more rows are stacked into the same wall span, so
+// neighboring rows can never visually overlap — Three-row's own bands sit
+// only 1.5 units apart (SHELF_ROW_Y's own spacing), so an item is capped
+// well under that; Dual's bands are twice as far apart (3.0), and Single has
+// no neighboring row to clash with at all.
+const WALL_ROW_MAX_HEIGHT: Record<RoomRowCount, number> = { 1: 2.2, 2: 1.9, 3: 1.3 };
+
 export function computeRoomPlacementSlots(
   roomId: CampusRoomId,
   doorways: RoomDoorway[],
@@ -1024,7 +1077,16 @@ export function computeRoomPlacementSlots(
   // exact existing rule (a supporting slot per flanking span only once
   // there's enough capacity to spare one) so this generalizes SPORTS's
   // proof-room layout into the shared engine instead of discarding it.
-  focalWall?: WallSide
+  focalWall?: WallSide,
+  // Museum Builder row-control fix (2026-09-12): Single/Dual/Three-row
+  // control, MuseumBuilder.tsx ONLY. Deliberately left undefined (not
+  // defaulted to 3) so every OTHER existing caller — VltdMuseumCampus.tsx's
+  // real live museum display and MuseumRoomPopup.tsx, neither of which this
+  // work order allows touching — keeps this function's exact original
+  // single-height-per-wall output, byte for byte, since neither passes this
+  // new argument. Only when a caller actually supplies a row count does the
+  // row-grid math below activate at all.
+  rowCount?: RoomRowCount
 ): PlacementSlot[] {
   if (capacity <= 0) return [];
   const roomModule: RoomModule = {
@@ -1053,6 +1115,11 @@ export function computeRoomPlacementSlots(
       })()
     : [{ spans, capacity }];
 
+  // Legacy no-row-argument path reproduces the original behavior exactly:
+  // one row at the caller's own `eyeHeight`, `maxHeight` 2.2 — untouched for
+  // VltdMuseumCampus.tsx/MuseumRoomPopup.tsx.
+  const rowYs = rowCount ? wallRowItemHeights(rowCount) : [eyeHeight];
+  const rowMaxHeight = rowCount ? WALL_ROW_MAX_HEIGHT[rowCount] : 2.2;
   const margin = 0.9;
   const slots: PlacementSlot[] = [];
   // Continuous per-WALL-SIDE counter for stable ids — a wall side can carry
@@ -1069,10 +1136,27 @@ export function computeRoomPlacementSlots(
       if (count <= 0) return;
       const spanLength = span.to - span.from;
       const usable = spanLength - margin * 2;
-      const step = usable / count;
+      // Row-aligned grid fix (2026-09-12): items used to be laid out in one
+      // continuous horizontal run at a single fixed height (`eyeHeight`) —
+      // the existing per-wall distribution (`count` per span, computed
+      // above) is correct and untouched, but with no real vertical row
+      // system it was the ONLY axis, so a room with more items than fit
+      // comfortably in one row just crowded them sideways instead of
+      // wrapping into a second/third row the way the personal Gallery's own
+      // wallGridPosition (col = slot % columns, row = floor(slot / columns))
+      // already does. Same row-major fill here: `columns` narrows to
+      // however many COLUMNS this span's own `count` needs across
+      // `rowYs.length` rows, and the horizontal step is now sized off that
+      // column count, not the raw item count — so items sharing a column
+      // stack at the exact same shared row heights (`rowYs`) instead of one
+      // long single-height run.
+      const columns = Math.max(1, Math.ceil(count / rowYs.length));
+      const step = usable / columns;
       const maxSlot = Math.min(2.6, step * 0.8);
       for (let i = 0; i < count; i += 1) {
-        const t = span.from + margin + step * (i + 0.5);
+        const col = i % columns;
+        const row = Math.floor(i / columns);
+        const t = span.from + margin + step * (col + 0.5);
         const wallInset = wallThickness / 2 + 0.04;
         const point = span.wall === "north" || span.wall === "south"
           ? { x: t, z: span.fixed + (span.wall === "north" ? 1 : -1) * wallInset }
@@ -1084,11 +1168,11 @@ export function computeRoomPlacementSlots(
           wall: span.wall,
           index: sideIndex,
           x: point.x,
-          y: eyeHeight,
+          y: rowYs[row] ?? rowYs[rowYs.length - 1],
           z: point.z,
           rotationY: span.rotationY,
           maxWidth: maxSlot,
-          maxHeight: 2.2,
+          maxHeight: rowMaxHeight,
         });
       }
     });
