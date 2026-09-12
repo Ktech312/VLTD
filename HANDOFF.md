@@ -5,6 +5,103 @@
 - **Mobile drag/scroll bug** (EK found this hands-on, unrelated to the above): dragging to look around also scrolled the whole page on a touch device, and yaw drag didn't track smoothly — both caused by the room's mount div never declaring `touch-action: none`. Fixed with the same one-line fix already used elsewhere in this file. Code-verified and reasoned through; genuinely NOT tested with a real touch input (no tool in this session can produce one) — needs EK's own phone to close the loop.
 Regression-checked live: White unaffected (still looks exactly right), pickup/rotate/return still works, no console errors anywhere. See the 2026-09-06 dated entries (top of the log below) for full detail, including the one real bug this session found and fixed in its own live check (Blue's case lids) before calling any of this done. Before tonight: the first White-room material pass (2026-09-05, commit `c61e600`/`f346d18`) — also READY on Vercel and live-verified. Below that: the VLTD Museum public campus work (2026-08-31 through 09-04, then resumed and heavily active again 2026-09-08 through 09-10 — see the 2026-09-10 dated entry, TOP of the dated list below, for the current state: NOT accepted yet, EK's own physical-input pass still pending). Read the dated entries below in order, newest first, before assuming any room behaves a particular way. Older work further down in §2 (2026-08-27/28 Admin Users redesign; ~110 VaultItem fields + 3 Gallery-sync gaps, both migrations confirmed run by EK; Events tooling, admin console/APP_MAP.md, Vault upload; a full backend security audit, 3D Museum beta-access gating, Room Builder fixes) is unrelated to either of the above.)
 
+# 2026-09-12 (new page) — Museum Builder: a separate, owner-only page (`/museum/builder`) for editing the real shared VLTD Museum's rooms, plus shelf/case furniture and per-room capacity sliders
+
+EK's direct instruction after using the in-Gallery-Builder museum room popup
+(the "Shared Museum Room Editor" work directly below): "not all features
+have been carried over. Like if i want shelves or all wall hanging, a
+slider bar to be able to add more items and they get even distributed...
+duplicate this page but instead call it Museum Builder... Leave the
+original Gallery Builder alone though for now. This museum page should only
+be on my Personal account, no other user should have access to it."
+
+**New route `/museum/builder`** (`src/app/museum/builder/page.tsx`) — a
+structural duplicate of the Gallery Builder's own page shell (identity
+card, Source panel, Room panel, toolbar over the 3D view) in a brand-new
+`src/components/gallery/MuseumBuilder.tsx`, every place the Gallery Builder
+points at a personal Hall pointed instead at the real shared VLTD Museum:
+Source lists `EDITABLE_ROOM_IDS` (the same 9 rooms the Map's edit badge
+already supports), the 3D view reuses MuseumRoomPopup.tsx's real-room-
+rendering approach (buildRoomShell/buildNeutralShell/buildSharedWall/
+buildRoomTrim, drag-to-look-only camera via visitorController.ts, only the
+wall segments touching the selected room) — a parallel copy of that
+approach rather than an import, since MuseumRoomPopup.tsx is its own
+full-screen popup with a different chrome and this work order requires it
+stay completely untouched. Organize runs organizeSlots.tsx's
+useSlotOrganizer/OrganizeSlotOverlay/OrganizeMoveMenu/OrganizeReplaceConfirm
+completely unchanged. Every save (item placement, capacity, background)
+goes straight to museum_room_items/museum_room_meta per-action — no "Save
+Hall" step, an inline Autosaved/Saving/Save Failed pill instead.
+
+**Owner-only gate** — `MuseumBuilderOwnerGate.tsx`, patterned directly
+after `VltdMuseumAdminGate.tsx` (the same small client-wrapper pattern the
+shared VLTD Museum route already uses) but stricter: checks
+`getMyAdminRole() === "owner"` specifically (matched against
+`NEXT_PUBLIC_OWNER_EMAIL`), not `role !== null` — a granted admin who is
+not the owner account is refused, same plain "Not authorized" state as the
+existing gate, no hint the route exists.
+
+**Feature-parity gaps closed:**
+- **Shelves and display cases** — ported (not redesigned) from
+  VirtualGalleryRoom.tsx's own shelf-board/display-case furniture recipe
+  into new `src/lib/museumRoomFurniture.ts` (`buildShelfBoard`,
+  `buildDisplayCase`, `placeItemsInCases`), generalized to any real campus
+  room's own wall coordinates instead of the personal room's fixed ones.
+  Two new, additive functions in `campusRoomBuilder.ts` —
+  `computeRoomShelfSlots()`/`computeRoomCaseSlots()` — reuse the exact same
+  `computeUsableWallSpans()`/`distributeAcrossSpans()` distribution math
+  `computeRoomPlacementSlots()` already uses (now exported, unchanged
+  otherwise). Cases are conservatively gated: a room only gets case slots
+  if it has at least one fully doorless wall and is large enough
+  (`CASE_MIN_ROOM_SPAN`) for a safe case row — "skip it there rather than
+  force it in," per the work order, instead of guessing a placement that
+  might collide with a real doorway.
+- **Per-room item-capacity sliders** — Wall/Shelf/Case sliders in the Room
+  panel recompute slots live (all three slot functions are pure functions
+  of capacity), debounce-persisted to three new `museum_room_meta` columns
+  (`item_capacity`/`shelf_capacity`/`case_capacity` — null falls back to
+  the existing global `items_per_room` default for wall, 0/off for
+  shelf/case). See the migration below.
+
+**Shared background/wallpaper catalog** — the Room panel's Background
+control uses the ALREADY-EXISTING `ROOM_BACKGROUND_OPTIONS`/
+`setRoomBackground`/`getRoomMeta` (built in the prior consolidation pass
+but never actually wired to any editor UI until now — confirmed neither
+MuseumRoomPopup.tsx nor RoomEditorModal.tsx call `setRoomBackground`; this
+is the missing editor for an already-live rendering path). For a custom
+uploaded image, it calls `virtualRooms.ts`'s existing
+`uploadHallWallpaper()` directly — the exact same function and
+`room-wallpapers` Storage bucket the Gallery Builder's own personal-Hall
+Wallpaper feature already uses — rather than a second, museum-only upload
+path, so an image uploaded from either surface lives in the same shared
+Storage location. The resulting URL persists to a new
+`museum_room_meta.background_image_url` column and is applied to Museum
+Builder's own preview only; wiring it into the live public museum's own
+rendering (`VltdMuseumCampus.tsx`) was deliberately left out of scope here
+since that file is one of this pass's explicit do-not-touch targets.
+
+**New migration (not run — EK runs by hand):**
+`supabase/migrations/20260912_museum_room_capacity_and_background.sql` adds
+`museum_room_meta.item_capacity`/`shelf_capacity`/`case_capacity` (int,
+nullable) and `background_image_url` (text, nullable). Every read of these
+columns fails soft (museumCampusConfig.ts's `selectRoomMeta`/
+`getAllRoomMeta` cascade down to the original bare `(room_id, title,
+description)` select on a "column does not exist" error) — nothing here
+required for the museum's current live display, MuseumRoomPopup.tsx, or
+RoomEditorModal.tsx to keep working before this is migrated.
+
+**Untouched, per the work order:** `/museum/virtual-room` (the Gallery
+Builder) and `MuseumRoomPopup.tsx` (the in-context room-editor popup) —
+neither file was modified. `campusRoomBuilder.ts`/`museumCampusConfig.ts`
+only gained new, additive exports (a `PlacementSlot.kind` optional field,
+new functions/columns) — every existing export's behavior is unchanged.
+Real campus geometry/doors/lighting/camera/collision in the walkable
+`/museum/vltd` untouched.
+
+**Not live-verified** — no authenticated browser session available to this
+pass for the owner-gated `/museum/builder` route; the parent session
+verifies live. Not declared accepted or ready for EK's test.
+
 # 2026-09-12 (consolidation pass) — Shared Museum Room Editor: extracted the personal Gallery's real Organize system instead of the prior two passes' own reinvented version
 
 **This is a correction, not a new feature.** EK's direct architecture call on

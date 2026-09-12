@@ -204,34 +204,56 @@ export type MuseumRoomMeta = {
   // or no choice saved — always means "keep the room's current default
   // finish," never a broken/blank wall.
   background_id?: string | null;
+  // Museum Builder pass (2026-09-12): per-room overrides for EK's "a slider
+  // to set how many items this room shows" ask — wall/shelf/case item
+  // capacity, independent of the global museum_campus_config default
+  // (getItemsPerRoom() above). Undefined/null for any of these — no
+  // override, no migration yet — always falls back to the existing global
+  // default (wall) or 0/disabled (shelf/case), never breaks a room that
+  // hasn't been touched by Museum Builder yet. See
+  // 20260912_museum_room_capacity_and_background.sql.
+  item_capacity?: number | null;
+  shelf_capacity?: number | null;
+  case_capacity?: number | null;
+  // A custom uploaded wallpaper image for this room, sharing the exact same
+  // Supabase Storage bucket ("room-wallpapers") and upload path the Gallery
+  // Builder's own personal-Hall Wallpaper feature already uses (see
+  // virtualRooms.ts's uploadHallWallpaper, reused as-is by Museum Builder —
+  // not a second, museum-only upload path) — EK's ask that "if I add a new
+  // background to one, the other should also be able to access it."
+  // Undefined/null means "use background_id (or the room's default finish)
+  // instead," same safe-default rule as background_id itself.
+  background_image_url?: string | null;
 };
 
-// Same fails-soft column gate as selectRoomItems above: try the extended
-// select (with background_id) first, retry the original select if that
-// column doesn't exist yet.
+// Fails-soft column cascade (extended 2026-09-12, Museum Builder pass): try
+// every column this file knows about, then retry with progressively fewer
+// columns on a Postgrest "column does not exist" error, down to the
+// original bare (room_id, title, description) select — so this never
+// breaks regardless of which of the columns below EK has actually migrated
+// yet, in any order.
+const ROOM_META_COLUMNS_FULL =
+  "room_id, title, description, background_id, item_capacity, shelf_capacity, case_capacity, background_image_url";
+const ROOM_META_COLUMNS_WITH_BACKGROUND = "room_id, title, description, background_id";
+const ROOM_META_COLUMNS_BASE = "room_id, title, description";
+
 async function selectRoomMeta(roomId: string): Promise<MuseumRoomMeta | null> {
   const supabase = getSupabaseBrowserClient();
   if (!supabase) return null;
-  try {
-    const { data, error } = await supabase
-      .from("museum_room_meta")
-      .select("room_id, title, description, background_id")
-      .eq("room_id", roomId)
-      .maybeSingle();
-    if (error) throw error;
-    return (data as MuseumRoomMeta | null) ?? null;
-  } catch {
+  for (const columns of [ROOM_META_COLUMNS_FULL, ROOM_META_COLUMNS_WITH_BACKGROUND, ROOM_META_COLUMNS_BASE]) {
     try {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from("museum_room_meta")
-        .select("room_id, title, description")
+        .select(columns)
         .eq("room_id", roomId)
         .maybeSingle();
-      return (data as MuseumRoomMeta | null) ?? null;
+      if (error) throw error;
+      return (data as unknown as MuseumRoomMeta | null) ?? null;
     } catch {
-      return null;
+      continue;
     }
   }
+  return null;
 }
 
 export async function getRoomMeta(roomId: string): Promise<MuseumRoomMeta | null> {
@@ -244,27 +266,56 @@ export async function getRoomMeta(roomId: string): Promise<MuseumRoomMeta | null
 export async function getAllRoomMeta(): Promise<Record<string, MuseumRoomMeta>> {
   const supabase = getSupabaseBrowserClient();
   if (!supabase) return {};
-  async function fetchAll(withBackground: boolean) {
-    const columns = withBackground ? "room_id, title, description, background_id" : "room_id, title, description";
+  async function fetchAll(columns: string) {
     const { data, error } = await supabase!.from("museum_room_meta").select(columns);
     if (error) throw error;
     return (data ?? []) as unknown as MuseumRoomMeta[];
   }
-  try {
-    const rows = await fetchAll(true);
-    const byRoomId: Record<string, MuseumRoomMeta> = {};
-    for (const row of rows) byRoomId[row.room_id] = row;
-    return byRoomId;
-  } catch {
+  for (const columns of [ROOM_META_COLUMNS_FULL, ROOM_META_COLUMNS_WITH_BACKGROUND, ROOM_META_COLUMNS_BASE]) {
     try {
-      const rows = await fetchAll(false);
+      const rows = await fetchAll(columns);
       const byRoomId: Record<string, MuseumRoomMeta> = {};
       for (const row of rows) byRoomId[row.room_id] = row;
       return byRoomId;
     } catch {
-      return {};
+      continue;
     }
   }
+  return {};
+}
+
+/** Saves a room's per-kind item-capacity overrides (Museum Builder's
+ * capacity sliders) independently of its title/background — same one-row-
+ * upserted-by-room_id shape every other per-room setting in this file
+ * already uses. Pass `null` for any field to clear that override back to
+ * its fallback (the global default for wall capacity, disabled for
+ * shelf/case). */
+export async function setRoomCapacities(
+  roomId: string,
+  capacities: { item_capacity?: number | null; shelf_capacity?: number | null; case_capacity?: number | null }
+): Promise<{ ok: boolean; error?: string }> {
+  const supabase = getSupabaseBrowserClient();
+  if (!supabase) return { ok: false, error: "Not signed in." };
+  const { error } = await supabase
+    .from("museum_room_meta")
+    .upsert({ room_id: roomId, ...capacities, updated_at: new Date().toISOString() });
+  if (error) return { ok: false, error: error.message };
+  return { ok: true };
+}
+
+/** Saves a room's custom uploaded wallpaper image URL (or `null` to clear
+ * it back to the preset background_id/default finish). The image itself is
+ * uploaded via virtualRooms.ts's own uploadHallWallpaper() — the exact same
+ * function and Storage bucket the Gallery Builder's personal-Hall Wallpaper
+ * feature already uses — this only ever persists the resulting public URL. */
+export async function setRoomBackgroundImage(roomId: string, imageUrl: string | null): Promise<{ ok: boolean; error?: string }> {
+  const supabase = getSupabaseBrowserClient();
+  if (!supabase) return { ok: false, error: "Not signed in." };
+  const { error } = await supabase
+    .from("museum_room_meta")
+    .upsert({ room_id: roomId, background_image_url: imageUrl, updated_at: new Date().toISOString() });
+  if (error) return { ok: false, error: error.message };
+  return { ok: true };
 }
 
 /** Saves a room's background choice independently of its title/description

@@ -978,12 +978,24 @@ export type PlacementSlot = {
   rotationY: number;
   maxWidth: number;
   maxHeight: number;
+  // Museum Builder pass (2026-09-12): which furniture kind this slot sits
+  // on. Undefined/omitted always means "wall" — every slot
+  // computeRoomPlacementSlots() has ever produced, and everything
+  // placeItemsAtSlots()/the live museum display already consume, is
+  // completely unchanged by adding this optional field. "shelf"/"case" are
+  // new, additive kinds produced by computeRoomShelfSlots()/
+  // computeRoomCaseSlots() below, for Museum Builder's own furniture-aware
+  // placement — placeItemsAtSlots() itself is untouched and is never called
+  // with a "case" slot (see museumRoomFurniture.ts's own placeItemsInCases).
+  kind?: "wall" | "shelf" | "case";
 };
 
 // Same proportional-by-span-length distribution placeArtwork() itself uses
 // (a floor of 1 slot per span so no usable span goes completely unused),
-// just returning per-span COUNTS instead of hanging anything.
-function distributeAcrossSpans(spans: WallSpan[], count: number): number[] {
+// just returning per-span COUNTS instead of hanging anything. Exported
+// (2026-09-12, Museum Builder pass) so computeRoomShelfSlots() below can
+// reuse the exact same distribution math instead of a second copy.
+export function distributeAcrossSpans(spans: WallSpan[], count: number): number[] {
   const totalLength = spans.reduce((sum, s) => sum + (s.to - s.from), 0);
   const counts: number[] = [];
   let used = 0;
@@ -1079,6 +1091,153 @@ export function computeRoomPlacementSlots(
           maxHeight: 2.2,
         });
       }
+    });
+  }
+  return slots;
+}
+
+// Museum Builder pass (2026-09-12): shelf-slot generator — EK's feature-
+// parity ask ("shelves... a slider... evenly distributed") ported from
+// VirtualGalleryRoom.tsx's own shelf system (physical boards resting items
+// at a lower height than eye-level wall art), generalized to any real
+// campus room's own usable wall spans instead of the personal room's fixed
+// -12/±10.5 coordinates. Reuses the exact same computeUsableWallSpans() +
+// distributeAcrossSpans() the wall-slot generator above uses — same
+// proportional-by-span-length distribution, just at shelf height instead of
+// eye height — and returns its own `kind: "shelf"` slots so a caller can
+// draw shelf-board furniture under them (museumRoomFurniture.ts) without
+// touching computeRoomPlacementSlots/placeItemsAtSlots at all.
+const SHELF_HEIGHT_FRACTION = 0.42; // fraction of eyeHeight — a low resting shelf, not another picture rail
+export const SHELF_ITEM_MAX = 1.6;
+const SHELF_WALL_OUTSET = 0.46; // wall-face-to-board-center distance — matches museumRoomFurniture.ts's own board depth/2
+
+export function computeRoomShelfSlots(
+  roomId: CampusRoomId,
+  doorways: RoomDoorway[],
+  wallThickness: number,
+  eyeHeight: number,
+  capacity: number
+): PlacementSlot[] {
+  if (capacity <= 0) return [];
+  const roomModule: RoomModule = {
+    room: roomById(roomId), doorways, wallHeight: 0, wallThickness, eyeHeight, finish: NEUTRAL_LEGACY_FINISH,
+  };
+  const spans = computeUsableWallSpans(roomModule);
+  if (spans.length === 0) return [];
+
+  const counts = distributeAcrossSpans(spans, capacity);
+  const margin = 0.9;
+  const shelfY = eyeHeight * SHELF_HEIGHT_FRACTION;
+  const slots: PlacementSlot[] = [];
+  const sideCounters = new Map<WallSide, number>();
+
+  spans.forEach((span, spanIdx) => {
+    const count = counts[spanIdx];
+    if (count <= 0) return;
+    const spanLength = span.to - span.from;
+    const usable = spanLength - margin * 2;
+    const step = usable / count;
+    const maxSlot = Math.min(SHELF_ITEM_MAX, step * 0.8);
+    for (let i = 0; i < count; i += 1) {
+      const t = span.from + margin + step * (i + 0.5);
+      const wallInset = wallThickness / 2 + SHELF_WALL_OUTSET;
+      const point = span.wall === "north" || span.wall === "south"
+        ? { x: t, z: span.fixed + (span.wall === "north" ? 1 : -1) * wallInset }
+        : { x: span.fixed + (span.wall === "west" ? 1 : -1) * wallInset, z: t };
+      const sideIndex = sideCounters.get(span.wall) ?? 0;
+      sideCounters.set(span.wall, sideIndex + 1);
+      slots.push({
+        id: `${roomId}#shelf-${span.wall}#${sideIndex}`,
+        wall: span.wall,
+        index: sideIndex,
+        x: point.x,
+        y: shelfY,
+        z: point.z,
+        rotationY: span.rotationY,
+        maxWidth: maxSlot,
+        maxHeight: 1.3,
+        kind: "shelf",
+      });
+    }
+  });
+  return slots;
+}
+
+/** The same usable wall spans computeRoomShelfSlots() places items along,
+ * exposed separately so a caller can draw exactly one shelf board per
+ * contributing span (museumRoomFurniture.ts's buildShelfBoard) without
+ * re-deriving the wall-span walk itself. */
+export function computeRoomShelfSpans(
+  roomId: CampusRoomId, doorways: RoomDoorway[], wallThickness: number, eyeHeight: number
+): WallSpan[] {
+  const roomModule: RoomModule = { room: roomById(roomId), doorways, wallHeight: 0, wallThickness, eyeHeight, finish: NEUTRAL_LEGACY_FINISH };
+  return computeUsableWallSpans(roomModule);
+}
+
+// Museum Builder pass (2026-09-12): floor display-case slots — EK's other
+// feature-parity ask. Ported from VirtualGalleryRoom.tsx's own CABINET_SPOTS/
+// glass-case furniture (cabinet base + glass box + a soft contact-shadow
+// plane — see museumRoomFurniture.ts's buildDisplayCase, the literal port of
+// that mesh recipe), but a real campus room's floor plan varies per room
+// (doorways, floor targets/logo) where the personal room's 4 fixed spots
+// never had to account for any of that — so placement here is a
+// conservative, geometry-driven eligibility check rather than a fixed spot
+// table: a room only gets cases at all if it has at least one FULLY SOLID
+// wall (no doorway anywhere along it — a doorless wall produces exactly one
+// usable span equal to the room's own full width/depth) large enough
+// (`CASE_MIN_ROOM_SPAN`) for a case row centered in front of that wall to
+// clear real walking/doorway space on the other walls. Rooms that don't
+// clear this bar simply get no case slots — "skip it there rather than
+// force it in," per the work order — instead of guessing a placement that
+// might collide with a real doorway or floor target.
+const CASE_MIN_ROOM_SPAN = 20; // world units — below this, there's no safe walking clearance for a freestanding case run
+const CASE_ROW_OFFSET = 3.2; // distance the case row sits out from its solid back wall
+export const CASE_ITEM_MAX = 1.1;
+
+export function computeRoomCaseSlots(
+  roomId: CampusRoomId,
+  doorways: RoomDoorway[],
+  wallThickness: number,
+  capacity: number
+): PlacementSlot[] {
+  if (capacity <= 0) return [];
+  const room = roomById(roomId);
+  if (room.w < CASE_MIN_ROOM_SPAN || room.d < CASE_MIN_ROOM_SPAN) return [];
+  const roomModule: RoomModule = { room, doorways, wallHeight: 0, wallThickness, eyeHeight: 0, finish: NEUTRAL_LEGACY_FINISH };
+  const spans = computeUsableWallSpans(roomModule);
+  const bounds = roomBounds(room);
+
+  const spansBySide = new Map<WallSide, WallSpan[]>();
+  for (const span of spans) spansBySide.set(span.wall, [...(spansBySide.get(span.wall) ?? []), span]);
+  const solidWall = (["north", "south", "east", "west"] as WallSide[]).find(
+    (side) => (spansBySide.get(side)?.length ?? 0) === 1
+  );
+  if (!solidWall) return [];
+
+  const margin = 2.2;
+  const runLength = solidWall === "north" || solidWall === "south" ? room.w : room.d;
+  const usable = runLength - margin * 2;
+  if (usable <= 0) return [];
+  const step = usable / capacity;
+  const slots: PlacementSlot[] = [];
+  for (let i = 0; i < capacity; i += 1) {
+    const t = (solidWall === "north" || solidWall === "south" ? bounds.x0 : bounds.z0) + margin + step * (i + 0.5);
+    const point =
+      solidWall === "north" ? { x: t, z: bounds.z0 + CASE_ROW_OFFSET }
+      : solidWall === "south" ? { x: t, z: bounds.z1 - CASE_ROW_OFFSET }
+      : solidWall === "west" ? { x: bounds.x0 + CASE_ROW_OFFSET, z: t }
+      : { x: bounds.x1 - CASE_ROW_OFFSET, z: t };
+    slots.push({
+      id: `${roomId}#case#${i}`,
+      wall: solidWall,
+      index: i,
+      x: point.x,
+      y: 1.25,
+      z: point.z,
+      rotationY: 0,
+      maxWidth: CASE_ITEM_MAX,
+      maxHeight: CASE_ITEM_MAX,
+      kind: "case",
     });
   }
   return slots;
