@@ -357,7 +357,7 @@ export default function VltdMuseumCampus() {
       buildRoomTrim(scene, room, wallSegments, finish, WALL_HEIGHT, WALL_THICKNESS, false);
     }
 
-    // Glowing room-center targets are generated further below once the
+    // Glowing room-center and doorway targets are generated further below once the
     // walkable areas exist. They restore the simple four-corner target
     // appearance and keep doorway openings visually clear.
 
@@ -1107,9 +1107,10 @@ export default function VltdMuseumCampus() {
       return q * q * (3 - 2 * q);
     }
 
-    // A room-center target moves and gently aims the camera along the path
-    // into that room. Free dragging, wheel input, and WASD remain untouched
-    // and never snap or rotate on their own.
+    // A center target aims along its travel path. A doorway target uses the
+    // cardinal yaw authored from that door's real shared-wall coordinates,
+    // lining the camera up with the opening. Free dragging, wheel input, and
+    // WASD remain untouched and never snap or rotate on their own.
     type PadAlignTween = {
       fromPos: THREE.Vector3; toPos: THREE.Vector3;
       fromYaw: number; toYaw: number;
@@ -1218,8 +1219,8 @@ export default function VltdMuseumCampus() {
       isDragging = false;
       if (didDrag) return;
 
-      // Click-to-walk only responds to a room-center target, never an
-      // arbitrary floor point.
+      // Click-to-walk only responds to a visible target, never an arbitrary
+      // floor point.
       if (!hoveredMarker) return;
       const waypoint = hoveredMarker.userData.waypoint as CampusWaypoint;
 
@@ -1232,7 +1233,9 @@ export default function VltdMuseumCampus() {
       const destination = new THREE.Vector3(waypoint.x, EYE_HEIGHT, waypoint.z);
       const dx = destination.x - cameraBody.x;
       const dz = destination.z - cameraBody.z;
-      const destinationYaw = Math.hypot(dx, dz) > 0.05 ? Math.atan2(dx, -dz) : yaw;
+      const destinationYaw = waypoint.kind === "doorway" && waypoint.yaw !== undefined
+        ? waypoint.yaw
+        : Math.hypot(dx, dz) > 0.05 ? Math.atan2(dx, -dz) : yaw;
       startWalkTween(destination, destinationYaw);
     }
     // EK's foreground rejection of the frame-accumulated version of this
@@ -1437,7 +1440,9 @@ export default function VltdMuseumCampus() {
         const destination = new THREE.Vector3(waypoint.x, EYE_HEIGHT, waypoint.z);
         const dx = destination.x - cameraBody.x;
         const dz = destination.z - cameraBody.z;
-        const destinationYaw = Math.hypot(dx, dz) > 0.05 ? Math.atan2(dx, -dz) : yaw;
+        const destinationYaw = waypoint.kind === "doorway" && waypoint.yaw !== undefined
+          ? waypoint.yaw
+          : Math.hypot(dx, dz) > 0.05 ? Math.atan2(dx, -dz) : yaw;
         startWalkTween(destination, destinationYaw);
         return true;
       },
@@ -1672,7 +1677,7 @@ export default function VltdMuseumCampus() {
         </div>
 
         <div className="mx-auto rounded-full bg-black/55 px-4 py-2 text-xs font-medium text-white/75 ring-1 ring-white/15 backdrop-blur">
-          Click a glowing target to move to a room center · drag to look around · scroll to step
+          Click a glowing target to align or move to a room center · drag to look around · scroll to step
         </div>
       </div>
 
