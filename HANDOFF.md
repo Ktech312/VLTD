@@ -5,6 +5,46 @@
 - **Mobile drag/scroll bug** (EK found this hands-on, unrelated to the above): dragging to look around also scrolled the whole page on a touch device, and yaw drag didn't track smoothly — both caused by the room's mount div never declaring `touch-action: none`. Fixed with the same one-line fix already used elsewhere in this file. Code-verified and reasoned through; genuinely NOT tested with a real touch input (no tool in this session can produce one) — needs EK's own phone to close the loop.
 Regression-checked live: White unaffected (still looks exactly right), pickup/rotate/return still works, no console errors anywhere. See the 2026-09-06 dated entries (top of the log below) for full detail, including the one real bug this session found and fixed in its own live check (Blue's case lids) before calling any of this done. Before tonight: the first White-room material pass (2026-09-05, commit `c61e600`/`f346d18`) — also READY on Vercel and live-verified. Below that: the VLTD Museum public campus work (2026-08-31 through 09-04, then resumed and heavily active again 2026-09-08 through 09-10 — see the 2026-09-10 dated entry, TOP of the dated list below, for the current state: NOT accepted yet, EK's own physical-input pass still pending). Read the dated entries below in order, newest first, before assuming any room behaves a particular way. Older work further down in §2 (2026-08-27/28 Admin Users redesign; ~110 VaultItem fields + 3 Gallery-sync gaps, both migrations confirmed run by EK; Events tooling, admin console/APP_MAP.md, Vault upload; a full backend security audit, 3D Museum beta-access gating, Room Builder fixes) is unrelated to either of the above.)
 
+# 2026-09-12 — Vercel deploy queue was stuck; Gallery Map visual fixes from a real screenshot
+
+**Infra note, check this first if a deploy ever looks stalled again:** EK's
+Vercel dashboard showed the `e5f7da2` deployment hung in "Building" for 4
+hours. `git fetch` confirmed 3 more commits (`89b9022`, `c419f82`,
+`b264b8b`) had pushed to GitHub successfully in that window but never even
+started building — Hobby plan allows one concurrent build, so everything
+queued behind the stuck one was invisible in the dashboard, not missing.
+Fix is manual on Vercel's side (cancel the stuck deployment, or redeploy
+the latest commit) — no CLI/API token available in this session to do it
+directly.
+
+**Gallery Map visual fixes (commit `188af67`)**, from EK's first real
+production screenshot of this Map (the "capture the current production Map"
+ask from the prior recovery-audit round finally had something to work
+from):
+- Top control row (identity/Items·Value·Mode, Source, Room) switched from
+  `items-start` to `items-stretch` — the three panels were visibly
+  different heights since each only shrank to its own content.
+- SPOTLIGHT/STORE no longer render with a distinct muted/dark fill ("not
+  sure why you made it different" — fair; it read as broken, not
+  intentional) — same light fill as every other room now, and clickable
+  like the rest. "Coming soon" stays as their subtitle text only.
+- PLAZA (the entrance forecourt) now gets the dark fill instead — the one
+  shape kept visually and functionally distinct, since it isn't a gallery.
+- Room click and "edit" are now two separate targets: the room body still
+  opens the shared museum (its only real destination — no per-room deep
+  link exists); a new small edit-icon badge sits at the top-right corner
+  (matching EK's marked screenshot) as a sibling element, not nested
+  inside the room's own link. Deliberately not wired to anything yet — the
+  real per-room editor (add/organize items, title/description) doesn't
+  exist, and the badge's tooltip says so rather than linking somewhere
+  wrong.
+
+Verified via `tsc`/lint/`build` only — still no browser connection this
+session, so none of this has been seen live. Was held back uncommitted
+pending EK's go-ahead (given the standing freeze from the recovery-audit
+round) until she asked directly why nothing had shipped in 4 hours, at
+which point it was pushed.
+
 # 2026-09-11 (one more pass, same day) — SPORTS: capped to itemsPerRoom, confirmed nothing else needed changing
 
 EK re-stated the SPORTS requirements as an explicit checklist. Everything on
