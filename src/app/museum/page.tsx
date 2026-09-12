@@ -40,6 +40,7 @@ import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 import { getPrimaryImageUrl, loadItems, type VaultItem } from "@/lib/vaultModel";
 import { getVaultImagePublicUrl } from "@/lib/vaultCloud";
 import { getMuseumBetaStatus, requestMuseumBetaAccess, type MuseumBetaStatus } from "@/lib/museumBeta";
+import { getMyAdminRole } from "@/lib/adminAuth";
 
 const ACTIVE_PROFILE_EVENT = "vltd:active-profile";
 const GALLERY_ASSET_BUCKET = "gallery-backgrounds";
@@ -194,6 +195,16 @@ export default function MuseumPage() {
   // VltdMuseumCampus.tsx). No beta gate yet since there's nothing to
   // protect: it's a first walkable pass, not a finished feature.
   const coverInputRef = useRef<HTMLInputElement | null>(null);
+  // Museum Builder (2026-09-12): EK's own owner-only room editor for the
+  // shared museum — "no other user should have access to it or be able
+  // to see it." The route itself is already gated by
+  // MuseumBuilderOwnerGate, but the ENTRY POINT here must also stay
+  // invisible to everyone else, not just redirect them after the fact —
+  // same `role === "owner"` check (not the broader "any admin" one).
+  const [isMuseumOwner, setIsMuseumOwner] = useState(false);
+  useEffect(() => {
+    void getMyAdminRole().then((role) => setIsMuseumOwner(role === "owner"));
+  }, []);
   const selectedItemsDragRef = useRef({ active: false, dragged: false, startX: 0, scrollLeft: 0 });
   const [filter, setFilter] = useState<ExhibitionFilter>("ACTIVE");
   const [sortMode, setSortMode] = useState<ExhibitionSort>("updated");
@@ -519,6 +530,24 @@ export default function MuseumPage() {
           </svg>
           VLTD Museum
         </button>
+        {/* Owner-only: Museum Builder, EK's own room editor for the shared
+            museum. Invisible to every other account, not just blocked —
+            see MuseumBuilderOwnerGate.tsx for the same check enforced on
+            the route itself. */}
+        {isMuseumOwner ? (
+          <button
+            type="button"
+            onClick={() => router.push("/museum/builder")}
+            className="inline-flex items-center gap-1.5 rounded-[8px] px-4 py-1.5 text-sm font-semibold ring-1 transition"
+            style={{ background: "var(--pill)", color: "var(--muted)", borderColor: "var(--border)" }}
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="M12 20h9" />
+              <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" />
+            </svg>
+            Museum Builder
+          </button>
+        ) : null}
       </div>
     </>
   );
