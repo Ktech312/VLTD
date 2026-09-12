@@ -5,6 +5,143 @@
 - **Mobile drag/scroll bug** (EK found this hands-on, unrelated to the above): dragging to look around also scrolled the whole page on a touch device, and yaw drag didn't track smoothly — both caused by the room's mount div never declaring `touch-action: none`. Fixed with the same one-line fix already used elsewhere in this file. Code-verified and reasoned through; genuinely NOT tested with a real touch input (no tool in this session can produce one) — needs EK's own phone to close the loop.
 Regression-checked live: White unaffected (still looks exactly right), pickup/rotate/return still works, no console errors anywhere. See the 2026-09-06 dated entries (top of the log below) for full detail, including the one real bug this session found and fixed in its own live check (Blue's case lids) before calling any of this done. Before tonight: the first White-room material pass (2026-09-05, commit `c61e600`/`f346d18`) — also READY on Vercel and live-verified. Below that: the VLTD Museum public campus work (2026-08-31 through 09-04, then resumed and heavily active again 2026-09-08 through 09-10 — see the 2026-09-10 dated entry, TOP of the dated list below, for the current state: NOT accepted yet, EK's own physical-input pass still pending). Read the dated entries below in order, newest first, before assuming any room behaves a particular way. Older work further down in §2 (2026-08-27/28 Admin Users redesign; ~110 VaultItem fields + 3 Gallery-sync gaps, both migrations confirmed run by EK; Events tooling, admin console/APP_MAP.md, Vault upload; a full backend security audit, 3D Museum beta-access gating, Room Builder fixes) is unrelated to either of the above.)
 
+# 2026-09-12 (overnight pass) — Museum: real in-3D Room Editor with numbered placement slots, SPORTS + 8 other gallery rooms (commits `b42af71`, `f70e988`)
+
+Full work order: `docs/MUSEUM-SHARED-ROOM-EDITOR-OVERNIGHT-PASS-2026-09-12.md`.
+Replaces the flat RoomEditorModal "+ Add item" form's job — the real
+`/museum/vltd` room itself now opens in an editing mode, per EK's ask that
+this "work the same way Organize already works for a personal Gallery."
+
+**Shared placement engine** (`src/lib/campusRoomBuilder.ts`,
+`src/lib/campusLayout.ts`) — the same generator both the editor and the
+museum's own live display now consult, so they can never disagree:
+- `computeRoomPlacementSlots()`: a stable, numbered set of wall positions
+  from a room's real geometry (usable wall spans — already excludes every
+  doorway's exclusion zone, corners, casings) — sized to a capacity
+  instead of however many items exist, so a position never shifts as
+  items are added/removed later. SPORTS's existing "south wall is the
+  focal wall" weighting (the fix that kept 6 short door-flanking spans
+  from outweighing the one long doorless wall) is now a reusable
+  `focalWall` param on this function, not SPORTS-only inline math.
+- `placeItemsAtSlots()`: hangs curated items at their exact assigned slots.
+- `deriveRoomDoorways()`: derives a room's doorways from `CAMPUS_DOORS`
+  directly, replacing hand-typed per-room doorway arrays.
+- `EDITABLE_ROOM_IDS`: the 9 real gallery rooms this engine covers —
+  POP_CULTURE, TCG, MISC, BUILT_BOTANY, GAMES, AUTOMOTIVE, COLLECTION,
+  SPORTS, CARDS. HUB (no edit badge), SPOTLIGHT/STORE (their own separate
+  admin-curated content types, not wall-hung vault-style items), and
+  PLAZA (not a room) are out of scope for this engine.
+
+**`VltdMuseumCampus.tsx`** — the real 3D editor:
+- `?edit=<roomId>` spawns the camera at that room's center (reuses the
+  existing `?room=` spawn logic, untouched) and turns on a numbered +/-
+  overlay, one real per-slot `<button>` projected onto its exact 3D wall
+  position every frame — same rAF-projection technique as the personal
+  Gallery's own Organize overlay (`VirtualGalleryRoom.tsx`, itself
+  untouched). Gated by a live `getMyAdminRole()` check; the whole
+  `/museum/vltd` route is already admin-gated at the page level
+  (`VltdMuseumAdminGate.tsx`, from 2026-09-11), so this is defense in
+  depth, not the only gate.
+- Clicking an empty slot opens `MuseumRoomItemPicker.tsx`, a real vault
+  item picker sourced from the same `loadItems()` lookup
+  `ItemPickerSheet.tsx`/the personal Gallery's own Organize already use —
+  no second, parallel item source. Clicking an occupied slot selects it
+  for Replace / Move / Remove from a small toolbar (all real, tabbable
+  buttons — keyboard-accessible by construction, not mouse-only); Move
+  asks for confirmation before overwriting an already-occupied
+  destination. Every action autosaves immediately and shows
+  Saving/Saved/"Save failed — try again." **Note on scope:** "move" here
+  is a click-to-arm-then-click-destination flow, not a literal continuous
+  drag gesture — chosen for reliability across mouse/touch/keyboard
+  rather than long-press timer fragility; it satisfies the same
+  capability (place, move, replace-with-confirm, remove) without a raw
+  `dragstart`/`dragend` implementation.
+- Any gallery room with at least one enabled `museum_room_items` row now
+  renders through this SAME slot engine
+  (`buildSlotAssignments()`: an item explicitly pinned to a slot keeps
+  that exact position; anything else — older unslotted rows, or simply
+  more curated items than assigned slots — auto-fills whatever slots are
+  still empty, in order). This replaces SPORTS's old bespoke dual-span
+  `placeArtwork()` call and, for the first time, extends real,
+  admin-curated, same-for-every-visitor content to every other gallery
+  room the moment it's curated — not just SPORTS. **A room with zero
+  curated items keeps today's personal-vault-placeholder fallback
+  completely unchanged** — zero behavior change for the 8 rooms nobody
+  has curated yet.
+
+**`RoomEditorModal.tsx`** — the Map's per-room editor gained, for the 9
+`EDITABLE_ROOM_IDS` rooms only: an "Add Items / Edit Room" button (opens
+the new 3D editor in a new tab), an "Enter Museum" link, a live item
+count/capacity display, and a Background picker (4 swatches, saved to
+the new `museum_room_meta.background_id`). The old flat "+ Add item" form
+is hidden for these 9 rooms (replaced by the note "Managed from the 3D
+editor above") but left completely untouched for any other room type
+(SPOTLIGHT/STORE keep their existing flat-form flow exactly as before).
+
+**Room renames now reach every required surface** (`f70e988`, same pass):
+the existing `museum_room_meta` title override already showed on the Map
+and in the room editor's own title field; this adds the two the work
+order also required — the destination sign built into each doorway's
+transom (`buildDestinationSign` now tags its group with the stable room
+id it names; `retitleDestinationSign()` regenerates just that sign's
+label texture once the override loads in) and the top-of-screen
+in-museum room label overlay. `CampusRoomId` itself is untouched — only
+displayed text changes.
+
+**Database**: one new migration,
+`supabase/migrations/20260912_museum_room_placement.sql` — **not yet run,
+full SQL pasted below.** Every new column read
+(`museum_room_items.slot_id`, `museum_room_meta.background_id`) goes
+through a fails-soft double-select in `museumCampusConfig.ts` (extended
+columns first, retries the pre-migration column list on a Postgrest
+"column does not exist" error) — nothing assumes this has been run, same
+pattern the file already used for every prior migration.
+
+```sql
+alter table public.museum_room_items add column if not exists slot_id text;
+
+create unique index if not exists museum_room_items_room_slot_unique
+  on public.museum_room_items (room_id, slot_id)
+  where slot_id is not null;
+
+alter table public.museum_room_meta add column if not exists background_id text;
+```
+
+**Known gaps, disclosed rather than silently dropped:**
+- **Background choice is saved but not yet visually applied.** The 3D
+  scene's wall materials are cached and shared by `RoomFinish` object
+  identity (`roomWallMaterial()` in `VltdMuseumCampus.tsx`), built
+  synchronously before any Supabase round trip — wiring a per-room
+  override into that cache safely (without risking the wall-building
+  code the work order explicitly said not to destabilize) needs its own
+  follow-up pass, not squeezed into this one. The data layer and picker
+  UI are real and ready for it.
+- Verified via `npx tsc --noEmit` (clean, both commits), targeted ESLint
+  (0 errors both times — same warning categories already present
+  elsewhere in this codebase: `react-hooks/set-state-in-effect` on a
+  mount-only `useState` set, matching `ItemPickerSheet.tsx`'s own
+  identical pattern; the React Compiler's suppression notice on the two
+  intentionally-mount-only effects, matching `RoomEditorModal.tsx`'s own
+  pre-existing one), and `npm run build` (clean both times, all 137
+  routes generated).
+- **Not live-verified — genuine blocker, not silently skipped.** Both
+  commits pushed to Vercel production; `b42af71` confirmed **Ready** via
+  the Vercel CLI (`vercel inspect`, authenticated as EK's own account) —
+  `dpl_8EPoDs4TeHhz2hnPLYpuuU2KNHw5`, aliased to `vltd.vercel.app`.
+  `f70e988`'s own deployment status is in the Required Morning Report
+  (this session's final message) rather than guessed here. But `/museum/vltd` is
+  admin/owner-gated (`VltdMuseumAdminGate.tsx`, 2026-09-11) and the whole
+  app requires a real login before that — this session's Claude-in-Chrome
+  connection (the tool this project's own standing convention calls for
+  on authed pages) was not connected/reachable at any point this pass,
+  retried twice. The sandboxed Browser pane has no saved session and
+  entering EK's password into it is against policy, so it could only
+  confirm `GET /museum/vltd` returns `200` (not a server crash) before
+  redirecting to `/login`. **EK still needs to open the edit badge on
+  SPORTS herself** (from HUB door, COLLECTION door, CARDS door, and room
+  center, per the work order) before this is truly accepted — everything
+  above is code-verified and reasoned through, not eyes-on.
+
 # 2026-09-12 (later, same day) — Gallery Map: real in-context Room Editor (commit `6be58c0`), replacing the wrong Admin Tools location
 
 EK tested the edit badge live (the "coming soon" alert from the entry
