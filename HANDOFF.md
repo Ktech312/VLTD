@@ -5,6 +5,92 @@
 - **Mobile drag/scroll bug** (EK found this hands-on, unrelated to the above): dragging to look around also scrolled the whole page on a touch device, and yaw drag didn't track smoothly — both caused by the room's mount div never declaring `touch-action: none`. Fixed with the same one-line fix already used elsewhere in this file. Code-verified and reasoned through; genuinely NOT tested with a real touch input (no tool in this session can produce one) — needs EK's own phone to close the loop.
 Regression-checked live: White unaffected (still looks exactly right), pickup/rotate/return still works, no console errors anywhere. See the 2026-09-06 dated entries (top of the log below) for full detail, including the one real bug this session found and fixed in its own live check (Blue's case lids) before calling any of this done. Before tonight: the first White-room material pass (2026-09-05, commit `c61e600`/`f346d18`) — also READY on Vercel and live-verified. Below that: the VLTD Museum public campus work (2026-08-31 through 09-04, then resumed and heavily active again 2026-09-08 through 09-10 — see the 2026-09-10 dated entry, TOP of the dated list below, for the current state: NOT accepted yet, EK's own physical-input pass still pending). Read the dated entries below in order, newest first, before assuming any room behaves a particular way. Older work further down in §2 (2026-08-27/28 Admin Users redesign; ~110 VaultItem fields + 3 Gallery-sync gaps, both migrations confirmed run by EK; Events tooling, admin console/APP_MAP.md, Vault upload; a full backend security audit, 3D Museum beta-access gating, Room Builder fixes) is unrelated to either of the above.)
 
+# 2026-09-11 (yet still later, same day) — VLTD Museum campus: SPORTS is the first "proof room" — real admin-curated artwork, south wall as focal wall
+
+Explicitly authorized change to `/museum/vltd` — SPORTS was picked to prove
+out a new placement standard before it's applied to the other 9 legacy
+rooms. Two real gaps closed at once: (1) SPORTS was showing whichever
+personal vault happened to be signed in, not real curated content for the
+shared museum; (2) SPORTS used the generic "north-wall-only, forced-square"
+placement loop every other legacy room still uses.
+
+**Content source — new admin-curated table, not the signed-in vault:**
+- `supabase/migrations/20260911_museum_room_items.sql` — new
+  `museum_room_items` table, generic `room_id` text column (only `SPORTS`
+  is wired into the app right now, but the same table covers every future
+  room without another migration). Same RLS/grant pattern as the existing
+  `museum_spotlight_programs`/`museum_store_items` tables. **EK needs to
+  run this.**
+- `src/lib/museumCampusConfig.ts` — added `getEnabledRoomItems(roomId)`,
+  same shape/error-fallback pattern as `getActiveSpotlightPrograms()`/
+  `getEnabledStoreItems()`.
+- `src/app/admin/museum-campus/page.tsx` — added a "SPORTS items" CRUD
+  section (title + image URL + enabled + sort order), modeled on the
+  existing Store-items section. Queried **separately** from the
+  Spotlight/Store `Promise.all` in `fetchAll()`, with its own
+  `sportsTableMissing` state — a missing `museum_room_items` table (before
+  EK runs the migration) shows its own inline notice in just that section
+  instead of blocking the whole admin page.
+
+**Placement — real per-item artwork instead of the generic loop:**
+- `src/components/gallery/VltdMuseumCampus.tsx`: SPORTS is now excluded from
+  the generic north-wall-only loop and gets its own `sportsModule`
+  (`RoomModule`, doorways to HUB/COLLECTION/CARDS — SPORTS's real three
+  connections) purely to compute usable wall spans via the existing
+  `computeUsableWallSpans()`. **SPORTS's shell (floor/ceiling/walls/trim)
+  is completely untouched** — `sportsModule` is never passed to
+  `buildRoomShell`, so it still goes through the exact same
+  `buildNeutralShell()` + `NEUTRAL_LEGACY_FINISH` loop every other legacy
+  room uses, same as before this pass. "Keep its existing neutral finish;
+  no new room theme" taken literally: only the artwork changed, nothing
+  structural or material.
+- A new, otherwise-empty `RoomLightGroups` was added for SPORTS
+  (`sportsLights`, registered into the existing full/preview room-occupancy
+  map) purely so the new picture lights on its real artwork can turn on/off
+  with room occupancy like the 3 converted rooms already do — SPORTS's
+  general ambient lighting is unaffected.
+- **Real fix, not a guess:** initially reused `placeArtwork()`'s existing
+  proportional-by-span-length distribution as-is (same call every other
+  converted room uses) — but computed the actual resulting spans in a
+  throwaway script first and found it backwards: a centered door on each of
+  north/west/east splits that wall into 2 short flanking segments, and with
+  6 short segments (each floored to at least 1 item) plus 1 long south
+  segment, south — the intended focal wall — would get only ~2 of 8 items
+  while the "supporting" door-flanking segments soaked up the rest. Fixed
+  by calling `placeArtwork()` **twice** instead of changing it (it's shared
+  with 3 other rooms, left unmodified): once for south alone with the
+  majority of items, once for one supporting piece per door wall (its
+  larger flanking segment). Verified the corrected allocation directly: at
+  7-8 curated items, south now gets 4-5 and each door wall gets exactly 1.
+  Below 5 total items, everything stays on the focal wall rather than
+  stranding one lonely supporting piece per door.
+- `src/lib/campusRoomBuilder.ts`: `placeArtwork()`/`hangArtPreservingAspect()`
+  gained an optional `label?: string` per item (backward compatible — the 3
+  existing callers never set it, so their appearance is byte-for-byte
+  unchanged) plus a new `hangCompactLabel()` helper — a small neutral
+  cream/charcoal placard hung just under each frame, sized off the frame's
+  own real width, truncated to one line. Deliberately its own function, not
+  a reuse of `VltdMuseumCampus.tsx`'s blue Spotlight/Store `hangPlaque()`,
+  which is styled for that specific room pair.
+
+**Verified:** `tsc --noEmit`, targeted ESLint (only a pre-existing,
+unrelated warning on `admin/museum-campus/page.tsx` — confirmed present
+before this change too via `git stash`), and `npm run build`, all clean.
+Confirmed via a throwaway script (deleted after use) that SPORTS's three
+real doorways (HUB/COLLECTION/CARDS) are exactly what `sportsModule`
+declares, and that the corrected focal/supporting allocation behaves as
+described above at every item count from 3 to 8.
+
+**Not verified — genuinely could not do this part:** anything visual. No
+browser connection was available this session, so nobody has actually
+looked at SPORTS's new artwork, labels, or lighting live. **Also not yet
+possible to test end-to-end:** the admin CRUD flow itself, since the
+migration hasn't run yet — EK will need to run it, add a few real SPORTS
+items through the new admin section, and then look at the room live before
+this can be called the real approved standard rather than a code-reviewed
+one. Per EK's own framing, movement testing and further tuning are off the
+active list for this pass.
+
 # 2026-09-11 (still later, same day) — VLTD Museum campus: transom-width fix for the vertical openings above every doorway jamb
 
 The 4a0cb01 anti-flicker fix trimmed the solid wall pieces beside every door

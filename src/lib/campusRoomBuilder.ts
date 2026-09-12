@@ -866,6 +866,47 @@ export function computeUsableWallSpans(module: RoomModule): WallSpan[] {
   return spans.filter((s) => s.to - s.from > 1);
 }
 
+// Compact museum-placard label under a piece of artwork — deliberately its
+// own small, neutral (cream/charcoal) plaque rather than reusing
+// VltdMuseumCampus.tsx's blue Spotlight/Store hangPlaque(), which is styled
+// for that room pair, not for sitting under real framed art in a neutral
+// room. Kept tiny (one line, truncated) — "compact labels," not a second
+// plaque.
+function hangCompactLabel(
+  scene: THREE.Scene,
+  x: number, y: number, z: number,
+  rotationY: number,
+  title: string,
+  maxWidth: number
+) {
+  const canvas = document.createElement("canvas");
+  canvas.width = 512;
+  canvas.height = 96;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return;
+  ctx.fillStyle = "#f2efe6";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.fillStyle = "#2a2a28";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.font = "600 40px Archivo, sans-serif";
+  const truncated = title.length > 28 ? `${title.slice(0, 27)}…` : title;
+  ctx.fillText(truncated, canvas.width / 2, canvas.height / 2);
+
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  const width = Math.min(maxWidth, 1.7);
+  const height = width * (canvas.height / canvas.width);
+  const plaque = new THREE.Mesh(
+    new THREE.PlaneGeometry(width, height),
+    new THREE.MeshStandardMaterial({ map: texture, roughness: 0.85 })
+  );
+  const normal = new THREE.Vector3(0, 0, 1).applyEuler(new THREE.Euler(0, rotationY, 0));
+  plaque.position.set(x + normal.x * 0.021, y, z + normal.z * 0.021);
+  plaque.rotation.y = rotationY;
+  scene.add(plaque);
+}
+
 function hangArtPreservingAspect(
   scene: THREE.Scene,
   textureLoader: THREE.TextureLoader,
@@ -875,7 +916,8 @@ function hangArtPreservingAspect(
   url: string,
   maxW: number, maxH: number,
   isCancelled: () => boolean,
-  withRealLight: boolean
+  withRealLight: boolean,
+  label?: string
 ) {
   textureLoader.load(url, (texture) => {
     if (isCancelled()) return;
@@ -910,6 +952,10 @@ function hangArtPreservingAspect(
       groups.full.add(pictureLight);
       groups.full.add(pictureLight.target);
     }
+
+    if (label) {
+      hangCompactLabel(scene, x, y - artH / 2 - 0.26, z, rotationY, label, Math.max(artW, 1.2));
+    }
   });
 }
 
@@ -923,7 +969,7 @@ export function placeArtwork(
   textureLoader: THREE.TextureLoader,
   groups: RoomLightGroups,
   spans: WallSpan[],
-  items: { url: string }[],
+  items: { url: string; label?: string }[],
   wallThickness: number,
   eyeHeight: number,
   isCancelled: () => boolean
@@ -948,7 +994,7 @@ export function placeArtwork(
         : { x: span.fixed + (span.wall === "west" ? 1 : -1) * wallInset, y: eyeHeight, z: t };
       const maxSlot = Math.min(2.6, step * 0.8);
       const withRealLight = itemIndex < MAX_PICTURE_LIGHTS_PER_ROOM;
-      hangArtPreservingAspect(scene, textureLoader, groups, point.x, point.y, point.z, span.rotationY, item.url, maxSlot, 2.2, isCancelled, withRealLight);
+      hangArtPreservingAspect(scene, textureLoader, groups, point.x, point.y, point.z, span.rotationY, item.url, maxSlot, 2.2, isCancelled, withRealLight, item.label);
     }
   }
 }

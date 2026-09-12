@@ -1,5 +1,16 @@
 # VLTD — Session Checklist (2026-08-05 night → ongoing, updated 2026-08-27)
 
+## 2026-09-11 (yet still later, same day) — VLTD Museum: SPORTS is the first proof room (real curated content + real placement)
+Full detail in the matching HANDOFF.md entry (same date, near the top).
+- [x] New `museum_room_items` table (generic `room_id`, only SPORTS wired up) + `getEnabledRoomItems()` + a "SPORTS items" admin CRUD section — real curated content instead of the signed-in personal vault.
+- [x] SPORTS excluded from the generic north-wall-only loop; artwork now spans all 4 walls via `computeUsableWallSpans()`, south (no doorway) as the focal wall getting the majority of items, one supporting piece per door wall (HUB/COLLECTION/CARDS).
+- [x] SPORTS's shell (floor/ceiling/walls/trim) completely untouched — still `buildNeutralShell()` + `NEUTRAL_LEGACY_FINISH`, same as every other legacy room. No new theme.
+- [x] `placeArtwork()`/`hangArtPreservingAspect()` gained an optional, backward-compatible `label` for a compact placard under each frame — the 3 existing rooms using it are unaffected.
+- [x] Verified the south-focal/door-supporting allocation directly (a throwaway script) after finding the naive proportional-by-span approach actually gave south a minority of items — fixed by calling `placeArtwork()` twice instead of modifying it.
+- [x] `tsc`/targeted ESLint/`npm run build` clean.
+- [ ] **New migration pending** — `20260911_museum_room_items.sql`, EK to run.
+- [ ] **Not live-verified** — no browser connection this session. Also can't be truly end-to-end tested until EK runs the migration and curates a few real SPORTS items through the new admin section.
+
 ## 2026-09-11 (still later, same day) — VLTD Museum: transom-width fix (vertical openings above doorway jambs)
 Left over from the same assigned task 4a0cb01 came from. Full detail in the
 matching HANDOFF.md entry (same date, near the top).

@@ -77,3 +77,33 @@ export async function getEnabledStoreItems(): Promise<StoreItem[]> {
     return [];
   }
 }
+
+// 2026-09-11: real, admin-curated items for a category room — starting with
+// SPORTS, the first "proof room" replacing whichever personal vault happens
+// to be signed in with actual curated content for the shared museum.
+// `room_id` is a generic text column (see 20260911_museum_room_items.sql) so
+// the same table/function covers every other room later.
+export type MuseumRoomItem = {
+  id: string;
+  room_id: string;
+  title: string;
+  image_url: string;
+  enabled: boolean;
+  sort_order: number;
+};
+
+export async function getEnabledRoomItems(roomId: string): Promise<MuseumRoomItem[]> {
+  const supabase = getSupabaseBrowserClient();
+  if (!supabase) return [];
+  try {
+    const { data } = await supabase
+      .from("museum_room_items")
+      .select("id, room_id, title, image_url, enabled, sort_order")
+      .eq("room_id", roomId)
+      .eq("enabled", true)
+      .order("sort_order", { ascending: true });
+    return (data ?? []) as MuseumRoomItem[];
+  } catch {
+    return [];
+  }
+}

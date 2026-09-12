@@ -36,7 +36,7 @@ import {
 } from "@/lib/campusLayout";
 import { getPrimaryImageUrl, loadItems, type VaultItem } from "@/lib/vaultModel";
 import { isUniverseKey, type UniverseKey } from "@/lib/taxonomy";
-import { getActiveSpotlightPrograms, getEnabledStoreItems, getItemsPerRoom } from "@/lib/museumCampusConfig";
+import { getActiveSpotlightPrograms, getEnabledRoomItems, getEnabledStoreItems, getItemsPerRoom } from "@/lib/museumCampusConfig";
 import {
   DOORWAY_NO_DISPLAY_HALF_WIDTH,
   MUSEUM_CAMERA_FOV,
@@ -58,6 +58,7 @@ import {
   type RoomFinish,
   type RoomLightGroups,
   type RoomModule,
+  type WallSpan,
 } from "@/lib/campusRoomBuilder";
 import {
   aimCamera,
@@ -528,6 +529,47 @@ export default function VltdMuseumCampus() {
     const collectionLights = buildRoomShell(scene, collectionModule);
     const collectionWallSpans = computeUsableWallSpans(collectionModule);
 
+    // SPORTS proof-room pass (2026-09-11): first room to get real,
+    // admin-curated artwork placed across every usable wall (south wall as
+    // the focal wall, since it's the one side with no doorway — see the
+    // three doorways below) instead of the generic north-wall-only,
+    // forced-square treatment every other legacy room still uses. This is
+    // ARTWORK PLACEMENT ONLY — SPORTS's shell (floor/ceiling/walls/trim)
+    // deliberately still goes through the exact same buildNeutralShell() +
+    // NEUTRAL_LEGACY_FINISH loop every other legacy room uses, below,
+    // completely unchanged: "keep its existing neutral finish, no new room
+    // theme." sportsModule exists only to feed computeUsableWallSpans() —
+    // it is never passed to buildRoomShell, so it never touches SPORTS's
+    // actual floor/ceiling/wall materials or adds buildRoomShell's own
+    // ambient light rig.
+    const sportsModule: RoomModule = {
+      room: roomById("SPORTS"),
+      wallHeight: WALL_HEIGHT,
+      wallThickness: WALL_THICKNESS,
+      eyeHeight: EYE_HEIGHT,
+      finish: NEUTRAL_LEGACY_FINISH,
+      doorways: [
+        { side: "north", gapCenter: doorGapCenter("SPORTS", "HUB"), neighborId: "HUB", width: doorWallWidth("SPORTS", "HUB") },
+        { side: "west", gapCenter: doorGapCenter("SPORTS", "COLLECTION"), neighborId: "COLLECTION", width: doorWallWidth("SPORTS", "COLLECTION") },
+        { side: "east", gapCenter: doorGapCenter("SPORTS", "CARDS"), neighborId: "CARDS", width: doorWallWidth("SPORTS", "CARDS") },
+      ],
+    };
+    const sportsWallSpans = computeUsableWallSpans(sportsModule);
+    // A dedicated (but otherwise empty) light group, added only so the new
+    // picture lights on SPORTS's real artwork can join the existing
+    // full/preview room-occupancy activation system below, the same way the
+    // 3 converted rooms' picture lights already do — real photographic
+    // items need real light to actually read, unlike the flat ambient wash
+    // every other legacy room relies on. Nothing else about SPORTS's
+    // lighting changes.
+    const sportsLightsFull = new THREE.Group();
+    sportsLightsFull.name = "room-full:SPORTS";
+    scene.add(sportsLightsFull);
+    const sportsLightsPreview = new THREE.Group();
+    sportsLightsPreview.name = "room-preview:SPORTS";
+    scene.add(sportsLightsPreview);
+    const sportsLights: RoomLightGroups = { full: sportsLightsFull, preview: sportsLightsPreview };
+
     // Two-tier room light activation — EK's review of 9796c72: room-level
     // activation alone doesn't scale through HUB, since HUB is adjacent to
     // nearly every room — enabling "current room's neighbors" at FULL
@@ -544,6 +586,7 @@ export default function VltdMuseumCampus() {
       POP_CULTURE: popCultureLights,
       TCG: tcgLights,
       COLLECTION: collectionLights,
+      SPORTS: sportsLights,
     };
 
     // EK's review of 751361a: the room-only check went blank (every light
@@ -703,10 +746,11 @@ export default function VltdMuseumCampus() {
     }
 
     async function populateDynamicContent() {
-      const [itemsPerRoom, spotlightPrograms, storeItems] = await Promise.all([
+      const [itemsPerRoom, spotlightPrograms, storeItems, sportsItems] = await Promise.all([
         getItemsPerRoom(),
         getActiveSpotlightPrograms(),
         getEnabledStoreItems(),
+        getEnabledRoomItems("SPORTS"),
       ]);
       if (contentCancelled) return;
 
@@ -730,8 +774,9 @@ export default function VltdMuseumCampus() {
         // POP_CULTURE, TCG, and COLLECTION place their own items with
         // aspect-ratio-preserving slots (see placeRoomItems below) instead
         // of the generic north-wall-only, forced-square treatment every
-        // other room uses.
-        if (room.id === "POP_CULTURE" || room.id === "TCG" || room.id === "COLLECTION") continue;
+        // other room uses. SPORTS is the new proof room (below,
+        // admin-curated content across sportsWallSpans) — also skipped here.
+        if (room.id === "POP_CULTURE" || room.id === "TCG" || room.id === "COLLECTION" || room.id === "SPORTS") continue;
         const universes = roomUniverses[room.id] ?? room.universes;
         if (universes.length === 0) continue;
         const items = allItems.filter((item) => {
@@ -812,6 +857,64 @@ export default function VltdMuseumCampus() {
           3,
           "Collection fills from your vault",
           "Add real items with photos to your vault to see them displayed here.",
+          0,
+          Math.PI,
+          -1
+        );
+      }
+
+      // SPORTS — the first proof room for real, admin-curated content
+      // (Admin Tools > Museum Campus), not whichever personal vault
+      // happens to be signed in. Each item carries its curated title as a
+      // compact label under the frame.
+      //
+      // South is the focal wall (the one side with no doorway); north/
+      // west/east each flank a real door (HUB/COLLECTION/CARDS) and are
+      // split by computeUsableWallSpans into two shorter segments each.
+      // placeArtwork()'s own distribution is proportional purely by RAW
+      // SPAN LENGTH with a floor of 1 item per span — with 6 small door-
+      // flanking segments plus 1 long south segment, that floor means the
+      // 6 short segments collectively soak up most of the items and south
+      // ends up a minority, backwards from "south as the main focal wall."
+      // Fixed by calling placeArtwork() twice instead of changing it (it's
+      // shared with 3 other rooms, unmodified): once for south alone with
+      // the majority of items, once for one supporting piece per door wall
+      // (its larger flanking segment — the two are equal length here since
+      // SPORTS's doors are centered, so "larger" is just a stable pick).
+      const sportsUrls = sportsItems
+        .filter((item) => item.image_url)
+        .map((item) => ({ url: item.image_url, label: item.title }));
+      const sportsSouthSpans = sportsWallSpans.filter((s) => s.wall === "south");
+      const sportsSupportingSpans = (["north", "west", "east"] as const)
+        .map((side) =>
+          sportsWallSpans
+            .filter((s) => s.wall === side)
+            .sort((a, b) => b.to - b.from - (a.to - a.from))[0]
+        )
+        .filter((s): s is WallSpan => Boolean(s));
+      // Only add supporting pieces once there's enough curated content to
+      // spare — with fewer than 5 items, everything stays on the focal wall
+      // rather than stranding one lonely piece per door.
+      const supportingPerWall = sportsUrls.length >= 5 ? 1 : 0;
+      const supportingCount = supportingPerWall * sportsSupportingSpans.length;
+      const sportsFocalItems = sportsUrls.slice(0, Math.max(0, sportsUrls.length - supportingCount));
+      const sportsSupportingItems = sportsUrls.slice(sportsFocalItems.length);
+      placeArtwork(scene, textureLoader, sportsLights, sportsSouthSpans, sportsFocalItems, WALL_THICKNESS, EYE_HEIGHT, () => contentCancelled);
+      if (sportsSupportingItems.length > 0) {
+        placeArtwork(scene, textureLoader, sportsLights, sportsSupportingSpans, sportsSupportingItems, WALL_THICKNESS, EYE_HEIGHT, () => contentCancelled);
+      }
+      if (sportsUrls.length === 0) {
+        // Honest empty state, same pattern as COLLECTION/Spotlight/Store —
+        // never a fake/demo item to make the room look populated. Mounted
+        // on SPORTS's own south wall, its one side with no doorway.
+        const sportsBounds = roomBounds(roomById("SPORTS"));
+        hangPlaque(
+          sportsBounds.x0 + (sportsBounds.x1 - sportsBounds.x0) / 2,
+          sportsBounds.z1 - WALL_THICKNESS,
+          6,
+          3,
+          "Coming soon",
+          "SPORTS items are managed from Admin Tools",
           0,
           Math.PI,
           -1

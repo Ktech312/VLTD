@@ -30,6 +30,21 @@ type StoreItem = {
   sort_order: number;
 };
 
+// 2026-09-11: real, admin-curated items for the SPORTS room (the first
+// "proof room" replacing whichever personal vault happens to be signed in
+// with actual curated content). Backed by museum_room_items (generic
+// room_id column, see 20260911_museum_room_items.sql) — queried and error-
+// handled separately from the Promise.all below so a missing table here
+// doesn't block the existing Spotlight/Store sections while EK hasn't run
+// that migration yet.
+type SportsItem = {
+  id: string;
+  title: string;
+  image_url: string;
+  enabled: boolean;
+  sort_order: number;
+};
+
 const EMPTY_PROGRAM: Omit<SpotlightProgram, "id"> = {
   title: "",
   description: "",
@@ -43,6 +58,13 @@ const EMPTY_STORE_ITEM: Omit<StoreItem, "id"> = {
   image_url: "",
   price_label: "",
   link_url: "",
+  enabled: true,
+  sort_order: 0,
+};
+
+const EMPTY_SPORTS_ITEM: Omit<SportsItem, "id"> = {
+  title: "",
+  image_url: "",
   enabled: true,
   sort_order: 0,
 };
@@ -70,6 +92,12 @@ export default function AdminMuseumCampusPage() {
   const [editingStoreId, setEditingStoreId] = useState<string | null>(null);
   const [showStoreForm, setShowStoreForm] = useState(false);
 
+  const [sportsItems, setSportsItems] = useState<SportsItem[]>([]);
+  const [sportsTableMissing, setSportsTableMissing] = useState(false);
+  const [sportsForm, setSportsForm] = useState<Omit<SportsItem, "id">>(EMPTY_SPORTS_ITEM);
+  const [editingSportsId, setEditingSportsId] = useState<string | null>(null);
+  const [showSportsForm, setShowSportsForm] = useState(false);
+
   useEffect(() => {
     getMyAdminRole().then((role) => setAuthorized(role !== null));
   }, []);
@@ -95,6 +123,22 @@ export default function AdminMuseumCampusPage() {
     }
     setPrograms((programsRes.data ?? []) as SpotlightProgram[]);
     setStoreItems((storeRes.data ?? []) as StoreItem[]);
+
+    // Queried separately from the Promise.all above: museum_room_items is a
+    // brand-new table (20260911_museum_room_items.sql), and a missing table
+    // here must not block the existing Spotlight/Store sections while EK
+    // hasn't run that migration yet.
+    const sportsRes = await supabase
+      .from("museum_room_items")
+      .select("*")
+      .eq("room_id", "SPORTS")
+      .order("sort_order", { ascending: true });
+    if (sportsRes.error) {
+      setSportsTableMissing(true);
+    } else {
+      setSportsTableMissing(false);
+      setSportsItems((sportsRes.data ?? []) as SportsItem[]);
+    }
   }
 
   useEffect(() => {
@@ -181,6 +225,37 @@ export default function AdminMuseumCampusPage() {
     const supabase = getSupabaseBrowserClient();
     if (!supabase) return;
     await supabase.from("museum_store_items").delete().eq("id", id);
+    void fetchAll();
+  }
+
+  function startEditSportsItem(s: SportsItem) {
+    setEditingSportsId(s.id);
+    setSportsForm({ title: s.title, image_url: s.image_url, enabled: s.enabled, sort_order: s.sort_order });
+    setShowSportsForm(true);
+  }
+  function startNewSportsItem() {
+    setEditingSportsId(null);
+    setSportsForm(EMPTY_SPORTS_ITEM);
+    setShowSportsForm(true);
+  }
+  async function saveSportsItem() {
+    const supabase = getSupabaseBrowserClient();
+    if (!supabase || !sportsForm.title.trim() || !sportsForm.image_url.trim()) return;
+    const payload = { ...sportsForm, room_id: "SPORTS", updated_at: new Date().toISOString() };
+    const { error } = editingSportsId
+      ? await supabase.from("museum_room_items").update(payload).eq("id", editingSportsId)
+      : await supabase.from("museum_room_items").insert(payload);
+    if (error) { setStatusMsg("Error: " + error.message); return; }
+    setShowSportsForm(false);
+    setEditingSportsId(null);
+    setSportsForm(EMPTY_SPORTS_ITEM);
+    void fetchAll();
+  }
+  async function deleteSportsItem(id: string) {
+    if (!confirm("Delete this SPORTS item?")) return;
+    const supabase = getSupabaseBrowserClient();
+    if (!supabase) return;
+    await supabase.from("museum_room_items").delete().eq("id", id);
     void fetchAll();
   }
 
@@ -431,6 +506,94 @@ export default function AdminMuseumCampusPage() {
                     </div>
                   ))}
                 </div>
+              )}
+            </section>
+
+            {/* SPORTS items — the first "proof room" for real, admin-curated
+                museum content (2026-09-11), replacing whichever personal
+                vault happens to be signed in. Same shape as Store items,
+                minus the shop-specific fields (price/link) that don't apply
+                to real SPORTS pieces. */}
+            <section className="rounded-[24px] p-5" style={{ background: "var(--theme-card)", border: "1px solid var(--border)" }}>
+              <div className="mb-4 flex items-center justify-between gap-4">
+                <div>
+                  <h2 className="text-base font-black" style={{ color: "var(--fg)" }}>SPORTS items</h2>
+                  <p className="mt-0.5 text-xs" style={{ color: "var(--muted)" }}>
+                    Real items shown in the campus SPORTS room. Title becomes the compact label under each piece.
+                  </p>
+                </div>
+                {!sportsTableMissing && (
+                  <button
+                    type="button"
+                    onClick={startNewSportsItem}
+                    className="shrink-0 rounded-full px-4 py-2 text-xs font-black text-[#0B0B0B] transition hover:brightness-110"
+                    style={{ background: "linear-gradient(135deg, #8C9298, #C8CDD2)" }}
+                  >
+                    + Add item
+                  </button>
+                )}
+              </div>
+
+              {sportsTableMissing ? (
+                <div className="rounded-[16px] p-4 text-sm" style={{ background: "var(--theme-elevated)", border: "1px solid rgba(224,82,82,0.3)", color: "var(--fg)" }}>
+                  This table doesn&apos;t exist yet — run <code>20260911_museum_room_items.sql</code> in Supabase, then reload this page.
+                </div>
+              ) : (
+                <>
+                  {showSportsForm && (
+                    <div className="mb-4 rounded-[18px] p-4" style={{ background: "var(--theme-elevated)", border: "1px solid rgba(203,208,213,0.25)" }}>
+                      <div className="grid gap-3 sm:grid-cols-2">
+                        <label className="block sm:col-span-2">
+                          <span className="mb-1 block text-xs font-semibold" style={{ color: "var(--muted)" }}>Title *</span>
+                          <input value={sportsForm.title} onChange={(e) => setSportsForm((f) => ({ ...f, title: e.target.value }))} className={inputCls()} />
+                        </label>
+                        <label className="block sm:col-span-2">
+                          <span className="mb-1 block text-xs font-semibold" style={{ color: "var(--muted)" }}>Image URL *</span>
+                          <input value={sportsForm.image_url} onChange={(e) => setSportsForm((f) => ({ ...f, image_url: e.target.value }))} className={inputCls()} />
+                        </label>
+                        <label className="block">
+                          <span className="mb-1 block text-xs font-semibold" style={{ color: "var(--muted)" }}>Sort order</span>
+                          <input type="number" value={sportsForm.sort_order} onChange={(e) => setSportsForm((f) => ({ ...f, sort_order: Number(e.target.value) }))} className={inputCls()} />
+                        </label>
+                        <label className="flex items-center gap-2 pt-6">
+                          <input type="checkbox" checked={sportsForm.enabled} onChange={(e) => setSportsForm((f) => ({ ...f, enabled: e.target.checked }))} className="h-4 w-4 accent-amber-500" />
+                          <span className="text-sm font-semibold" style={{ color: "var(--fg)" }}>Enabled</span>
+                        </label>
+                      </div>
+                      <div className="mt-4 flex gap-3">
+                        <button type="button" onClick={() => void saveSportsItem()} disabled={!sportsForm.title.trim() || !sportsForm.image_url.trim()} className="rounded-full px-5 py-2 text-sm font-black text-[#0B0B0B] transition hover:brightness-110 disabled:opacity-50" style={{ background: "linear-gradient(135deg, #8C9298, #C8CDD2)" }}>
+                          {editingSportsId ? "Update" : "Create"}
+                        </button>
+                        <button type="button" onClick={() => { setShowSportsForm(false); setEditingSportsId(null); setSportsForm(EMPTY_SPORTS_ITEM); }} className="rounded-full border px-5 py-2 text-sm font-semibold transition hover:brightness-110" style={{ borderColor: "var(--border)", color: "var(--muted)" }}>
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {sportsItems.length === 0 ? (
+                    <div className="rounded-[16px] py-8 text-center text-sm" style={{ background: "var(--theme-elevated)", color: "var(--muted)" }}>
+                      No SPORTS items yet.
+                    </div>
+                  ) : (
+                    <div className="flex flex-col gap-2">
+                      {sportsItems.map((s) => (
+                        <div key={s.id} className="flex items-center gap-3 rounded-[14px] px-4 py-2.5" style={{ background: "var(--theme-elevated)", border: "1px solid var(--border)" }}>
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-2">
+                              <span className="font-bold truncate" style={{ color: "var(--fg)" }}>{s.title}</span>
+                              {!s.enabled && <span className="text-[10px] text-red-400">disabled</span>}
+                            </div>
+                          </div>
+                          <div className="flex shrink-0 items-center gap-2">
+                            <button type="button" onClick={() => startEditSportsItem(s)} className="rounded-lg px-3 py-1.5 text-xs font-semibold transition hover:brightness-110" style={{ background: "var(--theme-card)", color: "var(--fg)", border: "1px solid var(--border)" }}>Edit</button>
+                            <button type="button" onClick={() => void deleteSportsItem(s.id)} className="rounded-lg px-3 py-1.5 text-xs font-semibold transition hover:bg-red-500/15" style={{ color: "#E05252", border: "1px solid rgba(224,82,82,0.25)" }}>Delete</button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </>
               )}
             </section>
           </>
