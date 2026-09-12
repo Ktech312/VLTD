@@ -5,6 +5,93 @@
 - **Mobile drag/scroll bug** (EK found this hands-on, unrelated to the above): dragging to look around also scrolled the whole page on a touch device, and yaw drag didn't track smoothly — both caused by the room's mount div never declaring `touch-action: none`. Fixed with the same one-line fix already used elsewhere in this file. Code-verified and reasoned through; genuinely NOT tested with a real touch input (no tool in this session can produce one) — needs EK's own phone to close the loop.
 Regression-checked live: White unaffected (still looks exactly right), pickup/rotate/return still works, no console errors anywhere. See the 2026-09-06 dated entries (top of the log below) for full detail, including the one real bug this session found and fixed in its own live check (Blue's case lids) before calling any of this done. Before tonight: the first White-room material pass (2026-09-05, commit `c61e600`/`f346d18`) — also READY on Vercel and live-verified. Below that: the VLTD Museum public campus work (2026-08-31 through 09-04, then resumed and heavily active again 2026-09-08 through 09-10 — see the 2026-09-10 dated entry, TOP of the dated list below, for the current state: NOT accepted yet, EK's own physical-input pass still pending). Read the dated entries below in order, newest first, before assuming any room behaves a particular way. Older work further down in §2 (2026-08-27/28 Admin Users redesign; ~110 VaultItem fields + 3 Gallery-sync gaps, both migrations confirmed run by EK; Events tooling, admin console/APP_MAP.md, Vault upload; a full backend security audit, 3D Museum beta-access gating, Room Builder fixes) is unrelated to either of the above.)
 
+# 2026-09-12 (follow-up pass) — Museum Room Editor: background application fix + drag interactions
+
+Follow-up to the overnight pass immediately below (`b42af71`/`f70e988`) — EK
+asked for exactly the two items that pass's own "Known gaps" flagged below,
+nothing else touched (campus geometry, doors, floor targets, lighting,
+camera/movement/collision, the personal Gallery's Organize, and Museum Map
+layout are all untouched).
+
+**1. Background choice now actually renders per room.** Root cause traced,
+not patched around: `VltdMuseumCampus.tsx`'s `roomWallMaterial()` cached
+exactly ONE wall `Material` per `RoomFinish` OBJECT IDENTITY
+(`NEUTRAL_LEGACY_FINISH`/`HUB_FINISH`/`NEUTRAL_PREVIEW_FINISH` are shared
+singleton consts) — so every room sharing a finish (every unconverted
+legacy room, SPORTS included) literally pointed at the SAME `Material`
+instance. Recoloring "SPORTS's" material there would have recolored every
+other room still sharing that instance too — exactly the "changing SPORTS
+must never change COLLECTION/CARDS/HUB" failure this system exists to
+prevent, and exactly why the prior pass shipped the data layer and picker
+UI but explicitly did not wire it into the live scene. Fixed by re-keying
+that cache per ROOM ID instead of per finish object
+(`wallMaterialByRoomId: Map<CampusRoomId, Material>`) — every room now owns
+its own Material/texture instance (same `createWallMaterial()` call, same
+default look, just no longer object-shared across rooms), so a saved
+`museum_room_meta.background_id` (applied inside the existing async
+`populateDynamicContent()`, the same place room-title overrides already
+apply post-hoc once Supabase data loads) can now recolor exactly one room's
+wall with zero effect on any other room. New `backgroundWallColorHex()`
+helper in `campusRoomBuilder.ts` resolves a saved id to its wall-tint color
+from `ROOM_BACKGROUND_OPTIONS`'s own swatch, so the editor's swatch preview
+and the live 3D wall can never disagree. `buildSharedWall()`/
+`buildNeutralShell()`/`buildRoomShell()` themselves are untouched — only
+the JS-level material-caching key changed.
+
+**2. Drag interactions added to the room editor's move flow**
+(`VltdMuseumCampus.tsx`), ADDED on top of — not replacing — the existing
+click-to-arm/click-destination flow and the keyboard-accessible Move/
+Replace/Remove controls, all three of which still work exactly as before:
+- **Desktop**: press on an occupied slot and drag (crosses a 6px move
+  threshold) to pick it up; release over a destination slot to move/swap/
+  replace, with the same "a different item is already in that position —
+  replace it?" confirmation already in place.
+- **Mobile/tablet**: long-press (450ms) on an occupied slot to pick it up,
+  then drag to a destination — the standard mobile pattern for
+  disambiguating "pick this up" from a tap or a scroll/swipe gesture.
+- All three input methods now call the exact same
+  `performMove(sourceSlotId, targetSlotId)` (extracted from the prior
+  pass's `handleMoveTo`, which now just resolves its source from the
+  existing arm/select state and calls it) — so autosave, the
+  occupied-destination confirmation, and slot validity behave identically
+  no matter how the move was initiated. Implemented with real DOM Pointer
+  Events (`pointerdown` on the slot button; `pointermove`/`pointerup`/
+  `pointercancel` on `window`, hit-testing the actual button under the
+  pointer via `document.elementFromPoint` + a `data-museum-slot-id`
+  attribute) — the same general technique this file's own camera-look drag
+  already uses — not native HTML5 drag-and-drop, since the numbered slot
+  buttons are re-positioned every frame by the existing rAF projector
+  effect rather than laid out in normal document flow. A shared
+  `suppressNextClickRef` stops the browser's own follow-up "click" (which
+  still fires after a completed drag's pointerup) from re-running the
+  click-to-arm logic on top of the same gesture, with a short failsafe
+  timeout so it can never wedge a later, unrelated click.
+
+**Verified**: `npx tsc --noEmit` clean; targeted ESLint on both changed
+files, 0 errors (1 pre-existing warning carried over unchanged — the React
+Compiler's suppression notice on the mount effect's own long-standing
+`eslint-disable-next-line react-hooks/exhaustive-deps`, not introduced by
+this pass); `npm run build` clean, exit 0, all 138 routes generated
+including `/museum/vltd`. This worktree had no installed dependencies at
+the start of this pass — ran a fresh `npm ci` first so all three checks
+ran for real against this worktree's own `node_modules`, not just resolved
+upward into another checkout.
+
+**Not done / not claimed:**
+- Migration `20260912_museum_room_placement.sql` is **still not applied** —
+  confirmed missing (`museum_room_items.slot_id` and
+  `museum_room_meta.background_id` both absent) via a direct read-only
+  query immediately before this pass started. Every read/write already
+  fails soft exactly as the prior pass's fails-soft code handles (nothing
+  about that changed here), so a saved background choice or a slotted move
+  genuinely cannot round-trip in production until EK runs it. SQL is
+  unchanged from the entry below — not re-pasted here.
+- **Not live-verified.** This session's Browser tool has no session for
+  the admin-gated `/museum/vltd` route (same limitation the prior pass
+  hit) — no live/authenticated check was attempted here. The parent
+  session verifies this live once the migration is confirmed run; this
+  pass does not declare the feature accepted or ready for EK to test.
+
 # 2026-09-12 (overnight pass) — Museum: real in-3D Room Editor with numbered placement slots, SPORTS + 8 other gallery rooms (commits `b42af71`, `f70e988`)
 
 Full work order: `docs/MUSEUM-SHARED-ROOM-EDITOR-OVERNIGHT-PASS-2026-09-12.md`.

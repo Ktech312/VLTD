@@ -59,6 +59,7 @@ import {
   MUSEUM_WALK_SPEED_SLOW,
 } from "@/lib/museumStandard";
 import {
+  backgroundWallColorHex,
   buildNeutralShell,
   buildRoomShell,
   buildRoomTrim,
@@ -235,6 +236,27 @@ function focalWallFor(roomId: CampusRoomId) {
   return roomId === "SPORTS" ? ("south" as const) : undefined;
 }
 
+// Drag interactions pass (2026-09-12): a real mouse press-drag-drop and a
+// mobile/tablet long-press-drag-drop for the room editor's numbered slots —
+// added on top of the existing click-to-arm/click-destination flow and
+// keyboard Move control, never replacing them. `dragging` starts false for
+// every pointer type: for a mouse it flips true the first time the pointer
+// travels past DRAG_MOVE_THRESHOLD_PX (an ordinary click never moves that
+// far); for touch/pen it only flips true once LONG_PRESS_MS elapses with the
+// finger still down (the standard mobile pattern for telling "pick this up"
+// apart from a tap or a scroll/swipe gesture) — a touch move before that
+// timer fires cancels the gesture outright rather than starting a drag.
+type SlotDragState = {
+  sourceSlotId: string;
+  pointerId: number;
+  startX: number;
+  startY: number;
+  dragging: boolean;
+  longPressTimer: number | null;
+};
+const DRAG_MOVE_THRESHOLD_PX = 6;
+const LONG_PRESS_MS = 450;
+
 export default function VltdMuseumCampus() {
   const mountRef = useRef<HTMLDivElement | null>(null);
   const roomLabelRef = useRef<HTMLDivElement | null>(null);
@@ -276,6 +298,27 @@ export default function VltdMuseumCampus() {
   const [editorPickerSlotId, setEditorPickerSlotId] = useState<string | null>(null);
   const [editorSaveState, setEditorSaveState] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const editorCapacityRef = useRef(DEFAULT_ITEMS_PER_ROOM);
+
+  // Drag interactions pass (2026-09-12): mouse press-drag-drop and
+  // mobile/tablet long-press-drag-drop, ADDED alongside the existing
+  // click-to-arm/click-destination flow and the keyboard-accessible Move
+  // control — none of those three are removed or changed by anything below.
+  // `slotDragRef` carries the ephemeral in-progress pointer-gesture data (not
+  // React state — it changes every pointermove and must never trigger a
+  // re-render); `activeDragSlotId`/`dragOverSlotId` are the only two bits of
+  // that gesture promoted to real state, purely so the two slots involved
+  // can be highlighted while a drag is in flight.
+  const slotDragRef = useRef<SlotDragState | null>(null);
+  const [activeDragSlotId, setActiveDragSlotId] = useState<string | null>(null);
+  const [dragOverSlotId, setDragOverSlotId] = useState<string | null>(null);
+  // Set right before a drag/long-press gesture completes over a valid
+  // destination so the browser's OWN follow-up "click" event (which still
+  // fires after a pointerup even though our drag logic already handled the
+  // move) doesn't ALSO run handleSlotActivate's click-to-arm logic for the
+  // same gesture. Self-clears on the next click it suppresses, or after a
+  // short timeout if no click ever arrives (e.g. the pointer was released
+  // off of any slot button) so it can never wedge a later, unrelated click.
+  const suppressNextClickRef = useRef(false);
 
   useEffect(() => {
     if (!editRoomId) return;
@@ -320,12 +363,22 @@ export default function VltdMuseumCampus() {
     if (result.ok) window.setTimeout(() => setEditorSaveState((s) => (s === "saved" ? "idle" : s)), 1600);
   }
 
-  async function handleMoveTo(targetSlotId: string) {
-    if (!editRoomId || !editorSelectedSlotId || editorSelectedSlotId === targetSlotId) {
+  // Drag interactions pass (2026-09-12): the ONE move/place implementation
+  // every input method funnels through — the pre-existing click-to-arm +
+  // click-destination flow (via handleMoveTo below), the new mouse
+  // drag-and-drop, and the new mobile/tablet long-press-drag all end up
+  // calling this exact function with an explicit (source, target) pair, so
+  // autosave, the occupied-destination confirmation, and invalid-position
+  // handling behave identically no matter how the move was initiated. Only
+  // handleMoveTo's own call site still resolves its source from
+  // `editorSelectedSlotId`/`editorMoveArmed` — drag gestures pass their
+  // source directly since they never go through the arm/select state at all.
+  async function performMove(sourceSlotId: string, targetSlotId: string) {
+    if (!editRoomId || sourceSlotId === targetSlotId) {
       setEditorMoveArmed(false);
       return;
     }
-    const source = editorAssignments[editorSelectedSlotId];
+    const source = editorAssignments[sourceSlotId];
     if (!source) {
       setEditorMoveArmed(false);
       return;
@@ -334,7 +387,7 @@ export default function VltdMuseumCampus() {
     if (destination && !window.confirm("A different item is already in that position. Replace it?")) return;
     setEditorSaveState("saving");
     const placed = await setRoomItemSlot(editRoomId, targetSlotId, { title: source.title, image_url: source.image_url }, 0);
-    const cleared = placed.ok ? await clearRoomItemSlot(editRoomId, editorSelectedSlotId) : { ok: false };
+    const cleared = placed.ok ? await clearRoomItemSlot(editRoomId, sourceSlotId) : { ok: false };
     setEditorSaveState(placed.ok && cleared.ok ? "saved" : "error");
     setEditorMoveArmed(false);
     setEditorSelectedSlotId(null);
@@ -342,7 +395,34 @@ export default function VltdMuseumCampus() {
     if (placed.ok) window.setTimeout(() => setEditorSaveState((s) => (s === "saved" ? "idle" : s)), 1600);
   }
 
+  async function handleMoveTo(targetSlotId: string) {
+    if (!editorSelectedSlotId) {
+      setEditorMoveArmed(false);
+      return;
+    }
+    await performMove(editorSelectedSlotId, targetSlotId);
+  }
+
+  // The window-level pointer-event effect below is installed once (it only
+  // depends on editRoomId/editorAdminOk, not on every render), so it can't
+  // close over a fresh `performMove` each time editorAssignments/editorSlots
+  // change. Re-pointing this ref every render (a plain assignment, not an
+  // effect — safe because it never affects what gets rendered) keeps that
+  // effect's drag-drop handler always calling the CURRENT performMove
+  // closure instead of a stale one from the render it was installed in.
+  const performMoveRef = useRef(performMove);
+  performMoveRef.current = performMove;
+
   function handleSlotActivate(slotId: string) {
+    if (suppressNextClickRef.current) {
+      // A drag or long-press-drag gesture just completed on this exact
+      // browser "click" (pointer devices still synthesize one after
+      // pointerup) — that gesture already performed the move itself; running
+      // the normal click-to-arm logic on top of it would double-handle the
+      // same user action.
+      suppressNextClickRef.current = false;
+      return;
+    }
     if (editorMoveArmed) {
       void handleMoveTo(slotId);
       return;
@@ -354,6 +434,37 @@ export default function VltdMuseumCampus() {
       return;
     }
     setEditorSelectedSlotId((current) => (current === slotId ? null : slotId));
+  }
+
+  // Drag interactions pass (2026-09-12): starts tracking a possible
+  // drag/long-press gesture on POINTER DOWN over an occupied slot (an empty
+  // "+" slot has nothing to pick up — it stays a valid drop target, just not
+  // a drag source). Deliberately a no-op while `editorMoveArmed` (the
+  // keyboard/click "Move" flow already owns the interaction at that point —
+  // Cancel it first rather than layering a second gesture on top) or while
+  // the item picker is open (it covers the screen already).
+  function handleSlotPointerDown(e: React.PointerEvent<HTMLButtonElement>, slotId: string) {
+    if (editorMoveArmed || editorPickerSlotId) return;
+    if (e.pointerType === "mouse" && e.button !== 0) return;
+    if (!editorAssignments[slotId]) return;
+    const state: SlotDragState = {
+      sourceSlotId: slotId,
+      pointerId: e.pointerId,
+      startX: e.clientX,
+      startY: e.clientY,
+      dragging: false,
+      longPressTimer: null,
+    };
+    if (e.pointerType !== "mouse") {
+      state.longPressTimer = window.setTimeout(() => {
+        // Still the same in-progress gesture (not released/cancelled/
+        // superseded in the meantime)?
+        if (slotDragRef.current !== state) return;
+        state.dragging = true;
+        setActiveDragSlotId(slotId);
+      }, LONG_PRESS_MS);
+    }
+    slotDragRef.current = state;
   }
 
   useEffect(() => {
@@ -475,30 +586,34 @@ export default function VltdMuseumCampus() {
     // faces it, and — wherever CAMPUS_DOORS calls for it — cuts one opening
     // with one casing, contained entirely within the wall's own thickness.
     //
-    // Wall materials are cached by FINISH IDENTITY, not per room — EK's
-    // world-space wall-panel fix (2026-09-10) moved all size-dependent
-    // texture scaling onto each wall SEGMENT's own geometry (see
-    // buildSharedWall's scaleWallPanelU()), so createWallMaterial() no
-    // longer varies by room size at all; two rooms sharing a finish now
-    // produce byte-identical materials, so there's no reason to build one
-    // per room anymore ("share wall finish materials/textures by finish
-    // identity" from the original approved plan's performance-correction
-    // section — previously blocked by the old per-room texture scaling,
-    // now unblocked by the same fix). Collapses 9 separate
-    // NEUTRAL_LEGACY_FINISH materials/textures (one per legacy room) into 1.
-    const wallMaterialByFinish = new Map<RoomFinish, THREE.Material>();
-    function wallMaterialFor(finish: RoomFinish): THREE.Material {
-      const cached = wallMaterialByFinish.get(finish);
-      if (cached) return cached;
-      const material = createWallMaterial(finish);
-      wallMaterialByFinish.set(finish, material);
-      return material;
+    // Shared Museum Room Editor pass (2026-09-12), background-application
+    // fix: wall materials USED TO be cached by FINISH IDENTITY (one shared
+    // Material per RoomFinish object — NEUTRAL_LEGACY_FINISH, HUB_FINISH,
+    // NEUTRAL_PREVIEW_FINISH), a real EK-approved memory optimization once
+    // EK's world-space wall-panel fix (2026-09-10) made createWallMaterial()
+    // byte-identical across any two rooms sharing a finish. That's exactly
+    // why a saved per-room background_id couldn't be wired in without
+    // breaking "changing SPORTS must not change COLLECTION/CARDS/HUB":
+    // recoloring the shared instance would have recolored every OTHER room
+    // still pointing at that same object. Keyed per ROOM ID instead — every
+    // room gets its own Material/texture instance (same createWallMaterial()
+    // call, same visual result, just not object-shared) — trades a few extra
+    // small canvas textures (well under a dozen rooms total) for the
+    // per-room independence correctness now requires. See
+    // backgroundWallColorHex() usage inside populateDynamicContent() below
+    // for where a saved choice actually gets applied to one room's material.
+    const wallMaterialByRoomId = new Map<CampusRoomId, THREE.MeshStandardMaterial>();
+    function baseFinishForRoom(roomId: CampusRoomId): RoomFinish {
+      if (roomId === "POP_CULTURE" || roomId === "TCG" || roomId === "COLLECTION") return NEUTRAL_PREVIEW_FINISH;
+      if (roomId === "HUB") return HUB_FINISH;
+      return NEUTRAL_LEGACY_FINISH;
     }
-    function roomWallMaterial(roomId: CampusRoomId): THREE.Material {
-      if (roomId === "POP_CULTURE" || roomId === "TCG" || roomId === "COLLECTION") {
-        return wallMaterialFor(NEUTRAL_PREVIEW_FINISH);
-      }
-      return wallMaterialFor(roomId === "HUB" ? HUB_FINISH : NEUTRAL_LEGACY_FINISH);
+    function roomWallMaterial(roomId: CampusRoomId): THREE.MeshStandardMaterial {
+      const cached = wallMaterialByRoomId.get(roomId);
+      if (cached) return cached;
+      const material = createWallMaterial(baseFinishForRoom(roomId));
+      wallMaterialByRoomId.set(roomId, material);
+      return material;
     }
 
     // One shared casing material for every door — "share frame geometry and
@@ -974,6 +1089,24 @@ export default function VltdMuseumCampus() {
           const override = roomId ? titleOverrides[roomId] : undefined;
           if (override) retitleDestinationSign(obj, override);
         });
+      }
+
+      // Shared Museum Room Editor pass (2026-09-12), background-application
+      // fix: apply each editable room's saved museum_room_meta.background_id
+      // to that room's OWN wall Material — roomWallMaterial() above now
+      // keys its cache per room id, so this can only ever touch the one
+      // Material instance built for `roomId`, never a neighbor's. Only
+      // EDITABLE_ROOM_IDS are looped — RoomEditorModal's own Background
+      // control only renders for those rooms, so HUB/SPOTLIGHT/STORE/PLAZA
+      // never carry a background override in the first place. A missing,
+      // unrecognized, or "neutral" background_id resolves to `null` from
+      // backgroundWallColorHex() and falls back to that room's normal
+      // per-category finish color — the required safe default / reset.
+      for (const roomId of EDITABLE_ROOM_IDS) {
+        const material = wallMaterialByRoomId.get(roomId);
+        if (!material) continue;
+        const override = backgroundWallColorHex(roomMeta[roomId]?.background_id);
+        material.color.setHex(override ?? baseFinishForRoom(roomId).wallColor);
       }
 
       // Shared Museum Room Editor pass (2026-09-12): fetch every gallery
@@ -2049,6 +2182,85 @@ export default function VltdMuseumCampus() {
     return () => window.cancelAnimationFrame(raf);
   }, [editRoomId, editorAdminOk, editorSlots]);
 
+  // Drag interactions pass (2026-09-12): completes whatever gesture
+  // handleSlotPointerDown above started — real mouse drag-and-drop, and
+  // mobile/tablet long-press-then-drag. Lives on `window` (not on the slot
+  // buttons themselves) for the same reason the existing camera-look drag
+  // above does: a drag's pointermove/pointerup can legitimately land over a
+  // DIFFERENT slot button (or no button at all) than the one the gesture
+  // started on, so this has to hit-test the real DOM under the pointer each
+  // frame rather than rely on the one element that received pointerdown.
+  // Installed once per editor session (not re-bound on every
+  // editorAssignments/editorSlots change) — it always calls
+  // `performMoveRef.current`, which is repointed to the freshest closure
+  // every render, so it never acts on stale slot data.
+  useEffect(() => {
+    if (!editRoomId || !editorAdminOk) return undefined;
+
+    function slotIdUnderPoint(x: number, y: number): string | null {
+      const el = document.elementFromPoint(x, y);
+      const slotEl = el instanceof Element ? el.closest<HTMLElement>("[data-museum-slot-id]") : null;
+      return slotEl?.dataset.museumSlotId ?? null;
+    }
+
+    function endDrag() {
+      const state = slotDragRef.current;
+      if (state?.longPressTimer != null) window.clearTimeout(state.longPressTimer);
+      slotDragRef.current = null;
+      setActiveDragSlotId(null);
+      setDragOverSlotId(null);
+    }
+
+    function onPointerMove(e: PointerEvent) {
+      const state = slotDragRef.current;
+      if (!state || state.pointerId !== e.pointerId) return;
+      if (!state.dragging) {
+        const movedFar = Math.hypot(e.clientX - state.startX, e.clientY - state.startY) > DRAG_MOVE_THRESHOLD_PX;
+        if (!movedFar) return;
+        if (e.pointerType !== "mouse") {
+          // Touch/pen: a move before the long-press timer fires reads as a
+          // tap or a scroll/swipe gesture, never a drag — cancel outright
+          // rather than starting one.
+          endDrag();
+          return;
+        }
+        state.dragging = true;
+        setActiveDragSlotId(state.sourceSlotId);
+      }
+      e.preventDefault();
+      setDragOverSlotId(slotIdUnderPoint(e.clientX, e.clientY));
+    }
+
+    function onPointerUp(e: PointerEvent) {
+      const state = slotDragRef.current;
+      if (!state || state.pointerId !== e.pointerId) return;
+      const wasDragging = state.dragging;
+      const destinationSlotId = wasDragging ? slotIdUnderPoint(e.clientX, e.clientY) : null;
+      endDrag();
+      if (!wasDragging) return; // never crossed the drag/long-press threshold — the normal click handles this press
+      suppressNextClickRef.current = true;
+      window.setTimeout(() => { suppressNextClickRef.current = false; }, 400);
+      if (destinationSlotId && destinationSlotId !== state.sourceSlotId) {
+        void performMoveRef.current(state.sourceSlotId, destinationSlotId);
+      }
+    }
+
+    function onPointerCancel(e: PointerEvent) {
+      const state = slotDragRef.current;
+      if (!state || state.pointerId !== e.pointerId) return;
+      endDrag();
+    }
+
+    window.addEventListener("pointermove", onPointerMove, { passive: false });
+    window.addEventListener("pointerup", onPointerUp);
+    window.addEventListener("pointercancel", onPointerCancel);
+    return () => {
+      window.removeEventListener("pointermove", onPointerMove);
+      window.removeEventListener("pointerup", onPointerUp);
+      window.removeEventListener("pointercancel", onPointerCancel);
+    };
+  }, [editRoomId, editorAdminOk]);
+
   return (
     <div className="fixed inset-0 bg-[#081527]">
       <div ref={mountRef} style={{ width: "100vw", height: "100vh" }} />
@@ -2097,6 +2309,14 @@ export default function VltdMuseumCampus() {
         ? editorSlots.map((slot, idx) => {
             const item = editorAssignments[slot.id];
             const isSelected = editorSelectedSlotId === slot.id;
+            // Drag interactions pass (2026-09-12): purely visual — which
+            // slot is currently "picked up" (dimmed, mid mouse-drag or
+            // mobile long-press) and which OTHER slot the pointer is
+            // currently hovering as a drop target (highlighted). Neither
+            // state changes what a click does; see handleSlotPointerDown /
+            // the window pointer-effect above for the actual gesture logic.
+            const isDragSource = activeDragSlotId === slot.id;
+            const isDropTarget = dragOverSlotId === slot.id && activeDragSlotId !== slot.id;
             return (
               <button
                 key={slot.id}
@@ -2105,32 +2325,41 @@ export default function VltdMuseumCampus() {
                   else editSlotElsRef.current.delete(slot.id);
                 }}
                 type="button"
+                data-museum-slot-id={slot.id}
                 onClick={() => handleSlotActivate(slot.id)}
+                onPointerDown={(e) => handleSlotPointerDown(e, slot.id)}
                 aria-label={
                   editorMoveArmed
                     ? `Position ${idx + 1}: place here`
                     : item
-                      ? `Position ${idx + 1}: ${item.title} — select to replace, move, or remove`
+                      ? `Position ${idx + 1}: ${item.title} — select to replace, move, or remove, or press and drag to move`
                       : `Position ${idx + 1}: empty — select to add an item`
                 }
-                className="pointer-events-auto absolute left-0 top-0 flex -translate-x-1/2 -translate-y-1/2 flex-col items-center gap-1"
-                style={{ willChange: "transform" }}
+                className="pointer-events-auto absolute left-0 top-0 flex -translate-x-1/2 -translate-y-1/2 flex-col items-center gap-1 select-none"
+                style={{ willChange: "transform", touchAction: "none" }}
               >
                 {item?.image_url ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
                     src={item.image_url}
                     alt=""
+                    draggable={false}
+                    onDragStart={(e) => e.preventDefault()}
                     className={[
-                      "h-10 w-10 rounded-md object-cover ring-2",
-                      isSelected ? "ring-[#4FD3EE]" : "ring-white/70",
+                      "h-10 w-10 rounded-md object-cover ring-2 transition",
+                      isDropTarget ? "ring-emerald-300" : isSelected ? "ring-[#4FD3EE]" : "ring-white/70",
+                      isDragSource ? "opacity-40" : "opacity-100",
                     ].join(" ")}
                   />
                 ) : (
                   <span
                     className={[
                       "flex h-9 w-9 items-center justify-center rounded-full text-base font-black ring-2 transition",
-                      isSelected ? "bg-[#4FD3EE] text-[#06171d] ring-white" : "bg-black/70 text-white ring-white/60",
+                      isDropTarget
+                        ? "bg-emerald-400/25 text-white ring-emerald-300"
+                        : isSelected
+                          ? "bg-[#4FD3EE] text-[#06171d] ring-white"
+                          : "bg-black/70 text-white ring-white/60",
                     ].join(" ")}
                   >
                     +

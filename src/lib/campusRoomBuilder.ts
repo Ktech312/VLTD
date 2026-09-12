@@ -119,18 +119,47 @@ export const HUB_FINISH: RoomFinish = {
 // enum id rather than an uploaded image, since the shared museum's rooms
 // are built procedurally (this file's own createWallMaterial/RoomFinish
 // system), not from the personal Gallery's GLB-based room styles, so there
-// is no single literal "wallpaper" asset to reuse across both. NOTE: this
-// pass ships the data layer and the editor's picker UI for these choices;
-// wiring a saved choice into VltdMuseumCampus.tsx's own live wall-material
-// build (currently one shared material per FINISH identity, cached by
-// object reference — see roomWallMaterial() there) is tracked as follow-up
-// work, not yet applied to the rendered scene.
+// is no single literal "wallpaper" asset to reuse across both.
+//
+// Follow-up pass (2026-09-12, background-application fix): wiring a saved
+// choice into VltdMuseumCampus.tsx's live wall-material build required
+// fixing the actual root cause first, not just calling setHex() somewhere —
+// that file cached exactly ONE wall Material per FINISH IDENTITY
+// (createWallMaterial(NEUTRAL_LEGACY_FINISH) etc., keyed by object
+// reference), so every room in a given finish category — e.g. every
+// unconverted legacy room, SPORTS included — literally shared the same
+// Material object. Recoloring "SPORTS's" material there would have
+// recolored every other room sharing that same cached instance too, exactly
+// the "changing SPORTS must not change COLLECTION/CARDS/HUB" failure this
+// system exists to prevent. Fixed there by keying that cache per ROOM ID
+// instead of per finish object — every room now owns its own dedicated
+// Material/texture instance (still produced by this file's own
+// createWallMaterial(), so the default look is unchanged — just no longer
+// object-shared across rooms), so backgroundWallColorHex() below can be
+// applied to exactly one room's material once its museum_room_meta row
+// loads, with zero effect on any other room's wall.
 export const ROOM_BACKGROUND_OPTIONS: { id: string; label: string; swatch: string }[] = [
   { id: "neutral", label: "Neutral (default)", swatch: "#d7d9d6" },
   { id: "warm", label: "Warm Ivory", swatch: "#e6d8bd" },
   { id: "cool_slate", label: "Cool Slate", swatch: "#c7ccd1" },
   { id: "charcoal", label: "Charcoal", swatch: "#33363b" },
 ];
+
+/** Resolves a saved `museum_room_meta.background_id` to the wall-tint color
+ * it represents, or `null` for "no override" — an undefined/null id, an
+ * unrecognized id, or the explicit "neutral" option all mean the same thing:
+ * leave the room's normal per-category finish color alone, never a broken or
+ * blank wall (the "safe default and reset-to-default option" the work order
+ * asked for). Parses the option's own `swatch` hex string rather than
+ * keeping a second color table, so the editor's swatch preview and the live
+ * 3D wall can never disagree about what a given background id looks like. */
+export function backgroundWallColorHex(backgroundId: string | null | undefined): number | null {
+  if (!backgroundId || backgroundId === "neutral") return null;
+  const option = ROOM_BACKGROUND_OPTIONS.find((o) => o.id === backgroundId);
+  if (!option) return null;
+  const parsed = Number.parseInt(option.swatch.replace("#", ""), 16);
+  return Number.isNaN(parsed) ? null : parsed;
+}
 
 export type RoomModule = {
   room: CampusRoom;
