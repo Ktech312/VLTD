@@ -107,3 +107,65 @@ export async function getEnabledRoomItems(roomId: string): Promise<MuseumRoomIte
     return [];
   }
 }
+
+/** Every item for a room, enabled or not — the room editor needs to show
+ * and toggle disabled items too, unlike the museum's own display (above),
+ * which only ever renders enabled ones. */
+export async function getAllRoomItems(roomId: string): Promise<MuseumRoomItem[]> {
+  const supabase = getSupabaseBrowserClient();
+  if (!supabase) return [];
+  try {
+    const { data } = await supabase
+      .from("museum_room_items")
+      .select("id, room_id, title, image_url, enabled, sort_order")
+      .eq("room_id", roomId)
+      .order("sort_order", { ascending: true });
+    return (data ?? []) as MuseumRoomItem[];
+  } catch {
+    return [];
+  }
+}
+
+// 2026-09-12: EK's correction — the room editor (title/description + item
+// curation) belongs directly on the Map, launched from each room's edit
+// badge, not as a separate Admin Tools page (see the removed SPORTS-only
+// section this replaces). `museum_room_meta` is an optional per-room
+// override; a room with no row here just keeps its normal static label —
+// this never touches the real museum scene's own destination signs
+// (campusLayout.ts's static room.label), only the Map's own display.
+export type MuseumRoomMeta = {
+  room_id: string;
+  title: string | null;
+  description: string | null;
+};
+
+export async function getRoomMeta(roomId: string): Promise<MuseumRoomMeta | null> {
+  const supabase = getSupabaseBrowserClient();
+  if (!supabase) return null;
+  try {
+    const { data } = await supabase
+      .from("museum_room_meta")
+      .select("room_id, title, description")
+      .eq("room_id", roomId)
+      .maybeSingle();
+    return (data as MuseumRoomMeta | null) ?? null;
+  } catch {
+    return null;
+  }
+}
+
+/** Every room's meta override in one query, keyed by room_id — used by the
+ * Map to show a custom title where one's been set, without a round trip
+ * per room. */
+export async function getAllRoomMeta(): Promise<Record<string, MuseumRoomMeta>> {
+  const supabase = getSupabaseBrowserClient();
+  if (!supabase) return {};
+  try {
+    const { data } = await supabase.from("museum_room_meta").select("room_id, title, description");
+    const byRoomId: Record<string, MuseumRoomMeta> = {};
+    for (const row of (data ?? []) as MuseumRoomMeta[]) byRoomId[row.room_id] = row;
+    return byRoomId;
+  } catch {
+    return {};
+  }
+}

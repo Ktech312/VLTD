@@ -1,9 +1,12 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { DoorOpen, Map as MapIcon, Sparkles } from "lucide-react";
 
 import { CAMPUS_DOORS, CAMPUS_ROOMS, type CampusRoomId } from "@/lib/campusLayout";
+import { getAllRoomMeta, type MuseumRoomMeta } from "@/lib/museumCampusConfig";
+import RoomEditorModal from "@/components/gallery/RoomEditorModal";
 
 // 2026-09-11, corrected same day: this map represents the ONE real, shared
 // VLTD Museum at /museum/vltd — not a personal campus. An earlier pass the
@@ -34,12 +37,14 @@ import { CAMPUS_DOORS, CAMPUS_ROOMS, type CampusRoomId } from "@/lib/campusLayou
 // (the open-air entrance forecourt, not a gallery) is the one shape kept
 // visually and functionally distinct — dark fill, not clickable. Each real
 // gallery room also gets a small separate edit-icon badge (top-right,
-// matching EK's marked screenshot) — deliberately NOT wired to a
-// destination yet: "the edit page" she described (per-room item
-// organize + title/description) is a real, separate feature that doesn't
-// exist yet (the future room editor, explicitly out of scope for the
-// recovery pass this map came out of). The badge is visible and its
-// tooltip says so plainly rather than silently linking somewhere wrong.
+// matching EK's marked screenshot).
+//
+// 2026-09-12, follow-up correction: the edit badge first only alerted
+// "coming soon," then EK pointed out she'd earlier been shown an edit UI
+// living on a separate Admin Tools page — "it should have never been
+// there, it should work here." The badge now opens RoomEditorModal
+// in-context (title/description override + real item curation), and the
+// Admin Tools SPORTS section has been removed entirely.
 const ROOM_LABELS: Record<CampusRoomId, string> = {
   HUB: "VLTD Museum",
   POP_CULTURE: "Pop Culture",
@@ -85,6 +90,13 @@ function mapRect(x: number, z: number, width: number, depth: number) {
 export default function MuseumCampusOverview({ onBackToRoom }: { onBackToRoom: () => void }) {
   const mapWidth = (MAP_BOUNDS.z1 - MAP_BOUNDS.z0) * MAP_HORIZONTAL_SCALE;
   const mapHeight = MAP_BOUNDS.x1 - MAP_BOUNDS.x0;
+
+  const [roomMeta, setRoomMeta] = useState<Record<string, MuseumRoomMeta>>({});
+  const [editingRoomId, setEditingRoomId] = useState<CampusRoomId | null>(null);
+
+  useEffect(() => {
+    void getAllRoomMeta().then(setRoomMeta);
+  }, []);
 
   return (
     <div className="absolute inset-0 overflow-hidden bg-[radial-gradient(circle_at_58%_0%,rgba(79,211,238,0.09),transparent_34%),linear-gradient(180deg,#12151a,#07090d)] p-3 text-white sm:p-4">
@@ -143,7 +155,7 @@ export default function MuseumCampusOverview({ onBackToRoom }: { onBackToRoom: (
               // only shape kept dark and non-interactive.
               const interactive = isHub || !isPlaza;
               const isEditableRoom = interactive && !isHub;
-              const label = ROOM_LABELS[layout.id];
+              const label = roomMeta[layout.id]?.title || ROOM_LABELS[layout.id];
               const subtitle = isHub
                 ? "Grand Hall"
                 : isPlaza
@@ -183,29 +195,20 @@ export default function MuseumCampusOverview({ onBackToRoom }: { onBackToRoom: (
               // Edit badge — a separate clickable target from the room body
               // (never nested inside the room's own Link — two interactive
               // elements, one for "view," one for "edit," matching EK's
-              // marked screenshot). Deliberately NOT wired to a destination
-              // yet: the per-room editor it should open doesn't exist yet.
-              // A hover-only tooltip wasn't enough feedback (EK: "the edit
-              // button does not work") — it now answers a real click with a
-              // plain, honest message instead of doing nothing.
+              // marked screenshot). Opens RoomEditorModal in-context — see
+              // the 2026-09-12 follow-up note above.
               const editBadge = isEditableRoom ? (
                 <g
                   key={`${layout.id}-edit`}
                   role="button"
                   tabIndex={0}
-                  aria-label={`Edit ${label} — room editor coming soon`}
+                  aria-label={`Edit ${label}`}
                   className="cursor-pointer"
-                  onClick={() =>
-                    window.alert(
-                      `Room editor coming soon.\n\nThis will let you add/organize ${label}'s items and edit its title and description.`
-                    )
-                  }
+                  onClick={() => setEditingRoomId(layout.id)}
                   onKeyDown={(event) => {
                     if (event.key === "Enter" || event.key === " ") {
                       event.preventDefault();
-                      window.alert(
-                        `Room editor coming soon.\n\nThis will let you add/organize ${label}'s items and edit its title and description.`
-                      );
+                      setEditingRoomId(layout.id);
                     }
                   }}
                 >
@@ -214,7 +217,7 @@ export default function MuseumCampusOverview({ onBackToRoom }: { onBackToRoom: (
                     <rect x={-0.17} y={-0.95} width={0.34} height={1.5} rx={0.1} fill="#eef1f3" />
                     <polygon points="-0.17,0.55 0.17,0.55 0,1.05" fill="#eef1f3" />
                   </g>
-                  <title>{`Edit ${label} — room editor coming soon`}</title>
+                  <title>{`Edit ${label}`}</title>
                 </g>
               ) : null;
               return (
@@ -258,6 +261,17 @@ export default function MuseumCampusOverview({ onBackToRoom }: { onBackToRoom: (
           </svg>
         </section>
       </div>
+
+      {editingRoomId ? (
+        <RoomEditorModal
+          roomId={editingRoomId}
+          roomLabel={roomMeta[editingRoomId]?.title || ROOM_LABELS[editingRoomId]}
+          onClose={() => setEditingRoomId(null)}
+          onMetaSaved={(roomId, title) =>
+            setRoomMeta((current) => ({ ...current, [roomId]: { room_id: roomId, title, description: current[roomId]?.description ?? null } }))
+          }
+        />
+      ) : null}
     </div>
   );
 }
