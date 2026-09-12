@@ -100,7 +100,14 @@ export default function MfaChallengeGate() {
 
   return (
     <div
-      className="fixed inset-0 z-[500] flex items-center justify-center bg-black/80 p-4"
+      // This must out-rank literally everything else in the app — TopNav
+      // alone uses z-[9999], and the scan sheets go up to z-[100001]. A
+      // security gate that a nav bar or a stray panel can visually cover
+      // (even without truly blocking clicks) is worse than none, since it
+      // looks broken/ignorable instead of clearly blocking. Picked well
+      // above every z-index found in this codebase (grepped for
+      // `z-[\d{3,}]` across src/ before choosing this number).
+      className="fixed inset-0 z-[999999] flex items-center justify-center bg-black/80 p-4"
       role="dialog"
       aria-modal="true"
       aria-label="Two-factor authentication required"
