@@ -938,7 +938,7 @@ export default function VltdMuseumCampus() {
         console.warn(`Room target ${waypoint.id} lands outside the walkable area — skipped`, waypoint);
         continue;
       }
-      const targetSize = waypoint.roomId === "HUB" ? HUB_TARGET_SIZE : 2.2;
+      const targetSize = waypoint.enlarged ? HUB_TARGET_SIZE : 2.2;
       const marker = new THREE.Mesh(
         new THREE.PlaneGeometry(targetSize, targetSize),
         new THREE.MeshBasicMaterial({

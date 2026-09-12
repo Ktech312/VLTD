@@ -1,5 +1,16 @@
 # VLTD — Session Checklist (2026-08-05 night → ongoing, updated 2026-08-27)
 
+## 2026-09-11 (yet later, same day) — VLTD Museum: multi-target rooms (HUB 3, MISC 2, AUTOMOTIVE 2)
+Explicitly authorized change to `/museum/vltd` itself this time (from EK's
+marked-up floor plan). Full detail in the matching HANDOFF.md entry (same
+date, near the top).
+- [x] `computeCampusWaypoints()` now places N evenly-spaced targets per room instead of always 1; every room not in `{HUB:3, MISC:2, AUTOMOTIVE:2}` still gets exactly 1, at the same position as before.
+- [x] Only HUB's original center target (on the VLTD floor medallion) renders at the enlarged size — the 2 new HUB targets and MISC/AUTOMOTIVE's targets are standard size (new `CampusWaypoint.enlarged` flag replaces the old `roomId === "HUB"` size check).
+- [x] `CAMPUS_DOORS`, room bounds/geometry, `visitorController.ts` untouched. `validateCampusDoors()` still 0 issues.
+- [x] `tsc`/targeted ESLint/`npm run build` clean.
+- [ ] **Discrepancy flagged, not silently resolved:** EK said 18 targets total; her own per-room breakdown (3+2+2+ 10 remaining rooms ×1) comes to 17, and 17 is what's implemented. Worth confirming against the actual marked image.
+- [ ] **Not live-verified** — no browser connection this session; positions/sizes/hover only computed and reasoned through, not seen.
+
 ## 2026-09-11 (later still, same day) — fixed the layout regression from the fix directly below, small patch
 The previous fix removed the wrong Hall-assignment data correctly but also
 collapsed the left control column and shrank the map. Restored as a

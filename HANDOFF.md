@@ -5,6 +5,59 @@
 - **Mobile drag/scroll bug** (EK found this hands-on, unrelated to the above): dragging to look around also scrolled the whole page on a touch device, and yaw drag didn't track smoothly — both caused by the room's mount div never declaring `touch-action: none`. Fixed with the same one-line fix already used elsewhere in this file. Code-verified and reasoned through; genuinely NOT tested with a real touch input (no tool in this session can produce one) — needs EK's own phone to close the loop.
 Regression-checked live: White unaffected (still looks exactly right), pickup/rotate/return still works, no console errors anywhere. See the 2026-09-06 dated entries (top of the log below) for full detail, including the one real bug this session found and fixed in its own live check (Blue's case lids) before calling any of this done. Before tonight: the first White-room material pass (2026-09-05, commit `c61e600`/`f346d18`) — also READY on Vercel and live-verified. Below that: the VLTD Museum public campus work (2026-08-31 through 09-04, then resumed and heavily active again 2026-09-08 through 09-10 — see the 2026-09-10 dated entry, TOP of the dated list below, for the current state: NOT accepted yet, EK's own physical-input pass still pending). Read the dated entries below in order, newest first, before assuming any room behaves a particular way. Older work further down in §2 (2026-08-27/28 Admin Users redesign; ~110 VaultItem fields + 3 Gallery-sync gaps, both migrations confirmed run by EK; Events tooling, admin console/APP_MAP.md, Vault upload; a full backend security audit, 3D Museum beta-access gating, Room Builder fixes) is unrelated to either of the above.)
 
+# 2026-09-11 (yet later, same day) — VLTD Museum campus: multi-target rooms (HUB/MISC/AUTOMOTIVE) from EK's marked-up floor plan
+
+**This one IS a change to `/museum/vltd` itself** — explicitly authorized
+this time (unlike every entry above, which repeatedly forbade touching this
+file). EK sent a marked-up top-down floor plan with hand-drawn blue X's
+showing where additional floor navigation targets (the clickable glowing
+squares) should go: HUB gets 3, MISC gets 2, AUTOMOTIVE gets 2, every other
+room keeps its existing 1. Explicitly NOT touched: `CAMPUS_DOORS`, room
+bounds/geometry, `visitorController.ts`, the doorway sign system — only
+`computeCampusWaypoints()` in `campusLayout.ts` and one line in
+`VltdMuseumCampus.tsx` that decided target render size.
+
+**What changed:**
+- `CampusWaypoint` gained an `enlarged?: boolean` field. Previously the
+  renderer sized a target up only by checking `roomId === "HUB"` — wrong
+  once HUB has 3 targets, since only the ORIGINAL center one sits on the
+  VLTD floor medallion and needs the bigger bracket frame; the other 2 new
+  HUB targets are plain floor space and must stay standard size.
+  `VltdMuseumCampus.tsx`'s sizing line now checks `waypoint.enlarged`
+  instead.
+- `computeCampusWaypoints()` rewritten to place `N` evenly-spaced targets
+  per room (`N` from a small `MULTI_TARGET_ROOM_COUNTS` map: HUB 3, MISC 2,
+  AUTOMOTIVE 2; every unlisted room defaults to 1) using `k/(N+1)` spacing
+  along whichever of the room's two dimensions (`w`/`d`) is actually
+  longer, centered on the other. For `N=1` this reduces to exactly the old
+  center-of-room formula (verified: `k/(N+1)` at `N=1` is `1/2`), so every
+  room outside the three named ones is byte-for-byte unchanged in effect.
+  For HUB specifically, the middle of its 3 targets (`k=2` of 3) lands
+  exactly on the room's true center — the same coordinate the single old
+  HUB target used — and is the one flagged `enlarged: true`.
+- Computed and printed every resulting waypoint from a throwaway script
+  before touching the renderer, to confirm real numbers rather than trust
+  the formula by eye (deleted after use, same as this codebase's established
+  pattern for one-off verification scripts): HUB's 3 land at Z=19.5/39/58.5
+  (X=52.5 for all three), MISC's 2 at Z≈69.33/86.67 (X=10.5), AUTOMOTIVE's 2
+  at Z≈69.33/86.67 (X=105) — all comfortably inside each room's walkable
+  interior (nowhere near the 0.9-unit wall margin that would otherwise
+  silently drop a target).
+- `validateCampusDoors()` still reports 0 issues, 13 rooms, 20 doors —
+  unaffected, since `CAMPUS_DOORS`/room bounds were never touched.
+- **Known discrepancy, disclosed rather than silently forced to match:**
+  EK's message said the marked-up image shows **18** total targets; the
+  explicit per-room breakdown she also gave (HUB 3 + MISC 2 + AUTOMOTIVE 2 +
+  "one in each remaining room," and this campus has exactly 13 rooms total)
+  arithmetically comes to **17**, and that's what was implemented — the
+  per-room rule is unambiguous even though the two numbers she gave don't
+  quite reconcile. Worth her double-checking the actual image count against
+  this file's `CAMPUS_ROOMS` (13 total) before assuming a room was missed.
+- Verified via `tsc --noEmit`, targeted ESLint, and `npm run build` — all
+  clean. **Not live-verified**: no browser connection this session, so the
+  actual on-screen target positions/sizes/hover behavior have not been seen,
+  only computed and reasoned through.
+
 # 2026-09-11 (later still, same day) — Gallery Builder Map: layout regression from the previous fix, corrected as a small patch
 
 The prior fix (below) removed the wrong DATA (personal Hall assignments)

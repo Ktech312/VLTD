@@ -400,8 +400,22 @@ export function isWalkable(
 
 // Room-center targets: one calm, predictable destination per named room.
 // The renderer gives these the original four-corner target appearance; the
-// layout layer owns only their exact room-center positions.
-export type CampusWaypoint = { id: string; roomId: CampusRoomId; x: number; z: number };
+// layout layer owns only their exact positions. `enlarged` marks the one
+// target that sits exactly on HUB's VLTD floor-seal medallion (see
+// VltdMuseumCampus.tsx's HUB_TARGET_SIZE comment) — every other target,
+// including HUB's other two, renders at the standard size.
+export type CampusWaypoint = { id: string; roomId: CampusRoomId; x: number; z: number; enlarged?: boolean };
+
+// 2026-09-11, EK's marked-up floor plan: HUB/MISC/AUTOMOTIVE each need more
+// than one floor target, evenly spread along the room's long axis and
+// centered across its width, instead of the single room-center dot every
+// other room keeps. Every room not listed here still gets exactly 1, at
+// its exact center — unchanged from before this map existed.
+const MULTI_TARGET_ROOM_COUNTS: Partial<Record<CampusRoomId, number>> = {
+  HUB: 3,
+  MISC: 2,
+  AUTOMOTIVE: 2,
+};
 
 export function computeCampusWaypoints(): CampusWaypoint[] {
   // EK's ask (2026-09-10): "most [rooms] have them" — every room gets a
@@ -410,12 +424,39 @@ export function computeCampusWaypoints(): CampusWaypoint[] {
   // identity of its own) — but the target here never displays that label,
   // so there was no real reason to exclude it. PLAZA's floor and center
   // are already walkable like any other room's.
-  return CAMPUS_ROOMS.map((room) => ({
-    id: `room:${room.id}`,
-    roomId: room.id,
-    x: room.x + room.w / 2,
-    z: room.z + room.d / 2,
-  }));
+  const waypoints: CampusWaypoint[] = [];
+
+  for (const room of CAMPUS_ROOMS) {
+    const count = MULTI_TARGET_ROOM_COUNTS[room.id] ?? 1;
+    // The room's longer physical dimension is the axis multiple targets
+    // spread along; the shorter one stays centered for every target in the
+    // room (HUB/MISC/AUTOMOTIVE all happen to run long along Z here, but
+    // this is computed from the room's real w/d, not assumed).
+    const longAxisIsZ = room.d >= room.w;
+
+    for (let i = 0; i < count; i++) {
+      // n evenly-spaced points with equal margin from both ends and from
+      // each other: k/(n+1) for k=1..n. For count=1 this is exactly 1/2 —
+      // the room's dead center, identical to the single-target formula
+      // this replaces. For count=3 the middle point (i=1) is also exactly
+      // 1/2 — the same position the original single HUB target already
+      // used, which is why it's the one marked `enlarged` below.
+      const fraction = (i + 1) / (count + 1);
+      const x = longAxisIsZ ? room.x + room.w / 2 : room.x + room.w * fraction;
+      const z = longAxisIsZ ? room.z + room.d * fraction : room.z + room.d / 2;
+      const isOriginalHubCenter = room.id === "HUB" && fraction === 0.5;
+
+      waypoints.push({
+        id: count === 1 ? `room:${room.id}` : `room:${room.id}:${i}`,
+        roomId: room.id,
+        x,
+        z,
+        enlarged: isOriginalHubCenter,
+      });
+    }
+  }
+
+  return waypoints;
 }
 
 // A validator that rejects a door unless (a) its gap center lies inside
