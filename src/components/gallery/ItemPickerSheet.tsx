@@ -31,12 +31,27 @@ export function ItemPickerSheet({
   allItems,
   confirmedIds,
   sectionTitle: initialTitle,
+  mode = "multi",
+  maxItems = MAX_EXHIBIT_ITEMS,
+  pickerTitle,
   onConfirm,
   onClose,
 }: {
   allItems: VaultItem[];
   confirmedIds: string[];
   sectionTitle?: string;
+  /** Shared Museum Room Editor consolidation pass (2026-09-12): "single"
+   * replaces MuseumRoomItemPicker.tsx's own near-duplicate single-select UI
+   * — tapping a tile picks it immediately (no Add button, no exhibit-name
+   * row), same as that component's own tap-to-place UX. Defaults to
+   * "multi" so every existing exhibit-builder call site is unaffected. */
+  mode?: "multi" | "single";
+  /** Selection cap — MAX_EXHIBIT_ITEMS for the default multi-select
+   * exhibit builder; 1 for a single museum placement slot. */
+  maxItems?: number;
+  /** Header label for single mode (e.g. "SPORTS — position 3") — ignored
+   * in multi mode, which keeps its own editable exhibit-name row instead. */
+  pickerTitle?: string;
   onConfirm: (ids: string[], title: string) => void;
   onClose: () => void;
 }) {
@@ -45,11 +60,12 @@ export function ItemPickerSheet({
   const [picked, setPicked] = useState<Set<string>>(new Set(confirmedIds));
   const [sectionName, setSectionName] = useState(initialTitle || "Exhibit 1");
   const [mounted, setMounted] = useState(false);
+  const isSingle = mode === "single";
 
   useEffect(() => { setMounted(true); }, []);
 
   const pickedCount = picked.size;
-  const slotsLeft = MAX_EXHIBIT_ITEMS - pickedCount;
+  const slotsLeft = maxItems - pickedCount;
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -76,12 +92,19 @@ export function ItemPickerSheet({
   }, []);
 
   function toggleItem(id: string) {
+    if (isSingle) {
+      // Single-select places immediately on tap — no pending selection, no
+      // separate "Add" step, matching MuseumRoomItemPicker.tsx's own
+      // tap-to-place UX exactly.
+      onConfirm([id], sectionName);
+      return;
+    }
     setPicked((prev) => {
       const next = new Set(prev);
       if (next.has(id)) {
         next.delete(id);
       } else {
-        if (next.size >= MAX_EXHIBIT_ITEMS) return prev;
+        if (next.size >= maxItems) return prev;
         next.add(id);
       }
       return next;
@@ -99,10 +122,10 @@ export function ItemPickerSheet({
     : "Select items to add";
 
   const slotLabel = slotsLeft === 0
-    ? "Exhibit is full (16 items max)"
+    ? `Exhibit is full (${maxItems} items max)`
     : (slotsLeft + " slot" + (slotsLeft === 1 ? "" : "s") + " remaining");
 
-  const isAtMax = pickedCount >= MAX_EXHIBIT_ITEMS;
+  const isAtMax = pickedCount >= maxItems;
 
   // Single max-width column so this reads as a contained sheet, not a full-bleed
   // takeover on wide screens — same content-width convention used in the builder.
@@ -159,38 +182,50 @@ export function ItemPickerSheet({
           />
         </div>
 
-        <div
-          className={isAtMax ? "bg-[color:var(--pill-active-bg)] text-[color:var(--fg)] ring-1 ring-[color:var(--pill-active-ring)]" : "bg-[color:var(--pill)] text-[color:var(--muted)] ring-1 ring-[color:var(--border)]"}
-          style={{ flexShrink: 0, borderRadius: 999, padding: "5px 10px", fontSize: 11, fontWeight: 700, fontVariantNumeric: "tabular-nums", whiteSpace: "nowrap" }}
-        >
-          {pickedCount}/{MAX_EXHIBIT_ITEMS}
-        </div>
+        {isSingle ? (
+          pickerTitle ? (
+            <div style={{ minWidth: 0, maxWidth: 160, flexShrink: 0, textAlign: "right" }}>
+              <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.1em", color: "var(--muted)", textTransform: "uppercase" }}>Place item</div>
+              <div style={{ fontSize: 12, fontWeight: 700, color: "var(--fg)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{pickerTitle}</div>
+            </div>
+          ) : null
+        ) : (
+          <div
+            className={isAtMax ? "bg-[color:var(--pill-active-bg)] text-[color:var(--fg)] ring-1 ring-[color:var(--pill-active-ring)]" : "bg-[color:var(--pill)] text-[color:var(--muted)] ring-1 ring-[color:var(--border)]"}
+            style={{ flexShrink: 0, borderRadius: 999, padding: "5px 10px", fontSize: 11, fontWeight: 700, fontVariantNumeric: "tabular-nums", whiteSpace: "nowrap" }}
+          >
+            {pickedCount}/{maxItems}
+          </div>
+        )}
       </div>
 
-      {/* ── Row 2: Exhibit name ── */}
-      <div
-        style={{
-          ...stageStyle,
-          flexShrink: 0,
-          display: "flex",
-          alignItems: "center",
-          gap: 8,
-          padding: "0 14px 10px",
-          borderBottom: "1px solid var(--border)",
-        }}
-      >
-        <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.14em", color: "var(--muted)", textTransform: "uppercase", flexShrink: 0 }}>
-          EXHIBIT
+      {/* ── Row 2: Exhibit name — multi-select (exhibit builder) only. Single
+          mode has no exhibit to name; it's placing one item into one slot. */}
+      {isSingle ? null : (
+        <div
+          style={{
+            ...stageStyle,
+            flexShrink: 0,
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+            padding: "0 14px 10px",
+            borderBottom: "1px solid var(--border)",
+          }}
+        >
+          <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.14em", color: "var(--muted)", textTransform: "uppercase", flexShrink: 0 }}>
+            EXHIBIT
+          </div>
+          <input
+            value={sectionName}
+            onChange={(e) => setSectionName(e.target.value)}
+            placeholder="Exhibit 1"
+            maxLength={40}
+            className="text-[color:var(--fg)] transition"
+            style={{ flex: 1, background: "transparent", border: "none", borderBottom: "1px solid var(--border)", borderRadius: 0, padding: "3px 2px", fontSize: 13, fontWeight: 600, outline: "none" }}
+          />
         </div>
-        <input
-          value={sectionName}
-          onChange={(e) => setSectionName(e.target.value)}
-          placeholder="Exhibit 1"
-          maxLength={40}
-          className="text-[color:var(--fg)] transition"
-          style={{ flex: 1, background: "transparent", border: "none", borderBottom: "1px solid var(--border)", borderRadius: 0, padding: "3px 2px", fontSize: 13, fontWeight: 600, outline: "none" }}
-        />
-      </div>
+      )}
 
       {/* ── Row 3: Universe filter chips — same shared toggle-pill system, same glow ── */}
       <div
@@ -237,8 +272,8 @@ export function ItemPickerSheet({
           ) : (
             <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 6, padding: 6 }}>
               {filtered.map((item) => {
-                const isSelected = picked.has(item.id);
-                const canPick = isSelected || pickedCount < MAX_EXHIBIT_ITEMS;
+                const isSelected = !isSingle && picked.has(item.id);
+                const canPick = isSingle || isSelected || pickedCount < maxItems;
                 const img = itemImage(item);
 
                 return (
@@ -304,31 +339,35 @@ export function ItemPickerSheet({
                       </div>
                     </div>
 
-                    {/* Selection circle */}
-                    <div
-                      className={isSelected ? "bg-[color:var(--pill-active-bg)]" : ""}
-                      style={{
-                        position: "absolute",
-                        right: 5,
-                        top: 5,
-                        width: 22,
-                        height: 22,
-                        borderRadius: "50%",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        background: isSelected ? undefined : "rgba(0,0,0,0.50)",
-                        boxShadow: isSelected
-                          ? "0 0 0 2px var(--pill-active-ring)"
-                          : "0 0 0 1.5px rgba(255,255,255,0.55)",
-                      }}
-                    >
-                      {isSelected && (
-                        <svg viewBox="0 0 20 20" fill="none" style={{ width: 13, height: 13, color: "var(--fg)" }}>
-                          <path d="m4.5 10 3.5 3.5 7.5-7.5" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
-                        </svg>
-                      )}
-                    </div>
+                    {/* Selection circle — multi-select only. Single-select
+                        (museum placement) confirms on tap, so there's no
+                        pending-selection state to show. */}
+                    {isSingle ? null : (
+                      <div
+                        className={isSelected ? "bg-[color:var(--pill-active-bg)]" : ""}
+                        style={{
+                          position: "absolute",
+                          right: 5,
+                          top: 5,
+                          width: 22,
+                          height: 22,
+                          borderRadius: "50%",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          background: isSelected ? undefined : "rgba(0,0,0,0.50)",
+                          boxShadow: isSelected
+                            ? "0 0 0 2px var(--pill-active-ring)"
+                            : "0 0 0 1.5px rgba(255,255,255,0.55)",
+                        }}
+                      >
+                        {isSelected && (
+                          <svg viewBox="0 0 20 20" fill="none" style={{ width: 13, height: 13, color: "var(--fg)" }}>
+                            <path d="m4.5 10 3.5 3.5 7.5-7.5" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+                          </svg>
+                        )}
+                      </div>
+                    )}
                   </button>
                 );
               })}
@@ -337,42 +376,45 @@ export function ItemPickerSheet({
         </div>
       </div>
 
-      {/* ── Footer ── */}
-      <div
-        style={{
-          flexShrink: 0,
-          padding: "10px 14px max(env(safe-area-inset-bottom, 0px), 14px)",
-          borderTop: "1px solid var(--border)",
-          background: "var(--surface)",
-        }}
-      >
-        <div style={stageStyle}>
-          {slotsLeft < MAX_EXHIBIT_ITEMS && (
-            <div style={{ marginBottom: 8, textAlign: "center", fontSize: 11, color: slotsLeft === 0 ? "var(--fg)" : "var(--muted)" }}>
-              {slotLabel}
-            </div>
-          )}
-          <button
-            type="button"
-            onClick={() => onConfirm(Array.from(picked), sectionName)}
-            disabled={pickedCount === 0}
-            className={["vltd-pill-main-glow transition", pickedCount > 0 ? "bg-[color:var(--pill-active-bg)]" : "bg-[color:var(--pill)]"].join(" ")}
-            style={{
-              width: "100%",
-              borderRadius: 999,
-              padding: "14px 0",
-              fontSize: 14,
-              fontWeight: 900,
-              letterSpacing: "0.05em",
-              border: "none",
-              cursor: pickedCount > 0 ? "pointer" : "default",
-              opacity: pickedCount === 0 ? 0.35 : 1,
-            }}
-          >
-            {addLabel}
-          </button>
+      {/* ── Footer — multi-select only. Single-select confirms on tap
+          (see toggleItem above), so there's nothing to add or confirm. */}
+      {isSingle ? null : (
+        <div
+          style={{
+            flexShrink: 0,
+            padding: "10px 14px max(env(safe-area-inset-bottom, 0px), 14px)",
+            borderTop: "1px solid var(--border)",
+            background: "var(--surface)",
+          }}
+        >
+          <div style={stageStyle}>
+            {slotsLeft < maxItems && (
+              <div style={{ marginBottom: 8, textAlign: "center", fontSize: 11, color: slotsLeft === 0 ? "var(--fg)" : "var(--muted)" }}>
+                {slotLabel}
+              </div>
+            )}
+            <button
+              type="button"
+              onClick={() => onConfirm(Array.from(picked), sectionName)}
+              disabled={pickedCount === 0}
+              className={["vltd-pill-main-glow transition", pickedCount > 0 ? "bg-[color:var(--pill-active-bg)]" : "bg-[color:var(--pill)]"].join(" ")}
+              style={{
+                width: "100%",
+                borderRadius: 999,
+                padding: "14px 0",
+                fontSize: 14,
+                fontWeight: 900,
+                letterSpacing: "0.05em",
+                border: "none",
+                cursor: pickedCount > 0 ? "pointer" : "default",
+                opacity: pickedCount === 0 ? 0.35 : 1,
+              }}
+            >
+              {addLabel}
+            </button>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 

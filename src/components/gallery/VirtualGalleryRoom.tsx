@@ -71,6 +71,7 @@ import {
   type RoomItemPosition,
   type RoomLayout,
 } from "@/lib/galleryRoomSlots";
+import { OrganizeMoveMenu, OrganizeReplaceConfirm, OrganizeSlotOverlay, useSlotOrganizer } from "./organizeSlots";
 
 // The app's real theme blue — same tone/text pairing as the "Save Room
 // Draft" button's own gradient (`#79E7FB`→`#2CB1D1`) and dark text
@@ -671,27 +672,15 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
   const [roomPanelOpen, setRoomPanelOpen] = useState(true);
   const [hallNoticeDismissed, setHallNoticeDismissed] = useState(false);
   const [roomSwitcherOpen, setRoomSwitcherOpen] = useState(false);
-  const [dragIndex, setDragIndex] = useState<number | null>(null);
-  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
   // 2026-09-11 in-room Organize overlay — replaces the old flat "Arrange
-  // Shelf Order" sidebar. `organizeSelectedSlot` is the occupied slot a
-  // click/tap or Tab+Enter most recently selected (reveals its Remove/Move
-  // controls); `moveMenuFor` opens the keyboard/phone "Move to position…"
-  // destination list for that same slot; `replaceConfirm` is the
-  // Replace/Cancel prompt for dropping onto an occupied destination.
-  const [organizeSelectedSlot, setOrganizeSelectedSlot] = useState<number | null>(null);
-  const [moveMenuFor, setMoveMenuFor] = useState<number | null>(null);
-  const [replaceConfirm, setReplaceConfirm] = useState<{
-    fromIdx: number;
-    toIdx: number;
-    itemTitle: string;
-    destTitle: string;
-  } | null>(null);
-  const organizeSlotRefs = useRef<Map<number, HTMLDivElement | null>>(new Map());
+  // Shelf Order" sidebar. Its state/interaction (organizeSelectedSlot,
+  // moveMenuFor, replaceConfirm, drag/touch handling, the overlay JSX
+  // itself) now lives in organizeSlots.tsx's useSlotOrganizer() — see the
+  // `organizer` const below (Shared Museum Room Editor consolidation pass,
+  // 2026-09-12) — so the same Organize system can also drive the new
+  // museum room popup. This file still owns its OWN slotItems/selectedIds
+  // data model, passed into that shared hook via callbacks.
   const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
-  // Touch press-and-hold-to-drag bookkeeping for the Organize overlay (a
-  // normal tap must stay a tap — only a deliberate hold arms dragging).
-  const organizeTouchRef = useRef<{ idx: number; x: number; y: number; armed: boolean; overIdx: number | null; timer: number | null } | null>(null);
   // EK's ask: an empty slot's "+" opens a picker built to match the Vault's
   // own "Wall" view (search + universe filter pills w/ counts + A-Z jump +
   // size slider — see VaultWallView.tsx). Multi-select fills the clicked
@@ -712,7 +701,7 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
   }
 
   function closeSlotPicker() {
-    if (pickerSlotIdx !== null) focusSlot(pickerSlotIdx);
+    if (pickerSlotIdx !== null) organizer.focusSlot(pickerSlotIdx);
     setPickerSlotIdx(null);
     setPickerSelection([]);
   }
@@ -968,6 +957,47 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
     }
     return map;
   }, [slotGroups]);
+  // Shared Museum Room Editor consolidation pass (2026-09-12): the personal
+  // Gallery's own Organize overlay, now driven by the shared
+  // useSlotOrganizer() hook (organizeSlots.tsx) instead of this file's own
+  // copy of that state machine — see that file's module comment for exactly
+  // what moved out of here. `onMove`/`onReplace` are identical (both just
+  // move the dragged item's id into the destination slot and clear the
+  // source), matching moveItemToSlot's non-replace branch and
+  // confirmReplace's mutation in the pre-extraction version of this file.
+  const organizer = useSlotOrganizer({
+    slotItems,
+    slotDisplayNumber,
+    announce,
+    onMove: (fromIdx, toIdx) => {
+      setSelectedIds((current) => {
+        const next = [...current];
+        next[toIdx] = next[fromIdx];
+        next[fromIdx] = "";
+        return next;
+      });
+    },
+    onReplace: (fromIdx, toIdx) => {
+      setSelectedIds((current) => {
+        const next = [...current];
+        next[toIdx] = next[fromIdx];
+        next[fromIdx] = "";
+        return next;
+      });
+    },
+    onRemove: (idx) => {
+      setSelectedIds((current) => {
+        const next = [...current];
+        next[idx] = "";
+        return next;
+      });
+    },
+  });
+  // A stable alias for the rAF projection effect's dependency array below —
+  // `organizer` itself is a fresh object every render, but `slotRefs` is the
+  // exact same ref (from useSlotOrganizer's own useRef) every time, so
+  // depending on this instead avoids re-running that effect on every render.
+  const organizeSlotRefs = organizer.slotRefs;
   // EK's ask (2026-08-23): "I should be able to select any item that own,
   // this isn't being fed off or exiting exhibitions only" — the picker
   // used to only list items not already placed anywhere in this room,
@@ -3211,7 +3241,7 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
     }
     raf = window.requestAnimationFrame(tick);
     return () => window.cancelAnimationFrame(raf);
-  }, [viewMode, isOrganizing, slotPositions]);
+  }, [viewMode, isOrganizing, slotPositions, organizeSlotRefs]);
 
   function applyGallery(nextGalleryId: string) {
     setGalleryId(nextGalleryId);
@@ -3464,10 +3494,10 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
 
   async function handleOrganizeToggle() {
     if (isOrganizing && editRoomContext) {
-      setDragIndex(null);
-      setDragOverIndex(null);
+      organizer.setDragIndex(null);
+      organizer.setDragOverIndex(null);
       setSelectedItemId("");
-      setOrganizeSelectedSlot(null);
+      organizer.setOrganizeSelectedSlot(null);
       const ok = await flushPendingSave();
       if (!ok) return; // stay in Organize with the Save Failed pill visible — nothing is discarded, just retry
       setIsOrganizing(false);
@@ -3476,10 +3506,10 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
       return;
     }
     setIsOrganizing((current) => !current);
-    setDragIndex(null);
-    setDragOverIndex(null);
+    organizer.setDragIndex(null);
+    organizer.setDragOverIndex(null);
     setSelectedItemId("");
-    setOrganizeSelectedSlot(null);
+    organizer.setOrganizeSelectedSlot(null);
   }
 
   // Room name (Hall title) editing — section 4 of the work order. `title`
@@ -3518,151 +3548,12 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
     void persistHall(null, title, linkGalleryId);
   }
 
-  // Shared room-edit commands for the in-3D Organize overlay — desktop
-  // drag, touch press-and-hold, and the keyboard Move menu all call these
-  // same functions, so every input path saves through the exact same
+  // Shared room-edit commands for the in-3D Organize overlay (click-to-
+  // select, desktop drag, touch press-and-hold, and the keyboard Move menu)
+  // now live in organizeSlots.tsx's useSlotOrganizer() — see the `organizer`
+  // const above. Its onMove/onReplace/onRemove callbacks are this file's own
   // canonical selectedIds mutation (work order §10: "the desktop drag flow,
   // touch flow, keyboard flow... must all call these same commands").
-  //
-  // Dropping onto an EMPTY valid slot moves the item there outright.
-  // Dropping onto an OCCUPIED valid slot never silently swaps or overwrites
-  // — it opens the Replace/Cancel prompt (replaceConfirm state) instead.
-  function moveItemToSlot(fromIdx: number, toIdx: number) {
-    if (fromIdx === toIdx) return;
-    const fromItem = slotItems[fromIdx];
-    if (!fromItem) return;
-    const destItem = slotItems[toIdx];
-    if (destItem) {
-      setReplaceConfirm({ fromIdx, toIdx, itemTitle: fromItem.title || "This item", destTitle: destItem.title || "this item" });
-      return;
-    }
-    setSelectedIds((current) => {
-      const next = [...current];
-      next[toIdx] = next[fromIdx];
-      next[fromIdx] = "";
-      return next;
-    });
-    setOrganizeSelectedSlot(null);
-    setMoveMenuFor(null);
-    announce(`Moved to position ${slotDisplayNumber.get(toIdx) ?? toIdx + 1}.`);
-    focusSlot(toIdx);
-  }
-
-  // "Focus returns predictably after picker, confirmation, save, or
-  // cancellation" — a `setTimeout(0)` waits for the DOM to actually
-  // reflect the state change before focusing (the target slot's control
-  // may not exist yet, or may have just been replaced, in the same tick).
-  function focusSlot(idx: number) {
-    window.setTimeout(() => {
-      organizeSlotRefs.current.get(idx)?.querySelector("button")?.focus();
-    }, 0);
-  }
-
-  // On Replace: the dragged item takes the destination slot; the item that
-  // was there returns to the vault/unassigned pool — it is NOT deleted,
-  // just no longer placed in any slot of THIS room (its own vault_items row
-  // is never touched, same as any other remove-from-room below).
-  function confirmReplace() {
-    if (!replaceConfirm) return;
-    const { fromIdx, toIdx } = replaceConfirm;
-    setSelectedIds((current) => {
-      const next = [...current];
-      next[toIdx] = next[fromIdx];
-      next[fromIdx] = "";
-      return next;
-    });
-    announce(`Replaced. ${replaceConfirm.destTitle} was removed from this room only — it is still in your vault.`);
-    setReplaceConfirm(null);
-    setOrganizeSelectedSlot(null);
-    setMoveMenuFor(null);
-    focusSlot(toIdx);
-  }
-
-  function cancelReplace() {
-    if (replaceConfirm) focusSlot(replaceConfirm.fromIdx);
-    setReplaceConfirm(null);
-  }
-
-  // Removing from a room clears only this slot's id reference — the real
-  // vault item, its media, and its metadata are never touched.
-  function removeFromSlot(idx: number) {
-    const item = slotItems[idx];
-    setSelectedIds((current) => {
-      const next = [...current];
-      next[idx] = "";
-      return next;
-    });
-    setOrganizeSelectedSlot(null);
-    announce(`${item?.title || "Item"} removed from this room. It is still in your vault.`);
-    focusSlot(idx);
-  }
-
-  // Touch press-and-hold-to-drag for the Organize overlay — "a short,
-  // intentional press-and-hold starts item dragging... a normal tap does
-  // not become a drag." A tap that never holds long enough (or that moves
-  // too far before the hold timer fires) falls through as a plain
-  // select/no-op instead — see handleOrganizeTouchEnd/Move below.
-  const ORGANIZE_HOLD_MS = 260;
-  const ORGANIZE_MOVE_TOLERANCE = 10;
-
-  function startOrganizeTouchHold(event: React.TouchEvent, index: number) {
-    const touch = event.touches[0];
-    if (!touch) return;
-    const timer = window.setTimeout(() => {
-      if (organizeTouchRef.current?.idx === index) {
-        organizeTouchRef.current.armed = true;
-        setDragIndex(index);
-      }
-    }, ORGANIZE_HOLD_MS);
-    organizeTouchRef.current = { idx: index, x: touch.clientX, y: touch.clientY, armed: false, overIdx: null, timer };
-  }
-
-  function handleOrganizeTouchMove(event: React.TouchEvent) {
-    const ref = organizeTouchRef.current;
-    if (!ref) return;
-    const touch = event.touches[0];
-    if (!touch) return;
-    const dx = touch.clientX - ref.x;
-    const dy = touch.clientY - ref.y;
-    if (!ref.armed) {
-      if (Math.abs(dx) > ORGANIZE_MOVE_TOLERANCE || Math.abs(dy) > ORGANIZE_MOVE_TOLERANCE) {
-        // Moved before the hold armed — a normal drag-to-look gesture,
-        // not an item drag. Cancel and let it go (this handler never
-        // called preventDefault, so the camera's own drag-look still
-        // tracks this same gesture underneath).
-        if (ref.timer) window.clearTimeout(ref.timer);
-        organizeTouchRef.current = null;
-      }
-      return;
-    }
-    let el: Element | null = document.elementFromPoint(touch.clientX, touch.clientY);
-    let toIdx: number | null = null;
-    while (el && toIdx === null) {
-      const attr = el.getAttribute?.("data-organize-idx");
-      if (attr !== null && attr !== undefined) toIdx = parseInt(attr, 10);
-      el = el.parentElement;
-    }
-    const resolved = toIdx !== null && toIdx !== ref.idx ? toIdx : null;
-    ref.overIdx = resolved;
-    setDragOverIndex(resolved);
-  }
-
-  function handleOrganizeTouchEnd() {
-    const ref = organizeTouchRef.current;
-    organizeTouchRef.current = null;
-    if (!ref) return;
-    if (ref.timer) window.clearTimeout(ref.timer);
-    if (!ref.armed) {
-      // Never armed into a drag — a plain tap selects/deselects this slot.
-      setOrganizeSelectedSlot((current) => (current === ref.idx ? null : ref.idx));
-      setDragIndex(null);
-      setDragOverIndex(null);
-      return;
-    }
-    setDragIndex(null);
-    setDragOverIndex(null);
-    if (ref.overIdx !== null && ref.overIdx !== ref.idx) moveItemToSlot(ref.idx, ref.overIdx);
-  }
 
   // EK's ask: the first item picked goes into the exact slot whose "+"
   // was clicked; every item picked after that fills the next EMPTY slots
@@ -3876,121 +3767,16 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
             // "numbered overlays in the actual 3D room" the work order
             // asks for, just implemented as an accessible DOM layer over
             // the canvas rather than unreachable WebGL-only geometry.
-            // Empty slots show a real "+"; occupied slots select on
-            // click/tap and reveal Remove/Move; desktop drag and a
-            // press-and-hold touch drag both call the same moveItemToSlot
-            // command as the keyboard Move menu below.
-            <div className="pointer-events-none absolute inset-0 z-[5]">
-              {slotPositions.map((pos, index) => {
-                const item = slotItems[index];
-                const label = slotDisplayNumber.get(index) ?? index + 1;
-                const isSelected = organizeSelectedSlot === index;
-                const isDragSource = dragIndex === index;
-                const isDragOver = dragOverIndex === index && dragIndex !== null && dragIndex !== index;
-                return (
-                  <div
-                    key={index}
-                    ref={(el) => {
-                      organizeSlotRefs.current.set(index, el);
-                    }}
-                    className="pointer-events-none absolute left-0 top-0"
-                  >
-                    {item ? (
-                      <div className="pointer-events-auto relative">
-                        <button
-                          type="button"
-                          data-organize-idx={index}
-                          draggable
-                          style={{ touchAction: "none" }}
-                          onDragStart={(event) => {
-                            event.dataTransfer.effectAllowed = "move";
-                            setDragIndex(index);
-                          }}
-                          onDragOver={(event) => {
-                            if (dragIndex === null) return;
-                            event.preventDefault();
-                            if (dragIndex !== index) setDragOverIndex(index);
-                          }}
-                          onDrop={(event) => {
-                            event.preventDefault();
-                            const fromIdx = dragIndex;
-                            setDragIndex(null);
-                            setDragOverIndex(null);
-                            if (fromIdx !== null && fromIdx !== index) moveItemToSlot(fromIdx, index);
-                          }}
-                          onDragEnd={() => {
-                            setDragIndex(null);
-                            setDragOverIndex(null);
-                          }}
-                          onTouchStart={(event) => startOrganizeTouchHold(event, index)}
-                          onTouchMove={handleOrganizeTouchMove}
-                          onTouchEnd={handleOrganizeTouchEnd}
-                          onTouchCancel={handleOrganizeTouchEnd}
-                          onClick={() => setOrganizeSelectedSlot((current) => (current === index ? null : index))}
-                          aria-label={`${item.title || "Item"}, position ${label}${isSelected ? ", selected" : ""}`}
-                          aria-pressed={isSelected}
-                          title={item.title}
-                          className={[
-                            "grid h-11 w-11 place-items-center rounded-full text-[12px] font-black shadow-[0_2px_12px_rgba(0,0,0,0.55)] ring-2 transition",
-                            isSelected ? "bg-[#4FD3EE] text-[#06171d] ring-white" : "bg-black/55 text-white ring-white/70 hover:ring-[#4FD3EE]",
-                            isDragOver ? "scale-125 bg-[rgba(79,211,238,0.35)] ring-[#4FD3EE]" : "",
-                            isDragSource ? "opacity-40" : "",
-                          ].join(" ")}
-                        >
-                          {label}
-                        </button>
-                        {isSelected ? (
-                          <div className="absolute left-1/2 top-full z-10 mt-1.5 flex -translate-x-1/2 items-center gap-1.5 whitespace-nowrap">
-                            <button
-                              type="button"
-                              onClick={() => removeFromSlot(index)}
-                              aria-label={`Remove ${item.title || "this item"} from this room`}
-                              className="grid h-9 w-9 place-items-center rounded-full bg-red-500/90 text-base font-black leading-none text-white ring-1 ring-white/40 transition hover:bg-red-500"
-                            >
-                              <span aria-hidden>−</span>
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => setMoveMenuFor(index)}
-                              className="rounded-full bg-black/85 px-3 py-2 text-[10px] font-black uppercase tracking-wider text-white ring-1 ring-white/25 transition hover:bg-black"
-                            >
-                              Move
-                            </button>
-                          </div>
-                        ) : null}
-                      </div>
-                    ) : (
-                      <button
-                        type="button"
-                        data-organize-idx={index}
-                        onClick={() => openSlotPicker(index)}
-                        onDragOver={(event) => {
-                          if (dragIndex === null) return;
-                          event.preventDefault();
-                          setDragOverIndex(index);
-                        }}
-                        onDrop={(event) => {
-                          event.preventDefault();
-                          const fromIdx = dragIndex;
-                          setDragIndex(null);
-                          setDragOverIndex(null);
-                          if (fromIdx !== null) moveItemToSlot(fromIdx, index);
-                        }}
-                        aria-label={`Empty position ${label}, add an item`}
-                        className={[
-                          "pointer-events-auto grid h-11 w-11 place-items-center rounded-full border-2 border-dashed text-white/70 transition",
-                          isDragOver
-                            ? "scale-125 border-[#4FD3EE] bg-[rgba(79,211,238,0.25)] text-[#4FD3EE]"
-                            : "border-white/40 bg-black/30 hover:border-[#4FD3EE] hover:text-[#4FD3EE]",
-                        ].join(" ")}
-                      >
-                        <Plus size={16} />
-                      </button>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
+            // Shared Museum Room Editor consolidation pass (2026-09-12):
+            // the overlay's own JSX now lives in organizeSlots.tsx's
+            // <OrganizeSlotOverlay> — same markup, same interactions, just
+            // shared with the new museum room popup.
+            <OrganizeSlotOverlay
+              slotCount={slotPositions.length}
+              slotItems={slotItems}
+              organizer={organizer}
+              onOpenPicker={openSlotPicker}
+            />
           ) : null}
           <div className={viewMode === "overview" ? "hidden" : "absolute left-3 right-3 top-3 flex flex-wrap items-center gap-2"}>
             <div className="pointer-events-none flex items-center gap-2 rounded-[6px] bg-black/42 px-3 py-2 text-xs font-black uppercase tracking-[0.14em] text-white ring-1 ring-white/12 backdrop-blur">
@@ -4857,132 +4643,13 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
             document.body
           )
         : null}
-      {/* Keyboard/phone fallback for moving a selected item — "Move" opens
-          a list of valid destination slot numbers using the same canonical
-          IDs and grouping the room's own Arrange panel used to show.
-          Occupied destinations are identified and still go through the
-          same Replace/Cancel confirmation as a drag drop. */}
-      {moveMenuFor !== null
-        ? createPortal(
-            <div
-              className="flex items-end justify-center p-0 sm:items-center sm:p-4"
-              style={{ position: "fixed", top: 0, right: 0, bottom: 0, left: 0, zIndex: 97 }}
-            >
-              <button
-                type="button"
-                onClick={() => {
-                  if (moveMenuFor !== null) focusSlot(moveMenuFor);
-                  setMoveMenuFor(null);
-                }}
-                aria-label="Close"
-                className="absolute inset-0 bg-black/60 backdrop-blur-sm"
-              />
-              <div
-                className="relative flex max-h-[80dvh] w-full flex-col overflow-hidden rounded-t-3xl ring-1 sm:max-w-sm sm:rounded-3xl"
-                style={{ background: "var(--bg, #060a13)", borderColor: "var(--theme-border)" }}
-              >
-                <div className="flex justify-center pb-1 pt-3 sm:hidden">
-                  <div className="h-1 w-12 rounded-full bg-[color:var(--border)]" />
-                </div>
-                <div className="p-4 pb-2">
-                  <div className="text-sm font-black">Move to position…</div>
-                  <p className="mt-1 text-xs text-[color:var(--muted)]">
-                    Positions marked <span className="text-amber-200">•</span> already hold an item — you&apos;ll be
-                    asked before replacing it.
-                  </p>
-                </div>
-                <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-4">
-                  {slotGroups.map((group) => (
-                    <div key={group.wall} className="mb-3">
-                      <div className="mb-1 text-[10px] font-black uppercase tracking-[0.14em] text-[color:var(--muted2)]">
-                        {group.label}
-                      </div>
-                      <div className="grid grid-cols-4 gap-1.5">
-                        {group.indices.map((idx) => {
-                          const destItem = slotItems[idx];
-                          const isSelf = idx === moveMenuFor;
-                          return (
-                            <button
-                              key={idx}
-                              type="button"
-                              disabled={isSelf}
-                              onClick={() => {
-                                const from = moveMenuFor;
-                                setMoveMenuFor(null);
-                                if (from !== null) moveItemToSlot(from, idx);
-                              }}
-                              aria-label={`Move to position ${slotDisplayNumber.get(idx) ?? idx + 1}${destItem ? `, currently ${destItem.title}` : ", empty"}`}
-                              className={[
-                                "min-h-11 rounded-[6px] px-1.5 py-2 text-[11px] font-bold ring-1 transition",
-                                isSelf
-                                  ? "cursor-default bg-white/5 text-white/25 ring-white/10"
-                                  : destItem
-                                    ? "bg-amber-300/10 text-amber-100 ring-amber-200/30 hover:bg-amber-300/20"
-                                    : "bg-white/5 text-white/80 ring-white/15 hover:bg-[rgba(79,211,238,0.14)]",
-                              ].join(" ")}
-                            >
-                              #{slotDisplayNumber.get(idx) ?? idx + 1}
-                              {destItem ? " •" : ""}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>,
-            document.body
-          )
-        : null}
-      {/* Replace/Cancel — required whenever a move/drop targets an occupied
-          slot, from any input path (drag, touch, or the Move menu above).
-          Neither item is ever lost: Cancel leaves both exactly where they
-          were; Replace only clears the destination item's slot reference
-          (its vault_items row is untouched either way). */}
-      {replaceConfirm
-        ? createPortal(
-            <div
-              className="flex items-center justify-center p-4"
-              style={{ position: "fixed", top: 0, right: 0, bottom: 0, left: 0, zIndex: 98 }}
-            >
-              <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
-              <div
-                role="alertdialog"
-                aria-modal="true"
-                aria-labelledby="vltd-replace-confirm-title"
-                className="relative w-full max-w-sm rounded-2xl p-5 ring-1"
-                style={{ background: "var(--bg, #060a13)", borderColor: "var(--theme-border)" }}
-              >
-                <div id="vltd-replace-confirm-title" className="text-sm font-black leading-5">
-                  This position already contains {replaceConfirm.destTitle}. Replace it?
-                </div>
-                <p className="mt-2 text-xs leading-5 text-[color:var(--muted)]">
-                  {replaceConfirm.destTitle} will be removed from this room only — it stays in your vault, unchanged.
-                </p>
-                <div className="mt-4 flex gap-2">
-                  <button
-                    type="button"
-                    onClick={cancelReplace}
-                    className="flex-1 rounded-[6px] border py-2.5 text-sm font-black"
-                    style={{ borderColor: "var(--theme-border)", color: "var(--fg)" }}
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="button"
-                    onClick={confirmReplace}
-                    className="flex-1 rounded-[6px] py-2.5 text-sm font-black"
-                    style={{ background: "linear-gradient(180deg,#79E7FB,#2CB1D1)", color: "#06171d" }}
-                  >
-                    Replace
-                  </button>
-                </div>
-              </div>
-            </div>,
-            document.body
-          )
-        : null}
+      {/* Keyboard/phone fallback for moving a selected item, and the
+          Replace/Cancel confirmation for dropping onto an occupied
+          destination — both shared with the museum room popup via
+          organizeSlots.tsx (Shared Museum Room Editor consolidation pass,
+          2026-09-12). */}
+      <OrganizeMoveMenu groups={slotGroups} slotItems={slotItems} organizer={organizer} />
+      <OrganizeReplaceConfirm organizer={organizer} />
       {/* Screen-reader live region for save results and room-only removals —
           "Announce save results and room-only removals with a polite live
           region." Visually hidden, always present so a text change (even a

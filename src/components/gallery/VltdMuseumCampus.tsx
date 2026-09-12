@@ -9,7 +9,7 @@
 // user's own vault items as placeholder content until there's a real
 // cross-user "top items" feed to show instead.
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 
@@ -39,16 +39,12 @@ import {
 } from "@/lib/campusLayout";
 import { getPrimaryImageUrl, loadItems, type VaultItem } from "@/lib/vaultModel";
 import { isUniverseKey, type UniverseKey } from "@/lib/taxonomy";
-import { getMyAdminRole } from "@/lib/adminAuth";
 import {
-  DEFAULT_ITEMS_PER_ROOM,
-  clearRoomItemSlot,
   getActiveSpotlightPrograms,
   getAllRoomMeta,
   getEnabledRoomItems,
   getEnabledStoreItems,
   getItemsPerRoom,
-  setRoomItemSlot,
   type MuseumRoomItem,
 } from "@/lib/museumCampusConfig";
 import {
@@ -86,7 +82,6 @@ import {
   facingDirection,
   WHEEL_STEP,
 } from "@/lib/visitorController";
-import MuseumRoomItemPicker from "./MuseumRoomItemPicker";
 
 function wrapText(ctx: CanvasRenderingContext2D, text: string, x: number, y: number, maxWidth: number, lineHeight: number) {
   const words = text.split(" ");
@@ -236,27 +231,6 @@ function focalWallFor(roomId: CampusRoomId) {
   return roomId === "SPORTS" ? ("south" as const) : undefined;
 }
 
-// Drag interactions pass (2026-09-12): a real mouse press-drag-drop and a
-// mobile/tablet long-press-drag-drop for the room editor's numbered slots —
-// added on top of the existing click-to-arm/click-destination flow and
-// keyboard Move control, never replacing them. `dragging` starts false for
-// every pointer type: for a mouse it flips true the first time the pointer
-// travels past DRAG_MOVE_THRESHOLD_PX (an ordinary click never moves that
-// far); for touch/pen it only flips true once LONG_PRESS_MS elapses with the
-// finger still down (the standard mobile pattern for telling "pick this up"
-// apart from a tap or a scroll/swipe gesture) — a touch move before that
-// timer fires cancels the gesture outright rather than starting a drag.
-type SlotDragState = {
-  sourceSlotId: string;
-  pointerId: number;
-  startX: number;
-  startY: number;
-  dragging: boolean;
-  longPressTimer: number | null;
-};
-const DRAG_MOVE_THRESHOLD_PX = 6;
-const LONG_PRESS_MS = 450;
-
 export default function VltdMuseumCampus() {
   const mountRef = useRef<HTMLDivElement | null>(null);
   const roomLabelRef = useRef<HTMLDivElement | null>(null);
@@ -268,204 +242,18 @@ export default function VltdMuseumCampus() {
   // movement, and every other accepted behavior are untouched. Falls back
   // to the normal PLAZA entrance spawn for a plain /museum/vltd visit or an
   // unrecognized ?room= value.
-  const router = useRouter();
   const searchParams = useSearchParams();
-  // Shared Museum Room Editor pass (2026-09-12): `?edit=<roomId>` opens the
-  // SAME real room, spawned at its center exactly like `?room=`, with the
-  // numbered placement-slot overlay turned on. Admin-only in effect (the
-  // Map link that produces this URL only renders for an admin, and the
-  // overlay below never shows/mutates anything until getMyAdminRole()
-  // resolves truthy for the current session) — same defense-in-depth model
-  // already used for museum_room_items/museum_room_meta's own RLS.
-  const requestedEditRoomId = searchParams.get("edit");
-  const editRoomId: CampusRoomId | null =
-    requestedEditRoomId && (EDITABLE_ROOM_IDS as string[]).includes(requestedEditRoomId)
-      ? (requestedEditRoomId as CampusRoomId)
-      : null;
-  const requestedRoomId = searchParams.get("room") ?? editRoomId ?? undefined;
+  // Shared Museum Room Editor consolidation pass (2026-09-12): the old
+  // `?edit=<roomId>` full-page editor mode is retired — "Add Items / Edit
+  // Room" now opens an in-page popup (RoomEditorModal.tsx ->
+  // MuseumRoomPopup.tsx) showing just that one room, instead of navigating
+  // here into the whole walkable campus. `?room=` (plain spawn-in-room, no
+  // editing) is untouched.
+  const requestedRoomId = searchParams.get("room") ?? undefined;
   const spawnRoom = requestedRoomId ? CAMPUS_ROOMS.find((room) => room.id === requestedRoomId) : undefined;
   const spawn = spawnRoom
     ? { x: spawnRoom.x + spawnRoom.w / 2, z: spawnRoom.z + spawnRoom.d / 2, yaw: CAMPUS_SPAWN.yaw }
     : CAMPUS_SPAWN;
-
-  const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
-  const editSlotElsRef = useRef<Map<string, HTMLButtonElement>>(new Map());
-  const [editorAdminOk, setEditorAdminOk] = useState<boolean | null>(null);
-  const [editorSlots, setEditorSlots] = useState<PlacementSlot[]>([]);
-  const [editorAssignments, setEditorAssignments] = useState<Record<string, MuseumRoomItem>>({});
-  const [editorSelectedSlotId, setEditorSelectedSlotId] = useState<string | null>(null);
-  const [editorMoveArmed, setEditorMoveArmed] = useState(false);
-  const [editorPickerSlotId, setEditorPickerSlotId] = useState<string | null>(null);
-  const [editorSaveState, setEditorSaveState] = useState<"idle" | "saving" | "saved" | "error">("idle");
-  const editorCapacityRef = useRef(DEFAULT_ITEMS_PER_ROOM);
-
-  // Drag interactions pass (2026-09-12): mouse press-drag-drop and
-  // mobile/tablet long-press-drag-drop, ADDED alongside the existing
-  // click-to-arm/click-destination flow and the keyboard-accessible Move
-  // control — none of those three are removed or changed by anything below.
-  // `slotDragRef` carries the ephemeral in-progress pointer-gesture data (not
-  // React state — it changes every pointermove and must never trigger a
-  // re-render); `activeDragSlotId`/`dragOverSlotId` are the only two bits of
-  // that gesture promoted to real state, purely so the two slots involved
-  // can be highlighted while a drag is in flight.
-  const slotDragRef = useRef<SlotDragState | null>(null);
-  const [activeDragSlotId, setActiveDragSlotId] = useState<string | null>(null);
-  const [dragOverSlotId, setDragOverSlotId] = useState<string | null>(null);
-  // Set right before a drag/long-press gesture completes over a valid
-  // destination so the browser's OWN follow-up "click" event (which still
-  // fires after a pointerup even though our drag logic already handled the
-  // move) doesn't ALSO run handleSlotActivate's click-to-arm logic for the
-  // same gesture. Self-clears on the next click it suppresses, or after a
-  // short timeout if no click ever arrives (e.g. the pointer was released
-  // off of any slot button) so it can never wedge a later, unrelated click.
-  const suppressNextClickRef = useRef(false);
-
-  useEffect(() => {
-    if (!editRoomId) return;
-    let cancelled = false;
-    void getMyAdminRole().then((role) => {
-      if (!cancelled) setEditorAdminOk(role !== null);
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [editRoomId]);
-
-  async function refreshEditorAssignments(roomId: CampusRoomId, slots: PlacementSlot[]) {
-    const items = await getEnabledRoomItems(roomId);
-    const bySlot: Record<string, MuseumRoomItem> = {};
-    for (const item of items) {
-      if (item.slot_id && slots.some((s) => s.id === item.slot_id)) bySlot[item.slot_id] = item;
-    }
-    setEditorAssignments(bySlot);
-  }
-
-  async function handlePickItem(item: { title: string; image_url: string }) {
-    if (!editRoomId || !editorPickerSlotId) return;
-    setEditorSaveState("saving");
-    const result = await setRoomItemSlot(editRoomId, editorPickerSlotId, item, 0);
-    setEditorSaveState(result.ok ? "saved" : "error");
-    setEditorPickerSlotId(null);
-    setEditorSelectedSlotId(null);
-    if (result.ok) await refreshEditorAssignments(editRoomId, editorSlots);
-    if (result.ok) window.setTimeout(() => setEditorSaveState((s) => (s === "saved" ? "idle" : s)), 1600);
-  }
-
-  async function handleRemoveSlot(slotId: string) {
-    if (!editRoomId) return;
-    if (!window.confirm("Remove this item from the museum room? It stays in the vault untouched.")) return;
-    setEditorSaveState("saving");
-    const result = await clearRoomItemSlot(editRoomId, slotId);
-    setEditorSaveState(result.ok ? "saved" : "error");
-    setEditorSelectedSlotId(null);
-    setEditorMoveArmed(false);
-    if (result.ok) await refreshEditorAssignments(editRoomId, editorSlots);
-    if (result.ok) window.setTimeout(() => setEditorSaveState((s) => (s === "saved" ? "idle" : s)), 1600);
-  }
-
-  // Drag interactions pass (2026-09-12): the ONE move/place implementation
-  // every input method funnels through — the pre-existing click-to-arm +
-  // click-destination flow (via handleMoveTo below), the new mouse
-  // drag-and-drop, and the new mobile/tablet long-press-drag all end up
-  // calling this exact function with an explicit (source, target) pair, so
-  // autosave, the occupied-destination confirmation, and invalid-position
-  // handling behave identically no matter how the move was initiated. Only
-  // handleMoveTo's own call site still resolves its source from
-  // `editorSelectedSlotId`/`editorMoveArmed` — drag gestures pass their
-  // source directly since they never go through the arm/select state at all.
-  async function performMove(sourceSlotId: string, targetSlotId: string) {
-    if (!editRoomId || sourceSlotId === targetSlotId) {
-      setEditorMoveArmed(false);
-      return;
-    }
-    const source = editorAssignments[sourceSlotId];
-    if (!source) {
-      setEditorMoveArmed(false);
-      return;
-    }
-    const destination = editorAssignments[targetSlotId];
-    if (destination && !window.confirm("A different item is already in that position. Replace it?")) return;
-    setEditorSaveState("saving");
-    const placed = await setRoomItemSlot(editRoomId, targetSlotId, { title: source.title, image_url: source.image_url }, 0);
-    const cleared = placed.ok ? await clearRoomItemSlot(editRoomId, sourceSlotId) : { ok: false };
-    setEditorSaveState(placed.ok && cleared.ok ? "saved" : "error");
-    setEditorMoveArmed(false);
-    setEditorSelectedSlotId(null);
-    if (placed.ok) await refreshEditorAssignments(editRoomId, editorSlots);
-    if (placed.ok) window.setTimeout(() => setEditorSaveState((s) => (s === "saved" ? "idle" : s)), 1600);
-  }
-
-  async function handleMoveTo(targetSlotId: string) {
-    if (!editorSelectedSlotId) {
-      setEditorMoveArmed(false);
-      return;
-    }
-    await performMove(editorSelectedSlotId, targetSlotId);
-  }
-
-  // The window-level pointer-event effect below is installed once (it only
-  // depends on editRoomId/editorAdminOk, not on every render), so it can't
-  // close over a fresh `performMove` each time editorAssignments/editorSlots
-  // change. Re-pointing this ref every render (a plain assignment, not an
-  // effect — safe because it never affects what gets rendered) keeps that
-  // effect's drag-drop handler always calling the CURRENT performMove
-  // closure instead of a stale one from the render it was installed in.
-  const performMoveRef = useRef(performMove);
-  performMoveRef.current = performMove;
-
-  function handleSlotActivate(slotId: string) {
-    if (suppressNextClickRef.current) {
-      // A drag or long-press-drag gesture just completed on this exact
-      // browser "click" (pointer devices still synthesize one after
-      // pointerup) — that gesture already performed the move itself; running
-      // the normal click-to-arm logic on top of it would double-handle the
-      // same user action.
-      suppressNextClickRef.current = false;
-      return;
-    }
-    if (editorMoveArmed) {
-      void handleMoveTo(slotId);
-      return;
-    }
-    const occupied = Boolean(editorAssignments[slotId]);
-    if (!occupied) {
-      setEditorSelectedSlotId(slotId);
-      setEditorPickerSlotId(slotId);
-      return;
-    }
-    setEditorSelectedSlotId((current) => (current === slotId ? null : slotId));
-  }
-
-  // Drag interactions pass (2026-09-12): starts tracking a possible
-  // drag/long-press gesture on POINTER DOWN over an occupied slot (an empty
-  // "+" slot has nothing to pick up — it stays a valid drop target, just not
-  // a drag source). Deliberately a no-op while `editorMoveArmed` (the
-  // keyboard/click "Move" flow already owns the interaction at that point —
-  // Cancel it first rather than layering a second gesture on top) or while
-  // the item picker is open (it covers the screen already).
-  function handleSlotPointerDown(e: React.PointerEvent<HTMLButtonElement>, slotId: string) {
-    if (editorMoveArmed || editorPickerSlotId) return;
-    if (e.pointerType === "mouse" && e.button !== 0) return;
-    if (!editorAssignments[slotId]) return;
-    const state: SlotDragState = {
-      sourceSlotId: slotId,
-      pointerId: e.pointerId,
-      startX: e.clientX,
-      startY: e.clientY,
-      dragging: false,
-      longPressTimer: null,
-    };
-    if (e.pointerType !== "mouse") {
-      state.longPressTimer = window.setTimeout(() => {
-        // Still the same in-progress gesture (not released/cancelled/
-        // superseded in the meantime)?
-        if (slotDragRef.current !== state) return;
-        state.dragging = true;
-        setActiveDragSlotId(slotId);
-      }, LONG_PRESS_MS);
-    }
-    slotDragRef.current = state;
-  }
 
   useEffect(() => {
     const mount = mountRef.current;
@@ -514,22 +302,6 @@ export default function VltdMuseumCampus() {
     const camera = new THREE.PerspectiveCamera(MUSEUM_CAMERA_FOV, window.innerWidth / window.innerHeight, 0.1, 400);
     camera.rotation.order = "YXZ";
     camera.position.set(spawn.x, EYE_HEIGHT, spawn.z);
-    cameraRef.current = camera;
-
-    // Shared Museum Room Editor pass: the numbered placement-slot overlay
-    // needs a stable slot list as soon as possible (the projection effect
-    // below starts on mount, independent of this effect's own async data
-    // fetch) — computed here from real geometry only (no network round
-    // trip needed), refined once the real admin-configured itemsPerRoom
-    // resolves inside populateDynamicContent below.
-    if (editRoomId) {
-      const doorways = deriveRoomDoorways(editRoomId);
-      const slots = computeRoomPlacementSlots(
-        editRoomId, doorways, WALL_THICKNESS, EYE_HEIGHT, editorCapacityRef.current, focalWallFor(editRoomId)
-      );
-      setEditorSlots(slots);
-      void refreshEditorAssignments(editRoomId, slots);
-    }
 
     const renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
@@ -1126,20 +898,6 @@ export default function VltdMuseumCampus() {
         })
       );
       if (contentCancelled) return;
-
-      if (editRoomId) {
-        // Refine the editor's slot list/capacity now that the real
-        // admin-configured itemsPerRoom is known (the pre-fetch pass at
-        // mount used the DEFAULT_ITEMS_PER_ROOM estimate so the overlay had
-        // something to project immediately).
-        editorCapacityRef.current = itemsPerRoom;
-        const doorways = deriveRoomDoorways(editRoomId);
-        const refreshedSlots = computeRoomPlacementSlots(
-          editRoomId, doorways, WALL_THICKNESS, EYE_HEIGHT, itemsPerRoom, focalWallFor(editRoomId)
-        );
-        setEditorSlots(refreshedSlots);
-        void refreshEditorAssignments(editRoomId, refreshedSlots);
-      }
 
       for (const roomId of EDITABLE_ROOM_IDS) {
         const curated = curatedItemsByRoom.get(roomId);
@@ -2132,134 +1890,21 @@ export default function VltdMuseumCampus() {
       renderer.dispose();
       if (renderer.domElement.parentElement === mount) mount.removeChild(renderer.domElement);
     };
-    // Deliberately mount-only — `spawn`/`editRoomId` are read once to place
-    // the camera and compute the editor's initial slot list; re-running this
-    // multi-second scene-build effect on every searchParams change would
-    // rebuild the entire campus, which is never the intent here (matches
-    // this effect's existing pre-2026-09-12 captured-at-mount behavior for
-    // `spawn`).
+    // Deliberately mount-only — `spawn` is read once to place the camera;
+    // re-running this multi-second scene-build effect on every searchParams
+    // change would rebuild the entire campus, which is never the intent
+    // here.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Shared Museum Room Editor pass (2026-09-12): a small, independent rAF
-  // loop that projects every real placement-slot position to on-screen
-  // coordinates every frame — the exact same technique the personal
-  // Gallery's own Organize overlay uses (VirtualGalleryRoom.tsx) — so the
-  // numbered +/- buttons below sit exactly over their real 3D wall position
-  // without tying overlay position updates to the much heavier scene-build
-  // effect's own lifecycle.
-  useEffect(() => {
-    if (!editRoomId || !editorAdminOk) return undefined;
-    let raf = 0;
-    const tmp = new THREE.Vector3();
-    function tick() {
-      const camera = cameraRef.current;
-      const mount = mountRef.current;
-      if (camera && mount) {
-        const rect = mount.getBoundingClientRect();
-        editSlotElsRef.current.forEach((el, slotId) => {
-          const slot = editorSlots.find((s) => s.id === slotId);
-          if (!slot) {
-            el.style.display = "none";
-            return;
-          }
-          tmp.set(slot.x, slot.y, slot.z);
-          tmp.project(camera);
-          const behind = tmp.z > 1 || tmp.z < -1;
-          if (behind) {
-            el.style.display = "none";
-          } else {
-            const x = (tmp.x * 0.5 + 0.5) * rect.width;
-            const y = (-tmp.y * 0.5 + 0.5) * rect.height;
-            el.style.display = "";
-            el.style.transform = `translate3d(${x}px, ${y}px, 0) translate(-50%, -50%)`;
-          }
-        });
-      }
-      raf = window.requestAnimationFrame(tick);
-    }
-    raf = window.requestAnimationFrame(tick);
-    return () => window.cancelAnimationFrame(raf);
-  }, [editRoomId, editorAdminOk, editorSlots]);
-
-  // Drag interactions pass (2026-09-12): completes whatever gesture
-  // handleSlotPointerDown above started — real mouse drag-and-drop, and
-  // mobile/tablet long-press-then-drag. Lives on `window` (not on the slot
-  // buttons themselves) for the same reason the existing camera-look drag
-  // above does: a drag's pointermove/pointerup can legitimately land over a
-  // DIFFERENT slot button (or no button at all) than the one the gesture
-  // started on, so this has to hit-test the real DOM under the pointer each
-  // frame rather than rely on the one element that received pointerdown.
-  // Installed once per editor session (not re-bound on every
-  // editorAssignments/editorSlots change) — it always calls
-  // `performMoveRef.current`, which is repointed to the freshest closure
-  // every render, so it never acts on stale slot data.
-  useEffect(() => {
-    if (!editRoomId || !editorAdminOk) return undefined;
-
-    function slotIdUnderPoint(x: number, y: number): string | null {
-      const el = document.elementFromPoint(x, y);
-      const slotEl = el instanceof Element ? el.closest<HTMLElement>("[data-museum-slot-id]") : null;
-      return slotEl?.dataset.museumSlotId ?? null;
-    }
-
-    function endDrag() {
-      const state = slotDragRef.current;
-      if (state?.longPressTimer != null) window.clearTimeout(state.longPressTimer);
-      slotDragRef.current = null;
-      setActiveDragSlotId(null);
-      setDragOverSlotId(null);
-    }
-
-    function onPointerMove(e: PointerEvent) {
-      const state = slotDragRef.current;
-      if (!state || state.pointerId !== e.pointerId) return;
-      if (!state.dragging) {
-        const movedFar = Math.hypot(e.clientX - state.startX, e.clientY - state.startY) > DRAG_MOVE_THRESHOLD_PX;
-        if (!movedFar) return;
-        if (e.pointerType !== "mouse") {
-          // Touch/pen: a move before the long-press timer fires reads as a
-          // tap or a scroll/swipe gesture, never a drag — cancel outright
-          // rather than starting one.
-          endDrag();
-          return;
-        }
-        state.dragging = true;
-        setActiveDragSlotId(state.sourceSlotId);
-      }
-      e.preventDefault();
-      setDragOverSlotId(slotIdUnderPoint(e.clientX, e.clientY));
-    }
-
-    function onPointerUp(e: PointerEvent) {
-      const state = slotDragRef.current;
-      if (!state || state.pointerId !== e.pointerId) return;
-      const wasDragging = state.dragging;
-      const destinationSlotId = wasDragging ? slotIdUnderPoint(e.clientX, e.clientY) : null;
-      endDrag();
-      if (!wasDragging) return; // never crossed the drag/long-press threshold — the normal click handles this press
-      suppressNextClickRef.current = true;
-      window.setTimeout(() => { suppressNextClickRef.current = false; }, 400);
-      if (destinationSlotId && destinationSlotId !== state.sourceSlotId) {
-        void performMoveRef.current(state.sourceSlotId, destinationSlotId);
-      }
-    }
-
-    function onPointerCancel(e: PointerEvent) {
-      const state = slotDragRef.current;
-      if (!state || state.pointerId !== e.pointerId) return;
-      endDrag();
-    }
-
-    window.addEventListener("pointermove", onPointerMove, { passive: false });
-    window.addEventListener("pointerup", onPointerUp);
-    window.addEventListener("pointercancel", onPointerCancel);
-    return () => {
-      window.removeEventListener("pointermove", onPointerMove);
-      window.removeEventListener("pointerup", onPointerUp);
-      window.removeEventListener("pointercancel", onPointerCancel);
-    };
-  }, [editRoomId, editorAdminOk]);
+  // Shared Museum Room Editor consolidation pass (2026-09-12): the numbered
+  // placement-slot overlay/projection/drag system that used to live here
+  // (its own rAF projection loop, window-level pointer drag handling,
+  // click-to-arm state, and JSX) is gone — "Add Items / Edit Room" now
+  // opens MuseumRoomPopup.tsx instead, which runs the shared Organize
+  // system from organizeSlots.tsx (the same one VirtualGalleryRoom.tsx
+  // uses) in its own small, focused scene. This walkable campus view no
+  // longer has an editing mode of its own.
 
   return (
     <div className="fixed inset-0 bg-[#081527]">
@@ -2299,173 +1944,6 @@ export default function VltdMuseumCampus() {
         </div>
       ) : null}
 
-      {/* Shared Museum Room Editor pass (2026-09-12): numbered +/- overlay,
-          one real (focusable, keyboard-activatable) button per generated
-          placement slot, projected onto its exact real 3D wall position by
-          the rAF effect above — mirrors the personal Gallery's own Organize
-          overlay pattern. Renders nothing (and mutates nothing) until
-          getMyAdminRole() has actually resolved truthy for this session. */}
-      {editRoomId && editorAdminOk
-        ? editorSlots.map((slot, idx) => {
-            const item = editorAssignments[slot.id];
-            const isSelected = editorSelectedSlotId === slot.id;
-            // Drag interactions pass (2026-09-12): purely visual — which
-            // slot is currently "picked up" (dimmed, mid mouse-drag or
-            // mobile long-press) and which OTHER slot the pointer is
-            // currently hovering as a drop target (highlighted). Neither
-            // state changes what a click does; see handleSlotPointerDown /
-            // the window pointer-effect above for the actual gesture logic.
-            const isDragSource = activeDragSlotId === slot.id;
-            const isDropTarget = dragOverSlotId === slot.id && activeDragSlotId !== slot.id;
-            return (
-              <button
-                key={slot.id}
-                ref={(el) => {
-                  if (el) editSlotElsRef.current.set(slot.id, el);
-                  else editSlotElsRef.current.delete(slot.id);
-                }}
-                type="button"
-                data-museum-slot-id={slot.id}
-                onClick={() => handleSlotActivate(slot.id)}
-                onPointerDown={(e) => handleSlotPointerDown(e, slot.id)}
-                aria-label={
-                  editorMoveArmed
-                    ? `Position ${idx + 1}: place here`
-                    : item
-                      ? `Position ${idx + 1}: ${item.title} — select to replace, move, or remove, or press and drag to move`
-                      : `Position ${idx + 1}: empty — select to add an item`
-                }
-                className="pointer-events-auto absolute left-0 top-0 flex -translate-x-1/2 -translate-y-1/2 flex-col items-center gap-1 select-none"
-                style={{ willChange: "transform", touchAction: "none" }}
-              >
-                {item?.image_url ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={item.image_url}
-                    alt=""
-                    draggable={false}
-                    onDragStart={(e) => e.preventDefault()}
-                    className={[
-                      "h-10 w-10 rounded-md object-cover ring-2 transition",
-                      isDropTarget ? "ring-emerald-300" : isSelected ? "ring-[#4FD3EE]" : "ring-white/70",
-                      isDragSource ? "opacity-40" : "opacity-100",
-                    ].join(" ")}
-                  />
-                ) : (
-                  <span
-                    className={[
-                      "flex h-9 w-9 items-center justify-center rounded-full text-base font-black ring-2 transition",
-                      isDropTarget
-                        ? "bg-emerald-400/25 text-white ring-emerald-300"
-                        : isSelected
-                          ? "bg-[#4FD3EE] text-[#06171d] ring-white"
-                          : "bg-black/70 text-white ring-white/60",
-                    ].join(" ")}
-                  >
-                    +
-                  </span>
-                )}
-                <span className="rounded-full bg-black/75 px-1.5 py-0.5 text-[10px] font-black text-white/85">
-                  {item ? "−" : idx + 1}
-                </span>
-              </button>
-            );
-          })
-        : null}
-
-      {editRoomId ? (
-        <div className="pointer-events-none absolute inset-x-0 bottom-4 z-20 flex flex-col items-center gap-2 px-4">
-          {editorAdminOk === null ? (
-            <div className="pointer-events-auto rounded-full bg-black/70 px-4 py-2 text-xs font-medium text-white/60 ring-1 ring-white/15">
-              Checking admin access…
-            </div>
-          ) : editorAdminOk === false ? (
-            <div className="pointer-events-auto rounded-full bg-black/70 px-4 py-2 text-xs font-semibold text-red-300 ring-1 ring-red-400/40">
-              Admin sign-in required to edit this room.
-            </div>
-          ) : (
-            <>
-              <div className="pointer-events-auto flex max-w-full flex-wrap items-center justify-center gap-2 rounded-2xl bg-black/70 px-4 py-2.5 ring-1 ring-white/15 backdrop-blur">
-                <span className="text-xs font-black uppercase tracking-[0.1em] text-white/70">
-                  Editing {editRoomId} · {Object.keys(editorAssignments).length}/{editorSlots.length}
-                </span>
-                {editorSaveState === "saving" ? <span className="text-xs font-semibold text-cyan-200">Saving…</span> : null}
-                {editorSaveState === "saved" ? <span className="text-xs font-semibold text-emerald-300">Saved</span> : null}
-                {editorSaveState === "error" ? <span className="text-xs font-semibold text-red-300">Save failed — try again</span> : null}
-                {editorSelectedSlotId ? (
-                  <>
-                    {editorAssignments[editorSelectedSlotId] ? (
-                      <>
-                        <button
-                          type="button"
-                          onClick={() => setEditorPickerSlotId(editorSelectedSlotId)}
-                          className="rounded-full bg-white/10 px-3 py-1.5 text-[11px] font-black uppercase tracking-[0.08em] text-white transition hover:bg-white/20"
-                        >
-                          Replace
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setEditorMoveArmed(true)}
-                          className={[
-                            "rounded-full px-3 py-1.5 text-[11px] font-black uppercase tracking-[0.08em] transition",
-                            editorMoveArmed ? "bg-[#4FD3EE] text-[#06171d]" : "bg-white/10 text-white hover:bg-white/20",
-                          ].join(" ")}
-                        >
-                          {editorMoveArmed ? "Choose destination…" : "Move"}
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => void handleRemoveSlot(editorSelectedSlotId)}
-                          className="rounded-full bg-red-500/20 px-3 py-1.5 text-[11px] font-black uppercase tracking-[0.08em] text-red-300 transition hover:bg-red-500/30"
-                        >
-                          Remove
-                        </button>
-                      </>
-                    ) : (
-                      <button
-                        type="button"
-                        onClick={() => setEditorPickerSlotId(editorSelectedSlotId)}
-                        className="rounded-full bg-[#4FD3EE] px-3 py-1.5 text-[11px] font-black uppercase tracking-[0.08em] text-[#06171d] transition hover:brightness-110"
-                      >
-                        Add item
-                      </button>
-                    )}
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setEditorSelectedSlotId(null);
-                        setEditorMoveArmed(false);
-                      }}
-                      className="rounded-full bg-white/10 px-3 py-1.5 text-[11px] font-bold text-white/70 transition hover:bg-white/20"
-                    >
-                      Cancel
-                    </button>
-                  </>
-                ) : (
-                  <span className="text-[11px] font-medium text-white/50">
-                    Click a numbered position to add, move, or remove an item
-                  </span>
-                )}
-              </div>
-              <button
-                type="button"
-                onClick={() => router.back()}
-                className="pointer-events-auto rounded-full bg-[#4FD3EE] px-5 py-2 text-xs font-black uppercase tracking-[0.1em] text-[#06171d] transition hover:brightness-110"
-              >
-                Done
-              </button>
-            </>
-          )}
-        </div>
-      ) : null}
-
-      {editRoomId && editorPickerSlotId ? (
-        <MuseumRoomItemPicker
-          title={`${editRoomId} — position ${editorSlots.findIndex((s) => s.id === editorPickerSlotId) + 1}`}
-          onPick={(item) => void handlePickItem(item)}
-          onClose={() => setEditorPickerSlotId(null)}
-        />
-      ) : null}
     </div>
   );
 }

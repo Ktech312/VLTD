@@ -5,7 +5,116 @@
 - **Mobile drag/scroll bug** (EK found this hands-on, unrelated to the above): dragging to look around also scrolled the whole page on a touch device, and yaw drag didn't track smoothly — both caused by the room's mount div never declaring `touch-action: none`. Fixed with the same one-line fix already used elsewhere in this file. Code-verified and reasoned through; genuinely NOT tested with a real touch input (no tool in this session can produce one) — needs EK's own phone to close the loop.
 Regression-checked live: White unaffected (still looks exactly right), pickup/rotate/return still works, no console errors anywhere. See the 2026-09-06 dated entries (top of the log below) for full detail, including the one real bug this session found and fixed in its own live check (Blue's case lids) before calling any of this done. Before tonight: the first White-room material pass (2026-09-05, commit `c61e600`/`f346d18`) — also READY on Vercel and live-verified. Below that: the VLTD Museum public campus work (2026-08-31 through 09-04, then resumed and heavily active again 2026-09-08 through 09-10 — see the 2026-09-10 dated entry, TOP of the dated list below, for the current state: NOT accepted yet, EK's own physical-input pass still pending). Read the dated entries below in order, newest first, before assuming any room behaves a particular way. Older work further down in §2 (2026-08-27/28 Admin Users redesign; ~110 VaultItem fields + 3 Gallery-sync gaps, both migrations confirmed run by EK; Events tooling, admin console/APP_MAP.md, Vault upload; a full backend security audit, 3D Museum beta-access gating, Room Builder fixes) is unrelated to either of the above.)
 
-# 2026-09-12 (follow-up pass) — Museum Room Editor: background application fix + drag interactions
+# 2026-09-12 (consolidation pass) — Shared Museum Room Editor: extracted the personal Gallery's real Organize system instead of the prior two passes' own reinvented version
+
+**This is a correction, not a new feature.** EK's direct architecture call on
+the previous two passes (`b42af71`/`f70e988`/`af14013`, both entries directly
+below): "we spent 2 weeks creating a baseline in the 3D gallery, now you are
+trying to reinvent what we already have done... The ADD Edit room should
+create a pop of that room, that has all the functionality of the 'Organize'
+button in the 3D gallery." Verbatim requirement: keep the 3D gallery exactly
+as it is, and literally MOVE its existing Organize implementation into a
+shared place both the personal Gallery and a new museum room popup consume
+— not a new touch-drag handler, a new keyboard-move handler, or new overlay
+code that merely resembles it.
+
+**What moved, verbatim, out of `VirtualGalleryRoom.tsx`, into new
+`src/components/gallery/organizeSlots.tsx`:**
+- The `organizeSelectedSlot`/`moveMenuFor`/`replaceConfirm` state, the
+  `organizeSlotRefs`/`organizeTouchRef` refs, and `dragIndex`/`dragOverIndex`
+  — now `useSlotOrganizer()`, a hook generalized to take an abstract
+  `slotItems` array + `onMove`/`onReplace`/`onRemove` callbacks instead of
+  hardcoding the personal Gallery's own `selectedIds` string array.
+- `moveItemToSlot`, `focusSlot`, `confirmReplace`/`cancelReplace`,
+  `removeFromSlot`, `startOrganizeTouchHold`/`handleOrganizeTouchMove`/
+  `handleOrganizeTouchEnd` — moved into that same hook, logic unchanged
+  (same 260ms hold / 10px tolerance touch constants, same replace-vs-move
+  decision, same announce() wording).
+- The numbered +/- overlay JSX (`data-organize-idx` buttons, Remove/Move
+  mini-toolbar) — now the `<OrganizeSlotOverlay>` component.
+- The "Move to position…" bottom sheet and the Replace/Cancel dialog — now
+  `<OrganizeMoveMenu>`/`<OrganizeReplaceConfirm>`.
+`VirtualGalleryRoom.tsx` itself now calls `useSlotOrganizer()` with its own
+`selectedIds`-mutating callbacks and renders the three shared components —
+its own rendered behavior/visuals are unchanged; `handleOrganizeToggle` and
+the rest of the Hall save/exit flow were untouched (host-specific, not part
+of the shared piece).
+
+**Picker consolidation:** `MuseumRoomItemPicker.tsx` (built in the prior
+pass, its own comment admitting it deliberately didn't reuse
+`ItemPickerSheet.tsx`) is **deleted**. `ItemPickerSheet.tsx` gained a
+`mode: "multi" | "single"` + `maxItems` + `pickerTitle` prop set — single
+mode taps a tile to place immediately (no Add button, no exhibit-name row),
+matching the deleted component's own UX exactly, sourced from the same real
+vault data. Its one caller is now the new museum room popup.
+
+**`RoomEditorModal.tsx`** — per EK's marked-up screenshot: deleted the
+"Enter Museum" link and the entire Background section (its state,
+`saveBackground`/`backgroundId`, and the `ROOM_BACKGROUND_OPTIONS` import —
+dropped from scope, not persisted anywhere in the UI; the `background_id`
+DB column itself is untouched, still there, just nothing writes to it
+anymore). "Add Items / Edit Room" no longer navigates anywhere — it opens a
+new in-page popup, `MuseumRoomPopup.tsx`.
+
+**New `src/components/gallery/MuseumRoomPopup.tsx`** — "a pop of that room"
+with the Organize overlay running on it:
+- Shows ONLY that one room: its real shell/finish (`buildRoomShell`/
+  `buildNeutralShell` + `buildSharedWall`/`buildRoomTrim`, the exact same
+  functions `VltdMuseumCampus.tsx` itself calls — same room-category finish
+  mapping, same wall/trim technique), not a generic box and not the whole
+  walkable campus. Only the wall segments that actually touch this room are
+  built; a neighboring room's face gets its real material color (so a
+  doorway still reads correctly) but that neighbor's own floor/ceiling/
+  lighting are never built.
+- Camera is fixed at the room's center — drag-to-look only (reuses
+  `visitorController.ts`'s own `applyDrag`/`aimCamera` math, not a new
+  formula), no WASD, no collision: "walking/navigation disabled."
+- Runs `useSlotOrganizer()` + `<OrganizeSlotOverlay>`/`<OrganizeMoveMenu>`/
+  `<OrganizeReplaceConfirm>` from `organizeSlots.tsx` — the identical piece
+  `VirtualGalleryRoom.tsx` uses — wired to `museum_room_items` via `slot_id`
+  (`setRoomItemSlot`/`clearRoomItemSlot`/`getEnabledRoomItems`, all
+  pre-existing from the prior pass, untouched) instead of a personal Hall's
+  `selectedIds` array. `computeRoomPlacementSlots()` (kept, per EK: the
+  museum's real per-room wall geometry generator is legitimately necessary
+  and different from the personal Gallery's generic slot layout) supplies
+  the slot list; empty-slot taps open `ItemPickerSheet` in single mode.
+
+**`VltdMuseumCampus.tsx`** — the old `?edit=<roomId>` full-page editor mode
+is retired: removed `editRoomId`/`EDITABLE_ROOM_IDS`-gated admin check, the
+`SlotDragState`/window-pointer drag-and-drop effect, the rAF slot-projection
+effect, `performMove`/`handleMoveTo`/`handlePickItem`/`handleRemoveSlot`/
+`refreshEditorAssignments`, the numbered-overlay + bottom-toolbar JSX, and
+the `MuseumRoomItemPicker` import/usage — all superseded by
+`MuseumRoomPopup.tsx`. `?room=` (plain spawn-in-room, no editing) is
+untouched. **Not touched, per the work order:** campus geometry, doors,
+floor targets, lighting, camera/movement/collision in the walkable campus,
+Museum Map layout, the personal Gallery's own Hall/Exhibition save flow,
+`computeRoomPlacementSlots()`/`placeItemsAtSlots()` (the live museum
+display's own read path, which still renders curated `museum_room_items`
+exactly as before), and migration `20260912_museum_room_placement.sql`
+(already run by EK; `background_id` stays in the DB, unused, untouched).
+
+**Verified:** `npx tsc --noEmit` clean (0 errors). Targeted ESLint on every
+changed/new file: 0 errors, 12 warnings — all either pre-existing (carried
+over unchanged from before this pass) or the same React-Compiler
+rule-suppression notice already present on other `eslint-disable-next-line
+react-hooks/exhaustive-deps` comments elsewhere in this codebase (not a new
+pattern). `npm run build` clean, exit 0. This worktree had no installed
+dependencies at the start of this pass — ran a real `npm ci` (lockfile
+byte-identical to the main checkout's) so all three checks ran against this
+worktree's own `node_modules`, not resolved upward into another checkout.
+
+**Not done / not claimed:**
+- **Not live-verified.** No authenticated browser session is available to
+  this pass for the admin-gated `/museum/vltd` route or the Gallery Map's
+  Room Editor modal — the parent session verifies this live. This pass does
+  not declare the consolidation accepted or ready for EK's test.
+- The museum popup's drag-to-look camera is a deliberately smaller subset
+  of the walkable campus's own controller (no WASD, no wheel-step, no
+  collision) — intentional per "walking/navigation disabled," not an
+  oversight.
+
+
 
 Follow-up to the overnight pass immediately below (`b42af71`/`f70e988`) — EK
 asked for exactly the two items that pass's own "Known gaps" flagged below,
