@@ -1553,7 +1553,18 @@ export function computeRoomCaseSlots(
       x: point.x,
       y: 1.25,
       z: point.z,
-      rotationY: 0,
+      // POP_CULTURE Vault-parity pass (2026-09-13): was a hardcoded 0 —
+      // dead data until now (buildDisplayCase never reads rotationY at all,
+      // and placeItemsInCases only ever applied its own fixed
+      // rotation.x = -Math.PI/2, ignoring this field completely), so
+      // changing it here has zero effect on anything that already
+      // consumes a case slot. Set to the SAME outward-facing rotation
+      // wall art on this room's `solidWall` uses (wallRotationY) so a new,
+      // optional case-item label plaque (museumRoomFurniture.ts's
+      // placeItemsInCases `placeLabel` callback) can orient itself facing
+      // the room interior, matching the wall-hung "info treatment" instead
+      // of a guessed direction.
+      rotationY: wallRotationY(solidWall),
       maxWidth: CASE_ITEM_MAX,
       maxHeight: CASE_ITEM_MAX,
       kind: "case",
@@ -1598,7 +1609,7 @@ export function placeItemsAtSlots(
 // for that room pair, not for sitting under real framed art in a neutral
 // room. Kept tiny (one line, truncated) — "compact labels," not a second
 // plaque.
-function hangCompactLabel(
+export function hangCompactLabel(
   scene: THREE.Scene,
   x: number, y: number, z: number,
   rotationY: number,

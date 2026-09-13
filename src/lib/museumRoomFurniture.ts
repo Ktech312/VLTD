@@ -135,7 +135,18 @@ export function placeItemsInCases(
   textureLoader: THREE.TextureLoader,
   slots: PlacementSlot[],
   itemsBySlot: Map<string, { url: string; label?: string }>,
-  isCancelled: () => boolean
+  isCancelled: () => boolean,
+  // POP_CULTURE Vault-parity pass (2026-09-13): optional compact title-
+  // plaque callback, so a case item can get the SAME "info treatment" wall
+  // and shelf items already get (campusRoomBuilder.ts's own
+  // hangCompactLabel) — a callback rather than importing that function
+  // directly here, since campusRoomBuilder.ts already imports a VALUE from
+  // THIS file (caseShadowTexture, above); a second value import running the
+  // other direction would be a genuine runtime circular dependency, not the
+  // safe type-only one this file already documents at the top. Undefined
+  // for MuseumBuilder.tsx's existing call site — its case items keep
+  // showing with no label, exactly their current behavior, unchanged.
+  placeLabel?: (x: number, y: number, z: number, rotationY: number, label: string, maxWidth: number) => void
 ): void {
   for (const slot of slots) {
     const item = itemsBySlot.get(slot.id);
@@ -153,6 +164,13 @@ export function placeItemsInCases(
       plane.position.set(slot.x, slot.y, slot.z);
       plane.rotation.x = -Math.PI / 2;
       scene.add(plane);
+      if (item.label && placeLabel) {
+        // A small placard on the case's own front (room-facing) side, at
+        // roughly the base pedestal's mid-height — same idea as a real
+        // museum case's own front label, not floating above the glass.
+        const normal = new THREE.Vector3(0, 0, 1).applyEuler(new THREE.Euler(0, slot.rotationY, 0));
+        placeLabel(slot.x + normal.x * 0.78, 0.42, slot.z + normal.z * 0.78, slot.rotationY, item.label, 1.3);
+      }
     });
   }
 }

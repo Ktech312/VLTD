@@ -60,22 +60,29 @@ import {
   buildRoomShell,
   buildRoomTrim,
   buildSharedWall,
+  computeRoomCaseSlots,
   computeRoomPlacementSlots,
+  computeRoomShelfSlots,
+  computeRoomShelfSpans,
   computeUsableWallSpans,
   createStyledRoomFinishes,
   createWallMaterial,
+  hangCompactLabel,
   HUB_FINISH,
   NEUTRAL_LEGACY_FINISH,
   NEUTRAL_PREVIEW_FINISH,
   placeArtwork,
   placeItemsAtSlots,
   retitleDestinationSign,
+  type GalleryFinishStyle,
   type PlacementSlot,
   type RoomFinish,
   type RoomLightGroups,
   type RoomModule,
   type StyledRoomFinishes,
 } from "@/lib/campusRoomBuilder";
+import { addStyledRoomArmor } from "@/lib/museumRoomArmor";
+import { buildDisplayCase, buildShelfBoard, createShelfMaterial, placeItemsInCases } from "@/lib/museumRoomFurniture";
 import {
   aimCamera,
   applyDrag,
@@ -232,6 +239,27 @@ function buildSlotAssignments(
 function focalWallFor(roomId: CampusRoomId) {
   return roomId === "SPORTS" ? ("south" as const) : undefined;
 }
+
+// POP_CULTURE Vault-parity pass (2026-09-13): validates a raw
+// museum_room_meta.room_style string against createStyledRoomFinishes()'s
+// own recognized set, so museumRoomArmor.ts's addStyledRoomArmor() (which
+// takes the real GalleryFinishStyle union, not a bare string) can be called
+// with the same value the style-patch loop below already resolves via
+// createStyledRoomFinishes() — one validated value, two consumers, instead
+// of a second, separately-typed guess.
+function resolveGalleryFinishStyle(raw: string | null | undefined): GalleryFinishStyle | null {
+  return raw === "whitebox" || raw === "vault" || raw === "arcade" || raw === "loft" ? raw : null;
+}
+
+// POP_CULTURE Vault-parity pass (2026-09-13): the personal Gallery Vault's
+// own real case count (CABINET_SPOTS, src/lib/galleryRoomSlots.ts) — the
+// "5-case feel" a room with a saved style should default toward ONLY when
+// its own museum_room_meta.case_capacity has never actually been set
+// (column genuinely null/undefined). A stored 0 still means "cases off for
+// this room," unchanged from 20260912_museum_room_capacity_and_background
+// .sql's own documented meaning for that column — this default never
+// overrides an explicit choice, it only fills in a true gap.
+const DEFAULT_CASE_CAPACITY_FOR_STYLED_ROOM = 5;
 
 export default function VltdMuseumCampus() {
   const mountRef = useRef<HTMLDivElement | null>(null);
@@ -399,6 +427,15 @@ export default function VltdMuseumCampus() {
     // the cleanup function at the bottom of this effect can release them
     // without needing to know which rooms ended up styled.
     const styledFinishesForDisposal: StyledRoomFinishes[] = [];
+
+    // POP_CULTURE Vault-parity pass (2026-09-13): the display-case/shelf
+    // PlacementSlots actually built for each EDITABLE_ROOM_IDS room (below,
+    // alongside the style-patch loop) — the curated-item placement pass
+    // further down needs this exact same slot list (not a second,
+    // independently recomputed one) so an item's slot_id assignment and its
+    // physical case/shelf furniture can never disagree about where a slot
+    // actually sits.
+    const roomFurnitureSlotsByRoomId = new Map<CampusRoomId, { caseSlots: PlacementSlot[]; shelfSlots: PlacementSlot[] }>();
 
     const legacyLightGroups = new Map<CampusRoomId, RoomLightGroups>();
     for (const room of CAMPUS_ROOMS) {
@@ -1311,58 +1348,135 @@ export default function VltdMuseumCampus() {
       // createStyledRoomFinishes() and leaves that room's normal
       // per-category finish untouched — the required safe default / reset.
       for (const roomId of EDITABLE_ROOM_IDS) {
-        const styled = createStyledRoomFinishes(roomMeta[roomId]?.room_style);
-        if (!styled) continue;
-        const shell = roomShellMaterialsByRoomId.get(roomId);
-        if (!shell?.wall || !shell.floor || !shell.ceiling || !shell.baseboard) {
-          // Fails soft: this room's shell materials weren't tracked (should
-          // never happen for an EDITABLE_ROOM_IDS room, but never break the
-          // campus over it) — leave the room at its normal default finish.
-          styled.dispose();
-          continue;
-        }
-        shell.wall.copy(styled.wall);
-        shell.wall.needsUpdate = true;
-        shell.floor.copy(styled.floor);
-        shell.floor.needsUpdate = true;
-        shell.ceiling.copy(styled.ceiling);
-        // Re-apply the same downward-facing-ceiling self-illumination fix
-        // createStyledRoomFinishes' caller already set on the SOURCE
-        // material (see buildCeilingAndTrim) — .copy() above just overwrote
-        // it with the copy's own (correctly emissive) values, so this is
-        // actually redundant right now, but kept explicit here in case a
-        // future edit changes what gets copied.
-        shell.ceiling.emissive.copy(shell.ceiling.color);
-        shell.ceiling.emissiveIntensity = 0.22;
-        shell.ceiling.needsUpdate = true;
-        shell.baseboard.copy(styled.charcoal);
-        shell.baseboard.needsUpdate = true;
-        if (shell.rail) {
-          shell.rail.copy(styled.brass);
-          shell.rail.needsUpdate = true;
-        }
+        const roomStyleValue = roomMeta[roomId]?.room_style;
+        const styled = createStyledRoomFinishes(roomStyleValue);
 
-        // Swap the generic ceiling-fixture/wash-light rig this room was
-        // built with for the style's own real light rig.
-        const groups = roomLightGroups[roomId] ?? ensureRoomLightGroups(roomId);
-        for (const child of [...groups.full.children]) groups.full.remove(child);
-        if (shell.shellFixtures) {
-          for (const child of [...shell.shellFixtures.children]) {
-            if (child instanceof THREE.Mesh) {
-              child.geometry.dispose();
-              const material = child.material;
-              if (Array.isArray(material)) material.forEach((m) => m.dispose());
-              else material.dispose();
+        // POP_CULTURE Vault-parity pass (2026-09-13): the real Vault/Loft
+        // decorative wall armor (structural rib panels, corner rivets,
+        // Vault's own diagonal glowing ceiling-light lattice / Loft's own
+        // ceiling arrows) — museumRoomArmor.ts's addStyledRoomArmor(),
+        // already proven in MuseumBuilder.tsx, wired into the real live
+        // walkable campus for the first time here. Called for every
+        // EDITABLE_ROOM_IDS room unconditionally: its own internal
+        // style-conditional dispatcher already no-ops for anything other
+        // than "vault"/"loft" (White/Arcade never got this armor system in
+        // the personal Gallery either), so a room with no style, or an
+        // unrecognized one, is completely unaffected — no new geometry, no
+        // change from today.
+        const roomWallSegments = wallSegments.filter(
+          (segment) => segment.roomA === roomId || segment.roomB === roomId
+        );
+        addStyledRoomArmor(
+          scene, roomById(roomId), roomWallSegments, WALL_HEIGHT, resolveGalleryFinishStyle(roomStyleValue), WALL_THICKNESS
+        );
+
+        if (styled) {
+          const shell = roomShellMaterialsByRoomId.get(roomId);
+          if (!shell?.wall || !shell.floor || !shell.ceiling || !shell.baseboard) {
+            // Fails soft: this room's shell materials weren't tracked
+            // (should never happen for an EDITABLE_ROOM_IDS room, but never
+            // break the campus over it) — leave the room at its normal
+            // default finish.
+            styled.dispose();
+          } else {
+            shell.wall.copy(styled.wall);
+            shell.wall.needsUpdate = true;
+            shell.floor.copy(styled.floor);
+            shell.floor.needsUpdate = true;
+            shell.ceiling.copy(styled.ceiling);
+            // Re-apply the same downward-facing-ceiling self-illumination
+            // fix createStyledRoomFinishes' caller already set on the
+            // SOURCE material (see buildCeilingAndTrim) — .copy() above
+            // just overwrote it with the copy's own (correctly emissive)
+            // values, so this is actually redundant right now, but kept
+            // explicit here in case a future edit changes what gets copied.
+            shell.ceiling.emissive.copy(shell.ceiling.color);
+            shell.ceiling.emissiveIntensity = 0.22;
+            shell.ceiling.needsUpdate = true;
+            shell.baseboard.copy(styled.charcoal);
+            shell.baseboard.needsUpdate = true;
+            if (shell.rail) {
+              shell.rail.copy(styled.brass);
+              shell.rail.needsUpdate = true;
             }
-            shell.shellFixtures.remove(child);
+
+            // Swap the generic ceiling-fixture/wash-light rig this room was
+            // built with for the style's own real light rig.
+            const groups = roomLightGroups[roomId] ?? ensureRoomLightGroups(roomId);
+            for (const child of [...groups.full.children]) groups.full.remove(child);
+            if (shell.shellFixtures) {
+              for (const child of [...shell.shellFixtures.children]) {
+                if (child instanceof THREE.Mesh) {
+                  child.geometry.dispose();
+                  const material = child.material;
+                  if (Array.isArray(material)) material.forEach((m) => m.dispose());
+                  else material.dispose();
+                }
+                shell.shellFixtures.remove(child);
+              }
+            }
+            const styledRoom = roomById(roomId);
+            const anchor = new THREE.Group();
+            anchor.position.set(styledRoom.x + styledRoom.w / 2, 0, styledRoom.z + styledRoom.d / 2);
+            groups.full.add(anchor);
+            styled.addLighting(anchor);
+            styledFinishesForDisposal.push(styled);
           }
         }
-        const styledRoom = roomById(roomId);
-        const anchor = new THREE.Group();
-        anchor.position.set(styledRoom.x + styledRoom.w / 2, 0, styledRoom.z + styledRoom.d / 2);
-        groups.full.add(anchor);
-        styled.addLighting(anchor);
-        styledFinishesForDisposal.push(styled);
+
+        // POP_CULTURE Vault-parity pass (2026-09-13): display cases + shelf
+        // boards — museumRoomFurniture.ts's buildDisplayCase/
+        // buildShelfBoard/createShelfMaterial, already proven in
+        // MuseumBuilder.tsx, wired into the live campus for the first time
+        // here — sized from this room's own real museum_room_meta
+        // case_capacity/shelf_capacity (Museum Builder's existing capacity
+        // sliders) instead of a hardcoded number. Independent of
+        // room_style: a room with no style still gets its own real
+        // furniture, using createShelfMaterial()/buildDisplayCase()'s
+        // existing plain-material fallback for `styled: null` — the same
+        // safe default Museum Builder itself already relies on.
+        //
+        // shelf_capacity: null/undefined OR an explicit 0 both mean "off"
+        // here — the exact meaning
+        // 20260912_museum_room_capacity_and_background.sql's own comment
+        // gives this column ("null or 0 means that furniture kind is off
+        // for this room"). case_capacity gets one additional default on top
+        // of that same rule (DEFAULT_CASE_CAPACITY_FOR_STYLED_ROOM, above):
+        // a room that DOES have its own saved room_style but has never had
+        // case_capacity set at all (column genuinely null/undefined, not a
+        // stored 0 — a stored 0 still means off, unchanged) defaults toward
+        // the personal Gallery Vault's own real 5-case layout instead of
+        // silently showing none. Gated on `styled` (not just any
+        // EDITABLE_ROOM_IDS room) so a room with no saved style and no
+        // capacity row at all — e.g. TCG/COLLECTION today — stays at zero
+        // cases, matching "any other room that currently has no saved style
+        // must render exactly as before."
+        const meta = roomMeta[roomId];
+        const shelfCapacity = meta?.shelf_capacity ?? 0;
+        const caseCapacity = meta?.case_capacity ?? (styled ? DEFAULT_CASE_CAPACITY_FOR_STYLED_ROOM : 0);
+        if (shelfCapacity > 0 || caseCapacity > 0) {
+          const furnitureDoorways = deriveRoomDoorways(roomId);
+          const caseEligible =
+            caseCapacity > 0 && computeRoomCaseSlots(roomId, furnitureDoorways, WALL_THICKNESS, 1).length > 0;
+          const caseSlots = caseEligible
+            ? computeRoomCaseSlots(roomId, furnitureDoorways, WALL_THICKNESS, caseCapacity)
+            : [];
+          const shelfSlots =
+            shelfCapacity > 0
+              ? computeRoomShelfSlots(roomId, furnitureDoorways, WALL_THICKNESS, EYE_HEIGHT, shelfCapacity)
+              : [];
+          if (shelfSlots.length > 0) {
+            const shelfMaterial = createShelfMaterial(styled);
+            const shelfY = EYE_HEIGHT * 0.42;
+            for (const span of computeRoomShelfSpans(roomId, furnitureDoorways, WALL_THICKNESS, EYE_HEIGHT)) {
+              buildShelfBoard(scene, span, shelfY, WALL_THICKNESS, shelfMaterial);
+            }
+          }
+          for (const slot of caseSlots) buildDisplayCase(scene, slot.x, slot.z, styled);
+          if (caseSlots.length > 0 || shelfSlots.length > 0) {
+            roomFurnitureSlotsByRoomId.set(roomId, { caseSlots, shelfSlots });
+          }
+        }
       }
 
       // Shared Museum Room Editor pass (2026-09-12): fetch every gallery
@@ -1387,10 +1501,28 @@ export default function VltdMuseumCampus() {
         const curated = curatedItemsByRoom.get(roomId);
         if (!curated) continue;
         const doorways = deriveRoomDoorways(roomId);
-        const slots = computeRoomPlacementSlots(roomId, doorways, WALL_THICKNESS, EYE_HEIGHT, itemsPerRoom, focalWallFor(roomId));
+        const wallSlots = computeRoomPlacementSlots(roomId, doorways, WALL_THICKNESS, EYE_HEIGHT, itemsPerRoom, focalWallFor(roomId));
+        // POP_CULTURE Vault-parity pass (2026-09-13): fold in this room's
+        // own case/shelf slots (built above, alongside the style-patch
+        // loop) so a curated item explicitly pinned to a case/shelf slot_id
+        // lands there, and any UNPINNED item can also auto-fill a case/
+        // shelf slot once every wall slot is already taken — wall slots
+        // stay FIRST in this combined list, in the exact same order as
+        // before, so an existing room's wall-only assignment (today, every
+        // EDITABLE_ROOM_IDS room) is completely unaffected; case/shelf
+        // slots only ever pick up items that would otherwise have gone
+        // unplaced.
+        const furniture = roomFurnitureSlotsByRoomId.get(roomId);
+        const shelfSlots = furniture?.shelfSlots ?? [];
+        const caseSlots = furniture?.caseSlots ?? [];
         const groups = ensureRoomLightGroups(roomId);
-        const bySlot = buildSlotAssignments(slots, curated);
-        placeItemsAtSlots(scene, textureLoader, groups, slots, bySlot, () => contentCancelled);
+        const bySlot = buildSlotAssignments([...wallSlots, ...shelfSlots, ...caseSlots], curated);
+        placeItemsAtSlots(scene, textureLoader, groups, [...wallSlots, ...shelfSlots], bySlot, () => contentCancelled);
+        if (caseSlots.length > 0) {
+          placeItemsInCases(scene, textureLoader, caseSlots, bySlot, () => contentCancelled, (x, y, z, rotationY, label, maxWidth) =>
+            hangCompactLabel(scene, x, y, z, rotationY, label, maxWidth)
+          );
+        }
       }
       // Newly-created light groups (any room curated here for the first
       // time) need their visibility resolved against the visitor's CURRENT
