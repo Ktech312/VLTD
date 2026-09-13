@@ -5,6 +5,106 @@
 - **Mobile drag/scroll bug** (EK found this hands-on, unrelated to the above): dragging to look around also scrolled the whole page on a touch device, and yaw drag didn't track smoothly — both caused by the room's mount div never declaring `touch-action: none`. Fixed with the same one-line fix already used elsewhere in this file. Code-verified and reasoned through; genuinely NOT tested with a real touch input (no tool in this session can produce one) — needs EK's own phone to close the loop.
 Regression-checked live: White unaffected (still looks exactly right), pickup/rotate/return still works, no console errors anywhere. See the 2026-09-06 dated entries (top of the log below) for full detail, including the one real bug this session found and fixed in its own live check (Blue's case lids) before calling any of this done. Before tonight: the first White-room material pass (2026-09-05, commit `c61e600`/`f346d18`) — also READY on Vercel and live-verified. Below that: the VLTD Museum public campus work (2026-08-31 through 09-04, then resumed and heavily active again 2026-09-08 through 09-10 — see the 2026-09-10 dated entry, TOP of the dated list below, for the current state: NOT accepted yet, EK's own physical-input pass still pending). Read the dated entries below in order, newest first, before assuming any room behaves a particular way. Older work further down in §2 (2026-08-27/28 Admin Users redesign; ~110 VaultItem fields + 3 Gallery-sync gaps, both migrations confirmed run by EK; Events tooling, admin console/APP_MAP.md, Vault upload; a full backend security audit, 3D Museum beta-access gating, Room Builder fixes) is unrelated to either of the above.)
 
+# 2026-09-13 (Grand Hall custom design pass) — real coffered ceiling, skylight well, and marble/limestone finishes for the live public HUB
+
+Work order: `docs/GRAND-HALL-CUSTOM-DESIGN-2026-09-13.md` +
+`docs/GRAND-HALL-VISUAL-ASSETS.md` (both authoritative; read in full,
+along with both reference images, before writing any code). This is the
+live, production, walkable public museum (`/museum/vltd`) — HUB is a
+real room connected by real doors to its actual neighbors (read from
+`campusLayout.ts`'s `CAMPUS_DOORS` before designing anything, per the
+work order). Replaces the old placeholder "Grand Hall enhancement"
+block in `VltdMuseumCampus.tsx` — a flat emissive `PlaneGeometry`
+"skylight" and a canvas-drawn compass medallion — with real geometry.
+
+- **Floor**: warm-ivory-marble field + charcoal-marble perimeter
+  border, real PBR materials (basecolor/normal/roughness maps via
+  `THREE.TextureLoader`, correct `colorSpace` per map —
+  `THREE.SRGBColorSpace` for basecolor, `THREE.NoColorSpace` for
+  normal/roughness — and `renderer.capabilities.getMaxAnisotropy()`,
+  the exact same loading pattern the existing VLTD floor-seal texture
+  already used). Layered as a thin full-room overlay on top of HUB's
+  existing shared-shell floor plane (built by `buildNeutralShell()` in
+  `campusRoomBuilder.ts`, completely untouched) — the same inlay
+  technique the seal itself already uses against the compass medallion
+  beneath it, so no shared floor-building code needed changing.
+- **Walls**: real ivory-limestone PBR texture replaces `HUB_FINISH`'s
+  flat gold wall color. Applied via one `roomId === "HUB"` branch
+  inside `VltdMuseumCampus.tsx`'s own `roomWallMaterial()` cache
+  function — `createWallMaterial()`/`HUB_FINISH` themselves are
+  untouched, and `buildSharedWall()`'s existing per-box UV rescale
+  (`scaleWallPanelU`, keyed off `PANEL_WIDTH`, not the material's own
+  `.repeat`) already tiles whatever material it's handed, so the new
+  photographic texture reads at the correct physical scale for free —
+  no changes needed to `campusRoomBuilder.ts` at all for this.
+- **Wall base trim**: charcoal-marble overlay on HUB's existing
+  baseboard. Built by reproducing the exact same wall-segment/door-gap
+  walk `buildRoomTrim()` already does internally
+  (`computeCampusWallSegments()` + `splitSegmentForDoor()`, both
+  already used elsewhere in this same file) locally inside the Grand
+  Hall block, positioned a hair's-width proud of the original flat
+  baseboard so it fully covers it without z-fighting — again, zero
+  changes to the shared `buildRoomTrim()` function every other room
+  still uses unmodified.
+- **Ceiling**: HUB's existing flat shared-shell ceiling plane (built by
+  `buildCeilingAndTrim()`, same as every legacy room) is left in the
+  scene completely untouched — found by material identity via the
+  existing `roomShellMaterialsByRoomId` map and switched `.visible =
+  false`, since it has no holes of its own and would otherwise occlude
+  everything recessed/raised above it. In its place: a real coffered
+  ceiling — a symmetrical 3x3 grid (per the ceiling reference image's
+  own "3 across, 3 deep" proportions) of 8 broad, calm coffer bays
+  around a long central skylight, every cell sized as a fraction of
+  HUB's own real `w`/`d` and centered on `roomCenter(hub)` so the whole
+  layout is derived from the room's real geometry and can never drift
+  out of sync with its real doorway axes. Each coffer: a flat
+  warm-ivory-plaster trim lip, a recessed plaster panel set back from
+  it, a thin warm emissive "reveal" strip around the recessed edge (not
+  a lit flat panel face), and one small centered emissive downlight
+  disc.
+- **Skylight**: sized to the design doc's own ratios (~35% of HUB's
+  width, ~51% of its length — both within the specified 30-38%/45-55%
+  ranges), with a substantial dark-bronze framed curb at the ceiling
+  plane and a real deep well below the glass (four side walls plus a
+  glass-colored top, not a flat plane) — a dark bronze mullion grid
+  divides the glass AND continues down the well's own four side faces,
+  per the "keeps going as the well recesses upward" instruction in the
+  design doc.
+- **Lighting stays bounded**: one soft cool point light stands in for
+  daylight through the well, and four soft warm point lights are spread
+  across the coffer ring — no light per coffer (that glow is
+  emissive-material only), per the design doc's explicit "a limited
+  number of soft area/rect lights, not one per coffer" instruction.
+- **VLTD medallion/seal — unchanged.** The compass-rose canvas texture
+  and the real `vltd-museum-floor-medallion-v1.png` inlay are
+  byte-for-byte the same code as before, just re-sequenced within the
+  same block to run after the new marble floor so it sits correctly on
+  top of it instead of the old stone floor.
+- **`campusRoomBuilder.ts` has ZERO diff** — confirmed via `git diff
+  --stat`, exactly 1 file changed (`VltdMuseumCampus.tsx`). Every
+  "do not touch" item from the work order (HUB's real dimensions, wall
+  positions/thickness, doorways, door frames/casing/transoms,
+  destination signs, navigation/floor targets including HUB's own
+  center target, camera behavior, movement/collision, every adjoining
+  room, every other room's finish/geometry/lighting, Museum Builder,
+  Gallery Builder, `organizeSlots.tsx`, `MuseumRoomPopup.tsx`,
+  `MuseumBuilder.tsx`, `museumRoomArmor.ts`, `museumRoomFurniture.ts`)
+  is untouched.
+- `npx tsc --noEmit` clean (0 errors) / targeted ESLint on the one
+  changed file, 0 errors (1 pre-existing, unrelated rule-suppression
+  warning carried over) / `npm run build` clean, exit 0 — ran a real
+  `npm install` first (this worktree had no installed dependencies).
+  Committed and pushed straight to `main` (rebased cleanly onto one
+  intervening docs-only commit first) per the standing convention.
+- **Not visually verified — this session has no browser/render
+  capability, and says so plainly rather than claiming otherwise.** The
+  parent session and EK do the required live check — main entrance,
+  every interior doorway, all four corners, the room center, straight
+  up — confirming the skylight/coffers/marble border/medallion stay
+  centered and symmetrical from every approach, with no gaps, flicker,
+  clipping, or blown-out brightness, before this is accepted as
+  finished.
+
 # 2026-09-12 (Vault-style full-parity pass) — Museum Builder's display cases/shelves now use the real per-style materials, and Vault/Loft's real decorative armor geometry is ported and scaled to each real room
 
 Work order: `docs/MUSEUM-VAULT-STYLE-FULL-PARITY-2026-09-12.md`. Direct
