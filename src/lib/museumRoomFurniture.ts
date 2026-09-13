@@ -60,7 +60,15 @@ export function buildShelfBoard(
 // plane — ported verbatim, just placed at an arbitrary (x, z) instead of a
 // fixed CABINET_SPOTS table entry.
 let cachedShadowTexture: THREE.CanvasTexture | null = null;
-function caseShadowTexture(): THREE.CanvasTexture {
+// Exported (Material Quality Parity pass, 2026-09-12) so
+// campusRoomBuilder.ts's hangArtPreservingAspect() can reuse this exact
+// contact-shadow texture/technique for wall-hung and shelf items instead of
+// a second, separately-authored shadow generator. Safe to import a value
+// from here into campusRoomBuilder.ts even though this file already imports
+// TYPES back from campusRoomBuilder.ts (`PlacementSlot`/`WallSpan`) — that
+// reverse import is `import type`, erased at compile time, so there is no
+// real runtime circular dependency between the two modules.
+export function caseShadowTexture(): THREE.CanvasTexture {
   if (cachedShadowTexture) return cachedShadowTexture;
   const canvas = document.createElement("canvas");
   canvas.width = canvas.height = 128;

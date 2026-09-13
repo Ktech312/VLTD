@@ -340,12 +340,56 @@ export default function VltdMuseumCampus() {
     function lightenedFloorTint(hex: number): number {
       return new THREE.Color(hex).lerp(new THREE.Color(0xffffff), 0.65).getHex();
     }
+    // Material Quality Parity pass (2026-09-12): every legacy room now gets
+    // its own real light rig too (buildNeutralShell's new optional `lights`
+    // group), not just the 3 converted rooms — EK's material/lighting-
+    // quality ask explicitly supersedes the 2026-09-09 "no dynamic light rig
+    // for unconverted rooms" decision (see buildNeutralShell's own comment).
+    // Each room's rig lands in its own full/preview group, same shape as
+    // every converted room's RoomLightGroups, collected here so the
+    // roomLightGroups dictionary below (and ensureRoomLightGroups) can wire
+    // them into the SAME two-tier occupancy activation system instead of
+    // leaving ~10 more rooms' fixture rigs always on regardless of where the
+    // visitor actually is.
+    // SPORTS already gets its own dedicated full/preview light group further
+    // below (so its picture lights join the two-tier occupancy activation
+    // system) — declared here instead, ahead of the legacy shell loop, so
+    // this SAME pair of groups can also receive SPORTS's own new ambient
+    // shell-light rig immediately below, rather than that rig ending up in a
+    // second, never-toggled group of its own.
+    const sportsLightsFull = new THREE.Group();
+    sportsLightsFull.name = "room-full:SPORTS";
+    scene.add(sportsLightsFull);
+    const sportsLightsPreview = new THREE.Group();
+    sportsLightsPreview.name = "room-preview:SPORTS";
+    scene.add(sportsLightsPreview);
+    const sportsLights: RoomLightGroups = { full: sportsLightsFull, preview: sportsLightsPreview };
+
+    const legacyLightGroups = new Map<CampusRoomId, RoomLightGroups>();
     for (const room of CAMPUS_ROOMS) {
       if (room.id === "POP_CULTURE" || room.id === "TCG" || room.id === "COLLECTION") continue;
       const finish: RoomFinish = room.id === "HUB"
         ? HUB_FINISH
         : { ...NEUTRAL_LEGACY_FINISH, floorTintColor: lightenedFloorTint(room.floorColor) };
-      buildNeutralShell(scene, room, WALL_HEIGHT, finish, room.id !== "PLAZA");
+      let full: THREE.Group;
+      let preview: THREE.Group;
+      if (room.id === "SPORTS") {
+        // Reuse SPORTS's own pre-existing dedicated group (declared just
+        // above) instead of creating a second, orphaned one — its ambient
+        // shell lighting and its curated picture lights end up in the exact
+        // same group, toggled together by the one occupancy system.
+        full = sportsLightsFull;
+        preview = sportsLightsPreview;
+      } else {
+        full = new THREE.Group();
+        full.name = `room-full:${room.id}`;
+        scene.add(full);
+        preview = new THREE.Group();
+        preview.name = `room-preview:${room.id}`;
+        scene.add(preview);
+        legacyLightGroups.set(room.id, { full, preview });
+      }
+      buildNeutralShell(scene, room, WALL_HEIGHT, finish, room.id !== "PLAZA", full);
     }
 
     // Shared-Wall Grid Plan (2026-09-08, replacing the rejected connection-
@@ -624,16 +668,10 @@ export default function VltdMuseumCampus() {
     // (campusRoomBuilder.ts / campusLayout.ts) — the same generator the new
     // room editor's numbered overlay uses — so this file no longer needs its
     // own one-off sportsModule/sportsWallSpans. SPORTS's dedicated light
-    // group stays (still needed so its picture lights join the two-tier
-    // room-occupancy activation system below, same as every converted
-    // room's).
-    const sportsLightsFull = new THREE.Group();
-    sportsLightsFull.name = "room-full:SPORTS";
-    scene.add(sportsLightsFull);
-    const sportsLightsPreview = new THREE.Group();
-    sportsLightsPreview.name = "room-preview:SPORTS";
-    scene.add(sportsLightsPreview);
-    const sportsLights: RoomLightGroups = { full: sportsLightsFull, preview: sportsLightsPreview };
+    // group (sportsLights, declared earlier above the legacy shell loop so
+    // its ambient rig and its picture lights share one group) stays — still
+    // needed so its picture lights join the two-tier room-occupancy
+    // activation system below, same as every converted room's.
 
     // Two-tier room light activation — EK's review of 9796c72: room-level
     // activation alone doesn't scale through HUB, since HUB is adjacent to
@@ -647,7 +685,14 @@ export default function VltdMuseumCampus() {
     //   - preview: the cheap "don't read as black" doorway-reveal lights —
     //     on whenever this room is a graph neighbor of the visitor's
     //     current room/bridge endpoints, in addition to whenever full is on.
+    // Material Quality Parity pass (2026-09-12): every OTHER legacy room's
+    // own new shell light rig (legacyLightGroups, built above alongside
+    // buildNeutralShell — SPORTS excluded, since it already reuses
+    // sportsLights below for exactly this) joins the same dictionary so its
+    // lights get the same occupancy-based on/off treatment every converted
+    // room already gets, instead of running always-on campus-wide.
     const roomLightGroups: Partial<Record<CampusRoomId, RoomLightGroups>> = {
+      ...Object.fromEntries(legacyLightGroups),
       POP_CULTURE: popCultureLights,
       TCG: tcgLights,
       COLLECTION: collectionLights,

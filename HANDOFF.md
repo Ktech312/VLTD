@@ -5,6 +5,126 @@
 - **Mobile drag/scroll bug** (EK found this hands-on, unrelated to the above): dragging to look around also scrolled the whole page on a touch device, and yaw drag didn't track smoothly — both caused by the room's mount div never declaring `touch-action: none`. Fixed with the same one-line fix already used elsewhere in this file. Code-verified and reasoned through; genuinely NOT tested with a real touch input (no tool in this session can produce one) — needs EK's own phone to close the loop.
 Regression-checked live: White unaffected (still looks exactly right), pickup/rotate/return still works, no console errors anywhere. See the 2026-09-06 dated entries (top of the log below) for full detail, including the one real bug this session found and fixed in its own live check (Blue's case lids) before calling any of this done. Before tonight: the first White-room material pass (2026-09-05, commit `c61e600`/`f346d18`) — also READY on Vercel and live-verified. Below that: the VLTD Museum public campus work (2026-08-31 through 09-04, then resumed and heavily active again 2026-09-08 through 09-10 — see the 2026-09-10 dated entry, TOP of the dated list below, for the current state: NOT accepted yet, EK's own physical-input pass still pending). Read the dated entries below in order, newest first, before assuming any room behaves a particular way. Older work further down in §2 (2026-08-27/28 Admin Users redesign; ~110 VaultItem fields + 3 Gallery-sync gaps, both migrations confirmed run by EK; Events tooling, admin console/APP_MAP.md, Vault upload; a full backend security audit, 3D Museum beta-access gating, Room Builder fixes) is unrelated to either of the above.)
 
+# 2026-09-12 (material quality parity pass) — shared museum rooms brought up to the personal Gallery Builder's own material/lighting quality bar
+
+Work order: `docs/MUSEUM-MATERIAL-QUALITY-PARITY-2026-09-12.md`. EK, verbatim:
+"why will you not give me the room i took days and days getting to look
+good, for this reason alone and you create different one, wasted my time in
+the paste and now." The shared museum's rooms (`src/lib/campusRoomBuilder.ts`,
+used by both the live `/museum/vltd` and the new Museum Builder) read
+flatter/plainer than the personal Gallery Builder's own rooms
+(`VirtualGalleryRoom.tsx` + `galleryRoomFinishes.ts`), which got many real
+correction passes (see the 2026-09-05/06 entries above) to reach EK's
+approved "believable materials, grounded contact shadows, distinct trim"
+quality bar. MATERIAL/LIGHTING QUALITY ONLY, per the doc's own "what this is
+and is not": real campus geometry, door positions/widths, floor targets,
+navigation, camera/movement/collision, `CAMPUS_ROOMS`/`CAMPUS_DOORS` are
+completely out of scope and untouched — no generic fixed-box room shape
+swapped in, every room keeps its own real shape/dimensions. Read
+`galleryRoomFinishes.ts`/`galleryTextures.ts` first, per the work order, and
+reused their actual approved material recipes/tuning values rather than
+inventing new ones.
+
+- **Wall material tuning per RoomFinish** (item 1). `RoomFinish`
+  (`campusRoomBuilder.ts`) gained `wallRoughness`/`wallMetalness` fields,
+  matching Gallery Builder's own `FinishPalette` shape
+  (`galleryRoomFinishes.ts`). `createWallMaterial()` previously used a flat
+  0.85/0 for every room regardless of finish; it now reads the active
+  finish's own values. `NEUTRAL_PREVIEW_FINISH` (the converted rooms'
+  neighbor-face finish) reuses Gallery's own whitebox tuning VERBATIM
+  (0.94/0) — its `wallColor`/`railColor` are already the exact same hex
+  values as Gallery's whitebox `wallColor`/`trimColor`, so this is a direct
+  reuse, not an adaptation. `NEUTRAL_LEGACY_FINISH` (0.92/0.03) and
+  `HUB_FINISH` (0.88/0.05) get their own tuned values, chosen within the
+  same range Gallery's own palettes span (0.48-0.94 roughness, 0-0.72
+  metalness) rather than arbitrary new numbers.
+- **Contact shadows under wall-hung and shelf items** (item 2).
+  `museumRoomFurniture.ts`'s existing display-case shadow generator
+  (`caseShadowTexture` — a soft radial-gradient canvas, already used for
+  every display case) is now `export`ed and reused (not reimplemented) by
+  `campusRoomBuilder.ts`'s `hangArtPreservingAspect()`. A new `slotKind:
+  "wall" | "shelf"` parameter (default `"wall"`, so every existing caller's
+  behavior is unchanged unless it opts in) draws either a horizontal
+  grounding shadow directly under a shelf item (same orientation/technique
+  as a display case's own floor shadow, sized to the item instead of the
+  case's fixed size) or a wall-parallel shadow positioned just behind the
+  existing dark backing "mat" plane (so it only shows in the ring beyond the
+  mat's silhouette) for a wall-hung frame. `placeItemsAtSlots()` now passes
+  `slot.kind` through (`"shelf"` vs `"wall"`); the older, non-curated
+  `placeArtwork()` path defaults to `"wall"`, matching its previous
+  behavior exactly.
+- **Trim/rail tuning per RoomFinish** (item 3). `RoomFinish` gained
+  `trimMetalness`/`trimRoughness`, matching Gallery's own
+  `trimMetalness`/`trimRoughness` `FinishPalette` fields.
+  `buildRoomTrim()`'s `railMaterial` previously used one flat 0.5/0.35
+  pair for every finish; it now reads the active finish's own values —
+  `NEUTRAL_PREVIEW_FINISH` reuses Gallery whitebox's trim tuning verbatim
+  (0.72/0.43, since its `railColor` is whitebox's own `trimColor` hex),
+  `NEUTRAL_LEGACY_FINISH` gets a more restrained brushed-steel tuning
+  (0.5/0.5), `HUB_FINISH` a shinier polished-gold tuning (0.75/0.35)
+  fitting its existing "Grand Hall" identity.
+- **Real lighting for every legacy room** (item 4). Previously only
+  `buildRoomShell()`'s 3 "converted" rooms (POP_CULTURE/TCG/COLLECTION) had
+  a real dynamic light rig at all — every other room went through
+  `buildNeutralShell()`, which the 2026-09-09 Overnight Polish pass
+  deliberately left with NO light rig ("unconverted rooms should receive
+  only this neutral structural finish... do not turn into a new themed
+  identity," to avoid an ~8-light activation rig on all 10 of them). EK's
+  current ask explicitly supersedes that constraint for LIGHTING QUALITY
+  specifically (not theme) — read `campusRoomBuilder.ts`'s own updated
+  comment on `buildNeutralShell` for the full reasoning. New
+  `buildLegacyRoomLightRig()` reuses `buildRoomShell()`'s EXACT fixture/
+  SpotLight/PointLight recipe (same colors, intensities, cone angles,
+  decay) — `buildRoomShell()` itself, and its 3 existing callers' own
+  already-approved fixture count/positions, are completely untouched, zero
+  risk of regressing POP_CULTURE/TCG/COLLECTION. Fixture COUNT (not the
+  recipe) adapts to a legacy room's own footprint: ceiling-downlight rows
+  scale with room depth using the same `CEILING_BAY_SIZE` rhythm the
+  ceiling-bay texture already tiles at (capped at 6 rows so even HUB's
+  large hall stays bounded), and the 4 wall-wash spotlights' range scales
+  with the room's own longest dimension so a wide legacy hall's wash still
+  reaches its target wall. `buildNeutralShell()` now calls this (after its
+  existing ceiling — still skipped entirely for PLAZA's open-air
+  `includeCeiling=false` path, so PLAZA keeps its open-sky character) via a
+  new optional `lights?: THREE.Object3D` parameter.
+  `VltdMuseumCampus.tsx` (the live walkable campus, where perf actually
+  matters) wires each legacy room's new rig into the SAME two-tier
+  occupancy-based full/preview activation system every converted room
+  already uses (`roomLightGroups`/`ensureRoomLightGroups`) — so these are
+  NOT ~10 more rooms' full fixture rigs left permanently on regardless of
+  where the visitor is standing; only the occupied room (and its preview
+  neighbors) actually render their lights, same as before. SPORTS (a legacy
+  room with its own pre-existing dedicated light group for curated picture
+  lights) reuses that same group for its new ambient rig instead of getting
+  a second, never-toggled one. `MuseumBuilder.tsx`/`MuseumRoomPopup.tsx`
+  (single-room preview scenes with no occupancy system at all) needed NO
+  source changes — they call `buildNeutralShell()` with only 5 args, so the
+  new `lights` param defaults to `undefined` and the rig goes straight onto
+  the scene, always on, exactly appropriate for a scene that only ever
+  shows the one room.
+- **Untouched, confirmed via diff**: `campusLayout.ts`/`museumStandard.ts`
+  (real geometry/doors/floor targets/navigation) — `git diff --stat`
+  against `origin/main` touches exactly 3 files
+  (`src/lib/campusRoomBuilder.ts`, `src/lib/museumRoomFurniture.ts`,
+  `src/components/gallery/VltdMuseumCampus.tsx`). Gallery Builder's own
+  files (`VirtualGalleryRoom.tsx`, `galleryRoomFinishes.ts`,
+  `galleryTextures.ts`) were read from for their approved recipes, never
+  modified. Museum Builder's Organize system, item placement/save logic,
+  the Room/Map toggle, the background-color-swatch feature, and per-item
+  Values are all untouched.
+- `npx tsc --noEmit` clean (0 errors) / targeted ESLint on all 3 changed
+  files, 0 errors (1 pre-existing, unrelated `react-hooks/rule-suppression`
+  warning in `VltdMuseumCampus.tsx`, nowhere near anything touched here) /
+  `npm run build` clean, exit 0, all routes including `/museum/vltd` and
+  `/museum/builder` — ran a real `npm install` first (this worktree had no
+  installed dependencies; the Turbopack "workspace root" build failure
+  beforehand was purely that missing local `node_modules`, not a code
+  issue — resolved by installing, not by touching `next.config.ts`).
+- **Not live-verified.** There is no reliable way to judge from code alone
+  whether this actually reads as good as the personal Gallery rooms EK
+  spent days tuning — the parent session reviews this live in a real
+  browser and iterates further if it doesn't hold up.
+
 # 2026-09-12 (fixes pass) — Museum Builder: real camera movement, row-aligned wall items, a Single/Dual/Three-row selector, a Shelves checkbox, and the invented Background swatch dropdown replaced by the real Wallpaper flow
 
 EK's itemized feedback after her first live test of `/museum/builder` (the

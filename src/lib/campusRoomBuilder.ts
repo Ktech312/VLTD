@@ -35,6 +35,12 @@ import { createStoneFloorTexture } from "../components/gallery/galleryTextures";
 // personal room's own `eyeHeight` constant, so these heights need no unit
 // conversion to apply to the museum's rooms.
 import { MIN_ITEM_SCALE, SHELF_ROW_Y, shelfItemY } from "./galleryRoomSlots";
+// Material Quality Parity pass (2026-09-12): the exact same soft
+// radial-gradient contact-shadow texture museumRoomFurniture.ts's display
+// cases already use — reused here for wall-hung and shelf items too, not a
+// new implementation. (museumRoomFurniture.ts imports only TYPES back from
+// this file, so this is not a real runtime circular import.)
+import { caseShadowTexture } from "./museumRoomFurniture";
 
 export type RoomDoorway = {
   side: WallSide;
@@ -63,8 +69,30 @@ export type RoomFinish = {
   // NEUTRAL_PREVIEW_FINISH's existing rooms (which never set it) keep their
   // current plain-white-tinted floor unchanged.
   floorTintColor?: number;
+  // Material Quality Parity pass (2026-09-12): per-finish wall material
+  // tuning, matching the personal Gallery Builder's own FinishPalette shape
+  // (galleryRoomFinishes.ts's `wallRoughness`/`wallMetalness`) instead of
+  // createWallMaterial()'s previous flat 0.85/0 for every room — the same
+  // real tuning that makes Gallery's White (0.94/0 matte plaster) read
+  // differently from Vault (0.48/0.24 brushed steel) now applies per museum
+  // RoomFinish instead of one identical wall character everywhere.
+  wallRoughness: number;
+  wallMetalness: number;
+  // Differentiated trim/rail tuning, same FinishPalette shape
+  // (`trimMetalness`/`trimRoughness`) — buildRoomTrim()'s railMaterial used
+  // one flat roughness/metalness pair regardless of which RoomFinish/room
+  // it was decorating.
+  trimMetalness: number;
+  trimRoughness: number;
 };
 
+// Material Quality Parity pass (2026-09-12): wallColor/railColor here are
+// the exact same hex values as Gallery Builder's own "whitebox" palette
+// (galleryRoomFinishes.ts's PALETTES.whitebox wallColor 0xe3ddd0 / trimColor
+// 0xa68b53) — reusing that palette's own wallRoughness/wallMetalness
+// (0.94/0, matte plaster) and trimMetalness/trimRoughness (0.72/0.43, warm
+// brushed brass) directly rather than inventing new tuning for a
+// same-colored finish.
 export const NEUTRAL_PREVIEW_FINISH: RoomFinish = {
   wallColor: 0xe3ddd0,
   ceilingColor: 0xd6d0c1,
@@ -75,6 +103,10 @@ export const NEUTRAL_PREVIEW_FINISH: RoomFinish = {
   frameColor: 0xdad4c6,
   transomColor: 0xe3ddd0,
   lightColor: 0xfff2d0,
+  wallRoughness: 0.94,
+  wallMetalness: 0,
+  trimMetalness: 0.72,
+  trimRoughness: 0.43,
 };
 
 // Overnight Polish pass (2026-09-09): "make the campus look like a
@@ -92,6 +124,15 @@ export const NEUTRAL_PREVIEW_FINISH: RoomFinish = {
 // mostly by its dark "ground" color, not the bright "sky" one, so a dark
 // base color reads as near-black. NEUTRAL_PREVIEW_FINISH's own light
 // ceiling (0xd6d0c1) already accounts for this; matched here.
+// Material Quality Parity pass (2026-09-12): a cooler, plainer wall than
+// NEUTRAL_PREVIEW_FINISH's warm plaster — read as a slightly less finished
+// architectural shell, so a touch more roughness/less sheen than Gallery's
+// own whitebox plaster (0.94/0), between that and Gallery Vault's
+// brushed-steel character (0.48/0.24) without going as reflective. railColor
+// (0x8a8d87, cool gray) is tuned as a restrained brushed-steel rail, using
+// the same trimMetalness/trimRoughness SHAPE Gallery's own palettes use, sat
+// between Gallery Vault's 0.42/0.58 and NEUTRAL_PREVIEW_FINISH's
+// brass-like 0.72/0.43.
 export const NEUTRAL_LEGACY_FINISH: RoomFinish = {
   wallColor: 0xd7d9d6,
   ceilingColor: 0xc9cbc6,
@@ -102,6 +143,10 @@ export const NEUTRAL_LEGACY_FINISH: RoomFinish = {
   frameColor: 0xc7c9c4,
   transomColor: 0xd7d9d6,
   lightColor: 0xeef0f2,
+  wallRoughness: 0.92,
+  wallMetalness: 0.03,
+  trimMetalness: 0.5,
+  trimRoughness: 0.5,
 };
 
 // HUB keeps its existing "Grand Hall enhancement" gold — an already-
@@ -109,6 +154,13 @@ export const NEUTRAL_LEGACY_FINISH: RoomFinish = {
 // one — but now goes through the same shared shell/trim technique as every
 // other room instead of its own bespoke floor/ceiling code, so it gets a
 // real ceiling and a restrained (rail-free) baseboard like everything else.
+// Material Quality Parity pass (2026-09-12): HUB keeps its own "Grand Hall"
+// identity, so its gilt plaster wall reads slightly richer/less chalky than
+// the two neutral finishes above (a touch of sheen, still far from Gallery
+// Vault's metal), and its rail — already a bright gold (0xc9a24a) — gets a
+// genuinely polished-brass tuning (closer to Gallery Vault's own trim
+// metalness/roughness ratio, but shinier to match a grand hall's gilt
+// hardware rather than Vault's deliberately understated "brushed" bronze).
 export const HUB_FINISH: RoomFinish = {
   wallColor: 0xe8b95e,
   ceilingColor: 0xcbb582,
@@ -119,6 +171,10 @@ export const HUB_FINISH: RoomFinish = {
   frameColor: 0xdad4c6,
   transomColor: 0xe8b95e,
   lightColor: 0xfff2d0,
+  wallRoughness: 0.88,
+  wallMetalness: 0.05,
+  trimMetalness: 0.75,
+  trimRoughness: 0.35,
 };
 
 // Shared Museum Room Editor pass (2026-09-12): the room editor's Background
@@ -263,10 +319,15 @@ function createArchitecturalPanelTexture(): THREE.CanvasTexture {
 // box's real world-space span, so the same shared material/texture reads
 // at the correct physical scale on every wall segment simultaneously,
 // regardless of that segment's own length or the room's shape.
+// Material Quality Parity pass (2026-09-12): roughness/metalness now read
+// from the active RoomFinish (see its wallRoughness/wallMetalness fields)
+// instead of a flat 0.85/0 applied to every room regardless of finish — the
+// same per-style tuning approach Gallery Builder's own FinishPalette uses.
 export function createWallMaterial(finish: RoomFinish): THREE.MeshStandardMaterial {
   const panel = createArchitecturalPanelTexture();
   return new THREE.MeshStandardMaterial({
-    color: finish.wallColor, map: panel, bumpMap: panel, bumpScale: 0.05, roughness: 0.85, metalness: 0,
+    color: finish.wallColor, map: panel, bumpMap: panel, bumpScale: 0.05,
+    roughness: finish.wallRoughness, metalness: finish.wallMetalness,
   });
 }
 
@@ -475,23 +536,99 @@ export function buildRoomShell(scene: THREE.Scene, module: RoomModule): RoomLigh
   return { full: lights, preview };
 }
 
+/** Material Quality Parity pass (2026-09-12): the exact same ceiling-fixture
+ * + wall-wash SpotLight/PointLight recipe buildRoomShell() above already
+ * builds for POP_CULTURE/TCG/COLLECTION (same colors, intensities, cone
+ * angles, decay) — buildRoomShell() itself is untouched, its own fixture
+ * count/positions stay exactly as EK already approved them. This is a
+ * SEPARATE function, used only by buildNeutralShell() below, because the
+ * placement needs to adapt to a legacy room's own (often much larger or
+ * differently-proportioned) footprint instead of assuming a 21x26 room:
+ * the downlight row count scales with room depth (the same CEILING_BAY_SIZE
+ * rhythm the ceiling-bay texture already tiles at, capped so even HUB's
+ * large hall gets a bounded number of fixtures), while the 4 wall-wash
+ * spotlights stay one-per-wall exactly like buildRoomShell's own, their
+ * positions already proportional to room.w/room.d so they scale to any
+ * room size for free. Lights are added to `lightsTarget` (a per-room group
+ * when the caller wants the SAME two-tier occupancy activation every
+ * converted room already uses, or the scene itself for a single-room
+ * preview with no activation system) — never left permanently-on across the
+ * whole campus regardless of where the visitor is standing. */
+function buildLegacyRoomLightRig(
+  scene: THREE.Scene, room: CampusRoom, wallHeight: number, finish: RoomFinish, lightsTarget: THREE.Object3D
+): void {
+  const bounds = roomBounds(room);
+  const center = { x: room.x + room.w / 2, z: room.z + room.d / 2 };
+  const fixtureMaterial = new THREE.MeshStandardMaterial({ color: 0xfff6e0, emissive: finish.lightColor, emissiveIntensity: 0.7 });
+
+  const rows = Math.max(2, Math.min(6, Math.round(room.d / CEILING_BAY_SIZE) + 1));
+  for (let i = 0; i < rows; i += 1) {
+    const t = (i + 0.5) / rows;
+    const lx = center.x;
+    const lz = bounds.z0 + room.d * t;
+    const fixture = new THREE.Mesh(new THREE.CircleGeometry(0.34, 20), fixtureMaterial);
+    fixture.rotation.x = Math.PI / 2;
+    fixture.position.set(lx, wallHeight - 0.03, lz);
+    scene.add(fixture);
+
+    const down = new THREE.SpotLight(finish.lightColor, 1.1, 14, Math.PI / 4, 0.55, 1.3);
+    down.position.set(lx, wallHeight - 0.4, lz);
+    down.target.position.set(lx, 0, lz);
+    lightsTarget.add(down);
+    lightsTarget.add(down.target);
+
+    const upglow = new THREE.PointLight(finish.lightColor, 0.5, 9, 2);
+    upglow.position.set(lx, wallHeight - 0.15, lz);
+    lightsTarget.add(upglow);
+  }
+
+  const washSpecs: { pos: [number, number, number]; target: [number, number, number] }[] = [
+    { pos: [center.x, wallHeight - 1.1, bounds.z0 + room.d * 0.85], target: [center.x, wallHeight * 0.35, bounds.z0] },
+    { pos: [center.x, wallHeight - 1.1, bounds.z0 + room.d * 0.15], target: [center.x, wallHeight * 0.35, bounds.z1] },
+    { pos: [bounds.x0 + room.w * 0.85, wallHeight - 1.1, center.z], target: [bounds.x0, wallHeight * 0.35, center.z] },
+    { pos: [bounds.x0 + room.w * 0.15, wallHeight - 1.1, center.z], target: [bounds.x1, wallHeight * 0.35, center.z] },
+  ];
+  for (const wash of washSpecs) {
+    // Distance scales with the room's own longest dimension (floored at
+    // buildRoomShell's own fixed 20) so a wide legacy hall's wash still
+    // reaches its target wall instead of falling short at the same fixed
+    // range tuned for a 21x26 converted room.
+    const distance = Math.max(20, Math.max(room.w, room.d) * 0.4);
+    const light = new THREE.SpotLight(finish.lightColor, 1.3, distance, Math.PI / 3.5, 0.65, 1.4);
+    light.position.set(...wash.pos);
+    light.target.position.set(...wash.target);
+    lightsTarget.add(light);
+    lightsTarget.add(light.target);
+  }
+}
+
 /** Overnight Polish pass (2026-09-09): floor, ceiling, and a wall-to-ceiling
  * trim band for a room that is NOT going through the full buildRoomShell
- * rig — every unconverted legacy room plus HUB. Deliberately does not add
- * any dynamic lights: these rooms already read fine under the scene's
- * always-on ambient/directional lighting (no full/preview activation gap to
- * fill), and "do not add a new light for every architectural detail...
- * prefer bounded room-level lighting" argues against giving all 10 of them
- * their own 8-light activation rig just to reach parity with the 3
- * converted rooms. Fixes the two structural gaps EK's review found: no
- * ceiling at all above these rooms (visible as a black void through any
- * opening into one), and a checkerboard floor where "one coherent neutral
- * floor family" was called for. `includeCeiling` defaults true; PLAZA (the
- * one intentionally open-air forecourt, `noWalls` on its true exterior
- * edge) passes false to keep its existing open-sky character instead of
- * capping it like every fully enclosed room. */
+ * rig — every unconverted legacy room plus HUB. `includeCeiling` defaults
+ * true; PLAZA (the one intentionally open-air forecourt, `noWalls` on its
+ * true exterior edge) passes false to keep its existing open-sky character
+ * instead of capping it like every fully enclosed room. Fixes the two
+ * structural gaps EK's review found: no ceiling at all above these rooms
+ * (visible as a black void through any opening into one), and a
+ * checkerboard floor where "one coherent neutral floor family" was called
+ * for.
+ *
+ * Material Quality Parity pass (2026-09-12): the 2026-09-09 decision above
+ * deliberately withheld any dynamic light rig from these rooms ("do not add
+ * a new light for every architectural detail... prefer bounded room-level
+ * lighting", to avoid giving all 10 of them their own 8-light activation rig
+ * just to reach parity with the 3 converted rooms). EK's current ask
+ * explicitly supersedes that for LIGHTING QUALITY (not theme): every legacy
+ * room now gets buildLegacyRoomLightRig()'s real fixture/spotlight rig too,
+ * same recipe buildRoomShell()'s converted rooms already use. `lights`
+ * is optional — when the caller supplies its own per-room group (wired into
+ * the same occupancy on/off system every converted room already uses, see
+ * VltdMuseumCampus.tsx), the rig only lights up while that room is actually
+ * occupied; when omitted (a single-room preview scene with no occupancy
+ * system, e.g. MuseumBuilder.tsx/MuseumRoomPopup.tsx), it goes straight onto
+ * the scene, always on, since that scene only ever shows the one room. */
 export function buildNeutralShell(
-  scene: THREE.Scene, room: CampusRoom, wallHeight: number, finish: RoomFinish, includeCeiling = true
+  scene: THREE.Scene, room: CampusRoom, wallHeight: number, finish: RoomFinish, includeCeiling = true, lights?: THREE.Object3D
 ): void {
   const center = { x: room.x + room.w / 2, z: room.z + room.d / 2 };
 
@@ -504,6 +641,7 @@ export function buildNeutralShell(
 
   if (!includeCeiling) return;
   buildCeilingAndTrim(scene, room, wallHeight, finish);
+  buildLegacyRoomLightRig(scene, room, wallHeight, finish, lights ?? scene);
 }
 
 const destinationSignFaceTextures = new WeakMap<THREE.Scene, THREE.Texture>();
@@ -902,7 +1040,11 @@ export function buildRoomTrim(
   includeRail = true
 ): void {
   const baseboardMaterial = new THREE.MeshStandardMaterial({ color: finish.baseboardColor, roughness: 0.85 });
-  const railMaterial = new THREE.MeshStandardMaterial({ color: finish.railColor, roughness: 0.5, metalness: 0.35 });
+  // Material Quality Parity pass (2026-09-12): per-finish trim tuning
+  // (finish.trimMetalness/trimRoughness) instead of one flat 0.5/0.35 rail
+  // material reused for every RoomFinish — the same trimMetalness/
+  // trimRoughness approach Gallery Builder's own FinishPalette uses.
+  const railMaterial = new THREE.MeshStandardMaterial({ color: finish.railColor, roughness: finish.trimRoughness, metalness: finish.trimMetalness });
   const baseboardHeight = 0.22;
   const railHeight = 0.06;
   const railY = wallHeight - 2.2;
@@ -1351,7 +1493,8 @@ export function placeItemsAtSlots(
       scene, textureLoader, groups,
       slot.x, slot.y, slot.z, slot.rotationY,
       item.url, slot.maxWidth, slot.maxHeight,
-      isCancelled, withRealLight, item.label
+      isCancelled, withRealLight, item.label,
+      slot.kind === "shelf" ? "shelf" : "wall"
     );
   }
 }
@@ -1407,7 +1550,12 @@ function hangArtPreservingAspect(
   maxW: number, maxH: number,
   isCancelled: () => boolean,
   withRealLight: boolean,
-  label?: string
+  label?: string,
+  // Material Quality Parity pass (2026-09-12): "wall" (default, every
+  // existing caller's behavior unchanged) vs "shelf" — which surface this
+  // item is actually grounded against, so the contact shadow below reads
+  // correctly either way.
+  slotKind: "wall" | "shelf" = "wall"
 ) {
   textureLoader.load(url, (texture) => {
     if (isCancelled()) return;
@@ -1427,6 +1575,42 @@ function hangArtPreservingAspect(
     scene.add(mat);
 
     const normal = new THREE.Vector3(0, 0, 1).applyEuler(new THREE.Euler(0, rotationY, 0));
+
+    // Contact shadow (Material Quality Parity pass, 2026-09-12): the exact
+    // same soft radial-gradient shadow technique museumRoomFurniture.ts's
+    // display cases already use (caseShadowTexture), reused here rather than
+    // a new implementation — grounds each frame/shelf item against the
+    // surface it actually hangs or rests on, instead of it reading as
+    // floating flat in front of/on top of that surface.
+    const shadowMaterial = new THREE.MeshBasicMaterial({
+      map: caseShadowTexture(), transparent: true, depthWrite: false, toneMapped: false,
+    });
+    if (slotKind === "shelf") {
+      // Shelf items rest ON a physical board (museumRoomFurniture.ts's
+      // buildShelfBoard) at this same y — a horizontal grounding shadow
+      // directly beneath the item's own footprint, same orientation/
+      // technique as a display case's floor shadow, sized to this item
+      // instead of the case's fixed size.
+      const shadow = new THREE.Mesh(
+        new THREE.PlaneGeometry(Math.max(artW * 1.3, 0.9), Math.max(artH * 0.9, 0.7)),
+        shadowMaterial
+      );
+      shadow.rotation.x = -Math.PI / 2;
+      shadow.position.set(x, y - 0.05, z);
+      scene.add(shadow);
+    } else {
+      // Wall-hung frames: a soft shadow behind and slightly below the frame,
+      // parallel to the wall — positioned just BEHIND the opaque mat plane
+      // (a hair closer to the real wall surface) so it only shows in the
+      // ring beyond the mat's own silhouette, reading as the frame casting a
+      // soft shadow onto the wall around it, instead of floating in front
+      // of a bare wall.
+      const shadow = new THREE.Mesh(new THREE.PlaneGeometry(artW + 0.5, artH + 0.35), shadowMaterial);
+      shadow.position.set(x - normal.x * 0.005, y - artH * 0.08, z - normal.z * 0.005);
+      shadow.rotation.y = rotationY;
+      scene.add(shadow);
+    }
+
     const artMaterial = withRealLight
       ? new THREE.MeshStandardMaterial({ map: texture, roughness: 0.6 })
       : new THREE.MeshStandardMaterial({ map: texture, roughness: 0.55, emissive: 0xffffff, emissiveMap: texture, emissiveIntensity: 0.22 });
