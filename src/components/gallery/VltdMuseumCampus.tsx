@@ -862,6 +862,29 @@ export default function VltdMuseumCampus() {
         grandHallGroup.add(light);
       }
 
+      // Restrained wall washing (docs/GRAND-HALL-VISUAL-ASSETS.md: "combine
+      // ... with restrained wall washing") — its own lighting layer, distinct
+      // from the coffer glow/skylight above. A live check after the initial
+      // build found the new ivory-limestone walls reading flat and cool: the
+      // coffer-ring fills above sit at ceiling height aimed at the coffers,
+      // not down at the walls, so the walls had only HUB's pre-existing
+      // legacy fixture rig (buildLegacyRoomLightRig/HUB_FINISH, tuned for the
+      // old flat gold ceiling, not this room's much taller coffered one) to
+      // read by. One soft warm point light per wall, at mid-wall-height,
+      // inset from the wall face — a real, if modest, wash rather than
+      // relying on ambient falloff from the ceiling fixtures alone.
+      const wallWashSpots: { x: number; z: number }[] = [
+        { x: hubCenter.x, z: hubBounds.z0 + 2.5 },
+        { x: hubCenter.x, z: hubBounds.z1 - 2.5 },
+        { x: hubBounds.x0 + 2.5, z: hubCenter.z },
+        { x: hubBounds.x1 - 2.5, z: hubCenter.z },
+      ];
+      for (const spot of wallWashSpots) {
+        const wash = new THREE.PointLight(0xffdcae, 0.85, 42, 2);
+        wash.position.set(spot.x, WALL_HEIGHT * 0.58, spot.z);
+        grandHallGroup.add(wash);
+      }
+
       // --- VLTD medallion/seal — UNCHANGED mechanism, just re-sequenced to
       // run after the new marble floor so it sits correctly on top of it
       // instead of the old stone floor. Every line below this comment is the
