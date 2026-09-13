@@ -339,27 +339,15 @@ export default function VltdMuseumCampus() {
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     mount.appendChild(renderer.domElement);
 
-    // Live-reported bug (2026-09-13, EK, Grand Hall check): this scene-wide
-    // ambient's cool sky (0xbcd6ef) / near-black-navy ground (0x12294a)
-    // hemisphere pair was washing every room's own real, warm materials
-    // toward blue-gray regardless of that room's own lighting or texture —
-    // confirmed by inspecting the actual ivory-limestone basecolor PNG
-    // (genuinely warm cream, not gray) and by two earlier scoped fixes
-    // (added wall-wash point lights, exempted Grand Hall materials from
-    // fog) producing zero visible change, which only makes sense if a much
-    // stronger, scene-wide light was dominating the result. This exact
-    // sky/ground pair was ALSO already flagged, independently, as a
-    // disclosed-but-unfixed contributor to Museum Builder's own "doesn't
-    // look like Vault" complaint (MuseumBuilder.tsx has its own separate
-    // copy of this same ambient — untouched here, out of scope for this
-    // file's pass). Warmed toward the museum's own established warm-gold
-    // palette (HUB_FINISH.lightColor 0xfff2d0, ceilingTrimColor 0x2a2015)
-    // instead of a cool blue "sky" — same intensity, so overall exposure
-    // doesn't change, only its color temperature. This affects EVERY room
-    // (it's the one scene-wide ambient), so verify live across more than
-    // just HUB before trusting this — reverify a legacy room and a styled
-    // room too, not just the one that prompted this fix.
-    scene.add(new THREE.HemisphereLight(0xfdf0d5, 0x2a2015, 0.9));
+    // Reverted (2026-09-13): a warm-shifted version of this scene-wide
+    // ambient was tried here briefly to fix Grand Hall's cool cast, but it's
+    // a GLOBAL light (every room, not just HUB) and live-checking it against
+    // more than HUB found it turned the corridor and other neutral rooms a
+    // muddy olive-brown — a real regression, reverted back to the original
+    // values every other room was already tuned against. HUB's own warmth
+    // now comes only from HUB-local lights (wallWashSpots/warmFillSpots
+    // below in the Grand Hall block), never from a scene-wide change.
+    scene.add(new THREE.HemisphereLight(0xbcd6ef, 0x12294a, 0.9));
     const sun = new THREE.DirectionalLight(0xfff4e0, 0.6);
     sun.position.set(40, 60, 20);
     scene.add(sun);
@@ -850,15 +838,6 @@ export default function VltdMuseumCampus() {
       const Y_PANEL = Y_CEIL_BASE + 0.34; // each coffer's recessed plaster panel (shallower — many small bays, not a few deep ones)
       const Y_WELL_TOP = Y_CEIL_BASE + 3.6; // skylight glass — a real deep well, not a flat plane
 
-      // One continuous plaster ceiling covering the entire real ceiling —
-      // every coffer/skylight opening below is cut INTO this same
-      // continuous surface via nested buildFrameRing calls, never leaving a
-      // gap that isn't warm ivory plaster.
-      const continuousCeiling = new THREE.Mesh(new THREE.PlaneGeometry(hubBounds.x1 - hubBounds.x0, hubBounds.z1 - hubBounds.z0), plasterMaterial);
-      continuousCeiling.rotation.x = Math.PI / 2;
-      continuousCeiling.position.set(hubCenter.x, Y_CEIL_BASE, hubCenter.z);
-      grandHallGroup.add(continuousCeiling);
-
       // Skylight sized per the design doc: ~45-55% of the Hall's length
       // (its longer axis, Z at 78) and ~30-38% of its width (X at 63) —
       // expressed as fractions of the room's own real dimensions so this
@@ -872,12 +851,25 @@ export default function VltdMuseumCampus() {
         z0: hubCenter.z - skyHalfL, z1: hubCenter.z + skyHalfL,
       };
 
-      // Coffer field: a margin in from the real walls.
+      // Coffer field: a margin in from the real walls. Bug fix (this pass):
+      // an earlier version of this rewrite added a SOLID full-ceiling plane
+      // at Y_CEIL_BASE covering the entire room before this point — since
+      // every coffer/skylight/panel/downlight below sits at Y >= Y_CEIL_BASE
+      // (further from the room, i.e. "behind" that plane from the floor's
+      // viewpoint looking up), that plane fully occluded all of it, which is
+      // exactly why the ceiling rendered as one dark, featureless field with
+      // no visible coffers or skylight at all, and likely why movement felt
+      // laggy (heavy per-frame overdraw of ~250 hidden meshes behind one
+      // opaque plane). Removed. Only the margin strip between the real wall
+      // and `field` needs its own flat plaster ring — everywhere inside
+      // `field` is already fully covered by each coffer cell's own outer
+      // frame ring below (the cells tile it edge-to-edge with zero gaps).
       const CEIL_MARGIN = 3;
       const field: Rect = {
         x0: hubBounds.x0 + CEIL_MARGIN, x1: hubBounds.x1 - CEIL_MARGIN,
         z0: hubBounds.z0 + CEIL_MARGIN, z1: hubBounds.z1 - CEIL_MARGIN,
       };
+      buildFrameRing(hubBounds, field, Y_CEIL_BASE, plasterMaterial, false);
 
       // The real layout, read off the reference image: a 6 (long axis) x 3
       // (short axis) grid where the skylight occupies the middle row's
