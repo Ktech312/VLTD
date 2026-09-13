@@ -33,6 +33,7 @@ import {
   isWalkable,
   roomBounds,
   roomById,
+  splitSegmentForDoor,
   type CampusWaypoint,
   type CampusRoom,
   type CampusRoomId,
@@ -463,10 +464,52 @@ export default function VltdMuseumCampus() {
       if (roomId === "HUB") return HUB_FINISH;
       return NEUTRAL_LEGACY_FINISH;
     }
+    // Grand Hall custom design (2026-09-13): every new PBR texture this pass
+    // loads (walls here, plus floor/border/ceiling further below in the
+    // Grand Hall enhancement block) shares this one loader — the exact same
+    // THREE.TextureLoader + colorSpace + renderer.capabilities.
+    // getMaxAnisotropy() pattern the existing VLTD floor-seal texture already
+    // uses, just factored out since this pass loads many more textures than
+    // that one seal did.
+    function loadGrandHallTexture(file: string, colorSpace: THREE.ColorSpace, repeatX: number, repeatY: number): THREE.Texture {
+      const texture = new THREE.TextureLoader().load(`/museum/grand-hall/${file}`);
+      texture.colorSpace = colorSpace;
+      texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
+      texture.repeat.set(repeatX, repeatY);
+      texture.anisotropy = renderer.capabilities.getMaxAnisotropy();
+      return texture;
+    }
+    // Same basecolor/normal/roughness recipe for every Grand Hall stone
+    // finish (docs/GRAND-HALL-VISUAL-ASSETS.md) — roughness stays a 1.0
+    // passthrough so each surface's own roughness MAP (already tuned near
+    // that doc's target ranges, confirmed by inspecting the actual PNGs)
+    // drives the real value, rather than guessing a second scalar on top of
+    // an unknown map.
+    function buildStoneMaterial(prefix: string, repeatX: number, repeatY: number, metalness: number, normalScale: number): THREE.MeshStandardMaterial {
+      const map = loadGrandHallTexture(`${prefix}-basecolor.png`, THREE.SRGBColorSpace, repeatX, repeatY);
+      const normalMap = loadGrandHallTexture(`${prefix}-normal.png`, THREE.NoColorSpace, repeatX, repeatY);
+      const roughnessMap = loadGrandHallTexture(`${prefix}-roughness.png`, THREE.NoColorSpace, repeatX, repeatY);
+      return new THREE.MeshStandardMaterial({
+        map, normalMap, roughnessMap, metalness, roughness: 1,
+        normalScale: new THREE.Vector2(normalScale, normalScale),
+      });
+    }
     function roomWallMaterial(roomId: CampusRoomId): THREE.MeshStandardMaterial {
       const cached = wallMaterialByRoomId.get(roomId);
       if (cached) return cached;
-      const material = createWallMaterial(baseFinishForRoom(roomId));
+      // Grand Hall custom design: HUB's wall gets the real ivory-limestone
+      // PBR texture instead of createWallMaterial()'s flat-tinted canvas
+      // panel — every other room's material is completely untouched, still
+      // built by createWallMaterial(baseFinishForRoom(roomId)) exactly as
+      // before. buildSharedWall() already rescales whatever material it's
+      // given per wall box via scaleWallPanelU (campusRoomBuilder.ts, keyed
+      // off PANEL_WIDTH, not this material's own .repeat), so leaving repeat
+      // at 1x1 here and letting that existing mechanism govern the physical
+      // tiling is the same convention createWallMaterial's own canvas
+      // texture already relies on, just pointed at a photographic texture.
+      const material = roomId === "HUB"
+        ? buildStoneMaterial("ivory-limestone", 1, 1, 0.02, 0.4)
+        : createWallMaterial(baseFinishForRoom(roomId));
       wallMaterialByRoomId.set(roomId, material);
       shellEntry(roomId).wall = material;
       return material;
@@ -538,23 +581,291 @@ export default function VltdMuseumCampus() {
     // door's own casing/header — see buildSharedWall's `style: "entrance"`
     // call below — not a separate structure standing apart from the wall.
 
-    // Grand Hall enhancement — a lit "skylight" ceiling accent and a floor
-    // medallion, so the Hub reads as a real grand hall rather than a plain box.
+    // Grand Hall custom design (2026-09-13) — replaces the previous flat
+    // emissive "skylight" plane + canvas-drawn medallion placeholder with
+    // real geometry per docs/GRAND-HALL-CUSTOM-DESIGN-2026-09-13.md and
+    // docs/GRAND-HALL-VISUAL-ASSETS.md (both authoritative; read in full
+    // before touching this block again). HUB's real room dimensions, walls,
+    // doors, signs, targets, camera, and every other room are untouched —
+    // everything below is new geometry sized off `hub`/`hubBounds`/
+    // `hubCenter` (this room's own real, unmodified data) or a thin overlay
+    // layered on top of the shared shell's existing (now-hidden) floor/
+    // ceiling, the same inlay technique the VLTD seal below already uses
+    // against the compass medallion beneath it.
     {
       const hub = roomById("HUB");
+      const hubBounds = roomBounds(hub);
       const hubCenter = roomCenter(hub);
+      const grandHallGroup = new THREE.Group();
+      grandHallGroup.name = "grand-hall-enhancement";
+      scene.add(grandHallGroup);
 
-      const skylight = new THREE.Mesh(
-        new THREE.PlaneGeometry(hub.w * 0.6, hub.d * 0.55),
-        new THREE.MeshStandardMaterial({ color: 0xfff6e0, emissive: 0xfff2d0, emissiveIntensity: 0.6, roughness: 1 })
-      );
-      skylight.rotation.x = Math.PI / 2;
-      skylight.position.set(hubCenter.x, WALL_HEIGHT - 0.05, hubCenter.z);
-      scene.add(skylight);
-      const skylightGlow = new THREE.PointLight(0xfff2d0, 0.8, 40, 2);
-      skylightGlow.position.set(hubCenter.x, WALL_HEIGHT - 1, hubCenter.z);
-      scene.add(skylightGlow);
+      type Rect = { x0: number; x1: number; z0: number; z1: number };
 
+      // A flat rectangular "picture frame" — 4 non-overlapping planes tiling
+      // the area between `outer` and `inner` — reused for the floor's
+      // charcoal border, every coffer's own flat trim lip, and the
+      // skylight's curb.
+      function buildFrameRing(outer: Rect, inner: Rect, y: number, material: THREE.Material, faceUp: boolean) {
+        const pieces: Rect[] = [
+          { x0: outer.x0, x1: outer.x1, z0: outer.z0, z1: inner.z0 },
+          { x0: outer.x0, x1: outer.x1, z0: inner.z1, z1: outer.z1 },
+          { x0: outer.x0, x1: inner.x0, z0: inner.z0, z1: inner.z1 },
+          { x0: inner.x1, x1: outer.x1, z0: inner.z0, z1: inner.z1 },
+        ];
+        for (const p of pieces) {
+          const w = p.x1 - p.x0;
+          const d = p.z1 - p.z0;
+          if (w <= 0.01 || d <= 0.01) continue;
+          const mesh = new THREE.Mesh(new THREE.PlaneGeometry(w, d), material);
+          mesh.rotation.x = faceUp ? -Math.PI / 2 : Math.PI / 2;
+          mesh.position.set((p.x0 + p.x1) / 2, y, (p.z0 + p.z1) / 2);
+          grandHallGroup.add(mesh);
+        }
+      }
+
+      // The thin emissive "reveal" connecting a coffer's flat trim lip (at
+      // `yLow`) up to its recessed panel (at `yHigh`) — four vertical strips
+      // forming the glowing frame around the panel's own recessed edge, per
+      // the ceiling reference image.
+      function buildRevealWalls(panel: Rect, yLow: number, yHigh: number, material: THREE.Material) {
+        const h = yHigh - yLow;
+        if (h <= 0.01) return;
+        const midY = (yLow + yHigh) / 2;
+        const nsGeom = new THREE.BoxGeometry(panel.x1 - panel.x0, h, 0.08);
+        const north = new THREE.Mesh(nsGeom, material);
+        north.position.set((panel.x0 + panel.x1) / 2, midY, panel.z0);
+        grandHallGroup.add(north);
+        const south = new THREE.Mesh(nsGeom, material);
+        south.position.set((panel.x0 + panel.x1) / 2, midY, panel.z1);
+        grandHallGroup.add(south);
+        const ewGeom = new THREE.BoxGeometry(0.08, h, panel.z1 - panel.z0);
+        const west = new THREE.Mesh(ewGeom, material);
+        west.position.set(panel.x0, midY, (panel.z0 + panel.z1) / 2);
+        grandHallGroup.add(west);
+        const east = new THREE.Mesh(ewGeom, material);
+        east.position.set(panel.x1, midY, (panel.z0 + panel.z1) / 2);
+        grandHallGroup.add(east);
+      }
+
+      // --- Materials ---------------------------------------------------
+      const marbleFloorMaterial = buildStoneMaterial("warm-ivory-marble", hub.w / 10.5, hub.d / 10.5, 0.03, 0.45);
+      const charcoalMaterial = buildStoneMaterial("charcoal-marble", 8, 8, 0.05, 0.4);
+      const plasterMaterial = buildStoneMaterial("warm-ivory-plaster", 3, 2, 0, 0.3);
+      const bronzeMaterial = new THREE.MeshStandardMaterial({ color: 0x2c2013, metalness: 0.65, roughness: 0.38 });
+      // Warm 2700-3000K glow for every coffer's recessed-edge strip and the
+      // skylight curb — a thin frame of emissive material, not a lit flat
+      // panel face (docs/GRAND-HALL-CUSTOM-DESIGN-2026-09-13.md).
+      const cofferGlowMaterial = new THREE.MeshStandardMaterial({ color: 0x2a1c10, emissive: 0xffb877, emissiveIntensity: 1.5, roughness: 0.6 });
+      const downlightMaterial = new THREE.MeshStandardMaterial({ color: 0xfff3d6, emissive: 0xfff0c2, emissiveIntensity: 2, roughness: 0.4 });
+      // Soft cool "sky" glow standing in for real daylight through the
+      // skylight glass and down the well's own side faces — there's no real
+      // skybox above the room to render, so this reads as bright overcast
+      // sky rather than a literal view out.
+      const skyGlassMaterial = new THREE.MeshStandardMaterial({ color: 0xcfe6f6, emissive: 0xbfe0f7, emissiveIntensity: 0.55, roughness: 0.9, side: THREE.DoubleSide });
+
+      // --- Floor: marble field + charcoal perimeter border --------------
+      const marbleFloor = new THREE.Mesh(new THREE.PlaneGeometry(hub.w, hub.d), marbleFloorMaterial);
+      marbleFloor.rotation.x = -Math.PI / 2;
+      marbleFloor.position.set(hubCenter.x, 0.01, hubCenter.z);
+      grandHallGroup.add(marbleFloor);
+
+      const FLOOR_BORDER_WIDTH = 3;
+      const floorBorderInner: Rect = {
+        x0: hubBounds.x0 + FLOOR_BORDER_WIDTH, x1: hubBounds.x1 - FLOOR_BORDER_WIDTH,
+        z0: hubBounds.z0 + FLOOR_BORDER_WIDTH, z1: hubBounds.z1 - FLOOR_BORDER_WIDTH,
+      };
+      buildFrameRing(hubBounds, floorBorderInner, 0.014, charcoalMaterial, true);
+
+      // --- Wall base trim: charcoal marble, overlaid on the shared shell's
+      // existing flat baseboard so it sits correctly without touching that
+      // shared per-room baseboard loop (buildRoomTrim, campusRoomBuilder.ts)
+      // used by every other room. Same wall-segment walk that loop already
+      // does (computeCampusWallSegments()/splitSegmentForDoor(), both
+      // already used above to build HUB's real walls/doors), just for HUB's
+      // own segments, at a hair's-width proud of the wall face so it fully
+      // covers (rather than z-fights with) the original.
+      const baseTrimHeight = 0.24;
+      for (const segment of wallSegments) {
+        if (segment.roomA !== "HUB" && segment.roomB !== "HUB") continue;
+        const isNS = segment.wall === "x";
+        const facingSign = segment.roomA === "HUB" ? -1 : 1;
+        const { solid } = splitSegmentForDoor(segment);
+        for (const piece of solid) {
+          const span = piece.to - piece.from;
+          if (span <= 0.05) continue;
+          const geometry = isNS
+            ? new THREE.BoxGeometry(span, baseTrimHeight, 0.07)
+            : new THREE.BoxGeometry(0.07, baseTrimHeight, span);
+          const trim = new THREE.Mesh(geometry, charcoalMaterial);
+          const offset = WALL_THICKNESS / 2 + 0.006;
+          if (isNS) trim.position.set((piece.from + piece.to) / 2, baseTrimHeight / 2, segment.fixed + facingSign * offset);
+          else trim.position.set(segment.fixed + facingSign * offset, baseTrimHeight / 2, (piece.from + piece.to) / 2);
+          grandHallGroup.add(trim);
+        }
+      }
+
+      // --- Ceiling: hide the shared shell's flat plane, build the real
+      // skylight + coffered ceiling in its place. The shared plane itself is
+      // left in the scene (untouched, same object buildNeutralShell already
+      // built for every legacy room) — just switched invisible, since it has
+      // no holes of its own and would otherwise occlude everything recessed
+      // or raised above it.
+      const hubCeilingMaterial = roomShellMaterialsByRoomId.get("HUB")?.ceiling;
+      if (hubCeilingMaterial) {
+        scene.traverse((obj) => {
+          if (obj instanceof THREE.Mesh && obj.material === hubCeilingMaterial) obj.visible = false;
+        });
+      }
+
+      const Y_CEIL_BASE = WALL_HEIGHT - 0.25; // flat trim/rings — clear of the shared shell's own ceiling-edge trim boxes just above
+      const Y_PANEL = Y_CEIL_BASE + 0.42; // each coffer's recessed plaster panel
+      const Y_WELL_TOP = Y_CEIL_BASE + 3.6; // skylight glass — a real deep well, not a flat plane
+
+      // Skylight sized per the design doc: ~45-55% of the Hall's length
+      // (its longer axis, Z at 78) and ~30-38% of its width (X at 63) —
+      // expressed as fractions of the room's own real dimensions so this
+      // stays correctly proportioned if either ever changes, and centered on
+      // both of HUB's real axes by construction (hubCenter is exactly the
+      // room's own center).
+      const skyHalfW = (hub.w * 0.35) / 2;
+      const skyHalfL = (hub.d * 0.51) / 2;
+      const sky: Rect = {
+        x0: hubCenter.x - skyHalfW, x1: hubCenter.x + skyHalfW,
+        z0: hubCenter.z - skyHalfL, z1: hubCenter.z + skyHalfL,
+      };
+
+      // Coffer field: a margin in from the real walls, then a symmetrical
+      // 3x3 grid (3 across, 3 deep, per the ceiling reference) centered on
+      // HUB's own real centerline — the skylight IS the center cell, the
+      // other 8 are the coffers, so this can never fall out of sync with
+      // HUB's real doorway axes the way a hand-picked layout could.
+      const CEIL_MARGIN = 3;
+      const field: Rect = {
+        x0: hubBounds.x0 + CEIL_MARGIN, x1: hubBounds.x1 - CEIL_MARGIN,
+        z0: hubBounds.z0 + CEIL_MARGIN, z1: hubBounds.z1 - CEIL_MARGIN,
+      };
+      buildFrameRing(hubBounds, field, Y_CEIL_BASE, plasterMaterial, false);
+
+      const cofferCells: Rect[] = [
+        { x0: field.x0, x1: sky.x0, z0: field.z0, z1: sky.z0 },
+        { x0: field.x0, x1: sky.x0, z0: sky.z0, z1: sky.z1 },
+        { x0: field.x0, x1: sky.x0, z0: sky.z1, z1: field.z1 },
+        { x0: sky.x1, x1: field.x1, z0: field.z0, z1: sky.z0 },
+        { x0: sky.x1, x1: field.x1, z0: sky.z0, z1: sky.z1 },
+        { x0: sky.x1, x1: field.x1, z0: sky.z1, z1: field.z1 },
+        { x0: sky.x0, x1: sky.x1, z0: field.z0, z1: sky.z0 },
+        { x0: sky.x0, x1: sky.x1, z0: sky.z1, z1: field.z1 },
+      ];
+
+      const COFFER_INSET = 1.15;
+      for (const cell of cofferCells) {
+        const panel: Rect = {
+          x0: cell.x0 + COFFER_INSET, x1: cell.x1 - COFFER_INSET,
+          z0: cell.z0 + COFFER_INSET, z1: cell.z1 - COFFER_INSET,
+        };
+        if (panel.x1 <= panel.x0 || panel.z1 <= panel.z0) continue;
+        buildFrameRing(cell, panel, Y_CEIL_BASE, plasterMaterial, false);
+        buildRevealWalls(panel, Y_CEIL_BASE, Y_PANEL, cofferGlowMaterial);
+        const panelMesh = new THREE.Mesh(new THREE.PlaneGeometry(panel.x1 - panel.x0, panel.z1 - panel.z0), plasterMaterial);
+        panelMesh.rotation.x = Math.PI / 2;
+        panelMesh.position.set((panel.x0 + panel.x1) / 2, Y_PANEL, (panel.z0 + panel.z1) / 2);
+        grandHallGroup.add(panelMesh);
+        const downlight = new THREE.Mesh(new THREE.CircleGeometry(0.22, 24), downlightMaterial);
+        downlight.rotation.x = Math.PI / 2;
+        downlight.position.set((panel.x0 + panel.x1) / 2, Y_PANEL - 0.01, (panel.z0 + panel.z1) / 2);
+        grandHallGroup.add(downlight);
+      }
+
+      // Skylight: a substantial framed bronze curb at the ceiling plane,
+      // then a real deep well (side walls + glass top, not a flat plane)
+      // with a dark bronze mullion grid that continues down the well's own
+      // side faces, not just across the flat glass top.
+      const CURB_INSET = 1.5;
+      const glass: Rect = {
+        x0: sky.x0 + CURB_INSET, x1: sky.x1 - CURB_INSET,
+        z0: sky.z0 + CURB_INSET, z1: sky.z1 - CURB_INSET,
+      };
+      buildFrameRing(sky, glass, Y_CEIL_BASE, bronzeMaterial, false);
+
+      const wellHeight = Y_WELL_TOP - Y_CEIL_BASE;
+      const wellMidY = (Y_CEIL_BASE + Y_WELL_TOP) / 2;
+      const wellWallThickness = 0.1;
+      const glassW = glass.x1 - glass.x0;
+      const glassL = glass.z1 - glass.z0;
+      const wellNorth = new THREE.Mesh(new THREE.BoxGeometry(glassW, wellHeight, wellWallThickness), skyGlassMaterial);
+      wellNorth.position.set((glass.x0 + glass.x1) / 2, wellMidY, glass.z0);
+      grandHallGroup.add(wellNorth);
+      const wellSouth = new THREE.Mesh(new THREE.BoxGeometry(glassW, wellHeight, wellWallThickness), skyGlassMaterial);
+      wellSouth.position.set((glass.x0 + glass.x1) / 2, wellMidY, glass.z1);
+      grandHallGroup.add(wellSouth);
+      const wellWest = new THREE.Mesh(new THREE.BoxGeometry(wellWallThickness, wellHeight, glassL), skyGlassMaterial);
+      wellWest.position.set(glass.x0, wellMidY, (glass.z0 + glass.z1) / 2);
+      grandHallGroup.add(wellWest);
+      const wellEast = new THREE.Mesh(new THREE.BoxGeometry(wellWallThickness, wellHeight, glassL), skyGlassMaterial);
+      wellEast.position.set(glass.x1, wellMidY, (glass.z0 + glass.z1) / 2);
+      grandHallGroup.add(wellEast);
+
+      const glassTop = new THREE.Mesh(new THREE.PlaneGeometry(glassW, glassL), skyGlassMaterial);
+      glassTop.rotation.x = Math.PI / 2;
+      glassTop.position.set((glass.x0 + glass.x1) / 2, Y_WELL_TOP, (glass.z0 + glass.z1) / 2);
+      grandHallGroup.add(glassTop);
+
+      const MULLION_TILE = 3.2;
+      const mullionCols = Math.max(2, Math.round(glassW / MULLION_TILE));
+      const mullionRows = Math.max(2, Math.round(glassL / MULLION_TILE));
+      const mullionWidth = 0.09;
+      for (let i = 1; i < mullionCols; i += 1) {
+        const x = glass.x0 + (glassW * i) / mullionCols;
+        const topBar = new THREE.Mesh(new THREE.BoxGeometry(mullionWidth, 0.05, glassL), bronzeMaterial);
+        topBar.position.set(x, Y_WELL_TOP + 0.03, (glass.z0 + glass.z1) / 2);
+        grandHallGroup.add(topBar);
+        const sideBarN = new THREE.Mesh(new THREE.BoxGeometry(mullionWidth, wellHeight, 0.03), bronzeMaterial);
+        sideBarN.position.set(x, wellMidY, glass.z0 - wellWallThickness / 2 - 0.02);
+        grandHallGroup.add(sideBarN);
+        const sideBarS = new THREE.Mesh(new THREE.BoxGeometry(mullionWidth, wellHeight, 0.03), bronzeMaterial);
+        sideBarS.position.set(x, wellMidY, glass.z1 + wellWallThickness / 2 + 0.02);
+        grandHallGroup.add(sideBarS);
+      }
+      for (let i = 1; i < mullionRows; i += 1) {
+        const z = glass.z0 + (glassL * i) / mullionRows;
+        const rowBar = new THREE.Mesh(new THREE.BoxGeometry(glassW, 0.05, mullionWidth), bronzeMaterial);
+        rowBar.position.set((glass.x0 + glass.x1) / 2, Y_WELL_TOP + 0.03, z);
+        grandHallGroup.add(rowBar);
+        const sideBarW = new THREE.Mesh(new THREE.BoxGeometry(0.03, wellHeight, mullionWidth), bronzeMaterial);
+        sideBarW.position.set(glass.x0 - wellWallThickness / 2 - 0.02, wellMidY, z);
+        grandHallGroup.add(sideBarW);
+        const sideBarE = new THREE.Mesh(new THREE.BoxGeometry(0.03, wellHeight, mullionWidth), bronzeMaterial);
+        sideBarE.position.set(glass.x1 + wellWallThickness / 2 + 0.02, wellMidY, z);
+        grandHallGroup.add(sideBarE);
+      }
+
+      // --- Lighting: a limited number of soft supporting lights, not one
+      // per coffer — the coffer glow itself comes from the emissive strips/
+      // downlight discs above. One cool point light stands in for daylight
+      // through the well; four warm ones spread across the coffer ring so
+      // neither the warm coffer glow nor the cool skylight washes the other
+      // out.
+      const skylightGlow = new THREE.PointLight(0xbfe0f7, 1, 60, 2);
+      skylightGlow.position.set(hubCenter.x, Y_WELL_TOP - 0.6, hubCenter.z);
+      grandHallGroup.add(skylightGlow);
+
+      const warmFillSpots: { x: number; z: number }[] = [
+        { x: (field.x0 + sky.x0) / 2, z: hubCenter.z },
+        { x: (sky.x1 + field.x1) / 2, z: hubCenter.z },
+        { x: hubCenter.x, z: (field.z0 + sky.z0) / 2 },
+        { x: hubCenter.x, z: (sky.z1 + field.z1) / 2 },
+      ];
+      for (const spot of warmFillSpots) {
+        const light = new THREE.PointLight(0xffc98a, 0.5, 28, 2);
+        light.position.set(spot.x, Y_CEIL_BASE - 0.6, spot.z);
+        grandHallGroup.add(light);
+      }
+
+      // --- VLTD medallion/seal — UNCHANGED mechanism, just re-sequenced to
+      // run after the new marble floor so it sits correctly on top of it
+      // instead of the old stone floor. Every line below this comment is the
+      // same code the prior "Grand Hall enhancement" block already had.
       const medallionCanvas = document.createElement("canvas");
       medallionCanvas.width = 512;
       medallionCanvas.height = 512;
