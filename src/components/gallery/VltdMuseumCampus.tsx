@@ -738,32 +738,17 @@ export default function VltdMuseumCampus() {
       // read as its own glowing bar.
       const cofferGlowMaterial = new THREE.MeshStandardMaterial({ color: 0x3a2a18, emissive: 0xffb877, emissiveIntensity: 0.45, roughness: 0.6, fog: false });
       const downlightMaterial = new THREE.MeshStandardMaterial({ color: 0xfff3d6, emissive: 0xfff0c2, emissiveIntensity: 1.1, roughness: 0.4, fog: false });
-      // Sky, redone per EK's correction: a canvas-drawn blue-sky-with-clouds
-      // texture (same canvas-texture technique the medallion below already
-      // uses) on the glass itself, so it reads as an actual view of sky
-      // rather than a flat tinted slab — this is the room-facing underside
-      // of the glass, unlit/emissive-only (no strong point light needed to
-      // "sell" it), matching the reference's calm, evenly bright sky.
-      const skyCanvas = document.createElement("canvas");
-      skyCanvas.width = 512;
-      skyCanvas.height = 256;
-      const skyCtx = skyCanvas.getContext("2d");
-      if (skyCtx) {
-        const grad = skyCtx.createLinearGradient(0, 0, 0, 256);
-        grad.addColorStop(0, "#bcd9f2");
-        grad.addColorStop(1, "#e6eff7");
-        skyCtx.fillStyle = grad;
-        skyCtx.fillRect(0, 0, 512, 256);
-        skyCtx.fillStyle = "rgba(255,255,255,0.75)";
-        const clouds: Array<[number, number, number]> = [[90, 90, 34], [140, 110, 26], [340, 60, 30], [400, 100, 22], [230, 160, 28]];
-        for (const [cx, cy, r] of clouds) {
-          skyCtx.beginPath();
-          skyCtx.ellipse(cx, cy, r * 1.6, r * 0.55, 0, 0, Math.PI * 2);
-          skyCtx.fill();
-        }
-      }
-      const skyTexture = new THREE.CanvasTexture(skyCanvas);
-      skyTexture.colorSpace = THREE.SRGBColorSpace;
+      // Sky, corrected again (EK, live): a hand-drawn canvas gradient was a
+      // needless re-creation of something already made — the actual
+      // reference concept art already shows a real photographed sky, so
+      // this crops a clean, low-perspective patch straight out of
+      // grand-hall-ceiling-concept-v1.png (saved once as its own asset,
+      // public/museum/grand-hall/grand-hall-skylight-sky.png) instead of
+      // synthesizing an inferior substitute. Its own baked-in mullion grid
+      // is why the flat-top mullion boxes below were removed — this image
+      // already shows that grid; only the well's vertical mullions (which a
+      // top-down photo can't show) are still built as real geometry.
+      const skyTexture = loadGrandHallTexture("grand-hall-skylight-sky.png", THREE.SRGBColorSpace, 1, 1);
       const skyGlassMaterial = new THREE.MeshStandardMaterial({
         map: skyTexture, emissive: 0xffffff, emissiveMap: skyTexture, emissiveIntensity: 0.5,
         roughness: 0.9, side: THREE.DoubleSide, fog: false,
@@ -914,6 +899,20 @@ export default function VltdMuseumCampus() {
         downlight.rotation.x = Math.PI / 2;
         downlight.position.set((panel.x0 + panel.x1) / 2, Y_PANEL - 0.01, (panel.z0 + panel.z1) / 2);
         grandHallGroup.add(downlight);
+
+        // Real illumination per coffer (not just the emissive glow strip):
+        // a live check found the ceiling reading almost pure dark navy —
+        // the scene's shared ambient's "ground" color dominates any
+        // downward-facing surface, and the restrained (intentionally dim)
+        // glow strip alone isn't enough real light to make the molding or
+        // recessed panel visible, matching the reference's evenly, brightly
+        // lit ceiling. One small warm point light per coffer, low intensity
+        // and short range each (so no single coffer blows out), sitting
+        // just below the panel so it lights that coffer's own molding without
+        // needing to rely on a handful of room-wide fills to reach all 14.
+        const cofferLight = new THREE.PointLight(0xffdcae, 0.55, 9, 2);
+        cofferLight.position.set((panel.x0 + panel.x1) / 2, Y_PANEL - 0.35, (panel.z0 + panel.z1) / 2);
+        grandHallGroup.add(cofferLight);
       }
 
       // --- Skylight rebuild (EK's correction): a substantial warm-ivory
@@ -957,20 +956,22 @@ export default function VltdMuseumCampus() {
       glassTop.position.set((glass.x0 + glass.x1) / 2, Y_WELL_TOP, (glass.z0 + glass.z1) / 2);
       grandHallGroup.add(glassTop);
 
-      // Mullions: positioned just BELOW the glass plane (room-facing side),
-      // not above it — the earlier build put them above the opaque glass,
-      // where it fully hid them from below. Sitting in front, they read as
-      // a real grid over the sky rather than being occluded by it.
+      // Mullions: the flat glass top's OWN grid comes straight from the
+      // real photo now (its baked-in mullion lines) — building a second,
+      // separate set of flat-top mullion boxes on top of that photo would
+      // be recreating a grid that's already there, and risked doubling up
+      // (and not quite lining up) with it. Only the well's own vertical
+      // mullions remain as real geometry, since a top-down photo can't show
+      // the grid continuing down the well's depth — those still position
+      // just below/beside the glass on the room-facing side, per the same
+      // fix as before (previously built above the opaque glass, which fully
+      // hid them).
       const MULLION_TILE = 3.2;
       const mullionCols = Math.max(2, Math.round(glassW / MULLION_TILE));
       const mullionRows = Math.max(2, Math.round(glassL / MULLION_TILE));
       const mullionWidth = 0.09;
-      const MULLION_Y = Y_WELL_TOP - 0.035;
       for (let i = 1; i < mullionCols; i += 1) {
         const x = glass.x0 + (glassW * i) / mullionCols;
-        const topBar = new THREE.Mesh(new THREE.BoxGeometry(mullionWidth, 0.05, glassL), bronzeMaterial);
-        topBar.position.set(x, MULLION_Y, (glass.z0 + glass.z1) / 2);
-        grandHallGroup.add(topBar);
         const sideBarN = new THREE.Mesh(new THREE.BoxGeometry(mullionWidth, wellHeight, 0.03), bronzeMaterial);
         sideBarN.position.set(x, wellMidY, glass.z0 - wellWallThickness / 2 - 0.02);
         grandHallGroup.add(sideBarN);
@@ -980,9 +981,6 @@ export default function VltdMuseumCampus() {
       }
       for (let i = 1; i < mullionRows; i += 1) {
         const z = glass.z0 + (glassL * i) / mullionRows;
-        const rowBar = new THREE.Mesh(new THREE.BoxGeometry(glassW, 0.05, mullionWidth), bronzeMaterial);
-        rowBar.position.set((glass.x0 + glass.x1) / 2, MULLION_Y, z);
-        grandHallGroup.add(rowBar);
         const sideBarW = new THREE.Mesh(new THREE.BoxGeometry(0.03, wellHeight, mullionWidth), bronzeMaterial);
         sideBarW.position.set(glass.x0 - wellWallThickness / 2 - 0.02, wellMidY, z);
         grandHallGroup.add(sideBarW);
@@ -990,20 +988,6 @@ export default function VltdMuseumCampus() {
         sideBarE.position.set(glass.x1 + wellWallThickness / 2 + 0.02, wellMidY, z);
         grandHallGroup.add(sideBarE);
       }
-      // Perimeter mullion frame right at the glass edge (so the grid reads
-      // as continuing all the way to the curb, matching the reference).
-      const glassFrameN = new THREE.Mesh(new THREE.BoxGeometry(glassW, 0.05, mullionWidth), bronzeMaterial);
-      glassFrameN.position.set((glass.x0 + glass.x1) / 2, MULLION_Y, glass.z0);
-      grandHallGroup.add(glassFrameN);
-      const glassFrameS = glassFrameN.clone();
-      glassFrameS.position.z = glass.z1;
-      grandHallGroup.add(glassFrameS);
-      const glassFrameW = new THREE.Mesh(new THREE.BoxGeometry(mullionWidth, 0.05, glassL), bronzeMaterial);
-      glassFrameW.position.set(glass.x0, MULLION_Y, (glass.z0 + glass.z1) / 2);
-      grandHallGroup.add(glassFrameW);
-      const glassFrameE = glassFrameW.clone();
-      glassFrameE.position.x = glass.x1;
-      grandHallGroup.add(glassFrameE);
 
       // --- Lighting: a limited number of soft supporting lights, not one
       // per coffer — the coffer glow itself comes from the emissive strips/
