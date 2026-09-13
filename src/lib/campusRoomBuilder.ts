@@ -206,7 +206,15 @@ export const ROOM_BACKGROUND_OPTIONS: { id: string; label: string; swatch: strin
   { id: "neutral", label: "Neutral (default)", swatch: "#d7d9d6" },
   { id: "warm", label: "Warm Ivory", swatch: "#e6d8bd" },
   { id: "cool_slate", label: "Cool Slate", swatch: "#c7ccd1" },
-  { id: "charcoal", label: "Charcoal", swatch: "#33363b" },
+  // 2026-09-12: live-tested via Museum Builder — the original #33363b read
+  // as pitch-black and made the room unusable (nothing placed in it was
+  // visible). It's darker than even Gallery Builder's own Vault wall
+  // (#4b5158), which needed a whole dedicated lighting pass of its own to
+  // stay legible — the museum's shared, generic light rig was never tuned
+  // for anything that extreme. Lightened to stay clearly the darkest/most
+  // dramatic option relative to the other three, without going darker than
+  // the current shared lighting can actually render as a usable room.
+  { id: "charcoal", label: "Charcoal", swatch: "#585b60" },
 ];
 
 /** Resolves a saved `museum_room_meta.background_id` to the wall-tint color
