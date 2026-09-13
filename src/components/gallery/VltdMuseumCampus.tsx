@@ -529,6 +529,20 @@ export default function VltdMuseumCampus() {
       return new THREE.MeshStandardMaterial({
         map, normalMap, roughnessMap, metalness, roughness: 1,
         normalScale: new THREE.Vector2(normalScale, normalScale),
+        // Root-cause fix (live check, second pass): HUB is far larger
+        // (63x78) than every other room the scene's shared `THREE.Fog(...,
+        // 40, 140)` was tuned against (every legacy/converted room's own
+        // longest dimension is well under that 40-unit near-fog distance,
+        // so they never visibly fog) — HUB's far walls/coffers/floor
+        // routinely sit beyond 40 units from a normal viewing position and
+        // were reading washed toward the fog's own dark navy color
+        // (0x081527) regardless of any material or light tuning, which is
+        // why the earlier wall-wash-light fix produced no visible change.
+        // Exempting only these new Grand Hall stone materials from fog
+        // (every other room's fog behavior, and the scene-wide Fog object
+        // itself, are completely untouched) is the correct fix, not another
+        // blind lighting guess.
+        fog: false,
       });
     }
     function roomWallMaterial(roomId: CampusRoomId): THREE.MeshStandardMaterial {
@@ -689,17 +703,24 @@ export default function VltdMuseumCampus() {
       const marbleFloorMaterial = buildStoneMaterial("warm-ivory-marble", hub.w / 10.5, hub.d / 10.5, 0.03, 0.45);
       const charcoalMaterial = buildStoneMaterial("charcoal-marble", 8, 8, 0.05, 0.4);
       const plasterMaterial = buildStoneMaterial("warm-ivory-plaster", 3, 2, 0, 0.3);
-      const bronzeMaterial = new THREE.MeshStandardMaterial({ color: 0x2c2013, metalness: 0.65, roughness: 0.38 });
+      // fog: false on every material below — same root-cause fix as
+      // buildStoneMaterial above: HUB's own new geometry routinely sits
+      // beyond the scene's shared Fog's 40-unit near distance, which was
+      // washing all of it toward the fog's dark navy color regardless of
+      // material color or added light. Only these Grand-Hall-specific
+      // material instances are exempted; the scene-wide Fog object and every
+      // other room's own materials are untouched.
+      const bronzeMaterial = new THREE.MeshStandardMaterial({ color: 0x2c2013, metalness: 0.65, roughness: 0.38, fog: false });
       // Warm 2700-3000K glow for every coffer's recessed-edge strip and the
       // skylight curb — a thin frame of emissive material, not a lit flat
       // panel face (docs/GRAND-HALL-CUSTOM-DESIGN-2026-09-13.md).
-      const cofferGlowMaterial = new THREE.MeshStandardMaterial({ color: 0x2a1c10, emissive: 0xffb877, emissiveIntensity: 1.5, roughness: 0.6 });
-      const downlightMaterial = new THREE.MeshStandardMaterial({ color: 0xfff3d6, emissive: 0xfff0c2, emissiveIntensity: 2, roughness: 0.4 });
+      const cofferGlowMaterial = new THREE.MeshStandardMaterial({ color: 0x2a1c10, emissive: 0xffb877, emissiveIntensity: 1.5, roughness: 0.6, fog: false });
+      const downlightMaterial = new THREE.MeshStandardMaterial({ color: 0xfff3d6, emissive: 0xfff0c2, emissiveIntensity: 2, roughness: 0.4, fog: false });
       // Soft cool "sky" glow standing in for real daylight through the
       // skylight glass and down the well's own side faces — there's no real
       // skybox above the room to render, so this reads as bright overcast
       // sky rather than a literal view out.
-      const skyGlassMaterial = new THREE.MeshStandardMaterial({ color: 0xcfe6f6, emissive: 0xbfe0f7, emissiveIntensity: 0.55, roughness: 0.9, side: THREE.DoubleSide });
+      const skyGlassMaterial = new THREE.MeshStandardMaterial({ color: 0xcfe6f6, emissive: 0xbfe0f7, emissiveIntensity: 0.55, roughness: 0.9, side: THREE.DoubleSide, fog: false });
 
       // --- Floor: marble field + charcoal perimeter border --------------
       const marbleFloor = new THREE.Mesh(new THREE.PlaneGeometry(hub.w, hub.d), marbleFloorMaterial);
