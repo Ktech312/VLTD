@@ -339,7 +339,27 @@ export default function VltdMuseumCampus() {
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     mount.appendChild(renderer.domElement);
 
-    scene.add(new THREE.HemisphereLight(0xbcd6ef, 0x12294a, 0.9));
+    // Live-reported bug (2026-09-13, EK, Grand Hall check): this scene-wide
+    // ambient's cool sky (0xbcd6ef) / near-black-navy ground (0x12294a)
+    // hemisphere pair was washing every room's own real, warm materials
+    // toward blue-gray regardless of that room's own lighting or texture —
+    // confirmed by inspecting the actual ivory-limestone basecolor PNG
+    // (genuinely warm cream, not gray) and by two earlier scoped fixes
+    // (added wall-wash point lights, exempted Grand Hall materials from
+    // fog) producing zero visible change, which only makes sense if a much
+    // stronger, scene-wide light was dominating the result. This exact
+    // sky/ground pair was ALSO already flagged, independently, as a
+    // disclosed-but-unfixed contributor to Museum Builder's own "doesn't
+    // look like Vault" complaint (MuseumBuilder.tsx has its own separate
+    // copy of this same ambient — untouched here, out of scope for this
+    // file's pass). Warmed toward the museum's own established warm-gold
+    // palette (HUB_FINISH.lightColor 0xfff2d0, ceilingTrimColor 0x2a2015)
+    // instead of a cool blue "sky" — same intensity, so overall exposure
+    // doesn't change, only its color temperature. This affects EVERY room
+    // (it's the one scene-wide ambient), so verify live across more than
+    // just HUB before trusting this — reverify a legacy room and a styled
+    // room too, not just the one that prompted this fix.
+    scene.add(new THREE.HemisphereLight(0xfdf0d5, 0x2a2015, 0.9));
     const sun = new THREE.DirectionalLight(0xfff4e0, 0.6);
     sun.position.set(40, 60, 20);
     scene.add(sun);
@@ -527,6 +547,10 @@ export default function VltdMuseumCampus() {
       const normalMap = loadGrandHallTexture(`${prefix}-normal.png`, THREE.NoColorSpace, repeatX, repeatY);
       const roughnessMap = loadGrandHallTexture(`${prefix}-roughness.png`, THREE.NoColorSpace, repeatX, repeatY);
       return new THREE.MeshStandardMaterial({
+        // EK's correction: explicit neutral white color so the texture's own
+        // (confirmed genuinely warm-cream, not gray) basecolor is never
+        // multiplied by an unintended tint.
+        color: 0xffffff,
         map, normalMap, roughnessMap, metalness, roughness: 1,
         normalScale: new THREE.Vector2(normalScale, normalScale),
         // Root-cause fix (live check, second pass): HUB is far larger
@@ -558,8 +582,16 @@ export default function VltdMuseumCampus() {
       // at 1x1 here and letting that existing mechanism govern the physical
       // tiling is the same convention createWallMaterial's own canvas
       // texture already relies on, just pointed at a photographic texture.
+      // EK's correction (2026-09-13): repeatY was left at 1, so the texture
+      // covered the ENTIRE 9.15-unit wall height in one tile — scaleWallPanelU
+      // (campusRoomBuilder.ts) only rescales the geometry's U coordinate per
+      // wall-box span, never V, so the material's own repeat.y is the only
+      // thing governing vertical tiling. Matching the same ~4.2-unit physical
+      // tile convention PANEL_WIDTH already uses for the horizontal axis
+      // fixes the stretch (previously reading almost like a giant blurred
+      // single sample rather than real stone).
       const material = roomId === "HUB"
-        ? buildStoneMaterial("ivory-limestone", 1, 1, 0.02, 0.4)
+        ? buildStoneMaterial("ivory-limestone", 1, WALL_HEIGHT / 4.2, 0.02, 0.4)
         : createWallMaterial(baseFinishForRoom(roomId));
       wallMaterialByRoomId.set(roomId, material);
       shellEntry(roomId).wall = material;
@@ -710,17 +742,50 @@ export default function VltdMuseumCampus() {
       // material color or added light. Only these Grand-Hall-specific
       // material instances are exempted; the scene-wide Fog object and every
       // other room's own materials are untouched.
-      const bronzeMaterial = new THREE.MeshStandardMaterial({ color: 0x2c2013, metalness: 0.65, roughness: 0.38, fog: false });
-      // Warm 2700-3000K glow for every coffer's recessed-edge strip and the
-      // skylight curb — a thin frame of emissive material, not a lit flat
-      // panel face (docs/GRAND-HALL-CUSTOM-DESIGN-2026-09-13.md).
-      const cofferGlowMaterial = new THREE.MeshStandardMaterial({ color: 0x2a1c10, emissive: 0xffb877, emissiveIntensity: 1.5, roughness: 0.6, fog: false });
-      const downlightMaterial = new THREE.MeshStandardMaterial({ color: 0xfff3d6, emissive: 0xfff0c2, emissiveIntensity: 2, roughness: 0.4, fog: false });
-      // Soft cool "sky" glow standing in for real daylight through the
-      // skylight glass and down the well's own side faces — there's no real
-      // skybox above the room to render, so this reads as bright overcast
-      // sky rather than a literal view out.
-      const skyGlassMaterial = new THREE.MeshStandardMaterial({ color: 0xcfe6f6, emissive: 0xbfe0f7, emissiveIntensity: 0.55, roughness: 0.9, side: THREE.DoubleSide, fog: false });
+      const bronzeMaterial = new THREE.MeshStandardMaterial({ color: 0x53401f, metalness: 0.55, roughness: 0.4, fog: false });
+      // EK's correction (2026-09-13, second pass): the emissive strip had
+      // become the dominant visible object, not a subtle reveal — cut
+      // intensity by roughly 3x (1.5 -> 0.45) and warm the base color
+      // slightly. This should softly catch the surrounding molding, not
+      // read as its own glowing bar.
+      const cofferGlowMaterial = new THREE.MeshStandardMaterial({ color: 0x3a2a18, emissive: 0xffb877, emissiveIntensity: 0.45, roughness: 0.6, fog: false });
+      const downlightMaterial = new THREE.MeshStandardMaterial({ color: 0xfff3d6, emissive: 0xfff0c2, emissiveIntensity: 1.1, roughness: 0.4, fog: false });
+      // Sky, redone per EK's correction: a canvas-drawn blue-sky-with-clouds
+      // texture (same canvas-texture technique the medallion below already
+      // uses) on the glass itself, so it reads as an actual view of sky
+      // rather than a flat tinted slab — this is the room-facing underside
+      // of the glass, unlit/emissive-only (no strong point light needed to
+      // "sell" it), matching the reference's calm, evenly bright sky.
+      const skyCanvas = document.createElement("canvas");
+      skyCanvas.width = 512;
+      skyCanvas.height = 256;
+      const skyCtx = skyCanvas.getContext("2d");
+      if (skyCtx) {
+        const grad = skyCtx.createLinearGradient(0, 0, 0, 256);
+        grad.addColorStop(0, "#bcd9f2");
+        grad.addColorStop(1, "#e6eff7");
+        skyCtx.fillStyle = grad;
+        skyCtx.fillRect(0, 0, 512, 256);
+        skyCtx.fillStyle = "rgba(255,255,255,0.75)";
+        const clouds: Array<[number, number, number]> = [[90, 90, 34], [140, 110, 26], [340, 60, 30], [400, 100, 22], [230, 160, 28]];
+        for (const [cx, cy, r] of clouds) {
+          skyCtx.beginPath();
+          skyCtx.ellipse(cx, cy, r * 1.6, r * 0.55, 0, 0, Math.PI * 2);
+          skyCtx.fill();
+        }
+      }
+      const skyTexture = new THREE.CanvasTexture(skyCanvas);
+      skyTexture.colorSpace = THREE.SRGBColorSpace;
+      const skyGlassMaterial = new THREE.MeshStandardMaterial({
+        map: skyTexture, emissive: 0xffffff, emissiveMap: skyTexture, emissiveIntensity: 0.5,
+        roughness: 0.9, side: THREE.DoubleSide, fog: false,
+      });
+      // Skylight well walls, per EK's correction: warm ivory plaster/stone,
+      // NOT the glowing sky-glass material — only the flat glass plane
+      // itself should read as sky; the well's own side walls are real
+      // architecture (with bronze mullions continuing up them, built
+      // below).
+      const wellWallMaterial = plasterMaterial;
 
       // --- Floor: marble field + charcoal perimeter border --------------
       const marbleFloor = new THREE.Mesh(new THREE.PlaneGeometry(hub.w, hub.d), marbleFloorMaterial);
@@ -763,12 +828,16 @@ export default function VltdMuseumCampus() {
         }
       }
 
-      // --- Ceiling: hide the shared shell's flat plane, build the real
-      // skylight + coffered ceiling in its place. The shared plane itself is
-      // left in the scene (untouched, same object buildNeutralShell already
-      // built for every legacy room) — just switched invisible, since it has
-      // no holes of its own and would otherwise occlude everything recessed
-      // or raised above it.
+      // --- Ceiling rebuild (EK's correction, 2026-09-13): the earlier 3x3 /
+      // 8-giant-cell interpretation is replaced with the reference image's
+      // actual layout — a repeating ROW of individually framed coffers along
+      // each long side (6 per side: a square-ish end cap, 4 mid coffers, a
+      // square-ish end cap) plus one coffer at each short end flanking the
+      // skylight, for 14 total, all sized off HUB's own real geometry so
+      // this can't drift out of sync with its doorway axes. The shared
+      // shell's flat ceiling plane is hidden (untouched otherwise, same as
+      // before) and replaced by ONE continuous plaster plane here, so there
+      // is no black gap anywhere behind the coffers/skylight.
       const hubCeilingMaterial = roomShellMaterialsByRoomId.get("HUB")?.ceiling;
       if (hubCeilingMaterial) {
         scene.traverse((obj) => {
@@ -776,9 +845,19 @@ export default function VltdMuseumCampus() {
         });
       }
 
-      const Y_CEIL_BASE = WALL_HEIGHT - 0.25; // flat trim/rings — clear of the shared shell's own ceiling-edge trim boxes just above
-      const Y_PANEL = Y_CEIL_BASE + 0.42; // each coffer's recessed plaster panel
+      const Y_CEIL_BASE = WALL_HEIGHT - 0.25; // continuous flat plaster ceiling
+      const Y_MOLD = Y_CEIL_BASE + 0.16; // first molding step (visible stepped ledge)
+      const Y_PANEL = Y_CEIL_BASE + 0.34; // each coffer's recessed plaster panel (shallower — many small bays, not a few deep ones)
       const Y_WELL_TOP = Y_CEIL_BASE + 3.6; // skylight glass — a real deep well, not a flat plane
+
+      // One continuous plaster ceiling covering the entire real ceiling —
+      // every coffer/skylight opening below is cut INTO this same
+      // continuous surface via nested buildFrameRing calls, never leaving a
+      // gap that isn't warm ivory plaster.
+      const continuousCeiling = new THREE.Mesh(new THREE.PlaneGeometry(hubBounds.x1 - hubBounds.x0, hubBounds.z1 - hubBounds.z0), plasterMaterial);
+      continuousCeiling.rotation.x = Math.PI / 2;
+      continuousCeiling.position.set(hubCenter.x, Y_CEIL_BASE, hubCenter.z);
+      grandHallGroup.add(continuousCeiling);
 
       // Skylight sized per the design doc: ~45-55% of the Hall's length
       // (its longer axis, Z at 78) and ~30-38% of its width (X at 63) —
@@ -793,74 +872,91 @@ export default function VltdMuseumCampus() {
         z0: hubCenter.z - skyHalfL, z1: hubCenter.z + skyHalfL,
       };
 
-      // Coffer field: a margin in from the real walls, then a symmetrical
-      // 3x3 grid (3 across, 3 deep, per the ceiling reference) centered on
-      // HUB's own real centerline — the skylight IS the center cell, the
-      // other 8 are the coffers, so this can never fall out of sync with
-      // HUB's real doorway axes the way a hand-picked layout could.
+      // Coffer field: a margin in from the real walls.
       const CEIL_MARGIN = 3;
       const field: Rect = {
         x0: hubBounds.x0 + CEIL_MARGIN, x1: hubBounds.x1 - CEIL_MARGIN,
         z0: hubBounds.z0 + CEIL_MARGIN, z1: hubBounds.z1 - CEIL_MARGIN,
       };
-      buildFrameRing(hubBounds, field, Y_CEIL_BASE, plasterMaterial, false);
 
-      const cofferCells: Rect[] = [
-        { x0: field.x0, x1: sky.x0, z0: field.z0, z1: sky.z0 },
-        { x0: field.x0, x1: sky.x0, z0: sky.z0, z1: sky.z1 },
-        { x0: field.x0, x1: sky.x0, z0: sky.z1, z1: field.z1 },
-        { x0: sky.x1, x1: field.x1, z0: field.z0, z1: sky.z0 },
-        { x0: sky.x1, x1: field.x1, z0: sky.z0, z1: sky.z1 },
-        { x0: sky.x1, x1: field.x1, z0: sky.z1, z1: field.z1 },
-        { x0: sky.x0, x1: sky.x1, z0: field.z0, z1: sky.z0 },
-        { x0: sky.x0, x1: sky.x1, z0: sky.z1, z1: field.z1 },
-      ];
+      // The real layout, read off the reference image: a 6 (long axis) x 3
+      // (short axis) grid where the skylight occupies the middle row's
+      // middle 4 columns — leaving 6 coffers along the west band, 6 along
+      // the east band, and 1 at each short end (north/south) flanking the
+      // skylight = 14 individually framed coffers, not 8 giant ones.
+      const cofferCells: Rect[] = [];
+      const END_COLS = 6; // divisions along the long (Z) axis for each side band
+      for (let i = 0; i < END_COLS; i += 1) {
+        const z0 = field.z0 + ((field.z1 - field.z0) * i) / END_COLS;
+        const z1 = field.z0 + ((field.z1 - field.z0) * (i + 1)) / END_COLS;
+        cofferCells.push({ x0: field.x0, x1: sky.x0, z0, z1 }); // west band
+        cofferCells.push({ x0: sky.x1, x1: field.x1, z0, z1 }); // east band
+      }
+      cofferCells.push({ x0: sky.x0, x1: sky.x1, z0: field.z0, z1: sky.z0 }); // north end cap
+      cofferCells.push({ x0: sky.x0, x1: sky.x1, z0: sky.z1, z1: field.z1 }); // south end cap
 
-      const COFFER_INSET = 1.15;
+      // Each coffer: outer trim (flush with the continuous ceiling) -> a
+      // riser down to a raised molding ledge -> the ledge itself (the
+      // "visible stepped molding") -> a second riser (carrying the thin,
+      // now-restrained concealed glow) -> the recessed plaster panel with
+      // one small centered downlight. Two real steps, not one flat
+      // frame-then-hole.
+      const STEP1_INSET = 0.55;
+      const STEP2_INSET = 0.4;
       for (const cell of cofferCells) {
-        const panel: Rect = {
-          x0: cell.x0 + COFFER_INSET, x1: cell.x1 - COFFER_INSET,
-          z0: cell.z0 + COFFER_INSET, z1: cell.z1 - COFFER_INSET,
-        };
+        const ledge: Rect = { x0: cell.x0 + STEP1_INSET, x1: cell.x1 - STEP1_INSET, z0: cell.z0 + STEP1_INSET, z1: cell.z1 - STEP1_INSET };
+        if (ledge.x1 <= ledge.x0 || ledge.z1 <= ledge.z0) continue;
+        const panel: Rect = { x0: ledge.x0 + STEP2_INSET, x1: ledge.x1 - STEP2_INSET, z0: ledge.z0 + STEP2_INSET, z1: ledge.z1 - STEP2_INSET };
         if (panel.x1 <= panel.x0 || panel.z1 <= panel.z0) continue;
-        buildFrameRing(cell, panel, Y_CEIL_BASE, plasterMaterial, false);
-        buildRevealWalls(panel, Y_CEIL_BASE, Y_PANEL, cofferGlowMaterial);
+
+        buildFrameRing(cell, ledge, Y_CEIL_BASE, plasterMaterial, false); // outer trim, flush with ceiling
+        buildRevealWalls(ledge, Y_CEIL_BASE, Y_MOLD, plasterMaterial); // first riser (plain plaster — the physical step)
+        buildFrameRing(ledge, panel, Y_MOLD, plasterMaterial, false); // raised molding ledge
+        buildRevealWalls(panel, Y_MOLD, Y_PANEL, cofferGlowMaterial); // second riser — the concealed glow lives here, restrained
+
         const panelMesh = new THREE.Mesh(new THREE.PlaneGeometry(panel.x1 - panel.x0, panel.z1 - panel.z0), plasterMaterial);
         panelMesh.rotation.x = Math.PI / 2;
         panelMesh.position.set((panel.x0 + panel.x1) / 2, Y_PANEL, (panel.z0 + panel.z1) / 2);
         grandHallGroup.add(panelMesh);
-        const downlight = new THREE.Mesh(new THREE.CircleGeometry(0.22, 24), downlightMaterial);
+        const downlight = new THREE.Mesh(new THREE.CircleGeometry(0.16, 24), downlightMaterial);
         downlight.rotation.x = Math.PI / 2;
         downlight.position.set((panel.x0 + panel.x1) / 2, Y_PANEL - 0.01, (panel.z0 + panel.z1) / 2);
         grandHallGroup.add(downlight);
       }
 
-      // Skylight: a substantial framed bronze curb at the ceiling plane,
-      // then a real deep well (side walls + glass top, not a flat plane)
-      // with a dark bronze mullion grid that continues down the well's own
-      // side faces, not just across the flat glass top.
+      // --- Skylight rebuild (EK's correction): a substantial warm-ivory
+      // molded border (plaster, not a slab of dark bronze) with a slim
+      // bronze accent lip; a real deep well whose SIDE WALLS are warm ivory
+      // plaster/stone (not the sky material); bronze mullions continuing up
+      // those walls; and the glass itself genuinely reads as glass+sky+grid
+      // because the mullions sit on the room-facing (lower) side of the
+      // glass plane instead of above/behind it, where the previous, opaque
+      // glass plane fully hid them.
       const CURB_INSET = 1.5;
       const glass: Rect = {
         x0: sky.x0 + CURB_INSET, x1: sky.x1 - CURB_INSET,
         z0: sky.z0 + CURB_INSET, z1: sky.z1 - CURB_INSET,
       };
-      buildFrameRing(sky, glass, Y_CEIL_BASE, bronzeMaterial, false);
+      const curbLedge: Rect = { x0: sky.x0 + CURB_INSET * 0.4, x1: sky.x1 - CURB_INSET * 0.4, z0: sky.z0 + CURB_INSET * 0.4, z1: sky.z1 - CURB_INSET * 0.4 };
+      buildFrameRing(sky, curbLedge, Y_CEIL_BASE, plasterMaterial, false); // substantial warm-ivory molded outer border
+      buildRevealWalls(curbLedge, Y_CEIL_BASE, Y_CEIL_BASE + 0.1, bronzeMaterial); // slim bronze accent lip, restrained
+      buildFrameRing(curbLedge, glass, Y_CEIL_BASE + 0.1, plasterMaterial, false); // inner curb face, back to warm ivory
 
       const wellHeight = Y_WELL_TOP - Y_CEIL_BASE;
       const wellMidY = (Y_CEIL_BASE + Y_WELL_TOP) / 2;
       const wellWallThickness = 0.1;
       const glassW = glass.x1 - glass.x0;
       const glassL = glass.z1 - glass.z0;
-      const wellNorth = new THREE.Mesh(new THREE.BoxGeometry(glassW, wellHeight, wellWallThickness), skyGlassMaterial);
+      const wellNorth = new THREE.Mesh(new THREE.BoxGeometry(glassW, wellHeight, wellWallThickness), wellWallMaterial);
       wellNorth.position.set((glass.x0 + glass.x1) / 2, wellMidY, glass.z0);
       grandHallGroup.add(wellNorth);
-      const wellSouth = new THREE.Mesh(new THREE.BoxGeometry(glassW, wellHeight, wellWallThickness), skyGlassMaterial);
+      const wellSouth = new THREE.Mesh(new THREE.BoxGeometry(glassW, wellHeight, wellWallThickness), wellWallMaterial);
       wellSouth.position.set((glass.x0 + glass.x1) / 2, wellMidY, glass.z1);
       grandHallGroup.add(wellSouth);
-      const wellWest = new THREE.Mesh(new THREE.BoxGeometry(wellWallThickness, wellHeight, glassL), skyGlassMaterial);
+      const wellWest = new THREE.Mesh(new THREE.BoxGeometry(wellWallThickness, wellHeight, glassL), wellWallMaterial);
       wellWest.position.set(glass.x0, wellMidY, (glass.z0 + glass.z1) / 2);
       grandHallGroup.add(wellWest);
-      const wellEast = new THREE.Mesh(new THREE.BoxGeometry(wellWallThickness, wellHeight, glassL), skyGlassMaterial);
+      const wellEast = new THREE.Mesh(new THREE.BoxGeometry(wellWallThickness, wellHeight, glassL), wellWallMaterial);
       wellEast.position.set(glass.x1, wellMidY, (glass.z0 + glass.z1) / 2);
       grandHallGroup.add(wellEast);
 
@@ -869,14 +965,19 @@ export default function VltdMuseumCampus() {
       glassTop.position.set((glass.x0 + glass.x1) / 2, Y_WELL_TOP, (glass.z0 + glass.z1) / 2);
       grandHallGroup.add(glassTop);
 
+      // Mullions: positioned just BELOW the glass plane (room-facing side),
+      // not above it — the earlier build put them above the opaque glass,
+      // where it fully hid them from below. Sitting in front, they read as
+      // a real grid over the sky rather than being occluded by it.
       const MULLION_TILE = 3.2;
       const mullionCols = Math.max(2, Math.round(glassW / MULLION_TILE));
       const mullionRows = Math.max(2, Math.round(glassL / MULLION_TILE));
       const mullionWidth = 0.09;
+      const MULLION_Y = Y_WELL_TOP - 0.035;
       for (let i = 1; i < mullionCols; i += 1) {
         const x = glass.x0 + (glassW * i) / mullionCols;
         const topBar = new THREE.Mesh(new THREE.BoxGeometry(mullionWidth, 0.05, glassL), bronzeMaterial);
-        topBar.position.set(x, Y_WELL_TOP + 0.03, (glass.z0 + glass.z1) / 2);
+        topBar.position.set(x, MULLION_Y, (glass.z0 + glass.z1) / 2);
         grandHallGroup.add(topBar);
         const sideBarN = new THREE.Mesh(new THREE.BoxGeometry(mullionWidth, wellHeight, 0.03), bronzeMaterial);
         sideBarN.position.set(x, wellMidY, glass.z0 - wellWallThickness / 2 - 0.02);
@@ -888,7 +989,7 @@ export default function VltdMuseumCampus() {
       for (let i = 1; i < mullionRows; i += 1) {
         const z = glass.z0 + (glassL * i) / mullionRows;
         const rowBar = new THREE.Mesh(new THREE.BoxGeometry(glassW, 0.05, mullionWidth), bronzeMaterial);
-        rowBar.position.set((glass.x0 + glass.x1) / 2, Y_WELL_TOP + 0.03, z);
+        rowBar.position.set((glass.x0 + glass.x1) / 2, MULLION_Y, z);
         grandHallGroup.add(rowBar);
         const sideBarW = new THREE.Mesh(new THREE.BoxGeometry(0.03, wellHeight, mullionWidth), bronzeMaterial);
         sideBarW.position.set(glass.x0 - wellWallThickness / 2 - 0.02, wellMidY, z);
@@ -897,6 +998,20 @@ export default function VltdMuseumCampus() {
         sideBarE.position.set(glass.x1 + wellWallThickness / 2 + 0.02, wellMidY, z);
         grandHallGroup.add(sideBarE);
       }
+      // Perimeter mullion frame right at the glass edge (so the grid reads
+      // as continuing all the way to the curb, matching the reference).
+      const glassFrameN = new THREE.Mesh(new THREE.BoxGeometry(glassW, 0.05, mullionWidth), bronzeMaterial);
+      glassFrameN.position.set((glass.x0 + glass.x1) / 2, MULLION_Y, glass.z0);
+      grandHallGroup.add(glassFrameN);
+      const glassFrameS = glassFrameN.clone();
+      glassFrameS.position.z = glass.z1;
+      grandHallGroup.add(glassFrameS);
+      const glassFrameW = new THREE.Mesh(new THREE.BoxGeometry(mullionWidth, 0.05, glassL), bronzeMaterial);
+      glassFrameW.position.set(glass.x0, MULLION_Y, (glass.z0 + glass.z1) / 2);
+      grandHallGroup.add(glassFrameW);
+      const glassFrameE = glassFrameW.clone();
+      glassFrameE.position.x = glass.x1;
+      grandHallGroup.add(glassFrameE);
 
       // --- Lighting: a limited number of soft supporting lights, not one
       // per coffer — the coffer glow itself comes from the emissive strips/
@@ -1734,6 +1849,22 @@ export default function VltdMuseumCampus() {
           hangPlaque(x, z, frameSize + 0.4, 1.1, item.name, item.price_label ?? undefined, item.image_url ? -frameSize * 0.55 : 0);
         });
       }
+
+      // Live-reported bug (2026-09-13, EK): "it gets stuck the first time I
+      // enter each room, then it works" — WebGL only compiles a material's
+      // shader program the first time it's actually drawn, and this scene
+      // adds a lot of new per-room material variants (this async pass's own
+      // style-patched wall/floor/ceiling materials, wall armor, display
+      // cases/shelves, plus every room's base shell) — walking into a room
+      // whose materials were never yet on-screen pays that compile cost as
+      // an in-game freeze, exactly matching "first time, then fine".
+      // renderer.compile() forces every material currently in the scene
+      // graph to compile up front in one pass instead of scattering that
+      // cost across each room's first real visit. Not exhaustive — an item
+      // image texture that finishes loading later (after this point) still
+      // compiles on its own first appearance — but this covers the bulk of
+      // it (every room's real wall/floor/ceiling/armor/case material).
+      if (!contentCancelled) renderer.compile(scene, camera);
     }
     void populateDynamicContent();
 
@@ -2296,6 +2427,15 @@ export default function VltdMuseumCampus() {
 
       renderer.render(scene, camera);
     }
+    // Live-reported bug (2026-09-13, EK): precompile every material already
+    // built synchronously above (every room's base shell, all real walls/
+    // floors/ceilings) in one pass, behind the loading screen (`ready` stays
+    // false until this finishes), instead of paying that WebGL shader-
+    // compile cost as an in-game freeze the first time each room's geometry
+    // actually comes into view. See the matching renderer.compile() call at
+    // the end of populateDynamicContent() above for the async-content half
+    // of this same fix.
+    renderer.compile(scene, camera);
     tick();
     const readyTimer = window.setTimeout(() => setReady(true), 0);
 
