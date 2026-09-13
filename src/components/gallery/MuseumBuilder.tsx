@@ -682,7 +682,7 @@ export default function MuseumBuilder() {
     // size. Same style-conditional gate VirtualGalleryRoom.tsx's own call
     // site uses (`roomStyle === "vault" || roomStyle === "loft"` — White/
     // Arcade never get this armor system, matching the personal room).
-    addStyledRoomArmor(scene, room, relevantSegments, WALL_HEIGHT, roomStyle);
+    addStyledRoomArmor(scene, room, relevantSegments, WALL_HEIGHT, roomStyle, WALL_THICKNESS);
 
     let cancelled = false;
     const textureLoader = new THREE.TextureLoader();

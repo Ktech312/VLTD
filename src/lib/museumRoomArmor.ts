@@ -113,9 +113,21 @@ function addVaultPanels(
   wallTop: number,
   wallBottom: number,
   dividerMaterial: THREE.Material,
-  rivetMaterial: THREE.Material
+  rivetMaterial: THREE.Material,
+  wallThickness: number
 ): void {
   const midY = (wallTop + wallBottom) / 2;
+  // Root cause of "the walls don't match" (EK, live): buildSharedWall()
+  // centers each wall BOX on `segment.fixed` with the box extending
+  // wallThickness/2 to each side — so the wall's actual visible face sits
+  // at fixedCoord + faceSign*wallThickness/2, not at fixedCoord itself.
+  // The personal Gallery room's own addVaultArmorRefined offsets (0.035/
+  // 0.04) were tuned in that GLB's own local space, where 0 already IS the
+  // wall face — reused unmodified here, they landed 0.11-0.115 units
+  // *inside* this room's real 0.3-thick wall (WALL_THICKNESS/2 = 0.15),
+  // fully embedded and invisible. Adding wallThickness/2 puts them back on
+  // the real, visible face, same as the personal room's own geometry.
+  const faceOffset = wallThickness / 2;
   for (const { wallAxis, fixedCoord, faceSign, from, to } of pieces) {
     const length = to - from;
     const panelCount = Math.max(1, Math.round(length / VAULT_PANEL_WIDTH));
@@ -128,8 +140,8 @@ function addVaultPanels(
           const rivet = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, 0.06, 10), rivetMaterial);
           rivet.rotation.x = wallAxis === "x" ? Math.PI / 2 : 0;
           rivet.rotation.z = wallAxis === "x" ? 0 : Math.PI / 2;
-          if (wallAxis === "x") rivet.position.set(pos, y, fixedCoord + faceSign * 0.035);
-          else rivet.position.set(fixedCoord + faceSign * 0.035, y, pos);
+          if (wallAxis === "x") rivet.position.set(pos, y, fixedCoord + faceSign * (faceOffset + 0.035));
+          else rivet.position.set(fixedCoord + faceSign * (faceOffset + 0.035), y, pos);
           scene.add(rivet);
         }
       }
@@ -140,8 +152,8 @@ function addVaultPanels(
             : new THREE.BoxGeometry(0.06, wallTop - wallBottom, 0.07),
           dividerMaterial
         );
-        if (wallAxis === "x") divider.position.set(a, midY, fixedCoord + faceSign * 0.04);
-        else divider.position.set(fixedCoord + faceSign * 0.04, midY, a);
+        if (wallAxis === "x") divider.position.set(a, midY, fixedCoord + faceSign * (faceOffset + 0.04));
+        else divider.position.set(fixedCoord + faceSign * (faceOffset + 0.04), midY, a);
         scene.add(divider);
       }
     }
@@ -219,13 +231,13 @@ function addVaultCeilingLattice(scene: THREE.Scene, room: CampusRoom, wallHeight
  * own real solid wall spans (door gaps excluded) instead of one fixed
  * personal-room size. */
 export function addVaultArmorForRoom(
-  scene: THREE.Scene, room: CampusRoom, segments: CampusWallSegment[], wallHeight: number
+  scene: THREE.Scene, room: CampusRoom, segments: CampusWallSegment[], wallHeight: number, wallThickness: number
 ): void {
   const dividerMaterial = new THREE.MeshStandardMaterial({ color: 0x1c1e20, metalness: 0.3, roughness: 0.55 });
   const rivetMaterial = new THREE.MeshStandardMaterial({ color: 0x8a9096, metalness: 0.72, roughness: 0.35 });
   const wallTop = wallHeight - 0.25;
   const wallBottom = 0.25;
-  addVaultPanels(scene, solidWallPieces(room, segments), wallTop, wallBottom, dividerMaterial, rivetMaterial);
+  addVaultPanels(scene, solidWallPieces(room, segments), wallTop, wallBottom, dividerMaterial, rivetMaterial, wallThickness);
   addVaultCeilingLattice(scene, room, wallHeight);
 }
 
@@ -251,10 +263,16 @@ function addLoftWalls(
   ribMaterial: THREE.Material,
   dividerMaterial: THREE.Material,
   seamMaterial: THREE.Material,
-  rivetMaterial: THREE.Material
+  rivetMaterial: THREE.Material,
+  wallThickness: number
 ): void {
   const midY = (wallTop + wallBottom) / 2;
   const seamY = wallBottom + LOFT_SEAM_FRACTION * (wallTop - wallBottom);
+  // Same real-wall-face correction as addVaultPanels above — see its own
+  // comment for the root cause (buildSharedWall() centers each wall box on
+  // segment.fixed, so the real face is wallThickness/2 further out than
+  // the personal room's own GLB-local-space offsets assumed).
+  const faceOffset = wallThickness / 2;
   for (const { wallAxis, fixedCoord, faceSign, from, to } of pieces) {
     const length = to - from;
 
@@ -270,15 +288,15 @@ function addLoftWalls(
           : new THREE.BoxGeometry(LOFT_RIB_DEPTH, wallTop - wallBottom, 0.16),
         ribMaterial
       );
-      if (wallAxis === "x") rib.position.set(pos, midY, fixedCoord + faceSign * LOFT_RIB_DEPTH * 0.5);
-      else rib.position.set(fixedCoord + faceSign * LOFT_RIB_DEPTH * 0.5, midY, pos);
+      if (wallAxis === "x") rib.position.set(pos, midY, fixedCoord + faceSign * (faceOffset + LOFT_RIB_DEPTH * 0.5));
+      else rib.position.set(fixedCoord + faceSign * (faceOffset + LOFT_RIB_DEPTH * 0.5), midY, pos);
       scene.add(rib);
 
       const rivet = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 0.06, 10), rivetMaterial);
       rivet.rotation.x = wallAxis === "x" ? Math.PI / 2 : 0;
       rivet.rotation.z = wallAxis === "x" ? 0 : Math.PI / 2;
-      if (wallAxis === "x") rivet.position.set(pos, seamY, fixedCoord + faceSign * (LOFT_RIB_DEPTH + 0.035));
-      else rivet.position.set(fixedCoord + faceSign * (LOFT_RIB_DEPTH + 0.035), seamY, pos);
+      if (wallAxis === "x") rivet.position.set(pos, seamY, fixedCoord + faceSign * (faceOffset + LOFT_RIB_DEPTH + 0.035));
+      else rivet.position.set(fixedCoord + faceSign * (faceOffset + LOFT_RIB_DEPTH + 0.035), seamY, pos);
       scene.add(rivet);
     }
 
@@ -288,8 +306,8 @@ function addLoftWalls(
       wallAxis === "x" ? new THREE.BoxGeometry(length, 0.05, 0.03) : new THREE.BoxGeometry(0.03, 0.05, length),
       seamMaterial
     );
-    if (wallAxis === "x") seam.position.set(mid, seamY, fixedCoord + faceSign * 0.02);
-    else seam.position.set(fixedCoord + faceSign * 0.02, seamY, mid);
+    if (wallAxis === "x") seam.position.set(mid, seamY, fixedCoord + faceSign * (faceOffset + 0.02));
+    else seam.position.set(fixedCoord + faceSign * (faceOffset + 0.02), seamY, mid);
     scene.add(seam);
 
     // A broad divider splitting this piece into 2-3 wide sections -- same
@@ -305,8 +323,8 @@ function addLoftWalls(
           : new THREE.BoxGeometry(LOFT_RIB_DEPTH + 0.04, wallTop - wallBottom, 0.32),
         dividerMaterial
       );
-      if (wallAxis === "x") divider.position.set(pos, midY, fixedCoord + faceSign * (LOFT_RIB_DEPTH + 0.04) * 0.5);
-      else divider.position.set(fixedCoord + faceSign * (LOFT_RIB_DEPTH + 0.04) * 0.5, midY, pos);
+      if (wallAxis === "x") divider.position.set(pos, midY, fixedCoord + faceSign * (faceOffset + (LOFT_RIB_DEPTH + 0.04) * 0.5));
+      else divider.position.set(fixedCoord + faceSign * (faceOffset + (LOFT_RIB_DEPTH + 0.04) * 0.5), midY, pos);
       scene.add(divider);
     }
   }
@@ -380,7 +398,7 @@ function addLoftCeilingArrows(scene: THREE.Scene, room: CampusRoom, wallHeight: 
  * museum room: same recipe and colors, scaled to this room's own real solid
  * wall spans (door gaps excluded) instead of one fixed personal-room size. */
 export function addLoftArmorForRoom(
-  scene: THREE.Scene, room: CampusRoom, segments: CampusWallSegment[], wallHeight: number
+  scene: THREE.Scene, room: CampusRoom, segments: CampusWallSegment[], wallHeight: number, wallThickness: number
 ): void {
   const ribMaterial = new THREE.MeshStandardMaterial({ color: 0x24272a, metalness: 0.32, roughness: 0.52 });
   const dividerMaterial = new THREE.MeshStandardMaterial({ color: 0x1c1e20, metalness: 0.3, roughness: 0.55 });
@@ -388,7 +406,7 @@ export function addLoftArmorForRoom(
   const rivetMaterial = new THREE.MeshStandardMaterial({ color: 0x767c81, metalness: 0.68, roughness: 0.4 });
   const wallTop = wallHeight - 0.25;
   const wallBottom = 0.25;
-  addLoftWalls(scene, solidWallPieces(room, segments), wallTop, wallBottom, ribMaterial, dividerMaterial, seamMaterial, rivetMaterial);
+  addLoftWalls(scene, solidWallPieces(room, segments), wallTop, wallBottom, ribMaterial, dividerMaterial, seamMaterial, rivetMaterial, wallThickness);
   addLoftCeilingArrows(scene, room, wallHeight);
 }
 
@@ -401,8 +419,9 @@ export function addStyledRoomArmor(
   room: CampusRoom,
   segments: CampusWallSegment[],
   wallHeight: number,
-  style: GalleryFinishStyle | null | undefined
+  style: GalleryFinishStyle | null | undefined,
+  wallThickness: number
 ): void {
-  if (style === "vault") addVaultArmorForRoom(scene, room, segments, wallHeight);
-  else if (style === "loft") addLoftArmorForRoom(scene, room, segments, wallHeight);
+  if (style === "vault") addVaultArmorForRoom(scene, room, segments, wallHeight, wallThickness);
+  else if (style === "loft") addLoftArmorForRoom(scene, room, segments, wallHeight, wallThickness);
 }
