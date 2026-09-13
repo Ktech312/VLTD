@@ -5,6 +5,78 @@
 - **Mobile drag/scroll bug** (EK found this hands-on, unrelated to the above): dragging to look around also scrolled the whole page on a touch device, and yaw drag didn't track smoothly — both caused by the room's mount div never declaring `touch-action: none`. Fixed with the same one-line fix already used elsewhere in this file. Code-verified and reasoned through; genuinely NOT tested with a real touch input (no tool in this session can produce one) — needs EK's own phone to close the loop.
 Regression-checked live: White unaffected (still looks exactly right), pickup/rotate/return still works, no console errors anywhere. See the 2026-09-06 dated entries (top of the log below) for full detail, including the one real bug this session found and fixed in its own live check (Blue's case lids) before calling any of this done. Before tonight: the first White-room material pass (2026-09-05, commit `c61e600`/`f346d18`) — also READY on Vercel and live-verified. Below that: the VLTD Museum public campus work (2026-08-31 through 09-04, then resumed and heavily active again 2026-09-08 through 09-10 — see the 2026-09-10 dated entry, TOP of the dated list below, for the current state: NOT accepted yet, EK's own physical-input pass still pending). Read the dated entries below in order, newest first, before assuming any room behaves a particular way. Older work further down in §2 (2026-08-27/28 Admin Users redesign; ~110 VaultItem fields + 3 Gallery-sync gaps, both migrations confirmed run by EK; Events tooling, admin console/APP_MAP.md, Vault upload; a full backend security audit, 3D Museum beta-access gating, Room Builder fixes) is unrelated to either of the above.)
 
+# 2026-09-12 (real Gallery environments pass) — removed the invented "Background" swatch colors, wired in the actual White/Vault/Arcade/Industrial Loft environments
+
+Work order: `docs/MUSEUM-BUILDER-REAL-GALLERY-ENVIRONMENTS-2026-09-12.md`. EK,
+verbatim, after testing the material-quality pass below: "nothing looks
+different, the rooms look the same and my environments are not there...
+These circles, I DO NOT WANT, I NEVER ASKED YOU TO MAKE THEM, REMOVE THEM
+AND GIVE ME THE ONES IN THE 3D GALLERY!!!!! LITERALLY ASKED SEVERAL TIMES."
+This supersedes every prior "background" decision from the entry below —
+`ROOM_BACKGROUND_OPTIONS` ("Neutral/Warm Ivory/Cool Slate/Charcoal") was
+invented for this project and is now removed entirely, not kept alongside
+the real thing.
+
+- **Removed completely**: `ROOM_BACKGROUND_OPTIONS`, `backgroundWallColorHex`,
+  `setRoomBackground` (`campusRoomBuilder.ts`/`museumCampusConfig.ts`), and
+  the BACKGROUND swatch-color picker UI in `MuseumBuilder.tsx`. No code
+  anywhere reads or writes `museum_room_meta.background_id` anymore — the
+  column itself is left in the database untouched (dropping it is
+  unnecessary churn).
+- **`galleryRoomFinishes.ts`**: exactly one additive line changed —
+  `createGalleryFinishes()`'s own return statement now also returns
+  `ceiling` and `charcoal` (both already built internally, just not
+  previously returned). Nothing else in that file touched; confirmed via
+  diff. `VirtualGalleryRoom.tsx`'s own use of this function is unaffected
+  (destructuring extra keys is non-breaking), and that file is itself
+  byte-for-byte unchanged this pass.
+- **New Style control** in `MuseumBuilder.tsx`: White / Vault / Arcade /
+  Industrial Loft — the exact same labels/values as
+  `VirtualGalleryRoom.tsx`'s own style `<select>` — persisted as a new
+  `museum_room_meta.room_style` column (migration:
+  `supabase/migrations/20260912_museum_room_style.sql`, written but NOT run
+  — EK runs migrations by hand). Fails soft exactly like every other
+  optional column in `museumCampusConfig.ts`: an unrun migration or an
+  unrecognized value just means "keep this room's normal default finish."
+  "Blue" is deliberately NOT offered — it has no `createGalleryFinishes()`
+  entry (hand-built inline in `VirtualGalleryRoom.tsx`, no GLB) — a known,
+  disclosed gap for a future pass, not silently dropped.
+- **`campusRoomBuilder.ts`**: `buildRoomShell`/`buildNeutralShell`/
+  `buildCeilingAndTrim`/`buildRoomTrim` all gained an optional trailing
+  `styled` parameter (a `createGalleryFinishes(style)` instance). When
+  present, a room's own real wall/floor/ceiling meshes get that style's
+  real `wall`/`floor`/`ceiling` materials, its baseboard/rail trim get
+  `charcoal`/`brass`, and its light rig is built by that style's own
+  `addLighting()` (via a small room-centered anchor group) instead of this
+  file's generic ceiling-fixture + wall-wash rig. `dark` is not currently
+  wired to any museum mesh (no direct equivalent in the shared-wall/shelf/
+  case architecture this pass touched) — returned/available, not yet used
+  here; a disclosed, intentional gap, not an oversight. Every room's own
+  real shape/wall lengths/door positions are completely untouched — only
+  materials and lighting change per style.
+- **`VltdMuseumCampus.tsx`** (the live museum): every editable room's shell
+  still builds synchronously with its normal default finish first (so the
+  campus doesn't wait on a network round-trip to first paint), then once
+  `museum_room_meta.room_style` loads asynchronously, that room's own
+  already-built wall/floor/ceiling/baseboard/rail Material instances are
+  patched in place (`.copy()`) and its generic light rig is swapped for the
+  style's own real `addLighting()` rig — same "build now, patch once loaded"
+  pattern already established for titles/the old background tint.
+- **`MuseumBuilder.tsx`**: since this page already loads a room's saved
+  settings before rebuilding its single-room preview scene, it builds
+  directly with the resolved style from the start (no patch-after-load step
+  needed there).
+- Both files share `campusRoomBuilder.ts`'s material code, so a room styled
+  from Museum Builder looks the same way when visited live, per the work
+  order.
+- Not touched, confirmed via diff: `VirtualGalleryRoom.tsx`, `galleryTextures.ts`,
+  `campusLayout.ts` (`CAMPUS_ROOMS`/`CAMPUS_DOORS`), doors, floor/navigation
+  targets, camera/movement/collision, Museum Builder's Organize system, item
+  placement/save logic, the Room/Map toggle, per-item Values.
+- `npx tsc --noEmit`, targeted `eslint`, and `npm run build` all clean before
+  push. Live visual verification is the parent session's to do in a real
+  browser after deploy — not claimed here.
+
 # 2026-09-12 (material quality parity pass) — shared museum rooms brought up to the personal Gallery Builder's own material/lighting quality bar
 
 Work order: `docs/MUSEUM-MATERIAL-QUALITY-PARITY-2026-09-12.md`. EK, verbatim:

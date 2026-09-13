@@ -835,7 +835,7 @@ export function createGalleryFinishes(style: GalleryFinishStyle = "whitebox") {
     room.add(glow);
   }
 
-  return { wall, floor, brass, dark, apply, addLighting, addCaseDetails, addVaultArmor, dispose() {
+  return { wall, floor, ceiling, brass, charcoal, dark, apply, addLighting, addCaseDetails, addVaultArmor, dispose() {
     textures.forEach((texture) => texture.dispose());
     materials.forEach((material) => material.dispose());
   } };

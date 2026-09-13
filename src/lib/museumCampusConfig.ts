@@ -221,12 +221,20 @@ export type MuseumRoomMeta = {
   room_id: string;
   title: string | null;
   description: string | null;
-  // Shared Museum Room Editor pass (2026-09-12): an optional per-room
-  // background/wall-finish choice (see ROOM_BACKGROUNDS in
-  // campusRoomBuilder.ts). Undefined/null — no override, no migration yet,
-  // or no choice saved — always means "keep the room's current default
-  // finish," never a broken/blank wall.
-  background_id?: string | null;
+  // Real Gallery Environments pass (2026-09-12): replaces the removed
+  // invented "background" swatch system (ROOM_BACKGROUND_OPTIONS/
+  // backgroundWallColorHex/setRoomBackground — EK: "these circles, I DO NOT
+  // WANT, I NEVER ASKED YOU TO MAKE THEM"). An optional per-room choice of
+  // one of the personal Gallery Builder's own real named environments
+  // (createGalleryFinishes' "whitebox"|"vault"|"arcade"|"loft" — see
+  // MUSEUM_ROOM_STYLE_OPTIONS in campusRoomBuilder.ts), reusing that
+  // function's real material/lighting code directly instead of a museum-
+  // only invented finish. Undefined/null — no override, no migration yet,
+  // or an unrecognized value — always means "keep the room's current
+  // default finish," never a broken/blank wall. The old `background_id`
+  // column itself is left in place in the database (dropping it is
+  // unnecessary churn) but no code in this app reads or writes it anymore.
+  room_style?: string | null;
   // Museum Builder pass (2026-09-12): per-room overrides for EK's "a slider
   // to set how many items this room shows" ask — wall/shelf/case item
   // capacity, independent of the global museum_campus_config default
@@ -265,16 +273,16 @@ export type MuseumRoomMeta = {
 // breaks regardless of which of the columns below EK has actually migrated
 // yet, in any order.
 const ROOM_META_COLUMNS_FULL =
-  "room_id, title, description, background_id, item_capacity, shelf_capacity, case_capacity, background_image_url, wall_row_count, wall_shelves_enabled";
+  "room_id, title, description, room_style, item_capacity, shelf_capacity, case_capacity, background_image_url, wall_row_count, wall_shelves_enabled";
 const ROOM_META_COLUMNS_WITH_CAPACITY =
-  "room_id, title, description, background_id, item_capacity, shelf_capacity, case_capacity, background_image_url";
-const ROOM_META_COLUMNS_WITH_BACKGROUND = "room_id, title, description, background_id";
+  "room_id, title, description, room_style, item_capacity, shelf_capacity, case_capacity, background_image_url";
+const ROOM_META_COLUMNS_WITH_STYLE = "room_id, title, description, room_style";
 const ROOM_META_COLUMNS_BASE = "room_id, title, description";
 
 async function selectRoomMeta(roomId: string): Promise<MuseumRoomMeta | null> {
   const supabase = getSupabaseBrowserClient();
   if (!supabase) return null;
-  for (const columns of [ROOM_META_COLUMNS_FULL, ROOM_META_COLUMNS_WITH_CAPACITY, ROOM_META_COLUMNS_WITH_BACKGROUND, ROOM_META_COLUMNS_BASE]) {
+  for (const columns of [ROOM_META_COLUMNS_FULL, ROOM_META_COLUMNS_WITH_CAPACITY, ROOM_META_COLUMNS_WITH_STYLE, ROOM_META_COLUMNS_BASE]) {
     try {
       const { data, error } = await supabase
         .from("museum_room_meta")
@@ -305,7 +313,7 @@ export async function getAllRoomMeta(): Promise<Record<string, MuseumRoomMeta>> 
     if (error) throw error;
     return (data ?? []) as unknown as MuseumRoomMeta[];
   }
-  for (const columns of [ROOM_META_COLUMNS_FULL, ROOM_META_COLUMNS_WITH_CAPACITY, ROOM_META_COLUMNS_WITH_BACKGROUND, ROOM_META_COLUMNS_BASE]) {
+  for (const columns of [ROOM_META_COLUMNS_FULL, ROOM_META_COLUMNS_WITH_CAPACITY, ROOM_META_COLUMNS_WITH_STYLE, ROOM_META_COLUMNS_BASE]) {
     try {
       const rows = await fetchAll(columns);
       const byRoomId: Record<string, MuseumRoomMeta> = {};
@@ -369,16 +377,19 @@ export async function setRoomBackgroundImage(roomId: string, imageUrl: string | 
   return { ok: true };
 }
 
-/** Saves a room's background choice independently of its title/description
- * — changing SPORTS's background must never touch COLLECTION/CARDS/HUB/etc,
- * satisfied here the same way title already is: one upserted row keyed by
- * room_id. Pass `null` to reset to the room's default finish. */
-export async function setRoomBackground(roomId: string, backgroundId: string | null): Promise<{ ok: boolean; error?: string }> {
+/** Saves a room's real Gallery-environment style choice
+ * ("whitebox"|"vault"|"arcade"|"loft") independently of its title/
+ * description — changing SPORTS's style must never touch
+ * COLLECTION/CARDS/HUB/etc, satisfied here the same way title already is:
+ * one upserted row keyed by room_id. Pass `null` to reset to the room's
+ * default finish. Fails soft (returns ok:false with a message) if
+ * 20260912_museum_room_style.sql hasn't been run yet. */
+export async function setRoomStyle(roomId: string, style: string | null): Promise<{ ok: boolean; error?: string }> {
   const supabase = getSupabaseBrowserClient();
   if (!supabase) return { ok: false, error: "Not signed in." };
   const { error } = await supabase
     .from("museum_room_meta")
-    .upsert({ room_id: roomId, background_id: backgroundId, updated_at: new Date().toISOString() });
+    .upsert({ room_id: roomId, room_style: style, updated_at: new Date().toISOString() });
   if (error) return { ok: false, error: error.message };
   return { ok: true };
 }

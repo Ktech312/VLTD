@@ -27,6 +27,17 @@ import {
   type WallSide,
 } from "./campusLayout";
 import { createStoneFloorTexture } from "../components/gallery/galleryTextures";
+// Real Gallery Environments pass (2026-09-12): EK's explicit, repeated
+// correction — the room editor's style choices must be the actual named
+// environments she built and refined in the personal Gallery Builder
+// (White/Vault/Arcade/Industrial Loft), using createGalleryFinishes()'s own
+// real material/lighting code, not invented museum-only colors. This is the
+// ONLY change made to galleryRoomFinishes.ts's own callers here — the
+// function itself gained one additive edit (ceiling/charcoal added to its
+// return statement) and is otherwise untouched, still used by
+// VirtualGalleryRoom.tsx exactly as before.
+import { createGalleryFinishes, type GalleryFinishStyle } from "../components/gallery/galleryRoomFinishes";
+export type { GalleryFinishStyle };
 // Museum Builder row-control fix (2026-09-12): SHELF_ROW_Y/shelfItemY/
 // MIN_ITEM_SCALE are the personal Gallery Builder's own hand-tuned fixed
 // row heights (src/lib/galleryRoomSlots.ts) — reused directly here, not
@@ -177,60 +188,44 @@ export const HUB_FINISH: RoomFinish = {
   trimRoughness: 0.35,
 };
 
-// Shared Museum Room Editor pass (2026-09-12): the room editor's Background
-// control choices. Persisted per room via museum_room_meta.background_id
-// (src/lib/museumCampusConfig.ts's setRoomBackground/getRoomMeta) — a plain
-// enum id rather than an uploaded image, since the shared museum's rooms
-// are built procedurally (this file's own createWallMaterial/RoomFinish
-// system), not from the personal Gallery's GLB-based room styles, so there
-// is no single literal "wallpaper" asset to reuse across both.
-//
-// Follow-up pass (2026-09-12, background-application fix): wiring a saved
-// choice into VltdMuseumCampus.tsx's live wall-material build required
-// fixing the actual root cause first, not just calling setHex() somewhere —
-// that file cached exactly ONE wall Material per FINISH IDENTITY
-// (createWallMaterial(NEUTRAL_LEGACY_FINISH) etc., keyed by object
-// reference), so every room in a given finish category — e.g. every
-// unconverted legacy room, SPORTS included — literally shared the same
-// Material object. Recoloring "SPORTS's" material there would have
-// recolored every other room sharing that same cached instance too, exactly
-// the "changing SPORTS must not change COLLECTION/CARDS/HUB" failure this
-// system exists to prevent. Fixed there by keying that cache per ROOM ID
-// instead of per finish object — every room now owns its own dedicated
-// Material/texture instance (still produced by this file's own
-// createWallMaterial(), so the default look is unchanged — just no longer
-// object-shared across rooms), so backgroundWallColorHex() below can be
-// applied to exactly one room's material once its museum_room_meta row
-// loads, with zero effect on any other room's wall.
-export const ROOM_BACKGROUND_OPTIONS: { id: string; label: string; swatch: string }[] = [
-  { id: "neutral", label: "Neutral (default)", swatch: "#d7d9d6" },
-  { id: "warm", label: "Warm Ivory", swatch: "#e6d8bd" },
-  { id: "cool_slate", label: "Cool Slate", swatch: "#c7ccd1" },
-  // 2026-09-12: live-tested via Museum Builder — the original #33363b read
-  // as pitch-black and made the room unusable (nothing placed in it was
-  // visible). It's darker than even Gallery Builder's own Vault wall
-  // (#4b5158), which needed a whole dedicated lighting pass of its own to
-  // stay legible — the museum's shared, generic light rig was never tuned
-  // for anything that extreme. Lightened to stay clearly the darkest/most
-  // dramatic option relative to the other three, without going darker than
-  // the current shared lighting can actually render as a usable room.
-  { id: "charcoal", label: "Charcoal", swatch: "#585b60" },
+// Real Gallery Environments pass (2026-09-12): replaces the removed
+// invented "Background" swatch system (ROOM_BACKGROUND_OPTIONS/
+// backgroundWallColorHex/museum_room_meta.background_id — EK, verbatim:
+// "These circles, I DO NOT WANT, I NEVER ASKED YOU TO MAKE THEM, REMOVE THEM
+// AND GIVE ME THE ONES IN THE 3D GALLERY!!!!!"). The room editor's Style
+// control now offers the personal Gallery Builder's own real, named
+// environments — the exact same values/labels as VirtualGalleryRoom.tsx's
+// own style `<select>` (White/Vault/Arcade/Industrial Loft) — persisted per
+// room via museum_room_meta.room_style (src/lib/museumCampusConfig.ts's
+// setRoomStyle/getRoomMeta). "Blue" is deliberately not offered: it has no
+// createGalleryFinishes() entry (see that file's own header comment) — it's
+// hand-built inline in VirtualGalleryRoom.tsx with no GLB/shared function to
+// reuse, so porting it is out of scope for this pass.
+export const MUSEUM_ROOM_STYLE_OPTIONS: { id: GalleryFinishStyle; label: string }[] = [
+  { id: "whitebox", label: "White" },
+  { id: "vault", label: "Vault" },
+  { id: "arcade", label: "Arcade" },
+  { id: "loft", label: "Industrial Loft" },
 ];
 
-/** Resolves a saved `museum_room_meta.background_id` to the wall-tint color
- * it represents, or `null` for "no override" — an undefined/null id, an
- * unrecognized id, or the explicit "neutral" option all mean the same thing:
- * leave the room's normal per-category finish color alone, never a broken or
- * blank wall (the "safe default and reset-to-default option" the work order
- * asked for). Parses the option's own `swatch` hex string rather than
- * keeping a second color table, so the editor's swatch preview and the live
- * 3D wall can never disagree about what a given background id looks like. */
-export function backgroundWallColorHex(backgroundId: string | null | undefined): number | null {
-  if (!backgroundId || backgroundId === "neutral") return null;
-  const option = ROOM_BACKGROUND_OPTIONS.find((o) => o.id === backgroundId);
-  if (!option) return null;
-  const parsed = Number.parseInt(option.swatch.replace("#", ""), 16);
-  return Number.isNaN(parsed) ? null : parsed;
+export type StyledRoomFinishes = ReturnType<typeof createGalleryFinishes>;
+
+/** Resolves a saved `museum_room_meta.room_style` to a real
+ * createGalleryFinishes() instance (the SAME wall/floor/ceiling/brass/
+ * charcoal/dark materials and addLighting() rig the personal Gallery
+ * Builder's own rooms use), or `null` for "no override" — an undefined,
+ * null, or unrecognized style all mean the same thing: keep the room's
+ * normal per-category RoomFinish, never a broken material (the same safe-
+ * default rule the old background system followed). Each call builds a
+ * fresh, standalone instance (real THREE.Material/Texture objects) — callers
+ * own its lifetime and must call `.dispose()` on it when the room is torn
+ * down or re-styled, same as VirtualGalleryRoom.tsx already does for its own
+ * `galleryFinishes`. */
+export function createStyledRoomFinishes(style: string | null | undefined): StyledRoomFinishes | null {
+  if (style === "whitebox" || style === "vault" || style === "arcade" || style === "loft") {
+    return createGalleryFinishes(style);
+  }
+  return null;
 }
 
 export type RoomModule = {
@@ -431,7 +426,9 @@ function createCeilingBayTexture(roomWidth: number, roomDepth: number): THREE.Ca
   return texture;
 }
 
-function buildCeilingAndTrim(scene: THREE.Scene, room: CampusRoom, wallHeight: number, finish: RoomFinish): void {
+function buildCeilingAndTrim(
+  scene: THREE.Scene, room: CampusRoom, wallHeight: number, finish: RoomFinish, styled?: StyledRoomFinishes | null
+): THREE.MeshStandardMaterial {
   const bounds = roomBounds(room);
   const center = { x: room.x + room.w / 2, z: room.z + room.d / 2 };
 
@@ -453,11 +450,30 @@ function buildCeilingAndTrim(scene: THREE.Scene, room: CampusRoom, wallHeight: n
   // legacy-room artwork elsewhere in this pass) puts the bay lines into the
   // self-illumination itself, so they're visible regardless of how little
   // real light the ceiling receives.
-  const ceilingTexture = createCeilingBayTexture(room.w, room.d);
-  const ceilingMaterial = new THREE.MeshStandardMaterial({
-    color: finish.ceilingColor, map: ceilingTexture, roughness: 0.92,
-    emissive: finish.ceilingColor, emissiveMap: ceilingTexture, emissiveIntensity: 0.22,
-  });
+  let ceilingMaterial: THREE.MeshStandardMaterial;
+  if (styled) {
+    // Real Gallery Environments pass: the styled ceiling material is the
+    // SAME object createGalleryFinishes() built (real color/roughness/map
+    // for this style) — reused directly, not recreated. It has no emissive
+    // set (the personal Gallery's own scene doesn't need one), so without
+    // adding one here it would suffer the exact same "near-black downward
+    // face" problem this comment already fixed for every other room's
+    // ceiling above, since the campus's own light rig is different from the
+    // personal Gallery's. Setting emissive from its own color/texture is
+    // the same self-illumination technique, applied to this one extra
+    // material instance — not a new invention.
+    ceilingMaterial = styled.ceiling;
+    ceilingMaterial.emissive = new THREE.Color(ceilingMaterial.color);
+    if (ceilingMaterial.map) ceilingMaterial.emissiveMap = ceilingMaterial.map;
+    ceilingMaterial.emissiveIntensity = 0.22;
+    ceilingMaterial.needsUpdate = true;
+  } else {
+    const ceilingTexture = createCeilingBayTexture(room.w, room.d);
+    ceilingMaterial = new THREE.MeshStandardMaterial({
+      color: finish.ceilingColor, map: ceilingTexture, roughness: 0.92,
+      emissive: finish.ceilingColor, emissiveMap: ceilingTexture, emissiveIntensity: 0.22,
+    });
+  }
   const ceilingTrimMaterial = new THREE.MeshStandardMaterial({ color: finish.ceilingTrimColor, roughness: 0.7 });
 
   const ceiling = new THREE.Mesh(new THREE.PlaneGeometry(room.w, room.d), ceilingMaterial);
@@ -480,9 +496,13 @@ function buildCeilingAndTrim(scene: THREE.Scene, room: CampusRoom, wallHeight: n
   const trimEast = new THREE.Mesh(trimEW.clone(), ceilingTrimMaterial);
   trimEast.position.set(bounds.x1, wallHeight - trimHeight / 2, center.z);
   scene.add(trimEast);
+
+  return ceilingMaterial;
 }
 
-export function buildRoomShell(scene: THREE.Scene, module: RoomModule): RoomLightGroups {
+export function buildRoomShell(
+  scene: THREE.Scene, module: RoomModule, styled?: StyledRoomFinishes | null
+): RoomLightGroups & { shellFixtures: THREE.Group; floorMaterial: THREE.MeshStandardMaterial; ceilingMaterial: THREE.MeshStandardMaterial } {
   const { room, wallHeight, finish } = module;
   const bounds = roomBounds(room);
   const center = { x: room.x + room.w / 2, z: room.z + room.d / 2 };
@@ -492,56 +512,88 @@ export function buildRoomShell(scene: THREE.Scene, module: RoomModule): RoomLigh
   const preview = new THREE.Group();
   preview.name = `room-preview:${room.id}`;
   scene.add(preview);
+  // Real Gallery Environments pass (2026-09-12): every ceiling-fixture mesh
+  // this shell builds (below, and in buildLegacyRoomLightRig) now lands in
+  // its own per-room group instead of directly on `scene` — same always-
+  // visible result (this group is never itself toggled), just a handle a
+  // later style change can clear/dispose when swapping in
+  // createGalleryFinishes(style)'s own real light rig instead.
+  const shellFixtures = new THREE.Group();
+  shellFixtures.name = `room-fixtures:${room.id}`;
+  scene.add(shellFixtures);
 
   // Overnight Polish pass: repeat scaled to this room's own size (was a
   // fixed 10.5x13 that only happened to fit POP_CULTURE/TCG/COLLECTION,
   // all 21x26 — "no stretched texture spanning several module bays" once
   // this floor technique is reused for rooms of other sizes below).
-  const floorTexture = createStoneFloorTexture(finish.floorJointColor, room.w / 2, room.d / 2);
-  const floorMaterial = new THREE.MeshStandardMaterial({ color: finish.floorTintColor ?? 0xffffff, map: floorTexture, roughness: 0.62 });
+  let floorMaterial: THREE.MeshStandardMaterial;
+  if (styled) {
+    // Real Gallery Environments pass: the room's own real floor material
+    // (stone/wood/concrete per style, tuned by createGalleryFinishes),
+    // reused directly instead of this file's generic stone-floor recipe.
+    floorMaterial = styled.floor;
+  } else {
+    const floorTexture = createStoneFloorTexture(finish.floorJointColor, room.w / 2, room.d / 2);
+    floorMaterial = new THREE.MeshStandardMaterial({ color: finish.floorTintColor ?? 0xffffff, map: floorTexture, roughness: 0.62 });
+  }
 
   const floor = new THREE.Mesh(new THREE.PlaneGeometry(room.w, room.d), floorMaterial);
   floor.rotation.x = -Math.PI / 2;
   floor.position.set(center.x, 0, center.z);
   scene.add(floor);
 
-  buildCeilingAndTrim(scene, room, wallHeight, finish);
+  const ceilingMaterial = buildCeilingAndTrim(scene, room, wallHeight, finish, styled);
 
-  for (const lz of [bounds.z0 + room.d * 0.3, bounds.z0 + room.d * 0.7]) {
-    const lx = center.x;
-    const fixture = new THREE.Mesh(
-      new THREE.CircleGeometry(0.34, 20),
-      new THREE.MeshStandardMaterial({ color: 0xfff6e0, emissive: finish.lightColor, emissiveIntensity: 0.7 })
-    );
-    fixture.rotation.x = Math.PI / 2;
-    fixture.position.set(lx, wallHeight - 0.03, lz);
-    scene.add(fixture);
-    const down = new THREE.SpotLight(finish.lightColor, 1.1, 14, Math.PI / 4, 0.55, 1.3);
-    down.position.set(lx, wallHeight - 0.4, lz);
-    down.target.position.set(lx, 0, lz);
-    lights.add(down);
-    lights.add(down.target);
+  if (styled) {
+    // Real Gallery Environments pass: this room's own real light rig
+    // (createGalleryFinishes(style).addLighting()) instead of the generic
+    // ceiling-fixture + wall-wash rig below. `anchor` re-bases addLighting's
+    // own local-space light targets (authored around the personal Gallery
+    // Builder's own similarly-sized 21x26 room, centered on its own origin)
+    // onto this room's real world-space center — the room's own real
+    // shape/wall lengths/door positions are untouched, only the lighting
+    // (and materials) come from the chosen style, per the work order.
+    const anchor = new THREE.Group();
+    anchor.position.set(center.x, 0, center.z);
+    lights.add(anchor);
+    styled.addLighting(anchor);
+  } else {
+    for (const lz of [bounds.z0 + room.d * 0.3, bounds.z0 + room.d * 0.7]) {
+      const lx = center.x;
+      const fixture = new THREE.Mesh(
+        new THREE.CircleGeometry(0.34, 20),
+        new THREE.MeshStandardMaterial({ color: 0xfff6e0, emissive: finish.lightColor, emissiveIntensity: 0.7 })
+      );
+      fixture.rotation.x = Math.PI / 2;
+      fixture.position.set(lx, wallHeight - 0.03, lz);
+      shellFixtures.add(fixture);
+      const down = new THREE.SpotLight(finish.lightColor, 1.1, 14, Math.PI / 4, 0.55, 1.3);
+      down.position.set(lx, wallHeight - 0.4, lz);
+      down.target.position.set(lx, 0, lz);
+      lights.add(down);
+      lights.add(down.target);
 
-    const upglow = new THREE.PointLight(finish.lightColor, 0.5, 9, 2);
-    upglow.position.set(lx, wallHeight - 0.15, lz);
-    lights.add(upglow);
+      const upglow = new THREE.PointLight(finish.lightColor, 0.5, 9, 2);
+      upglow.position.set(lx, wallHeight - 0.15, lz);
+      lights.add(upglow);
+    }
+
+    const washSpecs: { pos: [number, number, number]; target: [number, number, number] }[] = [
+      { pos: [center.x, wallHeight - 1.1, bounds.z0 + room.d * 0.85], target: [center.x, wallHeight * 0.35, bounds.z0] },
+      { pos: [center.x, wallHeight - 1.1, bounds.z0 + room.d * 0.15], target: [center.x, wallHeight * 0.35, bounds.z1] },
+      { pos: [bounds.x0 + room.w * 0.85, wallHeight - 1.1, center.z], target: [bounds.x0, wallHeight * 0.35, center.z] },
+      { pos: [bounds.x0 + room.w * 0.15, wallHeight - 1.1, center.z], target: [bounds.x1, wallHeight * 0.35, center.z] },
+    ];
+    for (const wash of washSpecs) {
+      const light = new THREE.SpotLight(finish.lightColor, 1.3, 20, Math.PI / 3.5, 0.65, 1.4);
+      light.position.set(...wash.pos);
+      light.target.position.set(...wash.target);
+      lights.add(light);
+      lights.add(light.target);
+    }
   }
 
-  const washSpecs: { pos: [number, number, number]; target: [number, number, number] }[] = [
-    { pos: [center.x, wallHeight - 1.1, bounds.z0 + room.d * 0.85], target: [center.x, wallHeight * 0.35, bounds.z0] },
-    { pos: [center.x, wallHeight - 1.1, bounds.z0 + room.d * 0.15], target: [center.x, wallHeight * 0.35, bounds.z1] },
-    { pos: [bounds.x0 + room.w * 0.85, wallHeight - 1.1, center.z], target: [bounds.x0, wallHeight * 0.35, center.z] },
-    { pos: [bounds.x0 + room.w * 0.15, wallHeight - 1.1, center.z], target: [bounds.x1, wallHeight * 0.35, center.z] },
-  ];
-  for (const wash of washSpecs) {
-    const light = new THREE.SpotLight(finish.lightColor, 1.3, 20, Math.PI / 3.5, 0.65, 1.4);
-    light.position.set(...wash.pos);
-    light.target.position.set(...wash.target);
-    lights.add(light);
-    lights.add(light.target);
-  }
-
-  return { full: lights, preview };
+  return { full: lights, preview, shellFixtures, floorMaterial, ceilingMaterial };
 }
 
 /** Material Quality Parity pass (2026-09-12): the exact same ceiling-fixture
@@ -563,7 +615,7 @@ export function buildRoomShell(scene: THREE.Scene, module: RoomModule): RoomLigh
  * preview with no activation system) — never left permanently-on across the
  * whole campus regardless of where the visitor is standing. */
 function buildLegacyRoomLightRig(
-  scene: THREE.Scene, room: CampusRoom, wallHeight: number, finish: RoomFinish, lightsTarget: THREE.Object3D
+  room: CampusRoom, wallHeight: number, finish: RoomFinish, lightsTarget: THREE.Object3D, fixturesTarget: THREE.Object3D
 ): void {
   const bounds = roomBounds(room);
   const center = { x: room.x + room.w / 2, z: room.z + room.d / 2 };
@@ -577,7 +629,7 @@ function buildLegacyRoomLightRig(
     const fixture = new THREE.Mesh(new THREE.CircleGeometry(0.34, 20), fixtureMaterial);
     fixture.rotation.x = Math.PI / 2;
     fixture.position.set(lx, wallHeight - 0.03, lz);
-    scene.add(fixture);
+    fixturesTarget.add(fixture);
 
     const down = new THREE.SpotLight(finish.lightColor, 1.1, 14, Math.PI / 4, 0.55, 1.3);
     down.position.set(lx, wallHeight - 0.4, lz);
@@ -636,20 +688,44 @@ function buildLegacyRoomLightRig(
  * system, e.g. MuseumBuilder.tsx/MuseumRoomPopup.tsx), it goes straight onto
  * the scene, always on, since that scene only ever shows the one room. */
 export function buildNeutralShell(
-  scene: THREE.Scene, room: CampusRoom, wallHeight: number, finish: RoomFinish, includeCeiling = true, lights?: THREE.Object3D
-): void {
+  scene: THREE.Scene, room: CampusRoom, wallHeight: number, finish: RoomFinish, includeCeiling = true, lights?: THREE.Object3D,
+  styled?: StyledRoomFinishes | null
+): { shellFixtures: THREE.Group; floorMaterial: THREE.MeshStandardMaterial; ceilingMaterial?: THREE.MeshStandardMaterial } {
   const center = { x: room.x + room.w / 2, z: room.z + room.d / 2 };
 
-  const floorTexture = createStoneFloorTexture(finish.floorJointColor, room.w / 2, room.d / 2);
-  const floorMaterial = new THREE.MeshStandardMaterial({ color: finish.floorTintColor ?? 0xffffff, map: floorTexture, roughness: 0.68 });
+  let floorMaterial: THREE.MeshStandardMaterial;
+  if (styled) {
+    // Real Gallery Environments pass: reuse the style's own real floor
+    // material directly, same as buildRoomShell() above.
+    floorMaterial = styled.floor;
+  } else {
+    const floorTexture = createStoneFloorTexture(finish.floorJointColor, room.w / 2, room.d / 2);
+    floorMaterial = new THREE.MeshStandardMaterial({ color: finish.floorTintColor ?? 0xffffff, map: floorTexture, roughness: 0.68 });
+  }
   const floor = new THREE.Mesh(new THREE.PlaneGeometry(room.w, room.d), floorMaterial);
   floor.rotation.x = -Math.PI / 2;
   floor.position.set(center.x, 0, center.z);
   scene.add(floor);
 
-  if (!includeCeiling) return;
-  buildCeilingAndTrim(scene, room, wallHeight, finish);
-  buildLegacyRoomLightRig(scene, room, wallHeight, finish, lights ?? scene);
+  // Real Gallery Environments pass: same per-room fixture-mesh group as
+  // buildRoomShell() above, so a later style change can clear/dispose this
+  // room's generic ceiling-fixture meshes when swapping in
+  // createGalleryFinishes(style)'s own real light rig.
+  const shellFixtures = new THREE.Group();
+  shellFixtures.name = `room-fixtures:${room.id}`;
+  scene.add(shellFixtures);
+
+  if (!includeCeiling) return { shellFixtures, floorMaterial };
+  const ceilingMaterial = buildCeilingAndTrim(scene, room, wallHeight, finish, styled);
+  if (styled) {
+    const anchor = new THREE.Group();
+    anchor.position.set(center.x, 0, center.z);
+    (lights ?? scene).add(anchor);
+    styled.addLighting(anchor);
+  } else {
+    buildLegacyRoomLightRig(room, wallHeight, finish, lights ?? scene, shellFixtures);
+  }
+  return { shellFixtures, floorMaterial, ceilingMaterial };
 }
 
 const destinationSignFaceTextures = new WeakMap<THREE.Scene, THREE.Texture>();
@@ -1045,14 +1121,21 @@ export function buildRoomTrim(
   finish: RoomFinish,
   wallHeight: number,
   wallThickness: number,
-  includeRail = true
-): void {
-  const baseboardMaterial = new THREE.MeshStandardMaterial({ color: finish.baseboardColor, roughness: 0.85 });
+  includeRail = true,
+  styled?: StyledRoomFinishes | null
+): { baseboardMaterial: THREE.MeshStandardMaterial; railMaterial: THREE.MeshStandardMaterial | null } {
+  // Real Gallery Environments pass: this room's own real trim materials
+  // (createGalleryFinishes' charcoal/brass) reused directly for baseboard/
+  // rail instead of this file's generic flat-color trim, when a style is
+  // saved for this room.
+  const baseboardMaterial = styled ? styled.charcoal : new THREE.MeshStandardMaterial({ color: finish.baseboardColor, roughness: 0.85 });
   // Material Quality Parity pass (2026-09-12): per-finish trim tuning
   // (finish.trimMetalness/trimRoughness) instead of one flat 0.5/0.35 rail
   // material reused for every RoomFinish — the same trimMetalness/
   // trimRoughness approach Gallery Builder's own FinishPalette uses.
-  const railMaterial = new THREE.MeshStandardMaterial({ color: finish.railColor, roughness: finish.trimRoughness, metalness: finish.trimMetalness });
+  const railMaterial = includeRail
+    ? (styled ? styled.brass : new THREE.MeshStandardMaterial({ color: finish.railColor, roughness: finish.trimRoughness, metalness: finish.trimMetalness }))
+    : null;
   const baseboardHeight = 0.22;
   const railHeight = 0.06;
   const railY = wallHeight - 2.2;
@@ -1074,7 +1157,7 @@ export function buildRoomTrim(
       else baseboard.position.set(segment.fixed + (facingSign * wallThickness) / 2, baseboardHeight / 2, (piece.from + piece.to) / 2);
       scene.add(baseboard);
 
-      if (!includeRail) continue;
+      if (!includeRail || !railMaterial) continue;
       const rail = new THREE.Mesh(
         isNS ? new THREE.BoxGeometry(span, railHeight, 0.04) : new THREE.BoxGeometry(0.04, railHeight, span),
         railMaterial
@@ -1084,6 +1167,8 @@ export function buildRoomTrim(
       scene.add(rail);
     }
   }
+
+  return { baseboardMaterial, railMaterial };
 }
 
 /** Usable wall spans for item placement — full length on doorless walls,

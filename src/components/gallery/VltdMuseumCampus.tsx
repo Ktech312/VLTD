@@ -55,13 +55,13 @@ import {
   MUSEUM_WALK_SPEED_SLOW,
 } from "@/lib/museumStandard";
 import {
-  backgroundWallColorHex,
   buildNeutralShell,
   buildRoomShell,
   buildRoomTrim,
   buildSharedWall,
   computeRoomPlacementSlots,
   computeUsableWallSpans,
+  createStyledRoomFinishes,
   createWallMaterial,
   HUB_FINISH,
   NEUTRAL_LEGACY_FINISH,
@@ -73,6 +73,7 @@ import {
   type RoomFinish,
   type RoomLightGroups,
   type RoomModule,
+  type StyledRoomFinishes,
 } from "@/lib/campusRoomBuilder";
 import {
   aimCamera,
@@ -365,6 +366,39 @@ export default function VltdMuseumCampus() {
     scene.add(sportsLightsPreview);
     const sportsLights: RoomLightGroups = { full: sportsLightsFull, preview: sportsLightsPreview };
 
+    // Real Gallery Environments pass (2026-09-12): tracks the real material
+    // instances actually built for each room's own wall/floor/ceiling/
+    // baseboard/rail meshes, and the group holding its generic ceiling-
+    // fixture meshes — so that once a room's saved museum_room_meta.
+    // room_style loads (async, see populateDynamicContent below),
+    // createGalleryFinishes(style)'s own real materials/light rig can be
+    // patched onto this SAME room, in place, with zero effect on any other
+    // room. Only EDITABLE_ROOM_IDS ever get entries read out of this map;
+    // every room's shell still builds and renders its normal default finish
+    // synchronously first, exactly as before, so there's no wait on network
+    // before the campus first paints.
+    type RoomShellMaterialsEntry = {
+      wall?: THREE.MeshStandardMaterial;
+      floor?: THREE.MeshStandardMaterial;
+      ceiling?: THREE.MeshStandardMaterial;
+      baseboard?: THREE.MeshStandardMaterial;
+      rail?: THREE.MeshStandardMaterial | null;
+      shellFixtures?: THREE.Group;
+    };
+    const roomShellMaterialsByRoomId = new Map<CampusRoomId, RoomShellMaterialsEntry>();
+    function shellEntry(id: CampusRoomId): RoomShellMaterialsEntry {
+      const existing = roomShellMaterialsByRoomId.get(id);
+      if (existing) return existing;
+      const created: RoomShellMaterialsEntry = {};
+      roomShellMaterialsByRoomId.set(id, created);
+      return created;
+    }
+    // Every createGalleryFinishes() instance built below (one per styled
+    // room) needs its own `.dispose()` call on unmount — collected here so
+    // the cleanup function at the bottom of this effect can release them
+    // without needing to know which rooms ended up styled.
+    const styledFinishesForDisposal: StyledRoomFinishes[] = [];
+
     const legacyLightGroups = new Map<CampusRoomId, RoomLightGroups>();
     for (const room of CAMPUS_ROOMS) {
       if (room.id === "POP_CULTURE" || room.id === "TCG" || room.id === "COLLECTION") continue;
@@ -389,7 +423,10 @@ export default function VltdMuseumCampus() {
         scene.add(preview);
         legacyLightGroups.set(room.id, { full, preview });
       }
-      buildNeutralShell(scene, room, WALL_HEIGHT, finish, room.id !== "PLAZA", full);
+      const shell = buildNeutralShell(scene, room, WALL_HEIGHT, finish, room.id !== "PLAZA", full);
+      shellEntry(room.id).floor = shell.floorMaterial;
+      shellEntry(room.id).ceiling = shell.ceilingMaterial;
+      shellEntry(room.id).shellFixtures = shell.shellFixtures;
     }
 
     // Shared-Wall Grid Plan (2026-09-08, replacing the rejected connection-
@@ -402,22 +439,24 @@ export default function VltdMuseumCampus() {
     // faces it, and — wherever CAMPUS_DOORS calls for it — cuts one opening
     // with one casing, contained entirely within the wall's own thickness.
     //
-    // Shared Museum Room Editor pass (2026-09-12), background-application
-    // fix: wall materials USED TO be cached by FINISH IDENTITY (one shared
+    // Shared Museum Room Editor pass (2026-09-12), style-application fix:
+    // wall materials USED TO be cached by FINISH IDENTITY (one shared
     // Material per RoomFinish object — NEUTRAL_LEGACY_FINISH, HUB_FINISH,
     // NEUTRAL_PREVIEW_FINISH), a real EK-approved memory optimization once
     // EK's world-space wall-panel fix (2026-09-10) made createWallMaterial()
     // byte-identical across any two rooms sharing a finish. That's exactly
-    // why a saved per-room background_id couldn't be wired in without
-    // breaking "changing SPORTS must not change COLLECTION/CARDS/HUB":
-    // recoloring the shared instance would have recolored every OTHER room
-    // still pointing at that same object. Keyed per ROOM ID instead — every
-    // room gets its own Material/texture instance (same createWallMaterial()
-    // call, same visual result, just not object-shared) — trades a few extra
-    // small canvas textures (well under a dozen rooms total) for the
-    // per-room independence correctness now requires. See
-    // backgroundWallColorHex() usage inside populateDynamicContent() below
-    // for where a saved choice actually gets applied to one room's material.
+    // why a saved per-room style couldn't be wired in without breaking
+    // "changing SPORTS must not change COLLECTION/CARDS/HUB": recoloring the
+    // shared instance would have recolored every OTHER room still pointing
+    // at that same object. Keyed per ROOM ID instead — every room gets its
+    // own Material/texture instance (same createWallMaterial() call, same
+    // visual result, just not object-shared) — trades a few extra small
+    // canvas textures (well under a dozen rooms total) for the per-room
+    // independence correctness now requires. See the room_style patch loop
+    // inside populateDynamicContent() below for where a saved
+    // createGalleryFinishes(style) actually gets applied onto this room's
+    // own material instances (via roomShellMaterialsByRoomId, declared
+    // above).
     const wallMaterialByRoomId = new Map<CampusRoomId, THREE.MeshStandardMaterial>();
     function baseFinishForRoom(roomId: CampusRoomId): RoomFinish {
       if (roomId === "POP_CULTURE" || roomId === "TCG" || roomId === "COLLECTION") return NEUTRAL_PREVIEW_FINISH;
@@ -429,6 +468,7 @@ export default function VltdMuseumCampus() {
       if (cached) return cached;
       const material = createWallMaterial(baseFinishForRoom(roomId));
       wallMaterialByRoomId.set(roomId, material);
+      shellEntry(roomId).wall = material;
       return material;
     }
 
@@ -465,7 +505,9 @@ export default function VltdMuseumCampus() {
     // finish, still per-room decoration even though the wall itself is now
     // shared structure).
     for (const convertedId of ["POP_CULTURE", "TCG", "COLLECTION"] as const) {
-      buildRoomTrim(scene, roomById(convertedId), wallSegments, NEUTRAL_PREVIEW_FINISH, WALL_HEIGHT, WALL_THICKNESS);
+      const trim = buildRoomTrim(scene, roomById(convertedId), wallSegments, NEUTRAL_PREVIEW_FINISH, WALL_HEIGHT, WALL_THICKNESS);
+      shellEntry(convertedId).baseboard = trim.baseboardMaterial;
+      shellEntry(convertedId).rail = trim.railMaterial;
     }
 
     // Overnight Polish pass (2026-09-09): every legacy room's old two-height
@@ -478,7 +520,9 @@ export default function VltdMuseumCampus() {
     for (const room of CAMPUS_ROOMS) {
       if (room.id === "POP_CULTURE" || room.id === "TCG" || room.id === "COLLECTION" || room.noWalls) continue;
       const finish = room.id === "HUB" ? HUB_FINISH : NEUTRAL_LEGACY_FINISH;
-      buildRoomTrim(scene, room, wallSegments, finish, WALL_HEIGHT, WALL_THICKNESS, false);
+      const trim = buildRoomTrim(scene, room, wallSegments, finish, WALL_HEIGHT, WALL_THICKNESS, false);
+      shellEntry(room.id).baseboard = trim.baseboardMaterial;
+      shellEntry(room.id).rail = trim.railMaterial;
     }
 
     // Glowing room-center and doorway targets are generated further below once the
@@ -645,12 +689,21 @@ export default function VltdMuseumCampus() {
     // usable wall spans for item placement.
     const popCultureLights = buildRoomShell(scene, popCultureModule);
     const popCultureWallSpans = computeUsableWallSpans(popCultureModule);
+    shellEntry("POP_CULTURE").floor = popCultureLights.floorMaterial;
+    shellEntry("POP_CULTURE").ceiling = popCultureLights.ceilingMaterial;
+    shellEntry("POP_CULTURE").shellFixtures = popCultureLights.shellFixtures;
 
     const tcgLights = buildRoomShell(scene, tcgModule);
     const tcgWallSpans = computeUsableWallSpans(tcgModule);
+    shellEntry("TCG").floor = tcgLights.floorMaterial;
+    shellEntry("TCG").ceiling = tcgLights.ceilingMaterial;
+    shellEntry("TCG").shellFixtures = tcgLights.shellFixtures;
 
     const collectionLights = buildRoomShell(scene, collectionModule);
     const collectionWallSpans = computeUsableWallSpans(collectionModule);
+    shellEntry("COLLECTION").floor = collectionLights.floorMaterial;
+    shellEntry("COLLECTION").ceiling = collectionLights.ceilingMaterial;
+    shellEntry("COLLECTION").shellFixtures = collectionLights.shellFixtures;
 
     // SPORTS proof-room pass (2026-09-11): first room to get real,
     // admin-curated artwork placed across every usable wall (south wall as
@@ -908,22 +961,74 @@ export default function VltdMuseumCampus() {
         });
       }
 
-      // Shared Museum Room Editor pass (2026-09-12), background-application
-      // fix: apply each editable room's saved museum_room_meta.background_id
-      // to that room's OWN wall Material — roomWallMaterial() above now
-      // keys its cache per room id, so this can only ever touch the one
-      // Material instance built for `roomId`, never a neighbor's. Only
-      // EDITABLE_ROOM_IDS are looped — RoomEditorModal's own Background
-      // control only renders for those rooms, so HUB/SPOTLIGHT/STORE/PLAZA
-      // never carry a background override in the first place. A missing,
-      // unrecognized, or "neutral" background_id resolves to `null` from
-      // backgroundWallColorHex() and falls back to that room's normal
-      // per-category finish color — the required safe default / reset.
+      // Real Gallery Environments pass (2026-09-12): apply each editable
+      // room's saved museum_room_meta.room_style — the personal Gallery
+      // Builder's own real White/Vault/Arcade/Industrial Loft environments
+      // (createGalleryFinishes(), reused directly, not an invented museum
+      // color) — onto that room's OWN wall/floor/ceiling/baseboard/rail
+      // Material instances (roomShellMaterialsByRoomId, keyed per room id
+      // exactly like roomWallMaterial() above, so this can only ever touch
+      // `roomId`'s own materials, never a neighbor's), and swap that room's
+      // generic ceiling-fixture/wash-light rig for the style's own real
+      // addLighting() rig. Only EDITABLE_ROOM_IDS are looped — the room
+      // editor's Style control only renders for those rooms, so
+      // HUB/SPOTLIGHT/STORE/PLAZA never carry a style override in the first
+      // place. A missing or unrecognized room_style resolves to `null` from
+      // createStyledRoomFinishes() and leaves that room's normal
+      // per-category finish untouched — the required safe default / reset.
       for (const roomId of EDITABLE_ROOM_IDS) {
-        const material = wallMaterialByRoomId.get(roomId);
-        if (!material) continue;
-        const override = backgroundWallColorHex(roomMeta[roomId]?.background_id);
-        material.color.setHex(override ?? baseFinishForRoom(roomId).wallColor);
+        const styled = createStyledRoomFinishes(roomMeta[roomId]?.room_style);
+        if (!styled) continue;
+        const shell = roomShellMaterialsByRoomId.get(roomId);
+        if (!shell?.wall || !shell.floor || !shell.ceiling || !shell.baseboard) {
+          // Fails soft: this room's shell materials weren't tracked (should
+          // never happen for an EDITABLE_ROOM_IDS room, but never break the
+          // campus over it) — leave the room at its normal default finish.
+          styled.dispose();
+          continue;
+        }
+        shell.wall.copy(styled.wall);
+        shell.wall.needsUpdate = true;
+        shell.floor.copy(styled.floor);
+        shell.floor.needsUpdate = true;
+        shell.ceiling.copy(styled.ceiling);
+        // Re-apply the same downward-facing-ceiling self-illumination fix
+        // createStyledRoomFinishes' caller already set on the SOURCE
+        // material (see buildCeilingAndTrim) — .copy() above just overwrote
+        // it with the copy's own (correctly emissive) values, so this is
+        // actually redundant right now, but kept explicit here in case a
+        // future edit changes what gets copied.
+        shell.ceiling.emissive.copy(shell.ceiling.color);
+        shell.ceiling.emissiveIntensity = 0.22;
+        shell.ceiling.needsUpdate = true;
+        shell.baseboard.copy(styled.charcoal);
+        shell.baseboard.needsUpdate = true;
+        if (shell.rail) {
+          shell.rail.copy(styled.brass);
+          shell.rail.needsUpdate = true;
+        }
+
+        // Swap the generic ceiling-fixture/wash-light rig this room was
+        // built with for the style's own real light rig.
+        const groups = roomLightGroups[roomId] ?? ensureRoomLightGroups(roomId);
+        for (const child of [...groups.full.children]) groups.full.remove(child);
+        if (shell.shellFixtures) {
+          for (const child of [...shell.shellFixtures.children]) {
+            if (child instanceof THREE.Mesh) {
+              child.geometry.dispose();
+              const material = child.material;
+              if (Array.isArray(material)) material.forEach((m) => m.dispose());
+              else material.dispose();
+            }
+            shell.shellFixtures.remove(child);
+          }
+        }
+        const styledRoom = roomById(roomId);
+        const anchor = new THREE.Group();
+        anchor.position.set(styledRoom.x + styledRoom.w / 2, 0, styledRoom.z + styledRoom.d / 2);
+        groups.full.add(anchor);
+        styled.addLighting(anchor);
+        styledFinishesForDisposal.push(styled);
       }
 
       // Shared Museum Room Editor pass (2026-09-12): fetch every gallery
@@ -1932,6 +2037,12 @@ export default function VltdMuseumCampus() {
         }
       });
       if (scene.background instanceof THREE.Texture) scene.background.dispose();
+      // Real Gallery Environments pass: releases every createGalleryFinishes()
+      // instance built for a styled room's materials/lighting above — its own
+      // dispose() releases any of its textures/materials not already caught
+      // by the generic scene.traverse pass just above (e.g. any left
+      // unattached to a visible mesh).
+      styledFinishesForDisposal.forEach((finishes) => finishes.dispose());
       renderer.dispose();
       if (renderer.domElement.parentElement === mount) mount.removeChild(renderer.domElement);
     };

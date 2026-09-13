@@ -67,16 +67,25 @@
 //     and not the separate Shelf-items/Case-items capacity sliders.
 //   - The personal Gallery Builder's real Wallpaper upload flow
 //     (handleWallpaperUpload/fileToRoomWallpaper/uploadHallWallpaper in
-//     VirtualGalleryRoom.tsx) is what the Background control mirrors now.
-//     The original pass's invented "BACKGROUND: Neutral/Warm Ivory/Cool
-//     Slate/Charcoal" swatch dropdown (campusRoomBuilder.ts's
-//     ROOM_BACKGROUND_OPTIONS/backgroundWallColorHex — a real, separate,
-//     already-accepted feature of the Map's own RoomEditorModal.tsx, not
-//     invented there) has been removed from THIS page entirely; this page
-//     no longer imports either. Only the real custom-wallpaper-image upload
-//     remains, unchanged: it already called uploadHallWallpaper() into the
-//     same "room-wallpapers" Storage bucket the personal Hall's own
+//     VirtualGalleryRoom.tsx) is what the custom-image Wallpaper control
+//     still mirrors, unchanged: it already called uploadHallWallpaper() into
+//     the same "room-wallpapers" Storage bucket the personal Hall's own
 //     Wallpaper button uses.
+//   - Real Gallery Environments pass (2026-09-12): EK, verbatim, after two
+//     prior passes both invented museum-only "background" colors instead of
+//     her own real Gallery environments: "These circles, I DO NOT WANT, I
+//     NEVER ASKED YOU TO MAKE THEM, REMOVE THEM AND GIVE ME THE ONES IN THE
+//     3D GALLERY!!!!!" The invented preset-color picker (ROOM_BACKGROUND_
+//     OPTIONS/backgroundWallColorHex/museum_room_meta.background_id) is
+//     removed entirely, replaced by a Style control offering the personal
+//     Gallery Builder's own real named environments (White/Vault/Arcade/
+//     Industrial Loft, matching VirtualGalleryRoom.tsx's own style `<select>`
+//     labels/values exactly) via createGalleryFinishes() — the SAME real
+//     material/lighting code that room uses, reused directly, not a new
+//     museum-only recipe. Persisted as museum_room_meta.room_style
+//     (setRoomStyle). "Blue" is not offered — it has no createGalleryFinishes
+//     entry (hand-built inline in VirtualGalleryRoom.tsx, no GLB) — a known,
+//     disclosed gap, not silently dropped.
 //   - museum_room_items/museum_room_meta via the SAME existing functions
 //     MuseumRoomPopup.tsx and RoomEditorModal.tsx already call
 //     (getEnabledRoomItems/setRoomItemSlot/clearRoomItemSlot/getRoomMeta) —
@@ -106,16 +115,15 @@ import {
   getItemsPerRoom,
   getRoomMeta,
   setItemShowValue,
-  setRoomBackground,
   setRoomBackgroundImage,
   setRoomCapacities,
   setRoomItemSlot,
+  setRoomStyle,
   setRoomWallLayout,
   type MuseumRoomItem,
 } from "@/lib/museumCampusConfig";
 import {
-  ROOM_BACKGROUND_OPTIONS,
-  backgroundWallColorHex,
+  MUSEUM_ROOM_STYLE_OPTIONS,
   buildNeutralShell,
   buildRoomShell,
   buildRoomTrim,
@@ -124,6 +132,7 @@ import {
   computeRoomPlacementSlots,
   computeRoomShelfSlots,
   computeRoomShelfSpans,
+  createStyledRoomFinishes,
   createWallMaterial,
   placeItemsAtSlots,
   visitorFacingRoomName,
@@ -131,6 +140,7 @@ import {
   HUB_FINISH,
   NEUTRAL_LEGACY_FINISH,
   NEUTRAL_PREVIEW_FINISH,
+  type GalleryFinishStyle,
   type PlacementSlot,
   type RoomFinish,
   type RoomLightGroups,
@@ -246,18 +256,14 @@ export default function MuseumBuilder() {
   const [backgroundSaveState, setBackgroundSaveState] = useState<SaveState>("idle");
   const [backgroundUploading, setBackgroundUploading] = useState(false);
   const [backgroundError, setBackgroundError] = useState("");
-  // EK's correction (2026-09-12): "I need the background colors, i said
-  // this from the begging" — the preset color-swatch picker this file
-  // removed in the prior fixes pass should not have been dropped; the
-  // custom-image Wallpaper upload and the preset colors are two separate,
-  // both-real options (a preset applies instantly with no upload; a
-  // custom image overrides it when set — same "wallpaper wins" order the
-  // live museum's own material code already resolves in). Reuses
-  // ROOM_BACKGROUND_OPTIONS/backgroundWallColorHex/setRoomBackground
-  // unchanged — this infrastructure already existed and already drives the
-  // live museum's own per-room wall tint; only the picker UI was missing.
-  const [backgroundId, setBackgroundId] = useState<string | null>(null);
-  const [presetSaveState, setPresetSaveState] = useState<SaveState>("idle");
+  // Real Gallery Environments pass (2026-09-12): replaces the removed
+  // invented preset-color picker — a Style control offering the personal
+  // Gallery Builder's own real named environments (createGalleryFinishes),
+  // independent of (and layered under) the custom-image Wallpaper upload
+  // above, same "wallpaper wins" order the live museum's own material code
+  // already resolves in.
+  const [roomStyle, setRoomStyleState] = useState<GalleryFinishStyle | null>(null);
+  const [styleSaveState, setStyleSaveState] = useState<SaveState>("idle");
 
   const [pickerSlotIdx, setPickerSlotIdx] = useState<number | null>(null);
   const [itemSaveState, setItemSaveState] = useState<SaveState>("idle");
@@ -327,7 +333,10 @@ export default function MuseumBuilder() {
       setShelfCapacity(nextShelf);
       setCaseCapacity(nextCase);
       setBackgroundImageUrl(meta?.background_image_url ?? null);
-      setBackgroundId(meta?.background_id ?? null);
+      const savedStyle = meta?.room_style;
+      setRoomStyleState(
+        savedStyle === "whitebox" || savedStyle === "vault" || savedStyle === "arcade" || savedStyle === "loft" ? savedStyle : null
+      );
       const savedRowCount = meta?.wall_row_count;
       const nextRowCount: RoomRowCount = savedRowCount === 1 || savedRowCount === 2 || savedRowCount === 3 ? savedRowCount : 3;
       const nextShelvesEnabled = meta?.wall_shelves_enabled ?? false;
@@ -438,12 +447,16 @@ export default function MuseumBuilder() {
     if (result.ok) window.setTimeout(() => setBackgroundSaveState((s) => (s === "saved" ? "idle" : s)), 1600);
   }
 
-  async function handleBackgroundPresetChange(nextId: string) {
-    setBackgroundId(nextId);
-    setPresetSaveState("saving");
-    const result = await setRoomBackground(roomId, nextId === "neutral" ? null : nextId);
-    setPresetSaveState(result.ok ? "saved" : "error");
-    if (result.ok) window.setTimeout(() => setPresetSaveState((s) => (s === "saved" ? "idle" : s)), 1600);
+  // Real Gallery Environments pass: clicking the already-active style
+  // toggles it back off (reset to this room's normal default finish) —
+  // the only "clear" affordance offered, since the work order calls for
+  // exactly these 4 named options, not a 5th "Default" button.
+  async function handleStyleChange(nextStyle: GalleryFinishStyle | null) {
+    setRoomStyleState(nextStyle);
+    setStyleSaveState("saving");
+    const result = await setRoomStyle(roomId, nextStyle);
+    setStyleSaveState(result.ok ? "saved" : "error");
+    if (result.ok) window.setTimeout(() => setStyleSaveState((s) => (s === "saved" ? "idle" : s)), 1600);
   }
 
   // Combined, ordered slot list — wall, then shelf, then case — the single
@@ -561,27 +574,34 @@ export default function MuseumBuilder() {
     sun.position.set(40, 60, 20);
     scene.add(sun);
 
+    // Real Gallery Environments pass (2026-09-12): when this room has a
+    // saved Style, build a real createGalleryFinishes() instance once here
+    // and reuse its wall/floor/ceiling/brass/charcoal/dark materials and
+    // addLighting() rig directly for this room's own real wall/floor/
+    // ceiling/trim meshes and light rig below — instead of this file's own
+    // generic createWallMaterial()/flat-color/generic-rig system. Only ever
+    // applies to THIS room (the one currently open in the editor); a
+    // neighbor room glimpsed through an open doorway keeps its own generic
+    // finish here, same simplification the old background system already
+    // made (Museum Builder is a single-room editor/preview, not the live
+    // multi-room campus).
+    const styled = createStyledRoomFinishes(roomStyle);
+
     let groups: RoomLightGroups;
     if (isConvertedRoom(roomId)) {
       const roomModule: RoomModule = {
         room, doorways: deriveRoomDoorways(roomId), wallHeight: WALL_HEIGHT, wallThickness: WALL_THICKNESS, eyeHeight: EYE_HEIGHT, finish,
       };
-      groups = buildRoomShell(scene, roomModule);
+      groups = buildRoomShell(scene, roomModule, styled);
     } else {
-      buildNeutralShell(scene, room, WALL_HEIGHT, finish, true);
+      buildNeutralShell(scene, room, WALL_HEIGHT, finish, true, undefined, styled);
       const lights = new THREE.Group();
       scene.add(lights);
       groups = { full: lights, preview: new THREE.Group() };
     }
 
     const doorFrameMaterial = new THREE.MeshStandardMaterial({ color: NEUTRAL_PREVIEW_FINISH.frameColor, roughness: 0.65, metalness: 0.04 });
-    const ownMaterial = createWallMaterial(finish);
-    // Same fix already applied to the live museum's own material code
-    // (VltdMuseumCampus.tsx) — ownMaterial is a real, per-room-id instance
-    // (not shared with any neighbor), so tinting it here can never leak
-    // into another room's wall.
-    const ownColorHex = backgroundWallColorHex(backgroundId);
-    if (ownColorHex !== null) (ownMaterial as THREE.MeshStandardMaterial).color.setHex(ownColorHex);
+    const ownMaterial = styled ? styled.wall : createWallMaterial(finish);
     const neighborMaterials = new Map<CampusRoomId, THREE.Material>();
     function materialFor(id: CampusRoomId): THREE.Material {
       if (id === roomId) return ownMaterial;
@@ -597,7 +617,7 @@ export default function MuseumBuilder() {
       const materialB = segment.roomB ? materialFor(segment.roomB) : null;
       buildSharedWall(scene, segment, materialA, materialB, doorFrameMaterial, { wallHeight: WALL_HEIGHT, wallThickness: WALL_THICKNESS, style: "ordinary" });
     }
-    buildRoomTrim(scene, room, relevantSegments, finish, WALL_HEIGHT, WALL_THICKNESS, isConvertedRoom(roomId));
+    buildRoomTrim(scene, room, relevantSegments, finish, WALL_HEIGHT, WALL_THICKNESS, isConvertedRoom(roomId), styled);
 
     // A custom uploaded background image — Museum Builder's own preview
     // only (this scene, not the live public museum's VltdMuseumCampus.tsx,
@@ -846,10 +866,14 @@ export default function MuseumBuilder() {
           });
         }
       });
+      // Real Gallery Environments pass: releases the createGalleryFinishes()
+      // instance built for this room's style above, if any — same dispose()
+      // call VirtualGalleryRoom.tsx already makes for its own `galleryFinishes`.
+      styled?.dispose();
       renderer.dispose();
       if (renderer.domElement.parentElement === mount) mount.removeChild(renderer.domElement);
     };
-  }, [roomId, wallSlots, shelfSlots, caseSlots, assignments, backgroundImageUrl, backgroundId, allSlots.length, rowCount, wallShelvesEnabled]);
+  }, [roomId, wallSlots, shelfSlots, caseSlots, assignments, backgroundImageUrl, roomStyle, allSlots.length, rowCount, wallShelvesEnabled]);
 
   // Same rAF projection technique MuseumRoomPopup.tsx/VirtualGalleryRoom.tsx
   // both already use for their own Organize overlays.
@@ -1045,29 +1069,28 @@ export default function MuseumBuilder() {
                   </div>
                 ) : null}
                 <div className="flex flex-wrap items-center gap-1.5">
-                  <span className="text-[10px] font-black uppercase tracking-[0.1em] text-[color:var(--muted2)]">Background</span>
-                  {ROOM_BACKGROUND_OPTIONS.map((option) => {
-                    const active = (backgroundId ?? "neutral") === option.id;
+                  <span className="text-[10px] font-black uppercase tracking-[0.1em] text-[color:var(--muted2)]">Style</span>
+                  {MUSEUM_ROOM_STYLE_OPTIONS.map((option) => {
+                    const active = roomStyle === option.id;
                     return (
                       <button
                         key={option.id}
                         type="button"
-                        onClick={() => void handleBackgroundPresetChange(option.id)}
+                        onClick={() => void handleStyleChange(active ? null : option.id)}
                         aria-pressed={active}
                         title={option.label}
                         className={[
-                          "flex h-6 items-center gap-1 rounded-[5px] px-2 text-[11px] font-bold ring-1 transition",
+                          "flex h-6 items-center rounded-[5px] px-2 text-[11px] font-bold ring-1 transition",
                           active ? "bg-[color:var(--input)] ring-cyan-400" : "bg-[color:var(--input)] ring-[color:var(--border)] hover:bg-black/10",
                         ].join(" ")}
                       >
-                        <span className="h-2.5 w-2.5 rounded-full ring-1 ring-white/30" style={{ background: option.swatch }} />
                         {option.label}
                       </button>
                     );
                   })}
-                  {presetSaveState === "saving" ? <span className="text-[11px] font-semibold text-cyan-300">Saving…</span> : null}
-                  {presetSaveState === "saved" ? <span className="text-[11px] font-semibold text-emerald-300">Saved</span> : null}
-                  {presetSaveState === "error" ? <span className="text-[11px] font-semibold text-red-300">Save failed</span> : null}
+                  {styleSaveState === "saving" ? <span className="text-[11px] font-semibold text-cyan-300">Saving…</span> : null}
+                  {styleSaveState === "saved" ? <span className="text-[11px] font-semibold text-emerald-300">Saved</span> : null}
+                  {styleSaveState === "error" ? <span className="text-[11px] font-semibold text-red-300">Save failed</span> : null}
                 </div>
                 <div className="flex flex-wrap items-center gap-1.5">
                   <label className="flex h-6 cursor-pointer items-center gap-1.5 rounded-[5px] bg-[color:var(--input)] px-2 text-[11px] font-bold ring-1 ring-[color:var(--border)] transition hover:bg-black/10">

@@ -1,0 +1,31 @@
+-- Real Gallery Environments pass (2026-09-12): EK's explicit, repeated
+-- correction after two prior passes both invented museum-only "background"
+-- colors instead of her own real Gallery Builder environments: "These
+-- circles, I DO NOT WANT, I NEVER ASKED YOU TO MAKE THEM, REMOVE THEM AND
+-- GIVE ME THE ONES IN THE 3D GALLERY!!!!!"
+--
+-- room_style: an optional per-room choice of one of the personal Gallery
+-- Builder's own real named environments — "whitebox" (White), "vault"
+-- (Vault), "arcade" (Arcade), or "loft" (Industrial Loft) — matching
+-- VirtualGalleryRoom.tsx's own style <select> values exactly
+-- (src/components/gallery/galleryRoomFinishes.ts's createGalleryFinishes()).
+-- Null/unrecognized means "keep this room's normal default finish," same
+-- safe-default rule the old (now-removed) background_id column followed.
+-- "Blue" is not a valid value here — it has no createGalleryFinishes() entry
+-- (hand-built inline in VirtualGalleryRoom.tsx, no GLB) — a known, disclosed
+-- gap, not ported this pass.
+--
+-- This replaces museum_room_meta.background_id (added by
+-- 20260912_museum_room_placement.sql) as the room editor's Style control —
+-- that old column is intentionally left in place (dropping it is
+-- unnecessary churn) but no application code reads or writes it anymore.
+--
+-- Every read of this new column in the app already falls back safely if
+-- this migration hasn't been run yet (src/lib/museumCampusConfig.ts's
+-- selectRoomMeta/getAllRoomMeta both retry with fewer columns on a
+-- Postgrest "column does not exist" error, all the way back to the
+-- original bare (room_id, title, description) select) — nothing here is
+-- required for the museum's current live display, MuseumRoomPopup.tsx, or
+-- RoomEditorModal.tsx to keep working before EK runs this by hand.
+
+alter table public.museum_room_meta add column if not exists room_style text;
