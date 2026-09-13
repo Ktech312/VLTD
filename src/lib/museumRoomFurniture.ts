@@ -11,7 +11,7 @@
 // MuseumRoomPopup.tsx are both untouched and neither imports this file.
 import * as THREE from "three";
 
-import type { PlacementSlot, WallSpan } from "./campusRoomBuilder";
+import type { PlacementSlot, StyledRoomFinishes, WallSpan } from "./campusRoomBuilder";
 
 // Same board thickness/depth as VirtualGalleryRoom.tsx's own
 // addBackRowBoard/addSideRowBoard (BoxGeometry(width, 0.1, 0.845)), embedded
@@ -24,9 +24,16 @@ const SHELF_BOARD_DEPTH = 0.845;
 const SHELF_BOARD_OUTSET = 0.46;
 
 /** Same warm trim tone VirtualGalleryRoom.tsx's own shelf `trimMaterial`
- * uses — a plain wood-ish trim, independent of the room's own RoomFinish so
- * a shelf reads consistently regardless of which finish the room is in. */
-export function createShelfMaterial(): THREE.MeshStandardMaterial {
+ * uses — a plain wood-ish trim — kept as the fallback for a room with no
+ * saved Style. Material Quality Parity follow-up (2026-09-12, Vault-style
+ * full-parity pass): when the room DOES have a style, reuse that style's own
+ * real `brass` material (the same instance createGalleryFinishes(style)
+ * already resolved for this room's walls/rail) directly instead of this
+ * fixed wood tone, so a shelf board reads as that style's own hardware
+ * (steel/bronze for Vault/Loft, brass for White/Arcade) rather than always
+ * looking like plain wood regardless of style. */
+export function createShelfMaterial(styled?: StyledRoomFinishes | null): THREE.Material {
+  if (styled) return styled.brass;
   return new THREE.MeshStandardMaterial({ color: 0x6b5a44, roughness: 0.55, metalness: 0.08 });
 }
 
@@ -85,9 +92,18 @@ export function caseShadowTexture(): THREE.CanvasTexture {
   return texture;
 }
 
-export function buildDisplayCase(scene: THREE.Scene, x: number, z: number): void {
-  const cabinetMaterial = new THREE.MeshStandardMaterial({ color: 0x2b3037, roughness: 0.38, metalness: 0.18 });
-  const glassMaterial = new THREE.MeshStandardMaterial({
+// Material Quality Parity follow-up (2026-09-12, Vault-style full-parity
+// pass): `styled` is the SAME createGalleryFinishes(style) instance already
+// resolved for this room's walls/floor/ceiling — cabinet base reuses its
+// `dark` material (the same "case bases need more weight" dark stone/steel
+// plinth Vault/Loft's own case_base already gets in the personal room) and
+// glass reuses its own real `glass` material (Vault's dedicated glassColor/
+// glassOpacity, Arcade's cyan, etc.) instead of one fixed color/opacity for
+// every style. Both hardcoded materials below remain the fallback for a room
+// with no saved Style, unchanged from before this pass.
+export function buildDisplayCase(scene: THREE.Scene, x: number, z: number, styled?: StyledRoomFinishes | null): void {
+  const cabinetMaterial = styled ? styled.dark : new THREE.MeshStandardMaterial({ color: 0x2b3037, roughness: 0.38, metalness: 0.18 });
+  const glassMaterial = styled ? styled.glass : new THREE.MeshStandardMaterial({
     color: 0xbceeff, transparent: true, opacity: 0.18, roughness: 0.08, metalness: 0.08,
   });
   const shadowMaterial = new THREE.MeshBasicMaterial({ map: caseShadowTexture(), transparent: true, depthWrite: false, toneMapped: false });

@@ -5,6 +5,88 @@
 - **Mobile drag/scroll bug** (EK found this hands-on, unrelated to the above): dragging to look around also scrolled the whole page on a touch device, and yaw drag didn't track smoothly — both caused by the room's mount div never declaring `touch-action: none`. Fixed with the same one-line fix already used elsewhere in this file. Code-verified and reasoned through; genuinely NOT tested with a real touch input (no tool in this session can produce one) — needs EK's own phone to close the loop.
 Regression-checked live: White unaffected (still looks exactly right), pickup/rotate/return still works, no console errors anywhere. See the 2026-09-06 dated entries (top of the log below) for full detail, including the one real bug this session found and fixed in its own live check (Blue's case lids) before calling any of this done. Before tonight: the first White-room material pass (2026-09-05, commit `c61e600`/`f346d18`) — also READY on Vercel and live-verified. Below that: the VLTD Museum public campus work (2026-08-31 through 09-04, then resumed and heavily active again 2026-09-08 through 09-10 — see the 2026-09-10 dated entry, TOP of the dated list below, for the current state: NOT accepted yet, EK's own physical-input pass still pending). Read the dated entries below in order, newest first, before assuming any room behaves a particular way. Older work further down in §2 (2026-08-27/28 Admin Users redesign; ~110 VaultItem fields + 3 Gallery-sync gaps, both migrations confirmed run by EK; Events tooling, admin console/APP_MAP.md, Vault upload; a full backend security audit, 3D Museum beta-access gating, Room Builder fixes) is unrelated to either of the above.)
 
+# 2026-09-12 (Vault-style full-parity pass) — Museum Builder's display cases/shelves now use the real per-style materials, and Vault/Loft's real decorative armor geometry is ported and scaled to each real room
+
+Work order: `docs/MUSEUM-VAULT-STYLE-FULL-PARITY-2026-09-12.md`. Direct
+follow-up after EK compared the shipped Vault style (commit `bf92a5d`, the
+material-quality-parity pass below) against the real Vault room in the
+personal Gallery Builder and said it "does not look anything like" it.
+Confirmed by reading the code: two concrete gaps, both fixed this pass.
+
+- **Display-case/shelf materials now follow the room's own Style.**
+  `museumRoomFurniture.ts`'s `buildDisplayCase()` and `createShelfMaterial()`
+  used to hardcode their own cabinet/glass/shelf colors regardless of which
+  style (White/Vault/Arcade/Industrial Loft) a room had — the previous pass
+  wired real per-style materials into walls/floor/ceiling/rail but never
+  into this furniture. Both functions now take the room's own
+  `createStyledRoomFinishes()` instance (already resolved once in
+  `MuseumBuilder.tsx`) and reuse its real `dark` (case cabinet base),
+  `glass` (case glass — Vault's own tinted glass, Arcade's cyan, etc.), and
+  `brass` (shelf board, read as that style's own hardware) materials
+  directly — the SAME material instances already used for that room's
+  walls/rail, not clones. Today's hardcoded colors remain the fallback for a
+  room with no saved Style, byte-identical to before. `createGalleryFinishes()`
+  itself needed exactly one additive line — `glass` added to its return
+  object (it built the material internally already, just didn't expose it) —
+  same narrowly-additive pattern as the prior pass's own ceiling/charcoal
+  addition; nothing else in that file changed.
+- **Vault/Loft's real decorative armor, adapted to each room's own real
+  size.** `createGalleryFinishes()`'s `addVaultArmor()`/`addLoftArmor()`
+  build the actual geometry that makes Vault read as "a vault" — floor-to-
+  ceiling steel panels with corner rivets and a diagonal glowing ceiling
+  lattice for Vault; shallow ribs, rivets, a horizontal seam, and broad
+  divided wall bays plus 4 ceiling "arrow" chevrons for Loft — but that code
+  is hardcoded to the personal Gallery room's own one fixed size (`WALL_TOP
+  = 8.9`, specific x/z coordinates like -12/-10.5/10.5). Calling it
+  unmodified against the museum's differently-sized real rooms (21x26,
+  42x26, 21x52, 42x52) would've placed geometry in the wrong spots or
+  clipped through walls. New `src/lib/museumRoomArmor.ts` re-derives the
+  SAME rib/rivet/divider/seam/lattice technique and materials (identical
+  colors/roughness/metalness), parameterized by a real room's own solid wall
+  spans instead — built from the exact same `campusLayout.ts`
+  `roomBounds()`/`splitSegmentForDoor()` data `campusRoomBuilder.ts`'s
+  `buildSharedWall()` already uses to build each real wall, so armor
+  geometry only ever lands on real solid wall and never crosses a doorway
+  (with an extra margin clearing `buildSharedWall()`'s own door-casing
+  trim). Wired into `MuseumBuilder.tsx` behind the exact same style gate
+  `VirtualGalleryRoom.tsx` itself uses (`roomStyle === "vault" || roomStyle
+  === "loft"` — White/Arcade never get this armor system, matching the
+  personal room). `galleryRoomFinishes.ts` itself is completely untouched by
+  this half of the pass.
+  - Two disclosed simplifications versus the frozen personal-room geometry:
+    the archway-flanking jamb boxes from `addLoftArmor` are dropped (every
+    museum doorway already gets its own real jamb+head casing from
+    `buildSharedWall()`; stacking a second decorative jamb against it would
+    reproduce the exact z-fighting/flicker bug that file's own history
+    already found and fixed once); and Loft's `LineSegments`-based "bay
+    outline" decoration is dropped in favor of the kept divider boxes alone,
+    since `MuseumBuilder.tsx`'s scene-teardown effect only disposes
+    `THREE.Mesh` geometry/material on unmount and a `LineSegments` object
+    would otherwise leak.
+  - **Noted but NOT done this pass** (flagged as a follow-up, not assumed in
+    scope): `VltdMuseumCampus.tsx` (the live walkable public campus) also
+    calls `createStyledRoomFinishes()` for any editable room with a saved
+    Vault/Loft style, and also never calls armor — the identical gap exists
+    there for a real visitor, not just in the Museum Builder preview this
+    pass was asked to fix. Left alone per "only do what's asked" — EK's own
+    comparison and this work order both named Museum Builder specifically.
+- Confirmed via diff: real campus geometry/doors/floor targets/navigation
+  targets/camera/movement/collision/`CAMPUS_ROOMS`/`CAMPUS_DOORS`
+  untouched — `campusLayout.ts` not in the diff at all. Gallery Builder's
+  own files (`VirtualGalleryRoom.tsx`, `galleryTextures.ts`) untouched,
+  read-only. Museum Builder's Organize system/item placement/save logic/
+  Room-Map toggle/per-item Values untouched. `git diff --stat`: 3 files
+  changed (`MuseumBuilder.tsx` +18/-3, `galleryRoomFinishes.ts` +7/-1,
+  `museumRoomFurniture.ts` +23/-7) plus 1 new file
+  (`src/lib/museumRoomArmor.ts`).
+- `npx tsc --noEmit` clean (0 errors) / targeted ESLint on all 4 changed/new
+  files, 0 errors (1 pre-existing, unrelated rule-suppression warning
+  carried over) / `npm run build` clean, exit 0 — ran a real `npm ci` first
+  (this worktree had no installed dependencies).
+- [ ] **Not live-verified.** The parent session compares this directly
+  against the real Vault room in a live browser, the same way this gap was
+  originally found, before calling it done.
+
 # 2026-09-12 (real Gallery environments pass) — removed the invented "Background" swatch colors, wired in the actual White/Vault/Arcade/Industrial Loft environments
 
 Work order: `docs/MUSEUM-BUILDER-REAL-GALLERY-ENVIRONMENTS-2026-09-12.md`. EK,

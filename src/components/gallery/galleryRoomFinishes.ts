@@ -835,7 +835,13 @@ export function createGalleryFinishes(style: GalleryFinishStyle = "whitebox") {
     room.add(glow);
   }
 
-  return { wall, floor, ceiling, brass, charcoal, dark, apply, addLighting, addCaseDetails, addVaultArmor, dispose() {
+  // Vault-style full-parity pass (2026-09-12): `glass` added to this return
+  // object — narrowly additive, same as the prior pass's ceiling/charcoal
+  // addition above — so museumRoomFurniture.ts's buildDisplayCase() can
+  // reuse this style's own real glass material for museum display cases
+  // instead of one fixed color/opacity for every style. No existing
+  // property, behavior, or caller is changed.
+  return { wall, floor, ceiling, brass, charcoal, dark, glass, apply, addLighting, addCaseDetails, addVaultArmor, dispose() {
     textures.forEach((texture) => texture.dispose());
     materials.forEach((material) => material.dispose());
   } };

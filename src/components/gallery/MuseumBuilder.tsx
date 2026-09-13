@@ -148,6 +148,7 @@ import {
   type RoomRowCount,
 } from "@/lib/campusRoomBuilder";
 import { buildDisplayCase, buildShelfBoard, createShelfMaterial, placeItemsInCases } from "@/lib/museumRoomFurniture";
+import { addStyledRoomArmor } from "@/lib/museumRoomArmor";
 import { MUSEUM_PITCH_LIMIT, MUSEUM_WALK_SPEED } from "@/lib/museumStandard";
 import {
   aimCamera,
@@ -641,7 +642,7 @@ export default function MuseumBuilder() {
     // Shelves checkbox below — this is the already-working shelf-resting-
     // item feature, untouched.
     if (shelfSlots.length > 0) {
-      const shelfMaterial = createShelfMaterial();
+      const shelfMaterial = createShelfMaterial(styled);
       const shelfY = EYE_HEIGHT * 0.42;
       const doorways = deriveRoomDoorways(roomId);
       for (const span of computeRoomShelfSpans(roomId, doorways, WALL_THICKNESS, EYE_HEIGHT)) {
@@ -659,7 +660,7 @@ export default function MuseumBuilder() {
     // feature above, just called at the wall-row heights instead of the
     // fixed shelf-item height.
     if (wallShelvesEnabled && wallSlots.length > 0) {
-      const wallShelfMaterial = createShelfMaterial();
+      const wallShelfMaterial = createShelfMaterial(styled);
       const doorways = deriveRoomDoorways(roomId);
       const wallSpans = computeRoomShelfSpans(roomId, doorways, WALL_THICKNESS, EYE_HEIGHT);
       for (const boardY of wallRowBoardHeights(rowCount)) {
@@ -670,7 +671,18 @@ export default function MuseumBuilder() {
     }
 
     // Case furniture — one cabinet+glass case per case slot.
-    for (const slot of caseSlots) buildDisplayCase(scene, slot.x, slot.z);
+    for (const slot of caseSlots) buildDisplayCase(scene, slot.x, slot.z, styled);
+
+    // Vault-style full-parity pass (2026-09-12): the real Vault/Loft
+    // decorative armor (structural rib panels, rivets, and Vault's own
+    // diagonal ceiling-light lattice / Loft's own ceiling arrows) —
+    // museumRoomArmor.ts adapts createGalleryFinishes()'s own addVaultArmor()/
+    // addLoftArmor() geometry-generation logic to THIS room's own real wall
+    // spans/door positions instead of the personal Gallery room's one fixed
+    // size. Same style-conditional gate VirtualGalleryRoom.tsx's own call
+    // site uses (`roomStyle === "vault" || roomStyle === "loft"` — White/
+    // Arcade never get this armor system, matching the personal room).
+    addStyledRoomArmor(scene, room, relevantSegments, WALL_HEIGHT, roomStyle);
 
     let cancelled = false;
     const textureLoader = new THREE.TextureLoader();
