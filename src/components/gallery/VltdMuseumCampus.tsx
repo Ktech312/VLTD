@@ -758,17 +758,26 @@ export default function VltdMuseumCampus() {
         }
       }
 
-      // --- Ceiling, final approach (EK's correction, 2026-09-13, GLB pass):
-      // the stretched atlas-image plane and every earlier procedural coffer/
-      // skylight attempt are replaced with the actual modeled asset,
-      // grand-hall-ceiling-63x78-v1.glb. Its root node carries its own
-      // install metadata (extras: hallWidth 63, hallDepth 78, ceilingDatumY
-      // 0, installY 9.15) confirming it's already built to HUB's exact real
-      // dimensions — centered at its own local origin, no scale/rescale
-      // needed, just position it at HUB's real center with its datum at
-      // WALL_HEIGHT (9.15, matching installY exactly). The shared shell's
-      // own flat ceiling plane is still hidden (untouched otherwise, same
-      // mechanism as every prior pass) since this model replaces it.
+      // --- Ceiling, temporary Blender asset (EK, 2026-09-13): every earlier
+      // ceiling treatment (procedural coffers, the stretched atlas image,
+      // the first GLB attempt) is replaced with this approved-temporary
+      // modeled asset, grand-hall-ceiling-blender-v1.glb — 6 pre-merged
+      // meshes with their own embedded materials/textures, already built to
+      // the Hall's real 63x78 footprint. Not a final photoreal design, per
+      // EK's own framing — just get it installed correctly. No scale
+      // change, no material/texture override this time (kept exactly as
+      // authored, per EK's explicit "do not redesign or modify the asset").
+      // Every one of this GLB's 6 top-level node translations already reads
+      // as absolute world-scale coordinates centered on the room's own
+      // local origin (e.g. y values of ~9.03-12.8, matching WALL_HEIGHT
+      // 9.15 plus a raised skylight ridge above it; x/z offsets up to
+      // ~±22.6/±38.65, within HUB's real ±31.5/±39 half-extents) — so the
+      // whole scene only needs to be recentered on HUB's real X/Z, with NO
+      // additional Y shift (unlike the first GLB, which needed +WALL_HEIGHT
+      // because ITS own datum was authored at local Y=0).
+      // The shared shell's own flat ceiling plane is still hidden (untouched
+      // otherwise, same mechanism as every prior pass) since this model
+      // replaces it.
       // Real bug found live (2026-09-13): the shared shell ALSO builds 4
       // thin perimeter trim boxes right at the wall top, in a material
       // never previously captured/hidden — every earlier ceiling pass sat
@@ -789,60 +798,18 @@ export default function VltdMuseumCampus() {
 
       const ceilingGltfLoader = new GLTFLoader();
       ceilingGltfLoader.load(
-        "/museum/grand-hall/grand-hall-ceiling-63x78-v1.glb",
+        "/museum/grand-hall/grand-hall-ceiling-blender-v1.glb",
         (gltf) => {
           if (contentCancelled) return;
           const model = gltf.scene;
-          // No scale change — the asset's own extras confirm it's already
-          // authored at HUB's real 63x78 size. Center on HUB's real X/Z;
-          // installY (9.15) already equals WALL_HEIGHT, so the model's own
-          // ceilingDatumY=0 lands exactly on the room's real ceiling plane.
-          model.position.set(hubCenter.x, WALL_HEIGHT, hubCenter.z);
-
-          // Only GH_Warm_Ivory_Plaster and GH_Warm_Ivory_Trim get the
-          // existing plaster texture (map/normal/roughness, the same real
-          // asset every other Grand Hall plaster surface uses) — every
-          // other named material (GH_Dark_Bronze, GH_Skylight_Glass,
-          // GH_2700K_Concealed_Glow, GH_Daylight_Backdrop) is left exactly
-          // as GLTFLoader parsed it from the GLB: GLTFLoader already
-          // converts KHR_materials_transmission on GH_Skylight_Glass into a
-          // real MeshPhysicalMaterial (transparent, transmissive), already
-          // reads KHR_materials_emissive_strength for the concealed glow's
-          // real intensity, and GH_Dark_Bronze's authored metalness/
-          // roughness are untouched — none of that needs (or should get)
-          // reinterpretation.
-          const plasterMap = loadGrandHallTexture("warm-ivory-plaster-basecolor.webp", THREE.SRGBColorSpace, 1, 1);
-          const plasterNormalMap = loadGrandHallTexture("warm-ivory-plaster-normal.webp", THREE.NoColorSpace, 1, 1);
-          const plasterRoughnessMap = loadGrandHallTexture("warm-ivory-plaster-roughness.webp", THREE.NoColorSpace, 1, 1);
-          model.traverse((obj) => {
-            if (!(obj instanceof THREE.Mesh)) return;
-            const materials = Array.isArray(obj.material) ? obj.material : [obj.material];
-            for (const material of materials) {
-              if (!(material instanceof THREE.MeshStandardMaterial)) continue;
-              if (material.name !== "GH_Warm_Ivory_Plaster" && material.name !== "GH_Warm_Ivory_Trim") continue;
-              material.map = plasterMap;
-              material.normalMap = plasterNormalMap;
-              material.roughnessMap = plasterRoughnessMap;
-              // Neutral white tint, same reasoning as the walls/floor
-              // fix earlier: let the texture's own real (confirmed warm
-              // ivory) color show, not multiplied by the GLB's flat
-              // placeholder baseColorFactor.
-              material.color.set(0xffffff);
-              material.needsUpdate = true;
-            }
-          });
-
+          // No scale change. X/Z recentered on HUB's real center; Y left at
+          // 0 (no vertical shift) since this asset's own node translations
+          // already read as real, already-correct absolute heights — see
+          // the comment above this block for the reasoning.
+          model.position.set(hubCenter.x, 0, hubCenter.z);
+          // Materials/textures kept exactly as embedded in the GLB, per
+          // EK's explicit instruction — no traversal, no overrides.
           grandHallGroup.add(model);
-
-          // Only a few soft supporting lights — the concealed glow comes
-          // from the model's own real emissive material (GH_2700K_Concealed_Glow),
-          // not from stacking a light per coffer again.
-          const ceilingFill1 = new THREE.PointLight(0xffdcae, 0.6, 45, 2);
-          ceilingFill1.position.set(hubCenter.x, WALL_HEIGHT - 1, hubCenter.z);
-          grandHallGroup.add(ceilingFill1);
-          const ceilingFill2 = new THREE.PointLight(0xbfe0f7, 0.5, 40, 2);
-          ceilingFill2.position.set(hubCenter.x, WALL_HEIGHT - 0.4, hubCenter.z);
-          grandHallGroup.add(ceilingFill2);
         }
       );
 
