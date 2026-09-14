@@ -12,6 +12,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
+import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 
 import {
   CAMPUS_DOORS,
@@ -750,21 +751,17 @@ export default function VltdMuseumCampus() {
         }
       }
 
-      // --- Ceiling, final approach (EK's correction, 2026-09-13): every
-      // procedural attempt at the coffered ceiling/skylight (multiple
-      // passes) either mismatched the reference or, in its most detailed
-      // form, made the page lag badly — dozens of small meshes and point
-      // lights per coffer, times 14 coffers, was too much real-time cost
-      // for what should be a mostly-static ceiling. Replaced entirely with
-      // ONE flat plane and ONE baked texture
-      // (grand-hall-ceiling-atlas-21x26-v1.webp, converted from the approved
-      // PNG for load-time reasons — see the perf-fix comment below) that
-      // already contains the
-      // finished coffer/skylight/lighting appearance — no per-coffer
-      // geometry, no per-coffer lights, no skylight well/glass/mullion
-      // meshes. The shared shell's own flat ceiling plane is still hidden
-      // (untouched otherwise, same mechanism as every prior pass) since
-      // this new plane replaces it.
+      // --- Ceiling, final approach (EK's correction, 2026-09-13, GLB pass):
+      // the stretched atlas-image plane and every earlier procedural coffer/
+      // skylight attempt are replaced with the actual modeled asset,
+      // grand-hall-ceiling-63x78-v1.glb. Its root node carries its own
+      // install metadata (extras: hallWidth 63, hallDepth 78, ceilingDatumY
+      // 0, installY 9.15) confirming it's already built to HUB's exact real
+      // dimensions — centered at its own local origin, no scale/rescale
+      // needed, just position it at HUB's real center with its datum at
+      // WALL_HEIGHT (9.15, matching installY exactly). The shared shell's
+      // own flat ceiling plane is still hidden (untouched otherwise, same
+      // mechanism as every prior pass) since this model replaces it.
       const hubCeilingMaterial = roomShellMaterialsByRoomId.get("HUB")?.ceiling;
       if (hubCeilingMaterial) {
         scene.traverse((obj) => {
@@ -772,33 +769,64 @@ export default function VltdMuseumCampus() {
         });
       }
 
-      const Y_CEIL_BASE = WALL_HEIGHT - 0.25;
-      // Mapped once, UVs 0-1, no repeat/crop/stretch beyond fitting the
-      // plane's own real 63x78 dimensions: PlaneGeometry(width, height)
-      // takes width along HUB's real X extent (63) and height along its
-      // real Z extent (78, the Hall's long direction) — the atlas image
-      // itself is portrait (its own height is its long axis), so mapping
-      // room-width(63)->image-width and room-length(78, Z)->image-height
-      // already lines up the image's long axis with the Hall's 78-unit
-      // direction with no rotation or UV trickery needed. One lightweight,
-      // unlit material (MeshBasicMaterial, no normal/roughness maps, no
-      // dynamic lighting response needed) since the finished look and
-      // lighting are already baked into the image.
-      // Perf fix (2026-09-13): the source PNG was 3.2MB for a 1092x1352
-      // image — converted to WebP (~117KB, same resolution, no visible
-      // change) as part of the same live lag investigation as the stone
-      // textures above.
-      const ceilingAtlasTexture = loadGrandHallTexture("grand-hall-ceiling-atlas-21x26-v1.webp", THREE.SRGBColorSpace, 1, 1);
-      const ceilingAtlasMaterial = new THREE.MeshBasicMaterial({ map: ceilingAtlasTexture, fog: false });
-      const ceilingAtlas = new THREE.Mesh(new THREE.PlaneGeometry(hub.w, hub.d), ceilingAtlasMaterial);
-      ceilingAtlas.rotation.x = Math.PI / 2;
-      ceilingAtlas.position.set(hubCenter.x, Y_CEIL_BASE, hubCenter.z);
-      grandHallGroup.add(ceilingAtlas);
+      const ceilingGltfLoader = new GLTFLoader();
+      ceilingGltfLoader.load(
+        "/museum/grand-hall/grand-hall-ceiling-63x78-v1.glb",
+        (gltf) => {
+          if (contentCancelled) return;
+          const model = gltf.scene;
+          // No scale change — the asset's own extras confirm it's already
+          // authored at HUB's real 63x78 size. Center on HUB's real X/Z;
+          // installY (9.15) already equals WALL_HEIGHT, so the model's own
+          // ceilingDatumY=0 lands exactly on the room's real ceiling plane.
+          model.position.set(hubCenter.x, WALL_HEIGHT, hubCenter.z);
 
-      // Skylight/coffer geometry, mullions, glow strips, downlights, and
-      // their supporting point lights (skylightGlow, warmFillSpots,
-      // per-coffer lights) are all gone — the atlas above already contains
-      // the finished, lit appearance of all of it.
+          // Only GH_Warm_Ivory_Plaster and GH_Warm_Ivory_Trim get the
+          // existing plaster texture (map/normal/roughness, the same real
+          // asset every other Grand Hall plaster surface uses) — every
+          // other named material (GH_Dark_Bronze, GH_Skylight_Glass,
+          // GH_2700K_Concealed_Glow, GH_Daylight_Backdrop) is left exactly
+          // as GLTFLoader parsed it from the GLB: GLTFLoader already
+          // converts KHR_materials_transmission on GH_Skylight_Glass into a
+          // real MeshPhysicalMaterial (transparent, transmissive), already
+          // reads KHR_materials_emissive_strength for the concealed glow's
+          // real intensity, and GH_Dark_Bronze's authored metalness/
+          // roughness are untouched — none of that needs (or should get)
+          // reinterpretation.
+          const plasterMap = loadGrandHallTexture("warm-ivory-plaster-basecolor.webp", THREE.SRGBColorSpace, 1, 1);
+          const plasterNormalMap = loadGrandHallTexture("warm-ivory-plaster-normal.webp", THREE.NoColorSpace, 1, 1);
+          const plasterRoughnessMap = loadGrandHallTexture("warm-ivory-plaster-roughness.webp", THREE.NoColorSpace, 1, 1);
+          model.traverse((obj) => {
+            if (!(obj instanceof THREE.Mesh)) return;
+            const materials = Array.isArray(obj.material) ? obj.material : [obj.material];
+            for (const material of materials) {
+              if (!(material instanceof THREE.MeshStandardMaterial)) continue;
+              if (material.name !== "GH_Warm_Ivory_Plaster" && material.name !== "GH_Warm_Ivory_Trim") continue;
+              material.map = plasterMap;
+              material.normalMap = plasterNormalMap;
+              material.roughnessMap = plasterRoughnessMap;
+              // Neutral white tint, same reasoning as the walls/floor
+              // fix earlier: let the texture's own real (confirmed warm
+              // ivory) color show, not multiplied by the GLB's flat
+              // placeholder baseColorFactor.
+              material.color.set(0xffffff);
+              material.needsUpdate = true;
+            }
+          });
+
+          grandHallGroup.add(model);
+
+          // Only a few soft supporting lights — the concealed glow comes
+          // from the model's own real emissive material (GH_2700K_Concealed_Glow),
+          // not from stacking a light per coffer again.
+          const ceilingFill1 = new THREE.PointLight(0xffdcae, 0.6, 45, 2);
+          ceilingFill1.position.set(hubCenter.x, WALL_HEIGHT - 1, hubCenter.z);
+          grandHallGroup.add(ceilingFill1);
+          const ceilingFill2 = new THREE.PointLight(0xbfe0f7, 0.5, 40, 2);
+          ceilingFill2.position.set(hubCenter.x, WALL_HEIGHT - 0.4, hubCenter.z);
+          grandHallGroup.add(ceilingFill2);
+        }
+      );
 
       // Restrained wall washing (docs/GRAND-HALL-VISUAL-ASSETS.md: "combine
       // ... with restrained wall washing") — its own lighting layer, distinct
