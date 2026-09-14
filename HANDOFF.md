@@ -8339,6 +8339,152 @@ subscribe.
 
 ---
 
+## Overnight session, 2026-09-13/14 — Grand Hall ceiling saga, POP_CULTURE Vault parity, museum-wide texture perf
+
+**Read this whole section before touching HUB/Grand Hall or POP_CULTURE again.** This was a long, multi-iteration overnight session with several real regressions found and fixed live, plus at least one genuinely unresolved question at the end — do not assume Grand Hall is "done."
+
+### Completed and verified live
+
+- **POP_CULTURE Vault-parity** (commit `0968d44`): wired `addStyledRoomArmor`
+  (wall panels/rivets) and display-case/shelf furniture
+  (`museumRoomFurniture.ts`) into the live walkable campus's existing
+  style-patch loop, generically per `EDITABLE_ROOM_IDS` room — previously
+  Museum-Builder-only. Confirmed via a read-only DB check (service-role
+  key, script deleted after) that `20260912_museum_room_style.sql` **has
+  been run** and POP_CULTURE's own row already has `room_style: "vault"`.
+  **POP_CULTURE's `case_capacity`/`shelf_capacity` are explicitly saved as
+  `0`** (not null) — cases/shelves will not appear there until EK sets a
+  positive `case_capacity` (suggest 5, matching the personal Vault's own
+  `CABINET_SPOTS`) via Museum Builder's slider or the DB directly. This is
+  a data value, not a code gap.
+- **Museum-wide texture performance fix** (commit `a80b4f0`) — EK reported
+  the whole page lagging and getting stuck on every room entry. Measured
+  it via `performance.getEntriesByType('resource')` against live
+  production instead of guessing: **~17MB of total image payload**, with
+  individual textures taking 3.5+ real seconds each. Root cause: 15 image
+  files (12 Grand Hall PBR stone maps, the first ceiling atlas, the VLTD
+  floor-medallion seal, and the door-sign-face texture used on **every
+  door in the whole campus**) were only ~1250px images saved as
+  near-lossless PNGs at 1.9-3.2MB EACH. Converted all 15 to WebP at
+  identical resolution (basecolor/roughness q85, normal maps q92) —
+  spot-checked for quality loss, none found. Total dropped from ~14.5MB+
+  to ~800KB-1MB for that set; total page image payload measured at ~2.8MB
+  after the fix (down from ~17.3MB), worst single-texture load ~1s (down
+  from 3.5s). **If lag/stuck-on-entry complaints return, check
+  `performance.getEntriesByType('resource')` first before assuming it's a
+  mesh-count or shader-compile issue again** — the actual dominant cause
+  here was always oversized image payloads, not geometry complexity, and
+  guessing at the wrong cause wasted real time earlier in this same
+  session.
+- **Shader-precompile fix** (still live, harmless either way): a real,
+  separate bug where WebGL only compiles a material's shader the first
+  time it's actually drawn — added two `renderer.compile(scene, camera)`
+  calls (one after the synchronous scene build, behind the loading
+  screen; one after `populateDynamicContent()`'s async content resolves)
+  so that cost is front-loaded once instead of paid as an in-game freeze
+  per room. This was a real, independently-diagnosed contributor
+  alongside the oversized-texture issue above — both were real, not
+  either/or.
+
+### Grand Hall ceiling — full iteration history (for context; only the LAST state matters going forward)
+
+EK's design doc/reference art asked for a coffered ceiling + long
+skylight. This went through, in order: (1) a procedural coffer/skylight
+build with real geometry — EK rejected it after comparing directly
+against the reference art (wrong layout: 8 giant cells instead of the
+reference's actual 14-coffer repeating grid; emissive strips too
+dominant; opaque skylight glass hiding its own mullions; oversized black
+border). (2) A rebuild matching the reference's real 14-coffer layout —
+introduced a real regression (an accidentally-added full opaque ceiling
+plane occluded all the new geometry, plus a scene-wide ambient-light
+color change broke every OTHER room's neutral tone) — both found and
+reverted/fixed same night. (3) Root-caused the remaining "flat and dark"
+look to the scene's shared `THREE.Fog` and, more fundamentally, the
+scene-wide `HemisphereLight`'s cool/dark-navy tone dominating any
+ceiling-facing-down surface — added per-coffer real lights to compensate.
+(4) **EK then redirected entirely**: replace all of this procedural work
+with a single baked ceiling-image plane
+(`grand-hall-ceiling-atlas-21x26-v1.png`, converted to WebP) mapped once
+across the room — this also directly fixed a real lag complaint, since it
+eliminated ~300 procedural meshes/lights. (5) **EK then redirected
+again**: replace the flat image with an actual modeled GLB asset
+(`grand-hall-ceiling-63x78-v1.glb`) — its root node's own `extras`
+metadata gave install dimensions/height directly. Live-checked and found
++ fixed a real bug: the shared shell (`buildCeilingAndTrim`,
+`campusRoomBuilder.ts`) also builds 4 thin ceiling-trim boxes right at
+wall height, in a material that had never been captured/hidden by any
+earlier pass (every earlier ceiling happened to sit low enough to
+occlude them by coincidence) — extended `buildCeilingAndTrim`/
+`buildRoomShell`/`buildNeutralShell`'s return types to also expose the
+trim material (additive, every other room unaffected) and hid it for HUB
+specifically, alongside the main ceiling material (commit `67de512`).
+(6) **EK then supplied a DIFFERENT, explicitly-labeled "approved
+temporary" GLB** (`grand-hall-ceiling-blender-v1.glb`, its `.blend`
+source and a preview PNG also copied in) to replace GLB #5 — 6 pre-merged
+meshes with their own embedded materials/textures; EK's explicit
+instruction was **do not modify or redesign the asset, keep the embedded
+materials/textures as-is** (no texture-override traversal this time,
+unlike GLB #5). Swapped in (commit `8799fc6`), reusing the exact same
+ceiling/ceiling-trim hide logic from step 5 (no new hide-logic needed).
+
+### ⬜ NOT yet resolved — genuinely open as of this write-up
+
+**A live check of GLB #6 (the current Blender ceiling) from HUB's center,
+facing the south doors (CARDS/SPORTS/COLLECTION), showed a bright yellow/
+gold pinstripe + diagonal-converging-lines band right at the wall-ceiling
+junction that does not match this model's own (neutral/grayish) trim
+design.** The straight-up view confirms the skylight itself is genuinely
+real, pitched 3D geometry (matches the model's own preview image) — that
+part is good. But this wall-junction band was NOT root-caused before this
+handoff was written:
+- The existing hide-logic (`hubCeilingMaterial`/`hubCeilingTrimMaterial`,
+  confirmed present in the deployed bundle via direct bundle-content
+  check) SHOULD already hide the shared shell's own ceiling + ceiling-trim
+  — if this band is that same legacy trim, the hide mechanism is
+  failing for an unknown reason with this specific GLB, which would be
+  surprising since it's identical code to the working GLB #5 case.
+- Alternatively, this may be the ordinary campus door-casing/header trim
+  (present on every door across the whole campus, unrelated to the
+  ceiling at all) simply being exposed because this GLB's own geometry
+  doesn't extend down/out far enough to visually cover that area near the
+  walls — which would instead mean the model doesn't fully "cover the
+  Hall without extending down the walls" the way EK's own verification
+  checklist asked to confirm.
+- **Do not declare EK's Grand Hall verification checklist (walk from
+  multiple doors + center; skylight reads as real geometry; ceiling
+  covers the Hall without extending down walls; no stretching/clipping/
+  flicker/duplicate ceiling; movement smooth, performance compared) fully
+  passed until this is actually root-caused and re-verified.** The
+  skylight-geometry item is confirmed; the "no duplicate ceiling /
+  extends down walls" item is NOT yet confirmed clean.
+- Also not yet done: a real before/after performance measurement
+  specifically for GLB #6, which is 7.9MB (much larger than GLB #5's
+  198KB) and embeds its own textures — a direct `fetch()` timing test
+  showed 155ms once cached, but a genuine cold-cache/first-load
+  measurement and in-game movement-smoothness check (the actual thing EK
+  asked to confirm) has not been done yet for this specific asset.
+
+### Other still-open items, not touched this session, carried forward
+
+- The Vault/Loft wall-armor panel-divider/rivet visibility bug (from the
+  POP_CULTURE material-quality-parity pass, several sessions back): the
+  wall-face-offset math was fixed and confirmed correct by re-reading the
+  geometry, but a live render still doesn't show visible panel dividers/
+  rivets. Root cause never found. Re-verified via the POP_CULTURE agent
+  this session that the math is still internally consistent, but no
+  visual re-check was possible (agent had no browser).
+- Museum Builder's `addLighting()` (the real per-style spotlight rig) is
+  still never actually called, despite an old code comment claiming it
+  is — confirmed via `grep -n "\.addLighting("` still returning zero
+  matches in `MuseumBuilder.tsx`. Base ambient (Hemisphere+Directional)
+  there is still unconditional per room regardless of style.
+- `guitar.png` (a curated vault item photo, not a Grand-Hall-specific
+  asset) is now the single largest remaining image on the museum page at
+  ~1.5MB — separate, pre-existing issue (item photos aren't resized on
+  upload), not touched this session.
+
+---
+
 ## 6. First moves for the new chat
 1. Read this + `MEMORY.md`. Confirm with EK **who owns `/capture` right now**
    (this chat vs the parallel Codex edits) before editing capture files. Also

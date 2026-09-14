@@ -1090,3 +1090,55 @@ before touching `VirtualGalleryRoom.tsx`. Short version:
   `/museum/virtual-room`. The old direct, ungated `/museum/virtual-room`
   link from this branch's own header was deliberately dropped during the
   merge so this gate can't be bypassed.
+
+---
+
+## Overnight session, 2026-09-13/14 — Grand Hall + POP_CULTURE + museum perf
+
+Full narrative (multi-iteration Grand Hall ceiling history, exact commits,
+root causes) is in `HANDOFF.md` — read that before touching HUB or
+POP_CULTURE again. Quick-scan status:
+
+- ✅ POP_CULTURE: real wall armor + display-case/shelf furniture wired into
+  the live campus (was Museum-Builder-only). `room_style` migration
+  confirmed run, POP_CULTURE's row already `"vault"`.
+- ⬜ **POP_CULTURE cases/shelves won't render yet** — `case_capacity`/
+  `shelf_capacity` are saved as `0`. EK needs to set a positive
+  `case_capacity` (suggest 5) via Museum Builder or the DB.
+- ✅ Museum-wide texture perf: ~17MB total image payload measured live →
+  15 oversized PNGs (Grand Hall stone maps + shared floor-medallion +
+  shared door-sign-face used on every door) converted to WebP, same
+  resolution, no visible quality loss → ~2.8MB total, worst single
+  texture load 3.5s → ~1s. **If lag returns, measure
+  `performance.getEntriesByType('resource')` first**, don't assume
+  mesh-count/shader-compile again.
+- ✅ Shader-precompile fix (`renderer.compile()`, twice) also in, real and
+  separate from the texture-size fix, harmless either way.
+- Grand Hall ceiling went through 6 real iterations tonight (procedural
+  coffers → rebuilt coffers → baked image plane → GLB #1
+  `grand-hall-ceiling-63x78-v1.glb` → GLB #2 "approved temporary"
+  `grand-hall-ceiling-blender-v1.glb`, current). Two real regressions
+  found and fixed live along the way (an accidental full occluding
+  ceiling plane; a scene-wide ambient-light change that broke every other
+  room, reverted). Do not re-attempt the procedural/coffer approach —
+  EK explicitly redirected away from it twice.
+- ⬜ **GLB #2 (current) — NOT fully verified.** Skylight reads as real
+  pitched 3D geometry ✅ (confirmed via straight-up screenshot, matches
+  the model's own preview image). **Still open:** a live check from HUB
+  center facing the south doors showed a bright yellow/gold trim band at
+  the wall-ceiling junction that doesn't match this model's own
+  (neutral/gray) design — not yet determined whether it's the shared
+  shell's legacy ceiling-trim still leaking through (hide-logic present
+  in the deployed bundle, reason for failure unknown) or the ordinary
+  campus door-casing trim exposed because this GLB doesn't extend far
+  enough down to cover it. **Do not tell EK this passed her "no duplicate
+  ceiling / doesn't extend down the walls" check until this is actually
+  root-caused.** Also not yet done: a real cold-cache/first-load
+  performance + movement-smoothness measurement for this specific GLB
+  (7.9MB, embeds its own textures — much bigger than GLB #1's 198KB).
+- ⬜ Still carried forward, untouched this session: Vault/Loft wall-armor
+  panel-divider/rivet visibility bug (math confirmed correct, render
+  still doesn't show them — root cause never found); Museum Builder's
+  `addLighting()` per-style rig still never called; `guitar.png` (a
+  curated item photo, ~1.5MB) is now the largest remaining museum image,
+  separate pre-existing issue.
