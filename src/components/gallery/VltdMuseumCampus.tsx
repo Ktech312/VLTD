@@ -2228,6 +2228,33 @@ export default function VltdMuseumCampus() {
     // the required movement correction, same pattern as the accepted
     // personal room's own window.__vltdDebug.
     (window as unknown as { __vltdCampusMoveDebug?: unknown }).__vltdCampusMoveDebug = {
+      // Temporary diagnostic (2026-09-14) — root-causing a wall-ceiling
+      // junction trim band spotted live in HUB with the current Grand Hall
+      // GLB. Lists every visible mesh in HUB's rough ceiling/wall-top band
+      // (x 21-84, z 0-78, y 8-11) with its material name/color, so we can
+      // tell whether it's the shared shell's own (should-be-hidden)
+      // ceiling-trim material leaking through, or something else (e.g.
+      // ordinary door-casing trim) entirely. Remove once root-caused.
+      debugHubCeilingBand: () => {
+        const hits: Array<{ name: string; matName: string; matColorHex: string; visible: boolean; pos: number[] }> = [];
+        scene.traverse((obj) => {
+          if (!(obj instanceof THREE.Mesh)) return;
+          const p = obj.getWorldPosition(new THREE.Vector3());
+          if (p.x < 21 || p.x > 84 || p.z < 0 || p.z > 78 || p.y < 8 || p.y > 11) return;
+          const mats = Array.isArray(obj.material) ? obj.material : [obj.material];
+          for (const m of mats) {
+            const std = m as THREE.MeshStandardMaterial;
+            hits.push({
+              name: obj.name || "(unnamed)",
+              matName: m.name || "(unnamed material)",
+              matColorHex: std.color ? "#" + std.color.getHexString() : "n/a",
+              visible: obj.visible,
+              pos: [Math.round(p.x * 10) / 10, Math.round(p.y * 10) / 10, Math.round(p.z * 10) / 10],
+            });
+          }
+        });
+        return hits;
+      },
       getCameraBody: () => cameraBody.clone(),
       getYawPitch: () => ({ yaw, pitch, targetYaw, targetPitch }),
       hasActiveWalkTween: () => walkTween !== null,
