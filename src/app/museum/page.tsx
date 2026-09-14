@@ -203,7 +203,20 @@ export default function MuseumPage() {
   // same `role === "owner"` check (not the broader "any admin" one).
   const [isMuseumOwner, setIsMuseumOwner] = useState(false);
   useEffect(() => {
-    void getMyAdminRole().then((role) => setIsMuseumOwner(role === "owner"));
+    function checkOwner() {
+      void getMyAdminRole().then((role) => setIsMuseumOwner(role === "owner"));
+    }
+    checkOwner();
+    // 2026-09-14: getMyAdminRole() also requires this session to have
+    // completed 2FA (see adminAuth.ts). A one-shot check on mount could
+    // run before the global MfaChallengeGate's own modal resolves that
+    // challenge, permanently leaving the owner's own Museum Builder button
+    // hidden for the rest of the page's life even after verifying
+    // successfully. Re-check on every auth-state change so it recovers.
+    const supabase = getSupabaseBrowserClient();
+    if (!supabase) return;
+    const { data: sub } = supabase.auth.onAuthStateChange(checkOwner);
+    return () => sub.subscription.unsubscribe();
   }, []);
   const selectedItemsDragRef = useRef({ active: false, dragged: false, startX: 0, scrollLeft: 0 });
   const [filter, setFilter] = useState<ExhibitionFilter>("ACTIVE");
