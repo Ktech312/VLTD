@@ -428,7 +428,7 @@ function createCeilingBayTexture(roomWidth: number, roomDepth: number): THREE.Ca
 
 function buildCeilingAndTrim(
   scene: THREE.Scene, room: CampusRoom, wallHeight: number, finish: RoomFinish, styled?: StyledRoomFinishes | null
-): THREE.MeshStandardMaterial {
+): { ceiling: THREE.MeshStandardMaterial; trim: THREE.MeshStandardMaterial } {
   const bounds = roomBounds(room);
   const center = { x: room.x + room.w / 2, z: room.z + room.d / 2 };
 
@@ -497,12 +497,21 @@ function buildCeilingAndTrim(
   trimEast.position.set(bounds.x1, wallHeight - trimHeight / 2, center.z);
   scene.add(trimEast);
 
-  return ceilingMaterial;
+  // Grand Hall GLB pass (2026-09-13): exposing the trim material alongside
+  // the ceiling one (previously only the ceiling material was returned) so
+  // a room that swaps in its own real ceiling asset — currently only HUB —
+  // can also hide these 4 perimeter trim boxes, which sit right at
+  // wallHeight - trimHeight/2 (just under the wall top) and would otherwise
+  // stay visible in front of a replacement ceiling installed at the room's
+  // real wall height. Every other room's own behavior is unchanged — this
+  // is purely an additional return value, nothing here stops building or
+  // rendering the trim boxes themselves.
+  return { ceiling: ceilingMaterial, trim: ceilingTrimMaterial };
 }
 
 export function buildRoomShell(
   scene: THREE.Scene, module: RoomModule, styled?: StyledRoomFinishes | null
-): RoomLightGroups & { shellFixtures: THREE.Group; floorMaterial: THREE.MeshStandardMaterial; ceilingMaterial: THREE.MeshStandardMaterial } {
+): RoomLightGroups & { shellFixtures: THREE.Group; floorMaterial: THREE.MeshStandardMaterial; ceilingMaterial: THREE.MeshStandardMaterial; ceilingTrimMaterial: THREE.MeshStandardMaterial } {
   const { room, wallHeight, finish } = module;
   const bounds = roomBounds(room);
   const center = { x: room.x + room.w / 2, z: room.z + room.d / 2 };
@@ -542,7 +551,7 @@ export function buildRoomShell(
   floor.position.set(center.x, 0, center.z);
   scene.add(floor);
 
-  const ceilingMaterial = buildCeilingAndTrim(scene, room, wallHeight, finish, styled);
+  const { ceiling: ceilingMaterial, trim: ceilingTrimMaterial } = buildCeilingAndTrim(scene, room, wallHeight, finish, styled);
 
   if (styled) {
     // Real Gallery Environments pass: this room's own real light rig
@@ -593,7 +602,7 @@ export function buildRoomShell(
     }
   }
 
-  return { full: lights, preview, shellFixtures, floorMaterial, ceilingMaterial };
+  return { full: lights, preview, shellFixtures, floorMaterial, ceilingMaterial, ceilingTrimMaterial };
 }
 
 /** Material Quality Parity pass (2026-09-12): the exact same ceiling-fixture
@@ -690,7 +699,7 @@ function buildLegacyRoomLightRig(
 export function buildNeutralShell(
   scene: THREE.Scene, room: CampusRoom, wallHeight: number, finish: RoomFinish, includeCeiling = true, lights?: THREE.Object3D,
   styled?: StyledRoomFinishes | null
-): { shellFixtures: THREE.Group; floorMaterial: THREE.MeshStandardMaterial; ceilingMaterial?: THREE.MeshStandardMaterial } {
+): { shellFixtures: THREE.Group; floorMaterial: THREE.MeshStandardMaterial; ceilingMaterial?: THREE.MeshStandardMaterial; ceilingTrimMaterial?: THREE.MeshStandardMaterial } {
   const center = { x: room.x + room.w / 2, z: room.z + room.d / 2 };
 
   let floorMaterial: THREE.MeshStandardMaterial;
@@ -716,7 +725,7 @@ export function buildNeutralShell(
   scene.add(shellFixtures);
 
   if (!includeCeiling) return { shellFixtures, floorMaterial };
-  const ceilingMaterial = buildCeilingAndTrim(scene, room, wallHeight, finish, styled);
+  const { ceiling: ceilingMaterial, trim: ceilingTrimMaterial } = buildCeilingAndTrim(scene, room, wallHeight, finish, styled);
   if (styled) {
     const anchor = new THREE.Group();
     anchor.position.set(center.x, 0, center.z);
@@ -725,7 +734,7 @@ export function buildNeutralShell(
   } else {
     buildLegacyRoomLightRig(room, wallHeight, finish, lights ?? scene, shellFixtures);
   }
-  return { shellFixtures, floorMaterial, ceilingMaterial };
+  return { shellFixtures, floorMaterial, ceilingMaterial, ceilingTrimMaterial };
 }
 
 const destinationSignFaceTextures = new WeakMap<THREE.Scene, THREE.Texture>();

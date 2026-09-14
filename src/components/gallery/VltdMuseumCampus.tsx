@@ -419,6 +419,12 @@ export default function VltdMuseumCampus() {
       wall?: THREE.MeshStandardMaterial;
       floor?: THREE.MeshStandardMaterial;
       ceiling?: THREE.MeshStandardMaterial;
+      // Grand Hall GLB pass (2026-09-13): the shared shell also builds 4
+      // thin perimeter trim boxes right at the wall top (buildCeilingAndTrim,
+      // campusRoomBuilder.ts) using a material never captured before now —
+      // a room replacing its own ceiling with a real asset (currently only
+      // HUB) needs to hide these too, or they render in front of it.
+      ceilingTrim?: THREE.MeshStandardMaterial;
       baseboard?: THREE.MeshStandardMaterial;
       rail?: THREE.MeshStandardMaterial | null;
       shellFixtures?: THREE.Group;
@@ -473,6 +479,7 @@ export default function VltdMuseumCampus() {
       const shell = buildNeutralShell(scene, room, WALL_HEIGHT, finish, room.id !== "PLAZA", full);
       shellEntry(room.id).floor = shell.floorMaterial;
       shellEntry(room.id).ceiling = shell.ceilingMaterial;
+      shellEntry(room.id).ceilingTrim = shell.ceilingTrimMaterial;
       shellEntry(room.id).shellFixtures = shell.shellFixtures;
     }
 
@@ -762,10 +769,21 @@ export default function VltdMuseumCampus() {
       // WALL_HEIGHT (9.15, matching installY exactly). The shared shell's
       // own flat ceiling plane is still hidden (untouched otherwise, same
       // mechanism as every prior pass) since this model replaces it.
+      // Real bug found live (2026-09-13): the shared shell ALSO builds 4
+      // thin perimeter trim boxes right at the wall top, in a material
+      // never previously captured/hidden — every earlier ceiling pass sat
+      // low enough (installed below wallHeight) to physically occlude them
+      // by coincidence, but this GLB's own datum installs exactly at
+      // wallHeight, at or above where those trim boxes sit, so they were
+      // rendering IN FRONT of the new ceiling instead of being hidden
+      // behind it — the exact "flat dark ceiling with bright trim lines"
+      // look that showed up on the first live check. Hidden the same way.
       const hubCeilingMaterial = roomShellMaterialsByRoomId.get("HUB")?.ceiling;
-      if (hubCeilingMaterial) {
+      const hubCeilingTrimMaterial = roomShellMaterialsByRoomId.get("HUB")?.ceilingTrim;
+      if (hubCeilingMaterial || hubCeilingTrimMaterial) {
         scene.traverse((obj) => {
-          if (obj instanceof THREE.Mesh && obj.material === hubCeilingMaterial) obj.visible = false;
+          if (!(obj instanceof THREE.Mesh)) return;
+          if (obj.material === hubCeilingMaterial || obj.material === hubCeilingTrimMaterial) obj.visible = false;
         });
       }
 
@@ -995,18 +1013,21 @@ export default function VltdMuseumCampus() {
     const popCultureWallSpans = computeUsableWallSpans(popCultureModule);
     shellEntry("POP_CULTURE").floor = popCultureLights.floorMaterial;
     shellEntry("POP_CULTURE").ceiling = popCultureLights.ceilingMaterial;
+    shellEntry("POP_CULTURE").ceilingTrim = popCultureLights.ceilingTrimMaterial;
     shellEntry("POP_CULTURE").shellFixtures = popCultureLights.shellFixtures;
 
     const tcgLights = buildRoomShell(scene, tcgModule);
     const tcgWallSpans = computeUsableWallSpans(tcgModule);
     shellEntry("TCG").floor = tcgLights.floorMaterial;
     shellEntry("TCG").ceiling = tcgLights.ceilingMaterial;
+    shellEntry("TCG").ceilingTrim = tcgLights.ceilingTrimMaterial;
     shellEntry("TCG").shellFixtures = tcgLights.shellFixtures;
 
     const collectionLights = buildRoomShell(scene, collectionModule);
     const collectionWallSpans = computeUsableWallSpans(collectionModule);
     shellEntry("COLLECTION").floor = collectionLights.floorMaterial;
     shellEntry("COLLECTION").ceiling = collectionLights.ceilingMaterial;
+    shellEntry("COLLECTION").ceilingTrim = collectionLights.ceilingTrimMaterial;
     shellEntry("COLLECTION").shellFixtures = collectionLights.shellFixtures;
 
     // SPORTS proof-room pass (2026-09-11): first room to get real,
