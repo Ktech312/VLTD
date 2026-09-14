@@ -734,7 +734,11 @@ function destinationSignFaceTexture(scene: THREE.Scene): THREE.Texture {
   const cached = destinationSignFaceTextures.get(scene);
   if (cached) return cached;
 
-  const texture = new THREE.TextureLoader().load("/brand/vltd-museum-door-sign-face-v1.png");
+  // Perf fix (2026-09-13, live lag investigation): 1.3MB PNG -> ~133KB WebP
+  // at the same resolution, no visible change — this texture loads once per
+  // scene (cached above) but every door sign across the whole campus was
+  // waiting on that one oversized file before it could render its face.
+  const texture = new THREE.TextureLoader().load("/brand/vltd-museum-door-sign-face-v1.webp");
   texture.colorSpace = THREE.SRGBColorSpace;
   texture.wrapS = THREE.ClampToEdgeWrapping;
   texture.wrapT = THREE.ClampToEdgeWrapping;

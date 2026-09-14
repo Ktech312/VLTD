@@ -530,10 +530,20 @@ export default function VltdMuseumCampus() {
     // that doc's target ranges, confirmed by inspecting the actual PNGs)
     // drives the real value, rather than guessing a second scalar on top of
     // an unknown map.
+    // Perf fix (2026-09-13, live lag investigation): these were originally
+    // 1254x1254 PNGs at 1.9-2.8MB EACH (12 files) — near-lossless encodes of
+    // photographic stone textures, which is massive overkill for a live
+    // WebGL texture and was directly responsible for multi-second load
+    // stalls (measured via performance.getEntriesByType('resource') against
+    // the live page: several individual textures took 3+ real seconds to
+    // download+decode). Converted to WebP at the same resolution (basecolor
+    // q85, normal q92 since lighting direction is more sensitive to
+    // compression there, roughness q85) — total for all 12 files dropped
+    // from ~14MB to under 1MB, no visible quality change (spot-checked).
     function buildStoneMaterial(prefix: string, repeatX: number, repeatY: number, metalness: number, normalScale: number): THREE.MeshStandardMaterial {
-      const map = loadGrandHallTexture(`${prefix}-basecolor.png`, THREE.SRGBColorSpace, repeatX, repeatY);
-      const normalMap = loadGrandHallTexture(`${prefix}-normal.png`, THREE.NoColorSpace, repeatX, repeatY);
-      const roughnessMap = loadGrandHallTexture(`${prefix}-roughness.png`, THREE.NoColorSpace, repeatX, repeatY);
+      const map = loadGrandHallTexture(`${prefix}-basecolor.webp`, THREE.SRGBColorSpace, repeatX, repeatY);
+      const normalMap = loadGrandHallTexture(`${prefix}-normal.webp`, THREE.NoColorSpace, repeatX, repeatY);
+      const roughnessMap = loadGrandHallTexture(`${prefix}-roughness.webp`, THREE.NoColorSpace, repeatX, repeatY);
       return new THREE.MeshStandardMaterial({
         // EK's correction: explicit neutral white color so the texture's own
         // (confirmed genuinely warm-cream, not gray) basecolor is never
@@ -747,7 +757,9 @@ export default function VltdMuseumCampus() {
       // lights per coffer, times 14 coffers, was too much real-time cost
       // for what should be a mostly-static ceiling. Replaced entirely with
       // ONE flat plane and ONE baked texture
-      // (grand-hall-ceiling-atlas-21x26-v1.png) that already contains the
+      // (grand-hall-ceiling-atlas-21x26-v1.webp, converted from the approved
+      // PNG for load-time reasons — see the perf-fix comment below) that
+      // already contains the
       // finished coffer/skylight/lighting appearance — no per-coffer
       // geometry, no per-coffer lights, no skylight well/glass/mullion
       // meshes. The shared shell's own flat ceiling plane is still hidden
@@ -772,7 +784,11 @@ export default function VltdMuseumCampus() {
       // unlit material (MeshBasicMaterial, no normal/roughness maps, no
       // dynamic lighting response needed) since the finished look and
       // lighting are already baked into the image.
-      const ceilingAtlasTexture = loadGrandHallTexture("grand-hall-ceiling-atlas-21x26-v1.png", THREE.SRGBColorSpace, 1, 1);
+      // Perf fix (2026-09-13): the source PNG was 3.2MB for a 1092x1352
+      // image — converted to WebP (~117KB, same resolution, no visible
+      // change) as part of the same live lag investigation as the stone
+      // textures above.
+      const ceilingAtlasTexture = loadGrandHallTexture("grand-hall-ceiling-atlas-21x26-v1.webp", THREE.SRGBColorSpace, 1, 1);
       const ceilingAtlasMaterial = new THREE.MeshBasicMaterial({ map: ceilingAtlasTexture, fog: false });
       const ceilingAtlas = new THREE.Mesh(new THREE.PlaneGeometry(hub.w, hub.d), ceilingAtlasMaterial);
       ceilingAtlas.rotation.x = Math.PI / 2;
@@ -853,8 +869,12 @@ export default function VltdMuseumCampus() {
       // that field as a separate, transparent floor inlay so the surrounding
       // rings and eight-point compass remain visible. This is visual only and
       // sits flush enough to avoid affecting movement or collision.
+      // Perf fix (2026-09-13, live lag investigation): this PNG was a
+      // needlessly heavy 2.4MB for a 1254x1254 image (near-lossless
+      // encoding of a mostly-flat graphic) — converted to WebP at the same
+      // resolution with alpha preserved, ~372KB, no visible quality change.
       const vltdSealTexture = new THREE.TextureLoader().load(
-        "/brand/vltd-museum-floor-medallion-v1.png"
+        "/brand/vltd-museum-floor-medallion-v1.webp"
       );
       vltdSealTexture.colorSpace = THREE.SRGBColorSpace;
       vltdSealTexture.anisotropy = renderer.capabilities.getMaxAnisotropy();
