@@ -138,35 +138,41 @@ export default function MfaChallengeGate() {
 
         {error ? <div className="mt-4 rounded-xl border border-red-400/35 bg-red-500/10 px-3 py-2 text-sm text-red-100">{error}</div> : null}
 
-        <input
-          value={code}
-          onChange={(e) => setCode(e.target.value.replace(/[^0-9]/g, "").slice(0, 6))}
-          placeholder="000000"
-          inputMode="numeric"
-          maxLength={6}
-          autoFocus
-          className="mt-4 w-full rounded-xl px-3 py-3 text-center text-2xl ring-1 ring-[color:var(--border)] focus:outline-none"
-          style={{ background: "var(--pill)", color: "var(--fg)", letterSpacing: "0.4em" }}
-        />
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            if (!busy && code.length === 6) void verify();
+          }}
+        >
+          <input
+            value={code}
+            onChange={(e) => setCode(e.target.value.replace(/[^0-9]/g, "").slice(0, 6))}
+            placeholder="000000"
+            inputMode="numeric"
+            maxLength={6}
+            autoFocus
+            className="mt-4 w-full rounded-xl px-3 py-3 text-center text-2xl ring-1 ring-[color:var(--border)] focus:outline-none"
+            style={{ background: "var(--pill)", color: "var(--fg)", letterSpacing: "0.4em" }}
+          />
 
-        <div className="mt-5 flex flex-col gap-2">
-          <button
-            type="button"
-            disabled={busy || code.length !== 6}
-            onClick={() => void verify()}
-            className="vltd-primary-button inline-flex h-12 items-center justify-center rounded-full px-6 text-sm font-black transition disabled:opacity-45"
-          >
-            {busy ? "Verifying..." : "Verify"}
-          </button>
-          <button
-            type="button"
-            onClick={() => void signOutInstead()}
-            className="inline-flex h-11 items-center justify-center rounded-[8px] border border-[color:var(--border)] px-6 text-sm font-semibold transition"
-            style={{ background: "var(--pill)", color: "var(--muted)" }}
-          >
-            Sign out instead
-          </button>
-        </div>
+          <div className="mt-5 flex flex-col gap-2">
+            <button
+              type="submit"
+              disabled={busy || code.length !== 6}
+              className="vltd-primary-button inline-flex h-12 items-center justify-center rounded-full px-6 text-sm font-black transition disabled:opacity-45"
+            >
+              {busy ? "Verifying..." : "Verify"}
+            </button>
+            <button
+              type="button"
+              onClick={() => void signOutInstead()}
+              className="inline-flex h-11 items-center justify-center rounded-[8px] border border-[color:var(--border)] px-6 text-sm font-semibold transition"
+              style={{ background: "var(--pill)", color: "var(--muted)" }}
+            >
+              Sign out instead
+            </button>
+          </div>
+        </form>
       </div>
     </div>
   );
