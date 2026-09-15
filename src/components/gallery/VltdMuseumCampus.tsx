@@ -828,6 +828,30 @@ export default function VltdMuseumCampus() {
         });
       }
 
+      // Free-floating skylight lights, real root cause (2026-09-14,
+      // EK-reported and re-confirmed live after an earlier fix targeted
+      // the wrong mesh entirely). The GLB's own meshes are all named
+      // GH_Merged_GH_* BufferGeometry objects — none of them are
+      // CircleGeometry, so the earlier attempt (hunting for that geometry
+      // type inside the loaded GLB's own traverse) silently hid nothing.
+      // The actual floating discs are buildNeutralShell()'s generic
+      // per-room ceiling-fixture rig (buildLegacyRoomLightRig(),
+      // campusRoomBuilder.ts — 6 CircleGeometry discs for HUB, one per
+      // row, at wallHeight-0.03), confirmed live via debugMeshesInRegion()
+      // to exist not just in HUB but at the same relative height in every
+      // other room's own centerline too — a campus-wide fixture, not
+      // something baked into this GLB at all. It was never built to sit
+      // this low: at a normal ~9.15-high flat ceiling it would sit flush
+      // against it, but HUB's real coffered ceiling peaks far higher, so
+      // the fixture discs hang in open air well below it. HUB's own
+      // shellFixtures group (captured in roomShellMaterialsByRoomId the
+      // same way its ceiling material is, right above) is hidden outright
+      // — the Grand Hall's own coffer glow/downlight/wall-wash lighting
+      // already covers this room, making the generic rig's disc meshes
+      // both wrong-looking and redundant here.
+      const hubShellFixtures = roomShellMaterialsByRoomId.get("HUB")?.shellFixtures;
+      if (hubShellFixtures) hubShellFixtures.visible = false;
+
       const ceilingGltfLoader = new GLTFLoader();
       ceilingGltfLoader.load(
         "/museum/grand-hall/grand-hall-ceiling-blender-v1.glb",
@@ -840,33 +864,8 @@ export default function VltdMuseumCampus() {
           // the comment above this block for the reasoning.
           model.position.set(hubCenter.x, 0, hubCenter.z);
           // Materials/textures kept exactly as embedded in the GLB, per
-          // EK's explicit instruction — no traversal, no overrides. The one
-          // exception (2026-09-14, EK-reported): 6 baked-in disc meshes
-          // along the skylight's own centerline read as light fixtures
-          // hanging in open air with nothing visibly holding them up.
-          // Confirmed live via debugMeshesInRegion() that these are plain
-          // CircleGeometry meshes (an emissive material baked into the
-          // GLB), not real THREE.Light objects, so hiding them changes
-          // nothing about the Hall's actual illumination — just the
-          // unsupported-looking glow. Removed per EK's own first option
-          // ("remove them outright") rather than adding a chain, since
-          // this asset has no rafter/purlin mesh nearby to anchor one to
-          // without guessing at geometry that was never actually modeled.
+          // EK's explicit instruction — no traversal, no overrides.
           grandHallGroup.add(model);
-          model.updateMatrixWorld(true);
-          let hiddenSkylightLights = 0;
-          const worldPos = new THREE.Vector3();
-          model.traverse((obj) => {
-            if (!(obj instanceof THREE.Mesh)) return;
-            if (obj.geometry.type !== "CircleGeometry") return;
-            obj.getWorldPosition(worldPos);
-            if (worldPos.y < 7) return;
-            obj.visible = false;
-            hiddenSkylightLights += 1;
-          });
-          if (hiddenSkylightLights === 0) {
-            console.warn("Grand Hall: expected to find the skylight's floating light discs to hide, found none — has the ceiling GLB changed?");
-          }
           // Choppy-turning fix (2026-09-14, EK-reported: "very slow and
           // choppy when scrolling up and sideways"). Measured live via
           // getWheelDiagnostics()/getSceneStats(): looking up at this GLB's
@@ -1014,6 +1013,37 @@ export default function VltdMuseumCampus() {
       );
       eastSkin.position.set(plazaBounds.x1 - wallSkinOffset, WALL_HEIGHT / 2, plazaCenter.z);
       plazaGroup.add(eastSkin);
+
+      // North wall (shared with HUB, the real museum entrance) — EK's
+      // correction (2026-09-14): "side wall are done but not the on in
+      // front of me." Missed in the first pass entirely. Same
+      // solid-piece walk buildRoomTrim()/the HUB base-trim loop above
+      // already use (computeCampusWallSegments()/splitSegmentForDoor()),
+      // so the entrance door's own casing/header is respected automatically
+      // — only the solid wall pieces flanking it get skinned, never the
+      // opening itself.
+      for (const segment of wallSegments) {
+        const touchesPlaza = segment.roomA === "PLAZA" || segment.roomB === "PLAZA";
+        const touchesHub = segment.roomA === "HUB" || segment.roomB === "HUB";
+        if (!touchesPlaza || !touchesHub) continue;
+        const isNS = segment.wall === "x";
+        const facingSign = segment.roomA === "PLAZA" ? -1 : 1;
+        const { solid } = splitSegmentForDoor(segment);
+        for (const piece of solid) {
+          const span = piece.to - piece.from;
+          if (span <= 0.05) continue;
+          const geometry = isNS
+            ? new THREE.BoxGeometry(span, WALL_HEIGHT, wallSkinThickness)
+            : new THREE.BoxGeometry(wallSkinThickness, WALL_HEIGHT, span);
+          const northSkin = new THREE.Mesh(geometry, limestoneWallMaterial);
+          if (isNS) {
+            northSkin.position.set((piece.from + piece.to) / 2, WALL_HEIGHT / 2, segment.fixed + facingSign * wallSkinOffset);
+          } else {
+            northSkin.position.set(segment.fixed + facingSign * wallSkinOffset, WALL_HEIGHT / 2, (piece.from + piece.to) / 2);
+          }
+          plazaGroup.add(northSkin);
+        }
+      }
     }
 
     // Display shelves flanking a doorway (EK's ask, 2026-09-02) are gone —
@@ -1809,20 +1839,20 @@ export default function VltdMuseumCampus() {
     // yaw values computeCampusWaypoints() emits (0, PI, ±PI/2) by checking
     // the rotated (-Z) vector matches visitorController.ts's own
     // forward(yaw) = (sin(yaw), 0, -cos(yaw)) in every case.
-    function drawChevron(ctx: CanvasRenderingContext2D, cx: number, cy: number, size: number, angle = 0) {
+    function drawChevron(ctx: CanvasRenderingContext2D, cx: number, cy: number, size: number, angle = 0, legFactor = 0.7) {
       const half = size / 2;
       ctx.save();
       ctx.translate(cx, cy);
       ctx.rotate(angle);
       ctx.beginPath();
-      ctx.moveTo(-half, half * 0.7);
-      ctx.lineTo(0, -half * 0.7);
-      ctx.lineTo(half, half * 0.7);
+      ctx.moveTo(-half, half * legFactor);
+      ctx.lineTo(0, -half * legFactor);
+      ctx.lineTo(half, half * legFactor);
       ctx.stroke();
       ctx.restore();
     }
 
-    function makeChevronTexture(chevrons: { cx: number; cy: number; size: number; angle?: number }[]) {
+    function makeChevronTexture(chevrons: { cx: number; cy: number; size: number; angle?: number; legFactor?: number }[]) {
       const canvas = document.createElement("canvas");
       canvas.width = 128;
       canvas.height = 128;
@@ -1831,7 +1861,7 @@ export default function VltdMuseumCampus() {
       ctx.lineCap = "round";
       ctx.lineJoin = "round";
       const draw = () => {
-        for (const c of chevrons) drawChevron(ctx, c.cx, c.cy, c.size, c.angle ?? 0);
+        for (const c of chevrons) drawChevron(ctx, c.cx, c.cy, c.size, c.angle ?? 0, c.legFactor ?? 0.7);
       };
 
       ctx.strokeStyle = "rgba(49,205,255,0.72)";
@@ -1854,11 +1884,19 @@ export default function VltdMuseumCampus() {
     const doorwayChevronTexture = makeChevronTexture([{ cx: 64, cy: 64, size: 68 }]);
     // Four small chevrons, each pointing outward from the room's own
     // center — same overall footprint as the old four-corner-bracket look.
+    // EK's live-review correction (2026-09-14): the first version (wider
+    // "0.7 leg factor" chevrons close to the middle) read as one continuous
+    // diamond/star outline from directly above, not 4 separate arrows —
+    // confirmed live via a top-down screenshot before this fix. Pushed
+    // further out toward the marker's own edge and narrowed (0.5 leg
+    // factor, a more pointed arrowhead) so each stays visually isolated
+    // with real empty space between it and its neighbors, reading as 4
+    // distinct outward-pointing arrows instead of one shape.
     const roomCenterChevronTexture = makeChevronTexture([
-      { cx: 64, cy: 30, size: 32, angle: 0 },              // north: points up
-      { cx: 64, cy: 98, size: 32, angle: Math.PI },        // south: points down
-      { cx: 98, cy: 64, size: 32, angle: Math.PI / 2 },    // east: points right
-      { cx: 30, cy: 64, size: 32, angle: -Math.PI / 2 },   // west: points left
+      { cx: 64, cy: 20, size: 26, angle: 0, legFactor: 0.5 },              // north: points up
+      { cx: 64, cy: 108, size: 26, angle: Math.PI, legFactor: 0.5 },       // south: points down
+      { cx: 108, cy: 64, size: 26, angle: Math.PI / 2, legFactor: 0.5 },   // east: points right
+      { cx: 20, cy: 64, size: 26, angle: -Math.PI / 2, legFactor: 0.5 },   // west: points left
     ]);
     const waypointMeshes: THREE.Mesh[] = [];
     // HUB's room-center target sits exactly on the Grand Hall's VLTD floor
