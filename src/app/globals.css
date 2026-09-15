@@ -395,6 +395,23 @@ body > .fixed {
   position: fixed !important;
 }
 
+/* Same bug, second property: `body > *` above ALSO forces z-index:1 on
+   every direct child of body, unconditionally, for the identical
+   unlayered-beats-layered reason — so even with position:fixed restored,
+   the modal was still pinned to z-index:1 instead of its intended
+   z-[999999] (chosen specifically to out-rank literally everything else
+   in the app, including TopNav's z-[9999] — see MfaChallengeGate.tsx's
+   own comment). That's what made the modal paint correctly as a centered,
+   dimmed overlay but still be unclickable: something else on the page was
+   still stacked above it for pointer-event purposes even though it no
+   longer looked that way. Scoped to the exact z-[999999] class (not a
+   blanket `.fixed` override) so this doesn't also force every OTHER
+   fixed, direct-body-child element in the app to the same maximum
+   z-index regardless of what it actually needs. */
+body > .z-\[999999\] {
+  z-index: 999999 !important;
+}
+
 /* Make form controls inherit theme colors */
 select,
 option,
