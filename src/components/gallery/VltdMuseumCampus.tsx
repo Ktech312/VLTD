@@ -909,46 +909,34 @@ export default function VltdMuseumCampus() {
         grandHallGroup.add(wash);
       }
 
-      // --- VLTD medallion/seal — UNCHANGED mechanism, just re-sequenced to
-      // run after the new marble floor so it sits correctly on top of it
-      // instead of the old stone floor. Every line below this comment is the
-      // same code the prior "Grand Hall enhancement" block already had.
-      const medallionCanvas = document.createElement("canvas");
-      medallionCanvas.width = 512;
-      medallionCanvas.height = 512;
-      const mctx = medallionCanvas.getContext("2d");
-      if (mctx) {
-        mctx.fillStyle = "#24211a";
-        mctx.fillRect(0, 0, 512, 512);
-        mctx.translate(256, 256);
-        for (let ring = 0; ring < 4; ring++) {
-          mctx.beginPath();
-          mctx.arc(0, 0, 230 - ring * 50, 0, Math.PI * 2);
-          mctx.strokeStyle = "rgba(232,185,94,0.55)";
-          mctx.lineWidth = 3;
-          mctx.stroke();
-        }
-        mctx.rotate(Math.PI / 8);
-        for (let i = 0; i < 8; i++) {
-          mctx.rotate(Math.PI / 4);
-          mctx.beginPath();
-          mctx.moveTo(0, -230);
-          mctx.lineTo(14, -170);
-          mctx.lineTo(0, -110);
-          mctx.lineTo(-14, -170);
-          mctx.closePath();
-          mctx.fillStyle = "rgba(232,185,94,0.35)";
-          mctx.fill();
-        }
-      }
-      const medallionTexture = new THREE.CanvasTexture(medallionCanvas);
+      // --- VLTD outer compass — swapped 2026-09-14 (EK, fully-specified
+      // work order, DO-LAST item on the punch list) from the runtime
+      // canvas-drawn rings/compass-points below to the real approved
+      // artwork, vltd-grand-hall-compass-inlay-v2.png. Same footprint
+      // (CircleGeometry(9, 48), same position) and re-sequencing after the
+      // marble floor as the canvas version this replaces — only the
+      // texture source changed. The seal/logo mesh right after this block
+      // is untouched.
+      const medallionTexture = new THREE.TextureLoader().load(
+        "/museum/grand-hall/vltd-grand-hall-compass-inlay-v2.png"
+      );
       medallionTexture.colorSpace = THREE.SRGBColorSpace;
+      medallionTexture.anisotropy = renderer.capabilities.getMaxAnisotropy();
       const medallion = new THREE.Mesh(
         new THREE.CircleGeometry(9, 48),
-        new THREE.MeshStandardMaterial({ map: medallionTexture, roughness: 0.9 })
+        new THREE.MeshStandardMaterial({
+          map: medallionTexture,
+          roughness: 0.9,
+          transparent: true,
+          alphaTest: 0.02,
+        })
       );
       medallion.rotation.x = -Math.PI / 2;
-      medallion.position.set(hubCenter.x, 0.02, hubCenter.z);
+      // A hair above the old canvas version's own 0.02 so the new, real
+      // artwork and the center logo mesh right after it (still at its own
+      // 0.028) don't z-fight, while both stay visually flush with the
+      // marble floor beneath (0.01/0.014).
+      medallion.position.set(hubCenter.x, 0.022, hubCenter.z);
       scene.add(medallion);
 
       // The compass was designed with an open center. Place the VLTD seal in
