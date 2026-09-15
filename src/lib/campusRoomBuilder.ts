@@ -21,6 +21,7 @@ import {
   roomBounds,
   roomById,
   splitSegmentForDoor,
+  wallFaceSign,
   type CampusRoom,
   type CampusRoomId,
   type CampusWallSegment,
@@ -1167,7 +1168,13 @@ export function buildRoomTrim(
   for (const segment of segments) {
     if (segment.roomA !== room.id && segment.roomB !== room.id) continue;
     const isNS = segment.wall === "x";
-    const facingSign = segment.roomA === room.id ? -1 : 1;
+    // Real bug fix (2026-09-15) — see wallFaceSign()'s own comment in
+    // campusLayout.ts: the old `segment.roomA === room.id ? -1 : 1` broke
+    // for a room's own solo exterior wall (roomB: null) whenever that
+    // room happened to be geometrically on the "low" side of the
+    // boundary, facing this trim into the exterior void instead of the
+    // room. Confirmed live on POP_CULTURE's west/north walls.
+    const facingSign = wallFaceSign(segment, room.id);
     const { solid } = splitSegmentForDoor(segment);
     for (const piece of solid) {
       const span = piece.to - piece.from;

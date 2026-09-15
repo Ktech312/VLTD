@@ -357,6 +357,38 @@ export function computeCampusWallSegments(): CampusWallSegment[] {
   return segments;
 }
 
+// Real bug found live (2026-09-15, EK's own review caught it): for a
+// SHARED segment, roomA is always the "high" bucket (the room whose own
+// far edge — x1/z1 — touches `fixed`, meaning its interior sits on the
+// LOW-coordinate side of the line) and roomB the "low" bucket (interior on
+// the HIGH-coordinate side) — see processAxis() above. Several call sites
+// (buildRoomTrim's baseboard/rail, museumRoomArmor.ts's Vault/Loft armor)
+// used `segment.roomA === roomId ? -1 : 1` as a cheap proxy for "which
+// side does this room's interior face" without reading a single real
+// coordinate, relying on that roomA=low/roomB=high correlation holding.
+// It breaks for a SOLO/exterior segment (roomB: null, line 350 above):
+// `only` there is whichever room exists regardless of whether it came
+// from the high or low bucket, so a room whose OWN exterior wall happens
+// to be on the geometric "low" side (its near edge — x0/z0 — touches
+// `fixed`, e.g. a room's own west or north campus-perimeter wall) still
+// gets labeled roomA, and every consumer trusting "roomA implies low
+// side" then faces baseboard trim and Vault/Loft armor away from the
+// room's own interior, into the exterior void — confirmed live on
+// POP_CULTURE's west/north walls (no Vault rivets visible; the room's
+// shared east/south walls, genuine dual segments, were unaffected).
+// This computes the sign directly from the room's own real bounds
+// instead of the roomA/roomB label, so it's correct for solo segments
+// too, and provably matches the label-based logic exactly for every dual
+// segment where that logic already worked (roomA's own far edge always
+// touches `fixed` by construction — see the `high`/`roomA` assignment
+// above), so this is a pure bug fix, not a behavior change for anything
+// currently correct.
+export function wallFaceSign(segment: CampusWallSegment, roomId: CampusRoomId): 1 | -1 {
+  const bounds = roomBounds(roomById(roomId));
+  const touchesFarEdge = segment.wall === "x" ? bounds.z1 === segment.fixed : bounds.x1 === segment.fixed;
+  return touchesFarEdge ? -1 : 1;
+}
+
 /** Cuts a door's gap (if any) out of a shared-wall segment, returning the
  * solid piece(s) that remain. A segment can carry at most one door, since
  * CAMPUS_DOORS only ever lists one connection per room pair. */

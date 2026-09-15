@@ -35,6 +35,7 @@ import {
   roomBounds,
   roomById,
   splitSegmentForDoor,
+  wallFaceSign,
   type CampusWaypoint,
   type CampusRoom,
   type CampusRoomId,
@@ -265,6 +266,13 @@ const DEFAULT_CASE_CAPACITY_FOR_STYLED_ROOM = 5;
 export default function VltdMuseumCampus() {
   const mountRef = useRef<HTMLDivElement | null>(null);
   const roomLabelRef = useRef<HTMLDivElement | null>(null);
+  // Stall indicator (2026-09-15, EK-reported: still lags entering doors —
+  // "if it a loading issue, then check that or make a indication that its
+  // happening, don't make it feel like its a bad App"). Toggled
+  // imperatively from inside tick() below, same pattern as roomLabelRef,
+  // rather than React state — a render-loop hot path is the wrong place
+  // to trigger React re-renders every frame.
+  const stallIndicatorRef = useRef<HTMLDivElement | null>(null);
   const [ready, setReady] = useState(false);
 
   // EK's ask (2026-09-12): clicking a room on the Gallery Map should spawn
@@ -774,7 +782,14 @@ export default function VltdMuseumCampus() {
       for (const segment of wallSegments) {
         if (segment.roomA !== "HUB" && segment.roomB !== "HUB") continue;
         const isNS = segment.wall === "x";
-        const facingSign = segment.roomA === "HUB" ? -1 : 1;
+        // Real bug fix (2026-09-15) — see wallFaceSign()'s own comment in
+        // campusLayout.ts: the old `segment.roomA === "HUB" ? -1 : 1` broke
+        // for a solo exterior wall (roomB: null) on the geometric "low"
+        // side of its boundary. HUB has no such wall today (every side
+        // borders a real neighbor), so this had no visible effect here,
+        // but it's the same provably-safe fix as the other two sites this
+        // pattern was actually broken on (POP_CULTURE's armor/trim).
+        const facingSign = wallFaceSign(segment, "HUB");
         const { solid } = splitSegmentForDoor(segment);
         for (const piece of solid) {
           const span = piece.to - piece.from;
@@ -1047,6 +1062,30 @@ export default function VltdMuseumCampus() {
         );
         northSkin.position.set((piece.from + piece.to) / 2, WALL_HEIGHT / 2, plazaBounds.z1 - wallSkinOffset);
         plazaGroup.add(northSkin);
+      }
+
+      // Wall-wash lighting (2026-09-15, EK-reported: close-up inspection
+      // confirmed the marble/limestone textures above are correctly there
+      // — real grain, pits, mottling all visible up close — but PLAZA's
+      // own ambient light is dim enough that none of it reads at a normal
+      // viewing distance, the same real gap HUB's own Grand Hall wall-wash
+      // pass already found and fixed for its walls. Same technique
+      // (modest warm point lights, mid-wall-height, inset from the wall
+      // face) sized to PLAZA's own corridor shape instead of copying
+      // HUB's 4-symmetric-sides layout: west/east walls each get one at
+      // mid-depth, the north (entrance) wall gets one of its own since
+      // that's where the marble floor and compass are most visible: PLAZA
+      // has no south wall at all (its true exterior edge, open to the
+      // facade), so there's nothing to wash there.
+      const plazaWashSpots: { x: number; z: number }[] = [
+        { x: plazaBounds.x0 + 2.5, z: plazaCenter.z },
+        { x: plazaBounds.x1 - 2.5, z: plazaCenter.z },
+        { x: plazaCenter.x, z: plazaBounds.z1 - 2.5 },
+      ];
+      for (const spot of plazaWashSpots) {
+        const wash = new THREE.PointLight(0xffdcae, 0.85, 30, 2);
+        wash.position.set(spot.x, WALL_HEIGHT * 0.58, spot.z);
+        plazaGroup.add(wash);
       }
     }
 
@@ -1804,6 +1843,34 @@ export default function VltdMuseumCampus() {
       // compiles on its own first appearance — but this covers the bulk of
       // it (every room's real wall/floor/ceiling/armor/case material).
       if (!contentCancelled) renderer.compile(scene, camera);
+
+      // Light-count shader-variant fix (2026-09-15, EK-reported: "in this
+      // room, spinning around is still lagging, this wasn't an issue a few
+      // days ago" — POP_CULTURE specifically, which gained its own real
+      // per-room lighting in the 2026-09-13 Vault-parity pass). The
+      // compile() call just above only warms whatever shader variant
+      // Three.js needs for the light configuration ACTIVE in the scene at
+      // the moment it runs — every room's own "full" light group (its
+      // real SpotLights/PointLights) is still invisible at this point,
+      // since the visitor hasn't walked near any of them yet, so
+      // materials lit by those lights get compiled for a "lights off"
+      // variant. The first time a room's real lights actually switch on
+      // (walking into proximity), WebGL has to compile a fresh variant
+      // for the new light count — a stall right on entry, matching
+      // "spinning around is lagging in this room." Briefly activating
+      // each editable room's own light group, compiling, then restoring
+      // its real (still-inactive) state warms the variant that's
+      // actually needed at runtime instead of waiting for the visitor to
+      // trigger it.
+      if (!contentCancelled) {
+        for (const styledRoomId of EDITABLE_ROOM_IDS) {
+          const groups = roomLightGroups[styledRoomId] ?? ensureRoomLightGroups(styledRoomId);
+          const wasVisible = groups.full.visible;
+          groups.full.visible = true;
+          renderer.compile(scene, camera);
+          groups.full.visible = wasVisible;
+        }
+      }
     }
     void populateDynamicContent();
 
@@ -2355,10 +2422,30 @@ export default function VltdMuseumCampus() {
 
     const clock = new THREE.Clock();
     let frameId = 0;
+    // Stall indicator (2026-09-15): a frame whose REAL elapsed time (before
+    // the 0.05s movement-smoothing clamp below) is unusually long means the
+    // main thread was blocked on something heavy — a new room's uncompiled
+    // shaders, a texture still streaming in, GC — the exact class of stall
+    // already root-caused for the Grand Hall GLB and precompiled for, but
+    // which can still happen anywhere new content enters view for the
+    // first time. Flashing a brief "Loading…" hint on any such frame turns
+    // an unexplained freeze into visible, expected feedback instead.
+    let stallHideTimer: number | null = null;
+    const STALL_THRESHOLD_MS = 250;
+    const STALL_INDICATOR_HOLD_MS = 700;
 
     function tick() {
       frameId = window.requestAnimationFrame(tick);
-      const dt = Math.min(clock.getDelta(), 0.05);
+      const rawDt = clock.getDelta();
+      if (rawDt * 1000 > STALL_THRESHOLD_MS && stallIndicatorRef.current) {
+        stallIndicatorRef.current.style.opacity = "1";
+        if (stallHideTimer !== null) window.clearTimeout(stallHideTimer);
+        stallHideTimer = window.setTimeout(() => {
+          if (stallIndicatorRef.current) stallIndicatorRef.current.style.opacity = "0";
+          stallHideTimer = null;
+        }, STALL_INDICATOR_HOLD_MS);
+      }
+      const dt = Math.min(rawDt, 0.05);
       const frameStartBody = cameraBody.clone();
 
       updateKeyboardMovement(dt);
@@ -2658,6 +2745,7 @@ export default function VltdMuseumCampus() {
       contentCancelled = true;
       window.clearTimeout(readyTimer);
       window.cancelAnimationFrame(frameId);
+      if (stallHideTimer !== null) window.clearTimeout(stallHideTimer);
       window.removeEventListener("keydown", onKeyDown);
       window.removeEventListener("keyup", onKeyUp);
       window.removeEventListener("blur", onWindowBlur);
@@ -2749,6 +2837,19 @@ export default function VltdMuseumCampus() {
         <div className="mx-auto rounded-full bg-black/55 px-4 py-2 text-xs font-medium text-white/75 ring-1 ring-white/15 backdrop-blur">
           Click a glowing target to align or move to a room center · drag to look around · scroll to step
         </div>
+      </div>
+
+      {/* Stall indicator (2026-09-15): opacity toggled directly from
+          tick() on an unusually slow frame — see stallIndicatorRef above.
+          Starts at opacity 0 (not `hidden`, so the CSS transition can
+          actually animate it in/out) and never intercepts clicks. */}
+      <div
+        ref={stallIndicatorRef}
+        className="pointer-events-none absolute left-1/2 top-6 flex -translate-x-1/2 items-center gap-2 rounded-full bg-black/70 px-4 py-2 text-xs font-medium text-white/85 ring-1 ring-white/15 backdrop-blur transition-opacity duration-300"
+        style={{ opacity: 0 }}
+      >
+        <span className="h-2 w-2 animate-pulse rounded-full bg-cyan-300" />
+        Loading detail…
       </div>
 
       {!ready ? (

@@ -49,6 +49,7 @@ import {
   DOOR_WIDTH,
   roomBounds,
   splitSegmentForDoor,
+  wallFaceSign,
   type CampusRoom,
   type CampusWallSegment,
 } from "./campusLayout";
@@ -68,8 +69,16 @@ const DOOR_EDGE_MARGIN = 0.3;
  * for a "z" segment (fixed X), roomA's interior is toward -X, roomB's toward
  * +X. A small offset in that direction keeps this file's decorative
  * geometry standing just off the wall's real face, into the room. */
+// Real bug fix (2026-09-15) — see wallFaceSign()'s own comment in
+// campusLayout.ts. The old `segment.roomA === roomId ? -1 : 1` broke for a
+// room's own solo exterior wall (roomB: null) whenever that room happened
+// to be geometrically on the "low" side of the boundary, facing this
+// room's Vault/Loft armor into the exterior void instead of its own
+// interior. Confirmed live on POP_CULTURE's west/north walls — no rivets
+// visible there, while its genuine dual (shared) east/south walls were
+// unaffected.
 function faceSignFor(segment: CampusWallSegment, roomId: CampusRoom["id"]): 1 | -1 {
-  return segment.roomA === roomId ? -1 : 1;
+  return wallFaceSign(segment, roomId);
 }
 
 /** This room's own solid (door-gap-excluded, casing-margin-trimmed) wall
