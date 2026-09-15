@@ -301,7 +301,16 @@ export default function VltdMuseumCampus() {
     // distant geometry still fades seamlessly into it.
     function createSkyGradientTexture(): THREE.CanvasTexture {
       const canvas = document.createElement("canvas");
-      canvas.width = 8;
+      // Entry corridor pass (2026-09-14, EK): "add the image of the sky
+      // with clouds above" — this was an 8px-wide vertical strip (no room
+      // for any horizontal detail) since scene.background renders a plain
+      // THREE.Texture as a static full-screen backdrop, not an
+      // equirectangular skybox — it never needed width before because it
+      // never varied with camera direction. Widened so soft cloud shapes
+      // can actually be drawn into it, dimmed to this scene's own
+      // dusk-navy palette rather than bright daylight clouds that would
+      // clash with the existing fog/lighting.
+      canvas.width = 512;
       canvas.height = 256;
       const ctx = canvas.getContext("2d")!;
       const gradient = ctx.createLinearGradient(0, 0, 0, 256);
@@ -309,7 +318,30 @@ export default function VltdMuseumCampus() {
       gradient.addColorStop(0.55, "#102240");
       gradient.addColorStop(1, "#081527");
       ctx.fillStyle = gradient;
-      ctx.fillRect(0, 0, 8, 256);
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      function cloud(cx: number, cy: number, scale: number, alpha: number) {
+        const blobs: [number, number, number][] = [
+          [0, 0, 1], [0.6, 0.08, 0.75], [-0.6, 0.1, 0.7], [0.22, -0.14, 0.6], [-0.28, -0.1, 0.55],
+        ];
+        for (const [dx, dy, s] of blobs) {
+          const r = 46 * scale * s;
+          const x = cx + dx * 90 * scale;
+          const y = cy + dy * 40 * scale;
+          const glow = ctx.createRadialGradient(x, y, 0, x, y, r);
+          glow.addColorStop(0, `rgba(214,225,240,${alpha})`);
+          glow.addColorStop(1, "rgba(214,225,240,0)");
+          ctx.fillStyle = glow;
+          ctx.beginPath();
+          ctx.arc(x, y, r, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+      cloud(90, 55, 1.15, 0.22);
+      cloud(270, 35, 0.85, 0.16);
+      cloud(410, 78, 1.3, 0.2);
+      cloud(180, 105, 0.6, 0.12);
+
       const texture = new THREE.CanvasTexture(canvas);
       texture.colorSpace = THREE.SRGBColorSpace;
       return texture;
@@ -808,8 +840,49 @@ export default function VltdMuseumCampus() {
           // the comment above this block for the reasoning.
           model.position.set(hubCenter.x, 0, hubCenter.z);
           // Materials/textures kept exactly as embedded in the GLB, per
-          // EK's explicit instruction — no traversal, no overrides.
+          // EK's explicit instruction — no traversal, no overrides. The one
+          // exception (2026-09-14, EK-reported): 6 baked-in disc meshes
+          // along the skylight's own centerline read as light fixtures
+          // hanging in open air with nothing visibly holding them up.
+          // Confirmed live via debugMeshesInRegion() that these are plain
+          // CircleGeometry meshes (an emissive material baked into the
+          // GLB), not real THREE.Light objects, so hiding them changes
+          // nothing about the Hall's actual illumination — just the
+          // unsupported-looking glow. Removed per EK's own first option
+          // ("remove them outright") rather than adding a chain, since
+          // this asset has no rafter/purlin mesh nearby to anchor one to
+          // without guessing at geometry that was never actually modeled.
           grandHallGroup.add(model);
+          model.updateMatrixWorld(true);
+          let hiddenSkylightLights = 0;
+          const worldPos = new THREE.Vector3();
+          model.traverse((obj) => {
+            if (!(obj instanceof THREE.Mesh)) return;
+            if (obj.geometry.type !== "CircleGeometry") return;
+            obj.getWorldPosition(worldPos);
+            if (worldPos.y < 7) return;
+            obj.visible = false;
+            hiddenSkylightLights += 1;
+          });
+          if (hiddenSkylightLights === 0) {
+            console.warn("Grand Hall: expected to find the skylight's floating light discs to hide, found none — has the ceiling GLB changed?");
+          }
+          // Choppy-turning fix (2026-09-14, EK-reported: "very slow and
+          // choppy when scrolling up and sideways"). Measured live via
+          // getWheelDiagnostics()/getSceneStats(): looking up at this GLB's
+          // ceiling the first time after page load stalled for 40+ seconds
+          // (5 forced renders immediately afterward took 53ms total — fast
+          // — confirming a one-time shader-compile stall, not an ongoing
+          // per-frame cost; only 7 of the scene's 167 lights are ever
+          // active at once per getLightCounts(), ruling out lighting load).
+          // populateDynamicContent() below already calls renderer.compile()
+          // once to precompile everything precisely to avoid this class of
+          // stall — but this GLB loads independently and finishes on its
+          // own schedule, so its ~300 materials were never included in
+          // that pass. Precompiling them here, the moment they're actually
+          // added, closes that gap for the single largest source of
+          // never-before-seen materials in the campus.
+          renderer.compile(scene, camera);
         }
       );
 
@@ -908,6 +981,51 @@ export default function VltdMuseumCampus() {
       vltdSeal.rotation.x = -Math.PI / 2;
       vltdSeal.position.set(hubCenter.x, 0.028, hubCenter.z);
       scene.add(vltdSeal);
+    }
+
+    // Entry corridor pass (2026-09-14, EK): "the museum Entry - Add the
+    // same marbles flooring and walls here in the entry point" — PLAZA
+    // (the "Corridor" HUD label is its own empty-`label` fallback text;
+    // this IS PLAZA) still sat on the plain gray shared-shell finish while
+    // HUB's Grand Hall next door got real marble/limestone. Same thin
+    // overlay-on-top-of-the-existing-shell technique the Grand Hall pass
+    // above uses (buildStoneMaterial, already in scope) — PLAZA's own
+    // dimensions/doors/nav targets/camera/every other room are untouched.
+    // PLAZA is `noWalls` (builds none of its own), so its "walls" are
+    // actually SPOTLIGHT's east face and STORE's west face, built and
+    // materialed by THOSE rooms — this only adds a thin skin flush against
+    // the inward side of each, the same way HUB's own base-trim overlay
+    // sits proud of that room's existing wall without touching
+    // campusRoomBuilder.ts's shared wall-building code.
+    {
+      const plaza = roomById("PLAZA");
+      const plazaBounds = roomBounds(plaza);
+      const plazaCenter = roomCenter(plaza);
+      const plazaGroup = new THREE.Group();
+      plazaGroup.name = "plaza-entry-enhancement";
+      scene.add(plazaGroup);
+
+      const marbleFloorMaterial = buildStoneMaterial("warm-ivory-marble", plaza.w / 10.5, plaza.d / 10.5, 0.03, 0.45);
+      const marbleFloor = new THREE.Mesh(new THREE.PlaneGeometry(plaza.w, plaza.d), marbleFloorMaterial);
+      marbleFloor.rotation.x = -Math.PI / 2;
+      marbleFloor.position.set(plazaCenter.x, 0.01, plazaCenter.z);
+      plazaGroup.add(marbleFloor);
+
+      const limestoneWallMaterial = buildStoneMaterial("ivory-limestone", plaza.d / 4.2, WALL_HEIGHT / 4.2, 0.02, 0.4);
+      const wallSkinThickness = 0.05;
+      const wallSkinOffset = WALL_THICKNESS / 2 + wallSkinThickness / 2 + 0.006;
+      const westSkin = new THREE.Mesh(
+        new THREE.BoxGeometry(wallSkinThickness, WALL_HEIGHT, plaza.d),
+        limestoneWallMaterial
+      );
+      westSkin.position.set(plazaBounds.x0 + wallSkinOffset, WALL_HEIGHT / 2, plazaCenter.z);
+      plazaGroup.add(westSkin);
+      const eastSkin = new THREE.Mesh(
+        new THREE.BoxGeometry(wallSkinThickness, WALL_HEIGHT, plaza.d),
+        limestoneWallMaterial
+      );
+      eastSkin.position.set(plazaBounds.x1 - wallSkinOffset, WALL_HEIGHT / 2, plazaCenter.z);
+      plazaGroup.add(eastSkin);
     }
 
     // Display shelves flanking a doorway (EK's ask, 2026-09-02) are gone —
@@ -1860,9 +1978,35 @@ export default function VltdMuseumCampus() {
       for (let index = 0; index < steps; index += 1) {
         const nextX = position.x + step.x;
         const nextZ = position.z + step.z;
-        if (!isWalkable(nextX, nextZ, walkable)) break;
-        position.x = nextX;
-        position.z = nextZ;
+        if (isWalkable(nextX, nextZ, walkable)) {
+          position.x = nextX;
+          position.z = nextZ;
+          continue;
+        }
+        // Doorway stuck-collision fix (2026-09-14, EK-reported: "still
+        // getting stuck in doorways when scrolling in"). Root cause: a
+        // doorway's walkable "bridge" (computeDoorBridges(), campusLayout.ts)
+        // is exactly the door's own visual width with no side margin,
+        // unlike a room's own floor (inset a full WALKABLE_MARGIN from
+        // every wall) — and this loop only ever tried the FULL combined
+        // (x,z) step, stopping outright the instant that combined point
+        // fell outside walkable ground. onWheel's own scroll-forward delta
+        // is built from the camera's raw facing direction (facingDirection
+        // (yaw) * step), not snapped to the doorway's own axis, so scrolling
+        // in even slightly off-center produces a diagonal step that clips
+        // the bridge's exact-width edge and halts completely — reads as
+        // stuck right at the threshold. Slide along whichever single axis
+        // is still walkable instead of stopping outright, the standard
+        // fix for this exact class of narrow-passage collision.
+        const xOnlyWalkable = isWalkable(nextX, position.z, walkable);
+        const zOnlyWalkable = isWalkable(position.x, nextZ, walkable);
+        if (xOnlyWalkable) {
+          position.x = nextX;
+        } else if (zOnlyWalkable) {
+          position.z = nextZ;
+        } else {
+          break;
+        }
       }
     }
 
