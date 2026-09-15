@@ -1843,34 +1843,6 @@ export default function VltdMuseumCampus() {
       // compiles on its own first appearance — but this covers the bulk of
       // it (every room's real wall/floor/ceiling/armor/case material).
       if (!contentCancelled) renderer.compile(scene, camera);
-
-      // Light-count shader-variant fix (2026-09-15, EK-reported: "in this
-      // room, spinning around is still lagging, this wasn't an issue a few
-      // days ago" — POP_CULTURE specifically, which gained its own real
-      // per-room lighting in the 2026-09-13 Vault-parity pass). The
-      // compile() call just above only warms whatever shader variant
-      // Three.js needs for the light configuration ACTIVE in the scene at
-      // the moment it runs — every room's own "full" light group (its
-      // real SpotLights/PointLights) is still invisible at this point,
-      // since the visitor hasn't walked near any of them yet, so
-      // materials lit by those lights get compiled for a "lights off"
-      // variant. The first time a room's real lights actually switch on
-      // (walking into proximity), WebGL has to compile a fresh variant
-      // for the new light count — a stall right on entry, matching
-      // "spinning around is lagging in this room." Briefly activating
-      // each editable room's own light group, compiling, then restoring
-      // its real (still-inactive) state warms the variant that's
-      // actually needed at runtime instead of waiting for the visitor to
-      // trigger it.
-      if (!contentCancelled) {
-        for (const styledRoomId of EDITABLE_ROOM_IDS) {
-          const groups = roomLightGroups[styledRoomId] ?? ensureRoomLightGroups(styledRoomId);
-          const wasVisible = groups.full.visible;
-          groups.full.visible = true;
-          renderer.compile(scene, camera);
-          groups.full.visible = wasVisible;
-        }
-      }
     }
     void populateDynamicContent();
 
