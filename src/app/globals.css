@@ -374,6 +374,27 @@ body > * {
   z-index: 1;
 }
 
+/* 2026-09-14, EK-reported regression ("can't even reach the two-factor
+   [modal]"): MfaChallengeGate (mounted in Providers.tsx, itself a plain
+   fragment with no wrapping element) renders its full-screen 2FA modal as
+   a DIRECT CHILD of body. The rule above unconditionally coerces every
+   direct child of body to position:relative — silently overriding
+   Tailwind's own `.fixed` utility on this one element, so instead of a
+   centered, dimmed, viewport-covering overlay it rendered in normal
+   document flow near the top of the page. This is Tailwind v4
+   (`@import "tailwindcss"` above) — its utilities live inside
+   `@layer utilities`, and per the CSS Cascade Layers spec, UNLAYERED
+   styles always win over layered ones regardless of selector specificity.
+   `body > *` above is unlayered, so it beat `.fixed` even though `.fixed`
+   has higher raw specificity. This override has to be unlayered too (a
+   plain Tailwind utility class can't out-rank it), and needs higher
+   specificity than `body > *` itself to win within that same unlayered
+   tier. Scoped to only the `.fixed` case so every other direct child of
+   body keeps the exact stacking behavior the rule above was written for. */
+body > .fixed {
+  position: fixed !important;
+}
+
 /* Make form controls inherit theme colors */
 select,
 option,

@@ -20,42 +20,40 @@
 import { useEffect, useState } from "react";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 
-async function needsChallenge(supabase: NonNullable<ReturnType<typeof getSupabaseBrowserClient>>) {
-  const { data: aal } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
-  return !!(aal && aal.nextLevel === "aal2" && aal.currentLevel !== "aal2");
-}
-
 export default function MfaChallengeGate() {
   const [factorId, setFactorId] = useState("");
   const [code, setCode] = useState("");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
 
+  // 2026-09-14: reverted a same-day change here that tried to fix an
+  // EK-reported "unwanted re-challenge on navigation" complaint by adding
+  // a 400ms settle-and-recheck. That introduced a worse regression —
+  // EK reported being unable to reach the 2FA modal AT ALL — almost
+  // certainly a race: onAuthStateChange commonly fires more than one
+  // event in quick succession on a single page load (e.g. INITIAL_SESSION
+  // then TOKEN_REFRESHED), each starting its own overlapping checkAal()
+  // call; with an artificial delay in the middle and no sequencing guard,
+  // an OLDER call's late-arriving "no challenge needed" could clobber a
+  // NEWER call's correct "show the modal" state. Restored to the simple,
+  // long-standing, known-reliable immediate check. The re-challenge
+  // annoyance this was trying to fix is real but lower-stakes than
+  // reachability — worth revisiting later with proper request
+  // sequencing (a generation counter that discards superseded results),
+  // not a bare delay.
   async function checkAal() {
     const supabase = getSupabaseBrowserClient();
     if (!supabase) return;
-    if (!(await needsChallenge(supabase))) {
-      setFactorId("");
-      return;
+    const { data: aal } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+    if (aal && aal.nextLevel === "aal2" && aal.currentLevel !== "aal2") {
+      const { data: factors } = await supabase.auth.mfa.listFactors();
+      const verified = factors?.totp?.find((f) => f.status === "verified");
+      if (verified) {
+        setFactorId(verified.id);
+        return;
+      }
     }
-    // 2026-09-14, EK-reported regression: an ordinary navigation/refresh on
-    // an already-verified (aal2) session was popping this modal again. A
-    // page load or token refresh fires onAuthStateChange before the
-    // session has fully settled, and a read taken at that exact instant
-    // can momentarily report aal1 for a session that's actually still
-    // aal2 — same symptom either way (unwanted re-challenge mid-session).
-    // Re-confirm once more after a brief settle before actually
-    // interrupting the user; a genuinely-required challenge is unaffected
-    // (still shows, just ~400ms later), a transient blip resolves itself
-    // and never shows anything.
-    await new Promise((resolve) => setTimeout(resolve, 400));
-    if (!(await needsChallenge(supabase))) {
-      setFactorId("");
-      return;
-    }
-    const { data: factors } = await supabase.auth.mfa.listFactors();
-    const verified = factors?.totp?.find((f) => f.status === "verified");
-    setFactorId(verified ? verified.id : "");
+    setFactorId("");
   }
 
   useEffect(() => {
