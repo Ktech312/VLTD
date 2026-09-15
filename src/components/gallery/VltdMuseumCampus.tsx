@@ -1077,13 +1077,28 @@ export default function VltdMuseumCampus() {
       // that's where the marble floor and compass are most visible: PLAZA
       // has no south wall at all (its true exterior edge, open to the
       // facade), so there's nothing to wash there.
+      //
+      // Real regression found and fixed (2026-09-15, same session): the
+      // first version copied HUB's own range (30-42) verbatim. HUB is
+      // 63x78 and those lights stay contained inside its own huge
+      // footprint; PLAZA is a small 21x26 room immediately south of
+      // HUB's own entrance, and the north light in particular sits only
+      // 2.5 units from that doorway — a 30-unit range reached deep into
+      // HUB, putting a large amount of HUB's own coffered-ceiling/marble/
+      // compass geometry within an EXTRA light's per-pixel shading cost
+      // on top of HUB's own already-active wall-wash lights. Measured
+      // live via forceRender() timing before this fix: looking from
+      // PLAZA toward HUB sustained 150-300ms/frame (not a one-time
+      // warm-up spike — it stayed there), versus 2-6ms/frame facing the
+      // other way. Range cut to stay contained within PLAZA's own
+      // footprint instead of bleeding into HUB's.
       const plazaWashSpots: { x: number; z: number }[] = [
         { x: plazaBounds.x0 + 2.5, z: plazaCenter.z },
         { x: plazaBounds.x1 - 2.5, z: plazaCenter.z },
         { x: plazaCenter.x, z: plazaBounds.z1 - 2.5 },
       ];
       for (const spot of plazaWashSpots) {
-        const wash = new THREE.PointLight(0xffdcae, 0.85, 30, 2);
+        const wash = new THREE.PointLight(0xffdcae, 0.85, 14, 2);
         wash.position.set(spot.x, WALL_HEIGHT * 0.58, spot.z);
         plazaGroup.add(wash);
       }
