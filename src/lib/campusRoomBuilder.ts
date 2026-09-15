@@ -1310,6 +1310,23 @@ export function wallRowBoardHeights(rowCount: RoomRowCount): number[] {
 // no neighboring row to clash with at all.
 const WALL_ROW_MAX_HEIGHT: Record<RoomRowCount, number> = { 1: 2.2, 2: 1.9, 3: 1.3 };
 
+// Wall-art seam fix (2026-09-14, EK-reported: "make sure items are on the
+// front of the entire wall, you can see the lines running through them").
+// Root cause, confirmed live via debugMeshesInRegion() against production
+// POP_CULTURE: this margin used to be wallThickness/2 + 0.04 (0.19 from the
+// wall's own centerline for the standard 0.3 wall) — shallower than the
+// Vault-armor divider/rivet strips museumRoomArmor.ts's addVaultArmorForRoom
+// mounts on that same wall (measured live at 0.215 from centerline: a
+// 0.06-deep divider/rivet box centered at faceOffset+0.04). Wherever a
+// picture frame happened to land near a divider's x position, the divider's
+// own front face sat PHYSICALLY IN FRONT of the frame, cutting a dark line
+// through the artwork instead of the frame occluding it. Loft-style armor
+// (addLoftArmor) runs even deeper (rivets centered at faceOffset+rib depth+
+// 0.035, ~0.265-0.295 from centerline) — this margin clears both with room
+// to spare, campus-wide, for every room's wall art regardless of which
+// finish/armor style that room happens to use.
+const ARTWORK_WALL_INSET_MARGIN = 0.16;
+
 export function computeRoomPlacementSlots(
   roomId: CampusRoomId,
   doorways: RoomDoorway[],
@@ -1405,7 +1422,7 @@ export function computeRoomPlacementSlots(
         const col = i % columns;
         const row = Math.floor(i / columns);
         const t = span.from + margin + step * (col + 0.5);
-        const wallInset = wallThickness / 2 + 0.04;
+        const wallInset = wallThickness / 2 + ARTWORK_WALL_INSET_MARGIN;
         const point = span.wall === "north" || span.wall === "south"
           ? { x: t, z: span.fixed + (span.wall === "north" ? 1 : -1) * wallInset }
           : { x: span.fixed + (span.wall === "west" ? 1 : -1) * wallInset, z: t };
@@ -1616,12 +1633,18 @@ export function placeItemsAtSlots(
   }
 }
 
-// Compact museum-placard label under a piece of artwork — deliberately its
-// own small, neutral (cream/charcoal) plaque rather than reusing
-// VltdMuseumCampus.tsx's blue Spotlight/Store hangPlaque(), which is styled
-// for that room pair, not for sitting under real framed art in a neutral
-// room. Kept tiny (one line, truncated) — "compact labels," not a second
-// plaque.
+// Compact museum-placard label under a piece of artwork. Restyled
+// (2026-09-14, EK-reported: "Items in the style should uses the same
+// Sign/Plaque as the ones above the doors, make sure they are sized for
+// the item on the wall and not the same as the ones above the doors") to
+// reuse buildDestinationSign()'s own gold-framed plaque construction —
+// its cached charcoal/brass face texture plus its label-rendering
+// function — at a size that fits the item instead of the door sign's own
+// fixed 2.8x0.56. Deliberately NOT calling buildDestinationSign() itself
+// and NOT tagging `museum-destination-sign` userData: that kind is swept
+// by populateDynamicContent()'s room-retitle traversal (an admin renaming
+// a room via museum_room_meta), and an artwork caption is not a room sign
+// — it must never get caught in that pass.
 export function hangCompactLabel(
   scene: THREE.Scene,
   x: number, y: number, z: number,
@@ -1629,32 +1652,33 @@ export function hangCompactLabel(
   title: string,
   maxWidth: number
 ) {
-  const canvas = document.createElement("canvas");
-  canvas.width = 512;
-  canvas.height = 96;
-  const ctx = canvas.getContext("2d");
-  if (!ctx) return;
-  ctx.fillStyle = "#f2efe6";
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
-  ctx.fillStyle = "#2a2a28";
-  ctx.textAlign = "center";
-  ctx.textBaseline = "middle";
-  ctx.font = "600 40px Archivo, sans-serif";
   const truncated = title.length > 28 ? `${title.slice(0, 27)}…` : title;
-  ctx.fillText(truncated, canvas.width / 2, canvas.height / 2);
+  const width = Math.min(Math.max(maxWidth, 0.9), 1.7);
+  const height = width / 5; // same 5:1 plaque proportions as the door sign face
+  const canvasHeight = 256;
+  const canvasWidth = Math.max(64, Math.round(canvasHeight * (width / height)));
 
-  const texture = new THREE.CanvasTexture(canvas);
-  texture.colorSpace = THREE.SRGBColorSpace;
-  const width = Math.min(maxWidth, 1.7);
-  const height = width * (canvas.height / canvas.width);
-  const plaque = new THREE.Mesh(
-    new THREE.PlaneGeometry(width, height),
-    new THREE.MeshStandardMaterial({ map: texture, roughness: 0.85 })
-  );
+  const group = new THREE.Group();
   const normal = new THREE.Vector3(0, 0, 1).applyEuler(new THREE.Euler(0, rotationY, 0));
-  plaque.position.set(x + normal.x * 0.021, y, z + normal.z * 0.021);
-  plaque.rotation.y = rotationY;
-  scene.add(plaque);
+  group.position.set(x + normal.x * 0.021, y, z + normal.z * 0.021);
+  group.rotation.y = rotationY;
+
+  const faceMaterial = new THREE.MeshBasicMaterial({
+    map: destinationSignFaceTexture(scene),
+    transparent: true,
+    alphaTest: 0.02,
+  });
+  const plaque = new THREE.Mesh(new THREE.PlaneGeometry(width, height), faceMaterial);
+  group.add(plaque);
+
+  const labelTexture = renderDestinationSignLabelTexture(truncated, canvasWidth, canvasHeight);
+  const labelMaterial = new THREE.MeshBasicMaterial({ map: labelTexture, transparent: true, depthWrite: false });
+  const labelPlane = new THREE.Mesh(new THREE.PlaneGeometry(width, height), labelMaterial);
+  labelPlane.position.z = 0.006;
+  labelPlane.renderOrder = 2;
+  group.add(labelPlane);
+
+  scene.add(group);
 }
 
 function hangArtPreservingAspect(
@@ -1779,7 +1803,7 @@ export function placeArtwork(
     for (let i = 0; i < count && itemIndex < items.length; i += 1, itemIndex += 1) {
       const item = items[itemIndex];
       const t = span.from + margin + step * (i + 0.5);
-      const wallInset = wallThickness / 2 + 0.04;
+      const wallInset = wallThickness / 2 + ARTWORK_WALL_INSET_MARGIN;
       const point = span.wall === "north" || span.wall === "south"
         ? { x: t, y: eyeHeight, z: span.fixed + (span.wall === "north" ? 1 : -1) * wallInset }
         : { x: span.fixed + (span.wall === "west" ? 1 : -1) * wallInset, y: eyeHeight, z: t };
