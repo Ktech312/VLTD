@@ -1668,52 +1668,78 @@ export default function VltdMuseumCampus() {
     const raycaster = new THREE.Raycaster();
     const pointerNdc = new THREE.Vector2();
 
-    // The original target language was a compact set of four corner
-    // brackets. Draw a soft cyan halo underneath the crisp strokes so the
-    // marker reads against both pale and dark floors without a backing
-    // plate, arrow, or destination label.
-    function makeRoomTargetTexture() {
+    // Chevron target redesign (2026-09-14, EK): "change these boxes in the
+    // doorways to Chevron style arrowing pointing in the direction they
+    // will make the view face, the one in the center of the room should
+    // have 4 small chevrons pointing in each direction, keep the same size
+    // and color." Replaces the old four-corner-bracket square (same glow
+    // technique, same colors/line weights, kept below) with (a) one
+    // chevron for doorway waypoints, aimed at that waypoint's own real
+    // destinationYaw, and (b) four small chevrons — one per cardinal
+    // direction — for every room-center waypoint.
+    //
+    // A chevron is drawn pointing toward the canvas's top edge (apex up,
+    // angle 0). With THREE.PlaneGeometry's default UV mapping (v=1 at the
+    // plane's local +Y) and CanvasTexture's default flipY (canvas row 0 —
+    // the top — becomes v=1), "toward the canvas top" is the plane's local
+    // +Y edge. This marker lies flat via rotation.x = -Math.PI/2, which
+    // maps local +Y to world -Z (Rx(-90°): y'=z, z'=-y), so a zero-rotation
+    // chevron already points world -Z. Doorway markers get one further
+    // marker.rotateOnWorldAxis(Y, -waypoint.yaw) — verified against all 4
+    // yaw values computeCampusWaypoints() emits (0, PI, ±PI/2) by checking
+    // the rotated (-Z) vector matches visitorController.ts's own
+    // forward(yaw) = (sin(yaw), 0, -cos(yaw)) in every case.
+    function drawChevron(ctx: CanvasRenderingContext2D, cx: number, cy: number, size: number, angle = 0) {
+      const half = size / 2;
+      ctx.save();
+      ctx.translate(cx, cy);
+      ctx.rotate(angle);
+      ctx.beginPath();
+      ctx.moveTo(-half, half * 0.7);
+      ctx.lineTo(0, -half * 0.7);
+      ctx.lineTo(half, half * 0.7);
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    function makeChevronTexture(chevrons: { cx: number; cy: number; size: number; angle?: number }[]) {
       const canvas = document.createElement("canvas");
       canvas.width = 128;
       canvas.height = 128;
       const ctx = canvas.getContext("2d");
       if (!ctx) return null;
-      const margin = 20;
-      const length = 28;
-      const corners: [number, number, number, number][] = [
-        [margin, margin, 1, 1],
-        [128 - margin, margin, -1, 1],
-        [margin, 128 - margin, 1, -1],
-        [128 - margin, 128 - margin, -1, -1],
-      ];
-      const drawCorners = () => {
-        for (const [cx, cy, sx, sy] of corners) {
-          ctx.beginPath();
-          ctx.moveTo(cx, cy + length * sy);
-          ctx.lineTo(cx, cy);
-          ctx.lineTo(cx + length * sx, cy);
-          ctx.stroke();
-        }
-      };
-
       ctx.lineCap = "round";
       ctx.lineJoin = "round";
+      const draw = () => {
+        for (const c of chevrons) drawChevron(ctx, c.cx, c.cy, c.size, c.angle ?? 0);
+      };
+
       ctx.strokeStyle = "rgba(49,205,255,0.72)";
       ctx.lineWidth = 13;
       ctx.shadowColor = "rgba(25,190,255,0.95)";
       ctx.shadowBlur = 18;
-      drawCorners();
+      draw();
       ctx.shadowBlur = 0;
       ctx.strokeStyle = "#8fe8ff";
       ctx.lineWidth = 6;
-      drawCorners();
+      draw();
 
       const texture = new THREE.CanvasTexture(canvas);
       texture.colorSpace = THREE.SRGBColorSpace;
       return texture;
     }
 
-    const roomTargetTexture = makeRoomTargetTexture();
+    // One chevron, centered, pointing "up" (world -Z at zero extra
+    // rotation) — doorway markers rotate this to their own real yaw below.
+    const doorwayChevronTexture = makeChevronTexture([{ cx: 64, cy: 64, size: 68 }]);
+    // Four small chevrons, each pointing outward from the room's own
+    // center — same overall footprint as the old four-corner-bracket look.
+    const roomCenterChevronTexture = makeChevronTexture([
+      { cx: 64, cy: 30, size: 32, angle: 0 },              // north: points up
+      { cx: 64, cy: 98, size: 32, angle: Math.PI },        // south: points down
+      { cx: 98, cy: 64, size: 32, angle: Math.PI / 2 },    // east: points right
+      { cx: 30, cy: 64, size: 32, angle: -Math.PI / 2 },   // west: points left
+    ]);
     const waypointMeshes: THREE.Mesh[] = [];
     // HUB's room-center target sits exactly on the Grand Hall's VLTD floor
     // seal (a 2.7-radius medallion centered on the same point) — the
@@ -1728,16 +1754,20 @@ export default function VltdMuseumCampus() {
         continue;
       }
       const targetSize = waypoint.enlarged ? HUB_TARGET_SIZE : 2.2;
+      const isDoorway = waypoint.kind === "doorway";
       const marker = new THREE.Mesh(
         new THREE.PlaneGeometry(targetSize, targetSize),
         new THREE.MeshBasicMaterial({
-          map: roomTargetTexture ?? undefined,
+          map: (isDoorway ? doorwayChevronTexture : roomCenterChevronTexture) ?? undefined,
           transparent: true,
           opacity: 0.72,
           depthWrite: false,
         })
       );
       marker.rotation.x = -Math.PI / 2;
+      if (isDoorway && waypoint.yaw !== undefined) {
+        marker.rotateOnWorldAxis(new THREE.Vector3(0, 1, 0), -waypoint.yaw);
+      }
       marker.position.set(waypoint.x, 0.03, waypoint.z);
       marker.userData.waypoint = waypoint;
       scene.add(marker);
