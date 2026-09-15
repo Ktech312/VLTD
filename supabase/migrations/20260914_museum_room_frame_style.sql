@@ -1,0 +1,24 @@
+-- Frame styles pass (2026-09-14): EK's punch list — "I want 3 different
+-- frame options to select from" for museum wall artwork, with one
+-- restricted to no-shelf displays and others usable for wall or shelf.
+--
+-- frame_style: an optional per-room choice of wall-artwork frame —
+-- "classic" (today's plain black/plastic-sleeve frame, a no-shelf-only
+-- look) or "gallery" (a gold-gradient bezel matching the Exhibitions
+-- "Curate the Layout" builder's own PremiumDisplayCard, confirmed live as
+-- the source of EK's own reference screenshot). A third style was
+-- referenced but never located/confirmed this pass; add it as a third
+-- valid value here once it is — no schema change needed beyond that.
+-- Null/unrecognized means "classic," same safe-default rule as room_style.
+-- Shelf items always render "gallery" regardless of this setting
+-- (src/lib/campusRoomBuilder.ts's placeItemsAtSlots), since "classic" was
+-- explicitly asked to be a wall-only look.
+--
+-- Every read of this new column in the app already falls back safely if
+-- this migration hasn't been run yet (src/lib/museumCampusConfig.ts's
+-- selectRoomMeta/getAllRoomMeta both retry with fewer columns on a
+-- Postgrest "column does not exist" error) — nothing here is required for
+-- the museum's current live display or Museum Builder to keep working
+-- before this is run.
+
+alter table public.museum_room_meta add column if not exists frame_style text;

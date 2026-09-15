@@ -1323,9 +1323,18 @@ export default function VltdMuseumCampus() {
     // other room still uses. Each room's picture lights join that room's
     // own light group so they turn off with the rest of the room's lights
     // when the visitor is elsewhere.
-    function placeRoomItems(wallSpans: ReturnType<typeof computeUsableWallSpans>, lightGroups: RoomLightGroups, items: VaultItem[]) {
+    function placeRoomItems(
+      wallSpans: ReturnType<typeof computeUsableWallSpans>,
+      lightGroups: RoomLightGroups,
+      items: VaultItem[],
+      // Frame styles pass (2026-09-14): the room's own chosen style,
+      // resolved by the caller (populateDynamicContent, where roomMeta —
+      // a local const there, not in scope in this sibling function — is
+      // read). Defaults to "classic" so no existing caller changes look.
+      frameStyle: "classic" | "gallery" = "classic"
+    ) {
       const urls = items.map((item) => ({ url: getPrimaryImageUrl(item) })).filter((it): it is { url: string } => Boolean(it.url));
-      placeArtwork(scene, textureLoader, lightGroups, wallSpans, urls, WALL_THICKNESS, EYE_HEIGHT, () => contentCancelled);
+      placeArtwork(scene, textureLoader, lightGroups, wallSpans, urls, WALL_THICKNESS, EYE_HEIGHT, () => contentCancelled, frameStyle);
     }
 
     async function populateDynamicContent() {
@@ -1335,6 +1344,11 @@ export default function VltdMuseumCampus() {
         getEnabledStoreItems(),
         getAllRoomMeta(),
       ]);
+      // Frame styles pass (2026-09-14): resolved once here (roomMeta is
+      // local to this function) and passed down to placeRoomItems/
+      // placeItemsAtSlots, which don't have access to it themselves.
+      const frameStyleFor = (roomId: CampusRoomId): "classic" | "gallery" =>
+        roomMeta[roomId]?.frame_style === "gallery" ? "gallery" : "classic";
       if (contentCancelled) return;
 
       // Shared Museum Room Editor pass (2026-09-12): an admin-renamed room
@@ -1544,7 +1558,7 @@ export default function VltdMuseumCampus() {
         const caseSlots = furniture?.caseSlots ?? [];
         const groups = ensureRoomLightGroups(roomId);
         const bySlot = buildSlotAssignments([...wallSlots, ...shelfSlots, ...caseSlots], curated);
-        placeItemsAtSlots(scene, textureLoader, groups, [...wallSlots, ...shelfSlots], bySlot, () => contentCancelled);
+        placeItemsAtSlots(scene, textureLoader, groups, [...wallSlots, ...shelfSlots], bySlot, () => contentCancelled, frameStyleFor(roomId));
         if (caseSlots.length > 0) {
           placeItemsInCases(scene, textureLoader, caseSlots, bySlot, () => contentCancelled, (x, y, z, rotationY, label, maxWidth) =>
             hangCompactLabel(scene, x, y, z, rotationY, label, maxWidth)
@@ -1639,14 +1653,14 @@ export default function VltdMuseumCampus() {
         const popItems = allItems
           .filter((item) => itemUniverse(item) === "POP_CULTURE")
           .slice(0, itemsPerRoom);
-        placeRoomItems(popCultureWallSpans, popCultureLights, popItems);
+        placeRoomItems(popCultureWallSpans, popCultureLights, popItems, frameStyleFor("POP_CULTURE"));
       }
 
       if (!curatedItemsByRoom.has("TCG")) {
         const tcgItems = allItems
           .filter((item) => itemUniverse(item) === "TCG")
           .slice(0, itemsPerRoom);
-        placeRoomItems(tcgWallSpans, tcgLights, tcgItems);
+        placeRoomItems(tcgWallSpans, tcgLights, tcgItems, frameStyleFor("TCG"));
       }
 
       if (!curatedItemsByRoom.has("COLLECTION")) {
@@ -1657,7 +1671,7 @@ export default function VltdMuseumCampus() {
           (universe) => (universeCounts[universe] ?? 0) > 0
         );
         const collectionItems = selectCollectionItems(allItems, collectionUniverses, itemsPerRoom);
-        placeRoomItems(collectionWallSpans, collectionLights, collectionItems);
+        placeRoomItems(collectionWallSpans, collectionLights, collectionItems, frameStyleFor("COLLECTION"));
         if (collectionItems.length === 0) {
           // No usable image-bearing items anywhere in the signed-in vault —
           // an honest empty-state instead of a silent blank room. Mounted on

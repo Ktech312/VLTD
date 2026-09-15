@@ -208,6 +208,17 @@ export const MUSEUM_ROOM_STYLE_OPTIONS: { id: GalleryFinishStyle; label: string 
   { id: "loft", label: "Industrial Loft" },
 ];
 
+// Frame styles pass (2026-09-14, EK's punch list): "classic" (today's
+// plain black/plastic-sleeve frame — no-shelf wall-hangs only per EK's own
+// ask) and "gallery" (the gold-gradient bezel look, confirmed live as the
+// Exhibitions builder's own PremiumDisplayCard — usable for wall or
+// shelf). A third style was referenced but never located/confirmed; add
+// it here once it is, same pattern as MUSEUM_ROOM_STYLE_OPTIONS above.
+export const FRAME_STYLE_OPTIONS: { id: ArtworkFrameStyle; label: string }[] = [
+  { id: "classic", label: "Classic" },
+  { id: "gallery", label: "Gallery" },
+];
+
 export type StyledRoomFinishes = ReturnType<typeof createGalleryFinishes>;
 
 /** Resolves a saved `museum_room_meta.room_style` to a real
@@ -1615,7 +1626,12 @@ export function placeItemsAtSlots(
   groups: RoomLightGroups,
   slots: PlacementSlot[],
   itemsBySlot: Map<string, { url: string; label?: string }>,
-  isCancelled: () => boolean
+  isCancelled: () => boolean,
+  // Frame styles pass (2026-09-14): the room's own chosen wall-artwork
+  // style ("classic", the default/every existing caller's prior look, or
+  // "gallery"). Shelf slots always render "gallery" regardless of this
+  // setting — EK's own ask was that "classic" is a no-shelf-only look.
+  wallFrameStyle: ArtworkFrameStyle = "classic"
 ): void {
   let lit = 0;
   for (const slot of slots) {
@@ -1623,12 +1639,14 @@ export function placeItemsAtSlots(
     if (!item) continue;
     const withRealLight = lit < MAX_PICTURE_LIGHTS_PER_ROOM;
     lit += 1;
+    const isShelf = slot.kind === "shelf";
     hangArtPreservingAspect(
       scene, textureLoader, groups,
       slot.x, slot.y, slot.z, slot.rotationY,
       item.url, slot.maxWidth, slot.maxHeight,
       isCancelled, withRealLight, item.label,
-      slot.kind === "shelf" ? "shelf" : "wall"
+      isShelf ? "shelf" : "wall",
+      isShelf ? "gallery" : wallFrameStyle
     );
   }
 }
@@ -1681,6 +1699,61 @@ export function hangCompactLabel(
   scene.add(group);
 }
 
+// Frame styles pass (2026-09-14, EK's punch list): the gold-gradient bezel
+// look EK pointed to (image 3 of her 3 reference screenshots) turned out,
+// confirmed via live inspection, to be the Exhibitions "Curate the Layout"
+// builder's own PremiumDisplayCard (GalleryShelfScene.tsx) — a diagonal
+// gold gradient border around a dark window, a thin inner hairline, and a
+// small corner badge ring. Reused here as a canvas texture (the same
+// technique every other campus sign/plaque/medallion already uses) rather
+// than importing that React/CSS component into a Three.js scene, since
+// it's a flat DOM card, not 3D geometry. No per-item rarity text — this 3D
+// frame has no rarity-tier data to show, unlike the card it echoes.
+function createGalleryFrameTexture(aspect: number): THREE.CanvasTexture {
+  const height = 384;
+  const width = Math.max(64, Math.round(height * aspect));
+  const canvas = document.createElement("canvas");
+  canvas.width = width;
+  canvas.height = height;
+  const ctx = canvas.getContext("2d")!;
+
+  const gradient = ctx.createLinearGradient(0, 0, width, height);
+  gradient.addColorStop(0, "#fff0a8");
+  gradient.addColorStop(0.18, "#d99a2b");
+  gradient.addColorStop(0.37, "#6f4514");
+  gradient.addColorStop(0.54, "#f7cf72");
+  gradient.addColorStop(0.72, "#3a250d");
+  gradient.addColorStop(1, "#ffe7a0");
+  ctx.fillStyle = gradient;
+  ctx.fillRect(0, 0, width, height);
+
+  const borderX = width * 0.045;
+  const borderY = height * 0.045;
+  ctx.fillStyle = "#0b1018";
+  ctx.fillRect(borderX, borderY, width - borderX * 2, height - borderY * 2);
+
+  ctx.strokeStyle = "rgba(255,232,163,0.55)";
+  ctx.lineWidth = Math.max(1, width * 0.006);
+  ctx.strokeRect(borderX, borderY, width - borderX * 2, height - borderY * 2);
+
+  const badgeR = width * 0.045;
+  const badgeX = width - borderX - badgeR * 1.3;
+  const badgeY = borderY + badgeR * 1.3;
+  ctx.beginPath();
+  ctx.arc(badgeX, badgeY, badgeR, 0, Math.PI * 2);
+  ctx.fillStyle = "#111018";
+  ctx.fill();
+  ctx.lineWidth = Math.max(1, width * 0.004);
+  ctx.strokeStyle = "#ffd978";
+  ctx.stroke();
+
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  return texture;
+}
+
+export type ArtworkFrameStyle = "classic" | "gallery";
+
 function hangArtPreservingAspect(
   scene: THREE.Scene,
   textureLoader: THREE.TextureLoader,
@@ -1696,7 +1769,13 @@ function hangArtPreservingAspect(
   // existing caller's behavior unchanged) vs "shelf" — which surface this
   // item is actually grounded against, so the contact shadow below reads
   // correctly either way.
-  slotKind: "wall" | "shelf" = "wall"
+  slotKind: "wall" | "shelf" = "wall",
+  // Frame styles pass (2026-09-14): "classic" (default, every existing
+  // caller's exact prior look) or "gallery" (the gold-gradient bezel
+  // above). EK's own ask: classic is a no-shelf-only look — callers are
+  // expected to pass "gallery" for any shelf slot regardless of the
+  // room's own chosen style, not this function's job to enforce.
+  frameStyle: ArtworkFrameStyle = "classic"
 ) {
   textureLoader.load(url, (texture) => {
     if (isCancelled()) return;
@@ -1707,10 +1786,13 @@ function hangArtPreservingAspect(
     const artW = naturalW * scale;
     const artH = naturalH * scale;
 
-    const mat = new THREE.Mesh(
-      new THREE.PlaneGeometry(artW + 0.12, artH + 0.12),
-      new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.9 })
-    );
+    const galleryMargin = 0.34;
+    const matWidth = frameStyle === "gallery" ? artW + galleryMargin * 2 : artW + 0.12;
+    const matHeight = frameStyle === "gallery" ? artH + galleryMargin * 2 : artH + 0.12;
+    const matMaterial = frameStyle === "gallery"
+      ? new THREE.MeshStandardMaterial({ map: createGalleryFrameTexture(matWidth / matHeight), roughness: 0.4, metalness: 0.5 })
+      : new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.9 });
+    const mat = new THREE.Mesh(new THREE.PlaneGeometry(matWidth, matHeight), matMaterial);
     mat.position.set(x, y, z);
     mat.rotation.y = rotationY;
     scene.add(mat);
@@ -1787,7 +1869,12 @@ export function placeArtwork(
   items: { url: string; label?: string }[],
   wallThickness: number,
   eyeHeight: number,
-  isCancelled: () => boolean
+  isCancelled: () => boolean,
+  // Frame styles pass (2026-09-14): default "classic" keeps every existing
+  // caller's exact prior look — POP_CULTURE/TCG are wall-only rooms
+  // (placeRoomItems, VltdMuseumCampus.tsx), so there's no shelf case to
+  // force here the way placeItemsAtSlots() has to.
+  frameStyle: ArtworkFrameStyle = "classic"
 ) {
   const totalLength = spans.reduce((sum, s) => sum + (s.to - s.from), 0);
   if (totalLength <= 0 || items.length === 0) return;
@@ -1809,7 +1896,7 @@ export function placeArtwork(
         : { x: span.fixed + (span.wall === "west" ? 1 : -1) * wallInset, y: eyeHeight, z: t };
       const maxSlot = Math.min(2.6, step * 0.8);
       const withRealLight = itemIndex < MAX_PICTURE_LIGHTS_PER_ROOM;
-      hangArtPreservingAspect(scene, textureLoader, groups, point.x, point.y, point.z, span.rotationY, item.url, maxSlot, 2.2, isCancelled, withRealLight, item.label);
+      hangArtPreservingAspect(scene, textureLoader, groups, point.x, point.y, point.z, span.rotationY, item.url, maxSlot, 2.2, isCancelled, withRealLight, item.label, "wall", frameStyle);
     }
   }
 }

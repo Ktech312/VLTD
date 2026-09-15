@@ -117,12 +117,14 @@ import {
   setItemShowValue,
   setRoomBackgroundImage,
   setRoomCapacities,
+  setRoomFrameStyle,
   setRoomItemSlot,
   setRoomStyle,
   setRoomWallLayout,
   type MuseumRoomItem,
 } from "@/lib/museumCampusConfig";
 import {
+  FRAME_STYLE_OPTIONS,
   MUSEUM_ROOM_STYLE_OPTIONS,
   buildNeutralShell,
   buildRoomShell,
@@ -140,6 +142,7 @@ import {
   HUB_FINISH,
   NEUTRAL_LEGACY_FINISH,
   NEUTRAL_PREVIEW_FINISH,
+  type ArtworkFrameStyle,
   type GalleryFinishStyle,
   type PlacementSlot,
   type RoomFinish,
@@ -265,6 +268,13 @@ export default function MuseumBuilder() {
   // already resolves in.
   const [roomStyle, setRoomStyleState] = useState<GalleryFinishStyle | null>(null);
   const [styleSaveState, setStyleSaveState] = useState<SaveState>("idle");
+  // Frame styles pass (2026-09-14, EK's punch list): which wall-artwork
+  // frame this room uses — "classic" (today's plain frame, no-shelf only)
+  // or "gallery" (gold-gradient bezel). Shelf items always render
+  // "gallery" regardless of this setting (enforced in placeItemsAtSlots),
+  // so "classic" is disabled here whenever this room has shelves enabled.
+  const [frameStyle, setFrameStyleState] = useState<ArtworkFrameStyle>("classic");
+  const [frameStyleSaveState, setFrameStyleSaveState] = useState<SaveState>("idle");
 
   const [pickerSlotIdx, setPickerSlotIdx] = useState<number | null>(null);
   const [itemSaveState, setItemSaveState] = useState<SaveState>("idle");
@@ -338,6 +348,7 @@ export default function MuseumBuilder() {
       setRoomStyleState(
         savedStyle === "whitebox" || savedStyle === "vault" || savedStyle === "arcade" || savedStyle === "loft" ? savedStyle : null
       );
+      setFrameStyleState(meta?.frame_style === "gallery" ? "gallery" : "classic");
       const savedRowCount = meta?.wall_row_count;
       const nextRowCount: RoomRowCount = savedRowCount === 1 || savedRowCount === 2 || savedRowCount === 3 ? savedRowCount : 3;
       const nextShelvesEnabled = meta?.wall_shelves_enabled ?? false;
@@ -458,6 +469,14 @@ export default function MuseumBuilder() {
     const result = await setRoomStyle(roomId, nextStyle);
     setStyleSaveState(result.ok ? "saved" : "error");
     if (result.ok) window.setTimeout(() => setStyleSaveState((s) => (s === "saved" ? "idle" : s)), 1600);
+  }
+
+  async function handleFrameStyleChange(nextStyle: ArtworkFrameStyle) {
+    setFrameStyleState(nextStyle);
+    setFrameStyleSaveState("saving");
+    const result = await setRoomFrameStyle(roomId, nextStyle);
+    setFrameStyleSaveState(result.ok ? "saved" : "error");
+    if (result.ok) window.setTimeout(() => setFrameStyleSaveState((s) => (s === "saved" ? "idle" : s)), 1600);
   }
 
   // Combined, ordered slot list — wall, then shelf, then case — the single
@@ -702,7 +721,7 @@ export default function MuseumBuilder() {
     // the protected live-museum read path (untouched here, just reused);
     // case items are visually different (lying flat under glass), placed
     // by the new placeItemsInCases instead.
-    placeItemsAtSlots(scene, textureLoader, groups, [...wallSlots, ...shelfSlots], bySlot, () => cancelled);
+    placeItemsAtSlots(scene, textureLoader, groups, [...wallSlots, ...shelfSlots], bySlot, () => cancelled, frameStyle);
     placeItemsInCases(scene, textureLoader, caseSlots, bySlot, () => cancelled);
 
     // Camera (first-round-fixes pass, 2026-09-12): drag-to-look PLUS real
@@ -885,7 +904,7 @@ export default function MuseumBuilder() {
       renderer.dispose();
       if (renderer.domElement.parentElement === mount) mount.removeChild(renderer.domElement);
     };
-  }, [roomId, wallSlots, shelfSlots, caseSlots, assignments, backgroundImageUrl, roomStyle, allSlots.length, rowCount, wallShelvesEnabled]);
+  }, [roomId, wallSlots, shelfSlots, caseSlots, assignments, backgroundImageUrl, roomStyle, frameStyle, allSlots.length, rowCount, wallShelvesEnabled]);
 
   // Same rAF projection technique MuseumRoomPopup.tsx/VirtualGalleryRoom.tsx
   // both already use for their own Organize overlays.
@@ -1103,6 +1122,42 @@ export default function MuseumBuilder() {
                   {styleSaveState === "saving" ? <span className="text-[11px] font-semibold text-cyan-300">Saving…</span> : null}
                   {styleSaveState === "saved" ? <span className="text-[11px] font-semibold text-emerald-300">Saved</span> : null}
                   {styleSaveState === "error" ? <span className="text-[11px] font-semibold text-red-300">Save failed</span> : null}
+                </div>
+                <div className="flex flex-wrap items-center gap-1.5">
+                  <span className="text-[10px] font-black uppercase tracking-[0.1em] text-[color:var(--muted2)]">Frame</span>
+                  {FRAME_STYLE_OPTIONS.map((option) => {
+                    const active = frameStyle === option.id;
+                    // EK's own ask: "classic" is a no-shelf-only look —
+                    // shelf items always render "gallery" regardless
+                    // (placeItemsAtSlots), so offering "classic" while
+                    // this room has shelves would silently do nothing
+                    // for those items. Disabled rather than hidden, so
+                    // it's clear why wall items still show it.
+                    const disabled = option.id === "classic" && shelfCapacity > 0;
+                    return (
+                      <button
+                        key={option.id}
+                        type="button"
+                        disabled={disabled}
+                        onClick={() => void handleFrameStyleChange(option.id)}
+                        aria-pressed={active}
+                        title={disabled ? "Classic is a no-shelf look — this room has shelves enabled" : option.label}
+                        className={[
+                          "flex h-6 items-center rounded-[5px] px-2 text-[11px] font-bold ring-1 transition",
+                          disabled
+                            ? "cursor-not-allowed bg-[color:var(--input)] text-[color:var(--muted)] opacity-40 ring-[color:var(--border)]"
+                            : active
+                              ? "bg-[color:var(--input)] ring-cyan-400"
+                              : "bg-[color:var(--input)] ring-[color:var(--border)] hover:bg-black/10",
+                        ].join(" ")}
+                      >
+                        {option.label}
+                      </button>
+                    );
+                  })}
+                  {frameStyleSaveState === "saving" ? <span className="text-[11px] font-semibold text-cyan-300">Saving…</span> : null}
+                  {frameStyleSaveState === "saved" ? <span className="text-[11px] font-semibold text-emerald-300">Saved</span> : null}
+                  {frameStyleSaveState === "error" ? <span className="text-[11px] font-semibold text-red-300">Save failed</span> : null}
                 </div>
                 <div className="flex flex-wrap items-center gap-1.5">
                   <label className="flex h-6 cursor-pointer items-center gap-1.5 rounded-[5px] bg-[color:var(--input)] px-2 text-[11px] font-bold ring-1 ring-[color:var(--border)] transition hover:bg-black/10">

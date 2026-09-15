@@ -264,16 +264,28 @@ export type MuseumRoomMeta = {
   // `rowCount` argument and wallRowBoardHeights().
   wall_row_count?: number | null;
   wall_shelves_enabled?: boolean | null;
+  // Frame styles pass (2026-09-14, EK's punch list): a room's chosen
+  // artwork-frame style ("classic"|"gallery" today — see FRAME_STYLE_
+  // OPTIONS in campusRoomBuilder.ts). Undefined/null — no override, or
+  // 20260914_museum_room_frame_style.sql hasn't been run yet — always
+  // falls back to "classic" (today's plain black/plastic-sleeve frame),
+  // same safe-default rule as every other override in this type. Applies
+  // to WALL-mounted items only: shelf items always render in "gallery"
+  // style regardless of this setting, since EK's own ask was that the
+  // classic frame is a no-shelf-only look.
+  frame_style?: string | null;
 };
 
-// Fails-soft column cascade (extended 2026-09-12, Museum Builder pass): try
+// Fails-soft column cascade (extended 2026-09-14, frame styles pass): try
 // every column this file knows about, then retry with progressively fewer
 // columns on a Postgrest "column does not exist" error, down to the
 // original bare (room_id, title, description) select — so this never
 // breaks regardless of which of the columns below EK has actually migrated
 // yet, in any order.
 const ROOM_META_COLUMNS_FULL =
-  "room_id, title, description, room_style, item_capacity, shelf_capacity, case_capacity, background_image_url, wall_row_count, wall_shelves_enabled";
+  "room_id, title, description, room_style, item_capacity, shelf_capacity, case_capacity, background_image_url, wall_row_count, wall_shelves_enabled, frame_style";
+const ROOM_META_COLUMNS_WITH_FRAME_STYLE =
+  "room_id, title, description, room_style, item_capacity, shelf_capacity, case_capacity, background_image_url, frame_style";
 const ROOM_META_COLUMNS_WITH_CAPACITY =
   "room_id, title, description, room_style, item_capacity, shelf_capacity, case_capacity, background_image_url";
 const ROOM_META_COLUMNS_WITH_STYLE = "room_id, title, description, room_style";
@@ -282,7 +294,7 @@ const ROOM_META_COLUMNS_BASE = "room_id, title, description";
 async function selectRoomMeta(roomId: string): Promise<MuseumRoomMeta | null> {
   const supabase = getSupabaseBrowserClient();
   if (!supabase) return null;
-  for (const columns of [ROOM_META_COLUMNS_FULL, ROOM_META_COLUMNS_WITH_CAPACITY, ROOM_META_COLUMNS_WITH_STYLE, ROOM_META_COLUMNS_BASE]) {
+  for (const columns of [ROOM_META_COLUMNS_FULL, ROOM_META_COLUMNS_WITH_FRAME_STYLE, ROOM_META_COLUMNS_WITH_CAPACITY, ROOM_META_COLUMNS_WITH_STYLE, ROOM_META_COLUMNS_BASE]) {
     try {
       const { data, error } = await supabase
         .from("museum_room_meta")
@@ -313,7 +325,7 @@ export async function getAllRoomMeta(): Promise<Record<string, MuseumRoomMeta>> 
     if (error) throw error;
     return (data ?? []) as unknown as MuseumRoomMeta[];
   }
-  for (const columns of [ROOM_META_COLUMNS_FULL, ROOM_META_COLUMNS_WITH_CAPACITY, ROOM_META_COLUMNS_WITH_STYLE, ROOM_META_COLUMNS_BASE]) {
+  for (const columns of [ROOM_META_COLUMNS_FULL, ROOM_META_COLUMNS_WITH_FRAME_STYLE, ROOM_META_COLUMNS_WITH_CAPACITY, ROOM_META_COLUMNS_WITH_STYLE, ROOM_META_COLUMNS_BASE]) {
     try {
       const rows = await fetchAll(columns);
       const byRoomId: Record<string, MuseumRoomMeta> = {};
@@ -390,6 +402,20 @@ export async function setRoomStyle(roomId: string, style: string | null): Promis
   const { error } = await supabase
     .from("museum_room_meta")
     .upsert({ room_id: roomId, room_style: style, updated_at: new Date().toISOString() });
+  if (error) return { ok: false, error: error.message };
+  return { ok: true };
+}
+
+/** Saves a room's chosen wall-artwork frame style ("classic"|"gallery" —
+ * see FRAME_STYLE_OPTIONS in campusRoomBuilder.ts) — same one-upserted-row
+ * shape as setRoomStyle. Pass `null` to reset to the default ("classic").
+ * Fails soft if 20260914_museum_room_frame_style.sql hasn't been run yet. */
+export async function setRoomFrameStyle(roomId: string, frameStyle: string | null): Promise<{ ok: boolean; error?: string }> {
+  const supabase = getSupabaseBrowserClient();
+  if (!supabase) return { ok: false, error: "Not signed in." };
+  const { error } = await supabase
+    .from("museum_room_meta")
+    .upsert({ room_id: roomId, frame_style: frameStyle, updated_at: new Date().toISOString() });
   if (error) return { ok: false, error: error.message };
   return { ok: true };
 }
