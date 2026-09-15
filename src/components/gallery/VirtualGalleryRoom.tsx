@@ -3,27 +3,7 @@
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
-import {
-  BadgeDollarSign,
-  Boxes,
-  ChevronDown,
-  ChevronUp,
-  DoorOpen,
-  ExternalLink,
-  Eye,
-  GalleryHorizontalEnd,
-  Grid3X3,
-  Layers3,
-  Map as MapIcon,
-  MonitorUp,
-  PackagePlus,
-  Paintbrush,
-  Pencil,
-  Plus,
-  Save,
-  Share2,
-  Sparkles,
-} from "lucide-react";
+import { AppIcon } from "@/components/ui/AppIcon";
 import * as THREE from "three";
 
 import {
@@ -3780,7 +3760,7 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
           ) : null}
           <div className={viewMode === "overview" ? "hidden" : "absolute left-3 right-3 top-3 flex flex-wrap items-center gap-2"}>
             <div className="pointer-events-none flex items-center gap-2 rounded-[6px] bg-black/42 px-3 py-2 text-xs font-black uppercase tracking-[0.14em] text-white ring-1 ring-white/12 backdrop-blur">
-              {viewMode === "room" ? <Sparkles size={14} /> : <MapIcon size={14} />}
+              {viewMode === "room" ? <AppIcon name="sparkle" size={14} /> : <AppIcon name="map" size={14} />}
               {viewMode === "room" ? "VLTD Room" : "Universe Map"}
             </div>
             {effectiveGuest ? (
@@ -3797,7 +3777,7 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
                 className="flex items-center gap-1.5 rounded-[6px] bg-black/42 px-3 py-2 text-xs font-black uppercase tracking-[0.14em] text-white ring-1 ring-white/12 backdrop-blur transition hover:bg-black/60"
                 title="Back to the room builder"
               >
-                <PackagePlus size={14} />
+                <AppIcon name="editRoom" size={14} />
                 Builder
               </Link>
             ) : null}
@@ -3812,7 +3792,7 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
                   className="flex items-center gap-1.5 rounded-[6px] bg-black/42 px-3 py-2 text-xs font-black uppercase tracking-[0.14em] text-white ring-1 ring-white/12 backdrop-blur transition hover:bg-black/60"
                   title="Save and exit to the campus map"
                 >
-                  <MapIcon size={14} />
+                  <AppIcon name="map" size={14} />
                   Exit
                 </button>
               ) : null
@@ -3826,7 +3806,7 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
                 className="flex items-center gap-1.5 rounded-[6px] bg-black/42 px-3 py-2 text-xs font-black uppercase tracking-[0.14em] text-white ring-1 ring-white/12 backdrop-blur transition hover:bg-black/60"
                 title="Back to the room"
               >
-                <Sparkles size={14} />
+                <AppIcon name="sparkle" size={14} />
                 Back to Room
               </button>
             )}
@@ -3839,9 +3819,9 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
                   className="flex items-center gap-1.5 rounded-[6px] bg-black/42 px-3 py-2 text-xs font-black uppercase tracking-[0.14em] text-white ring-1 ring-white/12 backdrop-blur transition hover:bg-black/60"
                   title="Jump to another room"
                 >
-                  <DoorOpen size={14} />
+                  <AppIcon name="door" size={14} />
                   Rooms
-                  <ChevronDown size={13} />
+                  <AppIcon name="chevronDown" size={13} />
                 </button>
                 {roomSwitcherOpen ? (
                   <div className="absolute left-0 top-[calc(100%+6px)] z-20 grid max-h-[280px] w-52 gap-1 overflow-y-auto rounded-[8px] bg-black/85 p-1.5 ring-1 ring-white/15 backdrop-blur">
@@ -3883,7 +3863,7 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
                 ].join(" ")}
                 title={editRoomContext ? "Rearrange, then save and return to the Map" : "Show slot numbers and rearrange shelves"}
               >
-                <Grid3X3 size={14} />
+                <AppIcon name="organize" size={14} />
                 {isOrganizing ? "Done" : "Organize"}
               </button>
             ) : null}
@@ -3911,7 +3891,7 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
                   ].join(" ")}
                   title={saveState === "error" ? "Save failed — tap to retry" : "Autosave status"}
                 >
-                  <Save size={14} />
+                  <AppIcon name="save" size={14} />
                   {saveState === "saving" ? "Saving…" : saveState === "error" ? "Save Failed — Retry" : "Saved"}
                 </button>
               ) : (
@@ -3927,7 +3907,7 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
                   ].join(" ")}
                   title="Name and save this room so it can autosave"
                 >
-                  <Save size={14} />
+                  <AppIcon name="save" size={14} />
                   {saveState === "saving" ? "Saving…" : saveState === "error" ? "Save Failed — Try Again" : "Save Hall"}
                 </button>
               )
@@ -4011,7 +3991,7 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
                     title="Edit this item"
                     aria-label="Edit this item"
                   >
-                    <Pencil size={12} />
+                    <AppIcon name="edit" size={12} />
                   </Link>
                 ) : (
                   <div className="relative shrink-0">
@@ -4029,7 +4009,7 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
                       title="View this item"
                       aria-label="View this item"
                     >
-                      <ExternalLink size={12} />
+                      <AppIcon name="externalLink" size={12} />
                     </button>
                     {privateItemNotice ? (
                       <div className="absolute bottom-full right-0 z-10 mb-2 w-max max-w-[220px] rounded-[6px] bg-black/90 px-2.5 py-1.5 text-[11px] font-semibold leading-4 text-white ring-1 ring-white/15">
@@ -4045,7 +4025,7 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
                   title="Share this item"
                   aria-label="Share this item"
                 >
-                  <Share2 size={12} />
+                  <AppIcon name="share" size={12} />
                 </button>
               </div>
               {socialShareOpen
@@ -4090,7 +4070,7 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
             <div className="flex items-center justify-between gap-3">
               <div>
                 <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.18em] text-[color:var(--muted2)]">
-                  <Layers3 size={12} />
+                  <AppIcon name="layers" size={12} />
                   Virtual Room
                 </div>
                 <h1 className="mt-1 text-xl font-black uppercase leading-[0.92] tracking-normal">
@@ -4103,7 +4083,7 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
                   className="inline-flex h-8 items-center gap-1.5 rounded-[6px] bg-[color:var(--pill)] px-2.5 text-xs font-black ring-1 ring-[color:var(--border)]"
                   title="View as a guest would — full screen, no builder controls"
                 >
-                  <Eye size={14} />
+                  <AppIcon name="eye" size={14} />
                   Guest
                 </Link>
                 <Link
@@ -4112,15 +4092,15 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
                   aria-label="Back to exhibitions"
                   title="Back to exhibitions"
                 >
-                  <GalleryHorizontalEnd size={15} />
+                  <AppIcon name="exhibitions" size={15} />
                 </Link>
               </div>
             </div>
 
             <div className="mt-2 grid grid-cols-3 gap-1.5">
-              <Metric icon={<Boxes size={13} />} label="Items" value={String(selectedItems.length)} />
-              <Metric icon={<BadgeDollarSign size={13} />} label="Value" value={formatMoney(selectedValue) || "$0"} />
-              <Metric icon={<Eye size={13} />} label="Mode" value="3D" />
+              <Metric icon={<AppIcon name="box" size={13} />} label="Items" value={String(selectedItems.length)} />
+              <Metric icon={<AppIcon name="price" size={13} />} label="Value" value={formatMoney(selectedValue) || "$0"} />
+              <Metric icon={<AppIcon name="eye" size={13} />} label="Mode" value="3D" />
             </div>
           </div>
 
@@ -4133,7 +4113,7 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
               its single child a flex item too, stretching (the flex
               default) to fill the wrapper's now-equal height. */}
           <div className="flex w-[260px] shrink-0">
-            <ControlPanel title="Source" icon={<Grid3X3 size={15} />}>
+            <ControlPanel title="Source" icon={<AppIcon name="organize" size={15} />}>
               <select
                 value={currentHallId ? `hall:${currentHallId}` : galleryId}
                 onChange={(event) => handleSourceChange(event.target.value)}
@@ -4207,7 +4187,7 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
 
           <ControlPanel
             title="Room"
-            icon={<MonitorUp size={15} />}
+            icon={<AppIcon name="viewGallery" size={15} />}
             action={
               <button
                 type="button"
@@ -4215,7 +4195,7 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
                 aria-label={roomPanelOpen ? "Collapse room settings" : "Expand room settings"}
                 className="grid h-6 w-6 place-items-center rounded-[5px] bg-[color:var(--input)] text-[color:var(--muted2)] ring-1 ring-[color:var(--border)] transition hover:text-[color:var(--fg)]"
               >
-                {roomPanelOpen ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                {roomPanelOpen ? <AppIcon name="chevronUp" size={14} /> : <AppIcon name="chevronDown" size={14} />}
               </button>
             }
           >
@@ -4268,7 +4248,7 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
                   Values
                 </label>
                 <label className="flex h-6 cursor-pointer items-center gap-1.5 rounded-[5px] bg-[color:var(--input)] px-2 text-[11px] font-bold ring-1 ring-[color:var(--border)] transition hover:bg-black/10">
-                  <Paintbrush size={12} />
+                  <AppIcon name="paintbrush" size={12} />
                   {wallTextureUrl ? "Wallpaper" : "Wallpaper"}
                   <input
                     type="file"
@@ -4542,7 +4522,7 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
                   className="flex w-full items-center justify-center gap-1.5 rounded-full py-3 text-sm font-black transition disabled:opacity-35"
                   style={{ background: "linear-gradient(180deg,#79E7FB,#2CB1D1)", color: "#06171d" }}
                 >
-                  <Plus size={14} />
+                  <AppIcon name="addItem" size={14} />
                   {pickerSelection.length > 0 ? `Add ${pickerSelection.length}` : "Select items to add"}
                 </button>
               </div>

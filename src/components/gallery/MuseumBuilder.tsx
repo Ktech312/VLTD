@@ -95,7 +95,7 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import Link from "next/link";
 import * as THREE from "three";
-import { ChevronDown, ChevronUp, DoorOpen, Grid3X3, Layers3, MonitorUp, Paintbrush, Save } from "lucide-react";
+import { AppIcon } from "@/components/ui/AppIcon";
 
 import {
   computeCampusWallSegments,
@@ -979,7 +979,7 @@ export default function MuseumBuilder() {
         <div className="flex flex-wrap items-stretch gap-3">
           <div className="w-[300px] shrink-0 rounded-[8px] border bg-[color:var(--theme-card)] p-3 shadow-[var(--shadow-soft)]" style={{ borderColor: "var(--theme-border)" }}>
             <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.18em] text-[color:var(--muted2)]">
-              <Layers3 size={12} />
+              <AppIcon name="layers" size={12} />
               VLTD Museum
             </div>
             <h1 className="mt-1 text-xl font-black uppercase leading-[0.92] tracking-normal">Museum Builder</h1>
@@ -991,7 +991,7 @@ export default function MuseumBuilder() {
           </div>
 
           <div className="flex w-[260px] shrink-0">
-            <ControlPanel title="Source" icon={<DoorOpen size={15} />}>
+            <ControlPanel title="Source" icon={<AppIcon name="door" size={15} />}>
               <select
                 value={roomId}
                 onChange={(event) => setRoomId(event.target.value as CampusRoomId)}
@@ -1013,7 +1013,7 @@ export default function MuseumBuilder() {
 
           <ControlPanel
             title="Room"
-            icon={<MonitorUp size={15} />}
+            icon={<AppIcon name="viewGallery" size={15} />}
             action={
               <button
                 type="button"
@@ -1021,7 +1021,7 @@ export default function MuseumBuilder() {
                 aria-label={roomPanelOpen ? "Collapse room settings" : "Expand room settings"}
                 className="grid h-6 w-6 place-items-center rounded-[5px] bg-[color:var(--input)] text-[color:var(--muted2)] ring-1 ring-[color:var(--border)] transition hover:text-[color:var(--fg)]"
               >
-                {roomPanelOpen ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                {roomPanelOpen ? <AppIcon name="chevronUp" size={14} /> : <AppIcon name="chevronDown" size={14} />}
               </button>
             }
           >
@@ -1161,7 +1161,7 @@ export default function MuseumBuilder() {
                 </div>
                 <div className="flex flex-wrap items-center gap-1.5">
                   <label className="flex h-6 cursor-pointer items-center gap-1.5 rounded-[5px] bg-[color:var(--input)] px-2 text-[11px] font-bold ring-1 ring-[color:var(--border)] transition hover:bg-black/10">
-                    <Paintbrush size={12} />
+                    <AppIcon name="paintbrush" size={12} />
                     {backgroundUploading ? "Uploading…" : "Wallpaper"}
                     <input
                       type="file"
@@ -1220,7 +1220,7 @@ export default function MuseumBuilder() {
 
             <div className="absolute left-3 right-3 top-3 flex flex-wrap items-center gap-2">
               <div className="pointer-events-none flex items-center gap-2 rounded-[6px] bg-black/42 px-3 py-2 text-xs font-black uppercase tracking-[0.14em] text-white ring-1 ring-white/12 backdrop-blur">
-                <Layers3 size={14} />
+                <AppIcon name="layers" size={14} />
                 {visitorFacingRoomName(currentRoom.label)}
               </div>
               <Link
@@ -1228,7 +1228,7 @@ export default function MuseumBuilder() {
                 className="flex items-center gap-1.5 rounded-[6px] bg-black/42 px-3 py-2 text-xs font-black uppercase tracking-[0.14em] text-white ring-1 ring-white/12 backdrop-blur transition hover:bg-black/60"
                 title="Exit to the live museum"
               >
-                <DoorOpen size={14} />
+                <AppIcon name="door" size={14} />
                 Exit
               </Link>
               <button
@@ -1241,7 +1241,7 @@ export default function MuseumBuilder() {
                 ].join(" ")}
                 title="Show numbered positions and add, move, or remove items"
               >
-                <Grid3X3 size={14} />
+                <AppIcon name="organize" size={14} />
                 {isOrganizing ? "Done" : "Organize"}
               </button>
               <div
@@ -1251,7 +1251,7 @@ export default function MuseumBuilder() {
                 ].join(" ")}
                 title="This room saves each change immediately — there is no separate Save step"
               >
-                <Save size={14} />
+                <AppIcon name="save" size={14} />
                 {itemSaveState === "saving" ? "Saving…" : itemSaveState === "error" ? "Save Failed" : "Autosaved"}
               </div>
             </div>

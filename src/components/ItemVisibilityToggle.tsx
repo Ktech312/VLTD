@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Eye, EyeOff } from "lucide-react";
+import { AppIcon } from "@/components/ui/AppIcon";
 
 import { emitVaultUpdate } from "@/lib/vaultEvents";
 import { saveItem, type VaultItem } from "@/lib/vaultModel";
@@ -61,7 +61,7 @@ export default function ItemVisibilityToggle({
 
   const label = isPublic ? "Public" : "Private";
   const buttonLabel = isPublic ? "Make item private" : "Make item public";
-  const Icon = isPublic ? Eye : EyeOff;
+  const iconName = isPublic ? "eye" : "eyeOff";
 
   return (
     <div className={["pointer-events-auto inline-flex flex-col items-end gap-1", className].filter(Boolean).join(" ")}>
@@ -95,7 +95,7 @@ export default function ItemVisibilityToggle({
             : "text-white/40 hover:text-white/70",
         ].join(" ")}
       >
-        <Icon size={size === "md" ? 15 : 13} strokeWidth={2.2} aria-hidden="true" />
+        <AppIcon name={iconName} size={size === "md" ? 15 : 13} strokeWidth={2.2} />
         {showLabel ? <span>{label}</span> : null}
       </button>
       {message ? <div className="max-w-[220px] text-right text-[10px] text-rose-200">{message}</div> : null}

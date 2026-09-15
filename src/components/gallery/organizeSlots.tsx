@@ -34,7 +34,7 @@
 // a personal Gallery shelf vs. a museum wall span).
 import { useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { Plus } from "lucide-react";
+import { AppIcon } from "@/components/ui/AppIcon";
 
 export type SlotItemLike = { title?: string | null };
 
@@ -376,7 +376,7 @@ export function OrganizeSlotOverlay({
                     : "border-white/40 bg-black/30 hover:border-[#4FD3EE] hover:text-[#4FD3EE]",
                 ].join(" ")}
               >
-                <Plus size={16} />
+                <AppIcon name="addItem" size={16} />
               </button>
             )}
           </div>

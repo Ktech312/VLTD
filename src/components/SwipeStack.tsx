@@ -14,7 +14,7 @@
 // scaled/offset to give a stacked-depth effect.
 
 import { useState, useRef, useCallback, useEffect } from "react";
-import { ChevronLeft, ChevronRight, Eye, RotateCw } from "lucide-react";
+import { AppIcon } from "@/components/ui/AppIcon";
 import type { VaultItem as ModelItem } from "@/lib/vaultModel";
 import { itemCurrentValue } from "@/lib/portfolioMetrics";
 import { isNotable } from "@/lib/itemIntelligence";
@@ -1137,7 +1137,7 @@ export default function SwipeStack({
                       }}
                       aria-label={isFlipped ? "Show front" : "Show back"}
                     >
-                      <RotateCw size={16} strokeWidth={2.4} />
+                      <AppIcon name="rotate" size={16} strokeWidth={2.4} />
                     </button>
                   </>
                 ) : null}
@@ -1165,7 +1165,7 @@ export default function SwipeStack({
               style={{ background: "var(--surface)", borderColor: "var(--border)", color: canCycle ? "var(--fg)" : "var(--muted2)" }}
               aria-label="Previous"
             >
-              <ChevronLeft size={20} strokeWidth={2.5} />
+              <AppIcon name="back" size={20} strokeWidth={2.5} />
             </button>
             <button
               type="button"
@@ -1173,7 +1173,7 @@ export default function SwipeStack({
               className="flex h-11 min-w-24 items-center justify-center gap-2 rounded-full px-4 text-[12px] font-bold uppercase tracking-[0.12em] ring-1 transition active:scale-95"
               style={{ background: "rgba(255,255,255,0.06)", borderColor: "rgba(255,255,255,0.1)", color: "#ECEDEF" }}
             >
-              <Eye size={14} strokeWidth={2.5} />
+              <AppIcon name="eye" size={14} strokeWidth={2.5} />
               View
             </button>
             <button
@@ -1184,7 +1184,7 @@ export default function SwipeStack({
               style={{ background: "var(--surface)", borderColor: "var(--border)", color: canCycle ? "var(--fg)" : "var(--muted2)" }}
               aria-label="Next"
             >
-              <ChevronRight size={20} strokeWidth={2.5} />
+              <AppIcon name="next" size={20} strokeWidth={2.5} />
             </button>
             </div>
           </div>

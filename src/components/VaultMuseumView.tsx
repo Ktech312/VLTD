@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, type MouseEvent } from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { AppIcon } from "@/components/ui/AppIcon";
 
 import { isNotable, notableReason } from "@/lib/itemIntelligence";
 import { itemCurrentValue, itemProfit, itemTotalCost } from "@/lib/portfolioMetrics";
@@ -574,7 +574,7 @@ function UniverseSection({
               opacity: canScrollLeft ? 1 : 0.35,
             }}
           >
-            <ChevronLeft size={15} strokeWidth={2.4} aria-hidden="true" />
+            <AppIcon name="back" size={15} strokeWidth={2.4} />
           </button>
           <button
             type="button"
@@ -590,7 +590,7 @@ function UniverseSection({
               opacity: canScrollRight ? 1 : 0.35,
             }}
           >
-            <ChevronRight size={15} strokeWidth={2.4} aria-hidden="true" />
+            <AppIcon name="next" size={15} strokeWidth={2.4} />
           </button>
           <button
             type="button"

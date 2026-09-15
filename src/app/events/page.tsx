@@ -1,17 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import {
-  Bookmark,
-  CalendarDays,
-  ChevronDown,
-  ExternalLink,
-  Loader2,
-  MapPin,
-  PlusCircle,
-  Search,
-  Ticket,
-} from "lucide-react";
+import { AppIcon } from "@/components/ui/AppIcon";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 import { loadSavedEventIds, syncSavedEventIdsFromSupabase, toggleSavedEvent } from "@/lib/savedEventsModel";
 
@@ -255,7 +245,7 @@ function EventTypeSelect({
   return (
     <label className="relative inline-block">
       <span className="pointer-events-none absolute left-3 top-1/2 z-10 -translate-y-1/2 text-[color:var(--muted)]">
-        <CalendarDays size={14} />
+        <AppIcon name="events" size={14} />
       </span>
       <select
         value={value}
@@ -270,7 +260,8 @@ function EventTypeSelect({
         <option value="gallery">Gallery</option>
         <option value="music">Music</option>
       </select>
-      <ChevronDown
+      <AppIcon
+        name="chevronDown"
         size={14}
         className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[color:var(--muted)]"
       />
@@ -297,7 +288,7 @@ function SaveButton({
       }}
       className={`inline-flex items-center justify-center rounded-[7px] border border-[color:var(--border)] bg-black/30 text-[color:var(--theme-gold)] ${compact ? "h-8 w-8" : "h-9 gap-2 px-3 text-xs font-bold"}`}
     >
-      <Bookmark size={15} fill={saved ? "currentColor" : "none"} />
+      <AppIcon name="favorite" size={15} filled={saved} />
       {!compact && <span>{saved ? "Saved" : "Save Event"}</span>}
     </button>
   );
@@ -422,7 +413,7 @@ function EventSuggestionCard({
           onClick={onSave}
           className="inline-flex h-9 items-center justify-center gap-2 rounded-[7px] border border-[color:var(--theme-gold-border)] bg-[color:var(--pill)] px-3 text-xs font-black text-[color:var(--theme-gold)]"
         >
-          <PlusCircle size={14} />
+          <AppIcon name="addItem" size={14} />
           {saved ? "Saved" : "Save"}
         </button>
         {(suggestion.ticketLink || suggestion.link) && (
@@ -432,7 +423,7 @@ function EventSuggestionCard({
             rel="noopener noreferrer"
             className="inline-flex h-9 items-center justify-center gap-2 rounded-[7px] border border-[color:var(--border)] bg-black/20 px-3 text-xs font-black text-[color:var(--fg)]"
           >
-            Open <ExternalLink size={13} />
+            Open <AppIcon name="externalLink" size={13} />
           </a>
         )}
       </div>
@@ -711,7 +702,7 @@ export default function EventsPage() {
               borderColor: "var(--border)",
             }}
           >
-            <Bookmark size={14} fill={showSavedOnly ? "currentColor" : "none"} />
+            <AppIcon name="favorite" size={14} filled={showSavedOnly} />
             {showSavedOnly ? "Showing saved" : "Saved Events"}
             <span
               className="rounded bg-black/20 px-1.5 text-[10px]"
@@ -789,7 +780,7 @@ export default function EventsPage() {
               disabled={eventSearchLoading}
               className="vltd-primary-button inline-flex h-10 items-center justify-center gap-2 rounded-[4px] px-5 text-sm font-black disabled:opacity-60"
             >
-              {eventSearchLoading ? <Loader2 size={16} className="animate-spin" /> : <Search size={16} />}
+              {eventSearchLoading ? <AppIcon name="loader" size={16} className="animate-spin" /> : <AppIcon name="search" size={16} />}
               Search
             </button>
           </div>
@@ -936,16 +927,16 @@ export default function EventsPage() {
               <h3 className="mb-3 text-[11px] font-black uppercase tracking-[0.16em] text-[color:var(--muted)]">Details</h3>
               <div className="space-y-2 text-sm text-[color:var(--fg)]">
                 <div className="flex items-center gap-2">
-                  <CalendarDays size={14} className="shrink-0 text-[color:var(--theme-gold)]" />
+                  <AppIcon name="events" size={14} className="shrink-0 text-[color:var(--theme-gold)]" />
                   {formatDateRange(selectedEvent.starts_at, selectedEvent.ends_at)}
                 </div>
                 <div className="flex items-start gap-2">
-                  <MapPin size={14} className="mt-0.5 shrink-0 text-[color:var(--theme-gold)]" />
+                  <AppIcon name="mapPin" size={14} className="mt-0.5 shrink-0 text-[color:var(--theme-gold)]" />
                   <span>{venueLine(selectedEvent)}</span>
                 </div>
                 {selectedEvent.admission && (
                   <div className="flex items-center gap-2">
-                    <Ticket size={14} className="shrink-0 text-[color:var(--theme-gold)]" />
+                    <AppIcon name="ticket" size={14} className="shrink-0 text-[color:var(--theme-gold)]" />
                     {selectedEvent.admission}
                   </div>
                 )}
@@ -957,7 +948,7 @@ export default function EventsPage() {
                   rel="noopener noreferrer"
                   className="mt-3 inline-flex h-9 w-full items-center justify-center gap-2 rounded-[7px] border border-[color:var(--theme-gold-border)] bg-[color:var(--pill)] text-xs font-black text-[color:var(--theme-gold)]"
                 >
-                  Event link <ExternalLink size={13} />
+                  Event link <AppIcon name="externalLink" size={13} />
                 </a>
               )}
             </div>

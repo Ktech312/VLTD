@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { DoorOpen, Map as MapIcon, Sparkles } from "lucide-react";
+import { AppIcon } from "@/components/ui/AppIcon";
 
 import { CAMPUS_DOORS, CAMPUS_ROOMS, type CampusRoomId } from "@/lib/campusLayout";
 import { getAllRoomMeta, type MuseumRoomMeta } from "@/lib/museumCampusConfig";
@@ -115,7 +115,7 @@ export default function MuseumCampusOverview({
       <div className="mx-auto grid h-full min-h-0 max-w-[1680px] grid-rows-[auto_minmax(0,1fr)] gap-2 sm:grid-cols-[168px_minmax(0,1fr)] sm:grid-rows-1 sm:gap-3">
         <aside className="z-10 flex items-center gap-2 sm:flex-col sm:items-stretch sm:pt-2">
           <div className="flex min-h-10 items-center gap-2 px-2 text-xs font-black uppercase tracking-[0.14em] text-white/82">
-            <MapIcon size={14} />
+            <AppIcon name="map" size={14} />
             Universe Map
           </div>
           <button
@@ -123,21 +123,21 @@ export default function MuseumCampusOverview({
             onClick={onBackToRoom}
             className="flex min-h-10 items-center gap-2 rounded-[6px] bg-black/28 px-3 text-xs font-black uppercase tracking-[0.12em] text-white ring-1 ring-white/14 transition hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#79e7fb]"
           >
-            <Sparkles size={14} />
+            <AppIcon name="sparkle" size={14} />
             Back to Room
           </button>
           <Link
             href="/museum/vltd"
             className="flex min-h-10 items-center gap-2 rounded-[6px] bg-[#4FD3EE] px-3 text-xs font-black uppercase tracking-[0.12em] text-[#06171d] transition hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
           >
-            <DoorOpen size={14} />
+            <AppIcon name="door" size={14} />
             Enter VLTD Museum
           </Link>
 
           <div className="mt-auto hidden gap-3 px-2 pb-4 text-[10px] font-black uppercase tracking-[0.12em] text-white/48 sm:grid">
             <span className="inline-flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-[2px] bg-[#d9dde0]" /> Room</span>
             <span className="inline-flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-[2px] border border-[#79e7fb] bg-[#153c50] shadow-[0_0_8px_rgba(121,231,251,0.5)]" /> Doorway</span>
-            <span className="inline-flex items-center gap-2"><DoorOpen size={13} /> Entrance at left</span>
+            <span className="inline-flex items-center gap-2"><AppIcon name="door" size={13} /> Entrance at left</span>
           </div>
         </aside>
 
