@@ -1016,33 +1016,37 @@ export default function VltdMuseumCampus() {
 
       // North wall (shared with HUB, the real museum entrance) — EK's
       // correction (2026-09-14): "side wall are done but not the on in
-      // front of me." Missed in the first pass entirely. Same
-      // solid-piece walk buildRoomTrim()/the HUB base-trim loop above
-      // already use (computeCampusWallSegments()/splitSegmentForDoor()),
-      // so the entrance door's own casing/header is respected automatically
-      // — only the solid wall pieces flanking it get skinned, never the
-      // opening itself.
-      for (const segment of wallSegments) {
-        const touchesPlaza = segment.roomA === "PLAZA" || segment.roomB === "PLAZA";
-        const touchesHub = segment.roomA === "HUB" || segment.roomB === "HUB";
-        if (!touchesPlaza || !touchesHub) continue;
-        const isNS = segment.wall === "x";
-        const facingSign = segment.roomA === "PLAZA" ? -1 : 1;
-        const { solid } = splitSegmentForDoor(segment);
-        for (const piece of solid) {
-          const span = piece.to - piece.from;
-          if (span <= 0.05) continue;
-          const geometry = isNS
-            ? new THREE.BoxGeometry(span, WALL_HEIGHT, wallSkinThickness)
-            : new THREE.BoxGeometry(wallSkinThickness, WALL_HEIGHT, span);
-          const northSkin = new THREE.Mesh(geometry, limestoneWallMaterial);
-          if (isNS) {
-            northSkin.position.set((piece.from + piece.to) / 2, WALL_HEIGHT / 2, segment.fixed + facingSign * wallSkinOffset);
-          } else {
-            northSkin.position.set(segment.fixed + facingSign * wallSkinOffset, WALL_HEIGHT / 2, (piece.from + piece.to) / 2);
-          }
-          plazaGroup.add(northSkin);
-        }
+      // front of me." Missed in the first pass. The west/east skins above
+      // walk computeCampusWallSegments()'s own per-boundary segments, but
+      // the museum entrance's "restrained wider casing + integrated VLTD
+      // MUSEUM header" (built by its own dedicated isMuseumEntrance() path,
+      // not the ordinary door-casing system) turned out not to produce a
+      // normal solid/door-gap split there — that loop found nothing to
+      // skin (confirmed live: zero matching segments). Using the same
+      // CAMPUS_DOORS-driven gap exclusion the north-wall item-placement
+      // code above already uses instead: two flanking pieces either side
+      // of the entrance's own real gapCenter, with extra margin beyond the
+      // ordinary DOORWAY_NO_DISPLAY_HALF_WIDTH since this casing is wider
+      // than a standard door's.
+      const entranceDoor = CAMPUS_DOORS.find(
+        (d) => d.wall === "x" && d.at === plazaBounds.z1 && d.rooms.includes("PLAZA")
+      );
+      const entranceHalfWidth = DOORWAY_NO_DISPLAY_HALF_WIDTH + 1.2;
+      const northPieces: { from: number; to: number }[] = entranceDoor
+        ? [
+            { from: plazaBounds.x0, to: entranceDoor.gapCenter - entranceHalfWidth },
+            { from: entranceDoor.gapCenter + entranceHalfWidth, to: plazaBounds.x1 },
+          ]
+        : [{ from: plazaBounds.x0, to: plazaBounds.x1 }];
+      for (const piece of northPieces) {
+        const span = piece.to - piece.from;
+        if (span <= 0.05) continue;
+        const northSkin = new THREE.Mesh(
+          new THREE.BoxGeometry(span, WALL_HEIGHT, wallSkinThickness),
+          limestoneWallMaterial
+        );
+        northSkin.position.set((piece.from + piece.to) / 2, WALL_HEIGHT / 2, plazaBounds.z1 - wallSkinOffset);
+        plazaGroup.add(northSkin);
       }
     }
 
