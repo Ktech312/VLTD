@@ -195,6 +195,27 @@
 }
 
 /* =========================================================
+   ICON STYLE — Classic (line-art) vs Friendly Glass (3D pack)
+   AppIcon.tsx always renders BOTH layers for every icon; this
+   attribute (set by ThemeContext, independent of Dark/Light and
+   Background) picks which one is visible. Kept in plain CSS
+   rather than a client check inside AppIcon so it stays usable
+   from server components. !important is deliberate here: it is
+   the only thing these two rules are for, and it must win over
+   each render path's own inline layout styles.
+========================================================= */
+
+.vltd-icon-friendly {
+  display: none;
+}
+[data-vltd-icon-style="friendly-glass"] .vltd-icon-classic {
+  display: none !important;
+}
+[data-vltd-icon-style="friendly-glass"] .vltd-icon-friendly {
+  display: block !important;
+}
+
+/* =========================================================
    THEME CLASS BRIDGES
    ThemeProvider adds .theme-dark / .theme-light to <html>,
    NOT .dark — so these blocks are what actually fires.

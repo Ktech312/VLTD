@@ -1,8 +1,8 @@
 'use client'
 /* Path: src/components/ui/ThemePicker.tsx */
-import { useTheme } from '@/lib/ThemeContext'
+import { useTheme, type IconStyle } from '@/lib/ThemeContext'
 import { themes, ThemeId, ThemeMode } from '@/lib/themes'
-import { AppIcon } from '@/components/ui/AppIcon'
+import { AppIcon, type AppIconName } from '@/components/ui/AppIcon'
 
 const previews: Record<ThemeId, string> = {
   'deep-vault':          'linear-gradient(135deg, #0B1320 60%, #1a2535 100%)',
@@ -24,8 +24,13 @@ function SunIcon() {
   return <AppIcon name="sun" size={15} strokeWidth={2} />
 }
 
+const ICON_STYLE_OPTIONS: { id: IconStyle; label: string; sample: AppIconName }[] = [
+  { id: 'classic', label: 'Classic', sample: 'vault' },
+  { id: 'friendly-glass', label: 'Friendly Glass', sample: 'vault' },
+]
+
 export function ThemePicker() {
-  const { themeId, setTheme } = useTheme()
+  const { themeId, setTheme, iconStyle, setIconStyle } = useTheme()
   const currentMode: ThemeMode = themes[themeId].mode
 
   function pickMode(mode: ThemeMode) {
@@ -114,6 +119,52 @@ export function ThemePicker() {
           </p>
         </div>
       )}
+
+      {/* ── Icon style section — independent of Dark/Light and Background ── */}
+      <div>
+        <p className="mb-2 text-[10px] font-bold uppercase tracking-[0.28em]"
+          style={{ color: 'var(--theme-text-muted, #5A5040)' }}>
+          Icon style
+        </p>
+        <div className="grid grid-cols-2 gap-2">
+          {ICON_STYLE_OPTIONS.map(opt => {
+            const active = iconStyle === opt.id
+            return (
+              <button
+                key={opt.id}
+                type="button"
+                onClick={() => setIconStyle(opt.id)}
+                className="flex items-center gap-2 rounded-xl px-3 py-2.5 text-[12px] font-semibold transition"
+                style={{
+                  background: active
+                    ? 'var(--theme-gold-subtle, rgba(203,208,213,0.10))'
+                    : 'rgba(255,255,255,0.04)',
+                  border: `1.5px solid ${active
+                    ? 'var(--theme-gold-border, rgba(203,208,213,0.35))'
+                    : 'rgba(255,255,255,0.08)'}`,
+                  color: active
+                    ? 'var(--theme-gold, #C8CDD2)'
+                    : 'var(--theme-text-muted, #5A5040)',
+                }}
+              >
+                {/* Force each swatch to preview its own style regardless of
+                    the globally active one — data-vltd-icon-style also
+                    matches as a descendant selector, not just on <html>. */}
+                <span data-vltd-icon-style={opt.id}>
+                  <AppIcon name={opt.sample} size={16} />
+                </span>
+                {opt.label}
+                {active && (
+                  <span
+                    className="ml-auto h-2 w-2 rounded-full"
+                    style={{ background: 'var(--theme-gold, #C8CDD2)' }}
+                  />
+                )}
+              </button>
+            )
+          })}
+        </div>
+      </div>
 
     </div>
   )

@@ -1,0 +1,714 @@
+{
+  "theme": "friendly-glass-v1",
+  "version": 1,
+  "format": "png",
+  "iconSize": 256,
+  "usage": "feature icons at 48px or larger",
+  "icons": {
+    "addItem": {
+      "file": "icons/addItem.png",
+      "sheet": 1,
+      "row": 0,
+      "column": 0
+    },
+    "organize": {
+      "file": "icons/organize.png",
+      "sheet": 1,
+      "row": 0,
+      "column": 1
+    },
+    "editRoom": {
+      "file": "icons/editRoom.png",
+      "sheet": 1,
+      "row": 0,
+      "column": 2
+    },
+    "save": {
+      "file": "icons/save.png",
+      "sheet": 1,
+      "row": 0,
+      "column": 3
+    },
+    "viewGallery": {
+      "file": "icons/viewGallery.png",
+      "sheet": 1,
+      "row": 1,
+      "column": 0
+    },
+    "vault": {
+      "file": "icons/vault.png",
+      "sheet": 1,
+      "row": 1,
+      "column": 1
+    },
+    "exhibitions": {
+      "file": "icons/exhibitions.png",
+      "sheet": 1,
+      "row": 1,
+      "column": 2
+    },
+    "discover": {
+      "file": "icons/discover.png",
+      "sheet": 1,
+      "row": 1,
+      "column": 3
+    },
+    "events": {
+      "file": "icons/events.png",
+      "sheet": 1,
+      "row": 2,
+      "column": 0
+    },
+    "notifications": {
+      "file": "icons/notifications.png",
+      "sheet": 1,
+      "row": 2,
+      "column": 1
+    },
+    "search": {
+      "file": "icons/search.png",
+      "sheet": 1,
+      "row": 2,
+      "column": 2
+    },
+    "account": {
+      "file": "icons/account.png",
+      "sheet": 1,
+      "row": 2,
+      "column": 3
+    },
+    "settings": {
+      "file": "icons/settings.png",
+      "sheet": 1,
+      "row": 3,
+      "column": 0
+    },
+    "close": {
+      "file": "icons/close.png",
+      "sheet": 1,
+      "row": 3,
+      "column": 1
+    },
+    "back": {
+      "file": "icons/back.png",
+      "sheet": 1,
+      "row": 3,
+      "column": 2
+    },
+    "next": {
+      "file": "icons/next.png",
+      "sheet": 1,
+      "row": 3,
+      "column": 3
+    },
+    "upload": {
+      "file": "icons/upload.png",
+      "sheet": 2,
+      "row": 0,
+      "column": 0
+    },
+    "camera": {
+      "file": "icons/camera.png",
+      "sheet": 2,
+      "row": 0,
+      "column": 1
+    },
+    "share": {
+      "file": "icons/share.png",
+      "sheet": 2,
+      "row": 0,
+      "column": 2
+    },
+    "favorite": {
+      "file": "icons/favorite.png",
+      "sheet": 2,
+      "row": 0,
+      "column": 3
+    },
+    "delete": {
+      "file": "icons/delete.png",
+      "sheet": 2,
+      "row": 1,
+      "column": 0
+    },
+    "door": {
+      "file": "icons/door.png",
+      "sheet": 2,
+      "row": 1,
+      "column": 1
+    },
+    "chevronDown": {
+      "file": "icons/chevronDown.png",
+      "sheet": 2,
+      "row": 1,
+      "column": 2
+    },
+    "chevronUp": {
+      "file": "icons/chevronUp.png",
+      "sheet": 2,
+      "row": 1,
+      "column": 3
+    },
+    "externalLink": {
+      "file": "icons/externalLink.png",
+      "sheet": 2,
+      "row": 2,
+      "column": 0
+    },
+    "layers": {
+      "file": "icons/layers.png",
+      "sheet": 2,
+      "row": 2,
+      "column": 1
+    },
+    "map": {
+      "file": "icons/map.png",
+      "sheet": 2,
+      "row": 2,
+      "column": 2
+    },
+    "mapPin": {
+      "file": "icons/mapPin.png",
+      "sheet": 2,
+      "row": 2,
+      "column": 3
+    },
+    "price": {
+      "file": "icons/price.png",
+      "sheet": 2,
+      "row": 3,
+      "column": 0
+    },
+    "paintbrush": {
+      "file": "icons/paintbrush.png",
+      "sheet": 2,
+      "row": 3,
+      "column": 1
+    },
+    "edit": {
+      "file": "icons/edit.png",
+      "sheet": 2,
+      "row": 3,
+      "column": 2
+    },
+    "rotate": {
+      "file": "icons/rotate.png",
+      "sheet": 2,
+      "row": 3,
+      "column": 3
+    },
+    "loader": {
+      "file": "icons/loader.png",
+      "sheet": 3,
+      "row": 0,
+      "column": 0
+    },
+    "ticket": {
+      "file": "icons/ticket.png",
+      "sheet": 3,
+      "row": 0,
+      "column": 1
+    },
+    "eyeOff": {
+      "file": "icons/eyeOff.png",
+      "sheet": 3,
+      "row": 0,
+      "column": 2
+    },
+    "more": {
+      "file": "icons/more.png",
+      "sheet": 3,
+      "row": 0,
+      "column": 3
+    },
+    "communityBoard": {
+      "file": "icons/communityBoard.png",
+      "sheet": 3,
+      "row": 1,
+      "column": 0
+    },
+    "insights": {
+      "file": "icons/insights.png",
+      "sheet": 3,
+      "row": 1,
+      "column": 1
+    },
+    "learn": {
+      "file": "icons/learn.png",
+      "sheet": 3,
+      "row": 1,
+      "column": 2
+    },
+    "activity": {
+      "file": "icons/activity.png",
+      "sheet": 3,
+      "row": 1,
+      "column": 3
+    },
+    "dashboard": {
+      "file": "icons/dashboard.png",
+      "sheet": 3,
+      "row": 2,
+      "column": 0
+    },
+    "guide": {
+      "file": "icons/guide.png",
+      "sheet": 3,
+      "row": 2,
+      "column": 1
+    },
+    "checkmark": {
+      "file": "icons/checkmark.png",
+      "sheet": 3,
+      "row": 2,
+      "column": 2
+    },
+    "sparkleAI": {
+      "file": "icons/sparkleAI.png",
+      "sheet": 3,
+      "row": 2,
+      "column": 3
+    },
+    "download": {
+      "file": "icons/download.png",
+      "sheet": 3,
+      "row": 3,
+      "column": 0
+    },
+    "ruler": {
+      "file": "icons/ruler.png",
+      "sheet": 3,
+      "row": 3,
+      "column": 1
+    },
+    "flipVertical": {
+      "file": "icons/flipVertical.png",
+      "sheet": 3,
+      "row": 3,
+      "column": 2
+    },
+    "unlocked": {
+      "file": "icons/unlocked.png",
+      "sheet": 3,
+      "row": 3,
+      "column": 3
+    },
+    "expand": {
+      "file": "icons/expand.png",
+      "sheet": 4,
+      "row": 0,
+      "column": 0
+    },
+    "eraser": {
+      "file": "icons/eraser.png",
+      "sheet": 4,
+      "row": 0,
+      "column": 1
+    },
+    "document": {
+      "file": "icons/document.png",
+      "sheet": 4,
+      "row": 0,
+      "column": 2
+    },
+    "copy": {
+      "file": "icons/copy.png",
+      "sheet": 4,
+      "row": 0,
+      "column": 3
+    },
+    "sms": {
+      "file": "icons/sms.png",
+      "sheet": 4,
+      "row": 1,
+      "column": 0
+    },
+    "email": {
+      "file": "icons/email.png",
+      "sheet": 4,
+      "row": 1,
+      "column": 1
+    },
+    "flash": {
+      "file": "icons/flash.png",
+      "sheet": 4,
+      "row": 1,
+      "column": 2
+    },
+    "play": {
+      "file": "icons/play.png",
+      "sheet": 4,
+      "row": 1,
+      "column": 3
+    },
+    "dragHandle": {
+      "file": "icons/dragHandle.png",
+      "sheet": 4,
+      "row": 2,
+      "column": 0
+    },
+    "gift": {
+      "file": "icons/gift.png",
+      "sheet": 4,
+      "row": 2,
+      "column": 1
+    },
+    "arrowLeft": {
+      "file": "icons/arrowLeft.png",
+      "sheet": 4,
+      "row": 2,
+      "column": 2
+    },
+    "bell": {
+      "file": "icons/bell.png",
+      "sheet": 4,
+      "row": 2,
+      "column": 3
+    },
+    "message": {
+      "file": "icons/message.png",
+      "sheet": 4,
+      "row": 3,
+      "column": 0
+    },
+    "exhibition": {
+      "file": "icons/exhibition.png",
+      "sheet": 4,
+      "row": 3,
+      "column": 1
+    },
+    "bug": {
+      "file": "icons/bug.png",
+      "sheet": 4,
+      "row": 3,
+      "column": 2
+    },
+    "chart": {
+      "file": "icons/chart.png",
+      "sheet": 4,
+      "row": 3,
+      "column": 3
+    },
+    "target": {
+      "file": "icons/target.png",
+      "sheet": 5,
+      "row": 0,
+      "column": 0
+    },
+    "trophy": {
+      "file": "icons/trophy.png",
+      "sheet": 5,
+      "row": 0,
+      "column": 1
+    },
+    "tag": {
+      "file": "icons/tag.png",
+      "sheet": 5,
+      "row": 0,
+      "column": 2
+    },
+    "heart": {
+      "file": "icons/heart.png",
+      "sheet": 5,
+      "row": 0,
+      "column": 3
+    },
+    "bag": {
+      "file": "icons/bag.png",
+      "sheet": 5,
+      "row": 1,
+      "column": 0
+    },
+    "gavel": {
+      "file": "icons/gavel.png",
+      "sheet": 5,
+      "row": 1,
+      "column": 1
+    },
+    "box": {
+      "file": "icons/box.png",
+      "sheet": 5,
+      "row": 1,
+      "column": 2
+    },
+    "sofa": {
+      "file": "icons/sofa.png",
+      "sheet": 5,
+      "row": 1,
+      "column": 3
+    },
+    "sparkle": {
+      "file": "icons/sparkle.png",
+      "sheet": 5,
+      "row": 2,
+      "column": 0
+    },
+    "flame": {
+      "file": "icons/flame.png",
+      "sheet": 5,
+      "row": 2,
+      "column": 1
+    },
+    "key": {
+      "file": "icons/key.png",
+      "sheet": 5,
+      "row": 2,
+      "column": 2
+    },
+    "cart": {
+      "file": "icons/cart.png",
+      "sheet": 5,
+      "row": 2,
+      "column": 3
+    },
+    "shield": {
+      "file": "icons/shield.png",
+      "sheet": 5,
+      "row": 3,
+      "column": 0
+    },
+    "cards": {
+      "file": "icons/cards.png",
+      "sheet": 5,
+      "row": 3,
+      "column": 1
+    },
+    "music": {
+      "file": "icons/music.png",
+      "sheet": 5,
+      "row": 3,
+      "column": 2
+    },
+    "gem": {
+      "file": "icons/gem.png",
+      "sheet": 5,
+      "row": 3,
+      "column": 3
+    },
+    "game": {
+      "file": "icons/game.png",
+      "sheet": 6,
+      "row": 0,
+      "column": 0
+    },
+    "leaf": {
+      "file": "icons/leaf.png",
+      "sheet": 6,
+      "row": 0,
+      "column": 1
+    },
+    "star": {
+      "file": "icons/star.png",
+      "sheet": 6,
+      "row": 0,
+      "column": 2
+    },
+    "car": {
+      "file": "icons/car.png",
+      "sheet": 6,
+      "row": 0,
+      "column": 3
+    },
+    "palette": {
+      "file": "icons/palette.png",
+      "sheet": 6,
+      "row": 1,
+      "column": 0
+    },
+    "burst": {
+      "file": "icons/burst.png",
+      "sheet": 6,
+      "row": 1,
+      "column": 1
+    },
+    "users": {
+      "file": "icons/users.png",
+      "sheet": 6,
+      "row": 1,
+      "column": 2
+    },
+    "check": {
+      "file": "icons/check.png",
+      "sheet": 6,
+      "row": 1,
+      "column": 3
+    },
+    "clock": {
+      "file": "icons/clock.png",
+      "sheet": 6,
+      "row": 2,
+      "column": 0
+    },
+    "eye": {
+      "file": "icons/eye.png",
+      "sheet": 6,
+      "row": 2,
+      "column": 1
+    },
+    "building": {
+      "file": "icons/building.png",
+      "sheet": 6,
+      "row": 2,
+      "column": 2
+    },
+    "warning": {
+      "file": "icons/warning.png",
+      "sheet": 6,
+      "row": 2,
+      "column": 3
+    },
+    "lock": {
+      "file": "icons/lock.png",
+      "sheet": 6,
+      "row": 3,
+      "column": 0
+    },
+    "megaphone": {
+      "file": "icons/megaphone.png",
+      "sheet": 6,
+      "row": 3,
+      "column": 1
+    },
+    "moon": {
+      "file": "icons/moon.png",
+      "sheet": 6,
+      "row": 3,
+      "column": 2
+    },
+    "sun": {
+      "file": "icons/sun.png",
+      "sheet": 6,
+      "row": 3,
+      "column": 3
+    },
+    "frame": {
+      "file": "icons/frame.png",
+      "sheet": 7,
+      "row": 0,
+      "column": 0
+    },
+    "rocket": {
+      "file": "icons/rocket.png",
+      "sheet": 7,
+      "row": 0,
+      "column": 1
+    },
+    "globe": {
+      "file": "icons/globe.png",
+      "sheet": 7,
+      "row": 0,
+      "column": 2
+    },
+    "book": {
+      "file": "icons/book.png",
+      "sheet": 7,
+      "row": 0,
+      "column": 3
+    },
+    "wrench": {
+      "file": "icons/wrench.png",
+      "sheet": 7,
+      "row": 1,
+      "column": 0
+    },
+    "scan": {
+      "file": "icons/scan.png",
+      "sheet": 7,
+      "row": 1,
+      "column": 1
+    },
+    "info": {
+      "file": "icons/info.png",
+      "sheet": 7,
+      "row": 1,
+      "column": 2
+    },
+    "link": {
+      "file": "icons/link.png",
+      "sheet": 7,
+      "row": 1,
+      "column": 3
+    },
+    "selectItems": {
+      "file": "icons/selectItems.png",
+      "sheet": 7,
+      "row": 2,
+      "column": 0
+    },
+    "card": {
+      "file": "icons/card.png",
+      "sheet": 7,
+      "row": 2,
+      "column": 1
+    },
+    "cloud": {
+      "file": "icons/cloud.png",
+      "sheet": 7,
+      "row": 2,
+      "column": 2
+    },
+    "dollar": {
+      "file": "icons/dollar.png",
+      "sheet": 7,
+      "row": 2,
+      "column": 3
+    },
+    "inbox": {
+      "file": "icons/inbox.png",
+      "sheet": 7,
+      "row": 3,
+      "column": 0
+    }
+  },
+  "sheets": [
+    {
+      "file": "sheets/friendly-glass-v1-sheet-01.png",
+      "columns": 4,
+      "rows": 4,
+      "width": 1247,
+      "height": 1261
+    },
+    {
+      "file": "sheets/friendly-glass-v1-sheet-02.png",
+      "columns": 4,
+      "rows": 4,
+      "width": 1247,
+      "height": 1261
+    },
+    {
+      "file": "sheets/friendly-glass-v1-sheet-03.png",
+      "columns": 4,
+      "rows": 4,
+      "width": 1247,
+      "height": 1261
+    },
+    {
+      "file": "sheets/friendly-glass-v1-sheet-04.png",
+      "columns": 4,
+      "rows": 4,
+      "width": 1244,
+      "height": 1265
+    },
+    {
+      "file": "sheets/friendly-glass-v1-sheet-05.png",
+      "columns": 4,
+      "rows": 4,
+      "width": 1240,
+      "height": 1268
+    },
+    {
+      "file": "sheets/friendly-glass-v1-sheet-06.png",
+      "columns": 4,
+      "rows": 4,
+      "width": 1240,
+      "height": 1268
+    },
+    {
+      "file": "sheets/friendly-glass-v1-sheet-07.png",
+      "columns": 4,
+      "rows": 4,
+      "width": 1240,
+      "height": 1268
+    }
+  ]
+}

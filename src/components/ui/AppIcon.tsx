@@ -417,6 +417,27 @@ export function universeGlyphName(universe: string): AppIconName {
   return "star";
 }
 
+// Runtime location of the Friendly Glass 3D icon pack — one 256x256 RGBA
+// PNG per AppIconName, filename matching the name exactly. See
+// design-assets/icon-themes/friendly-glass-v1/CODER-HANDOFF.md.
+const FRIENDLY_GLASS_BASE = "/ui/icon-themes/friendly-glass-v1";
+
+// The pack's own manifest/README call out 40px+ as the strongest
+// presentation size, but the real app renders most icons well below that
+// (TopNav at 20px, BottomNav at 22px, most inline buttons/badges 9-16px).
+// Verified with a public/_icon-size-test harness comparing native-size
+// rendering against a pixel-accurate 4x magnification of the same
+// downscaled bitmap at every size from 8-32px: the detailed/photographic
+// art holds up as a recognizable silhouette down to ~18px (TopNav and
+// BottomNav both clear this), but below that the app's many small
+// functional badges/checkmarks/toggles (9-16px) shrink past the point a
+// real eye can resolve raster detail — vector line art tolerates this
+// because it's drawn simply enough to read at that size; this pack isn't.
+// Below this size, an AppIcon instance renders Classic only, regardless
+// of the active global icon style — the Friendly Glass <img> layer isn't
+// rendered at all, so there's nothing for the CSS toggle to reveal.
+const FRIENDLY_GLASS_MIN_SIZE = 18;
+
 export function AppIcon({
   name,
   variant = "compact",
@@ -434,87 +455,148 @@ export function AppIcon({
   style?: CSSProperties;
   strokeWidth?: number;
   /** Toggle-state fill (e.g. a saved bookmark or a liked heart) — fills the
-   * shape with currentColor instead of just outlining it. */
+   * shape with currentColor instead of just outlining it. Classic-only:
+   * the Friendly Glass pack is one fixed asset per name, so filled state
+   * there stays visually communicated by the surrounding button/color. */
   filled?: boolean;
   /** Nav active/inactive state — only meaningful with variant="navTop" or
-   * "navBottom" (selects that surface's highlighted vs. dim rendering). */
+   * "navBottom" (selects that surface's highlighted vs. dim rendering for
+   * Classic, and dims the Friendly Glass layer when inactive since that
+   * pack has one asset per name rather than separate active art). */
   active?: boolean;
 }) {
+  const friendlySrc = `${FRIENDLY_GLASS_BASE}/${name}.png`;
+  const showFriendly = size >= FRIENDLY_GLASS_MIN_SIZE;
+
   if (variant === "navTop" || variant === "navBottom") {
     const renderer = (variant === "navTop" ? NAV_TOP_CONTENT : NAV_BOTTOM_CONTENT)[name];
     return (
-      <svg
-        width={size}
-        height={size}
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth={strokeWidth}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        aria-hidden="true"
-        className={className}
-        style={style}
-      >
-        {renderer ? renderer(active) : PATHS[name]}
-      </svg>
-    );
-  }
-
-  // "feature" is the future soft 3D/glass pack (large buttons, cards,
-  // onboarding, empty states) — real artwork for that comes in a later
-  // pass. For now it renders the SAME semantic line art as "compact",
-  // just on a soft rounded backing, so callers can already opt into the
-  // variant and swap to real feature art later with no call-site changes.
-  if (variant === "feature") {
-    const pad = Math.round(size * 0.62);
-    return (
       <span
         className={className}
-        style={{
-          display: "inline-flex",
-          alignItems: "center",
-          justifyContent: "center",
-          width: size + pad,
-          height: size + pad,
-          borderRadius: "28%",
-          background: "radial-gradient(circle at 32% 28%, rgba(255,255,255,0.16), rgba(255,255,255,0.03) 60%)",
-          boxShadow: "inset 0 1px 0 rgba(255,255,255,0.18), inset 0 -6px 12px rgba(0,0,0,0.25)",
-          ...style,
-        }}
+        style={{ display: "inline-block", position: "relative", width: size, height: size, lineHeight: 0, ...style }}
       >
         <svg
+          className="vltd-icon-classic"
           width={size}
           height={size}
           viewBox="0 0 24 24"
-          fill={filled ? "currentColor" : "none"}
+          fill="none"
           stroke="currentColor"
           strokeWidth={strokeWidth}
           strokeLinecap="round"
           strokeLinejoin="round"
           aria-hidden="true"
+          style={{ position: "absolute", inset: 0 }}
         >
-          {PATHS[name]}
+          {renderer ? renderer(active) : PATHS[name]}
         </svg>
+        {showFriendly && (
+          <img
+            className="vltd-icon-friendly"
+            src={friendlySrc}
+            alt=""
+            aria-hidden="true"
+            width={size}
+            height={size}
+            loading="lazy"
+            decoding="async"
+            style={{ position: "absolute", inset: 0, width: size, height: size, objectFit: "contain", opacity: active ? 1 : 0.5 }}
+          />
+        )}
       </span>
     );
   }
 
+  // "feature": large buttons, cards, onboarding, empty states. Classic
+  // keeps its soft rounded-backing placeholder look; Friendly Glass swaps
+  // in the real 3D asset (designed for 40px+) filling the same box so
+  // switching styles never moves surrounding layout.
+  if (variant === "feature") {
+    const pad = Math.round(size * 0.62);
+    const box = size + pad;
+    return (
+      <span
+        className={className}
+        style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: box, height: box, position: "relative", ...style }}
+      >
+        <span
+          className="vltd-icon-classic"
+          style={{
+            position: "absolute",
+            inset: 0,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            borderRadius: "28%",
+            background: "radial-gradient(circle at 32% 28%, rgba(255,255,255,0.16), rgba(255,255,255,0.03) 60%)",
+            boxShadow: "inset 0 1px 0 rgba(255,255,255,0.18), inset 0 -6px 12px rgba(0,0,0,0.25)",
+          }}
+        >
+          <svg
+            width={size}
+            height={size}
+            viewBox="0 0 24 24"
+            fill={filled ? "currentColor" : "none"}
+            stroke="currentColor"
+            strokeWidth={strokeWidth}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+          >
+            {PATHS[name]}
+          </svg>
+        </span>
+        {showFriendly && (
+          <img
+            className="vltd-icon-friendly"
+            src={friendlySrc}
+            alt=""
+            aria-hidden="true"
+            width={box}
+            height={box}
+            loading="lazy"
+            decoding="async"
+            style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "contain" }}
+          />
+        )}
+      </span>
+    );
+  }
+
+  // "compact" (default).
   return (
-    <svg
-      width={size}
-      height={size}
-      viewBox="0 0 24 24"
-      fill={filled ? "currentColor" : "none"}
-      stroke="currentColor"
-      strokeWidth={strokeWidth}
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
+    <span
       className={className}
-      style={style}
+      style={{ display: "inline-block", position: "relative", width: size, height: size, lineHeight: 0, ...style }}
     >
-      {PATHS[name]}
-    </svg>
+      <svg
+        className="vltd-icon-classic"
+        width={size}
+        height={size}
+        viewBox="0 0 24 24"
+        fill={filled ? "currentColor" : "none"}
+        stroke="currentColor"
+        strokeWidth={strokeWidth}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        aria-hidden="true"
+        style={{ position: "absolute", inset: 0 }}
+      >
+        {PATHS[name]}
+      </svg>
+      {showFriendly && (
+        <img
+          className="vltd-icon-friendly"
+          src={friendlySrc}
+          alt=""
+          aria-hidden="true"
+          width={size}
+          height={size}
+          loading="lazy"
+          decoding="async"
+          style={{ position: "absolute", inset: 0, width: size, height: size, objectFit: "contain" }}
+        />
+      )}
+    </span>
   );
 }

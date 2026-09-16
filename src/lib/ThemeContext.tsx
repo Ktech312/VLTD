@@ -3,16 +3,29 @@
 import React, { createContext, useContext, useEffect, useState } from 'react'
 import { Theme, ThemeId, themes, defaultTheme, THEME_LS_KEY } from './themes'
 
+// Icon style is a separate, independent preference from the background
+// theme (Dark/Light + palette) — see AppIcon.tsx, which renders both a
+// classic and a Friendly Glass layer and lets `data-vltd-icon-style` on
+// <html> pick which one is visible, so switching never requires a client
+// boundary in AppIcon itself.
+export type IconStyle = 'classic' | 'friendly-glass'
+export const ICON_STYLE_LS_KEY = 'vltd_icon_style'
+const DEFAULT_ICON_STYLE: IconStyle = 'classic'
+
 interface ThemeContextValue {
   themeId: ThemeId
   theme: Theme
   setTheme: (id: ThemeId) => void
+  iconStyle: IconStyle
+  setIconStyle: (style: IconStyle) => void
 }
 
 const ThemeContext = createContext<ThemeContextValue>({
   themeId: defaultTheme,
   theme: themes[defaultTheme],
   setTheme: () => {},
+  iconStyle: DEFAULT_ICON_STYLE,
+  setIconStyle: () => {},
 })
 
 function getThemeAccent(theme: Theme) {
@@ -20,6 +33,10 @@ function getThemeAccent(theme: Theme) {
   // holds a platinum value). Cyan is applied deliberately as a status accent,
   // never as the global accent, so the UI stays calm by default.
   return theme.gold
+}
+
+function applyIconStyleAttr(style: IconStyle) {
+  document.documentElement.setAttribute('data-vltd-icon-style', style)
 }
 
 function applyThemeVars(theme: Theme) {
@@ -51,16 +68,24 @@ function applyThemeVars(theme: Theme) {
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [themeId, setThemeId] = useState<ThemeId>(defaultTheme)
+  const [iconStyle, setIconStyleState] = useState<IconStyle>(DEFAULT_ICON_STYLE)
 
   // Track hydration so the initial default-theme render does NOT overwrite the
   // saved preference before we've read it back (that bug reverted every refresh
-  // to the dark default).
+  // to the dark default). Icon style shares this same guard and is read in the
+  // same effect so both preferences restore together before either persists.
   const [hydrated, setHydrated] = useState(false)
 
   useEffect(() => {
     try {
       const saved = localStorage.getItem(THEME_LS_KEY) as ThemeId | null
       if (saved && themes[saved]) setThemeId(saved)
+    } catch {}
+    try {
+      const savedIconStyle = localStorage.getItem(ICON_STYLE_LS_KEY) as IconStyle | null
+      if (savedIconStyle === 'classic' || savedIconStyle === 'friendly-glass') {
+        setIconStyleState(savedIconStyle)
+      }
     } catch {}
     setHydrated(true)
   }, [])
@@ -76,8 +101,19 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     }
   }, [themeId, hydrated])
 
+  useEffect(() => {
+    applyIconStyleAttr(iconStyle)
+    if (hydrated) {
+      try {
+        localStorage.setItem(ICON_STYLE_LS_KEY, iconStyle)
+      } catch {}
+    }
+  }, [iconStyle, hydrated])
+
   return (
-    <ThemeContext.Provider value={{ themeId, theme: themes[themeId], setTheme: setThemeId }}>
+    <ThemeContext.Provider
+      value={{ themeId, theme: themes[themeId], setTheme: setThemeId, iconStyle, setIconStyle: setIconStyleState }}
+    >
       {children}
     </ThemeContext.Provider>
   )
