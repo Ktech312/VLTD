@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { AppIcon } from "@/components/ui/AppIcon";
 import { getMyAdminRole, type AdminRole } from "@/lib/adminAuth";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 import { timeAgo, exactDateTime, formatDuration, averageSessionLength, isOnline } from "@/lib/presence";
@@ -226,24 +227,16 @@ export default function AdminUsersPage() {
           ].join(" ")}
         >
           {label}
-          <svg
-            width="10"
-            height="10"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="3"
-            strokeLinecap="round"
-            strokeLinejoin="round"
+          <AppIcon
+            name="chevronDown"
+            size={10}
+            strokeWidth={3}
             className={[
               "shrink-0 transition-transform",
               active ? "opacity-100" : "opacity-30",
               active && sortDir === "asc" ? "rotate-180" : "",
             ].join(" ")}
-            aria-hidden="true"
-          >
-            <polyline points="6 9 12 15 18 9" />
-          </svg>
+          />
         </button>
       </th>
     );
@@ -433,20 +426,12 @@ export default function AdminUsersPage() {
               <span className="text-xs font-semibold uppercase tracking-wider text-[color:var(--muted)]">
                 Seed / test accounts ({seedRows.length})
               </span>
-              <svg
-                width="12"
-                height="12"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
+              <AppIcon
+                name="chevronDown"
+                size={12}
+                strokeWidth={2.5}
                 className={`text-[color:var(--muted)] transition-transform ${showSeed ? "rotate-180" : ""}`}
-                aria-hidden="true"
-              >
-                <polyline points="6 9 12 15 18 9" />
-              </svg>
+              />
             </button>
             {showSeed ? (
               <div className="mt-2 overflow-x-auto rounded-2xl border border-[color:var(--border)]">

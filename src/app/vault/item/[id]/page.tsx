@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { use, useEffect, useMemo, useState } from "react";
 
+import { AppIcon } from "@/components/ui/AppIcon";
 import CostToSellPanel from "@/components/CostToSellPanel";
 import CoaScanButton from "@/components/CoaScanButton";
 import type { CoaAnalysisResult } from "@/app/api/ai/analyze-coa/route";
@@ -787,12 +788,7 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
                 aria-label="Delete item"
                 title="Delete item"
               >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
-                  <polyline points="3 6 5 6 21 6" />
-                  <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
-                  <path d="M10 11v6M14 11v6" />
-                  <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
-                </svg>
+                <AppIcon name="delete" size={16} strokeWidth={1.75} />
               </button>
               <div className="text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">ITEM</div>
               <div className="mt-2 flex flex-wrap items-center gap-3">
@@ -1310,10 +1306,7 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
                   className="inline-flex h-7 w-7 items-center justify-center rounded-[7px] ring-1 ring-[color:var(--border)] transition hover:bg-[color:var(--pill)]"
                   style={{ color: "var(--muted)" }}
                 >
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M12 20h9" />
-                    <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" />
-                  </svg>
+                  <AppIcon name="edit" size={14} strokeWidth={1.8} />
                 </button>
               ) : null
             }

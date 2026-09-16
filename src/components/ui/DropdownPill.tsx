@@ -79,7 +79,7 @@ export function DropdownPill({
         style={{ background: "rgba(255,255,255,0.06)", borderColor: "rgba(255,255,255,0.16)", color: "rgba(255,255,255,0.85)" }}
       >
         {title}
-        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6" /></svg>
+        <Glyph name="chevronDown" size={10} strokeWidth={2.6} />
       </button>
       {open ? (
         <>

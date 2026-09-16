@@ -68,7 +68,7 @@ export default async function LearnArticlePage({ params }: { params: Promise<{ s
     >
       <div className="mx-auto max-w-3xl px-4 py-7 sm:px-6 lg:px-8">
         <Link href="/learn" className="inline-flex items-center gap-1.5 text-sm font-semibold text-[color:var(--muted)] transition hover:text-text-primary">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 6l-6 6 6 6" /></svg>
+          <Glyph name="back" size={16} strokeWidth={2} />
           Learn
         </Link>
 

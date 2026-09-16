@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { AppIcon } from "@/components/ui/AppIcon";
 
 import {
   clearDropSession,
@@ -99,9 +100,7 @@ export default function DropReviewSheet({ session, onClose, onFinish }: Props) {
                     </div>
                   ) : null}
                 </div>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0 text-[color:var(--muted)]" aria-hidden="true">
-                  <path d="M9 18l6-6-6-6" />
-                </svg>
+                <AppIcon name="next" strokeWidth={2} className="shrink-0 text-[color:var(--muted)]" />
               </button>
             ))
           )}

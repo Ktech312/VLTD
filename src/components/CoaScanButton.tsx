@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
+import { AppIcon } from "@/components/ui/AppIcon";
 import type { CoaAnalysisResult } from "@/app/api/ai/analyze-coa/route";
 import { getStoredActiveProfileId } from "@/lib/auth";
 
@@ -98,10 +99,7 @@ export default function CoaScanButton({ onApply }: Props) {
           className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-semibold ring-1 ring-[color:var(--border)] transition hover:ring-[color:var(--theme-gold)] hover:text-[color:var(--theme-gold)]"
           style={{ color: "var(--muted)" }}
         >
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-            <rect x="3" y="3" width="18" height="18" rx="2"/>
-            <path d="M3 9h18M9 21V9"/>
-          </svg>
+          <AppIcon name="document" size={12} strokeWidth={2.5} />
           Scan Certificate
         </button>
       )}

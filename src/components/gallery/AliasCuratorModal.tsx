@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
+import { AppIcon } from "@/components/ui/AppIcon";
 
 function formatExhibitSince(createdAt?: number): string | null {
   if (!createdAt) return null;
@@ -84,9 +85,7 @@ export default function AliasCuratorModal({
           className="vltd-selectable bg-[color:var(--pill)] text-[color:var(--pill-fg)] ring-1 ring-[color:var(--border)] transition"
           style={{ position: "absolute", right: 14, top: 14, width: 30, height: 30, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", border: "none", cursor: "pointer" }}
         >
-          <svg viewBox="0 0 20 20" fill="none" style={{ width: 13, height: 13 }}>
-            <path d="M6 6l8 8M14 6l-8 8" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-          </svg>
+          <AppIcon name="close" strokeWidth={1.8} style={{ width: 13, height: 13 }} />
         </button>
 
         <div style={{ display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", paddingTop: 6 }}>

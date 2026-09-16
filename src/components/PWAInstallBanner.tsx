@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { AppIcon } from "@/components/ui/AppIcon";
 
 interface BeforeInstallPromptEvent extends Event {
   prompt(): Promise<void>;
@@ -107,9 +108,7 @@ export default function PWAInstallBanner() {
       style={{ minHeight: 36, minWidth: 36 }}
       className="flex items-center justify-center text-white/40 hover:text-white/70 transition flex-shrink-0"
     >
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-        <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
-      </svg>
+      <AppIcon name="close" size={14} strokeWidth={2.5} />
     </button>
   );
 
@@ -128,10 +127,7 @@ export default function PWAInstallBanner() {
           style={{ minHeight: 28, minWidth: 28 }}
           className="flex items-center justify-center rounded-full bg-amber-500 hover:bg-amber-400 transition flex-shrink-0"
         >
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="2.5">
-            <path d="M12 3v13M5 16l7 7 7-7"/>
-            <path d="M4 21h16" strokeLinecap="round"/>
-          </svg>
+          <AppIcon name="download" size={13} strokeWidth={2.5} style={{ color: "black" }} />
         </button>
         <XButton />
       </div>
@@ -153,7 +149,7 @@ export default function PWAInstallBanner() {
             onClick={() => setIosExpanded((v) => !v)}
             className="flex-1 text-left text-[11px] font-semibold text-white whitespace-nowrap"
           >
-            Tap <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="inline align-middle text-white/60"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> → Add to Home Screen
+            Tap <AppIcon name="share" size={10} strokeWidth={2} className="inline align-middle text-white/60" /> → Add to Home Screen
           </button>
           <XButton />
         </div>

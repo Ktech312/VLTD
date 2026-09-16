@@ -928,10 +928,7 @@ export default function ScanCapturePanel({ onClose }: { onClose: () => void }) {
                 boxShadow: "0 0 0 3px #0B0B0B, 0 0 0 4px rgba(203,208,213,0.30), 0 8px 24px rgba(0,0,0,0.5)",
               }}
             >
-              <svg width="30" height="30" viewBox="0 0 24 24" fill="none">
-                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" stroke="#1A0F00" strokeWidth="1.6" strokeLinejoin="round" fill="rgba(26,15,0,0.12)" />
-                <circle cx="12" cy="13" r="4" stroke="#1A0F00" strokeWidth="1.6" />
-              </svg>
+              <Glyph name="camera" size={30} strokeWidth={1.6} style={{ color: "#1A0F00" }} />
             </button>
 
             {/* Last shot — tap to review captures (retake decisions) */}

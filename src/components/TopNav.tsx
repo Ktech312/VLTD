@@ -8,7 +8,7 @@ import Image from "next/image";
 import AlertsBell from "@/components/AlertsBell";
 import CommandPalette from "@/components/CommandPalette";
 import { ThemePicker } from "@/components/ui/ThemePicker";
-import { Glyph } from "@/components/ui/Glyph";
+import { AppIcon, type AppIconName } from "@/components/ui/AppIcon";
 import {
   getCurrentUser,
   initAuthListener,
@@ -82,163 +82,50 @@ type Parsed = {
   grade?: string;
 };
 
-/* ── Icons ──────────────────────────────────────────────── */
-
-function IconVault({ active }: { active: boolean }) {
-  return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" style={{ color: active ? "#C8CDD2" : "var(--muted2, #61656B)" }}>
-      <rect x="3" y="5" width="18" height="14" rx="2" stroke="currentColor" strokeWidth="1.75"
-        fill={active ? "rgba(203,208,213,0.10)" : "none"} />
-      <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="1.75" />
-      <path d="M12 9v-2M12 17v-2M15 12h2M7 12h2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-    </svg>
-  );
-}
-
-function IconExhibitions({ active }: { active: boolean }) {
-  return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" style={{ color: active ? "#C8CDD2" : "var(--muted2, #61656B)" }}>
-      <path d="M3 21h18" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
-      <path d="M5 21V11M19 21V11" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
-      <path d="M2 11h20" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
-      <path d="M12 4 2 11h20L12 4Z" stroke="currentColor" strokeWidth="1.75" strokeLinejoin="round"
-        fill={active ? "rgba(203,208,213,0.12)" : "none"} />
-      <path d="M9 21v-5h6v5" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
-    </svg>
-  );
-}
-
-function IconDiscover({ active }: { active: boolean }) {
-  return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" style={{ color: active ? "#C8CDD2" : "var(--muted2, #61656B)" }}>
-      <circle cx="11" cy="11" r="7.5" stroke="currentColor" strokeWidth="1.75"
-        fill={active ? "rgba(203,208,213,0.10)" : "none"} />
-      <path d="M16.5 16.5 21 21" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
-      <circle cx="11" cy="11" r="2.5" stroke="currentColor" strokeWidth="1.4" />
-    </svg>
-  );
-}
-
-function IconCommunityBoard({ active }: { active: boolean }) {
-  return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" style={{ color: active ? "#C8CDD2" : "var(--muted2, #61656B)" }}>
-      {/* Podium / leaderboard */}
-      <rect x="2" y="13" width="5" height="8" rx="1" stroke="currentColor" strokeWidth="1.75"
-        fill={active ? "rgba(203,208,213,0.16)" : "none"} />
-      <rect x="9.5" y="9" width="5" height="12" rx="1" stroke="currentColor" strokeWidth="1.75"
-        fill={active ? "rgba(203,208,213,0.24)" : "none"} />
-      <rect x="17" y="11" width="5" height="10" rx="1" stroke="currentColor" strokeWidth="1.75"
-        fill={active ? "rgba(203,208,213,0.16)" : "none"} />
-      <path d="M12 6.5l1 2h2l-1.5 1.2.5 2L12 10.7 10 11.7l.5-2L9 8.5h2l1-2Z"
-        stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round"
-        fill={active ? "rgba(203,208,213,0.30)" : "none"} />
-    </svg>
-  );
-}
-
-function IconInsights({ active }: { active: boolean }) {
-  return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" style={{ color: active ? "#C8CDD2" : "var(--muted2, #61656B)" }}>
-      <path d="M3 17l4.5-5.5 4 3.5 4.5-6 4.5 3.5"
-        stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
-      <path d="M3 20h18" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" opacity="0.4" />
-    </svg>
-  );
-}
-
-function IconEvents({ active }: { active: boolean }) {
-  return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" style={{ color: active ? "#C8CDD2" : "var(--muted2, #61656B)" }}>
-      <rect x="3" y="5" width="18" height="16" rx="2" stroke="currentColor" strokeWidth="1.75"
-        fill={active ? "rgba(203,208,213,0.10)" : "none"} />
-      <path d="M3 10h18" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" opacity="0.5" />
-      <path d="M8 3v4M16 3v4" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
-      <circle cx="8" cy="15" r="1.2" fill="currentColor" opacity={active ? "1" : "0.6"} />
-      <circle cx="12" cy="15" r="1.2" fill="currentColor" opacity={active ? "1" : "0.6"} />
-      <circle cx="16" cy="15" r="1.2" fill="currentColor" opacity={active ? "0.5" : "0.3"} />
-    </svg>
-  );
-}
-
-function IconActivity({ active }: { active: boolean }) {
-  return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" style={{ color: active ? "#C8CDD2" : "var(--muted2, #61656B)" }}>
-      <path d="M3 12h3.5l2.5-6 4 12 2.5-6H21"
-        stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
-}
-
-function IconLearn({ active }: { active: boolean }) {
-  return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" style={{ color: active ? "#C8CDD2" : "var(--muted2, #61656B)" }}>
-      <path d="M12 6.5C10 5 6.5 4.8 3.5 5.5v12.5c3-.7 6.5-.5 8.5 1 2-1.5 5.5-1.7 8.5-1V5.5C17.5 4.8 14 5 12 6.5Z"
-        stroke="currentColor" strokeWidth="1.75" strokeLinejoin="round"
-        fill={active ? "rgba(203,208,213,0.12)" : "none"} />
-      <path d="M12 6.5V19" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" opacity="0.6" />
-    </svg>
-  );
-}
-
-function IconSearch({ className = "h-4 w-4" }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" className={className}>
-      <path d="M10.5 18a7.5 7.5 0 1 1 0-15 7.5 7.5 0 0 1 0 15Z" stroke="currentColor" strokeWidth="2" />
-      <path d="M16.4 16.4 21 21" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-    </svg>
-  );
-}
-
-function IconChevron({ size = 14 }: { size?: number }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-      <path d="M6 9l6 6 6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
-}
-
 /* ── Nav items ──────────────────────────────────────────── */
+// Icon art lives in AppIcon.tsx now (variant="navTop") — one component, so
+// a future icon change only has to happen in one place, including here.
 
 // Main nav bar items
-const MAIN_NAV_ITEMS = [
+const MAIN_NAV_ITEMS: { label: string; href: string; icon: AppIconName; exact: boolean; desc: string; subpathOnly?: boolean }[] = [
   {
-    label: "Vault",       href: "/vault",      icon: IconVault,       exact: false,
+    label: "Vault",       href: "/vault",      icon: "vault",       exact: false,
     desc: "Your private collection inventory.",
   },
   {
-    label: "Exhibitions", href: "/museum",     icon: IconExhibitions, exact: false,
+    label: "Exhibitions", href: "/museum",     icon: "exhibitions", exact: false,
     desc: "Curate and display collections for the world.",
   },
   {
-    label: "Discover",    href: "/discover",   icon: IconDiscover,    exact: false,
+    label: "Discover",    href: "/discover",   icon: "discover",    exact: false,
     desc: "Find collectors, museums and inspiration.",
   },
   {
-    label: "Events",      href: "/events",     icon: IconEvents,      exact: false,
+    label: "Events",      href: "/events",     icon: "events",      exact: false,
     desc: "Shows, conventions & collector gatherings.",
   },
   {
-    label: "Insights",    href: "/portfolio",  icon: IconInsights,    exact: true,  subpathOnly: false,
+    label: "Insights",    href: "/portfolio",  icon: "insights",    exact: true,  subpathOnly: false,
     desc: "Track value, growth, provenance and collection health.",
   },
 ];
 
 // "More" dropdown items
-const MORE_NAV_ITEMS = [
+const MORE_NAV_ITEMS: { label: string; href: string; icon: AppIconName; exact: boolean; desc: string }[] = [
   {
-    label: "Command Center", href: "/more", icon: IconVault, exact: true,
+    label: "Command Center", href: "/more", icon: "vault", exact: true,
     desc: "Account, tools, data, sharing and quick panels.",
   },
   {
-    label: "VLT Lounge", href: "/community-board", icon: IconCommunityBoard, exact: false,
+    label: "VLT Lounge", href: "/community-board", icon: "communityBoard", exact: false,
     desc: "Spotlights, MVPs & collector community.",
   },
   {
-    label: "Activity", href: "/activity", icon: IconActivity, exact: false,
+    label: "Activity", href: "/activity", icon: "activity", exact: false,
     desc: "Recent vault updates, sales and exhibition activity.",
   },
   {
-    label: "Learn", href: "/learn", icon: IconLearn, exact: false,
+    label: "Learn", href: "/learn", icon: "learn", exact: false,
     desc: "Guides on grading, provenance and getting started.",
   },
 ];
@@ -493,7 +380,6 @@ function TopNavInner() {
             <div className="flex items-end gap-1">
               {MAIN_NAV_ITEMS.map((item) => {
                 const active = isActive(item);
-                const Icon = item.icon;
                 return (
                   <Link
                     key={item.href + item.label}
@@ -501,7 +387,7 @@ function TopNavInner() {
                     className="relative flex flex-col items-center gap-[3px] px-3 pt-2 pb-[10px] transition-opacity hover:opacity-100"
                     style={{ opacity: active ? 1 : 0.65 }}
                   >
-                    <Icon active={active} />
+                    <AppIcon name={item.icon} variant="navTop" active={active} size={20} style={{ color: active ? "#C8CDD2" : "var(--muted2, #61656B)" }} />
                     <span
                       className="text-[11px] font-semibold tracking-[0.04em] leading-none whitespace-nowrap"
                       style={{ color: active ? "#C8CDD2" : "var(--muted, #C4B07A)" }}
@@ -532,12 +418,7 @@ function TopNavInner() {
                   className="relative flex flex-col items-center gap-[3px] px-3 pt-2 pb-[10px] transition-opacity hover:opacity-100"
                   style={{ opacity: isMoreActive || moreOpen ? 1 : 0.65 }}
                 >
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
-                    style={{ color: isMoreActive || moreOpen ? "#C8CDD2" : "var(--muted2, #61656B)" }}>
-                    <circle cx="5" cy="12" r="1.5" fill="currentColor" />
-                    <circle cx="12" cy="12" r="1.5" fill="currentColor" />
-                    <circle cx="19" cy="12" r="1.5" fill="currentColor" />
-                  </svg>
+                  <AppIcon name="more" variant="navTop" size={20} style={{ color: isMoreActive || moreOpen ? "#C8CDD2" : "var(--muted2, #61656B)" }} />
                   <span
                     className="text-[11px] font-semibold tracking-[0.04em] leading-none whitespace-nowrap"
                     style={{ color: isMoreActive || moreOpen ? "#C8CDD2" : "var(--muted, #C4B07A)" }}
@@ -565,6 +446,7 @@ function TopNavInner() {
               <button
                 type="button"
                 onClick={() => setGuideOpen((v) => !v)}
+                aria-label="Guide"
                 className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[13px] font-semibold transition"
                 style={{
                   background: guideOpen ? "rgba(203,208,213,0.12)" : "rgba(255,255,255,0.05)",
@@ -572,18 +454,9 @@ function TopNavInner() {
                   color: guideOpen ? "#C8CDD2" : "var(--muted2, #61656B)",
                 }}
               >
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-label="Guide">
-                  <path d="M4 4h7a1 1 0 0 1 1 1v14a1 1 0 0 0-1-1H4V4Z"
-                    stroke="currentColor" strokeWidth="1.75" strokeLinejoin="round"
-                    fill={guideOpen ? "rgba(203,208,213,0.16)" : "rgba(203,208,213,0.06)"} />
-                  <path d="M20 4h-7a1 1 0 0 0-1 1v14a1 1 0 0 1 1-1h7V4Z"
-                    stroke="currentColor" strokeWidth="1.75" strokeLinejoin="round"
-                    fill={guideOpen ? "rgba(203,208,213,0.16)" : "rgba(203,208,213,0.06)"} />
-                  <path d="M12 5v14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" opacity="0.5" />
-                  <text x="15.5" y="15" textAnchor="middle" fontSize="7" fontWeight="bold" fill="currentColor">?</text>
-                </svg>
+                <AppIcon name="guide" variant="navTop" active={guideOpen} size={18} />
                 <span style={{ transform: guideOpen ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s", display: "inline-flex" }}>
-                  <IconChevron />
+                  <AppIcon name="chevronDown" size={14} strokeWidth={2} />
                 </span>
               </button>
             </div>
@@ -604,7 +477,7 @@ function TopNavInner() {
                 }}
               >
                 <button type="submit" className="shrink-0" style={{ color: "var(--muted, #8A7A5A)" }} aria-label="Search">
-                  <IconSearch className="h-3.5 w-3.5" />
+                  <AppIcon name="search" variant="navTop" className="h-3.5 w-3.5" />
                 </button>
                 <input
                   value={input}
@@ -629,9 +502,7 @@ function TopNavInner() {
               className="relative grid h-9 w-9 place-items-center rounded-full transition hover:opacity-90"
               style={{ color: "var(--muted)" }}
             >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M4 5h16a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H8l-4 3V6a1 1 0 0 1 1-1z" />
-              </svg>
+              <AppIcon name="message" variant="navTop" size={20} strokeWidth={1.7} />
               {unreadDmCount > 0 ? (
                 <span
                   className="absolute -right-0.5 -top-0.5 grid h-4 min-w-4 place-items-center rounded-full px-1 text-[9px] font-black"
@@ -677,7 +548,7 @@ function TopNavInner() {
                     avatarText
                   )}
                 </div>
-                <IconChevron size={12} />
+                <AppIcon name="chevronDown" size={12} strokeWidth={2} />
               </button>
             </div>
           </div>
@@ -696,7 +567,6 @@ function TopNavInner() {
               <div className="grid grid-cols-4 gap-2 lg:grid-cols-10">
                 {ALL_NAV_ITEMS.map((item) => {
                   const active = isActive(item);
-                  const Icon = item.icon;
                   return (
                     <Link
                       key={item.href + item.label + "guide"}
@@ -717,7 +587,7 @@ function TopNavInner() {
                       }}
                     >
                       <div className="[&_svg]:h-3.5 [&_svg]:w-3.5">
-                        <Icon active={active} />
+                        <AppIcon name={item.icon} variant="navTop" active={active} size={20} style={{ color: active ? "#C8CDD2" : "var(--muted2, #61656B)" }} />
                       </div>
                       <div>
                         <p className="text-[11px] font-bold leading-none" style={{ color: active ? "#C8CDD2" : "var(--theme-text-primary, #ECEDEF)" }}>
@@ -744,7 +614,7 @@ function TopNavInner() {
                     className="flex h-7 w-7 items-center justify-center self-end rounded-lg text-sm"
                     style={{ background: "rgba(203,208,213,0.12)", border: "1px solid rgba(203,208,213,0.25)" }}
                   >
-                    <Glyph name="exhibition" size={16} />
+                    <AppIcon name="exhibition" size={16} />
                   </div>
                   <div>
                     <p className="text-[10px] font-black leading-tight" style={{ color: "var(--theme-text-primary, #ECEDEF)" }}>
@@ -789,7 +659,6 @@ function TopNavInner() {
           <div className="py-1.5 px-1.5">
             {MORE_NAV_ITEMS.map((item) => {
               const active = isActive(item);
-              const Icon = item.icon;
               return (
                 <Link
                   key={item.href}
@@ -799,7 +668,7 @@ function TopNavInner() {
                   style={{ background: active ? "rgba(203,208,213,0.07)" : "transparent" }}
                 >
                   <div className="[&_svg]:h-4 [&_svg]:w-4 shrink-0">
-                    <Icon active={active} />
+                    <AppIcon name={item.icon} variant="navTop" active={active} size={20} style={{ color: active ? "#C8CDD2" : "var(--muted2, #61656B)" }} />
                   </div>
                   <span
                     className="text-sm font-semibold"

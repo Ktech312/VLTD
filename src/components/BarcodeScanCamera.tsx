@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { AppIcon } from "@/components/ui/AppIcon";
 import type { BarcodeScanResult } from "@/lib/scanners/barcodeScanner";
 import { decodeBarcodeOnceFromVideo, startLiveBarcodeScan } from "@/lib/scanners/liveBarcodeReader";
 
@@ -156,9 +157,7 @@ export default function BarcodeScanCamera({
             {scanned && (
               <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
                 <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#C8CDD2]">
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#000" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                    <polyline points="20 6 9 17 4 12" />
-                  </svg>
+                  <AppIcon name="checkmark" strokeWidth={3} style={{ color: "#000" }} />
                 </div>
                 <span className="rounded-full bg-black/70 px-3 py-1 text-xs font-bold text-[#C8CDD2]">
                   {scannedCode}

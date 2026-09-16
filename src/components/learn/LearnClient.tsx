@@ -42,9 +42,7 @@ function SaveChip({ saved, onToggle }: { saved: boolean; onToggle: () => void })
       className="inline-flex items-center gap-1 text-[11px] font-semibold transition"
       style={{ color: saved ? "var(--theme-gold,#C8CDD2)" : "var(--muted)" }}
     >
-      <svg width="12" height="12" viewBox="0 0 24 24" fill={saved ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M6 4h12a1 1 0 0 1 1 1v15l-7-4-7 4V5a1 1 0 0 1 1-1z" />
-      </svg>
+      <Glyph name="favorite" size={12} strokeWidth={2} filled={saved} />
       {saved ? "Saved" : "Save"}
     </button>
   );
@@ -60,9 +58,7 @@ function ClockRead({ minutes }: { minutes: number }) {
 }
 
 function Chevron() {
-  return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 6l6 6-6 6" /></svg>
-  );
+  return <Glyph name="next" size={14} strokeWidth={2} />;
 }
 
 export default function LearnClient() {

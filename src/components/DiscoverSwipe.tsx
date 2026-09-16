@@ -7,6 +7,7 @@ import { getSeedAvatarUrlForProfile, isRenderableAvatarUrl } from "@/lib/seedAva
 import { getAppreciationCounts, getAppreciatedSet } from "@/lib/appreciations";
 import { VibeButton } from "@/components/social/VibeButton";
 import { Glyph } from "@/components/ui/Glyph";
+import { AppIcon } from "@/components/ui/AppIcon";
 
 const ACTIVE_PROFILE_KEY = "vltd_active_profile_id_v1";
 
@@ -153,9 +154,7 @@ function SwipeCard({ card, onSwipe, active, viewerProfileId }: CardProps) {
           {savedRef.current && (
             <div className="absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full"
               style={{ background: "rgba(203,208,213,0.9)" }}>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="#0B0B0B">
-                <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
-              </svg>
+              <AppIcon name="favorite" size={14} filled style={{ color: "#0B0B0B" }} />
             </div>
           )}
         </div>
@@ -378,9 +377,7 @@ export default function DiscoverSwipe({ open, onClose }: Props) {
             style={{ background: "var(--surface)", borderColor: "var(--border)", color: "var(--muted)" }}
             aria-label="Close"
           >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-              <path d="M18 6 6 18M6 6l12 12" />
-            </svg>
+            <Glyph name="close" size={14} strokeWidth={2} />
           </button>
         </div>
       </div>
@@ -466,9 +463,7 @@ export default function DiscoverSwipe({ open, onClose }: Props) {
             style={{ background: "rgba(248,113,113,0.10)", borderColor: "rgba(248,113,113,0.40)", color: "rgba(248,113,113,0.90)" }}
             aria-label="Skip"
           >
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-              <path d="M18 6 6 18M6 6l12 12" />
-            </svg>
+            <Glyph name="close" size={22} strokeWidth={2.5} />
           </button>
 
           {/* Save / Watchlist */}
@@ -479,9 +474,7 @@ export default function DiscoverSwipe({ open, onClose }: Props) {
             style={{ background: "rgba(203,208,213,0.12)", borderColor: "rgba(203,208,213,0.45)", color: "#C8CDD2" }}
             aria-label="Save to watchlist"
           >
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
-            </svg>
+            <AppIcon name="favorite" size={22} filled />
           </button>
         </div>
       )}

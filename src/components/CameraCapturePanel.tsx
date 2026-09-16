@@ -934,10 +934,7 @@ export default function CameraCapturePanel({
                   color: "var(--theme-gold, #C8CDD2)",
                 }}
               >
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                  <circle cx="12" cy="12" r="4" />
-                  <path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" />
-                </svg>
+                <Glyph name="sun" size={15} strokeWidth={1.8} />
               </button>
               <button
                 type="button"
@@ -955,11 +952,7 @@ export default function CameraCapturePanel({
                 {isRemovingBackground ? (
                   <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-current border-t-transparent" />
                 ) : (
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                    <path d="m7 21-4.3-4.3c-1-1-1-2.5 0-3.4l9.6-9.6c1-1 2.5-1 3.4 0l5.6 5.6c1 1 1 2.5 0 3.4L13 21" />
-                    <path d="M22 21H7" />
-                    <path d="m5 11 9 9" />
-                  </svg>
+                  <Glyph name="eraser" size={15} strokeWidth={1.8} />
                 )}
               </button>
             </div>
@@ -1079,11 +1072,7 @@ export default function CameraCapturePanel({
                 className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-[7px] ring-1 ring-[color:var(--border)] transition hover:text-[color:var(--fg)]"
                 style={{ background: "var(--pill)", color: "var(--muted)" }}
               >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                  <polyline points="17 8 12 3 7 8" />
-                  <line x1="12" y1="3" x2="12" y2="15" />
-                </svg>
+                <Glyph name="upload" size={16} strokeWidth={1.8} />
               </button>
 
               {!cameraError && cameraReady && !capturedFile ? (
@@ -1184,7 +1173,7 @@ export default function CameraCapturePanel({
                 className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[color:var(--muted)] ring-1 ring-[color:var(--border)] transition hover:text-[color:var(--fg)]"
                 style={{ background: "var(--pill)" }}
               >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
+                <Glyph name="close" size={14} strokeWidth={2} />
               </button>
             </div>
 
@@ -1522,16 +1511,7 @@ export default function CameraCapturePanel({
                 {isCapturing || (!cameraReady && !cameraError) ? (
                   <div className="h-5 w-5 rounded-full border-[2.5px] border-[#1A0F00]/30 border-t-[#1A0F00] animate-spin" />
                 ) : (
-                  <svg width="30" height="30" viewBox="0 0 24 24" fill="none">
-                    <path
-                      d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"
-                      stroke="#1A0F00"
-                      strokeWidth="1.6"
-                      strokeLinejoin="round"
-                      fill="rgba(26,15,0,0.12)"
-                    />
-                    <circle cx="12" cy="13" r="4" stroke="#1A0F00" strokeWidth="1.6" />
-                  </svg>
+                  <Glyph name="camera" size={30} strokeWidth={1.6} style={{ color: "#1A0F00" }} />
                 )}
               </button>
 

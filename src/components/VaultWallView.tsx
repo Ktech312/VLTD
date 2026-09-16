@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useMemo, useRef, useState } from "react";
 
 import ProgressiveImage from "@/components/ui/ProgressiveImage";
+import { AppIcon } from "@/components/ui/AppIcon";
 import { UNIVERSE_LABEL, type UniverseKey } from "@/lib/taxonomy";
 import { useResolvedVaultImage } from "@/lib/useResolvedVaultImages";
 import { type VaultItem } from "@/lib/vaultModel";
@@ -331,9 +332,7 @@ export default function VaultWallView({ items, saleMap }: VaultWallViewProps) {
               <span className="h-1.5 w-1.5 rounded-full bg-gold" />
             )}
             Advanced
-            <svg viewBox="0 0 10 6" className={["h-2.5 w-2.5 transition-transform", showAdvanced ? "rotate-180" : ""].join(" ")} fill="currentColor">
-              <path d="M0 0l5 6 5-6z" />
-            </svg>
+            <AppIcon name="chevronDown" strokeWidth={2.5} className={["h-2.5 w-2.5 transition-transform", showAdvanced ? "rotate-180" : ""].join(" ")} />
           </button>
         </div>
 

@@ -5,24 +5,7 @@ import { PageHeader } from "@/components/layout/PageHeader";
 import { type ChangeEvent, type PointerEvent, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { PillButton } from "@/components/ui/PillButton";
-function IconLayoutTemplate({ size = 24, style }: { size?: number; style?: Record<string, string | number> }) {
-  return (
-    <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={style}>
-      <rect x="3" y="3" width="18" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>
-    </svg>
-  );
-}
-
-function ExternalOpenIcon({ size = 17 }: { size?: number }) {
-  return (
-    <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="M15 3h6v6" />
-      <path d="M10 14 21 3" />
-      <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
-    </svg>
-  );
-}
-
+import { AppIcon } from "@/components/ui/AppIcon";
 import ProgressiveImage from "@/components/ui/ProgressiveImage";
 import { getGalleryScore } from "@/lib/galleryScore";
 import {
@@ -516,11 +499,7 @@ export default function MuseumPage() {
               : { background: "var(--pill)", color: "var(--muted)", borderColor: "var(--border)" }
           }
         >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-            <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z" />
-            <path d="M3.27 6.96 12 12.01l8.73-5.05" />
-            <path d="M12 22.08V12" />
-          </svg>
+          <AppIcon name="box" size={14} strokeWidth={2} />
           3D Gallery
         </button>
         {/* EK's ask: a second Beta pill next to 3D Gallery — the home for
@@ -532,15 +511,7 @@ export default function MuseumPage() {
           className="inline-flex items-center gap-1.5 rounded-[8px] px-4 py-1.5 text-sm font-semibold ring-1 transition"
           style={{ background: "var(--pill)", color: "var(--muted)", borderColor: "var(--border)" }}
         >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-            <path d="M3 21h18" />
-            <path d="M4 21V10" />
-            <path d="M20 21V10" />
-            <path d="M2 10 12 3l10 7" />
-            <path d="M8 21v-7" />
-            <path d="M12 21v-7" />
-            <path d="M16 21v-7" />
-          </svg>
+          <AppIcon name="building" size={14} strokeWidth={2} />
           VLTD Museum
         </button>
         {/* Owner-only: Museum Builder, EK's own room editor for the shared
@@ -554,10 +525,7 @@ export default function MuseumPage() {
             className="inline-flex items-center gap-1.5 rounded-[8px] px-4 py-1.5 text-sm font-semibold ring-1 transition"
             style={{ background: "var(--pill)", color: "var(--muted)", borderColor: "var(--border)" }}
           >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-              <path d="M12 20h9" />
-              <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" />
-            </svg>
+            <AppIcon name="edit" size={14} strokeWidth={2} />
             Museum Builder
           </button>
         ) : null}
@@ -698,7 +666,7 @@ export default function MuseumPage() {
                   border: "1px solid var(--theme-gold-border, rgba(203,208,213,0.25))",
                 }}
               >
-                <IconLayoutTemplate size={24} style={{ color: "var(--theme-gold, #C8CDD2)" }} />
+                <AppIcon name="exhibitions" size={24} style={{ color: "var(--theme-gold, #C8CDD2)" }} />
               </div>
 
               <h2 className="text-xl font-black" style={{ color: "var(--theme-text-primary, #ECEDEF)" }}>
@@ -798,7 +766,7 @@ export default function MuseumPage() {
                           className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-black/55 text-red-200 ring-1 ring-red-400/30 backdrop-blur transition hover:bg-red-600/80 hover:text-white"
                           aria-label={`Delete gallery ${gallery.title}`}
                         >
-                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/></svg>
+                          <AppIcon name="delete" size={13} strokeWidth={2} />
                         </button>
                       </div>
 
@@ -809,7 +777,7 @@ export default function MuseumPage() {
                         </h2>
                         <div className="flex items-center gap-1 text-[11px] text-white/70">
                           {gallery.itemIds.length} {gallery.itemIds.length === 1 ? "item" : "items"} <span className="opacity-60">·</span>
-                          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="opacity-80"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>
+                          <AppIcon name="globe" size={11} strokeWidth={1.8} className="opacity-80" />
                           {visibilityLabel(gallery.visibility)}
                         </div>
                       </div>
@@ -834,7 +802,7 @@ export default function MuseumPage() {
                         style={{ color: "#4FD3EE" }}
                         aria-label={`Open full exhibit page for ${gallery.title}`}
                       >
-                        <ExternalOpenIcon />
+                        <AppIcon name="externalLink" size={17} strokeWidth={1.8} />
                       </button>
                     </div>
                   </article>
@@ -855,7 +823,7 @@ export default function MuseumPage() {
                       className="flex h-12 w-12 items-center justify-center rounded-full border transition group-hover:scale-110"
                       style={{ borderColor: "var(--theme-gold-border, rgba(203,208,213,0.35))", color: "var(--theme-gold)" }}
                     >
-                      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M12 5v14M5 12h14"/></svg>
+                      <AppIcon name="addItem" size={22} strokeWidth={2} />
                     </span>
                     <span className="text-[12px] font-semibold tracking-[0.02em] text-[color:var(--muted)] transition group-hover:text-[#5FDCF3]">New exhibit</span>
                   </Link>
@@ -889,7 +857,7 @@ export default function MuseumPage() {
                       <div className="flex items-center justify-between border-b px-4 py-3" style={{ borderColor: "var(--theme-border)" }}>
                         <div className="text-sm font-black">Exhibition Details</div>
                         <button type="button" onClick={() => setSelectedId(null)} aria-label="Close details" className="inline-flex h-7 w-7 items-center justify-center rounded-full text-[color:var(--muted)] transition hover:text-[color:var(--fg)]">
-                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+                          <AppIcon name="chevronDown" size={16} strokeWidth={2} />
                         </button>
                       </div>
 
@@ -912,7 +880,7 @@ export default function MuseumPage() {
                           <div className="flex min-w-0 flex-wrap items-center gap-2">
                             <h2 className="text-2xl font-semibold" style={{ fontFamily: "var(--font-serif, 'Cormorant Garamond', Georgia, serif)" }}>{g.title}</h2>
                             <span className="inline-flex items-center gap-1.5 text-xs font-semibold" style={{ color: g.visibility === "PUBLIC" ? "var(--data-color)" : "var(--theme-gold)" }}>
-                              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>
+                              <AppIcon name="globe" size={13} strokeWidth={1.8} />
                               {visibilityLabel(g.visibility)}
                             </span>
                           </div>
@@ -923,7 +891,7 @@ export default function MuseumPage() {
                             style={{ color: "var(--theme-gold)" }}
                             aria-label={`Open full exhibit page for ${g.title}`}
                           >
-                            <ExternalOpenIcon />
+                            <AppIcon name="externalLink" size={17} strokeWidth={1.8} />
                           </button>
                         </div>
                         <div className="mt-1 text-xs text-[color:var(--muted)]">{g.itemIds.length} items · Updated {formatGalleryDate(g.updatedAt)}</div>
@@ -938,10 +906,10 @@ export default function MuseumPage() {
                             </div>
                             <div className="mt-1.5 text-base font-black" style={{ color: "var(--theme-gold)" }}>{gradeBandLabel(s.band)}</div>
                             <div className="text-[10.5px] leading-snug text-[color:var(--muted)]">Top {topPct}% of public exhibitions</div>
-                            <div className="mt-1 text-[11px] font-semibold leading-tight" style={{ color: "var(--theme-gold)" }}>How grades work <svg className="ml-0.5 inline-block align-[-1.5px]" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg></div>
+                            <div className="mt-1 text-[11px] font-semibold leading-tight" style={{ color: "var(--theme-gold)" }}>How grades work <AppIcon name="info" size={11} strokeWidth={2} className="ml-0.5 inline-block align-[-1.5px]" /></div>
                           </div>
                           <div className="min-w-0 border-l pl-3" style={{ borderColor: "var(--theme-border)" }}>
-                            <div className="flex items-center gap-1 whitespace-nowrap text-[9px] font-semibold uppercase tracking-[0.16em] text-[color:var(--muted2)]"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v13M6 12l6 6 6-6"/></svg>Grade factors</div>
+                            <div className="flex items-center gap-1 whitespace-nowrap text-[9px] font-semibold uppercase tracking-[0.16em] text-[color:var(--muted2)]"><AppIcon name="chevronDown" size={10} strokeWidth={2.5} />Grade factors</div>
                             <div className="mt-1.5 divide-y divide-[color:var(--theme-border)]">
                               {factors.map((f) => (
                                 <div key={f.name} className="flex items-center justify-between gap-2 py-[7px] text-[12px]">
@@ -974,7 +942,7 @@ export default function MuseumPage() {
                           <div className="mt-2 flex gap-2">
                             <input readOnly value={shareUrl} className="h-9 min-w-0 flex-1 rounded-[7px] border px-3 text-xs" style={{ borderColor: "var(--theme-border)", background: "var(--theme-elevated)", color: "var(--muted)" }} />
                             <button type="button" onClick={() => handleCopyShareLink(shareUrl)} className="inline-flex shrink-0 items-center gap-1.5 rounded-[7px] px-3 text-xs font-semibold ring-1" style={{ background: "var(--pill)", color: "var(--fg)", borderColor: "var(--border)" }}>
-                              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1"/><path d="M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1"/></svg>
+                              <AppIcon name="link" size={12} strokeWidth={2} />
                               {copyOk ? "Copied" : "Copy link"}
                             </button>
                           </div>
@@ -984,7 +952,7 @@ export default function MuseumPage() {
                         {/* Privacy & access */}
                         <div className="mt-5 flex items-center justify-between gap-3">
                           <div className="flex items-start gap-2">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="mt-0.5 text-[color:var(--muted)]"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>
+                            <AppIcon name="globe" size={16} strokeWidth={1.8} className="mt-0.5 text-[color:var(--muted)]" />
                             <div>
                               <div className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[color:var(--muted2)]">Privacy &amp; access</div>
                               <div className="text-sm font-semibold text-text-primary">{visibilityLabel(g.visibility)}</div>
@@ -1040,15 +1008,15 @@ export default function MuseumPage() {
 
                         <div className="mt-5 grid grid-cols-3 gap-2">
                           <button type="button" onClick={() => openGallery(g.id)} className="inline-flex min-h-[40px] items-center justify-center gap-1.5 rounded-[7px] text-xs font-semibold ring-1" style={{ background: "var(--pill)", color: "var(--fg)", borderColor: "var(--border)" }}>
-                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>
+                            <AppIcon name="copy" size={13} strokeWidth={1.8} />
                             Duplicate
                           </button>
                           <button type="button" onClick={() => openGallery(g.id)} className="inline-flex min-h-[40px] items-center justify-center gap-1.5 rounded-[7px] text-xs font-semibold ring-1" style={{ background: "var(--pill)", color: "var(--fg)", borderColor: "var(--border)" }}>
-                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M12 3v12m0 0l-4-4m4 4l4-4M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
+                            <AppIcon name="upload" size={13} strokeWidth={1.8} />
                             Export PDF
                           </button>
                           <button type="button" onClick={() => handleAskDelete(g)} className="inline-flex min-h-[40px] items-center justify-center gap-1.5 rounded-[7px] text-xs font-semibold ring-1" style={{ background: "rgba(248,113,113,0.08)", color: "#f87171", borderColor: "rgba(248,113,113,0.3)" }}>
-                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/></svg>
+                            <AppIcon name="delete" size={13} strokeWidth={1.8} />
                             Delete
                           </button>
                         </div>

@@ -965,7 +965,7 @@ export default function HomeClient() {
                 <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
                   <h1 style={{ fontFamily: C.r, fontSize: "40px", fontWeight: 700, lineHeight: 1.02, color: C.text }}>{displayName || "Curator"}</h1>
                   <Link href="/account" aria-label="Edit profile" title="Edit profile" style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 30, height: 30, borderRadius: 8, background: "rgba(203,208,213,0.10)", border: `1px solid ${C.bd}`, color: C.gold, textDecoration: "none" }}>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+                    <Glyph name="edit" size={14} strokeWidth={1.9} />
                   </Link>
                 </div>
                 <div style={{ fontSize: "15px", color: C.muted, marginTop: "10px" }}>

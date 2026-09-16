@@ -12,6 +12,7 @@ import VaultExportButton from "@/components/VaultExportButton";
 import VaultWallView from "@/components/VaultWallView";
 import { PillButton } from "@/components/ui/PillButton";
 import { Glyph } from "@/components/ui/Glyph";
+import { AppIcon } from "@/components/ui/AppIcon";
 import ProgressiveImage from "@/components/ui/ProgressiveImage";
 import { universePlaceholder } from "@/lib/itemPlaceholder";
 import SwipeStack from "@/components/SwipeStack";
@@ -413,24 +414,6 @@ function promoteLegacySalesToItems() {
   return changed;
 }
 
-function CameraIcon({ className = "h-5 w-5" }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" className={className} aria-hidden="true">
-      <path
-        d="M8.75 7.25 10.1 5.5h3.8l1.35 1.75h2.25A2.5 2.5 0 0 1 20 9.75v6.5a2.5 2.5 0 0 1-2.5 2.5h-11A2.5 2.5 0 0 1 4 16.25v-6.5a2.5 2.5 0 0 1 2.5-2.5h2.25Z"
-        stroke="currentColor"
-        strokeWidth="1.6"
-        strokeLinejoin="round"
-      />
-      <path
-        d="M12 15.75a3.25 3.25 0 1 0 0-6.5 3.25 3.25 0 0 0 0 6.5Z"
-        stroke="currentColor"
-        strokeWidth="1.6"
-      />
-    </svg>
-  );
-}
-
 function itemCardSubtitle(item: VaultItem) {
   const universe = universeDisplayName(universeForItem(item));
   const category =
@@ -528,9 +511,7 @@ function VaultCard({
           {isDeleting ? (
             <span className="text-[9px]">...</span>
           ) : (
-            <svg width="13" height="13" viewBox="0 0 15 15" fill="none" aria-hidden="true">
-              <path d="M5 1h5M1 3h13M2.5 3l1 9.5a1 1 0 001 .5h6a1 1 0 001-.5l1-9.5M5.5 6v4M9.5 6v4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
+            <AppIcon name="delete" size={13} strokeWidth={1.4} />
           )}
         </button>
       </div>
@@ -549,7 +530,7 @@ function VaultCard({
             <div className="relative h-full w-full">
               <img src={universePlaceholder(item.universe)} alt="" className="h-full w-full object-cover opacity-[0.22]" draggable={false} />
               <div className="absolute inset-0 flex flex-col items-center justify-center gap-1 text-center text-[10px] font-semibold uppercase tracking-[0.14em] text-white/45">
-                <CameraIcon className="h-5 w-5" />
+                <AppIcon name="camera" size={20} className="h-5 w-5" />
                 <span>Add photo</span>
               </div>
             </div>
@@ -665,7 +646,7 @@ function VaultEmptyState({
             className="w-full gap-2 sm:w-auto"
             style={{ background: "#C8CDD2", color: "#0B0B0B" }}
           >
-            <CameraIcon className="h-5 w-5" />
+            <AppIcon name="camera" size={20} className="h-5 w-5" />
             Scan your first item
           </PillButton>
           <div className="flex flex-wrap justify-center gap-2">
@@ -865,7 +846,7 @@ function VaultSelectionDrawer({
               <div className="relative h-full w-full">
                 <img src={universePlaceholder(item.universe)} alt="" className="h-full w-full object-cover opacity-[0.22]" draggable={false} />
                 <div className="absolute inset-0 flex flex-col items-center justify-center gap-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-white/45">
-                  <CameraIcon className="h-5 w-5" />
+                  <AppIcon name="camera" size={20} className="h-5 w-5" />
                   Add photo
                 </div>
               </div>
@@ -1454,7 +1435,7 @@ export default function VaultPage() {
             {/* Add Item — the single primary add on the page */}
             <Link href="/capture" className="vltd-action-module shrink-0">
               <span className="vltd-action-module__plate !py-1.5">Add Item</span>
-              <span className="vltd-action-module__block"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round"><path d="M12 5v14M5 12h14"/></svg></span>
+              <span className="vltd-action-module__block"><AppIcon name="addItem" size={14} strokeWidth={2.6} /></span>
             </Link>
             {/* Upload from device — EK: hard to find, needs a Single (all
                 photos -> one item) vs Batch (each photo -> its own item)
@@ -1603,7 +1584,7 @@ export default function VaultPage() {
           <div className="mt-5 flex gap-2 overflow-x-auto pb-2 sm:grid sm:grid-cols-2 sm:gap-3 sm:overflow-visible xl:grid-cols-4">
             <div className="w-[140px] shrink-0 vltd-brushed vltd-status-cyan p-2.5 sm:w-auto sm:p-4">
               <div className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-[color:var(--muted2)] sm:text-[11px] sm:tracking-[0.18em]">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true"><ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v6c0 1.66 3.58 3 8 3s8-1.34 8-3V5"/><path d="M4 11v6c0 1.66 3.58 3 8 3s8-1.34 8-3v-6"/></svg>
+                <AppIcon name="price" size={12} strokeWidth={1.8} />
                 Total Value
               </div>
               <div className="mt-1.5 text-xl font-extrabold tracking-[-0.02em] text-[color:var(--data-color)] sm:mt-2.5 sm:text-3xl">{formatMoney(stats.totalValue)}</div>
@@ -1611,7 +1592,7 @@ export default function VaultPage() {
             </div>
             <div className="w-[140px] shrink-0 vltd-brushed p-2.5 sm:w-auto sm:p-4">
               <div className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-[color:var(--muted2)] sm:text-[11px] sm:tracking-[0.18em]">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" aria-hidden="true"><path d="M21 8l-9-5-9 5 9 5 9-5z"/><path d="M3 8v8l9 5 9-5V8"/><path d="M12 13v8"/></svg>
+                <AppIcon name="box" size={12} strokeWidth={1.8} />
                 Items
               </div>
               <div className="mt-1.5 text-xl font-extrabold tracking-[-0.02em] sm:mt-2.5 sm:text-3xl">{stats.totalItems}</div>
@@ -1619,7 +1600,7 @@ export default function VaultPage() {
             </div>
             <div className="w-[140px] shrink-0 vltd-brushed vltd-status-cyan p-2.5 sm:w-auto sm:p-4">
               <div className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-[color:var(--muted2)] sm:text-[11px] sm:tracking-[0.18em]">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" aria-hidden="true"><path d="M12 3l8 3v6c0 4.5-3.2 7.8-8 9-4.8-1.2-8-4.5-8-9V6l8-3z"/></svg>
+                <AppIcon name="shield" size={12} strokeWidth={1.8} />
                 Insurance Ready
               </div>
               <div className="mt-1.5 text-xl font-extrabold tracking-[-0.02em] text-[color:var(--data-color)] sm:mt-2.5 sm:text-3xl">{stats.insuranceReadyPct}%</div>
@@ -1627,7 +1608,7 @@ export default function VaultPage() {
             </div>
             <div className="w-[140px] shrink-0 vltd-brushed p-2.5 sm:w-auto sm:p-4">
               <div className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-[color:var(--muted2)] sm:text-[11px] sm:tracking-[0.18em]">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/></svg>
+                <AppIcon name="warning" size={12} strokeWidth={1.8} />
                 Needs Review
               </div>
               <div className="mt-1.5 text-xl font-extrabold tracking-[-0.02em] sm:mt-2.5 sm:text-3xl">{stats.needsReviewCount}</div>
@@ -1705,7 +1686,7 @@ export default function VaultPage() {
                   className="inline-flex h-4 w-4 shrink-0 items-center justify-center rounded"
                   style={gradedOnly ? { background: "var(--theme-gold, #C8CDD2)" } : { border: "1.5px solid var(--border)", background: "transparent" }}
                 >
-                  {gradedOnly && <svg width="10" height="8" viewBox="0 0 10 8" fill="none"><path d="M1 4l2.5 2.5L9 1" stroke="#000" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+                  {gradedOnly && <AppIcon name="checkmark" size={10} strokeWidth={1.8} style={{ color: "#000" }} />}
                 </span>
                 Graded <span className="text-[11px] opacity-65">{gradedCount}</span>
               </button>
@@ -1719,7 +1700,7 @@ export default function VaultPage() {
                   className="inline-flex h-4 w-4 shrink-0 items-center justify-center rounded"
                   style={uncategorizedOnly ? { background: "var(--theme-gold, #C8CDD2)" } : { border: "1.5px solid var(--border)", background: "transparent" }}
                 >
-                  {uncategorizedOnly && <svg width="10" height="8" viewBox="0 0 10 8" fill="none"><path d="M1 4l2.5 2.5L9 1" stroke="#000" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+                  {uncategorizedOnly && <AppIcon name="checkmark" size={10} strokeWidth={1.8} style={{ color: "#000" }} />}
                 </span>
                 Uncategorized <span className="text-[11px] opacity-65">{uncategorizedCount}</span>
               </button>
@@ -1733,7 +1714,7 @@ export default function VaultPage() {
                   className="inline-flex h-4 w-4 shrink-0 items-center justify-center rounded"
                   style={showSoldItems ? { background: "var(--theme-gold, #C8CDD2)" } : { border: "1.5px solid var(--border)", background: "transparent" }}
                 >
-                  {showSoldItems && <svg width="10" height="8" viewBox="0 0 10 8" fill="none"><path d="M1 4l2.5 2.5L9 1" stroke="#000" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+                  {showSoldItems && <AppIcon name="checkmark" size={10} strokeWidth={1.8} style={{ color: "#000" }} />}
                 </span>
                 Show Sold <span className="text-[11px] opacity-65">{soldCount}</span>
               </button>
@@ -1749,13 +1730,7 @@ export default function VaultPage() {
                     style={selectMode ? { background: "rgba(203,208,213,0.18)", color: "#C8CDD2" } : { background: "var(--pill)", color: "var(--muted)" }}
                     aria-label="Select items"
                   >
-                    <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
-                      <rect x="1" y="1" width="5.5" height="5.5" rx="1.2" stroke="currentColor" strokeWidth="1.3"/>
-                      <path d="M2.5 3.75l1.2 1.2 2-2" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
-                      <rect x="8.5" y="1" width="5.5" height="5.5" rx="1.2" stroke="currentColor" strokeWidth="1.3"/>
-                      <rect x="1" y="8.5" width="5.5" height="5.5" rx="1.2" stroke="currentColor" strokeWidth="1.3"/>
-                      <rect x="8.5" y="8.5" width="5.5" height="5.5" rx="1.2" stroke="currentColor" strokeWidth="1.3"/>
-                    </svg>
+                    <AppIcon name="selectItems" size={15} strokeWidth={1.3} />
                   </button>
                   {selectMode && selectedIds.size > 0 && (
                     <>
@@ -1914,7 +1889,7 @@ export default function VaultPage() {
                             : { background: "rgba(255,255,255,0.15)", border: "2px solid rgba(203,208,213,0.55)" }}
                         >
                           {isSelected && (
-                            <svg width="14" height="11" viewBox="0 0 14 11" fill="none"><path d="M1 5.5l4 4L13 1" stroke="#1A0F00" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                            <AppIcon name="checkmark" size={14} strokeWidth={2} style={{ color: "#1A0F00" }} />
                           )}
                         </span>
                       </button>

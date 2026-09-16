@@ -5,6 +5,7 @@
 // ─────────────────────────────────────────────────────────────
 
 import { useState, useMemo, useEffect, useCallback, useRef, type ReactNode } from "react";
+import { AppIcon, type AppIconName } from "@/components/ui/AppIcon";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 import { setTierSafe, type Tier } from "@/lib/subscription";
 import { getStoredActiveProfileId } from "@/lib/auth";
@@ -368,47 +369,26 @@ function CouponsPanel({ adminEmail }: { adminEmail: string }) {
   );
 }
 
-// ── Sidebar icons (clean line icons — no emoji) ──────────────
+// ── Sidebar icons, routed through the shared AppIcon system ──
+const ADMIN_ICON_MAP: Record<string, AppIconName> = {
+  characters: "account",
+  key: "key",
+  ticket: "ticket",
+  shield: "shield",
+  palette: "palette",
+  inbox: "inbox",
+  bug: "bug",
+  users: "users",
+  calendar: "events",
+  gift: "gift",
+  star: "star",
+  landmark: "building",
+};
+
 function AdminIcon({ name }: { name: string }) {
-  const p = {
-    width: 14,
-    height: 14,
-    viewBox: "0 0 24 24",
-    fill: "none",
-    stroke: "currentColor",
-    strokeWidth: 1.8,
-    strokeLinecap: "round" as const,
-    strokeLinejoin: "round" as const,
-    "aria-hidden": true,
-  };
-  switch (name) {
-    case "characters":
-      return <svg {...p}><circle cx="12" cy="8" r="4" /><path d="M4 21c0-4 3.6-7 8-7s8 3 8 7" /></svg>;
-    case "key":
-      return <svg {...p}><circle cx="8" cy="8" r="4" /><path d="M11 11l9 9M17 17l2-2M14 14l2-2" /></svg>;
-    case "ticket":
-      return <svg {...p}><path d="M3 9a2 2 0 0 0 0 6v3a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-3a2 2 0 0 1 0-6V6a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2z" /><path d="M13 6v12" /></svg>;
-    case "shield":
-      return <svg {...p}><path d="M12 3l8 3v6c0 4.5-3.2 7.8-8 9-4.8-1.2-8-4.5-8-9V6l8-3z" /></svg>;
-    case "palette":
-      return <svg {...p}><path d="M12 3a9 9 0 1 0 0 18c1.1 0 2-.9 2-2 0-.5-.2-1-.5-1.3-.3-.4-.5-.8-.5-1.2 0-1.1.9-2 2-2H17a4 4 0 0 0 4-4c0-4.4-4-7.5-9-7.5z" /><circle cx="7.5" cy="10.5" r="1" /><circle cx="12" cy="7.5" r="1" /><circle cx="16.5" cy="10.5" r="1" /></svg>;
-    case "inbox":
-      return <svg {...p}><path d="M4 4h16v16H4zM4 9h16M9 4v5" /></svg>;
-    case "bug":
-      return <svg {...p}><path d="M12 20a6 6 0 0 0 6-6v-2a6 6 0 0 0-12 0v2a6 6 0 0 0 6 6zM12 8V6M5 11H3M19 11h2M5 16l-2 1M19 16l2 1" /></svg>;
-    case "users":
-      return <svg {...p}><circle cx="9" cy="8" r="3" /><path d="M3 21c0-3.3 2.7-6 6-6s6 2.7 6 6" /><circle cx="17" cy="9" r="2.5" /><path d="M15.5 12.5c2.6.4 4.5 2.5 4.5 5.2" /></svg>;
-    case "calendar":
-      return <svg {...p}><rect x="3" y="5" width="18" height="16" rx="2" /><path d="M3 10h18M8 3v4M16 3v4" /></svg>;
-    case "gift":
-      return <svg {...p}><rect x="3" y="9" width="18" height="12" rx="1" /><path d="M3 9h18M12 9v12M12 9c-2-3-6-4-6-1s4 1 6 1M12 9c2-3 6-4 6-1s-4 1-6 1" /></svg>;
-    case "star":
-      return <svg {...p}><path d="M12 3l2.6 5.8 6.4.6-4.8 4.2 1.4 6.3L12 16.8 6.4 19.9l1.4-6.3-4.8-4.2 6.4-.6z" /></svg>;
-    case "landmark":
-      return <svg {...p}><path d="M3 21h18M4 21V10M20 21V10M2 10l10-7 10 7M6 21v-7M10 21v-7M14 21v-7M18 21v-7" /></svg>;
-    default:
-      return null;
-  }
+  const mapped = ADMIN_ICON_MAP[name];
+  if (!mapped) return null;
+  return <AppIcon name={mapped} size={14} strokeWidth={1.8} />;
 }
 
 // ── Collapsible sidebar section ──────────────────────────────
@@ -440,9 +420,7 @@ function SidebarSection({
           </span>
           {title}
         </span>
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={`text-white/40 transition-transform ${open ? "rotate-180" : ""}`} aria-hidden="true">
-          <polyline points="6 9 12 15 18 9" />
-        </svg>
+        <AppIcon name="chevronDown" size={12} strokeWidth={2.5} className={`text-white/40 transition-transform ${open ? "rotate-180" : ""}`} />
       </button>
       {open ? <div className="px-3 pb-3">{children}</div> : null}
     </div>

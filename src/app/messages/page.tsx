@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, type MouseEvent } from "react";
 import { PageHeader } from "@/components/layout/PageHeader";
+import { Glyph } from "@/components/ui/Glyph";
 import { getCurrentUser, getStoredActiveProfileId } from "@/lib/auth";
 import {
   listConversations,
@@ -51,11 +52,7 @@ function Avatar({ src, name, size = 40 }: { src: string | null; name: string; si
 }
 
 function StarIcon({ filled }: { filled: boolean }) {
-  return (
-    <svg width="15" height="15" viewBox="0 0 24 24" fill={filled ? CYAN : "none"} stroke={filled ? CYAN : "currentColor"} strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M12 2.5l2.9 6.6 7.1.7-5.4 4.8 1.6 7-6.2-3.7-6.2 3.7 1.6-7L2 9.8l7.1-.7z" />
-    </svg>
-  );
+  return <Glyph name="star" size={15} strokeWidth={1.7} filled={filled} style={filled ? { color: CYAN } : undefined} />;
 }
 
 export default function MessagesPage() {
@@ -282,9 +279,7 @@ export default function MessagesPage() {
                       className="grid h-12 w-12 place-items-center rounded-[10px]"
                       style={{ border: "1px solid rgba(79,211,238,0.4)", color: CYAN, background: "rgba(79,211,238,0.08)" }}
                     >
-                      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M4 5h16a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H8l-4 3V6a1 1 0 0 1 1-1z" />
-                      </svg>
+                      <Glyph name="message" size={22} strokeWidth={1.7} />
                     </span>
                     <p className="text-sm font-bold">No conversations yet</p>
                     <p className="max-w-[220px] text-xs" style={{ color: "var(--muted)" }}>
@@ -340,7 +335,7 @@ export default function MessagesPage() {
                           className="grid h-7 w-7 place-items-center rounded-full opacity-0 transition hover:bg-[color:var(--pill)] group-hover:opacity-100"
                           style={{ color: "var(--muted)" }}
                         >
-                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M18 6L6 18M6 6l12 12" /></svg>
+                          <Glyph name="close" size={13} strokeWidth={2} />
                         </button>
                       </div>
                     </div>

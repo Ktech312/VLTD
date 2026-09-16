@@ -2,6 +2,7 @@
 
 import React, { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
+import { AppIcon } from "@/components/ui/AppIcon";
 import { type VaultItem } from "@/lib/vaultModel";
 import { UNIVERSE_KEYS, UNIVERSE_LABEL, type UniverseKey } from "@/lib/taxonomy";
 
@@ -164,15 +165,11 @@ export function ItemPickerSheet({
           className="vltd-selectable bg-[color:var(--pill)] text-[color:var(--pill-fg)] ring-1 ring-[color:var(--border)] transition"
           style={{ flexShrink: 0, width: 34, height: 34, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", border: "none", cursor: "pointer" }}
         >
-          <svg viewBox="0 0 20 20" fill="none" style={{ width: 15, height: 15 }}>
-            <path d="M6 6l8 8M14 6l-8 8" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-          </svg>
+          <AppIcon name="close" strokeWidth={1.8} style={{ width: 15, height: 15 }} />
         </button>
 
         <div style={{ position: "relative", flex: 1 }}>
-          <svg viewBox="0 0 24 24" fill="none" style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", width: 14, height: 14, pointerEvents: "none", color: "var(--muted)" }}>
-            <path d="m21 21-4.35-4.35m1.35-5.15a6.5 6.5 0 1 1-13 0 6.5 6.5 0 0 1 13 0Z" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-          </svg>
+          <AppIcon name="search" strokeWidth={1.8} style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", width: 14, height: 14, pointerEvents: "none", color: "var(--muted)" }} />
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
@@ -362,9 +359,7 @@ export function ItemPickerSheet({
                         }}
                       >
                         {isSelected && (
-                          <svg viewBox="0 0 20 20" fill="none" style={{ width: 13, height: 13, color: "var(--fg)" }}>
-                            <path d="m4.5 10 3.5 3.5 7.5-7.5" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
-                          </svg>
+                          <AppIcon name="checkmark" strokeWidth={2.2} style={{ width: 13, height: 13, color: "var(--fg)" }} />
                         )}
                       </div>
                     )}

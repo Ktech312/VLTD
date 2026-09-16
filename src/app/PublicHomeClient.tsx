@@ -34,81 +34,36 @@ type UniverseCard = {
   description: string;
 };
 
-const ICON_SVG = {
-  common: {
-    width: 20,
-    height: 20,
-    viewBox: "0 0 24 24",
-    fill: "none",
-    stroke: "currentColor",
-    strokeWidth: 1.8,
-    strokeLinecap: "round" as const,
-    strokeLinejoin: "round" as const,
-  },
-};
-
 const FEATURE_CARDS: { icon: React.ReactNode; title: string; description: string }[] = [
   {
     title: "Private Vault",
     description: "Your data. Your control. Locked in, always.",
-    icon: (
-      <svg {...ICON_SVG.common}>
-        <rect x="5" y="11" width="14" height="9" rx="2" />
-        <path d="M8 11V7a4 4 0 0 1 8 0v4" />
-      </svg>
-    ),
+    icon: <Glyph name="lock" size={20} strokeWidth={1.8} />,
   },
   {
     title: "Portfolio Intelligence",
     description: "Real-time values, analytics, and market insights.",
-    icon: (
-      <svg {...ICON_SVG.common}>
-        <path d="M3 3v18h18" />
-        <path d="M7 15l4-4 3 3 5-6" />
-      </svg>
-    ),
+    icon: <Glyph name="insights" size={20} strokeWidth={1.8} />,
   },
   {
     title: "Insurance Ready",
     description: "Export complete, accurate records in seconds.",
-    icon: (
-      <svg {...ICON_SVG.common}>
-        <path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6z" />
-        <path d="M9 12l2 2 4-4" />
-      </svg>
-    ),
+    icon: <Glyph name="shield" size={20} strokeWidth={1.8} />,
   },
   {
     title: "Museum Display",
     description: "Create stunning galleries. Share or keep private.",
-    icon: (
-      <svg {...ICON_SVG.common}>
-        <path d="M3 21h18" />
-        <path d="M5 21V9M10 21V9M14 21V9M19 21V9" />
-        <path d="M3 9l9-5 9 5" />
-      </svg>
-    ),
+    icon: <Glyph name="exhibitions" size={20} strokeWidth={1.8} />,
   },
   {
     title: "Sell Anywhere",
     description: "Export anytime. List on any platform you want.",
-    icon: (
-      <svg {...ICON_SVG.common}>
-        <path d="M4 15a4 4 0 0 1 1-7.9A5 5 0 0 1 19 8a4 4 0 0 1-.5 8" />
-        <path d="M12 12v7" />
-        <path d="M9 15l3-3 3 3" />
-      </svg>
-    ),
+    icon: <Glyph name="cloud" size={20} strokeWidth={1.8} />,
   },
   {
     title: "No Lock-In",
     description: "Your collection is yours. Take it anywhere.",
-    icon: (
-      <svg {...ICON_SVG.common}>
-        <rect x="5" y="11" width="14" height="9" rx="2" />
-        <path d="M8 11V7a4 4 0 0 1 7-2.4" />
-      </svg>
-    ),
+    icon: <Glyph name="unlocked" size={20} strokeWidth={1.8} />,
   },
 ];
 
@@ -505,9 +460,7 @@ export default function PublicHomeClient() {
                     key={label}
                     className="inline-flex items-center gap-1.5 text-xs font-semibold text-[color:var(--muted2)]"
                   >
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: "var(--accent)" }}>
-                      <path d="M20 6L9 17l-5-5" />
-                    </svg>
+                    <Glyph name="checkmark" size={14} strokeWidth={2.5} style={{ color: "var(--accent)" }} />
                     {label}
                   </span>
                 ))}
@@ -540,10 +493,7 @@ export default function PublicHomeClient() {
           {waitlistStatus === "success" || waitlistStatus === "already" ? (
             <div className="mt-6 rounded-2xl border border-[rgba(74,222,128,0.3)] bg-[rgba(74,222,128,0.06)] px-6 py-5 text-center">
               <div className="mb-2 flex justify-center">
-                <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#4ade80" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                  <circle cx="12" cy="12" r="10" />
-                  <path d="M8 12.5l2.5 2.5 5-6" />
-                </svg>
+                <Glyph name="check" size={26} strokeWidth={2} style={{ color: "#4ade80" }} />
               </div>
               <p className="text-sm font-semibold" style={{ color: '#4ade80' }}>{waitlistMessage}</p>
             </div>

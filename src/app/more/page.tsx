@@ -5,6 +5,7 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { useEffect, useMemo, useState } from "react";
 
+import { AppIcon, type AppIconName } from "@/components/ui/AppIcon";
 import { getCurrentUser, getOnboardingStatus } from "@/lib/auth";
 import { loadGalleries, type Gallery } from "@/lib/galleryModel";
 import { isOwnerEmail } from "@/lib/ownerAccess";
@@ -127,110 +128,22 @@ function tenureFrom(value: unknown): string {
   return `${years} year${years === 1 ? "" : "s"}`;
 }
 
-function Icon({ name, size = 30 }: { name: IconName; size?: number }) {
-  const common = {
-    width: size,
-    height: size,
-    viewBox: "0 0 24 24",
-    fill: "none",
-    style: { color: goldBright },
-    "aria-hidden": true,
-  } as const;
-  const stroke = {
-    stroke: "currentColor",
-    strokeWidth: 1.75,
-    strokeLinecap: "round",
-    strokeLinejoin: "round",
-  } as const;
+const ICON_MAP: Record<IconName, AppIconName> = {
+  user: "account",
+  team: "users",
+  shield: "shield",
+  card: "card",
+  cloud: "cloud",
+  globe: "globe",
+  camera: "camera",
+  vault: "vault",
+  museum: "exhibitions",
+  spark: "sparkle",
+  status: "check",
+};
 
-  if (name === "user") {
-    return (
-      <svg {...common}>
-        <circle cx="12" cy="8" r="3.2" fill="currentColor" opacity=".82" />
-        <path d="M5 20c.7-4 3.1-6 7-6s6.3 2 7 6" fill="currentColor" opacity=".38" />
-      </svg>
-    );
-  }
-  if (name === "team") {
-    return (
-      <svg {...common}>
-        <circle cx="12" cy="7" r="2.6" fill="currentColor" />
-        <circle cx="5.5" cy="10" r="2" fill="currentColor" opacity=".55" />
-        <circle cx="18.5" cy="10" r="2" fill="currentColor" opacity=".55" />
-        <path d="M4 20c.7-3.1 3.2-4.8 8-4.8s7.3 1.7 8 4.8" fill="currentColor" opacity=".28" />
-      </svg>
-    );
-  }
-  if (name === "shield") {
-    return (
-      <svg {...common}>
-        <path d="M12 3.2 19 6v5.2c0 4.4-2.7 7.6-7 9.6-4.3-2-7-5.2-7-9.6V6l7-2.8Z" {...stroke} fill="rgba(203,208,213,.14)" />
-        <path d="M12 8v5M12 16h.01" {...stroke} />
-      </svg>
-    );
-  }
-  if (name === "card") {
-    return (
-      <svg {...common}>
-        <rect x="3" y="6" width="18" height="12" rx="2" {...stroke} fill="rgba(203,208,213,.12)" />
-        <path d="M3 10h18M7 15h4" {...stroke} />
-      </svg>
-    );
-  }
-  if (name === "cloud") {
-    return (
-      <svg {...common}>
-        <path d="M7.3 18.5h10.1a4 4 0 0 0 .6-8 6 6 0 0 0-11.3-1.9A4.9 4.9 0 0 0 7.3 18.5Z" {...stroke} />
-        <path d="M12 12v6M9.5 15.4 12 18l2.5-2.6" {...stroke} />
-      </svg>
-    );
-  }
-  if (name === "globe") {
-    return (
-      <svg {...common}>
-        <circle cx="12" cy="12" r="8.5" {...stroke} />
-        <path d="M3.8 12h16.4M12 3.5c2.3 2.4 3.4 5.2 3.4 8.5s-1.1 6.1-3.4 8.5M12 3.5C9.7 5.9 8.6 8.7 8.6 12s1.1 6.1 3.4 8.5" {...stroke} />
-      </svg>
-    );
-  }
-  if (name === "camera") {
-    return (
-      <svg {...common}>
-        <path d="M6 8h2l1.4-2h5.2L16 8h2a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2Z" {...stroke} fill="rgba(203,208,213,.12)" />
-        <circle cx="12" cy="13.5" r="3" {...stroke} />
-      </svg>
-    );
-  }
-  if (name === "vault") {
-    return (
-      <svg {...common}>
-        <rect x="4" y="4" width="16" height="16" rx="3" {...stroke} />
-        <circle cx="12" cy="12" r="4" {...stroke} />
-        <path d="M12 8v8M8 12h8M9.2 9.2l5.6 5.6M14.8 9.2l-5.6 5.6" {...stroke} />
-      </svg>
-    );
-  }
-  if (name === "museum") {
-    return (
-      <svg {...common}>
-        <path d="M3 20h18M5 18V10M19 18V10M2.5 10h19L12 4 2.5 10Z" {...stroke} />
-        <path d="M9 18v-5h6v5" {...stroke} />
-      </svg>
-    );
-  }
-  if (name === "spark") {
-    return (
-      <svg {...common}>
-        <path d="M12 2.8 14.6 9l6.5 3-6.5 3L12 21.2 9.4 15l-6.5-3 6.5-3L12 2.8Z" {...stroke} fill="rgba(203,208,213,.12)" />
-      </svg>
-    );
-  }
-  return (
-    <svg {...common}>
-      <circle cx="12" cy="12" r="8.5" {...stroke} />
-      <path d="m8.2 12.4 2.5 2.5 5.4-6" {...stroke} />
-    </svg>
-  );
+function Icon({ name, size = 30 }: { name: IconName; size?: number }) {
+  return <AppIcon name={ICON_MAP[name]} size={size} strokeWidth={1.75} style={{ color: goldBright }} />;
 }
 
 function commandCardStyle(accent: boolean) {

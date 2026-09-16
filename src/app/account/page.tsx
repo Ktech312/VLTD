@@ -1080,9 +1080,7 @@ export default function AccountPage() {
                     className="ml-1 grid h-9 w-9 shrink-0 place-items-center rounded-full text-[color:var(--muted)] transition hover:bg-red-500/12 hover:text-red-400"
                     aria-label="Remove from watchlist"
                   >
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M18 6L6 18M6 6l12 12"/>
-                    </svg>
+                    <Glyph name="close" size={16} strokeWidth={2} />
                   </button>
                 </div>
               ))}

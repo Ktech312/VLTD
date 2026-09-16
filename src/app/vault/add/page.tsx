@@ -12,6 +12,7 @@ import { type ImageRole } from "@/components/ImageRoleSelector";
 import ScanCropEditor from "@/components/ScanCropEditor";
 import ScanPanel from "@/components/ScanPanel";
 import { PillButton } from "@/components/ui/PillButton";
+import { AppIcon } from "@/components/ui/AppIcon";
 import {
   applyBulkLockedValues,
   buildRememberedValues,
@@ -297,15 +298,9 @@ function Field({
           title={locked ? "Locked for next item" : "Unlocked for next item"}
         >
           {locked ? (
-            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ color: "var(--theme-gold, #C8CDD2)" }}>
-              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-              <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-            </svg>
+            <AppIcon name="lock" size={11} strokeWidth={2.5} style={{ color: "var(--theme-gold, #C8CDD2)" }} />
           ) : (
-            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ color: "var(--muted)" }}>
-              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-              <path d="M7 11V7a5 5 0 0 1 9.9-1"/>
-            </svg>
+            <AppIcon name="unlocked" size={11} strokeWidth={2.5} style={{ color: "var(--muted)" }} />
           )}
         </button>
       </div>
@@ -3433,7 +3428,7 @@ export default function AddPage() {
                         }}
                         className="inline-flex items-center gap-1 rounded-[7px] px-2 py-0.5 text-[10px] font-semibold ring-1 transition bg-[color:var(--pill)] text-[color:var(--theme-gold,#C8CDD2)] ring-[color:var(--border)] hover:ring-[color:var(--theme-gold,#C8CDD2)]"
                       >
-                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M12 3v1M18.364 5.636l-.707.707M21 12h-1M18.364 18.364l-.707-.707M12 21v-1M5.636 18.364l.707-.707M3 12h1M5.636 5.636l.707.707"/><circle cx="12" cy="12" r="4"/></svg>
+                        <AppIcon name="sun" size={10} strokeWidth={2} />
                         Auto
                       </button>
                       <button
@@ -3448,9 +3443,9 @@ export default function AddPage() {
                         title={locks.notes ? "Locked for next item" : "Unlocked for next item"}
                       >
                         {locks.notes ? (
-                          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ color: "var(--theme-gold, #C8CDD2)" }}><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                          <AppIcon name="lock" size={11} strokeWidth={2.5} style={{ color: "var(--theme-gold, #C8CDD2)" }} />
                         ) : (
-                          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ color: "var(--muted)" }}><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg>
+                          <AppIcon name="unlocked" size={11} strokeWidth={2.5} style={{ color: "var(--muted)" }} />
                         )}
                       </button>
                     </div>

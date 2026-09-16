@@ -14,12 +14,14 @@ export function Glyph({
   className,
   style,
   strokeWidth = 1.6,
+  filled = false,
 }: {
   name: AppIconName;
   size?: number;
   className?: string;
   style?: CSSProperties;
   strokeWidth?: number;
+  filled?: boolean;
 }) {
-  return <AppIcon name={name} variant="compact" size={size} className={className} style={style} strokeWidth={strokeWidth} />;
+  return <AppIcon name={name} variant="compact" size={size} className={className} style={style} strokeWidth={strokeWidth} filled={filled} />;
 }

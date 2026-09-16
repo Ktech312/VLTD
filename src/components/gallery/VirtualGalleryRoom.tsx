@@ -4323,9 +4323,7 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
                   aria-label="Close"
                   className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-[color:var(--pill)] text-[color:var(--muted)] ring-1 ring-[color:var(--border)] transition hover:text-[color:var(--fg)]"
                 >
-                  <svg viewBox="0 0 20 20" fill="none" className="h-[15px] w-[15px]">
-                    <path d="M6 6l8 8M14 6l-8 8" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-                  </svg>
+                  <AppIcon name="close" strokeWidth={1.8} className="h-[15px] w-[15px]" />
                 </button>
                 <div className="min-w-0 flex-1">
                   <div className="truncate text-sm font-black">

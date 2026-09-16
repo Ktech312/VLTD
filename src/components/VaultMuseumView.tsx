@@ -271,15 +271,7 @@ function SpotlightCard({ item, onItemClick }: { item: ModelItem; onItemClick?: (
               width: 28,
             }}
           >
-            <svg width="13" height="13" viewBox="0 0 13 13" fill="none" aria-hidden="true">
-              <path
-                d="M1 4.5V1h3.5M8.5 1H12v3.5M12 8.5V12H8.5M4.5 12H1V8.5"
-                stroke="currentColor"
-                strokeWidth="1.6"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
+            <AppIcon name="scan" size={13} strokeWidth={1.6} />
           </button>
           <button
             type="button"

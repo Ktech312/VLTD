@@ -2,6 +2,7 @@
 
 import { useRef, useState, useMemo, useEffect, useCallback } from "react";
 import Link from "next/link";
+import { AppIcon } from "@/components/ui/AppIcon";
 import { getPrimaryImageUrl, loadItems, type VaultItem } from "@/lib/vaultModel";
 import GenerateCopyPanel from "@/components/GenerateCopyPanel";
 import { fmtUsd } from "@/lib/format";
@@ -1197,9 +1198,7 @@ function VideoTab({ item }: { item: VaultItem }) {
               style={{ background: "rgba(0,0,0,0.72)", border: "1px solid rgba(203,208,213,0.4)" }}
               aria-label="Replay video"
             >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                <polygon points="6,4 20,12 6,20" fill="#C8CDD2" />
-              </svg>
+              <AppIcon name="play" size={16} style={{ color: "#C8CDD2" }} />
             </button>
           )}
         </div>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { AppIcon } from "@/components/ui/AppIcon";
 import { appreciateItem, unappreciateItem } from "@/lib/appreciations";
 
 /**
@@ -62,18 +63,7 @@ export function VibeButton({
 
   const icon = (
     <span style={{ position: "relative", width: iconSize, height: iconSize, display: "inline-flex" }}>
-      <svg
-        viewBox="0 0 24 24"
-        width={iconSize}
-        height={iconSize}
-        fill={vibed ? "currentColor" : "none"}
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      >
-        <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
-      </svg>
+      <AppIcon name="flash" size={iconSize} strokeWidth={2} filled={vibed} />
       {burstKey > 0 && (
         <span key={burstKey} className="vltd-spark-burst" aria-hidden="true">
           {Array.from({ length: 6 }).map((_, i) => (

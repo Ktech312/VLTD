@@ -1390,10 +1390,7 @@ export default function GalleryPage() {
                                   : "bg-[color:var(--pill)] text-[color:var(--pill-fg)] ring-[color:var(--border)]",
                               ].join(" ")}
                             >
-                              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                                <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="2" />
-                                <path d="M12 7v5l3 3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-                              </svg>
+                              <Glyph name="clock" size={10} strokeWidth={2} />
                               Expires: {expiryLabel}
                             </button>
 
@@ -1433,10 +1430,7 @@ export default function GalleryPage() {
                                   : "bg-[color:var(--pill)] text-[color:var(--pill-fg)] ring-[color:var(--border)]",
                               ].join(" ")}
                             >
-                              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                                <path d="M12 2a5 5 0 0 1 5 5v1h1a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V10a2 2 0 0 1 2-2h1V7a5 5 0 0 1 5-5Z" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" />
-                                <circle cx="12" cy="15" r="1.5" fill="currentColor" />
-                              </svg>
+                              <Glyph name="lock" size={10} strokeWidth={1.8} />
                               Permissions
                             </button>
 

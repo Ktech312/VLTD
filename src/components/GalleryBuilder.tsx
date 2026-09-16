@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { DragEvent, ReactNode } from "react";
 import { createPortal } from "react-dom";
+import { AppIcon } from "@/components/ui/AppIcon";
 
 import { type VaultItem, getPrimaryImageUrl } from "@/lib/vaultModel";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
@@ -887,9 +888,7 @@ export default function GalleryBuilder({
                 <span>
                   {"Exhibit #" + (activeSectionIdx + 1)}
                 </span>
-                <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" className="h-4 w-4 opacity-60 shrink-0">
-                  <path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.24a.75.75 0 01-1.06 0L5.21 8.29a.75.75 0 01.02-1.08z" clipRule="evenodd" />
-                </svg>
+                <AppIcon name="chevronDown" strokeWidth={2.2} className="h-4 w-4 opacity-60 shrink-0" />
               </button>
               {sectionDropdownOpen && typeof document !== "undefined" && createPortal(
                 <>
@@ -1178,7 +1177,7 @@ export default function GalleryBuilder({
                           {/* Drag handle hint while organizing */}
                           {canOrganize ? (
                             <div className="absolute left-1 top-1 z-20 grid h-[26px] w-[26px] place-items-center rounded-full pointer-events-none" style={{ background: "rgba(0,0,0,0.72)", boxShadow: "0 0 0 1px rgba(255,255,255,0.12)" }}>
-                              <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="4" cy="4" r="1.5" fill="white" opacity="0.85"/><circle cx="10" cy="4" r="1.5" fill="white" opacity="0.85"/><circle cx="4" cy="10" r="1.5" fill="white" opacity="0.85"/><circle cx="10" cy="10" r="1.5" fill="white" opacity="0.85"/></svg>
+                              <AppIcon name="dragHandle" size={14} style={{ color: "white", opacity: 0.85 }} />
                             </div>
                           ) : null}
 
@@ -1248,9 +1247,7 @@ export default function GalleryBuilder({
           className="mt-4 inline-flex min-h-[32px] items-center gap-1.5 rounded-full bg-[color:var(--surface)] px-4 text-[11px] font-semibold text-[color:var(--fg)] ring-1 ring-[color:var(--border)] shadow-sm transition-all hover:bg-[color:var(--pill)]"
         >
           <span>Advanced</span>
-          <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" className={["h-3.5 w-3.5 opacity-60 transition-transform duration-200", isAdvancedOpen ? "rotate-180" : ""].join(" ")}>
-            <path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.24a.75.75 0 01-1.06 0L5.21 8.29a.75.75 0 01.02-1.08z" clipRule="evenodd" />
-          </svg>
+          <AppIcon name="chevronDown" strokeWidth={2.2} className={["h-3.5 w-3.5 opacity-60 transition-transform duration-200", isAdvancedOpen ? "rotate-180" : ""].join(" ")} />
         </button>
 
         {isAdvancedOpen && sections.length ? (
@@ -1681,9 +1678,7 @@ export default function GalleryBuilder({
                 style={{ background: "rgba(255,255,255,0.07)" }}
                 aria-label="Close preview"
               >
-                <svg viewBox="0 0 20 20" fill="none" className="h-4 w-4" style={{ color: "var(--muted)" }}>
-                  <path d="M6 6l8 8M14 6l-8 8" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-                </svg>
+                <AppIcon name="close" strokeWidth={1.8} className="h-4 w-4" style={{ color: "var(--muted)" }} />
               </button>
             </div>
           </div>

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 
+import { AppIcon } from "@/components/ui/AppIcon";
 import ItemIntelligencePanel from "@/components/ItemIntelligencePanel";
 import ItemVisibilityToggle from "@/components/ItemVisibilityToggle";
 import RestoreVaultButton from "@/components/RestoreVaultButton";
@@ -361,23 +362,6 @@ function promoteLegacySalesToItems() {
   return changed;
 }
 
-function CameraIcon({ className = "h-5 w-5" }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" className={className} aria-hidden="true">
-      <path
-        d="M8.75 7.25 10.1 5.5h3.8l1.35 1.75h2.25A2.5 2.5 0 0 1 20 9.75v6.5a2.5 2.5 0 0 1-2.5 2.5h-11A2.5 2.5 0 0 1 4 16.25v-6.5a2.5 2.5 0 0 1 2.5-2.5h2.25Z"
-        stroke="currentColor"
-        strokeWidth="1.6"
-        strokeLinejoin="round"
-      />
-      <path
-        d="M12 15.75a3.25 3.25 0 1 0 0-6.5 3.25 3.25 0 0 0 0 6.5Z"
-        stroke="currentColor"
-        strokeWidth="1.6"
-      />
-    </svg>
-  );
-}
 
 function itemCardSubtitle(item: VaultItem) {
   const universe = universeDisplayName(universeForItem(item));
@@ -461,7 +445,7 @@ function VaultCard({
         >
           {isDeleting
             ? <span className="text-[9px]">…</span>
-            : <svg width="13" height="13" viewBox="0 0 15 15" fill="none"><path d="M5 1h5M1 3h13M2.5 3l1 9.5a1 1 0 001 .5h6a1 1 0 001-.5l1-9.5M5.5 6v4M9.5 6v4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+            : <AppIcon name="delete" size={13} strokeWidth={1.4} />}
         </button>
       </div>
 
@@ -477,7 +461,7 @@ function VaultCard({
             />
           ) : (
             <div className="flex h-full w-full flex-col items-center justify-center gap-1 text-center text-[10px] font-semibold uppercase tracking-[0.14em] text-white/28">
-              <CameraIcon className="h-5 w-5" />
+              <AppIcon name="camera" size={20} className="h-5 w-5" />
               <span>No photo</span>
             </div>
           )}
@@ -1234,7 +1218,7 @@ export default function VaultUniversePage() {
                   ? { background: "var(--theme-gold, #C8CDD2)" }
                   : { border: "1.5px solid var(--border)", background: "transparent" }}
               >
-                {gradedOnly && <svg width="10" height="8" viewBox="0 0 10 8" fill="none"><path d="M1 4l2.5 2.5L9 1" stroke="#000" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+                {gradedOnly && <AppIcon name="checkmark" size={10} strokeWidth={1.8} style={{ color: "#000" }} />}
               </span>
               Graded
             </button>
@@ -1251,7 +1235,7 @@ export default function VaultUniversePage() {
                   ? { background: "var(--theme-gold, #C8CDD2)" }
                   : { border: "1.5px solid var(--border)", background: "transparent" }}
               >
-                {showUncategorized && <svg width="10" height="8" viewBox="0 0 10 8" fill="none"><path d="M1 4l2.5 2.5L9 1" stroke="#000" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+                {showUncategorized && <AppIcon name="checkmark" size={10} strokeWidth={1.8} style={{ color: "#000" }} />}
               </span>
               Uncategorized
             </button>
@@ -1305,14 +1289,7 @@ export default function VaultUniversePage() {
                     : { background: "var(--pill)", color: "var(--muted)" }}
                   aria-label="Select items"
                 >
-                  {/* Multi-select / checkboxes icon */}
-                  <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
-                    <rect x="1" y="1" width="5.5" height="5.5" rx="1.2" stroke="currentColor" strokeWidth="1.3"/>
-                    <path d="M2.5 3.75l1.2 1.2 2-2" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
-                    <rect x="8.5" y="1" width="5.5" height="5.5" rx="1.2" stroke="currentColor" strokeWidth="1.3"/>
-                    <rect x="1" y="8.5" width="5.5" height="5.5" rx="1.2" stroke="currentColor" strokeWidth="1.3"/>
-                    <rect x="8.5" y="8.5" width="5.5" height="5.5" rx="1.2" stroke="currentColor" strokeWidth="1.3"/>
-                  </svg>
+                  <AppIcon name="selectItems" size={15} strokeWidth={1.3} />
                 </button>
                 {selectMode && selectedIds.size > 0 && (
                   <>
@@ -1475,7 +1452,7 @@ export default function VaultUniversePage() {
                               : { background: "rgba(255,255,255,0.15)", border: "2px solid rgba(203,208,213,0.55)" }}
                           >
                             {isSelected && (
-                              <svg width="14" height="11" viewBox="0 0 14 11" fill="none"><path d="M1 5.5l4 4L13 1" stroke="#1A0F00" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                              <AppIcon name="checkmark" size={14} strokeWidth={2} style={{ color: "#1A0F00" }} />
                             )}
                           </span>
                         </button>

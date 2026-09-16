@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { AppIcon } from "@/components/ui/AppIcon";
 import { isArticleSaved, toggleSavedArticle, syncSavedArticlesFromSupabase } from "@/lib/savedArticles";
 
 // Standalone save toggle (used on the article reader). The hub manages its own
@@ -28,9 +29,7 @@ export default function SaveArticleButton({ slug }: { slug: string }) {
         opacity: hydrated ? 1 : 0.6,
       }}
     >
-      <svg width="15" height="15" viewBox="0 0 24 24" fill={saved ? "currentColor" : "none"} stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M6 4h12a1 1 0 0 1 1 1v15l-7-4-7 4V5a1 1 0 0 1 1-1z" />
-      </svg>
+      <AppIcon name="favorite" size={15} strokeWidth={1.8} filled={saved} />
       {saved ? "Saved" : "Save"}
     </button>
   );

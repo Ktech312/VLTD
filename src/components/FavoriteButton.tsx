@@ -1,29 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { AppIcon } from "@/components/ui/AppIcon";
 
 import {
   getFavoriteStatus,
   toggleFavorite,
   type FavoriteContentType,
 } from "@/lib/favorites";
-
-function StarIcon({ filled, className }: { filled: boolean; className?: string }) {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      className={className || "h-5 w-5"}
-      aria-hidden="true"
-      fill={filled ? "currentColor" : "none"}
-      stroke="currentColor"
-      strokeWidth="1.9"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <path d="M12 3.6l2.57 5.21 5.75.84-4.16 4.06.98 5.73L12 16.74 6.86 19.44l.98-5.73-4.16-4.06 5.75-.84L12 3.6z" />
-    </svg>
-  );
-}
 
 export default function FavoriteButton({
   contentType,
@@ -120,7 +104,7 @@ export default function FavoriteButton({
               : "text-white/72 hover:text-cyan-200",
           ].join(" ")}
         >
-          <StarIcon filled={favorited} className={compact ? "h-4 w-4" : "h-5 w-5"} />
+          <AppIcon name="star" strokeWidth={1.9} filled={favorited} size={compact ? 16 : 20} />
         </button>
 
         <span className={["font-semibold leading-none text-white/82", compact ? "text-[10px]" : "text-xs"].join(" ")}>{count}</span>

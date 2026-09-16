@@ -54,9 +54,7 @@ export default function SavedPage() {
             className="grid h-9 w-9 shrink-0 place-items-center rounded-full border border-[color:var(--border)] bg-[color:var(--surface)] text-[color:var(--muted)] transition hover:text-[color:var(--fg)]"
             aria-label="Back"
           >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M19 12H5M12 5l-7 7 7 7" />
-            </svg>
+            <Glyph name="arrowLeft" size={16} strokeWidth={2} />
           </button>
           <div className="flex-1 min-w-0">
             <div className="text-[11px] tracking-[0.22em] text-[color:var(--muted2)] uppercase">Saved</div>
@@ -176,9 +174,7 @@ export default function SavedPage() {
                   className="ml-1 grid h-10 w-10 shrink-0 place-items-center rounded-full text-[color:var(--muted)] transition hover:bg-red-500/12 hover:text-red-400"
                   aria-label="Remove"
                 >
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M18 6L6 18M6 6l12 12" />
-                  </svg>
+                  <Glyph name="close" size={16} strokeWidth={2} />
                 </button>
               </div>
             ))}

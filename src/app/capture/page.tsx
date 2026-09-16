@@ -6,6 +6,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } fro
 
 import CameraCapturePanel from "@/components/CameraCapturePanel";
 import ScanCropEditor from "@/components/ScanCropEditor";
+import { AppIcon } from "@/components/ui/AppIcon";
 import { cropImageFile, type ScanCropRect } from "@/lib/scanners/cropImageFile";
 import { analyzeImageWithVision, type VisionAnalysisResult } from "@/lib/ai/openaiVision";
 import { resolveVisionTaxonomy } from "@/lib/visionTaxonomy";
@@ -154,18 +155,12 @@ function AccordionSection({
           <span className="flex-1" />
         )}
         {badge}
-        <svg
-          width="14"
-          height="14"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2.5"
-          strokeLinecap="round"
+        <AppIcon
+          name="chevronDown"
+          size={14}
+          strokeWidth={2.5}
           className={`shrink-0 text-[color:var(--muted2)] transition-transform ${open ? "rotate-180" : ""}`}
-        >
-          <path d="M6 9l6 6 6-6" />
-        </svg>
+        />
       </button>
       {open ? (
         <div
@@ -205,15 +200,9 @@ function LockableLabel({
         title={locked ? "Locked for next item" : "Unlocked for next item"}
       >
         {locked ? (
-          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ color: "var(--theme-gold, #C8CDD2)" }}>
-            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-            <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-          </svg>
+          <AppIcon name="lock" size={11} strokeWidth={2.5} style={{ color: "var(--theme-gold, #C8CDD2)" }} />
         ) : (
-          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ color: "var(--muted)" }}>
-            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-            <path d="M7 11V7a5 5 0 0 1 9.9-1"/>
-          </svg>
+          <AppIcon name="unlocked" size={11} strokeWidth={2.5} style={{ color: "var(--muted)" }} />
         )}
       </button>
     </div>
@@ -930,13 +919,13 @@ export default function CapturePage() {
                       <ActionButton
                         label="Retake"
                         onClick={() => { setCapturedImages([]); setIdentified(false); setErrorMsg(""); }}
-                        icon={<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M3 12a9 9 0 1 0 2.6-6.3L3 8" /><path d="M3 3v5h5" /></svg>}
+                        icon={<AppIcon name="rotate" size={15} strokeWidth={1.7} />}
                       />
                       <ActionButton
                         label={analyzing ? "Identifying…" : "Identify"}
                         disabled={analyzing}
                         onClick={() => void runAiIdentify()}
-                        icon={<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3l1.4 3.6L17 8l-3.6 1.4L12 13l-1.4-3.6L7 8l3.6-1.4z" /><path d="M5 16l.8 2L8 19l-2.2.8L5 22l-.8-2.2L2 19l2.2-1z" /></svg>}
+                        icon={<AppIcon name="sparkleAI" size={15} strokeWidth={1.7} />}
                       />
                     </>
                   ) : null}
@@ -963,7 +952,7 @@ export default function CapturePage() {
                       ) : (
                         <div className="flex flex-col items-center gap-3.5 px-6 text-center">
                           <div className="flex h-16 w-16 items-center justify-center rounded-full" style={{ background: "rgba(203,208,213,0.10)", border: "1px solid var(--theme-gold-border, rgba(203,208,213,0.3))", color: "var(--theme-gold, #C8CDD2)" }}>
-                            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" /><circle cx="12" cy="13" r="4" /></svg>
+                            <AppIcon name="camera" size={26} strokeWidth={1.6} />
                           </div>
                           <div className="text-sm font-semibold text-text-primary">Add a photo — optional</div>
                           <p className="max-w-[240px] text-xs leading-5 text-[color:var(--muted)]">Snap or upload one — then tap <b className="font-semibold text-[color:var(--fg)]">Identify</b> to auto-fill, or just type the details in. No photo required.</p>
@@ -985,7 +974,7 @@ export default function CapturePage() {
                           className="absolute right-3 top-3 grid h-9 w-9 place-items-center rounded-[8px] border"
                           style={{ borderColor: "var(--theme-gold-border, rgba(203,208,213,0.3))", background: "rgba(2,9,12,0.6)", color: "var(--theme-gold, #C8CDD2)" }}
                         >
-                          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7" /></svg>
+                          <AppIcon name="expand" size={15} strokeWidth={1.7} />
                         </a>
                         <div className="absolute bottom-3 right-3 flex items-center gap-2">
                           {selectedPreviewIndex !== 0 ? (
@@ -1089,7 +1078,7 @@ export default function CapturePage() {
 
                   <p className="mt-3 flex items-start gap-1.5 text-[11px] leading-4 text-[color:var(--muted2)]">
                     <span className="mt-px shrink-0" style={{ color: "var(--theme-gold, #C8CDD2)" }}>
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3l1.4 3.6L17 8l-3.6 1.4L12 13l-1.4-3.6L7 8l3.6-1.4z" /></svg>
+                      <AppIcon name="sparkle" size={12} strokeWidth={1.7} />
                     </span>
                     <span><b className="font-semibold text-[color:var(--muted)]">Tip:</b> Use good lighting and avoid glare. Clear, straight-on photos work best.</span>
                   </p>
@@ -1222,7 +1211,7 @@ export default function CapturePage() {
                           />
                           {fields.certNumber.trim() ? (
                             <span className="absolute right-3 top-1/2 -translate-y-1/2" style={{ color: "#22C55E" }}>
-                              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6 9 17l-5-5" /></svg>
+                              <AppIcon name="checkmark" size={15} strokeWidth={2.2} />
                             </span>
                           ) : null}
                         </div>
@@ -1433,11 +1422,11 @@ export default function CapturePage() {
                         className="inline-flex min-h-[52px] items-center justify-center gap-2 rounded-[4px] px-9 text-[15px] font-black text-[#06171d]"
                         style={{ background: "linear-gradient(115deg, rgba(255,255,255,0.35) 0%, rgba(255,255,255,0) 45%, rgba(255,255,255,0.18) 100%), linear-gradient(180deg, #79E7FB 0%, #41C6E4 55%, #2CB1D1 100%)", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.5), 0 2px 10px rgba(0,0,0,0.4), 0 0 18px rgba(79,211,238,0.25)" }}
                       >
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M4 4h12l4 4v12H4z" /><path d="M8 4v6h8" /><path d="M9 15h6" /></svg>
+                        <AppIcon name="save" size={18} strokeWidth={1.8} />
                         Save to Vault
                       </button>
                       <span className="inline-flex items-center gap-1.5 text-[11px] text-[color:var(--muted2)]">
-                        <span style={{ color: "#22C55E" }}><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6 9 17l-5-5" /></svg></span>
+                        <span style={{ color: "#22C55E" }}><AppIcon name="checkmark" size={12} strokeWidth={2.2} /></span>
                         Private — only you can see your vault
                       </span>
                     </div>

@@ -4,6 +4,7 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { PillButton } from "@/components/ui/PillButton";
+import { AppIcon } from "@/components/ui/AppIcon";
 import { readStyle, setStyle, type StyleKey, STYLE_LABEL } from "@/lib/style";
 
 type StyleCard = {
@@ -13,28 +14,6 @@ type StyleCard = {
   tags: string[];
   previewClass: string; // uses the same root class naming convention
 };
-
-function IconCheck({ className = "h-4 w-4" }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 24 24" className={className} aria-hidden="true" fill="none">
-      <path d="M20 6 9 17l-5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
-}
-
-function IconSpark({ className = "h-4 w-4" }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 24 24" className={className} aria-hidden="true" fill="none">
-      <path
-        d="M12 2l1.2 5.2L18 9l-4.8 1.8L12 16l-1.2-5.2L6 9l4.8-1.8L12 2Z"
-        stroke="currentColor"
-        strokeWidth="1.8"
-        strokeLinejoin="round"
-      />
-      <path d="M19 14l.7 3L22 18l-2.3 1-.7 3-.7-3L16 18l2.3-1 .7-3Z" stroke="currentColor" strokeWidth="1.6" />
-    </svg>
-  );
-}
 
 export default function ApplyStyleGalleryClient() {
   const [active, setActive] = useState<StyleKey>("MINIMAL");
@@ -132,7 +111,7 @@ export default function ApplyStyleGalleryClient() {
             <div>
               <div className="text-xs tracking-widest text-[color:var(--muted2)]">CURRENT</div>
               <div className="mt-2 flex items-center gap-2 text-xl font-semibold">
-                <IconSpark className="h-5 w-5" />
+                <AppIcon name="sparkleAI" className="h-5 w-5" />
                 {STYLE_LABEL[active]}
               </div>
               <div className="mt-1 text-sm text-[color:var(--muted)]">
@@ -208,7 +187,7 @@ export default function ApplyStyleGalleryClient() {
 
                   {selected ? (
                     <span className="inline-flex items-center gap-2 text-sm text-[color:var(--muted)]">
-                      <IconCheck className="h-4 w-4" /> Applied
+                      <AppIcon name="checkmark" className="h-4 w-4" strokeWidth={2} /> Applied
                     </span>
                   ) : (
                     <PillButton

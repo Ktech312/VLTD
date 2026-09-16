@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { AppIcon } from "@/components/ui/AppIcon";
 
 import { getCurrentUser, initAuthListener, onAuthStateChange } from "@/lib/auth";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
@@ -145,18 +146,7 @@ export default function BugReporter() {
           color: "var(--theme-gold, #C8CDD2)",
         }}
       >
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-          {/* antennae */}
-          <path d="M9 4.3 8 2.8M15 4.3 16 2.8" />
-          {/* head */}
-          <circle cx="12" cy="6" r="1.5" />
-          {/* body */}
-          <ellipse cx="12" cy="13.5" rx="4.6" ry="6" />
-          {/* wing seam */}
-          <path d="M12 8v11" />
-          {/* legs (3 per side) */}
-          <path d="M7.4 10.5 4.3 9M7.4 13.5 4 13.5M7.4 16.5 4.3 18M16.6 10.5 19.7 9M16.6 13.5 20 13.5M16.6 16.5 19.7 18" />
-        </svg>
+        <AppIcon name="bug" size={22} strokeWidth={1.7} />
       </button>
 
       {showHelper && !open && (

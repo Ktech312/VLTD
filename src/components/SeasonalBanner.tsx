@@ -243,9 +243,7 @@ export default function SeasonalBanner() {
               borderRadius: 7,
             }}
           >
-            <svg width="8" height="8" viewBox="0 0 12 12" fill="none">
-              <path d="M7.5 2L4 6l3.5 4" stroke="#E6C46A" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
+            <Glyph name="back" size={12} strokeWidth={2} style={{ color: "#E6C46A" }} />
           </button>
         )}
 
@@ -293,9 +291,7 @@ export default function SeasonalBanner() {
               borderRadius: 7,
             }}
           >
-            <svg width="8" height="8" viewBox="0 0 12 12" fill="none">
-              <path d="M4.5 2L8 6l-3.5 4" stroke="#E6C46A" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
+            <Glyph name="next" size={12} strokeWidth={2} style={{ color: "#E6C46A" }} />
           </button>
         )}
       </div>

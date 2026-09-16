@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
+import { AppIcon } from "@/components/ui/AppIcon";
 import { getGallerySections, type Gallery } from "@/lib/galleryModel";
 import { type VaultItem } from "@/lib/vaultModel";
 import { CommentThread } from "@/components/social/CommentThread";
@@ -103,9 +104,7 @@ export default function ExhibitionInfoModal({
           className="vltd-selectable bg-[color:var(--pill)] text-[color:var(--pill-fg)] ring-1 ring-[color:var(--border)] transition"
           style={{ position: "absolute", right: 14, top: 14, width: 30, height: 30, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", border: "none", cursor: "pointer" }}
         >
-          <svg viewBox="0 0 20 20" fill="none" style={{ width: 13, height: 13 }}>
-            <path d="M6 6l8 8M14 6l-8 8" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-          </svg>
+          <AppIcon name="close" strokeWidth={1.8} style={{ width: 13, height: 13 }} />
         </button>
 
         <div style={{ fontSize: 10, letterSpacing: "0.14em", textTransform: "uppercase", color: "var(--muted)", paddingRight: 30 }}>

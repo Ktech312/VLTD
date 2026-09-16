@@ -200,9 +200,7 @@ function ProfileItemModal({
           aria-label="Close"
           style={{ position: "absolute", right: 14, top: 14, width: 30, height: 30, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", border: "none", cursor: "pointer", background: "var(--pill)", color: "var(--fg)" }}
         >
-          <svg viewBox="0 0 20 20" fill="none" style={{ width: 13, height: 13 }}>
-            <path d="M6 6l8 8M14 6l-8 8" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-          </svg>
+          <Glyph name="close" strokeWidth={1.8} style={{ width: 13, height: 13 }} />
         </button>
 
         {singleItem ? (

@@ -3,6 +3,7 @@
 
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { AppIcon } from "@/components/ui/AppIcon";
 
 type Align = "left" | "right";
 
@@ -14,30 +15,11 @@ export type PillSelectOption<T extends string> = {
 };
 
 function CheckIcon({ className = "" }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 20 20" fill="none" aria-hidden="true" className={className}>
-      <path
-        d="m5.5 10.25 3 3 6-6"
-        stroke="currentColor"
-        strokeWidth="1.8"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
+  return <AppIcon name="checkmark" strokeWidth={1.8} className={className} />;
 }
 
 function CloseIcon({ className = "" }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 20 20" fill="none" aria-hidden="true" className={className}>
-      <path
-        d="M6 6l8 8M14 6l-8 8"
-        stroke="currentColor"
-        strokeWidth="1.8"
-        strokeLinecap="round"
-      />
-    </svg>
-  );
+  return <AppIcon name="close" strokeWidth={1.8} className={className} />;
 }
 
 function useIsMobile() {
@@ -250,13 +232,7 @@ export function PillSelect<T extends string>({
         </span>
 
         <span className={["pointer-events-none absolute grid place-items-center opacity-70 text-[color:var(--fg)]", compact ? "right-2.5 h-5 w-5" : "right-3 h-6 w-6"].join(" ")}>
-          <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" className="h-3.5 w-3.5">
-            <path
-              fillRule="evenodd"
-              d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.24a.75.75 0 01-1.06 0L5.21 8.29a.75.75 0 01.02-1.08z"
-              clipRule="evenodd"
-            />
-          </svg>
+          <AppIcon name="chevronDown" strokeWidth={2.2} className="h-3.5 w-3.5" />
         </span>
       </button>
 

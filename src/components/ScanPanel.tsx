@@ -1,6 +1,7 @@
 "use client";
 // v2 carousel layout
 import ProgressiveImage from "@/components/ui/ProgressiveImage";
+import { AppIcon } from "@/components/ui/AppIcon";
 import type { ScanSessionState } from "@/lib/scanners/scanSession";
 
 function chipClass(active = false) {
@@ -144,10 +145,7 @@ export default function ScanPanel({
               style={{ width: 60, minHeight: 144 }}
               title="Take another picture"
             >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
-                <circle cx="12" cy="13" r="4"/>
-              </svg>
+              <AppIcon name="camera" size={18} strokeWidth={1.8} />
             </button>
           </div>
         ) : (
@@ -161,10 +159,7 @@ export default function ScanPanel({
               className="pointer-events-none relative z-10 flex items-center justify-center rounded-full p-3 transition"
               style={{ background: "linear-gradient(135deg, #8C9298, #C8CDD2)", color: "#0B0B0B" }}
             >
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
-                <circle cx="12" cy="13" r="4"/>
-              </svg>
+              <AppIcon name="camera" size={24} strokeWidth={2} />
             </span>
           </button>
         )}
@@ -226,9 +221,7 @@ export default function ScanPanel({
                 : { background: "var(--pill)", color: "var(--muted)", border: "1px solid var(--border)" }
             }
           >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-              <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
-            </svg>
+            <AppIcon name="flash" size={14} strokeWidth={2.2} />
             {isIdentifying ? "Reading..." : hasImage ? "Auto Identify" : "Take a picture first"}
           </button>
 

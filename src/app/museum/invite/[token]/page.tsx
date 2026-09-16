@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useParams } from "next/navigation";
+import { AppIcon } from "@/components/ui/AppIcon";
 
 import {
   getGalleryByInviteToken,
@@ -597,28 +598,19 @@ export default function InviteGalleryPage() {
               <div className="mt-4 flex flex-wrap items-center gap-1.5">
                 {permissions.images ? (
                   <span className="inline-flex items-center gap-1 rounded-full bg-[color:var(--pill)] px-2.5 py-1 text-[10px] font-semibold text-[color:var(--muted2)] ring-1 ring-[color:var(--border)]">
-                    <svg width="9" height="9" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                      <rect x="3" y="3" width="18" height="18" rx="3" stroke="currentColor" strokeWidth="2" />
-                      <circle cx="8.5" cy="8.5" r="1.5" fill="currentColor" />
-                      <path d="M3 16l5-5 4 4 3-3 6 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
+                    <AppIcon name="frame" size={9} strokeWidth={2} />
                     Image view
                   </span>
                 ) : null}
                 {permissions.descriptionPage ? (
                   <span className="inline-flex items-center gap-1 rounded-full bg-[color:var(--pill)] px-2.5 py-1 text-[10px] font-semibold text-[color:var(--muted2)] ring-1 ring-[color:var(--border)]">
-                    <svg width="9" height="9" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                      <path d="M4 4h7a1 1 0 0 1 1 1v14a1 1 0 0 0-1-1H4V4Z" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
-                      <path d="M20 4h-7a1 1 0 0 0-1 1v14a1 1 0 0 1 1-1h7V4Z" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
-                    </svg>
+                    <AppIcon name="book" size={9} strokeWidth={2} />
                     Item details
                   </span>
                 ) : null}
                 {permissions.financialHistory ? (
                   <span className="inline-flex items-center gap-1 rounded-full bg-[color:var(--pill)] px-2.5 py-1 text-[10px] font-semibold text-[color:var(--muted2)] ring-1 ring-[color:var(--border)]">
-                    <svg width="9" height="9" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                      <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-                    </svg>
+                    <AppIcon name="dollar" size={9} strokeWidth={2} />
                     Financial data
                   </span>
                 ) : null}

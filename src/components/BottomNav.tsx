@@ -3,13 +3,14 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
+import { AppIcon, type AppIconName } from "@/components/ui/AppIcon";
 
 /* ── Tab config ─────────────────────────────────────────── */
 
 type Tab = {
   label: string;
   href: string;
-  icon: (active: boolean) => React.ReactNode;
+  icon: AppIconName;
   exact?: boolean;
 };
 
@@ -18,100 +19,30 @@ type Tab = {
 const GOLD  = "#C8CDD2";
 const DIM   = "rgba(240,226,198,0.94)";   // light warm cream — legible on the black nav
 
-function sz(active: boolean) { return active ? 2.2 : 1.75; }
-
-// Rope stanchions: two posts with ball tops + sagging rope = museum exhibit
-function IconExhibitions({ active }: { active: boolean }) {
-  const c = active ? GOLD : DIM;
-  const sw = sz(active);
-  return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-      <circle cx="6"  cy="6.2" r="1.5" stroke={c} strokeWidth={sw * 0.8} />
-      <circle cx="18" cy="6.2" r="1.5" stroke={c} strokeWidth={sw * 0.8} />
-      <line x1="6"  y1="7.9" x2="6"  y2="19" stroke={c} strokeWidth={sw} strokeLinecap="round" />
-      <line x1="18" y1="7.9" x2="18" y2="19" stroke={c} strokeWidth={sw} strokeLinecap="round" />
-      <line x1="3.4" y1="19" x2="8.6"  y2="19" stroke={c} strokeWidth={sw} strokeLinecap="round" />
-      <line x1="15.4" y1="19" x2="20.6" y2="19" stroke={c} strokeWidth={sw} strokeLinecap="round" />
-      <path d="M6.9 8.6 Q12 13.6 17.1 8.6" stroke={c} strokeWidth={sw * 0.85} strokeLinecap="round" fill="none" />
-    </svg>
-  );
-}
-
-// Vault door: rounded door face + spoke wheel handle (echoes the VLTD key-wheel logo)
-function IconVault({ active }: { active: boolean }) {
-  const c = active ? GOLD : DIM;
-  const sw = sz(active);
-  return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-      <rect x="3" y="3" width="18" height="18" rx="3" stroke={c} strokeWidth={sw} />
-      <line x1="12"  y1="6.2"  x2="12"   y2="17.8" stroke={c} strokeWidth={sw * 0.8} strokeLinecap="round" />
-      <line x1="6.2" y1="12"   x2="17.8" y2="12"   stroke={c} strokeWidth={sw * 0.8} strokeLinecap="round" />
-      <line x1="7.9" y1="7.9"  x2="16.1" y2="16.1" stroke={c} strokeWidth={sw * 0.8} strokeLinecap="round" />
-      <line x1="16.1" y1="7.9" x2="7.9"  y2="16.1" stroke={c} strokeWidth={sw * 0.8} strokeLinecap="round" />
-      <circle cx="12" cy="12" r="4.2" stroke={c} strokeWidth={sw * 0.9} fill="rgba(10,10,10,0.001)" />
-      <circle cx="12" cy="12" r="1.3" fill={c} />
-    </svg>
-  );
-}
-
-// Compass: circle + diamond needle (N bright / S dim) = explore / discover
-function IconDiscover({ active }: { active: boolean }) {
-  const c = active ? GOLD : DIM;
-  const sw = sz(active);
-  return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-      <circle cx="12" cy="12" r="9" stroke={c} strokeWidth={sw} />
-      <polygon points="12,5.5 14,11.5 12,10.5 10,11.5" fill={c} />
-      <polygon points="12,18.5 14,12.5 12,13.5 10,12.5" fill={c} opacity="0.4" />
-    </svg>
-  );
-}
-
-// Three dots = more / menu
-function IconMore({ active }: { active: boolean }) {
-  const c = active ? GOLD : DIM;
-  return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill={c} aria-hidden="true">
-      <circle cx="5" cy="12" r="1.9" />
-      <circle cx="12" cy="12" r="1.9" />
-      <circle cx="19" cy="12" r="1.9" />
-    </svg>
-  );
-}
-
 /* ── Tabs ────────────────────────────────────────────────── */
 
 const MORE_TAB = "__more__";
 
 const TABS: (Tab | null)[] = [
-  { label: "Exhibits", href: "/museum",   icon: (a) => <IconExhibitions active={a} />, exact: false },
-  { label: "Vault",    href: "/vault",    icon: (a) => <IconVault active={a} />,       exact: false },
+  { label: "Exhibits", href: "/museum",   icon: "exhibitions", exact: false },
+  { label: "Vault",    href: "/vault",    icon: "vault",       exact: false },
   null, // gold + centre button
-  { label: "Discover", href: "/discover", icon: (a) => <IconDiscover active={a} />,    exact: false },
-  { label: "More",     href: MORE_TAB,    icon: (a) => <IconMore active={a} />,         exact: false },
+  { label: "Discover", href: "/discover", icon: "discover",    exact: false },
+  { label: "More",     href: MORE_TAB,    icon: "more",        exact: false },
 ];
 
-// Custom line-art glyphs for the More sheet — same style as the nav icons.
-// No emoji / generic icons.
-function Glyph({ paths }: { paths: React.ReactNode }) {
-  return (
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke={DIM} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      {paths}
-    </svg>
-  );
-}
-
-// The rest of the categories, reachable from the "More" sheet.
-const MORE_LINKS: { label: string; href: string; icon: React.ReactNode }[] = [
-  { label: "Curator Home",   href: "/dashboard",       icon: (<><path d="M4 11.5 12 4l8 7.5" /><path d="M6 10.5V20h12v-9.5" /><path d="M9.7 20v-5h4.6v5" /></>) },
-  { label: "Insights",       href: "/portfolio",       icon: (<><path d="M4 20h16" /><path d="M7.5 20v-4.5M12 20V8.5M16.5 20v-7.5" /></>) },
-  { label: "Events",         href: "/events",          icon: (<><rect x="4" y="5.5" width="16" height="14.5" rx="2" /><path d="M4 10h16M8.5 3.5v4M15.5 3.5v4" /></>) },
-  { label: "Alerts",         href: "/notifications",   icon: (<><path d="M6 16v-5a6 6 0 0 1 12 0v5" /><path d="M4.5 16h15" /><path d="M10.4 19a1.7 1.7 0 0 0 3.2 0" /></>) },
-  { label: "Command Center", href: "/more",            icon: (<><path d="M4 8h8M16 8h4M4 16h4M12 16h8" /><circle cx="14" cy="8" r="2" /><circle cx="8" cy="16" r="2" /></>) },
-  { label: "VLT Lounge",     href: "/community-board", icon: (<><path d="M4 14v-2.5A2.5 2.5 0 0 1 6.5 9h11A2.5 2.5 0 0 1 20 11.5V14" /><rect x="3.5" y="13.5" width="17" height="4.5" rx="1.3" /><path d="M6.5 18v1.6M17.5 18v1.6" /></>) },
-  { label: "Activity",       href: "/activity",        icon: (<><path d="M3 12h3.5l2.5-6 4 12 2.5-6H21" /></>) },
-  { label: "Learn",          href: "/learn",           icon: (<><path d="M12 6.5C10 5 6.5 4.8 3.5 5.5v12.5c3-.7 6.5-.5 8.5 1 2-1.5 5.5-1.7 8.5-1V5.5C17.5 4.8 14 5 12 6.5Z" /><path d="M12 6.5V19" /></>) },
-  { label: "Account",        href: "/account",         icon: (<><circle cx="12" cy="8" r="3.2" /><path d="M5.8 19.5a6.2 6.2 0 0 1 12.4 0" /></>) },
+// The rest of the categories, reachable from the "More" sheet. Same style
+// as the nav icons — no emoji / generic icons.
+const MORE_LINKS: { label: string; href: string; icon: AppIconName }[] = [
+  { label: "Curator Home",   href: "/dashboard",       icon: "dashboard" },
+  { label: "Insights",       href: "/portfolio",       icon: "chart" },
+  { label: "Events",         href: "/events",          icon: "events" },
+  { label: "Alerts",         href: "/notifications",   icon: "notifications" },
+  { label: "Command Center", href: "/more",            icon: "settings" },
+  { label: "VLT Lounge",     href: "/community-board", icon: "sofa" },
+  { label: "Activity",       href: "/activity",        icon: "activity" },
+  { label: "Learn",          href: "/learn",           icon: "learn" },
+  { label: "Account",        href: "/account",         icon: "account" },
 ];
 
 function isGuestGalleryRoute(pathname: string) {
@@ -176,7 +107,7 @@ export default function BottomNav() {
                   className="flex flex-col items-center gap-1.5 rounded-2xl py-3.5 active:opacity-70"
                   style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}
                 >
-                  <Glyph paths={l.icon} />
+                  <AppIcon name={l.icon} size={24} style={{ color: DIM }} />
                   <span className="text-center text-[11px] font-medium leading-tight" style={{ color: DIM }}>
                     {l.label}
                   </span>
@@ -224,9 +155,7 @@ export default function BottomNav() {
                       ].join(", "),
                     }}
                   >
-                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-                      <path d="M12 5v14M5 12h14" stroke="#1A0F00" strokeWidth="2.5" strokeLinecap="round" />
-                    </svg>
+                    <AppIcon name="addItem" size={22} strokeWidth={2.5} style={{ color: "#1A0F00" }} />
                   </div>
                 </Link>
               );
@@ -248,7 +177,7 @@ export default function BottomNav() {
                     background: isActive ? "rgba(203,208,213,0.08)" : "transparent",
                   }}
                 >
-                  {tab.icon(isActive)}
+                  <AppIcon name={tab.icon} variant="navBottom" active={isActive} size={22} style={{ color: isActive ? GOLD : DIM }} />
                   <span
                     className="text-[11px] font-semibold tracking-[0.04em] transition-colors"
                     style={{ color: isActive ? GOLD : DIM }}
@@ -270,7 +199,7 @@ export default function BottomNav() {
                   background: isActive ? "rgba(203,208,213,0.08)" : "transparent",
                 }}
               >
-                {tab.icon(isActive)}
+                <AppIcon name={tab.icon} variant="navBottom" active={isActive} size={22} style={{ color: isActive ? GOLD : DIM }} />
                 <span
                   className="text-[11px] font-semibold tracking-[0.04em] transition-colors"
                   style={{ color: isActive ? GOLD : DIM }}

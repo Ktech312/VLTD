@@ -542,7 +542,7 @@ export default function WatchlistPage() {
                   className="grid h-8 w-8 place-items-center rounded-[6px] border border-[rgba(203,208,213,0.22)] transition disabled:opacity-35"
                   style={{ color: "var(--theme-gold,#C8CDD2)" }}
                 >
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M15 6l-6 6 6 6" /></svg>
+                  <Glyph name="back" size={14} strokeWidth={2.4} />
                 </button>
                 <button
                   type="button"
@@ -553,7 +553,7 @@ export default function WatchlistPage() {
                   className="grid h-8 w-8 place-items-center rounded-[6px] border border-[rgba(203,208,213,0.22)] transition disabled:opacity-35"
                   style={{ color: "var(--theme-gold,#C8CDD2)" }}
                 >
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M9 6l6 6-6 6" /></svg>
+                  <Glyph name="next" size={14} strokeWidth={2.4} />
                 </button>
                 <button
                   type="button"
@@ -563,7 +563,7 @@ export default function WatchlistPage() {
                   className="grid h-8 w-8 place-items-center rounded-[6px] transition"
                   style={{ color: "var(--theme-gold,#C8CDD2)" }}
                 >
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round"><path d="M6 6l12 12M18 6L6 18" /></svg>
+                  <Glyph name="close" size={15} strokeWidth={2.4} />
                 </button>
               </div>
             </div>

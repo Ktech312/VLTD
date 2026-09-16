@@ -7,6 +7,7 @@ import { createProfile, getOnboardingStatus, setStoredActiveProfileId } from "@/
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 import { UNIVERSE_KEYS, UNIVERSE_LABEL } from "@/lib/taxonomy";
 import { Glyph, universeGlyphName } from "@/components/ui/Glyph";
+import { AppIcon, type AppIconName } from "@/components/ui/AppIcon";
 import { clearOnboardingDraft, loadOnboardingDraft, saveOnboardingDraft } from "@/lib/onboardingDraft";
 import { PillButton } from "@/components/ui/PillButton";
 
@@ -41,19 +42,21 @@ const VALUE_PROPS = [
   { icon: "image", text: "Share beautiful public galleries" },
 ];
 
-// Clean line icons (no emoji). name → SVG path set.
+const UI_ICON_MAP: Record<string, AppIconName> = {
+  person: "account",
+  store: "building",
+  key: "key",
+  vault: "vault",
+  chart: "chart",
+  trophy: "trophy",
+  image: "frame",
+};
+
+// Clean line icons (no emoji), routed through the shared AppIcon system.
 function UiIcon({ name, size = 18 }: { name: string; size?: number }) {
-  const p = { width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 1.8, strokeLinecap: "round" as const, strokeLinejoin: "round" as const, "aria-hidden": true };
-  switch (name) {
-    case "person": return <svg {...p}><circle cx="12" cy="8" r="4" /><path d="M4 21c0-4 3.6-7 8-7s8 3 8 7" /></svg>;
-    case "store": return <svg {...p}><path d="M3 9l1.5-5h15L21 9M4 9h16v11H4zM9 20v-6h6v6" /></svg>;
-    case "key": return <svg {...p}><circle cx="8" cy="8" r="4" /><path d="M11 11l9 9M17 17l2-2M14 14l2-2" /></svg>;
-    case "vault": return <svg {...p}><rect x="3" y="4" width="18" height="16" rx="2" /><circle cx="12" cy="12" r="3" /><path d="M12 4v3M12 17v3" /></svg>;
-    case "chart": return <svg {...p}><path d="M4 20V10M10 20V4M16 20v-7M2 20h20" /></svg>;
-    case "trophy": return <svg {...p}><path d="M8 21h8M12 17v4M6 4h12v4a6 6 0 0 1-12 0zM6 5H3v2a3 3 0 0 0 3 3M18 5h3v2a3 3 0 0 1-3 3" /></svg>;
-    case "image": return <svg {...p}><rect x="3" y="3" width="18" height="18" rx="2" /><circle cx="9" cy="9" r="1.6" /><path d="M21 15l-5-5L5 21" /></svg>;
-    default: return null;
-  }
+  const mapped = UI_ICON_MAP[name];
+  if (!mapped) return null;
+  return <AppIcon name={mapped} size={size} strokeWidth={1.8} />;
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────

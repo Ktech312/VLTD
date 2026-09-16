@@ -20,6 +20,7 @@ import {
 
 import { PillButton } from "@/components/ui/PillButton";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { AppIcon } from "@/components/ui/AppIcon";
 import CameraCapturePanel from "@/components/CameraCapturePanel";
 import type { BarcodeLookupResult } from "@/lib/scanners/barcodeLookup";
 
@@ -244,28 +245,6 @@ function legacyCatToTaxonomy(cat: string | null): { u?: UniverseKey; c?: string 
 function museumImgSrc(i: ModelItem) {
   const label = itemLabel(i);
   return i.imageFrontUrl || placeholderDataUri(i.title, label);
-}
-
-function IconCamera({ className = "h-5 w-5" }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" className={className} aria-hidden="true">
-      <path
-        d="M9 5l1.2-1.6c.2-.3.6-.4.9-.4h1.8c.3 0 .7.1.9.4L15 5h3a3 3 0 0 1 3 3v9a3 3 0 0 1-3 3H6a3 3 0 0 1-3-3V8a3 3 0 0 1 3-3h3Z"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinejoin="round"
-      />
-      <path d="M12 17a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z" stroke="currentColor" strokeWidth="2" />
-    </svg>
-  );
-}
-
-function IconPlus({ className = "h-5 w-5" }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" className={className} aria-hidden="true">
-      <path d="M12 5v14M5 12h14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-    </svg>
-  );
 }
 
 function getFrameClasses(style: FrameStyle) {
@@ -636,7 +615,7 @@ function PhotoTile({
           <div className="grid h-full w-full place-items-center bg-[color:var(--input)]">
             <div className="flex flex-col items-center gap-2">
               <div className="grid h-12 w-12 place-items-center rounded-2xl bg-[color:var(--pill)] ring-1 ring-[color:var(--border)]">
-                <IconCamera />
+                <AppIcon name="camera" size={20} strokeWidth={2} />
               </div>
               <div className="text-sm font-medium">Add photo</div>
               <div className="text-xs text-[color:var(--muted2)]">Click or drag &amp; drop</div>
@@ -667,7 +646,7 @@ function PhotoTile({
 
         {!value ? (
           <div className="pointer-events-none absolute right-3 top-3 grid h-10 w-10 place-items-center rounded-2xl bg-white/10 ring-1 ring-white/15 backdrop-blur">
-            <IconPlus className="h-5 w-5 text-white/90" />
+            <AppIcon name="addItem" strokeWidth={2} className="h-5 w-5 text-white/90" />
           </div>
         ) : null}
       </button>

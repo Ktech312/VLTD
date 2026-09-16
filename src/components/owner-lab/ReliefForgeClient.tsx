@@ -1,7 +1,7 @@
 "use client";
 
 import { ChangeEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Download, FileImage, FlipVertical2, Ruler, Sparkles, Upload } from "lucide-react";
+import { AppIcon } from "@/components/ui/AppIcon";
 import earcut from "earcut";
 
 type HeightMode = "light" | "dark";
@@ -620,7 +620,7 @@ export default function ReliefForgeClient() {
         <section className="rounded-[8px] border border-[color:var(--border)] bg-[color:var(--surface)] p-5 shadow-[var(--shadow-soft)]">
           <div className="flex items-start gap-3">
             <div className="grid h-10 w-10 shrink-0 place-items-center rounded-[6px] border border-[color:var(--border)] bg-[color:var(--input)]">
-              <Sparkles size={19} aria-hidden="true" />
+              <AppIcon name="sparkle" size={19} />
             </div>
             <div>
               <p className="text-xs font-black uppercase tracking-[0.16em] text-[color:var(--muted2)]">VLTD Forge</p>
@@ -632,7 +632,7 @@ export default function ReliefForgeClient() {
           </div>
 
           <label className="mt-6 flex min-h-[150px] cursor-pointer flex-col items-center justify-center gap-3 rounded-[8px] border border-dashed border-[color:var(--border-strong)] bg-[color:var(--input)] p-5 text-center transition hover:bg-[color:var(--input-hover)]">
-            <Upload size={24} aria-hidden="true" />
+            <AppIcon name="upload" size={24} />
             <span className="text-sm font-black">{fileName || "Upload PNG or JPG"}</span>
             <span className="text-xs text-[color:var(--muted)]">Best with high-contrast logos, icons, emblems, and clean flat art.</span>
             <input className="sr-only" type="file" accept="image/png,image/jpeg,image/webp" onChange={handleFile} />
@@ -687,7 +687,7 @@ export default function ReliefForgeClient() {
 
             <label className="grid gap-2 text-sm font-bold">
               <span className="flex items-center justify-between">
-                <span className="flex items-center gap-2"><Ruler size={16} /> Width</span>
+                <span className="flex items-center gap-2"><AppIcon name="ruler" size={16} /> Width</span>
                 <span>{widthMm} mm</span>
               </span>
               <input type="range" min="30" max="500" value={widthMm} onChange={(e) => setWidthMm(Number(e.target.value))} />
@@ -738,7 +738,7 @@ export default function ReliefForgeClient() {
               onClick={handleGenerate}
               type="button"
             >
-              <FlipVertical2 size={17} aria-hidden="true" />
+              <AppIcon name="flipVertical" size={17} />
               {isWorking ? "Generating..." : "Generate STL"}
             </button>
             <button
@@ -747,7 +747,7 @@ export default function ReliefForgeClient() {
               onClick={handleDownload}
               type="button"
             >
-              <Download size={17} aria-hidden="true" />
+              <AppIcon name="download" size={17} />
               Download
             </button>
           </div>
@@ -782,7 +782,7 @@ export default function ReliefForgeClient() {
                   </div>
                 ) : (
                   <div className="grid justify-items-center gap-3 text-center text-[color:var(--muted)]">
-                    <FileImage size={44} aria-hidden="true" />
+                    <AppIcon name="frame" size={44} />
                     <p className="max-w-[320px] text-sm">Upload one of your test images and the generated relief preview will appear here.</p>
                   </div>
                 )}
