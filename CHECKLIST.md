@@ -1,5 +1,13 @@
 # VLTD — Session Checklist (2026-08-05 night → ongoing, updated 2026-08-27)
 
+## 2026-09-16 (later) — Friendly Glass navigation: NOT accepted, paused, review Artifact built instead
+Full narrative in HANDOFF.md. EK rejected the shipped nav treatment (opacity-dimmed inactive icons); no further production nav changes made this round, per her instruction.
+- [x] Measured real PNG padding for all 7 nav icons (alpha-bbox script) — 5/7 already fill 85-97%, 2/7 (More, Add/Capture) genuinely under-filled (~79-80% vertical, off-center). Not guessed.
+- [x] Published a standalone review Artifact ("Friendly Glass Nav Review"): icon grid (as-shipped vs. tight-cropped, 48px/56px, light/dark bg toggle), the measured-fill data table, and full TopNav (desktop) + BottomNav (390px mobile) mockups at a live 48/56px toggle — using the real existing underline (TopNav) / pill+border+dot (BottomNav) active-state treatments instead of a new one, no opacity dimming on the icon itself. Utility icons (search/chat/bell) kept Classic and small.
+- [x] **Bug caught before publishing, in this session's own "look once" review pass**: BottomNav mockup's `max-width:100%` let the 390px mock shrink and its 5 tabs overlap at narrower widths. Fixed (fixed 390px width inside a scrollable wrapper), re-verified clean.
+- [x] No code changes to `AppIcon.tsx`/`ThemeContext.tsx`/`ThemePicker.tsx` this round — the shipped `1ff5152`/`78d7fe3` infrastructure is untouched, still live, still defaulting to Classic.
+- [ ] **Still not done — authenticated live mobile-viewport verification** (BottomNav, Vault favorites, Messages star, Account picker, an action modal). Claude-in-Chrome's `resize_window` doesn't take effect in this environment (`window.innerWidth` stays 1920, reconfirmed); no second device paired; explicitly declined to copy the session's `localStorage` auth token into a viewport-emulating browser — that crosses into credential/token handling this session won't do. Flagged directly to EK rather than worked around.
+
 ## 2026-09-16 — Friendly Glass icon theme: switchable 3D icon pack, verified live on production
 Full narrative in HANDOFF.md; quick-scan status. Follows the icon-centralization work (`020adf2`/`3f0d297`). Three commits, all live: `1ff5152`, `78d7fe3`, plus this session's verification pass with no further code changes.
 - [x] `AppIcon.tsx` renders a classic SVG layer + a Friendly Glass `<img>` layer for every icon; `data-vltd-icon-style` on `<html>` (plain CSS, no client hook in `AppIcon`) picks which shows.
