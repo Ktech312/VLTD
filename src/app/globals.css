@@ -215,6 +215,16 @@
   display: block !important;
 }
 
+/* The `filled` selected-state badge (gold ring + checkmark) only makes
+   sense while the Friendly Glass layer is the one showing — Classic
+   already communicates filled via its own SVG fill, unaffected here. */
+.vltd-icon-friendly-badge {
+  display: none;
+}
+[data-vltd-icon-style="friendly-glass"] .vltd-icon-friendly-badge {
+  display: flex !important;
+}
+
 /* =========================================================
    THEME CLASS BRIDGES
    ThemeProvider adds .theme-dark / .theme-light to <html>,

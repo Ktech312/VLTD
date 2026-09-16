@@ -438,6 +438,44 @@ const FRIENDLY_GLASS_BASE = "/ui/icon-themes/friendly-glass-v1";
 // rendered at all, so there's nothing for the CSS toggle to reveal.
 const FRIENDLY_GLASS_MIN_SIZE = 18;
 
+// Matches FavoriteButton.tsx's existing `text-amber-300` / amber-400 glow
+// convention for a favorited star, so the new Friendly Glass "selected"
+// treatment reads as the same visual language, not a competing one.
+const FRIENDLY_SELECTED_COLOR = "#FBBF24";
+
+// The Friendly Glass pack has one asset per name — no separate "filled"
+// art — so a selected/saved/favorited state (the `filled` prop) is shown
+// as a gold ring around the tile plus a small checkmark badge, applied
+// only while Friendly Glass is the active style (gated by the same
+// `.vltd-icon-friendly-badge` + [data-vltd-icon-style] CSS pattern as the
+// classic/friendly layer toggle itself, in globals.css).
+function FriendlySelectedBadge({ size }: { size: number }) {
+  const badgeSize = Math.max(9, Math.round(size * 0.44));
+  return (
+    <span
+      className="vltd-icon-friendly-badge"
+      aria-hidden="true"
+      style={{
+        position: "absolute",
+        right: -2,
+        bottom: -2,
+        width: badgeSize,
+        height: badgeSize,
+        borderRadius: "50%",
+        background: FRIENDLY_SELECTED_COLOR,
+        border: "1.5px solid #1A0F00",
+        boxShadow: `0 0 4px rgba(251,191,36,0.7)`,
+        alignItems: "center",
+        justifyContent: "center",
+      }}
+    >
+      <svg viewBox="0 0 24 24" width="65%" height="65%" fill="none" stroke="#1A0F00" strokeWidth={3.5} strokeLinecap="round" strokeLinejoin="round">
+        <path d="M20 6 9 17l-5-5" />
+      </svg>
+    </span>
+  );
+}
+
 export function AppIcon({
   name,
   variant = "compact",
@@ -454,10 +492,12 @@ export function AppIcon({
   className?: string;
   style?: CSSProperties;
   strokeWidth?: number;
-  /** Toggle-state fill (e.g. a saved bookmark or a liked heart) — fills the
-   * shape with currentColor instead of just outlining it. Classic-only:
-   * the Friendly Glass pack is one fixed asset per name, so filled state
-   * there stays visually communicated by the surrounding button/color. */
+  /** Toggle-state fill (e.g. a saved bookmark or a liked heart). Classic:
+   * fills the shape with currentColor instead of just outlining it.
+   * Friendly Glass: the pack is one fixed asset per name with no separate
+   * filled art, so `filled` instead adds a small gold ring + checkmark
+   * badge on the icon tile — the same treatment everywhere this prop is
+   * used, so a favorited star and a saved bookmark read identically. */
   filled?: boolean;
   /** Nav active/inactive state — only meaningful with variant="navTop" or
    * "navBottom" (selects that surface's highlighted vs. dim rendering for
@@ -476,7 +516,7 @@ export function AppIcon({
         style={{ display: "inline-block", position: "relative", width: size, height: size, lineHeight: 0, ...style }}
       >
         <svg
-          className="vltd-icon-classic"
+          className={showFriendly ? "vltd-icon-classic" : undefined}
           width={size}
           height={size}
           viewBox="0 0 24 24"
@@ -520,7 +560,7 @@ export function AppIcon({
         style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: box, height: box, position: "relative", ...style }}
       >
         <span
-          className="vltd-icon-classic"
+          className={showFriendly ? "vltd-icon-classic" : undefined}
           style={{
             position: "absolute",
             inset: 0,
@@ -556,9 +596,18 @@ export function AppIcon({
             height={box}
             loading="lazy"
             decoding="async"
-            style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "contain" }}
+            style={{
+              position: "absolute",
+              inset: 0,
+              width: "100%",
+              height: "100%",
+              objectFit: "contain",
+              borderRadius: filled ? "28%" : undefined,
+              boxShadow: filled ? `0 0 0 2px ${FRIENDLY_SELECTED_COLOR}, 0 0 10px rgba(251,191,36,0.55)` : undefined,
+            }}
           />
         )}
+        {showFriendly && filled && <FriendlySelectedBadge size={box} />}
       </span>
     );
   }
@@ -570,7 +619,7 @@ export function AppIcon({
       style={{ display: "inline-block", position: "relative", width: size, height: size, lineHeight: 0, ...style }}
     >
       <svg
-        className="vltd-icon-classic"
+        className={showFriendly ? "vltd-icon-classic" : undefined}
         width={size}
         height={size}
         viewBox="0 0 24 24"
@@ -594,9 +643,18 @@ export function AppIcon({
           height={size}
           loading="lazy"
           decoding="async"
-          style={{ position: "absolute", inset: 0, width: size, height: size, objectFit: "contain" }}
+          style={{
+            position: "absolute",
+            inset: 0,
+            width: size,
+            height: size,
+            objectFit: "contain",
+            borderRadius: filled ? "28%" : undefined,
+            boxShadow: filled ? `0 0 0 2px ${FRIENDLY_SELECTED_COLOR}, 0 0 8px rgba(251,191,36,0.55)` : undefined,
+          }}
         />
       )}
+      {showFriendly && filled && <FriendlySelectedBadge size={size} />}
     </span>
   );
 }
