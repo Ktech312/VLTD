@@ -78,6 +78,11 @@
   --theme-text-primary: #ECEDEF;
   --theme-text-secondary: #9BA0A6;
   --theme-text-muted: #61656B;
+  /* Vault card title color — dark mode keeps its normal bright primary
+     text (already high-contrast against the dark card); light mode
+     overrides this to the same solid blue as the subtitle/price below
+     it, since plain dark text read as flat/hard-to-read there. */
+  --vault-title-color: var(--theme-text-primary);
   --theme-gold: #C8CDD2;
   --theme-gold-gradient: linear-gradient(112deg, rgba(255,255,255,0.5) 0%, rgba(255,255,255,0) 22%, rgba(255,255,255,0.3) 48%, rgba(255,255,255,0) 72%, rgba(255,255,255,0.45) 100%), linear-gradient(135deg, #EDEFF1 0%, #A8AEB4 42%, #D6DADE 66%, #8C9298 100%);
   --theme-gold-border: rgba(203, 208, 213, 0.34);
@@ -310,6 +315,7 @@
      solid, higher-contrast blue for light themes only. */
   --data-color: #1D6FE0;
   --status-cyan: #1D6FE0;
+  --vault-title-color: var(--data-color);
 }
 
 /* Nav seam fix: light themes use near-opaque navBg, disable blur so there's no frosted-glass color strip */
