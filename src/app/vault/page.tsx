@@ -542,7 +542,7 @@ function VaultCard({
         <ItemVisibilityToggle item={item} />
       </div>
 
-      <Link href={detailHref} className="relative z-10 mt-1 min-w-0">
+      <Link href={detailHref} className="relative z-10 mt-2 min-w-0">
         <div className="line-clamp-1 text-[15px] font-semibold leading-tight vltd-keep-color" style={{ "--vltd-keep-color": "var(--vault-title-color)" } as React.CSSProperties}>
           {item.title}
         </div>
@@ -551,7 +551,7 @@ function VaultCard({
         </div>
       </Link>
 
-      <div className="mt-auto flex items-end justify-between gap-2 pt-3">
+      <div className="mt-auto flex items-end justify-between gap-2 pt-4">
         <div className="min-w-0">
           {editingField === "value" ? (
             <input
@@ -569,17 +569,28 @@ function VaultCard({
               className="h-6 w-20 rounded-md bg-[color:var(--pill)] px-2 text-[11px] ring-1 ring-[color:var(--border)] focus:outline-none"
             />
           ) : (
+            // Single number: the current value itself, colored by gain/loss
+            // (green up, red down) instead of a separate, often-redundant
+            // "+$X" line underneath it — EK found two numbers confusing,
+            // especially when they showed the same figure twice.
             <button
               type="button"
               onClick={() => setEditingField("value")}
-              className="block text-left text-[20px] font-semibold leading-none text-[color:var(--data-color)] hover:text-gold-light"
+              className="block text-left text-[20px] font-semibold leading-none hover:opacity-80"
+              style={{
+                color:
+                  marketValue <= 0
+                    ? "var(--muted)"
+                    : showGain
+                      ? gain >= 0
+                        ? "var(--status-gain, #54C98A)"
+                        : "var(--status-loss, #E05252)"
+                      : "var(--data-color)",
+              }}
             >
               {marketValue > 0 ? formatMoney(marketValue) : "No value"}
             </button>
           )}
-          <div className={showGain ? (gain >= 0 ? "mt-1 text-[10px] font-bold leading-none text-emerald-300" : "mt-1 text-[10px] font-bold leading-none text-red-300") : "mt-1 text-[10px] font-bold leading-none text-[color:var(--muted)]"}>
-            {showGain ? `${gain >= 0 ? "+" : ""}${formatMoney(gain)}` : "—"}
-          </div>
         </div>
 
         {isSold ? (
