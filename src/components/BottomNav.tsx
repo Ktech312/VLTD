@@ -177,7 +177,18 @@ export default function BottomNav() {
                     background: isActive ? "rgba(203,208,213,0.08)" : "transparent",
                   }}
                 >
-                  <AppIcon name={tab.icon} variant="navBottom" active={isActive} size={32} style={{ color: isActive ? GOLD : DIM }} />
+                  <AppIcon
+                    name={tab.icon}
+                    variant="navBottom"
+                    active={isActive}
+                    size={32}
+                    style={{
+                      color: isActive ? GOLD : DIM,
+                      filter: isActive
+                        ? "drop-shadow(0 0 6px rgba(64,146,255,0.9)) drop-shadow(0 0 14px rgba(64,146,255,0.6))"
+                        : "none",
+                    }}
+                  />
                   <span
                     className="text-[11px] font-semibold tracking-[0.04em] transition-colors"
                     style={{ color: isActive ? GOLD : DIM }}
@@ -199,7 +210,18 @@ export default function BottomNav() {
                   background: isActive ? "rgba(203,208,213,0.08)" : "transparent",
                 }}
               >
-                <AppIcon name={tab.icon} variant="navBottom" active={isActive} size={32} style={{ color: isActive ? GOLD : DIM }} />
+                <AppIcon
+                  name={tab.icon}
+                  variant="navBottom"
+                  active={isActive}
+                  size={32}
+                  style={{
+                    color: isActive ? GOLD : DIM,
+                    filter: isActive
+                      ? "drop-shadow(0 0 6px rgba(64,146,255,0.9)) drop-shadow(0 0 14px rgba(64,146,255,0.6))"
+                      : "none",
+                  }}
+                />
                 <span
                   className="text-[11px] font-semibold tracking-[0.04em] transition-colors"
                   style={{ color: isActive ? GOLD : DIM }}

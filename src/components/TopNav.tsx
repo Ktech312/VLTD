@@ -384,10 +384,20 @@ function TopNavInner() {
                   <Link
                     key={item.href + item.label}
                     href={item.href}
-                    className="relative flex flex-col items-center gap-[4px] px-3 pt-1 pb-2 transition-opacity hover:opacity-100"
-                    style={{ opacity: active ? 1 : 0.65 }}
+                    className="relative flex flex-col items-center gap-[4px] px-3 pt-1 pb-2"
                   >
-                    <AppIcon name={item.icon} variant="navTop" active={active} size={32} style={{ color: active ? "#C8CDD2" : "var(--muted2, #61656B)" }} />
+                    <AppIcon
+                      name={item.icon}
+                      variant="navTop"
+                      active={active}
+                      size={32}
+                      style={{
+                        color: active ? "#C8CDD2" : "var(--muted2, #61656B)",
+                        filter: active
+                          ? "drop-shadow(0 0 6px rgba(64,146,255,0.9)) drop-shadow(0 0 14px rgba(64,146,255,0.6))"
+                          : "none",
+                      }}
+                    />
                     <span
                       className="text-[11px] font-semibold tracking-[0.04em] leading-none whitespace-nowrap"
                       style={{ color: active ? "#C8CDD2" : "var(--muted, #C4B07A)" }}
@@ -397,7 +407,7 @@ function TopNavInner() {
                     {active && (
                       <span
                         className="absolute bottom-0 left-3 right-3 h-[2px] rounded-full"
-                        style={{ background: "linear-gradient(90deg, transparent, #C8CDD2, transparent)" }}
+                        style={{ background: "linear-gradient(90deg, transparent, #4092FF, transparent)" }}
                       />
                     )}
                   </Link>
@@ -415,10 +425,20 @@ function TopNavInner() {
                     }
                     setMoreOpen((v) => !v);
                   }}
-                  className="relative flex flex-col items-center gap-[4px] px-3 pt-1 pb-2 transition-opacity hover:opacity-100"
-                  style={{ opacity: isMoreActive || moreOpen ? 1 : 0.65 }}
+                  className="relative flex flex-col items-center gap-[4px] px-3 pt-1 pb-2"
                 >
-                  <AppIcon name="more" variant="navTop" size={32} style={{ color: isMoreActive || moreOpen ? "#C8CDD2" : "var(--muted2, #61656B)" }} />
+                  <AppIcon
+                    name="more"
+                    variant="navTop"
+                    active={isMoreActive || moreOpen}
+                    size={32}
+                    style={{
+                      color: isMoreActive || moreOpen ? "#C8CDD2" : "var(--muted2, #61656B)",
+                      filter: isMoreActive || moreOpen
+                        ? "drop-shadow(0 0 6px rgba(64,146,255,0.9)) drop-shadow(0 0 14px rgba(64,146,255,0.6))"
+                        : "none",
+                    }}
+                  />
                   <span
                     className="text-[11px] font-semibold tracking-[0.04em] leading-none whitespace-nowrap"
                     style={{ color: isMoreActive || moreOpen ? "#C8CDD2" : "var(--muted, #C4B07A)" }}
@@ -428,7 +448,7 @@ function TopNavInner() {
                   {isMoreActive && (
                     <span
                       className="absolute bottom-0 left-3 right-3 h-[2px] rounded-full"
-                      style={{ background: "linear-gradient(90deg, transparent, #C8CDD2, transparent)" }}
+                      style={{ background: "linear-gradient(90deg, transparent, #4092FF, transparent)" }}
                     />
                   )}
                 </button>
