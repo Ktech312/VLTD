@@ -152,8 +152,15 @@
 .theme-light body h6,
 .theme-light body li,
 .theme-light body label,
-.theme-light body div:not([class*="gold-text"]) {
+.theme-light body div:not([class*="gold-text"]):not([class*="vltd-keep-color"]) {
   color: var(--theme-text-primary, #1A1A2E) !important;
+}
+
+/* Escape hatch for the handful of elements that deliberately want their own
+   color in light mode (e.g. the vault card's blue data/subtitle text)
+   instead of being forced to the default dark body text color above. */
+.vltd-keep-color {
+  color: var(--vltd-keep-color, inherit) !important;
 }
 
 /* White text → dark in light mode */

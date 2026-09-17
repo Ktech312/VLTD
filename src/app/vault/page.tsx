@@ -546,7 +546,7 @@ function VaultCard({
         <div className="line-clamp-1 text-[15px] font-semibold leading-tight text-text-primary">
           {item.title}
         </div>
-        <div className="mt-1 line-clamp-1 text-[11px] font-semibold" style={{ color: "var(--data-color)" }}>
+        <div className="mt-1 line-clamp-1 text-[11px] font-semibold vltd-keep-color" style={{ "--vltd-keep-color": "var(--data-color)" } as React.CSSProperties}>
           {itemCardSubtitle(item)}
         </div>
       </Link>
