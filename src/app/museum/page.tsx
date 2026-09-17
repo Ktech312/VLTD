@@ -820,10 +820,10 @@ export default function MuseumPage() {
                     style={{ background: "rgba(255,255,255,0.015)" }}
                   >
                     <span
-                      className="flex h-12 w-12 items-center justify-center rounded-full border transition group-hover:scale-110"
+                      className="flex h-14 w-14 items-center justify-center rounded-full border transition group-hover:scale-110"
                       style={{ borderColor: "var(--theme-gold-border, rgba(203,208,213,0.35))", color: "var(--theme-gold)" }}
                     >
-                      <AppIcon name="addItem" size={22} strokeWidth={2} />
+                      <AppIcon name="addItem" size={32} strokeWidth={2} />
                     </span>
                     <span className="text-[12px] font-semibold tracking-[0.02em] text-[color:var(--muted)] transition group-hover:text-[#5FDCF3]">New exhibit</span>
                   </Link>

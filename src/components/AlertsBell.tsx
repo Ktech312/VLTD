@@ -79,7 +79,7 @@ export default function AlertsBell({ profileId, active }: { profileId?: string; 
         color: "var(--theme-text-primary, #ECEDEF)",
       }}
     >
-      <AppIcon name="notifications" variant="navTop" size={18} strokeWidth={1.9} style={{ color: hasUnread ? GREEN : "currentColor" }} />
+      <AppIcon name="notifications" variant="navTop" size={26} strokeWidth={1.9} style={{ color: hasUnread ? GREEN : "currentColor" }} />
       {hasUnread && (
         <span
           className="absolute right-0 top-0 h-2.5 w-2.5 rounded-full"

@@ -474,7 +474,7 @@ function TopNavInner() {
                   color: guideOpen ? "#C8CDD2" : "var(--muted2, #61656B)",
                 }}
               >
-                <AppIcon name="guide" variant="navTop" active={guideOpen} size={18} />
+                <AppIcon name="guide" variant="navTop" active={guideOpen} size={26} />
                 <span style={{ transform: guideOpen ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s", display: "inline-flex" }}>
                   <AppIcon name="chevronDown" size={14} strokeWidth={2} />
                 </span>
@@ -497,7 +497,7 @@ function TopNavInner() {
                 }}
               >
                 <button type="submit" className="shrink-0" style={{ color: "var(--muted, #8A7A5A)" }} aria-label="Search">
-                  <AppIcon name="search" variant="navTop" className="h-3.5 w-3.5" />
+                  <AppIcon name="search" variant="navTop" size={26} />
                 </button>
                 <input
                   value={input}
@@ -522,7 +522,7 @@ function TopNavInner() {
               className="relative grid h-9 w-9 place-items-center rounded-full transition hover:opacity-90"
               style={{ color: "var(--muted)" }}
             >
-              <AppIcon name="message" variant="navTop" size={20} strokeWidth={1.7} />
+              <AppIcon name="message" variant="navTop" size={28} strokeWidth={1.7} />
               {unreadDmCount > 0 ? (
                 <span
                   className="absolute -right-0.5 -top-0.5 grid h-4 min-w-4 place-items-center rounded-full px-1 text-[9px] font-black"
