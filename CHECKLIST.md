@@ -1,5 +1,14 @@
 # VLTD — Session Checklist (2026-08-05 night → ongoing, updated 2026-08-27)
 
+## 2026-09-17 (latest) — Real 32px nav icon size increase, header height untouched — live, DOM-verified
+Full narrative in HANDOFF.md. Live commit: `8e383ac`.
+- [x] `AppIcon` `size` prop 20/22px → 32px on every TopNav/BottomNav tab (both navs' regular tabs + "More" trigger; BottomNav center "+" untouched). Real prop change, not a transform hack.
+- [x] Recalculated TopNav tab padding/gap so the bigger icon+label fit the unchanged container: `gap-[6px] px-3 pt-2 pb-[10px]` → `gap-[4px] px-3 pt-1 pb-2`.
+- [x] tsc/lint/build clean.
+- [x] Live DOM measurement on `vltd.vercel.app/vault` (authenticated): header `65px` unchanged, tab `59px` fits with `2.5px`/`3.5px` clearance, icon renders at real `32×32`.
+- [x] Zoomed live screenshot: all 6 TopNav icons (Vault/Exhibitions/Discover/Events/Insights/More) clearly legible at native size.
+- [ ] BottomNav mobile-width live re-verification not repeated this round — this environment's browser can't actually resize its viewport (confirmed, unresolved tooling gap); relies on same-code-path proof from TopNav plus an earlier mobile-viewport screenshot taken before this commit.
+
 ## 2026-09-16 (latest) — Reverted the size fix, tight-cropped all 109 icons instead — live, EK's read still pending
 Full narrative in HANDOFF.md. Live commit: `49cc8d0`.
 - [x] Reverted the `52d3fb5` size-scale-up entirely — EK rejected it, both navs are back to exactly 20px/22px, matching Classic, no layout size change.
