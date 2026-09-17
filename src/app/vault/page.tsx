@@ -515,15 +515,8 @@ function VaultCard({
         </button>
       </div>
 
-      {/* The image used to bleed 58px past the bottom of this box (z-0,
-          under the title/toggle rows above it at z-10) - it looked like a
-          nice photo-forward effect, but it meant the title text was
-          literally rendering on top of the live photo with no scrim behind
-          it, so any photo with a similar hue to the title color made the
-          title unreadable. Image now stays contained in its own box so
-          text below it never sits on top of it. */}
-      <div className={["relative z-0 rounded-[8px]", displayMode === "shelf" ? "h-[138px]" : displayMode === "flip" ? "h-[212px]" : "h-[190px]"].join(" ")}>
-        <Link href={detailHref} className="absolute inset-0 z-0 block overflow-hidden rounded-[8px] bg-black/24">
+      <div className={["relative z-0 overflow-visible rounded-[8px]", displayMode === "shelf" ? "h-[138px]" : displayMode === "flip" ? "h-[212px]" : "h-[190px]"].join(" ")}>
+        <Link href={detailHref} className="absolute inset-x-0 top-0 bottom-[-58px] z-0 block overflow-hidden rounded-[8px] bg-black/24">
           {image ? (
             <ProgressiveImage
               src={image}
@@ -548,7 +541,7 @@ function VaultCard({
         <ItemVisibilityToggle item={item} />
       </div>
 
-      <Link href={detailHref} className="relative z-10 mt-2 min-w-0">
+      <Link href={detailHref} className="relative z-10 mt-[40px] min-w-0">
         <div className="line-clamp-1 text-[15px] font-semibold leading-tight vltd-keep-color" style={{ "--vltd-keep-color": "var(--vault-title-color)" } as React.CSSProperties}>
           {item.title}
         </div>
