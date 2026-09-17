@@ -304,6 +304,12 @@
 
   --shadow-soft: 0 1px 0 rgba(255, 255, 255, 0.8);
   --shadow-pill: 0 8px 24px rgba(0, 0, 0, 0.12);
+
+  /* The dark theme's pale cyan (--data-color, #4FD3EE) reads as washed-out
+     grey against a light background instead of legible color — swap in a
+     solid, higher-contrast blue for light themes only. */
+  --data-color: #1D6FE0;
+  --status-cyan: #1D6FE0;
 }
 
 /* Nav seam fix: light themes use near-opaque navBg, disable blur so there's no frosted-glass color strip */
@@ -311,6 +317,14 @@
 .theme-light header {
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
+}
+
+/* The brand logo is fine detailed gold linework designed for a dark
+   backdrop — on a light theme's near-white nav it reads as thin/faint.
+   A dark contact shadow grounds the linework and makes it read as solid
+   without touching the source art or the dark themes, which already work. */
+.theme-light .vltd-nav-logo {
+  filter: drop-shadow(0 1px 0 rgba(20, 14, 4, 0.45)) drop-shadow(0 2px 5px rgba(20, 14, 4, 0.30));
 }
 
 /* =========================================================
