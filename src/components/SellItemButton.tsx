@@ -87,16 +87,16 @@ export default function SellItemButton({ item }: { item: VaultItem }) {
       type="button"
       onClick={() => void handleSell()}
       disabled={loading}
-      // The literal "bg-red" substring in this class name matters beyond
-      // styling: theme-override.css has a `.theme-light body button:not([class*="bg-red"])`
-      // rule that force-overrides button text color, and this is the exact
-      // escape hatch it checks for — dropping it (as an earlier pass here
-      // briefly did) silently re-breaks this button's color in light theme.
-      className="inline-flex min-h-7 items-center justify-center rounded-[7px] bg-red-500/15 px-3 py-1 text-xs font-semibold transition disabled:opacity-50"
+      // "bg-red" and "vltd-keep-color" both matter beyond styling here:
+      // theme-override.css force-colors buttons (and anything matching
+      // `[class*="opacity-5"]`, which `disabled:opacity-50` below also
+      // accidentally matches as a substring) in light theme unless one of
+      // these exact escape-hatch strings is present in the class list.
+      className="inline-flex min-h-7 items-center justify-center rounded-[7px] bg-red-500/15 px-3 py-1 text-xs font-semibold transition disabled:opacity-50 vltd-keep-color"
       style={{
-        color: "var(--status-loss, #E05252)",
+        "--vltd-keep-color": "var(--status-loss, #E05252)",
         boxShadow: "inset 0 0 0 1px color-mix(in srgb, var(--status-loss, #E05252) 38%, transparent)",
-      }}
+      } as React.CSSProperties}
     >
       {loading ? "Selling..." : "Sell"}
     </button>

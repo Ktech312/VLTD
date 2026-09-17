@@ -219,11 +219,15 @@
   color: var(--theme-text-primary, #1A1A2E) !important;
 }
 
-/* Muted text stays legible */
-.theme-light body [class*="text-muted"],
-.theme-light body [class*="opacity-5"],
-.theme-light body [class*="opacity-6"],
-.theme-light body [class*="opacity-7"] {
+/* Muted text stays legible. Note: [class*="opacity-5"] also matches any
+   element carrying Tailwind's `disabled:opacity-50`/`hover:opacity-50`
+   variant classes as a substring — not just an intentional "muted" class
+   — so anything that deliberately wants its own color needs the
+   `vltd-keep-color` escape hatch below, same as the button/div rules. */
+.theme-light body [class*="text-muted"]:not([class*="vltd-keep-color"]),
+.theme-light body [class*="opacity-5"]:not([class*="vltd-keep-color"]),
+.theme-light body [class*="opacity-6"]:not([class*="vltd-keep-color"]),
+.theme-light body [class*="opacity-7"]:not([class*="vltd-keep-color"]) {
   color: var(--theme-text-muted, #5A5A6A) !important;
   opacity: 1 !important;
 }
