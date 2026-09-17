@@ -384,10 +384,10 @@ function TopNavInner() {
                   <Link
                     key={item.href + item.label}
                     href={item.href}
-                    className="relative flex flex-col items-center gap-[6px] px-3 pt-2 pb-[10px] transition-opacity hover:opacity-100"
+                    className="relative flex flex-col items-center gap-[4px] px-3 pt-1 pb-2 transition-opacity hover:opacity-100"
                     style={{ opacity: active ? 1 : 0.65 }}
                   >
-                    <AppIcon name={item.icon} variant="navTop" active={active} size={20} style={{ color: active ? "#C8CDD2" : "var(--muted2, #61656B)" }} />
+                    <AppIcon name={item.icon} variant="navTop" active={active} size={32} style={{ color: active ? "#C8CDD2" : "var(--muted2, #61656B)" }} />
                     <span
                       className="text-[11px] font-semibold tracking-[0.04em] leading-none whitespace-nowrap"
                       style={{ color: active ? "#C8CDD2" : "var(--muted, #C4B07A)" }}
@@ -415,10 +415,10 @@ function TopNavInner() {
                     }
                     setMoreOpen((v) => !v);
                   }}
-                  className="relative flex flex-col items-center gap-[3px] px-3 pt-2 pb-[10px] transition-opacity hover:opacity-100"
+                  className="relative flex flex-col items-center gap-[4px] px-3 pt-1 pb-2 transition-opacity hover:opacity-100"
                   style={{ opacity: isMoreActive || moreOpen ? 1 : 0.65 }}
                 >
-                  <AppIcon name="more" variant="navTop" size={20} style={{ color: isMoreActive || moreOpen ? "#C8CDD2" : "var(--muted2, #61656B)" }} />
+                  <AppIcon name="more" variant="navTop" size={32} style={{ color: isMoreActive || moreOpen ? "#C8CDD2" : "var(--muted2, #61656B)" }} />
                   <span
                     className="text-[11px] font-semibold tracking-[0.04em] leading-none whitespace-nowrap"
                     style={{ color: isMoreActive || moreOpen ? "#C8CDD2" : "var(--muted, #C4B07A)" }}
