@@ -94,7 +94,7 @@ export default function ItemVisibilityToggle({
         ].join(" ")}
         style={isPublic ? undefined : ({ "--vltd-keep-color": "var(--data-color)" } as React.CSSProperties)}
       >
-        <AppIcon name={iconName} size={size === "md" ? 15 : 13} strokeWidth={2.2} />
+        <AppIcon name={iconName} size={size === "md" ? 15 : 13} strokeWidth={2.2} className={isPublic ? undefined : "vltd-keep-color"} />
         {showLabel ? <span>{label}</span> : null}
       </button>
       {message ? <div className="max-w-[220px] text-right text-[10px] text-rose-200">{message}</div> : null}
