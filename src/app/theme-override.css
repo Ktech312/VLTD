@@ -261,7 +261,7 @@
 }
 
 /* Button text in light mode */
-.theme-light body button:not([class*="btn-gold"]):not([class*="vltd-gold"]):not([class*="bg-red"]) {
+.theme-light body button:not([class*="btn-gold"]):not([class*="vltd-gold"]):not([class*="bg-red"]):not([class*="vltd-keep-color"]) {
   color: var(--theme-text-primary, #1A1A2E) !important;
 }
 
