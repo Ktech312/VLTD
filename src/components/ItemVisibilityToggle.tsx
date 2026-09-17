@@ -90,10 +90,9 @@ export default function ItemVisibilityToggle({
         className={[
           "inline-flex shrink-0 items-center justify-center gap-1.5 rounded-full transition disabled:cursor-not-allowed disabled:opacity-60",
           size === "md" ? "h-9 px-3 text-xs font-semibold" : "h-7 min-w-7 px-2 text-[10px] font-semibold",
-          isPublic
-            ? "text-[color:var(--theme-gold,#C8CDD2)]"
-            : "text-white/40 hover:text-white/70",
+          isPublic ? "text-[color:var(--theme-gold,#C8CDD2)]" : "vltd-keep-color hover:opacity-70",
         ].join(" ")}
+        style={isPublic ? undefined : ({ "--vltd-keep-color": "var(--data-color)" } as React.CSSProperties)}
       >
         <AppIcon name={iconName} size={size === "md" ? 15 : 13} strokeWidth={2.2} />
         {showLabel ? <span>{label}</span> : null}

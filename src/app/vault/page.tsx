@@ -575,17 +575,20 @@ function VaultCard({
             <button
               type="button"
               onClick={() => setEditingField("value")}
-              className="block text-left text-[20px] font-semibold leading-none hover:opacity-80 vltd-keep-color"
+              className={[
+                "block text-left font-semibold leading-none hover:opacity-80 vltd-keep-color",
+                marketValue > 0 ? "text-[20px]" : "text-[15px]",
+              ].join(" ")}
               style={{
                 "--vltd-keep-color":
                   marketValue <= 0
-                    ? "var(--muted)"
+                    ? "var(--status-gain, #54C98A)"
                     : gain >= 0
                       ? "var(--status-gain, #54C98A)"
                       : "var(--status-loss, #E05252)",
               } as React.CSSProperties}
             >
-              {marketValue > 0 ? formatMoney(marketValue) : "No value"}
+              {marketValue > 0 ? formatMoney(marketValue) : "+ Add Value"}
             </button>
           )}
         </div>
