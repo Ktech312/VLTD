@@ -482,7 +482,6 @@ function VaultCard({
       : readinessTone(readiness);
   const marketValue = Number(item.currentValue ?? 0);
   const gain = itemGain(item);
-  const showGain = Math.abs(gain) > 0.49;
   const detailHref = isSold ? `/vault/item/${item.id}?sold=1` : `/vault/item/${item.id}`;
 
   return (
@@ -516,8 +515,15 @@ function VaultCard({
         </button>
       </div>
 
-      <div className={["relative z-0 overflow-visible rounded-[8px]", displayMode === "shelf" ? "h-[138px]" : displayMode === "flip" ? "h-[212px]" : "h-[190px]"].join(" ")}>
-        <Link href={detailHref} className="absolute inset-x-0 top-0 bottom-[-58px] z-0 block overflow-hidden rounded-[8px] bg-black/24">
+      {/* The image used to bleed 58px past the bottom of this box (z-0,
+          under the title/toggle rows above it at z-10) - it looked like a
+          nice photo-forward effect, but it meant the title text was
+          literally rendering on top of the live photo with no scrim behind
+          it, so any photo with a similar hue to the title color made the
+          title unreadable. Image now stays contained in its own box so
+          text below it never sits on top of it. */}
+      <div className={["relative z-0 rounded-[8px]", displayMode === "shelf" ? "h-[138px]" : displayMode === "flip" ? "h-[212px]" : "h-[190px]"].join(" ")}>
+        <Link href={detailHref} className="absolute inset-0 z-0 block overflow-hidden rounded-[8px] bg-black/24">
           {image ? (
             <ProgressiveImage
               src={image}
@@ -581,11 +587,9 @@ function VaultCard({
                 "--vltd-keep-color":
                   marketValue <= 0
                     ? "var(--muted)"
-                    : showGain
-                      ? gain >= 0
-                        ? "var(--status-gain, #54C98A)"
-                        : "var(--status-loss, #E05252)"
-                      : "var(--data-color)",
+                    : gain >= 0
+                      ? "var(--status-gain, #54C98A)"
+                      : "var(--status-loss, #E05252)",
               } as React.CSSProperties}
             >
               {marketValue > 0 ? formatMoney(marketValue) : "No value"}
