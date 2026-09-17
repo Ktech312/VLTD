@@ -1,5 +1,16 @@
 # VLTD — Session Checklist (2026-08-05 night → ongoing, updated 2026-08-27)
 
+## 2026-09-16 (latest) — Reverted the size fix, tight-cropped all 109 icons instead — live, EK's read still pending
+Full narrative in HANDOFF.md. Live commit: `49cc8d0`.
+- [x] Reverted the `52d3fb5` size-scale-up entirely — EK rejected it, both navs are back to exactly 20px/22px, matching Classic, no layout size change.
+- [x] Real bug found and fixed: an earlier review Artifact linked images from `vltd.vercel.app` directly — Claude's artifact sandbox silently blocks external images, so EK saw broken icons. Rebuilt with base64-embedded images, verified rendering before resending.
+- [x] `scripts/crop_friendly_glass.js` — sharp-based batch trim+recenter, run across all 109 icons in `design-assets/` and `public/`. Before: 79-97% frame fill, inconsistent. After: 92.4-92.7% across all 109, verified via script report.
+- [x] Increased icon-to-label gap: TopNav 3px→6px, BottomNav 2px→5px. Applies to both icon styles, pure spacing, no size change.
+- [x] Published a final comparison Artifact with everything embedded: real-size TopNav/BottomNav mockups, 5x magnification of the 6 main nav icons, and a real before/after crop comparison (More, Add/Capture, Vault, Exhibitions).
+- [x] Found and disclosed (not fixed): several icons have a small sliver of an adjacent icon bled in from one edge — pre-existing sprite-sheet-cutting defect, opaque content not padding, cropping can't remove it. Flagged as a source-asset issue, not attempted here.
+- [x] tsc/lint/build clean. Classic confirmed pixel-identical. Nav icons confirmed back to native 20/22px with no transform via direct DOM measurement on the live site.
+- [ ] **EK's own read of the comparison Artifact is the real gate.** Her words: "if i still cant read them, then they get scrapped." Not yet resolved either way.
+
 ## 2026-09-16 (later) — Friendly Glass navigation: NOT accepted, paused, review Artifact built instead
 Full narrative in HANDOFF.md. EK rejected the shipped nav treatment (opacity-dimmed inactive icons); no further production nav changes made this round, per her instruction.
 - [x] Measured real PNG padding for all 7 nav icons (alpha-bbox script) — 5/7 already fill 85-97%, 2/7 (More, Add/Capture) genuinely under-filled (~79-80% vertical, off-center). Not guessed.
