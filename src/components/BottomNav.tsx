@@ -171,7 +171,7 @@ export default function BottomNav() {
                   type="button"
                   onClick={() => setMoreOpen((v) => !v)}
                   aria-label="More categories"
-                  className="flex min-w-[56px] flex-col items-center gap-[2px] rounded-[22px] px-2 py-1.5 transition-opacity active:opacity-70"
+                  className="flex min-w-[56px] flex-col items-center gap-[5px] rounded-[22px] px-2 py-1.5 transition-opacity active:opacity-70"
                   style={{
                     border: isActive ? "1px solid rgba(203,208,213,0.44)" : "1px solid transparent",
                     background: isActive ? "rgba(203,208,213,0.08)" : "transparent",
@@ -193,7 +193,7 @@ export default function BottomNav() {
               <Link
                 key={tab.href}
                 href={tab.href}
-                className="flex min-w-[56px] flex-col items-center gap-[2px] rounded-[22px] px-2 py-1.5 transition-opacity active:opacity-70"
+                className="flex min-w-[56px] flex-col items-center gap-[5px] rounded-[22px] px-2 py-1.5 transition-opacity active:opacity-70"
                 style={{
                   border: isActive ? "1px solid rgba(203,208,213,0.44)" : "1px solid transparent",
                   background: isActive ? "rgba(203,208,213,0.08)" : "transparent",

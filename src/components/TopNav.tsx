@@ -384,7 +384,7 @@ function TopNavInner() {
                   <Link
                     key={item.href + item.label}
                     href={item.href}
-                    className="relative flex flex-col items-center gap-[3px] px-3 pt-2 pb-[10px] transition-opacity hover:opacity-100"
+                    className="relative flex flex-col items-center gap-[6px] px-3 pt-2 pb-[10px] transition-opacity hover:opacity-100"
                     style={{ opacity: active ? 1 : 0.65 }}
                   >
                     <AppIcon name={item.icon} variant="navTop" active={active} size={20} style={{ color: active ? "#C8CDD2" : "var(--muted2, #61656B)" }} />

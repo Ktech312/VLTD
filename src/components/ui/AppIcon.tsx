@@ -510,16 +510,15 @@ export function AppIcon({
 
   if (variant === "navTop" || variant === "navBottom") {
     const renderer = (variant === "navTop" ? NAV_TOP_CONTENT : NAV_BOTTOM_CONTENT)[name];
-    // Nav renders Friendly Glass at its normal 20-22px box, which is well
-    // below the ~24px+ this pack needs to actually read (verified via a
-    // pixel-accurate magnification test, not guessed). Visually scaling the
-    // image up to a real ~32px — via transform, so the wrapper's own layout
-    // box is untouched and nothing reflows — fixes that without changing
-    // Classic at all. No opacity dimming on inactive: both nav surfaces
+    // Nav renders Friendly Glass at its normal 20-22px box, same as Classic —
+    // scaling the icon up visually (tried and reverted) threw off the
+    // icon-to-label spacing without EK's approval to change the nav's own
+    // proportions. Legibility here is addressed by tightly cropping the
+    // source art instead (see scripts/crop_friendly_glass.js), not by
+    // resizing anything. No opacity dimming on inactive: both nav surfaces
     // already have their own active/inactive tell (TopNav's underline bar,
     // BottomNav's pill+border+dot), so dimming an already-small icon just
     // made the common (inactive) case harder to see for no reason.
-    const navFriendlyScale = size < 32 ? 32 / size : 1;
     return (
       <span
         className={className}
@@ -550,14 +549,7 @@ export function AppIcon({
             height={size}
             loading="lazy"
             decoding="async"
-            style={{
-              position: "absolute",
-              inset: 0,
-              width: size,
-              height: size,
-              objectFit: "contain",
-              transform: navFriendlyScale !== 1 ? `scale(${navFriendlyScale})` : undefined,
-            }}
+            style={{ position: "absolute", inset: 0, width: size, height: size, objectFit: "contain" }}
           />
         )}
       </span>
