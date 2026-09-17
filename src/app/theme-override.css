@@ -258,9 +258,9 @@
 }
 
 /* Pills text in light mode — always dark */
-.theme-light body .rounded-full,
-.theme-light body [class*="badge"],
-.theme-light body [class*="pill"] {
+.theme-light body .rounded-full:not([class*="vltd-keep-color"]),
+.theme-light body [class*="badge"]:not([class*="vltd-keep-color"]),
+.theme-light body [class*="pill"]:not([class*="vltd-keep-color"]) {
   color: var(--theme-text-primary, #1A1A2E) !important;
 }
 
