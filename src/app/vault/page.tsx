@@ -535,13 +535,20 @@ function VaultCard({
             </div>
           )}
         </Link>
+
+        {/* Visibility toggle: bottom-left corner of the actual photo (which
+            bleeds -58px past this box), per EK's marked screenshot. A dark
+            backing chip behind it keeps it visible regardless of what
+            colors are in the photo underneath. */}
+        <div
+          className="absolute z-20 rounded-full"
+          style={{ left: 6, bottom: -50, background: "rgba(0,0,0,0.55)" }}
+        >
+          <ItemVisibilityToggle item={item} />
+        </div>
       </div>
 
-      <div className="relative z-10 mt-2 flex h-5 items-center">
-        <ItemVisibilityToggle item={item} />
-      </div>
-
-      <Link href={detailHref} className="relative z-10 mt-[40px] min-w-0">
+      <Link href={detailHref} className="relative z-10 mt-[68px] min-w-0">
         <div className="line-clamp-1 text-[15px] font-semibold leading-tight vltd-keep-color" style={{ "--vltd-keep-color": "var(--vault-title-color)" } as React.CSSProperties}>
           {item.title}
         </div>
