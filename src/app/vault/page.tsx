@@ -536,15 +536,16 @@ function VaultCard({
           )}
         </Link>
 
-        {/* Visibility toggle: bottom-left corner of the actual photo (which
-            bleeds -58px past this box), per EK's marked screenshot. A dark
-            backing chip behind it keeps it visible regardless of what
-            colors are in the photo underneath. */}
+        {/* Visibility toggle: pushed as far into the photo's actual
+            bottom-left corner as it can go without spilling outside its
+            own pill (the photo bleeds -58px past this box). A small dark
+            backing keeps it visible regardless of what colors are in the
+            photo underneath. */}
         <div
           className="absolute z-20 rounded-full"
-          style={{ left: 6, bottom: -50, background: "rgba(0,0,0,0.55)" }}
+          style={{ left: 3, bottom: -55, background: "rgba(0,0,0,0.55)" }}
         >
-          <ItemVisibilityToggle item={item} />
+          <ItemVisibilityToggle item={item} align="corner" />
         </div>
       </div>
 

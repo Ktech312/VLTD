@@ -13,7 +13,18 @@ type ItemVisibilityToggleProps = {
   showLabel?: boolean;
   className?: string;
   onChange?: (item: VaultItem) => void;
+  /** "corner": tight padding, icon pushed to the bottom-left of its own
+   * pill instead of centered - used where the toggle sits over a photo
+   * corner (the vault card) and needs to hug that corner as closely as
+   * possible without spilling outside the pill. */
+  align?: "center" | "corner";
 };
+
+// Fixed, theme-independent neon colors: red while hidden, green while
+// shared. EK asked for this exact pairing in both Dark and Light mode,
+// so these are plain hex values, not theme tokens.
+const NEON_RED = "#FF1744";
+const NEON_GREEN = "#39FF14";
 
 export default function ItemVisibilityToggle({
   item,
@@ -21,6 +32,7 @@ export default function ItemVisibilityToggle({
   showLabel = false,
   className = "",
   onChange,
+  align = "center",
 }: ItemVisibilityToggleProps) {
   const [isPublic, setIsPublic] = useState(Boolean(item.isPublic));
   const [message, setMessage] = useState("");
@@ -88,13 +100,19 @@ export default function ItemVisibilityToggle({
         aria-label={buttonLabel}
         title={buttonLabel}
         className={[
-          "inline-flex shrink-0 items-center justify-center gap-1.5 rounded-full transition disabled:cursor-not-allowed disabled:opacity-60",
-          size === "md" ? "h-9 px-3 text-xs font-semibold" : "h-7 min-w-7 px-2 text-[10px] font-semibold",
-          isPublic ? "text-[color:var(--theme-gold,#C8CDD2)]" : "vltd-keep-color hover:opacity-70",
+          "inline-flex shrink-0 rounded-full transition disabled:cursor-not-allowed disabled:opacity-60 vltd-keep-color hover:opacity-70",
+          align === "corner" ? "items-end justify-start p-1" : "items-center justify-center gap-1.5",
+          size === "md" ? "h-9 px-3 text-xs font-semibold" : align === "corner" ? "h-6 min-w-6 text-[10px] font-semibold" : "h-7 min-w-7 px-2 text-[10px] font-semibold",
         ].join(" ")}
-        style={isPublic ? undefined : ({ "--vltd-keep-color": "var(--data-color)" } as React.CSSProperties)}
+        style={{ "--vltd-keep-color": isPublic ? NEON_GREEN : NEON_RED } as React.CSSProperties}
       >
-        <AppIcon name={iconName} size={size === "md" ? 15 : 13} strokeWidth={2.2} className={isPublic ? undefined : "vltd-keep-color"} />
+        <AppIcon
+          name={iconName}
+          size={size === "md" ? 15 : 13}
+          strokeWidth={2.2}
+          className="vltd-keep-color"
+          style={{ filter: `drop-shadow(0 0 3px ${isPublic ? NEON_GREEN : NEON_RED})` }}
+        />
         {showLabel ? <span>{label}</span> : null}
       </button>
       {message ? <div className="max-w-[220px] text-right text-[10px] text-rose-200">{message}</div> : null}
