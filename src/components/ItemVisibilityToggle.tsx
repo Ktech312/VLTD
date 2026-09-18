@@ -111,7 +111,7 @@ export default function ItemVisibilityToggle({
           size={size === "md" ? 15 : 13}
           strokeWidth={2.2}
           className="vltd-keep-color"
-          style={{ filter: `drop-shadow(0 0 3px ${isPublic ? NEON_GREEN : NEON_RED})` }}
+          style={{ filter: `drop-shadow(0 0 3px ${isPublic ? NEON_GREEN : NEON_RED}) drop-shadow(0 1px 2px rgba(0,0,0,0.6))` }}
         />
         {showLabel ? <span>{label}</span> : null}
       </button>

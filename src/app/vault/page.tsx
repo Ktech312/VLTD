@@ -505,12 +505,13 @@ function VaultCard({
           disabled={isDeleting}
           aria-label="Delete item"
           title="Delete item"
-          className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-red-600/90 text-white ring-1 ring-red-500/40 disabled:opacity-50"
+          className="inline-flex h-7 w-7 items-center justify-center vltd-keep-color disabled:opacity-50"
+          style={{ "--vltd-keep-color": "#FF1744" } as React.CSSProperties}
         >
           {isDeleting ? (
             <span className="text-[9px]">...</span>
           ) : (
-            <AppIcon name="delete" size={13} strokeWidth={1.4} />
+            <AppIcon name="delete" size={15} strokeWidth={1.8} className="vltd-keep-color" style={{ filter: "drop-shadow(0 1px 2px rgba(0,0,0,0.6))" }} />
           )}
         </button>
       </div>
@@ -536,15 +537,10 @@ function VaultCard({
           )}
         </Link>
 
-        {/* Visibility toggle: pushed as far into the photo's actual
-            bottom-left corner as it can go without spilling outside its
-            own pill (the photo bleeds -58px past this box). A small dark
-            backing keeps it visible regardless of what colors are in the
-            photo underneath. */}
-        <div
-          className="absolute z-20 rounded-full"
-          style={{ left: 3, bottom: -55, background: "rgba(0,0,0,0.55)" }}
-        >
+        {/* Visibility toggle: pushed into the photo's actual bottom-left
+            corner (the photo bleeds -58px past this box) - no background
+            chip, just the bare symbol per EK's instruction. */}
+        <div className="absolute z-20" style={{ left: 3, bottom: -55 }}>
           <ItemVisibilityToggle item={item} align="corner" />
         </div>
       </div>
