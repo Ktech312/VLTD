@@ -427,7 +427,7 @@ explicitly requested). None of these four re-tested live yet.
   night: a second, opt-in `vault-images-private` bucket a specific photo
   migrates into on demand when a paying user marks that item Private.
   Free accounts and every existing photo are untouched. Migration
-  `20260919_private_photos.sql` — **[EK: run this if not already done]**.
+  `20260919_private_photos.sql` — **✅ confirmed run by EK.**
   **Not yet live-verified** — needs a real paid test account to toggle an
   item Private/Public and confirm the photo actually moves and still
   displays correctly.
