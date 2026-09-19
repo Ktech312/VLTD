@@ -421,9 +421,16 @@ already had.
 by EK 2026-08-22.** Private bucket (the one bucket in this app that isn't
 public, by design), real Share-link action (7-day signed URL, only when
 explicitly requested). None of these four re-tested live yet.
-⬜ **Private Photos as a paid feature** — EK's direction (free stays
-public, paid gets real privacy) — needs its own architecture plan, not
-started.
+- [x] **Private Photos as a paid feature — built 2026-09-19.** Architecture
+  decided directly with EK (weighed against a signed-URL-for-every-image
+  rewrite, rejected as riskier AND worse at scale) and built the same
+  night: a second, opt-in `vault-images-private` bucket a specific photo
+  migrates into on demand when a paying user marks that item Private.
+  Free accounts and every existing photo are untouched. Migration
+  `20260919_private_photos.sql` — **[EK: run this if not already done]**.
+  **Not yet live-verified** — needs a real paid test account to toggle an
+  item Private/Public and confirm the photo actually moves and still
+  displays correctly.
 ✅ **`/clubs` — all 3 original phases built + migrations confirmed run by
 EK 2026-08-22 + given a real spot in the Lounge.** Discord works as soon
 as a club owner pastes a webhook URL into Settings — no further setup
