@@ -1415,12 +1415,12 @@ session — that WIP is gone, this is a clean rewrite from `fe56c33`.
   names on it, clicking a room does nothing, Enter VLTD Museum opens the
   real museum, and an ordinary (non-admin) test account has no Map tab at
   all.
-- ⚠ Separately noticed while reading this file, **not touched, not part of
-  this task**: the still-open `20260909_fix_vault_item_limit_type_mismatch.sql`
-  entry a few sections below — every vault item save has reportedly been
-  silently failing to reach Supabase since 2026-08-19 until that migration is
-  run. Flagging it again here since it's severe and easy to lose track of
-  amid the museum work.
+- ✅ **UPDATE 2026-09-18: `20260909_fix_vault_item_limit_type_mismatch.sql`
+  confirmed run by EK.** Was open for over a week (silently breaking every
+  vault item save/edit's sync to Supabase since 2026-08-19) before a scoping
+  pass across the handoff docs surfaced it again and EK ran it same day. No
+  longer a live concern — see the migration's own dated entry below for the
+  full original writeup.
 
 ---
 
@@ -5809,14 +5809,15 @@ not a guess:
   reverted after changing pages" EK reported is the same bug: the item
   reloads from Supabase on navigation, and the server row was never
   actually updated, so the stale pre-crop image wins.
-- **Fix written, NOT yet run** — `supabase/migrations/20260909_fix_vault_item_limit_type_mismatch.sql`
+- **✅ FIXED, confirmed run by EK 2026-09-18** — `supabase/migrations/20260909_fix_vault_item_limit_type_mismatch.sql`
   (`create or replace function public.enforce_vault_item_limit()` with the
   `::uuid` cast added, plus the same defensive "only proceed if
   `new.profile_id` looks like a real uuid" guard already used elsewhere).
-  **EK needs to run this in the Supabase SQL editor** — full SQL is in the
-  file (paste-ready, safe to re-run). Until it's run, every vault item
-  save/create keeps silently failing to reach the cloud (local-only data
-  is NOT at risk, but nothing is syncing).
+  Sat unrun for over a week before a full scoping pass across the handoff
+  docs resurfaced it and EK ran it the same day. Vault item saves/edits
+  should now actually be reaching Supabase again — worth a spot-check
+  (edit an item, reload, confirm it stuck) next time someone's live on
+  the site, since this was never re-verified end-to-end after running.
 - **✅ FIXED, LIVE — Remove BG.** First pass wrongly concluded this
   needed a `REMOVE_BG_API_KEY` Vercel env var (that var genuinely is
   missing, confirmed via `vercel env ls`) — but EK correctly pushed back:
