@@ -540,19 +540,15 @@ read path, the owner-only gate).
   next to it needed to go. `museum_room_meta.background_id` column/
   migration is untouched (still real, still used by `RoomEditorModal.tsx`).
 
-**New migration (not run — EK runs by hand):**
+**Migration — ✅ confirmed run by EK 2026-09-18:**
 `supabase/migrations/20260912_museum_room_wall_rows_and_shelves.sql` adds
 `museum_room_meta.wall_row_count` (smallint, nullable) and
 `wall_shelves_enabled` (boolean, nullable) — the new Rows selector/Shelves
 checkbox persist here via a new `setRoomWallLayout()` in
 `museumCampusConfig.ts`, same debounced-autosave convention as the existing
-capacity sliders. Fails soft the same way every other `museum_room_meta`
-column in this file already does — `selectRoomMeta`/`getAllRoomMeta` now
-cascade FULL (10 columns) → WITH_CAPACITY (8, the prior migration's set) →
-WITH_BACKGROUND (4) → BASE (3) on a "column does not exist" error, so
-nothing here is required for `20260912_museum_room_capacity_and_background.sql`
-(still possibly not run either) to keep working, or for the museum's live
-display/MuseumRoomPopup.tsx/RoomEditorModal.tsx.
+capacity sliders. `selectRoomMeta`/`getAllRoomMeta`'s FULL (10 columns) →
+WITH_CAPACITY (8) → WITH_BACKGROUND (4) → BASE (3) cascade fallback is now
+live/exercised for real, not just a safety net.
 
 **Untouched, per the work order:** `/museum/virtual-room` (the Gallery
 Builder) and `MuseumRoomPopup.tsx` — neither file touched (zero diff).
@@ -641,7 +637,7 @@ Builder's own preview only; wiring it into the live public museum's own
 rendering (`VltdMuseumCampus.tsx`) was deliberately left out of scope here
 since that file is one of this pass's explicit do-not-touch targets.
 
-**New migration (not run — EK runs by hand):**
+**Migration — ✅ confirmed run by EK 2026-09-18:**
 `supabase/migrations/20260912_museum_room_capacity_and_background.sql` adds
 `museum_room_meta.item_capacity`/`shelf_capacity`/`case_capacity` (int,
 nullable) and `background_image_url` (text, nullable). Every read of these
@@ -845,14 +841,10 @@ ran for real against this worktree's own `node_modules`, not just resolved
 upward into another checkout.
 
 **Not done / not claimed:**
-- Migration `20260912_museum_room_placement.sql` is **still not applied** —
-  confirmed missing (`museum_room_items.slot_id` and
-  `museum_room_meta.background_id` both absent) via a direct read-only
-  query immediately before this pass started. Every read/write already
-  fails soft exactly as the prior pass's fails-soft code handles (nothing
-  about that changed here), so a saved background choice or a slotted move
-  genuinely cannot round-trip in production until EK runs it. SQL is
-  unchanged from the entry below — not re-pasted here.
+- Migration `20260912_museum_room_placement.sql` — **✅ confirmed run by EK
+  2026-09-18** (was genuinely missing — confirmed via a direct read-only
+  query at the time this entry was written — until then). A saved
+  background choice or a slotted move can now round-trip in production.
 - **Not live-verified.** This session's Browser tool has no session for
   the admin-gated `/museum/vltd` route (same limitation the prior pass
   hit) — no live/authenticated check was attempted here. The parent
@@ -943,8 +935,8 @@ in-museum room label overlay. `CampusRoomId` itself is untouched — only
 displayed text changes.
 
 **Database**: one new migration,
-`supabase/migrations/20260912_museum_room_placement.sql` — **not yet run,
-full SQL pasted below.** Every new column read
+`supabase/migrations/20260912_museum_room_placement.sql` — **✅ confirmed
+run by EK 2026-09-18** (full SQL kept below for reference). Every new column read
 (`museum_room_items.slot_id`, `museum_room_meta.background_id`) goes
 through a fails-soft double-select in `museumCampusConfig.ts` (extended
 columns first, retries the pre-migration column list on a Postgrest
@@ -1023,15 +1015,18 @@ Two changes:
     delete, all fields the museum display needs (title, image URL, sort
     order, enabled).
 
-New pending migration, **not yet run**:
-`supabase/migrations/20260912_museum_room_meta.sql` — paste in chat
-before EK runs it, per the standing rule.
+Migration `supabase/migrations/20260912_museum_room_meta.sql` — **✅
+confirmed run by EK 2026-09-18** (first attempt hit "policy already
+exists" — the table had already been created by an earlier, never-
+confirmed partial run, and this file was missing the drop-if-exists
+guard every other migration here uses; fixed at the source and re-run
+clean).
 
 Verified via `tsc`/targeted `eslint`/`build` only — still no browser
 connection this session, so the actual Supabase reads/writes from the
 new modal haven't been seen live yet. Next real step is EK using the
-edit badge live once the migration's run, on SPORTS first since it's the
-one room with real curated content already in `museum_room_items`.
+edit badge live now that the migration's run, on SPORTS first since it's
+the one room with real curated content already in `museum_room_items`.
 
 # 2026-09-12 — Vercel deploy queue was stuck; Gallery Map visual fixes from a real screenshot
 
