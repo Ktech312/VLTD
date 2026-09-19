@@ -465,9 +465,16 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
       for (const file of files) {
         try {
           if (hasSupabaseEnv()) {
+            // Perf/size fix (2026-09-19): this used to upload `file` raw —
+            // prepareImageBlob was only ever called on the offline/error
+            // fallback branches below, never here on the normal online
+            // path, which is what runs in production whenever Supabase is
+            // reachable. That's the real reason an untouched, full-
+            // resolution photo could land in storage from this screen.
+            const durableBlob = await prepareImageBlob(file);
             const uploaded = await uploadVaultImageToSupabase({
               itemId: item.id,
-              file,
+              file: durableBlob,
               fileName: file.name,
             });
             nextItem = appendImage(nextItem, uploaded.publicUrl, uploaded.path, { localOnly: false });
@@ -583,9 +590,12 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
 
       try {
         if (hasSupabaseEnv()) {
+          // Same fix as handleAddImages above -- the online path never
+          // resized before uploading, only the offline/error fallbacks did.
+          const durableBlob = await prepareImageBlob(file);
           const uploaded = await uploadVaultImageToSupabase({
             itemId: item.id,
-            file,
+            file: durableBlob,
             fileName: file.name || "edited-photo.jpg",
           });
           replacement = {

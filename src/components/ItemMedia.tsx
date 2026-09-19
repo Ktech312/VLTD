@@ -45,9 +45,15 @@ async function renderRotatedImageBlob(
 ): Promise<File> {
   const normalizedRotation = ((rotation % 360) + 360) % 360;
 
-  if (normalizedRotation === 0) {
-    return file;
-  }
+  // Perf/size fix (2026-09-19): this used to skip resizing entirely
+  // whenever the user didn't actively rotate the photo (the common case —
+  // almost nobody rotates a normal upload), silently handing the original,
+  // full-resolution file straight to storage. The canvas path below
+  // already handles rotation=0 correctly (quarterTurns=0, no size swap, no
+  // visible rotation) — it just also resizes/re-encodes, which is the
+  // whole point. Removed the early return so every add/replace-photo
+  // upload gets the same size cap as every other upload surface in the
+  // app, not just the ones a user happens to rotate.
 
   const objectUrl = URL.createObjectURL(file);
 

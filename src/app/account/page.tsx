@@ -26,6 +26,7 @@ function normalizeFocus(value: unknown): string {
   return s && s.toLowerCase() !== "null" ? s : "";
 }
 import { migrateExistingVaultImagesToSupabase } from "@/lib/vaultMigration";
+import { prepareImageBlob } from "@/lib/vaultImageStore";
 
 function computeAge(dobStr: string) {
   if (!dobStr) return null;
@@ -723,9 +724,17 @@ export default function AccountPage() {
                       // never actually persisted anywhere but this device.
                       const supabase = getSupabaseBrowserClient();
                       if (!supabase) throw new Error("Supabase not ready");
-                      const ext = f.name.split(".").pop() ?? "jpg";
-                      const path = `${profileId}/avatar.${ext}`;
-                      const { error } = await supabase.storage.from("avatars").upload(path, f, { upsert: true });
+                      // Perf/size fix (2026-09-19): avatars uploaded whatever
+                      // the browser/phone camera produced, full resolution,
+                      // no resize -- same gap as the vault-item photo flows,
+                      // just for a small round image nobody needs at full
+                      // camera resolution. Reuses the same shared utility.
+                      const durableBlob = await prepareImageBlob(f, { maxDimension: 512, quality: 0.86 });
+                      // prepareImageBlob always re-encodes to JPEG -- match
+                      // the path's own extension to what's actually stored,
+                      // instead of trusting the original file's extension.
+                      const path = `${profileId}/avatar.jpg`;
+                      const { error } = await supabase.storage.from("avatars").upload(path, durableBlob, { upsert: true, contentType: "image/jpeg" });
                       if (error) throw error;
                       const { data } = supabase.storage.from("avatars").getPublicUrl(path);
                       setAvatarUrl(`${data.publicUrl}?t=${Date.now()}`);

@@ -7,6 +7,7 @@ import { AppIcon } from "@/components/ui/AppIcon";
 
 import { type VaultItem, getPrimaryImageUrl } from "@/lib/vaultModel";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
+import { prepareImageBlob } from "@/lib/vaultImageStore";
 import {
   type Gallery,
   type GalleryShelfOverlayStyle,
@@ -199,15 +200,21 @@ async function uploadGalleryBackgroundToStorage(
     throw new Error("Supabase browser client is not available.");
   }
 
-  const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+  // Perf/size fix (2026-09-19): this uploaded whatever the browser
+  // produced with zero resize -- the one background-image surface in the
+  // app with no size cap at all (Museum Builder's and the personal
+  // Gallery Room's own wallpaper uploads both already resize to 1600px,
+  // matched here for consistency).
+  const durableBlob = await prepareImageBlob(file, { maxDimension: 1600, quality: 0.85 });
+  const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_").replace(/\.[^.]+$/, "") + ".jpg";
   const path = `${galleryId}/${Date.now()}_${safeName}`;
 
   const { error: uploadError } = await supabase.storage
     .from(GALLERY_BACKGROUND_BUCKET)
-    .upload(path, file, {
+    .upload(path, durableBlob, {
       cacheControl: "3600",
       upsert: true,
-      contentType: file.type || "application/octet-stream",
+      contentType: "image/jpeg",
     });
 
   if (uploadError) {

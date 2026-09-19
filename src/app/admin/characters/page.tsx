@@ -17,6 +17,7 @@ import {
   type AccessCoupon,
 } from "@/lib/accessCoupons";
 import { VAULT_IMAGES_BUCKET } from "@/lib/vaultCloud";
+import { prepareImageBlob } from "@/lib/vaultImageStore";
 import { SEED_CHARACTERS } from "@/lib/seedCharacters";
 import { SEED_CHARACTERS_PART2 } from "@/lib/seedCharacters_part2";
 import { SEED_CHARACTERS_PART3 } from "@/lib/seedCharacters_part3";
@@ -544,11 +545,13 @@ function ItemEditModal({
     setUploading(true);
     setError("");
     try {
-      const ext = file.name.split(".").pop() ?? "jpg";
-      const path = `admin/${item.id}-${Date.now()}.${ext}`;
+      // Perf/size fix (2026-09-19): admin-only surface, same gap as every
+      // other unresized upload path -- reuses the shared utility.
+      const durableBlob = await prepareImageBlob(file);
+      const path = `admin/${item.id}-${Date.now()}.jpg`;
       const { error: upErr } = await supabase.storage
         .from(VAULT_IMAGES_BUCKET)
-        .upload(path, file, { upsert: true, contentType: file.type });
+        .upload(path, durableBlob, { upsert: true, contentType: "image/jpeg" });
       if (upErr) throw new Error(upErr.message);
       const { data: { publicUrl } } = supabase.storage
         .from(VAULT_IMAGES_BUCKET)

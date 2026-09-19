@@ -14,6 +14,7 @@ import { getCollectionMetrics } from "@/lib/portfolioMetrics";
 import { getCollectionValuationScore } from "@/lib/collectionValuationScore";
 import { getCollectorStrength } from "@/lib/collectorStrength";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
+import { prepareImageBlob } from "@/lib/vaultImageStore";
 import SeasonalBanner from "@/components/SeasonalBanner";
 import { Glyph, type GlyphName } from "@/components/ui/Glyph";
 
@@ -260,9 +261,12 @@ function AvatarPickerModal({
     try {
       const supabase = getSupabaseBrowserClient();
       if (!supabase) return;
-      const ext = file.name.split(".").pop() ?? "jpg";
-      const path = `${profileId}/avatar.${ext}`;
-      const { error } = await supabase.storage.from("avatars").upload(path, file, { upsert: true });
+      // Perf/size fix (2026-09-19): same gap as the Account page's own
+      // (previously separate) copy of this upload -- full-resolution
+      // camera/phone photo uploaded raw, no resize.
+      const durableBlob = await prepareImageBlob(file, { maxDimension: 512, quality: 0.86 });
+      const path = `${profileId}/avatar.jpg`;
+      const { error } = await supabase.storage.from("avatars").upload(path, durableBlob, { upsert: true, contentType: "image/jpeg" });
       if (error) throw error;
       const { data } = supabase.storage.from("avatars").getPublicUrl(path);
       setSelected(data.publicUrl + "?t=" + Date.now());
