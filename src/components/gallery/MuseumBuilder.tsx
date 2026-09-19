@@ -590,10 +590,34 @@ export default function MuseumBuilder() {
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     mount.appendChild(renderer.domElement);
 
-    scene.add(new THREE.HemisphereLight(0xbcd6ef, 0x12294a, 0.9));
-    const sun = new THREE.DirectionalLight(0xfff4e0, 0.6);
-    sun.position.set(40, 60, 20);
-    scene.add(sun);
+    // Real per-style ambient (2026-09-19 fix): `addLighting()` below (via
+    // `styled`) already gets called correctly for a room with a saved
+    // style — confirmed by reading buildRoomShell/buildNeutralShell,
+    // which both call `styled.addLighting(anchor)` when `styled` is
+    // truthy. The actual gap was here: this generic ambient stayed on
+    // UNCONDITIONALLY regardless of style, at a color/intensity that
+    // matches no real style, stacking on top of the real spotlight rig
+    // instead of the LOW, per-style-tuned ambient that rig was built
+    // against (VirtualGalleryRoom.tsx's own `hemi` — same comment there:
+    // "this generic hemisphere fill... was flattening the whole room to
+    // one brightness with little light hierarchy"). `addLighting()` is
+    // spotlights only, no ambient of its own, so this layer matters.
+    // Mirrors the personal room's own real values for a styled room;
+    // unstyled rooms keep the exact previous generic values (no look
+    // change for a room with no style selected). The personal room has no
+    // directional "sun" at all in its own accepted setup, so a styled
+    // room here gets none either — added, not invented.
+    const HEMI_INTENSITY_BY_STYLE: Record<GalleryFinishStyle, number> = {
+      whitebox: 1.5, vault: 1.3, loft: 1.3, arcade: 1.8,
+    };
+    if (roomStyle) {
+      scene.add(new THREE.HemisphereLight(0xffffff, 0x3a3a3a, HEMI_INTENSITY_BY_STYLE[roomStyle]));
+    } else {
+      scene.add(new THREE.HemisphereLight(0xbcd6ef, 0x12294a, 0.9));
+      const sun = new THREE.DirectionalLight(0xfff4e0, 0.6);
+      sun.position.set(40, 60, 20);
+      scene.add(sun);
+    }
 
     // Real Gallery Environments pass (2026-09-12): when this room has a
     // saved Style, build a real createGalleryFinishes() instance once here
