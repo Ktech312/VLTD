@@ -299,8 +299,10 @@ the real thing.
   Industrial Loft — the exact same labels/values as
   `VirtualGalleryRoom.tsx`'s own style `<select>` — persisted as a new
   `museum_room_meta.room_style` column (migration:
-  `supabase/migrations/20260912_museum_room_style.sql`, written but NOT run
-  — EK runs migrations by hand). Fails soft exactly like every other
+  `supabase/migrations/20260912_museum_room_style.sql` — **✅ confirmed run
+  by EK 2026-09-19** (a read-only DB check earlier had already found this
+  applied; EK's own re-run just now was a harmless no-op on an existing
+  column, consistent with that). Fails soft exactly like every other
   optional column in `museumCampusConfig.ts`: an unrun migration or an
   unrecognized value just means "keep this room's normal default finish."
   "Blue" is deliberately NOT offered — it has no `createGalleryFinishes()`
