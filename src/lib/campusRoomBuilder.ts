@@ -213,11 +213,13 @@ export const MUSEUM_ROOM_STYLE_OPTIONS: { id: GalleryFinishStyle; label: string 
 // plain black/plastic-sleeve frame — no-shelf wall-hangs only per EK's own
 // ask) and "gallery" (the gold-gradient bezel look, confirmed live as the
 // Exhibitions builder's own PremiumDisplayCard — usable for wall or
-// shelf). A third style was referenced but never located/confirmed; add
-// it here once it is, same pattern as MUSEUM_ROOM_STYLE_OPTIONS above.
+// shelf). Third style added 2026-09-19: "matted" (gold trim + a real
+// cream mat, ported from the Vault "Shelf" view's own default "Gallery
+// Frame" — see createMuseumFrameTexture's comment for the full story).
 export const FRAME_STYLE_OPTIONS: { id: ArtworkFrameStyle; label: string }[] = [
   { id: "classic", label: "Classic" },
   { id: "gallery", label: "Gallery" },
+  { id: "matted", label: "Gold & Mat" },
 ];
 
 export type StyledRoomFinishes = ReturnType<typeof createGalleryFinishes>;
@@ -1759,7 +1761,67 @@ function createGalleryFrameTexture(aspect: number): THREE.CanvasTexture {
   return texture;
 }
 
-export type ArtworkFrameStyle = "classic" | "gallery";
+// Frame styles pass, third style (2026-09-19): EK's "this is in the
+// Exhibitions by default" correction — the actual match wasn't in the
+// Exhibitions "Curate the Layout" 3D builder at all, it's the Vault
+// page's own "Shelf" view (`src/app/vault/VaultInner.tsx`), whose
+// `FrameStyle` "gallery" case (confusingly a different name than this
+// file's own "gallery" style above — kept `"matted"` here to avoid that
+// collision) is the literal default (`useState<FrameStyle>("gallery")`)
+// applied to every item automatically. That one's CSS (nested divs,
+// `getFrameClasses()`, VaultInner.tsx ~line 250-262) reads outside-in as:
+// bronze border -> tan/gold body -> a gold-gradient bezel ring -> a
+// cream/off-white MAT -> the photo on a near-white backing — the mat is
+// exactly what distinguishes it from this file's existing "gallery"
+// style (which has no mat, just a dark window). Same exact hex values,
+// same canvas-texture technique as createGalleryFrameTexture above.
+function createMuseumFrameTexture(aspect: number): THREE.CanvasTexture {
+  const height = 384;
+  const width = Math.max(64, Math.round(height * aspect));
+  const canvas = document.createElement("canvas");
+  canvas.width = width;
+  canvas.height = height;
+  const ctx = canvas.getContext("2d")!;
+
+  // Outer: bronze border over a tan/gold body.
+  ctx.fillStyle = "#7f633f";
+  ctx.fillRect(0, 0, width, height);
+  const bronzeInset = width * 0.018;
+  ctx.fillStyle = "#d9b277";
+  ctx.fillRect(bronzeInset, bronzeInset, width - bronzeInset * 2, height - bronzeInset * 2);
+
+  // Middle: a gold-gradient bezel ring (VaultInner's 180deg #e8c892 -> #b97837).
+  const bezelInset = width * 0.06;
+  const bezelGradient = ctx.createLinearGradient(0, bezelInset, 0, height - bezelInset);
+  bezelGradient.addColorStop(0, "#e8c892");
+  bezelGradient.addColorStop(1, "#b97837");
+  ctx.fillStyle = bezelGradient;
+  ctx.fillRect(bezelInset, bezelInset, width - bezelInset * 2, height - bezelInset * 2);
+  ctx.strokeStyle = "#9f7742";
+  ctx.lineWidth = Math.max(1, width * 0.006);
+  ctx.strokeRect(bezelInset, bezelInset, width - bezelInset * 2, height - bezelInset * 2);
+
+  // Inner: the cream/off-white mat (passe-partout) — the layer the
+  // museum's existing "gallery" style is missing entirely.
+  const matInset = width * 0.1;
+  ctx.fillStyle = "#f4ead8";
+  ctx.fillRect(matInset, matInset, width - matInset * 2, height - matInset * 2);
+  ctx.strokeStyle = "#f0dfbf";
+  ctx.lineWidth = Math.max(1, width * 0.004);
+  ctx.strokeRect(matInset, matInset, width - matInset * 2, height - matInset * 2);
+
+  // Media backing (near-white, visible as a thin final ring before the
+  // actual artwork texture draws on top at runtime).
+  const mediaInset = width * 0.118;
+  ctx.fillStyle = "#fefcf8";
+  ctx.fillRect(mediaInset, mediaInset, width - mediaInset * 2, height - mediaInset * 2);
+
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  return texture;
+}
+
+export type ArtworkFrameStyle = "classic" | "gallery" | "matted";
 
 function hangArtPreservingAspect(
   scene: THREE.Scene,
@@ -1794,10 +1856,15 @@ function hangArtPreservingAspect(
     const artH = naturalH * scale;
 
     const galleryMargin = 0.34;
-    const matWidth = frameStyle === "gallery" ? artW + galleryMargin * 2 : artW + 0.12;
-    const matHeight = frameStyle === "gallery" ? artH + galleryMargin * 2 : artH + 0.12;
+    // "matted" gets the same generous margin as "gallery" (both are wide
+    // bezel treatments, unlike "classic"'s thin plastic-sleeve edge).
+    const hasWideMargin = frameStyle === "gallery" || frameStyle === "matted";
+    const matWidth = hasWideMargin ? artW + galleryMargin * 2 : artW + 0.12;
+    const matHeight = hasWideMargin ? artH + galleryMargin * 2 : artH + 0.12;
     const matMaterial = frameStyle === "gallery"
       ? new THREE.MeshStandardMaterial({ map: createGalleryFrameTexture(matWidth / matHeight), roughness: 0.4, metalness: 0.5 })
+      : frameStyle === "matted"
+      ? new THREE.MeshStandardMaterial({ map: createMuseumFrameTexture(matWidth / matHeight), roughness: 0.55, metalness: 0.3 })
       : new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.9 });
     const mat = new THREE.Mesh(new THREE.PlaneGeometry(matWidth, matHeight), matMaterial);
     mat.position.set(x, y, z);

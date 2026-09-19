@@ -76,6 +76,7 @@ import {
   placeArtwork,
   placeItemsAtSlots,
   retitleDestinationSign,
+  type ArtworkFrameStyle,
   type GalleryFinishStyle,
   type PlacementSlot,
   type RoomFinish,
@@ -1419,7 +1420,7 @@ export default function VltdMuseumCampus() {
       // resolved by the caller (populateDynamicContent, where roomMeta —
       // a local const there, not in scope in this sibling function — is
       // read). Defaults to "classic" so no existing caller changes look.
-      frameStyle: "classic" | "gallery" = "classic"
+      frameStyle: ArtworkFrameStyle = "classic"
     ) {
       const urls = items.map((item) => ({ url: getPrimaryImageUrl(item) })).filter((it): it is { url: string } => Boolean(it.url));
       placeArtwork(scene, textureLoader, lightGroups, wallSpans, urls, WALL_THICKNESS, EYE_HEIGHT, () => contentCancelled, frameStyle);
@@ -1435,8 +1436,10 @@ export default function VltdMuseumCampus() {
       // Frame styles pass (2026-09-14): resolved once here (roomMeta is
       // local to this function) and passed down to placeRoomItems/
       // placeItemsAtSlots, which don't have access to it themselves.
-      const frameStyleFor = (roomId: CampusRoomId): "classic" | "gallery" =>
-        roomMeta[roomId]?.frame_style === "gallery" ? "gallery" : "classic";
+      const frameStyleFor = (roomId: CampusRoomId): ArtworkFrameStyle => {
+        const saved = roomMeta[roomId]?.frame_style;
+        return saved === "gallery" || saved === "matted" ? saved : "classic";
+      };
       if (contentCancelled) return;
 
       // Shared Museum Room Editor pass (2026-09-12): an admin-renamed room

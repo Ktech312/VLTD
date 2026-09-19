@@ -348,7 +348,8 @@ export default function MuseumBuilder() {
       setRoomStyleState(
         savedStyle === "whitebox" || savedStyle === "vault" || savedStyle === "arcade" || savedStyle === "loft" ? savedStyle : null
       );
-      setFrameStyleState(meta?.frame_style === "gallery" ? "gallery" : "classic");
+      const savedFrameStyle = meta?.frame_style;
+      setFrameStyleState(savedFrameStyle === "gallery" || savedFrameStyle === "matted" ? savedFrameStyle : "classic");
       const savedRowCount = meta?.wall_row_count;
       const nextRowCount: RoomRowCount = savedRowCount === 1 || savedRowCount === 2 || savedRowCount === 3 ? savedRowCount : 3;
       const nextShelvesEnabled = meta?.wall_shelves_enabled ?? false;
