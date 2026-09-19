@@ -133,6 +133,12 @@ export async function migrateItemImagesToPrivate(item: VaultItem): Promise<Vault
 }
 
 /** Reverses migrateItemImagesToPrivate — moves images back to the public bucket. */
+// A private-bucket storageKey always starts with the uploader's auth uid
+// (see migrateItemImagesToPrivate above): "<uuid>/<itemId>/<file>". Used as
+// a fallback signal below in case isPrivateStorage itself was ever lost
+// (e.g. by a normalizer that didn't know about the field yet).
+const PRIVATE_STORAGE_KEY_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\//i;
+
 export async function migrateItemImagesToPublic(item: VaultItem): Promise<VaultItem> {
   const supabase = getSupabaseBrowserClient();
   if (!supabase) return item;
@@ -140,7 +146,8 @@ export async function migrateItemImagesToPublic(item: VaultItem): Promise<VaultI
   const images = [...(item.images ?? [])];
   const updated = await Promise.all(
     images.map(async (image) => {
-      if (image.localOnly || !image.isPrivateStorage || !image.storageKey) return image;
+      const isPrivate = image.isPrivateStorage || PRIVATE_STORAGE_KEY_PATTERN.test(image.storageKey || "");
+      if (image.localOnly || !isPrivate || !image.storageKey) return image;
       const { data: signed, error: signError } = await supabase.storage
         .from(VAULT_IMAGES_PRIVATE_BUCKET)
         .createSignedUrl(image.storageKey, 300);

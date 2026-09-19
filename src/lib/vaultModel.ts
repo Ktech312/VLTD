@@ -404,6 +404,7 @@ function normalizeImages(raw: unknown): VaultImage[] {
           isEphemeralImageUrl(safeUrl) ||
           isEphemeralImageUrl(resolvedStorageKey),
         role: inferImageRole(index, sanitizeVaultImageRole(image.role)),
+        isPrivateStorage: Boolean(image.isPrivateStorage),
       } as VaultImage;
     })
     .filter(Boolean) as VaultImage[];
