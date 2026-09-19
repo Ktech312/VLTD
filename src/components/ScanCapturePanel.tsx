@@ -290,9 +290,19 @@ export default function ScanCapturePanel({ onClose }: { onClose: () => void }) {
         // screen now seeds selectedDeviceId from the shared cross-screen
         // preference (cameraPreference.ts) at mount, making a stale id a
         // real, not just theoretical, possibility.
+        // `zoom: true` is required for Chrome to expose real optical/hardware
+        // zoom via track.getCapabilities().zoom at all -- without it in the
+        // ORIGINAL getUserMedia call, capabilities().zoom comes back empty
+        // even on hardware that supports it, and useCameraZoom silently
+        // falls back to digital-only zoom forever (found during a code
+        // review after this was flagged as never verified on a real
+        // device -- `ideal` not `true`/a fixed value, so it degrades
+        // gracefully to no hardware zoom on devices/browsers that don't
+        // support the constraint at all, same as every other `ideal` used
+        // here).
         const constraints: MediaStreamConstraints = selectedDeviceId
-          ? { video: { deviceId: { ideal: selectedDeviceId }, width: { ideal: 1280 } }, audio: false }
-          : { video: { facingMode: { ideal: "environment" }, width: { ideal: 1280 } }, audio: false };
+          ? { video: { deviceId: { ideal: selectedDeviceId }, width: { ideal: 1280 }, zoom: true } as MediaTrackConstraints, audio: false }
+          : { video: { facingMode: { ideal: "environment" }, width: { ideal: 1280 }, zoom: true } as MediaTrackConstraints, audio: false };
         const stream = await navigator.mediaDevices.getUserMedia(constraints);
         if (!active) { stream.getTracks().forEach((t) => t.stop()); return; }
         streamRef.current = stream;

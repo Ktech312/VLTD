@@ -392,9 +392,17 @@ export default function CameraCapturePanel({
         // capture has a real ceiling below what a native camera app can do
         // (no HDR/multi-frame fusion), so further tuning this number isn't
         // the lever to keep pulling.
+        // `zoom: true` on the PRIMARY request only (not the plain `video:
+        // true` fallback below, which is deliberately maximally permissive)
+        // -- required for Chrome to expose real optical/hardware zoom via
+        // track.getCapabilities().zoom at all. Without it, capabilities()
+        // .zoom comes back empty even on hardware that supports it, and
+        // useCameraZoom silently falls back to digital-only zoom forever
+        // (found during a code review after this was flagged as never
+        // verified on a real device).
         const requestedDevice = preferredDeviceId
-          ? { deviceId: { ideal: preferredDeviceId }, width: { ideal: 1280 } }
-          : { facingMode: { ideal: "environment" }, width: { ideal: 1280 } };
+          ? { deviceId: { ideal: preferredDeviceId }, width: { ideal: 1280 }, zoom: true }
+          : { facingMode: { ideal: "environment" }, width: { ideal: 1280 }, zoom: true };
 
         try {
           stream = await navigator.mediaDevices.getUserMedia({
