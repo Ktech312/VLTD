@@ -205,11 +205,10 @@ Every file matching `src/app/admin/**/page.tsx` (confirmed via glob):
 | `src/app/admin/events/quick-add/page.tsx` | ⚠️ Not iframed in — reachable only by direct URL. Manual fallback to add one `collector_events` row by hand. |
 | `src/app/admin/referrals/page.tsx` | ✅ Iframed as "Referrals" (fixed 2026-08-24) |
 | `src/app/admin/spotlights/page.tsx` | ✅ Iframed as "Spotlights" (fixed 2026-08-24) |
-| `src/app/admin/tiers/page.tsx` | ❓ **Still not wired in — needs EK's call, not a code decision.** `AdminTiersPage` grants FREE/MID/FULL tiers against `profiles.tier`, which looks like the same job the inline "Account Rights" section already does. Ask EK whether this file is dead before touching it either way. |
+| `src/app/admin/tiers/page.tsx` | ✅ Deleted 2026-09-19 — confirmed orphaned (no inbound links) and fully superseded by `/admin/users`'s server-side tier grant route. EK confirmed delete. |
 
-**Net takeaway:** Referrals and Spotlights are fixed. `/admin/tiers` is the one open
-question — don't add it to the sidebar and don't delete it; confirm with EK first
-whether it's dead code or does something Account Rights doesn't.
+**Net takeaway:** Referrals and Spotlights are fixed. `/admin/tiers` has been
+deleted — its one job (granting tiers) is fully covered by `/admin/users`.
 
 (The duplicate `/admin` hub page mentioned in earlier drafts of this doc has been
 deleted at EK's direction, 2026-08-24 — it no longer exists.)

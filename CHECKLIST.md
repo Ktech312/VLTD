@@ -356,14 +356,17 @@ columns on `vault_items`. Not yet live-verified visually. See HANDOFF.md
 HANDOFF.md §2, 2026-08-27 entry.
 
 ## Future cleanup — not urgent, wait for EK
-⬜ **Retire or trim "Account Rights" now that "Users" covers everything it
-did** (tier grants, activity stats, personal/business badge, search) —
-EK: "we will leave the changes until we have tested a few times." Both
-panels stay live side by side for now. Revisit once Users' tier controls
-have been used for real a few times.
-⬜ **`/admin/tiers/page.tsx`** — still unwired and undecided. Likely dead
-code duplicating Account Rights/Users, but needs EK to actually open it
-and compare before deleting or wiring it in. See `APP_MAP.md` §2.3.
+✅ **Retire "Account Rights" now that "Users" covers everything it did** —
+done 2026-08-27/28, `AccountRightsPanel`/`ProfileRow`/`TierProfile` (~275
+lines) deleted entirely from `src/app/admin/characters/page.tsx`, not just
+hidden. See HANDOFF.md §2, 2026-08-27/28 entries. (This checklist entry
+was stale — the deletion had already shipped and just never got checked
+off here.)
+✅ **`/admin/tiers/page.tsx`** — deleted 2026-09-19. Confirmed orphaned
+(no inbound links anywhere in the app) and fully superseded by
+`/admin/users`, which grants tiers through a server-side route
+(`api/admin/users/route.ts`) instead of this page's direct client-side
+`profiles` table write. EK confirmed delete.
 ⬜ **Event Catcher sharing** — currently admin-only (bookmarklet works for
 anyone, but saving through Quick Add needs VLTD admin access). EK: "leave
 it for now, figure out a way to share better in the future." If someone
