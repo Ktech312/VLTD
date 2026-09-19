@@ -4,6 +4,7 @@ import {
   hasSupabaseEnv,
   isDirectBrowserImageUrl,
 } from "@/lib/vaultCloud";
+import { resolvePrivateImageUrlSync } from "@/lib/privatePhotos";
 import { newId } from "@/lib/id";
 import {
   normalizeComparables,
@@ -22,6 +23,10 @@ export type VaultImage = {
   order: number;
   localOnly?: boolean;
   role?: VaultImageRole;
+  /** Private Photos (paid feature) — storageKey lives in vault-images-private
+   *  (needs a signed URL) instead of the default public vault-images bucket.
+   *  See src/lib/privatePhotos.ts. */
+  isPrivateStorage?: boolean;
 };
 
 export type VaultItem = {
@@ -870,6 +875,12 @@ export function getOrderedImages(item: VaultItem) {
 export function resolveVaultImageUrl(image?: VaultImage | null) {
   if (!image) return "";
   if (image.url && isDirectBrowserImageUrl(image.url)) return image.url;
+  // Private Photos (paid feature) — this storageKey lives in the private
+  // bucket and needs a signed URL, not a permanent public one. See
+  // privatePhotos.ts's own comment for why this stays synchronous like
+  // every other branch here instead of making this function (called from
+  // ~28 places across the app) async.
+  if (image.storageKey && image.isPrivateStorage) return resolvePrivateImageUrlSync(image.storageKey);
   if (image.storageKey && !image.localOnly) return getVaultImagePublicUrl(image.storageKey);
   if (image.storageKey && isDirectBrowserImageUrl(image.storageKey)) return image.storageKey;
   return "";

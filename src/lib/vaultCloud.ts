@@ -80,6 +80,7 @@ function rowToVaultImage(entry: unknown, index: number): VaultImage | null {
     url: url || undefined,
     order: Number.isFinite(Number(image.order)) ? Number(image.order) : index,
     localOnly: isLocalOnlyImageUrl(url),
+    isPrivateStorage: Boolean(image.isPrivateStorage),
   };
 }
 
@@ -410,6 +411,7 @@ function sanitizeRemoteImages(images?: VaultImage[]) {
       storageKey: image.storageKey,
       url: image.url ?? null,
       order: Number.isFinite(Number(image.order)) ? Number(image.order) : index,
+      isPrivateStorage: Boolean(image.isPrivateStorage),
     }));
 }
 
