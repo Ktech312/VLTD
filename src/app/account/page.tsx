@@ -587,10 +587,17 @@ export default function AccountPage() {
                   className="mb-4 flex flex-wrap items-center justify-between gap-2 border-b pb-4 text-xs"
                   style={{ borderColor: "var(--theme-border)" }}
                 >
-                  <span className="text-[color:var(--muted2)]">
-                    Local {localItemCount}
-                    {cloudItemCount != null ? ` · Cloud ${cloudItemCount}` : ""}
-                    {miniSyncMsg ? ` · ${miniSyncMsg}` : ""}
+                  <span>
+                    {cloudItemCount == null ? (
+                      <span className="text-[color:var(--muted2)]">Local {localItemCount}</span>
+                    ) : localItemCount === cloudItemCount ? (
+                      <span style={{ color: "#4ade80" }}>✓ Synced ({localItemCount})</span>
+                    ) : (
+                      <span style={{ color: "#f87171" }}>
+                        Out of sync — Local {localItemCount}, Cloud {cloudItemCount}
+                      </span>
+                    )}
+                    {miniSyncMsg ? <span className="text-[color:var(--muted2)]"> · {miniSyncMsg}</span> : null}
                   </span>
                   <button
                     type="button"
