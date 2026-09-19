@@ -11,8 +11,9 @@ import { AccountTabs } from "@/components/account/AccountTabs";
 import { getOnboardingStatus, updateProfile } from "@/lib/auth";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 import { syncPublicProfile } from "@/lib/publicProfile";
-import { processVaultSyncQueue } from "@/lib/vaultSyncQueue";
-import { syncVaultItemsFromSupabase } from "@/lib/vaultModel";
+import { processVaultSyncQueue, syncAllItemsToCloud } from "@/lib/vaultSyncQueue";
+import { getAllLocalItems, syncVaultItemsFromSupabase } from "@/lib/vaultModel";
+import { fetchVaultItemsFromSupabase, hasSupabaseEnv } from "@/lib/vaultCloud";
 import { loadWatchlist, removeFromWatchlist, type WatchlistItem } from "@/lib/watchlistModel";
 import { UNIVERSE_KEYS, UNIVERSE_LABEL, isUniverseKey } from "@/lib/taxonomy";
 import { getProfileSafe, setProfileSafe, broadcastProfileChange } from "@/lib/userProfile";
@@ -54,6 +55,16 @@ export default function AccountPage() {
   const [syncStatus, setSyncStatus] = useState("");
   const [isSyncing, setIsSyncing] = useState(false);
   const [isMigrating, setIsMigrating] = useState(false);
+  // EK's ask (2026-09-18): a small, quiet local-vs-cloud check right on this
+  // page — not its own page, not a banner, not buried in "More." Deliberately
+  // separate from the "Vault Maintenance" section's own Sync Now below (that
+  // one only retries what's already queued; this checks for the case where
+  // an item silently failed server-side and was never queued at all — the
+  // gap the enforce_vault_item_limit() trigger bug exposed).
+  const [localItemCount, setLocalItemCount] = useState<number | null>(null);
+  const [cloudItemCount, setCloudItemCount] = useState<number | null>(null);
+  const [miniSyncBusy, setMiniSyncBusy] = useState(false);
+  const [miniSyncMsg, setMiniSyncMsg] = useState("");
   const [watchlist, setWatchlist] = useState<WatchlistItem[]>([]);
   // Contact info
   const [fullName, setFullName] = useState("");
@@ -171,6 +182,45 @@ export default function AccountPage() {
       }
     } finally {
       setPushBusy(false);
+    }
+  }
+
+  useEffect(() => {
+    let active = true;
+    async function loadCounts() {
+      setLocalItemCount(getAllLocalItems().length);
+      if (!hasSupabaseEnv()) return;
+      try {
+        const cloud = await fetchVaultItemsFromSupabase();
+        if (active) setCloudItemCount(cloud.length);
+      } catch {
+        if (active) setCloudItemCount(null);
+      }
+    }
+    void loadCounts();
+    return () => { active = false; };
+  }, []);
+
+  async function handleMiniSync() {
+    if (miniSyncBusy) return;
+    setMiniSyncBusy(true);
+    setMiniSyncMsg("");
+    try {
+      const r = await syncAllItemsToCloud();
+      setLocalItemCount(getAllLocalItems().length);
+      if (hasSupabaseEnv()) {
+        try {
+          const cloud = await fetchVaultItemsFromSupabase();
+          setCloudItemCount(cloud.length);
+        } catch {
+          setCloudItemCount(null);
+        }
+      }
+      setMiniSyncMsg(r.remaining > 0 ? `${r.remaining} still pending.` : "Up to date.");
+    } catch (e) {
+      setMiniSyncMsg(e instanceof Error ? e.message : "Sync failed.");
+    } finally {
+      setMiniSyncBusy(false);
     }
   }
 
@@ -530,6 +580,29 @@ export default function AccountPage() {
             </div>
 
             <aside className="rounded-[28px] p-5" style={{ background: 'var(--theme-card)', border: '1px solid var(--theme-border)' }}>
+              {/* Small, quiet — EK's ask: local-vs-cloud + a sync button,
+                  nothing louder than that. */}
+              {localItemCount != null ? (
+                <div
+                  className="mb-4 flex flex-wrap items-center justify-between gap-2 border-b pb-4 text-xs"
+                  style={{ borderColor: "var(--theme-border)" }}
+                >
+                  <span className="text-[color:var(--muted2)]">
+                    Local {localItemCount}
+                    {cloudItemCount != null ? ` · Cloud ${cloudItemCount}` : ""}
+                    {miniSyncMsg ? ` · ${miniSyncMsg}` : ""}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => void handleMiniSync()}
+                    disabled={miniSyncBusy}
+                    className="font-semibold text-[color:var(--muted)] underline underline-offset-2 disabled:opacity-50"
+                  >
+                    {miniSyncBusy ? "Syncing…" : "Sync"}
+                  </button>
+                </div>
+              ) : null}
+
               <div className="text-[11px] font-semibold uppercase tracking-[0.30em] text-[color:var(--muted2)]">
                 Profile Summary
               </div>
