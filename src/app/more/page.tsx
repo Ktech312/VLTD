@@ -6,9 +6,8 @@ import type { ReactNode } from "react";
 import { useEffect, useMemo, useState } from "react";
 
 import { AppIcon, type AppIconName } from "@/components/ui/AppIcon";
-import { getCurrentUser, getOnboardingStatus } from "@/lib/auth";
+import { getOnboardingStatus } from "@/lib/auth";
 import { loadGalleries, type Gallery } from "@/lib/galleryModel";
-import { isOwnerEmail } from "@/lib/ownerAccess";
 import { loadItems, type VaultItem } from "@/lib/vaultModel";
 import { getFollowerCount } from "@/lib/follows";
 import { readHistory, sliceHistory } from "@/lib/valueHistory";
@@ -54,7 +53,6 @@ type PanelKey =
   | "security"
   | "billing"
   | "importExport"
-  | "backup"
   | "publicProfile"
   | "activity"
   | "help"
@@ -316,7 +314,6 @@ export default function MorePage() {
     memberSince: "Apr 2024",
     profileType: "personal",
   });
-  const [canUseOwnerTools, setCanUseOwnerTools] = useState(false);
   const [followerCount, setFollowerCount] = useState<number | null>(null);
   const [activityEvents, setActivityEvents] = useState<ActivityEventRecord[]>(() => loadActivityEvents());
 
@@ -325,9 +322,7 @@ export default function MorePage() {
     async function load() {
       try {
         const status = await getOnboardingStatus();
-        const userResult = await getCurrentUser();
         if (!active) return;
-        setCanUseOwnerTools(isOwnerEmail(userResult.data.user?.email));
         if (status.activeProfile) {
           const profileId = status.activeProfile.id;
           setProfile({
@@ -353,7 +348,6 @@ export default function MorePage() {
         // Keep local visual shell available if auth lookup is delayed.
       }
       if (!active) return;
-      setCanUseOwnerTools(false);
       setItems(loadItems({ includeAllProfiles: true }));
       setGalleries(loadGalleries({ includeAllProfiles: true }));
     }
@@ -385,9 +379,6 @@ export default function MorePage() {
     { icon: "shield", title: "Security", desc: "Passwords, sessions, privacy controls, and account protection.", panel: "security" },
     { icon: "card", title: "Billing & Plans", desc: "Plan, payment, invoice, and portal shortcuts.", panel: "billing" },
     { icon: "cloud", title: "Import & Export", desc: "Bring data in, export records, or prepare reports.", panel: "importExport" },
-    ...(canUseOwnerTools
-      ? [{ icon: "cloud" as const, title: "Backup & Restore", desc: "Archive, restore, and protect your vault data.", panel: "backup" as const }]
-      : []),
     { icon: "globe", title: "Public Profile & Share", desc: "Profile, gallery sharing, and public presentation controls.", panel: "publicProfile" },
     { icon: "camera", title: "Scan & Capture", desc: "Open the full capture flow for camera and scan work.", href: "/capture", cta: "Start Scan", accent: true },
   ];
@@ -541,7 +532,6 @@ export default function MorePage() {
               </div>
               <div className="mt-4 overflow-hidden rounded-[8px] border" style={{ borderColor: border, background: "var(--theme-card, rgba(28,31,36,0.94))" }}>
                 <MobileRow icon="cloud" title="Import & Export" panel="importExport" onPanel={setActivePanel} />
-                {canUseOwnerTools ? <MobileRow icon="cloud" title="Backup & Restore" panel="backup" onPanel={setActivePanel} /> : null}
                 <MobileRow icon="globe" title="Public Profile & Share" panel="publicProfile" onPanel={setActivePanel} />
                 <MobileRow icon="camera" title="Scan & Capture" href="/capture" onPanel={setActivePanel} />
               </div>
@@ -587,12 +577,6 @@ function PanelContent({ activePanel, profile, items, galleries }: { activePanel:
       intro: "Move collection data in or out of VLTD.",
       bullets: ["Import spreadsheets or text lists", "Export vault records", "Prepare data for backup or reports"],
       links: [["Open import/export", "/vault/import"]],
-    },
-    backup: {
-      title: "Backup & Restore",
-      intro: "Keep the data control tools close without making this page a settings maze.",
-      bullets: ["Download archive", "Restore from backup", "Review backup status"],
-      links: [["Open backup tools", "/account/backup"]],
     },
     publicProfile: {
       title: "Public Profile & Share",

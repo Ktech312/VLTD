@@ -7,8 +7,11 @@ import { PillButton } from "@/components/ui/PillButton";
 import {
   getVaultSyncQueueSnapshot,
   processVaultSyncQueue,
+  syncAllItemsToCloud,
   type VaultSyncQueueSnapshot,
 } from "@/lib/vaultSyncQueue";
+import { getAllLocalItems } from "@/lib/vaultModel";
+import { fetchVaultItemsFromSupabase, hasSupabaseEnv } from "@/lib/vaultCloud";
 
 function readSnapshot(): VaultSyncQueueSnapshot {
   return getVaultSyncQueueSnapshot();
@@ -57,12 +60,37 @@ export default function VaultSyncPage() {
   const [status, setStatus] = useState("");
   const [isSyncing, setIsSyncing] = useState(false);
 
+  // EK's ask (2026-09-18), after the enforce_vault_item_limit() trigger bug:
+  // the queue above only ever catches an edit that KNEW it failed (went
+  // offline, or a caller explicitly enqueued it). That bug's failures never
+  // got that chance — the device was online the whole time, the save just
+  // silently rejected server-side, so nothing was ever queued to retry.
+  // This is the one thing the queue view alone can't catch: a plain item-
+  // count comparison, independent of the queue, so a silent server-side
+  // failure like that one doesn't require anyone to notice on their own.
+  const [localTotal, setLocalTotal] = useState<number | null>(null);
+  const [cloudTotal, setCloudTotal] = useState<number | null>(null);
+  const [fullSyncBusy, setFullSyncBusy] = useState(false);
+  const [fullSyncStatus, setFullSyncStatus] = useState("");
+
   const refresh = useCallback(() => {
     setSnapshot(readSnapshot());
   }, []);
 
+  const refreshTotals = useCallback(async () => {
+    setLocalTotal(getAllLocalItems().length);
+    if (!hasSupabaseEnv()) return;
+    try {
+      const cloud = await fetchVaultItemsFromSupabase();
+      setCloudTotal(cloud.length);
+    } catch {
+      setCloudTotal(null);
+    }
+  }, []);
+
   useEffect(() => {
     refresh();
+    void refreshTotals();
 
     window.addEventListener("online", refresh);
     window.addEventListener("offline", refresh);
@@ -78,7 +106,29 @@ export default function VaultSyncPage() {
       window.removeEventListener("storage", refresh);
       window.clearInterval(timer);
     };
-  }, [refresh]);
+  }, [refresh, refreshTotals]);
+
+  const totalsDrift =
+    localTotal != null && cloudTotal != null ? Math.max(0, localTotal - cloudTotal) : null;
+
+  async function handleFullSync() {
+    if (fullSyncBusy) return;
+    setFullSyncBusy(true);
+    setFullSyncStatus("");
+    try {
+      const r = await syncAllItemsToCloud();
+      await refreshTotals();
+      setFullSyncStatus(
+        r.remaining > 0
+          ? `Synced ${r.processed} of ${r.total}. ${r.remaining} still pending.`
+          : `Done — all ${r.total} items match the cloud.`
+      );
+    } catch (e) {
+      setFullSyncStatus(e instanceof Error ? e.message : "Sync failed.");
+    } finally {
+      setFullSyncBusy(false);
+    }
+  }
 
   const readiness = useMemo(() => {
     if (!snapshot.online) return { label: "Offline", detail: "New captures and edits are saved locally until this device is online." };
@@ -170,6 +220,29 @@ export default function VaultSyncPage() {
                   {status}
                 </div>
               ) : null}
+
+              {/* Small, separate from the queue above on purpose — catches an
+                  item that silently failed server-side without ever being
+                  queued (see the comment on refreshTotals above). */}
+              <div className="mt-4 border-t pt-4" style={{ borderColor: "var(--border)" }}>
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div className="text-xs text-[color:var(--muted)]">
+                    {localTotal == null || cloudTotal == null
+                      ? "Checking device vs. cloud totals..."
+                      : totalsDrift
+                        ? `${totalsDrift} item${totalsDrift === 1 ? "" : "s"} on this device ${totalsDrift === 1 ? "hasn't" : "haven't"} reached the cloud.`
+                        : `All ${localTotal} items on this device match the cloud. ✓`}
+                  </div>
+                  {totalsDrift ? (
+                    <PillButton onClick={() => void handleFullSync()} disabled={fullSyncBusy}>
+                      {fullSyncBusy ? "Syncing..." : "Sync everything"}
+                    </PillButton>
+                  ) : null}
+                </div>
+                {fullSyncStatus ? (
+                  <div className="mt-2 text-xs text-[color:var(--muted)]">{fullSyncStatus}</div>
+                ) : null}
+              </div>
             </SurfaceCard>
 
             <SurfaceCard className="p-4 sm:p-5">
