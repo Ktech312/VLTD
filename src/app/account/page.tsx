@@ -12,7 +12,7 @@ import { getOnboardingStatus, updateProfile } from "@/lib/auth";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 import { syncPublicProfile } from "@/lib/publicProfile";
 import { processVaultSyncQueue, syncAllItemsToCloud } from "@/lib/vaultSyncQueue";
-import { getAllLocalItems, syncVaultItemsFromSupabase } from "@/lib/vaultModel";
+import { loadItems, syncVaultItemsFromSupabase } from "@/lib/vaultModel";
 import { fetchVaultItemsFromSupabase, hasSupabaseEnv } from "@/lib/vaultCloud";
 import { loadWatchlist, removeFromWatchlist, type WatchlistItem } from "@/lib/watchlistModel";
 import { UNIVERSE_KEYS, UNIVERSE_LABEL, isUniverseKey } from "@/lib/taxonomy";
@@ -188,7 +188,12 @@ export default function AccountPage() {
   useEffect(() => {
     let active = true;
     async function loadCounts() {
-      setLocalItemCount(getAllLocalItems().length);
+      // Scoped to the active profile only — matching fetchVaultItemsFromSupabase's
+      // own default scope below. getAllLocalItems() (the original version of
+      // this) counts every profile stored on this device, which never matched
+      // the cloud count for anyone with more than one local profile, regardless
+      // of whether sync was actually working.
+      setLocalItemCount(loadItems().length);
       if (!hasSupabaseEnv()) return;
       try {
         const cloud = await fetchVaultItemsFromSupabase();
@@ -207,7 +212,7 @@ export default function AccountPage() {
     setMiniSyncMsg("");
     try {
       const r = await syncAllItemsToCloud();
-      setLocalItemCount(getAllLocalItems().length);
+      setLocalItemCount(loadItems().length);
       if (hasSupabaseEnv()) {
         try {
           const cloud = await fetchVaultItemsFromSupabase();
@@ -591,9 +596,11 @@ export default function AccountPage() {
                     {cloudItemCount == null ? (
                       <span className="text-[color:var(--muted2)]">Local {localItemCount}</span>
                     ) : localItemCount === cloudItemCount ? (
-                      <span style={{ color: "#4ade80" }}>✓ Synced ({localItemCount})</span>
+                      <span className="vltd-keep-color" style={{ "--vltd-keep-color": "#4ade80" } as React.CSSProperties}>
+                        ✓ Synced ({localItemCount})
+                      </span>
                     ) : (
-                      <span style={{ color: "#f87171" }}>
+                      <span className="vltd-keep-color" style={{ "--vltd-keep-color": "#f87171" } as React.CSSProperties}>
                         Out of sync — Local {localItemCount}, Cloud {cloudItemCount}
                       </span>
                     )}
