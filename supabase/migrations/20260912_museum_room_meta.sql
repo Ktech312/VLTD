@@ -15,8 +15,16 @@ create table if not exists public.museum_room_meta (
 
 alter table public.museum_room_meta enable row level security;
 
+-- EK hit this live 2026-09-18: this migration was missing the
+-- drop-if-exists guard every other migration in this repo uses, so
+-- re-running it (the table already existed from an earlier partial
+-- run that was never confirmed/logged) failed on the first policy.
+-- Made idempotent to match the established convention.
+drop policy if exists "Public can read museum room meta" on public.museum_room_meta;
 create policy "Public can read museum room meta"
   on public.museum_room_meta for select using (true);
+
+drop policy if exists "Admin full access museum room meta" on public.museum_room_meta;
 create policy "Admin full access museum room meta"
   on public.museum_room_meta for all
   using (exists (select 1 from public.user_roles where email = auth.email()))
