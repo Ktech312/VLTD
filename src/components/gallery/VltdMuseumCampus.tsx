@@ -897,7 +897,29 @@ export default function VltdMuseumCampus() {
           // that pass. Precompiling them here, the moment they're actually
           // added, closes that gap for the single largest source of
           // never-before-seen materials in the campus.
+          //
+          // Live re-investigation (2026-09-20): EK reported the whole page
+          // now hanging badly (Chrome's own "Page Unresponsive" dialog),
+          // not just this GLB's ceiling. Timing this call directly instead
+          // of assuming it's still just this GLB's own ~6 materials --
+          // this compiles the ENTIRE scene, not just the newly-added
+          // model, so if a backlog has built up elsewhere in the campus
+          // (more rooms with real per-style armor/furniture since this
+          // comment was written) this call may now be sweeping up far
+          // more than originally measured. Temporary, remove once
+          // root-caused.
+          const compileStart = performance.now();
+          let materialCount = 0;
+          scene.traverse((obj) => {
+            const mats = (obj as THREE.Mesh).material;
+            if (!mats) return;
+            materialCount += Array.isArray(mats) ? mats.length : 1;
+          });
           renderer.compile(scene, camera);
+          console.warn(
+            `[perf] GLB-triggered renderer.compile(): ${Math.round(performance.now() - compileStart)}ms, ` +
+            `${materialCount} material references in scene, ${scene.children.length} top-level scene children`
+          );
         }
       );
 
@@ -1860,7 +1882,14 @@ export default function VltdMuseumCampus() {
       // image texture that finishes loading later (after this point) still
       // compiles on its own first appearance — but this covers the bulk of
       // it (every room's real wall/floor/ceiling/armor/case material).
-      if (!contentCancelled) renderer.compile(scene, camera);
+      if (!contentCancelled) {
+        // Live re-investigation (2026-09-20): same temporary timing as the
+        // GLB's own compile call above -- measuring this one too, since
+        // this is the OTHER of the two calls sweeping the entire scene.
+        const compileStart = performance.now();
+        renderer.compile(scene, camera);
+        console.warn(`[perf] populateDynamicContent renderer.compile(): ${Math.round(performance.now() - compileStart)}ms`);
+      }
     }
     void populateDynamicContent();
 
@@ -2527,7 +2556,14 @@ export default function VltdMuseumCampus() {
     // actually comes into view. See the matching renderer.compile() call at
     // the end of populateDynamicContent() above for the async-content half
     // of this same fix.
+    // Live re-investigation (2026-09-20): temporary timing, same as the
+    // other two compile() call sites -- this one runs BEHIND the loading
+    // screen, so if it's slow it wouldn't show as a mid-game freeze, but
+    // it would show as a slow initial load, which EK also reported
+    // ("this page just runs horrible in general now").
+    const initialCompileStart = performance.now();
     renderer.compile(scene, camera);
+    console.warn(`[perf] initial synchronous renderer.compile(): ${Math.round(performance.now() - initialCompileStart)}ms`);
     tick();
     const readyTimer = window.setTimeout(() => setReady(true), 0);
 
