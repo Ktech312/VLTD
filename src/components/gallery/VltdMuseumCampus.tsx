@@ -2379,7 +2379,15 @@ export default function VltdMuseumCampus() {
         yawAtEvent: yaw,
         firstChangedFrameLatencyMs: null,
       });
-      if (wheelEventLog.length > 40) wheelEventLog.shift();
+      // Buffer size fix (2026-09-19, live): 40 events / 120 frames only
+      // covers ~1-2 seconds at real frame rates -- nowhere near enough to
+      // still contain a multi-second stall by the time EK reports feeling
+      // one and this gets queried afterward (confirmed live: two real
+      // repro attempts both drained out of the old buffer before the
+      // query landed). Raised to cover a full minute of real usage so the
+      // actual stall itself is still in the log when queried after a
+      // delayed report.
+      if (wheelEventLog.length > 400) wheelEventLog.shift();
       pendingLatencyProbes.push({ eventTimestamp, beforeCameraBody: cameraBody.clone() });
     }
 
@@ -2479,7 +2487,11 @@ export default function VltdMuseumCampus() {
         distanceApplied: cameraBody.distanceTo(frameStartBody),
         queuedMovementRemaining: cameraBody.distanceTo(targetCameraBody),
       });
-      if (frameLog.length > 120) frameLog.shift();
+      // Buffer size fix (2026-09-19, live) -- same reasoning as
+      // wheelEventLog above: 120 frames (~2s at 60fps) doesn't survive
+      // the delay between EK reporting a stall and it actually getting
+      // queried. ~60s of frames at a real 60fps.
+      if (frameLog.length > 3600) frameLog.shift();
 
       // Resolve "time until the first changed camera frame" for any wheel
       // event still waiting on one: the first tick where the rendered body
@@ -2627,13 +2639,23 @@ export default function VltdMuseumCampus() {
       // frame, distance applied per frame, queued movement remaining, frame
       // delta, and collision adjustment, all measured off the live scene
       // graph as they actually happened.
-      getWheelDiagnostics: () => {
-        const recentFrames = frameLog.slice(-60);
+      // Time-window fix (2026-09-19, live): this used to return a fixed
+      // count (last 60 frames / last 20 wheel events) regardless of how
+      // long ago they happened — during a real multi-second stall almost
+      // no frames render at all, so a small fixed count spans barely any
+      // wall-clock time and gets pushed out by ordinary frames within a
+      // second or two of normal play after the stall ends, before a
+      // delayed report-then-query round-trip can ever reach it (confirmed
+      // live: two real repro attempts both missed the stall this way).
+      // `sinceMs` (default 30s) now filters by actual age instead.
+      getWheelDiagnostics: (sinceMs = 30000) => {
+        const now = performance.now();
+        const recentFrames = frameLog.filter((f) => now - f.frameTime <= sinceMs);
         const avgFrameMs = recentFrames.length
           ? recentFrames.reduce((sum, f) => sum + f.frameDeltaMs, 0) / recentFrames.length
           : 0;
         return {
-          wheelEvents: wheelEventLog.slice(-20),
+          wheelEvents: wheelEventLog.filter((e) => now - e.eventTimestamp <= sinceMs),
           recentFrames,
           avgFrameMs,
           avgFps: avgFrameMs > 0 ? 1000 / avgFrameMs : 0,
