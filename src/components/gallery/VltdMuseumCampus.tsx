@@ -2753,6 +2753,24 @@ export default function VltdMuseumCampus() {
         });
         return { meshCount, geometryCount, materialCount: materials.size, textureCount: textures.size, lightCount };
       },
+      // Live re-investigation (2026-09-20), temporary/measurement-only:
+      // isolates real-time light count as a candidate cause of the ~16fps
+      // sustained frame rate EK is reporting (measured live, not guessed --
+      // see HANDOFF.md). Hides every non-hemisphere light so a before/after
+      // forceRender() comparison can attribute cost specifically to
+      // per-pixel lighting math, independent of mesh/texture/material
+      // count (which stay identical either way). Restores on `false`.
+      __debugSetNonHemiLightsVisible: (visible: boolean) => {
+        let affected = 0;
+        scene.traverse((obj) => {
+          const light = obj as THREE.Light;
+          if (!light.isLight) return;
+          if ((light as unknown as THREE.HemisphereLight).isHemisphereLight) return;
+          light.visible = visible;
+          affected += 1;
+        });
+        return affected;
+      },
     };
 
     function onResize() {
