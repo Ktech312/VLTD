@@ -26,7 +26,8 @@ function SunIcon() {
 
 const ICON_STYLE_OPTIONS: { id: IconStyle; label: string; sample: AppIconName }[] = [
   { id: 'classic', label: 'Classic', sample: 'vault' },
-  { id: 'friendly-glass', label: 'Friendly Glass', sample: 'vault' },
+  { id: 'simplified-glass', label: 'Simple Glass', sample: 'vault' },
+  { id: 'soft-sticker', label: 'Soft Sticker', sample: 'vault' },
 ]
 
 export function ThemePicker() {
@@ -126,7 +127,7 @@ export function ThemePicker() {
           style={{ color: 'var(--theme-text-muted, #5A5040)' }}>
           Icon style
         </p>
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid grid-cols-3 gap-2">
           {ICON_STYLE_OPTIONS.map(opt => {
             const active = iconStyle === opt.id
             return (
@@ -148,10 +149,10 @@ export function ThemePicker() {
                 }}
               >
                 {/* Force each swatch to preview its own style regardless of
-                    the globally active one — data-vltd-icon-style also
-                    matches as a descendant selector, not just on <html>. */}
-                <span data-vltd-icon-style={opt.id}>
-                  <AppIcon name={opt.sample} size={16} />
+                    the globally active one. Preview-specific CSS overrides
+                    the root theme selector for this small subtree. */}
+                <span data-vltd-icon-preview={opt.id}>
+                  <AppIcon name={opt.sample} variant="navTop" size={20} />
                 </span>
                 {opt.label}
                 {active && (

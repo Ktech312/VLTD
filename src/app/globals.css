@@ -200,34 +200,38 @@
 }
 
 /* =========================================================
-   ICON STYLE — Classic (line-art) vs Friendly Glass (3D pack)
-   AppIcon.tsx always renders BOTH layers for every icon; this
-   attribute (set by ThemeContext, independent of Dark/Light and
-   Background) picks which one is visible. Kept in plain CSS
-   rather than a client check inside AppIcon so it stays usable
-   from server components. !important is deliberate here: it is
-   the only thing these two rules are for, and it must win over
-   each render path's own inline layout styles.
+   ICON STYLE TRIAL
+   Only the six navigation destinations with approved concept
+   assets opt into these classes. Every other AppIcon remains
+   Classic while the two small-size directions are evaluated.
 ========================================================= */
 
-.vltd-icon-friendly {
+.vltd-icon-simplified-glass,
+.vltd-icon-soft-sticker {
   display: none;
 }
-[data-vltd-icon-style="friendly-glass"] .vltd-icon-classic {
+[data-vltd-icon-style="simplified-glass"] .vltd-icon-nav-concept-classic,
+[data-vltd-icon-style="soft-sticker"] .vltd-icon-nav-concept-classic {
   display: none !important;
 }
-[data-vltd-icon-style="friendly-glass"] .vltd-icon-friendly {
+[data-vltd-icon-style="simplified-glass"] .vltd-icon-simplified-glass {
+  display: block !important;
+}
+[data-vltd-icon-style="soft-sticker"] .vltd-icon-soft-sticker {
   display: block !important;
 }
 
-/* The `filled` selected-state badge (gold ring + checkmark) only makes
-   sense while the Friendly Glass layer is the one showing — Classic
-   already communicates filled via its own SVG fill, unaffected here. */
-.vltd-icon-friendly-badge {
-  display: none;
+/* ThemePicker swatches always show the option they represent, even when a
+   different icon style is active on the root document. */
+[data-vltd-icon-preview] .vltd-icon-nav-concept-classic,
+[data-vltd-icon-preview] .vltd-icon-simplified-glass,
+[data-vltd-icon-preview] .vltd-icon-soft-sticker {
+  display: none !important;
 }
-[data-vltd-icon-style="friendly-glass"] .vltd-icon-friendly-badge {
-  display: flex !important;
+[data-vltd-icon-preview="classic"] .vltd-icon-nav-concept-classic,
+[data-vltd-icon-preview="simplified-glass"] .vltd-icon-simplified-glass,
+[data-vltd-icon-preview="soft-sticker"] .vltd-icon-soft-sticker {
+  display: block !important;
 }
 
 /* =========================================================

@@ -4,11 +4,10 @@ import React, { createContext, useContext, useEffect, useState } from 'react'
 import { Theme, ThemeId, themes, defaultTheme, THEME_LS_KEY } from './themes'
 
 // Icon style is a separate, independent preference from the background
-// theme (Dark/Light + palette) — see AppIcon.tsx, which renders both a
-// classic and a Friendly Glass layer and lets `data-vltd-icon-style` on
-// <html> pick which one is visible, so switching never requires a client
-// boundary in AppIcon itself.
-export type IconStyle = 'classic' | 'friendly-glass'
+// theme (Dark/Light + palette). The two non-classic choices are a limited
+// navigation trial: AppIcon keeps all other controls on Classic until EK
+// selects a direction and a complete small-icon pack exists.
+export type IconStyle = 'classic' | 'simplified-glass' | 'soft-sticker'
 export const ICON_STYLE_LS_KEY = 'vltd_icon_style'
 const DEFAULT_ICON_STYLE: IconStyle = 'classic'
 
@@ -83,8 +82,12 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     } catch {}
     try {
       const savedIconStyle = localStorage.getItem(ICON_STYLE_LS_KEY) as IconStyle | null
-      if (savedIconStyle === 'classic' || savedIconStyle === 'friendly-glass') {
+      if (savedIconStyle === 'classic' || savedIconStyle === 'simplified-glass' || savedIconStyle === 'soft-sticker') {
         setIconStyleState(savedIconStyle)
+      } else if (savedIconStyle === 'friendly-glass') {
+        // Retire the unreadable detailed pack without trapping existing users
+        // on a value that no longer appears in the picker.
+        setIconStyleState('simplified-glass')
       }
     } catch {}
     setHydrated(true)

@@ -417,64 +417,16 @@ export function universeGlyphName(universe: string): AppIconName {
   return "star";
 }
 
-// Runtime location of the Friendly Glass 3D icon pack — one 256x256 RGBA
-// PNG per AppIconName, filename matching the name exactly. See
-// design-assets/icon-themes/friendly-glass-v1/CODER-HANDOFF.md.
-const FRIENDLY_GLASS_BASE = "/ui/icon-themes/friendly-glass-v1";
-
-// The pack's own manifest/README call out 40px+ as the strongest
-// presentation size, but the real app renders most icons well below that
-// (TopNav at 20px, BottomNav at 22px, most inline buttons/badges 9-16px).
-// Verified with a public/_icon-size-test harness comparing native-size
-// rendering against a pixel-accurate 4x magnification of the same
-// downscaled bitmap at every size from 8-32px: the detailed/photographic
-// art holds up as a recognizable silhouette down to ~18px (TopNav and
-// BottomNav both clear this), but below that the app's many small
-// functional badges/checkmarks/toggles (9-16px) shrink past the point a
-// real eye can resolve raster detail — vector line art tolerates this
-// because it's drawn simply enough to read at that size; this pack isn't.
-// Below this size, an AppIcon instance renders Classic only, regardless
-// of the active global icon style — the Friendly Glass <img> layer isn't
-// rendered at all, so there's nothing for the CSS toggle to reveal.
-const FRIENDLY_GLASS_MIN_SIZE = 18;
-
-// Matches FavoriteButton.tsx's existing `text-amber-300` / amber-400 glow
-// convention for a favorited star, so the new Friendly Glass "selected"
-// treatment reads as the same visual language, not a competing one.
-const FRIENDLY_SELECTED_COLOR = "#FBBF24";
-
-// The Friendly Glass pack has one asset per name — no separate "filled"
-// art — so a selected/saved/favorited state (the `filled` prop) is shown
-// as a gold ring around the tile plus a small checkmark badge, applied
-// only while Friendly Glass is the active style (gated by the same
-// `.vltd-icon-friendly-badge` + [data-vltd-icon-style] CSS pattern as the
-// classic/friendly layer toggle itself, in globals.css).
-function FriendlySelectedBadge({ size }: { size: number }) {
-  const badgeSize = Math.max(9, Math.round(size * 0.44));
-  return (
-    <span
-      className="vltd-icon-friendly-badge"
-      aria-hidden="true"
-      style={{
-        position: "absolute",
-        right: -2,
-        bottom: -2,
-        width: badgeSize,
-        height: badgeSize,
-        borderRadius: "50%",
-        background: FRIENDLY_SELECTED_COLOR,
-        border: "1.5px solid #1A0F00",
-        boxShadow: `0 0 4px rgba(251,191,36,0.7)`,
-        alignItems: "center",
-        justifyContent: "center",
-      }}
-    >
-      <svg viewBox="0 0 24 24" width="65%" height="65%" fill="none" stroke="#1A0F00" strokeWidth={3.5} strokeLinecap="round" strokeLinejoin="round">
-        <path d="M20 6 9 17l-5-5" />
-      </svg>
-    </span>
-  );
-}
+const SIMPLIFIED_GLASS_NAV_BASE = "/ui/icon-themes/simplified-glass-nav-v1";
+const SOFT_STICKER_NAV_BASE = "/ui/icon-themes/soft-sticker-nav-v1";
+const NAV_CONCEPT_NAMES = new Set<AppIconName>([
+  "vault",
+  "exhibitions",
+  "discover",
+  "events",
+  "insights",
+  "more",
+]);
 
 export function AppIcon({
   name,
@@ -492,40 +444,24 @@ export function AppIcon({
   className?: string;
   style?: CSSProperties;
   strokeWidth?: number;
-  /** Toggle-state fill (e.g. a saved bookmark or a liked heart). Classic:
-   * fills the shape with currentColor instead of just outlining it.
-   * Friendly Glass: the pack is one fixed asset per name with no separate
-   * filled art, so `filled` instead adds a small gold ring + checkmark
-   * badge on the icon tile — the same treatment everywhere this prop is
-   * used, so a favorited star and a saved bookmark read identically. */
+  /** Toggle-state fill (e.g. a saved bookmark or a liked heart). The two
+   * concept styles are navigation-only, so filled controls stay Classic. */
   filled?: boolean;
   /** Nav active/inactive state — only meaningful with variant="navTop" or
-   * "navBottom" (selects that surface's highlighted vs. dim rendering for
-   * Classic, and dims the Friendly Glass layer when inactive since that
-   * pack has one asset per name rather than separate active art). */
+   * "navBottom". Existing labels, underline, and pill treatments continue
+   * to communicate the active destination for all three icon styles. */
   active?: boolean;
 }) {
-  const friendlySrc = `${FRIENDLY_GLASS_BASE}/${name}.png`;
-  const showFriendly = size >= FRIENDLY_GLASS_MIN_SIZE;
-
   if (variant === "navTop" || variant === "navBottom") {
     const renderer = (variant === "navTop" ? NAV_TOP_CONTENT : NAV_BOTTOM_CONTENT)[name];
-    // Nav renders Friendly Glass at its normal 20-22px box, same as Classic —
-    // scaling the icon up visually (tried and reverted) threw off the
-    // icon-to-label spacing without EK's approval to change the nav's own
-    // proportions. Legibility here is addressed by tightly cropping the
-    // source art instead (see scripts/crop_friendly_glass.js), not by
-    // resizing anything. No opacity dimming on inactive: both nav surfaces
-    // already have their own active/inactive tell (TopNav's underline bar,
-    // BottomNav's pill+border+dot), so dimming an already-small icon just
-    // made the common (inactive) case harder to see for no reason.
+    const hasConceptAsset = NAV_CONCEPT_NAMES.has(name);
     return (
       <span
         className={className}
         style={{ display: "inline-block", position: "relative", width: size, height: size, lineHeight: 0, ...style }}
       >
         <svg
-          className={showFriendly ? "vltd-icon-classic" : undefined}
+          className={hasConceptAsset ? "vltd-icon-nav-concept-classic" : undefined}
           width={size}
           height={size}
           viewBox="0 0 24 24"
@@ -539,10 +475,11 @@ export function AppIcon({
         >
           {renderer ? renderer(active) : PATHS[name]}
         </svg>
-        {showFriendly && (
+        {hasConceptAsset && (
+          <>
           <img
-            className="vltd-icon-friendly"
-            src={friendlySrc}
+            className="vltd-icon-simplified-glass"
+            src={`${SIMPLIFIED_GLASS_NAV_BASE}/${name}.png`}
             alt=""
             aria-hidden="true"
             width={size}
@@ -551,15 +488,26 @@ export function AppIcon({
             decoding="async"
             style={{ position: "absolute", inset: 0, width: size, height: size, objectFit: "contain" }}
           />
+          <img
+            className="vltd-icon-soft-sticker"
+            src={`${SOFT_STICKER_NAV_BASE}/${name}.png`}
+            alt=""
+            aria-hidden="true"
+            width={size}
+            height={size}
+            loading="lazy"
+            decoding="async"
+            style={{ position: "absolute", inset: 0, width: size, height: size, objectFit: "contain" }}
+          />
+          </>
         )}
       </span>
     );
   }
 
-  // "feature": large buttons, cards, onboarding, empty states. Classic
-  // keeps its soft rounded-backing placeholder look; Friendly Glass swaps
-  // in the real 3D asset (designed for 40px+) filling the same box so
-  // switching styles never moves surrounding layout.
+  // The two trial styles intentionally affect navigation only. Feature and
+  // compact controls remain Classic until a complete small-icon direction is
+  // selected and approved in the real app.
   if (variant === "feature") {
     const pad = Math.round(size * 0.62);
     const box = size + pad;
@@ -569,7 +517,6 @@ export function AppIcon({
         style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: box, height: box, position: "relative", ...style }}
       >
         <span
-          className={showFriendly ? "vltd-icon-classic" : undefined}
           style={{
             position: "absolute",
             inset: 0,
@@ -595,28 +542,6 @@ export function AppIcon({
             {PATHS[name]}
           </svg>
         </span>
-        {showFriendly && (
-          <img
-            className="vltd-icon-friendly"
-            src={friendlySrc}
-            alt=""
-            aria-hidden="true"
-            width={box}
-            height={box}
-            loading="lazy"
-            decoding="async"
-            style={{
-              position: "absolute",
-              inset: 0,
-              width: "100%",
-              height: "100%",
-              objectFit: "contain",
-              borderRadius: filled ? "28%" : undefined,
-              boxShadow: filled ? `0 0 0 2px ${FRIENDLY_SELECTED_COLOR}, 0 0 10px rgba(251,191,36,0.55)` : undefined,
-            }}
-          />
-        )}
-        {showFriendly && filled && <FriendlySelectedBadge size={box} />}
       </span>
     );
   }
@@ -628,7 +553,6 @@ export function AppIcon({
       style={{ display: "inline-block", position: "relative", width: size, height: size, lineHeight: 0, ...style }}
     >
       <svg
-        className={showFriendly ? "vltd-icon-classic" : undefined}
         width={size}
         height={size}
         viewBox="0 0 24 24"
@@ -642,28 +566,6 @@ export function AppIcon({
       >
         {PATHS[name]}
       </svg>
-      {showFriendly && (
-        <img
-          className="vltd-icon-friendly"
-          src={friendlySrc}
-          alt=""
-          aria-hidden="true"
-          width={size}
-          height={size}
-          loading="lazy"
-          decoding="async"
-          style={{
-            position: "absolute",
-            inset: 0,
-            width: size,
-            height: size,
-            objectFit: "contain",
-            borderRadius: filled ? "28%" : undefined,
-            boxShadow: filled ? `0 0 0 2px ${FRIENDLY_SELECTED_COLOR}, 0 0 8px rgba(251,191,36,0.55)` : undefined,
-          }}
-        />
-      )}
-      {showFriendly && filled && <FriendlySelectedBadge size={size} />}
     </span>
   );
 }
