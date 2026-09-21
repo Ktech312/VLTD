@@ -375,6 +375,17 @@ export default function VltdMuseumCampus() {
     camera.rotation.order = "YXZ";
     camera.position.set(spawn.x, EYE_HEIGHT, spawn.z);
 
+    // Live re-investigation (2026-09-20, later same session): EK reported
+    // "well over 10 seconds to get into the main hall" and a stuck
+    // "Loading detail…" stall indicator, AFTER the draw-call fixes above
+    // already landed -- so this is a different symptom (initial setup
+    // latency, not steady-state frame rate). Resource-timing data showed
+    // the Grand Hall GLB fetch not even STARTING until ~13s in, which
+    // could mean either a slow awaited chain, or that pure synchronous
+    // scene-construction JS (building every room's shell/walls/trim/
+    // textures) blocks the main thread for that long before the .load()
+    // call is even reached. Temporary timing to tell which.
+    const setupStartTime = performance.now();
     const renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.setSize(window.innerWidth, window.innerHeight);
@@ -868,6 +879,7 @@ export default function VltdMuseumCampus() {
       const hubShellFixtures = roomShellMaterialsByRoomId.get("HUB")?.shellFixtures;
       if (hubShellFixtures) hubShellFixtures.visible = false;
 
+      console.warn(`[perf] sync scene construction before GLB .load() call: ${Math.round(performance.now() - setupStartTime)}ms`);
       const ceilingGltfLoader = new GLTFLoader();
       ceilingGltfLoader.load(
         "/museum/grand-hall/grand-hall-ceiling-blender-v1.glb",
@@ -2564,6 +2576,7 @@ export default function VltdMuseumCampus() {
     const initialCompileStart = performance.now();
     renderer.compile(scene, camera);
     console.warn(`[perf] initial synchronous renderer.compile(): ${Math.round(performance.now() - initialCompileStart)}ms`);
+    console.warn(`[perf] TOTAL sync setup before first tick(): ${Math.round(performance.now() - setupStartTime)}ms`);
     tick();
     const readyTimer = window.setTimeout(() => setReady(true), 0);
 
