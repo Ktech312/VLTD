@@ -496,21 +496,22 @@ function buildCeilingAndTrim(
   ceiling.position.set(center.x, wallHeight, center.z);
   scene.add(ceiling);
 
+  // Perf pass (2026-09-20): all 4 perimeter trim boxes already share this
+  // one ceilingTrimMaterial object — confirmed safe to merge because the
+  // Grand Hall ceiling-hide logic (VltdMuseumCampus.tsx ~line 841) finds
+  // them by `scene.traverse` + `obj.material === hubCeilingTrimMaterial`,
+  // never by an individual mesh reference, so it still matches a single
+  // merged mesh exactly the same way. See HANDOFF.md's 2026-09-20 entry.
   const trimHeight = 0.12;
-  const trimNS = new THREE.BoxGeometry(room.w, trimHeight, 0.1);
-  const trimEW = new THREE.BoxGeometry(0.1, trimHeight, room.d);
-  const trimNorth = new THREE.Mesh(trimNS, ceilingTrimMaterial);
-  trimNorth.position.set(center.x, wallHeight - trimHeight / 2, bounds.z0);
-  scene.add(trimNorth);
-  const trimSouth = new THREE.Mesh(trimNS.clone(), ceilingTrimMaterial);
-  trimSouth.position.set(center.x, wallHeight - trimHeight / 2, bounds.z1);
-  scene.add(trimSouth);
-  const trimWest = new THREE.Mesh(trimEW, ceilingTrimMaterial);
-  trimWest.position.set(bounds.x0, wallHeight - trimHeight / 2, center.z);
-  scene.add(trimWest);
-  const trimEast = new THREE.Mesh(trimEW.clone(), ceilingTrimMaterial);
-  trimEast.position.set(bounds.x1, wallHeight - trimHeight / 2, center.z);
-  scene.add(trimEast);
+  const trimY = wallHeight - trimHeight / 2;
+  const trimNorth = new THREE.BoxGeometry(room.w, trimHeight, 0.1).translate(center.x, trimY, bounds.z0);
+  const trimSouth = new THREE.BoxGeometry(room.w, trimHeight, 0.1).translate(center.x, trimY, bounds.z1);
+  const trimWest = new THREE.BoxGeometry(0.1, trimHeight, room.d).translate(bounds.x0, trimY, center.z);
+  const trimEast = new THREE.BoxGeometry(0.1, trimHeight, room.d).translate(bounds.x1, trimY, center.z);
+  const trimPieces = [trimNorth, trimSouth, trimWest, trimEast];
+  const mergedTrim = mergeGeometries(trimPieces, false);
+  trimPieces.forEach((g) => g.dispose());
+  if (mergedTrim) scene.add(new THREE.Mesh(mergedTrim, ceilingTrimMaterial));
 
   // Grand Hall GLB pass (2026-09-13): exposing the trim material alongside
   // the ceiling one (previously only the ceiling material was returned) so
@@ -645,15 +646,21 @@ function buildLegacyRoomLightRig(
   const center = { x: room.x + room.w / 2, z: room.z + room.d / 2 };
   const fixtureMaterial = new THREE.MeshStandardMaterial({ color: 0xfff6e0, emissive: finish.lightColor, emissiveIntensity: 0.7 });
 
+  // Perf pass (2026-09-20): every fixture disc in a room already shares this
+  // one fixtureMaterial object, and the style-swap teardown that later
+  // disposes `fixturesTarget`'s children (VltdMuseumCampus.tsx ~line 1562)
+  // just iterates `instanceof THREE.Mesh` generically -- no dependency on
+  // fixture count -- so merging into one mesh per room is safe. See
+  // HANDOFF.md's 2026-09-20 entry.
+  const fixtureGeometries: THREE.BufferGeometry[] = [];
   const rows = Math.max(2, Math.min(6, Math.round(room.d / CEILING_BAY_SIZE) + 1));
   for (let i = 0; i < rows; i += 1) {
     const t = (i + 0.5) / rows;
     const lx = center.x;
     const lz = bounds.z0 + room.d * t;
-    const fixture = new THREE.Mesh(new THREE.CircleGeometry(0.34, 20), fixtureMaterial);
-    fixture.rotation.x = Math.PI / 2;
-    fixture.position.set(lx, wallHeight - 0.03, lz);
-    fixturesTarget.add(fixture);
+    fixtureGeometries.push(
+      new THREE.CircleGeometry(0.34, 20).rotateX(Math.PI / 2).translate(lx, wallHeight - 0.03, lz)
+    );
 
     const down = new THREE.SpotLight(finish.lightColor, 1.1, 14, Math.PI / 4, 0.55, 1.3);
     down.position.set(lx, wallHeight - 0.4, lz);
@@ -665,6 +672,9 @@ function buildLegacyRoomLightRig(
     upglow.position.set(lx, wallHeight - 0.15, lz);
     lightsTarget.add(upglow);
   }
+  const mergedFixtures = mergeGeometries(fixtureGeometries, false);
+  fixtureGeometries.forEach((g) => g.dispose());
+  if (mergedFixtures) fixturesTarget.add(new THREE.Mesh(mergedFixtures, fixtureMaterial));
 
   const washSpecs: { pos: [number, number, number]; target: [number, number, number] }[] = [
     { pos: [center.x, wallHeight - 1.1, bounds.z0 + room.d * 0.85], target: [center.x, wallHeight * 0.35, bounds.z0] },
