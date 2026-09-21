@@ -1051,22 +1051,29 @@ export function buildSharedWall(
   // both upper corners, which could shimmer as the camera moved.
   const jambHeight = openingClearHeight;
   const casingDepth = wallThickness + trimDepth * 2;
+  // Perf pass (2026-09-20): jambs + head all share this one frameMaterial
+  // (in fact the SAME object across every door campus-wide — "one shared
+  // casing material for every door," VltdMuseumCampus.tsx ~line 648) and
+  // nothing looks up an individual jamb/head mesh by reference, so merging
+  // this one door's 3 casing pieces into a single mesh is safe. See
+  // HANDOFF.md's 2026-09-20 entry.
   const jambGeom = isNS
     ? new THREE.BoxGeometry(trimWidth, jambHeight, casingDepth)
     : new THREE.BoxGeometry(casingDepth, jambHeight, trimWidth);
+  const casingPieces: THREE.BufferGeometry[] = [];
   for (const side of [-1, 1]) {
-    const jamb = new THREE.Mesh(jambGeom.clone(), frameMaterial);
     const jambPos = point(door.gapCenter + side * (half + trimWidth / 2), 0);
-    jamb.position.set(jambPos.x, jambHeight / 2, jambPos.z);
-    scene.add(jamb);
+    casingPieces.push(jambGeom.clone().translate(jambPos.x, jambHeight / 2, jambPos.z));
   }
+  jambGeom.dispose();
   const headWidth = openingWidth + trimWidth * 2;
   const headGeom = isNS
     ? new THREE.BoxGeometry(headWidth, headHeight, casingDepth)
     : new THREE.BoxGeometry(casingDepth, headHeight, headWidth);
-  const head = new THREE.Mesh(headGeom, frameMaterial);
-  head.position.set(framePos.x, openingClearHeight + headHeight / 2, framePos.z);
-  scene.add(head);
+  casingPieces.push(headGeom.translate(framePos.x, openingClearHeight + headHeight / 2, framePos.z));
+  const mergedCasing = mergeGeometries(casingPieces, false);
+  casingPieces.forEach((g) => g.dispose());
+  if (mergedCasing) scene.add(new THREE.Mesh(mergedCasing, frameMaterial));
 
   // Transom: closes the gap from the casing head to the ceiling using the
   // SAME per-face materials as the rest of this wall — a short band that
