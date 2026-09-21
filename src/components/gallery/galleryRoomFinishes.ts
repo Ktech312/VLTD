@@ -541,6 +541,17 @@ export function createGalleryFinishes(style: GalleryFinishStyle = "whitebox") {
     // pass ("large armored panels", not many thin scattered lines). A
     // rivet sits only where a rib actually crosses the horizontal seam —
     // one believable fastener per junction, not two arbitrary dots.
+    // Perf pass (2026-09-20): rivets share one geometry/material and
+    // differ only by transform, so they're collected here and drawn as a
+    // single InstancedMesh below instead of one draw call each — this
+    // was a measured, real contributor to the 1,301 draw calls/frame
+    // driving the sustained low frame rate EK reported (confirmed via a
+    // live A/B test: disabling every non-hemisphere light made zero
+    // difference to frame time, ruling out per-pixel lighting cost and
+    // pointing at draw-call count instead). Ribs are already few (12
+    // total here) and each a visually distinct size, so left as-is.
+    const rivetGeometry = new THREE.CylinderGeometry(0.06, 0.06, 0.06, 10);
+    const rivetMatrices: THREE.Matrix4[] = [];
     function addWallRibs(wallAxis: "x" | "z", fixedCoord: number, faceSign: 1 | -1, positions: number[]) {
       for (const pos of positions) {
         const rib = new THREE.Mesh(
@@ -553,17 +564,25 @@ export function createGalleryFinishes(style: GalleryFinishStyle = "whitebox") {
         if (wallAxis === "x") rib.position.set(pos, midY, fixedCoord + faceSign * RIB_DEPTH * 0.5);
         else rib.position.set(fixedCoord + faceSign * RIB_DEPTH * 0.5, midY, pos);
         room.add(rib);
-        const rivet = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 0.06, 10), rivetMaterial);
-        rivet.rotation.x = wallAxis === "x" ? Math.PI / 2 : 0;
-        rivet.rotation.z = wallAxis === "x" ? 0 : Math.PI / 2;
-        if (wallAxis === "x") rivet.position.set(pos, SEAM_Y, fixedCoord + faceSign * (RIB_DEPTH + 0.035));
-        else rivet.position.set(fixedCoord + faceSign * (RIB_DEPTH + 0.035), SEAM_Y, pos);
-        room.add(rivet);
+        const rivetPosition =
+          wallAxis === "x"
+            ? new THREE.Vector3(pos, SEAM_Y, fixedCoord + faceSign * (RIB_DEPTH + 0.035))
+            : new THREE.Vector3(fixedCoord + faceSign * (RIB_DEPTH + 0.035), SEAM_Y, pos);
+        const rivetEuler = new THREE.Euler(wallAxis === "x" ? Math.PI / 2 : 0, 0, wallAxis === "x" ? 0 : Math.PI / 2);
+        rivetMatrices.push(
+          new THREE.Matrix4().compose(rivetPosition, new THREE.Quaternion().setFromEuler(rivetEuler), new THREE.Vector3(1, 1, 1))
+        );
       }
     }
     addWallRibs("x", -12, 1, [-7.5, -2.5, 2.5, 7.5]);
     addWallRibs("z", -10.5, 1, [-11, -6, -1, 4]);
     addWallRibs("z", 10.5, -1, [-11, -6, -1, 4]);
+    if (rivetMatrices.length > 0) {
+      const rivetMesh = new THREE.InstancedMesh(rivetGeometry, rivetMaterial, rivetMatrices.length);
+      rivetMatrices.forEach((matrix, index) => rivetMesh.setMatrixAt(index, matrix));
+      rivetMesh.instanceMatrix.needsUpdate = true;
+      room.add(rivetMesh);
+    }
 
     // The recessed seam replacing the old bright rail's position — kept
     // from the third pass, unchanged.
@@ -710,16 +729,23 @@ export function createGalleryFinishes(style: GalleryFinishStyle = "whitebox") {
     // thin ribs and a horizontal seam. EK's direct correction: "they
     // should be large rectangle panels with rivets in the corners from
     // floor to ceiling."
+    // Perf pass (2026-09-20): same InstancedMesh batching as addLoftArmor's
+    // rivets, same reasoning — up to 48 identical corner bolts across a
+    // Vault room's 4 walls, each previously its own draw call.
+    const rivetGeometry = new THREE.CylinderGeometry(0.07, 0.07, 0.06, 10);
+    const rivetMatrices: THREE.Matrix4[] = [];
     function addPanelCorners(wallAxis: "x" | "z", fixedCoord: number, faceSign: 1 | -1, span: [number, number]) {
       const [a, b] = span;
       for (const pos of [a + RIVET_INSET, b - RIVET_INSET]) {
         for (const y of [WALL_TOP - RIVET_INSET, WALL_BOTTOM + RIVET_INSET]) {
-          const rivet = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, 0.06, 10), rivetMaterial);
-          rivet.rotation.x = wallAxis === "x" ? Math.PI / 2 : 0;
-          rivet.rotation.z = wallAxis === "x" ? 0 : Math.PI / 2;
-          if (wallAxis === "x") rivet.position.set(pos, y, fixedCoord + faceSign * 0.035);
-          else rivet.position.set(fixedCoord + faceSign * 0.035, y, pos);
-          room.add(rivet);
+          const position =
+            wallAxis === "x"
+              ? new THREE.Vector3(pos, y, fixedCoord + faceSign * 0.035)
+              : new THREE.Vector3(fixedCoord + faceSign * 0.035, y, pos);
+          const euler = new THREE.Euler(wallAxis === "x" ? Math.PI / 2 : 0, 0, wallAxis === "x" ? 0 : Math.PI / 2);
+          rivetMatrices.push(
+            new THREE.Matrix4().compose(position, new THREE.Quaternion().setFromEuler(euler), new THREE.Vector3(1, 1, 1))
+          );
         }
       }
     }
@@ -759,6 +785,12 @@ export function createGalleryFinishes(style: GalleryFinishStyle = "whitebox") {
     addPanelCorners("z", 10.5, -1, [-8.75, -3]);
     addPanelCorners("z", 10.5, -1, [-3, 2.75]);
     addPanelCorners("z", 10.5, -1, [2.75, 8.5]);
+    if (rivetMatrices.length > 0) {
+      const rivetMesh = new THREE.InstancedMesh(rivetGeometry, rivetMaterial, rivetMatrices.length);
+      rivetMatrices.forEach((matrix, index) => rivetMesh.setMatrixAt(index, matrix));
+      rivetMesh.instanceMatrix.needsUpdate = true;
+      room.add(rivetMesh);
+    }
 
     // The two jamb boxes that used to flank the archway here are REMOVED —
     // EK's direct correction, third round, pointing at a live screenshot:
