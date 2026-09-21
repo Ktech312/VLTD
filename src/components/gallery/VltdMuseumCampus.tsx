@@ -2771,6 +2771,23 @@ export default function VltdMuseumCampus() {
         });
         return affected;
       },
+      // Live re-investigation (2026-09-20), temporary/measurement-only:
+      // disabling 164 lights (__debugSetNonHemiLightsVisible) made zero
+      // measured difference to frame time across 3 consecutive samples,
+      // which rules out per-pixel lighting cost as the bottleneck. This
+      // exposes three.js's own renderer.info counters (real draw-call/
+      // triangle counts, not an estimate) to test the next candidate:
+      // 656 individual meshes with no geometry merging/instancing means
+      // 656 separate draw calls every frame, which is a CPU-side
+      // submission-overhead cost independent of light count -- exactly
+      // the shape of cost that wouldn't change when lights are toggled.
+      __debugGetRendererInfo: () => ({
+        calls: renderer.info.render.calls,
+        triangles: renderer.info.render.triangles,
+        geometries: renderer.info.memory.geometries,
+        textures: renderer.info.memory.textures,
+        programs: renderer.info.programs?.length ?? null,
+      }),
     };
 
     function onResize() {
