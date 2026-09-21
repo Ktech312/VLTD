@@ -741,6 +741,7 @@ export default function VltdMuseumCampus() {
     // ceiling, the same inlay technique the VLTD seal below already uses
     // against the compass medallion beneath it.
     {
+      console.warn(`[perf] checkpoint at start of Grand Hall custom block: ${Math.round(performance.now() - setupStartTime)}ms`);
       const hub = roomById("HUB");
       const hubBounds = roomBounds(hub);
       const hubCenter = roomCenter(hub);
