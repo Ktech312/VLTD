@@ -505,7 +505,9 @@ export default function VltdMuseumCampus() {
     const roomFurnitureSlotsByRoomId = new Map<CampusRoomId, { caseSlots: PlacementSlot[]; shelfSlots: PlacementSlot[] }>();
 
     const legacyLightGroups = new Map<CampusRoomId, RoomLightGroups>();
+    const perRoomTimings: { roomId: string; ms: number }[] = [];
     for (const room of CAMPUS_ROOMS) {
+      const roomStart = performance.now();
       if (room.id === "POP_CULTURE" || room.id === "TCG" || room.id === "COLLECTION") continue;
       const finish: RoomFinish = room.id === "HUB"
         ? HUB_FINISH
@@ -533,7 +535,9 @@ export default function VltdMuseumCampus() {
       shellEntry(room.id).ceiling = shell.ceilingMaterial;
       shellEntry(room.id).ceilingTrim = shell.ceilingTrimMaterial;
       shellEntry(room.id).shellFixtures = shell.shellFixtures;
+      perRoomTimings.push({ roomId: room.id, ms: performance.now() - roomStart });
     }
+    console.warn(`[perf] per-room buildNeutralShell breakdown: ${JSON.stringify(perRoomTimings.map((t) => ({ id: t.roomId, ms: Math.round(t.ms) })))}`);
 
     // Shared-Wall Grid Plan (2026-09-08, replacing the rejected connection-
     // owned vestibule architecture): every room now sits on an exact module
@@ -674,6 +678,7 @@ export default function VltdMuseumCampus() {
       );
     }
 
+    const wallSegmentsStart = performance.now();
     const wallSegments = computeCampusWallSegments();
     for (const segment of wallSegments) {
       const materialA = roomWallMaterial(segment.roomA);
@@ -684,6 +689,7 @@ export default function VltdMuseumCampus() {
         style: isMuseumEntrance(segment) ? "entrance" : "ordinary",
       });
     }
+    console.warn(`[perf] buildSharedWall loop (${wallSegments.length} segments): ${Math.round(performance.now() - wallSegmentsStart)}ms`);
 
     // Baseboard + picture rail for the three converted rooms (their own
     // finish, still per-room decoration even though the wall itself is now
