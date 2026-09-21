@@ -8563,9 +8563,11 @@ handoff was written:
 
 ---
 
-## Overnight session, 2026-09-20 — Museum campus performance investigation: root cause found, real fix PLANNED but not yet executed
+## Overnight session, 2026-09-20 — Museum campus performance investigation + real draw-call fixes shipped
 
 EK reported the museum campus getting stuck for 10-20+ seconds at doorways while scrolling, and separately "this page just runs horrible in general now," with a real Chrome "Page Unresponsive" dialog on the VLTD Museum tab (screenshot). Per her direct correction this session ("what were you waiting on from me, I cant sit here for 10 hours straight just waiting for you to ask me something"), this was investigated self-directed via the live production site (Claude-in-Chrome, her real Chrome/session) and `window.__vltdCampusMoveDebug`, not by asking her to repro and report back.
+
+**Update, same session, later:** the planned fix below was executed (not just planned) — see "EXECUTED" section after the plan for the real, measured before/after result. Short version: **1,301 → 1,013 draw calls/frame (~22% fewer)**, and real unclamped frame timing went from **~10-16fps (worst frames 100-170ms) to ~35fps average (worst frame 45.6ms)** on the same hardware, zero visual regressions found across 8+ rooms checked. One larger, higher-risk piece (the actual structural wall panels) was deliberately left for a future session — see that section for why.
 
 ### Ruled out, with real measurements (do not re-guess these)
 
@@ -8598,21 +8600,40 @@ Merge each room's static, same-material wall/floor/ceiling/trim `BoxGeometry` me
 
 2. **Does this limit items-per-wall (EK needs more than 3)?** No, and it's unrelated. Item/artwork placement is a completely separate, already-configurable system: `computeRoomPlacementSlots()` (`campusRoomBuilder.ts`) takes a `capacity` parameter fed from `itemsPerRoom`, which comes from `museum_room_meta.item_capacity` (per-room, already adjustable today via Museum Builder's "Wall items" slider — `MIN_ITEM_CAPACITY = 2`, `MAX_ITEM_CAPACITY = 24`, see `MuseumBuilder.tsx` ~line 188/1066) falling back to a global default of 8 (`museum_campus_config.items_per_room`, `DEFAULT_ITEMS_PER_ROOM = 8` in `museumCampusConfig.ts`). None of this reads or depends on wall shell mesh count in any way — the wall-geometry merge is purely a rendering/draw-call optimization of the structural boxes, and cannot change how many item slots a wall gets. If a specific room is currently only showing ~3 items per wall, that's from that room's saved `item_capacity` value (or genuinely having few real items in that universe, or the room having enough wall spans that a modest total capacity spreads thin per wall) — not touched by this work. Worth checking/raising separately if EK wants a specific room's cap increased; not blocked by or bundled into the performance fix.
 
-### Temporary debug hooks currently live in production (remove once the real fix lands and is verified)
+### Temporary debug hooks currently live in production (still needed — do not remove yet, see below)
 
 All on `window.__vltdCampusMoveDebug` in `VltdMuseumCampus.tsx`:
 - `__debugSetNonHemiLightsVisible(visible: boolean)` — toggles every non-hemisphere light; used for the lighting A/B test above.
 - `__debugGetRendererInfo()` — exposes `renderer.info` (real calls/triangles/geometries/textures/programs counts).
 - `__debugMeshHistogram()` — breaks the scene down by parent group name and geometry type.
 
+### EXECUTED, same session — real fixes shipped, real measured result
+
+EK said to keep going without waiting for confirmation ("you know what to do, do this work continuous"), so the plan above was actually implemented, not just written up. In order:
+
+1. **`museumRoomArmor.ts`'s `addStyledRoomArmor()` checked first** (commit `b39d2a6`) — confirmed this (not `galleryRoomFinishes.ts`) is the armor system the live campus actually calls, and it had the identical unbatched-rivet pattern. Converted Vault/Loft's corner rivets to `THREE.InstancedMesh`, same as the earlier (wrong-file) fix. **Live-tested and found dormant**: `renderer.info` draw calls were byte-for-byte unchanged after deploy, because a direct Supabase query of `museum_room_meta` confirmed **no room is currently styled "vault" or "loft"** (HUB/POP_CULTURE are "whitebox", the rest `null`). The fix is real and correct — it just has nothing to batch right now. It will matter the moment any room gets set to that style.
+2. **Baseboard/rail merge** (commit `02d76c2`, `buildRoomTrim()`) — verified safe first (grepped every caller of the shared per-room `baseboardMaterial`/`railMaterial`; confirmed the theme-swap code only ever mutates that one shared material object, never looks up an individual mesh). Merged each room's baseboard pieces into one mesh, rail pieces into another. **Result: 1,301 → 1,203 draw calls.**
+3. **Ceiling trim + fixture-disc merge** (commit `d403aba`, `buildCeilingAndTrim()` + `buildLegacyRoomLightRig()`) — verified safe first (confirmed the Grand Hall ceiling-hide logic matches by `scene.traverse` + `material ===` comparison, not by mesh reference, so it still finds a single merged mesh the same way; confirmed the style-swap teardown that disposes fixture-group children iterates generically with no count dependency). **Result: 1,203 → 1,123 draw calls.** Visually re-verified the Grand Hall ceiling specifically (the one place depending on the hide-by-material logic) — renders correctly, no stray trim band.
+4. **Door jamb+head casing merge** (commit `6e18a4e`, `buildSharedWall()`) — verified safe first (`doorFrameMaterial` is literally one shared object across every door campus-wide; grepped for any other reference, found none). Merged each door's 2 jambs + 1 head (3 boxes, single shared material) into one mesh per door. Left the transom untouched (it uses the wall's own per-face material array, a different and more complex merge target). **Result: 1,123 → 1,013 draw calls.**
+
+**Cumulative: 1,301 → 1,013 draw calls/frame (~22% fewer).** Real unclamped frame timing (same independent `requestAnimationFrame` timer methodology as the original investigation, not the app's own clamped `frameLog`) went from **~10-16fps sustained, worst frames 85-170ms** (measured at the start of this session, standing still, no input) to **~35fps average, worst frame 45.6ms** (measured after all 4 fixes above, same conditions). More than double the frame rate, and the severe 100ms+ frame spikes are gone in this test.
+
+**Visually verified after every single step, not just at the end** — screenshot-checked POP_CULTURE's baseboard trim (continuous, unbroken), the Grand Hall ceiling from HUB center (skylight geometry intact, no stray trim), a TCG doorway's jamb/head casing (clean unbroken frame), and a broad 8-room walkthrough (POP_CULTURE/TCG/MISC/HUB/BUILT_BOTANY/GAMES/AUTOMOTIVE/COLLECTION) with a close-up screenshot of COLLECTION (highest single-frame draw-call count of the 8, 870) — artwork, signage, baseboards all rendering correctly. **No visual regressions found.**
+
+### What's deliberately NOT done — the next, higher-risk piece
+
+`buildSharedWall()`'s actual structural wall panels (`buildWallBox()`) are the single largest remaining `BoxGeometry` concentration (124 `BoxGeometry` meshes still remain scene-wide, down from 349, and most of what's left is these). They were deliberately left untouched this session:
+- They use **per-face material arrays** (`[materialA, materialA, materialA, materialA, faceB, materialA]`, different material per box face for a shared wall's two room-facing sides), not one flat shared material — merging these correctly requires `mergeGeometries(..., useGroups: true)` with correct per-box material-group index assignment, meaningfully more complex and easier to get subtly wrong than every merge done tonight.
+- This is the single most fragile, heavily-corrected piece of geometry in the whole campus — `buildSharedWall()`'s own comments document a real, hard-to-spot z-fighting/flicker bug from an earlier session (jamb/head casing overlapping the solid wall's own volume) that only showed up at oblique viewing angles, not in a static screenshot. A merge mistake here has real potential to reintroduce exactly that class of bug, and it would be easy to miss without exhaustive per-doorway, per-angle visual verification across every room.
+- Given the already-strong, safely-verified result above (22% fewer draw calls, ~3x real frame-rate improvement), this was judged not worth the added risk in the same continuous push — better attempted as its own focused, carefully-verified pass.
+
 ### Next steps for whoever continues this
 
-1. Check `museumRoomArmor.ts`'s `addStyledRoomArmor()` for the same unbatched-small-mesh pattern just fixed in `galleryRoomFinishes.ts` — likely contributor, likely a fast safe win, check before the bigger wall merge.
-2. Do the wall/floor/ceiling/trim geometry merge in `campusRoomBuilder.ts`, `buildRoomShell` first, one room-shell-type at a time, visually verifying each (all 4 walls, doorways, both editable-room styles and legacy rooms) before moving on.
-3. Update any code that hides/shows individual named wall/trim mesh references (Grand Hall's ceiling-trim hide is the one known case) to target the merged mesh instead.
-4. Re-measure via `__debugGetRendererInfo()`/a real unclamped frame timer (see the A/B test methodology above — do NOT trust `getWheelDiagnostics()`'s `frameDeltaMs`, it's clamped to 50ms) after each stage to confirm real, cumulative draw-call reduction, not just "looks the same."
-5. Remove the temporary debug hooks listed above once done and confirmed.
-6. Re-run EK's original Grand Hall verification checklist (walk from every doorway, all 4 walls, no stretching/clipping, movement smoothness) since it was never fully closed out and this work touches the same shared shell code.
+1. If tackling the wall-panel merge: read `buildSharedWall()`'s full z-fighting history comments first (`campusRoomBuilder.ts` ~line 988 onward) before changing anything. Use `mergeGeometries(geometries, true)` (useGroups) grouped per wall segment (not campus-wide — each wall's own materialA/materialB pairing differs), and verify every doorway from an oblique angle, not just straight-on, given the documented flicker history.
+2. Re-measure via `__debugGetRendererInfo()`/a real unclamped frame timer (see the A/B test methodology above — do NOT trust `getWheelDiagnostics()`'s `frameDeltaMs`, it's clamped to 50ms) after any further change, to confirm real, cumulative draw-call reduction, not just "looks the same."
+3. Remove the temporary debug hooks listed above once the wall-panel piece (or a decision to skip it) is finalized.
+4. Re-run EK's original Grand Hall verification checklist (walk from every doorway, all 4 walls, no stretching/clipping, movement smoothness) since it was never fully closed out and this session's work touches the same shared shell code.
+5. Ask EK whether the current ~35fps/1,013-draw-call result feels resolved enough in her own real use, or whether the remaining wall-panel piece is worth the added risk to pursue further.
 
 ---
 
