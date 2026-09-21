@@ -137,6 +137,17 @@ function addVaultPanels(
   // fully embedded and invisible. Adding wallThickness/2 puts them back on
   // the real, visible face, same as the personal room's own geometry.
   const faceOffset = wallThickness / 2;
+  // Perf pass (2026-09-20): this is the museum campus's REAL, live armor
+  // system (unlike galleryRoomFinishes.ts's addVaultArmor, which only
+  // feeds the personal Gallery Builder) -- confirmed via a live
+  // renderer.info check that it's a real contributor to the 1,301 draw
+  // calls/frame driving EK's reported stalls (see HANDOFF.md's
+  // 2026-09-20 entry). Every rivet across every panel/wall in a room
+  // shares this same geometry/material and differs only by transform, so
+  // they're collected here and drawn as one InstancedMesh per room
+  // instead of 4 draw calls per panel.
+  const rivetGeometry = new THREE.CylinderGeometry(0.07, 0.07, 0.06, 10);
+  const rivetMatrices: THREE.Matrix4[] = [];
   for (const { wallAxis, fixedCoord, faceSign, from, to } of pieces) {
     const length = to - from;
     const panelCount = Math.max(1, Math.round(length / VAULT_PANEL_WIDTH));
@@ -146,12 +157,14 @@ function addVaultPanels(
       const b = a + panelWidth;
       for (const pos of [a + VAULT_RIVET_INSET, b - VAULT_RIVET_INSET]) {
         for (const y of [wallTop - VAULT_RIVET_INSET, wallBottom + VAULT_RIVET_INSET]) {
-          const rivet = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, 0.06, 10), rivetMaterial);
-          rivet.rotation.x = wallAxis === "x" ? Math.PI / 2 : 0;
-          rivet.rotation.z = wallAxis === "x" ? 0 : Math.PI / 2;
-          if (wallAxis === "x") rivet.position.set(pos, y, fixedCoord + faceSign * (faceOffset + 0.035));
-          else rivet.position.set(fixedCoord + faceSign * (faceOffset + 0.035), y, pos);
-          scene.add(rivet);
+          const position =
+            wallAxis === "x"
+              ? new THREE.Vector3(pos, y, fixedCoord + faceSign * (faceOffset + 0.035))
+              : new THREE.Vector3(fixedCoord + faceSign * (faceOffset + 0.035), y, pos);
+          const euler = new THREE.Euler(wallAxis === "x" ? Math.PI / 2 : 0, 0, wallAxis === "x" ? 0 : Math.PI / 2);
+          rivetMatrices.push(
+            new THREE.Matrix4().compose(position, new THREE.Quaternion().setFromEuler(euler), new THREE.Vector3(1, 1, 1))
+          );
         }
       }
       if (i > 0) {
@@ -166,6 +179,12 @@ function addVaultPanels(
         scene.add(divider);
       }
     }
+  }
+  if (rivetMatrices.length > 0) {
+    const rivetMesh = new THREE.InstancedMesh(rivetGeometry, rivetMaterial, rivetMatrices.length);
+    rivetMatrices.forEach((matrix, index) => rivetMesh.setMatrixAt(index, matrix));
+    rivetMesh.instanceMatrix.needsUpdate = true;
+    scene.add(rivetMesh);
   }
 }
 
@@ -282,6 +301,11 @@ function addLoftWalls(
   // segment.fixed, so the real face is wallThickness/2 further out than
   // the personal room's own GLB-local-space offsets assumed).
   const faceOffset = wallThickness / 2;
+  // Perf pass (2026-09-20): same InstancedMesh batching as addVaultPanels
+  // above, same reasoning -- one rivet per rib, same geometry/material,
+  // differing only by transform.
+  const rivetGeometry = new THREE.CylinderGeometry(0.06, 0.06, 0.06, 10);
+  const rivetMatrices: THREE.Matrix4[] = [];
   for (const { wallAxis, fixedCoord, faceSign, from, to } of pieces) {
     const length = to - from;
 
@@ -301,12 +325,14 @@ function addLoftWalls(
       else rib.position.set(fixedCoord + faceSign * (faceOffset + LOFT_RIB_DEPTH * 0.5), midY, pos);
       scene.add(rib);
 
-      const rivet = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 0.06, 10), rivetMaterial);
-      rivet.rotation.x = wallAxis === "x" ? Math.PI / 2 : 0;
-      rivet.rotation.z = wallAxis === "x" ? 0 : Math.PI / 2;
-      if (wallAxis === "x") rivet.position.set(pos, seamY, fixedCoord + faceSign * (faceOffset + LOFT_RIB_DEPTH + 0.035));
-      else rivet.position.set(fixedCoord + faceSign * (faceOffset + LOFT_RIB_DEPTH + 0.035), seamY, pos);
-      scene.add(rivet);
+      const rivetPosition =
+        wallAxis === "x"
+          ? new THREE.Vector3(pos, seamY, fixedCoord + faceSign * (faceOffset + LOFT_RIB_DEPTH + 0.035))
+          : new THREE.Vector3(fixedCoord + faceSign * (faceOffset + LOFT_RIB_DEPTH + 0.035), seamY, pos);
+      const rivetEuler = new THREE.Euler(wallAxis === "x" ? Math.PI / 2 : 0, 0, wallAxis === "x" ? 0 : Math.PI / 2);
+      rivetMatrices.push(
+        new THREE.Matrix4().compose(rivetPosition, new THREE.Quaternion().setFromEuler(rivetEuler), new THREE.Vector3(1, 1, 1))
+      );
     }
 
     // One recessed horizontal seam spanning this whole solid piece.
@@ -336,6 +362,12 @@ function addLoftWalls(
       else divider.position.set(fixedCoord + faceSign * (faceOffset + (LOFT_RIB_DEPTH + 0.04) * 0.5), midY, pos);
       scene.add(divider);
     }
+  }
+  if (rivetMatrices.length > 0) {
+    const rivetMesh = new THREE.InstancedMesh(rivetGeometry, rivetMaterial, rivetMatrices.length);
+    rivetMatrices.forEach((matrix, index) => rivetMesh.setMatrixAt(index, matrix));
+    rivetMesh.instanceMatrix.needsUpdate = true;
+    scene.add(rivetMesh);
   }
 }
 
