@@ -2788,6 +2788,34 @@ export default function VltdMuseumCampus() {
         textures: renderer.info.memory.textures,
         programs: renderer.info.programs?.length ?? null,
       }),
+      // Live re-investigation (2026-09-20), temporary/measurement-only:
+      // the rivet-batching fix (galleryRoomFinishes.ts) turned out not to
+      // touch this scene at all -- VltdMuseumCampus.tsx never calls
+      // addVaultArmor()/addLoftArmor(), so draw calls were unchanged
+      // (1301, byte-for-byte identical, confirmed live). This breaks the
+      // real 581-mesh scene down by parent group name and geometry type
+      // so the actual concentration can be found directly instead of
+      // guessed at from source.
+      __debugMeshHistogram: () => {
+        const byGroup: Record<string, number> = {};
+        const byGeometry: Record<string, number> = {};
+        scene.traverse((obj) => {
+          if (!(obj instanceof THREE.Mesh)) return;
+          let ancestor: THREE.Object3D | null = obj;
+          let topName = "(scene root)";
+          while (ancestor) {
+            if (ancestor.parent === scene) {
+              topName = ancestor.name || ancestor.type || "(unnamed)";
+              break;
+            }
+            ancestor = ancestor.parent;
+          }
+          byGroup[topName] = (byGroup[topName] || 0) + 1;
+          const geoKey = obj.geometry?.type || "(unknown)";
+          byGeometry[geoKey] = (byGeometry[geoKey] || 0) + 1;
+        });
+        return { byGroup, byGeometry };
+      },
     };
 
     function onResize() {
