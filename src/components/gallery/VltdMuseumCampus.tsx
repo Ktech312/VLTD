@@ -699,6 +699,7 @@ export default function VltdMuseumCampus() {
       shellEntry(convertedId).baseboard = trim.baseboardMaterial;
       shellEntry(convertedId).rail = trim.railMaterial;
     }
+    console.warn(`[perf] checkpoint after converted-room trim, before Grand Hall block: ${Math.round(performance.now() - setupStartTime)}ms`);
 
     // Overnight Polish pass (2026-09-09): every legacy room's old two-height
     // gold rail-lattice trim is gone — "no broad gold stripes or repeated
