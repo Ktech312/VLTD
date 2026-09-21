@@ -28,6 +28,7 @@ import {
   type WallSide,
 } from "./campusLayout";
 import { createStoneFloorTexture } from "../components/gallery/galleryTextures";
+import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js";
 // Real Gallery Environments pass (2026-09-12): EK's explicit, repeated
 // correction — the room editor's style choices must be the actual named
 // environments she built and refined in the personal Gallery Builder
@@ -1167,6 +1168,21 @@ export function buildRoomTrim(
   const railHeight = 0.06;
   const railY = wallHeight - 2.2;
 
+  // Perf pass (2026-09-20): baseboard/rail pieces are the same shape recipe
+  // repeated once per solid wall piece around a room (typically 4-8 of
+  // each), all sharing this ONE baseboardMaterial/railMaterial object per
+  // room (confirmed live-safe for theme swapping — VltdMuseumCampus.tsx's
+  // style-change code already mutates that one shared material in place,
+  // `shell.baseboard.copy(...)`/`shell.rail.copy(...)`, never looks up an
+  // individual baseboard/rail mesh by reference). Collected into per-piece
+  // geometries (position baked in via .translate()) and merged into one
+  // combined mesh each at the end instead of one draw call per piece — see
+  // HANDOFF.md's 2026-09-20 entry for the full investigation (1,301 draw
+  // calls/frame measured live, dominated by unbatched BoxGeometry across
+  // every room's shell/trim).
+  const baseboardGeometries: THREE.BufferGeometry[] = [];
+  const railGeometries: THREE.BufferGeometry[] = [];
+
   for (const segment of segments) {
     if (segment.roomA !== room.id && segment.roomB !== room.id) continue;
     const isNS = segment.wall === "x";
@@ -1182,23 +1198,36 @@ export function buildRoomTrim(
       const span = piece.to - piece.from;
       if (span <= 0.05) continue;
 
-      const baseboard = new THREE.Mesh(
-        isNS ? new THREE.BoxGeometry(span, baseboardHeight, 0.05) : new THREE.BoxGeometry(0.05, baseboardHeight, span),
-        baseboardMaterial
-      );
-      if (isNS) baseboard.position.set((piece.from + piece.to) / 2, baseboardHeight / 2, segment.fixed + (facingSign * wallThickness) / 2);
-      else baseboard.position.set(segment.fixed + (facingSign * wallThickness) / 2, baseboardHeight / 2, (piece.from + piece.to) / 2);
-      scene.add(baseboard);
+      const baseboardGeom = isNS
+        ? new THREE.BoxGeometry(span, baseboardHeight, 0.05)
+        : new THREE.BoxGeometry(0.05, baseboardHeight, span);
+      const baseboardPos = isNS
+        ? { x: (piece.from + piece.to) / 2, y: baseboardHeight / 2, z: segment.fixed + (facingSign * wallThickness) / 2 }
+        : { x: segment.fixed + (facingSign * wallThickness) / 2, y: baseboardHeight / 2, z: (piece.from + piece.to) / 2 };
+      baseboardGeom.translate(baseboardPos.x, baseboardPos.y, baseboardPos.z);
+      baseboardGeometries.push(baseboardGeom);
 
       if (!includeRail || !railMaterial) continue;
-      const rail = new THREE.Mesh(
-        isNS ? new THREE.BoxGeometry(span, railHeight, 0.04) : new THREE.BoxGeometry(0.04, railHeight, span),
-        railMaterial
-      );
-      if (isNS) rail.position.set((piece.from + piece.to) / 2, railY, segment.fixed + (facingSign * wallThickness) / 2);
-      else rail.position.set(segment.fixed + (facingSign * wallThickness) / 2, railY, (piece.from + piece.to) / 2);
-      scene.add(rail);
+      const railGeom = isNS
+        ? new THREE.BoxGeometry(span, railHeight, 0.04)
+        : new THREE.BoxGeometry(0.04, railHeight, span);
+      const railPos = isNS
+        ? { x: (piece.from + piece.to) / 2, y: railY, z: segment.fixed + (facingSign * wallThickness) / 2 }
+        : { x: segment.fixed + (facingSign * wallThickness) / 2, y: railY, z: (piece.from + piece.to) / 2 };
+      railGeom.translate(railPos.x, railPos.y, railPos.z);
+      railGeometries.push(railGeom);
     }
+  }
+
+  if (baseboardGeometries.length > 0) {
+    const merged = mergeGeometries(baseboardGeometries, false);
+    baseboardGeometries.forEach((g) => g.dispose());
+    if (merged) scene.add(new THREE.Mesh(merged, baseboardMaterial));
+  }
+  if (railGeometries.length > 0 && railMaterial) {
+    const merged = mergeGeometries(railGeometries, false);
+    railGeometries.forEach((g) => g.dispose());
+    if (merged) scene.add(new THREE.Mesh(merged, railMaterial));
   }
 
   return { baseboardMaterial, railMaterial };
