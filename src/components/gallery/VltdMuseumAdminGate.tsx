@@ -9,10 +9,12 @@
 // making page.tsx a client component (which would lose its `metadata`
 // export — Next.js only allows that on Server Components).
 import { useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 
 import { getMyAdminAccessStatus } from "@/lib/adminAuth";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 import VltdMuseumCampus from "@/components/gallery/VltdMuseumCampus";
+import MuseumCampusOverview from "@/components/gallery/MuseumCampusOverview";
 
 type AccessState = "checking" | "pending-mfa" | "authorized" | "denied";
 
@@ -32,6 +34,9 @@ type AccessState = "checking" | "pending-mfa" | "authorized" | "denied";
 // itself reacts to) so it recovers on its own once verification succeeds.
 export default function VltdMuseumAdminGate() {
   const [state, setState] = useState<AccessState>("checking");
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const roomParam = searchParams.get("room");
 
   useEffect(() => {
     let cancelled = false;
@@ -72,6 +77,22 @@ export default function VltdMuseumAdminGate() {
 
   if (state === "denied") {
     return <div className="p-8 text-sm text-red-400">Not authorized. Admin access required.</div>;
+  }
+
+  // Perf pass (2026-09-21, EK's own idea): land on the existing lightweight
+  // room-picker map first instead of jumping straight into the full
+  // walkable 3D build — nothing 3D loads until a room is actually chosen.
+  // Clicking a room on this map already navigates to this same route with
+  // ?room=<id> (MuseumCampusOverview's own existing Link, unchanged) — the
+  // exact same param VltdMuseumCampus.tsx already reads to pick its spawn
+  // point, so entering a room now happens in direct response to a click
+  // instead of automatically on page load, and the wait that follows reads
+  // as an expected transition instead of the page looking stuck. Neither
+  // VltdMuseumCampus.tsx nor MuseumCampusOverview.tsx needed any change for
+  // this — both already did exactly the right thing, this file just wasn't
+  // using them together yet. See HANDOFF.md's 2026-09-21 entry.
+  if (!roomParam) {
+    return <MuseumCampusOverview onBackToRoom={() => router.push("/museum")} />;
   }
 
   return <VltdMuseumCampus />;
