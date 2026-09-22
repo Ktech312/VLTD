@@ -185,7 +185,19 @@ export async function fetchAlerts(currentProfileId: string): Promise<AlertItem[]
 
   // 3. Bugs — all reports (admins only; 403 for everyone else)
   try {
-    const res = await fetch("/api/admin/bugs", { cache: "no-store" });
+    // Overnight QA pass (2026-09-22): this fetch never sent the caller's
+    // session token, so /api/admin/bugs' getAdminEmail() (which reads
+    // Authorization: Bearer <token>) always saw no token and returned 403
+    // - for every account, including real admins. Bug-report notifications
+    // in the bell dropdown have never worked for anyone. Same auth-header
+    // pattern src/app/admin/bugs/page.tsx already uses for the same endpoint.
+    const authHeader: Record<string, string> = {};
+    if (supabase) {
+      const { data } = await supabase.auth.getSession();
+      const token = data.session?.access_token;
+      if (token) authHeader.Authorization = `Bearer ${token}`;
+    }
+    const res = await fetch("/api/admin/bugs", { cache: "no-store", headers: authHeader });
     if (res.ok) {
       const json = (await res.json()) as {
         rows?: { id: string; message: string; status: string; page_path: string | null; created_at: string }[];
