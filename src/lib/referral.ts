@@ -142,9 +142,12 @@ export async function getReferralStats(
   const supabase = getSupabaseBrowserClient();
   if (!supabase) return { referralCount: 0, bonusEarned: 0 };
 
+  // Overnight QA pass (2026-09-22): same fix as follows.ts's getFollowerCount
+  // - narrowed select("*") to select("id") for this HEAD+count query, since
+  // that exact combination was reproducibly 503ing there.
   const { count } = await supabase
     .from("referral_redemptions")
-    .select("*", { count: "exact", head: true })
+    .select("id", { count: "exact", head: true })
     .eq("referrer_id", userId);
 
   const referralCount = count ?? 0;
