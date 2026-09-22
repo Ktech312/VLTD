@@ -153,6 +153,7 @@ import {
 import { buildDisplayCase, buildShelfBoard, createShelfMaterial, placeItemsInCases } from "@/lib/museumRoomFurniture";
 import { addStyledRoomArmor } from "@/lib/museumRoomArmor";
 import { MUSEUM_PITCH_LIMIT, MUSEUM_WALK_SPEED } from "@/lib/museumStandard";
+import { publishRoomBake } from "@/lib/museumRoomBake";
 import {
   aimCamera,
   applyDrag,
@@ -232,6 +233,12 @@ export default function MuseumBuilder() {
 
   const mountRef = useRef<HTMLDivElement | null>(null);
   const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
+  // Perf pass (2026-09-21): lets the "Publish" button export this room's
+  // already-built scene (GLTFExporter) without rebuilding anything — see
+  // HANDOFF.md's 2026-09-21 entry and src/lib/museumRoomBake.ts.
+  const sceneRef = useRef<THREE.Scene | null>(null);
+  const [publishState, setPublishState] = useState<SaveState>("idle");
+  const [publishError, setPublishError] = useState("");
   const [ready, setReady] = useState(false);
   const [vaultItems, setVaultItems] = useState<VaultItem[]>([]);
 
@@ -480,6 +487,27 @@ export default function MuseumBuilder() {
     if (result.ok) window.setTimeout(() => setFrameStyleSaveState((s) => (s === "saved" ? "idle" : s)), 1600);
   }
 
+  // Perf pass (2026-09-21): unlike every autosave above (capacity/rows/
+  // background/style/frame all save the instant you change them), Publish
+  // is a deliberate, separate action — it exports this room's current
+  // already-built scene to a static file and that's what the live public
+  // campus starts serving to visitors. EK's own call: rooms shouldn't go
+  // live to visitors mid-edit just because a field autosaved.
+  async function handlePublish() {
+    const scene = sceneRef.current;
+    if (!scene) return;
+    setPublishState("saving");
+    setPublishError("");
+    const result = await publishRoomBake(roomId, scene);
+    if (result.ok) {
+      setPublishState("saved");
+      window.setTimeout(() => setPublishState((s) => (s === "saved" ? "idle" : s)), 2400);
+    } else {
+      setPublishState("error");
+      setPublishError(result.error ?? "Publish failed.");
+    }
+  }
+
   // Combined, ordered slot list — wall, then shelf, then case — the single
   // fixed order both the Organize overlay's numbering and the 3D scene's
   // own item placement below agree on.
@@ -577,6 +605,8 @@ export default function MuseumBuilder() {
     const scene = new THREE.Scene();
     scene.background = new THREE.Color(0x0b1420);
     scene.fog = new THREE.Fog(0x0b1420, 20, 70);
+    sceneRef.current = scene;
+    setPublishState("idle");
 
     const camera = new THREE.PerspectiveCamera(50, mount.clientWidth / Math.max(1, mount.clientHeight), 0.1, 200);
     camera.rotation.order = "YXZ";
@@ -900,6 +930,7 @@ export default function MuseumBuilder() {
     return () => {
       cancelled = true;
       cancelledBg = true;
+      sceneRef.current = null;
       window.cancelAnimationFrame(raf);
       window.removeEventListener("pointermove", onPointerMove);
       window.removeEventListener("pointerup", onPointerUp);
@@ -1279,6 +1310,24 @@ export default function MuseumBuilder() {
                 <AppIcon name="save" size={14} />
                 {itemSaveState === "saving" ? "Saving…" : itemSaveState === "error" ? "Save Failed" : "Autosaved"}
               </div>
+              <button
+                type="button"
+                onClick={() => void handlePublish()}
+                disabled={publishState === "saving"}
+                className={[
+                  "flex items-center gap-1.5 rounded-[6px] px-3 py-2 text-xs font-black uppercase tracking-[0.14em] backdrop-blur transition disabled:cursor-not-allowed disabled:opacity-60",
+                  publishState === "saved" ? "bg-emerald-500/85 text-white" : publishState === "error" ? "bg-red-500/85 text-white" : "bg-[#4FD3EE] text-[#06171d] hover:brightness-110",
+                ].join(" ")}
+                title="Bakes this room to a fast-loading file and makes that the version visitors see — edits above autosave as a draft, but visitors only see what you last Published"
+              >
+                <AppIcon name="rocket" size={14} />
+                {publishState === "saving" ? "Publishing…" : publishState === "saved" ? "Published" : publishState === "error" ? "Publish Failed" : "Publish"}
+              </button>
+              {publishState === "error" && publishError ? (
+                <div className="basis-full rounded-[6px] bg-red-500/85 px-3 py-1.5 text-[11px] font-semibold text-white backdrop-blur">
+                  {publishError}
+                </div>
+              ) : null}
             </div>
               </>
             )}

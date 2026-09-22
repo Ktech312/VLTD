@@ -274,6 +274,16 @@ export type MuseumRoomMeta = {
   // style regardless of this setting, since EK's own ask was that the
   // classic frame is a no-shelf-only look.
   frame_style?: string | null;
+  // Perf pass (2026-09-21): a baked static .glb for this room, produced by
+  // Museum Builder's "Publish" action (GLTFExporter on its own already-live
+  // scene, uploaded to the museum-room-bakes bucket). Undefined/null —
+  // never published, or 20260921_museum_room_baked_asset.sql hasn't been
+  // run yet — means the live campus falls back to building this room
+  // procedurally exactly as it does today. See HANDOFF.md's 2026-09-21
+  // entry for the full plan; this is what makes converting rooms one at a
+  // time safe instead of an all-or-nothing cutover.
+  baked_asset_url?: string | null;
+  baked_at?: string | null;
 };
 
 // Fails-soft column cascade (extended 2026-09-14, frame styles pass): try
@@ -283,7 +293,7 @@ export type MuseumRoomMeta = {
 // breaks regardless of which of the columns below EK has actually migrated
 // yet, in any order.
 const ROOM_META_COLUMNS_FULL =
-  "room_id, title, description, room_style, item_capacity, shelf_capacity, case_capacity, background_image_url, wall_row_count, wall_shelves_enabled, frame_style";
+  "room_id, title, description, room_style, item_capacity, shelf_capacity, case_capacity, background_image_url, wall_row_count, wall_shelves_enabled, frame_style, baked_asset_url, baked_at";
 const ROOM_META_COLUMNS_WITH_FRAME_STYLE =
   "room_id, title, description, room_style, item_capacity, shelf_capacity, case_capacity, background_image_url, frame_style";
 const ROOM_META_COLUMNS_WITH_CAPACITY =
@@ -416,6 +426,22 @@ export async function setRoomFrameStyle(roomId: string, frameStyle: string | nul
   const { error } = await supabase
     .from("museum_room_meta")
     .upsert({ room_id: roomId, frame_style: frameStyle, updated_at: new Date().toISOString() });
+  if (error) return { ok: false, error: error.message };
+  return { ok: true };
+}
+
+/** Records a room's freshly-baked static asset URL (Museum Builder's
+ * "Publish" action) — same one-upserted-row shape as every other setter in
+ * this file. `baked_at` is stamped server-side to `now()` via the same
+ * `updated_at`-style pattern. Fails soft if
+ * 20260921_museum_room_baked_asset.sql hasn't been run yet. */
+export async function setRoomBakedAsset(roomId: string, bakedAssetUrl: string): Promise<{ ok: boolean; error?: string }> {
+  const supabase = getSupabaseBrowserClient();
+  if (!supabase) return { ok: false, error: "Not signed in." };
+  const nowIso = new Date().toISOString();
+  const { error } = await supabase
+    .from("museum_room_meta")
+    .upsert({ room_id: roomId, baked_asset_url: bakedAssetUrl, baked_at: nowIso, updated_at: nowIso });
   if (error) return { ok: false, error: error.message };
   return { ok: true };
 }
