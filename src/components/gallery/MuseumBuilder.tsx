@@ -237,6 +237,7 @@ export default function MuseumBuilder() {
   // already-built scene (GLTFExporter) without rebuilding anything — see
   // HANDOFF.md's 2026-09-21 entry and src/lib/museumRoomBake.ts.
   const sceneRef = useRef<THREE.Scene | null>(null);
+  const wallsGroupRef = useRef<THREE.Group | null>(null);
   const [publishState, setPublishState] = useState<SaveState>("idle");
   const [publishError, setPublishError] = useState("");
   const [ready, setReady] = useState(false);
@@ -495,10 +496,22 @@ export default function MuseumBuilder() {
   // live to visitors mid-edit just because a field autosaved.
   async function handlePublish() {
     const scene = sceneRef.current;
+    const wallsGroup = wallsGroupRef.current;
     if (!scene) return;
     setPublishState("saving");
     setPublishError("");
-    const result = await publishRoomBake(roomId, scene);
+    // Hide the shared walls (GLTFExporter's default onlyVisible skips
+    // hidden objects) so a baked room never duplicates a wall the live
+    // campus already builds for real — see the comment on wallsGroupRef's
+    // construction above. Restored immediately after, so this room's own
+    // live preview here is unaffected before/after the brief export.
+    if (wallsGroup) wallsGroup.visible = false;
+    let result: { ok: boolean; url?: string; error?: string };
+    try {
+      result = await publishRoomBake(roomId, scene);
+    } finally {
+      if (wallsGroup) wallsGroup.visible = true;
+    }
     if (result.ok) {
       setPublishState("saved");
       window.setTimeout(() => setPublishState((s) => (s === "saved" ? "idle" : s)), 2400);
@@ -687,11 +700,28 @@ export default function MuseumBuilder() {
       return material;
     }
     const relevantSegments = computeCampusWallSegments().filter((s) => s.roomA === roomId || s.roomB === roomId);
+    // Perf pass (2026-09-21): buildSharedWall() adds its wall boxes, door
+    // casings, transoms, and destination signs directly to `scene` (no
+    // group of its own, and deliberately not touched here — this function
+    // has a documented history of subtle z-fighting bugs from exactly this
+    // kind of change). Instead, everything it adds during this loop is
+    // captured by a before/after `scene.children` length diff and moved
+    // into `wallsGroupRef` afterward, purely at this call site. Publish
+    // hides that group (GLTFExporter's default onlyVisible skips it) so a
+    // baked room never duplicates a wall the live campus already builds
+    // itself for real, on the correct neighbor's own real material — see
+    // handlePublish below and HANDOFF.md's 2026-09-21 entry.
+    const wallsBefore = scene.children.length;
     for (const segment of relevantSegments) {
       const materialA = materialFor(segment.roomA);
       const materialB = segment.roomB ? materialFor(segment.roomB) : null;
       buildSharedWall(scene, segment, materialA, materialB, doorFrameMaterial, { wallHeight: WALL_HEIGHT, wallThickness: WALL_THICKNESS, style: "ordinary" });
     }
+    const wallsGroup = new THREE.Group();
+    wallsGroup.name = "publish-exclude-walls";
+    for (const obj of scene.children.slice(wallsBefore)) wallsGroup.add(obj);
+    scene.add(wallsGroup);
+    wallsGroupRef.current = wallsGroup;
     buildRoomTrim(scene, room, relevantSegments, finish, WALL_HEIGHT, WALL_THICKNESS, isConvertedRoom(roomId), styled);
 
     // A custom uploaded background image — Museum Builder's own preview
@@ -931,6 +961,7 @@ export default function MuseumBuilder() {
       cancelled = true;
       cancelledBg = true;
       sceneRef.current = null;
+      wallsGroupRef.current = null;
       window.cancelAnimationFrame(raf);
       window.removeEventListener("pointermove", onPointerMove);
       window.removeEventListener("pointerup", onPointerUp);
