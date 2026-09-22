@@ -106,8 +106,12 @@ export default function MfaChallengeGate() {
   }
 
   async function signOutInstead() {
+    // Multi-device fix (2026-09-22): local only, same reasoning as
+    // src/lib/auth.ts's own signOut() — this is a stuck-at-the-2FA-prompt
+    // escape hatch for THIS device, not a reason to log out every other
+    // device the account is signed into.
     const supabase = getSupabaseBrowserClient();
-    if (supabase) await supabase.auth.signOut();
+    if (supabase) await supabase.auth.signOut({ scope: "local" });
     window.location.href = "/login";
   }
 

@@ -114,8 +114,11 @@ export async function signInWithEmail(
   return error?.message ?? null;
 }
 
+// Multi-device fix (2026-09-22): scoped to this device only, same reasoning
+// as src/lib/auth.ts's own signOut() — the default scope is "global" and
+// was silently signing out every other device too.
 export async function signOut(): Promise<void> {
   const supabase = getSupabaseBrowserClient();
   if (!supabase) return;
-  await supabase.auth.signOut();
+  await supabase.auth.signOut({ scope: "local" });
 }

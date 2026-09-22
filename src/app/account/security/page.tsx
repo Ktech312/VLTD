@@ -221,7 +221,7 @@ export default function SecurityPage() {
                 </div>
                 <button
                   type="button"
-                  onClick={async () => { await signOut(); window.location.href = "/login"; }}
+                  onClick={async () => { await signOut({ scope: "global" }); window.location.href = "/login"; }}
                   className="shrink-0 rounded-[7px] px-4 py-1.5 text-xs font-semibold ring-1"
                   style={{ background: "rgba(248,113,113,0.1)", color: "#f87171", borderColor: "rgba(248,113,113,0.3)" }}
                 >

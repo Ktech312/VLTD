@@ -353,7 +353,14 @@ export async function resetPasswordForEmail(email: string) {
   if (error) throw error;
 }
 
-export async function signOut() {
+// Multi-device fix (2026-09-22): ordinary sign-out must only end THIS
+// device's session — signOut() used to call supabase.auth.signOut() with no
+// scope, which defaults to "global" and silently logged every other signed-
+// in device out too. Defaults to "local" so every existing call site (the
+// TopNav "Sign Out" button, admin pages, etc.) is correct with zero change;
+// the one deliberate exception is Account -> Security's "Sign out all
+// devices" action, which passes { scope: "global" } explicitly.
+export async function signOut(options?: { scope?: "local" | "global" }) {
   const supabase = getSupabase();
   if (!supabase) return;
 
@@ -362,7 +369,7 @@ export async function signOut() {
   clearInFlightAuth();
   profilesPromise = null;
 
-  await supabase.auth.signOut();
+  await supabase.auth.signOut({ scope: options?.scope ?? "local" });
 
   if (typeof window !== "undefined") {
     localStorage.removeItem(ACTIVE_PROFILE_KEY);
