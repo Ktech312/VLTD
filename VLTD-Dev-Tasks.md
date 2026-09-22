@@ -83,12 +83,12 @@ All handoffs shipped. Core loop (scan → vault → share) is complete.
 - **Task 10 — Visual Match / Recent Comparable Sales** — eBay Sold API, thumbnail comps panel post-scan, "use this as my value" pin
 - **Task 11 — Rarity Intelligence** — PSA/CGC pop report pulls, rarity score, "rarest in your vault" section
 - **Task 12 — Offline Capture / Convention Mode** — localStorage scan queue, background sync, "3 items syncing" indicator
-- **Task 14 — Fix multi-device login/sign-out behavior (BUG, security-relevant, not yet started)** — Ordinary sign-out currently signs out every device the account is logged into, not just the one you're on. EK's exact spec:
-  1. Change ordinary sign-out actions to `supabase.auth.signOut({ scope: "local" })` — must sign out only the current device.
-  2. Update all three unscoped calls: `src/lib/auth.ts`, `src/lib/adminAuth.ts`, `src/components/MfaChallengeGate.tsx`.
-  3. Preserve a separate "Sign out all devices" action on Account → Security using `supabase.auth.signOut({ scope: "global" })`.
-  4. Do not disable 2FA or weaken admin protection.
-  5. Verify with the same account on desktop and phone, each test reported separately (not "verified" from a build or one device alone): log into both + complete 2FA once on each; refresh/reopen both, both stay logged in; ordinary desktop sign-out doesn't affect the phone; "Sign out all devices" logs out both; normal navigation doesn't repeatedly re-request the 2FA code.
+- **Task 14 — Fix multi-device login/sign-out behavior (BUG, security-relevant) — code shipped `8a95a06`, EK's own cross-device test (point 5) still outstanding** — Ordinary sign-out was signing out every device the account was logged into, not just the one you were on (root cause: every `supabase.auth.signOut()` call in the app was unscoped, which defaults to "global"). Fixed per EK's exact spec:
+  1. Ordinary sign-out now uses `supabase.auth.signOut({ scope: "local" })` — done, `src/lib/auth.ts`'s `signOut()` defaults to local.
+  2. All three named call sites updated: `src/lib/auth.ts`, `src/lib/adminAuth.ts`, `src/components/MfaChallengeGate.tsx` — done. Full-repo grep confirmed these are the only 4 `supabase.auth.signOut()` call sites, none left unscoped.
+  3. Account → Security's existing "Sign out all" action explicitly passes `{ scope: "global" }` now — done (this button already existed and called the same function being defaulted to local, so its one call site needed updating too, not just left alone).
+  4. 2FA/admin protection itself untouched — done, only sign-out scope changed.
+  5. **NOT DONE**: EK's own real desktop+phone side-by-side test. Needs her own two physical devices; cannot be run from a build or a single session. Report each of the 5 sub-checks separately once run.
 - **Task 13 — Want List Price Alerts** — Add optional price threshold to any Want List item: "Alert me when a PSA 10 Charizard drops below $800." Background job polls eBay Sold API (already planned for Task 10) and sends push + email when a matching item hits the threshold. This is the entire business model of Alt.investor — their whole app is this one feature. VLTD already has the Want List, the item field schema, and (in Phase 2) the eBay pricing feed. This becomes a killer Pro tier feature: free users have the Want List, Pro users get price alerts on it. Requires: price_threshold field on wishlist items, a Supabase edge function on a cron schedule, push notification integration, and the eBay comp feed from Task 10. Build Task 10 first, Task 13 is a small add-on on top of it.
 
 **Advanced Image Studio (Phase 2)**
