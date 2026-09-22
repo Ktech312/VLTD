@@ -19,6 +19,7 @@ import { UNIVERSE_KEYS, UNIVERSE_LABEL, isUniverseKey } from "@/lib/taxonomy";
 import { getProfileSafe, setProfileSafe, broadcastProfileChange } from "@/lib/userProfile";
 import { showToast } from "@/lib/toast";
 import { isPushSupported, getPushSubscriptionState, subscribeToPush, unsubscribeFromPush, type PushState } from "@/lib/pushNotifications";
+import { resolveAvatarSrc } from "@/lib/avatarResolve";
 
 /** Normalize a stored focus value — treats the literal string "null" as empty. */
 function normalizeFocus(value: unknown): string {
@@ -692,8 +693,17 @@ export default function AccountPage() {
             ) : (
               <div className="mt-4 flex items-center gap-3">
                 {avatarUrl ? (
+                  // Overnight QA pass (2026-09-22): avatarUrl can be a raw
+                  // "__preset:guitar"-style sentinel (a chosen preset, not a
+                  // real image URL — same convention TopNav.tsx/HomeClient.tsx
+                  // already resolve) rather than always a real uploaded URL.
+                  // This was rendering the sentinel string directly as <img
+                  // src>, producing a literal 404 request and a broken image
+                  // icon in the user's own account settings whenever their
+                  // avatar was a preset. resolveAvatarSrc is this app's one
+                  // shared place that turns either shape into a real src.
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={avatarUrl} alt="Avatar preview" className="h-12 w-12 rounded-2xl object-cover ring-1 ring-[color:var(--border)]" />
+                  <img src={resolveAvatarSrc({ avatarUrl }) ?? avatarUrl} alt="Avatar preview" className="h-12 w-12 rounded-2xl object-cover ring-1 ring-[color:var(--border)]" />
                 ) : (
                   <div className="grid h-12 w-12 place-items-center rounded-2xl text-sm ring-1 ring-[color:var(--border)]" style={{ background: "var(--pill)" }}>
                     {(displayName || "U").slice(0, 1).toUpperCase()}
