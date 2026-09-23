@@ -1743,8 +1743,25 @@ export default function VltdMuseumCampus() {
       // 300ms deadline) — so no continuous block is ever more than one
       // room's own real cost, and a real frame (with real input handling)
       // always lands between rooms.
+      // requestAnimationFrame is paused entirely while the tab is hidden
+      // (verified live: a background/inactive tab reports
+      // document.hidden === true and rAF simply never fires) — racing it
+      // against a short timeout means a visible tab still gets genuine
+      // frame-aligned yields (the real target: keeping input responsive
+      // while the visitor is actively looking around), but a hidden tab
+      // still makes steady progress instead of content population
+      // stalling indefinitely until it's refocused.
       function frameYield(): Promise<void> {
-        return new Promise((resolve) => requestAnimationFrame(() => resolve()));
+        return new Promise((resolve) => {
+          let done = false;
+          const finish = () => {
+            if (done) return;
+            done = true;
+            resolve();
+          };
+          requestAnimationFrame(finish);
+          setTimeout(finish, 100);
+        });
       }
       async function processEditableRoomsIncremental(roomIds: CampusRoomId[]) {
         for (const roomId of roomIds) {
