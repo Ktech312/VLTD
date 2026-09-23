@@ -486,7 +486,18 @@ export function AppIcon({
             height={size}
             loading="lazy"
             decoding="async"
-            style={{ position: "absolute", inset: 0, width: size, height: size, objectFit: "contain" }}
+            style={{
+              position: "absolute",
+              inset: 0,
+              width: size,
+              height: size,
+              objectFit: "contain",
+              // The source art is tightly cropped to its glow. Reduce its
+              // optical footprint inside the existing nav slot so it matches
+              // the original icon scale and keeps breathing room on all sides.
+              transform: "scale(0.78)",
+              transformOrigin: "center",
+            }}
           />
           <img
             className="vltd-icon-soft-sticker"
