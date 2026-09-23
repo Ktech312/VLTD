@@ -1469,6 +1469,7 @@ export default function VltdMuseumCampus() {
     }
 
     async function populateDynamicContent() {
+      const perfPopulateStart = performance.now();
       const [itemsPerRoom, spotlightPrograms, storeItems, roomMeta] = await Promise.all([
         getItemsPerRoom(),
         getActiveSpotlightPrograms(),
@@ -1483,6 +1484,40 @@ export default function VltdMuseumCampus() {
         return saved === "gallery" || saved === "matted" ? saved : "classic";
       };
       if (contentCancelled) return;
+
+      // Perf pass (2026-09-22): EK-reported "well over 10 seconds," traced
+      // live to this function's own room loops below (style/armor, shelf/
+      // case furniture, curated item placement) running unconditionally for
+      // every EDITABLE_ROOM_IDS room on EVERY visit, regardless of which
+      // room the visitor actually spawns into — the real cost driver per
+      // the 2026-09-21 bake plan's own reasoning (furniture/trim/items, not
+      // walls, which this leaves fully untouched). Rather than the full
+      // bake-and-load rewrite that plan scoped, every existing function
+      // call and every room's own logic below is unchanged — only WHEN each
+      // room's work runs is reordered: the spawn room, HUB, and the spawn
+      // room's direct doorway neighbors (adjacentRoomIds() — already used
+      // elsewhere in this file for light activation) build first so the
+      // visitor's own starting view is real as fast as possible; every
+      // other room's identical work still runs in the same visit, just
+      // after one idle-callback yield so the browser gets a chance to paint
+      // first instead of the whole campus's furniture blocking one
+      // unbroken synchronous stretch.
+      const spawnRoomId: CampusRoomId = spawnRoom?.id ?? "PLAZA";
+      const priorityRoomIds = new Set<CampusRoomId>(["HUB", spawnRoomId, ...adjacentRoomIds(spawnRoomId)]);
+      const orderedEditableRoomIds = [
+        ...EDITABLE_ROOM_IDS.filter((id) => priorityRoomIds.has(id)),
+        ...EDITABLE_ROOM_IDS.filter((id) => !priorityRoomIds.has(id)),
+      ];
+      const priorityEditableCount = orderedEditableRoomIds.filter((id) => priorityRoomIds.has(id)).length;
+      function idleYield(): Promise<void> {
+        return new Promise((resolve) => {
+          if (typeof window.requestIdleCallback === "function") {
+            window.requestIdleCallback(() => resolve(), { timeout: 300 });
+          } else {
+            setTimeout(resolve, 0);
+          }
+        });
+      }
 
       // Shared Museum Room Editor pass (2026-09-12): an admin-renamed room
       // (museum_room_meta.title) updates the top-of-screen room label (via
@@ -1521,7 +1556,7 @@ export default function VltdMuseumCampus() {
       // place. A missing or unrecognized room_style resolves to `null` from
       // createStyledRoomFinishes() and leaves that room's normal
       // per-category finish untouched — the required safe default / reset.
-      for (const roomId of EDITABLE_ROOM_IDS) {
+      function buildRoomStyleAndFurniture(roomId: CampusRoomId) {
         const roomStyleValue = roomMeta[roomId]?.room_style;
         const styled = createStyledRoomFinishes(roomStyleValue);
 
@@ -1652,6 +1687,7 @@ export default function VltdMuseumCampus() {
           }
         }
       }
+      for (const roomId of orderedEditableRoomIds.slice(0, priorityEditableCount)) buildRoomStyleAndFurniture(roomId);
 
       // Shared Museum Room Editor pass (2026-09-12): fetch every gallery
       // room's admin-curated content once, generically — replacing the old
@@ -1671,9 +1707,9 @@ export default function VltdMuseumCampus() {
       );
       if (contentCancelled) return;
 
-      for (const roomId of EDITABLE_ROOM_IDS) {
+      function placeCuratedRoomItems(roomId: CampusRoomId) {
         const curated = curatedItemsByRoom.get(roomId);
-        if (!curated) continue;
+        if (!curated) return;
         const doorways = deriveRoomDoorways(roomId);
         const wallSlots = computeRoomPlacementSlots(roomId, doorways, WALL_THICKNESS, EYE_HEIGHT, itemsPerRoom, focalWallFor(roomId));
         // POP_CULTURE Vault-parity pass (2026-09-13): fold in this room's
@@ -1698,6 +1734,7 @@ export default function VltdMuseumCampus() {
           );
         }
       }
+      for (const roomId of orderedEditableRoomIds.slice(0, priorityEditableCount)) placeCuratedRoomItems(roomId);
       // Newly-created light groups (any room curated here for the first
       // time) need their visibility resolved against the visitor's CURRENT
       // position — the per-frame activation check only re-runs on a
@@ -1705,6 +1742,35 @@ export default function VltdMuseumCampus() {
       // arrived.
       lastLightLocation = { kind: "none" };
       updateRoomLightActivation(cameraBody.x, cameraBody.z);
+
+      // Perf pass (2026-09-22): the spawn room + doorway neighbors + HUB
+      // have their real style/furniture/items in place at this point —
+      // every other EDITABLE_ROOM_IDS room still gets the exact same
+      // treatment (same two functions above, completely unchanged), just
+      // after one idle-callback yield so the browser can paint and become
+      // interactive first instead of the whole campus's furniture blocking
+      // one unbroken synchronous stretch. Runs as a background task (not
+      // awaited here) so the rest of this function — vault placeholders,
+      // Spotlight/Store, marking the page ready — proceeds immediately
+      // rather than waiting on rooms the visitor isn't even near yet.
+      // Guarded by contentCancelled the same way every other async step in
+      // this function already is, in case the visitor navigates away first.
+      if (priorityEditableCount < orderedEditableRoomIds.length) {
+        void (async () => {
+          const deferredStart = performance.now();
+          await idleYield();
+          if (contentCancelled) return;
+          const deferredIds = orderedEditableRoomIds.slice(priorityEditableCount);
+          for (const roomId of deferredIds) buildRoomStyleAndFurniture(roomId);
+          for (const roomId of deferredIds) placeCuratedRoomItems(roomId);
+          lastLightLocation = { kind: "none" };
+          updateRoomLightActivation(cameraBody.x, cameraBody.z);
+          if (!contentCancelled) renderer.compile(scene, camera);
+          console.warn(
+            `[perf] populateDynamicContent deferred phase (${deferredIds.length} rooms): ${Math.round(performance.now() - deferredStart)}ms`
+          );
+        })();
+      }
 
       // Vault-item category rooms — the signed-in user's own items,
       // grouped by universe, as placeholder content until a real
@@ -1910,6 +1976,9 @@ export default function VltdMuseumCampus() {
         renderer.compile(scene, camera);
         console.warn(`[perf] populateDynamicContent renderer.compile(): ${Math.round(performance.now() - compileStart)}ms`);
       }
+      console.warn(
+        `[perf] populateDynamicContent priority phase (${priorityEditableCount}/${orderedEditableRoomIds.length} editable rooms): ${Math.round(performance.now() - perfPopulateStart)}ms`
+      );
     }
     void populateDynamicContent();
 
