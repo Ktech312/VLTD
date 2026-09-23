@@ -1509,15 +1509,6 @@ export default function VltdMuseumCampus() {
         ...EDITABLE_ROOM_IDS.filter((id) => !priorityRoomIds.has(id)),
       ];
       const priorityEditableCount = orderedEditableRoomIds.filter((id) => priorityRoomIds.has(id)).length;
-      function idleYield(): Promise<void> {
-        return new Promise((resolve) => {
-          if (typeof window.requestIdleCallback === "function") {
-            window.requestIdleCallback(() => resolve(), { timeout: 300 });
-          } else {
-            setTimeout(resolve, 0);
-          }
-        });
-      }
 
       // Shared Museum Room Editor pass (2026-09-12): an admin-renamed room
       // (museum_room_meta.title) updates the top-of-screen room label (via
@@ -1687,8 +1678,6 @@ export default function VltdMuseumCampus() {
           }
         }
       }
-      for (const roomId of orderedEditableRoomIds.slice(0, priorityEditableCount)) buildRoomStyleAndFurniture(roomId);
-
       // Shared Museum Room Editor pass (2026-09-12): fetch every gallery
       // room's admin-curated content once, generically — replacing the old
       // SPORTS-only special case. A room with zero enabled
@@ -1734,37 +1723,58 @@ export default function VltdMuseumCampus() {
           );
         }
       }
-      for (const roomId of orderedEditableRoomIds.slice(0, priorityEditableCount)) placeCuratedRoomItems(roomId);
-      // Newly-created light groups (any room curated here for the first
-      // time) need their visibility resolved against the visitor's CURRENT
-      // position — the per-frame activation check only re-runs on a
-      // location CHANGE, which already happened before this async content
-      // arrived.
-      lastLightLocation = { kind: "none" };
-      updateRoomLightActivation(cameraBody.x, cameraBody.z);
+      // Perf-regression fix (2026-09-23, EK-reported live: "it gets stuck
+      // and flings me around trying to catch up" while spinning the
+      // camera, worse in a new way than before the 2026-09-22 priority/
+      // deferred split above). Root cause: that split moved the freeze, it
+      // didn't remove it — each phase still ran every one of its rooms'
+      // style/furniture/item work as ONE continuous synchronous block (up
+      // to ~9 rooms in the deferred case), and that block can start firing
+      // via the idle callback WHILE the visitor is actively dragging to
+      // look around. A multi-hundred-ms-to-multi-second unbroken block
+      // can't be interrupted by the browser to process queued mouse-move
+      // input, so every drag during that window piles up and gets applied
+      // all at once the instant the block finally ends — exactly the
+      // "stuck then flings" symptom. The isolated 18s spike measured
+      // earlier tonight was this same bug at its worst, not a fluke.
+      // Fixed by yielding to the browser after EVERY SINGLE ROOM instead
+      // of once before a whole batch, via requestAnimationFrame (tied to
+      // the actual render/input cadence, not requestIdleCallback's up-to-
+      // 300ms deadline) — so no continuous block is ever more than one
+      // room's own real cost, and a real frame (with real input handling)
+      // always lands between rooms.
+      function frameYield(): Promise<void> {
+        return new Promise((resolve) => requestAnimationFrame(() => resolve()));
+      }
+      async function processEditableRoomsIncremental(roomIds: CampusRoomId[]) {
+        for (const roomId of roomIds) {
+          if (contentCancelled) return;
+          buildRoomStyleAndFurniture(roomId);
+          placeCuratedRoomItems(roomId);
+          // Newly-created light groups need their visibility resolved
+          // against the visitor's CURRENT position — the per-frame
+          // activation check only re-runs on a location CHANGE, which
+          // already happened before this async content arrived.
+          lastLightLocation = { kind: "none" };
+          updateRoomLightActivation(cameraBody.x, cameraBody.z);
+          await frameYield();
+        }
+      }
+      await processEditableRoomsIncremental(orderedEditableRoomIds.slice(0, priorityEditableCount));
+      if (contentCancelled) return;
 
-      // Perf pass (2026-09-22): the spawn room + doorway neighbors + HUB
-      // have their real style/furniture/items in place at this point —
-      // every other EDITABLE_ROOM_IDS room still gets the exact same
-      // treatment (same two functions above, completely unchanged), just
-      // after one idle-callback yield so the browser can paint and become
-      // interactive first instead of the whole campus's furniture blocking
-      // one unbroken synchronous stretch. Runs as a background task (not
-      // awaited here) so the rest of this function — vault placeholders,
-      // Spotlight/Store, marking the page ready — proceeds immediately
-      // rather than waiting on rooms the visitor isn't even near yet.
-      // Guarded by contentCancelled the same way every other async step in
-      // this function already is, in case the visitor navigates away first.
+      // Every other EDITABLE_ROOM_IDS room still gets the exact same
+      // treatment, now also one room at a time — runs as a background task
+      // (not awaited here) so the rest of this function — vault
+      // placeholders, Spotlight/Store, marking the page ready — proceeds
+      // immediately rather than waiting on rooms the visitor isn't even
+      // near yet. Guarded by contentCancelled the same way every other
+      // async step in this function already is.
       if (priorityEditableCount < orderedEditableRoomIds.length) {
         void (async () => {
           const deferredStart = performance.now();
-          await idleYield();
-          if (contentCancelled) return;
           const deferredIds = orderedEditableRoomIds.slice(priorityEditableCount);
-          for (const roomId of deferredIds) buildRoomStyleAndFurniture(roomId);
-          for (const roomId of deferredIds) placeCuratedRoomItems(roomId);
-          lastLightLocation = { kind: "none" };
-          updateRoomLightActivation(cameraBody.x, cameraBody.z);
+          await processEditableRoomsIncremental(deferredIds);
           if (!contentCancelled) renderer.compile(scene, camera);
           console.warn(
             `[perf] populateDynamicContent deferred phase (${deferredIds.length} rooms): ${Math.round(performance.now() - deferredStart)}ms`
