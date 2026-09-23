@@ -43,7 +43,21 @@ export function shadeHex(hex: string, amt: number) {
 // clouds at real viewing distance). One very-low-frequency term is kept, but
 // at low amplitude and a period longer than the canvas itself, so within any
 // one tile it's only a gentle overall drift, not a visible blob.
+// Perf pass (2026-09-23): zero parameters, hardcoded RNG seed (47, below) —
+// every call already produced a bit-identical 512x512 canvas. Root-caused
+// live while investigating the VLTD Museum campus's "well over 10 seconds"
+// load complaint: createStoneFloorTexture() below calls this once per
+// non-styled room's floor (every room in the campus, ~12-13 per full load),
+// on top of its own direct callers in VirtualGalleryRoom.tsx and
+// galleryRoomFinishes.ts — real, repeated per-pixel + trig cost for output
+// that never changes. Memoized at module scope: safe because nothing in any
+// of its three call sites mutates the returned texture's own properties
+// (repeat/offset/wrapS) after creation, they only assign it by reference to
+// their own fresh Material — the same texture-sharing pattern this file's
+// map/bumpMap assignment already relies on.
+let cachedGrainTexture: THREE.CanvasTexture | null = null;
 export function createGrainTexture() {
+  if (cachedGrainTexture) return cachedGrainTexture;
   const canvas = document.createElement("canvas");
   canvas.width = canvas.height = 512;
   const ctx = canvas.getContext("2d")!;
@@ -65,6 +79,7 @@ export function createGrainTexture() {
   texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
   texture.repeat.set(5, 3);
   texture.anisotropy = 4;
+  cachedGrainTexture = texture;
   return texture;
 }
 

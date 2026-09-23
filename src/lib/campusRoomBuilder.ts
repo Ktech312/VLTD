@@ -280,7 +280,25 @@ export type WallSpan = { wall: WallSide; from: number; to: number; fixed: number
 // needing a second large-room code path.
 const PANEL_WIDTH = 4.2; // world units per panel bay
 
+// Perf pass (2026-09-23): this function takes no parameters and its RNG
+// seed (47, below) is a hardcoded constant — it was producing a bit-
+// identical 256x560 canvas on EVERY call, yet every room calls it fresh via
+// createWallMaterial() (one call per distinct room id, ~12 rooms across a
+// full campus load), each paying its own real per-pixel fill + trig cost
+// for output that's already been computed. Root-caused live via the
+// museum's own [perf] timing logs (VltdMuseumCampus.tsx) while
+// investigating EK's "well over 10 seconds" report: this was a large,
+// unexplained chunk of the synchronous setup's cold-start variance.
+// Memoized at module scope — every room's own THREE.MeshStandardMaterial
+// INSTANCE is still created fresh in createWallMaterial() below (so the
+// "changing SPORTS must not change COLLECTION/CARDS/HUB" per-room
+// independence this file's 2026-09-12 pass required is untouched — that
+// guarantee is about the Material object, never about the read-only
+// CanvasTexture it points at), only the underlying pixel data — which nothing
+// in this file mutates after creation — is now computed once and shared.
+let cachedArchitecturalPanelTexture: THREE.CanvasTexture | null = null;
 function createArchitecturalPanelTexture(): THREE.CanvasTexture {
+  if (cachedArchitecturalPanelTexture) return cachedArchitecturalPanelTexture;
   const width = 256;
   const height = 560;
   const canvas = document.createElement("canvas");
@@ -322,6 +340,7 @@ function createArchitecturalPanelTexture(): THREE.CanvasTexture {
   texture.colorSpace = THREE.SRGBColorSpace;
   texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
   texture.anisotropy = 4;
+  cachedArchitecturalPanelTexture = texture;
   return texture;
 }
 
@@ -406,7 +425,25 @@ function wallRotationY(side: WallSide): number {
 // again, and there's one texture generator to tune instead of two.
 const CEILING_BAY_SIZE = 7.8; // world units per ceiling bay
 
+// Perf pass (2026-09-23): same over-regeneration issue as
+// createArchitecturalPanelTexture above, one tier down — this one DOES take
+// real parameters (roomWidth/roomDepth), but its RNG seed (211, below) is
+// still a hardcoded constant, so any two rooms sharing the same footprint
+// (several do — see CAMPUS_ROOMS in campusLayout.ts, e.g. every 21x26
+// legacy room) were each paying their own full 512x512 per-pixel fill for a
+// bit-identical result. Memoized by the exact `${roomWidth}x${roomDepth}`
+// key actually used below (both the pixel pattern and the .repeat set from
+// these same two numbers), so same-footprint rooms now share one texture —
+// different-footprint rooms are completely unaffected, each still gets its
+// own real texture on first request. Same safety reasoning as the panel
+// texture cache above: nothing here or in buildCeilingAndTrim's caller
+// mutates the returned texture's properties after creation, only assigns it
+// by reference to a room's own fresh Material instance.
+const ceilingBayTextureCache = new Map<string, THREE.CanvasTexture>();
 function createCeilingBayTexture(roomWidth: number, roomDepth: number): THREE.CanvasTexture {
+  const cacheKey = `${roomWidth}x${roomDepth}`;
+  const cached = ceilingBayTextureCache.get(cacheKey);
+  if (cached) return cached;
   const canvas = document.createElement("canvas");
   canvas.width = canvas.height = 512;
   const ctx = canvas.getContext("2d")!;
@@ -438,6 +475,7 @@ function createCeilingBayTexture(roomWidth: number, roomDepth: number): THREE.Ca
     Math.max(1, Math.round(roomDepth / CEILING_BAY_SIZE))
   );
   texture.anisotropy = 4;
+  ceilingBayTextureCache.set(cacheKey, texture);
   return texture;
 }
 
