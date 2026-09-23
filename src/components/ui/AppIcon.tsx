@@ -417,7 +417,13 @@ export function universeGlyphName(universe: string): AppIconName {
   return "star";
 }
 
-const SIMPLIFIED_GLASS_NAV_BASE = "/ui/icon-themes/simplified-glass-nav-v1";
+// Simple Glass — complete 109-icon pack (design-assets/icon-themes/
+// simple-glass-v1, approved 2026-09-23), one PNG per AppIconName via
+// manifest.json's exact list, copied verbatim into public/. Supersedes the
+// old 6-icon-only nav trial folder (simplified-glass-nav-v1) — the 6
+// NAV_CONCEPT_NAMES below now point at this same complete pack too, so the
+// whole app draws from one consistent asset set instead of two.
+const SIMPLIFIED_GLASS_NAV_BASE = "/ui/icon-themes/simple-glass-v1";
 const SOFT_STICKER_NAV_BASE = "/ui/icon-themes/soft-sticker-nav-v1";
 const NAV_CONCEPT_NAMES = new Set<AppIconName>([
   "vault",
@@ -427,6 +433,66 @@ const NAV_CONCEPT_NAMES = new Set<AppIconName>([
   "insights",
   "more",
 ]);
+
+// The extension of Simple Glass from those 6 nav icons to every AppIcon.
+// Kept as its own set (rather than "every AppIconName") because the pack
+// only actually ships art for these 109 — any name below without a matching
+// PNG silently stays Classic, the same safe-default rule NAV_CONCEPT_NAMES
+// already relies on. Mirrors manifest.json exactly; keep in sync if the
+// pack ever grows.
+const SIMPLE_GLASS_NAMES = new Set<AppIconName>([
+  "account", "activity", "addItem", "arrowLeft", "back", "bag", "bell", "book", "box", "bug",
+  "building", "burst", "camera", "car", "card", "cards", "cart", "chart", "check", "checkmark",
+  "chevronDown", "chevronUp", "clock", "close", "cloud", "communityBoard", "copy", "dashboard",
+  "delete", "discover", "document", "dollar", "door", "download", "dragHandle", "edit", "editRoom",
+  "email", "eraser", "events", "exhibition", "exhibitions", "expand", "externalLink", "eye",
+  "eyeOff", "favorite", "flame", "flash", "flipVertical", "frame", "game", "gavel", "gem", "gift",
+  "globe", "guide", "heart", "inbox", "info", "insights", "key", "layers", "leaf", "learn", "link",
+  "loader", "lock", "map", "mapPin", "megaphone", "message", "moon", "more", "music", "next",
+  "notifications", "organize", "paintbrush", "palette", "play", "price", "rocket", "rotate",
+  "ruler", "save", "scan", "search", "selectItems", "settings", "share", "shield", "sms", "sofa",
+  "sparkle", "sparkleAI", "star", "sun", "tag", "target", "ticket", "trophy", "unlocked", "upload",
+  "users", "vault", "viewGallery", "warning", "wrench",
+]);
+// Below this size the pack's own line detail stops reading clearly (same
+// threshold the earlier Friendly Glass pack's own size testing settled on)
+// — Classic renders instead, regardless of the active icon style. This is
+// what makes "load only icons rendered on the current page" true for small
+// UI too: a 9-14px badge never requests a Simple Glass image at all.
+const SIMPLE_GLASS_MIN_SIZE = 18;
+
+/** The Simple Glass raster layer for any non-nav-concept icon, plus a small
+ * filled-state indicator (the pack has one static image per name, no
+ * separate "filled" art) — same gold-ring-and-mark technique already
+ * established for the retired Friendly Glass pack's own filled toggles.
+ * Renders nothing (both name and size gates fail closed) unless this name
+ * has real art AND the caller's size clears the floor above. Purely
+ * additive to the DOM; [data-vltd-icon-style] on <html> (see globals.css)
+ * decides at paint time whether it's actually visible, so this stays a
+ * plain function usable from a server component exactly like the rest of
+ * this file. */
+function SimpleGlassOverlay({ name, size, filled }: { name: AppIconName; size: number; filled: boolean }) {
+  if (!SIMPLE_GLASS_NAMES.has(name) || size < SIMPLE_GLASS_MIN_SIZE) return null;
+  return (
+    <>
+      <img
+        className="vltd-icon-sg"
+        src={`${SIMPLIFIED_GLASS_NAV_BASE}/${name}.png`}
+        alt=""
+        aria-hidden="true"
+        width={size}
+        height={size}
+        loading="lazy"
+        decoding="async"
+        style={{ position: "absolute", inset: 0, width: size, height: size, objectFit: "contain" }}
+      />
+      {filled && <span className="vltd-icon-sg-filled-badge" aria-hidden="true" />}
+    </>
+  );
+}
+function simpleGlassClassicClass(name: AppIconName, size: number): string | undefined {
+  return SIMPLE_GLASS_NAMES.has(name) && size >= SIMPLE_GLASS_MIN_SIZE ? "vltd-icon-sg-classic" : undefined;
+}
 
 export function AppIcon({
   name,
@@ -444,8 +510,11 @@ export function AppIcon({
   className?: string;
   style?: CSSProperties;
   strokeWidth?: number;
-  /** Toggle-state fill (e.g. a saved bookmark or a liked heart). The two
-   * concept styles are navigation-only, so filled controls stay Classic. */
+  /** Toggle-state fill (e.g. a saved bookmark or a liked heart). Classic
+   * fills the SVG with currentColor as before; Simple Glass shows the same
+   * badge-dot indicator on top of the glass image (see
+   * vltd-icon-sg-filled-badge in globals.css) — Soft Sticker is nav-only/
+   * 6-icon-only and never renders a filled icon in the first place. */
   filled?: boolean;
   /** Nav active/inactive state — only meaningful with variant="navTop" or
    * "navBottom". Existing labels, underline, and pill treatments continue
@@ -461,7 +530,7 @@ export function AppIcon({
         style={{ display: "inline-block", position: "relative", width: size, height: size, lineHeight: 0, ...style }}
       >
         <svg
-          className={hasConceptAsset ? "vltd-icon-nav-concept-classic" : undefined}
+          className={hasConceptAsset ? "vltd-icon-nav-concept-classic" : simpleGlassClassicClass(name, size)}
           width={size}
           height={size}
           viewBox="0 0 24 24"
@@ -475,7 +544,7 @@ export function AppIcon({
         >
           {renderer ? renderer(active) : PATHS[name]}
         </svg>
-        {hasConceptAsset && (
+        {hasConceptAsset ? (
           <>
           <img
             className="vltd-icon-simplified-glass"
@@ -511,14 +580,18 @@ export function AppIcon({
             style={{ position: "absolute", inset: 0, width: size, height: size, objectFit: "contain" }}
           />
           </>
+        ) : (
+          <SimpleGlassOverlay name={name} size={size} filled={filled} />
         )}
       </span>
     );
   }
 
-  // The two trial styles intentionally affect navigation only. Feature and
-  // compact controls remain Classic until a complete small-icon direction is
-  // selected and approved in the real app.
+  // Simple Glass extension (2026-09-23): "feature" and "compact" now carry
+  // the same universal glass overlay as the extended navTop/navBottom path
+  // above — gated the same way (name in the pack + size clears the floor),
+  // invisible unless [data-vltd-icon-style="simplified-glass"] is set on
+  // <html>. Soft Sticker stays nav-only/6-icon-only, untouched.
   if (variant === "feature") {
     const pad = Math.round(size * 0.62);
     const box = size + pad;
@@ -539,19 +612,24 @@ export function AppIcon({
             boxShadow: "inset 0 1px 0 rgba(255,255,255,0.18), inset 0 -6px 12px rgba(0,0,0,0.25)",
           }}
         >
-          <svg
-            width={size}
-            height={size}
-            viewBox="0 0 24 24"
-            fill={filled ? "currentColor" : "none"}
-            stroke="currentColor"
-            strokeWidth={strokeWidth}
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            aria-hidden="true"
-          >
-            {PATHS[name]}
-          </svg>
+          <span style={{ position: "relative", width: size, height: size, lineHeight: 0 }}>
+            <svg
+              className={simpleGlassClassicClass(name, size)}
+              width={size}
+              height={size}
+              viewBox="0 0 24 24"
+              fill={filled ? "currentColor" : "none"}
+              stroke="currentColor"
+              strokeWidth={strokeWidth}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+              style={{ position: "absolute", inset: 0 }}
+            >
+              {PATHS[name]}
+            </svg>
+            <SimpleGlassOverlay name={name} size={size} filled={filled} />
+          </span>
         </span>
       </span>
     );
@@ -564,6 +642,7 @@ export function AppIcon({
       style={{ display: "inline-block", position: "relative", width: size, height: size, lineHeight: 0, ...style }}
     >
       <svg
+        className={simpleGlassClassicClass(name, size)}
         width={size}
         height={size}
         viewBox="0 0 24 24"
@@ -577,6 +656,7 @@ export function AppIcon({
       >
         {PATHS[name]}
       </svg>
+      <SimpleGlassOverlay name={name} size={size} filled={filled} />
     </span>
   );
 }

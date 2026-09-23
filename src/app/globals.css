@@ -201,9 +201,10 @@
 
 /* =========================================================
    ICON STYLE TRIAL
-   Only the six navigation destinations with approved concept
-   assets opt into these classes. Every other AppIcon remains
-   Classic while the two small-size directions are evaluated.
+   Soft Sticker stays limited to the six navigation destinations
+   with approved concept assets. Simple Glass (approved 2026-09-23)
+   now extends to every AppIcon that has matching art in the
+   109-icon pack — see vltd-icon-sg / vltd-icon-sg-classic below.
 ========================================================= */
 
 .vltd-icon-simplified-glass,
@@ -219,6 +220,38 @@
 }
 [data-vltd-icon-style="soft-sticker"] .vltd-icon-soft-sticker {
   display: block !important;
+}
+
+/* Simple Glass, extended (2026-09-23) — every AppIcon outside the six nav
+   concepts above (which keep their own dedicated classes/markup untouched).
+   .vltd-icon-sg-classic is only ever applied by AppIcon.tsx when a matching
+   Simple Glass PNG actually exists for that name and size clears the 18px
+   floor — so an icon with no art, or one below the floor, simply never gets
+   this class and stays the plain, always-visible Classic SVG. */
+.vltd-icon-sg {
+  display: none;
+}
+[data-vltd-icon-style="simplified-glass"] .vltd-icon-sg-classic {
+  display: none !important;
+}
+[data-vltd-icon-style="simplified-glass"] .vltd-icon-sg {
+  display: block !important;
+}
+.vltd-icon-sg-filled-badge {
+  display: none;
+}
+[data-vltd-icon-style="simplified-glass"] .vltd-icon-sg-filled-badge {
+  display: block !important;
+  position: absolute;
+  right: -2px;
+  bottom: -2px;
+  width: 38%;
+  height: 38%;
+  min-width: 7px;
+  min-height: 7px;
+  border-radius: 999px;
+  background: var(--theme-gold, #c8cdd2);
+  box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.55);
 }
 
 /* ThemePicker swatches always show the option they represent, even when a
