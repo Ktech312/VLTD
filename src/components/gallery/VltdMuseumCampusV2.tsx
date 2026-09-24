@@ -156,9 +156,7 @@ export default function VltdMuseumCampusV2({ roomId }: Props) {
     const clock = new THREE.Clock();
     let lastRoomLabel = "__unset__";
 
-    function tick() {
-      frameId = window.requestAnimationFrame(tick);
-      const dt = Math.min(clock.getDelta(), 0.05);
+    function frameStep(dt: number) {
       movement.update(dt);
 
       const pos = movement.getPosition();
@@ -173,6 +171,11 @@ export default function VltdMuseumCampusV2({ roomId }: Props) {
       }
 
       renderer.render(scene, camera);
+    }
+
+    function tick() {
+      frameId = window.requestAnimationFrame(tick);
+      frameStep(Math.min(clock.getDelta(), 0.05));
     }
     tick();
 
@@ -200,6 +203,18 @@ export default function VltdMuseumCampusV2({ roomId }: Props) {
       getLoadedRoomIds: () => (shellHandle ? Array.from(shellHandle.loadedRooms.keys()) : []),
       getCameraBody: () => ({ x: movement.getPosition().x, y: movement.getPosition().y, z: movement.getPosition().z, yaw: movement.getYaw() }),
       forceRender: () => renderer.render(scene, camera),
+      // Verification-only: drives the exact same per-frame logic tick()
+      // does (movement.update, room-crossing/resync check, render), but
+      // via explicit dt steps instead of requestAnimationFrame — rAF is
+      // throttled/paused by the browser whenever the tab isn't the visible
+      // one (document.hidden), which is correct, standard behavior (the
+      // legacy campus's own tick loop has the exact same characteristic),
+      // not something specific to V2. This lets movement/collision/
+      // doorway-crossing be verified deterministically regardless of
+      // whether the tab is actually foregrounded during automated testing.
+      pumpFrames: (count: number, dtMs = 16) => {
+        for (let i = 0; i < count; i += 1) frameStep(dtMs / 1000);
+      },
     };
 
     return () => {
