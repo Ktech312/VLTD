@@ -202,8 +202,8 @@ export default function VltdMuseumCampusV2({ roomId }: Props) {
   }, [roomId]);
 
   return (
-    <div className="relative h-full w-full overflow-hidden">
-      <div ref={mountRef} className="absolute inset-0" />
+    <div className="fixed inset-0 bg-[#081527]">
+      <div ref={mountRef} style={{ width: "100vw", height: "100vh" }} />
       <div className="pointer-events-none absolute left-1/2 top-6 -translate-x-1/2 rounded-full bg-black/70 px-4 py-1.5 text-xs font-medium tracking-wide text-white/85 ring-1 ring-white/15 backdrop-blur">
         <span ref={roomLabelRef}>Corridor</span>
         <span className="ml-2 text-cyan-300/80">V2</span>
