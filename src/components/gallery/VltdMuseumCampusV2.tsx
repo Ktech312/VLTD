@@ -32,7 +32,7 @@ import {
 } from "@/lib/campusLayout";
 import { MUSEUM_CAMERA_FOV } from "@/lib/museumStandard";
 import { createVisitorMovement } from "@/lib/museumV2/movement";
-import { createCampusShell, disposeCampusShell, syncNeighborhood, type CampusShellHandle } from "@/lib/museumV2/roomStreaming";
+import { createCampusShell, disposeCampusShell, primeRoom, syncNeighborhood, type CampusShellHandle } from "@/lib/museumV2/roomStreaming";
 
 type Props = { roomId: CampusRoomId };
 
@@ -129,11 +129,24 @@ export default function VltdMuseumCampusV2({ roomId }: Props) {
       try {
         shellHandle = createCampusShell(scene, new THREE.TextureLoader());
         if (cancelled) return;
-        await syncNeighborhood(shellHandle, roomId);
+        // Phase 1: only the room the visitor is actually entering — real
+        // walls on every side (including toward TCG/HUB, not yet built),
+        // real floor/ceiling/furniture/content. This is what the work
+        // order's "controllable within 2s warm / 4s cold" target is about.
+        await primeRoom(shellHandle, roomId);
         if (cancelled) return;
         renderer.compile(scene, camera);
         firstReadyMs = performance.now() - coldStart;
         setReady(true);
+        // Phase 2: bring the rest of the neighborhood (TCG, HUB) in behind
+        // it, unawaited — doesn't block "controllable," matches the work
+        // order's own "preload only rooms directly connected" framing
+        // (preload, not block on). Routed through resyncTo() (not a direct
+        // syncNeighborhood call) so it shares the same syncInFlight guard a
+        // doorway-crossing resync uses — otherwise a visitor crossing into
+        // TCG/HUB before this background sync finishes could race it,
+        // mutating handle.loadedRooms/loadedWalls from two places at once.
+        void resyncTo(roomId);
       } catch (err) {
         if (!cancelled) setLoadError(err instanceof Error ? err.message : "Failed to load the room.");
       }

@@ -357,14 +357,7 @@ function disposeStreamedRoom(handle: CampusShellHandle, roomId: CampusRoomId): v
   // wall segment. Cleared campus-wide only on full teardown, below.
 }
 
-/** Brings the loaded scene in line with `centerRoomId`'s neighborhood
- * (itself + adjacentRoomIds()) — disposes anything outside it, builds
- * anything missing. Safe to call repeatedly as the visitor moves; an
- * already-current neighborhood is a fast no-op for every already-loaded
- * room (no re-fetch, no re-build). */
-export async function syncNeighborhood(handle: CampusShellHandle, centerRoomId: CampusRoomId): Promise<void> {
-  const needed = new Set(neighborhoodFor(centerRoomId));
-
+async function syncToRoomSet(handle: CampusShellHandle, needed: Set<CampusRoomId>): Promise<void> {
   for (const roomId of Array.from(handle.loadedRooms.keys())) {
     if (!needed.has(roomId)) disposeStreamedRoom(handle, roomId);
   }
@@ -381,6 +374,32 @@ export async function syncNeighborhood(handle: CampusShellHandle, centerRoomId: 
 
   const toLoad = neededList.filter((id) => !handle.loadedRooms.has(id));
   await Promise.all(toLoad.map((id) => loadRoom(handle, id, metaByRoom.get(id) ?? null)));
+}
+
+/** Brings the loaded scene in line with `centerRoomId`'s neighborhood
+ * (itself + adjacentRoomIds()) — disposes anything outside it, builds
+ * anything missing. Safe to call repeatedly as the visitor moves; an
+ * already-current neighborhood is a fast no-op for every already-loaded
+ * room (no re-fetch, no re-build). */
+export async function syncNeighborhood(handle: CampusShellHandle, centerRoomId: CampusRoomId): Promise<void> {
+  await syncToRoomSet(handle, new Set(neighborhoodFor(centerRoomId)));
+}
+
+// Perf fix (2026-09-24, live-measured): the FIRST time a visitor ever
+// enters, gating "controllable" on the full neighborhood (center room +
+// both neighbors, each with their own procedural canvas-texture generation
+// — genuinely CPU-bound work, not network) was the actual reason a warm
+// load still measured ~5.3s against the work order's 2s target, even after
+// the getRoomMeta fix above got every real network call done by ~1.9s. The
+// work order's own target is about the room the visitor is ENTERING, not
+// every preloaded neighbor — primeRoom() builds and walls only
+// `centerRoomId` itself (so its doorways still look correct on every side,
+// including toward not-yet-built neighbors) and resolves as soon as THAT
+// is walkable; the caller is expected to follow it with an unawaited
+// syncNeighborhood() call to bring the rest of the neighborhood in behind
+// it without blocking the "controllable" moment.
+export async function primeRoom(handle: CampusShellHandle, centerRoomId: CampusRoomId): Promise<void> {
+  await syncToRoomSet(handle, new Set([centerRoomId]));
 }
 
 /** Full teardown — call on unmount. */
