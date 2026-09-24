@@ -127,7 +127,7 @@ export default function VltdMuseumCampusV2({ roomId }: Props) {
 
     (async () => {
       try {
-        shellHandle = await createCampusShell(scene, new THREE.TextureLoader());
+        shellHandle = createCampusShell(scene, new THREE.TextureLoader());
         if (cancelled) return;
         await syncNeighborhood(shellHandle, roomId);
         if (cancelled) return;

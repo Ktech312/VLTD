@@ -101,8 +101,19 @@ export type CampusShellHandle = {
   loadedRooms: Map<CampusRoomId, StreamedRoom>;
   loadedWalls: Map<string, THREE.Group>;
   loadEpoch: Map<CampusRoomId, number>;
-  itemsPerRoomDefault: number;
+  itemsPerRoomDefault: Promise<number>;
   wallMaterialCache: Map<CampusRoomId, { material: THREE.MeshStandardMaterial; styled: StyledRoomFinishes | null }>;
+  // Perf fix (2026-09-24, live-measured: a cold V2 load was taking 12-28s
+  // against a 2-4s target). Root cause: getRoomMeta(roomId) is a real
+  // Supabase round trip every call (no cache in museumCampusConfig.ts
+  // itself), and this file was calling it 2-3 SEPARATE times per room
+  // (once in resolveRoomWallMaterial, again in loadRoom, again in
+  // buildProceduralRoom) — some of those serialized behind a sequential
+  // for-await loop (syncWalls), not even run concurrently. metaCache
+  // stores the in-flight/resolved promise per room so every call site
+  // shares one fetch, and syncNeighborhood now warms every needed room's
+  // entry in parallel up front before anything that depends on it runs.
+  metaCache: Map<CampusRoomId, Promise<MuseumRoomMeta | null>>;
 };
 
 function wallSegmentKey(segment: CampusWallSegment): string {
@@ -133,8 +144,11 @@ function asSceneTarget(group: THREE.Group): THREE.Scene {
   return group as unknown as THREE.Scene;
 }
 
-export async function createCampusShell(scene: THREE.Scene, textureLoader: THREE.TextureLoader): Promise<CampusShellHandle> {
-  const itemsPerRoomDefault = await getItemsPerRoom();
+// Returns immediately — getItemsPerRoom() (one more Supabase round trip) is
+// kicked off but not awaited here, so it runs concurrently with whatever
+// the caller does next (syncNeighborhood's own meta warm-up) instead of
+// serializing in front of it.
+export function createCampusShell(scene: THREE.Scene, textureLoader: THREE.TextureLoader): CampusShellHandle {
   return {
     scene,
     textureLoader,
@@ -142,8 +156,9 @@ export async function createCampusShell(scene: THREE.Scene, textureLoader: THREE
     loadedRooms: new Map(),
     loadedWalls: new Map(),
     loadEpoch: new Map(),
-    itemsPerRoomDefault,
+    itemsPerRoomDefault: getItemsPerRoom(),
     wallMaterialCache: new Map(),
+    metaCache: new Map(),
   };
 }
 
@@ -151,13 +166,27 @@ export function neighborhoodFor(roomId: CampusRoomId): CampusRoomId[] {
   return Array.from(new Set<CampusRoomId>([roomId, ...adjacentRoomIds(roomId)]));
 }
 
-async function resolveRoomWallMaterial(
+// Shared across every call site in this file (syncWalls, loadRoom,
+// buildProceduralRoom) — see CampusShellHandle.metaCache's own comment.
+// Storing the PROMISE (not just the resolved value) means two callers
+// racing to resolve the same not-yet-cached room both await the exact same
+// single in-flight fetch instead of each starting their own.
+function resolveMeta(handle: CampusShellHandle, roomId: CampusRoomId): Promise<MuseumRoomMeta | null> {
+  let promise = handle.metaCache.get(roomId);
+  if (!promise) {
+    promise = getRoomMeta(roomId);
+    handle.metaCache.set(roomId, promise);
+  }
+  return promise;
+}
+
+function resolveRoomWallMaterial(
   handle: CampusShellHandle,
-  roomId: CampusRoomId
-): Promise<{ material: THREE.MeshStandardMaterial; styled: StyledRoomFinishes | null }> {
+  roomId: CampusRoomId,
+  meta: MuseumRoomMeta | null
+): { material: THREE.MeshStandardMaterial; styled: StyledRoomFinishes | null } {
   const cached = handle.wallMaterialCache.get(roomId);
   if (cached) return cached;
-  const meta = await getRoomMeta(roomId);
   const styled = createStyledRoomFinishes(meta?.room_style);
   const material = styled ? styled.wall : createWallMaterial(baseFinishForRoom(roomId));
   const entry = { material, styled };
@@ -165,7 +194,12 @@ async function resolveRoomWallMaterial(
   return entry;
 }
 
-async function syncWalls(handle: CampusShellHandle, needed: Set<CampusRoomId>): Promise<void> {
+// Synchronous — every room this function touches must already have its
+// resolveMeta() promise resolved (syncNeighborhood warms the whole needed
+// set in parallel before calling this), so building every wall segment for
+// a streaming cycle is now a single fast synchronous pass instead of a
+// chain of per-segment network round trips.
+function syncWalls(handle: CampusShellHandle, needed: Set<CampusRoomId>, metaByRoom: Map<CampusRoomId, MuseumRoomMeta | null>): void {
   const neededSegments = handle.wallSegments.filter(
     (s) => needed.has(s.roomA) || (s.roomB && needed.has(s.roomB))
   );
@@ -182,8 +216,8 @@ async function syncWalls(handle: CampusShellHandle, needed: Set<CampusRoomId>): 
   for (const segment of neededSegments) {
     const key = wallSegmentKey(segment);
     if (handle.loadedWalls.has(key)) continue;
-    const { material: materialA } = await resolveRoomWallMaterial(handle, segment.roomA);
-    const materialB = segment.roomB ? (await resolveRoomWallMaterial(handle, segment.roomB)).material : null;
+    const materialA = resolveRoomWallMaterial(handle, segment.roomA, metaByRoom.get(segment.roomA) ?? null).material;
+    const materialB = segment.roomB ? resolveRoomWallMaterial(handle, segment.roomB, metaByRoom.get(segment.roomB) ?? null).material : null;
     const segGroup = new THREE.Group();
     segGroup.name = `v2-wall:${key}`;
     handle.scene.add(segGroup);
@@ -233,11 +267,9 @@ async function loadBakedLikeRoom(handle: CampusShellHandle, roomId: CampusRoomId
   return { roomId, group, lightGroups, styledFinishes: null, source: "baked", bakedUrl };
 }
 
-async function buildProceduralRoom(handle: CampusShellHandle, roomId: CampusRoomId): Promise<StreamedRoom | null> {
+async function buildProceduralRoom(handle: CampusShellHandle, roomId: CampusRoomId, meta: MuseumRoomMeta | null): Promise<StreamedRoom | null> {
   const epoch = handle.loadEpoch.get(roomId) ?? 0;
   const isCancelled = () => (handle.loadEpoch.get(roomId) ?? 0) !== epoch;
-
-  const meta = await getRoomMeta(roomId);
   if (isCancelled()) return null;
 
   const group = new THREE.Group();
@@ -277,7 +309,7 @@ async function buildProceduralRoom(handle: CampusShellHandle, roomId: CampusRoom
     styled.addLighting(anchor);
   }
 
-  const itemCapacity = meta?.item_capacity ?? handle.itemsPerRoomDefault;
+  const itemCapacity = meta?.item_capacity ?? (await handle.itemsPerRoomDefault);
   await placeDynamicRoomItems(
     asSceneTarget(group),
     handle.textureLoader,
@@ -301,12 +333,11 @@ async function buildProceduralRoom(handle: CampusShellHandle, roomId: CampusRoom
   return { roomId, group, lightGroups, styledFinishes: styled, source: "procedural" };
 }
 
-async function loadRoom(handle: CampusShellHandle, roomId: CampusRoomId): Promise<void> {
+async function loadRoom(handle: CampusShellHandle, roomId: CampusRoomId, meta: MuseumRoomMeta | null): Promise<void> {
   handle.loadEpoch.set(roomId, (handle.loadEpoch.get(roomId) ?? 0) + 1);
-  const meta = await getRoomMeta(roomId);
   const streamed = meta?.baked_asset_url
     ? await loadBakedLikeRoom(handle, roomId, meta.baked_asset_url)
-    : await buildProceduralRoom(handle, roomId);
+    : await buildProceduralRoom(handle, roomId, meta);
   if (streamed) handle.loadedRooms.set(roomId, streamed);
 }
 
@@ -337,10 +368,19 @@ export async function syncNeighborhood(handle: CampusShellHandle, centerRoomId: 
   for (const roomId of Array.from(handle.loadedRooms.keys())) {
     if (!needed.has(roomId)) disposeStreamedRoom(handle, roomId);
   }
-  await syncWalls(handle, needed);
 
-  const toLoad = Array.from(needed).filter((id) => !handle.loadedRooms.has(id));
-  await Promise.all(toLoad.map((id) => loadRoom(handle, id)));
+  // Warm every needed room's meta in parallel up front — this is the one
+  // round trip per room the whole streaming cycle pays; syncWalls and
+  // loadRoom below both read from the now-resolved metaCache instead of
+  // fetching again.
+  const neededList = Array.from(needed);
+  const metaEntries = await Promise.all(neededList.map(async (id) => [id, await resolveMeta(handle, id)] as const));
+  const metaByRoom = new Map(metaEntries);
+
+  syncWalls(handle, needed, metaByRoom);
+
+  const toLoad = neededList.filter((id) => !handle.loadedRooms.has(id));
+  await Promise.all(toLoad.map((id) => loadRoom(handle, id, metaByRoom.get(id) ?? null)));
 }
 
 /** Full teardown — call on unmount. */
