@@ -11,7 +11,7 @@
 // MuseumRoomPopup.tsx are both untouched and neither imports this file.
 import * as THREE from "three";
 
-import type { PlacementSlot, StyledRoomFinishes, WallSpan } from "./campusRoomBuilder";
+import type { MuseumItemClickRef, PlacementSlot, StyledRoomFinishes, WallSpan } from "./campusRoomBuilder";
 
 // Same board thickness/depth as VirtualGalleryRoom.tsx's own
 // addBackRowBoard/addSideRowBoard (BoxGeometry(width, 0.1, 0.845)), embedded
@@ -134,7 +134,7 @@ export function placeItemsInCases(
   scene: THREE.Scene,
   textureLoader: THREE.TextureLoader,
   slots: PlacementSlot[],
-  itemsBySlot: Map<string, { url: string; label?: string }>,
+  itemsBySlot: Map<string, { url: string; label?: string; itemRef?: MuseumItemClickRef }>,
   isCancelled: () => boolean,
   // POP_CULTURE Vault-parity pass (2026-09-13): optional compact title-
   // plaque callback, so a case item can get the SAME "info treatment" wall
@@ -163,6 +163,12 @@ export function placeItemsInCases(
       const plane = new THREE.Mesh(new THREE.PlaneGeometry(naturalW * scale, naturalH * scale), material);
       plane.position.set(slot.x, slot.y, slot.z);
       plane.rotation.x = -Math.PI / 2;
+      // Architecture-vs-content separation (2026-09-24) — see the matching
+      // comment on campusRoomBuilder.ts's hangArtPreservingAspect. Museum
+      // Builder's handlePublish() hides everything tagged this way before
+      // exporting a room's bake.
+      plane.userData.kind = "museum-item-art";
+      if (item.itemRef) plane.userData.itemRef = item.itemRef;
       scene.add(plane);
       if (item.label && placeLabel) {
         // A small placard on the case's own front (room-facing) side, at

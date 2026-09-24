@@ -1,10 +1,12 @@
-// Museum Runtime V2 (2026-09-23) — room streaming.
-// Given a "center" room, keeps exactly that room plus its direct
-// adjacentRoomIds() neighbors built in the scene (their own shared walls
-// included), and disposes anything outside that set — the actual mechanism
-// behind the work order's "preload only rooms directly connected to
-// POP_CULTURE... unload and dispose of rooms outside the current room and
-// its direct neighbors."
+// Museum Runtime V2 (2026-09-23, budget fix 2026-09-24) — room streaming.
+// Keeps a fixed, capped budget of rooms built in the scene (their own
+// shared walls included) and disposes anything outside it as the visitor
+// moves — see computeStreamingBudget() below for the exact rule (current
+// room, room just left, up to 2 nearest-doorway neighbors, max 4 total).
+// This replaced an earlier "current room + every adjacentRoomIds()
+// neighbor" version after live testing showed it loading nearly the whole
+// campus once the visitor reached HUB (the campus's hub-and-spoke center,
+// with ~12 real doors) — see computeStreamingBudget()'s own comment.
 //
 // A room with a published bake (museum_room_meta.baked_asset_url) loads
 // that .glb directly (assetCache.ts) instead of being built procedurally —
@@ -55,9 +57,9 @@
 import * as THREE from "three";
 
 import {
-  adjacentRoomIds,
   computeCampusWallSegments,
   deriveRoomDoorways,
+  roomBounds,
   roomById,
   EYE_HEIGHT,
   WALL_HEIGHT,
@@ -162,8 +164,46 @@ export function createCampusShell(scene: THREE.Scene, textureLoader: THREE.Textu
   };
 }
 
-export function neighborhoodFor(roomId: CampusRoomId): CampusRoomId[] {
-  return Array.from(new Set<CampusRoomId>([roomId, ...adjacentRoomIds(roomId)]));
+const STREAMING_BUDGET_MAX = 4;
+
+// Streaming-budget fix (2026-09-24, EK-reported: entering HUB loaded all 12
+// of its real connected rooms — HUB is the campus's hub-and-spoke center,
+// so "current room + every adjacentRoomIds() neighbor" scaled with however
+// many doors the CURRENT room happens to have, not a fixed cost). Replaced
+// with a fixed budget of at most 4 rooms: the current room, the room the
+// visitor most recently left (kept warm in case they turn straight back
+// around), and up to 2 more of the current room's OWN doorway neighbors,
+// nearest-doorway-first by straight-line distance from the camera to that
+// doorway's real world position — this is what makes "approaching a
+// doorway preloads that destination" true without any special-casing: as
+// the camera gets closer to a not-yet-loaded door, that door's neighbor
+// naturally sorts into the nearest-2 and gets pulled into the budget. The
+// candidate pool is always just the CURRENT room's own real doors, never
+// the whole graph reachable from it, so a room with many doors (HUB) still
+// only ever contributes at most 2 of them to the budget.
+export function computeStreamingBudget(
+  current: CampusRoomId,
+  previous: CampusRoomId | null,
+  cameraPos: { x: number; z: number }
+): CampusRoomId[] {
+  const budget: CampusRoomId[] = [current];
+  if (previous && previous !== current) budget.push(previous);
+
+  const bounds = roomBounds(roomById(current));
+  const candidates = deriveRoomDoorways(current)
+    .filter((d) => !budget.includes(d.neighborId))
+    .map((d) => {
+      const gx = d.side === "east" ? bounds.x1 : d.side === "west" ? bounds.x0 : d.gapCenter;
+      const gz = d.side === "south" ? bounds.z1 : d.side === "north" ? bounds.z0 : d.gapCenter;
+      return { neighborId: d.neighborId, dist: Math.hypot(cameraPos.x - gx, cameraPos.z - gz) };
+    })
+    .sort((a, b) => a.dist - b.dist);
+
+  for (const candidate of candidates) {
+    if (budget.length >= STREAMING_BUDGET_MAX) break;
+    if (!budget.includes(candidate.neighborId)) budget.push(candidate.neighborId);
+  }
+  return budget;
 }
 
 // Shared across every call site in this file (syncWalls, loadRoom,
@@ -241,20 +281,29 @@ function makeLightGroups(scene: THREE.Scene, roomId: CampusRoomId): RoomLightGro
 }
 
 // POP_CULTURE (or any room with a baked_asset_url): the published .glb
-// already contains this room's real floor/ceiling/trim/furniture/style at
-// its real campus world coordinates (Museum Builder builds its preview
-// scene from the same roomById() position the live campus uses) — added to
-// the scene as-is, no repositioning. Its own boundary walls are NOT in the
-// bake (Museum Builder's handlePublish() hides wallsGroupRef before
-// exporting — see museumRoomBake.ts) and come from syncWalls() above, same
-// as every other room. Its item content is whatever was placed in Museum
-// Builder's preview at the moment it was last Published, since the bake
-// has no marker distinguishing an item mesh from a furniture mesh for V2
-// to strip and re-place dynamically.
-async function loadBakedLikeRoom(handle: CampusShellHandle, roomId: CampusRoomId, bakedUrl: string): Promise<StreamedRoom | null> {
+// contains this room's real floor/ceiling/walls-excluded architecture —
+// trim, lighting, shelves, display cases, furniture, and permanent
+// decoration — at its real campus world coordinates (Museum Builder builds
+// its preview scene from the same roomById() position the live campus
+// uses), added to the scene as-is, no repositioning. Its own boundary
+// walls are NOT in the bake (Museum Builder's handlePublish() hides
+// wallsGroupRef before exporting — see museumRoomBake.ts) and come from
+// syncWalls() above, same as every other room.
+//
+// Architecture-vs-content separation (2026-09-24): the bake pipeline no
+// longer exports artwork/item meshes at all (handlePublish() now also
+// hides the items group before exporting — see MuseumBuilder.tsx). Item
+// content is placed here exactly the same way buildProceduralRoom() does
+// it below, via the live museum_room_items table — so editing, moving,
+// disabling, or replacing an item shows up the next time this room streams
+// in, with no re-Publish needed, and a re-Publish only ever touches
+// architecture.
+async function loadBakedLikeRoom(handle: CampusShellHandle, roomId: CampusRoomId, bakedUrl: string, meta: MuseumRoomMeta | null): Promise<StreamedRoom | null> {
   const epoch = handle.loadEpoch.get(roomId) ?? 0;
+  const isCancelled = () => (handle.loadEpoch.get(roomId) ?? 0) !== epoch;
+
   const loaded = await loadBakedRoom(bakedUrl);
-  if ((handle.loadEpoch.get(roomId) ?? 0) !== epoch) {
+  if (isCancelled()) {
     disposeObject3D(loaded);
     releaseBakedRoom(bakedUrl);
     return null;
@@ -264,6 +313,28 @@ async function loadBakedLikeRoom(handle: CampusShellHandle, roomId: CampusRoomId
   group.add(loaded);
   handle.scene.add(group);
   const lightGroups = makeLightGroups(handle.scene, roomId);
+
+  const itemCapacity = meta?.item_capacity ?? (await handle.itemsPerRoomDefault);
+  await placeDynamicRoomItems(
+    asSceneTarget(group),
+    handle.textureLoader,
+    lightGroups,
+    roomId,
+    WALL_THICKNESS,
+    EYE_HEIGHT,
+    itemCapacity,
+    isCancelled,
+    resolveFrameStyle(meta)
+  );
+
+  if (isCancelled()) {
+    disposeObject3D(group);
+    disposeObject3D(lightGroups.full);
+    disposeObject3D(lightGroups.preview);
+    releaseBakedRoom(bakedUrl);
+    return null;
+  }
+
   return { roomId, group, lightGroups, styledFinishes: null, source: "baked", bakedUrl };
 }
 
@@ -336,7 +407,7 @@ async function buildProceduralRoom(handle: CampusShellHandle, roomId: CampusRoom
 async function loadRoom(handle: CampusShellHandle, roomId: CampusRoomId, meta: MuseumRoomMeta | null): Promise<void> {
   handle.loadEpoch.set(roomId, (handle.loadEpoch.get(roomId) ?? 0) + 1);
   const streamed = meta?.baked_asset_url
-    ? await loadBakedLikeRoom(handle, roomId, meta.baked_asset_url)
+    ? await loadBakedLikeRoom(handle, roomId, meta.baked_asset_url, meta)
     : await buildProceduralRoom(handle, roomId, meta);
   if (streamed) handle.loadedRooms.set(roomId, streamed);
 }
@@ -376,13 +447,13 @@ async function syncToRoomSet(handle: CampusShellHandle, needed: Set<CampusRoomId
   await Promise.all(toLoad.map((id) => loadRoom(handle, id, metaByRoom.get(id) ?? null)));
 }
 
-/** Brings the loaded scene in line with `centerRoomId`'s neighborhood
- * (itself + adjacentRoomIds()) — disposes anything outside it, builds
+/** Brings the loaded scene in line with an explicit room budget (see
+ * computeStreamingBudget()) — disposes anything outside it, builds
  * anything missing. Safe to call repeatedly as the visitor moves; an
- * already-current neighborhood is a fast no-op for every already-loaded
- * room (no re-fetch, no re-build). */
-export async function syncNeighborhood(handle: CampusShellHandle, centerRoomId: CampusRoomId): Promise<void> {
-  await syncToRoomSet(handle, new Set(neighborhoodFor(centerRoomId)));
+ * already-current budget is a fast no-op for every already-loaded room (no
+ * re-fetch, no re-build). */
+export async function syncStreamingBudget(handle: CampusShellHandle, budget: CampusRoomId[]): Promise<void> {
+  await syncToRoomSet(handle, new Set(budget));
 }
 
 // Perf fix (2026-09-24, live-measured): the FIRST time a visitor ever

@@ -1,21 +1,21 @@
 "use client";
 
-// Museum Runtime V2 (2026-09-23) — runtime and scene lifecycle.
-// A separate visitor runtime from the legacy VltdMuseumCampus.tsx (untouched
-// by this work, still the production fallback at plain /museum/vltd?room=…),
-// reached at /museum/vltd?room=POP_CULTURE&runtime=v2. Builds a streamed
-// neighborhood (roomStreaming.ts) around whichever room the camera is
-// standing in — that room plus its direct adjacentRoomIds() neighbors —
-// instead of the legacy component's one-time whole-campus construction.
-// Movement/camera/collision (movement.ts, collision.ts) reuse the same
-// shared visitorController.ts every other room in this app already uses.
+// Museum Runtime V2 (2026-09-23, budget fix 2026-09-24) — runtime and scene
+// lifecycle. A separate visitor runtime from the legacy
+// VltdMuseumCampus.tsx (untouched by this work, still the production
+// fallback at plain /museum/vltd?room=…), reached at
+// /museum/vltd?room=POP_CULTURE&runtime=v2. Builds a streamed room budget
+// (roomStreaming.ts's computeStreamingBudget()/syncStreamingBudget()) —
+// current room, room just left, up to 2 nearest-doorway neighbors, capped
+// at 4 rooms total — instead of the legacy component's one-time
+// whole-campus construction. Movement/camera/collision (movement.ts,
+// collision.ts) reuse the same shared visitorController.ts every other
+// room in this app already uses.
 //
 // First-pass scope, per the work order: POP_CULTURE only loads from its
-// published bake; TCG and HUB (its two real doors) are the only neighbors
-// this proof preloads; no other room is converted or reachable by walking
-// further than one hop from POP_CULTURE without triggering another,
-// perfectly ordinary streaming cycle (which will build them procedurally,
-// same as TCG/HUB, since nothing else has been published yet).
+// published bake; every other room this proof ever streams in (TCG, HUB,
+// and whatever else the visitor walks to) is built procedurally, same as
+// TCG/HUB, since nothing else has been published yet.
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
@@ -31,8 +31,36 @@ import {
   type CampusRoomId,
 } from "@/lib/campusLayout";
 import { MUSEUM_CAMERA_FOV } from "@/lib/museumStandard";
+import type { MuseumItemClickRef } from "@/lib/campusRoomBuilder";
 import { createVisitorMovement } from "@/lib/museumV2/movement";
-import { createCampusShell, disposeCampusShell, primeRoom, syncNeighborhood, type CampusShellHandle } from "@/lib/museumV2/roomStreaming";
+import { createInteraction } from "@/lib/museumV2/interaction";
+import { buildNavigationTargets, type NavigationTargetsHandle } from "@/lib/museumV2/navigationTargets";
+import {
+  computeStreamingBudget,
+  createCampusShell,
+  disposeCampusShell,
+  primeRoom,
+  syncStreamingBudget,
+  type CampusShellHandle,
+} from "@/lib/museumV2/roomStreaming";
+import { fetchPublicVaultItemById } from "@/lib/publicProfile";
+import { GuestItemModal } from "@/components/gallery/GuestGalleryRenderer";
+import type { VaultItem } from "@/lib/vaultModel";
+
+function fallbackVaultItem(ref: MuseumItemClickRef): VaultItem {
+  // Used when an item has no vault_item_id yet (placed before the
+  // 2026-09-24 migration, or the source item isn't marked public — see
+  // fetchPublicVaultItemById's own comment on why that's a hard stop, not
+  // a bypass) — the same GuestItemModal treatment, built from only the
+  // fields museum_room_items' own public RLS already exposes to everyone.
+  return {
+    id: ref.museumItemId,
+    title: ref.title,
+    imageFrontUrl: ref.imageUrl,
+    estimatedValue: ref.showValue ? (ref.estimatedValue ?? undefined) : undefined,
+    isPublic: true,
+  };
+}
 
 type Props = { roomId: CampusRoomId };
 
@@ -57,6 +85,7 @@ export default function VltdMuseumCampusV2({ roomId }: Props) {
   const roomLabelRef = useRef<HTMLDivElement | null>(null);
   const [ready, setReady] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [selectedItem, setSelectedItem] = useState<VaultItem | null>(null);
 
   useEffect(() => {
     const mount = mountRef.current;
@@ -94,34 +123,98 @@ export default function VltdMuseumCampusV2({ roomId }: Props) {
     // silent gap.
     const walkable = buildWalkableAreas();
 
-    const movement = createVisitorMovement(camera, renderer.domElement, spawn, walkable, EYE_HEIGHT);
-    movement.attach();
-
     let shellHandle: CampusShellHandle | null = null;
     let centerRoomId: CampusRoomId = roomId;
+    let previousRoomId: CampusRoomId | null = null;
+    let appliedBudgetKey = "";
     let syncInFlight = false;
-    let pendingResync = false;
+    let pendingBudget: CampusRoomId[] | null = null;
     const coldStart = performance.now();
     let firstReadyMs: number | null = null;
 
-    async function resyncTo(nextCenter: CampusRoomId) {
+    const interaction = createInteraction();
+    let navHandle: NavigationTargetsHandle | null = null;
+
+    // Nav-targets pass (2026-09-24): rebuilds the blue chevron markers and
+    // hands the interaction router the current set of item roots (each
+    // loaded room's own group — item meshes land inside these
+    // asynchronously, so raycasting against the groups always sees
+    // whatever's actually arrived, no separate list to keep in sync). Call
+    // after every streaming change (room loaded/disposed).
+    function refreshInteractionTargets() {
+      navHandle?.dispose();
+      const loadedIds = new Set(shellHandle ? shellHandle.loadedRooms.keys() : []);
+      navHandle = buildNavigationTargets(scene, loadedIds, walkable);
+      interaction.setTargets({
+        waypointMeshes: navHandle.meshes,
+        itemRoots: shellHandle ? Array.from(shellHandle.loadedRooms.values()).map((r) => r.group) : [],
+      });
+    }
+
+    async function openItem(ref: MuseumItemClickRef) {
+      const real = ref.vaultItemId ? await fetchPublicVaultItemById(ref.vaultItemId) : null;
+      if (cancelled) return;
+      setSelectedItem(real ?? fallbackVaultItem(ref));
+    }
+
+    function onCanvasClick(clientX: number, clientY: number) {
+      const resolved = interaction.resolveClick(clientX, clientY, camera, renderer.domElement);
+      if (!resolved) return;
+      if (resolved.kind === "item") {
+        void openItem(resolved.itemRef);
+        return;
+      }
+      const waypoint = resolved.waypoint;
+      const pos = movement.getPosition();
+      const dx = waypoint.x - pos.x;
+      const dz = waypoint.z - pos.z;
+      const destinationYaw =
+        waypoint.kind === "doorway" && waypoint.yaw !== undefined
+          ? waypoint.yaw
+          : Math.hypot(dx, dz) > 0.05
+          ? Math.atan2(dx, -dz)
+          : movement.getYaw();
+      movement.walkTo(waypoint.x, waypoint.z, destinationYaw);
+    }
+
+    const movement = createVisitorMovement(camera, renderer.domElement, spawn, walkable, EYE_HEIGHT, onCanvasClick);
+    movement.attach();
+
+    function onPointerMoveHover(e: PointerEvent) {
+      interaction.handleHover(e.clientX, e.clientY, camera, renderer.domElement);
+    }
+    window.addEventListener("pointermove", onPointerMoveHover);
+
+    function budgetKey(list: CampusRoomId[]): string {
+      return [...list].sort().join(",");
+    }
+
+    // Streaming-budget fix (2026-09-24): computeStreamingBudget() runs every
+    // frame (cheap — a handful of doorway-distance checks on the CURRENT
+    // room only) so a doorway destination preloads as the camera approaches
+    // it, not only once the visitor actually crosses the threshold. The
+    // async sync itself only ever runs when the computed budget's room SET
+    // actually changes (appliedBudgetKey guard below), and syncInFlight
+    // still serializes overlapping calls exactly as the old resyncTo() did.
+    async function applyBudget(budget: CampusRoomId[]) {
       if (!shellHandle) return;
       if (syncInFlight) {
-        pendingResync = true;
+        pendingBudget = budget;
         return;
       }
       syncInFlight = true;
-      centerRoomId = nextCenter;
+      appliedBudgetKey = budgetKey(budget);
       try {
-        await syncNeighborhood(shellHandle, nextCenter);
+        await syncStreamingBudget(shellHandle, budget);
+        if (!cancelled) refreshInteractionTargets();
       } catch (err) {
         if (!cancelled) setLoadError(err instanceof Error ? err.message : "Failed to stream the room.");
       }
       syncInFlight = false;
-      if (pendingResync) {
-        pendingResync = false;
-        const latest = currentRoomId(movement.getPosition().x, movement.getPosition().z);
-        if (latest && latest !== centerRoomId) void resyncTo(latest);
+      if (pendingBudget) {
+        const next = pendingBudget;
+        pendingBudget = null;
+        if (budgetKey(next) !== appliedBudgetKey) void applyBudget(next);
       }
     }
 
@@ -135,18 +228,16 @@ export default function VltdMuseumCampusV2({ roomId }: Props) {
         // order's "controllable within 2s warm / 4s cold" target is about.
         await primeRoom(shellHandle, roomId);
         if (cancelled) return;
+        refreshInteractionTargets();
         renderer.compile(scene, camera);
         firstReadyMs = performance.now() - coldStart;
         setReady(true);
-        // Phase 2: bring the rest of the neighborhood (TCG, HUB) in behind
-        // it, unawaited — doesn't block "controllable," matches the work
-        // order's own "preload only rooms directly connected" framing
-        // (preload, not block on). Routed through resyncTo() (not a direct
-        // syncNeighborhood call) so it shares the same syncInFlight guard a
-        // doorway-crossing resync uses — otherwise a visitor crossing into
-        // TCG/HUB before this background sync finishes could race it,
-        // mutating handle.loadedRooms/loadedWalls from two places at once.
-        void resyncTo(roomId);
+        // Phase 2: bring the rest of the initial budget (up to 2 nearest
+        // doorway neighbors) in behind it, unawaited — doesn't block
+        // "controllable." Routed through applyBudget() (not a direct
+        // syncStreamingBudget call) so it shares the same syncInFlight
+        // guard a doorway-crossing resync uses.
+        void applyBudget(computeStreamingBudget(roomId, null, { x: spawn.x, z: spawn.z }));
       } catch (err) {
         if (!cancelled) setLoadError(err instanceof Error ? err.message : "Failed to load the room.");
       }
@@ -166,8 +257,13 @@ export default function VltdMuseumCampusV2({ roomId }: Props) {
         lastRoomLabel = label;
         if (roomLabelRef.current) roomLabelRef.current.textContent = label || "Corridor";
       }
-      if (room && room !== centerRoomId && !syncInFlight) {
-        void resyncTo(room);
+      if (room && room !== centerRoomId) {
+        previousRoomId = centerRoomId;
+        centerRoomId = room;
+      }
+      if (room) {
+        const budget = computeStreamingBudget(centerRoomId, previousRoomId, { x: pos.x, z: pos.z });
+        if (budgetKey(budget) !== appliedBudgetKey) void applyBudget(budget);
       }
 
       renderer.render(scene, camera);
@@ -200,8 +296,11 @@ export default function VltdMuseumCampusV2({ roomId }: Props) {
       }),
       getFirstReadyMs: () => firstReadyMs,
       getCenterRoomId: () => centerRoomId,
+      getPreviousRoomId: () => previousRoomId,
       getLoadedRoomIds: () => (shellHandle ? Array.from(shellHandle.loadedRooms.keys()) : []),
       getCameraBody: () => ({ x: movement.getPosition().x, y: movement.getPosition().y, z: movement.getPosition().z, yaw: movement.getYaw() }),
+      getWaypointCount: () => navHandle?.meshes.length ?? 0,
+      clickAt: (clientX: number, clientY: number) => onCanvasClick(clientX, clientY),
       forceRender: () => renderer.render(scene, camera),
       // Verification-only: drives the exact same per-frame logic tick()
       // does (movement.update, room-crossing/resync check, render), but
@@ -221,7 +320,9 @@ export default function VltdMuseumCampusV2({ roomId }: Props) {
       cancelled = true;
       window.cancelAnimationFrame(frameId);
       window.removeEventListener("resize", onResize);
+      window.removeEventListener("pointermove", onPointerMoveHover);
       movement.detach();
+      navHandle?.dispose();
       if (shellHandle) disposeCampusShell(shellHandle);
       renderer.dispose();
       mount.removeChild(renderer.domElement);
@@ -252,6 +353,7 @@ export default function VltdMuseumCampusV2({ roomId }: Props) {
           {loadError}
         </div>
       )}
+      {selectedItem && <GuestItemModal item={selectedItem} onClose={() => setSelectedItem(null)} />}
     </div>
   );
 }

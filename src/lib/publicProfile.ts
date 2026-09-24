@@ -245,6 +245,34 @@ export async function fetchPublicVaultItems(profileId: string): Promise<VaultIte
   return (data ?? []).map(r => publicRowToItem(r) as MarketItem);
 }
 
+// Museum Runtime V2 item-interaction pass (2026-09-24): resolves a real
+// vault_items row by id for the museum's "click an item to see its info"
+// treatment — museum_room_items.vault_item_id, when set, points here.
+// Gated on is_public=true, same as fetchPublicVaultItems above and every
+// other anonymous-safe vault read in this app: an admin placing an item in
+// the museum only ever publishes museum_room_items' own already-public
+// curated copy (title/image/estimated_value — its RLS is `using (true)`
+// regardless of the source item's own privacy), never a bypass of the
+// ITEM OWNER's own public/private choice on the real vault_items row. If
+// the owner hasn't made the real item public, this returns null and the
+// caller falls back to a minimal treatment built from the curated copy
+// alone, rather than ever exposing fields the owner didn't choose to share.
+export async function fetchPublicVaultItemById(itemId: string): Promise<VaultItem | null> {
+  const supabase = getSupabaseBrowserClient();
+  const cleanId = String(itemId ?? "").trim();
+  if (!supabase || !cleanId) return null;
+
+  const { data, error } = await supabase
+    .from(VAULT_ITEMS_TABLE)
+    .select("*, images_json, primary_image_key")
+    .eq("id", cleanId)
+    .eq("is_public", true)
+    .maybeSingle();
+
+  if (error || !data) return null;
+  return publicRowToItem(data) as MarketItem;
+}
+
 export type PublicGallery = {
   id: string;
   title: string;

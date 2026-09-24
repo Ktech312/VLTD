@@ -506,11 +506,30 @@ export default function MuseumBuilder() {
     // construction above. Restored immediately after, so this room's own
     // live preview here is unaffected before/after the brief export.
     if (wallsGroup) wallsGroup.visible = false;
+    // Architecture-vs-content separation (2026-09-24): a published room
+    // should contain floor/ceiling/walls(excluded above)/lighting/shelves/
+    // cases/furniture/trim/decoration only — never artwork images or item
+    // labels, so changing, moving, disabling, or replacing an item never
+    // needs a re-Publish. placeItemsAtSlots()/placeItemsInCases()
+    // (campusRoomBuilder.ts, museumRoomFurniture.ts) tag every mesh/group
+    // they add with userData.kind "museum-item-art"/"museum-item-label" —
+    // found here via scene.traverse() (items load asynchronously, so
+    // there's no synchronous "before/after" moment to diff the way the
+    // walls group above is built) and hidden the same way, restored right
+    // after export.
+    const hiddenItemObjects: THREE.Object3D[] = [];
+    scene.traverse((child) => {
+      if (child.userData.kind === "museum-item-art" || child.userData.kind === "museum-item-label") {
+        child.visible = false;
+        hiddenItemObjects.push(child);
+      }
+    });
     let result: { ok: boolean; url?: string; error?: string };
     try {
       result = await publishRoomBake(roomId, scene);
     } finally {
       if (wallsGroup) wallsGroup.visible = true;
+      for (const obj of hiddenItemObjects) obj.visible = true;
     }
     if (result.ok) {
       setPublishState("saved");
@@ -555,7 +574,7 @@ export default function MuseumBuilder() {
     const source = assignments[fromSlot?.id ?? ""];
     if (!fromSlot || !toSlot || !source) return;
     setItemSaveState("saving");
-    const placed = await setRoomItemSlot(roomId, toSlot.id, { title: source.title, image_url: source.image_url }, 0);
+    const placed = await setRoomItemSlot(roomId, toSlot.id, { title: source.title, image_url: source.image_url, vault_item_id: source.vault_item_id ?? null }, 0);
     const cleared = placed.ok ? await clearRoomItemSlot(roomId, fromSlot.id) : { ok: false };
     setItemSaveState(placed.ok && cleared.ok ? "saved" : "error");
     if (placed.ok) {
@@ -1044,7 +1063,7 @@ export default function MuseumBuilder() {
     const result = await setRoomItemSlot(
       roomId,
       slot.id,
-      { title: item.title, image_url: image, estimated_value: item.estimatedValue ?? null },
+      { title: item.title, image_url: image, estimated_value: item.estimatedValue ?? null, vault_item_id: String(item.id) },
       0
     );
     setItemSaveState(result.ok ? "saved" : "error");
