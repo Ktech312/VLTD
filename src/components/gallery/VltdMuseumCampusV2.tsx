@@ -300,6 +300,7 @@ export default function VltdMuseumCampusV2({ roomId }: Props) {
       getLoadedRoomIds: () => (shellHandle ? Array.from(shellHandle.loadedRooms.keys()) : []),
       getCameraBody: () => ({ x: movement.getPosition().x, y: movement.getPosition().y, z: movement.getPosition().z, yaw: movement.getYaw() }),
       getWaypointCount: () => navHandle?.meshes.length ?? 0,
+      getItemsDebug: (roomIdToCheck: CampusRoomId) => shellHandle?.loadedRooms.get(roomIdToCheck)?.itemsDebug ?? null,
       clickAt: (clientX: number, clientY: number) => onCanvasClick(clientX, clientY),
       forceRender: () => renderer.render(scene, camera),
       // Verification-only: drives the exact same per-frame logic tick()

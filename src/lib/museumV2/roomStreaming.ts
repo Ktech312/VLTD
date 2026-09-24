@@ -85,7 +85,7 @@ import { addStyledRoomArmor } from "@/lib/museumRoomArmor";
 import { getItemsPerRoom, getRoomMeta, type MuseumRoomMeta } from "@/lib/museumCampusConfig";
 import { loadBakedRoom, releaseBakedRoom } from "./assetCache";
 import { disposeObject3D } from "./disposal";
-import { placeDynamicRoomItems } from "./dynamicContent";
+import { placeDynamicRoomItems, type PlacedItemsDebugInfo } from "./dynamicContent";
 
 type StreamedRoom = {
   roomId: CampusRoomId;
@@ -94,6 +94,7 @@ type StreamedRoom = {
   styledFinishes: StyledRoomFinishes | null;
   source: "baked" | "procedural";
   bakedUrl?: string;
+  itemsDebug?: PlacedItemsDebugInfo;
 };
 
 export type CampusShellHandle = {
@@ -315,7 +316,7 @@ async function loadBakedLikeRoom(handle: CampusShellHandle, roomId: CampusRoomId
   const lightGroups = makeLightGroups(handle.scene, roomId);
 
   const itemCapacity = meta?.item_capacity ?? (await handle.itemsPerRoomDefault);
-  await placeDynamicRoomItems(
+  const itemsDebug = await placeDynamicRoomItems(
     asSceneTarget(group),
     handle.textureLoader,
     lightGroups,
@@ -335,7 +336,7 @@ async function loadBakedLikeRoom(handle: CampusShellHandle, roomId: CampusRoomId
     return null;
   }
 
-  return { roomId, group, lightGroups, styledFinishes: null, source: "baked", bakedUrl };
+  return { roomId, group, lightGroups, styledFinishes: null, source: "baked", bakedUrl, itemsDebug };
 }
 
 async function buildProceduralRoom(handle: CampusShellHandle, roomId: CampusRoomId, meta: MuseumRoomMeta | null): Promise<StreamedRoom | null> {
@@ -381,7 +382,7 @@ async function buildProceduralRoom(handle: CampusShellHandle, roomId: CampusRoom
   }
 
   const itemCapacity = meta?.item_capacity ?? (await handle.itemsPerRoomDefault);
-  await placeDynamicRoomItems(
+  const itemsDebug = await placeDynamicRoomItems(
     asSceneTarget(group),
     handle.textureLoader,
     lightGroups,
@@ -401,7 +402,7 @@ async function buildProceduralRoom(handle: CampusShellHandle, roomId: CampusRoom
     return null;
   }
 
-  return { roomId, group, lightGroups, styledFinishes: styled, source: "procedural" };
+  return { roomId, group, lightGroups, styledFinishes: styled, source: "procedural", itemsDebug };
 }
 
 async function loadRoom(handle: CampusShellHandle, roomId: CampusRoomId, meta: MuseumRoomMeta | null): Promise<void> {

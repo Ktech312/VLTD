@@ -77,6 +77,13 @@ function buildSlotAssignments(
   return bySlot;
 }
 
+export type PlacedItemsDebugInfo = {
+  fetchedEnabledCount: number;
+  itemCapacity: number;
+  wallSlotCount: number;
+  placedCount: number;
+};
+
 export async function placeDynamicRoomItems(
   scene: THREE.Scene,
   textureLoader: THREE.TextureLoader,
@@ -87,14 +94,16 @@ export async function placeDynamicRoomItems(
   itemCapacity: number,
   isCancelled: () => boolean,
   frameStyle: ArtworkFrameStyle = "classic"
-): Promise<void> {
+): Promise<PlacedItemsDebugInfo> {
   const items = await getEnabledRoomItems(roomId);
-  if (isCancelled() || items.length === 0 || itemCapacity <= 0) return;
+  const debugBase = { fetchedEnabledCount: items.length, itemCapacity, wallSlotCount: 0, placedCount: 0 };
+  if (isCancelled() || items.length === 0 || itemCapacity <= 0) return debugBase;
 
   const doorways = deriveRoomDoorways(roomId);
   const wallSlots = computeRoomPlacementSlots(roomId, doorways, wallThickness, eyeHeight, itemCapacity);
-  if (wallSlots.length === 0) return;
+  if (wallSlots.length === 0) return { ...debugBase, wallSlotCount: 0 };
 
   const bySlot = buildSlotAssignments(wallSlots, items);
   placeItemsAtSlots(scene, textureLoader, groups, wallSlots, bySlot, isCancelled, frameStyle);
+  return { ...debugBase, wallSlotCount: wallSlots.length, placedCount: bySlot.size };
 }
