@@ -451,7 +451,7 @@ function normalizePublicItemSnapshots(value: unknown): GalleryPublicItemSnapshot
   return out;
 }
 
-function normalizeSupabaseItemIds(raw: any) {
+export function normalizeSupabaseItemIds(raw: any) {
   const direct = normalizeItemIds(
     raw?.layout?.itemIds ??
       raw?.exhibition_layout?.itemIds ??
@@ -1993,6 +1993,45 @@ export function setGalleryItemIds(galleryId: string, itemIds: string[]) {
 
     return withSyncedSections(nextGallery, nextSections);
   });
+}
+
+// Cascade cleanup for permanent item deletion (NYCC launch blocker #1: a
+// deleted vault item's id used to linger forever in every exhibition that
+// referenced it, so raw itemIds counts drifted from what actually still
+// exists). Strips the id — and its frozen public snapshot, which exists so
+// signed-out guests can see item details without vault_items access — from
+// every gallery across every profile, then lets each affected gallery's
+// existing itemIds/section/cloud-sync machinery run as normal.
+export function removeItemIdFromAllGalleries(itemId: string) {
+  const cleanId = safeString(itemId);
+  if (!cleanId) return;
+
+  const galleries = loadGalleries({ includeAllProfiles: true });
+  const affected = galleries.filter((gallery) => gallery.itemIds.includes(cleanId));
+
+  for (const gallery of affected) {
+    mutateGallery(gallery.id, (current) => {
+      const nextItemIds = current.itemIds.filter((id) => id !== cleanId);
+      const allowed = new Set(nextItemIds);
+      const nextSections = normalizeSections(getGallerySections(current), nextItemIds).map((section) => {
+        const sectionItemIds = section.itemIds.filter((id) => allowed.has(id));
+        const featuredItemId =
+          section.featuredItemId && sectionItemIds.includes(section.featuredItemId)
+            ? section.featuredItemId
+            : sectionItemIds[0];
+        return { ...section, itemIds: sectionItemIds, featuredItemId };
+      });
+
+      return withSyncedSections(
+        {
+          ...current,
+          itemIds: nextItemIds,
+          publicItemSnapshots: (current.publicItemSnapshots ?? []).filter((snap) => snap.id !== cleanId),
+        },
+        nextSections
+      );
+    }, { includeAllProfiles: true });
+  }
 }
 
 export function setGalleryItemNote(galleryId: string, itemId: string, note: string) {

@@ -23,6 +23,7 @@ import {
   getGalleryInviteUrl,
   getActiveInviteTokens,
   syncGalleryToSupabaseNow,
+  removeItemIdFromAllGalleries,
 } from "@/lib/galleryModel";
 
 import { loadItems, syncVaultItemsFromSupabase, type VaultItem } from "@/lib/vaultModel";
@@ -343,7 +344,7 @@ export default function GalleryPage() {
     setGallery(mergedGallery);
     setDraft(nextDraft ? cloneGallery(nextDraft) : null);
     setOriginalSnapshot(normalizeDraftForCompare(mergedGallery));
-    setItems(loadItems());
+    setItems(loadItems({ includeAllProfiles: true }));
   }, [id]);
 
   useEffect(() => {
@@ -398,13 +399,25 @@ export default function GalleryPage() {
     async function hydrateVaultItems() {
       await syncVaultItemsFromSupabase();
       if (cancelled) return;
-      setItems(loadItems());
+      const freshItems = loadItems({ includeAllProfiles: true });
+      setItems(freshItems);
+
+      // Self-heal (NYCC launch blocker #1): after a genuine fresh cloud
+      // sync, any itemId this gallery still lists that resolves to no real
+      // vault item anywhere is a permanently deleted item that was never
+      // cleaned out of this exhibition — prune it everywhere so the raw
+      // itemIds count (what /museum and Discover show) stops drifting from
+      // what the editor actually resolves.
+      const localIds = new Set(freshItems.map((item) => item.id));
+      const currentGallery = loadGalleries({ includeAllProfiles: true }).find((g) => g.id === id);
+      const deadIds = (currentGallery?.itemIds ?? []).filter((itemId) => !localIds.has(itemId));
+      deadIds.forEach((deadId) => removeItemIdFromAllGalleries(deadId));
     }
 
     void hydrateVaultItems();
 
     function onVaultUpdate() {
-      setItems(loadItems());
+      setItems(loadItems({ includeAllProfiles: true }));
     }
 
     window.addEventListener("vltd:vault-updated", onVaultUpdate);
@@ -642,7 +655,7 @@ export default function GalleryPage() {
             }
             await processVaultSyncQueue();
             await syncVaultItemsFromSupabase();
-            setItems(loadItems());
+            setItems(loadItems({ includeAllProfiles: true }));
           } catch (error) {
             vaultSyncError = error;
             console.error("Vault sync failed during gallery save:", error);

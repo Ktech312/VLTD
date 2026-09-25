@@ -84,8 +84,9 @@ export default function ProtectedRoute({
 
   if (loading) {
     return (
-      <main className="min-h-screen flex items-center justify-center text-text-primary">
-        Checking access...
+      <main className="min-h-screen flex flex-col items-center justify-center gap-3 text-text-primary">
+        <span className="h-6 w-6 animate-spin rounded-full border-2 border-current border-t-transparent text-[color:var(--muted,inherit)]" />
+        <span className="text-sm text-[color:var(--muted,inherit)]">Checking access...</span>
       </main>
     );
   }

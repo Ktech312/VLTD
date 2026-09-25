@@ -39,7 +39,6 @@ import {
   deleteImageAtIndex,
   getOrderedImageUrls,
   getOrderedImages,
-  deleteVaultItem,
   loadItems,
   markItemViewed,
   reorderImages,
@@ -48,6 +47,7 @@ import {
   type VaultImage,
   type VaultItem,
 } from "@/lib/vaultModel";
+import { deleteVaultItemEverywhere } from "@/lib/vaultActions";
 import { generateHashtags } from "@/lib/generateHashtags";
 import {
   generateVaultImageKey,
@@ -1417,7 +1417,7 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
               </PillButton>
               <PillButton
                 onClick={() => {
-                  deleteVaultItem(item.id);
+                  void deleteVaultItemEverywhere(item.id);
                   router.replace("/vault");
                 }}
                 className="flex-1"

@@ -10,7 +10,7 @@ import {
   type DropSession,
   updateDropItemStatus,
 } from "@/lib/dropSession";
-import { deleteItemAndNotify } from "@/lib/vaultActions";
+import { deleteVaultItemEverywhere } from "@/lib/vaultActions";
 
 type Props = {
   session: DropSession;
@@ -34,7 +34,7 @@ export default function DropReviewSheet({ session, onClose, onFinish }: Props) {
   const skipped = current.items.filter((item) => item.status === "skipped");
 
   function removeItem(id: string) {
-    deleteItemAndNotify(id);
+    void deleteVaultItemEverywhere(id);
     setCurrent((prev) => updateDropItemStatus(prev, id, "skipped"));
   }
 

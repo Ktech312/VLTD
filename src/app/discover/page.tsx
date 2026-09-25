@@ -10,6 +10,7 @@ import { getCurrentUser, getOnboardingStatus } from "@/lib/auth";
 import { buildUserPreferences, sortByPersonalization } from "@/lib/personalization";
 import { getSeedAvatarUrlForProfile, isRenderableAvatarUrl } from "@/lib/seedAvatar";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
+import { normalizeSupabaseItemIds } from "@/lib/galleryModel";
 import { showToast } from "@/lib/toast";
 import { isUniverseKey, type UniverseKey, UNIVERSE_KEYS, UNIVERSE_LABEL } from "@/lib/taxonomy";
 import { loadItems } from "@/lib/vaultModel";
@@ -68,8 +69,12 @@ function inferUniverseKeyFromText(gallery: Pick<PublicGallery, "title" | "descri
 
 function rowToGallery(row: Record<string, unknown>): PublicGallery {
   const layout = row.layout && typeof row.layout === "object" ? (row.layout as Record<string, unknown>) : null;
-  const rawItemIds = Array.isArray(layout?.itemIds) ? layout.itemIds : [];
-  const itemIds = rawItemIds.filter((id): id is string => typeof id === "string");
+  // Same fallback chain every other surface uses (owner list, editor, guest
+  // view) instead of only checking layout.itemIds — this file used to have
+  // its own narrower copy that skipped exhibition_layout.itemIds entirely,
+  // which is exactly the kind of divergence that made Discover's count
+  // disagree with everywhere else (NYCC launch blocker #1).
+  const itemIds = normalizeSupabaseItemIds(row);
   const themePack = typeof layout?.themePack === "string" ? layout.themePack : null;
 
   return {
@@ -160,7 +165,7 @@ export default function DiscoverPage() {
       try {
         const { data, error } = await supabase
           .from("galleries")
-          .select("id, title, description, cover_image, profile_id, analytics_views, layout, created_at")
+          .select("id, title, description, cover_image, profile_id, analytics_views, layout, exhibition_layout, created_at")
           .eq("visibility", "PUBLIC")
           .eq("state", "ACTIVE")
           .order("analytics_views", { ascending: false })

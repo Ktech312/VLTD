@@ -16,7 +16,6 @@ import { AppIcon } from "@/components/ui/AppIcon";
 import ProgressiveImage from "@/components/ui/ProgressiveImage";
 import { universePlaceholder } from "@/lib/itemPlaceholder";
 import SwipeStack from "@/components/SwipeStack";
-import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 import { computeItemIntelligence } from "@/lib/itemIntelligence";
 import { UNIVERSE_LABEL, TAXONOMY, getCategories, isUniverseKey, type UniverseKey } from "@/lib/taxonomy";
 import { migrateExistingVaultImagesToSupabase } from "@/lib/vaultMigration";
@@ -33,7 +32,8 @@ import {
   syncVaultItemsFromSupabase,
   type VaultItem,
 } from "@/lib/vaultModel";
-import { hasSupabaseEnv, VAULT_ITEMS_TABLE } from "@/lib/vaultCloud";
+import { hasSupabaseEnv } from "@/lib/vaultCloud";
+import { deleteVaultItemEverywhere } from "@/lib/vaultActions";
 
 const ACTIVE_PROFILE_EVENT = "vltd:active-profile";
 const SALES_KEY = "vltd_sales_history";
@@ -609,6 +609,23 @@ function VaultCard({
   );
 }
 
+// Shown only until the first hydrateAll() pass finishes — without this, a
+// cold load rendered VaultEmptyState ("Your vault is empty...") for however
+// long the sync took, which read as a broken/empty account rather than a
+// still-loading one (NYCC launch blocker: mobile access gate feeling stalled).
+function VaultLoadingSkeleton() {
+  return (
+    <section className="mt-4 grid grid-cols-2 gap-2 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6" aria-label="Loading your vault">
+      {Array.from({ length: 12 }).map((_, index) => (
+        <div
+          key={index}
+          className="aspect-square animate-pulse rounded-[14px] bg-[color:var(--surface)] ring-1 ring-[color:var(--border)]"
+        />
+      ))}
+    </section>
+  );
+}
+
 function VaultEmptyState({
   hasFilters,
   onClearFilters,
@@ -987,6 +1004,7 @@ export default function VaultPage() {
   const [syncStatus, setSyncStatus] = useState("");
   const [isMigrating, setIsMigrating] = useState(false);
   const [isOnline, setIsOnline] = useState<boolean | null>(null);
+  const [initialLoadComplete, setInitialLoadComplete] = useState(false);
   const [vaultViewMode, setVaultViewMode] = useState<VaultViewMode>("shelf");
   const [selectedIds, setSelectedIds] = useState<Set<string>>(() => new Set());
   const [selectMode, setSelectMode] = useState(false);
@@ -1025,6 +1043,7 @@ export default function VaultPage() {
       await processVaultSyncQueue();
     }
     refresh();
+    setInitialLoadComplete(true);
   }
 
   useEffect(() => {
@@ -1323,22 +1342,8 @@ export default function VaultPage() {
   }
 
   async function handleDeleteItem(target: VaultItem) {
-    const next = loadItems({ includeAllProfiles: true }).filter((entry) => String(entry.id) !== String(target.id));
-    saveItems(next);
     setItems((prev) => prev.filter((entry) => String(entry.id) !== String(target.id)));
-
-    if (hasSupabaseEnv()) {
-      const supabase = getSupabaseBrowserClient();
-      if (supabase) {
-        try {
-          await supabase.from(VAULT_ITEMS_TABLE).delete().eq("id", target.id);
-        } catch {
-          // leave local delete in place
-        }
-      }
-    }
-
-    window.dispatchEvent(new Event("vltd:vault-updated"));
+    await deleteVaultItemEverywhere(target.id);
   }
 
   function toggleSelectItem(id: string) {
@@ -1365,26 +1370,8 @@ export default function VaultPage() {
 
     setIsDeleting(true);
     try {
-      const remaining = loadItems({ includeAllProfiles: true }).filter((entry) => !idsToDelete.has(String(entry.id)));
-      saveItems(remaining);
       setItems((prev) => prev.filter((entry) => !idsToDelete.has(String(entry.id))));
-
-      if (hasSupabaseEnv()) {
-        const supabase = getSupabaseBrowserClient();
-        if (supabase) {
-          await Promise.all(
-            toDelete.map(async (item) => {
-              try {
-                await supabase.from(VAULT_ITEMS_TABLE).delete().eq("id", item.id);
-              } catch {
-                // ignore individual delete failures
-              }
-            })
-          );
-        }
-      }
-
-      window.dispatchEvent(new Event("vltd:vault-updated"));
+      await Promise.all(toDelete.map((item) => deleteVaultItemEverywhere(item.id)));
     } finally {
       setIsDeleting(false);
       setDeleteConfirmPending(false);
@@ -1846,7 +1833,9 @@ export default function VaultPage() {
           </div>
         </section>
 
-        {items.length === 0 ? (
+        {items.length === 0 && !initialLoadComplete ? (
+          <VaultLoadingSkeleton />
+        ) : items.length === 0 ? (
           <VaultEmptyState hasFilters={false} onClearFilters={handleClearFilters} />
         ) : vaultViewMode === "wall" ? (
           <VaultWallView items={items} saleMap={saleMap} />

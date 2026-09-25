@@ -1156,14 +1156,6 @@ export function appendItems(items: VaultItem[]) {
   saveRawItems([...existing, ...items.map(syncPrimaryFields)]);
 }
 
-export function deleteVaultItem(itemId: string) {
-  const next = loadRawItems().filter((item) => String(item.id) !== String(itemId));
-  saveRawItems(next);
-  if (typeof window !== "undefined") {
-    window.dispatchEvent(new Event("vltd:vault-updated"));
-  }
-}
-
 export function markItemViewed(itemId: string) {
   const next = loadRawItems().map((item) =>
     String(item.id) === String(itemId) ? { ...item, isNew: false } : item
