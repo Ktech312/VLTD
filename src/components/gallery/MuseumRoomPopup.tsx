@@ -435,7 +435,7 @@ export default function MuseumRoomPopup({
       return;
     }
     setSaveState("saving");
-    const result = await setRoomItemSlot(roomId, slot.id, { title: item.title, image_url: image }, 0);
+    const result = await setRoomItemSlot(roomId, slot.id, { title: item.title, image_url: image, vault_item_id: String(item.id) }, 0);
     setSaveState(result.ok ? "saved" : "error");
     setPickerSlotIdx(null);
     organizer.setOrganizeSelectedSlot(null);

@@ -1718,7 +1718,7 @@ export function placeItemsAtSlots(
   textureLoader: THREE.TextureLoader,
   groups: RoomLightGroups,
   slots: PlacementSlot[],
-  itemsBySlot: Map<string, { url: string; label?: string }>,
+  itemsBySlot: Map<string, { url: string; label?: string; itemRef?: MuseumItemClickRef }>,
   isCancelled: () => boolean,
   // Frame styles pass (2026-09-14): the room's own chosen wall-artwork
   // style ("classic", the default/every existing caller's prior look, or
@@ -1739,7 +1739,8 @@ export function placeItemsAtSlots(
       item.url, slot.maxWidth, slot.maxHeight,
       isCancelled, withRealLight, item.label,
       isShelf ? "shelf" : "wall",
-      isShelf ? "gallery" : wallFrameStyle
+      isShelf ? "gallery" : wallFrameStyle,
+      item.itemRef
     );
   }
 }
@@ -1773,6 +1774,11 @@ export function hangCompactLabel(
   const normal = new THREE.Vector3(0, 0, 1).applyEuler(new THREE.Euler(0, rotationY, 0));
   group.position.set(x + normal.x * 0.021, y, z + normal.z * 0.021);
   group.rotation.y = rotationY;
+  // Architecture-vs-content separation (2026-09-24) — see the matching
+  // comment on hangArtPreservingAspect's own mat mesh. This title's text
+  // comes from a curated item, not the room's own permanent decoration, so
+  // it's excluded from a Publish's baked geometry the same way.
+  group.userData.kind = "museum-item-label";
 
   const faceMaterial = new THREE.MeshBasicMaterial({
     map: destinationSignFaceTexture(scene),
@@ -1907,6 +1913,25 @@ function createMuseumFrameTexture(aspect: number): THREE.CanvasTexture {
 
 export type ArtworkFrameStyle = "classic" | "gallery" | "matted";
 
+// Museum Runtime V2 item-interaction pass (2026-09-24): an optional,
+// purely-additive item identity carried alongside {url, label} through
+// placeItemsAtSlots()/placeItemsInCases() into hangArtPreservingAspect(),
+// which stamps it on the actual mat/art/shadow meshes' userData.itemRef —
+// the museum campus's own click handler (V2's interaction.ts; the legacy
+// campus doesn't read this at all) raycasts against those meshes and reads
+// this back to know exactly which real curated item (and, if known, real
+// vault_items row) was clicked. Every existing caller that doesn't pass
+// this (MuseumBuilder.tsx, VltdMuseumCampus.tsx) is completely unaffected
+// — meshes just get no userData.itemRef, same as before this pass.
+export type MuseumItemClickRef = {
+  museumItemId: string;
+  vaultItemId: string | null;
+  title: string;
+  imageUrl: string;
+  estimatedValue: number | null;
+  showValue: boolean;
+};
+
 function hangArtPreservingAspect(
   scene: THREE.Scene,
   textureLoader: THREE.TextureLoader,
@@ -1928,7 +1953,10 @@ function hangArtPreservingAspect(
   // above). EK's own ask: classic is a no-shelf-only look — callers are
   // expected to pass "gallery" for any shelf slot regardless of the
   // room's own chosen style, not this function's job to enforce.
-  frameStyle: ArtworkFrameStyle = "classic"
+  frameStyle: ArtworkFrameStyle = "classic",
+  // Museum Runtime V2 item-interaction pass (2026-09-24): see
+  // MuseumItemClickRef's own comment. Undefined for every existing caller.
+  itemRef?: MuseumItemClickRef
 ) {
   textureLoader.load(url, (texture) => {
     if (isCancelled()) return;
@@ -1953,6 +1981,15 @@ function hangArtPreservingAspect(
     const mat = new THREE.Mesh(new THREE.PlaneGeometry(matWidth, matHeight), matMaterial);
     mat.position.set(x, y, z);
     mat.rotation.y = rotationY;
+    // Architecture-vs-content separation (2026-09-24): tags every mesh this
+    // function creates as collection content, not architecture — Museum
+    // Builder's handlePublish() hides everything tagged "museum-item-art"/
+    // "museum-item-label" before exporting a room's bake (see that
+    // function's own comment), so a Publish never freezes an item's image
+    // into the room's architecture file. The live campus/V2 runtime never
+    // reads this tag — it exists purely for the publish-time exclusion.
+    mat.userData.kind = "museum-item-art";
+    if (itemRef) mat.userData.itemRef = itemRef;
     scene.add(mat);
 
     const normal = new THREE.Vector3(0, 0, 1).applyEuler(new THREE.Euler(0, rotationY, 0));
@@ -1978,6 +2015,7 @@ function hangArtPreservingAspect(
       );
       shadow.rotation.x = -Math.PI / 2;
       shadow.position.set(x, y - 0.05, z);
+      shadow.userData.kind = "museum-item-art";
       scene.add(shadow);
     } else {
       // Wall-hung frames: a soft shadow behind and slightly below the frame,
@@ -1989,6 +2027,7 @@ function hangArtPreservingAspect(
       const shadow = new THREE.Mesh(new THREE.PlaneGeometry(artW + 0.5, artH + 0.35), shadowMaterial);
       shadow.position.set(x - normal.x * 0.005, y - artH * 0.08, z - normal.z * 0.005);
       shadow.rotation.y = rotationY;
+      shadow.userData.kind = "museum-item-art";
       scene.add(shadow);
     }
 
@@ -1998,6 +2037,8 @@ function hangArtPreservingAspect(
     const art = new THREE.Mesh(new THREE.PlaneGeometry(artW, artH), artMaterial);
     art.position.set(x + normal.x * 0.02, y, z + normal.z * 0.02);
     art.rotation.y = rotationY;
+    art.userData.kind = "museum-item-art";
+    if (itemRef) art.userData.itemRef = itemRef;
     scene.add(art);
 
     if (withRealLight) {

@@ -108,12 +108,23 @@ export type MuseumRoomItem = {
   // any row saved before 20260912_museum_room_item_value.sql runs.
   estimated_value?: number | null;
   show_value?: boolean;
+  // Museum Runtime V2 item-interaction pass (2026-09-24): the real
+  // vault_items.id this curated row was placed from, if known — lets a
+  // visitor clicking this item in the museum open the existing public
+  // item-information treatment (GuestItemModal) with real vault data
+  // instead of just this row's own curated title/image copy. Undefined
+  // for any row saved before 20260924_museum_room_item_vault_link.sql
+  // runs, or placed a way that doesn't have a real vault_items id handy —
+  // both mean "no real vault data available," never a broken click.
+  vault_item_id?: string | null;
 };
 
-// Fails-soft column gate (extended 2026-09-12): tries every column this
+// Fails-soft column gate (extended 2026-09-24): tries every column this
 // file knows about, then retries with progressively fewer on a Postgrest
 // "column does not exist" error, down to the original bare select — so
 // this never breaks regardless of which migration EK has actually run yet.
+const ROOM_ITEM_COLUMNS_WITH_VAULT_LINK =
+  "id, room_id, title, image_url, enabled, sort_order, slot_id, estimated_value, show_value, vault_item_id";
 const ROOM_ITEM_COLUMNS_FULL = "id, room_id, title, image_url, enabled, sort_order, slot_id, estimated_value, show_value";
 const ROOM_ITEM_COLUMNS_WITH_SLOT = "id, room_id, title, image_url, enabled, sort_order, slot_id";
 const ROOM_ITEM_COLUMNS_BASE = "id, room_id, title, image_url, enabled, sort_order";
@@ -121,7 +132,7 @@ const ROOM_ITEM_COLUMNS_BASE = "id, room_id, title, image_url, enabled, sort_ord
 async function selectRoomItems(roomId: string, onlyEnabled: boolean): Promise<MuseumRoomItem[]> {
   const supabase = getSupabaseBrowserClient();
   if (!supabase) return [];
-  for (const columns of [ROOM_ITEM_COLUMNS_FULL, ROOM_ITEM_COLUMNS_WITH_SLOT, ROOM_ITEM_COLUMNS_BASE]) {
+  for (const columns of [ROOM_ITEM_COLUMNS_WITH_VAULT_LINK, ROOM_ITEM_COLUMNS_FULL, ROOM_ITEM_COLUMNS_WITH_SLOT, ROOM_ITEM_COLUMNS_BASE]) {
     try {
       let query = supabase.from("museum_room_items").select(columns).eq("room_id", roomId);
       if (onlyEnabled) query = query.eq("enabled", true);
@@ -157,7 +168,7 @@ export async function getAllRoomItems(roomId: string): Promise<MuseumRoomItem[]>
 export async function setRoomItemSlot(
   roomId: string,
   slotId: string,
-  item: { title: string; image_url: string; estimated_value?: number | null },
+  item: { title: string; image_url: string; estimated_value?: number | null; vault_item_id?: string | null },
   sortOrder: number
 ): Promise<{ ok: boolean; error?: string }> {
   const supabase = getSupabaseBrowserClient();
@@ -171,12 +182,13 @@ export async function setRoomItemSlot(
     sort_order: sortOrder,
     updated_at: new Date().toISOString(),
   };
-  // estimated_value is snapshotted whenever the migration allows it; a
-  // "column does not exist" error here degrades to the base payload rather
-  // than failing the whole placement, same fails-soft rule as every other
-  // optional column in this file.
+  // estimated_value/vault_item_id are snapshotted whenever their migration
+  // allows it; a "column does not exist" error degrades one tier at a time
+  // rather than failing the whole placement, same fails-soft rule as every
+  // other optional column in this file.
+  const withValueAndVaultLink = { ...basePayload, estimated_value: item.estimated_value ?? null, vault_item_id: item.vault_item_id ?? null };
   const withValue = { ...basePayload, estimated_value: item.estimated_value ?? null };
-  for (const payload of [withValue, basePayload]) {
+  for (const payload of [withValueAndVaultLink, withValue, basePayload]) {
     const { error } = await supabase.from("museum_room_items").upsert(payload, { onConflict: "room_id,slot_id" });
     if (!error) return { ok: true };
     // onConflict target doesn't exist yet (migration not run) — degrade to

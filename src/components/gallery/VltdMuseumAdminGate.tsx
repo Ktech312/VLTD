@@ -14,7 +14,14 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { getMyAdminAccessStatus } from "@/lib/adminAuth";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 import VltdMuseumCampus from "@/components/gallery/VltdMuseumCampus";
+import VltdMuseumCampusV2 from "@/components/gallery/VltdMuseumCampusV2";
 import MuseumCampusOverview from "@/components/gallery/MuseumCampusOverview";
+import { CAMPUS_ROOMS, type CampusRoomId } from "@/lib/campusLayout";
+
+function resolveCampusRoomId(raw: string | null): CampusRoomId | null {
+  const match = CAMPUS_ROOMS.find((r) => r.id === raw);
+  return match ? match.id : null;
+}
 
 type AccessState = "checking" | "pending-mfa" | "authorized" | "denied";
 
@@ -93,6 +100,17 @@ export default function VltdMuseumAdminGate() {
   // using them together yet. See HANDOFF.md's 2026-09-21 entry.
   if (!roomParam) {
     return <MuseumCampusOverview onBackToRoom={() => router.push("/museum")} />;
+  }
+
+  // Museum Runtime V2 proof (2026-09-23): ?runtime=v2 routes to the new,
+  // separate streamed-neighborhood runtime instead of the legacy
+  // whole-campus build — plain ?room=<id> (no runtime param) is completely
+  // unchanged, still VltdMuseumCampus, so the existing production museum
+  // stays the default and the fallback. An unrecognized room id under
+  // runtime=v2 falls through to the legacy component rather than crashing.
+  const v2RoomId = searchParams.get("runtime") === "v2" ? resolveCampusRoomId(roomParam) : null;
+  if (v2RoomId) {
+    return <VltdMuseumCampusV2 roomId={v2RoomId} />;
   }
 
   return <VltdMuseumCampus />;

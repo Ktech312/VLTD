@@ -206,7 +206,12 @@ function reorderByDrag(ids: string[], fromId: string, toId: string): string[] {
   return next;
 }
 
-function GuestItemModal({
+// Museum Runtime V2 item-interaction pass (2026-09-24): exported so the
+// museum campus (VltdMuseumCampusV2.tsx) can reuse this exact "item
+// information" treatment for a clicked item, instead of building a second
+// one — it's already the public-safe version (no financial details, gated
+// VibeButton) built for a viewer who isn't the item's own owner.
+export function GuestItemModal({
   item,
   onClose,
   ownerProfileId,
