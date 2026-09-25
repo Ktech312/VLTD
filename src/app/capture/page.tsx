@@ -21,6 +21,7 @@ import { appendItems, type VaultImage, type VaultItem } from "@/lib/vaultModel";
 import { suggestAutoTags } from "@/lib/generateHashtags";
 import { emitVaultUpdate } from "@/lib/vaultEvents";
 import { hasSupabaseEnv, uploadVaultImageToSupabase } from "@/lib/vaultCloud";
+import { enqueueVaultItemSync, processVaultSyncQueue } from "@/lib/vaultSyncQueue";
 import {
   generateVaultImageKey,
   prepareImageBlob,
@@ -766,6 +767,14 @@ export default function CapturePage() {
       item.tags = suggestAutoTags(item as VaultItem);
       await appendItems([item as VaultItem]);
       emitVaultUpdate();
+      // NYCC launch blocker: this was the one add-item entry point that
+      // never enqueued a cloud sync for the item it just created — it sat
+      // local-only until some unrelated code path happened to push it, so
+      // it never showed up on a second device and was lost if local
+      // storage was ever cleared. Every other add flow (Scan, manual Add,
+      // spreadsheet/wishlist import) already does this.
+      enqueueVaultItemSync(id);
+      void processVaultSyncQueue();
       router.push("/vault");
     } catch (err) {
       const msg = err instanceof Error ? err.message : "";

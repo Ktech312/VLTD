@@ -18,6 +18,7 @@ import { analyzeImageWithVision, type VisionAnalysisResult } from "@/lib/ai/open
 import { newId } from "@/lib/id";
 import { appendItems, type VaultImage, type VaultItem } from "@/lib/vaultModel";
 import { emitVaultUpdate } from "@/lib/vaultEvents";
+import { enqueueVaultItemSync, processVaultSyncQueue } from "@/lib/vaultSyncQueue";
 import { hasSupabaseEnv, uploadVaultImageToSupabase } from "@/lib/vaultCloud";
 import {
   generateVaultImageKey,
@@ -325,6 +326,8 @@ export default function BulkUploadPage() {
       }
       appendItems(items);
       emitVaultUpdate();
+      items.forEach((item) => enqueueVaultItemSync(item.id));
+      void processVaultSyncQueue();
       router.push("/vault");
     } catch (err) {
       const msg = err instanceof Error ? err.message : "";
