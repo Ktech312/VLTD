@@ -1,5 +1,16 @@
 # VLTD — Session Checklist (2026-08-05 night → ongoing, updated 2026-08-27)
 
+## 2026-09-25 (latest) — NYCC launch-blocker pass: exhibition counts, cross-surface delete, mobile gate, and a real add-item sync bug
+Full narrative in HANDOFF.md. Commits: `e6b0ce3`, `c0ff615`, `b71fc79`.
+- [x] Exhibition item-count drift root-caused on the real `7/8 Test` gallery: 10 of its 19 stored item ids don't exist in `vault_items` at all — no delete path had ever cleaned up exhibition references. `removeItemIdsFromAllGalleries()` added; editor self-heals on load; Discover's own narrower id parser replaced with the canonical one.
+- [x] Race condition caught and fixed live: the first version of the self-heal looped one cloud sync per dead id, confirmed via direct query to leave the cloud row un-pruned while local was correct. Rebuilt to batch every id into one mutation per gallery.
+- [x] Item deletion unified: Vault grid, item-detail page, and DropReviewSheet now all go through one `deleteVaultItemEverywhere()`/`deleteVaultItemsEverywhere()` — local removal + cloud row delete + exhibition cleanup, every time. Old local-only `deleteVaultItem()`/`deleteItemAndNotify()` deleted, not left dead.
+- [x] **Found outside original scope, fixed anyway**: `/capture` (main Add Item) and `/vault/bulk` never enqueued new items for cloud sync at all — confirmed via direct `vault_items` query on a disposable test item (local: present, cloud: zero rows). Both now enqueue + sync immediately, matching every other add path.
+- [x] Mobile access gate: `ProtectedRoute` spinner added; Vault page got a real loading skeleton instead of flashing "Your vault is empty" during a cold sync.
+- [x] tsc/eslint clean on every commit; all pushed to `main`, Vercel deployed.
+- [x] Live-verified: disposable item survived hard reload locally; deleted via item-detail page, confirmed gone; exhibition self-heal confirmed pruning 19→9 locally on the regression gallery; no stray test data left on the account.
+- [ ] **NOT completed — tooling failure, not an app bug.** Claude-in-Chrome became unreliable partway through this pass: screenshot timeouts, a tab reporting 0×0 viewport, one tab hard-frozen after the Vault grid's native `window.confirm()` delete dialog (this tool has no way to dismiss a native JS dialog), and typing eventually stopped registering in fresh tabs on unrelated inputs. Same class of tooling gap logged 2026-09-17 (line 10 above) and 2026-09-19/25 sessions. Still needed: the 8→6 exhibition item test, desktop-vs-390px timing capture, and a full console/network/broken-image/overflow sweep across Vault/Add Item/Exhibitions/Discover/public exhibition — either retry once the tool stabilizes, or EK runs these directly on production.
+
 ## 2026-09-17 (latest) — Real 32px nav icon size increase, header height untouched — live, DOM-verified
 Full narrative in HANDOFF.md. Live commit: `8e383ac`.
 - [x] `AppIcon` `size` prop 20/22px → 32px on every TopNav/BottomNav tab (both navs' regular tabs + "More" trigger; BottomNav center "+" untouched). Real prop change, not a transform hack.
