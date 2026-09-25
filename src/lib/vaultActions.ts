@@ -2,7 +2,7 @@ import { loadItems, saveItem, saveItems, type VaultItem } from "./vaultModel";
 import { emitVaultUpdate } from "./vaultEvents";
 import { getSupabaseBrowserClient } from "./supabaseClient";
 import { hasSupabaseEnv, VAULT_ITEMS_TABLE } from "./vaultCloud";
-import { removeItemIdFromAllGalleries } from "./galleryModel";
+import { removeItemIdFromAllGalleries, removeItemIdsFromAllGalleries } from "./galleryModel";
 
 export function addItemAndNotify(item: VaultItem) {
   saveItem(item);
@@ -45,4 +45,41 @@ export async function deleteVaultItemEverywhere(id: string) {
   removeItemIdFromAllGalleries(id);
   emitVaultUpdate();
   return id;
+}
+
+// Same delete path, batched. Deleting several items one at a time (each
+// through deleteVaultItemEverywhere) would fire one independent
+// fire-and-forget gallery cloud-sync per item; two deleted items that
+// belonged to the same exhibition would then race each other's sync for
+// that one gallery row, and whichever lands last on the server wins — not
+// necessarily the fully-pruned result. Mass delete must resolve every
+// gallery exactly once, after all the ids are known.
+export async function deleteVaultItemsEverywhere(ids: string[]) {
+  const idSet = new Set(ids.map(String));
+  if (idSet.size === 0) return [];
+
+  const items = loadItems({ includeAllProfiles: true });
+  const next = items.filter((item) => !idSet.has(String(item.id)));
+  saveItems(next);
+  emitVaultUpdate();
+
+  if (hasSupabaseEnv()) {
+    const supabase = getSupabaseBrowserClient();
+    if (supabase) {
+      await Promise.all(
+        [...idSet].map(async (id) => {
+          try {
+            await supabase.from(VAULT_ITEMS_TABLE).delete().eq("id", id);
+          } catch {
+            // Local delete already applied; the row will be caught by the
+            // next reconcile if this fails.
+          }
+        })
+      );
+    }
+  }
+
+  removeItemIdsFromAllGalleries([...idSet]);
+  emitVaultUpdate();
+  return [...idSet];
 }

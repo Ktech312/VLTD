@@ -1998,20 +1998,27 @@ export function setGalleryItemIds(galleryId: string, itemIds: string[]) {
 // Cascade cleanup for permanent item deletion (NYCC launch blocker #1: a
 // deleted vault item's id used to linger forever in every exhibition that
 // referenced it, so raw itemIds counts drifted from what actually still
-// exists). Strips the id — and its frozen public snapshot, which exists so
-// signed-out guests can see item details without vault_items access — from
-// every gallery across every profile, then lets each affected gallery's
-// existing itemIds/section/cloud-sync machinery run as normal.
-export function removeItemIdFromAllGalleries(itemId: string) {
-  const cleanId = safeString(itemId);
-  if (!cleanId) return;
+// exists). Strips the ids — and their frozen public snapshots, which exist
+// so signed-out guests can see item details without vault_items access —
+// from every gallery across every profile, then lets each affected
+// gallery's existing itemIds/section/cloud-sync machinery run as normal.
+//
+// Takes every id at once and does ONE mutateGallery per affected gallery.
+// Calling mutateGallery separately per id fires a separate fire-and-forget
+// cloud upsert per call; several of those in flight for the same gallery
+// race each other, and whichever request's payload happens to land last on
+// the server wins — not necessarily the most-pruned one. Multiple ids to
+// remove from the same gallery must go through a single mutation.
+export function removeItemIdsFromAllGalleries(itemIds: string[]) {
+  const cleanIds = new Set(itemIds.map(safeString).filter(Boolean));
+  if (cleanIds.size === 0) return;
 
   const galleries = loadGalleries({ includeAllProfiles: true });
-  const affected = galleries.filter((gallery) => gallery.itemIds.includes(cleanId));
+  const affected = galleries.filter((gallery) => gallery.itemIds.some((id) => cleanIds.has(id)));
 
   for (const gallery of affected) {
     mutateGallery(gallery.id, (current) => {
-      const nextItemIds = current.itemIds.filter((id) => id !== cleanId);
+      const nextItemIds = current.itemIds.filter((id) => !cleanIds.has(id));
       const allowed = new Set(nextItemIds);
       const nextSections = normalizeSections(getGallerySections(current), nextItemIds).map((section) => {
         const sectionItemIds = section.itemIds.filter((id) => allowed.has(id));
@@ -2026,12 +2033,16 @@ export function removeItemIdFromAllGalleries(itemId: string) {
         {
           ...current,
           itemIds: nextItemIds,
-          publicItemSnapshots: (current.publicItemSnapshots ?? []).filter((snap) => snap.id !== cleanId),
+          publicItemSnapshots: (current.publicItemSnapshots ?? []).filter((snap) => !cleanIds.has(snap.id)),
         },
         nextSections
       );
     }, { includeAllProfiles: true });
   }
+}
+
+export function removeItemIdFromAllGalleries(itemId: string) {
+  removeItemIdsFromAllGalleries([itemId]);
 }
 
 export function setGalleryItemNote(galleryId: string, itemId: string, note: string) {

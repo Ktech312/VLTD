@@ -23,7 +23,7 @@ import {
   getGalleryInviteUrl,
   getActiveInviteTokens,
   syncGalleryToSupabaseNow,
-  removeItemIdFromAllGalleries,
+  removeItemIdsFromAllGalleries,
 } from "@/lib/galleryModel";
 
 import { loadItems, syncVaultItemsFromSupabase, type VaultItem } from "@/lib/vaultModel";
@@ -411,7 +411,7 @@ export default function GalleryPage() {
       const localIds = new Set(freshItems.map((item) => item.id));
       const currentGallery = loadGalleries({ includeAllProfiles: true }).find((g) => g.id === id);
       const deadIds = (currentGallery?.itemIds ?? []).filter((itemId) => !localIds.has(itemId));
-      deadIds.forEach((deadId) => removeItemIdFromAllGalleries(deadId));
+      if (deadIds.length > 0) removeItemIdsFromAllGalleries(deadIds);
     }
 
     void hydrateVaultItems();

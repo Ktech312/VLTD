@@ -33,7 +33,7 @@ import {
   type VaultItem,
 } from "@/lib/vaultModel";
 import { hasSupabaseEnv } from "@/lib/vaultCloud";
-import { deleteVaultItemEverywhere } from "@/lib/vaultActions";
+import { deleteVaultItemEverywhere, deleteVaultItemsEverywhere } from "@/lib/vaultActions";
 
 const ACTIVE_PROFILE_EVENT = "vltd:active-profile";
 const SALES_KEY = "vltd_sales_history";
@@ -1371,7 +1371,7 @@ export default function VaultPage() {
     setIsDeleting(true);
     try {
       setItems((prev) => prev.filter((entry) => !idsToDelete.has(String(entry.id))));
-      await Promise.all(toDelete.map((item) => deleteVaultItemEverywhere(item.id)));
+      await deleteVaultItemsEverywhere(toDelete.map((item) => item.id));
     } finally {
       setIsDeleting(false);
       setDeleteConfirmPending(false);
