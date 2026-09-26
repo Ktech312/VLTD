@@ -33,9 +33,11 @@ export default function DropReviewSheet({ session, onClose, onFinish }: Props) {
   const saved = current.items.filter((item) => item.status === "saved");
   const skipped = current.items.filter((item) => item.status === "skipped");
 
-  function removeItem(id: string) {
-    void deleteVaultItemEverywhere(id);
-    setCurrent((prev) => updateDropItemStatus(prev, id, "skipped"));
+  async function removeItem(id: string) {
+    const result = await deleteVaultItemEverywhere(id);
+    if (result.ok) {
+      setCurrent((prev) => updateDropItemStatus(prev, id, "skipped"));
+    }
   }
 
   function finish() {

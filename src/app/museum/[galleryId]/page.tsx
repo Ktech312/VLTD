@@ -23,7 +23,7 @@ import {
   getGalleryInviteUrl,
   getActiveInviteTokens,
   syncGalleryToSupabaseNow,
-  removeItemIdsFromAllGalleries,
+  removeItemIdsFromAllGalleriesConfirmed,
 } from "@/lib/galleryModel";
 
 import { loadItems, syncVaultItemsFromSupabase, type VaultItem } from "@/lib/vaultModel";
@@ -411,7 +411,12 @@ export default function GalleryPage() {
       const localIds = new Set(freshItems.map((item) => item.id));
       const currentGallery = loadGalleries({ includeAllProfiles: true }).find((g) => g.id === id);
       const deadIds = (currentGallery?.itemIds ?? []).filter((itemId) => !localIds.has(itemId));
-      if (deadIds.length > 0) removeItemIdsFromAllGalleries(deadIds);
+      if (deadIds.length > 0) {
+        const results = await removeItemIdsFromAllGalleriesConfirmed(deadIds);
+        if (results.some((r) => !r.ok)) {
+          console.error("Exhibition self-heal did not confirm against Supabase:", results);
+        }
+      }
     }
 
     void hydrateVaultItems();

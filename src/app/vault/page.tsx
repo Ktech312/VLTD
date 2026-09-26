@@ -1343,7 +1343,13 @@ export default function VaultPage() {
 
   async function handleDeleteItem(target: VaultItem) {
     setItems((prev) => prev.filter((entry) => String(entry.id) !== String(target.id)));
-    await deleteVaultItemEverywhere(target.id);
+    const result = await deleteVaultItemEverywhere(target.id);
+    if (!result.ok) {
+      // deleteVaultItemEverywhere already restored the item in storage and
+      // fired vltd:vault-updated, which hydrateAll() picks up — this just
+      // surfaces why it came back instead of leaving it unexplained.
+      setSyncStatus(result.error || "Could not delete this item from the cloud.");
+    }
   }
 
   function toggleSelectItem(id: string) {
@@ -1371,7 +1377,10 @@ export default function VaultPage() {
     setIsDeleting(true);
     try {
       setItems((prev) => prev.filter((entry) => !idsToDelete.has(String(entry.id))));
-      await deleteVaultItemsEverywhere(toDelete.map((item) => item.id));
+      const result = await deleteVaultItemsEverywhere(toDelete.map((item) => item.id));
+      if (!result.ok) {
+        setSyncStatus(result.error || "Could not delete some items from the cloud.");
+      }
     } finally {
       setIsDeleting(false);
       setDeleteConfirmPending(false);

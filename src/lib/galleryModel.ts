@@ -1995,54 +1995,119 @@ export function setGalleryItemIds(galleryId: string, itemIds: string[]) {
   });
 }
 
+function pruneGalleryItemIds(current: Gallery, cleanIds: Set<string>): Gallery {
+  const nextItemIds = current.itemIds.filter((id) => !cleanIds.has(id));
+  const allowed = new Set(nextItemIds);
+  const nextSections = normalizeSections(getGallerySections(current), nextItemIds).map((section) => {
+    const sectionItemIds = section.itemIds.filter((id) => allowed.has(id));
+    const featuredItemId =
+      section.featuredItemId && sectionItemIds.includes(section.featuredItemId)
+        ? section.featuredItemId
+        : sectionItemIds[0];
+    return { ...section, itemIds: sectionItemIds, featuredItemId };
+  });
+
+  return withSyncedSections(
+    {
+      ...current,
+      itemIds: nextItemIds,
+      publicItemSnapshots: (current.publicItemSnapshots ?? []).filter((snap) => !cleanIds.has(snap.id)),
+      updatedAt: Date.now(),
+    },
+    nextSections
+  );
+}
+
+// Fetches exactly one gallery row fresh (bypassing the local cache
+// entirely) and returns it normalized, or null if the row is gone or the
+// fetch fails.
+async function fetchGalleryFromSupabaseById(galleryId: string): Promise<Gallery | null> {
+  const supabase = getSupabaseBrowserClient();
+  if (!supabase) return null;
+
+  const { data, error } = await supabase.from("galleries").select("*").eq("id", galleryId).maybeSingle();
+  if (error || !data) return null;
+
+  return normalizeSupabaseGallery(data);
+}
+
+// Unconditionally replaces this one gallery's entry in the local cache with
+// a server-confirmed Gallery object — no updatedAt comparison, no merge.
+// hydrateLocalGalleriesFromSupabase's usual merge picks whichever side has
+// the newer client-stamped updatedAt, and a stale local copy that's simply
+// been re-touched by something unrelated can carry a newer timestamp than
+// a genuinely fresher server row; that's how a cleanup that landed
+// correctly on the server could still lose to stale local data afterward.
+// This bypasses that entirely for the one row we just confirmed.
+function replaceLocalGalleryWithServerVersion(serverGallery: Gallery) {
+  const current = readStoredGallerySnapshot();
+  const next = current.some((g) => g.id === serverGallery.id)
+    ? current.map((g) => (g.id === serverGallery.id ? serverGallery : g))
+    : [...current, serverGallery];
+  writeLocalCache(next, true);
+}
+
+export type GalleryCleanupResult = {
+  galleryId: string;
+  ok: boolean;
+  error?: string;
+};
+
 // Cascade cleanup for permanent item deletion (NYCC launch blocker #1: a
 // deleted vault item's id used to linger forever in every exhibition that
 // referenced it, so raw itemIds counts drifted from what actually still
 // exists). Strips the ids — and their frozen public snapshots, which exist
 // so signed-out guests can see item details without vault_items access —
-// from every gallery across every profile, then lets each affected
-// gallery's existing itemIds/section/cloud-sync machinery run as normal.
+// from every gallery across every profile.
 //
-// Takes every id at once and does ONE mutateGallery per affected gallery.
-// Calling mutateGallery separately per id fires a separate fire-and-forget
-// cloud upsert per call; several of those in flight for the same gallery
-// race each other, and whichever request's payload happens to land last on
-// the server wins — not necessarily the most-pruned one. Multiple ids to
-// remove from the same gallery must go through a single mutation.
-export function removeItemIdsFromAllGalleries(itemIds: string[]) {
+// Takes every id at once and does ONE Supabase upsert per affected
+// gallery, awaited and confirmed (not the fire-and-forget path every other
+// gallery mutation uses): several separate fire-and-forget upserts for the
+// same gallery race each other, and whichever lands last on the server
+// wins — not necessarily the most-pruned one, confirmed live on the "7/8
+// Test" regression gallery. After a confirmed write, the gallery is
+// re-fetched from Supabase and that server version REPLACES the local
+// cache entry outright (see replaceLocalGalleryWithServerVersion) so an
+// older local updatedAt elsewhere can't resurrect the ids we just removed.
+export async function removeItemIdsFromAllGalleriesConfirmed(
+  itemIds: string[]
+): Promise<GalleryCleanupResult[]> {
   const cleanIds = new Set(itemIds.map(safeString).filter(Boolean));
-  if (cleanIds.size === 0) return;
+  if (cleanIds.size === 0) return [];
 
   const galleries = loadGalleries({ includeAllProfiles: true });
   const affected = galleries.filter((gallery) => gallery.itemIds.some((id) => cleanIds.has(id)));
 
+  const results: GalleryCleanupResult[] = [];
+
   for (const gallery of affected) {
-    mutateGallery(gallery.id, (current) => {
-      const nextItemIds = current.itemIds.filter((id) => !cleanIds.has(id));
-      const allowed = new Set(nextItemIds);
-      const nextSections = normalizeSections(getGallerySections(current), nextItemIds).map((section) => {
-        const sectionItemIds = section.itemIds.filter((id) => allowed.has(id));
-        const featuredItemId =
-          section.featuredItemId && sectionItemIds.includes(section.featuredItemId)
-            ? section.featuredItemId
-            : sectionItemIds[0];
-        return { ...section, itemIds: sectionItemIds, featuredItemId };
+    const pruned = pruneGalleryItemIds(gallery, cleanIds);
+
+    try {
+      await syncGalleryToSupabaseNow(pruned);
+    } catch (error) {
+      console.error("Gallery item cleanup failed to reach Supabase:", gallery.id, error);
+      results.push({
+        galleryId: gallery.id,
+        ok: false,
+        error: error instanceof Error ? error.message : "Cloud update failed.",
       });
+      continue;
+    }
 
-      return withSyncedSections(
-        {
-          ...current,
-          itemIds: nextItemIds,
-          publicItemSnapshots: (current.publicItemSnapshots ?? []).filter((snap) => !cleanIds.has(snap.id)),
-        },
-        nextSections
-      );
-    }, { includeAllProfiles: true });
+    const confirmed = await fetchGalleryFromSupabaseById(gallery.id);
+    if (confirmed) {
+      replaceLocalGalleryWithServerVersion(withPreservedSlotLayout(confirmed, pruned));
+    } else {
+      // The write itself succeeded (no throw above); trust the pruned
+      // local value we just pushed rather than leaving stale ids in place.
+      replaceLocalGalleryWithServerVersion(pruned);
+    }
+
+    results.push({ galleryId: gallery.id, ok: true });
   }
-}
 
-export function removeItemIdFromAllGalleries(itemId: string) {
-  removeItemIdsFromAllGalleries([itemId]);
+  return results;
 }
 
 export function setGalleryItemNote(galleryId: string, itemId: string, note: string) {

@@ -299,6 +299,8 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
   const { trigger: shareTrigger, dismiss: dismissShareTrigger } = useAutoShareTrigger();
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState("");
   const [isEditingNotes, setIsEditingNotes] = useState(false);
   const [notesDraft, setNotesDraft] = useState("");
   const router = useRouter();
@@ -1411,19 +1413,30 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
             <p className="mt-2 text-sm text-[color:var(--muted)]">
               This will permanently remove the item from your vault. This cannot be undone.
             </p>
+            {deleteError ? (
+              <p className="mt-2 text-sm text-rose-400">{deleteError}</p>
+            ) : null}
             <div className="mt-5 flex items-center gap-3">
-              <PillButton onClick={() => setDeleteConfirm(false)} className="flex-1">
+              <PillButton onClick={() => { setDeleteConfirm(false); setDeleteError(""); }} className="flex-1" disabled={isDeleting}>
                 Cancel
               </PillButton>
               <PillButton
-                onClick={() => {
-                  void deleteVaultItemEverywhere(item.id);
-                  router.replace("/vault");
+                onClick={async () => {
+                  setIsDeleting(true);
+                  setDeleteError("");
+                  const result = await deleteVaultItemEverywhere(item.id);
+                  if (result.ok) {
+                    router.replace("/vault");
+                    return;
+                  }
+                  setIsDeleting(false);
+                  setDeleteError(result.error || "Could not delete this item. Please try again.");
                 }}
+                disabled={isDeleting}
                 className="flex-1"
                 style={{ background: "rgba(248,113,113,0.15)", color: "rgb(248,113,113)" }}
               >
-                Delete Forever
+                {isDeleting ? "Deleting…" : "Delete Forever"}
               </PillButton>
             </div>
           </div>
