@@ -183,10 +183,16 @@ export default function DiscoverPage() {
         if (allItemIds.length > 0) {
           // Pull value + image too, so gallery value and featured items are the
           // real items rather than invented numbers and a repeated cover.
-          const { data: itemRows } = await supabase
+          const { data: itemRows, error: itemRowsError } = await supabase
             .from("vault_items")
             .select("id, universe, current_value, image_front_url, title")
             .in("id", allItemIds);
+          if (itemRowsError) {
+            // Non-fatal — the gallery list above already rendered. Items
+            // just fall back to $0/no-image until this succeeds, but that
+            // fallback should never be silent.
+            console.error("Discover: failed to load item facts for galleries:", itemRowsError);
+          }
           const itemUniverseMap = new Map<string, UniverseKey>();
           const itemFacts = new Map<string, GalleryItemFact>();
           for (const raw of itemRows ?? []) {

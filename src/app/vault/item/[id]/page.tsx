@@ -34,6 +34,8 @@ import {
   uploadVaultImageToSupabase,
   upsertVaultItemToSupabase,
 } from "@/lib/vaultCloud";
+import { enqueueVaultItemSync } from "@/lib/vaultSyncQueue";
+import { showToast } from "@/lib/toast";
 import {
   appendImage,
   deleteImageAtIndex,
@@ -376,11 +378,25 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
     saveItem(nextItem);
     setItems((prev) => prev.map((entry) => (entry.id === nextItem.id ? nextItem : entry)));
 
+    // This is the save path for every edit on this page (title, value,
+    // notes, tags, asking price, video clip...). upsertVaultItemToSupabase
+    // always throws on a genuine failure, and most callers below do
+    // `void persist(...)` — an uncaught rejection here was a silent,
+    // invisible failure: the local edit looked saved, nothing told the
+    // user the cloud never got it, and vltd:vault-updated never fired
+    // (skipped by the throw) so other open views wouldn't even refresh
+    // to the locally-correct state. Now it's caught, queued for the
+    // existing retry mechanism, and the update event always fires.
     if (hasSupabaseEnv()) {
-      await upsertVaultItemToSupabase({
-        ...nextItem,
-        profile_id: nextItem.profile_id || getStoredActiveProfileId(),
-      });
+      try {
+        await upsertVaultItemToSupabase({
+          ...nextItem,
+          profile_id: nextItem.profile_id || getStoredActiveProfileId(),
+        });
+      } catch {
+        enqueueVaultItemSync(nextItem.id);
+        showToast("Saved on this device — will sync when back online.");
+      }
     }
 
     window.dispatchEvent(new Event("vltd:vault-updated"));

@@ -89,6 +89,8 @@ export async function deleteVaultItemsEverywhere(ids: string[]): Promise<DeleteV
       );
 
       const failed = results.filter((r) => r.error);
+      const succeededIds = results.filter((r) => !r.error).map((r) => r.id);
+
       if (failed.length > 0) {
         // Restore only the ones that actually failed to delete.
         const failedIds = new Set(failed.map((f) => f.id));
@@ -97,6 +99,16 @@ export async function deleteVaultItemsEverywhere(ids: string[]): Promise<DeleteV
           saveItems([...loadItems({ includeAllProfiles: true }), ...restore]);
           emitVaultUpdate();
         }
+
+        // A partial failure must not skip cleanup for the ones that DID
+        // delete — returning early here used to leave every successfully
+        // deleted item's id still sitting in gallery.itemIds, permanently,
+        // since this is the only place that ever prunes them.
+        if (succeededIds.length > 0) {
+          await removeItemIdsFromAllGalleriesConfirmed(succeededIds);
+          emitVaultUpdate();
+        }
+
         return {
           ok: false,
           error: `${failed.length} of ${idSet.size} item(s) could not be deleted from the cloud.`,

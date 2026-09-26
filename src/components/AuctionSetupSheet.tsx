@@ -4,6 +4,8 @@ import { useState } from "react";
 import { saveItem, type VaultItem } from "@/lib/vaultModel";
 import { Glyph } from "@/components/ui/Glyph";
 import { upsertVaultItemToSupabase } from "@/lib/vaultCloud";
+import { enqueueVaultItemSync } from "@/lib/vaultSyncQueue";
+import { showToast } from "@/lib/toast";
 
 // ─── Countdown helper ─────────────────────────────────────────────────────────
 
@@ -72,6 +74,24 @@ export default function AuctionSetupSheet({ item, onClose, onSaved }: Props) {
   const [durationHours, setDurationHours] = useState(168);
   const [saving, setSaving] = useState(false);
 
+  // The auction/cancel flows below always saveItem() first, so the local
+  // record is already correct regardless of what happens next — a failed
+  // cloud push used to be a bare fire-and-forget with an empty catch, which
+  // meant an auction could be "live" only on this one device (starting one
+  // sets isPublic: true, a reserve, a buy-it-now — real state a second
+  // device or Discover would never see) with no error and nothing queued
+  // to retry. Now it awaits, and on failure queues the item for the
+  // existing retry mechanism and tells the user instead of pretending it
+  // synced.
+  async function syncAuctionChange(updated: VaultItem, failureMessage: string) {
+    try {
+      await upsertVaultItemToSupabase(updated);
+    } catch {
+      enqueueVaultItemSync(updated.id);
+      showToast(failureMessage);
+    }
+  }
+
   async function handleStart() {
     const parsedStartingBid = startingBid ? Number(startingBid) : 1;
     setSaving(true);
@@ -91,7 +111,7 @@ export default function AuctionSetupSheet({ item, onClose, onSaved }: Props) {
     };
     saveItem(updated);
     window.dispatchEvent(new Event("vltd:vault-updated"));
-    void upsertVaultItemToSupabase(updated).catch(() => {});
+    void syncAuctionChange(updated, "Auction saved on this device — will sync when back online.");
     setSaving(false);
     onSaved?.(updated);
     onClose();
@@ -109,7 +129,7 @@ export default function AuctionSetupSheet({ item, onClose, onSaved }: Props) {
     };
     saveItem(updated);
     window.dispatchEvent(new Event("vltd:vault-updated"));
-    void upsertVaultItemToSupabase(updated).catch(() => {});
+    void syncAuctionChange(updated, "Cancellation saved on this device — will sync when back online.");
     onSaved?.(updated);
     onClose();
   }

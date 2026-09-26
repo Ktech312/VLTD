@@ -1090,8 +1090,14 @@ async function syncGalleryItemsToSupabase(
     }
 
     console.error("Failed inserting gallery_items rows:", insertError);
-    if (options?.throwOnError) throw insertError;
 
+    // This table's own rows were already deleted above (delete-then-insert,
+    // not atomic) — a failed insert here leaves gallery_items genuinely
+    // empty for this gallery, which is what the public share route reads
+    // directly. The restore attempt must always run before any throw, or a
+    // throwOnError caller (syncGalleryToSupabaseNow — the editor's Save
+    // button and the exhibition self-heal both go through it) skips
+    // straight past this recovery and leaves the row gone.
     if (normalizedExisting.length > 0) {
       const { error: restoreError } = await supabase
         .from("gallery_items")
@@ -1106,6 +1112,8 @@ async function syncGalleryItemsToSupabase(
         });
       }
     }
+
+    if (options?.throwOnError) throw insertError;
   } catch (error) {
     console.error("Unexpected gallery_items sync error:", error);
     if (options?.throwOnError) throw error;
