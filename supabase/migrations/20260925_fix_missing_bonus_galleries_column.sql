@@ -1,0 +1,23 @@
+-- NYCC launch-blocker root cause: enforce_gallery_limit() (from
+-- 20260819_server_side_tier_limits.sql) reads profiles.bonus_galleries,
+-- but no migration ever actually created that column. Since Postgres fires
+-- a table's BEFORE INSERT triggers on every row an
+-- "INSERT ... ON CONFLICT DO UPDATE" statement touches -- even when the row
+-- resolves to an UPDATE, not a fresh insert -- this trigger has been
+-- running, and failing, on every single galleries upsert since that
+-- migration ran: "column \"bonus_galleries\" does not exist". Confirmed
+-- live: an upsert against the real "7/8 Test" gallery returned exactly
+-- this error via a direct Supabase REST call. This has silently blocked
+-- every gallery save (new or existing) for every profile, at every tier,
+-- the entire time -- unrelated to anything else in this launch-blocker
+-- pass, and invisible client-side because upsertGalleryToSupabase's
+-- existing "strip an unrecognized payload column and retry" self-heal
+-- only matches PostgREST's own schema-cache error shape, not a plain
+-- Postgres "column does not exist" error from inside a trigger.
+--
+-- The trigger's own logic already expected this column to sometimes be
+-- null (`coalesce(bonus_galleries, 0)`), so this is a straightforward,
+-- additive, non-destructive fix -- add the column it was always assumed
+-- to have, defaulting every existing profile to 0 bonus exhibition slots.
+alter table public.profiles
+  add column if not exists bonus_galleries integer not null default 0;
