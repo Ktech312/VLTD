@@ -1,6 +1,19 @@
 # VLTD — Session Checklist (2026-08-05 night → ongoing, updated 2026-08-27)
 
-## 2026-09-26 (latest) — NYCC pass continued: editor race fixed + verified; second gate still open, blocked by a dead embedded browser
+## 2026-09-26 (latest) — Non-browser hardening pass: 4 confirmed error-handling defects fixed while the embedded browser stayed down
+Full narrative in HANDOFF.md. Commit: `d12508f`. Reference for the next session's browser work: [docs/nycc-remaining-browser-checks-2026-09-26.md](docs/nycc-remaining-browser-checks-2026-09-26.md).
+- [x] `syncGalleryItemsToSupabase`: restore-on-failure for `gallery_items` now runs before the `throwOnError` throw, not after — previously any `throwOnError: true` caller (editor Save, exhibition self-heal) skipped recovery and left `gallery_items` genuinely empty, the exact table the public share route reads.
+- [x] `deleteVaultItemsEverywhere`: partial mass-delete failure no longer skips gallery cleanup for the ids that DID succeed — it used to return early and leave successfully-deleted ids stuck in `gallery.itemIds` forever.
+- [x] `AuctionSetupSheet.tsx`: start/cancel-auction save (`isPublic`, reserve price, buy-it-now) was a fire-and-forget `void ...catch(() => {})` — a failed sync was invisible and never retried. Now awaited, queued via the existing retry mechanism on failure, toasted.
+- [x] `vault/item/[id]/page.tsx`'s `persist()` (13 call sites — title/value/notes/tags/price/video edits): no try/catch around the cloud upsert meant a genuine failure threw before `vltd:vault-updated` ever fired, so other open views of the item wouldn't even refresh locally. Now caught, queued, toasted, event always fires.
+- [x] Noted, not fixed (low severity, out of scope): `upsertGalleryToSupabase`'s invite-token upsert has the same throw-before-cleanup ordering bug, on `gallery_invites` — untouched by anything this pass tested.
+- [x] tsc/eslint/build all clean. Confirmed no test suite exists in this repo (no `test` script, no `.test.`/`.spec.` files) — nothing to run there.
+- [x] Static layout review of Vault/Add Item/Exhibitions: no confirmed overflow risk found (matches earlier live no-overflow result).
+- [x] Vercel log inspection for the two historical 503s: authenticated CLI, multiple time windows and filters — no historical logs retrievable at this plan tier at all (only live `--follow` streaming works). Genuine tooling limit, not evidence either way — **status stays "not reproducible on direct retry; cause unconfirmed."**
+- [x] Discogs/CardHedge/Ticketmaster: `DISCOGS_TOKEN` and `TICKETMASTER_API_KEY` both present in Vercel prod env (values not exposed). Safe read-only test confirms Discogs vinyl lookup is still broken in production — not an NYCC blocker, not fixed. Declined to trigger Ticketmaster's only endpoint (`/api/cron/refresh-events`) since it writes real event rows — not a safe connectivity test. CardHedge: zero code anywhere, not a blocker.
+- [ ] **Still not launch-ready.** All seven browser-only checks from the entry below remain open — this pass only closed out what didn't need a browser.
+
+## 2026-09-26 — NYCC pass continued: editor race fixed + verified; second gate still open, blocked by a dead embedded browser
 Full narrative in HANDOFF.md. Commits: `4531103` (bonus_galleries migration), `4dabd96` (anti-race fix).
 - [x] `bonus_galleries` migration run by EK — root cause of every gallery upsert silently failing since 2026-08-19, unrelated to anything else this pass.
 - [x] Editor background-poll race fixed (`isDirtyRef` gates `loadState()`) and live-verified end to end: removed 3 items, waited 20s past the poll interval, editor still showed 6 pre-save, saved, confirmed 6 in `layout.itemIds`/`exhibition_layout.itemIds`/`gallery_items` via direct query, then reconfirmed 6 on all 5 surfaces after a full local-cache clear, and again after a second poll cycle.
