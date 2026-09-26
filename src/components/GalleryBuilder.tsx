@@ -564,6 +564,17 @@ export default function GalleryBuilder({
     });
   }
 
+  // "Remove" on a section card means remove from the exhibition, not just
+  // unassign from this one section's layout — that's what the button says
+  // and what a viewer sees (the item disappears from the card grid). This
+  // used to only touch the section's own itemIds via syncSectionsAndLayout,
+  // which never updates the gallery's top-level itemIds — the field
+  // saveDraft() actually reads and pushes to Supabase. So a "removed" item
+  // stayed a real member of the exhibition: still counted on /museum,
+  // Discover, and the public share route, even though the editor's own
+  // preview correctly stopped showing it. Now mirrors the item picker's
+  // already-correct onConfirm handling (museum/[galleryId]/page.tsx),
+  // which keeps top-level itemIds and section itemIds in sync in one step.
   function removeItemFromSection(sectionId: string, itemId: string) {
     onGalleryChange((current) => {
       const nextSections = getGallerySections(current).map((entry) => {
@@ -578,7 +589,10 @@ export default function GalleryBuilder({
         };
       });
 
-      return syncSectionsAndLayout(current, nextSections);
+      return {
+        ...syncSectionsAndLayout(current, nextSections),
+        itemIds: current.itemIds.filter((id) => id !== itemId),
+      };
     });
   }
 
