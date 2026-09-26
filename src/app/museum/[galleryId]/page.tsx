@@ -324,9 +324,22 @@ export default function GalleryPage() {
   const [originalSnapshot, setOriginalSnapshot] = useState("");
   const latestGalleryRef = useRef<Gallery | null>(null);
   const latestDraftRef = useRef<Gallery | null>(null);
+  const isDirtyRef = useRef(false);
 
   const loadState = useCallback(() => {
     if (!id) return;
+
+    // A background refresh (the 15s poll, a window focus/visibility event,
+    // or any other GALLERY_EVENT) must never replace an in-progress, unsaved
+    // edit. Live-confirmed regression: remove an item, wait past the 15s
+    // poll, and the next tick of this function was silently restoring the
+    // old server state into `draft` — the removal vanished with no error,
+    // and Save then pushed the untouched original count. Vault items are a
+    // separate concern from the exhibition draft, so they still refresh.
+    if (isDirtyRef.current) {
+      setItems(loadItems({ includeAllProfiles: true }));
+      return;
+    }
 
     const galleries = loadGalleries();
     const rawGallery = galleries.find((x) => x.id === id) ?? null;
@@ -502,6 +515,10 @@ export default function GalleryPage() {
   const isDirty = useMemo(() => {
     return normalizeDraftForCompare(draft) !== originalSnapshot;
   }, [draft, originalSnapshot]);
+
+  useEffect(() => {
+    isDirtyRef.current = isDirty;
+  }, [isDirty]);
 
   const selectedAccessMode = useMemo(() => getAccessMode(draft), [draft]);
 
