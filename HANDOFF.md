@@ -1,3 +1,30 @@
+# 2026-09-26 — NYCC pass continued: editor background-poll race fixed and verified; second gate (mobile/cold-cache/second-session) still open, blocked by a dead embedded browser
+
+Direct continuation of 2026-09-25 below — same regression gallery (`c1243458-db47-4af1-a0bf-59b7d6bfba0e`), same launch-blocker doc. This entry exists so a fresh session can resume without re-deriving any of this.
+
+**Fixed and fully verified against production, both code and live data**: the exhibition editor's 15-second background poll (plus window-focus/visibility triggers) was silently overwriting an in-progress, unsaved item-removal edit — `loadState()` rebuilt `gallery`/`draft`/`originalSnapshot` from local storage on every `GALLERY_EVENT`, with no check for unsaved changes. Added an `isDirtyRef` (kept in sync with the existing `isDirty` memo) that makes `loadState()` skip touching the draft entirely while dirty, only refreshing vault items. Live-verified end to end: removed 3 items (9→6), waited 20s (past the poll interval) before saving, confirmed the editor still showed 6 pre-save, saved, and confirmed via direct Supabase query that `layout.itemIds`, `exhibition_layout.itemIds`, and `gallery_items` all landed at exactly 6 — then cleared local cache and reconfirmed 6 on `/museum`, the editor, Discover, Guest View, and the public share route, and confirmed the count survived a second poll cycle untouched.
+
+**Also fixed this same pass**: the `bonus_galleries` migration (EK ran it) — a trigger referencing a column that was never created had been silently failing every single `galleries` upsert since 2026-08-19, for every profile at every tier. This was the actual reason nothing could ever save, independent of any browser tooling issue.
+
+**Correction to an earlier report in this same pass**: two `503`s observed during a network sweep (a `follows` HEAD check, and a Next.js RSC prefetch for a vault item page) were described as "transient Cloudflare/CDN hiccups." That attribution was not backed by server logs — retested and both returned `200` on direct retry, so the honest status is **not reproducible on direct retry; cause unconfirmed**, not a confirmed CDN cause.
+
+**Gate 1 (second-device/session sync) — cloud persistence verified; second-session UI pending.** Confirmed via direct `vault_items` query (not just the app's own UI) that a newly created item survives a hard reload locally and exists in Supabase, and that a deleted item is confirmed gone from both. Not yet done: creating/editing/deleting an item in one authenticated session and confirming the exact result through the **actual rendered Vault UI** of a second, independent clean session — the tool-side blocker below stopped this before it could run.
+
+**Gate 2 (cross-viewport/timing) — partial.** Real 375×812 screenshots captured (via the sandboxed browser, which has no login but works for public routes) for Discover and the public share page — both clean, no overflow, correct counts on screen. Warm-load timing captured for all 5 core routes (all sub-second). **Not done**: real ~390px screenshots for the three *authenticated* routes (Vault, Add Item, Exhibitions) — Claude-in-Chrome's `resize_window` tool is confirmed non-functional in this environment (`window.outerWidth`/`outerHeight` report `0`, meaning there is no real resizable window for it to act on — the same class of gap already logged 2026-09-17, line ~10 of CHECKLIST.md). Also not done: a genuine cold-cache measurement (this profile's HTTP cache was warm all session).
+
+**Blocked, not attempted further per EK's explicit instruction**: items 1–5 of the newest acceptance list (create/edit/delete a uniquely-named item in session A and confirm through session B's actual UI; mass-delete with full local+`vault_items`+gallery-array+`gallery_items` confirmation) never ran this pass. The embedded Claude-in-Chrome browser went from intermittently flaky (recoverable with a fresh tab/tab-group) to a sustained failure — 0×0 viewport / frozen renderer for 3+ minutes across three fresh tab groups and multiple wait cycles — and EK said to stop retrying rather than keep burning cycles on it.
+
+**Exact remaining checklist for the next session (do not skip or re-scope):**
+1. Create a uniquely named item in session A.
+2. Confirm it appears through the UI in a clean session B.
+3. Edit it in A and confirm the change in B.
+4. Delete it individually and confirm removal in B and Supabase.
+5. Create disposable records, mass-delete, and confirm the Vault UI, `vault_items`, gallery arrays, and `gallery_items` all agree.
+6. Real ~390px screenshots for authenticated Vault, Add Item, and Exhibitions.
+7. A genuine cold-cache load measurement, separate from warm navigation, per core route.
+
+Do not report the app as launch-ready until all seven pass with direct evidence — indirect code-path coverage from the earlier gate work is not a substitute, per EK's explicit instruction this pass.
+
 # 2026-09-25 — NYCC launch-blocker pass: exhibition count drift, cross-surface delete gap, and a real "new items never reach the cloud" bug found mid-testing
 
 Scoped pass from `marketing/NYCC_2026_LAUNCH_CONTROL.md`'s two P0s plus the P1 mobile-gate profile. Do not read this as the museum/icons work continuing — this thread stayed strictly inside Vault/Exhibitions/Discover per that doc's own instruction.

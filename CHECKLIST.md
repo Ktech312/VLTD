@@ -1,6 +1,15 @@
 # VLTD — Session Checklist (2026-08-05 night → ongoing, updated 2026-08-27)
 
-## 2026-09-25 (latest) — NYCC launch-blocker pass: exhibition counts, cross-surface delete, mobile gate, and a real add-item sync bug
+## 2026-09-26 (latest) — NYCC pass continued: editor race fixed + verified; second gate still open, blocked by a dead embedded browser
+Full narrative in HANDOFF.md. Commits: `4531103` (bonus_galleries migration), `4dabd96` (anti-race fix).
+- [x] `bonus_galleries` migration run by EK — root cause of every gallery upsert silently failing since 2026-08-19, unrelated to anything else this pass.
+- [x] Editor background-poll race fixed (`isDirtyRef` gates `loadState()`) and live-verified end to end: removed 3 items, waited 20s past the poll interval, editor still showed 6 pre-save, saved, confirmed 6 in `layout.itemIds`/`exhibition_layout.itemIds`/`gallery_items` via direct query, then reconfirmed 6 on all 5 surfaces after a full local-cache clear, and again after a second poll cycle.
+- [x] **Correction**: the two 503s logged 2026-09-25 were called "transient Cloudflare/CDN hiccups" — that wasn't backed by logs. Corrected to: not reproducible on direct retry (both now return 200), cause unconfirmed.
+- [x] Item creation → cloud-sync proxy for "second device": confirmed via direct `vault_items` query (present after creation, gone after delete) — this is NOT the same as confirming through session B's actual rendered UI, which still hasn't run.
+- [x] 2 of 5 routes (Discover, public share) got real 375×812 mobile screenshots via the sandboxed browser — both clean, correct counts, no overflow.
+- [ ] **NOT completed — embedded browser went from intermittently flaky to a sustained failure (0×0 viewport / frozen renderer for 3+ min across 3 fresh tab groups).** EK said stop retrying. Exact remaining list (see HANDOFF.md 2026-09-26 entry for full detail): (1) create a uniquely-named item in session A, (2) confirm through session B's actual UI, (3) edit in A confirm in B, (4) delete individually confirm in B + Supabase, (5) mass-delete disposables confirming Vault UI + `vault_items` + gallery arrays + `gallery_items`, (6) real ~390px screenshots for authenticated Vault/Add Item/Exhibitions, (7) genuine cold-cache load timing separate from warm nav. Do not call this launch-ready until all seven pass with direct evidence.
+
+## 2026-09-25 — NYCC launch-blocker pass: exhibition counts, cross-surface delete, mobile gate, and a real add-item sync bug
 Full narrative in HANDOFF.md. Commits: `e6b0ce3`, `c0ff615`, `b71fc79`.
 - [x] Exhibition item-count drift root-caused on the real `7/8 Test` gallery: 10 of its 19 stored item ids don't exist in `vault_items` at all — no delete path had ever cleaned up exhibition references. `removeItemIdsFromAllGalleries()` added; editor self-heals on load; Discover's own narrower id parser replaced with the canonical one.
 - [x] Race condition caught and fixed live: the first version of the self-heal looped one cloud sync per dead id, confirmed via direct query to leave the cloud row un-pruned while local was correct. Rebuilt to batch every id into one mutation per gallery.
