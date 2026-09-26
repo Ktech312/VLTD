@@ -37,6 +37,12 @@ export type DeleteVaultItemResult = {
 // resolves with `{ error }`. A bare try/catch around the call never sees
 // that; it has to be checked explicitly, which is what actually confirms
 // the cloud row is gone before anything is reported back as successful.
+//
+// That alone isn't enough, though — confirmed live against a disposable test
+// row: an RLS-denied delete comes back with `error: null` and zero rows
+// affected, not an error. `.select("id")` gets back the row(s) actually
+// deleted, so an empty result is treated as a failure too, instead of being
+// read as "nothing left to delete, so it must have worked."
 export async function deleteVaultItemEverywhere(id: string): Promise<DeleteVaultItemResult> {
   const before = loadItems({ includeAllProfiles: true });
   const target = before.find((item) => String(item.id) === String(id));
@@ -46,14 +52,21 @@ export async function deleteVaultItemEverywhere(id: string): Promise<DeleteVault
   if (hasSupabaseEnv()) {
     const supabase = getSupabaseBrowserClient();
     if (supabase) {
-      const { error } = await supabase.from(VAULT_ITEMS_TABLE).delete().eq("id", id);
-      if (error) {
+      const { data, error } = await supabase
+        .from(VAULT_ITEMS_TABLE)
+        .delete()
+        .eq("id", id)
+        .select("id");
+      if (error || !data || data.length === 0) {
         // Cloud still has this item — don't leave it looking deleted locally.
         if (target) {
           saveItems([...loadItems({ includeAllProfiles: true }), target]);
           emitVaultUpdate();
         }
-        return { ok: false, error: error.message || "Could not delete from the cloud." };
+        return {
+          ok: false,
+          error: error?.message || "Could not delete this item from the cloud.",
+        };
       }
     }
   }
@@ -83,13 +96,20 @@ export async function deleteVaultItemsEverywhere(ids: string[]): Promise<DeleteV
     if (supabase) {
       const results = await Promise.all(
         [...idSet].map(async (id) => {
-          const { error } = await supabase.from(VAULT_ITEMS_TABLE).delete().eq("id", id);
-          return { id, error };
+          const { data, error } = await supabase
+            .from(VAULT_ITEMS_TABLE)
+            .delete()
+            .eq("id", id)
+            .select("id");
+          // Same RLS-denial gap as the single-item path: no error, zero rows
+          // deleted, must be treated as a failure just the same.
+          const ok = !error && Boolean(data && data.length > 0);
+          return { id, error, ok };
         })
       );
 
-      const failed = results.filter((r) => r.error);
-      const succeededIds = results.filter((r) => !r.error).map((r) => r.id);
+      const failed = results.filter((r) => !r.ok);
+      const succeededIds = results.filter((r) => r.ok).map((r) => r.id);
 
       if (failed.length > 0) {
         // Restore only the ones that actually failed to delete.

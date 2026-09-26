@@ -1213,41 +1213,48 @@ export async function syncGalleryToSupabaseNow(gallery: Gallery) {
   await upsertGalleryToSupabase(normalized, { throwOnError: true });
 }
 
-// The Supabase client resolves with { error } on an ordinary delete failure
-// (RLS denial, network blip) instead of throwing — a bare try/catch around
-// these three calls never saw that, so a silently-failed delete looked
-// identical to a real one and deleteGallery() below would remove the local
-// copy for good regardless. Each delete is now checked explicitly and the
-// first failure is reported back so the caller can restore the local gallery
-// instead of reporting a permanent delete that didn't actually happen.
+// Deletes only the parent `galleries` row. `gallery_items.gallery_id` and
+// `gallery_invites.gallery_id` both carry ON DELETE CASCADE (confirmed live
+// against the database — deleting a probe gallery with child rows in both
+// tables present removed the children automatically, with no FK-violation
+// on the parent delete). A single statement's cascade is atomic in Postgres:
+// there is no window where the parent is gone but a child row survives, or
+// vice versa, so this can't leave a partially-deleted gallery behind the way
+// three separate app-side deletes could. The Supabase client also resolves
+// with { error } on an ordinary delete failure (RLS denial, network blip)
+// instead of throwing, so that's checked explicitly rather than relying on
+// a bare try/catch, which would silently treat a failed delete as a real one
+// and let deleteGallery() below remove the local copy for good regardless.
+//
+// A second, separate failure mode was confirmed the same way (a live
+// unauthenticated delete attempt against a disposable probe row): an
+// RLS-denied delete does NOT come back as an `error` at all — Postgres
+// silently matches zero rows and the client reports success. `.select("id")`
+// gets the deleted row(s) back, so an empty array is treated as the same
+// kind of failure as a real error, instead of being read as "nothing to
+// delete, so it must have worked."
 async function deleteGalleryFromSupabase(
   galleryId: string
 ): Promise<{ ok: boolean; error?: string }> {
   const supabase = getSupabaseBrowserClient();
   if (!supabase) return { ok: true };
 
-  const { error: itemsError } = await supabase
-    .from("gallery_items")
+  const { data, error } = await supabase
+    .from("galleries")
     .delete()
-    .eq("gallery_id", galleryId);
-  if (itemsError) {
-    console.error("Failed to delete gallery_items from Supabase:", itemsError);
-    return { ok: false, error: itemsError.message || "Could not delete this exhibit from the cloud." };
+    .eq("id", galleryId)
+    .select("id");
+  if (error) {
+    console.error("Failed to delete gallery from Supabase:", error);
+    return { ok: false, error: error.message || "Could not delete this exhibit from the cloud." };
   }
 
-  const { error: invitesError } = await supabase
-    .from("gallery_invites")
-    .delete()
-    .eq("gallery_id", galleryId);
-  if (invitesError) {
-    console.error("Failed to delete gallery_invites from Supabase:", invitesError);
-    return { ok: false, error: invitesError.message || "Could not delete this exhibit from the cloud." };
-  }
-
-  const { error: galleryError } = await supabase.from("galleries").delete().eq("id", galleryId);
-  if (galleryError) {
-    console.error("Failed to delete gallery from Supabase:", galleryError);
-    return { ok: false, error: galleryError.message || "Could not delete this exhibit from the cloud." };
+  if (!data || data.length === 0) {
+    console.error("Gallery delete affected zero rows (RLS denial or already gone):", galleryId);
+    return {
+      ok: false,
+      error: "Could not delete this exhibit from the cloud — you may not have permission, or it's already gone.",
+    };
   }
 
   return { ok: true };
