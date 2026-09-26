@@ -109,9 +109,14 @@ export async function deleteVaultItemsEverywhere(ids: string[]): Promise<DeleteV
           emitVaultUpdate();
         }
 
+        const failedTitles = restore
+          .map((item) => item.title)
+          .filter((title): title is string => Boolean(title));
+        const named = failedTitles.length > 0 ? `: ${failedTitles.join(", ")}` : "";
+
         return {
           ok: false,
-          error: `${failed.length} of ${idSet.size} item(s) could not be deleted from the cloud.`,
+          error: `${failed.length} of ${idSet.size} item(s) could not be deleted from the cloud${named}. They've been restored.`,
         };
       }
     }

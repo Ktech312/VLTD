@@ -1213,17 +1213,44 @@ export async function syncGalleryToSupabaseNow(gallery: Gallery) {
   await upsertGalleryToSupabase(normalized, { throwOnError: true });
 }
 
-async function deleteGalleryFromSupabase(galleryId: string) {
+// The Supabase client resolves with { error } on an ordinary delete failure
+// (RLS denial, network blip) instead of throwing — a bare try/catch around
+// these three calls never saw that, so a silently-failed delete looked
+// identical to a real one and deleteGallery() below would remove the local
+// copy for good regardless. Each delete is now checked explicitly and the
+// first failure is reported back so the caller can restore the local gallery
+// instead of reporting a permanent delete that didn't actually happen.
+async function deleteGalleryFromSupabase(
+  galleryId: string
+): Promise<{ ok: boolean; error?: string }> {
   const supabase = getSupabaseBrowserClient();
-  if (!supabase) return;
+  if (!supabase) return { ok: true };
 
-  try {
-    await supabase.from("gallery_items").delete().eq("gallery_id", galleryId);
-    await supabase.from("gallery_invites").delete().eq("gallery_id", galleryId);
-    await supabase.from("galleries").delete().eq("id", galleryId);
-  } catch (error) {
-    console.error("Failed to delete gallery from Supabase:", error);
+  const { error: itemsError } = await supabase
+    .from("gallery_items")
+    .delete()
+    .eq("gallery_id", galleryId);
+  if (itemsError) {
+    console.error("Failed to delete gallery_items from Supabase:", itemsError);
+    return { ok: false, error: itemsError.message || "Could not delete this exhibit from the cloud." };
   }
+
+  const { error: invitesError } = await supabase
+    .from("gallery_invites")
+    .delete()
+    .eq("gallery_id", galleryId);
+  if (invitesError) {
+    console.error("Failed to delete gallery_invites from Supabase:", invitesError);
+    return { ok: false, error: invitesError.message || "Could not delete this exhibit from the cloud." };
+  }
+
+  const { error: galleryError } = await supabase.from("galleries").delete().eq("id", galleryId);
+  if (galleryError) {
+    console.error("Failed to delete gallery from Supabase:", galleryError);
+    return { ok: false, error: galleryError.message || "Could not delete this exhibit from the cloud." };
+  }
+
+  return { ok: true };
 }
 
 function syncGalleriesToSupabase(galleries: Gallery[], previousGalleries?: Gallery[]) {
@@ -1920,10 +1947,21 @@ export function updateGallery(updated: Gallery) {
   saveGalleries(next);
 }
 
-export function deleteGallery(id: string) {
+export async function deleteGallery(id: string): Promise<{ ok: boolean; error?: string }> {
   const galleries = loadRawGalleries();
+  const target = galleries.find((gallery) => gallery.id === id);
   saveGalleries(galleries.filter((gallery) => gallery.id !== id));
-  void deleteGalleryFromSupabase(id);
+
+  const result = await deleteGalleryFromSupabase(id);
+  if (!result.ok) {
+    // Cloud still has this gallery — don't leave it looking deleted locally.
+    if (target) {
+      saveGalleries([...loadRawGalleries(), target]);
+    }
+    return result;
+  }
+
+  return { ok: true };
 }
 
 // EK's ask (2026-08-24): saving a Room Builder "Hall" that started from an

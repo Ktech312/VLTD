@@ -20,6 +20,8 @@ export default function PublicGalleryPage() {
 
   const [galleryMode, setGalleryMode] = useState<"grid" | "swipe">("grid");
   const [reportSent, setReportSent] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const gallery = useMemo(() => {
     const galleries = loadGalleries();
@@ -38,10 +40,17 @@ export default function PublicGalleryPage() {
 
   const adultGate = useAdultGate(isAdultOnlyGallery(gallery));
 
-  function handleDelete() {
-    if (!gallery) return;
+  async function handleDelete() {
+    if (!gallery || isDeleting) return;
     if (!confirm("Delete this exhibit? This cannot be undone.")) return;
-    deleteGallery(gallery.id);
+    setIsDeleting(true);
+    setDeleteError(null);
+    const result = await deleteGallery(gallery.id);
+    if (!result.ok) {
+      setIsDeleting(false);
+      setDeleteError(result.error || "Could not delete this exhibit from the cloud. Please try again.");
+      return;
+    }
     router.push("/museum");
   }
 
@@ -95,6 +104,12 @@ export default function PublicGalleryPage() {
         {reportSent && (
           <div className="mt-3 rounded-2xl px-4 py-3 text-sm text-center" style={{ background: "rgba(203,208,213,0.08)", border: "1px solid rgba(203,208,213,0.2)", color: "#C8CDD2" }}>
             Report submitted — thank you.
+          </div>
+        )}
+
+        {deleteError && (
+          <div className="mt-3 rounded-2xl px-4 py-3 text-sm text-center" style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)", color: "rgb(252,165,165)" }}>
+            {deleteError}
           </div>
         )}
 

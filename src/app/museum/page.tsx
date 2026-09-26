@@ -165,6 +165,7 @@ export default function MuseumPage() {
   const [coverTargetGallery, setCoverTargetGallery] = useState<Gallery | null>(null);
   const [statusMessage, setStatusMessage] = useState("");
   const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
   const [isUploadingCover, setIsUploadingCover] = useState(false);
   // 3D Museum beta gate — EK's ask: a Beta button on every card, either
   // opens the builder (already enabled) or asks to request access
@@ -427,15 +428,21 @@ export default function MuseumPage() {
   function handleCancelDelete() {
     if (isDeleting) return;
     setGalleryPendingDelete(null);
+    setDeleteError(null);
   }
 
   async function handleConfirmDelete() {
     if (!galleryPendingDelete || isDeleting) return;
 
     setIsDeleting(true);
+    setDeleteError(null);
 
     try {
-      deleteGallery(galleryPendingDelete.id);
+      const result = await deleteGallery(galleryPendingDelete.id);
+      if (!result.ok) {
+        setDeleteError(result.error || "Could not delete this gallery from the cloud. Please try again.");
+        return;
+      }
       refresh();
       setGalleryPendingDelete(null);
     } finally {
@@ -1048,6 +1055,12 @@ export default function MuseumPage() {
             <p className="mt-4 text-sm text-[color:var(--muted)]">
               Deleting this gallery will not delete items in your Vault.
             </p>
+
+            {deleteError && (
+              <p className="mt-4 rounded-xl px-4 py-3 text-sm" style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)", color: "rgb(252,165,165)" }}>
+                {deleteError}
+              </p>
+            )}
 
             <div className="mt-6 flex flex-col gap-3 sm:flex-row">
               <PillButton
