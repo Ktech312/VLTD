@@ -500,6 +500,25 @@ body > .z-\[999999\] {
   z-index: 999999 !important;
 }
 
+/* Same bug, third occurrence (2026-09-27): every bottom sheet/modal in the
+   app that's rendered via createPortal(..., document.body) — to escape
+   PullToRefresh's own clipping wrapper, a separate issue entirely — is
+   now ALSO a direct child of body, so `body > *` above forces it to
+   z-index:1 too, same as the 2FA modal once did. Scoped to the exact
+   z-[10000]/[10001]/[10005] classes those portaled elements use (chosen
+   to clear BottomNav's own real rendered z-index of 9999 — see its inline
+   style — while staying well below the 2FA modal's deliberate maximum),
+   not a blanket override. */
+body > .z-\[10000\] {
+  z-index: 10000 !important;
+}
+body > .z-\[10001\] {
+  z-index: 10001 !important;
+}
+body > .z-\[10005\] {
+  z-index: 10005 !important;
+}
+
 /* Make form controls inherit theme colors */
 select,
 option,
