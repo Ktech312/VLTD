@@ -1,3 +1,22 @@
+# 2026-09-26 (latest) — Exhibition delete made atomic via a confirmed FK cascade; a second silent-failure class (RLS-denied deletes reporting success) found and fixed across every delete path this pass touched
+
+Direct continuation of the two entries below (same day). EK's review pushed past the local-restore fix and asked for the real, underlying guarantee: is exhibition delete actually atomic, and does every delete path correctly detect a failure, not just an explicit `{ error }`.
+
+**FK cascade — confirmed twice, first behaviorally then from the catalog itself.** `gallery_items`/`gallery_invites` were never defined in tracked migrations (created directly in the dashboard), so their FK behavior wasn't readable from the repo. Tested live against disposable probe rows (service-role key, cleaned up immediately after): deleting a parent `galleries` row with both child rows present succeeded and removed the children automatically — only possible under `ON DELETE CASCADE`. EK then asked for the literal catalog definition, not just the inferred behavior. PostgREST only exposes `public`/`graphql_public` schemas (confirmed by querying `information_schema`/`pg_catalog` directly and getting explicit refusals) and `pg_graphql` isn't enabled on this project, so a one-off read-only RPC (`debug_gallery_fk_definitions()` — [supabase/migrations/20260926_debug_gallery_fk_definitions.sql](supabase/migrations/20260926_debug_gallery_fk_definitions.sql), run by EK) was the only way to read `pg_constraint` directly. Result, verbatim:
+```
+gallery_items:   FOREIGN KEY (gallery_id) REFERENCES galleries(id) ON DELETE CASCADE
+gallery_invites: FOREIGN KEY (gallery_id) REFERENCES galleries(id) ON DELETE CASCADE
+```
+Matches the behavioral test exactly. `deleteGalleryFromSupabase` (`src/lib/galleryModel.ts`) was simplified to a single delete on `galleries`, letting Postgres cascade the rest — a single statement's cascade is atomic, so there's no longer a window where an app-side failure between separate deletes could leave cloud child rows gone while the local restore made it look like nothing happened. The diagnostic RPC was dropped again once it had served its purpose ([supabase/migrations/20260926_drop_debug_gallery_fk_definitions.sql](supabase/migrations/20260926_drop_debug_gallery_fk_definitions.sql), run by EK, confirmed via a follow-up call to the RPC returning `404 PGRST202` — function no longer exists). Both migrations stay in history; neither was rewritten.
+
+**Second defect, found while testing forced failure rather than just success.** Simulated a real delete failure the way it'd actually happen — an unauthenticated (RLS-denied) delete attempt against a disposable probe row — on both `galleries` and `vault_items`. Result: **the Supabase client returns `error: null` with zero rows affected, not an error.** Every `{ error }`-only check this session had written, including earlier fixes this same pass, would silently treat an RLS-blocked delete as a success. Fixed by adding `.select("id")` to every delete this pass has touched — exhibition delete, single vault-item delete, mass vault-item delete — and treating an empty returned set as a failure alongside a real `{ error }`. Confirmed via the same disposable-row method that the row (and its cascade-linked child, for the gallery case) survives untouched when RLS blocks the delete.
+
+**Mass-delete request shape re-confirmed by direct code read** (not by running anything): `deleteVaultItemsEverywhere` issues one delete request per id inside `Promise.all`, each with its own `.select("id")` and its own pass/fail check — not a single batched request needing a full-set comparison. No change needed.
+
+`tsc`/`eslint`/`build` clean after every change. Commits: `ec21f9d`, `2952ab6`, `49aadac`, `5f1e9d2`.
+
+**Still not launch-ready.** Deletion correctness (exhibition delete, single/mass item delete) is now database-verified, both behaviorally and against the literal catalog. The live UI acceptance test for these flows — and all seven browser-only gates from the entries below — remain open.
+
 # 2026-09-26 (later, non-browser pass) — 4 confirmed error-handling defects found and fixed while the embedded browser was down; exact resume plan written for the next session
 
 Direct continuation of the entry below this one (same day, same browser outage). EK's instruction for this stretch: no more browser retries, do everything reviewable/testable without one, prep the next session to finish the seven browser-only checks immediately.

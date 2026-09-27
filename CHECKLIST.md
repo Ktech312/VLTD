@@ -1,6 +1,16 @@
 # VLTD — Session Checklist (2026-08-05 night → ongoing, updated 2026-08-27)
 
-## 2026-09-26 (latest) — Non-browser hardening pass: 4 confirmed error-handling defects fixed while the embedded browser stayed down
+## 2026-09-26 (latest) — Exhibition delete made atomic via a confirmed FK cascade; RLS-denied deletes silently reporting success found and fixed everywhere this pass touched
+Full narrative in HANDOFF.md. Commits: `ec21f9d`, `2952ab6`, `49aadac`, `5f1e9d2`.
+- [x] `gallery_items`/`gallery_invites` FK cascade confirmed twice: first behaviorally (disposable probe rows — deleting the parent with children present removed them automatically), then from the literal catalog via a one-off read-only RPC EK ran and later dropped: both are `FOREIGN KEY (gallery_id) REFERENCES galleries(id) ON DELETE CASCADE`, verbatim.
+- [x] `deleteGalleryFromSupabase` simplified to a single delete on `galleries`, cascade handles the rest — atomic within one Postgres statement, closing the window where a partial three-step delete could leave cloud child rows gone while the local restore made it look like nothing happened.
+- [x] Diagnostic RPC (`debug_gallery_fk_definitions`) dropped after use, confirmed gone via a follow-up call returning `404 PGRST202`. Both the create and drop migrations kept in history, neither rewritten.
+- [x] **New defect found by testing forced failure, not just success**: an RLS-denied delete (no/wrong session) returns `error: null` with zero rows affected — not an error. Every `{ error }`-only check in this session's earlier fixes would have silently treated that as success. Added `.select("id")` + empty-result-is-failure to exhibition delete, single vault-item delete, and mass vault-item delete.
+- [x] Mass-delete request shape re-confirmed by direct code read: one delete request per id, each individually checked — not a batch requiring a full-set comparison.
+- [x] tsc/eslint/build clean on every commit.
+- [ ] **Still open**: deletion correctness is now database-verified (behaviorally and catalog-confirmed); the live UI acceptance test for exhibition delete + mass item delete, and all seven browser-only gates below, remain outstanding.
+
+## 2026-09-26 — Non-browser hardening pass: 4 confirmed error-handling defects fixed while the embedded browser stayed down
 Full narrative in HANDOFF.md. Commit: `d12508f`. Reference for the next session's browser work: [docs/nycc-remaining-browser-checks-2026-09-26.md](docs/nycc-remaining-browser-checks-2026-09-26.md).
 - [x] `syncGalleryItemsToSupabase`: restore-on-failure for `gallery_items` now runs before the `throwOnError` throw, not after — previously any `throwOnError: true` caller (editor Save, exhibition self-heal) skipped recovery and left `gallery_items` genuinely empty, the exact table the public share route reads.
 - [x] `deleteVaultItemsEverywhere`: partial mass-delete failure no longer skips gallery cleanup for the ids that DID succeed — it used to return early and leave successfully-deleted ids stuck in `gallery.itemIds` forever.
