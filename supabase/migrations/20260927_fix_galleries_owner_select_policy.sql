@@ -37,3 +37,11 @@ drop policy if exists "galleries_select_member" on public.galleries;
 create policy "galleries_select_member" on public.galleries
   for select to authenticated
   using (public.is_profile_member(profile_id));
+
+-- Drops the three diagnostic functions used to root-cause the above
+-- (debug_galleries_policies, debug_gallery_insert_probe,
+-- debug_gallery_delete_probe_v2) now that they've served their purpose.
+-- Read-only / self-cleaning in effect; nothing else is touched.
+drop function if exists public.debug_galleries_policies();
+drop function if exists public.debug_gallery_insert_probe();
+drop function if exists public.debug_gallery_delete_probe_v2();
