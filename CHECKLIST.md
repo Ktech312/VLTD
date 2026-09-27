@@ -1,6 +1,17 @@
 # VLTD — Session Checklist (2026-08-05 night → ongoing, updated 2026-08-27)
 
-## 2026-09-26 (latest) — Exhibition delete made atomic via a confirmed FK cascade; RLS-denied deletes silently reporting success found and fixed everywhere this pass touched
+## 2026-09-27 (latest) — LAUNCH BLOCKER: new exhibitions never reached the cloud, existing ones couldn't be deleted — root-caused and fixed, live-verified through the real UI
+Full narrative in HANDOFF.md. Commits: `39e93df` → `32710a3` (diagnostics + fix), migration `20260927_fix_galleries_owner_select_policy.sql` run by EK.
+- [x] Root cause found via migration history: `20260707_team_management.sql` dropped the combined `galleries_manage_member` policy (covered SELECT too) and replaced it with insert/update/delete-only policies — never recreating an equivalent SELECT policy. A profile's own exhibitions were unreadable to their owner unless already `PUBLIC + ACTIVE`, breaking PostgREST's read-back-after-insert and (most likely) the delete path too.
+- [x] Confirmed directly via disposable probe: a freshly inserted `visibility='LOCKED'` row was invisible to a plain SELECT by its own owner, same transaction, immediately after insert.
+- [x] Fix: added `galleries_select_member` (additive, `is_profile_member()`, same check the working insert/update policies use). Public read policy untouched.
+- [x] **Live-verified after the fix, through the real app UI**: created a new `LOCKED` exhibition via the actual Create Exhibition form → confirmed in Supabase. Deleted it via the actual museum-grid delete flow → no error, confirmed gone from Supabase.
+- [x] Four diagnostic functions created during root-causing (FK definitions, live policy dump, insert probe, delete probe) — all locked to `service_role`/`authenticated` only, all dropped in the fix migration.
+- [x] Re-confirmed (independent of the RLS bug): item create/edit/delete/mass-delete all pass through a clean second session + direct Supabase checks; mass-delete against a properly-synced exhibition ("New Live") cleans Vault UI + `vault_items` + gallery arrays + `gallery_items`, all four agree; exhibition-delete failure-path UI confirmed live (error shown, modal stays open, gallery stays in grid).
+- [x] All disposable test data cleaned up, confirmed zero stray rows in `vault_items`/`galleries`.
+- [ ] **Still not launch-ready** — real ~390px screenshots and genuine cold-cache timing remain blocked by this environment's browser viewport still reporting `0×0` (same gap since 2026-09-17) and a warm HTTP cache from repeated testing, respectively. Not fixable from this session.
+
+## 2026-09-26 — Exhibition delete made atomic via a confirmed FK cascade; RLS-denied deletes silently reporting success found and fixed everywhere this pass touched
 Full narrative in HANDOFF.md. Commits: `ec21f9d`, `2952ab6`, `49aadac`, `5f1e9d2`.
 - [x] `gallery_items`/`gallery_invites` FK cascade confirmed twice: first behaviorally (disposable probe rows — deleting the parent with children present removed them automatically), then from the literal catalog via a one-off read-only RPC EK ran and later dropped: both are `FOREIGN KEY (gallery_id) REFERENCES galleries(id) ON DELETE CASCADE`, verbatim.
 - [x] `deleteGalleryFromSupabase` simplified to a single delete on `galleries`, cascade handles the rest — atomic within one Postgres statement, closing the window where a partial three-step delete could leave cloud child rows gone while the local restore made it look like nothing happened.

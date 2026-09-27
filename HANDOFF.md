@@ -1,3 +1,30 @@
+# 2026-09-27 — LAUNCH BLOCKER FOUND AND FIXED: new exhibitions never reached the cloud; existing ones couldn't be deleted. Live-verified fixed, end to end, through the real app UI
+
+Found while executing the resumed browser acceptance checks (item create/edit/delete/mass-delete, screenshots, cold-cache, exhibition delete). Checks 1–5, 8 (failure path), and 9 all passed cleanly on their own — see the full check-by-check report in this session's transcript. But checks 5 (gallery-array cleanup) and 8 (successful exhibition delete) surfaced a genuine, severe, previously-undiscovered defect, unrelated to anything fixed earlier this pass.
+
+**What was broken.** Creating a brand-new exhibition through the real "Create Exhibition" flow saved locally only — it never reached Supabase, forever, silently. Deleting an *existing*, already-synced exhibition also silently failed (0 rows affected, no error surfaced). Both reproduced live and repeatedly: a real UI-created exhibition with `visibility: LOCKED` never appeared in `galleries`; a real pre-existing exhibition ("New Live," confirmed present in Supabase moments earlier) failed to delete via the exact same delete flow this pass's earlier atomicity fix was built on.
+
+**Root-caused exactly, via migration history, not guessed.** `20260707_profile_members.sql` created a single combined policy, `galleries_manage_member` (`for all`, which covers every command including SELECT). `20260707_team_management.sql` later dropped that policy and split it into three separate ones — `galleries_insert_member`, `galleries_update_member`, `galleries_delete_manager` — but never recreated an equivalent SELECT policy. **A profile's own exhibitions have been unreadable to their own owner via plain SELECT ever since, unless already `PUBLIC + ACTIVE`.** Confirmed directly: a disposable probe row inserted with `visibility='LOCKED'` was invisible to a plain SELECT by its own owner in the very same transaction, immediately after the insert.
+
+This explains both symptoms: PostgREST's INSERT uses `Prefer: return=representation`, which needs to read the new row back afterward to build the response — with no SELECT policy to permit that for a non-public row, PostgREST reports the whole INSERT as an RLS violation. The same missing visibility is the most likely mechanism behind the DELETE failures too.
+
+**Diagnostic trail** (all read-only or self-canceling, all created→used→dropped in this exact pass, none left behind): `debug_gallery_fk_definitions` (confirmed `gallery_items`/`gallery_invites` both carry `ON DELETE CASCADE` to `galleries.id`, from an earlier related atomicity fix — not this bug), `debug_galleries_policies` (showed the live policy set matches the migration files exactly — ruled out policy drift), `debug_gallery_insert_probe` (proved a bare SQL INSERT succeeds — isolating the app-level symptom to the PostgREST read-back layer), `debug_gallery_delete_probe_v2` (proved the just-inserted row is invisible to a plain SELECT by its own owner in the same transaction — the actual smoking gun). Every diagnostic function was locked to `service_role` or `authenticated` only (never `anon`/`PUBLIC`), and all were dropped in the fix migration itself.
+
+**Fix**: [supabase/migrations/20260927_fix_galleries_owner_select_policy.sql](supabase/migrations/20260927_fix_galleries_owner_select_policy.sql), run by EK. Adds `galleries_select_member` — an additive PERMISSIVE SELECT policy using the same `is_profile_member(profile_id)` check the working insert/update policies already use — so a profile's own members can always read their own galleries regardless of visibility. The existing public policy (`visibility='PUBLIC' AND state='ACTIVE'`) is untouched; public visitors still only ever see public/active rows. Same migration drops the three diagnostic functions.
+
+**Live-verified after the fix, through the real app UI (not raw REST calls):**
+- Created a new exhibition via the actual "Create Exhibition" form, `visibility: LOCKED` (the exact case that failed 100% of the time before) → confirmed present in Supabase `galleries` immediately after.
+- Deleted that same exhibition via the actual museum-grid delete flow → no error, modal closed, gone from the grid → confirmed gone from Supabase `galleries`.
+
+**Also resolved this pass, independent of the RLS bug:**
+- Item create → edit → delete → mass-delete, each confirmed through a "clean session" (local-cache-cleared second tab), each confirmed against Supabase directly. All correct.
+- Mass-delete against a *properly cloud-synced* exhibition ("New Live"): confirmed clean across Vault UI, `vault_items`, the gallery's `layout.itemIds`, and `gallery_items` — all four agree.
+- Exhibition-delete failure-path UI (from the prior atomicity-fix pass): confirmed live — error message shown verbatim, modal stays open, gallery stays in the grid. Exactly as designed.
+- Confirmed still broken, unrelated to this session: real ~390px screenshots (viewport still reports `0×0` even after a "successful" `resize_window` call — same gap since 2026-09-17) and genuine cold-cache timing (this browser profile's HTTP cache is warm from repeated testing; no service worker in play).
+- All disposable test data cleaned up — confirmed zero stray `NYCC`/`RLS FIX`-titled rows in `vault_items` or `galleries`.
+
+**Launch-readiness: still not launch-ready**, but the single most severe defect this entire multi-day pass uncovered is now fixed and live-verified. Remaining: real ~390px screenshots and genuine cold-cache timing require a browser whose viewport actually resizes — not something fixable from this session.
+
 # 2026-09-26 (latest) — Exhibition delete made atomic via a confirmed FK cascade; a second silent-failure class (RLS-denied deletes reporting success) found and fixed across every delete path this pass touched
 
 Direct continuation of the two entries below (same day). EK's review pushed past the local-restore fix and asked for the real, underlying guarantee: is exhibition delete actually atomic, and does every delete path correctly detect a failure, not just an explicit `{ error }`.
