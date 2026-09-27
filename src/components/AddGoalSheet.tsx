@@ -42,9 +42,14 @@ export default function AddGoalSheet({
 
   return (
     <>
-      <div className="fixed inset-0 z-40 bg-black/50" onClick={onClose} aria-hidden />
+      {/* z-[90]/[91], not z-40/z-50 — BottomNav.tsx uses z-50 itself, and
+          two `fixed` elements at the identical z-index fall back to DOM
+          order, so BottomNav (rendered after page content in NavShell)
+          was rendering on top of this sheet on mobile. z-[90] matches
+          every other bottom sheet in this app (AuctionSetupSheet, etc.). */}
+      <div className="fixed inset-0 z-[90] bg-black/50" onClick={onClose} aria-hidden />
       <div
-        className="fixed bottom-0 left-0 right-0 z-50 mx-auto max-w-xl rounded-t-[24px] px-5 pb-10 pt-6"
+        className="fixed bottom-0 left-0 right-0 z-[91] mx-auto max-w-xl rounded-t-[24px] px-5 pb-10 pt-6"
         style={{ background: "var(--surface)", boxShadow: "0 -4px 40px rgba(0,0,0,0.4)" }}
       >
         <div className="mb-6 flex items-center justify-between">

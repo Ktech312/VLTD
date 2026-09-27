@@ -3594,7 +3594,11 @@ export default function AddPage() {
         ) : null}
 
         {dropMode && dropSession && !showDropReview ? (
-          <div className="fixed bottom-0 left-0 right-0 z-50 flex items-center justify-between gap-4 border-t border-[color:var(--border)] bg-[color:var(--surface)] px-5 py-3 shadow-[0_-8px_32px_rgba(0,0,0,0.35)]">
+          // z-[90], not z-50 — BottomNav.tsx uses z-50 itself, and two
+          // `fixed` elements at the identical z-index fall back to DOM
+          // order, so BottomNav (rendered after page content in NavShell)
+          // was rendering on top of this bar on mobile.
+          <div className="fixed bottom-0 left-0 right-0 z-[90] flex items-center justify-between gap-4 border-t border-[color:var(--border)] bg-[color:var(--surface)] px-5 py-3 shadow-[0_-8px_32px_rgba(0,0,0,0.35)]">
             <div>
               <div className="text-sm font-bold">{dropSession.name}</div>
               <div className="text-xs text-[color:var(--muted)]">

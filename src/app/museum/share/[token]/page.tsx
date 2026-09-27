@@ -575,8 +575,13 @@ export default function SharedGalleryPage() {
 
   return (
     <>
-      {/* Top-right toolbar: share + report */}
-      <div className="fixed right-4 top-4 z-40 flex items-center gap-2">
+      {/* In-flow page-level action row — same fix as the guest-preview
+          page (museum/[galleryId]/guest/page.tsx): this used to be `fixed
+          right-4 top-4`, which visually stacked it inside the global
+          TopNav's own fixed 64px band (both viewport-fixed, so they
+          rendered into the same screen strip despite being unrelated
+          component trees). */}
+      <div className="relative z-10 mx-auto flex max-w-5xl items-center justify-end gap-2 px-4 pt-20">
         <button
           type="button"
           onClick={() => setShowShare((s) => !s)}
@@ -592,13 +597,18 @@ export default function SharedGalleryPage() {
       {/* Share sheet — slides up from bottom */}
       {showShare && (
         <>
-          {/* Backdrop */}
+          {/* Backdrop — z-[90]/[91], not z-40/z-50: BottomNav.tsx uses
+              z-50 itself, and two `fixed` elements at the identical
+              z-index fall back to DOM order, so BottomNav (rendered after
+              page content in NavShell) was rendering on top of this sheet
+              and hiding nearly all of it on mobile. z-[90] matches every
+              other bottom sheet in this app (AuctionSetupSheet, etc.). */}
           <div
-            className="fixed inset-0 z-40 bg-black/40 backdrop-blur-[2px]"
+            className="fixed inset-0 z-[90] bg-black/40 backdrop-blur-[2px]"
             onClick={() => setShowShare(false)}
           />
           {/* Panel */}
-          <div className="fixed bottom-0 left-0 right-0 z-50 rounded-t-3xl bg-[#111827] p-6 pb-10 ring-1 ring-white/10 shadow-2xl">
+          <div className="fixed bottom-0 left-0 right-0 z-[91] rounded-t-3xl bg-[#111827] p-6 pb-10 ring-1 ring-white/10 shadow-2xl">
             <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-white/20" />
             <p className="mb-1 text-sm font-semibold text-white">{gallery.title}</p>
             <p className="mb-4 text-xs text-white/40">Share this exhibition</p>

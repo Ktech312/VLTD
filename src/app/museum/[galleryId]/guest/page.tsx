@@ -278,8 +278,15 @@ export default function GuestGalleryPage() {
 
       {showShare && (
         <>
-          <div className="fixed inset-0 z-40 bg-black/40 backdrop-blur-[2px]" onClick={() => setShowShare(false)} />
-          <div className="fixed bottom-0 left-0 right-0 z-50 rounded-t-3xl bg-[#111827] p-6 pb-10 ring-1 ring-white/10 shadow-2xl">
+          {/* z-50 used to match BottomNav.tsx's own z-50 exactly — with
+              identical z-index, two `fixed` elements fall back to DOM
+              order, and BottomNav renders after this page's content in
+              NavShell, so it rendered on top of this sheet, hiding
+              nearly all of it on mobile. z-[90] matches the z-index
+              every other bottom sheet in this app already uses
+              (AuctionSetupSheet, etc.) specifically to clear BottomNav. */}
+          <div className="fixed inset-0 z-[90] bg-black/40 backdrop-blur-[2px]" onClick={() => setShowShare(false)} />
+          <div className="fixed bottom-0 left-0 right-0 z-[91] rounded-t-3xl bg-[#111827] p-6 pb-10 ring-1 ring-white/10 shadow-2xl">
             <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-white/20" />
             <p className="mb-1 text-sm font-semibold text-white">{gallery.title}</p>
             <p className="mb-4 text-xs text-white/40">Share this exhibition</p>
