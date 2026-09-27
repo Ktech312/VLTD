@@ -1,6 +1,17 @@
 # VLTD — Session Checklist (2026-08-05 night → ongoing, updated 2026-08-27)
 
-## 2026-09-27 (latest) — LAUNCH BLOCKER: new exhibitions never reached the cloud, existing ones couldn't be deleted — root-caused and fixed, live-verified through the real UI
+## 2026-09-27 (latest) — Guest-view nav + 2FA re-ask fixed, "remember device" added, and a 3-layer modal-visibility bug chain found + fixed
+Full narrative in HANDOFF.md. Commits: `a2d902e` → `645dab8`.
+- [x] Guest View: Edit Exhibition/Share moved out of the global-nav-overlapping fixed position into an in-flow page row; Share is now owner-only, Report is now guest-only. Same fix applied to the public share-link twin page.
+- [x] 2FA modal reopening bug fixed: sequence counter discards superseded assurance checks; `resolvedRef` stops re-deriving an already-cleared session — only a genuine sign-in/out resets it.
+- [x] "Remember this device" for 2FA added: server-generated token, only its hash ever stored, raw token in that device's own `localStorage` — independent per device/account. Admin access (`adminAuth.ts`) deliberately still always requires a fresh real `aal2` session, untouched. Account → Security got a trusted-devices list (forget one/all); "Sign out everywhere" now also revokes all of them.
+- [x] **3-layer bug chain found via the first real 390px test this session had**: (1) `BottomNav.tsx`'s real z-index is an inline `9999`, not its className's `z-50` — every bottom sheet in the app using the usual `z-[90]`-ish convention was silently below it (11+3 files fixed). (2) Raising z-index alone still failed live — `NavShell`'s `PullToRefresh` wrapper clips any `fixed` descendant to its own box before z-index even applies; ported 14 modals/sheets to `createPortal(document.body)` to escape it, the same way `MfaChallengeGate` always has. (3) Portaling made them direct children of `body`, which an existing global rule then reset to `z-index:1` (same bug class as a documented 2026-09-14 2FA-modal incident, whose fix never covered these new z-index values) — added the matching scoped `!important` overrides.
+- [x] Live-verified via `document.elementFromPoint` (not just screenshots — this session's Claude-in-Chrome extension renders its own UI banner at `z-index: 2147483647`, an automation-tool artifact that obscures screenshot evidence but not the actual app): the Share sheet's own content is now the topmost element at the coordinate BottomNav used to win.
+- [x] tsc/eslint/build clean on every commit.
+- [ ] Migration `20260927_mfa_trusted_devices.sql` needs EK to run it for "remember this device" to actually take effect (code degrades safely to "just show the modal" until then).
+- [ ] Resumed browser acceptance checks (390px overflow, cold-cache timing) were interrupted by this bug-fixing detour — pick back up next.
+
+## 2026-09-27 — LAUNCH BLOCKER: new exhibitions never reached the cloud, existing ones couldn't be deleted — root-caused and fixed, live-verified through the real UI
 Full narrative in HANDOFF.md. Commits: `39e93df` → `32710a3` (diagnostics + fix), migration `20260927_fix_galleries_owner_select_policy.sql` run by EK.
 - [x] Root cause found via migration history: `20260707_team_management.sql` dropped the combined `galleries_manage_member` policy (covered SELECT too) and replaced it with insert/update/delete-only policies — never recreating an equivalent SELECT policy. A profile's own exhibitions were unreadable to their owner unless already `PUBLIC + ACTIVE`, breaking PostgREST's read-back-after-insert and (most likely) the delete path too.
 - [x] Confirmed directly via disposable probe: a freshly inserted `visibility='LOCKED'` row was invisible to a plain SELECT by its own owner, same transaction, immediately after insert.
