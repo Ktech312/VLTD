@@ -164,7 +164,10 @@ function SaveHallModal({
   }, []);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center">
+    // z-[10000], not z-50 — BottomNav.tsx sets an inline zIndex:9999
+    // (higher than its own z-50 className), so a same-z-50 bottom sheet
+    // renders behind the bottom tab bar on mobile.
+    <div className="fixed inset-0 z-[10000] flex items-end justify-center sm:items-center">
       <button className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onCancel} aria-label="Close" />
       <div className="relative z-10 w-full max-w-sm rounded-t-3xl sm:rounded-3xl bg-[color:var(--surface)] p-6 shadow-2xl ring-1 ring-[color:var(--border)]">
         <h3 className="text-lg font-black text-[color:var(--fg)]">Name this Hall</h3>

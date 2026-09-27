@@ -164,7 +164,10 @@ export default function ImageViewer({
 
   const viewerMarkup = (
     <div
-      className="fixed inset-0 z-[90] flex h-[100dvh] w-[100dvw] items-center justify-center overflow-hidden bg-black/94 backdrop-blur-sm"
+      // z-[10000], not z-[90] — BottomNav.tsx sets an inline zIndex:9999
+      // (higher than its own z-50 className), so anything below 10000 on
+      // mobile renders behind the bottom tab bar instead of over it.
+      className="fixed inset-0 z-[10000] flex h-[100dvh] w-[100dvw] items-center justify-center overflow-hidden bg-black/94 backdrop-blur-sm"
       role="dialog"
       aria-modal="true"
       aria-label="Image viewer"
@@ -254,7 +257,7 @@ export default function ImageViewer({
 
       <div
         ref={panContainerRef}
-        className="fixed inset-0 z-[95] flex items-center justify-center overflow-hidden px-3 pb-20 pt-16 sm:px-12 sm:pb-20 sm:pt-20"
+        className="fixed inset-0 z-[10005] flex items-center justify-center overflow-hidden px-3 pb-20 pt-16 sm:px-12 sm:pb-20 sm:pt-20"
         onMouseDown={(event) => {
           if (event.target === event.currentTarget) onClose();
         }}

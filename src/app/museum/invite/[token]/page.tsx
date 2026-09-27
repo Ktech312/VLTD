@@ -183,7 +183,10 @@ function ItemDetailModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-end justify-center sm:items-center bg-black/70 backdrop-blur-sm px-4 pb-4 sm:p-6"
+      // z-[10000], not z-50 — BottomNav.tsx sets an inline zIndex:9999
+      // (higher than its own z-50 className), so a same-z-50 bottom sheet
+      // renders behind the bottom tab bar on mobile.
+      className="fixed inset-0 z-[10000] flex items-end justify-center sm:items-center bg-black/70 backdrop-blur-sm px-4 pb-4 sm:p-6"
       onClick={onClose}
     >
       <div

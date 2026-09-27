@@ -52,7 +52,10 @@ export default function InsurancePdfButton({
 
       {open ? (
         <div
-          className="fixed inset-0 z-50 flex items-end justify-center"
+          // z-[10000], not z-50 — BottomNav.tsx sets an inline zIndex:9999
+          // (higher than its own z-50 className), so a same-z-50 bottom
+          // sheet renders behind the bottom tab bar on mobile.
+          className="fixed inset-0 z-[10000] flex items-end justify-center"
           style={{ background: "rgba(0,0,0,0.6)" }}
           onClick={(event) => {
             if (event.target === event.currentTarget) setOpen(false);

@@ -713,11 +713,14 @@ export default function ItemMedia({
             <>
               {/* Backdrop */}
               <div
-                className="fixed inset-0 z-[89] bg-black/60 backdrop-blur-sm"
+                className="fixed inset-0 z-[10000] bg-black/60 backdrop-blur-sm"
                 onClick={() => setPreviewOpen(false)}
               />
-              {/* Top panel */}
-              <div className="fixed inset-x-0 top-0 z-[90] rounded-b-[32px] bg-[color:var(--surface)] shadow-[0_8px_48px_rgba(0,0,0,0.55)] ring-1 ring-[color:var(--border)]">
+              {/* Top panel. z-[10001], not z-[90] — BottomNav.tsx sets an
+                  inline zIndex:9999 (higher than its own z-50 className),
+                  so anything below 10000 on mobile renders behind the
+                  bottom tab bar instead of over it. */}
+              <div className="fixed inset-x-0 top-0 z-[10001] rounded-b-[32px] bg-[color:var(--surface)] shadow-[0_8px_48px_rgba(0,0,0,0.55)] ring-1 ring-[color:var(--border)]">
                 {/* Close */}
                 <button
                   type="button"
@@ -803,7 +806,7 @@ export default function ItemMedia({
       {mounted && editTarget && typeof document !== "undefined"
         ? createPortal(
             <div
-              className="fixed inset-0 z-[95] flex h-[100dvh] w-[100dvw] items-center justify-center overflow-y-auto bg-black/90 px-3 py-4 backdrop-blur-sm sm:px-4"
+              className="fixed inset-0 z-[10005] flex h-[100dvh] w-[100dvw] items-center justify-center overflow-y-auto bg-black/90 px-3 py-4 backdrop-blur-sm sm:px-4"
               role="dialog"
               aria-modal="true"
               aria-label="Edit saved photo"
@@ -834,7 +837,7 @@ export default function ItemMedia({
       {mounted && bgTarget && typeof document !== "undefined"
         ? createPortal(
             <div
-              className="fixed inset-0 z-[95] flex h-[100dvh] w-[100dvw] items-center justify-center overflow-y-auto bg-black/90 px-3 py-4 backdrop-blur-sm sm:px-4"
+              className="fixed inset-0 z-[10005] flex h-[100dvh] w-[100dvw] items-center justify-center overflow-y-auto bg-black/90 px-3 py-4 backdrop-blur-sm sm:px-4"
               role="dialog"
               aria-modal="true"
               aria-label="Remove background"
@@ -903,7 +906,7 @@ export default function ItemMedia({
         : null}
 
       {draftFile ? (
-        <div className="fixed inset-0 z-[95] bg-black/90 backdrop-blur-sm">
+        <div className="fixed inset-0 z-[10005] bg-black/90 backdrop-blur-sm">
           <div className="absolute inset-0 flex items-start justify-center overflow-auto px-4 pt-16 pb-8">
             <div className="w-full max-w-3xl rounded-[24px] bg-[color:var(--surface)] p-4 ring-1 ring-[color:var(--border)] shadow-[0_24px_80px_rgba(0,0,0,0.45)]">
               <div className="flex items-start justify-between gap-3">

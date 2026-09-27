@@ -1394,7 +1394,10 @@ export default function SocialExportSheet({ item, onClose, initialTab = "image" 
   const [tab, setTab] = useState<Tab>(initialTab);
 
   return (
-    <div className="fixed inset-0 z-[90] flex items-end sm:items-center justify-center p-0 sm:p-4">
+    // z-[10000], not z-[90] — BottomNav.tsx sets an inline zIndex:9999
+    // (higher than its own z-50 className), so anything below 10000 on
+    // mobile renders behind the bottom tab bar instead of over it.
+    <div className="fixed inset-0 z-[10000] flex items-end sm:items-center justify-center p-0 sm:p-4">
       {/* Backdrop */}
       <button type="button" className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} aria-label="Close" />
 

@@ -597,18 +597,18 @@ export default function SharedGalleryPage() {
       {/* Share sheet — slides up from bottom */}
       {showShare && (
         <>
-          {/* Backdrop — z-[90]/[91], not z-40/z-50: BottomNav.tsx uses
-              z-50 itself, and two `fixed` elements at the identical
-              z-index fall back to DOM order, so BottomNav (rendered after
-              page content in NavShell) was rendering on top of this sheet
-              and hiding nearly all of it on mobile. z-[90] matches every
-              other bottom sheet in this app (AuctionSetupSheet, etc.). */}
+          {/* Backdrop — z-[10000]/[10001], not z-40/z-50: BottomNav.tsx's
+              className says z-50, but it ALSO sets an inline style
+              zIndex:9999 that beats the class (inline always wins), so
+              even this app's usual z-[90]/[91] bottom-sheet convention
+              still rendered behind it. 10000+ clears the real, rendered
+              z-index, not just the misleading className. */}
           <div
-            className="fixed inset-0 z-[90] bg-black/40 backdrop-blur-[2px]"
+            className="fixed inset-0 z-[10000] bg-black/40 backdrop-blur-[2px]"
             onClick={() => setShowShare(false)}
           />
           {/* Panel */}
-          <div className="fixed bottom-0 left-0 right-0 z-[91] rounded-t-3xl bg-[#111827] p-6 pb-10 ring-1 ring-white/10 shadow-2xl">
+          <div className="fixed bottom-0 left-0 right-0 z-[10001] rounded-t-3xl bg-[#111827] p-6 pb-10 ring-1 ring-white/10 shadow-2xl">
             <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-white/20" />
             <p className="mb-1 text-sm font-semibold text-white">{gallery.title}</p>
             <p className="mb-4 text-xs text-white/40">Share this exhibition</p>

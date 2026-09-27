@@ -242,7 +242,10 @@ function MiniTool({ title, desc, href, panel: panelKey, onPanel }: { title: stri
 
 function PanelDialog({ title, children, onClose }: { title: string; children: ReactNode; onClose: () => void }) {
   return (
-    <div className="fixed inset-0 z-[90] grid place-items-center bg-black/70 px-4 py-8" role="dialog" aria-modal="true" aria-label={title}>
+    // z-[10000], not z-[90] — BottomNav.tsx sets an inline zIndex:9999
+    // (higher than its own z-50 className), so anything below 10000 on
+    // mobile renders behind the bottom tab bar instead of over it.
+    <div className="fixed inset-0 z-[10000] grid place-items-center bg-black/70 px-4 py-8" role="dialog" aria-modal="true" aria-label={title}>
       <button type="button" className="absolute inset-0 cursor-default" aria-label="Close panel" onClick={onClose} />
       <section className="relative w-full max-w-[760px] overflow-hidden rounded-[10px] border" style={{ borderColor: border, background: "linear-gradient(150deg, rgba(6,18,24,.98), rgba(1,7,10,.98))" }}>
         <div className="flex items-center justify-between border-b px-5 py-4" style={{ borderColor: borderSoft }}>

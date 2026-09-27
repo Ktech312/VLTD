@@ -45,7 +45,10 @@ export default function AutoSharePrompt({ trigger, onShare, onDismiss }: Props) 
 
   return (
     <div
-      className="fixed bottom-24 left-1/2 z-[95] -translate-x-1/2 transition-all duration-300"
+      // z-[10005], not z-[95] — BottomNav.tsx sets an inline zIndex:9999
+      // (higher than its own z-50 className), so anything below 10000 can
+      // render behind the bottom tab bar on mobile.
+      className="fixed bottom-24 left-1/2 z-[10005] -translate-x-1/2 transition-all duration-300"
       style={{ transform: `translateX(-50%) translateY(${visible ? "0px" : "80px"})`, opacity: visible ? 1 : 0 }}
     >
       <div
