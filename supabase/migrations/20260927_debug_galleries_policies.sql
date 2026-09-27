@@ -42,4 +42,11 @@ as $$
   where polrelid = 'public.galleries'::regclass;
 $$;
 
+-- Postgres grants EXECUTE to PUBLIC by default on function creation, which
+-- anon/authenticated inherit from — without this, the function would be
+-- callable (and its policy internals readable) by any signed-in user via
+-- PostgREST, not just service_role.
+revoke execute on function public.debug_galleries_policies() from public;
+revoke execute on function public.debug_galleries_policies() from anon;
+revoke execute on function public.debug_galleries_policies() from authenticated;
 grant execute on function public.debug_galleries_policies() to service_role;
