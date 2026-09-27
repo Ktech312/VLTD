@@ -1,50 +1,65 @@
--- Corrects a real, confirmed vulnerability in 20260927_mfa_trusted_devices.sql
--- (already applied): trust_this_device() never checked that the CALLING
--- session had itself completed a real MFA challenge, so any aal1
--- (password-only) session could call the RPC directly — no UI needed —
--- and mint itself a permanent 2FA-skip token, defeating the entire point
--- of the gate for anyone who ever obtains a valid session token by any
--- means short of the second factor itself.
+-- ONE complete, self-contained migration for "remember this device" (2FA).
+-- Supersedes 20260927_mfa_trusted_devices.sql and
+-- 20260927b_fix_mfa_trusted_devices_security.sql — neither of those ever
+-- actually finished applying (the first was never run; the second failed
+-- with "relation does not exist" because the first hadn't created the
+-- table it assumes). This is the single file to run; it creates
+-- everything from scratch in the already-corrected, secure form. Both
+-- earlier files stay in migration history unmodified (per the standing
+-- rule not to rewrite applied history), they just never took effect.
 --
--- This migration is additive/corrective on top of the existing table —
--- it does not drop or recreate mfa_trusted_devices, so any devices
--- already (illegitimately) trusted before this ran are NOT automatically
--- revoked. Run this afterward if that matters:
---   select revoke_trusted_device(id) from mfa_trusted_devices; -- or just:
---   delete from public.mfa_trusted_devices;
+-- Feature: stop asking for a 2FA code on every fresh login on a device
+-- that's already proven itself, while supporting several devices trusted
+-- independently on the same account at once.
 --
--- Fixes, each mapped to what was asked:
--- 1. trust_this_device() now requires auth.jwt()->>'aal' = 'aal2'.
--- 2. Trust duration is clamped server-side to a maximum of 30 days,
---    regardless of what the caller requests.
--- 3. The old "for all" policy (permitting authenticated users to insert/
---    update/delete their own rows directly) is replaced with SELECT-only.
+-- Security design (the version EK caught a real gap in before this ever
+-- reached real users, now fixed):
+-- 1. trust_this_device() requires the CALLING session to already be
+--    auth.jwt()->>'aal' = 'aal2' — an aal1 (password-only) session cannot
+--    mint itself a bypass token, from the RPC or otherwise.
+-- 2. Requested trust duration is clamped server-side to 30 days max.
+-- 3. RLS is SELECT-only for authenticated users; no direct insert/update/
+--    delete policy exists at all.
 -- 4. INSERT/UPDATE/DELETE table privileges are explicitly revoked from
---    anon and authenticated, on top of the policy change — belt and
---    suspenders, not relying on RLS alone.
+--    anon and authenticated too — not relying on RLS alone.
 -- 5. Creation/revocation stay behind SECURITY DEFINER functions with
---    EXECUTE revoked from PUBLIC and anon (unchanged from before, still
---    correct — the gap was inside the function body, not the grants).
--- 6. A test function proves an aal1 session is rejected by both the RPC
---    and direct table access, while a genuine aal2 session succeeds and
---    the 30-day clamp actually applies. Runnable only by service_role.
--- 7. Reviewed (not changed here): this app's ENTIRE session — the real
---    access/refresh tokens, not just this trust token — already lives in
---    plain localStorage (src/lib/supabaseClient.ts, storageKey
---    "vltd-auth"; confirmed directly this session). There is no
---    server-side/HttpOnly session model anywhere in this codebase to
---    hang a second, differently-secured cookie off of. An attacker with
---    enough access to read this trust token out of localStorage already
---    has equal access to the real session token sitting right next to
---    it, which grants complete account access on its own — a bespoke
---    HttpOnly cookie for only this one value, while the primary session
---    stays exactly as exposed, would add real implementation risk
---    (a parallel server-side auth path that doesn't exist today) for
---    marginal actual benefit. Recommend revisiting this if/when the
---    session model itself ever moves to server-side cookies — at that
---    point this token should move with it, not before.
+--    EXECUTE revoked from PUBLIC and anon.
+-- 6. test_mfa_trusted_device_security() (service_role only) proves an
+--    aal1 session is rejected by both the RPC and direct table access,
+--    while a genuine aal2 session succeeds with the clamp applied.
+-- 7. Reviewed: this app's real session tokens already live in plain
+--    localStorage (src/lib/supabaseClient.ts, storageKey "vltd-auth")
+--    with no server-side/HttpOnly model anywhere in this codebase. A
+--    bespoke HttpOnly cookie for only this trust token, while the actual
+--    session stays exactly as exposed, adds real implementation risk (a
+--    parallel server-side auth path that doesn't exist today) for
+--    marginal benefit — an attacker who can read this token out of
+--    localStorage already has equal access to the real session token
+--    sitting right next to it. Revisit if the session model itself ever
+--    moves server-side; this token should move with it, not before.
+--
+-- The client (MfaChallengeGate.tsx, Account > Security) has the feature
+-- disabled behind a flag pending this migration + independent
+-- verification of the test results below — re-enable only after that.
 
--- ── 3 & 4: lock down direct table access ────────────────────────────
+create extension if not exists pgcrypto;
+
+create table if not exists public.mfa_trusted_devices (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  token_hash text not null unique,
+  label text,
+  created_at timestamptz not null default now(),
+  last_used_at timestamptz not null default now(),
+  expires_at timestamptz not null
+);
+
+create index if not exists mfa_trusted_devices_user_id_idx on public.mfa_trusted_devices(user_id);
+
+alter table public.mfa_trusted_devices enable row level security;
+
+-- SELECT-only for the owning user. Creation/revocation only through the
+-- SECURITY DEFINER functions below, never directly via the table API.
 drop policy if exists "users manage their own trusted devices" on public.mfa_trusted_devices;
 drop policy if exists "users read their own trusted devices" on public.mfa_trusted_devices;
 create policy "users read their own trusted devices" on public.mfa_trusted_devices
@@ -55,7 +70,6 @@ revoke insert, update, delete on public.mfa_trusted_devices from authenticated;
 revoke insert, update, delete on public.mfa_trusted_devices from anon;
 revoke select on public.mfa_trusted_devices from anon;
 
--- ── 1 & 2: the actual vulnerability fix ──────────────────────────────
 create or replace function public.trust_this_device(p_label text default null, p_days integer default 30)
 returns text
 language plpgsql
@@ -71,11 +85,8 @@ begin
     raise exception 'Not authenticated';
   end if;
 
-  -- The whole point of this feature is skipping a re-challenge on a
-  -- device that already proved it once — it must never be mintable from
-  -- a session that hasn't itself completed a real MFA challenge. This
-  -- check is the fix: without it, any aal1 (password-only) session could
-  -- call this RPC directly and hand itself a permanent 2FA bypass.
+  -- The fix: without this check, any aal1 (password-only) session could
+  -- call this RPC directly and mint itself a permanent 2FA bypass.
   if coalesce(auth.jwt() ->> 'aal', '') <> 'aal2' then
     raise exception 'This session has not completed a two-factor challenge yet.';
   end if;
@@ -94,9 +105,6 @@ revoke execute on function public.trust_this_device(text, integer) from public;
 revoke execute on function public.trust_this_device(text, integer) from anon;
 grant execute on function public.trust_this_device(text, integer) to authenticated;
 
--- check_trusted_device() and revoke_trusted_device() are unchanged from
--- the original migration — re-declared here only so this file is a
--- complete, self-contained record of what's actually live afterward.
 create or replace function public.check_trusted_device(p_token text)
 returns boolean
 language plpgsql
@@ -147,15 +155,14 @@ revoke execute on function public.revoke_trusted_device(uuid) from public;
 revoke execute on function public.revoke_trusted_device(uuid) from anon;
 grant execute on function public.revoke_trusted_device(uuid) to authenticated;
 
--- ── 6: security tests ────────────────────────────────────────────────
+-- ── security tests ───────────────────────────────────────────────────
 -- Runs entirely inside its own transaction, simulating both an aal1 and
 -- an aal2 session by overriding request.jwt.claims (transaction-local —
--- reverted automatically at the end regardless of outcome) against a
--- disposable row scoped to a REAL existing auth.users id (needed to
--- satisfy the table's own foreign key), which it deletes again itself
--- before returning. Callable only by service_role — this deliberately
--- forges session claims, which must never be reachable by anon/
--- authenticated.
+-- reverted automatically regardless of outcome) against a disposable row
+-- scoped to a REAL existing auth.users id (needed to satisfy the table's
+-- foreign key), which it deletes again itself before returning. Callable
+-- only by service_role — this deliberately forges session claims, which
+-- must never be reachable by anon/authenticated.
 create or replace function public.test_mfa_trusted_device_security()
 returns table(test_name text, passed boolean, detail text)
 language plpgsql
@@ -191,12 +198,11 @@ begin
     end;
   end;
 
-  -- Test 2: an aal1 session cannot insert a trusted-device row directly
-  -- (RLS is SELECT-only now, and INSERT is also revoked at the table
-  -- level). SET LOCAL ROLE runs this as `authenticated`, not this
-  -- function's owner, so the real grants/policies actually apply — and
-  -- the role switch itself is inside the try/catch, so a permission
-  -- failure on the switch is reported like any other result rather than
+  -- Test 2: an aal1 session cannot insert a trusted-device row directly.
+  -- SET LOCAL ROLE runs this as `authenticated`, not this function's
+  -- owner, so the real grants/policies actually apply — and the role
+  -- switch is inside the try/catch, so a permission failure on the
+  -- switch itself is reported like any other result rather than
   -- aborting the whole test suite.
   begin
     set local role authenticated;
