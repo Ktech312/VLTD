@@ -17,7 +17,7 @@
 // for enrollment — same underlying check adminAuth.ts's getMyAdminRole()
 // already gates admin/owner pages on, just surfaced here as something the
 // user can actually resolve instead of a silent "Not authorized."
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 
 export default function MfaChallengeGate() {
@@ -35,24 +35,42 @@ export default function MfaChallengeGate() {
   // then TOKEN_REFRESHED), each starting its own overlapping checkAal()
   // call; with an artificial delay in the middle and no sequencing guard,
   // an OLDER call's late-arriving "no challenge needed" could clobber a
-  // NEWER call's correct "show the modal" state. Restored to the simple,
-  // long-standing, known-reliable immediate check. The re-challenge
-  // annoyance this was trying to fix is real but lower-stakes than
-  // reachability — worth revisiting later with proper request
-  // sequencing (a generation counter that discards superseded results),
-  // not a bare delay.
+  // NEWER call's correct "show the modal" state.
+  //
+  // 2026-09-27: EK reported the opposite failure now — the modal
+  // reopening after a successful verify, on plain navigation/refresh/token
+  // refresh within the same already-verified session. Same root cause the
+  // note above already named, just the other direction: TOKEN_REFRESHED
+  // (and INITIAL_SESSION, USER_UPDATED, etc.) keep firing for the rest of
+  // the tab's life, each starting a brand-new checkAal() call with no
+  // memory that this session was already resolved, and a slow one
+  // resolving after a fast one (or after verify() itself) can re-show the
+  // modal. Fixed properly this time, the way the note above already
+  // pointed at: a sequence counter so a superseded call's result is always
+  // discarded, plus a resolvedRef so a session that's already been cleared
+  // (no challenge needed, or successfully verified) is never re-derived
+  // from scratch again — only a genuine SIGNED_IN/SIGNED_OUT transition
+  // resets it.
+  const resolvedRef = useRef(false);
+  const checkSeqRef = useRef(0);
+
   async function checkAal() {
+    if (resolvedRef.current) return;
     const supabase = getSupabaseBrowserClient();
     if (!supabase) return;
+    const seq = ++checkSeqRef.current;
     const { data: aal } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+    if (seq !== checkSeqRef.current) return; // a newer check (or verify()) already resolved this
     if (aal && aal.nextLevel === "aal2" && aal.currentLevel !== "aal2") {
       const { data: factors } = await supabase.auth.mfa.listFactors();
+      if (seq !== checkSeqRef.current) return;
       const verified = factors?.totp?.find((f) => f.status === "verified");
       if (verified) {
         setFactorId(verified.id);
         return;
       }
     }
+    resolvedRef.current = true;
     setFactorId("");
   }
 
@@ -62,12 +80,21 @@ export default function MfaChallengeGate() {
     if (!supabase) return;
     const { data: sub } = supabase.auth.onAuthStateChange((event) => {
       if (event === "SIGNED_OUT") {
+        resolvedRef.current = false;
+        checkSeqRef.current++; // discard any check still in flight from before sign-out
         setFactorId("");
         return;
       }
+      if (event === "SIGNED_IN") {
+        // A genuinely new login always gets a fresh look, even if this
+        // tab had already resolved a previous session.
+        resolvedRef.current = false;
+      }
       // INITIAL_SESSION (page load with an existing session), SIGNED_IN
       // (any sign-in method), TOKEN_REFRESHED, and MFA_CHALLENGE_VERIFIED
-      // all warrant a fresh look at the current assurance level.
+      // all warrant a fresh look at the current assurance level — but
+      // checkAal() itself now no-ops once resolvedRef is set, so none of
+      // these can reopen an already-resolved session.
       void checkAal();
     });
     return () => sub.subscription.unsubscribe();

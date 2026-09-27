@@ -241,26 +241,39 @@ export default function GuestGalleryPage() {
 
   return (
     <>
-      <div className="fixed right-4 top-4 z-40 flex items-center gap-2">
+      {/* In-flow page-level action row — this used to be `fixed right-4
+          top-4`, which visually stacked it inside the global TopNav's own
+          fixed 64px band (both are viewport-fixed, so they rendered into
+          the same screen strip even though they're unrelated component
+          trees). Now a normal in-flow row, pushed below the fixed nav with
+          pt-20, so it's unambiguously page-level, never inside the global
+          nav. */}
+      <div className="relative z-10 mx-auto flex max-w-5xl items-center justify-end gap-2 px-4 pt-20">
         {isOwner ? (
-          <Link
-            href={`/museum/${gallery.id}`}
-            className="inline-flex min-h-[34px] items-center justify-center rounded-full bg-black/45 px-3 py-1 text-xs font-semibold ring-1 backdrop-blur transition hover:bg-black/65"
-            style={{ color: "var(--theme-gold, #C8CDD2)", borderColor: "rgba(203,208,213,0.35)" }}
-          >
-            Edit Exhibition
-          </Link>
-        ) : null}
-        <button
-          type="button"
-          onClick={() => setShowShare((s) => !s)}
-          className="flex items-center gap-1.5 rounded-full bg-[rgba(203,208,213,0.12)] px-3 py-2 text-xs font-semibold text-[#C8CDD2] ring-1 ring-[rgba(203,208,213,0.35)] backdrop-blur-sm transition-all hover:bg-[rgba(203,208,213,0.2)]"
-          aria-label="Share this exhibition"
-        >
-          <Glyph name="share" size={13} strokeWidth={2.5} />
-          Share
-        </button>
-        <ReportContentButton contentType="gallery" contentId={gallery.id} />
+          <>
+            <Link
+              href={`/museum/${gallery.id}`}
+              className="inline-flex min-h-[34px] items-center justify-center rounded-full bg-black/45 px-3 py-1 text-xs font-semibold ring-1 backdrop-blur transition hover:bg-black/65"
+              style={{ color: "var(--theme-gold, #C8CDD2)", borderColor: "rgba(203,208,213,0.35)" }}
+            >
+              Edit Exhibition
+            </Link>
+            <button
+              type="button"
+              onClick={() => setShowShare((s) => !s)}
+              className="flex items-center gap-1.5 rounded-full bg-[rgba(203,208,213,0.12)] px-3 py-2 text-xs font-semibold text-[#C8CDD2] ring-1 ring-[rgba(203,208,213,0.35)] backdrop-blur-sm transition-all hover:bg-[rgba(203,208,213,0.2)]"
+              aria-label="Share this exhibition"
+            >
+              <Glyph name="share" size={13} strokeWidth={2.5} />
+              Share
+            </button>
+          </>
+        ) : (
+          // Report is a visitor-facing control — the owner never needs to
+          // report their own exhibition, and it previously rendered for
+          // both owner and guest unconditionally.
+          <ReportContentButton contentType="gallery" contentId={gallery.id} />
+        )}
       </div>
 
       {showShare && (
