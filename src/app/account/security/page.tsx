@@ -8,6 +8,23 @@ import TwoFactorAuthCard from "@/components/account/TwoFactorAuthCard";
 
 type Session = { id: string; device: string; location: string; lastSeen: string; current: boolean };
 
+type TrustedDevice = {
+  id: string;
+  label: string | null;
+  created_at: string;
+  last_used_at: string;
+  expires_at: string;
+};
+
+function formatRelativeDate(iso: string): string {
+  const then = new Date(iso).getTime();
+  if (Number.isNaN(then)) return "unknown";
+  const days = Math.round((then - Date.now()) / 86400000);
+  if (days === 0) return "today";
+  if (days > 0) return `in ${days} day${days === 1 ? "" : "s"}`;
+  return `${Math.abs(days)} day${Math.abs(days) === 1 ? "" : "s"} ago`;
+}
+
 function getCurrentSession(): Session {
   const userAgent = typeof navigator === "undefined" ? "" : navigator.userAgent;
   const browser = userAgent.includes("Edg/")
@@ -69,12 +86,41 @@ export default function SecurityPage() {
   const [newEmail, setNewEmail] = useState("");
   const [emailChangeSaving, setEmailChangeSaving] = useState(false);
   const [emailChangeSent, setEmailChangeSent] = useState(false);
+  const [trustedDevices, setTrustedDevices] = useState<TrustedDevice[]>([]);
+  const [revokingId, setRevokingId] = useState<string | null>(null);
+
+  async function refreshTrustedDevices() {
+    const supabase = getSupabaseBrowserClient();
+    if (!supabase) return;
+    const { data } = await supabase
+      .from("mfa_trusted_devices")
+      .select("id, label, created_at, last_used_at, expires_at")
+      .order("last_used_at", { ascending: false });
+    setTrustedDevices((data as TrustedDevice[] | null) ?? []);
+  }
 
   useEffect(() => {
     getCurrentUser().then(({ data }) => setEmail(data.user?.email ?? ""));
     const sessionTimer = window.setTimeout(() => setSessions([getCurrentSession()]), 0);
+    void refreshTrustedDevices();
     return () => window.clearTimeout(sessionTimer);
   }, []);
+
+  async function handleRevokeDevice(id: string | null) {
+    const supabase = getSupabaseBrowserClient();
+    if (!supabase) return;
+    setRevokingId(id ?? "all");
+    try {
+      const { error } = await supabase.rpc("revoke_trusted_device", { p_id: id });
+      if (error) throw error;
+      await refreshTrustedDevices();
+      showToast(id ? "Device forgotten." : "All trusted devices forgotten.");
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : "Couldn't forget that device.");
+    } finally {
+      setRevokingId(null);
+    }
+  }
 
   function showToast(msg: string) {
     setToast(msg);
@@ -194,6 +240,47 @@ export default function SecurityPage() {
             <TwoFactorAuthCard />
 
             <div className="rounded-2xl p-5 ring-1 ring-[color:var(--border)]" style={{ background: "var(--surface)" }}>
+              <div className="mb-3 text-[11px] font-semibold uppercase tracking-widest" style={{ color: "var(--muted)" }}>Trusted devices</div>
+              <p className="mb-3 text-xs" style={{ color: "var(--muted)" }}>
+                Devices you chose to remember at the 2FA prompt skip the code for 30 days. Forget one here to require a fresh code there again.
+              </p>
+              {trustedDevices.length === 0 ? (
+                <div className="text-xs" style={{ color: "var(--muted)" }}>No trusted devices yet.</div>
+              ) : (
+                <div className="space-y-2">
+                  {trustedDevices.map((d) => (
+                    <div key={d.id} className="flex items-center justify-between gap-3 rounded-xl px-3 py-2.5 ring-1 ring-[color:var(--border)]" style={{ background: "var(--pill)" }}>
+                      <div>
+                        <div className="text-sm font-semibold" style={{ color: "var(--fg)" }}>{d.label || "Trusted device"}</div>
+                        <div className="mt-0.5 text-xs" style={{ color: "var(--muted)" }}>
+                          Last used {formatRelativeDate(d.last_used_at)} · expires {formatRelativeDate(d.expires_at)}
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => void handleRevokeDevice(d.id)}
+                        disabled={revokingId === d.id}
+                        className="shrink-0 rounded-[7px] px-3 py-1.5 text-xs font-semibold ring-1 disabled:opacity-50"
+                        style={{ background: "var(--surface)", color: "var(--fg)", borderColor: "var(--border)" }}
+                      >
+                        {revokingId === d.id ? "Forgetting…" : "Forget"}
+                      </button>
+                    </div>
+                  ))}
+                  <button
+                    type="button"
+                    onClick={() => void handleRevokeDevice(null)}
+                    disabled={revokingId === "all"}
+                    className="mt-1 text-xs font-semibold underline disabled:opacity-50"
+                    style={{ color: "var(--muted)" }}
+                  >
+                    {revokingId === "all" ? "Forgetting all…" : "Forget all devices"}
+                  </button>
+                </div>
+              )}
+            </div>
+
+            <div className="rounded-2xl p-5 ring-1 ring-[color:var(--border)]" style={{ background: "var(--surface)" }}>
               <div className="mb-3 text-[11px] font-semibold uppercase tracking-widest" style={{ color: "var(--muted)" }}>Active sessions</div>
               <div className="space-y-2">
                 {sessions.map((s) => (
@@ -221,7 +308,19 @@ export default function SecurityPage() {
                 </div>
                 <button
                   type="button"
-                  onClick={async () => { await signOut({ scope: "global" }); window.location.href = "/login"; }}
+                  onClick={async () => {
+                    const supabase = getSupabaseBrowserClient();
+                    // Signing out everywhere is the "something's wrong" action —
+                    // forget every trusted device too, so a fresh 2FA code is
+                    // required again on every device, not just a fresh password.
+                    try {
+                      if (supabase) await supabase.rpc("revoke_trusted_device", { p_id: null });
+                    } catch {
+                      // Not fatal — proceed with the sign-out regardless.
+                    }
+                    await signOut({ scope: "global" });
+                    window.location.href = "/login";
+                  }}
                   className="shrink-0 rounded-[7px] px-4 py-1.5 text-xs font-semibold ring-1"
                   style={{ background: "rgba(248,113,113,0.1)", color: "#f87171", borderColor: "rgba(248,113,113,0.3)" }}
                 >

@@ -20,11 +20,55 @@
 import { useEffect, useRef, useState } from "react";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 
+// "Remember this device" (2026-09-27, EK's ask, previously requested and
+// never built): a per-user trusted-device token stored only in this
+// browser's localStorage, keyed by user id so more than one VLTD account
+// on the same browser — or the same account trusted on several separate
+// devices at once — each keep their own independent record. The token
+// itself is opaque here; only its hash is ever checked server-side
+// (public.check_trusted_device / public.trust_this_device).
+const TRUSTED_DEVICE_KEY = "vltd_mfa_trusted_device_v1";
+
+function getStoredTrustedToken(userId: string): string | null {
+  try {
+    const raw = localStorage.getItem(TRUSTED_DEVICE_KEY);
+    if (!raw) return null;
+    const map = JSON.parse(raw) as Record<string, string>;
+    return typeof map[userId] === "string" ? map[userId] : null;
+  } catch {
+    return null;
+  }
+}
+
+function storeTrustedToken(userId: string, token: string) {
+  try {
+    const raw = localStorage.getItem(TRUSTED_DEVICE_KEY);
+    const map = raw ? (JSON.parse(raw) as Record<string, string>) : {};
+    map[userId] = token;
+    localStorage.setItem(TRUSTED_DEVICE_KEY, JSON.stringify(map));
+  } catch {
+    // Best-effort — worst case this device just gets asked again next time.
+  }
+}
+
+function clearStoredTrustedToken(userId: string) {
+  try {
+    const raw = localStorage.getItem(TRUSTED_DEVICE_KEY);
+    if (!raw) return;
+    const map = JSON.parse(raw) as Record<string, string>;
+    delete map[userId];
+    localStorage.setItem(TRUSTED_DEVICE_KEY, JSON.stringify(map));
+  } catch {
+    // Not fatal — check_trusted_device will just keep saying no.
+  }
+}
+
 export default function MfaChallengeGate() {
   const [factorId, setFactorId] = useState("");
   const [code, setCode] = useState("");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+  const [remember, setRemember] = useState(true);
 
   // 2026-09-14: reverted a same-day change here that tried to fix an
   // EK-reported "unwanted re-challenge on navigation" complaint by adding
@@ -62,6 +106,30 @@ export default function MfaChallengeGate() {
     const { data: aal } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
     if (seq !== checkSeqRef.current) return; // a newer check (or verify()) already resolved this
     if (aal && aal.nextLevel === "aal2" && aal.currentLevel !== "aal2") {
+      const { data: userData } = await supabase.auth.getUser();
+      const userId = userData?.user?.id;
+      if (seq !== checkSeqRef.current) return;
+
+      // A device this account already trusted skips the challenge
+      // entirely — checked server-side by hash, never trusted on the
+      // client's say-so alone.
+      if (userId) {
+        const storedToken = getStoredTrustedToken(userId);
+        if (storedToken) {
+          const { data: trusted } = await supabase.rpc("check_trusted_device", {
+            p_token: storedToken,
+          });
+          if (seq !== checkSeqRef.current) return;
+          if (trusted) {
+            resolvedRef.current = true;
+            setFactorId("");
+            return;
+          }
+          // Expired, revoked, or never valid — stop sending it.
+          clearStoredTrustedToken(userId);
+        }
+      }
+
       const { data: factors } = await supabase.auth.mfa.listFactors();
       if (seq !== checkSeqRef.current) return;
       const verified = factors?.totp?.find((f) => f.status === "verified");
@@ -125,6 +193,26 @@ export default function MfaChallengeGate() {
         setError(verifyError.message || "That code didn't match — try again.");
         return;
       }
+
+      if (remember) {
+        try {
+          const { data: userData } = await supabase.auth.getUser();
+          const userId = userData?.user?.id;
+          if (userId) {
+            const { data: token } = await supabase.rpc("trust_this_device", {
+              p_label: null,
+              p_days: 30,
+            });
+            if (typeof token === "string" && token) storeTrustedToken(userId, token);
+          }
+        } catch {
+          // Best-effort — worse case is just being asked again next time,
+          // not a reason to fail a verification that already succeeded.
+        }
+      }
+
+      resolvedRef.current = true;
+      checkSeqRef.current++; // discard any check still in flight
       setFactorId("");
       setCode("");
     } finally {
@@ -185,6 +273,16 @@ export default function MfaChallengeGate() {
             className="mt-4 w-full rounded-xl px-3 py-3 text-center text-2xl ring-1 ring-[color:var(--border)] focus:outline-none"
             style={{ background: "var(--pill)", color: "var(--fg)", letterSpacing: "0.4em" }}
           />
+
+          <label className="mt-4 flex cursor-pointer items-center gap-2 text-sm" style={{ color: "var(--muted)" }}>
+            <input
+              type="checkbox"
+              checked={remember}
+              onChange={(e) => setRemember(e.target.checked)}
+              className="h-4 w-4 rounded"
+            />
+            Remember this device for 30 days
+          </label>
 
           <div className="mt-5 flex flex-col gap-2">
             <button
