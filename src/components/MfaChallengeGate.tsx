@@ -27,6 +27,19 @@ import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 // devices at once — each keep their own independent record. The token
 // itself is opaque here; only its hash is ever checked server-side
 // (public.check_trusted_device / public.trust_this_device).
+//
+// TEMPORARILY DISABLED (2026-09-27, same day): EK caught a real bug in
+// the first version of trust_this_device() before it ever reached real
+// users' devices — it never checked that the CALLING session had itself
+// completed a real MFA challenge (aal2), so any aal1 (password-only)
+// session could call the RPC directly and mint itself a permanent
+// 2FA-skip token, undermining the entire point of this gate. The
+// database function has been fixed (see the corrected migration) to
+// reject anything but a genuine aal2 caller — but until that migration
+// has actually been run and independently verified, the client stays
+// off rather than silently depend on a fix that hasn't been confirmed
+// live yet. Flip this back to true only after that verification.
+const TRUSTED_DEVICE_FEATURE_ENABLED = false;
 const TRUSTED_DEVICE_KEY = "vltd_mfa_trusted_device_v1";
 
 function getStoredTrustedToken(userId: string): string | null {
@@ -113,7 +126,7 @@ export default function MfaChallengeGate() {
       // A device this account already trusted skips the challenge
       // entirely — checked server-side by hash, never trusted on the
       // client's say-so alone.
-      if (userId) {
+      if (TRUSTED_DEVICE_FEATURE_ENABLED && userId) {
         const storedToken = getStoredTrustedToken(userId);
         if (storedToken) {
           const { data: trusted } = await supabase.rpc("check_trusted_device", {
@@ -194,7 +207,7 @@ export default function MfaChallengeGate() {
         return;
       }
 
-      if (remember) {
+      if (TRUSTED_DEVICE_FEATURE_ENABLED && remember) {
         try {
           const { data: userData } = await supabase.auth.getUser();
           const userId = userData?.user?.id;
@@ -274,15 +287,17 @@ export default function MfaChallengeGate() {
             style={{ background: "var(--pill)", color: "var(--fg)", letterSpacing: "0.4em" }}
           />
 
-          <label className="mt-4 flex cursor-pointer items-center gap-2 text-sm" style={{ color: "var(--muted)" }}>
-            <input
-              type="checkbox"
-              checked={remember}
-              onChange={(e) => setRemember(e.target.checked)}
-              className="h-4 w-4 rounded"
-            />
-            Remember this device for 30 days
-          </label>
+          {TRUSTED_DEVICE_FEATURE_ENABLED && (
+            <label className="mt-4 flex cursor-pointer items-center gap-2 text-sm" style={{ color: "var(--muted)" }}>
+              <input
+                type="checkbox"
+                checked={remember}
+                onChange={(e) => setRemember(e.target.checked)}
+                className="h-4 w-4 rounded"
+              />
+              Remember this device for 30 days
+            </label>
+          )}
 
           <div className="mt-5 flex flex-col gap-2">
             <button

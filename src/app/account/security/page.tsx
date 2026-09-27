@@ -6,6 +6,13 @@ import { getCurrentUser, signOut } from "@/lib/auth";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 import TwoFactorAuthCard from "@/components/account/TwoFactorAuthCard";
 
+// Matches the same flag in MfaChallengeGate.tsx — the "remember this
+// device" creation path is temporarily disabled pending a security fix
+// (an aal1 session could mint itself a trust token) and independent
+// verification. This list would only ever show empty while that's true,
+// so it's hidden rather than shown confusingly empty.
+const TRUSTED_DEVICE_FEATURE_ENABLED = false;
+
 type Session = { id: string; device: string; location: string; lastSeen: string; current: boolean };
 
 type TrustedDevice = {
@@ -239,6 +246,7 @@ export default function SecurityPage() {
 
             <TwoFactorAuthCard />
 
+            {TRUSTED_DEVICE_FEATURE_ENABLED && (
             <div className="rounded-2xl p-5 ring-1 ring-[color:var(--border)]" style={{ background: "var(--surface)" }}>
               <div className="mb-3 text-[11px] font-semibold uppercase tracking-widest" style={{ color: "var(--muted)" }}>Trusted devices</div>
               <p className="mb-3 text-xs" style={{ color: "var(--muted)" }}>
@@ -279,6 +287,7 @@ export default function SecurityPage() {
                 </div>
               )}
             </div>
+            )}
 
             <div className="rounded-2xl p-5 ring-1 ring-[color:var(--border)]" style={{ background: "var(--surface)" }}>
               <div className="mb-3 text-[11px] font-semibold uppercase tracking-widest" style={{ color: "var(--muted)" }}>Active sessions</div>
