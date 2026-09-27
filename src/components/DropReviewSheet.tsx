@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { AppIcon } from "@/components/ui/AppIcon";
 
@@ -45,9 +46,17 @@ export default function DropReviewSheet({ session, onClose, onFinish }: Props) {
     onFinish();
   }
 
-  return (
+  if (typeof document === "undefined") return null;
+
+  // Portaled to document.body — NavShell renders this component's caller
+  // inside PullToRefresh, whose scrolling wrapper clips ANY fixed-position
+  // descendant to its own box regardless of z-index (z-[100] is also below
+  // BottomNav's real rendered z-index of 9999 — see its own inline style).
+  // Portaling escapes that clipping ancestor entirely, same as
+  // MfaChallengeGate always does.
+  return createPortal(
     <div
-      className="fixed inset-0 z-[100] flex items-end justify-center bg-black/60 backdrop-blur-sm"
+      className="fixed inset-0 z-[10000] flex items-end justify-center bg-black/60 backdrop-blur-sm"
       onClick={onClose}
     >
       <div
@@ -135,6 +144,7 @@ export default function DropReviewSheet({ session, onClose, onFinish }: Props) {
           </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

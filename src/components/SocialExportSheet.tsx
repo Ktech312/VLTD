@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState, useMemo, useEffect, useCallback } from "react";
+import { createPortal } from "react-dom";
 import Link from "next/link";
 import { AppIcon } from "@/components/ui/AppIcon";
 import { getPrimaryImageUrl, loadItems, type VaultItem } from "@/lib/vaultModel";
@@ -1393,10 +1394,13 @@ const TAB_CONFIG: { id: Tab; label: string; emoji: string }[] = [
 export default function SocialExportSheet({ item, onClose, initialTab = "image" }: Props) {
   const [tab, setTab] = useState<Tab>(initialTab);
 
-  return (
-    // z-[10000], not z-[90] — BottomNav.tsx sets an inline zIndex:9999
-    // (higher than its own z-50 className), so anything below 10000 on
-    // mobile renders behind the bottom tab bar instead of over it.
+  if (typeof document === "undefined") return null;
+
+  // Portaled to document.body — NavShell renders this component's caller
+  // inside PullToRefresh, whose scrolling wrapper clips ANY fixed-position
+  // descendant to its own box regardless of z-index. Portaling escapes
+  // that clipping ancestor entirely, same as MfaChallengeGate always does.
+  return createPortal(
     <div className="fixed inset-0 z-[10000] flex items-end sm:items-center justify-center p-0 sm:p-4">
       {/* Backdrop */}
       <button type="button" className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} aria-label="Close" />
@@ -1451,6 +1455,7 @@ export default function SocialExportSheet({ item, onClose, initialTab = "image" 
           {tab === "carousel" && <CarouselTab currentItem={item} />}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

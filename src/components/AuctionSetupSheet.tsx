@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { createPortal } from "react-dom";
 import { saveItem, type VaultItem } from "@/lib/vaultModel";
 import { Glyph } from "@/components/ui/Glyph";
 import { upsertVaultItemToSupabase } from "@/lib/vaultCloud";
@@ -145,10 +146,15 @@ export default function AuctionSetupSheet({ item, onClose, onSaved }: Props) {
       })
     : null;
 
-  return (
-    // z-[10000], not z-[90] — BottomNav.tsx sets an inline zIndex:9999
-    // (higher than its own z-50 className), so anything below 10000 on
-    // mobile renders behind the bottom tab bar instead of over it.
+  if (typeof document === "undefined") return null;
+
+  // Portaled to document.body — NavShell renders this component's caller
+  // inside PullToRefresh, whose scrolling wrapper (position:fixed +
+  // overflow-y:auto, bottom pinned to var(--bottomnav-h)) clips ANY
+  // fixed-position descendant to its own box regardless of z-index.
+  // Portaling escapes that clipping ancestor entirely, the same way
+  // MfaChallengeGate (mounted outside PullToRefresh) always does.
+  return createPortal(
     <div className="fixed inset-0 z-[10000] flex items-end sm:items-center justify-center p-0 sm:p-4">
       <button
         type="button"
@@ -371,6 +377,7 @@ export default function AuctionSetupSheet({ item, onClose, onSaved }: Props) {
           </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { createPortal } from "react-dom";
 
 import { printInsurancePdf } from "@/lib/insurancePdf";
 import type { VaultItem } from "@/lib/vaultModel";
@@ -50,11 +51,11 @@ export default function InsurancePdfButton({
         {label}
       </button>
 
-      {open ? (
+      {open && typeof document !== "undefined" ? createPortal(
+        // Portaled to document.body — NavShell renders this component's
+        // caller inside PullToRefresh, whose scrolling wrapper clips ANY
+        // fixed-position descendant to its own box regardless of z-index.
         <div
-          // z-[10000], not z-50 — BottomNav.tsx sets an inline zIndex:9999
-          // (higher than its own z-50 className), so a same-z-50 bottom
-          // sheet renders behind the bottom tab bar on mobile.
           className="fixed inset-0 z-[10000] flex items-end justify-center"
           style={{ background: "rgba(0,0,0,0.6)" }}
           onClick={(event) => {
@@ -135,7 +136,8 @@ export default function InsurancePdfButton({
               Cancel
             </button>
           </div>
-        </div>
+        </div>,
+        document.body
       ) : null}
     </>
   );

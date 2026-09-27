@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { createPortal } from "react-dom";
 import type { CollectionGoal } from "@/lib/collectionGoals";
 import { UNIVERSE_KEYS, UNIVERSE_LABEL } from "@/lib/taxonomy";
 import { useSaveFeedback } from "@/lib/useSaveFeedback";
@@ -40,12 +41,16 @@ export default function AddGoalSheet({
     setTimeout(() => onSave(fields), 450);
   }
 
-  return (
+  if (typeof document === "undefined") return null;
+
+  // Portaled to document.body — NavShell renders this component's caller
+  // inside PullToRefresh, whose scrolling wrapper (position:fixed +
+  // overflow-y:auto, bottom pinned to var(--bottomnav-h)) clips ANY
+  // fixed-position descendant to its own box regardless of z-index.
+  // Portaling escapes that clipping ancestor entirely, the same way
+  // MfaChallengeGate (mounted outside PullToRefresh) always does.
+  return createPortal(
     <>
-      {/* z-[10000]/[10001], not z-40/z-50 — BottomNav.tsx's className
-          says z-50, but it ALSO sets an inline style zIndex:9999 that
-          beats the class (inline always wins), so even this app's usual
-          z-[90]/[91] bottom-sheet convention still rendered behind it. */}
       <div className="fixed inset-0 z-[10000] bg-black/50" onClick={onClose} aria-hidden />
       <div
         className="fixed bottom-0 left-0 right-0 z-[10001] mx-auto max-w-xl rounded-t-[24px] px-5 pb-10 pt-6"
@@ -152,6 +157,7 @@ export default function AddGoalSheet({
           {justSaved ? "Saved ✓" : "Save Goal"}
         </button>
       </div>
-    </>
+    </>,
+    document.body
   );
 }

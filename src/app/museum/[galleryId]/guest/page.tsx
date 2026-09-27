@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import { useParams, useSearchParams } from "next/navigation";
 import ShareBar from "@/components/ShareBar";
 import { Glyph } from "@/components/ui/Glyph";
@@ -276,23 +277,31 @@ export default function GuestGalleryPage() {
         )}
       </div>
 
-      {showShare && (
-        <>
-          {/* z-50 used to match BottomNav.tsx's own z-50 CLASS exactly —
-              but BottomNav also sets an INLINE style zIndex:9999 that
-              beats its own className (inline always wins), so even
-              z-[90]/[91] (this app's usual bottom-sheet z-index) still
-              rendered behind it. z-[10000]/[10001] clears that real,
-              rendered z-index, not just the misleading className. */}
-          <div className="fixed inset-0 z-[10000] bg-black/40 backdrop-blur-[2px]" onClick={() => setShowShare(false)} />
-          <div className="fixed bottom-0 left-0 right-0 z-[10001] rounded-t-3xl bg-[#111827] p-6 pb-10 ring-1 ring-white/10 shadow-2xl">
-            <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-white/20" />
-            <p className="mb-1 text-sm font-semibold text-white">{gallery.title}</p>
-            <p className="mb-4 text-xs text-white/40">Share this exhibition</p>
-            <ShareBar title={gallery.title} shareUrl={publicShareUrl} compact />
-          </div>
-        </>
-      )}
+      {showShare && typeof document !== "undefined"
+        ? createPortal(
+            // Portaled to document.body, not left in the normal page tree —
+            // NavShell renders this page's content inside PullToRefresh,
+            // whose scrolling wrapper (position:fixed + overflow-y:auto,
+            // bottom pinned to var(--bottomnav-h)) clips ANY fixed-position
+            // descendant to its own box, no matter the z-index. A z-index
+            // bump alone (10000/10001, comfortably above BottomNav's real
+            // rendered z-index of 9999 — see its own inline style) fixed
+            // the STACKING order but not this clipping, which happens
+            // before stacking is even considered. Portaling to body escapes
+            // the clipping ancestor entirely, the same way MfaChallengeGate
+            // (mounted at the app root, outside PullToRefresh) always has.
+            <>
+              <div className="fixed inset-0 z-[10000] bg-black/40 backdrop-blur-[2px]" onClick={() => setShowShare(false)} />
+              <div className="fixed bottom-0 left-0 right-0 z-[10001] rounded-t-3xl bg-[#111827] p-6 pb-10 ring-1 ring-white/10 shadow-2xl">
+                <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-white/20" />
+                <p className="mb-1 text-sm font-semibold text-white">{gallery.title}</p>
+                <p className="mb-4 text-xs text-white/40">Share this exhibition</p>
+                <ShareBar title={gallery.title} shareUrl={publicShareUrl} compact />
+              </div>
+            </>,
+            document.body
+          )
+        : null}
 
       <GuestGalleryRenderer model={model} focusCommentId={focusCommentId} />
     </>

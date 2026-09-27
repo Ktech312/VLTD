@@ -16,6 +16,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { PillButton } from "@/components/ui/PillButton";
 import { Glyph } from "@/components/ui/Glyph";
 import ProgressiveImage from "@/components/ui/ProgressiveImage";
@@ -163,10 +164,13 @@ function SaveHallModal({
     inputRef.current?.focus();
   }, []);
 
-  return (
-    // z-[10000], not z-50 — BottomNav.tsx sets an inline zIndex:9999
-    // (higher than its own z-50 className), so a same-z-50 bottom sheet
-    // renders behind the bottom tab bar on mobile.
+  if (typeof document === "undefined") return null;
+
+  // Portaled to document.body — NavShell renders this page inside
+  // PullToRefresh, whose scrolling wrapper clips ANY fixed-position
+  // descendant to its own box regardless of z-index. Portaling escapes
+  // that clipping ancestor entirely, same as MfaChallengeGate always does.
+  return createPortal(
     <div className="fixed inset-0 z-[10000] flex items-end justify-center sm:items-center">
       <button className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onCancel} aria-label="Close" />
       <div className="relative z-10 w-full max-w-sm rounded-t-3xl sm:rounded-3xl bg-[color:var(--surface)] p-6 shadow-2xl ring-1 ring-[color:var(--border)]">
@@ -199,7 +203,8 @@ function SaveHallModal({
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 

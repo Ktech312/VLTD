@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 
 import { AppIcon, type AppIconName } from "@/components/ui/AppIcon";
 import { getOnboardingStatus } from "@/lib/auth";
@@ -241,10 +242,13 @@ function MiniTool({ title, desc, href, panel: panelKey, onPanel }: { title: stri
 }
 
 function PanelDialog({ title, children, onClose }: { title: string; children: ReactNode; onClose: () => void }) {
-  return (
-    // z-[10000], not z-[90] — BottomNav.tsx sets an inline zIndex:9999
-    // (higher than its own z-50 className), so anything below 10000 on
-    // mobile renders behind the bottom tab bar instead of over it.
+  if (typeof document === "undefined") return null;
+
+  // Portaled to document.body — NavShell renders this page inside
+  // PullToRefresh, whose scrolling wrapper clips ANY fixed-position
+  // descendant to its own box regardless of z-index. Portaling escapes
+  // that clipping ancestor entirely, same as MfaChallengeGate always does.
+  return createPortal(
     <div className="fixed inset-0 z-[10000] grid place-items-center bg-black/70 px-4 py-8" role="dialog" aria-modal="true" aria-label={title}>
       <button type="button" className="absolute inset-0 cursor-default" aria-label="Close panel" onClick={onClose} />
       <section className="relative w-full max-w-[760px] overflow-hidden rounded-[10px] border" style={{ borderColor: border, background: "linear-gradient(150deg, rgba(6,18,24,.98), rgba(1,7,10,.98))" }}>
@@ -254,7 +258,8 @@ function PanelDialog({ title, children, onClose }: { title: string; children: Re
         </div>
         <div className="p-5">{children}</div>
       </section>
-    </div>
+    </div>,
+    document.body
   );
 }
 

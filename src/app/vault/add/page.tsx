@@ -3593,10 +3593,13 @@ export default function AddPage() {
           </div>
         ) : null}
 
-        {dropMode && dropSession && !showDropReview ? (
-          // z-[10000], not z-50 — BottomNav.tsx's className says z-50, but
-          // it ALSO sets an inline style zIndex:9999 that beats the class
-          // (inline always wins), so even z-[90] still rendered behind it.
+        {dropMode && dropSession && !showDropReview && typeof document !== "undefined" ? createPortal(
+          // Portaled to document.body — NavShell renders this page inside
+          // PullToRefresh, whose scrolling wrapper clips ANY fixed-position
+          // descendant to its own box regardless of z-index (a z-index
+          // bump alone, even above BottomNav's real rendered 9999, wasn't
+          // enough — portaling escapes the clipping ancestor entirely,
+          // same as MfaChallengeGate always does).
           <div className="fixed bottom-0 left-0 right-0 z-[10000] flex items-center justify-between gap-4 border-t border-[color:var(--border)] bg-[color:var(--surface)] px-5 py-3 shadow-[0_-8px_32px_rgba(0,0,0,0.35)]">
             <div>
               <div className="text-sm font-bold">{dropSession.name}</div>
@@ -3614,7 +3617,8 @@ export default function AddPage() {
             <PillButton onClick={endDrop} style={{ background: "var(--theme-gold, #C8CDD2)", color: "#0A0800" }}>
               Done · Review
             </PillButton>
-          </div>
+          </div>,
+          document.body
         ) : null}
 
         {showDropReview && dropSession ? (

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import type { ShareTrigger } from "@/hooks/useAutoShareTrigger";
 import { getAutoShareEnabled, setAutoShareEnabled } from "@/hooks/useAutoShareTrigger";
 import { fmtUsd } from "@/lib/format";
@@ -43,11 +44,14 @@ export default function AutoSharePrompt({ trigger, onShare, onDismiss }: Props) 
     ? "Share the sale before it slips away."
     : "Your grade is in — share it with the hobby.";
 
-  return (
+  if (typeof document === "undefined") return null;
+
+  // Portaled to document.body — NavShell renders this component's caller
+  // inside PullToRefresh, whose scrolling wrapper clips ANY fixed-position
+  // descendant to its own box regardless of z-index. Portaling escapes
+  // that clipping ancestor entirely, same as MfaChallengeGate always does.
+  return createPortal(
     <div
-      // z-[10005], not z-[95] — BottomNav.tsx sets an inline zIndex:9999
-      // (higher than its own z-50 className), so anything below 10000 can
-      // render behind the bottom tab bar on mobile.
       className="fixed bottom-24 left-1/2 z-[10005] -translate-x-1/2 transition-all duration-300"
       style={{ transform: `translateX(-50%) translateY(${visible ? "0px" : "80px"})`, opacity: visible ? 1 : 0 }}
     >
@@ -100,6 +104,7 @@ export default function AutoSharePrompt({ trigger, onShare, onDismiss }: Props) 
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { useParams } from "next/navigation";
 import { AppIcon } from "@/components/ui/AppIcon";
 
@@ -181,11 +182,14 @@ function ItemDetailModal({
     return () => document.removeEventListener("keydown", onKey);
   }, [onClose]);
 
-  return (
+  if (typeof document === "undefined") return null;
+
+  // Portaled to document.body — NavShell renders this page inside
+  // PullToRefresh, whose scrolling wrapper clips ANY fixed-position
+  // descendant to its own box regardless of z-index. Portaling escapes
+  // that clipping ancestor entirely, same as MfaChallengeGate always does.
+  return createPortal(
     <div
-      // z-[10000], not z-50 — BottomNav.tsx sets an inline zIndex:9999
-      // (higher than its own z-50 className), so a same-z-50 bottom sheet
-      // renders behind the bottom tab bar on mobile.
       className="fixed inset-0 z-[10000] flex items-end justify-center sm:items-center bg-black/70 backdrop-blur-sm px-4 pb-4 sm:p-6"
       onClick={onClose}
     >
@@ -269,7 +273,8 @@ function ItemDetailModal({
           </div>
         ) : null}
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 
