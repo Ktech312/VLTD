@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { getMyAdminRole } from "@/lib/adminAuth";
+import { useCallback, useEffect, useState } from "react";
+import { getMyAdminAccessStatus } from "@/lib/adminAuth";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
+import MfaStepUp from "@/components/account/MfaStepUp";
 import {
   deleteReferralCode,
   listAllReferralCodes,
@@ -133,6 +134,7 @@ function PerkModal({ initial, adminEmail, onSave, onClose }: PerkModalProps) {
 
 export default function AdminReferralsPage() {
   const [role, setRole] = useState<"owner" | "admin" | null | "loading">("loading");
+  const [mfaOk, setMfaOk] = useState(false);
   const [adminEmail, setAdminEmail] = useState("");
   const [codes, setCodes] = useState<ReferralRow[]>([]);
   const [perks, setPerks] = useState<PerkRow[]>([]);
@@ -141,28 +143,33 @@ export default function AdminReferralsPage() {
   const [status, setStatus] = useState("");
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    async function init() {
-      const [r, supabase] = await Promise.all([getMyAdminRole(), Promise.resolve(getSupabaseBrowserClient())]);
-      setRole(r);
-      if (!r) { setLoading(false); return; }
-
-      if (supabase) {
-        const { data: { user } } = await supabase.auth.getUser();
-        setAdminEmail(user?.email ?? "");
-      }
-
-      await reload();
-      setLoading(false);
-    }
-    void init();
-  }, []);
-
   async function reload() {
     const [c, p] = await Promise.all([listAllReferralCodes(), listAllUserPerks()]);
     setCodes(c);
     setPerks(p);
   }
+
+  async function init() {
+    const [{ role: r, mfaOk: ok }, supabase] = await Promise.all([
+      getMyAdminAccessStatus(),
+      Promise.resolve(getSupabaseBrowserClient()),
+    ]);
+    setRole(r);
+    setMfaOk(ok);
+    if (!r || !ok) { setLoading(false); return; }
+
+    if (supabase) {
+      const { data: { user } } = await supabase.auth.getUser();
+      setAdminEmail(user?.email ?? "");
+    }
+
+    await reload();
+    setLoading(false);
+  }
+
+  useEffect(() => {
+    void init();
+  }, []);
 
   async function handleSavePerk(userId: string, bonus: number, reason: string) {
     const err = await setUserPerk(userId, bonus, reason, adminEmail);
@@ -210,6 +217,20 @@ export default function AdminReferralsPage() {
     return (
       <main style={{ padding: "2rem", textAlign: "center" }}>
         <p style={{ color: "var(--muted)", fontSize: 14 }}>Access denied.</p>
+      </main>
+    );
+  }
+
+  if (!mfaOk) {
+    return (
+      <main style={{ padding: "2rem" }}>
+        <MfaStepUp
+          onVerified={async () => {
+            setMfaOk(true);
+            setLoading(true);
+            await init();
+          }}
+        />
       </main>
     );
   }

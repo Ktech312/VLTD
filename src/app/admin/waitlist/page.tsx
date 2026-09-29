@@ -1,8 +1,9 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { getMyAdminRole, type AdminRole } from "@/lib/adminAuth";
+import { getMyAdminAccessStatus, type AdminRole } from "@/lib/adminAuth";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
+import MfaStepUp from "@/components/account/MfaStepUp";
 
 type WaitlistRow = {
   id: string;
@@ -33,6 +34,7 @@ async function authHeader(): Promise<Record<string, string>> {
 
 export default function AdminWaitlistPage() {
   const [role, setRole] = useState<AdminRole | "loading">("loading");
+  const [mfaOk, setMfaOk] = useState(false);
   const [rows, setRows] = useState<WaitlistRow[]>([]);
   const [status, setStatus] = useState("");
   const [invitingEmail, setInvitingEmail] = useState("");
@@ -55,9 +57,10 @@ export default function AdminWaitlistPage() {
 
   useEffect(() => {
     void (async () => {
-      const myRole = await getMyAdminRole();
+      const { role: myRole, mfaOk: ok } = await getMyAdminAccessStatus();
       setRole(myRole);
-      if (myRole) await loadRows();
+      setMfaOk(ok);
+      if (myRole && ok) await loadRows();
     })();
   }, [loadRows]);
 
@@ -98,6 +101,19 @@ export default function AdminWaitlistPage() {
         <div className="mx-auto max-w-3xl rounded-2xl border border-[color:var(--border)] bg-vault-card p-6 text-[color:var(--muted)]">
           You don&apos;t have access to this page.
         </div>
+      </main>
+    );
+  }
+
+  if (!mfaOk) {
+    return (
+      <main className="px-4 py-10 text-[color:var(--fg)]">
+        <MfaStepUp
+          onVerified={async () => {
+            setMfaOk(true);
+            await loadRows();
+          }}
+        />
       </main>
     );
   }

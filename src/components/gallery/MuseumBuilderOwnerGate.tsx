@@ -17,6 +17,7 @@ import { useEffect, useState } from "react";
 
 import { getMyAdminAccessStatus } from "@/lib/adminAuth";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
+import MfaStepUp from "@/components/account/MfaStepUp";
 import MuseumBuilder from "./MuseumBuilder";
 
 type AccessState = "checking" | "pending-mfa" | "authorized" | "denied";
@@ -55,16 +56,12 @@ export default function MuseumBuilderOwnerGate() {
     return <div className="p-8 text-sm text-[color:var(--muted)]">Checking access…</div>;
   }
 
+  // Real step-up, not just a hopeful link (2026-09-29) — see
+  // VltdMuseumAdminGate.tsx's matching comment: a trusted device makes the
+  // global MfaChallengeGate modal stand down for the rest of the session,
+  // and this route has no other way to force a fresh aal2 check without it.
   if (state === "pending-mfa") {
-    return (
-      <div className="p-8 text-sm text-[color:var(--muted)]">
-        Finishing 2FA verification… If nothing happens, complete it at{" "}
-        <a href="/account/security" className="underline">
-          Account → Security
-        </a>
-        .
-      </div>
-    );
+    return <MfaStepUp onVerified={() => setState("authorized")} />;
   }
 
   if (state === "denied") {

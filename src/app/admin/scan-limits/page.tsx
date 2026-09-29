@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { getMyAdminRole, type AdminRole } from "@/lib/adminAuth";
+import { getMyAdminAccessStatus, type AdminRole } from "@/lib/adminAuth";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
+import MfaStepUp from "@/components/account/MfaStepUp";
 import {
   getTierQuotas,
   setTierQuota,
@@ -30,6 +31,7 @@ const TIER_COLORS: Record<Tier, { bg: string; border: string; fg: string }> = {
 
 export default function AdminScanLimitsPage() {
   const [role, setRole] = useState<AdminRole | "loading">("loading");
+  const [mfaOk, setMfaOk] = useState(false);
   const [quotas, setQuotas] = useState<TierQuota[]>([]);
   const [drafts, setDrafts] = useState<Record<Tier, string>>({ FREE: "", MID: "", FULL: "" });
   const [profiles, setProfiles] = useState<ScanProfileRow[]>([]);
@@ -39,15 +41,18 @@ export default function AdminScanLimitsPage() {
   const [savingTier, setSavingTier] = useState<Tier | "">("");
   const [savingId, setSavingId] = useState("");
 
+  async function checkAndLoad() {
+    const { role: myRole, mfaOk: ok } = await getMyAdminAccessStatus();
+    setRole(myRole);
+    setMfaOk(ok);
+    if (myRole && ok) {
+      await loadQuotas();
+      await loadProfiles();
+    }
+  }
+
   useEffect(() => {
-    void (async () => {
-      const myRole = await getMyAdminRole();
-      setRole(myRole);
-      if (myRole) {
-        await loadQuotas();
-        await loadProfiles();
-      }
-    })();
+    void checkAndLoad();
   }, []);
 
   async function loadQuotas() {
@@ -150,6 +155,19 @@ export default function AdminScanLimitsPage() {
         <div className="mt-3 rounded-xl bg-red-500/10 px-4 py-3 text-sm text-red-200 ring-1 ring-red-500/20">
           You need admin access to view this page. Sign in with an admin account.
         </div>
+      </main>
+    );
+  }
+
+  if (!mfaOk) {
+    return (
+      <main className="min-h-dvh bg-[color:var(--bg)] p-6 text-[color:var(--fg)]">
+        <MfaStepUp
+          onVerified={async () => {
+            setMfaOk(true);
+            await checkAndLoad();
+          }}
+        />
       </main>
     );
   }

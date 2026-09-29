@@ -6,6 +6,7 @@
 
 import { useState, useMemo, useEffect, useCallback, useRef, type ReactNode } from "react";
 import { AppIcon, type AppIconName } from "@/components/ui/AppIcon";
+import MfaStepUp from "@/components/account/MfaStepUp";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 import { setTierSafe, type Tier } from "@/lib/subscription";
 import { getStoredActiveProfileId } from "@/lib/auth";
@@ -159,31 +160,31 @@ function AdminLoginGate({ onSignedIn }: { onSignedIn: () => void }) {
 // distinct from "you're just not an admin," so someone who genuinely
 // has the role isn't left thinking their account was removed when
 // they really just need to finish a 2FA step-up.
-function NotAuthorized({ userEmail, needsMfa }: { userEmail: string; needsMfa?: boolean }) {
+function NotAuthorized({
+  userEmail,
+  needsMfa,
+  onVerified,
+}: {
+  userEmail: string;
+  needsMfa?: boolean;
+  onVerified: () => void;
+}) {
+  // Real step-up, not just a link-out (2026-09-29): a trusted device makes
+  // the global MfaChallengeGate modal stand down for the rest of the
+  // session, and Account → Security's own 2FA card has no bare re-verify
+  // action — see MfaStepUp.tsx's own comment for the full reasoning.
+  if (needsMfa) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-[#0a0c12]">
+        <MfaStepUp onVerified={onVerified} />
+      </div>
+    );
+  }
   return (
     <div className="flex min-h-screen items-center justify-center bg-[#0a0c12]">
       <div className="w-full max-w-sm rounded-[24px] bg-[#111318] p-8 ring-1 ring-white/10 text-center">
-        <div className="text-2xl">🚫</div>
-        {needsMfa ? (
-          <>
-            <div className="mt-2 text-sm font-semibold text-white">2FA Required</div>
-            <div className="mt-1 text-xs text-white/40">
-              {userEmail} has admin access, but this session hasn&apos;t completed a 2FA challenge yet.
-              Set it up (or complete it) at Account → Security, then reload this page.
-            </div>
-            <a
-              href="/account/security"
-              className="mt-6 block w-full rounded-xl bg-white/10 py-2.5 text-sm text-white/80 transition hover:bg-white/20"
-            >
-              Go to Account → Security
-            </a>
-          </>
-        ) : (
-          <>
-            <div className="mt-2 text-sm font-semibold text-white">Not Authorized</div>
-            <div className="mt-1 text-xs text-white/40">{userEmail} does not have admin access.</div>
-          </>
-        )}
+        <div className="mt-2 text-sm font-semibold text-white">Not Authorized</div>
+        <div className="mt-1 text-xs text-white/40">{userEmail} does not have admin access.</div>
         <button
           onClick={() => signOut().then(() => window.location.reload())}
           className="mt-3 w-full rounded-xl bg-white/10 py-2.5 text-sm text-white/60 transition hover:bg-white/20"
@@ -1725,7 +1726,7 @@ export default function AdminCharactersPage() {
     );
   }
   if (authState === "signed-out") return <AdminLoginGate onSignedIn={checkAuth} />;
-  if (authState === "unauthorized") return <NotAuthorized userEmail={userEmail} needsMfa={needsMfa} />;
+  if (authState === "unauthorized") return <NotAuthorized userEmail={userEmail} needsMfa={needsMfa} onVerified={checkAuth} />;
 
   const filtered = ALL_CHARACTERS.filter((c) => {
     const q = search.toLowerCase();

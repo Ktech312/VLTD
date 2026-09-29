@@ -13,6 +13,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 
 import { getMyAdminAccessStatus } from "@/lib/adminAuth";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
+import MfaStepUp from "@/components/account/MfaStepUp";
 import VltdMuseumCampus from "@/components/gallery/VltdMuseumCampus";
 import VltdMuseumCampusV2 from "@/components/gallery/VltdMuseumCampusV2";
 import MuseumCampusOverview from "@/components/gallery/MuseumCampusOverview";
@@ -70,16 +71,18 @@ export default function VltdMuseumAdminGate() {
     return <div className="p-8 text-sm text-[color:var(--muted)]">Checking access…</div>;
   }
 
+  // Perf-security pass (2026-09-29): this used to just say "Finishing 2FA
+  // verification..." and link out to Account → Security, banking on the
+  // global MfaChallengeGate modal to actually resolve it — real for a
+  // normal aal1 session (that modal is always active and challenges
+  // immediately), but a real dead end once "remember this device" is live:
+  // a trusted device makes the global gate stand down for the rest of the
+  // session, and Account → Security's own 2FA card has no bare re-verify
+  // action, only "Disable 2FA." MfaStepUp is a real, on-the-spot code
+  // entry that re-runs this same check on success instead of just hoping
+  // the global gate eventually catches up.
   if (state === "pending-mfa") {
-    return (
-      <div className="p-8 text-sm text-[color:var(--muted)]">
-        Finishing 2FA verification… If nothing happens, complete it at{" "}
-        <a href="/account/security" className="underline">
-          Account → Security
-        </a>
-        .
-      </div>
-    );
+    return <MfaStepUp onVerified={() => setState("authorized")} />;
   }
 
   if (state === "denied") {

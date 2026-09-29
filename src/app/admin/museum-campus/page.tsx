@@ -16,7 +16,8 @@
 // per-category galleries.
 import { useEffect, useState } from "react";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
-import { getMyAdminRole } from "@/lib/adminAuth";
+import { getMyAdminAccessStatus } from "@/lib/adminAuth";
+import MfaStepUp from "@/components/account/MfaStepUp";
 import { DEFAULT_ITEMS_PER_ROOM } from "@/lib/museumCampusConfig";
 
 type SpotlightProgram = {
@@ -61,6 +62,7 @@ function inputCls() {
 
 export default function AdminMuseumCampusPage() {
   const [authorized, setAuthorized] = useState<boolean | null>(null);
+  const [needsMfa, setNeedsMfa] = useState(false);
   const [tableMissing, setTableMissing] = useState(false);
   const [statusMsg, setStatusMsg] = useState("");
 
@@ -78,8 +80,16 @@ export default function AdminMuseumCampusPage() {
   const [editingStoreId, setEditingStoreId] = useState<string | null>(null);
   const [showStoreForm, setShowStoreForm] = useState(false);
 
+  async function checkAccess() {
+    const { role, mfaOk } = await getMyAdminAccessStatus();
+    if (!role) { setNeedsMfa(false); setAuthorized(false); return; }
+    if (!mfaOk) { setNeedsMfa(true); setAuthorized(false); return; }
+    setNeedsMfa(false);
+    setAuthorized(true);
+  }
+
   useEffect(() => {
-    getMyAdminRole().then((role) => setAuthorized(role !== null));
+    void checkAccess();
   }, []);
 
   async function fetchAll() {
@@ -194,6 +204,13 @@ export default function AdminMuseumCampusPage() {
 
   if (authorized === null) {
     return <div className="p-8 text-sm text-[color:var(--muted)]">Checking access…</div>;
+  }
+  if (needsMfa) {
+    return (
+      <div className="p-8">
+        <MfaStepUp onVerified={checkAccess} />
+      </div>
+    );
   }
   if (!authorized) {
     return <div className="p-8 text-sm text-red-400">Not authorized. Admin access required.</div>;

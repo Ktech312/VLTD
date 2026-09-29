@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
-import { getMyAdminRole } from "@/lib/adminAuth";
+import { getMyAdminAccessStatus } from "@/lib/adminAuth";
+import MfaStepUp from "@/components/account/MfaStepUp";
 
 type Spotlight = {
   id: string;
@@ -39,6 +40,7 @@ function inputCls() {
 
 export default function AdminSpotlightsPage() {
   const [authorized, setAuthorized] = useState<boolean | null>(null);
+  const [needsMfa, setNeedsMfa] = useState(false);
   const [spotlights, setSpotlights] = useState<Spotlight[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -47,8 +49,16 @@ export default function AdminSpotlightsPage() {
   const [saving, setSaving] = useState(false);
   const [statusMsg, setStatusMsg] = useState("");
 
+  async function checkAccess() {
+    const { role, mfaOk } = await getMyAdminAccessStatus();
+    if (!role) { setNeedsMfa(false); setAuthorized(false); return; }
+    if (!mfaOk) { setNeedsMfa(true); setAuthorized(false); return; }
+    setNeedsMfa(false);
+    setAuthorized(true);
+  }
+
   useEffect(() => {
-    getMyAdminRole().then((role) => setAuthorized(role !== null));
+    void checkAccess();
   }, []);
 
   async function fetchAll() {
@@ -126,6 +136,13 @@ export default function AdminSpotlightsPage() {
 
   if (authorized === null) {
     return <div className="p-8 text-sm text-[color:var(--muted)]">Checking access…</div>;
+  }
+  if (needsMfa) {
+    return (
+      <div className="p-8">
+        <MfaStepUp onVerified={checkAccess} />
+      </div>
+    );
   }
   if (!authorized) {
     return <div className="p-8 text-sm text-red-400">Not authorized. Admin access required.</div>;

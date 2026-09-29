@@ -1,9 +1,10 @@
 "use client";
 
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useCallback, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { getMyAdminRole, type AdminRole } from "@/lib/adminAuth";
+import { getMyAdminAccessStatus, type AdminRole } from "@/lib/adminAuth";
 import QuickAddEventForm from "@/components/admin/QuickAddEventForm";
+import MfaStepUp from "@/components/account/MfaStepUp";
 
 // This has to stay a real page, not just the modal on /admin/events -- it's
 // the bookmarklet's window.open target, opened from an external site with
@@ -12,10 +13,17 @@ function QuickAddPageContent() {
   const params = useSearchParams();
   const router = useRouter();
   const [role, setRole] = useState<AdminRole | "loading">("loading");
+  const [mfaOk, setMfaOk] = useState(false);
+
+  const check = useCallback(async () => {
+    const { role: r, mfaOk: ok } = await getMyAdminAccessStatus();
+    setRole(r);
+    setMfaOk(ok);
+  }, []);
 
   useEffect(() => {
-    void (async () => setRole(await getMyAdminRole()))();
-  }, []);
+    void check();
+  }, [check]);
 
   if (role === "loading") {
     return (
@@ -31,6 +39,14 @@ function QuickAddPageContent() {
         <div className="mx-auto max-w-lg rounded-2xl border border-[color:var(--border)] bg-vault-card p-6 text-[color:var(--muted)]">
           You don&apos;t have access to this page.
         </div>
+      </main>
+    );
+  }
+
+  if (!mfaOk) {
+    return (
+      <main className="px-4 py-10 text-[color:var(--fg)]">
+        <MfaStepUp onVerified={check} />
       </main>
     );
   }
