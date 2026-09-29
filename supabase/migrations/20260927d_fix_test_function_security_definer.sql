@@ -1,19 +1,40 @@
--- Corrects one real error in test_mfa_trusted_device_security() from
--- 20260927c: calling it raised "cannot set parameter 'role' within
--- security-definer function" — Postgres hard-blocks SET ROLE inside any
--- SECURITY DEFINER function body, full stop, regardless of what it's
--- trying to do. The test needs to actually switch to the `authenticated`
--- role for its direct-INSERT check to mean anything (otherwise it would
--- run as the function's owner, which bypasses RLS entirely and would
--- always "pass" without truly testing anything).
+-- Corrects test_mfa_trusted_device_security() from 20260927c. This file
+-- was never actually run (confirmed — the blocker it was meant to fix was
+-- still reported live after it was written), so this replaces its content
+-- outright rather than adding yet another corrective migration on top of
+-- an unapplied one. 20260927c itself (the table, RLS, trust_this_device(),
+-- check_trusted_device(), revoke_trusted_device()) is untouched here and
+-- must not be re-run or modified — this migration only ever
+-- CREATE OR REPLACEs this one test function.
 --
--- Fix: SECURITY INVOKER instead of DEFINER. This function is granted to
--- service_role only, which already has more than enough privilege on its
--- own (bypasses RLS, can read auth.users, can SET ROLE) to run as itself
--- rather than needing an owner's elevated identity — the restriction
--- only applies to DEFINER functions, not to a service_role caller acting
--- as its own, already-privileged self. Everything else in the migration
--- applied correctly; only this one function's execution mode changes.
+-- Two independent problems in the original test function, fixed together:
+--
+-- 1. "cannot set parameter 'role' within security-definer function" —
+--    Postgres hard-blocks SET ROLE inside any SECURITY DEFINER function
+--    body, full stop. Fixed by making the function SECURITY INVOKER
+--    instead — it is granted to service_role only, which already has more
+--    than enough privilege running as itself (bypasses RLS, can read
+--    auth.users, can query any role's grants) without needing an owner
+--    identity.
+--
+-- 2. The direct-insert test itself was the wrong shape even before the
+--    SET ROLE error, independent of problem 1: SET ROLE authenticated
+--    changes the POSTGRES ROLE's grant-level privileges, but this table's
+--    RLS (and Supabase auth generally) key off auth.uid()/auth.jwt(),
+--    which are driven by the request.jwt.claims GUC — not by the bare
+--    role name. A SET-ROLE-based test proves less than it looks like it
+--    does, and needs careful role-bouncing (reset role in both the
+--    success and exception paths) to avoid leaking role state into later
+--    tests. Replaced with static catalog assertions that check the actual
+--    security model directly instead of trying to simulate a request:
+--    does authenticated or anon hold a real INSERT/UPDATE/DELETE grant on
+--    the table (has_table_privilege), and does any RLS policy exist that
+--    could permit a mutation at all (pg_policies), for either role. Zero
+--    side effects, nothing to reset.
+--
+-- Every other test (aal1 blocked via the RPC, aal2 succeeds via the RPC
+-- with the 30-day clamp applied, full cleanup) is unchanged from
+-- 20260927c.
 
 create or replace function public.test_mfa_trusted_device_security()
 returns table(test_name text, passed boolean, detail text)
@@ -28,6 +49,10 @@ declare
   v_token text;
   v_expires timestamptz;
   v_days numeric;
+  v_role text;
+  v_priv text;
+  v_has_priv boolean;
+  v_policy_count integer;
 begin
   select id into v_real_user from auth.users limit 1;
   if v_real_user is null then
@@ -50,19 +75,34 @@ begin
     end;
   end;
 
-  -- Test 2: an aal1 session cannot insert a trusted-device row directly.
-  begin
-    set local role authenticated;
-    insert into public.mfa_trusted_devices (user_id, token_hash, expires_at)
-    values (v_real_user, 'test-direct-insert-should-fail', now() + interval '1 day');
-    reset role;
-    delete from public.mfa_trusted_devices where token_hash = 'test-direct-insert-should-fail';
-    return query select 'aal1_direct_insert_blocked'::text, false,
-      'direct INSERT succeeded — vulnerable'::text;
-  exception when others then
-    reset role;
-    return query select 'aal1_direct_insert_blocked'::text, true, sqlerrm;
-  end;
+  -- Test 2 (replaced — see header): static catalog assertions instead of
+  -- SET LOCAL ROLE. Six privilege checks (INSERT/UPDATE/DELETE x
+  -- authenticated/anon), each its own reported row.
+  foreach v_role in array array['authenticated', 'anon'] loop
+    foreach v_priv in array array['INSERT', 'UPDATE', 'DELETE'] loop
+      v_has_priv := has_table_privilege(v_role, 'public.mfa_trusted_devices', v_priv);
+      return query select
+        ('no_' || lower(v_priv) || '_priv_' || v_role)::text,
+        (not v_has_priv),
+        case when v_has_priv
+          then (v_role || ' unexpectedly holds ' || v_priv || ' on mfa_trusted_devices — vulnerable')
+          else (v_role || ' correctly has no ' || v_priv || ' grant')
+        end::text;
+    end loop;
+  end loop;
+
+  -- Plus one policy-existence check: no INSERT/UPDATE/DELETE/ALL-cmd RLS
+  -- policy should exist on this table at all, for any role.
+  select count(*) into v_policy_count
+    from pg_policies
+    where schemaname = 'public'
+      and tablename = 'mfa_trusted_devices'
+      and cmd in ('INSERT', 'UPDATE', 'DELETE', 'ALL');
+  return query select 'no_mutation_policy_exists'::text, (v_policy_count = 0),
+    case when v_policy_count = 0
+      then 'no INSERT/UPDATE/DELETE/ALL-cmd policy exists on mfa_trusted_devices'
+      else (v_policy_count || ' mutation-capable RLS policy(ies) found — review needed')
+    end::text;
 
   -- Test 3: a genuinely aal2 session CAN mint a trust token via the RPC,
   -- and an absurd requested duration (9999 days) gets clamped to 30.
