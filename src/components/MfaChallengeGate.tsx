@@ -28,18 +28,21 @@ import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 // itself is opaque here; only its hash is ever checked server-side
 // (public.check_trusted_device / public.trust_this_device).
 //
-// TEMPORARILY DISABLED (2026-09-27, same day): EK caught a real bug in
-// the first version of trust_this_device() before it ever reached real
-// users' devices — it never checked that the CALLING session had itself
-// completed a real MFA challenge (aal2), so any aal1 (password-only)
-// session could call the RPC directly and mint itself a permanent
-// 2FA-skip token, undermining the entire point of this gate. The
-// database function has been fixed (see the corrected migration) to
-// reject anything but a genuine aal2 caller — but until that migration
-// has actually been run and independently verified, the client stays
-// off rather than silently depend on a fix that hasn't been confirmed
-// live yet. Flip this back to true only after that verification.
-const TRUSTED_DEVICE_FEATURE_ENABLED = false;
+// RE-ENABLED (2026-09-29): was off after EK caught a real bug in the
+// first trust_this_device() — it never checked the CALLING session had
+// itself completed a real MFA challenge (aal2), so an aal1 session could
+// mint itself a permanent 2FA-skip token. Fixed and independently
+// verified live before flipping this back on: test_mfa_trusted_device_
+// security() (service_role only, migrations 20260927c/d/e +
+// 20260929b) returns 10/10 passing — aal1 blocked at the RPC, no
+// direct INSERT/UPDATE/DELETE grant or policy for authenticated/anon,
+// aal2 succeeds with the 30-day clamp applied. Every admin/owner gate
+// was also independently confirmed to still require a genuinely live
+// aal2 session regardless of this flag (adminAuth.ts's check reads the
+// real Supabase session AAL directly, never this trusted-device record),
+// and now has a working inline step-up (MfaStepUp.tsx) instead of a dead
+// end if it isn't. See HANDOFF.md's 2026-09-29 entry for the full trail.
+const TRUSTED_DEVICE_FEATURE_ENABLED = true;
 const TRUSTED_DEVICE_KEY = "vltd_mfa_trusted_device_v1";
 
 function getStoredTrustedToken(userId: string): string | null {

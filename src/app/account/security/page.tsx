@@ -6,12 +6,11 @@ import { getCurrentUser, signOut } from "@/lib/auth";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 import TwoFactorAuthCard from "@/components/account/TwoFactorAuthCard";
 
-// Matches the same flag in MfaChallengeGate.tsx — the "remember this
-// device" creation path is temporarily disabled pending a security fix
-// (an aal1 session could mint itself a trust token) and independent
-// verification. This list would only ever show empty while that's true,
-// so it's hidden rather than shown confusingly empty.
-const TRUSTED_DEVICE_FEATURE_ENABLED = false;
+// Matches the same flag in MfaChallengeGate.tsx — re-enabled 2026-09-29
+// after the trust_this_device() aal2 fix was independently verified live
+// (10/10 on test_mfa_trusted_device_security(), see that file's own
+// comment for the full trail).
+const TRUSTED_DEVICE_FEATURE_ENABLED = true;
 
 type Session = { id: string; device: string; location: string; lastSeen: string; current: boolean };
 
