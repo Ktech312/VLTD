@@ -1,4 +1,14 @@
-# VLTD — Session Checklist (2026-08-05 night → ongoing, updated 2026-08-27)
+# VLTD — Session Checklist (2026-08-05 night → ongoing, updated 2026-09-29)
+
+## 2026-09-29 — "Remember this device" security-verified and enabled; full 10-step production click-through passed
+Full narrative in HANDOFF.md. Migrations `20260927d`/`20260927e`/`20260929`/`20260929b` (all run by EK). Supersedes the `20260927_mfa_trusted_devices.sql` line item below — that filename was never actually applied; `20260927c` (already in history) is the real, applied schema/RPCs.
+- [x] `test_mfa_trusted_device_security()` corrected: replaced a `SET LOCAL ROLE` test (proved less than it looked like, needed careful role-bouncing) with 7 static catalog assertions — `has_table_privilege` for INSERT/UPDATE/DELETE × authenticated/anon, plus a `pg_policies` check that no mutation-capable policy exists at all.
+- [x] Fixed two real bugs found only by actually invoking the corrected test, not by re-reading the SQL: (1) `SECURITY INVOKER` broke `auth.users` access for `service_role` — reverted to `SECURITY DEFINER`, safe now since the rewritten test has no `SET ROLE` left to conflict with it; (2) `trust_this_device()`/`check_trusted_device()` couldn't find `gen_random_bytes`/`digest` — pgcrypto lives in the `extensions` schema on this project, not `public`; schema-qualified both calls instead of widening search_path.
+- [x] Live test result: **10/10 passing** against production, confirmed via direct service-role REST calls, not assumed.
+- [x] Closed a real functional gap found by reading every admin gate in the app: 9 admin pages collapsed "not an admin" and "admin, just not aal2 this session" into one flat dead-end message; 3 more linked out to a page with no actual re-verify action. Built one shared `MfaStepUp.tsx` (same `mfa.challenge()`/`mfa.verify()` calls already used elsewhere) and wired it into all 12 gates.
+- [x] Both feature flags (`MfaChallengeGate.tsx`, `account/security/page.tsx`) flipped to `true`.
+- [x] **Full 10-step production click-through, all passed, with direct evidence (not just UI trust)**: new login shows the prompt → remember-device checked + code entered → modal doesn't reopen on navigation → local sign-out/sign-in skips the prompt on the trusted browser → an admin route still demands a real `aal2` via the new inline step-up, which worked → forgetting the device via Account → Security cleared it → signing back in required (and got) a fresh real code entry → global "sign out everywhere" removed the trusted-device row, confirmed via direct DB query (1 row → 0 rows).
+- [x] tsc/eslint/build clean on every commit.
 
 ## 2026-09-27 (latest) — Guest-view nav + 2FA re-ask fixed, "remember device" added, and a 3-layer modal-visibility bug chain found + fixed
 Full narrative in HANDOFF.md. Commits: `a2d902e` → `645dab8`.
@@ -8,7 +18,7 @@ Full narrative in HANDOFF.md. Commits: `a2d902e` → `645dab8`.
 - [x] **3-layer bug chain found via the first real 390px test this session had**: (1) `BottomNav.tsx`'s real z-index is an inline `9999`, not its className's `z-50` — every bottom sheet in the app using the usual `z-[90]`-ish convention was silently below it (11+3 files fixed). (2) Raising z-index alone still failed live — `NavShell`'s `PullToRefresh` wrapper clips any `fixed` descendant to its own box before z-index even applies; ported 14 modals/sheets to `createPortal(document.body)` to escape it, the same way `MfaChallengeGate` always has. (3) Portaling made them direct children of `body`, which an existing global rule then reset to `z-index:1` (same bug class as a documented 2026-09-14 2FA-modal incident, whose fix never covered these new z-index values) — added the matching scoped `!important` overrides.
 - [x] Live-verified via `document.elementFromPoint` (not just screenshots — this session's Claude-in-Chrome extension renders its own UI banner at `z-index: 2147483647`, an automation-tool artifact that obscures screenshot evidence but not the actual app): the Share sheet's own content is now the topmost element at the coordinate BottomNav used to win.
 - [x] tsc/eslint/build clean on every commit.
-- [ ] Migration `20260927_mfa_trusted_devices.sql` needs EK to run it for "remember this device" to actually take effect (code degrades safely to "just show the modal" until then).
+- [x] ~~Migration `20260927_mfa_trusted_devices.sql` needs EK to run it~~ — that file was never actually applied; the real schema landed via `20260927c` instead. See the 2026-09-29 entry above for the full corrected-migration trail and the verified, enabled result.
 - [ ] Resumed browser acceptance checks (390px overflow, cold-cache timing) were interrupted by this bug-fixing detour — pick back up next.
 
 ## 2026-09-27 — LAUNCH BLOCKER: new exhibitions never reached the cloud, existing ones couldn't be deleted — root-caused and fixed, live-verified through the real UI
