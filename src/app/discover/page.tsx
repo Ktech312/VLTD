@@ -375,7 +375,9 @@ export default function DiscoverPage() {
         {!compact && (
           <div className="relative h-[128px]" style={coverStyle(gallery)}>
             <div className="absolute inset-0 bg-gradient-to-t from-[#030809] via-black/20 to-transparent" />
-            <span className="absolute left-3 top-3 rounded-[5px] border border-[rgba(203,208,213,0.28)] bg-black/50 px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.14em]" style={{ color: "var(--theme-gold,#C8CDD2)" }}>
+            {/* Fixed light, not --theme-gold -- this badge sits on the
+                always-dark scrim above, same fix as the spotlight card. */}
+            <span className="absolute left-3 top-3 rounded-[5px] border border-[rgba(203,208,213,0.28)] bg-black/50 px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.14em]" style={{ color: "#C8CDD2" }}>
               {UNIVERSE_LABEL[gallery.universeKey]}
             </span>
           </div>
@@ -445,10 +447,17 @@ export default function DiscoverPage() {
             <section className="mt-4 overflow-hidden rounded-[7px] border border-[rgba(203,208,213,0.22)]" style={{ background: "var(--theme-card,rgba(15,25,45,0.85))" }}>
               <div className="relative min-h-[180px]" style={coverStyle(selectedGallery)}>
                 <div className="absolute inset-0 bg-gradient-to-r from-[#040909] via-[#040909]/75 to-transparent" />
+                {/* This card's scrim (line above, #040909) is a fixed dark
+                    gradient over a cover photo -- always dark regardless of
+                    site theme. Its text must stay fixed light to match,
+                    not follow --theme-text-primary/--theme-gold: those
+                    correctly go dark in light mode, which read as
+                    near-invisible against this still-dark scrim (found live
+                    on /discover in light mode, 2026-09-30). */}
                 <div className="relative max-w-[360px] p-6">
-                  <div className="text-[11px] font-black uppercase tracking-[0.18em]" style={{ color: "var(--theme-gold,#C8CDD2)" }}>Collector Spotlight</div>
-                  <h2 className="mt-3 font-serif text-[33px] font-black leading-[0.95]" style={{ color: "var(--theme-text-primary,#ECEDEF)" }}>Collector Rooms Worth Seeing</h2>
-                  <p className="mt-4 text-sm leading-6" style={{ color: "var(--theme-text-primary,#ECEDEF)" }}>Hand-picked public exhibitions from serious collectors around the world.</p>
+                  <div className="text-[11px] font-black uppercase tracking-[0.18em]" style={{ color: "#C8CDD2" }}>Collector Spotlight</div>
+                  <h2 className="mt-3 font-serif text-[33px] font-black leading-[0.95]" style={{ color: "#ECEDEF" }}>Collector Rooms Worth Seeing</h2>
+                  <p className="mt-4 text-sm leading-6" style={{ color: "#ECEDEF" }}>Hand-picked public exhibitions from serious collectors around the world.</p>
                   <button type="button" onClick={() => openGallery(selectedGallery)} className="mt-4 rounded-[7px] px-4 py-2 text-xs font-black" style={{ background: "linear-gradient(135deg,#8C9298,#C8CDD2)", color: "#0B0B0B" }}>
                     Explore featured rooms &rarr;
                   </button>
