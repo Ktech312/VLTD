@@ -39,7 +39,7 @@ const VALUE_PROPS = [
   { icon: "vault", text: "Vault everything you own" },
   { icon: "chart", text: "Track grades & market value" },
   { icon: "trophy", text: "Rank on the global registry" },
-  { icon: "image", text: "Share beautiful public galleries" },
+  { icon: "image", text: "Share beautiful public exhibitions" },
 ];
 
 const UI_ICON_MAP: Record<string, AppIconName> = {
@@ -382,7 +382,7 @@ export default function OnboardingPage() {
               <div className="mt-6 space-y-5">
                 <div className="grid gap-3 sm:grid-cols-3">
                   {([
-                    { key: "personal", icon: "person", title: "Curator", desc: "Personal vault, portfolio, and galleries." },
+                    { key: "personal", icon: "person", title: "Curator", desc: "Personal vault, portfolio, and exhibitions." },
                     { key: "business", icon: "store", title: "Business", desc: "Shop, resale inventory, or team workflow." },
                     { key: "both", icon: "key", title: "Both", desc: "A personal vault plus a separate business." },
                   ] as const).map(({ key, icon, title, desc }) => (

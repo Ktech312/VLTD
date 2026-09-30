@@ -16,7 +16,7 @@ function favoriteTitle(r: FavoriteRecord, items: VaultItem[], galleries: Gallery
     return it?.title || String(r.metadata?.title || "Saved item");
   }
   const g = galleries.find((x) => String(x.id) === String(r.content_id));
-  return g?.title || String(r.metadata?.title || "Saved gallery");
+  return g?.title || String(r.metadata?.title || "Saved exhibition");
 }
 
 function favoriteSubtitle(r: FavoriteRecord, items: VaultItem[], galleries: Gallery[]) {
@@ -26,7 +26,7 @@ function favoriteSubtitle(r: FavoriteRecord, items: VaultItem[], galleries: Gall
   }
   const g = galleries.find((x) => String(x.id) === String(r.content_id));
   const n = g?.itemIds?.length ?? r.metadata?.itemCount ?? 0;
-  return `${n} item${n === 1 ? "" : "s"} · Gallery`;
+  return `${n} item${n === 1 ? "" : "s"} · Exhibition`;
 }
 
 function favoriteImage(r: FavoriteRecord, items: VaultItem[], galleries: Gallery[]) {
@@ -103,7 +103,7 @@ function FavoriteCard({
           className="absolute bottom-1 left-1 rounded-md px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide"
           style={{ background: "rgba(0,0,0,0.72)", color: isItem ? "var(--theme-gold)" : "#a78bfa" }}
         >
-          {isItem ? "Item" : "Gallery"}
+          {isItem ? "Item" : "Exhibition"}
         </div>
       </div>
 
@@ -189,7 +189,7 @@ export default function FavoritesPage() {
   const TABS: { key: Filter; label: string; count: number }[] = [
     { key: "all", label: "All", count: favorites.length },
     { key: "item", label: "Items", count: itemCount },
-    { key: "gallery", label: "Galleries", count: galleryCount },
+    { key: "gallery", label: "Exhibitions", count: galleryCount },
   ];
 
   return (
@@ -204,7 +204,7 @@ export default function FavoritesPage() {
           </div>
           <h1 className="mt-3 text-2xl font-bold" style={{ color: "var(--fg)" }}>Favorites</h1>
           <p className="mt-1 text-sm" style={{ color: "var(--muted)" }}>
-            Items and galleries you've saved from across VLTD.
+            Items and exhibitions you've saved from across VLTD.
           </p>
 
           {/* Stats bar */}
@@ -220,7 +220,7 @@ export default function FavoritesPage() {
               </div>
               <div>
                 <span className="text-lg font-bold" style={{ color: "var(--fg)" }}>{galleryCount}</span>
-                <span className="ml-1.5 text-xs" style={{ color: "var(--muted)" }}>galleries</span>
+                <span className="ml-1.5 text-xs" style={{ color: "var(--muted)" }}>exhibitions</span>
               </div>
             </div>
           )}
@@ -243,7 +243,7 @@ export default function FavoritesPage() {
               No favorites yet
             </div>
             <p className="mt-2 text-sm" style={{ color: "var(--muted)" }}>
-              Browse the Discover page and tap the heart on any item or gallery to save it here.
+              Browse the Discover page and tap the heart on any item or exhibition to save it here.
             </p>
             <Link
               href="/discover"

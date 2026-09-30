@@ -426,76 +426,142 @@ function FeaturedGalleryCard({ galleries }: { galleries: Gallery[] }) {
       <div style={{ marginTop: "9px" }}>
         <div style={{ fontFamily: C.r, fontSize: "18px", fontWeight: 700, color: C.text, lineHeight: 1.1 }}>{g.title || "Untitled"}</div>
         <div style={{ fontSize: "11px", color: C.muted, marginTop: "2px" }}>{itemCount} piece{itemCount !== 1 ? "s" : ""}</div>
-        <Link href={"/gallery/" + g.id} style={{ display: "inline-flex", alignItems: "center", marginTop: "8px", borderRadius: "6px", padding: "6px 14px", fontSize: "11px", fontWeight: 700, background: "linear-gradient(135deg,#8C9298,#C8CDD2)", color: "#0B0B0B", textDecoration: "none" }}>View Gallery →</Link>
+        <Link href={"/gallery/" + g.id} style={{ display: "inline-flex", alignItems: "center", marginTop: "8px", borderRadius: "6px", padding: "6px 14px", fontSize: "11px", fontWeight: 700, background: "linear-gradient(135deg,#8C9298,#C8CDD2)", color: "#0B0B0B", textDecoration: "none" }}>View Exhibition →</Link>
       </div>
     </div>
   );
 }
 
 // ── Featured Gallery carousel (coverflow, compact) ──────────────
+// Rebuilt 2026-09-30 (previous coverflow rewrite): the old version tracked
+// drag distance only in refs (no re-render -> cards didn't follow the
+// finger), changed the index only on release (abrupt jump instead of a
+// tracked drag), keyed cards by `id + offset` (offset changes every time
+// idx changes, so React remounted the DOM node instead of animating it),
+// and hand-rolled separate mouse/touch handlers.
+//
+// Replaced with native horizontal scroll-snap: the browser's own scroll
+// physics handles touch/pen/mouse identically, follows the finger during
+// drag by construction, only "animates" (the snap settle) on release, and
+// needs no drag-tracking state at all. Cards are keyed by gallery.id and
+// rendered once; only the "which one is centered" bookkeeping (for the
+// header text and the active-card highlight) is derived, via
+// IntersectionObserver, not reset per scroll frame.
 function FeaturedGalleryCarousel({ galleries }: { galleries: Gallery[] }) {
   const [idx, setIdx] = useState(0);
-  const startX = useRef<number>(0);
-  const dragX = useRef<number>(0);
-  const dragging = useRef(false);
+  const trackRef = useRef<HTMLDivElement>(null);
+  const cardRefs = useRef<Map<string, HTMLButtonElement>>(new Map());
   const n = galleries.length;
-
-  function goNext() { setIdx((i) => (i + 1) % n); }
-  function goPrev() { setIdx((i) => (i - 1 + n) % n); }
-
-  function onTouchStart(e: React.TouchEvent) { startX.current = e.touches[0].clientX; dragX.current = 0; }
-  function onTouchMove(e: React.TouchEvent) { dragX.current = e.touches[0].clientX - startX.current; }
-  function onTouchEnd() { if (dragX.current < -40) goNext(); else if (dragX.current > 40) goPrev(); dragX.current = 0; }
-  function onMouseDown(e: React.MouseEvent) { dragging.current = true; startX.current = e.clientX; dragX.current = 0; }
-  function onMouseMove(e: React.MouseEvent) { if (!dragging.current) return; dragX.current = e.clientX - startX.current; }
-  function onMouseUp() { if (!dragging.current) return; dragging.current = false; if (dragX.current < -40) goNext(); else if (dragX.current > 40) goPrev(); dragX.current = 0; }
-  function onMouseLeave() { if (dragging.current) { dragging.current = false; if (dragX.current < -40) goNext(); else if (dragX.current > 40) goPrev(); dragX.current = 0; } }
-
-  const current = galleries[idx];
+  const current = galleries[idx] ?? galleries[0];
   const itemCount = current.itemIds?.length ?? 0;
-  const slots = [-1, 0, 1, 2].map((offset) => ({ g: galleries[(idx + offset + n) % n], offset }));
+
+  const prefersReducedMotion = useMemo(() => {
+    if (typeof window === "undefined" || !window.matchMedia) return false;
+    return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  }, []);
+
+  // Track which card is centered in the scroll track -- this is the ONLY
+  // thing derived from scrolling; it never drives the scroll itself, so
+  // there's nothing for it to fight with native touch/pointer scrolling.
+  useEffect(() => {
+    const track = trackRef.current;
+    if (!track) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const mostVisible = entries
+          .filter((e) => e.isIntersecting)
+          .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
+        if (!mostVisible) return;
+        const id = (mostVisible.target as HTMLElement).dataset.galleryId;
+        const i = galleries.findIndex((g) => g.id === id);
+        if (i >= 0) setIdx(i);
+      },
+      { root: track, threshold: [0.6] }
+    );
+    cardRefs.current.forEach((el) => observer.observe(el));
+    return () => observer.disconnect();
+  }, [galleries]);
+
+  function scrollToIndex(i: number) {
+    const clamped = Math.max(0, Math.min(n - 1, i));
+    const el = cardRefs.current.get(galleries[clamped]?.id);
+    el?.scrollIntoView({ behavior: prefersReducedMotion ? "auto" : "smooth", inline: "center", block: "nearest" });
+  }
+
+  function onTrackKeyDown(e: React.KeyboardEvent) {
+    if (e.key === "ArrowRight") { e.preventDefault(); scrollToIndex(idx + 1); }
+    else if (e.key === "ArrowLeft") { e.preventDefault(); scrollToIndex(idx - 1); }
+  }
 
   return (
-    <div className="relative select-none" style={{ cursor: "grab", padding: "12px" }}
-      onTouchStart={onTouchStart} onTouchMove={onTouchMove} onTouchEnd={onTouchEnd}
-      onMouseDown={onMouseDown} onMouseMove={onMouseMove} onMouseUp={onMouseUp} onMouseLeave={onMouseLeave}>
+    <div className="relative" style={{ padding: "12px" }}>
       {/* Header */}
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "8px" }}>
         <div>
           <p style={{ fontSize: "9px", fontWeight: 600, letterSpacing: "0.28em", textTransform: "uppercase", color: C.muted }}>
-            Featured Gallery <span style={{ opacity: 0.5, marginLeft: "6px" }}>{idx + 1} / {n}</span>
+            Featured Exhibition <span style={{ opacity: 0.5, marginLeft: "6px" }}>{idx + 1} / {n}</span>
           </p>
           <h2 style={{ fontSize: "13px", fontWeight: 700, color: C.text, marginTop: "2px" }}>{current.title || "Untitled"}</h2>
           <p style={{ fontSize: "11px", color: C.muted, marginTop: "1px" }}>{itemCount} piece{itemCount !== 1 ? "s" : ""}</p>
         </div>
         {n > 1 && (
           <div style={{ display: "flex", gap: "4px" }}>
-            <button type="button" onClick={goPrev} style={{ width: "24px", height: "24px", display: "flex", alignItems: "center", justifyContent: "center", borderRadius: "50%", border: `1px solid ${C.goldBd}`, background: C.goldDim, color: C.gold, fontSize: "14px", cursor: "pointer" }}>‹</button>
-            <button type="button" onClick={goNext} style={{ width: "24px", height: "24px", display: "flex", alignItems: "center", justifyContent: "center", borderRadius: "50%", border: `1px solid ${C.goldBd}`, background: C.goldDim, color: C.gold, fontSize: "14px", cursor: "pointer" }}>›</button>
+            <button type="button" aria-label="Previous exhibition" onClick={() => scrollToIndex(idx - 1)} disabled={idx === 0}
+              style={{ width: "24px", height: "24px", display: "flex", alignItems: "center", justifyContent: "center", borderRadius: "50%", border: `1px solid ${C.goldBd}`, background: C.goldDim, color: C.gold, fontSize: "14px", cursor: idx === 0 ? "default" : "pointer", opacity: idx === 0 ? 0.35 : 1 }}>‹</button>
+            <button type="button" aria-label="Next exhibition" onClick={() => scrollToIndex(idx + 1)} disabled={idx === n - 1}
+              style={{ width: "24px", height: "24px", display: "flex", alignItems: "center", justifyContent: "center", borderRadius: "50%", border: `1px solid ${C.goldBd}`, background: C.goldDim, color: C.gold, fontSize: "14px", cursor: idx === n - 1 ? "default" : "pointer", opacity: idx === n - 1 ? 0.35 : 1 }}>›</button>
           </div>
         )}
       </div>
-      {/* Coverflow */}
-      <div style={{ position: "relative", height: "160px", display: "flex", alignItems: "center", justifyContent: "center" }}>
-        {slots.map(({ g, offset }) => {
-          const isActive = offset === 0;
-          const tx = offset === -1 ? "-100px" : offset === 0 ? "0px" : offset === 1 ? "92px" : "138px";
-          const scale = isActive ? 1 : Math.abs(offset) === 1 ? 0.70 : 0.52;
-          const opacity = isActive ? 1 : Math.abs(offset) === 1 ? 0.55 : 0.25;
-          const zIndex = isActive ? 10 : Math.abs(offset) === 1 ? 5 : 1;
+      {/* Scroll-snap track */}
+      <div
+        ref={trackRef}
+        role="listbox"
+        aria-label="Featured exhibitions"
+        tabIndex={0}
+        onKeyDown={onTrackKeyDown}
+        className="no-scrollbar flex"
+        style={{
+          overflowX: "auto",
+          scrollSnapType: "x mandatory",
+          WebkitOverflowScrolling: "touch",
+          touchAction: "pan-x",
+          gap: "10px",
+          padding: "5px 50%",
+          height: "160px",
+          alignItems: "center",
+        }}
+      >
+        {galleries.map((g) => {
+          const isActive = g.id === current.id;
           return (
-            <button key={g.id + String(offset)} type="button"
-              onClick={offset < 0 ? goPrev : offset > 0 ? goNext : undefined}
-              className="absolute overflow-hidden transition-all duration-300"
-              style={{ width: "112px", height: "150px", borderRadius: "10px",
-                transform: `translateX(${tx}) scale(${scale})`, opacity, zIndex,
-                border: isActive ? `2px solid rgba(203,208,213,0.55)` : `1px solid rgba(203,208,213,0.14)`,
+            <button
+              key={g.id}
+              ref={(el) => { if (el) cardRefs.current.set(g.id, el); else cardRefs.current.delete(g.id); }}
+              data-gallery-id={g.id}
+              role="option"
+              aria-selected={isActive}
+              type="button"
+              onClick={() => scrollToIndex(galleries.indexOf(g))}
+              className="relative overflow-hidden"
+              style={{
+                flexShrink: 0,
+                scrollSnapAlign: "center",
+                width: "112px",
+                height: "150px",
+                borderRadius: "10px",
+                transform: isActive ? "scale(1)" : "scale(0.86)",
+                opacity: isActive ? 1 : 0.5,
+                transition: prefersReducedMotion ? "none" : "transform 0.25s ease, opacity 0.25s ease",
+                border: isActive ? "2px solid rgba(203,208,213,0.55)" : "1px solid rgba(203,208,213,0.14)",
                 background: "rgba(10,18,35,0.9)",
                 boxShadow: isActive ? "0 8px 28px rgba(0,0,0,0.55)" : "none",
-                cursor: isActive ? "default" : "pointer" }}>
+                cursor: isActive ? "default" : "pointer",
+              }}
+            >
               {g.coverImage ? (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={g.coverImage} alt={g.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} draggable={false} />
+                <img src={g.coverImage} alt={g.title} loading="eager" style={{ width: "100%", height: "100%", objectFit: "cover" }} draggable={false} />
               ) : (
                 <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", opacity: 0.2 }}><Glyph name="exhibition" size={20} /></div>
               )}
@@ -503,10 +569,10 @@ function FeaturedGalleryCarousel({ galleries }: { galleries: Gallery[] }) {
           );
         })}
       </div>
-      {/* Bottom row: View Gallery centered, All Galleries right */}
+      {/* Bottom row: View Exhibition centered, All Exhibitions right */}
       <div style={{ position: "relative", display: "flex", alignItems: "center", justifyContent: "center", marginTop: "12px" }}>
-        <Link href={"/gallery/" + current.id} style={{ borderRadius: "6px", padding: "6px 14px", fontSize: "11px", fontWeight: 700, background: `linear-gradient(135deg,#8C9298,#C8CDD2)`, color: "#0B0B0B", textDecoration: "none" }}>View Gallery ↑</Link>
-        <Link href="/museum" style={{ position: "absolute", right: 0, fontSize: "11px", fontWeight: 600, color: C.gold, textDecoration: "none", opacity: 0.75 }}>All Galleries</Link>
+        <Link href={"/gallery/" + current.id} style={{ borderRadius: "6px", padding: "6px 14px", fontSize: "11px", fontWeight: 700, background: `linear-gradient(135deg,#8C9298,#C8CDD2)`, color: "#0B0B0B", textDecoration: "none" }}>View Exhibition ↑</Link>
+        <Link href="/museum" style={{ position: "absolute", right: 0, fontSize: "11px", fontWeight: 600, color: C.gold, textDecoration: "none", opacity: 0.75 }}>All Exhibitions</Link>
       </div>
     </div>
   );
@@ -1013,25 +1079,25 @@ export default function HomeClient() {
             <CuratorStrengthCard curator={strength.curator} topItems={strength.topItems} roiPct={strength.roiPct} />
           )}
 
-          {/* Featured Gallery card (left) + coverflow carousel (right) */}
+          {/* Featured Exhibition card (left) + coverflow carousel (right) */}
           <div className="grid grid-cols-1 gap-[16px] lg:[grid-template-columns:minmax(0,1.08fr)_minmax(0,0.92fr)]">
             <div style={{ background: panelBg, border: premiumBorder, borderRadius: "8px", overflow: "hidden", boxShadow: premiumShadow }}>
-              <CardHd label="Featured Gallery" />
+              <CardHd label="Featured Exhibition" />
               {galleries.length > 0 ? (
                 <FeaturedGalleryCard galleries={galleries} />
               ) : (
                 <div style={{ padding: "16px" }}>
-                  <div style={{ fontFamily: C.r, fontSize: "15px", fontWeight: 600, color: C.text }}>No galleries yet</div>
-                  <Link href="/museum/new" style={{ display: "inline-flex", alignItems: "center", marginTop: "8px", borderRadius: "6px", padding: "6px 14px", fontSize: "11px", fontWeight: 700, background: "linear-gradient(135deg,#8C9298,#C8CDD2)", color: "#0B0B0B", textDecoration: "none" }}>Create Gallery →</Link>
+                  <div style={{ fontFamily: C.r, fontSize: "15px", fontWeight: 600, color: C.text }}>No exhibitions yet</div>
+                  <Link href="/museum/new" style={{ display: "inline-flex", alignItems: "center", marginTop: "8px", borderRadius: "6px", padding: "6px 14px", fontSize: "11px", fontWeight: 700, background: "linear-gradient(135deg,#8C9298,#C8CDD2)", color: "#0B0B0B", textDecoration: "none" }}>Create Exhibition →</Link>
                 </div>
               )}
             </div>
             <div style={{ background: panelBg, border: premiumBorder, borderRadius: "8px", overflow: "hidden", boxShadow: premiumShadow }}>
-              <CardHd label="Active Galleries" href="/museum" linkText="All" />
+              <CardHd label="Active Exhibitions" href="/museum" linkText="All" />
               {galleries.length > 0 ? (
                 <FeaturedGalleryCarousel galleries={galleries} />
               ) : (
-                <div style={{ padding: "12px 15px", fontSize: "11px", color: C.muted, opacity: 0.6 }}>Your galleries will appear here.</div>
+                <div style={{ padding: "12px 15px", fontSize: "11px", color: C.muted, opacity: 0.6 }}>Your exhibitions will appear here.</div>
               )}
             </div>
           </div>
@@ -1054,7 +1120,7 @@ export default function HomeClient() {
                   { label: "Add Item",   href: "/capture",           accent: true,  tip: "Snap a photo — VLTD identifies it and fills in the details." },
                   { label: "Quick Add",  href: "/vault/quick",       accent: false, tip: "Snap now, fill in the details later." },
                   { label: "Vault",      href: "/vault",             accent: false, tip: "" },
-                  { label: "Galleries",    href: "/museum",            accent: false, tip: "" },
+                  { label: "Exhibitions",    href: "/museum",            accent: false, tip: "" },
                   { label: "Saved",      href: "/saved", accent: false, tip: "Items saved from The Flip." },
                   { label: "Account",    href: "/account",           accent: false, tip: "" },
                 ] as { label: string; href: string; accent: boolean; tip: string }[]).map(({ label, href, accent, tip }) => (

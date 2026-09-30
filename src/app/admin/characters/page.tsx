@@ -846,7 +846,7 @@ function ExhibitEditModal({
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between border-b border-white/8 px-5 py-4">
-          <div className="text-sm font-semibold text-white">Edit Gallery</div>
+          <div className="text-sm font-semibold text-white">Edit Exhibition</div>
           <button onClick={onClose} className="text-white/40 hover:text-white text-lg leading-none">✕</button>
         </div>
         <div className="grid gap-3 p-5">
@@ -883,7 +883,7 @@ function ExhibitEditModal({
               justSaved ? "bg-emerald-500 text-white" : "bg-amber-500 text-black hover:bg-amber-400",
             ].join(" ")}
           >
-            {saving ? "Saving…" : justSaved ? "Saved ✓" : "Save Gallery"}
+            {saving ? "Saving…" : justSaved ? "Saved ✓" : "Save Exhibition"}
           </button>
         </div>
       </div>
@@ -1057,7 +1057,7 @@ function CharacterCard({
       </div>
       <div className="mt-2 flex gap-3 text-[10px] text-white/50">
         <span>{char.items.length} items</span>
-        <span>{char.galleries.length} galleries</span>
+        <span>{char.galleries.length} exhibitions</span>
         <span className="text-amber-400/70">{formatMoney(totalValue)}</span>
       </div>
       <div className="mt-1 text-[10px] text-white/30">{char.primaryFocus}</div>
@@ -1212,7 +1212,7 @@ function ExhibitGrid({
             })}
             {filtered.length === 0 && (
               <div className="col-span-2 py-6 text-center text-sm text-white/30">
-                {available.length === 0 ? "All items are in this gallery" : "No items match"}
+                {available.length === 0 ? "All items are in this exhibition" : "No items match"}
               </div>
             )}
           </div>
@@ -1237,7 +1237,7 @@ function ExhibitGrid({
               justSaved ? "bg-emerald-500 text-white" : "bg-amber-500 text-black hover:bg-amber-400",
             ].join(" ")}
           >
-            {saving ? "Saving…" : justSaved ? "Saved ✓" : "Save Gallery"}
+            {saving ? "Saving…" : justSaved ? "Saved ✓" : "Save Exhibition"}
           </button>
         </div>
       </div>
@@ -1476,7 +1476,7 @@ function CharacterDetail({ char }: { char: SeedCharacter }) {
             {char.items.length} items
           </div>
           <div className="rounded-full bg-white/5 px-3 py-1 text-white/60">
-            {char.galleries.length} exhibits
+            {char.galleries.length} exhibitions
           </div>
           <div className="rounded-full bg-amber-400/10 px-3 py-1 text-amber-400">
             {formatMoney(totalValue)} total value
@@ -1507,7 +1507,7 @@ function CharacterDetail({ char }: { char: SeedCharacter }) {
                 : "border-transparent text-white/40 hover:text-white/70",
             ].join(" ")}
           >
-            {t === "items" ? `Items (${char.items.length})` : t === "exhibits" ? `Galleries (${char.galleries.length})` : "Bio"}
+            {t === "items" ? `Items (${char.items.length})` : t === "exhibits" ? `Exhibitions (${char.galleries.length})` : "Bio"}
           </button>
         ))}
       </div>
@@ -1534,7 +1534,7 @@ function CharacterDetail({ char }: { char: SeedCharacter }) {
               <div className="font-mono text-xs text-white/50 break-all">{char.profileId}</div>
             </div>
             <div className="mt-3 rounded-2xl bg-white/[0.03] p-4 ring-1 ring-white/8">
-              <div className="text-[10px] text-white/30 uppercase tracking-widest mb-2">Gallery IDs</div>
+              <div className="text-[10px] text-white/30 uppercase tracking-widest mb-2">Exhibition IDs</div>
               {char.galleries.map((g) => (
                 <div key={g.id} className="font-mono text-[10px] text-white/40 mb-1">{g.id}</div>
               ))}

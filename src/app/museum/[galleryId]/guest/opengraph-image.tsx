@@ -6,7 +6,7 @@
 import { ImageResponse } from "next/og";
 
 export const runtime = "edge";
-export const alt = "VLTD Gallery";
+export const alt = "VLTD Exhibition";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -40,7 +40,7 @@ async function fetchGallery(galleryId: string): Promise<{ gallery: GalleryRow; p
   const rows: GalleryRow[] = await res.json().catch(() => []);
   const gallery = rows[0] ?? null;
 
-  if (!gallery) return { gallery: { id: galleryId, title: "VLTD Gallery", description: null, cover_image: null, layout: null, profile_id: "", alias_enabled: null, alias_name: null }, profile: null };
+  if (!gallery) return { gallery: { id: galleryId, title: "VLTD Exhibition", description: null, cover_image: null, layout: null, profile_id: "", alias_enabled: null, alias_name: null }, profile: null };
 
   // Aliased exhibition: use the made-up name, never fetch the real profile.
   const aliasName = gallery.alias_enabled ? (gallery.alias_name ?? "").trim() : "";
@@ -256,7 +256,7 @@ export default async function Image({ params }: { params: Promise<{ galleryId: s
                 color: "#0B0B0B",
               }}
             >
-              View Gallery
+              View Exhibition
             </div>
             <div style={{ fontSize: "13px", color: "rgba(160,149,107,0.6)" }}>
               vltd.app

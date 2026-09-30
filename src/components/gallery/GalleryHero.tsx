@@ -172,7 +172,7 @@ export default function GalleryHero({
               fontSize: "20px",
               fontWeight: 300,
             }}
-            aria-label="Add item to gallery"
+            aria-label="Add item to exhibition"
           >
             +
           </button>

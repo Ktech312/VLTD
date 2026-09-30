@@ -114,7 +114,7 @@ function buildGoalViews(progress: GoalProgress[], items: VaultItem[]): GoalView[
       missing: goal.missing,
       valueImpact,
       visibility: type === "gallery" ? "Public" : "Private",
-      previewLabel: type === "insurance" ? "Top Items In Goal" : type === "gallery" ? "Gallery Preview" : type === "sell" ? "Duplicates Ready To List" : type === "value" ? "Value Progress" : "Recently Added",
+      previewLabel: type === "insurance" ? "Top Items In Goal" : type === "gallery" ? "Exhibition Preview" : type === "sell" ? "Duplicates Ready To List" : type === "value" ? "Value Progress" : "Recently Added",
       nextAction: goal.missing > 0 ? (type === "insurance" ? "Add purchase info" : `Find ${goal.missing} more`) : "Goal complete",
       actionLabel: type === "insurance" ? "Review items" : type === "gallery" ? "Create room" : type === "sell" ? "Review duplicates" : "View set",
       notes: goal.notes,
@@ -335,7 +335,7 @@ export default function GoalsPage() {
               ["value", "Value", "chart"],
               ["insurance", "Insurance", "shield"],
               ["sell", "Sell", "tag"],
-              ["gallery", "Gallery", "exhibition"],
+              ["gallery", "Exhibition", "exhibition"],
             ].map(([key, label, icon]) => (
               <button
                 key={key}
@@ -399,7 +399,7 @@ export default function GoalsPage() {
                 <div>
                   <Glyph name="target" size={42} style={{ color: "var(--theme-gold,#C8CDD2)" }} />
                   <h2 className="mt-4 text-xl font-black" style={{ color: "var(--theme-text-primary,#ECEDEF)" }}>No goals yet</h2>
-                  <p className="mt-2 text-sm" style={{ color: "var(--theme-text-muted,#61656B)" }}>Create a real target for a set, value, insurance readiness, gallery, or sale plan.</p>
+                  <p className="mt-2 text-sm" style={{ color: "var(--theme-text-muted,#61656B)" }}>Create a real target for a set, value, insurance readiness, exhibition, or sale plan.</p>
                   <button
                     type="button"
                     onClick={() => setShowAdd(true)}

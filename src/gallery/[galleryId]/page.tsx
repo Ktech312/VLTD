@@ -36,9 +36,9 @@ export default function PublicGalleryPage() {
     return (
       <main className="min-h-screen grid place-items-center text-[color:var(--fg)]">
         <div className="text-center rounded-[28px] vltd-panel-main bg-[color:var(--surface)] p-8 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
-          <h1 className="text-3xl font-semibold">Gallery Locked</h1>
+          <h1 className="text-3xl font-semibold">Exhibition Locked</h1>
           <div className="mt-3 opacity-70">
-            This gallery is not publicly accessible.
+            This exhibition is not publicly accessible.
           </div>
         </div>
       </main>

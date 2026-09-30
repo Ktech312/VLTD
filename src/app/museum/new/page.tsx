@@ -130,7 +130,7 @@ export default function NewMuseumGalleryPage() {
             </h1>
 
             <p className="mt-3 max-w-2xl text-sm leading-6 text-[color:var(--muted)]">
-              Start a new curated gallery with your preferred visibility, theme pack,
+              Start a new curated exhibition with your preferred visibility, theme pack,
               display mode, and guest view behavior. You can refine exhibits, items,
               notes, shelves, and sharing after creation.
             </p>
@@ -194,7 +194,7 @@ export default function NewMuseumGalleryPage() {
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 rows={5}
-                placeholder="Write a short curatorial description for this gallery..."
+                placeholder="Write a short curatorial description for this exhibition..."
                 className="w-full rounded-2xl bg-[color:var(--input)] px-4 py-3 ring-1 ring-[color:var(--border)] focus:outline-none"
               />
             </div>
@@ -245,9 +245,9 @@ export default function NewMuseumGalleryPage() {
 
               <label className="flex items-start justify-between gap-4 rounded-2xl bg-[color:var(--input)] px-4 py-3 ring-1 ring-[color:var(--border)]">
                 <span>
-                  <span className="block text-sm font-medium">18+ gallery</span>
+                  <span className="block text-sm font-medium">18+ exhibition</span>
                   <span className="mt-1 block text-xs leading-5 text-[color:var(--muted)]">
-                    Require public viewers to confirm they are 18 or older before viewing this gallery.
+                    Require public viewers to confirm they are 18 or older before viewing this exhibition.
                   </span>
                 </span>
                 <input
@@ -317,7 +317,7 @@ export default function NewMuseumGalleryPage() {
 
           {!canCreate ? (
             <div className="mt-4 rounded-[20px] bg-[color:var(--input)] p-4 text-sm text-[color:var(--muted)] ring-1 ring-[color:var(--border)]">
-              You have reached your current gallery limit for this profile.
+              You have reached your current exhibition limit for this profile.
             </div>
           ) : null}
 

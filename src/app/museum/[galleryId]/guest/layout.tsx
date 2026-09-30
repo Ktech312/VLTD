@@ -17,7 +17,7 @@ type GalleryRow = {
 type ProfileRow = { display_name: string | null };
 
 async function fetchMeta(galleryId: string) {
-  const fallback = { title: "VLTD Gallery", description: "", itemCount: null as number | null, collector: "" };
+  const fallback = { title: "VLTD Exhibition", description: "", itemCount: null as number | null, collector: "" };
   if (!SUPABASE_URL || !SUPABASE_ANON) return fallback;
   const h = { apikey: SUPABASE_ANON, Authorization: `Bearer ${SUPABASE_ANON}` };
   try {

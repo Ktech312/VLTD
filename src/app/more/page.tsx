@@ -387,7 +387,7 @@ export default function MorePage() {
     { icon: "shield", title: "Security", desc: "Passwords, sessions, privacy controls, and account protection.", panel: "security" },
     { icon: "card", title: "Billing & Plans", desc: "Plan, payment, invoice, and portal shortcuts.", panel: "billing" },
     { icon: "cloud", title: "Import & Export", desc: "Bring data in, export records, or prepare reports.", panel: "importExport" },
-    { icon: "globe", title: "Public Profile & Share", desc: "Profile, gallery sharing, and public presentation controls.", panel: "publicProfile" },
+    { icon: "globe", title: "Public Profile & Share", desc: "Profile, exhibition sharing, and public presentation controls.", panel: "publicProfile" },
     { icon: "camera", title: "Scan & Capture", desc: "Open the full capture flow for camera and scan work.", href: "/capture", cta: "Start Scan", accent: true },
   ];
 

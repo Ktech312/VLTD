@@ -3,7 +3,7 @@ import ProtectedRoute from "@/components/ProtectedRoute";
 
 export const metadata: Metadata = {
   title: "Exhibitions — VLTD",
-  description: "Your curated exhibitions and galleries",
+  description: "Your curated exhibitions",
 };
 
 export default function MuseumLayout({ children }: { children: React.ReactNode }) {

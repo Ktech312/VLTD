@@ -410,7 +410,7 @@ export default function UserSettingsPage() {
               href="/vault"
               className="inline-flex h-10 items-center justify-center rounded-full bg-[color:var(--pill)] px-4 text-sm font-medium text-[color:var(--pill-fg)] ring-1 ring-[color:var(--border)] transition hover:bg-[color:var(--pill-hover)]"
             >
-              Back to Galleries
+              Back to Exhibitions
             </Link>
 
             <Link
@@ -464,7 +464,7 @@ export default function UserSettingsPage() {
           <section className="vltd-panel-main rounded-3xl bg-[color:var(--surface)] p-6 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
             <div className="text-sm font-semibold">Museum Background</div>
             <div className="mt-1 text-sm text-[color:var(--muted)]">
-              Upload your own gallery wall image for the Galleries page. PNG, JPG, and WEBP work well.
+              Upload your own wall image for the Exhibitions page. PNG, JPG, and WEBP work well.
             </div>
 
             <div className="mt-2 text-xs text-[color:var(--muted2)]">
@@ -571,7 +571,7 @@ export default function UserSettingsPage() {
                 </div>
 
                 <div className="mt-5 text-xs text-[color:var(--muted2)]">
-                  Best results: use a wide, dark gallery wall image with shelves or lighting already baked in.
+                  Best results: use a wide, dark wall image with shelves or lighting already baked in.
                 </div>
               </div>
             </div>
@@ -580,7 +580,7 @@ export default function UserSettingsPage() {
           <section className="vltd-panel-main rounded-3xl bg-[color:var(--surface)] p-6 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
             <div className="text-sm font-semibold">Subscription Tier</div>
             <div className="mt-1 text-sm text-[color:var(--muted)]">
-              Free supports core collecting. Mid unlocks more galleries and storage controls. Full removes limits.
+              Free supports core collecting. Mid unlocks more exhibitions and storage controls. Full removes limits.
             </div>
 
             <div className="mt-5 flex flex-col gap-4">
@@ -603,7 +603,7 @@ export default function UserSettingsPage() {
                   <div className="text-xs tracking-[0.18em] text-[color:var(--muted2)]">FREE</div>
                   <div className="mt-2 text-sm font-semibold">Core collecting</div>
                   <div className="mt-2 text-xs text-[color:var(--muted)]">
-                    Up to 5 galleries. One gallery may be placed in storage for the first 90 days.
+                    Up to 5 exhibitions. One exhibition may be placed in storage for the first 90 days.
                   </div>
                 </div>
 
@@ -611,7 +611,7 @@ export default function UserSettingsPage() {
                   <div className="text-xs tracking-[0.18em] text-[color:var(--muted2)]">MID</div>
                   <div className="mt-2 text-sm font-semibold">Expanded showcasing</div>
                   <div className="mt-2 text-xs text-[color:var(--muted)]">
-                    Up to 25 galleries. Galleries can be paused into storage and reactivated later.
+                    Up to 25 exhibitions. Exhibitions can be paused into storage and reactivated later.
                   </div>
                 </div>
 
@@ -619,7 +619,7 @@ export default function UserSettingsPage() {
                   <div className="text-xs tracking-[0.18em] text-[color:var(--muted2)]">FULL</div>
                   <div className="mt-2 text-sm font-semibold">Unlimited presentation</div>
                   <div className="mt-2 text-xs text-[color:var(--muted)]">
-                    Unlimited galleries, unlimited storage, and full public/private sharing flexibility.
+                    Unlimited exhibitions, unlimited storage, and full public/private sharing flexibility.
                   </div>
                 </div>
               </div>

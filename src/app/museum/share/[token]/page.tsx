@@ -254,7 +254,7 @@ function GateCard({
 
           <div className="mt-6 rounded-2xl bg-[color:var(--pill)] px-4 py-4 text-sm ring-1 ring-[color:var(--border)]">
             {requiresRegistered
-              ? "Owner only allows registered users to access this gallery."
+              ? "Owner only allows registered users to access this exhibition."
               : "Create a free account for full access, or continue as a guest."}
           </div>
 
@@ -289,7 +289,7 @@ function GateCard({
 
           {gateMode === "registered_only" && !isSignedIn ? (
             <p className="mt-4 text-xs text-[color:var(--muted)]">
-              Guest access is disabled for this gallery.
+              Guest access is disabled for this exhibition.
             </p>
           ) : null}
         </div>
@@ -494,7 +494,7 @@ export default function SharedGalleryPage() {
       <GalleryBackgroundShell backgroundUrl={model.background.url}>
         <div className="mx-auto flex max-w-3xl items-center justify-center px-4">
           <div className="rounded-[28px] bg-[color:var(--surface)] p-8 text-center ring-1 ring-[color:var(--border)]">
-            Loading gallery...
+            Loading exhibition...
           </div>
         </div>
       </GalleryBackgroundShell>
@@ -523,7 +523,7 @@ export default function SharedGalleryPage() {
             </div>
             <h1 className="mt-3 text-2xl font-semibold">Link not available</h1>
             <p className="mt-3 text-sm text-[color:var(--muted)]">
-              This shared gallery link is invalid or no longer available.
+              This shared exhibition link is invalid or no longer available.
             </p>
             <div className="mt-6">
               <Link
@@ -549,7 +549,7 @@ export default function SharedGalleryPage() {
             </div>
             <h1 className="mt-3 text-2xl font-semibold">Private Exhibition</h1>
             <p className="mt-3 text-sm text-[color:var(--muted)]">
-              This gallery is private and cannot be viewed from a shared link.
+              This exhibition is private and cannot be viewed from a shared link.
             </p>
           </div>
         </div>

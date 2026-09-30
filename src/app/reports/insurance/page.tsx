@@ -178,7 +178,7 @@ export default function InsuranceReportPage() {
               href="/vault"
               className="rounded-full bg-[color:var(--pill)] px-4 py-2 text-sm ring-1 ring-[color:var(--border)] hover:bg-[color:var(--pill-hover)]"
             >
-              Open Galleries
+              Open Exhibitions
             </Link>
           </div>
 

@@ -185,11 +185,11 @@ function buildGalleryEvents(events: Array<ExhibitionEvent & { galleryTitle: stri
     id: `exhibition-${event.id}`,
     kind: event.type === "announced" ? "share" : "exhibition",
     title: event.galleryTitle,
-    subtitle: event.type === "published" ? "Exhibition published" : "Gallery announced",
-    detail: event.type === "published" ? "Public gallery updated" : "Announcement sent",
+    subtitle: event.type === "published" ? "Exhibition published" : "Exhibition announced",
+    detail: event.type === "published" ? "Public exhibition updated" : "Announcement sent",
     timestamp: event.createdAt,
     href: `/museum/${event.galleryId}`,
-    actionLabel: event.type === "published" ? "View exhibition" : "Open gallery",
+    actionLabel: event.type === "published" ? "View exhibition" : "Open exhibition",
     source: "Exhibition",
   }) satisfies ActivityEvent);
 }
@@ -204,7 +204,7 @@ function buildCommentEvents(comments: RecentComment[]): ActivityEvent[] {
     timestamp: comment.createdAt,
     href: `/museum/${comment.exhibitionId}/guest?comment=${comment.id}`,
     actionLabel: "View comment",
-    source: "Public gallery",
+    source: "Public exhibition",
   }) satisfies ActivityEvent);
 }
 

@@ -272,14 +272,14 @@ function applyAccessMode(current: Gallery, mode: GalleryAccessPillMode): Gallery
 function accessDescription(mode: GalleryAccessPillMode) {
   switch (mode) {
     case "public_gallery":
-      return "Public Exhibit - Available to registered or unregistered users, searchable on Home page.";
+      return "Public Exhibition - Available to registered or unregistered users, searchable on Home page.";
     case "guest_view":
-      return "Guest View - Anyone with access to the shared link can view your exhibit.";
+      return "Guest View - Anyone with access to the shared link can view your exhibition.";
     case "registered_users":
-      return "Registered Users - Any registered user with access to the shared link can view your exhibit, allows analytics on views.";
+      return "Registered Users - Any registered user with access to the shared link can view your exhibition, allows analytics on views.";
     case "private":
     default:
-      return "Private Exhibit - This only for yourself, good for exhibit test beds before sharing with anyone.";
+      return "Private Exhibition - This only for yourself, good for exhibition test beds before sharing with anyone.";
   }
 }
 
@@ -692,10 +692,10 @@ export default function GalleryPage() {
       setStatusTone(vaultSyncError ? "neutral" : "good");
       setStatus(
         vaultSyncError
-          ? "Gallery saved. Some vault sync tasks still need retrying."
+          ? "Exhibition saved. Some vault sync tasks still need retrying."
           : justPublished
             ? "Exhibition published!"
-            : "Gallery saved."
+            : "Exhibition saved."
       );
 
       // Log publish event after a successful save — fire-and-forget.
@@ -711,7 +711,7 @@ export default function GalleryPage() {
     } catch (error) {
       console.error("Direct gallery sync failed:", error);
       setStatusTone("neutral");
-      setStatus("Gallery saved locally. Cloud sync failed.");
+      setStatus("Exhibition saved locally. Cloud sync failed.");
     }
   }
 
@@ -829,9 +829,9 @@ export default function GalleryPage() {
             <div className="text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">
               MUSEUM
             </div>
-            <h1 className="mt-3 text-2xl font-semibold">Gallery not found</h1>
+            <h1 className="mt-3 text-2xl font-semibold">Exhibition not found</h1>
             <p className="mt-3 text-sm text-[color:var(--muted)]">
-              This exhibit could not be loaded from local storage.
+              This exhibition could not be loaded from local storage.
             </p>
             <div className="mt-6">
               <Link href="/museum" className={neutralPillClass()}>
@@ -1474,7 +1474,7 @@ export default function GalleryPage() {
                                 <div className="mb-2 text-[9px] font-bold tracking-[0.18em] text-[color:var(--muted2)]">VIEWER PERMISSIONS</div>
                                 {(
                                   [
-                                    { key: "images" as const, label: "Images", desc: "Enlarge gallery images" },
+                                    { key: "images" as const, label: "Images", desc: "Enlarge exhibition images" },
                                     { key: "descriptionPage" as const, label: "Description Page", desc: "Full item info, no prices" },
                                     { key: "financialHistory" as const, label: "Financial History", desc: "Reveal purchase & value data" },
                                   ] as const

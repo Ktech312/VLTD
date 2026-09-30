@@ -440,7 +440,7 @@ export default function MuseumPage() {
     try {
       const result = await deleteGallery(galleryPendingDelete.id);
       if (!result.ok) {
-        setDeleteError(result.error || "Could not delete this gallery from the cloud. Please try again.");
+        setDeleteError(result.error || "Could not delete this exhibition from the cloud. Please try again.");
         return;
       }
       refresh();
@@ -461,16 +461,16 @@ export default function MuseumPage() {
     if (!file || !coverTargetGallery || isUploadingCover) return;
 
     setIsUploadingCover(true);
-    setStatusMessage("Uploading gallery cover...");
+    setStatusMessage("Uploading exhibition cover...");
 
     try {
       const publicUrl = await uploadGalleryCover(coverTargetGallery.id, file);
       updateGallery({ ...coverTargetGallery, coverImage: publicUrl });
       refresh();
-      setStatusMessage("Gallery cover updated.");
+      setStatusMessage("Exhibition cover updated.");
     } catch (error) {
       console.error("Failed uploading gallery cover:", error);
-      setStatusMessage(error instanceof Error ? error.message : "Gallery cover upload failed.");
+      setStatusMessage(error instanceof Error ? error.message : "Exhibition cover upload failed.");
     } finally {
       setIsUploadingCover(false);
       setCoverTargetGallery(null);
@@ -482,7 +482,7 @@ export default function MuseumPage() {
     updateGallery(gallerySettings);
     refresh();
     setGallerySettings(null);
-    setStatusMessage("Gallery settings updated.");
+    setStatusMessage("Exhibition settings updated.");
   }
 
   const headerBlock = (
@@ -576,7 +576,7 @@ export default function MuseumPage() {
           <section className="mt-6 grid gap-5 xl:grid-cols-3">
             <div className="vltd-panel-soft rounded-[24px] bg-[color:var(--surface)] p-5 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
               <div className="text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">
-                STRONGEST GALLERY
+                STRONGEST EXHIBITION
               </div>
               <h2 className="mt-2 text-xl font-semibold">
                 {strongestGallery?.gallery.title || "—"}
@@ -584,7 +584,7 @@ export default function MuseumPage() {
               <div className="mt-3 text-sm text-[color:var(--muted)]">
                 {strongestGallery
                   ? `${strongestGallery.score.score}/100 • ${scoreBandTone(strongestGallery.score.band)}`
-                  : "No gallery signal yet."}
+                  : "No exhibition signal yet."}
               </div>
               {strongestGallery ? (
                 <div className="mt-4 flex flex-wrap gap-2">
@@ -634,7 +634,7 @@ export default function MuseumPage() {
               </h2>
               <div className="mt-3 text-sm text-[color:var(--muted)]">
                 {mostValuableGallery
-                  ? `${formatMoney(mostValuableGallery.totalValue)} total gallery value`
+                  ? `${formatMoney(mostValuableGallery.totalValue)} total exhibition value`
                   : "No value data yet."}
               </div>
               {mostValuableGallery ? (
@@ -681,7 +681,7 @@ export default function MuseumPage() {
               </h2>
 
               <p className="mx-auto mt-2 max-w-sm text-sm leading-relaxed" style={{ color: "var(--theme-text-muted, #61656B)" }}>
-                Create your first gallery and shape a museum-quality story from your collection — public or private.
+                Create your first exhibition and shape a museum-quality story from your collection — public or private.
               </p>
 
               <div className="mt-6 flex flex-wrap justify-center gap-3">
@@ -693,7 +693,7 @@ export default function MuseumPage() {
                     color: "#0B0B0B",
                   }}
                 >
-                  Create First Gallery
+                  Create First Exhibition
                 </Link>
                 <Link
                   href="/vault"
@@ -748,8 +748,13 @@ export default function MuseumPage() {
                       <div className="pointer-events-none absolute inset-0 bg-black/10" />
                       <div className="pointer-events-none absolute inset-x-0 bottom-0 h-[56%]" style={{ background: "linear-gradient(to top, var(--theme-card) 0%, color-mix(in srgb, var(--theme-card) 55%, transparent) 55%, transparent 100%)" }} />
 
-                      {/* Hover controls: change cover / delete */}
-                      <div className="absolute right-2 top-2 z-20 flex items-center gap-1.5 opacity-0 transition group-hover:opacity-100">
+                      {/* Hover controls: change cover / delete. vltd-dark-surface
+                          scoped to just this row -- NOT the whole cover
+                          container above, whose title/meta overlay further
+                          down correctly goes dark-on-light in light mode via
+                          its own theme-aware scrim (var(--theme-card)) and
+                          must keep doing that. */}
+                      <div className="vltd-dark-surface absolute right-2 top-2 z-20 flex items-center gap-1.5 opacity-0 transition group-hover:opacity-100">
                         <button
                           type="button"
                           onClick={(event) => {
@@ -758,7 +763,7 @@ export default function MuseumPage() {
                             handleOpenCoverPicker(gallery);
                           }}
                           disabled={isUploadingCover}
-                          className="keep-white inline-flex h-7 w-7 items-center justify-center rounded-full bg-black/55 text-sm font-semibold ring-1 ring-white/20 backdrop-blur transition hover:bg-black/75 disabled:opacity-50"
+                          className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-black/55 text-sm font-semibold ring-1 ring-white/20 backdrop-blur transition hover:bg-black/75 disabled:opacity-50"
                           aria-label={`Change cover image for ${gallery.title}`}
                           style={{ color: "#fff" }}
                         >
@@ -772,7 +777,7 @@ export default function MuseumPage() {
                             handleAskDelete(gallery);
                           }}
                           className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-black/55 text-red-200 ring-1 ring-red-400/30 backdrop-blur transition hover:bg-red-600/80 hover:text-white"
-                          aria-label={`Delete gallery ${gallery.title}`}
+                          aria-label={`Delete exhibition ${gallery.title}`}
                         >
                           <AppIcon name="delete" size={13} strokeWidth={2} />
                         </button>
@@ -808,7 +813,7 @@ export default function MuseumPage() {
                         }}
                         className="absolute bottom-3 right-3 inline-flex h-8 w-8 items-center justify-center transition hover:text-[#5FDCF3]"
                         style={{ color: "#4FD3EE" }}
-                        aria-label={`Open full exhibit page for ${gallery.title}`}
+                        aria-label={`Open full exhibition page for ${gallery.title}`}
                       >
                         <AppIcon name="externalLink" size={17} strokeWidth={1.8} />
                       </button>
@@ -876,8 +881,13 @@ export default function MuseumPage() {
                           ) : (
                             <div className="flex h-full w-full items-center justify-center text-[11px] uppercase tracking-[0.18em] text-white/30">No cover</div>
                           )}
+                          {/* vltd-dark-surface directly on the button itself, not an
+                              ancestor -- the surrounding div also holds the "No
+                              cover" placeholder, which correctly stays dark-on-light
+                              via its own theme-aware background and must not inherit
+                              this button's forced-light text. */}
                           <button type="button" onClick={() => handleOpenCoverPicker(g)} disabled={isUploadingCover}
-                            className="keep-white absolute right-2.5 top-2.5 inline-flex items-center gap-1.5 rounded-[7px] border px-2.5 py-1 text-[11px] font-semibold backdrop-blur transition disabled:opacity-50" style={{ borderColor: "var(--theme-gold-border, var(--theme-border))", background: "rgba(3,8,14,0.72)", boxShadow: "inset 0 1px 0 rgba(237,239,241,0.12)", color: "#fff" }}>
+                            className="vltd-dark-surface absolute right-2.5 top-2.5 inline-flex items-center gap-1.5 rounded-[7px] border px-2.5 py-1 text-[11px] font-semibold backdrop-blur transition disabled:opacity-50" style={{ borderColor: "var(--theme-gold-border, var(--theme-border))", background: "rgba(3,8,14,0.72)", boxShadow: "inset 0 1px 0 rgba(237,239,241,0.12)", color: "#fff" }}>
                             Edit cover
                           </button>
                         </div>
@@ -1042,19 +1052,19 @@ export default function MuseumPage() {
         <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/70 px-4 backdrop-blur-sm">
           <div className="w-full max-w-lg rounded-[28px] bg-[color:var(--surface)] p-6 ring-1 ring-[color:var(--border)] shadow-[0_30px_90px_rgba(0,0,0,0.42)]">
             <div className="text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">
-              DELETE GALLERY
+              DELETE EXHIBITION
             </div>
 
             <h2 className="mt-3 text-2xl font-semibold">
-              Delete Gallery: {galleryPendingDelete.title}?
+              Delete Exhibition: {galleryPendingDelete.title}?
             </h2>
 
             <p className="mt-3 text-sm leading-6 text-[color:var(--muted)]">
-              This will delete the gallery {galleryPendingDelete.title}. Are you sure you want to continue?
+              This will delete the exhibition {galleryPendingDelete.title}. Are you sure you want to continue?
             </p>
 
             <p className="mt-4 text-sm text-[color:var(--muted)]">
-              Deleting this gallery will not delete items in your Vault.
+              Deleting this exhibition will not delete items in your Vault.
             </p>
 
             {deleteError && (
@@ -1073,7 +1083,7 @@ export default function MuseumPage() {
               </PillButton>
 
               <PillButton onClick={handleCancelDelete} disabled={isDeleting}>
-                Cancel, keep My Exhibit
+                Cancel, keep My Exhibition
               </PillButton>
             </div>
           </div>
@@ -1084,7 +1094,7 @@ export default function MuseumPage() {
         <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/70 px-4 backdrop-blur-sm">
           <div className="w-full max-w-md rounded-[26px] bg-[color:var(--surface)] p-5 ring-1 ring-[color:var(--border)] shadow-[0_30px_90px_rgba(0,0,0,0.42)]">
             <div className="text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">
-              EXHIBIT STATUS
+              EXHIBITION STATUS
             </div>
             <h2 className="mt-2 text-xl font-semibold">{gallerySettings.title}</h2>
 

@@ -963,7 +963,7 @@ function VaultSelectionDrawer({
           <div className="mt-3 flex items-center gap-2 text-[11px]" style={{ color: "#ECEDEF" }}>
             <span className="inline-flex items-center gap-2">
               <span className="inline-flex h-3.5 w-3.5 items-center justify-center rounded-full bg-emerald-500/20 text-[9px] text-emerald-300 ring-1 ring-emerald-400/50">↗</span>
-              Public Gallery
+              Public Exhibition
             </span>
             <ItemVisibilityToggle item={item} />
           </div>

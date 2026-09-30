@@ -38,7 +38,7 @@ export function AdultContentGate({
           <div className="text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">18+ CONTENT</div>
           <h1 className="mt-3 text-2xl font-semibold">{title}</h1>
           <p className="mt-3 text-sm leading-6 text-[color:var(--muted)]">
-            The owner marked this gallery as intended for adults. Confirm that you are 18 or older to continue.
+            The owner marked this exhibition as intended for adults. Confirm that you are 18 or older to continue.
           </p>
           <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-center">
             <PillButton variant="active" onClick={handleConfirm}>

@@ -5,12 +5,12 @@ const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://vltd.app";
 export const metadata: Metadata = {
   title: "Explore Exhibitions",
   description:
-    "Browse public galleries from collectors across every universe - comics, trading cards, vinyl, sports memorabilia, games, and more.",
+    "Browse public exhibitions from collectors across every universe - comics, trading cards, vinyl, sports memorabilia, games, and more.",
   alternates: { canonical: `${siteUrl}/discover` },
   openGraph: {
     title: "Explore Exhibitions | VLTD",
     description:
-      "Browse public galleries from collectors across every universe - comics, trading cards, vinyl, sports memorabilia, games, and more.",
+      "Browse public exhibitions from collectors across every universe - comics, trading cards, vinyl, sports memorabilia, games, and more.",
     url: `${siteUrl}/discover`,
     siteName: "VLTD",
     type: "website",
@@ -27,7 +27,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Explore Exhibitions | VLTD",
     description:
-      "Browse public galleries from collectors across every universe.",
+      "Browse public exhibitions from collectors across every universe.",
     images: [`${siteUrl}/discover/opengraph-image`],
     site: "@vltdapp",
   },

@@ -373,11 +373,9 @@ export default function DiscoverPage() {
         }}
       >
         {!compact && (
-          <div className="relative h-[128px]" style={coverStyle(gallery)}>
+          <div className="vltd-dark-surface relative h-[128px]" style={coverStyle(gallery)}>
             <div className="absolute inset-0 bg-gradient-to-t from-[#030809] via-black/20 to-transparent" />
-            {/* Fixed light, not --theme-gold -- this badge sits on the
-                always-dark scrim above, same fix as the spotlight card. */}
-            <span className="keep-white absolute left-3 top-3 rounded-[5px] border border-[rgba(203,208,213,0.28)] bg-black/50 px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.14em]" style={{ color: "#C8CDD2" }}>
+            <span className="absolute left-3 top-3 rounded-[5px] border border-[rgba(203,208,213,0.28)] bg-black/50 px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.14em]" style={{ color: "#C8CDD2" }}>
               {UNIVERSE_LABEL[gallery.universeKey]}
             </span>
           </div>
@@ -445,26 +443,18 @@ export default function DiscoverPage() {
 
           {selectedGallery && (
             <section className="mt-4 overflow-hidden rounded-[7px] border border-[rgba(203,208,213,0.22)]" style={{ background: "var(--theme-card,rgba(15,25,45,0.85))" }}>
-              <div className="relative min-h-[180px]" style={coverStyle(selectedGallery)}>
+              <div className="vltd-dark-surface relative min-h-[180px]" style={coverStyle(selectedGallery)}>
                 <div className="absolute inset-0 bg-gradient-to-r from-[#040909] via-[#040909]/75 to-transparent" />
                 {/* This card's scrim (line above, #040909) is a fixed dark
                     gradient over a cover photo -- always dark regardless of
-                    site theme. Its text must stay fixed light to match,
-                    not follow --theme-text-primary/--theme-gold: those
-                    correctly go dark in light mode, which read as
-                    near-invisible against this still-dark scrim (found live
-                    on /discover in light mode, 2026-09-30). */}
+                    site theme. vltd-dark-surface on the outer wrapper (this
+                    div) makes every descendant below inherit light text
+                    automatically, instead of needing its own keep-white
+                    class -- one class for the whole card. */}
                 <div className="relative max-w-[360px] p-6">
-                  {/* keep-white is required here, not just the fixed color
-                      above -- theme-override.css's blanket "force dark in
-                      light mode" rule still applies !important to any
-                      div/h2/p without this class, which otherwise beats a
-                      plain (non-important) inline style. Found live: the
-                      inline color was correctly set but getComputedStyle
-                      still showed dark until this class was added. */}
-                  <div className="keep-white text-[11px] font-black uppercase tracking-[0.18em]" style={{ color: "#C8CDD2" }}>Collector Spotlight</div>
-                  <h2 className="keep-white mt-3 font-serif text-[33px] font-black leading-[0.95]" style={{ color: "#ECEDEF" }}>Collector Rooms Worth Seeing</h2>
-                  <p className="keep-white mt-4 text-sm leading-6" style={{ color: "#ECEDEF" }}>Hand-picked public exhibitions from serious collectors around the world.</p>
+                  <div className="text-[11px] font-black uppercase tracking-[0.18em]" style={{ color: "#C8CDD2" }}>Collector Spotlight</div>
+                  <h2 className="mt-3 font-serif text-[33px] font-black leading-[0.95]" style={{ color: "#ECEDEF" }}>Collector Rooms Worth Seeing</h2>
+                  <p className="mt-4 text-sm leading-6" style={{ color: "#ECEDEF" }}>Hand-picked public exhibitions from serious collectors around the world.</p>
                   <button type="button" onClick={() => openGallery(selectedGallery)} className="mt-4 rounded-[7px] px-4 py-2 text-xs font-black" style={{ background: "linear-gradient(135deg,#8C9298,#C8CDD2)", color: "#0B0B0B" }}>
                     Explore featured rooms &rarr;
                   </button>
@@ -485,9 +475,9 @@ export default function DiscoverPage() {
           {isEmpty && (
             <section className="mt-5 rounded-[7px] border border-[rgba(203,208,213,0.22)] p-10 text-center" style={{ background: "var(--theme-card, rgba(15,25,45,0.85))" }}>
               <div className="flex justify-center" style={{ color: "var(--theme-gold)" }}><Glyph name="search" size={34} /></div>
-              <h2 className="mt-3 text-lg font-black" style={{ color: "var(--theme-text-primary, #ECEDEF)" }}>No galleries match</h2>
+              <h2 className="mt-3 text-lg font-black" style={{ color: "var(--theme-text-primary, #ECEDEF)" }}>No exhibitions match</h2>
               <p className="mt-1 text-sm" style={{ color: "var(--theme-text-muted, #61656B)" }}>
-                {hasActiveFilter ? "Clear the search or filters to see more public rooms." : "No public galleries yet. Be the first."}
+                {hasActiveFilter ? "Clear the search or filters to see more public rooms." : "No public exhibitions yet. Be the first."}
               </p>
               {hasActiveFilter && (
                 <button type="button" onClick={() => { setActiveTab("All"); setQuery(""); }} className="mt-4 rounded-[7px] px-4 py-2 text-sm font-black" style={{ background: "linear-gradient(135deg, #8C9298, #C8CDD2)", color: "#0B0B0B" }}>
@@ -559,10 +549,10 @@ export default function DiscoverPage() {
           {!loading && !signedIn && (
             <section className="mt-6 flex flex-col items-center gap-3 rounded-[7px] border border-[rgba(203,208,213,0.22)] px-6 py-8 text-center" style={{ background: "var(--theme-card, rgba(15,25,45,0.85))" }}>
               <div className="text-[11px] tracking-[0.22em]" style={{ color: "var(--theme-text-muted, #61656B)" }}>BUILD YOUR OWN</div>
-              <h2 className="text-xl font-black" style={{ color: "var(--theme-text-primary, #ECEDEF)" }}>Create a public gallery</h2>
-              <p className="max-w-sm text-sm leading-6" style={{ color: "var(--theme-text-muted, #61656B)" }}>Vault your collection, curate a gallery, and share it with one link.</p>
+              <h2 className="text-xl font-black" style={{ color: "var(--theme-text-primary, #ECEDEF)" }}>Create a public exhibition</h2>
+              <p className="max-w-sm text-sm leading-6" style={{ color: "var(--theme-text-muted, #61656B)" }}>Vault your collection, curate an exhibition, and share it with one link.</p>
               <Link href="/museum/new" className="rounded-[7px] px-5 py-2 text-sm font-black transition hover:brightness-105" style={{ background: "linear-gradient(135deg, #8C9298, #C8CDD2)", color: "#0B0B0B" }}>
-                Create Gallery
+                Create Exhibition
               </Link>
             </section>
           )}
@@ -588,7 +578,7 @@ export default function DiscoverPage() {
             </div>
             <div className="mt-5 grid grid-cols-2 gap-4 border-y border-[rgba(203,208,213,0.18)] py-4">
               <div>
-                <div className="text-[11px] font-black uppercase tracking-[0.14em]" style={{ color: "var(--theme-text-muted,#61656B)" }}>Estimated Gallery Value</div>
+                <div className="text-[11px] font-black uppercase tracking-[0.14em]" style={{ color: "var(--theme-text-muted,#61656B)" }}>Estimated Exhibition Value</div>
                 <div className="mt-2 text-[28px] font-black text-[color:var(--info,#52D6F4)]">${galleryValue(selectedGallery).toLocaleString()}</div>
               </div>
               <div className="border-l border-[rgba(203,208,213,0.18)] pl-5">

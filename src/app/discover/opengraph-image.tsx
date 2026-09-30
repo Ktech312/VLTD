@@ -70,7 +70,7 @@ export default async function Image() {
               Explore<br />Exhibitions
             </div>
             <div style={{ fontSize: "19px", color: "rgba(240,234,214,0.52)", lineHeight: 1.5 }}>
-              Browse public galleries from collectors across every universe.
+              Browse public exhibitions from collectors across every universe.
             </div>
           </div>
 

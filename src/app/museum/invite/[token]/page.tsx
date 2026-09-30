@@ -593,7 +593,7 @@ export default function InviteGalleryPage() {
         <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
           {/* Gallery hero */}
           <div className="mb-8">
-            <div className="text-[10px] tracking-[0.24em] text-[color:var(--muted2)]">EXHIBIT</div>
+            <div className="text-[10px] tracking-[0.24em] text-[color:var(--muted2)]">EXHIBITION</div>
             <h1 className="mt-1 text-3xl font-semibold sm:text-4xl">{gallery.title}</h1>
             {gallery.description?.trim() ? (
               <p className="mt-3 max-w-2xl text-sm leading-6 text-[color:var(--muted)]">

@@ -50,7 +50,7 @@ const FEATURES: Feature[] = [
       "6-column category grid: TCG, Sports, Music, Jewelry, Games, Pop Culture",
       "Proportional view bars relative to the top category",
       "HOT badge on the most-viewed category",
-      "Appears between trending galleries and the main grid on the Discover page",
+      "Appears between trending exhibitions and the main grid on the Discover page",
     ],
     value: "Know where the action is before you browse. Discover new categories you might be sleeping on.",
     category: "marketplace",

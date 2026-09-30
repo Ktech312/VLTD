@@ -42,13 +42,13 @@ export default function PublicGalleryPage() {
 
   async function handleDelete() {
     if (!gallery || isDeleting) return;
-    if (!confirm("Delete this exhibit? This cannot be undone.")) return;
+    if (!confirm("Delete this exhibition? This cannot be undone.")) return;
     setIsDeleting(true);
     setDeleteError(null);
     const result = await deleteGallery(gallery.id);
     if (!result.ok) {
       setIsDeleting(false);
-      setDeleteError(result.error || "Could not delete this exhibit from the cloud. Please try again.");
+      setDeleteError(result.error || "Could not delete this exhibition from the cloud. Please try again.");
       return;
     }
     router.push("/museum");
@@ -63,7 +63,7 @@ export default function PublicGalleryPage() {
     return (
       <main className="text-[color:var(--fg)]">
         <div className="mx-auto max-w-4xl px-6 py-16">
-          <div className="text-2xl font-semibold">This exhibit is private</div>
+          <div className="text-2xl font-semibold">This exhibition is private</div>
           <div className="mt-2 text-sm opacity-70">The owner has restricted public access.</div>
         </div>
       </main>
@@ -74,7 +74,7 @@ export default function PublicGalleryPage() {
     return (
       <main className="text-[color:var(--fg)]">
         <div className="mx-auto max-w-4xl px-6 py-16">
-          <div className="text-2xl font-semibold">This exhibit is private</div>
+          <div className="text-2xl font-semibold">This exhibition is private</div>
           <div className="mt-2 text-sm opacity-70">The owner has restricted public access.</div>
         </div>
       </main>
@@ -145,7 +145,7 @@ export default function PublicGalleryPage() {
                   addWishlistItem({
                     title: item.title,
                     targetPrice: item.currentValue ?? undefined,
-                    notes: `Spotted in ${gallery.title}'s exhibit`,
+                    notes: `Spotted in ${gallery.title}'s exhibition`,
                     universe: item.universe,
                     category: item.category,
                   });

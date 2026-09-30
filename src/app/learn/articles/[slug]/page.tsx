@@ -184,7 +184,7 @@ export default async function ArticlePage({ params }: Props) {
         <div className="mt-14 rounded-[22px] border border-[rgba(203,208,213,0.2)] bg-vault-card p-8 text-center" style={{ boxShadow: "0 8px 32px rgba(0,0,0,0.18)" }}>
           <div className="text-xl font-black text-text-primary">Start vaulting your collection.</div>
           <p className="mt-2 text-sm text-[color:var(--muted)]">
-            VLTD is free to start — AI scanning, public galleries, and portfolio tracking included.
+            VLTD is free to start — AI scanning, public exhibitions, and portfolio tracking included.
           </p>
           <div className="mt-5 flex flex-wrap justify-center gap-3">
             <Link

@@ -501,7 +501,7 @@ export default function AccountPage() {
                     style={{ background: profileType === "personal" ? "var(--pill-active-bg)" : "var(--theme-card)" }}
                   >
                     <div className="text-sm font-black">Curator</div>
-                    <div className="mt-1 text-xs leading-5 text-[color:var(--muted)]">Personal vault and gallery.</div>
+                    <div className="mt-1 text-xs leading-5 text-[color:var(--muted)]">Personal vault and exhibitions.</div>
                   </button>
                   <button
                     type="button"
@@ -855,7 +855,7 @@ export default function AccountPage() {
             <div className="flex-1">
               <div className="text-sm font-black text-text-primary">Public profile</div>
               <div className="mt-1 text-xs leading-5 text-[color:var(--muted)]">
-                Your vault and galleries are visible to other collectors. Turn this off to go incognito — your profile disappears from search and the Discover feed.
+                Your vault and exhibitions are visible to other collectors. Turn this off to go incognito — your profile disappears from search and the Discover feed.
               </div>
               <div className="mt-2 inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[11px] font-semibold ring-1 ring-[color:var(--frame-ring)]" style={{ background: "var(--pill-active-bg)", color: "var(--theme-gold, #C8CDD2)" }}>
                 ✦ Paid feature — coming soon

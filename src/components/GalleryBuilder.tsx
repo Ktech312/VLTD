@@ -56,12 +56,12 @@ const GALLERY_VIEW_OPTIONS: PillSelectOption<GalleryViewOption>[] = [
   {
     value: "cold-blue",
     label: "Midnight",
-    subtitle: "Dark charcoal gallery room.",
+    subtitle: "Dark charcoal room.",
   },
   {
     value: "marble",
     label: "Marble",
-    subtitle: "Bright luxury marble gallery room.",
+    subtitle: "Bright luxury marble room.",
   },
   {
     value: "midnight",
@@ -71,7 +71,7 @@ const GALLERY_VIEW_OPTIONS: PillSelectOption<GalleryViewOption>[] = [
   {
     value: "grid",
     label: "Grid View",
-    subtitle: "Flat gallery grid without shelves.",
+    subtitle: "Flat exhibition grid without shelves.",
   },
 ] as const;
 
@@ -649,9 +649,9 @@ export default function GalleryBuilder({
       <section className="overflow-hidden rounded-[24px] bg-[color:var(--input)] p-4 ring-1 ring-[color:var(--border)]">
         <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
           <div>
-            <div className="text-sm font-semibold">Gallery Layout</div>
+            <div className="text-sm font-semibold">Exhibition Layout</div>
             <div className="mt-1 text-sm text-[color:var(--muted)]">
-              Turn this gallery into a structured layout with sections, featured works,
+              Turn this exhibition into a structured layout with sections, featured works,
               shelf styling, guest preview, and curatorial flow.
             </div>
           </div>
@@ -761,7 +761,7 @@ export default function GalleryBuilder({
                 value={selectedGalleryView}
                 onChange={setGalleryView}
                 options={GALLERY_VIEW_OPTIONS}
-                ariaLabel="Gallery view"
+                ariaLabel="Exhibition view"
                 align="left"
                 minWidthPx={140}
                 extraWidthPx={6}
