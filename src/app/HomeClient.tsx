@@ -450,7 +450,6 @@ function FeaturedGalleryCard({ galleries }: { galleries: Gallery[] }) {
 function FeaturedGalleryCarousel({ galleries }: { galleries: Gallery[] }) {
   const [idx, setIdx] = useState(0);
   const trackRef = useRef<HTMLDivElement>(null);
-  const cardRefs = useRef<Map<string, HTMLButtonElement>>(new Map());
   const n = galleries.length;
   const current = galleries[idx] ?? galleries[0];
   const itemCount = current.itemIds?.length ?? 0;
@@ -463,9 +462,17 @@ function FeaturedGalleryCarousel({ galleries }: { galleries: Gallery[] }) {
   // Track which card is centered in the scroll track -- this is the ONLY
   // thing derived from scrolling; it never drives the scroll itself, so
   // there's nothing for it to fight with native touch/pointer scrolling.
+  // Queries the track's own DOM children directly (via data-gallery-id)
+  // instead of a separate ref Map populated by per-card ref callbacks --
+  // found live that the ref-Map version silently never populated (Next's
+  // React Compiler pass likely memoized the inline ref callback away),
+  // so scrollToIndex's lookups always missed and every control was a
+  // silent no-op. Querying the track's actual children at call time has
+  // no such indirection to go stale.
   useEffect(() => {
     const track = trackRef.current;
     if (!track) return;
+    const cards = Array.from(track.querySelectorAll<HTMLElement>("[data-gallery-id]"));
     const observer = new IntersectionObserver(
       (entries) => {
         const mostVisible = entries
@@ -478,13 +485,14 @@ function FeaturedGalleryCarousel({ galleries }: { galleries: Gallery[] }) {
       },
       { root: track, threshold: [0.6] }
     );
-    cardRefs.current.forEach((el) => observer.observe(el));
+    cards.forEach((el) => observer.observe(el));
     return () => observer.disconnect();
   }, [galleries]);
 
   function scrollToIndex(i: number) {
     const clamped = Math.max(0, Math.min(n - 1, i));
-    const el = cardRefs.current.get(galleries[clamped]?.id);
+    const track = trackRef.current;
+    const el = track?.querySelector<HTMLElement>(`[data-gallery-id="${galleries[clamped]?.id}"]`);
     el?.scrollIntoView({ behavior: prefersReducedMotion ? "auto" : "smooth", inline: "center", block: "nearest" });
   }
 
@@ -537,7 +545,6 @@ function FeaturedGalleryCarousel({ galleries }: { galleries: Gallery[] }) {
           return (
             <button
               key={g.id}
-              ref={(el) => { if (el) cardRefs.current.set(g.id, el); else cardRefs.current.delete(g.id); }}
               data-gallery-id={g.id}
               role="option"
               aria-selected={isActive}

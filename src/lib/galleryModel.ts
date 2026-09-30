@@ -93,7 +93,7 @@ export const GALLERY_THEME_PACK_OPTIONS: ReadonlyArray<{
   {
     value: "classic",
     label: "Classic",
-    description: "Balanced, refined, and timeless gallery presentation.",
+    description: "Balanced, refined, and timeless presentation.",
   },
   {
     value: "walnut",
@@ -108,7 +108,7 @@ export const GALLERY_THEME_PACK_OPTIONS: ReadonlyArray<{
   {
     value: "marble",
     label: "Marble",
-    description: "Bright luxury gallery with marble finish.",
+    description: "Bright luxury room with marble finish.",
   },
   {
     value: "midnight",

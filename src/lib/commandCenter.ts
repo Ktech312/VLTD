@@ -220,7 +220,7 @@ function getProductivityCommands(
   if (topGalleryByViews) {
     commands.push({
       id: "action_top_gallery_views",
-      label: "Open Top Gallery by Views",
+      label: "Open Top Exhibition by Views",
       subtitle: `${topGalleryByViews.title} • ${safeNumber(topGalleryByViews.analytics?.views)} views`,
       href: `/museum/${topGalleryByViews.id}`,
       section: "action",
@@ -231,7 +231,7 @@ function getProductivityCommands(
   if (largestGallery) {
     commands.push({
       id: "action_largest_gallery",
-      label: "Open Largest Gallery",
+      label: "Open Largest Exhibition",
       subtitle: `${largestGallery.title} • ${largestGallery.itemIds.length} items`,
       href: `/museum/${largestGallery.id}`,
       section: "action",
@@ -242,7 +242,7 @@ function getProductivityCommands(
   if (mostValuableGallery) {
     commands.push({
       id: "action_most_valuable_gallery",
-      label: "Open Most Valuable Gallery",
+      label: "Open Most Valuable Exhibition",
       subtitle: `${mostValuableGallery.title} • ${formatMoney(getGalleryItemsValue(mostValuableGallery, itemsById))}`,
       href: `/museum/${mostValuableGallery.id}`,
       section: "action",
@@ -256,8 +256,8 @@ function getProductivityCommands(
 function getGalleryCommands(galleries: Gallery[]): CommandItem[] {
   return galleries.map((gallery) => ({
     id: `gallery_${gallery.id}`,
-    label: gallery.title?.trim() || "Untitled Gallery",
-    subtitle: `${gallery.itemIds.length} items • ${gallery.visibility} gallery`,
+    label: gallery.title?.trim() || "Untitled Exhibition",
+    subtitle: `${gallery.itemIds.length} items • ${gallery.visibility} exhibition`,
     href: `/museum/${gallery.id}`,
     section: "museum",
     keywords: [

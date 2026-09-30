@@ -24,7 +24,7 @@ export function getGalleryLayoutLabel(layout: GalleryLayout) {
     case "EDITORIAL":
       return "Editorial";
     default:
-      return "Gallery";
+      return "Exhibition";
   }
 }
 

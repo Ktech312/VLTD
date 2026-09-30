@@ -228,7 +228,7 @@ export const LEARN_ARTICLES: LearnArticle[] = [
         "Add a purchase price so your portfolio math works.",
         "Photograph front, back, and any flaws.",
         "Set a current value from recent comps.",
-        "Build a public gallery or exhibition to show it off.",
+        "Build a public exhibition to show it off.",
         "Turn on insurance readiness so your record is claim-ready.",
       ] },
       { type: "callout", text: "You don't have to do it all at once. Add a few items, get the rhythm, and the rest follows." },
@@ -279,7 +279,7 @@ export const LEARN_ARTICLES: LearnArticle[] = [
   {
     slug: "share-and-showcase",
     title: "Share & Showcase",
-    dek: "Exhibitions, galleries, and stream mode.",
+    dek: "Exhibitions and stream mode.",
     category: "Playbook",
     readMinutes: 5,
     glyph: "exhibition",
@@ -287,7 +287,7 @@ export const LEARN_ARTICLES: LearnArticle[] = [
     body: [
       { type: "p", text: "Your collection is more fun shared. VLTD gives you a few ways to put it in front of people." },
       { type: "steps", items: [
-        "Curate a public gallery around a clear theme.",
+        "Curate a public exhibition around a clear theme.",
         "Build an exhibition with a hero piece and a real through-line.",
         "Write captions that give each item context.",
         "Share the link anywhere — social, forums, or direct to a collector.",

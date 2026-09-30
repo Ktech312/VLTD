@@ -135,7 +135,7 @@ export function resolveGuestGalleryViewModel(
       homeHref: null,
     },
     access: options?.access ?? {
-      modeLabel: guestViewMode === "public" ? "Guest Preview" : "Shared Gallery",
+      modeLabel: guestViewMode === "public" ? "Guest Preview" : "Shared Exhibition",
       isPublic: guestViewMode === "public",
     },
   };

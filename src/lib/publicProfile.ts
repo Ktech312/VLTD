@@ -320,7 +320,7 @@ export async function fetchPublicGalleriesForProfile(profileId: string): Promise
 
     return {
       id: String(row.id),
-      title: String(row.title || "Untitled Gallery"),
+      title: String(row.title || "Untitled Exhibition"),
       description: typeof row.description === "string" && row.description ? row.description : undefined,
       coverImage: typeof row.cover_image === "string" && row.cover_image ? row.cover_image : undefined,
       itemCount: itemIds.length,

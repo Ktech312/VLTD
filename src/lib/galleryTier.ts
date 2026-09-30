@@ -75,7 +75,7 @@ export function canMoveGalleryToStorage(params: {
   if (storageCount >= limits.storage) {
     return {
       allowed: false as const,
-      reason: "Free tier allows only 1 gallery in storage at a time.",
+      reason: "Free tier allows only 1 exhibition in storage at a time.",
     };
   }
 
@@ -85,7 +85,7 @@ export function canMoveGalleryToStorage(params: {
   if (ageMs > maxAgeMs) {
     return {
       allowed: false as const,
-      reason: "Free storage is only available during the first 90 days after gallery creation.",
+      reason: "Free storage is only available during the first 90 days after exhibition creation.",
     };
   }
 
