@@ -505,7 +505,26 @@ function FeaturedGalleryCarousel({ galleries }: { galleries: Gallery[] }) {
     const clamped = Math.max(0, Math.min(list.length - 1, i));
     const track = trackRef.current;
     const el = track?.querySelector<HTMLElement>(`[data-gallery-id="${list[clamped]?.id}"]`);
-    el?.scrollIntoView({ behavior: prefersReducedMotion ? "auto" : "smooth", inline: "center", block: "nearest" });
+    if (!el || !track) return;
+    if (prefersReducedMotion) {
+      el.scrollIntoView({ behavior: "auto", inline: "center", block: "nearest" });
+      return;
+    }
+    // Verified live, reproducibly, with scroll-position measurements before
+    // and after (not just a visual guess): scrollIntoView({behavior:
+    // "smooth"}) is a silent no-op in this browser when the container also
+    // has scroll-snap-type -- a known Chromium interaction where the snap
+    // machinery and the smooth-scroll animation fight and the scroll never
+    // starts. behavior:"auto" on the same element, same container, moves
+    // it every time. Standard workaround: drop snap-type for the duration
+    // of the animated scroll, then restore it once the animation would
+    // have finished -- no scrollend handling needed since nothing else
+    // scrolls this track programmatically while it's suppressed.
+    track.style.scrollSnapType = "none";
+    el.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
+    window.setTimeout(() => {
+      if (trackRef.current) trackRef.current.style.scrollSnapType = "x mandatory";
+    }, 500);
   }
 
   function onTrackKeyDown(e: React.KeyboardEvent) {
