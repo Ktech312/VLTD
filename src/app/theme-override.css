@@ -140,41 +140,78 @@
   color: var(--theme-text-primary) !important;
 }
 
-/* Force dark text on all text utilities in light mode.
-   2026-09-30: the keep-white/vltd-keep-color escape hatches were only ever
-   wired onto the span/div selectors below -- p, h1-h6, li and label had no
-   :not() exclusions at all, so an element using either hatch (e.g.
-   SeasonalBanner's title, an intentionally-dark promo card) still got
-   forced dark here even though it correctly skipped the more specific
-   text-white/text-gray rule further down. Found live: a <p class="text-white
-   keep-white"> still rendered as rgb(25,28,32) against its own always-dark
-   background. Every element type in this rule now honors both hatches. */
+/* =========================================================
+   TEMPORARY SAFETY NET — scheduled for removal
+   =========================================================
+   2026-09-30: EK rejected the pattern this had become -- every time a
+   new intentionally-dark card was found broken in light mode, the fix
+   was one more per-element `keep-white`/`vltd-keep-color` class. That's
+   a patch chain, not a fix. Replaced it with ONE opt-in container class,
+   `.vltd-dark-surface` (defined below): put it on the CARD/PANEL that
+   is meant to stay dark regardless of theme (a media overlay, a
+   promotional banner with a photo backdrop), and every descendant text
+   node inside inherits light text automatically -- no per-element class
+   needed. SeasonalBanner, the Discover spotlight card, and Exhibitions'
+   cover-image controls all use it now instead of keep-white.
+
+   The rule below (forcing color on every bare p/span/h1-h6/li/label/div
+   in light mode) is NOT yet narrowed to "semantic variables only" as the
+   end state calls for, because an audit found ~250-350 hardcoded
+   (non-var) text-color occurrences across ~83 other files -- including
+   TopNav.tsx (every page) and vault/page.tsx (the main vault list) --
+   that currently depend on this blanket rule to be readable in light
+   mode at all. Deleting it now would make that text disappear
+   site-wide until each of those files is individually migrated to
+   `var(--theme-text-primary)` etc.
+   FOLLOW-UP (tracked, not done here): migrate those ~83 files to
+   theme-variable colors, then delete this rule and the two narrower
+   ones below it (text-white/gray, button, link) entirely -- at that
+   point every element's color comes from real CSS inheritance off
+   `body`'s own var(--theme-text-primary), same as vltd-dark-surface
+   already works today, and no blanket force-override is needed at all. */
 .theme-light body,
-.theme-light body p:not([class*="keep-white"]):not([class*="vltd-keep-color"]),
-.theme-light body span:not([class*="gold-text"]):not([class*="keep-white"]):not([class*="vltd-keep-color"]),
-.theme-light body h1:not([class*="keep-white"]):not([class*="vltd-keep-color"]),
-.theme-light body h2:not([class*="keep-white"]):not([class*="vltd-keep-color"]),
-.theme-light body h3:not([class*="keep-white"]):not([class*="vltd-keep-color"]),
-.theme-light body h4:not([class*="keep-white"]):not([class*="vltd-keep-color"]),
-.theme-light body h5:not([class*="keep-white"]):not([class*="vltd-keep-color"]),
-.theme-light body h6:not([class*="keep-white"]):not([class*="vltd-keep-color"]),
-.theme-light body li:not([class*="keep-white"]):not([class*="vltd-keep-color"]),
-.theme-light body label:not([class*="keep-white"]):not([class*="vltd-keep-color"]),
-.theme-light body div:not([class*="gold-text"]):not([class*="keep-white"]):not([class*="vltd-keep-color"]) {
+.theme-light body p:not(.vltd-dark-surface):not(.vltd-dark-surface *):not([class*="vltd-keep-color"]),
+.theme-light body span:not([class*="gold-text"]):not(.vltd-dark-surface):not(.vltd-dark-surface *):not([class*="vltd-keep-color"]),
+.theme-light body h1:not(.vltd-dark-surface):not(.vltd-dark-surface *):not([class*="vltd-keep-color"]),
+.theme-light body h2:not(.vltd-dark-surface):not(.vltd-dark-surface *):not([class*="vltd-keep-color"]),
+.theme-light body h3:not(.vltd-dark-surface):not(.vltd-dark-surface *):not([class*="vltd-keep-color"]),
+.theme-light body h4:not(.vltd-dark-surface):not(.vltd-dark-surface *):not([class*="vltd-keep-color"]),
+.theme-light body h5:not(.vltd-dark-surface):not(.vltd-dark-surface *):not([class*="vltd-keep-color"]),
+.theme-light body h6:not(.vltd-dark-surface):not(.vltd-dark-surface *):not([class*="vltd-keep-color"]),
+.theme-light body li:not(.vltd-dark-surface):not(.vltd-dark-surface *):not([class*="vltd-keep-color"]),
+.theme-light body label:not(.vltd-dark-surface):not(.vltd-dark-surface *):not([class*="vltd-keep-color"]),
+.theme-light body div:not([class*="gold-text"]):not(.vltd-dark-surface):not(.vltd-dark-surface *):not([class*="vltd-keep-color"]) {
   color: var(--theme-text-primary, #1A1A2E) !important;
 }
 
 /* Escape hatch for the handful of elements that deliberately want their own
    color in light mode (e.g. the vault card's blue data/subtitle text)
-   instead of being forced to the default dark body text color above. */
+   instead of being forced to the default dark body text color above. This
+   is a different case from .vltd-dark-surface below -- a single element
+   wanting its own accent color, not a whole dark card wanting light text. */
 .vltd-keep-color {
   color: var(--vltd-keep-color, inherit) !important;
 }
 
+/* ── INTENTIONAL DARK SURFACE ──
+   Opt-in wrapper for a card/panel/banner that stays dark regardless of
+   site theme (a photo backdrop with a scrim, a promotional banner) --
+   put this class on the CONTAINER once. Every descendant with no color
+   of its own inherits light text automatically, the normal CSS way;
+   nothing about this rule needs per-element upkeep as new text gets
+   added inside the card. Elements that want a DIFFERENT specific color
+   inside the surface (an accent-colored sublabel, a gold badge) just
+   keep their own inline color -- it naturally wins over the inherited
+   value without needing vltd-keep-color too, since the legacy rules
+   above already step aside for anything under .vltd-dark-surface. */
+.vltd-dark-surface {
+  color: #ECEDEF;
+}
+
 /* White text → dark in light mode */
-.theme-light [class*="text-white"]:not(.keep-white):not([class*="vltd-keep-color"]),
-.theme-light [class*="text-gray-1"]:not(.keep-white):not([class*="vltd-keep-color"]),
-.theme-light [class*="text-gray-2"]:not(.keep-white):not([class*="vltd-keep-color"]) {
+.theme-light [class*="text-white"]:not(.vltd-dark-surface):not(.vltd-dark-surface *):not([class*="vltd-keep-color"]),
+.theme-light [class*="text-gray-1"]:not(.vltd-dark-surface):not(.vltd-dark-surface *):not([class*="vltd-keep-color"]),
+.theme-light [class*="text-gray-2"]:not(.vltd-dark-surface):not(.vltd-dark-surface *):not([class*="vltd-keep-color"]) {
   color: var(--theme-text-primary, #1A1A2E) !important;
 }
 
@@ -232,10 +269,10 @@
    variant classes as a substring — not just an intentional "muted" class
    — so anything that deliberately wants its own color needs the
    `vltd-keep-color` escape hatch below, same as the button/div rules. */
-.theme-light body [class*="text-muted"]:not([class*="keep-white"]):not([class*="vltd-keep-color"]),
-.theme-light body [class*="opacity-5"]:not([class*="keep-white"]):not([class*="vltd-keep-color"]),
-.theme-light body [class*="opacity-6"]:not([class*="keep-white"]):not([class*="vltd-keep-color"]),
-.theme-light body [class*="opacity-7"]:not([class*="keep-white"]):not([class*="vltd-keep-color"]) {
+.theme-light body [class*="text-muted"]:not(.vltd-dark-surface):not(.vltd-dark-surface *):not([class*="vltd-keep-color"]),
+.theme-light body [class*="opacity-5"]:not(.vltd-dark-surface):not(.vltd-dark-surface *):not([class*="vltd-keep-color"]),
+.theme-light body [class*="opacity-6"]:not(.vltd-dark-surface):not(.vltd-dark-surface *):not([class*="vltd-keep-color"]),
+.theme-light body [class*="opacity-7"]:not(.vltd-dark-surface):not(.vltd-dark-surface *):not([class*="vltd-keep-color"]) {
   color: var(--theme-text-muted, #5A5A6A) !important;
   opacity: 1 !important;
 }
@@ -266,55 +303,56 @@
 }
 
 /* Pills text in light mode — always dark */
-.theme-light body .rounded-full:not([class*="keep-white"]):not([class*="vltd-keep-color"]),
-.theme-light body [class*="badge"]:not([class*="keep-white"]):not([class*="vltd-keep-color"]),
-.theme-light body [class*="pill"]:not([class*="keep-white"]):not([class*="vltd-keep-color"]) {
+.theme-light body .rounded-full:not(.vltd-dark-surface):not(.vltd-dark-surface *):not([class*="vltd-keep-color"]),
+.theme-light body [class*="badge"]:not(.vltd-dark-surface):not(.vltd-dark-surface *):not([class*="vltd-keep-color"]),
+.theme-light body [class*="pill"]:not(.vltd-dark-surface):not(.vltd-dark-surface *):not([class*="vltd-keep-color"]) {
   color: var(--theme-text-primary, #1A1A2E) !important;
 }
 
-/* Button text in light mode. Same keep-white gap as the p/h1-h6/li/label
-   rule above -- this one already excluded vltd-keep-color but not
-   keep-white, so a button floating over always-dark media (Exhibitions'
-   cover-image controls) still went dark-on-dark despite the class. */
-.theme-light body button:not([class*="btn-gold"]):not([class*="vltd-gold"]):not([class*="bg-red"]):not([class*="keep-white"]):not([class*="vltd-keep-color"]) {
+/* Button text in light mode. Buttons need the same .vltd-dark-surface
+   exclusion as everything else, but note it's frequently NOT sufficient
+   alone for a <button> specifically -- this project's Tailwind build has
+   the button/select/input/textarea preflight (`color:inherit`) beating a
+   same-element utility class for reasons not fully root-caused, verified
+   live and worked around in Exhibitions' cover-image buttons by setting
+   color via inline style in addition to (not instead of) keeping the
+   containing element .vltd-dark-surface, which fixed the BACKGROUND half
+   of that bug (see the pill/badge catch-all below). */
+.theme-light body button:not([class*="btn-gold"]):not([class*="vltd-gold"]):not([class*="bg-red"]):not(.vltd-dark-surface):not(.vltd-dark-surface *):not([class*="vltd-keep-color"]) {
   color: var(--theme-text-primary, #1A1A2E) !important;
 }
 
 /* Link text in light mode — unless gold, or explicitly kept */
-.theme-light body a:not([class*="gold"]):not([class*="btn-gold"]):not([class*="vltd-gold"]):not([class*="keep-white"]):not([class*="vltd-keep-color"]) {
+.theme-light body a:not([class*="gold"]):not([class*="btn-gold"]):not([class*="vltd-gold"]):not(.vltd-dark-surface):not(.vltd-dark-surface *):not([class*="vltd-keep-color"]) {
   color: var(--theme-text-primary, #1A1A2E) !important;
 }
 
 /* Hardcoded dark bg overrides in light mode */
-.theme-light body [class*="bg-[#14"]:not([class*="keep-white"]):not([class*="vltd-keep-color"]),
-.theme-light body [class*="bg-[#0"]:not([class*="keep-white"]):not([class*="vltd-keep-color"]),
-.theme-light body [class*="bg-[rgba(20"]:not([class*="keep-white"]):not([class*="vltd-keep-color"]),
-.theme-light body [class*="bg-[rgba(15"]:not([class*="keep-white"]):not([class*="vltd-keep-color"]),
-.theme-light body [class*="bg-[rgba(14"]:not([class*="keep-white"]):not([class*="vltd-keep-color"]) {
+.theme-light body [class*="bg-[#14"]:not(.vltd-dark-surface):not(.vltd-dark-surface *):not([class*="vltd-keep-color"]),
+.theme-light body [class*="bg-[#0"]:not(.vltd-dark-surface):not(.vltd-dark-surface *):not([class*="vltd-keep-color"]),
+.theme-light body [class*="bg-[rgba(20"]:not(.vltd-dark-surface):not(.vltd-dark-surface *):not([class*="vltd-keep-color"]),
+.theme-light body [class*="bg-[rgba(15"]:not(.vltd-dark-surface):not(.vltd-dark-surface *):not([class*="vltd-keep-color"]),
+.theme-light body [class*="bg-[rgba(14"]:not(.vltd-dark-surface):not(.vltd-dark-surface *):not([class*="vltd-keep-color"]) {
   background: var(--theme-card, rgba(255,255,255,0.85)) !important;
   color: var(--theme-text-primary, #1A1A2E) !important;
 }
 
 /* Section/card headings in light mode — keep gold labels gold */
-.theme-light body [class*="tracking-[0.2"]:not([class*="gold"]):not([class*="text-[#F5"]) {
+.theme-light body [class*="tracking-[0.2"]:not([class*="gold"]):not([class*="text-[#F5"]):not(.vltd-dark-surface):not(.vltd-dark-surface *) {
   color: var(--theme-text-muted, #5A5A6A) !important;
 }
 
 /* ── PILL/BADGE DARK BG CATCH-ALL (light themes) ── */
 /* Any pill or small badge with black/dark inline bg gets flipped to theme
-   surface. 2026-09-30: this one had no keep-white/vltd-keep-color exclusion
-   at all, and unlike the text-forcing rules above it also overwrites the
-   BACKGROUND -- so Exhibitions' floating "change cover" button
-   (rounded-full + bg-black/55, meant to stay a dark scrim + white icon over
-   a photo, same as SeasonalBanner's card) was getting flipped to a light
-   pill with muted text, not just losing its icon color. Found live via
-   getComputedStyle after the p/button text-color fix above still left this
-   one dark-on-mid-gray instead of white-on-black. */
-.theme-light body [class*="rounded-full"][class*="bg-black"]:not([class*="keep-white"]):not([class*="vltd-keep-color"]),
-.theme-light body [class*="rounded-full"][class*="bg-[rgba(0"]:not([class*="keep-white"]):not([class*="vltd-keep-color"]),
-.theme-light body [class*="rounded-2xl"][class*="bg-black"]:not([class*="keep-white"]):not([class*="vltd-keep-color"]),
-.theme-light body [class*="rounded-xl"][class*="bg-black"]:not([class*="keep-white"]):not([class*="vltd-keep-color"]),
-.theme-light body [class*="rounded-lg"][class*="bg-black"]:not([class*="keep-white"]):not([class*="vltd-keep-color"]) {
+   surface -- EXCEPT inside .vltd-dark-surface, which means wrapping a
+   dark floating control (Exhibitions' cover-image buttons) in that class
+   protects both its background here AND its text color in the rules
+   above with one class, on the container, not on the button itself. */
+.theme-light body [class*="rounded-full"][class*="bg-black"]:not(.vltd-dark-surface):not(.vltd-dark-surface *):not([class*="vltd-keep-color"]),
+.theme-light body [class*="rounded-full"][class*="bg-[rgba(0"]:not(.vltd-dark-surface):not(.vltd-dark-surface *):not([class*="vltd-keep-color"]),
+.theme-light body [class*="rounded-2xl"][class*="bg-black"]:not(.vltd-dark-surface):not(.vltd-dark-surface *):not([class*="vltd-keep-color"]),
+.theme-light body [class*="rounded-xl"][class*="bg-black"]:not(.vltd-dark-surface):not(.vltd-dark-surface *):not([class*="vltd-keep-color"]),
+.theme-light body [class*="rounded-lg"][class*="bg-black"]:not(.vltd-dark-surface):not(.vltd-dark-surface *):not([class*="vltd-keep-color"]) {
   background: var(--theme-elevated, rgba(245,240,228,0.95)) !important;
   color: var(--theme-text-secondary, #4A3A1A) !important;
   border: 1px solid var(--theme-border, rgba(180,140,60,0.18)) !important;

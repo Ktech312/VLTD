@@ -364,10 +364,23 @@
 
 /* The brand logo is fine detailed gold linework designed for a dark
    backdrop — on a light theme's near-white nav it reads as thin/faint.
-   A dark contact shadow grounds the linework and makes it read as solid
-   without touching the source art or the dark themes, which already work. */
+   2026-09-30: a single soft drop-shadow (the previous version of this
+   rule) wasn't enough -- confirmed washed-out on a real phone. A drop-
+   shadow blurs the image's ALPHA channel, so one low-opacity, blurred
+   shadow just adds a faint halo; it doesn't darken the thin linework
+   pixels themselves. Stacking several near-zero-blur shadows compounds
+   into a near-solid dark OUTLINE around every opaque pixel instead (the
+   same trick used for icon-on-photo legibility elsewhere in CSS),
+   giving the linework a contact edge in every direction regardless of
+   what's behind it, plus one soft ambient shadow for depth. Filter-only
+   -- doesn't touch the source art, layout, or the dark themes. */
 .theme-light .vltd-nav-logo {
-  filter: drop-shadow(0 1px 0 rgba(20, 14, 4, 0.45)) drop-shadow(0 2px 5px rgba(20, 14, 4, 0.30));
+  filter:
+    drop-shadow(0 0 0.5px rgba(20, 12, 2, 0.95))
+    drop-shadow(0 0 0.5px rgba(20, 12, 2, 0.95))
+    drop-shadow(0 0 1px rgba(20, 12, 2, 0.85))
+    drop-shadow(0 0 1px rgba(20, 12, 2, 0.85))
+    drop-shadow(0 2px 5px rgba(20, 12, 2, 0.35));
 }
 
 /* =========================================================
