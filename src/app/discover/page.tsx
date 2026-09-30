@@ -377,7 +377,7 @@ export default function DiscoverPage() {
             <div className="absolute inset-0 bg-gradient-to-t from-[#030809] via-black/20 to-transparent" />
             {/* Fixed light, not --theme-gold -- this badge sits on the
                 always-dark scrim above, same fix as the spotlight card. */}
-            <span className="absolute left-3 top-3 rounded-[5px] border border-[rgba(203,208,213,0.28)] bg-black/50 px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.14em]" style={{ color: "#C8CDD2" }}>
+            <span className="keep-white absolute left-3 top-3 rounded-[5px] border border-[rgba(203,208,213,0.28)] bg-black/50 px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.14em]" style={{ color: "#C8CDD2" }}>
               {UNIVERSE_LABEL[gallery.universeKey]}
             </span>
           </div>
@@ -455,9 +455,16 @@ export default function DiscoverPage() {
                     near-invisible against this still-dark scrim (found live
                     on /discover in light mode, 2026-09-30). */}
                 <div className="relative max-w-[360px] p-6">
-                  <div className="text-[11px] font-black uppercase tracking-[0.18em]" style={{ color: "#C8CDD2" }}>Collector Spotlight</div>
-                  <h2 className="mt-3 font-serif text-[33px] font-black leading-[0.95]" style={{ color: "#ECEDEF" }}>Collector Rooms Worth Seeing</h2>
-                  <p className="mt-4 text-sm leading-6" style={{ color: "#ECEDEF" }}>Hand-picked public exhibitions from serious collectors around the world.</p>
+                  {/* keep-white is required here, not just the fixed color
+                      above -- theme-override.css's blanket "force dark in
+                      light mode" rule still applies !important to any
+                      div/h2/p without this class, which otherwise beats a
+                      plain (non-important) inline style. Found live: the
+                      inline color was correctly set but getComputedStyle
+                      still showed dark until this class was added. */}
+                  <div className="keep-white text-[11px] font-black uppercase tracking-[0.18em]" style={{ color: "#C8CDD2" }}>Collector Spotlight</div>
+                  <h2 className="keep-white mt-3 font-serif text-[33px] font-black leading-[0.95]" style={{ color: "#ECEDEF" }}>Collector Rooms Worth Seeing</h2>
+                  <p className="keep-white mt-4 text-sm leading-6" style={{ color: "#ECEDEF" }}>Hand-picked public exhibitions from serious collectors around the world.</p>
                   <button type="button" onClick={() => openGallery(selectedGallery)} className="mt-4 rounded-[7px] px-4 py-2 text-xs font-black" style={{ background: "linear-gradient(135deg,#8C9298,#C8CDD2)", color: "#0B0B0B" }}>
                     Explore featured rooms &rarr;
                   </button>
