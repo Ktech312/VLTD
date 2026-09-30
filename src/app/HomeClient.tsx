@@ -506,25 +506,38 @@ function FeaturedGalleryCarousel({ galleries }: { galleries: Gallery[] }) {
     const track = trackRef.current;
     const el = track?.querySelector<HTMLElement>(`[data-gallery-id="${list[clamped]?.id}"]`);
     if (!el || !track) return;
+    const targetLeft = el.offsetLeft - (track.clientWidth - el.clientWidth) / 2;
     if (prefersReducedMotion) {
-      el.scrollIntoView({ behavior: "auto", inline: "center", block: "nearest" });
+      track.scrollLeft = targetLeft;
       return;
     }
-    // Verified live, reproducibly, with scroll-position measurements before
-    // and after (not just a visual guess): scrollIntoView({behavior:
-    // "smooth"}) is a silent no-op in this browser when the container also
-    // has scroll-snap-type -- a known Chromium interaction where the snap
-    // machinery and the smooth-scroll animation fight and the scroll never
-    // starts. behavior:"auto" on the same element, same container, moves
-    // it every time. Standard workaround: drop snap-type for the duration
-    // of the animated scroll, then restore it once the animation would
-    // have finished -- no scrollend handling needed since nothing else
-    // scrolls this track programmatically while it's suppressed.
+    // Verified live, reproducibly, with scroll-position measurements
+    // sampled every 100ms across a full second (not a visual guess):
+    // Element.scrollIntoView/scrollTo with behavior:"smooth" is a silent
+    // no-op in this exact test environment -- confirmed even calling it
+    // completely manually, outside React, with scroll-snap-type removed
+    // from the equation entirely. Rather than ship a fix riding on a
+    // native browser feature I have no way to confirm actually animates
+    // on EK's phone, this drives scrollLeft by hand with rAF -- doesn't
+    // depend on scrollIntoView/scrollTo's smooth behavior at all, so
+    // there's nothing left for a browser quirk to silently swallow.
     track.style.scrollSnapType = "none";
-    el.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
-    window.setTimeout(() => {
-      if (trackRef.current) trackRef.current.style.scrollSnapType = "x mandatory";
-    }, 500);
+    const startLeft = track.scrollLeft;
+    const delta = targetLeft - startLeft;
+    const duration = 320;
+    const startTime = performance.now();
+    const ease = (t: number) => 1 - Math.pow(1 - t, 3); // ease-out cubic
+    function step(now: number) {
+      const elapsed = now - startTime;
+      const t = Math.min(1, elapsed / duration);
+      track!.scrollLeft = startLeft + delta * ease(t);
+      if (t < 1) {
+        requestAnimationFrame(step);
+      } else {
+        track!.style.scrollSnapType = "x mandatory";
+      }
+    }
+    requestAnimationFrame(step);
   }
 
   function onTrackKeyDown(e: React.KeyboardEvent) {
