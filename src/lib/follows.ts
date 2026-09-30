@@ -9,20 +9,31 @@ export async function getFollowerCount(profileId: string): Promise<number> {
   if (!profileId) return 0;
   const supabase = getSupabaseBrowserClient();
   if (!supabase) return 0;
-  // Overnight QA pass (2026-09-22): this exact query (HEAD + count:"exact" +
-  // select("*")) was reproducibly returning 503 on the live site - confirmed
-  // via 3 separate page loads, all failing the same way, while the sibling
-  // GET query (different select/filter shape) succeeded every time. Schema
-  // itself is fine (both follower_id and followed_id are indexed, RLS is a
-  // plain public-read policy) - narrowing the select from "*" to "id" (a
-  // real column, doesn't change what's counted) is the standard fix for
-  // this class of PostgREST HEAD-count quirk. count ?? 0 already meant this
-  // failure was silent (wrong "0 followers" instead of a visible error),
-  // which is why it went unnoticed until checked directly.
-  const { count } = await supabase
+  // Fix (2026-09-30): the previous HEAD+count:"exact" form was
+  // reproducibly 503ing on the live site, confirmed live and repeatedly —
+  // not by guessing at the query shape (an earlier attempt narrowed
+  // select("*") to select("id"), which did NOT fix it, since the real
+  // problem was never the selected column). Directly isolated the actual
+  // cause: the *identical* query as a GET (no head:true) succeeds every
+  // time, while the HEAD form fails 100% of the time in the live app
+  // context specifically — confirmed via curl outside the browser (single,
+  // sequential, concurrent, with browser-matching headers) never
+  // reproducing it either, meaning it's specific to how the real app/
+  // browser issues a HEAD request here, not the query itself. Switched to
+  // a plain GET with count:"exact" and .limit(1) — PostgREST returns the
+  // full exact count in Content-Range regardless of the row limit applied
+  // to the body, so this returns the correct count while downloading at
+  // most one row instead of the whole matching set. Errors are now
+  // surfaced (logged), not silently swallowed by `count ?? 0` alone.
+  const { count, error } = await supabase
     .from(TABLE)
-    .select("id", { count: "exact", head: true })
-    .eq("followed_id", profileId);
+    .select("id", { count: "exact" })
+    .eq("followed_id", profileId)
+    .limit(1);
+  if (error) {
+    console.error("getFollowerCount failed:", error);
+    return 0;
+  }
   return count ?? 0;
 }
 
@@ -31,10 +42,15 @@ export async function getFollowingCount(profileId: string): Promise<number> {
   if (!profileId) return 0;
   const supabase = getSupabaseBrowserClient();
   if (!supabase) return 0;
-  const { count } = await supabase
+  const { count, error } = await supabase
     .from(TABLE)
-    .select("id", { count: "exact", head: true })
-    .eq("follower_id", profileId);
+    .select("id", { count: "exact" })
+    .eq("follower_id", profileId)
+    .limit(1);
+  if (error) {
+    console.error("getFollowingCount failed:", error);
+    return 0;
+  }
   return count ?? 0;
 }
 
