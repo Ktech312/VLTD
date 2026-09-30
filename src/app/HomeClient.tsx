@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import dynamic from "next/dynamic";
-import { useEffect, useMemo, useRef, useState, useCallback } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { getOnboardingStatus } from "@/lib/auth";
 import { syncPublicProfile } from "@/lib/publicProfile";
@@ -447,68 +447,127 @@ function FeaturedGalleryCard({ galleries }: { galleries: Gallery[] }) {
 // rendered once; only the "which one is centered" bookkeeping (for the
 // header text and the active-card highlight) is derived, via
 // IntersectionObserver, not reset per scroll frame.
-function FeaturedGalleryCarousel({ galleries }: { galleries: Gallery[] }) {
-  const [idx, setIdx] = useState(0);
-  const trackRef = useRef<HTMLDivElement>(null);
-  const n = galleries.length;
-  const current = galleries[idx] ?? galleries[0];
-  const itemCount = current.itemIds?.length ?? 0;
+type DeckCard = { key: string; gallery: Gallery; isClone: boolean };
 
-  // "Latest ref" pattern -- scrollToIndex below reads galleriesRef.current
-  // instead of closing over `galleries` directly. Found live, with hard
-  // evidence (reading the ACTUAL attached onClick off the DOM node via its
-  // React fiber props and invoking it directly -- same no-op as a real
-  // click): the click handler ran every time, threw no error, but silently
-  // targeted a stale/empty `galleries` from an early render and never
-  // picked up the real list once it loaded. A ref updated on every render
-  // can't go stale the way a closure captured once can.
-  const galleriesRef = useRef(galleries);
-  galleriesRef.current = galleries;
+// Two extra slots (a clone of the last item before the first, a clone of
+// the first item after the last) make the native scroll track infinite:
+// dragging past either end continues smoothly into a clone that's pixel-
+// identical to the real item it mirrors, then a silent (no-animation,
+// no-snap) scrollLeft jump lands back in the real range once it settles
+// -- the same technique used for infinite native carousels generally,
+// needed here because CSS scroll-snap has no wrap-around of its own.
+function buildDeck(galleries: Gallery[]): DeckCard[] {
+  const n = galleries.length;
+  const real = galleries.map((g) => ({ key: g.id, gallery: g, isClone: false }));
+  if (n < 2) return real;
+  return [
+    { key: "clone-start", gallery: galleries[n - 1], isClone: true },
+    ...real,
+    { key: "clone-end", gallery: galleries[0], isClone: true },
+  ];
+}
+
+function FeaturedGalleryCarousel({ galleries }: { galleries: Gallery[] }) {
+  const n = galleries.length;
+  const deck = useMemo(() => buildDeck(galleries), [galleries]);
+  // Position within `deck` (not within `galleries`) -- position 0 is the
+  // start clone when n>1, so the first real item sits at position 1.
+  const [pos, setPos] = useState(n > 1 ? 1 : 0);
+  // `galleries` starts empty and loads in async -- when the count first
+  // goes from 0 to real data, `deck` grows to include the two clone slots
+  // but `pos` (still its initial-render value) would then be pointing at
+  // the wrong slot. Reset to the correct starting position whenever the
+  // underlying item count changes.
+  const prevN = useRef(n);
+  useEffect(() => {
+    if (n !== prevN.current) {
+      prevN.current = n;
+      setPos(n > 1 ? 1 : 0);
+    }
+  }, [n]);
+  const trackRef = useRef<HTMLDivElement>(null);
+  const current = deck[pos]?.gallery ?? galleries[0];
+  const itemCount = current?.itemIds?.length ?? 0;
+
+  // "Latest ref" pattern -- scrollToPos below reads deckRef.current instead
+  // of closing over `deck` directly. Found live, with hard evidence
+  // (reading the ACTUAL attached onClick off the DOM node via its React
+  // fiber props and invoking it directly -- same no-op as a real click):
+  // the click handler ran every time, threw no error, but silently
+  // targeted a stale/empty list from an early render. A ref updated on
+  // every render can't go stale the way a closure captured once can.
+  const deckRef = useRef(deck);
+  useLayoutEffect(() => { deckRef.current = deck; }, [deck]);
 
   const prefersReducedMotion = useMemo(() => {
     if (typeof window === "undefined" || !window.matchMedia) return false;
     return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   }, []);
 
-  // Track which card is centered in the scroll track -- this is the ONLY
-  // thing derived from scrolling; it never drives the scroll itself, so
-  // there's nothing for it to fight with native touch/pointer scrolling.
-  // Queries the track's own DOM children directly (via data-gallery-id)
-  // instead of a separate ref Map populated by per-card ref callbacks --
-  // found live that the ref-Map version silently never populated (Next's
-  // React Compiler pass likely memoized the inline ref callback away),
-  // so scrollToIndex's lookups always missed and every control was a
-  // silent no-op. Querying the track's actual children at call time has
-  // no such indirection to go stale.
+  // Un-scrolled, a flex track's natural resting scrollLeft is 0 -- with
+  // the clone-start slot now occupying deck position 0, that would show
+  // the clone (the last gallery, not the first) centered on first paint,
+  // mismatching the header text above. Center the real starting position
+  // immediately, synchronously before paint, whenever the deck's shape
+  // changes (e.g. once `galleries` finishes loading and clones appear).
+  useLayoutEffect(() => {
+    const startPos = n > 1 ? 1 : 0;
+    const track = trackRef.current;
+    const el = track?.querySelector<HTMLElement>(`[data-deck-pos="${startPos}"]`);
+    if (!track || !el) return;
+    track.scrollLeft = el.offsetLeft - (track.clientWidth - el.clientWidth) / 2;
+  }, [deck, n]);
+
+  // Track which card is centered -- this is the ONLY thing derived from
+  // scrolling; it never drives the scroll itself, so there's nothing for
+  // it to fight with native touch/pointer scrolling. When the centered
+  // card turns out to be one of the two clones, silently retarget to the
+  // real position it mirrors once the scroll has settled, so continued
+  // dragging always has real range left to move into.
   useEffect(() => {
     const track = trackRef.current;
     if (!track) return;
-    const cards = Array.from(track.querySelectorAll<HTMLElement>("[data-gallery-id]"));
+    const cards = Array.from(track.querySelectorAll<HTMLElement>("[data-deck-pos]"));
+    let settleTimer: ReturnType<typeof setTimeout> | null = null;
     const observer = new IntersectionObserver(
       (entries) => {
         const mostVisible = entries
           .filter((e) => e.isIntersecting)
           .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
         if (!mostVisible) return;
-        const id = (mostVisible.target as HTMLElement).dataset.galleryId;
-        const i = galleries.findIndex((g) => g.id === id);
-        if (i >= 0) setIdx(i);
+        const p = Number((mostVisible.target as HTMLElement).dataset.deckPos);
+        setPos(p);
+        if (settleTimer) clearTimeout(settleTimer);
+        if (deckRef.current[p]?.isClone) {
+          settleTimer = setTimeout(() => {
+            const list = deckRef.current;
+            const realPos = p === 0 ? list.length - 2 : 1;
+            const t = trackRef.current;
+            const target = t?.querySelector<HTMLElement>(`[data-deck-pos="${realPos}"]`);
+            if (!t || !target) return;
+            t.style.scrollSnapType = "none";
+            t.scrollLeft = target.offsetLeft - (t.clientWidth - target.clientWidth) / 2;
+            t.style.scrollSnapType = "x mandatory";
+            setPos(realPos);
+          }, 150);
+        }
       },
       { root: track, threshold: [0.6] }
     );
     cards.forEach((el) => observer.observe(el));
-    return () => observer.disconnect();
-  }, [galleries]);
+    return () => { observer.disconnect(); if (settleTimer) clearTimeout(settleTimer); };
+  }, [deck]);
 
-  function scrollToIndex(i: number) {
-    const list = galleriesRef.current;
-    const clamped = Math.max(0, Math.min(list.length - 1, i));
+  function scrollToPos(p: number) {
+    const list = deckRef.current;
+    const clamped = Math.max(0, Math.min(list.length - 1, p));
     const track = trackRef.current;
-    const el = track?.querySelector<HTMLElement>(`[data-gallery-id="${list[clamped]?.id}"]`);
+    const el = track?.querySelector<HTMLElement>(`[data-deck-pos="${clamped}"]`);
     if (!el || !track) return;
     const targetLeft = el.offsetLeft - (track.clientWidth - el.clientWidth) / 2;
     if (prefersReducedMotion) {
       track.scrollLeft = targetLeft;
+      setPos(clamped);
       return;
     }
     // Verified live, reproducibly, with scroll-position measurements
@@ -541,9 +600,11 @@ function FeaturedGalleryCarousel({ galleries }: { galleries: Gallery[] }) {
   }
 
   function onTrackKeyDown(e: React.KeyboardEvent) {
-    if (e.key === "ArrowRight") { e.preventDefault(); scrollToIndex(idx + 1); }
-    else if (e.key === "ArrowLeft") { e.preventDefault(); scrollToIndex(idx - 1); }
+    if (e.key === "ArrowRight") { e.preventDefault(); scrollToPos(pos + 1); }
+    else if (e.key === "ArrowLeft") { e.preventDefault(); scrollToPos(pos - 1); }
   }
+
+  if (!current) return null;
 
   return (
     <div className="relative" style={{ padding: "12px" }}>
@@ -551,21 +612,21 @@ function FeaturedGalleryCarousel({ galleries }: { galleries: Gallery[] }) {
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "8px" }}>
         <div>
           <p style={{ fontSize: "9px", fontWeight: 600, letterSpacing: "0.28em", textTransform: "uppercase", color: C.muted }}>
-            Featured Exhibition <span style={{ opacity: 0.5, marginLeft: "6px" }}>{idx + 1} / {n}</span>
+            Featured Exhibition <span style={{ opacity: 0.5, marginLeft: "6px" }}>{(galleries.indexOf(current) + 1) || 1} / {n}</span>
           </p>
           <h2 style={{ fontSize: "13px", fontWeight: 700, color: C.text, marginTop: "2px" }}>{current.title || "Untitled"}</h2>
           <p style={{ fontSize: "11px", color: C.muted, marginTop: "1px" }}>{itemCount} piece{itemCount !== 1 ? "s" : ""}</p>
         </div>
         {n > 1 && (
           <div style={{ display: "flex", gap: "4px" }}>
-            <button type="button" aria-label="Previous exhibition" onClick={() => scrollToIndex(idx - 1)} disabled={idx === 0}
-              style={{ width: "24px", height: "24px", display: "flex", alignItems: "center", justifyContent: "center", borderRadius: "50%", border: `1px solid ${C.goldBd}`, background: C.goldDim, color: C.gold, fontSize: "14px", cursor: idx === 0 ? "default" : "pointer", opacity: idx === 0 ? 0.35 : 1 }}>‹</button>
-            <button type="button" aria-label="Next exhibition" onClick={() => scrollToIndex(idx + 1)} disabled={idx === n - 1}
-              style={{ width: "24px", height: "24px", display: "flex", alignItems: "center", justifyContent: "center", borderRadius: "50%", border: `1px solid ${C.goldBd}`, background: C.goldDim, color: C.gold, fontSize: "14px", cursor: idx === n - 1 ? "default" : "pointer", opacity: idx === n - 1 ? 0.35 : 1 }}>›</button>
+            <button type="button" aria-label="Previous exhibition" onClick={() => scrollToPos(pos - 1)}
+              style={{ width: "24px", height: "24px", display: "flex", alignItems: "center", justifyContent: "center", borderRadius: "50%", border: `1px solid ${C.goldBd}`, background: C.goldDim, color: C.gold, fontSize: "14px", cursor: "pointer" }}>‹</button>
+            <button type="button" aria-label="Next exhibition" onClick={() => scrollToPos(pos + 1)}
+              style={{ width: "24px", height: "24px", display: "flex", alignItems: "center", justifyContent: "center", borderRadius: "50%", border: `1px solid ${C.goldBd}`, background: C.goldDim, color: C.gold, fontSize: "14px", cursor: "pointer" }}>›</button>
           </div>
         )}
       </div>
-      {/* Scroll-snap track */}
+      {/* Scroll-snap track -- infinite via the two clone slots above */}
       <div
         ref={trackRef}
         role="listbox"
@@ -584,16 +645,24 @@ function FeaturedGalleryCarousel({ galleries }: { galleries: Gallery[] }) {
           alignItems: "center",
         }}
       >
-        {galleries.map((g) => {
-          const isActive = g.id === current.id;
+        {deck.map((card, position) => {
+          // Graduated depth by distance from the centered card -- the
+          // "layered wheel" look, restored after an earlier pass flattened
+          // it to a plain active/inactive binary and lost the receding
+          // depth EK's original coverflow had.
+          const distance = Math.abs(position - pos);
+          const scale = Math.max(0.6, 1 - distance * 0.18);
+          const opacity = Math.max(0.25, 1 - distance * 0.35);
+          const isActive = distance === 0;
           return (
             <button
-              key={g.id}
-              data-gallery-id={g.id}
+              key={card.key}
+              data-deck-pos={position}
+              aria-hidden={card.isClone}
               role="option"
               aria-selected={isActive}
               type="button"
-              onClick={() => scrollToIndex(galleries.indexOf(g))}
+              onClick={() => scrollToPos(position)}
               className="relative overflow-hidden"
               style={{
                 flexShrink: 0,
@@ -601,8 +670,8 @@ function FeaturedGalleryCarousel({ galleries }: { galleries: Gallery[] }) {
                 width: "112px",
                 height: "150px",
                 borderRadius: "10px",
-                transform: isActive ? "scale(1)" : "scale(0.86)",
-                opacity: isActive ? 1 : 0.5,
+                transform: `scale(${scale})`,
+                opacity,
                 transition: prefersReducedMotion ? "none" : "transform 0.25s ease, opacity 0.25s ease",
                 border: isActive ? "2px solid rgba(203,208,213,0.55)" : "1px solid rgba(203,208,213,0.14)",
                 background: "rgba(10,18,35,0.9)",
@@ -610,9 +679,9 @@ function FeaturedGalleryCarousel({ galleries }: { galleries: Gallery[] }) {
                 cursor: isActive ? "default" : "pointer",
               }}
             >
-              {g.coverImage ? (
+              {card.gallery.coverImage ? (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={g.coverImage} alt={g.title} loading="eager" style={{ width: "100%", height: "100%", objectFit: "cover" }} draggable={false} />
+                <img src={card.gallery.coverImage} alt={card.gallery.title} loading="eager" style={{ width: "100%", height: "100%", objectFit: "cover" }} draggable={false} />
               ) : (
                 <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", opacity: 0.2 }}><Glyph name="exhibition" size={20} /></div>
               )}
