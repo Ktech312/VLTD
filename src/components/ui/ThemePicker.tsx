@@ -1,8 +1,8 @@
 'use client'
 /* Path: src/components/ui/ThemePicker.tsx */
-import { useTheme, type IconStyle } from '@/lib/ThemeContext'
+import { useTheme } from '@/lib/ThemeContext'
 import { themes, ThemeId, ThemeMode } from '@/lib/themes'
-import { AppIcon, type AppIconName } from '@/components/ui/AppIcon'
+import { AppIcon } from '@/components/ui/AppIcon'
 
 const previews: Record<ThemeId, string> = {
   'deep-vault':          'linear-gradient(135deg, #0B1320 60%, #1a2535 100%)',
@@ -24,14 +24,8 @@ function SunIcon() {
   return <AppIcon name="sun" size={15} strokeWidth={2} />
 }
 
-const ICON_STYLE_OPTIONS: { id: IconStyle; label: string; sample: AppIconName }[] = [
-  { id: 'classic', label: 'Classic', sample: 'vault' },
-  { id: 'simplified-glass', label: 'Simple Glass', sample: 'vault' },
-  { id: 'soft-sticker', label: 'Soft Sticker', sample: 'vault' },
-]
-
 export function ThemePicker() {
-  const { themeId, setTheme, iconStyle, setIconStyle } = useTheme()
+  const { themeId, setTheme } = useTheme()
   const currentMode: ThemeMode = themes[themeId].mode
 
   function pickMode(mode: ThemeMode) {
@@ -121,51 +115,12 @@ export function ThemePicker() {
         </div>
       )}
 
-      {/* ── Icon style section — independent of Dark/Light and Background ── */}
-      <div>
-        <p className="mb-2 text-[10px] font-bold uppercase tracking-[0.28em]"
-          style={{ color: 'var(--theme-text-muted, #5A5040)' }}>
-          Icon style
-        </p>
-        <div className="grid grid-cols-3 gap-2">
-          {ICON_STYLE_OPTIONS.map(opt => {
-            const active = iconStyle === opt.id
-            return (
-              <button
-                key={opt.id}
-                type="button"
-                onClick={() => setIconStyle(opt.id)}
-                className="flex items-center gap-2 rounded-xl px-3 py-2.5 text-[12px] font-semibold transition"
-                style={{
-                  background: active
-                    ? 'var(--theme-gold-subtle, rgba(203,208,213,0.10))'
-                    : 'rgba(255,255,255,0.04)',
-                  border: `1.5px solid ${active
-                    ? 'var(--theme-gold-border, rgba(203,208,213,0.35))'
-                    : 'rgba(255,255,255,0.08)'}`,
-                  color: active
-                    ? 'var(--theme-gold, #C8CDD2)'
-                    : 'var(--theme-text-muted, #5A5040)',
-                }}
-              >
-                {/* Force each swatch to preview its own style regardless of
-                    the globally active one. Preview-specific CSS overrides
-                    the root theme selector for this small subtree. */}
-                <span data-vltd-icon-preview={opt.id}>
-                  <AppIcon name={opt.sample} variant="navTop" size={20} />
-                </span>
-                {opt.label}
-                {active && (
-                  <span
-                    className="ml-auto h-2 w-2 rounded-full"
-                    style={{ background: 'var(--theme-gold, #C8CDD2)' }}
-                  />
-                )}
-              </button>
-            )
-          })}
-        </div>
-      </div>
+      {/* Icon style section removed (2026-09-30): with Simple Glass and Soft
+          Sticker pulled from production (see ICON_STYLE_OPTIONS above),
+          Classic is the only navigation icon system -- there's no longer a
+          real choice to present here. iconStyle/setIconStyle stay in
+          ThemeContext unused by this component so the underlying capability
+          isn't deleted, only the picker UI for it. */}
 
     </div>
   )

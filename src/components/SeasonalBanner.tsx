@@ -252,9 +252,15 @@ export default function SeasonalBanner() {
 
         {/* Text — one line title + faint sublabel */}
         <div className="flex-1 min-w-0">
-          <p className="text-xs font-bold text-white leading-tight truncate">{label}</p>
+          {/* This banner's background is always dark by design (line ~197),
+              regardless of the site theme -- keep-white/vltd-keep-color are
+              the established escape hatches (theme-override.css) for text
+              that must stay legible against an intentionally-dark surface,
+              rather than getting forced to the light theme's dark text
+              color and going invisible against this still-dark bg. */}
+          <p className="text-xs font-bold text-white keep-white leading-tight truncate">{label}</p>
           {sublabel && (
-            <p className="text-[10px] leading-tight truncate" style={{ color: `${accent}bb` }}>{sublabel}</p>
+            <p className="text-[10px] leading-tight truncate vltd-keep-color" style={{ color: `${accent}bb`, ["--vltd-keep-color" as string]: `${accent}bb` }}>{sublabel}</p>
           )}
         </div>
 
@@ -324,7 +330,7 @@ export default function SeasonalBanner() {
         <div
           className="flex items-center justify-between gap-2 px-3 pb-2"
         >
-          <p className="flex items-center gap-1 text-[10px]" style={{ color: `${accent}bb` }}>
+          <p className="flex items-center gap-1 text-[10px] vltd-keep-color" style={{ color: `${accent}bb`, ["--vltd-keep-color" as string]: `${accent}bb` }}>
             <Glyph name="palette" size={11} />
             Switch app theme?
           </p>
@@ -334,16 +340,16 @@ export default function SeasonalBanner() {
                 e.stopPropagation();
                 handleAcceptTheme();
               }}
-              className="px-2 py-0.5 text-[10px] font-bold"
-              style={{ background: "linear-gradient(135deg,#8C9298,#C8CDD2)", borderRadius: 6, color: "#000" }}
+              className="px-2 py-0.5 text-[10px] font-bold vltd-keep-color"
+              style={{ background: "linear-gradient(135deg,#8C9298,#C8CDD2)", borderRadius: 6, color: "#000", ["--vltd-keep-color" as string]: "#000" }}
             >Yes</button>
             <button
               onClick={(e) => {
                 e.stopPropagation();
                 handleDismissTheme();
               }}
-              className="px-2 py-0.5 text-[10px] font-semibold"
-              style={{ background: "rgba(255,255,255,0.035)", border: "1px solid rgba(203,208,213,0.26)", borderRadius: 6, color: `${accent}cc` }}
+              className="px-2 py-0.5 text-[10px] font-semibold vltd-keep-color"
+              style={{ background: "rgba(255,255,255,0.035)", border: "1px solid rgba(203,208,213,0.26)", borderRadius: 6, color: `${accent}cc`, ["--vltd-keep-color" as string]: `${accent}cc` }}
             >No</button>
           </div>
         </div>

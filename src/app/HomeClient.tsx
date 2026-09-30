@@ -21,24 +21,34 @@ import { Glyph, type GlyphName } from "@/components/ui/Glyph";
 const FOCUS_LS_KEY = "vltd_primary_focus";
 
 // ── Design tokens (home-only, no site-wide leakage) ─────────────
+// Root cause of the 2026-09-29 light-mode contrast failure: every one of
+// these used to be a hardcoded dark-mode literal (e.g. text: "#ECEDEF"),
+// completely disconnected from the runtime theme. theme-override.css's
+// blanket ".theme-light body *" rules forced the TEXT dark to compensate,
+// but panelBg/heroBg etc stayed hardcoded dark too -- dark text on a dark
+// panel, unreadable. Wiring these to the same --theme-* custom properties
+// ThemeContext.applyThemeVars() already sets per-theme (the pattern C.card/
+// C.elevated below already used) makes the whole file self-correct with the
+// theme instead of depending on a separate CSS file to paper over it.
 const C = {
   card:   "var(--theme-card, rgba(3,8,14,0.95))",
   elevated: "var(--theme-elevated, rgba(6,12,20,0.96))",
   bd:     "var(--theme-border, rgba(203,208,213,0.22))",
   bd2:    "rgba(203,208,213,0.12)",
-  gold:   "#C8CDD2",
+  gold:   "var(--theme-gold, #C8CDD2)",
   goldDim:"rgba(203,208,213,0.08)",
   goldBd: "rgba(203,208,213,0.20)",
-  muted:  "#9BA0A6",
-  muted2: "#9BA0A6",
-  text:   "#ECEDEF",
+  muted:  "var(--theme-text-secondary, #9BA0A6)",
+  muted2: "var(--theme-text-secondary, #9BA0A6)",
+  text:   "var(--theme-text-primary, #ECEDEF)",
   green:  "#52C27A",
   red:    "#E05252",
   r:      "var(--font-serif, 'Cormorant Garamond', Georgia, serif)",
 } as const;
 
-const panelBg = "linear-gradient(165deg, rgba(42,46,52,0.96), rgba(20,22,26,0.97))";
-const premiumBorder = "1px solid rgba(203,208,213,0.42)";
+const panelBg = "var(--theme-card, linear-gradient(165deg, rgba(42,46,52,0.96), rgba(20,22,26,0.97)))";
+const heroBg = "var(--theme-elevated, linear-gradient(135deg, rgba(8,14,24,0.99), rgba(3,8,14,0.98) 52%, rgba(0,0,0,0.94)))";
+const premiumBorder = "1px solid var(--theme-gold-border, rgba(203,208,213,0.42))";
 const premiumShadow = "0 22px 66px rgba(0,0,0,0.38), inset 0 1px 0 rgba(237,239,241,0.08)";
 
 // ── Social platforms ─────────────────────────────────────────────
@@ -219,7 +229,7 @@ function InfoTooltip({ text }: { text: string }) {
 function Stat({ label, value, tone = "default" }: { label: string; value: string; tone?: "default" | "gold" | "gain" | "loss" }) {
   const color = tone === "gold" ? C.gold : tone === "gain" ? C.green : tone === "loss" ? C.red : C.text;
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: "4px", minWidth: "94px", padding: "10px 12px", border: `1px solid ${C.bd2}`, borderRadius: "6px", background: "linear-gradient(165deg, rgba(42,46,52,0.85), rgba(20,22,26,0.9))", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.08)" }}>
+    <div style={{ display: "flex", flexDirection: "column", gap: "4px", minWidth: "94px", padding: "10px 12px", border: `1px solid ${C.bd2}`, borderRadius: "6px", background: "var(--theme-elevated, linear-gradient(165deg, rgba(42,46,52,0.85), rgba(20,22,26,0.9)))", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.08)" }}>
       <span style={{ fontFamily: C.r, fontSize: "28px", fontWeight: 800, letterSpacing: "-0.02em", lineHeight: 1, color }}>{value}</span>
       <span style={{ fontSize: "10px", color: C.muted2, letterSpacing: "0.10em", textTransform: "uppercase", fontWeight: 800 }}>{label}</span>
     </div>
@@ -957,7 +967,7 @@ export default function HomeClient() {
           <SeasonalBanner />
 
           {/* Hero card */}
-          <div style={{ background: "linear-gradient(135deg, rgba(8,14,24,0.99), rgba(3,8,14,0.98) 52%, rgba(0,0,0,0.94))", border: "1px solid rgba(203,208,213,0.42)", borderRadius: "10px", overflow: "hidden", minHeight: "218px", position: "relative", boxShadow: "0 24px 78px rgba(0,0,0,0.42), inset 0 1px 0 rgba(237,239,241,0.08)" }}
+          <div style={{ background: heroBg, border: premiumBorder, borderRadius: "10px", overflow: "hidden", minHeight: "218px", position: "relative", boxShadow: "0 24px 78px rgba(0,0,0,0.42), inset 0 1px 0 rgba(237,239,241,0.08)" }}
             className="grid grid-cols-1 sm:[grid-template-columns:minmax(0,1fr)_240px]">
             <div style={{ position: "absolute", inset: 0, background: "linear-gradient(90deg, rgba(203,208,213,0.08), transparent 38%, rgba(82,214,244,0.035)), radial-gradient(circle at 78% 40%, rgba(203,208,213,0.12), transparent 34%)", pointerEvents: "none" }} />
 

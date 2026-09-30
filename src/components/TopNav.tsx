@@ -386,17 +386,17 @@ function TopNavInner() {
                     href={item.href}
                     className="relative flex flex-col items-center gap-[4px] px-3 pt-1 pb-2"
                   >
+                    {/* Active state is icon/label accent color only
+                        (2026-09-30) -- dropped a blue drop-shadow glow
+                        (rgba(64,146,255,...)) left over from before this app
+                        settled on the platinum/gold accent system; it didn't
+                        match, and BottomNav's matching glow is gone too. */}
                     <AppIcon
                       name={item.icon}
                       variant="navTop"
                       active={active}
                       size={32}
-                      style={{
-                        color: active ? "#C8CDD2" : "var(--muted2, #61656B)",
-                        filter: active
-                          ? "drop-shadow(0 0 6px rgba(64,146,255,0.9)) drop-shadow(0 0 14px rgba(64,146,255,0.6))"
-                          : "none",
-                      }}
+                      style={{ color: active ? "#C8CDD2" : "var(--muted2, #61656B)" }}
                     />
                     <span
                       className="text-[11px] font-semibold tracking-[0.04em] leading-none whitespace-nowrap"
@@ -432,12 +432,7 @@ function TopNavInner() {
                     variant="navTop"
                     active={isMoreActive || moreOpen}
                     size={32}
-                    style={{
-                      color: isMoreActive || moreOpen ? "#C8CDD2" : "var(--muted2, #61656B)",
-                      filter: isMoreActive || moreOpen
-                        ? "drop-shadow(0 0 6px rgba(64,146,255,0.9)) drop-shadow(0 0 14px rgba(64,146,255,0.6))"
-                        : "none",
-                    }}
+                    style={{ color: isMoreActive || moreOpen ? "#C8CDD2" : "var(--muted2, #61656B)" }}
                   />
                   <span
                     className="text-[11px] font-semibold tracking-[0.04em] leading-none whitespace-nowrap"

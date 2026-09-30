@@ -140,22 +140,19 @@ export default function BottomNav() {
                   className="relative flex flex-col items-center"
                   style={{ marginTop: "-22px", marginLeft: "2px", marginRight: "2px" }}
                 >
+                  {/* Redesigned 2026-09-30: was a multi-layer beveled chrome
+                      orb (6-stop box-shadow, radial highlight) that read as
+                      skeuomorphic next to the flat monochrome tab icons
+                      around it. One flat accent fill, one restrained shadow,
+                      same visual family as the rest of the nav. */}
                   <div
-                    className="flex h-[58px] w-[58px] items-center justify-center rounded-full"
+                    className="flex h-[54px] w-[54px] items-center justify-center rounded-full"
                     style={{
-                      background:
-                        "linear-gradient(145deg, #EDEFF1 0%, #C8CDD2 30%, #A8AEB4 60%, #8C9298 100%)",
-                      boxShadow: [
-                        "0 0 0 3px #0B0B0B",
-                        "0 0 0 4px rgba(203,208,213,0.35)",
-                        "0 8px 28px rgba(203,208,213,0.55)",
-                        "0 2px 8px rgba(0,0,0,0.60)",
-                        "inset 0 1px 0 rgba(255,255,255,0.40)",
-                        "inset 0 -2px 4px rgba(0,0,0,0.30)",
-                      ].join(", "),
+                      background: "var(--theme-gold-gradient, linear-gradient(135deg,#8C9298,#C8CDD2))",
+                      boxShadow: "0 0 0 3px #0B0B0B, 0 6px 18px rgba(0,0,0,0.45)",
                     }}
                   >
-                    <AppIcon name="addItem" size={22} strokeWidth={2.5} style={{ color: "#1A0F00" }} />
+                    <AppIcon name="addItem" size={22} strokeWidth={2.5} style={{ color: "#0B0B0B" }} />
                   </div>
                 </Link>
               );
@@ -177,17 +174,17 @@ export default function BottomNav() {
                     background: isActive ? "rgba(203,208,213,0.08)" : "transparent",
                   }}
                 >
+                  {/* Active state is background pill + icon/label accent
+                      color only (2026-09-30) -- the previous blue drop-shadow
+                      glow (rgba(64,146,255,...)) was a leftover from before
+                      this app settled on the platinum/gold accent system and
+                      didn't match it. */}
                   <AppIcon
                     name={tab.icon}
                     variant="navBottom"
                     active={isActive}
                     size={32}
-                    style={{
-                      color: isActive ? GOLD : DIM,
-                      filter: isActive
-                        ? "drop-shadow(0 0 6px rgba(64,146,255,0.9)) drop-shadow(0 0 14px rgba(64,146,255,0.6))"
-                        : "none",
-                    }}
+                    style={{ color: isActive ? GOLD : DIM }}
                   />
                   <span
                     className="text-[11px] font-semibold tracking-[0.04em] transition-colors"
@@ -215,12 +212,7 @@ export default function BottomNav() {
                   variant="navBottom"
                   active={isActive}
                   size={32}
-                  style={{
-                    color: isActive ? GOLD : DIM,
-                    filter: isActive
-                      ? "drop-shadow(0 0 6px rgba(64,146,255,0.9)) drop-shadow(0 0 14px rgba(64,146,255,0.6))"
-                      : "none",
-                  }}
+                  style={{ color: isActive ? GOLD : DIM }}
                 />
                 <span
                   className="text-[11px] font-semibold tracking-[0.04em] transition-colors"
