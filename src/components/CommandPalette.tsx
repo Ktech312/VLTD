@@ -165,8 +165,21 @@ export default function CommandPalette({
 
   // Portal to <body> so the overlay escapes the nav's stacking context /
   // page-transition transforms — otherwise z-index can't lift it above content.
+  //
+  // Perf-security sweep (2026-09-30): this was z-[9998] — the only portaled
+  // sheet in the app not using the 10000/10001/10005 convention every
+  // other one settled on, and critically BELOW BottomNav's own real
+  // rendered z-index of 9999 (its inline style, not its className — see
+  // globals.css's own history on this exact file). Confirmed live via
+  // computed style, not assumed: this DIV's real z-index was resolving to
+  // 1, not 9998, because globals.css's `body > *` override only has scoped
+  // exceptions for the exact 10000/10001/10005 classes, never for 9998.
+  // Even a matching new exception for 9998 wouldn't have been enough on
+  // mobile, since 9998 < BottomNav's 9999 — bumped straight to the
+  // existing, already-covered 10000 instead of adding a fourth magic
+  // number to track.
   return createPortal(
-    <div className="fixed inset-0 z-[9998]">
+    <div className="fixed inset-0 z-[10000]">
       <div className="absolute inset-0 bg-black/75 backdrop-blur-sm" onClick={onClose} />
 
       <div
