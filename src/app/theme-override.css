@@ -140,19 +140,27 @@
   color: var(--theme-text-primary) !important;
 }
 
-/* Force dark text on all text utilities in light mode */
+/* Force dark text on all text utilities in light mode.
+   2026-09-30: the keep-white/vltd-keep-color escape hatches were only ever
+   wired onto the span/div selectors below -- p, h1-h6, li and label had no
+   :not() exclusions at all, so an element using either hatch (e.g.
+   SeasonalBanner's title, an intentionally-dark promo card) still got
+   forced dark here even though it correctly skipped the more specific
+   text-white/text-gray rule further down. Found live: a <p class="text-white
+   keep-white"> still rendered as rgb(25,28,32) against its own always-dark
+   background. Every element type in this rule now honors both hatches. */
 .theme-light body,
-.theme-light body p,
+.theme-light body p:not([class*="keep-white"]):not([class*="vltd-keep-color"]),
 .theme-light body span:not([class*="gold-text"]):not([class*="keep-white"]):not([class*="vltd-keep-color"]),
-.theme-light body h1,
-.theme-light body h2,
-.theme-light body h3,
-.theme-light body h4,
-.theme-light body h5,
-.theme-light body h6,
-.theme-light body li,
-.theme-light body label,
-.theme-light body div:not([class*="gold-text"]):not([class*="vltd-keep-color"]) {
+.theme-light body h1:not([class*="keep-white"]):not([class*="vltd-keep-color"]),
+.theme-light body h2:not([class*="keep-white"]):not([class*="vltd-keep-color"]),
+.theme-light body h3:not([class*="keep-white"]):not([class*="vltd-keep-color"]),
+.theme-light body h4:not([class*="keep-white"]):not([class*="vltd-keep-color"]),
+.theme-light body h5:not([class*="keep-white"]):not([class*="vltd-keep-color"]),
+.theme-light body h6:not([class*="keep-white"]):not([class*="vltd-keep-color"]),
+.theme-light body li:not([class*="keep-white"]):not([class*="vltd-keep-color"]),
+.theme-light body label:not([class*="keep-white"]):not([class*="vltd-keep-color"]),
+.theme-light body div:not([class*="gold-text"]):not([class*="keep-white"]):not([class*="vltd-keep-color"]) {
   color: var(--theme-text-primary, #1A1A2E) !important;
 }
 
@@ -264,13 +272,16 @@
   color: var(--theme-text-primary, #1A1A2E) !important;
 }
 
-/* Button text in light mode */
-.theme-light body button:not([class*="btn-gold"]):not([class*="vltd-gold"]):not([class*="bg-red"]):not([class*="vltd-keep-color"]) {
+/* Button text in light mode. Same keep-white gap as the p/h1-h6/li/label
+   rule above -- this one already excluded vltd-keep-color but not
+   keep-white, so a button floating over always-dark media (Exhibitions'
+   cover-image controls) still went dark-on-dark despite the class. */
+.theme-light body button:not([class*="btn-gold"]):not([class*="vltd-gold"]):not([class*="bg-red"]):not([class*="keep-white"]):not([class*="vltd-keep-color"]) {
   color: var(--theme-text-primary, #1A1A2E) !important;
 }
 
-/* Link text in light mode — unless gold */
-.theme-light body a:not([class*="gold"]):not([class*="btn-gold"]):not([class*="vltd-gold"]) {
+/* Link text in light mode — unless gold, or explicitly kept */
+.theme-light body a:not([class*="gold"]):not([class*="btn-gold"]):not([class*="vltd-gold"]):not([class*="keep-white"]):not([class*="vltd-keep-color"]) {
   color: var(--theme-text-primary, #1A1A2E) !important;
 }
 
