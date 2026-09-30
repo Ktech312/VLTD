@@ -758,8 +758,9 @@ export default function MuseumPage() {
                             handleOpenCoverPicker(gallery);
                           }}
                           disabled={isUploadingCover}
-                          className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-black/55 text-sm font-semibold text-white keep-white ring-1 ring-white/20 backdrop-blur transition hover:bg-black/75 disabled:opacity-50"
+                          className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-black/55 text-sm font-semibold ring-1 ring-white/20 backdrop-blur transition hover:bg-black/75 disabled:opacity-50"
                           aria-label={`Change cover image for ${gallery.title}`}
+                          style={{ color: "#fff" }}
                         >
                           +
                         </button>
@@ -876,7 +877,7 @@ export default function MuseumPage() {
                             <div className="flex h-full w-full items-center justify-center text-[11px] uppercase tracking-[0.18em] text-white/30">No cover</div>
                           )}
                           <button type="button" onClick={() => handleOpenCoverPicker(g)} disabled={isUploadingCover}
-                            className="absolute right-2.5 top-2.5 inline-flex items-center gap-1.5 rounded-[7px] border px-2.5 py-1 text-[11px] font-semibold text-white keep-white backdrop-blur transition disabled:opacity-50" style={{ borderColor: "var(--theme-gold-border, var(--theme-border))", background: "rgba(3,8,14,0.72)", boxShadow: "inset 0 1px 0 rgba(237,239,241,0.12)" }}>
+                            className="absolute right-2.5 top-2.5 inline-flex items-center gap-1.5 rounded-[7px] border px-2.5 py-1 text-[11px] font-semibold backdrop-blur transition disabled:opacity-50" style={{ borderColor: "var(--theme-gold-border, var(--theme-border))", background: "rgba(3,8,14,0.72)", boxShadow: "inset 0 1px 0 rgba(237,239,241,0.12)", color: "#fff" }}>
                             Edit cover
                           </button>
                         </div>
