@@ -454,6 +454,17 @@ function FeaturedGalleryCarousel({ galleries }: { galleries: Gallery[] }) {
   const current = galleries[idx] ?? galleries[0];
   const itemCount = current.itemIds?.length ?? 0;
 
+  // "Latest ref" pattern -- scrollToIndex below reads galleriesRef.current
+  // instead of closing over `galleries` directly. Found live, with hard
+  // evidence (reading the ACTUAL attached onClick off the DOM node via its
+  // React fiber props and invoking it directly -- same no-op as a real
+  // click): the click handler ran every time, threw no error, but silently
+  // targeted a stale/empty `galleries` from an early render and never
+  // picked up the real list once it loaded. A ref updated on every render
+  // can't go stale the way a closure captured once can.
+  const galleriesRef = useRef(galleries);
+  galleriesRef.current = galleries;
+
   const prefersReducedMotion = useMemo(() => {
     if (typeof window === "undefined" || !window.matchMedia) return false;
     return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -490,9 +501,10 @@ function FeaturedGalleryCarousel({ galleries }: { galleries: Gallery[] }) {
   }, [galleries]);
 
   function scrollToIndex(i: number) {
-    const clamped = Math.max(0, Math.min(n - 1, i));
+    const list = galleriesRef.current;
+    const clamped = Math.max(0, Math.min(list.length - 1, i));
     const track = trackRef.current;
-    const el = track?.querySelector<HTMLElement>(`[data-gallery-id="${galleries[clamped]?.id}"]`);
+    const el = track?.querySelector<HTMLElement>(`[data-gallery-id="${list[clamped]?.id}"]`);
     el?.scrollIntoView({ behavior: prefersReducedMotion ? "auto" : "smooth", inline: "center", block: "nearest" });
   }
 
