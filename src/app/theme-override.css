@@ -172,9 +172,9 @@
 }
 
 /* White text → dark in light mode */
-.theme-light [class*="text-white"]:not(.keep-white),
-.theme-light [class*="text-gray-1"]:not(.keep-white),
-.theme-light [class*="text-gray-2"]:not(.keep-white) {
+.theme-light [class*="text-white"]:not(.keep-white):not([class*="vltd-keep-color"]),
+.theme-light [class*="text-gray-1"]:not(.keep-white):not([class*="vltd-keep-color"]),
+.theme-light [class*="text-gray-2"]:not(.keep-white):not([class*="vltd-keep-color"]) {
   color: var(--theme-text-primary, #1A1A2E) !important;
 }
 
@@ -232,10 +232,10 @@
    variant classes as a substring — not just an intentional "muted" class
    — so anything that deliberately wants its own color needs the
    `vltd-keep-color` escape hatch below, same as the button/div rules. */
-.theme-light body [class*="text-muted"]:not([class*="vltd-keep-color"]),
-.theme-light body [class*="opacity-5"]:not([class*="vltd-keep-color"]),
-.theme-light body [class*="opacity-6"]:not([class*="vltd-keep-color"]),
-.theme-light body [class*="opacity-7"]:not([class*="vltd-keep-color"]) {
+.theme-light body [class*="text-muted"]:not([class*="keep-white"]):not([class*="vltd-keep-color"]),
+.theme-light body [class*="opacity-5"]:not([class*="keep-white"]):not([class*="vltd-keep-color"]),
+.theme-light body [class*="opacity-6"]:not([class*="keep-white"]):not([class*="vltd-keep-color"]),
+.theme-light body [class*="opacity-7"]:not([class*="keep-white"]):not([class*="vltd-keep-color"]) {
   color: var(--theme-text-muted, #5A5A6A) !important;
   opacity: 1 !important;
 }
@@ -266,9 +266,9 @@
 }
 
 /* Pills text in light mode — always dark */
-.theme-light body .rounded-full:not([class*="vltd-keep-color"]),
-.theme-light body [class*="badge"]:not([class*="vltd-keep-color"]),
-.theme-light body [class*="pill"]:not([class*="vltd-keep-color"]) {
+.theme-light body .rounded-full:not([class*="keep-white"]):not([class*="vltd-keep-color"]),
+.theme-light body [class*="badge"]:not([class*="keep-white"]):not([class*="vltd-keep-color"]),
+.theme-light body [class*="pill"]:not([class*="keep-white"]):not([class*="vltd-keep-color"]) {
   color: var(--theme-text-primary, #1A1A2E) !important;
 }
 
@@ -286,11 +286,11 @@
 }
 
 /* Hardcoded dark bg overrides in light mode */
-.theme-light body [class*="bg-[#14"],
-.theme-light body [class*="bg-[#0"],
-.theme-light body [class*="bg-[rgba(20"],
-.theme-light body [class*="bg-[rgba(15"],
-.theme-light body [class*="bg-[rgba(14"] {
+.theme-light body [class*="bg-[#14"]:not([class*="keep-white"]):not([class*="vltd-keep-color"]),
+.theme-light body [class*="bg-[#0"]:not([class*="keep-white"]):not([class*="vltd-keep-color"]),
+.theme-light body [class*="bg-[rgba(20"]:not([class*="keep-white"]):not([class*="vltd-keep-color"]),
+.theme-light body [class*="bg-[rgba(15"]:not([class*="keep-white"]):not([class*="vltd-keep-color"]),
+.theme-light body [class*="bg-[rgba(14"]:not([class*="keep-white"]):not([class*="vltd-keep-color"]) {
   background: var(--theme-card, rgba(255,255,255,0.85)) !important;
   color: var(--theme-text-primary, #1A1A2E) !important;
 }
@@ -301,12 +301,20 @@
 }
 
 /* ── PILL/BADGE DARK BG CATCH-ALL (light themes) ── */
-/* Any pill or small badge with black/dark inline bg gets flipped to theme surface */
-.theme-light body [class*="rounded-full"][class*="bg-black"],
-.theme-light body [class*="rounded-full"][class*="bg-[rgba(0"],
-.theme-light body [class*="rounded-2xl"][class*="bg-black"],
-.theme-light body [class*="rounded-xl"][class*="bg-black"],
-.theme-light body [class*="rounded-lg"][class*="bg-black"] {
+/* Any pill or small badge with black/dark inline bg gets flipped to theme
+   surface. 2026-09-30: this one had no keep-white/vltd-keep-color exclusion
+   at all, and unlike the text-forcing rules above it also overwrites the
+   BACKGROUND -- so Exhibitions' floating "change cover" button
+   (rounded-full + bg-black/55, meant to stay a dark scrim + white icon over
+   a photo, same as SeasonalBanner's card) was getting flipped to a light
+   pill with muted text, not just losing its icon color. Found live via
+   getComputedStyle after the p/button text-color fix above still left this
+   one dark-on-mid-gray instead of white-on-black. */
+.theme-light body [class*="rounded-full"][class*="bg-black"]:not([class*="keep-white"]):not([class*="vltd-keep-color"]),
+.theme-light body [class*="rounded-full"][class*="bg-[rgba(0"]:not([class*="keep-white"]):not([class*="vltd-keep-color"]),
+.theme-light body [class*="rounded-2xl"][class*="bg-black"]:not([class*="keep-white"]):not([class*="vltd-keep-color"]),
+.theme-light body [class*="rounded-xl"][class*="bg-black"]:not([class*="keep-white"]):not([class*="vltd-keep-color"]),
+.theme-light body [class*="rounded-lg"][class*="bg-black"]:not([class*="keep-white"]):not([class*="vltd-keep-color"]) {
   background: var(--theme-elevated, rgba(245,240,228,0.95)) !important;
   color: var(--theme-text-secondary, #4A3A1A) !important;
   border: 1px solid var(--theme-border, rgba(180,140,60,0.18)) !important;
