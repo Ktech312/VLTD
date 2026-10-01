@@ -5,7 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Glyph, type GlyphName } from "@/components/ui/Glyph";
 import { useRouter } from "next/navigation";
 import { getCurrentUser, initAuthListener } from "@/lib/auth";
-import { useTheme } from "@/lib/ThemeContext";
+import { HOME_FAQ } from "@/lib/homeFaq";
 
 import {
   GALLERY_EVENT,
@@ -35,36 +35,9 @@ type UniverseCard = {
 };
 
 const FEATURE_CARDS: { icon: React.ReactNode; title: string; description: string }[] = [
-  {
-    title: "Private Vault",
-    description: "Your data. Your control. Locked in, always.",
-    icon: <Glyph name="lock" size={20} strokeWidth={1.8} />,
-  },
-  {
-    title: "Portfolio Intelligence",
-    description: "Real-time values, analytics, and market insights.",
-    icon: <Glyph name="insights" size={20} strokeWidth={1.8} />,
-  },
-  {
-    title: "Insurance Ready",
-    description: "Export complete, accurate records in seconds.",
-    icon: <Glyph name="shield" size={20} strokeWidth={1.8} />,
-  },
-  {
-    title: "Museum Display",
-    description: "Create stunning galleries. Share or keep private.",
-    icon: <Glyph name="exhibitions" size={20} strokeWidth={1.8} />,
-  },
-  {
-    title: "Sell Anywhere",
-    description: "Export anytime. List on any platform you want.",
-    icon: <Glyph name="cloud" size={20} strokeWidth={1.8} />,
-  },
-  {
-    title: "No Lock-In",
-    description: "Your collection is yours. Take it anywhere.",
-    icon: <Glyph name="unlocked" size={20} strokeWidth={1.8} />,
-  },
+  { title: "Organize", description: "Keep photos, descriptions, and condition notes with each collectible.", icon: <Glyph name="vault" size={20} /> },
+  { title: "Track", description: "Record purchase prices and estimated values as your collection grows.", icon: <Glyph name="insights" size={20} /> },
+  { title: "Showcase", description: "Bring selected pieces together in a public exhibition you can share.", icon: <Glyph name="exhibitions" size={20} /> },
 ];
 
 const VAULT_UNIVERSES: UniverseCard[] = [
@@ -113,91 +86,14 @@ const VAULT_UNIVERSES: UniverseCard[] = [
 ];
 
 const HOW_IT_WORKS = [
-  { n: 1, title: "Capture", desc: "Take photos or scan. We handle the rest." },
-  { n: 2, title: "We analyze", desc: "AI reads, values, and grades with precision." },
-  { n: 3, title: "Secure in your vault", desc: "Everything organized, private, and backed up." },
-  { n: 4, title: "Track & grow", desc: "Watch values, trends, and portfolio performance." },
-  { n: 5, title: "Share or sell", desc: "Display in galleries or export anywhere." },
+  { n: 1, title: "Catalog your collection", desc: "Add photos and item details. Review AI-assisted suggestions before saving." },
+  { n: 2, title: "Keep your records together", desc: "Record condition, purchase prices, and the estimated values you use." },
+  { n: 3, title: "Create an exhibition", desc: "Choose pieces to display and share your public exhibition with a link." },
 ];
 
-const COMPARISON_ROWS = [
-  ["Multi-category vault", "One category", "All 7 universes"],
-  ["Portfolio analytics", "Basic", "Full P&L tracking"],
-  ["Public gallery", "No", "Museum view"],
-  ["Insurance documentation", "No", "Printable packet"],
-  ["AI identification & pricing", "Manual", "Smart Scan"],
-  ["Offline capture queue", "No", "Built in"],
-  ["Spreadsheet imports", "Limited", "CSV, Excel, eBay, Whatnot"],
-  ["Public share link", "Partial", "Private by default"],
-  ["Marketplace listing prep", "Manual", "Multi-channel drafts"],
-  ["Team & multi-profile", "No", "Yes"],
-];
-
-const FALLBACK_GALLERIES: PublicGalleryCard[] = [
-  {
-    id: "sample-pop-culture",
-    title: "Pop Culture Collection",
-    description: "Public gallery display for comics, figures, and key collectibles.",
-    href: "/signup",
-    image: "/themes/classic-shelf-wall.webp",
-    itemCount: 7,
-    views: 24,
-    category: "Pop Culture",
-  },
-  {
-    id: "sample-tcg",
-    title: "TCG Slabs",
-    description: "A clean gallery for slabs, singles, grades, and cert details.",
-    href: "/signup",
-    image: "/themes/midnight-shelf-wall.webp",
-    itemCount: 12,
-    views: 18,
-    category: "TCG",
-  },
-  {
-    id: "sample-sports",
-    title: "Sports Memorabilia",
-    description: "A public showcase for cards, autos, jerseys, and signed gear.",
-    href: "/signup",
-    image: "/themes/walnut-shelf-wall.webp",
-    itemCount: 5,
-    views: 11,
-    category: "Sports",
-  },
-];
-
-function normalizeText(value: unknown) {
-  return String(value ?? "")
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, " ")
-    .trim();
-}
-
-function inferCategory(gallery: Gallery) {
-  const text = normalizeText(
-    [
-      gallery.title,
-      gallery.description,
-      gallery.themePack,
-      ...(gallery.publicItemSnapshots ?? []).flatMap((item) => [
-        item.title,
-        item.subtitle,
-        item.grade,
-      ]),
-    ]
-      .filter(Boolean)
-      .join(" "),
-  );
-
-  if (/pokemon|magic|yugioh|tcg|card|slab/.test(text)) return "TCG";
-  if (/sports|rookie|jersey|autograph|memorabilia|baseball|basketball|football/.test(text)) return "Sports";
-  if (/vinyl|album|music|record|artist/.test(text)) return "Music";
-  if (/watch|jewelry|apparel|streetwear|luxury/.test(text)) return "Jewelry";
-  if (/game|console|nintendo|playstation|xbox|arcade/.test(text)) return "Games";
-  if (/comic|marvel|dc|figure|toy|manga|poster|prop/.test(text)) return "Pop Culture";
-
-  return "Misc";
-}
+// Deliberate editorial selection, not the most recently changed user records.
+// Recheck the guest experience before adding another token here.
+const FEATURED_GALLERY_TOKENS = ["pub_mr6nb8k6_vp2iwm7i"];
 
 function resolveSnapshotImage(gallery: Gallery) {
   const snapshot = gallery.publicItemSnapshots?.find(
@@ -243,7 +139,7 @@ function toPublicCard(gallery: Gallery): PublicGalleryCard {
     image: galleryImage(gallery),
     itemCount: gallery.itemIds.length || gallery.publicItemSnapshots?.length || 0,
     views: gallery.analytics?.views ?? 0,
-    category: inferCategory(gallery),
+    category: "Collector showcase",
   };
 }
 
@@ -276,8 +172,9 @@ function PublicGalleryTile({ gallery }: { gallery: PublicGalleryCard }) {
       <div className="p-4">
         <div className="text-sm font-black" style={{ color: 'var(--fg)' }}>{gallery.title}</div>
         <div className="mt-1 text-[11px] uppercase tracking-[0.18em]" style={{ color: 'var(--muted)' }}>
-          {gallery.category} · {gallery.itemCount} pieces · {gallery.views} views
+          {gallery.category}
         </div>
+        <p className="mt-2 text-sm leading-6 text-[color:var(--muted)]">Open the exhibition and explore the individual pieces.</p>
       </div>
     </Link>
   );
@@ -285,11 +182,8 @@ function PublicGalleryTile({ gallery }: { gallery: PublicGalleryCard }) {
 
 
 export default function PublicHomeClient() {
-  const { theme } = useTheme();
-  const cardBg = theme.bgCard;
   const router = useRouter();
   const [galleries, setGalleries] = useState<Gallery[]>([]);
-  const [authChecked, setAuthChecked] = useState(false);
   const [signedIn, setSignedIn] = useState(false);
 
   // Beta waitlist state
@@ -306,10 +200,8 @@ export default function PublicHomeClient() {
       if (user) {
         setSignedIn(true);
         router.replace("/dashboard");
-      } else {
-        setAuthChecked(true);
       }
-    });
+    }).catch(() => { /* Public content remains available if auth is unavailable. */ });
   }, [router]);
 
   useEffect(() => {
@@ -332,8 +224,13 @@ export default function PublicHomeClient() {
   }, []);
 
   const galleryCards = useMemo(() => {
-    const live = galleries.slice(0, 6).map(toPublicCard);
-    return live.length ? live : FALLBACK_GALLERIES;
+    return FEATURED_GALLERY_TOKENS.flatMap((token) => {
+      const gallery = galleries.find((candidate) => candidate.share?.publicToken === token);
+      if (!gallery || gallery.state !== "ACTIVE" || gallery.visibility !== "PUBLIC") return [];
+      if (!(gallery.itemIds.length || gallery.publicItemSnapshots?.length)) return [];
+      if (!gallery.coverImage && !resolveSnapshotImage(gallery)) return [];
+      return [toPublicCard(gallery)];
+    });
   }, [galleries]);
 
   // Opening the form submit no longer sends immediately — it gates the request
@@ -377,10 +274,6 @@ export default function PublicHomeClient() {
     }
   }
 
-  // Show nothing while checking auth (prevents flash of marketing page for logged-in users)
-  if (!authChecked) {
-    return <div className="bg-[color:var(--bg)]" />;
-  }
 
   return (
     <main className="text-[color:var(--fg)]">
@@ -404,11 +297,10 @@ export default function PublicHomeClient() {
                   Log in
                 </Link>
                 <Link
-                  href="/signup"
+                  href="#early-access"
                   className="vltd-primary-button rounded-full px-4 py-2 text-sm font-black whitespace-nowrap transition"
                 >
-                  <span className="md:hidden">Start free</span>
-                  <span className="hidden md:inline">Start your vault</span>
+                  Request early access
                 </Link>
               </>
             )}
@@ -429,33 +321,34 @@ export default function PublicHomeClient() {
             {/* Left — copy + calls to action */}
             <div className="text-center lg:text-left">
               <h1 className="mx-auto max-w-2xl text-4xl font-black leading-[0.96] tracking-[-0.06em] text-text-primary sm:text-5xl lg:mx-0 lg:text-6xl">
-                Your collection deserves a <span className="text-[color:var(--accent)]">real home.</span>
+                Your collection, <span className="text-[color:var(--accent)]">VauLTeD.</span>
               </h1>
               <p className="mx-auto mt-4 max-w-lg text-base leading-7 text-[color:var(--muted)] lg:mx-0">
-                Private vault. Museum display. Portfolio intelligence. Insurance
-                records. One home for every card, comic, record, slab, game, and
-                piece you collect.
+                VLTD (pronounced &ldquo;Vaulted&rdquo;) is the collection tracker for cards,
+                comics, records, games, and other collectibles. Catalog every piece, keep
+                purchase prices and estimated values, and share public exhibitions of the
+                pieces you want to showcase.
               </p>
 
               <div className="mt-7 flex flex-col items-center justify-center gap-3 sm:flex-row lg:justify-start">
                 <Link
-                  href="/signup"
+                  href="#early-access"
                   className="vltd-primary-button inline-flex h-12 items-center justify-center rounded-full px-7 text-sm font-black transition"
                 >
-                  Start your vault — it&apos;s free →
+                  Request early access →
                 </Link>
                 <Link
                   href="#public-galleries"
                   className="inline-flex h-12 items-center justify-center rounded-full border border-[color:var(--border)] px-7 text-sm font-semibold text-[color:var(--muted)] transition hover:text-text-primary"
-                  style={{ background: cardBg }}
+                  style={{ background: 'var(--surface)' }}
                 >
-                  View public galleries
+                  View public exhibitions
                 </Link>
               </div>
 
               {/* Trust row */}
               <div className="mt-6 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 lg:justify-start">
-                {["No credit card", "No ads", "No lock-in"].map((label) => (
+                {["Private beta", "Access by invitation", "Explore exhibitions now"].map((label) => (
                   <span
                     key={label}
                     className="inline-flex items-center gap-1.5 text-xs font-semibold text-[color:var(--muted2)]"
@@ -479,6 +372,30 @@ export default function PublicHomeClient() {
       </section>
 
       {/* ── Beta invite / early access ────────────────────────── */}
+      <section id="public-galleries" className="border-y" style={{ background: 'var(--surface)', borderColor: 'var(--border)' }}>
+        <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
+          <div className="max-w-3xl">
+            <div className="text-[11px] font-semibold uppercase tracking-[0.32em]" style={{ color: 'var(--muted)' }}>
+              Public Exhibitions
+            </div>
+            <h2 className="mt-2 text-3xl font-black tracking-[-0.04em]" style={{ color: 'var(--fg)' }}>
+              Your collection, displayed like it deserves.
+            </h2>
+            <p className="mt-3 text-base leading-7" style={{ color: 'var(--muted)' }}>
+              Explore a public collection, open individual pieces, and see how an
+              exhibition brings them together. No account needed to browse.
+            </p>
+          </div>
+
+          <div className="mt-8 grid max-w-xl gap-5">
+            {galleryCards.map((gallery) => (
+              <PublicGalleryTile key={gallery.id} gallery={gallery} />
+            ))}
+            {galleryCards.length === 0 && <p className="text-sm text-[color:var(--muted)]">Featured exhibitions are being refreshed. Learn how to <Link className="underline" href="/learn/building-exhibitions">build an exhibition</Link>.</p>}
+          </div>
+        </div>
+      </section>
+
       <section id="early-access" className="scroll-mt-24 border-b" style={{ borderColor: 'var(--border)', background: 'linear-gradient(135deg, rgba(203,208,213,0.06) 0%, var(--bg) 60%)' }}>
         <div className="mx-auto max-w-3xl px-4 py-10 sm:px-6 lg:px-8 text-center">
           <div className="inline-flex items-center gap-2 rounded-full border border-[rgba(203,208,213,0.32)] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.22em] mb-4" style={{ color: '#C8CDD2', background: 'rgba(203,208,213,0.07)' }}>
@@ -500,6 +417,8 @@ export default function PublicHomeClient() {
           ) : (
             <form onSubmit={handleWaitlistSubmit} className="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-center">
               <input
+                aria-label="Email address for early access"
+                autoComplete="email"
                 type="email"
                 required
                 placeholder="your@email.com"
@@ -521,7 +440,7 @@ export default function PublicHomeClient() {
           {waitlistStatus === "error" && (
             <p className="mt-3 text-xs" style={{ color: '#f87171' }}>{waitlistMessage}</p>
           )}
-          <p className="mt-3 text-xs" style={{ color: 'var(--muted2)' }}>No spam. Invite-only slots are limited.</p>
+          <p className="mt-3 text-xs" style={{ color: 'var(--muted2)' }}>We’ll email you when your invitation is ready.</p>
         </div>
       </section>
 
@@ -592,7 +511,7 @@ export default function PublicHomeClient() {
       )}
 
       <section className="border-b" style={{ background: 'var(--surface)', borderColor: 'var(--border)' }}>
-        <div className="mx-auto grid max-w-7xl divide-y divide-[color:var(--border)] px-4 sm:px-6 sm:grid-cols-2 sm:divide-x sm:divide-y-0 md:grid-cols-3 lg:grid-cols-6 lg:divide-x lg:divide-y-0 lg:px-8">
+        <div className="mx-auto grid max-w-7xl divide-y divide-[color:var(--border)] px-4 sm:px-6 sm:grid-cols-3 sm:divide-x sm:divide-y-0 lg:px-8">
           {FEATURE_CARDS.map((feature) => (
             <div key={feature.title} className="px-2 py-7 md:px-6">
               <div
@@ -619,10 +538,10 @@ export default function PublicHomeClient() {
             How it works
           </div>
           <h2 className="mt-2 text-3xl font-black tracking-[-0.04em] text-text-primary">
-            From shoebox to vault in five steps.
+            Your collection, from record to showcase.
           </h2>
         </div>
-        <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+        <div className="mt-8 grid gap-4 sm:grid-cols-3">
           {HOW_IT_WORKS.map((step, i) => (
             <div
               key={step.n}
@@ -656,9 +575,8 @@ export default function PublicHomeClient() {
             Every category. One vault.
           </h2>
           <p className="mt-3 text-base leading-7 text-[color:var(--muted)]">
-            Most apps handle one category. VLTD handles all of them — with the same
-            financial tracking, gallery tools, and AI scanning across every collectible
-            type.
+            Collect cards, comics, records, games, and more? Keep your collecting
+            interests together, with details and photos for each piece.
           </p>
         </div>
 
@@ -687,13 +605,13 @@ export default function PublicHomeClient() {
             </div>
           ))}
           <Link
-            href="/signup"
+            href="#early-access"
             className="flex min-h-[150px] flex-col items-center justify-center rounded-2xl border border-dashed border-[rgba(203,208,213,0.34)] p-5 text-center text-[color:var(--accent)] transition hover:bg-[rgba(203,208,213,0.06)]"
             style={{ background: 'var(--surface)' }}
           >
             <span className="text-2xl">+</span>
-            <span className="mt-2 text-sm font-black">Start your vault</span>
-            <span className="text-xs text-[color:var(--muted2)]">Free to join</span>
+            <span className="mt-2 text-sm font-black">Request early access</span>
+            <span className="text-xs text-[color:var(--muted2)]">Private beta</span>
           </Link>
         </div>
       </section>
@@ -709,14 +627,14 @@ export default function PublicHomeClient() {
                   ⟳ Drop Mode
                 </div>
                 <h2 className="text-3xl font-black tracking-[-0.04em] text-text-primary sm:text-4xl">
-                  50 items in one sitting.
+                  Start with a photo. Make the record your own.
                 </h2>
                 <p className="mt-4 max-w-md text-base leading-7 text-[color:var(--muted)]">
-                  Stream Mode keeps the scanner live between items — point, lock, done. Auto-Lock detects the sharpest frame so you never tap the screen. Bulk drops that used to take hours now take minutes.
+                  Use photos and AI-assisted identification to start an item record. Review the suggested details, add what you know, and check estimated values against recent comparable sales.
                 </p>
                 <div className="mt-6 flex flex-wrap gap-3">
-                  <Link href="/signup" className="vltd-primary-button inline-flex h-11 items-center justify-center rounded-full px-6 text-sm font-black transition">
-                    Start scanning — free
+                  <Link href="#early-access" className="vltd-primary-button inline-flex h-11 items-center justify-center rounded-full px-6 text-sm font-black transition">
+                    Request early access
                   </Link>
                   <Link href="/learn" className="inline-flex h-11 items-center justify-center rounded-full border border-[rgba(203,208,213,0.28)] px-6 text-sm font-semibold transition hover:bg-[rgba(203,208,213,0.06)]" style={{ color: '#C8CDD2' }}>
                     Learn more →
@@ -726,10 +644,10 @@ export default function PublicHomeClient() {
               {/* Right — feature list */}
               <div className="flex flex-col justify-center gap-4 border-t border-[rgba(203,208,213,0.12)] px-8 py-10 lg:border-l lg:border-t-0 lg:py-14">
                 {[
-                  { icon: "◎", title: "Auto-Lock Scanner", desc: "Captures the sharpest frame automatically. No tapping, no blur, no retakes." },
+                  { icon: "◎", title: "Auto-Lock Scanner", desc: "Helps capture an image when the camera is steady. Review photo quality before saving." },
                   { icon: "⟳", title: "Stream Mode", desc: "Scanner stays live between items. Continuous flow for large drops." },
-                  { icon: "▣", title: "AI Identification", desc: "Name, category, estimated value — filled in the moment it locks." },
-                  { icon: "↗", title: "Instant Portfolio Update", desc: "Every scanned item updates your P&L in real time." },
+                  { icon: "▣", title: "AI Identification", desc: "Suggested item details for you to review and correct. Condition estimates are not professional grades." },
+                  { icon: "↗", title: "Collection Records", desc: "Keep purchase prices and estimated values with your saved items." },
                 ].map(({ icon, title, desc }) => (
                   <div key={title} className="flex items-start gap-4">
                     <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-[rgba(203,208,213,0.22)] bg-[rgba(203,208,213,0.08)] text-base" style={{ color: '#C8CDD2' }}>
@@ -747,83 +665,11 @@ export default function PublicHomeClient() {
         </div>
       </section>
 
-      <section id="public-galleries" className="border-y" style={{ background: 'var(--surface)', borderColor: 'var(--border)' }}>
-        <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
-          <div className="max-w-3xl">
-            <div className="text-[11px] font-semibold uppercase tracking-[0.32em]" style={{ color: 'var(--muted)' }}>
-              Public Galleries
-            </div>
-            <h2 className="mt-2 text-3xl font-black tracking-[-0.04em]" style={{ color: 'var(--fg)' }}>
-              Your collection, displayed like it deserves.
-            </h2>
-            <p className="mt-3 text-base leading-7" style={{ color: 'var(--muted)' }}>
-              Build a museum-style gallery inside VLTD. Share it with one link. Your
-              vault stays completely private.
-            </p>
-          </div>
-
-          <div className="mt-8 grid gap-5 md:grid-cols-3">
-            {galleryCards.slice(0, 3).map((gallery) => (
-              <PublicGalleryTile key={gallery.id} gallery={gallery} />
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── Social proof — 3 stats ────────────────────────────────── */}
-      <section className="border-b" style={{ borderColor: 'var(--border)' }}>
-        <div className="mx-auto max-w-5xl px-4 py-14 sm:px-6 lg:px-8">
-          <div className="grid gap-px overflow-hidden rounded-2xl sm:grid-cols-3" style={{ background: 'var(--border)' }}>
-            {[
-              { stat: "7", label: "Collecting universes", sub: "Every category, one vault" },
-              { stat: "∞", label: "Items supported", sub: "No limits on vault size" },
-              { stat: "1 link", label: "To share your gallery", sub: "Private vault, public showcase" },
-            ].map(({ stat, label, sub }) => (
-              <div key={label} className="flex flex-col items-center justify-center py-10 text-center" style={{ background: cardBg }}>
-                <div className="text-5xl font-black tracking-[-0.05em]" style={{ color: '#C8CDD2' }}>{stat}</div>
-                <div className="mt-2 text-sm font-black text-text-primary">{label}</div>
-                <div className="mt-1 text-xs text-[color:var(--muted2)]">{sub}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── Comparison table ──────────────────────────────────────── */}
-      <section className="mx-auto max-w-5xl px-4 py-16 text-center sm:px-6 lg:px-8">
-        <div className="text-[11px] font-semibold uppercase tracking-[0.32em] text-[color:var(--muted2)]">
-          Why VLTD
-        </div>
-        <h2 className="mt-2 text-3xl font-black tracking-[-0.04em] text-text-primary">
-          Every other app does one thing.
-        </h2>
-        <p className="mx-auto mt-3 max-w-2xl text-base leading-7 text-[color:var(--muted)]">
-          CLZ. Shiny. CollX. Misprint. Every competitor solves one category. VLTD
-          solves all of them — together, in one vault.
-        </p>
-
-        <div className="mx-auto mt-8 max-w-3xl overflow-hidden rounded-2xl border border-[color:var(--border)] text-left" style={{ background: cardBg }}>
-          {/* Header row */}
-          <div className="grid grid-cols-[1fr_110px_110px] border-b border-[color:var(--border)] bg-[rgba(203,208,213,0.06)]">
-            <div className="px-5 py-3 text-[11px] font-bold uppercase tracking-[0.22em] text-[color:var(--muted2)]">Feature</div>
-            <div className="px-5 py-3 text-center text-[11px] font-bold uppercase tracking-[0.22em] text-[color:var(--muted2)]">Others</div>
-            <div className="bg-[rgba(203,208,213,0.10)] px-5 py-3 text-center text-[11px] font-black uppercase tracking-[0.22em] text-[color:var(--accent)]">
-              VLTD
-            </div>
-          </div>
-          {COMPARISON_ROWS.map(([feature, others, vltd]) => (
-            <div
-              key={feature}
-              className="grid grid-cols-[1fr_110px_110px] border-b border-[color:var(--border)] last:border-b-0"
-            >
-              <div className="px-5 py-3.5 text-sm font-medium text-[color:var(--muted)]">{feature}</div>
-              <div className="px-5 py-3.5 text-center text-sm text-[color:var(--muted2)]">
-                {others}
-              </div>
-              <div className="bg-[rgba(203,208,213,0.04)] px-5 py-3.5 text-center text-sm font-semibold text-[color:var(--vltd-green)]">
-                {vltd}
-              </div>
-            </div>
+      <section className="mx-auto max-w-3xl px-4 py-14 sm:px-6">
+        <h2 className="text-3xl font-black text-text-primary">Before you join</h2>
+        <div className="mt-6 space-y-6 text-[color:var(--muted)]">
+          {HOME_FAQ.map(({ q, a }) => (
+            <div key={q}><h3 className="font-bold text-text-primary">{q}</h3><p className="mt-2">{a}</p></div>
           ))}
         </div>
       </section>
@@ -836,15 +682,14 @@ export default function PublicHomeClient() {
           Your collection is worth tracking properly.
         </h2>
         <p className="mx-auto mt-4 max-w-xl text-base leading-7 text-[color:var(--muted)]">
-          Scan your first item in under 60 seconds. Free to start — no credit card,
-          no category limit, no cap on vault size.
+          Request beta access, watch for your invitation, and start building your collection when your spot is ready.
         </p>
         <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
           <Link
-            href="/signup"
+            href="#early-access"
             className="vltd-primary-button inline-flex h-14 items-center justify-center rounded-full px-8 text-base font-black transition"
           >
-            Vault your collection — free
+            Request early access
           </Link>
           <Link
             href="/login"
@@ -854,7 +699,7 @@ export default function PublicHomeClient() {
           </Link>
         </div>
         <p className="mt-4 text-xs text-[color:var(--muted2)]">
-          Free forever · No credit card · All 7 universes included
+          Private beta · Access by invitation
         </p>
       </section>
 
@@ -864,14 +709,14 @@ export default function PublicHomeClient() {
             <div className="flex flex-col gap-1">
               <BrandMark />
               <p className="mt-1 max-w-xs text-xs text-[color:var(--muted2)]">
-                The collector&apos;s operating system. Every category. One vault.
+                Your collection. Your records. Your showcase.
               </p>
             </div>
             <div className="grid grid-cols-2 gap-x-10 gap-y-2 text-sm sm:grid-cols-3">
               <div>
                 <div className="mb-1.5 text-[10px] font-bold uppercase tracking-[0.18em] text-[color:var(--muted2)]">Product</div>
                 <div className="flex flex-col gap-1.5">
-                  <Link href="/signup" className="text-[color:var(--muted)] hover:text-text-primary transition">Sign up</Link>
+                  <Link href="#early-access" className="text-[color:var(--muted)] hover:text-text-primary transition">Request early access</Link>
                   <Link href="/login" className="text-[color:var(--muted)] hover:text-text-primary transition">Log in</Link>
                   <Link href="/learn" className="text-[color:var(--muted)] hover:text-text-primary transition">Learn</Link>
                 </div>
@@ -879,23 +724,23 @@ export default function PublicHomeClient() {
               <div>
                 <div className="mb-1.5 text-[10px] font-bold uppercase tracking-[0.18em] text-[color:var(--muted2)]">Explore</div>
                 <div className="flex flex-col gap-1.5">
-                  <Link href="#public-galleries" className="text-[color:var(--muted)] hover:text-text-primary transition">Galleries</Link>
+                  <Link href="#public-galleries" className="text-[color:var(--muted)] hover:text-text-primary transition">Exhibitions</Link>
                   <Link href="/discover" className="text-[color:var(--muted)] hover:text-text-primary transition">Discover</Link>
-                  <Link href="/museum" className="text-[color:var(--muted)] hover:text-text-primary transition">Galleries</Link>
+                  <Link href="/museum" className="text-[color:var(--muted)] hover:text-text-primary transition">Exhibitions</Link>
                 </div>
               </div>
               <div>
                 <div className="mb-1.5 text-[10px] font-bold uppercase tracking-[0.18em] text-[color:var(--muted2)]">Universes</div>
                 <div className="flex flex-col gap-1.5">
-                  <Link href="/signup" className="text-[color:var(--muted)] hover:text-text-primary transition">TCG</Link>
-                  <Link href="/signup" className="text-[color:var(--muted)] hover:text-text-primary transition">Sports</Link>
-                  <Link href="/signup" className="text-[color:var(--muted)] hover:text-text-primary transition">Pop Culture</Link>
+                  <Link href="#early-access" className="text-[color:var(--muted)] hover:text-text-primary transition">TCG</Link>
+                  <Link href="#early-access" className="text-[color:var(--muted)] hover:text-text-primary transition">Sports</Link>
+                  <Link href="#early-access" className="text-[color:var(--muted)] hover:text-text-primary transition">Pop Culture</Link>
                 </div>
               </div>
             </div>
           </div>
           <div className="mt-6 border-t border-[color:var(--border)] pt-4 text-xs text-[color:var(--muted2)]">
-            © 2026 VLTD. Pronounced “Vaulted.” — free to start · no credit card required
+            © 2026 VLTD. Pronounced “Vaulted.” — private beta · access by invitation
           </div>
         </div>
       </footer>

@@ -486,12 +486,17 @@ export default function GuestGalleryRenderer({
     .filter((entry) => entry.items.length > 0);
 
   // Section-filtered items for non-embedded public view
-  const displayItems: VaultItem[] = !embedded && sectionViews.length > 0
-    ? (sectionViews[Math.min(selectedSectionIdx, sectionViews.length - 1)]?.items ?? model.galleryItems)
-    : model.galleryItems;
+  const activeSection = !embedded && sectionViews.length > 0
+    ? sectionViews[Math.min(selectedSectionIdx, sectionViews.length - 1)]
+    : undefined;
+  const displayItems: VaultItem[] = activeSection?.items ?? model.galleryItems;
   const backgroundImageUrl = model.background.url;
   const coverImageUrl = typeof model.gallery?.coverImage === "string" ? model.gallery.coverImage.trim() : "";
-  const shelfSlotLayout = getShelfSlotLayout(model);
+  // Items and positions must come from the same exhibit. Previously the first
+  // exhibit's positions were reused on every tab, leaving later exhibits blank.
+  const shelfSlotLayout = activeSection
+    ? activeSection.section.slotLayout
+    : getShelfSlotLayout(model);
 
   return (
     <main
@@ -523,7 +528,7 @@ export default function GuestGalleryRenderer({
                   href={model.navigation.homeHref}
                   className="inline-flex min-h-[42px] items-center justify-center rounded-full bg-[color:var(--pill)] px-4 py-2 text-sm font-medium text-[color:var(--pill-fg)] ring-1 ring-[color:var(--border)]"
                 >
-                  {model.navigation.homeLabel ?? "Galleries"}
+                  {model.navigation.homeLabel ?? "Exhibitions"}
                 </Link>
               ) : null}
             </div>
@@ -613,7 +618,7 @@ export default function GuestGalleryRenderer({
                     contentType="gallery"
                     contentId={String(model.gallery?.id || model.galleryTitle)}
                     metadata={{ title: model.galleryTitle, itemCount: model.galleryItems.length }}
-                    label="Favorite exhibit"
+                    label="Favorite exhibition"
                     showMessage={false}
                   />
                   <div className="rounded-full bg-black/15 px-4 py-2 text-sm font-semibold ring-1 ring-white/10">

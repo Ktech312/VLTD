@@ -35,54 +35,53 @@ import RouteTransition from "@/components/RouteTransition";
 import { ThemeBoot } from "@/components/ThemeBoot";
 import ThemeScript from "@/components/ThemeScript";
 import { ThemeProvider } from "@/lib/ThemeContext";
+import { SITE_URL } from "@/lib/siteUrl";
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://vltd.app";
+const siteUrl = SITE_URL;
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   applicationName: "VLTD",
   title: {
-    default: "VLTD | Collectible Vaults and Public Galleries",
+    default: "VLTD (Vaulted) | Collection Tracker for Cards, Comics & More",
     template: "%s | VLTD",
   },
   description:
-    "VLTD helps collectors organize comics, cards, music, games, memorabilia, and other collectibles in a private vault with polished public galleries.",
+    "VLTD (pronounced Vaulted) is a collection tracker for cards, comics, records and games. Catalog pieces, track value, share public exhibitions. Private beta.",
   keywords: [
+    "collection tracker",
     "collectible vault",
-    "collection management",
     "comic collection tracker",
     "trading card inventory",
     "collector gallery",
     "memorabilia inventory",
     "VLTD",
+    "Vaulted",
   ],
   authors: [{ name: "VLTD" }],
   creator: "VLTD",
   publisher: "VLTD",
-  alternates: {
-    canonical: "/",
-  },
   openGraph: {
     type: "website",
     url: "/",
     siteName: "VLTD",
-    title: "VLTD | Collectible Vaults and Public Galleries",
+    title: "VLTD (Vaulted) | Collection Tracker for Cards, Comics & More",
     description:
-      "Organize private collector inventory and share polished public galleries for comics, cards, music, games, memorabilia, and more.",
+      "VLTD (pronounced Vaulted) is a collection tracker for cards, comics, records and games. Catalog pieces, track value, share public exhibitions. Private beta.",
     images: [
       {
         url: "/og-image.png",
         width: 1200,
         height: 630,
-        alt: "VLTD \u2014 Collectible Vaults and Public Galleries",
+        alt: "VLTD \u2014 Collection tracker and public exhibitions",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "VLTD | Collectible Vaults and Public Galleries",
+    title: "VLTD (Vaulted) | Collection Tracker for Cards, Comics & More",
     description:
-      "A private collector vault with polished public galleries for sharing your collection.",
+      "VLTD (pronounced Vaulted) is a collection tracker for cards, comics, records and games. Catalog pieces, track value, share public exhibitions. Private beta.",
     images: ["/og-image.png"],
   },
   robots: {

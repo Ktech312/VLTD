@@ -206,7 +206,7 @@ function LoginInner() {
                 </div>
 
                 <div className="mt-7 text-center text-base text-[color:var(--muted2)]">
-                  Don&apos;t have a VLTD account? <Link href="/signup" className="font-semibold text-[color:var(--fg)] underline underline-offset-4">Sign up free</Link>
+                  Access is by invitation. <Link href="/#early-access" className="font-semibold text-[color:var(--fg)] underline underline-offset-4">Request early access</Link>
                 </div>
               </>
             )}

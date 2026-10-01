@@ -14,7 +14,12 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const { slug } = await params;
   const article = getArticle(slug);
   if (!article) return { title: "Learn — VLTD" };
-  return { title: `${article.title} — VLTD`, description: article.dek };
+  return {
+    title: article.title,
+    description: article.dek,
+    alternates: { canonical: `/learn/${article.slug}` },
+    openGraph: { title: article.title, description: article.dek, url: `/learn/${article.slug}` },
+  };
 }
 
 function Block({ block }: { block: LearnBlock }) {
