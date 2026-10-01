@@ -367,6 +367,12 @@ function TopNavInner() {
     return item.exact ? pathname === item.href : pathname.startsWith(item.href);
   }
 
+  // The home route isn't itself one of MAIN_NAV_ITEMS/MORE_NAV_ITEMS, so
+  // nothing in the bar lights up there even though the logo is how you get
+  // back to it. EK's stopgap: glow the logo instead, until there's a real
+  // "Home" nav state (2026-10-01).
+  const isHome = pathname === "/" || pathname === "/dashboard";
+
   // Check if any "more" item is active (to highlight the More button)
   const isMoreActive = MORE_NAV_ITEMS.some((item) => isActive(item));
 
@@ -387,7 +393,7 @@ function TopNavInner() {
 
           {/* Logo */}
           <Link href="/" className="shrink-0 flex items-center">
-            <Image src="/brand/vltd-logo.png" alt="VLTD" width={120} height={42} className="vltd-nav-logo h-[52px] w-auto" priority />
+            <Image src="/brand/vltd-logo.png" alt="VLTD" width={120} height={42} className={`vltd-nav-logo h-[52px] w-auto${isHome ? " vltd-nav-logo-home" : ""}`} priority />
           </Link>
 
           {/* Desktop icon nav — centered */}
@@ -694,9 +700,19 @@ function TopNavInner() {
                   key={item.href}
                   href={item.href}
                   onClick={() => setMoreOpen(false)}
-                  className="flex items-center gap-3 rounded-xl px-3 py-2.5 transition hover:bg-[rgba(203,208,213,0.07)]"
+                  className="relative flex items-center gap-3 rounded-xl px-3 py-2.5 transition hover:bg-[rgba(203,208,213,0.07)]"
                   style={{ background: active ? "rgba(203,208,213,0.07)" : "transparent" }}
                 >
+                  {/* Same active signal as the main nav's bottom underline
+                      (#4092FF), rotated to a left-edge bar to fit a
+                      vertical list -- so the two share one "you're here"
+                      language instead of each inventing its own. */}
+                  {active && (
+                    <span
+                      className="absolute left-1 top-2 bottom-2 w-[2px] rounded-full"
+                      style={{ background: "linear-gradient(180deg, transparent, #4092FF, transparent)" }}
+                    />
+                  )}
                   <div className="[&_svg]:h-4 [&_svg]:w-4 shrink-0">
                     <AppIcon name={item.icon} variant="navTop" active={active} size={20} style={{ color: active ? "#C8CDD2" : "var(--muted2, #61656B)" }} />
                   </div>
