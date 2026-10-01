@@ -806,7 +806,12 @@ function RecentSidebarItems({ items }: { items: VaultItem[] }) {
             <div style={{ fontSize: "12px", fontWeight: 600, color: C.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{item.title}</div>
             <div style={{ fontSize: "11px", color: C.muted }}>{item.universe || item.category || "Collectible"}</div>
           </div>
-          <div style={{ fontSize: "12px", fontWeight: 600, flexShrink: 0, color: "var(--data-color, #4FD3EE)", fontVariantNumeric: "tabular-nums" }}>{formatMoney(item.currentValue ?? item.estimatedValue ?? 0)}</div>
+          {/* vltd-keep-color: the light-theme safety net in theme-override.css
+              force-darkens every plain div's text !important -- without this
+              escape hatch (+ the matching --vltd-keep-color custom property)
+              the value would silently lose its data-color blue and match the
+              title's dark text instead. */}
+          <div className="vltd-keep-color" style={{ ["--vltd-keep-color" as string]: "var(--data-color, #4FD3EE)", fontSize: "12px", fontWeight: 600, flexShrink: 0, fontVariantNumeric: "tabular-nums" }}>{formatMoney(item.currentValue ?? item.estimatedValue ?? 0)}</div>
         </Link>
       ))}
     </div>
