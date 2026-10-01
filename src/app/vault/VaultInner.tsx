@@ -640,7 +640,7 @@ function PhotoTile({
           }}
         />
 
-        <div className="pointer-events-none absolute bottom-0 left-0 right-0 bg-black/35 px-3 py-2 text-left text-xs text-white/80">
+        <div className="pointer-events-none absolute bottom-0 left-0 right-0 bg-black/35 px-3 py-2 text-left text-xs text-white/80 vltd-dark-surface">
           {dragOver ? "Drop to add" : hint}
         </div>
 

@@ -182,13 +182,22 @@ function EventArt({
         </>
       )}
       {/* ONE readability gradient -- compact gets the small corner radial
-          it always had (just enough for the fallback-art title below);
-          the larger non-compact/hero usage gets a bottom-anchored fade
-          sized for its full title+date+description text block, instead
-          of relying on a second gradient layered on top by the caller. */}
+          it always had (just enough for the fallback-art title below).
+          The non-compact/hero gradient is a custom 4-stop fade, not
+          Tailwind's 3-stop from/via/to (which only reaches ~50% dark by
+          the gradient's midpoint): found live, with a real bright photo,
+          that the default 3-stop version left the top of a TALL text
+          block (badge+title+date+description) in the lightly-protected
+          via-black/25 zone, since that block takes up well over half the
+          hero's height. This keeps strong darkening through 55% of the
+          height before tapering, regardless of what's in the photo there. */}
       <div className={compact
         ? "absolute inset-0 bg-[radial-gradient(circle_at_18%_72%,rgba(0,0,0,0),rgba(0,0,0,0.62)_70%)]"
-        : "absolute inset-0 bg-gradient-to-t from-black/80 via-black/25 to-transparent"} />
+        : "absolute inset-0"}
+        style={compact ? undefined : {
+          background: "linear-gradient(to top, rgba(0,0,0,0.88) 0%, rgba(0,0,0,0.72) 35%, rgba(0,0,0,0.40) 55%, rgba(0,0,0,0.08) 80%, transparent 100%)",
+        }}
+      />
       <div className="absolute left-4 top-4 rounded-[5px] bg-black/45 px-2 py-1 text-[9px] font-black uppercase tracking-[0.16em]" style={{ color: accent }}>
         {categoryLabel(category)}
       </div>

@@ -14,8 +14,8 @@ import { getFollowerCount } from "@/lib/follows";
 import { readHistory, sliceHistory } from "@/lib/valueHistory";
 import { loadActivityEvents, syncActivityEventsFromSupabase, type ActivityEventRecord } from "@/lib/activityEvents";
 
-const gold = "#C8CDD2";
-const goldBright = "#C8CDD2";
+const gold = "var(--theme-gold, #C8CDD2)";
+const goldBright = "var(--theme-gold, #C8CDD2)";
 const cream = "var(--fg)";
 const muted = "var(--muted)";
 const dim = "var(--muted2)";
@@ -197,7 +197,7 @@ function MobileRow({ icon, title, href, panel: panelKey, onPanel }: { icon: Icon
     <>
       <Icon name={icon} size={20} />
       <span className="flex-1 text-[13px] font-semibold" style={{ color: cream }}>{title}</span>
-      <span className="text-[24px] leading-none" style={{ color: "#E8D9AA" }}>›</span>
+      <span className="text-[24px] leading-none" style={{ color: goldBright }}>›</span>
     </>
   );
   const className = "flex h-[52px] w-full items-center gap-3 border-b px-4 text-left last:border-b-0";

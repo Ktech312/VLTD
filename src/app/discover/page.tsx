@@ -566,7 +566,7 @@ export default function DiscoverPage() {
             </div>
             <div className="mt-4 h-[230px] rounded-[7px] border border-[rgba(203,208,213,0.22)]" style={coverStyle(selectedGallery)}>
               <div className="flex h-full items-start p-3">
-                <span className="rounded-[5px] border border-[rgba(82,214,244,0.35)] bg-black/55 px-2 py-0.5 text-xs font-bold text-[color:var(--info,#52D6F4)]">Public</span>
+                <span className="vltd-dark-surface rounded-[5px] border border-[rgba(82,214,244,0.35)] bg-black/55 px-2 py-0.5 text-xs font-bold text-[color:var(--info,#52D6F4)]">Public</span>
               </div>
             </div>
             <h2 className="mt-4 font-serif text-[28px] font-black leading-tight" style={{ color: "var(--theme-text-primary,#ECEDEF)" }}>{selectedGallery.title}</h2>

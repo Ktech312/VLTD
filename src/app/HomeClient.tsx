@@ -75,7 +75,7 @@ const SOCIAL_DEFS = [
 function CollectionValueSparkline({ points }: { points: { day: string; totalValue: number }[] }) {
   if (points.length < 2) {
     return (
-      <div style={{ marginTop: "14px", fontSize: "11px", color: "#61656B" }}>
+      <div style={{ marginTop: "14px", fontSize: "11px", color: C.muted }}>
         Value history builds up daily — check back soon.
       </div>
     );
@@ -217,7 +217,7 @@ function InfoTooltip({ text }: { text: string }) {
   return (
     <span className="group/tip relative inline-flex items-center justify-center">
       <span className="flex h-3.5 w-3.5 items-center justify-center text-[8px] font-bold leading-none cursor-default select-none" style={{ background: "rgba(203,208,213,0.12)", color: C.muted, border: "1px solid rgba(203,208,213,0.20)", borderRadius: "50%" }}>i</span>
-      <span className="pointer-events-none absolute bottom-full left-1/2 z-50 mb-2 w-52 -translate-x-1/2 px-3 py-2 text-left text-xs leading-snug opacity-0 shadow-xl transition-opacity duration-150 group-hover/tip:opacity-100" style={{ background: "rgba(10,18,35,0.97)", border: "1px solid rgba(203,208,213,0.22)", color: "#D4C9A8", borderRadius: "6px" }}>
+      <span className="pointer-events-none absolute bottom-full left-1/2 z-50 mb-2 w-52 -translate-x-1/2 px-3 py-2 text-left text-xs leading-snug opacity-0 shadow-xl transition-opacity duration-150 group-hover/tip:opacity-100 vltd-dark-surface" style={{ background: "rgba(10,18,35,0.97)", border: "1px solid rgba(203,208,213,0.22)", color: "#D4C9A8", borderRadius: "6px" }}>
         {text}
         <span className="absolute left-1/2 top-full -translate-x-1/2 border-4 border-transparent" style={{ borderTopColor: "rgba(203,208,213,0.22)" }} />
       </span>
@@ -384,7 +384,7 @@ function HeroAvatarPanel({ avatarUrl, onClick }: { avatarUrl: string; onClick: (
   const presetImage = avatarPresetSrc(avatarUrl);
 
   return (
-    <button onClick={onClick} style={{ position: "relative", width: "100%", height: "100%", background: preset?.bg ?? "linear-gradient(155deg,#100D06,#0C0A04)", border: "none", cursor: "pointer", overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", borderLeft: "1px solid rgba(203,208,213,0.16)" }} className="max-sm:hidden">
+    <button onClick={onClick} style={{ position: "relative", width: "100%", height: "100%", background: preset?.bg ?? "linear-gradient(155deg,#100D06,#0C0A04)", border: "none", cursor: "pointer", overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", borderLeft: "1px solid rgba(203,208,213,0.16)" }} className="max-sm:hidden vltd-dark-surface">
       {/* Ambient glow */}
       <div style={{ position: "absolute", inset: 0, background: "radial-gradient(ellipse at 50% 10%, rgba(203,208,213,0.18) 0%, transparent 60%)", pointerEvents: "none" }} />
       {/* Decorative wall frames behind */}
@@ -401,12 +401,12 @@ function HeroAvatarPanel({ avatarUrl, onClick }: { avatarUrl: string; onClick: (
         // eslint-disable-next-line @next/next/no-img-element
         <img src={presetImage} alt={preset?.label ?? "avatar"} style={{ width: "100%", height: "100%", objectFit: "cover", position: "absolute", inset: 0, transform: "scale(1.08)" }} />
       ) : (
-        <span style={{ fontSize: "18px", color: C.gold, position: "relative", zIndex: 1 }}>VLTD</span>
+        <span style={{ fontSize: "18px", position: "relative", zIndex: 1 }}>VLTD</span>
       )}
       {/* Edit hint overlay */}
       <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0)", display: "flex", alignItems: "flex-end", justifyContent: "center", paddingBottom: "12px", opacity: 0, transition: "all 0.2s" }}
         className="hover:!opacity-100 hover:!bg-[rgba(0,0,0,0.4)]">
-        <span style={{ fontSize: "11px", color: C.gold, fontWeight: 600, background: "rgba(0,0,0,0.6)", borderRadius: "4px", padding: "3px 8px" }}>Change avatar</span>
+        <span style={{ fontSize: "11px", fontWeight: 600, background: "rgba(0,0,0,0.6)", borderRadius: "4px", padding: "3px 8px" }}>Change avatar</span>
       </div>
     </button>
   );
@@ -954,10 +954,10 @@ function ProfileNudge({ primaryFocus }: { primaryFocus: string }) {
       background: "rgba(203,208,213,0.08)",
       border: "1px solid rgba(203,208,213,0.22)",
     }}>
-      <Glyph name="sparkle" size={20} className="shrink-0" style={{ color: "#C8CDD2" }} />
+      <Glyph name="sparkle" size={20} className="shrink-0" style={{ color: C.gold }} />
       <div className="flex-1 min-w-0">
-        <div style={{ fontSize: "12px", fontWeight: 700, color: "#C8CDD2" }}>Complete your profile</div>
-        <div style={{ fontSize: "11px", color: "#61656B", marginTop: "1px" }}>
+        <div style={{ fontSize: "12px", fontWeight: 700, color: C.gold }}>Complete your profile</div>
+        <div style={{ fontSize: "11px", color: C.muted, marginTop: "1px" }}>
           Add your collection focus to personalise your Discover feed.
         </div>
       </div>
@@ -966,7 +966,7 @@ function ProfileNudge({ primaryFocus }: { primaryFocus: string }) {
         background: "linear-gradient(135deg, #8C9298, #C8CDD2)", borderRadius: "20px", padding: "5px 12px",
       }}>Set up</a>
       <button type="button" onClick={dismiss}
-        style={{ flexShrink: 0, fontSize: "14px", color: "#635F59", background: "none", border: "none", cursor: "pointer", lineHeight: 1 }}
+        style={{ flexShrink: 0, fontSize: "14px", color: C.muted, background: "none", border: "none", cursor: "pointer", lineHeight: 1 }}
         aria-label="Dismiss">✕</button>
     </div>
   );
@@ -1126,7 +1126,7 @@ export default function HomeClient() {
   );
   if (error) return (
     <main style={{ minHeight: "100vh", padding: "32px 22px" }}>
-      <div style={{ maxWidth: "1200px", margin: "0 auto", background: "rgba(224,82,82,0.08)", border: "1px solid rgba(224,82,82,0.30)", borderRadius: "10px", padding: "16px", color: "#f8c0c0" }}>{error}</div>
+      <div style={{ maxWidth: "1200px", margin: "0 auto", background: "rgba(224,82,82,0.08)", border: "1px solid rgba(224,82,82,0.30)", borderRadius: "10px", padding: "16px", color: C.red }}>{error}</div>
     </main>
   );
 

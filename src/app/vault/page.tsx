@@ -517,7 +517,7 @@ function VaultCard({
       </div>
 
       <div className={["relative z-0 overflow-visible rounded-[8px]", displayMode === "shelf" ? "h-[138px]" : displayMode === "flip" ? "h-[212px]" : "h-[190px]"].join(" ")}>
-        <Link href={detailHref} className="absolute inset-x-0 top-0 bottom-[-58px] z-0 block overflow-hidden rounded-[8px] bg-black/24">
+        <Link href={detailHref} className="absolute inset-x-0 top-0 bottom-[-58px] z-0 block overflow-hidden rounded-[8px] bg-black/24 vltd-dark-surface">
           {image ? (
             <ProgressiveImage
               src={image}
@@ -666,10 +666,10 @@ function VaultEmptyState({
         </div>
         <div
           className="mt-3 inline-flex flex-wrap items-center justify-center gap-1.5 rounded-full px-3 py-1 text-xs"
-          style={{ background: "rgba(203,208,213,0.08)", border: "1px solid rgba(203,208,213,0.15)", color: "#61656B" }}
+          style={{ background: "rgba(203,208,213,0.08)", border: "1px solid rgba(203,208,213,0.15)", color: "var(--theme-text-muted, #61656B)" }}
         >
           <span>Universes:</span>
-          <span style={{ color: "#C8CDD2" }}>TCG - Sports - Comics - Music - Games - Jewelry - Misc</span>
+          <span style={{ color: "var(--theme-gold, #C8CDD2)" }}>TCG - Sports - Comics - Music - Games - Jewelry - Misc</span>
         </div>
 
         <div className="mt-6 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
@@ -858,7 +858,7 @@ function VaultSelectionDrawer({
   }
 
   return (
-    <section className="fixed inset-x-2 bottom-[calc(var(--bottomnav-h,120px)+8px)] z-40 max-h-[74vh] overflow-y-auto rounded-[14px] border border-[color:var(--theme-gold-border)] bg-[rgba(3,11,14,0.94)] p-2 shadow-[0_-18px_60px_rgba(0,0,0,0.46)] backdrop-blur-xl lg:static lg:inset-x-auto lg:bottom-2 lg:z-30 lg:mx-auto lg:mt-5 lg:max-h-none lg:w-fit lg:overflow-visible lg:sticky">
+    <section className="fixed inset-x-2 bottom-[calc(var(--bottomnav-h,120px)+8px)] z-40 max-h-[74vh] overflow-y-auto rounded-[14px] border border-[color:var(--theme-gold-border)] bg-[rgba(3,11,14,0.94)] p-2 shadow-[0_-18px_60px_rgba(0,0,0,0.46)] backdrop-blur-xl lg:static lg:inset-x-auto lg:bottom-2 lg:z-30 lg:mx-auto lg:mt-5 lg:max-h-none lg:w-fit lg:overflow-visible lg:sticky vltd-dark-surface">
       <button
         type="button"
         onClick={onClose}
@@ -1738,7 +1738,7 @@ export default function VaultPage() {
                     type="button"
                     onClick={() => { setSelectMode((v) => !v); setSelectedIds(new Set()); setMoveTargetUniverse(""); setMoveTargetCategory(""); setMoveTargetSubcategory(""); setDeleteConfirmPending(false); }}
                     className="inline-flex h-8 w-8 items-center justify-center rounded-full transition"
-                    style={selectMode ? { background: "rgba(203,208,213,0.18)", color: "#C8CDD2" } : { background: "var(--pill)", color: "var(--muted)" }}
+                    style={selectMode ? { background: "rgba(203,208,213,0.18)", color: "var(--theme-gold, #C8CDD2)" } : { background: "var(--pill)", color: "var(--muted)" }}
                     aria-label="Select items"
                   >
                     <AppIcon name="selectItems" size={15} strokeWidth={1.3} />
@@ -1754,7 +1754,7 @@ export default function VaultPage() {
                             type="button"
                             onClick={() => void confirmMassDelete()}
                             disabled={isDeleting}
-                            className="inline-flex h-8 items-center rounded-[7px] px-3 text-xs font-bold text-white"
+                            className="inline-flex h-8 items-center rounded-[7px] px-3 text-xs font-bold text-white vltd-dark-surface"
                             style={{ background: "#dc2626", opacity: isDeleting ? 0.6 : 1 }}
                           >
                             {isDeleting ? "Deleting…" : "Yes, Delete"}
@@ -1773,7 +1773,7 @@ export default function VaultPage() {
                         <button
                           type="button"
                           onClick={handleMassDelete}
-                          className="inline-flex h-8 items-center rounded-[7px] px-3 text-xs font-semibold text-white"
+                          className="inline-flex h-8 items-center rounded-[7px] px-3 text-xs font-semibold text-white vltd-dark-surface"
                           style={{ background: "#dc2626" }}
                         >
                           Delete {selectedIds.size}
@@ -1819,7 +1819,7 @@ export default function VaultPage() {
                           type="button"
                           onClick={() => void handleMassMove()}
                           className="inline-flex h-8 items-center rounded-[7px] px-3 text-xs font-semibold"
-                          style={{ background: "rgba(203,208,213,0.18)", color: "#C8CDD2", border: "1px solid rgba(203,208,213,0.4)" }}
+                          style={{ background: "rgba(203,208,213,0.18)", color: "var(--theme-gold, #C8CDD2)", border: "1px solid rgba(203,208,213,0.4)" }}
                         >
                           Move
                         </button>
