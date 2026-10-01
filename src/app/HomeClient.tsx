@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import dynamic from "next/dynamic";
-import { useEffect, useLayoutEffect, useMemo, useRef, useState, useCallback } from "react";
+import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { getOnboardingStatus } from "@/lib/auth";
 import { syncPublicProfile } from "@/lib/publicProfile";
@@ -433,178 +433,127 @@ function FeaturedGalleryCard({ galleries }: { galleries: Gallery[] }) {
 }
 
 // ── Featured Gallery carousel (coverflow, compact) ──────────────
-// Rebuilt 2026-09-30 (previous coverflow rewrite): the old version tracked
-// drag distance only in refs (no re-render -> cards didn't follow the
-// finger), changed the index only on release (abrupt jump instead of a
-// tracked drag), keyed cards by `id + offset` (offset changes every time
-// idx changes, so React remounted the DOM node instead of animating it),
-// and hand-rolled separate mouse/touch handlers.
+// Rebuilt 2026-09-30 (second rewrite, replacing native scroll-snap): a
+// desktop mouse can't click-drag scroll-snap, and EK's phone test showed
+// it reading as a clipped strip with no layered depth -- the structural
+// problem was relying on the browser's own scroll physics at all, which
+// gives nothing to hook "wheel" geometry onto. This version drives
+// everything from a single continuous index instead:
 //
-// Replaced with native horizontal scroll-snap: the browser's own scroll
-// physics handles touch/pen/mouse identically, follows the finger during
-// drag by construction, only "animates" (the snap settle) on release, and
-// needs no drag-tracking state at all. Cards are keyed by gallery.id and
-// rendered once; only the "which one is centered" bookkeeping (for the
-// header text and the active-card highlight) is derived, via
-// IntersectionObserver, not reset per scroll frame.
-type DeckCard = { key: string; gallery: Gallery; isClone: boolean };
-
-// Two extra slots (a clone of the last item before the first, a clone of
-// the first item after the last) make the native scroll track infinite:
-// dragging past either end continues smoothly into a clone that's pixel-
-// identical to the real item it mirrors, then a silent (no-animation,
-// no-snap) scrollLeft jump lands back in the real range once it settles
-// -- the same technique used for infinite native carousels generally,
-// needed here because CSS scroll-snap has no wrap-around of its own.
-function buildDeck(galleries: Gallery[]): DeckCard[] {
-  const n = galleries.length;
-  const real = galleries.map((g) => ({ key: g.id, gallery: g, isClone: false }));
-  if (n < 2) return real;
-  return [
-    { key: "clone-start", gallery: galleries[n - 1], isClone: true },
-    ...real,
-    { key: "clone-end", gallery: galleries[0], isClone: true },
-  ];
-}
-
+// - `activeIndex` is the committed, snapped gallery index. `dragDeltaIndex`
+//   is a continuous offset on top of it that only exists while a pointer
+//   drag is in progress -- rendering always uses their sum, so cards
+//   follow the pointer 1:1 (no transition during drag) and ease to the
+//   snapped position once released (transition re-enabled, position set
+//   to an integer) via an ordinary CSS transition -- not rAF, not
+//   scrollIntoView, so there's no native smooth-scroll behavior for a
+//   backgrounded/occluded tab to silently swallow.
+// - `wrappedDelta` gives each gallery's shortest signed distance from the
+//   current position around the loop (e.g. for 5 items, deltas run
+//   -2..2). Every gallery renders exactly once; wrapping falls out of
+//   that arithmetic with no clone DOM nodes and no scrollLeft jumps.
+// - Pointer Events + setPointerCapture on the track mean mouse, touch,
+//   and pen all drag it the same way, even if the pointer wanders off
+//   the card it started on.
 function FeaturedGalleryCarousel({ galleries }: { galleries: Gallery[] }) {
   const n = galleries.length;
-  const deck = useMemo(() => buildDeck(galleries), [galleries]);
-  // Position within `deck` (not within `galleries`) -- position 0 is the
-  // start clone when n>1, so the first real item sits at position 1.
-  const [pos, setPos] = useState(n > 1 ? 1 : 0);
-  // `galleries` starts empty and loads in async -- when the count first
-  // goes from 0 to real data, `deck` grows to include the two clone slots
-  // but `pos` (still its initial-render value) would then be pointing at
-  // the wrong slot. Reset to the correct starting position whenever the
-  // underlying item count changes.
+  const CARD_W = 118;
+  const CARD_H = 156;
+  const SPACING = 92; // px between adjacent card centers
+  const VISIBLE_WINDOW = 3; // render up to this many cards deep on either side
+  const CLICK_THRESHOLD_PX = 6;
+
+  const [activeIndex, setActiveIndex] = useState(0);
+  const [dragDeltaIndex, setDragDeltaIndex] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
+
+  // `galleries` starts empty and loads in async -- reset to the start
+  // whenever the underlying item count changes so a stale index from an
+  // earlier (possibly empty) render can't point past the new array.
   const prevN = useRef(n);
   useEffect(() => {
     if (n !== prevN.current) {
       prevN.current = n;
-      setPos(n > 1 ? 1 : 0);
+      setActiveIndex(0);
+      setDragDeltaIndex(0);
     }
   }, [n]);
-  const trackRef = useRef<HTMLDivElement>(null);
-  const current = deck[pos]?.gallery ?? galleries[0];
-  const itemCount = current?.itemIds?.length ?? 0;
-
-  // "Latest ref" pattern -- scrollToPos below reads deckRef.current instead
-  // of closing over `deck` directly. Found live, with hard evidence
-  // (reading the ACTUAL attached onClick off the DOM node via its React
-  // fiber props and invoking it directly -- same no-op as a real click):
-  // the click handler ran every time, threw no error, but silently
-  // targeted a stale/empty list from an early render. A ref updated on
-  // every render can't go stale the way a closure captured once can.
-  const deckRef = useRef(deck);
-  useLayoutEffect(() => { deckRef.current = deck; }, [deck]);
 
   const prefersReducedMotion = useMemo(() => {
     if (typeof window === "undefined" || !window.matchMedia) return false;
     return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   }, []);
 
-  // Un-scrolled, a flex track's natural resting scrollLeft is 0 -- with
-  // the clone-start slot now occupying deck position 0, that would show
-  // the clone (the last gallery, not the first) centered on first paint,
-  // mismatching the header text above. Center the real starting position
-  // immediately, synchronously before paint, whenever the deck's shape
-  // changes (e.g. once `galleries` finishes loading and clones appear).
-  useLayoutEffect(() => {
-    const startPos = n > 1 ? 1 : 0;
-    const track = trackRef.current;
-    const el = track?.querySelector<HTMLElement>(`[data-deck-pos="${startPos}"]`);
-    if (!track || !el) return;
-    track.scrollLeft = el.offsetLeft - (track.clientWidth - el.clientWidth) / 2;
-  }, [deck, n]);
+  const trackRef = useRef<HTMLDivElement>(null);
+  const dragStartXRef = useRef(0);
+  const dragStartIndexRef = useRef(0);
+  const dragMovedRef = useRef(false);
+  const activePointerIdRef = useRef<number | null>(null);
 
-  // Track which card is centered -- this is the ONLY thing derived from
-  // scrolling; it never drives the scroll itself, so there's nothing for
-  // it to fight with native touch/pointer scrolling. When the centered
-  // card turns out to be one of the two clones, silently retarget to the
-  // real position it mirrors once the scroll has settled, so continued
-  // dragging always has real range left to move into.
-  useEffect(() => {
-    const track = trackRef.current;
-    if (!track) return;
-    const cards = Array.from(track.querySelectorAll<HTMLElement>("[data-deck-pos]"));
-    let settleTimer: ReturnType<typeof setTimeout> | null = null;
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const mostVisible = entries
-          .filter((e) => e.isIntersecting)
-          .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
-        if (!mostVisible) return;
-        const p = Number((mostVisible.target as HTMLElement).dataset.deckPos);
-        setPos(p);
-        if (settleTimer) clearTimeout(settleTimer);
-        if (deckRef.current[p]?.isClone) {
-          settleTimer = setTimeout(() => {
-            const list = deckRef.current;
-            const realPos = p === 0 ? list.length - 2 : 1;
-            const t = trackRef.current;
-            const target = t?.querySelector<HTMLElement>(`[data-deck-pos="${realPos}"]`);
-            if (!t || !target) return;
-            t.style.scrollSnapType = "none";
-            t.scrollLeft = target.offsetLeft - (t.clientWidth - target.clientWidth) / 2;
-            t.style.scrollSnapType = "x mandatory";
-            setPos(realPos);
-          }, 150);
-        }
-      },
-      { root: track, threshold: [0.6] }
-    );
-    cards.forEach((el) => observer.observe(el));
-    return () => { observer.disconnect(); if (settleTimer) clearTimeout(settleTimer); };
-  }, [deck]);
+  const current = galleries[activeIndex];
+  const itemCount = current?.itemIds?.length ?? 0;
 
-  function scrollToPos(p: number) {
-    const list = deckRef.current;
-    const clamped = Math.max(0, Math.min(list.length - 1, p));
-    const track = trackRef.current;
-    const el = track?.querySelector<HTMLElement>(`[data-deck-pos="${clamped}"]`);
-    if (!el || !track) return;
-    const targetLeft = el.offsetLeft - (track.clientWidth - el.clientWidth) / 2;
-    if (prefersReducedMotion) {
-      track.scrollLeft = targetLeft;
-      setPos(clamped);
-      return;
-    }
-    // Verified live, reproducibly, with scroll-position measurements
-    // sampled every 100ms across a full second (not a visual guess):
-    // Element.scrollIntoView/scrollTo with behavior:"smooth" is a silent
-    // no-op in this exact test environment -- confirmed even calling it
-    // completely manually, outside React, with scroll-snap-type removed
-    // from the equation entirely. Rather than ship a fix riding on a
-    // native browser feature I have no way to confirm actually animates
-    // on EK's phone, this drives scrollLeft by hand with rAF -- doesn't
-    // depend on scrollIntoView/scrollTo's smooth behavior at all, so
-    // there's nothing left for a browser quirk to silently swallow.
-    track.style.scrollSnapType = "none";
-    const startLeft = track.scrollLeft;
-    const delta = targetLeft - startLeft;
-    const duration = 320;
-    const startTime = performance.now();
-    const ease = (t: number) => 1 - Math.pow(1 - t, 3); // ease-out cubic
-    function step(now: number) {
-      const elapsed = now - startTime;
-      const t = Math.min(1, elapsed / duration);
-      track!.scrollLeft = startLeft + delta * ease(t);
-      if (t < 1) {
-        requestAnimationFrame(step);
-      } else {
-        track!.style.scrollSnapType = "x mandatory";
-      }
-    }
-    requestAnimationFrame(step);
+  function wrapIndex(i: number) {
+    if (n === 0) return 0;
+    return ((Math.round(i) % n) + n) % n;
+  }
+
+  function wrappedDelta(i: number, position: number) {
+    if (n === 0) return 0;
+    let d = i - position;
+    d = ((d % n) + n) % n;
+    if (d > n / 2) d -= n;
+    return d;
+  }
+
+  function goTo(target: number) {
+    setDragDeltaIndex(0);
+    setActiveIndex(wrapIndex(target));
   }
 
   function onTrackKeyDown(e: React.KeyboardEvent) {
-    if (e.key === "ArrowRight") { e.preventDefault(); scrollToPos(pos + 1); }
-    else if (e.key === "ArrowLeft") { e.preventDefault(); scrollToPos(pos - 1); }
+    if (e.key === "ArrowRight") { e.preventDefault(); goTo(activeIndex + 1); }
+    else if (e.key === "ArrowLeft") { e.preventDefault(); goTo(activeIndex - 1); }
+  }
+
+  function onPointerDown(e: React.PointerEvent<HTMLDivElement>) {
+    if (n < 2) return;
+    e.currentTarget.setPointerCapture(e.pointerId);
+    activePointerIdRef.current = e.pointerId;
+    dragStartXRef.current = e.clientX;
+    dragStartIndexRef.current = activeIndex;
+    dragMovedRef.current = false;
+    setIsDragging(true);
+  }
+
+  function onPointerMove(e: React.PointerEvent<HTMLDivElement>) {
+    if (activePointerIdRef.current !== e.pointerId) return;
+    const deltaPx = e.clientX - dragStartXRef.current;
+    if (Math.abs(deltaPx) > CLICK_THRESHOLD_PX) dragMovedRef.current = true;
+    setDragDeltaIndex(-deltaPx / SPACING);
+  }
+
+  function endDrag(e: React.PointerEvent<HTMLDivElement>) {
+    if (activePointerIdRef.current !== e.pointerId) return;
+    activePointerIdRef.current = null;
+    setIsDragging(false);
+    if (dragMovedRef.current) {
+      goTo(dragStartIndexRef.current + dragDeltaIndex);
+      // The click that follows this pointerup (e.g. landing on a card)
+      // must not also re-trigger navigation -- cleared after the click
+      // has had a chance to check it, not before.
+      setTimeout(() => { dragMovedRef.current = false; }, 0);
+    } else {
+      setDragDeltaIndex(0);
+    }
   }
 
   if (!current) return null;
+
+  const position = activeIndex + dragDeltaIndex;
+  const cards = galleries
+    .map((gallery, i) => ({ gallery, i, delta: wrappedDelta(i, position) }))
+    .filter((c) => Math.abs(c.delta) <= VISIBLE_WINDOW + 0.5);
 
   return (
     <div className="relative" style={{ padding: "12px" }}>
@@ -612,76 +561,80 @@ function FeaturedGalleryCarousel({ galleries }: { galleries: Gallery[] }) {
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "8px" }}>
         <div>
           <p style={{ fontSize: "9px", fontWeight: 600, letterSpacing: "0.28em", textTransform: "uppercase", color: C.muted }}>
-            Featured Exhibition <span style={{ opacity: 0.5, marginLeft: "6px" }}>{(galleries.indexOf(current) + 1) || 1} / {n}</span>
+            Featured Exhibition <span style={{ opacity: 0.5, marginLeft: "6px" }}>{activeIndex + 1} / {n}</span>
           </p>
           <h2 style={{ fontSize: "13px", fontWeight: 700, color: C.text, marginTop: "2px" }}>{current.title || "Untitled"}</h2>
           <p style={{ fontSize: "11px", color: C.muted, marginTop: "1px" }}>{itemCount} piece{itemCount !== 1 ? "s" : ""}</p>
         </div>
         {n > 1 && (
           <div style={{ display: "flex", gap: "4px" }}>
-            <button type="button" aria-label="Previous exhibition" onClick={() => scrollToPos(pos - 1)}
+            <button type="button" aria-label="Previous exhibition" onClick={() => goTo(activeIndex - 1)}
               style={{ width: "24px", height: "24px", display: "flex", alignItems: "center", justifyContent: "center", borderRadius: "50%", border: `1px solid ${C.goldBd}`, background: C.goldDim, color: C.gold, fontSize: "14px", cursor: "pointer" }}>‹</button>
-            <button type="button" aria-label="Next exhibition" onClick={() => scrollToPos(pos + 1)}
+            <button type="button" aria-label="Next exhibition" onClick={() => goTo(activeIndex + 1)}
               style={{ width: "24px", height: "24px", display: "flex", alignItems: "center", justifyContent: "center", borderRadius: "50%", border: `1px solid ${C.goldBd}`, background: C.goldDim, color: C.gold, fontSize: "14px", cursor: "pointer" }}>›</button>
           </div>
         )}
       </div>
-      {/* Scroll-snap track -- infinite via the two clone slots above */}
+      {/* Index-driven coverflow -- see the function-level comment above for
+          why this replaced native scroll-snap. */}
       <div
         ref={trackRef}
         role="listbox"
         aria-label="Featured exhibitions"
         tabIndex={0}
         onKeyDown={onTrackKeyDown}
-        className="no-scrollbar flex"
+        onPointerDown={onPointerDown}
+        onPointerMove={onPointerMove}
+        onPointerUp={endDrag}
+        onPointerCancel={endDrag}
+        className="relative"
         style={{
-          overflowX: "auto",
-          scrollSnapType: "x mandatory",
-          WebkitOverflowScrolling: "touch",
-          touchAction: "pan-x",
-          gap: "10px",
-          padding: "5px 50%",
           height: "160px",
-          alignItems: "center",
+          touchAction: n > 1 ? "none" : "auto",
+          cursor: n > 1 ? (isDragging ? "grabbing" : "grab") : "default",
+          userSelect: "none",
         }}
       >
-        {deck.map((card, position) => {
+        {cards.map(({ gallery, i, delta }) => {
           // Graduated depth by distance from the centered card -- the
-          // "layered wheel" look, restored after an earlier pass flattened
-          // it to a plain active/inactive binary and lost the receding
-          // depth EK's original coverflow had.
-          const distance = Math.abs(position - pos);
-          const scale = Math.max(0.6, 1 - distance * 0.18);
-          const opacity = Math.max(0.25, 1 - distance * 0.35);
-          const isActive = distance === 0;
+          // layered, receding "wheel" look, driven continuously by `delta`
+          // (fractional mid-drag) instead of a binary active/inactive flag.
+          const absDist = Math.abs(delta);
+          const scale = Math.max(0.58, 1 - absDist * 0.18);
+          const opacity = Math.max(0, 1 - absDist * 0.4);
+          const isActive = absDist < 0.5;
           return (
             <button
-              key={card.key}
-              data-deck-pos={position}
-              aria-hidden={card.isClone}
+              key={gallery.id}
+              data-gallery-index={i}
               role="option"
               aria-selected={isActive}
               type="button"
-              onClick={() => scrollToPos(position)}
-              className="relative overflow-hidden"
+              onClick={() => {
+                if (dragMovedRef.current) { dragMovedRef.current = false; return; }
+                goTo(position + delta);
+              }}
+              className="absolute overflow-hidden"
               style={{
-                flexShrink: 0,
-                scrollSnapAlign: "center",
-                width: "112px",
-                height: "150px",
+                top: "50%",
+                left: "50%",
+                width: `${CARD_W}px`,
+                height: `${CARD_H}px`,
+                marginLeft: `${-CARD_W / 2}px`,
+                marginTop: `${-CARD_H / 2}px`,
                 borderRadius: "10px",
-                transform: `scale(${scale})`,
+                transform: `translateX(${delta * SPACING}px) scale(${scale})`,
                 opacity,
-                transition: prefersReducedMotion ? "none" : "transform 0.25s ease, opacity 0.25s ease",
+                zIndex: Math.round(100 - absDist * 10),
+                transition: prefersReducedMotion || isDragging ? "none" : "transform 0.32s cubic-bezier(0.22,0.61,0.36,1), opacity 0.32s ease",
                 border: isActive ? "2px solid rgba(203,208,213,0.55)" : "1px solid rgba(203,208,213,0.14)",
                 background: "rgba(10,18,35,0.9)",
                 boxShadow: isActive ? "0 8px 28px rgba(0,0,0,0.55)" : "none",
-                cursor: isActive ? "default" : "pointer",
               }}
             >
-              {card.gallery.coverImage ? (
+              {gallery.coverImage ? (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={card.gallery.coverImage} alt={card.gallery.title} loading="eager" style={{ width: "100%", height: "100%", objectFit: "cover" }} draggable={false} />
+                <img src={gallery.coverImage} alt={gallery.title} loading="eager" style={{ width: "100%", height: "100%", objectFit: "cover" }} draggable={false} />
               ) : (
                 <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", opacity: 0.2 }}><Glyph name="exhibition" size={20} /></div>
               )}
@@ -842,8 +795,8 @@ function RecentSidebarItems({ items }: { items: VaultItem[] }) {
     <div style={{ flex: 1, overflowY: "auto", padding: "8px", display: "flex", flexDirection: "column", gap: "7px" }}>
       {recent.map((item) => (
         <Link key={item.id} href={"/vault/item/" + item.id}
-          style={{ display: "flex", gap: "10px", padding: "9px", border: premiumBorder, borderRadius: "8px", alignItems: "center", textDecoration: "none", background: "linear-gradient(135deg, rgba(8,14,20,0.84), rgba(3,8,14,0.94))", boxShadow: "inset 0 1px 0 rgba(237,239,241,0.06)" }}>
-          <div style={{ width: "34px", height: "34px", flexShrink: 0, borderRadius: "6px", border: `1px solid rgba(203,208,213,0.34)`, background: "rgba(10,18,35,0.9)", overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "12px" }}>
+          style={{ display: "flex", gap: "10px", padding: "9px", border: `1px solid ${C.bd}`, borderRadius: "8px", alignItems: "center", textDecoration: "none", background: C.elevated, boxShadow: "inset 0 1px 0 rgba(237,239,241,0.06)" }}>
+          <div style={{ width: "34px", height: "34px", flexShrink: 0, borderRadius: "6px", border: `1px solid ${C.bd}`, background: C.elevated, overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "12px" }}>
             {item.imageFrontUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img src={item.imageFrontUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
@@ -853,7 +806,7 @@ function RecentSidebarItems({ items }: { items: VaultItem[] }) {
             <div style={{ fontSize: "12px", fontWeight: 600, color: C.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{item.title}</div>
             <div style={{ fontSize: "11px", color: C.muted }}>{item.universe || item.category || "Collectible"}</div>
           </div>
-          <div style={{ fontSize: "12px", fontWeight: 600, flexShrink: 0, color: "#52D6F4", fontVariantNumeric: "tabular-nums" }}>{formatMoney(item.currentValue ?? item.estimatedValue ?? 0)}</div>
+          <div style={{ fontSize: "12px", fontWeight: 600, flexShrink: 0, color: "var(--data-color, #4FD3EE)", fontVariantNumeric: "tabular-nums" }}>{formatMoney(item.currentValue ?? item.estimatedValue ?? 0)}</div>
         </Link>
       ))}
     </div>

@@ -179,6 +179,7 @@ function TopNavInner() {
 
   const [input, setInput] = useState("");
   const [userOpen, setUserOpen] = useState(false);
+  const [levelInfoOpen, setLevelInfoOpen] = useState(false);
   const [commandOpen, setCommandOpen] = useState(false);
   const [guideOpen, setGuideOpen] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
@@ -194,6 +195,7 @@ function TopNavInner() {
 
   const userMenuRef = useRef<HTMLDivElement | null>(null);
   const dropdownRef = useRef<HTMLDivElement | null>(null);
+  const levelInfoRef = useRef<HTMLDivElement | null>(null);
   const guideRef = useRef<HTMLDivElement | null>(null);
   const moreRef = useRef<HTMLDivElement | null>(null);
   const moreDropdownRef = useRef<HTMLDivElement | null>(null);
@@ -322,6 +324,7 @@ function TopNavInner() {
       const inTrigger = userMenuRef.current?.contains(target);
       const inDropdown = dropdownRef.current?.contains(target);
       if (!inTrigger && !inDropdown) setUserOpen(false);
+      if (levelInfoRef.current && !levelInfoRef.current.contains(target)) setLevelInfoOpen(false);
       if (guideRef.current && !guideRef.current.contains(target)) setGuideOpen(false);
       const inMore = moreRef.current?.contains(target);
       const inMoreDropdown = moreDropdownRef.current?.contains(target);
@@ -330,6 +333,18 @@ function TopNavInner() {
     document.addEventListener("mousedown", handleOutside);
     return () => document.removeEventListener("mousedown", handleOutside);
   }, []);
+
+  // The Collector Level info popover closes on Escape, independent of the
+  // account dropdown it lives inside (closing just the popover should not
+  // also close the whole menu).
+  useEffect(() => {
+    if (!levelInfoOpen) return;
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape") setLevelInfoOpen(false);
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [levelInfoOpen]);
 
   function applySearch(raw: string) {
     const parsed = parseQuerySmart(raw);
@@ -739,8 +754,42 @@ function TopNavInner() {
           {signedIn && levelInfo && (
             <div className="px-4 py-3.5" style={{ borderBottom: "1px solid rgba(203,208,213,0.10)" }}>
               <div className="flex items-baseline justify-between gap-2">
-                <span className="text-sm font-black" style={{ color: "#4FD3EE" }}>
+                <span className="flex items-center gap-1.5 text-sm font-black" style={{ color: "#4FD3EE" }}>
                   {levelInfo.title} · Level {levelInfo.level}
+                  <span ref={levelInfoRef} className="relative inline-flex">
+                    <button
+                      type="button"
+                      aria-label="Level progress details"
+                      aria-expanded={levelInfoOpen}
+                      aria-controls="collector-level-info-popover"
+                      onClick={() => setLevelInfoOpen((v) => !v)}
+                      className="flex h-4 w-4 items-center justify-center rounded-full text-[9px] font-bold transition hover:opacity-80"
+                      style={{ background: "rgba(79,211,238,0.14)", color: "#4FD3EE", border: "1px solid rgba(79,211,238,0.35)" }}
+                    >
+                      i
+                    </button>
+                    {levelInfoOpen && (
+                      <div
+                        id="collector-level-info-popover"
+                        className="absolute left-0 top-[calc(100%+6px)] z-10 w-56 rounded-xl p-3 text-left text-[11px] font-normal"
+                        style={{
+                          background: "var(--theme-elevated, rgba(20,22,26,0.98))",
+                          border: "1px solid rgba(203,208,213,0.18)",
+                          boxShadow: "0 12px 32px rgba(0,0,0,0.5)",
+                          color: "var(--muted2, #61656B)",
+                        }}
+                      >
+                        <div className="mb-1.5 font-semibold" style={{ color: "var(--theme-text-primary, #ECEDEF)" }}>
+                          {Math.max(0, levelInfo.nextLevelAt - levelInfo.points)} pts to Level {levelInfo.level + 1}
+                        </div>
+                        <ul className="space-y-0.5">
+                          <li>Items added: +10</li>
+                          <li>Exhibitions built: +40</li>
+                          <li>Followers: +5 each</li>
+                        </ul>
+                      </div>
+                    )}
+                  </span>
                 </span>
                 <span className="shrink-0 text-[11px]" style={{ color: "var(--muted2, #61656B)" }}>
                   {levelInfo.points} pts
@@ -752,26 +801,23 @@ function TopNavInner() {
                   style={{ width: `${Math.round(levelInfo.progress * 100)}%`, background: "#4FD3EE" }}
                 />
               </div>
-              <div className="mt-1.5 text-[11px]" style={{ color: "var(--muted2, #61656B)" }}>
-                {Math.max(0, levelInfo.nextLevelAt - levelInfo.points)} pts to Level {levelInfo.level + 1} — earned from
-                items you add (+10), exhibitions you build (+40), and followers (+5 each).
-              </div>
             </div>
           )}
           <div className="px-2 py-2">
             {signedIn ? (
               <>
-                {[
-                  { href: "/more", label: "Command Center" },
-                  { href: "/account", label: "Account Settings" },
-                  { href: "/account/invite", label: "Invite Friends" },
-                ].map(({ href, label }) => (
-                  <Link key={href} href={href} onClick={() => setUserOpen(false)}
-                    className="block rounded-xl px-3 py-2.5 text-sm transition hover:bg-[rgba(203,208,213,0.06)]"
+                <div className="flex items-center gap-2 px-1 py-1">
+                  <Link href="/account" onClick={() => setUserOpen(false)}
+                    className="flex-1 rounded-xl px-3 py-1.5 text-sm transition hover:bg-[rgba(203,208,213,0.06)]"
                     style={{ color: "var(--theme-text-primary, #ECEDEF)" }}>
-                    {label}
+                    Account Settings
                   </Link>
-                ))}
+                  <Link href="/account/invite" onClick={() => setUserOpen(false)}
+                    className="shrink-0 rounded-lg px-2.5 py-1.5 text-[11px] font-semibold transition hover:opacity-85"
+                    style={{ background: "rgba(203,208,213,0.12)", color: "#C8CDD2", border: "1px solid rgba(203,208,213,0.3)" }}>
+                    Invite Friends
+                  </Link>
+                </div>
                 {profiles.length > 1 && (
                   <div className="mt-1 pt-2" style={{ borderTop: "1px solid rgba(203,208,213,0.10)" }}>
                     <div className="px-3 pb-1 text-[10px] font-semibold uppercase tracking-widest" style={{ color: "var(--muted2, #61656B)" }}>
@@ -812,26 +858,6 @@ function TopNavInner() {
                     })}
                   </div>
                 )}
-                {adminRole && (
-                  <div className="mt-2 pt-2" style={{ borderTop: "1px solid rgba(203,208,213,0.28)" }}>
-                    <Link href="/admin/characters" onClick={() => setUserOpen(false)}
-                      className="flex items-center gap-2 rounded-xl px-3 py-2.5 text-sm font-medium transition hover:bg-[rgba(203,208,213,0.08)]"
-                      style={{ color: "#C8CDD2" }}>
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" style={{ opacity: 0.9 }}>
-                        <path d="M12 2a5 5 0 1 1 0 10A5 5 0 0 1 12 2Z" stroke="currentColor" strokeWidth="1.75" />
-                        <path d="M3 21c0-4.418 4.03-8 9-8s9 3.582 9 8" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
-                        <circle cx="19" cy="7" r="3" fill="#C8CDD2" stroke="#0b1320" strokeWidth="1.5" />
-                        <path d="M18 7h2M19 6v2" stroke="#0b1320" strokeWidth="1.2" strokeLinecap="round" />
-                      </svg>
-                      Admin
-                      <span className="ml-auto rounded-full px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide"
-                        style={{ background: "rgba(203,208,213,0.15)", color: "#C8CDD2", border: "1px solid rgba(203,208,213,0.25)" }}>
-                        {adminRole}
-                      </span>
-                    </Link>
-                  </div>
-                )}
-                {/* Beta Waitlist + Bug Reports live inside the Admin section now */}
               </>
             ) : (
               <>
@@ -848,9 +874,26 @@ function TopNavInner() {
             <ThemePicker />
           </div>
           {signedIn && (
-            <div className="px-2 py-2" style={{ borderTop: "1px solid rgba(203,208,213,0.10)" }}>
+            <div className="flex items-center justify-between gap-2 px-3 py-2" style={{ borderTop: "1px solid rgba(203,208,213,0.10)" }}>
+              {adminRole ? (
+                <Link href="/admin/characters" onClick={() => setUserOpen(false)}
+                  className="flex items-center gap-1.5 rounded-lg px-1.5 py-1 text-sm font-medium transition hover:bg-[rgba(203,208,213,0.08)]"
+                  style={{ color: "#C8CDD2" }}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" style={{ opacity: 0.9 }}>
+                    <path d="M12 2a5 5 0 1 1 0 10A5 5 0 0 1 12 2Z" stroke="currentColor" strokeWidth="1.75" />
+                    <path d="M3 21c0-4.418 4.03-8 9-8s9 3.582 9 8" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
+                    <circle cx="19" cy="7" r="3" fill="#C8CDD2" stroke="#0b1320" strokeWidth="1.5" />
+                    <path d="M18 7h2M19 6v2" stroke="#0b1320" strokeWidth="1.2" strokeLinecap="round" />
+                  </svg>
+                  Admin
+                  <span className="rounded-full px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide"
+                    style={{ background: "rgba(203,208,213,0.15)", color: "#C8CDD2", border: "1px solid rgba(203,208,213,0.25)" }}>
+                    {adminRole}
+                  </span>
+                </Link>
+              ) : <span />}
               <button type="button" onClick={handleSignOut}
-                className="block w-full rounded-xl px-3 py-2.5 text-left text-sm transition hover:bg-[rgba(224,82,82,0.08)]"
+                className="rounded-lg px-2 py-1 text-sm transition hover:bg-[rgba(224,82,82,0.08)]"
                 style={{ color: "#E05252" }}>
                 Sign Out
               </button>
