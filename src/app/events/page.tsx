@@ -161,8 +161,15 @@ function EventArt({
   const hasImage = Boolean(event.image_url);
 
   return (
+    // vltd-dark-surface: this is always either a real photo with a dark
+    // readability scrim, or generated dark fallback artwork -- never a
+    // theme-following surface. Every caller (compact card, hero, detail
+    // panel) previously colored its OWN text here with --fg/--muted,
+    // which correctly goes dark in light mode for ordinary page text but
+    // went dark-on-dark here, unreadable over this image. One class here
+    // instead of tagging each usage.
     <div
-      className={`relative overflow-hidden rounded-[7px] border ${className}`}
+      className={`vltd-dark-surface relative overflow-hidden rounded-[7px] border ${className}`}
       style={hasImage ? { borderColor: `color-mix(in srgb, ${accent} 52%, transparent)` } : eventArtStyle(event)}
     >
       {hasImage ? (
@@ -174,15 +181,28 @@ function EventArt({
           <div className="absolute right-8 top-5 h-24 w-16 rotate-6 rounded-[5px] border border-[color:var(--theme-gold-border)] bg-black/35 shadow-[0_12px_28px_rgba(0,0,0,0.45)]" />
         </>
       )}
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_18%_72%,rgba(0,0,0,0),rgba(0,0,0,0.62)_70%)]" />
+      {/* ONE readability gradient -- compact gets the small corner radial
+          it always had (just enough for the fallback-art title below);
+          the larger non-compact/hero usage gets a bottom-anchored fade
+          sized for its full title+date+description text block, instead
+          of relying on a second gradient layered on top by the caller. */}
+      <div className={compact
+        ? "absolute inset-0 bg-[radial-gradient(circle_at_18%_72%,rgba(0,0,0,0),rgba(0,0,0,0.62)_70%)]"
+        : "absolute inset-0 bg-gradient-to-t from-black/80 via-black/25 to-transparent"} />
       <div className="absolute left-4 top-4 rounded-[5px] bg-black/45 px-2 py-1 text-[9px] font-black uppercase tracking-[0.16em]" style={{ color: accent }}>
         {categoryLabel(category)}
       </div>
-      <div className="absolute inset-x-0 bottom-0 p-3">
-        <div className="max-w-[82%] text-sm font-black leading-tight text-[color:var(--fg)] drop-shadow-[0_2px_8px_rgba(0,0,0,0.7)]">
-          {titleWords}
+      {/* Only for generated fallback art -- every real-photo usage already
+          shows the full event name elsewhere (the card body below, the
+          detail panel beside, the featured hero's own title block), so
+          overlaying it here too just duplicated it. */}
+      {!hasImage && (
+        <div className="absolute inset-x-0 bottom-0 p-3">
+          <div className="max-w-[82%] text-sm font-black leading-tight drop-shadow-[0_2px_8px_rgba(0,0,0,0.7)]">
+            {titleWords}
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }
@@ -286,7 +306,12 @@ function SaveButton({
         event.stopPropagation();
         onClick();
       }}
-      className={`inline-flex items-center justify-center rounded-[7px] border border-[color:var(--border)] bg-black/30 text-[color:var(--theme-gold)] ${compact ? "h-8 w-8" : "h-9 gap-2 px-3 text-xs font-bold"}`}
+      // Every usage of this button sits over an event's artwork (compact
+      // thumbnails, the featured hero) -- a fixed-dark bg-black/30 chip,
+      // same as EventArt's category badge, so its icon/label use the same
+      // fixed light color rather than the theme-following gold accent
+      // that goes dark-on-dark in light mode over the same backdrop.
+      className={`vltd-dark-surface inline-flex items-center justify-center rounded-[7px] border border-[color:var(--border)] bg-black/30 ${compact ? "h-8 w-8" : "h-9 gap-2 px-3 text-xs font-bold"}`}
     >
       <AppIcon name="favorite" size={15} filled={saved} />
       {!compact && <span>{saved ? "Saved" : "Save Event"}</span>}
@@ -632,18 +657,24 @@ export default function EventsPage() {
         <section className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_260px]">
           <div className="relative overflow-hidden rounded-[7px] border border-[color:var(--border)] bg-[color:var(--surface)] p-3 md:p-4">
             <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_238px]">
-              <div className="relative min-h-[210px] overflow-hidden rounded-[7px] border border-[color:var(--border)]">
+              {/* vltd-dark-surface here too, on the wrapper: EventArt's own
+                  scrim covers its own DOM, but this text block is a SIBLING
+                  of EventArt, not a descendant, so it needs its own light-
+                  text inheritance. EventArt's non-compact gradient (bottom-
+                  anchored, sized for this whole text block) is now the
+                  ONLY readability gradient -- this used to stack a second
+                  bg-gradient-to-r on top of EventArt's own overlay. */}
+              <div className="vltd-dark-surface relative min-h-[210px] overflow-hidden rounded-[7px] border border-[color:var(--border)]">
                 <EventArt event={featuredEvent} className="absolute inset-0 rounded-none border-0" />
-                <div className="absolute inset-0 bg-gradient-to-r from-black/76 via-black/38 to-black/12" />
                 <div className="absolute inset-x-0 bottom-0 p-5 md:p-7">
-                  <div className="mb-2 inline-flex rounded-[5px] bg-black/45 px-2 py-1 text-[9px] font-black uppercase tracking-[0.18em] text-[color:var(--theme-gold)]">
+                  <div className="mb-2 inline-flex rounded-[5px] bg-black/45 px-2 py-1 text-[9px] font-black uppercase tracking-[0.18em]" style={{ color: "#C8CDD2" }}>
                     Featured Event
                   </div>
                   <h1 className="max-w-2xl text-2xl font-black leading-tight md:text-3xl">{featuredEvent.name}</h1>
-                  <div className="mt-1 text-xs font-bold uppercase tracking-[0.08em] text-[color:var(--fg)]">
+                  <div className="mt-1 text-xs font-bold uppercase tracking-[0.08em]">
                     {formatLongDate(featuredEvent.starts_at, featuredEvent.ends_at)} - {locationLabel(featuredEvent)}
                   </div>
-                  <p className="mt-3 max-w-2xl text-sm leading-relaxed text-[color:var(--muted)]">
+                  <p className="mt-3 max-w-2xl text-sm leading-relaxed" style={{ color: "rgba(255,255,255,0.75)" }}>
                     {featuredEvent.short_desc ?? "Collector event with shows, releases, and market moments worth tracking."}
                   </p>
                   <div className="mt-4 flex flex-wrap gap-2">

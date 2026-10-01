@@ -82,16 +82,22 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     } catch {}
     try {
       const savedIconStyle = localStorage.getItem(ICON_STYLE_LS_KEY) as IconStyle | null
-      if (savedIconStyle === 'classic') {
+      if (savedIconStyle === 'classic' || savedIconStyle === 'simplified-glass' || savedIconStyle === 'soft-sticker') {
+        // 2026-09-30: EK was explicit that removing Simple Glass/Soft
+        // Sticker and force-migrating saved users to Classic was NOT an
+        // authorized design decision (a prior pass here did exactly that,
+        // reusing the retirement pattern below for the wrong reason --
+        // those two packs are incomplete, not retired). Restored: all
+        // three are real, selectable choices again; nothing gets silently
+        // reassigned. Classic remains only the DEFAULT for someone who
+        // has never chosen (see DEFAULT_ICON_STYLE above).
         setIconStyleState(savedIconStyle)
-      } else if (savedIconStyle === 'simplified-glass' || savedIconStyle === 'soft-sticker' || savedIconStyle === 'friendly-glass') {
-        // 2026-09-30: Simple Glass and Soft Sticker are pulled from
-        // production (mixed-icon-system launch blocker) until a complete,
-        // coherent set is approved -- same retirement pattern already used
-        // for the earlier 'friendly-glass' pack, extended to cover these
-        // two. Existing users who'd switched land back on Classic instead
-        // of being trapped on a value the picker no longer offers.
-        setIconStyleState('classic')
+      } else if (savedIconStyle === 'friendly-glass') {
+        // Retire the unreadable detailed pack without trapping existing
+        // users on a value that no longer appears in the picker. This one
+        // actually IS retired (replaced by Simple Glass), unlike the two
+        // above.
+        setIconStyleState('simplified-glass')
       }
     } catch {}
     setHydrated(true)
