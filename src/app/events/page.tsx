@@ -159,6 +159,15 @@ function EventArt({
   const accent = categoryColor(category);
   const titleWords = event.name.split(/\s+/).filter(Boolean).slice(0, compact ? 2 : 4).join(" ");
   const hasImage = Boolean(event.image_url);
+  // The hero caller passes "absolute inset-0" to fill its wrapper. Tailwind
+  // utilities have no specificity order based on where they sit in the class
+  // string -- it's whichever utility's rule comes later in the generated
+  // stylesheet -- so hardcoding "relative" here was silently beating a
+  // caller's "absolute" and collapsing this box to 0 height (no position:
+  // absolute means no inset-driven size, and with only absolutely-positioned
+  // children, normal flow has no height to give it). Only default to
+  // relative when the caller isn't already setting its own position.
+  const hasPositionOverride = /\b(absolute|fixed|sticky|static)\b/.test(className);
 
   return (
     // vltd-dark-surface: this is always either a real photo with a dark
@@ -169,7 +178,7 @@ function EventArt({
     // went dark-on-dark here, unreadable over this image. One class here
     // instead of tagging each usage.
     <div
-      className={`vltd-dark-surface relative overflow-hidden rounded-[7px] border ${className}`}
+      className={`vltd-dark-surface ${hasPositionOverride ? "" : "relative"} overflow-hidden rounded-[7px] border ${className}`}
       style={hasImage ? { borderColor: `color-mix(in srgb, ${accent} 52%, transparent)` } : eventArtStyle(event)}
     >
       {hasImage ? (
