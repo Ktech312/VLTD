@@ -5,6 +5,10 @@ import type { GlyphName } from "@/components/ui/Glyph";
 // these — nothing is a dead link. Content is educational and general; it is
 // not personalized financial, legal, or investment advice.
 
+/** Guides were published with the Learn hub rework (2026-07-18) and last revised 2026-09-30, per repo history. */
+export const LEARN_PUBLISHED = "2026-07-18";
+export const LEARN_UPDATED = "2026-09-30";
+
 export type LearnBlock =
   | { type: "p"; text: string }
   | { type: "h"; text: string }

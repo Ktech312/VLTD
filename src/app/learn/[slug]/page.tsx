@@ -4,7 +4,8 @@ import { notFound } from "next/navigation";
 
 import { Glyph } from "@/components/ui/Glyph";
 import SaveArticleButton from "@/components/learn/SaveArticleButton";
-import { getArticle, LEARN_ARTICLES, type LearnBlock } from "@/lib/learnContent";
+import { getArticle, LEARN_ARTICLES, LEARN_PUBLISHED, LEARN_UPDATED, type LearnBlock } from "@/lib/learnContent";
+import { SITE_URL } from "@/lib/siteUrl";
 
 export function generateStaticParams() {
   return LEARN_ARTICLES.map((a) => ({ slug: a.slug }));
@@ -14,11 +15,21 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const { slug } = await params;
   const article = getArticle(slug);
   if (!article) return { title: "Learn — VLTD" };
+  const image = article.image ?? "/og-image.png";
   return {
     title: article.title,
     description: article.dek,
     alternates: { canonical: `/learn/${article.slug}` },
-    openGraph: { title: article.title, description: article.dek, url: `/learn/${article.slug}` },
+    openGraph: {
+      type: "article",
+      title: article.title,
+      description: article.dek,
+      url: `/learn/${article.slug}`,
+      publishedTime: LEARN_PUBLISHED,
+      modifiedTime: LEARN_UPDATED,
+      images: [{ url: image, alt: article.title }],
+    },
+    twitter: { card: "summary_large_image", title: article.title, description: article.dek, images: [image] },
   };
 }
 
@@ -66,11 +77,39 @@ export default async function LearnArticlePage({ params }: { params: Promise<{ s
   const article = getArticle(slug);
   if (!article) notFound();
 
+  const url = `${SITE_URL}/learn/${article.slug}`;
+  const articleJsonLd = {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Article",
+        headline: article.title,
+        description: article.dek,
+        image: `${SITE_URL}${article.image ?? "/og-image.png"}`,
+        datePublished: LEARN_PUBLISHED,
+        dateModified: LEARN_UPDATED,
+        articleSection: article.category,
+        author: { "@type": "Organization", name: "VLTD", url: SITE_URL },
+        publisher: { "@type": "Organization", name: "VLTD", url: SITE_URL, logo: { "@type": "ImageObject", url: `${SITE_URL}/icons/icon-512x512.png` } },
+        mainEntityOfPage: url,
+      },
+      {
+        "@type": "BreadcrumbList",
+        itemListElement: [
+          { "@type": "ListItem", position: 1, name: "VLTD", item: SITE_URL },
+          { "@type": "ListItem", position: 2, name: "Learn", item: `${SITE_URL}/learn` },
+          { "@type": "ListItem", position: 3, name: article.title, item: url },
+        ],
+      },
+    ],
+  };
+
   return (
     <main
       className="min-h-screen text-[color:var(--fg)]"
       style={{ backgroundColor: "#040507", backgroundImage: "radial-gradient(circle at 22% 0%, rgba(203,208,213,0.05), transparent 46%)" }}
     >
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(articleJsonLd) }} />
       <div className="mx-auto max-w-3xl px-4 py-7 sm:px-6 lg:px-8">
         <Link href="/learn" className="inline-flex items-center gap-1.5 text-sm font-semibold text-[color:var(--muted)] transition hover:text-text-primary">
           <Glyph name="back" size={16} strokeWidth={2} />
@@ -106,11 +145,11 @@ export default async function LearnArticlePage({ params }: { params: Promise<{ s
           <h3 className="text-base font-black text-text-primary">Put it into practice</h3>
           <p className="mt-2 text-sm text-[color:var(--muted)]">Document, value, and protect your collection in VLTD.</p>
           <Link
-            href="/vault"
+            href="/signup"
             className="mt-4 inline-flex min-h-10 items-center justify-center rounded-[6px] px-5 text-sm font-bold"
             style={{ background: "var(--theme-gold-gradient)", boxShadow: "var(--theme-gold-glow)", color: "#0B0B0B" }}
           >
-            Go to your vault
+            Start your collection
           </Link>
         </div>
       </div>
