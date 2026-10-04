@@ -104,7 +104,7 @@ export async function listLoungePosts(viewerProfileId = "", limit = 50): Promise
 
   const rich = await supabase
     .from(TABLE)
-    .select("id, profile_id, kind, title, category, body, created_at, score, comment_count, profiles(display_name, username, avatar_url, avatar_emoji)")
+    .select("id, profile_id, kind, title, category, body, created_at, score, comment_count, profiles!lounge_posts_profile_id_fkey(display_name, username, avatar_url, avatar_emoji)")
     .order("created_at", { ascending: false })
     .limit(limit);
 
@@ -127,7 +127,7 @@ export async function listLoungePosts(viewerProfileId = "", limit = 50): Promise
 
   const legacy = await supabase
     .from(TABLE)
-    .select("id, profile_id, kind, body, created_at, profiles(display_name, username, avatar_url, avatar_emoji)")
+    .select("id, profile_id, kind, body, created_at, profiles!lounge_posts_profile_id_fkey(display_name, username, avatar_url, avatar_emoji)")
     .order("created_at", { ascending: false })
     .limit(limit);
 
@@ -151,7 +151,7 @@ export async function addLoungePost(
   const { data, error } = await supabase
     .from(TABLE)
     .insert({ profile_id: profileId, kind, title: trimmedTitle, body: trimmedBody, category })
-    .select("id, profile_id, kind, title, category, body, created_at, score, comment_count, profiles(display_name, username, avatar_url, avatar_emoji)")
+    .select("id, profile_id, kind, title, category, body, created_at, score, comment_count, profiles!lounge_posts_profile_id_fkey(display_name, username, avatar_url, avatar_emoji)")
     .single();
 
   if (error || !data) return null;
