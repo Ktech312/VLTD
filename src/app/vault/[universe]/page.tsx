@@ -14,7 +14,8 @@ import { PillButton } from "@/components/ui/PillButton";
 import ProgressiveImage from "@/components/ui/ProgressiveImage";
 import VaultMuseumView from "@/components/VaultMuseumView";
 import VaultWrappedSheet from "@/components/VaultWrappedSheet";
-import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
+import { showToast } from "@/lib/toast";
+import { deleteVaultItemEverywhere, deleteVaultItemsEverywhere } from "@/lib/vaultActions";
 import { computeItemIntelligence } from "@/lib/itemIntelligence";
 import { UNIVERSE_LABEL, TAXONOMY, getCategories, isUniverseKey, type UniverseKey } from "@/lib/taxonomy";
 import {
@@ -29,7 +30,7 @@ import {
   syncVaultItemsFromSupabase,
   type VaultItem,
 } from "@/lib/vaultModel";
-import { hasSupabaseEnv, VAULT_ITEMS_TABLE } from "@/lib/vaultCloud";
+import { hasSupabaseEnv } from "@/lib/vaultCloud";
 import { listMyProfiles, getStoredActiveProfileId, type ProfileRow } from "@/lib/auth";
 
 const ACTIVE_PROFILE_EVENT = "vltd:active-profile";
@@ -905,33 +906,13 @@ export default function VaultUniversePage() {
 
     setIsDeleting(true);
     try {
-      // Single localStorage read → filter → single write (instead of N reads/writes)
-      const remaining = loadItems({ includeAllProfiles: true }).filter(
-        (entry) => !idsToDelete.has(String(entry.id))
-      );
-      saveItems(remaining);
-
-      // Update React state once
       setItems((prev) => prev.filter((entry) => !idsToDelete.has(String(entry.id))));
-
-      // Parallel Supabase deletes (instead of sequential awaits)
-      if (hasSupabaseEnv()) {
-        const supabase = getSupabaseBrowserClient();
-        if (supabase) {
-          await Promise.all(
-            toDelete.map(async (item) => {
-              try {
-                await supabase.from(VAULT_ITEMS_TABLE).delete().eq("id", item.id);
-              } catch {
-                // ignore individual delete failures
-              }
-            })
-          );
-        }
+      // Cloud-confirmed delete: restores anything the cloud refused and
+      // removes the deleted ids from every exhibition.
+      const result = await deleteVaultItemsEverywhere(toDelete.map((item) => item.id));
+      if (!result.ok) {
+        showToast(result.error || "Could not delete some items from the cloud.", 5000);
       }
-
-      // Single event dispatch at the end
-      window.dispatchEvent(new Event("vltd:vault-updated"));
     } finally {
       setIsDeleting(false);
       setDeleteConfirmPending(false);
@@ -1067,22 +1048,12 @@ export default function VaultUniversePage() {
   }
 
   async function handleDeleteItem(target: VaultItem) {
-    const next = loadItems({ includeAllProfiles: true }).filter((entry) => String(entry.id) !== String(target.id));
-    saveItems(next);
     setItems((prev) => prev.filter((entry) => String(entry.id) !== String(target.id)));
-
-    if (hasSupabaseEnv()) {
-      const supabase = getSupabaseBrowserClient();
-      if (supabase) {
-        try {
-          await supabase.from(VAULT_ITEMS_TABLE).delete().eq("id", target.id);
-        } catch {
-          // leave local delete in place
-        }
-      }
+    // Cloud-confirmed delete; restores the item locally if the cloud refuses.
+    const result = await deleteVaultItemEverywhere(target.id);
+    if (!result.ok) {
+      showToast(result.error || "Could not delete this item from the cloud.", 5000);
     }
-
-    window.dispatchEvent(new Event("vltd:vault-updated"));
   }
 
   function handleClearFilters() {
