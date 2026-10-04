@@ -34,6 +34,13 @@ type UniverseCard = {
   description: string;
 };
 
+type LaunchAccessStatus = {
+  capacity: number;
+  claimed: number;
+  remaining: number;
+  isOpen: boolean;
+};
+
 const FEATURE_CARDS: { icon: React.ReactNode; title: string; description: string }[] = [
   { title: "Organize", description: "Keep photos, descriptions, and condition notes with each collectible.", icon: <Glyph name="vault" size={20} /> },
   { title: "Track", description: "Record purchase prices and estimated values as your collection grows.", icon: <Glyph name="insights" size={20} /> },
@@ -185,6 +192,7 @@ export default function PublicHomeClient() {
   const router = useRouter();
   const [galleries, setGalleries] = useState<Gallery[]>([]);
   const [signedIn, setSignedIn] = useState(false);
+  const [launchAccess, setLaunchAccess] = useState<LaunchAccessStatus | null>(null);
 
   // Beta waitlist state
   const [waitlistEmail, setWaitlistEmail] = useState("");
@@ -203,6 +211,27 @@ export default function PublicHomeClient() {
       }
     }).catch(() => { /* Public content remains available if auth is unavailable. */ });
   }, [router]);
+
+  useEffect(() => {
+    let alive = true;
+    const load = async () => {
+      try {
+        const response = await fetch("/api/launch-access", { cache: "no-store" });
+        if (!response.ok) return;
+        const status = (await response.json()) as LaunchAccessStatus;
+        if (alive) setLaunchAccess(status);
+      } catch {
+        // The rest of the public homepage remains useful if the counter is
+        // temporarily unavailable. We never invent a number as a fallback.
+      }
+    };
+    void load();
+    const timer = window.setInterval(load, 30_000);
+    return () => {
+      alive = false;
+      window.clearInterval(timer);
+    };
+  }, []);
 
   useEffect(() => {
     function loadPublicGalleries() {
@@ -297,10 +326,10 @@ export default function PublicHomeClient() {
                   Log in
                 </Link>
                 <Link
-                  href="#early-access"
+                  href={launchAccess?.isOpen === false ? "#early-access" : "/signup"}
                   className="vltd-primary-button rounded-full px-4 py-2 text-sm font-black whitespace-nowrap transition"
                 >
-                  Request early access
+                  {launchAccess?.isOpen === false ? "Join the waitlist" : "Claim a free spot"}
                 </Link>
               </>
             )}
@@ -332,10 +361,10 @@ export default function PublicHomeClient() {
 
               <div className="mt-7 flex flex-col items-center justify-center gap-3 sm:flex-row lg:justify-start">
                 <Link
-                  href="#early-access"
+                  href={launchAccess?.isOpen === false ? "#early-access" : "/signup"}
                   className="vltd-primary-button inline-flex h-12 items-center justify-center rounded-full px-7 text-sm font-black transition"
                 >
-                  Request early access →
+                  {launchAccess?.isOpen === false ? "Join the waitlist →" : "Claim a free spot →"}
                 </Link>
                 <Link
                   href="#public-galleries"
@@ -346,9 +375,26 @@ export default function PublicHomeClient() {
                 </Link>
               </div>
 
+              {launchAccess ? (
+                <div className="mx-auto mt-5 max-w-lg rounded-2xl border p-4 text-left lg:mx-0" style={{ background: "var(--surface)", borderColor: "var(--border)" }}>
+                  <div className="flex items-center justify-between gap-4">
+                    <div>
+                      <div className="text-sm font-black text-text-primary">First 50 collector accounts are free</div>
+                      <div className="mt-0.5 text-xs text-[color:var(--muted)]">
+                        {launchAccess.claimed} of {launchAccess.capacity} claimed · {launchAccess.remaining} remaining
+                      </div>
+                    </div>
+                    <span className="shrink-0 text-2xl font-black text-[color:var(--accent)]">{launchAccess.claimed}/{launchAccess.capacity}</span>
+                  </div>
+                  <div className="mt-3 h-2 overflow-hidden rounded-full bg-[color:var(--pill)]" role="progressbar" aria-label="Founding collector spots claimed" aria-valuemin={0} aria-valuemax={launchAccess.capacity} aria-valuenow={launchAccess.claimed}>
+                    <div className="h-full rounded-full transition-[width] duration-500" style={{ width: `${Math.min(100, (launchAccess.claimed / launchAccess.capacity) * 100)}%`, background: "var(--accent)", boxShadow: "0 0 12px color-mix(in srgb, var(--accent) 65%, transparent)" }} />
+                  </div>
+                </div>
+              ) : null}
+
               {/* Trust row */}
               <div className="mt-6 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 lg:justify-start">
-                {["Private beta", "Access by invitation", "Explore exhibitions now"].map((label) => (
+                {["Free founding account", "Private by default", "Explore exhibitions now"].map((label) => (
                   <span
                     key={label}
                     className="inline-flex items-center gap-1.5 text-xs font-semibold text-[color:var(--muted2)]"
@@ -399,15 +445,26 @@ export default function PublicHomeClient() {
       <section id="early-access" className="scroll-mt-24 border-b" style={{ borderColor: 'var(--border)', background: 'linear-gradient(135deg, rgba(203,208,213,0.06) 0%, var(--bg) 60%)' }}>
         <div className="mx-auto max-w-3xl px-4 py-10 sm:px-6 lg:px-8 text-center">
           <div className="inline-flex items-center gap-2 rounded-full border border-[rgba(203,208,213,0.32)] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.22em] mb-4" style={{ color: '#C8CDD2', background: 'rgba(203,208,213,0.07)' }}>
-            Beta Access
+            Founding Access
           </div>
           <h2 className="text-2xl font-black tracking-[-0.04em] text-text-primary sm:text-3xl">
-            Join the early access list.
+            {launchAccess?.isOpen === false ? "All 50 founding spots are claimed." : "Join the first 50 collectors."}
           </h2>
           <p className="mt-2 text-base leading-7" style={{ color: 'var(--muted)' }}>
-            VLTD is invite-only during beta. Drop your email and we&apos;ll reach out when your spot is ready.
+            {launchAccess?.isOpen === false
+              ? "Join the waitlist and we’ll contact you when the next group opens."
+              : "Create your free account now. Existing real accounts are included in the public total, and registration closes automatically at 50."}
           </p>
-          {waitlistStatus === "success" || waitlistStatus === "already" ? (
+          {launchAccess?.isOpen !== false ? (
+            <div className="mt-6 flex flex-col items-center gap-3">
+              {launchAccess ? (
+                <div className="text-sm font-bold text-[color:var(--accent)]">{launchAccess.remaining} of {launchAccess.capacity} free spots remain</div>
+              ) : null}
+              <Link href="/signup" className="vltd-primary-button inline-flex h-12 items-center justify-center rounded-full px-7 text-sm font-black transition">
+                Create your free account →
+              </Link>
+            </div>
+          ) : waitlistStatus === "success" || waitlistStatus === "already" ? (
             <div className="mt-6 rounded-2xl border border-[rgba(74,222,128,0.3)] bg-[rgba(74,222,128,0.06)] px-6 py-5 text-center">
               <div className="mb-2 flex justify-center">
                 <Glyph name="check" size={26} strokeWidth={2} style={{ color: "#4ade80" }} />
@@ -440,7 +497,7 @@ export default function PublicHomeClient() {
           {waitlistStatus === "error" && (
             <p className="mt-3 text-xs" style={{ color: '#f87171' }}>{waitlistMessage}</p>
           )}
-          <p className="mt-3 text-xs" style={{ color: 'var(--muted2)' }}>We’ll email you when your invitation is ready.</p>
+          {launchAccess?.isOpen === false ? <p className="mt-3 text-xs" style={{ color: 'var(--muted2)' }}>We’ll email you when another group opens.</p> : null}
         </div>
       </section>
 
@@ -605,13 +662,13 @@ export default function PublicHomeClient() {
             </div>
           ))}
           <Link
-            href="#early-access"
+            href={launchAccess?.isOpen === false ? "#early-access" : "/signup"}
             className="flex min-h-[150px] flex-col items-center justify-center rounded-2xl border border-dashed border-[rgba(203,208,213,0.34)] p-5 text-center text-[color:var(--accent)] transition hover:bg-[rgba(203,208,213,0.06)]"
             style={{ background: 'var(--surface)' }}
           >
             <span className="text-2xl">+</span>
-            <span className="mt-2 text-sm font-black">Request early access</span>
-            <span className="text-xs text-[color:var(--muted2)]">Private beta</span>
+            <span className="mt-2 text-sm font-black">{launchAccess?.isOpen === false ? "Join the waitlist" : "Claim a free spot"}</span>
+            <span className="text-xs text-[color:var(--muted2)]">Founding access</span>
           </Link>
         </div>
       </section>
@@ -633,8 +690,8 @@ export default function PublicHomeClient() {
                   Use photos and AI-assisted identification to start an item record. Review the suggested details, add what you know, and check estimated values against recent comparable sales.
                 </p>
                 <div className="mt-6 flex flex-wrap gap-3">
-                  <Link href="#early-access" className="vltd-primary-button inline-flex h-11 items-center justify-center rounded-full px-6 text-sm font-black transition">
-                    Request early access
+                  <Link href={launchAccess?.isOpen === false ? "#early-access" : "/signup"} className="vltd-primary-button inline-flex h-11 items-center justify-center rounded-full px-6 text-sm font-black transition">
+                    {launchAccess?.isOpen === false ? "Join the waitlist" : "Claim a free spot"}
                   </Link>
                   <Link href="/learn" className="inline-flex h-11 items-center justify-center rounded-full border border-[rgba(203,208,213,0.28)] px-6 text-sm font-semibold transition hover:bg-[rgba(203,208,213,0.06)]" style={{ color: '#C8CDD2' }}>
                     Learn more →
@@ -682,14 +739,16 @@ export default function PublicHomeClient() {
           Your collection is worth tracking properly.
         </h2>
         <p className="mx-auto mt-4 max-w-xl text-base leading-7 text-[color:var(--muted)]">
-          Request beta access, watch for your invitation, and start building your collection when your spot is ready.
+          {launchAccess?.isOpen === false
+            ? "The first 50 spots are claimed. Join the waitlist for the next opening."
+            : "Create one of the first 50 free collector accounts and start building your collection."}
         </p>
         <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
           <Link
-            href="#early-access"
+            href={launchAccess?.isOpen === false ? "#early-access" : "/signup"}
             className="vltd-primary-button inline-flex h-14 items-center justify-center rounded-full px-8 text-base font-black transition"
           >
-            Request early access
+            {launchAccess?.isOpen === false ? "Join the waitlist" : "Create free account"}
           </Link>
           <Link
             href="/login"
@@ -699,7 +758,7 @@ export default function PublicHomeClient() {
           </Link>
         </div>
         <p className="mt-4 text-xs text-[color:var(--muted2)]">
-          Private beta · Access by invitation
+          Founding access · Registration closes at 50 accounts
         </p>
       </section>
 
@@ -716,7 +775,7 @@ export default function PublicHomeClient() {
               <div>
                 <div className="mb-1.5 text-[10px] font-bold uppercase tracking-[0.18em] text-[color:var(--muted2)]">Product</div>
                 <div className="flex flex-col gap-1.5">
-                  <Link href="#early-access" className="text-[color:var(--muted)] hover:text-text-primary transition">Request early access</Link>
+                  <Link href={launchAccess?.isOpen === false ? "#early-access" : "/signup"} className="text-[color:var(--muted)] hover:text-text-primary transition">{launchAccess?.isOpen === false ? "Join the waitlist" : "Create free account"}</Link>
                   <Link href="/login" className="text-[color:var(--muted)] hover:text-text-primary transition">Log in</Link>
                   <Link href="/learn" className="text-[color:var(--muted)] hover:text-text-primary transition">Learn</Link>
                 </div>
@@ -740,7 +799,7 @@ export default function PublicHomeClient() {
             </div>
           </div>
           <div className="mt-6 border-t border-[color:var(--border)] pt-4 text-xs text-[color:var(--muted2)]">
-            © 2026 VLTD. Pronounced “Vaulted.” — private beta · access by invitation
+            © 2026 VLTD. Pronounced “Vaulted.” — founding access
           </div>
         </div>
       </footer>

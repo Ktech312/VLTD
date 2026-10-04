@@ -1,10 +1,23 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 import { resolveAvatarSrc } from "@/lib/avatarResolve";
-import { listLoungePosts, addLoungePost, hideLoungePost, type LoungePost, type LoungePostKind } from "@/lib/loungePosts";
+import {
+  addLoungeComment,
+  addLoungePost,
+  hideLoungeComment,
+  hideLoungePost,
+  listLoungeComments,
+  listLoungePosts,
+  setLoungeVote,
+  type LoungeCategory,
+  type LoungeComment,
+  type LoungePost,
+  type LoungePostKind,
+  type LoungeSort,
+} from "@/lib/loungePosts";
 import { listClubs, type Club } from "@/lib/clubs";
 import { PageHeader } from "@/components/layout/PageHeader";
 
@@ -33,10 +46,9 @@ function timeAgoShort(timestamp: number) {
 
 /* =========================================================================
    VLT LOUNGE — the collector clubhouse.
-   Brushed Console theme. Most sections are wired to Supabase (MVP, Universe,
-   New Members, Collector Signals, Drops, Room of the Night). Lounge Live /
-   Hot Threads still need a discussions/posts backend — honest empty states
-   until that exists. No sidebar; full-width 3-column clubhouse.
+   Brushed Console theme. Sections use real Supabase data: the center thread
+   feed, votes, comments, MVP, universes, new members, signals, drops, and
+   clubs. No sidebar; full-width 3-column clubhouse.
 ========================================================================= */
 
 const CYAN = "#4FD3EE";
@@ -61,7 +73,6 @@ function joinedLabel(iso: string) {
 }
 
 type DropRow = { name: string; date: string; time: string };
-type RoomRow = { title: string; desc: string; image: string | null; linkUrl: string | null; linkLabel: string; tags: string[] };
 type Signals = { pulse: number; volume: number; listings: number; sales: number };
 
 function money(n: number) {
@@ -128,7 +139,7 @@ function Avatar({ name, size = 34, src, ring = "var(--border-strong, rgba(255,25
   );
 }
 
-/* Placeholder media tile for feed thumbnails / room display. */
+/* Placeholder media tile for event/drop thumbnails. */
 function Tile({ hue = 220, className = "", children }: { hue?: number; className?: string; children?: React.ReactNode }) {
   return (
     <div
@@ -152,13 +163,21 @@ export default function VltLoungePage() {
   const [members, setMembers] = useState<MemberRow[] | null>(null);
   const [signals, setSignals] = useState<Signals | null>(null);
   const [drops, setDrops] = useState<DropRow[] | null>(null);
-  const [room, setRoom] = useState<RoomRow | null | undefined>(undefined); // undefined = loading
   const [posts, setPosts] = useState<LoungePost[] | null>(null);
   const [viewerProfileId, setViewerProfileId] = useState("");
   const [clubs, setClubs] = useState<Club[] | null>(null);
   const [composerKind, setComposerKind] = useState<LoungePostKind | null>(null);
+  const [composerTitle, setComposerTitle] = useState("");
   const [composerBody, setComposerBody] = useState("");
+  const [composerCategory, setComposerCategory] = useState<LoungeCategory>("discussion");
   const [posting, setPosting] = useState(false);
+  const [sort, setSort] = useState<LoungeSort>("hot");
+  const [selectedPostId, setSelectedPostId] = useState("");
+  const [comments, setComments] = useState<LoungeComment[]>([]);
+  const [commentsLoading, setCommentsLoading] = useState(false);
+  const [commentBody, setCommentBody] = useState("");
+  const [replyTo, setReplyTo] = useState<LoungeComment | null>(null);
+  const [commentPosting, setCommentPosting] = useState(false);
 
   useEffect(() => {
     setViewerProfileId(getActiveProfileId());
@@ -169,24 +188,77 @@ export default function VltLoungePage() {
   }, []);
 
   function openComposer(kind: LoungePostKind) {
+    setComposerTitle("");
     setComposerBody("");
+    setComposerCategory(kind === "question" ? "question" : "discussion");
     setComposerKind(kind);
   }
 
   async function handlePost() {
+    const trimmedTitle = composerTitle.trim();
     const trimmed = composerBody.trim();
-    if (!trimmed || !viewerProfileId || !composerKind || posting) return;
+    if (!trimmedTitle || !trimmed || !viewerProfileId || !composerKind || posting) return;
     setPosting(true);
     try {
-      const created = await addLoungePost(viewerProfileId, composerKind, trimmed);
+      const created = await addLoungePost(viewerProfileId, composerKind, trimmedTitle, trimmed, composerCategory);
       if (created) {
         setPosts((prev) => [created, ...(prev ?? [])]);
         setComposerKind(null);
+        setComposerTitle("");
         setComposerBody("");
       }
     } finally {
       setPosting(false);
     }
+  }
+
+  async function handleVote(post: LoungePost, direction: -1 | 1) {
+    if (!viewerProfileId) return;
+    const nextVote = post.viewerVote === direction ? 0 : direction;
+    const delta = nextVote - post.viewerVote;
+    setPosts((current) => (current ?? []).map((item) => item.id === post.id ? { ...item, viewerVote: nextVote, score: item.score + delta } : item));
+    const ok = await setLoungeVote(post.id, viewerProfileId, nextVote);
+    if (!ok) {
+      setPosts((current) => (current ?? []).map((item) => item.id === post.id ? { ...item, viewerVote: post.viewerVote, score: post.score } : item));
+    }
+  }
+
+  async function openThread(postId: string) {
+    if (selectedPostId === postId) {
+      setSelectedPostId("");
+      setComments([]);
+      return;
+    }
+    setSelectedPostId(postId);
+    setCommentsLoading(true);
+    setReplyTo(null);
+    setCommentBody("");
+    setComments(await listLoungeComments(postId));
+    setCommentsLoading(false);
+  }
+
+  async function handleComment() {
+    const trimmed = commentBody.trim();
+    if (!selectedPostId || !viewerProfileId || !trimmed || commentPosting) return;
+    setCommentPosting(true);
+    try {
+      const created = await addLoungeComment(selectedPostId, viewerProfileId, trimmed, replyTo?.id ?? null);
+      if (created) {
+        setComments((current) => [...current, created]);
+        setPosts((current) => (current ?? []).map((post) => post.id === selectedPostId ? { ...post, commentCount: post.commentCount + 1 } : post));
+        setCommentBody("");
+        setReplyTo(null);
+      }
+    } finally {
+      setCommentPosting(false);
+    }
+  }
+
+  async function handleHideComment(comment: LoungeComment) {
+    const previous = comments;
+    setComments((current) => current.filter((item) => item.id !== comment.id && item.parentId !== comment.id));
+    const ok = await hideLoungeComment(comment.id);
+    if (!ok) setComments(previous);
   }
 
   async function handleHidePost(postId: string) {
@@ -197,11 +269,27 @@ export default function VltLoungePage() {
   // Real Lounge posts — the backend behind "Ask the Lounge" / "Post Update".
   useEffect(() => {
     let alive = true;
-    void listLoungePosts().then((rows) => {
+    void listLoungePosts(viewerProfileId).then((rows) => {
       if (alive) setPosts(rows);
     });
     return () => { alive = false; };
-  }, []);
+  }, [viewerProfileId]);
+
+  const visiblePosts = useMemo(() => {
+    const filtered = (posts ?? []).filter((post) => {
+      if (tab === "Collector Q&A") return post.category === "question" || post.category === "help";
+      if (tab === "Discussions") return post.category === "discussion" || post.category === "news";
+      if (tab === "Item Chatter") return post.category === "showcase";
+      return true;
+    });
+    return [...filtered].sort((a, b) => {
+      if (sort === "new") return b.createdAt - a.createdAt;
+      if (sort === "top") return b.score - a.score || b.createdAt - a.createdAt;
+      const hotA = a.score * 4 + a.commentCount * 2 - Math.max(0, (Date.now() - a.createdAt) / 36e5) * 0.12;
+      const hotB = b.score * 4 + b.commentCount * 2 - Math.max(0, (Date.now() - b.createdAt) / 36e5) * 0.12;
+      return hotB - hotA;
+    });
+  }, [posts, sort, tab]);
 
   // Real leaderboard / universe / member data from Supabase (item-count based).
   useEffect(() => {
@@ -284,26 +372,10 @@ export default function VltLoungePage() {
           time: dropTime(String(e.starts_at ?? "")),
         })));
 
-        // Room of the Night — featured spotlight.
-        const { data: sp } = await supabase
-          .from("spotlights")
-          .select("name, tagline, bio, image_url, link_url, link_label, universe_tags")
-          .eq("is_featured", true)
-          .order("sort_order", { ascending: true })
-          .limit(1);
-        const spot = (Array.isArray(sp) ? sp[0] : sp) as Record<string, unknown> | undefined;
-        if (alive) setRoom(spot ? {
-          title: String(spot.name ?? "Featured Room"),
-          desc: String(spot.bio || spot.tagline || ""),
-          image: (typeof spot.image_url === "string" && spot.image_url) ? spot.image_url : null,
-          linkUrl: (typeof spot.link_url === "string" && spot.link_url) ? spot.link_url : null,
-          linkLabel: (typeof spot.link_label === "string" && spot.link_label) ? spot.link_label : "View Room",
-          tags: Array.isArray(spot.universe_tags) ? (spot.universe_tags as string[]) : [],
-        } : null);
       } catch {
         if (alive) {
           setMvp((v) => v ?? []); setUniverses((v) => v ?? []); setMembers((v) => v ?? []);
-          setSignals(null); setDrops((v) => v ?? []); setRoom((r) => (r === undefined ? null : r));
+          setSignals(null); setDrops((v) => v ?? []);
         }
       }
     })();
@@ -403,48 +475,124 @@ export default function VltLoungePage() {
           <section className="rounded-[8px]" style={CARD}>
             <div className="flex items-center justify-between px-4 py-3" style={{ borderBottom: "1px solid var(--border)" }}>
               <Label>Hot Threads</Label>
-              <More />
+              <button type="button" onClick={() => setSort("hot")} className="text-[11px] font-bold" style={{ color: CYAN }}>View in feed</button>
             </div>
-            <div className="px-4 py-6 text-center text-[12px]" style={{ color: "var(--muted2)" }}>
-              No hot threads yet.
-            </div>
+            {(posts ?? []).length === 0 ? (
+              <div className="px-4 py-6 text-center text-[12px]" style={{ color: "var(--muted2)" }}>No hot threads yet.</div>
+            ) : (
+              <div className="divide-y" style={{ borderColor: "var(--border)" }}>
+                {[...(posts ?? [])].sort((a, b) => (b.score + b.commentCount * 2) - (a.score + a.commentCount * 2)).slice(0, 3).map((post) => (
+                  <button key={post.id} type="button" onClick={() => void openThread(post.id)} className="block w-full px-4 py-3 text-left">
+                    <div className="line-clamp-2 text-[12px] font-bold">{post.title}</div>
+                    <div className="mt-1 text-[10px]" style={{ color: "var(--muted2)" }}>{post.score} points · {post.commentCount} comments</div>
+                  </button>
+                ))}
+              </div>
+            )}
           </section>
         </div>
 
-        {/* ── CENTER: Room of the Night + New Members ── */}
+        {/* ── CENTER: Reddit-style discussions + New Members ── */}
         <div className="flex flex-col gap-4">
           <section className="rounded-[8px] overflow-hidden" style={CARD}>
             <div className="flex items-center justify-between px-5 py-3" style={{ borderBottom: "1px solid var(--border)" }}>
-              <Label>Room of the Night</Label>
-              <span className="text-[11px]" style={{ color: "var(--muted2)" }}>Curated by <span className="font-bold" style={{ color: "var(--fg)" }}>Vault Council</span></span>
-            </div>
-            <div className="relative">
-              <Tile hue={220} className="min-h-[300px] w-full">
-                {room && room.image ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={room.image} alt="" className="absolute inset-0 h-full w-full object-cover opacity-70" />
-                ) : null}
-                <div className="absolute inset-0" style={{ background: "linear-gradient(90deg, rgba(3,6,10,0.72), rgba(3,6,10,0.2) 62%, transparent)" }} />
-                <div className="relative z-10 max-w-[62%] p-6">
-                  <h2 className="text-[30px] font-extrabold leading-[1.02] tracking-[-0.02em]" style={{ color: "#F3F4F5" }}>
-                    {room === undefined ? "Loading…" : room ? room.title : "Room of the Night"}
-                  </h2>
-                  <p className="mt-3 line-clamp-4 text-[13px] leading-snug" style={{ color: "rgba(240,241,242,0.78)" }}>
-                    {room === undefined ? "" : (room && room.desc) ? room.desc : "A nightly spotlight on legendary pieces that moved the market, broke records, or defined the culture. No featured room tonight."}
-                  </p>
-                  {room && room.linkUrl ? (
-                    <a href={room.linkUrl} target="_blank" rel="noopener noreferrer" className="vltd-primary-button mt-4 inline-flex rounded-[6px] px-4 py-2 text-[12px] font-black">{room.linkLabel}</a>
-                  ) : null}
-                </div>
-              </Tile>
-            </div>
-            {room && room.tags.length > 0 ? (
-              <div className="flex flex-wrap gap-2 px-5 py-3" style={{ borderTop: "1px solid var(--border)" }}>
-                {room.tags.map((t) => (
-                  <span key={t} className="rounded-[4px] px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.08em]" style={{ background: "var(--pill)", color: "var(--muted)" }}>{titleCase(t.replace(/_/g, " "))}</span>
+              <Label>Community Discussions</Label>
+              <div className="flex items-center gap-1 rounded-[6px] p-1" style={{ background: "var(--pill)" }}>
+                {(["hot", "new", "top"] as LoungeSort[]).map((option) => (
+                  <button
+                    key={option}
+                    type="button"
+                    onClick={() => setSort(option)}
+                    className="rounded-[5px] px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.08em]"
+                    style={{
+                      background: sort === option ? "var(--surface)" : "transparent",
+                      color: sort === option ? CYAN : "var(--muted2)",
+                      boxShadow: sort === option ? `0 0 10px rgba(79,211,238,0.18)` : "none",
+                    }}
+                  >
+                    {option}
+                  </button>
                 ))}
               </div>
-            ) : null}
+            </div>
+            {posts === null ? (
+              <div className="px-5 py-12 text-center text-[12px]" style={{ color: "var(--muted2)" }}>Loading discussions…</div>
+            ) : visiblePosts.length === 0 ? (
+              <div className="px-5 py-12 text-center">
+                <div className="text-sm font-bold">No discussions here yet.</div>
+                <button type="button" onClick={() => openComposer("question")} className="mt-3 text-[12px] font-bold" style={{ color: CYAN }}>Start the first thread →</button>
+              </div>
+            ) : (
+              <div className="divide-y" style={{ borderColor: "var(--border)" }}>
+                {visiblePosts.map((post) => {
+                  const expanded = selectedPostId === post.id;
+                  const canModeratePost = viewerProfileId === post.profileId;
+                  return (
+                    <article key={post.id} style={{ borderColor: "var(--border)", background: expanded ? "var(--table-row-hover)" : "transparent" }}>
+                      <div className="grid grid-cols-[46px_minmax(0,1fr)] gap-3 px-4 py-4 sm:grid-cols-[52px_minmax(0,1fr)] sm:px-5">
+                        <div className="flex flex-col items-center gap-1">
+                          <button type="button" disabled={!viewerProfileId} aria-label="Upvote" onClick={() => void handleVote(post, 1)} className="grid h-7 w-7 place-items-center rounded-[5px] text-sm font-black disabled:opacity-40" style={{ background: post.viewerVote === 1 ? "rgba(79,211,238,0.16)" : "var(--pill)", color: post.viewerVote === 1 ? CYAN : "var(--muted)" }}>▲</button>
+                          <span className="text-[12px] font-black" style={{ color: post.score > 0 ? CYAN : "var(--fg)" }}>{post.score}</span>
+                          <button type="button" disabled={!viewerProfileId} aria-label="Downvote" onClick={() => void handleVote(post, -1)} className="grid h-7 w-7 place-items-center rounded-[5px] text-sm font-black disabled:opacity-40" style={{ background: post.viewerVote === -1 ? "rgba(248,113,113,0.13)" : "var(--pill)", color: post.viewerVote === -1 ? "#f87171" : "var(--muted)" }}>▼</button>
+                        </div>
+                        <div className="min-w-0">
+                          <div className="flex flex-wrap items-center gap-2 text-[10px]" style={{ color: "var(--muted2)" }}>
+                            <span className="rounded-[4px] px-2 py-0.5 font-black uppercase tracking-[0.08em]" style={{ background: "rgba(79,211,238,0.10)", color: CYAN }}>{post.category}</span>
+                            <span>Posted by <span className="font-bold" style={{ color: "var(--muted)" }}>{post.authorName}</span></span>
+                            <span>·</span><span>{timeAgoShort(post.createdAt)}</span>
+                          </div>
+                          <button type="button" onClick={() => void openThread(post.id)} className="mt-2 block w-full text-left text-[17px] font-black leading-tight hover:underline">{post.title}</button>
+                          <p className={`mt-2 whitespace-pre-wrap text-[12.5px] leading-5 ${expanded ? "" : "line-clamp-3"}`} style={{ color: "var(--muted)" }}>{post.body}</p>
+                          <div className="mt-3 flex flex-wrap items-center gap-4 text-[11px] font-bold" style={{ color: "var(--muted2)" }}>
+                            <button type="button" onClick={() => void openThread(post.id)} className="hover:underline">{post.commentCount} comment{post.commentCount === 1 ? "" : "s"}</button>
+                            {canModeratePost ? <button type="button" onClick={() => void handleHidePost(post.id)} className="hover:underline">Remove</button> : null}
+                          </div>
+                        </div>
+                      </div>
+
+                      {expanded ? (
+                        <div className="border-t px-4 py-4 sm:px-5" style={{ borderColor: "var(--border)" }}>
+                          {commentsLoading ? (
+                            <div className="py-4 text-center text-[11px]" style={{ color: "var(--muted2)" }}>Loading comments…</div>
+                          ) : comments.length === 0 ? (
+                            <div className="py-3 text-[12px]" style={{ color: "var(--muted2)" }}>No comments yet. Add the first reply.</div>
+                          ) : (
+                            <div className="space-y-3">
+                              {comments.map((comment) => {
+                                const canModerateComment = viewerProfileId === comment.profileId || viewerProfileId === post.profileId;
+                                return (
+                                  <div key={comment.id} className="flex gap-2.5 rounded-[7px] p-3" style={{ marginLeft: comment.parentId ? 28 : 0, background: "var(--surface)", border: "1px solid var(--border)" }}>
+                                    <Avatar name={comment.authorName} size={28} src={comment.authorAvatarSrc} />
+                                    <div className="min-w-0 flex-1">
+                                      <div className="flex flex-wrap items-center gap-2 text-[10px]" style={{ color: "var(--muted2)" }}><span className="font-bold" style={{ color: "var(--fg)" }}>{comment.authorName}</span><span>{timeAgoShort(comment.createdAt)}</span></div>
+                                      <p className="mt-1 whitespace-pre-wrap break-words text-[12px] leading-5">{comment.body}</p>
+                                      <div className="mt-1.5 flex gap-3 text-[10px] font-bold" style={{ color: "var(--muted2)" }}>
+                                        {viewerProfileId && !comment.parentId ? <button type="button" onClick={() => { setReplyTo(comment); setCommentBody(""); }}>Reply</button> : null}
+                                        {canModerateComment ? <button type="button" onClick={() => void handleHideComment(comment)}>Remove</button> : null}
+                                      </div>
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          )}
+
+                          {viewerProfileId ? (
+                            <div className="mt-4">
+                              {replyTo ? <div className="mb-2 flex items-center justify-between rounded-[5px] px-2.5 py-1.5 text-[10px]" style={{ background: "var(--pill)", color: "var(--muted)" }}><span>Replying to {replyTo.authorName}</span><button type="button" onClick={() => setReplyTo(null)}>Cancel</button></div> : null}
+                              <div className="flex gap-2">
+                                <textarea value={commentBody} onChange={(event) => setCommentBody(event.target.value.slice(0, 2000))} placeholder="Add to the discussion…" className="min-h-20 flex-1 resize-y rounded-[7px] bg-[color:var(--pill)] px-3 py-2 text-[12px] ring-1 ring-[color:var(--border)] focus:outline-none" />
+                                <button type="button" disabled={!commentBody.trim() || commentPosting} onClick={() => void handleComment()} className="vltd-primary-button self-end rounded-[6px] px-4 py-2 text-[11px] font-black disabled:opacity-50">{commentPosting ? "Posting…" : "Reply"}</button>
+                              </div>
+                            </div>
+                          ) : <p className="mt-4 text-[11px]" style={{ color: "var(--muted2)" }}>Sign in to vote or join the discussion.</p>}
+                        </div>
+                      ) : null}
+                    </article>
+                  );
+                })}
+              </div>
+            )}
           </section>
 
           <section className="rounded-[8px]" style={CARD}>
@@ -603,7 +751,7 @@ export default function VltLoungePage() {
 
       {composerKind ? (
         <div
-          className="fixed inset-0 z-[1000] flex items-center justify-center bg-black/60 px-4 backdrop-blur-sm"
+          className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/60 px-4 backdrop-blur-sm"
           onClick={() => setComposerKind(null)}
         >
           <div
@@ -617,11 +765,30 @@ export default function VltLoungePage() {
             </div>
             {viewerProfileId ? (
               <>
+                <input
+                  value={composerTitle}
+                  onChange={(e) => setComposerTitle(e.target.value.slice(0, 160))}
+                  placeholder="Thread title"
+                  autoFocus
+                  className="mt-3 h-11 w-full rounded-[7px] bg-[color:var(--pill)] px-3 text-[13px] font-bold ring-1 ring-[color:var(--border)] focus:outline-none"
+                  style={{ color: "var(--fg)" }}
+                />
+                <select
+                  value={composerCategory}
+                  onChange={(e) => setComposerCategory(e.target.value as LoungeCategory)}
+                  className="mt-2 h-10 w-full rounded-[7px] bg-[color:var(--pill)] px-3 text-[12px] ring-1 ring-[color:var(--border)] focus:outline-none"
+                  style={{ color: "var(--fg)" }}
+                >
+                  <option value="discussion">Discussion</option>
+                  <option value="question">Collector Q&amp;A</option>
+                  <option value="showcase">Item Showcase</option>
+                  <option value="news">Collector News</option>
+                  <option value="help">Help</option>
+                </select>
                 <textarea
                   value={composerBody}
                   onChange={(e) => setComposerBody(e.target.value.slice(0, 2000))}
                   placeholder={composerKind === "question" ? "What do you want to ask the Lounge?" : "What's the update?"}
-                  autoFocus
                   className="mt-3 h-28 w-full resize-none rounded-[7px] bg-[color:var(--pill)] px-3 py-2.5 text-[13px] ring-1 ring-[color:var(--border)] focus:outline-none"
                   style={{ color: "var(--fg)" }}
                 />
@@ -630,7 +797,7 @@ export default function VltLoungePage() {
                   <button
                     type="button"
                     onClick={() => void handlePost()}
-                    disabled={!composerBody.trim() || posting}
+                    disabled={!composerTitle.trim() || !composerBody.trim() || posting}
                     className="vltd-primary-button inline-flex items-center rounded-[6px] px-4 py-2 text-[12px] font-black disabled:opacity-50"
                   >
                     {posting ? "Posting…" : "Post to Lounge"}
