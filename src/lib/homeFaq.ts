@@ -6,7 +6,7 @@ export const HOME_FAQ: { q: string; a: string }[] = [
   },
   {
     q: "Can I start today?",
-    a: "VLTD is in private beta. Request early access and we’ll email you when an invitation is available. You can explore public exhibitions now.",
+    a: "Yes, while one of the first 50 founding collector spots remains. Existing real accounts count toward the total, registration closes automatically at 50, and public exhibitions remain available to explore without an account.",
   },
   {
     q: "What can I collect in VLTD?",

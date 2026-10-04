@@ -1304,3 +1304,17 @@ POP_CULTURE again. Quick-scan status:
   `addLighting()` per-style rig still never called; `guitar.png` (a
   curated item photo, ~1.5MB) is now the largest remaining museum image,
   separate pre-existing issue.
+# 2026-10-04 — Founding access and Lounge discussion board
+
+- [x] Count real production Auth users without exposing identities: 11 non-seed users, 39 of the first 50 spots remain.
+- [x] Add public aggregate `/api/launch-access` endpoint and homepage `11/50` founding-access counter.
+- [x] Replace invite-only signup stub with real email/password signup and consistent first-50 messaging.
+- [x] Implement an atomic database-enforced 50-account cap, including truthful backfill of existing non-seed accounts.
+- [x] Replace Lounge `Room of the Night` with Reddit-style threads, Hot/New/Top sorting, votes, comments, replies, and hide controls.
+- [x] Add RLS and aggregate-maintenance triggers for Lounge votes/comments; keep individual vote ownership private.
+- [x] Verify homepage and signup at 390×844 with no horizontal overflow.
+- [x] Verify Lounge at 390×844 and 1440×900 with no horizontal overflow and a clean console.
+- [x] Public-site verification, TypeScript, targeted ESLint, and production build pass locally.
+- [ ] **EK action required before deployment:** run `supabase/migrations/20261003_launch_access_and_lounge_threads.sql` in Supabase SQL Editor.
+- [ ] After the migration: deploy and live-check the counter plus one disposable authenticated thread/vote/comment/reply/hide/cleanup cycle.
+- [ ] Do not call this production-verified until both unchecked items above pass.

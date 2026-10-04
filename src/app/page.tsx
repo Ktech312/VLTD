@@ -42,7 +42,7 @@ const homeJsonLd = {
       applicationCategory: "LifestyleApplication",
       operatingSystem: "Web",
       description:
-        "VLTD (pronounced Vaulted) is a collection tracker for cards, comics, records, games, and other collectibles. Catalog pieces with photos and condition notes, record purchase prices and estimated values, and share selected pieces in public exhibitions. Currently in private beta with access by invitation.",
+        "VLTD (pronounced Vaulted) is a collection tracker for cards, comics, records, games, and other collectibles. Catalog pieces with photos and condition notes, record purchase prices and estimated values, and share selected pieces in public exhibitions. Founding access is open to the first 50 real collector accounts.",
       featureList: [
         "Catalog collectibles with photos, descriptions, and condition notes",
         "Record purchase prices and estimated values",
