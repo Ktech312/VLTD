@@ -256,9 +256,28 @@ export default function VltLoungePage() {
 
   async function handleHideComment(comment: LoungeComment) {
     const previous = comments;
-    setComments((current) => current.filter((item) => item.id !== comment.id && item.parentId !== comment.id));
+    const removedIds = new Set([comment.id]);
+    let foundDescendant = true;
+    while (foundDescendant) {
+      foundDescendant = false;
+      for (const item of previous) {
+        if (item.parentId && removedIds.has(item.parentId) && !removedIds.has(item.id)) {
+          removedIds.add(item.id);
+          foundDescendant = true;
+        }
+      }
+    }
+    setComments((current) => current.filter((item) => !removedIds.has(item.id)));
+    setPosts((current) => (current ?? []).map((post) => post.id === comment.postId
+      ? { ...post, commentCount: Math.max(0, post.commentCount - removedIds.size) }
+      : post));
     const ok = await hideLoungeComment(comment.id);
-    if (!ok) setComments(previous);
+    if (!ok) {
+      setComments(previous);
+      setPosts((current) => (current ?? []).map((post) => post.id === comment.postId
+        ? { ...post, commentCount: post.commentCount + removedIds.size }
+        : post));
+    }
   }
 
   async function handleHidePost(postId: string) {

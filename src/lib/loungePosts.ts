@@ -154,7 +154,10 @@ export async function addLoungePost(
     .select("id, profile_id, kind, title, category, body, created_at, score, comment_count, profiles!lounge_posts_profile_id_fkey(display_name, username, avatar_url, avatar_emoji)")
     .single();
 
-  if (error || !data) return null;
+  if (error || !data) {
+    console.error("addLoungePost failed", error);
+    return null;
+  }
   return mapPost(data as Record<string, unknown>);
 }
 
@@ -197,7 +200,10 @@ export async function addLoungeComment(postId: string, profileId: string, body: 
     .insert({ post_id: postId, profile_id: profileId, parent_id: parentId, body: trimmed })
     .select("id, post_id, profile_id, parent_id, body, created_at, profiles(display_name, username, avatar_url, avatar_emoji)")
     .single();
-  if (error || !data) return null;
+  if (error || !data) {
+    console.error("addLoungeComment failed", error);
+    return null;
+  }
   return mapComment(data as Record<string, unknown>);
 }
 
