@@ -1315,6 +1315,9 @@ POP_CULTURE again. Quick-scan status:
 - [x] Verify homepage and signup at 390×844 with no horizontal overflow.
 - [x] Verify Lounge at 390×844 and 1440×900 with no horizontal overflow and a clean console.
 - [x] Public-site verification, TypeScript, targeted ESLint, and production build pass locally.
-- [ ] **EK action required before deployment:** run `supabase/migrations/20261003_launch_access_and_lounge_threads.sql` in Supabase SQL Editor.
-- [ ] After the migration: deploy and live-check the counter plus one disposable authenticated thread/vote/comment/reply/hide/cleanup cycle.
-- [ ] Do not call this production-verified until both unchecked items above pass.
+- [x] EK ran `supabase/migrations/20261003_launch_access_and_lounge_threads.sql`; live RPC returns capacity 50, claimed 11, remaining 39, open true.
+- [x] Merged/deployed the counter and Lounge in PR #22; fixed the new vote-table relationship ambiguity in PR #23 by naming `lounge_posts_profile_id_fkey` explicitly.
+- [x] Live authenticated production cycle completed: create thread → upvote → top-level comment → nested reply → remove reply → remove parent comment → reverse vote → remove thread.
+- [x] Live testing found and fixed the nested-reply INSERT policy's unqualified outer-row references. `20261004_fix_lounge_comment_reply_policy.sql` also makes parent moderation recursively hide descendants so visible rows and aggregate counts stay aligned.
+- [x] Disposable production rows hard-deleted after the moderation test; direct SQL confirms 0 matching posts and 0 matching comments. Counter remained 11/50 with 39 remaining.
+- [x] **Production-verified.** Final code/migration follow-up still needs the normal PR/deploy cycle recorded below before this branch is closed.
