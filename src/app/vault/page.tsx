@@ -425,8 +425,12 @@ function itemCardSubtitle(item: VaultItem) {
     item.subcategoryLabel ||
     itemMeta(item) ||
     "Collector's Choice";
+  // Show the subtype (e.g. Vinyl Records) too when one is set and isn't just
+  // the category repeated.
+  const subtype =
+    item.subcategoryLabel && item.subcategoryLabel !== category ? item.subcategoryLabel : "";
 
-  return `${universe} · ${category}`;
+  return subtype ? `${universe} · ${category} · ${subtype}` : `${universe} · ${category}`;
 }
 
 function VaultCard({
