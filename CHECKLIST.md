@@ -1,4 +1,11 @@
-# VLTD — Session Checklist (2026-08-05 night → ongoing, updated 2026-09-30)
+# VLTD — Session Checklist (2026-08-05 night → ongoing, updated 2026-10-01)
+
+## OPEN — TO CHECK (EK, 2026-10-01): plan limits must come from the server, not a browser setting
+EK's rule: as owner on the paid plan she must never be limited, and the app should never work by trusting a local flag for this. Suspected old code.
+- [ ] What it does today: the plan (FREE / MID / FULL) is read from this browser's `localStorage` key `vltd_tier` (`src/lib/subscription.ts` → `getTierSafe`). If the key is missing (new browser/device, cleared data) it defaults to **FREE** → 50-item cap (`FREE_VAULT_ITEM_LIMIT`) and 4 exhibitions (`src/lib/galleryTier.ts`). Verified 2026-10-01: EK's browser reads `FULL`, so no cap there; the risk is any browser where it isn't set.
+- [ ] Find everything that WRITES it: `src/app/admin/users/page.tsx:146`, `src/app/admin/characters/page.tsx`, `src/components/account/RedeemCodeCard.tsx`, and **`src/app/user/page.tsx:241`** (looks like it sets the plan from a selectable value — check whether any non-admin can pick FULL for themselves).
+- [ ] Decide: derive the plan from the signed-in account's real subscription on the server (and enforce the 50-item / exhibition limits there too), and use the local value only as a display cache.
+- Not changed in this pass — logged only.
 
 ## 2026-09-30 — Final launch-acceptance sweep, corrected after an initial premature "launch-ready" call; `follows` 503 actually fixed and deployed, not just characterized; six real routes, not five
 Full narrative in HANDOFF.md. Commits `1d51b1d` (Command Palette z-index fix), `304dec0` (follows 503 fix).
