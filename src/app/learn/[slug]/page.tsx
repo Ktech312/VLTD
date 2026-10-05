@@ -15,7 +15,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const { slug } = await params;
   const article = getArticle(slug);
   if (!article) return { title: "Learn — VLTD" };
-  const image = article.image ?? "/og-image.png";
+  const image = article.image ?? "/og-image-v2.png";
   return {
     title: article.title,
     description: article.dek,
@@ -85,7 +85,7 @@ export default async function LearnArticlePage({ params }: { params: Promise<{ s
         "@type": "Article",
         headline: article.title,
         description: article.dek,
-        image: `${SITE_URL}${article.image ?? "/og-image.png"}`,
+        image: `${SITE_URL}${article.image ?? "/og-image-v2.png"}`,
         datePublished: LEARN_PUBLISHED,
         dateModified: LEARN_UPDATED,
         articleSection: article.category,

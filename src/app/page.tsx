@@ -50,7 +50,7 @@ const homeJsonLd = {
         "Public exhibitions to share selected pieces with a link",
         "One collection for cards, comics, records, games, and more",
       ],
-      image: `${SITE_URL}/og-image.png`,
+      image: `${SITE_URL}/og-image-v2.png`,
       publisher: { "@id": `${SITE_URL}/#organization` },
     },
     {

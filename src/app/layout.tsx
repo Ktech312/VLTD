@@ -70,7 +70,7 @@ export const metadata: Metadata = {
       "VLTD (pronounced Vaulted) is a collection tracker for cards, comics, records and games. Catalog pieces, track value, share public exhibitions. Private beta.",
     images: [
       {
-        url: "/og-image.png",
+        url: "/og-image-v2.png",
         width: 1200,
         height: 630,
         alt: "VLTD \u2014 Collection tracker and public exhibitions",
@@ -82,7 +82,7 @@ export const metadata: Metadata = {
     title: "VLTD (Vaulted) | Collection Tracker for Cards, Comics & More",
     description:
       "VLTD (pronounced Vaulted) is a collection tracker for cards, comics, records and games. Catalog pieces, track value, share public exhibitions. Private beta.",
-    images: ["/og-image.png"],
+    images: ["/og-image-v2.png"],
   },
   robots: {
     index: true,
