@@ -305,28 +305,42 @@ function rowToItem(input: unknown): VaultItem {
   };
 }
 
+// Supabase/PostgREST returns at most 1000 rows per request no matter what.
+// This used to ask for everything in one request, so a profile with more than
+// 1000 items silently got only its newest 1000 -- the rest were uploaded fine
+// but invisible to every pull (and to any new device). Read in pages instead.
+// The second sort key keeps page boundaries stable when many rows share the
+// same created_at (a bulk import does).
+const CLOUD_PAGE_SIZE = 1000;
+
 async function fetchRowsWithOptionalGallery(profileId: string) {
   const supabase = getSupabaseBrowserClient();
   if (!supabase) return [];
 
+  async function readAll(columns: string) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const rows: any[] = [];
+    for (let from = 0; ; from += CLOUD_PAGE_SIZE) {
+      const { data, error } = await supabase!
+        .from(VAULT_ITEMS_TABLE)
+        .select(columns)
+        .eq("profile_id", profileId)
+        .order("created_at", { ascending: false })
+        .order("id", { ascending: true })
+        .range(from, from + CLOUD_PAGE_SIZE - 1);
+
+      if (error) throw error;
+      const batch = data ?? [];
+      rows.push(...batch);
+      if (batch.length < CLOUD_PAGE_SIZE) break;
+    }
+    return rows;
+  }
+
   try {
-    const { data, error } = await supabase
-      .from(VAULT_ITEMS_TABLE)
-      .select("*, images_json, primary_image_key")
-      .eq("profile_id", profileId)
-      .order("created_at", { ascending: false });
-
-    if (error) throw error;
-    return data ?? [];
+    return await readAll("*, images_json, primary_image_key");
   } catch {
-    const { data, error } = await supabase
-      .from(VAULT_ITEMS_TABLE)
-      .select("*")
-      .eq("profile_id", profileId)
-      .order("created_at", { ascending: false });
-
-    if (error) throw error;
-    return data ?? [];
+    return await readAll("*");
   }
 }
 
