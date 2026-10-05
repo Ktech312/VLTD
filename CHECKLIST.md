@@ -7,6 +7,11 @@ EK's rule: as owner on the paid plan she must never be limited, and the app shou
 - [ ] Decide: derive the plan from the signed-in account's real subscription on the server (and enforce the 50-item / exhibition limits there too), and use the local value only as a display cache.
 - Not changed in this pass — logged only.
 
+## OPEN — TO CHECK (2026-10-05): old code found while fixing the triple download
+- [ ] `src/app/vault/VaultClient.tsx` + `src/app/vault/VaultInner.tsx` are not imported by any page (the live Vault route is `src/app/vault/page.tsx`). It is a second, older copy of the Vault screen with its own `syncVaultItemsFromSupabase` call. Confirm unused, then delete.
+- [x] DONE 2026-10-05 (`159f746`): opening the Vault downloaded the full item list 3x (queue pull + page pull + the pull triggered by the "vault updated" event the first pull emits). `syncVaultItemsFromSupabase` (`src/lib/vaultModel.ts`) now shares an in-flight pull / reuses one that finished <4s ago, only if same profile and the local item list is byte-identical. Verified live: 3 → 1 download per load; add → cloud → delete → stays gone, no ghost. Also fixed: items that only existed on one device could never be deleted (`src/lib/vaultActions.ts`).
+- [ ] Supabase Free Plan usage (2026-10-05): database 0.26/0.5 GB (52%) — find what is using ~250 MB (Database → Tables); egress 2.3/5 GB (46%); log ingestion 3.5/1 GB (marked upcoming). Decide on Pro plan before importing the remaining Pristine pages (2–6).
+
 ## 2026-09-30 — Final launch-acceptance sweep, corrected after an initial premature "launch-ready" call; `follows` 503 actually fixed and deployed, not just characterized; six real routes, not five
 Full narrative in HANDOFF.md. Commits `1d51b1d` (Command Palette z-index fix), `304dec0` (follows 503 fix).
 - [x] Console/network/visible-broken-image/overflow sweep, **six** routes (an earlier pass in this same session claimed six but only named five — corrected here): `/account`, `/vault`, `/discover`, `/messages`, `/admin/waitlist`, `/museum` (the real Exhibitions route — `/exhibitions` is a 404) — all clean.
