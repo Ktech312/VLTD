@@ -2,6 +2,7 @@ import { getStoredActiveProfileId } from "@/lib/auth";
 import {
   getAllLocalItems,
   saveItem,
+  saveItemsBatch,
   syncVaultItemsFromSupabase,
   type VaultItem,
 } from "@/lib/vaultModel";
@@ -131,6 +132,24 @@ export function enqueueVaultItemSync(itemId: string) {
   writeQueue(dedupeQueue(queue));
 }
 
+/**
+ * Apply a batch of edited items: one local write, one queue write. Callers
+ * then run processVaultSyncQueue() (usually in the background) to upload.
+ */
+export function commitVaultItemEdits(items: VaultItem[]) {
+  if (items.length === 0) return;
+  saveItemsBatch(items);
+  const queue = readQueue();
+  const queued = new Set(queue.map((entry) => String(entry.itemId)));
+  for (const item of items) {
+    const itemId = String(item.id);
+    if (queued.has(itemId)) continue;
+    queued.add(itemId);
+    queue.push({ id: `${itemId}_${Date.now()}`, type: "upsert_item", itemId, createdAt: Date.now() });
+  }
+  writeQueue(dedupeQueue(queue));
+}
+
 function itemNeedsImageUpload(item: VaultItem) {
   return (item.images ?? []).some((image) => image?.localOnly);
 }
@@ -195,8 +214,9 @@ async function syncAllImages(item: VaultItem): Promise<VaultItem> {
 
 async function syncOneItem(item: VaultItem) {
   let nextItem: VaultItem = { ...item };
+  const hadLocalImages = itemNeedsImageUpload(nextItem);
 
-  if (itemNeedsImageUpload(nextItem)) {
+  if (hadLocalImages) {
     nextItem = await syncAllImages(nextItem);
   }
 
@@ -205,7 +225,10 @@ async function syncOneItem(item: VaultItem) {
     profile_id: nextItem.profile_id || getStoredActiveProfileId(),
   });
 
-  saveItem(nextItem);
+  // Only write back when image uploads changed the item. Otherwise this was a
+  // full read + rewrite of the whole local vault that stored identical data
+  // (and could overwrite an edit made while the upload was in flight).
+  if (hadLocalImages) saveItem(nextItem);
 }
 
 export async function processVaultSyncQueue() {

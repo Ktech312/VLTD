@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { PageHeader } from "@/components/layout/PageHeader";
-import { useEffect, useMemo, useState } from "react";
+import { memo, useCallback, useEffect, useMemo, useState } from "react";
 
 import ItemIntelligencePanel from "@/components/ItemIntelligencePanel";
 import ItemVisibilityToggle from "@/components/ItemVisibilityToggle";
@@ -21,6 +21,7 @@ import { computeItemIntelligence } from "@/lib/itemIntelligence";
 import { UNIVERSE_LABEL, TAXONOMY, getCategories, isUniverseKey, type UniverseKey } from "@/lib/taxonomy";
 import { migrateExistingVaultImagesToSupabase } from "@/lib/vaultMigration";
 import {
+  commitVaultItemEdits,
   enqueueVaultItemSync,
   getPendingVaultSyncCount,
   processVaultSyncQueue,
@@ -609,6 +610,10 @@ function VaultCard({
     </div>
   );
 }
+
+// Ticking one item in select mode re-renders the whole page; without this every
+// one of the (thousands of) cards re-rendered too, which is the select lag.
+const MemoVaultCard = memo(VaultCard);
 
 // Shown only until the first hydrateAll() pass finishes — without this, a
 // cold load rendered VaultEmptyState ("Your vault is empty...") for however
@@ -1330,7 +1335,9 @@ export default function VaultPage() {
     }
   }
 
-  async function handleSaveItem(nextItem: VaultItem) {
+  // Stable references (they only use state setters and module functions) so
+  // the memoized VaultCard below is not re-rendered by every selection tick.
+  const handleSaveItem = useCallback(async (nextItem: VaultItem) => {
     saveItem(nextItem);
     enqueueVaultItemSync(nextItem.id);
     setItems((prev) => prev.map((entry) => (entry.id === nextItem.id ? nextItem : entry)));
@@ -1340,9 +1347,9 @@ export default function VaultPage() {
     }
 
     window.dispatchEvent(new Event("vltd:vault-updated"));
-  }
+  }, []);
 
-  async function handleDeleteItem(target: VaultItem) {
+  const handleDeleteItem = useCallback(async (target: VaultItem) => {
     setItems((prev) => prev.filter((entry) => String(entry.id) !== String(target.id)));
     const result = await deleteVaultItemEverywhere(target.id);
     if (!result.ok) {
@@ -1351,7 +1358,7 @@ export default function VaultPage() {
       // surfaces why it came back instead of leaving it unexplained.
       setSyncStatus(result.error || "Could not delete this item from the cloud.");
     }
-  }
+  }, []);
 
   function toggleSelectItem(id: string) {
     setSelectedIds((prev) => {
@@ -1390,7 +1397,7 @@ export default function VaultPage() {
     }
   }
 
-  async function handleMassMove() {
+  function handleMassMove() {
     if (!moveTargetUniverse || selectedIds.size === 0) return;
     const updated = items.map((item) => {
       if (!selectedIds.has(item.id)) return item;
@@ -1401,23 +1408,22 @@ export default function VaultPage() {
         ...(moveTargetSubcategory ? { subcategoryLabel: moveTargetSubcategory } : {}),
       };
     });
-    const movedItems = updated.filter((item) => selectedIds.has(item.id));
-    for (const item of movedItems) {
-      saveItem(item);
-      enqueueVaultItemSync(item.id);
-    }
+    // One local save + one queue write for the whole batch, then show the
+    // result right away. The cloud upload runs in the background; the queue is
+    // stored, so it still finishes if the tab is closed and reopened.
+    commitVaultItemEdits(updated.filter((item) => selectedIds.has(item.id)));
     setItems(updated);
-
-    if (hasSupabaseEnv()) {
-      await processVaultSyncQueue();
-    }
-
-    window.dispatchEvent(new Event("vltd:vault-updated"));
     setSelectedIds(new Set());
     setSelectMode(false);
     setMoveTargetUniverse("");
     setMoveTargetCategory("");
     setMoveTargetSubcategory("");
+
+    if (hasSupabaseEnv()) {
+      void processVaultSyncQueue().then(() => window.dispatchEvent(new Event("vltd:vault-updated")));
+    } else {
+      window.dispatchEvent(new Event("vltd:vault-updated"));
+    }
   }
 
   function handleClearFilters() {
@@ -1818,7 +1824,7 @@ export default function VaultPage() {
                       {moveTargetUniverse && (
                         <button
                           type="button"
-                          onClick={() => void handleMassMove()}
+                          onClick={handleMassMove}
                           className="inline-flex h-8 items-center rounded-[7px] px-3 text-xs font-semibold"
                           style={{ background: "rgba(203,208,213,0.18)", color: "var(--theme-gold, #C8CDD2)", border: "1px solid rgba(203,208,213,0.4)" }}
                         >
@@ -1899,7 +1905,7 @@ export default function VaultPage() {
                         <SelectCircle selected={isSelected} />
                       </button>
                     )}
-                    <VaultCard
+                    <MemoVaultCard
                       item={item}
                       readiness={intelligenceMap[item.id]?.readiness ?? "Low"}
                       sale={saleInfoForItem(item, saleMap)}

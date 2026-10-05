@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { memo, useCallback, useEffect, useMemo, useState } from "react";
 
 import { AppIcon } from "@/components/ui/AppIcon";
 import { SelectCircle } from "@/components/ui/SelectCircle";
@@ -20,6 +20,7 @@ import { deleteVaultItemEverywhere, deleteVaultItemsEverywhere } from "@/lib/vau
 import { computeItemIntelligence } from "@/lib/itemIntelligence";
 import { UNIVERSE_LABEL, TAXONOMY, getCategories, isUniverseKey, type UniverseKey } from "@/lib/taxonomy";
 import {
+  commitVaultItemEdits,
   enqueueVaultItemSync,
   processVaultSyncQueue,
 } from "@/lib/vaultSyncQueue";
@@ -525,6 +526,10 @@ function VaultCard({
   );
 }
 
+// Ticking one item in select mode re-renders the whole page; without this every
+// card re-rendered too, which is the select lag on large vaults.
+const MemoVaultCard = memo(VaultCard);
+
 function VaultEmptyState({
   hasFilters,
   onClearFilters,
@@ -888,10 +893,10 @@ export default function VaultUniversePage() {
     };
   }, []);
 
-  function saveScrollPosition() {
+  const saveScrollPosition = useCallback(() => {
     const el = document.querySelector<HTMLElement>(".vltd-content-wrap");
     sessionStorage.setItem("vltd_vault_scroll_y", String(el ? el.scrollTop : 0));
-  }
+  }, []);
 
   function handleMassDelete() {
     if (selectedIds.size === 0) return;
@@ -933,26 +938,24 @@ export default function VaultUniversePage() {
   }, []);
 
   /** Move the selected items to another profile (personal <-> business). */
-  async function handleMoveToProfile(targetProfileId: string) {
+  function handleMoveToProfile(targetProfileId: string) {
     if (!targetProfileId || selectedIds.size === 0) return;
     const movedItems = items
       .filter((item) => selectedIds.has(item.id))
       .map((item) => ({ ...item, profile_id: targetProfileId }));
-    for (const item of movedItems) {
-      saveItem(item);
-      enqueueVaultItemSync(item.id);
-    }
+    commitVaultItemEdits(movedItems);
     // Moved items now belong to another profile — drop them from this view.
     setItems((prev) => prev.filter((item) => !selectedIds.has(item.id)));
-    if (hasSupabaseEnv()) {
-      await processVaultSyncQueue();
-    }
-    window.dispatchEvent(new Event("vltd:vault-updated"));
     setSelectedIds(new Set());
     setSelectMode(false);
+    if (hasSupabaseEnv()) {
+      void processVaultSyncQueue().then(() => window.dispatchEvent(new Event("vltd:vault-updated")));
+    } else {
+      window.dispatchEvent(new Event("vltd:vault-updated"));
+    }
   }
 
-  async function handleMassMove() {
+  function handleMassMove() {
     if (!moveTargetUniverse || selectedIds.size === 0) return;
     const updated = items.map((item) => {
       if (!selectedIds.has(item.id)) return item;
@@ -963,21 +966,20 @@ export default function VaultUniversePage() {
         ...(moveTargetSubcategory ? { subcategoryLabel: moveTargetSubcategory } : {}),
       };
     });
-    const movedItems = updated.filter((item) => selectedIds.has(item.id));
-    for (const item of movedItems) {
-      saveItem(item);
-      enqueueVaultItemSync(item.id);
-    }
+    // One local save + one queue write for the whole batch, shown right away;
+    // the cloud upload continues in the background (the queue is stored).
+    commitVaultItemEdits(updated.filter((item) => selectedIds.has(item.id)));
     setItems(updated);
-    if (hasSupabaseEnv()) {
-      await processVaultSyncQueue();
-    }
-    window.dispatchEvent(new Event("vltd:vault-updated"));
     setSelectedIds(new Set());
     setSelectMode(false);
     setMoveTargetUniverse("");
     setMoveTargetCategory("");
     setMoveTargetSubcategory("");
+    if (hasSupabaseEnv()) {
+      void processVaultSyncQueue().then(() => window.dispatchEvent(new Event("vltd:vault-updated")));
+    } else {
+      window.dispatchEvent(new Event("vltd:vault-updated"));
+    }
   }
 
   function toggleSelectItem(id: string) {
@@ -1036,7 +1038,9 @@ export default function VaultUniversePage() {
     showSoldItems ||
     sortMode !== "newest";
 
-  async function handleSaveItem(nextItem: VaultItem) {
+  // Stable references (state setters + module functions only) so the memoized
+  // VaultCard is not re-rendered by every selection tick.
+  const handleSaveItem = useCallback(async (nextItem: VaultItem) => {
     saveItem(nextItem);
     enqueueVaultItemSync(nextItem.id);
     setItems((prev) => prev.map((entry) => (entry.id === nextItem.id ? nextItem : entry)));
@@ -1046,16 +1050,16 @@ export default function VaultUniversePage() {
     }
 
     window.dispatchEvent(new Event("vltd:vault-updated"));
-  }
+  }, []);
 
-  async function handleDeleteItem(target: VaultItem) {
+  const handleDeleteItem = useCallback(async (target: VaultItem) => {
     setItems((prev) => prev.filter((entry) => String(entry.id) !== String(target.id)));
     // Cloud-confirmed delete; restores the item locally if the cloud refuses.
     const result = await deleteVaultItemEverywhere(target.id);
     if (!result.ok) {
       showToast(result.error || "Could not delete this item from the cloud.", 5000);
     }
-  }
+  }, []);
 
   function handleClearFilters() {
     setQuery("");
@@ -1337,7 +1341,7 @@ export default function VaultUniversePage() {
                     {moveTargetUniverse && (
                       <button
                         type="button"
-                        onClick={() => void handleMassMove()}
+                        onClick={handleMassMove}
                         className="inline-flex h-8 items-center rounded-[7px] px-3 text-xs font-semibold"
                         style={{ background: "rgba(203,208,213,0.18)", color: "#C8CDD2", border: "1px solid rgba(203,208,213,0.4)" }}
                       >
@@ -1420,7 +1424,7 @@ export default function VaultUniversePage() {
                           <SelectCircle selected={isSelected} />
                         </button>
                       )}
-                      <VaultCard
+                      <MemoVaultCard
                         item={item}
                         readiness={readiness}
                         sale={saleInfoForItem(item, saleMap)}

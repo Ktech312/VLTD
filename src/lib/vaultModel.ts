@@ -1257,6 +1257,32 @@ export function saveItem(item: VaultItem) {
   }
 }
 
+/**
+ * Save many items with ONE read and ONE write. saveItem() re-reads and
+ * re-writes the entire local vault every call, so saving a 43-item bulk move
+ * item by item meant 43 full rewrites of a vault with thousands of items.
+ */
+export function saveItemsBatch(items: VaultItem[]) {
+  if (items.length === 0) return;
+  const incoming = new Map<string, VaultItem>();
+  for (const item of items) {
+    const normalized = syncPrimaryFields(item);
+    incoming.set(String(normalized.id), normalized);
+  }
+  const placed = new Set<string>();
+  const next = loadRawItems().map((entry) => {
+    const key = String(entry.id);
+    const replacement = incoming.get(key);
+    if (!replacement) return entry;
+    placed.add(key);
+    return replacement;
+  });
+  for (const [key, item] of incoming) {
+    if (!placed.has(key)) next.push(item);
+  }
+  saveRawItems(next);
+}
+
 export function loadItemsOrSeed(seed?: VaultItem[]) {
   const existing = loadItems();
   if (existing.length > 0) return existing;
