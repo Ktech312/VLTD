@@ -82,7 +82,10 @@ export type MappingField =
   | "serialNumber"
   | "edition"
   | "variant"
-  | "imageFrontUrl";
+  | "imageFrontUrl"
+  | "imageUrl2"
+  | "imageUrl3"
+  | "imageUrl4";
 
 export type ParsedSourceSheet = {
   sheetName: string;
@@ -133,6 +136,9 @@ const HEADER_ALIASES: Record<Exclude<MappingField, "ignore">, string[]> = {
   edition: ["edition", "printing", "release"],
   variant: ["variant", "parallel", "cover", "variation"],
   imageFrontUrl: ["image url", "image", "photo", "photo url", "front image", "front image url"],
+  imageUrl2: ["image url 2", "image 2", "photo 2", "back image", "back image url"],
+  imageUrl3: ["image url 3", "image 3", "photo 3"],
+  imageUrl4: ["image url 4", "image 4", "photo 4"],
 };
 
 export const MAPPING_OPTIONS: Array<{ value: MappingField; label: string }> = [
@@ -170,6 +176,9 @@ export const MAPPING_OPTIONS: Array<{ value: MappingField; label: string }> = [
   { value: "edition", label: "Edition" },
   { value: "variant", label: "Variant" },
   { value: "imageFrontUrl", label: "Image URL (front)" },
+  { value: "imageUrl2", label: "Image URL 2 (back)" },
+  { value: "imageUrl3", label: "Image URL 3" },
+  { value: "imageUrl4", label: "Image URL 4" },
 ];
 
 function normalizeHeader(value: unknown) {
@@ -378,6 +387,25 @@ function applyMappingToRow(rawRow: Record<string, unknown>, mapping: Record<stri
   return out;
 }
 
+function importImageFields(row: RowRecord) {
+  const urls = [row.imageFrontUrl, row.imageUrl2, row.imageUrl3, row.imageUrl4]
+    .map((value) => stringify(value))
+    .filter((value) => /^https?:\/\//i.test(value));
+  if (urls.length === 0) return {};
+  return {
+    imageFrontUrl: urls[0],
+    ...(urls[1] ? { imageBackUrl: urls[1] } : {}),
+    images: urls.map((url, index) => ({
+      id: url,
+      storageKey: url,
+      url,
+      order: index,
+      role: index === 0 ? ("primary" as const) : ("detail" as const),
+      localOnly: false,
+    })),
+  };
+}
+
 function mapRowToItems(sheetName: string, rowNumber: number, row: RowRecord) {
   const kind = detectKind(sheetName);
   const title = buildTitle(kind, row).trim();
@@ -461,15 +489,9 @@ function mapRowToItems(sheetName: string, rowNumber: number, row: RowRecord) {
     variant: stringify(row.variant) || undefined,
     // Photos live in `images[]`: syncPrimaryFields clears imageFrontUrl on
     // save whenever that list is empty, so setting only imageFrontUrl
-    // silently imported every item with no photo.
-    ...(/^https?:\/\//i.test(stringify(row.imageFrontUrl))
-      ? {
-          imageFrontUrl: stringify(row.imageFrontUrl),
-          images: [
-            { id: stringify(row.imageFrontUrl), storageKey: stringify(row.imageFrontUrl), url: stringify(row.imageFrontUrl), order: 0, role: "primary" as const, localOnly: false },
-          ],
-        }
-      : {}),
+    // silently imported every item with no photo. Up to 4, in column order;
+    // the 2nd also fills imageBackUrl for the places that still read it.
+    ...importImageFields(row),
     storageLocation: stringify(row.storageLocation) || undefined,
     universe: stringify(row.universe) || universeForKind(kind),
     categoryLabel: stringify(row.category) || categories.categoryLabel,

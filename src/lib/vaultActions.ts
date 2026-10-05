@@ -43,6 +43,25 @@ export type DeleteVaultItemResult = {
 // affected, not an error. `.select("id")` gets back the row(s) actually
 // deleted, so an empty result is treated as a failure too, instead of being
 // read as "nothing left to delete, so it must have worked."
+// A delete that removed zero rows is ambiguous: either the cloud denied it
+// (RLS -- the row is still there) or the cloud never had this row at all
+// (an item that only ever existed on this device, which can never be
+// "deleted from the cloud" and used to be undeletable forever). Looking the
+// row up by id tells them apart: still there = a real failure, keep it;
+// not there = nothing to delete in the cloud, so the delete is done. A
+// lookup error is treated as "can't tell" and still counts as a failure.
+async function isConfirmedAbsentFromCloud(
+  supabase: NonNullable<ReturnType<typeof getSupabaseBrowserClient>>,
+  id: string
+): Promise<boolean> {
+  const { data, error } = await supabase
+    .from(VAULT_ITEMS_TABLE)
+    .select("id")
+    .eq("id", id)
+    .limit(1);
+  return !error && Array.isArray(data) && data.length === 0;
+}
+
 export async function deleteVaultItemEverywhere(id: string): Promise<DeleteVaultItemResult> {
   const before = loadItems({ includeAllProfiles: true });
   const target = before.find((item) => String(item.id) === String(id));
@@ -57,7 +76,9 @@ export async function deleteVaultItemEverywhere(id: string): Promise<DeleteVault
         .delete()
         .eq("id", id)
         .select("id");
-      if (error || !data || data.length === 0) {
+      const deletedNothing = !error && Boolean(data) && data!.length === 0;
+      const alreadyGone = deletedNothing && (await isConfirmedAbsentFromCloud(supabase, id));
+      if (!alreadyGone && (error || !data || data.length === 0)) {
         // Cloud still has this item — don't leave it looking deleted locally.
         if (target) {
           saveItems([...loadItems({ includeAllProfiles: true }), target]);
@@ -103,7 +124,10 @@ export async function deleteVaultItemsEverywhere(ids: string[]): Promise<DeleteV
             .select("id");
           // Same RLS-denial gap as the single-item path: no error, zero rows
           // deleted, must be treated as a failure just the same.
-          const ok = !error && Boolean(data && data.length > 0);
+          const deleted = !error && Boolean(data && data.length > 0);
+          const ok =
+            deleted ||
+            (!error && Boolean(data) && (await isConfirmedAbsentFromCloud(supabase, id)));
           return { id, error, ok };
         })
       );
