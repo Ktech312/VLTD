@@ -1102,21 +1102,72 @@ async function checkForceClearVault(profileId: string) {
   }
 }
 
-export async function syncVaultItemsFromSupabase() {
-  if (typeof window === "undefined") return [];
-  if (!hasSupabaseEnv()) return loadRawItems();
+// Every screen, the upload queue and the "vault updated" event listeners can
+// each start their own full download of the whole item list -- opening the
+// Vault alone fired three back to back (the queue's own pull, then the page's
+// explicit pull, then a second one from the event the first pull emits). That
+// is real Supabase egress and, because overlapping pulls can re-add an item
+// that is mid-delete, it is also how device-only "ghost" items got created.
+//
+// This shares or reuses a pull ONLY when it is provably equivalent to doing
+// a fresh one: same profile, and the locally stored items are byte-for-byte
+// what they were when that pull started/finished (so nothing here has been
+// added, edited or deleted since). Any local change, profile switch or
+// restore changes that signature and forces a real pull, exactly as before.
+const PULL_REUSE_MS = 4000;
+let pullInFlight: { promise: Promise<VaultItem[]>; startSig: string | null; profileId: string } | null = null;
+let lastPull: { finishedAt: number; sig: string | null; profileId: string } | null = null;
 
+function localItemsSignature() {
+  if (typeof window === "undefined") return null;
+  return window.localStorage.getItem(LS_KEY);
+}
+
+async function pullAndMergeFromSupabase(profileId: string): Promise<VaultItem[]> {
   try {
-    const activeProfileId = getActiveProfileId();
-    if (activeProfileId) await checkForceClearVault(activeProfileId);
+    if (profileId) await checkForceClearVault(profileId);
 
     const remoteItems = await fetchVaultItemsFromSupabase();
     const localItems = loadRawItems();
     const merged = mergeById(localItems, remoteItems);
     saveRawItems(merged);
+    // Settle the stored form (loadRawItems normalizes and re-saves) before
+    // taking the signature, so an unchanged vault compares equal later.
+    loadRawItems();
+    lastPull = { finishedAt: Date.now(), sig: localItemsSignature(), profileId };
     return merged;
   } catch {
     return loadRawItems();
+  }
+}
+
+export async function syncVaultItemsFromSupabase() {
+  if (typeof window === "undefined") return [];
+  if (!hasSupabaseEnv()) return loadRawItems();
+
+  const profileId = getActiveProfileId();
+  const sig = localItemsSignature();
+
+  if (
+    lastPull &&
+    lastPull.profileId === profileId &&
+    lastPull.sig === sig &&
+    Date.now() - lastPull.finishedAt < PULL_REUSE_MS
+  ) {
+    return loadRawItems();
+  }
+
+  if (pullInFlight && pullInFlight.profileId === profileId && pullInFlight.startSig === sig) {
+    await pullInFlight.promise;
+    return loadRawItems();
+  }
+
+  const entry = { promise: pullAndMergeFromSupabase(profileId), startSig: sig, profileId };
+  pullInFlight = entry;
+  try {
+    return await entry.promise;
+  } finally {
+    if (pullInFlight === entry) pullInFlight = null;
   }
 }
 
