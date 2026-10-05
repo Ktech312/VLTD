@@ -19,6 +19,7 @@ import { universePlaceholder } from "@/lib/itemPlaceholder";
 import SwipeStack from "@/components/SwipeStack";
 import { computeItemIntelligence } from "@/lib/itemIntelligence";
 import { UNIVERSE_LABEL, TAXONOMY, getCategories, isUniverseKey, type UniverseKey } from "@/lib/taxonomy";
+import { showToast } from "@/lib/toast";
 import { migrateExistingVaultImagesToSupabase } from "@/lib/vaultMigration";
 import {
   commitVaultItemEdits,
@@ -1415,7 +1416,10 @@ export default function VaultPage() {
     // One local save + one queue write for the whole batch, then show the
     // result right away. The cloud upload runs in the background; the queue is
     // stored, so it still finishes if the tab is closed and reopened.
+    const movedCount = selectedIds.size;
+    const movedTo = [UNIVERSE_LABEL[moveTargetUniverse as UniverseKey] ?? moveTargetUniverse, moveTargetCategory, moveTargetSubcategory].filter(Boolean).join(" · ");
     commitVaultItemEdits(updated.filter((item) => selectedIds.has(item.id)));
+    showToast(`Moved ${movedCount} item${movedCount === 1 ? "" : "s"} to ${movedTo}`, 4000);
     setItems(updated);
     setSelectedIds(new Set());
     setSelectMode(false);
@@ -1424,7 +1428,14 @@ export default function VaultPage() {
     setMoveTargetSubcategory("");
 
     if (hasSupabaseEnv()) {
-      void processVaultSyncQueue().then(() => window.dispatchEvent(new Event("vltd:vault-updated")));
+      void processVaultSyncQueue()
+        .then((res) => {
+          if (res && res.remaining > 0) {
+            showToast(`${res.remaining} item${res.remaining === 1 ? "" : "s"} saved here but not uploaded yet. Will retry.`, 6000);
+          }
+          window.dispatchEvent(new Event("vltd:vault-updated"));
+        })
+        .catch(() => showToast("Moved here, but the upload failed. Will retry.", 6000));
     } else {
       window.dispatchEvent(new Event("vltd:vault-updated"));
     }
@@ -1747,7 +1758,7 @@ export default function VaultPage() {
                 <div className="flex flex-wrap items-center gap-1.5">
                   <button
                     type="button"
-                    onClick={() => { setSelectMode((v) => !v); setSelectedIds(new Set()); setMoveTargetUniverse(""); setMoveTargetCategory(""); setMoveTargetSubcategory(""); setDeleteConfirmPending(false); }}
+                    onClick={() => { if (selectMode) return; setSelectMode(true); setMoveTargetUniverse(""); setMoveTargetCategory(""); setMoveTargetSubcategory(""); setDeleteConfirmPending(false); }}
                     className="inline-flex h-8 w-8 items-center justify-center rounded-full transition"
                     style={selectMode ? { background: "rgba(203,208,213,0.18)", color: "var(--theme-gold, #C8CDD2)" } : { background: "var(--pill)", color: "var(--muted)" }}
                     aria-label="Select items"
@@ -1830,9 +1841,9 @@ export default function VaultPage() {
                           type="button"
                           onClick={handleMassMove}
                           className="inline-flex h-8 items-center rounded-[7px] px-3 text-xs font-semibold"
-                          style={{ background: "rgba(203,208,213,0.18)", color: "var(--theme-gold, #C8CDD2)", border: "1px solid rgba(203,208,213,0.4)" }}
+                          style={{ background: "var(--status-cyan, #22D3EE)", color: "#04121A", border: "1px solid rgba(255,255,255,0.4)", boxShadow: "0 0 10px rgba(34,211,238,0.45)" }}
                         >
-                          Move
+                          Move {selectedIds.size}
                         </button>
                       )}
                     </>
