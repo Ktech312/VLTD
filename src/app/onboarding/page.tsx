@@ -486,7 +486,7 @@ export default function OnboardingPage() {
                         type="button"
                         onClick={() => chooseLook(opt.key as "classic" | "bright")}
                         aria-pressed={active}
-                        className={accountTypeCardClass(active)}
+                        className={`${accountTypeCardClass(active)} h-full${active ? " ring-2 ring-[color:var(--data-color,#4FD3EE)]" : ""}`}
                       >
                         <div className="flex h-16 items-center">
                           <VltdLogo height={34} force={opt.force} />
@@ -510,7 +510,7 @@ export default function OnboardingPage() {
                         className={[
                           "rounded-full px-5 py-2 text-sm font-semibold ring-1 transition",
                           lookMode === m
-                            ? "bg-[rgba(203,208,213,0.15)] ring-[rgba(203,208,213,0.55)] text-text-primary"
+                            ? "bg-[rgba(203,208,213,0.15)] ring-2 ring-[color:var(--data-color,#4FD3EE)] text-text-primary"
                             : "bg-[color:var(--pill)] ring-[color:var(--border)] text-[color:var(--muted)] hover:text-text-primary",
                         ].join(" ")}
                       >

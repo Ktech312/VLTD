@@ -23,7 +23,7 @@ export default function VltdLogo({
     return (
       <span className={`vltd-logo ${className}`.trim()} role="img" aria-label="VLTD">
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/brand/logo/vltd-logo-color.png" alt="" aria-hidden="true" style={{ ...style, display: "block" }} />
+        <img className="vltd-logo-color" src="/brand/logo/vltd-logo-color.png" alt="" aria-hidden="true" style={{ ...style, display: "block" }} />
       </span>
     );
   }
