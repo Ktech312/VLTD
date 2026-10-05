@@ -1,6 +1,7 @@
  "use client";
 
 import { newId } from "@/lib/id";
+import { readVaultLocalJson } from "@/lib/vaultLocalStore";
 import { appendItems, getAllLocalItems, saveItems, type VaultItem } from "@/lib/vaultModel";
 import { enqueueVaultItemSync, removeVaultItemFromSyncQueue } from "@/lib/vaultSyncQueue";
 
@@ -672,7 +673,7 @@ function normalizeItem(raw: unknown): VaultItem | null {
 export function readRawVault(): VaultItem[] {
   if (typeof window === "undefined") return [];
   try {
-    const raw = window.localStorage.getItem(LS_KEY);
+    const raw = readVaultLocalJson();
     if (!raw) return [];
     const parsed = JSON.parse(raw);
     if (!Array.isArray(parsed)) return [];

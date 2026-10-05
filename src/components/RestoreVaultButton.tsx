@@ -1,6 +1,7 @@
 "use client";
 
 import { showToast } from "@/lib/toast";
+import { writeVaultLocalJson } from "@/lib/vaultLocalStore";
 
 export default function RestoreVaultButton() {
   function handleRestore() {
@@ -15,7 +16,7 @@ export default function RestoreVaultButton() {
 
     if (!confirmRestore) return;
 
-    localStorage.setItem("vltd_vault_items_v1", backup);
+    writeVaultLocalJson(backup);
 
     showToast("Vault restored.");
     location.reload();

@@ -11,6 +11,7 @@ import {
   uploadVaultImageToSupabase,
 } from "@/lib/vaultCloud";
 import { getImageBlobFromIndexedDb } from "@/lib/vaultImageStore";
+import { writeVaultLocalJson } from "@/lib/vaultLocalStore";
 
 export type VaultSyncQueueItem = {
   id: string;
@@ -295,7 +296,7 @@ export async function restoreLocalVaultFromCloud(): Promise<{ pulled: number }> 
   // Drop any pending (possibly mis-tagged) local edits so they can't re-upload.
   window.localStorage.setItem("vltd_sync_queue_v1", "[]");
   // Wipe the local item cache entirely, then re-pull authoritative cloud data.
-  window.localStorage.setItem("vltd_vault_items_v1", "[]");
+  writeVaultLocalJson("[]");
   const fresh = await syncVaultItemsFromSupabase();
   window.dispatchEvent(new Event("vltd:vault-updated"));
   return { pulled: Array.isArray(fresh) ? fresh.length : 0 };

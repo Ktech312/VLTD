@@ -6,9 +6,9 @@ import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { PillButton } from "@/components/ui/PillButton";
 import { newId } from "@/lib/id";
 import { emitVaultUpdate } from "@/lib/vaultEvents";
+import { readVaultLocalJson, writeVaultLocalJson } from "@/lib/vaultLocalStore";
 import type { VaultItem } from "@/lib/vaultModel";
 
-const LS_KEY = "vltd_vault_items_v1";
 const ACTIVE_PROFILE_KEY = "vltd_active_profile_id_v1";
 const PREVIEW_LIMIT = 200;
 
@@ -67,7 +67,7 @@ function normalizeItem(raw: any): VaultItem | null {
 function readRawVault(): VaultItem[] {
   if (typeof window === "undefined") return [];
   try {
-    const raw = window.localStorage.getItem(LS_KEY);
+    const raw = readVaultLocalJson();
     if (!raw) return [];
     const parsed = JSON.parse(raw);
     if (!Array.isArray(parsed)) return [];
@@ -87,7 +87,7 @@ function readVaultForActiveProfile(): VaultItem[] {
 
 function writeRawVault(items: VaultItem[]) {
   if (typeof window === "undefined") return;
-  window.localStorage.setItem(LS_KEY, JSON.stringify(items));
+  writeVaultLocalJson(JSON.stringify(items));
 }
 
 function appendImportedItems(items: VaultItem[]) {

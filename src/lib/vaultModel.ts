@@ -4,6 +4,11 @@ import {
   hasSupabaseEnv,
   isDirectBrowserImageUrl,
 } from "@/lib/vaultCloud";
+import {
+  getVaultLocalSignature,
+  readVaultLocalJson,
+  writeVaultLocalJson,
+} from "@/lib/vaultLocalStore";
 import { resolvePrivateImageUrlSync } from "@/lib/privatePhotos";
 import { newId } from "@/lib/id";
 import {
@@ -257,7 +262,6 @@ type LoadItemsOptions = {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type UnknownRecord = Record<string, any>;
 
-const LS_KEY = "vltd_vault_items_v1";
 const LEGACY_LS_KEY = "vltd_items";
 const ACTIVE_PROFILE_KEY = "vltd_active_profile_id_v1";
 
@@ -841,17 +845,17 @@ function stripEphemeralForPersistence(item: VaultItem): VaultItem {
 function saveRawItems(items: VaultItem[]) {
   if (typeof window === "undefined") return;
   const safeItems = items.map((item) => stripEphemeralForPersistence(syncPrimaryFields(item)));
-  window.localStorage.setItem(LS_KEY, JSON.stringify(safeItems));
+  writeVaultLocalJson(JSON.stringify(safeItems));
 }
 
 function loadRawItems() {
   if (typeof window === "undefined") return [];
   try {
-    let raw = window.localStorage.getItem(LS_KEY);
+    let raw = readVaultLocalJson();
     if (!raw) {
       const legacy = window.localStorage.getItem(LEGACY_LS_KEY);
       if (legacy) {
-        window.localStorage.setItem(LS_KEY, legacy);
+        writeVaultLocalJson(legacy);
         raw = legacy;
       }
     }
@@ -1089,7 +1093,7 @@ async function checkForceClearVault(profileId: string) {
       const remaining = loadRawItems().filter(
         (item) => item.profile_id !== profileId
       );
-      window.localStorage.setItem(LS_KEY, JSON.stringify(remaining));
+      writeVaultLocalJson(JSON.stringify(remaining));
 
       // Reset the flag
       await supabase
@@ -1120,7 +1124,7 @@ let lastPull: { finishedAt: number; sig: string | null; profileId: string } | nu
 
 function localItemsSignature() {
   if (typeof window === "undefined") return null;
-  return window.localStorage.getItem(LS_KEY);
+  return getVaultLocalSignature();
 }
 
 async function pullAndMergeFromSupabase(profileId: string): Promise<VaultItem[]> {
