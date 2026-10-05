@@ -81,7 +81,8 @@ export type MappingField =
   | "subcategory"
   | "serialNumber"
   | "edition"
-  | "variant";
+  | "variant"
+  | "imageFrontUrl";
 
 export type ParsedSourceSheet = {
   sheetName: string;
@@ -131,6 +132,7 @@ const HEADER_ALIASES: Record<Exclude<MappingField, "ignore">, string[]> = {
   serialNumber: ["serial number", "serial #", "slab serial"],
   edition: ["edition", "printing", "release"],
   variant: ["variant", "parallel", "cover", "variation"],
+  imageFrontUrl: ["image url", "image", "photo", "photo url", "front image", "front image url"],
 };
 
 export const MAPPING_OPTIONS: Array<{ value: MappingField; label: string }> = [
@@ -167,6 +169,7 @@ export const MAPPING_OPTIONS: Array<{ value: MappingField; label: string }> = [
   { value: "serialNumber", label: "Serial Number" },
   { value: "edition", label: "Edition" },
   { value: "variant", label: "Variant" },
+  { value: "imageFrontUrl", label: "Image URL (front)" },
 ];
 
 function normalizeHeader(value: unknown) {
@@ -456,6 +459,7 @@ function mapRowToItems(sheetName: string, rowNumber: number, row: RowRecord) {
     serialNumber: stringify(row.serialNumber) || undefined,
     edition: stringify(row.edition) || undefined,
     variant: stringify(row.variant) || undefined,
+    imageFrontUrl: /^https?:\/\//i.test(stringify(row.imageFrontUrl)) ? stringify(row.imageFrontUrl) : undefined,
     storageLocation: stringify(row.storageLocation) || undefined,
     universe: stringify(row.universe) || universeForKind(kind),
     categoryLabel: stringify(row.category) || categories.categoryLabel,
