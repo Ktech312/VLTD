@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { signUpWithPassword } from "@/lib/auth";
+import VltdLogo from "@/components/VltdLogo";
 
 type LaunchAccessStatus = {
   capacity: number;
@@ -86,10 +87,7 @@ export default function SignupPage() {
 
         <div className="flex flex-1 items-center justify-center py-8">
           <div className="vltd-vault-surface w-full max-w-[560px] rounded-[34px] p-7 backdrop-blur-xl sm:p-10">
-            <div className="flex items-center gap-3">
-              <span className="vltd-brand-dot" />
-              <div className="text-2xl font-black tracking-[0.08em]">VLTD <span className="align-super text-[9px] text-[color:var(--muted2)]">TM</span></div>
-            </div>
+            <VltdLogo height={40} onDark />
 
             <div className="mt-8 inline-flex items-center gap-2 rounded-full border px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.22em]" style={{ color: "#C8CDD2", borderColor: "rgba(203,208,213,0.32)", background: "rgba(203,208,213,0.07)" }}>
               Founding Access

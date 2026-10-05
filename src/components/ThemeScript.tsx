@@ -29,6 +29,10 @@ export default function ThemeScript() {
 
     var root = document.documentElement;
 
+    // Logo version (A platinum/black, B color) before first paint
+    var logo = localStorage.getItem("vltd_logo_variant");
+    root.setAttribute("data-vltd-logo", logo === "b" ? "b" : "a");
+
     // Theme class
     if (shouldBeDark) root.classList.add("dark");
     else root.classList.remove("dark");

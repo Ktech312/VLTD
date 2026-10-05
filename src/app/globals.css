@@ -2515,3 +2515,19 @@ main {
 @keyframes ptr-spin {
   to { transform: rotate(360deg); }
 }
+
+/* ── VLTD logo (approved 2026-10-04): A platinum/black, B color ─────────── */
+.vltd-logo { display: inline-flex; align-items: center; line-height: 0; }
+.vltd-logo img { display: none; }
+.vltd-logo .vltd-logo-platinum { display: block; }
+.theme-light .vltd-logo .vltd-logo-platinum { display: none; }
+.theme-light .vltd-logo .vltd-logo-black { display: block; }
+html[data-vltd-logo="b"] .vltd-logo img { display: none !important; }
+html[data-vltd-logo="b"] .vltd-logo .vltd-logo-color { display: block !important; }
+.vltd-logo-glow { filter: drop-shadow(0 0 6px rgba(64, 146, 255, 0.9)) drop-shadow(0 0 14px rgba(64, 146, 255, 0.6)); }
+html[data-vltd-logo="b"] .vltd-logo.vltd-logo-force-a .vltd-logo-platinum { display: block !important; }
+html[data-vltd-logo="b"].theme-light .vltd-logo.vltd-logo-force-a .vltd-logo-platinum { display: none !important; }
+html[data-vltd-logo="b"].theme-light .vltd-logo.vltd-logo-force-a .vltd-logo-black { display: block !important; }
+html[data-vltd-logo="b"] .vltd-logo.vltd-logo-force-a .vltd-logo-color { display: none !important; }
+html:not([data-vltd-logo="b"]) .vltd-logo.vltd-logo-on-dark .vltd-logo-platinum { display: block !important; }
+html:not([data-vltd-logo="b"]) .vltd-logo.vltd-logo-on-dark .vltd-logo-black { display: none !important; }

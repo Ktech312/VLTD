@@ -2,6 +2,7 @@
 /* Path: src/lib/ThemeContext.tsx */
 import React, { createContext, useContext, useEffect, useState } from 'react'
 import { Theme, ThemeId, themes, defaultTheme, THEME_LS_KEY } from './themes'
+import { loadLookFromAccount, saveLookToAccount } from './lookSync'
 
 // Icon style is a separate, independent preference from the background
 // theme (Dark/Light + palette). Simple Glass is a navigation-wide trial;
@@ -13,12 +14,20 @@ type StoredIconStyle = IconStyle | 'soft-sticker' | 'friendly-glass'
 export const ICON_STYLE_LS_KEY = 'vltd_icon_style'
 const DEFAULT_ICON_STYLE: IconStyle = 'classic'
 
+// Logo A (platinum/black) is the default; Logo B is the color version chosen
+// with the Bright look. Rendering is pure CSS off html[data-vltd-logo].
+export type LogoVariant = 'a' | 'b'
+export const LOGO_VARIANT_LS_KEY = 'vltd_logo_variant'
+const DEFAULT_LOGO_VARIANT: LogoVariant = 'a'
+
 interface ThemeContextValue {
   themeId: ThemeId
   theme: Theme
   setTheme: (id: ThemeId) => void
   iconStyle: IconStyle
   setIconStyle: (style: IconStyle) => void
+  logoVariant: LogoVariant
+  setLogoVariant: (variant: LogoVariant) => void
 }
 
 const ThemeContext = createContext<ThemeContextValue>({
@@ -27,6 +36,8 @@ const ThemeContext = createContext<ThemeContextValue>({
   setTheme: () => {},
   iconStyle: DEFAULT_ICON_STYLE,
   setIconStyle: () => {},
+  logoVariant: DEFAULT_LOGO_VARIANT,
+  setLogoVariant: () => {},
 })
 
 function getThemeAccent(theme: Theme) {
@@ -38,6 +49,10 @@ function getThemeAccent(theme: Theme) {
 
 function applyIconStyleAttr(style: IconStyle) {
   document.documentElement.setAttribute('data-vltd-icon-style', style)
+}
+
+function applyLogoAttr(variant: LogoVariant) {
+  document.documentElement.setAttribute('data-vltd-logo', variant)
 }
 
 function applyThemeVars(theme: Theme) {
@@ -70,6 +85,7 @@ function applyThemeVars(theme: Theme) {
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [themeId, setThemeId] = useState<ThemeId>(defaultTheme)
   const [iconStyle, setIconStyleState] = useState<IconStyle>(DEFAULT_ICON_STYLE)
+  const [logoVariant, setLogoVariantState] = useState<LogoVariant>(DEFAULT_LOGO_VARIANT)
 
   // Track hydration so the initial default-theme render does NOT overwrite the
   // saved preference before we've read it back (that bug reverted every refresh
@@ -99,7 +115,24 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
         setIconStyleState('classic')
       }
     } catch {}
+    let hasLocalLook = false
+    try {
+      const savedLogo = localStorage.getItem(LOGO_VARIANT_LS_KEY)
+      if (savedLogo === 'a' || savedLogo === 'b') setLogoVariantState(savedLogo)
+      hasLocalLook = Boolean(localStorage.getItem(THEME_LS_KEY) || savedLogo)
+    } catch {}
     setHydrated(true)
+
+    // New device (nothing saved here yet): bring the look the member chose on
+    // their account, so it follows them across devices.
+    if (!hasLocalLook) {
+      void loadLookFromAccount().then((look) => {
+        if (!look) return
+        if (look.theme && themes[look.theme as ThemeId]) setThemeId(look.theme as ThemeId)
+        if (look.iconStyle === 'classic' || look.iconStyle === 'simplified-glass') setIconStyleState(look.iconStyle)
+        if (look.logoVariant === 'a' || look.logoVariant === 'b') setLogoVariantState(look.logoVariant)
+      })
+    }
   }, [])
 
   useEffect(() => {
@@ -122,9 +155,33 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     }
   }, [iconStyle, hydrated])
 
+  useEffect(() => {
+    applyLogoAttr(logoVariant)
+    if (hydrated) {
+      try {
+        localStorage.setItem(LOGO_VARIANT_LS_KEY, logoVariant)
+      } catch {}
+    }
+  }, [logoVariant, hydrated])
+
+  // Setters used by the pickers: apply right away, then save to the account
+  // so the look follows the member to other devices.
+  const setTheme = (id: ThemeId) => {
+    setThemeId(id)
+    void saveLookToAccount({ theme: id })
+  }
+  const setIconStyle = (style: IconStyle) => {
+    setIconStyleState(style)
+    void saveLookToAccount({ iconStyle: style })
+  }
+  const setLogoVariant = (variant: LogoVariant) => {
+    setLogoVariantState(variant)
+    void saveLookToAccount({ logoVariant: variant })
+  }
+
   return (
     <ThemeContext.Provider
-      value={{ themeId, theme: themes[themeId], setTheme: setThemeId, iconStyle, setIconStyle: setIconStyleState }}
+      value={{ themeId, theme: themes[themeId], setTheme, iconStyle, setIconStyle, logoVariant, setLogoVariant }}
     >
       {children}
     </ThemeContext.Provider>

@@ -6,6 +6,7 @@ import { Suspense, useMemo, useState } from "react";
 
 import { getOnboardingStatus, signInWithGoogle, signInWithPassword } from "@/lib/auth";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
+import VltdLogo from "@/components/VltdLogo";
 
 function LoginInner() {
   const router = useRouter();
@@ -122,10 +123,7 @@ function LoginInner() {
 
         <div className="flex flex-1 items-center justify-center py-8">
           <div className="vltd-vault-surface w-full max-w-[560px] rounded-[34px] p-7 backdrop-blur-xl sm:p-10">
-            <div className="flex items-center gap-3">
-              <span className="vltd-brand-dot" />
-              <div className="text-2xl font-black tracking-[0.08em]">VLTD <span className="align-super text-[9px] text-[color:var(--muted2)]">TM</span></div>
-            </div>
+            <VltdLogo height={40} onDark />
 
             {mfaFactorId ? (
               <>

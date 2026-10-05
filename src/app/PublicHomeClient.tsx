@@ -15,6 +15,7 @@ import {
 } from "@/lib/galleryModel";
 import { getVaultImagePublicUrl, isDirectBrowserImageUrl } from "@/lib/vaultCloud";
 import VltdVaultLogoAnimation from "@/components/VltdVaultLogoAnimation";
+import VltdLogo from "@/components/VltdLogo";
 
 type PublicGalleryCard = {
   id: string;
@@ -151,13 +152,7 @@ function toPublicCard(gallery: Gallery): PublicGalleryCard {
 }
 
 function BrandMark() {
-  return (
-    <div className="flex items-center gap-2 font-black tracking-[0.08em] text-text-primary">
-      <span className="vltd-brand-dot h-2.5 w-2.5" />
-      <span>VLTD</span>
-      <span className="text-[8px] text-[color:var(--muted2)]">TM</span>
-    </div>
-  );
+  return <VltdLogo height={34} />;
 }
 
 function PublicGalleryTile({ gallery }: { gallery: PublicGalleryCard }) {

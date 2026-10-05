@@ -10,6 +10,8 @@ import { Glyph, universeGlyphName } from "@/components/ui/Glyph";
 import { AppIcon, type AppIconName } from "@/components/ui/AppIcon";
 import { clearOnboardingDraft, loadOnboardingDraft, saveOnboardingDraft } from "@/lib/onboardingDraft";
 import { PillButton } from "@/components/ui/PillButton";
+import VltdLogo from "@/components/VltdLogo";
+import { useTheme } from "@/lib/ThemeContext";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 // Realistic preset avatars — the same illustrated set the app renders elsewhere
@@ -139,14 +141,23 @@ function AvatarThumb({ id, size = 40 }: { id: string; size?: number }) {
 }
 
 // ─── Main ─────────────────────────────────────────────────────────────────────
-const TOTAL_STEPS = 3;
+const TOTAL_STEPS = 4;
 
 export default function OnboardingPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
-  const [step, setStep] = useState<1 | 2 | 3>(1);
+  const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
+  const { theme, setTheme, setIconStyle, logoVariant, setLogoVariant } = useTheme();
+  const lookMode = theme.mode;
+  function chooseLook(next: "classic" | "bright") {
+    setIconStyle(next === "bright" ? "simplified-glass" : "classic");
+    setLogoVariant(next === "bright" ? "b" : "a");
+  }
+  function chooseMode(next: "dark" | "light") {
+    setTheme(next === "light" ? "pearl-light" : "deep-vault");
+  }
 
   const [username, setUsername] = useState("");
   const [displayName, setDisplayName] = useState("");
@@ -298,12 +309,14 @@ export default function OnboardingPage() {
             <h1 className="mt-3 text-3xl font-black leading-[1] tracking-[-0.05em] text-text-primary sm:text-4xl">
               {step === 1 && "Your identity."}
               {step === 2 && "Account type."}
-              {step === 3 && "What you collect."}
+              {step === 3 && "Pick your look."}
+              {step === 4 && "What you collect."}
             </h1>
             <p className="mt-2 text-sm text-[color:var(--muted)]">
               {step === 1 && "Pick an avatar, set your name. You can change all of this later."}
               {step === 2 && "This shapes your dashboard and visibility defaults."}
-              {step === 3 && "Pick the universes to focus your experience. You can change this anytime."}
+              {step === 3 && "Choose how VLTD looks for you. Change it anytime in your account menu."}
+              {step === 4 && "Pick the universes to focus your experience. You can change this anytime."}
             </p>
 
             <StepIndicator step={step} total={TOTAL_STEPS} />
@@ -458,8 +471,64 @@ export default function OnboardingPage() {
               </div>
             )}
 
-            {/* ── Step 3: Universes + Confirm + Launch ── */}
+            {/* ── Step 3: Pick your look ── */}
             {step === 3 && (
+              <div className="mt-6 space-y-5">
+                <div className="grid gap-3 sm:grid-cols-2">
+                  {([
+                    { key: "classic", title: "Classic", desc: "Calm platinum, Classic icons.", force: "a" as const },
+                    { key: "bright", title: "Bright", desc: "Color logo, Simple Glass icons.", force: "b" as const },
+                  ]).map((opt) => {
+                    const active = (opt.key === "bright") === (logoVariant === "b");
+                    return (
+                      <button
+                        key={opt.key}
+                        type="button"
+                        onClick={() => chooseLook(opt.key as "classic" | "bright")}
+                        aria-pressed={active}
+                        className={accountTypeCardClass(active)}
+                      >
+                        <div className="flex h-16 items-center">
+                          <VltdLogo height={34} force={opt.force} />
+                        </div>
+                        <div className="mt-3 text-base font-black text-text-primary">{opt.title}</div>
+                        <div className="mt-1 text-xs text-[color:var(--muted2)]">{opt.desc}</div>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                <div>
+                  <div className="mb-2 text-sm font-semibold text-text-primary">Screen</div>
+                  <div className="inline-flex gap-2">
+                    {(["dark", "light"] as const).map((m) => (
+                      <button
+                        key={m}
+                        type="button"
+                        onClick={() => chooseMode(m)}
+                        aria-pressed={lookMode === m}
+                        className={[
+                          "rounded-full px-5 py-2 text-sm font-semibold ring-1 transition",
+                          lookMode === m
+                            ? "bg-[rgba(203,208,213,0.15)] ring-[rgba(203,208,213,0.55)] text-text-primary"
+                            : "bg-[color:var(--pill)] ring-[color:var(--border)] text-[color:var(--muted)] hover:text-text-primary",
+                        ].join(" ")}
+                      >
+                        {m === "dark" ? "Dark" : "Light"}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="flex gap-3">
+                  <GoldButton onClick={() => setStep(4)}>Continue →</GoldButton>
+                  <GhostButton onClick={() => setStep(2)}>Back</GhostButton>
+                </div>
+              </div>
+            )}
+
+            {/* ── Step 4: Universes + Confirm + Launch ── */}
+            {step === 4 && (
               <div className="mt-6 space-y-5">
                 <div>
                   <div className="text-sm font-semibold text-text-primary mb-1">What universes do you collect in?</div>
@@ -526,7 +595,7 @@ export default function OnboardingPage() {
                   <GoldButton disabled={saving || !canContinueIdentity} onClick={() => void handleFinish()}>
                     {saving ? "Setting up…" : "Launch my vault →"}
                   </GoldButton>
-                  <GhostButton onClick={() => setStep(2)}>Back</GhostButton>
+                  <GhostButton onClick={() => setStep(3)}>Back</GhostButton>
                 </div>
               </div>
             )}

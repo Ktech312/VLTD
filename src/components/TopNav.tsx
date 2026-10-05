@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import React, { Suspense, useEffect, useMemo, useRef, useState } from "react";
 
-import Image from "next/image";
+import VltdLogo from "@/components/VltdLogo";
 import AlertsBell from "@/components/AlertsBell";
 import CommandPalette from "@/components/CommandPalette";
 import { ThemePicker } from "@/components/ui/ThemePicker";
@@ -393,7 +393,7 @@ function TopNavInner() {
 
           {/* Logo */}
           <Link href="/" className="shrink-0 flex items-center">
-            <Image src="/brand/vltd-logo.png" alt="VLTD" width={120} height={42} className={`vltd-nav-logo h-[52px] w-auto${isHome ? " vltd-nav-logo-home" : ""}`} priority />
+            <VltdLogo height={38} glow={isHome} />
           </Link>
 
           {/* Desktop icon nav — centered */}

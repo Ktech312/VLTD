@@ -4,6 +4,7 @@ import type { CSSProperties } from 'react'
 import { useTheme, type IconStyle } from '@/lib/ThemeContext'
 import { themes, ThemeId, ThemeMode } from '@/lib/themes'
 import { AppIcon, type AppIconName } from '@/components/ui/AppIcon'
+import VltdLogo from '@/components/VltdLogo'
 
 // Compact account-menu preview: three representative icons, not all six nav
 // destinations -- this panel sits inside the account dropdown, not a
@@ -52,7 +53,7 @@ function SunIcon() {
 }
 
 export function ThemePicker() {
-  const { themeId, setTheme, iconStyle, setIconStyle } = useTheme()
+  const { themeId, setTheme, iconStyle, setIconStyle, logoVariant, setLogoVariant } = useTheme()
   const currentMode: ThemeMode = themes[themeId].mode
 
   function pickMode(mode: ThemeMode) {
@@ -140,6 +141,42 @@ export function ThemePicker() {
                   {ICON_PREVIEW.map(nav => (
                     <AppIcon key={nav.name} name={nav.name} variant="navTop" size={20} style={{ color: 'var(--theme-text-primary, #ECEDEF)' }} />
                   ))}
+                </div>
+              </button>
+            )
+          })}
+        </div>
+      </div>
+
+      {/* ── Logo ── Classic (platinum/black) or Color. */}
+      <div>
+        <p className="mb-2 text-[10px] font-bold uppercase tracking-[0.28em]"
+          style={{ color: 'var(--theme-text-muted, #5A5040)' }}>
+          Logo
+        </p>
+        <div className="grid grid-cols-2 gap-2">
+          {([
+            { id: 'a', label: 'Classic' },
+            { id: 'b', label: 'Color' },
+          ] as const).map(opt => {
+            const active = logoVariant === opt.id
+            return (
+              <button
+                key={opt.id}
+                type="button"
+                onClick={() => setLogoVariant(opt.id)}
+                aria-pressed={active}
+                className="rounded-xl px-2.5 py-2.5 text-center transition"
+                style={{
+                  ...selectedStyle(active),
+                  background: active ? 'rgba(79,211,238,0.08)' : 'rgba(255,255,255,0.04)',
+                }}
+              >
+                <span className="text-[11px] font-semibold" style={{ color: active ? SELECTED_RING : 'var(--theme-text-muted, #5A5040)' }}>
+                  {opt.label}
+                </span>
+                <div className="mt-2 flex justify-center">
+                  <VltdLogo height={18} force={opt.id} />
                 </div>
               </button>
             )
