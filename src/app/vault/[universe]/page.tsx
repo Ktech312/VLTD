@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 
 import { AppIcon } from "@/components/ui/AppIcon";
+import { SelectCircle } from "@/components/ui/SelectCircle";
 import ItemIntelligencePanel from "@/components/ItemIntelligencePanel";
 import ItemVisibilityToggle from "@/components/ItemVisibilityToggle";
 import RestoreVaultButton from "@/components/RestoreVaultButton";
@@ -1416,16 +1417,7 @@ export default function VaultUniversePage() {
                           className="absolute inset-0 z-40 flex items-center justify-center rounded-[14px]"
                           style={{ background: isSelected ? "rgba(203,208,213,0.18)" : "rgba(0,0,0,0.04)" }}
                         >
-                          <span
-                            className="flex h-8 w-8 items-center justify-center rounded-full"
-                            style={isSelected
-                              ? { background: "#C8CDD2", boxShadow: "0 0 0 2px rgba(203,208,213,0.5)" }
-                              : { background: "rgba(255,255,255,0.15)", border: "2px solid rgba(203,208,213,0.55)" }}
-                          >
-                            {isSelected && (
-                              <AppIcon name="checkmark" size={14} strokeWidth={2} style={{ color: "#1A0F00" }} />
-                            )}
-                          </span>
+                          <SelectCircle selected={isSelected} />
                         </button>
                       )}
                       <VaultCard

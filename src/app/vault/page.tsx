@@ -13,6 +13,7 @@ import VaultWallView from "@/components/VaultWallView";
 import { PillButton } from "@/components/ui/PillButton";
 import { Glyph } from "@/components/ui/Glyph";
 import { AppIcon } from "@/components/ui/AppIcon";
+import { SelectCircle } from "@/components/ui/SelectCircle";
 import ProgressiveImage from "@/components/ui/ProgressiveImage";
 import { universePlaceholder } from "@/lib/itemPlaceholder";
 import SwipeStack from "@/components/SwipeStack";
@@ -1895,16 +1896,7 @@ export default function VaultPage() {
                         className="absolute inset-0 z-40 flex items-center justify-center rounded-[10px]"
                         style={{ background: isSelected ? "rgba(203,208,213,0.18)" : "rgba(0,0,0,0.04)" }}
                       >
-                        <span
-                          className="flex h-8 w-8 items-center justify-center rounded-full"
-                          style={isSelected
-                            ? { background: "#C8CDD2", boxShadow: "0 0 0 2px rgba(203,208,213,0.5)" }
-                            : { background: "rgba(255,255,255,0.15)", border: "2px solid rgba(203,208,213,0.55)" }}
-                        >
-                          {isSelected && (
-                            <AppIcon name="checkmark" size={14} strokeWidth={2} style={{ color: "#1A0F00" }} />
-                          )}
-                        </span>
+                        <SelectCircle selected={isSelected} />
                       </button>
                     )}
                     <VaultCard
