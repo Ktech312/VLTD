@@ -459,7 +459,17 @@ function mapRowToItems(sheetName: string, rowNumber: number, row: RowRecord) {
     serialNumber: stringify(row.serialNumber) || undefined,
     edition: stringify(row.edition) || undefined,
     variant: stringify(row.variant) || undefined,
-    imageFrontUrl: /^https?:\/\//i.test(stringify(row.imageFrontUrl)) ? stringify(row.imageFrontUrl) : undefined,
+    // Photos live in `images[]`: syncPrimaryFields clears imageFrontUrl on
+    // save whenever that list is empty, so setting only imageFrontUrl
+    // silently imported every item with no photo.
+    ...(/^https?:\/\//i.test(stringify(row.imageFrontUrl))
+      ? {
+          imageFrontUrl: stringify(row.imageFrontUrl),
+          images: [
+            { id: stringify(row.imageFrontUrl), storageKey: stringify(row.imageFrontUrl), url: stringify(row.imageFrontUrl), order: 0, role: "primary" as const, localOnly: false },
+          ],
+        }
+      : {}),
     storageLocation: stringify(row.storageLocation) || undefined,
     universe: stringify(row.universe) || universeForKind(kind),
     categoryLabel: stringify(row.category) || categories.categoryLabel,
