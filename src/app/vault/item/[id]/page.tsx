@@ -332,14 +332,16 @@ function InlineEditSection({
                   }}
                 />
               ) : field ? (
-                <button
-                  type="button"
+                <span
+                  role="button"
+                  tabIndex={0}
                   onClick={() => startOne(field)}
+                  onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); startOne(field); } }}
                   title={`Click to edit ${row.label.toLowerCase()}`}
                   className="cursor-pointer text-right text-[color:var(--fg)] hover:underline hover:decoration-[color:var(--border)] hover:underline-offset-4"
                 >
                   {row.value}
-                </button>
+                </span>
               ) : (
                 <div className="text-right text-[color:var(--fg)]">{row.value}</div>
               )}
@@ -416,12 +418,21 @@ function DescriptionField({
 
   return (
     <div className="mt-1.5 max-w-3xl">
-      <button
-        type="button"
+      <div
+        role="button"
+        tabIndex={0}
         onClick={() => {
           skip.current = false;
           setDraft(item.description ?? "");
           setEditing(true);
+        }}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") {
+            e.preventDefault();
+            skip.current = false;
+            setDraft(item.description ?? "");
+            setEditing(true);
+          }
         }}
         title="Click to edit the description"
         className="block w-full cursor-text text-left text-sm leading-6 hover:underline hover:decoration-[color:var(--border)] hover:underline-offset-4"
@@ -431,7 +442,7 @@ function DescriptionField({
         ) : (
           <span style={{ color: "var(--muted2)" }}>Add a description. This is what people see when you share this item.</span>
         )}
-      </button>
+      </div>
     </div>
   );
 }

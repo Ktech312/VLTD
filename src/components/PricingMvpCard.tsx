@@ -396,9 +396,16 @@ export default function PricingMvpCard({
                   />
                 )
               ) : (
-                <button type="button" onClick={() => open(field)} title={`Click to edit ${label.toLowerCase()}`} className="max-w-[70%] cursor-pointer whitespace-pre-wrap text-right text-[color:var(--fg)] hover:underline hover:decoration-[color:var(--border)] hover:underline-offset-4">
+                <span
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => open(field)}
+                  onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); open(field); } }}
+                  title={`Click to edit ${label.toLowerCase()}`}
+                  className="max-w-[70%] cursor-pointer whitespace-pre-wrap text-right text-[color:var(--fg)] hover:underline hover:decoration-[color:var(--border)] hover:underline-offset-4"
+                >
                   {shown}
-                </button>
+                </span>
               )}
             </div>
           ))}
