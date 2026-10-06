@@ -133,12 +133,15 @@ export default function GuestGalleryPage() {
         if (found.profile_id) {
           const supabase = getSupabaseBrowserClient();
           if (supabase) {
-            const { data: publicItems } = await supabase
+            let publicQuery = supabase
               .from("vault_items")
               .select(PUBLIC_ITEM_COLUMNS)
               .eq("profile_id", found.profile_id)
-              .eq("is_public", true)
-              .order("created_at", { ascending: false });
+              .eq("is_public", true);
+            if (found.itemIds.length > 0 && found.itemIds.length <= 300) {
+              publicQuery = publicQuery.in("id", found.itemIds);
+            }
+            const { data: publicItems } = await publicQuery.order("created_at", { ascending: false });
 
             const shown = ((publicItems ?? []) as unknown as Record<string, unknown>[]).filter((row) => !isSupplyItem({ universe: row.universe, categoryLabel: row.category_label }));
             if (!cancelled && shown.length > 0) {

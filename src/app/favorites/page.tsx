@@ -48,7 +48,7 @@ function favoriteValue(r: FavoriteRecord, items: VaultItem[]) {
 
 function favoriteHref(r: FavoriteRecord) {
   if (r.content_type === "item") return `/vault/item/${r.content_id}`;
-  return `/gallery/${r.content_id}`;
+  return `/museum/${r.content_id}/guest`;
 }
 
 function timeAgo(iso: string) {

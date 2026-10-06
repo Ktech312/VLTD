@@ -4,7 +4,7 @@ import Link from "next/link";
 import type { CSSProperties } from "react";
 
 import type { GalleryShelfOverlayStyle } from "@/lib/galleryModel";
-import type { VaultItem } from "@/lib/vaultModel";
+import { getPrimaryImageUrl, type VaultItem } from "@/lib/vaultModel";
 
 export const GALLERY_STAGE_MAX_WIDTH_CLASS = "max-w-[1120px]";
 export const GALLERY_STAGE_HEIGHT_CLASS = "h-[1500px] sm:h-[2200px] lg:h-[2700px]";
@@ -19,7 +19,7 @@ const EMBEDDED_MOBILE_ROW_ANCHORS = ["432px", "729px", "1026px", "1323px", "1620
 const EMBEDDED_DESKTOP_ROW_ANCHORS = ["616px", "1016px", "1416px", "1816px", "2216px", "2616px"] as const;
 
 function itemImage(item: VaultItem) {
-  return item.imageFrontUrl || item.imageBackUrl || "";
+  return getPrimaryImageUrl(item) || item.imageFrontUrl || item.imageBackUrl || "";
 }
 
 function itemSubtitle(item: VaultItem) {

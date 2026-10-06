@@ -1,5 +1,6 @@
 "use client";
 
+import { effectiveMarketValue } from "@/lib/vaultStats";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { DragEvent, ReactNode } from "react";
 import { createPortal } from "react-dom";
@@ -136,7 +137,7 @@ function DragHandle() {
 }
 
 function itemImage(i: VaultItem) {
-  return i.imageFrontUrl || i.imageBackUrl || "";
+  return getPrimaryImageUrl(i) || i.imageFrontUrl || i.imageBackUrl || "";
 }
 
 function itemCategoryBadge(item: VaultItem) {
@@ -348,7 +349,7 @@ export default function GalleryBuilder({
   const sections = getGallerySections(gallery);
 
   const selectedValue = useMemo(() => {
-    return selectedItems.reduce((sum, item) => sum + Number(item.currentValue ?? 0), 0);
+    return selectedItems.reduce((sum, item) => sum + effectiveMarketValue(item), 0);
   }, [selectedItems]);
 
   const selectedCost = useMemo(() => {

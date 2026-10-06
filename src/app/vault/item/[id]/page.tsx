@@ -1,5 +1,6 @@
 "use client";
 
+import { effectiveMarketValue } from "@/lib/vaultStats";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { use, useEffect, useMemo, useRef, useState } from "react";
@@ -148,16 +149,6 @@ function fmtDate(ms: number) {
 
 function totalCost(item: VaultItem) {
   return clamp(item.purchasePrice) + clamp(item.purchaseTax) + clamp(item.purchaseShipping) + clamp(item.purchaseFees);
-}
-
-function effectiveMarketValue(item: VaultItem) {
-  if (typeof item.valueMedian === "number" && Number.isFinite(item.valueMedian)) {
-    return item.valueMedian;
-  }
-  if (typeof item.estimatedValue === "number" && Number.isFinite(item.estimatedValue)) {
-    return item.estimatedValue;
-  }
-  return clamp(item.currentValue);
 }
 
 function gain(item: VaultItem) {
@@ -1043,7 +1034,8 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
           .eq("id", item.id);
 
         if (error) {
-          setMediaMessage(`${error.message} Item restored locally only.`);
+          enqueueVaultItemSync(item.id);
+          setMediaMessage(`${error.message} Item restored here; it will retry saving to your account.`);
           return;
         }
       }

@@ -92,6 +92,7 @@
 //     none of those are modified, only new sibling setters are added
 //     (setRoomCapacities/setRoomBackgroundImage/setRoomWallLayout) for the
 //     per-room settings this page introduces.
+import { effectiveMarketValue } from "@/lib/vaultStats";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import Link from "next/link";
 import * as THREE from "three";
@@ -1063,7 +1064,7 @@ export default function MuseumBuilder() {
     const result = await setRoomItemSlot(
       roomId,
       slot.id,
-      { title: item.title, image_url: image, estimated_value: item.estimatedValue ?? null, vault_item_id: String(item.id) },
+      { title: item.title, image_url: image, estimated_value: effectiveMarketValue(item) || null, vault_item_id: String(item.id) },
       0
     );
     setItemSaveState(result.ok ? "saved" : "error");
@@ -1355,10 +1356,10 @@ export default function MuseumBuilder() {
                   "flex items-center gap-1.5 rounded-[6px] px-3 py-2 text-xs font-black uppercase tracking-[0.14em] backdrop-blur",
                   itemSaveState === "error" ? "bg-red-500/85 text-white" : "bg-black/42 text-white ring-1 ring-white/12",
                 ].join(" ")}
-                title="This room saves each change immediately — there is no separate Save step"
+                title="Changes save as a draft right away. Visitors only see them after you press Publish."
               >
                 <AppIcon name="save" size={14} />
-                {itemSaveState === "saving" ? "Saving…" : itemSaveState === "error" ? "Save Failed" : "Autosaved"}
+                {itemSaveState === "saving" ? "Saving…" : itemSaveState === "error" ? "Save Failed" : "Draft saved"}
               </div>
               <button
                 type="button"

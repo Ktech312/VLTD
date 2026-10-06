@@ -17,7 +17,7 @@ import ProgressiveImage from "@/components/ui/ProgressiveImage";
 import VaultMuseumView from "@/components/VaultMuseumView";
 import VaultWrappedSheet from "@/components/VaultWrappedSheet";
 import { showToast } from "@/lib/toast";
-import { collectibleItems } from "@/lib/vaultStats";
+import { collectibleItems, effectiveMarketValue } from "@/lib/vaultStats";
 import { deleteVaultItemEverywhere, deleteVaultItemsEverywhere } from "@/lib/vaultActions";
 import { computeItemIntelligence } from "@/lib/itemIntelligence";
 import { UNIVERSE_LABEL, TAXONOMY, getCategories, isUniverseKey, type UniverseKey } from "@/lib/taxonomy";
@@ -238,16 +238,6 @@ function parseMoneyInput(value: string) {
   return Number.isFinite(parsed) ? parsed : 0;
 }
 
-function effectiveMarketValue(item: VaultItem) {
-  if (typeof item.estimatedValue === "number" && Number.isFinite(item.estimatedValue)) {
-    return item.estimatedValue;
-  }
-  if (typeof item.currentValue === "number" && Number.isFinite(item.currentValue)) {
-    return item.currentValue;
-  }
-  return 0;
-}
-
 function saleInfoForItem(item: VaultItem, saleMap: Record<string, SaleInfo | undefined>): SaleInfo | null {
   if (item.status === "SOLD" || item.soldAt || item.soldPrice !== undefined) {
     return {
@@ -354,7 +344,10 @@ function VaultCard({
       setEditingField("");
       return;
     }
-    await onSaveItem({ ...item, currentValue: nextValue });
+    const edited: VaultItem = { ...item, currentValue: nextValue };
+    if (typeof item.estimatedValue === "number") edited.estimatedValue = nextValue;
+    if (typeof item.valueMedian === "number") edited.valueMedian = nextValue;
+    await onSaveItem(edited);
     setEditingField("");
   }
 
@@ -368,7 +361,7 @@ function VaultCard({
     }
   }
 
-  const marketValue = Number(item.currentValue ?? 0);
+  const marketValue = effectiveMarketValue(item);
   const gain = itemGain(item);
   const showGain = Math.abs(gain) > 0.49;
   const detailHref = isSold ? `/vault/item/${item.id}?sold=1` : `/vault/item/${item.id}`;

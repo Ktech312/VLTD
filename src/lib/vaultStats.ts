@@ -43,8 +43,11 @@ export function activeItems(items: VaultItem[]): VaultItem[] {
   return items.filter((item) => !isSoldItem(item) && !isSupplyItem(item));
 }
 
-/** What one item is worth today. Estimated value wins, then current value. */
+/** What one item is worth today: comparable median, then estimated value, then current value. */
 export function effectiveMarketValue(item: VaultItem): number {
+  if (typeof item.valueMedian === "number" && Number.isFinite(item.valueMedian)) {
+    return item.valueMedian;
+  }
   if (typeof item.estimatedValue === "number" && Number.isFinite(item.estimatedValue)) {
     return item.estimatedValue;
   }

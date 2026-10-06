@@ -21,7 +21,7 @@ import SwipeStack from "@/components/SwipeStack";
 import { computeItemIntelligence } from "@/lib/itemIntelligence";
 import { UNIVERSE_LABEL, TAXONOMY, getCategories, isUniverseKey, type UniverseKey } from "@/lib/taxonomy";
 import { showToast } from "@/lib/toast";
-import { collectibleItems } from "@/lib/vaultStats";
+import { collectibleItems, effectiveMarketValue } from "@/lib/vaultStats";
 import { migrateExistingVaultImagesToSupabase } from "@/lib/vaultMigration";
 import {
   commitVaultItemEdits,
@@ -88,7 +88,7 @@ function totalCost(item: VaultItem) {
 }
 
 function itemGain(item: VaultItem) {
-  return Number(item.currentValue ?? 0) - totalCost(item);
+  return effectiveMarketValue(item) - totalCost(item);
 }
 type VaultUniverseSlug = "pop-culture" | "sports" | "tcg" | "music" | "jewelry-apparel" | "games" | "built-botany" | "misc" | "automotive" | "art";
 
@@ -264,16 +264,6 @@ function parseMoneyInput(value: string) {
   return Number.isFinite(parsed) ? parsed : 0;
 }
 
-function effectiveMarketValue(item: VaultItem) {
-  if (typeof item.estimatedValue === "number" && Number.isFinite(item.estimatedValue)) {
-    return item.estimatedValue;
-  }
-  if (typeof item.currentValue === "number" && Number.isFinite(item.currentValue)) {
-    return item.currentValue;
-  }
-  return 0;
-}
-
 function PercentDonut({ percent }: { percent: number }) {
   const size = 58;
   const radius = 23;
@@ -406,7 +396,10 @@ function VaultCard({
       setEditingField("");
       return;
     }
-    await onSaveItem({ ...item, currentValue: nextValue });
+    const edited: VaultItem = { ...item, currentValue: nextValue };
+    if (typeof item.estimatedValue === "number") edited.estimatedValue = nextValue;
+    if (typeof item.valueMedian === "number") edited.valueMedian = nextValue;
+    await onSaveItem(edited);
     setEditingField("");
   }
 
@@ -426,7 +419,7 @@ function VaultCard({
     : item.isNew
       ? "bg-red-600/18 text-red-100 ring-red-400/30"
       : readinessTone(readiness);
-  const marketValue = Number(item.currentValue ?? 0);
+  const marketValue = effectiveMarketValue(item);
   const gain = itemGain(item);
   const detailHref = isSold ? `/vault/item/${item.id}?sold=1` : `/vault/item/${item.id}`;
 

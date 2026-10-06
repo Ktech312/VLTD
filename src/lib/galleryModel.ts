@@ -1142,6 +1142,7 @@ function getGallerySyncSignature(gallery: Gallery) {
       label: invite.label ?? null,
       disabled: !!invite.disabled,
       expires_at: typeof invite.expiresAt === "number" ? invite.expiresAt : null,
+      permissions: invite.permissions ?? null,
     })),
   });
 }

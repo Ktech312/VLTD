@@ -348,7 +348,7 @@ export default function MuseumRoomPopup({
     const source = assignments[fromSlot.id];
     if (!fromSlot || !toSlot || !source) return;
     setSaveState("saving");
-    const placed = await setRoomItemSlot(roomId, toSlot.id, { title: source.title, image_url: source.image_url }, 0);
+    const placed = await setRoomItemSlot(roomId, toSlot.id, { title: source.title, image_url: source.image_url, vault_item_id: source.vault_item_id ?? null }, 0);
     const cleared = placed.ok ? await clearRoomItemSlot(roomId, fromSlot.id) : { ok: false };
     setSaveState(placed.ok && cleared.ok ? "saved" : "error");
     if (placed.ok) {

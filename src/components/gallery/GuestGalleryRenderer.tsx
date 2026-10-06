@@ -667,9 +667,9 @@ export default function GuestGalleryRenderer({
               className={["mx-auto mt-3 flex w-full flex-col items-center gap-3 rounded-[24px] border border-white/12 bg-black/25 p-4 text-center sm:flex-row sm:text-left", GALLERY_STAGE_WIDTH_CLASS].join(" ")}
             >
               <div className="h-56 w-full overflow-hidden rounded-[16px] bg-black/30 p-2 sm:h-64 sm:w-[260px] sm:shrink-0">
-                {featuredItem.imageFrontUrl || featuredItem.imageBackUrl ? (
+                {getPrimaryImageUrl(featuredItem) ? (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={featuredItem.imageFrontUrl || featuredItem.imageBackUrl} alt={featuredItem.title} className="h-full w-full object-contain" draggable={false} />
+                  <img src={getPrimaryImageUrl(featuredItem)} alt={featuredItem.title} className="h-full w-full object-contain" draggable={false} />
                 ) : null}
               </div>
               <div className="min-w-0">

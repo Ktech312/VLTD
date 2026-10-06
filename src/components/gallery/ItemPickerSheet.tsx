@@ -4,7 +4,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import { AppIcon } from "@/components/ui/AppIcon";
 import { SelectCircle } from "@/components/ui/SelectCircle";
-import { type VaultItem } from "@/lib/vaultModel";
+import { getPrimaryImageUrl, type VaultItem } from "@/lib/vaultModel";
 import { isSupplyItem } from "@/lib/vaultStats";
 import { UNIVERSE_KEYS, UNIVERSE_LABEL, type UniverseKey } from "@/lib/taxonomy";
 
@@ -35,7 +35,7 @@ function searchText(i: VaultItem) {
 }
 
 function itemImage(i: VaultItem) {
-  return i.imageFrontUrl || i.imageBackUrl || "";
+  return getPrimaryImageUrl(i) || i.imageFrontUrl || i.imageBackUrl || "";
 }
 
 export function ItemPickerSheet({
@@ -75,6 +75,8 @@ export function ItemPickerSheet({
   );
   const [query, setQuery] = useState("");
   const [activeUniverses, setActiveUniverses] = useState<string[]>([]);
+  const PAGE_SIZE = 120;
+  const [shownCount, setShownCount] = useState(PAGE_SIZE);
   const [activeCategory, setActiveCategory] = useState("");
   const [activeSub, setActiveSub] = useState("");
   const [picked, setPicked] = useState<Set<string>>(() => {
@@ -116,6 +118,10 @@ export function ItemPickerSheet({
       new Set(inUniverse.filter((i) => categoryOf(i) === activeCategory).map(subcategoryOf).filter(Boolean))
     ).sort((a, b) => a.localeCompare(b));
   }, [inUniverse, activeCategory]);
+
+  useEffect(() => {
+    setShownCount(PAGE_SIZE);
+  }, [query, activeUniverses, activeCategory, activeSub]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -400,7 +406,7 @@ export function ItemPickerSheet({
             </div>
           ) : (
             <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 6, padding: 6 }}>
-              {filtered.map((item) => {
+              {filtered.slice(0, shownCount).map((item) => {
                 const isSelected = !isSingle && picked.has(item.id);
                 const canPick = isSingle || isSelected || pickedCount < maxItems;
                 const img = itemImage(item);
@@ -430,6 +436,7 @@ export function ItemPickerSheet({
                       <img
                         src={img}
                         alt={item.title}
+                        loading="lazy"
                         style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
                         draggable={false}
                       />
@@ -490,6 +497,18 @@ export function ItemPickerSheet({
               })}
             </div>
           )}
+          {filtered.length > shownCount ? (
+            <div style={{ display: "flex", justifyContent: "center", padding: "6px 6px 14px" }}>
+              <button
+                type="button"
+                onClick={() => setShownCount((count) => count + PAGE_SIZE)}
+                className="vltd-selectable bg-[color:var(--pill)] text-[color:var(--pill-fg)] ring-1 ring-[color:var(--border)]"
+                style={{ borderRadius: 999, padding: "8px 18px", fontSize: 12, fontWeight: 700, border: "none", cursor: "pointer" }}
+              >
+                Show {Math.min(PAGE_SIZE, filtered.length - shownCount)} more ({shownCount} of {filtered.length})
+              </button>
+            </div>
+          ) : null}
         </div>
       </div>
 
