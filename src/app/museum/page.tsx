@@ -158,6 +158,7 @@ export default function MuseumPage() {
 
   const [galleries, setGalleries] = useState<Gallery[]>([]);
   const [items, setItems] = useState<VaultItem[]>([]);
+  const [hasHydratedGalleries, setHasHydratedGalleries] = useState(false);
   const [tier, setTier] = useState<Tier>(getTierSafe());
   const [bonusGalleries, setBonusGalleries] = useState(0);
   const [galleryPendingDelete, setGalleryPendingDelete] = useState<Gallery | null>(null);
@@ -277,15 +278,29 @@ export default function MuseumPage() {
   }
 
   useEffect(() => {
+    let active = true;
+
     refresh();
-    void refreshGalleriesFromSupabase(true);
+    async function hydrateGalleries() {
+      try {
+        await refreshGalleriesFromSupabase(true);
+      } finally {
+        if (active) {
+          refresh();
+          setHasHydratedGalleries(true);
+        }
+      }
+    }
+    void hydrateGalleries();
 
     function onGalleryChange() {
       refresh();
     }
 
     function onActiveProfileChange() {
+      setHasHydratedGalleries(false);
       refresh();
+      void hydrateGalleries();
     }
 
     function onWindowFocus() {
@@ -312,6 +327,7 @@ export default function MuseumPage() {
     document.addEventListener("visibilitychange", onVisibilityChange);
 
     return () => {
+      active = false;
       window.removeEventListener(GALLERY_EVENT, onGalleryChange);
       window.removeEventListener(ACTIVE_PROFILE_EVENT, onActiveProfileChange);
       window.removeEventListener("focus", onWindowFocus);
@@ -663,7 +679,23 @@ export default function MuseumPage() {
             </div>
           ) : null}
 
-          {galleries.length === 0 ? (
+          {!hasHydratedGalleries && galleries.length === 0 ? (
+            <div
+              aria-label="Loading your exhibitions"
+              className="grid grid-cols-2 gap-4 xl:grid-cols-3"
+            >
+              {Array.from({ length: 4 }).map((_, index) => (
+                <div
+                  key={index}
+                  className="h-64 animate-pulse rounded-[26px] border"
+                  style={{
+                    background: "var(--theme-card, rgba(15,25,45,0.85))",
+                    borderColor: "var(--theme-border, rgba(203,208,213,0.12))",
+                  }}
+                />
+              ))}
+            </div>
+          ) : galleries.length === 0 ? (
             <div
               className="rounded-[26px] border p-8 text-center"
               style={{
