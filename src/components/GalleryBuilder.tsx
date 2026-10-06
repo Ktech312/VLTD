@@ -1270,6 +1270,15 @@ export default function GalleryBuilder({
           </div>
         </div>
 
+        {/* Full guest preview, right on the page: the same renderer visitors see, so there is no need to open the Preview popup. */}
+        <div className="mt-5 overflow-hidden rounded-[20px] bg-[color:var(--surface)] p-4 ring-1 ring-[color:var(--border)]">
+          <div className="text-[11px] tracking-[0.14em] text-[color:var(--muted2)]">PREVIEW</div>
+          <div className="mt-0.5 text-sm text-[color:var(--muted)]">Exactly what visitors see.</div>
+          <div className="mt-3">
+            <BuilderPreviewBridge gallery={gallery} items={selectedItems} readOnly />
+          </div>
+        </div>
+
         <button
           type="button"
           onClick={() => setIsAdvancedOpen((v) => !v)}
