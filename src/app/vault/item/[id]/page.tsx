@@ -874,14 +874,14 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
 
     if (hasSupabaseEnv()) {
       try {
-        if (target && target.storageKey && !target.localOnly) {
-          await deleteVaultImageFromSupabase(target.storageKey);
-        }
-
         await upsertVaultItemToSupabase({
           ...nextItem,
           profile_id: nextItem.profile_id || getStoredActiveProfileId(),
         });
+
+        if (target && target.storageKey && !target.localOnly) {
+          await deleteVaultImageFromSupabase(target.storageKey);
+        }
       } catch (error) {
         setMediaMessage(
           error instanceof Error
@@ -1342,28 +1342,13 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
           </div>
 
           <div>
-            <Section
-              title="ITEM SUMMARY"
-              action={
-                <button
-                  type="button"
-                  onClick={() => { setHeaderEditing(true); window.scrollTo({ top: 0, behavior: "smooth" }); }}
-                  aria-label="Edit title and category"
-                  title="Edit title and category"
-                  className="inline-flex h-7 w-7 items-center justify-center rounded-[7px] ring-1 ring-[color:var(--border)] transition hover:bg-[color:var(--pill)]"
-                  style={{ color: "var(--muted)" }}
-                >
-                  <AppIcon name="edit" size={14} strokeWidth={1.8} />
-                </button>
-              }
-            >
+            <Section title="ITEM SUMMARY">
               <div className="pt-1">
                 <DetailGrid
                   rows={[
                     { label: "Universe", value: UNIVERSE_LABEL[universe] },
                     { label: "Category", value: categoryLabel(item) },
                     { label: "Subcategory", value: detailValue(item.subcategoryLabel) },
-                    { label: "Cert #", value: detailValue(item.certNumber) },
                     { label: "Vault ID", value: detailValue(item.itemCode) },
                     { label: "Added", value: fmtDate(addedAt) },
                   ]}
@@ -1488,7 +1473,7 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
               <GenerateCopyPanel
                 item={item}
                 mode="listing"
-                onAccept={(text) => void persist({ ...item, notes: text })}
+                onAccept={(text) => void persist({ ...item, description: text })}
                 triggerLabel="✦ Generate listing copy"
               />
             </div>
@@ -1505,94 +1490,6 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
               </div>
             </div>
           )}
-        </div>
-
-        <div className="mt-5">
-          <Section title="BASIC ITEM RECORD">
-            <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-              <label className="grid gap-1.5">
-                <span className="text-[11px] font-medium tracking-[0.14em] text-[color:var(--muted2)]">Universe</span>
-                <select
-                  className="h-10 rounded-xl bg-[color:var(--pill)] px-3 text-sm ring-1 ring-[color:var(--border)] focus:outline-none"
-                  value={recordDraft.universe}
-                  onChange={(event) => setDraftUniverse(normUniverse(event.target.value))}
-                >
-                  {getUniverses().map((key) => (
-                    <option key={key} value={key}>
-                      {UNIVERSE_LABEL[key]}
-                    </option>
-                  ))}
-                </select>
-              </label>
-
-              <label className="grid gap-1.5">
-                <span className="text-[11px] font-medium tracking-[0.14em] text-[color:var(--muted2)]">Category</span>
-                <select
-                  className="h-10 rounded-xl bg-[color:var(--pill)] px-3 text-sm ring-1 ring-[color:var(--border)] focus:outline-none"
-                  value={recordSelectedCategory}
-                  onChange={(event) => setDraftCategory(event.target.value)}
-                >
-                  {recordCategoryOptions.map((category) => (
-                    <option key={category} value={category}>
-                      {category}
-                    </option>
-                  ))}
-                </select>
-              </label>
-
-              <label className="grid gap-1.5">
-                <span className="text-[11px] font-medium tracking-[0.14em] text-[color:var(--muted2)]">Subcategory</span>
-                {recordSubcategoryOptions.length ? (
-                  <select
-                    className="h-10 rounded-xl bg-[color:var(--pill)] px-3 text-sm ring-1 ring-[color:var(--border)] focus:outline-none"
-                    value={recordDraft.subcategoryLabel}
-                    onChange={(event) => setRecordDraft((prev) => ({ ...prev, subcategoryLabel: event.target.value }))}
-                  >
-                    <option value="">Optional</option>
-                    {recordSubcategoryOptions.map((subcategory) => (
-                      <option key={subcategory} value={subcategory}>
-                        {subcategory}
-                      </option>
-                    ))}
-                  </select>
-                ) : (
-                  <input
-                    className="h-10 rounded-xl bg-[color:var(--pill)] px-3 text-sm ring-1 ring-[color:var(--border)] focus:outline-none"
-                    value={recordDraft.subcategoryLabel}
-                    onChange={(event) => setRecordDraft((prev) => ({ ...prev, subcategoryLabel: event.target.value }))}
-                    placeholder="Optional"
-                  />
-                )}
-              </label>
-
-              <label className="grid gap-1.5">
-                <span className="text-[11px] font-medium tracking-[0.14em] text-[color:var(--muted2)]">Title</span>
-                <input
-                  className="h-10 rounded-xl bg-[color:var(--pill)] px-3 text-sm ring-1 ring-[color:var(--border)] focus:outline-none"
-                  value={recordDraft.title}
-                  onChange={(event) => setRecordDraft((prev) => ({ ...prev, title: event.target.value }))}
-                  placeholder="Batman"
-                />
-              </label>
-
-              <label className="grid gap-1.5">
-                <span className="text-[11px] font-medium tracking-[0.14em] text-[color:var(--muted2)]">Subject</span>
-                <input
-                  className="h-10 rounded-xl bg-[color:var(--pill)] px-3 text-sm ring-1 ring-[color:var(--border)] focus:outline-none"
-                  value={recordDraft.subject}
-                  onChange={(event) => setRecordDraft((prev) => ({ ...prev, subject: event.target.value }))}
-                  placeholder="Player, character, artist, franchise"
-                />
-              </label>
-            </div>
-
-            <div className="mt-4 flex flex-wrap items-center gap-3">
-              <PillButton onClick={() => void handleSaveBasicRecord()} style={{ background: 'rgba(203,208,213,0.15)', color: '#67E8F9' }}>
-                Save basic record
-              </PillButton>
-              {recordMessage ? <div className="text-sm text-[color:var(--muted)]">{recordMessage}</div> : null}
-            </div>
-          </Section>
         </div>
 
         <div className="mt-5">
@@ -1629,6 +1526,10 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
                 { label: "Number / Model", field: { key: "number", kind: "text" }, value: detailValue(item.number) },
                 { label: "Grade", field: { key: "grade", kind: "text" }, value: detailValue(item.grade) },
                 { label: "Serial #", field: { key: "serialNumber", kind: "text" }, value: detailValue(item.serialNumber) },
+                { label: "Cert #", field: { key: "certNumber", kind: "text" }, value: detailValue(item.certNumber) },
+                { label: "Subject", field: { key: "subject", kind: "text" }, value: detailValue(item.subject) },
+                { label: "Year", field: { key: "year", kind: "text" }, value: detailValue(item.year) },
+                { label: "Brand", field: { key: "brand", kind: "text" }, value: detailValue(item.brand) },
             ]}
           >
             {(item.edition || item.variant || item.printRun || item.isFirstEdition) && (

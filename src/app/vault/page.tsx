@@ -1,5 +1,6 @@
 "use client";
 
+import { normalizeUniverse, universeForItem } from "@/lib/universeMatch";
 import Link from "next/link";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { memo, useCallback, useEffect, useMemo, useState } from "react";
@@ -189,37 +190,6 @@ function universeFromSlug(value: unknown): UniverseKey {
   return VAULT_UNIVERSES.find((entry) => entry.slug === slug)?.key ?? "MISC";
 }
 
-function normalizeUniverseText(value: unknown) {
-  return String(value ?? "")
-    .trim()
-    .toLowerCase()
-    .replace(/&/g, " and ")
-    .replace(/[^a-z0-9]+/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
-}
-
-function directUniverseMatch(value: unknown): UniverseKey | "" {
-  const text = normalizeUniverseText(value);
-  if (!text) return "";
-
-  if (["pop culture", "pop", "comics", "comic", "comic books", "toys", "figures", "figure", "funko", "manga", "marvel", "dc", "art cards"].includes(text)) return "POP_CULTURE";
-  if (["sports", "sports cards", "memorabilia", "jerseys", "jersey", "game used", "autographs"].includes(text)) return "SPORTS";
-  if (["tcg", "trading card game", "pokemon", "pokémon", "mtg", "magic", "magic the gathering", "yugioh", "yu gi oh", "bo jackson arena"].includes(text)) return "TCG";
-  if (["music", "vinyl", "vinyl records", "record", "records", "album", "albums", "lp", "cd", "cds", "instruments"].includes(text)) return "MUSIC";
-  if (["jewelry apparel", "jewelry and apparel", "jewelry", "apparel", "watches", "watch", "bags", "bag", "streetwear", "luxury"].includes(text)) return "JEWELRY_APPAREL";
-  if (["games", "game", "video games", "video game", "console", "consoles", "cartridge", "cartridges", "arcade", "handhelds"].includes(text)) return "GAMES";
-  if (["built botany", "built and botany", "handmade", "plants", "crafts", "botany", "garden"].includes(text)) return "BUILT_BOTANY";
-  if (["misc", "miscellaneous", "other", "uncategorized", "unknown", "collectors choice"].includes(text)) return "MISC";
-  if (["automotive", "gears and gasoline", "gears gasoline", "cars", "car", "classic cars", "motorcycles", "motorcycle", "bicycles", "bicycle", "vehicle", "vehicles"].includes(text)) return "AUTOMOTIVE";
-  if (["art", "painting", "paintings", "sculpture", "sculptures", "fine art", "prints", "original art"].includes(text)) return "ART";
-
-  return "";
-}
-function normalizeUniverse(value: unknown): UniverseKey {
-  return directUniverseMatch(value) || "MISC";
-}
-
 function readFocusUniverseKey(): UniverseKey | null {
   if (typeof window === "undefined") return null;
   try {
@@ -230,46 +200,6 @@ function readFocusUniverseKey(): UniverseKey | null {
   } catch {
     return null;
   }
-}
-
-function inferVaultUniverse(item: VaultItem): UniverseKey {
-  const existing = normalizeUniverse(item.universe);
-  if (existing !== "MISC") return existing;
-
-  const direct = directUniverseMatch(item.categoryLabel || item.customCategoryLabel || item.category || item.subcategoryLabel);
-  if (direct) return direct;
-
-  const text = normalizeUniverseText([
-    item.category,
-    item.categoryLabel,
-    item.customCategoryLabel,
-    item.subcategoryLabel,
-    item.title,
-    item.subtitle,
-    item.number,
-    item.grade,
-    item.notes,
-    item.purchaseSource,
-    item.purchaseLocation,
-  ].filter(Boolean).join(" "));
-
-  const hasAny = (terms: string[]) => terms.some((term) => text.includes(term));
-
-  if (hasAny(["comic", "comics", "cgc", "cbcs", "variant cover", "first appearance", "issue", "spawn", "batman", "superman", "spider man", "x men", "marvel", " dc ", "funko", "figure", "toy", "statue", "manga"])) return "POP_CULTURE";
-  if (hasAny(["sports card", "rookie", "refractor", "panini", "topps", "jersey", "game used", "autograph", "psa", "bgs", "sgc", "baseball", "basketball", "football", "soccer", "hockey"])) return "SPORTS";
-  if (hasAny(["pokemon", "pokémon", "magic the gathering", " mtg ", "yugioh", "yu gi oh", "trading card game", " tcg ", "bo jackson arena", "foil", "serialized", "base set"])) return "TCG";
-  if (hasAny(["vinyl", "record", "records", "album", "albums", " lp ", "signed lp", "cd ", "guitar", "instrument", "turntable"])) return "MUSIC";
-  if (hasAny(["watch", "watches", "jewelry", "apparel", "bag", "bags", "streetwear", "vintage clothing", "limited drop", "luxury"])) return "JEWELRY_APPAREL";
-  if (hasAny(["video game", "game cartridge", "sealed game", "console", "nintendo", "playstation", "xbox", "sega", "atari", "cartridge", "disc only", "controller", "arcade"])) return "GAMES";
-  if (hasAny(["handmade", "handcrafted", "ceramic", "pottery", "woodwork", "plant", "succulent", "cactus", "terrarium", "bonsai", "tropical", "air plant", "resin", "craft"])) return "BUILT_BOTANY";
-
-  return "MISC";
-}
-
-function universeForItem(item: VaultItem): UniverseKey {
-  const rawUniverse = typeof item.universe === "string" ? item.universe.trim() : "";
-  if (rawUniverse) return normalizeUniverse(rawUniverse);
-  return inferVaultUniverse(item);
 }
 
 function ensureVaultItemUniverses() {
@@ -459,12 +389,18 @@ function VaultCard({
   const [editingField, setEditingField] = useState<InlineField>("");
   const [valueDraft, setValueDraft] = useState(String(Number(item.currentValue ?? 0)));
   const [isDeleting, setIsDeleting] = useState(false);
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
 
   useEffect(() => {
     setValueDraft(String(Number(item.currentValue ?? 0)));
   }, [item.currentValue]);
 
   async function saveValueInline() {
+    if (!valueDraft.trim()) {
+      setValueDraft(String(Number(item.currentValue ?? 0)));
+      setEditingField("");
+      return;
+    }
     const nextValue = parseMoneyInput(valueDraft);
     if (nextValue === Number(item.currentValue ?? 0)) {
       setEditingField("");
@@ -475,8 +411,7 @@ function VaultCard({
   }
 
   async function handleDelete() {
-    const ok = window.confirm(`Delete "${item.title}"?`);
-    if (!ok) return;
+    setConfirmingDelete(false);
     setIsDeleting(true);
     try {
       await onDeleteItem(item);
@@ -509,14 +444,21 @@ function VaultCard({
       </span>
 
       {/* Hover action buttons — top RIGHT, clear of status badge */}
-      <div className="absolute right-1.5 top-1.5 z-20 hidden items-center gap-1 group-hover:flex">
+      <div className={"absolute right-1.5 top-1.5 z-20 items-center gap-1 " + (confirmingDelete ? "flex" : "hidden group-hover:flex [@media(hover:none)]:flex")}>
+        {confirmingDelete ? (
+          <span className="flex items-center gap-1.5 rounded-full bg-black/85 px-2.5 py-1 text-[10px] font-semibold text-white">
+            Delete this?
+            <button type="button" onClick={handleDelete} className="text-red-400 hover:underline">Yes</button>
+            <button type="button" onClick={() => setConfirmingDelete(false)} className="text-white/70 hover:underline">No</button>
+          </span>
+        ) : null}
         <button
           type="button"
-          onClick={handleDelete}
+          onClick={() => setConfirmingDelete(true)}
           disabled={isDeleting}
           aria-label="Delete item"
           title="Delete item"
-          className="inline-flex h-7 w-7 items-center justify-center vltd-keep-color disabled:opacity-50"
+          className={(confirmingDelete ? "hidden " : "") + "inline-flex h-7 w-7 items-center justify-center vltd-keep-color disabled:opacity-50"}
           style={{ "--vltd-keep-color": "#FF1744" } as React.CSSProperties}
         >
           {isDeleting ? (
@@ -857,9 +799,10 @@ function VaultSelectionDrawer({
   const paid = totalCost(item);
   const gain = value - paid;
   const gainPct = paid > 0 ? (gain / paid) * 100 : 0;
-  const low = Number(item.valueLow ?? item.lastCompValue ?? (value > 0 ? value * 0.85 : 0));
+  // Only real comparable data: no made-up low and high around the value.
+  const low = Number(item.valueLow ?? item.lastCompValue ?? 0);
   const median = Number(item.valueMedian ?? value);
-  const high = Number(item.valueHigh ?? (value > 0 ? value * 1.15 : 0));
+  const high = Number(item.valueHigh ?? 0);
   const docs = documentationStatus(item);
   const detailHref = `/vault/item/${item.id}`;
 
@@ -906,7 +849,6 @@ function VaultSelectionDrawer({
               <Link href={detailHref} className="line-clamp-1 text-[18px] font-semibold leading-tight" style={{ color: "#ECEDEF" }}>
                 {item.title}
               </Link>
-              <span className="text-sm leading-none" style={{ color: "#8E835F" }}>⋮</span>
             </div>
             <div className="mt-0.5 line-clamp-1 text-[12px]" style={{ color: "#B9AE86" }}>{itemMeta(item)}</div>
             <div className="mt-2 flex flex-wrap gap-1.5">
@@ -916,7 +858,7 @@ function VaultSelectionDrawer({
             </div>
             <div className="mt-3 text-[21px] font-bold leading-none" style={{ color: "#44D9F2" }}>{formatMoney(value)}</div>
             <div className="mt-1 text-[11px]" style={{ color: gain >= 0 ? "var(--color-gain, #4CAF82)" : "var(--color-loss, #E05252)" }}>
-              {paid > 0 ? `${gain >= 0 ? "+" : ""}${gainPct.toFixed(1)}% this year` : "Add cost basis for return"}
+              {paid > 0 ? `${gain >= 0 ? "+" : ""}${gainPct.toFixed(1)}% since purchase` : "Add cost basis for return"}
             </div>
           </div>
         </div>
@@ -983,20 +925,11 @@ function VaultSelectionDrawer({
             </span>
             <ItemVisibilityToggle item={item} />
           </div>
-          <Link href={detailHref} className="mt-2 inline-flex items-center gap-2 text-[11px] font-semibold" style={{ color: "#C8CDD2" }}>
-            View public page <span aria-hidden="true">↗</span>
-          </Link>
           <div className="mt-3 flex flex-wrap items-center gap-2">
-            <Link href={detailHref} className="inline-flex min-h-[28px] w-auto items-center justify-center gap-2 rounded-[7px] px-3 text-[11px] font-semibold ring-1 ring-[color:var(--theme-gold-border)]" style={{ color: "#C8CDD2" }}>
-              Create Listing
-            </Link>
             <button type="button" onClick={exportItemData} className="inline-flex min-h-[28px] w-auto items-center justify-center gap-2 rounded-[7px] px-3 text-[11px] font-semibold ring-1 ring-[color:var(--theme-gold-border)]" style={{ color: "#C8CDD2" }}>
               Export Data
             </button>
           </div>
-          <Link href={detailHref} className="mt-2.5 inline-flex items-center gap-2 text-[11px] font-semibold" style={{ color: "#C8CDD2" }}>
-            More actions <span aria-hidden="true">⌄</span>
-          </Link>
         </div>
         </div>
       </div>
@@ -1719,18 +1652,6 @@ export default function VaultPage() {
                 style={{ borderColor: "var(--theme-border)" }}
               />
               <select
-                value={universeFilter}
-                onChange={(e) => setUniverseFilter(e.target.value as UniverseFilter)}
-                className="min-h-[38px] w-auto rounded-[8px] bg-[color:var(--input)] px-3 py-2 text-sm text-[color:var(--fg)] ring-1 ring-[color:var(--border)] focus:outline-none"
-              >
-                <option value="ALL">All Universes</option>
-                {VAULT_UNIVERSES.map((category) => (
-                  <option key={category.key} value={category.key}>
-                    {UNIVERSE_LABEL[category.key] ?? category.key}
-                  </option>
-                ))}
-              </select>
-              <select
                 value={sortMode}
                 onChange={(e) => setSortMode(e.target.value as SortMode)}
                 className="min-h-[38px] w-auto rounded-[8px] bg-[color:var(--input)] px-3 py-2 text-sm text-[color:var(--fg)] ring-1 ring-[color:var(--border)] focus:outline-none"
@@ -1852,7 +1773,7 @@ export default function VaultPage() {
                         style={{ color: moveTargetCategory ? "var(--fg)" : "var(--muted)" }}
                         disabled={!moveTargetUniverse}
                       >
-                        <option value="">Sub</option>
+                        <option value="">Category</option>
                         {moveTargetUniverse && isUniverseKey(moveTargetUniverse) && getCategories(moveTargetUniverse).map((cat) => (
                           <option key={cat} value={cat}>{cat}</option>
                         ))}
@@ -1864,7 +1785,7 @@ export default function VaultPage() {
                         style={{ color: moveTargetSubcategory ? "var(--fg)" : "var(--muted)" }}
                         disabled={!moveTargetCategory}
                       >
-                        <option value="">Type</option>
+                        <option value="">Subcategory</option>
                         {moveTargetUniverse && isUniverseKey(moveTargetUniverse) && moveTargetCategory && TAXONOMY[moveTargetUniverse][moveTargetCategory]?.map((sub) => (
                           <option key={sub} value={sub}>{sub}</option>
                         ))}
@@ -1882,6 +1803,16 @@ export default function VaultPage() {
                     </>
                   )}
                   {selectMode && (
+                    <button
+                      type="button"
+                      onClick={() => setSelectedIds(new Set(filteredItems.map((entry) => entry.id)))}
+                      className="inline-flex h-8 items-center rounded-[7px] px-3 text-xs font-medium ring-1 ring-[color:var(--border)]"
+                      style={{ background: "var(--pill)", color: "var(--muted)" }}
+                    >
+                      Select all {filteredItems.length}
+                    </button>
+                  )}
+                                    {selectMode && (
                     <button
                       type="button"
                       onClick={() => { setSelectMode(false); setSelectedIds(new Set()); setMoveTargetUniverse(""); setMoveTargetCategory(""); setMoveTargetSubcategory(""); setDeleteConfirmPending(false); }}
@@ -1902,7 +1833,7 @@ export default function VaultPage() {
         ) : items.length === 0 ? (
           <VaultEmptyState hasFilters={false} onClearFilters={handleClearFilters} />
         ) : vaultViewMode === "wall" ? (
-          <VaultWallView items={items} saleMap={saleMap} />
+          <VaultWallView items={filteredItems} saleMap={saleMap} />
         ) : filteredItems.length === 0 ? (
           <VaultEmptyState hasFilters={hasActiveFilters} onClearFilters={handleClearFilters} />
         ) : vaultViewMode === "flip" ? (

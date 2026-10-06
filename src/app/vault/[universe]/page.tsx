@@ -1,5 +1,6 @@
 "use client";
 
+import { normalizeUniverse, universeForItem } from "@/lib/universeMatch";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { memo, useCallback, useEffect, useMemo, useState } from "react";
@@ -181,75 +182,6 @@ function universeFromSlug(value: unknown): UniverseKey {
   return VAULT_UNIVERSES.find((entry) => entry.slug === slug)?.key ?? "MISC";
 }
 
-function normalizeUniverseText(value: unknown) {
-  return String(value ?? "")
-    .trim()
-    .toLowerCase()
-    .replace(/&/g, " and ")
-    .replace(/[^a-z0-9]+/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
-}
-
-function directUniverseMatch(value: unknown): UniverseKey | "" {
-  const text = normalizeUniverseText(value);
-  if (!text) return "";
-
-  if (["pop culture", "pop", "comics", "comic", "comic books", "toys", "figures", "figure", "funko", "manga", "marvel", "dc", "art cards"].includes(text)) return "POP_CULTURE";
-  if (["sports", "sports cards", "memorabilia", "jerseys", "jersey", "game used", "autographs"].includes(text)) return "SPORTS";
-  if (["tcg", "trading card game", "pokemon", "pokémon", "mtg", "magic", "magic the gathering", "yugioh", "yu gi oh", "bo jackson arena"].includes(text)) return "TCG";
-  if (["music", "vinyl", "vinyl records", "record", "records", "album", "albums", "lp", "cd", "cds", "instruments"].includes(text)) return "MUSIC";
-  if (["jewelry apparel", "jewelry and apparel", "jewelry", "apparel", "watches", "watch", "bags", "bag", "streetwear", "luxury"].includes(text)) return "JEWELRY_APPAREL";
-  if (["games", "game", "video games", "video game", "console", "consoles", "cartridge", "cartridges", "arcade", "handhelds"].includes(text)) return "GAMES";
-  if (["built botany", "built and botany", "handmade", "plants", "crafts", "botany", "garden"].includes(text)) return "BUILT_BOTANY";
-  if (["misc", "miscellaneous", "other", "uncategorized", "unknown", "collectors choice"].includes(text)) return "MISC";
-
-  return "";
-}
-function normalizeUniverse(value: unknown): UniverseKey {
-  return directUniverseMatch(value) || "MISC";
-}
-
-function inferVaultUniverse(item: VaultItem): UniverseKey {
-  const existing = normalizeUniverse(item.universe);
-  if (existing !== "MISC") return existing;
-
-  const direct = directUniverseMatch(item.categoryLabel || item.customCategoryLabel || item.category || item.subcategoryLabel);
-  if (direct) return direct;
-
-  const text = normalizeUniverseText([
-    item.category,
-    item.categoryLabel,
-    item.customCategoryLabel,
-    item.subcategoryLabel,
-    item.title,
-    item.subtitle,
-    item.number,
-    item.grade,
-    item.notes,
-    item.purchaseSource,
-    item.purchaseLocation,
-  ].filter(Boolean).join(" "));
-
-  const hasAny = (terms: string[]) => terms.some((term) => text.includes(term));
-
-  if (hasAny(["comic", "comics", "cgc", "cbcs", "variant cover", "first appearance", "issue", "spawn", "batman", "superman", "spider man", "x men", "marvel", " dc ", "funko", "figure", "toy", "statue", "manga"])) return "POP_CULTURE";
-  if (hasAny(["sports card", "rookie", "refractor", "panini", "topps", "jersey", "game used", "autograph", "psa", "bgs", "sgc", "baseball", "basketball", "football", "soccer", "hockey"])) return "SPORTS";
-  if (hasAny(["pokemon", "pokémon", "magic the gathering", " mtg ", "yugioh", "yu gi oh", "trading card game", " tcg ", "bo jackson arena", "foil", "serialized", "base set"])) return "TCG";
-  if (hasAny(["vinyl", "record", "records", "album", "albums", " lp ", "signed lp", "cd ", "guitar", "instrument", "turntable"])) return "MUSIC";
-  if (hasAny(["watch", "watches", "jewelry", "apparel", "bag", "bags", "streetwear", "vintage clothing", "limited drop", "luxury"])) return "JEWELRY_APPAREL";
-  if (hasAny(["video game", "game cartridge", "sealed game", "console", "nintendo", "playstation", "xbox", "sega", "atari", "cartridge", "disc only", "controller", "arcade"])) return "GAMES";
-  if (hasAny(["handmade", "handcrafted", "ceramic", "pottery", "woodwork", "plant", "succulent", "cactus", "terrarium", "bonsai", "tropical", "air plant", "resin", "craft"])) return "BUILT_BOTANY";
-
-  return "MISC";
-}
-
-function universeForItem(item: VaultItem): UniverseKey {
-  const rawUniverse = typeof item.universe === "string" ? item.universe.trim() : "";
-  if (rawUniverse) return normalizeUniverse(rawUniverse);
-  return inferVaultUniverse(item);
-}
-
 function ensureVaultItemUniverses() {
   const allItems = loadItems({ includeAllProfiles: true });
   let changed = false;
@@ -405,12 +337,18 @@ function VaultCard({
   const [editingField, setEditingField] = useState<InlineField>("");
   const [valueDraft, setValueDraft] = useState(String(Number(item.currentValue ?? 0)));
   const [isDeleting, setIsDeleting] = useState(false);
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
 
   useEffect(() => {
     setValueDraft(String(Number(item.currentValue ?? 0)));
   }, [item.currentValue]);
 
   async function saveValueInline() {
+    if (!valueDraft.trim()) {
+      setValueDraft(String(Number(item.currentValue ?? 0)));
+      setEditingField("");
+      return;
+    }
     const nextValue = parseMoneyInput(valueDraft);
     if (nextValue === Number(item.currentValue ?? 0)) {
       setEditingField("");
@@ -421,8 +359,7 @@ function VaultCard({
   }
 
   async function handleDelete() {
-    const ok = window.confirm(`Delete "${item.title}"?`);
-    if (!ok) return;
+    setConfirmingDelete(false);
     setIsDeleting(true);
     try {
       await onDeleteItem(item);
@@ -443,13 +380,20 @@ function VaultCard({
         marketValue > 0 ? "border-l-2 border-l-emerald-400/55" : "border-l border-l-[color:var(--border)]",
       ].join(" ")}
     >
-      <div className="absolute right-1.5 top-1.5 z-20 hidden items-center gap-1 group-hover:flex">
+      <div className={"absolute right-1.5 top-1.5 z-20 items-center gap-1 " + (confirmingDelete ? "flex" : "hidden group-hover:flex [@media(hover:none)]:flex")}>
+        {confirmingDelete ? (
+          <span className="flex items-center gap-1.5 rounded-full bg-black/85 px-2.5 py-1 text-[10px] font-semibold text-white">
+            Delete this?
+            <button type="button" onClick={handleDelete} className="text-red-400 hover:underline">Yes</button>
+            <button type="button" onClick={() => setConfirmingDelete(false)} className="text-white/70 hover:underline">No</button>
+          </span>
+        ) : null}
         <button
           type="button"
-          onClick={handleDelete}
+          onClick={() => setConfirmingDelete(true)}
           disabled={isDeleting}
           aria-label="Delete item"
-          className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-red-600/90 text-white ring-1 ring-red-500/40 disabled:opacity-50"
+          className={(confirmingDelete ? "hidden " : "") + "inline-flex h-7 w-7 items-center justify-center rounded-full bg-red-600/90 text-white ring-1 ring-red-500/40 disabled:opacity-50"}
         >
           {isDeleting
             ? <span className="text-[9px]">…</span>
@@ -817,7 +761,7 @@ export default function VaultUniversePage() {
     });
 
     return next;
-  }, [items, query, universeFilter, gradedOnly, sortMode, intelligenceMap, sales, showSoldItems, activeUniverse]);
+  }, [items, query, universeFilter, gradedOnly, showUncategorized, sortMode, intelligenceMap, sales, showSoldItems, activeUniverse]);
 
   const saleMap = useMemo(
     () => Object.fromEntries(sales.map((sale) => [String(sale.id), sale])),
@@ -1338,7 +1282,7 @@ export default function VaultUniversePage() {
                       style={{ color: moveTargetCategory ? "var(--fg)" : "var(--muted)" }}
                       disabled={!moveTargetUniverse}
                     >
-                      <option value="">Sub</option>
+                      <option value="">Category</option>
                       {moveTargetUniverse && isUniverseKey(moveTargetUniverse) && getCategories(moveTargetUniverse).map((cat) => (
                         <option key={cat} value={cat}>{cat}</option>
                       ))}
@@ -1350,7 +1294,7 @@ export default function VaultUniversePage() {
                       style={{ color: moveTargetSubcategory ? "var(--fg)" : "var(--muted)" }}
                       disabled={!moveTargetCategory}
                     >
-                      <option value="">Type</option>
+                      <option value="">Subcategory</option>
                       {moveTargetUniverse && isUniverseKey(moveTargetUniverse) && moveTargetCategory && TAXONOMY[moveTargetUniverse][moveTargetCategory]?.map((sub) => (
                         <option key={sub} value={sub}>{sub}</option>
                       ))}
@@ -1385,6 +1329,16 @@ export default function VaultUniversePage() {
                   </>
                 )}
                 {selectMode && (
+                  <button
+                    type="button"
+                    onClick={() => setSelectedIds(new Set(filteredItems.map((entry) => entry.id)))}
+                    className="inline-flex h-8 items-center rounded-[7px] px-3 text-xs font-medium ring-1 ring-[color:var(--border)]"
+                    style={{ background: "var(--pill)", color: "var(--muted)" }}
+                  >
+                    Select all {filteredItems.length}
+                  </button>
+                )}
+                                {selectMode && (
                   <button
                     type="button"
                     onClick={() => { setSelectMode(false); setSelectedIds(new Set()); setMoveTargetUniverse(""); setMoveTargetCategory(""); setMoveTargetSubcategory(""); setDeleteConfirmPending(false); }}
