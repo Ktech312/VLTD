@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 import type { DragEvent } from "react";
 
 import FavoriteButton from "@/components/FavoriteButton";
@@ -476,14 +476,38 @@ export default function GuestGalleryRenderer({
   const activeSection = !embedded && sectionViews.length > 0
     ? sectionViews[Math.min(selectedSectionIdx, sectionViews.length - 1)]
     : undefined;
-  const displayItems: VaultItem[] = activeSection?.items ?? model.galleryItems;
+  const baseItems: VaultItem[] = activeSection?.items ?? model.galleryItems;
+  // The three layout buttons in the builder (Grid / Curated / Timeline) shape what visitors see.
+  // Embedded (editing) mode always keeps the plain order so drag-to-reorder stays predictable.
+  const layoutKind = embedded ? "GRID" : String(model.layoutType ?? "GRID").toUpperCase();
+  const itemYear = (i: VaultItem) => {
+    const m = String(i.year ?? "").match(/d{4}/);
+    return m ? Number(m[0]) : null;
+  };
+  const featuredId = activeSection?.section.featuredItemId || baseItems[0]?.id;
+  const featuredItem = layoutKind === "CURATED" && baseItems.length > 1
+    ? baseItems.find((i) => i.id === featuredId) ?? baseItems[0]
+    : undefined;
+  const displayItems: VaultItem[] = (() => {
+    if (layoutKind === "TIMELINE") {
+      return baseItems
+        .map((item, idx) => ({ item, idx, year: itemYear(item) }))
+        .sort((a, b) => (a.year ?? 9999) - (b.year ?? 9999) || a.idx - b.idx)
+        .map((entry) => entry.item);
+    }
+    if (featuredItem) return baseItems.filter((i) => i.id !== featuredItem.id);
+    return baseItems;
+  })();
+  const layoutReordered = layoutKind === "TIMELINE" || Boolean(featuredItem);
   const backgroundImageUrl = model.background.url;
   const coverImageUrl = typeof model.gallery?.coverImage === "string" ? model.gallery.coverImage.trim() : "";
   // Items and positions must come from the same exhibit. Previously the first
   // exhibit's positions were reused on every tab, leaving later exhibits blank.
-  const shelfSlotLayout = activeSection
-    ? activeSection.section.slotLayout
-    : getShelfSlotLayout(model);
+  const shelfSlotLayout = layoutReordered
+    ? undefined
+    : activeSection
+      ? activeSection.section.slotLayout
+      : getShelfSlotLayout(model);
 
   return (
     <main
@@ -630,6 +654,37 @@ export default function GuestGalleryRenderer({
             </div>
           )}
 
+          {!embedded && activeSection?.section.description?.trim() ? (
+            <p className={["mx-auto mt-3 text-sm leading-6 text-[color:var(--muted)]", GALLERY_STAGE_WIDTH_CLASS].join(" ")}>
+              {activeSection.section.description}
+            </p>
+          ) : null}
+
+          {featuredItem ? (
+            <button
+              type="button"
+              onClick={() => setSelectedItem(featuredItem)}
+              className={["mx-auto mt-3 flex w-full flex-col items-center gap-3 rounded-[24px] border border-white/12 bg-black/25 p-4 text-center sm:flex-row sm:text-left", GALLERY_STAGE_WIDTH_CLASS].join(" ")}
+            >
+              <div className="h-56 w-full overflow-hidden rounded-[16px] bg-black/30 p-2 sm:h-64 sm:w-[260px] sm:shrink-0">
+                {featuredItem.imageFrontUrl || featuredItem.imageBackUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={featuredItem.imageFrontUrl || featuredItem.imageBackUrl} alt={featuredItem.title} className="h-full w-full object-contain" draggable={false} />
+                ) : null}
+              </div>
+              <div className="min-w-0">
+                <div className="text-[10px] tracking-[0.24em] text-[color:var(--muted2)]">FEATURED</div>
+                <div className="mt-1 text-xl font-semibold leading-tight">{featuredItem.title}</div>
+                {itemSubtitle(featuredItem) ? (
+                  <div className="mt-1 text-sm text-[color:var(--muted)]">{itemSubtitle(featuredItem)}</div>
+                ) : null}
+                {featuredItem.description?.trim() ? (
+                  <div className="mt-2 text-sm leading-6 text-[color:var(--muted)]">{featuredItem.description}</div>
+                ) : null}
+              </div>
+            </button>
+          ) : null}
+
           {model.displayMode === "shelf" ? (
             <div className={embedded ? "" : "mt-3"}>
               <GalleryShelfScene
@@ -675,8 +730,16 @@ export default function GuestGalleryRenderer({
                 ) : (
                   <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
                     {displayItems.map((item, index) => (
+                      <Fragment key={item.id}>
+                      {layoutKind === "TIMELINE" && itemYear(item) !== (index > 0 ? itemYear(displayItems[index - 1]) : -1) ? (
+                        <div className="col-span-full flex items-center gap-3 pt-2 first:pt-0">
+                          <span className="text-lg font-semibold" style={{ color: "var(--gold, #C8CDD2)" }}>
+                            {itemYear(item) ?? "Undated"}
+                          </span>
+                          <span className="h-px flex-1 bg-white/15" />
+                        </div>
+                      ) : null}
                       <button
-                        key={item.id}
                         type="button"
                         className="block w-full text-left"
                         onClick={() => setSelectedItem(item)}
@@ -690,6 +753,7 @@ export default function GuestGalleryRenderer({
                           viewerVibed={vibedSet.has(String(item.id))}
                         />
                       </button>
+                      </Fragment>
                     ))}
                   </div>
                 )}

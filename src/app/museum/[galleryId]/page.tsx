@@ -523,6 +523,18 @@ export default function GalleryPage() {
 
   const selectedAccessMode = useMemo(() => getAccessMode(draft), [draft]);
 
+  // Autosave: every change (items, exhibits, title, description, layout, background) saves
+  // itself about a second after the last edit, so nothing depends on pressing Save Changes.
+  const autosaveRef = useRef<() => void>(() => {});
+  useEffect(() => {
+    autosaveRef.current = () => { void saveDraft(undefined, undefined, true); };
+  });
+  useEffect(() => {
+    if (!isDirty || !draft) return;
+    const timer = window.setTimeout(() => autosaveRef.current(), 1000);
+    return () => window.clearTimeout(timer);
+  }, [isDirty, draft]);
+
   function patchDraft(updater: (current: Gallery) => Gallery) {
     setDraft((current) => {
       if (!current) return current;
@@ -590,7 +602,7 @@ export default function GalleryPage() {
     });
   }
 
-  async function saveDraft(overrideIds?: string[], overrideSections?: Gallery["sections"]) {
+  async function saveDraft(overrideIds?: string[], overrideSections?: Gallery["sections"], auto = false) {
     const baseDraft = latestDraftRef.current ?? draft;
     if (!baseDraft) return;
     const effectiveIds = overrideIds ?? baseDraft.itemIds;
@@ -672,6 +684,8 @@ export default function GalleryPage() {
       const [galleryResult] = await Promise.allSettled([
         syncGalleryToSupabaseNow(nextDraft),
         (async () => {
+          // Autosave only saves the exhibit itself; the heavier item sync runs on explicit saves.
+          if (auto) return;
           try {
             for (const itemId of nextDraft.itemIds) {
               enqueueVaultItemSync(itemId);

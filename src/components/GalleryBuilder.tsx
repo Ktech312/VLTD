@@ -686,27 +686,6 @@ export default function GalleryBuilder({
               );
             })}
 
-            <button
-              type="button"
-              onClick={() =>
-                onGalleryChange((current) => {
-                  const nextSections = [
-                    ...getGallerySections(current),
-                    {
-                      id: makeLocalSectionId(),
-                      title: `Section ${((sections.length ?? 0) + 1).toString()}`,
-                      description: "",
-                      itemIds: [],
-                      featuredItemId: undefined,
-                    },
-                  ];
-                  return syncSectionsAndLayout(current, nextSections);
-                })
-              }
-              className="vltd-selectable rounded-[7px] bg-[color:var(--surface)] px-4 py-2 text-xs font-semibold ring-1 ring-[color:var(--border)]"
-            >
-              Add Exhibit
-            </button>
           </div>
         </div>
 
