@@ -471,10 +471,27 @@ export default function GalleryPage() {
   }
 
   function update(ids: string[]) {
-    patchDraft((current) => ({
-      ...current,
-      itemIds: [...ids],
-    }));
+    patchDraft((current) => {
+      // An item taken out of the exhibition must also leave every exhibit it sat in, including when
+      // it was the last one (an empty list used to stop the exhibits being trimmed).
+      const keep = new Set(ids);
+      const currentSections = Array.isArray(current.sections) ? current.sections : [];
+      if (currentSections.length === 0) return { ...current, itemIds: [...ids] };
+      const trimmed = currentSections.map((section) => ({
+        ...section,
+        itemIds: section.itemIds.filter((id) => keep.has(id)),
+        slotLayout: section.slotLayout?.map((id) => (id && keep.has(id) ? id : null)),
+      }));
+      return {
+        ...current,
+        itemIds: [...ids],
+        sections: trimmed,
+        exhibitionLayout: {
+          ...((current.exhibitionLayout as object) ?? {}),
+          sections: trimmed,
+        } as Gallery["exhibitionLayout"],
+      };
+    });
   }
 
   function updateAccessMode(mode: GalleryAccessPillMode, confirmed = false) {

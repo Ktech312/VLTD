@@ -289,5 +289,5 @@ How to read this: findings are ranked most annoying first. "Likelihood" is how l
 
 **Still open:**
 - 37: the two Vault list pages are still two files. They share the universe rule, value formula and category chips, but a full merge would drop the universe page's move-to-profile, scroll restore and museum/shelf/swipe views.
-- 46: removing the last item from the Advanced list can leave it in the saved exhibit. Left alone because the fix touches how saved exhibits are read, which could blank older exhibits.
+- 46: fixed in a follow-up (removing an item now also removes it from every exhibit it sat in).
 - The invite-link viewer keeps its own card layout because its permission gates (images, details, financial) are built into it.
