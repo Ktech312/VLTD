@@ -129,6 +129,8 @@ export type VaultItem = {
   addedVia?: "scan" | "manual" | "import" | "wishlist";
   isNew?: boolean;
   isPublic?: boolean;
+  /** Public pages only: stands in for an item the owner has hidden (shows as "Hidden Item"). */
+  hiddenItem?: boolean;
   // TCG-specific
   tcgParallelType?: string;
   tcgSetCode?: string;

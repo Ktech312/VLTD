@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { AppIcon } from "@/components/ui/AppIcon";
+import { applyVisibilityToExhibits, exhibitNamesForItem, makeBlurThumb } from "@/lib/hiddenItems";
 
 import { emitVaultUpdate } from "@/lib/vaultEvents";
 import { saveItem, type VaultItem } from "@/lib/vaultModel";
@@ -38,19 +40,33 @@ export default function ItemVisibilityToggle({
   const [isPublic, setIsPublic] = useState(Boolean(item.isPublic));
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
+  const [confirmNames, setConfirmNames] = useState<string[] | null>(null);
 
   useEffect(() => {
     setIsPublic(Boolean(item.isPublic));
   }, [item.id, item.isPublic]);
 
-  async function handleToggle() {
+  async function handleToggle(confirmed = false) {
     if (loading) return;
 
     const previousPublic = isPublic;
+
+    // Hiding an item that sits in an exhibit also hides it from that exhibit's visitors: say so first.
+    if (previousPublic && !confirmed) {
+      const names = exhibitNamesForItem(item.id);
+      if (names.length > 0) {
+        setConfirmNames(names);
+        return;
+      }
+    }
+
     let nextItem: VaultItem = { ...item, isPublic: !previousPublic };
 
     setLoading(true);
     setMessage("");
+
+    // Made before any photo moves to private storage, while the picture can still be read.
+    const blurThumb = previousPublic ? await makeBlurThumb(item) : undefined;
 
     try {
       // Private Photos (paid feature, see privatePhotos.ts) — only paid
@@ -83,6 +99,8 @@ export default function ItemVisibilityToggle({
       if (hasSupabaseEnv()) {
         await upsertVaultItemToSupabase(nextItem);
       }
+      // Exhibits that hold this item now show it as "Hidden Item" (or show it again).
+      await applyVisibilityToExhibits(nextItem, blurThumb);
     } catch (error) {
       const reverted = { ...item, isPublic: previousPublic };
       setIsPublic(previousPublic);
@@ -106,7 +124,7 @@ export default function ItemVisibilityToggle({
         onClick={(event) => {
           event.preventDefault();
           event.stopPropagation();
-          void handleToggle();
+          void handleToggle(false);
         }}
         disabled={loading || !item.id}
         onPointerDown={(event) => {
@@ -140,6 +158,49 @@ export default function ItemVisibilityToggle({
         {showLabel ? <span>{label}</span> : null}
       </button>
       {message ? <div className="max-w-[220px] text-right text-[10px] text-rose-200">{message}</div> : null}
+      {confirmNames && typeof document !== "undefined"
+        ? createPortal(
+            <div
+              className="fixed inset-0 z-[9500] flex items-center justify-center bg-black/60 p-4"
+              onClick={(event) => {
+                event.stopPropagation();
+                setConfirmNames(null);
+              }}
+            >
+              <div
+                role="dialog"
+                aria-label="Hide item"
+                onClick={(event) => event.stopPropagation()}
+                className="w-full max-w-[340px] rounded-2xl bg-[color:var(--surface-strong)] p-4 text-sm ring-1 ring-[color:var(--border)]"
+              >
+                <div className="text-[color:var(--fg)]">
+                  This item is in {confirmNames.length === 1 ? "Exhibit" : "Exhibits"}{" "}
+                  {confirmNames.map((name) => `"${name}"`).join(", ")}, this will hide it from your viewers.
+                </div>
+                <div className="mt-3 flex justify-end gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setConfirmNames(null)}
+                    className="vltd-selectable rounded-full bg-[color:var(--pill)] px-4 py-1.5 text-xs font-semibold text-[color:var(--pill-fg)] ring-1 ring-[color:var(--border)]"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setConfirmNames(null);
+                      void handleToggle(true);
+                    }}
+                    className="vltd-pill-main-glow rounded-full bg-[color:var(--pill-active-bg)] px-4 py-1.5 text-xs font-semibold text-[color:var(--fg)]"
+                  >
+                    Hide item
+                  </button>
+                </div>
+              </div>
+            </div>,
+            document.body
+          )
+        : null}
     </div>
   );
 }

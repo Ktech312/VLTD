@@ -1,5 +1,6 @@
 "use client";
 
+import { hiddenStubItem } from "@/lib/hiddenItems";
 import { PUBLIC_ITEM_COLUMNS } from "@/lib/publicItemColumns";
 import Link from "next/link";
 import { isSupplyItem } from "@/lib/vaultStats";
@@ -23,6 +24,7 @@ import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 import { AdultContentGate, ReportContentButton, useAdultGate } from "@/components/PublicSafetyControls";
 
 function vaultItemFromGallerySnapshot(snapshot: GalleryPublicItemSnapshot): VaultItem {
+  if (snapshot.hidden) return hiddenStubItem(snapshot.id, snapshot.createdAt, snapshot.blurThumb);
   return {
     id: String(snapshot.id ?? "").trim(),
     title: String(snapshot.title ?? "").trim() || "Untitled Item",
@@ -177,9 +179,10 @@ export default function GuestGalleryPage() {
 
     const ordered = gallery.itemIds
       .map((itemId) => {
+        const snapshot = snapshotById.get(itemId);
+        if (snapshot?.hidden) return vaultItemFromGallerySnapshot(snapshot);
         const hydrated = byId.get(itemId);
         if (hydrated) return hydrated;
-        const snapshot = snapshotById.get(itemId);
         return snapshot ? vaultItemFromGallerySnapshot(snapshot) : undefined;
       })
       .filter(Boolean) as VaultItem[];

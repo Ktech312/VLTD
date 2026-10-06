@@ -1,5 +1,6 @@
 "use client";
 
+import { hiddenStubItem } from "@/lib/hiddenItems";
 import { PUBLIC_ITEM_COLUMNS } from "@/lib/publicItemColumns";
 import Link from "next/link";
 import type { CSSProperties, ReactNode } from "react";
@@ -159,6 +160,7 @@ function normalizeVaultItem(raw: any): VaultItem {
 }
 
 function vaultItemFromGallerySnapshot(snapshot: GalleryPublicItemSnapshot): VaultItem {
+  if (snapshot.hidden) return hiddenStubItem(snapshot.id, snapshot.createdAt, snapshot.blurThumb);
   return {
     id: String(snapshot.id ?? "").trim(),
     title: String(snapshot.title ?? "").trim() || "Untitled Item",
@@ -436,9 +438,10 @@ export default function SharedGalleryPage() {
 
                 hydratedItems = orderedArtifactIds
                   .map((artifactId) => {
+                    const snapshot = snapshotById.get(artifactId);
+                    if (snapshot?.hidden) return vaultItemFromGallerySnapshot(snapshot);
                     const hydrated = byId.get(artifactId);
                     if (hydrated) return hydrated;
-                    const snapshot = snapshotById.get(artifactId);
                     return snapshot ? vaultItemFromGallerySnapshot(snapshot) : undefined;
                   })
                   .filter(Boolean) as VaultItem[];

@@ -59,6 +59,10 @@ export type GalleryPublicItemSnapshot = {
   imageFrontStoragePath?: string;
   primaryImageKey?: string;
   createdAt?: number;
+  /** The owner hid this item: public pages show "Hidden Item" and a grey blur instead. */
+  hidden?: boolean;
+  /** Tiny greyscale thumbnail (data URL) used for the blur on hidden items. */
+  blurThumb?: string;
 };
 
 export type ExhibitionLayoutType =
@@ -422,6 +426,17 @@ function normalizePublicItemSnapshots(value: unknown): GalleryPublicItemSnapshot
     if (!id || seen.has(id)) continue;
 
     seen.add(id);
+    if ((raw as any)?.hidden === true) {
+      const thumb = safeString((raw as any)?.blurThumb);
+      out.push({
+        id,
+        title: "Hidden Item",
+        hidden: true,
+        blurThumb: thumb.startsWith("data:image/") && thumb.length < 6000 ? thumb : undefined,
+        createdAt: typeof (raw as any)?.createdAt === "number" ? (raw as any).createdAt : undefined,
+      });
+      continue;
+    }
     out.push({
       id,
       title: safeString((raw as any)?.title) || "Untitled Item",

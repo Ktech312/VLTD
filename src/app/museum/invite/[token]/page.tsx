@@ -1,5 +1,6 @@
 "use client";
 
+import { hiddenStubItem } from "@/lib/hiddenItems";
 import { PUBLIC_ITEM_COLUMNS, PUBLIC_ITEM_COLUMNS_FINANCIAL } from "@/lib/publicItemColumns";
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -90,6 +91,7 @@ function normalizeVaultItem(raw: Record<string, unknown>): VaultItem {
 }
 
 function vaultItemFromSnapshot(snapshot: GalleryPublicItemSnapshot): VaultItem {
+  if (snapshot.hidden) return hiddenStubItem(snapshot.id, snapshot.createdAt, snapshot.blurThumb);
   return {
     id: String(snapshot.id ?? "").trim(),
     title: String(snapshot.title ?? "").trim() || "Untitled Item",
@@ -307,7 +309,7 @@ function InviteItemCard({
     if (canEnlarge && imageUrl) { onImageEnlarge(item); return; }
   }
 
-  const isClickable = canDetail || (canEnlarge && !!imageUrl);
+  const isClickable = !item.hiddenItem && (canDetail || (canEnlarge && !!imageUrl));
 
   return (
     <article
@@ -458,9 +460,10 @@ export default function InviteGalleryPage() {
 
             items = uniqueIds
               .map((id) => {
+                const snapshot = snapshotById.get(id);
+                if (snapshot?.hidden) return vaultItemFromSnapshot(snapshot);
                 const hydrated = byId.get(id);
                 if (hydrated) return hydrated;
-                const snapshot = snapshotById.get(id);
                 return snapshot ? vaultItemFromSnapshot(snapshot) : undefined;
               })
               .filter(Boolean) as VaultItem[];

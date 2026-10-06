@@ -1,5 +1,6 @@
 "use client";
 
+import { hiddenStubItem } from "@/lib/hiddenItems";
 import { useEffect, useRef } from "react";
 
 import GuestGalleryRenderer from "@/components/gallery/GuestGalleryRenderer";
@@ -19,7 +20,17 @@ type Props = {
 
 export default function BuilderPreviewBridge({ gallery, items, onHeightChange, onRemoveItem, onReorder, readOnly }: Props) {
   const containerRef = useRef<HTMLDivElement | null>(null);
-  const model = resolveGuestGalleryViewModel(gallery, items, {
+  // Same masking visitors get: items the owner hid show as "Hidden Item".
+  const snapshotById = new Map((gallery.publicItemSnapshots ?? []).map((snapshot) => [snapshot.id, snapshot]));
+  const shownItems = readOnly
+    ? items.map((item) => {
+        const snapshot = snapshotById.get(item.id);
+        return snapshot?.hidden && item.isPublic !== true
+          ? hiddenStubItem(item.id, item.createdAt, snapshot.blurThumb)
+          : item;
+      })
+    : items;
+  const model = resolveGuestGalleryViewModel(gallery, shownItems, {
     navigation: { show: false },
     access: { modeLabel: "Preview", isPublic: true },
     // readOnly passes all items and lets VM resolve order from gallery.itemIds (same as real guest)

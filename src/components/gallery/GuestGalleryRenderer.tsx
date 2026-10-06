@@ -774,7 +774,7 @@ export default function GuestGalleryRenderer({
         </div>
       </div>
 
-      {selectedItem && !embedded ? (
+      {selectedItem && !embedded && !selectedItem.hiddenItem ? (
         <GuestItemModal
           item={selectedItem}
           onClose={() => setSelectedItem(null)}

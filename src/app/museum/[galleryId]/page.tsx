@@ -1,5 +1,6 @@
 ﻿"use client";
 
+import { buildPublicSnapshot, hiddenStubItem } from "@/lib/hiddenItems";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useParams } from "next/navigation";
@@ -157,22 +158,8 @@ async function uploadGalleryAssetToStorage(
   return publicUrl;
 }
 
-function toGalleryPublicItemSnapshot(item: VaultItem): GalleryPublicItemSnapshot {
-  return {
-    id: item.id,
-    title: item.title || "Untitled Item",
-    subtitle: item.subtitle,
-    number: item.number,
-    grade: item.grade,
-    imageFrontUrl: item.imageFrontUrl,
-    imageBackUrl: item.imageBackUrl,
-    imageFrontStoragePath: item.imageFrontStoragePath,
-    primaryImageKey: item.primaryImageKey,
-    createdAt: item.createdAt,
-  };
-}
-
 function vaultItemFromGallerySnapshot(snapshot: GalleryPublicItemSnapshot): VaultItem {
+  if (snapshot.hidden) return hiddenStubItem(snapshot.id, snapshot.createdAt, snapshot.blurThumb);
   return {
     id: snapshot.id,
     title: snapshot.title || "Untitled Item",
@@ -626,7 +613,7 @@ export default function GalleryPage() {
       .map((itemId) => {
         const localItem = selectedItemById.get(itemId);
         // Supplies (boxes, cases) are never part of the public record.
-        if (localItem) return isSupplyItem(localItem) ? undefined : toGalleryPublicItemSnapshot(localItem);
+        if (localItem) return isSupplyItem(localItem) ? undefined : buildPublicSnapshot(localItem, snapshotFallbackById.get(itemId));
         return snapshotFallbackById.get(itemId);
       })
       .filter(Boolean) as GalleryPublicItemSnapshot[];
