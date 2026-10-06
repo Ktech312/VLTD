@@ -58,7 +58,18 @@ export function ItemPickerSheet({
 }) {
   const [query, setQuery] = useState("");
   const [activeUniverses, setActiveUniverses] = useState<string[]>([]);
-  const [picked, setPicked] = useState<Set<string>>(new Set(confirmedIds));
+  const [picked, setPicked] = useState<Set<string>>(() => {
+    const known = new Set(allItems.map((item) => String(item.id)));
+    return new Set(confirmedIds.filter((id) => known.has(String(id))));
+  });
+  // Saved ids this device cannot show right now (not loaded here yet, or deleted). They do not
+  // use up a slot, and they are kept as they are when you confirm, never silently dropped.
+  const hiddenIds = useMemo(() => {
+    const known = new Set(allItems.map((item) => String(item.id)));
+    return confirmedIds.filter((id) => !known.has(String(id)));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  const hiddenCount = hiddenIds.length;
   const [sectionName, setSectionName] = useState(initialTitle || "Exhibit 1");
   const [mounted, setMounted] = useState(false);
   const isSingle = mode === "single";
@@ -123,8 +134,9 @@ export function ItemPickerSheet({
     : "Select items to add";
 
   const slotLabel = slotsLeft === 0
-    ? `Exhibit is full (${maxItems} items max)`
-    : (slotsLeft + " slot" + (slotsLeft === 1 ? "" : "s") + " remaining");
+    ? `Exhibit is full (${maxItems} items max). Tap a picked item to remove it and make room.`
+    : (slotsLeft + " slot" + (slotsLeft === 1 ? "" : "s") + " remaining") +
+      (hiddenCount > 0 ? ` (${hiddenCount} saved item${hiddenCount === 1 ? "" : "s"} not shown on this device are kept and not counted)` : "");
 
   const isAtMax = pickedCount >= maxItems;
 
@@ -390,7 +402,7 @@ export function ItemPickerSheet({
             )}
             <button
               type="button"
-              onClick={() => onConfirm(Array.from(picked), sectionName)}
+              onClick={() => onConfirm([...Array.from(picked), ...hiddenIds], sectionName)}
               disabled={pickedCount === 0}
               className={["vltd-pill-main-glow transition", pickedCount > 0 ? "bg-[color:var(--pill-active-bg)]" : "bg-[color:var(--pill)]"].join(" ")}
               style={{
