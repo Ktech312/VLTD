@@ -81,6 +81,8 @@ function rowToVaultImage(entry: unknown, index: number): VaultImage | null {
     order: Number.isFinite(Number(image.order)) ? Number(image.order) : index,
     localOnly: isLocalOnlyImageUrl(url),
     isPrivateStorage: Boolean(image.isPrivateStorage),
+    ...(image.quality === "snapshot" ? { quality: "snapshot" as const } : {}),
+    ...(typeof image.sourceUrl === "string" && image.sourceUrl ? { sourceUrl: image.sourceUrl } : {}),
   };
 }
 
@@ -454,6 +456,8 @@ function sanitizeRemoteImages(images?: VaultImage[]) {
       url: image.url ?? null,
       order: Number.isFinite(Number(image.order)) ? Number(image.order) : index,
       isPrivateStorage: Boolean(image.isPrivateStorage),
+      ...(image.quality === "snapshot" ? { quality: "snapshot" as const } : {}),
+      ...(image.sourceUrl ? { sourceUrl: image.sourceUrl } : {}),
     }));
 }
 

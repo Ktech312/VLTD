@@ -6,7 +6,7 @@
  * `generate*` functions with async API calls in the future.
  *
  * Modes:
- *   description — collector-to-collector, factual, saves to item.notes
+ *   description — short, factual, saves to item.description (the public text shown when shared)
  *   listing     — buyer-facing, value-proposition, FOR_SALE context
  *   social      — short enthusiast caption for Instagram/Twitter
  */
@@ -62,54 +62,94 @@ function toConfidence(filledFields: number, totalFields: number): number {
 
 // ─── description mode ──────────────────────────────────────────────────────────
 
+// Words that describe the product line rather than the item itself. They are
+// dropped when working out the item's own name ("Bandai Boa Hancock ST06-006
+// 6000 One Piece CCG Character Card English" -> "Boa Hancock").
+const BRAND_NOISE =
+  /\b(bandai|konami|wizards of the coast|upper deck|topps|panini|fleer|ccg|tcg|character card|trading card|card)\b/gi;
+const LANGUAGE = /\b(english|japanese|korean|chinese|french|german|spanish|italian)\b/i;
+const SET_CODE = /\b[A-Z]{1,4}\d{1,3}[-/]\d{2,4}[A-Z]?\b/g;
+// A few illustrators whose name shows up in listing titles.
+const KNOWN_ARTISTS = [
+  "Peach Momoko",
+  "J. Scott Campbell",
+  "Alex Ross",
+  "Jenny Frison",
+  "Inhyuk Lee",
+  "Skottie Young",
+  "Artgerm",
+];
+
+function escapeRegExp(text: string): string {
+  return text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function findArtist(item: VaultItem): string {
+  const haystack = [item.title, item.subject, item.notes].filter(Boolean).join(" \n ");
+  const by = haystack.match(/\b(?:art|artwork|illustrat\w*)\s+by\s+([A-Z][A-Za-z.'-]+(?:\s+[A-Z][A-Za-z.'-]+){0,2})/);
+  if (by) return by[1].trim();
+  const known = KNOWN_ARTISTS.find((name) => new RegExp(escapeRegExp(name), "i").test(haystack));
+  return known ?? "";
+}
+
+function findLanguage(item: VaultItem): string {
+  const fromField = item.tcgLanguage?.trim();
+  if (fromField) return fromField;
+  const match = (item.title ?? "").match(LANGUAGE);
+  return match ? match[1].charAt(0).toUpperCase() + match[1].slice(1).toLowerCase() : "";
+}
+
+/** The item's own name with product-line wording, codes and language removed. */
+function cleanName(item: VaultItem, franchise: string, artist = "", grade = ""): string {
+  let name = item.subject?.trim() || item.title?.trim() || "";
+  if (!item.subject?.trim()) {
+    if (franchise) name = name.replace(new RegExp("\\b" + escapeRegExp(franchise) + "\\b", "ig"), " ");
+    name = name.replace(BRAND_NOISE, " ").replace(LANGUAGE, " ").replace(SET_CODE, " ");
+    if (artist) name = name.replace(new RegExp(escapeRegExp(artist), "ig"), " ");
+    if (grade) name = name.replace(new RegExp("\\(?\\s*" + escapeRegExp(grade) + "\\s*\\)?", "ig"), " ");
+    if (item.universe === "TCG") {
+      // trading-card power / cost numbers like "6000" (but keep years)
+      name = name.replace(/\b(?!(?:19|20)\d{2}\b)\d{3,5}\b/g, " ");
+    }
+    name = name.replace(/\s{2,}/g, " ").replace(/^[\s,.\-–—]+|[\s,.\-–—]+$/g, "").trim();
+  }
+  return name || item.title?.trim() || "this item";
+}
+
+/** Which line / series / publisher this belongs to, in plain words. */
+function findFranchise(item: VaultItem): string {
+  const sub = item.subcategoryLabel?.trim();
+  if (item.universe === "TCG" && sub && !/^(other|sealed|accessor)/i.test(sub)) return sub;
+  if (item.comicPublisher?.trim()) return item.comicPublisher.trim();
+  return "";
+}
+
+// Short and factual, in the form a collector would write it:
+//   "One Piece, Boa Hancock (English), Art by Peach Momoko"
+// Only facts we actually have; no filler.
 function generateDescription(item: VaultItem): GeneratedCopy {
-  const subject = subjectOrTitle(item);
-  const universe = universeLabel(item);
-  const grade = gradeOrCondition(item);
+  const franchise = findFranchise(item);
+  const artist = findArtist(item);
+  const grade = item.grade?.trim() || "";
+  const name = cleanName(item, franchise, artist, grade);
+  const language = findLanguage(item);
+  const condition = !grade ? item.condition?.trim() || "" : "";
   const cert = item.certNumber?.trim();
 
   const parts: string[] = [];
-  const filledFields: string[] = [];
+  const nameAlreadyHasFranchise = franchise && name.toLowerCase().includes(franchise.toLowerCase());
+  if (franchise && !nameAlreadyHasFranchise) parts.push(franchise);
+  parts.push(language ? `${name} (${language})` : name);
+  const extra = [item.tcgParallelType?.trim(), item.variant?.trim(), item.edition?.trim()].filter(Boolean);
+  parts.push(...(extra as string[]));
+  if (artist) parts.push(`Art by ${artist}`);
+  if (grade) parts.push(cert ? `${grade} (cert #${cert})` : grade);
+  else if (condition) parts.push(condition);
+  else if (cert) parts.push(`cert #${cert}`);
 
-  // Opening sentence: grade + subject + universe
-  if (grade && universe) {
-    parts.push(`${grade} graded ${subject} from ${universe}.`);
-    filledFields.push("grade", "subject", "universe");
-  } else if (grade) {
-    parts.push(`${grade} graded ${subject}.`);
-    filledFields.push("grade", "subject");
-  } else if (universe) {
-    parts.push(`${subject} from ${universe}.`);
-    filledFields.push("subject", "universe");
-  } else {
-    parts.push(`${subject}.`);
-    filledFields.push("subject");
-  }
-
-  // Cert sentence
-  if (cert) {
-    parts.push(`Certified and verified — cert #${cert}.`);
-    filledFields.push("certNumber");
-  }
-
-  // Condition note if no grade
-  if (!item.grade && item.condition) {
-    parts.push(`Condition: ${item.condition}.`);
-  }
-
-  // Acquisition note if no cert
-  if (!cert) {
-    parts.push(`Part of a personally curated collection.`);
-  }
-
-  const usedFields = new Set(filledFields).size;
-  const confidence = toConfidence(
-    fieldScore(item),
-    6 // title/subject/universe/grade/cert/notes
-  );
-
+  const confidence = toConfidence(fieldScore(item), 6);
   return {
-    text: parts.join(" "),
+    text: parts.filter(Boolean).join(", "),
     confidence: Math.min(confidence, 92), // cap at 92 — template is never 100%
     mode: "description",
   };

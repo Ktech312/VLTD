@@ -896,7 +896,7 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
     }
   }
 
-  async function handleReplaceImage(index: number, file: File) {
+  async function handleReplaceImage(index: number, file: File, meta?: { snapshotOf?: string }) {
     if (!item) return;
 
     const orderedImages = getOrderedImages(item);
@@ -925,6 +925,7 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
             storageKey: uploaded.path,
             url: uploaded.publicUrl,
             localOnly: false,
+            ...(meta?.snapshotOf ? { quality: "snapshot" as const, sourceUrl: meta.snapshotOf } : {}),
           };
         } else {
           const durableBlob = await prepareImageBlob(file);

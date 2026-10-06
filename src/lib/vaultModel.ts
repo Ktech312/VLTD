@@ -32,6 +32,12 @@ export type VaultImage = {
    *  (needs a signed URL) instead of the default public vault-images bucket.
    *  See src/lib/privatePhotos.ts. */
   isPrivateStorage?: boolean;
+  /** "snapshot" = a smaller, lower-quality copy saved when a photo that was only
+   *  linked from another site (eBay, Whatnot...) got edited. */
+  quality?: "snapshot";
+  /** Where the full-quality original lives (the link it replaced), so it can be
+   *  upgraded to a full-quality stored copy later. */
+  sourceUrl?: string;
 };
 
 export type VaultItem = {
@@ -411,6 +417,8 @@ function normalizeImages(raw: unknown): VaultImage[] {
           isEphemeralImageUrl(resolvedStorageKey),
         role: inferImageRole(index, sanitizeVaultImageRole(image.role)),
         isPrivateStorage: Boolean(image.isPrivateStorage),
+        ...(image.quality === "snapshot" ? { quality: "snapshot" as const } : {}),
+        ...(typeof image.sourceUrl === "string" && image.sourceUrl ? { sourceUrl: image.sourceUrl } : {}),
       } as VaultImage;
     })
     .filter(Boolean) as VaultImage[];

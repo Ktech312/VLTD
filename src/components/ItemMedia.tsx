@@ -252,7 +252,7 @@ export default function ItemMedia({
   onAddImages: (files: File[]) => void;
   onMoveImage: (fromIndex: number, toIndex: number) => void;
   onDeleteImage: (index: number) => void;
-  onReplaceImage?: (index: number, file: File) => Promise<void> | void;
+  onReplaceImage?: (index: number, file: File, meta?: { snapshotOf?: string }) => Promise<void> | void;
   onSetImageRole?: (imageId: string, role: ImageRole) => void;
 }) {
   const fileRef = useRef<HTMLInputElement | null>(null);
@@ -274,6 +274,7 @@ export default function ItemMedia({
   // True when the photo being edited had to be read through our own server
   // because it is only linked from another site.
   const usedProxyRef = useRef(false);
+  const originalUrlRef = useRef("");
   const bakeToken = useRef(0);
 
   // Remove Background — same free, client-side pipeline and backdrop
@@ -440,6 +441,7 @@ export default function ItemMedia({
     setViewerOpen(false);
     baseFileRef.current = null;
     usedProxyRef.current = false;
+    originalUrlRef.current = entry.url;
     bakeToken.current += 1;
     setEditTarget({
       index: entry.originalIndex,
@@ -459,7 +461,11 @@ export default function ItemMedia({
         : base;
       const cropped = await cropImageFile(file, editTarget.crop);
       const toSave = usedProxyRef.current ? await shrinkPhoto(cropped) : cropped;
-      await onReplaceImage(editTarget.index, toSave);
+      await onReplaceImage(
+        editTarget.index,
+        toSave,
+        usedProxyRef.current ? { snapshotOf: originalUrlRef.current } : undefined
+      );
       if (usedProxyRef.current) showToast("Saved a smaller copy of this photo to your vault.");
       if (editTarget.url.startsWith("blob:")) URL.revokeObjectURL(editTarget.url);
       baseFileRef.current = null;
