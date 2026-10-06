@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 
 import {
   buildPricingPatch,
@@ -15,47 +15,25 @@ import {
   normalizePriceConfidence,
   parsePriceInput,
   type PriceComparable,
-  type PriceConfidence,
   type PricingMvpFields,
 } from "@/lib/pricingMvp";
-import { PillButton } from "@/components/ui/PillButton";
 
-function inputClass() {
-  return "h-10 rounded-xl bg-[color:var(--pill)] px-3 text-sm ring-1 ring-[color:var(--border)] focus:outline-none";
+type FieldKey = "range" | "lastComp" | "estimate" | "source" | "notes";
+
+const inputClass =
+  "h-8 min-w-0 rounded-lg bg-[color:var(--pill)] px-2.5 text-sm text-[color:var(--fg)] ring-1 ring-[color:var(--theme-gold,#C8CDD2)] focus:outline-none";
+
+const editableClass =
+  "rounded-lg transition hover:bg-[color:var(--pill)] hover:ring-1 hover:ring-[color:var(--border)]";
+
+function numText(n?: number) {
+  return n !== undefined && n !== null && Number.isFinite(n) ? String(n) : "";
 }
 
-function textareaClass() {
-  return "min-h-[84px] rounded-xl bg-[color:var(--pill)] px-3 py-2.5 text-sm ring-1 ring-[color:var(--border)] focus:outline-none";
-}
-
-function selectClass() {
-  return "h-10 rounded-xl bg-[color:var(--pill)] px-3 text-sm ring-1 ring-[color:var(--border)] focus:outline-none";
-}
-
-function ActionButton({
-  children,
-  primary = false,
-  onClick,
-  disabled,
-  className,
-}: {
-  children: React.ReactNode;
-  primary?: boolean;
-  onClick?: () => void;
-  disabled?: boolean;
-  className?: string;
-}) {
-  return (
-    <PillButton variant={primary ? "active" : "default"} onClick={onClick} disabled={disabled} className={className}>
-      {children}
-    </PillButton>
-  );
-}
-
-function compDraftFromComparables(comparables: PricingMvpFields["comparables"]) {
-  return normalizeComparables(comparables) ?? [];
-}
-
+/**
+ * Pricing, edited where you read it: click any value to change it, press Enter
+ * (or click away) to save, Esc to cancel. No separate edit mode or form.
+ */
 export default function PricingMvpCard({
   value,
   compact = false,
@@ -75,32 +53,11 @@ export default function PricingMvpCard({
   itemTitle?: string;
   onSave?: (patch: PricingMvpFields) => void | Promise<void>;
 }) {
-  const [isEditing, setIsEditing] = useState(false);
-
-  const [estimatedValueInput, setEstimatedValueInput] = useState(
-    value.estimatedValue !== undefined ? String(value.estimatedValue) : ""
-  );
-  const [lastCompValueInput, setLastCompValueInput] = useState(
-    value.lastCompValue !== undefined ? String(value.lastCompValue) : ""
-  );
-  const [valueLowInput, setValueLowInput] = useState(
-    value.valueLow !== undefined ? String(value.valueLow) : ""
-  );
-  const [valueMedianInput, setValueMedianInput] = useState(
-    value.valueMedian !== undefined ? String(value.valueMedian) : ""
-  );
-  const [valueHighInput, setValueHighInput] = useState(
-    value.valueHigh !== undefined ? String(value.valueHigh) : ""
-  );
-  const [priceSourceInput, setPriceSourceInput] = useState(value.priceSource ?? "");
-  const [priceConfidenceInput, setPriceConfidenceInput] = useState<PriceConfidence | "">(
-    value.priceConfidence ?? ""
-  );
-  const [priceNotesInput, setPriceNotesInput] = useState(value.priceNotes ?? "");
-  const [comparableDraft, setComparableDraft] = useState<PriceComparable[]>(() =>
-    compDraftFromComparables(value.comparables)
-  );
-  const [isSaving, setIsSaving] = useState(false);
+  const [editing, setEditing] = useState<FieldKey | null>(null);
+  const [draft, setDraft] = useState({ low: "", median: "", high: "", text: "" });
+  const [addingComp, setAddingComp] = useState(false);
+  const [compDraft, setCompDraft] = useState({ source: "", price: "", date: "", url: "" });
+  const skipCommit = useRef(false);
 
   const primaryValue = useMemo(() => displayPrimaryValue(value), [value]);
   const range = useMemo(() => effectiveValueRange(value), [value]);
@@ -110,417 +67,368 @@ export default function PricingMvpCard({
   );
   const comparables = useMemo(() => normalizeComparables(value.comparables) ?? [], [value.comparables]);
 
-  useEffect(() => {
-    if (isEditing) return;
-    setEstimatedValueInput(value.estimatedValue !== undefined ? String(value.estimatedValue) : "");
-    setLastCompValueInput(value.lastCompValue !== undefined ? String(value.lastCompValue) : "");
-    setValueLowInput(value.valueLow !== undefined ? String(value.valueLow) : "");
-    setValueMedianInput(value.valueMedian !== undefined ? String(value.valueMedian) : "");
-    setValueHighInput(value.valueHigh !== undefined ? String(value.valueHigh) : "");
-    setPriceSourceInput(value.priceSource ?? "");
-    setPriceConfidenceInput(value.priceConfidence ?? "");
-    setPriceNotesInput(value.priceNotes ?? "");
-    setComparableDraft(compDraftFromComparables(value.comparables));
-  }, [
-    isEditing,
-    value.estimatedValue,
-    value.lastCompValue,
-    value.valueLow,
-    value.valueMedian,
-    value.valueHigh,
-    value.priceSource,
-    value.priceConfidence,
-    value.priceNotes,
-    value.comparables,
-  ]);
-
-  function resetDraft() {
-    setEstimatedValueInput(value.estimatedValue !== undefined ? String(value.estimatedValue) : "");
-    setLastCompValueInput(value.lastCompValue !== undefined ? String(value.lastCompValue) : "");
-    setValueLowInput(value.valueLow !== undefined ? String(value.valueLow) : "");
-    setValueMedianInput(value.valueMedian !== undefined ? String(value.valueMedian) : "");
-    setValueHighInput(value.valueHigh !== undefined ? String(value.valueHigh) : "");
-    setPriceSourceInput(value.priceSource ?? "");
-    setPriceConfidenceInput(value.priceConfidence ?? "");
-    setPriceNotesInput(value.priceNotes ?? "");
-    setComparableDraft(compDraftFromComparables(value.comparables));
-  }
-
-  function updateComp(index: number, key: keyof PriceComparable, nextValue: unknown) {
-    setComparableDraft((prev) =>
-      prev.map((comp, i) => (i === index ? { ...comp, [key]: nextValue } : comp))
+  async function commit(overrides: Parameters<typeof buildPricingPatch>[0]) {
+    if (!onSave) return;
+    await onSave(
+      buildPricingPatch({
+        estimatedValue: value.estimatedValue,
+        lastCompValue: value.lastCompValue,
+        valueLow: value.valueLow,
+        valueMedian: value.valueMedian,
+        valueHigh: value.valueHigh,
+        priceSource: value.priceSource,
+        priceConfidence: value.priceConfidence,
+        priceNotes: value.priceNotes,
+        priceSources: value.priceSources,
+        comparables,
+        ...overrides,
+      })
     );
   }
 
-  function removeComp(index: number) {
-    setComparableDraft((prev) => prev.filter((_, i) => i !== index));
+  function open(field: FieldKey) {
+    skipCommit.current = false;
+    setDraft({
+      low: numText(value.valueLow),
+      median: numText(value.valueMedian),
+      high: numText(value.valueHigh),
+      text:
+        field === "lastComp"
+          ? numText(value.lastCompValue)
+          : field === "estimate"
+            ? numText(value.estimatedValue)
+            : field === "source"
+              ? value.priceSource ?? ""
+              : field === "notes"
+                ? value.priceNotes ?? ""
+                : "",
+    });
+    setEditing(field);
   }
 
-  function normalizedComparableDraft() {
-    return comparableDraft
-      .map((comp) => ({
-        ...comp,
-        source: String(comp.source ?? "").trim(),
-        salePrice: Number(comp.salePrice),
-        saleDate: String(comp.saleDate ?? "").trim() || undefined,
-        condition: String(comp.condition ?? "").trim() || undefined,
-        url: String(comp.url ?? "").trim() || undefined,
-        thumbnailUrl: String(comp.thumbnailUrl ?? "").trim() || undefined,
-        notes: String(comp.notes ?? "").trim() || undefined,
-      }))
-      .filter((comp) => comp.source && Number.isFinite(comp.salePrice) && comp.salePrice > 0);
+  async function finish() {
+    if (skipCommit.current || !editing) return;
+    const field = editing;
+    // Enter and blur can both fire for one edit; only save once.
+    skipCommit.current = true;
+    setEditing(null);
+    if (field === "range") {
+      const next = {
+        valueLow: parsePriceInput(draft.low),
+        valueMedian: parsePriceInput(draft.median),
+        valueHigh: parsePriceInput(draft.high),
+      };
+      if (next.valueLow === value.valueLow && next.valueMedian === value.valueMedian && next.valueHigh === value.valueHigh) return;
+      await commit(next);
+    } else if (field === "lastComp") {
+      const next = parsePriceInput(draft.text);
+      if (next !== value.lastCompValue) await commit({ lastCompValue: next });
+    } else if (field === "estimate") {
+      const next = parsePriceInput(draft.text);
+      if (next !== value.estimatedValue) await commit({ estimatedValue: next });
+    } else if (field === "source") {
+      const next = draft.text.trim();
+      if (next !== (value.priceSource ?? "").trim()) await commit({ priceSource: next });
+    } else if (field === "notes") {
+      const next = draft.text.trim();
+      if (next !== (value.priceNotes ?? "").trim()) await commit({ priceNotes: next });
+    }
   }
 
-  function applyCompAsValue(comp: PriceComparable) {
+  function cancel() {
+    skipCommit.current = true;
+    setEditing(null);
+  }
+
+  function onKeys(e: React.KeyboardEvent, allowEnter = true) {
+    if (e.key === "Enter" && allowEnter) {
+      e.preventDefault();
+      void finish();
+    }
+    if (e.key === "Escape") cancel();
+  }
+
+  async function addComp() {
+    const salePrice = parsePriceInput(compDraft.price);
+    const source = compDraft.source.trim();
+    if (!source || !salePrice || salePrice <= 0) return;
+    const comp: PriceComparable = {
+      source,
+      salePrice,
+      saleDate: compDraft.date.trim() || undefined,
+      url: compDraft.url.trim() || undefined,
+    };
+    setAddingComp(false);
+    setCompDraft({ source: "", price: "", date: "", url: "" });
+    await commit({ comparables: [...comparables, comp] });
+  }
+
+  async function removeComp(index: number) {
+    await commit({ comparables: comparables.filter((_, i) => i !== index) });
+  }
+
+  async function applyCompAsValue(comp: PriceComparable) {
     const salePrice = Number(comp.salePrice);
     if (!Number.isFinite(salePrice) || salePrice <= 0) return;
-
-    setValueMedianInput(String(salePrice));
-    setLastCompValueInput(String(salePrice));
-    setPriceSourceInput(comp.source);
-    setPriceConfidenceInput((current) => current || "medium");
-    setPriceNotesInput((current) => {
-      const line = [
-        `Value set from ${comp.source} comparable`,
-        comp.saleDate ? `sold ${comp.saleDate}` : "",
-        comp.condition ? `condition ${comp.condition}` : "",
-        comp.url ? comp.url : "",
-      ].filter(Boolean).join(" - ");
-      const trimmed = current.trim();
-      return trimmed ? `${trimmed}\n${line}` : line;
+    await commit({
+      valueMedian: salePrice,
+      lastCompValue: salePrice,
+      priceSource: comp.source,
+      priceConfidence: value.priceConfidence ?? "medium",
     });
   }
 
-  async function handleSave() {
-    if (!onSave) {
-      setIsEditing(false);
-      return;
-    }
-
-    setIsSaving(true);
-    try {
-      await onSave(
-        buildPricingPatch({
-          estimatedValue: parsePriceInput(estimatedValueInput),
-          lastCompValue: parsePriceInput(lastCompValueInput),
-          valueLow: parsePriceInput(valueLowInput),
-          valueMedian: parsePriceInput(valueMedianInput),
-          valueHigh: parsePriceInput(valueHighInput),
-          priceSource: priceSourceInput,
-          priceConfidence: normalizePriceConfidence(priceConfidenceInput),
-          priceNotes: priceNotesInput,
-          comparables: normalizedComparableDraft(),
-        })
-      );
-      setIsEditing(false);
-    } finally {
-      setIsSaving(false);
-    }
-  }
-
-  function handleCancel() {
-    resetDraft();
-    setIsEditing(false);
-  }
+  const tile = "w-full rounded-[14px] bg-[color:var(--surface)] p-3 text-left ring-1 ring-[color:var(--border)]";
+  const tileLabel = "text-[11px] tracking-[0.14em] text-[color:var(--muted2)]";
 
   return (
     <section className="rounded-[16px] bg-[color:var(--surface)] p-3 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <div className="text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">{title}</div>
-          {!compact ? (
-            <div className="mt-1 text-sm text-[color:var(--muted)]">
-              Multi-source pricing with defensible comparable sales.
-            </div>
-          ) : null}
-        </div>
-
-        {!isEditing ? (
-          <ActionButton onClick={() => setIsEditing(true)}>Edit</ActionButton>
+      <div>
+        <div className="text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">{title}</div>
+        {!compact ? (
+          <div className="mt-1 text-sm text-[color:var(--muted)]">
+            Click any value to edit it.
+            {suggestions.length > 0 ? (
+              <>
+                {" "}Look up sold prices:{" "}
+                {suggestions.map((s, i) => (
+                  <span key={s.platform}>
+                    {i > 0 ? " · " : ""}
+                    <a
+                      href={s.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      title={s.note}
+                      className="text-[color:var(--theme-gold)] underline-offset-2 hover:underline"
+                    >
+                      {s.platform}
+                    </a>
+                  </span>
+                ))}
+              </>
+            ) : null}
+          </div>
         ) : null}
       </div>
 
-      {isEditing ? (
-        <div className="mt-3 grid gap-4">
-          {suggestions.length > 0 ? (
-            <div>
-              <div className="mb-2 text-[11px] tracking-[0.14em] text-[color:var(--muted2)]">
-                WHERE TO LOOK
-              </div>
-              <div className="space-y-2">
-                {suggestions.map((suggestion) => (
-                  <a
-                    key={suggestion.platform}
-                    href={suggestion.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-start justify-between gap-3 rounded-xl bg-[color:var(--pill)] px-3 py-2.5 ring-1 ring-[color:var(--border)] transition hover:brightness-110"
-                  >
-                    <div>
-                      <div className="text-[13px] font-semibold text-[color:var(--fg)]">
-                        {suggestion.platform}
-                      </div>
-                      <div className="mt-0.5 text-[11px] text-[color:var(--muted)]">
-                        {suggestion.note}
-                      </div>
-                    </div>
-                    <div className="max-w-[42%] shrink-0 pt-0.5 text-right text-[11px] text-[color:var(--muted)]">
-                      {suggestion.searchHint}
-                    </div>
-                  </a>
+      <div className="mt-3 grid gap-3">
+        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          {/* VALUE RANGE: low / median (the headline number) / high */}
+          {editing === "range" ? (
+            <div
+              className={tile}
+              onBlur={(e) => {
+                if (!e.currentTarget.contains(e.relatedTarget as Node | null)) void finish();
+              }}
+            >
+              <div className={tileLabel}>VALUE RANGE</div>
+              <div className="mt-1.5 grid grid-cols-3 gap-1.5">
+                {(
+                  [
+                    ["low", "Low"],
+                    ["median", "Value"],
+                    ["high", "High"],
+                  ] as const
+                ).map(([k, label], i) => (
+                  <label key={k} className="grid gap-0.5">
+                    <span className="text-[10px] text-[color:var(--muted2)]">{label}</span>
+                    <input
+                      autoFocus={i === 1}
+                      className={inputClass}
+                      inputMode="decimal"
+                      value={draft[k]}
+                      onChange={(e) => setDraft((d) => ({ ...d, [k]: e.target.value }))}
+                      onKeyDown={(e) => onKeys(e)}
+                    />
+                  </label>
                 ))}
               </div>
             </div>
-          ) : null}
-
-          <div className="grid gap-2 sm:grid-cols-3">
-            <label className="grid gap-1.5">
-              <span className="text-[11px] tracking-[0.14em] text-[color:var(--muted2)]">LOW</span>
-              <input className={inputClass()} value={valueLowInput} onChange={(e) => setValueLowInput(e.target.value)} placeholder="80" />
-            </label>
-            <label className="grid gap-1.5">
-              <span className="text-[11px] tracking-[0.14em] text-[color:var(--muted2)]">MEDIAN</span>
-              <input className={inputClass()} value={valueMedianInput} onChange={(e) => setValueMedianInput(e.target.value)} placeholder="110" />
-            </label>
-            <label className="grid gap-1.5">
-              <span className="text-[11px] tracking-[0.14em] text-[color:var(--muted2)]">HIGH</span>
-              <input className={inputClass()} value={valueHighInput} onChange={(e) => setValueHighInput(e.target.value)} placeholder="150" />
-            </label>
-          </div>
-
-          <div className="grid gap-3 md:grid-cols-2">
-            <label className="grid gap-1.5">
-              <span className="text-[11px] tracking-[0.14em] text-[color:var(--muted2)]">LEGACY ESTIMATE</span>
-              <input className={inputClass()} value={estimatedValueInput} onChange={(e) => setEstimatedValueInput(e.target.value)} placeholder="125" />
-            </label>
-            <label className="grid gap-1.5">
-              <span className="text-[11px] tracking-[0.14em] text-[color:var(--muted2)]">LAST COMP</span>
-              <input className={inputClass()} value={lastCompValueInput} onChange={(e) => setLastCompValueInput(e.target.value)} placeholder="110" />
-            </label>
-            <label className="grid gap-1.5">
-              <span className="text-[11px] tracking-[0.14em] text-[color:var(--muted2)]">PRICE SOURCE</span>
-              <input className={inputClass()} value={priceSourceInput} onChange={(e) => setPriceSourceInput(e.target.value)} placeholder="eBay sold / Discogs / PWCC" />
-            </label>
-            <label className="grid gap-1.5">
-              <span className="text-[11px] tracking-[0.14em] text-[color:var(--muted2)]">CONFIDENCE</span>
-              <select
-                className={selectClass()}
-                value={priceConfidenceInput}
-                onChange={(e) => setPriceConfidenceInput((e.target.value || "") as PriceConfidence | "")}
-              >
-                <option value="">Select confidence</option>
-                <option value="low">Low</option>
-                <option value="medium">Medium</option>
-                <option value="high">High</option>
-              </select>
-            </label>
-          </div>
-
-          <label className="grid gap-1.5">
-            <span className="text-[11px] tracking-[0.14em] text-[color:var(--muted2)]">PRICE NOTES</span>
-            <textarea
-              className={textareaClass()}
-              value={priceNotesInput}
-              onChange={(e) => setPriceNotesInput(e.target.value)}
-              placeholder="Why this estimate makes sense, what comps you used, grade caveats, etc."
-            />
-          </label>
-
-          <div>
-            <div className="mb-2 flex items-center justify-between">
-              <span className="text-[11px] tracking-[0.14em] text-[color:var(--muted2)]">COMPARABLE SALES</span>
-              <button
-                type="button"
-                onClick={() => setComparableDraft((prev) => [...prev, { source: "", salePrice: 0 }])}
-                className="text-[11px] font-semibold text-[color:var(--theme-gold)]"
-              >
-                + Add Comp
-              </button>
-            </div>
-            <div className="space-y-3">
-              {comparableDraft.map((comp, index) => (
-                <div key={index} className="rounded-2xl bg-[color:var(--pill)] p-3 ring-1 ring-[color:var(--border)]">
-                  <div className="grid gap-2 sm:grid-cols-[1fr_110px_120px_32px]">
-                    <input
-                      className={inputClass()}
-                      placeholder="Source"
-                      value={comp.source}
-                      onChange={(e) => updateComp(index, "source", e.target.value)}
-                    />
-                    <input
-                      className={inputClass()}
-                      placeholder="Price"
-                      type="number"
-                      value={comp.salePrice || ""}
-                      onChange={(e) => updateComp(index, "salePrice", Number(e.target.value))}
-                    />
-                    <input
-                      className={inputClass()}
-                      placeholder="Sale date"
-                      value={comp.saleDate ?? ""}
-                      onChange={(e) => updateComp(index, "saleDate", e.target.value)}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => removeComp(index)}
-                      className="h-10 rounded-xl text-sm text-[color:var(--muted)] ring-1 ring-[color:var(--border)]"
-                      title="Remove comparable"
-                    >
-                      x
-                    </button>
-                  </div>
-                  <div className="mt-2 grid gap-2 sm:grid-cols-2">
-                    <input
-                      className={inputClass()}
-                      placeholder="Thumbnail URL"
-                      value={comp.thumbnailUrl ?? ""}
-                      onChange={(e) => updateComp(index, "thumbnailUrl", e.target.value)}
-                    />
-                    <input
-                      className={inputClass()}
-                      placeholder="Listing / sold URL"
-                      value={comp.url ?? ""}
-                      onChange={(e) => updateComp(index, "url", e.target.value)}
-                    />
-                    <input
-                      className={inputClass()}
-                      placeholder="Condition / grade"
-                      value={comp.condition ?? ""}
-                      onChange={(e) => updateComp(index, "condition", e.target.value)}
-                    />
-                    <input
-                      className={inputClass()}
-                      placeholder="Notes"
-                      value={comp.notes ?? ""}
-                      onChange={(e) => updateComp(index, "notes", e.target.value)}
-                    />
-                  </div>
-                  <div className="mt-2 flex justify-end">
-                    <button
-                      type="button"
-                      onClick={() => applyCompAsValue(comp)}
-                      className="rounded-[7px] bg-[color:var(--surface)] px-3 py-1.5 text-[11px] font-semibold text-[color:var(--theme-gold)] ring-1 ring-[color:var(--border)]"
-                    >
-                      Use as current value
-                    </button>
-                  </div>
-                </div>
-              ))}
-              {comparableDraft.length === 0 ? (
-                <div className="rounded-xl bg-[color:var(--pill)] px-3 py-2 text-xs text-[color:var(--muted)] ring-1 ring-[color:var(--border)]">
-                  Add recent sales to make insurance values easier to defend.
-                </div>
-              ) : null}
-            </div>
-          </div>
-
-          <div className="flex flex-wrap gap-2">
-            <ActionButton primary onClick={() => void handleSave()} disabled={isSaving}>
-              {isSaving ? "Saving..." : "Save Pricing"}
-            </ActionButton>
-            <ActionButton onClick={handleCancel} disabled={isSaving}>
-              Cancel
-            </ActionButton>
-          </div>
-        </div>
-      ) : (
-        <div className="mt-3 grid gap-3">
-          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-            <div className="rounded-[14px] bg-[color:var(--surface)] p-3 ring-1 ring-[color:var(--border)]">
-              <div className="text-[11px] tracking-[0.14em] text-[color:var(--muted2)]">VALUE RANGE</div>
+          ) : (
+            <button type="button" onClick={() => open("range")} className={`${tile} ${editableClass}`} title="Click to edit value range">
+              <div className={tileLabel}>VALUE RANGE</div>
               <div className="mt-1 flex flex-wrap items-baseline gap-1.5">
                 {range.low ? <span className="text-xs text-[color:var(--muted)]">{formatPrice(range.low)}</span> : null}
                 <span className="text-lg font-semibold">{formatPrice(primaryValue)}</span>
                 {range.high ? <span className="text-xs text-[color:var(--muted)]">{formatPrice(range.high)}</span> : null}
               </div>
-            </div>
+            </button>
+          )}
 
-            <div className="rounded-[14px] bg-[color:var(--surface)] p-3 ring-1 ring-[color:var(--border)]">
-              <div className="text-[11px] tracking-[0.14em] text-[color:var(--muted2)]">LAST COMP</div>
+          {/* LAST COMP */}
+          {editing === "lastComp" ? (
+            <div className={tile}>
+              <div className={tileLabel}>LAST COMP</div>
+              <input
+                autoFocus
+                className={`${inputClass} mt-1.5 w-full`}
+                inputMode="decimal"
+                value={draft.text}
+                onChange={(e) => setDraft((d) => ({ ...d, text: e.target.value }))}
+                onBlur={() => void finish()}
+                onKeyDown={(e) => onKeys(e)}
+              />
+            </div>
+          ) : (
+            <button type="button" onClick={() => open("lastComp")} className={`${tile} ${editableClass}`} title="Click to edit last comp">
+              <div className={tileLabel}>LAST COMP</div>
               <div className="mt-1 text-lg font-semibold">{formatPrice(value.lastCompValue)}</div>
-            </div>
+            </button>
+          )}
 
-            <div className="rounded-[14px] bg-[color:var(--surface)] p-3 ring-1 ring-[color:var(--border)]">
-              <div className="text-[11px] tracking-[0.14em] text-[color:var(--muted2)]">CONFIDENCE</div>
-              <div className="mt-2">
-                <span className={["rounded-full px-2.5 py-1 text-[11px] font-medium ring-1", confidenceTone(value.priceConfidence)].join(" ")}>
-                  {confidenceLabel(value.priceConfidence)}
-                </span>
-              </div>
-            </div>
-
-            <div className="rounded-[14px] bg-[color:var(--surface)] p-3 ring-1 ring-[color:var(--border)]">
-              <div className="text-[11px] tracking-[0.14em] text-[color:var(--muted2)]">UPDATED</div>
-              <div className="mt-1 text-lg font-semibold">{formatPriceUpdatedAt(value.priceUpdatedAt)}</div>
+          {/* CONFIDENCE: pick and it saves */}
+          <div className={tile}>
+            <div className={tileLabel}>CONFIDENCE</div>
+            <div className="mt-2 flex items-center gap-2">
+              <span className={["rounded-full px-2.5 py-1 text-[11px] font-medium ring-1", confidenceTone(value.priceConfidence)].join(" ")}>
+                {confidenceLabel(value.priceConfidence)}
+              </span>
+              <select
+                aria-label="Confidence"
+                className="h-7 rounded-lg bg-[color:var(--pill)] px-1.5 text-[11px] text-[color:var(--muted)] ring-1 ring-[color:var(--border)] focus:outline-none"
+                value={value.priceConfidence ?? ""}
+                onChange={(e) => void commit({ priceConfidence: normalizePriceConfidence(e.target.value) })}
+              >
+                <option value="">Change…</option>
+                <option value="low">Low</option>
+                <option value="medium">Medium</option>
+                <option value="high">High</option>
+              </select>
             </div>
           </div>
 
-          {comparables.length > 0 ? (
-            <div>
-              <div className="mb-2 text-[11px] tracking-[0.14em] text-[color:var(--muted2)]">COMPARABLE SALES</div>
-              <div className="space-y-1.5">
-                {comparables.map((comp, index) => {
-                  const body = (
-                    <>
-                      {comp.thumbnailUrl ? (
-                        <div className="h-14 w-14 shrink-0 overflow-hidden rounded-lg bg-[color:var(--surface)] ring-1 ring-[color:var(--border)]">
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img src={comp.thumbnailUrl} alt="" className="h-full w-full object-cover" />
-                        </div>
-                      ) : null}
-                      <div className="min-w-0 flex-1">
-                        <div>
-                          <span className="text-[13px] font-semibold text-[color:var(--fg)]">{formatPrice(comp.salePrice)}</span>
-                          {comp.condition ? <span className="ml-2 text-[11px] text-[color:var(--muted)]">{comp.condition}</span> : null}
-                        </div>
-                        {comp.notes ? <div className="mt-1 truncate text-[11px] text-[color:var(--muted)]">{comp.notes}</div> : null}
-                      </div>
-                      <div className="shrink-0 text-right">
-                        <div className="text-[12px] font-semibold text-[color:var(--muted)]">{comp.source}</div>
-                        {comp.saleDate ? <div className="text-[11px] text-[color:var(--muted2)]">{comp.saleDate}</div> : null}
-                      </div>
-                    </>
-                  );
-
-                  const className = "flex items-center justify-between gap-3 rounded-xl bg-[color:var(--pill)] px-3 py-2 ring-1 ring-[color:var(--border)]";
-                  return comp.url ? (
-                    <a
-                      key={`${comp.source}-${index}`}
-                      href={comp.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className={`${className} transition hover:brightness-110`}
-                    >
-                      {body}
-                    </a>
-                  ) : (
-                    <div
-                    key={`${comp.source}-${index}`}
-                      className={className}
-                  >
-                      {body}
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          ) : null}
-
-          <div className="grid gap-2">
-            <div className="flex items-start justify-between gap-4">
-              <div className="text-sm text-[color:var(--muted)]">Price source</div>
-              <div className="text-right text-sm text-[color:var(--fg)]">{value.priceSource?.trim() || "—"}</div>
-            </div>
-
-            <div className="flex items-start justify-between gap-4">
-              <div className="text-sm text-[color:var(--muted)]">Notes</div>
-              <div className="max-w-[70%] whitespace-pre-wrap text-right text-sm text-[color:var(--fg)]">
-                {value.priceNotes?.trim() || "—"}
-              </div>
-            </div>
+          {/* UPDATED: automatic */}
+          <div className={tile}>
+            <div className={tileLabel}>UPDATED</div>
+            <div className="mt-1 text-lg font-semibold">{formatPriceUpdatedAt(value.priceUpdatedAt)}</div>
           </div>
         </div>
-      )}
+
+        {/* Comparable sales */}
+        <div>
+          <div className="mb-2 flex items-center justify-between">
+            <span className={tileLabel}>COMPARABLE SALES</span>
+            {!addingComp ? (
+              <button type="button" onClick={() => setAddingComp(true)} className="text-[11px] font-semibold text-[color:var(--theme-gold)]">
+                + Add comp
+              </button>
+            ) : null}
+          </div>
+          <div className="space-y-1.5">
+            {comparables.map((comp, index) => (
+              <div
+                key={`${comp.source}-${index}`}
+                className="flex items-center justify-between gap-3 rounded-xl bg-[color:var(--pill)] px-3 py-2 ring-1 ring-[color:var(--border)]"
+              >
+                <div className="min-w-0 flex-1">
+                  <span className="text-[13px] font-semibold text-[color:var(--fg)]">{formatPrice(comp.salePrice)}</span>
+                  {comp.condition ? <span className="ml-2 text-[11px] text-[color:var(--muted)]">{comp.condition}</span> : null}
+                  {comp.notes ? <div className="mt-0.5 truncate text-[11px] text-[color:var(--muted)]">{comp.notes}</div> : null}
+                </div>
+                <div className="shrink-0 text-right">
+                  {comp.url ? (
+                    <a href={comp.url} target="_blank" rel="noopener noreferrer" className="text-[12px] font-semibold text-[color:var(--muted)] hover:underline">
+                      {comp.source}
+                    </a>
+                  ) : (
+                    <div className="text-[12px] font-semibold text-[color:var(--muted)]">{comp.source}</div>
+                  )}
+                  {comp.saleDate ? <div className="text-[11px] text-[color:var(--muted2)]">{comp.saleDate}</div> : null}
+                </div>
+                <div className="flex shrink-0 items-center gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => void applyCompAsValue(comp)}
+                    className="rounded-md px-2 py-1 text-[11px] font-semibold text-[color:var(--theme-gold)] ring-1 ring-[color:var(--border)] hover:bg-[color:var(--surface)]"
+                    title="Use this sale as the current value"
+                  >
+                    Use as value
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => void removeComp(index)}
+                    className="rounded-md px-2 py-1 text-[11px] text-[color:var(--muted)] ring-1 ring-[color:var(--border)] hover:bg-[color:var(--surface)]"
+                    title="Remove this comparable"
+                    aria-label="Remove this comparable"
+                  >
+                    Remove
+                  </button>
+                </div>
+              </div>
+            ))}
+            {comparables.length === 0 && !addingComp ? (
+              <div className="rounded-xl bg-[color:var(--pill)] px-3 py-2 text-xs text-[color:var(--muted)] ring-1 ring-[color:var(--border)]">
+                No comparable sales yet. Add recent sales to make insurance values easier to defend.
+              </div>
+            ) : null}
+            {addingComp ? (
+              <div className="rounded-xl bg-[color:var(--pill)] p-2.5 ring-1 ring-[color:var(--border)]">
+                <div className="grid gap-2 sm:grid-cols-4">
+                  <input autoFocus className={inputClass} placeholder="Source (eBay…)" value={compDraft.source} onChange={(e) => setCompDraft((d) => ({ ...d, source: e.target.value }))} />
+                  <input className={inputClass} placeholder="Sold price" inputMode="decimal" value={compDraft.price} onChange={(e) => setCompDraft((d) => ({ ...d, price: e.target.value }))} />
+                  <input className={inputClass} placeholder="Sale date" value={compDraft.date} onChange={(e) => setCompDraft((d) => ({ ...d, date: e.target.value }))} />
+                  <input className={inputClass} placeholder="Link (optional)" value={compDraft.url} onChange={(e) => setCompDraft((d) => ({ ...d, url: e.target.value }))} />
+                </div>
+                <div className="mt-2 flex items-center gap-2">
+                  <button type="button" onClick={() => void addComp()} className="rounded-[8px] px-3 py-1 text-xs font-bold" style={{ background: "var(--theme-gold, #C8CDD2)", color: "#0A0800" }}>
+                    Add
+                  </button>
+                  <button type="button" onClick={() => setAddingComp(false)} className="rounded-[8px] px-3 py-1 text-xs font-semibold text-[color:var(--muted)] ring-1 ring-[color:var(--border)]">
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            ) : null}
+          </div>
+        </div>
+
+        {/* Rows */}
+        <div className="grid gap-2 text-sm">
+          {(
+            [
+              ["estimate", "Estimate", formatPrice(value.estimatedValue), "input"],
+              ["source", "Price source", value.priceSource?.trim() || "—", "input"],
+              ["notes", "Notes", value.priceNotes?.trim() || "—", "textarea"],
+            ] as const
+          ).map(([field, label, shown, kind]) => (
+            <div key={field} className="flex items-start justify-between gap-4">
+              <div className="shrink-0 pt-1 text-[color:var(--muted)]">{label}</div>
+              {editing === field ? (
+                kind === "textarea" ? (
+                  <textarea
+                    autoFocus
+                    rows={3}
+                    className="min-w-0 flex-1 resize-none rounded-lg bg-[color:var(--pill)] px-2.5 py-1.5 text-sm text-[color:var(--fg)] ring-1 ring-[color:var(--theme-gold,#C8CDD2)] focus:outline-none"
+                    value={draft.text}
+                    onChange={(e) => setDraft((d) => ({ ...d, text: e.target.value }))}
+                    onBlur={() => void finish()}
+                    onKeyDown={(e) => onKeys(e, false)}
+                  />
+                ) : (
+                  <input
+                    autoFocus
+                    className={`${inputClass} flex-1 text-right`}
+                    inputMode={field === "estimate" ? "decimal" : undefined}
+                    value={draft.text}
+                    onChange={(e) => setDraft((d) => ({ ...d, text: e.target.value }))}
+                    onBlur={() => void finish()}
+                    onKeyDown={(e) => onKeys(e)}
+                  />
+                )
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => open(field)}
+                  title={`Click to edit ${label.toLowerCase()}`}
+                  className={`max-w-[70%] whitespace-pre-wrap px-2 py-1 text-right text-[color:var(--fg)] ${editableClass}`}
+                >
+                  {shown}
+                </button>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
     </section>
   );
 }
