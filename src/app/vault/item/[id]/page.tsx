@@ -196,71 +196,130 @@ function Section({
 
 type InlineRow = {
   label: string;
-  /** Present = this row's value can be clicked and edited in place. */
+  /** Present = this row's value can be edited in place. */
   field?: { key: keyof VaultItem; kind: "text" | "money" };
   value: React.ReactNode;
 };
 
 /**
- * Detail rows whose values edit in place: click the value, type, press Enter
- * (or click away) to save, Esc to cancel. Same look as the read-only rows.
+ * A details section whose values edit where they are. The pencil in the
+ * header edits every value at once; clicking a single value edits just that
+ * one. Rows keep exactly the height of the read-only version.
  */
-function InlineEditGrid({
+function InlineEditSection({
+  title,
   item,
   rows,
   onSave,
+  children,
 }: {
+  title: string;
   item: VaultItem;
   rows: InlineRow[];
   onSave: (patch: Partial<VaultItem>) => Promise<void> | void;
+  children?: React.ReactNode;
 }) {
+  const [all, setAll] = useState(false);
+  const [drafts, setDrafts] = useState<Record<string, string>>({});
   const [editingKey, setEditingKey] = useState<string | null>(null);
   const [draft, setDraft] = useState("");
   const skipCommit = useRef(false);
 
-  function start(row: InlineRow) {
-    if (!row.field) return;
+  const fieldRows = rows.filter((row): row is InlineRow & { field: NonNullable<InlineRow["field"]> } => Boolean(row.field));
+
+  function rawOf(row: InlineRow & { field: NonNullable<InlineRow["field"]> }) {
     const raw = item[row.field.key];
+    return raw === undefined || raw === null ? "" : String(raw);
+  }
+
+  function parse(kind: "text" | "money", text: string): string | number | undefined {
+    const t = text.trim();
+    if (kind === "money") {
+      const num = Number(t.replace(/[^0-9.\-]/g, ""));
+      return t && Number.isFinite(num) ? num : undefined;
+    }
+    return t || undefined;
+  }
+
+  function startAll() {
+    const next: Record<string, string> = {};
+    for (const row of fieldRows) next[String(row.field.key)] = rawOf(row);
+    setDrafts(next);
+    setEditingKey(null);
+    setAll(true);
+  }
+
+  async function saveAll() {
+    const patch: Record<string, string | number | undefined> = {};
+    for (const row of fieldRows) {
+      const key = String(row.field.key);
+      if ((drafts[key] ?? "").trim() !== rawOf(row).trim()) patch[key] = parse(row.field.kind, drafts[key] ?? "");
+    }
+    setAll(false);
+    if (Object.keys(patch).length) await onSave(patch as Partial<VaultItem>);
+  }
+
+  function startOne(row: InlineRow & { field: NonNullable<InlineRow["field"]> }) {
     skipCommit.current = false;
-    setDraft(raw === undefined || raw === null ? "" : String(raw));
+    setDraft(rawOf(row));
     setEditingKey(String(row.field.key));
   }
 
-  async function commit(row: InlineRow) {
-    if (skipCommit.current || !row.field) return;
-    const key = String(row.field.key);
-    const text = draft.trim();
-    const current = item[row.field.key];
-    const currentText = current === undefined || current === null ? "" : String(current);
+  async function commitOne(row: InlineRow & { field: NonNullable<InlineRow["field"]> }) {
+    if (skipCommit.current) return;
+    skipCommit.current = true;
     setEditingKey(null);
-    if (text === currentText) return;
-    let next: string | number | undefined;
-    if (row.field.kind === "money") {
-      const num = Number(text.replace(/[^0-9.\-]/g, ""));
-      next = text && Number.isFinite(num) ? num : undefined;
-    } else {
-      next = text || undefined;
-    }
-    await onSave({ [key]: next } as Partial<VaultItem>);
+    if (draft.trim() === rawOf(row).trim()) return;
+    await onSave({ [String(row.field.key)]: parse(row.field.kind, draft) } as Partial<VaultItem>);
   }
 
+  const inputClass =
+    "-my-1 h-7 min-w-0 flex-1 rounded-lg bg-[color:var(--pill)] px-2 text-right text-sm text-[color:var(--fg)] ring-1 ring-[color:var(--theme-gold,#C8CDD2)] focus:outline-none";
+
   return (
-    <div className="grid gap-3 text-sm">
-      {rows.map((row) => {
-        const key = row.field ? String(row.field.key) : row.label;
-        const editing = row.field && editingKey === key;
-        return (
-          <div key={row.label} className="flex items-center justify-between gap-4">
-            <div className="shrink-0 text-[color:var(--muted)]">{row.label}</div>
-            {row.field ? (
-              editing ? (
+    <Section
+      title={title}
+      action={
+        !all ? (
+          <button
+            type="button"
+            onClick={startAll}
+            aria-label={`Edit ${title.toLowerCase()}`}
+            title={`Edit ${title.toLowerCase()}`}
+            className="inline-flex h-7 w-7 items-center justify-center rounded-[7px] ring-1 ring-[color:var(--border)] transition hover:bg-[color:var(--pill)]"
+            style={{ color: "var(--muted)" }}
+          >
+            <AppIcon name="edit" size={14} strokeWidth={1.8} />
+          </button>
+        ) : null
+      }
+    >
+      <div className="grid gap-3 text-sm">
+        {rows.map((row) => {
+          const field = row.field ? (row as InlineRow & { field: NonNullable<InlineRow["field"]> }) : null;
+          const key = field ? String(field.field.key) : "";
+          return (
+            <div key={row.label} className="flex items-start justify-between gap-4">
+              <div className="shrink-0 text-[color:var(--muted)]">{row.label}</div>
+              {field && all ? (
+                <input
+                  className={inputClass}
+                  inputMode={field.field.kind === "money" ? "decimal" : undefined}
+                  value={drafts[key] ?? ""}
+                  onChange={(e) => setDrafts((d) => ({ ...d, [key]: e.target.value }))}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") void saveAll();
+                    if (e.key === "Escape") setAll(false);
+                  }}
+                />
+              ) : field && editingKey === key ? (
                 <input
                   autoFocus
-                  className="h-8 min-w-0 flex-1 rounded-lg bg-[color:var(--pill)] px-2.5 text-right text-sm text-[color:var(--fg)] ring-1 ring-[color:var(--theme-gold,#C8CDD2)] focus:outline-none"
-                  inputMode={row.field.kind === "money" ? "decimal" : undefined}
+                  className={inputClass}
+                  inputMode={field.field.kind === "money" ? "decimal" : undefined}
                   value={draft}
                   onChange={(e) => setDraft(e.target.value)}
-                  onBlur={() => void commit(row)}
+                  onBlur={() => void commitOne(field)}
                   onKeyDown={(e) => {
                     if (e.key === "Enter") e.currentTarget.blur();
                     if (e.key === "Escape") {
@@ -269,22 +328,125 @@ function InlineEditGrid({
                     }
                   }}
                 />
-              ) : (
+              ) : field ? (
                 <button
                   type="button"
-                  onClick={() => start(row)}
+                  onClick={() => startOne(field)}
                   title={`Click to edit ${row.label.toLowerCase()}`}
-                  className="min-w-[3rem] rounded-lg px-2 py-1 text-right text-[color:var(--fg)] transition hover:bg-[color:var(--pill)] hover:ring-1 hover:ring-[color:var(--border)]"
+                  className="-my-0.5 -mr-1.5 rounded-md px-1.5 py-0.5 text-right text-[color:var(--fg)] transition hover:bg-[color:var(--pill)]"
                 >
                   {row.value}
                 </button>
-              )
-            ) : (
-              <div className="text-right text-[color:var(--fg)]">{row.value}</div>
-            )}
-          </div>
-        );
-      })}
+              ) : (
+                <div className="text-right text-[color:var(--fg)]">{row.value}</div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+      {all ? (
+        <div className="mt-3 flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => void saveAll()}
+            className="rounded-[8px] px-3 py-1 text-xs font-bold transition"
+            style={{ background: "var(--theme-gold, #C8CDD2)", color: "#0A0800" }}
+          >
+            Save
+          </button>
+          <button
+            type="button"
+            onClick={() => setAll(false)}
+            className="rounded-[8px] px-3 py-1 text-xs font-semibold ring-1 ring-[color:var(--border)]"
+            style={{ color: "var(--muted)" }}
+          >
+            Cancel
+          </button>
+        </div>
+      ) : null}
+      {children}
+    </Section>
+  );
+}
+
+/**
+ * The item's PUBLIC description, shown under the title. This is the text people
+ * see when the item is shared; the Notes section below stays private.
+ */
+function DescriptionField({
+  item,
+  onSave,
+  extra,
+}: {
+  item: VaultItem;
+  onSave: (text: string) => Promise<void> | void;
+  extra?: React.ReactNode;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState("");
+  const text = item.description?.trim() ?? "";
+
+  async function save() {
+    setEditing(false);
+    const next = draft.trim();
+    if (next !== text) await onSave(next);
+  }
+
+  if (editing) {
+    return (
+      <div className="mt-3 max-w-3xl">
+        <textarea
+          autoFocus
+          rows={3}
+          maxLength={600}
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Escape") setEditing(false);
+            if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) void save();
+          }}
+          placeholder="Describe this item for anyone you share it with."
+          className="w-full resize-none rounded-xl bg-[color:var(--pill)] px-3 py-2.5 text-sm leading-6 text-[color:var(--fg)] ring-1 ring-[color:var(--theme-gold,#C8CDD2)] focus:outline-none"
+        />
+        <div className="mt-2 flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => void save()}
+            className="rounded-[8px] px-4 py-1.5 text-xs font-bold transition"
+            style={{ background: "var(--theme-gold, #C8CDD2)", color: "#0A0800" }}
+          >
+            Save
+          </button>
+          <button
+            type="button"
+            onClick={() => setEditing(false)}
+            className="rounded-[8px] px-4 py-1.5 text-xs font-semibold ring-1 ring-[color:var(--border)]"
+            style={{ color: "var(--muted)" }}
+          >
+            Cancel
+          </button>
+          <span className="text-[11px] text-[color:var(--muted2)]">{draft.length}/600</span>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="mt-3 max-w-3xl">
+      <button
+        type="button"
+        onClick={() => { setDraft(item.description ?? ""); setEditing(true); }}
+        title="Click to edit the description"
+        className="block w-full rounded-lg px-2 py-1.5 text-left text-sm leading-6 transition hover:bg-[color:var(--pill)] hover:ring-1 hover:ring-[color:var(--border)]"
+        style={{ marginLeft: "-0.5rem", width: "calc(100% + 0.5rem)" }}
+      >
+        {text ? (
+          <span className="whitespace-pre-wrap text-[color:var(--fg)]">{text}</span>
+        ) : (
+          <span style={{ color: "var(--muted2)" }}>Add a description. This is what people see when you share this item.</span>
+        )}
+      </button>
+      {extra ? <div className="mt-1.5">{extra}</div> : null}
     </div>
   );
 }
@@ -1040,7 +1202,7 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
               ) : (
                 <>
                   <div className="mt-2 flex flex-wrap items-center gap-3">
-                    <h1 className="text-3xl font-semibold leading-tight sm:text-4xl">{item.title}</h1>
+                    <h1 className="text-2xl font-semibold leading-tight sm:text-3xl">{item.title}</h1>
                     <button
                       type="button"
                       onClick={() => setHeaderEditing(true)}
@@ -1053,7 +1215,19 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
                     </button>
                     {notable ? <NotableBadge reason={notableReason(item)} /> : null}
                   </div>
-                  <div className="mt-2 text-sm text-[color:var(--muted)]">
+                  <DescriptionField
+                    item={item}
+                    onSave={(text) => persist({ ...item, description: text })}
+                    extra={
+                      <GenerateCopyPanel
+                        item={item}
+                        mode="description"
+                        onAccept={(text) => void persist({ ...item, description: text })}
+                        triggerLabel={item.description?.trim() ? "Regenerate description" : "Generate description"}
+                      />
+                    }
+                  />
+                  <div className="mt-3 text-sm text-[color:var(--muted)]">
                     {UNIVERSE_LABEL[universe]} • {categoryLabel(item)}
                     {item.subcategoryLabel ? ` • ${item.subcategoryLabel}` : ""}
                     {" • "}Added {fmtDate(addedAt)}
@@ -1454,17 +1628,17 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
         </div>
 
         <div className="mt-5 grid gap-4 lg:grid-cols-2 xl:grid-cols-3">
-          <Section title="DETAILS">
-            <InlineEditGrid
-              item={item}
-              onSave={(patch) => persist({ ...item, ...patch })}
-              rows={[
+          <InlineEditSection
+            title="DETAILS"
+            item={item}
+            onSave={(patch) => persist({ ...item, ...patch })}
+            rows={[
                 { label: "Subtitle", field: { key: "subtitle", kind: "text" }, value: detailValue(item.subtitle) },
                 { label: "Number / Model", field: { key: "number", kind: "text" }, value: detailValue(item.number) },
                 { label: "Grade", field: { key: "grade", kind: "text" }, value: detailValue(item.grade) },
                 { label: "Serial #", field: { key: "serialNumber", kind: "text" }, value: detailValue(item.serialNumber) },
-              ]}
-            />
+            ]}
+          >
             {(item.edition || item.variant || item.printRun || item.isFirstEdition) && (
               <div className="mt-4 rounded-2xl bg-[color:var(--pill)] p-4 ring-1 ring-[color:var(--border)]">
                 <div className="text-[11px] uppercase tracking-[0.24em] text-[color:var(--muted2)]">
@@ -1541,13 +1715,13 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
                 )}
               </div>
             ) : null}
-          </Section>
+          </InlineEditSection>
 
-          <Section title="PURCHASE">
-            <InlineEditGrid
-              item={item}
-              onSave={(patch) => persist({ ...item, ...patch })}
-              rows={[
+          <InlineEditSection
+            title="PURCHASE"
+            item={item}
+            onSave={(patch) => persist({ ...item, ...patch })}
+            rows={[
                 { label: "Purchase price", field: { key: "purchasePrice", kind: "money" }, value: fmtMoney(clamp(item.purchasePrice)) },
                 { label: "Tax", field: { key: "purchaseTax", kind: "money" }, value: fmtMoney(clamp(item.purchaseTax)) },
                 { label: "Shipping", field: { key: "purchaseShipping", kind: "money" }, value: fmtMoney(clamp(item.purchaseShipping)) },
@@ -1555,27 +1729,25 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
                 { label: "Source", field: { key: "purchaseSource", kind: "text" }, value: detailValue(item.purchaseSource) },
                 { label: "Location", field: { key: "purchaseLocation", kind: "text" }, value: detailValue(item.purchaseLocation) },
                 { label: "Order #", field: { key: "orderNumber", kind: "text" }, value: detailValue(item.orderNumber) },
-              ]}
-            />
-          </Section>
+            ]}
+          />
 
-          <Section title="STORAGE + TRACKING">
-            <InlineEditGrid
-              item={item}
-              onSave={(patch) => persist({ ...item, ...patch })}
-              rows={[
+          <InlineEditSection
+            title="STORAGE + TRACKING"
+            item={item}
+            onSave={(patch) => persist({ ...item, ...patch })}
+            rows={[
                 { label: "Storage location", field: { key: "storageLocation", kind: "text" }, value: detailValue(item.storageLocation) },
                 { label: "Value source", value: detailValue(item.valueSource) },
                 { label: "Value updated", value: detailValue(item.valueUpdatedAt ? fmtDate(item.valueUpdatedAt) : "—") },
                 { label: "Confidence", value: typeof item.valueConfidence === "number" ? `${item.valueConfidence}%` : "\u2014" },
-              ]}
-            />
-          </Section>
+            ]}
+          />
         </div>
 
         <div className="mt-5">
           <Section
-            title="NOTES"
+            title="INTERNAL NOTES (ONLY YOU SEE THESE)"
             action={
               !isEditingNotes ? (
                 <button
@@ -1624,16 +1796,10 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
               <>
                 <div className="whitespace-pre-wrap text-sm leading-6 mb-3">
                   {item.notes?.trim() ? item.notes : (
-                    <span style={{ color: "var(--muted2)" }}>No notes yet.</span>
+                    <span style={{ color: "var(--muted2)" }}>No private notes yet.</span>
                   )}
                 </div>
                 <div className="flex items-center gap-2">
-                  <GenerateCopyPanel
-                    item={item}
-                    mode="description"
-                    onAccept={(text) => void persist({ ...item, notes: text })}
-                    triggerLabel={item.notes?.trim() ? "\u2728 Regenerate description" : "\u2728 Generate description"}
-                  />
                   {item.notes?.trim() ? (
                     <button
                       type="button"

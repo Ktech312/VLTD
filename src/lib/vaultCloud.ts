@@ -122,6 +122,7 @@ function rowToItem(input: unknown): VaultItem {
       row.image_front_url ??
       undefined,
     notes: row.notes ?? undefined,
+    description: typeof row.description === "string" ? row.description : undefined,
     storageLocation: row.storage_location ?? undefined,
     certNumber: row.cert_number ?? undefined,
     serialNumber: row.serial_number ?? undefined,
@@ -501,6 +502,9 @@ export async function upsertVaultItemToSupabase(item: VaultItem) {
     image_front_storage_path: safeImageFrontStoragePath,
     primary_image_key: primary?.storageKey || safeImageFrontStoragePath || null,
     notes: item.notes ?? null,
+    // Only sent once a description has been set, so saves keep working on a
+    // database that has not had the description column added yet.
+    ...(item.description !== undefined ? { description: item.description } : {}),
     storage_location: item.storageLocation ?? null,
     cert_number: item.certNumber ?? null,
     serial_number: item.serialNumber ?? null,

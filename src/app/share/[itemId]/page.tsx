@@ -54,12 +54,23 @@ async function fetchItem(itemId: string): Promise<Row | null> {
   const supabase = getServerSupabase();
   if (!supabase) return null;
 
-  const { data, error } = await supabase
+  const columns =
+    "id, title, grade, universe, image_front_url, image_front_storage_path, primary_image_key, images_json, is_public, category_label";
+  // Never expose price/value or the private notes: only identity fields and
+  // the owner's public description. If the description column has not been
+  // added to the database yet, fall back to the same query without it.
+  const withDescription = await supabase
     .from(VAULT_ITEMS_TABLE)
-    // Never expose price/value — only identity fields safe to share publicly
-    .select("id, title, grade, universe, image_front_url, image_front_storage_path, primary_image_key, images_json, notes, is_public, category_label")
+    .select(columns + ", description")
     .eq("id", itemId)
     .single();
+  let data = withDescription.data as Row | null;
+  let error: unknown = withDescription.error;
+  if (error) {
+    const without = await supabase.from(VAULT_ITEMS_TABLE).select(columns).eq("id", itemId).single();
+    data = without.data as Row | null;
+    error = without.error;
+  }
 
   if (error || !data) return null;
   // EK's ask 2026-08-25: this link used to work for ANY item regardless of
@@ -93,8 +104,8 @@ export async function generateMetadata(
   const gradeRaw = row.grade ? String(row.grade) : "";
   const grade = gradeRaw ? ` · ${gradeRaw}` : "";
   const imageUrl = buildImageUrl(row);
-  const description = row.notes
-    ? String(row.notes).slice(0, 150)
+  const description = row.description
+    ? String(row.description).slice(0, 150)
     : `A collectible from my vault on VLTD.`;
 
   const ogImageUrl = buildOgUrl(title, gradeRaw, description, imageUrl);
@@ -138,8 +149,8 @@ export default async function ShareItemPage(
   const universe = row.universe
     ? String(row.universe).replace(/_/g, " ")
     : null;
-  const description = row.notes
-    ? String(row.notes).slice(0, 150)
+  const description = row.description
+    ? String(row.description).slice(0, 150)
     : `A collectible from my vault on VLTD.`;
   const ogImageUrl = buildOgUrl(title, gradeRaw, description, imageUrl);
   const downloadName = `vltd-${title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")}.jpg`;

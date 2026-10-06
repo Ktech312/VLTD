@@ -116,7 +116,8 @@ function publicRowToItem(input: unknown): VaultItem {
     imageFrontStoragePath: imageFrontStoragePath || undefined,
     images,
     primaryImageKey,
-    notes: optionalString(row.notes),
+    // Public surfaces show the owner's public description, never the private notes.
+    notes: optionalString(row.description),
     storageLocation: optionalString(row.storage_location),
     certNumber: optionalString(row.cert_number),
     serialNumber: optionalString(row.serial_number),

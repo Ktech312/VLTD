@@ -2,6 +2,8 @@
 
 import { useMemo, useRef, useState } from "react";
 
+import { AppIcon } from "@/components/ui/AppIcon";
+
 import {
   buildPricingPatch,
   confidenceLabel,
@@ -54,7 +56,8 @@ export default function PricingMvpCard({
   onSave?: (patch: PricingMvpFields) => void | Promise<void>;
 }) {
   const [editing, setEditing] = useState<FieldKey | null>(null);
-  const [draft, setDraft] = useState({ low: "", median: "", high: "", text: "" });
+  const [all, setAll] = useState(false);
+  const [draft, setDraft] = useState({ low: "", median: "", high: "", text: "", last: "", estimate: "", source: "", notes: "" });
   const [addingComp, setAddingComp] = useState(false);
   const [compDraft, setCompDraft] = useState({ source: "", price: "", date: "", url: "" });
   const skipCommit = useRef(false);
@@ -92,6 +95,10 @@ export default function PricingMvpCard({
       low: numText(value.valueLow),
       median: numText(value.valueMedian),
       high: numText(value.valueHigh),
+      last: numText(value.lastCompValue),
+      estimate: numText(value.estimatedValue),
+      source: value.priceSource ?? "",
+      notes: value.priceNotes ?? "",
       text:
         field === "lastComp"
           ? numText(value.lastCompValue)
@@ -148,6 +155,37 @@ export default function PricingMvpCard({
     if (e.key === "Escape") cancel();
   }
 
+  function startAll() {
+    open("range"); // fills every draft field
+    setEditing(null);
+    setAll(true);
+  }
+
+  async function saveAll() {
+    setAll(false);
+    await commit({
+      valueLow: parsePriceInput(draft.low),
+      valueMedian: parsePriceInput(draft.median),
+      valueHigh: parsePriceInput(draft.high),
+      lastCompValue: parsePriceInput(draft.last),
+      estimatedValue: parsePriceInput(draft.estimate),
+      priceSource: draft.source.trim(),
+      priceNotes: draft.notes.trim(),
+    });
+  }
+
+  function onAllKeys(e: React.KeyboardEvent) {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      void saveAll();
+    }
+    if (e.key === "Escape") setAll(false);
+  }
+
+  // In "edit everything" mode each field has its own draft; in click-to-edit
+  // mode the one open field uses draft.text.
+  const slot = (field: "last" | "estimate" | "source" | "notes") => (all ? field : "text");
+
   async function addComp() {
     const salePrice = parsePriceInput(compDraft.price);
     const source = compDraft.source.trim();
@@ -183,7 +221,8 @@ export default function PricingMvpCard({
 
   return (
     <section className="rounded-[16px] bg-[color:var(--surface)] p-3 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
-      <div>
+      <div className="flex items-start justify-between gap-3">
+       <div>
         <div className="text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">{title}</div>
         {!compact ? (
           <div className="mt-1 text-sm text-[color:var(--muted)]">
@@ -209,16 +248,29 @@ export default function PricingMvpCard({
             ) : null}
           </div>
         ) : null}
+       </div>
+       {!all ? (
+         <button
+           type="button"
+           onClick={startAll}
+           aria-label="Edit pricing"
+           title="Edit pricing"
+           className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-[7px] ring-1 ring-[color:var(--border)] transition hover:bg-[color:var(--pill)]"
+           style={{ color: "var(--muted)" }}
+         >
+           <AppIcon name="edit" size={14} strokeWidth={1.8} />
+         </button>
+       ) : null}
       </div>
 
       <div className="mt-3 grid gap-3">
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
           {/* VALUE RANGE: low / median (the headline number) / high */}
-          {editing === "range" ? (
+          {editing === "range" || all ? (
             <div
               className={tile}
               onBlur={(e) => {
-                if (!e.currentTarget.contains(e.relatedTarget as Node | null)) void finish();
+                if (!all && !e.currentTarget.contains(e.relatedTarget as Node | null)) void finish();
               }}
             >
               <div className={tileLabel}>VALUE RANGE</div>
@@ -233,12 +285,12 @@ export default function PricingMvpCard({
                   <label key={k} className="grid gap-0.5">
                     <span className="text-[10px] text-[color:var(--muted2)]">{label}</span>
                     <input
-                      autoFocus={i === 1}
+                      autoFocus={i === 1 && !all}
                       className={inputClass}
                       inputMode="decimal"
                       value={draft[k]}
                       onChange={(e) => setDraft((d) => ({ ...d, [k]: e.target.value }))}
-                      onKeyDown={(e) => onKeys(e)}
+                      onKeyDown={(e) => (all ? onAllKeys(e) : onKeys(e))}
                     />
                   </label>
                 ))}
@@ -256,17 +308,17 @@ export default function PricingMvpCard({
           )}
 
           {/* LAST COMP */}
-          {editing === "lastComp" ? (
+          {editing === "lastComp" || all ? (
             <div className={tile}>
               <div className={tileLabel}>LAST COMP</div>
               <input
-                autoFocus
+                autoFocus={!all}
                 className={`${inputClass} mt-1.5 w-full`}
                 inputMode="decimal"
-                value={draft.text}
-                onChange={(e) => setDraft((d) => ({ ...d, text: e.target.value }))}
-                onBlur={() => void finish()}
-                onKeyDown={(e) => onKeys(e)}
+                value={draft[slot("last")]}
+                onChange={(e) => setDraft((d) => ({ ...d, [slot("last")]: e.target.value }))}
+                onBlur={() => { if (!all) void finish(); }}
+                onKeyDown={(e) => (all ? onAllKeys(e) : onKeys(e))}
               />
             </div>
           ) : (
@@ -306,8 +358,11 @@ export default function PricingMvpCard({
 
         {/* Comparable sales */}
         <div>
-          <div className="mb-2 flex items-center justify-between">
-            <span className={tileLabel}>COMPARABLE SALES</span>
+          <div className="mb-1.5 flex items-center justify-between">
+            <span className={tileLabel}>
+              COMPARABLE SALES
+              {comparables.length === 0 && !addingComp ? <span className="ml-2 normal-case tracking-normal text-[color:var(--muted2)]">none yet</span> : null}
+            </span>
             {!addingComp ? (
               <button type="button" onClick={() => setAddingComp(true)} className="text-[11px] font-semibold text-[color:var(--theme-gold)]">
                 + Add comp
@@ -356,11 +411,6 @@ export default function PricingMvpCard({
                 </div>
               </div>
             ))}
-            {comparables.length === 0 && !addingComp ? (
-              <div className="rounded-xl bg-[color:var(--pill)] px-3 py-2 text-xs text-[color:var(--muted)] ring-1 ring-[color:var(--border)]">
-                No comparable sales yet. Add recent sales to make insurance values easier to defend.
-              </div>
-            ) : null}
             {addingComp ? (
               <div className="rounded-xl bg-[color:var(--pill)] p-2.5 ring-1 ring-[color:var(--border)]">
                 <div className="grid gap-2 sm:grid-cols-4">
@@ -392,27 +442,27 @@ export default function PricingMvpCard({
             ] as const
           ).map(([field, label, shown, kind]) => (
             <div key={field} className="flex items-start justify-between gap-4">
-              <div className="shrink-0 pt-1 text-[color:var(--muted)]">{label}</div>
-              {editing === field ? (
+              <div className="shrink-0 text-[color:var(--muted)]">{label}</div>
+              {editing === field || all ? (
                 kind === "textarea" ? (
                   <textarea
-                    autoFocus
-                    rows={3}
-                    className="min-w-0 flex-1 resize-none rounded-lg bg-[color:var(--pill)] px-2.5 py-1.5 text-sm text-[color:var(--fg)] ring-1 ring-[color:var(--theme-gold,#C8CDD2)] focus:outline-none"
-                    value={draft.text}
-                    onChange={(e) => setDraft((d) => ({ ...d, text: e.target.value }))}
-                    onBlur={() => void finish()}
-                    onKeyDown={(e) => onKeys(e, false)}
+                    autoFocus={!all}
+                    rows={2}
+                    className="-my-1 min-w-0 flex-1 resize-none rounded-lg bg-[color:var(--pill)] px-2 py-1 text-sm text-[color:var(--fg)] ring-1 ring-[color:var(--theme-gold,#C8CDD2)] focus:outline-none"
+                    value={draft[slot(field)]}
+                    onChange={(e) => setDraft((d) => ({ ...d, [slot(field)]: e.target.value }))}
+                    onBlur={() => { if (!all) void finish(); }}
+                    onKeyDown={(e) => { if (e.key === "Escape") { if (all) setAll(false); else cancel(); } }}
                   />
                 ) : (
                   <input
-                    autoFocus
-                    className={`${inputClass} flex-1 text-right`}
+                    autoFocus={!all}
+                    className={`${inputClass} -my-1 flex-1 text-right`}
                     inputMode={field === "estimate" ? "decimal" : undefined}
-                    value={draft.text}
-                    onChange={(e) => setDraft((d) => ({ ...d, text: e.target.value }))}
-                    onBlur={() => void finish()}
-                    onKeyDown={(e) => onKeys(e)}
+                    value={draft[slot(field)]}
+                    onChange={(e) => setDraft((d) => ({ ...d, [slot(field)]: e.target.value }))}
+                    onBlur={() => { if (!all) void finish(); }}
+                    onKeyDown={(e) => (all ? onAllKeys(e) : onKeys(e))}
                   />
                 )
               ) : (
@@ -420,7 +470,7 @@ export default function PricingMvpCard({
                   type="button"
                   onClick={() => open(field)}
                   title={`Click to edit ${label.toLowerCase()}`}
-                  className={`max-w-[70%] whitespace-pre-wrap px-2 py-1 text-right text-[color:var(--fg)] ${editableClass}`}
+                  className="-my-0.5 -mr-1.5 max-w-[70%] whitespace-pre-wrap rounded-md px-1.5 py-0.5 text-right text-[color:var(--fg)] transition hover:bg-[color:var(--pill)]"
                 >
                   {shown}
                 </button>
@@ -428,6 +478,17 @@ export default function PricingMvpCard({
             </div>
           ))}
         </div>
+
+        {all ? (
+          <div className="flex items-center gap-2">
+            <button type="button" onClick={() => void saveAll()} className="rounded-[8px] px-3 py-1 text-xs font-bold" style={{ background: "var(--theme-gold, #C8CDD2)", color: "#0A0800" }}>
+              Save
+            </button>
+            <button type="button" onClick={() => setAll(false)} className="rounded-[8px] px-3 py-1 text-xs font-semibold text-[color:var(--muted)] ring-1 ring-[color:var(--border)]">
+              Cancel
+            </button>
+          </div>
+        ) : null}
       </div>
     </section>
   );

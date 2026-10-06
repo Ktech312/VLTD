@@ -77,6 +77,8 @@ export type VaultItem = {
   images?: VaultImage[];
   primaryImageKey?: string;
   notes?: string;
+  /** Public description shown when the item is shared. Separate from `notes`, which stays private. */
+  description?: string;
   storageLocation?: string;
   certNumber?: string;
   serialNumber?: string;
