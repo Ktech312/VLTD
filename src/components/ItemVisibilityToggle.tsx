@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { AppIcon } from "@/components/ui/AppIcon";
-import { applyVisibilityToExhibits, exhibitNamesForItem, makeBlurThumb } from "@/lib/hiddenItems";
+import { applyVisibilityToExhibits, exhibitNamesForItem, isHiddenInExhibits, makeBlurThumb } from "@/lib/hiddenItems";
 
 import { emitVaultUpdate } from "@/lib/vaultEvents";
 import { saveItem, type VaultItem } from "@/lib/vaultModel";
@@ -41,32 +41,53 @@ export default function ItemVisibilityToggle({
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const [confirmNames, setConfirmNames] = useState<string[] | null>(null);
+  // An item that sits in an exhibit is shown there by default. The eye then controls that
+  // exhibit's viewers only (green = shown in it, red = "Hidden Item"); it never makes the
+  // item public to the whole world. Items in no exhibit keep the plain public/private eye.
+  const [exhibitNames, setExhibitNames] = useState<string[]>([]);
+  const [exhibitHidden, setExhibitHidden] = useState(false);
 
   useEffect(() => {
     setIsPublic(Boolean(item.isPublic));
   }, [item.id, item.isPublic]);
 
+  useEffect(() => {
+    setExhibitNames(exhibitNamesForItem(item.id));
+    setExhibitHidden(isHiddenInExhibits(item.id));
+  }, [item.id]);
+
+  const inExhibit = exhibitNames.length > 0;
+  const showing = inExhibit ? !exhibitHidden : isPublic;
+
   async function handleToggle(confirmed = false) {
     if (loading) return;
 
-    const previousPublic = isPublic;
-
-    // Hiding an item that sits in an exhibit also hides it from that exhibit's visitors: say so first.
-    if (previousPublic && !confirmed) {
-      const names = exhibitNamesForItem(item.id);
-      if (names.length > 0) {
-        setConfirmNames(names);
+    if (inExhibit) {
+      const hiding = !exhibitHidden;
+      if (hiding && !confirmed) {
+        setConfirmNames(exhibitNames);
         return;
       }
+      setLoading(true);
+      setMessage("");
+      try {
+        const thumb = hiding ? await makeBlurThumb(item) : undefined;
+        await applyVisibilityToExhibits(item, thumb, hiding ? "hide" : "show");
+        setExhibitHidden(hiding);
+        emitVaultUpdate();
+      } catch (error) {
+        setMessage(error instanceof Error ? error.message : "Could not update the exhibit.");
+      } finally {
+        setLoading(false);
+      }
+      return;
     }
 
+    const previousPublic = isPublic;
     let nextItem: VaultItem = { ...item, isPublic: !previousPublic };
 
     setLoading(true);
     setMessage("");
-
-    // Made before any photo moves to private storage, while the picture can still be read.
-    const blurThumb = previousPublic ? await makeBlurThumb(item) : undefined;
 
     try {
       // Private Photos (paid feature, see privatePhotos.ts) — only paid
@@ -99,8 +120,6 @@ export default function ItemVisibilityToggle({
       if (hasSupabaseEnv()) {
         await upsertVaultItemToSupabase(nextItem);
       }
-      // Exhibits that hold this item now show it as "Hidden Item" (or show it again).
-      await applyVisibilityToExhibits(nextItem, blurThumb);
     } catch (error) {
       const reverted = { ...item, isPublic: previousPublic };
       setIsPublic(previousPublic);
@@ -113,9 +132,15 @@ export default function ItemVisibilityToggle({
     }
   }
 
-  const label = isPublic ? "Public" : "Private";
-  const buttonLabel = isPublic ? "Make item private" : "Make item public";
-  const iconName = isPublic ? "eye" : "eyeOff";
+  const label = inExhibit ? (showing ? "Shown in exhibit" : "Hidden in exhibit") : isPublic ? "Public" : "Private";
+  const buttonLabel = inExhibit
+    ? showing
+      ? "Hide this item in your exhibits"
+      : "Show this item in your exhibits again"
+    : isPublic
+      ? "Make item private"
+      : "Make item public";
+  const iconName = showing ? "eye" : "eyeOff";
 
   return (
     <div className={["pointer-events-auto inline-flex flex-col items-end gap-1", className].filter(Boolean).join(" ")}>
@@ -138,7 +163,7 @@ export default function ItemVisibilityToggle({
         onTouchStart={(event) => {
           event.stopPropagation();
         }}
-        aria-pressed={isPublic}
+        aria-pressed={showing}
         aria-label={buttonLabel}
         title={buttonLabel}
         className={[
@@ -146,14 +171,14 @@ export default function ItemVisibilityToggle({
           align === "corner" ? "items-end justify-start p-1" : "items-center justify-center gap-1.5",
           size === "md" ? "h-9 px-3 text-xs font-semibold" : align === "corner" ? "h-6 min-w-6 text-[10px] font-semibold" : "h-7 min-w-7 px-2 text-[10px] font-semibold",
         ].join(" ")}
-        style={{ "--vltd-keep-color": isPublic ? NEON_GREEN : NEON_RED } as React.CSSProperties}
+        style={{ "--vltd-keep-color": showing ? NEON_GREEN : NEON_RED } as React.CSSProperties}
       >
         <AppIcon
           name={iconName}
           size={size === "md" ? 15 : 13}
           strokeWidth={2.2}
           className="vltd-keep-color"
-          style={{ filter: `drop-shadow(0 0 3px ${isPublic ? NEON_GREEN : NEON_RED}) drop-shadow(0 1px 2px rgba(0,0,0,0.6))` }}
+          style={{ filter: `drop-shadow(0 0 3px ${showing ? NEON_GREEN : NEON_RED}) drop-shadow(0 1px 2px rgba(0,0,0,0.6))` }}
         />
         {showLabel ? <span>{label}</span> : null}
       </button>

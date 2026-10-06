@@ -1,5 +1,6 @@
 "use client";
 
+import type { GalleryInvitePermissions } from "@/lib/galleryModel";
 import Link from "next/link";
 import { Fragment, useEffect, useState } from "react";
 import type { DragEvent } from "react";
@@ -205,6 +206,7 @@ export function GuestItemModal({
   viewerProfileId,
   vibeCount = 0,
   viewerVibed = false,
+  showFinancials = false,
 }: {
   item: VaultItem;
   onClose: () => void;
@@ -212,9 +214,15 @@ export function GuestItemModal({
   viewerProfileId?: string;
   vibeCount?: number;
   viewerVibed?: boolean;
+  /** Invite links can allow paid and value to be shown; public pages never do. */
+  showFinancials?: boolean;
 }) {
   const imageUrl = getPrimaryImageUrl(item);
   const subtitle = itemSubtitle(item);
+  const money = (value?: number) =>
+    typeof value === "number" && Number.isFinite(value)
+      ? new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(value)
+      : null;
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) { if (e.key === "Escape") onClose(); }
@@ -283,6 +291,23 @@ export function GuestItemModal({
             ) : null}
           </div>
 
+          {showFinancials && (money(item.purchasePrice) || money(item.currentValue)) ? (
+            <div className="mt-2 grid grid-cols-2 gap-2 text-xs">
+              {money(item.purchasePrice) ? (
+                <div className="rounded-[10px] bg-white/5 px-3 py-2 ring-1 ring-white/8">
+                  <div className="text-[10px] uppercase tracking-[0.14em] text-white/40">Paid</div>
+                  <div className="mt-0.5 font-medium text-white/80">{money(item.purchasePrice)}</div>
+                </div>
+              ) : null}
+              {money(item.currentValue) ? (
+                <div className="rounded-[10px] bg-white/5 px-3 py-2 ring-1 ring-white/8">
+                  <div className="text-[10px] uppercase tracking-[0.14em] text-white/40">Value</div>
+                  <div className="mt-0.5 font-medium text-white/80">{money(item.currentValue)}</div>
+                </div>
+              ) : null}
+            </div>
+          ) : null}
+
           {item.notes ? (
             <div className="mt-3 rounded-[12px] bg-white/4 px-3 py-2.5 text-[12px] leading-relaxed text-white/60 ring-1 ring-white/8">
               {item.notes}
@@ -300,7 +325,7 @@ export function GuestItemModal({
           </div>
 
           <div className="mt-4 text-center text-[10px] uppercase tracking-[0.14em] text-white/25">
-            GUEST VIEW · Financial details not shown
+            {showFinancials ? "INVITE ACCESS" : "GUEST VIEW · Financial details not shown"}
           </div>
         </div>
       </div>
@@ -332,16 +357,31 @@ export default function GuestGalleryRenderer({
   onRemoveItem,
   onReorder,
   focusCommentId,
+  invitePermissions,
 }: {
   model: GuestGalleryViewModel;
   embedded?: boolean;
   onRemoveItem?: (itemId: string) => void;
   onReorder?: (orderedIds: string[]) => void;
   focusCommentId?: string;
+  /** Set on invite links: the same exhibit page, with what a visitor may open decided by the invite. */
+  invitePermissions?: GalleryInvitePermissions;
 }) {
   const [dragId, setDragId] = useState<string | null>(null);
   const [dragOverId, setDragOverId] = useState<string | null>(null);
   const [selectedItem, setSelectedItem] = useState<VaultItem | null>(null);
+  const [lightboxItem, setLightboxItem] = useState<VaultItem | null>(null);
+  // Public pages open the detail popup on any click. Invite pages follow the invite: details
+  // popup if "item details" is allowed, otherwise just a bigger photo if "images" is allowed.
+  function openItem(item: VaultItem) {
+    if (item.hiddenItem) return;
+    if (!invitePermissions) {
+      setSelectedItem(item);
+      return;
+    }
+    if (invitePermissions.descriptionPage) setSelectedItem(item);
+    else if (invitePermissions.images && getPrimaryImageUrl(item)) setLightboxItem(item);
+  }
   const [owner, setOwner] = useState<OwnerProfile | null>(null);
   const [selectedSectionIdx, setSelectedSectionIdx] = useState(0);
   const [bioOpen, setBioOpen] = useState(false);
@@ -663,7 +703,7 @@ export default function GuestGalleryRenderer({
           {featuredItem ? (
             <button
               type="button"
-              onClick={() => setSelectedItem(featuredItem)}
+              onClick={() => openItem(featuredItem)}
               className={["mx-auto mt-3 flex w-full flex-col items-center gap-3 rounded-[24px] border border-white/12 bg-black/25 p-4 text-center sm:flex-row sm:text-left", GALLERY_STAGE_WIDTH_CLASS].join(" ")}
             >
               <div className="h-56 w-full overflow-hidden rounded-[16px] bg-black/30 p-2 sm:h-64 sm:w-[260px] sm:shrink-0">
@@ -695,7 +735,7 @@ export default function GuestGalleryRenderer({
                 shelfOverlayStyle={model.shelfOverlayStyle}
                 slotLayout={shelfSlotLayout}
                 embeddedPreview={embedded}
-                onItemClick={embedded ? undefined : (item) => setSelectedItem(item)}
+                onItemClick={embedded ? undefined : (item) => openItem(item)}
               />
             </div>
           ) : (
@@ -742,7 +782,7 @@ export default function GuestGalleryRenderer({
                       <button
                         type="button"
                         className="block w-full text-left"
-                        onClick={() => setSelectedItem(item)}
+                        onClick={() => openItem(item)}
                       >
                         <ViewerItemCard
                           item={item}
@@ -774,8 +814,32 @@ export default function GuestGalleryRenderer({
         </div>
       </div>
 
+      {lightboxItem && !embedded ? (
+        <div
+          className="fixed inset-0 z-[200] flex items-center justify-center bg-black/90 backdrop-blur-sm"
+          onClick={() => setLightboxItem(null)}
+        >
+          <button
+            type="button"
+            onClick={() => setLightboxItem(null)}
+            aria-label="Close"
+            className="absolute right-4 top-4 grid h-9 w-9 place-items-center rounded-full bg-white/10 text-white ring-1 ring-white/20 hover:bg-white/20"
+          >
+            ✕
+          </button>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={getPrimaryImageUrl(lightboxItem)}
+            alt={lightboxItem.title}
+            className="max-h-[88vh] max-w-[88vw] rounded-[14px] object-contain shadow-[0_24px_80px_rgba(0,0,0,0.6)]"
+            onClick={(event) => event.stopPropagation()}
+          />
+        </div>
+      ) : null}
+
       {selectedItem && !embedded && !selectedItem.hiddenItem ? (
         <GuestItemModal
+          showFinancials={Boolean(invitePermissions?.financialHistory)}
           item={selectedItem}
           onClose={() => setSelectedItem(null)}
           ownerProfileId={model.gallery?.profile_id}

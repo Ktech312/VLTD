@@ -140,15 +140,28 @@ export function exhibitNamesForItem(itemId: string): string[] {
   return Array.from(new Set(names));
 }
 
-/** After an item is hidden or made public again, update every exhibit that holds it. */
-export async function applyVisibilityToExhibits(item: VaultItem, blurThumb?: string) {
+/** True when the item is hidden in any exhibit that holds it. */
+export function isHiddenInExhibits(itemId: string): boolean {
+  return loadGalleries({ includeAllProfiles: true }).some(
+    (gallery) =>
+      gallery.itemIds.includes(itemId) &&
+      (gallery.publicItemSnapshots ?? []).some((snapshot) => snapshot.id === itemId && snapshot.hidden === true)
+  );
+}
+
+/** After an item is hidden or shown again, update every exhibit that holds it. */
+export async function applyVisibilityToExhibits(
+  item: VaultItem,
+  blurThumb?: string,
+  action: "hide" | "show" = item.isPublic === true ? "show" : "hide"
+) {
   const all = loadGalleries({ includeAllProfiles: true });
   const changed: Gallery[] = [];
   const next = all.map((gallery) => {
     if (!gallery.itemIds.includes(item.id)) return gallery;
     const snapshots = Array.isArray(gallery.publicItemSnapshots) ? gallery.publicItemSnapshots : [];
     const entry =
-      item.isPublic === true ? buildPublicSnapshot(item) : hiddenSnapshot(item.id, item.createdAt, blurThumb);
+      action === "show" ? buildPublicSnapshot(item) : hiddenSnapshot(item.id, item.createdAt, blurThumb);
     const found = snapshots.some((snapshot) => snapshot.id === item.id);
     const updated: Gallery = {
       ...gallery,
