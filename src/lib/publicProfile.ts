@@ -1,6 +1,7 @@
 "use client";
 
 import { getStoredActiveProfileId } from "@/lib/auth";
+import { isSupplyItem } from "@/lib/vaultStats";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 import { getSeedAvatarUrlForProfile, isRenderableAvatarUrl } from "@/lib/seedAvatar";
 
@@ -242,7 +243,9 @@ export async function fetchPublicVaultItems(profileId: string): Promise<VaultIte
     .order("created_at", { ascending: false });
 
   if (error) throw new Error(error.message || "Failed to load public vault.");
-  return (data ?? []).map(r => publicRowToItem(r) as MarketItem);
+  return (data ?? [])
+    .filter((r) => !isSupplyItem({ universe: r.universe, categoryLabel: r.category_label }))
+    .map(r => publicRowToItem(r) as MarketItem);
 }
 
 // Museum Runtime V2 item-interaction pass (2026-09-24): resolves a real
@@ -270,6 +273,8 @@ export async function fetchPublicVaultItemById(itemId: string): Promise<VaultIte
     .maybeSingle();
 
   if (error || !data) return null;
+  // Supplies (boxes, cases) are never shown publicly.
+  if (isSupplyItem({ universe: data.universe, categoryLabel: data.category_label })) return null;
   return publicRowToItem(data) as MarketItem;
 }
 
@@ -382,5 +387,7 @@ export async function fetchMarketItems(opts?: {
   const { data, error } = await query;
   if (error) throw new Error(error.message || "Failed to load market.");
 
-  return (data ?? []).map(r => publicRowToItem(r) as MarketItem);
+  return (data ?? [])
+    .filter((r) => !isSupplyItem({ universe: r.universe, categoryLabel: r.category_label }))
+    .map(r => publicRowToItem(r) as MarketItem);
 }

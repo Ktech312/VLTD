@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { use, useEffect, useMemo, useState } from "react";
+import { use, useEffect, useMemo, useRef, useState } from "react";
 
 import { AppIcon } from "@/components/ui/AppIcon";
 import CostToSellPanel from "@/components/CostToSellPanel";
@@ -194,120 +194,98 @@ function Section({
   );
 }
 
-type EditableField = {
-  key: keyof VaultItem;
+type InlineRow = {
   label: string;
-  kind: "text" | "money";
-  placeholder?: string;
+  /** Present = this row's value can be clicked and edited in place. */
+  field?: { key: keyof VaultItem; kind: "text" | "money" };
+  value: React.ReactNode;
 };
 
 /**
- * A section whose read-only details can be edited right where they are: a
- * pencil in the section header (same as Notes) swaps the details for inputs
- * with Save / Cancel. `display` is what shows when not editing.
+ * Detail rows whose values edit in place: click the value, type, press Enter
+ * (or click away) to save, Esc to cancel. Same look as the read-only rows.
  */
-function EditableSection({
-  title,
+function InlineEditGrid({
   item,
-  fields,
-  display,
+  rows,
   onSave,
 }: {
-  title: string;
   item: VaultItem;
-  fields: EditableField[];
-  display: React.ReactNode;
+  rows: InlineRow[];
   onSave: (patch: Partial<VaultItem>) => Promise<void> | void;
 }) {
-  const [editing, setEditing] = useState(false);
-  const [draft, setDraft] = useState<Record<string, string>>({});
+  const [editingKey, setEditingKey] = useState<string | null>(null);
+  const [draft, setDraft] = useState("");
+  const skipCommit = useRef(false);
 
-  function start() {
-    const next: Record<string, string> = {};
-    for (const f of fields) {
-      const v = item[f.key];
-      next[String(f.key)] = v === undefined || v === null ? "" : String(v);
-    }
-    setDraft(next);
-    setEditing(true);
+  function start(row: InlineRow) {
+    if (!row.field) return;
+    const raw = item[row.field.key];
+    skipCommit.current = false;
+    setDraft(raw === undefined || raw === null ? "" : String(raw));
+    setEditingKey(String(row.field.key));
   }
 
-  async function save() {
-    const patch: Record<string, string | number | undefined> = {};
-    for (const f of fields) {
-      const raw = (draft[String(f.key)] ?? "").trim();
-      if (f.kind === "money") {
-        const n = Number(raw.replace(/[^0-9.\-]/g, ""));
-        patch[String(f.key)] = raw && Number.isFinite(n) ? n : undefined;
-      } else {
-        patch[String(f.key)] = raw || undefined;
-      }
+  async function commit(row: InlineRow) {
+    if (skipCommit.current || !row.field) return;
+    const key = String(row.field.key);
+    const text = draft.trim();
+    const current = item[row.field.key];
+    const currentText = current === undefined || current === null ? "" : String(current);
+    setEditingKey(null);
+    if (text === currentText) return;
+    let next: string | number | undefined;
+    if (row.field.kind === "money") {
+      const num = Number(text.replace(/[^0-9.\-]/g, ""));
+      next = text && Number.isFinite(num) ? num : undefined;
+    } else {
+      next = text || undefined;
     }
-    await onSave(patch as Partial<VaultItem>);
-    setEditing(false);
+    await onSave({ [key]: next } as Partial<VaultItem>);
   }
 
   return (
-    <Section
-      title={title}
-      action={
-        !editing ? (
-          <button
-            type="button"
-            onClick={start}
-            aria-label={`Edit ${title.toLowerCase()}`}
-            title={`Edit ${title.toLowerCase()}`}
-            className="inline-flex h-7 w-7 items-center justify-center rounded-[7px] ring-1 ring-[color:var(--border)] transition hover:bg-[color:var(--pill)]"
-            style={{ color: "var(--muted)" }}
-          >
-            <AppIcon name="edit" size={14} strokeWidth={1.8} />
-          </button>
-        ) : null
-      }
-    >
-      {editing ? (
-        <div>
-          <div className="grid gap-3 sm:grid-cols-2">
-            {fields.map((f) => (
-              <label key={String(f.key)} className="grid gap-1.5">
-                <span className="text-[11px] font-medium tracking-[0.14em] text-[color:var(--muted2)]">{f.label}</span>
+    <div className="grid gap-3 text-sm">
+      {rows.map((row) => {
+        const key = row.field ? String(row.field.key) : row.label;
+        const editing = row.field && editingKey === key;
+        return (
+          <div key={row.label} className="flex items-center justify-between gap-4">
+            <div className="shrink-0 text-[color:var(--muted)]">{row.label}</div>
+            {row.field ? (
+              editing ? (
                 <input
-                  className="h-10 rounded-xl bg-[color:var(--pill)] px-3 text-sm ring-1 ring-[color:var(--border)] focus:outline-none"
-                  inputMode={f.kind === "money" ? "decimal" : undefined}
-                  value={draft[String(f.key)] ?? ""}
-                  placeholder={f.placeholder}
-                  onChange={(e) => setDraft((prev) => ({ ...prev, [String(f.key)]: e.target.value }))}
+                  autoFocus
+                  className="h-8 min-w-0 flex-1 rounded-lg bg-[color:var(--pill)] px-2.5 text-right text-sm text-[color:var(--fg)] ring-1 ring-[color:var(--theme-gold,#C8CDD2)] focus:outline-none"
+                  inputMode={row.field.kind === "money" ? "decimal" : undefined}
+                  value={draft}
+                  onChange={(e) => setDraft(e.target.value)}
+                  onBlur={() => void commit(row)}
                   onKeyDown={(e) => {
-                    if (e.key === "Enter") void save();
-                    if (e.key === "Escape") setEditing(false);
+                    if (e.key === "Enter") e.currentTarget.blur();
+                    if (e.key === "Escape") {
+                      skipCommit.current = true;
+                      setEditingKey(null);
+                    }
                   }}
                 />
-              </label>
-            ))}
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => start(row)}
+                  title={`Click to edit ${row.label.toLowerCase()}`}
+                  className="min-w-[3rem] rounded-lg px-2 py-1 text-right text-[color:var(--fg)] transition hover:bg-[color:var(--pill)] hover:ring-1 hover:ring-[color:var(--border)]"
+                >
+                  {row.value}
+                </button>
+              )
+            ) : (
+              <div className="text-right text-[color:var(--fg)]">{row.value}</div>
+            )}
           </div>
-          <div className="mt-3 flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => void save()}
-              className="rounded-[8px] px-4 py-1.5 text-xs font-bold transition"
-              style={{ background: "var(--theme-gold, #C8CDD2)", color: "#0A0800" }}
-            >
-              Save
-            </button>
-            <button
-              type="button"
-              onClick={() => setEditing(false)}
-              className="rounded-[8px] px-4 py-1.5 text-xs font-semibold ring-1 ring-[color:var(--border)]"
-              style={{ color: "var(--muted)" }}
-            >
-              Cancel
-            </button>
-          </div>
-        </div>
-      ) : (
-        display
-      )}
-    </Section>
+        );
+      })}
+    </div>
   );
 }
 
@@ -1476,23 +1454,15 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
         </div>
 
         <div className="mt-5 grid gap-4 lg:grid-cols-2 xl:grid-cols-3">
-          <EditableSection
-            title="DETAILS"
-            item={item}
-            fields={[
-              { key: "subtitle", label: "Subtitle", kind: "text" },
-              { key: "number", label: "Number / Model", kind: "text" },
-              { key: "grade", label: "Grade", kind: "text" },
-              { key: "serialNumber", label: "Serial #", kind: "text" },
-            ]}
-            onSave={(patch) => persist({ ...item, ...patch })}
-            display={<>
-            <DetailGrid
+          <Section title="DETAILS">
+            <InlineEditGrid
+              item={item}
+              onSave={(patch) => persist({ ...item, ...patch })}
               rows={[
-                { label: "Subtitle", value: detailValue(item.subtitle) },
-                { label: "Number / Model", value: detailValue(item.number) },
-                { label: "Grade", value: detailValue(item.grade) },
-                { label: "Serial #", value: detailValue(item.serialNumber) },
+                { label: "Subtitle", field: { key: "subtitle", kind: "text" }, value: detailValue(item.subtitle) },
+                { label: "Number / Model", field: { key: "number", kind: "text" }, value: detailValue(item.number) },
+                { label: "Grade", field: { key: "grade", kind: "text" }, value: detailValue(item.grade) },
+                { label: "Serial #", field: { key: "serialNumber", kind: "text" }, value: detailValue(item.serialNumber) },
               ]}
             />
             {(item.edition || item.variant || item.printRun || item.isFirstEdition) && (
@@ -1571,53 +1541,36 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
                 )}
               </div>
             ) : null}
-            </>}
-          />
+          </Section>
 
-          <EditableSection
-            title="PURCHASE"
-            item={item}
-            fields={[
-              { key: "purchasePrice", label: "Purchase price", kind: "money", placeholder: "0.00" },
-              { key: "purchaseTax", label: "Tax", kind: "money", placeholder: "0.00" },
-              { key: "purchaseShipping", label: "Shipping", kind: "money", placeholder: "0.00" },
-              { key: "purchaseFees", label: "Fees", kind: "money", placeholder: "0.00" },
-              { key: "purchaseSource", label: "Source", kind: "text" },
-              { key: "purchaseLocation", label: "Location", kind: "text" },
-              { key: "orderNumber", label: "Order #", kind: "text" },
-            ]}
-            onSave={(patch) => persist({ ...item, ...patch })}
-            display={
-            <DetailGrid
+          <Section title="PURCHASE">
+            <InlineEditGrid
+              item={item}
+              onSave={(patch) => persist({ ...item, ...patch })}
               rows={[
-                { label: "Purchase price", value: fmtMoney(clamp(item.purchasePrice)) },
-                { label: "Tax", value: fmtMoney(clamp(item.purchaseTax)) },
-                { label: "Shipping", value: fmtMoney(clamp(item.purchaseShipping)) },
-                { label: "Fees", value: fmtMoney(clamp(item.purchaseFees)) },
-                { label: "Source", value: detailValue(item.purchaseSource) },
-                { label: "Location", value: detailValue(item.purchaseLocation) },
-                { label: "Order #", value: detailValue(item.orderNumber) },
+                { label: "Purchase price", field: { key: "purchasePrice", kind: "money" }, value: fmtMoney(clamp(item.purchasePrice)) },
+                { label: "Tax", field: { key: "purchaseTax", kind: "money" }, value: fmtMoney(clamp(item.purchaseTax)) },
+                { label: "Shipping", field: { key: "purchaseShipping", kind: "money" }, value: fmtMoney(clamp(item.purchaseShipping)) },
+                { label: "Fees", field: { key: "purchaseFees", kind: "money" }, value: fmtMoney(clamp(item.purchaseFees)) },
+                { label: "Source", field: { key: "purchaseSource", kind: "text" }, value: detailValue(item.purchaseSource) },
+                { label: "Location", field: { key: "purchaseLocation", kind: "text" }, value: detailValue(item.purchaseLocation) },
+                { label: "Order #", field: { key: "orderNumber", kind: "text" }, value: detailValue(item.orderNumber) },
               ]}
             />
-            }
-          />
+          </Section>
 
-          <EditableSection
-            title="STORAGE + TRACKING"
-            item={item}
-            fields={[{ key: "storageLocation", label: "Storage location", kind: "text", placeholder: "Shelf, box, safe..." }]}
-            onSave={(patch) => persist({ ...item, ...patch })}
-            display={
-            <DetailGrid
+          <Section title="STORAGE + TRACKING">
+            <InlineEditGrid
+              item={item}
+              onSave={(patch) => persist({ ...item, ...patch })}
               rows={[
-                { label: "Storage location", value: detailValue(item.storageLocation) },
+                { label: "Storage location", field: { key: "storageLocation", kind: "text" }, value: detailValue(item.storageLocation) },
                 { label: "Value source", value: detailValue(item.valueSource) },
                 { label: "Value updated", value: detailValue(item.valueUpdatedAt ? fmtDate(item.valueUpdatedAt) : "—") },
                 { label: "Confidence", value: typeof item.valueConfidence === "number" ? `${item.valueConfidence}%` : "\u2014" },
               ]}
             />
-            }
-          />
+          </Section>
         </div>
 
         <div className="mt-5">

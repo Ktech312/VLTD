@@ -1,4 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
+import { isSupplyItem } from "@/lib/vaultStats";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
@@ -56,7 +57,7 @@ async function fetchItem(itemId: string): Promise<Row | null> {
   const { data, error } = await supabase
     .from(VAULT_ITEMS_TABLE)
     // Never expose price/value — only identity fields safe to share publicly
-    .select("id, title, grade, universe, image_front_url, image_front_storage_path, primary_image_key, images_json, notes, is_public")
+    .select("id, title, grade, universe, image_front_url, image_front_storage_path, primary_image_key, images_json, notes, is_public, category_label")
     .eq("id", itemId)
     .single();
 
@@ -68,6 +69,8 @@ async function fetchItem(itemId: string): Promise<Row | null> {
   // convention vaultModel.ts's own rowToItem() uses -- strict `=== true`
   // required, not just truthy, so an unset column fails closed.
   if (data.is_public !== true) return null;
+  // Supplies (boxes, cases) are never shared publicly.
+  if (isSupplyItem({ universe: data.universe, categoryLabel: data.category_label })) return null;
   return data as Row;
 }
 

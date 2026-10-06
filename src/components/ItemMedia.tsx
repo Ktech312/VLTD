@@ -114,6 +114,40 @@ async function renderRotatedImageBlob(
   }
 }
 
+type PhotoOrientationOp = "rotateLeft" | "rotateRight" | "flipHorizontal" | "flipVertical";
+
+/** Returns a copy of the image with the rotation / flip baked in. */
+async function applyPhotoOrientation(file: File, op: PhotoOrientationOp): Promise<Blob> {
+  const objectUrl = URL.createObjectURL(file);
+  try {
+    const image = await new Promise<HTMLImageElement>((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => resolve(img);
+      img.onerror = () => reject(new Error("Failed to load image."));
+      img.src = objectUrl;
+    });
+    const w = image.naturalWidth;
+    const h = image.naturalHeight;
+    const turn = op === "rotateLeft" || op === "rotateRight";
+    const canvas = document.createElement("canvas");
+    canvas.width = turn ? h : w;
+    canvas.height = turn ? w : h;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) throw new Error("Canvas is not available.");
+    ctx.translate(canvas.width / 2, canvas.height / 2);
+    if (op === "rotateRight") ctx.rotate(Math.PI / 2);
+    if (op === "rotateLeft") ctx.rotate(-Math.PI / 2);
+    if (op === "flipHorizontal") ctx.scale(-1, 1);
+    if (op === "flipVertical") ctx.scale(1, -1);
+    ctx.drawImage(image, -w / 2, -h / 2, w, h);
+    const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/jpeg", 0.92));
+    if (!blob) throw new Error("Failed to prepare image.");
+    return blob;
+  } finally {
+    URL.revokeObjectURL(objectUrl);
+  }
+}
+
 function roleTone(role: ImageRole) {
   if (role === "primary") {
     return "bg-gold/20 text-cyan-100 ring-gold/30";
@@ -162,7 +196,7 @@ export default function ItemMedia({
   const [rotation, setRotation] = useState(0);
   const [isPreparing, setIsPreparing] = useState(false);
   const [viewerIndex, setViewerIndex] = useState(0);
-  const [editTarget, setEditTarget] = useState<{ index: number; url: string; crop: ScanCropRect } | null>(null);
+  const [editTarget, setEditTarget] = useState<{ index: number; url: string; crop: ScanCropRect; reoriented?: boolean } | null>(null);
   const [isEditingImage, setIsEditingImage] = useState(false);
 
   // Remove Background — same free, client-side pipeline and backdrop
@@ -330,6 +364,7 @@ export default function ItemMedia({
       const file = await imageUrlToFile(editTarget.url, editTarget.index);
       const cropped = await cropImageFile(file, editTarget.crop);
       await onReplaceImage(editTarget.index, cropped);
+      if (editTarget.url.startsWith("blob:")) URL.revokeObjectURL(editTarget.url);
       setEditTarget(null);
     } catch (error) {
       console.error(error);
@@ -339,11 +374,43 @@ export default function ItemMedia({
     }
   }
 
-  function requestCloseImageEdit() {
-    if (editTarget && !cropsEqual(editTarget.crop, FULL_CROP)) {
-      const ok = window.confirm("Discard unsaved photo crop changes?");
+  async function reorientEditImage(op: PhotoOrientationOp) {
+    if (!editTarget || isEditingImage) return;
+    setIsEditingImage(true);
+    try {
+      const file = await imageUrlToFile(editTarget.url, editTarget.index);
+      const blob = await applyPhotoOrientation(file, op);
+      const nextUrl = URL.createObjectURL(blob);
+      const previousUrl = editTarget.url;
+      // The crop box is relative to the old picture, so start the crop over.
+      setEditTarget((prev) => (prev ? { ...prev, url: nextUrl, crop: FULL_CROP, reoriented: true } : prev));
+      if (previousUrl.startsWith("blob:")) URL.revokeObjectURL(previousUrl);
+    } catch (error) {
+      console.error(error);
+      showToast(error instanceof Error ? error.message : "Could not turn this image.");
+    } finally {
+      setIsEditingImage(false);
+    }
+  }
+
+  // The photo editor asks "Discard unsaved changes?" itself when the crop was
+  // changed, then calls this. Asking again here made people click OK twice.
+  // It only needs to ask when the editor would not have (turned/flipped only).
+  function closeImageEditFromEditor() {
+    if (editTarget?.reoriented && cropsEqual(editTarget.crop, FULL_CROP)) {
+      const ok = window.confirm("Discard unsaved photo changes?");
       if (!ok) return;
     }
+    if (editTarget?.url.startsWith("blob:")) URL.revokeObjectURL(editTarget.url);
+    setEditTarget(null);
+  }
+
+  function requestCloseImageEdit() {
+    if (editTarget && (editTarget.reoriented || !cropsEqual(editTarget.crop, FULL_CROP))) {
+      const ok = window.confirm("Discard unsaved photo changes?");
+      if (!ok) return;
+    }
+    if (editTarget?.url.startsWith("blob:")) URL.revokeObjectURL(editTarget.url);
     setEditTarget(null);
   }
 
@@ -821,12 +888,32 @@ export default function ItemMedia({
                   onChange={(crop) => setEditTarget((prev) => (prev ? { ...prev, crop } : prev))}
                   onApply={() => void applyImageEdit()}
                   onReset={() => setEditTarget((prev) => (prev ? { ...prev, crop: FULL_CROP } : prev))}
-                  onCancel={requestCloseImageEdit}
+                  onCancel={closeImageEditFromEditor}
                   isApplying={isEditingImage}
                   title="EDIT PHOTO"
                   description="Crop and zoom this saved item photo. The edited version replaces the current photo."
                   applyLabel="Save Photo"
                   compact
+                  zoomRowRight={
+                    <div className="flex flex-wrap items-center justify-end gap-1.5">
+                      {([
+                        ["rotateLeft", "Rotate left"],
+                        ["rotateRight", "Rotate right"],
+                        ["flipHorizontal", "Flip left-right"],
+                        ["flipVertical", "Flip up-down"],
+                      ] as const).map(([op, label]) => (
+                        <button
+                          key={op}
+                          type="button"
+                          disabled={isEditingImage}
+                          onClick={() => void reorientEditImage(op)}
+                          className="rounded-lg bg-[color:var(--pill)] px-2.5 py-1.5 text-[11px] font-medium ring-1 ring-[color:var(--border)] transition hover:bg-[color:var(--pill-hover)] disabled:opacity-40"
+                        >
+                          {label}
+                        </button>
+                      ))}
+                    </div>
+                  }
                 />
               </div>
             </div>,

@@ -80,6 +80,10 @@ export const TAXONOMY: Taxonomy = {
     "Coins & Currency": ["Coins", "Bills", "Errors", "Graded", "Bullion", "Ancient Coins", "Proof Sets", "Misprints", "Silver Certificates"],
     "Stamps": ["Vintage", "Sheets", "Covers", "First Day Covers", "Blocks", "Errors", "Postcards", "Revenue Stamps"],
     "Armory & Blades": ["Pistols", "Rifles", "Shotguns", "Muskets", "Swords", "Katanas", "Daggers", "Pocket Knives", "Custom Bowies", "Axes", "Bayonets"],
+    // NON-COLLECTIBLE inventory: things you own to store or show the collection
+    // (comic boxes, display cases, sleeves). Kept out of value totals,
+    // insurance and public pages -- see isSupplyItem() in vaultStats.ts.
+    "Supplies & Display": ["Storage Boxes", "Display Cases", "Sleeves & Holders", "Shelving & Racks", "Other Supplies"],
   },
 
   AUTOMOTIVE: {

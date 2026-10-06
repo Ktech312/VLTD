@@ -2,6 +2,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { collectibleItems } from "@/lib/vaultStats";
 import Link from "next/link";
 
 import { DEMO_ITEMS } from "@/lib/demoVault";
@@ -79,11 +80,11 @@ export default function InsuranceReportPage() {
   useEffect(() => {
     const seed = toSeedItemsFromDemo();
     const loaded = loadItemsOrSeed(seed);
-    setItems(loaded);
+    setItems(collectibleItems(loaded));
     setHydrated(true);
     let active = true;
     void syncVaultItemsFromSupabase().then(() => {
-      if (active) setItems(loadItems());
+      if (active) setItems(collectibleItems(loadItems()));
     });
     return () => {
       active = false;

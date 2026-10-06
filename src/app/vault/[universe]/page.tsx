@@ -16,6 +16,7 @@ import ProgressiveImage from "@/components/ui/ProgressiveImage";
 import VaultMuseumView from "@/components/VaultMuseumView";
 import VaultWrappedSheet from "@/components/VaultWrappedSheet";
 import { showToast } from "@/lib/toast";
+import { collectibleItems } from "@/lib/vaultStats";
 import { deleteVaultItemEverywhere, deleteVaultItemsEverywhere } from "@/lib/vaultActions";
 import { computeItemIntelligence } from "@/lib/itemIntelligence";
 import { UNIVERSE_LABEL, TAXONOMY, getCategories, isUniverseKey, type UniverseKey } from "@/lib/taxonomy";
@@ -621,8 +622,9 @@ function UniverseOverviewCard({
   items: VaultItem[];
 }) {
   const thumbnailImage = category.thumbnailSrc;
-  const totalValue = items.reduce((sum, item) => sum + effectiveMarketValue(item), 0);
-  const totalCostValue = items.reduce((sum, item) => sum + totalCost(item), 0);
+  const countedItems = collectibleItems(items);
+  const totalValue = countedItems.reduce((sum, item) => sum + effectiveMarketValue(item), 0);
+  const totalCostValue = countedItems.reduce((sum, item) => sum + totalCost(item), 0);
   const totalGain = totalValue - totalCostValue;
   const hasItems = items.length > 0;
   const showGain = Math.abs(totalGain) > 0.49;
@@ -1010,8 +1012,9 @@ export default function VaultUniversePage() {
 
   const stats = useMemo(() => {
     const totalItems = filteredItems.length;
-    const totalCostValue = filteredItems.reduce((sum, item) => sum + totalCost(item), 0);
-    const totalValue = filteredItems.reduce((sum, item) => sum + effectiveMarketValue(item), 0);
+    const counted = collectibleItems(filteredItems);
+    const totalCostValue = counted.reduce((sum, item) => sum + totalCost(item), 0);
+    const totalValue = counted.reduce((sum, item) => sum + effectiveMarketValue(item), 0);
     const totalGain = totalValue - totalCostValue;
     return { totalItems, totalCost: totalCostValue, totalValue, totalGain };
   }, [filteredItems]);

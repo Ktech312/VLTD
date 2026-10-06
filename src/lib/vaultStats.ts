@@ -17,9 +17,30 @@ export function isSoldItem(item: VaultItem): boolean {
   return item.status === "SOLD" || Boolean(item.soldAt) || item.soldPrice !== undefined;
 }
 
-/** Items you currently own (everything except sold). */
+/** Category label for non-collectible inventory (boxes, cases, sleeves). */
+export const SUPPLIES_CATEGORY = "Supplies & Display";
+
+/**
+ * Non-collectible inventory: owned to store or show the collection, not part
+ * of it. These stay visible in the Vault but are left out of value totals,
+ * insurance and public pages. Works on any item-shaped object.
+ */
+export function isSupplyItem(item: { universe?: unknown; categoryLabel?: unknown; category?: unknown }): boolean {
+  if (String(item.universe ?? "").toUpperCase() !== "MISC") return false;
+  const label = String(item.categoryLabel ?? item.category ?? "").trim();
+  return label === SUPPLIES_CATEGORY;
+}
+
+/** The collection proper: everything that is not a supply. */
+export function collectibleItems<T extends { universe?: unknown; categoryLabel?: unknown; category?: unknown }>(
+  items: T[]
+): T[] {
+  return items.filter((item) => !isSupplyItem(item));
+}
+
+/** Items you currently own (everything except sold items and supplies). */
 export function activeItems(items: VaultItem[]): VaultItem[] {
-  return items.filter((item) => !isSoldItem(item));
+  return items.filter((item) => !isSoldItem(item) && !isSupplyItem(item));
 }
 
 /** What one item is worth today. Estimated value wins, then current value. */

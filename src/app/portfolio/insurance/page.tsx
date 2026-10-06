@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { collectibleItems } from "@/lib/vaultStats";
 import { useEffect, useMemo, useState } from "react";
 
 import { loadItems, type VaultItem } from "@/lib/vaultModel";
@@ -19,7 +20,7 @@ export default function InsuranceReportPage() {
   const [items, setItems] = useState<VaultItem[]>([]);
 
   useEffect(() => {
-    setItems(loadItems());
+    setItems(collectibleItems(loadItems()));
   }, []);
 
   const totals = useMemo(() => {

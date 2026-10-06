@@ -20,6 +20,7 @@ import SwipeStack from "@/components/SwipeStack";
 import { computeItemIntelligence } from "@/lib/itemIntelligence";
 import { UNIVERSE_LABEL, TAXONOMY, getCategories, isUniverseKey, type UniverseKey } from "@/lib/taxonomy";
 import { showToast } from "@/lib/toast";
+import { collectibleItems } from "@/lib/vaultStats";
 import { migrateExistingVaultImagesToSupabase } from "@/lib/vaultMigration";
 import {
   commitVaultItemEdits,
@@ -745,8 +746,9 @@ function UniverseOverviewCard({
   isFocus?: boolean;
 }) {
   const thumbnailImage = category.thumbnailSrc;
-  const totalValue = items.reduce((sum, item) => sum + effectiveMarketValue(item), 0);
-  const totalCostValue = items.reduce((sum, item) => sum + totalCost(item), 0);
+  const countedItems = collectibleItems(items);
+  const totalValue = countedItems.reduce((sum, item) => sum + effectiveMarketValue(item), 0);
+  const totalCostValue = countedItems.reduce((sum, item) => sum + totalCost(item), 0);
   const totalGain = totalValue - totalCostValue;
   const hasItems = items.length > 0;
   const showGain = Math.abs(totalGain) > 0.49;
@@ -1281,16 +1283,19 @@ export default function VaultPage() {
   }
 
   const stats = useMemo(() => {
-    const totalItems = filteredItems.length;
-    const totalCostValue = filteredItems.reduce((sum, item) => sum + totalCost(item), 0);
-    const totalValue = filteredItems.reduce((sum, item) => sum + effectiveMarketValue(item), 0);
+    // Supplies (boxes, cases) stay in the list but never count toward the
+    // collection's value, insurance readiness or review counts.
+    const counted = collectibleItems(filteredItems);
+    const totalItems = counted.length;
+    const totalCostValue = counted.reduce((sum, item) => sum + totalCost(item), 0);
+    const totalValue = counted.reduce((sum, item) => sum + effectiveMarketValue(item), 0);
     const totalGain = totalValue - totalCostValue;
-    const universeCount = new Set(filteredItems.map((item) => universeForItem(item))).size;
-    const insuranceReadyCount = filteredItems.filter((item) => {
+    const universeCount = new Set(counted.map((item) => universeForItem(item))).size;
+    const insuranceReadyCount = counted.filter((item) => {
       const intelligence = intelligenceMap[item.id];
       return (intelligence?.readiness ?? "Low") === "High";
     }).length;
-    const needsReviewCount = filteredItems.filter((item) => {
+    const needsReviewCount = counted.filter((item) => {
       const intelligence = intelligenceMap[item.id];
       return (intelligence?.readiness ?? "Low") !== "High";
     }).length;

@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { isSupplyItem } from "@/lib/vaultStats";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 import { addToWatchlist, isWatchlisted, type WatchlistItem } from "@/lib/watchlistModel";
 import { getSeedAvatarUrlForProfile, isRenderableAvatarUrl } from "@/lib/seedAvatar";
@@ -240,15 +241,17 @@ export default function DiscoverSwipe({ open, onClose }: Props) {
       const supabase = getSupabaseBrowserClient();
       if (!supabase) { setLoading(false); return; }
 
-      const { data: items } = await supabase
+      const { data: rawItems } = await supabase
         .from("vault_items")
-        .select("id, title, subtitle, grade, current_value, image_front_url, profile_id")
+        .select("id, title, subtitle, grade, current_value, image_front_url, profile_id, universe, category_label")
         .eq("is_public", true)
         .not("image_front_url", "is", null)
         .order("created_at", { ascending: false })
         .limit(40);
 
-      if (!items || items.length === 0) { setLoading(false); return; }
+      // Supplies (boxes, cases) never appear in Discover.
+      const items = (rawItems ?? []).filter((i) => !isSupplyItem({ universe: i.universe, categoryLabel: i.category_label }));
+      if (items.length === 0) { setLoading(false); return; }
 
       const profileIds = [...new Set(items.map((i) => String(i.profile_id)).filter(Boolean))];
       const profileMap = new Map<string, { name: string; avatarUrl: string }>();

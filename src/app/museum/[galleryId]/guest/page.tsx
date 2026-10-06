@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { isSupplyItem } from "@/lib/vaultStats";
 import { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import { useParams, useSearchParams } from "next/navigation";
@@ -134,8 +135,9 @@ export default function GuestGalleryPage() {
               .eq("is_public", true)
               .order("created_at", { ascending: false });
 
-            if (!cancelled && publicItems && publicItems.length > 0) {
-              setItems(publicItems.map((row) => rowToVaultItem(row as Record<string, unknown>)));
+            const shown = (publicItems ?? []).filter((row) => !isSupplyItem({ universe: row.universe, categoryLabel: row.category_label }));
+            if (!cancelled && shown.length > 0) {
+              setItems(shown.map((row) => rowToVaultItem(row as Record<string, unknown>)));
               setIsResolved(true);
               return;
             }
