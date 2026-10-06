@@ -59,6 +59,11 @@ export type GalleryPublicItemSnapshot = {
   imageFrontStoragePath?: string;
   primaryImageKey?: string;
   createdAt?: number;
+  /** Public facts about the item, so public pages can order by year and show details for items that are not public in the vault. */
+  year?: string;
+  description?: string;
+  categoryLabel?: string;
+  subcategoryLabel?: string;
   /** The owner hid this item: public pages show "Hidden Item" and a grey blur instead. */
   hidden?: boolean;
   /** Tiny greyscale thumbnail (data URL) used for the blur on hidden items. */
@@ -443,6 +448,10 @@ function normalizePublicItemSnapshots(value: unknown): GalleryPublicItemSnapshot
       subtitle: safeString((raw as any)?.subtitle) || undefined,
       number: safeString((raw as any)?.number) || undefined,
       grade: safeString((raw as any)?.grade) || undefined,
+      year: safeString((raw as any)?.year) || undefined,
+      description: safeString((raw as any)?.description) || undefined,
+      categoryLabel: safeString((raw as any)?.categoryLabel) || undefined,
+      subcategoryLabel: safeString((raw as any)?.subcategoryLabel) || undefined,
       // No currentValue here on purpose: this record is public, and prices are not.
       imageFrontUrl: safeString((raw as any)?.imageFrontUrl ?? (raw as any)?.image_front_url) || undefined,
       imageBackUrl: safeString((raw as any)?.imageBackUrl ?? (raw as any)?.image_back_url) || undefined,
