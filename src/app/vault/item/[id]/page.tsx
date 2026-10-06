@@ -394,10 +394,10 @@ function DescriptionField({
 
   if (editing) {
     return (
-      <div className="mt-3 max-w-3xl">
+      <div className="mt-1.5 max-w-3xl">
         <textarea
           autoFocus
-          rows={3}
+          rows={2}
           maxLength={600}
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
@@ -432,7 +432,7 @@ function DescriptionField({
   }
 
   return (
-    <div className="mt-3 max-w-3xl">
+    <div className="mt-1.5 max-w-3xl">
       <button
         type="button"
         onClick={() => { setDraft(item.description ?? ""); setEditing(true); }}
@@ -1123,10 +1123,10 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
               </button>
               <div className="text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">ITEM</div>
               {headerEditing ? (
-                <div className="mt-2 grid gap-3 pr-12">
+                <div className="mt-1 pr-12">
                   <input
                     autoFocus
-                    className="h-12 w-full rounded-xl bg-[color:var(--pill)] px-4 text-xl font-semibold ring-1 ring-[color:var(--border)] focus:outline-none"
+                    className="h-9 w-full rounded-lg bg-[color:var(--pill)] px-3 text-lg font-semibold ring-1 ring-[color:var(--border)] focus:outline-none"
                     value={recordDraft.title}
                     onChange={(event) => setRecordDraft((prev) => ({ ...prev, title: event.target.value }))}
                     onKeyDown={(event) => {
@@ -1136,9 +1136,9 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
                     placeholder="Title"
                     aria-label="Title"
                   />
-                  <div className="grid gap-3 sm:grid-cols-3">
+                  <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
                     <select
-                      className="h-10 rounded-xl bg-[color:var(--pill)] px-3 text-sm ring-1 ring-[color:var(--border)] focus:outline-none"
+                      className="h-8 max-w-[12rem] rounded-lg bg-[color:var(--pill)] px-2 text-xs ring-1 ring-[color:var(--border)] focus:outline-none"
                       value={recordDraft.universe}
                       onChange={(event) => setDraftUniverse(normUniverse(event.target.value))}
                       aria-label="Universe"
@@ -1148,7 +1148,7 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
                       ))}
                     </select>
                     <select
-                      className="h-10 rounded-xl bg-[color:var(--pill)] px-3 text-sm ring-1 ring-[color:var(--border)] focus:outline-none"
+                      className="h-8 max-w-[12rem] rounded-lg bg-[color:var(--pill)] px-2 text-xs ring-1 ring-[color:var(--border)] focus:outline-none"
                       value={recordSelectedCategory}
                       onChange={(event) => setDraftCategory(event.target.value)}
                       aria-label="Category"
@@ -1159,31 +1159,29 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
                     </select>
                     {recordSubcategoryOptions.length ? (
                       <select
-                        className="h-10 rounded-xl bg-[color:var(--pill)] px-3 text-sm ring-1 ring-[color:var(--border)] focus:outline-none"
+                        className="h-8 max-w-[12rem] rounded-lg bg-[color:var(--pill)] px-2 text-xs ring-1 ring-[color:var(--border)] focus:outline-none"
                         value={recordDraft.subcategoryLabel}
                         onChange={(event) => setRecordDraft((prev) => ({ ...prev, subcategoryLabel: event.target.value }))}
                         aria-label="Subcategory"
                       >
-                        <option value="">Subcategory (optional)</option>
+                        <option value="">Subcategory</option>
                         {recordSubcategoryOptions.map((subcategory) => (
                           <option key={subcategory} value={subcategory}>{subcategory}</option>
                         ))}
                       </select>
                     ) : (
                       <input
-                        className="h-10 rounded-xl bg-[color:var(--pill)] px-3 text-sm ring-1 ring-[color:var(--border)] focus:outline-none"
+                        className="h-8 max-w-[12rem] rounded-lg bg-[color:var(--pill)] px-2 text-xs ring-1 ring-[color:var(--border)] focus:outline-none w-36"
                         value={recordDraft.subcategoryLabel}
                         onChange={(event) => setRecordDraft((prev) => ({ ...prev, subcategoryLabel: event.target.value }))}
-                        placeholder="Subcategory (optional)"
+                        placeholder="Subcategory"
                         aria-label="Subcategory"
                       />
                     )}
-                  </div>
-                  <div className="flex flex-wrap items-center gap-2">
                     <button
                       type="button"
                       onClick={() => void saveHeaderEdit()}
-                      className="rounded-[8px] px-4 py-1.5 text-xs font-bold transition"
+                      className="rounded-[8px] px-3 py-1 text-xs font-bold transition"
                       style={{ background: "var(--theme-gold, #C8CDD2)", color: "#0A0800" }}
                     >
                       Save
@@ -1191,7 +1189,7 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
                     <button
                       type="button"
                       onClick={cancelHeaderEdit}
-                      className="rounded-[8px] px-4 py-1.5 text-xs font-semibold ring-1 ring-[color:var(--border)]"
+                      className="rounded-[8px] px-3 py-1 text-xs font-semibold ring-1 ring-[color:var(--border)]"
                       style={{ color: "var(--muted)" }}
                     >
                       Cancel
@@ -1201,20 +1199,20 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
                 </div>
               ) : (
                 <>
-                  <div className="mt-2 flex flex-wrap items-center gap-3">
-                    <h1 className="text-2xl font-semibold leading-tight sm:text-3xl">{item.title}</h1>
+                  <h1 className="mt-1 text-2xl font-semibold leading-tight sm:text-3xl">
+                    {item.title}
                     <button
                       type="button"
                       onClick={() => setHeaderEditing(true)}
                       aria-label="Edit title and category"
                       title="Edit title and category"
-                      className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-[8px] ring-1 ring-[color:var(--border)] transition hover:bg-[color:var(--pill)]"
+                      className="ml-2 inline-flex h-6 w-6 items-center justify-center rounded-[6px] align-middle ring-1 ring-[color:var(--border)] transition hover:bg-[color:var(--pill)]"
                       style={{ color: "var(--muted)" }}
                     >
-                      <AppIcon name="edit" size={15} strokeWidth={1.8} />
+                      <AppIcon name="edit" size={13} strokeWidth={1.8} />
                     </button>
-                    {notable ? <NotableBadge reason={notableReason(item)} /> : null}
-                  </div>
+                    {notable ? <span className="ml-2 inline-block align-middle"><NotableBadge reason={notableReason(item)} /></span> : null}
+                  </h1>
                   <DescriptionField
                     item={item}
                     onSave={(text) => persist({ ...item, description: text })}
@@ -1227,7 +1225,7 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
                       />
                     }
                   />
-                  <div className="mt-3 text-sm text-[color:var(--muted)]">
+                  <div className="mt-1.5 text-sm text-[color:var(--muted)]">
                     {UNIVERSE_LABEL[universe]} • {categoryLabel(item)}
                     {item.subcategoryLabel ? ` • ${item.subcategoryLabel}` : ""}
                     {" • "}Added {fmtDate(addedAt)}
@@ -1235,7 +1233,7 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
                 </>
               )}
 
-              <div className="mt-4 flex flex-wrap items-center gap-2">
+              <div className="mt-3 flex flex-wrap items-center gap-2">
                 <Link href="/vault" className="inline-flex h-10 items-center rounded-full bg-[color:var(--pill)] px-4 text-sm font-medium ring-1 ring-[color:var(--border)]">
                   ← Vault
                 </Link>
