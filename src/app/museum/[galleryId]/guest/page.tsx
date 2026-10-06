@@ -57,6 +57,7 @@ function rowToVaultItem(row: Record<string, unknown>): VaultItem {
     grade: typeof row.grade === "string" ? row.grade : undefined,
     // Guests see the public description, never the owner's private notes.
     notes: typeof row.description === "string" ? row.description : undefined,
+    year: typeof row.year === "string" ? row.year : undefined,
     currentValue: typeof row.current_value === "number" ? row.current_value : undefined,
     purchasePrice: typeof row.purchase_price === "number" ? row.purchase_price : undefined,
     imageFrontUrl: typeof row.image_front_url === "string" && row.image_front_url ? row.image_front_url : undefined,

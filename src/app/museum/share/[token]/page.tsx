@@ -131,7 +131,9 @@ function normalizeVaultItem(raw: any): VaultItem {
         : typeof raw?.primaryImageKey === "string"
           ? raw.primaryImageKey
           : undefined,
-    notes: typeof raw?.notes === "string" ? raw.notes : undefined,
+    // Visitors see the public description, never the owner's private notes.
+    notes: typeof raw?.description === "string" ? raw.description : undefined,
+    year: typeof raw?.year === "string" ? raw.year : undefined,
     storageLocation:
       typeof raw?.storage_location === "string"
         ? raw.storage_location

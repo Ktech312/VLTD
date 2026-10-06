@@ -1051,13 +1051,20 @@ export default function GalleryBuilder({
           >
             <div className="relative overflow-hidden p-3 sm:p-4">
               <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_22%_9%,rgba(255,245,204,0.18),transparent_22%),radial-gradient(circle_at_50%_9%,rgba(255,245,204,0.16),transparent_22%),radial-gradient(circle_at_78%_9%,rgba(255,245,204,0.18),transparent_22%),linear-gradient(180deg,rgba(255,255,255,0.08),transparent_18%,rgba(0,0,0,0.18))]" />
-              <div className="relative mx-auto grid max-w-[330px] grid-cols-3 gap-x-2 gap-y-3">
+              <div className="relative mx-auto grid max-w-[330px] grid-flow-row-dense grid-cols-3 gap-x-2 gap-y-3">
                 {Array.from({ length: SHELF_SLOT_COUNT }).map((_, i) => {
+                  // The wall follows the same choices visitors see: Curated pulls one featured work out wide,
+                  // Timeline puts each work's year on it, and Grid View uses plain cards instead of shelf frames.
+                  const wallLayout = String(layoutType ?? "GRID").toUpperCase();
+                  const plainCards = displayMode === "grid";
+                  const wallFeaturedId = sections[activeSectionIdx]?.featuredItemId || previewSlots.find((id) => id) || "";
                   const itemId = previewSlots[i];
                   const itemMap = new Map(items.map((it) => [it.id, it]));
                   const item = itemId ? itemMap.get(itemId) ?? null : null;
                   const img = item ? itemImage(item) : null;
                   const subtitle = item ? [item.subtitle, item.number, item.grade].filter(Boolean).join(" • ") : null;
+                  const isFeaturedSlot = wallLayout === "CURATED" && !!item && item.id === wallFeaturedId && previewItems.length > 1;
+                  const wallYear = wallLayout === "TIMELINE" && item ? (String(item.year ?? "").match(/d{4}/)?.[0] ?? "") : "";
                   const isBeingDragged = slotDragIdx === i;
                   const isDragOver = slotDragOverIdx === i && slotDragIdx !== i;
                   const canOrganize = isOrganizing && sections.length > 0;
@@ -1065,7 +1072,7 @@ export default function GalleryBuilder({
                     <div
                       key={"slot-" + i}
                       data-slot-idx={i}
-                      className="min-w-0"
+                      className={isFeaturedSlot ? "col-span-3 min-w-0" : "min-w-0"}
                       style={{ touchAction: canOrganize && item ? "none" : "auto" }}
                       draggable={canOrganize && !!item}
                       onDragStart={canOrganize && item ? (e) => {
@@ -1150,9 +1157,10 @@ export default function GalleryBuilder({
                             canOrganize ? (isDragOver ? "vltd-wiggle-over" : "vltd-wiggle") : "",
                           ].join(" ")}
                           style={{
-                            aspectRatio: "3/4",
-                            background:
-                              "linear-gradient(135deg, #fff0a8 0%, #d99a2b 18%, #6f4514 37%, #f7cf72 54%, #3a250d 72%, #ffe7a0 100%)",
+                            aspectRatio: isFeaturedSlot ? "16/10" : "3/4",
+                            background: plainCards
+                              ? "#0b1018"
+                              : "linear-gradient(135deg, #fff0a8 0%, #d99a2b 18%, #6f4514 37%, #f7cf72 54%, #3a250d 72%, #ffe7a0 100%)",
                             boxShadow: isDragOver
                               ? "0 0 0 2px rgba(203,208,213,0.9), 0 0 16px rgba(203,208,213,0.5)"
                               : isBeingDragged
@@ -1164,11 +1172,21 @@ export default function GalleryBuilder({
                           }}
                         >
                           <div className="relative h-full overflow-hidden rounded-[13px] bg-[#090d14] ring-1 ring-black/70">
+                          {plainCards ? null : (
+                            <>
                           <div className="pointer-events-none absolute inset-[3px] z-10 rounded-[10px] ring-1 ring-[#ffe8a3]/35" />
                           <div className="pointer-events-none absolute left-1 top-1 z-20 h-4 w-4 rounded-full border border-[#ffd978]/80 bg-[#131018] shadow-[inset_0_0_0_2px_rgba(0,0,0,0.55),0_0_10px_rgba(203,208,213,0.35)]" />
                           <div className="pointer-events-none absolute right-1 top-1 z-10 h-4 w-4 rounded-full border border-[#ffd978]/80 bg-[#131018] shadow-[inset_0_0_0_2px_rgba(0,0,0,0.55),0_0_10px_rgba(203,208,213,0.35)]" />
                           <div className="pointer-events-none absolute inset-x-5 top-2 z-10 h-px bg-[linear-gradient(90deg,transparent,#ffdf87,transparent)]" />
                           <div className="pointer-events-none absolute inset-x-4 bottom-[24%] z-10 h-px bg-[linear-gradient(90deg,transparent,#8f5d18,#ffdf87,#8f5d18,transparent)]" />
+                            </>
+                          )}
+                          {isFeaturedSlot ? (
+                            <div className="pointer-events-none absolute left-1/2 top-1 z-30 -translate-x-1/2 rounded-full bg-black/70 px-2 py-0.5 text-[7px] font-bold tracking-[0.2em] text-[#f7d979] ring-1 ring-[#C8CDD2]/60">FEATURED</div>
+                          ) : null}
+                          {wallYear ? (
+                            <div className="pointer-events-none absolute left-1/2 top-1 z-30 -translate-x-1/2 rounded-full bg-black/70 px-2 py-0.5 text-[8px] font-bold tracking-[0.1em] text-[#f7d979] ring-1 ring-[#C8CDD2]/60">{wallYear}</div>
+                          ) : null}
                           {/* Remove button — hidden while organizing */}
                           {sections.length > 0 && !isOrganizing ? (
                             <button

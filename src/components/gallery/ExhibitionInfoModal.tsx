@@ -18,10 +18,6 @@ function getActiveProfileId(): string {
   }
 }
 
-function formatMoney(value: number) {
-  return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(value);
-}
-
 export default function ExhibitionInfoModal({
   gallery,
   items,
@@ -57,12 +53,10 @@ export default function ExhibitionInfoModal({
     const sectionItems = section.itemIds
       .map((id) => itemsById.get(id))
       .filter(Boolean) as VaultItem[];
-    const value = sectionItems.reduce((sum, item) => sum + Number(item.currentValue ?? 0), 0);
     return {
       id: section.id,
       title: section.title || `Exhibit ${idx + 1}`,
       itemCount: sectionItems.length,
-      value,
     };
   });
 
@@ -145,7 +139,6 @@ export default function ExhibitionInfoModal({
                   </div>
                   <div style={{ flexShrink: 0, display: "flex", gap: 10, fontSize: 11, color: "var(--muted)" }}>
                     <span>{section.itemCount} {section.itemCount === 1 ? "item" : "items"}</span>
-                    <span>{formatMoney(section.value)}</span>
                   </div>
                 </div>
               ))}
