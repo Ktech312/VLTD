@@ -12,7 +12,7 @@ const SUPABASE_SERVICE_KEY =
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "";
 const VAULT_IMAGES_BUCKET = "vault-images";
 const VAULT_ITEMS_TABLE = "vault_items";
-const BASE = process.env.NEXT_PUBLIC_SITE_URL ?? "${BASE}";
+const BASE = process.env.NEXT_PUBLIC_SITE_URL || "https://vltd.app";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Row = Record<string, any>;
@@ -149,8 +149,9 @@ export default async function ShareItemPage(
   const universe = row.universe
     ? String(row.universe).replace(/_/g, " ")
     : null;
-  const description = row.description
-    ? String(row.description).slice(0, 150)
+  const ownerDescription = row.description ? String(row.description).trim() : "";
+  const description = ownerDescription
+    ? ownerDescription.slice(0, 150)
     : `A collectible from my vault on VLTD.`;
   const ogImageUrl = buildOgUrl(title, gradeRaw, description, imageUrl);
   const downloadName = `vltd-${title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")}.jpg`;
@@ -276,6 +277,20 @@ export default async function ShareItemPage(
                 {universe}
               </p>
             )}
+
+            {ownerDescription ? (
+              <p
+                style={{
+                  color: "#b5b5b5",
+                  fontSize: 14,
+                  lineHeight: 1.6,
+                  margin: "0 0 1rem",
+                  whiteSpace: "pre-wrap",
+                }}
+              >
+                {ownerDescription}
+              </p>
+            ) : null}
 
             <Link
               href="/"

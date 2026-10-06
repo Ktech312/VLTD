@@ -428,12 +428,7 @@ function normalizePublicItemSnapshots(value: unknown): GalleryPublicItemSnapshot
       subtitle: safeString((raw as any)?.subtitle) || undefined,
       number: safeString((raw as any)?.number) || undefined,
       grade: safeString((raw as any)?.grade) || undefined,
-      currentValue:
-        typeof (raw as any)?.currentValue === "number" && Number.isFinite((raw as any).currentValue)
-          ? (raw as any).currentValue
-          : typeof (raw as any)?.current_value === "number" && Number.isFinite((raw as any).current_value)
-            ? (raw as any).current_value
-            : undefined,
+      // No currentValue here on purpose: this record is public, and prices are not.
       imageFrontUrl: safeString((raw as any)?.imageFrontUrl ?? (raw as any)?.image_front_url) || undefined,
       imageBackUrl: safeString((raw as any)?.imageBackUrl ?? (raw as any)?.image_back_url) || undefined,
       imageFrontStoragePath:

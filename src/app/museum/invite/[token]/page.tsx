@@ -1,5 +1,6 @@
 "use client";
 
+import { PUBLIC_ITEM_COLUMNS, PUBLIC_ITEM_COLUMNS_FINANCIAL } from "@/lib/publicItemColumns";
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
@@ -442,12 +443,12 @@ export default function InviteGalleryPage() {
           if (uniqueIds.length > 0) {
             const { data: vaultRows } = await supabase
               .from("vault_items")
-              .select("*")
+              .select(permissions.financialHistory ? PUBLIC_ITEM_COLUMNS_FINANCIAL : PUBLIC_ITEM_COLUMNS)
               .in("id", uniqueIds);
 
             const byId = new Map<string, VaultItem>();
             for (const raw of vaultRows ?? []) {
-              const item = normalizeVaultItem(raw as Record<string, unknown>);
+              const item = normalizeVaultItem(raw as unknown as Record<string, unknown>);
               byId.set(item.id, item);
             }
 

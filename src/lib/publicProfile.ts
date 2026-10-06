@@ -1,5 +1,6 @@
 "use client";
 
+import { PUBLIC_ITEM_COLUMNS_WITH_VALUE } from "@/lib/publicItemColumns";
 import { getStoredActiveProfileId } from "@/lib/auth";
 import { isSupplyItem } from "@/lib/vaultStats";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
@@ -238,14 +239,14 @@ export async function fetchPublicVaultItems(profileId: string): Promise<VaultIte
 
   const { data, error } = await supabase
     .from(VAULT_ITEMS_TABLE)
-    .select("*, images_json, primary_image_key")
+    .select(PUBLIC_ITEM_COLUMNS_WITH_VALUE)
     .eq("profile_id", cleanProfileId)
     .eq("is_public", true)
     .order("created_at", { ascending: false });
 
   if (error) throw new Error(error.message || "Failed to load public vault.");
-  return (data ?? [])
-    .filter((r) => !isSupplyItem({ universe: r.universe, categoryLabel: r.category_label }))
+  return ((data ?? []) as unknown as Record<string, unknown>[])
+    .filter((r) => !isSupplyItem({ universe: r.universe as string, categoryLabel: r.category_label as string }))
     .map(r => publicRowToItem(r) as MarketItem);
 }
 
@@ -268,15 +269,16 @@ export async function fetchPublicVaultItemById(itemId: string): Promise<VaultIte
 
   const { data, error } = await supabase
     .from(VAULT_ITEMS_TABLE)
-    .select("*, images_json, primary_image_key")
+    .select(PUBLIC_ITEM_COLUMNS_WITH_VALUE)
     .eq("id", cleanId)
     .eq("is_public", true)
     .maybeSingle();
 
   if (error || !data) return null;
+  const row = data as unknown as Record<string, unknown>;
   // Supplies (boxes, cases) are never shown publicly.
-  if (isSupplyItem({ universe: data.universe, categoryLabel: data.category_label })) return null;
-  return publicRowToItem(data) as MarketItem;
+  if (isSupplyItem({ universe: row.universe as string, categoryLabel: row.category_label as string })) return null;
+  return publicRowToItem(row) as MarketItem;
 }
 
 export type PublicGallery = {
@@ -302,7 +304,8 @@ export async function fetchPublicGalleriesForProfile(profileId: string): Promise
     .from("galleries")
     .select("id, title, description, cover_image, layout, analytics, visibility, sections, exhibition_layout")
     .eq("profile_id", cleanProfileId)
-    .neq("visibility", "LOCKED")
+    .eq("visibility", "PUBLIC")
+    .eq("state", "ACTIVE")
     .order("created_at", { ascending: false });
 
   if (error) return [];
@@ -377,7 +380,7 @@ export async function fetchMarketItems(opts?: {
 
   let query = supabase
     .from(VAULT_ITEMS_TABLE)
-    .select("*, images_json, primary_image_key")
+    .select(PUBLIC_ITEM_COLUMNS_WITH_VALUE)
     .eq("status", "FOR_SALE")
     .eq("is_public", true)
     .order("created_at", { ascending: false })
@@ -388,7 +391,7 @@ export async function fetchMarketItems(opts?: {
   const { data, error } = await query;
   if (error) throw new Error(error.message || "Failed to load market.");
 
-  return (data ?? [])
-    .filter((r) => !isSupplyItem({ universe: r.universe, categoryLabel: r.category_label }))
+  return ((data ?? []) as unknown as Record<string, unknown>[])
+    .filter((r) => !isSupplyItem({ universe: r.universe as string, categoryLabel: r.category_label as string }))
     .map(r => publicRowToItem(r) as MarketItem);
 }

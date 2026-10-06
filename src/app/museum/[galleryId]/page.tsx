@@ -27,6 +27,7 @@ import {
 } from "@/lib/galleryModel";
 
 import { loadItems, syncVaultItemsFromSupabase, type VaultItem } from "@/lib/vaultModel";
+import { isSupplyItem } from "@/lib/vaultStats";
 import { logExhibitionPublished, logExhibitionAnnouncement } from "@/lib/exhibitionEvents";
 import { getVaultImagePublicUrl } from "@/lib/vaultCloud";
 import { enqueueVaultItemSync, processVaultSyncQueue } from "@/lib/vaultSyncQueue";
@@ -163,10 +164,6 @@ function toGalleryPublicItemSnapshot(item: VaultItem): GalleryPublicItemSnapshot
     subtitle: item.subtitle,
     number: item.number,
     grade: item.grade,
-    currentValue:
-      typeof item.currentValue === "number" && Number.isFinite(item.currentValue)
-        ? item.currentValue
-        : undefined,
     imageFrontUrl: item.imageFrontUrl,
     imageBackUrl: item.imageBackUrl,
     imageFrontStoragePath: item.imageFrontStoragePath,
@@ -628,7 +625,8 @@ export default function GalleryPage() {
     const publicItemSnapshots = effectiveIds
       .map((itemId) => {
         const localItem = selectedItemById.get(itemId);
-        if (localItem) return toGalleryPublicItemSnapshot(localItem);
+        // Supplies (boxes, cases) are never part of the public record.
+        if (localItem) return isSupplyItem(localItem) ? undefined : toGalleryPublicItemSnapshot(localItem);
         return snapshotFallbackById.get(itemId);
       })
       .filter(Boolean) as GalleryPublicItemSnapshot[];

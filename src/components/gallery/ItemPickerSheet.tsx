@@ -5,6 +5,7 @@ import { createPortal } from "react-dom";
 import { AppIcon } from "@/components/ui/AppIcon";
 import { SelectCircle } from "@/components/ui/SelectCircle";
 import { type VaultItem } from "@/lib/vaultModel";
+import { isSupplyItem } from "@/lib/vaultStats";
 import { UNIVERSE_KEYS, UNIVERSE_LABEL, type UniverseKey } from "@/lib/taxonomy";
 
 export const MAX_EXHIBIT_ITEMS = 18;
@@ -38,7 +39,7 @@ function itemImage(i: VaultItem) {
 }
 
 export function ItemPickerSheet({
-  allItems,
+  allItems: everyItem,
   confirmedIds,
   sectionTitle: initialTitle,
   mode = "multi",
@@ -65,6 +66,13 @@ export function ItemPickerSheet({
   onConfirm: (ids: string[], title: string) => void;
   onClose: () => void;
 }) {
+  // Supplies (boxes, cases) are never shown publicly, so they cannot be picked. One already in an
+  // exhibit is dropped when you confirm.
+  const allItems = useMemo(() => everyItem.filter((item) => !isSupplyItem(item)), [everyItem]);
+  const supplyIds = useMemo(
+    () => new Set(everyItem.filter((item) => isSupplyItem(item)).map((item) => String(item.id))),
+    [everyItem]
+  );
   const [query, setQuery] = useState("");
   const [activeUniverses, setActiveUniverses] = useState<string[]>([]);
   const [activeCategory, setActiveCategory] = useState("");
@@ -77,7 +85,7 @@ export function ItemPickerSheet({
   // use up a slot, and they are kept as they are when you confirm, never silently dropped.
   const hiddenIds = useMemo(() => {
     const known = new Set(allItems.map((item) => String(item.id)));
-    return confirmedIds.filter((id) => !known.has(String(id)));
+    return confirmedIds.filter((id) => !known.has(String(id)) && !supplyIds.has(String(id)));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   const hiddenCount = hiddenIds.length;

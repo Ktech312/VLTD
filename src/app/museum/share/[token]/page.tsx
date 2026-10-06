@@ -1,5 +1,6 @@
 "use client";
 
+import { PUBLIC_ITEM_COLUMNS } from "@/lib/publicItemColumns";
 import Link from "next/link";
 import type { CSSProperties, ReactNode } from "react";
 import { useEffect, useMemo, useState } from "react";
@@ -417,7 +418,7 @@ export default function SharedGalleryPage() {
             if (uniqueArtifactIds.length > 0) {
               const { data: vaultRows, error: itemError } = await supabase
                 .from("vault_items")
-                .select("*")
+                .select(PUBLIC_ITEM_COLUMNS)
                 .in("id", uniqueArtifactIds);
 
               if (itemError) {
