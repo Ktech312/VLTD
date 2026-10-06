@@ -38,11 +38,14 @@ import {
 } from "@/lib/vaultModel";
 import { hasSupabaseEnv } from "@/lib/vaultCloud";
 import { deleteVaultItemEverywhere, deleteVaultItemsEverywhere } from "@/lib/vaultActions";
+import { getOnboardingStatus } from "@/lib/auth";
 
 const ACTIVE_PROFILE_EVENT = "vltd:active-profile";
 const SALES_KEY = "vltd_sales_history";
 const FOCUS_LS_KEY = "vltd_primary_focus";
 const VISIBLE_UNIVERSE_CHIPS_LS_KEY = "vltd_visible_universe_chips";
+const INITIAL_VISIBLE_ITEM_COUNT = 60;
+const VISIBLE_ITEM_INCREMENT = 60;
 
 type SortMode = "newest" | "value_desc" | "value_asc" | "gain_desc" | "gain_asc" | "title";
 type ReadinessFilter = "all" | "high" | "moderate" | "low";
@@ -1019,6 +1022,7 @@ export default function VaultPage() {
   const [isOnline, setIsOnline] = useState<boolean | null>(null);
   const [initialLoadComplete, setInitialLoadComplete] = useState(false);
   const [vaultViewMode, setVaultViewMode] = useState<VaultViewMode>("shelf");
+  const [visibleItemCount, setVisibleItemCount] = useState(INITIAL_VISIBLE_ITEM_COUNT);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(() => new Set());
   const [selectMode, setSelectMode] = useState(false);
   const [moveTargetUniverse, setMoveTargetUniverse] = useState<string>("");
@@ -1039,23 +1043,25 @@ export default function VaultPage() {
     }
   });
 
-  function refresh() {
-    setItems(loadItems());
+  function refresh(profileId?: string) {
+    setItems(loadItems(profileId ? { profileId } : undefined));
     setSales(readSales());
     setPendingSyncCount(getPendingVaultSyncCount());
   }
 
   async function hydrateAll() {
-    refresh();
+    const { activeProfile } = await getOnboardingStatus();
+    const profileId = activeProfile?.id ?? "";
+    refresh(profileId);
     if (promoteLegacySalesToItems()) {
-      refresh();
+      refresh(profileId);
     }
     await processVaultSyncQueue();
-    await syncVaultItemsFromSupabase();
+    await syncVaultItemsFromSupabase(profileId);
     if (ensureVaultItemUniverses()) {
       await processVaultSyncQueue();
     }
-    refresh();
+    refresh(profileId);
     setInitialLoadComplete(true);
   }
 
@@ -1177,6 +1183,15 @@ export default function VaultPage() {
 
     return next;
   }, [items, query, universeFilter, gradedOnly, uncategorizedOnly, sortMode, readinessFilter, intelligenceMap, sales, showSoldItems]);
+
+  const visibleItems = useMemo(
+    () => filteredItems.slice(0, visibleItemCount),
+    [filteredItems, visibleItemCount]
+  );
+
+  useEffect(() => {
+    setVisibleItemCount(INITIAL_VISIBLE_ITEM_COUNT);
+  }, [query, universeFilter, readinessFilter, gradedOnly, uncategorizedOnly, sortMode, showSoldItems, vaultViewMode]);
 
   useEffect(() => {
     if (filteredItems.length === 0) {
@@ -1899,7 +1914,7 @@ export default function VaultPage() {
                   : "gap-3 grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5",
               ].join(" ")}
             >
-              {filteredItems.map((item) => {
+              {visibleItems.map((item) => {
                 const isSelected = selectedIds.has(item.id);
                 return (
                   <div
@@ -1937,6 +1952,21 @@ export default function VaultPage() {
                 );
               })}
             </div>
+            {visibleItems.length < filteredItems.length ? (
+              <div className="mt-5 flex justify-center">
+                <button
+                  type="button"
+                  onClick={() => setVisibleItemCount((count) => count + VISIBLE_ITEM_INCREMENT)}
+                  className="min-h-11 rounded-[9px] px-5 text-sm font-semibold ring-1 ring-[color:var(--border)]"
+                  style={{ background: "var(--pill)", color: "var(--text)" }}
+                >
+                  Show {Math.min(VISIBLE_ITEM_INCREMENT, filteredItems.length - visibleItems.length)} more
+                  <span className="ml-2 text-xs font-normal" style={{ color: "var(--muted)" }}>
+                    {visibleItems.length} of {filteredItems.length}
+                  </span>
+                </button>
+              </div>
+            ) : null}
             {shouldShowSelectionDrawer && selectedDetailItem ? (
               <VaultSelectionDrawer
                 item={selectedDetailItem}

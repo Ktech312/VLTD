@@ -548,6 +548,22 @@ export function setStoredActiveProfileId(profileId: string) {
   window.dispatchEvent(new Event("vltd:active-profile"));
 }
 
+/**
+ * Pick the active profile consistently everywhere in the app.  This used to
+ * be duplicated in TopNav and getOnboardingStatus with different fallback
+ * orders, so a route change could silently switch a collector from their
+ * default profile to the legacy `clerk` profile.
+ */
+export function resolveActiveProfile(profiles: ProfileRow[], storedId = "") {
+  return (
+    profiles.find((profile) => profile.id === storedId) ??
+    profiles.find((profile) => profile.is_default) ??
+    profiles.find((profile) => profile.username === "clerk") ??
+    profiles[0] ??
+    null
+  );
+}
+
 export async function getOnboardingStatus() {
   const supabase = getSupabase();
   if (!supabase) {
@@ -601,12 +617,7 @@ export async function getOnboardingStatus() {
   const profiles = (profilesResult.data ?? []) as ProfileRow[];
   const storedId = getStoredActiveProfileId();
 
-  const activeProfile =
-    profiles.find((p) => p.id === storedId) ??
-    profiles.find((p) => p.is_default) ??
-    profiles.find((p) => p.username === "clerk") ??
-    profiles[0] ??
-    null;
+  const activeProfile = resolveActiveProfile(profiles, storedId);
 
   if (activeProfile && activeProfile.id !== storedId) {
     setStoredActiveProfileId(activeProfile.id);
