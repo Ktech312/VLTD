@@ -858,7 +858,7 @@ export default function ItemMedia({
               >
                 <img
                   src={activeImage}
-                  alt=""
+                  alt="" data-pin-nopin="true"
                   draggable={false}
                   className="h-full w-full object-contain bg-[color:var(--surface)] p-3 transition duration-300 group-hover:scale-[1.01]"
                 />

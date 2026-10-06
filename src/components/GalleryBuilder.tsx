@@ -576,24 +576,32 @@ export default function GalleryBuilder({
   // already-correct onConfirm handling (museum/[galleryId]/page.tsx),
   // which keeps top-level itemIds and section itemIds in sync in one step.
   function removeItemFromSection(sectionId: string, itemId: string) {
-    onGalleryChange((current) => {
-      const nextSections = getGallerySections(current).map((entry) => {
-        if (entry.id !== sectionId) return entry;
-        const nextItemIds = entry.itemIds.filter((id) => id !== itemId);
-        return {
-          ...entry,
-          itemIds: nextItemIds,
-          featuredItemId: nextItemIds.includes(entry.featuredItemId ?? "")
-            ? entry.featuredItemId
-            : nextItemIds[0],
-        };
-      });
-
+    const shrink = (entry: (typeof sections)[number]) => {
+      if (entry.id !== sectionId) return entry;
+      const nextItemIds = entry.itemIds.filter((id) => id !== itemId);
       return {
-        ...syncSectionsAndLayout(current, nextSections),
-        itemIds: current.itemIds.filter((id) => id !== itemId),
+        ...entry,
+        itemIds: nextItemIds,
+        // keep the saved wall positions in step, so the removed item cannot come back
+        slotLayout: entry.slotLayout ? entry.slotLayout.map((id) => (id === itemId ? null : id)) : entry.slotLayout,
+        featuredItemId: nextItemIds.includes(entry.featuredItemId ?? "")
+          ? entry.featuredItemId
+          : nextItemIds[0],
       };
-    });
+    };
+
+    onGalleryChange((current) => ({
+      ...syncSectionsAndLayout(current, getGallerySections(current).map(shrink)),
+      itemIds: current.itemIds.filter((id) => id !== itemId),
+    }));
+
+    // Save right away, like moving an item does. Without this the removal only
+    // lived in the open page and was lost unless you pressed Done, so the
+    // "deleted" item reappeared the next time the exhibit opened.
+    onQuickSave?.(
+      gallery.itemIds.filter((id) => id !== itemId),
+      sections.map(shrink)
+    );
   }
 
   function handlePreviewRemoveItem(itemId: string) {
@@ -1064,7 +1072,7 @@ export default function GalleryBuilder({
           >
             <div className="relative overflow-hidden p-3 sm:p-4">
               <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_22%_9%,rgba(255,245,204,0.18),transparent_22%),radial-gradient(circle_at_50%_9%,rgba(255,245,204,0.16),transparent_22%),radial-gradient(circle_at_78%_9%,rgba(255,245,204,0.18),transparent_22%),linear-gradient(180deg,rgba(255,255,255,0.08),transparent_18%,rgba(0,0,0,0.18))]" />
-              <div className="relative mx-auto grid max-w-[760px] grid-cols-3 gap-x-3 gap-y-7 sm:gap-x-4 sm:gap-y-8">
+              <div className="relative mx-auto grid max-w-[330px] grid-cols-3 gap-x-2 gap-y-3">
                 {Array.from({ length: SHELF_SLOT_COUNT }).map((_, i) => {
                   const itemId = previewSlots[i];
                   const itemMap = new Map(items.map((it) => [it.id, it]));
@@ -1187,7 +1195,7 @@ export default function GalleryBuilder({
                             <button
                               type="button"
                               onClick={(e) => { e.stopPropagation(); handlePreviewRemoveItem(item.id); }}
-                              className="absolute left-1 top-1 z-30 grid h-[18px] w-[18px] place-items-center rounded-full border border-red-400/70 bg-black/75"
+                              className="absolute bottom-[26%] left-1 z-30 grid h-[18px] w-[18px] place-items-center rounded-full border border-red-400/70 bg-black/75"
                               style={{ boxShadow: "0 0 8px rgba(248,113,113,0.75), 0 0 18px rgba(248,113,113,0.35)" }}
                               aria-label={`Remove ${item.title}`}
                             >
@@ -1209,7 +1217,7 @@ export default function GalleryBuilder({
 
                           {img ? (
                             // eslint-disable-next-line @next/next/no-img-element
-                            <img src={img} alt={item.title} className="absolute inset-x-0 top-0 h-[76%] w-full bg-[radial-gradient(circle_at_50%_0%,rgba(255,230,160,0.16),rgba(0,0,0,0.18)_45%,rgba(0,0,0,0.40))] object-contain object-center" draggable={false} />
+                            <img src={img} alt={item.title} data-pin-nopin="true" className="absolute inset-x-0 top-0 h-[76%] w-full bg-[radial-gradient(circle_at_50%_0%,rgba(255,230,160,0.16),rgba(0,0,0,0.18)_45%,rgba(0,0,0,0.40))] object-contain object-center" draggable={false} />
                           ) : (
                             <div className="absolute inset-x-0 top-0 flex h-[76%] w-full items-center justify-center bg-black/20 text-[9px] text-[color:var(--muted)]">—</div>
                           )}
