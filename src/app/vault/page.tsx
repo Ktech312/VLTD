@@ -1,5 +1,6 @@
 "use client";
 
+import VaultCategoryChips, { vaultItemCategory, vaultItemSubcategory } from "@/components/VaultCategoryChips";
 import { normalizeUniverse, universeForItem } from "@/lib/universeMatch";
 import Link from "next/link";
 import { PageHeader } from "@/components/layout/PageHeader";
@@ -939,6 +940,8 @@ export default function VaultPage() {
   const [readinessFilter, setReadinessFilter] = useState<ReadinessFilter>("all");
   const [gradedOnly, setGradedOnly] = useState(false);
   const [uncategorizedOnly, setUncategorizedOnly] = useState(false);
+  const [categoryFilter, setCategoryFilter] = useState("");
+  const [subFilter, setSubFilter] = useState("");
   const [sortMode, setSortMode] = useState<SortMode>("newest");
   const [showSoldItems, setShowSoldItems] = useState(false);
   const [sales, setSales] = useState<SaleInfo[]>([]);
@@ -1060,6 +1063,8 @@ export default function VaultPage() {
       const isSold = Boolean(saleInfoForItem(item, saleMap));
       if (!showSoldItems && isSold) return false;
       if (universeFilter !== "ALL" && universeForItem(item) !== universeFilter) return false;
+      if (categoryFilter && vaultItemCategory(item) !== categoryFilter) return false;
+      if (subFilter && vaultItemSubcategory(item) !== subFilter) return false;
       if (gradedOnly && !item.grade) return false;
       if (
         uncategorizedOnly &&
@@ -1108,7 +1113,17 @@ export default function VaultPage() {
     });
 
     return next;
-  }, [items, query, universeFilter, gradedOnly, uncategorizedOnly, sortMode, readinessFilter, intelligenceMap, sales, showSoldItems]);
+  }, [items, query, universeFilter, categoryFilter, subFilter, gradedOnly, uncategorizedOnly, sortMode, readinessFilter, intelligenceMap, sales, showSoldItems]);
+
+  const universeScopedItems = useMemo(
+    () => (universeFilter === "ALL" ? [] : items.filter((item) => universeForItem(item) === universeFilter)),
+    [items, universeFilter]
+  );
+  // A category only makes sense inside one universe: clear it when the universe changes.
+  useEffect(() => {
+    setCategoryFilter("");
+    setSubFilter("");
+  }, [universeFilter]);
 
   const visibleItems = useMemo(
     () => filteredItems.slice(0, visibleItemCount),
@@ -1256,6 +1271,8 @@ export default function VaultPage() {
   const hasActiveFilters =
     query.trim().length > 0 ||
     universeFilter !== "ALL" ||
+    categoryFilter !== "" ||
+    subFilter !== "" ||
     readinessFilter !== "all" ||
     gradedOnly ||
     uncategorizedOnly ||
@@ -1390,6 +1407,8 @@ export default function VaultPage() {
   function handleClearFilters() {
     setQuery("");
     setUniverseFilter("ALL");
+    setCategoryFilter("");
+    setSubFilter("");
     setReadinessFilter("all");
     setGradedOnly(false);
     setUncategorizedOnly(false);
@@ -1699,6 +1718,16 @@ export default function VaultPage() {
                 Show Sold <span className="text-[11px] opacity-65">{soldCount}</span>
               </button>
             </div>
+
+            {universeFilter !== "ALL" ? (
+              <VaultCategoryChips
+                items={universeScopedItems}
+                category={categoryFilter}
+                subcategory={subFilter}
+                onCategory={setCategoryFilter}
+                onSubcategory={setSubFilter}
+              />
+            ) : null}
 
             <div className="mt-3 flex flex-wrap items-center gap-2">
               {filteredItems.length > 0 && (

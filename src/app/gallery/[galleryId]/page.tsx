@@ -1,168 +1,24 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 
-import { loadGalleries, deleteGallery } from "@/lib/galleryModel";
-import { loadItems } from "@/lib/vaultModel";
-import { canViewPublicGallery, isAdultOnlyGallery } from "@/lib/galleryPublic";
-import { addWishlistItem } from "@/lib/wishlistModel";
-import { AdultContentGate, useAdultGate } from "@/components/PublicSafetyControls";
-import SwipeStack from "@/components/SwipeStack";
-
-import GalleryHero from "@/components/gallery/GalleryHero";
-import GalleryLayout from "@/components/gallery/GalleryLayout";
-
-export default function PublicGalleryPage() {
+// The old exhibition viewer only read this device's own saved exhibitions, so anyone else's
+// exhibition showed as private. The home page, favorites and old links still point here, so
+// they all land on the real public exhibit page instead.
+export default function GalleryRedirectPage() {
   const params = useParams();
   const router = useRouter();
-  const id = params.galleryId as string;
+  const id = String(params?.galleryId ?? "");
 
-  const [galleryMode, setGalleryMode] = useState<"grid" | "swipe">("grid");
-  const [reportSent, setReportSent] = useState(false);
-  const [deleteError, setDeleteError] = useState<string | null>(null);
-  const [isDeleting, setIsDeleting] = useState(false);
-
-  const gallery = useMemo(() => {
-    const galleries = loadGalleries();
-    return galleries.find((entry) => entry.id === id) ?? null;
-  }, [id]);
-
-  const items = useMemo(() => loadItems(), []);
-
-  const galleryItems = useMemo(() => {
-    if (!gallery) return [];
-    return items.filter((i) => gallery.itemIds.includes(i.id));
-  }, [gallery, items]);
-
-  // If found via loadGalleries() (local storage), the viewer is the owner
-  const isOwner = gallery !== null;
-
-  const adultGate = useAdultGate(isAdultOnlyGallery(gallery));
-
-  async function handleDelete() {
-    if (!gallery || isDeleting) return;
-    if (!confirm("Delete this exhibition? This cannot be undone.")) return;
-    setIsDeleting(true);
-    setDeleteError(null);
-    const result = await deleteGallery(gallery.id);
-    if (!result.ok) {
-      setIsDeleting(false);
-      setDeleteError(result.error || "Could not delete this exhibition from the cloud. Please try again.");
-      return;
-    }
-    router.push("/museum");
-  }
-
-  function handleReport() {
-    setReportSent(true);
-    setTimeout(() => setReportSent(false), 3000);
-  }
-
-  if (!gallery) {
-    return (
-      <main className="text-[color:var(--fg)]">
-        <div className="mx-auto max-w-4xl px-6 py-16">
-          <div className="text-2xl font-semibold">This exhibition is private</div>
-          <div className="mt-2 text-sm opacity-70">The owner has restricted public access.</div>
-        </div>
-      </main>
-    );
-  }
-
-  if (!canViewPublicGallery(gallery)) {
-    return (
-      <main className="text-[color:var(--fg)]">
-        <div className="mx-auto max-w-4xl px-6 py-16">
-          <div className="text-2xl font-semibold">This exhibition is private</div>
-          <div className="mt-2 text-sm opacity-70">The owner has restricted public access.</div>
-        </div>
-      </main>
-    );
-  }
-
-  if (adultGate.shouldGate) {
-    return <AdultContentGate onConfirm={adultGate.confirm} />;
-  }
+  useEffect(() => {
+    if (id) router.replace(`/museum/${encodeURIComponent(id)}/guest`);
+  }, [id, router]);
 
   return (
     <main className="text-[color:var(--fg)]">
-      <div className="mx-auto max-w-4xl px-4 py-6 sm:px-6">
-
-        {/* Hero with all controls embedded */}
-        <GalleryHero
-          gallery={gallery}
-          isOwner={isOwner}
-          galleryMode={galleryMode}
-          onSwipe={() => setGalleryMode("swipe")}
-          onGridView={() => setGalleryMode("grid")}
-          onAdd={() => router.push(`/museum/${gallery.id}`)}
-          onDelete={handleDelete}
-          onReport={handleReport}
-        />
-
-        {reportSent && (
-          <div className="mt-3 rounded-2xl px-4 py-3 text-sm text-center" style={{ background: "rgba(203,208,213,0.08)", border: "1px solid rgba(203,208,213,0.2)", color: "#C8CDD2" }}>
-            Report submitted — thank you.
-          </div>
-        )}
-
-        {deleteError && (
-          <div className="mt-3 rounded-2xl px-4 py-3 text-sm text-center" style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)", color: "rgb(252,165,165)" }}>
-            {deleteError}
-          </div>
-        )}
-
-        {/* Content */}
-        <div className="mt-6">
-          {/* Blank "add first item" card — shown in both modes when empty */}
-          {galleryItems.length === 0 ? (
-            <button
-              type="button"
-              onClick={() => router.push(`/museum/${gallery.id}`)}
-              className="mx-auto flex w-full max-w-[200px] flex-col items-center justify-center gap-3 rounded-[24px] transition hover:scale-[1.02] active:scale-[0.98]"
-              style={{
-                aspectRatio: "2/3",
-                background: "rgba(15,25,45,0.6)",
-                border: "1.5px dashed rgba(203,208,213,0.35)",
-                color: "#C8CDD2",
-              }}
-            >
-              <span
-                className="flex h-12 w-12 items-center justify-center rounded-full"
-                style={{ background: "rgba(203,208,213,0.12)", border: "1px solid rgba(203,208,213,0.3)", fontSize: "24px", fontWeight: 300 }}
-              >
-                +
-              </span>
-              <span className="text-sm font-semibold" style={{ color: "#61656B" }}>Add first item</span>
-            </button>
-          ) : galleryMode === "swipe" ? (
-            <div className="mx-auto max-w-sm px-4 pt-4">
-              <SwipeStack
-                items={galleryItems}
-                mode="gallery"
-                onWant={(item) => {
-                  addWishlistItem({
-                    title: item.title,
-                    targetPrice: item.currentValue ?? undefined,
-                    notes: `Spotted in ${gallery.title}'s exhibition`,
-                    universe: item.universe,
-                    category: item.category,
-                  });
-                }}
-                onOpen={(item) => router.push(`/vault/item/${item.id}`)}
-                onEnd={() => setGalleryMode("grid")}
-              />
-            </div>
-          ) : (
-            <GalleryLayout
-              layout={gallery.layout}
-              items={galleryItems}
-              title={gallery.title}
-            />
-          )}
-        </div>
-
+      <div className="mx-auto max-w-3xl px-4 py-16 text-center text-sm text-[color:var(--muted)]">
+        Opening exhibition…
       </div>
     </main>
   );

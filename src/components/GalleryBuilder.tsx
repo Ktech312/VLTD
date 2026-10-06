@@ -70,8 +70,8 @@ const GALLERY_VIEW_OPTIONS: PillSelectOption<GalleryViewOption>[] = [
   },
   {
     value: "grid",
-    label: "Grid View",
-    subtitle: "Flat exhibition grid without shelves.",
+    label: "Plain cards",
+    subtitle: "Flat cards on a plain background, no shelves.",
   },
 ] as const;
 
@@ -328,7 +328,9 @@ export default function GalleryBuilder({
       const nextSections = getGallerySections(current).map((s, i) => {
         if (i !== 0) return s;
         const existing = new Set(s.itemIds);
-        const toAdd = unassigned.filter((id) => !existing.has(id));
+        const toAdd = unassigned
+          .filter((id) => !existing.has(id))
+          .slice(0, Math.max(0, SHELF_SLOT_COUNT - s.itemIds.length));
         return toAdd.length > 0 ? { ...s, itemIds: [...s.itemIds, ...toAdd] } : s;
       });
       return syncSectionsAndLayout(current, nextSections);
@@ -451,12 +453,26 @@ export default function GalleryBuilder({
     });
   }
 
+  const [capMessage, setCapMessage] = useState("");
+  function warnFull() {
+    setCapMessage(`An exhibit holds ${SHELF_SLOT_COUNT} items. Remove one first, or start another exhibit.`);
+    window.setTimeout(() => setCapMessage(""), 4000);
+  }
+  // New items land in the first exhibit, so that is the one that must have room.
+  function firstExhibitFull() {
+    return sections.length > 0 && sections[0].itemIds.length >= SHELF_SLOT_COUNT;
+  }
+
   function toggle(id: string) {
     if (selectedSet.has(id)) {
       onChange(gallery.itemIds.filter((itemId) => itemId !== id));
       return;
     }
 
+    if (firstExhibitFull()) {
+      warnFull();
+      return;
+    }
     onChange([...gallery.itemIds, id]);
   }
 
@@ -496,6 +512,12 @@ export default function GalleryBuilder({
     if (selectedSet.has(droppedId)) {
       onChange(reorderIds(gallery.itemIds, droppedId, targetId));
     } else {
+      if (firstExhibitFull()) {
+        warnFull();
+        setDraggingId(null);
+        setDropTargetId(null);
+        return;
+      }
       const targetIndex = gallery.itemIds.indexOf(targetId);
       const next = [...gallery.itemIds];
       if (!next.includes(droppedId)) {
@@ -511,7 +533,11 @@ export default function GalleryBuilder({
   function onDropIntoSelectedList(event: DragEvent<HTMLElement>) {
     const droppedId = getDroppedItemId(event);
     if (droppedId && !selectedSet.has(droppedId)) {
-      onChange([...gallery.itemIds, droppedId]);
+      if (firstExhibitFull()) {
+        warnFull();
+      } else {
+        onChange([...gallery.itemIds, droppedId]);
+      }
     }
 
     setDraggingId(null);
@@ -524,6 +550,12 @@ export default function GalleryBuilder({
 
   function assignItemToSection(sectionId: string, itemId: string) {
     if (!itemId) return;
+
+    const target = sections.find((entry) => entry.id === sectionId);
+    if (target && !target.itemIds.includes(itemId) && target.itemIds.length >= SHELF_SLOT_COUNT) {
+      warnFull();
+      return;
+    }
 
     onGalleryChange((current) => {
       const nextSections = getGallerySections(current).map((entry) => {
@@ -668,13 +700,20 @@ export default function GalleryBuilder({
                   ].join(" ")}
                   aria-pressed={active}
                 >
-                  {type}
+                  {type === "GRID" ? "Standard" : type === "CURATED" ? "Curated" : "Timeline"}
                 </button>
               );
             })}
 
           </div>
         </div>
+        {layoutType === "CURATED" || layoutType === "TIMELINE" ? (
+          <div className="mt-2 text-[11px] text-[color:var(--muted)]">
+            {layoutType === "CURATED"
+              ? "Curated shows one featured work large at the top. The wall positions you arranged are not used."
+              : "Timeline orders works by year. The wall positions you arranged are not used."}
+          </div>
+        ) : null}
 
         {/* ── Gallery stat chips — compact row ── */}
         <div className="mt-3 grid grid-cols-2 gap-2">
@@ -1222,7 +1261,8 @@ export default function GalleryBuilder({
                 })}
               </div>
               <div className="mt-2 text-center text-[10px] font-semibold uppercase tracking-widest text-white/25">
-                {previewItems.length} / {SHELF_SLOT_COUNT} items · {displayMode === "grid" ? "Grid View" : getGalleryThemeLabel(themePack)}
+                {capMessage ? <span className="mb-1 block normal-case tracking-normal text-red-300">{capMessage}</span> : null}
+                {previewItems.length} / {SHELF_SLOT_COUNT} items · {displayMode === "grid" ? "Plain cards" : getGalleryThemeLabel(themePack)}
               </div>
             </div>
           </div>

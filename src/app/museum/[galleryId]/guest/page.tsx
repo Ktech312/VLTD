@@ -1,6 +1,7 @@
 "use client";
 
-import { hiddenStubItem } from "@/lib/hiddenItems";
+import { vaultItemFromPublicSnapshot as vaultItemFromGallerySnapshot } from "@/lib/hiddenItems";
+import { publicRowToItem as rowToVaultItem } from "@/lib/publicProfile";
 import { PUBLIC_ITEM_COLUMNS } from "@/lib/publicItemColumns";
 import Link from "next/link";
 import { isSupplyItem } from "@/lib/vaultStats";
@@ -22,56 +23,6 @@ import { resolveGuestGalleryViewModel } from "@/lib/guestGalleryViewModel";
 import { loadItems, syncVaultItemsFromSupabase, type VaultItem } from "@/lib/vaultModel";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 import { AdultContentGate, ReportContentButton, useAdultGate } from "@/components/PublicSafetyControls";
-
-function vaultItemFromGallerySnapshot(snapshot: GalleryPublicItemSnapshot): VaultItem {
-  if (snapshot.hidden) return hiddenStubItem(snapshot.id, snapshot.createdAt, snapshot.blurThumb);
-  return {
-    id: String(snapshot.id ?? "").trim(),
-    title: String(snapshot.title ?? "").trim() || "Untitled Item",
-    subtitle: typeof snapshot.subtitle === "string" ? snapshot.subtitle : undefined,
-    number: typeof snapshot.number === "string" ? snapshot.number : undefined,
-    grade: typeof snapshot.grade === "string" ? snapshot.grade : undefined,
-    currentValue:
-      typeof snapshot.currentValue === "number" && Number.isFinite(snapshot.currentValue)
-        ? snapshot.currentValue
-        : undefined,
-    imageFrontUrl: typeof snapshot.imageFrontUrl === "string" ? snapshot.imageFrontUrl : undefined,
-    imageBackUrl: typeof snapshot.imageBackUrl === "string" ? snapshot.imageBackUrl : undefined,
-    imageFrontStoragePath:
-      typeof snapshot.imageFrontStoragePath === "string" ? snapshot.imageFrontStoragePath : undefined,
-    primaryImageKey:
-      typeof snapshot.primaryImageKey === "string" ? snapshot.primaryImageKey : undefined,
-    createdAt:
-      typeof snapshot.createdAt === "number" && Number.isFinite(snapshot.createdAt)
-        ? snapshot.createdAt
-        : Date.now(),
-    isNew: false,
-  };
-}
-
-function rowToVaultItem(row: Record<string, unknown>): VaultItem {
-  return {
-    id: String(row.id ?? ""),
-    profile_id: typeof row.profile_id === "string" ? row.profile_id : undefined,
-    title: typeof row.title === "string" ? row.title : "Untitled Item",
-    subtitle: typeof row.subtitle === "string" ? row.subtitle : undefined,
-    universe: typeof row.universe === "string" ? row.universe : undefined,
-    category: typeof row.category === "string" ? row.category : undefined,
-    grade: typeof row.grade === "string" ? row.grade : undefined,
-    // Guests see the public description, never the owner's private notes.
-    notes: typeof row.description === "string" ? row.description : undefined,
-    year: typeof row.year === "string" ? row.year : undefined,
-    currentValue: typeof row.current_value === "number" ? row.current_value : undefined,
-    purchasePrice: typeof row.purchase_price === "number" ? row.purchase_price : undefined,
-    imageFrontUrl: typeof row.image_front_url === "string" && row.image_front_url ? row.image_front_url : undefined,
-    imageFrontStoragePath: typeof row.image_front_storage_path === "string" ? row.image_front_storage_path : undefined,
-    status: (row.status === "COLLECTION" || row.status === "FOR_SALE" || row.status === "SOLD" || row.status === "WISHLIST")
-      ? row.status : undefined,
-    isPublic: true,
-    createdAt: typeof row.created_at === "number" ? row.created_at : Date.now(),
-    isNew: false,
-  };
-}
 
 const ACTIVE_PROFILE_KEY = "vltd_active_profile_id_v1";
 

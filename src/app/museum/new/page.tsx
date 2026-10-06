@@ -1,5 +1,6 @@
 "use client";
 
+import { ACCESS_PILLS, accessDescription, applyAccessMode, type GalleryAccessPillMode } from "@/lib/galleryAccess";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -52,13 +53,11 @@ export default function NewMuseumGalleryPage() {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   // Free tier exhibitions must be PUBLIC
-  const [visibility, setVisibility] = useState<Gallery["visibility"]>(
-    forcePublic ? "PUBLIC" : "LOCKED"
+  const [accessMode, setAccessMode] = useState<GalleryAccessPillMode>(
+    forcePublic ? "public_gallery" : "private"
   );
-  const [state, setState] = useState<Gallery["state"]>("ACTIVE");
   const [themePack, setThemePack] = useState<GalleryThemePack>("classic");
   const [displayMode, setDisplayMode] = useState<"grid" | "shelf">("grid");
-  const [guestViewMode, setGuestViewMode] = useState<"public" | "guest">("public");
   const [adultOnly, setAdultOnly] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
@@ -79,17 +78,19 @@ export default function NewMuseumGalleryPage() {
     try {
       const next = createGallery(cleanTitle);
 
-      const updated: Gallery = {
-        ...next,
-        description: safeTrim(description),
-        visibility,
-        state,
-        themePack,
-        displayMode,
-        guestViewMode,
-        adultOnly,
-        updatedAt: Date.now(),
-      };
+      // Same four access choices the exhibit page uses, so the words match from the start.
+      const updated: Gallery = applyAccessMode(
+        {
+          ...next,
+          description: safeTrim(description),
+          state: "ACTIVE",
+          themePack,
+          displayMode,
+          adultOnly,
+          updatedAt: Date.now(),
+        },
+        accessMode
+      );
 
       saveGalleries([...existingGalleries, updated]);
       router.push(`/museum/${updated.id}`);
@@ -206,41 +207,41 @@ export default function NewMuseumGalleryPage() {
             <div className="text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">
               ACCESS
             </div>
-            <h2 className="mt-2 text-xl font-semibold">Visibility + State</h2>
+            <h2 className="mt-2 text-xl font-semibold">Visibility</h2>
 
             <div className="mt-5 grid gap-4">
               <div>
-                <label className="mb-2 block text-sm font-medium">Visibility</label>
+                <label className="mb-2 block text-sm font-medium">Who can see it</label>
                 {forcePublic ? (
                   <div className="flex items-center gap-2 min-h-[46px] w-full rounded-2xl bg-[color:var(--input)] px-4 py-3 ring-1 ring-[color:var(--border)]">
-                    <span className="text-sm text-[color:var(--fg)]">Public</span>
+                    <span className="text-sm text-[color:var(--fg)]">Public Exhibit</span>
                     <span className="ml-auto text-[10px] font-semibold uppercase tracking-[0.18em] text-[color:var(--muted2)]">
                       Free plan · <a href="/account/billing" className="underline">Upgrade</a> for private
                     </span>
                   </div>
                 ) : (
-                  <select
-                    value={visibility}
-                    onChange={(e) => setVisibility(e.target.value as Gallery["visibility"])}
-                    className="min-h-[46px] w-full rounded-2xl bg-[color:var(--input)] px-4 py-3 ring-1 ring-[color:var(--border)] focus:outline-none"
-                  >
-                    <option value="PUBLIC">Public</option>
-                    <option value="INVITE">Invite Only</option>
-                    <option value="LOCKED">Locked</option>
-                  </select>
+                  <>
+                    <div className="flex flex-wrap gap-2">
+                      {ACCESS_PILLS.map((pill) => (
+                        <button
+                          key={pill.mode}
+                          type="button"
+                          onClick={() => setAccessMode(pill.mode)}
+                          className={[
+                            "vltd-selectable inline-flex min-h-[34px] items-center justify-center rounded-full px-3.5 py-1 text-xs font-semibold ring-1 transition",
+                            accessMode === pill.mode
+                              ? "vltd-pill-main-glow bg-[color:var(--pill-active-bg)] text-[color:var(--pill-active-fg)]"
+                              : "bg-[color:var(--pill)] text-[color:var(--pill-fg)] ring-[color:var(--border)] hover:bg-[color:var(--pill-hover)]",
+                          ].join(" ")}
+                          aria-pressed={accessMode === pill.mode}
+                        >
+                          {pill.label}
+                        </button>
+                      ))}
+                    </div>
+                    <div className="mt-2 text-xs leading-5 text-[color:var(--muted)]">{accessDescription(accessMode)}</div>
+                  </>
                 )}
-              </div>
-
-              <div>
-                <label className="mb-2 block text-sm font-medium">State</label>
-                <select
-                  value={state}
-                  onChange={(e) => setState(e.target.value as Gallery["state"])}
-                  className="min-h-[46px] w-full rounded-2xl bg-[color:var(--input)] px-4 py-3 ring-1 ring-[color:var(--border)] focus:outline-none"
-                >
-                  <option value="ACTIVE">Active</option>
-                  <option value="STORAGE">Storage</option>
-                </select>
               </div>
 
               <label className="flex items-start justify-between gap-4 rounded-2xl bg-[color:var(--input)] px-4 py-3 ring-1 ring-[color:var(--border)]">
@@ -294,17 +295,6 @@ export default function NewMuseumGalleryPage() {
                 </select>
               </div>
 
-              <div>
-                <label className="mb-2 block text-sm font-medium">Guest View Mode</label>
-                <select
-                  value={guestViewMode}
-                  onChange={(e) => setGuestViewMode(e.target.value as "public" | "guest")}
-                  className="min-h-[46px] w-full rounded-2xl bg-[color:var(--input)] px-4 py-3 ring-1 ring-[color:var(--border)] focus:outline-none"
-                >
-                  <option value="public">Public</option>
-                  <option value="guest">Guest</option>
-                </select>
-              </div>
             </div>
           </div>
         </section>

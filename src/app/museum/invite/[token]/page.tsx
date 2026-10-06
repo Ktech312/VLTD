@@ -1,6 +1,7 @@
 "use client";
 
-import { hiddenStubItem } from "@/lib/hiddenItems";
+import { vaultItemFromPublicSnapshot as vaultItemFromSnapshot } from "@/lib/hiddenItems";
+import { publicRowToItem as normalizeVaultItem } from "@/lib/publicProfile";
 import { PUBLIC_ITEM_COLUMNS, PUBLIC_ITEM_COLUMNS_FINANCIAL } from "@/lib/publicItemColumns";
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -33,89 +34,6 @@ function formatMoney(value?: number) {
 
 function itemSubtitle(item: VaultItem) {
   return [item.subtitle, item.number, item.grade].filter(Boolean).join(" · ");
-}
-
-function normalizeVaultItem(raw: Record<string, unknown>): VaultItem {
-  const createdAt =
-    typeof raw.created_at === "string"
-      ? Date.parse(raw.created_at) || Date.now()
-      : typeof raw.createdAt === "number"
-        ? raw.createdAt
-        : Date.now();
-
-  return {
-    id: String(raw.id ?? "").trim(),
-    profile_id: typeof raw.profile_id === "string" ? raw.profile_id : undefined,
-    title: String(raw.title ?? "").trim() || "Untitled Item",
-    subtitle: typeof raw.subtitle === "string" ? raw.subtitle : undefined,
-    number: typeof raw.number === "string" ? raw.number : undefined,
-    grade: typeof raw.grade === "string" ? raw.grade : undefined,
-    universe: typeof raw.universe === "string" ? raw.universe : undefined,
-    category: typeof raw.category === "string" ? raw.category : undefined,
-    categoryLabel:
-      typeof raw.category_label === "string"
-        ? raw.category_label
-        : typeof raw.categoryLabel === "string"
-          ? raw.categoryLabel
-          : undefined,
-    subcategoryLabel:
-      typeof raw.subcategory_label === "string"
-        ? raw.subcategory_label
-        : typeof raw.subcategoryLabel === "string"
-          ? raw.subcategoryLabel
-          : undefined,
-    purchasePrice:
-      typeof raw.purchase_price === "number" ? raw.purchase_price : undefined,
-    currentValue:
-      typeof raw.current_value === "number" ? raw.current_value : undefined,
-    imageFrontUrl:
-      typeof raw.image_front_url === "string" ? raw.image_front_url : undefined,
-    imageFrontStoragePath:
-      typeof raw.image_front_storage_path === "string"
-        ? raw.image_front_storage_path
-        : undefined,
-    primaryImageKey:
-      typeof raw.primary_image_key === "string" ? raw.primary_image_key : undefined,
-    // Visitors see the public description, never the owner's private notes.
-    notes: typeof raw.description === "string" ? raw.description : undefined,
-    year: typeof raw.year === "string" ? raw.year : undefined,
-    storageLocation:
-      typeof raw.storage_location === "string" ? raw.storage_location : undefined,
-    certNumber:
-      typeof raw.cert_number === "string" ? raw.cert_number : undefined,
-    serialNumber:
-      typeof raw.serial_number === "string" ? raw.serial_number : undefined,
-    createdAt,
-    isNew: false,
-  };
-}
-
-function vaultItemFromSnapshot(snapshot: GalleryPublicItemSnapshot): VaultItem {
-  if (snapshot.hidden) return hiddenStubItem(snapshot.id, snapshot.createdAt, snapshot.blurThumb);
-  return {
-    id: String(snapshot.id ?? "").trim(),
-    title: String(snapshot.title ?? "").trim() || "Untitled Item",
-    subtitle: typeof snapshot.subtitle === "string" ? snapshot.subtitle : undefined,
-    number: typeof snapshot.number === "string" ? snapshot.number : undefined,
-    grade: typeof snapshot.grade === "string" ? snapshot.grade : undefined,
-    currentValue:
-      typeof snapshot.currentValue === "number" && Number.isFinite(snapshot.currentValue)
-        ? snapshot.currentValue
-        : undefined,
-    imageFrontUrl:
-      typeof snapshot.imageFrontUrl === "string" ? snapshot.imageFrontUrl : undefined,
-    imageFrontStoragePath:
-      typeof snapshot.imageFrontStoragePath === "string"
-        ? snapshot.imageFrontStoragePath
-        : undefined,
-    primaryImageKey:
-      typeof snapshot.primaryImageKey === "string" ? snapshot.primaryImageKey : undefined,
-    createdAt:
-      typeof snapshot.createdAt === "number" && Number.isFinite(snapshot.createdAt)
-        ? snapshot.createdAt
-        : Date.now(),
-    isNew: false,
-  };
 }
 
 // ─── Image lightbox ──────────────────────────────────────────

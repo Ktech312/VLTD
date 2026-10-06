@@ -29,6 +29,25 @@ export function hiddenStubItem(id: string, createdAt?: number, blurThumb?: strin
   };
 }
 
+/** Turns a saved public record back into an item for a public page (hidden ones become the stub). */
+export function vaultItemFromPublicSnapshot(snapshot: GalleryPublicItemSnapshot): VaultItem {
+  if (snapshot.hidden) return hiddenStubItem(snapshot.id, snapshot.createdAt, snapshot.blurThumb);
+  return {
+    id: String(snapshot.id ?? "").trim(),
+    title: String(snapshot.title ?? "").trim() || "Untitled Item",
+    subtitle: snapshot.subtitle,
+    number: snapshot.number,
+    grade: snapshot.grade,
+    imageFrontUrl: snapshot.imageFrontUrl,
+    imageBackUrl: snapshot.imageBackUrl,
+    imageFrontStoragePath: snapshot.imageFrontStoragePath,
+    primaryImageKey: snapshot.primaryImageKey,
+    createdAt:
+      typeof snapshot.createdAt === "number" && Number.isFinite(snapshot.createdAt) ? snapshot.createdAt : Date.now(),
+    isNew: false,
+  };
+}
+
 /** The public record for a hidden item: no title, no photo, only a tiny grey blur. */
 export function hiddenSnapshot(id: string, createdAt?: number, blurThumb?: string): GalleryPublicItemSnapshot {
   return { id, title: HIDDEN_ITEM_TITLE, hidden: true, blurThumb, createdAt };

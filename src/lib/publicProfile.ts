@@ -62,6 +62,7 @@ function optionalString(value: unknown) {
 }
 
 function optionalNumber(value: unknown) {
+  if (value === null || value === undefined || value === "") return undefined;
   const next = Number(value);
   return Number.isFinite(next) ? next : undefined;
 }
@@ -80,7 +81,7 @@ function rowToVaultImage(entry: unknown, index: number): VaultImage | null {
   };
 }
 
-function publicRowToItem(input: unknown): VaultItem {
+export function publicRowToItem(input: unknown): VaultItem {
   const row = asRecord(input);
   const imageFrontUrlRaw = typeof row.image_front_url === "string" ? row.image_front_url : "";
   const imageFrontStoragePath =
@@ -106,7 +107,16 @@ function publicRowToItem(input: unknown): VaultItem {
     universe: optionalString(row.universe),
     category: optionalString(row.category),
     categoryLabel: optionalString(row.category_label),
+    customCategoryLabel: optionalString(row.custom_category_label),
     subcategoryLabel: optionalString(row.subcategory_label),
+    year: optionalString(row.year),
+    brand: optionalString(row.brand),
+    edition: optionalString(row.edition),
+    variant: optionalString(row.variant),
+    condition: optionalString(row.condition),
+    tags: Array.isArray(row.tags) ? row.tags.filter((tag): tag is string => typeof tag === "string") : undefined,
+    isFirstEdition: typeof row.is_first_edition === "boolean" ? row.is_first_edition : undefined,
+    imageBackUrl: optionalString(row.image_back_url),
     title: optionalString(row.title) || "Untitled item",
     subtitle: optionalString(row.subtitle),
     number: optionalString(row.number),
@@ -127,7 +137,9 @@ function publicRowToItem(input: unknown): VaultItem {
       row.status === "COLLECTION" || row.status === "FOR_SALE" || row.status === "SOLD" || row.status === "WISHLIST"
         ? row.status
         : undefined,
-    createdAt: optionalNumber(row.created_at) ?? Date.now(),
+    createdAt:
+      optionalNumber(row.created_at) ??
+      (typeof row.created_at === "string" ? Date.parse(row.created_at) || Date.now() : Date.now()),
     isNew: typeof row.is_new === "boolean" ? row.is_new : false,
     isPublic: typeof row.is_public === "boolean" ? row.is_public : true,
   };

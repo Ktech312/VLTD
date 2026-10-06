@@ -1,5 +1,6 @@
 "use client";
 
+import VaultCategoryChips, { vaultItemCategory, vaultItemSubcategory } from "@/components/VaultCategoryChips";
 import { normalizeUniverse, universeForItem } from "@/lib/universeMatch";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
@@ -632,6 +633,8 @@ export default function VaultUniversePage() {
   const [universeFilter, setUniverseFilter] = useState<UniverseFilter>("ALL");
   const [gradedOnly, setGradedOnly] = useState(false);
   const [showUncategorized, setShowUncategorized] = useState(false);
+  const [categoryFilter, setCategoryFilter] = useState("");
+  const [subFilter, setSubFilter] = useState("");
   const [selectMode, setSelectMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [myProfiles, setMyProfiles] = useState<ProfileRow[]>([]);
@@ -714,6 +717,8 @@ export default function VaultUniversePage() {
       if (!showSoldItems && isSold) return false;
       if (universeForItem(item) !== activeUniverse) return false;
       if (universeFilter !== "ALL" && universeForItem(item) !== universeFilter) return false;
+      if (categoryFilter && vaultItemCategory(item) !== categoryFilter) return false;
+      if (subFilter && vaultItemSubcategory(item) !== subFilter) return false;
       if (gradedOnly && !item.grade) return false;
       if (showUncategorized && (item.categoryLabel || item.category)) return false;
       if (q) {
@@ -754,7 +759,12 @@ export default function VaultUniversePage() {
     });
 
     return next;
-  }, [items, query, universeFilter, gradedOnly, showUncategorized, sortMode, intelligenceMap, sales, showSoldItems, activeUniverse]);
+  }, [items, query, universeFilter, categoryFilter, subFilter, gradedOnly, showUncategorized, sortMode, intelligenceMap, sales, showSoldItems, activeUniverse]);
+
+  const universeScopedItems = useMemo(
+    () => items.filter((item) => universeForItem(item) === activeUniverse),
+    [items, activeUniverse]
+  );
 
   const saleMap = useMemo(
     () => Object.fromEntries(sales.map((sale) => [String(sale.id), sale])),
@@ -948,8 +958,8 @@ export default function VaultUniversePage() {
   );
 
   const stats = useMemo(() => {
-    const totalItems = filteredItems.length;
     const counted = collectibleItems(filteredItems);
+    const totalItems = counted.length;
     const totalCostValue = counted.reduce((sum, item) => sum + totalCost(item), 0);
     const totalValue = counted.reduce((sum, item) => sum + effectiveMarketValue(item), 0);
     const totalGain = totalValue - totalCostValue;
@@ -987,6 +997,8 @@ export default function VaultUniversePage() {
 
   const hasActiveFilters =
     query.trim().length > 0 ||
+    categoryFilter !== "" ||
+    subFilter !== "" ||
     gradedOnly ||
     showUncategorized ||
     showSoldItems ||
@@ -1017,6 +1029,8 @@ export default function VaultUniversePage() {
 
   function handleClearFilters() {
     setQuery("");
+    setCategoryFilter("");
+    setSubFilter("");
     setGradedOnly(false);
     setShowUncategorized(false);
     setSortMode("newest");
@@ -1207,6 +1221,15 @@ export default function VaultUniversePage() {
             >
               {showSoldItems ? `Hide Sold Items (${soldCount})` : `Show Sold Items (${soldCount})`}
             </PillButton>
+            <div className="basis-full">
+              <VaultCategoryChips
+                items={universeScopedItems}
+                category={categoryFilter}
+                subcategory={subFilter}
+                onCategory={setCategoryFilter}
+                onSubcategory={setSubFilter}
+              />
+            </div>
             {/* Bulk select — checkboxes icon + inline actions */}
             {filteredItems.length > 0 && (
               <div className="flex flex-wrap items-center gap-1.5">

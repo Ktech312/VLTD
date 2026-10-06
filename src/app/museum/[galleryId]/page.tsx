@@ -1,6 +1,7 @@
 ﻿"use client";
 
-import { buildPublicSnapshot, hiddenStubItem } from "@/lib/hiddenItems";
+import { accessDescription, applyAccessMode, getAccessMode, type GalleryAccessPillMode } from "@/lib/galleryAccess";
+import { buildPublicSnapshot, vaultItemFromPublicSnapshot as vaultItemFromGallerySnapshot } from "@/lib/hiddenItems";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useParams } from "next/navigation";
@@ -38,7 +39,6 @@ import { INLINE_EDIT_LINE } from "@/lib/inlineEdit";
 import { ItemPickerSheet } from "@/components/gallery/ItemPickerSheet";
 import { formatMoney, getGalleryMetrics } from "@/lib/portfolioMetrics";
 
-type GalleryAccessPillMode = "private" | "public_gallery" | "guest_view" | "registered_users";
 
 const GALLERY_ASSET_BUCKET = "gallery-backgrounds";
 const GALLERY_DRAFT_CACHE_PREFIX = "vltd_gallery_editor_draft_v1";
@@ -162,27 +162,6 @@ async function uploadGalleryAssetToStorage(
   return publicUrl;
 }
 
-function vaultItemFromGallerySnapshot(snapshot: GalleryPublicItemSnapshot): VaultItem {
-  if (snapshot.hidden) return hiddenStubItem(snapshot.id, snapshot.createdAt, snapshot.blurThumb);
-  return {
-    id: snapshot.id,
-    title: snapshot.title || "Untitled Item",
-    subtitle: snapshot.subtitle,
-    number: snapshot.number,
-    grade: snapshot.grade,
-    currentValue: snapshot.currentValue,
-    imageFrontUrl: snapshot.imageFrontUrl,
-    imageBackUrl: snapshot.imageBackUrl,
-    imageFrontStoragePath: snapshot.imageFrontStoragePath,
-    primaryImageKey: snapshot.primaryImageKey,
-    createdAt:
-      typeof snapshot.createdAt === "number" && Number.isFinite(snapshot.createdAt)
-        ? snapshot.createdAt
-        : Date.now(),
-    isNew: false,
-  };
-}
-
 function mergeHeavyDraftFields(nextGallery: Gallery | null, fallback: Gallery | null) {
   if (!nextGallery) return nextGallery;
   if (!fallback) return nextGallery;
@@ -216,60 +195,6 @@ function normalizeDraftForCompare(gallery: Gallery | null) {
     itemNotes: gallery.itemNotes ?? [],
     share: gallery.share ?? { publicToken: undefined, inviteTokens: [] },
   });
-}
-
-function getAccessMode(gallery: Gallery | null | undefined): GalleryAccessPillMode {
-  if (!gallery) return "private";
-  if (gallery.guestViewMode === "guest") return "registered_users";
-  if (gallery.visibility === "LOCKED") return "private";
-  if (gallery.visibility === "INVITE") return "guest_view";
-  return "public_gallery";
-}
-
-function applyAccessMode(current: Gallery, mode: GalleryAccessPillMode): Gallery {
-  if (mode === "private") {
-    return {
-      ...current,
-      visibility: "LOCKED",
-      guestViewMode: "public",
-    };
-  }
-
-  if (mode === "registered_users") {
-    return {
-      ...current,
-      visibility: "INVITE",
-      guestViewMode: "guest",
-    };
-  }
-
-  if (mode === "guest_view") {
-    return {
-      ...current,
-      visibility: "INVITE",
-      guestViewMode: "public",
-    };
-  }
-
-  return {
-    ...current,
-    visibility: "PUBLIC",
-    guestViewMode: "public",
-  };
-}
-
-function accessDescription(mode: GalleryAccessPillMode) {
-  switch (mode) {
-    case "public_gallery":
-      return "Public Exhibition - Available to registered or unregistered users, searchable on Home page.";
-    case "guest_view":
-      return "Guest View - Anyone with access to the shared link can view your exhibition.";
-    case "registered_users":
-      return "Registered Users - Any registered user with access to the shared link can view your exhibition, allows analytics on views.";
-    case "private":
-    default:
-      return "Private Exhibition - This only for yourself, good for exhibition test beds before sharing with anyone.";
-  }
 }
 
 function accessPillClass(active: boolean) {
