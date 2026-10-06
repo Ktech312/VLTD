@@ -7,7 +7,7 @@ import { SelectCircle } from "@/components/ui/SelectCircle";
 import { type VaultItem } from "@/lib/vaultModel";
 import { UNIVERSE_KEYS, UNIVERSE_LABEL, type UniverseKey } from "@/lib/taxonomy";
 
-export const MAX_EXHIBIT_ITEMS = 16;
+export const MAX_EXHIBIT_ITEMS = 18;
 
 // Shortened labels so chips fit on one line. Anything not listed here falls back
 // to the canonical UNIVERSE_LABEL from taxonomy.ts, so a newly added universe

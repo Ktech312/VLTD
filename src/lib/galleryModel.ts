@@ -43,7 +43,7 @@ export type GallerySection = {
   description?: string;
   itemIds: string[];
   featuredItemId?: string;
-  /** Preserved 16-slot positional grid (null = empty). Saved by the builder's Organize mode. */
+  /** Preserved 18-slot positional grid (null = empty). Saved by the builder's Organize mode. */
   slotLayout?: (string | null)[];
 };
 
