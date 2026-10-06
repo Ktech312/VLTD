@@ -69,6 +69,7 @@ import {
 import { fetchRegistrySubjects, type RegistrySubject } from "@/lib/registryModel";
 import ListingReadinessPanel from "@/components/ListingReadinessPanel";
 import GenerateCopyPanel from "@/components/GenerateCopyPanel";
+import { INLINE_EDIT_LINE } from "@/lib/inlineEdit";
 
 const SALES_KEY = "vltd_sales_history";
 
@@ -202,9 +203,10 @@ type InlineRow = {
 };
 
 /**
- * A details section whose values edit where they are. The pencil in the
- * header edits every value at once; clicking a single value edits just that
- * one. Rows keep exactly the height of the read-only version.
+ * A details section whose values edit where they are. Click a value, or the
+ * pencil for all of them, and the text becomes a line you can type on: same
+ * size, same place, nothing else on the card moves. Enter saves, Esc cancels,
+ * the check (where the pencil was) saves everything.
  */
 function InlineEditSection({
   title,
@@ -225,9 +227,10 @@ function InlineEditSection({
   const [draft, setDraft] = useState("");
   const skipCommit = useRef(false);
 
-  const fieldRows = rows.filter((row): row is InlineRow & { field: NonNullable<InlineRow["field"]> } => Boolean(row.field));
+  type FieldRow = InlineRow & { field: NonNullable<InlineRow["field"]> };
+  const fieldRows = rows.filter((row): row is FieldRow => Boolean(row.field));
 
-  function rawOf(row: InlineRow & { field: NonNullable<InlineRow["field"]> }) {
+  function rawOf(row: FieldRow) {
     const raw = item[row.field.key];
     return raw === undefined || raw === null ? "" : String(raw);
   }
@@ -259,13 +262,13 @@ function InlineEditSection({
     if (Object.keys(patch).length) await onSave(patch as Partial<VaultItem>);
   }
 
-  function startOne(row: InlineRow & { field: NonNullable<InlineRow["field"]> }) {
+  function startOne(row: FieldRow) {
     skipCommit.current = false;
     setDraft(rawOf(row));
     setEditingKey(String(row.field.key));
   }
 
-  async function commitOne(row: InlineRow & { field: NonNullable<InlineRow["field"]> }) {
+  async function commitOne(row: FieldRow) {
     if (skipCommit.current) return;
     skipCommit.current = true;
     setEditingKey(null);
@@ -273,38 +276,39 @@ function InlineEditSection({
     await onSave({ [String(row.field.key)]: parse(row.field.kind, draft) } as Partial<VaultItem>);
   }
 
-  const inputClass =
-    "-my-1 h-7 min-w-0 flex-1 rounded-lg bg-[color:var(--pill)] px-2 text-right text-sm text-[color:var(--fg)] ring-1 ring-[color:var(--theme-gold,#C8CDD2)] focus:outline-none";
-
   return (
     <Section
       title={title}
       action={
-        !all ? (
-          <button
-            type="button"
-            onClick={startAll}
-            aria-label={`Edit ${title.toLowerCase()}`}
-            title={`Edit ${title.toLowerCase()}`}
-            className="inline-flex h-7 w-7 items-center justify-center rounded-[7px] ring-1 ring-[color:var(--border)] transition hover:bg-[color:var(--pill)]"
-            style={{ color: "var(--muted)" }}
-          >
-            <AppIcon name="edit" size={14} strokeWidth={1.8} />
-          </button>
-        ) : null
+        <button
+          type="button"
+          onClick={() => (all ? void saveAll() : startAll())}
+          aria-label={all ? `Save ${title.toLowerCase()}` : `Edit ${title.toLowerCase()}`}
+          title={all ? "Save (Esc to cancel)" : `Edit ${title.toLowerCase()}`}
+          className="inline-flex h-7 w-7 items-center justify-center rounded-[7px] ring-1 ring-[color:var(--border)] transition hover:bg-[color:var(--pill)]"
+          style={{ color: all ? "var(--theme-gold)" : "var(--muted)" }}
+        >
+          <AppIcon name={all ? "checkmark" : "edit"} size={14} strokeWidth={1.8} />
+        </button>
       }
     >
       <div className="grid gap-3 text-sm">
         {rows.map((row) => {
-          const field = row.field ? (row as InlineRow & { field: NonNullable<InlineRow["field"]> }) : null;
+          const field = row.field ? (row as FieldRow) : null;
           const key = field ? String(field.field.key) : "";
+          const inputProps = field
+            ? {
+                inputMode: field.field.kind === "money" ? ("decimal" as const) : undefined,
+                "aria-label": row.label,
+                className: `${INLINE_EDIT_LINE} h-5 flex-1 text-right`,
+              }
+            : null;
           return (
             <div key={row.label} className="flex items-start justify-between gap-4">
               <div className="shrink-0 text-[color:var(--muted)]">{row.label}</div>
-              {field && all ? (
+              {field && inputProps && all ? (
                 <input
-                  className={inputClass}
-                  inputMode={field.field.kind === "money" ? "decimal" : undefined}
+                  {...inputProps}
                   value={drafts[key] ?? ""}
                   onChange={(e) => setDrafts((d) => ({ ...d, [key]: e.target.value }))}
                   onKeyDown={(e) => {
@@ -312,11 +316,10 @@ function InlineEditSection({
                     if (e.key === "Escape") setAll(false);
                   }}
                 />
-              ) : field && editingKey === key ? (
+              ) : field && inputProps && editingKey === key ? (
                 <input
+                  {...inputProps}
                   autoFocus
-                  className={inputClass}
-                  inputMode={field.field.kind === "money" ? "decimal" : undefined}
                   value={draft}
                   onChange={(e) => setDraft(e.target.value)}
                   onBlur={() => void commitOne(field)}
@@ -333,7 +336,7 @@ function InlineEditSection({
                   type="button"
                   onClick={() => startOne(field)}
                   title={`Click to edit ${row.label.toLowerCase()}`}
-                  className="-my-0.5 -mr-1.5 rounded-md px-1.5 py-0.5 text-right text-[color:var(--fg)] transition hover:bg-[color:var(--pill)]"
+                  className="cursor-pointer text-right text-[color:var(--fg)] hover:underline hover:decoration-[color:var(--border)] hover:underline-offset-4"
                 >
                   {row.value}
                 </button>
@@ -344,26 +347,6 @@ function InlineEditSection({
           );
         })}
       </div>
-      {all ? (
-        <div className="mt-3 flex items-center gap-2">
-          <button
-            type="button"
-            onClick={() => void saveAll()}
-            className="rounded-[8px] px-3 py-1 text-xs font-bold transition"
-            style={{ background: "var(--theme-gold, #C8CDD2)", color: "#0A0800" }}
-          >
-            Save
-          </button>
-          <button
-            type="button"
-            onClick={() => setAll(false)}
-            className="rounded-[8px] px-3 py-1 text-xs font-semibold ring-1 ring-[color:var(--border)]"
-            style={{ color: "var(--muted)" }}
-          >
-            Cancel
-          </button>
-        </div>
-      ) : null}
       {children}
     </Section>
   );
@@ -371,7 +354,8 @@ function InlineEditSection({
 
 /**
  * The item's PUBLIC description, shown under the title. This is the text people
- * see when the item is shared; the Notes section below stays private.
+ * see when the item is shared; the Notes section below stays private. Editing
+ * happens on the text itself (a line under it), so the header never grows.
  */
 function DescriptionField({
   item,
@@ -380,14 +364,17 @@ function DescriptionField({
 }: {
   item: VaultItem;
   onSave: (text: string) => Promise<void> | void;
-  /** Shown only while editing. Receives a setter so a generated draft lands in the box. */
+  /** Shown only while editing. Receives a setter so a generated draft lands in the text. */
   extra?: (setDraft: (text: string) => void) => React.ReactNode;
 }) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState("");
+  const skip = useRef(false);
   const text = item.description?.trim() ?? "";
 
   async function save() {
+    if (skip.current) return;
+    skip.current = true;
     setEditing(false);
     const next = draft.trim();
     if (next !== text) await onSave(next);
@@ -395,39 +382,33 @@ function DescriptionField({
 
   if (editing) {
     return (
-      <div className="mt-1.5 max-w-3xl">
+      <div
+        className="mt-1.5 max-w-3xl"
+        onBlur={(e) => {
+          // Clicking the Generate button should not count as leaving the text.
+          if (!e.currentTarget.contains(e.relatedTarget as Node | null)) void save();
+        }}
+      >
         <textarea
           autoFocus
-          rows={2}
+          rows={1}
           maxLength={600}
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
           onKeyDown={(e) => {
-            if (e.key === "Escape") setEditing(false);
-            if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) void save();
+            if (e.key === "Escape") {
+              skip.current = true;
+              setEditing(false);
+            }
+            if (e.key === "Enter" && !e.shiftKey) {
+              e.preventDefault();
+              void save();
+            }
           }}
           placeholder="Describe this item for anyone you share it with."
-          className="w-full resize-none rounded-xl bg-[color:var(--pill)] px-3 py-2.5 text-sm leading-6 text-[color:var(--fg)] ring-1 ring-[color:var(--theme-gold,#C8CDD2)] focus:outline-none"
+          aria-label="Description"
+          className={`${INLINE_EDIT_LINE} block w-full resize-none text-sm leading-6 text-[color:var(--fg)]`}
         />
-        <div className="mt-2 flex items-center gap-2">
-          <button
-            type="button"
-            onClick={() => void save()}
-            className="rounded-[8px] px-4 py-1.5 text-xs font-bold transition"
-            style={{ background: "var(--theme-gold, #C8CDD2)", color: "#0A0800" }}
-          >
-            Save
-          </button>
-          <button
-            type="button"
-            onClick={() => setEditing(false)}
-            className="rounded-[8px] px-4 py-1.5 text-xs font-semibold ring-1 ring-[color:var(--border)]"
-            style={{ color: "var(--muted)" }}
-          >
-            Cancel
-          </button>
-          <span className="text-[11px] text-[color:var(--muted2)]">{draft.length}/600</span>
-        </div>
         {extra ? <div className="mt-1.5">{extra(setDraft)}</div> : null}
       </div>
     );
@@ -437,10 +418,13 @@ function DescriptionField({
     <div className="mt-1.5 max-w-3xl">
       <button
         type="button"
-        onClick={() => { setDraft(item.description ?? ""); setEditing(true); }}
+        onClick={() => {
+          skip.current = false;
+          setDraft(item.description ?? "");
+          setEditing(true);
+        }}
         title="Click to edit the description"
-        className="block w-full rounded-lg px-2 py-1.5 text-left text-sm leading-6 transition hover:bg-[color:var(--pill)] hover:ring-1 hover:ring-[color:var(--border)]"
-        style={{ marginLeft: "-0.5rem", width: "calc(100% + 0.5rem)" }}
+        className="block w-full cursor-text text-left text-sm leading-6 hover:underline hover:decoration-[color:var(--border)] hover:underline-offset-4"
       >
         {text ? (
           <span className="whitespace-pre-wrap text-[color:var(--fg)]">{text}</span>
@@ -1125,114 +1109,111 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
               </button>
               <div className="text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">ITEM</div>
               {headerEditing ? (
-                <div className="mt-1 pr-12">
-                  <input
+                <>
+                  <button
+                    type="button"
+                    onClick={() => void saveHeaderEdit()}
+                    aria-label="Save title and category"
+                    title="Save (Esc to cancel)"
+                    className="absolute right-16 top-4 grid h-9 w-9 place-items-center rounded-full ring-1 ring-[color:var(--border)] transition hover:bg-[color:var(--pill)]"
+                    style={{ color: "var(--theme-gold)" }}
+                  >
+                    <AppIcon name="checkmark" size={16} strokeWidth={1.8} />
+                  </button>
+                  <textarea
                     autoFocus
-                    className="h-9 w-full rounded-lg bg-[color:var(--pill)] px-3 text-lg font-semibold ring-1 ring-[color:var(--border)] focus:outline-none"
+                    rows={1}
+                    aria-label="Title"
+                    className={`${INLINE_EDIT_LINE} mt-1 block w-full resize-none text-2xl font-semibold leading-tight sm:text-3xl`}
                     value={recordDraft.title}
                     onChange={(event) => setRecordDraft((prev) => ({ ...prev, title: event.target.value }))}
                     onKeyDown={(event) => {
-                      if (event.key === "Enter") void saveHeaderEdit();
+                      if (event.key === "Enter" && !event.shiftKey) {
+                        event.preventDefault();
+                        void saveHeaderEdit();
+                      }
                       if (event.key === "Escape") cancelHeaderEdit();
                     }}
-                    placeholder="Title"
-                    aria-label="Title"
                   />
-                  <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
-                    <select
-                      className="h-8 max-w-[12rem] rounded-lg bg-[color:var(--pill)] px-2 text-xs ring-1 ring-[color:var(--border)] focus:outline-none"
-                      value={recordDraft.universe}
-                      onChange={(event) => setDraftUniverse(normUniverse(event.target.value))}
-                      aria-label="Universe"
-                    >
-                      {getUniverses().map((key) => (
-                        <option key={key} value={key}>{UNIVERSE_LABEL[key]}</option>
-                      ))}
-                    </select>
-                    <select
-                      className="h-8 max-w-[12rem] rounded-lg bg-[color:var(--pill)] px-2 text-xs ring-1 ring-[color:var(--border)] focus:outline-none"
-                      value={recordSelectedCategory}
-                      onChange={(event) => setDraftCategory(event.target.value)}
-                      aria-label="Category"
-                    >
-                      {recordCategoryOptions.map((category) => (
-                        <option key={category} value={category}>{category}</option>
-                      ))}
-                    </select>
-                    {recordSubcategoryOptions.length ? (
+                </>
+              ) : (
+                <h1 className="mt-1 text-2xl font-semibold leading-tight sm:text-3xl">
+                  {item.title}
+                  <button
+                    type="button"
+                    onClick={() => setHeaderEditing(true)}
+                    aria-label="Edit title and category"
+                    title="Edit title and category"
+                    className="ml-2 inline-flex h-6 w-6 items-center justify-center rounded-[6px] align-middle ring-1 ring-[color:var(--border)] transition hover:bg-[color:var(--pill)]"
+                    style={{ color: "var(--muted)" }}
+                  >
+                    <AppIcon name="edit" size={13} strokeWidth={1.8} />
+                  </button>
+                  {notable ? <span className="ml-2 inline-block align-middle"><NotableBadge reason={notableReason(item)} /></span> : null}
+                </h1>
+              )}
+              <DescriptionField
+                item={item}
+                onSave={(text) => persist({ ...item, description: text })}
+                extra={(setText) => (
+                  <GenerateCopyPanel
+                    item={item}
+                    mode="description"
+                    onAccept={(text) => setText(text)}
+                    triggerLabel={item.description?.trim() ? "Regenerate description" : "Generate description"}
+                  />
+                )}
+              />
+              {headerEditing ? (
+                <div className="mt-1.5 text-sm text-[color:var(--muted)]">
+                  <select
+                    aria-label="Universe"
+                    className={`${INLINE_EDIT_LINE} h-5 w-auto`}
+                    value={recordDraft.universe}
+                    onChange={(event) => setDraftUniverse(normUniverse(event.target.value))}
+                    onKeyDown={(event) => { if (event.key === "Escape") cancelHeaderEdit(); }}
+                  >
+                    {getUniverses().map((key) => (
+                      <option key={key} value={key}>{UNIVERSE_LABEL[key]}</option>
+                    ))}
+                  </select>
+                  {" • "}
+                  <select
+                    aria-label="Category"
+                    className={`${INLINE_EDIT_LINE} h-5 w-auto`}
+                    value={recordSelectedCategory}
+                    onChange={(event) => setDraftCategory(event.target.value)}
+                    onKeyDown={(event) => { if (event.key === "Escape") cancelHeaderEdit(); }}
+                  >
+                    {recordCategoryOptions.map((category) => (
+                      <option key={category} value={category}>{category}</option>
+                    ))}
+                  </select>
+                  {recordSubcategoryOptions.length ? (
+                    <>
+                      {" • "}
                       <select
-                        className="h-8 max-w-[12rem] rounded-lg bg-[color:var(--pill)] px-2 text-xs ring-1 ring-[color:var(--border)] focus:outline-none"
+                        aria-label="Subcategory"
+                        className={`${INLINE_EDIT_LINE} h-5 w-auto`}
                         value={recordDraft.subcategoryLabel}
                         onChange={(event) => setRecordDraft((prev) => ({ ...prev, subcategoryLabel: event.target.value }))}
-                        aria-label="Subcategory"
+                        onKeyDown={(event) => { if (event.key === "Escape") cancelHeaderEdit(); }}
                       >
-                        <option value="">Subcategory</option>
+                        <option value="">(none)</option>
                         {recordSubcategoryOptions.map((subcategory) => (
                           <option key={subcategory} value={subcategory}>{subcategory}</option>
                         ))}
                       </select>
-                    ) : (
-                      <input
-                        className="h-8 max-w-[12rem] rounded-lg bg-[color:var(--pill)] px-2 text-xs ring-1 ring-[color:var(--border)] focus:outline-none w-36"
-                        value={recordDraft.subcategoryLabel}
-                        onChange={(event) => setRecordDraft((prev) => ({ ...prev, subcategoryLabel: event.target.value }))}
-                        placeholder="Subcategory"
-                        aria-label="Subcategory"
-                      />
-                    )}
-                    <button
-                      type="button"
-                      onClick={() => void saveHeaderEdit()}
-                      className="rounded-[8px] px-3 py-1 text-xs font-bold transition"
-                      style={{ background: "var(--theme-gold, #C8CDD2)", color: "#0A0800" }}
-                    >
-                      Save
-                    </button>
-                    <button
-                      type="button"
-                      onClick={cancelHeaderEdit}
-                      className="rounded-[8px] px-3 py-1 text-xs font-semibold ring-1 ring-[color:var(--border)]"
-                      style={{ color: "var(--muted)" }}
-                    >
-                      Cancel
-                    </button>
-                    {recordMessage ? <span className="text-xs text-[color:var(--muted)]">{recordMessage}</span> : null}
-                  </div>
+                    </>
+                  ) : null}
+                  {" • "}Added {fmtDate(addedAt)}
                 </div>
               ) : (
-                <>
-                  <h1 className="mt-1 text-2xl font-semibold leading-tight sm:text-3xl">
-                    {item.title}
-                    <button
-                      type="button"
-                      onClick={() => setHeaderEditing(true)}
-                      aria-label="Edit title and category"
-                      title="Edit title and category"
-                      className="ml-2 inline-flex h-6 w-6 items-center justify-center rounded-[6px] align-middle ring-1 ring-[color:var(--border)] transition hover:bg-[color:var(--pill)]"
-                      style={{ color: "var(--muted)" }}
-                    >
-                      <AppIcon name="edit" size={13} strokeWidth={1.8} />
-                    </button>
-                    {notable ? <span className="ml-2 inline-block align-middle"><NotableBadge reason={notableReason(item)} /></span> : null}
-                  </h1>
-                  <DescriptionField
-                    item={item}
-                    onSave={(text) => persist({ ...item, description: text })}
-                    extra={(setText) => (
-                      <GenerateCopyPanel
-                        item={item}
-                        mode="description"
-                        onAccept={(text) => setText(text)}
-                        triggerLabel={item.description?.trim() ? "Regenerate description" : "Generate description"}
-                      />
-                    )}
-                  />
-                  <div className="mt-1.5 text-sm text-[color:var(--muted)]">
-                    {UNIVERSE_LABEL[universe]} • {categoryLabel(item)}
-                    {item.subcategoryLabel ? ` • ${item.subcategoryLabel}` : ""}
-                    {" • "}Added {fmtDate(addedAt)}
-                  </div>
-                </>
+                <div className="mt-1.5 text-sm text-[color:var(--muted)]">
+                  {UNIVERSE_LABEL[universe]} • {categoryLabel(item)}
+                  {item.subcategoryLabel ? ` • ${item.subcategoryLabel}` : ""}
+                  {" • "}Added {fmtDate(addedAt)}
+                </div>
               )}
 
               <div className="mt-3 flex flex-wrap items-center gap-2">
