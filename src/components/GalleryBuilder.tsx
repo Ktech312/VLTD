@@ -24,14 +24,13 @@ import {
 import BuilderPreviewBridge from "@/components/gallery/BuilderPreviewBridge";
 import { PillSelect, type PillSelectOption } from "@/components/ui/PillSelect";
 import { isUniverseKey, UNIVERSE_LABEL } from "@/lib/taxonomy";
-import { useSaveFeedback, SAVE_FEEDBACK_STYLE } from "@/lib/useSaveFeedback";
 
 type Props = {
   gallery: Gallery;
   items: VaultItem[];
   onChange: (ids: string[]) => void;
   onGalleryChange: (updater: (current: Gallery) => Gallery) => void;
-  onQuickSave?: (overrideIds?: string[], overrideSections?: NonNullable<Gallery["sections"]>) => void | Promise<void>;
+  onQuickSave?: (overrideIds?: string[], overrideSections?: NonNullable<Gallery["sections"]>) => void | boolean | Promise<void | boolean>;
   onOpenPicker?: (sectionTitle?: string, sectionItemIds?: string[], sectionIdx?: number) => void;
   advancedContent?: ReactNode;
 };
@@ -297,15 +296,12 @@ export default function GalleryBuilder({
 }: Props) {
   const previewScale = 0.36;
   const previewWidthPercent = 100 / previewScale;
-  const [previewExpanded, setPreviewExpanded] = useState(false);
-  const [previewSectionIdx, setPreviewSectionIdx] = useState(0);
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [dropTargetId, setDropTargetId] = useState<string | null>(null);
   const [slotDragIdx, setSlotDragIdx] = useState<number | null>(null);
   const [slotDragOverIdx, setSlotDragOverIdx] = useState<number | null>(null);
   const [isOrganizing, setIsOrganizing] = useState(false);
   const [isAdvancedOpen, setIsAdvancedOpen] = useState(false);
-  const { justSaved: quickSaveJustSaved, flashSaved: flashQuickSaved } = useSaveFeedback();
   const touchSlotFromRef = useRef<number | null>(null);
   const touchSlotOverRef = useRef<number | null>(null);
   const touchCloneRef = useRef<HTMLElement | null>(null);
@@ -368,16 +364,6 @@ export default function GalleryBuilder({
     // Use section order directly so drag-reorder is immediately visible
     return activeSection.itemIds.map((id) => itemMap.get(id)).filter(Boolean) as VaultItem[];
   }, [items, selectedItems, sections, activeSectionIdx]);
-
-  // Items to show in the fullscreen preview (section-specific, driven by previewSectionIdx)
-  const fullPreviewItems = useMemo(() => {
-    const itemMap = new Map(items.map((item) => [item.id, item]));
-    if (sections.length === 0) return selectedItems;
-    const section = sections[previewSectionIdx];
-    if (!section || section.itemIds.length === 0) return [];
-    return section.itemIds.map((id) => itemMap.get(id)).filter(Boolean) as VaultItem[];
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [items, selectedItems, sections, previewSectionIdx]);
 
   // Sync previewSlots when section changes (full reset) or items added/removed (incremental)
   // Must be declared AFTER previewItems
@@ -690,11 +676,9 @@ export default function GalleryBuilder({
         </div>
 
         {/* ── Gallery stat chips — compact row ── */}
-        <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
+        <div className="mt-3 grid grid-cols-2 gap-2">
           {[
-            { label: "LAYOUT", value: layoutType },
             { label: "EXHIBITS", value: sections.length },
-            { label: "ITEMS", value: selectedCount },
             { label: "FEATURED", value: sections.filter((s) => !!s.featuredItemId).length },
           ].map(({ label, value }) => (
             <div key={label} className="rounded-[14px] bg-[color:var(--surface)] px-3 py-2.5 ring-1 ring-[color:var(--border)]">
@@ -731,13 +715,6 @@ export default function GalleryBuilder({
                 Theme, view mode, background, and guest feel in one place.
               </div>
             </div>
-            <button
-              type="button"
-              onClick={() => { setPreviewSectionIdx(0); setPreviewExpanded(true); }}
-              className="vltd-pill-micro shrink-0 rounded-[7px] border px-3 py-1 text-[11px] font-semibold transition hover:opacity-90"
-            >
-              Preview ↗
-            </button>
           </div>
 
           {/* ── Row 1a: Theme | Shelf ── */}
@@ -777,23 +754,6 @@ export default function GalleryBuilder({
               />
             </div>
 
-            {/* Save — matches Save Changes pill exactly: same glow lock, same fg text */}
-            <button
-              type="button"
-              onClick={async () => {
-                await onQuickSave?.();
-                flashQuickSaved();
-              }}
-              className={[
-                "inline-flex min-h-[28px] items-center justify-center rounded-full px-2.5 text-[11px] font-semibold ring-1 transition-all hover:opacity-90 active:scale-[0.98]",
-                quickSaveJustSaved
-                  ? ""
-                  : "vltd-pill-main-glow bg-[color:var(--pill-active-bg)] text-[color:var(--fg)] ring-[rgba(203,208,213,0.48)]",
-              ].join(" ")}
-              style={quickSaveJustSaved ? SAVE_FEEDBACK_STYLE : undefined}
-            >
-              {quickSaveJustSaved ? "Saved ✓" : "Save"}
-            </button>
           </div>
 
           {/* ── Row 1b: Upload Background ── */}
@@ -1306,35 +1266,7 @@ export default function GalleryBuilder({
                         EXHIBIT #{sectionIndex + 1}
                       </div>
 
-                      <input
-                        value={section.title}
-                        onChange={(e) =>
-                          onGalleryChange((current) => {
-                            const nextSections = getGallerySections(current).map((entry) =>
-                              entry.id === section.id
-                                ? { ...entry, title: e.target.value.trim() || `Section ${sectionIndex + 1}` }
-                                : entry
-                            );
-                            return syncSectionsAndLayout(current, nextSections);
-                          })
-                        }
-                        className="mt-2 min-h-[38px] w-full rounded-xl bg-[color:var(--input)] px-3 py-2 text-sm font-semibold ring-1 ring-[color:var(--border)] focus:outline-none"
-                      />
-
-                      <textarea
-                        value={section.description ?? ""}
-                        onChange={(e) =>
-                          onGalleryChange((current) => {
-                            const nextSections = getGallerySections(current).map((entry) =>
-                              entry.id === section.id ? { ...entry, description: e.target.value } : entry
-                            );
-                            return syncSectionsAndLayout(current, nextSections);
-                          })
-                        }
-                        rows={2}
-                        placeholder="Exhibit curatorial description..."
-                        className="mt-2 w-full rounded-xl bg-[color:var(--input)] px-3 py-2 text-sm ring-1 ring-[color:var(--border)] focus:outline-none"
-                      />
+                      <div className="mt-1 text-sm font-semibold">{section.title || `Exhibit ${sectionIndex + 1}`}</div>
                     </div>
 
                     <div className="flex shrink-0 flex-wrap items-center gap-2">
@@ -1361,7 +1293,22 @@ export default function GalleryBuilder({
                       ) : null}
                       <button
                         type="button"
-                        onClick={() => onGalleryChange((current) => syncSectionsAndLayout(current, getGallerySections(current).filter((entry) => entry.id !== section.id)))}
+                        onClick={() =>
+                          onGalleryChange((current) => {
+                            const all = getGallerySections(current);
+                            const remaining = all.filter((entry) => entry.id !== section.id);
+                            const moving = all.find((entry) => entry.id === section.id)?.itemIds ?? [];
+                            if (remaining.length > 0 && moving.length > 0) {
+                              const first = remaining[0];
+                              remaining[0] = {
+                                ...first,
+                                itemIds: [...first.itemIds, ...moving.filter((id) => !first.itemIds.includes(id))],
+                                slotLayout: undefined,
+                              };
+                            }
+                            return syncSectionsAndLayout(current, remaining);
+                          })
+                        }
                         className="inline-flex items-center rounded-[7px] bg-[color:var(--pill)] px-3 py-1.5 text-xs font-semibold text-[color:var(--pill-fg)] ring-1 ring-[color:var(--border)]"
                       >
                         Remove Exhibit
@@ -1526,22 +1473,6 @@ export default function GalleryBuilder({
               </div>
             </div>
 
-            <div className="grid grid-cols-3 gap-2">
-              <div className="rounded-[16px] bg-[color:var(--surface)] p-3 ring-1 ring-[color:var(--border)]">
-                <div className="text-[11px] tracking-[0.14em] text-[color:var(--muted2)]">ITEMS</div>
-                <div className="mt-2 text-xl font-semibold">{selectedCount}</div>
-              </div>
-
-              <div className="rounded-[16px] bg-[color:var(--surface)] p-3 ring-1 ring-[color:var(--border)]">
-                <div className="text-[11px] tracking-[0.14em] text-[color:var(--muted2)]">CURATED VALUE</div>
-                <div className="mt-2 text-xl font-semibold">{formatMoney(selectedValue) ?? "-"}</div>
-              </div>
-
-              <div className="rounded-[16px] bg-[color:var(--surface)] p-3 ring-1 ring-[color:var(--border)]">
-                <div className="text-[11px] tracking-[0.14em] text-[color:var(--muted2)]">CURATED COST</div>
-                <div className="mt-2 text-xl font-semibold">{formatMoney(selectedCost) ?? "-"}</div>
-              </div>
-            </div>
           </div>
 
           {selectedItems.length === 0 ? (
@@ -1692,37 +1623,6 @@ export default function GalleryBuilder({
       </div>
       )}
 
-      {previewExpanded && (
-        <div className="fixed inset-0 z-[10000] flex flex-col" style={{ background: "#080C14" }}>
-          <div
-            className="shrink-0"
-            style={{
-              paddingTop: "max(env(safe-area-inset-top, 0px), 14px)",
-              borderBottom: "1px solid rgba(255,255,255,0.07)",
-            }}
-          >
-            <div className="mx-auto flex w-full max-w-[1120px] items-center gap-3 px-4 pb-3">
-              <div className="min-w-0 flex-1">
-                <div className="text-[11px] tracking-[0.2em]" style={{ color: "var(--muted2)" }}>GUEST PREVIEW</div>
-                <div className="mt-0.5 text-sm font-semibold truncate">{gallery.title || "Exhibition"}</div>
-              </div>
-              <button
-                type="button"
-                onClick={() => setPreviewExpanded(false)}
-                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full transition active:opacity-70"
-                style={{ background: "rgba(255,255,255,0.07)" }}
-                aria-label="Close preview"
-              >
-                <AppIcon name="close" strokeWidth={1.8} className="h-4 w-4" style={{ color: "var(--muted)" }} />
-              </button>
-            </div>
-          </div>
-          <div className="flex-1 overflow-y-auto overscroll-contain" style={{ minHeight: 0, WebkitOverflowScrolling: "touch" }}>
-            {/* readOnly=true → renders exactly what a guest sees: real section nav, no edit chrome */}
-            <BuilderPreviewBridge gallery={gallery} items={selectedItems} readOnly onHeightChange={setPreviewNaturalHeight} />
-          </div>
-        </div>
-      )}
     </div>
   );
 }

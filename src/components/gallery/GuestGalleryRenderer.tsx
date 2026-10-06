@@ -134,7 +134,7 @@ function ViewerItemCard({
 
   return (
     <article className="relative rounded-[18px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.06),rgba(255,255,255,0.03))] p-3 shadow-[0_12px_28px_rgba(0,0,0,0.18)] backdrop-blur-sm">
-      <div className="mb-2 text-[10px] tracking-[0.16em] text-[color:var(--muted2)]">{label}</div>
+      {label ? <div className="mb-2 text-[10px] tracking-[0.16em] text-[color:var(--muted2)]">{label}</div> : null}
 
       <div className="absolute right-3 top-3 z-10">
         <FavoriteButton
@@ -746,7 +746,7 @@ export default function GuestGalleryRenderer({
                       >
                         <ViewerItemCard
                           item={item}
-                          label={`GRID ITEM #${index + 1}`}
+                          label=""
                           ownerProfileId={model.gallery?.profile_id}
                           viewerProfileId={viewerProfileId}
                           vibeCount={vibeCounts.get(String(item.id)) ?? 0}

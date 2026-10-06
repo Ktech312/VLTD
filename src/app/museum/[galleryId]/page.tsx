@@ -115,12 +115,16 @@ function loadCachedGalleryDraft(galleryId: string): Gallery | null {
 function persistCachedGalleryDraft(galleryId: string, draft: Gallery | null) {
   if (typeof window === "undefined") return;
 
-  if (!draft) {
-    window.sessionStorage.removeItem(getGalleryDraftCacheKey(galleryId));
-    return;
-  }
+  try {
+    if (!draft) {
+      window.sessionStorage.removeItem(getGalleryDraftCacheKey(galleryId));
+      return;
+    }
 
-  window.sessionStorage.setItem(getGalleryDraftCacheKey(galleryId), JSON.stringify(draft));
+    window.sessionStorage.setItem(getGalleryDraftCacheKey(galleryId), JSON.stringify(draft));
+  } catch {
+    // Private mode or full storage: the draft cache is only a convenience.
+  }
 }
 
 async function uploadGalleryAssetToStorage(
@@ -303,6 +307,10 @@ export default function GalleryPage() {
   const [status, setStatus] = useState("");
   const [statusTone, setStatusTone] = useState<"neutral" | "good">("neutral");
   const [isUploadingCover, setIsUploadingCover] = useState(false);
+  const [saveState, setSaveState] = useState<"idle" | "saving" | "saved" | "failed">("idle");
+  const [confirmPublic, setConfirmPublic] = useState(false);
+  const [confirmRegenerate, setConfirmRegenerate] = useState(false);
+  const [loadedOnce, setLoadedOnce] = useState(false);
   const [announcing, setAnnouncing] = useState(false);
   const [announced, setAnnounced] = useState(false);
 
@@ -313,6 +321,7 @@ export default function GalleryPage() {
 
   const loadState = useCallback(() => {
     if (!id) return;
+    setLoadedOnce(true);
 
     // A background refresh (the 15s poll, a window focus/visibility event,
     // or any other GALLERY_EVENT) must never replace an in-progress, unsaved
@@ -518,6 +527,12 @@ export default function GalleryPage() {
     const timer = window.setTimeout(() => autosaveRef.current(), 1000);
     return () => window.clearTimeout(timer);
   }, [isDirty, draft]);
+  // A save that did not reach the cloud tries again by itself until it does.
+  useEffect(() => {
+    if (saveState !== "failed") return;
+    const timer = window.setTimeout(() => autosaveRef.current(), 15000);
+    return () => window.clearTimeout(timer);
+  }, [saveState]);
 
   function patchDraft(updater: (current: Gallery) => Gallery) {
     setDraft((current) => {
@@ -537,7 +552,13 @@ export default function GalleryPage() {
     }));
   }
 
-  function updateAccessMode(mode: GalleryAccessPillMode) {
+  function updateAccessMode(mode: GalleryAccessPillMode, confirmed = false) {
+    // Going public shows the exhibit to everyone, and autosave would do it within a second: ask first.
+    if (mode === "public_gallery" && selectedAccessMode !== "public_gallery" && !confirmed) {
+      setConfirmPublic(true);
+      return;
+    }
+    setConfirmPublic(false);
     patchDraft((current) => applyAccessMode(current, mode));
   }
 
@@ -554,7 +575,7 @@ export default function GalleryPage() {
         coverImage: publicUrl,
       }));
       setStatusTone("neutral");
-      setStatus("Cover artwork uploaded. Click Save to publish it.");
+      setStatus("Cover artwork uploaded.");
     } catch (error) {
       console.error("Failed uploading cover artwork:", error);
       setStatusTone("neutral");
@@ -566,29 +587,10 @@ export default function GalleryPage() {
     }
   }
 
-  function updateNote(itemId: string, note: string) {
-    patchDraft((current) => {
-      const existing = Array.isArray(current.itemNotes) ? [...current.itemNotes] : [];
-      const next = existing.filter((entry) => entry.itemId !== itemId);
-
-      if (note.trim()) {
-        next.push({
-          itemId,
-          note,
-          updatedAt: Date.now(),
-        });
-      }
-
-      return {
-        ...current,
-        itemNotes: next,
-      };
-    });
-  }
-
-  async function saveDraft(overrideIds?: string[], overrideSections?: Gallery["sections"], auto = false) {
+  async function saveDraft(overrideIds?: string[], overrideSections?: Gallery["sections"], auto = false): Promise<boolean> {
     const baseDraft = latestDraftRef.current ?? draft;
-    if (!baseDraft) return;
+    if (!baseDraft) return false;
+    setSaveState("saving");
     const effectiveIds = overrideIds ?? baseDraft.itemIds;
     const effectiveSections = overrideSections ?? baseDraft.sections;
 
@@ -689,14 +691,17 @@ export default function GalleryPage() {
         throw galleryResult.reason;
       }
 
-      setStatusTone(vaultSyncError ? "neutral" : "good");
-      setStatus(
-        vaultSyncError
-          ? "Exhibition saved. Some vault sync tasks still need retrying."
-          : justPublished
-            ? "Exhibition published!"
-            : "Exhibition saved."
-      );
+      setSaveState("saved");
+      if (!auto || justPublished || vaultSyncError) {
+        setStatusTone(vaultSyncError ? "neutral" : "good");
+        setStatus(
+          vaultSyncError
+            ? "Exhibition saved. Some vault sync tasks still need retrying."
+            : justPublished
+              ? "Exhibition published!"
+              : "Exhibition saved."
+        );
+      }
 
       // Log publish event after a successful save — fire-and-forget.
       if (justPublished) {
@@ -708,19 +713,12 @@ export default function GalleryPage() {
           void logExhibitionPublished(nextDraft.id, profileId, nextDraft.title);
         }
       }
+      return true;
     } catch (error) {
       console.error("Direct gallery sync failed:", error);
-      setStatusTone("neutral");
-      setStatus("Exhibition saved locally. Cloud sync failed.");
+      setSaveState("failed");
+      return false;
     }
-  }
-
-  function cancelChanges() {
-    if (!gallery) return;
-    persistCachedGalleryDraft(gallery.id, null);
-    setDraft(cloneGallery(gallery));
-    setStatusTone("neutral");
-    setStatus("Changes reverted.");
   }
 
   async function handleAnnounce() {
@@ -761,67 +759,60 @@ export default function GalleryPage() {
     } catch {}
   }
 
+  // Invite and public-link changes are saved straight to storage. Bring only the sharing info back
+  // into the open draft, so nothing typed in the last second is thrown away.
+  function adoptRefreshedShare(galleryId: string) {
+    const refreshed = loadGalleries({ includeAllProfiles: true }).find((x) => x.id === galleryId) ?? null;
+    if (!refreshed) return;
+    const base = latestGalleryRef.current ?? refreshed;
+    setGallery(cloneGallery({ ...base, share: refreshed.share }));
+    setOriginalSnapshot(normalizeDraftForCompare({ ...base, share: refreshed.share }));
+    setDraft((current) => (current ? cloneGallery({ ...current, share: refreshed.share }) : cloneGallery(refreshed)));
+  }
+
   function handleCreateInviteToken() {
     if (!draft) return;
 
     const token = createGalleryInviteToken(draft.id, inviteLabel.trim() || undefined);
     setInviteLabel("");
     if (token) {
-      const refreshed = loadGalleries({ includeAllProfiles: true }).find((x) => x.id === draft.id) ?? null;
-      if (refreshed) {
-        setGallery(cloneGallery(refreshed));
-        setDraft(cloneGallery(refreshed));
-          setOriginalSnapshot(normalizeDraftForCompare(refreshed));
-      }
+      adoptRefreshedShare(draft.id);
     }
   }
 
   function handleDisableInviteToken(token: string) {
     if (!draft) return;
     disableGalleryInviteToken(draft.id, token);
-    const refreshed = loadGalleries({ includeAllProfiles: true }).find((x) => x.id === draft.id) ?? null;
-    if (refreshed) {
-      setGallery(cloneGallery(refreshed));
-      setDraft(cloneGallery(refreshed));
-        setOriginalSnapshot(normalizeDraftForCompare(refreshed));
-    }
+    adoptRefreshedShare(draft.id);
   }
 
   function handleUpdateTokenPermissions(token: string, permissions: GalleryInvitePermissions) {
     if (!draft) return;
     updateGalleryInviteToken(draft.id, token, { permissions });
-    const refreshed = loadGalleries({ includeAllProfiles: true }).find((x) => x.id === draft.id) ?? null;
-    if (refreshed) {
-      setGallery(cloneGallery(refreshed));
-      setDraft(cloneGallery(refreshed));
-      setOriginalSnapshot(normalizeDraftForCompare(refreshed));
-    }
+    adoptRefreshedShare(draft.id);
   }
 
   function handleUpdateTokenExpiry(token: string, expiresAt: number | null) {
     if (!draft) return;
     updateGalleryInviteToken(draft.id, token, { expiresAt });
-    const refreshed = loadGalleries({ includeAllProfiles: true }).find((x) => x.id === draft.id) ?? null;
-    if (refreshed) {
-      setGallery(cloneGallery(refreshed));
-      setDraft(cloneGallery(refreshed));
-      setOriginalSnapshot(normalizeDraftForCompare(refreshed));
-    }
+    adoptRefreshedShare(draft.id);
     setOpenExpiryToken(null);
   }
 
   function handleRegeneratePublicLink() {
     if (!draft) return;
     regenerateGalleryPublicToken(draft.id);
-    const refreshed = loadGalleries({ includeAllProfiles: true }).find((x) => x.id === draft.id) ?? null;
-    if (refreshed) {
-      setGallery(cloneGallery(refreshed));
-      setDraft(cloneGallery(refreshed));
-        setOriginalSnapshot(normalizeDraftForCompare(refreshed));
-    }
+    adoptRefreshedShare(draft.id);
   }
 
   if (!draft || !metrics) {
+    if (!loadedOnce) {
+      return (
+        <main className="text-[color:var(--fg)]">
+          <div className="mx-auto max-w-3xl px-4 py-16 text-center text-sm text-[color:var(--muted)]">Loading exhibition…</div>
+        </main>
+      );
+    }
     return (
       <main className="text-[color:var(--fg)]">
         <div className="mx-auto flex max-w-3xl items-center justify-center px-4">
@@ -831,7 +822,7 @@ export default function GalleryPage() {
             </div>
             <h1 className="mt-3 text-2xl font-semibold">Exhibition not found</h1>
             <p className="mt-3 text-sm text-[color:var(--muted)]">
-              This exhibition could not be loaded from local storage.
+              This exhibition could not be found. It may have been deleted, or it belongs to another profile.
             </p>
             <div className="mt-6">
               <Link href="/museum" className={neutralPillClass()}>
@@ -851,6 +842,19 @@ export default function GalleryPage() {
           <Link href="/museum" className={neutralPillClass()}>
             Back to Exhibitions
           </Link>
+          <span
+            className="ml-auto text-[11px]"
+            style={{ color: saveState === "failed" ? "#fca5a5" : "var(--muted2)" }}
+            aria-live="polite"
+          >
+            {saveState === "saving"
+              ? "Saving…"
+              : saveState === "failed"
+                ? "Not saved to the cloud yet, retrying…"
+                : saveState === "saved"
+                  ? "Saved"
+                  : ""}
+          </span>
         </div>
 
         {status ? (
@@ -918,6 +922,15 @@ export default function GalleryPage() {
                   >
                     {isUploadingCover ? "Uploading..." : "Cover Artwork"}
                   </label>
+                  {draft.coverImage ? (
+                    <button
+                      type="button"
+                      onClick={() => patchDraft((current) => ({ ...current, coverImage: undefined }))}
+                      className="mt-0.5 block w-full text-center text-[8px] font-semibold text-[color:var(--muted)] underline"
+                    >
+                      Remove
+                    </button>
+                  ) : null}
                 </div>
 
                 <div className="min-w-0">
@@ -953,17 +966,8 @@ export default function GalleryPage() {
                       {visibilityLabel(draft.visibility)}
                     </span>
 
-                    <span className="rounded-full bg-[color:var(--theme-elevated)] px-3 py-1.5 text-xs tracking-[0.14em] text-[color:var(--muted2)] ring-1 ring-[color:var(--theme-border)] xl:px-2.5 xl:py-1 xl:text-[10px]">
-                      {metrics.totalItems} ITEMS
-                    </span>
 
-                    <span className="rounded-full bg-[color:var(--theme-elevated)] px-3 py-1.5 text-xs tracking-[0.14em] text-[color:var(--muted2)] ring-1 ring-[color:var(--theme-border)] xl:px-2.5 xl:py-1 xl:text-[10px]">
-                      {metrics.views} VIEWS
-                    </span>
 
-                    <span className="rounded-full bg-[color:var(--theme-elevated)] px-3 py-1.5 text-xs tracking-[0.14em] text-[color:var(--muted2)] ring-1 ring-[color:var(--theme-border)] xl:px-2.5 xl:py-1 xl:text-[10px]">
-                      {draft.exhibitionLayout?.type ?? "GRID"} LAYOUT
-                    </span>
                   </div>
                 </div>
               </div>
@@ -979,11 +983,6 @@ export default function GalleryPage() {
                   <div className="mt-0.5 text-lg font-semibold leading-tight xl:text-base">
                     {metrics.roi >= 0 ? "+" : ""}{metrics.roi.toFixed(1)}%
                   </div>
-                </div>
-
-                <div className="rounded-2xl bg-[color:var(--surface)] px-3.5 py-2.5 ring-1 ring-[color:var(--border)] xl:rounded-xl xl:px-2.5 xl:py-2">
-                  <div className="text-[9px] tracking-[0.18em] text-[color:var(--muted2)]">NOTES</div>
-                  <div className="mt-0.5 text-lg font-semibold leading-tight xl:text-base">{metrics.notesCoverage.toFixed(0)}%</div>
                 </div>
 
                 <div className="rounded-2xl bg-[color:var(--surface)] px-3.5 py-2.5 ring-1 ring-[color:var(--border)] xl:rounded-xl xl:px-2.5 xl:py-2">
@@ -1022,12 +1021,32 @@ export default function GalleryPage() {
                   </div>
                   <button
                     type="button"
-                    onClick={handleRegeneratePublicLink}
+                    onClick={() => setConfirmRegenerate(true)}
                     className="vltd-selectable inline-flex min-h-[30px] items-center justify-center rounded-[7px] bg-[color:var(--pill)] px-2 py-1 text-[9px] font-semibold text-[color:var(--pill-fg)] ring-1 ring-[color:var(--border)] transition hover:bg-[color:var(--pill-hover)] xl:min-h-[28px]"
                   >
                     Regenerate
                   </button>
                 </div>
+
+                {confirmRegenerate ? (
+                  <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px] text-[color:var(--muted)]">
+                    <span>Regenerating stops the old link from working. Continue?</span>
+                    <button
+                      type="button"
+                      onClick={() => { setConfirmRegenerate(false); handleRegeneratePublicLink(); }}
+                      className="vltd-pill-main-glow rounded-full bg-[color:var(--pill-active-bg)] px-3 py-1 text-[10px] font-semibold text-[color:var(--fg)]"
+                    >
+                      Regenerate
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setConfirmRegenerate(false)}
+                      className="vltd-selectable rounded-full bg-[color:var(--pill)] px-3 py-1 text-[10px] font-semibold text-[color:var(--pill-fg)] ring-1 ring-[color:var(--border)]"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                ) : null}
 
                 {shareUrl ? (
                   <div className="mt-3">
@@ -1102,6 +1121,25 @@ export default function GalleryPage() {
                       Registered Users
                     </button>
                   </div>
+                  {confirmPublic ? (
+                    <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px] text-[color:var(--muted)]">
+                      <span>Make this exhibit public now? Anyone will be able to find it.</span>
+                      <button
+                        type="button"
+                        onClick={() => updateAccessMode("public_gallery", true)}
+                        className="vltd-pill-main-glow rounded-full bg-[color:var(--pill-active-bg)] px-3 py-1 text-[10px] font-semibold text-[color:var(--fg)]"
+                      >
+                        Make public
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setConfirmPublic(false)}
+                        className="vltd-selectable rounded-full bg-[color:var(--pill)] px-3 py-1 text-[10px] font-semibold text-[color:var(--pill-fg)] ring-1 ring-[color:var(--border)]"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  ) : null}
 
                   <div className="relative mt-3 border-t border-[color:var(--border)] pt-3">
                     <div className="flex flex-wrap items-center gap-2">
@@ -1228,22 +1266,6 @@ export default function GalleryPage() {
                           )}
                         </button>
                       )}
-                      <button
-                        type="button"
-                        onClick={() => void saveDraft()}
-                        disabled={!isDirty}
-                        className="vltd-pill-main-glow inline-flex min-h-[30px] min-w-[104px] items-center justify-center rounded-full bg-[color:var(--pill-active-bg)] px-3 py-1 text-[10px] font-semibold text-[color:var(--fg)] ring-1 ring-[rgba(203,208,213,0.48)] transition hover:opacity-95"
-                      >
-                        Save Changes
-                      </button>
-                      <button
-                        type="button"
-                        onClick={cancelChanges}
-                        disabled={!isDirty}
-                        className="inline-flex min-h-[30px] min-w-[104px] items-center justify-center rounded-[7px] bg-[color:var(--pill)] px-3 py-1 text-[10px] font-semibold text-[color:var(--pill-fg)] ring-1 ring-[color:var(--border)] transition hover:bg-[color:var(--pill-hover)] disabled:opacity-60"
-                      >
-                        Cancel Changes
-                      </button>
                     </div>
                   </div>
                 </div>
@@ -1277,25 +1299,12 @@ export default function GalleryPage() {
         <section className="grid gap-5 xl:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)]" style={{ maxWidth: "calc(100vw - 2rem)" }}>
           <div className="rounded-[30px] vltd-panel-main bg-[color:var(--surface)] p-6 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
             <div className="text-[11px] tracking-[0.24em] text-[color:var(--muted2)]">
-              EXHIBIT NOTES
+              ITEMS
             </div>
-            <h2 className="mt-2 text-2xl font-semibold">Description</h2>
-            <p className="mt-1 text-sm text-[color:var(--muted)]">
-              Shown to visitors on the public exhibit page.
-            </p>
-
-            <textarea
-              value={draft.description ?? ""}
-              onChange={(e) =>
-                patchDraft((current) => ({ ...current, description: e.target.value }))
-              }
-              placeholder="Describe this exhibit for visitors — theme, story, what makes it special..."
-              className="mt-4 min-h-[160px] w-full rounded-2xl bg-[color:var(--input)] p-4 text-sm ring-1 ring-[color:var(--border)] focus:outline-none resize-none leading-relaxed"
-            />
+            <h2 className="mt-2 text-2xl font-semibold">In this exhibition</h2>
 
             {galleryItems.length > 0 ? (
               <div className="mt-4">
-                <div className="text-[11px] tracking-[0.18em] text-[color:var(--muted2)]">ITEMS IN THIS EXHIBIT</div>
                 <div className="mt-2 flex flex-col gap-1">
                   {galleryItems.map((item, index) => (
                     <div key={item.id} className="flex items-center gap-3 rounded-xl bg-[color:var(--input)] px-3 py-2 text-sm ring-1 ring-[color:var(--border)]">
@@ -1321,11 +1330,7 @@ export default function GalleryPage() {
             <h2 className="mt-2 text-xl font-semibold">Invite Tokens</h2>
 
             {/* Compact stats row */}
-            <div className="mt-3 grid grid-cols-3 gap-2">
-              <div className="rounded-xl bg-[color:var(--input)] px-2.5 py-2 ring-1 ring-[color:var(--border)]">
-                <div className="text-[9px] tracking-[0.16em] text-[color:var(--muted2)]">VIEWS</div>
-                <div className="mt-0.5 text-lg font-semibold leading-tight">{metrics.views}</div>
-              </div>
+            <div className="mt-3 grid grid-cols-2 gap-2">
               <div className="rounded-xl bg-[color:var(--input)] px-2.5 py-2 ring-1 ring-[color:var(--border)]">
                 <div className="text-[9px] tracking-[0.16em] text-[color:var(--muted2)]">UNIQUE</div>
                 <div className="mt-0.5 text-lg font-semibold leading-tight">{metrics.uniqueViewers}</div>
@@ -1536,7 +1541,7 @@ export default function GalleryPage() {
           allItems={items}
           confirmedIds={pickerSectionIds !== null ? pickerSectionIds : draft.itemIds}
           sectionTitle={pickerSectionTitle}
-          onConfirm={(ids) => {
+          onConfirm={(ids, pickedName) => {
             if (pickerSectionIds !== null && pickerSectionIdx !== null) {
               // Section-specific update: add/remove items for this section only.
               // Compute the next ids/sections from the freshest known draft BEFORE
@@ -1561,7 +1566,7 @@ export default function GalleryPage() {
               // Update the section's itemIds
               const currentSections = Array.isArray(baseDraft.sections) ? baseDraft.sections : [];
               const nextSections = currentSections.map((s, i) =>
-                i === pickerSectionIdx ? { ...s, itemIds: ids } : s
+                i === pickerSectionIdx ? { ...s, itemIds: ids, title: pickedName?.trim() ? pickedName.trim() : s.title } : s
               );
 
               patchDraft((current) => ({

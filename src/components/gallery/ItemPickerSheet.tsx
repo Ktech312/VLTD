@@ -174,9 +174,12 @@ export function ItemPickerSheet({
     setActiveSub("");
   }
 
+  const canClear = confirmedIds.length > 0;
   const addLabel = pickedCount > 0
     ? ("Add to Exhibit (" + pickedCount + ")")
-    : "Select items to add";
+    : canClear
+      ? "Empty this exhibit"
+      : "Select items to add";
 
   const slotLabel = slotsLeft === 0
     ? `Exhibit is full (${maxItems} items max). Tap a picked item to remove it and make room.`
@@ -510,8 +513,8 @@ export function ItemPickerSheet({
             <button
               type="button"
               onClick={() => onConfirm([...Array.from(picked), ...hiddenIds], sectionName)}
-              disabled={pickedCount === 0}
-              className={["vltd-pill-main-glow transition", pickedCount > 0 ? "bg-[color:var(--pill-active-bg)]" : "bg-[color:var(--pill)]"].join(" ")}
+              disabled={pickedCount === 0 && !canClear}
+              className={["vltd-pill-main-glow transition", pickedCount > 0 || canClear ? "bg-[color:var(--pill-active-bg)]" : "bg-[color:var(--pill)]"].join(" ")}
               style={{
                 width: "100%",
                 borderRadius: 999,
@@ -520,8 +523,8 @@ export function ItemPickerSheet({
                 fontWeight: 900,
                 letterSpacing: "0.05em",
                 border: "none",
-                cursor: pickedCount > 0 ? "pointer" : "default",
-                opacity: pickedCount === 0 ? 0.35 : 1,
+                cursor: pickedCount > 0 || canClear ? "pointer" : "default",
+                opacity: pickedCount === 0 && !canClear ? 0.35 : 1,
               }}
             >
               {addLabel}
