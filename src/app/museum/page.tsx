@@ -341,12 +341,17 @@ export default function MuseumPage() {
       const score = getGalleryScore(gallery, items);
       const totalValue = galleryValue(gallery, itemsById);
       const views = gallery.analytics?.views ?? 0;
+      const resolvedItems = gallery.itemIds
+        .map((itemId) => itemsById.get(itemId))
+        .filter((item): item is VaultItem => Boolean(item));
 
       return {
         gallery,
         score,
         totalValue,
         views,
+        resolvedItems,
+        itemCount: resolvedItems.length,
       };
     });
   }, [galleries, items, itemsById]);
@@ -589,7 +594,7 @@ export default function MuseumPage() {
               {strongestGallery ? (
                 <div className="mt-4 flex flex-wrap gap-2">
                   <span className="rounded-full bg-[color:var(--theme-elevated)] px-3 py-1 text-xs ring-1 ring-black/10">
-                    {strongestGallery.gallery.itemIds.length} items
+                    {strongestGallery.itemCount} items
                   </span>
                   <span className="rounded-full bg-[color:var(--theme-elevated)] px-3 py-1 text-xs ring-1 ring-black/10">
                     {strongestGallery.score.signals.sections} exhibits
@@ -640,7 +645,7 @@ export default function MuseumPage() {
               {mostValuableGallery ? (
                 <div className="mt-4 flex flex-wrap gap-2">
                   <span className="rounded-full bg-[color:var(--theme-elevated)] px-3 py-1 text-xs ring-1 ring-black/10">
-                    {mostValuableGallery.gallery.itemIds.length} items
+                    {mostValuableGallery.itemCount} items
                   </span>
                   <span className="rounded-full bg-[color:var(--theme-elevated)] px-3 py-1 text-xs ring-1 ring-black/10">
                     {mostValuableGallery.score.score}/100 score
@@ -712,7 +717,8 @@ export default function MuseumPage() {
               <div className="min-w-0">
                 {headerBlock}
                 <div className="mt-5 grid grid-cols-2 gap-4 xl:grid-cols-3">
-              {displayedGalleries.map(({ gallery, totalValue }) => {
+              {displayedGalleries.map((entry) => {
+                const { gallery, totalValue, itemCount } = entry;
                 const coverImage = resolveGalleryImage(gallery.coverImage);
 
                 return (
@@ -789,7 +795,7 @@ export default function MuseumPage() {
                           {gallery.title}
                         </h2>
                         <div className="flex items-center gap-1 text-[11px] text-white/70">
-                          {gallery.itemIds.length} {gallery.itemIds.length === 1 ? "item" : "items"} <span className="opacity-60">·</span>
+                          {itemCount} {itemCount === 1 ? "item" : "items"} <span className="opacity-60">·</span>
                           <AppIcon name="globe" size={11} strokeWidth={1.8} className="opacity-80" />
                           {visibilityLabel(gallery.visibility)}
                         </div>
@@ -855,7 +861,7 @@ export default function MuseumPage() {
                   const origin = typeof window !== "undefined" ? window.location.origin : "";
                   const token = g.share?.publicToken;
                   const shareUrl = token ? `${origin}/museum/share/${token}` : `${origin}/gallery/${g.id}`;
-                  const panelItems = g.itemIds.map((id) => itemsById.get(id)).filter(Boolean) as VaultItem[];
+                  const panelItems = selectedEntry.resolvedItems;
                   const factors = [
                     { name: "Presentation", r: factorRating(sig.hasCover ? (sig.hasDescription ? 2 : 1) : 0, 1, 2, 2) },
                     { name: "Item Quality", r: factorRating(sig.featuredWorks, 1, 2, 3) },
@@ -912,7 +918,7 @@ export default function MuseumPage() {
                             <AppIcon name="externalLink" size={17} strokeWidth={1.8} />
                           </button>
                         </div>
-                        <div className="mt-1 text-xs text-[color:var(--muted)]">{g.itemIds.length} items · Updated {formatGalleryDate(g.updatedAt)}</div>
+                        <div className="mt-1 text-xs text-[color:var(--muted)]">{selectedEntry.itemCount} items · Updated {formatGalleryDate(g.updatedAt)}</div>
 
                         {/* Grade + factors, side by side */}
                         <div className="vltd-dark-surface mt-4 grid grid-cols-[116px_minmax(0,1fr)] gap-4 rounded-[9px] border p-3" style={{ borderColor: "var(--theme-border)", background: "rgba(3, 8, 14, 0.44)", boxShadow: "inset 0 1px 0 rgba(237,239,241,0.06)" }}>
