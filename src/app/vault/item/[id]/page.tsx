@@ -193,6 +193,123 @@ function Section({
   );
 }
 
+type EditableField = {
+  key: keyof VaultItem;
+  label: string;
+  kind: "text" | "money";
+  placeholder?: string;
+};
+
+/**
+ * A section whose read-only details can be edited right where they are: a
+ * pencil in the section header (same as Notes) swaps the details for inputs
+ * with Save / Cancel. `display` is what shows when not editing.
+ */
+function EditableSection({
+  title,
+  item,
+  fields,
+  display,
+  onSave,
+}: {
+  title: string;
+  item: VaultItem;
+  fields: EditableField[];
+  display: React.ReactNode;
+  onSave: (patch: Partial<VaultItem>) => Promise<void> | void;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState<Record<string, string>>({});
+
+  function start() {
+    const next: Record<string, string> = {};
+    for (const f of fields) {
+      const v = item[f.key];
+      next[String(f.key)] = v === undefined || v === null ? "" : String(v);
+    }
+    setDraft(next);
+    setEditing(true);
+  }
+
+  async function save() {
+    const patch: Record<string, string | number | undefined> = {};
+    for (const f of fields) {
+      const raw = (draft[String(f.key)] ?? "").trim();
+      if (f.kind === "money") {
+        const n = Number(raw.replace(/[^0-9.\-]/g, ""));
+        patch[String(f.key)] = raw && Number.isFinite(n) ? n : undefined;
+      } else {
+        patch[String(f.key)] = raw || undefined;
+      }
+    }
+    await onSave(patch as Partial<VaultItem>);
+    setEditing(false);
+  }
+
+  return (
+    <Section
+      title={title}
+      action={
+        !editing ? (
+          <button
+            type="button"
+            onClick={start}
+            aria-label={`Edit ${title.toLowerCase()}`}
+            title={`Edit ${title.toLowerCase()}`}
+            className="inline-flex h-7 w-7 items-center justify-center rounded-[7px] ring-1 ring-[color:var(--border)] transition hover:bg-[color:var(--pill)]"
+            style={{ color: "var(--muted)" }}
+          >
+            <AppIcon name="edit" size={14} strokeWidth={1.8} />
+          </button>
+        ) : null
+      }
+    >
+      {editing ? (
+        <div>
+          <div className="grid gap-3 sm:grid-cols-2">
+            {fields.map((f) => (
+              <label key={String(f.key)} className="grid gap-1.5">
+                <span className="text-[11px] font-medium tracking-[0.14em] text-[color:var(--muted2)]">{f.label}</span>
+                <input
+                  className="h-10 rounded-xl bg-[color:var(--pill)] px-3 text-sm ring-1 ring-[color:var(--border)] focus:outline-none"
+                  inputMode={f.kind === "money" ? "decimal" : undefined}
+                  value={draft[String(f.key)] ?? ""}
+                  placeholder={f.placeholder}
+                  onChange={(e) => setDraft((prev) => ({ ...prev, [String(f.key)]: e.target.value }))}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") void save();
+                    if (e.key === "Escape") setEditing(false);
+                  }}
+                />
+              </label>
+            ))}
+          </div>
+          <div className="mt-3 flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => void save()}
+              className="rounded-[8px] px-4 py-1.5 text-xs font-bold transition"
+              style={{ background: "var(--theme-gold, #C8CDD2)", color: "#0A0800" }}
+            >
+              Save
+            </button>
+            <button
+              type="button"
+              onClick={() => setEditing(false)}
+              className="rounded-[8px] px-4 py-1.5 text-xs font-semibold ring-1 ring-[color:var(--border)]"
+              style={{ color: "var(--muted)" }}
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      ) : (
+        display
+      )}
+    </Section>
+  );
+}
+
 function TagsEditor({ item, onSave }: { item: VaultItem; onSave: (tags: string[]) => void }) {
   const [draft, setDraft] = useState("");
   const tags = item.tags ?? [];
@@ -304,6 +421,7 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState("");
   const [isEditingNotes, setIsEditingNotes] = useState(false);
+  const [headerEditing, setHeaderEditing] = useState(false);
   const [notesDraft, setNotesDraft] = useState("");
   const router = useRouter();
   const [registryEntry, setRegistryEntry] = useState<import("@/lib/registryModel").RegistrySubject | null>(null);
@@ -420,12 +538,12 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
     }));
   }
 
-  async function handleSaveBasicRecord() {
-    if (!item) return;
+  async function handleSaveBasicRecord(): Promise<boolean> {
+    if (!item) return false;
     const title = recordDraft.title.trim();
     if (!title) {
       setRecordMessage("Title is required.");
-      return;
+      return false;
     }
 
     const universe = normUniverse(recordDraft.universe);
@@ -449,6 +567,26 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
 
     await persist(nextItem);
     setRecordMessage("Basic item record saved.");
+    return true;
+  }
+
+  async function saveHeaderEdit() {
+    if (await handleSaveBasicRecord()) setHeaderEditing(false);
+  }
+
+  function cancelHeaderEdit() {
+    if (item) {
+      const nextUniverse = normUniverse(item.universe);
+      setRecordDraft({
+        universe: nextUniverse,
+        categoryLabel: safeCategoryForUniverse(nextUniverse, item.categoryLabel || item.category),
+        subcategoryLabel: item.subcategoryLabel ?? "",
+        title: item.title ?? "",
+        subject: item.subject ?? "",
+      });
+    }
+    setRecordMessage("");
+    setHeaderEditing(false);
   }
 
   async function handleApplyCoa(data: CoaAnalysisResult, imageFile: File) {
@@ -819,15 +957,106 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
                 <AppIcon name="delete" size={16} strokeWidth={1.75} />
               </button>
               <div className="text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">ITEM</div>
-              <div className="mt-2 flex flex-wrap items-center gap-3">
-                <h1 className="text-3xl font-semibold leading-tight sm:text-4xl">{item.title}</h1>
-                {notable ? <NotableBadge reason={notableReason(item)} /> : null}
-              </div>
-              <div className="mt-2 text-sm text-[color:var(--muted)]">
-                {UNIVERSE_LABEL[universe]} • {categoryLabel(item)}
-                {item.subcategoryLabel ? ` • ${item.subcategoryLabel}` : ""}
-                {" • "}Added {fmtDate(addedAt)}
-              </div>
+              {headerEditing ? (
+                <div className="mt-2 grid gap-3 pr-12">
+                  <input
+                    autoFocus
+                    className="h-12 w-full rounded-xl bg-[color:var(--pill)] px-4 text-xl font-semibold ring-1 ring-[color:var(--border)] focus:outline-none"
+                    value={recordDraft.title}
+                    onChange={(event) => setRecordDraft((prev) => ({ ...prev, title: event.target.value }))}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter") void saveHeaderEdit();
+                      if (event.key === "Escape") cancelHeaderEdit();
+                    }}
+                    placeholder="Title"
+                    aria-label="Title"
+                  />
+                  <div className="grid gap-3 sm:grid-cols-3">
+                    <select
+                      className="h-10 rounded-xl bg-[color:var(--pill)] px-3 text-sm ring-1 ring-[color:var(--border)] focus:outline-none"
+                      value={recordDraft.universe}
+                      onChange={(event) => setDraftUniverse(normUniverse(event.target.value))}
+                      aria-label="Universe"
+                    >
+                      {getUniverses().map((key) => (
+                        <option key={key} value={key}>{UNIVERSE_LABEL[key]}</option>
+                      ))}
+                    </select>
+                    <select
+                      className="h-10 rounded-xl bg-[color:var(--pill)] px-3 text-sm ring-1 ring-[color:var(--border)] focus:outline-none"
+                      value={recordSelectedCategory}
+                      onChange={(event) => setDraftCategory(event.target.value)}
+                      aria-label="Category"
+                    >
+                      {recordCategoryOptions.map((category) => (
+                        <option key={category} value={category}>{category}</option>
+                      ))}
+                    </select>
+                    {recordSubcategoryOptions.length ? (
+                      <select
+                        className="h-10 rounded-xl bg-[color:var(--pill)] px-3 text-sm ring-1 ring-[color:var(--border)] focus:outline-none"
+                        value={recordDraft.subcategoryLabel}
+                        onChange={(event) => setRecordDraft((prev) => ({ ...prev, subcategoryLabel: event.target.value }))}
+                        aria-label="Subcategory"
+                      >
+                        <option value="">Subcategory (optional)</option>
+                        {recordSubcategoryOptions.map((subcategory) => (
+                          <option key={subcategory} value={subcategory}>{subcategory}</option>
+                        ))}
+                      </select>
+                    ) : (
+                      <input
+                        className="h-10 rounded-xl bg-[color:var(--pill)] px-3 text-sm ring-1 ring-[color:var(--border)] focus:outline-none"
+                        value={recordDraft.subcategoryLabel}
+                        onChange={(event) => setRecordDraft((prev) => ({ ...prev, subcategoryLabel: event.target.value }))}
+                        placeholder="Subcategory (optional)"
+                        aria-label="Subcategory"
+                      />
+                    )}
+                  </div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => void saveHeaderEdit()}
+                      className="rounded-[8px] px-4 py-1.5 text-xs font-bold transition"
+                      style={{ background: "var(--theme-gold, #C8CDD2)", color: "#0A0800" }}
+                    >
+                      Save
+                    </button>
+                    <button
+                      type="button"
+                      onClick={cancelHeaderEdit}
+                      className="rounded-[8px] px-4 py-1.5 text-xs font-semibold ring-1 ring-[color:var(--border)]"
+                      style={{ color: "var(--muted)" }}
+                    >
+                      Cancel
+                    </button>
+                    {recordMessage ? <span className="text-xs text-[color:var(--muted)]">{recordMessage}</span> : null}
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <div className="mt-2 flex flex-wrap items-center gap-3">
+                    <h1 className="text-3xl font-semibold leading-tight sm:text-4xl">{item.title}</h1>
+                    <button
+                      type="button"
+                      onClick={() => setHeaderEditing(true)}
+                      aria-label="Edit title and category"
+                      title="Edit title and category"
+                      className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-[8px] ring-1 ring-[color:var(--border)] transition hover:bg-[color:var(--pill)]"
+                      style={{ color: "var(--muted)" }}
+                    >
+                      <AppIcon name="edit" size={15} strokeWidth={1.8} />
+                    </button>
+                    {notable ? <NotableBadge reason={notableReason(item)} /> : null}
+                  </div>
+                  <div className="mt-2 text-sm text-[color:var(--muted)]">
+                    {UNIVERSE_LABEL[universe]} • {categoryLabel(item)}
+                    {item.subcategoryLabel ? ` • ${item.subcategoryLabel}` : ""}
+                    {" • "}Added {fmtDate(addedAt)}
+                  </div>
+                </>
+              )}
 
               <div className="mt-4 flex flex-wrap items-center gap-2">
                 <Link href="/vault" className="inline-flex h-10 items-center rounded-full bg-[color:var(--pill)] px-4 text-sm font-medium ring-1 ring-[color:var(--border)]">
@@ -944,7 +1173,21 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
           </div>
 
           <div>
-            <Section title="ITEM SUMMARY">
+            <Section
+              title="ITEM SUMMARY"
+              action={
+                <button
+                  type="button"
+                  onClick={() => { setHeaderEditing(true); window.scrollTo({ top: 0, behavior: "smooth" }); }}
+                  aria-label="Edit title and category"
+                  title="Edit title and category"
+                  className="inline-flex h-7 w-7 items-center justify-center rounded-[7px] ring-1 ring-[color:var(--border)] transition hover:bg-[color:var(--pill)]"
+                  style={{ color: "var(--muted)" }}
+                >
+                  <AppIcon name="edit" size={14} strokeWidth={1.8} />
+                </button>
+              }
+            >
               <div className="pt-1">
                 <DetailGrid
                   rows={[
@@ -1208,7 +1451,17 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
         </div>
 
         <div className="mt-5 grid gap-4 lg:grid-cols-2 xl:grid-cols-3">
-          <Section title="DETAILS">
+          <EditableSection
+            title="DETAILS"
+            item={item}
+            fields={[
+              { key: "subtitle", label: "Subtitle", kind: "text" },
+              { key: "number", label: "Number / Model", kind: "text" },
+              { key: "grade", label: "Grade", kind: "text" },
+              { key: "serialNumber", label: "Serial #", kind: "text" },
+            ]}
+            onSave={(patch) => persist({ ...item, ...patch })}
+            display={<>
             <DetailGrid
               rows={[
                 { label: "Subtitle", value: detailValue(item.subtitle) },
@@ -1293,9 +1546,23 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
                 )}
               </div>
             ) : null}
-          </Section>
+            </>}
+          />
 
-          <Section title="PURCHASE">
+          <EditableSection
+            title="PURCHASE"
+            item={item}
+            fields={[
+              { key: "purchasePrice", label: "Purchase price", kind: "money", placeholder: "0.00" },
+              { key: "purchaseTax", label: "Tax", kind: "money", placeholder: "0.00" },
+              { key: "purchaseShipping", label: "Shipping", kind: "money", placeholder: "0.00" },
+              { key: "purchaseFees", label: "Fees", kind: "money", placeholder: "0.00" },
+              { key: "purchaseSource", label: "Source", kind: "text" },
+              { key: "purchaseLocation", label: "Location", kind: "text" },
+              { key: "orderNumber", label: "Order #", kind: "text" },
+            ]}
+            onSave={(patch) => persist({ ...item, ...patch })}
+            display={
             <DetailGrid
               rows={[
                 { label: "Purchase price", value: fmtMoney(clamp(item.purchasePrice)) },
@@ -1307,9 +1574,15 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
                 { label: "Order #", value: detailValue(item.orderNumber) },
               ]}
             />
-          </Section>
+            }
+          />
 
-          <Section title="STORAGE + TRACKING">
+          <EditableSection
+            title="STORAGE + TRACKING"
+            item={item}
+            fields={[{ key: "storageLocation", label: "Storage location", kind: "text", placeholder: "Shelf, box, safe..." }]}
+            onSave={(patch) => persist({ ...item, ...patch })}
+            display={
             <DetailGrid
               rows={[
                 { label: "Storage location", value: detailValue(item.storageLocation) },
@@ -1318,7 +1591,8 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
                 { label: "Confidence", value: typeof item.valueConfidence === "number" ? `${item.valueConfidence}%` : "\u2014" },
               ]}
             />
-          </Section>
+            }
+          />
         </div>
 
         <div className="mt-5">
