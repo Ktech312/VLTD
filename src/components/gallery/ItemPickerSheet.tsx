@@ -3,6 +3,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import { AppIcon } from "@/components/ui/AppIcon";
+import { SelectCircle } from "@/components/ui/SelectCircle";
 import { type VaultItem } from "@/lib/vaultModel";
 import { UNIVERSE_KEYS, UNIVERSE_LABEL, type UniverseKey } from "@/lib/taxonomy";
 
@@ -19,8 +20,16 @@ function chipLabel(u: UniverseKey) {
   return CHIP_LABEL_OVERRIDE[u] ?? UNIVERSE_LABEL[u] ?? u;
 }
 
+function categoryOf(i: VaultItem) {
+  return String(i.categoryLabel || i.customCategoryLabel || i.category || "").trim();
+}
+
+function subcategoryOf(i: VaultItem) {
+  return String(i.subcategoryLabel || "").trim();
+}
+
 function searchText(i: VaultItem) {
-  return [i.title, i.subtitle, i.number, i.grade, i.notes, i.category, i.universe]
+  return [i.title, i.subtitle, i.number, i.grade, i.notes, i.category, i.categoryLabel, i.subcategoryLabel, i.universe]
     .filter(Boolean).join(" ").toLowerCase();
 }
 
@@ -58,6 +67,8 @@ export function ItemPickerSheet({
 }) {
   const [query, setQuery] = useState("");
   const [activeUniverses, setActiveUniverses] = useState<string[]>([]);
+  const [activeCategory, setActiveCategory] = useState("");
+  const [activeSub, setActiveSub] = useState("");
   const [picked, setPicked] = useState<Set<string>>(() => {
     const known = new Set(allItems.map((item) => String(item.id)));
     return new Set(confirmedIds.filter((id) => known.has(String(id))));
@@ -79,15 +90,34 @@ export function ItemPickerSheet({
   const pickedCount = picked.size;
   const slotsLeft = maxItems - pickedCount;
 
+  // Items inside the chosen universe(s): the category and subcategory rows are built from
+  // what is really in the vault, so imported labels show up too.
+  const inUniverse = useMemo(() => {
+    const uSet = new Set(activeUniverses);
+    return allItems.filter((item) => uSet.size === 0 || uSet.has(String(item.universe ?? "").toUpperCase()));
+  }, [allItems, activeUniverses]);
+
+  const categoryOptions = useMemo(() => {
+    if (activeUniverses.length === 0) return [];
+    return Array.from(new Set(inUniverse.map(categoryOf).filter(Boolean))).sort((a, b) => a.localeCompare(b));
+  }, [inUniverse, activeUniverses]);
+
+  const subOptions = useMemo(() => {
+    if (!activeCategory) return [];
+    return Array.from(
+      new Set(inUniverse.filter((i) => categoryOf(i) === activeCategory).map(subcategoryOf).filter(Boolean))
+    ).sort((a, b) => a.localeCompare(b));
+  }, [inUniverse, activeCategory]);
+
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    const uSet = new Set(activeUniverses);
-    return allItems.filter((item) => {
-      if (uSet.size > 0 && !uSet.has(String(item.universe ?? "").toUpperCase())) return false;
+    return inUniverse.filter((item) => {
+      if (activeCategory && categoryOf(item) !== activeCategory) return false;
+      if (activeSub && subcategoryOf(item) !== activeSub) return false;
       if (q && !searchText(item).includes(q)) return false;
       return true;
     });
-  }, [allItems, query, activeUniverses]);
+  }, [inUniverse, query, activeCategory, activeSub]);
 
   // Scroll lock on both html and body — prevents iOS bounce breaking inner scroll
   useEffect(() => {
@@ -127,6 +157,13 @@ export function ItemPickerSheet({
     setActiveUniverses((prev) =>
       prev.includes(u) ? prev.filter((x) => x !== u) : [...prev, u]
     );
+    setActiveCategory("");
+    setActiveSub("");
+  }
+
+  function toggleCategory(c: string) {
+    setActiveCategory((prev) => (prev === c ? "" : c));
+    setActiveSub("");
   }
 
   const addLabel = pickedCount > 0
@@ -271,6 +308,78 @@ export function ItemPickerSheet({
         })}
       </div>
 
+      {categoryOptions.length > 0 && (
+        <div
+          style={{
+            ...stageStyle,
+            flexShrink: 0,
+            display: "flex",
+            gap: 6,
+            padding: "6px 14px",
+            borderBottom: "1px solid var(--divider)",
+            overflowX: "auto",
+            WebkitOverflowScrolling: "touch",
+          } as React.CSSProperties}
+        >
+          {categoryOptions.map((c) => {
+            const active = activeCategory === c;
+            return (
+              <button
+                key={c}
+                type="button"
+                onClick={() => toggleCategory(c)}
+                aria-pressed={active}
+                className={[
+                  "vltd-selectable transition",
+                  active
+                    ? "vltd-selected bg-[color:var(--pill-active-bg)] text-[color:var(--fg)]"
+                    : "bg-[color:var(--pill)] text-[color:var(--pill-fg)] ring-1 ring-[color:var(--border)]",
+                ].join(" ")}
+                style={{ flexShrink: 0, borderRadius: 999, padding: "3px 10px", fontSize: 10, fontWeight: 700, letterSpacing: "0.02em", border: "none", cursor: "pointer", whiteSpace: "nowrap" }}
+              >
+                {c}
+              </button>
+            );
+          })}
+        </div>
+      )}
+
+      {subOptions.length > 0 && (
+        <div
+          style={{
+            ...stageStyle,
+            flexShrink: 0,
+            display: "flex",
+            gap: 6,
+            padding: "6px 14px",
+            borderBottom: "1px solid var(--divider)",
+            overflowX: "auto",
+            WebkitOverflowScrolling: "touch",
+          } as React.CSSProperties}
+        >
+          {subOptions.map((c) => {
+            const active = activeSub === c;
+            return (
+              <button
+                key={c}
+                type="button"
+                onClick={() => setActiveSub((prev) => (prev === c ? "" : c))}
+                aria-pressed={active}
+                className={[
+                  "vltd-selectable transition",
+                  active
+                    ? "vltd-selected bg-[color:var(--pill-active-bg)] text-[color:var(--fg)]"
+                    : "bg-[color:var(--pill)] text-[color:var(--pill-fg)] ring-1 ring-[color:var(--border)]",
+                ].join(" ")}
+                style={{ flexShrink: 0, borderRadius: 999, padding: "3px 10px", fontSize: 10, fontWeight: 700, letterSpacing: "0.02em", border: "none", cursor: "pointer", whiteSpace: "nowrap" }}
+              >
+                {c}
+              </button>
+            );
+          })}
+        </div>
+      )}
+
       {/* ── Photo grid ── */}
       <div style={{ flex: 1, minHeight: 0, overflowY: "scroll", overscrollBehavior: "contain", WebkitOverflowScrolling: "touch" } as React.CSSProperties}>
         <div style={stageStyle}>
@@ -348,32 +457,22 @@ export function ItemPickerSheet({
                       </div>
                     </div>
 
-                    {/* Selection circle — multi-select only. Single-select
-                        (museum placement) confirms on tap, so there's no
-                        pending-selection state to show. */}
+                    {/* Selection circle: centred on the photo, same as the Vault page. Single-select
+                        (museum placement) confirms on tap, so no pending state to show. */}
                     {isSingle ? null : (
-                      <div
-                        className={isSelected ? "bg-[color:var(--pill-active-bg)]" : ""}
+                      <span
                         style={{
                           position: "absolute",
-                          right: 5,
-                          top: 5,
-                          width: 22,
-                          height: 22,
-                          borderRadius: "50%",
+                          inset: 0,
                           display: "flex",
                           alignItems: "center",
                           justifyContent: "center",
-                          background: isSelected ? undefined : "rgba(0,0,0,0.50)",
-                          boxShadow: isSelected
-                            ? "0 0 0 2px var(--pill-active-ring)"
-                            : "0 0 0 1.5px rgba(255,255,255,0.55)",
+                          background: isSelected ? "rgba(203,208,213,0.18)" : "rgba(0,0,0,0.04)",
+                          pointerEvents: "none",
                         }}
                       >
-                        {isSelected && (
-                          <AppIcon name="checkmark" strokeWidth={2.2} style={{ width: 13, height: 13, color: "var(--fg)" }} />
-                        )}
-                      </div>
+                        <SelectCircle selected={isSelected} />
+                      </span>
                     )}
                   </button>
                 );
