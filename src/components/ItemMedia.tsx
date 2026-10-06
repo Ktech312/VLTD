@@ -15,6 +15,8 @@ type ImageRole = "primary" | "detail" | "proof";
 type ItemMediaImageMeta = {
   id?: string;
   role?: ImageRole;
+  quality?: "snapshot";
+  sourceUrl?: string;
 };
 
 type ImageEntry = {
@@ -216,6 +218,80 @@ async function shrinkPhoto(file: File, maxEdge = 1200, quality = 0.8): Promise<F
   } finally {
     URL.revokeObjectURL(objectUrl);
   }
+}
+
+/**
+ * A very small, quiet label on the main photo: its pixel size, file size when
+ * the browser can tell, and where it lives: stored in VLTD, a smaller saved
+ * copy, or linked from another site (with a link to the original).
+ */
+function ImageInfoBadge({ url, meta }: { url: string; meta?: ItemMediaImageMeta }) {
+  const [info, setInfo] = useState<{ url: string; w: number; h: number; kb: number | null } | null>(null);
+
+  useEffect(() => {
+    let active = true;
+    const probe = new Image();
+    probe.onload = () => {
+      if (!active) return;
+      setInfo({ url, w: probe.naturalWidth, h: probe.naturalHeight, kb: null });
+      if (/^https?:/i.test(url)) {
+        fetch(url, { method: "HEAD" })
+          .then((res) => {
+            const bytes = Number(res.headers.get("content-length") ?? 0);
+            if (active && bytes > 0) {
+              setInfo((prev) => (prev && prev.url === url ? { ...prev, kb: Math.max(1, Math.round(bytes / 1024)) } : prev));
+            }
+          })
+          .catch(() => {
+            /* other sites do not let us read the size; leave it out */
+          });
+      }
+    };
+    probe.src = url;
+    return () => {
+      active = false;
+    };
+  }, [url]);
+
+  let host = "";
+  try {
+    host = new URL(url).hostname.replace(/^www\./, "");
+  } catch {
+    host = "";
+  }
+  const stored = !host || /(^|\.)supabase\.(co|in)$/i.test(host);
+  const snapshot = meta?.quality === "snapshot";
+  const current = info && info.url === url ? info : null;
+
+  const where = snapshot ? (
+    <>
+      smaller copy
+      {meta?.sourceUrl ? (
+        <>
+          {" · "}
+          <a href={meta.sourceUrl} target="_blank" rel="noopener noreferrer" className="underline-offset-2 hover:underline" title="Open the original photo">
+            original
+          </a>
+        </>
+      ) : null}
+    </>
+  ) : stored ? (
+    "stored in VLTD"
+  ) : (
+    <>
+      linked:{" "}
+      <a href={url} target="_blank" rel="noopener noreferrer" className="underline-offset-2 hover:underline" title="Open the linked photo">
+        {host}
+      </a>
+    </>
+  );
+
+  return (
+    <div className="absolute right-3 top-3 z-10 rounded-full bg-black/30 px-2 py-0.5 text-[10px] leading-4 text-[color:var(--muted)] opacity-70 backdrop-blur transition hover:opacity-100">
+      {current ? `${current.w}×${current.h}${current.kb ? ` · ${current.kb} KB` : ""} · ` : ""}
+      {where}
+    </div>
+  );
 }
 
 function roleTone(role: ImageRole) {
@@ -811,6 +887,10 @@ export default function ItemMedia({
                   {roleLabel(activeVisibleEntry.role)}
                 </span>
               </div>
+            ) : null}
+
+            {activeVisibleEntry && activeImage ? (
+              <ImageInfoBadge url={activeImage} meta={imageMeta[activeVisibleEntry.originalIndex]} />
             ) : null}
           </div>
 

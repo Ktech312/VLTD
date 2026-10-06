@@ -380,7 +380,8 @@ function DescriptionField({
 }: {
   item: VaultItem;
   onSave: (text: string) => Promise<void> | void;
-  extra?: React.ReactNode;
+  /** Shown only while editing. Receives a setter so a generated draft lands in the box. */
+  extra?: (setDraft: (text: string) => void) => React.ReactNode;
 }) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState("");
@@ -427,6 +428,7 @@ function DescriptionField({
           </button>
           <span className="text-[11px] text-[color:var(--muted2)]">{draft.length}/600</span>
         </div>
+        {extra ? <div className="mt-1.5">{extra(setDraft)}</div> : null}
       </div>
     );
   }
@@ -446,7 +448,6 @@ function DescriptionField({
           <span style={{ color: "var(--muted2)" }}>Add a description. This is what people see when you share this item.</span>
         )}
       </button>
-      {extra ? <div className="mt-1.5">{extra}</div> : null}
     </div>
   );
 }
@@ -1217,14 +1218,14 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
                   <DescriptionField
                     item={item}
                     onSave={(text) => persist({ ...item, description: text })}
-                    extra={
+                    extra={(setText) => (
                       <GenerateCopyPanel
                         item={item}
                         mode="description"
-                        onAccept={(text) => void persist({ ...item, description: text })}
+                        onAccept={(text) => setText(text)}
                         triggerLabel={item.description?.trim() ? "Regenerate description" : "Generate description"}
                       />
-                    }
+                    )}
                   />
                   <div className="mt-1.5 text-sm text-[color:var(--muted)]">
                     {UNIVERSE_LABEL[universe]} • {categoryLabel(item)}
