@@ -14,6 +14,7 @@ import {
   initAuthListener,
   listMyProfiles,
   onAuthStateChange,
+  resolveActiveProfile,
   setStoredActiveProfileId,
   signOut,
 } from "@/lib/auth";
@@ -288,11 +289,8 @@ function TopNavInner() {
         if (!active) return;
         const nextProfiles = (data ?? []) as ProfileRow[];
         setProfiles(nextProfiles);
-        const stored = typeof window !== "undefined" ? localStorage.getItem(ACTIVE_PROFILE_KEY) : "";
-        const nextActive =
-          nextProfiles.find((p) => p.id === stored)?.id ??
-          nextProfiles.find((p) => p.username === "clerk")?.id ??
-          nextProfiles[0]?.id ?? "";
+        const stored = typeof window !== "undefined" ? localStorage.getItem(ACTIVE_PROFILE_KEY) ?? "" : "";
+        const nextActive = resolveActiveProfile(nextProfiles, stored)?.id ?? "";
         setActiveProfileId(nextActive);
         if (typeof window !== "undefined" && nextActive && nextActive !== stored) {
           localStorage.setItem(ACTIVE_PROFILE_KEY, nextActive);

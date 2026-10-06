@@ -1155,11 +1155,11 @@ async function pullAndMergeFromSupabase(profileId: string): Promise<VaultItem[]>
   }
 }
 
-export async function syncVaultItemsFromSupabase() {
+export async function syncVaultItemsFromSupabase(explicitProfileId?: string) {
   if (typeof window === "undefined") return [];
   if (!hasSupabaseEnv()) return loadRawItems();
 
-  const profileId = getActiveProfileId();
+  const profileId = explicitProfileId ?? getActiveProfileId();
   const sig = localItemsSignature();
 
   if (
