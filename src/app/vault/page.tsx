@@ -1,10 +1,12 @@
 "use client";
 
+import VaultWrappedSheet from "@/components/VaultWrappedSheet";
+import VaultMuseumView from "@/components/VaultMuseumView";
 import VaultCategoryChips, { vaultItemCategory, vaultItemSubcategory } from "@/components/VaultCategoryChips";
 import { normalizeUniverse, universeForItem } from "@/lib/universeMatch";
 import Link from "next/link";
 import { PageHeader } from "@/components/layout/PageHeader";
-import { memo, useCallback, useEffect, useMemo, useState } from "react";
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import ItemIntelligencePanel from "@/components/ItemIntelligencePanel";
 import ItemVisibilityToggle from "@/components/ItemVisibilityToggle";
@@ -40,11 +42,12 @@ import {
 } from "@/lib/vaultModel";
 import { hasSupabaseEnv } from "@/lib/vaultCloud";
 import { deleteVaultItemEverywhere, deleteVaultItemsEverywhere } from "@/lib/vaultActions";
-import { getOnboardingStatus } from "@/lib/auth";
+import { getOnboardingStatus, getStoredActiveProfileId, listMyProfiles, type ProfileRow } from "@/lib/auth";
 
 const ACTIVE_PROFILE_EVENT = "vltd:active-profile";
 const SALES_KEY = "vltd_sales_history";
 const FOCUS_LS_KEY = "vltd_primary_focus";
+const VIEW_MODE_KEY = "vltd_vault_view_mode";
 const VISIBLE_UNIVERSE_CHIPS_LS_KEY = "vltd_visible_universe_chips";
 const INITIAL_VISIBLE_ITEM_COUNT = 60;
 const VISIBLE_ITEM_INCREMENT = 60;
@@ -52,7 +55,7 @@ const VISIBLE_ITEM_INCREMENT = 60;
 type SortMode = "newest" | "value_desc" | "value_asc" | "gain_desc" | "gain_asc" | "title";
 type ReadinessFilter = "all" | "high" | "moderate" | "low";
 type UniverseFilter = "ALL" | UniverseKey;
-type VaultViewMode = "wall" | "gallery" | "shelf" | "flip";
+type VaultViewMode = "wall" | "gallery" | "museum" | "shelf" | "flip";
 type InlineField = "" | "value" | "cost";
 type SaleInfo = {
   id: string;
@@ -951,6 +954,10 @@ export default function VaultPage() {
   const [isOnline, setIsOnline] = useState<boolean | null>(null);
   const [initialLoadComplete, setInitialLoadComplete] = useState(false);
   const [vaultViewMode, setVaultViewMode] = useState<VaultViewMode>("shelf");
+  const [wrappedOpen, setWrappedOpen] = useState(false);
+  const [myProfiles, setMyProfiles] = useState<ProfileRow[]>([]);
+  const [activeProfileId, setActiveProfileId] = useState("");
+  const [confirmProfileMove, setConfirmProfileMove] = useState<ProfileRow | null>(null);
   const [visibleItemCount, setVisibleItemCount] = useState(INITIAL_VISIBLE_ITEM_COUNT);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(() => new Set());
   const [selectMode, setSelectMode] = useState(false);
@@ -1056,6 +1063,105 @@ export default function VaultPage() {
     return computeItemIntelligence(items);
   }, [items]);
 
+  // The view you picked is remembered. (Older saved values: "swipe" is now "flip".)
+  useEffect(() => {
+    try {
+      const saved = window.localStorage.getItem(VIEW_MODE_KEY);
+      const known: Record<string, VaultViewMode> = {
+        wall: "wall", gallery: "gallery", museum: "museum", shelf: "shelf", flip: "flip", swipe: "flip",
+      };
+      if (saved && known[saved]) setVaultViewMode(known[saved]);
+    } catch {
+      // storage unavailable: keep the default view
+    }
+  }, []);
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(VIEW_MODE_KEY, vaultViewMode);
+    } catch {
+      // storage unavailable
+    }
+  }, [vaultViewMode]);
+
+  // Scroll restoration: open an item, press Back, and the list returns to the same spot.
+  // The page scrolls inside .vltd-content-wrap, not the window. Two paths: a fresh remount reads
+  // the saved spot on mount; a cached page gets popstate. The saved spot also remembers how many
+  // items had been loaded, so the list is tall enough to scroll back to.
+  const visibleCountRef = useRef(INITIAL_VISIBLE_ITEM_COUNT);
+  useEffect(() => {
+    visibleCountRef.current = visibleItemCount;
+  }, [visibleItemCount]);
+  useEffect(() => {
+    function getScroller() {
+      return document.querySelector<HTMLElement>(".vltd-content-wrap");
+    }
+
+    function applyScrollRestore(target: number) {
+      let attempts = 0;
+      function poll() {
+        const el = getScroller();
+        // Wait (up to ~5s) for the list to load and be tall enough, then jump once.
+        if (el && (el.scrollHeight >= target || attempts >= 45)) {
+          el.scrollTop = target;
+          return;
+        }
+        if (++attempts < 50) setTimeout(poll, 100);
+      }
+      setTimeout(poll, 50);
+    }
+
+    function saveSpot() {
+      try {
+        const el = getScroller();
+        sessionStorage.setItem("vltd_vault_scroll_y", String(el ? el.scrollTop : 0));
+        sessionStorage.setItem("vltd_vault_scroll_count", String(visibleCountRef.current));
+      } catch {
+        // storage unavailable
+      }
+    }
+
+    function restoreSpot() {
+      try {
+        const raw = sessionStorage.getItem("vltd_vault_scroll_y");
+        if (!raw) return;
+        const target = parseInt(raw, 10);
+        const count = parseInt(sessionStorage.getItem("vltd_vault_scroll_count") ?? "", 10);
+        sessionStorage.removeItem("vltd_vault_scroll_y");
+        sessionStorage.removeItem("vltd_vault_scroll_count");
+        if (!Number.isNaN(count) && count > INITIAL_VISIBLE_ITEM_COUNT) {
+          setVisibleItemCount((current) => Math.max(current, count));
+        }
+        if (!Number.isNaN(target) && target > 0) applyScrollRestore(target);
+      } catch {
+        // storage unavailable
+      }
+    }
+
+    function saveOnClick(event: MouseEvent) {
+      if ((event.target as HTMLElement).closest("a[href]")) saveSpot();
+    }
+
+    document.addEventListener("click", saveOnClick, true);
+    window.addEventListener("popstate", restoreSpot);
+    restoreSpot();
+    return () => {
+      document.removeEventListener("click", saveOnClick, true);
+      window.removeEventListener("popstate", restoreSpot);
+    };
+  }, []);
+
+  // Profiles, so selected items can be moved between them (personal <-> business).
+  useEffect(() => {
+    setActiveProfileId(getStoredActiveProfileId());
+    let active = true;
+    void listMyProfiles().then(({ data }) => {
+      if (active) setMyProfiles(data ?? []);
+    });
+    return () => {
+      active = false;
+    };
+  }, []);
+
   const filteredItems = useMemo(() => {
     const q = query.trim().toLowerCase();
     const saleMap = Object.fromEntries(sales.map((sale) => [String(sale.id), sale]));
@@ -1114,6 +1220,25 @@ export default function VaultPage() {
 
     return next;
   }, [items, query, universeFilter, categoryFilter, subFilter, gradedOnly, uncategorizedOnly, sortMode, readinessFilter, intelligenceMap, sales, showSoldItems]);
+
+  const featuredItem = useMemo(() => {
+    if (universeFilter === "ALL" || filteredItems.length === 0) return null;
+    return [...filteredItems].sort((a, b) => {
+      const aInt = intelligenceMap[a.id];
+      const bInt = intelligenceMap[b.id];
+      const aScore = (aInt?.valueScore ?? 0) + (aInt?.gainScore ?? 0);
+      const bScore = (bInt?.valueScore ?? 0) + (bInt?.gainScore ?? 0);
+      if (bScore !== aScore) return bScore - aScore;
+      return effectiveMarketValue(b) - effectiveMarketValue(a);
+    })[0];
+  }, [filteredItems, intelligenceMap, universeFilter]);
+
+  const filteredTotals = useMemo(() => {
+    const counted = collectibleItems(filteredItems);
+    const cost = counted.reduce((sum, item) => sum + totalCost(item), 0);
+    const value = counted.reduce((sum, item) => sum + effectiveMarketValue(item), 0);
+    return { count: counted.length, cost, value, gain: value - cost };
+  }, [filteredItems]);
 
   const universeScopedItems = useMemo(
     () => (universeFilter === "ALL" ? [] : items.filter((item) => universeForItem(item) === universeFilter)),
@@ -1404,6 +1529,25 @@ export default function VaultPage() {
     }
   }
 
+  /** Move the selected items to another profile (personal <-> business). */
+  function handleMoveToProfile(targetProfileId: string) {
+    if (!targetProfileId || selectedIds.size === 0) return;
+    const movedItems = items
+      .filter((item) => selectedIds.has(item.id))
+      .map((item) => ({ ...item, profile_id: targetProfileId }));
+    commitVaultItemEdits(movedItems);
+    // Moved items now belong to another profile: drop them from this view.
+    setItems((prev) => prev.filter((item) => !selectedIds.has(item.id)));
+    setSelectedIds(new Set());
+    setSelectMode(false);
+    setConfirmProfileMove(null);
+    if (hasSupabaseEnv()) {
+      void processVaultSyncQueue().then(() => window.dispatchEvent(new Event("vltd:vault-updated")));
+    } else {
+      window.dispatchEvent(new Event("vltd:vault-updated"));
+    }
+  }
+
   function handleClearFilters() {
     setQuery("");
     setUniverseFilter("ALL");
@@ -1424,6 +1568,14 @@ export default function VaultPage() {
         actions={
           <>
             <VaultExportButton />
+            <RestoreVaultButton />
+            <button
+              type="button"
+              onClick={() => setWrappedOpen(true)}
+              className="inline-flex items-center justify-center gap-1.5 rounded-[6px] bg-[color:var(--pill)] px-4 py-1.5 text-sm font-bold ring-1 ring-[color:var(--border)] transition hover:ring-[color:var(--theme-gold)]"
+            >
+              ✦ Wrapped
+            </button>
             <Link href="/vault/halls" className="inline-flex items-center justify-center gap-1.5 rounded-[6px] bg-[color:var(--pill)] px-4 py-1.5 text-sm font-bold ring-1 ring-[color:var(--border)]"><Glyph name="building" size={14} />Halls</Link>
             <Link href="/vault/for-sale" className="inline-flex items-center justify-center rounded-[6px] bg-[color:var(--pill)] px-4 py-1.5 text-sm font-bold ring-1 ring-[color:var(--border)]">For Sale</Link>
             <Link href="/vault/import" className="inline-flex items-center justify-center rounded-[6px] bg-[color:var(--pill)] px-4 py-1.5 text-sm font-bold ring-1 ring-[color:var(--border)]">Import</Link>
@@ -1492,6 +1644,7 @@ export default function VaultPage() {
         }
       />
       <main className="text-[color:var(--fg)]">
+      {wrappedOpen ? <VaultWrappedSheet onClose={() => setWrappedOpen(false)} /> : null}
       {!initialLoadComplete ? (
         <div className="mx-auto max-w-[1500px] px-3 pb-4 sm:px-5 sm:pb-5" aria-label="Loading your vault summary">
           <section className="mt-5 grid grid-cols-2 gap-2 lg:grid-cols-4">
@@ -1639,6 +1792,7 @@ export default function VaultPage() {
                       ["wall", "Wall"],
                       ["gallery", "Gallery"],
                       ["shelf", "Shelf"],
+                      ["museum", "Museum"],
                       ["flip", "Flip"],
                     ] as const
                   ).map(([mode, label]) => (
@@ -1822,6 +1976,42 @@ export default function VaultPage() {
                           Move {selectedIds.size}
                         </button>
                       )}
+                      {confirmProfileMove ? (
+                        <>
+                          <span className="text-xs font-semibold" style={{ color: "#93c5fd" }}>
+                            Move {selectedIds.size} to {confirmProfileMove.display_name}? They leave this profile.
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => handleMoveToProfile(confirmProfileMove.id)}
+                            className="inline-flex h-8 items-center rounded-[7px] px-3 text-xs font-bold"
+                            style={{ background: "rgba(96,165,250,0.25)", color: "#bfdbfe", border: "1px solid rgba(96,165,250,0.5)" }}
+                          >
+                            Yes, move
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setConfirmProfileMove(null)}
+                            className="inline-flex h-8 items-center rounded-[7px] px-3 text-xs font-semibold ring-1 ring-[color:var(--border)]"
+                            style={{ background: "var(--pill)", color: "var(--muted)" }}
+                          >
+                            No
+                          </button>
+                        </>
+                      ) : (
+                        myProfiles.filter((profile) => profile.id !== activeProfileId).map((profile) => (
+                          <button
+                            key={profile.id}
+                            type="button"
+                            onClick={() => setConfirmProfileMove(profile)}
+                            className="inline-flex h-8 items-center gap-1 rounded-[7px] px-3 text-xs font-semibold"
+                            style={{ background: "rgba(96,165,250,0.14)", color: "#93c5fd", border: "1px solid rgba(96,165,250,0.4)" }}
+                            title={`Move selected items to your ${profile.profile_type} profile`}
+                          >
+                            → {profile.display_name}
+                          </button>
+                        ))
+                      )}
                     </>
                   )}
                   {selectMode && (
@@ -1850,6 +2040,29 @@ export default function VaultPage() {
           </div>
         </section>
 
+        {universeFilter !== "ALL" && filteredItems.length > 0 ? (
+          <section className="mb-3">
+            <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+              {[
+                { label: "FILTERED ITEMS", value: String(filteredTotals.count) },
+                { label: "FILTERED COST", value: formatMoney(filteredTotals.cost) },
+                { label: "FILTERED VALUE", value: formatMoney(filteredTotals.value) },
+                { label: "FILTERED GAIN", value: `${filteredTotals.gain >= 0 ? "+" : ""}${formatMoney(filteredTotals.gain)}` },
+              ].map((tile) => (
+                <div key={tile.label} className="rounded-[14px] bg-[color:var(--surface)] p-2.5 ring-1 ring-[color:var(--border)]">
+                  <div className="text-[11px] tracking-[0.18em] text-[color:var(--muted2)]">{tile.label}</div>
+                  <div className="mt-1 text-lg font-semibold">{tile.value}</div>
+                </div>
+              ))}
+            </div>
+            {featuredItem ? (
+              <div className="mt-3">
+                <ItemIntelligencePanel item={featuredItem} intelligence={intelligenceMap[featuredItem.id] ?? null} />
+              </div>
+            ) : null}
+          </section>
+        ) : null}
+
         {items.length === 0 && !initialLoadComplete ? (
           <VaultLoadingSkeleton />
         ) : items.length === 0 ? (
@@ -1858,6 +2071,10 @@ export default function VaultPage() {
           <VaultWallView items={filteredItems} saleMap={saleMap} />
         ) : filteredItems.length === 0 ? (
           <VaultEmptyState hasFilters={hasActiveFilters} onClearFilters={handleClearFilters} />
+        ) : vaultViewMode === "museum" ? (
+          <section className="mt-4">
+            <VaultMuseumView items={filteredItems} onFilterToUniverse={(universe) => setUniverseFilter(universe)} />
+          </section>
         ) : vaultViewMode === "flip" ? (
           <section className="mt-4">
             <div className="mx-auto max-w-3xl">
