@@ -207,7 +207,14 @@ export default function DiscoverPage() {
             });
           }
           setItemFactsById(itemFacts);
-          for (const gallery of mapped) gallery.universeKey = computeGalleryUniverse(gallery.itemIds, itemUniverseMap, gallery);
+          for (const gallery of mapped) {
+            // Stored gallery layouts can retain an id after its vault item is
+            // deleted.  Public counts and featured-item previews must describe
+            // the rows a visitor can actually see, not stale layout ids.
+            gallery.itemIds = gallery.itemIds.filter((itemId) => itemFacts.has(itemId));
+            gallery.item_count = gallery.itemIds.length;
+            gallery.universeKey = computeGalleryUniverse(gallery.itemIds, itemUniverseMap, gallery);
+          }
         } else {
           for (const gallery of mapped) gallery.universeKey = inferUniverseKeyFromText(gallery);
         }
