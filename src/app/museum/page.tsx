@@ -520,14 +520,13 @@ export default function MuseumPage() {
         <button
           type="button"
           onClick={handleMuseumBetaClick}
-          className="ml-1 inline-flex items-center gap-1.5 rounded-[8px] px-4 py-1.5 text-sm font-semibold ring-1 transition"
+          className="inline-flex items-center rounded-[8px] px-4 py-1.5 text-sm font-semibold ring-1 ring-[color:var(--border)] transition"
           style={
             museumBetaStatus.enabled
               ? { background: "#4FD3EE", color: "#06171d" }
               : { background: "var(--pill)", color: "var(--muted)", borderColor: "var(--border)" }
           }
         >
-          <AppIcon name="box" size={14} strokeWidth={2} />
           3D Gallery
         </button>
         {/* EK's ask: a second Beta pill next to 3D Gallery — the home for
@@ -536,10 +535,9 @@ export default function MuseumPage() {
         <button
           type="button"
           onClick={() => router.push("/museum/vltd")}
-          className="inline-flex items-center gap-1.5 rounded-[8px] px-4 py-1.5 text-sm font-semibold ring-1 transition"
+          className="inline-flex items-center rounded-[8px] px-4 py-1.5 text-sm font-semibold ring-1 ring-[color:var(--border)] transition"
           style={{ background: "var(--pill)", color: "var(--muted)", borderColor: "var(--border)" }}
         >
-          <AppIcon name="building" size={14} strokeWidth={2} />
           VLTD Museum
         </button>
         {/* Owner-only: Museum Builder, EK's own room editor for the shared
@@ -550,10 +548,9 @@ export default function MuseumPage() {
           <button
             type="button"
             onClick={() => router.push("/museum/builder")}
-            className="inline-flex items-center gap-1.5 rounded-[8px] px-4 py-1.5 text-sm font-semibold ring-1 transition"
+            className="inline-flex items-center rounded-[8px] px-4 py-1.5 text-sm font-semibold ring-1 ring-[color:var(--border)] transition"
             style={{ background: "var(--pill)", color: "var(--muted)", borderColor: "var(--border)" }}
           >
-            <AppIcon name="edit" size={14} strokeWidth={2} />
             Museum Builder
           </button>
         ) : null}
