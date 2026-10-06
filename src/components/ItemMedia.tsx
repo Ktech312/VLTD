@@ -187,6 +187,37 @@ async function straightenImage(file: File, angleDegrees: number, maxEdge?: numbe
   }
 }
 
+/**
+ * A smaller, lower-quality copy of a photo. Used when an edited photo that was
+ * only linked from another site (eBay, Whatnot...) gets saved into VLTD
+ * storage, so only photos you actually edit take up space, and little of it.
+ */
+async function shrinkPhoto(file: File, maxEdge = 1200, quality = 0.8): Promise<File> {
+  const objectUrl = URL.createObjectURL(file);
+  try {
+    const image = await new Promise<HTMLImageElement>((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => resolve(img);
+      img.onerror = () => reject(new Error("Failed to load image."));
+      img.src = objectUrl;
+    });
+    const scale = Math.min(1, maxEdge / Math.max(image.naturalWidth, image.naturalHeight));
+    const w = Math.max(1, Math.round(image.naturalWidth * scale));
+    const h = Math.max(1, Math.round(image.naturalHeight * scale));
+    const canvas = document.createElement("canvas");
+    canvas.width = w;
+    canvas.height = h;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return file;
+    ctx.drawImage(image, 0, 0, w, h);
+    const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/jpeg", quality));
+    if (!blob) return file;
+    return new File([blob], file.name || "item-photo.jpg", { type: "image/jpeg", lastModified: Date.now() });
+  } finally {
+    URL.revokeObjectURL(objectUrl);
+  }
+}
+
 function roleTone(role: ImageRole) {
   if (role === "primary") {
     return "bg-gold/20 text-cyan-100 ring-gold/30";
@@ -240,6 +271,9 @@ export default function ItemMedia({
   // The photo as it is after any rotate / flip, before straightening. Kept so
   // moving the Straighten slider never re-compresses an already-edited copy.
   const baseFileRef = useRef<File | null>(null);
+  // True when the photo being edited had to be read through our own server
+  // because it is only linked from another site.
+  const usedProxyRef = useRef(false);
   const bakeToken = useRef(0);
 
   // Remove Background — same free, client-side pipeline and backdrop
@@ -375,8 +409,19 @@ export default function ItemMedia({
   }
 
   async function imageUrlToFile(url: string, index: number) {
-    const response = await fetch(url);
-    if (!response.ok) throw new Error("Could not load this image for editing.");
+    let response: Response | null = null;
+    try {
+      response = await fetch(url);
+    } catch {
+      response = null;
+    }
+    if ((!response || !response.ok) && /^https:/i.test(url)) {
+      // Browsers will not let us read another site's photo directly; fetch it
+      // through our own server (allowed marketplaces only) instead.
+      response = await fetch(`/api/image-proxy?url=${encodeURIComponent(url)}`);
+      if (response.ok) usedProxyRef.current = true;
+    }
+    if (!response || !response.ok) throw new Error("Could not load this image for editing.");
     const blob = await response.blob();
     return new File([blob], `item-photo-${index + 1}.jpg`, {
       type: blob.type || "image/jpeg",
@@ -394,6 +439,7 @@ export default function ItemMedia({
     if (!onReplaceImage) return;
     setViewerOpen(false);
     baseFileRef.current = null;
+    usedProxyRef.current = false;
     bakeToken.current += 1;
     setEditTarget({
       index: entry.originalIndex,
@@ -412,7 +458,9 @@ export default function ItemMedia({
         ? new File([await straightenImage(base, angle)], base.name || "item-photo.jpg", { type: "image/jpeg", lastModified: Date.now() })
         : base;
       const cropped = await cropImageFile(file, editTarget.crop);
-      await onReplaceImage(editTarget.index, cropped);
+      const toSave = usedProxyRef.current ? await shrinkPhoto(cropped) : cropped;
+      await onReplaceImage(editTarget.index, toSave);
+      if (usedProxyRef.current) showToast("Saved a smaller copy of this photo to your vault.");
       if (editTarget.url.startsWith("blob:")) URL.revokeObjectURL(editTarget.url);
       baseFileRef.current = null;
       setEditTarget(null);

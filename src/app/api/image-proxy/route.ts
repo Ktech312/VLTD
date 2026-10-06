@@ -1,12 +1,26 @@
 import { NextRequest, NextResponse } from "next/server";
 
-// Only proxy images from known safe hosts (Supabase storage)
-const ALLOWED_HOSTS = ["supabase.co", "supabase.in"];
+// Only proxy images from known hosts: our own storage, plus the marketplaces
+// imported photos are linked from (so Edit Photo / Remove BG can read them;
+// browsers block reading those images directly). Matches the exact host or a
+// subdomain of it -- never a lookalike such as "evilsupabase.co".
+const ALLOWED_HOSTS = [
+  "supabase.co",
+  "supabase.in",
+  "ebayimg.com",
+  "whatnot.com",
+  "celebrityauthenticsauctions.com",
+  "pristineauction.com",
+];
 
-function isAllowedHost(urlString: string): boolean {
+const MAX_BYTES = 15 * 1024 * 1024;
+
+function isAllowedUrl(urlString: string): boolean {
   try {
-    const { hostname } = new URL(urlString);
-    return ALLOWED_HOSTS.some((h) => hostname.endsWith(h));
+    const { protocol, hostname } = new URL(urlString);
+    if (protocol !== "https:") return false;
+    const host = hostname.toLowerCase();
+    return ALLOWED_HOSTS.some((allowed) => host === allowed || host.endsWith("." + allowed));
   } catch {
     return false;
   }
@@ -15,7 +29,7 @@ function isAllowedHost(urlString: string): boolean {
 export async function GET(req: NextRequest) {
   const url = req.nextUrl.searchParams.get("url");
 
-  if (!url || !isAllowedHost(url)) {
+  if (!url || !isAllowedUrl(url)) {
     return new NextResponse(null, { status: 400 });
   }
 
@@ -29,8 +43,25 @@ export async function GET(req: NextRequest) {
       return new NextResponse(null, { status: upstream.status });
     }
 
+    // A redirect must not take us somewhere outside the allowed hosts.
+    if (upstream.url && !isAllowedUrl(upstream.url)) {
+      return new NextResponse(null, { status: 400 });
+    }
+
     const contentType = upstream.headers.get("Content-Type") ?? "image/jpeg";
+    if (!contentType.toLowerCase().startsWith("image/")) {
+      return new NextResponse(null, { status: 415 });
+    }
+
+    const declared = Number(upstream.headers.get("Content-Length") ?? 0);
+    if (declared > MAX_BYTES) {
+      return new NextResponse(null, { status: 413 });
+    }
+
     const buffer = Buffer.from(await upstream.arrayBuffer());
+    if (buffer.length > MAX_BYTES) {
+      return new NextResponse(null, { status: 413 });
+    }
 
     return new NextResponse(buffer, {
       status: 200,
