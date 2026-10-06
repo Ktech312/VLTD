@@ -32,6 +32,7 @@ import { getVaultImagePublicUrl } from "@/lib/vaultCloud";
 import { enqueueVaultItemSync, processVaultSyncQueue } from "@/lib/vaultSyncQueue";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 import GalleryBuilder from "@/components/GalleryBuilder";
+import { INLINE_EDIT_LINE } from "@/lib/inlineEdit";
 import { ItemPickerSheet } from "@/components/gallery/ItemPickerSheet";
 import { formatMoney, getGalleryMetrics } from "@/lib/portfolioMetrics";
 
@@ -926,14 +927,27 @@ export default function GalleryPage() {
                   </div>
 
                   <h1 className="mt-2 text-2xl font-semibold xl:mt-1 xl:text-2xl">
-                    {draft.title}
+                    <input
+                      value={draft.title ?? ""}
+                      onChange={(event) =>
+                        patchDraft((current) => ({ ...current, title: event.target.value.slice(0, 80) }))
+                      }
+                      placeholder="Exhibit title"
+                      aria-label="Exhibit title"
+                      className={INLINE_EDIT_LINE + " w-full text-[color:var(--fg)] placeholder:text-[color:var(--muted2)]"}
+                    />
                   </h1>
 
-                  <p className="mt-1 max-w-2xl text-sm leading-5 text-[color:var(--muted)] xl:text-xs xl:leading-4">
-                    {draft.description?.trim()
-                      ? draft.description
-                      : "Curated collection presentation"}
-                  </p>
+                  <textarea
+                    value={draft.description ?? ""}
+                    onChange={(event) =>
+                      patchDraft((current) => ({ ...current, description: event.target.value }))
+                    }
+                    rows={1}
+                    placeholder="Add a description"
+                    aria-label="Exhibit description"
+                    className={INLINE_EDIT_LINE + " mt-1 block w-full max-w-2xl resize-none text-sm leading-5 text-[color:var(--muted)] placeholder:text-[color:var(--muted2)] xl:text-xs xl:leading-4"}
+                  />
 
                   <div className="mt-3 flex flex-wrap items-center gap-1.5 xl:mt-2 xl:gap-1">
                     <span className="rounded-full bg-[color:var(--theme-elevated)] px-3 py-1.5 text-xs tracking-[0.14em] text-[color:var(--muted2)] ring-1 ring-[color:var(--theme-border)] xl:px-2.5 xl:py-1 xl:text-[10px]">
@@ -1153,13 +1167,13 @@ export default function GalleryPage() {
                               aliasAvatar: event.target.value.slice(0, 4),
                             }))
                           }
-                          placeholder="🗝️"
-                          aria-label="Alias avatar emoji"
-                          className="h-9 w-16 rounded-[8px] bg-[color:var(--pill)] px-2 text-center text-base ring-1 ring-[color:var(--border)] focus:outline-none"
+                          placeholder="Avatar"
+                          aria-label="Alias avatar: one emoji or letter"
+                          className="h-9 w-20 rounded-[8px] bg-[color:var(--pill)] px-2 text-center text-sm ring-1 ring-[color:var(--border)] focus:outline-none"
                         />
-                        <div className="grid h-9 w-9 shrink-0 place-items-center rounded-[8px] bg-[color:var(--surface)] text-base ring-1 ring-[color:var(--border)]">
-                          {draft.aliasAvatar || "🗝️"}
-                        </div>
+                        <span className="text-[10px] text-[color:var(--muted2)]">
+                          Type one emoji or letter to show beside the alias. Empty uses the default key.
+                        </span>
                       </div>
                     ) : null}
                   </div>
