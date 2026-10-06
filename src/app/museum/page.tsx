@@ -566,7 +566,7 @@ export default function MuseumPage() {
       <PageHeader
         title="Exhibitions"
         description="Curate public rooms from your private vault."
-        contentClassName="max-w-[1500px]"
+        contentClassName={selectedEntry ? "max-w-[1300px]" : "max-w-[900px]"}
         actions={
           galleries.length > 0 ? (
             <>
@@ -583,7 +583,7 @@ export default function MuseumPage() {
         }
       />
       <main className="text-[color:var(--fg)]">
-      <div className="mx-auto max-w-[1500px] px-4 pb-3 sm:px-6 sm:pb-4">
+      <div className={`mx-auto px-4 pb-3 sm:px-6 sm:pb-4 ${selectedEntry ? "max-w-[1300px]" : "max-w-[900px]"}`}>
         <input
           ref={coverInputRef}
           type="file"
@@ -748,7 +748,7 @@ export default function MuseumPage() {
             <div className={`grid gap-6 lg:items-start ${selectedEntry ? "lg:grid-cols-[minmax(0,1fr)_440px]" : ""}`}>
               <div className="min-w-0">
                 {headerBlock}
-                <div className={`mt-5 grid gap-3 ${selectedEntry ? "grid-cols-2 xl:grid-cols-3" : "grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-5"}`}>
+                <div className={`mt-5 grid gap-3 ${selectedEntry ? "grid-cols-2 xl:grid-cols-3" : "grid-cols-2 sm:grid-cols-3 lg:grid-cols-4"}`}>
               {displayedGalleries.map((entry) => {
                 const { gallery, totalValue, itemCount } = entry;
                 const coverImage = resolveGalleryImage(gallery.coverImage);
@@ -861,7 +861,7 @@ export default function MuseumPage() {
               })}
               {(() => {
                 // Ghost exhibits: fill the grid out to 3 rows (3 cols), always at least one create card.
-                const ghostCount = Math.max(1, 5 - displayedGalleries.length);
+                const ghostCount = Math.max(1, 12 - displayedGalleries.length);
                 return Array.from({ length: ghostCount }).map((_, i) => (
                   <Link
                     key={`ghost-${i}`}
