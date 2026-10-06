@@ -270,3 +270,15 @@ How to read this: findings are ranked most annoying first. "Likelihood" is how l
 2. Items 20, 21, 22 (lost or unsynced edits).
 3. Items 8, 9, 10, 11, 16 (things that look broken).
 4. Item 38 (one shared value formula), then the copy-paste clean-ups (30, 32, 33, 34, 36, 37).
+
+---
+
+## Status after the fix pass (2026-10-06)
+
+**Fixed:** 1, 2, 3, 4, 5 (supplies), 6, 7, 8 (sort fixed; year reaches public pages that read live rows, not the saved snapshot), 9, 10, 11, 12, 13, 14, 15, 16, 17, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 31, 32, 33, 34, 36, 38, 39, 40, 41, 44, 45, 47, 48, 49, 50, 51, 53, 54. Also added Select all (43) and the one shared universe match (the core of 37).
+
+**Not done, on purpose:**
+- 5 (Private items already in an exhibit): done as "Hidden Item" on explicit hide only, because almost every item is already marked Private.
+- 18: Layout buttons vs "Theme: Grid View" still use two similar words. The buttons now work; the wording is a design call.
+- 30 and 37 (full merge of the five public viewers and the two Vault list pages): too large to do safely in one pass. Fixes now go through shared code where it matters (public columns, universe match, value formula, image lookup).
+- 35 (Create Exhibition wording), 42 (silent 18-item cap on drag/import paths), 43 (category chips on Vault lists), 46, 52: small or design-dependent, left for a follow-up.
