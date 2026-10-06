@@ -148,6 +148,45 @@ async function applyPhotoOrientation(file: File, op: PhotoOrientationOp): Promis
   }
 }
 
+/**
+ * "Straighten": turn the photo by a small angle to level it. The image is
+ * scaled up just enough that the turned picture still fills the frame, so no
+ * empty corners appear. `maxEdge` makes a smaller copy for the live preview.
+ */
+async function straightenImage(file: File, angleDegrees: number, maxEdge?: number): Promise<Blob> {
+  const objectUrl = URL.createObjectURL(file);
+  try {
+    const image = await new Promise<HTMLImageElement>((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => resolve(img);
+      img.onerror = () => reject(new Error("Failed to load image."));
+      img.src = objectUrl;
+    });
+    const scale = maxEdge ? Math.min(1, maxEdge / Math.max(image.naturalWidth, image.naturalHeight)) : 1;
+    const w = Math.max(1, Math.round(image.naturalWidth * scale));
+    const h = Math.max(1, Math.round(image.naturalHeight * scale));
+    const radians = (angleDegrees * Math.PI) / 180;
+    const cos = Math.abs(Math.cos(radians));
+    const sin = Math.abs(Math.sin(radians));
+    const fill = Math.max((w * cos + h * sin) / w, (w * sin + h * cos) / h);
+
+    const canvas = document.createElement("canvas");
+    canvas.width = w;
+    canvas.height = h;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) throw new Error("Canvas is not available.");
+    ctx.translate(w / 2, h / 2);
+    ctx.rotate(radians);
+    ctx.scale(fill, fill);
+    ctx.drawImage(image, -w / 2, -h / 2, w, h);
+    const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/jpeg", 0.92));
+    if (!blob) throw new Error("Failed to prepare image.");
+    return blob;
+  } finally {
+    URL.revokeObjectURL(objectUrl);
+  }
+}
+
 function roleTone(role: ImageRole) {
   if (role === "primary") {
     return "bg-gold/20 text-cyan-100 ring-gold/30";
@@ -196,8 +235,12 @@ export default function ItemMedia({
   const [rotation, setRotation] = useState(0);
   const [isPreparing, setIsPreparing] = useState(false);
   const [viewerIndex, setViewerIndex] = useState(0);
-  const [editTarget, setEditTarget] = useState<{ index: number; url: string; crop: ScanCropRect; reoriented?: boolean } | null>(null);
+  const [editTarget, setEditTarget] = useState<{ index: number; url: string; crop: ScanCropRect; reoriented?: boolean; angle?: number } | null>(null);
   const [isEditingImage, setIsEditingImage] = useState(false);
+  // The photo as it is after any rotate / flip, before straightening. Kept so
+  // moving the Straighten slider never re-compresses an already-edited copy.
+  const baseFileRef = useRef<File | null>(null);
+  const bakeToken = useRef(0);
 
   // Remove Background — same free, client-side pipeline and backdrop
   // choices as the camera capture flow (src/components/capture/
@@ -350,6 +393,8 @@ export default function ItemMedia({
   function openEditorForEntry(entry: ImageEntry) {
     if (!onReplaceImage) return;
     setViewerOpen(false);
+    baseFileRef.current = null;
+    bakeToken.current += 1;
     setEditTarget({
       index: entry.originalIndex,
       url: entry.url,
@@ -361,10 +406,15 @@ export default function ItemMedia({
     if (!editTarget || !onReplaceImage) return;
     setIsEditingImage(true);
     try {
-      const file = await imageUrlToFile(editTarget.url, editTarget.index);
+      const base = baseFileRef.current ?? (await imageUrlToFile(editTarget.url, editTarget.index));
+      const angle = editTarget.angle ?? 0;
+      const file = angle
+        ? new File([await straightenImage(base, angle)], base.name || "item-photo.jpg", { type: "image/jpeg", lastModified: Date.now() })
+        : base;
       const cropped = await cropImageFile(file, editTarget.crop);
       await onReplaceImage(editTarget.index, cropped);
       if (editTarget.url.startsWith("blob:")) URL.revokeObjectURL(editTarget.url);
+      baseFileRef.current = null;
       setEditTarget(null);
     } catch (error) {
       console.error(error);
@@ -378,9 +428,13 @@ export default function ItemMedia({
     if (!editTarget || isEditingImage) return;
     setIsEditingImage(true);
     try {
-      const file = await imageUrlToFile(editTarget.url, editTarget.index);
-      const blob = await applyPhotoOrientation(file, op);
-      const nextUrl = URL.createObjectURL(blob);
+      const base = baseFileRef.current ?? (await imageUrlToFile(editTarget.url, editTarget.index));
+      const turned = await applyPhotoOrientation(base, op);
+      const turnedFile = new File([turned], base.name || "item-photo.jpg", { type: "image/jpeg", lastModified: Date.now() });
+      baseFileRef.current = turnedFile;
+      const angle = editTarget.angle ?? 0;
+      const shown = angle ? await straightenImage(turnedFile, angle, 1400) : turned;
+      const nextUrl = URL.createObjectURL(shown);
       const previousUrl = editTarget.url;
       // The crop box is relative to the old picture, so start the crop over.
       setEditTarget((prev) => (prev ? { ...prev, url: nextUrl, crop: FULL_CROP, reoriented: true } : prev));
@@ -393,10 +447,33 @@ export default function ItemMedia({
     }
   }
 
+  async function straightenEditImage(angle: number) {
+    if (!editTarget) return;
+    const token = ++bakeToken.current;
+    // Move the slider right away; the picture follows as soon as it is ready.
+    setEditTarget((prev) => (prev ? { ...prev, angle } : prev));
+    try {
+      const base = baseFileRef.current ?? (await imageUrlToFile(editTarget.url, editTarget.index));
+      baseFileRef.current = base;
+      const shown = angle ? await straightenImage(base, angle, 1400) : base;
+      if (token !== bakeToken.current) return; // a newer slider position won
+      const nextUrl = URL.createObjectURL(shown);
+      setEditTarget((prev) => {
+        if (!prev) return prev;
+        if (prev.url.startsWith("blob:")) URL.revokeObjectURL(prev.url);
+        return { ...prev, url: nextUrl, crop: FULL_CROP, reoriented: true, angle };
+      });
+    } catch (error) {
+      console.error(error);
+      showToast(error instanceof Error ? error.message : "Could not straighten this image.");
+    }
+  }
+
   // The photo editor asks "Discard unsaved changes?" itself when the crop was
   // changed, then calls this. Asking again here made people click OK twice.
   // It only needs to ask when the editor would not have (turned/flipped only).
   function closeImageEditFromEditor() {
+    baseFileRef.current = null;
     if (editTarget?.reoriented && cropsEqual(editTarget.crop, FULL_CROP)) {
       const ok = window.confirm("Discard unsaved photo changes?");
       if (!ok) return;
@@ -411,6 +488,7 @@ export default function ItemMedia({
       if (!ok) return;
     }
     if (editTarget?.url.startsWith("blob:")) URL.revokeObjectURL(editTarget.url);
+    baseFileRef.current = null;
     setEditTarget(null);
   }
 
@@ -896,6 +974,25 @@ export default function ItemMedia({
                   compact
                   zoomRowRight={
                     <div className="flex flex-wrap items-center justify-end gap-1.5">
+                      <label className="flex items-center gap-1.5 rounded-lg bg-[color:var(--pill)] px-2.5 py-1 text-[11px] font-medium ring-1 ring-[color:var(--border)]">
+                        Straighten
+                        <input
+                          type="range"
+                          min={-45}
+                          max={45}
+                          step={0.5}
+                          value={editTarget.angle ?? 0}
+                          onChange={(event) => void straightenEditImage(Number(event.target.value))}
+                          className="w-28 accent-[color:var(--theme-gold,#C8CDD2)]"
+                          aria-label="Straighten photo"
+                        />
+                        <span className="w-9 text-right tabular-nums">{(editTarget.angle ?? 0).toFixed(1)}°</span>
+                        {(editTarget.angle ?? 0) !== 0 ? (
+                          <button type="button" onClick={() => void straightenEditImage(0)} className="text-[color:var(--muted)] underline-offset-2 hover:underline">
+                            Reset
+                          </button>
+                        ) : null}
+                      </label>
                       {([
                         ["rotateLeft", "Rotate left"],
                         ["rotateRight", "Rotate right"],
