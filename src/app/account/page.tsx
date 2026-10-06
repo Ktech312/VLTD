@@ -11,7 +11,7 @@ import { AccountTabs } from "@/components/account/AccountTabs";
 import { getOnboardingStatus, updateProfile } from "@/lib/auth";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 import { syncPublicProfile } from "@/lib/publicProfile";
-import { processVaultSyncQueue, syncAllItemsToCloud } from "@/lib/vaultSyncQueue";
+import { getPendingVaultSyncCount, processVaultSyncQueue } from "@/lib/vaultSyncQueue";
 import { loadItems, syncVaultItemsFromSupabase } from "@/lib/vaultModel";
 import { fetchVaultItemsFromSupabase, hasSupabaseEnv } from "@/lib/vaultCloud";
 import { loadWatchlist, removeFromWatchlist, type WatchlistItem } from "@/lib/watchlistModel";
@@ -213,7 +213,8 @@ export default function AccountPage() {
     setMiniSyncBusy(true);
     setMiniSyncMsg("");
     try {
-      const r = await syncAllItemsToCloud();
+      const pendingBefore = getPendingVaultSyncCount();
+      const r = await processVaultSyncQueue();
       setLocalItemCount(loadItems().length);
       if (hasSupabaseEnv()) {
         try {
@@ -223,7 +224,13 @@ export default function AccountPage() {
           setCloudItemCount(null);
         }
       }
-      setMiniSyncMsg(r.remaining > 0 ? `${r.remaining} still pending.` : "Up to date.");
+      setMiniSyncMsg(
+        r.remaining > 0
+          ? `${r.remaining} still pending.`
+          : pendingBefore > 0
+            ? "Pending changes synced."
+            : "No pending changes to upload."
+      );
     } catch (e) {
       setMiniSyncMsg(e instanceof Error ? e.message : "Sync failed.");
     } finally {
@@ -608,14 +615,20 @@ export default function AccountPage() {
                     )}
                     {miniSyncMsg ? <span className="text-[color:var(--muted2)]"> · {miniSyncMsg}</span> : null}
                   </span>
-                  <button
-                    type="button"
-                    onClick={() => void handleMiniSync()}
-                    disabled={miniSyncBusy}
-                    className="font-semibold text-[color:var(--muted)] underline underline-offset-2 disabled:opacity-50"
-                  >
-                    {miniSyncBusy ? "Syncing…" : "Sync"}
-                  </button>
+                  {getPendingVaultSyncCount() > 0 ? (
+                    <button
+                      type="button"
+                      onClick={() => void handleMiniSync()}
+                      disabled={miniSyncBusy}
+                      className="font-semibold text-[color:var(--muted)] underline underline-offset-2 disabled:opacity-50"
+                    >
+                      {miniSyncBusy ? "Syncing…" : "Sync pending changes"}
+                    </button>
+                  ) : cloudItemCount != null && localItemCount !== cloudItemCount ? (
+                    <span className="max-w-[18rem] text-right text-[color:var(--muted2)]">
+                      Device-only records need review; they will not be uploaded automatically.
+                    </span>
+                  ) : null}
                 </div>
               ) : null}
 

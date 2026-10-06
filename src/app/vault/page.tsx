@@ -1547,6 +1547,19 @@ export default function VaultPage() {
         }
       />
       <main className="text-[color:var(--fg)]">
+      {!initialLoadComplete ? (
+        <div className="mx-auto max-w-[1500px] px-3 pb-4 sm:px-5 sm:pb-5" aria-label="Loading your vault summary">
+          <section className="mt-5 grid grid-cols-2 gap-2 lg:grid-cols-4">
+            {Array.from({ length: 4 }).map((_, index) => (
+              <div
+                key={index}
+                className="h-24 animate-pulse rounded-[12px] bg-[color:var(--surface)] ring-1 ring-[color:var(--border)]"
+              />
+            ))}
+          </section>
+          <VaultLoadingSkeleton />
+        </div>
+      ) : (
       <div className="mx-auto max-w-[1500px] px-3 pb-4 sm:px-5 sm:pb-5">
         <section className="mb-5">
           {items.length > 0 ? (
@@ -1977,6 +1990,7 @@ export default function VaultPage() {
           </section>
         )}
       </div>
+      )}
       </main>
     </>
   );
