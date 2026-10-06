@@ -26,16 +26,6 @@ function itemSubtitle(item: VaultItem) {
   return [item.subtitle, item.number, item.grade].filter(Boolean).join(" • ");
 }
 
-function formatMoney(value?: number) {
-  if (typeof value !== "number" || !Number.isFinite(value)) return "—";
-
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-    maximumFractionDigits: 0,
-  }).format(value);
-}
-
 type Props = {
   items: VaultItem[];
   galleryHrefPrefix?: string;
@@ -138,7 +128,6 @@ function PremiumDisplayCard({
   onItemClick?: (item: VaultItem) => void;
 }) {
   const subtitle = itemSubtitle(item);
-  const value = formatMoney(item.currentValue);
 
   const cardInner = (
     <div
@@ -181,9 +170,6 @@ function PremiumDisplayCard({
           </div>
           <div className="w-full truncate text-[6px] uppercase tracking-[0.06em] text-white/62 sm:text-[7px]">
             {subtitle || "Collection piece"}
-          </div>
-          <div className="w-full truncate text-[6px] uppercase tracking-[0.06em] text-white/45 sm:text-[7px]">
-            EMV {value}
           </div>
         </div>
       </div>

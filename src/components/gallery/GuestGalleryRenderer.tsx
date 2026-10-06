@@ -37,16 +37,6 @@ function itemSubtitle(item: VaultItem) {
   return [item.subtitle, item.number, item.grade].filter(Boolean).join(" • ");
 }
 
-function formatMoney(value?: number) {
-  if (typeof value !== "number" || !Number.isFinite(value)) return "—";
-
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-    maximumFractionDigits: 0,
-  }).format(value);
-}
-
 
 function ViewerItemCard({
   item,
@@ -176,10 +166,7 @@ function ViewerItemCard({
       <div className="mt-1 line-clamp-1 text-[11px] text-[color:var(--muted)]">
         {itemSubtitle(item) || "—"}
       </div>
-      <div className="mt-3 flex items-center justify-between gap-2">
-        <div className="rounded-full bg-black/10 px-3 py-1 text-[11px] text-[color:var(--muted)] ring-1 ring-black/10">
-          EMV {formatMoney(item.currentValue)}
-        </div>
+      <div className="mt-3 flex items-center justify-end gap-2">
         <div onClick={(e) => e.stopPropagation()}>
           <VibeButton
             itemId={String(item.id)}
@@ -540,26 +527,22 @@ export default function GuestGalleryRenderer({
               GALLERY_STAGE_WIDTH_CLASS,
             ].join(" ")}
           >
-            {coverImageUrl ? (
-              <>
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={coverImageUrl}
-                  alt={model.galleryTitle}
-                  className="absolute inset-0 h-full w-full object-contain p-5 opacity-28 sm:p-8"
-                  draggable={false}
-                />
-                <div className="absolute inset-0 bg-black/35" />
-              </>
-            ) : null}
-
             <div className="relative">
               <div className="text-[11px] tracking-[0.28em] text-[color:var(--muted2)]">
                 {model.access.modeLabel.toUpperCase()}
               </div>
 
-              <div className="mt-3 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-                <div className="max-w-3xl">
+              <div className="mt-3 flex items-start gap-4 sm:gap-5">
+                {coverImageUrl ? (
+                  <div
+                    className="w-[84px] shrink-0 overflow-hidden rounded-[14px] shadow-[0_8px_24px_rgba(0,0,0,0.5)] ring-1 ring-white/15 sm:w-[120px]"
+                    style={{ aspectRatio: "3/4" }}
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={coverImageUrl} alt={model.galleryTitle} className="h-full w-full object-cover" draggable={false} />
+                  </div>
+                ) : null}
+                <div className="min-w-0 flex-1">
                   <h1 className="text-3xl font-semibold sm:text-4xl lg:text-5xl">
                     {model.galleryTitle}
                   </h1>
@@ -613,7 +596,7 @@ export default function GuestGalleryRenderer({
                   </div>
                 </div>
 
-                <div className="flex flex-col items-start gap-2 lg:items-end">
+                <div className="flex shrink-0 flex-col items-end gap-2">
                   <FavoriteButton
                     contentType="gallery"
                     contentId={String(model.gallery?.id || model.galleryTitle)}
@@ -621,9 +604,6 @@ export default function GuestGalleryRenderer({
                     label="Favorite exhibition"
                     showMessage={false}
                   />
-                  <div className="rounded-full bg-black/15 px-4 py-2 text-sm font-semibold ring-1 ring-white/10">
-                    EMV {formatMoney(model.totalValue)}
-                  </div>
                 </div>
               </div>
             </div>
