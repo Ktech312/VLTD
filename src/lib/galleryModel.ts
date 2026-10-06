@@ -1261,7 +1261,11 @@ async function deleteGalleryFromSupabase(
   }
 
   if (!data || data.length === 0) {
-    console.error("Gallery delete affected zero rows (RLS denial or already gone):", galleryId);
+    // Zero rows deleted means either "already gone" (fine: that is what was asked for) or "not allowed".
+    // Look it up to tell which, instead of treating both as a failure and bringing the exhibit back.
+    const stillThere = await supabase.from("galleries").select("id").eq("id", galleryId).maybeSingle();
+    if (!stillThere.error && !stillThere.data) return { ok: true };
+    console.error("Gallery delete affected zero rows (RLS denial):", galleryId);
     return {
       ok: false,
       error: "Could not delete this exhibit from the cloud — you may not have permission, or it's already gone.",
@@ -1471,6 +1475,29 @@ export async function refreshGalleriesFromSupabase(force = true) {
   await hydrateLocalGalleriesFromSupabase(force);
 }
 
+const DELETED_GALLERIES_KEY = "vltd_deleted_gallery_ids_v1";
+
+function readDeletedGalleryIds(): Set<string> {
+  if (typeof window === "undefined") return new Set();
+  try {
+    const parsed: unknown = JSON.parse(window.localStorage.getItem(DELETED_GALLERIES_KEY) || "[]");
+    return new Set(Array.isArray(parsed) ? parsed.filter((id): id is string => typeof id === "string") : []);
+  } catch {
+    return new Set();
+  }
+}
+
+function rememberDeletedGalleryId(id: string) {
+  if (typeof window === "undefined") return;
+  try {
+    const ids = readDeletedGalleryIds();
+    ids.add(id);
+    window.localStorage.setItem(DELETED_GALLERIES_KEY, JSON.stringify(Array.from(ids).slice(-500)));
+  } catch {
+    // storage unavailable: the cloud delete is still the real delete
+  }
+}
+
 function normalizeAll(rawList: unknown) {
   if (!Array.isArray(rawList)) {
     return {
@@ -1479,7 +1506,10 @@ function normalizeAll(rawList: unknown) {
     };
   }
 
-  const normalized = rawList.map(normalizeGallery).filter(Boolean) as Gallery[];
+  const deleted = readDeletedGalleryIds();
+  const normalized = (rawList.map(normalizeGallery).filter(Boolean) as Gallery[]).filter(
+    (gallery) => !deleted.has(gallery.id)
+  );
   const unique = ensureUniqueGalleryIds(normalized);
   const migrated = migrateMissingProfileIds(unique.galleries);
 
@@ -1979,6 +2009,7 @@ export async function deleteGallery(id: string): Promise<{ ok: boolean; error?: 
     return result;
   }
 
+  rememberDeletedGalleryId(id);
   return { ok: true };
 }
 

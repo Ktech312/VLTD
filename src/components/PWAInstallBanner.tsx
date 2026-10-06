@@ -105,8 +105,8 @@ export default function PWAInstallBanner() {
     <button
       onClick={dismiss}
       aria-label="Dismiss"
-      style={{ minHeight: 36, minWidth: 36 }}
-      className="flex items-center justify-center text-white/40 hover:text-white/70 transition flex-shrink-0"
+      style={{ minHeight: 36, minWidth: 36, color: "rgba(255,255,255,0.7)" }}
+      className="flex items-center justify-center hover:text-white transition flex-shrink-0"
     >
       <AppIcon name="close" size={14} strokeWidth={2.5} />
     </button>
@@ -117,10 +117,10 @@ export default function PWAInstallBanner() {
     return (
       <div
         style={pillStyle}
-        className="flex items-center gap-1.5 rounded-xl border border-white/10 bg-[#12101C]/95 px-2 py-1.5 shadow-xl backdrop-blur-xl"
+        className="vltd-dark-surface flex items-center gap-1.5 rounded-xl border border-white/10 bg-[#12101C]/95 px-2 py-1.5 shadow-xl backdrop-blur-xl"
       >
-        <img src="/icons/icon-96x96.png" alt="VLTD" className="h-6 w-6 rounded-lg flex-shrink-0" />
-        <p className="text-[11px] font-semibold text-white whitespace-nowrap">Add to Home Screen</p>
+        <img src="/icons/icon-96x96.png" alt="" className="h-6 w-6 rounded-lg flex-shrink-0" />
+        <p className="text-[11px] font-semibold whitespace-nowrap" style={{ color: "#fff" }}>Add to Home Screen</p>
         <button
           onClick={() => void install()}
           aria-label="Install"
@@ -140,14 +140,15 @@ export default function PWAInstallBanner() {
     return (
       <div
         style={pillStyle}
-        className="flex flex-col gap-1.5 rounded-xl border border-white/10 bg-[#12101C]/95 px-2 py-1.5 shadow-xl backdrop-blur-xl"
+        className="vltd-dark-surface flex flex-col gap-1.5 rounded-xl border border-white/10 bg-[#12101C]/95 px-2 py-1.5 shadow-xl backdrop-blur-xl"
       >
         <div className="flex items-center gap-1.5">
-          <img src="/icons/icon-96x96.png" alt="VLTD" className="h-6 w-6 rounded-lg flex-shrink-0" />
+          <img src="/icons/icon-96x96.png" alt="" className="h-6 w-6 rounded-lg flex-shrink-0" />
           <button
             type="button"
             onClick={() => setIosExpanded((v) => !v)}
-            className="flex-1 text-left text-[11px] font-semibold text-white whitespace-nowrap"
+            className="flex-1 text-left text-[11px] font-semibold whitespace-nowrap"
+            style={{ color: "#fff" }}
           >
             Tap <AppIcon name="share" size={10} strokeWidth={2} className="inline align-middle text-white/60" /> → Add to Home Screen
           </button>

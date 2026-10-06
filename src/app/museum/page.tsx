@@ -748,7 +748,7 @@ export default function MuseumPage() {
             <div className={`grid gap-6 lg:items-start ${selectedEntry ? "lg:grid-cols-[minmax(0,1fr)_440px]" : ""}`}>
               <div className="min-w-0">
                 {headerBlock}
-                <div className="mt-5 grid grid-cols-2 gap-4 xl:grid-cols-3">
+                <div className={`mt-5 grid gap-3 ${selectedEntry ? "grid-cols-2 xl:grid-cols-3" : "grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-5"}`}>
               {displayedGalleries.map((entry) => {
                 const { gallery, totalValue, itemCount } = entry;
                 const coverImage = resolveGalleryImage(gallery.coverImage);
@@ -769,7 +769,7 @@ export default function MuseumPage() {
                     className={`group relative flex w-full cursor-pointer flex-col overflow-hidden rounded-[10px] border bg-[color:var(--theme-card)] shadow-[0_16px_42px_rgba(0,0,0,0.22)] transition duration-300 hover:-translate-y-0.5 hover:shadow-[0_22px_56px_rgba(0,0,0,0.30)] ${selectedEntry?.gallery.id === gallery.id ? "border-[#4FD3EE] ring-1 ring-[#4FD3EE]" : "border-[color:var(--theme-border)]"}`}
                   >
                     {/* Cover image with a distinct value shelf below. */}
-                    <div className="relative h-[176px] overflow-hidden bg-[color:var(--theme-elevated)]">
+                    <div className="relative h-[104px] overflow-hidden bg-[color:var(--theme-elevated)]">
                       {coverImage ? (
                         <ProgressiveImage
                           src={coverImage}
@@ -823,10 +823,10 @@ export default function MuseumPage() {
 
                       {/* Title + meta overlaid on the faded lower image */}
                       <div className="absolute inset-x-0 bottom-0 z-10 flex flex-col gap-0.5 px-2.5 pb-2.5">
-                        <h2 className="line-clamp-1 text-[19px] font-semibold tracking-[0] text-white" style={{ fontFamily: "var(--font-serif, 'Cormorant Garamond', Georgia, serif)" }}>
+                        <h2 className="line-clamp-1 text-[15px] font-semibold tracking-[0] text-white" style={{ fontFamily: "var(--font-serif, 'Cormorant Garamond', Georgia, serif)" }}>
                           {gallery.title}
                         </h2>
-                        <div className="flex items-center gap-1 text-[11px] text-white/70">
+                        <div className="flex items-center gap-1 text-[10px] text-white/70">
                           {itemCount} {itemCount === 1 ? "item" : "items"} <span className="opacity-60">·</span>
                           <AppIcon name="globe" size={11} strokeWidth={1.8} className="opacity-80" />
                           {visibilityLabel(gallery.visibility)}
@@ -835,11 +835,11 @@ export default function MuseumPage() {
                     </div>
 
                     {/* Divider + Total Value on the solid card background */}
-                    <div className="border-t bg-[color:var(--theme-card)] p-2.5" style={{ borderColor: "var(--theme-border)" }}>
-                      <div className="text-[9px] font-semibold uppercase tracking-[0.16em] text-[color:var(--muted2)]">
+                    <div className="border-t bg-[color:var(--theme-card)] px-2.5 py-1.5" style={{ borderColor: "var(--theme-border)" }}>
+                      <div className="text-[8px] font-semibold uppercase tracking-[0.16em] text-[color:var(--muted2)]">
                         Total Value
                       </div>
-                      <div className="text-lg font-medium text-[color:var(--data-color)]">
+                      <div className="text-sm font-medium text-[color:var(--data-color)]">
                         {formatMoney(totalValue)}
                       </div>
                       <button
@@ -849,11 +849,11 @@ export default function MuseumPage() {
                           event.stopPropagation();
                           openGallery(gallery.id);
                         }}
-                        className="absolute bottom-3 right-3 inline-flex h-8 w-8 items-center justify-center transition hover:text-[#5FDCF3]"
+                        className="absolute bottom-1.5 right-1.5 inline-flex h-7 w-7 items-center justify-center transition hover:text-[#5FDCF3]"
                         style={{ color: "#4FD3EE" }}
                         aria-label={`Open full exhibition page for ${gallery.title}`}
                       >
-                        <AppIcon name="externalLink" size={17} strokeWidth={1.8} />
+                        <AppIcon name="externalLink" size={15} strokeWidth={1.8} />
                       </button>
                     </div>
                   </article>
@@ -861,13 +861,13 @@ export default function MuseumPage() {
               })}
               {(() => {
                 // Ghost exhibits: fill the grid out to 3 rows (3 cols), always at least one create card.
-                const ghostCount = Math.max(1, 9 - displayedGalleries.length);
+                const ghostCount = Math.max(1, 5 - displayedGalleries.length);
                 return Array.from({ length: ghostCount }).map((_, i) => (
                   <Link
                     key={`ghost-${i}`}
                     href="/museum/new"
                     aria-label="Create a new exhibit"
-                    className="group flex min-h-[206px] w-full flex-col items-center justify-center gap-2.5 rounded-[10px] border border-dashed border-[color:var(--theme-border)] transition duration-300 hover:-translate-y-0.5 hover:border-[#4FD3EE]"
+                    className="group flex min-h-[150px] w-full flex-col items-center justify-center gap-2 rounded-[10px] border border-dashed border-[color:var(--theme-border)] transition duration-300 hover:-translate-y-0.5 hover:border-[#4FD3EE]"
                     style={{ background: "rgba(255,255,255,0.015)" }}
                   >
                     <span
