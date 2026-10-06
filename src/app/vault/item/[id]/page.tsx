@@ -45,6 +45,7 @@ import {
   markItemViewed,
   reorderImages,
   saveItem,
+  syncVaultItemsFromSupabase,
   normalizeTags,
   type VaultImage,
   type VaultItem,
@@ -448,6 +449,30 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
       const match = sales.find((s) => String(s.id) === String(id));
       if (match) setSale(match);
     }
+
+    // The saved copy on this device can be older than the cloud (an edit made
+    // elsewhere, or a bulk fix). Pull in the background and only swap in the
+    // fresh data if THIS item actually changed, so a refresh landing while
+    // you are typing never resets what you are editing.
+    let cancelled = false;
+    if (hasSupabaseEnv()) {
+      void syncVaultItemsFromSupabase()
+        .then(() => {
+          if (cancelled) return;
+          const fresh = loadItems({ includeAllProfiles: true });
+          setItems((prev) => {
+            const before = prev.find((entry) => String(entry.id) === String(id));
+            const after = fresh.find((entry) => String(entry.id) === String(id));
+            return JSON.stringify(before) === JSON.stringify(after) ? prev : fresh;
+          });
+        })
+        .catch(() => {
+          /* offline or cloud unavailable: keep showing the saved copy */
+        });
+    }
+    return () => {
+      cancelled = true;
+    };
   }, [id]);
 
   const item = useMemo(() => items.find((entry) => String(entry.id) === String(id)) ?? sale ?? null, [items, id, sale]);

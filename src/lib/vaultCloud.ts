@@ -311,16 +311,23 @@ function rowToItem(input: unknown): VaultItem {
 // but invisible to every pull (and to any new device). Read in pages instead.
 // The second sort key keeps page boundaries stable when many rows share the
 // same created_at (a bulk import does).
-const CLOUD_PAGE_SIZE = 1000;
+//
+// Pages are small on purpose. Each item row is wide (about 5 KB), so a
+// 1000-row page was 5 MB and took 5-35 seconds on a cold database -- past
+// Supabase's ~8 s request limit for signed-in users. The pull then failed
+// silently and the app kept showing its stale saved copy, which is why edits
+// made elsewhere only appeared after several refreshes. 200 rows is ~1 s.
+// A few pages load at once, and a failed page is retried before giving up.
+const CLOUD_PAGE_SIZE = 200;
+const CLOUD_PAGE_CONCURRENCY = 3;
+const CLOUD_PAGE_RETRIES = 2;
 
 async function fetchRowsWithOptionalGallery(profileId: string) {
   const supabase = getSupabaseBrowserClient();
   if (!supabase) return [];
 
-  async function readAll(columns: string) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const rows: any[] = [];
-    for (let from = 0; ; from += CLOUD_PAGE_SIZE) {
+  async function readPage(columns: string, from: number) {
+    for (let attempt = 0; ; attempt++) {
       const { data, error } = await supabase!
         .from(VAULT_ITEMS_TABLE)
         .select(columns)
@@ -329,10 +336,30 @@ async function fetchRowsWithOptionalGallery(profileId: string) {
         .order("id", { ascending: true })
         .range(from, from + CLOUD_PAGE_SIZE - 1);
 
-      if (error) throw error;
-      const batch = data ?? [];
-      rows.push(...batch);
-      if (batch.length < CLOUD_PAGE_SIZE) break;
+      if (!error) return data ?? [];
+      if (attempt >= CLOUD_PAGE_RETRIES) throw error;
+      await new Promise((resolve) => setTimeout(resolve, 500 * (attempt + 1)));
+    }
+  }
+
+  async function readAll(columns: string) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const rows: any[] = [];
+    for (let from = 0; ; from += CLOUD_PAGE_SIZE * CLOUD_PAGE_CONCURRENCY) {
+      const pages = await Promise.all(
+        Array.from({ length: CLOUD_PAGE_CONCURRENCY }, (_, i) =>
+          readPage(columns, from + i * CLOUD_PAGE_SIZE)
+        )
+      );
+      let finished = false;
+      for (const batch of pages) {
+        rows.push(...batch);
+        if (batch.length < CLOUD_PAGE_SIZE) {
+          finished = true;
+          break;
+        }
+      }
+      if (finished) break;
     }
     return rows;
   }
