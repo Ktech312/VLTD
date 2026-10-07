@@ -711,7 +711,7 @@ export default function MuseumPage() {
               </div>
 
               <h2 className="text-xl font-black" style={{ color: "var(--theme-text-primary, #ECEDEF)" }}>
-                Your museum is waiting
+                Your exhibitions are waiting
               </h2>
 
               <p className="mx-auto mt-2 max-w-sm text-sm leading-relaxed" style={{ color: "var(--theme-text-muted, #61656B)" }}>
