@@ -707,7 +707,7 @@ export default function GalleryBuilder({
 
   return (
     <div className="mx-auto mt-6 grid w-full gap-5 lg:max-w-[780px]" style={{ maxWidth: "min(780px, calc(100vw - 2rem))", overflow: "hidden" }}>
-      <section className="overflow-hidden rounded-[24px] bg-[color:var(--input)] p-4 ring-1 ring-[color:var(--border)]">
+      <section className="overflow-hidden rounded-b-[24px] bg-[color:var(--input)] p-4 ring-1 ring-[color:var(--border)]">
         <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
           <div>
             <div className="text-sm font-semibold">Exhibition Layout</div>
@@ -757,26 +757,26 @@ export default function GalleryBuilder({
             { label: "ITEMS", value: selectedCount },
             { label: "FEATURED", value: sections.filter((s) => !!s.featuredItemId).length },
           ].map(({ label, value }) => (
-            <div key={label} className="rounded-[14px] bg-[color:var(--surface)] px-3 py-2.5 ring-1 ring-[color:var(--border)]">
-              <div className="text-[10px] tracking-[0.14em] text-[color:var(--muted2)]">{label}</div>
-              <div className="mt-1 text-base font-semibold leading-none">{value}</div>
+            <div key={label} className="rounded-[10px] bg-[color:var(--surface)] px-2.5 py-1.5 text-right ring-1 ring-[color:var(--border)]">
+              <div className="text-[9px] tracking-[0.14em] text-[color:var(--muted2)]">{label}</div>
+              <div className="mt-0.5 text-sm font-semibold leading-none">{value}</div>
             </div>
           ))}
         </div>
 
         {/* ── Selected Items stats ── */}
         <div className="mt-2 grid grid-cols-3 gap-2">
-          <div className="rounded-[14px] bg-[color:var(--surface)] px-3 py-2.5 ring-1 ring-[color:var(--border)]">
-            <div className="text-[10px] tracking-[0.14em] text-[color:var(--muted2)]">ITEMS</div>
-            <div className="mt-1 text-base font-semibold leading-none">{selectedCount}</div>
+          <div className="rounded-[10px] bg-[color:var(--surface)] px-2.5 py-1.5 text-right ring-1 ring-[color:var(--border)]">
+            <div className="text-[9px] tracking-[0.14em] text-[color:var(--muted2)]">ITEMS</div>
+            <div className="mt-0.5 text-sm font-semibold leading-none">{selectedCount}</div>
           </div>
-          <div className="rounded-[14px] bg-[color:var(--surface)] px-3 py-2.5 ring-1 ring-[color:var(--border)]">
-            <div className="text-[10px] tracking-[0.14em] text-[color:var(--muted2)]">CURATED VALUE</div>
-            <div className="mt-1 text-base font-semibold leading-none">{formatMoney(selectedValue) ?? "—"}</div>
+          <div className="rounded-[10px] bg-[color:var(--surface)] px-2.5 py-1.5 text-right ring-1 ring-[color:var(--border)]">
+            <div className="text-[9px] tracking-[0.14em] text-[color:var(--muted2)]">CURATED VALUE</div>
+            <div className="mt-0.5 text-sm font-semibold leading-none">{formatMoney(selectedValue) ?? "—"}</div>
           </div>
-          <div className="rounded-[14px] bg-[color:var(--surface)] px-3 py-2.5 ring-1 ring-[color:var(--border)]">
-            <div className="text-[10px] tracking-[0.14em] text-[color:var(--muted2)]">CURATED COST</div>
-            <div className="mt-1 text-base font-semibold leading-none">{formatMoney(selectedCost) ?? "—"}</div>
+          <div className="rounded-[10px] bg-[color:var(--surface)] px-2.5 py-1.5 text-right ring-1 ring-[color:var(--border)]">
+            <div className="text-[9px] tracking-[0.14em] text-[color:var(--muted2)]">CURATED COST</div>
+            <div className="mt-0.5 text-sm font-semibold leading-none">{formatMoney(selectedCost) ?? "—"}</div>
           </div>
         </div>
 
@@ -1807,7 +1807,7 @@ export default function GalleryBuilder({
       )}
 
       {previewExpanded && (
-        <div className="fixed inset-0 z-[10000] flex flex-col" style={{ background: "#080C14" }}>
+        <div className="vltd-dark-surface fixed inset-0 z-[10000] flex flex-col" style={{ background: "#080C14" }}>
           <div
             className="shrink-0"
             style={{

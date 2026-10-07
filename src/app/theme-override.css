@@ -206,6 +206,14 @@
    above already step aside for anything under .vltd-dark-surface. */
 .vltd-dark-surface {
   color: #ECEDEF;
+  /* Anything inside that reads its colour from the site's variables gets the dark-theme values,
+     so grey "muted" text is light on a dark surface instead of dark blue on near-black. */
+  --fg: #ECEDEF;
+  --muted: rgba(236, 237, 239, 0.76);
+  --muted2: rgba(236, 237, 239, 0.58);
+  --border: rgba(255, 255, 255, 0.16);
+  --pill: rgba(255, 255, 255, 0.07);
+  --pill-fg: rgba(236, 237, 239, 0.92);
 }
 
 /* White text → dark in light mode */
