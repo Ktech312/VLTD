@@ -236,7 +236,10 @@ function isUuidLike(value: unknown) {
 }
 
 function normalizeTitle(value: unknown) {
-  return safeString(value);
+  // Keep the spaces as typed (a name is only "empty" if it is nothing but spaces); trimming here
+  // removed each trailing space while you were still typing the next word.
+  const text = typeof value === "string" ? value : String(value ?? "");
+  return text.trim() ? text : "";
 }
 
 function normalizeDescription(value: unknown) {
@@ -676,10 +679,11 @@ function normalizeSections(value: unknown, galleryItemIds?: string[]): GallerySe
     const id = safeString((raw as any)?.id) || makeSectionId();
     if (seen.has(id)) continue;
 
-    const rawTitle = safeString((raw as any)?.title);
+    const rawTitleExact = typeof (raw as any)?.title === "string" ? ((raw as any).title as string) : "";
+    const rawTitle = rawTitleExact.trim();
     // "Untitled Section" was the old legacy default — treat it as unset so existing
     // galleries self-heal to the new "Exhibit N" default instead of staying stuck.
-    const title = rawTitle && rawTitle !== "Untitled Section" ? rawTitle : `Exhibit ${out.length + 1}`;
+    const title = rawTitle && rawTitle !== "Untitled Section" ? rawTitleExact : `Exhibit ${out.length + 1}`;
     const description =
       typeof (raw as any)?.description === "string" ? (raw as any).description : "";
     const itemIds = normalizeItemIds((raw as any)?.itemIds).filter((itemId) =>

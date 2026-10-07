@@ -860,16 +860,16 @@ export default function GalleryPage() {
           <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.10),rgba(255,255,255,0)_28%),radial-gradient(circle_at_80%_0%,rgba(255,225,170,0.10),rgba(255,225,170,0)_24%)]" />
 
           <div className="relative md:mx-auto md:w-[690px] md:max-w-full">
-                  <div className="absolute right-0 top-0 z-10 flex flex-col items-end gap-1.5">
-                    <span className="rounded-full bg-[color:var(--theme-elevated)] px-3 py-1.5 text-xs tracking-[0.14em] text-[color:var(--muted2)] ring-1 ring-[color:var(--theme-border)] xl:px-2.5 xl:py-1 xl:text-[10px]">
+                  <div className="absolute right-0 top-0 z-10 flex flex-col items-end gap-1">
+                    <span className="rounded-full bg-[color:var(--theme-elevated)] px-2 py-[1px] text-[9px] tracking-[0.1em] text-[color:var(--muted2)] ring-1 ring-[color:var(--theme-border)]">
                       {visibilityLabel(draft.visibility)}
                     </span>
 
-                    <span className="rounded-full bg-[color:var(--theme-elevated)] px-3 py-1.5 text-xs tracking-[0.14em] text-[color:var(--muted2)] ring-1 ring-[color:var(--theme-border)] xl:px-2.5 xl:py-1 xl:text-[10px]">
+                    <span className="rounded-full bg-[color:var(--theme-elevated)] px-2 py-[1px] text-[9px] tracking-[0.1em] text-[color:var(--muted2)] ring-1 ring-[color:var(--theme-border)]">
                       {metrics.totalItems} ITEMS
                     </span>
 
-                    <span className="rounded-full bg-[color:var(--theme-elevated)] px-3 py-1.5 text-xs tracking-[0.14em] text-[color:var(--muted2)] ring-1 ring-[color:var(--theme-border)] xl:px-2.5 xl:py-1 xl:text-[10px]">
+                    <span className="rounded-full bg-[color:var(--theme-elevated)] px-2 py-[1px] text-[9px] tracking-[0.1em] text-[color:var(--muted2)] ring-1 ring-[color:var(--theme-border)]">
                       {metrics.views} VIEWS
                     </span>
                   </div>
@@ -879,7 +879,7 @@ export default function GalleryPage() {
                 <div className="shrink-0">
                   {draft.coverImage ? (
                     <div
-                      className="w-[104px] overflow-hidden rounded-[14px] shadow-[0_8px_24px_rgba(0,0,0,0.5)]"
+                      className="w-[132px] overflow-hidden rounded-[14px] shadow-[0_8px_24px_rgba(0,0,0,0.5)]"
                       style={{ aspectRatio: "3/4" }}
                     >
                     {/* eslint-disable-next-line @next/next/no-img-element */}
