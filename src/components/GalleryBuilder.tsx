@@ -963,24 +963,6 @@ export default function GalleryBuilder({
               Upload Background
             </label>
 
-          </div>
-
-          {/* ── Row 1b: Upload Background ── */}
-          <div className="mt-2 flex flex-wrap items-center gap-2">
-            {shelfBackground ? (
-              <button
-                type="button"
-                onClick={() => {
-                  setShelfFileName("");
-                  setBackgroundUploadError("");
-                  onGalleryChange((current) => ({ ...current, shelfBackground: "" }));
-                }}
-                className="vltd-selectable inline-flex min-h-[28px] items-center justify-center rounded-[7px] bg-[color:var(--pill)] px-3 text-[11px] font-semibold text-[color:var(--fg)] ring-1 ring-[color:var(--border)] shadow-sm hover:bg-[color:var(--pill-hover)] transition-all"
-              >
-                Remove BG
-              </button>
-            ) : null}
-
             {/* Edit Selection — always neutral, no glow. Per explicit instruction:
                 "Edit doesn't need to glow, no reason for that." */}
             {(() => {
@@ -998,7 +980,7 @@ export default function GalleryBuilder({
                   }}
                   className="inline-flex min-h-[28px] items-center justify-center rounded-[7px] bg-[color:var(--surface)] px-3 text-[11px] font-black tracking-wide text-[color:var(--pill-fg)] ring-1 ring-[color:var(--border)] transition-all hover:opacity-90 active:scale-[0.98]"
                 >
-                  {editCount === 0 ? "Edit Selection" : `Edit (${editCount})`}
+                  {editCount === 0 ? "Edit/Add" : `Edit/Add (${editCount})`}
                 </button>
               );
             })()}
@@ -1026,6 +1008,25 @@ export default function GalleryBuilder({
                 {isOrganizing ? "Done" : "Organize"}
               </button>
             ) : null}
+
+          </div>
+
+          {/* ── Row 1b: Upload Background ── */}
+          <div className={["mt-2 flex flex-wrap items-center gap-2", shelfBackground ? "" : "hidden"].join(" ")}>
+            {shelfBackground ? (
+              <button
+                type="button"
+                onClick={() => {
+                  setShelfFileName("");
+                  setBackgroundUploadError("");
+                  onGalleryChange((current) => ({ ...current, shelfBackground: "" }));
+                }}
+                className="vltd-selectable inline-flex min-h-[28px] items-center justify-center rounded-[7px] bg-[color:var(--pill)] px-3 text-[11px] font-semibold text-[color:var(--fg)] ring-1 ring-[color:var(--border)] shadow-sm hover:bg-[color:var(--pill-hover)] transition-all"
+              >
+                Remove BG
+              </button>
+            ) : null}
+
 
           </div>
 

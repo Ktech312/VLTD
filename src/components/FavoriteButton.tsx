@@ -104,7 +104,7 @@ export default function FavoriteButton({
               : "text-white/72 hover:text-cyan-200",
           ].join(" ")}
         >
-          <AppIcon name="star" strokeWidth={1.9} filled={favorited} size={compact ? 16 : 20} />
+          <AppIcon name="flash" strokeWidth={1.9} filled={favorited} size={compact ? 16 : 20} />
         </button>
 
         <span className={["font-semibold leading-none text-white/82", compact ? "text-[10px]" : "text-xs"].join(" ")}>{count}</span>
