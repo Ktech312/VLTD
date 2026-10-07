@@ -60,9 +60,11 @@ type ShareBarProps = {
   itemId?: string;
   /** When true, renders just the icon row with no container or heading */
   compact?: boolean;
+  /** Leave out the copy icon when a Copy Link button is already next to it */
+  hideCopy?: boolean;
 };
 
-export default function ShareBar({ title, shareUrl, itemId, compact = false }: ShareBarProps) {
+export default function ShareBar({ title, shareUrl, itemId, compact = false, hideCopy = false }: ShareBarProps) {
   const [copied, setCopied] = useState(false);
   const [igCopied, setIgCopied] = useState(false);
 
@@ -143,9 +145,11 @@ export default function ShareBar({ title, shareUrl, itemId, compact = false }: S
 
   const icons = (
     <div className="flex flex-wrap gap-2">
-      <button type="button" onClick={() => void handleCopy()} className={iconBtn} style={iconStyle} title="Copy link">
-        {copied ? <AppIcon name="checkmark" strokeWidth={2.5} /> : <AppIcon name="copy" />}
-      </button>
+      {hideCopy ? null : (
+        <button type="button" onClick={() => void handleCopy()} className={iconBtn} style={iconStyle} title="Copy link">
+          {copied ? <AppIcon name="checkmark" strokeWidth={2.5} /> : <AppIcon name="copy" />}
+        </button>
+      )}
       <a href={tweetUrl} target="_blank" rel="noopener noreferrer" className={iconBtn} style={iconStyle} title="Post on X">
         <XIcon />
       </a>

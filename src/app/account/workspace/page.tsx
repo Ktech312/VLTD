@@ -186,7 +186,7 @@ export default function WorkspaceSettingsPage() {
     }
   }
 
-  const origin = typeof window !== "undefined" ? window.location.origin : "https://vltd.vercel.app";
+  const origin = typeof window !== "undefined" ? window.location.origin : "https://vltd.app";
   const publicUrl = activeProfile?.username ? `${origin}/v/${activeProfile.username}` : "";
 
   return (

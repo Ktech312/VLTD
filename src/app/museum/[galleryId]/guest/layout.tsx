@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
 const SUPABASE_ANON = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "";
-const BASE = process.env.NEXT_PUBLIC_SITE_URL ?? "https://vltd.vercel.app";
+const BASE = process.env.NEXT_PUBLIC_SITE_URL ?? "https://vltd.app";
 const PLACEHOLDERS = new Set(["collector", "user", "vltd user", "vltd collector", ""]);
 
 type GalleryRow = {

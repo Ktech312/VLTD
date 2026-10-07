@@ -1049,7 +1049,7 @@ export default function GalleryPage() {
 
                 {shareUrl ? (
                   <div className="mt-3">
-                    <ShareBar title={draft?.title ?? gallery?.title ?? "My Exhibition"} shareUrl={shareUrl} compact />
+                    <ShareBar title={draft?.title ?? gallery?.title ?? "My Exhibition"} shareUrl={shareUrl} compact hideCopy />
                   </div>
                 ) : null}
 
@@ -1140,24 +1140,22 @@ export default function GalleryPage() {
                     </div>
                   ) : null}
 
-                  <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-[color:var(--border)] pt-2 md:flex-nowrap">
-                    <div className="relative inline-flex min-h-[34px] w-fit items-center gap-2 rounded-full bg-[color:var(--surface)] px-3 py-1.5 ring-1 ring-[color:var(--border)] xl:min-h-[28px] xl:px-2.5 xl:py-1">
-                      <span className="flex items-center gap-1.5">
-                        <span className="block text-xs font-semibold">18+ exhibit</span>
-                        <button
-                          type="button"
-                          onClick={(event) => {
-                            event.preventDefault();
-                            event.stopPropagation();
-                            setAdultInfoOpen((current) => !current);
-                          }}
-                          className="vltd-selectable inline-flex h-5 w-5 items-center justify-center rounded-full bg-[color:var(--pill)] text-[10px] font-semibold text-[color:var(--pill-fg)] ring-1 ring-[color:var(--border)]"
-                          aria-label="18+ exhibit help"
-                          aria-expanded={adultInfoOpen}
-                        >
-                          i
-                        </button>
-                      </span>
+                  <div className="mt-3 flex flex-wrap items-center gap-1.5">
+                    <div className="relative inline-flex min-h-[30px] w-fit items-center gap-1.5 rounded-full bg-[color:var(--surface)] px-2.5 py-1 text-[10px] ring-1 ring-[color:var(--border)]">
+                      <span className="font-semibold">18+ exhibit</span>
+                      <button
+                        type="button"
+                        onClick={(event) => {
+                          event.preventDefault();
+                          event.stopPropagation();
+                          setAdultInfoOpen((current) => !current);
+                        }}
+                        className="vltd-selectable inline-flex h-4 w-4 items-center justify-center rounded-full bg-[color:var(--pill)] text-[9px] font-semibold text-[color:var(--pill-fg)] ring-1 ring-[color:var(--border)]"
+                        aria-label="18+ exhibit help"
+                        aria-expanded={adultInfoOpen}
+                      >
+                        i
+                      </button>
                       <input
                         type="checkbox"
                         aria-label="Require 18+ confirmation"
@@ -1168,7 +1166,7 @@ export default function GalleryPage() {
                             adultOnly: event.target.checked,
                           }))
                         }
-                        className="h-4 w-4 accent-cyan-400"
+                        className="h-3.5 w-3.5 accent-cyan-400"
                       />
                       {adultInfoOpen ? (
                         <span id="gallery-adult-info" className="absolute left-0 bottom-full z-20 mb-2 w-[min(360px,calc(100vw-48px))] rounded-xl px-3 py-2 text-[11px] leading-4 text-[color:var(--muted)] ring-1 ring-[color:var(--border)] shadow-[0_18px_44px_rgba(0,0,0,0.38)]">
@@ -1177,81 +1175,67 @@ export default function GalleryPage() {
                       ) : null}
                     </div>
 
-                    <div className="flex flex-wrap items-center gap-1.5 md:ml-auto md:flex-nowrap">
-                      {gallery?.visibility === "PUBLIC" && (
-                        <button
-                          type="button"
-                          onClick={() => void handleAnnounce()}
-                          disabled={announcing || announced}
-                          title="Let your followers know you&#39;ve updated this exhibition"
-                          className="inline-flex min-h-[30px] items-center justify-center gap-1 rounded-[7px] bg-[color:var(--pill)] px-3 py-1 text-[10px] font-semibold text-[color:var(--pill-fg)] ring-1 ring-[color:var(--border)] transition hover:bg-[color:var(--pill-hover)] disabled:opacity-60"
-                        >
-                          {announced ? "✓ Announced" : announcing ? "Announcing…" : (
-                            <span className="inline-flex items-center gap-1"><Glyph name="megaphone" size={12} /> Announce</span>
-                          )}
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                  <div className="relative mt-3 border-t border-[color:var(--border)] pt-3">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <div className="relative inline-flex min-h-[34px] w-fit items-center gap-2 rounded-full bg-[color:var(--surface)] px-3 py-1.5 ring-1 ring-[color:var(--border)] xl:min-h-[28px] xl:px-2.5 xl:py-1">
-                        <span className="flex items-center gap-1.5">
-                          <span className="block text-xs font-semibold">Use an alias</span>
-                          <button
-                            type="button"
-                            onClick={(event) => {
-                              event.preventDefault();
-                              event.stopPropagation();
-                              setAliasInfoOpen((current) => !current);
-                            }}
-                            className="vltd-selectable inline-flex h-5 w-5 items-center justify-center rounded-full bg-[color:var(--pill)] text-[10px] font-semibold text-[color:var(--pill-fg)] ring-1 ring-[color:var(--border)]"
-                            aria-label="Alias help"
-                            aria-expanded={aliasInfoOpen}
-                          >
-                            i
-                          </button>
+                    <div className="relative inline-flex min-h-[30px] w-fit items-center gap-1.5 rounded-full bg-[color:var(--surface)] px-2.5 py-1 text-[10px] ring-1 ring-[color:var(--border)]">
+                      <span className="font-semibold">Use an alias</span>
+                      <button
+                        type="button"
+                        onClick={(event) => {
+                          event.preventDefault();
+                          event.stopPropagation();
+                          setAliasInfoOpen((current) => !current);
+                        }}
+                        className="vltd-selectable inline-flex h-4 w-4 items-center justify-center rounded-full bg-[color:var(--pill)] text-[9px] font-semibold text-[color:var(--pill-fg)] ring-1 ring-[color:var(--border)]"
+                        aria-label="Alias help"
+                        aria-expanded={aliasInfoOpen}
+                      >
+                        i
+                      </button>
+                      <input
+                        type="checkbox"
+                        aria-label="Show a made-up curator identity instead of your real name"
+                        checked={draft.aliasEnabled === true}
+                        onChange={(event) =>
+                          patchDraft((current) => ({
+                            ...current,
+                            aliasEnabled: event.target.checked,
+                          }))
+                        }
+                        className="h-3.5 w-3.5 accent-cyan-400"
+                      />
+                      {aliasInfoOpen ? (
+                        <span id="gallery-alias-info" className="absolute left-0 bottom-full z-20 mb-2 w-[min(360px,calc(100vw-48px))] rounded-xl px-3 py-2 text-[11px] leading-4 text-[color:var(--muted)] ring-1 ring-[color:var(--border)] shadow-[0_18px_44px_rgba(0,0,0,0.38)]">
+                          Hides your real name on THIS exhibition's public page. Visitors see the name you choose instead. You still manage this exhibition as yourself.
                         </span>
-                        <input
-                          type="checkbox"
-                          aria-label="Show a made-up curator identity instead of your real name"
-                          checked={draft.aliasEnabled === true}
-                          onChange={(event) =>
-                            patchDraft((current) => ({
-                              ...current,
-                              aliasEnabled: event.target.checked,
-                            }))
-                          }
-                          className="h-4 w-4 accent-cyan-400"
-                        />
-                        {aliasInfoOpen ? (
-                          <span id="gallery-alias-info" className="absolute left-0 bottom-full z-20 mb-2 w-[min(360px,calc(100vw-48px))] rounded-xl px-3 py-2 text-[11px] leading-4 text-[color:var(--muted)] ring-1 ring-[color:var(--border)] shadow-[0_18px_44px_rgba(0,0,0,0.38)]">
-                            Hides your real name and avatar on THIS exhibition's public page — visitors
-                            see the name/avatar you choose below instead. You still see every comment
-                            and fully manage this exhibition as yourself; only the public display changes.
-                          </span>
-                        ) : null}
-                      </div>
+                      ) : null}
                     </div>
 
                     {draft.aliasEnabled ? (
-                      <div className="mt-2.5 flex flex-wrap items-center gap-2">
-                        <input
-                          value={draft.aliasName ?? ""}
-                          onChange={(event) =>
-                            patchDraft((current) => ({
-                              ...current,
-                              aliasName: event.target.value.slice(0, 60),
-                            }))
-                          }
-                          placeholder="Alias name (e.g. Ghost Vault Curator)"
-                          className="h-9 min-w-0 flex-1 rounded-[8px] bg-[color:var(--pill)] px-3 text-sm ring-1 ring-[color:var(--border)] focus:outline-none"
-                          style={{ maxWidth: 280 }}
-                        />
-                      </div>
+                      <input
+                        value={draft.aliasName ?? ""}
+                        onChange={(event) =>
+                          patchDraft((current) => ({
+                            ...current,
+                            aliasName: event.target.value.slice(0, 60),
+                          }))
+                        }
+                        placeholder="Alias name"
+                        aria-label="Alias name"
+                        className="h-[30px] w-[140px] min-w-0 rounded-full bg-[color:var(--pill)] px-3 text-[11px] ring-1 ring-[color:var(--border)] focus:outline-none"
+                      />
                     ) : null}
-                  </div>
 
+                    <button
+                      type="button"
+                      onClick={() => void handleAnnounce()}
+                      disabled={announcing || announced}
+                      title="Let your followers know you&#39;ve updated this exhibition"
+                      className="inline-flex min-h-[30px] items-center justify-center gap-1 rounded-full bg-[color:var(--pill)] px-2.5 py-1 text-[10px] font-semibold text-[color:var(--pill-fg)] ring-1 ring-[color:var(--border)] transition hover:bg-[color:var(--pill-hover)] disabled:opacity-60 md:ml-auto"
+                    >
+                      {announced ? "✓ Announced" : announcing ? "Announcing…" : (
+                        <span className="inline-flex items-center gap-1"><Glyph name="megaphone" size={12} /> Announce</span>
+                      )}
+                    </button>
+                  </div>
                 </div>
               </div>
 

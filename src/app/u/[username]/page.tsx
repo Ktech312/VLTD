@@ -35,7 +35,7 @@ export async function generateMetadata(
   { params }: { params: Promise<Params> }
 ): Promise<Metadata> {
   const { username } = await params;
-  const base = process.env.NEXT_PUBLIC_SITE_URL ?? "https://vltd.vercel.app";
+  const base = process.env.NEXT_PUBLIC_SITE_URL ?? "https://vltd.app";
   const pageUrl = `${base}/@${username}`;
   const imgUrl = `${base}/u/${username}/opengraph-image`;
   const description = `View @${username}'s collector vault and public exhibitions on VLTD.`;
