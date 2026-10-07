@@ -861,7 +861,7 @@ export default function GalleryPage() {
 
           <div className="relative md:mx-auto md:w-[690px] md:max-w-full">
             <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between xl:justify-start xl:gap-5">
-              <div className="flex items-start gap-2.5 max-w-3xl">
+              <div className="flex w-full items-start gap-2.5">
                 {/* Cover image portrait card */}
                 <div className="shrink-0">
                   {draft.coverImage ? (
@@ -896,8 +896,8 @@ export default function GalleryPage() {
                   </label>
                 </div>
 
-                <div className="min-w-0">
-                  <div className="text-[11px] tracking-[0.28em] text-[color:var(--muted2)] xl:text-[10px]">
+                <div className="vltd-dark-surface min-w-0 flex-1">
+                  <div className="text-[11px] tracking-[0.28em] text-white/55 xl:text-[10px]">
                     CURATED EXHIBIT
                   </div>
 
@@ -910,7 +910,7 @@ export default function GalleryPage() {
                         }
                         placeholder="Exhibit title"
                         aria-label="Exhibit title"
-                        className={INLINE_EDIT_LINE + " mt-2 w-full text-2xl font-semibold text-[color:var(--fg)] xl:mt-1"}
+                        className={INLINE_EDIT_LINE + " mt-2 w-full text-center text-2xl font-semibold xl:mt-1"}
                       />
                       <textarea
                         value={draft.description ?? ""}
@@ -920,16 +920,16 @@ export default function GalleryPage() {
                         rows={1}
                         placeholder="Curated collection presentation"
                         aria-label="Exhibit description"
-                        className={INLINE_EDIT_LINE + " mt-1 block w-full max-w-2xl resize-none text-sm leading-5 text-[color:var(--muted)] xl:text-xs xl:leading-4"}
+                        className={INLINE_EDIT_LINE + " mx-auto mt-1 block w-full max-w-2xl resize-none text-center text-sm leading-5 text-white/80 xl:text-xs xl:leading-4"}
                       />
                     </>
                   ) : (
                     <>
-                      <h1 className="mt-2 text-2xl font-semibold xl:mt-1 xl:text-2xl">
+                      <h1 className="mt-2 text-center text-2xl font-semibold xl:mt-1 xl:text-2xl">
                         {draft.title}
                       </h1>
 
-                      <p className="mt-1 max-w-2xl text-sm leading-5 text-[color:var(--muted)] xl:text-xs xl:leading-4">
+                      <p className="mx-auto mt-1 max-w-2xl text-center text-sm leading-5 text-white/80 xl:text-xs xl:leading-4">
                         {draft.description?.trim()
                           ? draft.description
                           : "Curated collection presentation"}
@@ -941,7 +941,7 @@ export default function GalleryPage() {
                     onClick={() => setHeaderEditing((value) => !value)}
                     aria-label={headerEditing ? "Done editing title and description" : "Edit title and description"}
                     title={headerEditing ? "Done" : "Edit title and description"}
-                    className="mt-1 inline-flex h-6 w-6 items-center justify-center rounded-[6px] text-[color:var(--muted)] ring-1 ring-[color:var(--border)] transition hover:text-[color:var(--fg)]"
+                    className="mx-auto mt-1 flex h-6 w-6 items-center justify-center rounded-[6px] text-white/70 ring-1 ring-white/25 transition hover:text-white"
                   >
                     <AppIcon name={headerEditing ? "checkmark" : "edit"} size={12} strokeWidth={1.8} />
                   </button>
@@ -957,10 +957,6 @@ export default function GalleryPage() {
 
                     <span className="rounded-full bg-[color:var(--theme-elevated)] px-3 py-1.5 text-xs tracking-[0.14em] text-[color:var(--muted2)] ring-1 ring-[color:var(--theme-border)] xl:px-2.5 xl:py-1 xl:text-[10px]">
                       {metrics.views} VIEWS
-                    </span>
-
-                    <span className="rounded-full bg-[color:var(--theme-elevated)] px-3 py-1.5 text-xs tracking-[0.14em] text-[color:var(--muted2)] ring-1 ring-[color:var(--theme-border)] xl:px-2.5 xl:py-1 xl:text-[10px]">
-                      {draft.exhibitionLayout?.type ?? "GRID"} LAYOUT
                     </span>
                   </div>
                 </div>
