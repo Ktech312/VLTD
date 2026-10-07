@@ -1,6 +1,7 @@
 "use client";
 
 import { effectiveMarketValue } from "@/lib/vaultStats";
+import { resolveGuestGalleryBackground } from "@/lib/guestGalleryViewModel";
 import { useSaveFeedback, SAVE_FEEDBACK_STYLE } from "@/lib/useSaveFeedback";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { DragEvent, ReactNode } from "react";
@@ -436,6 +437,13 @@ export default function GalleryBuilder({
   const shelfOverlayStyle = getGalleryShelfOverlayStyle(gallery);
   const shelfBackground = getGalleryShelfBackground(gallery);
   const selectedGalleryView = displayMode === "grid" ? "grid" : themePack;
+  // On a shelf theme the wall is drawn like the guest preview: the same background, shelves and card
+  // positions, shrunk to fit. (Plain cards keep the simple grid.)
+  const sceneMode = displayMode === "shelf";
+  const sceneBackground = sceneMode ? resolveGuestGalleryBackground(gallery).url : null;
+  const SCENE_ROW_ANCHORS = [616, 1016, 1416, 1816, 2216, 2616];
+  const SCENE_STAGE_HEIGHT = 2700;
+  const SCENE_ROW_SHIFT = 357.3;
 
   const previewPanelClass = useMemo(() => {
     if (themePack === "walnut") return "bg-[linear-gradient(180deg,rgba(62,34,22,0.92),rgba(26,13,9,0.96))] ring-amber-200/10";
@@ -1092,7 +1100,46 @@ export default function GalleryBuilder({
           >
             <div className="relative overflow-hidden p-3 sm:p-4">
               <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_22%_9%,rgba(255,245,204,0.18),transparent_22%),radial-gradient(circle_at_50%_9%,rgba(255,245,204,0.16),transparent_22%),radial-gradient(circle_at_78%_9%,rgba(255,245,204,0.18),transparent_22%),linear-gradient(180deg,rgba(255,255,255,0.08),transparent_18%,rgba(0,0,0,0.18))]" />
-              <div className="relative mx-auto grid max-w-[330px] grid-flow-row-dense grid-cols-3 gap-x-2 gap-y-3">
+              <div
+                className={
+                  sceneMode
+                    ? "relative mx-auto w-full overflow-hidden rounded-[18px]"
+                    : "relative mx-auto grid max-w-[330px] grid-flow-row-dense grid-cols-3 gap-x-2 gap-y-3"
+                }
+                style={
+                  sceneMode
+                    ? {
+                        maxWidth: 360,
+                        aspectRatio: "940 / 2700",
+                        backgroundImage: sceneBackground ? `url(${sceneBackground})` : undefined,
+                        backgroundSize: "100% auto",
+                        backgroundPosition: "center top",
+                        backgroundRepeat: "no-repeat",
+                      }
+                    : undefined
+                }
+              >
+                {sceneMode && shelfOverlayStyle !== "none"
+                  ? SCENE_ROW_ANCHORS.map((anchor, rowIndex) => (
+                      <div
+                        key={"shelf-" + rowIndex}
+                        aria-hidden="true"
+                        className="pointer-events-none absolute"
+                        style={{
+                          left: "9.55%",
+                          width: "80.9%",
+                          top: `${((anchor - 24) / SCENE_STAGE_HEIGHT) * 100}%`,
+                          height: shelfOverlayStyle === "glass" ? 9 : 8,
+                          borderRadius: 999,
+                          background:
+                            shelfOverlayStyle === "glass"
+                              ? "linear-gradient(180deg,rgba(255,255,255,0.72),rgba(255,255,255,0.2) 40%,rgba(155,210,255,0.22))"
+                              : "linear-gradient(180deg,#f6f7f9,#cfd6dd 30%,#818b97 60%,#5b6571)",
+                          boxShadow: "0 4px 10px rgba(0,0,0,0.25)",
+                        }}
+                      />
+                    ))
+                  : null}
                 {Array.from({ length: SHELF_SLOT_COUNT }).map((_, i) => {
                   // The wall follows the same choices visitors see: Curated pulls one featured work out wide,
                   // Timeline puts each work's year on it, and Grid View uses plain cards instead of shelf frames.
@@ -1113,8 +1160,18 @@ export default function GalleryBuilder({
                     <div
                       key={"slot-" + i}
                       data-slot-idx={i}
-                      className={isFeaturedSlot ? "col-span-3 min-w-0" : "min-w-0"}
-                      style={{ touchAction: canOrganize && item ? "none" : "auto" }}
+                      className={!sceneMode && isFeaturedSlot ? "col-span-3 min-w-0" : "min-w-0"}
+                      style={{
+                        touchAction: canOrganize && item ? "none" : "auto",
+                        ...(sceneMode
+                          ? {
+                              position: "absolute" as const,
+                              width: "25.82%",
+                              left: `${9.55 + (i % 3) * 27.52}%`,
+                              top: `${((SCENE_ROW_ANCHORS[Math.floor(i / 3)] - SCENE_ROW_SHIFT) / SCENE_STAGE_HEIGHT) * 100}%`,
+                            }
+                          : {}),
+                      }}
                       draggable={canOrganize && !!item}
                       onDragStart={canOrganize && item ? (e) => {
                         e.dataTransfer.setData("text/plain", String(i));
