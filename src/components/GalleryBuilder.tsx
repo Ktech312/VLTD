@@ -838,42 +838,11 @@ export default function GalleryBuilder({
             </div>
           </div>
 
-          <div className="flex flex-wrap gap-2">
-            {(["GRID", "CURATED", "TIMELINE"] as const).map((type) => {
-              const active = layoutType === type;
-
-              return (
-                <button
-                  key={type}
-                  type="button"
-                  onClick={() => onGalleryChange((current) => syncSectionsAndLayout(current, getGallerySections(current), type))}
-                  className={[
-                    "vltd-selectable rounded-full px-4 py-2 text-xs font-semibold ring-1 transition",
-                    active
-                      ? "vltd-selected bg-[color:var(--pill-active-bg)] text-[color:var(--fg)]"
-                      : "bg-[color:var(--surface)] text-[color:var(--pill-fg)] ring-[color:var(--border)]",
-                  ].join(" ")}
-                  aria-pressed={active}
-                >
-                  {type === "GRID" ? "Standard" : type === "CURATED" ? "Curated" : "Timeline"}
-                </button>
-              );
-            })}
-
-          </div>
         </div>
-        {layoutType === "CURATED" || layoutType === "TIMELINE" ? (
-          <div className="mt-2 text-[11px] text-[color:var(--muted)]">
-            {layoutType === "CURATED"
-              ? "Curated shows one featured work large at the top. The wall positions you arranged are not used."
-              : "Timeline orders works by year. The wall positions you arranged are not used."}
-          </div>
-        ) : null}
 
         {/* ── Gallery stat chips — compact row ── */}
         <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
           {[
-            { label: "LAYOUT", value: layoutType },
             { label: "EXHIBITS", value: sections.length },
             { label: "ITEMS", value: selectedCount },
             { label: "FEATURED", value: sections.filter((s) => !!s.featuredItemId).length },
@@ -1342,16 +1311,14 @@ export default function GalleryBuilder({
                 {Array.from({ length: SHELF_SLOT_COUNT }).map((_, i) => {
                   // The wall follows the same choices visitors see: Curated pulls one featured work out wide,
                   // Timeline puts each work's year on it, and Grid View uses plain cards instead of shelf frames.
-                  const wallLayout = String(layoutType ?? "GRID").toUpperCase();
                   const plainCards = displayMode === "grid";
-                  const wallFeaturedId = sections[activeSectionIdx]?.featuredItemId || previewSlots.find((id) => id) || "";
                   const itemId = previewSlots[i];
                   const itemMap = new Map(items.map((it) => [it.id, it]));
                   const item = itemId ? itemMap.get(itemId) ?? null : null;
                   const img = item ? itemImage(item) : null;
                   const subtitle = item ? [item.subtitle, item.number, item.grade].filter(Boolean).join(" • ") : null;
-                  const isFeaturedSlot = wallLayout === "CURATED" && !!item && item.id === wallFeaturedId && previewItems.length > 1;
-                  const wallYear = wallLayout === "TIMELINE" && item ? (String(item.year ?? "").match(/d{4}/)?.[0] ?? "") : "";
+                  const isFeaturedSlot = false;
+                  const wallYear = "";
                   const isBeingDragged = slotDragIdx === i;
                   const isDragOver = slotDragOverIdx === i && slotDragIdx !== i;
                   const canOrganize = isOrganizing && sections.length > 0;
