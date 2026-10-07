@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import VaultWrappedSheet from "@/components/VaultWrappedSheet";
 import VaultMuseumView from "@/components/VaultMuseumView";
-import VaultCategoryChips, { vaultItemCategory, vaultItemSubcategory } from "@/components/VaultCategoryChips";
+import VaultCategoryChips, { chipKey, vaultItemCategory, vaultItemSubcategory } from "@/components/VaultCategoryChips";
 import { normalizeUniverse, universeForItem } from "@/lib/universeMatch";
 import Link from "next/link";
 import { PageHeader } from "@/components/layout/PageHeader";
@@ -953,8 +953,8 @@ export default function VaultListView({ lockedUniverse }: { lockedUniverse?: Uni
   const [readinessFilter, setReadinessFilter] = useState<ReadinessFilter>("all");
   const [gradedOnly, setGradedOnly] = useState(false);
   const [uncategorizedOnly, setUncategorizedOnly] = useState(false);
-  const [categoryFilter, setCategoryFilter] = useState("");
-  const [subFilter, setSubFilter] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState<string[]>([]);
+  const [subFilter, setSubFilter] = useState<string[]>([]);
   const [sortMode, setSortMode] = useState<SortMode>("newest");
   const [showSoldItems, setShowSoldItems] = useState(false);
   const [sales, setSales] = useState<SaleInfo[]>([]);
@@ -1179,8 +1179,8 @@ export default function VaultListView({ lockedUniverse }: { lockedUniverse?: Uni
       const isSold = Boolean(saleInfoForItem(item, saleMap));
       if (!showSoldItems && isSold) return false;
       if (universeFilter !== "ALL" && universeForItem(item) !== universeFilter) return false;
-      if (categoryFilter && vaultItemCategory(item) !== categoryFilter) return false;
-      if (subFilter && vaultItemSubcategory(item) !== subFilter) return false;
+      if (categoryFilter.length > 0 && !categoryFilter.includes(chipKey(vaultItemCategory(item)))) return false;
+      if (subFilter.length > 0 && !subFilter.includes(chipKey(vaultItemSubcategory(item)))) return false;
       if (gradedOnly && !item.grade) return false;
       if (
         uncategorizedOnly &&
@@ -1249,8 +1249,8 @@ export default function VaultListView({ lockedUniverse }: { lockedUniverse?: Uni
   );
   // A category only makes sense inside one universe: clear it when the universe changes.
   useEffect(() => {
-    setCategoryFilter("");
-    setSubFilter("");
+    setCategoryFilter([]);
+    setSubFilter([]);
   }, [universeFilter]);
 
   const visibleItems = useMemo(
@@ -1399,8 +1399,8 @@ export default function VaultListView({ lockedUniverse }: { lockedUniverse?: Uni
   const hasActiveFilters =
     query.trim().length > 0 ||
     universeFilter !== (lockedUniverse ?? "ALL") ||
-    categoryFilter !== "" ||
-    subFilter !== "" ||
+    categoryFilter.length > 0 ||
+    subFilter.length > 0 ||
     readinessFilter !== "all" ||
     gradedOnly ||
     uncategorizedOnly ||
@@ -1554,8 +1554,8 @@ export default function VaultListView({ lockedUniverse }: { lockedUniverse?: Uni
   function handleClearFilters() {
     setQuery("");
     setUniverseFilter(lockedUniverse ?? "ALL");
-    setCategoryFilter("");
-    setSubFilter("");
+    setCategoryFilter([]);
+    setSubFilter([]);
     setReadinessFilter("all");
     setGradedOnly(false);
     setUncategorizedOnly(false);
@@ -1886,10 +1886,10 @@ export default function VaultListView({ lockedUniverse }: { lockedUniverse?: Uni
             {universeFilter !== "ALL" ? (
               <VaultCategoryChips
                 items={universeScopedItems}
-                category={categoryFilter}
-                subcategory={subFilter}
-                onCategory={setCategoryFilter}
-                onSubcategory={setSubFilter}
+                categories={categoryFilter}
+                subcategories={subFilter}
+                onCategories={setCategoryFilter}
+                onSubcategories={setSubFilter}
               />
             ) : null}
 

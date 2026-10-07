@@ -214,6 +214,9 @@
   --border: rgba(255, 255, 255, 0.16);
   --pill: rgba(255, 255, 255, 0.07);
   --pill-fg: rgba(236, 237, 239, 0.92);
+  --surface: rgba(12, 16, 24, 0.96);
+  --pill-active-bg: rgba(79, 211, 238, 0.22);
+  --pill-active-ring: rgba(79, 211, 238, 0.6);
 }
 
 /* White text → dark in light mode */

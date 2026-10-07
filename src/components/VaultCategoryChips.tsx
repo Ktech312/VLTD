@@ -12,44 +12,64 @@ export function vaultItemSubcategory(item: VaultItem) {
   return String(item.subcategoryLabel || "").trim();
 }
 
+/** Labels that differ only by capital letters are the same category: compare with this key. */
+export function chipKey(value: string) {
+  return value.trim().toLowerCase();
+}
+
+/** One chip per category, however it was capitalised; shown with its most common spelling. */
+export function chipOptions(values: string[]): { key: string; label: string; count: number }[] {
+  const byKey = new Map<string, { counts: Map<string, number>; count: number }>();
+  for (const value of values) {
+    const clean = value.trim();
+    if (!clean) continue;
+    const key = chipKey(clean);
+    const entry = byKey.get(key) ?? { counts: new Map<string, number>(), count: 0 };
+    entry.counts.set(clean, (entry.counts.get(clean) ?? 0) + 1);
+    entry.count += 1;
+    byKey.set(key, entry);
+  }
+  return Array.from(byKey.entries())
+    .map(([key, entry]) => {
+      const label = Array.from(entry.counts.entries()).sort(
+        (a, b) => b[1] - a[1] || Number(/^[A-Z]/.test(b[0])) - Number(/^[A-Z]/.test(a[0]))
+      )[0][0];
+      return { key, label, count: entry.count };
+    })
+    .sort((a, b) => b.count - a.count || a.label.localeCompare(b.label));
+}
+
 /**
- * Category, then subcategory chips for a Vault list. The choices come from what is really in the
- * items you are looking at, so imported labels show up too. Same chip style as the exhibit picker.
+ * Category, then subcategory chips for a Vault list. Pick as many as you like; with none picked,
+ * everything shows. The choices come from what is really in the items, so imported labels show up.
  */
 export default function VaultCategoryChips({
   items,
-  category,
-  subcategory,
-  onCategory,
-  onSubcategory,
+  categories: selectedCategories,
+  subcategories: selectedSubcategories,
+  onCategories,
+  onSubcategories,
 }: {
   items: VaultItem[];
-  category: string;
-  subcategory: string;
-  onCategory: (value: string) => void;
-  onSubcategory: (value: string) => void;
+  categories: string[];
+  subcategories: string[];
+  onCategories: (keys: string[]) => void;
+  onSubcategories: (keys: string[]) => void;
 }) {
-  const categories = useMemo(() => {
-    const counts = new Map<string, number>();
-    for (const item of items) {
-      const name = vaultItemCategory(item);
-      if (name) counts.set(name, (counts.get(name) ?? 0) + 1);
-    }
-    return Array.from(counts.entries()).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
-  }, [items]);
+  const categoryOptions = useMemo(() => chipOptions(items.map(vaultItemCategory)), [items]);
 
-  const subcategories = useMemo(() => {
-    if (!category) return [];
-    const counts = new Map<string, number>();
-    for (const item of items) {
-      if (vaultItemCategory(item) !== category) continue;
-      const name = vaultItemSubcategory(item);
-      if (name) counts.set(name, (counts.get(name) ?? 0) + 1);
-    }
-    return Array.from(counts.entries()).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
-  }, [items, category]);
+  const subcategoryOptions = useMemo(() => {
+    if (selectedCategories.length === 0) return [];
+    return chipOptions(
+      items
+        .filter((item) => selectedCategories.includes(chipKey(vaultItemCategory(item))))
+        .map(vaultItemSubcategory)
+    );
+  }, [items, selectedCategories]);
 
-  if (categories.length === 0) return null;
+  if (categoryOptions.length === 0) return null;
+
+  const toggle = (list: string[], key: string) => (list.includes(key) ? list.filter((k) => k !== key) : [...list, key]);
 
   const chipClass = (active: boolean) =>
     [
@@ -62,32 +82,32 @@ export default function VaultCategoryChips({
   return (
     <div className="mt-3 grid gap-2">
       <div className="flex gap-1.5 overflow-x-auto pb-1" aria-label="Category">
-        {categories.map(([name, count]) => (
+        {categoryOptions.map((option) => (
           <button
-            key={name}
+            key={option.key}
             type="button"
-            aria-pressed={category === name}
+            aria-pressed={selectedCategories.includes(option.key)}
             onClick={() => {
-              onCategory(category === name ? "" : name);
-              onSubcategory("");
+              onCategories(toggle(selectedCategories, option.key));
+              onSubcategories([]);
             }}
-            className={chipClass(category === name)}
+            className={chipClass(selectedCategories.includes(option.key))}
           >
-            {name} <span className="opacity-60">{count}</span>
+            {option.label} <span className="opacity-60">{option.count}</span>
           </button>
         ))}
       </div>
-      {subcategories.length > 0 ? (
+      {subcategoryOptions.length > 0 ? (
         <div className="flex gap-1.5 overflow-x-auto pb-1" aria-label="Subcategory">
-          {subcategories.map(([name, count]) => (
+          {subcategoryOptions.map((option) => (
             <button
-              key={name}
+              key={option.key}
               type="button"
-              aria-pressed={subcategory === name}
-              onClick={() => onSubcategory(subcategory === name ? "" : name)}
-              className={chipClass(subcategory === name)}
+              aria-pressed={selectedSubcategories.includes(option.key)}
+              onClick={() => onSubcategories(toggle(selectedSubcategories, option.key))}
+              className={chipClass(selectedSubcategories.includes(option.key))}
             >
-              {name} <span className="opacity-60">{count}</span>
+              {option.label} <span className="opacity-60">{option.count}</span>
             </button>
           ))}
         </div>

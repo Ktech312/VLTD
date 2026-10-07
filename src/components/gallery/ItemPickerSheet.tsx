@@ -6,6 +6,7 @@ import { AppIcon } from "@/components/ui/AppIcon";
 import { SelectCircle } from "@/components/ui/SelectCircle";
 import { getPrimaryImageUrl, type VaultItem } from "@/lib/vaultModel";
 import { isSupplyItem } from "@/lib/vaultStats";
+import { chipKey, chipOptions } from "@/components/VaultCategoryChips";
 import { UNIVERSE_KEYS, UNIVERSE_LABEL, type UniverseKey } from "@/lib/taxonomy";
 
 export const MAX_EXHIBIT_ITEMS = 18;
@@ -77,8 +78,9 @@ export function ItemPickerSheet({
   const [activeUniverses, setActiveUniverses] = useState<string[]>([]);
   const PAGE_SIZE = 120;
   const [shownCount, setShownCount] = useState(PAGE_SIZE);
-  const [activeCategory, setActiveCategory] = useState("");
-  const [activeSub, setActiveSub] = useState("");
+  // Pick as many categories as you like; with none picked, everything shows.
+  const [activeCategories, setActiveCategories] = useState<string[]>([]);
+  const [activeSubs, setActiveSubs] = useState<string[]>([]);
   const [picked, setPicked] = useState<Set<string>>(() => {
     const known = new Set(allItems.map((item) => String(item.id)));
     return new Set(confirmedIds.filter((id) => known.has(String(id))));
@@ -109,29 +111,29 @@ export function ItemPickerSheet({
 
   const categoryOptions = useMemo(() => {
     if (activeUniverses.length === 0) return [];
-    return Array.from(new Set(inUniverse.map(categoryOf).filter(Boolean))).sort((a, b) => a.localeCompare(b));
+    return chipOptions(inUniverse.map(categoryOf));
   }, [inUniverse, activeUniverses]);
 
   const subOptions = useMemo(() => {
-    if (!activeCategory) return [];
-    return Array.from(
-      new Set(inUniverse.filter((i) => categoryOf(i) === activeCategory).map(subcategoryOf).filter(Boolean))
-    ).sort((a, b) => a.localeCompare(b));
-  }, [inUniverse, activeCategory]);
+    if (activeCategories.length === 0) return [];
+    return chipOptions(
+      inUniverse.filter((i) => activeCategories.includes(chipKey(categoryOf(i)))).map(subcategoryOf)
+    );
+  }, [inUniverse, activeCategories]);
 
   useEffect(() => {
     setShownCount(PAGE_SIZE);
-  }, [query, activeUniverses, activeCategory, activeSub]);
+  }, [query, activeUniverses, activeCategories, activeSubs]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     return inUniverse.filter((item) => {
-      if (activeCategory && categoryOf(item) !== activeCategory) return false;
-      if (activeSub && subcategoryOf(item) !== activeSub) return false;
+      if (activeCategories.length > 0 && !activeCategories.includes(chipKey(categoryOf(item)))) return false;
+      if (activeSubs.length > 0 && !activeSubs.includes(chipKey(subcategoryOf(item)))) return false;
       if (q && !searchText(item).includes(q)) return false;
       return true;
     });
-  }, [inUniverse, query, activeCategory, activeSub]);
+  }, [inUniverse, query, activeCategories, activeSubs]);
 
   // Scroll lock on both html and body — prevents iOS bounce breaking inner scroll
   useEffect(() => {
@@ -171,13 +173,13 @@ export function ItemPickerSheet({
     setActiveUniverses((prev) =>
       prev.includes(u) ? prev.filter((x) => x !== u) : [...prev, u]
     );
-    setActiveCategory("");
-    setActiveSub("");
+    setActiveCategories([]);
+    setActiveSubs([]);
   }
 
-  function toggleCategory(c: string) {
-    setActiveCategory((prev) => (prev === c ? "" : c));
-    setActiveSub("");
+  function toggleCategory(key: string) {
+    setActiveCategories((prev) => (prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key]));
+    setActiveSubs([]);
   }
 
   const canClear = confirmedIds.length > 0;
@@ -229,8 +231,9 @@ export function ItemPickerSheet({
           type="button"
           onClick={onClose}
           aria-label="Close picker"
-          className="vltd-selectable bg-[color:var(--pill)] text-[color:var(--pill-fg)] ring-1 ring-[color:var(--border)] transition"
-          style={{ flexShrink: 0, width: 34, height: 34, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", border: "none", cursor: "pointer" }}
+          title="Close without changing anything"
+          className="!rounded-full transition hover:opacity-80"
+          style={{ flexShrink: 0, width: 34, height: 34, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", border: "1px solid rgba(255,255,255,0.28)", background: "rgba(255,255,255,0.08)", boxShadow: "none", color: "#fff", cursor: "pointer" }}
         >
           <AppIcon name="close" strokeWidth={1.8} style={{ width: 15, height: 15 }} />
         </button>
@@ -339,13 +342,13 @@ export function ItemPickerSheet({
             WebkitOverflowScrolling: "touch",
           } as React.CSSProperties}
         >
-          {categoryOptions.map((c) => {
-            const active = activeCategory === c;
+          {categoryOptions.map((option) => {
+            const active = activeCategories.includes(option.key);
             return (
               <button
-                key={c}
+                key={option.key}
                 type="button"
-                onClick={() => toggleCategory(c)}
+                onClick={() => toggleCategory(option.key)}
                 aria-pressed={active}
                 className={[
                   "vltd-selectable transition",
@@ -355,7 +358,7 @@ export function ItemPickerSheet({
                 ].join(" ")}
                 style={{ flexShrink: 0, borderRadius: 999, padding: "3px 10px", fontSize: 10, fontWeight: 700, letterSpacing: "0.02em", border: "none", cursor: "pointer", whiteSpace: "nowrap" }}
               >
-                {c}
+                {option.label}
               </button>
             );
           })}
@@ -375,13 +378,13 @@ export function ItemPickerSheet({
             WebkitOverflowScrolling: "touch",
           } as React.CSSProperties}
         >
-          {subOptions.map((c) => {
-            const active = activeSub === c;
+          {subOptions.map((option) => {
+            const active = activeSubs.includes(option.key);
             return (
               <button
-                key={c}
+                key={option.key}
                 type="button"
-                onClick={() => setActiveSub((prev) => (prev === c ? "" : c))}
+                onClick={() => setActiveSubs((prev) => (prev.includes(option.key) ? prev.filter((k) => k !== option.key) : [...prev, option.key]))}
                 aria-pressed={active}
                 className={[
                   "vltd-selectable transition",
@@ -391,7 +394,7 @@ export function ItemPickerSheet({
                 ].join(" ")}
                 style={{ flexShrink: 0, borderRadius: 999, padding: "3px 10px", fontSize: 10, fontWeight: 700, letterSpacing: "0.02em", border: "none", cursor: "pointer", whiteSpace: "nowrap" }}
               >
-                {c}
+                {option.label}
               </button>
             );
           })}
@@ -520,8 +523,8 @@ export function ItemPickerSheet({
           style={{
             flexShrink: 0,
             padding: "10px 14px max(env(safe-area-inset-bottom, 0px), 14px)",
-            borderTop: "1px solid var(--border)",
-            background: "var(--surface)",
+            borderTop: "1px solid rgba(255,255,255,0.14)",
+            background: "#0B111C",
           }}
         >
           <div style={stageStyle}>
@@ -543,8 +546,9 @@ export function ItemPickerSheet({
                 fontWeight: 900,
                 letterSpacing: "0.05em",
                 border: "none",
+                color: "#fff",
                 cursor: pickedCount > 0 || canClear ? "pointer" : "default",
-                opacity: pickedCount === 0 && !canClear ? 0.35 : 1,
+                opacity: pickedCount === 0 && !canClear ? 0.45 : 1,
               }}
             >
               {addLabel}
