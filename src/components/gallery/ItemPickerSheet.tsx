@@ -200,6 +200,7 @@ export function ItemPickerSheet({
 
   const overlay = (
     <div
+      className="vltd-dark-surface"
       style={{
         position: "fixed",
         top: 0,

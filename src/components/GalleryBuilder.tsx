@@ -878,26 +878,26 @@ export default function GalleryBuilder({
             { label: "ITEMS", value: selectedCount },
             { label: "FEATURED", value: sections.filter((s) => !!s.featuredItemId).length },
           ].map(({ label, value }) => (
-            <div key={label} className="rounded-[10px] bg-[color:var(--surface)] px-2.5 py-1.5 text-right ring-1 ring-[color:var(--border)]">
+            <div key={label} className="rounded-[10px] bg-[color:var(--surface)] flex items-center justify-between gap-2 px-2.5 py-1 ring-1 ring-[color:var(--border)]">
               <div className="text-[9px] tracking-[0.14em] text-[color:var(--muted2)]">{label}</div>
-              <div className="mt-0.5 text-sm font-semibold leading-none">{value}</div>
+              <div className="text-sm font-semibold leading-none">{value}</div>
             </div>
           ))}
         </div>
 
         {/* ── Selected Items stats ── */}
         <div className="mt-2 grid grid-cols-3 gap-2">
-          <div className="rounded-[10px] bg-[color:var(--surface)] px-2.5 py-1.5 text-right ring-1 ring-[color:var(--border)]">
+          <div className="rounded-[10px] bg-[color:var(--surface)] flex items-center justify-between gap-2 px-2.5 py-1 ring-1 ring-[color:var(--border)]">
             <div className="text-[9px] tracking-[0.14em] text-[color:var(--muted2)]">ITEMS</div>
-            <div className="mt-0.5 text-sm font-semibold leading-none">{selectedCount}</div>
+            <div className="text-sm font-semibold leading-none">{selectedCount}</div>
           </div>
-          <div className="rounded-[10px] bg-[color:var(--surface)] px-2.5 py-1.5 text-right ring-1 ring-[color:var(--border)]">
+          <div className="rounded-[10px] bg-[color:var(--surface)] flex items-center justify-between gap-2 px-2.5 py-1 ring-1 ring-[color:var(--border)]">
             <div className="text-[9px] tracking-[0.14em] text-[color:var(--muted2)]">CURATED VALUE</div>
-            <div className="mt-0.5 text-sm font-semibold leading-none">{formatMoney(selectedValue) ?? "—"}</div>
+            <div className="text-sm font-semibold leading-none">{formatMoney(selectedValue) ?? "—"}</div>
           </div>
-          <div className="rounded-[10px] bg-[color:var(--surface)] px-2.5 py-1.5 text-right ring-1 ring-[color:var(--border)]">
+          <div className="rounded-[10px] bg-[color:var(--surface)] flex items-center justify-between gap-2 px-2.5 py-1 ring-1 ring-[color:var(--border)]">
             <div className="text-[9px] tracking-[0.14em] text-[color:var(--muted2)]">CURATED COST</div>
-            <div className="mt-0.5 text-sm font-semibold leading-none">{formatMoney(selectedCost) ?? "—"}</div>
+            <div className="text-sm font-semibold leading-none">{formatMoney(selectedCost) ?? "—"}</div>
           </div>
         </div>
 

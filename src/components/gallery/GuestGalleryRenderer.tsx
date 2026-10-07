@@ -2,7 +2,7 @@
 
 import type { GalleryInvitePermissions } from "@/lib/galleryModel";
 import Link from "next/link";
-import { Fragment, useEffect, useState } from "react";
+import { Fragment, useEffect, useRef, useState } from "react";
 import type { DragEvent } from "react";
 
 import FavoriteButton from "@/components/FavoriteButton";
@@ -371,6 +371,7 @@ export default function GuestGalleryRenderer({
   const [dragOverId, setDragOverId] = useState<string | null>(null);
   const [selectedItem, setSelectedItem] = useState<VaultItem | null>(null);
   const [lightboxItem, setLightboxItem] = useState<VaultItem | null>(null);
+  const swipeStartRef = useRef<{ x: number; y: number } | null>(null);
   // Public pages open the detail popup on any click. Invite pages follow the invite: details
   // popup if "item details" is allowed, otherwise just a bigger photo if "images" is allowed.
   function openItem(item: VaultItem) {
@@ -384,6 +385,11 @@ export default function GuestGalleryRenderer({
   }
   const [owner, setOwner] = useState<OwnerProfile | null>(null);
   const [selectedSectionIdx, setSelectedSectionIdx] = useState(0);
+  function stepSection(delta: number) {
+    const count = getGallerySections(model.gallery).filter((section) => section.itemIds.length > 0).length;
+    if (count < 2) return;
+    setSelectedSectionIdx((index) => (Math.min(index, count - 1) + delta + count) % count);
+  }
   const [bioOpen, setBioOpen] = useState(false);
   const [infoOpen, setInfoOpen] = useState(false);
   const [viewerProfileId, setViewerProfileId] = useState("");
@@ -694,12 +700,6 @@ export default function GuestGalleryRenderer({
             </div>
           )}
 
-          {!embedded && activeSection?.section.description?.trim() ? (
-            <p className={["mx-auto mt-3 text-sm leading-6 text-[color:var(--muted)]", GALLERY_STAGE_WIDTH_CLASS].join(" ")}>
-              {activeSection.section.description}
-            </p>
-          ) : null}
-
           {featuredItem ? (
             <button
               type="button"
@@ -725,6 +725,49 @@ export default function GuestGalleryRenderer({
             </button>
           ) : null}
 
+          {/* Arrows and swiping step through the exhibits; after the last one comes the first. */}
+          <div
+            className={embedded ? "" : ["relative mx-auto", GALLERY_STAGE_WIDTH_CLASS].join(" ")}
+            onTouchStart={(event) => {
+              if (embedded || sectionViews.length < 2 || event.touches.length > 1) {
+                swipeStartRef.current = null;
+                return;
+              }
+              const touch = event.touches[0];
+              swipeStartRef.current = { x: touch.clientX, y: touch.clientY };
+            }}
+            onTouchEnd={(event) => {
+              const startPoint = swipeStartRef.current;
+              swipeStartRef.current = null;
+              if (!startPoint || embedded) return;
+              const touch = event.changedTouches[0];
+              const dx = touch.clientX - startPoint.x;
+              const dy = touch.clientY - startPoint.y;
+              if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 1.5) stepSection(dx < 0 ? 1 : -1);
+            }}
+          >
+            {!embedded && sectionViews.length > 1 ? (
+              <>
+                <button
+                  type="button"
+                  onClick={() => stepSection(-1)}
+                  aria-label="Previous exhibit"
+                  title="Previous exhibit"
+                  className="absolute left-3 top-3 z-30 grid h-8 w-8 place-items-center rounded-full bg-black/45 ring-1 ring-white/25 transition hover:bg-black/65"
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M19 12H5M12 5l-7 7 7 7" /></svg>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => stepSection(1)}
+                  aria-label="Next exhibit"
+                  title="Next exhibit"
+                  className="absolute right-3 top-3 z-30 grid h-8 w-8 place-items-center rounded-full bg-black/45 ring-1 ring-white/25 transition hover:bg-black/65"
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7" /></svg>
+                </button>
+              </>
+            ) : null}
           {model.displayMode === "shelf" ? (
             <div className={embedded ? "" : "mt-3"}>
               <GalleryShelfScene
@@ -803,6 +846,8 @@ export default function GuestGalleryRenderer({
             </section>
           )}
 
+
+          </div>
 
           {displayItems.length === 0 ? (
             <section className={["mt-6 mx-auto", GALLERY_STAGE_WIDTH_CLASS].join(" ")}>
