@@ -13,6 +13,7 @@ import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 import { syncPublicProfile } from "@/lib/publicProfile";
 import { getPendingVaultSyncCount, processVaultSyncQueue } from "@/lib/vaultSyncQueue";
 import { loadItems, syncVaultItemsFromSupabase } from "@/lib/vaultModel";
+import { exportVaultJson } from "@/lib/vaultExport";
 import { fetchVaultItemsFromSupabase, hasSupabaseEnv } from "@/lib/vaultCloud";
 import { loadWatchlist, removeFromWatchlist, type WatchlistItem } from "@/lib/watchlistModel";
 import { UNIVERSE_KEYS, UNIVERSE_LABEL, isUniverseKey } from "@/lib/taxonomy";
@@ -409,20 +410,6 @@ export default function AccountPage() {
     window.localStorage.removeItem("vltd_google_sheet_id_v1");
     broadcastProfileChange();
     showToast("Cleared local cache. Refresh the page.");
-  }
-
-  function exportVaultJson() {
-    if (typeof window === "undefined") return;
-    const raw = window.localStorage.getItem("vltd_items_v2") || "[]";
-    const blob = new Blob([raw], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "vltd_vault_export.json";
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    URL.revokeObjectURL(url);
   }
 
   if (loading) {

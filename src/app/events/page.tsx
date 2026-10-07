@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { AppIcon } from "@/components/ui/AppIcon";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 import { loadSavedEventIds, syncSavedEventIdsFromSupabase, toggleSavedEvent } from "@/lib/savedEventsModel";
+import { UNIVERSE_KEYS, UNIVERSE_LABEL, isUniverseKey } from "@/lib/taxonomy";
 
 type EventType = "local" | "national" | "international";
 
@@ -64,6 +65,7 @@ function formatDateRange(starts: string, ends: string): string {
   const year = start.getUTCFullYear();
 
   if (startText === endText) return `${startText}, ${year}`;
+  if (start.getUTCFullYear() !== end.getUTCFullYear()) return `${startText}, ${year} - ${endText}, ${end.getUTCFullYear()}`;
   if (start.getUTCMonth() === end.getUTCMonth()) {
     return `${startText}-${end.getUTCDate()}, ${year}`;
   }
@@ -83,6 +85,7 @@ function venueLine(event: CollectorEvent): string {
 }
 
 function normalizeUniverse(universe: string): string {
+  if (isUniverseKey(universe)) return UNIVERSE_LABEL[universe];
   return universe
     .replace(/_/g, " ")
     .replace(/\b\w/g, (letter) => letter.toUpperCase());
@@ -91,6 +94,8 @@ function normalizeUniverse(universe: string): string {
 function categoryFor(event: CollectorEvent): EventCategory {
   const text = `${event.name} ${event.short_desc ?? ""} ${event.long_desc ?? ""}`.toLowerCase();
   if (text.includes("auction")) return "auction";
+  if (event.relevant_universes?.includes("MUSIC")) return "music";
+  if (event.relevant_universes?.includes("ART") || text.includes("art fair")) return "gallery";
   if (text.includes("drop") || text.includes("release")) return "drop";
   if (text.includes("gallery") || text.includes("museum")) return "gallery";
   if (text.includes("card show") || text.includes("sports card") || text.includes("trading card")) return "card_show";
@@ -479,6 +484,9 @@ export default function EventsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [filter, setFilter] = useState<EventFilter>("all");
+  const [universeFilter, setUniverseFilter] = useState("all");
+  const [catalogQuery, setCatalogQuery] = useState("");
+  const [visibleCount, setVisibleCount] = useState(30);
   const [savedIds, setSavedIds] = useState<Set<string>>(() => new Set());
   const [savedSuggestionIds, setSavedSuggestionIds] = useState<Set<string>>(() => new Set());
   const [selectedId, setSelectedId] = useState<string>("");
@@ -536,19 +544,23 @@ export default function EventsPage() {
       return () => window.clearTimeout(timer);
     }
 
-    supabase
-      .from("collector_events")
-      .select("*")
-      .eq("enabled", true)
-      .order("starts_at", { ascending: true })
-      .then(({ data, error: queryError }: { data: CollectorEvent[] | null; error: { message: string } | null }) => {
-        if (queryError) {
-          setError(queryError.message);
-          setEvents([]);
-          setSelectedId("");
-        } else {
-          const rows = (data ?? []) as CollectorEvent[];
-          setEvents(rows);
+    let cancelled = false;
+    async function fetchCatalog() {
+      const rows: CollectorEvent[] = [];
+      for (let offset = 0; ; offset += 1000) {
+        const { data, error } = await supabase!.from("collector_events").select("*")
+          .eq("enabled", true).gte("ends_at", new Date().toISOString())
+          .order("starts_at", { ascending: true }).order("id").range(offset, offset + 999);
+        if (error) throw error;
+        rows.push(...(data ?? []) as CollectorEvent[]);
+        if (!data || data.length < 1000) return rows;
+      }
+    }
+    fetchCatalog()
+      .then((data) => {
+        if (cancelled) return;
+        const rows = data;
+        setEvents(rows);
 
           // A save from the Quick Add Event fallback lands here with
           // ?highlight=<slug> so the user can actually see it went in,
@@ -559,9 +571,15 @@ export default function EventsPage() {
           if (highlighted) {
             window.setTimeout(() => detailRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" }), 300);
           }
-        }
+        setLoading(false);
+      }).catch((queryError: Error) => {
+        if (cancelled) return;
+        setError(queryError.message);
+        setEvents([]);
+        setSelectedId("");
         setLoading(false);
       });
+    return () => { cancelled = true; };
   }, []);
 
   const sortedEvents = useMemo(() => {
@@ -583,8 +601,12 @@ export default function EventsPage() {
 
   const filteredEvents = useMemo(() => {
     const active = filter === "all" ? upcomingEvents : upcomingEvents.filter((event) => categoryFor(event) === filter);
-    return showSavedOnly ? active.filter((event) => savedIds.has(event.id)) : active;
-  }, [filter, upcomingEvents, showSavedOnly, savedIds]);
+    const legacy: Record<string, string> = {comics:"POP_CULTURE",toys:"POP_CULTURE",sports_cards:"SPORTS",tcg:"TCG",vinyl:"MUSIC",sneakers:"JEWELRY_APPAREL",watches:"JEWELRY_APPAREL",games:"GAMES",whisky:"BUILT_BOTANY",plants:"BUILT_BOTANY",coins:"MISC",stamps:"MISC",classic_cars:"AUTOMOTIVE",automotive:"AUTOMOTIVE",art:"ART"};
+    const query = catalogQuery.trim().toLocaleLowerCase();
+    return active.filter(event => (!showSavedOnly || savedIds.has(event.id))
+      && (universeFilter === "all" || event.relevant_universes?.some(u => (legacy[u] ?? u) === universeFilter))
+      && (!query || [event.name,event.city,event.state_region,event.country,event.venue_name,event.short_desc].filter(Boolean).join(" ").toLocaleLowerCase().includes(query)));
+  }, [filter, upcomingEvents, showSavedOnly, savedIds, universeFilter, catalogQuery]);
 
   const savedEvents = useMemo(() => {
     return sortedEvents.filter((event) => savedIds.has(event.id));
@@ -740,10 +762,15 @@ export default function EventsPage() {
         ) : null}
 
         <section className="mt-4 flex flex-wrap items-center gap-2">
-          <EventTypeSelect value={filter} onChange={setFilter} />
+          <EventTypeSelect value={filter} onChange={(value) => { setFilter(value); setVisibleCount(30); }} />
+          <select aria-label="Filter by universe" value={universeFilter} onChange={e => {setUniverseFilter(e.target.value);setVisibleCount(30);}} className="h-9 rounded-[7px] border border-[color:var(--border)] bg-[color:var(--pill)] px-3 text-xs text-[color:var(--fg)]">
+            <option value="all">All Universes</option>
+            {UNIVERSE_KEYS.map(key => <option key={key} value={key}>{UNIVERSE_LABEL[key]}</option>)}
+          </select>
+          <input aria-label="Search listed events" placeholder="Search events, city or country" value={catalogQuery} onChange={e => {setCatalogQuery(e.target.value);setVisibleCount(30);}} className="h-9 min-w-0 flex-1 rounded-[7px] border border-[color:var(--border)] bg-[color:var(--pill)] px-3 text-sm text-[color:var(--fg)]" />
           <button
             type="button"
-            onClick={() => setShowSavedOnly((v) => !v)}
+            onClick={() => {setShowSavedOnly((v) => !v);setVisibleCount(30);}}
             className="inline-flex h-9 items-center justify-center gap-2 rounded-[7px] border px-3 text-xs font-bold"
             style={{
               background: showSavedOnly ? "var(--theme-gold)" : "var(--pill)",
@@ -762,12 +789,13 @@ export default function EventsPage() {
           </button>
         </section>
 
-        <section className="mt-4 rounded-[7px] border border-[color:var(--border)] bg-[color:var(--surface)] p-4">
-          <div className="flex flex-col gap-3 lg:flex-row lg:items-end">
+        <details className="mt-4 rounded-[7px] border border-[color:var(--border)] bg-[color:var(--surface)] p-4">
+          <summary className="cursor-pointer text-xs font-bold text-[color:var(--muted)]">Search beyond the catalog</summary>
+          <div className="mt-3 flex flex-col gap-3 lg:flex-row lg:items-end">
             <div className="min-w-0 flex-1">
               <div className="text-[11px] font-black uppercase tracking-[0.18em] text-[color:var(--theme-gold)]">Find Events</div>
               <p className="mt-1 text-xs text-[color:var(--muted)]">
-                Search Google Events through SerpApi by collector category, city or ZIP, and range. Range is a Google-guided nearby search, not an exact radius fence.
+                Search for nearby events by category and city. This additional search may return fewer results than the specialist catalog.
               </p>
             </div>
             <label className="block min-w-[170px]">
@@ -858,7 +886,7 @@ export default function EventsPage() {
               </div>
             </div>
           )}
-        </section>
+        </details>
 
         <section className="mt-4 md:hidden">
           <div className="flex gap-2 overflow-x-auto pb-2">
@@ -884,6 +912,7 @@ export default function EventsPage() {
           <section>
             <div className="mb-2 flex items-center justify-between">
               <h2 className="text-[11px] font-black uppercase tracking-[0.18em] text-[color:var(--theme-gold)]">Upcoming Events</h2>
+              {!loading && <span className="text-xs text-[color:var(--muted)]">{filteredEvents.length} events</span>}
             </div>
 
             {loading ? (
@@ -898,12 +927,12 @@ export default function EventsPage() {
               <div className="rounded-[7px] border border-[color:var(--border)] bg-[color:var(--surface)] p-8 text-center text-sm text-[color:var(--muted)]">
                 {showSavedOnly
                   ? "You haven't saved any events yet."
-                  : "No events listed yet — check back soon, or search for events near you above."}
+                  : "No events match these filters. Try another universe, city or event name."}
               </div>
             ) : (
               <>
                 <div className="hidden grid-cols-5 gap-3 md:grid">
-                  {filteredEvents.map((event) => (
+                  {filteredEvents.slice(0, visibleCount).map((event) => (
                     <EventCard
                       key={event.id}
                       event={event}
@@ -915,7 +944,7 @@ export default function EventsPage() {
                   ))}
                 </div>
                 <div className="space-y-2 md:hidden">
-                  {filteredEvents.map((event) => (
+                  {filteredEvents.slice(0, visibleCount).map((event) => (
                     <EventRow
                       key={event.id}
                       event={event}
@@ -925,6 +954,7 @@ export default function EventsPage() {
                     />
                   ))}
                 </div>
+                {filteredEvents.length > visibleCount && <button type="button" onClick={() => setVisibleCount(count => count + 30)} className="mt-4 w-full rounded-[7px] border border-[color:var(--border)] bg-[color:var(--pill)] p-3 text-sm font-bold">Show more events ({filteredEvents.length - visibleCount} remaining)</button>}
               </>
             )}
           </section>

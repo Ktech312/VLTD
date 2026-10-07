@@ -9,7 +9,6 @@ import Link from "next/link";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 
-import ItemIntelligencePanel from "@/components/ItemIntelligencePanel";
 import ItemVisibilityToggle from "@/components/ItemVisibilityToggle";
 import RestoreVaultButton from "@/components/RestoreVaultButton";
 import SellItemButton from "@/components/SellItemButton";
@@ -1231,18 +1230,6 @@ export default function VaultListView({ lockedUniverse }: { lockedUniverse?: Uni
     return next;
   }, [items, query, universeFilter, categoryFilter, subFilter, gradedOnly, uncategorizedOnly, sortMode, readinessFilter, intelligenceMap, sales, showSoldItems]);
 
-  const featuredItem = useMemo(() => {
-    if (universeFilter === "ALL" || filteredItems.length === 0) return null;
-    return [...filteredItems].sort((a, b) => {
-      const aInt = intelligenceMap[a.id];
-      const bInt = intelligenceMap[b.id];
-      const aScore = (aInt?.valueScore ?? 0) + (aInt?.gainScore ?? 0);
-      const bScore = (bInt?.valueScore ?? 0) + (bInt?.gainScore ?? 0);
-      if (bScore !== aScore) return bScore - aScore;
-      return effectiveMarketValue(b) - effectiveMarketValue(a);
-    })[0];
-  }, [filteredItems, intelligenceMap, universeFilter]);
-
   const universeScopedItems = useMemo(
     () => (universeFilter === "ALL" ? [] : items.filter((item) => universeForItem(item) === universeFilter)),
     [items, universeFilter]
@@ -2049,16 +2036,6 @@ export default function VaultListView({ lockedUniverse }: { lockedUniverse?: Uni
             </div>
           </div>
         </section>
-
-        {universeFilter !== "ALL" && filteredItems.length > 0 ? (
-          <section className="mb-3">
-            {featuredItem ? (
-              <div className="mt-3">
-                <ItemIntelligencePanel item={featuredItem} intelligence={intelligenceMap[featuredItem.id] ?? null} />
-              </div>
-            ) : null}
-          </section>
-        ) : null}
 
         {items.length === 0 && !initialLoadComplete ? (
           <VaultLoadingSkeleton />

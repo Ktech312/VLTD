@@ -2178,13 +2178,18 @@ export type GalleryCleanupResult = {
 // cache entry outright (see replaceLocalGalleryWithServerVersion) so an
 // older local updatedAt elsewhere can't resurrect the ids we just removed.
 export async function removeItemIdsFromAllGalleriesConfirmed(
-  itemIds: string[]
+  itemIds: string[],
+  options?: { onlyGalleryId?: string }
 ): Promise<GalleryCleanupResult[]> {
   const cleanIds = new Set(itemIds.map(safeString).filter(Boolean));
   if (cleanIds.size === 0) return [];
 
   const galleries = loadGalleries({ includeAllProfiles: true });
-  const affected = galleries.filter((gallery) => gallery.itemIds.some((id) => cleanIds.has(id)));
+  const affected = galleries.filter(
+    (gallery) =>
+      (!options?.onlyGalleryId || gallery.id === options.onlyGalleryId) &&
+      gallery.itemIds.some((id) => cleanIds.has(id))
+  );
 
   const results: GalleryCleanupResult[] = [];
 

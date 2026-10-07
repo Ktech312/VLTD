@@ -345,6 +345,19 @@ export default function GalleryPage() {
       const localIds = new Set(freshItems.map((item) => item.id));
       const currentGallery = loadGalleries({ includeAllProfiles: true }).find((g) => g.id === id);
       const deadIds = (currentGallery?.itemIds ?? []).filter((itemId) => !localIds.has(itemId));
+
+      // Profiles are separate accounts: an exhibit can only hold items from its own profile. Older
+      // exhibits that picked up items from another profile lose them (the items stay in their vault).
+      const ownerProfile = currentGallery?.profile_id;
+      if (ownerProfile && !/^0+(-0+)*$/.test(ownerProfile)) {
+        const foreignIds = new Set(
+          freshItems.filter((item) => item.profile_id && item.profile_id !== ownerProfile).map((item) => item.id)
+        );
+        const crossIds = (currentGallery?.itemIds ?? []).filter((itemId) => foreignIds.has(itemId));
+        if (crossIds.length > 0) {
+          await removeItemIdsFromAllGalleriesConfirmed(crossIds, { onlyGalleryId: id });
+        }
+      }
       if (deadIds.length > 0) {
         const results = await removeItemIdsFromAllGalleriesConfirmed(deadIds);
         if (results.some((r) => !r.ok)) {
@@ -422,6 +435,13 @@ export default function GalleryPage() {
       })
       .filter(Boolean) as VaultItem[];
   }, [draft, items]);
+
+  // The item picker only offers this exhibit's own profile (a personal vault and a business vault are separate).
+  const ownProfileItems = useMemo(() => {
+    const owner = draft?.profile_id;
+    if (!owner) return items;
+    return items.filter((item) => !item.profile_id || item.profile_id === owner);
+  }, [draft?.profile_id, items]);
 
   const activeInviteTokens = useMemo(() => {
     if (!draft) return [];
@@ -1506,7 +1526,7 @@ export default function GalleryPage() {
 
       {pickerOpen && (
         <ItemPickerSheet
-          allItems={items}
+          allItems={ownProfileItems}
           confirmedIds={pickerSectionIds !== null ? pickerSectionIds : draft.itemIds}
           sectionTitle={pickerSectionTitle}
           pages={

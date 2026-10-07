@@ -47,15 +47,18 @@ export default function ProgressiveImage({
 
       {imageSrc ? (
         <>
-          <img
-            src={imageSrc}
-            alt=""
-            aria-hidden="true"
-            className={["absolute inset-0 h-full w-full scale-105 blur-xl transition-opacity duration-300", imageClassName, loaded ? "opacity-0" : "opacity-70"].join(" ")}
-            loading={loading}
-            decoding="async"
-            draggable={false}
-          />
+          {/* The blurred stand-in only exists while the photo loads; keeping a hidden blurred copy on every card made scrolling choppy. */}
+          {loaded ? null : (
+            <img
+              src={imageSrc}
+              alt=""
+              aria-hidden="true"
+              className={["absolute inset-0 h-full w-full scale-105 blur-xl transition-opacity duration-300", imageClassName, "opacity-70"].join(" ")}
+              loading={loading}
+              decoding="async"
+              draggable={false}
+            />
+          )}
           <img
             src={imageSrc}
             alt={alt}
