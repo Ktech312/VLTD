@@ -966,7 +966,20 @@ export default function GalleryPage() {
                 </div>
               </div>
 
-              <div className="flex flex-wrap gap-2 lg:justify-end xl:justify-start xl:gap-1.5">
+            </div>
+
+            <div className="mt-4 md:max-w-[690px] xl:mt-2">
+              <div className="rounded-[22px] bg-[color:var(--surface)] p-4 ring-1 ring-[color:var(--border)] xl:rounded-[18px] xl:p-3">
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div>
+                    <div className="text-[10px] tracking-[0.18em] text-[color:var(--muted2)]">
+                      PUBLIC SHARE LINK
+                    </div>
+                    <div className="mt-0.5 text-xs text-[color:var(--muted)]">
+                      Uses a dedicated public route for clean sharing.
+                    </div>
+                  </div>
+              <div className="flex flex-wrap gap-1.5 sm:justify-end">
                 <div className="rounded-2xl bg-[color:var(--surface)] px-3.5 py-2.5 ring-1 ring-[color:var(--border)] xl:rounded-xl xl:px-2.5 xl:py-2">
                   <div className="text-[9px] tracking-[0.18em] text-[color:var(--muted2)]">VALUE</div>
                   <div className="mt-0.5 text-lg font-semibold leading-tight xl:text-base">{formatMoney(metrics.totalValue)}</div>
@@ -989,19 +1002,6 @@ export default function GalleryPage() {
                   <div className="mt-0.5 text-lg font-semibold leading-tight xl:text-base">{metrics.views}</div>
                 </div>
               </div>
-            </div>
-
-            <div className="mt-4 md:max-w-[690px] xl:mt-2">
-              <div className="rounded-[22px] bg-[color:var(--surface)] p-4 ring-1 ring-[color:var(--border)] xl:rounded-[18px] xl:p-3">
-                <div>
-                  <div>
-                    <div className="text-[10px] tracking-[0.18em] text-[color:var(--muted2)]">
-                      PUBLIC SHARE LINK
-                    </div>
-                    <div className="mt-0.5 text-xs text-[color:var(--muted)]">
-                      Uses a dedicated public route for clean sharing.
-                    </div>
-                  </div>
                 </div>
 
                 <div className="mt-3 grid grid-cols-[auto_auto_auto] items-center justify-start gap-1.5 xl:mt-2">
@@ -1140,6 +1140,59 @@ export default function GalleryPage() {
                     </div>
                   ) : null}
 
+                  <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-[color:var(--border)] pt-2 md:flex-nowrap">
+                    <div className="relative inline-flex min-h-[34px] w-fit items-center gap-2 rounded-full bg-[color:var(--surface)] px-3 py-1.5 ring-1 ring-[color:var(--border)] xl:min-h-[28px] xl:px-2.5 xl:py-1">
+                      <span className="flex items-center gap-1.5">
+                        <span className="block text-xs font-semibold">18+ exhibit</span>
+                        <button
+                          type="button"
+                          onClick={(event) => {
+                            event.preventDefault();
+                            event.stopPropagation();
+                            setAdultInfoOpen((current) => !current);
+                          }}
+                          className="vltd-selectable inline-flex h-5 w-5 items-center justify-center rounded-full bg-[color:var(--pill)] text-[10px] font-semibold text-[color:var(--pill-fg)] ring-1 ring-[color:var(--border)]"
+                          aria-label="18+ exhibit help"
+                          aria-expanded={adultInfoOpen}
+                        >
+                          i
+                        </button>
+                      </span>
+                      <input
+                        type="checkbox"
+                        aria-label="Require 18+ confirmation"
+                        checked={draft.adultOnly === true}
+                        onChange={(event) =>
+                          patchDraft((current) => ({
+                            ...current,
+                            adultOnly: event.target.checked,
+                          }))
+                        }
+                        className="h-4 w-4 accent-cyan-400"
+                      />
+                      {adultInfoOpen ? (
+                        <span id="gallery-adult-info" className="absolute left-0 bottom-full z-20 mb-2 w-[min(360px,calc(100vw-48px))] rounded-xl px-3 py-2 text-[11px] leading-4 text-[color:var(--muted)] ring-1 ring-[color:var(--border)] shadow-[0_18px_44px_rgba(0,0,0,0.38)]">
+                          Public viewers must confirm they are 18 or older before entering this exhibit.
+                        </span>
+                      ) : null}
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-1.5 md:ml-auto md:flex-nowrap">
+                      {gallery?.visibility === "PUBLIC" && (
+                        <button
+                          type="button"
+                          onClick={() => void handleAnnounce()}
+                          disabled={announcing || announced}
+                          title="Let your followers know you&#39;ve updated this exhibition"
+                          className="inline-flex min-h-[30px] items-center justify-center gap-1 rounded-[7px] bg-[color:var(--pill)] px-3 py-1 text-[10px] font-semibold text-[color:var(--pill-fg)] ring-1 ring-[color:var(--border)] transition hover:bg-[color:var(--pill-hover)] disabled:opacity-60"
+                        >
+                          {announced ? "✓ Announced" : announcing ? "Announcing…" : (
+                            <span className="inline-flex items-center gap-1"><Glyph name="megaphone" size={12} /> Announce</span>
+                          )}
+                        </button>
+                      )}
+                    </div>
+                  </div>
                   <div className="relative mt-3 border-t border-[color:var(--border)] pt-3">
                     <div className="flex flex-wrap items-center gap-2">
                       <div className="relative inline-flex min-h-[34px] w-fit items-center gap-2 rounded-full bg-[color:var(--surface)] px-3 py-1.5 ring-1 ring-[color:var(--border)] xl:min-h-[28px] xl:px-2.5 xl:py-1">
@@ -1195,78 +1248,10 @@ export default function GalleryPage() {
                           className="h-9 min-w-0 flex-1 rounded-[8px] bg-[color:var(--pill)] px-3 text-sm ring-1 ring-[color:var(--border)] focus:outline-none"
                           style={{ maxWidth: 280 }}
                         />
-                        <input
-                          value={draft.aliasAvatar ?? ""}
-                          onChange={(event) =>
-                            patchDraft((current) => ({
-                              ...current,
-                              aliasAvatar: event.target.value.slice(0, 4),
-                            }))
-                          }
-                          placeholder="Avatar"
-                          aria-label="Alias avatar: one emoji or letter"
-                          className="h-9 w-20 rounded-[8px] bg-[color:var(--pill)] px-2 text-center text-sm ring-1 ring-[color:var(--border)] focus:outline-none"
-                        />
-                        <span className="text-[10px] text-[color:var(--muted2)]">
-                          Type one emoji or letter to show beside the alias. Empty uses the default key.
-                        </span>
                       </div>
                     ) : null}
                   </div>
 
-                  <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-[color:var(--border)] pt-2 md:flex-nowrap">
-                    <div className="relative inline-flex min-h-[34px] w-fit items-center gap-2 rounded-full bg-[color:var(--surface)] px-3 py-1.5 ring-1 ring-[color:var(--border)] xl:min-h-[28px] xl:px-2.5 xl:py-1">
-                      <span className="flex items-center gap-1.5">
-                        <span className="block text-xs font-semibold">18+ exhibit</span>
-                        <button
-                          type="button"
-                          onClick={(event) => {
-                            event.preventDefault();
-                            event.stopPropagation();
-                            setAdultInfoOpen((current) => !current);
-                          }}
-                          className="vltd-selectable inline-flex h-5 w-5 items-center justify-center rounded-full bg-[color:var(--pill)] text-[10px] font-semibold text-[color:var(--pill-fg)] ring-1 ring-[color:var(--border)]"
-                          aria-label="18+ exhibit help"
-                          aria-expanded={adultInfoOpen}
-                        >
-                          i
-                        </button>
-                      </span>
-                      <input
-                        type="checkbox"
-                        aria-label="Require 18+ confirmation"
-                        checked={draft.adultOnly === true}
-                        onChange={(event) =>
-                          patchDraft((current) => ({
-                            ...current,
-                            adultOnly: event.target.checked,
-                          }))
-                        }
-                        className="h-4 w-4 accent-cyan-400"
-                      />
-                      {adultInfoOpen ? (
-                        <span id="gallery-adult-info" className="absolute left-0 bottom-full z-20 mb-2 w-[min(360px,calc(100vw-48px))] rounded-xl px-3 py-2 text-[11px] leading-4 text-[color:var(--muted)] ring-1 ring-[color:var(--border)] shadow-[0_18px_44px_rgba(0,0,0,0.38)]">
-                          Public viewers must confirm they are 18 or older before entering this exhibit.
-                        </span>
-                      ) : null}
-                    </div>
-
-                    <div className="flex flex-wrap items-center gap-1.5 md:ml-auto md:flex-nowrap">
-                      {gallery?.visibility === "PUBLIC" && (
-                        <button
-                          type="button"
-                          onClick={() => void handleAnnounce()}
-                          disabled={announcing || announced}
-                          title="Let your followers know you&#39;ve updated this exhibition"
-                          className="inline-flex min-h-[30px] items-center justify-center gap-1 rounded-[7px] bg-[color:var(--pill)] px-3 py-1 text-[10px] font-semibold text-[color:var(--pill-fg)] ring-1 ring-[color:var(--border)] transition hover:bg-[color:var(--pill-hover)] disabled:opacity-60"
-                        >
-                          {announced ? "✓ Announced" : announcing ? "Announcing…" : (
-                            <span className="inline-flex items-center gap-1"><Glyph name="megaphone" size={12} /> Announce</span>
-                          )}
-                        </button>
-                      )}
-                    </div>
-                  </div>
                 </div>
               </div>
 
