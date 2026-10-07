@@ -23,7 +23,7 @@ import ProgressiveImage from "@/components/ui/ProgressiveImage";
 import { universePlaceholder } from "@/lib/itemPlaceholder";
 import {
   loadItems,
-  saveItems,
+  saveItemsBatch,
   syncVaultItemsFromSupabase,
   getPrimaryImageUrl,
   type VaultItem,
@@ -306,16 +306,17 @@ export default function VaultHallsPage() {
     setBackfilling(true);
     setBackfillStatus("");
     try {
-      const allItems = loadItems({ includeAllProfiles: true });
+      const allItems = loadItems();
       let taggedCount = 0;
-      const updated = allItems.map((item) => {
-        if (item.tags && item.tags.length > 0) return item;
+      const changed: typeof allItems = [];
+      for (const item of allItems) {
+        if (item.tags && item.tags.length > 0) continue;
         const tags = suggestAutoTags(item);
-        if (!tags.length) return item;
+        if (!tags.length) continue;
         taggedCount += 1;
-        return { ...item, tags };
-      });
-      saveItems(updated);
+        changed.push({ ...item, tags });
+      }
+      if (changed.length > 0) saveItemsBatch(changed);
       setItems(loadItems());
       setBackfillStatus(`Tagged ${taggedCount} item${taggedCount === 1 ? "" : "s"}.`);
       void syncAllItemsToCloud().catch(console.error);

@@ -10,7 +10,7 @@ import {
   syncAllItemsToCloud,
   type VaultSyncQueueSnapshot,
 } from "@/lib/vaultSyncQueue";
-import { getAllLocalItems } from "@/lib/vaultModel";
+import { getAllLocalItems, loadItems } from "@/lib/vaultModel";
 import { fetchVaultItemsFromSupabase, hasSupabaseEnv } from "@/lib/vaultCloud";
 
 function readSnapshot(): VaultSyncQueueSnapshot {
@@ -78,7 +78,7 @@ export default function VaultSyncPage() {
   }, []);
 
   const refreshTotals = useCallback(async () => {
-    setLocalTotal(getAllLocalItems().length);
+    setLocalTotal(loadItems().length);
     if (!hasSupabaseEnv()) return;
     try {
       const cloud = await fetchVaultItemsFromSupabase();

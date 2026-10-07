@@ -342,8 +342,8 @@ export default function MorePage() {
           });
           const profileItems = loadItems({ profileId });
           const profileGalleries = loadGalleries({ profileId });
-          setItems(profileItems.length > 0 ? profileItems : loadItems({ includeAllProfiles: true }));
-          setGalleries(profileGalleries.length > 0 ? profileGalleries : loadGalleries({ includeAllProfiles: true }));
+          setItems(profileItems);
+          setGalleries(profileGalleries);
           void getFollowerCount(profileId).then((count) => {
             if (active) setFollowerCount(count);
           });
@@ -356,8 +356,8 @@ export default function MorePage() {
         // Keep local visual shell available if auth lookup is delayed.
       }
       if (!active) return;
-      setItems(loadItems({ includeAllProfiles: true }));
-      setGalleries(loadGalleries({ includeAllProfiles: true }));
+      setItems(loadItems());
+      setGalleries(loadGalleries());
     }
     void load();
     return () => { active = false; };

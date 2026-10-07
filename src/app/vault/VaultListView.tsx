@@ -1526,6 +1526,8 @@ export default function VaultListView({ lockedUniverse }: { lockedUniverse?: Uni
       .filter((item) => selectedIds.has(item.id))
       .map((item) => ({ ...item, profile_id: targetProfileId }));
     commitVaultItemEdits(movedItems);
+    // An exhibit only holds its own profile's items, so the moved ones leave this profile's exhibits.
+    void import("@/lib/galleryModel").then((m) => m.removeItemIdsFromAllGalleriesConfirmed(movedItems.map((item) => item.id)));
     // Moved items now belong to another profile: drop them from this view.
     setItems((prev) => prev.filter((item) => !selectedIds.has(item.id)));
     setSelectedIds(new Set());

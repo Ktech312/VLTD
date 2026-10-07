@@ -31,7 +31,7 @@ export default function VaultPrintPage() {
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    const all = loadItems({ includeAllProfiles: true }).filter(
+    const all = loadItems().filter(
       (i) => i.status !== "WISHLIST" && i.status !== "SOLD"
     );
     // Sort by universe then title

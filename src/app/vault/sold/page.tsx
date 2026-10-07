@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 
 import ProgressiveImage from "@/components/ui/ProgressiveImage";
+import { getStoredActiveProfileId } from "@/lib/auth";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 import { UNIVERSE_LABEL, type UniverseKey } from "@/lib/taxonomy";
 import { getPrimaryImageUrl, loadItems, saveItem, syncVaultItemsFromSupabase, type VaultItem } from "@/lib/vaultModel";
@@ -127,7 +128,12 @@ function readSales(): SoldItem[] {
   if (typeof window === "undefined") return [];
   try {
     const data: unknown = JSON.parse(localStorage.getItem(SALES_KEY) || "[]");
-    return Array.isArray(data) ? (data as SoldItem[]) : [];
+    if (!Array.isArray(data)) return [];
+    // This older shared list holds sales from every profile: keep only the active profile's.
+    const activeProfileId = getStoredActiveProfileId();
+    return (data as (SoldItem & { profile_id?: string })[]).filter(
+      (sale) => !activeProfileId || !sale.profile_id || sale.profile_id === activeProfileId
+    );
   } catch {
     return [];
   }
@@ -175,7 +181,7 @@ function soldItemFromVaultItem(item: VaultItem): SoldItem | null {
 function buildSoldItems() {
   const byId = new Map<string, SoldItem>();
 
-  for (const item of loadItems({ includeAllProfiles: true })) {
+  for (const item of loadItems()) {
     const sold = soldItemFromVaultItem(item);
     if (sold) byId.set(String(sold.id), sold);
   }

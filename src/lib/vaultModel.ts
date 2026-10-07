@@ -1157,7 +1157,13 @@ async function pullAndMergeFromSupabase(profileId: string): Promise<VaultItem[]>
   }
 }
 
-export async function syncVaultItemsFromSupabase(explicitProfileId?: string) {
+/** Pulls from the cloud and returns only the active (or given) profile's items: personal and Business never mix. */
+export async function syncVaultItemsFromSupabase(explicitProfileId?: string): Promise<VaultItem[]> {
+  await syncVaultItemsInternal(explicitProfileId);
+  return explicitProfileId ? loadItems({ profileId: explicitProfileId }) : loadItems();
+}
+
+async function syncVaultItemsInternal(explicitProfileId?: string) {
   if (typeof window === "undefined") return [];
   if (!hasSupabaseEnv()) return loadRawItems();
 

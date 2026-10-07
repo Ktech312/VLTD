@@ -602,7 +602,13 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
     };
   }, [id]);
 
-  const item = useMemo(() => items.find((entry) => String(entry.id) === String(id)) ?? sale ?? null, [items, id, sale]);
+  const item = useMemo(() => {
+    const found = items.find((entry) => String(entry.id) === String(id));
+    // Personal and Business are separate: an item that belongs to the other profile is not shown here.
+    const activeProfileId = getStoredActiveProfileId();
+    if (found && activeProfileId && found.profile_id && found.profile_id !== activeProfileId) return null;
+    return found ?? sale ?? null;
+  }, [items, id, sale]);
   const images = useMemo(() => (item ? getOrderedImageUrls(item) : []), [item]);
 
   useEffect(() => {

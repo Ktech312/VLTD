@@ -98,13 +98,13 @@ async function downloadPhotosZip(
 export default function VaultExportButton() {
   const [open, setOpen] = useState(false);
   const [zipStatus, setZipStatus] = useState<string | null>(null);
-  const items = open ? loadItems({ includeAllProfiles: true }) : [];
+  const items = open ? loadItems() : [];
 
   const isZipping = zipStatus !== null && zipStatus !== "Done";
 
   async function handlePhotoZip() {
     setOpen(false);
-    const allItems = loadItems({ includeAllProfiles: true });
+    const allItems = loadItems();
     try {
       await downloadPhotosZip(allItems, setZipStatus);
     } catch (err) {

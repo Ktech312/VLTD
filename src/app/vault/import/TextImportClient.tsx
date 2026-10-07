@@ -82,7 +82,7 @@ function readVaultForActiveProfile(): VaultItem[] {
   const activeProfileId = getActiveProfileId();
   if (!activeProfileId) return all;
   const filtered = all.filter((item) => String(item.profile_id ?? "").trim() === activeProfileId);
-  return filtered.length > 0 ? filtered : all;
+  return filtered;
 }
 
 function writeRawVault(items: VaultItem[]) {

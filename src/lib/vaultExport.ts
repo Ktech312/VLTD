@@ -62,7 +62,7 @@ const CSV_COLUMNS: (keyof VaultItem)[] = [
 ];
 
 export function exportVaultCsv() {
-  const items = loadItems({ includeAllProfiles: true });
+  const items = loadItems();
   const rows = items.map((item) => ({
     ...item,
     comparables: (item.comparables ?? [])
@@ -76,7 +76,7 @@ export function exportVaultCsv() {
 }
 
 export function exportVaultJson() {
-  const items = loadItems({ includeAllProfiles: true });
+  const items = loadItems();
   const json = JSON.stringify({ exportedAt: Date.now(), version: 1, items }, null, 2);
   const blob = new Blob([json], { type: "application/json;charset=utf-8" });
   const url = URL.createObjectURL(blob);
