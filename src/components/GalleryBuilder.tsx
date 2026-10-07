@@ -1273,6 +1273,9 @@ export default function GalleryBuilder({
                         >
                           <div
                             style={{
+                              position: "absolute",
+                              left: 0,
+                              top: 0,
                               width: 242.67,
                               transform: `scale(${sceneScale})`,
                               transformOrigin: "top left",
