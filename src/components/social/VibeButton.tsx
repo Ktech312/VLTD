@@ -63,7 +63,7 @@ export function VibeButton({
 
   const icon = (
     <span style={{ position: "relative", width: iconSize, height: iconSize, display: "inline-flex" }}>
-      <AppIcon name="flash" size={iconSize} strokeWidth={2} filled={vibed} />
+      <AppIcon name="vibe" size={iconSize} strokeWidth={2.6} filled={vibed} />
       {burstKey > 0 && (
         <span key={burstKey} className="vltd-spark-burst" aria-hidden="true">
           {Array.from({ length: 6 }).map((_, i) => (

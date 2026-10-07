@@ -75,6 +75,7 @@ export type AppIconName =
   | "sms"
   | "email"
   | "flash"
+  | "vibe"
   | "play"
   | "dragHandle"
   | "gift"
@@ -214,6 +215,8 @@ const PATHS: Record<AppIconName, ReactNode> = {
   sms: (<><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /><line x1="9" y1="10" x2="9" y2="10" strokeWidth={3} /><line x1="12" y1="10" x2="12" y2="10" strokeWidth={3} /><line x1="15" y1="10" x2="15" y2="10" strokeWidth={3} /></>),
   email: (<><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" /><polyline points="22,6 12,13 2,6" /></>),
   flash: (<polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />),
+  // A plain V: the Vibe button
+  vibe: (<polyline points="4.5 5.5 12 19 19.5 5.5" />),
   play: (<polygon points="6,4 20,12 6,20" fill="currentColor" stroke="none" />),
   dragHandle: (<><circle cx="7" cy="7" r="1.4" fill="currentColor" stroke="none" /><circle cx="17" cy="7" r="1.4" fill="currentColor" stroke="none" /><circle cx="7" cy="17" r="1.4" fill="currentColor" stroke="none" /><circle cx="17" cy="17" r="1.4" fill="currentColor" stroke="none" /></>),
   gift: (<><polyline points="20 12 20 22 4 22 4 12" /><rect x="2" y="7" width="20" height="5" /><line x1="12" y1="22" x2="12" y2="7" /><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z" /><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z" /></>),
@@ -446,7 +449,7 @@ const SIMPLE_GLASS_NAMES = new Set<AppIconName>([
   "chevronDown", "chevronUp", "clock", "close", "cloud", "communityBoard", "copy", "dashboard",
   "delete", "discover", "document", "dollar", "door", "download", "dragHandle", "edit", "editRoom",
   "email", "eraser", "events", "exhibition", "exhibitions", "expand", "externalLink", "eye",
-  "eyeOff", "favorite", "flame", "flash", "flipVertical", "frame", "game", "gavel", "gem", "gift",
+  "eyeOff", "favorite", "flame", "flash", "vibe", "flipVertical", "frame", "game", "gavel", "gem", "gift",
   "globe", "guide", "heart", "inbox", "info", "insights", "key", "layers", "leaf", "learn", "link",
   "loader", "lock", "map", "mapPin", "megaphone", "message", "moon", "more", "music", "next",
   "notifications", "organize", "paintbrush", "palette", "play", "price", "rocket", "rotate",
