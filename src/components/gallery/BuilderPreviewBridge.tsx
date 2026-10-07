@@ -27,7 +27,7 @@ export default function BuilderPreviewBridge({ gallery, items, onHeightChange, o
         const snapshot = snapshotById.get(item.id);
         return snapshot?.hidden && item.isPublic !== true
           ? hiddenStubItem(item.id, item.createdAt, snapshot.blurThumb)
-          : item;
+          : { ...item, notes: item.description };
       })
     : items;
   const model = resolveGuestGalleryViewModel(gallery, shownItems, {

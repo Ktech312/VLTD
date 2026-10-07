@@ -1,5 +1,6 @@
 "use client";
 
+import { UNIVERSE_LABEL, type UniverseKey } from "@/lib/taxonomy";
 import type { GalleryInvitePermissions } from "@/lib/galleryModel";
 import Link from "next/link";
 import { Fragment, useEffect, useRef, useState } from "react";
@@ -219,6 +220,9 @@ export function GuestItemModal({
 }) {
   const imageUrl = getPrimaryImageUrl(item);
   const subtitle = itemSubtitle(item);
+  // "Unknown" is not a category worth showing
+  const rawCategory = String(item.categoryLabel || item.category || "").trim();
+  const modalCategory = rawCategory && rawCategory.toLowerCase() !== "unknown" ? rawCategory : "";
   const money = (value?: number) =>
     typeof value === "number" && Number.isFinite(value)
       ? new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(value)
@@ -265,16 +269,16 @@ export function GuestItemModal({
           {subtitle ? <div className="mt-1 text-sm text-white/60">{subtitle}</div> : null}
 
           <div className="mt-4 grid grid-cols-2 gap-2 text-xs">
-            {item.categoryLabel || item.category ? (
+            {modalCategory ? (
               <div className="rounded-[10px] bg-white/5 px-3 py-2 ring-1 ring-white/8">
                 <div className="text-[10px] uppercase tracking-[0.14em] text-white/40">Category</div>
-                <div className="mt-0.5 font-medium text-white/80">{item.categoryLabel || item.category}</div>
+                <div className="mt-0.5 font-medium text-white/80">{modalCategory}</div>
               </div>
             ) : null}
             {item.universe ? (
               <div className="rounded-[10px] bg-white/5 px-3 py-2 ring-1 ring-white/8">
                 <div className="text-[10px] uppercase tracking-[0.14em] text-white/40">Universe</div>
-                <div className="mt-0.5 font-medium text-white/80">{item.universe}</div>
+                <div className="mt-0.5 font-medium text-white/80">{UNIVERSE_LABEL[item.universe as UniverseKey] ?? item.universe}</div>
               </div>
             ) : null}
             {item.grade ? (
@@ -322,10 +326,6 @@ export function GuestItemModal({
               initialCount={vibeCount}
               initialVibed={viewerVibed}
             />
-          </div>
-
-          <div className="mt-4 text-center text-[10px] uppercase tracking-[0.14em] text-white/25">
-            {showFinancials ? "INVITE ACCESS" : "GUEST VIEW · Financial details not shown"}
           </div>
         </div>
       </div>
