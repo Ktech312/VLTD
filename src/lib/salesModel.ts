@@ -5,6 +5,7 @@
 // historyModel), which are now thin adapters over this model. On first load it
 // migrates any existing legacy local records so nothing is lost.
 
+import { mayAdoptLegacyKey } from "./legacyKeys";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 
 export type Sale = {
@@ -88,7 +89,7 @@ function readRaw(): Sale[] {
     let raw = window.localStorage.getItem(key);
     if (!raw && key !== LS_BASE) {
       const legacy = window.localStorage.getItem(LS_BASE);
-      if (legacy) {
+      if (legacy && mayAdoptLegacyKey(LS_BASE, key)) {
         window.localStorage.setItem(key, legacy);
         raw = legacy;
       }

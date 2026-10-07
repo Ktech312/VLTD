@@ -1,3 +1,4 @@
+import { mayAdoptLegacyKey } from "./legacyKeys";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 
 const LS_BASE = "vltd_saved_event_ids_v1";
@@ -26,7 +27,7 @@ export function loadSavedEventIds(): string[] {
     // profile-scoped one, so existing local saves aren't lost.
     if (!raw && key !== LS_BASE) {
       const legacy = window.localStorage.getItem(LS_BASE);
-      if (legacy) {
+      if (legacy && mayAdoptLegacyKey(LS_BASE, key)) {
         window.localStorage.setItem(key, legacy);
         raw = legacy;
       }

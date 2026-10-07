@@ -1,3 +1,4 @@
+import { mayAdoptLegacyKey } from "./legacyKeys";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 
 // Saved Learn guides — profile-scoped localStorage cache + best-effort
@@ -28,7 +29,7 @@ export function loadSavedArticles(): string[] {
     let raw = localStorage.getItem(key);
     if (!raw && key !== LS_BASE) {
       const legacy = localStorage.getItem(LS_BASE);
-      if (legacy) {
+      if (legacy && mayAdoptLegacyKey(LS_BASE, key)) {
         localStorage.setItem(key, legacy);
         raw = legacy;
       }

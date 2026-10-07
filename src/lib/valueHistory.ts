@@ -6,6 +6,7 @@
 // All Supabase calls are best-effort and wrapped — if the table isn't there yet
 // (migration not applied) or the user is offline, the local cache still works.
 
+import { mayAdoptLegacyKey } from "./legacyKeys";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 import type { VaultItem } from "@/lib/vaultModel";
 import type { UniverseKey } from "@/lib/taxonomy";
@@ -61,7 +62,7 @@ export function readHistory(): HistoryPoint[] {
     // profile-scoped key, so existing users don't lose their local trend.
     if (!raw && key !== LS_BASE) {
       const legacy = window.localStorage.getItem(LS_BASE);
-      if (legacy) {
+      if (legacy && mayAdoptLegacyKey(LS_BASE, key)) {
         window.localStorage.setItem(key, legacy);
         raw = legacy;
       }

@@ -185,7 +185,7 @@ export default function DiscoverPage() {
           // real items rather than invented numbers and a repeated cover.
           const { data: itemRows, error: itemRowsError } = await supabase
             .from("vault_items")
-            .select("id, universe, current_value, image_front_url, title")
+            .select("id, profile_id, universe, current_value, image_front_url, title")
             .in("id", allItemIds);
           if (itemRowsError) {
             // Non-fatal — the gallery list above already rendered. Items
@@ -195,9 +195,12 @@ export default function DiscoverPage() {
           }
           const itemUniverseMap = new Map<string, UniverseKey>();
           const itemFacts = new Map<string, GalleryItemFact>();
+          // An exhibit only counts items from its own profile.
+          const ownedPairs = new Set(mapped.flatMap((gallery) => gallery.itemIds.map((itemId) => `${itemId}|${gallery.profile_id || "*"}`)));
           for (const raw of itemRows ?? []) {
             const row = raw as Record<string, unknown>;
             const id = String(row.id);
+            if (!ownedPairs.has(`${id}|${String(row.profile_id ?? "")}`) && !ownedPairs.has(`${id}|*`)) continue;
             const universe = String(row.universe ?? "").toUpperCase();
             if (isUniverseKey(universe)) itemUniverseMap.set(id, universe);
             itemFacts.set(id, {

@@ -1219,7 +1219,9 @@ export function appendItems(items: VaultItem[]) {
     const { getVaultItemLimit } = require("./galleryTier") as typeof import("./galleryTier");
     const tier = getTierSafe();
     const limit = getVaultItemLimit(tier);
-    if (isFinite(limit) && existing.length >= limit) {
+    const activeProfile = getActiveProfileId();
+    const ownCount = activeProfile ? existing.filter((item) => item.profile_id === activeProfile).length : existing.length;
+    if (isFinite(limit) && ownCount >= limit) {
       throw new Error(
         `FREE_TIER_LIMIT:You've reached the ${limit}-item limit on the free plan. Upgrade to add more items.`
       );

@@ -135,10 +135,13 @@ export default function InviteGalleryPage() {
           const uniqueIds = [...new Set(orderedIds)];
 
           if (uniqueIds.length > 0) {
-            const { data: vaultRows } = await supabase
+            let itemQuery = supabase
               .from("vault_items")
               .select(permissions.financialHistory ? PUBLIC_ITEM_COLUMNS_FINANCIAL : PUBLIC_ITEM_COLUMNS)
               .in("id", uniqueIds);
+            // An exhibit only shows items from its own profile.
+            if (gallery.profile_id) itemQuery = itemQuery.eq("profile_id", gallery.profile_id);
+            const { data: vaultRows } = await itemQuery;
 
             const byId = new Map<string, VaultItem>();
             for (const raw of vaultRows ?? []) {

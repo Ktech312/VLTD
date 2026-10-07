@@ -260,10 +260,13 @@ export default function SharedGalleryPage() {
             const uniqueArtifactIds = [...new Set(orderedArtifactIds)];
 
             if (uniqueArtifactIds.length > 0) {
-              const { data: vaultRows, error: itemError } = await supabase
+              let itemQuery = supabase
                 .from("vault_items")
                 .select(PUBLIC_ITEM_COLUMNS)
                 .in("id", uniqueArtifactIds);
+              // An exhibit only shows items from its own profile.
+              if (gallery.profile_id) itemQuery = itemQuery.eq("profile_id", gallery.profile_id);
+              const { data: vaultRows, error: itemError } = await itemQuery;
 
               if (itemError) {
                 console.error("Failed loading vault_items for shared gallery:", itemError);
