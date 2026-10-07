@@ -497,6 +497,14 @@ export default function GalleryBuilder({
     return sections.length > 0 && sections[0].itemIds.length >= SHELF_SLOT_COUNT;
   }
 
+  // Arrows (and swiping on a phone) step through the exhibits and loop: after the last one comes the first.
+  const swipeStartRef = useRef<{ x: number; y: number } | null>(null);
+  function stepExhibit(delta: number) {
+    const count = sections.length;
+    if (count < 2) return;
+    setActiveSectionIdx((index) => (index + delta + count) % count);
+  }
+
   function toggle(id: string) {
     if (selectedSet.has(id)) {
       onChange(gallery.itemIds.filter((itemId) => itemId !== id));
@@ -1089,8 +1097,22 @@ export default function GalleryBuilder({
             .vltd-wiggle-over { animation: none !important; transform: scale(1.06) !important; box-shadow: 0 0 0 2px rgba(74,222,128,0.8), 0 0 14px rgba(74,222,128,0.4) !important; }
           `}</style>
           <div
-            className={["mt-3 overflow-hidden rounded-[24px] ring-1 lg:mx-auto lg:max-w-[780px]", previewPanelClass].join(" ")}
+            className={["relative mt-3 overflow-hidden rounded-[24px] ring-1 lg:mx-auto lg:max-w-[780px]", previewPanelClass].join(" ")}
             style={{ width: "100%" }}
+            onTouchStart={(e) => {
+              if (isOrganizing) return;
+              const touch = e.touches[0];
+              swipeStartRef.current = { x: touch.clientX, y: touch.clientY };
+            }}
+            onTouchEnd={(e) => {
+              const start = swipeStartRef.current;
+              swipeStartRef.current = null;
+              if (!start || isOrganizing) return;
+              const touch = e.changedTouches[0];
+              const dx = touch.clientX - start.x;
+              const dy = touch.clientY - start.y;
+              if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 1.5) stepExhibit(dx < 0 ? 1 : -1);
+            }}
             onDragOver={(e) => {
               if (!isOrganizing) return;
               e.preventDefault();
@@ -1110,6 +1132,28 @@ export default function GalleryBuilder({
             }}
             onDragEnd={() => { setSlotDragIdx(null); setSlotDragOverIdx(null); }}
           >
+            {sections.length > 1 ? (
+              <>
+                <button
+                  type="button"
+                  onClick={() => stepExhibit(-1)}
+                  aria-label="Previous exhibit"
+                  title="Previous exhibit"
+                  className="vltd-dark-surface absolute left-3 top-3 z-30 grid h-8 w-8 place-items-center rounded-full bg-black/45 ring-1 ring-white/25 transition hover:bg-black/65"
+                >
+                  <AppIcon name="arrowLeft" size={16} strokeWidth={2.2} style={{ color: "#fff" }} />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => stepExhibit(1)}
+                  aria-label="Next exhibit"
+                  title="Next exhibit"
+                  className="vltd-dark-surface absolute right-3 top-3 z-30 grid h-8 w-8 place-items-center rounded-full bg-black/45 ring-1 ring-white/25 transition hover:bg-black/65"
+                >
+                  <AppIcon name="arrowLeft" size={16} strokeWidth={2.2} style={{ color: "#fff", transform: "rotate(180deg)" }} />
+                </button>
+              </>
+            ) : null}
             <div className="relative overflow-hidden p-3 sm:p-4">
               <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_22%_9%,rgba(255,245,204,0.18),transparent_22%),radial-gradient(circle_at_50%_9%,rgba(255,245,204,0.16),transparent_22%),radial-gradient(circle_at_78%_9%,rgba(255,245,204,0.18),transparent_22%),linear-gradient(180deg,rgba(255,255,255,0.08),transparent_18%,rgba(0,0,0,0.18))]" />
               <div
