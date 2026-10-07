@@ -34,7 +34,7 @@ type Props = {
   items: VaultItem[];
   onChange: (ids: string[]) => void;
   onGalleryChange: (updater: (current: Gallery) => Gallery) => void;
-  onQuickSave?: (overrideIds?: string[], overrideSections?: NonNullable<Gallery["sections"]>) => void | boolean | Promise<void | boolean>;
+  onQuickSave?: (overrideIds?: string[], overrideSections?: NonNullable<Gallery["sections"]>, auto?: boolean) => void | boolean | Promise<void | boolean>;
   onOpenPicker?: (sectionTitle?: string, sectionItemIds?: string[], sectionIdx?: number) => void;
   advancedContent?: ReactNode;
 };
@@ -841,7 +841,7 @@ export default function GalleryBuilder({
             <button
               type="button"
               onClick={async () => {
-                const saved = await onQuickSave?.();
+                const saved = await onQuickSave?.(undefined, undefined, true);
                 if (saved !== false) flashQuickSaved();
               }}
               className={[
@@ -854,11 +854,6 @@ export default function GalleryBuilder({
             >
               {quickSaveJustSaved ? "Saved ✓" : "Save"}
             </button>
-
-          </div>
-
-          {/* ── Row 1b: Upload Background ── */}
-          <div className="mt-2 flex flex-wrap items-center gap-2">
             <input
               id={`shelf-upload-${gallery.id}`}
               type="file"
@@ -877,6 +872,11 @@ export default function GalleryBuilder({
             >
               Upload Background
             </label>
+
+          </div>
+
+          {/* ── Row 1b: Upload Background ── */}
+          <div className="mt-2 flex flex-wrap items-center gap-2">
             {shelfBackground ? (
               <button
                 type="button"

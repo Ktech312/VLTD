@@ -95,12 +95,12 @@ export function PillSelect<T extends string>({
         )
       : 0;
     const estimatedTextWidth =
-      Math.max((longestLabelLength + labelPrefix.length) * 8.2, longestSubtitleLength * 6.1) +
-      78 +
+      Math.max((longestLabelLength + labelPrefix.length) * (compact ? 7 : 8.2), longestSubtitleLength * 6.1) +
+      (compact ? 42 : 78) +
       extraWidthPx;
 
     return Math.max(minWidthPx, Math.ceil(estimatedTextWidth));
-  }, [options, showSelectedSubtitle, extraWidthPx, minWidthPx]);
+  }, [options, showSelectedSubtitle, extraWidthPx, minWidthPx, compact, labelPrefix]);
 
   const safeBottomStyle = useMemo(
     () =>
