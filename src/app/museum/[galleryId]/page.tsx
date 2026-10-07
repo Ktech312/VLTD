@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useParams } from "next/navigation";
 import ShareBar from "@/components/ShareBar";
+import { AppIcon } from "@/components/ui/AppIcon";
 import { Glyph } from "@/components/ui/Glyph";
 
 import {
@@ -236,6 +237,7 @@ export default function GalleryPage() {
   const [confirmPublic, setConfirmPublic] = useState(false);
   const [confirmRegenerate, setConfirmRegenerate] = useState(false);
   const [loadedOnce, setLoadedOnce] = useState(false);
+  const [headerEditing, setHeaderEditing] = useState(false);
   const [announcing, setAnnouncing] = useState(false);
   const [announced, setAnnounced] = useState(false);
 
@@ -892,15 +894,6 @@ export default function GalleryPage() {
                   >
                     {isUploadingCover ? "Uploading..." : "Cover Artwork"}
                   </label>
-                  {draft.coverImage ? (
-                    <button
-                      type="button"
-                      onClick={() => patchDraft((current) => ({ ...current, coverImage: undefined }))}
-                      className="mt-0.5 block w-full text-center text-[8px] font-semibold text-[color:var(--muted)] underline"
-                    >
-                      Remove
-                    </button>
-                  ) : null}
                 </div>
 
                 <div className="min-w-0">
@@ -908,36 +901,67 @@ export default function GalleryPage() {
                     CURATED EXHIBIT
                   </div>
 
-                  <h1 className="mt-2 text-2xl font-semibold xl:mt-1 xl:text-2xl">
-                    <input
-                      value={draft.title ?? ""}
-                      onChange={(event) =>
-                        patchDraft((current) => ({ ...current, title: event.target.value.slice(0, 80) }))
-                      }
-                      placeholder="Exhibit title"
-                      aria-label="Exhibit title"
-                      className={INLINE_EDIT_LINE + " w-full text-[color:var(--fg)] placeholder:text-[color:var(--muted2)]"}
-                    />
-                  </h1>
+                  {headerEditing ? (
+                    <>
+                      <input
+                        value={draft.title ?? ""}
+                        onChange={(event) =>
+                          patchDraft((current) => ({ ...current, title: event.target.value.slice(0, 80) }))
+                        }
+                        placeholder="Exhibit title"
+                        aria-label="Exhibit title"
+                        className={INLINE_EDIT_LINE + " mt-2 w-full text-2xl font-semibold text-[color:var(--fg)] xl:mt-1"}
+                      />
+                      <textarea
+                        value={draft.description ?? ""}
+                        onChange={(event) =>
+                          patchDraft((current) => ({ ...current, description: event.target.value }))
+                        }
+                        rows={1}
+                        placeholder="Curated collection presentation"
+                        aria-label="Exhibit description"
+                        className={INLINE_EDIT_LINE + " mt-1 block w-full max-w-2xl resize-none text-sm leading-5 text-[color:var(--muted)] xl:text-xs xl:leading-4"}
+                      />
+                    </>
+                  ) : (
+                    <>
+                      <h1 className="mt-2 text-2xl font-semibold xl:mt-1 xl:text-2xl">
+                        {draft.title}
+                      </h1>
 
-                  <textarea
-                    value={draft.description ?? ""}
-                    onChange={(event) =>
-                      patchDraft((current) => ({ ...current, description: event.target.value }))
-                    }
-                    rows={1}
-                    placeholder="Add a description"
-                    aria-label="Exhibit description"
-                    className={INLINE_EDIT_LINE + " mt-1 block w-full max-w-2xl resize-none text-sm leading-5 text-[color:var(--muted)] placeholder:text-[color:var(--muted2)] xl:text-xs xl:leading-4"}
-                  />
+                      <p className="mt-1 max-w-2xl text-sm leading-5 text-[color:var(--muted)] xl:text-xs xl:leading-4">
+                        {draft.description?.trim()
+                          ? draft.description
+                          : "Curated collection presentation"}
+                      </p>
+                    </>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => setHeaderEditing((value) => !value)}
+                    aria-label={headerEditing ? "Done editing title and description" : "Edit title and description"}
+                    title={headerEditing ? "Done" : "Edit title and description"}
+                    className="mt-1 inline-flex h-6 w-6 items-center justify-center rounded-[6px] text-[color:var(--muted)] ring-1 ring-[color:var(--border)] transition hover:text-[color:var(--fg)]"
+                  >
+                    <AppIcon name={headerEditing ? "checkmark" : "edit"} size={12} strokeWidth={1.8} />
+                  </button>
 
                   <div className="mt-3 flex flex-wrap items-center gap-1.5 xl:mt-2 xl:gap-1">
                     <span className="rounded-full bg-[color:var(--theme-elevated)] px-3 py-1.5 text-xs tracking-[0.14em] text-[color:var(--muted2)] ring-1 ring-[color:var(--theme-border)] xl:px-2.5 xl:py-1 xl:text-[10px]">
                       {visibilityLabel(draft.visibility)}
                     </span>
 
+                    <span className="rounded-full bg-[color:var(--theme-elevated)] px-3 py-1.5 text-xs tracking-[0.14em] text-[color:var(--muted2)] ring-1 ring-[color:var(--theme-border)] xl:px-2.5 xl:py-1 xl:text-[10px]">
+                      {metrics.totalItems} ITEMS
+                    </span>
 
+                    <span className="rounded-full bg-[color:var(--theme-elevated)] px-3 py-1.5 text-xs tracking-[0.14em] text-[color:var(--muted2)] ring-1 ring-[color:var(--theme-border)] xl:px-2.5 xl:py-1 xl:text-[10px]">
+                      {metrics.views} VIEWS
+                    </span>
 
+                    <span className="rounded-full bg-[color:var(--theme-elevated)] px-3 py-1.5 text-xs tracking-[0.14em] text-[color:var(--muted2)] ring-1 ring-[color:var(--theme-border)] xl:px-2.5 xl:py-1 xl:text-[10px]">
+                      {draft.exhibitionLayout?.type ?? "GRID"} LAYOUT
+                    </span>
                   </div>
                 </div>
               </div>
@@ -953,6 +977,11 @@ export default function GalleryPage() {
                   <div className="mt-0.5 text-lg font-semibold leading-tight xl:text-base">
                     {metrics.roi >= 0 ? "+" : ""}{metrics.roi.toFixed(1)}%
                   </div>
+                </div>
+
+                <div className="rounded-2xl bg-[color:var(--surface)] px-3.5 py-2.5 ring-1 ring-[color:var(--border)] xl:rounded-xl xl:px-2.5 xl:py-2">
+                  <div className="text-[9px] tracking-[0.18em] text-[color:var(--muted2)]">NOTES</div>
+                  <div className="mt-0.5 text-lg font-semibold leading-tight xl:text-base">{metrics.notesCoverage.toFixed(0)}%</div>
                 </div>
 
                 <div className="rounded-2xl bg-[color:var(--surface)] px-3.5 py-2.5 ring-1 ring-[color:var(--border)] xl:rounded-xl xl:px-2.5 xl:py-2">
@@ -1300,7 +1329,11 @@ export default function GalleryPage() {
             <h2 className="mt-2 text-xl font-semibold">Invite Tokens</h2>
 
             {/* Compact stats row */}
-            <div className="mt-3 grid grid-cols-2 gap-2">
+            <div className="mt-3 grid grid-cols-3 gap-2">
+              <div className="rounded-xl bg-[color:var(--input)] px-2.5 py-2 ring-1 ring-[color:var(--border)]">
+                <div className="text-[9px] tracking-[0.16em] text-[color:var(--muted2)]">VIEWS</div>
+                <div className="mt-0.5 text-lg font-semibold leading-tight">{metrics.views}</div>
+              </div>
               <div className="rounded-xl bg-[color:var(--input)] px-2.5 py-2 ring-1 ring-[color:var(--border)]">
                 <div className="text-[9px] tracking-[0.16em] text-[color:var(--muted2)]">UNIQUE</div>
                 <div className="mt-0.5 text-lg font-semibold leading-tight">{metrics.uniqueViewers}</div>

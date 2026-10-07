@@ -423,8 +423,8 @@ export default function MuseumPage() {
   }, [sortedGalleries, filter]);
 
   const selectedEntry = useMemo(
-    // Detail panel stays hidden until the user selects a card (desktop + mobile).
-    () => displayedGalleries.find((e) => e.gallery.id === selectedId) ?? null,
+    // The details panel is always open on one exhibit: the one you picked, otherwise the first.
+    () => displayedGalleries.find((e) => e.gallery.id === selectedId) ?? displayedGalleries[0] ?? null,
     [displayedGalleries, selectedId]
   );
 
@@ -904,9 +904,6 @@ export default function MuseumPage() {
                       <div className="flex justify-center pt-2 lg:hidden"><span className="h-1 w-10 rounded-full bg-white/20" /></div>
                       <div className="flex items-center justify-between border-b px-4 py-3" style={{ borderColor: "var(--theme-border)" }}>
                         <div className="text-sm font-black">Exhibition Details</div>
-                        <button type="button" onClick={() => setSelectedId(null)} aria-label="Close details" className="inline-flex h-7 w-7 items-center justify-center rounded-full text-[color:var(--muted)] transition hover:text-[color:var(--fg)]">
-                          <AppIcon name="chevronDown" size={16} strokeWidth={2} />
-                        </button>
                       </div>
 
                       <div className="px-3 pt-3">
