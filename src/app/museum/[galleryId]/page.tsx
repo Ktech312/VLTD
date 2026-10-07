@@ -860,13 +860,26 @@ export default function GalleryPage() {
           <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.10),rgba(255,255,255,0)_28%),radial-gradient(circle_at_80%_0%,rgba(255,225,170,0.10),rgba(255,225,170,0)_24%)]" />
 
           <div className="relative md:mx-auto md:w-[690px] md:max-w-full">
+                  <div className="absolute right-0 top-0 z-10 flex flex-col items-end gap-1.5">
+                    <span className="rounded-full bg-[color:var(--theme-elevated)] px-3 py-1.5 text-xs tracking-[0.14em] text-[color:var(--muted2)] ring-1 ring-[color:var(--theme-border)] xl:px-2.5 xl:py-1 xl:text-[10px]">
+                      {visibilityLabel(draft.visibility)}
+                    </span>
+
+                    <span className="rounded-full bg-[color:var(--theme-elevated)] px-3 py-1.5 text-xs tracking-[0.14em] text-[color:var(--muted2)] ring-1 ring-[color:var(--theme-border)] xl:px-2.5 xl:py-1 xl:text-[10px]">
+                      {metrics.totalItems} ITEMS
+                    </span>
+
+                    <span className="rounded-full bg-[color:var(--theme-elevated)] px-3 py-1.5 text-xs tracking-[0.14em] text-[color:var(--muted2)] ring-1 ring-[color:var(--theme-border)] xl:px-2.5 xl:py-1 xl:text-[10px]">
+                      {metrics.views} VIEWS
+                    </span>
+                  </div>
             <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between xl:justify-start xl:gap-5">
               <div className="flex w-full items-start gap-2.5">
                 {/* Cover image portrait card */}
                 <div className="shrink-0">
                   {draft.coverImage ? (
                     <div
-                      className="w-[72px] overflow-hidden rounded-[14px] shadow-[0_8px_24px_rgba(0,0,0,0.5)] xl:w-14"
+                      className="w-[104px] overflow-hidden rounded-[14px] shadow-[0_8px_24px_rgba(0,0,0,0.5)]"
                       style={{ aspectRatio: "3/4" }}
                     >
                     {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -897,7 +910,7 @@ export default function GalleryPage() {
                 </div>
 
                 <div className="vltd-dark-surface min-w-0 flex-1">
-                  <div className="text-[11px] tracking-[0.28em] text-white/55 xl:text-[10px]">
+                  <div className="text-center text-[11px] tracking-[0.28em] text-white/55 xl:text-[10px]">
                     CURATED EXHIBIT
                   </div>
 
@@ -946,19 +959,6 @@ export default function GalleryPage() {
                     <AppIcon name={headerEditing ? "checkmark" : "edit"} size={12} strokeWidth={1.8} />
                   </button>
 
-                  <div className="mt-3 flex flex-wrap items-center gap-1.5 xl:mt-2 xl:gap-1">
-                    <span className="rounded-full bg-[color:var(--theme-elevated)] px-3 py-1.5 text-xs tracking-[0.14em] text-[color:var(--muted2)] ring-1 ring-[color:var(--theme-border)] xl:px-2.5 xl:py-1 xl:text-[10px]">
-                      {visibilityLabel(draft.visibility)}
-                    </span>
-
-                    <span className="rounded-full bg-[color:var(--theme-elevated)] px-3 py-1.5 text-xs tracking-[0.14em] text-[color:var(--muted2)] ring-1 ring-[color:var(--theme-border)] xl:px-2.5 xl:py-1 xl:text-[10px]">
-                      {metrics.totalItems} ITEMS
-                    </span>
-
-                    <span className="rounded-full bg-[color:var(--theme-elevated)] px-3 py-1.5 text-xs tracking-[0.14em] text-[color:var(--muted2)] ring-1 ring-[color:var(--theme-border)] xl:px-2.5 xl:py-1 xl:text-[10px]">
-                      {metrics.views} VIEWS
-                    </span>
-                  </div>
                 </div>
               </div>
 
@@ -1000,7 +1000,8 @@ export default function GalleryPage() {
               </div>
                 </div>
 
-                <div className="mt-3 grid grid-cols-[auto_auto_auto] items-center justify-start gap-1.5 xl:mt-2">
+                <div className="mt-3 flex flex-wrap items-center justify-between gap-x-3 gap-y-2 xl:mt-2">
+                <div className="grid grid-cols-[auto_auto_auto] items-center justify-start gap-1.5">
                   <button
                     type="button"
                     onClick={copyShareLink}
@@ -1021,6 +1022,10 @@ export default function GalleryPage() {
                   >
                     Regenerate
                   </button>
+                </div>
+                  {shareUrl ? (
+                    <ShareBar title={draft?.title ?? gallery?.title ?? "My Exhibition"} shareUrl={shareUrl} compact hideCopy />
+                  ) : null}
                 </div>
 
                 {confirmRegenerate ? (
@@ -1043,11 +1048,6 @@ export default function GalleryPage() {
                   </div>
                 ) : null}
 
-                {shareUrl ? (
-                  <div className="mt-3">
-                    <ShareBar title={draft?.title ?? gallery?.title ?? "My Exhibition"} shareUrl={shareUrl} compact hideCopy />
-                  </div>
-                ) : null}
 
                 <div className="relative mt-4 xl:mt-2">
                   <div className="flex items-center gap-2">
