@@ -903,7 +903,7 @@ export default function EventsPage() {
             ) : (
               <>
                 <div className="hidden grid-cols-5 gap-3 md:grid">
-                  {filteredEvents.slice(0, 5).map((event) => (
+                  {filteredEvents.map((event) => (
                     <EventCard
                       key={event.id}
                       event={event}
