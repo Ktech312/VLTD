@@ -2,6 +2,7 @@
 
 import { effectiveMarketValue } from "@/lib/vaultStats";
 import { resolveGuestGalleryBackground } from "@/lib/guestGalleryViewModel";
+import { PremiumDisplayCard } from "@/components/gallery/GalleryShelfScene";
 import { useSaveFeedback, SAVE_FEEDBACK_STYLE } from "@/lib/useSaveFeedback";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { DragEvent, ReactNode } from "react";
@@ -440,6 +441,17 @@ export default function GalleryBuilder({
   // On a shelf theme the wall is drawn like the guest preview: the same background, shelves and card
   // positions, shrunk to fit. (Plain cards keep the simple grid.)
   const sceneMode = displayMode === "shelf";
+  const wallRef = useRef<HTMLDivElement | null>(null);
+  const [wallWidth, setWallWidth] = useState(360);
+  useEffect(() => {
+    const el = wallRef.current;
+    if (!el || typeof ResizeObserver === "undefined") return;
+    const observer = new ResizeObserver(() => setWallWidth(el.getBoundingClientRect().width || 360));
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [displayMode]);
+  // The shelf card is drawn at its real size (about 243px wide) and shrunk to the width of a wall slot.
+  const sceneScale = (wallWidth * 0.2582) / 242.67;
   const sceneBackground = sceneMode ? resolveGuestGalleryBackground(gallery).url : null;
   const SCENE_ROW_ANCHORS = [616, 1016, 1416, 1816, 2216, 2616];
   const SCENE_STAGE_HEIGHT = 2700;
@@ -1101,9 +1113,10 @@ export default function GalleryBuilder({
             <div className="relative overflow-hidden p-3 sm:p-4">
               <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_22%_9%,rgba(255,245,204,0.18),transparent_22%),radial-gradient(circle_at_50%_9%,rgba(255,245,204,0.16),transparent_22%),radial-gradient(circle_at_78%_9%,rgba(255,245,204,0.18),transparent_22%),linear-gradient(180deg,rgba(255,255,255,0.08),transparent_18%,rgba(0,0,0,0.18))]" />
               <div
+                ref={wallRef}
                 className={
                   sceneMode
-                    ? "relative mx-auto w-full overflow-hidden rounded-[18px]"
+                    ? "vltd-dark-surface relative mx-auto w-full overflow-hidden rounded-[18px]"
                     : "relative mx-auto grid max-w-[330px] grid-flow-row-dense grid-cols-3 gap-x-2 gap-y-3"
                 }
                 style={
@@ -1248,7 +1261,44 @@ export default function GalleryBuilder({
                         setSlotDragIdx(null); setSlotDragOverIdx(null);
                       } : undefined}
                     >
-                      {item ? (
+                      {item && sceneMode ? (
+                        <div
+                          className={["relative", canOrganize ? (isDragOver ? "vltd-wiggle-over" : "vltd-wiggle") : ""].join(" ")}
+                          style={{
+                            aspectRatio: "3/4",
+                            opacity: isBeingDragged ? 0.35 : 1,
+                            cursor: canOrganize ? "grab" : "default",
+                          }}
+                          title={item.title}
+                        >
+                          <div
+                            style={{
+                              width: 242.67,
+                              transform: `scale(${sceneScale})`,
+                              transformOrigin: "top left",
+                              pointerEvents: "none",
+                            }}
+                          >
+                            <PremiumDisplayCard item={item} galleryHrefPrefix="/vault/item" onItemClick={() => {}} />
+                          </div>
+                          {sections.length > 0 && !isOrganizing ? (
+                            <button
+                              type="button"
+                              onClick={(e) => { e.stopPropagation(); handlePreviewRemoveItem(item.id); }}
+                              className="absolute bottom-[26%] left-1 z-30 grid h-[18px] w-[18px] place-items-center rounded-full border border-red-400/70 bg-black/75"
+                              style={{ boxShadow: "0 0 8px rgba(248,113,113,0.75), 0 0 18px rgba(248,113,113,0.35)" }}
+                              aria-label={`Remove ${item.title}`}
+                            >
+                              <span className="h-[2px] w-[8px] rounded-full bg-red-400" style={{ boxShadow: "0 0 4px rgba(248,113,113,0.9)" }} aria-hidden="true" />
+                            </button>
+                          ) : null}
+                          {canOrganize ? (
+                            <div className="pointer-events-none absolute left-1 top-1 z-20 grid h-[26px] w-[26px] place-items-center rounded-full" style={{ background: "rgba(0,0,0,0.72)", boxShadow: "0 0 0 1px rgba(255,255,255,0.12)" }}>
+                              <AppIcon name="dragHandle" size={14} style={{ color: "white", opacity: 0.85 }} />
+                            </div>
+                          ) : null}
+                        </div>
+                      ) : item ? (
                         <div
                           className={[
                             "relative overflow-hidden rounded-[18px] bg-[#0b1018] p-[5px]",

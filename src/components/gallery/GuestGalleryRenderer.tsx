@@ -552,7 +552,7 @@ export default function GuestGalleryRenderer({
   return (
     <main
       className={[
-        "relative bg-[radial-gradient(circle_at_top,rgba(30,36,46,0.96),rgba(8,10,14,1)_62%)] text-[color:var(--fg)]",
+        "vltd-dark-surface relative bg-[radial-gradient(circle_at_top,rgba(30,36,46,0.96),rgba(8,10,14,1)_62%)] text-[color:var(--fg)]",
         embedded ? "" : "min-h-screen",
       ].join(" ")}
     >

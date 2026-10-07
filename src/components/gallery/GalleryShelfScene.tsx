@@ -118,7 +118,7 @@ function itemCategoryBadge(item: VaultItem) {
     .toUpperCase();
 }
 
-function PremiumDisplayCard({
+export function PremiumDisplayCard({
   item,
   galleryHrefPrefix,
   onItemClick,
@@ -132,7 +132,7 @@ function PremiumDisplayCard({
   const cardInner = (
     <div
       className={[
-        "relative aspect-[3/4] w-full overflow-hidden rounded-[16px] bg-[#0b1018] p-[2px] sm:rounded-[18px] sm:p-[5px]",
+        "vltd-dark-surface relative aspect-[3/4] w-full overflow-hidden rounded-[16px] bg-[#0b1018] p-[2px] sm:rounded-[18px] sm:p-[5px]",
         "shadow-[0_18px_38px_rgba(0,0,0,0.52),0_0_0_1px_rgba(255,234,174,0.32),0_0_22px_rgba(203,208,213,0.18),inset_0_1px_0_rgba(255,255,255,0.36),inset_0_-12px_18px_rgba(54,32,8,0.55)]",
         "before:pointer-events-none before:absolute before:inset-0 before:rounded-[16px] before:bg-[linear-gradient(135deg,#fff0a8_0%,#d99a2b_18%,#6f4514_37%,#f7cf72_54%,#3a250d_72%,#ffe7a0_100%)] sm:before:rounded-[18px]",
         "after:pointer-events-none after:absolute after:inset-[2px] after:rounded-[13px] after:ring-1 after:ring-black/70 sm:after:inset-[5px] sm:after:rounded-[13px]",
