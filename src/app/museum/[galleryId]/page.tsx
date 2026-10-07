@@ -1509,6 +1509,46 @@ export default function GalleryPage() {
           allItems={items}
           confirmedIds={pickerSectionIds !== null ? pickerSectionIds : draft.itemIds}
           sectionTitle={pickerSectionTitle}
+          pages={
+            pickerSectionIds !== null && pickerSectionIdx !== null && (draft.sections ?? []).length > 0
+              ? (draft.sections ?? []).map((section) => ({ id: section.id, title: section.title, itemIds: section.itemIds }))
+              : undefined
+          }
+          activePageIdx={pickerSectionIdx ?? 0}
+          onConfirmPages={(pickedPages) => {
+            const baseDraft = latestDraftRef.current ?? draft;
+            if (!baseDraft) {
+              setPickerOpen(false);
+              return;
+            }
+            const currentSections = Array.isArray(baseDraft.sections) ? baseDraft.sections : [];
+            const nextSections = pickedPages.map((page) => {
+              const existing = currentSections.find((section) => section.id === page.id);
+              return existing
+                ? { ...existing, itemIds: page.itemIds }
+                : {
+                    id: `sec_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`,
+                    title: page.title,
+                    description: "",
+                    itemIds: page.itemIds,
+                  };
+            });
+            // Items that sat in no exhibit page stay in the exhibition as they were.
+            const placedBefore = new Set(currentSections.flatMap((section) => section.itemIds));
+            const looseIds = baseDraft.itemIds.filter((id) => !placedBefore.has(id));
+            const nextGalleryIds = Array.from(new Set([...nextSections.flatMap((section) => section.itemIds), ...looseIds]));
+            patchDraft((current) => ({
+              ...current,
+              itemIds: nextGalleryIds,
+              sections: nextSections,
+              exhibitionLayout: {
+                ...(current.exhibitionLayout as object ?? {}),
+                sections: nextSections,
+              } as Gallery["exhibitionLayout"],
+            }));
+            void saveDraft(nextGalleryIds, nextSections);
+            setPickerOpen(false);
+          }}
           onConfirm={(ids, pickedName) => {
             if (pickerSectionIds !== null && pickerSectionIdx !== null) {
               // Section-specific update: add/remove items for this section only.

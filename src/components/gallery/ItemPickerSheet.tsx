@@ -39,6 +39,8 @@ function itemImage(i: VaultItem) {
   return getPrimaryImageUrl(i) || i.imageFrontUrl || i.imageBackUrl || "";
 }
 
+type PickerPageState = { id: string; title: string; picked: string[]; hidden: string[] };
+
 export function ItemPickerSheet({
   allItems: everyItem,
   confirmedIds,
@@ -46,9 +48,17 @@ export function ItemPickerSheet({
   mode = "multi",
   maxItems = MAX_EXHIBIT_ITEMS,
   pickerTitle,
+  pages,
+  activePageIdx,
+  onConfirmPages,
   onConfirm,
   onClose,
 }: {
+  /** Exhibit builder: every exhibit page of this exhibition, so items can be added to any of them
+   * (or to a new one) without closing the picker. An item can only be on one page. */
+  pages?: { id: string; title: string; itemIds: string[] }[];
+  activePageIdx?: number;
+  onConfirmPages?: (pages: { id: string; title: string; itemIds: string[] }[]) => void;
   allItems: VaultItem[];
   confirmedIds: string[];
   sectionTitle?: string;
@@ -81,18 +91,50 @@ export function ItemPickerSheet({
   // Pick as many categories as you like; with none picked, everything shows.
   const [activeCategories, setActiveCategories] = useState<string[]>([]);
   const [activeSubs, setActiveSubs] = useState<string[]>([]);
-  const [picked, setPicked] = useState<Set<string>>(() => {
+  const pagesMode = mode !== "single" && !!(pages && pages.length > 0 && onConfirmPages);
+  // One entry per exhibit page. Saved ids this device cannot show right now (not loaded here yet, or
+  // deleted) sit in "hidden": they do not use up a slot and are kept when you confirm, never dropped.
+  const [pageStates, setPageStates] = useState<PickerPageState[]>(() => {
     const known = new Set(allItems.map((item) => String(item.id)));
-    return new Set(confirmedIds.filter((id) => known.has(String(id))));
+    const split = (ids: string[]) => ({
+      picked: ids.filter((id) => known.has(String(id))),
+      hidden: ids.filter((id) => !known.has(String(id)) && !supplyIds.has(String(id))),
+    });
+    if (pages && pages.length > 0 && onConfirmPages && mode !== "single") {
+      return pages.map((page) => ({ id: page.id, title: page.title, ...split(page.itemIds) }));
+    }
+    return [{ id: "single", title: initialTitle || "Exhibit 1", ...split(confirmedIds) }];
   });
-  // Saved ids this device cannot show right now (not loaded here yet, or deleted). They do not
-  // use up a slot, and they are kept as they are when you confirm, never silently dropped.
-  const hiddenIds = useMemo(() => {
-    const known = new Set(allItems.map((item) => String(item.id)));
-    return confirmedIds.filter((id) => !known.has(String(id)) && !supplyIds.has(String(id)));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  const [activeIdx, setActiveIdx] = useState(() =>
+    Math.min(Math.max(activePageIdx ?? 0, 0), Math.max(0, (pages?.length ?? 1) - 1))
+  );
+  const [pageMenuOpen, setPageMenuOpen] = useState(false);
+  const [confirmNewPageFor, setConfirmNewPageFor] = useState<string | null>(null);
+  const activePage = pageStates[activeIdx] ?? pageStates[0];
+  const picked = useMemo(() => new Set(activePage.picked), [activePage]);
+  const hiddenIds = activePage.hidden;
   const hiddenCount = hiddenIds.length;
+  // Items already on another page of this exhibition: one item, one page.
+  const otherPageOf = useMemo(() => {
+    const map = new Map<string, number>();
+    pageStates.forEach((page, index) => {
+      if (index === activeIdx) return;
+      page.picked.forEach((id) => {
+        if (!map.has(id)) map.set(id, index);
+      });
+    });
+    return map;
+  }, [pageStates, activeIdx]);
+  function addPage(firstId?: string) {
+    const newIndex = pageStates.length;
+    setPageStates((prev) => [
+      ...prev,
+      { id: `new_${prev.length + 1}_${Date.now().toString(36)}`, title: `Exhibit ${prev.length + 1}`, picked: firstId ? [firstId] : [], hidden: [] },
+    ]);
+    setActiveIdx(newIndex);
+    setPageMenuOpen(false);
+    setConfirmNewPageFor(null);
+  }
   const [sectionName, setSectionName] = useState(initialTitle || "Exhibit 1");
   const [mounted, setMounted] = useState(false);
   const isSingle = mode === "single";
@@ -157,16 +199,17 @@ export function ItemPickerSheet({
       onConfirm([id], sectionName);
       return;
     }
-    setPicked((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) {
-        next.delete(id);
-      } else {
-        if (next.size >= maxItems) return prev;
-        next.add(id);
-      }
-      return next;
-    });
+    if (activePage.picked.includes(id)) {
+      setPageStates((prev) => prev.map((page, i) => (i === activeIdx ? { ...page, picked: page.picked.filter((x) => x !== id) } : page)));
+      return;
+    }
+    if (otherPageOf.has(id)) return;
+    if (activePage.picked.length >= maxItems) {
+      // A page holds 18. Ask before starting another page.
+      if (pagesMode) setConfirmNewPageFor(id);
+      return;
+    }
+    setPageStates((prev) => prev.map((page, i) => (i === activeIdx ? { ...page, picked: [...page.picked, id] } : page)));
   }
 
   function toggleUniverse(u: string) {
@@ -183,11 +226,18 @@ export function ItemPickerSheet({
   }
 
   const canClear = confirmedIds.length > 0;
-  const addLabel = pickedCount > 0
-    ? ("Add to Exhibit (" + pickedCount + ")")
-    : canClear
-      ? "Empty this exhibit"
-      : "Select items to add";
+  const totalPicked = pageStates.reduce((sum, page) => sum + page.picked.length, 0);
+  const addLabel = pagesMode
+    ? totalPicked > 0
+      ? `Save (${totalPicked} item${totalPicked === 1 ? "" : "s"})`
+      : canClear
+        ? "Empty the exhibits"
+        : "Select items to add"
+    : pickedCount > 0
+      ? ("Add to Exhibit (" + pickedCount + ")")
+      : canClear
+        ? "Empty this exhibit"
+        : "Select items to add";
 
   const slotLabel = slotsLeft === 0
     ? `Exhibit is full (${maxItems} items max). Tap a picked item to remove it and make room.`
@@ -283,14 +333,54 @@ export function ItemPickerSheet({
           <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.14em", color: "var(--muted)", textTransform: "uppercase", flexShrink: 0 }}>
             EXHIBIT
           </div>
-          <input
-            value={sectionName}
-            onChange={(e) => setSectionName(e.target.value)}
-            placeholder="Exhibit 1"
-            maxLength={40}
-            className="text-[color:var(--fg)] transition"
-            style={{ flex: 1, background: "transparent", border: "none", borderBottom: "1px solid var(--border)", borderRadius: 0, padding: "3px 2px", fontSize: 13, fontWeight: 600, outline: "none" }}
-          />
+          {pagesMode ? (
+            <div style={{ position: "relative" }}>
+              <button
+                type="button"
+                onClick={() => setPageMenuOpen((open) => !open)}
+                aria-expanded={pageMenuOpen}
+                aria-label="Choose which exhibit page to add items to"
+                style={{ display: "inline-flex", alignItems: "center", gap: 6, maxWidth: 230, borderRadius: 999, padding: "4px 10px", fontSize: 11, fontWeight: 700, border: "1px solid rgba(255,255,255,0.22)", background: "rgba(255,255,255,0.08)", color: "#fff", cursor: "pointer" }}
+              >
+                <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{`#${activeIdx + 1} ${activePage.title}`}</span>
+                <AppIcon name="chevronDown" size={12} strokeWidth={2.2} style={{ flexShrink: 0 }} />
+              </button>
+              {pageMenuOpen ? (
+                <div style={{ position: "absolute", top: "calc(100% + 6px)", left: 0, zIndex: 30, minWidth: 210, borderRadius: 12, background: "#111827", border: "1px solid rgba(255,255,255,0.18)", padding: 4, boxShadow: "0 18px 40px rgba(0,0,0,0.55)" }}>
+                  {pageStates.map((page, index) => (
+                    <button
+                      key={page.id}
+                      type="button"
+                      onClick={() => {
+                        setActiveIdx(index);
+                        setPageMenuOpen(false);
+                      }}
+                      style={{ display: "flex", width: "100%", justifyContent: "space-between", gap: 14, textAlign: "left", padding: "7px 10px", borderRadius: 8, fontSize: 12, fontWeight: 600, color: "#fff", border: "none", cursor: "pointer", background: index === activeIdx ? "rgba(79,211,238,0.22)" : "transparent" }}
+                    >
+                      <span>{`#${index + 1} ${page.title}`}</span>
+                      <span style={{ opacity: 0.6 }}>{page.picked.length}</span>
+                    </button>
+                  ))}
+                  <button
+                    type="button"
+                    onClick={() => addPage()}
+                    style={{ display: "block", width: "100%", textAlign: "left", padding: "7px 10px", borderRadius: 8, fontSize: 12, fontWeight: 700, color: "#67E8F9", border: "none", cursor: "pointer", background: "transparent" }}
+                  >
+                    + New exhibit page
+                  </button>
+                </div>
+              ) : null}
+            </div>
+          ) : (
+            <input
+              value={sectionName}
+              onChange={(e) => setSectionName(e.target.value)}
+              placeholder="Exhibit 1"
+              maxLength={40}
+              className="text-[color:var(--fg)] transition"
+              style={{ flex: 1, background: "transparent", border: "none", borderBottom: "1px solid var(--border)", borderRadius: 0, padding: "3px 2px", fontSize: 13, fontWeight: 600, outline: "none" }}
+            />
+          )}
         </div>
       )}
 
@@ -412,7 +502,8 @@ export function ItemPickerSheet({
             <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 6, padding: 6 }}>
               {filtered.slice(0, shownCount).map((item) => {
                 const isSelected = !isSingle && picked.has(item.id);
-                const canPick = isSingle || isSelected || pickedCount < maxItems;
+                const elsewhere = otherPageOf.get(item.id);
+                const canPick = isSingle || isSelected || (elsewhere === undefined && (pickedCount < maxItems || pagesMode));
                 const img = itemImage(item);
 
                 return (
@@ -449,6 +540,14 @@ export function ItemPickerSheet({
                         {"—"}
                       </div>
                     )}
+
+                    {elsewhere !== undefined ? (
+                      <div
+                        style={{ position: "absolute", top: 6, left: 6, right: 6, zIndex: 2, borderRadius: 999, background: "rgba(0,0,0,0.72)", padding: "2px 7px", fontSize: 9, fontWeight: 700, color: "#fff", textAlign: "center", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", pointerEvents: "none" }}
+                      >
+                        {`On #${elsewhere + 1} ${pageStates[elsewhere]?.title ?? ""}`}
+                      </div>
+                    ) : null}
 
                     {/* Item name */}
                     <div
@@ -516,6 +615,41 @@ export function ItemPickerSheet({
         </div>
       </div>
 
+      {confirmNewPageFor ? (
+        <div
+          style={{ position: "absolute", inset: 0, zIndex: 50, display: "flex", alignItems: "center", justifyContent: "center", padding: 20, background: "rgba(0,0,0,0.6)" }}
+          onClick={() => setConfirmNewPageFor(null)}
+        >
+          <div
+            role="dialog"
+            aria-label="Start a new exhibit page"
+            onClick={(event) => event.stopPropagation()}
+            style={{ width: "100%", maxWidth: 340, borderRadius: 16, background: "#111827", border: "1px solid rgba(255,255,255,0.18)", padding: 16, color: "#fff" }}
+          >
+            <div style={{ fontSize: 14, fontWeight: 700 }}>This page is full ({maxItems} items)</div>
+            <div style={{ marginTop: 6, fontSize: 13, lineHeight: 1.45, color: "rgba(255,255,255,0.75)" }}>
+              If you add more, it will start a new Exhibit page. Continue?
+            </div>
+            <div style={{ marginTop: 14, display: "flex", justifyContent: "flex-end", gap: 8 }}>
+              <button
+                type="button"
+                onClick={() => setConfirmNewPageFor(null)}
+                style={{ borderRadius: 999, padding: "7px 16px", fontSize: 12, fontWeight: 700, color: "#fff", background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.2)", cursor: "pointer" }}
+              >
+                No
+              </button>
+              <button
+                type="button"
+                onClick={() => addPage(confirmNewPageFor)}
+                style={{ borderRadius: 999, padding: "7px 16px", fontSize: 12, fontWeight: 700, color: "#fff", background: "rgba(79,211,238,0.3)", border: "1px solid rgba(79,211,238,0.6)", cursor: "pointer" }}
+              >
+                Yes, start a new page
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
       {/* ── Footer — multi-select only. Single-select confirms on tap
           (see toggleItem above), so there's nothing to add or confirm. */}
       {isSingle ? null : (
@@ -528,16 +662,22 @@ export function ItemPickerSheet({
           }}
         >
           <div style={stageStyle}>
-            {slotsLeft < maxItems && (
+            {slotsLeft < maxItems && !pagesMode && (
               <div style={{ marginBottom: 8, textAlign: "center", fontSize: 11, color: slotsLeft === 0 ? "var(--fg)" : "var(--muted)" }}>
                 {slotLabel}
               </div>
             )}
             <button
               type="button"
-              onClick={() => onConfirm([...Array.from(picked), ...hiddenIds], sectionName)}
-              disabled={pickedCount === 0 && !canClear}
-              className={["vltd-pill-main-glow transition", pickedCount > 0 || canClear ? "bg-[color:var(--pill-active-bg)]" : "bg-[color:var(--pill)]"].join(" ")}
+              onClick={() => {
+                if (pagesMode && onConfirmPages) {
+                  onConfirmPages(pageStates.map((page) => ({ id: page.id, title: page.title, itemIds: [...page.picked, ...page.hidden] })));
+                } else {
+                  onConfirm([...Array.from(picked), ...hiddenIds], sectionName);
+                }
+              }}
+              disabled={pagesMode ? totalPicked === 0 && !canClear : pickedCount === 0 && !canClear}
+              className={["vltd-pill-main-glow transition", (pagesMode ? totalPicked > 0 : pickedCount > 0) || canClear ? "bg-[color:var(--pill-active-bg)]" : "bg-[color:var(--pill)]"].join(" ")}
               style={{
                 width: "100%",
                 borderRadius: 999,
@@ -547,8 +687,8 @@ export function ItemPickerSheet({
                 letterSpacing: "0.05em",
                 border: "none",
                 color: "#fff",
-                cursor: pickedCount > 0 || canClear ? "pointer" : "default",
-                opacity: pickedCount === 0 && !canClear ? 0.45 : 1,
+                cursor: (pagesMode ? totalPicked > 0 : pickedCount > 0) || canClear ? "pointer" : "default",
+                opacity: (pagesMode ? totalPicked === 0 : pickedCount === 0) && !canClear ? 0.45 : 1,
               }}
             >
               {addLabel}
