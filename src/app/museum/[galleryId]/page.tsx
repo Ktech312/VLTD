@@ -923,7 +923,7 @@ export default function GalleryPage() {
                         }
                         placeholder="Exhibit title"
                         aria-label="Exhibit title"
-                        className={INLINE_EDIT_LINE + " mt-2 w-full text-center text-2xl font-semibold xl:mt-1"}
+                        className={INLINE_EDIT_LINE + " mx-auto mt-2 block w-full max-w-[320px] text-center text-2xl font-semibold xl:mt-1"}
                       />
                       <textarea
                         value={draft.description ?? ""}
@@ -933,7 +933,7 @@ export default function GalleryPage() {
                         rows={1}
                         placeholder="Curated collection presentation"
                         aria-label="Exhibit description"
-                        className={INLINE_EDIT_LINE + " mx-auto mt-1 block w-full max-w-2xl resize-none text-center text-sm leading-5 text-white/80 xl:text-xs xl:leading-4"}
+                        className={INLINE_EDIT_LINE + " mx-auto mt-1 block w-full max-w-[320px] resize-none text-center text-sm leading-5 text-white/80 xl:text-xs xl:leading-4"}
                       />
                     </>
                   ) : (
