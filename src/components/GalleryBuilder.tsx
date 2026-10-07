@@ -3,6 +3,7 @@
 import { effectiveMarketValue } from "@/lib/vaultStats";
 import { resolveGuestGalleryBackground } from "@/lib/guestGalleryViewModel";
 import { PremiumDisplayCard } from "@/components/gallery/GalleryShelfScene";
+import ExhibitPlaque from "@/components/gallery/ExhibitPlaque";
 import { useSaveFeedback, SAVE_FEEDBACK_STYLE } from "@/lib/useSaveFeedback";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { DragEvent, ReactNode } from "react";
@@ -446,9 +447,121 @@ export default function GalleryBuilder({
   useEffect(() => {
     const el = wallRef.current;
     if (!el || typeof ResizeObserver === "undefined") return;
-    const observer = new ResizeObserver(() => setWallWidth(el.getBoundingClientRect().width || 360));
+    const observer = new ResizeObserver(() => setWallWidth(el.offsetWidth || 360));
     observer.observe(el);
     return () => observer.disconnect();
+  }, [displayMode]);
+  // Zoom: pinch, ctrl+scroll, or scrolling the wheel while the mouse is over the wall's items, zooms the wall
+  // itself instead of the page. Drag to move around while zoomed in.
+  const zoomRef = useRef<HTMLDivElement | null>(null);
+  const [wallZoom, setWallZoom] = useState({ scale: 1, x: 0, y: 0 });
+  const wallZoomRef = useRef(wallZoom);
+  const pinchRef = useRef<{ dist: number; scale: number; cx: number; cy: number; x: number; y: number } | null>(null);
+  const panRef = useRef<{ x: number; y: number } | null>(null);
+  useEffect(() => {
+    wallZoomRef.current = wallZoom;
+  }, [wallZoom]);
+  useEffect(() => {
+    const el = zoomRef.current;
+    if (!el) return;
+    const MAX = 3.5;
+    const clampView = (scale: number, x: number, y: number) => {
+      const s = Math.min(MAX, Math.max(1, scale));
+      if (s === 1) return { scale: 1, x: 0, y: 0 };
+      const w = el.clientWidth;
+      const h = el.clientHeight;
+      return { scale: s, x: Math.min(0, Math.max(w - w * s, x)), y: Math.min(0, Math.max(h - h * s, y)) };
+    };
+    const zoomAbout = (nextScale: number, cx: number, cy: number) => {
+      const cur = wallZoomRef.current;
+      const s = Math.min(MAX, Math.max(1, nextScale));
+      const k = s / cur.scale;
+      setWallZoom(clampView(s, cx - (cx - cur.x) * k, cy - (cy - cur.y) * k));
+    };
+    const onWheel = (e: WheelEvent) => {
+      const overItem = (e.target as HTMLElement | null)?.closest("[data-slot-idx]");
+      if (!e.ctrlKey && !overItem) return;
+      e.preventDefault();
+      const rect = el.getBoundingClientRect();
+      const factor = Math.exp(-e.deltaY * (e.ctrlKey ? 0.01 : 0.0015));
+      zoomAbout(wallZoomRef.current.scale * factor, e.clientX - rect.left, e.clientY - rect.top);
+    };
+    const mid = (a: Touch, b: Touch, rect: DOMRect) => ({
+      x: (a.clientX + b.clientX) / 2 - rect.left,
+      y: (a.clientY + b.clientY) / 2 - rect.top,
+    });
+    const onTouchStart = (e: TouchEvent) => {
+      const rect = el.getBoundingClientRect();
+      if (e.touches.length === 2) {
+        const [a, b] = [e.touches[0], e.touches[1]];
+        const c = mid(a, b, rect);
+        const cur = wallZoomRef.current;
+        pinchRef.current = { dist: Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY), scale: cur.scale, cx: c.x, cy: c.y, x: cur.x, y: cur.y };
+        panRef.current = null;
+      } else if (e.touches.length === 1 && wallZoomRef.current.scale > 1) {
+        panRef.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+      }
+    };
+    const onTouchMove = (e: TouchEvent) => {
+      const rect = el.getBoundingClientRect();
+      const pinch = pinchRef.current;
+      if (pinch && e.touches.length === 2) {
+        e.preventDefault();
+        const [a, b] = [e.touches[0], e.touches[1]];
+        const c = mid(a, b, rect);
+        const dist = Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY);
+        const s = Math.min(MAX, Math.max(1, pinch.scale * (dist / pinch.dist)));
+        const k = s / pinch.scale;
+        setWallZoom(clampView(s, c.x - (pinch.cx - pinch.x) * k, c.y - (pinch.cy - pinch.y) * k));
+        return;
+      }
+      const pan = panRef.current;
+      if (pan && e.touches.length === 1 && wallZoomRef.current.scale > 1) {
+        e.preventDefault();
+        const t = e.touches[0];
+        const cur = wallZoomRef.current;
+        setWallZoom(clampView(cur.scale, cur.x + (t.clientX - pan.x), cur.y + (t.clientY - pan.y)));
+        panRef.current = { x: t.clientX, y: t.clientY };
+      }
+    };
+    const onTouchEnd = (e: TouchEvent) => {
+      if (e.touches.length < 2) pinchRef.current = null;
+      if (e.touches.length === 0) panRef.current = null;
+    };
+    const onMouseDown = (e: MouseEvent) => {
+      if (e.button !== 0 || wallZoomRef.current.scale <= 1) return;
+      if ((e.target as HTMLElement | null)?.closest("button")) return;
+      panRef.current = { x: e.clientX, y: e.clientY };
+    };
+    const onMouseMove = (e: MouseEvent) => {
+      const pan = panRef.current;
+      if (!pan || (e.buttons & 1) === 0) {
+        panRef.current = null;
+        return;
+      }
+      const cur = wallZoomRef.current;
+      setWallZoom(clampView(cur.scale, cur.x + (e.clientX - pan.x), cur.y + (e.clientY - pan.y)));
+      panRef.current = { x: e.clientX, y: e.clientY };
+    };
+    const onMouseUp = () => {
+      panRef.current = null;
+    };
+    el.addEventListener("wheel", onWheel, { passive: false });
+    el.addEventListener("touchstart", onTouchStart, { passive: true });
+    el.addEventListener("touchmove", onTouchMove, { passive: false });
+    el.addEventListener("touchend", onTouchEnd);
+    el.addEventListener("mousedown", onMouseDown);
+    window.addEventListener("mousemove", onMouseMove);
+    window.addEventListener("mouseup", onMouseUp);
+    return () => {
+      el.removeEventListener("wheel", onWheel);
+      el.removeEventListener("touchstart", onTouchStart);
+      el.removeEventListener("touchmove", onTouchMove);
+      el.removeEventListener("touchend", onTouchEnd);
+      el.removeEventListener("mousedown", onMouseDown);
+      window.removeEventListener("mousemove", onMouseMove);
+      window.removeEventListener("mouseup", onMouseUp);
+    };
   }, [displayMode]);
   // The shelf card is drawn at its real size (about 243px wide) and shrunk to the width of a wall slot.
   const sceneScale = (wallWidth * 0.2582) / 242.67;
@@ -1100,14 +1213,17 @@ export default function GalleryBuilder({
             className={["relative mt-3 overflow-hidden rounded-[24px] ring-1 lg:mx-auto lg:max-w-[780px]", previewPanelClass].join(" ")}
             style={{ width: "100%" }}
             onTouchStart={(e) => {
-              if (isOrganizing) return;
+              if (isOrganizing || e.touches.length > 1 || wallZoomRef.current.scale > 1) {
+                swipeStartRef.current = null;
+                return;
+              }
               const touch = e.touches[0];
               swipeStartRef.current = { x: touch.clientX, y: touch.clientY };
             }}
             onTouchEnd={(e) => {
               const start = swipeStartRef.current;
               swipeStartRef.current = null;
-              if (!start || isOrganizing) return;
+              if (!start || isOrganizing || wallZoomRef.current.scale > 1) return;
               const touch = e.changedTouches[0];
               const dx = touch.clientX - start.x;
               const dy = touch.clientY - start.y;
@@ -1157,16 +1273,36 @@ export default function GalleryBuilder({
             <div className="relative overflow-hidden p-3 sm:p-4">
               <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_22%_9%,rgba(255,245,204,0.18),transparent_22%),radial-gradient(circle_at_50%_9%,rgba(255,245,204,0.16),transparent_22%),radial-gradient(circle_at_78%_9%,rgba(255,245,204,0.18),transparent_22%),linear-gradient(180deg,rgba(255,255,255,0.08),transparent_18%,rgba(0,0,0,0.18))]" />
               <div
+                ref={zoomRef}
+                className="relative mx-auto w-full overflow-hidden rounded-[18px]"
+                style={{ maxWidth: sceneMode ? 360 : 330, touchAction: wallZoom.scale > 1 ? "none" : "pan-y" }}
+              >
+              {wallZoom.scale > 1 ? (
+                <button
+                  type="button"
+                  onClick={() => setWallZoom({ scale: 1, x: 0, y: 0 })}
+                  className="vltd-dark-surface absolute bottom-2 left-2 z-40 rounded-full bg-black/60 px-2.5 py-1 text-[10px] font-semibold ring-1 ring-white/25"
+                >
+                  Reset zoom
+                </button>
+              ) : null}
+              <div
+                style={{
+                  transform: `translate(${wallZoom.x}px, ${wallZoom.y}px) scale(${wallZoom.scale})`,
+                  transformOrigin: "0 0",
+                }}
+              >
+              <div
                 ref={wallRef}
                 className={
                   sceneMode
-                    ? "vltd-dark-surface relative mx-auto w-full overflow-hidden rounded-[18px]"
-                    : "relative mx-auto grid max-w-[330px] grid-flow-row-dense grid-cols-3 gap-x-2 gap-y-3"
+                    ? "vltd-dark-surface relative w-full overflow-hidden rounded-[18px]"
+                    : "relative grid grid-flow-row-dense grid-cols-3 gap-x-2 gap-y-3"
                 }
                 style={
                   sceneMode
                     ? {
-                        maxWidth: 360,
+                        containerType: "inline-size" as const,
                         aspectRatio: "940 / 2700",
                         backgroundImage: sceneBackground ? `url(${sceneBackground})` : undefined,
                         backgroundSize: "100% auto",
@@ -1176,6 +1312,12 @@ export default function GalleryBuilder({
                     : undefined
                 }
               >
+                {sceneMode ? (
+                  <ExhibitPlaque
+                    title={sections[activeSectionIdx]?.title || ""}
+                    text={sections[activeSectionIdx]?.description || ""}
+                  />
+                ) : null}
                 {sceneMode && shelfOverlayStyle !== "none"
                   ? SCENE_ROW_ANCHORS.map((anchor, rowIndex) => (
                       <div
@@ -1454,6 +1596,8 @@ export default function GalleryBuilder({
                     </div>
                   );
                 })}
+              </div>
+              </div>
               </div>
               <div className="mt-2 text-center text-[10px] font-semibold uppercase tracking-widest text-white/25">
                 {capMessage ? <span className="mb-1 block normal-case tracking-normal text-red-300">{capMessage}</span> : null}

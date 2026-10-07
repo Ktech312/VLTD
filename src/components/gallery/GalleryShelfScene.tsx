@@ -4,6 +4,7 @@ import Link from "next/link";
 import type { CSSProperties } from "react";
 
 import type { GalleryShelfOverlayStyle } from "@/lib/galleryModel";
+import ExhibitPlaque from "@/components/gallery/ExhibitPlaque";
 import { getPrimaryImageUrl, type VaultItem } from "@/lib/vaultModel";
 
 export const GALLERY_STAGE_MAX_WIDTH_CLASS = "max-w-[1120px]";
@@ -39,6 +40,9 @@ type Props = {
   shelfOverlayStyle?: GalleryShelfOverlayStyle;
   slotLayout?: (string | null)[];
   embeddedPreview?: boolean;
+  /** This exhibit's title and short description, shown on a plaque at the top of the room. */
+  plaqueTitle?: string;
+  plaqueText?: string;
 };
 
 function getShelfThemeClasses(themePack?: string | null) {
@@ -327,6 +331,8 @@ export default function GalleryShelfScene({
   shelfOverlayStyle = "none",
   slotLayout,
   embeddedPreview = false,
+  plaqueTitle,
+  plaqueText,
 }: Props) {
   const theme = getShelfThemeClasses(themePack);
   const sceneBackground = backgroundImageUrl?.trim() || "";
@@ -371,7 +377,7 @@ export default function GalleryShelfScene({
               ? "h-[var(--embedded-mobile-stage-height)] md:h-[var(--embedded-desktop-stage-height)]"
               : GALLERY_STAGE_HEIGHT_CLASS,
           ].join(" ")}
-          style={embeddedStageStyle}
+          style={{ ...(embeddedStageStyle ?? {}), containerType: "inline-size" } as CSSProperties}
         >
           <div
             className={embeddedPreview ? "absolute inset-0 vltd-embedded-shelf-bg" : "absolute inset-0"}
@@ -379,6 +385,8 @@ export default function GalleryShelfScene({
           />
           <div className={["absolute inset-0", theme.vignette].join(" ")} />
           <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(6,10,16,0.08),rgba(6,10,16,0.12))]" />
+
+          {shelvesEnabled && plaqueTitle ? <ExhibitPlaque title={plaqueTitle} text={plaqueText} /> : null}
 
           {shelvesEnabled
             ? rows.map((row, index) => (

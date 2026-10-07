@@ -735,6 +735,8 @@ export default function GuestGalleryRenderer({
                 shelfOverlayStyle={model.shelfOverlayStyle}
                 slotLayout={shelfSlotLayout}
                 embeddedPreview={embedded}
+                plaqueTitle={activeSection?.section.title || (sectionViews[0]?.section.title ?? "")}
+                plaqueText={activeSection?.section.description || (sectionViews[0]?.section.description ?? "")}
                 onItemClick={embedded ? undefined : (item) => openItem(item)}
               />
             </div>
