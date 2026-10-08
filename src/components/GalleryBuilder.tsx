@@ -209,7 +209,7 @@ async function uploadGalleryBackgroundToStorage(
   // app with no size cap at all (Museum Builder's and the personal
   // Gallery Room's own wallpaper uploads both already resize to 1600px,
   // matched here for consistency).
-  const durableBlob = await prepareImageBlob(file, { maxDimension: 1600, quality: 0.85 });
+  const durableBlob = await prepareImageBlob(file, { maxDimension: 5400, quality: 0.85 });
   const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_").replace(/\.[^.]+$/, "") + ".jpg";
   const path = `${galleryId}/${Date.now()}_${safeName}`;
 
