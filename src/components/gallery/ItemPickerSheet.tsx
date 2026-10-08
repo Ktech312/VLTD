@@ -110,6 +110,29 @@ export function ItemPickerSheet({
   );
   const [pageMenuOpen, setPageMenuOpen] = useState(false);
   const [confirmNewPageFor, setConfirmNewPageFor] = useState<string | null>(null);
+  const [moveNote, setMoveNote] = useState("");
+  const [deletePageConfirm, setDeletePageConfirm] = useState<string | null>(null);
+  useEffect(() => {
+    if (!moveNote) return;
+    const timer = window.setTimeout(() => setMoveNote(""), 3500);
+    return () => window.clearTimeout(timer);
+  }, [moveNote]);
+  function deletePage(pageId: string) {
+    const index = pageStates.findIndex((page) => page.id === pageId);
+    if (index < 0 || pageStates.length <= 1) return;
+    // Pages named "Exhibit 3" and so on keep counting in order; pages you named yourself keep their name.
+    setPageStates((prev) =>
+      prev
+        .filter((page) => page.id !== pageId)
+        .map((page, i) => (/^Exhibit\s+\d+$/i.test(page.title.trim()) ? { ...page, title: `Exhibit ${i + 1}` } : page))
+    );
+    setActiveIdx((current) => {
+      if (index < current) return current - 1;
+      if (index === current) return Math.max(0, Math.min(current, pageStates.length - 2));
+      return current;
+    });
+    setDeletePageConfirm(null);
+  }
   const activePage = pageStates[activeIdx] ?? pageStates[0];
   const picked = useMemo(() => new Set(activePage.picked), [activePage]);
   const hiddenIds = activePage.hidden;
@@ -205,8 +228,21 @@ export function ItemPickerSheet({
     }
     if (otherPageOf.has(id)) return;
     if (activePage.picked.length >= maxItems) {
-      // A page holds 18. Ask before starting another page.
-      if (pagesMode) setConfirmNewPageFor(id);
+      if (pagesMode) {
+        // This page holds 18: the item goes to the next page with room (later pages first, then earlier ones).
+        const order = [
+          ...pageStates.map((_, i) => i).filter((i) => i > activeIdx),
+          ...pageStates.map((_, i) => i).filter((i) => i < activeIdx),
+        ];
+        const target = order.find((i) => pageStates[i].picked.length < maxItems);
+        if (target !== undefined) {
+          setPageStates((prev) => prev.map((page, i) => (i === target ? { ...page, picked: [...page.picked, id] } : page)));
+          setMoveNote(`Page is full: added to #${target + 1} ${pageStates[target].title}`);
+          return;
+        }
+        // Every page is full: ask before starting another page.
+        setConfirmNewPageFor(id);
+      }
       return;
     }
     setPageStates((prev) => prev.map((page, i) => (i === activeIdx ? { ...page, picked: [...page.picked, id] } : page)));
@@ -348,18 +384,40 @@ export function ItemPickerSheet({
               {pageMenuOpen ? (
                 <div style={{ position: "absolute", top: "calc(100% + 6px)", left: 0, zIndex: 30, minWidth: 210, borderRadius: 12, background: "#111827", border: "1px solid rgba(255,255,255,0.18)", padding: 4, boxShadow: "0 18px 40px rgba(0,0,0,0.55)" }}>
                   {pageStates.map((page, index) => (
-                    <button
-                      key={page.id}
-                      type="button"
-                      onClick={() => {
-                        setActiveIdx(index);
-                        setPageMenuOpen(false);
-                      }}
-                      style={{ display: "flex", width: "100%", justifyContent: "space-between", gap: 14, textAlign: "left", padding: "7px 10px", borderRadius: 8, fontSize: 12, fontWeight: 600, color: "#fff", border: "none", cursor: "pointer", background: index === activeIdx ? "rgba(79,211,238,0.22)" : "transparent" }}
-                    >
-                      <span>{`#${index + 1} ${page.title}`}</span>
-                      <span style={{ opacity: 0.6 }}>{page.picked.length}</span>
-                    </button>
+                    <div key={page.id} style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setActiveIdx(index);
+                          setPageMenuOpen(false);
+                        }}
+                        style={{ display: "flex", flex: 1, minWidth: 0, justifyContent: "space-between", gap: 14, textAlign: "left", padding: "7px 10px", borderRadius: 8, fontSize: 12, fontWeight: 600, color: "#fff", border: "none", cursor: "pointer", background: index === activeIdx ? "rgba(79,211,238,0.22)" : "transparent" }}
+                      >
+                        <span>{`#${index + 1} ${page.title}`}</span>
+                        <span style={{ opacity: 0.6 }}>{page.picked.length}</span>
+                      </button>
+                      {pageStates.length > 1 ? (
+                        deletePageConfirm === page.id ? (
+                          <button
+                            type="button"
+                            onClick={() => deletePage(page.id)}
+                            style={{ flexShrink: 0, borderRadius: 999, padding: "2px 8px", fontSize: 10, fontWeight: 800, color: "#fff", background: "#dc2626", border: "none", cursor: "pointer" }}
+                          >
+                            Delete?
+                          </button>
+                        ) : (
+                          <button
+                            type="button"
+                            aria-label={`Delete exhibit page ${index + 1}`}
+                            title="Delete this exhibit page"
+                            onClick={() => (page.picked.length > 0 ? setDeletePageConfirm(page.id) : deletePage(page.id))}
+                            style={{ flexShrink: 0, width: 20, height: 20, borderRadius: 999, fontSize: 15, lineHeight: "18px", fontWeight: 900, color: "#f87171", background: "rgba(248,113,113,0.12)", border: "none", cursor: "pointer" }}
+                          >
+                            −
+                          </button>
+                        )
+                      ) : null}
+                    </div>
                   ))}
                   <button
                     type="button"
@@ -664,7 +722,7 @@ export function ItemPickerSheet({
           <div style={stageStyle}>
             {slotsLeft < maxItems && !pagesMode && (
               <div style={{ marginBottom: 8, textAlign: "center", fontSize: 11, color: slotsLeft === 0 ? "var(--fg)" : "var(--muted)" }}>
-                {slotLabel}
+                {moveNote || slotLabel}
               </div>
             )}
             <button

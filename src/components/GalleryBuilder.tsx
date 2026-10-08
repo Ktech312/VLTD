@@ -320,6 +320,7 @@ export default function GalleryBuilder({
   const [backgroundUploadError, setBackgroundUploadError] = useState("");
   const [previewNaturalHeight, setPreviewNaturalHeight] = useState(1120);
   const [sectionDropdownOpen, setSectionDropdownOpen] = useState(false);
+  const [deleteSectionConfirm, setDeleteSectionConfirm] = useState<string | null>(null);
   const [sectionBtnRect, setSectionBtnRect] = useState<DOMRect | null>(null);
   const [activeSectionIdx, setActiveSectionIdx] = useState(0);
   const sectionBtnRef = useRef<HTMLButtonElement | null>(null);
@@ -1058,12 +1059,14 @@ export default function GalleryBuilder({
                     aria-hidden="true"
                   />
                   <div
-                    className="overflow-hidden rounded-2xl bg-[color:var(--surface-strong)] ring-1 ring-[color:var(--border)] shadow-[var(--shadow-pill)] p-1"
+                    className="overflow-hidden rounded-xl bg-[color:var(--surface-strong)] ring-1 ring-[color:var(--border)] shadow-[var(--shadow-pill)] p-1"
                     style={{
                       position: "fixed",
                       top: (sectionBtnRect?.bottom ?? 0) + 8,
                       left: sectionBtnRect?.left ?? 0,
-                      minWidth: 180,
+                      minWidth: 150,
+                      width: "max-content",
+                      maxWidth: "min(340px, calc(100vw - 24px))",
                       zIndex: 61,
                     }}
                   >
@@ -1071,22 +1074,64 @@ export default function GalleryBuilder({
                       <div className="px-3 py-2 text-sm text-[color:var(--muted)]">No exhibits yet</div>
                     ) : (
                       sections.map((s, i) => (
-                        <button
-                          key={s.id}
-                          type="button"
-                          onClick={() => {
-                            setActiveSectionIdx(i);
-                            setSectionDropdownOpen(false);
-                          }}
-                          className={[
-                            "w-full rounded-xl px-3 py-2 text-left text-sm transition",
-                            i === activeSectionIdx
-                              ? "bg-[color:var(--pill)] font-semibold text-[color:var(--fg)] ring-1 ring-[color:var(--border)]"
-                              : "text-[color:var(--fg)] hover:bg-[color:var(--pill)]",
-                          ].join(" ")}
-                        >
-                          {"Exhibit #" + (i + 1)}{s.title ? (" — " + s.title) : ""}
-                        </button>
+                        <div key={s.id} className="flex items-center gap-1">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setActiveSectionIdx(i);
+                              setSectionDropdownOpen(false);
+                            }}
+                            className={[
+                              "min-w-0 flex-1 truncate rounded-lg px-2.5 py-1 text-left text-[11px] transition",
+                              i === activeSectionIdx
+                                ? "bg-[color:var(--pill)] font-semibold text-[color:var(--fg)] ring-1 ring-[color:var(--border)]"
+                                : "text-[color:var(--fg)] hover:bg-[color:var(--pill)]",
+                            ].join(" ")}
+                          >
+                            {"Exhibit #" + (i + 1)}{s.title ? (" — " + s.title) : ""}
+                          </button>
+                          {sections.length > 1 ? (
+                            deleteSectionConfirm === s.id ? (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const removedIds = new Set(s.itemIds);
+                                  onGalleryChange((current) => {
+                                    const all = getGallerySections(current);
+                                    // Pages named "Exhibit 3" and so on keep counting in order; pages you named keep their name.
+                                    const remaining = all
+                                      .filter((x) => x.id !== s.id)
+                                      .map((x, idx) => (/^Exhibit\s+\d+$/i.test((x.title ?? "").trim()) ? { ...x, title: "Exhibit " + (idx + 1) } : x));
+                                    const stillUsed = new Set(remaining.flatMap((x) => x.itemIds));
+                                    const next = syncSectionsAndLayout(current, remaining);
+                                    return {
+                                      ...next,
+                                      itemIds: current.itemIds.filter((id) => !removedIds.has(id) || stillUsed.has(id)),
+                                    };
+                                  });
+                                  setActiveSectionIdx((cur) => (i < cur ? cur - 1 : i === cur ? Math.max(0, Math.min(cur, sections.length - 2)) : cur));
+                                  setDeleteSectionConfirm(null);
+                                  setSectionDropdownOpen(false);
+                                }}
+                                className="vltd-keep-color shrink-0 rounded-full bg-red-600 px-2 py-0.5 text-[10px] font-extrabold"
+                                style={{ "--vltd-keep-color": "#ffffff" } as React.CSSProperties}
+                              >
+                                Delete?
+                              </button>
+                            ) : (
+                              <button
+                                type="button"
+                                aria-label={"Delete exhibit page " + (i + 1)}
+                                title="Delete this exhibit page"
+                                onClick={() => setDeleteSectionConfirm(s.id)}
+                                className="vltd-keep-color flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-red-500/15 text-[15px] font-black leading-none"
+                                style={{ "--vltd-keep-color": "#f87171" } as React.CSSProperties}
+                              >
+                                −
+                              </button>
+                            )
+                          ) : null}
+                        </div>
                       ))
                     )}
                     <button
@@ -1108,7 +1153,7 @@ export default function GalleryBuilder({
                         setActiveSectionIdx(sections.length);
                         setSectionDropdownOpen(false);
                       }}
-                      className="mt-1 w-full rounded-xl px-3 py-2 text-left text-sm text-[color:var(--muted)] hover:bg-[color:var(--pill)] transition"
+                      className="mt-1 w-full rounded-lg px-2.5 py-1 text-left text-[11px] text-[color:var(--muted)] hover:bg-[color:var(--pill)] transition"
                     >
                       + Add Exhibit
                     </button>
