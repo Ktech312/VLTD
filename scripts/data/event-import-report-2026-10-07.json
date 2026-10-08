@@ -1,0 +1,38 @@
+{
+  "checkedAt": "2026-10-07",
+  "publishedEvents": 905,
+  "byUniverse": {
+    "POP_CULTURE": 120,
+    "SPORTS": 450,
+    "TCG": 569,
+    "ART": 6,
+    "BUILT_BOTANY": 75,
+    "GAMES": 3,
+    "AUTOMOTIVE": 2,
+    "MUSIC": 70,
+    "JEWELRY_APPAREL": 5,
+    "MISC": 4
+  },
+  "sourceFailures": 242,
+  "failureReasons": {
+    "The operation was aborted due to timeout": 240,
+    "No dated event schema": 2
+  },
+  "disabledDuplicateRows": 2,
+  "liveChecks": {
+    "universeFilter": true,
+    "plantSearch": true,
+    "eventSourceLink": true,
+    "jsonExportItems": 1484,
+    "csvExportItems": 1484,
+    "privateVaultItemsChecked": 20,
+    "privateExhibitsChecked": 1,
+    "publicExhibitsChecked": 4,
+    "invalidShareTokenRejected": true
+  },
+  "remaining": [
+    "242 specialist source pages unavailable or missing dated details",
+    "Photo identification blocked by Chrome extension file upload setting",
+    "Insurance HTML formatting tested; browser print-to-PDF not verified"
+  ]
+}

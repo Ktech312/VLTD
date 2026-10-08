@@ -44,7 +44,7 @@ let exportedBlob,downloaded=false;
 const exportModule={};
 vm.runInNewContext(ts.transpileModule(fs.readFileSync(path.join(__dirname,'../src/lib/vaultExport.ts'),'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText,{
  exports:exportModule,Blob,Date,JSON,
- require:id=>id==='@/lib/vaultModel'?{loadItems:options=>{assert.equal(options.includeAllProfiles,true);return [{id:'synthetic-export',title:'Export test'}];}}:{downloadCsv(){}},
+ require:id=>id==='@/lib/vaultModel'?{loadItems:options=>{assert.notEqual(options?.includeAllProfiles,true);return [{id:'synthetic-export',title:'Export test'}];}}:{downloadCsv(){}},
  URL:{createObjectURL:blob=>{exportedBlob=blob;return 'blob:test';},revokeObjectURL(){}},
  document:{createElement:()=>({click(){downloaded=true;}})},
 });

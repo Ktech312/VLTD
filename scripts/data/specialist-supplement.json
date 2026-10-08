@@ -1,0 +1,1634 @@
+[
+  {
+    "name": "PlantCon Houston",
+    "start": "2026-10-17",
+    "end": "2026-10-18",
+    "city": "Houston",
+    "region": "TX",
+    "country": "US",
+    "venue": "Reliant Center, Hall D",
+    "universes": [
+      "BUILT_BOTANY"
+    ],
+    "kind": "Plant convention",
+    "source": "https://www.plantcon.org/",
+    "website": "https://www.plantcon.org/"
+  },
+  {
+    "name": "PlantCon Dallas",
+    "start": "2026-10-24",
+    "end": "2026-10-25",
+    "city": "Dallas",
+    "region": "TX",
+    "country": "US",
+    "venue": "Kay Bailey Hutchison Convention Center",
+    "universes": [
+      "BUILT_BOTANY"
+    ],
+    "kind": "Plant convention",
+    "source": "https://www.plantcon.org/dallas",
+    "website": "https://www.plantcon.org/dallas"
+  },
+  {
+    "name": "PlantCon Atlanta",
+    "start": "2026-12-05",
+    "end": "2026-12-06",
+    "city": "Atlanta",
+    "region": "GA",
+    "country": "US",
+    "venue": "Atlanta Convention Center at AmericasMart",
+    "universes": [
+      "BUILT_BOTANY"
+    ],
+    "kind": "Plant convention",
+    "source": "https://www.plantcon.org/",
+    "website": "https://www.plantcon.org/"
+  },
+  {
+    "name": "Art Basel Paris",
+    "start": "2026-10-23",
+    "end": "2026-10-25",
+    "city": "Paris",
+    "region": null,
+    "country": "FR",
+    "venue": null,
+    "universes": [
+      "ART"
+    ],
+    "kind": "Art fair",
+    "source": "https://www.artbasel.com/about/application",
+    "website": "https://www.artbasel.com/about/application"
+  },
+  {
+    "name": "Art Basel Miami Beach",
+    "start": "2026-12-04",
+    "end": "2026-12-06",
+    "city": "Miami Beach",
+    "region": "FL",
+    "country": "US",
+    "venue": null,
+    "universes": [
+      "ART"
+    ],
+    "kind": "Art fair",
+    "source": "https://www.artbasel.com/about/application",
+    "website": "https://www.artbasel.com/about/application"
+  },
+  {
+    "name": "Art Basel Qatar",
+    "start": "2027-01-28",
+    "end": "2027-01-30",
+    "city": null,
+    "region": null,
+    "country": "QA",
+    "venue": null,
+    "universes": [
+      "ART"
+    ],
+    "kind": "Art fair",
+    "source": "https://www.artbasel.com/about/application",
+    "website": "https://www.artbasel.com/about/application"
+  },
+  {
+    "name": "Art Basel Hong Kong",
+    "start": "2027-03-25",
+    "end": "2027-03-27",
+    "city": "Hong Kong",
+    "region": null,
+    "country": "HK",
+    "venue": null,
+    "universes": [
+      "ART"
+    ],
+    "kind": "Art fair",
+    "source": "https://www.artbasel.com/about/application",
+    "website": "https://www.artbasel.com/about/application"
+  },
+  {
+    "name": "Art Basel Basel",
+    "start": "2027-06-17",
+    "end": "2027-06-20",
+    "city": "Basel",
+    "region": null,
+    "country": "CH",
+    "venue": null,
+    "universes": [
+      "ART"
+    ],
+    "kind": "Art fair",
+    "source": "https://www.artbasel.com/about/application",
+    "website": "https://www.artbasel.com/about/application"
+  },
+  {
+    "name": "Propstore: Blade Runner 2049 Final Online Auction",
+    "start": "2026-09-15",
+    "end": "2026-10-14",
+    "city": "Online",
+    "region": null,
+    "country": "Online",
+    "venue": null,
+    "universes": [
+      "POP_CULTURE"
+    ],
+    "kind": "Movie memorabilia auction",
+    "source": "https://www.propstore.com/auctions.action",
+    "website": "https://www.propstore.com/auctions.action"
+  },
+  {
+    "name": "Propstore: James Bond Online Auction – London",
+    "start": "2026-10-06",
+    "end": "2026-10-27",
+    "city": "London",
+    "region": null,
+    "country": "GB",
+    "venue": "Online",
+    "universes": [
+      "POP_CULTURE"
+    ],
+    "kind": "Movie memorabilia auction",
+    "source": "https://www.propstore.com/auctions.action",
+    "website": "https://www.propstore.com/auctions.action"
+  },
+  {
+    "name": "Propstore: Collectible Posters Live Auction – Los Angeles",
+    "start": "2026-10-09",
+    "end": "2026-10-11",
+    "city": "Los Angeles",
+    "region": "CA",
+    "country": "US",
+    "venue": null,
+    "universes": [
+      "POP_CULTURE",
+      "ART"
+    ],
+    "kind": "Collectible poster auction",
+    "source": "https://www.propstore.com/auctions.action",
+    "website": "https://www.propstore.com/auctions.action"
+  },
+  {
+    "name": "Propstore: The Wheel of Time Online Auction",
+    "start": "2026-10-12",
+    "end": "2026-10-28",
+    "city": "Online",
+    "region": null,
+    "country": "Online",
+    "venue": null,
+    "universes": [
+      "POP_CULTURE"
+    ],
+    "kind": "TV memorabilia auction",
+    "source": "https://www.propstore.com/auctions.action",
+    "website": "https://www.propstore.com/auctions.action"
+  },
+  {
+    "name": "Propstore: Entertainment Memorabilia Live Auction – London Winter",
+    "start": "2026-12-04",
+    "end": "2026-12-06",
+    "city": "London",
+    "region": null,
+    "country": "GB",
+    "venue": null,
+    "universes": [
+      "POP_CULTURE"
+    ],
+    "kind": "Movie memorabilia auction",
+    "source": "https://www.propstore.com/auctions.action",
+    "website": "https://www.propstore.com/auctions.action"
+  },
+  {
+    "name": "Sneaker Con Macau",
+    "start": "2026-10-10",
+    "end": "2026-10-11",
+    "city": "Macau",
+    "region": null,
+    "country": "MO",
+    "venue": "Grand Lisboa Palace Resort, Great Hall",
+    "universes": [
+      "JEWELRY_APPAREL"
+    ],
+    "kind": "Sneaker convention",
+    "source": "https://sneakercon.com/",
+    "website": "https://sneakercon.com/"
+  },
+  {
+    "name": "Sneaker Con Los Angeles",
+    "start": "2026-10-17",
+    "end": "2026-10-18",
+    "city": "Anaheim",
+    "region": "CA",
+    "country": "US",
+    "venue": "Anaheim Convention Center",
+    "universes": [
+      "JEWELRY_APPAREL"
+    ],
+    "kind": "Sneaker convention",
+    "source": "https://sneakercon.com/",
+    "website": "https://sneakercon.com/"
+  },
+  {
+    "name": "Sneaker Con Bay Area",
+    "start": "2026-11-07",
+    "end": "2026-11-08",
+    "city": "Santa Clara",
+    "region": "CA",
+    "country": "US",
+    "venue": "Santa Clara Convention Center",
+    "universes": [
+      "JEWELRY_APPAREL"
+    ],
+    "kind": "Sneaker convention",
+    "source": "https://sneakercon.com/",
+    "website": "https://sneakercon.com/"
+  },
+  {
+    "name": "Sneaker Con Osaka",
+    "start": "2026-12-19",
+    "end": "2026-12-19",
+    "city": "Osaka",
+    "region": null,
+    "country": "JP",
+    "venue": "MYDOME Osaka",
+    "universes": [
+      "JEWELRY_APPAREL"
+    ],
+    "kind": "Sneaker convention",
+    "source": "https://sneakercon.com/",
+    "website": "https://sneakercon.com/"
+  },
+  {
+    "name": "Windup Watch Fair New York",
+    "start": "2026-10-16",
+    "end": "2026-10-18",
+    "city": "New York",
+    "region": "NY",
+    "country": "US",
+    "venue": "Center415",
+    "universes": [
+      "JEWELRY_APPAREL"
+    ],
+    "kind": "Watch fair",
+    "source": "https://windupwatchfair.com/news/windup-watch-fair-nyc-2026-the-biggest-watch-fair-around-just-got-bigger",
+    "website": "https://windupwatchfair.com/news/windup-watch-fair-nyc-2026-the-biggest-watch-fair-around-just-got-bigger"
+  },
+  {
+    "name": "ANA National Money Show",
+    "start": "2027-03-04",
+    "end": "2027-03-06",
+    "city": "Virginia Beach",
+    "region": "VA",
+    "country": "US",
+    "venue": null,
+    "universes": [
+      "MISC"
+    ],
+    "kind": "Coin convention",
+    "source": "https://www.money.org/events/future-conventions/",
+    "website": "https://www.money.org/events/future-conventions/"
+  },
+  {
+    "name": "ANA World’s Fair of Money",
+    "start": "2027-08-10",
+    "end": "2027-08-14",
+    "city": "Rosemont",
+    "region": "IL",
+    "country": "US",
+    "venue": "Donald E. Stephens Convention Center",
+    "universes": [
+      "MISC"
+    ],
+    "kind": "Coin convention",
+    "source": "https://www.money.org/events/future-conventions/",
+    "website": "https://www.money.org/events/future-conventions/"
+  },
+  {
+    "name": "World Money Fair",
+    "start": "2027-01-28",
+    "end": "2027-01-30",
+    "city": "Berlin",
+    "region": null,
+    "country": "DE",
+    "venue": "Estrel Congress Center",
+    "universes": [
+      "MISC"
+    ],
+    "kind": "Coin convention",
+    "source": "https://worldmoneyfair.de/en/exhibit-2027/",
+    "website": "https://worldmoneyfair.de/en/exhibit-2027/"
+  },
+  {
+    "name": "Great American Stamp Show",
+    "start": "2027-08-19",
+    "end": "2027-08-22",
+    "city": "Albuquerque",
+    "region": "NM",
+    "country": "US",
+    "venue": null,
+    "universes": [
+      "MISC"
+    ],
+    "kind": "Stamp convention",
+    "source": "https://stamps.org/news/c/news/cat/aps-news/post/aps-announces-location-of-gass-2027",
+    "website": "https://stamps.org/news/c/news/cat/aps-news/post/aps-announces-location-of-gass-2027"
+  },
+  {
+    "name": "Gen Con",
+    "start": "2027-08-05",
+    "end": "2027-08-08",
+    "city": "Indianapolis",
+    "region": "IN",
+    "country": "US",
+    "venue": "Indiana Convention Center and Lucas Oil Stadium",
+    "universes": [
+      "GAMES",
+      "TCG"
+    ],
+    "kind": "Tabletop gaming convention",
+    "source": "https://www.gencon.com/attend/futuredates",
+    "website": "https://www.gencon.com/attend/futuredates"
+  },
+  {
+    "name": "PAX Unplugged",
+    "start": "2026-12-04",
+    "end": "2026-12-06",
+    "city": "Philadelphia",
+    "region": "PA",
+    "country": "US",
+    "venue": null,
+    "universes": [
+      "GAMES",
+      "TCG"
+    ],
+    "kind": "Tabletop gaming convention",
+    "source": "https://unplugged.paxsite.com/",
+    "website": "https://unplugged.paxsite.com/"
+  },
+  {
+    "name": "Pinball Expo",
+    "start": "2026-10-14",
+    "end": "2026-10-17",
+    "city": null,
+    "region": "IL",
+    "country": "US",
+    "venue": null,
+    "universes": [
+      "GAMES"
+    ],
+    "kind": "Pinball convention",
+    "source": "https://pinballexpo.com/",
+    "website": "https://pinballexpo.com/"
+  },
+  {
+    "name": "SEMA Show",
+    "start": "2026-11-03",
+    "end": "2026-11-06",
+    "city": "Las Vegas",
+    "region": "NV",
+    "country": "US",
+    "venue": "Las Vegas Convention Center",
+    "universes": [
+      "AUTOMOTIVE"
+    ],
+    "kind": "Automotive trade show",
+    "source": "https://semashow.com/",
+    "website": "https://semashow.com/"
+  },
+  {
+    "name": "The NAMM Show",
+    "start": "2027-01-26",
+    "end": "2027-01-30",
+    "city": "Anaheim",
+    "region": "CA",
+    "country": "US",
+    "venue": "Anaheim Convention Center",
+    "universes": [
+      "MUSIC"
+    ],
+    "kind": "Music equipment show",
+    "source": "https://www.namm.org/thenammshow/show-information-policies",
+    "website": "https://www.namm.org/thenammshow/show-information-policies"
+  },
+  {
+    "name": "Central California Orchid Society's \"The Big Fresno Fair\"",
+    "start": "2026-10-07",
+    "end": "2026-10-18",
+    "city": null,
+    "region": "California",
+    "country": "US",
+    "venue": null,
+    "address": "Fresno Fairgrounds, 1121 S Chance Ave, Fresno, CA 93702",
+    "universes": [
+      "BUILT_BOTANY"
+    ],
+    "kind": "Orchid show",
+    "source": "https://www.aos.org/community-events/calendar",
+    "website": "https://www.aos.org/community-events/calendar",
+    "sourceId": "aos-596"
+  },
+  {
+    "name": "Central Louisiana Orchid Society Fall Show",
+    "start": "2026-10-09",
+    "end": "2026-10-10",
+    "city": null,
+    "region": "Louisiana",
+    "country": "US",
+    "venue": null,
+    "address": "Kees Park, 2450 HWY 28 EAST, Pineville, LA 71360",
+    "universes": [
+      "BUILT_BOTANY"
+    ],
+    "kind": "Orchid show",
+    "source": "https://www.aos.org/community-events/calendar",
+    "website": "https://www.aos.org/community-events/calendar",
+    "sourceId": "aos-513"
+  },
+  {
+    "name": "The Huntington 10th Annual International Orchid Show and Sale",
+    "start": "2026-10-09",
+    "end": "2026-10-11",
+    "city": null,
+    "region": "California",
+    "country": "US",
+    "venue": null,
+    "address": "The Huntington Library, Art Museum and Botanical Gardens (Brody Center), 1151 Oxford Road, San Marino, CA 91108",
+    "universes": [
+      "BUILT_BOTANY"
+    ],
+    "kind": "Orchid show",
+    "source": "https://www.aos.org/community-events/calendar",
+    "website": "https://www.aos.org/community-events/calendar",
+    "sourceId": "aos-527"
+  },
+  {
+    "name": "Connecticut Orchid Society’s “Orchid Harvest”",
+    "start": "2026-10-10",
+    "end": "2026-10-11",
+    "city": null,
+    "region": "Connecticut",
+    "country": "US",
+    "venue": null,
+    "address": "Sheraton Hartford South Hotel, 100 Capital Blvd, Rocky Hill, CT 06067",
+    "universes": [
+      "BUILT_BOTANY"
+    ],
+    "kind": "Orchid show",
+    "source": "https://www.aos.org/community-events/calendar",
+    "website": "https://www.aos.org/community-events/calendar",
+    "sourceId": "aos-547"
+  },
+  {
+    "name": "Illinois Orchid Society Fall 2026 Show ",
+    "start": "2026-10-10",
+    "end": "2026-10-11",
+    "city": null,
+    "region": "Illinois",
+    "country": "US",
+    "venue": null,
+    "address": "Chicago Botanic Garden, 1000 Lake Cook Rd., Glencoe, IL 60022",
+    "universes": [
+      "BUILT_BOTANY"
+    ],
+    "kind": "Orchid show",
+    "source": "https://www.aos.org/community-events/calendar",
+    "website": "https://www.aos.org/community-events/calendar",
+    "sourceId": "aos-619"
+  },
+  {
+    "name": "Northwest Orchid Society Fall Show and Sale",
+    "start": "2026-10-10",
+    "end": "2026-10-11",
+    "city": null,
+    "region": "Washington",
+    "country": "US",
+    "venue": null,
+    "address": "Volunteer Park Conservatory, 1400 East Galer Street, Seattle, WA, 98112",
+    "universes": [
+      "BUILT_BOTANY"
+    ],
+    "kind": "Orchid show",
+    "source": "https://www.aos.org/community-events/calendar",
+    "website": "https://www.aos.org/community-events/calendar",
+    "sourceId": "aos-639"
+  },
+  {
+    "name": "Southwest Florida Orchid Society Experience Orchids, Cacti & Tillandsia Show",
+    "start": "2026-10-10",
+    "end": "2026-10-11",
+    "city": null,
+    "region": "Florida",
+    "country": "US",
+    "venue": null,
+    "address": "Edison & Ford Winter Estates, 2350 McGregor Blvd. · Fort Myers, FL 33901 ",
+    "universes": [
+      "BUILT_BOTANY"
+    ],
+    "kind": "Orchid show",
+    "source": "https://www.aos.org/community-events/calendar",
+    "website": "https://www.aos.org/community-events/calendar",
+    "sourceId": "aos-643"
+  },
+  {
+    "name": "Redland International Orchid Festival",
+    "start": "2026-10-16",
+    "end": "2026-10-18",
+    "city": null,
+    "region": "Florida",
+    "country": "US",
+    "venue": null,
+    "address": "Redland Fruit & Spice Park, 24801 SW 187th Ave, Homestead, FL  33031",
+    "universes": [
+      "BUILT_BOTANY"
+    ],
+    "kind": "Orchid show",
+    "source": "https://www.aos.org/community-events/calendar",
+    "website": "https://www.aos.org/community-events/calendar",
+    "sourceId": "aos-624"
+  },
+  {
+    "name": "Victoria Orchid Society Show and Sale - \"Reflections\"",
+    "start": "2026-10-16",
+    "end": "2026-10-18",
+    "city": null,
+    "region": "British Columbia",
+    "country": "CA",
+    "venue": null,
+    "address": "Our Lady of Fatima Hall, 4635 Elk Drive, Victoria, British Columbia, V8Z 5M2, Canada",
+    "universes": [
+      "BUILT_BOTANY"
+    ],
+    "kind": "Orchid show",
+    "source": "https://www.aos.org/community-events/calendar",
+    "website": "https://www.aos.org/community-events/calendar",
+    "sourceId": "aos-638"
+  },
+  {
+    "name": "Asociación Peruano de Orquideas' \"País de Orquideas, 40 años” ",
+    "start": "2026-10-23",
+    "end": "2026-10-25",
+    "city": null,
+    "region": null,
+    "country": "PE",
+    "venue": null,
+    "address": "Universidad Champagnat, Av. Mariscal Ramon Castillo 1270, Santiago de Surco, Lima, Peru",
+    "universes": [
+      "BUILT_BOTANY"
+    ],
+    "kind": "Orchid show",
+    "source": "https://www.aos.org/community-events/calendar",
+    "website": "https://www.aos.org/community-events/calendar",
+    "sourceId": "aos-606"
+  },
+  {
+    "name": "Asociacion Mexicana de Orquideologia’s “Laelia Anceps: Colores de Otoño\"",
+    "start": "2026-10-23",
+    "end": "2026-10-25",
+    "city": null,
+    "region": null,
+    "country": "MX",
+    "venue": null,
+    "address": "Jardin Botanico Clavijero, Instituto de Ecologia, Carretera Antigua a Coatepec, No 351, Col El Haya, Xalapa, Veracruz, Mexico 91073",
+    "universes": [
+      "BUILT_BOTANY"
+    ],
+    "kind": "Orchid show",
+    "source": "https://www.aos.org/community-events/calendar",
+    "website": "https://www.aos.org/community-events/calendar",
+    "sourceId": "aos-664"
+  },
+  {
+    "name": "Eastern Iowa Orchid Society’s “Orchids are a Scream\"",
+    "start": "2026-10-24",
+    "end": "2026-10-25",
+    "city": null,
+    "region": "Iowa",
+    "country": "US",
+    "venue": null,
+    "address": "Radisson Hotel Conference Center, 1200 Collins Road NE, Cedar Rapids, Iowa 52402",
+    "universes": [
+      "BUILT_BOTANY"
+    ],
+    "kind": "Orchid show",
+    "source": "https://www.aos.org/community-events/calendar",
+    "website": "https://www.aos.org/community-events/calendar",
+    "sourceId": "aos-618"
+  },
+  {
+    "name": " Asociacion de Orquidistas del Sur “Casa Abierta Gualaceo Orchid Fest”",
+    "start": "2026-10-29",
+    "end": "2026-11-08",
+    "city": null,
+    "region": "Azuay",
+    "country": "EC",
+    "venue": null,
+    "address": "Ecuagenera Gualaceo, KM 2 via Cuenca, Gualaceo, Azuay, Ecuador 010350",
+    "universes": [
+      "BUILT_BOTANY"
+    ],
+    "kind": "Orchid show",
+    "source": "https://www.aos.org/community-events/calendar",
+    "website": "https://www.aos.org/community-events/calendar",
+    "sourceId": "aos-640"
+  },
+  {
+    "name": "Orchid Society of Greater Kansas City’s “Bewitched by Orchids” ",
+    "start": "2026-10-31",
+    "end": "2026-11-01",
+    "city": null,
+    "region": "Kansas",
+    "country": "US",
+    "venue": null,
+    "address": "Overland Park Arboretum Longhouse Visitor Center, 9209 W. 179th Street, Overland Park, KS 66013",
+    "universes": [
+      "BUILT_BOTANY"
+    ],
+    "kind": "Orchid show",
+    "source": "https://www.aos.org/community-events/calendar",
+    "website": "https://www.aos.org/community-events/calendar",
+    "sourceId": "aos-600"
+  },
+  {
+    "name": "Asociación Vallecaucana de Orquideologia “Caliorquideas 2026”",
+    "start": "2026-11-06",
+    "end": "2026-11-08",
+    "city": null,
+    "region": "Cali",
+    "country": "CO",
+    "venue": null,
+    "address": "Orquideorama, Av. 2 Norte #48-10, Cali, Valle, Colombia",
+    "universes": [
+      "BUILT_BOTANY"
+    ],
+    "kind": "Orchid show",
+    "source": "https://www.aos.org/community-events/calendar",
+    "website": "https://www.aos.org/community-events/calendar",
+    "sourceId": "aos-635"
+  },
+  {
+    "name": "Massachusetts Orchid Society’s “World of Orchids – Rooted in History”",
+    "start": "2026-11-06",
+    "end": "2026-11-08",
+    "city": null,
+    "region": "Massachusetts",
+    "country": "US",
+    "venue": null,
+    "address": "Sons of Italy, 117 Swanton St, Winchester, MA 01890",
+    "universes": [
+      "BUILT_BOTANY"
+    ],
+    "kind": "Orchid show",
+    "source": "https://www.aos.org/community-events/calendar",
+    "website": "https://www.aos.org/community-events/calendar",
+    "sourceId": "aos-659"
+  },
+  {
+    "name": "Utah Orchid Society’s “A Banquet of Orchids\"",
+    "start": "2026-11-07",
+    "end": "2026-11-08",
+    "city": null,
+    "region": "Utah",
+    "country": "US",
+    "venue": null,
+    "address": "Red Butte Garden, 300 Wakara Way, Salt Lake City, UT, 84108",
+    "universes": [
+      "BUILT_BOTANY"
+    ],
+    "kind": "Orchid show",
+    "source": "https://www.aos.org/community-events/calendar",
+    "website": "https://www.aos.org/community-events/calendar",
+    "sourceId": "aos-633"
+  },
+  {
+    "name": "Orchid Research and Development Center - National Cheng Kung University Fall Orchid Show",
+    "start": "2026-11-12",
+    "end": "2026-11-16",
+    "city": null,
+    "region": "Taiwan",
+    "country": "TW",
+    "venue": null,
+    "address": "National Cheng Kung University Library, 1 University Road, East District, Tainan, 702, Taiwan",
+    "universes": [
+      "BUILT_BOTANY"
+    ],
+    "kind": "Orchid show",
+    "source": "https://www.aos.org/community-events/calendar",
+    "website": "https://www.aos.org/community-events/calendar",
+    "sourceId": "aos-673"
+  },
+  {
+    "name": "Puerto Rico Orchid Society's \"5ta. Exhibicion Educativa de Orquideas: Pasatiempo, Arte, y Ciencia\"",
+    "start": "2026-11-13",
+    "end": "2026-11-15",
+    "city": null,
+    "region": "Puerto Rico",
+    "country": "US",
+    "venue": null,
+    "address": "Parque Forestal La Marquesa, Carretera 834 Barrio Sonadora, Guaynabo, PR 00971",
+    "universes": [
+      "BUILT_BOTANY"
+    ],
+    "kind": "Orchid show",
+    "source": "https://www.aos.org/community-events/calendar",
+    "website": "https://www.aos.org/community-events/calendar",
+    "sourceId": "aos-599"
+  },
+  {
+    "name": "Niagara Frontier Orchid Society's \"Orchids Under the Dome\"",
+    "start": "2026-11-14",
+    "end": "2026-11-15",
+    "city": null,
+    "region": "New York",
+    "country": "US",
+    "venue": null,
+    "address": "Buffalo & Erie County Botanical Gardens, 2655 South Park Ave, Buffalo, NY 14218",
+    "universes": [
+      "BUILT_BOTANY"
+    ],
+    "kind": "Orchid show",
+    "source": "https://www.aos.org/community-events/calendar",
+    "website": "https://www.aos.org/community-events/calendar",
+    "sourceId": "aos-655"
+  },
+  {
+    "name": "Deerfield Beach Orchid Society’s “Orchid Obsession” ",
+    "start": "2026-11-14",
+    "end": "2026-11-15",
+    "city": null,
+    "region": "Florida",
+    "country": "US",
+    "venue": null,
+    "address": "Safe Schools Institute,1790 Spanish River Blvd, Boca Raton, FL 33431",
+    "universes": [
+      "BUILT_BOTANY"
+    ],
+    "kind": "Orchid show",
+    "source": "https://www.aos.org/community-events/calendar",
+    "website": "https://www.aos.org/community-events/calendar",
+    "sourceId": "aos-658"
+  },
+  {
+    "name": "*Mid-Hudson Orchid Society Fall 2026 Orchid Show",
+    "start": "2026-11-14",
+    "end": "2026-11-14",
+    "city": null,
+    "region": "New York",
+    "country": "US",
+    "venue": null,
+    "address": "Union Church Community Center, 44 Balmville Road, Newburgh, NY 12550",
+    "universes": [
+      "BUILT_BOTANY"
+    ],
+    "kind": "Orchid show",
+    "source": "https://www.aos.org/community-events/calendar",
+    "website": "https://www.aos.org/community-events/calendar",
+    "sourceId": "aos-671"
+  },
+  {
+    "name": "Asociación Altaverapacense de Orquideologia “La XLVII Exposición Internacional de Orquideas de Cobán\"",
+    "start": "2026-11-18",
+    "end": "2026-11-22",
+    "city": null,
+    "region": "Alta Verapaz",
+    "country": "GT",
+    "venue": null,
+    "address": "Convento Parroquial Santo Domingo de Guzmán, 1a. Ave. 1-31 zona 3, Cobán, Alta Verapaz, Guatemala 16001",
+    "universes": [
+      "BUILT_BOTANY"
+    ],
+    "kind": "Orchid show",
+    "source": "https://www.aos.org/community-events/calendar",
+    "website": "https://www.aos.org/community-events/calendar",
+    "sourceId": "aos-657"
+  },
+  {
+    "name": "Triangle Orchid Society's \"Fall for Orchids 2026\"",
+    "start": "2026-11-20",
+    "end": "2026-11-22",
+    "city": null,
+    "region": "North Carolina",
+    "country": "US",
+    "venue": null,
+    "address": "Sarah P. Duke Gardens, 420 Anderson St, Durham, NC 27705",
+    "universes": [
+      "BUILT_BOTANY"
+    ],
+    "kind": "Orchid show",
+    "source": "https://www.aos.org/community-events/calendar",
+    "website": "https://www.aos.org/community-events/calendar",
+    "sourceId": "aos-622"
+  },
+  {
+    "name": "Ann Arbor Orchid Society's “Ann Arbor Orchid Festival 2026”",
+    "start": "2026-11-21",
+    "end": "2026-11-22",
+    "city": null,
+    "region": "Michigan",
+    "country": "US",
+    "venue": null,
+    "address": "Matthaei Botanical Gardens, 1800 N Dixboro Rd, Ann Arbor, MI 48105",
+    "universes": [
+      "BUILT_BOTANY"
+    ],
+    "kind": "Orchid show",
+    "source": "https://www.aos.org/community-events/calendar",
+    "website": "https://www.aos.org/community-events/calendar",
+    "sourceId": "aos-611"
+  },
+  {
+    "name": "Asociacion Bogotana de Orquideologia \"XXIII Exposicion de Orquideas\"",
+    "start": "2026-12-01",
+    "end": "2026-12-08",
+    "city": null,
+    "region": "Bogota",
+    "country": "CO",
+    "venue": null,
+    "address": "Corferias, carrera 37 #24 67, Entrada Principal Bogota, Cundinarmarca, Colombia ",
+    "universes": [
+      "BUILT_BOTANY"
+    ],
+    "kind": "Orchid show",
+    "source": "https://www.aos.org/community-events/calendar",
+    "website": "https://www.aos.org/community-events/calendar",
+    "sourceId": "aos-644"
+  },
+  {
+    "name": "Fort Pierce Orchid Society Show and Sale",
+    "start": "2026-12-12",
+    "end": "2026-12-13",
+    "city": null,
+    "region": "Florida",
+    "country": "US",
+    "venue": null,
+    "address": "River Walk Center, 600 N Indian River Drive, Ft. Pierce, FL 34950",
+    "universes": [
+      "BUILT_BOTANY"
+    ],
+    "kind": "Orchid show",
+    "source": "https://www.aos.org/community-events/calendar",
+    "website": "https://www.aos.org/community-events/calendar",
+    "sourceId": "aos-607"
+  },
+  {
+    "name": "Fort Lauderdale Orchid Society's \"Orchid Odyssey\"",
+    "start": "2027-01-08",
+    "end": "2027-01-10",
+    "city": null,
+    "region": "Florida",
+    "country": "US",
+    "venue": null,
+    "address": "Fort Lauderdale War Memorial Auditorium, 800 NE 8th Street, Fort Lauderdale, FL 33304",
+    "universes": [
+      "BUILT_BOTANY"
+    ],
+    "kind": "Orchid show",
+    "source": "https://www.aos.org/community-events/calendar",
+    "website": "https://www.aos.org/community-events/calendar",
+    "sourceId": "aos-649"
+  },
+  {
+    "name": "North Jersey Orchid Society Show",
+    "start": "2027-01-15",
+    "end": "2027-01-17",
+    "city": null,
+    "region": "New Jersey",
+    "country": "US",
+    "venue": null,
+    "address": "Rutgers University, Douglass Student Center, 100 George St, New Brunswick, NJ 08901",
+    "universes": [
+      "BUILT_BOTANY"
+    ],
+    "kind": "Orchid show",
+    "source": "https://www.aos.org/community-events/calendar",
+    "website": "https://www.aos.org/community-events/calendar",
+    "sourceId": "aos-651"
+  },
+  {
+    "name": "Grand Valley Orchid Society Show",
+    "start": "2027-01-23",
+    "end": "2027-01-24",
+    "city": null,
+    "region": "Michigan",
+    "country": "US",
+    "venue": null,
+    "address": "Frederik Meijer Gardens & Sculpture Park, 1000 East Beltline NE, Grand Rapids, MI 49525",
+    "universes": [
+      "BUILT_BOTANY"
+    ],
+    "kind": "Orchid show",
+    "source": "https://www.aos.org/community-events/calendar",
+    "website": "https://www.aos.org/community-events/calendar",
+    "sourceId": "aos-653"
+  },
+  {
+    "name": "Susquehanna Orchid Society's \"For the Love of Orchids\"",
+    "start": "2027-01-29",
+    "end": "2027-01-31",
+    "city": null,
+    "region": "Pennsylvania",
+    "country": "US",
+    "venue": null,
+    "address": "Milton and Catherine Hershey Conservatory at Hershey Gardens, 170 Hotel Road, Hershey, PA 17033",
+    "universes": [
+      "BUILT_BOTANY"
+    ],
+    "kind": "Orchid show",
+    "source": "https://www.aos.org/community-events/calendar",
+    "website": "https://www.aos.org/community-events/calendar",
+    "sourceId": "aos-604"
+  },
+  {
+    "name": "Gulf Coast Orchid Society Show and Sale \"Orchids - Portraits Through Time\"",
+    "start": "2027-01-29",
+    "end": "2027-01-31",
+    "city": null,
+    "region": "Mississippi",
+    "country": "US",
+    "venue": null,
+    "address": "Gautier Convention Center, 2012 Library Lane, Gautier, MS 39553",
+    "universes": [
+      "BUILT_BOTANY"
+    ],
+    "kind": "Orchid show",
+    "source": "https://www.aos.org/community-events/calendar",
+    "website": "https://www.aos.org/community-events/calendar",
+    "sourceId": "aos-621"
+  },
+  {
+    "name": "Florida West Coast Orchid Society’s “A Rainbow of Orchids” ",
+    "start": "2027-01-30",
+    "end": "2027-01-31",
+    "city": null,
+    "region": "Florida",
+    "country": "US",
+    "venue": null,
+    "address": " Walter Fuller Park, St. Petersburg Recreation Center, 7901 30th Ave N, St. Petersburg, FL 33710",
+    "universes": [
+      "BUILT_BOTANY"
+    ],
+    "kind": "Orchid show",
+    "source": "https://www.aos.org/community-events/calendar",
+    "website": "https://www.aos.org/community-events/calendar",
+    "sourceId": "aos-612"
+  },
+  {
+    "name": "Orchid Society of Minnesota's \"Winter Carnival Orchid Show\"",
+    "start": "2027-01-30",
+    "end": "2027-01-31",
+    "city": null,
+    "region": "Minnesota",
+    "country": "US",
+    "venue": null,
+    "address": "Marjorie McNeely Conservatory, 1225 Estabrook Drive, St. Paul, MN 55103",
+    "universes": [
+      "BUILT_BOTANY"
+    ],
+    "kind": "Orchid show",
+    "source": "https://www.aos.org/community-events/calendar",
+    "website": "https://www.aos.org/community-events/calendar",
+    "sourceId": "aos-656"
+  },
+  {
+    "name": "Orchid Society of Greater St Louis Orchid Show",
+    "start": "2027-01-30",
+    "end": "2027-01-31",
+    "city": null,
+    "region": "Missouri",
+    "country": "US",
+    "venue": null,
+    "address": "Missouri Botanical Garden, 4344 Shaw Blvd, St. Louis, MO 63110",
+    "universes": [
+      "BUILT_BOTANY"
+    ],
+    "kind": "Orchid show",
+    "source": "https://www.aos.org/community-events/calendar",
+    "website": "https://www.aos.org/community-events/calendar",
+    "sourceId": "aos-677"
+  },
+  {
+    "name": "Venice Area Orchid Society Show & Sale",
+    "start": "2027-02-06",
+    "end": "2027-02-07",
+    "city": null,
+    "region": "Florida",
+    "country": "US",
+    "venue": null,
+    "address": "Venice Community Center, 326 S Nokomis Ave, Venice, FL 34285",
+    "universes": [
+      "BUILT_BOTANY"
+    ],
+    "kind": "Orchid show",
+    "source": "https://www.aos.org/community-events/calendar",
+    "website": "https://www.aos.org/community-events/calendar",
+    "sourceId": "aos-609"
+  },
+  {
+    "name": "Three Rivers Orchid Society Show",
+    "start": "2027-02-06",
+    "end": "2027-02-07",
+    "city": null,
+    "region": "Indiana",
+    "country": "US",
+    "venue": null,
+    "address": "Foellinger-Freimann Botanical Conservatory, 1100 S Calhaun St, Fort Wayne, IN 46802",
+    "universes": [
+      "BUILT_BOTANY"
+    ],
+    "kind": "Orchid show",
+    "source": "https://www.aos.org/community-events/calendar",
+    "website": "https://www.aos.org/community-events/calendar",
+    "sourceId": "aos-647"
+  },
+  {
+    "name": "Orchid Growers Guild's \"Orchid Quest\"",
+    "start": "2027-02-06",
+    "end": "2027-02-07",
+    "city": null,
+    "region": "Wisconsin",
+    "country": "US",
+    "venue": null,
+    "address": "Monona Terrace Community and Convention Center, 1 John Nolen Dr, Madison, WI 53703",
+    "universes": [
+      "BUILT_BOTANY"
+    ],
+    "kind": "Orchid show",
+    "source": "https://www.aos.org/community-events/calendar",
+    "website": "https://www.aos.org/community-events/calendar",
+    "sourceId": "aos-652"
+  },
+  {
+    "name": "Boca Raton Orchid Society’s “In Love With…Orchids” ",
+    "start": "2027-02-13",
+    "end": "2027-02-14",
+    "city": null,
+    "region": "Florida",
+    "country": "US",
+    "venue": null,
+    "address": "Safe Schools Institute, 1790 NW Spanish River Blvd, Boca Raton, FL 33431",
+    "universes": [
+      "BUILT_BOTANY"
+    ],
+    "kind": "Orchid show",
+    "source": "https://www.aos.org/community-events/calendar",
+    "website": "https://www.aos.org/community-events/calendar",
+    "sourceId": "aos-605"
+  },
+  {
+    "name": "Southern Ontario Orchid Society’s “Explore the Exotic\" Annual Show and Sale",
+    "start": "2027-02-13",
+    "end": "2027-02-14",
+    "city": null,
+    "region": "Ontario",
+    "country": "CA",
+    "venue": null,
+    "address": "Toronto Botanical Garden, 777 Lawrence Avenue East, Toronto, Ontario, M3C 1P2, Canada",
+    "universes": [
+      "BUILT_BOTANY"
+    ],
+    "kind": "Orchid show",
+    "source": "https://www.aos.org/community-events/calendar",
+    "website": "https://www.aos.org/community-events/calendar",
+    "sourceId": "aos-625"
+  },
+  {
+    "name": "National Capital Orchid Society’s “47th Annual Paphiopedilum Forum” ",
+    "start": "2027-02-13",
+    "end": "2027-02-13",
+    "city": null,
+    "region": "Maryland",
+    "country": "US",
+    "venue": null,
+    "address": "Rosensteel Hall, 9707 Rosensteel Ave, Silver Spring, MD 20910",
+    "universes": [
+      "BUILT_BOTANY"
+    ],
+    "kind": "Orchid show",
+    "source": "https://www.aos.org/community-events/calendar",
+    "website": "https://www.aos.org/community-events/calendar",
+    "sourceId": "aos-678"
+  },
+  {
+    "name": "Naples Orchid Society's \"Orchid Fiesta\"",
+    "start": "2027-02-19",
+    "end": "2027-02-21",
+    "city": null,
+    "region": "Florida",
+    "country": "US",
+    "venue": null,
+    "address": "Naples Botanical Garden, 4820 Bayshore Drive, Naples, FL 34112",
+    "universes": [
+      "BUILT_BOTANY"
+    ],
+    "kind": "Orchid show",
+    "source": "https://www.aos.org/community-events/calendar",
+    "website": "https://www.aos.org/community-events/calendar",
+    "sourceId": "aos-634"
+  },
+  {
+    "name": "Orchid Society of Highlands County Orchid Show and Sale",
+    "start": "2027-02-20",
+    "end": "2027-02-21",
+    "city": null,
+    "region": "Florida",
+    "country": "US",
+    "venue": null,
+    "address": "Bert J Harris Agri-Civic Center, 4509 George Boulevard, Sebring, FL 33870",
+    "universes": [
+      "BUILT_BOTANY"
+    ],
+    "kind": "Orchid show",
+    "source": "https://www.aos.org/community-events/calendar",
+    "website": "https://www.aos.org/community-events/calendar",
+    "sourceId": "aos-614"
+  },
+  {
+    "name": "Greater Lansing Orchid Society Orchid Show",
+    "start": "2027-02-27",
+    "end": "2027-02-28",
+    "city": null,
+    "region": "Michigan",
+    "country": "US",
+    "venue": null,
+    "address": "Van Atta's Greenhouse & Flower Shop, 9008 Old M-78, Haslett, MI 48840",
+    "universes": [
+      "BUILT_BOTANY"
+    ],
+    "kind": "Orchid show",
+    "source": "https://www.aos.org/community-events/calendar",
+    "website": "https://www.aos.org/community-events/calendar",
+    "sourceId": "aos-660"
+  },
+  {
+    "name": "Virginia Orchid Society's \"VOS 2027 Orchid Show\" ",
+    "start": "2027-03-05",
+    "end": "2027-03-07",
+    "city": null,
+    "region": "Virginia",
+    "country": "US",
+    "venue": null,
+    "address": "Lewis Ginter Botanical Garden, 1800 Lakeside Ave, Henrico, VA 23228",
+    "universes": [
+      "BUILT_BOTANY"
+    ],
+    "kind": "Orchid show",
+    "source": "https://www.aos.org/community-events/calendar",
+    "website": "https://www.aos.org/community-events/calendar",
+    "sourceId": "aos-598"
+  },
+  {
+    "name": "Mobile Area Orchid Society 48th Show",
+    "start": "2027-03-05",
+    "end": "2027-03-07",
+    "city": null,
+    "region": "Alabama",
+    "country": "US",
+    "venue": null,
+    "address": "Bellingrath Gardens and Home, 12401 Bellingrath Garden Rd, Theodore, AL 36582",
+    "universes": [
+      "BUILT_BOTANY"
+    ],
+    "kind": "Orchid show",
+    "source": "https://www.aos.org/community-events/calendar",
+    "website": "https://www.aos.org/community-events/calendar",
+    "sourceId": "aos-675"
+  },
+  {
+    "name": "Martin County Orchid Society’s “Symphony of Orchids\"",
+    "start": "2027-03-05",
+    "end": "2027-03-07",
+    "city": null,
+    "region": "Florida",
+    "country": "US",
+    "venue": null,
+    "address": "Martin County Fairgrounds, Building G, 2616 SE Dixie Hwy, Stuart, FL 34996",
+    "universes": [
+      "BUILT_BOTANY"
+    ],
+    "kind": "Orchid show",
+    "source": "https://www.aos.org/community-events/calendar",
+    "website": "https://www.aos.org/community-events/calendar",
+    "sourceId": "aos-681"
+  },
+  {
+    "name": "Tampa Bay Orchid Society Show and Sale",
+    "start": "2027-03-06",
+    "end": "2027-03-07",
+    "city": null,
+    "region": "Florida",
+    "country": "US",
+    "venue": null,
+    "address": "Sons of Italy Hall, 3315 W Lemon St, Tampa, FL 33609",
+    "universes": [
+      "BUILT_BOTANY"
+    ],
+    "kind": "Orchid show",
+    "source": "https://www.aos.org/community-events/calendar",
+    "website": "https://www.aos.org/community-events/calendar",
+    "sourceId": "aos-631"
+  },
+  {
+    "name": "Mount Baker Orchid Society Show and Sale",
+    "start": "2027-03-06",
+    "end": "2027-03-07",
+    "city": null,
+    "region": "Washington",
+    "country": "US",
+    "venue": null,
+    "address": "Christianson’s Nursery and Greenhouse, 15806 Best Road, Mount Vernon, WA 98273",
+    "universes": [
+      "BUILT_BOTANY"
+    ],
+    "kind": "Orchid show",
+    "source": "https://www.aos.org/community-events/calendar",
+    "website": "https://www.aos.org/community-events/calendar",
+    "sourceId": "aos-679"
+  },
+  {
+    "name": "Maryland Orchid Society Show and Sale",
+    "start": "2027-03-12",
+    "end": "2027-03-14",
+    "city": null,
+    "region": "Maryland",
+    "country": "US",
+    "venue": null,
+    "address": "Cow Palace at the Timonium Fairgrounds, 2200 York Road, Timonium, MD 21093",
+    "universes": [
+      "BUILT_BOTANY"
+    ],
+    "kind": "Orchid show",
+    "source": "https://www.aos.org/community-events/calendar",
+    "website": "https://www.aos.org/community-events/calendar",
+    "sourceId": "aos-603"
+  },
+  {
+    "name": "Terrebonne Orchid Society Show and Sale",
+    "start": "2027-03-12",
+    "end": "2027-03-14",
+    "city": null,
+    "region": "Louisiana",
+    "country": "US",
+    "venue": null,
+    "address": "Southland Mall, 5953 West Park Ave, Houma, LA 70364",
+    "universes": [
+      "BUILT_BOTANY"
+    ],
+    "kind": "Orchid show",
+    "source": "https://www.aos.org/community-events/calendar",
+    "website": "https://www.aos.org/community-events/calendar",
+    "sourceId": "aos-641"
+  },
+  {
+    "name": "Atlanta Orchid Society’s “2027 Atlanta Orchid Show\"",
+    "start": "2027-03-12",
+    "end": "2027-03-14",
+    "city": null,
+    "region": "Georgia",
+    "country": "US",
+    "venue": null,
+    "address": "Atlanta Botanical Garden, 1345 Piedmont Ave NE, Atlanta, GA 30309",
+    "universes": [
+      "BUILT_BOTANY"
+    ],
+    "kind": "Orchid show",
+    "source": "https://www.aos.org/community-events/calendar",
+    "website": "https://www.aos.org/community-events/calendar",
+    "sourceId": "aos-645"
+  },
+  {
+    "name": "New Hampshire Orchid Society's \"Flower Power!\"",
+    "start": "2027-03-12",
+    "end": "2027-03-14",
+    "city": null,
+    "region": "New Hampshire",
+    "country": "US",
+    "venue": null,
+    "address": "Courtyard by Marriott Nashua, 2200 Southwood Drive, Nashua, NH 03063",
+    "universes": [
+      "BUILT_BOTANY"
+    ],
+    "kind": "Orchid show",
+    "source": "https://www.aos.org/community-events/calendar",
+    "website": "https://www.aos.org/community-events/calendar",
+    "sourceId": "aos-661"
+  },
+  {
+    "name": "Englewood Area Orchid Society’s “Orchid Flower Power” ",
+    "start": "2027-03-12",
+    "end": "2027-03-14",
+    "city": null,
+    "region": "Florida",
+    "country": "US",
+    "venue": null,
+    "address": "Tringali Community Center, 3460 North Access Road, Englewood, FL 34224",
+    "universes": [
+      "BUILT_BOTANY"
+    ],
+    "kind": "Orchid show",
+    "source": "https://www.aos.org/community-events/calendar",
+    "website": "https://www.aos.org/community-events/calendar",
+    "sourceId": "aos-666"
+  },
+  {
+    "name": "Santa Barbara International Orchid Show",
+    "start": "2027-03-12",
+    "end": "2027-03-14",
+    "city": null,
+    "region": "California",
+    "country": "US",
+    "venue": null,
+    "address": "Earl Warren Showgrounds, 3400 Calle Real, Santa Barbara, CA 93105",
+    "universes": [
+      "BUILT_BOTANY"
+    ],
+    "kind": "Orchid show",
+    "source": "https://www.aos.org/community-events/calendar",
+    "website": "https://www.aos.org/community-events/calendar",
+    "sourceId": "aos-672"
+  },
+  {
+    "name": "Batavia Orchid Society Show",
+    "start": "2027-03-13",
+    "end": "2027-03-14",
+    "city": null,
+    "region": "Illinois",
+    "country": "US",
+    "venue": null,
+    "address": "Cantigny Park, 1S 151 Winfield Rd, Wheaton, IL 60189",
+    "universes": [
+      "BUILT_BOTANY"
+    ],
+    "kind": "Orchid show",
+    "source": "https://www.aos.org/community-events/calendar",
+    "website": "https://www.aos.org/community-events/calendar",
+    "sourceId": "aos-650"
+  },
+  {
+    "name": "Central Pennsylvania Orchid Society 58th Annual Show",
+    "start": "2027-03-13",
+    "end": "2027-03-14",
+    "city": null,
+    "region": "Pennsylvania",
+    "country": "US",
+    "venue": null,
+    "address": "State College Friends School, 1900 University Drive, State College, PA 16801",
+    "universes": [
+      "BUILT_BOTANY"
+    ],
+    "kind": "Orchid show",
+    "source": "https://www.aos.org/community-events/calendar",
+    "website": "https://www.aos.org/community-events/calendar",
+    "sourceId": "aos-680"
+  },
+  {
+    "name": "Orchid Society of Western Pennsylvania's \"Orchid Obsession\"",
+    "start": "2027-03-19",
+    "end": "2027-03-21",
+    "city": null,
+    "region": "Pennsylvania",
+    "country": "US",
+    "venue": null,
+    "address": "Crowne Plaza Hotel, 164 Fort Couch Road, Pittsburgh, PA 15241",
+    "universes": [
+      "BUILT_BOTANY"
+    ],
+    "kind": "Orchid show",
+    "source": "https://www.aos.org/community-events/calendar",
+    "website": "https://www.aos.org/community-events/calendar",
+    "sourceId": "aos-601"
+  },
+  {
+    "name": "Flamingo Gardens Orchid Society Forty-Fifth International Orchid and Bromeliad Show",
+    "start": "2027-03-26",
+    "end": "2027-03-28",
+    "city": null,
+    "region": "Florida",
+    "country": "US",
+    "venue": null,
+    "address": "Flamingo Gardens, 3750 S Flamingo Rd, Davie, FL 33330",
+    "universes": [
+      "BUILT_BOTANY"
+    ],
+    "kind": "Orchid show",
+    "source": "https://www.aos.org/community-events/calendar",
+    "website": "https://www.aos.org/community-events/calendar",
+    "sourceId": "aos-669"
+  },
+  {
+    "name": "Southeastern Pennsylvania Orchid Society International Orchid Show and Sale",
+    "start": "2027-04-02",
+    "end": "2027-04-04",
+    "city": null,
+    "region": "Pennsylvania",
+    "country": "US",
+    "venue": null,
+    "address": "Greater Philadelphia Expo Center, 100 Station Ave, Oaks, PA 19456",
+    "universes": [
+      "BUILT_BOTANY"
+    ],
+    "kind": "Orchid show",
+    "source": "https://www.aos.org/community-events/calendar",
+    "website": "https://www.aos.org/community-events/calendar",
+    "sourceId": "aos-662"
+  },
+  {
+    "name": "The Greater Cincinnati Orchid Society Spring Show 2027",
+    "start": "2027-04-03",
+    "end": "2027-04-04",
+    "city": null,
+    "region": "Ohio",
+    "country": "US",
+    "venue": null,
+    "address": "Dan Beard Council, 10078 Reading Rd, Cincinnati, OH 45241",
+    "universes": [
+      "BUILT_BOTANY"
+    ],
+    "kind": "Orchid show",
+    "source": "https://www.aos.org/community-events/calendar",
+    "website": "https://www.aos.org/community-events/calendar",
+    "sourceId": "aos-584"
+  },
+  {
+    "name": "Northeastern Wisconsin Orchid Society's \"Northeastern Wisconsin Spring Orchid Show\"",
+    "start": "2027-04-03",
+    "end": "2027-04-04",
+    "city": null,
+    "region": "Wisconsin",
+    "country": "US",
+    "venue": null,
+    "address": "Winnegamie Dog Club, 2043 Manitowoc Rd, Menasha, WI 54952",
+    "universes": [
+      "BUILT_BOTANY"
+    ],
+    "kind": "Orchid show",
+    "source": "https://www.aos.org/community-events/calendar",
+    "website": "https://www.aos.org/community-events/calendar",
+    "sourceId": "aos-602"
+  },
+  {
+    "name": "Cherry City Orchid Society’s “Orchid Roundup” ",
+    "start": "2027-04-03",
+    "end": "2027-04-04",
+    "city": null,
+    "region": "Oregon",
+    "country": "US",
+    "venue": null,
+    "address": "Keizer Lions Club, 4100 Cherry Ave NE, Keizer, OR 97303",
+    "universes": [
+      "BUILT_BOTANY"
+    ],
+    "kind": "Orchid show",
+    "source": "https://www.aos.org/community-events/calendar",
+    "website": "https://www.aos.org/community-events/calendar",
+    "sourceId": "aos-654"
+  },
+  {
+    "name": "Greater North Texas Orchid Society's \"Orchid Roundup\"",
+    "start": "2027-04-10",
+    "end": "2027-04-11",
+    "city": null,
+    "region": "Florida",
+    "country": "US",
+    "venue": null,
+    "address": "Texas A&M Agrilife – Research and Extension Center, 17360 Coit Rd, Dallas, TX 75252",
+    "universes": [
+      "BUILT_BOTANY"
+    ],
+    "kind": "Orchid show",
+    "source": "https://www.aos.org/community-events/calendar",
+    "website": "https://www.aos.org/community-events/calendar",
+    "sourceId": "aos-676"
+  },
+  {
+    "name": "Illinois Orchid Society Spring 2027 Show",
+    "start": "2027-04-16",
+    "end": "2027-04-18",
+    "city": null,
+    "region": "Illinois",
+    "country": "US",
+    "venue": null,
+    "address": "Chicago Botanic Garden, 1000 Lake Cook Rd., Glencoe, IL 60022",
+    "universes": [
+      "BUILT_BOTANY"
+    ],
+    "kind": "Orchid show",
+    "source": "https://www.aos.org/community-events/calendar",
+    "website": "https://www.aos.org/community-events/calendar",
+    "sourceId": "aos-620"
+  },
+  {
+    "name": "South Carolina Orchid Society Show",
+    "start": "2027-04-16",
+    "end": "2027-04-18",
+    "city": null,
+    "region": "South Carolina",
+    "country": "US",
+    "venue": null,
+    "address": "Garden Clubs of Greater Columbia, 1605 Park Circle, Columbia, SC 29201",
+    "universes": [
+      "BUILT_BOTANY"
+    ],
+    "kind": "Orchid show",
+    "source": "https://www.aos.org/community-events/calendar",
+    "website": "https://www.aos.org/community-events/calendar",
+    "sourceId": "aos-648"
+  },
+  {
+    "name": "Orchid Society of Middle Tennessee’s “Music City Orchid Show and Sale” ",
+    "start": "2027-04-23",
+    "end": "2027-04-25",
+    "city": null,
+    "region": "Tennessee",
+    "country": "US",
+    "venue": null,
+    "address": "Ellington Agriculture Center, Ed Jones Auditorium, 416 Hogan Road, Nashville, TN 37220",
+    "universes": [
+      "BUILT_BOTANY"
+    ],
+    "kind": "Orchid show",
+    "source": "https://www.aos.org/community-events/calendar",
+    "website": "https://www.aos.org/community-events/calendar",
+    "sourceId": "aos-668"
+  },
+  {
+    "name": "West Shore Orchid Society Spring Show",
+    "start": "2027-04-24",
+    "end": "2027-04-25",
+    "city": null,
+    "region": "Ohio",
+    "country": "US",
+    "venue": null,
+    "address": "Best Western Plus Strongsville, 15471 Royalton Road, Strongsville, OH 44136",
+    "universes": [
+      "BUILT_BOTANY"
+    ],
+    "kind": "Orchid show",
+    "source": "https://www.aos.org/community-events/calendar",
+    "website": "https://www.aos.org/community-events/calendar",
+    "sourceId": "aos-663"
+  },
+  {
+    "name": "Ottawa Orchid Society's \"Orchidophilia 2027\"",
+    "start": "2027-05-01",
+    "end": "2027-05-02",
+    "city": null,
+    "region": "Ontario",
+    "country": "CA",
+    "venue": null,
+    "address": "Algonquin College, 1385 Woodroffe Avenue, Ottawa, ON, K2G 1V8, Canada",
+    "universes": [
+      "BUILT_BOTANY"
+    ],
+    "kind": "Orchid show",
+    "source": "https://www.aos.org/community-events/calendar",
+    "website": "https://www.aos.org/community-events/calendar",
+    "sourceId": "aos-670"
+  },
+  {
+    "name": "Oklahoma Orchid Society Annual Show and Sale",
+    "start": "2027-05-07",
+    "end": "2027-05-09",
+    "city": null,
+    "region": "Oklahoma",
+    "country": "US",
+    "venue": null,
+    "address": "Will Rogers Gardens Exhibition Center, 3400 NW 36th Street, Oklahoma City, OK 73112",
+    "universes": [
+      "BUILT_BOTANY"
+    ],
+    "kind": "Orchid show",
+    "source": "https://www.aos.org/community-events/calendar",
+    "website": "https://www.aos.org/community-events/calendar",
+    "sourceId": "aos-626"
+  },
+  {
+    "name": "Galveston Bay Orchid Society Spring Show & Sale",
+    "start": "2027-05-07",
+    "end": "2027-05-09",
+    "city": null,
+    "region": "Texas",
+    "country": "US",
+    "venue": null,
+    "address": "Webster Civic Center, 311 Pennsylvania Avenue, Webster, TX 77598",
+    "universes": [
+      "BUILT_BOTANY"
+    ],
+    "kind": "Orchid show",
+    "source": "https://www.aos.org/community-events/calendar",
+    "website": "https://www.aos.org/community-events/calendar",
+    "sourceId": "aos-646"
+  },
+  {
+    "name": "Memphis Orchid Society Show and Sale",
+    "start": "2027-05-21",
+    "end": "2027-05-23",
+    "city": null,
+    "region": "Tennessee",
+    "country": "US",
+    "venue": null,
+    "address": "Memphis Botanic Garden, 750 Cherry Rd, Memphis, TN 38117",
+    "universes": [
+      "BUILT_BOTANY"
+    ],
+    "kind": "Orchid show",
+    "source": "https://www.aos.org/community-events/calendar",
+    "website": "https://www.aos.org/community-events/calendar",
+    "sourceId": "aos-667"
+  }
+]
