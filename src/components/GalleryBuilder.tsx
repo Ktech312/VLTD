@@ -593,12 +593,16 @@ export default function GalleryBuilder({
         };
       }
 
+      // Picking a theme puts that theme's own wall picture back: it replaces an uploaded background.
       return {
         ...current,
         themePack: nextView,
         displayMode: "shelf",
+        shelfBackground: "",
       };
     });
+    setShelfFileName("");
+    setBackgroundUploadError("");
   }
 
   const [capMessage, setCapMessage] = useState("");
