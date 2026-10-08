@@ -191,7 +191,6 @@ function buildImportItems(rows: ParsedRow[]): VaultItem[] {
         id: newId(),
         title: row.title,
         purchasePrice: row.purchasePrice,
-        currentValue: row.purchasePrice,
         notes: row.notes,
         createdAt: now + rowIndex * 1000 + i,
       });

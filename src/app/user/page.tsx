@@ -57,7 +57,7 @@ function clamp(n: number) {
 }
 
 function gain(i: ModelItem) {
-  return clamp(Number(i.currentValue ?? 0)) - clamp(Number(i.purchasePrice ?? 0));
+  return (Number(i.currentValue ?? 0) > 0 ? clamp(Number(i.currentValue ?? 0)) - clamp(Number(i.purchasePrice ?? 0)) : 0);
 }
 
 function csvEscape(value: any) {

@@ -554,7 +554,9 @@ function normalizeOne(input: unknown): VaultItem | null {
     purchaseTax: clampNum(raw.purchaseTax, 0),
     purchaseShipping: clampNum(raw.purchaseShipping, 0),
     purchaseFees: clampNum(raw.purchaseFees, 0),
-    currentValue: clampNum(raw.currentValue, clampNum(raw.purchasePrice, 0)),
+    // A value is only ever a value someone entered or looked up: when it is missing it stays missing
+    // (it used to be filled in with what the item cost, which looked like a market price).
+    currentValue: raw.currentValue == null || raw.currentValue === "" ? undefined : clampNum(raw.currentValue, 0),
     askingPrice:
       typeof raw.askingPrice === "number" && Number.isFinite(raw.askingPrice) && raw.askingPrice > 0
         ? raw.askingPrice

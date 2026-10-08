@@ -20,7 +20,7 @@ function clamp(n: number) {
   return Number.isFinite(n) ? n : 0;
 }
 function gain(i: ModelItem) {
-  return clamp(Number(i.currentValue ?? 0)) - clamp(Number(i.purchasePrice ?? 0));
+  return (Number(i.currentValue ?? 0) > 0 ? clamp(Number(i.currentValue ?? 0)) - clamp(Number(i.purchasePrice ?? 0)) : 0);
 }
 function fmtMoney(n: number) {
   const v = clamp(n);

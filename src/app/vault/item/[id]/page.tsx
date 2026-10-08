@@ -1384,13 +1384,16 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
 
               <div className="mt-5 rounded-[20px] bg-[color:var(--theme-elevated)] p-4 ring-1 ring-[color:var(--theme-border)]">
                 <div className="text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">MARKET</div>
-                <div className="mt-3 text-[40px] font-semibold leading-none">{fmtMoney(effectiveMarketValue(item))}</div>
+                <div className="mt-3 text-[40px] font-semibold leading-none">{effectiveMarketValue(item) > 0 ? fmtMoney(effectiveMarketValue(item)) : "Not valued"}</div>
+                {effectiveMarketValue(item) > 0 ? null : (
+                  <div className="mt-2 text-xs text-[color:var(--muted)]">No market value yet. Add one in Pricing below; nothing is filled in for you.</div>
+                )}
                 <div className="mt-4 border-t border-[color:var(--theme-border)] pt-3">
                   <DetailGrid
                     rows={[
-                      { label: "ROI", value: fmtPct(roi(item)) },
+                      { label: "ROI", value: effectiveMarketValue(item) > 0 ? fmtPct(roi(item)) : "—" },
                       { label: "Total cost", value: fmtMoney(totalCost(item)) },
-                      { label: "Gain", value: fmtMoney(gain(item)) },
+                      { label: "Gain", value: effectiveMarketValue(item) > 0 ? fmtMoney(gain(item)) : "—" },
                     ]}
                   />
                 </div>

@@ -92,7 +92,7 @@ function totalCost(item: VaultItem) {
 }
 
 function itemGain(item: VaultItem) {
-  return effectiveMarketValue(item) - totalCost(item);
+  return effectiveMarketValue(item) > 0 ? effectiveMarketValue(item) - totalCost(item) : 0;
 }
 type VaultUniverseSlug = "pop-culture" | "sports" | "tcg" | "music" | "jewelry-apparel" | "games" | "built-botany" | "misc" | "automotive" | "art";
 
@@ -691,7 +691,7 @@ function UniverseOverviewCard({
   const countedItems = collectibleItems(items);
   const totalValue = countedItems.reduce((sum, item) => sum + effectiveMarketValue(item), 0);
   const totalCostValue = countedItems.reduce((sum, item) => sum + totalCost(item), 0);
-  const totalGain = totalValue - totalCostValue;
+  const totalGain = totalValue - countedItems.filter((item) => effectiveMarketValue(item) > 0).reduce((sum, item) => sum + totalCost(item), 0);
   const hasItems = items.length > 0;
   const showGain = Math.abs(totalGain) > 0.49;
 
@@ -853,9 +853,9 @@ function VaultSelectionDrawer({
               {item.variant ? <span className="rounded-[5px] px-1.5 py-0.5 text-[10px] ring-1 ring-[color:var(--border)]" style={{ color: "#ECEDEF" }}>{item.variant}</span> : null}
               <span className="rounded-[5px] px-1.5 py-0.5 text-[10px] ring-1 ring-[color:var(--border)]" style={{ color: "#C8CDD2" }}>{item.isPublic ? "Public" : "Private"}</span>
             </div>
-            <div className="mt-3 text-[21px] font-bold leading-none" style={{ color: "#44D9F2" }}>{formatMoney(value)}</div>
+            <div className="mt-3 text-[21px] font-bold leading-none" style={{ color: "#44D9F2" }}>{value > 0 ? formatMoney(value) : "Not valued"}</div>
             <div className="mt-1 text-[11px]" style={{ color: gain >= 0 ? "var(--color-gain, #4CAF82)" : "var(--color-loss, #E05252)" }}>
-              {paid > 0 ? `${gain >= 0 ? "+" : ""}${gainPct.toFixed(1)}% since purchase` : "Add cost basis for return"}
+              {value <= 0 ? "Add a value to see return" : paid > 0 ? `${gain >= 0 ? "+" : ""}${gainPct.toFixed(1)}% since purchase` : "Add cost basis for return"}
             </div>
           </div>
         </div>
@@ -1360,7 +1360,7 @@ export default function VaultListView({ lockedUniverse }: { lockedUniverse?: Uni
     const totalItems = counted.length;
     const totalCostValue = counted.reduce((sum, item) => sum + totalCost(item), 0);
     const totalValue = counted.reduce((sum, item) => sum + effectiveMarketValue(item), 0);
-    const totalGain = totalValue - totalCostValue;
+    const totalGain = totalValue - counted.filter((item) => effectiveMarketValue(item) > 0).reduce((sum, item) => sum + totalCost(item), 0);
     const universeCount = new Set(counted.map((item) => universeForItem(item))).size;
     const insuranceReadyCount = counted.filter((item) => {
       const intelligence = intelligenceMap[item.id];
