@@ -108,7 +108,7 @@ export default function InsurancePacketPrintPage() {
   }, [selectedItems]);
 
   return (
-    <main className="bg-white px-5 py-5 text-black">
+    <main className="vltd-ins-light bg-white px-5 py-5 text-black">
       <style>{`
         :root { color-scheme: light; }
         body { background: white !important; color: black !important; }

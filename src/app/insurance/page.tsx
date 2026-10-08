@@ -154,7 +154,7 @@ export default function InsuranceExportPage() {
 
   if (hydrated && items.length === 0) {
     return (
-      <main className="px-4 py-10 text-[color:var(--fg)] sm:px-6">
+      <main className="vltd-ins-light px-4 py-10 text-[color:var(--fg)] sm:px-6">
         <div className="mx-auto max-w-2xl">
           <div className="text-[11px] tracking-[0.22em]" style={{ color: "var(--muted2)" }}>INSURANCE</div>
           <h1 className="mt-2 text-2xl font-semibold">Insurance export</h1>
@@ -185,7 +185,7 @@ export default function InsuranceExportPage() {
   }
 
   return (
-    <main className="px-4 py-6 text-[color:var(--fg)] sm:px-6 lg:px-8">
+    <main className="vltd-ins-light px-4 py-6 text-[color:var(--fg)] sm:px-6 lg:px-8">
       <style>{`
         @media print {
           @page { size: landscape; margin: 0.28in; }

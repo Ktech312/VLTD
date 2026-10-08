@@ -414,3 +414,7 @@
 #gallery-permissions-dropdown {
   background: #14171d !important;
 }
+
+/* Readable "good / synced" green: bright on dark pages, deeper on light pages. */
+:root { --ok-text: #4ade80; }
+.theme-light { --ok-text: #15803d; }

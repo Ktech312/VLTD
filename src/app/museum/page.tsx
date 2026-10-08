@@ -947,23 +947,23 @@ export default function MuseumPage() {
                         <div className="mt-1 text-xs text-[color:var(--muted)]">{selectedEntry.itemCount} items · Updated {formatGalleryDate(g.updatedAt)}</div>
 
                         {/* Grade + factors, side by side */}
-                        <div className="vltd-dark-surface mt-4 grid grid-cols-[116px_minmax(0,1fr)] gap-4 rounded-[9px] border p-3" style={{ borderColor: "var(--theme-border)", background: "rgba(3, 8, 14, 0.44)", boxShadow: "inset 0 1px 0 rgba(237,239,241,0.06)" }}>
+                        <div className="vltd-dark-surface mt-4 grid grid-cols-[116px_minmax(0,1fr)] gap-4 rounded-[9px] border p-3" style={{ borderColor: "var(--theme-border)", background: "#0F1620", boxShadow: "inset 0 1px 0 rgba(237,239,241,0.06)" }}>
                           <div className="flex flex-col">
-                            <div className="text-[9px] font-semibold uppercase tracking-[0.06em]" style={{ color: "#61656B" }}>Exhibition Grade</div>
+                            <div className="text-[9px] font-semibold uppercase tracking-[0.06em]" style={{ color: "#AEB6C0" }}>Exhibition Grade</div>
                             <div className="relative mt-2 flex h-[72px] w-[72px] items-center justify-center">
                               <svg viewBox="0 0 76 84" className="absolute inset-0 h-full w-full"><polygon points="38,3 71,22 71,62 38,81 5,62 5,22" fill="transparent" stroke="var(--theme-gold-border, rgba(203,208,213,0.45))" strokeWidth="2"/></svg>
                               <span className="relative text-3xl font-black" style={{ color: "#C8CDD2" }}>{gradeLetter(s.band)}</span>
                             </div>
                             <div className="mt-1.5 text-base font-black" style={{ color: "#C8CDD2" }}>{gradeBandLabel(s.band)}</div>
-                            <div className="text-[10.5px] leading-snug" style={{ color: "#9BA0A6" }}>Top {topPct}% of public exhibitions</div>
+                            <div className="text-[10.5px] leading-snug" style={{ color: "#D3D9E0" }}>Top {topPct}% of public exhibitions</div>
                             <div className="mt-1 text-[11px] font-semibold leading-tight" style={{ color: "#C8CDD2" }}>How grades work <AppIcon name="info" size={11} strokeWidth={2} className="ml-0.5 inline-block align-[-1.5px]" /></div>
                           </div>
                           <div className="min-w-0 border-l pl-3" style={{ borderColor: "var(--theme-border)" }}>
-                            <div className="flex items-center gap-1 whitespace-nowrap text-[9px] font-semibold uppercase tracking-[0.16em]" style={{ color: "#61656B" }}><AppIcon name="chevronDown" size={10} strokeWidth={2.5} />Grade factors</div>
+                            <div className="flex items-center gap-1 whitespace-nowrap text-[9px] font-semibold uppercase tracking-[0.16em]" style={{ color: "#AEB6C0" }}><AppIcon name="chevronDown" size={10} strokeWidth={2.5} />Grade factors</div>
                             <div className="mt-1.5 divide-y divide-[color:var(--theme-border)]">
                               {factors.map((f) => (
                                 <div key={f.name} className="flex items-center justify-between gap-2 py-[7px] text-[12px]">
-                                  <span className="flex min-w-0 items-center gap-2 whitespace-nowrap" style={{ color: "#9BA0A6" }}>
+                                  <span className="flex min-w-0 items-center gap-2 whitespace-nowrap" style={{ color: "#D3D9E0" }}>
                                     <svg width="16" height="16" viewBox="0 0 24 24" className="shrink-0">
                                       {f.r.ok ? (
                                         <>

@@ -592,7 +592,7 @@ export default function AccountPage() {
                     {cloudItemCount == null ? (
                       <span className="text-[color:var(--muted2)]">Local {localItemCount}</span>
                     ) : localItemCount === cloudItemCount ? (
-                      <span className="vltd-keep-color" style={{ "--vltd-keep-color": "#4ade80" } as React.CSSProperties}>
+                      <span className="vltd-keep-color" style={{ "--vltd-keep-color": "var(--ok-text, #4ade80)" } as React.CSSProperties}>
                         ✓ Synced ({localItemCount})
                       </span>
                     ) : (
