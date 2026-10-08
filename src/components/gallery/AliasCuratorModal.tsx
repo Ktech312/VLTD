@@ -86,7 +86,7 @@ export default function AliasCuratorModal({
           className="vltd-selectable bg-[color:var(--pill)] text-[color:var(--pill-fg)] ring-1 ring-[color:var(--border)] transition"
           style={{ position: "absolute", right: 14, top: 14, width: 30, height: 30, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", border: "none", cursor: "pointer" }}
         >
-          <AppIcon name="close" strokeWidth={1.8} style={{ width: 13, height: 13 }} />
+          <AppIcon name="close" strokeWidth={1.8} size={13} />
         </button>
 
         <div style={{ display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", paddingTop: 6 }}>

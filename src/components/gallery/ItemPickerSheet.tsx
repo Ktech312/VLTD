@@ -321,11 +321,11 @@ export function ItemPickerSheet({
           className="!rounded-full transition hover:opacity-80"
           style={{ flexShrink: 0, width: 34, height: 34, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", border: "1px solid rgba(255,255,255,0.28)", background: "rgba(255,255,255,0.08)", boxShadow: "none", color: "#fff", cursor: "pointer" }}
         >
-          <AppIcon name="close" strokeWidth={1.8} style={{ width: 15, height: 15 }} />
+          <AppIcon name="close" strokeWidth={1.8} size={15} />
         </button>
 
         <div style={{ position: "relative", flex: 1 }}>
-          <AppIcon name="search" strokeWidth={1.8} style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", width: 14, height: 14, pointerEvents: "none", color: "var(--muted)" }} />
+          <AppIcon name="search" strokeWidth={1.8} size={14} style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", pointerEvents: "none", color: "var(--muted)" }} />
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
