@@ -2,7 +2,7 @@
 
 import { vaultItemFromPublicSnapshot as vaultItemFromSnapshot } from "@/lib/hiddenItems";
 import { publicRowToItem as normalizeVaultItem } from "@/lib/publicProfile";
-import { PUBLIC_ITEM_COLUMNS, PUBLIC_ITEM_COLUMNS_FINANCIAL } from "@/lib/publicItemColumns";
+import { PUBLIC_ITEM_COLUMNS_WITH_VALUE } from "@/lib/publicItemColumns";
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useParams } from "next/navigation";
@@ -137,7 +137,7 @@ export default function InviteGalleryPage() {
           if (uniqueIds.length > 0) {
             let itemQuery = supabase
               .from("vault_items")
-              .select(permissions.financialHistory ? PUBLIC_ITEM_COLUMNS_FINANCIAL : PUBLIC_ITEM_COLUMNS)
+              .select(PUBLIC_ITEM_COLUMNS_WITH_VALUE)
               .in("id", uniqueIds);
             // An exhibit only shows items from its own profile.
             if (gallery.profile_id) itemQuery = itemQuery.eq("profile_id", gallery.profile_id);
@@ -147,6 +147,19 @@ export default function InviteGalleryPage() {
             for (const raw of vaultRows ?? []) {
               const item = normalizeVaultItem(raw as unknown as Record<string, unknown>);
               byId.set(item.id, item);
+            }
+
+            // What was paid is not public: invites that allow financial history get it through a checked call.
+            if (permissions.financialHistory) {
+              try {
+                const { data: financials } = await supabase.rpc("get_invite_item_financials", { p_token: token });
+                for (const row of (Array.isArray(financials) ? financials : []) as { id: string; purchase_price: number | null }[]) {
+                  const found = byId.get(String(row.id));
+                  if (found && row.purchase_price != null) found.purchasePrice = Number(row.purchase_price);
+                }
+              } catch {
+                /* the page still works without purchase prices */
+              }
             }
 
             const snapshotById = new Map(

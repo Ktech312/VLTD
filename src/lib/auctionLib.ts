@@ -43,6 +43,13 @@ export type PlaceBidResult =
 // Helpers
 // ---------------------------------------------------------------------------
 
+// Only these columns are readable by signed-out visitors (never the private notes or what was paid).
+const AUCTION_COLUMNS = [
+  "id", "title", "auction_status", "auction_ends_at", "auction_starting_bid", "auction_current_bid",
+  "auction_bid_count", "auction_winner_id", "reserve_price", "buy_it_now_price", "universe", "category",
+  "grade", "image_front_url", "description", "profile_id",
+].join(", ");
+
 function rowToAuctionItem(row: Record<string, unknown>): AuctionItem {
   return {
     id: String(row.id),
@@ -60,7 +67,7 @@ function rowToAuctionItem(row: Record<string, unknown>): AuctionItem {
     category: typeof row.category === "string" ? row.category : undefined,
     grade: typeof row.grade === "string" ? row.grade : undefined,
     imageFrontUrl: typeof row.image_front_url === "string" ? row.image_front_url : undefined,
-    notes: typeof row.notes === "string" ? row.notes : undefined,
+    notes: typeof row.description === "string" ? row.description : undefined,
     profile_id: typeof row.profile_id === "string" ? row.profile_id : undefined,
   };
 }
@@ -91,7 +98,7 @@ export async function fetchActiveAuctions(opts?: {
   const now = Date.now();
   let q = sb
     .from("vault_items")
-    .select("*")
+    .select(AUCTION_COLUMNS)
     .eq("status", "AUCTION")
     .eq("auction_status", "ACTIVE")
     .gt("auction_ends_at", now)
@@ -102,7 +109,7 @@ export async function fetchActiveAuctions(opts?: {
 
   const { data, error } = await q;
   if (error || !data) return [];
-  return (data as Record<string, unknown>[]).map(rowToAuctionItem);
+  return (data as unknown as Record<string, unknown>[]).map(rowToAuctionItem);
 }
 
 /** Fetch a single auction item by vault item id. */
@@ -112,13 +119,13 @@ export async function fetchAuctionItem(id: string): Promise<AuctionItem | null> 
 
   const { data, error } = await sb
     .from("vault_items")
-    .select("*")
+    .select(AUCTION_COLUMNS)
     .eq("id", id)
     .eq("status", "AUCTION")
     .single();
 
   if (error || !data) return null;
-  return rowToAuctionItem(data as Record<string, unknown>);
+  return rowToAuctionItem(data as unknown as Record<string, unknown>);
 }
 
 /** Fetch bid history for an item, newest first. */
@@ -134,7 +141,7 @@ export async function fetchBids(itemId: string, limit = 50): Promise<Bid[]> {
     .limit(limit);
 
   if (error || !data) return [];
-  return (data as Record<string, unknown>[]).map(rowToBid);
+  return (data as unknown as Record<string, unknown>[]).map(rowToBid);
 }
 
 /** Place a bid. Enforces minimum increment server-side via RLS + DB function. */
