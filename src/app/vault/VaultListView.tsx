@@ -1779,7 +1779,7 @@ export default function VaultListView({ lockedUniverse }: { lockedUniverse?: Uni
             </div>
           </div>
 
-          <div className="mt-3 rounded-[14px] border p-3" style={{ background: "var(--theme-card)", borderColor: "var(--theme-border)" }}>
+          <div className="mt-3 rounded-[9px] border p-3" style={{ background: "var(--theme-card)", borderColor: "var(--theme-border)" }}>
             <div className="flex flex-wrap items-center gap-2">
               {items.length > 0 ? (
                 <div className="flex flex-wrap items-center gap-2 rounded-[8px] bg-[color:var(--input)] px-2 py-1 ring-1 ring-[color:var(--border)]">

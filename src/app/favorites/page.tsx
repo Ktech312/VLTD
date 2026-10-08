@@ -195,8 +195,8 @@ export default function FavoritesPage() {
   return (
     <div className="" style={{ background: "var(--bg)" }}>
       {/* Header */}
-      <div className="border-b border-[color:var(--border)]" style={{ background: "var(--surface)" }}>
-        <div className="mx-auto max-w-2xl px-4 py-6">
+      <div className="mx-auto max-w-2xl px-4 pt-6">
+        <div className="rounded-[9px] border border-[color:var(--border)] px-4 py-5" style={{ background: "var(--surface)" }}>
           <div className="flex items-center gap-3">
             <Link href="/vault" className="text-sm" style={{ color: "var(--muted)" }}>Vault</Link>
             <span style={{ color: "var(--muted)" }}>/</span>

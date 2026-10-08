@@ -247,6 +247,12 @@
   background: var(--theme-card, rgba(255,255,255,0.80)) !important;
 }
 
+/* Panels that get a card background here but have no corner of their own: same 9px as every other panel. */
+.theme-light body section:not([class*="rounded"]):not(.vltd-dark-surface):not(.vltd-dark-surface *),
+.theme-light body article:not([class*="rounded"]):not(.vltd-dark-surface):not(.vltd-dark-surface *) {
+  border-radius: 9px;
+}
+
 /* Browse public galleries button */
 .theme-light body a[href="#public-galleries"] {
   background: var(--theme-card, rgba(255,255,255,0.80)) !important;
