@@ -1086,7 +1086,7 @@ export default function GalleryPage() {
                   </div>
 
                   {accessInfoOpen ? (
-                    <div id="gallery-access-mode-help" className="absolute left-0 bottom-full z-20 mb-3 w-full max-w-[520px] rounded-2xl p-4 text-sm leading-6 text-[color:var(--fg)] ring-1 ring-[color:var(--border)] shadow-[0_24px_60px_rgba(0,0,0,0.42)]">
+                    <div id="gallery-access-mode-help" className="vltd-dark-surface absolute left-0 bottom-full z-20 mb-3 w-full max-w-[520px] rounded-2xl p-4 text-sm leading-6 text-[color:var(--fg)] ring-1 ring-[color:var(--border)] shadow-[0_24px_60px_rgba(0,0,0,0.42)]">
                       <div className="flex items-start justify-between gap-4">
                         <div className="text-[11px] tracking-[0.18em] text-[color:var(--muted2)]">ACCESS MODE HELP</div>
                         <button
@@ -1185,7 +1185,7 @@ export default function GalleryPage() {
                         className="h-3.5 w-3.5 accent-cyan-400"
                       />
                       {adultInfoOpen ? (
-                        <span id="gallery-adult-info" className="absolute left-0 bottom-full z-20 mb-2 w-[min(360px,calc(100vw-48px))] rounded-xl px-3 py-2 text-[11px] leading-4 text-[color:var(--muted)] ring-1 ring-[color:var(--border)] shadow-[0_18px_44px_rgba(0,0,0,0.38)]">
+                        <span id="gallery-adult-info" className="vltd-dark-surface absolute left-0 bottom-full z-20 mb-2 w-[min(360px,calc(100vw-48px))] rounded-xl px-3 py-2 text-[11px] leading-4 text-[color:var(--muted)] ring-1 ring-[color:var(--border)] shadow-[0_18px_44px_rgba(0,0,0,0.38)]">
                           Public viewers must confirm they are 18 or older before entering this exhibit.
                         </span>
                       ) : null}
@@ -1219,7 +1219,7 @@ export default function GalleryPage() {
                         className="h-3.5 w-3.5 accent-cyan-400"
                       />
                       {aliasInfoOpen ? (
-                        <span id="gallery-alias-info" className="absolute left-0 bottom-full z-20 mb-2 w-[min(360px,calc(100vw-48px))] rounded-xl px-3 py-2 text-[11px] leading-4 text-[color:var(--muted)] ring-1 ring-[color:var(--border)] shadow-[0_18px_44px_rgba(0,0,0,0.38)]">
+                        <span id="gallery-alias-info" className="vltd-dark-surface absolute left-0 bottom-full z-20 mb-2 w-[min(360px,calc(100vw-48px))] rounded-xl px-3 py-2 text-[11px] leading-4 text-[color:var(--muted)] ring-1 ring-[color:var(--border)] shadow-[0_18px_44px_rgba(0,0,0,0.38)]">
                           Hides your real name on THIS exhibition's public page. Visitors see the name you choose instead. You still manage this exhibition as yourself.
                         </span>
                       ) : null}
@@ -1436,7 +1436,7 @@ export default function GalleryPage() {
                             </button>
 
                             {isExpiryOpen && (
-                              <div id="gallery-expiry-dropdown" className="absolute left-0 top-full z-20 mt-1.5 w-40 rounded-[14px] p-2 ring-1 ring-[color:var(--border)] shadow-[0_12px_36px_rgba(0,0,0,0.42)]">
+                              <div id="gallery-expiry-dropdown" className="vltd-dark-surface absolute left-0 top-full z-20 mt-1.5 w-40 rounded-[14px] p-2 ring-1 ring-[color:var(--border)] shadow-[0_12px_36px_rgba(0,0,0,0.42)]">
                                 {[
                                   { label: "Never", value: null },
                                   { label: "24 hours", value: Date.now() + 86400000 },
@@ -1476,7 +1476,7 @@ export default function GalleryPage() {
                             </button>
 
                             {isPermsOpen && (
-                              <div id="gallery-permissions-dropdown" className="absolute left-0 top-full z-20 mt-1.5 w-52 rounded-[14px] p-3 ring-1 ring-[color:var(--border)] shadow-[0_12px_36px_rgba(0,0,0,0.42)]">
+                              <div id="gallery-permissions-dropdown" className="vltd-dark-surface absolute left-0 top-full z-20 mt-1.5 w-52 rounded-[14px] p-3 ring-1 ring-[color:var(--border)] shadow-[0_12px_36px_rgba(0,0,0,0.42)]">
                                 <div className="mb-2 text-[9px] font-bold tracking-[0.18em] text-[color:var(--muted2)]">VIEWER PERMISSIONS</div>
                                 {(
                                   [

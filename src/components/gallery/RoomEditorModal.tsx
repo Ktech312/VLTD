@@ -147,7 +147,7 @@ export default function RoomEditorModal({
       aria-label={`Edit ${roomLabel}`}
     >
       <div
-        className="max-h-[85vh] w-full max-w-lg overflow-y-auto rounded-[16px] bg-[#14171d] p-5 text-white ring-1 ring-white/12"
+        className="vltd-dark-surface max-h-[85vh] w-full max-w-lg overflow-y-auto rounded-[16px] bg-[#14171d] p-5 text-white ring-1 ring-white/12"
         onClick={(event) => event.stopPropagation()}
       >
         <div className="mb-4 flex items-center justify-between gap-3">

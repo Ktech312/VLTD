@@ -78,6 +78,7 @@ export default function ExhibitionInfoModal({
       onClick={onClose}
     >
       <div
+        className="vltd-dark-surface"
         onClick={(e) => e.stopPropagation()}
         style={{
           position: "relative",

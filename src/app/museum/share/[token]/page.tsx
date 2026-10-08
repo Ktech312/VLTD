@@ -461,7 +461,7 @@ export default function SharedGalleryPage() {
                 className="fixed inset-0 z-[10000] bg-black/40 backdrop-blur-[2px]"
                 onClick={() => setShowShare(false)}
               />
-              <div className="fixed bottom-0 left-0 right-0 z-[10001] rounded-t-3xl bg-[#111827] p-6 pb-10 ring-1 ring-white/10 shadow-2xl">
+              <div className="vltd-dark-surface fixed bottom-0 left-0 right-0 z-[10001] rounded-t-3xl bg-[#111827] p-6 pb-10 ring-1 ring-white/10 shadow-2xl">
                 <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-white/20" />
                 <p className="mb-1 text-sm font-semibold text-white">{gallery.title}</p>
                 <p className="mb-4 text-xs text-white/40">Share this exhibition</p>

@@ -67,6 +67,7 @@ export default function AliasCuratorModal({
       onClick={onClose}
     >
       <div
+        className="vltd-dark-surface"
         onClick={(e) => e.stopPropagation()}
         style={{
           position: "relative",
