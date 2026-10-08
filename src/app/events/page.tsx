@@ -547,7 +547,7 @@ export default function EventsPage() {
     let cancelled = false;
     async function fetchCatalog() {
       const rows: CollectorEvent[] = [];
-      for (let offset = 0; ; offset += 1000) {
+      for (let offset = 0; !cancelled; offset += 1000) {
         const { data, error } = await supabase!.from("collector_events").select("*")
           .eq("enabled", true).gte("ends_at", new Date().toISOString())
           .order("starts_at", { ascending: true }).order("id").range(offset, offset + 999);
@@ -555,6 +555,7 @@ export default function EventsPage() {
         rows.push(...(data ?? []) as CollectorEvent[]);
         if (!data || data.length < 1000) return rows;
       }
+      return rows;
     }
     fetchCatalog()
       .then((data) => {
@@ -738,7 +739,7 @@ export default function EventsPage() {
 
           <aside className="hidden rounded-[7px] border border-[color:var(--border)] bg-[color:var(--surface)] p-4 lg:block">
             <div className="mb-3 flex items-center justify-between">
-              <h2 className="text-[11px] font-black uppercase tracking-[0.16em] text-[color:var(--theme-gold)]">Saved Events</h2>
+              <h2 className="text-[11px] font-black uppercase tracking-[0.16em] text-[color:var(--theme-gold)]">{savedEvents.length ? "Saved Events" : "Coming Up"}</h2>
             </div>
             <div className="space-y-2">
               {(savedEvents.length ? savedEvents : filteredEvents.slice(0, 3)).map((event) => (
@@ -961,7 +962,7 @@ export default function EventsPage() {
 
           <aside className="rounded-[7px] border border-[color:var(--border)] bg-[color:var(--surface)] p-4 lg:hidden">
             <div className="mb-3 flex items-center justify-between">
-              <h2 className="text-[11px] font-black uppercase tracking-[0.16em] text-[color:var(--theme-gold)]">Saved Events</h2>
+              <h2 className="text-[11px] font-black uppercase tracking-[0.16em] text-[color:var(--theme-gold)]">{savedEvents.length ? "Saved Events" : "Coming Up"}</h2>
             </div>
             <div className="space-y-2">
               {(savedEvents.length ? savedEvents : filteredEvents.slice(0, 3)).map((event) => (
