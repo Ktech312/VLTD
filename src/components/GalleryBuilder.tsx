@@ -1174,34 +1174,34 @@ export default function GalleryBuilder({
                 onGalleryChange((current) => syncSectionsAndLayout(current, updated));
               }}
               placeholder="Exhibit name…"
-              className="min-w-0 flex-1 min-h-[28px] rounded-full bg-[color:var(--pill)] px-3 text-[11px] font-semibold text-[color:var(--fg)] ring-1 ring-[color:var(--border)] shadow-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--fg)]/20 transition-all placeholder:text-[color:var(--muted)]"
+              className="w-[38%] min-w-[150px] max-w-full shrink-0 min-h-[28px] rounded-full bg-[color:var(--pill)] px-3 text-[11px] font-semibold text-[color:var(--fg)] ring-1 ring-[color:var(--border)] shadow-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--fg)]/20 transition-all placeholder:text-[color:var(--muted)]"
+            />
+
+            {/* Section description — sits to the right of the title; auto-expands on type, shrinks on blur */}
+            <textarea
+              key={activeSectionIdx}
+              rows={1}
+              value={sections[activeSectionIdx]?.description ?? ""}
+              onChange={(e) => {
+                const updated = sections.map((s, i) =>
+                  i === activeSectionIdx ? { ...s, description: e.target.value } : s
+                );
+                onGalleryChange((current) => syncSectionsAndLayout(current, updated));
+              }}
+              onInput={(e) => {
+                const el = e.currentTarget;
+                el.style.height = "auto";
+                el.style.height = el.scrollHeight + "px";
+              }}
+              onBlur={(e) => {
+                if (!e.currentTarget.value) {
+                  e.currentTarget.style.height = "auto";
+                }
+              }}
+              placeholder="Exhibit description…"
+              className="min-w-[150px] flex-1 resize-none overflow-hidden rounded-2xl bg-[color:var(--pill)] px-3 py-1.5 text-[11px] text-[color:var(--fg)] ring-1 ring-[color:var(--border)] shadow-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--fg)]/20 transition-all placeholder:text-[color:var(--muted)]"
             />
           </div>
-
-          {/* Section description — one line, auto-expands on type, shrinks on blur */}
-          <textarea
-            key={activeSectionIdx}
-            rows={1}
-            value={sections[activeSectionIdx]?.description ?? ""}
-            onChange={(e) => {
-              const updated = sections.map((s, i) =>
-                i === activeSectionIdx ? { ...s, description: e.target.value } : s
-              );
-              onGalleryChange((current) => syncSectionsAndLayout(current, updated));
-            }}
-            onInput={(e) => {
-              const el = e.currentTarget;
-              el.style.height = "auto";
-              el.style.height = el.scrollHeight + "px";
-            }}
-            onBlur={(e) => {
-              if (!e.currentTarget.value) {
-                e.currentTarget.style.height = "auto";
-              }
-            }}
-            placeholder="Exhibit description…"
-            className="mt-1 block w-full resize-none overflow-hidden rounded-2xl bg-[color:var(--pill)] px-3 py-2 text-[11px] text-[color:var(--fg)] ring-1 ring-[color:var(--border)] shadow-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--fg)]/20 transition-all placeholder:text-[color:var(--muted)]"
-          />
 
           {/* Background / error status */}
           {(shelfFileName || shelfBackground || backgroundUploadError) ? (
