@@ -631,6 +631,27 @@ export default function GuestGalleryRenderer({
                       </>
                     ) : null}
                   </div>
+
+                  {/* Exhibit pages: tabs live inside the header card, to the right */}
+                  {sectionViews.length > 1 ? (
+                    <div className="mt-3 flex flex-wrap justify-end gap-2">
+                      {sectionViews.map((sv, idx) => (
+                        <button
+                          key={sv.section.id}
+                          type="button"
+                          onClick={() => setSelectedSectionIdx(idx)}
+                          className="shrink-0 rounded-full px-3 py-1 text-xs font-semibold transition"
+                          style={{
+                            background: idx === selectedSectionIdx ? "rgba(203,208,213,0.18)" : "rgba(255,255,255,0.06)",
+                            color: idx === selectedSectionIdx ? "#C8CDD2" : "rgba(255,255,255,0.55)",
+                            border: `1px solid ${idx === selectedSectionIdx ? "rgba(203,208,213,0.35)" : "rgba(255,255,255,0.08)"}`,
+                          }}
+                        >
+                          {sv.section.title && sv.section.title !== "Untitled Section" ? sv.section.title : `Exhibit ${idx + 1}`}
+                        </button>
+                      ))}
+                    </div>
+                  ) : null}
                 </div>
 
                 <div className="flex shrink-0 flex-col items-end gap-2">
@@ -645,27 +666,6 @@ export default function GuestGalleryRenderer({
               </div>
             </div>
           </section> : null}
-
-          {/* Section navigation tabs — public view only */}
-          {!embedded && sectionViews.length > 1 && (
-            <div className={["mx-auto flex gap-2 overflow-x-auto pb-1 pt-3", GALLERY_STAGE_WIDTH_CLASS].join(" ")}>
-              {sectionViews.map((sv, idx) => (
-                <button
-                  key={sv.section.id}
-                  type="button"
-                  onClick={() => setSelectedSectionIdx(idx)}
-                  className="shrink-0 rounded-full px-4 py-2 text-sm font-semibold transition"
-                  style={{
-                    background: idx === selectedSectionIdx ? "rgba(203,208,213,0.18)" : "rgba(255,255,255,0.06)",
-                    color: idx === selectedSectionIdx ? "#C8CDD2" : "rgba(255,255,255,0.55)",
-                    border: `1px solid ${idx === selectedSectionIdx ? "rgba(203,208,213,0.35)" : "rgba(255,255,255,0.08)"}`,
-                  }}
-                >
-                  {sv.section.title && sv.section.title !== "Untitled Section" ? sv.section.title : `Exhibit ${idx + 1}`}
-                </button>
-              ))}
-            </div>
-          )}
 
           {/* Arrows and swiping step through the exhibits; after the last one comes the first. */}
           <div

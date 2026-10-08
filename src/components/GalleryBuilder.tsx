@@ -1320,8 +1320,8 @@ export default function GalleryBuilder({
                         containerType: "inline-size" as const,
                         aspectRatio: "940 / 2700",
                         backgroundImage: sceneBackground ? `url(${sceneBackground})` : undefined,
-                        backgroundSize: "cover",
-                        backgroundPosition: "center",
+                        backgroundSize: "100% auto",
+                        backgroundPosition: "center top",
                         backgroundRepeat: "no-repeat",
                       }
                     : undefined
