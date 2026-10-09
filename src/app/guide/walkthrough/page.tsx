@@ -51,8 +51,8 @@ export default function WalkthroughPage() {
       {lessons.map((lesson) => (
         <section key={lesson.id} id={lesson.id} aria-labelledby={`${lesson.id}-title`} className="scroll-mt-24 border-t py-10" style={{ borderColor: "var(--border)" }}>
           <h2 id={`${lesson.id}-title`} className="mb-5 text-3xl font-bold">{lesson.title}</h2>
-          <video controls playsInline preload="none" poster={`/guide-media/${lesson.video}.png`} className="aspect-video w-full rounded-xl bg-black" aria-label={`${lesson.title}: narrated screen walkthrough`}>
-            <source src={`/guide-media/${lesson.video}.mp4`} type="video/mp4" />
+          <video controls playsInline preload="none" poster={`/guide-media/${lesson.video}.png?v=brand2`} className="aspect-video w-full rounded-xl bg-black" aria-label={`${lesson.title}: narrated screen walkthrough`}>
+            <source src={`/guide-media/${lesson.video}.mp4?v=brand2`} type="video/mp4" />
             <track kind="captions" src={`/guide-media/${lesson.video}.vtt`} srcLang="en" label="English" />
             <p>Your browser does not support this video. Follow the written steps below.</p>
           </video>
