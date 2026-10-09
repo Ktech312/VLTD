@@ -321,6 +321,7 @@ export default function GalleryBuilder({
   const [previewNaturalHeight, setPreviewNaturalHeight] = useState(1120);
   const [sectionDropdownOpen, setSectionDropdownOpen] = useState(false);
   const [deleteSectionConfirm, setDeleteSectionConfirm] = useState<string | null>(null);
+  const [bgInfoOpen, setBgInfoOpen] = useState(false);
   const [sectionBtnRect, setSectionBtnRect] = useState<DOMRect | null>(null);
   const [activeSectionIdx, setActiveSectionIdx] = useState(0);
   const sectionBtnRef = useRef<HTMLButtonElement | null>(null);
@@ -967,6 +968,44 @@ export default function GalleryBuilder({
             >
               Upload Background
             </label>
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setBgInfoOpen((open) => !open)}
+                className="vltd-selectable inline-flex h-5 w-5 items-center justify-center rounded-full bg-[color:var(--pill)] text-[10px] font-semibold text-[color:var(--pill-fg)] ring-1 ring-[color:var(--border)]"
+                aria-label="Background picture size and format"
+                aria-expanded={bgInfoOpen}
+              >
+                i
+              </button>
+              {bgInfoOpen ? (
+                <div
+                  id="gallery-background-info"
+                  className="vltd-dark-surface absolute left-0 top-full z-30 mt-2 w-[min(340px,calc(100vw-48px))] rounded-xl px-3 py-2.5 text-[11px] leading-[1.5] ring-1 ring-[color:var(--border)] shadow-[0_18px_44px_rgba(0,0,0,0.38)]"
+                  style={{ background: "#14171d" }}
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="text-[10px] font-bold tracking-[0.16em] text-[color:var(--muted2)]">BACKGROUND PICTURE</div>
+                    <button
+                      type="button"
+                      onClick={() => setBgInfoOpen(false)}
+                      className="text-[11px] font-semibold text-[color:var(--muted)]"
+                      aria-label="Close background picture info"
+                    >
+                      Close
+                    </button>
+                  </div>
+                  <ul className="mt-1.5 grid gap-1">
+                    <li><b>Shape:</b> tall, 940 wide by 2700 tall (about 1 to 2.9). Any size in that shape works; 1880 by 5400 stays sharp.</li>
+                    <li><b>Type:</b> JPG or PNG. Pictures longer than 5400 pixels are shrunk to that.</li>
+                    <li><b>Shelves:</b> there are 6 rows of 3 items. Cards rest on a shelf at about 22%, 37%, 52%, 66%, 81% and 96% of the height, counted from the top.</li>
+                    <li><b>Top of the wall:</b> keep the first 10% free for the title plaque.</li>
+                    <li><b>A wide picture</b> only covers the top of the wall.</li>
+                    <li><b>Themes:</b> picking a theme from the Theme menu replaces your picture with that theme&apos;s own.</li>
+                  </ul>
+                </div>
+              ) : null}
+            </div>
 
             {/* Edit Selection — always neutral, no glow. Per explicit instruction:
                 "Edit doesn't need to glow, no reason for that." */}
