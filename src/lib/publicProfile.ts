@@ -1,5 +1,6 @@
 "use client";
 
+import { publicItemsTable } from "@/lib/publicItemsSource";
 import { PUBLIC_ITEM_COLUMNS_WITH_VALUE } from "@/lib/publicItemColumns";
 import { getStoredActiveProfileId } from "@/lib/auth";
 import { isSupplyItem } from "@/lib/vaultStats";
@@ -250,7 +251,7 @@ export async function fetchPublicVaultItems(profileId: string): Promise<VaultIte
   if (!supabase || !cleanProfileId) return [];
 
   const { data, error } = await supabase
-    .from(VAULT_ITEMS_TABLE)
+    .from(await publicItemsTable(supabase))
     .select(PUBLIC_ITEM_COLUMNS_WITH_VALUE)
     .eq("profile_id", cleanProfileId)
     .eq("is_public", true)
@@ -280,7 +281,7 @@ export async function fetchPublicVaultItemById(itemId: string): Promise<VaultIte
   if (!supabase || !cleanId) return null;
 
   const { data, error } = await supabase
-    .from(VAULT_ITEMS_TABLE)
+    .from(await publicItemsTable(supabase))
     .select(PUBLIC_ITEM_COLUMNS_WITH_VALUE)
     .eq("id", cleanId)
     .eq("is_public", true)
@@ -391,7 +392,7 @@ export async function fetchMarketItems(opts?: {
   if (!supabase) return [];
 
   let query = supabase
-    .from(VAULT_ITEMS_TABLE)
+    .from(await publicItemsTable(supabase))
     .select(PUBLIC_ITEM_COLUMNS_WITH_VALUE)
     .eq("status", "FOR_SALE")
     .eq("is_public", true)

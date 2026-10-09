@@ -1,3 +1,4 @@
+import { publicItemsTable } from "@/lib/publicItemsSource";
 import { createClient } from "@supabase/supabase-js";
 import { isSupplyItem } from "@/lib/vaultStats";
 import type { Metadata } from "next";
@@ -60,14 +61,14 @@ async function fetchItem(itemId: string): Promise<Row | null> {
   // the owner's public description. If the description column has not been
   // added to the database yet, fall back to the same query without it.
   const withDescription = await supabase
-    .from(VAULT_ITEMS_TABLE)
+    .from(await publicItemsTable(supabase))
     .select(columns + ", description")
     .eq("id", itemId)
     .single();
   let data = withDescription.data as Row | null;
   let error: unknown = withDescription.error;
   if (error) {
-    const without = await supabase.from(VAULT_ITEMS_TABLE).select(columns).eq("id", itemId).single();
+    const without = await supabase.from(await publicItemsTable(supabase)).select(columns).eq("id", itemId).single();
     data = without.data as Row | null;
     error = without.error;
   }

@@ -1,6 +1,19 @@
 "use client";
 
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
+import { getStoredActiveProfileId } from "@/lib/auth";
+
+/**
+ * Favorites belong to the profile you are signed into (personal or Business). Each new favorite is stamped
+ * with its profile; favorites saved before that carry no profile and stay visible to both.
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function scopeToProfile<T>(query: T): T {
+  const id = getStoredActiveProfileId();
+  if (!id) return query;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return (query as any).or(`metadata->>profile_id.eq.${id},metadata->>profile_id.is.null`) as T;
+}
 
 export type FavoriteContentType = "item" | "gallery";
 
@@ -98,7 +111,7 @@ export async function getFavoriteStatus(
     .limit(1);
 
   const filter = identityFilter(identity);
-  if ("user_id" in filter) query = query.eq("user_id", filter.user_id);
+  if ("user_id" in filter) query = scopeToProfile(query.eq("user_id", filter.user_id));
   else query = query.eq("anonymous_id", filter.anonymous_id);
 
   const [{ data, error }, count] = await Promise.all([query, countPromise]);
@@ -133,12 +146,14 @@ export async function setFavoriteState({
     if ("user_id" in filter) {
       // Signed-in users have a real, RLS-verified identity (auth.uid() =
       // user_id) — the direct delete is already safely scoped server-side.
-      const { error } = await supabase
-        .from(FAVORITES_TABLE)
-        .delete()
-        .eq("content_type", contentType)
-        .eq("content_id", contentId)
-        .eq("user_id", filter.user_id);
+      const { error } = await scopeToProfile(
+        supabase
+          .from(FAVORITES_TABLE)
+          .delete()
+          .eq("content_type", contentType)
+          .eq("content_id", contentId)
+          .eq("user_id", filter.user_id)
+      );
       if (error) throw error;
     } else {
       // Guests have no server-verified identity to check against, so this
@@ -165,7 +180,7 @@ export async function setFavoriteState({
     .limit(1);
 
   const filter = identityFilter(identity);
-  if ("user_id" in filter) existingQuery = existingQuery.eq("user_id", filter.user_id);
+  if ("user_id" in filter) existingQuery = scopeToProfile(existingQuery.eq("user_id", filter.user_id));
   else existingQuery = existingQuery.eq("anonymous_id", filter.anonymous_id);
 
   const { data: existingRows } = await existingQuery;
@@ -178,7 +193,7 @@ export async function setFavoriteState({
     content_id: contentId,
     user_id: identity.type === "user" ? identity.userId : null,
     anonymous_id: identity.type === "anonymous" ? identity.anonymousId : null,
-    metadata: metadata ?? {},
+    metadata: { ...(metadata ?? {}), ...(identity.type === "user" && getStoredActiveProfileId() ? { profile_id: getStoredActiveProfileId() } : {}) },
   };
 
   const { error } = await supabase.from(FAVORITES_TABLE).insert(payload);
@@ -214,7 +229,7 @@ export async function listViewerFavorites() {
     .order("created_at", { ascending: false });
 
   const filter = identityFilter(identity);
-  if ("user_id" in filter) query = query.eq("user_id", filter.user_id);
+  if ("user_id" in filter) query = scopeToProfile(query.eq("user_id", filter.user_id));
   else query = query.eq("anonymous_id", filter.anonymous_id);
 
   const { data, error } = await query;

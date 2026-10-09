@@ -7,6 +7,7 @@
  *   bids         — id, item_id, bidder_id, amount, created_at
  */
 
+import { publicItemsTable } from "./publicItemsSource";
 import { getSupabaseBrowserClient } from "./supabaseClient";
 import type { VaultItem } from "./vaultModel";
 
@@ -97,7 +98,7 @@ export async function fetchActiveAuctions(opts?: {
 
   const now = Date.now();
   let q = sb
-    .from("vault_items")
+    .from(await publicItemsTable(sb))
     .select(AUCTION_COLUMNS)
     .eq("status", "AUCTION")
     .eq("auction_status", "ACTIVE")
@@ -118,7 +119,7 @@ export async function fetchAuctionItem(id: string): Promise<AuctionItem | null> 
   if (!sb) return null;
 
   const { data, error } = await sb
-    .from("vault_items")
+    .from(await publicItemsTable(sb))
     .select(AUCTION_COLUMNS)
     .eq("id", id)
     .eq("status", "AUCTION")

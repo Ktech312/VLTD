@@ -1041,7 +1041,43 @@ export function deleteImageAtIndex(item: VaultItem, index: number) {
   });
 }
 
+// Items moved to another profile whose upload has not finished yet: a cloud pull must not move them back.
+const PENDING_MOVES_KEY = "vltd_pending_moves_v1";
+
+function readPendingMoves(): Record<string, string> {
+  if (typeof window === "undefined") return {};
+  try {
+    const parsed = JSON.parse(window.localStorage.getItem(PENDING_MOVES_KEY) || "{}");
+    return parsed && typeof parsed === "object" ? (parsed as Record<string, string>) : {};
+  } catch {
+    return {};
+  }
+}
+
+export function markPendingMoves(ids: string[], targetProfileId: string) {
+  if (typeof window === "undefined") return;
+  const next = readPendingMoves();
+  for (const id of ids) next[String(id)] = targetProfileId;
+  try {
+    window.localStorage.setItem(PENDING_MOVES_KEY, JSON.stringify(next));
+  } catch {
+    /* storage full or blocked */
+  }
+}
+
+export function clearPendingMoves(ids: string[]) {
+  if (typeof window === "undefined") return;
+  const next = readPendingMoves();
+  for (const id of ids) delete next[String(id)];
+  try {
+    window.localStorage.setItem(PENDING_MOVES_KEY, JSON.stringify(next));
+  } catch {
+    /* storage full or blocked */
+  }
+}
+
 function mergeById(localItems: VaultItem[], remoteItems: VaultItem[]) {
+  const pendingMoves = readPendingMoves();
   const byId = new Map<string, VaultItem>();
 
   for (const item of localItems) {
@@ -1078,6 +1114,9 @@ function mergeById(localItems: VaultItem[], remoteItems: VaultItem[]) {
       imageFrontUrl: remoteItem.imageFrontUrl || existing.imageFrontUrl,
       imageFrontStoragePath: remoteItem.imageFrontStoragePath || existing.imageFrontStoragePath,
       createdAt: remoteItem.createdAt || existing.createdAt,
+      ...(pendingMoves[String(remoteItem.id)]
+        ? { profile_id: pendingMoves[String(remoteItem.id)], isPublic: false }
+        : {}),
     });
 
     if (merged) {

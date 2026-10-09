@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getStripeClient, getStripePriceId, isStripeConfigured, tierForPlan, type BillingPlan } from "@/lib/stripe";
+import { getServiceClient, getSignedInUserId } from "@/lib/serverAdmin";
 
 export async function POST(req: NextRequest) {
   if (!isStripeConfigured()) {
@@ -21,6 +22,19 @@ export async function POST(req: NextRequest) {
   }
   if (!returnUrl) {
     return NextResponse.json({ error: "bad_request", message: "Missing returnUrl." }, { status: 400 });
+  }
+
+  // The profile being upgraded has to belong to the person asking.
+  if (profileId) {
+    const svc = getServiceClient();
+    const userId = svc ? await getSignedInUserId(req, svc) : null;
+    if (!svc || !userId) {
+      return NextResponse.json({ error: "not_signed_in", message: "Sign in to upgrade." }, { status: 401 });
+    }
+    const { data: mine } = await svc.from("profiles").select("id").eq("id", profileId).eq("user_id", userId).limit(1);
+    if (!mine || mine.length === 0) {
+      return NextResponse.json({ error: "forbidden", message: "That profile isn't yours." }, { status: 403 });
+    }
   }
 
   const priceId = getStripePriceId(plan);

@@ -54,7 +54,12 @@ async function fetchData(token: string) {
         ? Promise.resolve(null)
         : fetch(`${SUPABASE_URL}/rest/v1/public_profiles?profile_id=eq.${g.profile_id}&select=display_name&limit=1`, { headers: h, cache: "no-store" }),
       sampleIds.length > 0
-        ? fetch(`${SUPABASE_URL}/rest/v1/vault_items?id=in.(${sampleIds.join(",")})&select=title&limit=8`, { headers: h, cache: "no-store" })
+        ? (async () => {
+            // Public items come from the public view; falls back to the table until the view exists.
+            const query = `id=in.(${sampleIds.join(",")})&select=title&limit=8`;
+            const viaView = await fetch(`${SUPABASE_URL}/rest/v1/public_vault_items?${query}`, { headers: h, cache: "no-store" });
+            return viaView.ok ? viaView : fetch(`${SUPABASE_URL}/rest/v1/vault_items?${query}`, { headers: h, cache: "no-store" });
+          })()
         : Promise.resolve(null),
     ]);
 

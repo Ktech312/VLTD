@@ -1,5 +1,6 @@
 "use client";
 
+import { publicItemsTable } from "@/lib/publicItemsSource";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
@@ -184,7 +185,7 @@ export default function DiscoverPage() {
           // Pull value + image too, so gallery value and featured items are the
           // real items rather than invented numbers and a repeated cover.
           const { data: itemRows, error: itemRowsError } = await supabase
-            .from("vault_items")
+            .from(await publicItemsTable(supabase))
             .select("id, profile_id, universe, current_value, image_front_url, title")
             .in("id", allItemIds);
           if (itemRowsError) {

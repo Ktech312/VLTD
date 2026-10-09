@@ -7,6 +7,31 @@
 
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 import { resolveAvatarSrc } from "@/lib/avatarResolve";
+import { getStoredActiveProfileId } from "@/lib/auth";
+
+type Supa = NonNullable<ReturnType<typeof getSupabaseBrowserClient>>;
+
+/** The profile a club action runs as: the one you are signed into (personal or Business), if it is yours. */
+async function actingProfileId(supabase: Supa, userId: string): Promise<string | undefined> {
+  const active = getStoredActiveProfileId();
+  if (active) {
+    const { data } = await supabase.from("profiles").select("id").eq("id", active).eq("user_id", userId).maybeSingle();
+    if (data?.id) return data.id as string;
+  }
+  const { data: first } = await supabase.from("profiles").select("id").eq("user_id", userId).order("id").limit(1).maybeSingle();
+  return first?.id as string | undefined;
+}
+
+/** Calls a club function as the active profile; if the database has not been updated yet, falls back to the old call. */
+async function clubRpc(supabase: Supa, name: string, args: Record<string, unknown>) {
+  const active = getStoredActiveProfileId();
+  if (active) {
+    const withProfile = await supabase.rpc(name, { ...args, p_profile_id: active });
+    const code = (withProfile.error as { code?: string } | null)?.code;
+    if (!withProfile.error || (code !== "PGRST202" && code !== "42883")) return withProfile;
+  }
+  return supabase.rpc(name, args);
+}
 
 export type ClubRole = "owner" | "moderator" | "member";
 
@@ -134,8 +159,7 @@ export async function createClub(name: string, description: string): Promise<Clu
   if (!supabase) return null;
   const { data: userData } = await supabase.auth.getUser();
   if (!userData.user) return null;
-  const { data: profileRow } = await supabase.from("profiles").select("id").eq("user_id", userData.user.id).limit(1).single();
-  const ownerProfileId = profileRow?.id as string | undefined;
+  const ownerProfileId = await actingProfileId(supabase, userData.user.id);
   if (!ownerProfileId) return null;
 
   const { data, error } = await supabase
@@ -172,14 +196,14 @@ export async function getMyMembership(clubId: string, myProfileId: string): Prom
 export async function joinClub(clubId: string): Promise<boolean> {
   const supabase = getSupabaseBrowserClient();
   if (!supabase) return false;
-  const { error } = await supabase.rpc("join_club", { p_club_id: clubId });
+  const { error } = await clubRpc(supabase, "join_club", { p_club_id: clubId });
   return !error;
 }
 
 export async function leaveClub(clubId: string): Promise<boolean> {
   const supabase = getSupabaseBrowserClient();
   if (!supabase) return false;
-  const { error } = await supabase.rpc("leave_club", { p_club_id: clubId });
+  const { error } = await clubRpc(supabase, "leave_club", { p_club_id: clubId });
   return !error;
 }
 
@@ -209,7 +233,7 @@ export async function listClubMembers(clubId: string): Promise<ClubMember[]> {
 export async function removeClubMember(clubId: string, targetProfileId: string, reason?: string): Promise<boolean> {
   const supabase = getSupabaseBrowserClient();
   if (!supabase) return false;
-  const { error } = await supabase.rpc("remove_club_member", {
+  const { error } = await clubRpc(supabase, "remove_club_member", {
     p_club_id: clubId,
     p_target_profile_id: targetProfileId,
     p_reason: reason ?? null,
@@ -220,7 +244,7 @@ export async function removeClubMember(clubId: string, targetProfileId: string, 
 export async function setClubModerator(clubId: string, targetProfileId: string, isModerator: boolean): Promise<boolean> {
   const supabase = getSupabaseBrowserClient();
   if (!supabase) return false;
-  const { error } = await supabase.rpc("set_club_moderator", {
+  const { error } = await clubRpc(supabase, "set_club_moderator", {
     p_club_id: clubId,
     p_target_profile_id: targetProfileId,
     p_is_moderator: isModerator,
@@ -280,7 +304,7 @@ export async function addClubPost(clubId: string, profileId: string, body: strin
 export async function hideClubPost(postId: string): Promise<boolean> {
   const supabase = getSupabaseBrowserClient();
   if (!supabase) return false;
-  const { error } = await supabase.rpc("hide_club_post", { p_post_id: postId });
+  const { error } = await clubRpc(supabase, "hide_club_post", { p_post_id: postId });
   return !error;
 }
 
@@ -291,8 +315,7 @@ export async function reportClubPost(postId: string, reason: string): Promise<bo
   if (!supabase) return false;
   const { data: userData } = await supabase.auth.getUser();
   if (!userData.user) return false;
-  const { data: profileRow } = await supabase.from("profiles").select("id").eq("user_id", userData.user.id).limit(1).single();
-  const reporterProfileId = profileRow?.id as string | undefined;
+  const reporterProfileId = await actingProfileId(supabase, userData.user.id);
   if (!reporterProfileId) return false;
   const { error } = await supabase
     .from("club_post_reports")
@@ -338,7 +361,7 @@ export async function listClubReports(clubId: string): Promise<ClubReport[]> {
 export async function resolveClubReport(reportId: string): Promise<boolean> {
   const supabase = getSupabaseBrowserClient();
   if (!supabase) return false;
-  const { error } = await supabase.rpc("resolve_club_report", { p_report_id: reportId });
+  const { error } = await clubRpc(supabase, "resolve_club_report", { p_report_id: reportId });
   return !error;
 }
 

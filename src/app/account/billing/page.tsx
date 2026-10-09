@@ -7,6 +7,16 @@ import { showToast } from "@/lib/toast";
 import { getCurrentUser, getOnboardingStatus, getStoredActiveProfileId } from "@/lib/auth";
 import { getStoredStripeCustomerId, setStoredStripeCustomerId } from "@/lib/billingClient";
 import { getTierSafe, onTierChange, type Tier } from "@/lib/subscription";
+import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
+
+/** Headers for billing calls: the server checks that the profile / billing account is really yours. */
+async function billingHeaders(): Promise<Record<string, string>> {
+  const headers: Record<string, string> = { "Content-Type": "application/json" };
+  const supabase = getSupabaseBrowserClient();
+  const { data } = (await supabase?.auth.getSession()) ?? { data: { session: null } };
+  if (data.session?.access_token) headers.Authorization = `Bearer ${data.session.access_token}`;
+  return headers;
+}
 import { Glyph } from "@/components/ui/Glyph";
 
 type Plan = "free" | "pro" | "business";
@@ -62,14 +72,13 @@ export default function BillingPage() {
 
   useEffect(() => {
     getCurrentUser().then(({ data }) => setEmail(data.user?.email ?? ""));
-    setCustomerId(getStoredStripeCustomerId());
+    setCustomerId(getStoredStripeCustomerId(getStoredActiveProfileId() || undefined));
     void getOnboardingStatus().then(({ activeProfile }) => {
       setCurrentPlan(planForTier(getTierSafe()));
       const serverCustomerId = activeProfile?.stripe_customer_id;
-      if (serverCustomerId) {
-        setCustomerId(serverCustomerId);
-        setStoredStripeCustomerId(serverCustomerId);
-      }
+      // This profile's own billing account, never another profile's.
+      setCustomerId(serverCustomerId || "");
+      if (serverCustomerId) setStoredStripeCustomerId(serverCustomerId, activeProfile?.id);
     });
     const unsubscribe = onTierChange((tier) => setCurrentPlan(planForTier(tier)));
 
@@ -83,7 +92,7 @@ export default function BillingPage() {
         .then((r) => r.json())
         .then((data) => {
           if (data?.customerId) {
-            setStoredStripeCustomerId(data.customerId);
+            setStoredStripeCustomerId(data.customerId, getStoredActiveProfileId() || undefined);
             setCustomerId(data.customerId);
             showToast("Subscription updated.");
           }
@@ -106,7 +115,7 @@ export default function BillingPage() {
     try {
       const res = await fetch("/api/billing/checkout", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: await billingHeaders(),
         body: JSON.stringify({
           plan,
           customerEmail: email || undefined,
@@ -133,7 +142,7 @@ export default function BillingPage() {
     try {
       const res = await fetch("/api/billing/portal", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: await billingHeaders(),
         body: JSON.stringify({
           customerId: customerId || undefined,
           returnUrl: `${window.location.origin}/account/billing`,

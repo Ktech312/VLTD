@@ -1,5 +1,6 @@
 "use client";
 
+import { publicItemsTable } from "@/lib/publicItemsSource";
 import { vaultItemFromPublicSnapshot as vaultItemFromSnapshot } from "@/lib/hiddenItems";
 import { publicRowToItem as normalizeVaultItem } from "@/lib/publicProfile";
 import { PUBLIC_ITEM_COLUMNS_WITH_VALUE } from "@/lib/publicItemColumns";
@@ -136,7 +137,7 @@ export default function InviteGalleryPage() {
 
           if (uniqueIds.length > 0) {
             let itemQuery = supabase
-              .from("vault_items")
+              .from(await publicItemsTable(supabase))
               .select(PUBLIC_ITEM_COLUMNS_WITH_VALUE)
               .in("id", uniqueIds);
             // An exhibit only shows items from its own profile.

@@ -63,3 +63,13 @@ export async function getAdminEmail(req: NextRequest, svc: SupabaseClient): Prom
 
   return role ? email : null;
 }
+
+// The signed-in person behind a request (the browser sends its Supabase access token as a Bearer token).
+export async function getSignedInUserId(req: NextRequest, svc: SupabaseClient): Promise<string | null> {
+  const header = req.headers.get("authorization") ?? "";
+  const token = header.startsWith("Bearer ") ? header.slice(7).trim() : "";
+  if (!token) return null;
+  const { data, error } = await svc.auth.getUser(token);
+  if (error || !data.user) return null;
+  return data.user.id;
+}

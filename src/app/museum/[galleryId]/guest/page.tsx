@@ -1,5 +1,6 @@
 "use client";
 
+import { publicItemsTable } from "@/lib/publicItemsSource";
 import { vaultItemFromPublicSnapshot as vaultItemFromGallerySnapshot } from "@/lib/hiddenItems";
 import { publicRowToItem as rowToVaultItem } from "@/lib/publicProfile";
 import { PUBLIC_ITEM_COLUMNS } from "@/lib/publicItemColumns";
@@ -85,7 +86,7 @@ export default function GuestGalleryPage() {
           const supabase = getSupabaseBrowserClient();
           if (supabase) {
             let publicQuery = supabase
-              .from("vault_items")
+              .from(await publicItemsTable(supabase))
               .select(PUBLIC_ITEM_COLUMNS)
               .eq("profile_id", found.profile_id)
               .eq("is_public", true);

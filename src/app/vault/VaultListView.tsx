@@ -39,6 +39,8 @@ import {
   saveItems,
   syncVaultItemsFromSupabase,
   type VaultItem,
+  markPendingMoves,
+  clearPendingMoves,
 } from "@/lib/vaultModel";
 import { hasSupabaseEnv } from "@/lib/vaultCloud";
 import { deleteVaultItemEverywhere, deleteVaultItemsEverywhere } from "@/lib/vaultActions";
@@ -1524,7 +1526,9 @@ export default function VaultListView({ lockedUniverse }: { lockedUniverse?: Uni
     if (!targetProfileId || selectedIds.size === 0) return;
     const movedItems = items
       .filter((item) => selectedIds.has(item.id))
-      .map((item) => ({ ...item, profile_id: targetProfileId }));
+      // A moved item starts private in its new profile; it is never made public by the move.
+      .map((item) => ({ ...item, profile_id: targetProfileId, isPublic: false }));
+    markPendingMoves(movedItems.map((item) => item.id), targetProfileId);
     commitVaultItemEdits(movedItems);
     // An exhibit only holds its own profile's items, so the moved ones leave this profile's exhibits.
     void import("@/lib/galleryModel").then((m) => m.removeItemIdsFromAllGalleriesConfirmed(movedItems.map((item) => item.id)));
@@ -1534,7 +1538,12 @@ export default function VaultListView({ lockedUniverse }: { lockedUniverse?: Uni
     setSelectMode(false);
     setConfirmProfileMove(null);
     if (hasSupabaseEnv()) {
-      void processVaultSyncQueue().then(() => window.dispatchEvent(new Event("vltd:vault-updated")));
+      const movedIds = movedItems.map((item) => item.id);
+      void processVaultSyncQueue().then((result) => {
+        if (result.remaining === 0) clearPendingMoves(movedIds);
+        else showToast("The move is saved here and will finish uploading when you are back online.", 6000);
+        window.dispatchEvent(new Event("vltd:vault-updated"));
+      });
     } else {
       window.dispatchEvent(new Event("vltd:vault-updated"));
     }

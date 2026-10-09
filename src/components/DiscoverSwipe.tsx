@@ -1,5 +1,6 @@
 "use client";
 
+import { publicItemsTable } from "@/lib/publicItemsSource";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { isSupplyItem } from "@/lib/vaultStats";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
@@ -242,7 +243,7 @@ export default function DiscoverSwipe({ open, onClose }: Props) {
       if (!supabase) { setLoading(false); return; }
 
       const { data: rawItems } = await supabase
-        .from("vault_items")
+        .from(await publicItemsTable(supabase))
         .select("id, title, subtitle, grade, current_value, image_front_url, profile_id, universe, category_label")
         .eq("is_public", true)
         .not("image_front_url", "is", null)

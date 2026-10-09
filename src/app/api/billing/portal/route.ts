@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getStripeClient, isStripeConfigured } from "@/lib/stripe";
+import { getServiceClient, getSignedInUserId } from "@/lib/serverAdmin";
 
 /**
  * Single shared entry point for both "Update card" and "Cancel plan" -
@@ -27,6 +28,22 @@ export async function POST(req: NextRequest) {
   }
   if (!returnUrl) {
     return NextResponse.json({ error: "bad_request", message: "Missing returnUrl." }, { status: 400 });
+  }
+
+  // Only the owner of a billing account can open its portal.
+  const svc = getServiceClient();
+  const userId = svc ? await getSignedInUserId(req, svc) : null;
+  if (!svc || !userId) {
+    return NextResponse.json({ error: "not_signed_in", message: "Sign in to manage billing." }, { status: 401 });
+  }
+  const { data: owned } = await svc
+    .from("profiles")
+    .select("id")
+    .eq("user_id", userId)
+    .eq("stripe_customer_id", customerId)
+    .limit(1);
+  if (!owned || owned.length === 0) {
+    return NextResponse.json({ error: "forbidden", message: "That billing account isn't yours." }, { status: 403 });
   }
 
   try {
