@@ -345,6 +345,10 @@ export default function GuidePage() {
             A practical guide to all {FEATURES.length} features built for serious collectors — from market intelligence to listing readiness to social export.
           </p>
 
+          <Link href="/guide/walkthrough" className="mt-6 inline-flex min-h-11 items-center rounded-lg px-5 py-3 font-bold underline-offset-4 hover:underline" style={{ background: "var(--fg)", color: "var(--bg)" }}>
+            Getting started: item and exhibition walkthroughs
+          </Link>
+
           {/* Category nav */}
           <div className="mt-6 flex flex-wrap gap-2">
             {CATEGORIES.map((cat) => {
