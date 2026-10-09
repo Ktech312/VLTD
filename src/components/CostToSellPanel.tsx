@@ -5,8 +5,10 @@ import { useMemo, useState } from "react";
 type Channel = "ebay" | "mercari" | "whatnot" | "pwcc" | "discogs" | "custom";
 
 /**
- * Seller fee tables: published rates, checked October 2026 against public seller-fee pages and guides.
- * Marketplaces change these, so the panel says so, and "Custom" lets you type your own percentage.
+ * Seller fee tables, checked October 2026. eBay and Discogs commissions were read from their own fee pages;
+ * Whatnot, Mercari and Fanatics Collect come from published guides (Whatnot's commission now depends on your
+ * four-week sales tier). Marketplaces change these, so each line says where it came from, and "Custom" lets you
+ * type your own percentage.
  * Fees are worked out on the sale price you enter (include shipping if you charge the buyer for it).
  */
 type FeeBreakdown = { total: number; summary: string };
@@ -19,10 +21,10 @@ const FEE_RULES: Record<Exclude<Channel, "custom">, FeeRule> = {
   ebay: (gross) => {
     const base = Math.min(gross, 7500) * 0.1325 + Math.max(gross - 7500, 0) * 0.0235;
     const perOrder = gross <= 0 ? 0 : gross <= 10 ? 0.3 : 0.4;
-    return { total: base + perOrder, summary: `13.25% (2.35% over $7,500) + ${money2(perOrder)} per order` };
+    return { total: base + perOrder, summary: `13.25% (2.35% over $7,500) + ${money2(perOrder)} per order (from eBay's fee page)` };
   },
   // Mercari: a flat 10% of the sale, payment processing included.
-  mercari: (gross) => ({ total: gross * 0.1, summary: "10% flat (payment processing included)" }),
+  mercari: (gross) => ({ total: gross * 0.1, summary: "10% flat, payment processing included (published guides; confirm in your account)" }),
   // Whatnot: 8% commission (none on the part of a card, comic or coin sale above $1,500) + 2.9% + $0.30 payment processing.
   whatnot: (gross, category) => {
     const label = String(category ?? "").toLowerCase();
@@ -31,13 +33,16 @@ const FEE_RULES: Record<Exclude<Channel, "custom">, FeeRule> = {
     const processing = gross <= 0 ? 0 : gross * 0.029 + 0.3;
     return {
       total: commissionBase * 0.08 + processing,
-      summary: waived ? "8% (none above $1,500) + 2.9% + $0.30 processing" : "8% + 2.9% + $0.30 processing",
+      summary: `${waived ? "8% (none above $1,500)" : "8%"} + 2.9% + $0.30 processing. Whatnot's commission now depends on your four-week sales tier, so check your rate card`,
     };
   },
   // Fanatics Collect (formerly PWCC): 6% on Buy Now sales (12% if it sells well above market value, which this cannot know).
-  pwcc: (gross) => ({ total: gross * 0.06, summary: "6% Buy Now (12% if it sells well above market value)" }),
-  // Discogs: 9% of the sale + about 2.9% + $0.30 payment processing.
-  discogs: (gross) => ({ total: gross <= 0 ? 0 : gross * 0.09 + gross * 0.029 + 0.3, summary: "9% + about 2.9% + $0.30 processing" }),
+  pwcc: (gross) => ({ total: gross * 0.06, summary: "6% Buy Now (12% if it sells well above market value) (published guides; confirm in your account)" }),
+  // Discogs: 9% of the sale (item and shipping), at least $0.10 and at most $150, plus the payment processor's fee.
+  discogs: (gross) => ({
+    total: gross <= 0 ? 0 : Math.min(150, Math.max(0.1, gross * 0.09)) + gross * 0.029 + 0.3,
+    summary: "9% (min $0.10, max $150; from Discogs' fee page) + about 2.9% + $0.30 payment processing (estimate)",
+  }),
 };
 
 const CHANNELS: Array<{ id: Channel; label: string }> = [
@@ -189,7 +194,7 @@ export default function CostToSellPanel({
 
       <div className="mt-2 text-[11px] leading-4 text-[color:var(--muted)]">
         {hasPrice
-          ? `Fees used: ${payout.feeSummary}. Published rates, checked October 2026; marketplaces change them, so confirm in your seller account.`
+          ? `Fees used: ${payout.feeSummary}. Checked October 2026. Marketplaces change their fees, so confirm in your seller account.`
           : "Type the price you expect to sell it for. Fees for each marketplace are worked out from published rates."}
       </div>
 
