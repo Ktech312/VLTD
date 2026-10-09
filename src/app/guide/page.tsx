@@ -345,7 +345,7 @@ export default function GuidePage() {
             A practical guide to all {FEATURES.length} features built for serious collectors — from market intelligence to listing readiness to social export.
           </p>
 
-          <Link href="/guide/walkthrough" className="mt-6 inline-flex min-h-11 items-center rounded-lg px-5 py-3 font-bold underline-offset-4 hover:underline" style={{ background: "var(--fg)", color: "var(--bg)" }}>
+          <Link href="/guide/walkthrough" className="vltd-keep-color mt-6 inline-flex min-h-11 items-center rounded-lg px-5 py-3 font-bold underline-offset-4 hover:underline" style={{ background: "var(--fg)", "--vltd-keep-color": "var(--bg)" } as React.CSSProperties}>
             Getting started: item and exhibition walkthroughs
           </Link>
 

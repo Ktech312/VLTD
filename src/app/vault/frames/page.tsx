@@ -46,7 +46,7 @@ function CardImage({ src, title }: { src: string; title: string }) {
     );
   }
   return (
-    <div style={{
+    <div className="vltd-dark-surface" style={{
       width: "100%", height: "100%", background: "#1a2a3a",
       display: "flex", alignItems: "center", justifyContent: "center",
       borderRadius: 3, flexDirection: "column", gap: 6,
@@ -758,7 +758,7 @@ export default function FramesPage() {
   return (
     <div style={{ minHeight: "100vh", background: "var(--bg, #f5f0e8)", fontFamily: "var(--font-sans, -apple-system, sans-serif)" }}>
       {/* Header */}
-      <div style={{ background: "#1a1a1a", color: "#fff", padding: "16px 24px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+      <div className="vltd-dark-surface" style={{ background: "#1a1a1a", color: "#fff", padding: "16px 24px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
         <div>
           <div style={{ fontSize: 10, letterSpacing: "0.22em", color: "#f5c52a", fontWeight: 700 }}>VLTD</div>
           <h1 style={{ margin: "2px 0 0", fontSize: 18, fontWeight: 700 }}>Frame Studio</h1>

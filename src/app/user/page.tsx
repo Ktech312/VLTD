@@ -498,7 +498,7 @@ export default function UserSettingsPage() {
 
                 <div className="p-4">
                   <div
-                    className="relative overflow-hidden rounded-[24px] bg-black"
+                    className="vltd-dark-surface relative overflow-hidden rounded-[24px] bg-black"
                     style={{
                       aspectRatio: "16 / 10",
                       backgroundColor: "#141414",

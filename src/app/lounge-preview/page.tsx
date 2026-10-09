@@ -291,7 +291,7 @@ export default function LoungePreviewPage() {
 
   return (
     <main
-      className="min-h-screen px-4 pb-12 pt-6 text-white sm:px-6 lg:px-8"
+      className="vltd-dark-surface min-h-screen px-4 pb-12 pt-6 text-white sm:px-6 lg:px-8"
       style={{
         background:
           "radial-gradient(circle at 10% 0%, rgba(36,82,99,0.18), transparent 28%), radial-gradient(circle at 98% 18%, rgba(217,162,58,0.08), transparent 32%), linear-gradient(135deg, #000407 0%, #041018 46%, #010506 100%)",

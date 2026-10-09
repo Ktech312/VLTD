@@ -270,6 +270,7 @@ export default function KickstarterPage() {
 
   return (
     <div
+      className="vltd-dark-surface"
       style={{
         minHeight: "100dvh",
         background: "#0A0A12",

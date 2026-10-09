@@ -267,7 +267,7 @@ export default function UpcomingPage() {
   const creatorName  = fedResult?.resolvedCreator?.name;
 
   return (
-    <div style={{
+    <div className="vltd-dark-surface" style={{
       minHeight: "100dvh", background: "#0A0A12", color: "#ECEDEF",
       paddingTop: "env(safe-area-inset-top, 0px)",
       paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 90px)",
