@@ -1373,8 +1373,10 @@ export default function VaultListView({ lockedUniverse }: { lockedUniverse?: Uni
       return (intelligence?.readiness ?? "Low") !== "High";
     }).length;
     const insuranceReadyPct = totalItems ? Math.round((insuranceReadyCount / totalItems) * 100) : 0;
+    const valuedCount = counted.filter((item) => effectiveMarketValue(item) > 0).length;
     return {
       totalItems,
+      valuedCount,
       totalCost: totalCostValue,
       totalValue,
       totalGain,
@@ -1759,8 +1761,20 @@ export default function VaultListView({ lockedUniverse }: { lockedUniverse?: Uni
                 <AppIcon name="price" size={12} strokeWidth={1.8} />
                 Total Value
               </div>
-              <div className="mt-1.5 text-xl font-extrabold tracking-[-0.02em] text-[color:var(--data-color)] sm:mt-2.5 sm:text-3xl">{formatMoney(stats.totalValue)}</div>
-              <div className={(stats.totalGain >= 0 ? "text-emerald-300" : "text-red-300") + " mt-0.5 text-[11px] sm:text-sm"}>{stats.totalGain >= 0 ? "+" : ""}{formatMoney(stats.totalGain)}</div>
+              {stats.valuedCount === 0 ? (
+                <>
+                  <div className="mt-1.5 text-lg font-extrabold tracking-[-0.02em] text-[color:var(--muted)] sm:mt-2.5 sm:text-2xl">Not valued yet</div>
+                  <div className="mt-0.5 text-[11px] text-[color:var(--muted)] sm:text-sm">Total cost {formatMoney(stats.totalCost)}</div>
+                </>
+              ) : (
+                <>
+                  <div className="mt-1.5 text-xl font-extrabold tracking-[-0.02em] text-[color:var(--data-color)] sm:mt-2.5 sm:text-3xl">{formatMoney(stats.totalValue)}</div>
+                  <div className={(stats.totalGain >= 0 ? "text-emerald-300" : "text-red-300") + " mt-0.5 text-[11px] sm:text-sm"}>{stats.totalGain >= 0 ? "+" : ""}{formatMoney(stats.totalGain)}</div>
+                  {stats.valuedCount < stats.totalItems ? (
+                    <div className="mt-0.5 text-[11px] text-[color:var(--muted)]">{stats.valuedCount} of {stats.totalItems} valued</div>
+                  ) : null}
+                </>
+              )}
             </div>
             <div className="w-[140px] shrink-0 vltd-brushed p-2.5 sm:w-auto sm:p-4">
               <div className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-[color:var(--muted2)] sm:text-[11px] sm:tracking-[0.18em]">

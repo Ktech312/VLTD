@@ -46,6 +46,8 @@ type BulkDraft = {
   previewUrl: string;
   title: string;
   currentValue: string;
+  /** The AI's guess: shown as a hint, never saved as the item's value. */
+  aiEstimate?: string;
   scanned: boolean;
   confidence: number;
 };
@@ -107,7 +109,8 @@ async function persistBulkImage(itemId: string, file: File): Promise<Partial<Vau
 function visionToDraftPatch(vision: VisionAnalysisResult): Partial<BulkDraft> {
   return {
     title: vision.title || "",
-    currentValue: vision.estimatedValue ? String(vision.estimatedValue) : "",
+    currentValue: "",
+    aiEstimate: vision.estimatedValue ? String(vision.estimatedValue) : "",
     scanned: true,
     confidence: vision.confidence ?? 0,
   };
@@ -653,7 +656,7 @@ export default function BulkUploadPage() {
                         style={INPUT_STYLE}
                         value={d.currentValue}
                         onChange={(e) => patchDraft(d.id, { currentValue: e.target.value })}
-                        placeholder="0"
+                        placeholder={d.aiEstimate ? `AI guess: $${d.aiEstimate} (not saved)` : "Leave blank if unknown"}
                       />
                     </div>
                     <div className="flex items-end justify-between gap-2">

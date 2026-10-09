@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect, useState } from "react";
 import type { CSSProperties } from "react";
 
 import type { GalleryShelfOverlayStyle } from "@/lib/galleryModel";
@@ -203,6 +204,7 @@ function AnchoredRow({
   onItemClick,
   shelfOverlayStyle,
   embeddedPreview = false,
+  alignedToPicture = false,
 }: {
   row: Array<VaultItem | null>;
   anchor: string;
@@ -211,6 +213,8 @@ function AnchoredRow({
   onItemClick?: (item: VaultItem) => void;
   shelfOverlayStyle?: GalleryShelfOverlayStyle;
   embeddedPreview?: boolean;
+  /** Public page with a tall uploaded picture: on wider screens rows use the same spacing as the builder and Preview. */
+  alignedToPicture?: boolean;
 }) {
   const showGlassShelf = shelfOverlayStyle === "glass";
   const showMetalShelf = shelfOverlayStyle === "metal";
@@ -220,10 +224,12 @@ function AnchoredRow({
       className={
         embeddedPreview
           ? "absolute left-[3%] right-[3%] [top:var(--mobile-row-anchor)] md:[top:var(--desktop-row-anchor)] sm:left-[8%] sm:right-[8%]"
-          : "absolute left-[4%] right-[4%]"
+          : alignedToPicture
+            ? "absolute left-[4%] right-[4%] [top:var(--mobile-row-anchor)] md:[top:var(--desktop-row-anchor)] md:left-[8%] md:right-[8%]"
+            : "absolute left-[4%] right-[4%]"
       }
       style={
-        embeddedPreview
+        embeddedPreview || alignedToPicture
           ? ({
               "--mobile-row-anchor": anchor,
               "--desktop-row-anchor": desktopAnchor ?? anchor,
@@ -337,11 +343,33 @@ export default function GalleryShelfScene({
   const theme = getShelfThemeClasses(themePack);
   const sceneBackground = backgroundImageUrl?.trim() || "";
 
+  // A tall picture (made for the 940 by 2700 wall) only lines up with the shelves if the rows use the same
+  // spacing as the builder. Wide pictures and the built-in themes keep the original public layout.
+  const [tallPicture, setTallPicture] = useState(false);
+  useEffect(() => {
+    if (!sceneBackground || embeddedPreview) {
+      setTallPicture(false);
+      return;
+    }
+    let cancelled = false;
+    const probe = new window.Image();
+    probe.onload = () => {
+      if (!cancelled) setTallPicture(probe.naturalWidth > 0 && probe.naturalHeight / probe.naturalWidth >= 2.4);
+    };
+    probe.onerror = () => {
+      if (!cancelled) setTallPicture(false);
+    };
+    probe.src = sceneBackground;
+    return () => {
+      cancelled = true;
+    };
+  }, [sceneBackground, embeddedPreview]);
+
   const itemsPerRow = SHELF_COLUMNS;
   const visibleItems = buildShelfSlots(items, slotLayout);
   const shelfCount = SHELF_ROWS;
   const rowAnchors = embeddedPreview ? EMBEDDED_MOBILE_ROW_ANCHORS : ROW_ANCHORS;
-  const desktopRowAnchors = embeddedPreview ? EMBEDDED_DESKTOP_ROW_ANCHORS : ROW_ANCHORS;
+  const desktopRowAnchors = embeddedPreview || tallPicture ? EMBEDDED_DESKTOP_ROW_ANCHORS : ROW_ANCHORS;
   const rows = Array.from({ length: shelfCount }, (_, i) =>
     visibleItems.slice(i * itemsPerRow, (i + 1) * itemsPerRow)
   );
@@ -366,7 +394,7 @@ export default function GalleryShelfScene({
       <div
         className={[
           "relative mx-auto overflow-hidden rounded-[30px] ring-1 shadow-[0_30px_90px_rgba(0,0,0,0.34)]",
-          embeddedPreview ? "max-w-[940px]" : GALLERY_STAGE_MAX_WIDTH_CLASS,
+          embeddedPreview ? "max-w-[940px]" : tallPicture ? "max-w-[1120px] md:max-w-[940px]" : GALLERY_STAGE_MAX_WIDTH_CLASS,
           theme.stageShell,
         ].join(" ")}
       >
@@ -375,7 +403,9 @@ export default function GalleryShelfScene({
             "relative",
             embeddedPreview
               ? "h-[var(--embedded-mobile-stage-height)] md:h-[var(--embedded-desktop-stage-height)]"
-              : GALLERY_STAGE_HEIGHT_CLASS,
+              : tallPicture
+                ? "h-[1500px] sm:h-[2200px] md:h-[2700px]"
+                : GALLERY_STAGE_HEIGHT_CLASS,
           ].join(" ")}
           style={{ ...(embeddedStageStyle ?? {}), containerType: "inline-size" } as CSSProperties}
         >
@@ -399,6 +429,7 @@ export default function GalleryShelfScene({
                   onItemClick={onItemClick}
                   shelfOverlayStyle={shelfOverlayStyle}
                   embeddedPreview={embeddedPreview}
+                  alignedToPicture={tallPicture}
                 />
               ))
             : null}

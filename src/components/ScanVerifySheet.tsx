@@ -242,7 +242,8 @@ export default function ScanVerifySheet({
                         <input
                           value={d.currentValue}
                           onChange={(e) => onPatch(d.id, { currentValue: e.target.value })}
-                          placeholder="Value ($)"
+                          placeholder={d.vision?.estimatedValue ? `AI: $${d.vision.estimatedValue}` : "Value ($)"}
+                          title={d.vision?.estimatedValue ? "The AI's guess. It is only saved if you type it in." : undefined}
                           inputMode="decimal"
                           className={`${FIELD_CLS} w-16`}
                         />

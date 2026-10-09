@@ -515,7 +515,8 @@ export default function ScanCapturePanel({ onClose }: { onClose: () => void }) {
       title: vision.title || "",
       categoryLabel,
       subcategoryLabel,
-      currentValue: vision.estimatedValue ? String(vision.estimatedValue) : "",
+      // The AI's guess is shown as a hint in the verify sheet; it is never saved as the item's value.
+      currentValue: "",
       scanned: true,
       confidence: vision.confidence ?? 0,
       aiUniverse,
