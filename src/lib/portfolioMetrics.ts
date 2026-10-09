@@ -312,13 +312,23 @@ export type NetProceedsResult = {
   itemCount: number;
 };
 
+// Whole-portfolio estimate: the main published percentage per marketplace (checked October 2026; see the Cost to Sell
+// panel on an item for the exact tables), plus the usual flat charge per order.
 const PLATFORM_FEE_RATES: Record<string, number> = {
-  ebay: 0.129,
+  ebay: 0.1325,
   mercari: 0.1,
-  whatnot: 0.088,
-  pwcc: 0.2,
-  discogs: 0.09,
-  custom: 0.129,
+  whatnot: 0.109,
+  pwcc: 0.06,
+  discogs: 0.119,
+  custom: 0.1325,
+};
+const PLATFORM_FEE_PER_ORDER: Record<string, number> = {
+  ebay: 0.4,
+  mercari: 0,
+  whatnot: 0.3,
+  pwcc: 0,
+  discogs: 0.3,
+  custom: 0.4,
 };
 
 const AVG_SHIPPING_PER_ITEM = 5;
@@ -332,7 +342,7 @@ export function getNetProceedsEstimate(
 
   const totalCurrentValue = safeItems.reduce((sum, item) => sum + itemCurrentValue(item), 0);
   const totalCostBasis = safeItems.reduce((sum, item) => sum + itemTotalCost(item), 0);
-  const estimatedFees = totalCurrentValue * feeRate;
+  const estimatedFees = totalCurrentValue * feeRate + safeItems.length * (PLATFORM_FEE_PER_ORDER[platform] ?? 0);
   const estimatedShipping = safeItems.length * AVG_SHIPPING_PER_ITEM;
   const netProceeds = totalCurrentValue - estimatedFees - estimatedShipping;
   const netGainLoss = netProceeds - totalCostBasis;

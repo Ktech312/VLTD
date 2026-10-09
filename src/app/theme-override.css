@@ -424,3 +424,6 @@
 /* Readable "good / synced" green: bright on dark pages, deeper on light pages. */
 :root { --ok-text: #4ade80; }
 .theme-light { --ok-text: #15803d; }
+
+/* Gain green: the bright dark-page green is hard to read on light pages, so light pages use a deeper green. */
+.theme-light { --status-gain: #15803d; --color-gain: #15803d; }
