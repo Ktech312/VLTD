@@ -119,6 +119,8 @@ export default function CostToSellPanel({
     };
   }, [salePrice, shipping, channel, customRate, category, costBasis]);
 
+  const hasPrice = payout.gross > 0;
+
   return (
     <div className="rounded-[24px] bg-[color:var(--surface)] p-6 ring-1 ring-[color:var(--border)]">
       <div className="flex items-start justify-between gap-3">
@@ -186,7 +188,9 @@ export default function CostToSellPanel({
       ) : null}
 
       <div className="mt-2 text-[11px] leading-4 text-[color:var(--muted)]">
-        Fees used: {payout.feeSummary}. Published rates, checked October 2026; marketplaces change them, so confirm in your seller account.
+        {hasPrice
+          ? `Fees used: ${payout.feeSummary}. Published rates, checked October 2026; marketplaces change them, so confirm in your seller account.`
+          : "Type the price you expect to sell it for. Fees for each marketplace are worked out from published rates."}
       </div>
 
       <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
@@ -196,7 +200,7 @@ export default function CostToSellPanel({
         </div>
         <div className="rounded-2xl bg-[color:var(--pill)] p-4 ring-1 ring-[color:var(--border)]">
           <div className="text-[11px] uppercase tracking-[0.18em] text-[color:var(--muted2)]">Fees</div>
-          <div className="mt-2 text-lg font-semibold">{money(payout.fees)}</div>
+          <div className="mt-2 text-lg font-semibold">{hasPrice ? money(payout.fees) : "—"}</div>
         </div>
         <div className="rounded-2xl bg-[color:var(--pill)] p-4 ring-1 ring-[color:var(--border)]">
           <div className="text-[11px] uppercase tracking-[0.18em] text-[color:var(--muted2)]">Ship Cost</div>
@@ -204,7 +208,7 @@ export default function CostToSellPanel({
         </div>
         <div className="rounded-2xl bg-[color:var(--pill)] p-4 ring-1 ring-[color:var(--border)]">
           <div className="text-[11px] uppercase tracking-[0.18em] text-[color:var(--muted2)]">Net</div>
-          <div className="mt-2 text-lg font-semibold">{money(payout.net)}</div>
+          <div className="mt-2 text-lg font-semibold">{hasPrice ? money(payout.net) : "—"}</div>
         </div>
       </div>
 
@@ -212,9 +216,9 @@ export default function CostToSellPanel({
         <div className="flex items-center justify-between gap-4">
           <div>
             <div className="text-[11px] uppercase tracking-[0.18em] text-[color:var(--muted2)]">Net Gain / Loss</div>
-            <div className={["mt-2 text-2xl font-semibold", payout.gain >= 0 ? "text-emerald-300" : "text-red-300"].join(" ")}>
-              {payout.gain >= 0 ? "+" : ""}
-              {money(payout.gain)}
+            <div className={["mt-2 text-2xl font-semibold", !hasPrice ? "" : payout.gain >= 0 ? "text-emerald-300" : "text-red-300"].join(" ")}>
+              {hasPrice ? (payout.gain >= 0 ? "+" : "") : ""}
+              {hasPrice ? money(payout.gain) : "—"}
             </div>
           </div>
           <div className="text-right text-xs text-[color:var(--muted)]">
