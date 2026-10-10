@@ -1,5 +1,5 @@
 import {
-  fetchVaultItemsFromSupabase,
+  fetchVaultItemsDelta,
   getVaultImagePublicUrl,
   hasSupabaseEnv,
   isDirectBrowserImageUrl,
@@ -1180,11 +1180,48 @@ function localItemsSignature() {
   return getVaultLocalSignature();
 }
 
+// The pull remembers the newest change it has seen, so the next pull can ask only for what changed since
+// (a full pull is about 5 MB for 1,000 items). It still does a full pull at least every 12 hours.
+const PULL_CURSOR_KEY = "vltd_pull_cursor_v1";
+const FULL_PULL_EVERY_MS = 12 * 60 * 60 * 1000;
+
+function readPullCursor(profileId: string): { c: string; f: number } | null {
+  if (typeof window === "undefined" || !profileId) return null;
+  try {
+    const all = JSON.parse(window.localStorage.getItem(PULL_CURSOR_KEY) || "{}");
+    const hit = all?.[profileId];
+    return hit && typeof hit.c === "string" && typeof hit.f === "number" ? hit : null;
+  } catch {
+    return null;
+  }
+}
+
+function writePullCursor(profileId: string, entry: { c: string; f: number } | null) {
+  if (typeof window === "undefined" || !profileId) return;
+  try {
+    const all = JSON.parse(window.localStorage.getItem(PULL_CURSOR_KEY) || "{}") || {};
+    if (entry) all[profileId] = entry;
+    else delete all[profileId];
+    window.localStorage.setItem(PULL_CURSOR_KEY, JSON.stringify(all));
+  } catch {
+    /* storage full or blocked: the next pull is simply a full one */
+  }
+}
+
 async function pullAndMergeFromSupabase(profileId: string): Promise<VaultItem[]> {
   try {
     if (profileId) await checkForceClearVault(profileId);
 
-    const remoteItems = await fetchVaultItemsFromSupabase();
+    const saved = readPullCursor(profileId);
+    const dueForFull = !saved || Date.now() - saved.f > FULL_PULL_EVERY_MS;
+    const knownLocalCount = loadRawItems().filter((item) => String(item.profile_id ?? "") === String(profileId)).length;
+    const pulled = await fetchVaultItemsDelta(profileId || undefined, dueForFull ? undefined : saved?.c, knownLocalCount);
+    const remoteItems = pulled.items;
+    if (pulled.cursor) {
+      writePullCursor(profileId, { c: pulled.cursor, f: pulled.delta && saved ? saved.f : Date.now() });
+    } else {
+      writePullCursor(profileId, null);
+    }
     const localItems = loadRawItems();
     const merged = mergeById(localItems, remoteItems);
     saveRawItems(merged);

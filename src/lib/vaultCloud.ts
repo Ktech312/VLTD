@@ -325,16 +325,19 @@ const CLOUD_PAGE_SIZE = 200;
 const CLOUD_PAGE_CONCURRENCY = 3;
 const CLOUD_PAGE_RETRIES = 2;
 
-async function fetchRowsWithOptionalGallery(profileId: string) {
+async function fetchRowsWithOptionalGallery(profileId: string, since?: string) {
   const supabase = getSupabaseBrowserClient();
   if (!supabase) return [];
 
   async function readPage(columns: string, from: number) {
     for (let attempt = 0; ; attempt++) {
-      const { data, error } = await supabase!
+      let query = supabase!
         .from(VAULT_ITEMS_TABLE)
         .select(columns)
-        .eq("profile_id", profileId)
+        .eq("profile_id", profileId);
+      // Only rows changed since the last pull (needs the updated_at column and its trigger).
+      if (since) query = query.gte("updated_at", since);
+      const { data, error } = await query
         .order("created_at", { ascending: false })
         .order("id", { ascending: true })
         .range(from, from + CLOUD_PAGE_SIZE - 1);
@@ -372,6 +375,57 @@ async function fetchRowsWithOptionalGallery(profileId: string) {
   } catch {
     return await readAll("*");
   }
+}
+
+/**
+ * The cheap way to pull. A full pull downloads every item (about 5 KB each, 5 MB for a vault of 1,000), and
+ * that ran after every edit, which is how Supabase's free egress limit got used up. This asks only for the
+ * rows that changed since the last pull. It falls back to a full pull whenever it cannot be sure:
+ * no saved cursor, the cloud has more items than this device, the column is missing, or the query fails.
+ * Rows are only ever merged in (never deleted by a pull), so a partial list is safe to merge.
+ */
+export async function fetchVaultItemsDelta(
+  profileId: string | undefined,
+  since: string | undefined,
+  knownLocalCount: number
+): Promise<{ items: VaultItem[]; cursor?: string; delta: boolean }> {
+  const supabase = getSupabaseBrowserClient();
+  if (!supabase) return { items: [], delta: false };
+
+  const activeProfileId = String(profileId ?? getStoredActiveProfileId()).trim();
+  if (!activeProfileId) return { items: [], delta: false };
+
+  function newestStamp(rows: Array<Record<string, unknown>>, fallback?: string) {
+    let best = fallback;
+    let bestTime = best ? Date.parse(best) : -Infinity;
+    for (const row of rows) {
+      const stamp = typeof row.updated_at === "string" ? row.updated_at : undefined;
+      const time = stamp ? Date.parse(stamp) : NaN;
+      if (stamp && Number.isFinite(time) && time > bestTime) {
+        best = stamp;
+        bestTime = time;
+      }
+    }
+    return best;
+  }
+
+  if (since) {
+    try {
+      const { count, error } = await supabase
+        .from(VAULT_ITEMS_TABLE)
+        .select("id", { count: "exact", head: true })
+        .eq("profile_id", activeProfileId);
+      if (!error && typeof count === "number" && count <= knownLocalCount) {
+        const rows = await fetchRowsWithOptionalGallery(activeProfileId, since);
+        return { items: rows.map(rowToItem), cursor: newestStamp(rows, since), delta: true };
+      }
+    } catch {
+      /* fall through to a full pull */
+    }
+  }
+
+  const rows = await fetchRowsWithOptionalGallery(activeProfileId);
+  return { items: rows.map(rowToItem), cursor: newestStamp(rows), delta: false };
 }
 
 export async function fetchVaultItemsFromSupabase(profileId?: string) {
