@@ -516,10 +516,15 @@ const SITE_NOTE = /sold sales?$/i;
 export function siteLabel(source: string): string {
   const clean = String(source ?? "")
     .replace(/\s*\((?:sold,?\s*)?pasted\)\s*/gi, " ")
-    .replace(/\s+sold$/i, "")
+    .replace(/\s+sold(?:\s+listings)?$/i, "")
     .replace(/\s+/g, " ")
     .trim();
   return clean || "Other";
+}
+
+/** Two names for the same site ("eBay sold", "eBay Sold Listings") share one key. */
+export function siteKey(name: string): string {
+  return siteLabel(name).toLowerCase();
 }
 
 /** One average per site from the sold comps, each dated. Averages from other sources are left alone. */

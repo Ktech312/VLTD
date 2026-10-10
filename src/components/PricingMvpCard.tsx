@@ -14,6 +14,8 @@ import {
   overallSiteAverage,
   pastedSourceName,
   siteAverageEntries,
+  siteKey,
+  priceCheckIsStale,
   buildPricingPatch,
   confidenceLabel,
   confidenceTone,
@@ -92,6 +94,7 @@ export default function PricingMvpCard({
 }) {
   const [editing, setEditing] = useState<FieldKey | null>(null);
   const [all, setAll] = useState(false);
+  const [detailsOpen, setDetailsOpen] = useState(false);
   const [draft, setDraft] = useState({ low: "", median: "", high: "", last: "", estimate: "", source: "", notes: "" });
   const [addingComp, setAddingComp] = useState(false);
   const [compDraft, setCompDraft] = useState({ source: "", price: "", date: "", url: "" });
@@ -310,6 +313,18 @@ export default function PricingMvpCard({
     });
   }
 
+  const pillSites = [
+    ...links.map((s) => ({ key: s.key, label: s.label, url: s.url as string | undefined, note: s.note, avg: siteAvgs.find((a) => siteKey(a.platform) === siteKey(s.label)) })),
+    ...siteAvgs
+      .filter((a) => !links.some((s) => siteKey(s.label) === siteKey(a.platform)))
+      .map((a) => ({ key: `avg-${a.platform}`, label: a.platform, url: undefined as string | undefined, note: "", avg: a as typeof a | undefined })),
+  ];
+  const checkedAtAll = lastPriceCheckAt(value);
+  const hasAnyValue = Boolean(value.valueMedian || value.estimatedValue || value.valueLow || value.valueHigh || siteAvgs.length);
+  const checkStale = hasAnyValue && priceCheckIsStale(value);
+  const showBody = compact || detailsOpen || all || editing !== null;
+  const pillClass = "inline-flex min-w-[104px] flex-col rounded-xl bg-[color:var(--pill)] px-2.5 py-1.5 text-left ring-1 ring-[color:var(--border)]";
+
   const tile = "w-full rounded-[14px] bg-[color:var(--surface)] p-3 text-left ring-1 ring-[color:var(--border)]";
   const tileLabel = "text-[11px] tracking-[0.14em] text-[color:var(--muted2)]";
   const hover = "transition hover:ring-[color:var(--theme-gold,#C8CDD2)]";
@@ -321,31 +336,43 @@ export default function PricingMvpCard({
         <div>
           <div className="text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">{title}</div>
           {!compact ? (
-            <div className="mt-1 text-sm text-[color:var(--muted)]">
-              Click any value to edit it.
-              {links.length > 0 ? (
-                <div className="mt-2 flex flex-wrap items-center gap-1.5">
-                  <span className="text-[12px] font-semibold">Look up sold prices:</span>
-                  {links.map((s) => (
-                    <a
-                      key={s.key}
-                      href={s.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      onClick={() => setPasteSource(s.label)}
-                      title={`${s.note} Opens in a new tab.`}
-                      className="inline-flex items-center gap-1 rounded-full bg-[color:var(--pill)] px-2.5 py-1 text-[12px] font-semibold text-[color:var(--fg)] underline underline-offset-2 ring-1 ring-[color:var(--border)] hover:bg-[color:var(--surface)]"
-                    >
-                      {s.label} <span aria-hidden="true">↗</span>
-                    </a>
-                  ))}
+            <div className="mt-2 text-sm text-[color:var(--muted)]">
+              {pillSites.length > 0 ? (
+                <div className="flex flex-wrap items-stretch gap-1.5">
+                  {pillSites.map((p) => {
+                    const inner = (
+                      <>
+                        <span className={`flex items-center gap-1 text-[12px] font-semibold text-[color:var(--fg)] ${p.url ? "underline underline-offset-2" : ""}`}>
+                          {p.label}
+                          {p.url ? <span aria-hidden="true">↗</span> : null}
+                        </span>
+                        <span className="mt-0.5 block text-[11px] leading-4">
+                          {p.avg ? (
+                            <>
+                              <span className="text-[13px] font-bold text-[color:var(--fg)]">{money2(p.avg.value)}</span>
+                              <span className="ml-1.5 text-[color:var(--muted)]">{formatPriceUpdatedAt(p.avg.fetchedAt)}</span>
+                            </>
+                          ) : (
+                            <span className="text-[color:var(--muted2)]">—</span>
+                          )}
+                        </span>
+                      </>
+                    );
+                    return p.url ? (
+                      <a key={p.key} href={p.url} target="_blank" rel="noopener noreferrer" onClick={() => setPasteSource(p.label)} title={`${p.note} Opens in a new tab.`} className={`${pillClass} hover:bg-[color:var(--surface)]`}>
+                        {inner}
+                      </a>
+                    ) : (
+                      <div key={p.key} className={pillClass}>{inner}</div>
+                    );
+                  })}
                 </div>
               ) : null}
-              <div className="mt-2 flex flex-wrap items-center gap-2">
+              <div className="mt-2 flex flex-wrap items-center gap-1.5">
                 <button
                   type="button"
                   onClick={() => setPasteOpen((open) => !open)}
-                  className="inline-flex items-center rounded-[8px] px-3 py-1.5 text-[12px] font-bold"
+                  className="inline-flex items-center rounded-[8px] px-2.5 py-1 text-[11px] font-bold"
                   style={{ background: "var(--theme-gold, #C8CDD2)", color: "#0A0800" }}
                 >
                   Paste sold results
@@ -353,12 +380,32 @@ export default function PricingMvpCard({
                 <button
                   type="button"
                   onClick={() => setChooserOpen((open) => !open)}
-                  className="inline-flex items-center rounded-[8px] bg-[color:var(--pill)] px-3 py-1.5 text-[12px] font-semibold text-[color:var(--fg)] ring-1 ring-[color:var(--border)]"
+                  className="inline-flex items-center rounded-[8px] bg-[color:var(--pill)] px-2.5 py-1 text-[11px] font-semibold text-[color:var(--fg)] ring-1 ring-[color:var(--border)]"
                 >
                   {chooserOpen ? "Close site list" : "Choose sites"}
                 </button>
-                <span className="text-[12px]">Copy a sold page, then paste it here to add the sales as comps.</span>
+                <button
+                  type="button"
+                  onClick={() => setDetailsOpen((open) => !open)}
+                  className="inline-flex items-center rounded-[8px] px-2.5 py-1 text-[11px] font-semibold text-[color:var(--muted)] ring-1 ring-[color:var(--border)]"
+                >
+                  {showBody ? "Hide details" : "Details"}
+                </button>
               </div>
+              {overall ? (
+                <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[12px]">
+                  <span>
+                    <span className="font-bold text-[color:var(--fg)]">Overall average {money2(overall.average)}</span>
+                    <span className="ml-1.5 text-[color:var(--muted)]">{overall.sites} site{overall.sites === 1 ? "" : "s"} · {formatPriceUpdatedAt(overall.asOf)}</span>
+                  </span>
+                  <button type="button" onClick={() => void applyOverallAsEstimate()} className="rounded-md px-2 py-0.5 text-[11px] font-semibold text-[color:var(--theme-gold)] ring-1 ring-[color:var(--border)] hover:bg-[color:var(--pill)]">
+                    Use as my estimate
+                  </button>
+                </div>
+              ) : null}
+              {checkStale && checkedAtAll ? (
+                <div className="mt-1 text-[11px] font-semibold text-amber-400">Last price check {formatPriceUpdatedAt(checkedAtAll)}. Over 6 months ago, so check again to keep it current for insurance.</div>
+              ) : null}
             </div>
           ) : null}
           {!compact && chooserOpen ? (
@@ -525,6 +572,7 @@ export default function PricingMvpCard({
         </button>
       </div>
 
+      {showBody ? (
       <div className="mt-3 grid gap-3">
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
           {/* VALUE RANGE */}
@@ -590,19 +638,6 @@ export default function PricingMvpCard({
           </div>
         </div>
 
-        {(() => {
-          const checkedAt = lastPriceCheckAt(value);
-          const hasAnyValue = Boolean(value.valueMedian || value.estimatedValue || value.valueLow || value.valueHigh || siteAvgs.length);
-          if (!checkedAt || !hasAnyValue) return null;
-          const stale = Date.now() - checkedAt > PRICE_CHECK_STALE_DAYS * 86400000;
-          return (
-            <div className={`text-[12px] ${stale ? "font-semibold text-amber-400" : "text-[color:var(--muted)]"}`}>
-              Last price check: {formatPriceUpdatedAt(checkedAt)}.
-              {stale ? " It has been over 6 months. Check the prices again to keep this value current, which matters for insurance." : ""}
-            </div>
-          );
-        })()}
-
         {/* Comparable sales */}
         <div>
           <div className="mb-1.5 flex items-center justify-between">
@@ -655,31 +690,6 @@ export default function PricingMvpCard({
                 <button type="button" onClick={() => void applyCompsAsEstimate()} className="rounded-md px-2 py-1 text-[11px] font-semibold text-[color:var(--theme-gold)] ring-1 ring-[color:var(--border)] hover:bg-[color:var(--pill)]">
                   Use as my estimate
                 </button>
-              </div>
-            ) : null}
-            {siteAvgs.length > 0 ? (
-              <div className="rounded-xl bg-[color:var(--surface)] px-3 py-2 text-[12px] ring-1 ring-[color:var(--border)]">
-                <div className={tileLabel}>AVERAGE BY SITE</div>
-                {siteAvgs.map((a) => (
-                  <div key={a.platform} className="mt-1 flex flex-wrap items-baseline justify-between gap-2">
-                    <span className="font-semibold">{a.platform}</span>
-                    <span>
-                      <span className="font-semibold">{money2(a.value)}</span>
-                      <span className="ml-2 text-[color:var(--muted)]">{a.notes} · checked {formatPriceUpdatedAt(a.fetchedAt)}</span>
-                    </span>
-                  </div>
-                ))}
-                {overall ? (
-                  <div className="mt-2 flex flex-wrap items-center justify-between gap-2 border-t border-[color:var(--border)] pt-2">
-                    <span>
-                      <span className="font-semibold">Overall average of {overall.sites} site{overall.sites === 1 ? "" : "s"}: {money2(overall.average)}</span>
-                      <span className="ml-2 text-[color:var(--muted)]">checked {formatPriceUpdatedAt(overall.asOf)}</span>
-                    </span>
-                    <button type="button" onClick={() => void applyOverallAsEstimate()} className="rounded-md px-2 py-1 text-[11px] font-semibold text-[color:var(--theme-gold)] ring-1 ring-[color:var(--border)] hover:bg-[color:var(--pill)]">
-                      Use as my estimate
-                    </button>
-                  </div>
-                ) : null}
               </div>
             ) : null}
             {addingComp ? (
@@ -750,6 +760,7 @@ export default function PricingMvpCard({
           ))}
         </div>
       </div>
+      ) : null}
     </section>
   );
 }
