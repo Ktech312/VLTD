@@ -10,7 +10,6 @@ import {
   findPriceMentions,
   lastPriceCheckAt,
   PRICE_CHECK_STALE_DAYS,
-  COPY_SOLD_SALES_BOOKMARKLET,
   overallSiteAverage,
   parsePastedListings,
   siteAveragesByKind,
@@ -503,25 +502,11 @@ export default function PricingMvpCard({
             <>
           {pasteOpen ? (
             <div className="mt-3 rounded-xl bg-[color:var(--pill)] p-2.5 ring-1 ring-[color:var(--border)]">
-              <div className="text-[12px] text-[color:var(--muted)]">
-                Open a sold-listings page (the eBay sold link above), press Ctrl+A then Ctrl+C, and paste it here. The sales are found automatically and only they are kept; the rest of the page is thrown away.
-              </div>
-                <div className="mt-2 text-[12px] text-[color:var(--muted)]">
-                  Easier: drag{" "}
-                  <a
-                    ref={(el) => {
-                      if (el) el.setAttribute("href", COPY_SOLD_SALES_BOOKMARKLET);
-                    }}
-                    href="#"
-                    onClick={(e) => e.preventDefault()}
-                    draggable
-                    title="Drag this to your bookmarks bar"
-                    className="inline-flex items-center rounded-full bg-[color:var(--surface)] px-2.5 py-0.5 font-bold text-[color:var(--fg)] underline ring-1 ring-[color:var(--border)]"
-                  >
-                    Copy sold sales (VLTD)
-                  </a>{" "}
-                  up to your bookmarks bar (press Ctrl+Shift+B if you can&apos;t see it). On any sold-listings page, click that bookmark, then paste here. It copies just the sales.
-                </div>
+              <ol className="list-decimal space-y-0.5 pl-4 text-[12px] text-[color:var(--muted)]">
+                <li>Tap a site above to open its sold or for-sale listings.</li>
+                <li>Copy the page: on a computer press Ctrl+A then Ctrl+C; on a phone press and hold, choose Select all, then Copy.</li>
+                <li>Come back here and paste in the box below. The prices are found for you and the rest of the page is thrown away.</li>
+              </ol>
               <div className="mt-2 flex flex-wrap items-center gap-2">
                 <input className={`${smallInput} w-full sm:w-60`} placeholder="Where it is from" value={pasteSource} onChange={(e) => setPasteSource(e.target.value)} />
                 <span className="inline-flex overflow-hidden rounded-lg text-[11px] font-semibold ring-1 ring-[color:var(--border)]">
