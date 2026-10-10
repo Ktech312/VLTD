@@ -132,7 +132,17 @@ export type MarketplaceSuggestion = {
   url: string;
   searchHint: string;
   note: string;
+  /** For sites whose link cannot carry a search: this text is copied when the link is clicked, to paste into their search box. */
+  copyText?: string;
 };
+
+/** "Deadpool Kills the Marvel Universe One Last Time #1 John Giang C2E2" becomes "Deadpool Kills the Marvel Universe One Last Time 1". Comic dealer sites find an issue by series and number only. */
+export function comicShortQuery(title?: string, withHash = false): string {
+  const clean = String(title ?? "").trim();
+  const hit = clean.match(/^(.*?)\s*#\s*(\d+[A-Za-z]?)\b/);
+  if (!hit || !hit[1].trim()) return clean;
+  return `${hit[1].trim()} ${withHash ? "#" : ""}${hit[2]}`;
+}
 
 export function getPricingSuggestions(
   universe: string,
@@ -166,6 +176,7 @@ export function getPricingSuggestions(
         {
           platform: "MySlabs",
           url: "https://www.myslabs.com/",
+          copyText: cleanTitle,
           searchHint: "Search by cert number for exact grade history.",
           note: "Useful for graded slab transaction context.",
         },
@@ -177,6 +188,7 @@ export function getPricingSuggestions(
       {
         platform: "130point",
         url: "https://www.130point.com/sales/",
+        copyText: cleanTitle,
         searchHint: cleanTitle,
         note: "Aggregated sold data, helpful for raw cards.",
       },
@@ -200,7 +212,7 @@ export function getPricingSuggestions(
       ebay,
       {
         platform: "MyComicShop",
-        url: `https://www.mycomicshop.com/search?q=${searchQuery}`,
+        url: `https://www.mycomicshop.com/search?q=${encodeURIComponent(comicShortQuery(cleanTitle))}`,
         searchHint: cleanTitle,
         note: "Good for raw comics and dealer price context.",
       },
@@ -208,7 +220,8 @@ export function getPricingSuggestions(
         platform: "CovrPrice",
         url: "https://covrprice.com/",
         searchHint: cleanTitle,
-        note: "Comic-focused comparable sales and FMV ranges.",
+        note: "Comic-focused comparable sales. Clicking copies the issue name to paste into their search box.",
+        copyText: comicShortQuery(cleanTitle, true),
       },
     ];
   }
@@ -338,15 +351,21 @@ export function resolveSearchLinks(
   prefs: SearchSitePrefs | null,
   title?: string,
   grade?: string
-): { key: string; label: string; url: string; note: string }[] {
+): { key: string; label: string; url: string; note: string; copyText?: string }[] {
   const q = searchQueryFor(title, grade);
   if (!prefs || (prefs.ids.length === 0 && prefs.custom.length === 0)) {
-    const base = defaults.map((d) => ({ key: d.platform, label: d.platform, url: d.url, note: d.note }));
+    const base: { key: string; label: string; url: string; note: string; copyText?: string }[] = defaults.map((d) => ({ key: d.platform, label: d.platform, url: d.url, note: d.note, copyText: d.copyText }));
     const google = SEARCH_SITES.find((site) => site.id === "google");
     if (google && !base.some((b) => /google/i.test(b.label))) base.push({ key: "google", label: google.label, url: google.url(q), note: google.note });
     return base;
   }
-  const picked = SEARCH_SITES.filter((site) => prefs.ids.includes(site.id)).map((site) => ({ key: site.id, label: site.label, url: site.url(q), note: site.note }));
+  const picked = SEARCH_SITES.filter((site) => prefs.ids.includes(site.id)).map((site) => ({
+    key: site.id,
+    label: site.label,
+    url: site.url(site.id === "mycomicshop" ? encodeURIComponent(comicShortQuery(title)) : q),
+    note: site.note,
+    copyText: site.id === "130point" ? String(title ?? "").trim() : undefined,
+  }));
   const custom = prefs.custom
     .filter((c) => c.label.trim() && /^https?:\/\//i.test(c.url.trim()))
     .map((c, i) => ({ key: `custom-${i}`, label: c.label.trim(), url: c.url.trim().split("{query}").join(q), note: "Your own search site." }));

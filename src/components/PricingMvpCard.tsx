@@ -314,10 +314,10 @@ export default function PricingMvpCard({
   }
 
   const pillSites = [
-    ...links.map((s) => ({ key: s.key, label: s.label, url: s.url as string | undefined, note: s.note, avg: siteAvgs.find((a) => siteKey(a.platform) === siteKey(s.label)) })),
+    ...links.map((s) => ({ key: s.key, label: s.label, url: s.url as string | undefined, note: s.note, copyText: (s as { copyText?: string }).copyText, avg: siteAvgs.find((a) => siteKey(a.platform) === siteKey(s.label)) })),
     ...siteAvgs
       .filter((a) => !links.some((s) => siteKey(s.label) === siteKey(a.platform)))
-      .map((a) => ({ key: `avg-${a.platform}`, label: a.platform, url: undefined as string | undefined, note: "", avg: a as typeof a | undefined })),
+      .map((a) => ({ key: `avg-${a.platform}`, label: a.platform, url: undefined as string | undefined, note: "", copyText: undefined as string | undefined, avg: a as typeof a | undefined })),
   ];
   const checkedAtAll = lastPriceCheckAt(value);
   const hasAnyValue = Boolean(value.valueMedian || value.estimatedValue || value.valueLow || value.valueHigh || siteAvgs.length);
@@ -359,7 +359,10 @@ export default function PricingMvpCard({
                       </>
                     );
                     return p.url ? (
-                      <a key={p.key} href={p.url} target="_blank" rel="noopener noreferrer" onClick={() => setPasteSource(p.label)} title={`${p.note} Opens in a new tab.`} className={`${pillClass} hover:bg-[color:var(--surface)]`}>
+                      <a key={p.key} href={p.url} target="_blank" rel="noopener noreferrer" onClick={() => {
+                          setPasteSource(p.label);
+                          if (p.copyText) void navigator.clipboard?.writeText(p.copyText).catch(() => {});
+                        }} title={`${p.note} Opens in a new tab.`} className={`${pillClass} hover:bg-[color:var(--surface)]`}>
                         {inner}
                       </a>
                     ) : (
