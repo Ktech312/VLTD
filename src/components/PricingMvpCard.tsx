@@ -241,12 +241,6 @@ export default function PricingMvpCard({
     await commit({ comparables: [...comparables, comp] });
   }
 
-  function readPaste() {
-    const results = parsePastedSoldResults(pasteText, pasteSource.trim() || "Sold listings (pasted)");
-    setPasteResults(results);
-    setPasteChecked(Object.fromEntries(results.map((r) => [r.id, true])));
-  }
-
   async function addPasted() {
     const chosen = (pasteResults ?? []).filter((r) => pasteChecked[r.id]);
     if (chosen.length === 0) return;
@@ -419,16 +413,23 @@ export default function PricingMvpCard({
           {pasteOpen ? (
             <div className="mt-3 rounded-xl bg-[color:var(--pill)] p-2.5 ring-1 ring-[color:var(--border)]">
               <div className="text-[12px] text-[color:var(--muted)]">
-                Open a sold-listings page (for example the eBay sold link above), select everything on it, copy, and paste it here. VLTD only reads what you paste.
+                Open a sold-listings page (the eBay sold link above), press Ctrl+A then Ctrl+C, and paste it here. The sales are found automatically and only they are kept; the rest of the page is thrown away.
               </div>
               <input className={`${smallInput} mt-2 w-full sm:w-72`} placeholder="Where it is from" value={pasteSource} onChange={(e) => setPasteSource(e.target.value)} />
               <textarea
-                className={`${smallInput} mt-2 h-28 w-full resize-y`}
-                placeholder="Paste the page text here"
+                className={`${smallInput} mt-2 h-10 w-full resize-none overflow-hidden`}
+                placeholder="Click here and press Ctrl+V. The pasted page is not shown or saved."
                 value={pasteText}
                 onChange={(e) => {
-                  setPasteText(e.target.value);
-                  setPasteResults(null);
+                  const text = e.target.value;
+                  setPasteText(text);
+                  if (!text.trim()) {
+                    setPasteResults(null);
+                    return;
+                  }
+                  const results = parsePastedSoldResults(text, pasteSource.trim() || "Sold listings (pasted)");
+                  setPasteResults(results);
+                  setPasteChecked(Object.fromEntries(results.map((r) => [r.id, true])));
                 }}
               />
               {pasteResults ? (
@@ -452,11 +453,7 @@ export default function PricingMvpCard({
                 )
               ) : null}
               <div className="mt-2 flex items-center gap-2">
-                {!pasteResults ? (
-                  <button type="button" onClick={readPaste} disabled={!pasteText.trim()} className="rounded-[8px] px-3 py-1 text-xs font-bold disabled:opacity-50" style={{ background: "var(--theme-gold, #C8CDD2)", color: "#0A0800" }}>Read it</button>
-                ) : (
-                  <button type="button" onClick={() => void addPasted()} disabled={!Object.values(pasteChecked).some(Boolean)} className="rounded-[8px] px-3 py-1 text-xs font-bold disabled:opacity-50" style={{ background: "var(--theme-gold, #C8CDD2)", color: "#0A0800" }}>Add selected</button>
-                )}
+                <button type="button" onClick={() => void addPasted()} disabled={!pasteResults || !Object.values(pasteChecked).some(Boolean)} className="rounded-[8px] px-3 py-1 text-xs font-bold disabled:opacity-50" style={{ background: "var(--theme-gold, #C8CDD2)", color: "#0A0800" }}>Add selected</button>
                 <button type="button" onClick={() => { setPasteOpen(false); setPasteResults(null); setPasteText(""); }} className="rounded-[8px] px-3 py-1 text-xs font-semibold text-[color:var(--muted)] ring-1 ring-[color:var(--border)]">Cancel</button>
               </div>
             </div>
