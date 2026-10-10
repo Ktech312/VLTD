@@ -257,7 +257,7 @@ export default function PricingMvpCard({
     await commit({ comparables: [...comparables, ...additions] });
   }
 
-  async function useCompsAsEstimate() {
+  async function applyCompsAsEstimate() {
     if (!compSummary) return;
     const span = compSummary.from && compSummary.to && compSummary.from !== compSummary.to ? ` (${compSummary.from} to ${compSummary.to})` : "";
     await commit({
@@ -587,7 +587,7 @@ export default function PricingMvpCard({
                 <span className="text-[color:var(--muted)]">
                   From these {compSummary.n} sold comps: {money2(compSummary.low)} to {money2(compSummary.high)}, middle {money2(compSummary.median)}.
                 </span>
-                <button type="button" onClick={() => void useCompsAsEstimate()} className="rounded-md px-2 py-1 text-[11px] font-semibold text-[color:var(--theme-gold)] ring-1 ring-[color:var(--border)] hover:bg-[color:var(--pill)]">
+                <button type="button" onClick={() => void applyCompsAsEstimate()} className="rounded-md px-2 py-1 text-[11px] font-semibold text-[color:var(--theme-gold)] ring-1 ring-[color:var(--border)] hover:bg-[color:var(--pill)]">
                   Use as my estimate
                 </button>
               </div>
