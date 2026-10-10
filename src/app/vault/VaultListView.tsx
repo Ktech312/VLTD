@@ -25,6 +25,7 @@ import { computeItemIntelligence } from "@/lib/itemIntelligence";
 import { UNIVERSE_LABEL, TAXONOMY, getCategories, isUniverseKey, type UniverseKey } from "@/lib/taxonomy";
 import { showToast } from "@/lib/toast";
 import { collectibleItems, effectiveMarketValue } from "@/lib/vaultStats";
+import { priceCheckIsStale } from "@/lib/pricingMvp";
 import { migrateExistingVaultImagesToSupabase } from "@/lib/vaultMigration";
 import {
   commitVaultItemEdits,
@@ -1374,7 +1375,9 @@ export default function VaultListView({ lockedUniverse }: { lockedUniverse?: Uni
     }).length;
     const insuranceReadyPct = totalItems ? Math.round((insuranceReadyCount / totalItems) * 100) : 0;
     const valuedCount = counted.filter((item) => effectiveMarketValue(item) > 0).length;
+    const staleCheckCount = counted.filter((item) => effectiveMarketValue(item) > 0 && priceCheckIsStale(item)).length;
     return {
+      staleCheckCount,
       totalItems,
       valuedCount,
       totalCost: totalCostValue,
@@ -1772,6 +1775,9 @@ export default function VaultListView({ lockedUniverse }: { lockedUniverse?: Uni
                   <div className={(stats.totalGain >= 0 ? "text-emerald-300" : "text-red-300") + " mt-0.5 text-[11px] sm:text-sm"}>{stats.totalGain >= 0 ? "+" : ""}{formatMoney(stats.totalGain)}</div>
                   {stats.valuedCount < stats.totalItems ? (
                     <div className="mt-0.5 text-[11px] text-[color:var(--muted)]">{stats.valuedCount} of {stats.totalItems} valued</div>
+                  ) : null}
+                  {stats.staleCheckCount > 0 ? (
+                    <div className="mt-0.5 text-[11px] text-amber-400">{stats.staleCheckCount} {stats.staleCheckCount === 1 ? "item hasn't" : "items haven't"} had a price check in 6 months</div>
                   ) : null}
                 </>
               )}

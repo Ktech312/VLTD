@@ -399,6 +399,24 @@ export function pastedSourceName(text: string): string | undefined {
   return hit ? hit[1].trim() : undefined;
 }
 
+/** Text with prices but no sale dates (a search summary, say): every dollar amount found, so the person can pick the ones they trust. */
+export function findPriceMentions(text: string, source: string): PastedComp[] {
+  const flat = String(text ?? "").replace(/\s+/g, " ");
+  const out: PastedComp[] = [];
+  const seen = new Set<number>();
+  const pattern = /\$\s?([\d,]+(?:\.\d{1,2})?)/g;
+  let hit: RegExpExecArray | null;
+  while ((hit = pattern.exec(flat)) && out.length < 12) {
+    const price = toMoney(hit[1]);
+    if (!price || price < 1 || seen.has(price)) continue;
+    seen.add(price);
+    const from = Math.max(0, hit.index - 45);
+    const snippet = flat.slice(from, hit.index + hit[0].length + 30).trim();
+    out.push({ id: `mention_${out.length}`, source, salePrice: price, notes: `…${snippet}…` });
+  }
+  return out;
+}
+
 export function parsePastedSoldResults(text: string, source: string): PastedComp[] {
   const lines = String(text ?? "")
     .split(/\r?\n/)
@@ -505,7 +523,8 @@ export function siteLabel(source: string): string {
 }
 
 /** One average per site from the sold comps, each dated. Averages from other sources are left alone. */
-export function buildSiteAverages(comps: PriceComparable[], previous: PricingSource[] = []): PricingSource[] {
+export function buildSiteAverages(comps: PriceComparable[], previous: PricingSource[] = [], recheck: string[] = []): PricingSource[] {
+  const rechecked = new Set(recheck.map((name) => siteLabel(name).toLowerCase()));
   const groups = new Map<string, number[]>();
   const names = new Map<string, string>();
   for (const comp of comps) {
@@ -525,7 +544,7 @@ export function buildSiteAverages(comps: PriceComparable[], previous: PricingSou
     const value = Math.round((prices.reduce((a, b) => a + b, 0) / prices.length) * 100) / 100;
     const notes = `${prices.length} sold sale${prices.length === 1 ? "" : "s"}`;
     const before = previous.find((entry) => entry.platform.toLowerCase() === platform.toLowerCase() && SITE_NOTE.test(entry.notes ?? ""));
-    const unchanged = before && Math.abs(before.value - value) < 0.005 && before.notes === notes;
+    const unchanged = before && Math.abs(before.value - value) < 0.005 && before.notes === notes && !rechecked.has(platform.toLowerCase());
     averages.push({
       platform,
       value,
@@ -536,6 +555,21 @@ export function buildSiteAverages(comps: PriceComparable[], previous: PricingSou
   }
   const others = previous.filter((entry) => !SITE_NOTE.test(entry.notes ?? ""));
   return [...others, ...averages];
+}
+
+export const PRICE_CHECK_STALE_DAYS = 183;
+
+/** The day the person last did a price check: the newest saved site average, or else the last time a value was saved. */
+export function lastPriceCheckAt(item: { priceSources?: PricingSource[]; priceUpdatedAt?: number; valueUpdatedAt?: number }): number | undefined {
+  const stamps = siteAverageEntries(item.priceSources).map((entry) => entry.fetchedAt ?? 0).filter(Boolean);
+  if (stamps.length > 0) return Math.max(...stamps);
+  const fallback = Math.max(Number(item.priceUpdatedAt ?? 0) || 0, Number(item.valueUpdatedAt ?? 0) || 0);
+  return fallback > 0 ? fallback : undefined;
+}
+
+export function priceCheckIsStale(item: { priceSources?: PricingSource[]; priceUpdatedAt?: number; valueUpdatedAt?: number }, now = Date.now()): boolean {
+  const at = lastPriceCheckAt(item);
+  return !at || now - at > PRICE_CHECK_STALE_DAYS * 86400000;
 }
 
 export function siteAverageEntries(sources?: PricingSource[]): PricingSource[] {

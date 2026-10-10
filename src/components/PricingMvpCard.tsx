@@ -7,6 +7,9 @@ import { INLINE_EDIT_LINE } from "@/lib/inlineEdit";
 import { getStoredActiveProfileId } from "@/lib/auth";
 import {
   buildSiteAverages,
+  findPriceMentions,
+  lastPriceCheckAt,
+  PRICE_CHECK_STALE_DAYS,
   COPY_SOLD_SALES_BOOKMARKLET,
   overallSiteAverage,
   pastedSourceName,
@@ -246,7 +249,7 @@ export default function PricingMvpCard({
     setAddingComp(false);
     setCompDraft({ source: "", price: "", date: "", url: "" });
     const next = [...comparables, comp];
-    await commit({ comparables: next, priceSources: buildSiteAverages(next, value.priceSources ?? []) });
+    await commit({ comparables: next, priceSources: buildSiteAverages(next, value.priceSources ?? [], [comp.source]) });
   }
 
   async function addPasted() {
@@ -264,7 +267,7 @@ export default function PricingMvpCard({
     setPasteText("");
     setPasteResults(null);
     const next = [...comparables, ...additions];
-    await commit({ comparables: next, priceSources: buildSiteAverages(next, value.priceSources ?? []) });
+    await commit({ comparables: next, priceSources: buildSiteAverages(next, value.priceSources ?? [], [site]) });
   }
 
   async function applyOverallAsEstimate() {
@@ -469,23 +472,30 @@ export default function PricingMvpCard({
                   }
                   const named = pastedSourceName(text);
                   if (named) setPasteSource(named);
-                  const results = parsePastedSoldResults(text, (named || pasteSource).trim() || "Sold listings (pasted)");
+                  const site = (named || pasteSource).trim() || "Sold listings";
+                  let results = parsePastedSoldResults(text, site);
+                  const undated = results.length === 0;
+                  if (undated) results = findPriceMentions(text, site);
                   setPasteResults(results);
-                  setPasteChecked(Object.fromEntries(results.map((r) => [r.id, true])));
+                  setPasteChecked(Object.fromEntries(results.map((r) => [r.id, !undated])));
                 }}
               />
               {pasteResults ? (
                 pasteResults.length === 0 ? (
-                  <div className="mt-2 text-[12px] text-[color:var(--muted)]">Nothing that looks like a sold price and date was found. Try copying more of the page, or add comps one by one.</div>
+                  <div className="mt-2 text-[12px] text-[color:var(--muted)]">No prices were found in that text. Try copying more of the page, or add comps one by one.</div>
                 ) : (
                   <div className="mt-2 space-y-1">
-                    <div className="text-[12px] text-[color:var(--muted)]">Found {pasteResults.length}. Untick any you don&apos;t want.</div>
+                    <div className="text-[12px] text-[color:var(--muted)]">
+                      {pasteResults.every((r) => !r.saleDate)
+                        ? `No sales with dates were found. These are the prices in the text, and they may not be real sales. Tick the ones you trust.`
+                        : `Found ${pasteResults.length}. Untick any you don't want.`}
+                    </div>
                     {pasteResults.map((r) => (
                       <label key={r.id} className="flex items-start gap-2 rounded-lg bg-[color:var(--surface)] px-2.5 py-1.5 text-[12px] ring-1 ring-[color:var(--border)]">
                         <input type="checkbox" className="mt-0.5" checked={!!pasteChecked[r.id]} onChange={() => setPasteChecked((c) => ({ ...c, [r.id]: !c[r.id] }))} />
                         <span className="min-w-0 flex-1">
                           <span className="font-semibold">{money2(r.salePrice)}</span>
-                          {r.saleDate ? <span className="ml-2 text-[color:var(--muted)]">{r.saleDate}</span> : null}
+                          {r.saleDate ? <span className="ml-2 text-[color:var(--muted)]">{r.saleDate}</span> : <span className="ml-2 text-[color:var(--muted)]">no sale date</span>}
                           {r.condition ? <span className="ml-2 text-[color:var(--muted)]">{r.condition}</span> : null}
                           {r.notes ? <span className="block truncate text-[color:var(--muted)]">{r.notes}</span> : null}
                         </span>
@@ -580,6 +590,19 @@ export default function PricingMvpCard({
           </div>
         </div>
 
+        {(() => {
+          const checkedAt = lastPriceCheckAt(value);
+          const hasAnyValue = Boolean(value.valueMedian || value.estimatedValue || value.valueLow || value.valueHigh || siteAvgs.length);
+          if (!checkedAt || !hasAnyValue) return null;
+          const stale = Date.now() - checkedAt > PRICE_CHECK_STALE_DAYS * 86400000;
+          return (
+            <div className={`text-[12px] ${stale ? "font-semibold text-amber-400" : "text-[color:var(--muted)]"}`}>
+              Last price check: {formatPriceUpdatedAt(checkedAt)}.
+              {stale ? " It has been over 6 months. Check the prices again to keep this value current, which matters for insurance." : ""}
+            </div>
+          );
+        })()}
+
         {/* Comparable sales */}
         <div>
           <div className="mb-1.5 flex items-center justify-between">
@@ -642,7 +665,7 @@ export default function PricingMvpCard({
                     <span className="font-semibold">{a.platform}</span>
                     <span>
                       <span className="font-semibold">{money2(a.value)}</span>
-                      <span className="ml-2 text-[color:var(--muted)]">{a.notes} · {formatPriceUpdatedAt(a.fetchedAt)}</span>
+                      <span className="ml-2 text-[color:var(--muted)]">{a.notes} · checked {formatPriceUpdatedAt(a.fetchedAt)}</span>
                     </span>
                   </div>
                 ))}
@@ -650,7 +673,7 @@ export default function PricingMvpCard({
                   <div className="mt-2 flex flex-wrap items-center justify-between gap-2 border-t border-[color:var(--border)] pt-2">
                     <span>
                       <span className="font-semibold">Overall average of {overall.sites} site{overall.sites === 1 ? "" : "s"}: {money2(overall.average)}</span>
-                      <span className="ml-2 text-[color:var(--muted)]">as of {formatPriceUpdatedAt(overall.asOf)}</span>
+                      <span className="ml-2 text-[color:var(--muted)]">checked {formatPriceUpdatedAt(overall.asOf)}</span>
                     </span>
                     <button type="button" onClick={() => void applyOverallAsEstimate()} className="rounded-md px-2 py-1 text-[11px] font-semibold text-[color:var(--theme-gold)] ring-1 ring-[color:var(--border)] hover:bg-[color:var(--pill)]">
                       Use as my estimate
