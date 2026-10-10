@@ -47,6 +47,13 @@ function readSearchPrefs(): SearchSitePrefs | null {
   }
 }
 
+/** Sale prices keep their cents: $9.75 is not "$10". */
+function money2(n?: number) {
+  const amount = Number(n ?? 0);
+  if (!Number.isFinite(amount) || amount <= 0) return "—";
+  return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(amount);
+}
+
 function numText(n?: number) {
   return n !== undefined && n !== null && Number.isFinite(n) ? String(n) : "";
 }
@@ -488,7 +495,7 @@ export default function PricingMvpCard({
             {comparables.map((comp, index) => (
               <div key={`${comp.source}-${index}`} className="flex items-center justify-between gap-3 rounded-xl bg-[color:var(--pill)] px-3 py-2 ring-1 ring-[color:var(--border)]">
                 <div className="min-w-0 flex-1">
-                  <span className="text-[13px] font-semibold text-[color:var(--fg)]">{formatPrice(comp.salePrice)}</span>
+                  <span className="text-[13px] font-semibold text-[color:var(--fg)]">{money2(comp.salePrice)}</span>
                   {comp.condition ? <span className="ml-2 text-[11px] text-[color:var(--muted)]">{comp.condition}</span> : null}
                   {comp.notes ? <div className="mt-0.5 truncate text-[11px] text-[color:var(--muted)]">{comp.notes}</div> : null}
                 </div>
@@ -535,7 +542,7 @@ export default function PricingMvpCard({
                         <label key={r.id} className="flex items-start gap-2 rounded-lg bg-[color:var(--surface)] px-2.5 py-1.5 text-[12px] ring-1 ring-[color:var(--border)]">
                           <input type="checkbox" className="mt-0.5" checked={!!pasteChecked[r.id]} onChange={() => setPasteChecked((c) => ({ ...c, [r.id]: !c[r.id] }))} />
                           <span className="min-w-0 flex-1">
-                            <span className="font-semibold">{formatPrice(r.salePrice)}</span>
+                            <span className="font-semibold">{money2(r.salePrice)}</span>
                             {r.saleDate ? <span className="ml-2 text-[color:var(--muted)]">{r.saleDate}</span> : null}
                             {r.condition ? <span className="ml-2 text-[color:var(--muted)]">{r.condition}</span> : null}
                             {r.notes ? <span className="block truncate text-[color:var(--muted)]">{r.notes}</span> : null}
@@ -558,7 +565,7 @@ export default function PricingMvpCard({
             {compSummary && compSummary.n >= 2 ? (
               <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl bg-[color:var(--surface)] px-3 py-2 text-[12px] ring-1 ring-[color:var(--border)]">
                 <span className="text-[color:var(--muted)]">
-                  From these {compSummary.n} sold comps: {formatPrice(compSummary.low)} to {formatPrice(compSummary.high)}, middle {formatPrice(compSummary.median)}.
+                  From these {compSummary.n} sold comps: {money2(compSummary.low)} to {money2(compSummary.high)}, middle {money2(compSummary.median)}.
                 </span>
                 <button type="button" onClick={() => void useCompsAsEstimate()} className="rounded-md px-2 py-1 text-[11px] font-semibold text-[color:var(--theme-gold)] ring-1 ring-[color:var(--border)] hover:bg-[color:var(--pill)]">
                   Use as my estimate
