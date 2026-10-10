@@ -336,7 +336,8 @@ async function fetchRowsWithOptionalGallery(profileId: string, since?: string) {
         .select(columns)
         .eq("profile_id", profileId);
       // Only rows changed since the last pull (needs the updated_at column and its trigger).
-      if (since) query = query.gte("updated_at", since);
+      // Strictly after the newest stamp already seen. (Inclusive would re-download every row that shares that stamp, as all rows did right after the migration.)
+      if (since) query = query.gt("updated_at", since);
       const { data, error } = await query
         .order("created_at", { ascending: false })
         .order("id", { ascending: true })
