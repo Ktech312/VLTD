@@ -1258,7 +1258,14 @@ export default function CameraCapturePanel({
                     real ultra-wide lens when the phone exposes one as a
                     separate camera (best-effort, see cameraLenses.ts);
                     scrolling back in switches back. */}
-                {!cameraError ? (
+                {!cameraError && isTouchPrimary ? (
+                  // Phones: pinching the picture zooms, so the slider is replaced by a small note.
+                  <div className="pointer-events-none absolute bottom-3 right-3 text-[9px] font-medium text-white" style={{ textShadow: "0 1px 2px rgba(0,0,0,0.9)" }}>
+                    Pinch and Zoom Enabled
+                  </div>
+                ) : null}
+
+                {!cameraError && !isTouchPrimary ? (
                   <div className="absolute bottom-3 right-3 flex h-32 w-9 flex-col items-center gap-1 rounded-full px-1.5 py-2 backdrop-blur" style={{ background: "rgba(0,0,0,0.42)", border: "1px solid rgba(255,255,255,0.25)" }}>
                     <span className="text-[8px] font-bold text-white/70">
                       {isAtWideLens ? "Wide" : `${cameraZoom.zoom.toFixed(1)}x`}
