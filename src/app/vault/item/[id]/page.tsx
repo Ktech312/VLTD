@@ -1331,12 +1331,6 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
               </Section>
             </div>
 
-            <div className="mt-4">
-              <Section title="DOCUMENTS">
-                <DocumentsSection itemId={item.id} />
-              </Section>
-            </div>
-
           </div>
 
           <div>
@@ -1458,6 +1452,11 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
               ) : null}
             </Section>
 
+            <div className="mt-4">
+              <Section title="DOCUMENTS">
+                <DocumentsSection itemId={item.id} />
+              </Section>
+            </div>
           </div>
         </div>
 
