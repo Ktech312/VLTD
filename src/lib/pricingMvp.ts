@@ -297,3 +297,161 @@ export function effectivePricingValue(
   if (typeof input.lastCompValue === "number" && Number.isFinite(input.lastCompValue)) return input.lastCompValue;
   return undefined;
 }
+
+// ── Search sites ──────────────────────────────────────────────────────────────
+// Links only: each one opens a search in the user's own browser. VLTD never fetches these pages itself.
+
+export type SearchSite = {
+  id: string;
+  label: string;
+  /** Builds the search link for an item. */
+  url: (query: string) => string;
+  note: string;
+};
+
+export const SEARCH_SITES: SearchSite[] = [
+  { id: "ebay-sold", label: "eBay sold", url: (q) => `https://www.ebay.com/sch/i.html?_nkw=${q}&LH_Sold=1&LH_Complete=1`, note: "Completed and sold listings." },
+  { id: "google", label: "Google", url: (q) => `https://www.google.com/search?q=${q}+sold+price`, note: "A general search for sold prices." },
+  { id: "google-shopping", label: "Google Shopping", url: (q) => `https://www.google.com/search?tbm=shop&q=${q}`, note: "Current prices from many shops." },
+  { id: "bing", label: "Bing", url: (q) => `https://www.bing.com/search?q=${q}+sold+price`, note: "A general search for sold prices." },
+  { id: "duckduckgo", label: "DuckDuckGo", url: (q) => `https://duckduckgo.com/?q=${q}+sold+price`, note: "A general search for sold prices." },
+  { id: "heritage", label: "Heritage Auctions", url: (q) => `https://www.ha.com/c/search-results.zx?Ntt=${q}`, note: "Auction results for higher-end items." },
+  { id: "mercari-sold", label: "Mercari sold", url: (q) => `https://www.mercari.com/search/?keyword=${q}&status=sold_out`, note: "Sold listings on Mercari." },
+  { id: "tcgplayer", label: "TCGplayer", url: (q) => `https://www.tcgplayer.com/search/all/product?q=${q}`, note: "Trading card market prices." },
+  { id: "pricecharting", label: "PriceCharting", url: (q) => `https://www.pricecharting.com/search-products?q=${q}`, note: "Games, cards and comics price guide." },
+  { id: "discogs", label: "Discogs", url: (q) => `https://www.discogs.com/search/?q=${q}&type=all`, note: "Vinyl and music; check sales history on the release page." },
+  { id: "mycomicshop", label: "MyComicShop", url: (q) => `https://www.mycomicshop.com/search?q=${q}`, note: "Comic dealer prices." },
+  { id: "130point", label: "130point", url: () => "https://www.130point.com/sales/", note: "Sold card sales." },
+  { id: "worthpoint", label: "WorthPoint", url: (q) => `https://www.worthpoint.com/search?query=${q}`, note: "Past sale prices (some need an account)." },
+];
+
+export type CustomSearchSite = { label: string; /** Use {query} where the item's name goes. */ url: string };
+export type SearchSitePrefs = { ids: string[]; custom: CustomSearchSite[] };
+
+export function searchQueryFor(title?: string, grade?: string) {
+  return encodeURIComponent(`${String(title ?? "").trim()} ${grade ?? ""}`.trim());
+}
+
+/** The links to show: the user's own choice if they made one, otherwise the sensible defaults for the item. */
+export function resolveSearchLinks(
+  defaults: MarketplaceSuggestion[],
+  prefs: SearchSitePrefs | null,
+  title?: string,
+  grade?: string
+): { key: string; label: string; url: string; note: string }[] {
+  const q = searchQueryFor(title, grade);
+  if (!prefs || (prefs.ids.length === 0 && prefs.custom.length === 0)) {
+    const base = defaults.map((d) => ({ key: d.platform, label: d.platform, url: d.url, note: d.note }));
+    const google = SEARCH_SITES.find((site) => site.id === "google");
+    if (google && !base.some((b) => /google/i.test(b.label))) base.push({ key: "google", label: google.label, url: google.url(q), note: google.note });
+    return base;
+  }
+  const picked = SEARCH_SITES.filter((site) => prefs.ids.includes(site.id)).map((site) => ({ key: site.id, label: site.label, url: site.url(q), note: site.note }));
+  const custom = prefs.custom
+    .filter((c) => c.label.trim() && /^https?:\/\//i.test(c.url.trim()))
+    .map((c, i) => ({ key: `custom-${i}`, label: c.label.trim(), url: c.url.trim().split("{query}").join(q), note: "Your own search site." }));
+  return [...picked, ...custom];
+}
+
+// ── Paste sold results ───────────────────────────────────────────────────────
+// The user copies a sold-listings page (eBay, Discogs and similar) and pastes the text. Only what they paste is read.
+
+const MONTHS = "Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Sept|Oct|Nov|Dec|January|February|March|April|June|July|August|September|October|November|December";
+const DATE_WORDS = new RegExp(`((?:${MONTHS})\\.?\\s+\\d{1,2},?\\s+\\d{4})`, "i");
+const DATE_SLASH = /(\d{1,2}\/\d{1,2}\/\d{2,4})/;
+const DATE_ISO = /(\d{4}-\d{2}-\d{2})/;
+const PRICE_ALONE = /^(?:US\s*)?\$\s?([\d,]+(?:\.\d{1,2})?)(?:\s*(?:to|-)\s*\$\s?[\d,.]+)?(?:\s*(?:or Best Offer|Buy It Now|Best offer accepted|Best Offer Accepted))?\s*$/i;
+const PRICE_ANY = /\$\s?([\d,]+(?:\.\d{1,2})?)/;
+const CONDITION_LINE = /^(Brand New|New|New with tags|Pre-Owned|Used|Open Box|Like New|Very Good|Good|Acceptable|Mint|Near Mint|Sealed|Graded|Not Specified)\b/i;
+const SKIP_LINE = /^(\+|Free |or Best Offer|Buy It Now|Located in|View similar|Sell one like|Accepts offers|Sponsored|Opens in|Save|Last one|\d+ (watchers|sold)|Results matching|No exact matches)/i;
+
+export type PastedComp = PriceComparable & { id: string };
+
+function toMoney(text: string): number | undefined {
+  const n = Number(text.replace(/,/g, ""));
+  return Number.isFinite(n) && n > 0 ? n : undefined;
+}
+
+function tidyDate(text: string): string {
+  return text.replace(/\s+/g, " ").replace(/\.(?=\s)/, "").trim();
+}
+
+export function parsePastedSoldResults(text: string, source: string): PastedComp[] {
+  const lines = String(text ?? "")
+    .split(/\r?\n/)
+    .map((line) => line.replace(/\s+/g, " ").trim())
+    .filter(Boolean);
+  const out: PastedComp[] = [];
+  const seen = new Set<string>();
+  const push = (price: number | undefined, date: string | undefined, title: string | undefined, condition: string | undefined) => {
+    if (!price) return;
+    const key = `${price}|${date ?? ""}|${(title ?? "").slice(0, 40)}`;
+    if (seen.has(key)) return;
+    seen.add(key);
+    out.push({
+      id: `paste_${out.length}`,
+      source,
+      salePrice: price,
+      saleDate: date,
+      condition,
+      notes: title ? title.slice(0, 120) : undefined,
+    });
+  };
+
+  // eBay style: "Sold Aug 20, 2026", then the title, a condition line, then the price on its own line.
+  for (let i = 0; i < lines.length; i += 1) {
+    const sold = lines[i].match(/^(?:Sold|Ended)(?:\s+on)?\s+(.+)$/i);
+    const dateMatch = sold ? sold[1].match(DATE_WORDS) || sold[1].match(DATE_SLASH) || sold[1].match(DATE_ISO) : null;
+    if (!sold || !dateMatch) continue;
+    const date = tidyDate(dateMatch[1]);
+    let title: string | undefined;
+    let condition: string | undefined;
+    let price: number | undefined;
+    for (let j = i + 1; j < Math.min(lines.length, i + 9); j += 1) {
+      const line = lines[j];
+      if (/^(?:Sold|Ended)(?:\s+on)?\s+/i.test(line) && (line.match(DATE_WORDS) || line.match(DATE_SLASH) || line.match(DATE_ISO))) break;
+      const priceHit = line.match(PRICE_ALONE);
+      if (priceHit) {
+        price = toMoney(priceHit[1]);
+        break;
+      }
+      if (SKIP_LINE.test(line)) continue;
+      if (!title) title = line;
+      else if (!condition && CONDITION_LINE.test(line)) condition = line;
+    }
+    push(price, date, title, condition);
+  }
+  if (out.length > 0) return out;
+
+  // Any other layout: a line (or neighbouring lines) holding a date and a dollar price.
+  for (let i = 0; i < lines.length; i += 1) {
+    const line = lines[i];
+    const dateMatch = line.match(DATE_WORDS) || line.match(DATE_SLASH) || line.match(DATE_ISO);
+    if (!dateMatch) continue;
+    const near = [line, lines[i + 1] ?? "", lines[i + 2] ?? ""].join(" ");
+    const priceHit = near.match(PRICE_ANY);
+    if (!priceHit) continue;
+    const title = line.replace(dateMatch[1], "").replace(PRICE_ANY, "").replace(/[|·•–-]+/g, " ").replace(/\s+/g, " ").trim();
+    push(toMoney(priceHit[1]), tidyDate(dateMatch[1]), title || undefined, undefined);
+  }
+  return out;
+}
+
+export function summarizeComps(comps: PriceComparable[]): { n: number; low: number; median: number; high: number; from?: string; to?: string } | null {
+  const prices = comps.map((c) => Number(c.salePrice)).filter((n) => Number.isFinite(n) && n > 0).sort((a, b) => a - b);
+  if (prices.length === 0) return null;
+  const mid = Math.floor(prices.length / 2);
+  const median = prices.length % 2 ? prices[mid] : (prices[mid - 1] + prices[mid]) / 2;
+  const dated = comps
+    .map((c) => (c.saleDate ? { t: Date.parse(c.saleDate), label: c.saleDate } : null))
+    .filter((d): d is { t: number; label: string } => !!d && Number.isFinite(d.t))
+    .sort((a, b) => a.t - b.t);
+  return {
+    n: prices.length,
+    low: prices[0],
+    median: Math.round(median * 100) / 100,
+    high: prices[prices.length - 1],
+    from: dated[0]?.label,
+    to: dated[dated.length - 1]?.label,
+  };
+}
