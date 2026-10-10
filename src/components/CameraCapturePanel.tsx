@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import ScanCropEditor from "@/components/ScanCropEditor";
 import BackgroundSwatchPicker from "@/components/capture/BackgroundSwatchPicker";
 import { DropdownPill } from "@/components/ui/DropdownPill";
@@ -873,7 +874,17 @@ export default function CameraCapturePanel({
     }
   }
 
-  return (
+  // Decided once when the camera opens, so turning the phone never restarts the camera. The inline layout on
+  // wider screens (sm and up) stays in the page.
+  const [portalToBody] = useState(
+    () =>
+      typeof window !== "undefined" &&
+      !!window.matchMedia &&
+      window.matchMedia("(pointer: coarse)").matches &&
+      (!isInline || window.matchMedia("(max-width: 639px)").matches)
+  );
+
+  const panel = (
     <div
       className={
         isInline
@@ -1548,4 +1559,10 @@ export default function CameraCapturePanel({
       </div>
     </div>
   );
+
+  // On phones the page sits inside a scrolling wrapper that confines position:fixed, so the full-screen camera
+  // ended up under the app header and bottom menu (the shutter button was hidden). Drawing it on the page body,
+  // like the app other sheets, lets it cover the whole screen.
+  if (portalToBody && typeof document !== "undefined") return createPortal(panel, document.body);
+  return panel;
 }
