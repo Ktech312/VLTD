@@ -393,6 +393,12 @@ function tidyTitle(text: string): string {
   return text.replace(/Opens in a new (?:window or tab|window|tab)/gi, "").replace(/\s+/g, " ").trim();
 }
 
+/** The bookmark button puts "VLTD source: eBay sold" on the first line; this reads the site name from it. */
+export function pastedSourceName(text: string): string | undefined {
+  const hit = String(text ?? "").match(/^\s*VLTD source:\s*(.+)$/im);
+  return hit ? hit[1].trim() : undefined;
+}
+
 export function parsePastedSoldResults(text: string, source: string): PastedComp[] {
   const lines = String(text ?? "")
     .split(/\r?\n/)
@@ -414,6 +420,16 @@ export function parsePastedSoldResults(text: string, source: string): PastedComp
       notes: title ? title.slice(0, 120) : undefined,
     });
   };
+
+  // Short lines from the bookmark button: "Sold Aug 13, 2026 | $11.99 | Title".
+  for (const line of lines) {
+    const compact = line.match(/^(?:Sold|Ended)?\s*(.+?)\s*\|\s*\$\s?([\d,]+(?:\.\d{1,2})?)\s*(?:\|\s*(.*))?$/i);
+    if (!compact) continue;
+    const dateHit = compact[1].match(DATE_WORDS) || compact[1].match(DATE_SLASH) || compact[1].match(DATE_ISO);
+    if (!dateHit) continue;
+    push(toMoney(compact[2]), tidyDate(dateHit[1]), compact[3] ? compact[3].trim() : undefined, undefined);
+  }
+  if (out.length > 0) return out;
 
   // eBay style: "Sold Aug 20, 2026", then the title, a condition line, then the price on its own line.
   for (let i = 0; i < lines.length; i += 1) {
@@ -473,3 +489,69 @@ export function summarizeComps(comps: PriceComparable[]): { n: number; low: numb
     to: dated[dated.length - 1]?.label,
   };
 }
+
+// ── Site averages ────────────────────────────────────────────────────────────
+
+const SITE_NOTE = /sold sales?$/i;
+
+/** "eBay sold (pasted)" and "eBay" are the same site. */
+export function siteLabel(source: string): string {
+  const clean = String(source ?? "")
+    .replace(/\s*\((?:sold,?\s*)?pasted\)\s*/gi, " ")
+    .replace(/\s+sold$/i, "")
+    .replace(/\s+/g, " ")
+    .trim();
+  return clean || "Other";
+}
+
+/** One average per site from the sold comps, each dated. Averages from other sources are left alone. */
+export function buildSiteAverages(comps: PriceComparable[], previous: PricingSource[] = []): PricingSource[] {
+  const groups = new Map<string, number[]>();
+  const names = new Map<string, string>();
+  for (const comp of comps) {
+    const price = Number(comp.salePrice);
+    if (!Number.isFinite(price) || price <= 0) continue;
+    const label = siteLabel(comp.source);
+    const key = label.toLowerCase();
+    if (!names.has(key)) names.set(key, label);
+    const list = groups.get(key) ?? [];
+    list.push(price);
+    groups.set(key, list);
+  }
+  const now = Date.now();
+  const averages: PricingSource[] = [];
+  for (const [key, prices] of groups) {
+    const platform = names.get(key) ?? key;
+    const value = Math.round((prices.reduce((a, b) => a + b, 0) / prices.length) * 100) / 100;
+    const notes = `${prices.length} sold sale${prices.length === 1 ? "" : "s"}`;
+    const before = previous.find((entry) => entry.platform.toLowerCase() === platform.toLowerCase() && SITE_NOTE.test(entry.notes ?? ""));
+    const unchanged = before && Math.abs(before.value - value) < 0.005 && before.notes === notes;
+    averages.push({
+      platform,
+      value,
+      confidence: prices.length >= 3 ? "medium" : "low",
+      fetchedAt: unchanged && before.fetchedAt ? before.fetchedAt : now,
+      notes,
+    });
+  }
+  const others = previous.filter((entry) => !SITE_NOTE.test(entry.notes ?? ""));
+  return [...others, ...averages];
+}
+
+export function siteAverageEntries(sources?: PricingSource[]): PricingSource[] {
+  return (sources ?? []).filter((entry) => SITE_NOTE.test(entry.notes ?? ""));
+}
+
+/** The average of the site averages: each site counts once, however many sales it had. */
+export function overallSiteAverage(sources?: PricingSource[]): { sites: number; average: number; low: number; high: number; asOf?: number } | null {
+  const entries = siteAverageEntries(sources).filter((entry) => Number.isFinite(entry.value) && entry.value > 0);
+  if (entries.length === 0) return null;
+  const values = entries.map((entry) => entry.value);
+  const average = Math.round((values.reduce((a, b) => a + b, 0) / values.length) * 100) / 100;
+  const dates = entries.map((entry) => entry.fetchedAt ?? 0).filter(Boolean);
+  return { sites: entries.length, average, low: Math.min(...values), high: Math.max(...values), asOf: dates.length ? Math.max(...dates) : undefined };
+}
+
+
+/** What the "Copy sold sales" bookmark runs on a sold-listings page: it copies only the sales (date | price | title). */
+export const COPY_SOLD_SALES_BOOKMARKLET = "javascript:(function () { try { var L = document.body.innerText.split(\"\\n\").map(function (s) { return s.replace(/\\s+/g, \" \").trim(); }).filter(Boolean); var D = /((?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Sept|Oct|Nov|Dec|January|February|March|April|June|July|August|September|October|November|December)\\.?\\s+\\d{1,2}(?:,?\\s+\\d{4})?)/i; function pr(l) { if (/^\\+/.test(l) || /(delivery|shipping|postage)/i.test(l)) return 0; var m = l.match(/^(?:US\\s*)?\\$\\s?([\\d,]+(?:\\.\\d{1,2})?)/); return m ? parseFloat(m[1].replace(/,/g, \"\")) : 0; } var out = [], i, j; for (i = 0; i < L.length; i++) { var s = L[i].match(/^(?:Sold|Ended)(?:\\s+on)?\\s+(.+)$/i); if (!s) continue; var d = s[1].match(D); if (!d) continue; var t = \"\", p = 0; for (j = i + 1; j < Math.min(L.length, i + 9); j++) { if (/^(?:Sold|Ended)\\s+/i.test(L[j]) && D.test(L[j])) break; var v = pr(L[j]); if (v) { p = v; break; } if (!t && !/^(Opens in|Brand New|New|Pre-Owned|Used|Located|Free|View similar|Sell one|Sponsored|\\+|or Best|Buy It)/i.test(L[j])) t = L[j]; } if (p) out.push(\"Sold \" + d[1] + \" | $\" + p.toFixed(2) + \" | \" + t.replace(/Opens in a new.*$/i, \"\").replace(/\\|/g, \"/\")); } var h = location.hostname.replace(/^www\\./, \"\").split(\".\")[0]; var known = { ebay: \"eBay\", mercari: \"Mercari\", discogs: \"Discogs\", heritage: \"Heritage\", ha: \"Heritage\", whatnot: \"Whatnot\", tcgplayer: \"TCGplayer\", goldin: \"Goldin\" }; var name = known[h] || (h.charAt(0).toUpperCase() + h.slice(1)); var txt = \"VLTD source: \" + name + \" sold\\n\" + out.join(\"\\n\"); function note(m) { var n = document.createElement(\"div\"); n.textContent = m; n.style.cssText = \"position:fixed;top:12px;right:12px;z-index:2147483647;background:#0b1320;color:#fff;padding:12px 16px;border-radius:8px;font:600 14px sans-serif;box-shadow:0 8px 30px rgba(0,0,0,.4)\"; document.body.appendChild(n); setTimeout(function () { n.remove(); }, 5000); } if (!out.length) { note(\"VLTD: no sold sales found on this page. Open a sold-listings page first.\"); return; } function fb() { var a = document.createElement(\"textarea\"); a.value = txt; document.body.appendChild(a); a.select(); document.execCommand(\"copy\"); a.remove(); } function ok() { note(\"VLTD: copied \" + out.length + \" sold sale\" + (out.length == 1 ? \"\" : \"s\") + \". Now paste them into VLTD.\"); } if (navigator.clipboard && navigator.clipboard.writeText) { navigator.clipboard.writeText(txt).then(ok, function () { fb(); ok(); }); } else { fb(); ok(); } } catch (e) { alert(\"VLTD: could not read this page. \" + e); } })();";

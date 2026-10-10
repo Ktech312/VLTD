@@ -6,6 +6,11 @@ import { AppIcon } from "@/components/ui/AppIcon";
 import { INLINE_EDIT_LINE } from "@/lib/inlineEdit";
 import { getStoredActiveProfileId } from "@/lib/auth";
 import {
+  buildSiteAverages,
+  COPY_SOLD_SALES_BOOKMARKLET,
+  overallSiteAverage,
+  pastedSourceName,
+  siteAverageEntries,
   buildPricingPatch,
   confidenceLabel,
   confidenceTone,
@@ -122,6 +127,8 @@ export default function PricingMvpCard({
   const comparables = useMemo(() => normalizeComparables(value.comparables) ?? [], [value.comparables]);
   const links = useMemo(() => resolveSearchLinks(suggestions, prefs, itemTitle, grade), [suggestions, prefs, itemTitle, grade]);
   const compSummary = useMemo(() => summarizeComps(comparables), [comparables]);
+  const siteAvgs = useMemo(() => siteAverageEntries(value.priceSources), [value.priceSources]);
+  const overall = useMemo(() => overallSiteAverage(value.priceSources), [value.priceSources]);
 
   async function commit(overrides: Parameters<typeof buildPricingPatch>[0]) {
     if (!onSave) return;
@@ -238,7 +245,8 @@ export default function PricingMvpCard({
     };
     setAddingComp(false);
     setCompDraft({ source: "", price: "", date: "", url: "" });
-    await commit({ comparables: [...comparables, comp] });
+    const next = [...comparables, comp];
+    await commit({ comparables: next, priceSources: buildSiteAverages(next, value.priceSources ?? []) });
   }
 
   async function addPasted() {
@@ -254,7 +262,20 @@ export default function PricingMvpCard({
     setPasteOpen(false);
     setPasteText("");
     setPasteResults(null);
-    await commit({ comparables: [...comparables, ...additions] });
+    const next = [...comparables, ...additions];
+    await commit({ comparables: next, priceSources: buildSiteAverages(next, value.priceSources ?? []) });
+  }
+
+  async function applyOverallAsEstimate() {
+    if (!overall) return;
+    const parts = siteAvgs.map((a) => `${a.platform} ${money2(a.value)}`).join(", ");
+    await commit({
+      valueLow: overall.low,
+      valueMedian: overall.average,
+      valueHigh: overall.high,
+      priceSource: `Average of ${overall.sites} site${overall.sites === 1 ? "" : "s"} (${parts}), as of ${formatPriceUpdatedAt(overall.asOf)}`,
+      priceConfidence: overall.sites >= 2 ? "medium" : "low",
+    });
   }
 
   async function applyCompsAsEstimate() {
@@ -270,7 +291,8 @@ export default function PricingMvpCard({
   }
 
   async function removeComp(index: number) {
-    await commit({ comparables: comparables.filter((_, i) => i !== index) });
+    const next = comparables.filter((_, i) => i !== index);
+    await commit({ comparables: next, priceSources: buildSiteAverages(next, value.priceSources ?? []) });
   }
 
   async function applyCompAsValue(comp: PriceComparable) {
@@ -415,6 +437,22 @@ export default function PricingMvpCard({
               <div className="text-[12px] text-[color:var(--muted)]">
                 Open a sold-listings page (the eBay sold link above), press Ctrl+A then Ctrl+C, and paste it here. The sales are found automatically and only they are kept; the rest of the page is thrown away.
               </div>
+                <div className="mt-2 text-[12px] text-[color:var(--muted)]">
+                  Easier: drag{" "}
+                  <a
+                    ref={(el) => {
+                      if (el) el.setAttribute("href", COPY_SOLD_SALES_BOOKMARKLET);
+                    }}
+                    href="#"
+                    onClick={(e) => e.preventDefault()}
+                    draggable
+                    title="Drag this to your bookmarks bar"
+                    className="inline-flex items-center rounded-full bg-[color:var(--surface)] px-2.5 py-0.5 font-bold text-[color:var(--fg)] underline ring-1 ring-[color:var(--border)]"
+                  >
+                    Copy sold sales (VLTD)
+                  </a>{" "}
+                  up to your bookmarks bar (press Ctrl+Shift+B if you can&apos;t see it). On any sold-listings page, click that bookmark, then paste here. It copies just the sales.
+                </div>
               <input className={`${smallInput} mt-2 w-full sm:w-72`} placeholder="Where it is from" value={pasteSource} onChange={(e) => setPasteSource(e.target.value)} />
               <textarea
                 className={`${smallInput} mt-2 h-10 w-full resize-none overflow-hidden`}
@@ -427,7 +465,9 @@ export default function PricingMvpCard({
                     setPasteResults(null);
                     return;
                   }
-                  const results = parsePastedSoldResults(text, pasteSource.trim() || "Sold listings (pasted)");
+                  const named = pastedSourceName(text);
+                  if (named) setPasteSource(named);
+                  const results = parsePastedSoldResults(text, (named || pasteSource).trim() || "Sold listings (pasted)");
                   setPasteResults(results);
                   setPasteChecked(Object.fromEntries(results.map((r) => [r.id, true])));
                 }}
@@ -590,6 +630,31 @@ export default function PricingMvpCard({
                 <button type="button" onClick={() => void applyCompsAsEstimate()} className="rounded-md px-2 py-1 text-[11px] font-semibold text-[color:var(--theme-gold)] ring-1 ring-[color:var(--border)] hover:bg-[color:var(--pill)]">
                   Use as my estimate
                 </button>
+              </div>
+            ) : null}
+            {siteAvgs.length > 0 ? (
+              <div className="rounded-xl bg-[color:var(--surface)] px-3 py-2 text-[12px] ring-1 ring-[color:var(--border)]">
+                <div className={tileLabel}>AVERAGE BY SITE</div>
+                {siteAvgs.map((a) => (
+                  <div key={a.platform} className="mt-1 flex flex-wrap items-baseline justify-between gap-2">
+                    <span className="font-semibold">{a.platform}</span>
+                    <span>
+                      <span className="font-semibold">{money2(a.value)}</span>
+                      <span className="ml-2 text-[color:var(--muted)]">{a.notes} · {formatPriceUpdatedAt(a.fetchedAt)}</span>
+                    </span>
+                  </div>
+                ))}
+                {overall ? (
+                  <div className="mt-2 flex flex-wrap items-center justify-between gap-2 border-t border-[color:var(--border)] pt-2">
+                    <span>
+                      <span className="font-semibold">Overall average of {overall.sites} site{overall.sites === 1 ? "" : "s"}: {money2(overall.average)}</span>
+                      <span className="ml-2 text-[color:var(--muted)]">as of {formatPriceUpdatedAt(overall.asOf)}</span>
+                    </span>
+                    <button type="button" onClick={() => void applyOverallAsEstimate()} className="rounded-md px-2 py-1 text-[11px] font-semibold text-[color:var(--theme-gold)] ring-1 ring-[color:var(--border)] hover:bg-[color:var(--pill)]">
+                      Use as my estimate
+                    </button>
+                  </div>
+                ) : null}
               </div>
             ) : null}
             {addingComp ? (
