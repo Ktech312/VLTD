@@ -114,7 +114,7 @@ export default function PricingMvpCard({
   // Paste sold results: the person copies a sold-listings page and pastes it; only that text is read.
   const [pasteOpen, setPasteOpen] = useState(false);
   const [pasteText, setPasteText] = useState("");
-  const [pasteSource, setPasteSource] = useState("eBay sold (pasted)");
+  const [pasteSource, setPasteSource] = useState("eBay sold");
   const [pasteResults, setPasteResults] = useState<PastedComp[] | null>(null);
   const [pasteChecked, setPasteChecked] = useState<Record<string, boolean>>({});
 
@@ -252,8 +252,9 @@ export default function PricingMvpCard({
   async function addPasted() {
     const chosen = (pasteResults ?? []).filter((r) => pasteChecked[r.id]);
     if (chosen.length === 0) return;
+    const site = pasteSource.trim() || "Sold listings";
     const additions: PriceComparable[] = chosen.map((r) => ({
-      source: r.source,
+      source: site,
       salePrice: r.salePrice,
       saleDate: r.saleDate,
       condition: r.condition,
@@ -328,6 +329,7 @@ export default function PricingMvpCard({
                       href={s.url}
                       target="_blank"
                       rel="noopener noreferrer"
+                      onClick={() => setPasteSource(s.label)}
                       title={`${s.note} Opens in a new tab.`}
                       className="inline-flex items-center gap-1 rounded-full bg-[color:var(--pill)] px-2.5 py-1 text-[12px] font-semibold text-[color:var(--fg)] underline underline-offset-2 ring-1 ring-[color:var(--border)] hover:bg-[color:var(--surface)]"
                     >
