@@ -143,7 +143,9 @@ export function comicShortQuery(title?: string, withHash = false): string {
   const clean = String(title ?? "").trim();
   const hit = clean.match(/^(.*?)\s*#\s*(\d+[A-Za-z]?)\b/);
   if (!hit || !hit[1].trim()) return clean;
-  return `${hit[1].trim()} ${withHash ? "#" : ""}${hit[2]}`;
+  // Colons and stray dashes ("Villain of the Year - #1") make the dealer sites fall back to an A-Z list.
+  const series = hit[1].replace(/[:;,!?"“”]/g, "").replace(/\s+[-–—]+(?=\s|$)/g, " ").replace(/\s+/g, " ").trim();
+  return `${series} ${withHash ? "#" : ""}${hit[2]}`;
 }
 
 export function getPricingSuggestions(
