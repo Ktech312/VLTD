@@ -88,6 +88,7 @@ export default function PricingMvpCard({
   const [addingComp, setAddingComp] = useState(false);
   const [compDraft, setCompDraft] = useState({ source: "", price: "", date: "", url: "" });
   const skipCommit = useRef(false);
+  const sectionRef = useRef<HTMLElement>(null);
 
   // Which sites to link to: each person chooses; nothing is forced on them.
   const [prefs, setPrefs] = useState<SearchSitePrefs | null>(null);
@@ -295,7 +296,7 @@ export default function PricingMvpCard({
   const smallInput = "rounded-lg bg-[color:var(--pill)] px-2.5 py-1 text-sm ring-1 ring-[color:var(--border)] focus:outline-none";
 
   return (
-    <section className="rounded-[16px] bg-[color:var(--surface)] p-3 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
+    <section ref={sectionRef} className="rounded-[16px] bg-[color:var(--surface)] p-3 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
       <div className="flex items-start justify-between gap-3">
         <div>
           <div className="text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">{title}</div>
@@ -303,22 +304,40 @@ export default function PricingMvpCard({
             <div className="mt-1 text-sm text-[color:var(--muted)]">
               Click any value to edit it.
               {links.length > 0 ? (
-                <>
-                  {" "}Look up sold prices:{" "}
-                  {links.map((s, i) => (
-                    <span key={s.key}>
-                      {i > 0 ? " · " : ""}
-                      <a href={s.url} target="_blank" rel="noopener noreferrer" title={s.note} className="text-[color:var(--theme-gold)] underline-offset-2 hover:underline">
-                        {s.label}
-                      </a>
-                    </span>
+                <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                  <span className="text-[12px] font-semibold">Look up sold prices:</span>
+                  {links.map((s) => (
+                    <a
+                      key={s.key}
+                      href={s.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      title={`${s.note} Opens in a new tab.`}
+                      className="inline-flex items-center gap-1 rounded-full bg-[color:var(--pill)] px-2.5 py-1 text-[12px] font-semibold text-[color:var(--fg)] underline underline-offset-2 ring-1 ring-[color:var(--border)] hover:bg-[color:var(--surface)]"
+                    >
+                      {s.label} <span aria-hidden="true">↗</span>
+                    </a>
                   ))}
-                </>
+                </div>
               ) : null}
-              {" "}
-              <button type="button" onClick={() => setChooserOpen((open) => !open)} className="text-[12px] font-semibold text-[color:var(--muted)] underline-offset-2 hover:underline">
-                {chooserOpen ? "Close" : "Choose sites"}
-              </button>
+              <div className="mt-2 flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setPasteOpen((open) => !open)}
+                  className="inline-flex items-center rounded-[8px] px-3 py-1.5 text-[12px] font-bold"
+                  style={{ background: "var(--theme-gold, #C8CDD2)", color: "#0A0800" }}
+                >
+                  Paste sold results
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setChooserOpen((open) => !open)}
+                  className="inline-flex items-center rounded-[8px] bg-[color:var(--pill)] px-3 py-1.5 text-[12px] font-semibold text-[color:var(--fg)] ring-1 ring-[color:var(--border)]"
+                >
+                  {chooserOpen ? "Close site list" : "Choose sites"}
+                </button>
+                <span className="text-[12px]">Copy a sold page, then paste it here to add the sales as comps.</span>
+              </div>
             </div>
           ) : null}
           {!compact && chooserOpen ? (
@@ -394,6 +413,55 @@ export default function PricingMvpCard({
                 </button>
               ) : null}
             </div>
+          ) : null}
+          {!compact ? (
+            <>
+          {pasteOpen ? (
+            <div className="mt-3 rounded-xl bg-[color:var(--pill)] p-2.5 ring-1 ring-[color:var(--border)]">
+              <div className="text-[12px] text-[color:var(--muted)]">
+                Open a sold-listings page (for example the eBay sold link above), select everything on it, copy, and paste it here. VLTD only reads what you paste.
+              </div>
+              <input className={`${smallInput} mt-2 w-full sm:w-72`} placeholder="Where it is from" value={pasteSource} onChange={(e) => setPasteSource(e.target.value)} />
+              <textarea
+                className={`${smallInput} mt-2 h-28 w-full resize-y`}
+                placeholder="Paste the page text here"
+                value={pasteText}
+                onChange={(e) => {
+                  setPasteText(e.target.value);
+                  setPasteResults(null);
+                }}
+              />
+              {pasteResults ? (
+                pasteResults.length === 0 ? (
+                  <div className="mt-2 text-[12px] text-[color:var(--muted)]">Nothing that looks like a sold price and date was found. Try copying more of the page, or add comps one by one.</div>
+                ) : (
+                  <div className="mt-2 space-y-1">
+                    <div className="text-[12px] text-[color:var(--muted)]">Found {pasteResults.length}. Untick any you don&apos;t want.</div>
+                    {pasteResults.map((r) => (
+                      <label key={r.id} className="flex items-start gap-2 rounded-lg bg-[color:var(--surface)] px-2.5 py-1.5 text-[12px] ring-1 ring-[color:var(--border)]">
+                        <input type="checkbox" className="mt-0.5" checked={!!pasteChecked[r.id]} onChange={() => setPasteChecked((c) => ({ ...c, [r.id]: !c[r.id] }))} />
+                        <span className="min-w-0 flex-1">
+                          <span className="font-semibold">{money2(r.salePrice)}</span>
+                          {r.saleDate ? <span className="ml-2 text-[color:var(--muted)]">{r.saleDate}</span> : null}
+                          {r.condition ? <span className="ml-2 text-[color:var(--muted)]">{r.condition}</span> : null}
+                          {r.notes ? <span className="block truncate text-[color:var(--muted)]">{r.notes}</span> : null}
+                        </span>
+                      </label>
+                    ))}
+                  </div>
+                )
+              ) : null}
+              <div className="mt-2 flex items-center gap-2">
+                {!pasteResults ? (
+                  <button type="button" onClick={readPaste} disabled={!pasteText.trim()} className="rounded-[8px] px-3 py-1 text-xs font-bold disabled:opacity-50" style={{ background: "var(--theme-gold, #C8CDD2)", color: "#0A0800" }}>Read it</button>
+                ) : (
+                  <button type="button" onClick={() => void addPasted()} disabled={!Object.values(pasteChecked).some(Boolean)} className="rounded-[8px] px-3 py-1 text-xs font-bold disabled:opacity-50" style={{ background: "var(--theme-gold, #C8CDD2)", color: "#0A0800" }}>Add selected</button>
+                )}
+                <button type="button" onClick={() => { setPasteOpen(false); setPasteResults(null); setPasteText(""); }} className="rounded-[8px] px-3 py-1 text-xs font-semibold text-[color:var(--muted)] ring-1 ring-[color:var(--border)]">Cancel</button>
+              </div>
+            </div>
+          ) : null}
+            </>
           ) : null}
         </div>
         <button
@@ -482,7 +550,7 @@ export default function PricingMvpCard({
             </span>
             {!addingComp && !pasteOpen ? (
               <div className="flex items-center gap-3">
-                <button type="button" onClick={() => setPasteOpen(true)} className="text-[11px] font-semibold text-[color:var(--theme-gold)]">
+                <button type="button" onClick={() => { setPasteOpen(true); window.setTimeout(() => sectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 50); }} className="text-[11px] font-semibold text-[color:var(--theme-gold)]">
                   + Paste sold results
                 </button>
                 <button type="button" onClick={() => setAddingComp(true)} className="text-[11px] font-semibold text-[color:var(--theme-gold)]">
@@ -517,51 +585,6 @@ export default function PricingMvpCard({
                 </div>
               </div>
             ))}
-            {pasteOpen ? (
-              <div className="rounded-xl bg-[color:var(--pill)] p-2.5 ring-1 ring-[color:var(--border)]">
-                <div className="text-[12px] text-[color:var(--muted)]">
-                  Open a sold-listings page (for example the eBay sold link above), select everything on it, copy, and paste it here. VLTD only reads what you paste.
-                </div>
-                <input className={`${smallInput} mt-2 w-full sm:w-72`} placeholder="Where it is from" value={pasteSource} onChange={(e) => setPasteSource(e.target.value)} />
-                <textarea
-                  className={`${smallInput} mt-2 h-28 w-full resize-y`}
-                  placeholder="Paste the page text here"
-                  value={pasteText}
-                  onChange={(e) => {
-                    setPasteText(e.target.value);
-                    setPasteResults(null);
-                  }}
-                />
-                {pasteResults ? (
-                  pasteResults.length === 0 ? (
-                    <div className="mt-2 text-[12px] text-[color:var(--muted)]">Nothing that looks like a sold price and date was found. Try copying more of the page, or add comps one by one.</div>
-                  ) : (
-                    <div className="mt-2 space-y-1">
-                      <div className="text-[12px] text-[color:var(--muted)]">Found {pasteResults.length}. Untick any you don&apos;t want.</div>
-                      {pasteResults.map((r) => (
-                        <label key={r.id} className="flex items-start gap-2 rounded-lg bg-[color:var(--surface)] px-2.5 py-1.5 text-[12px] ring-1 ring-[color:var(--border)]">
-                          <input type="checkbox" className="mt-0.5" checked={!!pasteChecked[r.id]} onChange={() => setPasteChecked((c) => ({ ...c, [r.id]: !c[r.id] }))} />
-                          <span className="min-w-0 flex-1">
-                            <span className="font-semibold">{money2(r.salePrice)}</span>
-                            {r.saleDate ? <span className="ml-2 text-[color:var(--muted)]">{r.saleDate}</span> : null}
-                            {r.condition ? <span className="ml-2 text-[color:var(--muted)]">{r.condition}</span> : null}
-                            {r.notes ? <span className="block truncate text-[color:var(--muted)]">{r.notes}</span> : null}
-                          </span>
-                        </label>
-                      ))}
-                    </div>
-                  )
-                ) : null}
-                <div className="mt-2 flex items-center gap-2">
-                  {!pasteResults ? (
-                    <button type="button" onClick={readPaste} disabled={!pasteText.trim()} className="rounded-[8px] px-3 py-1 text-xs font-bold disabled:opacity-50" style={{ background: "var(--theme-gold, #C8CDD2)", color: "#0A0800" }}>Read it</button>
-                  ) : (
-                    <button type="button" onClick={() => void addPasted()} disabled={!Object.values(pasteChecked).some(Boolean)} className="rounded-[8px] px-3 py-1 text-xs font-bold disabled:opacity-50" style={{ background: "var(--theme-gold, #C8CDD2)", color: "#0A0800" }}>Add selected</button>
-                  )}
-                  <button type="button" onClick={() => { setPasteOpen(false); setPasteResults(null); setPasteText(""); }} className="rounded-[8px] px-3 py-1 text-xs font-semibold text-[color:var(--muted)] ring-1 ring-[color:var(--border)]">Cancel</button>
-                </div>
-              </div>
-            ) : null}
             {compSummary && compSummary.n >= 2 ? (
               <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl bg-[color:var(--surface)] px-3 py-2 text-[12px] ring-1 ring-[color:var(--border)]">
                 <span className="text-[color:var(--muted)]">

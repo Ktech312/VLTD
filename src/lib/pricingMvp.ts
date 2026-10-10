@@ -357,7 +357,7 @@ export function resolveSearchLinks(
 // The user copies a sold-listings page (eBay, Discogs and similar) and pastes the text. Only what they paste is read.
 
 const MONTHS = "Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Sept|Oct|Nov|Dec|January|February|March|April|June|July|August|September|October|November|December";
-const DATE_WORDS = new RegExp(`((?:${MONTHS})\\.?\\s+\\d{1,2},?\\s+\\d{4})`, "i");
+const DATE_WORDS = new RegExp(`((?:${MONTHS})\\.?\\s+\\d{1,2}(?:,?\\s+\\d{4})?)`, "i");
 const DATE_SLASH = /(\d{1,2}\/\d{1,2}\/\d{2,4})/;
 const DATE_ISO = /(\d{4}-\d{2}-\d{2})/;
 const PRICE_ALONE = /^(?:US\s*)?\$\s?([\d,]+(?:\.\d{1,2})?)(?:\s*(?:to|-)\s*\$\s?[\d,.]+)?(?:\s*(?:or Best Offer|Buy It Now|Best offer accepted|Best Offer Accepted))?\s*$/i;
@@ -373,7 +373,24 @@ function toMoney(text: string): number | undefined {
 }
 
 function tidyDate(text: string): string {
-  return text.replace(/\s+/g, " ").replace(/\.(?=\s)/, "").trim();
+  const clean = text.replace(/\s+/g, " ").replace(/\.(?=\s)/, "").trim();
+  if (/\d{4}/.test(clean) || !new RegExp(`^(?:${MONTHS})`, "i").test(clean)) return clean;
+  const now = new Date();
+  const withThisYear = `${clean}, ${now.getFullYear()}`;
+  const parsed = Date.parse(withThisYear);
+  if (Number.isFinite(parsed) && parsed > now.getTime() + 86400000) return `${clean}, ${now.getFullYear() - 1}`;
+  return withThisYear;
+}
+
+/** A price line: starts with a dollar amount. Shipping lines ("+$4.39 delivery") are not prices. "$11.99$14.99" is read as $11.99. */
+function priceFromLine(line: string): number | undefined {
+  if (/^\+/.test(line) || /(delivery|shipping|postage)/i.test(line)) return undefined;
+  const hit = line.match(/^(?:US\s*)?\$\s?([\d,]+(?:\.\d{1,2})?)/);
+  return hit ? toMoney(hit[1]) : undefined;
+}
+
+function tidyTitle(text: string): string {
+  return text.replace(/Opens in a new (?:window or tab|window|tab)/gi, "").replace(/\s+/g, " ").trim();
 }
 
 export function parsePastedSoldResults(text: string, source: string): PastedComp[] {
@@ -404,19 +421,20 @@ export function parsePastedSoldResults(text: string, source: string): PastedComp
     const dateMatch = sold ? sold[1].match(DATE_WORDS) || sold[1].match(DATE_SLASH) || sold[1].match(DATE_ISO) : null;
     if (!sold || !dateMatch) continue;
     const date = tidyDate(dateMatch[1]);
-    let title: string | undefined;
+    const afterDate = tidyTitle(sold[1].replace(dateMatch[1], ""));
+    let title: string | undefined = afterDate.length > 3 ? afterDate : undefined;
     let condition: string | undefined;
     let price: number | undefined;
     for (let j = i + 1; j < Math.min(lines.length, i + 9); j += 1) {
       const line = lines[j];
       if (/^(?:Sold|Ended)(?:\s+on)?\s+/i.test(line) && (line.match(DATE_WORDS) || line.match(DATE_SLASH) || line.match(DATE_ISO))) break;
-      const priceHit = line.match(PRICE_ALONE);
-      if (priceHit) {
-        price = toMoney(priceHit[1]);
+      const lineAmount = priceFromLine(line);
+      if (lineAmount) {
+        price = lineAmount;
         break;
       }
       if (SKIP_LINE.test(line)) continue;
-      if (!title) title = line;
+      if (!title) title = tidyTitle(line);
       else if (!condition && CONDITION_LINE.test(line)) condition = line;
     }
     push(price, date, title, condition);
