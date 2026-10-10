@@ -8,6 +8,8 @@ export type PriceComparable = {
   url?: string;
   thumbnailUrl?: string;
   notes?: string;
+  /** "listed" = an asking price on a for-sale listing. Left out, it means a real sale. */
+  kind?: "sold" | "listed";
 };
 
 export type PricingSource = {
@@ -297,6 +299,7 @@ export function normalizeComparables(value: unknown): PriceComparable[] | undefi
       url: String(record.url ?? "").trim() || undefined,
       thumbnailUrl: String(record.thumbnailUrl ?? "").trim() || undefined,
       notes: String(record.notes ?? "").trim() || undefined,
+      kind: record.kind === "listed" ? ("listed" as const) : undefined,
     }];
   });
   return comparables.length ? comparables : undefined;
@@ -431,7 +434,33 @@ export function findPriceMentions(text: string, source: string): PastedComp[] {
     seen.add(price);
     const from = Math.max(0, hit.index - 45);
     const snippet = flat.slice(from, hit.index + hit[0].length + 30).trim();
-    out.push({ id: `mention_${out.length}`, source, salePrice: price, notes: `…${snippet}…` });
+    out.push({ id: `mention_${out.length}`, source, salePrice: price, kind: "listed", notes: `…${snippet}…` });
+  }
+  return out;
+}
+
+/** A page of items for sale (no sold dates): each price line, with the title just above it. */
+export function parsePastedListings(text: string, source: string): PastedComp[] {
+  const lines = String(text ?? "")
+    .split(/\r?\n/)
+    .map((line) => line.replace(/\s+/g, " ").trim())
+    .filter(Boolean);
+  const out: PastedComp[] = [];
+  const seen = new Set<string>();
+  for (let i = 0; i < lines.length && out.length < 40; i += 1) {
+    const price = priceFromLine(lines[i]);
+    if (!price) continue;
+    let title: string | undefined;
+    for (let j = i - 1; j >= Math.max(0, i - 4); j -= 1) {
+      const line = lines[j];
+      if (priceFromLine(line) || SKIP_LINE.test(line) || CONDITION_LINE.test(line) || line.length < 6) continue;
+      title = tidyTitle(line);
+      break;
+    }
+    const key = `${price}|${(title ?? "").slice(0, 40)}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push({ id: `listing_${out.length}`, source, salePrice: price, kind: "listed", notes: title ? title.slice(0, 120) : undefined });
   }
   return out;
 }
@@ -529,7 +558,8 @@ export function summarizeComps(comps: PriceComparable[]): { n: number; low: numb
 
 // ── Site averages ────────────────────────────────────────────────────────────
 
-const SITE_NOTE = /sold sales?$/i;
+const SITE_NOTE = /(sold sales?|for sale)$/i;
+const kindOfEntry = (entry: PricingSource): "sold" | "listed" => (/for sale$/i.test(entry.notes ?? "") ? "listed" : "sold");
 
 /** "eBay sold (pasted)" and "eBay" are the same site. */
 export function siteLabel(source: string): string {
@@ -546,33 +576,31 @@ export function siteKey(name: string): string {
   return siteLabel(name).toLowerCase();
 }
 
-/** One average per site from the sold comps, each dated. Averages from other sources are left alone. */
+/** Per site, one average of the sales and one average of the asking prices, each dated. Averages from other sources are left alone. */
 export function buildSiteAverages(comps: PriceComparable[], previous: PricingSource[] = [], recheck: string[] = []): PricingSource[] {
   const rechecked = new Set(recheck.map((name) => siteLabel(name).toLowerCase()));
-  const groups = new Map<string, number[]>();
-  const names = new Map<string, string>();
+  const groups = new Map<string, { platform: string; kind: "sold" | "listed"; prices: number[] }>();
   for (const comp of comps) {
     const price = Number(comp.salePrice);
     if (!Number.isFinite(price) || price <= 0) continue;
     const label = siteLabel(comp.source);
-    const key = label.toLowerCase();
-    if (!names.has(key)) names.set(key, label);
-    const list = groups.get(key) ?? [];
-    list.push(price);
-    groups.set(key, list);
+    const kind = comp.kind === "listed" ? "listed" : "sold";
+    const key = `${label.toLowerCase()}|${kind}`;
+    const group = groups.get(key) ?? { platform: label, kind, prices: [] };
+    group.prices.push(price);
+    groups.set(key, group);
   }
   const now = Date.now();
   const averages: PricingSource[] = [];
-  for (const [key, prices] of groups) {
-    const platform = names.get(key) ?? key;
+  for (const { platform, kind, prices } of groups.values()) {
     const value = Math.round((prices.reduce((a, b) => a + b, 0) / prices.length) * 100) / 100;
-    const notes = `${prices.length} sold sale${prices.length === 1 ? "" : "s"}`;
-    const before = previous.find((entry) => entry.platform.toLowerCase() === platform.toLowerCase() && SITE_NOTE.test(entry.notes ?? ""));
+    const notes = kind === "listed" ? `${prices.length} for sale` : `${prices.length} sold sale${prices.length === 1 ? "" : "s"}`;
+    const before = previous.find((entry) => entry.platform.toLowerCase() === platform.toLowerCase() && SITE_NOTE.test(entry.notes ?? "") && kindOfEntry(entry) === kind);
     const unchanged = before && Math.abs(before.value - value) < 0.005 && before.notes === notes && !rechecked.has(platform.toLowerCase());
     averages.push({
       platform,
       value,
-      confidence: prices.length >= 3 ? "medium" : "low",
+      confidence: kind === "sold" && prices.length >= 3 ? "medium" : "low",
       fetchedAt: unchanged && before.fetchedAt ? before.fetchedAt : now,
       notes,
     });
@@ -600,14 +628,30 @@ export function siteAverageEntries(sources?: PricingSource[]): PricingSource[] {
   return (sources ?? []).filter((entry) => SITE_NOTE.test(entry.notes ?? ""));
 }
 
-/** The average of the site averages: each site counts once, however many sales it had. */
-export function overallSiteAverage(sources?: PricingSource[]): { sites: number; average: number; low: number; high: number; asOf?: number } | null {
-  const entries = siteAverageEntries(sources).filter((entry) => Number.isFinite(entry.value) && entry.value > 0);
+export type OverallAverage = { sites: number; average: number; low: number; high: number; asOf?: number };
+
+/** The average of the site averages: each site counts once, however many sales it had. Sold prices and asking prices are kept apart. */
+export function overallSiteAverage(sources?: PricingSource[], kind: "sold" | "listed" = "sold"): OverallAverage | null {
+  const entries = siteAverageEntries(sources).filter((entry) => kindOfEntry(entry) === kind && Number.isFinite(entry.value) && entry.value > 0);
   if (entries.length === 0) return null;
   const values = entries.map((entry) => entry.value);
   const average = Math.round((values.reduce((a, b) => a + b, 0) / values.length) * 100) / 100;
   const dates = entries.map((entry) => entry.fetchedAt ?? 0).filter(Boolean);
   return { sites: entries.length, average, low: Math.min(...values), high: Math.max(...values), asOf: dates.length ? Math.max(...dates) : undefined };
+}
+
+/** The saved averages grouped by site: what it sold for and what it is listed for. */
+export function siteAveragesByKind(sources?: PricingSource[]): Map<string, { platform: string; sold?: PricingSource; listed?: PricingSource; asOf?: number }> {
+  const map = new Map<string, { platform: string; sold?: PricingSource; listed?: PricingSource; asOf?: number }>();
+  for (const entry of siteAverageEntries(sources)) {
+    const key = siteKey(entry.platform);
+    const row = map.get(key) ?? { platform: entry.platform };
+    if (kindOfEntry(entry) === "listed") row.listed = entry;
+    else row.sold = entry;
+    row.asOf = Math.max(row.asOf ?? 0, entry.fetchedAt ?? 0) || undefined;
+    map.set(key, row);
+  }
+  return map;
 }
 
 

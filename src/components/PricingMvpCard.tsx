@@ -12,6 +12,8 @@ import {
   PRICE_CHECK_STALE_DAYS,
   COPY_SOLD_SALES_BOOKMARKLET,
   overallSiteAverage,
+  parsePastedListings,
+  siteAveragesByKind,
   pastedSourceName,
   siteAverageEntries,
   siteKey,
@@ -121,6 +123,7 @@ export default function PricingMvpCard({
   const [pasteOpen, setPasteOpen] = useState(false);
   const [pasteText, setPasteText] = useState("");
   const [pasteSource, setPasteSource] = useState("eBay sold");
+  const [pasteKind, setPasteKind] = useState<"sold" | "listed">("sold");
   const [pasteResults, setPasteResults] = useState<PastedComp[] | null>(null);
   const [pasteChecked, setPasteChecked] = useState<Record<string, boolean>>({});
 
@@ -132,9 +135,11 @@ export default function PricingMvpCard({
   );
   const comparables = useMemo(() => normalizeComparables(value.comparables) ?? [], [value.comparables]);
   const links = useMemo(() => resolveSearchLinks(suggestions, prefs, itemTitle, grade), [suggestions, prefs, itemTitle, grade]);
-  const compSummary = useMemo(() => summarizeComps(comparables), [comparables]);
+  const compSummary = useMemo(() => summarizeComps(comparables.filter((c) => c.kind !== "listed")), [comparables]);
   const siteAvgs = useMemo(() => siteAverageEntries(value.priceSources), [value.priceSources]);
-  const overall = useMemo(() => overallSiteAverage(value.priceSources), [value.priceSources]);
+  const overall = useMemo(() => overallSiteAverage(value.priceSources, "sold"), [value.priceSources]);
+  const overallListed = useMemo(() => overallSiteAverage(value.priceSources, "listed"), [value.priceSources]);
+  const byKey = useMemo(() => siteAveragesByKind(value.priceSources), [value.priceSources]);
 
   async function commit(overrides: Parameters<typeof buildPricingPatch>[0]) {
     if (!onSave) return;
@@ -260,6 +265,7 @@ export default function PricingMvpCard({
     if (chosen.length === 0) return;
     const site = pasteSource.trim() || "Sold listings";
     const additions: PriceComparable[] = chosen.map((r) => ({
+      kind: pasteKind === "listed" ? ("listed" as const) : undefined,
       source: site,
       salePrice: r.salePrice,
       saleDate: r.saleDate,
@@ -274,14 +280,20 @@ export default function PricingMvpCard({
   }
 
   async function applyOverallAsEstimate() {
-    if (!overall) return;
-    const parts = siteAvgs.map((a) => `${a.platform} ${money2(a.value)}`).join(", ");
+    const kind = overall ? "sold" : "listed";
+    const chosen = overall ?? overallListed;
+    if (!chosen) return;
+    const parts = [...byKey.values()]
+      .map((row) => (kind === "sold" ? row.sold : row.listed))
+      .filter((entry): entry is NonNullable<typeof entry> => !!entry)
+      .map((entry) => `${entry.platform} ${money2(entry.value)}`)
+      .join(", ");
     await commit({
-      valueLow: overall.low,
-      valueMedian: overall.average,
-      valueHigh: overall.high,
-      priceSource: `Average of ${overall.sites} site${overall.sites === 1 ? "" : "s"} (${parts}), as of ${formatPriceUpdatedAt(overall.asOf)}`,
-      priceConfidence: overall.sites >= 2 ? "medium" : "low",
+      valueLow: chosen.low,
+      valueMedian: chosen.average,
+      valueHigh: chosen.high,
+      priceSource: `Average of ${chosen.sites} site${chosen.sites === 1 ? "" : "s"} (${parts}), ${kind === "sold" ? "sold prices" : "asking prices"}, as of ${formatPriceUpdatedAt(chosen.asOf)}`,
+      priceConfidence: kind === "sold" && chosen.sites >= 2 ? "medium" : "low",
     });
   }
 
@@ -313,11 +325,12 @@ export default function PricingMvpCard({
     });
   }
 
+  const linkKeys = new Set(links.map((s) => siteKey(s.label)));
   const pillSites = [
-    ...links.map((s) => ({ key: s.key, label: s.label, url: s.url as string | undefined, note: s.note, copyText: (s as { copyText?: string }).copyText, avg: siteAvgs.find((a) => siteKey(a.platform) === siteKey(s.label)) })),
-    ...siteAvgs
-      .filter((a) => !links.some((s) => siteKey(s.label) === siteKey(a.platform)))
-      .map((a) => ({ key: `avg-${a.platform}`, label: a.platform, url: undefined as string | undefined, note: "", copyText: undefined as string | undefined, avg: a as typeof a | undefined })),
+    ...links.map((s) => ({ key: s.key, label: s.label, url: s.url as string | undefined, note: s.note, copyText: (s as { copyText?: string }).copyText, avg: byKey.get(siteKey(s.label)) })),
+    ...[...byKey.entries()]
+      .filter(([k]) => !linkKeys.has(k))
+      .map(([k, row]) => ({ key: `avg-${k}`, label: row.platform, url: undefined as string | undefined, note: "", copyText: undefined as string | undefined, avg: row as typeof row | undefined })),
   ];
   const checkedAtAll = lastPriceCheckAt(value);
   const hasAnyValue = Boolean(value.valueMedian || value.estimatedValue || value.valueLow || value.valueHigh || siteAvgs.length);
@@ -346,15 +359,14 @@ export default function PricingMvpCard({
                           {p.label}
                           {p.url ? <span aria-hidden="true">↗</span> : null}
                         </span>
-                        <span className="mt-0.5 block text-[11px] leading-4">
-                          {p.avg ? (
-                            <>
-                              <span className="text-[13px] font-bold text-[color:var(--fg)]">{money2(p.avg.value)}</span>
-                              <span className="ml-1.5 text-[color:var(--muted)]">{formatPriceUpdatedAt(p.avg.fetchedAt)}</span>
-                            </>
-                          ) : (
-                            <span className="text-[color:var(--muted2)]">—</span>
-                          )}
+                        <span className="mt-0.5 flex flex-wrap items-baseline gap-x-2 text-[11px] leading-4">
+                          {p.avg?.sold ? (
+                            <span><span className="text-[color:var(--muted)]">Sold </span><span className="text-[13px] font-bold text-[color:var(--fg)]">{money2(p.avg.sold.value)}</span></span>
+                          ) : null}
+                          {p.avg?.listed ? (
+                            <span><span className="text-[color:var(--muted)]">For sale </span><span className="text-[13px] font-bold text-[color:var(--fg)]">{money2(p.avg.listed.value)}</span></span>
+                          ) : null}
+                          {p.avg ? <span className="text-[color:var(--muted)]">{formatPriceUpdatedAt(p.avg.asOf)}</span> : <span className="text-[color:var(--muted2)]">—</span>}
                         </span>
                       </>
                     );
@@ -395,13 +407,15 @@ export default function PricingMvpCard({
                   {showBody ? "Hide details" : "Details"}
                 </button>
               </div>
-              {overall ? (
+              {overall || overallListed ? (
                 <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[12px]">
                   <span>
-                    <span className="font-bold text-[color:var(--fg)]">Overall average {money2(overall.average)}</span>
-                    <span className="ml-1.5 text-[color:var(--muted)]">{overall.sites} site{overall.sites === 1 ? "" : "s"} · {formatPriceUpdatedAt(overall.asOf)}</span>
+                    <span className="font-bold text-[color:var(--fg)]">Overall average</span>
+                    {overall ? <span className="ml-1.5">Sold <b className="text-[color:var(--fg)]">{money2(overall.average)}</b></span> : null}
+                    {overallListed ? <span className="ml-1.5">For sale <b className="text-[color:var(--fg)]">{money2(overallListed.average)}</b></span> : null}
+                    <span className="ml-1.5 text-[color:var(--muted)]">{Math.max(overall?.sites ?? 0, overallListed?.sites ?? 0)} site{Math.max(overall?.sites ?? 0, overallListed?.sites ?? 0) === 1 ? "" : "s"} · {formatPriceUpdatedAt(Math.max(overall?.asOf ?? 0, overallListed?.asOf ?? 0) || undefined)}</span>
                   </span>
-                  <button type="button" onClick={() => void applyOverallAsEstimate()} className="rounded-md px-2 py-0.5 text-[11px] font-semibold text-[color:var(--theme-gold)] ring-1 ring-[color:var(--border)] hover:bg-[color:var(--pill)]">
+                  <button type="button" onClick={() => void applyOverallAsEstimate()} className="rounded-md px-2 py-0.5 text-[11px] font-semibold text-[color:var(--theme-gold)] ring-1 ring-[color:var(--border)] hover:bg-[color:var(--pill)]" title={overall ? "Saves the sold average as your estimate" : "Saves the for-sale average as your estimate"}>
                     Use as my estimate
                   </button>
                 </div>
@@ -508,7 +522,22 @@ export default function PricingMvpCard({
                   </a>{" "}
                   up to your bookmarks bar (press Ctrl+Shift+B if you can&apos;t see it). On any sold-listings page, click that bookmark, then paste here. It copies just the sales.
                 </div>
-              <input className={`${smallInput} mt-2 w-full sm:w-72`} placeholder="Where it is from" value={pasteSource} onChange={(e) => setPasteSource(e.target.value)} />
+              <div className="mt-2 flex flex-wrap items-center gap-2">
+                <input className={`${smallInput} w-full sm:w-60`} placeholder="Where it is from" value={pasteSource} onChange={(e) => setPasteSource(e.target.value)} />
+                <span className="inline-flex overflow-hidden rounded-lg text-[11px] font-semibold ring-1 ring-[color:var(--border)]">
+                  {(["sold", "listed"] as const).map((k) => (
+                    <button
+                      key={k}
+                      type="button"
+                      onClick={() => setPasteKind(k)}
+                      className={`px-2.5 py-1 ${pasteKind === k ? "" : "text-[color:var(--muted)]"}`}
+                      style={pasteKind === k ? { background: "var(--theme-gold, #C8CDD2)", color: "#0A0800" } : undefined}
+                    >
+                      {k === "sold" ? "Sold" : "For sale"}
+                    </button>
+                  ))}
+                </span>
+              </div>
               <textarea
                 className={`${smallInput} mt-2 h-10 w-full resize-none overflow-hidden`}
                 placeholder="Click here and press Ctrl+V. The pasted page is not shown or saved."
@@ -524,10 +553,19 @@ export default function PricingMvpCard({
                   if (named) setPasteSource(named);
                   const site = (named || pasteSource).trim() || "Sold listings";
                   let results = parsePastedSoldResults(text, site);
-                  const undated = results.length === 0;
-                  if (undated) results = findPriceMentions(text, site);
+                  let kind: "sold" | "listed" = "sold";
+                  let tickAll = true;
+                  if (results.length === 0) {
+                    kind = "listed";
+                    results = parsePastedListings(text, site);
+                  }
+                  if (results.length === 0) {
+                    results = findPriceMentions(text, site);
+                    tickAll = false;
+                  }
+                  setPasteKind(kind);
                   setPasteResults(results);
-                  setPasteChecked(Object.fromEntries(results.map((r) => [r.id, !undated])));
+                  setPasteChecked(Object.fromEntries(results.map((r) => [r.id, tickAll])));
                 }}
               />
               {pasteResults ? (
@@ -536,16 +574,18 @@ export default function PricingMvpCard({
                 ) : (
                   <div className="mt-2 space-y-1">
                     <div className="text-[12px] text-[color:var(--muted)]">
-                      {pasteResults.every((r) => !r.saleDate)
-                        ? `No sales with dates were found. These are the prices in the text, and they may not be real sales. Tick the ones you trust.`
-                        : `Found ${pasteResults.length}. Untick any you don't want.`}
+                      {pasteResults[0].id.startsWith("mention_")
+                        ? `No sales or listings were found. These are the prices in the text, and they may not be real. Tick the ones you trust.`
+                        : pasteResults.every((r) => !r.saleDate)
+                          ? `Found ${pasteResults.length} items for sale. Untick any you don't want.`
+                          : `Found ${pasteResults.length}. Untick any you don't want.`}
                     </div>
                     {pasteResults.map((r) => (
                       <label key={r.id} className="flex items-start gap-2 rounded-lg bg-[color:var(--surface)] px-2.5 py-1.5 text-[12px] ring-1 ring-[color:var(--border)]">
                         <input type="checkbox" className="mt-0.5" checked={!!pasteChecked[r.id]} onChange={() => setPasteChecked((c) => ({ ...c, [r.id]: !c[r.id] }))} />
                         <span className="min-w-0 flex-1">
                           <span className="font-semibold">{money2(r.salePrice)}</span>
-                          {r.saleDate ? <span className="ml-2 text-[color:var(--muted)]">{r.saleDate}</span> : <span className="ml-2 text-[color:var(--muted)]">no sale date</span>}
+                          {r.saleDate ? <span className="ml-2 text-[color:var(--muted)]">{r.saleDate}</span> : <span className="ml-2 text-[color:var(--muted)]">{pasteKind === "listed" ? "for sale" : "no sale date"}</span>}
                           {r.condition ? <span className="ml-2 text-[color:var(--muted)]">{r.condition}</span> : null}
                           {r.notes ? <span className="block truncate text-[color:var(--muted)]">{r.notes}</span> : null}
                         </span>
@@ -665,6 +705,7 @@ export default function PricingMvpCard({
                 <div className="min-w-0 flex-1">
                   <span className="text-[13px] font-semibold text-[color:var(--fg)]">{money2(comp.salePrice)}</span>
                   {comp.condition ? <span className="ml-2 text-[11px] text-[color:var(--muted)]">{comp.condition}</span> : null}
+                  {comp.kind === "listed" ? <span className="ml-2 text-[11px] text-[color:var(--muted)]">for sale</span> : null}
                   {comp.notes ? <div className="mt-0.5 truncate text-[11px] text-[color:var(--muted)]">{comp.notes}</div> : null}
                 </div>
                 <div className="shrink-0 text-right">
