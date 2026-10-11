@@ -2,9 +2,11 @@
 
 import { useState, useRef, useEffect, useMemo } from "react";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import {
   fetchAllSources,
   groupByYear,
+  groupByReleaseDate,
   formatStoreDate,
   roleLabel,
   isCoverOnlyRole,
@@ -13,8 +15,12 @@ import {
 } from "@/lib/comicUpcoming";
 import {
   COMIC_STATUS_LABEL,
+  findOwnedComic,
   loadComicStatuses,
-  setComicStatus,
+  ownComic,
+  refreshComicStatuses,
+  setComicWish,
+  undoOwnComic,
   type ComicStatus,
 } from "@/lib/comicWishlistModel";
 import { showToast } from "@/lib/toast";
@@ -178,16 +184,27 @@ export default function UpcomingPage() {
   const [saving, setSaving]           = useState<Set<number>>(new Set());
   const [notFound, setNotFound]       = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const router = useRouter();
 
+  // Statuses: instant from this device's copy, then refreshed from the account.
   useEffect(() => {
-    loadComicStatuses().then(setStatuses).catch(() => {});
+    let active = true;
+    void refreshComicStatuses().then((m) => { if (active) setStatuses(m); });
+    const onChange = () => setStatuses(loadComicStatuses());
+    window.addEventListener("vltd:wishlist-updated", onChange);
+    window.addEventListener("vltd:vault-updated", onChange);
+    return () => {
+      active = false;
+      window.removeEventListener("vltd:wishlist-updated", onChange);
+      window.removeEventListener("vltd:vault-updated", onChange);
+    };
   }, []);
 
   // Open on the full upcoming list, like a comic shop's pre-order page.
   // Same request the Search button sends with an empty box.
   useEffect(() => {
     let cancelled = false;
-    fetchAllSources({ days: 90, page: 1, pageSize: 25 }).then((data) => {
+    fetchAllSources({ days: 90, page: 1, pageSize: 25, byDate: true }).then((data) => {
       if (cancelled) return;
       setLoading(false);
       if (!data) return;
@@ -222,6 +239,7 @@ export default function UpcomingPage() {
       all: allMode || undefined,
       page: pg,
       pageSize: 25,
+      byDate: !allMode,
       publisher: singlePub,
       ...(q ? (mode === "creator" ? { creator: q } : { series: q }) : {}),
     };
@@ -247,14 +265,47 @@ export default function UpcomingPage() {
     const prev = statuses.get(issue.id) ?? null;
     const apply = (value: ComicStatus | null) =>
       setStatuses((m) => { const n = new Map(m); if (value) n.set(issue.id, value); else n.delete(issue.id); return n; });
+
+    // Already in the vault: never delete it from here (it may have been edited since).
+    if (prev === "own") {
+      const owned = findOwnedComic(issue.id);
+      showToast("Already in your vault", 4000, owned ? { label: "Open", onClick: () => router.push(`/vault/item/${owned.id}`) } : undefined);
+      return;
+    }
+
     apply(next);
     setSaving((p) => new Set(p).add(issue.id));
-    const res = await setComicStatus(issue, next);
-    if (!res.ok) {
+    // .catch instead of try/finally keeps this component compiler-optimized.
+    await saveStatus(issue, next, prev).catch(() => {
       apply(prev);
-      showToast(res.needsSql ? "Pre-ordered and Own need the comic status SQL run first. Want works now." : "Couldn't save that. Try again.");
-    }
+      showToast("Couldn't save that. Try again.");
+    });
     setSaving((p) => { const n = new Set(p); n.delete(issue.id); return n; });
+
+    async function saveStatus(target: UpcomingIssue, value: ComicStatus | null, before: ComicStatus | null) {
+      if (value === "own") {
+        const res = await ownComic(target);
+        if (!res.ok) {
+          apply(before);
+          showToast("Couldn't add that to your vault. Try again.");
+          return;
+        }
+        showToast(`Added "${res.item.title}" to your vault`, 7000, {
+          label: "Undo",
+          onClick: () => {
+            void undoOwnComic(target, res.item.id, res.previousWish).then(() => setStatuses(loadComicStatuses()));
+          },
+        });
+        return;
+      }
+      const ok = await setComicWish(target, value);
+      if (!ok) {
+        // Don't leave a change only on this device: put it back.
+        await setComicWish(target, before === "want" || before === "preordered" ? before : null);
+        apply(before);
+        showToast("Couldn't save to your account. Try again.");
+      }
+    }
   }
 
 
@@ -285,7 +336,14 @@ export default function UpcomingPage() {
     );
   }, [fedResult, selectedPubs]);
 
-  const groups       = useMemo(() => groupByYear(filteredResults, allMode ? "desc" : "asc"), [filteredResults, allMode]);
+  // Upcoming: a row per release date (each "Load more" adds the next date below).
+  // Back catalog ("All"): a row per year, newest first.
+  const groups = useMemo(
+    () => (allMode
+      ? groupByYear(filteredResults, "desc").map((g) => ({ label: g.year, issues: g.issues }))
+      : groupByReleaseDate(filteredResults)),
+    [filteredResults, allMode]
+  );
   const totalCount   = fedResult?.count ?? 0;
   const shownCount   = filteredResults.length;
   const variantCount = filteredResults.filter((r) => r.isVariant).length;
@@ -469,10 +527,10 @@ export default function UpcomingPage() {
 
         {/* Year rows */}
         {!loading && groups.map((group) => (
-          <div key={group.year} style={{ marginBottom: "28px" }}>
+          <div key={group.label} style={{ marginBottom: "28px" }}>
             <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "10px" }}>
               <div style={{ fontSize: "14px", fontWeight: 800, color: "#C8CDD2", letterSpacing: "0.06em" }}>
-                {group.year}
+                {group.label}
               </div>
               <div style={{ flex: 1, height: "1px", background: "rgba(203,208,213,0.12)" }} />
               <div style={{ fontSize: "11px", color: "rgba(240,234,214,0.3)" }}>

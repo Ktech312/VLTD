@@ -19,6 +19,8 @@ export type FetchUpcomingOptions = {
   page?: number;
   /** Results per page. Default 25, max 100. */
   pageSize?: number;
+  /** Page by whole release date (one date per page) instead of by count. */
+  byDate?: boolean;
 };
 
 export type UpcomingComicsResult = {
@@ -47,6 +49,7 @@ export async function fetchUpcomingComics(
   if (opts.page)      p.set("page", String(opts.page));
   if (opts.pageSize)  p.set("page_size", String(opts.pageSize));
   if (opts.all)       p.set("all", "true");
+  if (opts.byDate)    p.set("by", "date");
 
   const qs = p.toString();
   const res = await fetch(`/api/comic-upcoming${qs ? "?" + qs : ""}`);
@@ -126,6 +129,21 @@ export function groupByStoreDate(
       label: formatStoreDate(date === "TBD" ? null : date, true),
       issues: items,
     }));
+}
+
+/** Upcoming: one group per release date, soonest first; label like "Oct 14, 2026". TBD last. */
+export function groupByReleaseDate(
+  issues: UpcomingIssue[]
+): Array<{ label: string; issues: UpcomingIssue[] }> {
+  const map = new Map<string, UpcomingIssue[]>();
+  for (const issue of issues) {
+    const key = issue.storeDate ?? "TBD";
+    if (!map.has(key)) map.set(key, []);
+    map.get(key)!.push(issue);
+  }
+  return Array.from(map.entries())
+    .sort(([a], [b]) => (a === "TBD" ? 1 : b === "TBD" ? -1 : a.localeCompare(b)))
+    .map(([key, items]) => ({ label: key === "TBD" ? "Date TBD" : formatStoreDate(key), issues: items }));
 }
 
 /** Group by year. "desc" (back catalog): newest first. "asc" (upcoming): soonest first. TBD always last. */

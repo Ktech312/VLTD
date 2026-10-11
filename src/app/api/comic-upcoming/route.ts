@@ -210,8 +210,17 @@ export async function GET(req: NextRequest) {
         String(a.number).localeCompare(String(b.number), undefined, { numeric: true })
       );
       count = all.length;
-      items = all.slice((page - 1) * pageSize, page * pageSize);
-      hasMore = page * pageSize < all.length;
+      if (searchParams.get("by") === "date") {
+        // One whole release date per page, so "Load more" always adds a new
+        // dated row below instead of quietly lengthening a row off-screen.
+        const dates = Array.from(new Set(all.map((i) => i.store_date ?? "TBD")));
+        const date = dates[page - 1];
+        items = date === undefined ? [] : all.filter((i) => (i.store_date ?? "TBD") === date);
+        hasMore = page < dates.length;
+      } else {
+        items = all.slice((page - 1) * pageSize, page * pageSize);
+        hasMore = page * pageSize < all.length;
+      }
     }
 
     clearTimeout(timeout);
