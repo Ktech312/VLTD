@@ -197,8 +197,16 @@ export async function syncValueHistoryFromSupabase(): Promise<HistoryPoint[]> {
   }
 }
 
+// Snapshots before this UTC day were saved under the old value rule (raw
+// current value, sold items included, un-priced = $0). Comparing them with
+// totals under the shared rule produced numbers like "-95.9% (30D)", so they
+// are left out of every chart and % change. 2026-10-12 is the first full day
+// after the rule shipped (a 2026-10-11 snapshot may predate the deploy).
+const VALUE_RULE_START_DAY = "2026-10-12";
+
 export function sliceHistory(points: HistoryPoint[], range: "7d" | "30d" | "90d" | "all") {
-  if (range === "all") return points;
+  const current = points.filter((p) => p.day >= VALUE_RULE_START_DAY);
+  if (range === "all") return current;
   const days = range === "7d" ? 7 : range === "30d" ? 30 : 90;
-  return points.slice(-days);
+  return current.slice(-days);
 }
