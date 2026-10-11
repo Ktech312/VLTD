@@ -6,6 +6,7 @@ import { loadSales, type SaleRecord } from "@/lib/salesHistory";
 import { syncSalesFromSupabase } from "@/lib/salesModel";
 import { loadItems, getPrimaryImageUrl, type VaultItem } from "@/lib/vaultModel";
 import { Glyph } from "@/components/ui/Glyph";
+import { estimateSaleFees } from "@/lib/sellerFees";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -19,8 +20,10 @@ function fmtDate(ms: number) {
   return new Date(ms).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
 }
 
+/** After estimated seller fees for the platform it sold on (0 if unknown). */
 function profit(s: SaleRecord) {
-  return Number(s.salePrice ?? 0) - Number(s.purchasePrice ?? 0);
+  const sale = Number(s.salePrice ?? 0);
+  return sale - Number(s.purchasePrice ?? 0) - estimateSaleFees(s.platform, sale, s.categoryLabel);
 }
 
 function margin(s: SaleRecord) {

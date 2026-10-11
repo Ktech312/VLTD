@@ -44,6 +44,10 @@ export default function SellItemButton({ item }: { item: VaultItem }) {
       showToast("Invalid price.");
       return;
     }
+    // Same question the For Sale page asks; drives the Sold page fee estimate.
+    const platformInput = window.prompt("Where did it sell? (eBay, Whatnot, in person…)", "eBay");
+    if (platformInput === null) return;
+    const soldPlatform = platformInput.trim() || undefined;
 
     setLoading(true);
 
@@ -55,6 +59,7 @@ export default function SellItemButton({ item }: { item: VaultItem }) {
         status: "SOLD",
         soldPrice: salePrice,
         soldAt,
+        soldPlatform,
       };
 
       const nextSale: SaleRecord = {

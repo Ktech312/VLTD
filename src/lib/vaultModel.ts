@@ -120,6 +120,8 @@ export type VaultItem = {
   status?: "COLLECTION" | "FOR_SALE" | "SOLD" | "WISHLIST" | "AUCTION";
   soldPrice?: number;
   soldAt?: number;
+  /** Where it sold, as typed ("eBay", "Whatnot", "in person"...). Drives the Sold page fee estimate. */
+  soldPlatform?: string;
   createdAt?: number;
   /** How this item actually entered the vault — real provenance, not a
    *  guess. "scan" only when an AI photo-identify actually ran and its
@@ -653,6 +655,7 @@ function normalizeOne(input: unknown): VaultItem | null {
       typeof raw.soldAt === "number" && Number.isFinite(raw.soldAt)
         ? raw.soldAt
         : undefined,
+    soldPlatform: typeof raw.soldPlatform === "string" && raw.soldPlatform.trim() ? raw.soldPlatform.trim() : undefined,
     createdAt:
       typeof raw.createdAt === "number" && Number.isFinite(raw.createdAt)
         ? raw.createdAt
@@ -1109,6 +1112,7 @@ function mergeById(localItems: VaultItem[], remoteItems: VaultItem[]) {
       status: latestSale ? "SOLD" : remoteItem.status ?? existing.status,
       soldPrice: latestSale?.soldPrice ?? existing.soldPrice ?? remoteItem.soldPrice,
       soldAt: latestSale?.soldAt ?? existing.soldAt ?? remoteItem.soldAt,
+      soldPlatform: latestSale?.soldPlatform ?? existing.soldPlatform ?? remoteItem.soldPlatform,
       images: remoteHasImages ? remoteItem.images : existing.images,
       primaryImageKey: remoteItem.primaryImageKey || existing.primaryImageKey,
       imageFrontUrl: remoteItem.imageFrontUrl || existing.imageFrontUrl,

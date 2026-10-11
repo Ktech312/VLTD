@@ -9,6 +9,7 @@ import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 import { UNIVERSE_LABEL, type UniverseKey } from "@/lib/taxonomy";
 import { getPrimaryImageUrl, loadItems, saveItem, syncVaultItemsFromSupabase, type VaultItem } from "@/lib/vaultModel";
 import { enqueueVaultItemSync, processVaultSyncQueue } from "@/lib/vaultSyncQueue";
+import { estimateSaleFees } from "@/lib/sellerFees";
 
 const SALES_KEY = "vltd_sales_history";
 
@@ -31,6 +32,9 @@ type SoldItem = {
   soldPrice: number;
   soldAt: number;
   itemId?: string;
+  soldPlatform?: string;
+  /** Older local sale records (For Sale page) kept the platform under this name. */
+  salePlatform?: string;
 };
 
 type SoldStats = {
@@ -52,6 +56,16 @@ function cost(i: SoldItem) {
     Number(i.purchaseShipping ?? 0) +
     Number(i.purchaseFees ?? 0)
   );
+}
+
+/** Estimated seller fees for where it sold; 0 when the platform is unknown. */
+function saleFees(i: SoldItem) {
+  return estimateSaleFees(i.soldPlatform, Number(i.soldPrice ?? 0), i.categoryLabel || i.category);
+}
+
+/** Profit after purchase costs and estimated seller fees. */
+function profitOf(i: SoldItem) {
+  return Number(i.soldPrice ?? 0) - cost(i) - saleFees(i);
 }
 
 function normalizeUniverseText(value: unknown) {
@@ -175,6 +189,7 @@ function soldItemFromVaultItem(item: VaultItem): SoldItem | null {
     purchaseFees: item.purchaseFees,
     soldPrice: Number(item.soldPrice ?? 0),
     soldAt: Number(item.soldAt ?? Date.now()),
+    soldPlatform: item.soldPlatform,
   };
 }
 
@@ -187,7 +202,10 @@ function buildSoldItems() {
   }
 
   for (const sale of readSales()) {
-    if (!byId.has(String(sale.id))) byId.set(String(sale.id), sale);
+    const existing = byId.get(String(sale.id));
+    if (!existing) byId.set(String(sale.id), { ...sale, soldPlatform: sale.soldPlatform ?? sale.salePlatform });
+    // Platform typed before it was saved on the item lives only in this older list.
+    else if (!existing.soldPlatform && sale.salePlatform) existing.soldPlatform = sale.salePlatform;
   }
 
   return Array.from(byId.values()).sort((a, b) => Number(b.soldAt) - Number(a.soldAt));
@@ -200,7 +218,7 @@ function soldStats(items: SoldItem[]): SoldStats {
       stats.count += 1;
       stats.realizedRevenue += Number(item.soldPrice ?? 0);
       stats.totalCost += itemCost;
-      stats.totalProfit += Number(item.soldPrice ?? 0) - itemCost;
+      stats.totalProfit += profitOf(item);
       return stats;
     },
     { count: 0, realizedRevenue: 0, totalCost: 0, totalProfit: 0 }
@@ -217,7 +235,7 @@ function groupByMonth(items: SoldItem[]) {
     const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
     const prev = map.get(key) ?? { revenue: 0, profit: 0, count: 0 };
     prev.revenue += Number(item.soldPrice ?? 0);
-    prev.profit += Number(item.soldPrice ?? 0) - cost(item);
+    prev.profit += profitOf(item);
     prev.count += 1;
     map.set(key, prev);
   }
@@ -232,7 +250,7 @@ function groupByUniverse(items: SoldItem[]) {
     const u = UNIVERSE_LABEL[inferSoldUniverse(item)] ?? "Other";
     const prev = map.get(u) ?? { revenue: 0, profit: 0, count: 0 };
     prev.revenue += Number(item.soldPrice ?? 0);
-    prev.profit += Number(item.soldPrice ?? 0) - cost(item);
+    prev.profit += profitOf(item);
     prev.count += 1;
     map.set(u, prev);
   }
@@ -289,12 +307,12 @@ function AnalyticsPanel({ items }: { items: SoldItem[] }) {
   const byUniverse = groupByUniverse(items);
   const roiPct = items.length > 0
     ? (() => {
-        const rev = items.reduce((s, i) => s + Number(i.soldPrice ?? 0), 0);
+        const net = items.reduce((s, i) => s + profitOf(i), 0);
         const c = items.reduce((s, i) => s + cost(i), 0);
-        return c > 0 ? ((rev - c) / c) * 100 : null;
+        return c > 0 ? (net / c) * 100 : null;
       })()
     : null;
-  const bestItem = [...items].sort((a, b) => (b.soldPrice - cost(b)) - (a.soldPrice - cost(a)))[0];
+  const bestItem = [...items].sort((a, b) => profitOf(b) - profitOf(a))[0];
 
   if (items.length === 0) return null;
 
@@ -401,7 +419,7 @@ function AnalyticsPanel({ items }: { items: SoldItem[] }) {
               {bestItem.title}
             </div>
             <div className="text-[11px]" style={{ color: "rgb(52,211,153)" }}>
-              +{money(bestItem.soldPrice - cost(bestItem))} profit
+              +{money(profitOf(bestItem))} profit
             </div>
           </div>
         )}
@@ -419,7 +437,8 @@ function SoldCard({
   onReturnToVault: (item: SoldItem) => void;
   onViewImage: (item: SoldItem, imageUrl: string) => void;
 }) {
-  const profit = item.soldPrice - cost(item);
+  const profit = profitOf(item);
+  const fees = saleFees(item);
   const universe = inferSoldUniverse(item);
   const detailHref = `/vault/item/${item.id}?sold=1`;
   const imageUrl = getPrimaryImageUrl(item as unknown as VaultItem) || item.imageFrontUrl || "";
@@ -479,12 +498,16 @@ function SoldCard({
             {profit >= 0 ? "+" : ""}
             {money(profit)}
           </div>
-          <div className="mt-1 text-[9px] font-semibold text-[color:var(--muted2)]">
+          <div
+            className="mt-1 truncate text-[9px] font-semibold text-[color:var(--muted2)]"
+            title={fees > 0 ? `Profit is after about ${money(fees)} in ${item.soldPlatform} seller fees (estimate from current fee tables)` : undefined}
+          >
             {new Date(item.soldAt).toLocaleDateString(undefined, {
               month: "short",
               day: "numeric",
               year: "2-digit",
             })}
+            {fees > 0 && ` · ${money(fees)} fees`}
           </div>
         </div>
 

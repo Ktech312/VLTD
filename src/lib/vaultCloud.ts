@@ -138,6 +138,7 @@ function rowToItem(input: unknown): VaultItem {
     status: row.status ?? undefined,
     soldPrice: row.sold_price ?? undefined,
     soldAt: row.sold_at ?? undefined,
+    soldPlatform: row.sold_platform ?? undefined,
     createdAt: row.created_at ?? Date.now(),
     addedVia:
       row.added_via === "scan" || row.added_via === "manual" || row.added_via === "import" || row.added_via === "wishlist"
@@ -734,6 +735,7 @@ export async function upsertVaultItemToSupabase(item: VaultItem) {
   if (item.status) baseRow.status = item.status;
   if (item.soldPrice !== undefined) baseRow.sold_price = item.soldPrice;
   if (item.soldAt !== undefined) baseRow.sold_at = item.soldAt;
+  if (item.soldPlatform !== undefined) baseRow.sold_platform = item.soldPlatform;
 
   // Auction fields — only written when present so non-auction upserts stay clean.
   if (item.auctionStatus !== undefined) baseRow.auction_status = item.auctionStatus;

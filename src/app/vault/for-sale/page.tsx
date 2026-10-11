@@ -336,7 +336,7 @@ export default function ForSalePage() {
     if (soldPrice === undefined) { setStatus("Invalid price."); return; }
     const platformInput = window.prompt("Platform (eBay, Whatnot, in person…):", "eBay");
     const salePlatform = platformInput?.trim() || undefined;
-    const soldItem: VaultItem = { ...item, status: "SOLD", soldPrice, soldAt: Date.now() };
+    const soldItem: VaultItem = { ...item, status: "SOLD", soldPrice, soldAt: Date.now(), soldPlatform: salePlatform };
     const rec: SaleRecord = { ...soldItem, soldPrice, soldAt: Date.now(), salePlatform };
     writeSales([rec, ...readSales().filter(s => String(s.id) !== String(item.id))]);
     saveItem(soldItem);

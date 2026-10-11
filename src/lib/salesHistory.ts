@@ -13,6 +13,7 @@ export type SaleRecord = {
   purchasePrice?: number;
   salePrice?: number;
   soldAt: number;
+  platform?: string;
 };
 
 function toRecord(s: Sale): SaleRecord {
@@ -25,6 +26,7 @@ function toRecord(s: Sale): SaleRecord {
     purchasePrice: s.purchasePrice,
     salePrice: s.salePrice,
     soldAt: s.soldAt,
+    platform: s.platform,
   };
 }
 
@@ -43,6 +45,7 @@ export function saveSales(sales: SaleRecord[]) {
       purchasePrice: r.purchasePrice,
       salePrice: r.salePrice,
       soldAt: r.soldAt,
+      platform: r.platform,
     }))
   );
 }
@@ -57,6 +60,7 @@ export function recordSale(record: SaleRecord) {
     purchasePrice: record.purchasePrice,
     salePrice: record.salePrice,
     soldAt: record.soldAt,
+    platform: record.platform,
   });
   return loadSales();
 }
