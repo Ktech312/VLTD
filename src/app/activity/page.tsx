@@ -356,26 +356,33 @@ export default function ActivityPage() {
     let isActive = true;
 
     async function loadActivity() {
-      setIsLoading(true);
-      try {
-        await syncVaultItemsFromSupabase();
-      } catch {
-        // Local activity still renders if sync is unavailable.
-      }
-      try {
-        await syncSalesFromSupabase();
-      } catch {
-        // Local sales still render if sync is unavailable.
-      }
-      let nextLoggedEvents: ActivityEventRecord[];
-      try {
-        nextLoggedEvents = await syncActivityEventsFromSupabase();
-      } catch {
-        nextLoggedEvents = loadActivityEvents();
+      // Render the saved timeline immediately. A large vault can take many
+      // seconds to refresh from the cloud; keeping the whole page behind its
+      // loader made a healthy, populated account look frozen during that pull.
+      const localItems = loadItems();
+      const localSales = [...loadSaleHistory(), ...loadSales()];
+      const localLoggedEvents = loadActivityEvents();
+      if (isActive) {
+        setItems(localItems);
+        setSales(localSales);
+        setLoggedEvents(localLoggedEvents);
+        if (localItems.length > 0 || localSales.length > 0 || localLoggedEvents.length > 0) {
+          setIsLoading(false);
+        }
       }
 
+      // These three sources are independent, so refresh them together rather
+      // than serially adding every network delay before anything can render.
+      const [, , activityResult] = await Promise.allSettled([
+        syncVaultItemsFromSupabase(),
+        syncSalesFromSupabase(),
+        syncActivityEventsFromSupabase(),
+      ]);
+
       if (!isActive) return;
-      setLoggedEvents(nextLoggedEvents);
+      setLoggedEvents(
+        activityResult.status === "fulfilled" ? activityResult.value : loadActivityEvents()
+      );
       setItems(loadItems());
       setSales([...loadSaleHistory(), ...loadSales()]);
       setIsLoading(false);

@@ -11,6 +11,7 @@
 - [x] Fixed duplicate/overlapping mobile Events hero content.
 - [x] Prevented Insights Month Change/Value History from flashing local fallback data before cloud history finishes.
 - [x] Fixed the dark admin console under light theme with a single `vltd-dark-surface` scope.
+- [x] Fixed Activity's ~20-second blocking loader: saved activity now renders immediately while vault, sales, and activity cloud refreshes run concurrently in the background.
 - [x] Verified Featured Exhibition advances, continuously wraps, and responds to a real mouse drag; enlarged carousel arrows to 44×44.
 - [x] Made mobile exhibition cover/delete/open actions visible and 44×44.
 - [x] Authenticated desktop sweep clean on Dashboard, Vault, Exhibitions, Discover, Events, More, Messages, Account.
@@ -20,12 +21,12 @@
 - [x] Deployed as `ffc0734`; Vercel deployment `dpl_3utKTbFyDTbfiT7X9sAKcrYt7Rse` READY on `vltd.app` and `vltd.vercel.app`.
 - [ ] Data reconciliation remains open until the 23 records are intentionally classified; no launch-ready claim should describe that mismatch as resolved.
 
-## OPEN — TO CHECK (EK, 2026-10-01): plan limits must come from the server, not a browser setting
-EK's rule: as owner on the paid plan she must never be limited, and the app should never work by trusting a local flag for this. Suspected old code.
-- [ ] What it does today: the plan (FREE / MID / FULL) is read from this browser's `localStorage` key `vltd_tier` (`src/lib/subscription.ts` → `getTierSafe`). If the key is missing (new browser/device, cleared data) it defaults to **FREE** → 50-item cap (`FREE_VAULT_ITEM_LIMIT`) and 4 exhibitions (`src/lib/galleryTier.ts`). Verified 2026-10-01: EK's browser reads `FULL`, so no cap there; the risk is any browser where it isn't set.
-- [ ] Find everything that WRITES it: `src/app/admin/users/page.tsx:146`, `src/app/admin/characters/page.tsx`, `src/components/account/RedeemCodeCard.tsx`, and **`src/app/user/page.tsx:241`** (looks like it sets the plan from a selectable value — check whether any non-admin can pick FULL for themselves).
-- [ ] Decide: derive the plan from the signed-in account's real subscription on the server (and enforce the 50-item / exhibition limits there too), and use the local value only as a display cache.
-- Not changed in this pass — logged only.
+## VERIFIED IN SOURCE 2026-10-10 — plan limits are server-authoritative; browser value is a UI cache
+- [x] `profiles.tier`/`tier_expires_at` are the authoritative subscription fields; Stripe, coupons, and admin grants write those backend fields.
+- [x] `getOnboardingStatus()` reads the active profile's backend tier and expiry and overwrites the `vltd_tier` browser cache. `getTierSafe()` remains synchronous UI state, not the authorization boundary.
+- [x] Database trigger functions in `20260819_server_side_tier_limits.sql` and the corrected `20261008_item_limit_and_registry.sql` enforce the 50-item and 4-exhibition Free limits from `profiles.tier`; expired paid access is treated as Free; existing item edits are still allowed.
+- [x] `20260823_protect_profile_billing_columns.sql` prevents ordinary profile updates from self-granting tier/billing fields.
+- [ ] The literal live trigger catalog was not re-read in this audit because the project exposes no catalog RPC/DB credential. This is a deployment-state verification gap, not a source-architecture gap; do not claim a live forced-limit test was run.
 
 ## OPEN — TO CHECK (2026-10-05): old code found while fixing the triple download
 - [ ] `src/app/vault/VaultClient.tsx` + `src/app/vault/VaultInner.tsx` are not imported by any page (the live Vault route is `src/app/vault/page.tsx`). It is a second, older copy of the Vault screen with its own `syncVaultItemsFromSupabase` call. Confirm unused, then delete.
