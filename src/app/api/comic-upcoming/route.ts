@@ -170,9 +170,11 @@ export async function GET(req: NextRequest) {
       page: String(page),
       page_size: String(pageSize),
     });
+    // Metron's date filter names -- `store_date__gte`/`__lte` are silently
+    // ignored, which returned the whole back catalog instead of upcoming books.
     if (!allIssues) {
-      params.set("store_date__gte", today);
-      params.set("store_date__lte", until);
+      params.set("store_date_range_after", today);
+      params.set("store_date_range_before", until);
     }
 
     if (creatorId) params.set("creator_id", creatorId);

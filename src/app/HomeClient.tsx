@@ -590,6 +590,7 @@ function FeaturedGalleryCarousel({ galleries }: { galleries: Gallery[] }) {
         className="relative"
         style={{
           height: "160px",
+          perspective: "700px",
           touchAction: n > 1 ? "none" : "auto",
           cursor: n > 1 ? (isDragging ? "grabbing" : "grab") : "default",
           userSelect: "none",
@@ -601,6 +602,10 @@ function FeaturedGalleryCarousel({ galleries }: { galleries: Gallery[] }) {
           // (fractional mid-drag) instead of a binary active/inactive flag.
           const absDist = Math.abs(delta);
           const scale = Math.max(0.58, 1 - absDist * 0.18);
+          // Curved arc: side cards turn their face toward the center card and
+          // sit a little deeper, capped so far cards don't turn edge-on.
+          const tilt = Math.max(-38, Math.min(38, -delta * 26));
+          const depth = Math.min(absDist, VISIBLE_WINDOW) * 36;
           const opacity = Math.max(0, 1 - absDist * 0.4);
           const isActive = absDist < 0.5;
           return (
@@ -623,7 +628,7 @@ function FeaturedGalleryCarousel({ galleries }: { galleries: Gallery[] }) {
                 marginLeft: `${-CARD_W / 2}px`,
                 marginTop: `${-CARD_H / 2}px`,
                 borderRadius: "10px",
-                transform: `translateX(${delta * SPACING}px) scale(${scale})`,
+                transform: `translateX(${delta * SPACING}px) translateZ(${-depth}px) rotateY(${tilt}deg) scale(${scale})`,
                 opacity,
                 zIndex: Math.round(100 - absDist * 10),
                 transition: prefersReducedMotion || isDragging ? "none" : "transform 0.32s cubic-bezier(0.22,0.61,0.36,1), opacity 0.32s ease",
