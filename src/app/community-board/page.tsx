@@ -20,6 +20,7 @@ import {
 } from "@/lib/loungePosts";
 import { listClubs, type Club } from "@/lib/clubs";
 import { PageHeader } from "@/components/layout/PageHeader";
+import ReleaseRadar from "@/components/lounge/ReleaseRadar";
 
 const ACTIVE_PROFILE_KEY = "vltd_active_profile_id_v1";
 function getActiveProfileId(): string {
@@ -509,6 +510,8 @@ export default function VltLoungePage() {
               </div>
             )}
           </section>
+
+          <ReleaseRadar cardStyle={CARD} accent={CYAN} />
         </div>
 
         {/* ── CENTER: Reddit-style discussions + New Members ── */}
