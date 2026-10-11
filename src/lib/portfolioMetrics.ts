@@ -167,8 +167,9 @@ export function getCollectionMetrics(items: VaultItem[], mode: ValueMode = "fill
     segmentValue
   );
 
+  // Ranked by the same value the totals use (un-priced = what was paid in "fill").
   const topItems = [...safeItems]
-    .sort((a, b) => itemCurrentValue(b) - itemCurrentValue(a))
+    .sort((a, b) => segmentValue(b) - segmentValue(a))
     .slice(0, 6);
 
   const recentItems = [...safeItems]

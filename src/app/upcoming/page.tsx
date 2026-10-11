@@ -15,8 +15,10 @@ import {
 } from "@/lib/comicUpcoming";
 import {
   COMIC_STATUS_LABEL,
+  comicTitle,
   findOwnedComic,
   loadComicStatuses,
+  loadOwnedCatalogTitles,
   ownComic,
   refreshComicStatuses,
   setComicWish,
@@ -182,6 +184,9 @@ export default function UpcomingPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [statuses, setStatuses]       = useState<Map<number, ComicStatus>>(new Map());
   const [saving, setSaving]           = useState<Set<number>>(new Set());
+  const [ownedTitles, setOwnedTitles] = useState<Set<string>>(new Set());
+  const statusOf = (issue: UpcomingIssue): ComicStatus | null =>
+    statuses.get(issue.id) ?? (ownedTitles.has(comicTitle(issue.series, issue.number)) ? "own" : null);
   const [notFound, setNotFound]       = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
@@ -189,8 +194,15 @@ export default function UpcomingPage() {
   // Statuses: instant from this device's copy, then refreshed from the account.
   useEffect(() => {
     let active = true;
-    void refreshComicStatuses().then((m) => { if (active) setStatuses(m); });
-    const onChange = () => setStatuses(loadComicStatuses());
+    void refreshComicStatuses().then((m) => {
+      if (!active) return;
+      setStatuses(m);
+      setOwnedTitles(loadOwnedCatalogTitles());
+    });
+    const onChange = () => {
+      setStatuses(loadComicStatuses());
+      setOwnedTitles(loadOwnedCatalogTitles());
+    };
     window.addEventListener("vltd:wishlist-updated", onChange);
     window.addEventListener("vltd:vault-updated", onChange);
     return () => {
@@ -262,13 +274,13 @@ export default function UpcomingPage() {
 
   async function handleStatus(issue: UpcomingIssue, next: ComicStatus | null) {
     if (saving.has(issue.id)) return;
-    const prev = statuses.get(issue.id) ?? null;
+    const prev = statusOf(issue);
     const apply = (value: ComicStatus | null) =>
       setStatuses((m) => { const n = new Map(m); if (value) n.set(issue.id, value); else n.delete(issue.id); return n; });
 
     // Already in the vault: never delete it from here (it may have been edited since).
     if (prev === "own") {
-      const owned = findOwnedComic(issue.id);
+      const owned = findOwnedComic(issue);
       showToast("Already in your vault", 4000, owned ? { label: "Open", onClick: () => router.push(`/vault/item/${owned.id}`) } : undefined);
       return;
     }
@@ -543,7 +555,7 @@ export default function UpcomingPage() {
             }}>
               {group.issues.map((issue) => (
                 <div key={issue.id} style={{ flexShrink: 0, width: "140px", scrollSnapAlign: "start" }}>
-                  <IssueCard issue={issue} status={statuses.get(issue.id) ?? null} onStatus={handleStatus} />
+                  <IssueCard issue={issue} status={statusOf(issue)} onStatus={handleStatus} />
                 </div>
               ))}
             </div>

@@ -52,10 +52,31 @@ function pickFor(issue: UpcomingIssue) {
   };
 }
 
-/** The vault item already added from this issue (active profile), if any. */
-export function findOwnedComic(metronId: number | string): VaultItem | undefined {
-  const ref = comicCatalogRef(metronId);
-  return loadItems().find((item) => item.catalogRef === ref && item.status !== "SOLD");
+export function comicTitle(series: string, number: string) {
+  return number ? `${series} #${number}` : series;
+}
+
+function isOwnedCatalogItem(item: VaultItem) {
+  return item.addedVia === "catalog" && item.status !== "SOLD";
+}
+
+/**
+ * The vault item already added from this issue (active profile), if any.
+ * Matches the catalog tag, or (until vault_items.catalog_ref exists in the
+ * database and survives a sync) an item added from the catalog with the same
+ * title, so Own never adds a duplicate.
+ */
+export function findOwnedComic(issue: { id: number; series: string; number: string }): VaultItem | undefined {
+  const ref = comicCatalogRef(issue.id);
+  const title = comicTitle(issue.series, issue.number);
+  return loadItems().find(
+    (item) => isOwnedCatalogItem(item) && (item.catalogRef === ref || (!item.catalogRef && item.title === title))
+  );
+}
+
+/** Titles of comics added from the catalog without a surviving catalog tag (see findOwnedComic). */
+export function loadOwnedCatalogTitles(): Set<string> {
+  return new Set(loadItems().filter((item) => isOwnedCatalogItem(item) && !item.catalogRef).map((item) => item.title));
 }
 
 /** metron id -> status, from the local copies of the wishlist and vault. */
@@ -103,7 +124,7 @@ async function fetchIssueDetail(metronId: number): Promise<MetronIssueResult | n
 export async function ownComic(
   issue: UpcomingIssue
 ): Promise<{ ok: true; item: VaultItem; previousWish: WishStatus | null; alreadyOwned: boolean } | { ok: false; error: string }> {
-  const owned = findOwnedComic(issue.id);
+  const owned = findOwnedComic(issue);
   if (owned) return { ok: true, item: owned, previousWish: null, alreadyOwned: true };
 
   const detail = await fetchIssueDetail(issue.id);
@@ -133,6 +154,15 @@ export async function ownComic(
     addedVia: "catalog",
     catalogRef: comicCatalogRef(issue.id),
   };
+
+  // appendItems keeps only covers that are in the photo list, so the stock
+  // cover goes in as a linked (not uploaded) primary photo, same shape as the
+  // vault's other linked photos.
+  const coverUrl = item.imageFrontUrl;
+  if (coverUrl) {
+    item.images = [{ id: "catalog-cover", storageKey: coverUrl, url: coverUrl, order: 0, localOnly: false, role: "primary" }];
+    item.primaryImageKey = coverUrl;
+  }
 
   const wish = findCatalogWish(SOURCE, String(issue.id));
   const previousWish = wish?.status ?? (wish ? "want" : null);

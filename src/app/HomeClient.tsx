@@ -891,7 +891,15 @@ function CuratorStrengthCard({
                     </div>
                     <div style={{ minWidth: 0, flex: 1 }}>
                       <div style={{ fontSize: "12px", fontWeight: 600, color: C.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{item.title}</div>
-                      <div style={{ fontSize: "11px", fontWeight: 600, color: C.gold }}>{formatMoney(Number(item.currentValue ?? 0))}</div>
+                      {(() => {
+                        // Same rule as the totals: un-priced shows what was paid, in grey.
+                        const v = totalsValue(item);
+                        return (
+                          <div title={v.isGhost ? "Purchase price. Not priced yet." : undefined} style={{ fontSize: "11px", fontWeight: 600, color: v.isGhost ? C.muted2 : C.gold }}>
+                            {v.amount > 0 ? formatMoney(v.amount) : "—"}
+                          </div>
+                        );
+                      })()}
                     </div>
                   </Link>
                 );
