@@ -14,8 +14,10 @@ import type { MetronIssueResult } from "@/app/api/comic-lookup/route";
 import { getStoredActiveProfileId } from "@/lib/auth";
 import { appendItems, loadItems, type VaultItem } from "@/lib/vaultModel";
 import { emitVaultUpdate } from "@/lib/vaultEvents";
-import { enqueueVaultItemSync, processVaultSyncQueue } from "@/lib/vaultSyncQueue";
+import { enqueueVaultItemSync, processVaultSyncQueue, removeVaultItemFromSyncQueue } from "@/lib/vaultSyncQueue";
 import { deleteVaultItemEverywhere } from "@/lib/vaultActions";
+import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
+import { VAULT_ITEMS_TABLE } from "@/lib/vaultCloud";
 import {
   findCatalogWish,
   loadWishlist,
@@ -171,7 +173,8 @@ export async function ownComic(
   enqueueVaultItemSync(item.id);
   emitVaultUpdate();
   if (wish) removeWishlistItem(wish.id);
-  void processVaultSyncQueue();
+  // Upload before offering Undo, so Undo deletes a row that's really there.
+  await processVaultSyncQueue();
 
   return { ok: true, item, previousWish, alreadyOwned: false };
 }
@@ -191,8 +194,27 @@ export async function ownComicFromWish(wish: { externalId?: string; title: strin
   return ownComic(issue);
 }
 
-/** Undo an Own: remove the added item and put the wishlist status back. */
-export async function undoOwnComic(issue: UpcomingIssue, itemId: string, previousWish: WishStatus | null) {
-  await deleteVaultItemEverywhere(itemId);
-  if (previousWish) await setComicWish(issue, previousWish);
+async function cloudHasItem(itemId: string): Promise<boolean> {
+  const supabase = getSupabaseBrowserClient();
+  if (!supabase) return false;
+  const { data, error } = await supabase.from(VAULT_ITEMS_TABLE).select("id").eq("id", itemId).limit(1);
+  return !error && Array.isArray(data) && data.length > 0;
+}
+
+/**
+ * Undo an Own: remove the added item and put the wishlist status back.
+ * An upload already in flight (another sync run) can land after the delete
+ * and bring the row back, so the cloud is re-checked and the delete repeated.
+ */
+export async function undoOwnComic(issue: UpcomingIssue, itemId: string, previousWish: WishStatus | null): Promise<boolean> {
+  removeVaultItemFromSyncQueue(itemId);
+  let res = await deleteVaultItemEverywhere(itemId);
+  for (let attempt = 0; attempt < 3; attempt++) {
+    await new Promise((resolve) => setTimeout(resolve, 2000));
+    if (!(await cloudHasItem(itemId))) break;
+    res = await deleteVaultItemEverywhere(itemId);
+  }
+  const gone = !(await cloudHasItem(itemId));
+  if (gone && previousWish) await setComicWish(issue, previousWish);
+  return res.ok && gone;
 }

@@ -1118,6 +1118,11 @@ function mergeById(localItems: VaultItem[], remoteItems: VaultItem[]) {
       soldPrice: latestSale?.soldPrice ?? existing.soldPrice ?? remoteItem.soldPrice,
       soldAt: latestSale?.soldAt ?? existing.soldAt ?? remoteItem.soldAt,
       soldPlatform: latestSale?.soldPlatform ?? existing.soldPlatform ?? remoteItem.soldPlatform,
+      // Provenance never changes once set. A row from before the catalog_ref
+      // migration (or a row saved without it) must not blank the local copy,
+      // or the next upload would save the blanks back.
+      addedVia: remoteItem.addedVia ?? existing.addedVia,
+      catalogRef: remoteItem.catalogRef ?? existing.catalogRef,
       images: remoteHasImages ? remoteItem.images : existing.images,
       primaryImageKey: remoteItem.primaryImageKey || existing.primaryImageKey,
       imageFrontUrl: remoteItem.imageFrontUrl || existing.imageFrontUrl,

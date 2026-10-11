@@ -305,7 +305,11 @@ export default function UpcomingPage() {
         showToast(`Added "${res.item.title}" to your vault`, 7000, {
           label: "Undo",
           onClick: () => {
-            void undoOwnComic(target, res.item.id, res.previousWish).then(() => setStatuses(loadComicStatuses()));
+            void undoOwnComic(target, res.item.id, res.previousWish).then((ok) => {
+              setStatuses(loadComicStatuses());
+              setOwnedTitles(loadOwnedCatalogTitles());
+              showToast(ok ? "Removed from your vault" : "Couldn't undo. Delete it from the item page.");
+            });
           },
         });
         return;
