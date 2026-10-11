@@ -141,9 +141,10 @@ function rowToItem(input: unknown): VaultItem {
     soldPlatform: row.sold_platform ?? undefined,
     createdAt: row.created_at ?? Date.now(),
     addedVia:
-      row.added_via === "scan" || row.added_via === "manual" || row.added_via === "import" || row.added_via === "wishlist"
+      row.added_via === "scan" || row.added_via === "manual" || row.added_via === "import" || row.added_via === "wishlist" || row.added_via === "catalog"
         ? row.added_via
         : undefined,
+    catalogRef: row.catalog_ref ?? undefined,
     isNew: typeof row.is_new === "boolean" ? row.is_new : true,
     isPublic: typeof row.is_public === "boolean" ? row.is_public : false,
     askingPrice: typeof row.asking_price === "number" ? row.asking_price : undefined,
@@ -582,6 +583,7 @@ export async function upsertVaultItemToSupabase(item: VaultItem) {
     subcategory_label: item.subcategoryLabel ?? null,
     created_at: item.createdAt ?? Date.now(),
     added_via: item.addedVia ?? null,
+    catalog_ref: item.catalogRef ?? null,
     is_new: item.isNew ?? true,
     is_public: item.isPublic ?? false,
     asking_price: item.askingPrice ?? null,

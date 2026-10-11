@@ -1,9 +1,30 @@
 "use client";
 
-import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
-import type { UpcomingIssue } from "@/app/api/comic-upcoming/route";
+// Upcoming Comics: Want / Ordered / Own for one issue.
+//
+// Want and Pre-ordered live on the profile's account wishlist (wishlistModel,
+// source "metron"), so they show on the Watchlist > Wishlist tab and on the
+// shared wishlist link. Own adds the issue to the vault with its stock cover
+// and details (addedVia "catalog", catalogRef "metron:<id>"). The older
+// per-login comic_wishlist table is no longer read; its rows were copied into
+// the wishlist by 20261011_wishlist_comics_and_sharing.sql.
 
-/** Where a saved upcoming issue stands for this Curator. */
+import type { UpcomingIssue } from "@/app/api/comic-upcoming/route";
+import type { MetronIssueResult } from "@/app/api/comic-lookup/route";
+import { getStoredActiveProfileId } from "@/lib/auth";
+import { appendItems, loadItems, type VaultItem } from "@/lib/vaultModel";
+import { emitVaultUpdate } from "@/lib/vaultEvents";
+import { enqueueVaultItemSync, processVaultSyncQueue } from "@/lib/vaultSyncQueue";
+import { deleteVaultItemEverywhere } from "@/lib/vaultActions";
+import {
+  findCatalogWish,
+  loadWishlist,
+  removeWishlistItem,
+  setCatalogWish,
+  syncWishlistFromSupabase,
+  type WishStatus,
+} from "@/lib/wishlistModel";
+
 export type ComicStatus = "want" | "preordered" | "own";
 
 export const COMIC_STATUS_LABEL: Record<ComicStatus, string> = {
@@ -12,122 +33,136 @@ export const COMIC_STATUS_LABEL: Record<ComicStatus, string> = {
   own: "Own",
 };
 
-export type ComicWishlistItem = {
-  id: string;
-  metronId: number;
-  series: string;
-  number: string;
-  publisher: string | null;
-  storeDate: string | null;
-  imageUrl: string | null;
-  addedAt: string;
-  status: ComicStatus;
-};
+const SOURCE = "metron";
 
-type DbRow = {
-  id: string;
-  metron_id: number;
-  series: string;
-  number: string;
-  publisher: string | null;
-  store_date: string | null;
-  image_url: string | null;
-  added_at: string;
-  status?: string | null;
-};
-
-function toStatus(value: unknown): ComicStatus {
-  return value === "preordered" || value === "own" ? value : "want";
+export function comicCatalogRef(metronId: number | string) {
+  return `${SOURCE}:${metronId}`;
 }
 
-// Rows saved before 20261011_comic_wishlist_status.sql has no `status` column.
-function isMissingStatusColumn(message: string | undefined) {
-  return !!message && /status/i.test(message);
-}
-
-function rowToItem(row: DbRow): ComicWishlistItem {
+function pickFor(issue: UpcomingIssue) {
   return {
-    id: row.id,
-    metronId: row.metron_id,
-    series: row.series,
-    number: row.number,
-    publisher: row.publisher,
-    storeDate: row.store_date,
-    imageUrl: row.image_url,
-    addedAt: row.added_at,
-    status: toStatus(row.status),
+    source: SOURCE,
+    externalId: String(issue.id),
+    title: `${issue.series} #${issue.number}`.trim(),
+    imageUrl: issue.imageUrl ?? undefined,
+    releaseDate: issue.storeDate ?? undefined,
+    universe: "POP_CULTURE",
+    category: "Comics",
+    subject: issue.publisher || undefined,
   };
 }
 
-/** Load all wishlist items for the signed-in user, newest first. */
-export async function loadComicWishlist(): Promise<ComicWishlistItem[]> {
-  const supabase = getSupabaseBrowserClient();
-  if (!supabase) return [];
-  const { data, error } = await supabase
-    .from("comic_wishlist")
-    .select("*")
-    .order("added_at", { ascending: false });
-  if (error || !data) return [];
-  return (data as DbRow[]).map(rowToItem);
+/** The vault item already added from this issue (active profile), if any. */
+export function findOwnedComic(metronId: number | string): VaultItem | undefined {
+  const ref = comicCatalogRef(metronId);
+  return loadItems().find((item) => item.catalogRef === ref && item.status !== "SOLD");
 }
 
-/** metron_id -> status for every saved issue. Fast for UI checks. */
-export async function loadComicStatuses(): Promise<Map<number, ComicStatus>> {
-  const supabase = getSupabaseBrowserClient();
-  if (!supabase) return new Map();
-  const withStatus = await supabase.from("comic_wishlist").select("metron_id,status");
-  if (!withStatus.error && withStatus.data) {
-    return new Map(
-      (withStatus.data as { metron_id: number; status: string | null }[]).map((r) => [r.metron_id, toStatus(r.status)])
-    );
+/** metron id -> status, from the local copies of the wishlist and vault. */
+export function loadComicStatuses(): Map<number, ComicStatus> {
+  const map = new Map<number, ComicStatus>();
+  for (const w of loadWishlist()) {
+    if (w.source !== SOURCE || !w.externalId) continue;
+    map.set(Number(w.externalId), w.status === "preordered" ? "preordered" : "want");
   }
-  if (!isMissingStatusColumn(withStatus.error?.message)) return new Map();
-  // Column not added yet: every saved row is a "want".
-  const ids = await supabase.from("comic_wishlist").select("metron_id");
-  if (ids.error || !ids.data) return new Map();
-  return new Map((ids.data as { metron_id: number }[]).map((r) => [r.metron_id, "want" as const]));
+  for (const item of loadItems()) {
+    const m = item.catalogRef?.match(/^metron:(\d+)$/);
+    if (m && item.status !== "SOLD") map.set(Number(m[1]), "own");
+  }
+  return map;
 }
 
-/** Remove an issue from the wishlist by its Metron ID. */
-export async function removeFromComicWishlist(
-  metronId: number
-): Promise<{ ok: boolean; error?: string }> {
-  const supabase = getSupabaseBrowserClient();
-  if (!supabase) return { ok: false, error: "Not signed in." };
-  const { error } = await supabase
-    .from("comic_wishlist")
-    .delete()
-    .eq("metron_id", metronId);
-  if (error) return { ok: false, error: error.message };
-  return { ok: true };
+/** Pull the latest wishlist from the account, then read statuses. */
+export async function refreshComicStatuses(): Promise<Map<number, ComicStatus>> {
+  await syncWishlistFromSupabase();
+  return loadComicStatuses();
+}
+
+/** Want / Pre-ordered / off. Returns false if it couldn't reach the account. */
+export async function setComicWish(issue: UpcomingIssue, status: WishStatus | null): Promise<boolean> {
+  return setCatalogWish(pickFor(issue), status);
+}
+
+async function fetchIssueDetail(metronId: number): Promise<MetronIssueResult | null> {
+  try {
+    const res = await fetch(`/api/comic-lookup?id=${metronId}`);
+    if (!res.ok) return null;
+    const data = (await res.json()) as { result?: MetronIssueResult | null };
+    return data.result ?? null;
+  } catch {
+    return null;
+  }
 }
 
 /**
- * Set an upcoming issue's status, or clear it (null removes the saved row).
- * Safe to call repeatedly (upsert). `needsSql` = the status column isn't there
- * yet, so only "Want" can be saved until the migration is run.
+ * Own: add the issue to the vault with its stock cover and details.
+ * Price paid = cover price when the catalog has one (editable later); value is
+ * left empty, so totals show it at purchase price until it's priced.
+ * Takes it off the wishlist. Returns what Undo needs.
  */
-export async function setComicStatus(
-  issue: UpcomingIssue,
-  status: ComicStatus | null
-): Promise<{ ok: boolean; error?: string; needsSql?: boolean }> {
-  if (status === null) return removeFromComicWishlist(issue.id);
-  const supabase = getSupabaseBrowserClient();
-  if (!supabase) return { ok: false, error: "Not signed in." };
-  const row = {
-    metron_id: issue.id,
-    series: issue.series,
-    number: issue.number,
-    publisher: issue.publisher ?? null,
-    store_date: issue.storeDate ?? null,
-    image_url: issue.imageUrl ?? null,
+export async function ownComic(
+  issue: UpcomingIssue
+): Promise<{ ok: true; item: VaultItem; previousWish: WishStatus | null; alreadyOwned: boolean } | { ok: false; error: string }> {
+  const owned = findOwnedComic(issue.id);
+  if (owned) return { ok: true, item: owned, previousWish: null, alreadyOwned: true };
+
+  const detail = await fetchIssueDetail(issue.id);
+  const coverPrice = Number(detail?.price ?? "");
+  const now = Date.now();
+  const series = detail?.series || issue.series;
+  const number = detail?.number || issue.number;
+  const item: VaultItem = {
+    id: `vault_${now}_${Math.random().toString(36).slice(2, 8)}`,
+    profile_id: getStoredActiveProfileId() || undefined,
+    title: number ? `${series} #${number}` : series,
+    universe: "POP_CULTURE",
+    category: "COMICS",
+    categoryLabel: "Comics",
+    subcategoryLabel: "Comic Book",
+    brand: detail?.publisher || issue.publisher || undefined,
+    comicPublisher: detail?.publisher || issue.publisher || undefined,
+    comicIssueNumber: number || undefined,
+    comicCoverDate: detail?.coverDate ?? issue.coverDate ?? undefined,
+    notes: detail?.description ?? undefined,
+    // Stock cover from the catalog, linked (not copied), like other linked photos.
+    imageFrontUrl: detail?.imageUrl ?? issue.imageUrl ?? undefined,
+    purchasePrice: Number.isFinite(coverPrice) && coverPrice > 0 ? coverPrice : undefined,
+    status: "COLLECTION",
+    createdAt: now,
+    isNew: true,
+    addedVia: "catalog",
+    catalogRef: comicCatalogRef(issue.id),
   };
-  const { error } = await supabase
-    .from("comic_wishlist")
-    .upsert({ ...row, status }, { onConflict: "user_id,metron_id" });
-  if (!error) return { ok: true };
-  if (!isMissingStatusColumn(error.message)) return { ok: false, error: error.message };
-  if (status !== "want") return { ok: false, needsSql: true, error: error.message };
-  const retry = await supabase.from("comic_wishlist").upsert(row, { onConflict: "user_id,metron_id" });
-  return retry.error ? { ok: false, error: retry.error.message } : { ok: true };
+
+  const wish = findCatalogWish(SOURCE, String(issue.id));
+  const previousWish = wish?.status ?? (wish ? "want" : null);
+
+  appendItems([item]);
+  enqueueVaultItemSync(item.id);
+  emitVaultUpdate();
+  if (wish) removeWishlistItem(wish.id);
+  void processVaultSyncQueue();
+
+  return { ok: true, item, previousWish, alreadyOwned: false };
+}
+
+/** Own straight from a saved wishlist entry (Watchlist "+ Add to Vault"). */
+export async function ownComicFromWish(wish: { externalId?: string; title: string; imageUrl?: string; releaseDate?: string; subject?: string }) {
+  if (!wish.externalId) return { ok: false as const, error: "Not a catalog comic." };
+  const issue: UpcomingIssue = {
+    id: Number(wish.externalId),
+    series: wish.title,
+    number: "",
+    publisher: wish.subject ?? "",
+    storeDate: wish.releaseDate ?? null,
+    coverDate: null,
+    imageUrl: wish.imageUrl ?? null,
+  };
+  return ownComic(issue);
+}
+
+/** Undo an Own: remove the added item and put the wishlist status back. */
+export async function undoOwnComic(issue: UpcomingIssue, itemId: string, previousWish: WishStatus | null) {
+  await deleteVaultItemEverywhere(itemId);
+  if (previousWish) await setComicWish(issue, previousWish);
 }

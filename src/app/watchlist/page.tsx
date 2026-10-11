@@ -18,17 +18,13 @@ import {
   syncWatchlistFromSupabase,
   type WatchlistItem,
 } from "@/lib/watchlistModel";
-import {
-  COMIC_STATUS_LABEL,
-  loadComicWishlist,
-  removeFromComicWishlist,
-  type ComicWishlistItem,
-} from "@/lib/comicWishlistModel";
+import { COMIC_STATUS_LABEL, ownComicFromWish } from "@/lib/comicWishlistModel";
+import { disableWishlistShare, enableWishlistShare, loadWishlistShareToken, wishlistShareUrl } from "@/lib/wishlistShare";
 import { showToast } from "@/lib/toast";
 import { universePlaceholder } from "@/lib/itemPlaceholder";
 
 type WatchKind = "item" | "exhibition" | "comic";
-type FilterKey = "all" | "items" | "exhibitions" | "alerts" | "undecided";
+type FilterKey = "all" | "wishlist" | "items" | "exhibitions" | "alerts" | "undecided";
 type SortMode = "recent" | "value" | "target";
 
 type WatchEntry = {
@@ -46,7 +42,7 @@ type WatchEntry = {
   alertActive: boolean;
   notes: string;
   sourceType: "wishlist" | "watchlist" | "comic";
-  raw?: WishlistItem | WatchlistItem | ComicWishlistItem;
+  raw?: WishlistItem | WatchlistItem;
 };
 
 function money(value: number) {
@@ -67,6 +63,26 @@ function priorityFromItem(item: WishlistItem): WatchEntry["priority"] {
 
 function entryFromWishlist(item: WishlistItem): WatchEntry {
   const target = safeNumber(item.targetPrice, 0);
+  // Catalog picks (Upcoming Comics Want / Ordered) carry their own cover and release date.
+  if (item.source === "metron") {
+    return {
+      id: item.id,
+      kind: "comic",
+      title: item.title || "Upcoming comic",
+      subtitle: item.subject || "Upcoming comic",
+      meta: COMIC_STATUS_LABEL[item.status ?? "want"] + (item.releaseDate ? " · Release " + item.releaseDate : ""),
+      image: item.imageUrl || universePlaceholder("POP_CULTURE"),
+      currentValue: 0,
+      targetPrice: target,
+      source: "Upcoming Comics",
+      savedAgo: formatAgo(item.createdAt),
+      priority: priorityFromItem(item),
+      alertActive: false,
+      notes: item.notes || "Saved from Upcoming Comics. Tap + Add to Vault once you have it.",
+      sourceType: "wishlist",
+      raw: item,
+    };
+  }
   return {
     id: item.id,
     kind: "item",
@@ -75,7 +91,7 @@ function entryFromWishlist(item: WishlistItem): WatchEntry {
     meta: [item.condition && item.condition !== "any" ? item.condition.toUpperCase() : null, item.priority ? `${item.priority} priority` : null]
       .filter(Boolean)
       .join(" · ") || "Target watch",
-    image: universePlaceholder(item.universe),
+    image: item.imageUrl || universePlaceholder(item.universe),
     currentValue: target ? Math.round(target * 1.18) : 0,
     targetPrice: target,
     source: "Manual",
@@ -105,26 +121,6 @@ function entryFromWatch(item: WatchlistItem): WatchEntry {
     alertActive: currentValue > 0,
     notes: "Saved from Discover. Watch this item before adding it to your private vault.",
     sourceType: "watchlist",
-    raw: item,
-  };
-}
-
-function entryFromComic(item: ComicWishlistItem): WatchEntry {
-  return {
-    id: String(item.metronId),
-    kind: "comic",
-    title: `${item.series} #${item.number}`,
-    subtitle: item.publisher || "Upcoming comic",
-    meta: `${COMIC_STATUS_LABEL[item.status]} · ${item.storeDate ? `Release ${item.storeDate}` : "Upcoming issue"}`,
-    image: item.imageUrl || universePlaceholder("POP_CULTURE"),
-    currentValue: 0,
-    targetPrice: 0,
-    source: "Metron",
-    savedAgo: formatAgo(Date.parse(item.addedAt)),
-    priority: "medium",
-    alertActive: false,
-    notes: "Upcoming issue saved from Metron. Move it to your vault after release or purchase.",
-    sourceType: "comic",
     raw: item,
   };
 }
@@ -206,7 +202,8 @@ function WatchCard({
 export default function WatchlistPage() {
   const [wishlist, setWishlist] = useState<WishlistItem[]>(() => loadWishlist());
   const [watchlist, setWatchlist] = useState<WatchlistItem[]>(() => loadWatchlist());
-  const [comicItems, setComicItems] = useState<ComicWishlistItem[]>([]);
+  const [shareToken, setShareToken] = useState<string | null>(null);
+  const [shareBusy, setShareBusy] = useState(false);
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<FilterKey>("all");
   const [sort, setSort] = useState<SortMode>("recent");
@@ -226,9 +223,9 @@ export default function WatchlistPage() {
     void syncWatchlistFromSupabase().then(() => {
       if (active) setWatchlist(loadWatchlist());
     });
-    void loadComicWishlist().then((items) => {
-      if (active) setComicItems(items);
-    }).catch(() => {});
+    void loadWishlistShareToken().then((res) => {
+      if (active) setShareToken(res.token);
+    });
     return () => {
       active = false;
     };
@@ -238,15 +235,15 @@ export default function WatchlistPage() {
     return [
       ...watchlist.map(entryFromWatch),
       ...wishlist.map(entryFromWishlist),
-      ...comicItems.map(entryFromComic),
     ];
-  }, [comicItems, watchlist, wishlist]);
+  }, [watchlist, wishlist]);
 
   const entries = realEntries;
 
   const filteredEntries = useMemo(() => {
     const q = query.trim().toLowerCase();
     let list = entries.filter((entry) => {
+      if (filter === "wishlist" && entry.sourceType !== "wishlist") return false;
       if (filter === "items" && entry.kind !== "item" && entry.kind !== "comic") return false;
       if (filter === "exhibitions" && entry.kind !== "exhibition") return false;
       if (filter === "alerts" && !entry.alertActive) return false;
@@ -262,6 +259,7 @@ export default function WatchlistPage() {
 
   const selected = filteredEntries.find((entry) => entry.id === selectedId) ?? filteredEntries[0] ?? null;
   const itemCount = entries.filter((entry) => entry.kind === "item" || entry.kind === "comic").length;
+  const wishlistCount = entries.filter((entry) => entry.sourceType === "wishlist").length;
   const exhibitionCount = entries.filter((entry) => entry.kind === "exhibition").length;
   const alertCount = entries.filter((entry) => entry.alertActive).length;
   const undecidedCount = entries.filter((entry) => entry.priority === "low").length;
@@ -276,6 +274,13 @@ export default function WatchlistPage() {
       if (movingId) return;
       setMovingId(item.id);
       try {
+        if (item.source === "metron") {
+          // Same as Own on Upcoming Comics: stock cover, details, cover price.
+          const res = await ownComicFromWish(item);
+          setWishlist(loadWishlist());
+          showToast(res.ok ? "Moved \"" + res.item.title + "\" to your vault" : "Couldn't move that item. Try again.");
+          return;
+        }
         await convertWishlistToVault(item);
         setWishlist((prev) => prev.filter((candidate) => candidate.id !== item.id));
         showToast(`Moved "${item.title}" to your vault`);
@@ -304,11 +309,6 @@ export default function WatchlistPage() {
     if (entry.sourceType === "watchlist") {
       removeFromWatchlist(entry.id);
       setWatchlist((prev) => prev.filter((candidate) => candidate.id !== entry.id));
-    }
-    if (entry.sourceType === "comic" && entry.raw) {
-      const item = entry.raw as ComicWishlistItem;
-      void removeFromComicWishlist(item.metronId);
-      setComicItems((prev) => prev.filter((candidate) => candidate.metronId !== item.metronId));
     }
   }
 
@@ -346,6 +346,36 @@ export default function WatchlistPage() {
     showToast("Notes saved");
   }
 
+  async function shareWishlist() {
+    if (shareBusy) return;
+    setShareBusy(true);
+    const res = shareToken ? { token: shareToken } : await enableWishlistShare();
+    setShareBusy(false);
+    if (!res.token) {
+      showToast("Couldn't create a share link. Try again.");
+      return;
+    }
+    setShareToken(res.token);
+    const url = wishlistShareUrl(res.token);
+    // Phone share sheet when there is one, otherwise copy the link.
+    const shared = typeof navigator !== "undefined" && navigator.share
+      ? await navigator.share({ title: "My wishlist", url }).then(() => true, () => false)
+      : false;
+    if (shared) return;
+    const copied = await navigator.clipboard.writeText(url).then(() => true, () => false);
+    showToast(copied ? "Wishlist link copied" : url);
+  }
+
+  async function stopSharingWishlist() {
+    const res = await disableWishlistShare();
+    if (res.ok) {
+      setShareToken(null);
+      showToast("Wishlist link turned off");
+    } else {
+      showToast("Couldn't turn the link off. Try again.");
+    }
+  }
+
   async function shareSelected() {
     if (!selected) return;
     const parts = [
@@ -373,6 +403,24 @@ export default function WatchlistPage() {
         title="Watchlist"
         description={<span style={{ color: "var(--theme-text-muted,#61656B)" }}>Track items, exhibitions, and price targets before they enter your vault.</span>}
         contentClassName="max-w-[1480px]"
+        actions={
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => void shareWishlist()}
+              disabled={shareBusy}
+              className="rounded-[7px] border px-3 py-2 text-xs font-black"
+              style={{ borderColor: "rgba(203,208,213,0.32)", color: "var(--theme-gold,#C8CDD2)" }}
+            >
+              {shareToken ? "Copy wishlist link" : "Share wishlist"}
+            </button>
+            {shareToken ? (
+              <button type="button" onClick={() => void stopSharingWishlist()} className="text-xs font-semibold underline" style={{ color: "var(--theme-text-muted,#61656B)" }}>
+                Stop sharing
+              </button>
+            ) : null}
+          </div>
+        }
       />
       <main className="px-4 pb-6 sm:px-6 lg:px-8">
       <div className="mx-auto grid max-w-[1480px] gap-6 xl:grid-cols-[minmax(0,1fr)_430px]">
@@ -416,6 +464,7 @@ export default function WatchlistPage() {
           <div className="mt-4 flex flex-wrap items-center gap-3">
             {[
               ["all", `All (${entries.length})`],
+              ["wishlist", `Wishlist (${wishlistCount})`],
               ["items", `Items (${itemCount})`],
               ["exhibitions", `Exhibitions (${exhibitionCount})`],
               ["alerts", `Price Alerts (${alertCount})`],

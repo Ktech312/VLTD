@@ -21,6 +21,8 @@ export type MetronIssueResult = {
   imageUrl: string | null;
   description: string | null;
   upc: string | null;
+  /** Cover price as printed, e.g. "4.99" (USD). */
+  price?: string | null;
 };
 
 type MetronListItem = {
@@ -36,6 +38,7 @@ type MetronListItem = {
 type MetronDetailItem = MetronListItem & {
   desc?: string | null;
   upc?: string | null;
+  price?: string | null;
 };
 
 function normalizeListItem(item: MetronListItem): Omit<MetronIssueResult, "description" | "upc"> {
@@ -100,11 +103,13 @@ export async function GET(req: NextRequest) {
   const upc = searchParams.get("upc")?.replace(/\D/g, "").trim() ?? "";
   const seriesName = searchParams.get("series")?.trim() ?? "";
   const number = searchParams.get("number")?.trim() ?? "";
+  // A known Metron issue id (Upcoming Comics) skips the search entirely.
+  const issueId = searchParams.get("id")?.replace(/\D/g, "") ?? "";
   const publisher = searchParams.get("publisher")?.trim() ?? "";
 
-  if (!upc && !seriesName) {
+  if (!upc && !seriesName && !issueId) {
     return NextResponse.json(
-      { error: "Provide ?upc=... or ?series=...&number=..." },
+      { error: "Provide ?id=..., ?upc=... or ?series=...&number=..." },
       { status: 400 }
     );
   }
@@ -112,7 +117,7 @@ export async function GET(req: NextRequest) {
   // Permanent cache -- a comic issue's series/publisher/cover-date never
   // changes once published, so a repeat lookup (re-scan, two users with
   // the same issue, testing) costs zero real Metron calls after the first.
-  const cacheKey = upc ? `upc:${upc}` : `series:${seriesName}|${number}|${publisher}`;
+  const cacheKey = issueId ? `id:${issueId}` : upc ? `upc:${upc}` : `series:${seriesName}|${number}|${publisher}`;
   const cached = await getCachedLookup<MetronIssueResult>("metron", cacheKey);
   if (cached) {
     return NextResponse.json({ result: cached, cached: true });
@@ -121,6 +126,20 @@ export async function GET(req: NextRequest) {
   try {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 8000);
+
+    if (issueId) {
+      const detail: MetronDetailItem | null = await fetchMetron(`/issue/${issueId}/`, auth, controller.signal);
+      clearTimeout(timeout);
+      if (!detail) return NextResponse.json({ result: null });
+      const result: MetronIssueResult = {
+        ...normalizeListItem(detail),
+        description: detail.desc ?? null,
+        upc: detail.upc ?? null,
+        price: detail.price ?? null,
+      };
+      await putCachedLookup("metron", cacheKey, result);
+      return NextResponse.json({ result });
+    }
 
     let listData: { count: number; results: MetronListItem[] } | null = null;
 
@@ -150,6 +169,7 @@ export async function GET(req: NextRequest) {
     // 3. Fetch detail for description + upc confirmation (one more request)
     let description: string | null = null;
     let confirmedUpc: string | null = null;
+    let price: string | null = null;
 
     try {
       const detail: MetronDetailItem | null = await fetchMetron(
@@ -159,6 +179,7 @@ export async function GET(req: NextRequest) {
       if (detail) {
         description = detail.desc ?? null;
         confirmedUpc = detail.upc ?? null;
+        price = detail.price ?? null;
       }
     } catch {
       // Detail fetch failure is non-fatal — base data is still good
@@ -168,6 +189,7 @@ export async function GET(req: NextRequest) {
       ...base,
       description,
       upc: confirmedUpc,
+      price,
     };
 
     await putCachedLookup("metron", cacheKey, result);

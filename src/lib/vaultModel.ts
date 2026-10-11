@@ -127,8 +127,12 @@ export type VaultItem = {
    *  guess. "scan" only when an AI photo-identify actually ran and its
    *  result was kept; "manual" for hand-typed entry (including via a scan
    *  flow the user didn't use); "import" for CSV/spreadsheet; "wishlist"
-   *  for a wishlist→vault conversion. undefined = predates this field. */
-  addedVia?: "scan" | "manual" | "import" | "wishlist";
+   *  for a wishlist→vault conversion; "catalog" when added from a catalog
+   *  listing (Upcoming Comics "Own") with its stock cover and details.
+   *  undefined = predates this field. */
+  addedVia?: "scan" | "manual" | "import" | "wishlist" | "catalog";
+  /** Catalog this item was added from, "source:id" (e.g. "metron:181794"). */
+  catalogRef?: string;
   isNew?: boolean;
   isPublic?: boolean;
   /** Public pages only: stands in for an item the owner has hidden (shows as "Hidden Item"). */
@@ -549,9 +553,10 @@ function normalizeOne(input: unknown): VaultItem | null {
         ? raw.conditionSource
         : undefined,
     addedVia:
-      raw.addedVia === "scan" || raw.addedVia === "manual" || raw.addedVia === "import" || raw.addedVia === "wishlist"
+      raw.addedVia === "scan" || raw.addedVia === "manual" || raw.addedVia === "import" || raw.addedVia === "wishlist" || raw.addedVia === "catalog"
         ? raw.addedVia
         : undefined,
+    catalogRef: typeof raw.catalogRef === "string" && raw.catalogRef ? raw.catalogRef : undefined,
     purchasePrice: clampNum(raw.purchasePrice, 0),
     purchaseTax: clampNum(raw.purchaseTax, 0),
     purchaseShipping: clampNum(raw.purchaseShipping, 0),

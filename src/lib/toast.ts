@@ -5,7 +5,10 @@
 
 let offset = 0;
 
-export function showToast(msg: string, duration = 3000) {
+/** Optional button inside the toast, e.g. Undo. Clicking it runs once and closes the toast. */
+export type ToastAction = { label: string; onClick: () => void };
+
+export function showToast(msg: string, duration = 3000, action?: ToastAction) {
   if (typeof document === "undefined") return;
 
   const id = `vltd-toast-${Date.now()}-${Math.random().toString(36).slice(2)}`;
@@ -15,6 +18,7 @@ export function showToast(msg: string, duration = 3000) {
   const el = document.createElement("div");
   el.id = id;
   el.textContent = msg;
+  let closed = false;
   el.setAttribute(
     "style",
     [
@@ -30,13 +34,29 @@ export function showToast(msg: string, duration = 3000) {
       "font-size:13px",
       "font-weight:600",
       "z-index:99999",
-      "pointer-events:none",
+      action ? "pointer-events:auto" : "pointer-events:none",
       "box-shadow:0 4px 24px rgba(0,0,0,0.45)",
       "white-space:nowrap",
       "opacity:0",
       "transition:opacity 0.18s ease,transform 0.18s ease",
     ].join(";"),
   );
+
+  if (action) {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.textContent = action.label;
+    btn.setAttribute(
+      "style",
+      "margin-left:12px;background:transparent;border:none;color:var(--theme-gold,#C8CDD2);font-weight:800;font-size:13px;cursor:pointer;text-decoration:underline",
+    );
+    btn.addEventListener("click", () => {
+      if (closed) return;
+      action.onClick();
+      close();
+    });
+    el.appendChild(btn);
+  }
 
   document.body.appendChild(el);
 
@@ -48,12 +68,15 @@ export function showToast(msg: string, duration = 3000) {
   });
 
   // Animate out and remove
-  setTimeout(() => {
+  function close() {
+    if (closed) return;
+    closed = true;
     el.style.opacity = "0";
     el.style.transform = "translateX(-50%) translateY(6px)";
     setTimeout(() => {
       el.remove();
       offset = Math.max(0, offset - 52);
     }, 200);
-  }, duration);
+  }
+  setTimeout(close, duration);
 }
