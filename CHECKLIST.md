@@ -1,4 +1,24 @@
-# VLTD — Session Checklist (2026-08-05 night → ongoing, updated 2026-10-01)
+# VLTD — Session Checklist (2026-08-05 night → ongoing, updated 2026-10-10)
+
+## 2026-10-10 — Full production re-audit after launch
+
+- [x] Recounted the live mismatch: **1,507 local / 1,484 cloud = exactly 23 device-only IDs**; zero cloud-only/unexplained IDs; pending sync queue empty.
+- [ ] Review the 23 device-only records individually. They mix obvious test/scanner leftovers with plausible real collectibles, so no bulk upload or bulk delete is safe.
+- [x] Removed `/vault/sync`'s unsafe `Sync everything`; added an exact per-record review list with open, single-item upload, and confirmed local-only removal actions.
+- [x] Account links to `/vault/sync` with the exact device-only count.
+- [x] Fixed More's false default-account/$0 flash with an honest hydration state.
+- [x] Unified More totals with Dashboard/Vault/Insights via `computeVaultStats`; live result is $934 and 1,500 currently-owned collectibles.
+- [x] Fixed duplicate/overlapping mobile Events hero content.
+- [x] Prevented Insights Month Change/Value History from flashing local fallback data before cloud history finishes.
+- [x] Fixed the dark admin console under light theme with a single `vltd-dark-surface` scope.
+- [x] Verified Featured Exhibition advances, continuously wraps, and responds to a real mouse drag; enlarged carousel arrows to 44×44.
+- [x] Made mobile exhibition cover/delete/open actions visible and 44×44.
+- [x] Authenticated desktop sweep clean on Dashboard, Vault, Exhibitions, Discover, Events, More, Messages, Account.
+- [x] True 390×844 production pass clean on Account, Vault Sync, More, Events, Portfolio, Dashboard, Exhibitions, Admin: no audited-route horizontal overflow; no console warnings/errors.
+- [x] Founding-access API still truthful: capacity 50, claimed 15, remaining 35, open.
+- [x] `tsc --noEmit`, targeted ESLint (0 errors), `next build --webpack`, and Vercel production build pass.
+- [x] Deployed as `ffc0734`; Vercel deployment `dpl_3utKTbFyDTbfiT7X9sAKcrYt7Rse` READY on `vltd.app` and `vltd.vercel.app`.
+- [ ] Data reconciliation remains open until the 23 records are intentionally classified; no launch-ready claim should describe that mismatch as resolved.
 
 ## OPEN — TO CHECK (EK, 2026-10-01): plan limits must come from the server, not a browser setting
 EK's rule: as owner on the paid plan she must never be limited, and the app should never work by trusting a local flag for this. Suspected old code.

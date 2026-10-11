@@ -1,3 +1,27 @@
+# 2026-10-10 — Full authenticated production re-audit after launch; record mismatch measured exactly, unsafe recovery removed, seven live regressions fixed
+
+EK asked for a complete repeat audit after finding several post-launch inconsistencies, with special attention to the previously reported **1,507 local records versus 1,484 cloud records**.
+
+**The mismatch was not resolved.** The live Account page still reports Local 1,507 / Cloud 1,484. A read-only ID comparison proved the difference is exactly **23 device-only records**, with **zero cloud-only/unexplained records** and an **empty pending-sync queue**. The 23 are a mixed group: some are plainly diagnostic/scanner leftovers (`test 1`, `Nothing`, `Untitled Item`/`Untitled scan` entries), while others have real collectible-looking titles (Spider-Man, Batman, Turtles, Pieces of the Past, Arana, We Live #1). Nothing was bulk-uploaded or deleted because either action would risk restoring deleted test data or losing real items.
+
+**The dangerous recovery path is removed.** `/vault/sync` previously offered one `Sync everything` action for every unmatched local record. That could resurrect intentionally deleted/test rows. It now compares exact IDs and displays one review row per device-only item, with three explicit actions: open the item, keep and upload that one item, or remove only that local copy behind a confirmation dialog. Account links directly to this review list and reports the exact count. Live verification after deployment confirmed 23 rows, no bulk-upload control, and no overflow at 390px. No review action was clicked during the audit.
+
+**Other confirmed production defects fixed in the same pass:**
+
+- More briefly displayed a fake default account (`@collection`, Curator, $0, zero items/exhibitions) for up to several seconds while the real profile hydrated. It now shows an honest loading shell, then the real account.
+- More calculated $2,274 / 1,507 by counting sold and supply records while Dashboard, Vault, and Insights calculated the currently-owned collection. More now uses the shared `computeVaultStats()` rules and live-settles at **$934 / 1,500**, matching the other surfaces.
+- Events' featured mobile hero rendered its generated category/title layer underneath the separate hero title, visibly duplicating and overlapping copy. The hero artwork now runs in decorative mode and the mobile hero has enough height for its own content.
+- Insights rendered a local-history Month Change before the cloud-history merge completed, causing a visibly wrong number to flash. Month Change and Value History now remain in an explicit loading state until the cloud attempt settles.
+- The always-dark admin console was missing the established `vltd-dark-surface` boundary, so light-mode overrides recolored its sidebar while the workspace remained black. The entire console is now correctly scoped and readable in light mode.
+- Featured Exhibition's carousel already supported continuous wrap, keyboard arrows, mouse drag, touch drag, and pen input; a real production mouse drag and 1→2→3→4→1 loop both passed. Its 24px arrows were too small, so they are now 44px.
+- Exhibition cover/delete/open controls were only 28px and hidden behind hover on phones. They now remain visible and measure 44×44 at mobile width while keeping the compact desktop presentation.
+
+**Production evidence after commit `ffc0734`:** Vercel deployment `dpl_3utKTbFyDTbfiT7X9sAKcrYt7Rse` is READY and aliased to both `vltd.app` and `vltd.vercel.app`. Authenticated desktop sweep of Dashboard, Vault, Exhibitions, Discover, Events, More, Messages, and Account returned clean pages with no failed requests, broken visible images, console errors, or horizontal overflow. A real 390×844 light-mode pass verified Account, `/vault/sync`, More, Events, Portfolio, Dashboard, Exhibitions, and Admin; audited pages had `scrollWidth === innerWidth`. The three lazy Simple Glass preview assets flagged by a naive image check all return HTTP 200 and are intentionally deferred until their picker section is viewed. Founding access remains truthful at **15 claimed / 50 capacity / 35 remaining**.
+
+**Validation:** `tsc --noEmit` passes; targeted ESLint reports zero errors (pre-existing warnings remain); `next build --webpack` passes all 139 static pages. The default Turbopack build first hit a Turbopack worker timeout while processing unchanged `globals.css`; the supported Webpack production build completed cleanly and Vercel's production build also completed cleanly.
+
+**Current verdict:** the audited application paths are functioning and the fixes above are live, but local/cloud data is **not fully reconciled** until the 23 device-only rows are reviewed individually. Do not call those 23 “fixed,” upload them wholesale, or delete them wholesale. The admin console is readable at 390px but remains a dense, desktop-oriented two-column tool; no claim is made that every admin workflow is phone-optimized.
+
 # 2026-09-30 — Final launch-acceptance sweep, on the same already-authenticated live session as the 2026-09-29 entry below: one real regression found and fixed, `follows` 503 fully characterized (not just re-flagged), evidence-based launch verdict given
 
 Direct continuation of the 2026-09-29 trusted-device work — same live session, EK still signed in, explicitly not signed out again per her own instruction. Scope: the remaining launch-acceptance items from the NYCC-era checklists that hadn't been closed with direct evidence yet.
