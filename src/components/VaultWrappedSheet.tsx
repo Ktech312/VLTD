@@ -31,8 +31,10 @@ const UNIVERSE_LABELS: Record<string, string> = {
 };
 
 function calcStats(items: VaultItem[]): WrappedStats {
-  const totalValue = items.reduce((s, i) => s + Number(i.currentValue ?? i.estimatedValue ?? 0), 0);
-  const totalCost = items.reduce((s, i) => s + Number(i.purchasePrice ?? 0), 0);
+  const valueOf = (i: VaultItem) => Number(i.currentValue ?? i.estimatedValue ?? 0);
+  const totalValue = items.reduce((s, i) => s + valueOf(i), 0);
+  // Gain only on items that have a value -- an un-valued item isn't a $0 loss.
+  const totalCost = items.filter((i) => valueOf(i) > 0).reduce((s, i) => s + Number(i.purchasePrice ?? 0), 0);
   const totalGain = totalValue - totalCost;
   const gainPct = totalCost > 0 ? (totalGain / totalCost) * 100 : 0;
 

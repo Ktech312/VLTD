@@ -74,9 +74,17 @@ export type VaultStats = {
   totalValue: number;
   /** All-in cost of items currently owned. */
   totalCost: number;
-  /** totalValue - totalCost. */
+  /** Owned items that have a market value entered. */
+  valuedCount: number;
+  /** All-in cost of just the valued items -- what gain is measured against. */
+  valuedCost: number;
+  /**
+   * totalValue - valuedCost. Only items with a value count: values are never
+   * auto-filled, so an un-valued item is "not priced yet", not worth $0.
+   * Same rule as the Vault page header.
+   */
   totalGain: number;
-  /** Gain as a percentage of cost. 0 when nothing was spent. */
+  /** Gain as a percentage of valuedCost. 0 when no valued item has a cost. */
   gainPct: number;
   /** Sold items, reported separately rather than folded into the totals. */
   soldCount: number;
@@ -90,14 +98,18 @@ export function computeVaultStats(items: VaultItem[]): VaultStats {
   const owned = activeItems(items);
   const totalValue = owned.reduce((sum, item) => sum + effectiveMarketValue(item), 0);
   const cost = owned.reduce((sum, item) => sum + totalCost(item), 0);
-  const totalGain = totalValue - cost;
+  const valued = owned.filter((item) => effectiveMarketValue(item) > 0);
+  const valuedCost = valued.reduce((sum, item) => sum + totalCost(item), 0);
+  const totalGain = totalValue - valuedCost;
 
   return {
     itemCount: owned.length,
     totalValue,
     totalCost: cost,
+    valuedCount: valued.length,
+    valuedCost,
     totalGain,
-    gainPct: cost > 0 ? (totalGain / cost) * 100 : 0,
+    gainPct: valuedCost > 0 ? (totalGain / valuedCost) * 100 : 0,
     soldCount: items.length - owned.length,
   };
 }

@@ -356,16 +356,16 @@ export default function MorePage() {
 
   const vaultStats = useMemo(() => computeVaultStats(items), [items]);
   const totalValue = vaultStats.totalValue;
-  const totalCost = vaultStats.totalCost;
   const ownedItemCount = vaultStats.itemCount;
   const thirtyDaySeries = useMemo(() => sliceHistory(readHistory(), "30d").map((point) => point.totalValue), [items]);
   const gainPct = useMemo(() => {
     if (thirtyDaySeries.length >= 2 && thirtyDaySeries[0] > 0) {
       return ((thirtyDaySeries[thirtyDaySeries.length - 1] - thirtyDaySeries[0]) / thirtyDaySeries[0]) * 100;
     }
-    if (totalCost > 0) return ((totalValue - totalCost) / totalCost) * 100;
+    // Only valued items count toward return (see computeVaultStats).
+    if (vaultStats.valuedCost > 0) return vaultStats.gainPct;
     return null;
-  }, [thirtyDaySeries, totalCost, totalValue]);
+  }, [thirtyDaySeries, vaultStats.valuedCost, vaultStats.gainPct]);
   const publicGalleries = galleries.filter((gallery) => gallery.visibility === "PUBLIC").length || galleries.length;
   const isBusiness = profile.profileType === "business";
 
@@ -493,6 +493,7 @@ export default function MorePage() {
                     <h3 className="text-[15px] font-semibold" style={{ color: cream }}>More Tools</h3>
                     <div className="mt-3 grid gap-2">
                       <MiniTool title="Watchlist" desc="Saved pieces and follows." href="/watchlist" onPanel={setActivePanel} />
+                      <MiniTool title="Upcoming Comics" desc="New releases and pre-orders, with covers." href="/upcoming" onPanel={setActivePanel} />
                       <MiniTool title="Goals" desc="Collection targets." href="/goals" onPanel={setActivePanel} />
                       <MiniTool title="Marketplace" desc="Browse collector listings." href="/market" onPanel={setActivePanel} />
                       <MiniTool title="Help & Support" desc="Guides and support links." panel="help" onPanel={setActivePanel} />

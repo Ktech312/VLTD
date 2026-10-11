@@ -1057,6 +1057,8 @@ export default function HomeClient() {
       totalValue: s.totalValue,
       totalGain: s.totalGain,
       gainPct: s.gainPct,
+      valuedCount: s.valuedCount,
+      valuedCost: s.valuedCost,
     };
   }, [items]);
 
@@ -1074,9 +1076,14 @@ export default function HomeClient() {
 
   const gainTone = stats.totalGain >= 0 ? "gain" as const : "loss" as const;
   const gainPrefix = stats.totalGain >= 0 ? "+" : "";
-  const summaryLine = stats.totalGain >= 0
-    ? "Your vault is up " + formatMoney(stats.totalGain) + " overall."
-    : "Your vault is down " + formatMoney(Math.abs(stats.totalGain)) + " overall.";
+  // Gain only means something on items that have a value -- see computeVaultStats.
+  const hasReturn = stats.valuedCount > 0 && stats.valuedCost > 0;
+  const valuedNote = stats.valuedCount < stats.totalItems ? " (" + stats.valuedCount + " of " + stats.totalItems + " items valued)" : "";
+  const summaryLine = stats.valuedCount === 0
+    ? "No values added yet."
+    : !hasReturn
+      ? "Your vault is worth " + formatMoney(stats.totalValue) + valuedNote + "."
+      : (stats.totalGain >= 0 ? "Your vault is up " : "Your vault is down ") + formatMoney(Math.abs(stats.totalGain)) + valuedNote + ".";
 
   void profileType;
   void focusToVaultSlug;
@@ -1138,8 +1145,8 @@ export default function HomeClient() {
                   <div style={{ display: "flex", gap: "10px", marginTop: "24px", flexWrap: "wrap" }}>
                     <Stat label="Items" value={String(stats.totalItems)} />
                     <Stat label="Invested" value={formatMoney(stats.totalCostValue)} />
-                    <Stat label="Value" value={formatMoney(stats.totalValue)} tone="gold" />
-                    {stats.totalCostValue > 0 && <Stat label="Return" value={gainPrefix + stats.gainPct.toFixed(1) + "%"} tone={gainTone} />}
+                    <Stat label="Value" value={stats.valuedCount === 0 ? "—" : formatMoney(stats.totalValue)} tone="gold" />
+                    {hasReturn && <Stat label="Return" value={gainPrefix + stats.gainPct.toFixed(1) + "%"} tone={gainTone} />}
                     {primaryFocus && primaryFocus.toLowerCase() !== "null" && <Stat label="Focus" value={primaryFocus} tone="gold" />}
                   </div>
                 )}
@@ -1240,8 +1247,12 @@ export default function HomeClient() {
 
           <div style={{ padding: "16px", background: panelBg, border: premiumBorder, borderRadius: "8px", boxShadow: premiumShadow }}>
             <div style={{ fontSize: "10px", letterSpacing: "1.8px", textTransform: "uppercase", color: C.muted, fontWeight: 800 }}>Collection Value</div>
-            <div style={{ fontFamily: C.r, fontSize: "32px", fontWeight: 800, lineHeight: 1, marginTop: "10px", color: C.gold }}>{formatMoney(stats.totalValue)}</div>
-            {stats.totalCostValue > 0 && (
+            {stats.valuedCount === 0 ? (
+              <div style={{ fontSize: "15px", fontWeight: 700, marginTop: "10px", color: C.muted }}>Not valued yet</div>
+            ) : (
+              <div style={{ fontFamily: C.r, fontSize: "32px", fontWeight: 800, lineHeight: 1, marginTop: "10px", color: C.gold }}>{formatMoney(stats.totalValue)}</div>
+            )}
+            {hasReturn && (
               <div style={{ display: "flex", alignItems: "center", gap: "5px", marginTop: "5px" }}>
                 <span style={{ fontSize: "12px", fontWeight: 600, color: gainTone === "gain" ? C.green : C.red }}>{gainTone === "gain" ? "▲" : "▼"} {gainPrefix}{stats.gainPct.toFixed(1)}%</span>
                 <span style={{ fontSize: "11px", color: C.muted }}>overall return</span>
