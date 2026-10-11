@@ -128,10 +128,12 @@ export function groupByStoreDate(
     }));
 }
 
-/** Group by year, newest year first. Within each year, newest issues first. */
+/** Group by year. "desc" (back catalog): newest first. "asc" (upcoming): soonest first. TBD always last. */
 export function groupByYear(
-  issues: UpcomingIssue[]
+  issues: UpcomingIssue[],
+  order: "asc" | "desc" = "desc"
 ): Array<{ year: string; issues: UpcomingIssue[] }> {
+  const dir = order === "asc" ? 1 : -1;
   const map = new Map<string, UpcomingIssue[]>();
   for (const issue of issues) {
     const year = issue.storeDate ? issue.storeDate.slice(0, 4) : "TBD";
@@ -139,14 +141,14 @@ export function groupByYear(
     map.get(year)!.push(issue);
   }
   return Array.from(map.entries())
-    .sort(([a], [b]) => b.localeCompare(a)) // newest year first
+    .sort(([a], [b]) => (a === "TBD" ? 1 : b === "TBD" ? -1 : dir * a.localeCompare(b)))
     .map(([year, items]) => ({
       year,
       issues: items.sort((a, b) => {
         if (!a.storeDate && !b.storeDate) return 0;
         if (!a.storeDate) return 1;
         if (!b.storeDate) return -1;
-        return b.storeDate.localeCompare(a.storeDate); // newest first within year
+        return dir * a.storeDate.localeCompare(b.storeDate);
       }),
     }));
 }

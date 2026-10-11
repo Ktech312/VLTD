@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 
 const METRON_BASE = "https://metron.cloud/api";
+const METRON_PAGE = 100; // Metron's fixed page size
+const MAX_PAGES = 10; // 1,000 issues; 180 days of all publishers was ~670 in Oct 2026
 
 function getBasicAuth() {
   const user = process.env.METRON_USERNAME ?? "";
@@ -141,7 +143,8 @@ export async function GET(req: NextRequest) {
   const until = new Date(Date.now() + days * 86_400_000).toISOString().slice(0, 10);
 
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 12_000);
+  // Upcoming mode fans out to ~7 parallel Metron pages on a cold cache.
+  const timeout = setTimeout(() => controller.abort(), 20_000);
 
   try {
     let creatorId = creatorIdParam;
@@ -165,11 +168,7 @@ export async function GET(req: NextRequest) {
       creatorId = String(resolvedCreator.id);
     }
 
-    const params = new URLSearchParams({
-      ordering: allIssues ? "-store_date" : "store_date",
-      page: String(page),
-      page_size: String(pageSize),
-    });
+    const params = new URLSearchParams();
     // Metron's date filter names -- `store_date__gte`/`__lte` are silently
     // ignored, which returned the whole back catalog instead of upcoming books.
     if (!allIssues) {
@@ -181,26 +180,54 @@ export async function GET(req: NextRequest) {
     if (publisher) params.set("publisher_name", publisher);
     if (series) params.set("series_name", series);
 
-    const data: MetronListResponse = await metronFetch(
-      `/issue/?${params}`,
-      auth,
-      controller.signal
-    );
+    let count: number;
+    let hasMore: boolean;
+    let items: MetronListItem[];
+
+    if (allIssues) {
+      // Back-catalog browsing: too big to pull whole, so page straight through.
+      params.set("page", String(page));
+      const data: MetronListResponse = await metronFetch(`/issue/?${params}`, auth, controller.signal);
+      count = data.count;
+      hasMore = !!data.next;
+      items = data.results ?? [];
+    } else {
+      // Metron ignores `ordering` and `page_size` (always 100 per page, A-Z by
+      // series), so pull every page in the window, sort by release date here,
+      // then hand back the requested slice. Each page URL is cached for an
+      // hour, which keeps this well inside Metron's 20 requests/minute.
+      const first: MetronListResponse = await metronFetch(`/issue/?${params}&page=1`, auth, controller.signal);
+      const totalPages = Math.min(Math.ceil((first.count ?? 0) / METRON_PAGE), MAX_PAGES);
+      const rest = await Promise.all(
+        Array.from({ length: Math.max(0, totalPages - 1) }, (_, i) =>
+          metronFetch(`/issue/?${params}&page=${i + 2}`, auth, controller.signal) as Promise<MetronListResponse>
+        )
+      );
+      const all = [first, ...rest].flatMap((d) => d.results ?? []);
+      all.sort((a, b) =>
+        (a.store_date ?? "9999").localeCompare(b.store_date ?? "9999") ||
+        normalizeItem(a).series.localeCompare(normalizeItem(b).series) ||
+        String(a.number).localeCompare(String(b.number), undefined, { numeric: true })
+      );
+      count = all.length;
+      items = all.slice((page - 1) * pageSize, page * pageSize);
+      hasMore = page * pageSize < all.length;
+    }
 
     clearTimeout(timeout);
 
     return NextResponse.json({
-      count: data.count,
+      count,
       page,
       pageSize,
-      hasMore: !!data.next,
+      hasMore,
       dateRange: { from: today, to: until },
       resolvedCreator: resolvedCreator
         ? { id: resolvedCreator.id, name: resolvedCreator.name }
         : creatorId
         ? { id: parseInt(creatorId, 10), name: "" }
         : null,
-      results: (data.results ?? []).map(normalizeItem),
+      results: items.map(normalizeItem),
     });
   } catch (error) {
     clearTimeout(timeout);

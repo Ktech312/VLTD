@@ -163,7 +163,7 @@ export default function UpcomingPage() {
   const [selectedPubs, setSelectedPubs] = useState<Set<string>>(new Set());
   const [days, setDays]               = useState(90);
   const [allMode, setAllMode]         = useState(false);
-  const [loading, setLoading]         = useState(false);
+  const [loading, setLoading]         = useState(true); // initial browse load
   const [loadingMore, setLoadingMore] = useState(false);
   const [fedResult, setFedResult]     = useState<UpcomingComicsResult | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
@@ -176,12 +176,28 @@ export default function UpcomingPage() {
     loadWishlistedIds().then(setWishlistIds).catch(() => {});
   }, []);
 
+  // Open on the full upcoming list, like a comic shop's pre-order page.
+  // Same request the Search button sends with an empty box.
+  useEffect(() => {
+    let cancelled = false;
+    fetchAllSources({ days: 90, page: 1, pageSize: 25 }).then((data) => {
+      if (cancelled) return;
+      setLoading(false);
+      if (!data) return;
+      setFedResult((prev) => prev ?? data);
+      setCurrentPage(1);
+    });
+    return () => { cancelled = true; };
+  }, []);
+
   /**
    * pubOverride: undefined = use current selectedPubs; null = no filter; string = specific publisher
    */
   async function handleSearch(pg = 1, pubOverride?: string | null) {
     const q = query.trim();
-    if (!q) return;
+    // No name = browse everything releasing in the window (soonest first).
+    // Never browse the whole back catalog unfiltered.
+    if (!q && allMode) return;
 
     const isLoadMore = pg > 1;
     if (isLoadMore) setLoadingMore(true);
@@ -200,7 +216,7 @@ export default function UpcomingPage() {
       page: pg,
       pageSize: 25,
       publisher: singlePub,
-      ...(mode === "creator" ? { creator: q } : { series: q }),
+      ...(q ? (mode === "creator" ? { creator: q } : { series: q }) : {}),
     };
 
     const data = await fetchAllSources(opts);
@@ -260,7 +276,7 @@ export default function UpcomingPage() {
     );
   }, [fedResult, selectedPubs]);
 
-  const groups       = useMemo(() => groupByYear(filteredResults), [filteredResults]);
+  const groups       = useMemo(() => groupByYear(filteredResults, allMode ? "desc" : "asc"), [filteredResults, allMode]);
   const totalCount   = fedResult?.count ?? 0;
   const shownCount   = filteredResults.length;
   const variantCount = filteredResults.filter((r) => r.isVariant).length;
