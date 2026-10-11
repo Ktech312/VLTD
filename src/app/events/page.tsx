@@ -155,10 +155,12 @@ function EventArt({
   event,
   className = "",
   compact = false,
+  decorative = false,
 }: {
   event: CollectorEvent;
   className?: string;
   compact?: boolean;
+  decorative?: boolean;
 }) {
   const category = categoryFor(event);
   const accent = categoryColor(category);
@@ -212,14 +214,16 @@ function EventArt({
           background: "linear-gradient(to top, rgba(0,0,0,0.88) 0%, rgba(0,0,0,0.72) 35%, rgba(0,0,0,0.40) 55%, rgba(0,0,0,0.08) 80%, transparent 100%)",
         }}
       />
-      <div className="absolute left-4 top-4 rounded-[5px] bg-black/45 px-2 py-1 text-[9px] font-black uppercase tracking-[0.16em]" style={{ color: accent }}>
-        {categoryLabel(category)}
-      </div>
+      {!decorative ? (
+        <div className="absolute left-4 top-4 rounded-[5px] bg-black/45 px-2 py-1 text-[9px] font-black uppercase tracking-[0.16em]" style={{ color: accent }}>
+          {categoryLabel(category)}
+        </div>
+      ) : null}
       {/* Only for generated fallback art -- every real-photo usage already
           shows the full event name elsewhere (the card body below, the
           detail panel beside, the featured hero's own title block), so
           overlaying it here too just duplicated it. */}
-      {!hasImage && (
+      {!decorative && !hasImage && (
         <div className="absolute inset-x-0 bottom-0 p-3">
           <div className="max-w-[82%] text-sm font-black leading-tight drop-shadow-[0_2px_8px_rgba(0,0,0,0.7)]">
             {titleWords}
@@ -705,8 +709,8 @@ export default function EventsPage() {
                   anchored, sized for this whole text block) is now the
                   ONLY readability gradient -- this used to stack a second
                   bg-gradient-to-r on top of EventArt's own overlay. */}
-              <div className="vltd-dark-surface relative min-h-[210px] overflow-hidden rounded-[7px] border border-[color:var(--border)]">
-                <EventArt event={featuredEvent} className="absolute inset-0 rounded-none border-0" />
+              <div className="vltd-dark-surface relative min-h-[292px] overflow-hidden rounded-[7px] border border-[color:var(--border)] sm:min-h-[250px] md:min-h-[210px]">
+                <EventArt event={featuredEvent} decorative className="absolute inset-0 rounded-none border-0" />
                 <div className="absolute inset-x-0 bottom-0 p-5 md:p-7">
                   <div className="mb-2 inline-flex rounded-[5px] bg-black/45 px-2 py-1 text-[9px] font-black uppercase tracking-[0.18em]" style={{ color: "#C8CDD2" }}>
                     Featured Event

@@ -13,6 +13,7 @@ import { loadItems, type VaultItem } from "@/lib/vaultModel";
 import { getFollowerCount } from "@/lib/follows";
 import { readHistory, sliceHistory } from "@/lib/valueHistory";
 import { loadActivityEvents, syncActivityEventsFromSupabase, type ActivityEventRecord } from "@/lib/activityEvents";
+import { computeVaultStats } from "@/lib/vaultStats";
 
 const gold = "var(--theme-gold, #C8CDD2)";
 const goldBright = "var(--theme-gold, #C8CDD2)";
@@ -75,19 +76,6 @@ function money(value: number) {
     currency: "USD",
     maximumFractionDigits: 0,
   }).format(value);
-}
-
-function itemValue(item: VaultItem) {
-  return Number(item.currentValue ?? item.estimatedValue ?? 0);
-}
-
-function itemCost(item: VaultItem) {
-  return (
-    Number(item.purchasePrice ?? 0) +
-    Number(item.purchaseTax ?? 0) +
-    Number(item.purchaseShipping ?? 0) +
-    Number(item.purchaseFees ?? 0)
-  );
 }
 
 function monthYear(value: unknown) {
@@ -313,6 +301,7 @@ function StatStrip({
 }
 
 export default function MorePage() {
+  const [isHydrating, setIsHydrating] = useState(true);
   const [items, setItems] = useState<VaultItem[]>([]);
   const [galleries, setGalleries] = useState<Gallery[]>([]);
   const [activePanel, setActivePanel] = useState<PanelKey | null>(null);
@@ -350,6 +339,7 @@ export default function MorePage() {
           void syncActivityEventsFromSupabase().then((events) => {
             if (active) setActivityEvents(events);
           });
+          setIsHydrating(false);
           return;
         }
       } catch {
@@ -358,13 +348,16 @@ export default function MorePage() {
       if (!active) return;
       setItems(loadItems());
       setGalleries(loadGalleries());
+      setIsHydrating(false);
     }
     void load();
     return () => { active = false; };
   }, []);
 
-  const totalValue = useMemo(() => items.reduce((sum, item) => sum + itemValue(item), 0), [items]);
-  const totalCost = useMemo(() => items.reduce((sum, item) => sum + itemCost(item), 0), [items]);
+  const vaultStats = useMemo(() => computeVaultStats(items), [items]);
+  const totalValue = vaultStats.totalValue;
+  const totalCost = vaultStats.totalCost;
+  const ownedItemCount = vaultStats.itemCount;
   const thirtyDaySeries = useMemo(() => sliceHistory(readHistory(), "30d").map((point) => point.totalValue), [items]);
   const gainPct = useMemo(() => {
     if (thirtyDaySeries.length >= 2 && thirtyDaySeries[0] > 0) {
@@ -397,6 +390,18 @@ export default function MorePage() {
     text: event.title + (event.subtitle ? ` — ${event.subtitle}` : ""),
     time: formatActivityTime(event.timestamp),
   }));
+
+  if (isHydrating) {
+    return (
+      <main className="min-h-screen px-4 pb-[calc(var(--bottomnav-h,0px)+32px)] pt-6 text-[color:var(--fg)] sm:px-6 lg:px-8" style={{ background: `radial-gradient(circle at 16% 12%, rgba(79,211,238,.10), transparent 34%), ${bg}` }}>
+        <div className="mx-auto max-w-[1460px] rounded-[10px] border p-6" style={{ borderColor: border, background: panel }}>
+          <div className="text-[11px] font-semibold uppercase tracking-[0.22em]" style={{ color: dim }}>Command Center</div>
+          <div className="mt-3 text-lg font-semibold" style={{ color: cream }}>Loading your account and collection…</div>
+          <div className="mt-2 text-sm" style={{ color: muted }}>Your totals and workspace tools will appear when the active profile is ready.</div>
+        </div>
+      </main>
+    );
+  }
 
   return (
     <main className="min-h-screen px-4 pb-[calc(var(--bottomnav-h,0px)+32px)] pt-6 text-[color:var(--fg)] sm:px-6 lg:px-8" style={{ background: `radial-gradient(circle at 16% 12%, rgba(79,211,238,.10), transparent 34%), ${bg}` }}>
@@ -445,7 +450,7 @@ export default function MorePage() {
                       <p className="mt-2 max-w-[430px] text-[12px] leading-[1.55]" style={{ color: muted }}>Panels keep common actions here. Deep workflows still open as full pages when they need room.</p>
                     </div>
                     <div className="w-full max-w-[690px]">
-                      <StatStrip value={totalValue} items={items.length} galleries={publicGalleries} memberSince={profile.memberSince} memberSinceRaw={profile.memberSinceRaw} gainPct={gainPct} followers={followerCount} />
+                      <StatStrip value={totalValue} items={ownedItemCount} galleries={publicGalleries} memberSince={profile.memberSince} memberSinceRaw={profile.memberSinceRaw} gainPct={gainPct} followers={followerCount} />
                     </div>
                   </div>
 
@@ -506,25 +511,25 @@ export default function MorePage() {
               <Image src="/brand/vltd-logo-header.png" alt="VLTD" width={92} height={32} className="h-auto w-[92px]" />
               <button type="button" onClick={() => setActivePanel("notifications")} className="text-[13px]" style={{ color: goldBright }}>Alerts</button>
             </div>
-            <button type="button" onClick={() => setActivePanel("account")} className="mx-4 mb-4 flex h-10 w-[calc(100%-2rem)] items-center justify-between rounded-full border px-4" style={{ borderColor: border, color: cream }}>
-              <span className="text-[13px] font-semibold">@{profile.username}</span>
-              <span style={{ color: goldBright }}>{profile.profileType === "business" ? "Business" : "Curator"}</span>
+            <button type="button" onClick={() => setActivePanel("account")} disabled={isHydrating} className="mx-4 mb-4 flex h-10 w-[calc(100%-2rem)] items-center justify-between rounded-full border px-4 disabled:cursor-wait" style={{ borderColor: border, color: cream }}>
+              <span className="text-[13px] font-semibold">{isHydrating ? "Loading account…" : `@${profile.username}`}</span>
+              <span style={{ color: goldBright }}>{isHydrating ? "" : profile.profileType === "business" ? "Business" : "Curator"}</span>
             </button>
             <div className="mx-4 grid grid-cols-3 rounded-[8px] border" style={{ borderColor: borderSoft, background: panel2 }}>
               <div className="p-3">
                 <div className="text-[9px] uppercase" style={{ color: dim }}>Value</div>
-                <div className="text-[20px] font-semibold" style={{ color: cyan }}>{money(totalValue)}</div>
-                <div className="text-[10px]" style={{ color: green }}>{gainPct === null ? "30D" : `${gainPct >= 0 ? "+" : ""}${gainPct.toFixed(1)}% (30D)`}</div>
+                <div className="text-[20px] font-semibold" style={{ color: cyan }}>{isHydrating ? "—" : money(totalValue)}</div>
+                <div className="text-[10px]" style={{ color: green }}>{isHydrating ? "Loading" : gainPct === null ? "30D" : `${gainPct >= 0 ? "+" : ""}${gainPct.toFixed(1)}% (30D)`}</div>
               </div>
               <div className="border-l p-3" style={{ borderColor: borderSoft }}>
                 <div className="text-[9px] uppercase" style={{ color: dim }}>Items</div>
-                <div className="text-[22px]" style={{ color: cream }}>{items.length}</div>
-                <div className="text-[10px]" style={{ color: muted }}>Total</div>
+                <div className="text-[22px]" style={{ color: cream }}>{isHydrating ? "—" : ownedItemCount}</div>
+                <div className="text-[10px]" style={{ color: muted }}>{isHydrating ? "Loading" : "Total"}</div>
               </div>
               <div className="border-l p-3" style={{ borderColor: borderSoft }}>
                 <div className="text-[9px] uppercase" style={{ color: dim }}>Exhibitions</div>
-                <div className="text-[22px]" style={{ color: cream }}>{publicGalleries}</div>
-                <div className="text-[10px]" style={{ color: muted }}>Public</div>
+                <div className="text-[22px]" style={{ color: cream }}>{isHydrating ? "—" : publicGalleries}</div>
+                <div className="text-[10px]" style={{ color: muted }}>{isHydrating ? "Loading" : "Public"}</div>
               </div>
             </div>
 
@@ -595,7 +600,7 @@ function PanelContent({ activePanel, profile, items, galleries }: { activePanel:
     activity: {
       title: "Activity",
       intro: "Recent account and collection movement at a glance.",
-      bullets: [`Vault items: ${items.length}`, `Exhibitions: ${galleries.length}`, "Recent imports, exports, follows, and updates"],
+      bullets: [`Vault items: ${computeVaultStats(items).itemCount}`, `Exhibitions: ${galleries.length}`, "Recent imports, exports, follows, and updates"],
       links: [["Open activity", "/activity"]],
     },
     help: {

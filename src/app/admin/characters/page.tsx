@@ -1746,7 +1746,7 @@ export default function AdminCharactersPage() {
   );
 
   return (
-    <div className="flex h-screen bg-[#0a0c12] text-white overflow-hidden">
+    <div className="vltd-dark-surface flex h-screen bg-[#0a0c12] text-white overflow-hidden">
       {/* Sidebar — collapsible sections */}
       <div className="w-72 shrink-0 flex flex-col border-r border-white/8">
         <div className="shrink-0 p-4 border-b border-white/8">

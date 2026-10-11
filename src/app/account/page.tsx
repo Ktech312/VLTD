@@ -3,6 +3,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { ThemePicker } from "@/components/ui/ThemePicker";
 import { PillButton } from "@/components/ui/PillButton";
 import { Glyph, universeGlyphName } from "@/components/ui/Glyph";
@@ -612,9 +613,12 @@ export default function AccountPage() {
                       {miniSyncBusy ? "Syncing…" : "Sync pending changes"}
                     </button>
                   ) : cloudItemCount != null && localItemCount !== cloudItemCount ? (
-                    <span className="max-w-[18rem] text-right text-[color:var(--muted2)]">
-                      Device-only records need review; they will not be uploaded automatically.
-                    </span>
+                    <Link
+                      href="/vault/sync"
+                      className="max-w-[18rem] text-right font-semibold text-[color:var(--muted)] underline underline-offset-2"
+                    >
+                      Review {Math.max(0, localItemCount - cloudItemCount)} device-only record{localItemCount - cloudItemCount === 1 ? "" : "s"}
+                    </Link>
                   ) : null}
                 </div>
               ) : null}

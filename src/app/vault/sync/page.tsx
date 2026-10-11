@@ -7,11 +7,11 @@ import { PillButton } from "@/components/ui/PillButton";
 import {
   getVaultSyncQueueSnapshot,
   processVaultSyncQueue,
-  syncAllItemsToCloud,
   type VaultSyncQueueSnapshot,
 } from "@/lib/vaultSyncQueue";
-import { getAllLocalItems, loadItems } from "@/lib/vaultModel";
-import { fetchVaultItemsFromSupabase, hasSupabaseEnv } from "@/lib/vaultCloud";
+import { getAllLocalItems, loadItems, saveItems, type VaultItem } from "@/lib/vaultModel";
+import { fetchVaultItemsFromSupabase, hasSupabaseEnv, upsertVaultItemToSupabase } from "@/lib/vaultCloud";
+import { emitVaultUpdate } from "@/lib/vaultEvents";
 
 function readSnapshot(): VaultSyncQueueSnapshot {
   return getVaultSyncQueueSnapshot();
@@ -29,12 +29,15 @@ function formatDateTime(value: number) {
 function SurfaceCard({
   children,
   className = "",
+  id,
 }: {
   children: React.ReactNode;
   className?: string;
+  id?: string;
 }) {
   return (
     <div
+      id={id}
       className={[
         "rounded-[28px] bg-[color:var(--surface)] ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]",
         className,
@@ -70,21 +73,29 @@ export default function VaultSyncPage() {
   // failure like that one doesn't require anyone to notice on their own.
   const [localTotal, setLocalTotal] = useState<number | null>(null);
   const [cloudTotal, setCloudTotal] = useState<number | null>(null);
-  const [fullSyncBusy, setFullSyncBusy] = useState(false);
-  const [fullSyncStatus, setFullSyncStatus] = useState("");
+  const [deviceOnlyItems, setDeviceOnlyItems] = useState<VaultItem[]>([]);
+  const [reviewLoading, setReviewLoading] = useState(true);
+  const [reviewBusyId, setReviewBusyId] = useState("");
+  const [reviewStatus, setReviewStatus] = useState("");
+  const [removeCandidate, setRemoveCandidate] = useState<VaultItem | null>(null);
 
   const refresh = useCallback(() => {
     setSnapshot(readSnapshot());
   }, []);
 
   const refreshTotals = useCallback(async () => {
-    setLocalTotal(loadItems().length);
+    const local = loadItems();
+    setLocalTotal(local.length);
     if (!hasSupabaseEnv()) return;
     try {
       const cloud = await fetchVaultItemsFromSupabase();
       setCloudTotal(cloud.length);
+      const cloudIds = new Set(cloud.map((item) => String(item.id)));
+      setDeviceOnlyItems(local.filter((item) => !cloudIds.has(String(item.id))));
     } catch {
       setCloudTotal(null);
+    } finally {
+      setReviewLoading(false);
     }
   }, []);
 
@@ -111,23 +122,29 @@ export default function VaultSyncPage() {
   const totalsDrift =
     localTotal != null && cloudTotal != null ? Math.max(0, localTotal - cloudTotal) : null;
 
-  async function handleFullSync() {
-    if (fullSyncBusy) return;
-    setFullSyncBusy(true);
-    setFullSyncStatus("");
+  async function handleUploadOne(item: VaultItem) {
+    if (reviewBusyId) return;
+    setReviewBusyId(String(item.id));
+    setReviewStatus("");
     try {
-      const r = await syncAllItemsToCloud();
+      await upsertVaultItemToSupabase(item);
       await refreshTotals();
-      setFullSyncStatus(
-        r.remaining > 0
-          ? `Synced ${r.processed} of ${r.total}. ${r.remaining} still pending.`
-          : `Done — all ${r.total} items match the cloud.`
-      );
+      setReviewStatus(`Uploaded “${item.title || "Untitled item"}” to the cloud.`);
     } catch (e) {
-      setFullSyncStatus(e instanceof Error ? e.message : "Sync failed.");
+      setReviewStatus(e instanceof Error ? e.message : "Upload failed.");
     } finally {
-      setFullSyncBusy(false);
+      setReviewBusyId("");
     }
+  }
+
+  function handleRemoveLocal() {
+    if (!removeCandidate) return;
+    const id = String(removeCandidate.id);
+    saveItems(getAllLocalItems().filter((item) => String(item.id) !== id));
+    emitVaultUpdate();
+    setRemoveCandidate(null);
+    setReviewStatus("Removed the device-only copy. No cloud record was changed.");
+    void refreshTotals();
   }
 
   const readiness = useMemo(() => {
@@ -233,15 +250,9 @@ export default function VaultSyncPage() {
                         ? `${totalsDrift} item${totalsDrift === 1 ? "" : "s"} on this device ${totalsDrift === 1 ? "hasn't" : "haven't"} reached the cloud.`
                         : `All ${localTotal} items on this device match the cloud. ✓`}
                   </div>
-                  {totalsDrift ? (
-                    <PillButton onClick={() => void handleFullSync()} disabled={fullSyncBusy}>
-                      {fullSyncBusy ? "Syncing..." : "Sync everything"}
-                    </PillButton>
-                  ) : null}
+                  {totalsDrift ? <a href="#device-only" className="text-xs font-semibold underline underline-offset-2">Review records</a> : null}
                 </div>
-                {fullSyncStatus ? (
-                  <div className="mt-2 text-xs text-[color:var(--muted)]">{fullSyncStatus}</div>
-                ) : null}
+                <p className="mt-2 text-xs text-[color:var(--muted2)]">VLTD will never bulk-upload unmatched records. Review each one so deleted test data cannot return.</p>
               </div>
             </SurfaceCard>
 
@@ -299,8 +310,55 @@ export default function VaultSyncPage() {
               )}
             </div>
           </SurfaceCard>
+
+          <SurfaceCard className="p-4 sm:p-5" id="device-only">
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <div className="text-[11px] uppercase tracking-[0.18em] text-[color:var(--muted2)]">Device-only records</div>
+                <div className="mt-1 text-sm text-[color:var(--muted)]">Choose one record at a time: upload a real collectible, or remove an obsolete local copy.</div>
+              </div>
+              <div className="text-sm text-[color:var(--muted)]">{reviewLoading ? "Checking…" : `${deviceOnlyItems.length} to review`}</div>
+            </div>
+
+            {reviewStatus ? <div className="mt-4 rounded-2xl bg-[color:var(--pill)] px-4 py-3 text-sm ring-1 ring-[color:var(--border)]">{reviewStatus}</div> : null}
+
+            <div className="mt-4 space-y-3">
+              {!reviewLoading && deviceOnlyItems.length === 0 ? (
+                <RowCard><div className="text-sm text-[color:var(--muted)]">No device-only records. This device and the cloud contain the same item IDs.</div></RowCard>
+              ) : (
+                deviceOnlyItems.map((item) => (
+                  <RowCard key={item.id}>
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                      <div className="min-w-0">
+                        <div className="truncate text-sm font-semibold">{item.title || "Untitled item"}</div>
+                        <div className="mt-1 text-xs text-[color:var(--muted)]">{item.status || "COLLECTION"} · ID {item.id}</div>
+                      </div>
+                      <div className="flex shrink-0 flex-wrap gap-2">
+                        <Link href={`/vault/item/${item.id}`} className="inline-flex min-h-11 items-center rounded-full px-4 text-xs font-semibold ring-1 ring-[color:var(--border)]">Review item</Link>
+                        <button type="button" onClick={() => void handleUploadOne(item)} disabled={Boolean(reviewBusyId)} className="min-h-11 rounded-full px-4 text-xs font-semibold ring-1 ring-[color:var(--border)] disabled:opacity-50">{reviewBusyId === String(item.id) ? "Uploading…" : "Keep and upload"}</button>
+                        <button type="button" onClick={() => setRemoveCandidate(item)} disabled={Boolean(reviewBusyId)} className="min-h-11 rounded-full px-4 text-xs font-semibold text-red-300 ring-1 ring-red-400/40 disabled:opacity-50">Remove local copy</button>
+                      </div>
+                    </div>
+                  </RowCard>
+                ))
+              )}
+            </div>
+          </SurfaceCard>
         </div>
       </div>
+
+      {removeCandidate ? (
+        <div className="fixed inset-0 z-[10000] grid place-items-center bg-black/70 px-4" role="dialog" aria-modal="true" aria-label="Remove device-only record">
+          <div className="w-full max-w-md rounded-[20px] bg-[color:var(--surface)] p-5 ring-1 ring-[color:var(--border)]">
+            <h2 className="text-lg font-semibold">Remove this local copy?</h2>
+            <p className="mt-2 text-sm text-[color:var(--muted)]">“{removeCandidate.title || "Untitled item"}” is not in the cloud. This removes it only from this browser and cannot be undone here.</p>
+            <div className="mt-5 flex justify-end gap-2">
+              <PillButton onClick={() => setRemoveCandidate(null)}>Cancel</PillButton>
+              <button type="button" onClick={handleRemoveLocal} className="min-h-11 rounded-full bg-red-500 px-5 text-sm font-semibold text-white">Remove local copy</button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </main>
   );
 }

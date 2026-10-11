@@ -789,7 +789,7 @@ export default function MuseumPage() {
                           down correctly goes dark-on-light in light mode via
                           its own theme-aware scrim (var(--theme-card)) and
                           must keep doing that. */}
-                      <div className="vltd-dark-surface absolute right-2 top-2 z-20 flex items-center gap-1.5 opacity-0 transition group-hover:opacity-100">
+                      <div className="vltd-dark-surface absolute right-2 top-2 z-20 flex items-center gap-1.5 opacity-100 transition lg:opacity-0 lg:group-hover:opacity-100">
                         <button
                           type="button"
                           onClick={(event) => {
@@ -798,7 +798,7 @@ export default function MuseumPage() {
                             handleOpenCoverPicker(gallery);
                           }}
                           disabled={isUploadingCover}
-                          className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-black/55 text-sm font-semibold ring-1 ring-white/20 backdrop-blur transition hover:bg-black/75 disabled:opacity-50"
+                          className="inline-flex h-11 w-11 items-center justify-center rounded-full bg-black/55 text-sm font-semibold ring-1 ring-white/20 backdrop-blur transition hover:bg-black/75 disabled:opacity-50 lg:h-7 lg:w-7"
                           aria-label={`Change cover image for ${gallery.title}`}
                           style={{ color: "#fff" }}
                         >
@@ -811,7 +811,7 @@ export default function MuseumPage() {
                             event.stopPropagation();
                             handleAskDelete(gallery);
                           }}
-                          className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-black/55 text-red-200 ring-1 ring-red-400/30 backdrop-blur transition hover:bg-red-600/80 hover:text-white"
+                          className="inline-flex h-11 w-11 items-center justify-center rounded-full bg-black/55 text-red-200 ring-1 ring-red-400/30 backdrop-blur transition hover:bg-red-600/80 hover:text-white lg:h-7 lg:w-7"
                           aria-label={`Delete exhibition ${gallery.title}`}
                         >
                           <AppIcon name="delete" size={13} strokeWidth={2} />
@@ -846,7 +846,7 @@ export default function MuseumPage() {
                           event.stopPropagation();
                           openGallery(gallery.id);
                         }}
-                        className="absolute bottom-1.5 right-1.5 inline-flex h-7 w-7 items-center justify-center transition hover:text-[#5FDCF3]"
+                        className="absolute bottom-0 right-0 inline-flex h-11 w-11 items-center justify-center transition hover:text-[#5FDCF3] lg:bottom-1.5 lg:right-1.5 lg:h-7 lg:w-7"
                         style={{ color: "#4FD3EE" }}
                         aria-label={`Open full exhibition page for ${gallery.title}`}
                       >

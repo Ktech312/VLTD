@@ -569,9 +569,9 @@ function FeaturedGalleryCarousel({ galleries }: { galleries: Gallery[] }) {
         {n > 1 && (
           <div style={{ display: "flex", gap: "4px" }}>
             <button type="button" aria-label="Previous exhibition" onClick={() => goTo(activeIndex - 1)}
-              style={{ width: "24px", height: "24px", display: "flex", alignItems: "center", justifyContent: "center", borderRadius: "50%", border: `1px solid ${C.goldBd}`, background: C.goldDim, color: C.gold, fontSize: "14px", cursor: "pointer" }}>‹</button>
+              style={{ width: "44px", height: "44px", display: "flex", alignItems: "center", justifyContent: "center", borderRadius: "50%", border: `1px solid ${C.goldBd}`, background: C.goldDim, color: C.gold, fontSize: "18px", cursor: "pointer" }}>‹</button>
             <button type="button" aria-label="Next exhibition" onClick={() => goTo(activeIndex + 1)}
-              style={{ width: "24px", height: "24px", display: "flex", alignItems: "center", justifyContent: "center", borderRadius: "50%", border: `1px solid ${C.goldBd}`, background: C.goldDim, color: C.gold, fontSize: "14px", cursor: "pointer" }}>›</button>
+              style={{ width: "44px", height: "44px", display: "flex", alignItems: "center", justifyContent: "center", borderRadius: "50%", border: `1px solid ${C.goldBd}`, background: C.goldDim, color: C.gold, fontSize: "18px", cursor: "pointer" }}>›</button>
           </div>
         )}
       </div>

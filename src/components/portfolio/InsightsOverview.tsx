@@ -534,6 +534,7 @@ export default function InsightsOverview({ items: allItems }: { items: VaultItem
   // agrees with the Vault instead of each block deciding for itself.
   const items = useMemo(() => activeItems(allItems), [allItems]);
   const [mounted, setMounted] = useState(false);
+  const [historyHydrated, setHistoryHydrated] = useState(false);
   const [range, setRange] = useState<TimeRange>("all");
   const [tick, setTick] = useState(0);
 
@@ -550,8 +551,13 @@ export default function InsightsOverview({ items: allItems }: { items: VaultItem
 
   useEffect(() => {
     let active = true;
-    void syncValueHistoryFromSupabase().then(() => {
-      if (active) setTick((x) => x + 1);
+    void syncValueHistoryFromSupabase().catch(() => {
+      // Offline: the local history is still valid once the cloud attempt settles.
+    }).finally(() => {
+      if (active) {
+        setTick((x) => x + 1);
+        setHistoryHydrated(true);
+      }
     });
     return () => {
       active = false;
@@ -577,15 +583,15 @@ export default function InsightsOverview({ items: allItems }: { items: VaultItem
 
   // Keep the day with each value so the chart can label its own axes.
   const historyPoints = useMemo(() => {
-    if (!mounted) return [] as { day: string; totalValue: number }[];
+    if (!mounted || !historyHydrated) return [] as { day: string; totalValue: number }[];
     return sliceHistory(readHistory(), range).map((point) => ({ day: point.day, totalValue: point.totalValue }));
-  }, [mounted, range, tick]);
+  }, [historyHydrated, mounted, range, tick]);
   const historySeries = useMemo(() => historyPoints.map((point) => point.totalValue), [historyPoints]);
 
   const thirtyDaySeries = useMemo(() => {
-    if (!mounted) return [] as number[];
+    if (!mounted || !historyHydrated) return [] as number[];
     return sliceHistory(readHistory(), "30d").map((point) => point.totalValue);
-  }, [mounted, tick]);
+  }, [historyHydrated, mounted, tick]);
 
   const monthChange = useMemo(() => {
     if (thirtyDaySeries.length >= 2) {
@@ -761,11 +767,11 @@ export default function InsightsOverview({ items: allItems }: { items: VaultItem
           />
           <StatCard
             label="Month Change"
-            value={`${monthChange >= 0 ? "+" : ""}${formatMoney(monthChange)}`}
-            sub={<span style={{ color: monthChange >= 0 ? GREEN : RED }}>{fmtPct(monthPct, true)}</span>}
+            value={historyHydrated ? `${monthChange >= 0 ? "+" : ""}${formatMoney(monthChange)}` : "Loading…"}
+            sub={historyHydrated ? <span style={{ color: monthChange >= 0 ? GREEN : RED }}>{fmtPct(monthPct, true)}</span> : <span style={{ color: MUTED }}>Syncing history</span>}
             icon={<Glyph name="chart" size={28} />}
             tone={monthChange >= 0 ? GREEN : RED}
-            trend={thirtyDaySeries}
+            trend={historyHydrated ? thirtyDaySeries : undefined}
           />
           <StatCard
             label="Insurance Covered"
@@ -803,7 +809,11 @@ export default function InsightsOverview({ items: allItems }: { items: VaultItem
                 })}
               </div>
             </div>
-            <ValueHistoryChart points={historyPoints} />
+            {historyHydrated ? (
+              <ValueHistoryChart points={historyPoints} />
+            ) : (
+              <div className="grid min-h-[260px] place-items-center text-sm" style={{ color: MUTED }}>Loading value history…</div>
+            )}
           </Panel>
 
           <Panel className="p-4">
