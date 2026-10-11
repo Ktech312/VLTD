@@ -1378,13 +1378,13 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
 
               <div className="mt-5 rounded-[20px] bg-[color:var(--theme-elevated)] p-4 ring-1 ring-[color:var(--theme-border)]">
                 <div className="text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">MARKET</div>
-                <div className="mt-3 text-[40px] font-semibold leading-none">{effectiveMarketValue(item) > 0 ? fmtMoney(effectiveMarketValue(item)) : "Not valued"}</div>
+                <div className={"mt-3 text-[40px] font-semibold leading-none" + (effectiveMarketValue(item) > 0 ? "" : " text-[color:var(--muted2)]")}>{effectiveMarketValue(item) > 0 ? fmtMoney(effectiveMarketValue(item)) : totalCost(item) > 0 ? fmtMoney(totalCost(item)) : "Not valued"}</div>
                 {effectiveMarketValue(item) > 0 ? (
                   item.priceSource ? (
                     <div className="mt-2 text-xs text-[color:var(--muted)]">Estimated price based on: {item.priceSource}</div>
                   ) : null
                 ) : (
-                  <div className="mt-2 text-xs text-[color:var(--muted)]">No market value yet. Add one in Pricing below; nothing is filled in for you.</div>
+                  <div className="mt-2 text-xs text-[color:var(--muted)]">{totalCost(item) > 0 ? "Not priced yet, so vault totals use what you paid (grey). Add a value in Pricing below." : "No market value yet. Add one in Pricing below; nothing is filled in for you."}</div>
                 )}
                 <div className="mt-4 border-t border-[color:var(--theme-border)] pt-3">
                   <DetailGrid

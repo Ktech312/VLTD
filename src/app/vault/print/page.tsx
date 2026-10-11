@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { loadItems } from "@/lib/vaultModel";
 import type { VaultItem } from "@/lib/vaultModel";
 import { getVaultImagePublicUrl } from "@/lib/vaultCloud";
+import { activeItems, insuranceValue, PURCHASE_BASED_NOTE } from "@/lib/vaultStats";
 
 function getPrimaryImageUrl(item: VaultItem): string {
   if (item.images && item.images.length > 0) {
@@ -22,8 +23,9 @@ function fmt(value?: number) {
   return "$" + value.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
+// Shared rule: priced value, or purchase price marked with * (lib/vaultStats).
 function itemValue(item: VaultItem) {
-  return item.currentValue ?? item.estimatedValue ?? item.valueMedian ?? item.purchasePrice ?? 0;
+  return insuranceValue(item).amount;
 }
 
 export default function VaultPrintPage() {
@@ -31,9 +33,7 @@ export default function VaultPrintPage() {
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    const all = loadItems().filter(
-      (i) => i.status !== "WISHLIST" && i.status !== "SOLD"
-    );
+    const all = activeItems(loadItems());
     // Sort by universe then title
     all.sort((a, b) => {
       const ua = (a.universe ?? "Other").toLowerCase();
@@ -47,6 +47,7 @@ export default function VaultPrintPage() {
   }, []);
 
   const totalValue = items.reduce((sum, i) => sum + itemValue(i), 0);
+  const purchaseBasedCount = items.filter((i) => insuranceValue(i).purchaseBased).length;
   const today = new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
 
   // Group by universe
@@ -124,7 +125,7 @@ export default function VaultPrintPage() {
               </div>
               <div className="summary-card">
                 <div className="summary-label">Est. Collection Value</div>
-                <div className="summary-value">{fmt(totalValue)}</div>
+                <div className="summary-value">{fmt(totalValue)}{purchaseBasedCount > 0 ? "*" : ""}</div>
               </div>
               <div className="summary-card">
                 <div className="summary-label">Categories</div>
@@ -168,7 +169,7 @@ export default function VaultPrintPage() {
                               ) : (
                                 <span />
                               )}
-                              {val > 0 && <span className="item-value">{fmt(val)}</span>}
+                              {val > 0 && <span className="item-value">{fmt(val)}{insuranceValue(item).purchaseBased ? "*" : ""}</span>}
                             </div>
                           </div>
                         </div>
@@ -178,6 +179,10 @@ export default function VaultPrintPage() {
                 </div>
               );
             })}
+
+            {purchaseBasedCount > 0 ? (
+              <div className="footer"><span>{PURCHASE_BASED_NOTE} ({purchaseBasedCount} of {items.length} items)</span></div>
+            ) : null}
 
             {/* Footer */}
             <div className="footer">

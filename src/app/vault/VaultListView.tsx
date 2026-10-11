@@ -24,7 +24,7 @@ import SwipeStack from "@/components/SwipeStack";
 import { computeItemIntelligence } from "@/lib/itemIntelligence";
 import { UNIVERSE_LABEL, TAXONOMY, getCategories, isUniverseKey, type UniverseKey } from "@/lib/taxonomy";
 import { showToast } from "@/lib/toast";
-import { collectibleItems, effectiveMarketValue } from "@/lib/vaultStats";
+import { collectibleItems, effectiveMarketValue, readValueMode, summarizeValues, writeValueMode, type ValueMode } from "@/lib/vaultStats";
 import { priceCheckIsStale } from "@/lib/pricingMvp";
 import { migrateExistingVaultImagesToSupabase } from "@/lib/vaultMigration";
 import {
@@ -534,18 +534,21 @@ function VaultCard({
               onClick={() => setEditingField("value")}
               className={[
                 "block text-left font-semibold leading-none hover:opacity-80 vltd-keep-color",
-                marketValue > 0 ? "text-[20px]" : "text-[15px]",
+                marketValue > 0 || totalCost(item) > 0 ? "text-[20px]" : "text-[15px]",
               ].join(" ")}
+              title={marketValue <= 0 && totalCost(item) > 0 ? "Purchase price. Not priced yet. Tap to add a value." : undefined}
               style={{
                 "--vltd-keep-color":
                   marketValue <= 0
-                    ? "var(--status-gain, #54C98A)"
+                    ? totalCost(item) > 0
+                      ? "var(--muted2, #8C9298)"
+                      : "var(--status-gain, #54C98A)"
                     : gain >= 0
                       ? "var(--status-gain, #54C98A)"
                       : "var(--status-loss, #E05252)",
               } as React.CSSProperties}
             >
-              {marketValue > 0 ? formatMoney(marketValue) : "+ Add Value"}
+              {marketValue > 0 ? formatMoney(marketValue) : totalCost(item) > 0 ? formatMoney(totalCost(item)) : "+ Add Value"}
             </button>
           )}
         </div>
@@ -692,9 +695,10 @@ function UniverseOverviewCard({
 }) {
   const thumbnailImage = category.thumbnailSrc;
   const countedItems = collectibleItems(items);
-  const totalValue = countedItems.reduce((sum, item) => sum + effectiveMarketValue(item), 0);
-  const totalCostValue = countedItems.reduce((sum, item) => sum + totalCost(item), 0);
-  const totalGain = totalValue - countedItems.filter((item) => effectiveMarketValue(item) > 0).reduce((sum, item) => sum + totalCost(item), 0);
+  const summary = summarizeValues(countedItems, "fill");
+  const totalValue = summary.totalValue;
+  const totalCostValue = summary.totalCost;
+  const totalGain = summary.totalGain;
   const hasItems = items.length > 0;
   const showGain = Math.abs(totalGain) > 0.49;
 
@@ -856,7 +860,7 @@ function VaultSelectionDrawer({
               {item.variant ? <span className="rounded-[5px] px-1.5 py-0.5 text-[10px] ring-1 ring-[color:var(--border)]" style={{ color: "#ECEDEF" }}>{item.variant}</span> : null}
               <span className="rounded-[5px] px-1.5 py-0.5 text-[10px] ring-1 ring-[color:var(--border)]" style={{ color: "#C8CDD2" }}>{item.isPublic ? "Public" : "Private"}</span>
             </div>
-            <div className="mt-3 text-[21px] font-bold leading-none" style={{ color: "#44D9F2" }}>{value > 0 ? formatMoney(value) : "Not valued"}</div>
+            <div className="mt-3 text-[21px] font-bold leading-none" style={{ color: value > 0 ? "#44D9F2" : "#8C9298" }} title={value <= 0 && paid > 0 ? "Purchase price. Not priced yet." : undefined}>{value > 0 ? formatMoney(value) : paid > 0 ? `${formatMoney(paid)} paid` : "Not valued"}</div>
             <div className="mt-1 text-[11px]" style={{ color: gain >= 0 ? "var(--color-gain, #4CAF82)" : "var(--color-loss, #E05252)" }}>
               {value <= 0 ? "Add a value to see return" : paid > 0 ? `${gain >= 0 ? "+" : ""}${gainPct.toFixed(1)}% since purchase` : "Add cost basis for return"}
             </div>
@@ -1356,14 +1360,25 @@ export default function VaultListView({ lockedUniverse }: { lockedUniverse?: Uni
     });
   }
 
+  // Same switch as the Home page (remembered on this device): count un-priced
+  // items at purchase price ("fill", default) or show priced items only.
+  const [valueMode, setValueMode] = useState<ValueMode>("fill");
+  useEffect(() => {
+    const sync = () => setValueMode(readValueMode());
+    sync();
+    window.addEventListener("vltd:value-mode", sync);
+    return () => window.removeEventListener("vltd:value-mode", sync);
+  }, []);
+
   const stats = useMemo(() => {
     // Supplies (boxes, cases) stay in the list but never count toward the
     // collection's value, insurance readiness or review counts.
     const counted = collectibleItems(filteredItems);
     const totalItems = counted.length;
-    const totalCostValue = counted.reduce((sum, item) => sum + totalCost(item), 0);
-    const totalValue = counted.reduce((sum, item) => sum + effectiveMarketValue(item), 0);
-    const totalGain = totalValue - counted.filter((item) => effectiveMarketValue(item) > 0).reduce((sum, item) => sum + totalCost(item), 0);
+    const summary = summarizeValues(counted, valueMode);
+    const totalCostValue = summary.totalCost;
+    const totalValue = summary.totalValue;
+    const totalGain = summary.totalGain;
     const universeCount = new Set(counted.map((item) => universeForItem(item))).size;
     const insuranceReadyCount = counted.filter((item) => {
       const intelligence = intelligenceMap[item.id];
@@ -1374,12 +1389,14 @@ export default function VaultListView({ lockedUniverse }: { lockedUniverse?: Uni
       return (intelligence?.readiness ?? "Low") !== "High";
     }).length;
     const insuranceReadyPct = totalItems ? Math.round((insuranceReadyCount / totalItems) * 100) : 0;
-    const valuedCount = counted.filter((item) => effectiveMarketValue(item) > 0).length;
+    const valuedCount = summary.pricedCount;
+    const ghostCount = summary.ghostCount;
     const staleCheckCount = counted.filter((item) => effectiveMarketValue(item) > 0 && priceCheckIsStale(item)).length;
     return {
       staleCheckCount,
       totalItems,
       valuedCount,
+      ghostCount,
       totalCost: totalCostValue,
       totalValue,
       totalGain,
@@ -1388,7 +1405,7 @@ export default function VaultListView({ lockedUniverse }: { lockedUniverse?: Uni
       insuranceReadyPct,
       needsReviewCount,
     };
-  }, [filteredItems, intelligenceMap]);
+  }, [filteredItems, intelligenceMap, valueMode]);
 
   const hasActiveFilters =
     query.trim().length > 0 ||
@@ -1764,17 +1781,31 @@ export default function VaultListView({ lockedUniverse }: { lockedUniverse?: Uni
                 <AppIcon name="price" size={12} strokeWidth={1.8} />
                 Total Value
               </div>
-              {stats.valuedCount === 0 ? (
+              {valueMode === "priced" && stats.valuedCount === 0 ? (
                 <>
-                  <div className="mt-1.5 text-lg font-extrabold tracking-[-0.02em] text-[color:var(--muted)] sm:mt-2.5 sm:text-2xl">Not valued yet</div>
+                  <div className="mt-1.5 text-lg font-extrabold tracking-[-0.02em] text-[color:var(--muted)] sm:mt-2.5 sm:text-2xl">No items priced yet</div>
                   <div className="mt-0.5 text-[11px] text-[color:var(--muted)] sm:text-sm">Total cost {formatMoney(stats.totalCost)}</div>
                 </>
               ) : (
                 <>
-                  <div className="mt-1.5 text-xl font-extrabold tracking-[-0.02em] text-[color:var(--data-color)] sm:mt-2.5 sm:text-3xl">{formatMoney(stats.totalValue)}</div>
+                  <div
+                    className={"mt-1.5 text-xl font-extrabold tracking-[-0.02em] sm:mt-2.5 sm:text-3xl " + (valueMode === "fill" && stats.ghostCount > 0 ? "text-[color:var(--muted)]" : "text-[color:var(--data-color)]")}
+                    title={valueMode === "fill" && stats.ghostCount > 0 ? "Includes purchase price for items not priced yet" : undefined}
+                  >{formatMoney(stats.totalValue)}</div>
                   <div className={(stats.totalGain >= 0 ? "text-emerald-300" : "text-red-300") + " mt-0.5 text-[11px] sm:text-sm"}>{stats.totalGain >= 0 ? "+" : ""}{formatMoney(stats.totalGain)}</div>
                   {stats.valuedCount < stats.totalItems ? (
-                    <div className="mt-0.5 text-[11px] text-[color:var(--muted)]">{stats.valuedCount} of {stats.totalItems} valued</div>
+                    <div className="mt-0.5 text-[11px] text-[color:var(--muted)]">
+                      {valueMode === "fill" ? `${stats.ghostCount} of ${stats.totalItems} at purchase price` : `${stats.valuedCount} of ${stats.totalItems} priced`}
+                    </div>
+                  ) : null}
+                  {stats.totalItems > 0 && stats.valuedCount < stats.totalItems ? (
+                    <button
+                      type="button"
+                      onClick={() => writeValueMode(valueMode === "fill" ? "priced" : "fill")}
+                      className="mt-0.5 text-[11px] font-semibold text-[color:var(--theme-gold)] hover:underline"
+                    >
+                      {valueMode === "fill" ? "Show priced only" : "Include unpriced"}
+                    </button>
                   ) : null}
                   {stats.staleCheckCount > 0 ? (
                     <div className="mt-0.5 text-[11px] text-amber-400">{stats.staleCheckCount} {stats.staleCheckCount === 1 ? "item hasn't" : "items haven't"} had a price check in 6 months</div>

@@ -2,7 +2,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { collectibleItems } from "@/lib/vaultStats";
+import { collectibleItems, insuranceValue, PURCHASE_BASED_NOTE } from "@/lib/vaultStats";
 import Link from "next/link";
 
 import { DEMO_ITEMS } from "@/lib/demoVault";
@@ -95,16 +95,18 @@ export default function InsuranceReportPage() {
     const arr = [...items];
     arr.sort((a, b) => {
       if (sortBy === "title_asc") return String(a.title).localeCompare(String(b.title));
-      if (sortBy === "value_asc") return clamp(Number(a.currentValue)) - clamp(Number(b.currentValue));
+      if (sortBy === "value_asc") return clamp(insuranceValue(a).amount) - clamp(insuranceValue(b).amount);
       if (sortBy === "gain_desc") return gain(b) - gain(a);
-      return clamp(Number(b.currentValue)) - clamp(Number(a.currentValue));
+      return clamp(insuranceValue(b).amount) - clamp(insuranceValue(a).amount);
     });
     return arr;
   }, [items, sortBy]);
 
+  // Items stated at purchase price (not priced yet) carry a * and the footnote below.
+  const purchaseBasedCount = useMemo(() => sorted.filter((i) => insuranceValue(i).purchaseBased).length, [sorted]);
   const totals = useMemo(() => {
     const cost = sorted.reduce((s, i) => s + clamp(Number(i.purchasePrice ?? 0)), 0);
-    const value = sorted.reduce((s, i) => s + clamp(Number(i.currentValue ?? 0)), 0);
+    const value = sorted.reduce((s, i) => s + clamp(insuranceValue(i).amount), 0);
     const g = value - cost;
     return { cost, value, gain: g };
   }, [sorted]);
@@ -222,7 +224,7 @@ export default function InsuranceReportPage() {
 
             <div className="rounded-2xl bg-[color:var(--surface)] p-4 ring-1 ring-[color:var(--border)]">
               <div className="text-xs tracking-widest text-[color:var(--muted2)]">TOTAL VALUE</div>
-              <div className="mt-2 text-2xl font-semibold">{fmtMoney(totals.value)}</div>
+              <div className="mt-2 text-2xl font-semibold">{fmtMoney(totals.value)}{purchaseBasedCount > 0 ? "*" : ""}</div>
               <div className="mt-1 text-sm text-[color:var(--muted)]">Cost {fmtMoney(totals.cost)}</div>
             </div>
 
@@ -246,7 +248,7 @@ export default function InsuranceReportPage() {
           <div className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
             {(Object.keys(TAXONOMY) as UniverseKey[]).map((u) => {
               const pool = byUniverse.get(u) ?? [];
-              const val = pool.reduce((s, i) => s + clamp(Number(i.currentValue ?? 0)), 0);
+              const val = pool.reduce((s, i) => s + clamp(insuranceValue(i).amount), 0);
               return (
                 <div key={u} className="rounded-2xl bg-[color:var(--surface)] p-4 ring-1 ring-[color:var(--border)]">
                   <div className="text-sm font-semibold">{UNIVERSE_LABEL[u]}</div>
@@ -322,7 +324,7 @@ export default function InsuranceReportPage() {
                     <td className="border-b border-[color:var(--border)] py-3 pr-3">{i.grade ?? ""}</td>
                     <td className="border-b border-[color:var(--border)] py-3 pr-3">{i.number ?? ""}</td>
                     <td className="border-b border-[color:var(--border)] py-3 pr-3">{fmtMoney(Number(i.purchasePrice ?? 0))}</td>
-                    <td className="border-b border-[color:var(--border)] py-3 pr-3">{fmtMoney(Number(i.currentValue ?? 0))}</td>
+                    <td className="border-b border-[color:var(--border)] py-3 pr-3">{fmtMoney(insuranceValue(i).amount)}{insuranceValue(i).purchaseBased ? "*" : ""}</td>
                     <td className="border-b border-[color:var(--border)] py-3 pr-3">{fmtMoney(gain(i))}</td>
                     <td className="border-b border-[color:var(--border)] py-3 pr-3">{i.storageLocation ?? ""}</td>
                     <td className="border-b border-[color:var(--border)] py-3 pr-3">{i.certNumber ?? ""}</td>
@@ -332,6 +334,7 @@ export default function InsuranceReportPage() {
                 ))}
               </tbody>
             </table>
+            {purchaseBasedCount > 0 ? <div className="mt-3 text-xs" style={{ opacity: 0.8 }}>{PURCHASE_BASED_NOTE} ({purchaseBasedCount} of {sorted.length} items)</div> : null}
           </div>
 
           <div className="mt-4 text-xs text-[color:var(--muted2)] no-print">

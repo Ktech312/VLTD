@@ -2,7 +2,7 @@
 "use client";
 
 import Link from "next/link";
-import { collectibleItems } from "@/lib/vaultStats";
+import { collectibleItems, insuranceValue, PURCHASE_BASED_NOTE } from "@/lib/vaultStats";
 import { useEffect, useMemo, useState } from "react";
 
 import { DEMO_ITEMS } from "@/lib/demoVault";
@@ -103,11 +103,13 @@ export default function InsurancePacketPage() {
   }, [includeImages]);
 
   const selectedItems = useMemo(() => items.filter((item) => !excludedIds.has(String(item.id))), [items, excludedIds]);
+  // Items stated at purchase price (not priced yet) carry a * and the footnote below.
+  const purchaseBasedCount = useMemo(() => selectedItems.filter((i) => insuranceValue(i).purchaseBased).length, [selectedItems]);
   const itemsPerPage = includeImages ? ITEMS_PER_PAGE_WITH_IMAGES : ITEMS_PER_PAGE_NO_IMAGES;
 
   const totals = useMemo(() => {
     const cost = selectedItems.reduce((s, i) => s + clamp(Number(i.purchasePrice ?? 0)), 0);
-    const value = selectedItems.reduce((s, i) => s + clamp(Number(i.currentValue ?? 0)), 0);
+    const value = selectedItems.reduce((s, i) => s + clamp(insuranceValue(i).amount), 0);
     return { cost, value };
   }, [selectedItems]);
 
@@ -184,7 +186,7 @@ export default function InsurancePacketPage() {
           <div className="text-[11px] font-semibold uppercase tracking-[0.30em] text-[color:var(--muted2)]">Insurance Packet</div>
           <h1 className="mt-2 text-3xl font-black tracking-[-0.045em] text-text-primary">Insurance Policy Packet</h1>
           <div className="mt-2 text-sm text-[color:var(--muted)]">
-            Generated {new Date().toLocaleString()} • Included {selectedItems.length} of {items.length} items • Total Value {fmtMoney(totals.value)} • Page {safePageIndex + 1} of {totalPages} • Showing {visibleItems.length} items
+            Generated {new Date().toLocaleString()} • Included {selectedItems.length} of {items.length} items • Total Value {fmtMoney(totals.value)}{purchaseBasedCount > 0 ? "*" : ""} • Page {safePageIndex + 1} of {totalPages} • Showing {visibleItems.length} items
           </div>
           <div className="mt-3 rounded-2xl border border-[rgba(203,208,213,0.18)] bg-[rgba(203,208,213,0.06)] px-4 py-3 text-sm text-[color:var(--muted)]">
             Use Open Printable Page to generate the PDF from a lightweight print-only route. Without images: 25 items per page. With images: 5 items per page.
@@ -228,7 +230,7 @@ export default function InsurancePacketPage() {
                   </td>
                   <td className="py-3 pr-3">{item.storageLocation ?? "-"}</td>
                   <td className="py-3 pr-3 font-semibold text-text-primary">{fmtMoney(item.purchasePrice)}</td>
-                  <td className="py-3 pr-3 font-semibold text-text-primary">{fmtMoney(item.currentValue)}</td>
+                  <td className="py-3 pr-3 font-semibold text-text-primary">{fmtMoney(insuranceValue(item).amount)}{insuranceValue(item).purchaseBased ? "*" : ""}</td>
                   <td className="py-3 pr-4 text-xs text-[color:var(--muted)]">
                     <div>{item.valueSource ?? ""}</div>
                     <div>
@@ -240,6 +242,7 @@ export default function InsurancePacketPage() {
               ))}
             </tbody>
           </table>
+          {purchaseBasedCount > 0 ? <div className="mt-3 text-xs" style={{ opacity: 0.8 }}>{PURCHASE_BASED_NOTE} ({purchaseBasedCount} of {selectedItems.length} items)</div> : null}
 
           {visibleItems.length === 0 ? (
             <div className="py-6 text-center text-[color:var(--muted)]">No items selected for this insurance packet.</div>

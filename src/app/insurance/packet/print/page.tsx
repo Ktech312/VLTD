@@ -2,7 +2,7 @@
 "use client";
 
 import Link from "next/link";
-import { collectibleItems } from "@/lib/vaultStats";
+import { collectibleItems, insuranceValue, PURCHASE_BASED_NOTE } from "@/lib/vaultStats";
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 
@@ -96,6 +96,8 @@ export default function InsurancePacketPrintPage() {
   }, []);
 
   const selectedItems = useMemo(() => items.filter((item) => !excludedIds.has(String(item.id))), [items, excludedIds]);
+  // Items stated at purchase price (not priced yet) carry a * and the footnote below.
+  const purchaseBasedCount = useMemo(() => selectedItems.filter((i) => insuranceValue(i).purchaseBased).length, [selectedItems]);
   const itemsPerPage = includeImages ? ITEMS_PER_PAGE_WITH_IMAGES : ITEMS_PER_PAGE_NO_IMAGES;
   const totalPages = Math.max(1, Math.ceil(selectedItems.length / itemsPerPage));
   const pageIndex = Math.min(requestedPage, totalPages - 1);
@@ -103,7 +105,7 @@ export default function InsurancePacketPrintPage() {
 
   const totals = useMemo(() => {
     const cost = selectedItems.reduce((s, i) => s + clamp(Number(i.purchasePrice ?? 0)), 0);
-    const value = selectedItems.reduce((s, i) => s + clamp(Number(i.currentValue ?? 0)), 0);
+    const value = selectedItems.reduce((s, i) => s + clamp(insuranceValue(i).amount), 0);
     return { cost, value };
   }, [selectedItems]);
 
@@ -140,7 +142,7 @@ export default function InsurancePacketPrintPage() {
         <div className="text-[8px] font-bold uppercase tracking-[0.14em]">VLTD Insurance Packet</div>
         <h1 className="mt-1 text-base font-black leading-none">Insurance Policy Packet</h1>
         <div className="mt-1 text-[8px] text-slate-700">
-          Generated {new Date().toLocaleString()} • Page {pageIndex + 1} of {totalPages} • Showing {visibleItems.length} of {selectedItems.length} insured items • Total Value {fmtMoney(totals.value)} • Total Cost {fmtMoney(totals.cost)} • Images {includeImages ? "included" : "excluded"}
+          Generated {new Date().toLocaleString()} • Page {pageIndex + 1} of {totalPages} • Showing {visibleItems.length} of {selectedItems.length} insured items • Total Value {fmtMoney(totals.value)}{purchaseBasedCount > 0 ? "*" : ""} • Total Cost {fmtMoney(totals.cost)} • Images {includeImages ? "included" : "excluded"}
         </div>
       </section>
 
@@ -177,7 +179,7 @@ export default function InsurancePacketPrintPage() {
               </td>
               <td className="border border-slate-300 p-1 align-top">{item.storageLocation ?? "-"}</td>
               <td className="border border-slate-300 p-1 align-top font-bold">{fmtMoney(item.purchasePrice)}</td>
-              <td className="border border-slate-300 p-1 align-top font-bold">{fmtMoney(item.currentValue)}</td>
+              <td className="border border-slate-300 p-1 align-top font-bold">{fmtMoney(insuranceValue(item).amount)}{insuranceValue(item).purchaseBased ? "*" : ""}</td>
               <td className="border border-slate-300 p-1 align-top">
                 <div>{item.valueSource ?? ""}</div>
                 <div>{item.valueUpdatedAt ? fmtDate(item.valueUpdatedAt) : ""}{typeof item.valueConfidence === "number" ? ` • ${item.valueConfidence}%` : ""}</div>
@@ -186,6 +188,7 @@ export default function InsurancePacketPrintPage() {
           ))}
         </tbody>
       </table>
+      {purchaseBasedCount > 0 ? <div className="mt-3 text-xs" style={{ opacity: 0.8 }}>{PURCHASE_BASED_NOTE} ({purchaseBasedCount} of {selectedItems.length} items)</div> : null}
     </main>
   );
 }

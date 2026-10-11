@@ -3,7 +3,7 @@ import type {
   Gallery,
 } from "@/lib/galleryModel";
 import type { VaultItem } from "@/lib/vaultModel";
-import { activeItems } from "@/lib/vaultStats";
+import { activeItems, effectiveMarketValue, summarizeValues, totalCost as vaultTotalCost, totalsValue, type ValueMode } from "@/lib/vaultStats";
 
 export type ValueSegment = {
   label: string;
@@ -71,27 +71,28 @@ function optionalRecord(value: unknown): Record<string, unknown> {
   return value && typeof value === "object" ? (value as Record<string, unknown>) : {};
 }
 
+// One rule for cost and value, shared with lib/vaultStats.ts (these used to
+// check value fields in a different order, so two screens could disagree).
 export function itemTotalCost(item: VaultItem) {
-  return (
-    safeNumber(item.purchasePrice) +
-    safeNumber(item.purchaseTax) +
-    safeNumber(item.purchaseShipping) +
-    safeNumber(item.purchaseFees)
-  );
+  return safeNumber(vaultTotalCost(item));
 }
 
+/** Real (entered/priced) value; 0 = not priced yet. */
 export function itemCurrentValue(item: VaultItem) {
-  return safeNumber(item.valueMedian ?? item.currentValue ?? item.estimatedValue ?? item.lastCompValue);
+  return effectiveMarketValue(item);
 }
 
+/** Gain on a priced item. Un-priced items have no gain or loss yet (not a loss of everything paid). */
 export function itemProfit(item: VaultItem) {
-  return itemCurrentValue(item) - itemTotalCost(item);
+  const value = itemCurrentValue(item);
+  return value > 0 ? value - itemTotalCost(item) : 0;
 }
 
 function makeSegments(
   items: VaultItem[],
   keyGetter: (item: VaultItem) => string,
-  limit = 5
+  limit = 5,
+  valueOf: (item: VaultItem) => number = itemCurrentValue
 ): ValueSegment[] {
   const map = new Map<string, ValueSegment>();
 
@@ -104,7 +105,7 @@ function makeSegments(
       count: 0,
     };
 
-    existing.value += itemCurrentValue(item);
+    existing.value += valueOf(item);
     existing.cost += itemTotalCost(item);
     existing.count += 1;
 
@@ -120,17 +121,22 @@ function makeSegments(
     .slice(0, limit);
 }
 
-export function getCollectionMetrics(items: VaultItem[]): CollectionMetrics {
+export function getCollectionMetrics(items: VaultItem[], mode: ValueMode = "fill"): CollectionMetrics {
   // Collection metrics describe what you currently own, so sold items are
   // excluded — otherwise Insights and the Dashboard report a bigger vault
   // than the Vault page does. See lib/vaultStats.ts for the shared rule.
   const safeItems = activeItems(safeArray(items));
 
+  // Totals and ROI come from the shared summary so Curator Strength, Insights
+  // and Home always show the same numbers. In "fill" mode un-priced items
+  // count at purchase price, so they read as flat instead of a total loss.
+  const summary = summarizeValues(safeItems, mode);
   const totalItems = safeItems.length;
-  const totalCost = safeItems.reduce((sum, item) => sum + itemTotalCost(item), 0);
-  const totalValue = safeItems.reduce((sum, item) => sum + itemCurrentValue(item), 0);
-  const delta = totalValue - totalCost;
-  const roi = totalCost > 0 ? (delta / totalCost) * 100 : 0;
+  const totalCost = summary.totalCost;
+  const totalValue = summary.totalValue;
+  const delta = summary.totalGain;
+  const roi = summary.gainPct ?? 0;
+  const segmentValue = mode === "fill" ? (item: VaultItem) => totalsValue(item).amount : itemCurrentValue;
 
   const universes = new Set(
     safeItems.map((item) => safeString(item.universe)).filter(Boolean)
@@ -150,12 +156,15 @@ export function getCollectionMetrics(items: VaultItem[]): CollectionMetrics {
   const topValueSegments = makeSegments(
     safeItems,
     (item) => String(item.categoryLabel ?? item.category ?? item.universe ?? "Uncategorized"),
-    Number.MAX_SAFE_INTEGER
+    Number.MAX_SAFE_INTEGER,
+    segmentValue
   );
 
   const topSourceSegments = makeSegments(
     safeItems,
-    (item) => String(item.purchaseSource ?? "Unknown Source")
+    (item) => String(item.purchaseSource ?? "Unknown Source"),
+    5,
+    segmentValue
   );
 
   const topItems = [...safeItems]

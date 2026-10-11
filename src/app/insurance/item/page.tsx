@@ -7,6 +7,7 @@ import { useSearchParams } from "next/navigation";
 import { DEMO_ITEMS } from "@/lib/demoVault";
 import { loadItemsOrSeed, loadItems, syncVaultItemsFromSupabase, type VaultItem as ModelItem } from "@/lib/vaultModel";
 import { UNIVERSE_LABEL, type UniverseKey } from "@/lib/taxonomy";
+import { insuranceValue } from "@/lib/vaultStats";
 import { EmptyVault } from "@/components/ui/EmptyVault";
 import { PillButton } from "@/components/ui/PillButton";
 
@@ -196,7 +197,7 @@ export default function InsuranceItemPage() {
                     <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[color:var(--muted2)]">Financial</div>
                     <div className="mt-3 space-y-1 text-sm text-[#dbeafe]">
                       <div><span className="text-[color:var(--muted)]">Purchase Cost:</span> <span className="font-semibold text-text-primary">{fmtMoney(Number(item.purchasePrice ?? 0))}</span></div>
-                      <div><span className="text-[color:var(--muted)]">Current Value:</span> <span className="font-semibold text-text-primary">{fmtMoney(Number(item.currentValue ?? 0))}</span></div>
+                      <div><span className="text-[color:var(--muted)]">Current Value:</span> <span className="font-semibold text-text-primary">{fmtMoney(insuranceValue(item).amount)}{insuranceValue(item).purchaseBased ? "*" : ""}</span>{insuranceValue(item).purchaseBased ? <span className="text-[color:var(--muted)]"> (* based on purchase price, not priced yet)</span> : null}</div>
                     </div>
                   </div>
 

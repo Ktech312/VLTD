@@ -38,24 +38,54 @@ export function collectibleItems<T extends { universe?: unknown; categoryLabel?:
   return items.filter((item) => !isSupplyItem(item));
 }
 
-/** Items you currently own (everything except sold items and supplies). */
+/** Items you currently own (everything except sold, wishlist and supply items). */
 export function activeItems(items: VaultItem[]): VaultItem[] {
-  return items.filter((item) => !isSoldItem(item) && !isSupplyItem(item));
+  return items.filter((item) => !isSoldItem(item) && !isSupplyItem(item) && item.status !== "WISHLIST");
 }
 
-/** What one item is worth today: comparable median, then estimated value, then current value. */
+/**
+ * What one item is worth today, as the Curator entered or priced it:
+ * comparable median, then estimated value, then current value, then last
+ * comp -- the first one above zero. 0 = not priced yet. This is the only
+ * "real value" rule; portfolioMetrics.itemCurrentValue delegates here.
+ */
 export function effectiveMarketValue(item: VaultItem): number {
-  if (typeof item.valueMedian === "number" && Number.isFinite(item.valueMedian)) {
-    return item.valueMedian;
-  }
-  if (typeof item.estimatedValue === "number" && Number.isFinite(item.estimatedValue)) {
-    return item.estimatedValue;
-  }
-  if (typeof item.currentValue === "number" && Number.isFinite(item.currentValue)) {
-    return item.currentValue;
+  for (const v of [item.valueMedian, item.estimatedValue, item.currentValue, item.lastCompValue]) {
+    if (typeof v === "number" && Number.isFinite(v) && v > 0) return v;
   }
   return 0;
 }
+
+/**
+ * Value used in totals. Values are never auto-filled, so an item nobody has
+ * priced yet counts at what was paid for it (a "ghost" value: shown in grey,
+ * never saved). Without this, 1,000 un-priced items read as a $100K loss.
+ */
+export function totalsValue(item: VaultItem): { amount: number; isGhost: boolean } {
+  const real = effectiveMarketValue(item);
+  if (real > 0) return { amount: real, isGhost: false };
+  return { amount: totalCost(item), isGhost: true };
+}
+
+/** "fill" = un-priced items count at purchase price (default). "priced" = only items with a real value. */
+export type ValueMode = "fill" | "priced";
+
+export const VALUE_MODE_LABEL: Record<ValueMode, string> = {
+  fill: "Using purchase price for unpriced items",
+  priced: "Priced items only",
+};
+
+/**
+ * Insurance / appraisal value. Same as totals, but the caller must mark
+ * purchase-based amounts (asterisk + "Based on purchase price" footnote) so a
+ * packet never presents an unchecked number as a market value.
+ */
+export function insuranceValue(item: VaultItem): { amount: number; purchaseBased: boolean } {
+  const v = totalsValue(item);
+  return { amount: v.amount, purchaseBased: v.isGhost && v.amount > 0 };
+}
+
+export const PURCHASE_BASED_NOTE = "* Based on purchase price. This item has not been priced yet.";
 
 /** All-in cost of one item: price plus tax, shipping and fees. */
 export function totalCost(item: VaultItem): number {
@@ -67,49 +97,123 @@ export function totalCost(item: VaultItem): number {
   );
 }
 
-export type VaultStats = {
-  /** Items currently owned (sold excluded). */
+export type ValueSummary = {
+  /** Items counted. */
   itemCount: number;
-  /** Market value of items currently owned. */
-  totalValue: number;
-  /** All-in cost of items currently owned. */
+  /** All-in cost of every counted item ("Invested"). */
   totalCost: number;
-  /** Owned items that have a market value entered. */
-  valuedCount: number;
-  /** All-in cost of just the valued items -- what gain is measured against. */
-  valuedCost: number;
-  /**
-   * totalValue - valuedCost. Only items with a value count: values are never
-   * auto-filled, so an un-valued item is "not priced yet", not worth $0.
-   * Same rule as the Vault page header.
-   */
+  /** Items with a real value entered. */
+  pricedCount: number;
+  /** Items counted at purchase price because they aren't priced yet. */
+  ghostCount: number;
+  /** Total value for the chosen mode. */
+  totalValue: number;
+  /** Value minus what it is measured against, for the chosen mode. */
   totalGain: number;
-  /** Gain as a percentage of valuedCost. 0 when no valued item has a cost. */
-  gainPct: number;
-  /** Sold items, reported separately rather than folded into the totals. */
+  /** Gain as % of the cost base. null = nothing to measure against (hide it). */
+  gainPct: number | null;
+  /** What gainPct is measured against. */
+  costBase: number;
+  /** Items behind the gain number ("on 6 priced items"). */
+  gainItemCount: number;
+};
+
+/**
+ * Totals for an already-chosen set of items (callers decide sold/supplies).
+ *
+ * fill (default): every item counts; un-priced ones at purchase price.
+ *   Value = priced values + purchase price of the rest; gain vs all cost.
+ * priced: only items with a real value. Gain/% use just those that also
+ *   have a purchase price -- an item entered as $0 paid would otherwise turn
+ *   one comic into a +9,000% "return".
+ */
+export function summarizeValues(items: VaultItem[], mode: ValueMode = "fill"): ValueSummary {
+  let totalCostAll = 0;
+  let pricedCount = 0;
+  let filledValue = 0;
+  let pricedValue = 0;
+  let pricedWithCostValue = 0;
+  let pricedWithCostCost = 0;
+  let pricedWithCostCount = 0;
+
+  for (const item of items) {
+    const cost = totalCost(item);
+    const real = effectiveMarketValue(item);
+    totalCostAll += cost;
+    if (real > 0) {
+      pricedCount += 1;
+      pricedValue += real;
+      filledValue += real;
+      if (cost > 0) {
+        pricedWithCostValue += real;
+        pricedWithCostCost += cost;
+        pricedWithCostCount += 1;
+      }
+    } else {
+      filledValue += cost;
+    }
+  }
+
+  const base = {
+    itemCount: items.length,
+    totalCost: totalCostAll,
+    pricedCount,
+    ghostCount: items.length - pricedCount,
+  };
+
+  if (mode === "priced") {
+    const gain = pricedWithCostValue - pricedWithCostCost;
+    return {
+      ...base,
+      totalValue: pricedValue,
+      totalGain: gain,
+      gainPct: pricedWithCostCost > 0 ? (gain / pricedWithCostCost) * 100 : null,
+      costBase: pricedWithCostCost,
+      gainItemCount: pricedWithCostCount,
+    };
+  }
+
+  const gain = filledValue - totalCostAll;
+  return {
+    ...base,
+    totalValue: filledValue,
+    totalGain: gain,
+    gainPct: totalCostAll > 0 ? (gain / totalCostAll) * 100 : null,
+    costBase: totalCostAll,
+    gainItemCount: items.length,
+  };
+}
+
+export type VaultStats = ValueSummary & {
+  /** Sold / wishlist / supply items left out of the totals. */
   soldCount: number;
 };
 
 /**
- * Compute vault totals from a raw item list. Pass the full list — this
- * excludes sold items for you, so every screen agrees.
+ * Totals for what you currently own. Pass the full list — sold, wishlist and
+ * supply items are excluded for you, so every screen agrees.
  */
-export function computeVaultStats(items: VaultItem[]): VaultStats {
+export function computeVaultStats(items: VaultItem[], mode: ValueMode = "fill"): VaultStats {
   const owned = activeItems(items);
-  const totalValue = owned.reduce((sum, item) => sum + effectiveMarketValue(item), 0);
-  const cost = owned.reduce((sum, item) => sum + totalCost(item), 0);
-  const valued = owned.filter((item) => effectiveMarketValue(item) > 0);
-  const valuedCost = valued.reduce((sum, item) => sum + totalCost(item), 0);
-  const totalGain = totalValue - valuedCost;
+  return { ...summarizeValues(owned, mode), soldCount: items.length - owned.length };
+}
 
-  return {
-    itemCount: owned.length,
-    totalValue,
-    totalCost: cost,
-    valuedCount: valued.length,
-    valuedCost,
-    totalGain,
-    gainPct: valuedCost > 0 ? (totalGain / valuedCost) * 100 : 0,
-    soldCount: items.length - owned.length,
-  };
+// Remembered per device: which way the Curator likes to see totals.
+const VALUE_MODE_KEY = "vltd_value_mode_v1";
+
+export function readValueMode(): ValueMode {
+  try {
+    return typeof window !== "undefined" && window.localStorage.getItem(VALUE_MODE_KEY) === "priced" ? "priced" : "fill";
+  } catch {
+    return "fill";
+  }
+}
+
+export function writeValueMode(mode: ValueMode) {
+  try {
+    window.localStorage.setItem(VALUE_MODE_KEY, mode);
+    window.dispatchEvent(new Event("vltd:value-mode"));
+  } catch {
+    /* preference only */
+  }
 }

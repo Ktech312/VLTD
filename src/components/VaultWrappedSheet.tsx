@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import { loadItems, type VaultItem } from "@/lib/vaultModel";
+import { summarizeValues } from "@/lib/vaultStats";
 
 // ─── Stats calculation ────────────────────────────────────────────────────────
 
@@ -31,12 +32,12 @@ const UNIVERSE_LABELS: Record<string, string> = {
 };
 
 function calcStats(items: VaultItem[]): WrappedStats {
-  const valueOf = (i: VaultItem) => Number(i.currentValue ?? i.estimatedValue ?? 0);
-  const totalValue = items.reduce((s, i) => s + valueOf(i), 0);
-  // Gain only on items that have a value -- an un-valued item isn't a $0 loss.
-  const totalCost = items.filter((i) => valueOf(i) > 0).reduce((s, i) => s + Number(i.purchasePrice ?? 0), 0);
-  const totalGain = totalValue - totalCost;
-  const gainPct = totalCost > 0 ? (totalGain / totalCost) * 100 : 0;
+  // Shared vault rule: un-priced items count at what was paid (lib/vaultStats).
+  const summary = summarizeValues(items, "fill");
+  const totalValue = summary.totalValue;
+  const totalCost = summary.totalCost;
+  const totalGain = summary.totalGain;
+  const gainPct = summary.gainPct ?? 0;
 
   // Top universe by item count
   const universeCounts: Record<string, number> = {};

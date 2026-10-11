@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation";
 import { getOnboardingStatus } from "@/lib/auth";
 import { syncPublicProfile } from "@/lib/publicProfile";
 import { loadItems, syncVaultItemsFromSupabase, type VaultItem } from "@/lib/vaultModel";
-import { computeVaultStats } from "@/lib/vaultStats";
+import { computeVaultStats, readValueMode, totalsValue, writeValueMode, type ValueMode } from "@/lib/vaultStats";
 import { readHistory, sliceHistory } from "@/lib/valueHistory";
 import { loadGalleries, refreshGalleriesFromSupabase, type Gallery } from "@/lib/galleryModel";
 import { getCollectionMetrics } from "@/lib/portfolioMetrics";
@@ -226,14 +226,18 @@ function InfoTooltip({ text }: { text: string }) {
 }
 
 // ── Bare stat: serif number + tiny label ──────────────────────────
-function Stat({ label, value, tone = "default" }: { label: string; value: string; tone?: "default" | "gold" | "gain" | "loss" }) {
-  const color = tone === "gold" ? C.gold : tone === "gain" ? C.green : tone === "loss" ? C.red : C.text;
-  return (
-    <div style={{ display: "flex", flexDirection: "column", gap: "4px", minWidth: "94px", padding: "10px 12px", border: `1px solid ${C.bd2}`, borderRadius: "6px", background: "var(--theme-elevated, linear-gradient(165deg, rgba(42,46,52,0.85), rgba(20,22,26,0.9)))", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.08)" }}>
+function Stat({ label, value, tone = "default", ghost = false, onClick, title }: { label: string; value: string; tone?: "default" | "gold" | "gain" | "loss"; ghost?: boolean; onClick?: () => void; title?: string }) {
+  // ghost = the number leans on purchase prices for un-priced items: grey, not gold.
+  const color = ghost ? C.muted : tone === "gold" ? C.gold : tone === "gain" ? C.green : tone === "loss" ? C.red : C.text;
+  const box: React.CSSProperties = { display: "flex", flexDirection: "column", gap: "4px", minWidth: "94px", padding: "10px 12px", border: `1px solid ${C.bd2}`, borderRadius: "6px", background: "var(--theme-elevated, linear-gradient(165deg, rgba(42,46,52,0.85), rgba(20,22,26,0.9)))", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.08)", textAlign: "left" };
+  const inner = (
+    <>
       <span style={{ fontFamily: C.r, fontSize: "28px", fontWeight: 800, letterSpacing: "-0.02em", lineHeight: 1, color }}>{value}</span>
       <span style={{ fontSize: "10px", color: C.muted2, letterSpacing: "0.10em", textTransform: "uppercase", fontWeight: 800 }}>{label}</span>
-    </div>
+    </>
   );
+  if (!onClick) return <div style={box} title={title}>{inner}</div>;
+  return <button type="button" onClick={onClick} title={title} style={{ ...box, cursor: "pointer", font: "inherit" }}>{inner}</button>;
 }
 
 // ── Card header ───────────────────────────────────────────────────
@@ -816,7 +820,13 @@ function RecentSidebarItems({ items }: { items: VaultItem[] }) {
               escape hatch (+ the matching --vltd-keep-color custom property)
               the value would silently lose its data-color blue and match the
               title's dark text instead. */}
-          <div className="vltd-keep-color" style={{ ["--vltd-keep-color" as string]: "var(--data-color, #4FD3EE)", fontSize: "12px", fontWeight: 600, flexShrink: 0, fontVariantNumeric: "tabular-nums" }}>{formatMoney(item.currentValue ?? item.estimatedValue ?? 0)}</div>
+          <div className="vltd-keep-color" style={{ ["--vltd-keep-color" as string]: "var(--data-color, #4FD3EE)", fontSize: "12px", fontWeight: 600, flexShrink: 0, fontVariantNumeric: "tabular-nums" }}>{(() => {
+            const v = totalsValue(item);
+            if (v.amount <= 0) return <span style={{ color: C.muted2 }}>—</span>;
+            return v.isGhost
+              ? <span title="Purchase price. Not priced yet." style={{ color: C.muted2 }}>{formatMoney(v.amount)}</span>
+              : formatMoney(v.amount);
+          })()}</div>
         </Link>
       ))}
     </div>
@@ -1047,43 +1057,61 @@ export default function HomeClient() {
     void load();
   }, [router]);
 
+  // How totals treat un-priced items. "fill" (default): at purchase price.
+  // "priced": only items with a real value. Tapping Return or the Collection
+  // Value card switches it; remembered on this device.
+  const [valueMode, setValueMode] = useState<ValueMode>("fill");
+  useEffect(() => {
+    const sync = () => setValueMode(readValueMode());
+    sync();
+    window.addEventListener("vltd:value-mode", sync);
+    return () => window.removeEventListener("vltd:value-mode", sync);
+  }, []);
+  const toggleValueMode = () => writeValueMode(valueMode === "fill" ? "priced" : "fill");
+
   // Shared vault totals — sold items are excluded, so this matches the Vault
   // and Insights instead of each screen counting differently.
   const stats = useMemo(() => {
-    const s = computeVaultStats(items);
+    const s = computeVaultStats(items, valueMode);
     return {
       totalItems: s.itemCount,
       totalCostValue: s.totalCost,
       totalValue: s.totalValue,
       totalGain: s.totalGain,
       gainPct: s.gainPct,
-      valuedCount: s.valuedCount,
-      valuedCost: s.valuedCost,
+      pricedCount: s.pricedCount,
+      ghostCount: s.ghostCount,
     };
-  }, [items]);
+  }, [items, valueMode]);
 
   // Curator Strength glance — folded in from the old Collection Identity page.
   const strength = useMemo(() => {
     if (items.length === 0) return null;
-    const metrics = getCollectionMetrics(items);
+    const metrics = getCollectionMetrics(items, valueMode);
     const valuation = getCollectionValuationScore(metrics);
     return {
       curator: getCollectorStrength(metrics, valuation, galleries.length),
       topItems: metrics.topItems,
       roiPct: metrics.roi ?? 0,
     };
-  }, [items, galleries.length]);
+  }, [items, galleries.length, valueMode]);
 
   const gainTone = stats.totalGain >= 0 ? "gain" as const : "loss" as const;
   const gainPrefix = stats.totalGain >= 0 ? "+" : "";
-  // Gain only means something on items that have a value -- see computeVaultStats.
-  const hasReturn = stats.valuedCount > 0 && stats.valuedCost > 0;
-  const valuedNote = stats.valuedCount < stats.totalItems ? " (" + stats.valuedCount + " of " + stats.totalItems + " items valued)" : "";
-  const summaryLine = stats.valuedCount === 0
-    ? "No values added yet."
-    : !hasReturn
-      ? "Your vault is worth " + formatMoney(stats.totalValue) + valuedNote + "."
-      : (stats.totalGain >= 0 ? "Your vault is up " : "Your vault is down ") + formatMoney(Math.abs(stats.totalGain)) + valuedNote + ".";
+  // See summarizeValues in lib/vaultStats for exactly what each mode counts.
+  const pctText = stats.gainPct === null ? "—" : gainPrefix + stats.gainPct.toFixed(1) + "%";
+  const allGhost = valueMode === "fill" && stats.pricedCount === 0;
+  const valueIsGhost = valueMode === "fill" && stats.ghostCount > 0;
+  const modeNote = valueMode === "fill"
+    ? (stats.ghostCount > 0 ? stats.ghostCount + " of " + stats.totalItems + " at purchase price" : "All items priced")
+    : stats.pricedCount + " of " + stats.totalItems + " priced";
+  const switchHint = valueMode === "fill" ? "Tap to show priced items only" : "Tap to include unpriced items at purchase price";
+  const upDown = (stats.totalGain >= 0 ? "up " : "down ") + formatMoney(Math.abs(stats.totalGain));
+  const summaryLine = valueMode === "priced"
+    ? (stats.pricedCount === 0 ? "No items priced yet." : "Priced items are " + upDown + " (" + modeNote + ").")
+    : allGhost
+      ? "Valued at what you paid. Price items to see gains."
+      : "Your vault is " + upDown + (stats.ghostCount > 0 ? " (" + modeNote + ")." : ".");
 
   void profileType;
   void focusToVaultSlug;
@@ -1145,10 +1173,15 @@ export default function HomeClient() {
                   <div style={{ display: "flex", gap: "10px", marginTop: "24px", flexWrap: "wrap" }}>
                     <Stat label="Items" value={String(stats.totalItems)} />
                     <Stat label="Invested" value={formatMoney(stats.totalCostValue)} />
-                    <Stat label="Value" value={stats.valuedCount === 0 ? "—" : formatMoney(stats.totalValue)} tone="gold" />
-                    {hasReturn && <Stat label="Return" value={gainPrefix + stats.gainPct.toFixed(1) + "%"} tone={gainTone} />}
+                    <Stat label={allGhost ? "Value (at cost)" : "Value"} value={valueMode === "priced" && stats.pricedCount === 0 ? "—" : formatMoney(stats.totalValue)} tone="gold" ghost={valueIsGhost} title={modeNote} />
+                    <Stat label="Return" value={pctText} tone={gainTone} ghost={valueIsGhost} onClick={toggleValueMode} title={modeNote + ". " + switchHint} />
                     {primaryFocus && primaryFocus.toLowerCase() !== "null" && <Stat label="Focus" value={primaryFocus} tone="gold" />}
                   </div>
+                )}
+                {stats.totalItems > 0 && (
+                  <button type="button" onClick={toggleValueMode} style={{ marginTop: "8px", padding: 0, border: "none", background: "transparent", cursor: "pointer", fontSize: "11px", color: C.muted2, textAlign: "left" }}>
+                    {modeNote} · <span style={{ color: C.gold }}>{valueMode === "fill" ? "Show priced only" : "Include unpriced"}</span>
+                  </button>
                 )}
               </div>
               <div style={{ display: "flex", gap: "12px", marginTop: "24px", flexWrap: "wrap" }}>
@@ -1247,17 +1280,20 @@ export default function HomeClient() {
 
           <div style={{ padding: "16px", background: panelBg, border: premiumBorder, borderRadius: "8px", boxShadow: premiumShadow }}>
             <div style={{ fontSize: "10px", letterSpacing: "1.8px", textTransform: "uppercase", color: C.muted, fontWeight: 800 }}>Collection Value</div>
-            {stats.valuedCount === 0 ? (
-              <div style={{ fontSize: "15px", fontWeight: 700, marginTop: "10px", color: C.muted }}>Not valued yet</div>
-            ) : (
-              <div style={{ fontFamily: C.r, fontSize: "32px", fontWeight: 800, lineHeight: 1, marginTop: "10px", color: C.gold }}>{formatMoney(stats.totalValue)}</div>
-            )}
-            {hasReturn && (
-              <div style={{ display: "flex", alignItems: "center", gap: "5px", marginTop: "5px" }}>
-                <span style={{ fontSize: "12px", fontWeight: 600, color: gainTone === "gain" ? C.green : C.red }}>{gainTone === "gain" ? "▲" : "▼"} {gainPrefix}{stats.gainPct.toFixed(1)}%</span>
-                <span style={{ fontSize: "11px", color: C.muted }}>overall return</span>
-              </div>
-            )}
+            <button type="button" onClick={toggleValueMode} title={switchHint} style={{ display: "block", width: "100%", padding: 0, border: "none", background: "transparent", cursor: "pointer", textAlign: "left", font: "inherit" }}>
+              {valueMode === "priced" && stats.pricedCount === 0 ? (
+                <div style={{ fontSize: "15px", fontWeight: 700, marginTop: "10px", color: C.muted }}>No items priced yet</div>
+              ) : (
+                <div style={{ fontFamily: C.r, fontSize: "32px", fontWeight: 800, lineHeight: 1, marginTop: "10px", color: valueIsGhost ? C.muted : C.gold }}>{formatMoney(stats.totalValue)}</div>
+              )}
+              {stats.gainPct !== null && (
+                <div style={{ display: "flex", alignItems: "center", gap: "5px", marginTop: "5px" }}>
+                  <span style={{ fontSize: "12px", fontWeight: 600, color: valueIsGhost ? C.muted : gainTone === "gain" ? C.green : C.red }}>{gainTone === "gain" ? "▲" : "▼"} {pctText}</span>
+                  <span style={{ fontSize: "11px", color: C.muted }}>overall return</span>
+                </div>
+              )}
+              <div style={{ fontSize: "10px", color: C.muted2, marginTop: "4px" }}>{modeNote} · <span style={{ color: C.gold }}>switch</span></div>
+            </button>
             <CollectionValueSparkline points={valuePoints} />
             <Link href="/vault/sold" style={{ display: "block", textAlign: "center", marginTop: "8px", fontSize: "11px", color: C.muted, textDecoration: "none" }}>View analytics →</Link>
           </div>

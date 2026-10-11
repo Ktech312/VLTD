@@ -10,6 +10,7 @@ import { mayAdoptLegacyKey } from "./legacyKeys";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 import type { VaultItem } from "@/lib/vaultModel";
 import type { UniverseKey } from "@/lib/taxonomy";
+import { activeItems, summarizeValues, totalsValue } from "@/lib/vaultStats";
 
 export type HistoryPoint = {
   day: string; // YYYY-MM-DD (UTC)
@@ -117,13 +118,18 @@ export function takeDailySnapshotIfNeeded(items: VaultItem[]) {
   // If today's snapshot already exists, skip (already pushed when created).
   if (history.length > 0 && history[history.length - 1]?.day === today) return;
 
-  const totalCost = items.reduce((s, i) => s + clamp(Number(i.purchasePrice ?? 0)), 0);
-  const totalValue = items.reduce((s, i) => s + clamp(Number(i.currentValue ?? 0)), 0);
+  // Same rule as every vault total (lib/vaultStats): owned items only, and an
+  // un-priced item counts at what was paid. Points before 2026-10-11 used raw
+  // current value (sold items included), so the line steps once at that date.
+  const owned = activeItems(items);
+  const summary = summarizeValues(owned, "fill");
+  const totalCost = clamp(summary.totalCost);
+  const totalValue = clamp(summary.totalValue);
 
   const byUniverseValue: Record<string, number> = {};
-  for (const it of items) {
+  for (const it of owned) {
     const u = (it.universe ?? "MISC") as UniverseKey;
-    byUniverseValue[u] = (byUniverseValue[u] ?? 0) + clamp(Number(it.currentValue ?? 0));
+    byUniverseValue[u] = (byUniverseValue[u] ?? 0) + clamp(totalsValue(it).amount);
   }
 
   const p: HistoryPoint = {

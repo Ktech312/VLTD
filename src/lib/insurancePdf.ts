@@ -1,6 +1,7 @@
 import { formatPrice } from "@/lib/pricingMvp";
 import { UNIVERSE_LABEL } from "@/lib/taxonomy";
 import type { VaultItem } from "@/lib/vaultModel";
+import { insuranceValue, PURCHASE_BASED_NOTE } from "@/lib/vaultStats";
 
 export type InsurancePdfOptions = {
   collectorName?: string;
@@ -31,8 +32,9 @@ function safeDate(timestamp?: number) {
   }
 }
 
+// Shared rule (lib/vaultStats): priced value, or purchase price marked with *.
 function effectiveValue(item: VaultItem) {
-  return item.valueMedian ?? item.currentValue ?? item.estimatedValue ?? item.lastCompValue ?? 0;
+  return insuranceValue(item).amount;
 }
 
 function universeLabel(item: VaultItem) {
@@ -94,8 +96,8 @@ function itemHtml(item: VaultItem, index: number, opts: InsurancePdfOptions) {
       <div class="item-meta">${escapeHtml(universeLabel(item))}${item.categoryLabel ? ` | ${escapeHtml(item.categoryLabel)}` : ""}${item.number ? ` | #${escapeHtml(item.number)}` : ""}</div>
     </div>
     <div class="item-value-block">
-      <div class="item-value">${escapeHtml(formatPrice(value))}</div>
-      <div class="item-value-label">Stated Value</div>
+      <div class="item-value">${escapeHtml(formatPrice(value))}${insuranceValue(item).purchaseBased ? "*" : ""}</div>
+      <div class="item-value-label">${insuranceValue(item).purchaseBased ? "Stated Value (purchase price)*" : "Stated Value"}</div>
       ${valueRangeLine}
     </div>
   </div>
@@ -148,6 +150,7 @@ export function buildInsurancePdfHtml(items: VaultItem[], opts: InsurancePdfOpti
     });
 
   const totalValue = items.reduce((sum, item) => sum + effectiveValue(item), 0);
+  const purchaseBasedCount = items.filter((item) => insuranceValue(item).purchaseBased).length;
   const collectorName = opts.collectorName?.trim() || "VLTD Collector";
   const itemsHtml = items.map((item, index) => itemHtml(item, index, opts)).join("\n");
 
@@ -208,7 +211,7 @@ export function buildInsurancePdfHtml(items: VaultItem[], opts: InsurancePdfOpti
   </div>
   <div class="cover-stats">
     <div><div class="cover-stat-label">Total Items</div><div class="cover-stat-value">${items.length.toLocaleString()}</div></div>
-    <div><div class="cover-stat-label">Total Stated Value</div><div class="cover-stat-value">${escapeHtml(formatPrice(totalValue))}</div></div>
+    <div><div class="cover-stat-label">Total Stated Value</div><div class="cover-stat-value">${escapeHtml(formatPrice(totalValue))}${purchaseBasedCount > 0 ? "*" : ""}</div></div>
     <div><div class="cover-stat-label">Report Generated</div><div class="cover-stat-value" style="font-size: 13pt; padding-top: 4px;">${escapeHtml(date)}</div></div>
   </div>
   <div class="cover-footer">
@@ -217,6 +220,7 @@ export function buildInsurancePdfHtml(items: VaultItem[], opts: InsurancePdfOpti
   </div>
 </div>
 ${itemsHtml}
+${purchaseBasedCount > 0 ? `<div style="margin-top:18px;font-size:10pt;color:#555;">${escapeHtml(PURCHASE_BASED_NOTE)} (${purchaseBasedCount.toLocaleString()} of ${items.length.toLocaleString()} items)</div>` : ""}
 </body>
 </html>`;
 }

@@ -2,7 +2,7 @@
 "use client";
 
 import Link from "next/link";
-import { collectibleItems } from "@/lib/vaultStats";
+import { collectibleItems, insuranceValue, PURCHASE_BASED_NOTE } from "@/lib/vaultStats";
 import { useEffect, useMemo, useState } from "react";
 
 import { DEMO_ITEMS } from "@/lib/demoVault";
@@ -120,10 +120,12 @@ export default function InsuranceExportPage() {
   }, []);
 
   const selectedItems = useMemo(() => items.filter((item) => !excludedIds.has(String(item.id))), [items, excludedIds]);
+  // Items stated at purchase price (not priced yet) carry a * and the footnote below.
+  const purchaseBasedCount = useMemo(() => selectedItems.filter((i) => insuranceValue(i).purchaseBased).length, [selectedItems]);
 
   const totals = useMemo(() => {
     const cost = selectedItems.reduce((s, i) => s + clamp(Number(i.purchasePrice ?? 0)), 0);
-    const value = selectedItems.reduce((s, i) => s + clamp(Number(i.currentValue ?? 0)), 0);
+    const value = selectedItems.reduce((s, i) => s + clamp(insuranceValue(i).amount), 0);
     return { cost, value };
   }, [selectedItems]);
 
@@ -146,7 +148,7 @@ export default function InsuranceExportPage() {
   function excludeZeroValue() {
     const next = new Set(excludedIds);
     items.forEach((item) => {
-      if (Number(item.currentValue ?? 0) <= 0) next.add(String(item.id));
+      if (insuranceValue(item).amount <= 0) next.add(String(item.id));
     });
     setExcludedIds(next);
     saveExcludedIds(next);
@@ -258,7 +260,7 @@ export default function InsuranceExportPage() {
           <div className="insurance-eyebrow text-[11px] font-semibold uppercase tracking-[0.30em] text-[color:var(--muted2)]">Insurance Inventory</div>
           <h1 className="insurance-title mt-2 text-3xl font-black tracking-[-0.045em] text-text-primary">Vault Inventory Report</h1>
           <div className="insurance-summary mt-2 text-sm text-[color:var(--muted)]">
-            Generated {new Date().toLocaleString()} • Included {selectedItems.length} of {items.length} items • Total Value {fmtMoney(totals.value)} • Total Cost {fmtMoney(totals.cost)}
+            Generated {new Date().toLocaleString()} • Included {selectedItems.length} of {items.length} items • Total Value {fmtMoney(totals.value)}{purchaseBasedCount > 0 ? "*" : ""} • Total Cost {fmtMoney(totals.cost)}
           </div>
           <div className="no-print mt-3 rounded-[9px] border border-[rgba(203,208,213,0.18)] bg-[rgba(203,208,213,0.06)] px-4 py-3 text-sm text-[color:var(--muted)]">
             Checked items are included in insurance reports and the policy packet. Uncheck anything that should not be part of insurance documentation. Inventory print uses compact landscape formatting.
@@ -332,7 +334,7 @@ export default function InsuranceExportPage() {
                       <td className="py-3 pr-3">{i.serialNumber ?? ""}</td>
                       <td className="py-3 pr-3">{i.storageLocation ?? ""}</td>
                       <td className="py-3 pr-3 font-semibold text-text-primary">{fmtMoney(Number(i.purchasePrice ?? 0))}</td>
-                      <td className="py-3 pr-3 font-semibold text-text-primary">{fmtMoney(Number(i.currentValue ?? 0))}</td>
+                      <td className="py-3 pr-3 font-semibold text-text-primary">{fmtMoney(insuranceValue(i).amount)}{insuranceValue(i).purchaseBased ? "*" : ""}</td>
                       <td className="py-3 pr-4 text-xs text-[color:var(--muted)]">
                         <div>{(i as any).valueSource ?? ""}</div>
                         <div className="muted-print">
@@ -345,6 +347,7 @@ export default function InsuranceExportPage() {
                 })}
               </tbody>
             </table>
+            {purchaseBasedCount > 0 ? <div className="mt-3 text-xs" style={{ opacity: 0.8 }}>{PURCHASE_BASED_NOTE} ({purchaseBasedCount} of {selectedItems.length} items)</div> : null}
 
             {items.length === 0 ? <div className="py-6 text-center text-[color:var(--muted)]">No items found.</div> : null}
           </div>

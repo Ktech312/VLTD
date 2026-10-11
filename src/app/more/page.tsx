@@ -362,10 +362,9 @@ export default function MorePage() {
     if (thirtyDaySeries.length >= 2 && thirtyDaySeries[0] > 0) {
       return ((thirtyDaySeries[thirtyDaySeries.length - 1] - thirtyDaySeries[0]) / thirtyDaySeries[0]) * 100;
     }
-    // Only valued items count toward return (see computeVaultStats).
-    if (vaultStats.valuedCost > 0) return vaultStats.gainPct;
+    // No 30-day history yet: show nothing rather than an all-time number labeled "30D".
     return null;
-  }, [thirtyDaySeries, vaultStats.valuedCost, vaultStats.gainPct]);
+  }, [thirtyDaySeries]);
   const publicGalleries = galleries.filter((gallery) => gallery.visibility === "PUBLIC").length || galleries.length;
   const isBusiness = profile.profileType === "business";
 

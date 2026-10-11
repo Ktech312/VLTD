@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { collectibleItems } from "@/lib/vaultStats";
+import { activeItems, insuranceValue, PURCHASE_BASED_NOTE } from "@/lib/vaultStats";
 import { useEffect, useMemo, useState } from "react";
 
 import { loadItems, type VaultItem } from "@/lib/vaultModel";
@@ -20,14 +20,16 @@ export default function InsuranceReportPage() {
   const [items, setItems] = useState<VaultItem[]>([]);
 
   useEffect(() => {
-    setItems(collectibleItems(loadItems()));
+    // Owned items only (sold/wishlist/supplies out), same as every vault total.
+    setItems(activeItems(loadItems()));
   }, []);
 
   const totals = useMemo(() => {
     const cost = items.reduce((s, i) => s + clamp(Number(i.purchasePrice ?? 0)), 0);
-    const value = items.reduce((s, i) => s + clamp(Number(i.currentValue ?? 0)), 0);
+    const value = items.reduce((s, i) => s + clamp(insuranceValue(i).amount), 0);
     const gain = value - cost;
-    return { cost, value, gain };
+    const purchaseBased = items.filter((i) => insuranceValue(i).purchaseBased).length;
+    return { cost, value, gain, purchaseBased };
   }, [items]);
 
   const today = useMemo(() => new Date().toLocaleDateString(), []);
@@ -84,7 +86,7 @@ export default function InsuranceReportPage() {
 
             <div className="mt-3 sm:mt-0 grid gap-1 text-right">
               <div className="text-sm">
-                Total Value: <span className="font-semibold">{fmtMoney(totals.value)}</span>
+                Total Value: <span className="font-semibold">{fmtMoney(totals.value)}{totals.purchaseBased > 0 ? "*" : ""}</span>
               </div>
               <div className="text-sm text-[color:var(--muted)]">Total Cost: {fmtMoney(totals.cost)}</div>
               <div className="text-sm text-[color:var(--muted)]">Total Gain: {fmtMoney(totals.gain)}</div>
@@ -145,7 +147,7 @@ export default function InsuranceReportPage() {
                         {i.certNumber?.trim() ? i.certNumber : "—"}
                       </td>
 
-                      <td className="py-3 align-top text-right font-semibold">{fmtMoney(Number(i.currentValue ?? 0))}</td>
+                      <td className="py-3 align-top text-right font-semibold">{fmtMoney(insuranceValue(i).amount)}{insuranceValue(i).purchaseBased ? "*" : ""}</td>
                     </tr>
                   ))
                 )}
@@ -153,6 +155,9 @@ export default function InsuranceReportPage() {
             </table>
           </div>
 
+          {totals.purchaseBased > 0 ? (
+            <div className="mt-4 text-xs text-[color:var(--muted)]">{PURCHASE_BASED_NOTE} ({totals.purchaseBased} of {items.length} items)</div>
+          ) : null}
           <div className="mt-4 text-xs text-[color:var(--muted2)]">
             Print tip: In the print dialog, choose <span className="font-semibold">Save as PDF</span>.
           </div>
