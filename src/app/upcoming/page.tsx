@@ -2,7 +2,6 @@
 
 import { useState, useRef, useEffect, useMemo } from "react";
 import Image from "next/image";
-import { AppIcon } from "@/components/ui/AppIcon";
 import {
   fetchAllSources,
   groupByYear,
@@ -13,9 +12,16 @@ import {
   type UpcomingComicsResult,
 } from "@/lib/comicUpcoming";
 import {
-  loadWishlistedIds,
-  toggleComicWishlist,
+  COMIC_STATUS_LABEL,
+  loadComicStatuses,
+  setComicStatus,
+  type ComicStatus,
 } from "@/lib/comicWishlistModel";
+import { showToast } from "@/lib/toast";
+
+const STATUS_ORDER: ComicStatus[] = ["want", "preordered", "own"];
+// Short labels so all three fit one row on a 140px card.
+const CARD_LABEL: Record<ComicStatus, string> = { want: "Want", preordered: "Ordered", own: "Own" };
 
 /* ── Publisher pills ──────────────────────────────────────────── */
 
@@ -32,12 +38,12 @@ const ALL_PUBLISHERS = [
 
 function IssueCard({
   issue,
-  wishlisted,
-  onToggle,
+  status,
+  onStatus,
 }: {
   issue: UpcomingIssue;
-  wishlisted: boolean;
-  onToggle: (issue: UpcomingIssue) => void;
+  status: ComicStatus | null;
+  onStatus: (issue: UpcomingIssue, status: ComicStatus | null) => void;
 }) {
   const [imgError, setImgError] = useState(false);
   const metronUrl = `https://metron.cloud/issue/${issue.id}/`;
@@ -93,27 +99,6 @@ function IssueCard({
           }}>VARIANT</div>
         )}
 
-        <button
-          onClick={(e) => { e.preventDefault(); e.stopPropagation(); onToggle(issue); }}
-          aria-label={wishlisted ? "Remove from wishlist" : "Add to wishlist"}
-          style={{
-            position: "absolute", top: "8px", right: "8px",
-            width: "32px", height: "32px", borderRadius: "50%",
-            border: wishlisted ? "1.5px solid #C8CDD2" : "1.5px solid rgba(255,255,255,0.25)",
-            background: wishlisted ? "rgba(203,208,213,0.20)" : "rgba(0,0,0,0.55)",
-            backdropFilter: "blur(6px)",
-            display: "flex", alignItems: "center", justifyContent: "center",
-            cursor: "pointer", transition: "all 0.15s",
-          }}
-        >
-          <AppIcon
-            name="favorite"
-            size={14}
-            strokeWidth={1.75}
-            filled={wishlisted}
-            style={{ color: wishlisted ? "#C8CDD2" : "rgba(255,255,255,0.6)" }}
-          />
-        </button>
       </div>
 
       <div style={{ padding: "9px 9px 11px", display: "flex", flexDirection: "column", gap: "3px", flex: 1 }}>
@@ -143,6 +128,28 @@ function IssueCard({
               {formatStoreDate(issue.storeDate)}
             </div>
           )}
+          {/* Want / Pre-ordered / Own -- tap the lit one again to clear it. */}
+          <div role="group" aria-label="My status" style={{ display: "flex", gap: "3px", margin: "3px 0 2px" }}>
+            {STATUS_ORDER.map((s) => {
+              const on = status === s;
+              return (
+                <button
+                  key={s}
+                  type="button"
+                  aria-pressed={on}
+                  title={COMIC_STATUS_LABEL[s]}
+                  onClick={(e) => { e.preventDefault(); e.stopPropagation(); onStatus(issue, on ? null : s); }}
+                  style={{
+                    padding: "2px 4px", borderRadius: "100px", fontSize: "9px", fontWeight: 700,
+                    whiteSpace: "nowrap", cursor: "pointer", transition: "all 0.15s",
+                    border: on ? "1px solid #C8CDD2" : "1px solid rgba(255,255,255,0.14)",
+                    background: on ? "rgba(203,208,213,0.18)" : "transparent",
+                    color: on ? "#ECEDEF" : "rgba(240,234,214,0.5)",
+                  }}
+                >{CARD_LABEL[s]}</button>
+              );
+            })}
+          </div>
           <div style={{
             fontSize: "10px", color: "rgba(255,255,255,0.25)",
             whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
@@ -167,13 +174,13 @@ export default function UpcomingPage() {
   const [loadingMore, setLoadingMore] = useState(false);
   const [fedResult, setFedResult]     = useState<UpcomingComicsResult | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
-  const [wishlistIds, setWishlistIds] = useState<Set<number>>(new Set());
-  const [toggling, setToggling]       = useState<Set<number>>(new Set());
+  const [statuses, setStatuses]       = useState<Map<number, ComicStatus>>(new Map());
+  const [saving, setSaving]           = useState<Set<number>>(new Set());
   const [notFound, setNotFound]       = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    loadWishlistedIds().then(setWishlistIds).catch(() => {});
+    loadComicStatuses().then(setStatuses).catch(() => {});
   }, []);
 
   // Open on the full upcoming list, like a comic shop's pre-order page.
@@ -235,19 +242,21 @@ export default function UpcomingPage() {
     else setLoading(false);
   }
 
-  async function handleToggle(issue: UpcomingIssue) {
-    if (toggling.has(issue.id)) return;
-    const isWishlisted = wishlistIds.has(issue.id);
-    setWishlistIds((prev) => { const n = new Set(prev); isWishlisted ? n.delete(issue.id) : n.add(issue.id); return n; });
-    setToggling((prev) => new Set(prev).add(issue.id));
-    const { ok, nowWishlisted } = await toggleComicWishlist(issue, isWishlisted);
-    if (!ok) {
-      setWishlistIds((prev) => { const n = new Set(prev); isWishlisted ? n.add(issue.id) : n.delete(issue.id); return n; });
-    } else {
-      setWishlistIds((prev) => { const n = new Set(prev); nowWishlisted ? n.add(issue.id) : n.delete(issue.id); return n; });
+  async function handleStatus(issue: UpcomingIssue, next: ComicStatus | null) {
+    if (saving.has(issue.id)) return;
+    const prev = statuses.get(issue.id) ?? null;
+    const apply = (value: ComicStatus | null) =>
+      setStatuses((m) => { const n = new Map(m); if (value) n.set(issue.id, value); else n.delete(issue.id); return n; });
+    apply(next);
+    setSaving((p) => new Set(p).add(issue.id));
+    const res = await setComicStatus(issue, next);
+    if (!res.ok) {
+      apply(prev);
+      showToast(res.needsSql ? "Pre-ordered and Own need the comic status SQL run first. Want works now." : "Couldn't save that. Try again.");
     }
-    setToggling((prev) => { const n = new Set(prev); n.delete(issue.id); return n; });
+    setSaving((p) => { const n = new Set(p); n.delete(issue.id); return n; });
   }
+
 
   function togglePub(value: string) {
     const next = new Set(selectedPubs);
@@ -299,12 +308,12 @@ export default function UpcomingPage() {
 
           <div style={{ display: "flex", alignItems: "baseline", gap: "10px", marginBottom: "14px" }}>
             <span style={{ fontSize: "22px", fontWeight: 900, letterSpacing: "-0.02em" }}>Upcoming Comics</span>
-            {wishlistIds.size > 0 && (
+            {statuses.size > 0 && (
               <span style={{
                 fontSize: "12px", fontWeight: 700, color: "#C8CDD2",
                 background: "rgba(203,208,213,0.12)", border: "1px solid rgba(203,208,213,0.25)",
                 borderRadius: "100px", padding: "2px 9px",
-              }}>{wishlistIds.size} saved</span>
+              }}>{statuses.size} saved</span>
             )}
           </div>
 
@@ -476,7 +485,7 @@ export default function UpcomingPage() {
             }}>
               {group.issues.map((issue) => (
                 <div key={issue.id} style={{ flexShrink: 0, width: "140px", scrollSnapAlign: "start" }}>
-                  <IssueCard issue={issue} wishlisted={wishlistIds.has(issue.id)} onToggle={handleToggle} />
+                  <IssueCard issue={issue} status={statuses.get(issue.id) ?? null} onStatus={handleStatus} />
                 </div>
               ))}
             </div>

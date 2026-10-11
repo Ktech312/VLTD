@@ -19,6 +19,7 @@ import {
   type WatchlistItem,
 } from "@/lib/watchlistModel";
 import {
+  COMIC_STATUS_LABEL,
   loadComicWishlist,
   removeFromComicWishlist,
   type ComicWishlistItem,
@@ -114,7 +115,7 @@ function entryFromComic(item: ComicWishlistItem): WatchEntry {
     kind: "comic",
     title: `${item.series} #${item.number}`,
     subtitle: item.publisher || "Upcoming comic",
-    meta: item.storeDate ? `Release ${item.storeDate}` : "Upcoming issue",
+    meta: `${COMIC_STATUS_LABEL[item.status]} · ${item.storeDate ? `Release ${item.storeDate}` : "Upcoming issue"}`,
     image: item.imageUrl || universePlaceholder("POP_CULTURE"),
     currentValue: 0,
     targetPrice: 0,
