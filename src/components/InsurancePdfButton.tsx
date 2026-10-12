@@ -1,5 +1,6 @@
 "use client";
 
+import { pillClassName } from "@/components/ui/PillButton";
 import { useState } from "react";
 import { createPortal } from "react-dom";
 
@@ -54,11 +55,7 @@ export default function InsurancePdfButton({
       {hideTrigger ? null : <button
         type="button"
         onClick={() => setOpen(true)}
-        className={
-          className ??
-          "rounded-[8px] px-4 py-2 text-[13px] font-semibold ring-1 ring-[color:var(--border)] transition hover:brightness-110"
-        }
-        style={{ background: "var(--surface)", color: "var(--fg)" }}
+        className={className ?? pillClassName("default")}
       >
         {label}
       </button>}

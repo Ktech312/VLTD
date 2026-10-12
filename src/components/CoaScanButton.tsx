@@ -1,5 +1,6 @@
 "use client";
 
+import { PillButton } from "@/components/ui/PillButton";
 import { useRef, useState } from "react";
 import { AppIcon } from "@/components/ui/AppIcon";
 import type { CoaAnalysisResult } from "@/app/api/ai/analyze-coa/route";
@@ -93,15 +94,10 @@ export default function CoaScanButton({ onApply }: Props) {
 
       {/* Trigger button */}
       {phase === "idle" && (
-        <button
-          type="button"
-          onClick={() => inputRef.current?.click()}
-          className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-semibold ring-1 ring-[color:var(--border)] transition hover:ring-[color:var(--theme-gold)] hover:text-[color:var(--theme-gold)]"
-          style={{ color: "var(--muted)" }}
-        >
-          <AppIcon name="document" size={12} strokeWidth={2.5} />
+        <PillButton onClick={() => inputRef.current?.click()}>
+          <AppIcon name="document" size={14} strokeWidth={2.5} />
           Scan Certificate
-        </button>
+        </PillButton>
       )}
 
       {/* Scanning state */}

@@ -472,7 +472,7 @@ export default function BulkUploadPage() {
 
               <div className="mt-2 flex items-center gap-3 text-xs text-[color:var(--muted2)]">
                 <span className="uppercase tracking-[0.14em]">or</span>
-                <PillButton onClick={() => setCameraOpen(true)}>Use the camera — snap them one after another</PillButton>
+                <PillButton className="h-auto! min-h-11 whitespace-normal! py-2 text-left" onClick={() => setCameraOpen(true)}>Use the camera — snap them one after another</PillButton>
               </div>
 
               {drafts.length > 0 ? (

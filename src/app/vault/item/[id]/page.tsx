@@ -1,5 +1,6 @@
 "use client";
 
+import { pillClassName } from "@/components/ui/PillButton";
 import { effectiveMarketValue } from "@/lib/vaultStats";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -1322,7 +1323,7 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
                   <InsurancePdfButton
                     items={[item]}
                     label="Add to Insurance"
-                    className="inline-flex h-9 items-center gap-1.5 rounded-full px-4 text-[12px] font-semibold ring-1 ring-[color:var(--border)] transition hover:ring-[color:var(--theme-gold)] hover:text-[color:var(--theme-gold)]"
+                    className={pillClassName("default")}
                   />
                   <CoaScanButton onApply={(data, file) => void handleApplyCoa(data, file)} />
                 </div>

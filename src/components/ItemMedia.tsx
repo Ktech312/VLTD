@@ -762,30 +762,11 @@ export default function ItemMedia({
         <div className="order-1 lg:order-2">
           <div className="mb-2 flex flex-wrap justify-end gap-2">
             {onReplaceImage && activeVisibleEntry ? (
-              <button
-                type="button"
-                onClick={() => openEditorForEntry(activeVisibleEntry)}
-                className="rounded-full bg-[color:var(--pill)] px-3 py-2 text-xs text-text-primary ring-1 ring-[color:var(--border)]"
-              >
-                Edit Photo
-              </button>
+              <PillButton onClick={() => openEditorForEntry(activeVisibleEntry)}>Edit Photo</PillButton>
             ) : null}
-            <button
-              type="button"
-              onClick={() => cameraRef.current?.click()}
-              className="rounded-full bg-[color:var(--pill)] px-3 py-2 text-xs text-text-primary ring-1 ring-[color:var(--border)]"
-            >
-              Camera
-            </button>
+            <PillButton onClick={() => cameraRef.current?.click()}>Camera</PillButton>
             {onReplaceImage && activeVisibleEntry ? (
-              <button
-                type="button"
-                disabled={isPreparingBg}
-                onClick={() => void openBackgroundRemoval(activeVisibleEntry)}
-                className="rounded-full bg-[color:var(--pill)] px-3 py-2 text-xs text-text-primary ring-1 ring-[color:var(--border)] disabled:opacity-50"
-              >
-                {isPreparingBg ? "Removing…" : "Remove BG"}
-              </button>
+              <PillButton disabled={isPreparingBg} onClick={() => void openBackgroundRemoval(activeVisibleEntry)}>{isPreparingBg ? "Removing…" : "Remove BG"}</PillButton>
             ) : null}
           </div>
 

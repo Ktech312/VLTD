@@ -1,5 +1,6 @@
 "use client";
 
+import { PillButton } from "@/components/ui/PillButton";
 import { useMemo, useState } from "react";
 
 import {
@@ -99,22 +100,7 @@ export default function ExportListingButton({ item }: { item: VaultItem }) {
         </div>
         <div className="flex flex-wrap gap-2">
           {(Object.keys(PLATFORM_LABEL) as Platform[]).map((option) => (
-            <button
-              key={option}
-              type="button"
-              onClick={() => {
-                setPlatform(option);
-                setMessage("");
-              }}
-              className={[
-                "rounded-full px-4 py-2 text-sm ring-1 transition",
-                platform === option
-                  ? "bg-[color:var(--pill-active-bg)] text-[color:var(--fg)] ring-[color:var(--pill-active-bg)]"
-                  : "bg-[color:var(--pill)] text-[color:var(--pill-fg)] ring-[color:var(--border)]",
-              ].join(" ")}
-            >
-              {PLATFORM_LABEL[option]}
-            </button>
+            <PillButton key={option} variant={platform === option ? "active" : "default"} pressed={platform === option} onClick={() => { setPlatform(option); setMessage(""); }}>{PLATFORM_LABEL[option]}</PillButton>
           ))}
         </div>
       </div>
@@ -151,13 +137,7 @@ export default function ExportListingButton({ item }: { item: VaultItem }) {
       </div>
 
       <div className="mt-4 flex flex-wrap items-center gap-3">
-        <button
-          type="button"
-          onClick={() => void handleCopy()}
-          className="inline-flex h-10 items-center justify-center rounded-[8px] bg-gold/15 px-4 text-sm font-medium text-cyan-100 ring-1 ring-gold/25"
-        >
-          Copy Listing
-        </button>
+        <PillButton variant="active" onClick={() => void handleCopy()}>Copy Listing</PillButton>
         {message ? <div className="text-sm text-[color:var(--muted)]">{message}</div> : null}
       </div>
     </div>

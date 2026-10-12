@@ -1,5 +1,6 @@
 "use client";
 
+import { PillButton } from "@/components/ui/PillButton";
 import { useMemo, useState } from "react";
 import { FEE_RULES, type Channel } from "@/lib/sellerFees";
 
@@ -125,19 +126,7 @@ export default function CostToSellPanel({
 
       <div className="mt-4 flex flex-wrap gap-2">
         {CHANNELS.map((option) => (
-          <button
-            key={option.id}
-            type="button"
-            onClick={() => setChannel(option.id)}
-            className={[
-              "rounded-full px-4 py-2 text-sm ring-1 transition",
-              channel === option.id
-                ? "bg-[color:var(--pill-active-bg)] text-[color:var(--fg)] ring-[color:var(--pill-active-bg)]"
-                : "bg-[color:var(--pill)] text-[color:var(--pill-fg)] ring-[color:var(--border)]",
-            ].join(" ")}
-          >
-            {option.label}
-          </button>
+          <PillButton key={option.id} variant={channel === option.id ? "active" : "default"} pressed={channel === option.id} onClick={() => setChannel(option.id)}>{option.label}</PillButton>
         ))}
       </div>
 
