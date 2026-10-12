@@ -595,6 +595,26 @@ textarea {
   }
 }
 
+/* Native selects, everywhere: the shared touch target, corners, focus and disabled state.
+   min-height only raises a short select; it never shrinks a taller one. */
+select {
+  min-height: 44px;
+  border-radius: 8px;
+}
+@media (min-width: 768px) {
+  select {
+    min-height: 36px;
+  }
+}
+select:focus-visible {
+  outline: 2px solid var(--pill-active-ring, var(--accent));
+  outline-offset: 2px;
+}
+select:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 /* Accessible focus ring that matches palette */
 :focus-visible {
   outline: 2px solid color-mix(in srgb, var(--accent) 70%, white 30%);

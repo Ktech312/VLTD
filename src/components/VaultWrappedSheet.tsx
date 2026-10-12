@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { createPortal } from "react-dom";
+import { PillButton } from "@/components/ui/PillButton";
 import { loadItems, type VaultItem } from "@/lib/vaultModel";
 import { activeItems, readValueMode, summarizeValues, type ValueMode } from "@/lib/vaultStats";
 
@@ -91,6 +92,11 @@ function calcStats(items: VaultItem[], mode: ValueMode): WrappedStats {
 
 // ─── Canvas renderer ──────────────────────────────────────────────────────────
 
+// On-screen figures are exact dollars (same as Vault and Insights); fmt() below is the compact form for the share image.
+function fmtExact(n: number) {
+  return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(n);
+}
+
 function fmt(n: number) {
   if (n >= 1_000_000) return `$${(n / 1_000_000).toFixed(1)}M`;
   if (n >= 1_000) return `$${Math.round(n / 1_000)}K`;
@@ -145,7 +151,7 @@ async function renderWrappedCanvas(stats: WrappedStats): Promise<string> {
 
   ctx.font = `400 26px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif`;
   ctx.fillStyle = MUTED;
-  ctx.fillText(`${stats.year} Vault Wrapped`, 80, 170);
+  ctx.fillText(`${stats.year} Collection recap`, 80, 170);
 
   // Gold line
   ctx.strokeStyle = GOLD;
@@ -359,7 +365,7 @@ export default function VaultWrappedSheet({ onClose }: Props) {
       const res = await fetch(preview);
       const blob = await res.blob();
       const file = new File([blob], `vltd-wrapped-${stats.year}.png`, { type: "image/png" });
-      await navigator.share({ files: [file], title: `My ${stats.year} Vault Wrapped`, text: `${stats.itemCount} items. ${fmt(stats.totalValue)} vault. #VLTD #collector` });
+      await navigator.share({ files: [file], title: `My ${stats.year} Collection recap`, text: `${stats.itemCount} items. ${fmt(stats.totalValue)} vault. #VLTD #collector` });
     } catch { /* */ }
   }
 
@@ -386,24 +392,20 @@ export default function VaultWrappedSheet({ onClose }: Props) {
           <div className="flex items-center justify-between">
             <div>
               <div className="text-[10px] font-semibold uppercase tracking-widest" style={{ color: "var(--muted)" }}>
-                Vault Wrapped · {stats.year}
+                Collection recap · {stats.year}
               </div>
               <div className="mt-0.5 text-base font-bold" style={{ color: "var(--fg)" }}>
-                Your year in collecting
+                Your collection in review
               </div>
             </div>
-            <button type="button" onClick={onClose}
-              className="rounded-full p-2 text-lg leading-none"
-              style={{ background: "var(--pill)", color: "var(--muted)" }}>
-              ✕
-            </button>
+            <PillButton onClick={onClose} title="Close"><span aria-hidden="true">✕</span><span className="sr-only">Close</span></PillButton>
           </div>
 
           {/* Live stats summary */}
           <div className="grid grid-cols-3 gap-3">
             {[
               { label: "Items", value: String(stats.itemCount) },
-              { label: "Value", value: fmt(stats.totalValue) },
+              { label: "Value", value: fmtExact(stats.totalValue) },
               { label: "ROI", value: `${stats.gainPct >= 0 ? "+" : ""}${stats.gainPct.toFixed(0)}%` },
             ].map(s => (
               <div key={s.label} className="rounded-2xl p-3 text-center ring-1 ring-[color:var(--border)]"
@@ -418,7 +420,7 @@ export default function VaultWrappedSheet({ onClose }: Props) {
             <div className="rounded-2xl p-3 ring-1 ring-[color:var(--border)]" style={{ background: "var(--pill)" }}>
               <div className="text-[10px] uppercase tracking-widest mb-1" style={{ color: "var(--muted)" }}>Biggest Gainer</div>
               <div className="text-sm font-bold line-clamp-1" style={{ color: "var(--fg)" }}>{stats.biggestGainer.title}</div>
-              <div className="text-sm font-bold" style={{ color: "#4CAF82" }}>+{fmt(stats.biggestGainerGain)}</div>
+              <div className="text-sm font-bold" style={{ color: "#4CAF82" }}>+{fmtExact(stats.biggestGainerGain)}</div>
             </div>
           )}
 
@@ -426,37 +428,34 @@ export default function VaultWrappedSheet({ onClose }: Props) {
           {preview && (
             <div className="rounded-2xl overflow-hidden ring-1 ring-[color:var(--border)]" style={{ aspectRatio: "9/16" }}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={preview} alt="Vault Wrapped" className="h-full w-full object-cover" />
+              <img src={preview} alt="Collection recap card" className="h-full w-full object-cover" />
             </div>
           )}
 
           {/* Actions */}
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             {!preview ? (
-              <button type="button" onClick={() => void handleGenerate()} disabled={exporting || items.length === 0}
-                className="flex-1 rounded-2xl py-3 text-sm font-bold"
-                style={{ background: "linear-gradient(180deg,#79E7FB,#41C6E4 55%,#2CB1D1)", color: "#06171d", opacity: (exporting || items.length === 0) ? 0.5 : 1 }}>
-                {exporting ? "Generating…" : items.length === 0 ? "No items in vault" : "Generate Wrapped Card"}
-              </button>
+              <PillButton
+                onClick={() => void handleGenerate()}
+                disabled={exporting || items.length === 0}
+                className="font-black"
+                style={{ background: "linear-gradient(180deg, #79E7FB, #41C6E4 55%, #2CB1D1)", color: "#06171d" }}
+              >
+                {exporting ? "Generating…" : items.length === 0 ? "No items in vault" : "Generate recap card"}
+              </PillButton>
             ) : (
               <>
-                <button type="button" onClick={() => setPreview(null)}
-                  className="rounded-2xl px-4 py-3 text-sm font-semibold ring-1 ring-[color:var(--border)]"
-                  style={{ background: "var(--pill)", color: "var(--fg)" }}>
-                  Regenerate
-                </button>
+                <PillButton onClick={() => setPreview(null)}>Regenerate</PillButton>
                 {typeof navigator !== "undefined" && "share" in navigator && (
-                  <button type="button" onClick={() => void handleShare()}
-                    className="rounded-2xl px-4 py-3 text-sm font-semibold ring-1 ring-[color:var(--border)]"
-                    style={{ background: "var(--pill)", color: "var(--fg)" }}>
-                    Share
-                  </button>
+                  <PillButton onClick={() => void handleShare()}>Share</PillButton>
                 )}
-                <button type="button" onClick={handleDownload}
-                  className="flex-1 rounded-2xl py-3 text-sm font-bold"
-                  style={{ background: "linear-gradient(180deg,#79E7FB,#41C6E4 55%,#2CB1D1)", color: "#06171d" }}>
+                <PillButton
+                  onClick={handleDownload}
+                  className="font-black"
+                  style={{ background: "linear-gradient(180deg, #79E7FB, #41C6E4 55%, #2CB1D1)", color: "#06171d" }}
+                >
                   Download
-                </button>
+                </PillButton>
               </>
             )}
           </div>

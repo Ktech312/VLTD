@@ -1,5 +1,6 @@
 "use client";
 
+import { Toggle } from "@/components/ui/Toggle";
 import { useEffect, useMemo, useState } from "react";
 
 import { Glyph } from "@/components/ui/Glyph";
@@ -100,20 +101,7 @@ export default function PrivacyIdentityCards() {
               ✦ Paid feature — coming soon
             </div>
           </div>
-          <button
-            type="button"
-            disabled={true}
-            title="Going incognito is a paid feature"
-            aria-pressed={isPublic}
-            aria-label="Public profile"
-            className="relative mt-0.5 h-6 w-11 shrink-0 cursor-not-allowed rounded-full transition-colors opacity-50"
-            style={{ background: isPublic ? "#22C55E" : "rgba(255,255,255,0.12)" }}
-          >
-            <span
-              className="absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform"
-              style={{ transform: isPublic ? "translateX(20px)" : "translateX(0)" }}
-            />
-          </button>
+          <Toggle on={isPublic} onChange={() => {}} disabled title="Going incognito is a paid feature" ariaLabel="Public profile" className="mt-0.5" />
         </div>
       </section>
 

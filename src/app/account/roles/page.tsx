@@ -59,9 +59,9 @@ export default function AccountRolesPage() {
             boxShadow: "0 26px 86px rgba(0,0,0,0.32)",
           }}
         >
-          <div className="text-[11px] tracking-[0.24em] text-[color:var(--muted2)]">ROLES & PERMISSIONS</div>
-          <h1 className="mt-3 text-3xl font-semibold">Permission shells for business access</h1>
-          <p className="mt-3 max-w-3xl text-sm leading-6 text-[color:var(--muted)]">These role defaults are placeholders for the real permission gate. The key business requirement is already represented: employees can add and view items without seeing portfolio financials unless explicitly allowed.</p>
+          <div className="text-[11px] tracking-[0.24em] text-[color:var(--muted2)]">ROLES · PREVIEW</div>
+          <h1 className="mt-3 text-3xl font-semibold">Planned business roles</h1>
+          <p className="mt-3 max-w-3xl text-sm leading-6 text-[color:var(--muted)]">This is a preview of the roles planned for business accounts. These permissions are placeholders and are not enforced yet: they do not change what anyone on your team can see or do today. The goal is that employees can add and view items without seeing portfolio financials unless you allow it.</p>
 
         <div className="mt-8 grid gap-5 xl:grid-cols-2">
           {roles.map((role) => {
@@ -76,7 +76,7 @@ export default function AccountRolesPage() {
                   {Object.entries(perm).map(([key, value]) => (
                     <div key={key} className="flex items-center justify-between rounded-2xl bg-[color:var(--input)] px-4 py-3 ring-1 ring-[color:var(--border)]">
                       <span className="text-[color:var(--fg)]">{key}</span>
-                      <span className="text-[color:var(--muted)]">{value ? "Allowed" : "Hidden"}</span>
+                      <span className="text-[color:var(--muted)]">{value ? "Planned: allowed" : "Planned: hidden"}</span>
                     </div>
                   ))}
                 </div>

@@ -1,5 +1,6 @@
 "use client";
 
+import { Toggle as Switch } from "@/components/ui/Toggle";
 import { useRef, useState, useMemo, useEffect, useCallback } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
@@ -711,17 +712,7 @@ function Toggle({
   compact?: boolean;
 }) {
   const switchButton = (
-    <button
-      type="button"
-      onClick={onToggle}
-      className="relative h-6 w-11 rounded-full transition-colors flex-shrink-0"
-      style={{ background: on ? "var(--theme-gold)" : "var(--pill)" }}
-    >
-      <span
-        className="absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform"
-        style={{ transform: on ? "translateX(20px)" : "translateX(0)" }}
-      />
-    </button>
+    <Switch on={on} onChange={onToggle} ariaLabel={label} />
   );
   if (compact) {
     return (

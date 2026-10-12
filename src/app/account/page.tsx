@@ -1,6 +1,7 @@
 "use client";
 // NOTE: primaryFocus uses taxonomy universe keys for personalisation
 
+import { Toggle } from "@/components/ui/Toggle";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
@@ -741,20 +742,14 @@ export default function AccountPage() {
                     : "Get notified the moment someone sends you a message, even with VLTD closed."}
               </div>
             </div>
-            <button
-              type="button"
-              onClick={() => void handleTogglePush()}
+            <Toggle
+              on={pushState === "subscribed"}
+              onChange={() => void handleTogglePush()}
               disabled={pushBusy || pushState === "unsupported" || pushState === "denied"}
-              aria-pressed={pushState === "subscribed"}
               title={pushState === "denied" ? "Blocked in browser settings" : undefined}
-              className="relative mt-0.5 h-6 w-11 shrink-0 rounded-full transition-colors disabled:cursor-not-allowed disabled:opacity-50"
-              style={{ background: pushState === "subscribed" ? "#22C55E" : "rgba(255,255,255,0.12)" }}
-            >
-              <span
-                className="absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform"
-                style={{ transform: pushState === "subscribed" ? "translateX(20px)" : "translateX(0)" }}
-              />
-            </button>
+              ariaLabel="Push notifications"
+              className="mt-0.5"
+            />
           </div>
         </section>
         ) : null}
@@ -905,18 +900,7 @@ export default function AccountPage() {
               <div className="text-sm font-black text-text-primary">Show all universes</div>
               <div className="mt-0.5 text-xs text-[color:var(--muted)]">Turn off to pick specific universes</div>
             </div>
-            <button
-              type="button"
-              onClick={() => setShowAllUniverses((v) => !v)}
-              aria-pressed={showAllUniverses}
-              className="relative h-6 w-11 shrink-0 rounded-full transition-colors"
-              style={{ background: showAllUniverses ? "#22C55E" : "rgba(255,255,255,0.12)" }}
-            >
-              <span
-                className="absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform"
-                style={{ transform: showAllUniverses ? "translateX(20px)" : "translateX(0)" }}
-              />
-            </button>
+            <Toggle on={showAllUniverses} onChange={() => setShowAllUniverses((v) => !v)} ariaLabel="Show all universes" />
           </div>
 
           {/* Universe chip grid */}

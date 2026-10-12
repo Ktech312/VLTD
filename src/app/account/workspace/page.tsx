@@ -1,5 +1,6 @@
 "use client";
 
+import { Toggle } from "@/components/ui/Toggle";
 import { PillButton } from "@/components/ui/PillButton";
 import Link from "next/link";
 import { useEffect, useState } from "react";
@@ -47,22 +48,6 @@ function Row({ label, sub, children }: { label: string; sub?: string; children: 
       </div>
       <div className="shrink-0">{children}</div>
     </div>
-  );
-}
-
-function Toggle({ on, onChange }: { on: boolean; onChange: () => void }) {
-  return (
-    <button
-      type="button"
-      onClick={onChange}
-      className="relative h-6 w-11 rounded-full transition-colors"
-      style={{ background: on ? "var(--theme-gold)" : "var(--pill)" }}
-    >
-      <span
-        className="absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform"
-        style={{ transform: on ? "translateX(20px)" : "translateX(0)" }}
-      />
-    </button>
   );
 }
 
@@ -270,19 +255,19 @@ export default function WorkspaceSettingsPage() {
 
         <Section title="Notifications">
           <Row label="Weekly report email" sub="Summary of collection activity every Monday">
-            <Toggle on={notifyWeekly} onChange={() => setNotifyWeekly((v) => { saveLocalPrefs({ notifyWeekly: !v }); return !v; })} />
+            <Toggle ariaLabel="Weekly report email" on={notifyWeekly} onChange={() => setNotifyWeekly((v) => { saveLocalPrefs({ notifyWeekly: !v }); return !v; })} />
           </Row>
           <Row label="Activity alerts" sub="New followers, registry rank changes">
-            <Toggle on={notifyActivity} onChange={() => setNotifyActivity((v) => { saveLocalPrefs({ notifyActivity: !v }); return !v; })} />
+            <Toggle ariaLabel="Activity alerts" on={notifyActivity} onChange={() => setNotifyActivity((v) => { saveLocalPrefs({ notifyActivity: !v }); return !v; })} />
           </Row>
         </Section>
 
         <Section title="AI cataloging">
           <Row label="Auto-advance high-confidence drafts" sub="Skip review for items scored ≥ 90%">
-            <Toggle on={aiAutoReview} onChange={() => setAiAutoReview((v) => { saveLocalPrefs({ aiAutoReview: !v }); return !v; })} />
+            <Toggle ariaLabel="Auto-advance high-confidence drafts" on={aiAutoReview} onChange={() => setAiAutoReview((v) => { saveLocalPrefs({ aiAutoReview: !v }); return !v; })} />
           </Row>
           <Row label="Show confidence scores" sub="Display AI confidence on draft cards">
-            <Toggle on={showConfidence} onChange={() => setShowConfidence((v) => { saveLocalPrefs({ showConfidence: !v }); return !v; })} />
+            <Toggle ariaLabel="Show confidence scores" on={showConfidence} onChange={() => setShowConfidence((v) => { saveLocalPrefs({ showConfidence: !v }); return !v; })} />
           </Row>
           <div className="mt-3">
             <PillButton href="/ai/drafts">View AI draft queue →</PillButton>
