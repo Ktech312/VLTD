@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
 import { getOnboardingStatus } from "@/lib/auth";
+import { consumeAuthLinkFromHash } from "@/lib/authLink";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 import VltdLogo from "@/components/VltdLogo";
 
@@ -55,9 +56,17 @@ export default function EmailConfirmedPage() {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (session && (event === "SIGNED_IN" || event === "INITIAL_SESSION")) confirmed();
     });
-    void supabase.auth.getSession().then(({ data }) => {
+    // The confirmation link carries the session after "#", which the PKCE client rejects: start it from the link (src/lib/authLink.ts).
+    void (async () => {
+      const link = await consumeAuthLinkFromHash();
+      if (link.failed) {
+        done = true;
+        setPhase("bad_link");
+        return;
+      }
+      const { data } = await supabase.auth.getSession();
       if (data.session) confirmed();
-    });
+    })();
     // The address is confirmed even if this browser could not keep the session: say so and send them to log in.
     const giveUp = window.setTimeout(() => {
       if (!done) setPhase("needs_login");
