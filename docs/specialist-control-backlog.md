@@ -20,3 +20,22 @@ Rules while on this backlog:
 | Museum carousel dots | `src/components/VaultMuseumView.tsx` `SpotlightCard` dots | 6px pagination dots | A 44px hit area on each would overlap its neighbours |
 | Inline-edit values | `src/app/vault/item/[id]/page.tsx` (values), `src/components/PricingMvpCard.tsx` (tiles) | Click-to-edit text in dense detail rows | Inline text; each section has a 44px pencil button that performs the same action |
 | Card-wide links | `src/app/vault/VaultListView.tsx:502` (title link), `GuestGalleryRenderer` and `VaultMuseumView` card wrappers | Secondary link inside a card that is itself a link to the same page | The whole card is the larger equivalent target |
+
+## Other reported exceptions (not started — no further all-pages migration)
+
+Measured on live pages at 390px (2026-10-12). Each is an ordinary control under 44px on phones, listed so none is lost; none was changed in the closeout.
+
+| Page | Controls |
+| --- | --- |
+| `/vault` | item title links (39px; the whole card is also a link), narrow price chips |
+| `/portfolio` | breakdown rows (15px tall), "View all movers" |
+| `/messages` | about 20 small controls (28px star, remove from inbox, row actions) |
+| `/community-board` | "See all …" links (42px), "View all" (17px) |
+| `/events`, `/watchlist` | search fields (21px inner input), Save event, previous/next item overlap each other's hit areas |
+| `/discover`, `/learn`, `/vault/sold`, `/vault/for-sale` | search/email inputs (inner input 21px in a taller box), Ask price field (33px), "View image for …" (36px) |
+| `/vault/import` | 13px checkbox |
+| `/account/workspace` | profile buttons (35px) |
+
+Not yet exercised live: onboarding, club detail page, guest gallery, room editor, slot organizer, museum view (they passed type check, lint and build only).
+
+Wider-than-column pages kept on purpose: Home (1100px hero column) and Settings (1152px form column).
