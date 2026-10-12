@@ -2,8 +2,6 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import { signUpWithPassword } from "@/lib/auth";
 import VltdLogo from "@/components/VltdLogo";
 
 type LaunchAccessStatus = {
@@ -14,8 +12,8 @@ type LaunchAccessStatus = {
 };
 
 export default function SignupPage() {
-  const router = useRouter();
   const [status, setStatus] = useState<LaunchAccessStatus | null>(null);
+  const [firstName, setFirstName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -55,14 +53,19 @@ export default function SignupPage() {
 
     setSubmitting(true);
     try {
-      const data = await signUpWithPassword(email.trim(), password);
+      // The server decides what to send (new, unconfirmed or existing account) and always answers the same way,
+      // so this page never reveals whether an address already has an account.
+      const response = await fetch("/api/auth/signup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: email.trim(), password, firstName: firstName.trim() }),
+      });
+      const result = (await response.json().catch(() => ({}))) as { ok?: boolean; message?: string };
       await loadStatus();
-      if (data.session) {
-        router.replace("/onboarding");
-        router.refresh();
-      } else {
-        setConfirmationSent(true);
+      if (!response.ok || !result.ok) {
+        throw new Error(result.message || "Account creation failed.");
       }
+      setConfirmationSent(true);
     } catch (err) {
       await loadStatus();
       const message = err instanceof Error ? err.message : "Account creation failed.";
@@ -118,11 +121,15 @@ export default function SignupPage() {
               </div>
             ) : confirmationSent ? (
               <div className="mt-7 rounded-2xl border border-green-400/35 bg-green-500/10 px-5 py-4 text-sm leading-6 text-green-200">
-                Check your email to confirm your account. Your founding spot has been reserved.
+                Check your email for your next step. If this address already has an account, the email will help you get back in.
               </div>
             ) : (
               <form onSubmit={handleSignup} className="mt-7 grid gap-5">
                 {error ? <div className="rounded-2xl border border-red-400/35 bg-red-500/10 px-4 py-3 text-sm text-red-100">{error}</div> : null}
+                <label className="block">
+                  <span className="text-base font-medium text-[color:var(--muted)]">First name <span className="text-sm text-[color:var(--muted2)]">(optional)</span></span>
+                  <input value={firstName} onChange={(event) => setFirstName(event.target.value)} type="text" autoComplete="given-name" maxLength={40} placeholder="So we can say hello properly" className="vltd-input mt-3 h-16 w-full rounded-[22px] px-6 text-lg" />
+                </label>
                 <label className="block">
                   <span className="text-base font-medium text-[color:var(--muted)]">Email</span>
                   <input value={email} onChange={(event) => setEmail(event.target.value)} type="email" autoComplete="email" required placeholder="you@example.com" className="vltd-input mt-3 h-16 w-full rounded-[22px] px-6 text-lg" />

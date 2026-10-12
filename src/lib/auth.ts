@@ -298,23 +298,6 @@ export async function signInWithPassword(email: string, password: string) {
   return data;
 }
 
-export async function signUpWithPassword(email: string, password: string) {
-  const supabase = getSupabase();
-  if (!supabase) throw new Error("Supabase not ready");
-
-  const { data, error } = await withTimeout(
-    supabase.auth.signUp({ email, password }),
-    "Password sign up"
-  );
-
-  if (error) throw error;
-
-  setCachedAuthFromSession(data.session ?? null);
-  clearInFlightAuth();
-  profilesPromise = null;
-  return data;
-}
-
 export async function signInWithGoogle() {
   const supabase = getSupabase();
   if (!supabase) throw new Error("Supabase not ready");
@@ -340,21 +323,18 @@ export async function signInWithGoogle() {
   return data;
 }
 
-export async function resetPasswordForEmail(email: string) {
-  const supabase = getSupabase();
-  if (!supabase) throw new Error("Supabase not ready");
-
-  const redirectTo =
-    typeof window !== "undefined"
-      ? `${window.location.origin}/reset-password`
-      : undefined;
-
-  const { error } = await withTimeout(
-    supabase.auth.resetPasswordForEmail(email.trim(), { redirectTo }),
-    "Password reset"
-  );
-
-  if (error) throw error;
+// Password reset goes through the server so it can be refused unless account email is sending as VLTD
+// (src/lib/email/senderGate.ts). The browser must never call Supabase's mailer directly.
+export async function resetPasswordForEmail(email: string, returnPath: "/reset-password" | "/account/security" = "/reset-password") {
+  const response = await fetch("/api/auth/password-reset", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email: email.trim(), returnPath }),
+  });
+  if (!response.ok) {
+    const result = (await response.json().catch(() => ({}))) as { message?: string };
+    throw new Error(result.message || "Password reset failed.");
+  }
 }
 
 // Multi-device fix (2026-09-22): ordinary sign-out must only end THIS

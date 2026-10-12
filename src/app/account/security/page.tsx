@@ -3,7 +3,7 @@
 import { PillButton } from "@/components/ui/PillButton";
 import { useEffect, useState } from "react";
 import { AccountTabs } from "@/components/account/AccountTabs";
-import { getCurrentUser, signOut } from "@/lib/auth";
+import { getCurrentUser, resetPasswordForEmail, signOut } from "@/lib/auth";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 import TwoFactorAuthCard from "@/components/account/TwoFactorAuthCard";
 import PrivacyIdentityCards from "@/components/account/PrivacyIdentityCards";
@@ -134,16 +134,13 @@ export default function SecurityPage() {
   }
 
   async function handleResetPassword() {
-    const supabase = getSupabaseBrowserClient();
-    if (!supabase || !email) return;
+    if (!email) return;
     try {
-      await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: typeof window !== "undefined" ? `${window.location.origin}/account/security` : undefined,
-      });
+      await resetPasswordForEmail(email, "/account/security");
       setPwSent(true);
       showToast("Password reset email sent.");
-    } catch {
-      showToast("Failed to send reset email.");
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : "Failed to send reset email.");
     }
   }
 
@@ -161,8 +158,17 @@ export default function SecurityPage() {
     }
     setEmailChangeSaving(true);
     try {
-      const { error } = await supabase.auth.updateUser({ email: trimmed });
-      if (error) throw error;
+      // Through the server, so it is refused unless account email is sending as VLTD.
+      const { data: sessionData } = await supabase.auth.getSession();
+      const response = await fetch("/api/auth/change-email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${sessionData.session?.access_token ?? ""}` },
+        body: JSON.stringify({ email: trimmed }),
+      });
+      if (!response.ok) {
+        const result = (await response.json().catch(() => ({}))) as { message?: string };
+        throw new Error(result.message || "Couldn't start the email change.");
+      }
       setEmailChangeSent(true);
       showToast("Confirmation email sent — check your inbox to finish the change.");
     } catch (err) {

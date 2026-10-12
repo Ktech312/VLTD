@@ -1,6 +1,7 @@
 import type { SupabaseClient, User } from "@supabase/supabase-js";
 import { NextRequest, NextResponse } from "next/server";
 import { getAdminEmail, getServiceClient } from "@/lib/serverAdmin";
+import { authEmailSenderVerified, SENDER_NOT_READY_MESSAGE } from "@/lib/email/senderGate";
 
 // Looks one person up by email in Supabase Auth (the admin API has no lookup-by-email, so page through the users).
 async function findAuthUserByEmail(svc: SupabaseClient, email: string): Promise<User | null> {
@@ -38,6 +39,11 @@ export async function POST(req: NextRequest) {
 
   const admin = await getAdminEmail(req, svc);
   if (!admin) return NextResponse.json({ error: "forbidden", message: "Admins only." }, { status: 403 });
+
+  // No invitation (or resend) goes out unless account email is sending as VLTD.
+  if (!authEmailSenderVerified()) {
+    return NextResponse.json({ error: "sender_not_ready", message: SENDER_NOT_READY_MESSAGE }, { status: 503 });
+  }
 
   const body = await req.json().catch(() => ({}));
   const email = typeof body?.email === "string" ? body.email.trim().toLowerCase() : "";
