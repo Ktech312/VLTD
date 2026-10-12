@@ -73,7 +73,7 @@ declare
   v_a text; v_b text;
   t text;
   tbls text[] := array['museum_campus_config','museum_spotlight_programs','museum_store_items','museum_room_items','museum_room_meta'];
-  p record;
+  act record;
   v_room uuid;
 begin
   -- ── Real accounts to test with ─────────────────────────────────────────────
@@ -113,7 +113,7 @@ begin
   perform pg_temp.rec('setup', 'approved 3D user with a profile found', 'yes', null, coalesce(pg_temp.mask(v_ap_email), 'none (no profile is approved yet)'), case when v_ap_uid is null then 'NOT VERIFIED' else 'PASS' end);
 
   -- ── A. Reading the Museum Alpha tables and the bake files, as each kind of visitor ──
-  for p in
+  for act in
     select * from (values
       ('signed-out',       null::uuid, null::text),
       ('unapproved user',  v_unap_uid, v_unap_email),
@@ -122,15 +122,15 @@ begin
       ('owner',            v_owner_uid, v_owner_email)
     ) as x(label, uid, email)
   loop
-    if p.label <> 'signed-out' and p.uid is null then
-      perform pg_temp.rec(p.label, 'read the 5 Museum Alpha tables and the bake files', case when p.label = 'owner' then 'readable' else '0 rows' end, null, 'no such account to test with', 'NOT VERIFIED');
+    if act.label <> 'signed-out' and act.uid is null then
+      perform pg_temp.rec(act.label, 'read the 5 Museum Alpha tables and the bake files', case when act.label = 'owner' then 'readable' else '0 rows' end, null, 'no such account to test with', 'NOT VERIFIED');
       continue;
     end if;
 
     foreach t in array array_cat(tbls, array['storage.objects (museum-room-bakes)']) loop
       v_cnt := null; v_state := null; v_msg := null;
       begin
-        if p.label = 'signed-out' then perform pg_temp.act_as_anon(); else perform pg_temp.act_as(p.uid, p.email); end if;
+        if act.label = 'signed-out' then perform pg_temp.act_as_anon(); else perform pg_temp.act_as(act.uid, act.email); end if;
         if t like 'storage.objects%' then
           select count(*) into v_cnt from storage.objects where bucket_id = 'museum-room-bakes';
         else
@@ -141,14 +141,14 @@ begin
       end;
       reset role;
 
-      if v_state is not null and v_state = '42501' and p.label <> 'owner' then
-        perform pg_temp.rec(p.label, 'read ' || t, '0 rows or denied', null, 'denied by permissions (42501)', 'PASS');
+      if v_state is not null and v_state = '42501' and act.label <> 'owner' then
+        perform pg_temp.rec(act.label, 'read ' || t, '0 rows or denied', null, 'denied by permissions (42501)', 'PASS');
       elsif v_state is not null then
-        perform pg_temp.rec(p.label, 'read ' || t, case when p.label = 'owner' then 'readable' else '0 rows' end, null, 'unexpected error ' || v_state || ': ' || left(v_msg, 120), 'FAIL');
-      elsif p.label = 'owner' then
-        perform pg_temp.rec(p.label, 'read ' || t, 'readable, no error', v_cnt::int, v_cnt || ' rows visible', 'PASS');
+        perform pg_temp.rec(act.label, 'read ' || t, case when act.label = 'owner' then 'readable' else '0 rows' end, null, 'unexpected error ' || v_state || ': ' || left(v_msg, 120), 'FAIL');
+      elsif act.label = 'owner' then
+        perform pg_temp.rec(act.label, 'read ' || t, 'readable, no error', v_cnt::int, v_cnt || ' rows visible', 'PASS');
       else
-        perform pg_temp.rec(p.label, 'read ' || t, '0 rows', v_cnt::int, v_cnt || ' rows visible', case when v_cnt = 0 then 'PASS' else 'FAIL' end);
+        perform pg_temp.rec(act.label, 'read ' || t, '0 rows', v_cnt::int, v_cnt || ' rows visible', case when v_cnt = 0 then 'PASS' else 'FAIL' end);
       end if;
     end loop;
   end loop;
@@ -165,20 +165,20 @@ begin
   else
     select museum_beta_enabled into v_orig_beta from public.profiles where id = v_unap_profile;
 
-    for p in
+    for act in
       select * from (values
         ('unapproved user (own profile)', v_unap_uid,  v_unap_email,  'own row: approval trigger must keep it false'),
         ('non-owner admin',               v_admin_uid, v_admin_email, 'other profile: approval trigger must keep it false'),
         ('owner',                         v_owner_uid, v_owner_email, 'owner may approve')
       ) as x(label, uid, email, note)
     loop
-      if p.uid is null then
-        perform pg_temp.rec(p.label, 'set museum_beta_enabled = true', p.note, null, 'no such account to test with', 'NOT VERIFIED');
+      if act.uid is null then
+        perform pg_temp.rec(act.label, 'set museum_beta_enabled = true', act.note, null, 'no such account to test with', 'NOT VERIFIED');
         continue;
       end if;
       v_rows := null; v_after := null; v_state := null; v_msg := null;
       begin
-        perform pg_temp.act_as(p.uid, p.email);
+        perform pg_temp.act_as(act.uid, act.email);
         update public.profiles set museum_beta_enabled = true where id = v_unap_profile;
         get diagnostics v_rows = row_count;
         select museum_beta_enabled into v_after from public.profiles where id = v_unap_profile;
@@ -192,18 +192,18 @@ begin
       reset role;
 
       if v_state is not null then
-        perform pg_temp.rec(p.label, 'set museum_beta_enabled = true', p.note, v_rows, 'unexpected error ' || v_state || ': ' || left(v_msg, 120), 'FAIL');
-      elsif p.label = 'owner' then
-        perform pg_temp.rec(p.label, 'set museum_beta_enabled = true', p.note, v_rows,
+        perform pg_temp.rec(act.label, 'set museum_beta_enabled = true', act.note, v_rows, 'unexpected error ' || v_state || ': ' || left(v_msg, 120), 'FAIL');
+      elsif act.label = 'owner' then
+        perform pg_temp.rec(act.label, 'set museum_beta_enabled = true', act.note, v_rows,
           v_rows || ' row(s) updated, value after: ' || coalesce(v_after::text, 'null'),
           case when v_rows = 1 and v_after = true then 'PASS (owner can approve; undone)'
                when v_rows = 0 then 'INCONCLUSIVE (blocked by row permissions, so the owner path was not exercised)'
                else 'FAIL' end);
       elsif v_rows = 0 then
-        perform pg_temp.rec(p.label, 'set museum_beta_enabled = true', p.note, v_rows, '0 rows updated',
+        perform pg_temp.rec(act.label, 'set museum_beta_enabled = true', act.note, v_rows, '0 rows updated',
           'PASS - blocked by row permissions (approval trigger NOT exercised by this account)');
       else
-        perform pg_temp.rec(p.label, 'set museum_beta_enabled = true', p.note, v_rows,
+        perform pg_temp.rec(act.label, 'set museum_beta_enabled = true', act.note, v_rows,
           v_rows || ' row(s) updated, value after: ' || coalesce(v_after::text, 'null'),
           case when v_after = false then 'PASS - approval trigger tested (update was allowed, value stayed false)'
                else 'FAIL - the account approved itself or someone else' end);
