@@ -364,6 +364,55 @@ begin
     end;
   end if;
 
+  -- ── D2. The settings migration with populated data (every change is undone) ─────────
+  if v_unap_profile is null then
+    perform pg_temp.rec('settings', 'populated migration cases', 'all pass', null, 'no test profile', 'NOT VERIFIED');
+  elsif not exists (select 1 from pg_proc f join pg_namespace n on n.oid = f.pronamespace and n.nspname = 'public' where f.proname = 'vltd_backfill_universe_settings') then
+    perform pg_temp.rec('settings', 'populated migration cases', 'all pass', null, 'the migration function is missing', 'FAIL (run 20261012_collection_interests_and_displayed_universes.sql)');
+  else
+    declare
+      i1 text; d1 text; i2 text; d2 text; i3 text; d3 text; i4 text; d4 text; i5 text; d5 text;
+      n1 int; n5 int; v_flag boolean;
+    begin
+      v_state := null; v_msg := null;
+      select exists (select 1 from public.vltd_migration_flags where name = '20261012_universe_settings_backfill') into v_flag;
+      begin
+        -- Start as a database that only has the old shared column filled in.
+        update public.profiles set focused_universes = array['MUSIC','ART'], collection_interests = null, displayed_universes = null where id = v_unap_profile;
+        -- 1. The first-run copy keeps the old selections in both new columns.
+        n1 := public.vltd_backfill_universe_settings(true, v_unap_profile);
+        select collection_interests::text, displayed_universes::text into i1, d1 from public.profiles where id = v_unap_profile;
+        -- 2. Changing Universes displayed leaves Collection interests alone.
+        update public.profiles set displayed_universes = array['GAMES'] where id = v_unap_profile;
+        select collection_interests::text, displayed_universes::text into i2, d2 from public.profiles where id = v_unap_profile;
+        -- 3. Clearing interests on purpose is stored as an empty list and leaves Universes displayed alone.
+        update public.profiles set collection_interests = array[]::text[] where id = v_unap_profile;
+        select collection_interests::text, displayed_universes::text into i3, d3 from public.profiles where id = v_unap_profile;
+        -- 4. "Show all" (null) is stored, and the cleared interests stay cleared.
+        update public.profiles set displayed_universes = null where id = v_unap_profile;
+        select collection_interests::text, displayed_universes::text into i4, d4 from public.profiles where id = v_unap_profile;
+        -- 5. Running the migration again copies nothing and changes nothing.
+        n5 := public.vltd_backfill_universe_settings();
+        select collection_interests::text, displayed_universes::text into i5, d5 from public.profiles where id = v_unap_profile;
+        raise exception 'ROLLBACK_TEST' using errcode = 'P0001';
+      exception
+        when sqlstate 'P0001' then
+          if sqlerrm <> 'ROLLBACK_TEST' then v_state := sqlstate; v_msg := sqlerrm; end if;
+        when others then
+          v_state := sqlstate; v_msg := sqlerrm;
+      end;
+      if v_state is not null then
+        perform pg_temp.rec('settings', 'populated migration cases', 'all pass', null, 'error ' || v_state || ': ' || left(v_msg, 120), 'FAIL');
+      else
+        perform pg_temp.rec('settings', 'first-run copy keeps the old selections', 'both = {MUSIC,ART}', n1, 'interests=' || coalesce(i1,'null') || ' displayed=' || coalesce(d1,'null'), case when i1 = '{MUSIC,ART}' and d1 = '{MUSIC,ART}' then 'PASS' else 'FAIL' end);
+        perform pg_temp.rec('settings', 'changing Universes displayed leaves interests unchanged', 'interests {MUSIC,ART}, displayed {GAMES}', null, 'interests=' || coalesce(i2,'null') || ' displayed=' || coalesce(d2,'null'), case when i2 = '{MUSIC,ART}' and d2 = '{GAMES}' then 'PASS' else 'FAIL' end);
+        perform pg_temp.rec('settings', 'clearing interests is stored and leaves displayed unchanged', 'interests {} (empty, not null), displayed {GAMES}', null, 'interests=' || coalesce(i3,'null') || ' displayed=' || coalesce(d3,'null'), case when i3 = '{}' and d3 = '{GAMES}' then 'PASS' else 'FAIL' end);
+        perform pg_temp.rec('settings', 'show all (null) is stored; cleared interests stay cleared', 'interests {}, displayed null', null, 'interests=' || coalesce(i4,'null') || ' displayed=' || coalesce(d4,'null'), case when i4 = '{}' and d4 is null then 'PASS' else 'FAIL' end);
+        perform pg_temp.rec('settings', 're-running the migration changes nothing', '0 rows copied; interests {}, displayed null', n5, 'interests=' || coalesce(i5,'null') || ' displayed=' || coalesce(d5,'null') || '; flag present=' || v_flag::text, case when n5 = 0 and i5 = '{}' and d5 is null and v_flag then 'PASS' else 'FAIL' end);
+      end if;
+    end;
+  end if;
+
   -- ── E. The rules as they stand right now ────────────────────────────────────
   insert into access_checks(who, what, expected, rows_affected, actual, result)
   select 'live policies', c.relname, 'no public read policy; owner policy present', null,

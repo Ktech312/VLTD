@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 
 import AddItemMenu from "@/components/AddItemMenu";
 import SeasonalBanner from "@/components/SeasonalBanner";
+import { PillButton } from "@/components/ui/PillButton";
 import { Glyph } from "@/components/ui/Glyph";
 import { getOnboardingStatus } from "@/lib/auth";
 import { loadGalleries, refreshGalleriesFromSupabase, type Gallery } from "@/lib/galleryModel";
@@ -64,20 +65,6 @@ function excerpt(text: string, max = 120) {
   return flat.length > max ? flat.slice(0, max - 1).trimEnd() + "…" : flat;
 }
 
-const pillLink: React.CSSProperties = {
-  display: "inline-flex",
-  alignItems: "center",
-  minHeight: 36,
-  borderRadius: 8,
-  padding: "0 12px",
-  fontSize: 13,
-  fontWeight: 500,
-  textDecoration: "none",
-  color: C.text,
-  border: `1px solid ${C.bd}`,
-  background: "var(--pill, rgba(255,255,255,0.04))",
-};
-
 // ── Bare stat: serif number + tiny label ──────────────────────────
 function Stat({ label, value, tone = "default", ghost = false, onClick, title }: { label: string; value: string; tone?: "default" | "gold" | "gain" | "loss"; ghost?: boolean; onClick?: () => void; title?: string }) {
   const color = ghost ? C.muted : tone === "gold" ? C.gold : tone === "gain" ? C.green : tone === "loss" ? C.red : C.text;
@@ -98,9 +85,7 @@ function Block({ label, link, children }: { label: string; link?: { href: string
     <section style={{ background: panelBg, border: premiumBorder, borderRadius: 8, overflow: "hidden", boxShadow: premiumShadow }}>
       <div style={{ padding: "12px 16px", borderBottom: `1px solid ${C.bd2}`, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
         <h2 style={{ fontSize: 10, letterSpacing: "1.8px", textTransform: "uppercase", color: C.muted, fontWeight: 800 }}>{label}</h2>
-        {link ? (
-          <Link href={link.href} style={{ fontSize: 12, color: C.gold, textDecoration: "none", fontWeight: 600 }}>{link.text}</Link>
-        ) : null}
+        {link ? <PillButton href={link.href}>{link.text}</PillButton> : null}
       </div>
       {children}
     </section>
@@ -226,16 +211,17 @@ export default function HomeClient() {
                 <Stat label={allGhost ? "Value (at cost)" : "Value"} value={valueMode === "priced" && stats.pricedCount === 0 ? "—" : formatMoney(stats.totalValue)} tone="gold" ghost={valueIsGhost} title={basis} />
                 <Stat label="Return" value={pctText} tone={gainTone} ghost={valueIsGhost} onClick={toggleValueMode} title={basis} />
               </div>
-              <button type="button" onClick={toggleValueMode} style={{ marginTop: 10, padding: 0, border: "none", background: "transparent", cursor: "pointer", fontSize: 12, color: C.muted, textAlign: "left" }}>
-                Value basis: {basis} · <span style={{ color: C.gold }}>{valueMode === "fill" ? "Show priced only" : "Include unpriced"}</span>
-              </button>
+              <div style={{ marginTop: 10, display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                <span style={{ fontSize: 12, color: C.muted }}>Value basis: {basis}</span>
+                <PillButton onClick={toggleValueMode}>{valueMode === "fill" ? "Show priced only" : "Include unpriced"}</PillButton>
+              </div>
             </>
           )}
 
           <div style={{ display: "flex", gap: 8, marginTop: 20, flexWrap: "wrap", alignItems: "center" }}>
             <span className="hidden md:inline-flex"><AddItemMenu /></span>
-            <Link href="/portfolio" style={pillLink}>Insights</Link>
-            <Link href="/activity" style={pillLink}>Activity</Link>
+            <PillButton href="/portfolio">Insights</PillButton>
+            <PillButton href="/activity">Activity</PillButton>
           </div>
         </section>
 
@@ -245,7 +231,7 @@ export default function HomeClient() {
             {notices.map((n) => (
               <div key={n.key} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap", padding: "10px 14px", borderRadius: 8, background: "rgba(240,195,106,0.10)", border: "1px solid rgba(240,195,106,0.35)", fontSize: 13 }}>
                 <span>{n.text}</span>
-                <Link href={n.href} style={{ color: C.gold, fontWeight: 700, textDecoration: "none" }}>{n.cta} →</Link>
+                <PillButton href={n.href}>{n.cta}</PillButton>
               </div>
             ))}
           </div>
@@ -297,7 +283,7 @@ export default function HomeClient() {
             ) : (
               <div style={{ flex: "1 1 260px", fontSize: 13, color: C.muted }}>No exhibitions yet. Show a few pieces from your vault.</div>
             )}
-            <Link href="/museum/new" style={pillLink}>Create exhibition</Link>
+            <PillButton href="/museum/new">Create exhibition</PillButton>
           </div>
         </Block>
 

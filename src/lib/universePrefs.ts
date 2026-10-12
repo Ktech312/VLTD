@@ -5,8 +5,12 @@ import { isUniverseKey, type UniverseKey } from "@/lib/taxonomy";
  * Two separate settings, stored in two separate columns:
  *   collection_interests: what you collect (profile, personalises Discover)
  *   displayed_universes:  which universes VLTD shows you (Vault chips, Discover). null means show all.
- * Changing one never touches the other. Before the database update that adds the two columns,
- * both fall back to the older shared column (focused_universes) so nothing looks different.
+ * Changing one never touches the other.
+ *
+ * The older shared column (focused_universes) is only a fallback while the two new columns do not exist yet
+ * (the property is absent from the profile). Once they exist, what is stored there is the truth: an empty
+ * interests list means the person cleared it, and a null displayed list means show everything. Neither is
+ * ever replaced by the old shared value.
  */
 export type UniversePrefs = {
   interests: UniverseKey[];
@@ -24,8 +28,12 @@ export function readUniversePrefs(profile: Record<string, unknown> | null | unde
   const legacy = cleanKeys(p.focused_universes);
   const primary = typeof p.primary_focus === "string" && isUniverseKey(p.primary_focus) ? [p.primary_focus] : [];
 
-  const ownInterests = cleanKeys(p.collection_interests);
-  const interests = ownInterests ?? (legacy && legacy.length > 0 ? legacy : primary);
+  const interests =
+    "collection_interests" in p
+      ? cleanKeys(p.collection_interests) ?? []
+      : legacy && legacy.length > 0
+        ? legacy
+        : primary;
 
   const ownDisplayed = "displayed_universes" in p ? cleanKeys(p.displayed_universes) : legacy;
   const displayed = ownDisplayed && ownDisplayed.length > 0 ? ownDisplayed : null;
@@ -38,7 +46,8 @@ export async function saveCollectionInterests(profileId: string, interests: Univ
   if (!supabase) throw new Error("Supabase not ready");
   const { error } = await supabase
     .from("profiles")
-    .update({ collection_interests: interests.length > 0 ? interests : null })
+    // An empty list is stored as an empty list, so clearing interests on purpose survives a reload.
+    .update({ collection_interests: interests })
     .eq("id", profileId);
   if (error) throw error;
 }
