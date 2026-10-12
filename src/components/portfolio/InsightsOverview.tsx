@@ -783,19 +783,13 @@ export default function InsightsOverview({ items: allItems }: { items: VaultItem
           <Panel className="p-4">
             <div className="flex items-center justify-between gap-3">
               <Label>Value History</Label>
-              <div className="flex gap-1">
+              <div className="flex flex-wrap gap-1.5">
                 {(["7d", "30d", "90d", "all"] as TimeRange[]).map((value) => {
                   const active = value === range;
                   return (
-                    <button
-                      key={value}
-                      type="button"
-                      onClick={() => setRange(value)}
-                      className="h-8 min-w-10 rounded-[7px] px-2 text-xs font-bold"
-                      style={active ? { background: "rgba(203,208,213,0.16)", border: "1px solid rgba(203,208,213,0.44)", color: GOLD } : { color: MUTED, border: "1px solid transparent" }}
-                    >
+                    <PillButton key={value} variant={active ? "active" : "default"} onClick={() => setRange(value)}>
                       {value === "all" ? "1Y" : value.toUpperCase()}
-                    </button>
+                    </PillButton>
                   );
                 })}
               </div>
