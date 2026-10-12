@@ -51,7 +51,8 @@ export default function VltdMuseumAdminGate() {
     async function check() {
       const { role, mfaOk } = await getMyAdminAccessStatus();
       if (cancelled) return;
-      if (!role) {
+      // Museum Alpha is owner-only (2026-10-11): a granted admin who is not the owner is refused too.
+      if (role !== "owner") {
         setState("denied");
         return;
       }
@@ -86,7 +87,7 @@ export default function VltdMuseumAdminGate() {
   }
 
   if (state === "denied") {
-    return <div className="p-8 text-sm text-red-400">Not authorized. Admin access required.</div>;
+    return <div className="p-8 text-sm text-red-400">Not authorized. Owner access required.</div>;
   }
 
   // Perf pass (2026-09-21, EK's own idea): land on the existing lightweight

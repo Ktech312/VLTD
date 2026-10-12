@@ -527,32 +527,33 @@ export default function MuseumPage() {
               : { background: "var(--pill)", color: "var(--muted)", borderColor: "var(--border)" }
           }
         >
-          3D Gallery
+          {museumBetaStatus.enabled ? "Open 3D Gallery" : museumBetaStatus.requestedAt ? "3D Gallery access requested" : "Request 3D Gallery access"}
         </button>
         {/* EK's ask: a second Beta pill next to 3D Gallery — the home for
             the separate public museum campus project (planning stage only
             right now, see the Museum Campus Blueprint doc). */}
-        <button
-          type="button"
-          onClick={() => router.push("/museum/vltd")}
-          className="inline-flex items-center rounded-[8px] px-4 py-1.5 text-sm font-semibold ring-1 ring-[color:var(--border)] transition"
-          style={{ background: "var(--pill)", color: "var(--muted)", borderColor: "var(--border)" }}
-        >
-          VLTD Museum
-        </button>
-        {/* Owner-only: Museum Builder, EK's own room editor for the shared
-            museum. Invisible to every other account, not just blocked —
-            see MuseumBuilderOwnerGate.tsx for the same check enforced on
-            the route itself. */}
+        {/* Owner-only (Museum Alpha): the shared Museum and its Builder are invisible to every other
+            account, not just blocked. Each route enforces the same check, see VltdMuseumAdminGate.tsx
+            and MuseumBuilderOwnerGate.tsx. */}
         {isMuseumOwner ? (
-          <button
-            type="button"
-            onClick={() => router.push("/museum/builder")}
-            className="inline-flex items-center rounded-[8px] px-4 py-1.5 text-sm font-semibold ring-1 ring-[color:var(--border)] transition"
-            style={{ background: "var(--pill)", color: "var(--muted)", borderColor: "var(--border)" }}
-          >
-            Museum Builder
-          </button>
+          <>
+            <button
+              type="button"
+              onClick={() => router.push("/museum/vltd")}
+              className="inline-flex items-center rounded-[8px] px-4 py-1.5 text-sm font-semibold ring-1 ring-[color:var(--border)] transition"
+              style={{ background: "var(--pill)", color: "var(--muted)", borderColor: "var(--border)" }}
+            >
+              Museum Alpha
+            </button>
+            <button
+              type="button"
+              onClick={() => router.push("/museum/builder")}
+              className="inline-flex items-center rounded-[8px] px-4 py-1.5 text-sm font-semibold ring-1 ring-[color:var(--border)] transition"
+              style={{ background: "var(--pill)", color: "var(--muted)", borderColor: "var(--border)" }}
+            >
+              Museum Builder Alpha
+            </button>
+          </>
         ) : null}
       </div>
     </>

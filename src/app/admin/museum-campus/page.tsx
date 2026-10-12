@@ -82,7 +82,7 @@ export default function AdminMuseumCampusPage() {
 
   async function checkAccess() {
     const { role, mfaOk } = await getMyAdminAccessStatus();
-    if (!role) { setNeedsMfa(false); setAuthorized(false); return; }
+    if (role !== "owner") { setNeedsMfa(false); setAuthorized(false); return; }
     if (!mfaOk) { setNeedsMfa(true); setAuthorized(false); return; }
     setNeedsMfa(false);
     setAuthorized(true);
@@ -213,7 +213,7 @@ export default function AdminMuseumCampusPage() {
     );
   }
   if (!authorized) {
-    return <div className="p-8 text-sm text-red-400">Not authorized. Admin access required.</div>;
+    return <div className="p-8 text-sm text-red-400">Not authorized. Owner access required.</div>;
   }
 
   return (

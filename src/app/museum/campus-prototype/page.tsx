@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 
+import MuseumOwnerGate from "@/components/gallery/MuseumOwnerGate";
 import MuseumPrototypeRoom from "@/components/gallery/MuseumPrototypeRoom";
 
 export const metadata: Metadata = {
@@ -8,5 +9,9 @@ export const metadata: Metadata = {
 };
 
 export default function CampusPrototypePage() {
-  return <MuseumPrototypeRoom />;
+  return (
+    <MuseumOwnerGate>
+      <MuseumPrototypeRoom />
+    </MuseumOwnerGate>
+  );
 }

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 
 import VirtualGalleryRoom from "@/components/gallery/VirtualGalleryRoom";
+import VirtualRoomApprovalGate from "@/components/gallery/VirtualRoomApprovalGate";
 
 export const metadata: Metadata = {
   title: "Virtual Room Builder",
@@ -9,5 +10,9 @@ export const metadata: Metadata = {
 };
 
 export default function VirtualRoomPage() {
-  return <VirtualGalleryRoom />;
+  return (
+    <VirtualRoomApprovalGate>
+      <VirtualGalleryRoom />
+    </VirtualRoomApprovalGate>
+  );
 }

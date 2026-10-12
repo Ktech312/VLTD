@@ -1927,17 +1927,19 @@ export default function AdminCharactersPage() {
           {/* VLTD Museum campus — EK's ask (2026-09-02): control the
               Spotlight room's rotating programs, the Store room's items,
               and items-per-room, since these will change over time. */}
-          <SidebarSection
-            title="Museum Campus"
-            icon="landmark"
-            open={openSections["museum-campus"]}
-            active={activeSection === "museum-campus"}
-            onToggle={() => selectSection("museum-campus")}
-          >
-            <p className="text-[11px] leading-4 text-white/40">
-              Spotlight programs, Store items, items-per-room for the public museum campus. Opens on the right.
-            </p>
-          </SidebarSection>
+          {role === "owner" ? (
+            <SidebarSection
+              title="Museum Campus Alpha"
+              icon="landmark"
+              open={openSections["museum-campus"]}
+              active={activeSection === "museum-campus"}
+              onToggle={() => selectSection("museum-campus")}
+            >
+              <p className="text-[11px] leading-4 text-white/40">
+                Spotlight programs, Store items, items-per-room for the public museum campus. Opens on the right.
+              </p>
+            </SidebarSection>
+          ) : null}
         </div>
 
         <div className="shrink-0 p-3 border-t border-white/8 flex items-center justify-between">

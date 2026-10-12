@@ -693,7 +693,7 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
   }, []);
 
   useEffect(() => {
-    getMyAdminRole().then((role) => setIsMuseumMapAdmin(role !== null));
+    getMyAdminRole().then((role) => setIsMuseumMapAdmin(role === "owner"));
   }, []);
 
   useEffect(() => {
