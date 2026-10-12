@@ -1,5 +1,6 @@
 "use client";
 
+import { PillButton } from "@/components/ui/PillButton";
 import { publicItemsTable } from "@/lib/publicItemsSource";
 import { vaultItemFromPublicSnapshot as vaultItemFromGallerySnapshot } from "@/lib/hiddenItems";
 import { publicRowToItem as normalizeVaultItem } from "@/lib/publicProfile";
@@ -108,30 +109,13 @@ function GateCard({
 
           <div className="mt-6 flex flex-col items-center gap-3">
             {!isSignedIn ? (
-              <Link
-                href={`/login?next=${encodeURIComponent(typeof window !== "undefined" ? window.location.pathname : "/")}`}
-                className="vltd-pill-main-glow inline-flex min-h-[48px] items-center justify-center rounded-full bg-[color:var(--pill-active-bg)] px-6 py-3 text-sm font-semibold text-[color:var(--fg)]"
-              >
-                Create Free Account
-              </Link>
+              <PillButton variant="active" href={`/login?next=${encodeURIComponent(typeof window !== "undefined" ? window.location.pathname : "/")}`} className="font-black">Create Free Account</PillButton>
             ) : (
-              <button
-                type="button"
-                onClick={onEnterGuest}
-                className="vltd-pill-main-glow inline-flex min-h-[48px] items-center justify-center rounded-full bg-[color:var(--pill-active-bg)] px-6 py-3 text-sm font-semibold text-[color:var(--fg)]"
-              >
-                Continue to Exhibition
-              </button>
+              <PillButton variant="active" onClick={onEnterGuest} className="font-black">Continue to Exhibition</PillButton>
             )}
 
             {!requiresRegistered ? (
-              <button
-                type="button"
-                onClick={onEnterGuest}
-                className="text-sm text-[color:var(--muted)] underline underline-offset-4"
-              >
-                View as Guest
-              </button>
+              <PillButton onClick={onEnterGuest}>View as Guest</PillButton>
             ) : null}
           </div>
 

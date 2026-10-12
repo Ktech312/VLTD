@@ -1,5 +1,6 @@
 "use client";
 // v2 carousel layout
+import { PillButton } from "@/components/ui/PillButton";
 import ProgressiveImage from "@/components/ui/ProgressiveImage";
 import { AppIcon } from "@/components/ui/AppIcon";
 import type { ScanSessionState } from "@/lib/scanners/scanSession";
@@ -144,6 +145,7 @@ export default function ScanPanel({
               className="flex shrink-0 items-center justify-center rounded-[14px] border border-dashed border-white/20 text-[color:var(--muted)] transition hover:border-white/40"
               style={{ width: 60, minHeight: 144 }}
               title="Take another picture"
+              aria-label="Take another picture"
             >
               <AppIcon name="camera" size={18} strokeWidth={1.8} />
             </button>
@@ -154,6 +156,7 @@ export default function ScanPanel({
             onClick={onUseCamera}
             className="flex min-h-[160px] items-center justify-center overflow-hidden rounded-[20px] bg-[color:var(--surface)] p-2 text-center ring-1 ring-[color:var(--border)] transition hover:bg-black/25 focus:outline-none"
             title="Take a new picture"
+            aria-label="Take a new picture"
           >
             <span
               className="pointer-events-none relative z-10 flex items-center justify-center rounded-full p-3 transition"
@@ -171,6 +174,7 @@ export default function ScanPanel({
               type="button"
               onClick={onUploadImage}
               title="Upload from file"
+              aria-label="Upload a photo from a file"
               className="flex items-center justify-center rounded-full p-0.5 transition hover:opacity-90 active:scale-95 focus:outline-none"
             >
               <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -210,20 +214,15 @@ export default function ScanPanel({
             </button>
           </div>
 
-          <button
-            type="button"
+          <PillButton
             onClick={onScanAutofill}
             disabled={!hasImage || isIdentifying}
-            className="flex w-full items-center justify-center gap-2 rounded-[8px] px-3 py-2 text-sm font-bold transition disabled:opacity-60"
-            style={
-              hasImage
-                ? { background: "linear-gradient(135deg, #8C9298, #C8CDD2)", color: "#0B0B0B", boxShadow: "0 4px 18px rgba(203,208,213,0.28)" }
-                : { background: "var(--pill)", color: "var(--muted)", border: "1px solid var(--border)" }
-            }
+            className="font-bold"
+            style={hasImage ? { background: "linear-gradient(135deg, #8C9298, #C8CDD2)", color: "#0B0B0B", boxShadow: "0 4px 18px rgba(203,208,213,0.28)" } : undefined}
           >
-            <AppIcon name="flash" size={14} strokeWidth={2.2} />
+            <AppIcon name="flash" size={16} strokeWidth={2.2} />
             {isIdentifying ? "Reading..." : hasImage ? "Auto Identify" : "Take a picture first"}
-          </button>
+          </PillButton>
 
           <p className="text-center text-[10px] leading-4 text-[color:var(--muted2)]">
             Take item pictures here. Use one to identify/autofill, then save.

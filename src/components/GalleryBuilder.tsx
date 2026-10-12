@@ -1,5 +1,6 @@
 "use client";
 
+import { pillClassName, type PillVariant } from "@/components/ui/PillButton";
 import { effectiveMarketValue } from "@/lib/vaultStats";
 import { resolveGuestGalleryBackground } from "@/lib/guestGalleryViewModel";
 import { PremiumDisplayCard } from "@/components/gallery/GalleryShelfScene";
@@ -29,6 +30,9 @@ import {
 import BuilderPreviewBridge from "@/components/gallery/BuilderPreviewBridge";
 import { PillSelect, type PillSelectOption } from "@/components/ui/PillSelect";
 import { isUniverseKey, UNIVERSE_LABEL } from "@/lib/taxonomy";
+
+// Compact shared pill (32px, 28px on desktop, 44px touch target on phones) for the builder's dense panels.
+const cp = (variant: PillVariant = "default", extra = "") => pillClassName(variant, false, extra, "compact");
 
 type Props = {
   gallery: Gallery;
@@ -890,7 +894,7 @@ export default function GalleryBuilder({
             <button
               type="button"
               onClick={() => { setPreviewSectionIdx(0); setPreviewExpanded(true); }}
-              className="vltd-pill-micro shrink-0 rounded-[7px] border px-3 py-1 text-[11px] font-semibold transition hover:opacity-90"
+              className={cp("default", "shrink-0")}
             >
               Preview ↗
             </button>
@@ -940,12 +944,7 @@ export default function GalleryBuilder({
                 const saved = await onQuickSave?.(undefined, undefined, true);
                 if (saved !== false) flashQuickSaved();
               }}
-              className={[
-                "inline-flex min-h-[28px] items-center justify-center rounded-full px-2.5 text-[11px] font-semibold ring-1 transition-all hover:opacity-90 active:scale-[0.98]",
-                quickSaveJustSaved
-                  ? ""
-                  : "vltd-pill-main-glow bg-[color:var(--pill-active-bg)] text-[color:var(--fg)] ring-[rgba(203,208,213,0.48)]",
-              ].join(" ")}
+              className={quickSaveJustSaved ? cp("default") : cp("active")}
               style={quickSaveJustSaved ? SAVE_FEEDBACK_STYLE : undefined}
             >
               {quickSaveJustSaved ? "Saved ✓" : "Save"}
@@ -964,7 +963,7 @@ export default function GalleryBuilder({
             {/* Upload Background — uniform pill */}
             <label
               htmlFor={`shelf-upload-${gallery.id}`}
-              className="vltd-selectable inline-flex min-h-[28px] cursor-pointer items-center justify-center rounded-[7px] bg-[color:var(--pill)] px-3 text-[11px] font-semibold text-[color:var(--fg)] ring-1 ring-[color:var(--border)] shadow-sm hover:bg-[color:var(--pill-hover)] transition-all select-none"
+              className={cp("default", "cursor-pointer")}
             >
               Upload Background
             </label>
@@ -972,7 +971,7 @@ export default function GalleryBuilder({
               <button
                 type="button"
                 onClick={() => setBgInfoOpen((open) => !open)}
-                className="vltd-selectable inline-flex h-5 w-5 items-center justify-center rounded-full bg-[color:var(--pill)] text-[10px] font-semibold text-[color:var(--pill-fg)] ring-1 ring-[color:var(--border)]"
+                className={cp("default", "w-8 px-0! md:w-7")}
                 aria-label="Background picture size and format"
                 aria-expanded={bgInfoOpen}
               >
@@ -989,7 +988,7 @@ export default function GalleryBuilder({
                     <button
                       type="button"
                       onClick={() => setBgInfoOpen(false)}
-                      className="text-[11px] font-semibold text-[color:var(--muted)]"
+                      className={cp("default")}
                       aria-label="Close background picture info"
                     >
                       Close
@@ -1022,7 +1021,7 @@ export default function GalleryBuilder({
                       onOpenPicker?.();
                     }
                   }}
-                  className="inline-flex min-h-[28px] items-center justify-center rounded-[7px] bg-[color:var(--surface)] px-3 text-[11px] font-black tracking-wide text-[color:var(--pill-fg)] ring-1 ring-[color:var(--border)] transition-all hover:opacity-90 active:scale-[0.98]"
+                  className={cp("default")}
                 >
                   {editCount === 0 ? "Edit/Add" : `Edit/Add (${editCount})`}
                 </button>
@@ -1042,12 +1041,7 @@ export default function GalleryBuilder({
                   }
                 }}
                 aria-pressed={isOrganizing}
-                className={[
-                  "vltd-selectable inline-flex min-h-[28px] items-center justify-center rounded-full px-2.5 text-[11px] font-semibold ring-1 transition-all hover:opacity-90 active:scale-[0.98]",
-                  isOrganizing
-                    ? "vltd-selected bg-[color:var(--pill-active-bg)] text-[color:var(--fg)]"
-                    : "bg-[color:var(--surface)] text-[color:var(--pill-fg)] ring-[color:var(--border)]",
-                ].join(" ")}
+                className={cp(isOrganizing ? "active" : "default")}
               >
                 {isOrganizing ? "Done" : "Organize"}
               </button>
@@ -1065,7 +1059,7 @@ export default function GalleryBuilder({
                   setBackgroundUploadError("");
                   onGalleryChange((current) => ({ ...current, shelfBackground: "" }));
                 }}
-                className="vltd-selectable inline-flex min-h-[28px] items-center justify-center rounded-[7px] bg-[color:var(--pill)] px-3 text-[11px] font-semibold text-[color:var(--fg)] ring-1 ring-[color:var(--border)] shadow-sm hover:bg-[color:var(--pill-hover)] transition-all"
+                className={cp("default")}
               >
                 Remove BG
               </button>
@@ -1087,12 +1081,12 @@ export default function GalleryBuilder({
                   }
                   setSectionDropdownOpen((v) => !v);
                 }}
-                className="inline-flex min-h-[28px] items-center justify-between gap-1.5 rounded-full bg-[color:var(--pill)] px-3 text-[11px] font-semibold text-[color:var(--fg)] ring-1 ring-[color:var(--border)] shadow-sm hover:bg-[color:var(--pill-hover)] transition-all select-none"
+                className={cp("default", "justify-between")}
               >
                 <span>
                   {"Exhibit #" + (activeSectionIdx + 1)}
                 </span>
-                <AppIcon name="chevronDown" strokeWidth={2.2} className="h-4 w-4 opacity-60 shrink-0" />
+                <AppIcon name="chevronDown" strokeWidth={2.2} className="h-4 w-4 opacity-70 shrink-0" />
               </button>
               {sectionDropdownOpen && typeof document !== "undefined" && createPortal(
                 <>
@@ -1125,7 +1119,7 @@ export default function GalleryBuilder({
                               setSectionDropdownOpen(false);
                             }}
                             className={[
-                              "min-w-0 flex-1 truncate rounded-lg px-2.5 py-1 text-left text-[11px] transition",
+                              "min-h-11 min-w-0 flex-1 truncate rounded-[8px] px-2.5 text-left text-[13px] transition md:min-h-8",
                               i === activeSectionIdx
                                 ? "bg-[color:var(--pill)] font-semibold text-[color:var(--fg)] ring-1 ring-[color:var(--border)]"
                                 : "text-[color:var(--fg)] hover:bg-[color:var(--pill)]",
@@ -1156,8 +1150,7 @@ export default function GalleryBuilder({
                                   setDeleteSectionConfirm(null);
                                   setSectionDropdownOpen(false);
                                 }}
-                                className="vltd-keep-color shrink-0 rounded-full bg-red-600 px-2 py-0.5 text-[10px] font-extrabold"
-                                style={{ "--vltd-keep-color": "#ffffff" } as React.CSSProperties}
+                                className={cp("danger", "shrink-0")}
                               >
                                 Delete?
                               </button>
@@ -1167,8 +1160,7 @@ export default function GalleryBuilder({
                                 aria-label={"Delete exhibit page " + (i + 1)}
                                 title="Delete this exhibit page"
                                 onClick={() => setDeleteSectionConfirm(s.id)}
-                                className="vltd-keep-color flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-red-500/15 text-[15px] font-black leading-none"
-                                style={{ "--vltd-keep-color": "#f87171" } as React.CSSProperties}
+                                className={cp("danger", "w-8 shrink-0 px-0! md:w-7")}
                               >
                                 −
                               </button>
@@ -1196,7 +1188,7 @@ export default function GalleryBuilder({
                         setActiveSectionIdx(sections.length);
                         setSectionDropdownOpen(false);
                       }}
-                      className="mt-1 w-full rounded-lg px-2.5 py-1 text-left text-[11px] text-[color:var(--muted)] hover:bg-[color:var(--pill)] transition"
+                      className="mt-1 flex min-h-11 w-full items-center rounded-[8px] px-2.5 text-left text-[13px] text-[color:var(--fg)] transition hover:bg-[color:var(--pill)] md:min-h-8"
                     >
                       + Add Exhibit
                     </button>
@@ -1313,7 +1305,7 @@ export default function GalleryBuilder({
                   onClick={() => stepExhibit(-1)}
                   aria-label="Previous exhibit"
                   title="Previous exhibit"
-                  className="vltd-dark-surface absolute left-3 top-3 z-30 grid h-8 w-8 place-items-center rounded-full bg-black/45 ring-1 ring-white/25 transition hover:bg-black/65"
+                  className="vltd-dark-surface absolute left-3 top-3 z-30 grid h-8 w-8 place-items-center rounded-full bg-black/45 ring-1 ring-white/25 transition hover:bg-black/65 max-md:after:absolute max-md:after:-inset-1.5 max-md:after:content-['']"
                 >
                   <AppIcon name="arrowLeft" size={16} strokeWidth={2.2} style={{ color: "#fff" }} />
                 </button>
@@ -1322,7 +1314,7 @@ export default function GalleryBuilder({
                   onClick={() => stepExhibit(1)}
                   aria-label="Next exhibit"
                   title="Next exhibit"
-                  className="vltd-dark-surface absolute right-3 top-3 z-30 grid h-8 w-8 place-items-center rounded-full bg-black/45 ring-1 ring-white/25 transition hover:bg-black/65"
+                  className="vltd-dark-surface absolute right-3 top-3 z-30 grid h-8 w-8 place-items-center rounded-full bg-black/45 ring-1 ring-white/25 transition hover:bg-black/65 max-md:after:absolute max-md:after:-inset-1.5 max-md:after:content-['']"
                 >
                   <AppIcon name="arrowLeft" size={16} strokeWidth={2.2} style={{ color: "#fff", transform: "rotate(180deg)" }} />
                 </button>
@@ -1339,7 +1331,7 @@ export default function GalleryBuilder({
                 <button
                   type="button"
                   onClick={() => setWallZoom({ scale: 1, x: 0, y: 0 })}
-                  className="vltd-dark-surface absolute bottom-2 left-2 z-40 rounded-full bg-black/60 px-2.5 py-1 text-[10px] font-semibold ring-1 ring-white/25"
+                  className="vltd-dark-surface absolute bottom-2 left-2 z-40 rounded-[8px] bg-black/60 px-3 py-1.5 text-xs font-medium ring-1 ring-white/25 max-md:after:absolute max-md:after:-inset-1.5 max-md:after:content-['']"
                 >
                   Reset zoom
                 </button>
@@ -1530,7 +1522,7 @@ export default function GalleryBuilder({
                             <button
                               type="button"
                               onClick={(e) => { e.stopPropagation(); handlePreviewRemoveItem(item.id); }}
-                              className="absolute bottom-[26%] left-1 z-30 grid h-[18px] w-[18px] place-items-center rounded-full border border-red-400/70 bg-black/75"
+                              className="absolute bottom-[26%] left-1 z-30 grid h-[18px] w-[18px] place-items-center rounded-full border border-red-400/70 bg-black/75 max-md:after:absolute max-md:after:-inset-3.5 max-md:after:content-['']"
                               style={{ boxShadow: "0 0 8px rgba(248,113,113,0.75), 0 0 18px rgba(248,113,113,0.35)" }}
                               aria-label={`Remove ${item.title}`}
                             >
@@ -1585,7 +1577,7 @@ export default function GalleryBuilder({
                             <button
                               type="button"
                               onClick={(e) => { e.stopPropagation(); handlePreviewRemoveItem(item.id); }}
-                              className="absolute bottom-[26%] left-1 z-30 grid h-[18px] w-[18px] place-items-center rounded-full border border-red-400/70 bg-black/75"
+                              className="absolute bottom-[26%] left-1 z-30 grid h-[18px] w-[18px] place-items-center rounded-full border border-red-400/70 bg-black/75 max-md:after:absolute max-md:after:-inset-3.5 max-md:after:content-['']"
                               style={{ boxShadow: "0 0 8px rgba(248,113,113,0.75), 0 0 18px rgba(248,113,113,0.35)" }}
                               aria-label={`Remove ${item.title}`}
                             >
@@ -1666,10 +1658,11 @@ export default function GalleryBuilder({
         <button
           type="button"
           onClick={() => setIsAdvancedOpen((v) => !v)}
-          className="mt-4 inline-flex min-h-[32px] items-center gap-1.5 rounded-full bg-[color:var(--surface)] px-4 text-[11px] font-semibold text-[color:var(--fg)] ring-1 ring-[color:var(--border)] shadow-sm transition-all hover:bg-[color:var(--pill)]"
+          className={cp("default", "mt-4")}
+          aria-expanded={isAdvancedOpen}
         >
           <span>Advanced</span>
-          <AppIcon name="chevronDown" strokeWidth={2.2} className={["h-3.5 w-3.5 opacity-60 transition-transform duration-200", isAdvancedOpen ? "rotate-180" : ""].join(" ")} />
+          <AppIcon name="chevronDown" strokeWidth={2.2} className={["h-4 w-4 opacity-70 transition-transform duration-200", isAdvancedOpen ? "rotate-180" : ""].join(" ")} />
         </button>
 
         {isAdvancedOpen && sections.length ? (
@@ -1736,7 +1729,7 @@ export default function GalleryBuilder({
                             return syncSectionsAndLayout(current, remaining);
                           })
                         }
-                        className="inline-flex items-center rounded-[7px] bg-[color:var(--pill)] px-3 py-1.5 text-xs font-semibold text-[color:var(--pill-fg)] ring-1 ring-[color:var(--border)]"
+                        className={cp("default")}
                       >
                         Remove Exhibit
                       </button>
@@ -1804,12 +1797,7 @@ export default function GalleryBuilder({
                                       return syncSectionsAndLayout(current, nextSections);
                                     })
                                   }
-                                    className={[
-                                      "vltd-selectable inline-flex items-center rounded-full px-3 py-1 text-[11px] font-semibold ring-1",
-                                      featured
-                                        ? "vltd-selected bg-[color:var(--pill-active-bg)] text-[color:var(--fg)]"
-                                        : "bg-[color:var(--surface)] text-[color:var(--pill-fg)] ring-[color:var(--border)]",
-                                    ].join(" ")}
+                                    className={cp(featured ? "active" : "default")}
                                     aria-pressed={featured}
                                   >
                                     {featured ? "Featured" : "Set Featured"}
@@ -1862,7 +1850,7 @@ export default function GalleryBuilder({
                                   <button
                                     type="button"
                                     onClick={() => removeItemFromSection(section.id, item.id)}
-                                    className="inline-flex items-center rounded-[7px] bg-red-500/10 px-2.5 py-1 text-[11px] font-semibold text-red-100 ring-1 ring-red-400/20"
+                                    className={cp("danger")}
                                   >
                                     Remove
                                   </button>
@@ -2020,7 +2008,7 @@ export default function GalleryBuilder({
                     <button
                       type="button"
                       onClick={() => removeItem(item.id)}
-                      className="absolute bottom-2 right-2 grid h-9 w-9 place-items-center overflow-visible rounded-full border-[3px] border-red-500 bg-transparent text-[0px] text-transparent ring-1 ring-red-100/70 transition hover:scale-105"
+                      className="absolute bottom-2 right-2 grid h-9 w-9 place-items-center overflow-visible rounded-full border-[3px] border-red-500 bg-transparent text-[0px] text-transparent ring-1 ring-red-100/70 transition hover:scale-105 max-md:after:absolute max-md:after:-inset-1 max-md:after:content-['']"
                       style={{
                         boxShadow:
                           "0 0 14px rgba(248,113,113,0.92), 0 0 30px rgba(248,113,113,0.48), inset 0 0 8px rgba(248,113,113,0.24)",
@@ -2067,11 +2055,10 @@ export default function GalleryBuilder({
               <button
                 type="button"
                 onClick={() => setPreviewExpanded(false)}
-                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full transition active:opacity-70"
-                style={{ background: "rgba(255,255,255,0.07)" }}
+                className={cp("default", "w-9 shrink-0 px-0! md:w-8")}
                 aria-label="Close preview"
               >
-                <AppIcon name="close" strokeWidth={1.8} className="h-4 w-4" style={{ color: "var(--muted)" }} />
+                <AppIcon name="close" strokeWidth={1.8} className="h-4 w-4" />
               </button>
             </div>
           </div>

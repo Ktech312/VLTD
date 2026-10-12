@@ -1,5 +1,6 @@
 "use client";
 
+import { PillButton } from "@/components/ui/PillButton";
 import React, { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import { AppIcon } from "@/components/ui/AppIcon";
@@ -313,16 +314,9 @@ export function ItemPickerSheet({
           padding: "max(env(safe-area-inset-top, 0px), 12px) 14px 10px",
         }}
       >
-        <button
-          type="button"
-          onClick={onClose}
-          aria-label="Close picker"
-          title="Close without changing anything"
-          className="!rounded-full transition hover:opacity-80"
-          style={{ flexShrink: 0, width: 34, height: 34, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", border: "1px solid rgba(255,255,255,0.28)", background: "rgba(255,255,255,0.08)", boxShadow: "none", color: "#fff", cursor: "pointer" }}
-        >
-          <AppIcon name="close" strokeWidth={1.8} size={15} />
-        </button>
+        <PillButton onClick={onClose} ariaLabel="Close picker" title="Close without changing anything" className="shrink-0 px-0! w-11 md:w-9">
+          <AppIcon name="close" strokeWidth={1.8} size={16} />
+        </PillButton>
 
         <div style={{ position: "relative", flex: 1 }}>
           <AppIcon name="search" strokeWidth={1.8} size={14} style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", pointerEvents: "none", color: "var(--muted)" }} />
@@ -371,18 +365,17 @@ export function ItemPickerSheet({
           </div>
           {pagesMode ? (
             <div style={{ position: "relative" }}>
-              <button
-                type="button"
+              <PillButton
+                size="compact"
                 onClick={() => setPageMenuOpen((open) => !open)}
-                aria-expanded={pageMenuOpen}
-                aria-label="Choose which exhibit page to add items to"
-                style={{ display: "inline-flex", alignItems: "center", gap: 6, maxWidth: 230, borderRadius: 999, padding: "4px 10px", fontSize: 11, fontWeight: 700, border: "1px solid rgba(255,255,255,0.22)", background: "rgba(255,255,255,0.08)", color: "#fff", cursor: "pointer" }}
+                ariaLabel="Choose which exhibit page to add items to"
+                className="max-w-[230px]"
               >
                 <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{`#${activeIdx + 1} ${activePage.title}`}</span>
-                <AppIcon name="chevronDown" size={12} strokeWidth={2.2} style={{ flexShrink: 0 }} />
-              </button>
+                <AppIcon name="chevronDown" size={16} strokeWidth={2.2} style={{ flexShrink: 0 }} />
+              </PillButton>
               {pageMenuOpen ? (
-                <div style={{ position: "absolute", top: "calc(100% + 6px)", left: 0, zIndex: 30, minWidth: 210, borderRadius: 12, background: "#111827", border: "1px solid rgba(255,255,255,0.18)", padding: 4, boxShadow: "0 18px 40px rgba(0,0,0,0.55)" }}>
+                <div style={{ position: "absolute", top: "calc(100% + 6px)", left: 0, zIndex: 30, minWidth: 210, borderRadius: 8, background: "var(--surface)", border: "1px solid var(--border)", padding: 4, boxShadow: "0 18px 40px rgba(0,0,0,0.55)" }}>
                   {pageStates.map((page, index) => (
                     <div key={page.id} style={{ display: "flex", alignItems: "center", gap: 4 }}>
                       <button
@@ -391,30 +384,27 @@ export function ItemPickerSheet({
                           setActiveIdx(index);
                           setPageMenuOpen(false);
                         }}
-                        style={{ display: "flex", flex: 1, minWidth: 0, justifyContent: "space-between", gap: 14, textAlign: "left", padding: "7px 10px", borderRadius: 8, fontSize: 12, fontWeight: 600, color: "#fff", border: "none", cursor: "pointer", background: index === activeIdx ? "rgba(79,211,238,0.22)" : "transparent" }}
+                        aria-current={index === activeIdx ? "true" : undefined}
+                        className="flex min-h-11 min-w-0 flex-1 items-center justify-between gap-3 rounded-[8px] px-2.5 text-left text-[13px] font-medium text-[color:var(--fg)] md:min-h-9"
+                        style={{ background: index === activeIdx ? "var(--pill-active-bg)" : "transparent" }}
                       >
                         <span>{`#${index + 1} ${page.title}`}</span>
-                        <span style={{ opacity: 0.6 }}>{page.picked.length}</span>
+                        <span style={{ opacity: 0.7 }}>{page.picked.length}</span>
                       </button>
                       {pageStates.length > 1 ? (
                         deletePageConfirm === page.id ? (
-                          <button
-                            type="button"
-                            onClick={() => deletePage(page.id)}
-                            style={{ flexShrink: 0, borderRadius: 999, padding: "2px 8px", fontSize: 10, fontWeight: 800, color: "#fff", background: "#dc2626", border: "none", cursor: "pointer" }}
-                          >
-                            Delete?
-                          </button>
+                          <PillButton size="compact" variant="danger" onClick={() => deletePage(page.id)}>Delete?</PillButton>
                         ) : (
-                          <button
-                            type="button"
-                            aria-label={`Delete exhibit page ${index + 1}`}
+                          <PillButton
+                            size="compact"
+                            variant="danger"
+                            ariaLabel={`Delete exhibit page ${index + 1}`}
                             title="Delete this exhibit page"
                             onClick={() => (page.picked.length > 0 ? setDeletePageConfirm(page.id) : deletePage(page.id))}
-                            style={{ flexShrink: 0, width: 20, height: 20, borderRadius: 999, fontSize: 15, lineHeight: "18px", fontWeight: 900, color: "#f87171", background: "rgba(248,113,113,0.12)", border: "none", cursor: "pointer" }}
+                            className="w-8 px-0! md:w-7"
                           >
-                            −
-                          </button>
+                            <span aria-hidden="true">−</span>
+                          </PillButton>
                         )
                       ) : null}
                     </div>
@@ -422,7 +412,8 @@ export function ItemPickerSheet({
                   <button
                     type="button"
                     onClick={() => addPage()}
-                    style={{ display: "block", width: "100%", textAlign: "left", padding: "7px 10px", borderRadius: 8, fontSize: 12, fontWeight: 700, color: "#67E8F9", border: "none", cursor: "pointer", background: "transparent" }}
+                    className="flex min-h-11 w-full items-center rounded-[8px] px-2.5 text-left text-[13px] font-semibold md:min-h-9"
+                    style={{ color: "#67E8F9" }}
                   >
                     + New exhibit page
                   </button>
@@ -458,21 +449,9 @@ export function ItemPickerSheet({
         {UNIVERSE_KEYS.map((u) => {
           const active = activeUniverses.includes(u);
           return (
-            <button
-              key={u}
-              type="button"
-              onClick={() => toggleUniverse(u)}
-              aria-pressed={active}
-              className={[
-                "vltd-selectable transition",
-                active
-                  ? "vltd-selected bg-[color:var(--pill-active-bg)] text-[color:var(--fg)]"
-                  : "bg-[color:var(--pill)] text-[color:var(--pill-fg)] ring-1 ring-[color:var(--border)]",
-              ].join(" ")}
-              style={{ flexShrink: 0, borderRadius: 999, padding: "3px 10px", fontSize: 10, fontWeight: 700, letterSpacing: "0.02em", border: "none", cursor: "pointer" }}
-            >
+            <PillButton key={u} size="compact" variant={active ? "active" : "default"} pressed={active} onClick={() => toggleUniverse(u)} className="shrink-0">
               {chipLabel(u)}
-            </button>
+            </PillButton>
           );
         })}
       </div>
@@ -493,21 +472,9 @@ export function ItemPickerSheet({
           {categoryOptions.map((option) => {
             const active = activeCategories.includes(option.key);
             return (
-              <button
-                key={option.key}
-                type="button"
-                onClick={() => toggleCategory(option.key)}
-                aria-pressed={active}
-                className={[
-                  "vltd-selectable transition",
-                  active
-                    ? "vltd-selected bg-[color:var(--pill-active-bg)] text-[color:var(--fg)]"
-                    : "bg-[color:var(--pill)] text-[color:var(--pill-fg)] ring-1 ring-[color:var(--border)]",
-                ].join(" ")}
-                style={{ flexShrink: 0, borderRadius: 999, padding: "3px 10px", fontSize: 10, fontWeight: 700, letterSpacing: "0.02em", border: "none", cursor: "pointer", whiteSpace: "nowrap" }}
-              >
+              <PillButton key={option.key} size="compact" variant={active ? "active" : "default"} pressed={active} onClick={() => toggleCategory(option.key)} className="shrink-0">
                 {option.label}
-              </button>
+              </PillButton>
             );
           })}
         </div>
@@ -529,21 +496,9 @@ export function ItemPickerSheet({
           {subOptions.map((option) => {
             const active = activeSubs.includes(option.key);
             return (
-              <button
-                key={option.key}
-                type="button"
-                onClick={() => setActiveSubs((prev) => (prev.includes(option.key) ? prev.filter((k) => k !== option.key) : [...prev, option.key]))}
-                aria-pressed={active}
-                className={[
-                  "vltd-selectable transition",
-                  active
-                    ? "vltd-selected bg-[color:var(--pill-active-bg)] text-[color:var(--fg)]"
-                    : "bg-[color:var(--pill)] text-[color:var(--pill-fg)] ring-1 ring-[color:var(--border)]",
-                ].join(" ")}
-                style={{ flexShrink: 0, borderRadius: 999, padding: "3px 10px", fontSize: 10, fontWeight: 700, letterSpacing: "0.02em", border: "none", cursor: "pointer", whiteSpace: "nowrap" }}
-              >
+              <PillButton key={option.key} size="compact" variant={active ? "active" : "default"} pressed={active} onClick={() => setActiveSubs((prev) => (prev.includes(option.key) ? prev.filter((k) => k !== option.key) : [...prev, option.key]))} className="shrink-0">
                 {option.label}
-              </button>
+              </PillButton>
             );
           })}
         </div>
@@ -660,14 +615,9 @@ export function ItemPickerSheet({
           )}
           {filtered.length > shownCount ? (
             <div style={{ display: "flex", justifyContent: "center", padding: "6px 6px 14px" }}>
-              <button
-                type="button"
-                onClick={() => setShownCount((count) => count + PAGE_SIZE)}
-                className="vltd-selectable bg-[color:var(--pill)] text-[color:var(--pill-fg)] ring-1 ring-[color:var(--border)]"
-                style={{ borderRadius: 999, padding: "8px 18px", fontSize: 12, fontWeight: 700, border: "none", cursor: "pointer" }}
-              >
+              <PillButton onClick={() => setShownCount((count) => count + PAGE_SIZE)}>
                 Show {Math.min(PAGE_SIZE, filtered.length - shownCount)} more ({shownCount} of {filtered.length})
-              </button>
+              </PillButton>
             </div>
           ) : null}
         </div>
@@ -682,27 +632,15 @@ export function ItemPickerSheet({
             role="dialog"
             aria-label="Start a new exhibit page"
             onClick={(event) => event.stopPropagation()}
-            style={{ width: "100%", maxWidth: 340, borderRadius: 16, background: "#111827", border: "1px solid rgba(255,255,255,0.18)", padding: 16, color: "#fff" }}
+            style={{ width: "100%", maxWidth: 340, borderRadius: 16, background: "var(--surface)", border: "1px solid var(--border)", padding: 16, color: "var(--fg)" }}
           >
             <div style={{ fontSize: 14, fontWeight: 700 }}>This page is full ({maxItems} items)</div>
             <div style={{ marginTop: 6, fontSize: 13, lineHeight: 1.45, color: "rgba(255,255,255,0.75)" }}>
               If you add more, it will start a new Exhibit page. Continue?
             </div>
             <div style={{ marginTop: 14, display: "flex", justifyContent: "flex-end", gap: 8 }}>
-              <button
-                type="button"
-                onClick={() => setConfirmNewPageFor(null)}
-                style={{ borderRadius: 999, padding: "7px 16px", fontSize: 12, fontWeight: 700, color: "#fff", background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.2)", cursor: "pointer" }}
-              >
-                No
-              </button>
-              <button
-                type="button"
-                onClick={() => addPage(confirmNewPageFor)}
-                style={{ borderRadius: 999, padding: "7px 16px", fontSize: 12, fontWeight: 700, color: "#fff", background: "rgba(79,211,238,0.3)", border: "1px solid rgba(79,211,238,0.6)", cursor: "pointer" }}
-              >
-                Yes, start a new page
-              </button>
+              <PillButton onClick={() => setConfirmNewPageFor(null)}>No</PillButton>
+              <PillButton variant="active" onClick={() => addPage(confirmNewPageFor)}>Yes, start a new page</PillButton>
             </div>
           </div>
         </div>
@@ -725,8 +663,8 @@ export function ItemPickerSheet({
                 {moveNote || slotLabel}
               </div>
             )}
-            <button
-              type="button"
+            <PillButton
+              variant={(pagesMode ? totalPicked > 0 : pickedCount > 0) || canClear ? "active" : "default"}
               onClick={() => {
                 if (pagesMode && onConfirmPages) {
                   onConfirmPages(pageStates.map((page) => ({ id: page.id, title: page.title, itemIds: [...page.picked, ...page.hidden] })));
@@ -735,22 +673,10 @@ export function ItemPickerSheet({
                 }
               }}
               disabled={pagesMode ? totalPicked === 0 && !canClear : pickedCount === 0 && !canClear}
-              className={["vltd-pill-main-glow transition", (pagesMode ? totalPicked > 0 : pickedCount > 0) || canClear ? "bg-[color:var(--pill-active-bg)]" : "bg-[color:var(--pill)]"].join(" ")}
-              style={{
-                width: "100%",
-                borderRadius: 999,
-                padding: "14px 0",
-                fontSize: 14,
-                fontWeight: 900,
-                letterSpacing: "0.05em",
-                border: "none",
-                color: "#fff",
-                cursor: (pagesMode ? totalPicked > 0 : pickedCount > 0) || canClear ? "pointer" : "default",
-                opacity: (pagesMode ? totalPicked === 0 : pickedCount === 0) && !canClear ? 0.45 : 1,
-              }}
+              className="w-full font-black"
             >
               {addLabel}
-            </button>
+            </PillButton>
           </div>
         </div>
       )}

@@ -1,5 +1,6 @@
 "use client";
 
+import { PillButton, pillClassName } from "@/components/ui/PillButton";
 import { Toggle as Switch } from "@/components/ui/Toggle";
 import { useRef, useState, useMemo, useEffect, useCallback } from "react";
 import { createPortal } from "react-dom";
@@ -745,7 +746,9 @@ function BgPicker({ value, onChange }: { value: string; onChange: (v: string) =>
           key={b.id}
           type="button"
           onClick={() => onChange(b.value)}
-          className={`h-6 w-6 rounded-full transition ${value === b.value ? "ring-2 ring-[color:var(--theme-gold)] ring-offset-1 scale-110" : "ring-1 ring-[color:var(--border)] opacity-70 hover:opacity-100"}`}
+          aria-pressed={value === b.value}
+          aria-label={b.label}
+          className={`relative h-6 w-6 rounded-full transition max-md:after:absolute max-md:after:-inset-2.5 max-md:after:content-[''] focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-2 ${value === b.value ? "ring-2 ring-[color:var(--theme-gold)] ring-offset-1 scale-110" : "ring-1 ring-[color:var(--border)] opacity-70 hover:opacity-100"}`}
           style={{ background: b.value, "--tw-ring-offset-color": "var(--surface)" } as React.CSSProperties}
           title={b.label}
         />
@@ -843,10 +846,10 @@ function ImageCardTab({ item }: { item: VaultItem }) {
         <div className="grid grid-cols-4 gap-2">
           {ASPECT_OPTIONS.map((o) => (
             <button key={o.ratio} type="button" onClick={() => { setRatio(o.ratio); setPreview(null); }}
-              className="flex flex-col items-center gap-1 rounded-xl py-2 text-center ring-1 transition"
-              style={{ background: ratio === o.ratio ? "var(--theme-gold)" : "var(--pill)", color: ratio === o.ratio ? "#0B0B0B" : "var(--fg)" }}>
-              <span className="text-sm font-bold">{o.label}</span>
-              <span className="text-[9px] opacity-70">{o.desc}</span>
+              aria-pressed={ratio === o.ratio}
+              className={pillClassName(ratio === o.ratio ? "active" : "default", false, "h-auto min-h-11 flex-col gap-0.5 py-2")}>
+              <span className="text-[13px] font-semibold">{o.label}</span>
+              <span className="text-[11px] opacity-80">{o.desc}</span>
             </button>
           ))}
         </div>
@@ -863,26 +866,17 @@ function ImageCardTab({ item }: { item: VaultItem }) {
         <div className="mb-2 flex items-center justify-between">
           <div className="text-xs font-semibold uppercase tracking-widest" style={{ color: "var(--muted)" }}>Hashtags</div>
           <div className="flex items-center gap-2">
-            <button type="button" onClick={() => void copyHashtags()}
-              className="rounded-[7px] px-2.5 py-1 text-[10px] font-semibold ring-1 transition"
-              style={{ background: "var(--pill)", color: hashtagsCopied ? "#52C27A" : "var(--muted)", borderColor: hashtagsCopied ? "#52C27A" : "var(--border)" }}>
-              {hashtagsCopied ? "✓ Copied" : "Copy all"}
-            </button>
-            <button type="button" onClick={() => { setShowHashtags(!showHashtags); setPreview(null); }}
-              className="relative h-5 w-9 rounded-full transition-colors flex-shrink-0"
-              style={{ background: showHashtags ? "var(--theme-gold)" : "var(--pill)" }}>
-              <span className="absolute top-0.5 left-0.5 h-4 w-4 rounded-full bg-white shadow transition-transform"
-                style={{ transform: showHashtags ? "translateX(16px)" : "translateX(0)" }} />
-            </button>
+            <PillButton size="compact" onClick={() => void copyHashtags()}>
+              {hashtagsCopied ? (<><AppIcon name="checkmark" size={14} /> Copied</>) : "Copy all"}
+            </PillButton>
+            <Switch on={showHashtags} onChange={() => { setShowHashtags(!showHashtags); setPreview(null); }} ariaLabel="Show hashtags on the image" />
           </div>
         </div>
         <div className="flex flex-wrap gap-1.5">
           {allTags.map(tag => (
-            <button key={tag} type="button" onClick={() => toggleTag(tag)}
-              className="rounded-full px-2.5 py-1 text-[11px] font-medium transition"
-              style={{ background: activeTags.has(tag) ? "rgba(203,208,213,0.18)" : "var(--pill)", color: activeTags.has(tag) ? "#C8CDD2" : "var(--muted)", border: activeTags.has(tag) ? "1px solid rgba(203,208,213,0.40)" : "1px solid var(--border)" }}>
+            <PillButton key={tag} size="compact" variant={activeTags.has(tag) ? "active" : "default"} pressed={activeTags.has(tag)} onClick={() => toggleTag(tag)}>
               #{tag}
-            </button>
+            </PillButton>
           ))}
         </div>
         <div className="mt-2 flex gap-2">
@@ -891,11 +885,7 @@ function ImageCardTab({ item }: { item: VaultItem }) {
             placeholder="Add hashtag…"
             className="flex-1 rounded-xl px-3 py-1.5 text-sm outline-none ring-1 transition focus:ring-[color:var(--theme-gold)]"
             style={{ background: "var(--pill)", color: "var(--fg)", borderColor: "var(--border)" }} />
-          <button type="button" onClick={addCustomTag}
-            className="rounded-xl px-3 py-1.5 text-sm font-semibold ring-1 transition"
-            style={{ background: "var(--pill)", color: "var(--muted)", borderColor: "var(--border)" }}>
-            +
-          </button>
+          <PillButton onClick={addCustomTag} ariaLabel="Add hashtag" title="Add hashtag">+</PillButton>
         </div>
         <div className="mt-1.5 text-[10px]" style={{ color: "var(--muted)" }}>
           {activeTags.size} selected · {showHashtags ? "will appear on image" : "copy to use in caption"}
@@ -925,35 +915,21 @@ function ImageCardTab({ item }: { item: VaultItem }) {
           toggling Preview/Edit, rather than two separate mounts. */}
       <div className="flex gap-2">
         {!preview ? (
-          <button type="button" onClick={() => void handleExport()} disabled={exporting}
-            className="flex-1 rounded-2xl py-3 text-sm font-bold transition"
-            style={{ background: "linear-gradient(180deg,#79E7FB,#41C6E4 55%,#2CB1D1)", color: "#06171d", opacity: exporting ? 0.6 : 1 }}>
+          <PillButton onClick={() => void handleExport()} disabled={exporting} className="font-black" style={{ background: "linear-gradient(180deg,#79E7FB,#41C6E4 55%,#2CB1D1)", color: "#06171d" }}>
             {exporting ? "Generating…" : `Preview ${specLabel?.desc ?? ratio}`}
-          </button>
+          </PillButton>
         ) : (
           <>
-            <button type="button" onClick={() => setPreview(null)}
-              className="rounded-2xl px-4 py-3 text-sm font-semibold ring-1 ring-[color:var(--border)]"
-              style={{ background: "var(--pill)", color: "var(--fg)" }}>
-              Edit
-            </button>
+            <PillButton onClick={() => setPreview(null)}>Edit</PillButton>
             {typeof navigator !== "undefined" && "share" in navigator && (
-              <button type="button" onClick={() => void handleShare()}
-                className="rounded-2xl px-4 py-3 text-sm font-semibold ring-1 ring-[color:var(--border)]"
-                style={{ background: "var(--pill)", color: "var(--fg)" }}>
-                Share
-              </button>
+              <PillButton onClick={() => void handleShare()}>Share</PillButton>
             )}
-            <button type="button" onClick={handleDownload}
-              className="flex-1 rounded-2xl py-3 text-sm font-bold"
-              style={{ background: "linear-gradient(180deg,#79E7FB,#41C6E4 55%,#2CB1D1)", color: "#06171d" }}>
-              Download PNG
-            </button>
+            <PillButton onClick={handleDownload} className="font-black" style={{ background: "linear-gradient(180deg,#79E7FB,#41C6E4 55%,#2CB1D1)", color: "#06171d" }}>Download PNG</PillButton>
           </>
         )}
         <GenerateCopyPanel item={item} mode="social"
           onAccept={(text) => void navigator.clipboard?.writeText(text)}
-          triggerLabel="✦ Generate caption"
+          triggerLabel="Generate caption"
           fullWidth={!preview} />
       </div>
 
@@ -1061,30 +1037,16 @@ function ThenVsNowTab({ item }: { item: VaultItem }) {
       {/* Actions */}
       <div className="flex gap-2">
         {!preview ? (
-          <button type="button" onClick={() => void handleGenerate()} disabled={exporting || !hasBoth}
-            className="flex-1 rounded-2xl py-3 text-sm font-bold transition"
-            style={{ background: "linear-gradient(180deg,#79E7FB,#41C6E4 55%,#2CB1D1)", color: "#06171d", opacity: (exporting || !hasBoth) ? 0.5 : 1 }}>
+          <PillButton onClick={() => void handleGenerate()} disabled={exporting || !hasBoth} className="font-black" style={{ background: "linear-gradient(180deg,#79E7FB,#41C6E4 55%,#2CB1D1)", color: "#06171d" }}>
             {exporting ? "Generating…" : "Preview Card"}
-          </button>
+          </PillButton>
         ) : (
           <>
-            <button type="button" onClick={() => setPreview(null)}
-              className="rounded-2xl px-4 py-3 text-sm font-semibold ring-1 ring-[color:var(--border)]"
-              style={{ background: "var(--pill)", color: "var(--fg)" }}>
-              Edit
-            </button>
+            <PillButton onClick={() => setPreview(null)}>Edit</PillButton>
             {typeof navigator !== "undefined" && "share" in navigator && (
-              <button type="button" onClick={() => void handleShare()}
-                className="rounded-2xl px-4 py-3 text-sm font-semibold ring-1 ring-[color:var(--border)]"
-                style={{ background: "var(--pill)", color: "var(--fg)" }}>
-                Share
-              </button>
+              <PillButton onClick={() => void handleShare()}>Share</PillButton>
             )}
-            <button type="button" onClick={handleDownload}
-              className="flex-1 rounded-2xl py-3 text-sm font-bold"
-              style={{ background: "linear-gradient(180deg,#79E7FB,#41C6E4 55%,#2CB1D1)", color: "#06171d" }}>
-              Download PNG
-            </button>
+            <PillButton onClick={handleDownload} className="font-black" style={{ background: "linear-gradient(180deg,#79E7FB,#41C6E4 55%,#2CB1D1)", color: "#06171d" }}>Download PNG</PillButton>
           </>
         )}
       </div>
@@ -1186,7 +1148,7 @@ function VideoTab({ item }: { item: VaultItem }) {
             <button
               type="button"
               onClick={handleReplay}
-              className="absolute bottom-3 right-3 flex h-10 w-10 items-center justify-center rounded-full shadow-lg transition active:scale-95"
+              className="absolute bottom-3 right-3 flex h-11 w-11 items-center justify-center rounded-full shadow-lg transition active:scale-95 focus-visible:outline-2 focus-visible:outline-white"
               style={{ background: "rgba(0,0,0,0.72)", border: "1px solid rgba(203,208,213,0.4)" }}
               aria-label="Replay video"
             >
@@ -1198,36 +1160,18 @@ function VideoTab({ item }: { item: VaultItem }) {
 
       <div className="flex gap-2">
         {!videoUrl ? (
-          <button type="button" onClick={() => void handleRecord()} disabled={recording}
-            className="flex-1 rounded-2xl py-3 text-sm font-bold transition"
-            style={{ background: "linear-gradient(180deg,#79E7FB,#41C6E4 55%,#2CB1D1)", color: "#06171d", opacity: recording ? 0.6 : 1 }}>
+          <PillButton onClick={() => void handleRecord()} disabled={recording} className="font-black" style={{ background: "linear-gradient(180deg,#79E7FB,#41C6E4 55%,#2CB1D1)", color: "#06171d" }}>
             {recording ? "Generating… (~5 sec)" : "Generate Video"}
-          </button>
+          </PillButton>
         ) : (
           <>
-            <button type="button" onClick={() => { setVideoUrl(null); setVideoBlob(null); setEnded(false); }}
-              className="rounded-2xl px-4 py-3 text-sm font-semibold ring-1 ring-[color:var(--border)]"
-              style={{ background: "var(--pill)", color: "var(--fg)" }}>
-              Redo
-            </button>
+            <PillButton onClick={() => { setVideoUrl(null); setVideoBlob(null); setEnded(false); }}>Redo</PillButton>
             {canShare ? (
-              <button type="button" onClick={() => void handleShare()}
-                className="flex-1 rounded-2xl py-3 text-sm font-bold"
-                style={{ background: "linear-gradient(180deg,#79E7FB,#41C6E4 55%,#2CB1D1)", color: "#06171d" }}>
-                Share
-              </button>
+              <PillButton onClick={() => void handleShare()} className="font-black" style={{ background: "linear-gradient(180deg,#79E7FB,#41C6E4 55%,#2CB1D1)", color: "#06171d" }}>Share</PillButton>
             ) : (
-              <button type="button" onClick={handleDownload}
-                className="flex-1 rounded-2xl py-3 text-sm font-bold"
-                style={{ background: "linear-gradient(180deg,#79E7FB,#41C6E4 55%,#2CB1D1)", color: "#06171d" }}>
-                Save .webm
-              </button>
+              <PillButton onClick={handleDownload} className="font-black" style={{ background: "linear-gradient(180deg,#79E7FB,#41C6E4 55%,#2CB1D1)", color: "#06171d" }}>Save .webm</PillButton>
             )}
-            <button type="button" onClick={handleDownload}
-              className="rounded-2xl px-4 py-3 text-sm font-semibold ring-1 ring-[color:var(--border)]"
-              style={{ background: "var(--pill)", color: "var(--fg)" }}>
-              Save
-            </button>
+            <PillButton onClick={handleDownload}>Save</PillButton>
           </>
         )}
       </div>
@@ -1327,22 +1271,16 @@ function CarouselTab({ currentItem }: { currentItem: VaultItem }) {
             const imgUrl = getPrimaryImageUrl(i);
             const isSel = selected.has(i.id);
             return (
-              <button key={i.id} type="button" onClick={() => toggleItem(i.id)}
-                className="relative rounded-xl overflow-hidden ring-2 transition aspect-square"
+              <button key={i.id} type="button" onClick={() => toggleItem(i.id)} aria-pressed={isSel} aria-label={i.title}
+                className="relative rounded-xl overflow-hidden ring-2 transition aspect-square focus:outline-none focus-visible:ring-[color:var(--pill-active-ring)]"
                 style={{ border: isSel ? "2px solid #C8CDD2" : "2px solid transparent" }}>
                 {imgUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={imgUrl} alt={i.title} className="h-full w-full object-cover" />
+                  <img src={imgUrl} alt="" className="h-full w-full object-cover" />
                 ) : (
                   <div className="h-full w-full flex items-center justify-center text-[9px] text-center p-1"
                     style={{ background: "var(--pill)", color: "var(--muted)" }}>
                     {i.title.slice(0, 12)}
-                  </div>
-                )}
-                {isSel && (
-                  <div className="absolute top-1 right-1 h-5 w-5 rounded-full flex items-center justify-center text-[10px] font-bold"
-                    style={{ background: "#C8CDD2", color: "#0B0B0B" }}>
-                    {Array.from(selected).indexOf(i.id) + 1}
                   </div>
                 )}
               </button>
@@ -1353,12 +1291,9 @@ function CarouselTab({ currentItem }: { currentItem: VaultItem }) {
 
       {/* Export */}
       <div className="flex gap-2">
-        <button type="button" onClick={() => void handleExportAll()}
-          disabled={exporting || selected.size === 0}
-          className="flex-1 rounded-2xl py-3 text-sm font-bold transition"
-          style={{ background: exported ? "#4CAF82" : "var(--theme-gold)", color: "#0B0B0B", opacity: (exporting || selected.size === 0) ? 0.5 : 1 }}>
-          {exporting ? `Generating ${selected.size} card${selected.size !== 1 ? "s" : ""}…` : exported ? "✓ Done!" : `Share ${selected.size} Card${selected.size !== 1 ? "s" : ""}`}
-        </button>
+        <PillButton onClick={() => void handleExportAll()} disabled={exporting || selected.size === 0} className="font-black" style={{ background: exported ? "#4CAF82" : "var(--theme-gold)", color: "#0B0B0B" }}>
+          {exporting ? `Generating ${selected.size} card${selected.size !== 1 ? "s" : ""}…` : exported ? "Done" : `Share ${selected.size} Card${selected.size !== 1 ? "s" : ""}`}
+        </PillButton>
       </div>
 
       <div className="text-[10px] text-center" style={{ color: "var(--muted)" }}>
@@ -1375,11 +1310,11 @@ type Props = {
   initialTab?: Tab;
 };
 
-const TAB_CONFIG: { id: Tab; label: string; emoji: string }[] = [
-  { id: "image",       label: "Image",     emoji: "📷" },
-  { id: "then-vs-now", label: "Then vs Now", emoji: "↗️" },
-  { id: "video",       label: "Video",     emoji: "🎬" },
-  { id: "carousel",    label: "Carousel",  emoji: "🗂️" },
+const TAB_CONFIG: { id: Tab; label: string; icon: "camera" | "insights" | "play" | "layers" }[] = [
+  { id: "image",       label: "Image",       icon: "camera" },
+  { id: "then-vs-now", label: "Then vs Now", icon: "insights" },
+  { id: "video",       label: "Video",       icon: "play" },
+  { id: "carousel",    label: "Carousel",    icon: "layers" },
 ];
 
 export default function SocialExportSheet({ item, onClose, initialTab = "image" }: Props) {
@@ -1416,26 +1351,16 @@ export default function SocialExportSheet({ item, onClose, initialTab = "image" 
                 {item.title}
               </div>
             </div>
-            <button type="button" onClick={onClose}
-              className="rounded-full p-2 text-lg leading-none"
-              style={{ background: "var(--pill)", color: "var(--muted)" }}>
-              ✕
-            </button>
+            <PillButton onClick={onClose} ariaLabel="Close" title="Close"><AppIcon name="close" size={16} /></PillButton>
           </div>
 
           {/* Tab nav */}
-          <div className="flex gap-1 rounded-2xl p-1 ring-1 ring-[color:var(--border)]" style={{ background: "var(--pill)" }}>
+          <div role="tablist" aria-label="Export type" className="flex flex-wrap gap-2">
             {TAB_CONFIG.map(t => (
-              <button key={t.id} type="button" onClick={() => setTab(t.id)}
-                className="flex-1 rounded-xl py-2 text-center text-[11px] font-bold transition"
-                style={{
-                  background: tab === t.id ? "var(--theme-gold)" : "transparent",
-                  color: tab === t.id ? "#0B0B0B" : "var(--muted)",
-                }}>
-                <span className="block sm:hidden">{t.emoji}</span>
-                <span className="hidden sm:block">{t.label}</span>
-                <span className="sm:hidden text-[9px] block leading-tight mt-0.5">{t.label}</span>
-              </button>
+              <PillButton key={t.id} variant={tab === t.id ? "active" : "default"} pressed={tab === t.id} onClick={() => setTab(t.id)}>
+                <AppIcon name={t.icon} size={16} />
+                {t.label}
+              </PillButton>
             ))}
           </div>
 

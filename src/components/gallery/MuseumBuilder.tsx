@@ -92,6 +92,7 @@
 //     none of those are modified, only new sibling setters are added
 //     (setRoomCapacities/setRoomBackgroundImage/setRoomWallLayout) for the
 //     per-room settings this page introduces.
+import { pillClassName, type PillVariant } from "@/components/ui/PillButton";
 import { effectiveMarketValue } from "@/lib/vaultStats";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import Link from "next/link";
@@ -175,6 +176,9 @@ import MuseumCampusOverview from "./MuseumCampusOverview";
 // work order's consolidation is actually about), consistent with how
 // MuseumRoomPopup.tsx itself already justifies keeping its own copy rather
 // than a shared import.
+// Compact shared pill: 32px (28px on desktop) with a 44px touch target on phones.
+const cp = (variant: PillVariant = "default", extra = "") => pillClassName(variant, false, extra, "compact");
+
 function baseFinishForRoom(roomId: CampusRoomId): RoomFinish {
   if (roomId === "POP_CULTURE" || roomId === "TCG" || roomId === "COLLECTION") return NEUTRAL_PREVIEW_FINISH;
   if (roomId === "HUB") return HUB_FINISH;
@@ -1126,7 +1130,7 @@ export default function MuseumBuilder() {
                 type="button"
                 onClick={() => setRoomPanelOpen((current) => !current)}
                 aria-label={roomPanelOpen ? "Collapse room settings" : "Expand room settings"}
-                className="grid h-6 w-6 place-items-center rounded-[5px] bg-[color:var(--input)] text-[color:var(--muted2)] ring-1 ring-[color:var(--border)] transition hover:text-[color:var(--fg)]"
+                className={cp("default", "w-8 px-0! md:w-7")}
               >
                 {roomPanelOpen ? <AppIcon name="chevronUp" size={14} /> : <AppIcon name="chevronDown" size={14} />}
               </button>
@@ -1217,10 +1221,7 @@ export default function MuseumBuilder() {
                         onClick={() => void handleStyleChange(active ? null : option.id)}
                         aria-pressed={active}
                         title={option.label}
-                        className={[
-                          "flex h-6 items-center rounded-[5px] px-2 text-[11px] font-bold ring-1 transition",
-                          active ? "bg-[color:var(--input)] ring-cyan-400" : "bg-[color:var(--input)] ring-[color:var(--border)] hover:bg-black/10",
-                        ].join(" ")}
+                        className={cp(active ? "active" : "default")}
                       >
                         {option.label}
                       </button>
@@ -1249,14 +1250,7 @@ export default function MuseumBuilder() {
                         onClick={() => void handleFrameStyleChange(option.id)}
                         aria-pressed={active}
                         title={disabled ? "Classic is a no-shelf look — this room has shelves enabled" : option.label}
-                        className={[
-                          "flex h-6 items-center rounded-[5px] px-2 text-[11px] font-bold ring-1 transition",
-                          disabled
-                            ? "cursor-not-allowed bg-[color:var(--input)] text-[color:var(--muted)] opacity-40 ring-[color:var(--border)]"
-                            : active
-                              ? "bg-[color:var(--input)] ring-cyan-400"
-                              : "bg-[color:var(--input)] ring-[color:var(--border)] hover:bg-black/10",
-                        ].join(" ")}
+                        className={pillClassName(active ? "active" : "default", disabled, "", "compact")}
                       >
                         {option.label}
                       </button>
@@ -1285,7 +1279,7 @@ export default function MuseumBuilder() {
                     <button
                       type="button"
                       onClick={() => void handleBackgroundImageClear()}
-                      className="flex h-6 items-center rounded-[5px] bg-[color:var(--input)] px-2 text-[11px] font-bold text-[color:var(--muted)] ring-1 ring-[color:var(--border)] transition hover:text-[color:var(--fg)]"
+                      className={cp("default")}
                     >
                       Remove
                     </button>
@@ -1458,12 +1452,8 @@ function Segmented({
           key={optionValue}
           type="button"
           onClick={() => onChange(optionValue)}
-          className={[
-            "rounded-[4px] px-1 text-[10px] font-black leading-none transition",
-            optionValue === value
-              ? "bg-[rgba(79,211,238,0.18)] text-[#67E8F9] shadow-[0_0_12px_rgba(79,211,238,0.16)]"
-              : "text-[color:var(--muted)]",
-          ].join(" ")}
+          aria-pressed={optionValue === value}
+          className={cp(optionValue === value ? "active" : "default", "px-1.5!")}
         >
           {label}
         </button>

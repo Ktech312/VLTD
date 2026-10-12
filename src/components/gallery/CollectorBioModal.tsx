@@ -1,5 +1,6 @@
 "use client";
 
+import { PillButton, pillClassName, type PillVariant } from "@/components/ui/PillButton";
 import Link from "next/link";
 import React, { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
@@ -14,6 +15,9 @@ import { getPrimaryImageUrl, type VaultItem } from "@/lib/vaultModel";
 import { UNIVERSE_LABEL, type UniverseKey } from "@/lib/taxonomy";
 import { getFollowerCount, isFollowing } from "@/lib/follows";
 import { FollowButton } from "@/components/social/FollowButton";
+
+// Compact shared pill: 32px (28px on desktop) with a 44px touch target on phones.
+const cp = (variant: PillVariant = "default", extra = "") => pillClassName(variant, false, extra, "compact");
 
 const ACTIVE_PROFILE_KEY = "vltd_active_profile_id_v1";
 
@@ -173,15 +177,9 @@ export default function CollectorBioModal({
           padding: 20,
         }}
       >
-        <button
-          type="button"
-          onClick={onClose}
-          aria-label="Close"
-          className="vltd-selectable bg-[color:var(--pill)] text-[color:var(--pill-fg)] ring-1 ring-[color:var(--border)] transition"
-          style={{ position: "absolute", right: 14, top: 14, width: 30, height: 30, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", border: "none", cursor: "pointer" }}
-        >
-          <AppIcon name="close" strokeWidth={1.8} size={13} />
-        </button>
+        <PillButton onClick={onClose} ariaLabel="Close" title="Close" className="absolute right-3.5 top-3.5 w-11 px-0! md:w-9">
+          <AppIcon name="close" strokeWidth={1.8} size={16} />
+        </PillButton>
 
         {!data ? (
           <div style={{ padding: "40px 0", textAlign: "center", fontSize: 13, color: "var(--muted)" }}>
@@ -279,13 +277,7 @@ export default function CollectorBioModal({
               </div>
             )}
 
-            <Link
-              href={`/v/${data.profile.profileId}`}
-              className="vltd-pill-main-glow bg-[color:var(--pill-active-bg)] text-[color:var(--fg)] transition"
-              style={{ marginTop: 18, display: "flex", alignItems: "center", justifyContent: "center", borderRadius: 999, padding: "11px 0", fontSize: 13, fontWeight: 700 }}
-            >
-              View Full Vault
-            </Link>
+            <PillButton variant="active" href={`/v/${data.profile.profileId}`} className="mt-4 font-black">View Full Vault</PillButton>
           </>
         )}
       </div>

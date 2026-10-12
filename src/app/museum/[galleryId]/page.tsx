@@ -1,5 +1,6 @@
 ﻿"use client";
 
+import { pillClassName, type PillVariant } from "@/components/ui/PillButton";
 import { accessDescription, applyAccessMode, getAccessMode, type GalleryAccessPillMode } from "@/lib/galleryAccess";
 import { buildPublicSnapshot, vaultItemFromPublicSnapshot as vaultItemFromGallerySnapshot } from "@/lib/hiddenItems";
 import Link from "next/link";
@@ -198,17 +199,17 @@ function normalizeDraftForCompare(gallery: Gallery | null) {
   });
 }
 
+// Every control in the exhibit editor uses the one shared compact pill (32px, 28px on desktop, 44px touch target on phones).
+function compactPill(variant: PillVariant = "default", extra = "") {
+  return pillClassName(variant, false, extra, "compact");
+}
+
 function accessPillClass(active: boolean) {
-  return [
-    "vltd-selectable inline-flex min-h-[32px] items-center justify-center rounded-full px-3 py-1 text-[11px] font-semibold ring-1 transition xl:min-h-[26px] xl:px-2.5 xl:text-[10px]",
-    active
-      ? "vltd-pill-main-glow bg-[color:var(--pill-active-bg)] text-[color:var(--pill-active-fg)]"
-      : "bg-[color:var(--pill)] text-[color:var(--pill-fg)] ring-[color:var(--border)] hover:bg-[color:var(--pill-hover)]",
-  ].join(" ");
+  return compactPill(active ? "active" : "default");
 }
 
 function neutralPillClass() {
-  return "vltd-selectable inline-flex min-h-[38px] items-center justify-center rounded-full bg-[color:var(--pill)] px-4 py-1.5 text-xs font-semibold text-[color:var(--pill-fg)] ring-1 ring-[color:var(--border)] transition hover:bg-[color:var(--pill-hover)]";
+  return compactPill("default");
 }
 
 export default function GalleryPage() {
@@ -974,7 +975,7 @@ export default function GalleryPage() {
                     onClick={() => setHeaderEditing((value) => !value)}
                     aria-label={headerEditing ? "Done editing title and description" : "Edit title and description"}
                     title={headerEditing ? "Done" : "Edit title and description"}
-                    className="mx-auto mt-1 flex h-6 w-6 items-center justify-center rounded-[6px] text-white/70 ring-1 ring-white/25 transition hover:text-white"
+                    className="relative mx-auto mt-1 flex h-7 w-7 items-center justify-center rounded-[8px] text-white/80 ring-1 ring-white/30 transition hover:text-white max-md:after:absolute max-md:after:-inset-2 max-md:after:content-['']"
                   >
                     <AppIcon name={headerEditing ? "checkmark" : "edit"} size={12} strokeWidth={1.8} />
                   </button>
@@ -1025,7 +1026,7 @@ export default function GalleryPage() {
                   <button
                     type="button"
                     onClick={copyShareLink}
-                    className="vltd-pill-main-glow inline-flex min-h-[30px] shrink-0 items-center justify-center rounded-full bg-[color:var(--pill-active-bg)] px-2 py-1 text-[10px] font-semibold text-[color:var(--fg)] transition hover:opacity-95 xl:min-h-[28px]"
+                    className={compactPill("active", "shrink-0")}
                   >
                     {copied ? "Copied" : "Copy Link"}
                   </button>
@@ -1038,7 +1039,7 @@ export default function GalleryPage() {
                   <button
                     type="button"
                     onClick={() => setConfirmRegenerate(true)}
-                    className="vltd-selectable inline-flex min-h-[30px] items-center justify-center rounded-[7px] bg-[color:var(--pill)] px-2 py-1 text-[9px] font-semibold text-[color:var(--pill-fg)] ring-1 ring-[color:var(--border)] transition hover:bg-[color:var(--pill-hover)] xl:min-h-[28px]"
+                    className={compactPill("default")}
                   >
                     Regenerate
                   </button>
@@ -1054,14 +1055,14 @@ export default function GalleryPage() {
                     <button
                       type="button"
                       onClick={() => { setConfirmRegenerate(false); handleRegeneratePublicLink(); }}
-                      className="vltd-pill-main-glow rounded-full bg-[color:var(--pill-active-bg)] px-3 py-1 text-[10px] font-semibold text-[color:var(--fg)]"
+                      className={compactPill("active")}
                     >
                       Regenerate
                     </button>
                     <button
                       type="button"
                       onClick={() => setConfirmRegenerate(false)}
-                      className="vltd-selectable rounded-full bg-[color:var(--pill)] px-3 py-1 text-[10px] font-semibold text-[color:var(--pill-fg)] ring-1 ring-[color:var(--border)]"
+                      className={compactPill("default")}
                     >
                       Cancel
                     </button>
@@ -1077,7 +1078,7 @@ export default function GalleryPage() {
                     <button
                       type="button"
                       onClick={() => setAccessInfoOpen((current) => !current)}
-                      className="vltd-selectable inline-flex h-5 w-5 items-center justify-center rounded-full bg-[color:var(--pill)] text-[10px] font-semibold text-[color:var(--pill-fg)] ring-1 ring-[color:var(--border)]"
+                      className={compactPill("default", "w-8 px-0! md:w-7")}
                       aria-label="Access mode help"
                       aria-expanded={accessInfoOpen}
                     >
@@ -1092,7 +1093,7 @@ export default function GalleryPage() {
                         <button
                           type="button"
                           onClick={() => setAccessInfoOpen(false)}
-                          className="vltd-selectable inline-flex h-7 w-7 items-center justify-center rounded-full bg-[color:var(--pill)] text-xs font-semibold text-[color:var(--pill-fg)] ring-1 ring-[color:var(--border)]"
+                          className={compactPill("default", "w-8 px-0! md:w-7")}
                           aria-label="Close access mode help"
                         >
                           X
@@ -1142,14 +1143,14 @@ export default function GalleryPage() {
                       <button
                         type="button"
                         onClick={() => updateAccessMode("public_gallery", true)}
-                        className="vltd-pill-main-glow rounded-full bg-[color:var(--pill-active-bg)] px-3 py-1 text-[10px] font-semibold text-[color:var(--fg)]"
+                        className={compactPill("active")}
                       >
                         Make public
                       </button>
                       <button
                         type="button"
                         onClick={() => setConfirmPublic(false)}
-                        className="vltd-selectable rounded-full bg-[color:var(--pill)] px-3 py-1 text-[10px] font-semibold text-[color:var(--pill-fg)] ring-1 ring-[color:var(--border)]"
+                        className={compactPill("default")}
                       >
                         Cancel
                       </button>
@@ -1166,7 +1167,7 @@ export default function GalleryPage() {
                           event.stopPropagation();
                           setAdultInfoOpen((current) => !current);
                         }}
-                        className="vltd-selectable inline-flex h-4 w-4 items-center justify-center rounded-full bg-[color:var(--pill)] text-[9px] font-semibold text-[color:var(--pill-fg)] ring-1 ring-[color:var(--border)]"
+                        className={compactPill("default", "w-8 px-0! md:w-7")}
                         aria-label="18+ exhibit help"
                         aria-expanded={adultInfoOpen}
                       >
@@ -1200,7 +1201,7 @@ export default function GalleryPage() {
                           event.stopPropagation();
                           setAliasInfoOpen((current) => !current);
                         }}
-                        className="vltd-selectable inline-flex h-4 w-4 items-center justify-center rounded-full bg-[color:var(--pill)] text-[9px] font-semibold text-[color:var(--pill-fg)] ring-1 ring-[color:var(--border)]"
+                        className={compactPill("default", "w-8 px-0! md:w-7")}
                         aria-label="Alias help"
                         aria-expanded={aliasInfoOpen}
                       >
@@ -1245,7 +1246,7 @@ export default function GalleryPage() {
                       onClick={() => void handleAnnounce()}
                       disabled={announcing || announced}
                       title="Let your followers know you&#39;ve updated this exhibition"
-                      className="inline-flex min-h-[30px] items-center justify-center gap-1 rounded-full bg-[color:var(--pill)] px-2.5 py-1 text-[10px] font-semibold text-[color:var(--pill-fg)] ring-1 ring-[color:var(--border)] transition hover:bg-[color:var(--pill-hover)] disabled:opacity-60 md:ml-auto"
+                      className={compactPill("default", "md:ml-auto")}
                     >
                       {announced ? "✓ Announced" : announcing ? "Announcing…" : (
                         <span className="inline-flex items-center gap-1"><Glyph name="megaphone" size={12} /> Announce</span>
@@ -1343,7 +1344,7 @@ export default function GalleryPage() {
                 <button
                   type="button"
                   onClick={handleCreateInviteToken}
-                  className="vltd-pill-main-glow inline-flex min-h-[36px] shrink-0 items-center justify-center rounded-full bg-[color:var(--pill-active-bg)] px-4 py-1.5 text-xs font-semibold text-[color:var(--fg)] whitespace-nowrap"
+                  className={pillClassName("active", false, "shrink-0")}
                 >
                   Create Link
                 </button>
@@ -1392,7 +1393,7 @@ export default function GalleryPage() {
                           <button
                             type="button"
                             onClick={() => handleDisableInviteToken(entry.token)}
-                            className="inline-flex min-h-[28px] shrink-0 items-center justify-center rounded-[7px] bg-[color:var(--pill)] px-2.5 py-1 text-[10px] font-semibold text-[color:var(--pill-fg)] ring-1 ring-[color:var(--border)]"
+                            className={compactPill("default", "shrink-0")}
                           >
                             Disable
                           </button>
@@ -1411,7 +1412,7 @@ export default function GalleryPage() {
                           <button
                             type="button"
                             onClick={() => copyInviteLink(entry.token)}
-                            className="vltd-pill-main-glow inline-flex min-h-[30px] items-center justify-center rounded-full bg-[color:var(--pill-active-bg)] px-3 py-1 text-[10px] font-semibold text-[color:var(--fg)]"
+                            className={compactPill("active")}
                           >
                             {inviteCopiedToken === entry.token ? "Copied!" : "Copy Link"}
                           </button>
@@ -1424,12 +1425,7 @@ export default function GalleryPage() {
                                 setOpenExpiryToken(isExpiryOpen ? null : entry.token);
                                 setOpenPermissionsToken(null);
                               }}
-                              className={[
-                                "inline-flex min-h-[30px] items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-semibold ring-1 transition",
-                                isExpiryOpen
-                                  ? "bg-[color:var(--pill-active-bg)] text-[color:var(--fg)] ring-[color:var(--pill-active-ring)]"
-                                  : "bg-[color:var(--pill)] text-[color:var(--pill-fg)] ring-[color:var(--border)]",
-                              ].join(" ")}
+                              className={compactPill(isExpiryOpen ? "active" : "default")}
                             >
                               <Glyph name="clock" size={10} strokeWidth={2} />
                               Expires: {expiryLabel}
@@ -1447,7 +1443,7 @@ export default function GalleryPage() {
                                     key={label}
                                     type="button"
                                     onClick={() => handleUpdateTokenExpiry(entry.token, value)}
-                                    className="flex w-full items-center rounded-xl px-2.5 py-1.5 text-left text-[11px] transition hover:bg-[color:var(--input)]"
+                                    className="flex min-h-11 w-full items-center rounded-xl px-2.5 py-1.5 text-left text-[12px] transition hover:bg-[color:var(--input)] md:min-h-8"
                                   >
                                     {label}
                                   </button>
@@ -1464,12 +1460,7 @@ export default function GalleryPage() {
                                 setOpenPermissionsToken(isPermsOpen ? null : entry.token);
                                 setOpenExpiryToken(null);
                               }}
-                              className={[
-                                "inline-flex min-h-[30px] items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-semibold ring-1 transition",
-                                isPermsOpen
-                                  ? "bg-[color:var(--pill-active-bg)] text-[color:var(--fg)] ring-[color:var(--pill-active-ring)]"
-                                  : "bg-[color:var(--pill)] text-[color:var(--pill-fg)] ring-[color:var(--border)]",
-                              ].join(" ")}
+                              className={compactPill(isPermsOpen ? "active" : "default")}
                             >
                               <Glyph name="lock" size={10} strokeWidth={1.8} />
                               Permissions

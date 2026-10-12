@@ -4,6 +4,13 @@ import * as React from "react";
 import Link from "next/link";
 
 export type PillVariant = "default" | "active" | "primary" | "success" | "danger";
+/**
+ * "default" is the approved 36px / 44px control. "compact" is the one shared compact variant for dense panels
+ * (editor toolbars, chips, sheets): a 32px (28px on desktop) visual with 12px text and 10px padding, and an
+ * invisible hit area that brings the touch target to 44px on phones. Same corners, weights, focus, selected,
+ * disabled and loading treatment as the default.
+ */
+export type PillSize = "default" | "compact";
 
 type PillButtonProps = {
   children: React.ReactNode;
@@ -13,6 +20,10 @@ type PillButtonProps = {
   title?: string;
   type?: "button" | "submit" | "reset";
   className?: string;
+  size?: PillSize;
+  /** Toggle-style pills: exposes the on/off state to assistive technology. */
+  pressed?: boolean;
+  ariaLabel?: string;
   /** Renders as a Next.js Link instead of a <button> -- for nav-style pills. */
   href?: string;
   /** Inline style passthrough -- for bespoke colors a variant doesn't cover.
@@ -26,13 +37,19 @@ type PillButtonProps = {
  * Anything that must look like a pill (menu triggers, local navigation, filter chips) takes its
  * classes from here so the geometry stays in one place.
  */
-export function pillClassName(variant: PillVariant = "default", disabled = false, extra = ""): string {
+export function pillClassName(variant: PillVariant = "default", disabled = false, extra = "", size: PillSize = "default"): string {
+  const geometry =
+    size === "compact"
+      ? [
+          "relative h-8 md:h-7 px-2.5 text-xs font-medium",
+          // 44px touch target on phones without growing the visual
+          "max-md:after:absolute max-md:after:inset-x-0 max-md:after:-inset-y-1.5 max-md:after:content-['']",
+        ].join(" ")
+      : "h-11 md:h-9 px-3 text-[13px] font-medium";
   const base = [
     "inline-flex items-center justify-center gap-1.5",
-    "h-11 md:h-9",
-    "px-3",
+    geometry,
     "rounded-[8px]",
-    "text-[13px] font-medium",
     "whitespace-nowrap",
     "[&>svg]:h-4 [&>svg]:w-4 [&>svg]:shrink-0",
     "ring-1 transition select-none vltd-selectable",
@@ -89,8 +106,11 @@ export function PillButton({
   className = "",
   href,
   style,
+  size = "default",
+  pressed,
+  ariaLabel,
 }: PillButtonProps) {
-  const fullClassName = pillClassName(variant, !!disabled, className);
+  const fullClassName = pillClassName(variant, !!disabled, className, size);
 
   if (href) {
     return (
@@ -101,6 +121,7 @@ export function PillButton({
           onClick?.(e);
         }}
         aria-disabled={disabled || undefined}
+        aria-label={ariaLabel}
         title={title}
         className={fullClassName}
         style={style}
@@ -115,6 +136,8 @@ export function PillButton({
       type={type}
       onClick={disabled ? undefined : onClick}
       disabled={disabled}
+      aria-pressed={pressed}
+      aria-label={ariaLabel}
       title={title}
       className={fullClassName}
       style={style}

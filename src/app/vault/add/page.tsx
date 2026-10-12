@@ -286,23 +286,20 @@ function Field({
         <label className="text-xs font-medium tracking-[0.14em] text-[color:var(--muted2)]">
           {label}
         </label>
-        <button
-          type="button"
+        <PillButton
+          size="compact"
+          variant={locked ? "active" : "default"}
+          pressed={locked}
           onClick={onToggleLock}
-          className={[
-            "inline-flex items-center justify-center rounded-full px-2 py-0.5 text-[10px] font-semibold ring-1 transition",
-            locked
-              ? "bg-[color:var(--pill-active-bg)] text-[color:var(--fg)] ring-[color:var(--pill-active-bg)]"
-              : "bg-[color:var(--pill)] text-[color:var(--muted)] ring-[color:var(--border)]",
-          ].join(" ")}
+          ariaLabel={locked ? "Locked for next item" : "Unlocked for next item"}
           title={locked ? "Locked for next item" : "Unlocked for next item"}
         >
           {locked ? (
-            <AppIcon name="lock" size={11} strokeWidth={2.5} style={{ color: "var(--theme-gold, #C8CDD2)" }} />
+            <AppIcon name="lock" size={14} strokeWidth={2.5} style={{ color: "var(--theme-gold, #C8CDD2)" }} />
           ) : (
-            <AppIcon name="unlocked" size={11} strokeWidth={2.5} style={{ color: "var(--muted)" }} />
+            <AppIcon name="unlocked" size={14} strokeWidth={2.5} style={{ color: "var(--muted)" }} />
           )}
-        </button>
+        </PillButton>
       </div>
       {children}
     </div>
@@ -2359,11 +2356,10 @@ export default function AddPage() {
 
         {/* Floating Save — always visible while scrolling */}
         {!dropMode && (
-          <button
-            type="button"
+          <PillButton
             onClick={() => void saveForm(false)}
             disabled={!canSave}
-            className="fixed right-4 z-[60] inline-flex h-11 items-center justify-center rounded-[8px] px-6 text-sm font-bold transition disabled:cursor-not-allowed disabled:opacity-45"
+            className="fixed right-4 z-[60] px-6 font-bold"
             style={{
               top: "calc(var(--topnav-h, 64px) + 12px)",
               background: "linear-gradient(135deg, #8C9298, #C8CDD2)",
@@ -2372,7 +2368,7 @@ export default function AddPage() {
             }}
           >
             {isSaving ? "Saving..." : "Save"}
-          </button>
+          </PillButton>
         )}
 
         <div className="mb-3 w-full max-w-5xl mx-auto grid gap-3">
@@ -2411,14 +2407,7 @@ export default function AddPage() {
                   <div className="text-[11px] font-semibold tracking-[0.18em] text-[color:var(--muted2)]">
                     BASIC ITEM RECORD
                   </div>
-                  <button
-                    type="button"
-                    onClick={resetUnlockedFields}
-                    disabled={isSaving}
-                    className="rounded-[7px] bg-[color:var(--pill)] px-2.5 py-1 text-[10px] ring-1 ring-[color:var(--border)] disabled:opacity-40"
-                  >
-                    Unlock All
-                  </button>
+                  <PillButton size="compact" onClick={resetUnlockedFields} disabled={isSaving}>Unlock All</PillButton>
                 </div>
                 <div className="mt-3 grid gap-3 sm:grid-cols-2 2xl:grid-cols-4">
                   <Field label="Universe" locked={locks.universe} onToggleLock={() => handleToggleLock("universe")}>
@@ -2493,32 +2482,16 @@ export default function AddPage() {
                       <div className="mb-1.5 flex items-center justify-between">
                         <span className="text-xs font-medium" style={{ color: "var(--fg-muted)" }}>Attributes</span>
                         {selectedAttributes.size > 0 && (
-                          <button
-                            type="button"
-                            onClick={() => setField("itemAttributes", "")}
-                            className="text-xs"
-                            style={{ color: "var(--fg-muted)" }}
-                          >Clear</button>
+                          <PillButton size="compact" onClick={() => setField("itemAttributes", "")}>Clear</PillButton>
                         )}
                       </div>
                       <div className="flex flex-wrap gap-1.5">
                         {checkboxOptions.map((attr) => {
                           const active = selectedAttributes.has(attr);
                           return (
-                            <button
-                              key={attr}
-                              type="button"
-                              onClick={() => toggleAttribute(attr)}
-                              className="rounded-full px-3 py-1 text-xs font-medium transition-colors"
-                              style={{
-                                background: active ? "var(--theme-gold)" : "var(--pill)",
-                                color: active ? "#000" : "var(--fg)",
-                                border: "1px solid",
-                                borderColor: active ? "var(--theme-gold)" : "var(--border)",
-                              }}
-                            >
+                            <PillButton key={attr} size="compact" variant={active ? "active" : "default"} pressed={active} onClick={() => toggleAttribute(attr)}>
                               {attr}
-                            </button>
+                            </PillButton>
                           );
                         })}
                       </div>
@@ -2639,15 +2612,9 @@ export default function AddPage() {
                     onChange={(e) => { setAiFilledFields(prev => { const n = new Set(prev); n.delete("certNumber"); return n; }); setField("certNumber", e.target.value); }}
                     placeholder="Certification number"
                   />
-                  <button
-                    type="button"
-                    onClick={() => void runPSALookupForCode(values.certNumber)}
-                    disabled={!values.certNumber.trim() || isComicLookupRunning}
-                    title="Look up this PSA cert number"
-                    className="inline-flex h-10 shrink-0 items-center rounded-[8px] bg-[color:var(--pill)] px-3 text-sm font-semibold ring-1 ring-[color:var(--border)] transition hover:bg-[color:var(--pill-hover)] disabled:opacity-40"
-                  >
+                  <PillButton onClick={() => void runPSALookupForCode(values.certNumber)} disabled={!values.certNumber.trim() || isComicLookupRunning} title="Look up this PSA cert number">
                     {isComicLookupRunning ? "Looking up…" : "Look up"}
-                  </button>
+                  </PillButton>
                 </div>
                 <p className="mt-1 text-[11px]" style={{ color: "var(--muted2)" }}>
                   PSA graded card? Type the cert number from the slab label and tap Look up.
@@ -3416,8 +3383,8 @@ export default function AddPage() {
                   <div className="flex items-center justify-between gap-2">
                     <label className="text-xs font-medium tracking-[0.14em] text-[color:var(--muted2)]">Notes</label>
                     <div className="flex items-center gap-1.5">
-                      <button
-                        type="button"
+                      <PillButton
+                        size="compact"
                         title="Auto-fill from filled fields"
                         onClick={() => {
                           const generated = generateNotesSummary(values);
@@ -3426,28 +3393,24 @@ export default function AddPage() {
                             setAiFilledFields((prev) => { const n = new Set(prev); n.add("notes"); return n; });
                           }
                         }}
-                        className="inline-flex items-center gap-1 rounded-[7px] px-2 py-0.5 text-[10px] font-semibold ring-1 transition bg-[color:var(--pill)] text-[color:var(--theme-gold,#C8CDD2)] ring-[color:var(--border)] hover:ring-[color:var(--theme-gold,#C8CDD2)]"
                       >
-                        <AppIcon name="sun" size={10} strokeWidth={2} />
+                        <AppIcon name="sun" size={14} strokeWidth={2} />
                         Auto
-                      </button>
-                      <button
-                        type="button"
+                      </PillButton>
+                      <PillButton
+                        size="compact"
+                        variant={locks.notes ? "active" : "default"}
+                        pressed={locks.notes}
                         onClick={() => handleToggleLock("notes")}
-                        className={[
-                          "inline-flex items-center justify-center rounded-full px-2 py-0.5 text-[10px] font-semibold ring-1 transition",
-                          locks.notes
-                            ? "bg-[color:var(--pill-active-bg)] text-[color:var(--fg)] ring-[color:var(--pill-active-bg)]"
-                            : "bg-[color:var(--pill)] text-[color:var(--muted)] ring-[color:var(--border)]",
-                        ].join(" ")}
+                        ariaLabel={locks.notes ? "Locked for next item" : "Unlocked for next item"}
                         title={locks.notes ? "Locked for next item" : "Unlocked for next item"}
                       >
                         {locks.notes ? (
-                          <AppIcon name="lock" size={11} strokeWidth={2.5} style={{ color: "var(--theme-gold, #C8CDD2)" }} />
+                          <AppIcon name="lock" size={14} strokeWidth={2.5} style={{ color: "var(--theme-gold, #C8CDD2)" }} />
                         ) : (
-                          <AppIcon name="unlocked" size={11} strokeWidth={2.5} style={{ color: "var(--muted)" }} />
+                          <AppIcon name="unlocked" size={14} strokeWidth={2.5} style={{ color: "var(--muted)" }} />
                         )}
-                      </button>
+                      </PillButton>
                     </div>
                   </div>
                   <textarea
@@ -3506,35 +3469,11 @@ export default function AddPage() {
                 />
               </div>
 
-              <div className="mt-3 grid gap-2 sm:grid-cols-2">
-                <button
-                  type="button"
-                  onClick={() => selectDraftMediaImageForIdentify(selectedMediaImage.id)}
-                  className="min-h-11 rounded-2xl bg-[color:var(--pill-active-bg)] px-4 py-2 text-sm font-medium ring-1 ring-[color:var(--pill-active-bg)]"
-                >
-                  Use for Identify
-                </button>
-                <button
-                  type="button"
-                  onClick={() => openMediaCropEditor(selectedMediaImage.id)}
-                  className="min-h-11 rounded-2xl bg-[color:var(--pill)] px-4 py-2 text-sm ring-1 ring-[color:var(--border)]"
-                >
-                  Edit / Crop
-                </button>
-                <button
-                  type="button"
-                  onClick={() => removeDraftMediaImage(selectedMediaImage.id)}
-                  className="min-h-11 rounded-2xl bg-red-500/15 px-4 py-2 text-sm text-red-100 ring-1 ring-red-400/25"
-                >
-                  Delete Photo
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setSelectedMediaImageId("")}
-                  className="min-h-11 rounded-2xl bg-[color:var(--pill)] px-4 py-2 text-sm ring-1 ring-[color:var(--border)]"
-                >
-                  Close
-                </button>
+              <div className="mt-3 flex flex-wrap gap-2">
+                <PillButton variant="active" onClick={() => selectDraftMediaImageForIdentify(selectedMediaImage.id)}>Use for Identify</PillButton>
+                <PillButton onClick={() => openMediaCropEditor(selectedMediaImage.id)}>Edit / Crop</PillButton>
+                <PillButton variant="danger" onClick={() => removeDraftMediaImage(selectedMediaImage.id)}>Delete Photo</PillButton>
+                <PillButton onClick={() => setSelectedMediaImageId("")}>Close</PillButton>
               </div>
             </div>
           </div>

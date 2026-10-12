@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { AppIcon } from "@/components/ui/AppIcon";
+import { PillButton } from "@/components/ui/PillButton";
 import { appreciateItem, unappreciateItem } from "@/lib/appreciations";
 
 /**
@@ -57,9 +58,7 @@ export function VibeButton({
     }
   }
 
-  const padding = size === "compact" ? "6px 10px" : "7px 14px";
-  const fontSize = size === "compact" ? 11 : 12;
-  const iconSize = size === "compact" ? 14 : 16;
+  const iconSize = 16;
 
   const icon = (
     <span style={{ position: "relative", width: iconSize, height: iconSize, display: "inline-flex" }}>
@@ -79,18 +78,12 @@ export function VibeButton({
     // Never a button - no click affordance at all on your own item.
     return (
       <div
+        role="img"
         aria-label={`${count} ${count === 1 ? "vibe" : "vibes"}`}
-        className="vltd-pill-neutral"
-        style={{
-          display: "inline-flex",
-          alignItems: "center",
-          gap: 6,
-          borderRadius: 999,
-          padding,
-          fontSize,
-          fontWeight: 700,
-          background: "var(--pill)",
-        }}
+        className={[
+          "inline-flex items-center gap-1.5 rounded-[8px] bg-[color:var(--pill)] px-3 font-medium text-[color:var(--fg)] ring-1 ring-[color:var(--border)]",
+          size === "compact" ? "h-7 px-2.5 text-xs" : "h-9 text-[13px]",
+        ].join(" ")}
       >
         {icon}
         <span style={{ fontVariantNumeric: "tabular-nums" }}>{count}</span>
@@ -99,34 +92,17 @@ export function VibeButton({
   }
 
   return (
-    <button
-      type="button"
+    <PillButton
+      size={size}
+      variant={vibed ? "active" : "default"}
+      pressed={vibed}
       onClick={toggle}
       disabled={!canInteract}
-      aria-pressed={vibed}
-      aria-label={vibed ? "Remove Vibe" : "Vibe this item"}
-      className={[
-        "vltd-selectable transition relative",
-        vibed
-          ? "vltd-selected bg-[color:var(--pill-active-bg)] text-[color:var(--fg)]"
-          : "bg-[color:var(--pill)] text-[color:var(--fg)] ring-1 ring-[color:var(--border)]",
-      ].join(" ")}
-      style={{
-        display: "inline-flex",
-        alignItems: "center",
-        gap: 6,
-        borderRadius: 999,
-        padding,
-        fontSize,
-        fontWeight: 700,
-        border: "none",
-        cursor: canInteract ? "pointer" : "default",
-        minHeight: 44,
-        opacity: profileId ? 1 : 0.5,
-      }}
+      ariaLabel={vibed ? "Remove Vibe" : "Vibe this item"}
+      className="relative"
     >
       {icon}
       <span style={{ fontVariantNumeric: "tabular-nums" }}>{count}</span>
-    </button>
+    </PillButton>
   );
 }

@@ -188,8 +188,11 @@ export function PillSelect<T extends string>({
   }, [open]);
 
   const popW = Math.max(btnW, 220);
-  const btnH = compact ? "min-h-[28px]" : "min-h-[44px] md:min-h-[36px]";
-  const btnPx = compact ? "px-3 pr-8" : "px-3 pr-9";
+  // compact = the shared compact variant (see PillButton): 32px visual (28px on desktop) with a 44px touch target on phones.
+  const btnH = compact
+    ? "min-h-8 md:min-h-7 max-md:after:absolute max-md:after:inset-x-0 max-md:after:-inset-y-1.5 max-md:after:content-['']"
+    : "min-h-[44px] md:min-h-[36px]";
+  const btnPx = compact ? "pl-2.5 pr-8" : "px-3 pr-9";
   const btnText = compact ? "text-xs" : "text-[13px]";
 
   return (
@@ -231,8 +234,8 @@ export function PillSelect<T extends string>({
           </span>
         </span>
 
-        <span className={["pointer-events-none absolute top-1/2 grid -translate-y-1/2 place-items-center opacity-70 text-[color:var(--fg)]", compact ? "right-2.5 h-5 w-5" : "right-3 h-4 w-4"].join(" ")}>
-          <AppIcon name="chevronDown" strokeWidth={2.2} className={compact ? "h-3.5 w-3.5" : "h-4 w-4"} />
+        <span className={["pointer-events-none absolute top-1/2 grid -translate-y-1/2 place-items-center opacity-70 text-[color:var(--fg)]", compact ? "right-2.5 h-4 w-4" : "right-3 h-4 w-4"].join(" ")}>
+          <AppIcon name="chevronDown" strokeWidth={2.2} className="h-4 w-4" />
         </span>
       </button>
 

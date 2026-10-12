@@ -1,5 +1,6 @@
 "use client";
 
+import { pillClassName } from "@/components/ui/PillButton";
 import { UNIVERSE_LABEL, type UniverseKey } from "@/lib/taxonomy";
 import type { GalleryInvitePermissions } from "@/lib/galleryModel";
 import Link from "next/link";
@@ -610,8 +611,7 @@ export default function GuestGalleryRenderer({
                           <button
                             type="button"
                             onClick={() => setInfoOpen(true)}
-                            className="vltd-pill-micro transition"
-                            style={{ borderRadius: 999, padding: "2px 10px", fontSize: 11, fontWeight: 600, border: "none", cursor: "pointer" }}
+                            className={pillClassName("default", false, "", "compact")}
                           >
                             Info
                           </button>

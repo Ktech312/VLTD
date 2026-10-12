@@ -1,5 +1,6 @@
 "use client";
 
+import { pillClassName } from "@/components/ui/PillButton";
 import Link from "next/link";
 
 function PillLink({ href, children }: { href: string; children: React.ReactNode }) {
@@ -36,7 +37,7 @@ function Card({
       <div className="text-xs tracking-widest text-[color:var(--muted2)]">INGEST</div>
       <div className="mt-2 text-xl font-semibold">{title}</div>
       <div className="mt-2 text-sm text-[color:var(--muted)]">{desc}</div>
-      <div className="mt-4 inline-flex h-10 items-center rounded-full px-5 text-sm font-semibold ring-1 transition bg-[color:var(--pill)] text-[color:var(--fg)] ring-[color:var(--pill-active-ring)] vltd-pill-main-glow hover:bg-[color:var(--pill-hover)]">
+      <div className={pillClassName("active", false, "mt-4")}>
         {cta}
       </div>
     </Link>

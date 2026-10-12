@@ -1,5 +1,6 @@
 "use client";
 
+import { pillClassName, type PillVariant } from "@/components/ui/PillButton";
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { AppIcon } from "@/components/ui/AppIcon";
@@ -9,6 +10,9 @@ import { emitVaultUpdate } from "@/lib/vaultEvents";
 import { saveItem, type VaultItem } from "@/lib/vaultModel";
 import { hasSupabaseEnv, upsertVaultItemToSupabase } from "@/lib/vaultCloud";
 import { canUsePrivatePhotos, migrateItemImagesToPrivate, migrateItemImagesToPublic } from "@/lib/privatePhotos";
+
+// Compact shared pill: 32px (28px on desktop) with a 44px touch target on phones.
+const cp = (variant: PillVariant = "default", extra = "") => pillClassName(variant, false, extra, "compact");
 
 type ItemVisibilityToggleProps = {
   item: VaultItem;
@@ -167,7 +171,7 @@ export default function ItemVisibilityToggle({
         aria-label={buttonLabel}
         title={buttonLabel}
         className={[
-          "inline-flex shrink-0 rounded-full transition disabled:cursor-not-allowed disabled:opacity-60 vltd-keep-color hover:opacity-70",
+          "relative inline-flex shrink-0 rounded-full transition disabled:cursor-not-allowed disabled:opacity-60 vltd-keep-color hover:opacity-70 max-md:after:absolute max-md:after:-inset-2.5 max-md:after:content-['']",
           align === "corner" ? "items-end justify-start p-1" : "items-center justify-center gap-1.5",
           size === "md" ? "h-9 px-3 text-xs font-semibold" : align === "corner" ? "h-6 min-w-6 text-[10px] font-semibold" : "h-7 min-w-7 px-2 text-[10px] font-semibold",
         ].join(" ")}
@@ -206,7 +210,7 @@ export default function ItemVisibilityToggle({
                   <button
                     type="button"
                     onClick={() => setConfirmNames(null)}
-                    className="vltd-selectable rounded-full bg-[color:var(--pill)] px-4 py-1.5 text-xs font-semibold text-[color:var(--pill-fg)] ring-1 ring-[color:var(--border)]"
+                    className={pillClassName("default")}
                   >
                     Cancel
                   </button>
@@ -216,7 +220,7 @@ export default function ItemVisibilityToggle({
                       setConfirmNames(null);
                       void handleToggle(true);
                     }}
-                    className="vltd-pill-main-glow rounded-full bg-[color:var(--pill-active-bg)] px-4 py-1.5 text-xs font-semibold text-[color:var(--fg)]"
+                    className={pillClassName("active")}
                   >
                     Hide item
                   </button>

@@ -1,5 +1,6 @@
 "use client";
 
+import { PillButton } from "@/components/ui/PillButton";
 import { useEffect, useState } from "react";
 import { listComments, addComment, hideComment, type Comment } from "@/lib/comments";
 import { fetchPublicProfile } from "@/lib/publicProfile";
@@ -130,7 +131,7 @@ export function CommentThread({
                   </div>
                 </div>
                 {canModerate && (
-                  <label style={{ flexShrink: 0, display: "flex", alignItems: "center", gap: 4, fontSize: 10, color: "var(--muted)", cursor: "pointer" }}>
+                  <label className="min-h-11 md:min-h-0" style={{ flexShrink: 0, display: "flex", alignItems: "center", gap: 4, fontSize: 11, color: "var(--muted)", cursor: "pointer" }}>
                     <input
                       type="checkbox"
                       onChange={() => handleHide(c.id)}
@@ -152,27 +153,13 @@ export function CommentThread({
             onChange={(e) => setBody(e.target.value.slice(0, 2000))}
             onKeyDown={(e) => { if (e.key === "Enter") handlePost(); }}
             placeholder="Add a comment…"
-            className="bg-[color:var(--pill)] text-[color:var(--fg)] ring-1 ring-[color:var(--border)] placeholder:text-[color:var(--muted)]"
-            style={{ flex: 1, borderRadius: 999, padding: "9px 14px", fontSize: 13, outline: "none", border: "none" }}
+            aria-label="Add a comment"
+            className="h-11 min-w-0 flex-1 rounded-[8px] bg-[color:var(--pill)] px-3 text-[13px] text-[color:var(--fg)] ring-1 ring-[color:var(--border)] placeholder:text-[color:var(--muted)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--pill-active-ring)] md:h-9"
+            style={{ border: "none" }}
           />
-          <button
-            type="button"
-            onClick={handlePost}
-            disabled={!body.trim() || posting}
-            className="vltd-pill-main-glow"
-            style={{
-              background: "var(--pill-active-bg)",
-              border: "none",
-              borderRadius: 999,
-              padding: "9px 18px",
-              fontSize: 13,
-              fontWeight: 700,
-              cursor: !body.trim() || posting ? "default" : "pointer",
-              opacity: !body.trim() || posting ? 0.5 : 1,
-            }}
-          >
-            Post
-          </button>
+          <PillButton variant="active" onClick={handlePost} disabled={!body.trim() || posting}>
+            {posting ? "Posting…" : "Post"}
+          </PillButton>
         </div>
       ) : (
         <div style={{ fontSize: 11, color: "var(--muted)" }}>Sign in to leave a comment.</div>
