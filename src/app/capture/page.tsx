@@ -382,6 +382,11 @@ export default function CapturePage() {
   // True only after an AI identify has actually run — gates the confidence badge.
   const [identified, setIdentified] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
+  // Save feedback: a missing name must stop the save (same rule as the manual Add page: "Title / Series is required"),
+  // and a second tap while a save is running must not create a second record.
+  const [saving, setSaving] = useState(false);
+  const savingRef = useRef(false); // set synchronously, so two quick taps in the same moment still save once
+  const [saveError, setSaveError] = useState("");
   // Live-scan barcode enrichment -- fires the instant the Scan button reads a
   // code, before any photo is taken. Free lookups only (comic/vinyl/UPC/book
   // via barcodeLookup.ts) — no metered AI call, no PSA (paused). This is the
@@ -730,6 +735,20 @@ export default function CapturePage() {
 
   /* ── Save to vault ── */
   const handleSave = useCallback(async () => {
+    if (savingRef.current) return;
+    const trimmedTitle = fields.title.trim();
+    if (!trimmedTitle) {
+      setSaveError("Item name is required.");
+      const input = typeof document !== "undefined" ? document.getElementById("capture-item-name") : null;
+      if (input instanceof HTMLElement) {
+        input.scrollIntoView({ block: "center", behavior: "smooth" });
+        input.focus({ preventScroll: true });
+      }
+      return;
+    }
+    setSaveError("");
+    savingRef.current = true;
+    setSaving(true);
     try {
       const id = newId();
       const imagePatch = capturedImages.length
@@ -738,7 +757,7 @@ export default function CapturePage() {
 
       const item: Partial<VaultItem> & { id: string; title: string } = {
         id,
-        title: fields.title.trim() || "Untitled Item",
+        title: trimmedTitle,
         subtitle: fields.subtitle || undefined,
         category: fields.category || undefined,
         universe: fields.universe || undefined,
@@ -780,10 +799,15 @@ export default function CapturePage() {
       const msg = err instanceof Error ? err.message : "";
       if (msg.startsWith("FREE_TIER_LIMIT:")) {
         // Redirect to billing with a toast-friendly message
+        savingRef.current = false;
+        setSaving(false);
         router.push("/account/billing?reason=vault_limit");
         return;
       }
       console.error("[Capture] Save error:", err);
+      setSaveError("Could not save. Nothing was added. Try again.");
+      savingRef.current = false;
+      setSaving(false);
     }
   }, [capturedImages, fields, router]);
 
@@ -1159,11 +1183,17 @@ export default function CapturePage() {
                       <div>
                         <LockableLabel label="Item Name *" locked={locks.title} onToggleLock={() => toggleFieldLock("title")} />
                         <input
+                          id="capture-item-name"
                           className={INPUT_CLS}
                           style={INPUT_STYLE}
                           value={fields.title}
-                          onChange={(e) => setFields((p) => ({ ...p, title: e.target.value }))}
+                          onChange={(e) => {
+                            setFields((p) => ({ ...p, title: e.target.value }));
+                            if (saveError) setSaveError("");
+                          }}
                           placeholder="Item name"
+                          aria-required="true"
+                          aria-invalid={saveError === "Item name is required." ? true : undefined}
                         />
                       </div>
                       <div>
@@ -1428,12 +1458,16 @@ export default function CapturePage() {
                       <button
                         type="button"
                         onClick={handleSave}
-                        className="inline-flex min-h-[52px] items-center justify-center gap-2 rounded-[4px] px-9 text-[15px] font-black text-[#06171d]"
+                        disabled={saving}
+                        className="inline-flex min-h-[52px] disabled:opacity-60 items-center justify-center gap-2 rounded-[4px] px-9 text-[15px] font-black text-[#06171d]"
                         style={{ background: "linear-gradient(115deg, rgba(255,255,255,0.35) 0%, rgba(255,255,255,0) 45%, rgba(255,255,255,0.18) 100%), linear-gradient(180deg, #79E7FB 0%, #41C6E4 55%, #2CB1D1 100%)", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.5), 0 2px 10px rgba(0,0,0,0.4), 0 0 18px rgba(79,211,238,0.25)" }}
                       >
                         <AppIcon name="save" size={18} strokeWidth={1.8} />
-                        Save to Vault
+                        {saving ? "Saving…" : "Save to Vault"}
                       </button>
+                      {saveError ? (
+                        <span role="alert" className="text-[12px] font-semibold text-red-400">{saveError}</span>
+                      ) : null}
                       <span className="inline-flex items-center gap-1.5 text-[11px] text-[color:var(--muted2)]">
                         <span style={{ color: "#22C55E" }}><AppIcon name="checkmark" size={12} strokeWidth={2.2} /></span>
                         Private — only you can see your vault

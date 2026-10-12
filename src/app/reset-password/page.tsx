@@ -4,6 +4,19 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
+// What kind of emailed link brought the visitor here, read from the URL before the auth client consumes and clears it.
+// "invite" = an admin invitation (Supabase signs the person in with no password set yet), "recovery" = a password reset.
+function readLinkKind(): "invite" | "recovery" | "other" | "none" {
+  if (typeof window === "undefined") return "none";
+  const hash = new URLSearchParams(window.location.hash.replace(/^#/, ""));
+  const query = new URLSearchParams(window.location.search);
+  const type = hash.get("type") || query.get("type");
+  if (type === "invite") return "invite";
+  if (type === "recovery") return "recovery";
+  if (hash.get("access_token") || query.get("code") || query.get("token_hash")) return "other";
+  return "none";
+}
+
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 
 export default function ResetPasswordPage() {
@@ -14,21 +27,33 @@ export default function ResetPasswordPage() {
   const [done, setDone] = useState(false);
   const [error, setError] = useState("");
   const [ready, setReady] = useState(false);
+  // Read during the first client render, before any effect lets the auth client strip the link from the URL.
+  const [linkKind] = useState(readLinkKind);
 
-  // Supabase sends the recovery token as a hash fragment.
-  // onAuthStateChange fires with event "PASSWORD_RECOVERY" once it's exchanged.
+  // A reset link makes Supabase fire "PASSWORD_RECOVERY". An invitation link does NOT: it signs the person in
+  // ("SIGNED_IN") with no password set, so waiting only for PASSWORD_RECOVERY left invited people on "Verifying link…" forever
+  // and they could never log in. The event can also fire before this page subscribes, so the current session is checked too.
   useEffect(() => {
     const supabase = getSupabaseBrowserClient();
     if (!supabase) return;
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+    const cameFromLink = linkKind !== "none";
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === "PASSWORD_RECOVERY") {
+        setReady(true);
+      } else if (cameFromLink && session && (event === "SIGNED_IN" || event === "INITIAL_SESSION")) {
         setReady(true);
       }
     });
 
+    if (cameFromLink) {
+      void supabase.auth.getSession().then(({ data }) => {
+        if (data.session) setReady(true);
+      });
+    }
+
     return () => subscription.unsubscribe();
-  }, []);
+  }, [linkKind]);
 
   async function handleSubmit() {
     if (!password || password !== confirm) {
@@ -90,8 +115,8 @@ export default function ResetPasswordPage() {
               </>
             ) : (
               <>
-                <div className="mt-8 text-[12px] font-semibold uppercase tracking-[0.32em] text-[color:var(--muted2)]">Account recovery</div>
-                <h1 className="mt-2 text-2xl font-black tracking-[-0.04em] sm:text-4xl">Choose a new password</h1>
+                <div className="mt-8 text-[12px] font-semibold uppercase tracking-[0.32em] text-[color:var(--muted2)]">{linkKind === "invite" ? "Welcome to VLTD" : "Account recovery"}</div>
+                <h1 className="mt-2 text-2xl font-black tracking-[-0.04em] sm:text-4xl">{linkKind === "invite" ? "Set your password" : "Choose a new password"}</h1>
 
                 {error ? <div className="mt-5 rounded-2xl border border-red-400/35 bg-red-500/10 px-4 py-3 text-sm text-red-100">{error}</div> : null}
 
