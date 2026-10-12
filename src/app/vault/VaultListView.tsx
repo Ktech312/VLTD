@@ -459,7 +459,7 @@ function VaultCard({
           disabled={isDeleting}
           aria-label="Delete item"
           title="Delete item"
-          className={(confirmingDelete ? "hidden " : "") + "inline-flex h-7 w-7 items-center justify-center vltd-keep-color disabled:opacity-50"}
+          className={(confirmingDelete ? "hidden " : "") + "relative inline-flex h-7 w-7 items-center justify-center vltd-keep-color disabled:opacity-50 max-md:after:absolute max-md:after:-inset-2 max-md:after:content-['']"}
           style={{ "--vltd-keep-color": "#FF1744" } as React.CSSProperties}
         >
           {isDeleting ? (
