@@ -12,6 +12,10 @@ const nextConfig: NextConfig = {
             destination: "/watchlist",
             permanent: true,
           },
+          // The old User Settings pages were duplicates of Settings (/account); their one-off controls had no readers elsewhere.
+          { source: "/user", destination: "/account", permanent: false },
+          { source: "/user/profile", destination: "/account", permanent: false },
+          { source: "/user/style", destination: "/account?section=preferences", permanent: false },
           // The old Command Center is gone; everything in it now lives in Home, Vault, Settings and Help.
           {
             source: "/more",

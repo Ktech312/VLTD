@@ -10,6 +10,8 @@ import React, {
   type WheelEvent as ReactWheelEvent,
 } from "react";
 
+import { AppIcon } from "@/components/ui/AppIcon";
+import { PillButton } from "@/components/ui/PillButton";
 import type { ScanCropRect } from "@/lib/scanners/cropImageFile";
 
 const MIN_CROP_SIZE_PX = 36;
@@ -51,14 +53,6 @@ type PinchSession = {
   zoom: number;
   pan: { x: number; y: number };
 };
-
-function buttonClass() {
-  return "rounded-xl bg-[color:var(--pill)] px-3 py-2.5 text-sm ring-1 ring-[color:var(--border)] transition hover:bg-[color:var(--pill-hover)]";
-}
-
-function primaryButtonClass() {
-  return "rounded-xl bg-[color:var(--pill-active-bg)] px-3 py-2.5 text-sm font-medium text-[color:var(--fg)] ring-1 ring-[color:var(--pill-active-bg)] disabled:opacity-40";
-}
 
 function clamp(value: number, min: number, max: number) {
   return Math.min(max, Math.max(min, value));
@@ -484,22 +478,21 @@ export default function ScanCropEditor({
         type="button"
         onClick={requestCancel}
         aria-label="Close crop editor"
-        className="absolute right-2 top-2 z-40 inline-flex h-10 w-10 items-center justify-center rounded-full bg-black/65 text-2xl leading-none text-text-primary ring-1 ring-[color:var(--border)] backdrop-blur transition hover:bg-black/80"
+        title="Close"
+        className="absolute right-2 top-2 z-40 inline-flex h-11 w-11 items-center justify-center rounded-full bg-black/65 leading-none text-text-primary ring-1 ring-[color:var(--border)] backdrop-blur transition hover:bg-black/80 md:h-10 md:w-10"
       >
-        ×
+        <AppIcon name="close" size={16} />
       </button>
 
       {!compact ? (
-        <div className="flex flex-wrap items-start justify-between gap-3 pr-12">
+        <div className="flex flex-wrap items-start justify-between gap-3 pr-14">
           <div>
             <div className="text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">{title}</div>
             <div className="mt-1 text-xs text-[color:var(--muted)]">{description}</div>
           </div>
 
           {onRotate ? (
-            <button type="button" onClick={onRotate} className={buttonClass()}>
-              Rotate 90
-            </button>
+            <PillButton onClick={onRotate}>Rotate 90</PillButton>
           ) : null}
         </div>
       ) : null}
@@ -569,16 +562,12 @@ export default function ScanCropEditor({
       ) : null}
 
       {!hideActionButtons ? (
-        <div className={compact ? "mt-2 flex flex-wrap gap-2" : "mt-4 grid gap-2 sm:flex sm:flex-wrap"}>
-          <button type="button" onClick={onApply} disabled={isApplying} className={primaryButtonClass()}>
+        <div className={compact ? "mt-2 flex flex-wrap gap-2" : "mt-4 flex flex-wrap gap-2"}>
+          <PillButton variant="primary" onClick={onApply} disabled={isApplying}>
             {isApplying ? "Saving..." : applyLabel}
-          </button>
-          <button type="button" onClick={handleReset} className={buttonClass()}>
-            Use Full Photo
-          </button>
-          <button type="button" onClick={requestCancel} className={buttonClass()}>
-            Cancel
-          </button>
+          </PillButton>
+          <PillButton onClick={handleReset}>Use Full Photo</PillButton>
+          <PillButton onClick={requestCancel}>Cancel</PillButton>
         </div>
       ) : null}
     </section>

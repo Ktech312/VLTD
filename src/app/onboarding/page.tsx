@@ -105,15 +105,14 @@ function GoldButton({
   disabled?: boolean;
 }) {
   return (
-    <button
-      type="button"
-      disabled={disabled}
+    <PillButton
       onClick={onClick}
-      className="inline-flex h-12 items-center rounded-[8px] px-6 text-sm font-black text-[#0B0B0B] transition hover:-translate-y-0.5 hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-50"
-      style={{ background: "var(--theme-gold-gradient)", boxShadow: "var(--theme-gold-glow)" }}
+      disabled={disabled}
+      className="font-black"
+      style={{ background: "var(--theme-gold-gradient)", boxShadow: "var(--theme-gold-glow)", color: "#0B0B0B" }}
     >
       {children}
-    </button>
+    </PillButton>
   );
 }
 
@@ -465,7 +464,7 @@ export default function OnboardingPage() {
                   </div>
                 </div>
 
-                <div className="flex gap-3">
+                <div className="flex flex-wrap items-center gap-3">
                   <GoldButton onClick={() => setStep(3)}>Continue →</GoldButton>
                   <GhostButton onClick={() => setStep(1)}>Back</GhostButton>
                 </div>
@@ -501,27 +500,16 @@ export default function OnboardingPage() {
 
                 <div>
                   <div className="mb-2 text-sm font-semibold text-text-primary">Screen</div>
-                  <div className="inline-flex gap-2">
+                  <div className="flex flex-wrap gap-2">
                     {(["dark", "light"] as const).map((m) => (
-                      <button
-                        key={m}
-                        type="button"
-                        onClick={() => chooseMode(m)}
-                        aria-pressed={lookMode === m}
-                        className={[
-                          "rounded-full px-5 py-2 text-sm font-semibold ring-1 transition",
-                          lookMode === m
-                            ? "bg-[rgba(203,208,213,0.15)] ring-2 ring-[color:var(--data-color,#4FD3EE)] text-text-primary"
-                            : "bg-[color:var(--pill)] ring-[color:var(--border)] text-[color:var(--muted)] hover:text-text-primary",
-                        ].join(" ")}
-                      >
+                      <PillButton key={m} onClick={() => chooseMode(m)} variant={lookMode === m ? "active" : "default"} pressed={lookMode === m}>
                         {m === "dark" ? "Dark" : "Light"}
-                      </button>
+                      </PillButton>
                     ))}
                   </div>
                 </div>
 
-                <div className="flex gap-3">
+                <div className="flex flex-wrap items-center gap-3">
                   <GoldButton onClick={() => setStep(4)}>Continue →</GoldButton>
                   <GhostButton onClick={() => setStep(2)}>Back</GhostButton>
                 </div>
@@ -538,43 +526,29 @@ export default function OnboardingPage() {
                     {UNIVERSE_KEYS.map((key) => {
                       const active = focusedUniverses.includes(key);
                       return (
-                        <button
+                        <PillButton
                           key={key}
-                          type="button"
+                          variant={active ? "active" : "default"}
+                          pressed={active}
                           onClick={() =>
                             setFocusedUniverses((prev) =>
                               active ? prev.filter((k) => k !== key) : [...prev, key]
                             )
                           }
-                          className={[
-                            "inline-flex items-center gap-1.5 rounded-full px-3.5 py-2 text-sm font-semibold transition ring-1",
-                            active
-                              ? "bg-[rgba(203,208,213,0.15)] ring-[rgba(203,208,213,0.55)] text-text-primary"
-                              : "bg-[color:var(--pill)] ring-[color:var(--border)] text-[color:var(--muted)] hover:ring-[rgba(203,208,213,0.35)] hover:text-text-primary",
-                          ].join(" ")}
                         >
                           <Glyph name={universeGlyphName(key)} size={16} />
                           <span>{UNIVERSE_LABEL[key]}</span>
-                        </button>
+                        </PillButton>
                       );
                     })}
                   </div>
-                  <div className="mt-3 flex gap-2">
-                    <button
-                      type="button"
-                      onClick={() => setFocusedUniverses([...UNIVERSE_KEYS])}
-                      className="text-xs font-semibold text-[color:var(--muted)] hover:text-text-primary transition"
-                    >
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    <PillButton size="compact" onClick={() => setFocusedUniverses([...UNIVERSE_KEYS])}>
                       Select all
-                    </button>
-                    <span className="text-[color:var(--muted2)]">·</span>
-                    <button
-                      type="button"
-                      onClick={() => setFocusedUniverses([])}
-                      className="text-xs font-semibold text-[color:var(--muted)] hover:text-text-primary transition"
-                    >
+                    </PillButton>
+                    <PillButton size="compact" onClick={() => setFocusedUniverses([])}>
                       Skip — show everything
-                    </button>
+                    </PillButton>
                   </div>
                 </div>
 
@@ -592,7 +566,7 @@ export default function OnboardingPage() {
                   </div>
                 </div>
 
-                <div className="flex gap-3">
+                <div className="flex flex-wrap items-center gap-3">
                   <GoldButton disabled={saving || !canContinueIdentity} onClick={() => void handleFinish()}>
                     {saving ? "Setting up…" : "Launch my vault →"}
                   </GoldButton>

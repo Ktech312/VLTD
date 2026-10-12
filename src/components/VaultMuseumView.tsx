@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, type MouseEvent } from "react";
 import { AppIcon } from "@/components/ui/AppIcon";
+import { PillButton } from "@/components/ui/PillButton";
 
 import { isNotable, notableReason } from "@/lib/itemIntelligence";
 import { itemCurrentValue, itemProfit, itemTotalCost } from "@/lib/portfolioMetrics";
@@ -254,29 +255,20 @@ function SpotlightCard({ item, onItemClick }: { item: ModelItem; onItemClick?: (
           </div>
         )}
         <div className="ml-auto flex items-center gap-2">
-          <button
-            type="button"
+          <PillButton
+            size="compact"
+            variant="primary"
             onClick={onItemClick ? () => onItemClick(item) : undefined}
-            aria-label="Open item detail"
-            className="flex items-center justify-center rounded-full transition-opacity hover:opacity-90"
-            style={{
-              background: "rgba(59,130,246,0.9)",
-              border: "1.5px solid rgba(255,255,255,0.22)",
-              boxShadow: "0 2px 10px rgba(59,130,246,0.45)",
-              color: "#fff",
-              cursor: "pointer",
-              flexShrink: 0,
-              height: 28,
-              textDecoration: "none",
-              width: 28,
-            }}
+            ariaLabel="Open item detail"
+            title="Open item detail"
+            className="w-8 shrink-0 px-0! md:w-7"
           >
             <AppIcon name="scan" size={13} strokeWidth={1.6} />
-          </button>
+          </PillButton>
           <button
             type="button"
             onClick={onItemClick ? () => onItemClick(item) : undefined}
-            className="text-[11px] font-semibold transition-opacity hover:opacity-80"
+            className="relative inline-flex h-7 items-center text-[11px] font-semibold transition-opacity hover:opacity-80 max-md:after:absolute max-md:after:inset-x-0 max-md:after:-inset-y-2 max-md:after:content-['']"
             style={{ color: "var(--theme-gold, #C8CDD2)", background: "none", border: "none", cursor: "pointer", padding: 0 }}
           >
             View details →
@@ -552,42 +544,30 @@ function UniverseSection({
         </div>
 
         <div className="flex items-center gap-1.5">
-          <button
-            type="button"
-            aria-label="Scroll left"
+          <PillButton
+            size="compact"
+            ariaLabel="Scroll left"
+            title="Scroll left"
             onClick={() => scrollRailBy(-300)}
             disabled={!canScrollLeft}
-            className="flex h-7 w-7 items-center justify-center rounded-full text-sm ring-1 transition-opacity"
-            style={{
-              background: "var(--surface)",
-              borderColor: "var(--border)",
-              color: canScrollLeft ? "var(--fg)" : "var(--muted2)",
-              cursor: canScrollLeft ? "pointer" : "default",
-              opacity: canScrollLeft ? 1 : 0.35,
-            }}
+            className="w-8 px-0! md:w-7"
           >
             <AppIcon name="back" size={15} strokeWidth={2.4} />
-          </button>
-          <button
-            type="button"
-            aria-label="Scroll right"
+          </PillButton>
+          <PillButton
+            size="compact"
+            ariaLabel="Scroll right"
+            title="Scroll right"
             onClick={() => scrollRailBy(300)}
             disabled={!canScrollRight}
-            className="flex h-7 w-7 items-center justify-center rounded-full text-sm ring-1 transition-opacity"
-            style={{
-              background: "var(--surface)",
-              borderColor: "var(--border)",
-              color: canScrollRight ? "var(--fg)" : "var(--muted2)",
-              cursor: canScrollRight ? "pointer" : "default",
-              opacity: canScrollRight ? 1 : 0.35,
-            }}
+            className="w-8 px-0! md:w-7"
           >
             <AppIcon name="next" size={15} strokeWidth={2.4} />
-          </button>
+          </PillButton>
           <button
             type="button"
             onClick={() => onViewAll(universeKey)}
-            className="text-[11px] transition-opacity hover:opacity-80"
+            className="relative inline-flex h-7 items-center text-[11px] transition-opacity hover:opacity-80 max-md:after:absolute max-md:after:inset-x-0 max-md:after:-inset-y-2 max-md:after:content-['']"
             style={{ color: "var(--theme-gold, #C8CDD2)" }}
           >
             See all →

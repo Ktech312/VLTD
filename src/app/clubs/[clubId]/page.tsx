@@ -28,6 +28,9 @@ import {
   type ClubRole,
 } from "@/lib/clubs";
 
+const FIELD_CLASS =
+  "w-full rounded-[8px] bg-[color:var(--pill)] px-3 text-sm text-[color:var(--fg)] ring-1 ring-[color:var(--border)] transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--pill-active-ring)]";
+
 function timeAgo(ts: number) {
   const seconds = Math.max(0, Math.floor((Date.now() - ts) / 1000));
   if (seconds < 60) return "just now";
@@ -193,8 +196,8 @@ export default function ClubDetailPage() {
     <>
       <PageHeader title={club.name} description={club.description || undefined} contentClassName="max-w-[900px]" />
       <main className="mx-auto w-full max-w-[900px] px-4 pb-16 sm:px-6">
-        <div className="flex items-center justify-between gap-3">
-          <div className="text-xs text-[color:var(--muted2)]">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="min-w-0 text-xs text-[color:var(--muted2)]">
             {club.memberCount} member{club.memberCount === 1 ? "" : "s"}
             {myRole ? ` · you're ${myRole === "owner" ? "the owner" : myRole}` : ""}
           </div>
@@ -205,22 +208,13 @@ export default function ClubDetailPage() {
           ) : null}
         </div>
 
-        <div className="mt-4 flex gap-1.5 border-b border-[color:var(--border)] pb-2">
+        <div className="mt-4 flex flex-wrap gap-2 border-b border-[color:var(--border)] pb-2">
           {(["discussion", "members", ...(isStaff ? ["moderation" as const] : []), ...(isOwner ? ["settings" as const] : [])] as const).map(
             (t) => (
-              <button
-                key={t}
-                onClick={() => setTab(t)}
-                className="rounded-full px-3 py-1.5 text-xs font-semibold capitalize ring-1"
-                style={
-                  tab === t
-                    ? { background: "var(--pill-active-bg)", color: "var(--theme-gold, #C8CDD2)", borderColor: "var(--frame-ring)" }
-                    : { background: "var(--pill)", color: "var(--muted)", borderColor: "var(--border)" }
-                }
-              >
+              <PillButton key={t} onClick={() => setTab(t)} variant={tab === t ? "active" : "default"} pressed={tab === t} className="capitalize">
                 {t}
                 {t === "moderation" && reports.length > 0 ? ` (${reports.length})` : ""}
-              </button>
+              </PillButton>
             )
           )}
         </div>
@@ -236,7 +230,7 @@ export default function ClubDetailPage() {
                   onChange={(e) => setComposerBody(e.target.value)}
                   maxLength={2000}
                   placeholder="Post something to this club…"
-                  className="w-full rounded-xl bg-[color:var(--pill)] px-3 py-2 text-sm ring-1 ring-[color:var(--border)] focus:outline-none"
+                  className={`py-2 ${FIELD_CLASS}`}
                   style={{ minHeight: 64 }}
                 />
                 <div className="mt-2 flex justify-end">
@@ -262,16 +256,16 @@ export default function ClubDetailPage() {
                       <span className="text-[10px] text-[color:var(--muted2)]">{timeAgo(post.createdAt)}</span>
                     </div>
                     <p className="mt-1 whitespace-pre-wrap text-sm text-[color:var(--fg)]">{post.body}</p>
-                    <div className="mt-2 flex gap-2">
+                    <div className="mt-2 flex flex-wrap gap-2">
                       {post.profileId === profileId || isStaff ? (
-                        <button onClick={() => void handleHide(post.id)} className="text-[11px] text-[color:var(--muted2)] hover:text-[color:var(--fg)]">
+                        <PillButton size="compact" onClick={() => void handleHide(post.id)}>
                           Hide
-                        </button>
+                        </PillButton>
                       ) : null}
                       {post.profileId !== profileId ? (
-                        <button onClick={() => void handleReport(post.id)} className="text-[11px] text-[color:var(--muted2)] hover:text-[color:var(--fg)]">
+                        <PillButton size="compact" onClick={() => void handleReport(post.id)}>
                           Report
-                        </button>
+                        </PillButton>
                       ) : null}
                     </div>
                   </div>
@@ -284,24 +278,24 @@ export default function ClubDetailPage() {
         {tab === "members" ? (
           <div className="mt-4 flex flex-col gap-2">
             {members.map((m) => (
-              <div key={m.profileId} className="flex items-center justify-between gap-2 rounded-[10px] bg-[color:var(--pill)] px-3 py-2 ring-1 ring-[color:var(--border)]">
-                <div className="min-w-0">
+              <div key={m.profileId} className="flex flex-wrap items-center justify-between gap-2 rounded-[10px] bg-[color:var(--pill)] px-3 py-2 ring-1 ring-[color:var(--border)]">
+                <div className="min-w-0 break-words">
                   <span className="text-sm font-semibold">{m.name}</span>
                   <span className="ml-2 text-[10px] uppercase tracking-wide text-[color:var(--muted2)]">{m.role}</span>
                 </div>
                 {isOwner && m.role !== "owner" ? (
                   <div className="flex shrink-0 gap-2">
-                    <button onClick={() => void handleToggleModerator(m)} className="text-[11px] text-[color:var(--muted2)] hover:text-[color:var(--fg)]">
+                    <PillButton size="compact" onClick={() => void handleToggleModerator(m)}>
                       {m.role === "moderator" ? "Remove mod" : "Make mod"}
-                    </button>
-                    <button onClick={() => void handleRemoveMember(m)} className="text-[11px] text-red-400 hover:text-red-300">
+                    </PillButton>
+                    <PillButton size="compact" variant="danger" onClick={() => void handleRemoveMember(m)}>
                       Remove
-                    </button>
+                    </PillButton>
                   </div>
                 ) : isStaff && m.role === "member" ? (
-                  <button onClick={() => void handleRemoveMember(m)} className="shrink-0 text-[11px] text-red-400 hover:text-red-300">
+                  <PillButton size="compact" variant="danger" onClick={() => void handleRemoveMember(m)} className="shrink-0">
                     Remove
-                  </button>
+                  </PillButton>
                 ) : null}
               </div>
             ))}
@@ -318,13 +312,13 @@ export default function ClubDetailPage() {
                   <div className="text-xs text-[color:var(--muted2)]">Reported by {r.reporterName} · {timeAgo(r.createdAt)}</div>
                   <div className="mt-1 text-xs italic text-[color:var(--muted)]">&ldquo;{r.reason}&rdquo;</div>
                   <p className="mt-2 whitespace-pre-wrap text-sm">{r.postBody}</p>
-                  <div className="mt-2 flex gap-2">
-                    <button onClick={() => void handleHide(r.postId)} className="text-[11px] text-red-400 hover:text-red-300">
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    <PillButton size="compact" variant="danger" onClick={() => void handleHide(r.postId)}>
                       Hide post
-                    </button>
-                    <button onClick={() => void handleResolveReport(r.id)} className="text-[11px] text-[color:var(--muted2)] hover:text-[color:var(--fg)]">
+                    </PillButton>
+                    <PillButton size="compact" onClick={() => void handleResolveReport(r.id)}>
                       Dismiss report
-                    </button>
+                    </PillButton>
                   </div>
                 </div>
               ))
@@ -346,7 +340,7 @@ export default function ClubDetailPage() {
               value={discordWebhookUrl}
               onChange={(e) => setDiscordWebhookUrl(e.target.value)}
               placeholder="https://discord.com/api/webhooks/…"
-              className="mt-1 h-11 w-full rounded-xl bg-[color:var(--pill)] px-3 text-sm ring-1 ring-[color:var(--border)] focus:outline-none"
+              className={`mt-1 h-11 ${FIELD_CLASS}`}
             />
             <p className="mt-1 text-[11px] text-[color:var(--muted2)]">
               In your Discord server: Server Settings → Integrations → Webhooks → New Webhook → Copy URL.
@@ -359,7 +353,7 @@ export default function ClubDetailPage() {
               value={telegramBotToken}
               onChange={(e) => setTelegramBotToken(e.target.value)}
               placeholder="123456789:ABCdefGhIJKl…"
-              className="mt-1 h-11 w-full rounded-xl bg-[color:var(--pill)] px-3 text-sm ring-1 ring-[color:var(--border)] focus:outline-none"
+              className={`mt-1 h-11 ${FIELD_CLASS}`}
             />
             <label className="mt-2 block text-xs font-semibold uppercase tracking-[0.14em] text-[color:var(--muted2)]">
               Telegram chat/channel ID
@@ -368,7 +362,7 @@ export default function ClubDetailPage() {
               value={telegramChatId}
               onChange={(e) => setTelegramChatId(e.target.value)}
               placeholder="e.g. -1001234567890 or @yourchannel"
-              className="mt-1 h-11 w-full rounded-xl bg-[color:var(--pill)] px-3 text-sm ring-1 ring-[color:var(--border)] focus:outline-none"
+              className={`mt-1 h-11 ${FIELD_CLASS}`}
             />
             <p className="mt-1 text-[11px] text-[color:var(--muted2)]">
               In Telegram: message @BotFather → /newbot → copy the token. Add that bot to your channel/group as an
@@ -384,7 +378,7 @@ export default function ClubDetailPage() {
               value={slackWebhookUrl}
               onChange={(e) => setSlackWebhookUrl(e.target.value)}
               placeholder="https://hooks.slack.com/services/…"
-              className="mt-1 h-11 w-full rounded-xl bg-[color:var(--pill)] px-3 text-sm ring-1 ring-[color:var(--border)] focus:outline-none"
+              className={`mt-1 h-11 ${FIELD_CLASS}`}
             />
             <p className="mt-1 text-[11px] text-[color:var(--muted2)]">
               In Slack: Settings → Incoming Webhooks → Add New Webhook → pick a channel → Copy URL.
@@ -397,7 +391,7 @@ export default function ClubDetailPage() {
               value={redditSubreddit}
               onChange={(e) => setRedditSubreddit(e.target.value)}
               placeholder="e.g. VintageVinylCollectors (no r/)"
-              className="mt-1 h-11 w-full rounded-xl bg-[color:var(--pill)] px-3 text-sm ring-1 ring-[color:var(--border)] focus:outline-none"
+              className={`mt-1 h-11 ${FIELD_CLASS}`}
             />
             <p className="mt-1 text-[11px] text-[color:var(--muted2)]">
               Cross-posting isn&apos;t live yet — Reddit now requires a manually-approved developer application before

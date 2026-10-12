@@ -18,13 +18,16 @@ import {
   type MuseumRoomItem,
 } from "@/lib/museumCampusConfig";
 import { EDITABLE_ROOM_IDS, type CampusRoomId } from "@/lib/campusLayout";
+import { PillButton } from "@/components/ui/PillButton";
+import { Toggle } from "@/components/ui/Toggle";
+import { useDialogA11y } from "@/components/ui/useDialogA11y";
 import MuseumRoomPopup from "./MuseumRoomPopup";
 
 type ItemForm = { title: string; image_url: string; enabled: boolean; sort_order: number };
 const EMPTY_ITEM_FORM: ItemForm = { title: "", image_url: "", enabled: true, sort_order: 0 };
 
 function fieldCls() {
-  return "h-9 w-full rounded-[6px] bg-black/30 px-2.5 text-sm text-white ring-1 ring-white/15 outline-none focus-visible:ring-2 focus-visible:ring-[#79e7fb]";
+  return "h-9 max-md:h-11 w-full rounded-[6px] bg-black/30 px-2.5 text-sm text-white ring-1 ring-white/15 outline-none focus-visible:ring-2 focus-visible:ring-[#79e7fb]";
 }
 
 export default function RoomEditorModal({
@@ -62,6 +65,10 @@ export default function RoomEditorModal({
   const [showRoomPopup, setShowRoomPopup] = useState(false);
   const isEditableRoom = (EDITABLE_ROOM_IDS as string[]).includes(roomId);
   const enabledCount = items.filter((item) => item.enabled).length;
+  // The 3D room popup sits inside this dialog and has no Escape handling of its own, so Escape does nothing while it is open (as before).
+  const dialogRef = useDialogA11y<HTMLDivElement>(true, () => {
+    if (!showRoomPopup) onClose();
+  });
 
   async function fetchAll() {
     const [meta, roomItems, itemsPerRoom] = await Promise.all([getRoomMeta(roomId), getAllRoomItems(roomId), getItemsPerRoom()]);
@@ -140,6 +147,7 @@ export default function RoomEditorModal({
 
   return (
     <div
+      ref={dialogRef}
       className="fixed inset-0 z-[200] flex items-center justify-center bg-black/70 p-4"
       onClick={onClose}
       role="dialog"
@@ -152,13 +160,7 @@ export default function RoomEditorModal({
       >
         <div className="mb-4 flex items-center justify-between gap-3">
           <h2 className="text-lg font-black uppercase tracking-[0.08em]">Edit {roomLabel}</h2>
-          <button
-            type="button"
-            onClick={onClose}
-            className="rounded-[6px] bg-white/10 px-3 py-1.5 text-xs font-black uppercase tracking-[0.1em] transition hover:bg-white/20"
-          >
-            Close
-          </button>
+          <PillButton onClick={onClose}>Close</PillButton>
         </div>
 
         {loading ? (
@@ -181,13 +183,9 @@ export default function RoomEditorModal({
                 />
               </label>
               <div className="flex items-center gap-3">
-                <button
-                  type="button"
-                  onClick={() => void saveMeta()}
-                  className="rounded-[6px] bg-[#4FD3EE] px-3 py-1.5 text-xs font-black uppercase tracking-[0.1em] text-[#06171d] transition hover:brightness-110"
-                >
+                <PillButton variant="primary" onClick={() => void saveMeta()}>
                   {metaSaveState === "saving" ? "Saving…" : "Save"}
-                </button>
+                </PillButton>
                 {metaSaveState === "saved" ? <span className="text-xs font-semibold text-emerald-300">Saved.</span> : null}
                 {metaSaveState === "error" ? <span className="text-xs font-semibold text-red-300">Couldn&apos;t save — try again.</span> : null}
               </div>
@@ -200,13 +198,9 @@ export default function RoomEditorModal({
                   <span className="text-xs font-bold text-white/70">{enabledCount} / {capacity} placed</span>
                 </div>
                 <div className="mb-1 flex flex-wrap gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setShowRoomPopup(true)}
-                    className="rounded-[6px] bg-[#4FD3EE] px-3 py-1.5 text-xs font-black uppercase tracking-[0.1em] text-[#06171d] transition hover:brightness-110"
-                  >
+                  <PillButton variant="primary" onClick={() => setShowRoomPopup(true)}>
                     Add Items / Edit Room
-                  </button>
+                  </PillButton>
                 </div>
               </section>
             ) : null}
@@ -217,13 +211,7 @@ export default function RoomEditorModal({
                 {isEditableRoom ? (
                   <span className="text-[10px] font-semibold text-white/45">Managed from the 3D editor above</span>
                 ) : (
-                  <button
-                    type="button"
-                    onClick={startNewItem}
-                    className="rounded-[6px] bg-white/10 px-2.5 py-1.5 text-[10px] font-black uppercase tracking-[0.1em] transition hover:bg-white/20"
-                  >
-                    + Add item
-                  </button>
+                  <PillButton onClick={startNewItem}>+ Add item</PillButton>
                 )}
               </div>
 
@@ -249,32 +237,26 @@ export default function RoomEditorModal({
                         className={fieldCls()}
                       />
                     </label>
-                    <label className="flex items-center gap-2 pt-4">
-                      <input
-                        type="checkbox"
-                        checked={itemForm.enabled}
-                        onChange={(event) => setItemForm((f) => ({ ...f, enabled: event.target.checked }))}
-                        className="h-4 w-4 accent-[#4FD3EE]"
+                    <div className="flex items-center gap-2 pt-4">
+                      <Toggle
+                        on={itemForm.enabled}
+                        onChange={() => setItemForm((f) => ({ ...f, enabled: !f.enabled }))}
+                        ariaLabel="Enabled"
                       />
                       <span className="text-xs font-semibold">Enabled</span>
-                    </label>
+                    </div>
                   </div>
                   <div className="flex gap-2">
-                    <button
-                      type="button"
+                    <PillButton
+                      variant="primary"
                       onClick={() => void saveItem()}
                       disabled={!itemForm.title.trim() || !itemForm.image_url.trim()}
-                      className="rounded-[6px] bg-[#4FD3EE] px-3 py-1.5 text-xs font-black uppercase tracking-[0.1em] text-[#06171d] transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-40"
                     >
                       {editingItemId ? "Update" : "Create"}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => { setShowItemForm(false); setEditingItemId(null); setItemForm(EMPTY_ITEM_FORM); setItemError(""); }}
-                      className="rounded-[6px] bg-white/10 px-3 py-1.5 text-xs font-semibold transition hover:bg-white/20"
-                    >
+                    </PillButton>
+                    <PillButton onClick={() => { setShowItemForm(false); setEditingItemId(null); setItemForm(EMPTY_ITEM_FORM); setItemError(""); }}>
                       Cancel
-                    </button>
+                    </PillButton>
                   </div>
                 </div>
               ) : null}
@@ -289,15 +271,15 @@ export default function RoomEditorModal({
                         <span className="block truncate text-sm font-bold">{item.title}</span>
                         <span className="text-[10px] text-white/40">order {item.sort_order}{!item.enabled ? " · disabled" : ""}</span>
                       </div>
-                      <button type="button" onClick={() => void toggleEnabled(item)} className="shrink-0 rounded-[5px] bg-white/10 px-2 py-1 text-[10px] font-bold transition hover:bg-white/20">
+                      <PillButton size="compact" className="shrink-0" onClick={() => void toggleEnabled(item)}>
                         {item.enabled ? "Disable" : "Enable"}
-                      </button>
-                      <button type="button" onClick={() => startEditItem(item)} className="shrink-0 rounded-[5px] bg-white/10 px-2 py-1 text-[10px] font-bold transition hover:bg-white/20">
+                      </PillButton>
+                      <PillButton size="compact" className="shrink-0" onClick={() => startEditItem(item)}>
                         Edit
-                      </button>
-                      <button type="button" onClick={() => void deleteItem(item.id)} className="shrink-0 rounded-[5px] bg-red-500/20 px-2 py-1 text-[10px] font-bold text-red-300 transition hover:bg-red-500/30">
+                      </PillButton>
+                      <PillButton size="compact" variant="danger" className="shrink-0" onClick={() => void deleteItem(item.id)}>
                         Delete
-                      </button>
+                      </PillButton>
                     </div>
                   ))}
                 </div>

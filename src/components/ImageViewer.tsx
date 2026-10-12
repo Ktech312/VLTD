@@ -3,6 +3,8 @@
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { AppIcon } from "@/components/ui/AppIcon";
+import { PillButton } from "@/components/ui/PillButton";
+import { useDialogA11y } from "@/components/ui/useDialogA11y";
 
 type Point = { x: number; y: number };
 type TouchPoint = { clientX: number; clientY: number };
@@ -43,6 +45,7 @@ export default function ImageViewer({
 
   const currentImage = images[current] ?? "";
   const canPan = scale > 1.01;
+  const dialogRef = useDialogA11y<HTMLDivElement>(true, onClose);
 
   useEffect(() => {
     setMounted(true);
@@ -77,7 +80,6 @@ export default function ImageViewer({
 
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
-      if (event.key === "Escape") onClose();
       if (event.key === "ArrowRight" && images.length > 1) next();
       if (event.key === "ArrowLeft" && images.length > 1) prev();
     }
@@ -92,7 +94,15 @@ export default function ImageViewer({
 
     document.addEventListener("keydown", onKeyDown);
 
-    // Attach wheel + touch listeners non-passively so preventDefault() works
+    return () => {
+      document.removeEventListener("keydown", onKeyDown);
+      document.body.style.overflow = previousBodyOverflow;
+      document.documentElement.style.overflow = previousHtmlOverflow;
+      document.body.style.touchAction = previousBodyTouchAction;
+    };
+  }, [images.length]);
+
+  // Attach wheel + touch listeners non-passively so preventDefault() works
   // (React 17+ makes onWheel/onTouchMove passive by default)
   useEffect(() => {
     const el = panContainerRef.current;
@@ -155,16 +165,10 @@ export default function ImageViewer({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // stable — handlers read latest values from refs
 
-  return () => {
-      document.removeEventListener("keydown", onKeyDown);
-      document.body.style.overflow = previousBodyOverflow;
-      document.documentElement.style.overflow = previousHtmlOverflow;
-      document.body.style.touchAction = previousBodyTouchAction;
-    };
-  }, [images.length, onClose]);
 
   const viewerMarkup = (
     <div
+      ref={dialogRef}
       // z-[10000], not z-[90] — BottomNav.tsx sets an inline zIndex:9999
       // (higher than its own z-50 className), so anything below 10000 on
       // mobile renders behind the bottom tab bar instead of over it.
@@ -179,33 +183,21 @@ export default function ImageViewer({
         if (event.target === event.currentTarget) onClose();
       }}
     >
-      <button
-        type="button"
+      <PillButton
         onClick={onClose}
-        aria-label="Close image viewer"
-        className="fixed right-3 top-3 z-[110] inline-flex h-11 w-11 items-center justify-center rounded-full bg-white/14 leading-none text-text-primary ring-1 ring-white/25 backdrop-blur transition hover:bg-white/20 sm:right-4 sm:top-4"
+        ariaLabel="Close image viewer"
+        title="Close"
+        className="fixed right-3 top-3 z-[110] w-11 px-0! sm:right-4 sm:top-4 md:w-9"
       >
-        <AppIcon name="close" size={18} />
-      </button>
+        <AppIcon name="close" size={16} />
+      </PillButton>
 
-      <div className="fixed left-3 top-3 z-[100] flex max-w-[calc(100dvw-72px)] flex-wrap gap-2 sm:left-4 sm:top-4">
-        {onEdit ? (
-          <button
-            type="button"
-            onClick={() => onEdit(current)}
-            className="rounded-[8px] bg-white/10 px-3 py-2 text-sm text-text-primary ring-1 ring-[color:var(--border)] backdrop-blur"
-          >
-            Edit Photo
-          </button>
-        ) : null}
+      <div className="fixed left-3 top-3 z-[10010] flex max-w-[calc(100dvw-72px)] flex-wrap gap-2 sm:left-4 sm:top-4">
+        {onEdit ? <PillButton onClick={() => onEdit(current)}>Edit Photo</PillButton> : null}
         {onDelete ? (
-          <button
-            type="button"
-            onClick={() => onDelete(current)}
-            className="rounded-[8px] bg-red-600/75 px-3 py-2 text-sm text-text-primary ring-1 ring-red-400/35 backdrop-blur"
-          >
+          <PillButton variant="danger" onClick={() => onDelete(current)}>
             Delete
-          </button>
+          </PillButton>
         ) : null}
       </div>
 
@@ -214,7 +206,7 @@ export default function ImageViewer({
           <button
             type="button"
             onClick={prev}
-            className="fixed left-3 top-1/2 z-[100] -translate-y-1/2 rounded-full bg-white/10 px-3 py-2 text-3xl leading-none text-text-primary ring-1 ring-[color:var(--border)] backdrop-blur"
+            className="fixed left-3 top-1/2 z-[10010] -translate-y-1/2 rounded-full max-md:min-w-11 bg-white/10 px-3 py-2 text-3xl leading-none text-text-primary ring-1 ring-[color:var(--border)] backdrop-blur"
             aria-label="Previous image"
           >
             ‹
@@ -222,7 +214,7 @@ export default function ImageViewer({
           <button
             type="button"
             onClick={next}
-            className="fixed right-3 top-1/2 z-[100] -translate-y-1/2 rounded-full bg-white/10 px-3 py-2 text-3xl leading-none text-text-primary ring-1 ring-[color:var(--border)] backdrop-blur"
+            className="fixed right-3 top-1/2 z-[10010] -translate-y-1/2 rounded-full max-md:min-w-11 bg-white/10 px-3 py-2 text-3xl leading-none text-text-primary ring-1 ring-[color:var(--border)] backdrop-blur"
             aria-label="Next image"
           >
             ›
@@ -230,32 +222,14 @@ export default function ImageViewer({
         </>
       ) : null}
 
-      <div className="fixed inset-x-0 bottom-4 z-[100] flex items-center justify-center gap-2">
-        <button
-          type="button"
-          onClick={() => zoomBy(-0.25)}
-          disabled={scale <= 1}
-          aria-label="Zoom out"
-          className="inline-flex items-center justify-center rounded-full bg-white/10 px-3 py-2 text-sm text-text-primary ring-1 ring-[color:var(--border)] backdrop-blur disabled:opacity-40 max-md:min-h-11 max-md:min-w-11"
-        >
+      <div className="fixed inset-x-0 bottom-4 z-[10010] flex items-center justify-center gap-2">
+        <PillButton onClick={() => zoomBy(-0.25)} disabled={scale <= 1} ariaLabel="Zoom out" title="Zoom out" className="w-11 px-0! md:w-9">
           −
-        </button>
-        <button
-          type="button"
-          onClick={resetTransform}
-          className="rounded-full bg-white/10 px-3 py-2 text-sm text-text-primary ring-1 ring-[color:var(--border)] backdrop-blur"
-        >
-          Fit {Math.round(scale * 100)}%
-        </button>
-        <button
-          type="button"
-          onClick={() => zoomBy(0.25)}
-          disabled={scale >= 5}
-          aria-label="Zoom in"
-          className="inline-flex items-center justify-center rounded-full bg-white/10 px-3 py-2 text-sm text-text-primary ring-1 ring-[color:var(--border)] backdrop-blur disabled:opacity-40 max-md:min-h-11 max-md:min-w-11"
-        >
+        </PillButton>
+        <PillButton onClick={resetTransform}>Fit {Math.round(scale * 100)}%</PillButton>
+        <PillButton onClick={() => zoomBy(0.25)} disabled={scale >= 5} ariaLabel="Zoom in" title="Zoom in" className="w-11 px-0! md:w-9">
           +
-        </button>
+        </PillButton>
       </div>
 
       <div

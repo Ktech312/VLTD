@@ -3,6 +3,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import { AppIcon } from "@/components/ui/AppIcon";
+import { PillButton } from "@/components/ui/PillButton";
+import { PillSelect, type PillSelectOption } from "@/components/ui/PillSelect";
 import { INLINE_EDIT_LINE } from "@/lib/inlineEdit";
 import { getStoredActiveProfileId } from "@/lib/auth";
 import {
@@ -64,6 +66,13 @@ function money2(n?: number) {
   if (!Number.isFinite(amount) || amount <= 0) return "—";
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(amount);
 }
+
+const CONFIDENCE_OPTIONS: PillSelectOption<string>[] = [
+  { value: "", label: "Change…" },
+  { value: "low", label: "Low" },
+  { value: "medium", label: "Medium" },
+  { value: "high", label: "High" },
+];
 
 function numText(n?: number) {
   return n !== undefined && n !== null && Number.isFinite(n) ? String(n) : "";
@@ -340,7 +349,7 @@ export default function PricingMvpCard({
   const tile = "w-full rounded-[14px] bg-[color:var(--surface)] p-3 text-left ring-1 ring-[color:var(--border)]";
   const tileLabel = "text-[11px] tracking-[0.14em] text-[color:var(--muted2)]";
   const hover = "transition hover:ring-[color:var(--theme-gold,#C8CDD2)]";
-  const smallInput = "rounded-lg bg-[color:var(--pill)] px-2.5 py-1 text-sm ring-1 ring-[color:var(--border)] focus:outline-none";
+  const smallInput = "rounded-[8px] bg-[color:var(--pill)] px-2.5 py-1 text-sm ring-1 ring-[color:var(--border)] focus:outline-none max-md:h-11";
 
   return (
     <section ref={sectionRef} className="rounded-[16px] bg-[color:var(--surface)] p-3 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
@@ -382,41 +391,28 @@ export default function PricingMvpCard({
                   })}
                 </div>
               ) : null}
-              <div className="mt-2 flex flex-wrap items-center gap-1.5">
-                <button
-                  type="button"
-                  onClick={() => setPasteOpen((open) => !open)}
-                  className="relative max-md:after:absolute max-md:after:inset-x-0 max-md:after:-inset-y-2.5 max-md:after:content-[''] inline-flex items-center rounded-[8px] px-2.5 py-1 text-[11px] font-bold"
-                  style={{ background: "var(--theme-gold, #C8CDD2)", color: "#0A0800" }}
-                >
+              <div className="mt-2 flex flex-wrap items-center gap-x-1.5 gap-y-3">
+                <PillButton size="compact" variant="primary" onClick={() => setPasteOpen((open) => !open)}>
                   Paste sold results
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setChooserOpen((open) => !open)}
-                  className="relative max-md:after:absolute max-md:after:inset-x-0 max-md:after:-inset-y-2.5 max-md:after:content-[''] inline-flex items-center rounded-[8px] bg-[color:var(--pill)] px-2.5 py-1 text-[11px] font-semibold text-[color:var(--fg)] ring-1 ring-[color:var(--border)]"
-                >
+                </PillButton>
+                <PillButton size="compact" onClick={() => setChooserOpen((open) => !open)}>
                   {chooserOpen ? "Close site list" : "Choose sites"}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setDetailsOpen((open) => !open)}
-                  className="relative max-md:after:absolute max-md:after:inset-x-0 max-md:after:-inset-y-2.5 max-md:after:content-[''] inline-flex items-center rounded-[8px] px-2.5 py-1 text-[11px] font-semibold text-[color:var(--muted)] ring-1 ring-[color:var(--border)]"
-                >
+                </PillButton>
+                <PillButton size="compact" onClick={() => setDetailsOpen((open) => !open)}>
                   {showBody ? "Hide details" : "Details"}
-                </button>
+                </PillButton>
               </div>
               {overall || overallListed ? (
-                <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[12px]">
+                <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-3 text-[12px]">
                   <span>
                     <span className="font-bold text-[color:var(--fg)]">Overall average</span>
                     {overall ? <span className="ml-1.5">Sold <b className="text-[color:var(--fg)]">{money2(overall.average)}</b></span> : null}
                     {overallListed ? <span className="ml-1.5">For sale <b className="text-[color:var(--fg)]">{money2(overallListed.average)}</b></span> : null}
                     <span className="ml-1.5 text-[color:var(--muted)]">{Math.max(overall?.sites ?? 0, overallListed?.sites ?? 0)} site{Math.max(overall?.sites ?? 0, overallListed?.sites ?? 0) === 1 ? "" : "s"} · {formatPriceUpdatedAt(Math.max(overall?.asOf ?? 0, overallListed?.asOf ?? 0) || undefined)}</span>
                   </span>
-                  <button type="button" onClick={() => void applyOverallAsEstimate()} className="rounded-md px-2 py-0.5 text-[11px] font-semibold text-[color:var(--theme-gold)] ring-1 ring-[color:var(--border)] hover:bg-[color:var(--pill)]" title={overall ? "Saves the sold average as your estimate" : "Saves the for-sale average as your estimate"}>
+                  <PillButton size="compact" onClick={() => void applyOverallAsEstimate()} title={overall ? "Saves the sold average as your estimate" : "Saves the for-sale average as your estimate"}>
                     Use as my estimate
-                  </button>
+                  </PillButton>
                 </div>
               ) : null}
               {checkStale && checkedAtAll ? (
@@ -433,7 +429,7 @@ export default function PricingMvpCard({
                 {SEARCH_SITES.map((site) => {
                   const checked = prefs ? prefs.ids.includes(site.id) : links.some((l) => l.key === site.id);
                   return (
-                    <label key={site.id} className="inline-flex items-center gap-1.5">
+                    <label key={site.id} className="inline-flex items-center gap-1.5 max-md:min-h-11">
                       <input
                         type="checkbox"
                         checked={checked}
@@ -454,10 +450,10 @@ export default function PricingMvpCard({
               <div className="mt-1.5 grid gap-2 sm:grid-cols-[160px_1fr_auto]">
                 <input className={smallInput} placeholder="Name" value={customDraft.label} onChange={(e) => setCustomDraft((d) => ({ ...d, label: e.target.value }))} />
                 <input className={smallInput} placeholder="https://…{query}" value={customDraft.url} onChange={(e) => setCustomDraft((d) => ({ ...d, url: e.target.value }))} />
-                <button
-                  type="button"
-                  className="rounded-[8px] px-3 py-1 text-xs font-bold"
-                  style={{ background: "var(--theme-gold, #C8CDD2)", color: "#0A0800" }}
+                <PillButton
+                  size="compact"
+                  variant="primary"
+                  className="justify-self-start"
                   onClick={() => {
                     if (!customDraft.label.trim() || !/^https?:\/\//i.test(customDraft.url.trim())) return;
                     const current = prefs ?? { ids: links.filter((l) => SEARCH_SITES.some((x) => x.id === l.key)).map((l) => l.key), custom: [] };
@@ -466,14 +462,20 @@ export default function PricingMvpCard({
                   }}
                 >
                   Add
-                </button>
+                </PillButton>
               </div>
               {prefs && prefs.custom.length > 0 ? (
-                <div className="mt-2 flex flex-wrap gap-2">
+                <div className="mt-2 flex flex-wrap gap-2 max-md:gap-y-3">
                   {prefs.custom.map((c, i) => (
                     <span key={`${c.label}-${i}`} className="inline-flex items-center gap-1.5 rounded-full bg-[color:var(--surface)] px-2.5 py-0.5 ring-1 ring-[color:var(--border)]">
                       {c.label}
-                      <button type="button" aria-label={`Remove ${c.label}`} onClick={() => savePrefs({ ids: prefs.ids, custom: prefs.custom.filter((_, idx) => idx !== i) })} className="inline-flex text-[color:var(--muted)]">
+                      <button
+                        type="button"
+                        aria-label={`Remove ${c.label}`}
+                        title={`Remove ${c.label}`}
+                        onClick={() => savePrefs({ ids: prefs.ids, custom: prefs.custom.filter((_, idx) => idx !== i) })}
+                        className="relative inline-flex text-[color:var(--muted)] max-md:after:absolute max-md:after:-inset-4 max-md:after:content-['']"
+                      >
                         <AppIcon name="close" size={12} />
                       </button>
                     </span>
@@ -481,20 +483,21 @@ export default function PricingMvpCard({
                 </div>
               ) : null}
               {prefs ? (
-                <button
-                  type="button"
-                  className="mt-2 text-[12px] font-semibold text-[color:var(--muted)] underline-offset-2 hover:underline"
-                  onClick={() => {
-                    try {
-                      window.localStorage.removeItem(searchPrefsKey());
-                    } catch {
-                      /* ignore */
-                    }
-                    setPrefs(null);
-                  }}
-                >
-                  Back to the suggested sites
-                </button>
+                <div className="mt-3">
+                  <PillButton
+                    size="compact"
+                    onClick={() => {
+                      try {
+                        window.localStorage.removeItem(searchPrefsKey());
+                      } catch {
+                        /* ignore */
+                      }
+                      setPrefs(null);
+                    }}
+                  >
+                    Back to the suggested sites
+                  </PillButton>
+                </div>
               ) : null}
             </div>
           ) : null}
@@ -509,17 +512,11 @@ export default function PricingMvpCard({
               </ol>
               <div className="mt-2 flex flex-wrap items-center gap-2">
                 <input className={`${smallInput} w-full sm:w-60`} placeholder="Where it is from" value={pasteSource} onChange={(e) => setPasteSource(e.target.value)} />
-                <span className="inline-flex overflow-hidden rounded-lg text-[11px] font-semibold ring-1 ring-[color:var(--border)]">
+                <span role="group" aria-label="Result type" className="inline-flex items-center gap-1.5">
                   {(["sold", "listed"] as const).map((k) => (
-                    <button
-                      key={k}
-                      type="button"
-                      onClick={() => setPasteKind(k)}
-                      className={`px-2.5 py-1 ${pasteKind === k ? "" : "text-[color:var(--muted)]"}`}
-                      style={pasteKind === k ? { background: "var(--theme-gold, #C8CDD2)", color: "#0A0800" } : undefined}
-                    >
+                    <PillButton key={k} size="compact" variant={pasteKind === k ? "active" : "default"} pressed={pasteKind === k} onClick={() => setPasteKind(k)}>
                       {k === "sold" ? "Sold" : "For sale"}
-                    </button>
+                    </PillButton>
                   ))}
                 </span>
               </div>
@@ -566,7 +563,7 @@ export default function PricingMvpCard({
                           : `Found ${pasteResults.length}. Untick any you don't want.`}
                     </div>
                     {pasteResults.map((r) => (
-                      <label key={r.id} className="flex items-start gap-2 rounded-lg bg-[color:var(--surface)] px-2.5 py-1.5 text-[12px] ring-1 ring-[color:var(--border)]">
+                      <label key={r.id} className="flex items-start gap-2 rounded-lg bg-[color:var(--surface)] px-2.5 py-1.5 text-[12px] ring-1 ring-[color:var(--border)] max-md:min-h-11">
                         <input type="checkbox" className="mt-0.5" checked={!!pasteChecked[r.id]} onChange={() => setPasteChecked((c) => ({ ...c, [r.id]: !c[r.id] }))} />
                         <span className="min-w-0 flex-1">
                           <span className="font-semibold">{money2(r.salePrice)}</span>
@@ -580,24 +577,24 @@ export default function PricingMvpCard({
                 )
               ) : null}
               <div className="mt-2 flex items-center gap-2">
-                <button type="button" onClick={() => void addPasted()} disabled={!pasteResults || !Object.values(pasteChecked).some(Boolean)} className="rounded-[8px] px-3 py-1 text-xs font-bold disabled:opacity-50" style={{ background: "var(--theme-gold, #C8CDD2)", color: "#0A0800" }}>Add selected</button>
-                <button type="button" onClick={() => { setPasteOpen(false); setPasteResults(null); setPasteText(""); }} className="rounded-[8px] px-3 py-1 text-xs font-semibold text-[color:var(--muted)] ring-1 ring-[color:var(--border)]">Cancel</button>
+                <PillButton size="compact" variant="primary" onClick={() => void addPasted()} disabled={!pasteResults || !Object.values(pasteChecked).some(Boolean)}>Add selected</PillButton>
+                <PillButton size="compact" onClick={() => { setPasteOpen(false); setPasteResults(null); setPasteText(""); }}>Cancel</PillButton>
               </div>
             </div>
           ) : null}
             </>
           ) : null}
         </div>
-        <button
-          type="button"
+        <PillButton
+          size="compact"
+          variant={all ? "active" : "default"}
           onClick={() => (all ? void saveAll() : startAll())}
-          aria-label={all ? "Save pricing" : "Edit pricing"}
+          ariaLabel={all ? "Save pricing" : "Edit pricing"}
           title={all ? "Save (Esc to cancel)" : "Edit pricing"}
-          className="relative max-md:after:absolute max-md:after:-inset-2 max-md:after:content-[''] inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-[7px] ring-1 ring-[color:var(--border)] transition hover:bg-[color:var(--pill)]"
-          style={{ color: all ? "var(--theme-gold)" : "var(--muted)" }}
+          className="w-8 shrink-0 px-0! md:w-7 max-md:after:-inset-x-1.5!"
         >
           <AppIcon name={all ? "checkmark" : "edit"} size={14} strokeWidth={1.8} />
-        </button>
+        </PillButton>
       </div>
 
       {showBody ? (
@@ -645,17 +642,15 @@ export default function PricingMvpCard({
               <span className={["rounded-full px-2.5 py-1 text-[11px] font-medium ring-1", confidenceTone(value.priceConfidence)].join(" ")}>
                 {confidenceLabel(value.priceConfidence)}
               </span>
-              <select
-                aria-label="Confidence"
-                className="h-7 rounded-lg bg-[color:var(--pill)] px-1.5 text-[11px] text-[color:var(--muted)] ring-1 ring-[color:var(--border)] focus:outline-none"
-                value={value.priceConfidence ?? ""}
-                onChange={(e) => void commit({ priceConfidence: normalizePriceConfidence(e.target.value) })}
-              >
-                <option value="">Change…</option>
-                <option value="low">Low</option>
-                <option value="medium">Medium</option>
-                <option value="high">High</option>
-              </select>
+              <PillSelect
+                compact
+                align="left"
+                ariaLabel="Confidence"
+                options={CONFIDENCE_OPTIONS}
+                value={(value.priceConfidence ?? "") as string}
+                onChange={(next) => void commit({ priceConfidence: normalizePriceConfidence(next) })}
+                minWidthPx={104}
+              />
             </div>
           </div>
 
@@ -668,19 +663,19 @@ export default function PricingMvpCard({
 
         {/* Comparable sales */}
         <div>
-          <div className="mb-1.5 flex items-center justify-between">
+          <div className="mb-2 flex flex-wrap items-center justify-between gap-x-2 gap-y-3">
             <span className={tileLabel}>
               COMPARABLE SALES
               {comparables.length === 0 && !addingComp ? <span className="ml-2 normal-case tracking-normal text-[color:var(--muted2)]">none yet</span> : null}
             </span>
             {!addingComp && !pasteOpen ? (
-              <div className="flex items-center gap-3">
-                <button type="button" onClick={() => { setPasteOpen(true); window.setTimeout(() => sectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 50); }} className="text-[11px] font-semibold text-[color:var(--theme-gold)]">
+              <div className="flex flex-wrap items-center gap-x-1.5 gap-y-3">
+                <PillButton size="compact" onClick={() => { setPasteOpen(true); window.setTimeout(() => sectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 50); }}>
                   + Paste sold results
-                </button>
-                <button type="button" onClick={() => setAddingComp(true)} className="text-[11px] font-semibold text-[color:var(--theme-gold)]">
+                </PillButton>
+                <PillButton size="compact" onClick={() => setAddingComp(true)}>
                   + Add comp
-                </button>
+                </PillButton>
               </div>
             ) : null}
           </div>
@@ -702,12 +697,12 @@ export default function PricingMvpCard({
                   {comp.saleDate ? <div className="text-[11px] text-[color:var(--muted2)]">{comp.saleDate}</div> : null}
                 </div>
                 <div className="flex shrink-0 items-center gap-1.5">
-                  <button type="button" onClick={() => void applyCompAsValue(comp)} className="rounded-md px-2 py-1 text-[11px] font-semibold text-[color:var(--theme-gold)] ring-1 ring-[color:var(--border)] hover:bg-[color:var(--surface)]" title="Use this sale as the current value">
+                  <PillButton size="compact" onClick={() => void applyCompAsValue(comp)} title="Use this sale as the current value">
                     Use as value
-                  </button>
-                  <button type="button" onClick={() => void removeComp(index)} className="rounded-md px-2 py-1 text-[11px] text-[color:var(--muted)] ring-1 ring-[color:var(--border)] hover:bg-[color:var(--surface)]" title="Remove this comparable" aria-label="Remove this comparable">
+                  </PillButton>
+                  <PillButton size="compact" onClick={() => void removeComp(index)} title="Remove this comparable" ariaLabel="Remove this comparable">
                     Remove
-                  </button>
+                  </PillButton>
                 </div>
               </div>
             ))}
@@ -716,9 +711,9 @@ export default function PricingMvpCard({
                 <span className="text-[color:var(--muted)]">
                   From these {compSummary.n} sold comps: {money2(compSummary.low)} to {money2(compSummary.high)}, middle {money2(compSummary.median)}.
                 </span>
-                <button type="button" onClick={() => void applyCompsAsEstimate()} className="rounded-md px-2 py-1 text-[11px] font-semibold text-[color:var(--theme-gold)] ring-1 ring-[color:var(--border)] hover:bg-[color:var(--pill)]">
+                <PillButton size="compact" onClick={() => void applyCompsAsEstimate()}>
                   Use as my estimate
-                </button>
+                </PillButton>
               </div>
             ) : null}
             {addingComp ? (
@@ -730,8 +725,8 @@ export default function PricingMvpCard({
                   <input className={smallInput} placeholder="Link (optional)" value={compDraft.url} onChange={(e) => setCompDraft((d) => ({ ...d, url: e.target.value }))} />
                 </div>
                 <div className="mt-2 flex items-center gap-2">
-                  <button type="button" onClick={() => void addComp()} className="rounded-[8px] px-3 py-1 text-xs font-bold" style={{ background: "var(--theme-gold, #C8CDD2)", color: "#0A0800" }}>Add</button>
-                  <button type="button" onClick={() => setAddingComp(false)} className="rounded-[8px] px-3 py-1 text-xs font-semibold text-[color:var(--muted)] ring-1 ring-[color:var(--border)]">Cancel</button>
+                  <PillButton size="compact" variant="primary" onClick={() => void addComp()}>Add</PillButton>
+                  <PillButton size="compact" onClick={() => setAddingComp(false)}>Cancel</PillButton>
                 </div>
               </div>
             ) : null}

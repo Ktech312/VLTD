@@ -1,23 +1,12 @@
 "use client";
 
-import { pillClassName } from "@/components/ui/PillButton";
 import Link from "next/link";
 
-function PillLink({ href, children }: { href: string; children: React.ReactNode }) {
-  return (
-    <Link
-      href={href}
-      className={[
-        "inline-flex h-10 items-center rounded-full px-5 text-sm font-medium ring-1 transition no-underline",
-        "bg-[color:var(--pill)] text-[color:var(--pill-fg)] ring-[color:var(--border)]",
-        "hover:bg-[color:var(--pill-hover)]",
-      ].join(" ")}
-    >
-      {children}
-    </Link>
-  );
-}
+import { PageHeader } from "@/components/layout/PageHeader";
+import { PillButton, pillClassName } from "@/components/ui/PillButton";
 
+// Compatibility entry for the old Ingest hub: it is still linked from older bookmarks and the text-import page, so it stays,
+// now named for what people do here (add items) and built from the shared header and controls.
 function Card({
   title,
   desc,
@@ -32,39 +21,32 @@ function Card({
   return (
     <Link
       href={href}
-      className="block rounded-3xl bg-[color:var(--surface)] p-6 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)] hover:bg-[color:var(--surface-strong)] transition"
+      className="block rounded-3xl bg-[color:var(--surface)] p-6 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)] transition hover:bg-[color:var(--surface-strong)]"
     >
-      <div className="text-xs tracking-widest text-[color:var(--muted2)]">INGEST</div>
-      <div className="mt-2 text-xl font-semibold">{title}</div>
+      <div className="text-xl font-semibold">{title}</div>
       <div className="mt-2 text-sm text-[color:var(--muted)]">{desc}</div>
-      <div className={pillClassName("active", false, "mt-4")}>
-        {cta}
-      </div>
+      <div className={pillClassName("active", false, "mt-4")}>{cta}</div>
     </Link>
   );
 }
 
-export default function IngestHubPage() {
+export default function AddItemsHubPage() {
   return (
     <main className="text-[color:var(--fg)]">
-      <div className="mx-auto max-w-6xl px-5 py-10">
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <div className="text-xs tracking-widest text-[color:var(--muted2)]">VLTD</div>
-            <h1 className="mt-2 text-4xl font-semibold">Ingest</h1>
-            <p className="mt-2 text-sm text-[color:var(--muted)]">
-              Get inventory in fast. Spreadsheet import is now the primary migration path.
-            </p>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-2">
-            <PillLink href="/">Home</PillLink>
-            <PillLink href="/vault">Open Exhibitions</PillLink>
-            <PillLink href="/portfolio">Portfolio</PillLink>
-          </div>
-        </div>
-
-        <div className="mt-8 grid gap-3 md:grid-cols-3">
+      <PageHeader
+        title="Add items"
+        description="Get inventory in fast. Spreadsheet import is the primary migration path."
+        actions={
+          <>
+            <PillButton href="/dashboard">Home</PillButton>
+            <PillButton href="/vault">Vault</PillButton>
+            <PillButton href="/museum">Exhibitions</PillButton>
+            <PillButton href="/portfolio">Insights</PillButton>
+          </>
+        }
+      />
+      <div className="mx-auto max-w-6xl px-5 pb-10">
+        <div className="grid gap-3 md:grid-cols-3">
           <Card
             title="Quick Add"
             desc="One-step, phone-first entry. Start with image if you want it. Save with minimal fields."

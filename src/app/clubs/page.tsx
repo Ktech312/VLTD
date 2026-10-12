@@ -8,6 +8,9 @@ import { PillButton } from "@/components/ui/PillButton";
 import { getStoredActiveProfileId } from "@/lib/auth";
 import { listClubs, createClub, type Club } from "@/lib/clubs";
 
+const FIELD_CLASS =
+  "w-full rounded-[8px] bg-[color:var(--pill)] px-3 text-sm text-[color:var(--fg)] ring-1 ring-[color:var(--border)] transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--pill-active-ring)]";
+
 export default function ClubsPage() {
   const router = useRouter();
   const [clubs, setClubs] = useState<Club[] | null>(null);
@@ -43,8 +46,8 @@ export default function ClubsPage() {
     <>
       <PageHeader title="Clubs" description="Real collector clubs and discussion boards." contentClassName="max-w-[900px]" />
       <main className="mx-auto w-full max-w-[900px] px-4 pb-16 sm:px-6">
-        <div className="flex items-center justify-between gap-3">
-          <p className="text-sm text-[color:var(--muted)]">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <p className="min-w-0 text-sm text-[color:var(--muted)]">
             Join a club to post; anyone can browse and read.
           </p>
           {profileId ? (
@@ -60,7 +63,7 @@ export default function ClubsPage() {
               onChange={(e) => setName(e.target.value)}
               maxLength={60}
               placeholder="e.g. Vintage Vinyl Collectors"
-              className="mt-1 h-11 w-full rounded-xl bg-[color:var(--pill)] px-3 text-sm ring-1 ring-[color:var(--border)] focus:outline-none"
+              className={`mt-1 h-11 ${FIELD_CLASS}`}
             />
             <label className="mt-3 block text-xs font-semibold uppercase tracking-[0.14em] text-[color:var(--muted2)]">
               Description
@@ -70,7 +73,7 @@ export default function ClubsPage() {
               onChange={(e) => setDescription(e.target.value)}
               maxLength={500}
               placeholder="What's this club about?"
-              className="mt-1 w-full rounded-xl bg-[color:var(--pill)] px-3 py-2 text-sm ring-1 ring-[color:var(--border)] focus:outline-none"
+              className={`mt-1 py-2 ${FIELD_CLASS}`}
               style={{ minHeight: 72 }}
             />
             {error ? <p className="mt-2 text-xs text-red-400">{error}</p> : null}

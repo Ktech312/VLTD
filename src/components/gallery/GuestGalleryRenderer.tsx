@@ -1,9 +1,8 @@
 "use client";
 
-import { pillClassName } from "@/components/ui/PillButton";
+import { useDialogA11y } from "@/components/ui/useDialogA11y";
 import { UNIVERSE_LABEL, type UniverseKey } from "@/lib/taxonomy";
 import type { GalleryInvitePermissions } from "@/lib/galleryModel";
-import Link from "next/link";
 import { Fragment, useEffect, useRef, useState } from "react";
 import type { DragEvent } from "react";
 
@@ -86,9 +85,10 @@ function ViewerItemCard({
           <button
             type="button"
             onClick={(e) => { e.stopPropagation(); onRemove(); }}
-            className="pointer-events-auto absolute right-1 top-1 z-20 grid h-[18px] w-[18px] place-items-center rounded-full border border-red-400/70 bg-black/75"
+            className="pointer-events-auto absolute right-1 top-1 z-20 grid h-[18px] w-[18px] place-items-center rounded-full border border-red-400/70 bg-black/75 max-md:after:absolute max-md:after:-inset-[13px] max-md:after:content-['']"
             style={{ boxShadow: "0 0 8px rgba(248,113,113,0.75), 0 0 18px rgba(248,113,113,0.35)" }}
             aria-label={`Remove ${item.title}`}
+            title={`Remove ${item.title}`}
           >
             <span
               className="h-[2px] w-[8px] rounded-full bg-red-400"
@@ -220,11 +220,7 @@ export function GuestItemModal({
       ? new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(value)
       : null;
 
-  useEffect(() => {
-    function onKey(e: KeyboardEvent) { if (e.key === "Escape") onClose(); }
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [onClose]);
+  const dialogRef = useDialogA11y<HTMLDivElement>(true, onClose);
 
   return (
     <div
@@ -233,6 +229,10 @@ export function GuestItemModal({
     >
       <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
       <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-label={item.title}
         className="relative z-10 w-full max-w-lg overflow-hidden rounded-t-[28px] sm:rounded-[28px] border border-white/10"
         style={{ background: "linear-gradient(180deg,rgba(20,24,30,0.98),rgba(10,12,16,0.99))" }}
         onClick={(e) => e.stopPropagation()}
@@ -245,14 +245,9 @@ export function GuestItemModal({
           ) : (
             <div className="flex h-full items-center justify-center text-sm text-white/40">No image</div>
           )}
-          <button
-            type="button"
-            onClick={onClose}
-            className="absolute right-3 top-3 grid h-8 w-8 place-items-center rounded-full bg-black/60 text-white/80 ring-1 ring-white/15 hover:bg-black/80 max-md:after:absolute max-md:after:-inset-2 max-md:after:content-['']"
-            aria-label="Close"
-          >
+          <PillButton onClick={onClose} ariaLabel="Close" title="Close" className="absolute right-3 top-3 w-11 px-0! md:w-9">
             <AppIcon name="close" size={16} />
-          </button>
+          </PillButton>
         </div>
 
         {/* Info */}
@@ -382,6 +377,7 @@ export default function GuestGalleryRenderer({
     if (count < 2) return;
     setSelectedSectionIdx((index) => (Math.min(index, count - 1) + delta + count) % count);
   }
+  const lightboxRef = useDialogA11y<HTMLDivElement>(Boolean(lightboxItem && !embedded), () => setLightboxItem(null));
   const [bioOpen, setBioOpen] = useState(false);
   const [infoOpen, setInfoOpen] = useState(false);
   const [viewerProfileId, setViewerProfileId] = useState("");
@@ -541,21 +537,15 @@ export default function GuestGalleryRenderer({
               </PillButton>
 
               {model.navigation.backHref ? (
-                <Link
-                  href={model.navigation.backHref}
-                  className="inline-flex min-h-[42px] items-center justify-center rounded-full bg-[color:var(--pill)] px-4 py-2 text-sm font-medium text-[color:var(--pill-fg)] ring-1 ring-[color:var(--border)]"
-                >
+                <PillButton href={model.navigation.backHref} className="text-sm">
                   {model.navigation.backLabel ?? "Back"}
-                </Link>
+                </PillButton>
               ) : null}
 
               {model.navigation.homeHref ? (
-                <Link
-                  href={model.navigation.homeHref}
-                  className="inline-flex min-h-[42px] items-center justify-center rounded-full bg-[color:var(--pill)] px-4 py-2 text-sm font-medium text-[color:var(--pill-fg)] ring-1 ring-[color:var(--border)]"
-                >
+                <PillButton href={model.navigation.homeHref} className="text-sm">
                   {model.navigation.homeLabel ?? "Exhibitions"}
-                </Link>
+                </PillButton>
               ) : null}
             </div>
           ) : null}
@@ -603,19 +593,15 @@ export default function GuestGalleryRenderer({
                         <button
                           type="button"
                           onClick={() => setBioOpen(true)}
-                          className="text-sm font-semibold transition-opacity hover:opacity-80"
+                          className="relative inline-flex h-7 items-center text-sm font-semibold transition-opacity hover:opacity-80 max-md:after:absolute max-md:after:inset-x-0 max-md:after:-inset-y-2 max-md:after:content-['']"
                           style={{ color: "var(--gold, #C8CDD2)", background: "none", border: "none", cursor: "pointer", padding: 0 }}
                         >
                           {owner.displayName}
                         </button>
                         {model.gallery ? (
-                          <button
-                            type="button"
-                            onClick={() => setInfoOpen(true)}
-                            className={pillClassName("default", false, "", "compact")}
-                          >
+                          <PillButton size="compact" onClick={() => setInfoOpen(true)}>
                             Info
-                          </button>
+                          </PillButton>
                         ) : null}
                         <span className="text-[color:var(--muted2)]" aria-hidden="true">·</span>
                       </>
@@ -635,21 +621,18 @@ export default function GuestGalleryRenderer({
 
                   {/* Exhibit pages: tabs live inside the header card, to the right */}
                   {sectionViews.length > 1 ? (
-                    <div className="mt-3 flex flex-wrap justify-end gap-2">
+                    <div className="mt-3 flex flex-wrap justify-end gap-2 max-md:gap-y-3">
                       {sectionViews.map((sv, idx) => (
-                        <button
+                        <PillButton
                           key={sv.section.id}
-                          type="button"
+                          size="compact"
+                          variant={idx === selectedSectionIdx ? "active" : "default"}
+                          pressed={idx === selectedSectionIdx}
+                          className="shrink-0"
                           onClick={() => setSelectedSectionIdx(idx)}
-                          className="shrink-0 rounded-full px-3 py-1 text-xs font-semibold transition"
-                          style={{
-                            background: idx === selectedSectionIdx ? "rgba(203,208,213,0.18)" : "rgba(255,255,255,0.06)",
-                            color: idx === selectedSectionIdx ? "#C8CDD2" : "rgba(255,255,255,0.55)",
-                            border: `1px solid ${idx === selectedSectionIdx ? "rgba(203,208,213,0.35)" : "rgba(255,255,255,0.08)"}`,
-                          }}
                         >
                           {sv.section.title && sv.section.title !== "Untitled Section" ? sv.section.title : `Exhibit ${idx + 1}`}
-                        </button>
+                        </PillButton>
                       ))}
                     </div>
                   ) : null}
@@ -696,7 +679,7 @@ export default function GuestGalleryRenderer({
                   onClick={() => stepSection(-1)}
                   aria-label="Previous exhibit"
                   title="Previous exhibit"
-                  className="absolute left-3 top-3 z-30 grid h-8 w-8 place-items-center rounded-full bg-black/45 ring-1 ring-white/25 transition hover:bg-black/65"
+                  className="absolute left-3 top-3 z-30 grid h-8 w-8 place-items-center rounded-full bg-black/45 ring-1 ring-white/25 transition hover:bg-black/65 max-md:after:absolute max-md:after:-inset-1.5 max-md:after:content-['']"
                 >
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M19 12H5M12 5l-7 7 7 7" /></svg>
                 </button>
@@ -705,7 +688,7 @@ export default function GuestGalleryRenderer({
                   onClick={() => stepSection(1)}
                   aria-label="Next exhibit"
                   title="Next exhibit"
-                  className="absolute right-3 top-3 z-30 grid h-8 w-8 place-items-center rounded-full bg-black/45 ring-1 ring-white/25 transition hover:bg-black/65"
+                  className="absolute right-3 top-3 z-30 grid h-8 w-8 place-items-center rounded-full bg-black/45 ring-1 ring-white/25 transition hover:bg-black/65 max-md:after:absolute max-md:after:-inset-1.5 max-md:after:content-['']"
                 >
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7" /></svg>
                 </button>
@@ -798,17 +781,16 @@ export default function GuestGalleryRenderer({
 
       {lightboxItem && !embedded ? (
         <div
+          ref={lightboxRef}
+          role="dialog"
+          aria-modal="true"
+          aria-label={lightboxItem.title}
           className="fixed inset-0 z-[200] flex items-center justify-center bg-black/90 backdrop-blur-sm"
           onClick={() => setLightboxItem(null)}
         >
-          <button
-            type="button"
-            onClick={() => setLightboxItem(null)}
-            aria-label="Close"
-            className="absolute right-4 top-4 grid h-9 w-9 place-items-center rounded-full bg-white/10 text-white ring-1 ring-white/20 hover:bg-white/20 max-md:after:absolute max-md:after:-inset-1 max-md:after:content-['']"
-          >
+          <PillButton onClick={() => setLightboxItem(null)} ariaLabel="Close" title="Close" className="absolute right-4 top-4 w-11 px-0! md:w-9">
             <AppIcon name="close" size={16} />
-          </button>
+          </PillButton>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={getPrimaryImageUrl(lightboxItem)}

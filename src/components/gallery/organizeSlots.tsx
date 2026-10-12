@@ -35,6 +35,8 @@
 import { useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { AppIcon } from "@/components/ui/AppIcon";
+import { PillButton } from "@/components/ui/PillButton";
+import { useDialogA11y } from "@/components/ui/useDialogA11y";
 
 export type SlotItemLike = { title?: string | null };
 
@@ -402,6 +404,11 @@ export function OrganizeMoveMenu({
   organizer: SlotOrganizer;
 }) {
   const moveMenuFor = organizer.moveMenuFor;
+  const dialogRef = useDialogA11y<HTMLDivElement>(moveMenuFor !== null, () => {
+    if (organizer.moveMenuFor === null) return;
+    organizer.focusSlot(organizer.moveMenuFor);
+    organizer.setMoveMenuFor(null);
+  });
   if (moveMenuFor === null || typeof document === "undefined") return null;
   return createPortal(
     <div
@@ -418,6 +425,10 @@ export function OrganizeMoveMenu({
         className="absolute inset-0 bg-black/60 backdrop-blur-sm"
       />
       <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Move to position"
         className="relative flex max-h-[80dvh] w-full flex-col overflow-hidden rounded-t-3xl ring-1 sm:max-w-sm sm:rounded-3xl"
         style={{ background: "var(--bg, #060a13)", borderColor: "var(--theme-border)" }}
       >
@@ -442,27 +453,19 @@ export function OrganizeMoveMenu({
                   const destItem = slotItems[idx];
                   const isSelf = idx === moveMenuFor;
                   return (
-                    <button
+                    <PillButton
                       key={idx}
-                      type="button"
                       disabled={isSelf}
                       onClick={() => {
                         organizer.setMoveMenuFor(null);
                         organizer.moveItemToSlot(moveMenuFor, idx);
                       }}
-                      aria-label={`Move to position ${organizer.displayNumber(idx)}${destItem ? `, currently ${destItem.title}` : ", empty"}`}
-                      className={[
-                        "min-h-11 rounded-[6px] px-1.5 py-2 text-[11px] font-bold ring-1 transition",
-                        isSelf
-                          ? "cursor-default bg-white/5 text-white/25 ring-white/10"
-                          : destItem
-                            ? "bg-amber-300/10 text-amber-100 ring-amber-200/30 hover:bg-amber-300/20"
-                            : "bg-white/5 text-white/80 ring-white/15 hover:bg-[rgba(79,211,238,0.14)]",
-                      ].join(" ")}
+                      ariaLabel={`Move to position ${organizer.displayNumber(idx)}${destItem ? `, currently ${destItem.title}` : ", empty"}`}
+                      className={["w-full min-w-0 px-1.5!", destItem && !isSelf ? "text-amber-500! ring-amber-400/50!" : ""].join(" ")}
                     >
                       #{organizer.displayNumber(idx)}
                       {destItem ? " •" : ""}
-                    </button>
+                    </PillButton>
                   );
                 })}
               </div>
@@ -481,6 +484,7 @@ export function OrganizeMoveMenu({
  * only clears the destination item's slot reference. */
 export function OrganizeReplaceConfirm({ organizer }: { organizer: SlotOrganizer }) {
   const replaceConfirm = organizer.replaceConfirm;
+  const dialogRef = useDialogA11y<HTMLDivElement>(Boolean(replaceConfirm), organizer.cancelReplace);
   if (!replaceConfirm || typeof document === "undefined") return null;
   return createPortal(
     <div
@@ -489,6 +493,7 @@ export function OrganizeReplaceConfirm({ organizer }: { organizer: SlotOrganizer
     >
       <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
       <div
+        ref={dialogRef}
         role="alertdialog"
         aria-modal="true"
         aria-labelledby="vltd-replace-confirm-title"
@@ -501,23 +506,11 @@ export function OrganizeReplaceConfirm({ organizer }: { organizer: SlotOrganizer
         <p className="mt-2 text-xs leading-5 text-[color:var(--muted)]">
           {replaceConfirm.destTitle} will be removed from this room only — it stays in your vault, unchanged.
         </p>
-        <div className="mt-4 flex gap-2">
-          <button
-            type="button"
-            onClick={organizer.cancelReplace}
-            className="flex-1 rounded-[6px] border py-2.5 text-sm font-black"
-            style={{ borderColor: "var(--theme-border)", color: "var(--fg)" }}
-          >
-            Cancel
-          </button>
-          <button
-            type="button"
-            onClick={organizer.confirmReplace}
-            className="flex-1 rounded-[6px] py-2.5 text-sm font-black"
-            style={{ background: "linear-gradient(180deg,#79E7FB,#2CB1D1)", color: "#06171d" }}
-          >
+        <div className="mt-4 flex justify-end gap-2">
+          <PillButton onClick={organizer.cancelReplace}>Cancel</PillButton>
+          <PillButton variant="primary" onClick={organizer.confirmReplace}>
             Replace
-          </button>
+          </PillButton>
         </div>
       </div>
     </div>,

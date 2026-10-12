@@ -304,12 +304,7 @@ export default function TextImportClient() {
             </p>
           </div>
 
-          <Link
-            href="/ingest"
-            className="inline-flex h-11 items-center rounded-full px-4 text-sm font-medium ring-1 ring-[color:var(--border)] transition hover:bg-[color:var(--pill)]"
-          >
-            Back
-          </Link>
+          <PillButton href="/ingest">Back</PillButton>
         </div>
 
         <div className="mt-5 grid gap-4 lg:grid-cols-[1.15fr_0.85fr]">
