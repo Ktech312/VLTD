@@ -32,28 +32,25 @@ export default function ResetPasswordPage() {
 
   // A reset link makes Supabase fire "PASSWORD_RECOVERY". An invitation link does NOT: it signs the person in
   // ("SIGNED_IN") with no password set, so waiting only for PASSWORD_RECOVERY left invited people on "Verifying link…" forever
-  // and they could never log in. The event can also fire before this page subscribes, so the current session is checked too.
+  // and they could never log in. The auth client also processes the link (and clears it from the address bar) before this page
+  // renders, so its event can fire before this page subscribes: the link marker above can be gone and the event missed.
+  // The reliable signal is the session itself: if the link was good there is a session now, and the form can be shown
+  // (updateUser needs that session anyway). No session means the link was bad or expired, and the "request a new one" text stays.
   useEffect(() => {
     const supabase = getSupabaseBrowserClient();
     if (!supabase) return;
 
-    const cameFromLink = linkKind !== "none";
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === "PASSWORD_RECOVERY") {
-        setReady(true);
-      } else if (cameFromLink && session && (event === "SIGNED_IN" || event === "INITIAL_SESSION")) {
+      if (event === "PASSWORD_RECOVERY" || (session && (event === "SIGNED_IN" || event === "INITIAL_SESSION"))) {
         setReady(true);
       }
     });
-
-    if (cameFromLink) {
-      void supabase.auth.getSession().then(({ data }) => {
-        if (data.session) setReady(true);
-      });
-    }
+    void supabase.auth.getSession().then(({ data }) => {
+      if (data.session) setReady(true);
+    });
 
     return () => subscription.unsubscribe();
-  }, [linkKind]);
+  }, []);
 
   async function handleSubmit() {
     if (!password || password !== confirm) {
