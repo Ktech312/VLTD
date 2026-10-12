@@ -47,7 +47,7 @@ export async function POST(req: NextRequest) {
 
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || new URL(req.url).origin;
   // The confirmation button lands on a page that says "your email is confirmed" and moves them on (not the public home page).
-  const confirmedUrl = `${siteUrl.replace(//+$/, "")}/auth/confirmed`;
+  const confirmedUrl = `${siteUrl.replace(/\/+$/, "")}/auth/confirmed`;
 
   const deps: SignupDeps = {
     async findUserByEmail(target) {
