@@ -271,7 +271,7 @@ function MiniCalendar({ event }: { event: CollectorEvent }) {
               // Text on the gold highlight: dark on the dark themes, white on the light ones (--on-gold, globals.css).
               color: day === activeDay ? "var(--on-gold, #05080b)" : day ? "var(--fg)" : "transparent",
               ["--vltd-keep-color" as string]: day === activeDay ? "var(--on-gold, #05080b)" : day ? "var(--fg)" : "transparent",
-              background: day === activeDay ? "var(--theme-gold)" : "transparent",
+              background: day === activeDay ? "var(--day-active-bg, var(--theme-gold))" : "transparent",
               fontWeight: day === activeDay ? 900 : 600,
             }}
           >
