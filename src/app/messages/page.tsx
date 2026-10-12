@@ -237,14 +237,9 @@ export default function MessagesPage() {
               Turn on message alerts so you don't miss a reply — even with VLTD closed. To turn off later, use Account Settings.
             </p>
             <div className="flex shrink-0 items-center gap-2">
-              <button
-                type="button"
-                onClick={() => void handleEnablePush()}
-                disabled={pushBusy}
-                className="vltd-primary-button rounded-[6px] px-3 py-1.5 text-xs font-black disabled:opacity-50"
-              >
+              <PillButton variant="active" onClick={() => void handleEnablePush()} disabled={pushBusy}>
                 {pushBusy ? "Turning on…" : "Turn On"}
-              </button>
+              </PillButton>
               <PillButton onClick={() => setBannerDismissed(true)} ariaLabel="Dismiss" title="Dismiss" className="px-0! w-11 md:w-9">
                 <AppIcon name="close" size={16} />
               </PillButton>

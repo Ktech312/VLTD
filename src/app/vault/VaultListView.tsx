@@ -1748,7 +1748,7 @@ export default function VaultListView({ lockedUniverse }: { lockedUniverse?: Uni
                 key={category.key}
                 type="button"
                 onClick={() => setUniverseFilter(category.key)}
-                className={["inline-flex min-h-[42px] shrink-0 items-stretch gap-2 overflow-hidden rounded-[7px] pr-4 text-sm font-semibold ring-1", universeFilter === category.key ? "bg-[color:var(--pill-active-bg)] text-[color:var(--pill-active-fg)] ring-[color:var(--pill-active-bg)]" : "bg-[color:var(--pill)] ring-[color:var(--border)]"].join(" ")}
+                className={["inline-flex min-h-11 shrink-0 items-stretch gap-2 overflow-hidden rounded-[8px] pr-4 text-sm font-semibold ring-1", universeFilter === category.key ? "bg-[color:var(--pill-active-bg)] text-[color:var(--pill-active-fg)] ring-[color:var(--pill-active-bg)]" : "bg-[color:var(--pill)] ring-[color:var(--border)]"].join(" ")}
               >
                 <span className="w-[42px] overflow-hidden border-r bg-[color:var(--theme-elevated)]" style={{ borderColor: "var(--theme-gold-border, var(--theme-border))" }}>
                   <ProgressiveImage src={category.thumbnailSrc} alt="" className="h-full w-full" imageClassName="object-cover object-center" draggable={false} />
@@ -1783,13 +1783,9 @@ export default function VaultListView({ lockedUniverse }: { lockedUniverse?: Uni
                     </div>
                   ) : null}
                   {stats.totalItems > 0 && stats.valuedCount < stats.totalItems ? (
-                    <button
-                      type="button"
-                      onClick={() => writeValueMode(valueMode === "fill" ? "priced" : "fill")}
-                      className="mt-0.5 text-[11px] font-semibold text-[color:var(--theme-gold)] hover:underline"
-                    >
+                    <PillButton size="compact" className="mt-1" onClick={() => writeValueMode(valueMode === "fill" ? "priced" : "fill")}>
                       {valueMode === "fill" ? "Show priced only" : "Include unpriced"}
-                    </button>
+                    </PillButton>
                   ) : null}
                   {stats.staleCheckCount > 0 ? (
                     <div className="mt-0.5 text-[11px] text-amber-400">{stats.staleCheckCount} {stats.staleCheckCount === 1 ? "item hasn't" : "items haven't"} had a price check in 6 months</div>
@@ -1839,17 +1835,9 @@ export default function VaultListView({ lockedUniverse }: { lockedUniverse?: Uni
                       ["flip", "Flip"],
                     ] as const
                   ).map(([mode, label]) => (
-                    <button
-                      key={mode}
-                      type="button"
-                      onClick={() => setVaultViewMode(mode)}
-                      className="min-h-[30px] rounded-[7px] px-3 py-1 text-[12px] font-semibold transition"
-                      style={vaultViewMode === mode
-                        ? { background: "var(--theme-gold-subtle, rgba(203,208,213,0.12))", color: "var(--theme-gold, #C8CDD2)" }
-                        : { background: "transparent", color: "var(--muted)" }}
-                    >
+                    <PillButton key={mode} variant={vaultViewMode === mode ? "active" : "default"} pressed={vaultViewMode === mode} onClick={() => setVaultViewMode(mode)}>
                       {label}
-                    </button>
+                    </PillButton>
                   ))}
                 </div>
               ) : null}
@@ -1857,13 +1845,14 @@ export default function VaultListView({ lockedUniverse }: { lockedUniverse?: Uni
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="Search..."
-                className="min-h-[38px] w-full sm:w-[180px] rounded-[8px] bg-[color:var(--input)] px-4 py-2 text-sm ring-1 ring-[color:var(--border)] focus:outline-none"
+                className="h-11 w-full rounded-[8px] bg-[color:var(--input)] px-3 text-[13px] ring-1 ring-[color:var(--border)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--pill-active-ring)] sm:w-[180px] md:h-9"
+                aria-label="Search the vault"
                 style={{ borderColor: "var(--theme-border)" }}
               />
               <select
                 value={sortMode}
                 onChange={(e) => setSortMode(e.target.value as SortMode)}
-                className="min-h-[38px] w-auto rounded-[8px] bg-[color:var(--input)] px-3 py-2 text-sm text-[color:var(--fg)] ring-1 ring-[color:var(--border)] focus:outline-none"
+                aria-label="Sort the vault" className="h-11 w-auto rounded-[8px] bg-[color:var(--input)] px-3 text-[13px] text-[color:var(--fg)] ring-1 ring-[color:var(--border)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--pill-active-ring)] md:h-9"
               >
                 <option value="newest">Newest</option>
                 <option value="value_desc">Value ↓</option>
@@ -1872,48 +1861,15 @@ export default function VaultListView({ lockedUniverse }: { lockedUniverse?: Uni
                 <option value="gain_asc">Gain ↑</option>
                 <option value="title">Title A-Z</option>
               </select>
-              <button
-                type="button"
-                onClick={() => setGradedOnly((v) => !v)}
-                className="inline-flex min-h-[36px] items-center gap-1.5 px-1 text-sm font-medium transition"
-                style={gradedOnly ? { color: "var(--theme-gold, #C8CDD2)" } : { color: "var(--fg-muted)" }}
-              >
-                <span
-                  className="inline-flex h-4 w-4 shrink-0 items-center justify-center rounded"
-                  style={gradedOnly ? { background: "var(--theme-gold, #C8CDD2)" } : { border: "1.5px solid var(--border)", background: "transparent" }}
-                >
-                  {gradedOnly && <AppIcon name="checkmark" size={10} strokeWidth={1.8} style={{ color: "#000" }} />}
-                </span>
-                Graded <span className="text-[11px] opacity-65">{gradedCount}</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setUncategorizedOnly((v) => !v)}
-                className="inline-flex min-h-[36px] items-center gap-1.5 px-1 text-sm font-medium transition"
-                style={uncategorizedOnly ? { color: "var(--theme-gold, #C8CDD2)" } : { color: "var(--fg-muted)" }}
-              >
-                <span
-                  className="inline-flex h-4 w-4 shrink-0 items-center justify-center rounded"
-                  style={uncategorizedOnly ? { background: "var(--theme-gold, #C8CDD2)" } : { border: "1.5px solid var(--border)", background: "transparent" }}
-                >
-                  {uncategorizedOnly && <AppIcon name="checkmark" size={10} strokeWidth={1.8} style={{ color: "#000" }} />}
-                </span>
-                Uncategorized <span className="text-[11px] opacity-65">{uncategorizedCount}</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setShowSoldItems((value) => !value)}
-                className="inline-flex min-h-[36px] items-center gap-1.5 px-1 text-sm font-medium transition"
-                style={showSoldItems ? { color: "var(--theme-gold, #C8CDD2)" } : { color: "var(--fg-muted)" }}
-              >
-                <span
-                  className="inline-flex h-4 w-4 shrink-0 items-center justify-center rounded"
-                  style={showSoldItems ? { background: "var(--theme-gold, #C8CDD2)" } : { border: "1.5px solid var(--border)", background: "transparent" }}
-                >
-                  {showSoldItems && <AppIcon name="checkmark" size={10} strokeWidth={1.8} style={{ color: "#000" }} />}
-                </span>
-                Show Sold <span className="text-[11px] opacity-65">{soldCount}</span>
-              </button>
+              <PillButton variant={gradedOnly ? "active" : "default"} pressed={gradedOnly} onClick={() => setGradedOnly((v) => !v)}>
+                Graded <span className="text-[11px] opacity-70">{gradedCount}</span>
+              </PillButton>
+              <PillButton variant={uncategorizedOnly ? "active" : "default"} pressed={uncategorizedOnly} onClick={() => setUncategorizedOnly((v) => !v)}>
+                Uncategorized <span className="text-[11px] opacity-70">{uncategorizedCount}</span>
+              </PillButton>
+              <PillButton variant={showSoldItems ? "active" : "default"} pressed={showSoldItems} onClick={() => setShowSoldItems((value) => !value)}>
+                Show Sold <span className="text-[11px] opacity-70">{soldCount}</span>
+              </PillButton>
             </div>
 
             {universeFilter !== "ALL" ? (
@@ -1929,15 +1885,16 @@ export default function VaultListView({ lockedUniverse }: { lockedUniverse?: Uni
             <div className="mt-3 flex flex-wrap items-center gap-2">
               {filteredItems.length > 0 && (
                 <div className="flex flex-wrap items-center gap-1.5">
-                  <button
-                    type="button"
+                  <PillButton
+                    variant={selectMode ? "active" : "default"}
+                    pressed={selectMode}
+                    ariaLabel="Select items"
+                    title="Select items"
+                    className="w-11 px-0! md:w-9"
                     onClick={() => { if (selectMode) return; setSelectMode(true); setMoveTargetUniverse(""); setMoveTargetCategory(""); setMoveTargetSubcategory(""); setDeleteConfirmPending(false); }}
-                    className="inline-flex h-8 w-8 items-center justify-center rounded-full transition"
-                    style={selectMode ? { background: "rgba(203,208,213,0.18)", color: "var(--theme-gold, #C8CDD2)" } : { background: "var(--pill)", color: "var(--muted)" }}
-                    aria-label="Select items"
                   >
-                    <AppIcon name="selectItems" size={15} strokeWidth={1.3} />
-                  </button>
+                    <AppIcon name="selectItems" size={16} strokeWidth={1.3} />
+                  </PillButton>
                   {selectMode && selectedIds.size > 0 && (
                     <>
                       {deleteConfirmPending ? (
@@ -1945,34 +1902,13 @@ export default function VaultListView({ lockedUniverse }: { lockedUniverse?: Uni
                           <span className="text-xs font-semibold" style={{ color: "#f87171" }}>
                             Delete {selectedIds.size} {selectedIds.size === 1 ? "item" : "items"}?
                           </span>
-                          <button
-                            type="button"
-                            onClick={() => void confirmMassDelete()}
-                            disabled={isDeleting}
-                            className="inline-flex h-8 items-center rounded-[7px] px-3 text-xs font-bold text-white vltd-dark-surface"
-                            style={{ background: "#dc2626", opacity: isDeleting ? 0.6 : 1 }}
-                          >
+                          <PillButton variant="danger" onClick={() => void confirmMassDelete()} disabled={isDeleting}>
                             {isDeleting ? "Deleting…" : "Yes, Delete"}
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setDeleteConfirmPending(false)}
-                            disabled={isDeleting}
-                            className="inline-flex h-8 items-center rounded-[7px] px-3 text-xs font-semibold ring-1 ring-[color:var(--border)]"
-                            style={{ background: "var(--pill)", color: "var(--muted)" }}
-                          >
-                            Cancel
-                          </button>
+                          </PillButton>
+                          <PillButton onClick={() => setDeleteConfirmPending(false)} disabled={isDeleting}>Cancel</PillButton>
                         </>
                       ) : (
-                        <button
-                          type="button"
-                          onClick={handleMassDelete}
-                          className="inline-flex h-8 items-center rounded-[7px] px-3 text-xs font-semibold text-white vltd-dark-surface"
-                          style={{ background: "#dc2626" }}
-                        >
-                          Delete {selectedIds.size}
-                        </button>
+                        <PillButton variant="danger" onClick={handleMassDelete}>Delete {selectedIds.size}</PillButton>
                       )}
                       <select
                         value={moveTargetUniverse}
@@ -2010,72 +1946,30 @@ export default function VaultListView({ lockedUniverse }: { lockedUniverse?: Uni
                         ))}
                       </select>
                       {moveTargetUniverse && (
-                        <button
-                          type="button"
-                          onClick={handleMassMove}
-                          className="inline-flex h-8 items-center rounded-[7px] px-3 text-xs font-semibold"
-                          style={{ background: "var(--status-cyan, #22D3EE)", color: "#04121A", border: "1px solid rgba(255,255,255,0.4)", boxShadow: "0 0 10px rgba(34,211,238,0.45)" }}
-                        >
-                          Move {selectedIds.size}
-                        </button>
+                        <PillButton variant="active" onClick={handleMassMove}>Move {selectedIds.size}</PillButton>
                       )}
                       {confirmProfileMove ? (
                         <>
                           <span className="text-xs font-semibold" style={{ color: "#93c5fd" }}>
                             Move {selectedIds.size} to {confirmProfileMove.display_name}? They leave this profile.
                           </span>
-                          <button
-                            type="button"
-                            onClick={() => handleMoveToProfile(confirmProfileMove.id)}
-                            className="inline-flex h-8 items-center rounded-[7px] px-3 text-xs font-bold"
-                            style={{ background: "rgba(96,165,250,0.25)", color: "#bfdbfe", border: "1px solid rgba(96,165,250,0.5)" }}
-                          >
-                            Yes, move
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setConfirmProfileMove(null)}
-                            className="inline-flex h-8 items-center rounded-[7px] px-3 text-xs font-semibold ring-1 ring-[color:var(--border)]"
-                            style={{ background: "var(--pill)", color: "var(--muted)" }}
-                          >
-                            No
-                          </button>
+                          <PillButton variant="active" onClick={() => handleMoveToProfile(confirmProfileMove.id)}>Yes, move</PillButton>
+                          <PillButton onClick={() => setConfirmProfileMove(null)}>No</PillButton>
                         </>
                       ) : (
                         myProfiles.filter((profile) => profile.id !== activeProfileId).map((profile) => (
-                          <button
-                            key={profile.id}
-                            type="button"
-                            onClick={() => setConfirmProfileMove(profile)}
-                            className="inline-flex h-8 items-center gap-1 rounded-[7px] px-3 text-xs font-semibold"
-                            style={{ background: "rgba(96,165,250,0.14)", color: "#93c5fd", border: "1px solid rgba(96,165,250,0.4)" }}
-                            title={`Move selected items to your ${profile.profile_type} profile`}
-                          >
-                            → {profile.display_name}
-                          </button>
+                          <PillButton key={profile.id} onClick={() => setConfirmProfileMove(profile)} title={`Move selected items to your ${profile.profile_type} profile`}>
+                            <AppIcon name="next" size={16} /> {profile.display_name}
+                          </PillButton>
                         ))
                       )}
                     </>
                   )}
                   {selectMode && (
-                    <button
-                      type="button"
-                      onClick={() => setSelectedIds(new Set(filteredItems.map((entry) => entry.id)))}
-                      className="inline-flex h-8 items-center rounded-[7px] px-3 text-xs font-medium ring-1 ring-[color:var(--border)]"
-                      style={{ background: "var(--pill)", color: "var(--muted)" }}
-                    >
-                      Select all {filteredItems.length}
-                    </button>
+                    <PillButton onClick={() => setSelectedIds(new Set(filteredItems.map((entry) => entry.id)))}>Select all {filteredItems.length}</PillButton>
                   )}
                                     {selectMode && (
-                    <button
-                      type="button"
-                      onClick={() => { setSelectMode(false); setSelectedIds(new Set()); setMoveTargetUniverse(""); setMoveTargetCategory(""); setMoveTargetSubcategory(""); setDeleteConfirmPending(false); }}
-                      className="inline-flex h-8 items-center rounded-[7px] px-3 text-xs font-medium ring-1 ring-[color:var(--border)]"
-                      style={{ background: "var(--pill)", color: "var(--muted)" }}
-                    >
-                      Cancel
-                    </button>
+                    <PillButton onClick={() => { setSelectMode(false); setSelectedIds(new Set()); setMoveTargetUniverse(""); setMoveTargetCategory(""); setMoveTargetSubcategory(""); setDeleteConfirmPending(false); }}>Cancel</PillButton>
                   )}
                 </div>
               )}

@@ -501,7 +501,7 @@ function TopNavInner() {
                     avatarText
                   )}
                 </div>
-                <AppIcon name="chevronDown" size={12} strokeWidth={2} />
+                <span className="inline-flex max-[359px]:hidden" aria-hidden="true"><AppIcon name="chevronDown" size={12} strokeWidth={2} /></span>
               </button>
             </div>
           </div>

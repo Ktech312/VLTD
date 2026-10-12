@@ -336,20 +336,10 @@ export default function GoalsPage() {
               ["sell", "Sell", "tag"],
               ["gallery", "Exhibition", "exhibition"],
             ].map(([key, label, icon]) => (
-              <button
-                key={key}
-                type="button"
-                onClick={() => setFilter(key as GoalFilter)}
-                className="flex h-10 items-center gap-2 rounded-[7px] border px-4 text-sm font-bold"
-                style={{
-                  background: filter === key ? "rgba(203,208,213,0.16)" : "var(--theme-card,rgba(15,25,45,0.82))",
-                  borderColor: filter === key ? "var(--theme-gold,#C8CDD2)" : "rgba(203,208,213,0.24)",
-                  color: filter === key ? "var(--theme-gold,#C8CDD2)" : "var(--theme-text-primary,#ECEDEF)",
-                }}
-              >
-                <Glyph name={icon as "target"} size={15} />
+              <PillButton key={key} variant={filter === key ? "active" : "default"} pressed={filter === key} onClick={() => setFilter(key as GoalFilter)}>
+                <Glyph name={icon as "target"} size={16} />
                 {label}
-              </button>
+              </PillButton>
             ))}
           </div>
 

@@ -544,10 +544,10 @@ export default function ActivityPage() {
                     {selected.item?.isPublic ? "Public" : "Private"}
                   </div>
                   {selected.href && (
-                    <Link href={selected.href} className="mt-5 inline-flex h-10 items-center gap-2 rounded-[7px] border border-[rgba(203,208,213,0.34)] px-5 text-sm font-bold" style={{ color: "var(--theme-gold,#C8CDD2)" }}>
+                    <PillButton href={selected.href} className="mt-5">
                       {selected.actionLabel ?? "Open"}
-                      <Glyph name="share" size={15} />
-                    </Link>
+                      <Glyph name="share" size={16} />
+                    </PillButton>
                   )}
                 </div>
               </div>

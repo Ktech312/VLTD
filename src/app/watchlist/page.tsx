@@ -438,21 +438,10 @@ export default function WatchlistPage() {
             ] as const).map(([label, key, glyph]) => {
               const active = filter === key;
               return (
-                <button
-                  key={key}
-                  type="button"
-                  onClick={() => setFilter(active ? "all" : key)}
-                  aria-pressed={active}
-                  className="flex h-10 items-center justify-center gap-2 rounded-[7px] border px-3 text-xs font-black transition"
-                  style={{
-                    background: active ? "rgba(203,208,213,0.12)" : "var(--theme-card,rgba(15,25,45,0.85))",
-                    borderColor: active ? "var(--theme-gold,#C8CDD2)" : "rgba(203,208,213,0.22)",
-                    color: active ? "var(--theme-gold,#C8CDD2)" : "var(--theme-text-primary,#ECEDEF)",
-                  }}
-                >
-                  <Glyph name={glyph} size={14} />
+                <PillButton key={key} variant={active ? "active" : "default"} pressed={active} onClick={() => setFilter(active ? "all" : key)}>
+                  <Glyph name={glyph} size={16} />
                   {label}
-                </button>
+                </PillButton>
               );
             })}
           </div>
@@ -466,18 +455,7 @@ export default function WatchlistPage() {
               ["alerts", `Price Alerts (${alertCount})`],
               ["undecided", `Undecided (${undecidedCount})`],
             ].map(([key, label]) => (
-              <button
-                key={key}
-                type="button"
-                onClick={() => setFilter(key as FilterKey)}
-                className="border-b-2 px-3 py-2 text-sm font-bold transition"
-                style={{
-                  borderColor: filter === key ? "var(--theme-gold,#C8CDD2)" : "transparent",
-                  color: filter === key ? "var(--theme-gold,#C8CDD2)" : "var(--theme-text-primary,#ECEDEF)",
-                }}
-              >
-                {label}
-              </button>
+              <PillButton key={key} variant={filter === key ? "active" : "default"} pressed={filter === key} onClick={() => setFilter(key as FilterKey)}>{label}</PillButton>
             ))}
             <div className="ml-auto flex items-center gap-2">
               <span className="text-xs" style={{ color: "var(--theme-text-muted,#61656B)" }}>Sort</span>

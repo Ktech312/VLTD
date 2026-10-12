@@ -472,9 +472,7 @@ export default function DiscoverPage() {
                   <div className="text-[11px] font-black uppercase tracking-[0.18em]" style={{ color: "#C8CDD2" }}>Collector Spotlight</div>
                   <h2 className="mt-3 font-serif text-[33px] font-black leading-[0.95]" style={{ color: "#ECEDEF" }}>Collector Rooms Worth Seeing</h2>
                   <p className="mt-4 text-sm leading-6" style={{ color: "#ECEDEF" }}>Hand-picked public exhibitions from serious collectors around the world.</p>
-                  <button type="button" onClick={() => openGallery(selectedGallery)} className="mt-4 rounded-[7px] px-4 py-2 text-xs font-black" style={{ background: "linear-gradient(135deg,#8C9298,#C8CDD2)", color: "#0B0B0B" }}>
-                    Explore featured rooms &rarr;
-                  </button>
+                  <PillButton className="mt-4 font-black" onClick={() => openGallery(selectedGallery)} style={{ background: "linear-gradient(135deg,#8C9298,#C8CDD2)", color: "#0B0B0B" }}>Explore featured rooms &rarr;</PillButton>
                 </div>
                 <div className="absolute bottom-3 left-1/2 flex -translate-x-1/2 gap-2">
                   {[0, 1, 2, 3, 4].map((dot) => <span key={dot} className="h-2 w-2 rounded-full" style={{ background: dot === 0 ? "var(--theme-gold,#C8CDD2)" : "rgba(240,234,214,0.28)" }} />)}
@@ -508,7 +506,7 @@ export default function DiscoverPage() {
             <section className="mt-5">
               <div className="mb-2 flex items-center justify-between">
                 <h2 className="text-[12px] font-black uppercase tracking-[0.16em]" style={{ color: "var(--theme-gold,#C8CDD2)" }}>Trending Exhibitions</h2>
-                <button type="button" onClick={() => toggleSection("trending")} className="text-xs font-bold" style={{ color: "var(--theme-gold,#C8CDD2)" }}>{expanded.trending ? "Show less" : "View all"}</button>
+                <PillButton size="compact" onClick={() => toggleSection("trending")}>{expanded.trending ? "Show less" : "View all"}</PillButton>
               </div>
               <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
                 {shown(trending, "trending").map((gallery) => <GalleryCard key={gallery.id} gallery={gallery} />)}
@@ -520,7 +518,7 @@ export default function DiscoverPage() {
             <section className="mt-5">
               <div className="mb-2 flex items-center justify-between">
                 <h2 className="text-[12px] font-black uppercase tracking-[0.16em]" style={{ color: "var(--theme-gold,#C8CDD2)" }}>New This Week</h2>
-                <button type="button" onClick={() => toggleSection("newThisWeek")} className="text-xs font-bold" style={{ color: "var(--theme-gold,#C8CDD2)" }}>{expanded.newThisWeek ? "Show less" : "View all"}</button>
+                <PillButton size="compact" onClick={() => toggleSection("newThisWeek")}>{expanded.newThisWeek ? "Show less" : "View all"}</PillButton>
               </div>
               <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
                 {shown(newThisWeek, "newThisWeek").map((gallery) => <GalleryCard key={gallery.id} gallery={gallery} />)}
@@ -532,7 +530,7 @@ export default function DiscoverPage() {
             <section className="mt-5">
               <div className="mb-2 flex items-center justify-between">
                 <h2 className="text-[12px] font-black uppercase tracking-[0.16em]" style={{ color: "var(--theme-gold,#C8CDD2)" }}>Notable Items</h2>
-                <button type="button" onClick={() => toggleSection("notableItems")} className="text-xs font-bold" style={{ color: "var(--theme-gold,#C8CDD2)" }}>{expanded.notableItems ? "Show less" : "View all"}</button>
+                <PillButton size="compact" onClick={() => toggleSection("notableItems")}>{expanded.notableItems ? "Show less" : "View all"}</PillButton>
               </div>
               <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
                 {shown(notableItems, "notableItems").map((gallery) => <GalleryCard key={gallery.id} gallery={gallery} compact />)}
@@ -544,7 +542,7 @@ export default function DiscoverPage() {
             <section className="mt-5">
               <div className="mb-2 flex items-center justify-between">
                 <h2 className="text-[12px] font-black uppercase tracking-[0.16em]" style={{ color: "var(--theme-gold,#C8CDD2)" }}>Across Every Universe</h2>
-                <button type="button" onClick={() => setActiveTab("All")} className="text-xs font-bold" style={{ color: "var(--theme-gold,#C8CDD2)" }}>View all</button>
+                <PillButton size="compact" onClick={() => setActiveTab("All")}>View all</PillButton>
               </div>
               <div className="grid overflow-hidden rounded-[7px] border border-[rgba(203,208,213,0.22)] md:grid-cols-4 xl:grid-cols-8" style={{ background: "var(--theme-card,rgba(15,25,45,0.85))" }}>
                 {universeCounts.map(({ key, count }) => (
@@ -556,9 +554,7 @@ export default function DiscoverPage() {
                     </span>
                   </button>
                 ))}
-                <button type="button" onClick={() => setSwipeOpen(true)} className="flex min-h-[58px] items-center justify-center gap-2 px-3 text-xs font-black" style={{ color: "var(--theme-gold,#C8CDD2)" }}>
-                  <Glyph name="cards" size={16} /> View all
-                </button>
+                <PillButton className="m-1" onClick={() => setSwipeOpen(true)}><Glyph name="cards" size={16} /> View all</PillButton>
               </div>
             </section>
           )}

@@ -94,7 +94,7 @@ export default function BottomNav() {
                   style={keepColor(isActive ? GOLD : DIM)}
                 />
                 <span
-                  className="vltd-keep-color whitespace-nowrap text-[10.5px] font-semibold tracking-[0.01em] transition-colors"
+                  className="vltd-keep-color whitespace-nowrap text-[10.5px] font-semibold tracking-[0.01em] transition-colors max-[359px]:text-[9.5px] max-[359px]:tracking-normal"
                   style={keepColor(isActive ? GOLD : DIM)}
                 >
                   {tab.label}

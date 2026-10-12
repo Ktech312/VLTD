@@ -344,7 +344,7 @@ function SaveButton({
       // same as EventArt's category badge, so its icon/label use the same
       // fixed light color rather than the theme-following gold accent
       // that goes dark-on-dark in light mode over the same backdrop.
-      className={`vltd-dark-surface inline-flex items-center justify-center rounded-[7px] border border-[color:var(--border)] bg-black/30 ${compact ? "h-8 w-8" : "h-9 gap-2 px-3 text-xs font-bold"}`}
+      className={`vltd-dark-surface inline-flex items-center justify-center rounded-[7px] border border-[color:var(--border)] bg-black/30 ${compact ? "relative h-8 w-8 max-md:after:absolute max-md:after:-inset-1.5 max-md:after:content-['']" : "h-11 gap-2 px-3 text-[13px] font-medium md:h-9"}`}
     >
       <AppIcon name="favorite" size={15} filled={saved} />
       {!compact && <span>{saved ? "Saved" : "Save Event"}</span>}
@@ -736,13 +736,7 @@ export default function EventsPage() {
                     {featuredEvent.short_desc ?? "Collector event with shows, releases, and market moments worth tracking."}
                   </p>
                   <div className="mt-4 flex flex-wrap gap-2">
-                    <button
-                      type="button"
-                      onClick={() => selectEvent(featuredEvent.id, true)}
-                      className="vltd-primary-button inline-flex h-9 items-center rounded-[4px] px-5 text-xs font-black"
-                    >
-                      View Event
-                    </button>
+                    <PillButton onClick={() => selectEvent(featuredEvent.id, true)} className="font-black" style={{ background: "linear-gradient(180deg, #79E7FB, #41C6E4 55%, #2CB1D1)", color: "#06171d", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.5), 0 0 16px rgba(79,211,238,0.25)" }}>View Event</PillButton>
                     <SaveButton
                       saved={savedIds.has(featuredEvent.id)}
                       onClick={() => toggleSaved(featuredEvent.id)}
@@ -888,19 +882,7 @@ export default function EventsPage() {
         <section className="mt-4 md:hidden">
           <div className="flex gap-2 overflow-x-auto pb-2">
             {categories.map((category) => (
-              <button
-                key={category.key}
-                type="button"
-                onClick={() => setFilter(category.key)}
-                className="h-8 shrink-0 rounded-[7px] border px-4 text-xs font-bold"
-                style={{
-                  background: filter === category.key ? "var(--theme-gold)" : "var(--pill)",
-                  color: filter === category.key ? "#05080b" : "var(--fg)",
-                  borderColor: "var(--border)",
-                }}
-              >
-                {category.label}
-              </button>
+              <PillButton key={category.key} className="shrink-0" variant={filter === category.key ? "active" : "default"} pressed={filter === category.key} onClick={() => setFilter(category.key)}>{category.label}</PillButton>
             ))}
           </div>
         </section>

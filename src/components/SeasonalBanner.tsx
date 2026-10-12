@@ -1,5 +1,6 @@
 "use client";
 
+import { PillButton } from "@/components/ui/PillButton";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
@@ -333,22 +334,8 @@ export default function SeasonalBanner() {
             Switch app theme?
           </p>
           <div className="flex gap-1.5 flex-shrink-0">
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                handleAcceptTheme();
-              }}
-              className="px-2 py-0.5 text-[10px] font-bold"
-              style={{ background: "linear-gradient(135deg,#8C9298,#C8CDD2)", borderRadius: 6, color: "#000" }}
-            >Yes</button>
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                handleDismissTheme();
-              }}
-              className="px-2 py-0.5 text-[10px] font-semibold"
-              style={{ background: "rgba(255,255,255,0.035)", border: "1px solid rgba(203,208,213,0.26)", borderRadius: 6, color: `${accent}cc` }}
-            >No</button>
+            <PillButton size="compact" onClick={(e) => { e.stopPropagation(); handleAcceptTheme(); }} style={{ background: "linear-gradient(135deg,#8C9298,#C8CDD2)", color: "#000" }}>Yes</PillButton>
+            <PillButton size="compact" onClick={(e) => { e.stopPropagation(); handleDismissTheme(); }}>No</PillButton>
           </div>
         </div>
       )}

@@ -90,7 +90,7 @@ export default function LearnClient() {
       <LoungeNav activeKey="learn" />
       <main className="text-[color:var(--fg)]">
       <div className="mx-auto max-w-[1480px] px-4 pb-7 sm:px-6 lg:px-8">
-        <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
+        <div className="grid grid-cols-[minmax(0,1fr)] gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
           {/* ── Main column ── */}
           <div className="min-w-0">
             {/* Featured */}
@@ -98,7 +98,7 @@ export default function LearnClient() {
               href={`/learn/${featured.slug}`}
               className="group block overflow-hidden rounded-[8px] border border-[rgba(203,208,213,0.22)] bg-vault-card transition hover:border-[rgba(203,208,213,0.4)]"
             >
-              <div className="grid md:grid-cols-[minmax(0,1fr)_420px]">
+              <div className="grid grid-cols-[minmax(0,1fr)] md:grid-cols-[minmax(0,1fr)_420px]">
                 <div className="p-6">
                   <span className="inline-flex rounded-[5px] border border-[rgba(203,208,213,0.28)] px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.16em] text-[color:var(--accent)]">
                     Featured
@@ -107,7 +107,7 @@ export default function LearnClient() {
                     {featured.title}
                   </h2>
                   <p className="mt-2 text-[13px] leading-6 text-[color:var(--muted)]">{featured.dek}</p>
-                  <div className="mt-4 flex items-center gap-3">
+                  <div className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-2">
                     <ClockRead minutes={featured.readMinutes} />
                     {featured.tag && (
                       <span className="inline-flex items-center gap-1 text-[11px] text-[color:var(--muted2)]">

@@ -442,14 +442,11 @@ export default function VltLoungePage() {
             <div className="flex items-center gap-2 px-4 pt-3.5">
               <Label>Lounge Live</Label>
             </div>
-            <div className="mt-2.5 flex gap-4 overflow-x-auto px-4 no-scrollbar" style={{ borderBottom: "1px solid var(--border)" }}>
+            <div className="mt-2.5 flex flex-wrap gap-2 px-4 pb-2.5" style={{ borderBottom: "1px solid var(--border)" }}>
               {LIVE_TABS.map((t) => {
                 const active = t === tab;
                 return (
-                  <button key={t} type="button" onClick={() => setTab(t)} className="relative whitespace-nowrap pb-2.5 text-[12px] font-bold transition" style={{ color: active ? CYAN : "var(--muted)" }}>
-                    {t}
-                    {active && <span className="absolute inset-x-0 -bottom-px h-0.5 rounded-full" style={{ background: CYAN, boxShadow: `0 0 8px ${CYAN}` }} />}
-                  </button>
+                  <PillButton key={t} size="compact" variant={active ? "active" : "default"} pressed={active} onClick={() => setTab(t)}>{t}</PillButton>
                 );
               })}
             </div>
@@ -507,7 +504,7 @@ export default function VltLoungePage() {
           <section className="rounded-[8px]" style={CARD}>
             <div className="flex items-center justify-between px-4 py-3" style={{ borderBottom: "1px solid var(--border)" }}>
               <Label>Hot Threads</Label>
-              <button type="button" onClick={() => setSort("hot")} className="text-[11px] font-bold" style={{ color: CYAN }}>View in feed</button>
+              <PillButton size="compact" onClick={() => setSort("hot")}>View in feed</PillButton>
             </div>
             {(posts ?? []).length === 0 ? (
               <div className="px-4 py-6 text-center text-[12px]" style={{ color: "var(--muted2)" }}>No hot threads yet.</div>
@@ -544,7 +541,7 @@ export default function VltLoungePage() {
             ) : visiblePosts.length === 0 ? (
               <div className="px-5 py-12 text-center">
                 <div className="text-sm font-bold">No discussions here yet.</div>
-                <button type="button" onClick={() => openComposer("question")} className="mt-3 text-[12px] font-bold" style={{ color: CYAN }}>Start the first thread →</button>
+                <PillButton size="compact" className="mt-3" onClick={() => openComposer("question")}>Start the first thread →</PillButton>
               </div>
             ) : (
               <div className="divide-y" style={{ borderColor: "var(--border)" }}>

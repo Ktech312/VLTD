@@ -1,5 +1,6 @@
 "use client";
 
+import { pillClassName } from "@/components/ui/PillButton";
 import { useMemo } from "react";
 
 import type { VaultItem } from "@/lib/vaultModel";
@@ -71,17 +72,11 @@ export default function VaultCategoryChips({
 
   const toggle = (list: string[], key: string) => (list.includes(key) ? list.filter((k) => k !== key) : [...list, key]);
 
-  const chipClass = (active: boolean) =>
-    [
-      "vltd-selectable shrink-0 whitespace-nowrap rounded-full px-3 py-1 text-[11px] font-semibold ring-1 transition",
-      active
-        ? "vltd-selected bg-[color:var(--pill-active-bg)] text-[color:var(--fg)] ring-[color:var(--pill-active-ring)]"
-        : "bg-[color:var(--pill)] text-[color:var(--pill-fg)] ring-[color:var(--border)]",
-    ].join(" ");
+  const chipClass = (active: boolean) => pillClassName(active ? "active" : "default", false, "shrink-0", "compact");
 
   return (
     <div className="mt-3 grid gap-2">
-      <div className="flex gap-1.5 overflow-x-auto pb-1" aria-label="Category">
+      <div className="flex gap-2 overflow-x-auto py-1" aria-label="Category">
         {categoryOptions.map((option) => (
           <button
             key={option.key}

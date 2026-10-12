@@ -712,26 +712,8 @@ export default function MuseumPage() {
               </p>
 
               <div className="mt-6 flex flex-wrap justify-center gap-3">
-                <Link
-                  href="/museum/new"
-                  className="inline-flex min-h-[40px] items-center justify-center rounded-full px-5 py-2 text-sm font-semibold transition"
-                  style={{
-                    background: "linear-gradient(135deg, #8C9298 0%, #A8AEB4 25%, #C8CDD2 50%, #EDEFF1 70%, #A8AEB4 100%)",
-                    color: "#0B0B0B",
-                  }}
-                >
-                  Create First Exhibition
-                </Link>
-                <Link
-                  href="/vault"
-                  className="inline-flex min-h-[40px] items-center justify-center rounded-full border px-5 py-2 text-sm font-semibold transition"
-                  style={{
-                    borderColor: "var(--theme-gold-border, rgba(203,208,213,0.30))",
-                    color: "var(--theme-gold, #C8CDD2)",
-                  }}
-                >
-                  Browse your vault →
-                </Link>
+                <PillButton variant="active" href="/museum/new" className="font-black">Create First Exhibition</PillButton>
+                <PillButton href="/vault">Browse your vault →</PillButton>
               </div>
             </div>
           ) : (
