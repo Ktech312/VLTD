@@ -39,7 +39,7 @@ async function loadJSZip(): Promise<unknown> {
   return window.JSZip;
 }
 
-async function downloadPhotosZip(
+export async function downloadPhotosZip(
   items: VaultItem[],
   onProgress: (msg: string) => void
 ) {

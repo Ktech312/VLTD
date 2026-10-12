@@ -678,6 +678,12 @@ a:hover {
     linear-gradient(180deg, #79E7FB, #41C6E4 55%, #2CB1D1);
   box-shadow: inset 1px 0 0 rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.6);
 }
+/* Shared size for the branded Add Item control: 44px on touch/mobile, 36px on desktop, 8px corners (same as every pill). */
+.vltd-action-module--shared { height: 44px; border-radius: 8px; }
+.vltd-action-module--shared .vltd-action-module__plate { display: flex; align-items: center; padding: 0 14px; }
+.vltd-action-module--shared .vltd-action-module__block { min-width: 44px; padding: 0 12px; }
+@media (min-width: 768px) { .vltd-action-module--shared { height: 36px; } }
+
 /* Light mode: the plate goes light with dark text (dark plate looks wrong on a light page) */
 .theme-light .vltd-action-module__plate {
   color: #14161A;

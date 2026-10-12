@@ -3,11 +3,11 @@
 import * as React from "react";
 import Link from "next/link";
 
-type Variant = "default" | "active" | "primary" | "success" | "danger";
+export type PillVariant = "default" | "active" | "primary" | "success" | "danger";
 
 type PillButtonProps = {
   children: React.ReactNode;
-  variant?: Variant;
+  variant?: PillVariant;
   onClick?: () => void;
   disabled?: boolean;
   title?: string;
@@ -20,24 +20,21 @@ type PillButtonProps = {
   style?: React.CSSProperties;
 };
 
-export function PillButton({
-  children,
-  variant = "default",
-  onClick,
-  disabled,
-  title,
-  type = "button",
-  className = "",
-  href,
-  style,
-}: PillButtonProps) {
+/**
+ * The shared pill recipe (Revision 2): 36px tall on desktop, 44px on touch/mobile, 8px corners,
+ * 12px side padding, 6px icon-to-label gap, 13px label at weight 500, 16px icons.
+ * Anything that must look like a pill (menu triggers, local navigation, filter chips) takes its
+ * classes from here so the geometry stays in one place.
+ */
+export function pillClassName(variant: PillVariant = "default", disabled = false, extra = ""): string {
   const base = [
-    "inline-flex items-center justify-center",
-    "h-11 sm:h-10",
-    "px-4",
+    "inline-flex items-center justify-center gap-1.5",
+    "h-11 md:h-9",
+    "px-3",
     "rounded-[8px]",
-    "text-sm font-medium",
+    "text-[13px] font-medium",
     "whitespace-nowrap",
+    "[&>svg]:h-4 [&>svg]:w-4 [&>svg]:shrink-0",
     "ring-1 transition select-none vltd-selectable",
     "active:scale-[0.98]",
     "focus:outline-none focus-visible:ring-2 focus-visible:ring-white/20",
@@ -60,16 +57,7 @@ export function PillButton({
           "font-semibold",
           "hover:bg-red-500/15",
         ].join(" ")
-      : variant === "active"
-      ? [
-          "bg-[color:var(--pill)]",
-          "text-[color:var(--fg)]",
-          "ring-[color:var(--pill-active-ring)]",
-          "vltd-selected",
-          "font-semibold",
-          "hover:bg-[color:var(--pill-hover)]",
-        ].join(" ")
-      : variant === "primary"
+      : variant === "active" || variant === "primary"
       ? [
           "bg-[color:var(--pill)]",
           "text-[color:var(--fg)]",
@@ -85,13 +73,23 @@ export function PillButton({
           "hover:bg-[color:var(--pill-hover)]",
         ].join(" ");
 
-  const disabledStyles = disabled
-    ? "opacity-60 cursor-not-allowed active:scale-100"
-    : "";
+  const disabledStyles = disabled ? "opacity-60 cursor-not-allowed active:scale-100" : "";
 
-  const fullClassName = [base, styles, disabledStyles, className]
-    .filter(Boolean)
-    .join(" ");
+  return [base, styles, disabledStyles, extra].filter(Boolean).join(" ");
+}
+
+export function PillButton({
+  children,
+  variant = "default",
+  onClick,
+  disabled,
+  title,
+  type = "button",
+  className = "",
+  href,
+  style,
+}: PillButtonProps) {
+  const fullClassName = pillClassName(variant, !!disabled, className);
 
   if (href) {
     return (

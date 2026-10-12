@@ -11,13 +11,25 @@ export default function InsurancePdfButton({
   collectorName,
   label = "Insurance PDF",
   className,
+  open: controlledOpen,
+  onOpenChange,
+  hideTrigger = false,
 }: {
   items: VaultItem[];
   collectorName?: string;
   label?: string;
   className?: string;
+  /** Optional: let a menu open and close the dialog instead of this button. */
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  hideTrigger?: boolean;
 }) {
-  const [open, setOpen] = useState(false);
+  const [innerOpen, setInnerOpen] = useState(false);
+  const open = controlledOpen ?? innerOpen;
+  const setOpen = (next: boolean) => {
+    if (controlledOpen === undefined) setInnerOpen(next);
+    onOpenChange?.(next);
+  };
   const [name, setName] = useState(collectorName ?? "");
   const [includeNotes, setIncludeNotes] = useState(true);
   const [includeComparables, setIncludeComparables] = useState(true);
@@ -39,7 +51,7 @@ export default function InsurancePdfButton({
 
   return (
     <>
-      <button
+      {hideTrigger ? null : <button
         type="button"
         onClick={() => setOpen(true)}
         className={
@@ -49,7 +61,7 @@ export default function InsurancePdfButton({
         style={{ background: "var(--surface)", color: "var(--fg)" }}
       >
         {label}
-      </button>
+      </button>}
 
       {open && typeof document !== "undefined" ? createPortal(
         // Portaled to document.body — NavShell renders this component's

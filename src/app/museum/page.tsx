@@ -22,6 +22,7 @@ import { getTierSafe, onTierChange, type Tier } from "@/lib/subscription";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 import { getPrimaryImageUrl, loadItems, type VaultItem } from "@/lib/vaultModel";
 import { getVaultImagePublicUrl } from "@/lib/vaultCloud";
+import { ToolsMenu } from "@/components/ui/ToolsMenu";
 import { getMuseumBetaStatus, requestMuseumBetaAccess, type MuseumBetaStatus } from "@/lib/museumBeta";
 import { getMyAdminRole } from "@/lib/adminAuth";
 
@@ -566,7 +567,9 @@ export default function MuseumPage() {
         description="Curate public rooms from your private vault."
         contentClassName={selectedEntry ? "max-w-[1300px]" : "max-w-[900px]"}
         actions={
-          galleries.length > 0 ? (
+          <>
+            <ToolsMenu items={[{ key: "halls", label: "Build exhibition from search", description: "Search your vault, pick items, save as an exhibition", href: "/vault/halls" }]} />
+            {galleries.length > 0 ? (
             <>
               {/* Mobile-only filter dropdown, grouped inline with sort */}
               <select value={filter} onChange={(e) => setFilter(e.target.value as ExhibitionFilter)} className="shrink-0 rounded-[6px] border px-4 py-1.5 text-sm font-bold outline-none sm:hidden" style={{ borderColor: "var(--theme-border)", background: "var(--theme-elevated)", color: "var(--fg)", boxShadow: "inset 0 1px 0 rgba(237,239,241,0.08)" }}>
@@ -577,7 +580,8 @@ export default function MuseumPage() {
               </select>
               <Link href="/museum/new" className="inline-flex shrink-0 items-center justify-center gap-1.5 rounded-[6px] px-4 py-2.5 text-sm font-black transition" style={{ background: "linear-gradient(180deg, #79E7FB, #41C6E4 55%, #2CB1D1)", color: "#06171d", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.5), 0 0 16px rgba(79,211,238,0.25)" }}>+ Create Exhibition</Link>
             </>
-          ) : undefined
+          ) : null}
+          </>
         }
       />
       <main className="text-[color:var(--fg)]">

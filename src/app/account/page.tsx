@@ -1133,6 +1133,9 @@ export default function AccountPage() {
           <p className="px-1 mb-4 text-xs text-[color:var(--muted)]">
             Export a backup, or clear cached display preferences on this device.
           </p>
+          <p className="px-1 mb-4 text-xs text-[color:var(--muted)]">
+            Restore from a backup is not available. The old Restore Vault button looked for a backup that the app never saves, and replacing what is stored on this device has not been checked against your Personal and Business profiles, so it has been turned off. Your items are saved to your account automatically, and Export Vault JSON gives you your own copy.
+          </p>
           <div className="flex flex-wrap gap-2">
             <PillButton onClick={exportVaultJson}>Export Vault JSON</PillButton>
             <PillButton onClick={clearLocalCache} className="bg-red-500/10 text-red-200 ring-red-400/20 hover:bg-red-500/15">

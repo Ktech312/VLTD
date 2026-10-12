@@ -2,6 +2,8 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { AppIcon } from "@/components/ui/AppIcon";
+import { PillButton } from "@/components/ui/PillButton";
+import { PillSelect, type PillSelectOption } from "@/components/ui/PillSelect";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 import { loadSavedEventIds, syncSavedEventIdsFromSupabase, toggleSavedEvent } from "@/lib/savedEventsModel";
 import { UNIVERSE_KEYS, UNIVERSE_LABEL, isUniverseKey } from "@/lib/taxonomy";
@@ -282,6 +284,21 @@ function MiniCalendar({ event }: { event: CollectorEvent }) {
   );
 }
 
+const UNIVERSE_FILTER_OPTIONS: PillSelectOption<string>[] = [
+  { value: "all", label: "All Universes" },
+  ...UNIVERSE_KEYS.map((key) => ({ value: key as string, label: UNIVERSE_LABEL[key] })),
+];
+
+const EVENT_TYPE_OPTIONS: PillSelectOption<EventFilter>[] = [
+  { value: "all", label: "All Event Types" },
+  { value: "convention", label: "Conventions" },
+  { value: "card_show", label: "Card Shows" },
+  { value: "auction", label: "Auctions" },
+  { value: "drop", label: "Drops" },
+  { value: "gallery", label: "Gallery" },
+  { value: "music", label: "Music" },
+];
+
 function EventTypeSelect({
   value,
   onChange,
@@ -290,29 +307,14 @@ function EventTypeSelect({
   onChange: (value: EventFilter) => void;
 }) {
   return (
-    <label className="relative inline-block">
-      <span className="pointer-events-none absolute left-3 top-1/2 z-10 -translate-y-1/2 text-[color:var(--muted)]">
-        <AppIcon name="events" size={14} />
-      </span>
-      <select
-        value={value}
-        onChange={(event) => onChange(event.target.value as EventFilter)}
-        className="h-9 w-auto appearance-none rounded-[7px] border border-[color:var(--border)] bg-[color:var(--pill)] pl-9 pr-8 text-xs font-bold text-[color:var(--fg)] outline-none"
-      >
-        <option value="all">All Event Types</option>
-        <option value="convention">Conventions</option>
-        <option value="card_show">Card Shows</option>
-        <option value="auction">Auctions</option>
-        <option value="drop">Drops</option>
-        <option value="gallery">Gallery</option>
-        <option value="music">Music</option>
-      </select>
-      <AppIcon
-        name="chevronDown"
-        size={14}
-        className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[color:var(--muted)]"
-      />
-    </label>
+    <PillSelect
+      value={value}
+      onChange={onChange}
+      options={EVENT_TYPE_OPTIONS}
+      ariaLabel="Filter by event type"
+      align="left"
+      minWidthPx={160}
+    />
   );
 }
 
@@ -768,30 +770,26 @@ export default function EventsPage() {
 
         <section className="mt-4 flex flex-wrap items-center gap-2">
           <EventTypeSelect value={filter} onChange={(value) => { setFilter(value); setVisibleCount(30); }} />
-          <select aria-label="Filter by universe" value={universeFilter} onChange={e => {setUniverseFilter(e.target.value);setVisibleCount(30);}} className="h-9 rounded-[7px] border border-[color:var(--border)] bg-[color:var(--pill)] px-3 text-xs text-[color:var(--fg)]">
-            <option value="all">All Universes</option>
-            {UNIVERSE_KEYS.map(key => <option key={key} value={key}>{UNIVERSE_LABEL[key]}</option>)}
-          </select>
-          <input aria-label="Search listed events" placeholder="Search events, city or country" value={catalogQuery} onChange={e => {setCatalogQuery(e.target.value);setVisibleCount(30);}} className="h-9 min-w-0 flex-1 rounded-[7px] border border-[color:var(--border)] bg-[color:var(--pill)] px-3 text-sm text-[color:var(--fg)]" />
-          <button
-            type="button"
-            onClick={() => {setShowSavedOnly((v) => !v);setVisibleCount(30);}}
-            className="inline-flex h-9 items-center justify-center gap-2 rounded-[7px] border px-3 text-xs font-bold"
-            style={{
-              background: showSavedOnly ? "var(--theme-gold)" : "var(--pill)",
-              color: showSavedOnly ? "#05080b" : "var(--fg)",
-              borderColor: "var(--border)",
-            }}
+          <PillSelect
+            value={universeFilter}
+            onChange={(next) => { setUniverseFilter(next); setVisibleCount(30); }}
+            options={UNIVERSE_FILTER_OPTIONS}
+            ariaLabel="Filter by universe"
+            align="left"
+            minWidthPx={150}
+          />
+          <input aria-label="Search listed events" placeholder="Search events, city or country" value={catalogQuery} onChange={e => {setCatalogQuery(e.target.value);setVisibleCount(30);}} className="h-11 min-w-[200px] flex-1 rounded-[8px] border border-[color:var(--border)] bg-[color:var(--pill)] px-3 text-[13px] text-[color:var(--fg)] md:h-9" />
+          <PillButton
+            onClick={() => { setShowSavedOnly((v) => !v); setVisibleCount(30); }}
+            variant={showSavedOnly ? "active" : "default"}
+            style={showSavedOnly ? { background: "var(--theme-gold)", color: "#05080b" } : undefined}
           >
-            <AppIcon name="favorite" size={14} filled={showSavedOnly} />
+            <AppIcon name="favorite" size={16} filled={showSavedOnly} />
             {showSavedOnly ? "Showing saved" : "Saved Events"}
-            <span
-              className="rounded bg-black/20 px-1.5 text-[10px]"
-              style={{ color: showSavedOnly ? "#05080b" : "var(--muted)" }}
-            >
+            <span className="rounded bg-black/20 px-1.5 text-[10px]" style={{ color: showSavedOnly ? "#05080b" : "var(--muted)" }}>
               {savedIds.size}
             </span>
-          </button>
+          </PillButton>
         </section>
 
         <details className="mt-4 rounded-[7px] border border-[color:var(--border)] bg-[color:var(--surface)] p-4">

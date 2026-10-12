@@ -23,6 +23,8 @@ import { activeItems } from "@/lib/vaultStats";
 import { loadGoals, syncGoalsFromSupabase, type CollectionGoal } from "@/lib/collectionGoals";
 import { getCollectionValuationScore } from "@/lib/collectionValuationScore";
 import { PageHeader } from "@/components/layout/PageHeader";
+import { ToolsMenu } from "@/components/ui/ToolsMenu";
+import VaultWrappedSheet from "@/components/VaultWrappedSheet";
 import PortfolioIntelligencePanel from "@/components/PortfolioIntelligencePanel";
 import CollectionValuationScoreCard from "@/components/CollectionValuationScoreCard";
 import GoalsProgressWidget from "@/components/GoalsProgressWidget";
@@ -529,6 +531,7 @@ function ReviewCard({ item, reason }: { item: VaultItem; reason: string }) {
 }
 
 export default function InsightsOverview({ items: allItems }: { items: VaultItem[] }) {
+  const [recapOpen, setRecapOpen] = useState(false);
   // Insights describes what you CURRENTLY OWN. Filter sold items once, here,
   // so every number on the page (totals, stale prices, breakdown, movers)
   // agrees with the Vault instead of each block deciding for itself.
@@ -753,9 +756,14 @@ export default function InsightsOverview({ items: allItems }: { items: VaultItem
             <HeaderAction onClick={() => exportItemsCsv(items)} primary>
               Export Report
             </HeaderAction>
+            <ToolsMenu
+              label="Collection tools"
+              items={[{ key: "recap", label: "Collection recap", description: "Your collection in review, with sharing", onClick: () => setRecapOpen(true) }]}
+            />
           </>
         }
       />
+      {recapOpen ? <VaultWrappedSheet onClose={() => setRecapOpen(false)} /> : null}
       <main className="min-h-screen pb-[calc(var(--bottomnav-h,86px)+20px)] text-[color:var(--fg)] md:pb-10">
       <div className="mx-auto max-w-[1480px] px-4 pb-6 sm:px-8">
         <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">

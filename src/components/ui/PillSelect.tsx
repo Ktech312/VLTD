@@ -95,8 +95,8 @@ export function PillSelect<T extends string>({
         )
       : 0;
     const estimatedTextWidth =
-      Math.max((longestLabelLength + labelPrefix.length) * (compact ? 7 : 8.2), longestSubtitleLength * 6.1) +
-      (compact ? 42 : 78) +
+      Math.max((longestLabelLength + labelPrefix.length) * (compact ? 7 : 7.6), longestSubtitleLength * 6.1) +
+      (compact ? 42 : 52) +
       extraWidthPx;
 
     return Math.max(minWidthPx, Math.ceil(estimatedTextWidth));
@@ -188,9 +188,9 @@ export function PillSelect<T extends string>({
   }, [open]);
 
   const popW = Math.max(btnW, 220);
-  const btnH = compact ? "min-h-[28px]" : "min-h-[44px]";
-  const btnPx = compact ? "px-3 pr-8" : "px-4 pr-10";
-  const btnText = compact ? "text-xs" : "text-sm";
+  const btnH = compact ? "min-h-[28px]" : "min-h-[44px] md:min-h-[36px]";
+  const btnPx = compact ? "px-3 pr-8" : "px-3 pr-9";
+  const btnText = compact ? "text-xs" : "text-[13px]";
 
   return (
     <div ref={wrapRef} className="relative inline-flex">
@@ -231,8 +231,8 @@ export function PillSelect<T extends string>({
           </span>
         </span>
 
-        <span className={["pointer-events-none absolute grid place-items-center opacity-70 text-[color:var(--fg)]", compact ? "right-2.5 h-5 w-5" : "right-3 h-6 w-6"].join(" ")}>
-          <AppIcon name="chevronDown" strokeWidth={2.2} className="h-3.5 w-3.5" />
+        <span className={["pointer-events-none absolute top-1/2 grid -translate-y-1/2 place-items-center opacity-70 text-[color:var(--fg)]", compact ? "right-2.5 h-5 w-5" : "right-3 h-4 w-4"].join(" ")}>
+          <AppIcon name="chevronDown" strokeWidth={2.2} className={compact ? "h-3.5 w-3.5" : "h-4 w-4"} />
         </span>
       </button>
 
@@ -243,7 +243,7 @@ export function PillSelect<T extends string>({
             ref={menuRef}
             id={`pillselect-${id}`}
             role="menu"
-            className="overflow-hidden rounded-2xl bg-[color:var(--surface-strong)] ring-1 ring-[color:var(--border)] shadow-[var(--shadow-pill)]"
+            className="overflow-hidden rounded-[8px] bg-[color:var(--surface-strong)] ring-1 ring-[color:var(--border)] shadow-[var(--shadow-pill)]"
             style={{
               position: "fixed",
               top: (btnRect?.bottom ?? 0) + 8,
@@ -272,7 +272,7 @@ export function PillSelect<T extends string>({
                       btnRef.current?.focus();
                     }}
                     className={[
-                      "w-full rounded-xl px-3 py-2.5 text-left transition",
+                      "w-full rounded-[6px] px-3 py-2.5 text-left transition",
                       isSelected
                         ? "bg-[color:var(--pill)] text-[color:var(--fg)] ring-1 ring-[color:var(--border)] font-semibold"
                         : isActive

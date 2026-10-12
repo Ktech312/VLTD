@@ -1,7 +1,10 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import VaultWrappedSheet from "@/components/VaultWrappedSheet";
+import AddItemMenu from "@/components/AddItemMenu";
+import VaultToolsMenu from "@/components/VaultToolsMenu";
+import { LocalNav } from "@/components/ui/LocalNav";
+import { PillButton } from "@/components/ui/PillButton";
 import VaultMuseumView from "@/components/VaultMuseumView";
 import VaultCategoryChips, { chipKey, vaultItemCategory, vaultItemSubcategory } from "@/components/VaultCategoryChips";
 import { normalizeUniverse, universeForItem } from "@/lib/universeMatch";
@@ -10,12 +13,8 @@ import { PageHeader } from "@/components/layout/PageHeader";
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import ItemVisibilityToggle from "@/components/ItemVisibilityToggle";
-import RestoreVaultButton from "@/components/RestoreVaultButton";
 import SellItemButton from "@/components/SellItemButton";
-import VaultExportButton from "@/components/VaultExportButton";
 import VaultWallView from "@/components/VaultWallView";
-import { PillButton } from "@/components/ui/PillButton";
-import { Glyph } from "@/components/ui/Glyph";
 import { AppIcon } from "@/components/ui/AppIcon";
 import { SelectCircle } from "@/components/ui/SelectCircle";
 import ProgressiveImage from "@/components/ui/ProgressiveImage";
@@ -949,7 +948,6 @@ export default function VaultListView({ lockedUniverse }: { lockedUniverse?: Uni
   const router = useRouter();
   const [focusKey] = useState<UniverseKey | null>(() => readFocusUniverseKey());
   const [items, setItems] = useState<VaultItem[]>([]);
-  const [showUploadMenu, setShowUploadMenu] = useState(false);
   const [query, setQuery] = useState("");
   const [universeFilter, setUniverseFilter] = useState<UniverseFilter>(lockedUniverse ?? "ALL");
   // Moving between universe routes reuses this component: follow the route.
@@ -970,7 +968,6 @@ export default function VaultListView({ lockedUniverse }: { lockedUniverse?: Uni
   const [isOnline, setIsOnline] = useState<boolean | null>(null);
   const [initialLoadComplete, setInitialLoadComplete] = useState(false);
   const [vaultViewMode, setVaultViewMode] = useState<VaultViewMode>("shelf");
-  const [wrappedOpen, setWrappedOpen] = useState(false);
   const [myProfiles, setMyProfiles] = useState<ProfileRow[]>([]);
   const [activeProfileId, setActiveProfileId] = useState("");
   const [confirmProfileMove, setConfirmProfileMove] = useState<ProfileRow | null>(null);
@@ -1594,87 +1591,27 @@ export default function VaultListView({ lockedUniverse }: { lockedUniverse?: Uni
         contentClassName="max-w-[1500px]"
         actions={
           <>
-            {lockedUniverse ? (
-              <Link href="/vault" className="inline-flex items-center justify-center rounded-[6px] bg-[color:var(--pill)] px-4 py-1.5 text-sm font-bold ring-1 ring-[color:var(--border)]">All Universes</Link>
-            ) : null}
-            <VaultExportButton />
-            <RestoreVaultButton />
-            <button
-              type="button"
-              onClick={() => setWrappedOpen(true)}
-              className="inline-flex items-center justify-center gap-1.5 rounded-[6px] bg-[color:var(--pill)] px-4 py-1.5 text-sm font-bold ring-1 ring-[color:var(--border)] transition hover:ring-[color:var(--theme-gold)]"
-            >
-              ✦ Wrapped
-            </button>
-            <Link href="/vault/halls" className="inline-flex items-center justify-center gap-1.5 rounded-[6px] bg-[color:var(--pill)] px-4 py-1.5 text-sm font-bold ring-1 ring-[color:var(--border)]"><Glyph name="building" size={14} />Halls</Link>
-            <Link href="/vault/for-sale" className="inline-flex items-center justify-center rounded-[6px] bg-[color:var(--pill)] px-4 py-1.5 text-sm font-bold ring-1 ring-[color:var(--border)]">For Sale</Link>
-            <Link href="/vault/import" className="inline-flex items-center justify-center rounded-[6px] bg-[color:var(--pill)] px-4 py-1.5 text-sm font-bold ring-1 ring-[color:var(--border)]">Import</Link>
-            <Link href="/vault/sold" className="inline-flex items-center justify-center rounded-[6px] bg-[color:var(--pill)] px-4 py-1.5 text-sm font-bold ring-1 ring-[color:var(--border)]">Sold</Link>
-            {/* Quick Add sits next to Add Item — the two "add" actions grouped together */}
-            <Link href="/vault/quick" className="inline-flex items-center justify-center rounded-[6px] bg-[color:var(--pill-active-bg)] px-4 py-1.5 text-sm font-bold text-[color:var(--fg)] ring-1 ring-[color:var(--pill-active-bg)]">Quick Add</Link>
-            {/* Add Item — the single primary add on the page */}
-            <Link href="/capture" className="vltd-action-module shrink-0">
-              <span className="vltd-action-module__plate !py-1.5">Add Item</span>
-              <span className="vltd-action-module__block"><AppIcon name="addItem" size={14} strokeWidth={2.6} /></span>
-            </Link>
-            {/* Upload from device — EK: hard to find, needs a Single (all
-                photos -> one item) vs Batch (each photo -> its own item)
-                choice up front. Single opens the existing Add flow's file
-                picker directly; Batch is the existing /vault/bulk flow. */}
-            <div className="relative shrink-0">
-              <button
-                type="button"
-                onClick={() => setShowUploadMenu((v) => !v)}
-                aria-label="Upload from device"
-                className="inline-flex h-[42px] w-[42px] items-center justify-center rounded-[6px] bg-[color:var(--pill)] ring-1 ring-[color:var(--border)]"
-              >
-                <Glyph name="share" size={16} />
-              </button>
-              {showUploadMenu ? (
-                <>
-                  {/* Solid dark scrim behind the menu -- belt and suspenders
-                      against anything showing through regardless of the
-                      box's own background. */}
-                  <div className="fixed inset-0 z-40 bg-black/70" onClick={() => setShowUploadMenu(false)} />
-                  {/* id + a matching !important rule (see globals.css
-                      #vault-upload-menu) -- EK saw thumbnails bleeding
-                      through this box through two previous attempts (a
-                      theme CSS variable, then a plain inline style). A
-                      stylesheet !important rule beats a non-important
-                      inline style, so if theme-override.css's blanket
-                      !important rules were ever the real cause, this is
-                      the one thing left that's guaranteed to win: nothing
-                      else in this codebase targets an #id with !important. */}
-                  <div
-                    id="vault-upload-menu"
-                    className="absolute right-0 top-[calc(100%+6px)] z-50 w-48 overflow-hidden rounded-[7px] shadow-lg"
-                  >
-                    <Link
-                      href="/capture?openUpload=1"
-                      onClick={() => setShowUploadMenu(false)}
-                      className="block px-3 py-2 text-center hover:brightness-110"
-                    >
-                      <div className="text-xs font-black">Single item</div>
-                      <div className="text-[10px] font-semibold opacity-80">All Images to 1 Item</div>
-                    </Link>
-                    <div style={{ borderTop: "1px solid #C8CDD2" }} />
-                    <Link
-                      href="/vault/bulk"
-                      onClick={() => setShowUploadMenu(false)}
-                      className="block px-3 py-2 text-center hover:brightness-110"
-                    >
-                      <div className="text-xs font-black">Batch</div>
-                      <div className="text-[10px] font-semibold opacity-80">Each Image creates new item</div>
-                    </Link>
-                  </div>
-                </>
-              ) : null}
-            </div>
+            {lockedUniverse ? <PillButton href="/vault">All Universes</PillButton> : null}
+            <AddItemMenu />
+            <VaultToolsMenu />
           </>
         }
       />
+      <div className="mx-auto max-w-[1500px] px-3 pb-3 sm:px-5">
+        <LocalNav
+          activeKey="items"
+          items={[
+            { key: "items", label: "Items", href: "/vault" },
+            { key: "for-sale", label: "For Sale", href: "/vault/for-sale" },
+            { key: "sold", label: "Sold", href: "/vault/sold" },
+          ]}
+          trailing={[
+            { key: "insights", label: "Insights", href: "/portfolio" },
+            { key: "goals", label: "Goals", href: "/goals" },
+          ]}
+        />
+      </div>
       <main className="text-[color:var(--fg)]">
-      {wrappedOpen ? <VaultWrappedSheet onClose={() => setWrappedOpen(false)} /> : null}
       {!initialLoadComplete ? (
         <div className="mx-auto max-w-[1500px] px-3 pb-4 sm:px-5 sm:pb-5" aria-label="Loading your vault summary">
           <section className="mt-5 grid grid-cols-2 gap-2 lg:grid-cols-4">
