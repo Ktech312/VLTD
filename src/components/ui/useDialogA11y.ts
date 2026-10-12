@@ -31,8 +31,8 @@ export function useDialogA11y<T extends HTMLElement = HTMLDivElement>(open: bool
 
     function onKeyDown(event: KeyboardEvent) {
       if (event.key === "Escape") {
-        // A menu or select opened inside the dialog handles its own Escape first.
-        if (event.defaultPrevented) return;
+        // A menu or select opened inside the dialog handles its own Escape first (it closes, then the next Escape closes the dialog).
+        if (event.defaultPrevented || document.querySelector('[role="menu"], [role="listbox"]')) return;
         event.stopPropagation();
         closeRef.current();
         return;

@@ -1,5 +1,6 @@
 "use client";
 
+import { PillButton } from "@/components/ui/PillButton";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 
@@ -674,52 +675,10 @@ export default function ItemMedia({
     if (!onSetImageRole || !entry.id) return null;
 
     return (
-      <div className="mt-1 grid grid-cols-3 gap-1">
-        <button
-          type="button"
-          onClick={() => onSetImageRole(entry.id!, "primary")}
-          className={[
-            "rounded-full px-2 py-1 text-[10px] ring-1",
-            entry.role === "primary"
-              ? "bg-gold/20 text-cyan-100 ring-gold/30"
-              : "bg-[color:var(--pill)] ring-[color:var(--border)]",
-          ].join(" ")}
-          title="Set as primary"
-          aria-label="Set as primary"
-          aria-pressed={entry.role === "primary"}
-        >
-          P
-        </button>
-        <button
-          type="button"
-          onClick={() => onSetImageRole(entry.id!, "detail")}
-          className={[
-            "rounded-full px-2 py-1 text-[10px] ring-1",
-            entry.role === "detail"
-              ? "bg-white/15 text-text-primary ring-white/20"
-              : "bg-[color:var(--pill)] ring-[color:var(--border)]",
-          ].join(" ")}
-          title="Set as detail"
-          aria-label="Set as detail"
-          aria-pressed={entry.role === "detail"}
-        >
-          D
-        </button>
-        <button
-          type="button"
-          onClick={() => onSetImageRole(entry.id!, "proof")}
-          className={[
-            "rounded-full px-2 py-1 text-[10px] ring-1",
-            entry.role === "proof"
-              ? "bg-amber-500/20 text-amber-100 ring-amber-400/30"
-              : "bg-[color:var(--pill)] ring-[color:var(--border)]",
-          ].join(" ")}
-          title="Set as proof"
-          aria-label="Set as proof"
-          aria-pressed={entry.role === "proof"}
-        >
-          <AppIcon name="checkmark" size={12} className="mx-auto" />
-        </button>
+      <div className="mt-2 grid grid-cols-3 gap-x-1 gap-y-2">
+        <PillButton size="compact" variant={entry.role === "primary" ? "active" : "default"} pressed={entry.role === "primary"} onClick={() => onSetImageRole(entry.id!, "primary")} ariaLabel="Set as primary" title="Set as primary" className="w-full px-0!">P</PillButton>
+        <PillButton size="compact" variant={entry.role === "detail" ? "active" : "default"} pressed={entry.role === "detail"} onClick={() => onSetImageRole(entry.id!, "detail")} ariaLabel="Set as detail" title="Set as detail" className="w-full px-0!">D</PillButton>
+        <PillButton size="compact" variant={entry.role === "proof" ? "active" : "default"} pressed={entry.role === "proof"} onClick={() => onSetImageRole(entry.id!, "proof")} ariaLabel="Set as proof" title="Set as proof" className="w-full px-0!"><AppIcon name="checkmark" size={16} /></PillButton>
       </div>
     );
   }
@@ -761,40 +720,10 @@ export default function ItemMedia({
                 </div>
               </button>
 
-              <div className="mt-1 grid grid-cols-3 gap-1">
-                <button
-                  type="button"
-                  disabled={visibleIndex === 0}
-                  onClick={() =>
-                    onMoveImage(entry.originalIndex, visibleEntries[visibleIndex - 1].originalIndex)
-                  }
-                  className="rounded-full bg-[color:var(--pill)] px-2 py-1 text-[10px] ring-1 ring-[color:var(--border)] disabled:opacity-30"
-                  title="Move up"
-                  aria-label="Move up"
-                >
-                  <AppIcon name="chevronUp" size={12} className="mx-auto" />
-                </button>
-                <button
-                  type="button"
-                  disabled={visibleIndex === visibleEntries.length - 1}
-                  onClick={() =>
-                    onMoveImage(entry.originalIndex, visibleEntries[visibleIndex + 1].originalIndex)
-                  }
-                  className="rounded-full bg-[color:var(--pill)] px-2 py-1 text-[10px] ring-1 ring-[color:var(--border)] disabled:opacity-30"
-                  title="Move down"
-                  aria-label="Move down"
-                >
-                  <AppIcon name="chevronDown" size={12} className="mx-auto" />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => onDeleteImage(entry.originalIndex)}
-                  className="rounded-full bg-red-600/85 px-2 py-1 text-[10px] text-text-primary ring-1 ring-red-500/40"
-                  title="Delete image"
-                  aria-label="Delete image"
-                >
-                  <AppIcon name="delete" size={12} className="mx-auto" />
-                </button>
+              <div className="mt-2 grid grid-cols-3 gap-x-1 gap-y-2">
+                <PillButton size="compact" disabled={visibleIndex === 0} onClick={() => onMoveImage(entry.originalIndex, visibleEntries[visibleIndex - 1].originalIndex)} ariaLabel="Move up" title="Move up" className="w-full px-0!"><AppIcon name="chevronUp" size={16} /></PillButton>
+                <PillButton size="compact" disabled={visibleIndex === visibleEntries.length - 1} onClick={() => onMoveImage(entry.originalIndex, visibleEntries[visibleIndex + 1].originalIndex)} ariaLabel="Move down" title="Move down" className="w-full px-0!"><AppIcon name="chevronDown" size={16} /></PillButton>
+                <PillButton size="compact" variant="danger" onClick={() => onDeleteImage(entry.originalIndex)} ariaLabel="Delete image" title="Delete image" className="w-full px-0!"><AppIcon name="delete" size={16} /></PillButton>
               </div>
 
               {renderRoleControls(entry)}
@@ -948,14 +877,7 @@ export default function ItemMedia({
                         {roleLabel(entry.role)}
                       </span>
 
-                      <button
-                        type="button"
-                        onClick={() => onDeleteImage(entry.originalIndex)}
-                        className="rounded-full bg-red-600/85 px-2 py-1 text-[10px] text-text-primary ring-1 ring-red-500/40"
-                        title="Delete image"
-                      >
-                        Delete
-                      </button>
+                      <PillButton size="compact" variant="danger" onClick={() => onDeleteImage(entry.originalIndex)} title="Delete image">Delete</PillButton>
                     </div>
 
                     {renderRoleControls(entry)}

@@ -1,5 +1,6 @@
 "use client";
 
+import { exportVaultCsv } from "@/lib/vaultExport";
 import { Toggle } from "@/components/ui/Toggle";
 import { PillButton } from "@/components/ui/PillButton";
 import Link from "next/link";
@@ -235,17 +236,10 @@ export default function WorkspaceSettingsPage() {
 
         {publicUrl && (
           <Section title="Public vault URL">
-            <div className="flex items-center gap-2 rounded-xl ring-1 ring-[color:var(--border)] overflow-hidden" style={{ background: "var(--pill)" }}>
-              <span className="pl-3 text-xs truncate flex-1 py-2.5" style={{ color: "var(--fg)" }}>{publicUrl}</span>
-              <button
-                type="button"
-                onClick={() => void navigator.clipboard?.writeText(publicUrl)}
-                className="shrink-0 px-3 py-2.5 text-xs font-semibold"
-                style={{ background: "linear-gradient(180deg,#79E7FB,#41C6E4 55%,#2CB1D1)", color: "#06171d" }}
-              >Copy</button>
-              <Link href={publicUrl} target="_blank" className="shrink-0 px-3 py-2.5 text-xs font-semibold" style={{ color: "#2CB1D1" }}>
-                Visit →
-              </Link>
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="min-w-0 flex-1 basis-48 truncate rounded-[8px] px-3 py-2.5 text-xs ring-1 ring-[color:var(--border)]" style={{ background: "var(--pill)", color: "var(--fg)" }}>{publicUrl}</span>
+              <PillButton variant="active" onClick={() => void navigator.clipboard?.writeText(publicUrl)}>Copy</PillButton>
+              <PillButton href={publicUrl}>Visit</PillButton>
             </div>
             <p className="mt-2 text-xs" style={{ color: "var(--muted)" }}>
               Only items marked <strong>Public</strong> appear on your vault page.
@@ -291,9 +285,7 @@ export default function WorkspaceSettingsPage() {
             )}
           </Row>
           <Row label="CSV export" sub="Download your vault as a spreadsheet">
-            <Link href="/vault?export=csv" className="rounded-[8px] px-3 py-1.5 text-xs font-semibold ring-1 ring-[color:var(--border)]" style={{ background: "var(--pill)", color: "var(--fg)" }}>
-              Export
-            </Link>
+            <PillButton onClick={exportVaultCsv}>Export</PillButton>
           </Row>
           <Row label="API access" sub="Business plan — programmatic vault access">
             <span className="rounded-full px-2 py-0.5 text-[10px] font-semibold" style={{ background: "var(--pill)", color: "var(--muted)" }}>Business</span>

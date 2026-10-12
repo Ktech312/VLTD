@@ -68,15 +68,15 @@ export default function AccountRolesPage() {
             const perm = getRoleDefaults(role);
             return (
               <section key={role} className="rounded-[26px] bg-[color:var(--surface)] p-5 ring-1 ring-[color:var(--border)] shadow-[0_18px_42px_rgba(0,0,0,0.28)]">
-                <div className="flex items-center justify-between gap-3">
+                <div className="flex flex-wrap items-center justify-between gap-3">
                   <h2 className="text-xl font-semibold">{labels[role]}</h2>
                   <span className="rounded-full bg-[color:var(--pill)] px-3 py-1 text-xs ring-1 ring-[color:var(--border)]">{role}</span>
                 </div>
                 <div className="mt-4 grid gap-2 text-sm">
                   {Object.entries(perm).map(([key, value]) => (
-                    <div key={key} className="flex items-center justify-between rounded-2xl bg-[color:var(--input)] px-4 py-3 ring-1 ring-[color:var(--border)]">
-                      <span className="text-[color:var(--fg)]">{key}</span>
-                      <span className="text-[color:var(--muted)]">{value ? "Planned: allowed" : "Planned: hidden"}</span>
+                    <div key={key} className="flex items-center justify-between gap-3 rounded-2xl bg-[color:var(--input)] px-4 py-3 ring-1 ring-[color:var(--border)]">
+                      <span className="min-w-0 break-words text-[color:var(--fg)]">{key}</span>
+                      <span className="shrink-0 text-[color:var(--muted)]">{value ? "Planned: allowed" : "Planned: hidden"}</span>
                     </div>
                   ))}
                 </div>

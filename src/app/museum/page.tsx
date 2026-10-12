@@ -209,6 +209,17 @@ export default function MuseumPage() {
   const selectedItemsDragRef = useRef({ active: false, dragged: false, startX: 0, scrollLeft: 0 });
   const [filter, setFilter] = useState<ExhibitionFilter>("ACTIVE");
   const [sortMode, setSortMode] = useState<ExhibitionSort>("updated");
+  // Returning from an exhibition puts the list back the way it was (filter and sort), for this browser session.
+  useEffect(() => {
+    try {
+      const saved = JSON.parse(window.sessionStorage.getItem("vltd_museum_view") ?? "null") as { filter?: string; sortMode?: string } | null;
+      if (saved?.filter && EXHIBITION_FILTERS.some((f) => f.key === saved.filter)) setFilter(saved.filter as ExhibitionFilter);
+      if (saved?.sortMode && EXHIBITION_SORTS.some((o) => o.key === saved.sortMode)) setSortMode(saved.sortMode as ExhibitionSort);
+    } catch { /* storage unavailable */ }
+  }, []);
+  useEffect(() => {
+    try { window.sessionStorage.setItem("vltd_museum_view", JSON.stringify({ filter, sortMode })); } catch { /* storage unavailable */ }
+  }, [filter, sortMode]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [copyOk, setCopyOk] = useState(false);
 

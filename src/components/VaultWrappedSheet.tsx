@@ -1,5 +1,6 @@
 "use client";
 
+import { AppIcon } from "@/components/ui/AppIcon";
 import { useDialogA11y } from "@/components/ui/useDialogA11y";
 import { useMemo, useState } from "react";
 import { createPortal } from "react-dom";
@@ -404,7 +405,7 @@ export default function VaultWrappedSheet({ onClose }: Props) {
                 Your collection in review
               </div>
             </div>
-            <PillButton onClick={onClose} title="Close"><span aria-hidden="true">✕</span><span className="sr-only">Close</span></PillButton>
+            <PillButton onClick={onClose} ariaLabel="Close" title="Close"><AppIcon name="close" size={16} /></PillButton>
           </div>
 
           {/* Live stats summary */}

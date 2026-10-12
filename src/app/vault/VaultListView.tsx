@@ -963,6 +963,9 @@ export default function VaultListView({ lockedUniverse }: { lockedUniverse?: Uni
   const [subFilter, setSubFilter] = useState<string[]>([]);
   const [sortMode, setSortMode] = useState<SortMode>("newest");
   const [showSoldItems, setShowSoldItems] = useState(false);
+  // The current filters, kept in a ref so opening an item can remember them and Back can put them back.
+  const filtersRef = useRef<Record<string, unknown>>({});
+  filtersRef.current = { query, universeFilter, readinessFilter, gradedOnly, uncategorizedOnly, categoryFilter, subFilter, sortMode, showSoldItems, locked: lockedUniverse ?? null };
   const [sales, setSales] = useState<SaleInfo[]>([]);
   const [pendingSyncCount, setPendingSyncCount] = useState(0);
   const [syncStatus, setSyncStatus] = useState("");
@@ -1130,12 +1133,36 @@ export default function VaultListView({ lockedUniverse }: { lockedUniverse?: Uni
         const el = getScroller();
         sessionStorage.setItem("vltd_vault_scroll_y", String(el ? el.scrollTop : 0));
         sessionStorage.setItem("vltd_vault_scroll_count", String(visibleCountRef.current));
+        sessionStorage.setItem("vltd_vault_filters", JSON.stringify(filtersRef.current));
+      } catch {
+        // storage unavailable
+      }
+    }
+
+    function restoreFilters() {
+      try {
+        const saved = sessionStorage.getItem("vltd_vault_filters");
+        if (!saved) return;
+        sessionStorage.removeItem("vltd_vault_filters");
+        const f = JSON.parse(saved) as Record<string, unknown>;
+        // Only put them back on the same list they came from (all universes, or the same universe route).
+        if ((f.locked ?? null) !== (lockedUniverse ?? null)) return;
+        if (typeof f.query === "string") setQuery(f.query);
+        if (!lockedUniverse && typeof f.universeFilter === "string") setUniverseFilter(f.universeFilter as UniverseFilter);
+        if (typeof f.readinessFilter === "string") setReadinessFilter(f.readinessFilter as ReadinessFilter);
+        if (typeof f.gradedOnly === "boolean") setGradedOnly(f.gradedOnly);
+        if (typeof f.uncategorizedOnly === "boolean") setUncategorizedOnly(f.uncategorizedOnly);
+        if (Array.isArray(f.categoryFilter)) setCategoryFilter(f.categoryFilter.filter((x): x is string => typeof x === "string"));
+        if (Array.isArray(f.subFilter)) setSubFilter(f.subFilter.filter((x): x is string => typeof x === "string"));
+        if (typeof f.sortMode === "string") setSortMode(f.sortMode as SortMode);
+        if (typeof f.showSoldItems === "boolean") setShowSoldItems(f.showSoldItems);
       } catch {
         // storage unavailable
       }
     }
 
     function restoreSpot() {
+      restoreFilters();
       try {
         const raw = sessionStorage.getItem("vltd_vault_scroll_y");
         if (!raw) return;
