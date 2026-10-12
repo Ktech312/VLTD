@@ -1,0 +1,2423 @@
+{
+  "source": "https://freshcomics.us/conventions",
+  "rows": [
+    {
+      "slug": "freshcomics-nycc-2026",
+      "name": "New York Comic Con",
+      "starts_at": "2026-10-08T00:00:00.000Z",
+      "ends_at": "2026-10-11T23:59:59.000Z",
+      "city": "New York",
+      "state_region": "NY",
+      "country": "US",
+      "event_type": "national",
+      "website_url": "https://www.newyorkcomiccon.com/",
+      "short_desc": "New York Comic Con in New York, NY, US.",
+      "long_desc": "Listed by Fresh Comics: https://freshcomics.us/convention/nycc-2026/ny-new-york\nCheck the official event website for current hours, admission and venue details.",
+      "relevant_universes": [
+        "comics"
+      ],
+      "emoji": "🎪"
+    },
+    {
+      "slug": "freshcomics-big-texas-2026",
+      "name": "Big Texas Comicon",
+      "starts_at": "2026-10-09T00:00:00.000Z",
+      "ends_at": "2026-10-11T23:59:59.000Z",
+      "city": "San Antonio",
+      "state_region": "TX",
+      "country": "US",
+      "event_type": "national",
+      "website_url": "https://bigtexascomicon.com/",
+      "short_desc": "Big Texas Comicon in San Antonio, TX, US.",
+      "long_desc": "Listed by Fresh Comics: https://freshcomics.us/convention/big-texas-2026/tx-san-antonio\nCheck the official event website for current hours, admission and venue details.",
+      "relevant_universes": [
+        "comics"
+      ],
+      "emoji": "🎪"
+    },
+    {
+      "slug": "freshcomics-comiccon-quebec-2026",
+      "name": "Comiccon de Québec",
+      "starts_at": "2026-10-09T00:00:00.000Z",
+      "ends_at": "2026-10-11T23:59:59.000Z",
+      "city": "Québec",
+      "state_region": "QC",
+      "country": "CA",
+      "event_type": "international",
+      "website_url": "https://www.comicconquebec.com/",
+      "short_desc": "Comiccon de Québec in Québec, QC, CA.",
+      "long_desc": "Listed by Fresh Comics: https://freshcomics.us/convention/comiccon-quebec-2026/qc-quebec\nCheck the official event website for current hours, admission and venue details.",
+      "relevant_universes": [
+        "comics"
+      ],
+      "emoji": "🎪"
+    },
+    {
+      "slug": "freshcomics-collect-a-con-chicago-fall-2026",
+      "name": "Collect-A-Con Chicago",
+      "starts_at": "2026-10-10T00:00:00.000Z",
+      "ends_at": "2026-10-11T23:59:59.000Z",
+      "city": "Rosemont",
+      "state_region": "IL",
+      "country": "US",
+      "event_type": "national",
+      "website_url": "https://collectaconusa.com/chicago-2/",
+      "short_desc": "Collect-A-Con Chicago in Rosemont, IL, US.",
+      "long_desc": "Listed by Fresh Comics: https://freshcomics.us/convention/collect-a-con-chicago-fall-2026/il-rosemont\nCheck the official event website for current hours, admission and venue details.",
+      "relevant_universes": [
+        "comics"
+      ],
+      "emoji": "🎪"
+    },
+    {
+      "slug": "freshcomics-jcpl-comic-surge-2026",
+      "name": "JCPL Comic Surge",
+      "starts_at": "2026-10-10T00:00:00.000Z",
+      "ends_at": "2026-10-10T23:59:59.000Z",
+      "city": "Nicholasville",
+      "state_region": "KY",
+      "country": "US",
+      "event_type": "national",
+      "website_url": "https://jesspublib.org/jcpl-comicsurge/",
+      "short_desc": "JCPL Comic Surge in Nicholasville, KY, US.",
+      "long_desc": "Listed by Fresh Comics: https://freshcomics.us/convention/jcpl-comic-surge-2026/ky-nicholasville\nCheck the official event website for current hours, admission and venue details.",
+      "relevant_universes": [
+        "comics"
+      ],
+      "emoji": "🎪"
+    },
+    {
+      "slug": "freshcomics-mncba-fallcon-2026",
+      "name": "MNCBA FallCon",
+      "starts_at": "2026-10-10T00:00:00.000Z",
+      "ends_at": "2026-10-11T23:59:59.000Z",
+      "city": "Falcon Heights",
+      "state_region": "MN",
+      "country": "US",
+      "event_type": "national",
+      "website_url": "https://www.mncba.org/",
+      "short_desc": "MNCBA FallCon in Falcon Heights, MN, US.",
+      "long_desc": "Listed by Fresh Comics: https://freshcomics.us/convention/mncba-fallcon-2026/mn-falcon-heights\nCheck the official event website for current hours, admission and venue details.",
+      "relevant_universes": [
+        "comics"
+      ],
+      "emoji": "🎪"
+    },
+    {
+      "slug": "freshcomics-carlisle-2026",
+      "name": "Carlisle Comic Con",
+      "starts_at": "2026-10-16T00:00:00.000Z",
+      "ends_at": "2026-10-18T23:59:59.000Z",
+      "city": "Carlisle",
+      "state_region": "PA",
+      "country": "US",
+      "event_type": "national",
+      "website_url": "https://carlislecomiccon.weebly.com/",
+      "short_desc": "Carlisle Comic Con in Carlisle, PA, US.",
+      "long_desc": "Listed by Fresh Comics: https://freshcomics.us/convention/carlisle-2026/pa-carlisle\nCheck the official event website for current hours, admission and venue details.",
+      "relevant_universes": [
+        "comics"
+      ],
+      "emoji": "🎪"
+    },
+    {
+      "slug": "freshcomics-for-the-fans-fest-2026",
+      "name": "For the Fans Fest",
+      "starts_at": "2026-10-16T00:00:00.000Z",
+      "ends_at": "2026-10-18T23:59:59.000Z",
+      "city": "Atlantic City",
+      "state_region": "NJ",
+      "country": "US",
+      "event_type": "national",
+      "website_url": "https://forfansfest.com/",
+      "short_desc": "For the Fans Fest in Atlantic City, NJ, US.",
+      "long_desc": "Listed by Fresh Comics: https://freshcomics.us/convention/for-the-fans-fest-2026/nj-atlantic-city\nCheck the official event website for current hours, admission and venue details.",
+      "relevant_universes": [
+        "comics"
+      ],
+      "emoji": "🎪"
+    },
+    {
+      "slug": "freshcomics-military-herocon-fort-macdill-2026",
+      "name": "Military HeroCon",
+      "starts_at": "2026-10-16T00:00:00.000Z",
+      "ends_at": "2026-10-18T23:59:59.000Z",
+      "city": "Tampa",
+      "state_region": "FL",
+      "country": "US",
+      "event_type": "national",
+      "website_url": "https://militaryherocon.com/macdill-afb",
+      "short_desc": "Military HeroCon in Tampa, FL, US.",
+      "long_desc": "Listed by Fresh Comics: https://freshcomics.us/convention/military-herocon-fort-macdill-2026/fl-tampa\nCheck the official event website for current hours, admission and venue details.",
+      "relevant_universes": [
+        "comics"
+      ],
+      "emoji": "🎪"
+    },
+    {
+      "slug": "freshcomics-quocon-2026",
+      "name": "QuoCon",
+      "starts_at": "2026-10-16T00:00:00.000Z",
+      "ends_at": "2026-10-18T23:59:59.000Z",
+      "city": "Waxahachie",
+      "state_region": "TX",
+      "country": "US",
+      "event_type": "national",
+      "website_url": "https://quocon.com/",
+      "short_desc": "QuoCon in Waxahachie, TX, US.",
+      "long_desc": "Listed by Fresh Comics: https://freshcomics.us/convention/quocon-2026/tx-waxahachie\nCheck the official event website for current hours, admission and venue details.",
+      "relevant_universes": [
+        "comics"
+      ],
+      "emoji": "🎪"
+    },
+    {
+      "slug": "freshcomics-highlight-realms-2026",
+      "name": "Highland Realms Comic Con",
+      "starts_at": "2026-10-17T00:00:00.000Z",
+      "ends_at": "2026-10-17T23:59:59.000Z",
+      "city": "Inverness",
+      "state_region": null,
+      "country": "GB",
+      "event_type": "international",
+      "website_url": "https://www.highlandrealms.co.uk/",
+      "short_desc": "Highland Realms Comic Con in Inverness, GB.",
+      "long_desc": "Listed by Fresh Comics: https://freshcomics.us/convention/highlight-realms-2026/convention\nCheck the official event website for current hours, admission and venue details.",
+      "relevant_universes": [
+        "comics"
+      ],
+      "emoji": "🎪"
+    },
+    {
+      "slug": "freshcomics-north-bay-2026",
+      "name": "North Bay ComiCon",
+      "starts_at": "2026-10-17T00:00:00.000Z",
+      "ends_at": "2026-10-17T23:59:59.000Z",
+      "city": "North Bay",
+      "state_region": "ON",
+      "country": "CA",
+      "event_type": "international",
+      "website_url": "https://www.popculturecanada.ca/",
+      "short_desc": "North Bay ComiCon in North Bay, ON, CA.",
+      "long_desc": "Listed by Fresh Comics: https://freshcomics.us/convention/north-bay-2026/on-north-bay\nCheck the official event website for current hours, admission and venue details.",
+      "relevant_universes": [
+        "comics"
+      ],
+      "emoji": "🎪"
+    },
+    {
+      "slug": "freshcomics-northwest-comiccon-portland-2026",
+      "name": "Northwest ComicCon - Portland",
+      "starts_at": "2026-10-17T00:00:00.000Z",
+      "ends_at": "2026-10-17T23:59:59.000Z",
+      "city": "Portland",
+      "state_region": "OR",
+      "country": "US",
+      "event_type": "national",
+      "website_url": "https://northwestcomiccon.com/Portland/",
+      "short_desc": "Northwest ComicCon - Portland in Portland, OR, US.",
+      "long_desc": "Listed by Fresh Comics: https://freshcomics.us/convention/northwest-comiccon-portland-2026/or-portland\nCheck the official event website for current hours, admission and venue details.",
+      "relevant_universes": [
+        "comics"
+      ],
+      "emoji": "🎪"
+    },
+    {
+      "slug": "freshcomics-armageddon-aukland-spring-2026",
+      "name": "Armageddon Expo Auckland Spring",
+      "starts_at": "2026-10-23T00:00:00.000Z",
+      "ends_at": "2026-10-23T23:59:59.000Z",
+      "city": "Epsom",
+      "state_region": "Auckland",
+      "country": "NZ",
+      "event_type": "international",
+      "website_url": "https://www.armageddonexpo.com/",
+      "short_desc": "Armageddon Expo Auckland Spring in Epsom, Auckland, NZ.",
+      "long_desc": "Listed by Fresh Comics: https://freshcomics.us/convention/armageddon-aukland-spring-2026/auckland-epsom\nCheck the official event website for current hours, admission and venue details.",
+      "relevant_universes": [
+        "comics"
+      ],
+      "emoji": "🎪"
+    },
+    {
+      "slug": "freshcomics-galaxycon-st-louis-2026",
+      "name": "GalaxyCon St. Louis",
+      "starts_at": "2026-10-23T00:00:00.000Z",
+      "ends_at": "2026-10-25T23:59:59.000Z",
+      "city": "St. Louis",
+      "state_region": "MO",
+      "country": "US",
+      "event_type": "national",
+      "website_url": "https://galaxycon.com/pages/galaxycon-st-louis",
+      "short_desc": "GalaxyCon St. Louis in St. Louis, MO, US.",
+      "long_desc": "Listed by Fresh Comics: https://freshcomics.us/convention/galaxycon-st-louis-2026/mo-st-louis\nCheck the official event website for current hours, admission and venue details.",
+      "relevant_universes": [
+        "comics"
+      ],
+      "emoji": "🎪"
+    },
+    {
+      "slug": "freshcomics-georgia-mountains-2026",
+      "name": "Georgia Mountains Charity Comic Con",
+      "starts_at": "2026-10-23T00:00:00.000Z",
+      "ends_at": "2026-10-24T23:59:59.000Z",
+      "city": "Jasper",
+      "state_region": "GA",
+      "country": "US",
+      "event_type": "national",
+      "website_url": "https://gamountaincharitycomiccon.com/",
+      "short_desc": "Georgia Mountains Charity Comic Con in Jasper, GA, US.",
+      "long_desc": "Listed by Fresh Comics: https://freshcomics.us/convention/georgia-mountains-2026/ga-jasper\nCheck the official event website for current hours, admission and venue details.",
+      "relevant_universes": [
+        "comics"
+      ],
+      "emoji": "🎪"
+    },
+    {
+      "slug": "freshcomics-mcm-london-oct-2026",
+      "name": "MCM Comic Con London",
+      "starts_at": "2026-10-23T00:00:00.000Z",
+      "ends_at": "2026-10-25T23:59:59.000Z",
+      "city": "London",
+      "state_region": null,
+      "country": "GB",
+      "event_type": "international",
+      "website_url": "https://www.mcmcomiccon.com/london/en-us.html",
+      "short_desc": "MCM Comic Con London in London, GB.",
+      "long_desc": "Listed by Fresh Comics: https://freshcomics.us/convention/mcm-london-oct-2026/convention\nCheck the official event website for current hours, admission and venue details.",
+      "relevant_universes": [
+        "comics"
+      ],
+      "emoji": "🎪"
+    },
+    {
+      "slug": "freshcomics-smackdown-sketches-2026",
+      "name": "Smackdown and Sketches",
+      "starts_at": "2026-10-23T00:00:00.000Z",
+      "ends_at": "2026-10-24T23:59:59.000Z",
+      "city": "State College",
+      "state_region": "PA",
+      "country": "US",
+      "event_type": "national",
+      "website_url": "https://comiccovesc.com/smackdown-and-sketches",
+      "short_desc": "Smackdown and Sketches in State College, PA, US.",
+      "long_desc": "Listed by Fresh Comics: https://freshcomics.us/convention/smackdown-sketches-2026/pa-state-college\nCheck the official event website for current hours, admission and venue details.",
+      "relevant_universes": [
+        "comics"
+      ],
+      "emoji": "🎪"
+    },
+    {
+      "slug": "freshcomics-bedrock-city-2026",
+      "name": "Bedrock City Con",
+      "starts_at": "2026-10-24T00:00:00.000Z",
+      "ends_at": "2026-10-25T23:59:59.000Z",
+      "city": "Stafford",
+      "state_region": "TX",
+      "country": "US",
+      "event_type": "national",
+      "website_url": "https://www.bedrockcitycon.com/",
+      "short_desc": "Bedrock City Con in Stafford, TX, US.",
+      "long_desc": "Listed by Fresh Comics: https://freshcomics.us/convention/bedrock-city-2026/tx-stafford\nCheck the official event website for current hours, admission and venue details.",
+      "relevant_universes": [
+        "comics"
+      ],
+      "emoji": "🎪"
+    },
+    {
+      "slug": "freshcomics-blue-hen-2026",
+      "name": "Blue Hen Comic Con",
+      "starts_at": "2026-10-24T00:00:00.000Z",
+      "ends_at": "2026-10-25T23:59:59.000Z",
+      "city": "Harrington",
+      "state_region": "DE",
+      "country": "US",
+      "event_type": "national",
+      "website_url": "https://omniverseevents.com/home/events/bluehencomiccon/",
+      "short_desc": "Blue Hen Comic Con in Harrington, DE, US.",
+      "long_desc": "Listed by Fresh Comics: https://freshcomics.us/convention/blue-hen-2026/de-harrington\nCheck the official event website for current hours, admission and venue details.",
+      "relevant_universes": [
+        "comics"
+      ],
+      "emoji": "🎪"
+    },
+    {
+      "slug": "freshcomics-collect-a-con-dallas-fall-2026",
+      "name": "Collect-A-Con Dallas",
+      "starts_at": "2026-10-24T00:00:00.000Z",
+      "ends_at": "2026-10-25T23:59:59.000Z",
+      "city": "Dallas",
+      "state_region": "TX",
+      "country": "US",
+      "event_type": "national",
+      "website_url": "https://collectaconusa.com/dallas/",
+      "short_desc": "Collect-A-Con Dallas in Dallas, TX, US.",
+      "long_desc": "Listed by Fresh Comics: https://freshcomics.us/convention/collect-a-con-dallas-fall-2026/tx-dallas\nCheck the official event website for current hours, admission and venue details.",
+      "relevant_universes": [
+        "comics"
+      ],
+      "emoji": "🎪"
+    },
+    {
+      "slug": "freshcomics-comic-con-brussels-oct-2026",
+      "name": "Comic Con Brussels",
+      "starts_at": "2026-10-24T00:00:00.000Z",
+      "ends_at": "2026-10-25T23:59:59.000Z",
+      "city": "Bruxelles",
+      "state_region": null,
+      "country": "BE",
+      "event_type": "international",
+      "website_url": "https://comicconbrussels.com/",
+      "short_desc": "Comic Con Brussels in Bruxelles, BE.",
+      "long_desc": "Listed by Fresh Comics: https://freshcomics.us/convention/comic-con-brussels-oct-2026/convention\nCheck the official event website for current hours, admission and venue details.",
+      "relevant_universes": [
+        "comics"
+      ],
+      "emoji": "🎪"
+    },
+    {
+      "slug": "freshcomics-comic-con-scotland-2026",
+      "name": "Comic Con Scotland",
+      "starts_at": "2026-10-24T00:00:00.000Z",
+      "ends_at": "2026-10-25T23:59:59.000Z",
+      "city": "Newbridge",
+      "state_region": null,
+      "country": "GB",
+      "event_type": "international",
+      "website_url": "https://www.comicconventionscotland.co.uk/",
+      "short_desc": "Comic Con Scotland in Newbridge, GB.",
+      "long_desc": "Listed by Fresh Comics: https://freshcomics.us/convention/comic-con-scotland-2026/convention\nCheck the official event website for current hours, admission and venue details.",
+      "relevant_universes": [
+        "comics"
+      ],
+      "emoji": "🎪"
+    },
+    {
+      "slug": "freshcomics-perth-2026",
+      "name": "Perth ComiCon",
+      "starts_at": "2026-10-24T00:00:00.000Z",
+      "ends_at": "2026-10-24T23:59:59.000Z",
+      "city": "Perth",
+      "state_region": "ON",
+      "country": "CA",
+      "event_type": "international",
+      "website_url": "https://www.popculturecanada.ca/",
+      "short_desc": "Perth ComiCon in Perth, ON, CA.",
+      "long_desc": "Listed by Fresh Comics: https://freshcomics.us/convention/perth-2026/on-perth\nCheck the official event website for current hours, admission and venue details.",
+      "relevant_universes": [
+        "comics"
+      ],
+      "emoji": "🎪"
+    },
+    {
+      "slug": "freshcomics-brockville-2026",
+      "name": "Brockville ComiCon",
+      "starts_at": "2026-10-25T00:00:00.000Z",
+      "ends_at": "2026-10-25T23:59:59.000Z",
+      "city": "Brockville",
+      "state_region": "ON",
+      "country": "CA",
+      "event_type": "international",
+      "website_url": "https://www.popculturecanada.ca/",
+      "short_desc": "Brockville ComiCon in Brockville, ON, CA.",
+      "long_desc": "Listed by Fresh Comics: https://freshcomics.us/convention/brockville-2026/on-brockville\nCheck the official event website for current hours, admission and venue details.",
+      "relevant_universes": [
+        "comics"
+      ],
+      "emoji": "🎪"
+    },
+    {
+      "slug": "freshcomics-capital-october-2026",
+      "name": "Capital Comic Book Convention",
+      "starts_at": "2026-10-25T00:00:00.000Z",
+      "ends_at": "2026-10-25T23:59:59.000Z",
+      "city": "Ottawa",
+      "state_region": "ON",
+      "country": "CA",
+      "event_type": "international",
+      "website_url": "https://capitalcomiccon.com/",
+      "short_desc": "Capital Comic Book Convention in Ottawa, ON, CA.",
+      "long_desc": "Listed by Fresh Comics: https://freshcomics.us/convention/capital-october-2026/on-ottawa\nCheck the official event website for current hours, admission and venue details.",
+      "relevant_universes": [
+        "comics"
+      ],
+      "emoji": "🎪"
+    },
+    {
+      "slug": "freshcomics-sc-comiccon-fall-2026",
+      "name": "SC Comicon Fall Editon",
+      "starts_at": "2026-10-25T00:00:00.000Z",
+      "ends_at": "2026-10-25T23:59:59.000Z",
+      "city": "Greenville",
+      "state_region": "SC",
+      "country": "US",
+      "event_type": "national",
+      "website_url": "https://sccomicon.com/fall-edition/",
+      "short_desc": "SC Comicon Fall Editon in Greenville, SC, US.",
+      "long_desc": "Listed by Fresh Comics: https://freshcomics.us/convention/sc-comiccon-fall-2026/sc-greenville\nCheck the official event website for current hours, admission and venue details.",
+      "relevant_universes": [
+        "comics"
+      ],
+      "emoji": "🎪"
+    },
+    {
+      "slug": "freshcomics-derpycon-2026",
+      "name": "DerpyCon",
+      "starts_at": "2026-10-30T00:00:00.000Z",
+      "ends_at": "2026-11-01T23:59:59.000Z",
+      "city": "New Brunswick",
+      "state_region": "NJ",
+      "country": "US",
+      "event_type": "national",
+      "website_url": "https://derpycon.com/",
+      "short_desc": "DerpyCon in New Brunswick, NJ, US.",
+      "long_desc": "Listed by Fresh Comics: https://freshcomics.us/convention/derpycon-2026/nj-new-brunswick\nCheck the official event website for current hours, admission and venue details.",
+      "relevant_universes": [
+        "comics"
+      ],
+      "emoji": "🎪"
+    },
+    {
+      "slug": "freshcomics-galaxycon-milwaukee-2026",
+      "name": "GalaxyCon Milwaukee",
+      "starts_at": "2026-10-30T00:00:00.000Z",
+      "ends_at": "2026-11-01T23:59:59.000Z",
+      "city": "Milwaukee",
+      "state_region": "WI",
+      "country": "US",
+      "event_type": "national",
+      "website_url": "https://galaxycon.com/pages/galaxycon-milwaukee",
+      "short_desc": "GalaxyCon Milwaukee in Milwaukee, WI, US.",
+      "long_desc": "Listed by Fresh Comics: https://freshcomics.us/convention/galaxycon-milwaukee-2026/wi-milwaukee\nCheck the official event website for current hours, admission and venue details.",
+      "relevant_universes": [
+        "comics"
+      ],
+      "emoji": "🎪"
+    },
+    {
+      "slug": "freshcomics-la-comic-con-2026",
+      "name": "L.A. Comic Con",
+      "starts_at": "2026-10-30T00:00:00.000Z",
+      "ends_at": "2026-11-01T23:59:59.000Z",
+      "city": "Los Angeles",
+      "state_region": "CA",
+      "country": "US",
+      "event_type": "national",
+      "website_url": "https://www.comicconla.com/",
+      "short_desc": "L.A. Comic Con in Los Angeles, CA, US.",
+      "long_desc": "Listed by Fresh Comics: https://freshcomics.us/convention/la-comic-con-2026/ca-los-angeles\nCheck the official event website for current hours, admission and venue details.",
+      "relevant_universes": [
+        "comics"
+      ],
+      "emoji": "🎪"
+    },
+    {
+      "slug": "freshcomics-winnipeg-2026",
+      "name": "Winnipeg Comiccon",
+      "starts_at": "2026-10-30T00:00:00.000Z",
+      "ends_at": "2026-11-01T23:59:59.000Z",
+      "city": "Winnipeg",
+      "state_region": "MB",
+      "country": "CA",
+      "event_type": "international",
+      "website_url": "https://comicconwinnipeg.com/",
+      "short_desc": "Winnipeg Comiccon in Winnipeg, MB, CA.",
+      "long_desc": "Listed by Fresh Comics: https://freshcomics.us/convention/winnipeg-2026/mb-winnipeg\nCheck the official event website for current hours, admission and venue details.",
+      "relevant_universes": [
+        "comics"
+      ],
+      "emoji": "🎪"
+    },
+    {
+      "slug": "freshcomics-kansas-2026",
+      "name": "Kansas Comic Con",
+      "starts_at": "2026-10-31T00:00:00.000Z",
+      "ends_at": "2026-11-01T23:59:59.000Z",
+      "city": "Wichita",
+      "state_region": "KS",
+      "country": "US",
+      "event_type": "national",
+      "website_url": "https://www.kansascon.com/",
+      "short_desc": "Kansas Comic Con in Wichita, KS, US.",
+      "long_desc": "Listed by Fresh Comics: https://freshcomics.us/convention/kansas-2026/ks-wichita\nCheck the official event website for current hours, admission and venue details.",
+      "relevant_universes": [
+        "comics"
+      ],
+      "emoji": "🎪"
+    },
+    {
+      "slug": "freshcomics-pittsburg-comic-book-show-2026",
+      "name": "Pittsburgh Comic Book Show",
+      "starts_at": "2026-10-31T00:00:00.000Z",
+      "ends_at": "2026-11-01T23:59:59.000Z",
+      "city": "Pittsburgh",
+      "state_region": "PA",
+      "country": "US",
+      "event_type": "national",
+      "website_url": "https://www.pittsburghcomicbookshow.com/",
+      "short_desc": "Pittsburgh Comic Book Show in Pittsburgh, PA, US.",
+      "long_desc": "Listed by Fresh Comics: https://freshcomics.us/convention/pittsburg-comic-book-show-2026/pa-pittsburgh\nCheck the official event website for current hours, admission and venue details.",
+      "relevant_universes": [
+        "comics"
+      ],
+      "emoji": "🎪"
+    },
+    {
+      "slug": "freshcomics-solocon-2026",
+      "name": "SoloCon",
+      "starts_at": "2026-10-31T00:00:00.000Z",
+      "ends_at": "2026-11-01T23:59:59.000Z",
+      "city": "Derendingen",
+      "state_region": null,
+      "country": "CH",
+      "event_type": "international",
+      "website_url": "https://www.solocon.ch/",
+      "short_desc": "SoloCon in Derendingen, CH.",
+      "long_desc": "Listed by Fresh Comics: https://freshcomics.us/convention/solocon-2026/convention\nCheck the official event website for current hours, admission and venue details.",
+      "relevant_universes": [
+        "comics"
+      ],
+      "emoji": "🎪"
+    },
+    {
+      "slug": "freshcomics-tiger-con-2026",
+      "name": "Tiger Con",
+      "starts_at": "2026-10-31T00:00:00.000Z",
+      "ends_at": "2026-11-01T23:59:59.000Z",
+      "city": "Valdosta",
+      "state_region": "GA",
+      "country": "US",
+      "event_type": "national",
+      "website_url": "https://tigerconvention.com/",
+      "short_desc": "Tiger Con in Valdosta, GA, US.",
+      "long_desc": "Listed by Fresh Comics: https://freshcomics.us/convention/tiger-con-2026/ga-valdosta\nCheck the official event website for current hours, admission and venue details.",
+      "relevant_universes": [
+        "comics"
+      ],
+      "emoji": "🎪"
+    },
+    {
+      "slug": "freshcomics-villainscon-2026",
+      "name": "VillainSCon",
+      "starts_at": "2026-10-31T00:00:00.000Z",
+      "ends_at": "2026-11-01T23:59:59.000Z",
+      "city": "Beaufort",
+      "state_region": "SC",
+      "country": "US",
+      "event_type": "national",
+      "website_url": "https://www.villainsconbeaufort.org/",
+      "short_desc": "VillainSCon in Beaufort, SC, US.",
+      "long_desc": "Listed by Fresh Comics: https://freshcomics.us/convention/villainscon-2026/sc-beaufort\nCheck the official event website for current hours, admission and venue details.",
+      "relevant_universes": [
+        "comics"
+      ],
+      "emoji": "🎪"
+    },
+    {
+      "slug": "freshcomics-cape-con-2026",
+      "name": "Cape Con",
+      "starts_at": "2026-11-06T00:00:00.000Z",
+      "ends_at": "2026-11-08T23:59:59.000Z",
+      "city": "Cape Girardeau",
+      "state_region": "MO",
+      "country": "US",
+      "event_type": "national",
+      "website_url": "https://www.cape-events.com/",
+      "short_desc": "Cape Con in Cape Girardeau, MO, US.",
+      "long_desc": "Listed by Fresh Comics: https://freshcomics.us/convention/cape-con-2026/mo-cape-girardeau\nCheck the official event website for current hours, admission and venue details.",
+      "relevant_universes": [
+        "comics"
+      ],
+      "emoji": "🎪"
+    },
+    {
+      "slug": "freshcomics-rhode-island-2026",
+      "name": "Rhode Island Comic Con",
+      "starts_at": "2026-11-06T00:00:00.000Z",
+      "ends_at": "2026-11-08T23:59:59.000Z",
+      "city": "Providence",
+      "state_region": "RI",
+      "country": "US",
+      "event_type": "national",
+      "website_url": "https://www.ricomiccon.com/",
+      "short_desc": "Rhode Island Comic Con in Providence, RI, US.",
+      "long_desc": "Listed by Fresh Comics: https://freshcomics.us/convention/rhode-island-2026/ri-providence\nCheck the official event website for current hours, admission and venue details.",
+      "relevant_universes": [
+        "comics"
+      ],
+      "emoji": "🎪"
+    },
+    {
+      "slug": "freshcomics-batawa-2026",
+      "name": "Batawa ComiCon",
+      "starts_at": "2026-11-07T00:00:00.000Z",
+      "ends_at": "2026-11-07T23:59:59.000Z",
+      "city": "Batawa",
+      "state_region": "ON",
+      "country": "CA",
+      "event_type": "international",
+      "website_url": "https://www.popculturecanada.ca/",
+      "short_desc": "Batawa ComiCon in Batawa, ON, CA.",
+      "long_desc": "Listed by Fresh Comics: https://freshcomics.us/convention/batawa-2026/on-batawa\nCheck the official event website for current hours, admission and venue details.",
+      "relevant_universes": [
+        "comics"
+      ],
+      "emoji": "🎪"
+    },
+    {
+      "slug": "freshcomics-chattanooga-2026",
+      "name": "Chattanooga Comic Con",
+      "starts_at": "2026-11-07T00:00:00.000Z",
+      "ends_at": "2026-11-08T23:59:59.000Z",
+      "city": "Chattanooga",
+      "state_region": "TN",
+      "country": "US",
+      "event_type": "national",
+      "website_url": "https://www.chattanoogacomiccon.com/",
+      "short_desc": "Chattanooga Comic Con in Chattanooga, TN, US.",
+      "long_desc": "Listed by Fresh Comics: https://freshcomics.us/convention/chattanooga-2026/tn-chattanooga\nCheck the official event website for current hours, admission and venue details.",
+      "relevant_universes": [
+        "comics"
+      ],
+      "emoji": "🎪"
+    },
+    {
+      "slug": "freshcomics-collect-a-con-houston-fall-2026",
+      "name": "Collect-A-Con Houston",
+      "starts_at": "2026-11-07T00:00:00.000Z",
+      "ends_at": "2026-11-08T23:59:59.000Z",
+      "city": "Houston",
+      "state_region": "TX",
+      "country": "US",
+      "event_type": "national",
+      "website_url": "https://collectaconusa.com/houston2/",
+      "short_desc": "Collect-A-Con Houston in Houston, TX, US.",
+      "long_desc": "Listed by Fresh Comics: https://freshcomics.us/convention/collect-a-con-houston-fall-2026/tx-houston\nCheck the official event website for current hours, admission and venue details.",
+      "relevant_universes": [
+        "comics"
+      ],
+      "emoji": "🎪"
+    },
+    {
+      "slug": "freshcomics-infinite-realities-comicopia-2026",
+      "name": "Infinite Realities Comicopia",
+      "starts_at": "2026-11-07T00:00:00.000Z",
+      "ends_at": "2026-11-08T23:59:59.000Z",
+      "city": "Tucker",
+      "state_region": "GA",
+      "country": "US",
+      "event_type": "national",
+      "website_url": "https://infiniterealitiescomics.com/comicopia/",
+      "short_desc": "Infinite Realities Comicopia in Tucker, GA, US.",
+      "long_desc": "Listed by Fresh Comics: https://freshcomics.us/convention/infinite-realities-comicopia-2026/ga-tucker\nCheck the official event website for current hours, admission and venue details.",
+      "relevant_universes": [
+        "comics"
+      ],
+      "emoji": "🎪"
+    },
+    {
+      "slug": "freshcomics-lindsay-2026",
+      "name": "Lindsay ComiCon",
+      "starts_at": "2026-11-08T00:00:00.000Z",
+      "ends_at": "2026-11-08T23:59:59.000Z",
+      "city": "Lindsay",
+      "state_region": "ON",
+      "country": "CA",
+      "event_type": "international",
+      "website_url": "https://www.popculturecanada.ca/",
+      "short_desc": "Lindsay ComiCon in Lindsay, ON, CA.",
+      "long_desc": "Listed by Fresh Comics: https://freshcomics.us/convention/lindsay-2026/on-lindsay\nCheck the official event website for current hours, admission and venue details.",
+      "relevant_universes": [
+        "comics"
+      ],
+      "emoji": "🎪"
+    },
+    {
+      "slug": "freshcomics-brno-jr-2026",
+      "name": "Comic-Con Brno & Junior",
+      "starts_at": "2026-11-13T00:00:00.000Z",
+      "ends_at": "2026-11-15T23:59:59.000Z",
+      "city": "Brno-střed",
+      "state_region": null,
+      "country": "CZ",
+      "event_type": "international",
+      "website_url": "https://junior.comiccon.cz/",
+      "short_desc": "Comic-Con Brno & Junior in Brno-střed, CZ.",
+      "long_desc": "Listed by Fresh Comics: https://freshcomics.us/convention/brno-jr-2026/convention\nCheck the official event website for current hours, admission and venue details.",
+      "relevant_universes": [
+        "comics"
+      ],
+      "emoji": "🎪"
+    },
+    {
+      "slug": "freshcomics-extravacon-2026",
+      "name": "ExtravaCon",
+      "starts_at": "2026-11-14T00:00:00.000Z",
+      "ends_at": "2026-11-15T23:59:59.000Z",
+      "city": "Melville",
+      "state_region": "NY",
+      "country": "US",
+      "event_type": "national",
+      "website_url": "https://www.extravacon.com/",
+      "short_desc": "ExtravaCon in Melville, NY, US.",
+      "long_desc": "Listed by Fresh Comics: https://freshcomics.us/convention/extravacon-2026/ny-melville\nCheck the official event website for current hours, admission and venue details.",
+      "relevant_universes": [
+        "comics"
+      ],
+      "emoji": "🎪"
+    },
+    {
+      "slug": "freshcomics-illinois-2026",
+      "name": "Illinois Comic Con",
+      "starts_at": "2026-11-14T00:00:00.000Z",
+      "ends_at": "2026-11-15T23:59:59.000Z",
+      "city": "Peoria",
+      "state_region": "IL",
+      "country": "US",
+      "event_type": "national",
+      "website_url": "https://www.illinoiscomiccon.com/",
+      "short_desc": "Illinois Comic Con in Peoria, IL, US.",
+      "long_desc": "Listed by Fresh Comics: https://freshcomics.us/convention/illinois-2026/il-peoria\nCheck the official event website for current hours, admission and venue details.",
+      "relevant_universes": [
+        "comics"
+      ],
+      "emoji": "🎪"
+    },
+    {
+      "slug": "freshcomics-kids-con-me-2026",
+      "name": "Kids Con New England",
+      "starts_at": "2026-11-14T00:00:00.000Z",
+      "ends_at": "2026-11-14T23:59:59.000Z",
+      "city": "Portland",
+      "state_region": "ME",
+      "country": "US",
+      "event_type": "national",
+      "website_url": "https://www.kidsconne.com/",
+      "short_desc": "Kids Con New England in Portland, ME, US.",
+      "long_desc": "Listed by Fresh Comics: https://freshcomics.us/convention/kids-con-me-2026/me-portland\nCheck the official event website for current hours, admission and venue details.",
+      "relevant_universes": [
+        "comics"
+      ],
+      "emoji": "🎪"
+    },
+    {
+      "slug": "freshcomics-newmarket-2026",
+      "name": "Newmarket ComiCon",
+      "starts_at": "2026-11-14T00:00:00.000Z",
+      "ends_at": "2026-11-14T23:59:59.000Z",
+      "city": "Newmarket",
+      "state_region": "ON",
+      "country": "CA",
+      "event_type": "international",
+      "website_url": "https://www.popculturecanada.ca/",
+      "short_desc": "Newmarket ComiCon in Newmarket, ON, CA.",
+      "long_desc": "Listed by Fresh Comics: https://freshcomics.us/convention/newmarket-2026/on-newmarket\nCheck the official event website for current hours, admission and venue details.",
+      "relevant_universes": [
+        "comics"
+      ],
+      "emoji": "🎪"
+    },
+    {
+      "slug": "freshcomics-st-tammany-nov-2026",
+      "name": "St. Tammany Toy & Comic Con",
+      "starts_at": "2026-11-14T00:00:00.000Z",
+      "ends_at": "2026-11-15T23:59:59.000Z",
+      "city": "Mandeville",
+      "state_region": "LA",
+      "country": "US",
+      "event_type": "national",
+      "website_url": "https://www.sttammanycollectorscon.com/",
+      "short_desc": "St. Tammany Toy & Comic Con in Mandeville, LA, US.",
+      "long_desc": "Listed by Fresh Comics: https://freshcomics.us/convention/st-tammany-nov-2026/la-mandeville\nCheck the official event website for current hours, admission and venue details.",
+      "relevant_universes": [
+        "comics"
+      ],
+      "emoji": "🎪"
+    },
+    {
+      "slug": "freshcomics-ajax-2026",
+      "name": "Ajax ComiCon",
+      "starts_at": "2026-11-15T00:00:00.000Z",
+      "ends_at": "2026-11-15T23:59:59.000Z",
+      "city": "Ajax",
+      "state_region": "ON",
+      "country": "CA",
+      "event_type": "international",
+      "website_url": "https://www.popculturecanada.ca/",
+      "short_desc": "Ajax ComiCon in Ajax, ON, CA.",
+      "long_desc": "Listed by Fresh Comics: https://freshcomics.us/convention/ajax-2026/on-ajax\nCheck the official event website for current hours, admission and venue details.",
+      "relevant_universes": [
+        "comics"
+      ],
+      "emoji": "🎪"
+    },
+    {
+      "slug": "freshcomics-colossalcon-north-2026",
+      "name": "Colossalcon North",
+      "starts_at": "2026-11-20T00:00:00.000Z",
+      "ends_at": "2026-11-22T23:59:59.000Z",
+      "city": "Baraboo",
+      "state_region": "WI",
+      "country": "US",
+      "event_type": "national",
+      "website_url": "https://colossalconnorth.com/",
+      "short_desc": "Colossalcon North in Baraboo, WI, US.",
+      "long_desc": "Listed by Fresh Comics: https://freshcomics.us/convention/colossalcon-north-2026/wi-baraboo\nCheck the official event website for current hours, admission and venue details.",
+      "relevant_universes": [
+        "comics"
+      ],
+      "emoji": "🎪"
+    },
+    {
+      "slug": "freshcomics-philcon-2026",
+      "name": "Philcon",
+      "starts_at": "2026-11-20T00:00:00.000Z",
+      "ends_at": "2026-11-22T23:59:59.000Z",
+      "city": "Cherry Hill Township",
+      "state_region": "NJ",
+      "country": "US",
+      "event_type": "national",
+      "website_url": "https://philcon.org/",
+      "short_desc": "Philcon in Cherry Hill Township, NJ, US.",
+      "long_desc": "Listed by Fresh Comics: https://freshcomics.us/convention/philcon-2026/nj-cherry-hill-township\nCheck the official event website for current hours, admission and venue details.",
+      "relevant_universes": [
+        "comics"
+      ],
+      "emoji": "🎪"
+    },
+    {
+      "slug": "freshcomics-twin-cities-2026",
+      "name": "Twin Cities Con",
+      "starts_at": "2026-11-20T00:00:00.000Z",
+      "ends_at": "2026-11-22T23:59:59.000Z",
+      "city": "Minneapolis",
+      "state_region": "MN",
+      "country": "US",
+      "event_type": "national",
+      "website_url": "https://www.twincitiescon.com/",
+      "short_desc": "Twin Cities Con in Minneapolis, MN, US.",
+      "long_desc": "Listed by Fresh Comics: https://freshcomics.us/convention/twin-cities-2026/mn-minneapolis\nCheck the official event website for current hours, admission and venue details.",
+      "relevant_universes": [
+        "comics"
+      ],
+      "emoji": "🎪"
+    },
+    {
+      "slug": "freshcomics-collect-a-con-new-jersey-fall-2026",
+      "name": "Collect-A-Con New Jersey",
+      "starts_at": "2026-11-21T00:00:00.000Z",
+      "ends_at": "2026-11-22T23:59:59.000Z",
+      "city": "Edison",
+      "state_region": "NJ",
+      "country": "US",
+      "event_type": "national",
+      "website_url": "https://collectaconusa.com/new-jersey-2/",
+      "short_desc": "Collect-A-Con New Jersey in Edison, NJ, US.",
+      "long_desc": "Listed by Fresh Comics: https://freshcomics.us/convention/collect-a-con-new-jersey-fall-2026/nj-edison\nCheck the official event website for current hours, admission and venue details.",
+      "relevant_universes": [
+        "comics"
+      ],
+      "emoji": "🎪"
+    },
+    {
+      "slug": "freshcomics-owen-sound-2026",
+      "name": "Owen Sound ComiCon",
+      "starts_at": "2026-11-21T00:00:00.000Z",
+      "ends_at": "2026-11-21T23:59:59.000Z",
+      "city": "Owen Sound",
+      "state_region": "ON",
+      "country": "CA",
+      "event_type": "international",
+      "website_url": "https://www.popculturecanada.ca/",
+      "short_desc": "Owen Sound ComiCon in Owen Sound, ON, CA.",
+      "long_desc": "Listed by Fresh Comics: https://freshcomics.us/convention/owen-sound-2026/on-owen-sound\nCheck the official event website for current hours, admission and venue details.",
+      "relevant_universes": [
+        "comics"
+      ],
+      "emoji": "🎪"
+    },
+    {
+      "slug": "freshcomics-vienna-2026",
+      "name": "Vienna Comic Con",
+      "starts_at": "2026-11-21T00:00:00.000Z",
+      "ends_at": "2026-11-22T23:59:59.000Z",
+      "city": "Wien",
+      "state_region": null,
+      "country": "AT",
+      "event_type": "international",
+      "website_url": "https://viecc.com/",
+      "short_desc": "Vienna Comic Con in Wien, AT.",
+      "long_desc": "Listed by Fresh Comics: https://freshcomics.us/convention/vienna-2026/convention\nCheck the official event website for current hours, admission and venue details.",
+      "relevant_universes": [
+        "comics"
+      ],
+      "emoji": "🎪"
+    },
+    {
+      "slug": "freshcomics-beaver-valley-2026",
+      "name": "Beaver Valley ComiCon",
+      "starts_at": "2026-11-22T00:00:00.000Z",
+      "ends_at": "2026-11-22T23:59:59.000Z",
+      "city": "Thornbury",
+      "state_region": "ON",
+      "country": "CA",
+      "event_type": "international",
+      "website_url": "https://www.popculturecanada.ca/main.html",
+      "short_desc": "Beaver Valley ComiCon in Thornbury, ON, CA.",
+      "long_desc": "Listed by Fresh Comics: https://freshcomics.us/convention/beaver-valley-2026/on-thornbury\nCheck the official event website for current hours, admission and venue details.",
+      "relevant_universes": [
+        "comics"
+      ],
+      "emoji": "🎪"
+    },
+    {
+      "slug": "freshcomics-charlestoncon-2026",
+      "name": "CharlestonCon",
+      "starts_at": "2026-11-22T00:00:00.000Z",
+      "ends_at": "2026-11-22T23:59:59.000Z",
+      "city": "North Charleston",
+      "state_region": "SC",
+      "country": "US",
+      "event_type": "national",
+      "website_url": "http://charlestoncon.com/",
+      "short_desc": "CharlestonCon in North Charleston, SC, US.",
+      "long_desc": "Listed by Fresh Comics: https://freshcomics.us/convention/charlestoncon-2026/sc-north-charleston\nCheck the official event website for current hours, admission and venue details.",
+      "relevant_universes": [
+        "comics"
+      ],
+      "emoji": "🎪"
+    },
+    {
+      "slug": "freshcomics-mitcham-2026",
+      "name": "Mitcham Comic Festival",
+      "starts_at": "2026-11-22T00:00:00.000Z",
+      "ends_at": "2026-11-22T23:59:59.000Z",
+      "city": "Mitcham",
+      "state_region": null,
+      "country": "GB",
+      "event_type": "international",
+      "website_url": "https://www.bewevents.co.uk/mitchamcomicfest",
+      "short_desc": "Mitcham Comic Festival in Mitcham, GB.",
+      "long_desc": "Listed by Fresh Comics: https://freshcomics.us/convention/mitcham-2026/convention\nCheck the official event website for current hours, admission and venue details.",
+      "relevant_universes": [
+        "comics"
+      ],
+      "emoji": "🎪"
+    },
+    {
+      "slug": "freshcomics-anthracite-con-2026",
+      "name": "Anthracite",
+      "starts_at": "2026-11-28T00:00:00.000Z",
+      "ends_at": "2026-11-28T23:59:59.000Z",
+      "city": "Scranton",
+      "state_region": "PA",
+      "country": "US",
+      "event_type": "national",
+      "website_url": "https://comiccovesc.com/anthracite-con",
+      "short_desc": "Anthracite in Scranton, PA, US.",
+      "long_desc": "Listed by Fresh Comics: https://freshcomics.us/convention/anthracite-con-2026/pa-scranton\nCheck the official event website for current hours, admission and venue details.",
+      "relevant_universes": [
+        "comics"
+      ],
+      "emoji": "🎪"
+    },
+    {
+      "slug": "freshcomics-belleville-2026",
+      "name": "Belleville ComiCon",
+      "starts_at": "2026-11-28T00:00:00.000Z",
+      "ends_at": "2026-11-28T23:59:59.000Z",
+      "city": "Belleville",
+      "state_region": "ON",
+      "country": "CA",
+      "event_type": "international",
+      "website_url": "https://www.popculturecanada.ca/",
+      "short_desc": "Belleville ComiCon in Belleville, ON, CA.",
+      "long_desc": "Listed by Fresh Comics: https://freshcomics.us/convention/belleville-2026/on-belleville\nCheck the official event website for current hours, admission and venue details.",
+      "relevant_universes": [
+        "comics"
+      ],
+      "emoji": "🎪"
+    },
+    {
+      "slug": "freshcomics-sw-floridacon-2026",
+      "name": "SW-FloridaCon",
+      "starts_at": "2026-11-29T00:00:00.000Z",
+      "ends_at": "2026-11-29T23:59:59.000Z",
+      "city": "Fort Myers",
+      "state_region": "FL",
+      "country": "US",
+      "event_type": "national",
+      "website_url": "http://swfloridacomiccon.com/",
+      "short_desc": "SW-FloridaCon in Fort Myers, FL, US.",
+      "long_desc": "Listed by Fresh Comics: https://freshcomics.us/convention/sw-floridacon-2026/fl-fort-myers\nCheck the official event website for current hours, admission and venue details.",
+      "relevant_universes": [
+        "comics"
+      ],
+      "emoji": "🎪"
+    },
+    {
+      "slug": "freshcomics-galaxycon-columbus-20267",
+      "name": "GalaxyCon Columbus",
+      "starts_at": "2026-12-04T00:00:00.000Z",
+      "ends_at": "2026-12-06T23:59:59.000Z",
+      "city": "Columbus",
+      "state_region": "OH",
+      "country": "US",
+      "event_type": "national",
+      "website_url": "https://galaxycon.com/pages/galaxycon-columbus",
+      "short_desc": "GalaxyCon Columbus in Columbus, OH, US.",
+      "long_desc": "Listed by Fresh Comics: https://freshcomics.us/convention/galaxycon-columbus-20267/oh-columbus\nCheck the official event website for current hours, admission and venue details.",
+      "relevant_universes": [
+        "comics"
+      ],
+      "emoji": "🎪"
+    },
+    {
+      "slug": "freshcomics-cajun-con-2026",
+      "name": "Cajun Con",
+      "starts_at": "2026-12-05T00:00:00.000Z",
+      "ends_at": "2026-12-06T23:59:59.000Z",
+      "city": "Gonzales",
+      "state_region": "LA",
+      "country": "US",
+      "event_type": "national",
+      "website_url": "https://www.cajunconla.com/",
+      "short_desc": "Cajun Con in Gonzales, LA, US.",
+      "long_desc": "Listed by Fresh Comics: https://freshcomics.us/convention/cajun-con-2026/la-gonzales\nCheck the official event website for current hours, admission and venue details.",
+      "relevant_universes": [
+        "comics"
+      ],
+      "emoji": "🎪"
+    },
+    {
+      "slug": "freshcomics-lehigh-velley-2026",
+      "name": "Lehigh Valley Comic Convention",
+      "starts_at": "2026-12-05T00:00:00.000Z",
+      "ends_at": "2026-12-05T23:59:59.000Z",
+      "city": "Schnecksville",
+      "state_region": "PA",
+      "country": "US",
+      "event_type": "national",
+      "website_url": "https://www.lehighvalleycomicconvention.com/",
+      "short_desc": "Lehigh Valley Comic Convention in Schnecksville, PA, US.",
+      "long_desc": "Listed by Fresh Comics: https://freshcomics.us/convention/lehigh-velley-2026/pa-schnecksville\nCheck the official event website for current hours, admission and venue details.",
+      "relevant_universes": [
+        "comics"
+      ],
+      "emoji": "🎪"
+    },
+    {
+      "slug": "freshcomics-yorkgate-mall-2026",
+      "name": "Yorkgate Mall ComiCon",
+      "starts_at": "2026-12-12T00:00:00.000Z",
+      "ends_at": "2026-12-12T23:59:59.000Z",
+      "city": "North York",
+      "state_region": "ON",
+      "country": "CA",
+      "event_type": "international",
+      "website_url": "https://www.popculturecanada.ca/",
+      "short_desc": "Yorkgate Mall ComiCon in North York, ON, CA.",
+      "long_desc": "Listed by Fresh Comics: https://freshcomics.us/convention/yorkgate-mall-2026/on-north-york\nCheck the official event website for current hours, admission and venue details.",
+      "relevant_universes": [
+        "comics"
+      ],
+      "emoji": "🎪"
+    },
+    {
+      "slug": "freshcomics-comic-fiesta-2026",
+      "name": "Comic Fiesta",
+      "starts_at": "2026-12-19T00:00:00.000Z",
+      "ends_at": "2026-12-20T23:59:59.000Z",
+      "city": "Kuala Lumpur",
+      "state_region": "Wilayah Persekutuan Kuala Lumpur",
+      "country": "MY",
+      "event_type": "international",
+      "website_url": "https://comicfiesta.org/",
+      "short_desc": "Comic Fiesta in Kuala Lumpur, Wilayah Persekutuan Kuala Lumpur, MY.",
+      "long_desc": "Listed by Fresh Comics: https://freshcomics.us/convention/comic-fiesta-2026/wilayah-persekutuan-kuala-lumpur-kuala-lumpur\nCheck the official event website for current hours, admission and venue details.",
+      "relevant_universes": [
+        "comics"
+      ],
+      "emoji": "🎪"
+    },
+    {
+      "slug": "freshcomics-oshawa-2026",
+      "name": "Oshawa ComiCon",
+      "starts_at": "2026-12-27T00:00:00.000Z",
+      "ends_at": "2026-12-27T23:59:59.000Z",
+      "city": "Oshawa",
+      "state_region": "ON",
+      "country": "CA",
+      "event_type": "international",
+      "website_url": "https://www.popculturecanada.ca",
+      "short_desc": "Oshawa ComiCon in Oshawa, ON, CA.",
+      "long_desc": "Listed by Fresh Comics: https://freshcomics.us/convention/oshawa-2026/on-oshawa\nCheck the official event website for current hours, admission and venue details.",
+      "relevant_universes": [
+        "comics"
+      ],
+      "emoji": "🎪"
+    },
+    {
+      "slug": "freshcomics-peterborough-2027",
+      "name": "Peterborough ComiCon",
+      "starts_at": "2027-01-02T00:00:00.000Z",
+      "ends_at": "2027-01-02T23:59:59.000Z",
+      "city": "Peterborough",
+      "state_region": "ON",
+      "country": "CA",
+      "event_type": "international",
+      "website_url": "https://www.popculturecanada.ca/main.html",
+      "short_desc": "Peterborough ComiCon in Peterborough, ON, CA.",
+      "long_desc": "Listed by Fresh Comics: https://freshcomics.us/convention/peterborough-2027/on-peterborough\nCheck the official event website for current hours, admission and venue details.",
+      "relevant_universes": [
+        "comics"
+      ],
+      "emoji": "🎪"
+    },
+    {
+      "slug": "freshcomics-ft-lauderdalecon-2027",
+      "name": "FT-LauderdaleCon",
+      "starts_at": "2027-01-03T00:00:00.000Z",
+      "ends_at": "2027-01-03T23:59:59.000Z",
+      "city": "Fort Lauderdale",
+      "state_region": "FL",
+      "country": "US",
+      "event_type": "national",
+      "website_url": "http://ftlauderdalecon.com/",
+      "short_desc": "FT-LauderdaleCon in Fort Lauderdale, FL, US.",
+      "long_desc": "Listed by Fresh Comics: https://freshcomics.us/convention/ft-lauderdalecon-2027/fl-fort-lauderdale\nCheck the official event website for current hours, admission and venue details.",
+      "relevant_universes": [
+        "comics"
+      ],
+      "emoji": "🎪"
+    },
+    {
+      "slug": "freshcomics-animate-raleigh-2027",
+      "name": "Animate! Raleigh",
+      "starts_at": "2027-01-08T00:00:00.000Z",
+      "ends_at": "2027-01-10T23:59:59.000Z",
+      "city": "Raleigh",
+      "state_region": "NC",
+      "country": "US",
+      "event_type": "national",
+      "website_url": "https://galaxycon.com/pages/animate-raleigh",
+      "short_desc": "Animate! Raleigh in Raleigh, NC, US.",
+      "long_desc": "Listed by Fresh Comics: https://freshcomics.us/convention/animate-raleigh-2027/nc-raleigh\nCheck the official event website for current hours, admission and venue details.",
+      "relevant_universes": [
+        "comics"
+      ],
+      "emoji": "🎪"
+    },
+    {
+      "slug": "freshcomics-fan-expo-new-orleans-2027",
+      "name": "Fan Expo New Orleans",
+      "starts_at": "2027-01-08T00:00:00.000Z",
+      "ends_at": "2027-01-10T23:59:59.000Z",
+      "city": "New Orleans",
+      "state_region": "LA",
+      "country": "US",
+      "event_type": "national",
+      "website_url": "https://fanexpohq.com/fanexponeworleans/",
+      "short_desc": "Fan Expo New Orleans in New Orleans, LA, US.",
+      "long_desc": "Listed by Fresh Comics: https://freshcomics.us/convention/fan-expo-new-orleans-2027/la-new-orleans\nCheck the official event website for current hours, admission and venue details.",
+      "relevant_universes": [
+        "comics"
+      ],
+      "emoji": "🎪"
+    },
+    {
+      "slug": "freshcomics-ashevillecon-2027",
+      "name": "AshevilleCon",
+      "starts_at": "2027-01-09T00:00:00.000Z",
+      "ends_at": "2027-01-09T23:59:59.000Z",
+      "city": "Asheville",
+      "state_region": "NC",
+      "country": "US",
+      "event_type": "national",
+      "website_url": "http://ashevillecon.com/",
+      "short_desc": "AshevilleCon in Asheville, NC, US.",
+      "long_desc": "Listed by Fresh Comics: https://freshcomics.us/convention/ashevillecon-2027/nc-asheville\nCheck the official event website for current hours, admission and venue details.",
+      "relevant_universes": [
+        "comics"
+      ],
+      "emoji": "🎪"
+    },
+    {
+      "slug": "freshcomics-augustacon-2027",
+      "name": "AugustaCon",
+      "starts_at": "2027-01-09T00:00:00.000Z",
+      "ends_at": "2027-01-09T23:59:59.000Z",
+      "city": "Augusta",
+      "state_region": "GA",
+      "country": "US",
+      "event_type": "national",
+      "website_url": "http://www.theaugustacon.com/",
+      "short_desc": "AugustaCon in Augusta, GA, US.",
+      "long_desc": "Listed by Fresh Comics: https://freshcomics.us/convention/augustacon-2027/ga-augusta\nCheck the official event website for current hours, admission and venue details.",
+      "relevant_universes": [
+        "comics"
+      ],
+      "emoji": "🎪"
+    },
+    {
+      "slug": "freshcomics-charlies-2027",
+      "name": "Charlie's Comic Con",
+      "starts_at": "2027-01-10T00:00:00.000Z",
+      "ends_at": "2027-01-10T23:59:59.000Z",
+      "city": "Punta Gorda",
+      "state_region": "FL",
+      "country": "US",
+      "event_type": "national",
+      "website_url": "https://www.charliescomiccon.com/charlies/view/?id=10",
+      "short_desc": "Charlie's Comic Con in Punta Gorda, FL, US.",
+      "long_desc": "Listed by Fresh Comics: https://freshcomics.us/convention/charlies-2027/fl-punta-gorda\nCheck the official event website for current hours, admission and venue details.",
+      "relevant_universes": [
+        "comics"
+      ],
+      "emoji": "🎪"
+    },
+    {
+      "slug": "freshcomics-swfl-comic-book-fest-2027",
+      "name": "SWFL Comic Book-Fest",
+      "starts_at": "2027-02-07T00:00:00.000Z",
+      "ends_at": "2027-02-07T23:59:59.000Z",
+      "city": "Fort Myers",
+      "state_region": "FL",
+      "country": "US",
+      "event_type": "national",
+      "website_url": "http://swflcomicfest.com/",
+      "short_desc": "SWFL Comic Book-Fest in Fort Myers, FL, US.",
+      "long_desc": "Listed by Fresh Comics: https://freshcomics.us/convention/swfl-comic-book-fest-2027/fl-fort-myers\nCheck the official event website for current hours, admission and venue details.",
+      "relevant_universes": [
+        "comics"
+      ],
+      "emoji": "🎪"
+    },
+    {
+      "slug": "freshcomics-texoma-2027",
+      "name": "Texoma Comic Con",
+      "starts_at": "2027-02-20T00:00:00.000Z",
+      "ends_at": "2027-02-21T23:59:59.000Z",
+      "city": "Durant",
+      "state_region": "OK",
+      "country": "US",
+      "event_type": "national",
+      "website_url": "https://www.texomacomiccon.com/",
+      "short_desc": "Texoma Comic Con in Durant, OK, US.",
+      "long_desc": "Listed by Fresh Comics: https://freshcomics.us/convention/texoma-2027/ok-durant\nCheck the official event website for current hours, admission and venue details.",
+      "relevant_universes": [
+        "comics"
+      ],
+      "emoji": "🎪"
+    },
+    {
+      "slug": "freshcomics-happy-valley-2027",
+      "name": "Happy Valley Comic & Collectibles Convention",
+      "starts_at": "2027-02-27T00:00:00.000Z",
+      "ends_at": "2027-02-28T23:59:59.000Z",
+      "city": "State College",
+      "state_region": "PA",
+      "country": "US",
+      "event_type": "national",
+      "website_url": "https://happyvalleycomiccon.com/",
+      "short_desc": "Happy Valley Comic & Collectibles Convention in State College, PA, US.",
+      "long_desc": "Listed by Fresh Comics: https://freshcomics.us/convention/happy-valley-2027/pa-state-college\nCheck the official event website for current hours, admission and venue details.",
+      "relevant_universes": [
+        "comics"
+      ],
+      "emoji": "🎪"
+    },
+    {
+      "slug": "freshcomics-whitby-2027",
+      "name": "Whitby ComiCon",
+      "starts_at": "2027-02-28T00:00:00.000Z",
+      "ends_at": "2027-02-28T23:59:59.000Z",
+      "city": "Whitby",
+      "state_region": "ON",
+      "country": "CA",
+      "event_type": "international",
+      "website_url": "https://www.popculturecanada.ca/main.html",
+      "short_desc": "Whitby ComiCon in Whitby, ON, CA.",
+      "long_desc": "Listed by Fresh Comics: https://freshcomics.us/convention/whitby-2027/on-whitby\nCheck the official event website for current hours, admission and venue details.",
+      "relevant_universes": [
+        "comics"
+      ],
+      "emoji": "🎪"
+    },
+    {
+      "slug": "freshcomics-acecon-2027",
+      "name": "ACEcon",
+      "starts_at": "2027-03-06T00:00:00.000Z",
+      "ends_at": "2027-03-07T23:59:59.000Z",
+      "city": "Palm Harbor",
+      "state_region": "FL",
+      "country": "US",
+      "event_type": "national",
+      "website_url": "https://acecon.carrd.co/",
+      "short_desc": "ACEcon in Palm Harbor, FL, US.",
+      "long_desc": "Listed by Fresh Comics: https://freshcomics.us/convention/acecon-2027/fl-palm-harbor\nCheck the official event website for current hours, admission and venue details.",
+      "relevant_universes": [
+        "comics"
+      ],
+      "emoji": "🎪"
+    },
+    {
+      "slug": "freshcomics-dublin-spring-2027",
+      "name": "Dublin Comic Con: Spring Edition",
+      "starts_at": "2027-03-06T00:00:00.000Z",
+      "ends_at": "2027-03-07T23:59:59.000Z",
+      "city": "North Wall",
+      "state_region": "Dublin 1",
+      "country": "IE",
+      "event_type": "international",
+      "website_url": "https://dublincomiccon.com/",
+      "short_desc": "Dublin Comic Con: Spring Edition in North Wall, Dublin 1, IE.",
+      "long_desc": "Listed by Fresh Comics: https://freshcomics.us/convention/dublin-spring-2027/dublin-1-north-wall\nCheck the official event website for current hours, admission and venue details.",
+      "relevant_universes": [
+        "comics"
+      ],
+      "emoji": "🎪"
+    },
+    {
+      "slug": "freshcomics-power-comicon-2027",
+      "name": "Power Comic Con",
+      "starts_at": "2027-03-06T00:00:00.000Z",
+      "ends_at": "2027-03-07T23:59:59.000Z",
+      "city": "Glasgow",
+      "state_region": "Scotland",
+      "country": "GB",
+      "event_type": "international",
+      "website_url": "https://www.forthefans.uk/power-gaming-con",
+      "short_desc": "Power Comic Con in Glasgow, Scotland, GB.",
+      "long_desc": "Listed by Fresh Comics: https://freshcomics.us/convention/power-comicon-2027/scotland-glasgow\nCheck the official event website for current hours, admission and venue details.",
+      "relevant_universes": [
+        "comics"
+      ],
+      "emoji": "🎪"
+    },
+    {
+      "slug": "freshcomics-dornbin-2027",
+      "name": "Comic Con Dornbirn",
+      "starts_at": "2027-03-13T00:00:00.000Z",
+      "ends_at": "2027-03-14T23:59:59.000Z",
+      "city": "Dornbirn",
+      "state_region": null,
+      "country": "AT",
+      "event_type": "international",
+      "website_url": "https://www.comiccondornbirn.at/",
+      "short_desc": "Comic Con Dornbirn in Dornbirn, AT.",
+      "long_desc": "Listed by Fresh Comics: https://freshcomics.us/convention/dornbin-2027/convention\nCheck the official event website for current hours, admission and venue details.",
+      "relevant_universes": [
+        "comics"
+      ],
+      "emoji": "🎪"
+    },
+    {
+      "slug": "freshcomics-midsouthcon-2027",
+      "name": "MidSouthCon",
+      "starts_at": "2027-03-19T00:00:00.000Z",
+      "ends_at": "2027-03-21T23:59:59.000Z",
+      "city": "Olive Branch",
+      "state_region": "MS",
+      "country": "US",
+      "event_type": "national",
+      "website_url": "https://midsouthcon.org/",
+      "short_desc": "MidSouthCon in Olive Branch, MS, US.",
+      "long_desc": "Listed by Fresh Comics: https://freshcomics.us/convention/midsouthcon-2027/ms-olive-branch\nCheck the official event website for current hours, admission and venue details.",
+      "relevant_universes": [
+        "comics"
+      ],
+      "emoji": "🎪"
+    },
+    {
+      "slug": "freshcomics-syfi-pop-fest-2027",
+      "name": "Syfi Pop Fest",
+      "starts_at": "2027-03-20T00:00:00.000Z",
+      "ends_at": "2027-03-21T23:59:59.000Z",
+      "city": "Leesburg",
+      "state_region": "FL",
+      "country": "US",
+      "event_type": "national",
+      "website_url": "https://syfipopfest.com/",
+      "short_desc": "Syfi Pop Fest in Leesburg, FL, US.",
+      "long_desc": "Listed by Fresh Comics: https://freshcomics.us/convention/syfi-pop-fest-2027/fl-leesburg\nCheck the official event website for current hours, admission and venue details.",
+      "relevant_universes": [
+        "comics"
+      ],
+      "emoji": "🎪"
+    },
+    {
+      "slug": "freshcomics-wondercon-2027",
+      "name": "WonderCon",
+      "starts_at": "2027-03-26T00:00:00.000Z",
+      "ends_at": "2027-03-28T23:59:59.000Z",
+      "city": "Anaheim",
+      "state_region": "CA",
+      "country": "US",
+      "event_type": "national",
+      "website_url": "https://www.comic-con.org/wc/",
+      "short_desc": "WonderCon in Anaheim, CA, US.",
+      "long_desc": "Listed by Fresh Comics: https://freshcomics.us/convention/wondercon-2027/ca-anaheim\nCheck the official event website for current hours, admission and venue details.",
+      "relevant_universes": [
+        "comics"
+      ],
+      "emoji": "🎪"
+    },
+    {
+      "slug": "freshcomics-clarksvillecon-2027",
+      "name": "ClarksvilleCon",
+      "starts_at": "2027-04-03T00:00:00.000Z",
+      "ends_at": "2027-04-03T23:59:59.000Z",
+      "city": "Clarksville",
+      "state_region": "TN",
+      "country": "US",
+      "event_type": "national",
+      "website_url": "http://clarksvillecon.com/",
+      "short_desc": "ClarksvilleCon in Clarksville, TN, US.",
+      "long_desc": "Listed by Fresh Comics: https://freshcomics.us/convention/clarksvillecon-2027/tn-clarksville\nCheck the official event website for current hours, admission and venue details.",
+      "relevant_universes": [
+        "comics"
+      ],
+      "emoji": "🎪"
+    },
+    {
+      "slug": "freshcomics-huntsvillecon-2027",
+      "name": "HuntsvilleCon",
+      "starts_at": "2027-04-03T00:00:00.000Z",
+      "ends_at": "2027-04-03T23:59:59.000Z",
+      "city": "Huntsville",
+      "state_region": "AL",
+      "country": "US",
+      "event_type": "national",
+      "website_url": "http://huntsvillecon.com/",
+      "short_desc": "HuntsvilleCon in Huntsville, AL, US.",
+      "long_desc": "Listed by Fresh Comics: https://freshcomics.us/convention/huntsvillecon-2027/al-huntsville\nCheck the official event website for current hours, admission and venue details.",
+      "relevant_universes": [
+        "comics"
+      ],
+      "emoji": "🎪"
+    },
+    {
+      "slug": "freshcomics-st-tammany-2027",
+      "name": "St. Tammany Toy & Comic Con",
+      "starts_at": "2027-04-10T00:00:00.000Z",
+      "ends_at": "2027-04-11T23:59:59.000Z",
+      "city": "Mandeville",
+      "state_region": "LA",
+      "country": "US",
+      "event_type": "national",
+      "website_url": "https://www.sttammanycollectorscon.com/",
+      "short_desc": "St. Tammany Toy & Comic Con in Mandeville, LA, US.",
+      "long_desc": "Listed by Fresh Comics: https://freshcomics.us/convention/st-tammany-2027/la-mandeville\nCheck the official event website for current hours, admission and venue details.",
+      "relevant_universes": [
+        "comics"
+      ],
+      "emoji": "🎪"
+    },
+    {
+      "slug": "freshcomics-bloomsburg-2027",
+      "name": "Bloomsburg Comic Con",
+      "starts_at": "2027-04-17T00:00:00.000Z",
+      "ends_at": "2027-04-17T23:59:59.000Z",
+      "city": "Bloomsburg",
+      "state_region": "PA",
+      "country": "US",
+      "event_type": "national",
+      "website_url": "https://www.greaterpaconventions.com/",
+      "short_desc": "Bloomsburg Comic Con in Bloomsburg, PA, US.",
+      "long_desc": "Listed by Fresh Comics: https://freshcomics.us/convention/bloomsburg-2027/pa-bloomsburg\nCheck the official event website for current hours, admission and venue details.",
+      "relevant_universes": [
+        "comics"
+      ],
+      "emoji": "🎪"
+    },
+    {
+      "slug": "freshcomics-kidsconne-2027",
+      "name": "Kids Con New England",
+      "starts_at": "2027-04-17T00:00:00.000Z",
+      "ends_at": "2027-04-18T23:59:59.000Z",
+      "city": "Concord",
+      "state_region": "NH",
+      "country": "US",
+      "event_type": "national",
+      "website_url": "https://kidsconne.com/",
+      "short_desc": "Kids Con New England in Concord, NH, US.",
+      "long_desc": "Listed by Fresh Comics: https://freshcomics.us/convention/kidsconne-2027/nh-concord\nCheck the official event website for current hours, admission and venue details.",
+      "relevant_universes": [
+        "comics"
+      ],
+      "emoji": "🎪"
+    },
+    {
+      "slug": "freshcomics-st-pete-2027",
+      "name": "St. Pete Comic Con",
+      "starts_at": "2027-04-17T00:00:00.000Z",
+      "ends_at": "2027-04-18T23:59:59.000Z",
+      "city": "St. Petersburg",
+      "state_region": "FL",
+      "country": "US",
+      "event_type": "national",
+      "website_url": "https://stpete.floridacomiccons.com/",
+      "short_desc": "St. Pete Comic Con in St. Petersburg, FL, US.",
+      "long_desc": "Listed by Fresh Comics: https://freshcomics.us/convention/st-pete-2027/fl-st-petersburg\nCheck the official event website for current hours, admission and venue details.",
+      "relevant_universes": [
+        "comics"
+      ],
+      "emoji": "🎪"
+    },
+    {
+      "slug": "freshcomics-super-jersey-2027",
+      "name": "Super Jersey Comic Expo",
+      "starts_at": "2027-04-17T00:00:00.000Z",
+      "ends_at": "2027-04-18T23:59:59.000Z",
+      "city": "Hillsborough Township",
+      "state_region": "NJ",
+      "country": "US",
+      "event_type": "national",
+      "website_url": "https://www.superjerseyexpo.com/",
+      "short_desc": "Super Jersey Comic Expo in Hillsborough Township, NJ, US.",
+      "long_desc": "Listed by Fresh Comics: https://freshcomics.us/convention/super-jersey-2027/nj-hillsborough-township\nCheck the official event website for current hours, admission and venue details.",
+      "relevant_universes": [
+        "comics"
+      ],
+      "emoji": "🎪"
+    },
+    {
+      "slug": "freshcomics-lvl-up-2027",
+      "name": "Lvl Up Expo",
+      "starts_at": "2027-04-23T00:00:00.000Z",
+      "ends_at": "2027-04-25T23:59:59.000Z",
+      "city": "Winchester",
+      "state_region": "NV",
+      "country": "US",
+      "event_type": "national",
+      "website_url": "https://lvlupexpo.com/",
+      "short_desc": "Lvl Up Expo in Winchester, NV, US.",
+      "long_desc": "Listed by Fresh Comics: https://freshcomics.us/convention/lvl-up-2027/nv-winchester\nCheck the official event website for current hours, admission and venue details.",
+      "relevant_universes": [
+        "comics"
+      ],
+      "emoji": "🎪"
+    },
+    {
+      "slug": "freshcomics-c2e2-2027",
+      "name": "C2E2",
+      "starts_at": "2027-04-30T00:00:00.000Z",
+      "ends_at": "2027-05-02T23:59:59.000Z",
+      "city": "Chicago",
+      "state_region": "IL",
+      "country": "US",
+      "event_type": "national",
+      "website_url": "https://www.c2e2.com/",
+      "short_desc": "C2E2 in Chicago, IL, US.",
+      "long_desc": "Listed by Fresh Comics: https://freshcomics.us/convention/c2e2-2027/il-chicago\nCheck the official event website for current hours, admission and venue details.",
+      "relevant_universes": [
+        "comics"
+      ],
+      "emoji": "🎪"
+    },
+    {
+      "slug": "freshcomics-westernmasscon-2027",
+      "name": "WesternMassCon",
+      "starts_at": "2027-05-01T00:00:00.000Z",
+      "ends_at": "2027-05-02T23:59:59.000Z",
+      "city": "Springfield",
+      "state_region": "MA",
+      "country": "US",
+      "event_type": "national",
+      "website_url": "https://www.westernmasscon.com/",
+      "short_desc": "WesternMassCon in Springfield, MA, US.",
+      "long_desc": "Listed by Fresh Comics: https://freshcomics.us/convention/westernmasscon-2027/ma-springfield\nCheck the official event website for current hours, admission and venue details.",
+      "relevant_universes": [
+        "comics"
+      ],
+      "emoji": "🎪"
+    },
+    {
+      "slug": "freshcomics-gem-state-2027",
+      "name": "Gem State Comic Con",
+      "starts_at": "2027-05-14T00:00:00.000Z",
+      "ends_at": "2027-05-16T23:59:59.000Z",
+      "city": "Garden City",
+      "state_region": "ID",
+      "country": "US",
+      "event_type": "national",
+      "website_url": "https://www.gemstatecomiccon.com/",
+      "short_desc": "Gem State Comic Con in Garden City, ID, US.",
+      "long_desc": "Listed by Fresh Comics: https://freshcomics.us/convention/gem-state-2027/id-garden-city\nCheck the official event website for current hours, admission and venue details.",
+      "relevant_universes": [
+        "comics"
+      ],
+      "emoji": "🎪"
+    },
+    {
+      "slug": "freshcomics-fantasy-basel-2027",
+      "name": "Fantasy Basel",
+      "starts_at": "2027-05-15T00:00:00.000Z",
+      "ends_at": "2027-05-17T23:59:59.000Z",
+      "city": "Basel",
+      "state_region": null,
+      "country": "CH",
+      "event_type": "international",
+      "website_url": "https://www.fantasybasel.ch/",
+      "short_desc": "Fantasy Basel in Basel, CH.",
+      "long_desc": "Listed by Fresh Comics: https://freshcomics.us/convention/fantasy-basel-2027/convention\nCheck the official event website for current hours, admission and venue details.",
+      "relevant_universes": [
+        "comics"
+      ],
+      "emoji": "🎪"
+    },
+    {
+      "slug": "freshcomics-savannah-2027",
+      "name": "Savannah Comic Con",
+      "starts_at": "2027-05-15T00:00:00.000Z",
+      "ends_at": "2027-05-16T23:59:59.000Z",
+      "city": "Savannah",
+      "state_region": "GA",
+      "country": "US",
+      "event_type": "national",
+      "website_url": "https://www.savannahcomiccon.com/",
+      "short_desc": "Savannah Comic Con in Savannah, GA, US.",
+      "long_desc": "Listed by Fresh Comics: https://freshcomics.us/convention/savannah-2027/ga-savannah\nCheck the official event website for current hours, admission and venue details.",
+      "relevant_universes": [
+        "comics"
+      ],
+      "emoji": "🎪"
+    },
+    {
+      "slug": "freshcomics-comic-con-revolution-2027",
+      "name": "Comic Con Revolution",
+      "starts_at": "2027-05-22T00:00:00.000Z",
+      "ends_at": "2027-05-23T23:59:59.000Z",
+      "city": "Ontario",
+      "state_region": "CA",
+      "country": "US",
+      "event_type": "national",
+      "website_url": "https://www.comicconrevolution.com/ontario/",
+      "short_desc": "Comic Con Revolution in Ontario, CA, US.",
+      "long_desc": "Listed by Fresh Comics: https://freshcomics.us/convention/comic-con-revolution-2027/ca-ontario\nCheck the official event website for current hours, admission and venue details.",
+      "relevant_universes": [
+        "comics"
+      ],
+      "emoji": "🎪"
+    },
+    {
+      "slug": "freshcomics-momocon-2027",
+      "name": "MomoCon",
+      "starts_at": "2027-05-27T00:00:00.000Z",
+      "ends_at": "2027-05-30T23:59:59.000Z",
+      "city": "Atlanta",
+      "state_region": "GA",
+      "country": "US",
+      "event_type": "national",
+      "website_url": "https://www.momocon.com/",
+      "short_desc": "MomoCon in Atlanta, GA, US.",
+      "long_desc": "Listed by Fresh Comics: https://freshcomics.us/convention/momocon-2027/ga-atlanta\nCheck the official event website for current hours, admission and venue details.",
+      "relevant_universes": [
+        "comics"
+      ],
+      "emoji": "🎪"
+    },
+    {
+      "slug": "freshcomics-fan-expo-philidelphia-2027",
+      "name": "Fan Expo Philadelphia",
+      "starts_at": "2027-05-28T00:00:00.000Z",
+      "ends_at": "2027-05-30T23:59:59.000Z",
+      "city": "Philadelphia",
+      "state_region": "PA",
+      "country": "US",
+      "event_type": "national",
+      "website_url": "https://fanexpohq.com/fanexpophiladelphia/",
+      "short_desc": "Fan Expo Philadelphia in Philadelphia, PA, US.",
+      "long_desc": "Listed by Fresh Comics: https://freshcomics.us/convention/fan-expo-philidelphia-2027/pa-philadelphia\nCheck the official event website for current hours, admission and venue details.",
+      "relevant_universes": [
+        "comics"
+      ],
+      "emoji": "🎪"
+    },
+    {
+      "slug": "freshcomics-thy-geekdom-2027",
+      "name": "Thy Geekdom Con",
+      "starts_at": "2027-05-28T00:00:00.000Z",
+      "ends_at": "2027-05-30T23:59:59.000Z",
+      "city": "Oaks",
+      "state_region": "PA",
+      "country": "US",
+      "event_type": "national",
+      "website_url": "https://thygeekdomcon.com/",
+      "short_desc": "Thy Geekdom Con in Oaks, PA, US.",
+      "long_desc": "Listed by Fresh Comics: https://freshcomics.us/convention/thy-geekdom-2027/pa-oaks\nCheck the official event website for current hours, admission and venue details.",
+      "relevant_universes": [
+        "comics"
+      ],
+      "emoji": "🎪"
+    },
+    {
+      "slug": "freshcomics-oxfordcon-2027",
+      "name": "OxfordCon",
+      "starts_at": "2027-05-29T00:00:00.000Z",
+      "ends_at": "2027-05-29T23:59:59.000Z",
+      "city": "Oxford",
+      "state_region": "AL",
+      "country": "US",
+      "event_type": "national",
+      "website_url": "https://oxfordcon.com/",
+      "short_desc": "OxfordCon in Oxford, AL, US.",
+      "long_desc": "Listed by Fresh Comics: https://freshcomics.us/convention/oxfordcon-2027/al-oxford\nCheck the official event website for current hours, admission and venue details.",
+      "relevant_universes": [
+        "comics"
+      ],
+      "emoji": "🎪"
+    },
+    {
+      "slug": "freshcomics-lehigh-velley-2027",
+      "name": "Lehigh Valley Comic Convention",
+      "starts_at": "2027-06-05T00:00:00.000Z",
+      "ends_at": "2027-06-06T23:59:59.000Z",
+      "city": "Allentown",
+      "state_region": "PA",
+      "country": "US",
+      "event_type": "national",
+      "website_url": "https://www.lehighvalleycomicconvention.com/",
+      "short_desc": "Lehigh Valley Comic Convention in Allentown, PA, US.",
+      "long_desc": "Listed by Fresh Comics: https://freshcomics.us/convention/lehigh-velley-2027/pa-allentown\nCheck the official event website for current hours, admission and venue details.",
+      "relevant_universes": [
+        "comics"
+      ],
+      "emoji": "🎪"
+    },
+    {
+      "slug": "freshcomics-soonercon-2027",
+      "name": "Soonercon",
+      "starts_at": "2027-06-11T00:00:00.000Z",
+      "ends_at": "2027-06-13T23:59:59.000Z",
+      "city": "Norman",
+      "state_region": "OK",
+      "country": "US",
+      "event_type": "national",
+      "website_url": "https://soonercon.com/",
+      "short_desc": "Soonercon in Norman, OK, US.",
+      "long_desc": "Listed by Fresh Comics: https://freshcomics.us/convention/soonercon-2027/ok-norman\nCheck the official event website for current hours, admission and venue details.",
+      "relevant_universes": [
+        "comics"
+      ],
+      "emoji": "🎪"
+    },
+    {
+      "slug": "freshcomics-beaver-state-2027",
+      "name": "Beaver State Comic Con",
+      "starts_at": "2027-06-12T00:00:00.000Z",
+      "ends_at": "2027-06-13T23:59:59.000Z",
+      "city": "Redmond",
+      "state_region": "OR",
+      "country": "US",
+      "event_type": "national",
+      "website_url": "https://www.beaverstatecomiccon.com/",
+      "short_desc": "Beaver State Comic Con in Redmond, OR, US.",
+      "long_desc": "Listed by Fresh Comics: https://freshcomics.us/convention/beaver-state-2027/or-redmond\nCheck the official event website for current hours, admission and venue details.",
+      "relevant_universes": [
+        "comics"
+      ],
+      "emoji": "🎪"
+    },
+    {
+      "slug": "freshcomics-portconmaine-2027",
+      "name": "PortConMaine",
+      "starts_at": "2027-06-24T00:00:00.000Z",
+      "ends_at": "2027-06-27T23:59:59.000Z",
+      "city": "Portland",
+      "state_region": "ME",
+      "country": "US",
+      "event_type": "national",
+      "website_url": "https://portconmaine.com/",
+      "short_desc": "PortConMaine in Portland, ME, US.",
+      "long_desc": "Listed by Fresh Comics: https://freshcomics.us/convention/portconmaine-2027/me-portland\nCheck the official event website for current hours, admission and venue details.",
+      "relevant_universes": [
+        "comics"
+      ],
+      "emoji": "🎪"
+    },
+    {
+      "slug": "freshcomics-fan-expo-denver-2027",
+      "name": "Fan Expo Denver",
+      "starts_at": "2027-07-02T00:00:00.000Z",
+      "ends_at": "2027-07-05T23:59:59.000Z",
+      "city": "Denver",
+      "state_region": "CO",
+      "country": "US",
+      "event_type": "national",
+      "website_url": "https://fanexpohq.com/fanexpodenver/",
+      "short_desc": "Fan Expo Denver in Denver, CO, US.",
+      "long_desc": "Listed by Fresh Comics: https://freshcomics.us/convention/fan-expo-denver-2027/co-denver\nCheck the official event website for current hours, admission and venue details.",
+      "relevant_universes": [
+        "comics"
+      ],
+      "emoji": "🎪"
+    },
+    {
+      "slug": "freshcomics-frankfortcon-2027",
+      "name": "FrankfortCon",
+      "starts_at": "2027-07-10T00:00:00.000Z",
+      "ends_at": "2027-07-10T23:59:59.000Z",
+      "city": "Frankfort",
+      "state_region": "KY",
+      "country": "US",
+      "event_type": "national",
+      "website_url": "http://frankfortcomiccon.com/",
+      "short_desc": "FrankfortCon in Frankfort, KY, US.",
+      "long_desc": "Listed by Fresh Comics: https://freshcomics.us/convention/frankfortcon-2027/ky-frankfort\nCheck the official event website for current hours, admission and venue details.",
+      "relevant_universes": [
+        "comics"
+      ],
+      "emoji": "🎪"
+    },
+    {
+      "slug": "freshcomics-connecticon-2027",
+      "name": "ConnectiCon0",
+      "starts_at": "2027-07-15T00:00:00.000Z",
+      "ends_at": "2027-07-18T23:59:59.000Z",
+      "city": "Hartford",
+      "state_region": "CT",
+      "country": "US",
+      "event_type": "national",
+      "website_url": "https://connecticon.org/",
+      "short_desc": "ConnectiCon0 in Hartford, CT, US.",
+      "long_desc": "Listed by Fresh Comics: https://freshcomics.us/convention/connecticon-2027/ct-hartford\nCheck the official event website for current hours, admission and venue details.",
+      "relevant_universes": [
+        "comics"
+      ],
+      "emoji": "🎪"
+    },
+    {
+      "slug": "freshcomics-london-film-comic-2027",
+      "name": "London Film & Comic Con",
+      "starts_at": "2027-08-14T00:00:00.000Z",
+      "ends_at": "2027-08-15T23:59:59.000Z",
+      "city": "London",
+      "state_region": null,
+      "country": "GB",
+      "event_type": "international",
+      "website_url": "https://londonfilmandcomiccon.com/",
+      "short_desc": "London Film & Comic Con in London, GB.",
+      "long_desc": "Listed by Fresh Comics: https://freshcomics.us/convention/london-film-comic-2027/convention\nCheck the official event website for current hours, admission and venue details.",
+      "relevant_universes": [
+        "comics"
+      ],
+      "emoji": "🎪"
+    },
+    {
+      "slug": "freshcomics-fan-expo-canada-2027",
+      "name": "Fan Expo Canada",
+      "starts_at": "2027-08-26T00:00:00.000Z",
+      "ends_at": "2027-08-29T23:59:59.000Z",
+      "city": "Toronto",
+      "state_region": "ON",
+      "country": "CA",
+      "event_type": "international",
+      "website_url": "https://fanexpohq.com/fanexpocanada/",
+      "short_desc": "Fan Expo Canada in Toronto, ON, CA.",
+      "long_desc": "Listed by Fresh Comics: https://freshcomics.us/convention/fan-expo-canada-2027/on-toronto\nCheck the official event website for current hours, admission and venue details.",
+      "relevant_universes": [
+        "comics"
+      ],
+      "emoji": "🎪"
+    },
+    {
+      "slug": "freshcomics-derpycon-2027",
+      "name": "DerpyCon",
+      "starts_at": "2027-10-29T00:00:00.000Z",
+      "ends_at": "2027-10-31T23:59:59.000Z",
+      "city": "New Brunswick",
+      "state_region": "NJ",
+      "country": "US",
+      "event_type": "national",
+      "website_url": "https://derpycon.com/",
+      "short_desc": "DerpyCon in New Brunswick, NJ, US.",
+      "long_desc": "Listed by Fresh Comics: https://freshcomics.us/convention/derpycon-2027/nj-new-brunswick\nCheck the official event website for current hours, admission and venue details.",
+      "relevant_universes": [
+        "comics"
+      ],
+      "emoji": "🎪"
+    },
+    {
+      "slug": "freshcomics-st-tammany-nov-2027",
+      "name": "St. Tammany Toy & Comic Con",
+      "starts_at": "2027-11-13T00:00:00.000Z",
+      "ends_at": "2027-11-14T23:59:59.000Z",
+      "city": "Mandeville",
+      "state_region": "LA",
+      "country": "US",
+      "event_type": "national",
+      "website_url": "https://www.sttammanycollectorscon.com/",
+      "short_desc": "St. Tammany Toy & Comic Con in Mandeville, LA, US.",
+      "long_desc": "Listed by Fresh Comics: https://freshcomics.us/convention/st-tammany-nov-2027/la-mandeville\nCheck the official event website for current hours, admission and venue details.",
+      "relevant_universes": [
+        "comics"
+      ],
+      "emoji": "🎪"
+    }
+  ],
+  "inserts": 0,
+  "updates": [
+    {
+      "id": "ca8f318d-3255-4a04-b7e0-f8345e46835c",
+      "name": "New York Comic Con"
+    },
+    {
+      "id": "60e7795b-2aa1-4059-a5bf-e8bd23809b76",
+      "name": "Big Texas Comicon"
+    },
+    {
+      "id": "4380f324-eb2e-460d-a550-adcbcc68e09c",
+      "name": "Comiccon de Québec"
+    },
+    {
+      "id": "f90ddc4f-6fc1-4e46-987c-4cdb0535887a",
+      "name": "Collect-A-Con Chicago"
+    },
+    {
+      "id": "5496785b-3ec4-4589-981a-71a1d36aa51c",
+      "name": "JCPL Comic Surge"
+    },
+    {
+      "id": "3f360892-62f9-4743-8d98-05bfaab1289c",
+      "name": "MNCBA FallCon"
+    },
+    {
+      "id": "87df1924-e9e8-40e4-ba8a-7eb3a80bbf56",
+      "name": "Carlisle Comic Con"
+    },
+    {
+      "id": "ed9bffb9-8093-45ad-8e34-d33717717883",
+      "name": "For the Fans Fest"
+    },
+    {
+      "id": "4143f2f8-1fc9-4093-9862-48cefbbac993",
+      "name": "Military HeroCon"
+    },
+    {
+      "id": "c568c0dc-9b37-4ac9-a71a-4fcbb12b6083",
+      "name": "QuoCon"
+    },
+    {
+      "id": "c89660e3-2d30-4e41-8f58-a4353b147e69",
+      "name": "Highland Realms Comic Con"
+    },
+    {
+      "id": "dea4b175-029d-4d89-bacc-c7eef4ec8d93",
+      "name": "North Bay ComiCon"
+    },
+    {
+      "id": "8027c423-48b2-40fa-a312-d6fdf79178cb",
+      "name": "Northwest ComicCon - Portland"
+    },
+    {
+      "id": "d9881f2e-7f98-4dbc-902a-04bba28b6263",
+      "name": "Armageddon Expo Auckland Spring"
+    },
+    {
+      "id": "f56a6799-5f78-48fd-8bc0-fc2939fb49e3",
+      "name": "GalaxyCon St. Louis"
+    },
+    {
+      "id": "a1cfdea0-88e0-455f-980f-a70eea0238ed",
+      "name": "Georgia Mountains Charity Comic Con"
+    },
+    {
+      "id": "b22eeb55-8e1b-4005-86d5-5b223df1ea06",
+      "name": "MCM Comic Con London"
+    },
+    {
+      "id": "a6c95f83-83f0-44c3-8523-526b0de97459",
+      "name": "Smackdown and Sketches"
+    },
+    {
+      "id": "45f830f0-2e80-481d-b574-f961e86006df",
+      "name": "Bedrock City Con"
+    },
+    {
+      "id": "06902523-e130-4410-a9a0-c5556ed0ae7b",
+      "name": "Blue Hen Comic Con"
+    },
+    {
+      "id": "a467ca35-2bb0-4af1-8b0f-18e68d54dde0",
+      "name": "Collect-A-Con Dallas"
+    },
+    {
+      "id": "77dbb151-8628-40c0-a11a-a83e6cbe3b43",
+      "name": "Comic Con Brussels"
+    },
+    {
+      "id": "216c377d-0181-48bd-b68b-ee4a25df1f5f",
+      "name": "Comic Con Scotland"
+    },
+    {
+      "id": "e0369c72-d43f-4321-b76e-f699374dabb6",
+      "name": "Perth ComiCon"
+    },
+    {
+      "id": "75aef508-fdc6-4e9f-8696-3d15e4bb4d88",
+      "name": "Brockville ComiCon"
+    },
+    {
+      "id": "bb5952d2-bd95-4635-8492-a1b0bdac01e2",
+      "name": "Capital Comic Book Convention"
+    },
+    {
+      "id": "e3d93cb4-9400-4c26-9ff4-8b45d1d941d9",
+      "name": "SC Comicon Fall Editon"
+    },
+    {
+      "id": "0c992047-0eda-4d22-9fd3-db52dd42856f",
+      "name": "DerpyCon"
+    },
+    {
+      "id": "da45d2d5-4d31-4a4e-9976-7a8fe81a7f6f",
+      "name": "GalaxyCon Milwaukee"
+    },
+    {
+      "id": "d563cb8e-e24d-4935-b53a-e5aa6017ca56",
+      "name": "L.A. Comic Con"
+    },
+    {
+      "id": "a65831c6-300b-4b44-b05b-4bf447e7aa6d",
+      "name": "Winnipeg Comiccon"
+    },
+    {
+      "id": "f9cc77a5-6d5c-4aa3-a74d-aa7b3a751758",
+      "name": "Kansas Comic Con"
+    },
+    {
+      "id": "99f6ae3b-b1f2-42dd-8494-33f19e8dacd3",
+      "name": "Pittsburgh Comic Book Show"
+    },
+    {
+      "id": "16a5266b-b280-436c-a81e-2c96adcbe854",
+      "name": "SoloCon"
+    },
+    {
+      "id": "dbedd776-fda2-4594-8ca1-db16f60dd727",
+      "name": "Tiger Con"
+    },
+    {
+      "id": "71a5ef88-7145-4889-98d4-e3a5c1a66afe",
+      "name": "VillainSCon"
+    },
+    {
+      "id": "3a4b0320-600e-4b2c-bbb9-c286f90993af",
+      "name": "Cape Con"
+    },
+    {
+      "id": "696c0d3e-a53b-47c5-ad23-c334ba84e033",
+      "name": "Rhode Island Comic Con"
+    },
+    {
+      "id": "8f3eb160-4b44-4fcf-96ba-826bd5da07d8",
+      "name": "Batawa ComiCon"
+    },
+    {
+      "id": "a0f8c0a1-0b23-4f74-a9c3-809f92d7b22d",
+      "name": "Chattanooga Comic Con"
+    },
+    {
+      "id": "635cb779-c49b-48fc-8cac-cfa4150fc10a",
+      "name": "Collect-A-Con Houston"
+    },
+    {
+      "id": "d5713028-1550-493a-905e-380acc19d912",
+      "name": "Infinite Realities Comicopia"
+    },
+    {
+      "id": "377b394a-5811-47f9-a9f0-abb6b8b412f4",
+      "name": "Lindsay ComiCon"
+    },
+    {
+      "id": "30d9b29d-9717-4497-b4a8-3b34ae1d344c",
+      "name": "Comic-Con Brno & Junior"
+    },
+    {
+      "id": "2467b6c6-f4ff-48ee-81ca-0f46806ebbca",
+      "name": "ExtravaCon"
+    },
+    {
+      "id": "d9a2ae6c-5695-49fa-884b-e20c680ec7d7",
+      "name": "Illinois Comic Con"
+    },
+    {
+      "id": "69e3fac5-7950-4a83-9a87-c335e973c40c",
+      "name": "Kids Con New England"
+    },
+    {
+      "id": "fb55bb15-4aa6-4ac6-91cc-9e0f4b1aa1b0",
+      "name": "Newmarket ComiCon"
+    },
+    {
+      "id": "a52c5d78-da96-4398-9655-8bd6aaacfea7",
+      "name": "St. Tammany Toy & Comic Con"
+    },
+    {
+      "id": "2bda8ba0-4895-4462-9557-8159e26ab43b",
+      "name": "Ajax ComiCon"
+    },
+    {
+      "id": "320a46fe-9301-4aff-b8ec-73f81d45c017",
+      "name": "Colossalcon North"
+    },
+    {
+      "id": "f3e8b8c6-f7ed-403b-8d20-daabcaab3fc8",
+      "name": "Philcon"
+    },
+    {
+      "id": "ea0cfbd2-340f-4a4a-8003-6de04ebbadc5",
+      "name": "Twin Cities Con"
+    },
+    {
+      "id": "4f90d125-0de9-4929-8c61-8e41274ad9ed",
+      "name": "Collect-A-Con New Jersey"
+    },
+    {
+      "id": "d4721a3e-025a-4774-a8c6-5b25692a5e44",
+      "name": "Owen Sound ComiCon"
+    },
+    {
+      "id": "b540573e-651b-4d9f-9657-0b1a51c31a0b",
+      "name": "Vienna Comic Con"
+    },
+    {
+      "id": "254fcf9b-59e5-45eb-a569-102c497f8b91",
+      "name": "Beaver Valley ComiCon"
+    },
+    {
+      "id": "7a46187f-def0-4d92-89ac-f10f78c3d6c1",
+      "name": "CharlestonCon"
+    },
+    {
+      "id": "518c813e-35d5-48f7-9f2d-ba01782c360a",
+      "name": "Mitcham Comic Festival"
+    },
+    {
+      "id": "b3751664-5b46-4600-a9bf-46be29051acf",
+      "name": "Anthracite"
+    },
+    {
+      "id": "192c2ba5-c5b9-4481-ac4c-f80be08265a5",
+      "name": "Belleville ComiCon"
+    },
+    {
+      "id": "c53cf80a-4b91-4a66-879b-08c07cf9553c",
+      "name": "SW-FloridaCon"
+    },
+    {
+      "id": "f8624f22-8c64-4f96-846f-3a2137993dd7",
+      "name": "GalaxyCon Columbus"
+    },
+    {
+      "id": "e009a200-23a3-45b6-bf30-66cce91ecb39",
+      "name": "Cajun Con"
+    },
+    {
+      "id": "8a95580b-9ed5-4494-a43d-da553b298da2",
+      "name": "Lehigh Valley Comic Convention"
+    },
+    {
+      "id": "5816cae6-a2e0-4678-8497-f805eb30e9de",
+      "name": "Yorkgate Mall ComiCon"
+    },
+    {
+      "id": "f83dbfde-345f-49d1-8c8e-a1e86d69cdaa",
+      "name": "Comic Fiesta"
+    },
+    {
+      "id": "28ef82fe-8c21-4e59-a31d-c94e53846705",
+      "name": "Oshawa ComiCon"
+    },
+    {
+      "id": "8ca05793-f5e2-42b7-abfb-f75cb6c13b22",
+      "name": "Peterborough ComiCon"
+    },
+    {
+      "id": "74e65424-2f6b-4152-aa8f-ad2ab86ca137",
+      "name": "FT-LauderdaleCon"
+    },
+    {
+      "id": "d5620f32-8857-440d-9f90-9d8c50666b3a",
+      "name": "Animate! Raleigh"
+    },
+    {
+      "id": "5dcf36df-38b8-4596-a424-085b55b9b562",
+      "name": "Fan Expo New Orleans"
+    },
+    {
+      "id": "2c85e754-ed4d-4161-9e73-b84f089a3150",
+      "name": "AshevilleCon"
+    },
+    {
+      "id": "fcc427c8-7d67-4321-8f76-14ca01b55470",
+      "name": "AugustaCon"
+    },
+    {
+      "id": "e90676b5-1e97-41cc-a645-f6f65526b8d6",
+      "name": "Charlie's Comic Con"
+    },
+    {
+      "id": "742402c3-f151-41cb-ad43-9b8915eb06e2",
+      "name": "SWFL Comic Book-Fest"
+    },
+    {
+      "id": "031a2701-9fb1-4212-bd18-b3cfbe986f71",
+      "name": "Texoma Comic Con"
+    },
+    {
+      "id": "e308487d-e5cf-41f4-9656-b1fd363b776d",
+      "name": "Happy Valley Comic & Collectibles Convention"
+    },
+    {
+      "id": "a08cf094-1449-4d25-9b35-6458e036ae0d",
+      "name": "Whitby ComiCon"
+    },
+    {
+      "id": "4cce8354-2bb9-4c3a-ba9c-b1f0a88096eb",
+      "name": "ACEcon"
+    },
+    {
+      "id": "a50ecf9f-7cc8-45b9-90b9-3a8575c26e42",
+      "name": "Dublin Comic Con: Spring Edition"
+    },
+    {
+      "id": "8ed30da5-5bc1-4a06-9ddb-70b5f761512b",
+      "name": "Power Comic Con"
+    },
+    {
+      "id": "56919cec-edef-4316-985d-6fd1efca0744",
+      "name": "Comic Con Dornbirn"
+    },
+    {
+      "id": "71a0ee4c-5c92-49b3-858f-5b13cd9fd814",
+      "name": "MidSouthCon"
+    },
+    {
+      "id": "34ef7b51-b9ab-43ad-9bf0-c9151ee34235",
+      "name": "Syfi Pop Fest"
+    },
+    {
+      "id": "f45069c3-1447-490d-936b-e5aafd19e043",
+      "name": "WonderCon"
+    },
+    {
+      "id": "d5571ef9-5c3a-45c4-b56c-4fa70dba2e89",
+      "name": "ClarksvilleCon"
+    },
+    {
+      "id": "862239dd-fb2d-4a6a-8b74-190695a75e7e",
+      "name": "HuntsvilleCon"
+    },
+    {
+      "id": "92b2ae34-70d4-4d32-99a0-a816afbf11ce",
+      "name": "St. Tammany Toy & Comic Con"
+    },
+    {
+      "id": "a4ac36e6-a4c2-4fae-984d-39f97ee5d57c",
+      "name": "Bloomsburg Comic Con"
+    },
+    {
+      "id": "9f3ed030-0e20-42a7-be0f-55198b8fab19",
+      "name": "Kids Con New England"
+    },
+    {
+      "id": "c7a8be5e-74b4-451f-a0ef-3329743f8a67",
+      "name": "St. Pete Comic Con"
+    },
+    {
+      "id": "f8bf595a-11e3-4871-b0d5-5ce50b0daef5",
+      "name": "Super Jersey Comic Expo"
+    },
+    {
+      "id": "87e0262f-8f1c-41ab-804d-36268fa320d6",
+      "name": "Lvl Up Expo"
+    },
+    {
+      "id": "72154888-c8c4-430a-a894-f6360e48034d",
+      "name": "C2E2"
+    },
+    {
+      "id": "1117ee7f-c662-4927-a721-cbf8802eca0b",
+      "name": "WesternMassCon"
+    },
+    {
+      "id": "cb0b3838-a420-400a-9fda-c7746bb26649",
+      "name": "Gem State Comic Con"
+    },
+    {
+      "id": "388e0792-1718-498b-84c4-bad76b04ce7b",
+      "name": "Fantasy Basel"
+    },
+    {
+      "id": "78a50fb2-7714-442c-8ac1-b989f0a0c56e",
+      "name": "Savannah Comic Con"
+    },
+    {
+      "id": "be7ffc9f-9dab-4c75-916d-451ae31fbe0b",
+      "name": "Comic Con Revolution"
+    },
+    {
+      "id": "9fb43c6b-6c1e-44f4-8802-0d7d89eb78aa",
+      "name": "MomoCon"
+    },
+    {
+      "id": "3fffcba1-4032-4036-a80e-91542788b33f",
+      "name": "Fan Expo Philadelphia"
+    },
+    {
+      "id": "e135bfaf-9b9b-450b-ae3d-7a823bee515b",
+      "name": "Thy Geekdom Con"
+    },
+    {
+      "id": "db68ffe6-ef55-428c-b85b-970af0a7fa34",
+      "name": "OxfordCon"
+    },
+    {
+      "id": "7bd34062-655c-47d8-be29-d940b99cdb1c",
+      "name": "Lehigh Valley Comic Convention"
+    },
+    {
+      "id": "a09d6c12-d18a-4dfb-a2dc-646374ca2686",
+      "name": "Soonercon"
+    },
+    {
+      "id": "7d096c4c-6aed-44d1-868c-19bba97693df",
+      "name": "Beaver State Comic Con"
+    },
+    {
+      "id": "c908ba17-37fe-426f-a92c-fa69d8bdc077",
+      "name": "PortConMaine"
+    },
+    {
+      "id": "ad0e291f-e92f-475c-acce-48fbfb413cae",
+      "name": "Fan Expo Denver"
+    },
+    {
+      "id": "659891db-e759-41c3-91ef-1049ba3e2a16",
+      "name": "FrankfortCon"
+    },
+    {
+      "id": "8638a170-9469-4a4b-ac7d-da59962ecaa4",
+      "name": "ConnectiCon0"
+    },
+    {
+      "id": "e9ee356d-8826-4339-986b-30ff5a98b5c8",
+      "name": "London Film & Comic Con"
+    },
+    {
+      "id": "63af2ca7-f619-4528-80c4-b888ac71f42f",
+      "name": "Fan Expo Canada"
+    },
+    {
+      "id": "72d0ffb2-eb53-4f6e-ba8a-861511571cab",
+      "name": "DerpyCon"
+    },
+    {
+      "id": "3f88f61c-9649-4007-a52b-c2d77560929d",
+      "name": "St. Tammany Toy & Comic Con"
+    }
+  ]
+}

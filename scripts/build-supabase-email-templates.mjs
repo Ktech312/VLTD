@@ -69,8 +69,8 @@ const templates = {
         p("VLTD is built for collectors like you. Your ideas, questions and conversations help shape the community and make the experience better for everyone."),
         p("Confirm your email below to get started."),
         button("Confirm my email", "{{ .ConfirmationURL }}"),
-        p("If you didn’t try to join, you can ignore this email."),
-        p(`Need a hand? ${HELP}.`),
+        // Replies reach the monitored sending mailbox, so the approved welcome copy can invite them.
+        p("Have a question or an idea? We’d love to hear from you—just reply to this email."),
       ],
     }),
   },
