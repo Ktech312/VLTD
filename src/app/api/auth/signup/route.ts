@@ -46,6 +46,8 @@ export async function POST(req: NextRequest) {
   }
 
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || new URL(req.url).origin;
+  // The confirmation button lands on a page that says "your email is confirmed" and moves them on (not the public home page).
+  const confirmedUrl = `${siteUrl.replace(//+$/, "")}/auth/confirmed`;
 
   const deps: SignupDeps = {
     async findUserByEmail(target) {
@@ -76,7 +78,7 @@ export async function POST(req: NextRequest) {
       if (error) throw error;
     },
     async supabaseResend(to) {
-      const { error } = await svc.auth.resend({ type: "signup", email: to });
+      const { error } = await svc.auth.resend({ type: "signup", email: to, options: { emailRedirectTo: confirmedUrl } });
       if (error) throw error;
     },
     async supabaseSignUp(to, pw, name) {
@@ -84,7 +86,11 @@ export async function POST(req: NextRequest) {
       const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
       if (!url || !anon) return { errorMessage: "not_configured" };
       const standard = createClient(url, anon, { auth: { persistSession: false, autoRefreshToken: false } });
-      const { error } = await standard.auth.signUp({ email: to, password: pw, options: name ? { data: { first_name: name } } : undefined });
+      const { error } = await standard.auth.signUp({
+        email: to,
+        password: pw,
+        options: { emailRedirectTo: confirmedUrl, ...(name ? { data: { first_name: name } } : {}) },
+      });
       return error ? { errorMessage: error.message } : {};
     },
     now: () => Date.now(),
