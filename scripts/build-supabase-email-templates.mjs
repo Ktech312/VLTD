@@ -11,7 +11,7 @@ mkdirSync(OUT, { recursive: true });
 
 const SITE = "https://vltd.app";
 const C = { page: "#05080C", card: "#0E141B", border: "#1D2A35", text: "#E8EDF2", muted: "#9AA7B3", teal: "#41C6E4", tealLight: "#79E7FB", buttonText: "#06171D" };
-const GREETING = "{{ if .Data.first_name }}Hi {{ .Data.first_name }},{{ else }}Hi there,{{ end }}";
+const GREETING = "{{ if .Data.first_name }}Hello {{ .Data.first_name }},{{ else }}Hello,{{ end }}";
 const HELP = `<a href="${SITE}/guide" style="color:${C.teal};text-decoration:underline;">We’re here to help</a>`;
 
 const p = (html, small = false) =>

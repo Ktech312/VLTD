@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { getServiceClient } from "@/lib/serverAdmin";
 import { authEmailSenderVerified, SENDER_NOT_READY_MESSAGE } from "@/lib/email/senderGate";
-import { allow } from "@/lib/email/signupRecovery";
+import { allow, safeFirstName } from "@/lib/email/signupRecovery";
 
 export const dynamic = "force-dynamic";
 
@@ -38,6 +38,26 @@ export async function POST(req: NextRequest) {
   }
 
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || new URL(req.url).origin;
+
+  // Greet an existing member by the name saved on their account (display name, else username; never from the email address).
+  try {
+    for (let page = 1; page <= 20; page++) {
+      const { data, error: listError } = await svc.auth.admin.listUsers({ page, perPage: 1000 });
+      if (listError) break;
+      const hit = data.users.find((u) => (u.email ?? "").toLowerCase() === email);
+      if (hit) {
+        const { data: rows } = await svc.from("profiles").select("display_name, username").eq("user_id", hit.id).order("created_at", { ascending: true }).limit(1);
+        const saved = [rows?.[0]?.display_name, rows?.[0]?.username].find((v) => typeof v === "string" && v.trim());
+        const first = safeFirstName(typeof saved === "string" ? saved : "");
+        if (first) await svc.auth.admin.updateUserById(hit.id, { user_metadata: { ...(hit.user_metadata ?? {}), first_name: first } });
+        break;
+      }
+      if (data.users.length < 1000) break;
+    }
+  } catch {
+    // The reset still goes out; the greeting falls back to "Hello,".
+  }
+
   const { error } = await svc.auth.resetPasswordForEmail(email, { redirectTo: `${siteUrl.replace(/\/+$/, "")}${returnPath}` });
   if (error) {
     return NextResponse.json({ error: "send_failed", message: "We couldn't complete that just now. Please try again in a moment." }, { status: 502 });

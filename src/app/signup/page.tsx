@@ -13,6 +13,7 @@ type LaunchAccessStatus = {
 
 export default function SignupPage() {
   const [status, setStatus] = useState<LaunchAccessStatus | null>(null);
+  const [firstName, setFirstName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -57,7 +58,7 @@ export default function SignupPage() {
       const response = await fetch("/api/auth/signup", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: email.trim(), password }),
+        body: JSON.stringify({ email: email.trim(), password, firstName: firstName.trim() }),
       });
       const result = (await response.json().catch(() => ({}))) as { ok?: boolean; message?: string };
       await loadStatus();
@@ -125,6 +126,10 @@ export default function SignupPage() {
             ) : (
               <form onSubmit={handleSignup} className="mt-7 grid gap-5">
                 {error ? <div className="rounded-2xl border border-red-400/35 bg-red-500/10 px-4 py-3 text-sm text-red-100">{error}</div> : null}
+                <label className="block">
+                  <span className="text-base font-medium text-[color:var(--muted)]">First name <span className="text-sm text-[color:var(--muted2)]">(optional)</span></span>
+                  <input value={firstName} onChange={(event) => setFirstName(event.target.value)} type="text" autoComplete="given-name" maxLength={40} placeholder="So we can say hello properly" className="vltd-input mt-3 h-16 w-full rounded-[22px] px-6 text-lg" />
+                </label>
                 <label className="block">
                   <span className="text-base font-medium text-[color:var(--muted)]">Email</span>
                   <input value={email} onChange={(event) => setEmail(event.target.value)} type="email" autoComplete="email" required placeholder="you@example.com" className="vltd-input mt-3 h-16 w-full rounded-[22px] px-6 text-lg" />

@@ -3,7 +3,7 @@ import { createClient, type User } from "@supabase/supabase-js";
 
 import { getServiceClient } from "@/lib/serverAdmin";
 import { authEmailSenderVerified, SENDER_NOT_READY_MESSAGE } from "@/lib/email/senderGate";
-import { allow, handleSignupRequest, type AuthUserLite, type SignupDeps } from "@/lib/email/signupRecovery";
+import { allow, handleSignupRequest, safeFirstName, type AuthUserLite, type SignupDeps } from "@/lib/email/signupRecovery";
 
 export const dynamic = "force-dynamic";
 
@@ -29,6 +29,7 @@ export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => ({}));
   const email = typeof body?.email === "string" ? body.email.trim().toLowerCase() : "";
   const password = typeof body?.password === "string" ? body.password : "";
+  const firstName = typeof body?.firstName === "string" ? safeFirstName(body.firstName) : "";
   if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     return NextResponse.json({ error: "invalid_email", message: "Please enter a valid email address." }, { status: 400 });
   }
@@ -58,9 +59,13 @@ export async function POST(req: NextRequest) {
       return null;
     },
     async savedName(userId) {
-      const { data } = await svc.from("profiles").select("display_name").eq("user_id", userId).order("created_at", { ascending: true }).limit(1);
-      const name = data?.[0]?.display_name;
-      return typeof name === "string" && name.trim() ? name : null;
+      const { data } = await svc.from("profiles").select("display_name, username").eq("user_id", userId).order("created_at", { ascending: true }).limit(1);
+      const row = data?.[0];
+      // Saved display name first, then saved username. Never anything derived from the email address.
+      for (const value of [row?.display_name, row?.username]) {
+        if (typeof value === "string" && value.trim()) return value;
+      }
+      return null;
     },
     async setFirstName(user, firstName) {
       // Merge into the existing metadata so nothing already saved on the account is lost.
@@ -74,19 +79,19 @@ export async function POST(req: NextRequest) {
       const { error } = await svc.auth.resend({ type: "signup", email: to });
       if (error) throw error;
     },
-    async supabaseSignUp(to, pw) {
+    async supabaseSignUp(to, pw, name) {
       const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
       const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
       if (!url || !anon) return { errorMessage: "not_configured" };
       const standard = createClient(url, anon, { auth: { persistSession: false, autoRefreshToken: false } });
-      const { error } = await standard.auth.signUp({ email: to, password: pw });
+      const { error } = await standard.auth.signUp({ email: to, password: pw, options: name ? { data: { first_name: name } } : undefined });
       return error ? { errorMessage: error.message } : {};
     },
     now: () => Date.now(),
   };
 
   try {
-    const outcome = await handleSignupRequest({ email, password }, deps, { siteUrl });
+    const outcome = await handleSignupRequest({ email, password, firstName }, deps, { siteUrl });
     if (outcome === "founding_full") {
       return NextResponse.json({ error: "founding_full", message: "All 50 founding spots have been claimed. Join the waitlist for the next opening." }, { status: 409 });
     }

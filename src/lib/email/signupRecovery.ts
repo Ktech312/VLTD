@@ -14,13 +14,13 @@ export type AuthUserLite = {
 
 export type SignupDeps = {
   findUserByEmail(email: string): Promise<AuthUserLite | null>;
-  /** The name saved on an existing account's profile (never the name typed into a duplicate signup). */
+  /** The name saved on an existing account's profile (display name, else saved username). Never the name typed into a duplicate signup and never derived from the email address. */
   savedName(userId: string): Promise<string | null>;
   /** Stores the safe first name on the account so the VLTD email template can greet them by name. */
   setFirstName(user: AuthUserLite, firstName: string): Promise<void>;
   supabaseReset(email: string, redirectTo: string): Promise<void>;
   supabaseResend(email: string): Promise<void>;
-  supabaseSignUp(email: string, password: string): Promise<{ errorMessage?: string }>;
+  supabaseSignUp(email: string, password: string, firstName: string): Promise<{ errorMessage?: string }>;
   now(): number;
 };
 
@@ -50,7 +50,7 @@ export function safeFirstName(name?: string | null): string {
 }
 
 export async function handleSignupRequest(
-  input: { email: string; password: string },
+  input: { email: string; password: string; firstName?: string },
   deps: SignupDeps,
   options: { siteUrl: string }
 ): Promise<SignupOutcome> {
@@ -59,7 +59,8 @@ export async function handleSignupRequest(
 
   // ── No account yet: the standard sign-up. The founding-spot rule runs in the database, exactly as before. ──
   if (!existing) {
-    const result = await deps.supabaseSignUp(email, input.password);
+    // The name typed at sign-up travels with the account so the confirmation email can greet them by name.
+    const result = await deps.supabaseSignUp(email, input.password, safeFirstName(input.firstName));
     if (!result.errorMessage) return "account_created";
     return FULL_PATTERN.test(result.errorMessage) ? "founding_full" : "failed";
   }
