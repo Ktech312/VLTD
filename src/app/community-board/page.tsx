@@ -239,6 +239,16 @@ export default function VltLoungePage() {
     setCommentsLoading(false);
   }
 
+  // A link from Home (/community-board?post=<id>) opens that post and its thread, once the posts have loaded.
+  const [openedFromLink, setOpenedFromLink] = useState(false);
+  useEffect(() => {
+    if (openedFromLink || !posts || typeof window === "undefined") return;
+    const wanted = new URLSearchParams(window.location.search).get("post");
+    setOpenedFromLink(true);
+    if (wanted && posts.some((post) => post.id === wanted)) void openThread(wanted);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [posts, openedFromLink]);
+
   async function handleComment() {
     const trimmed = commentBody.trim();
     if (!selectedPostId || !viewerProfileId || !trimmed || commentPosting) return;

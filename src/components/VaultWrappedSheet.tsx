@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import { loadItems, type VaultItem } from "@/lib/vaultModel";
-import { summarizeValues } from "@/lib/vaultStats";
+import { activeItems, readValueMode, summarizeValues, type ValueMode } from "@/lib/vaultStats";
 
 // ─── Stats calculation ────────────────────────────────────────────────────────
 
@@ -31,9 +31,10 @@ const UNIVERSE_LABELS: Record<string, string> = {
   MISC: "Collectibles",
 };
 
-function calcStats(items: VaultItem[]): WrappedStats {
-  // Shared vault rule: un-priced items count at what was paid (lib/vaultStats).
-  const summary = summarizeValues(items, "fill");
+function calcStats(items: VaultItem[], mode: ValueMode): WrappedStats {
+  // Same rule as the Vault, Home and Insights (lib/vaultStats): the active profile's items you currently own
+  // (sold items, supplies and wishlist entries are left out), valued the way the Vault is set to value them.
+  const summary = summarizeValues(items, mode);
   const totalValue = summary.totalValue;
   const totalCost = summary.totalCost;
   const totalGain = summary.totalGain;
@@ -327,10 +328,10 @@ type Props = {
 
 export default function VaultWrappedSheet({ onClose }: Props) {
   const items = useMemo(() => {
-    try { return loadItems(); } catch { return []; }
+    try { return activeItems(loadItems()); } catch { return []; }
   }, []);
 
-  const stats = useMemo(() => calcStats(items), [items]);
+  const stats = useMemo(() => calcStats(items, readValueMode()), [items]);
 
   const [exporting, setExporting] = useState(false);
   const [preview, setPreview] = useState<string | null>(null);
