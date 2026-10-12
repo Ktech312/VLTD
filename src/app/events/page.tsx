@@ -1,5 +1,6 @@
 "use client";
 
+import { pillClassName } from "@/components/ui/PillButton";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { DiscoverNav } from "@/components/SectionNav";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -1004,7 +1005,7 @@ export default function EventsPage() {
                   href={selectedEvent.ticket_url ?? selectedEvent.website_url ?? "#"}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="mt-3 inline-flex h-9 w-full items-center justify-center gap-2 rounded-[7px] border border-[color:var(--theme-gold-border)] bg-[color:var(--pill)] text-xs font-black text-[color:var(--theme-gold)]"
+                  className={pillClassName("default", false, "mt-3 w-full")}
                 >
                   Event link <AppIcon name="externalLink" size={13} />
                 </a>

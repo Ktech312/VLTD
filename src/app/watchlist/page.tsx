@@ -189,13 +189,9 @@ function WatchCard({
           <Glyph name="heart" size={24} />
         </div>
         {entry.kind === "exhibition" ? (
-          <Link href="/discover" onClick={(event) => event.stopPropagation()} className="rounded-[7px] border border-[rgba(203,208,213,0.32)] px-5 py-2 text-xs font-black" style={{ color: "var(--theme-gold,#C8CDD2)" }}>
-            View Exhibition
-          </Link>
+          <PillButton size="compact" href="/discover" onClick={(event) => event.stopPropagation()}>View Exhibition</PillButton>
         ) : (
-          <button type="button" onClick={(event) => { event.stopPropagation(); onMove(); }} className="rounded-[7px] border border-[rgba(203,208,213,0.32)] px-5 py-2 text-xs font-black" style={{ color: "var(--theme-gold,#C8CDD2)" }}>
-            + Add to Vault
-          </button>
+          <PillButton size="compact" onClick={(event) => { event.stopPropagation(); onMove(); }}>+ Add to Vault</PillButton>
         )}
       </div>
     </button>
@@ -679,17 +675,7 @@ export default function WatchlistPage() {
               <div className="mb-2 flex items-center justify-between">
                 <div className="text-[11px] font-black uppercase tracking-[0.16em]" style={{ color: "var(--theme-gold,#C8CDD2)" }}>Notes</div>
                 {canEditSelected && !editingNotes && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setNotesDraft(selected.notes ?? "");
-                      setEditingNotes(true);
-                    }}
-                    className="rounded-[6px] border border-[rgba(203,208,213,0.28)] px-3 py-1 text-xs font-bold"
-                    style={{ color: "var(--theme-gold,#C8CDD2)" }}
-                  >
-                    Edit
-                  </button>
+                  <PillButton size="compact" onClick={() => { setNotesDraft(selected.notes ?? ""); setEditingNotes(true); }}>Edit</PillButton>
                 )}
               </div>
               {editingNotes && canEditSelected ? (
@@ -718,16 +704,10 @@ export default function WatchlistPage() {
               </div>
             </div>
 
-            <div className="mt-5 grid grid-cols-3 gap-3">
-              <button type="button" onClick={() => handleMove(selected)} className="rounded-[7px] px-4 py-3 text-sm font-black" style={{ background: "linear-gradient(135deg,#8C9298,#C8CDD2)", color: "#0B0B0B" }}>
-                + Add to Vault
-              </button>
-              <button type="button" onClick={() => handleDismiss(selected)} className="rounded-[7px] border border-[rgba(203,208,213,0.22)] px-4 py-3 text-sm font-bold" style={{ color: "var(--theme-text-primary,#ECEDEF)" }}>
-                Dismiss
-              </button>
-              <button type="button" onClick={shareSelected} className="rounded-[7px] border border-[rgba(203,208,213,0.22)] px-4 py-3 text-sm font-bold" style={{ color: "var(--theme-gold,#C8CDD2)" }}>
-                Share
-              </button>
+            <div className="mt-5 flex flex-wrap gap-2">
+              <PillButton variant="active" className="font-black" onClick={() => handleMove(selected)}>+ Add to Vault</PillButton>
+              <PillButton onClick={() => handleDismiss(selected)}>Dismiss</PillButton>
+              <PillButton onClick={shareSelected}>Share</PillButton>
             </div>
           </aside>
         )}

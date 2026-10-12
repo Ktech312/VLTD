@@ -1,5 +1,6 @@
 "use client";
 
+import { PillButton } from "@/components/ui/PillButton";
 import { useState } from "react";
 
 export default function NewsletterSignup({ source = "learn" }: { source?: string }) {
@@ -59,17 +60,12 @@ export default function NewsletterSignup({ source = "learn" }: { source?: string
             if (status === "error") setStatus("idle");
           }}
           placeholder="Your email address"
-          className="min-h-10 w-full min-w-0 flex-1 rounded-[6px] border border-[color:var(--border)] bg-[color:var(--surface)] px-3 text-sm text-[color:var(--fg)] outline-none placeholder:text-[color:var(--muted2)] focus:border-[color:var(--theme-gold,#C8CDD2)]"
+          className="h-11 w-full min-w-0 flex-1 rounded-[8px] border md:h-9 border-[color:var(--border)] bg-[color:var(--surface)] px-3 text-sm text-[color:var(--fg)] outline-none placeholder:text-[color:var(--muted2)] focus:border-[color:var(--theme-gold,#C8CDD2)]"
           aria-label="Email address"
         />
-        <button
-          type="submit"
-          disabled={status === "loading"}
-          className="min-h-10 shrink-0 rounded-[6px] px-5 text-sm font-bold disabled:opacity-60"
-          style={{ background: "var(--theme-gold-gradient)", boxShadow: "var(--theme-gold-glow)", color: "#0B0B0B" }}
-        >
+        <PillButton type="submit" variant="active" disabled={status === "loading"} className="shrink-0 font-black">
           {status === "loading" ? "Subscribing…" : "Subscribe"}
-        </button>
+        </PillButton>
       </div>
       {status === "error" ? (
         <p className="text-xs text-[color:#f0857d]">{message}</p>

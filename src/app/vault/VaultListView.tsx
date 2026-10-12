@@ -523,7 +523,7 @@ function VaultCard({
                   setEditingField("");
                 }
               }}
-              className="h-6 w-20 rounded-md bg-[color:var(--pill)] px-2 text-[11px] ring-1 ring-[color:var(--border)] focus:outline-none"
+              aria-label="Value" className="h-9 w-24 rounded-[8px] bg-[color:var(--pill)] px-2 text-[13px] ring-1 ring-[color:var(--border)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--pill-active-ring)] md:h-7"
             />
           ) : (
             // Single number: the current value itself, colored by gain/loss
@@ -534,7 +534,7 @@ function VaultCard({
               type="button"
               onClick={() => setEditingField("value")}
               className={[
-                "block text-left font-semibold leading-none hover:opacity-80 vltd-keep-color",
+                "relative block text-left font-semibold leading-none hover:opacity-80 vltd-keep-color max-md:after:absolute max-md:after:inset-x-0 max-md:after:-inset-y-3 max-md:after:content-['']",
                 marketValue > 0 || totalCost(item) > 0 ? "text-[20px]" : "text-[15px]",
               ].join(" ")}
               title={marketValue <= 0 && totalCost(item) > 0 ? "Purchase price. Not priced yet. Tap to add a value." : undefined}
@@ -1688,18 +1688,19 @@ export default function VaultListView({ lockedUniverse }: { lockedUniverse?: Uni
                 <button
                   type="button"
                   onClick={() => setUniverseFilter("ALL")}
-                  className={["inline-flex min-h-[42px] items-center rounded-[7px] px-4 text-sm font-semibold ring-1", universeFilter === "ALL" ? "bg-[color:var(--pill-active-bg)] text-[color:var(--pill-active-fg)] ring-[color:var(--pill-active-bg)]" : "bg-[color:var(--pill)] ring-[color:var(--border)]"].join(" ")}
+                  className={["inline-flex min-h-11 items-center rounded-[8px] px-4 text-sm font-semibold ring-1", universeFilter === "ALL" ? "bg-[color:var(--pill-active-bg)] text-[color:var(--pill-active-fg)] ring-[color:var(--pill-active-bg)]" : "bg-[color:var(--pill)] ring-[color:var(--border)]"].join(" ")}
                 >
                   All
                 </button>
                 <button
                   type="button"
                   onClick={() => setShowUniverseMenu((value) => !value)}
-                  className="hidden min-h-[42px] items-center rounded-[7px] px-4 text-sm font-semibold ring-1 sm:inline-flex"
+                  className="hidden min-h-11 items-center gap-1.5 rounded-[8px] px-4 text-sm font-semibold ring-1 sm:inline-flex"
                   style={{ background: "var(--pill)", borderColor: "var(--border)", color: "var(--fg)" }}
                   aria-expanded={showUniverseMenu}
+                  aria-haspopup="true"
                 >
-                  Show v
+                  Show <AppIcon name="chevronDown" size={16} />
                 </button>
               </div>
 
@@ -1720,7 +1721,7 @@ export default function VaultListView({ lockedUniverse }: { lockedUniverse?: Uni
                       return (
                         <label
                           key={category.key}
-                          className="flex min-h-[34px] cursor-pointer items-center gap-2 rounded-[7px] px-2 text-sm"
+                          className="flex min-h-11 cursor-pointer items-center gap-2 rounded-[8px] px-2 text-sm md:min-h-9"
                           style={{ color: "var(--fg)" }}
                         >
                           <input

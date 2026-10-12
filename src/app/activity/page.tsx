@@ -280,15 +280,15 @@ function ActivityRow({ event, selected, onSelect }: { event: ActivityEvent; sele
     <button
       type="button"
       onClick={onSelect}
-      className="grid w-full grid-cols-[78px_50px_70px_minmax(0,1fr)_minmax(150px,220px)_150px] items-center gap-4 rounded-[7px] border p-4 text-left transition hover:-translate-y-0.5"
+      className="grid w-full grid-cols-[auto_minmax(0,1fr)] items-center gap-x-3 gap-y-2 rounded-[7px] border p-3 text-left transition hover:-translate-y-0.5 md:grid-cols-[78px_50px_70px_minmax(0,1fr)_minmax(150px,220px)_150px] md:gap-4 md:p-4"
       style={{
         background: "var(--theme-card,rgba(15,25,45,0.88))",
         borderColor: selected ? "var(--theme-gold,#C8CDD2)" : "rgba(203,208,213,0.22)",
         boxShadow: selected ? "0 0 0 1px rgba(203,208,213,0.2), 0 18px 38px rgba(0,0,0,0.28)" : "none",
       }}
     >
-      <div className="relative text-sm after:content-[''] after:pointer-events-none after:absolute after:top-1/2 after:right-[-10px] after:h-11 after:w-px after:-translate-y-1/2 after:bg-[color:var(--border-strong)]" style={{ color: "var(--theme-text-muted,#61656B)" }}>{formatClock(event.timestamp)}</div>
-      <div className="grid h-11 w-11 place-items-center justify-self-center rounded-full border" style={{ borderColor: colorForKind(event.kind), color: colorForKind(event.kind), background: "rgba(0,0,0,0.24)" }}>
+      <div className="relative hidden text-sm md:block after:content-[''] after:pointer-events-none after:absolute after:top-1/2 after:right-[-10px] after:h-11 after:w-px after:-translate-y-1/2 after:bg-[color:var(--border-strong)]" style={{ color: "var(--theme-text-muted,#61656B)" }}>{formatClock(event.timestamp)}</div>
+      <div className="hidden h-11 w-11 place-items-center justify-self-center rounded-full border md:grid" style={{ borderColor: colorForKind(event.kind), color: colorForKind(event.kind), background: "rgba(0,0,0,0.24)" }}>
         <Glyph name={iconForKind(event.kind)} size={19} />
       </div>
       <ActivityThumb event={event} />
@@ -297,7 +297,7 @@ function ActivityRow({ event, selected, onSelect }: { event: ActivityEvent; sele
         <div className="truncate text-base" style={{ color: "var(--theme-text-primary,#ECEDEF)" }}>{event.title}</div>
         <div className="mt-1 truncate text-sm" style={{ color: "var(--theme-text-muted,#61656B)" }}>{event.detail}</div>
       </div>
-      <div className="relative min-w-0 pl-5 before:content-[''] before:pointer-events-none before:absolute before:left-0 before:top-1/2 before:h-11 before:w-px before:-translate-y-1/2 before:bg-[color:var(--border-strong)]">
+      <div className="relative col-span-2 min-w-0 md:col-span-1 md:pl-5 max-md:before:hidden before:content-[''] before:pointer-events-none before:absolute before:left-0 before:top-1/2 before:h-11 before:w-px before:-translate-y-1/2 before:bg-[color:var(--border-strong)]">
         {showValue && event.newValue ? (
           <div className="text-[22px] font-black text-[color:var(--info,#52D6F4)]">
             {event.previousValue ? `${formatMoney(event.previousValue)} -> ` : ""}
@@ -312,7 +312,7 @@ function ActivityRow({ event, selected, onSelect }: { event: ActivityEvent; sele
           </div>
         )}
       </div>
-      <div className="relative pl-5 text-right text-sm before:content-[''] before:pointer-events-none before:absolute before:left-0 before:top-1/2 before:h-11 before:w-px before:-translate-y-1/2 before:bg-[color:var(--border-strong)]" style={{ color: "var(--theme-text-muted,#61656B)" }}>
+      <div className="relative col-span-2 text-sm md:col-span-1 md:pl-5 md:text-right max-md:before:hidden before:content-[''] before:pointer-events-none before:absolute before:left-0 before:top-1/2 before:h-11 before:w-px before:-translate-y-1/2 before:bg-[color:var(--border-strong)]" style={{ color: "var(--theme-text-muted,#61656B)" }}>
         {showEvidence ? (
           <>
             {event.confidence && <div>{event.confidence} confidence</div>}

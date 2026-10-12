@@ -1,5 +1,6 @@
 "use client";
 
+import { PillButton } from "@/components/ui/PillButton";
 import { useState } from "react";
 
 import { enqueueVaultItemSync, processVaultSyncQueue } from "@/lib/vaultSyncQueue";
@@ -88,22 +89,8 @@ export default function SellItemButton({ item }: { item: VaultItem }) {
   }
 
   return (
-    <button
-      type="button"
-      onClick={() => void handleSell()}
-      disabled={loading}
-      // "bg-red" and "vltd-keep-color" both matter beyond styling here:
-      // theme-override.css force-colors buttons (and anything matching
-      // `[class*="opacity-5"]`, which `disabled:opacity-50` below also
-      // accidentally matches as a substring) in light theme unless one of
-      // these exact escape-hatch strings is present in the class list.
-      className="inline-flex min-h-7 items-center justify-center rounded-[7px] bg-red-500/15 px-3 py-1 text-xs font-semibold transition disabled:opacity-50 vltd-keep-color"
-      style={{
-        "--vltd-keep-color": "var(--status-loss, #E05252)",
-        boxShadow: "inset 0 0 0 1px color-mix(in srgb, var(--status-loss, #E05252) 38%, transparent)",
-      } as React.CSSProperties}
-    >
+    <PillButton size="compact" variant="danger" onClick={() => void handleSell()} disabled={loading}>
       {loading ? "Selling..." : "Sell"}
-    </button>
+    </PillButton>
   );
 }
