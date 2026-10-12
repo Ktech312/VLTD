@@ -65,6 +65,8 @@
 
 :root {
   --radius: 4px;
+  /* Text colour that sits on the gold highlight: dark on the dark themes, white on the light themes. */
+  --on-gold: #05080b;
 
   /* =========================================================
      THEME SYSTEM DEFAULTS (deep-vault)
@@ -320,6 +322,7 @@
 }
 
 .theme-light {
+  --on-gold: #ffffff;
   --bg: var(--theme-bg, #F5F0E8);
   /* Override vltd-design.css hardcoded dark vars so vltd-page-depth/grid render correctly on light themes */
   --vltd-bg: var(--theme-bg, #F5F0E8);

@@ -266,9 +266,11 @@ function MiniCalendar({ event }: { event: CollectorEvent }) {
         {cells.map((day, index) => (
           <span
             key={`${day}-${index}`}
-            className="grid h-6 place-items-center rounded-full"
+            className="vltd-keep-color grid h-6 place-items-center rounded-full"
             style={{
-              color: day === activeDay ? "#05080b" : day ? "var(--fg)" : "transparent",
+              // Text on the gold highlight: dark on the dark themes, white on the light ones (--on-gold, globals.css).
+              color: day === activeDay ? "var(--on-gold, #05080b)" : day ? "var(--fg)" : "transparent",
+              ["--vltd-keep-color" as string]: day === activeDay ? "var(--on-gold, #05080b)" : day ? "var(--fg)" : "transparent",
               background: day === activeDay ? "var(--theme-gold)" : "transparent",
               fontWeight: day === activeDay ? 900 : 600,
             }}
