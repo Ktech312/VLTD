@@ -555,7 +555,7 @@ export default function MuseumPage() {
       <PageHeader
         title="Exhibitions"
         description="Curate public rooms from your private vault."
-        contentClassName={selectedEntry ? "max-w-[1300px]" : "max-w-[900px]"}
+        contentClassName={selectedEntry ? "max-w-[1480px]" : "max-w-[900px]"}
         actions={
           <>
             <ToolsMenu items={[{ key: "halls", label: "Build exhibition from search", description: "Search your vault, pick items, save as an exhibition", href: "/vault/halls" }]} />
@@ -573,7 +573,7 @@ export default function MuseumPage() {
         }
       />
       <main className="text-[color:var(--fg)]">
-      <div className={`mx-auto px-4 pb-3 sm:px-6 sm:pb-4 ${selectedEntry ? "max-w-[1300px]" : "max-w-[900px]"}`}>
+      <div className={`mx-auto px-4 pb-3 sm:px-6 sm:pb-4 lg:px-8 ${selectedEntry ? "max-w-[1480px]" : "max-w-[900px]"}`}>
         <input
           ref={coverInputRef}
           type="file"

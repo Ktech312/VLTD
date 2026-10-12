@@ -1,6 +1,6 @@
 "use client";
 
-import { VaultLocalNav } from "@/components/SectionNav";
+import { VaultNav } from "@/components/SectionNav";
 import { useRouter } from "next/navigation";
 import AddItemMenu from "@/components/AddItemMenu";
 import VaultToolsMenu from "@/components/VaultToolsMenu";
@@ -1645,7 +1645,7 @@ export default function VaultListView({ lockedUniverse }: { lockedUniverse?: Uni
             ? VAULT_UNIVERSES.find((entry) => entry.key === lockedUniverse)?.description ?? "Items in this universe."
             : "Every item you own, documented and searchable."
         }
-        contentClassName="max-w-[1500px]"
+        contentClassName="max-w-[1480px]"
         actions={
           <>
             {lockedUniverse ? <PillButton href="/vault">All Universes</PillButton> : null}
@@ -1655,12 +1655,10 @@ export default function VaultListView({ lockedUniverse }: { lockedUniverse?: Uni
           </>
         }
       />
-      <div className="mx-auto max-w-[1500px] px-3 pb-3 sm:px-5">
-        <VaultLocalNav activeKey="items" />
-      </div>
+      <VaultNav activeKey="items" />
       <main className="text-[color:var(--fg)]">
       {!initialLoadComplete ? (
-        <div className="mx-auto max-w-[1500px] px-3 pb-4 sm:px-5 sm:pb-5" aria-label="Loading your vault summary">
+        <div className="mx-auto max-w-[1480px] px-4 pb-4 sm:px-6 sm:pb-5 lg:px-8" aria-label="Loading your vault summary">
           <section className="mt-5 grid grid-cols-2 gap-2 lg:grid-cols-4">
             {Array.from({ length: 4 }).map((_, index) => (
               <div
@@ -1672,7 +1670,7 @@ export default function VaultListView({ lockedUniverse }: { lockedUniverse?: Uni
           <VaultLoadingSkeleton />
         </div>
       ) : (
-      <div className="mx-auto max-w-[1500px] px-3 pb-4 sm:px-5 sm:pb-5">
+      <div className="mx-auto max-w-[1480px] px-4 pb-4 sm:px-6 sm:pb-5 lg:px-8">
         <section className="mb-5">
           {items.length > 0 ? (
             <div className="mb-3 hidden flex-wrap gap-2 text-xs text-[color:var(--muted)] sm:flex">

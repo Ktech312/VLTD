@@ -417,6 +417,7 @@ export default function VltLoungePage() {
     <>
       <PageHeader
         title="VLT Lounge"
+        contentClassName="max-w-[1480px]"
         description={
           <>
             The collector clubhouse.<br className="hidden sm:block" /> Trusted talk. Real knowledge.
@@ -433,8 +434,8 @@ export default function VltLoungePage() {
           </>
         }
       />
-      <main className="mx-auto w-full max-w-[1440px] px-4 pb-16 sm:px-6 lg:px-8">
       <LoungeNav activeKey="community" />
+      <main className="mx-auto w-full max-w-[1480px] px-4 pb-16 sm:px-6 lg:px-8">
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,340px)_minmax(0,1fr)_minmax(0,340px)]">
         {/* ── LEFT: Lounge Live + Hot Threads ── */}
         <div className="flex flex-col gap-4">

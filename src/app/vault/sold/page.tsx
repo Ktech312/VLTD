@@ -625,11 +625,11 @@ export default function SoldPage() {
     <PageHeader
       title="Sold Items"
       description="Realized sales history using the same compact management layout as Vault."
-      contentClassName="max-w-[1500px]"
+      contentClassName="max-w-[1480px]"
       actions={<PillButton href="/sales">Sales History</PillButton>}
     />
     <main className="bg-[color:var(--bg)] text-[color:var(--fg)]">
-      <div className="mx-auto max-w-[1500px] px-3 pb-3 sm:px-4 sm:pb-4">
+      <div className="mx-auto max-w-[1480px] px-4 pb-3 sm:px-6 sm:pb-4 lg:px-8">
         <div className="mb-3"><VaultLocalNav activeKey="sold" /></div>
         <section className="relative overflow-hidden rounded-[18px] border border-[color:var(--theme-border)] bg-[color:var(--theme-card)] px-4 py-3 shadow-[0_14px_40px_rgba(0,0,0,0.2)]">
           <div className="relative flex flex-col gap-4">
