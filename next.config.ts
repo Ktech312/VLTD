@@ -1,6 +1,10 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+      // The commit this build was made from (set by Vercel), so a deployment can be matched to its commit.
+      env: {
+              NEXT_PUBLIC_COMMIT_SHA: process.env.VERCEL_GIT_COMMIT_SHA ?? "",
+      },
       async redirects() {
         return [
           {

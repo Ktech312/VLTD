@@ -43,7 +43,7 @@ export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   applicationName: "VLTD",
   // Stops the Pinterest browser extension from putting its Save button on top of our photos and controls.
-  other: { pinterest: "nopin" },
+  other: { pinterest: "nopin", "vltd-commit": process.env.NEXT_PUBLIC_COMMIT_SHA ?? "" },
   title: {
     default: "VLTD (Vaulted) | Collection Tracker for Cards, Comics & More",
     template: "%s | VLTD",
