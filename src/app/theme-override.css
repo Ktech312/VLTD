@@ -287,9 +287,9 @@
    — so anything that deliberately wants its own color needs the
    `vltd-keep-color` escape hatch below, same as the button/div rules. */
 .theme-light body [class*="text-muted"]:not(.vltd-dark-surface):not(.vltd-dark-surface *):not([class*="vltd-keep-color"]),
-.theme-light body [class*="opacity-5"]:not(.vltd-dark-surface):not(.vltd-dark-surface *):not([class*="vltd-keep-color"]),
-.theme-light body [class*="opacity-6"]:not(.vltd-dark-surface):not(.vltd-dark-surface *):not([class*="vltd-keep-color"]),
-.theme-light body [class*="opacity-7"]:not(.vltd-dark-surface):not(.vltd-dark-surface *):not([class*="vltd-keep-color"]) {
+.theme-light body [class*="opacity-5"]:not([class*="disabled:opacity"]):not([class*="hover:opacity"]):not([class*="group-hover:opacity"]):not(.vltd-dark-surface):not(.vltd-dark-surface *):not([class*="vltd-keep-color"]),
+.theme-light body [class*="opacity-6"]:not([class*="disabled:opacity"]):not([class*="hover:opacity"]):not([class*="group-hover:opacity"]):not(.vltd-dark-surface):not(.vltd-dark-surface *):not([class*="vltd-keep-color"]),
+.theme-light body [class*="opacity-7"]:not([class*="disabled:opacity"]):not([class*="hover:opacity"]):not([class*="group-hover:opacity"]):not(.vltd-dark-surface):not(.vltd-dark-surface *):not([class*="vltd-keep-color"]) {
   color: var(--theme-text-muted, #5A5A6A) !important;
   opacity: 1 !important;
 }

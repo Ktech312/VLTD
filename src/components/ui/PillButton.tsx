@@ -73,7 +73,8 @@ export function pillClassName(variant: PillVariant = "default", disabled = false
           "hover:bg-[color:var(--pill-hover)]",
         ].join(" ");
 
-  const disabledStyles = disabled ? "opacity-60 cursor-not-allowed active:scale-100" : "";
+  // .vltd-disabled (globals.css) instead of an opacity-N class: the light-theme legacy rule resets any class containing "opacity-6".
+  const disabledStyles = disabled ? "vltd-disabled cursor-not-allowed active:scale-100" : "";
 
   return [base, styles, disabledStyles, extra].filter(Boolean).join(" ");
 }

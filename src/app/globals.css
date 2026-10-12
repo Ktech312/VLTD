@@ -1121,6 +1121,11 @@ main {
    Apply to all selectable pills/cards/options across pages
 ========================================================= */
 
+/* Disabled state for shared controls. Not an opacity-N utility, so no theme rule can reset it. */
+.vltd-disabled {
+  opacity: 0.6;
+}
+
 .vltd-selectable {
   transition:
     box-shadow 180ms ease,

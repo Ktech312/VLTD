@@ -633,19 +633,19 @@ export default function SoldPage() {
           <div className="relative flex flex-col gap-4">
             <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
               <div className="rounded-[14px] bg-[color:var(--theme-elevated)] px-3 py-2 ring-1 ring-[color:var(--theme-border)]">
-                <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[color:var(--muted2)]">Sold</div>
+                <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[color:var(--muted)]">Sold</div>
                 <div className="mt-1 text-lg font-extrabold leading-none">{stats.count}</div>
               </div>
               <div className="rounded-[14px] bg-[color:var(--theme-elevated)] px-3 py-2 ring-1 ring-[color:var(--theme-border)]">
-                <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[color:var(--muted2)]">Revenue</div>
+                <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[color:var(--muted)]">Revenue</div>
                 <div className="mt-1 text-lg font-extrabold leading-none">{money(stats.realizedRevenue)}</div>
               </div>
               <div className="rounded-[14px] bg-[color:var(--theme-elevated)] px-3 py-2 ring-1 ring-[color:var(--theme-border)]">
-                <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[color:var(--muted2)]">Cost Basis</div>
+                <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[color:var(--muted)]">Cost Basis</div>
                 <div className="mt-1 text-lg font-extrabold leading-none">{money(stats.totalCost)}</div>
               </div>
               <div className="rounded-[14px] bg-[color:var(--theme-elevated)] px-3 py-2 ring-1 ring-[color:var(--theme-border)]">
-                <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[color:var(--muted2)]">Realized Profit</div>
+                <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[color:var(--muted)]">Realized Profit</div>
                 <div className={stats.totalProfit >= 0 ? "mt-1 text-lg font-extrabold leading-none text-emerald-300" : "mt-1 text-lg font-extrabold leading-none text-red-300"}>
                   {stats.totalProfit >= 0 ? "+" : ""}
                   {money(stats.totalProfit)}

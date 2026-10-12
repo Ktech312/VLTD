@@ -533,21 +533,11 @@ export default function VltLoungePage() {
           <section className="rounded-[8px] overflow-hidden" style={CARD}>
             <div className="flex items-center justify-between px-5 py-3" style={{ borderBottom: "1px solid var(--border)" }}>
               <Label>Community Discussions</Label>
-              <div className="flex items-center gap-1 rounded-[6px] p-1" style={{ background: "var(--pill)" }}>
+              <div className="flex flex-wrap items-center gap-2">
                 {(["hot", "new", "top"] as LoungeSort[]).map((option) => (
-                  <button
-                    key={option}
-                    type="button"
-                    onClick={() => setSort(option)}
-                    className="rounded-[5px] px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.08em]"
-                    style={{
-                      background: sort === option ? "var(--surface)" : "transparent",
-                      color: sort === option ? CYAN : "var(--muted2)",
-                      boxShadow: sort === option ? `0 0 10px rgba(79,211,238,0.18)` : "none",
-                    }}
-                  >
-                    {option}
-                  </button>
+                  <PillButton key={option} variant={sort === option ? "active" : "default"} onClick={() => setSort(option)}>
+                    {option.charAt(0).toUpperCase() + option.slice(1)}
+                  </PillButton>
                 ))}
               </div>
             </div>
