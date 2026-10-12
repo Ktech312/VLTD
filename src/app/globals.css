@@ -356,8 +356,8 @@
   /* The dark theme's pale cyan (--data-color, #4FD3EE) reads as washed-out
      grey against a light background instead of legible color — swap in a
      solid, higher-contrast blue for light themes only. */
-  --data-color: #1D6FE0;
-  --status-cyan: #1D6FE0;
+  --data-color: #1C69D5; /* 2026-10-12: 4.5:1 on Cloud and Steel cards (was 4.26:1) */
+  --status-cyan: #1C69D5;
   --vault-title-color: var(--data-color);
 }
 
