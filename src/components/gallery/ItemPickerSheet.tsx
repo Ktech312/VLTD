@@ -301,15 +301,19 @@ export function ItemPickerSheet({
       role="dialog"
       aria-modal="true"
       aria-label={pickerTitle ? "Choose items: " + pickerTitle : "Choose items for the exhibit"}
-      className="vltd-dark-surface"
       style={{
         position: "fixed",
         top: 0,
         left: 0,
         right: 0,
         bottom: 0,
-        zIndex: 9000,
-        background: "#080C14",
+        // Above the bottom tab bar (z 9999) so the confirm button is never hidden behind it on phones.
+        zIndex: 100000,
+        // Theme background over the theme's near-opaque nav colour: Platinum's background has see-through stops, so the page behind must not show.
+        background: "var(--theme-bg), var(--theme-nav-bg, #080C14)",
+        backdropFilter: "blur(18px)",
+        WebkitBackdropFilter: "blur(18px)",
+        color: "var(--fg)",
         display: "flex",
         flexDirection: "column",
         overflowY: "hidden",
@@ -336,7 +340,7 @@ export function ItemPickerSheet({
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search vault..."
-            className="bg-[color:var(--pill)] text-[color:var(--fg)] ring-1 ring-[color:var(--border)] transition focus:ring-[color:var(--pill-active-ring)] placeholder:text-[color:var(--muted)]"
+            className="bg-[color:var(--pill)] text-[color:var(--fg)] ring-1 ring-[color:var(--border)] transition focus:ring-[color:var(--pill-active-ring)] placeholder:text-[color:var(--muted)] max-md:min-h-11"
             style={{ width: "100%", borderRadius: 999, padding: "7px 14px 7px 32px", fontSize: 13, outline: "none", boxSizing: "border-box", border: "none" }}
           />
         </div>
@@ -425,7 +429,7 @@ export function ItemPickerSheet({
                     type="button"
                     onClick={() => addPage()}
                     className="flex min-h-11 w-full items-center rounded-[8px] px-2.5 text-left text-[13px] font-semibold md:min-h-9"
-                    style={{ color: "#67E8F9" }}
+                    style={{ color: "var(--fg)" }}
                   >
                     + New exhibit page
                   </button>
@@ -538,7 +542,7 @@ export function ItemPickerSheet({
                     onClick={() => canPick && toggleItem(item.id)}
                     aria-pressed={isSelected}
                     aria-label={item.title}
-                    className={["vltd-selectable transition", isSelected ? "vltd-selected ring-[color:var(--pill-active-ring)]" : "ring-1 ring-[color:var(--border)]"].join(" ")}
+                    className={["vltd-dark-surface vltd-selectable transition", isSelected ? "vltd-selected ring-[color:var(--pill-active-ring)]" : "ring-1 ring-[color:var(--border)]"].join(" ")}
                     style={{
                       position: "relative",
                       overflow: "hidden",
@@ -647,7 +651,7 @@ export function ItemPickerSheet({
             style={{ width: "100%", maxWidth: 340, borderRadius: 16, background: "var(--surface)", border: "1px solid var(--border)", padding: 16, color: "var(--fg)" }}
           >
             <div style={{ fontSize: 14, fontWeight: 700 }}>This page is full ({maxItems} items)</div>
-            <div style={{ marginTop: 6, fontSize: 13, lineHeight: 1.45, color: "rgba(255,255,255,0.75)" }}>
+            <div style={{ marginTop: 6, fontSize: 13, lineHeight: 1.45, color: "var(--muted)" }}>
               If you add more, it will start a new Exhibit page. Continue?
             </div>
             <div style={{ marginTop: 14, display: "flex", justifyContent: "flex-end", gap: 8 }}>
@@ -665,8 +669,8 @@ export function ItemPickerSheet({
           style={{
             flexShrink: 0,
             padding: "10px 14px max(env(safe-area-inset-bottom, 0px), 14px)",
-            borderTop: "1px solid rgba(255,255,255,0.14)",
-            background: "#0B111C",
+            borderTop: "1px solid var(--border)",
+            background: "var(--theme-nav-bg, #0B111C)",
           }}
         >
           <div style={stageStyle}>

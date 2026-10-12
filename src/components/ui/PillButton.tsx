@@ -38,12 +38,16 @@ type PillButtonProps = {
  * classes from here so the geometry stays in one place.
  */
 export function pillClassName(variant: PillVariant = "default", disabled = false, extra = "", size: PillSize = "default"): string {
+  // Icon-only compact controls (fixed w-8 width) get a 44px-wide phone target too; text pills keep their own width so neighbours never overlap.
+  const iconOnlyCompact = size === "compact" && /(^|\s)w-8(\s|$)/.test(extra);
   const geometry =
     size === "compact"
       ? [
           "relative h-8 md:h-7 px-2.5 text-xs font-medium",
           // 44px touch target on phones without growing the visual
-          "max-md:after:absolute max-md:after:inset-x-0 max-md:after:-inset-y-1.5 max-md:after:content-['']",
+          iconOnlyCompact
+            ? "max-md:after:absolute max-md:after:-inset-x-1.5 max-md:after:-inset-y-1.5 max-md:after:content-['']"
+            : "max-md:after:absolute max-md:after:inset-x-0 max-md:after:-inset-y-1.5 max-md:after:content-['']",
         ].join(" ")
       : "h-11 md:h-9 px-3 text-[13px] font-medium";
   const base = [

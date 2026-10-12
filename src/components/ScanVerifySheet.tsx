@@ -59,7 +59,7 @@ function confidenceColor(pct: number) {
 }
 
 const FIELD_CLS =
-  "h-8 w-full rounded-lg bg-[color:var(--surface)] px-2.5 text-[13px] ring-1 ring-[color:var(--border)]";
+  "h-8 max-md:h-11 w-full rounded-lg bg-[color:var(--surface)] px-2.5 text-[13px] ring-1 ring-[color:var(--border)]";
 
 export default function ScanVerifySheet({
   drafts,
@@ -234,13 +234,13 @@ export default function ScanVerifySheet({
                         </select>
                       </div>
 
-                      <div className="flex items-center gap-2">
+                      <div className="flex flex-wrap items-center gap-x-2 gap-y-3">
                         <input
                           value={d.purchasePrice}
                           onChange={(e) => onPatch(d.id, { purchasePrice: e.target.value })}
                           placeholder="Cost ($)"
                           inputMode="decimal"
-                          className={`${FIELD_CLS} w-16`}
+                          className={`${FIELD_CLS} w-20 shrink-0`}
                         />
                         <input
                           value={d.currentValue}
@@ -248,23 +248,12 @@ export default function ScanVerifySheet({
                           placeholder={d.vision?.estimatedValue ? `AI: $${d.vision.estimatedValue}` : "Value ($)"}
                           title={d.vision?.estimatedValue ? "The AI's guess. It is only saved if you type it in." : undefined}
                           inputMode="decimal"
-                          className={`${FIELD_CLS} w-16`}
+                          className={`${FIELD_CLS} w-20 shrink-0`}
                         />
-                        <button
-                          type="button"
-                          onClick={() => onRescan(d.id)}
-                          disabled={scanningId !== null || outOfScans}
-                          className="ml-auto shrink-0 text-[11px] font-semibold text-[color:var(--theme-gold,#C8CDD2)] underline-offset-2 hover:underline disabled:opacity-40 disabled:no-underline"
-                        >
+                        <PillButton size="compact" className="ml-auto shrink-0" onClick={() => onRescan(d.id)} disabled={scanningId !== null || outOfScans}>
                           {isScanning ? "Scanning…" : d.scanned ? "Rescan" : "Scan with AI"}
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => onRemove(d.id)}
-                          className="shrink-0 text-[11px] font-semibold text-[color:var(--muted)] transition hover:text-red-400 hover:underline"
-                        >
-                          Remove
-                        </button>
+                        </PillButton>
+                        <PillButton size="compact" variant="danger" className="shrink-0" onClick={() => onRemove(d.id)}>Remove</PillButton>
                       </div>
                     </div>
                   </div>

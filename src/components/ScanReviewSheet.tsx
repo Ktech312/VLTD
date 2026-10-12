@@ -75,7 +75,7 @@ export default function ScanReviewSheet({ items, removed, onRemove, onUndo, onCl
               {remaining.length} item{remaining.length !== 1 ? "s" : ""} ready to vault — remove any bad captures
             </div>
           </div>
-          <PillButton size="compact" onClick={onClose} ariaLabel="Close" title="Close" className="w-8 px-0! md:w-7">
+          <PillButton size="compact" onClick={onClose} ariaLabel="Close" title="Close" className="shrink-0 w-8 px-0! md:w-7">
             <AppIcon name="close" size={16} />
           </PillButton>
         </div>
@@ -110,9 +110,9 @@ export default function ScanReviewSheet({ items, removed, onRemove, onUndo, onCl
                   >
                     {item.frontObjectUrl ? (
                       // eslint-disable-next-line @next/next/no-img-element
-                      <img src={item.frontObjectUrl} alt={`Item ${num}`} className="h-14 w-10 rounded-xl object-cover" />
+                      <img src={item.frontObjectUrl} alt={`Item ${num}`} className="h-14 w-11 rounded-xl object-cover" />
                     ) : (
-                      <div className="h-14 w-10 rounded-xl bg-[color:var(--surface)]" />
+                      <div className="h-14 w-11 rounded-xl bg-[color:var(--surface)]" />
                     )}
                     {item.backObjectUrl ? (
                       // eslint-disable-next-line @next/next/no-img-element
@@ -187,7 +187,7 @@ export default function ScanReviewSheet({ items, removed, onRemove, onUndo, onCl
 
                   {/* Skip AI — opposite side of the thumbnail */}
                   {!isRemoved ? (
-                    <label className="flex shrink-0 flex-col items-center gap-1 text-[9px] font-semibold uppercase tracking-wide text-[color:var(--muted)]">
+                    <label className="flex shrink-0 flex-col items-center justify-center gap-1 max-md:min-h-11 max-md:min-w-11 text-[9px] font-semibold uppercase tracking-wide text-[color:var(--muted)]">
                       <input
                         type="checkbox"
                         checked={Boolean(item.skipAi)}
@@ -200,21 +200,9 @@ export default function ScanReviewSheet({ items, removed, onRemove, onUndo, onCl
 
                   {/* Action */}
                   {isRemoved ? (
-                    <button
-                      type="button"
-                      onClick={() => onUndo(item.id)}
-                      className="shrink-0 rounded-[7px] px-3 py-1.5 text-xs ring-1 ring-[color:var(--border)] transition hover:bg-[color:var(--pill)]"
-                    >
-                      Undo
-                    </button>
+                    <PillButton size="compact" className="shrink-0" onClick={() => onUndo(item.id)}>Undo</PillButton>
                   ) : (
-                    <button
-                      type="button"
-                      onClick={() => onRemove(item.id)}
-                      className="shrink-0 rounded-[7px] px-3 py-1.5 text-xs text-red-400 ring-1 ring-red-400/30 transition hover:bg-red-500/10"
-                    >
-                      Remove
-                    </button>
+                    <PillButton size="compact" variant="danger" className="shrink-0" onClick={() => onRemove(item.id)}>Remove</PillButton>
                   )}
                 </div>
               ))}
