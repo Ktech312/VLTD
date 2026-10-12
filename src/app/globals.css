@@ -2576,3 +2576,17 @@ html[data-vltd-logo="b"].theme-light .vltd-logo.vltd-logo-force-a .vltd-logo-bla
 html[data-vltd-logo="b"] .vltd-logo.vltd-logo-force-a .vltd-logo-color { display: none !important; }
 html:not([data-vltd-logo="b"]) .vltd-logo.vltd-logo-on-dark .vltd-logo-platinum { display: block !important; }
 html:not([data-vltd-logo="b"]) .vltd-logo.vltd-logo-on-dark .vltd-logo-black { display: none !important; }
+
+/* PageHeader's full-width coloured band, behind the header content (see components/layout/PageHeader.tsx). */
+.vltd-page-band::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 100vw;
+  transform: translateX(-50%);
+  background: var(--theme-nav-bg, rgba(16, 18, 21, 0.95));
+  z-index: -1;
+  pointer-events: none;
+}

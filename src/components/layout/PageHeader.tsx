@@ -34,23 +34,20 @@ export function PageHeader({
 }) {
   return (
     <div className="pt-6 pb-6">
+      {/* The coloured band is drawn behind the content (vltd-page-band) instead of making the content itself viewport-wide, so the
+          title and actions sit in the same column as the tab bar and page content under them, scrollbar or not. */}
       <div
-        className="relative left-1/2 w-screen -translate-x-1/2"
-        style={{ background: "var(--theme-nav-bg, rgba(16, 18, 21, 0.95))" }}
+        className={`vltd-page-band relative isolate mx-auto flex w-full flex-col gap-4 px-4 sm:px-6 lg:flex-row lg:min-h-[50px] lg:items-center lg:justify-between lg:px-8 ${contentClassName}`}
       >
-        <div
-          className={`mx-auto flex w-full flex-col gap-4 px-4 sm:px-6 lg:flex-row lg:min-h-[50px] lg:items-center lg:justify-between lg:px-8 ${contentClassName}`}
-        >
-          <div className="flex flex-wrap items-end gap-x-5 gap-y-1">
-            <h1 className={titleClassName}>{title}</h1>
-            {description ? (
-              <p className="pb-1 text-sm leading-tight" style={{ color: "var(--muted)" }}>
-                {description}
-              </p>
-            ) : null}
-          </div>
-          {actions ? <div className="flex flex-wrap shrink-0 items-center gap-2.5">{actions}</div> : null}
+        <div className="flex flex-wrap items-end gap-x-5 gap-y-1">
+          <h1 className={titleClassName}>{title}</h1>
+          {description ? (
+            <p className="pb-1 text-sm leading-tight" style={{ color: "var(--muted)" }}>
+              {description}
+            </p>
+          ) : null}
         </div>
+        {actions ? <div className="flex flex-wrap shrink-0 items-center gap-2.5">{actions}</div> : null}
       </div>
     </div>
   );
