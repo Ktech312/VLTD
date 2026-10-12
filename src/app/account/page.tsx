@@ -21,6 +21,8 @@ import { getProfileSafe, setProfileSafe, broadcastProfileChange } from "@/lib/us
 import { showToast } from "@/lib/toast";
 import { isPushSupported, getPushSubscriptionState, subscribeToPush, unsubscribeFromPush, type PushState } from "@/lib/pushNotifications";
 import { resolveAvatarSrc } from "@/lib/avatarResolve";
+import { readUniversePrefs, saveCollectionInterests, saveDisplayedUniverses } from "@/lib/universePrefs";
+import type { UniverseKey } from "@/lib/taxonomy";
 
 /** Normalize a stored focus value — treats the literal string "null" as empty. */
 function normalizeFocus(value: unknown): string {
@@ -71,8 +73,9 @@ export default function AccountPage() {
   const [country, setCountry] = useState("US");
   const [contactSaving, setContactSaving] = useState(false);
   const [contactSuccess, setContactSuccess] = useState("");
-  // Universe Focus
+  // Collection interests (Profile) and Universes displayed (Preferences) are two separate settings.
   const [focusedUniverses, setFocusedUniverses] = useState<string[]>([]);
+  const [displayedUniverses, setDisplayedUniverses] = useState<string[]>([]);
   const [showAllUniverses, setShowAllUniverses] = useState(false);
   const [universeFocusSaving, setUniverseFocusSaving] = useState(false);
   const [universeFocusSuccess, setUniverseFocusSuccess] = useState("");
@@ -116,17 +119,11 @@ export default function AccountPage() {
         setStateVal(status.activeProfile.state ?? "");
         setZip(status.activeProfile.zip ?? "");
         setCountry(status.activeProfile.country ?? "US");
-        const fu = (status.activeProfile as Record<string, unknown>).focused_universes;
-        const primary = normalizeFocus(status.activeProfile.primary_focus);
-        // Seed the multi-select from focused_universes; fall back to the legacy
-        // single primary_focus (only when it's a real universe key).
-        const seeded = Array.isArray(fu) && fu.length > 0
-          ? (fu as string[]).filter((k) => isUniverseKey(k))
-          : primary && isUniverseKey(primary)
-            ? [primary]
-            : [];
-        setFocusedUniverses(seeded);
-        setShowAllUniverses(!Array.isArray(fu) || (fu as string[]).length === 0);
+        // Two separate saved settings (see lib/universePrefs.ts): what you collect, and which universes are displayed.
+        const prefs = readUniversePrefs(status.activeProfile as unknown as Record<string, unknown>);
+        setFocusedUniverses(prefs.interests);
+        setDisplayedUniverses(prefs.displayed ?? []);
+        setShowAllUniverses(prefs.displayed === null);
 
         // Avatar emoji + uploaded image are both real (profiles table) --
         // whichever one is actually set wins; "mode" here just remembers
@@ -273,13 +270,14 @@ export default function AccountPage() {
         bio: bio || null,
         is_public: isPublic,
       });
-      // Persist the multi-select collection focus alongside the primary.
-      const supabase = getSupabaseBrowserClient();
-      if (supabase) {
-        await supabase
-          .from("profiles")
-          .update({ focused_universes: focusedUniverses.length > 0 ? focusedUniverses : null })
-          .eq("id", profileId);
+      // Collection interests save on their own; they never change which universes are displayed.
+      try {
+        await saveCollectionInterests(profileId, focusedUniverses as UniverseKey[]);
+      } catch (interestsError) {
+        setError(
+          "Your profile was saved, but your collection interests could not be saved yet: " +
+            (interestsError instanceof Error ? interestsError.message : "unknown error")
+        );
       }
       void syncPublicProfile(profileId);
       setSuccess("Account updated.");
@@ -320,11 +318,15 @@ export default function AccountPage() {
     setUniverseFocusSaving(true);
     setUniverseFocusSuccess("");
     try {
-      const supabase = getSupabaseBrowserClient();
-      if (!supabase) throw new Error("Supabase not ready");
-      const val = showAllUniverses ? null : (focusedUniverses.length > 0 ? focusedUniverses : null);
-      await supabase.from("profiles").update({ focused_universes: val }).eq("id", profileId);
-      setUniverseFocusSuccess("Universe focus saved.");
+      const val = showAllUniverses ? null : (displayedUniverses.length > 0 ? (displayedUniverses as UniverseKey[]) : null);
+      await saveDisplayedUniverses(profileId, val);
+      // The Vault remembers its own copy on this device; refresh it so the change shows there right away.
+      try {
+        window.localStorage.removeItem("vltd_visible_universe_chips");
+      } catch {
+        /* storage blocked: the Vault simply reloads the saved setting */
+      }
+      setUniverseFocusSuccess("Saved.");
     } catch (err) {
       setUniverseFocusSuccess(err instanceof Error ? err.message : "Failed to save.");
     } finally {
@@ -962,13 +964,13 @@ export default function AccountPage() {
           {!showAllUniverses && (
             <div className="flex flex-wrap gap-2 mb-4">
               {UNIVERSE_KEYS.map((key) => {
-                const active = focusedUniverses.includes(key);
+                const active = displayedUniverses.includes(key);
                 return (
                   <button
                     key={key}
                     type="button"
                     onClick={() =>
-                      setFocusedUniverses((prev) =>
+                      setDisplayedUniverses((prev) =>
                         active ? prev.filter((k) => k !== key) : [...prev, key]
                       )
                     }
@@ -1000,7 +1002,7 @@ export default function AccountPage() {
               className="inline-flex h-12 items-center rounded-[8px] px-6 text-sm font-black text-[#0B0B0B] transition hover:-translate-y-0.5 hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-50"
               style={{ background: "var(--theme-gold-gradient)", boxShadow: "var(--theme-gold-glow)" }}
             >
-              {universeFocusSaving ? "Saving..." : "Save focus"}
+              {universeFocusSaving ? "Saving..." : "Save"}
             </button>
             {universeFocusSuccess && (
               <span className="text-sm text-emerald-400">{universeFocusSuccess}</span>

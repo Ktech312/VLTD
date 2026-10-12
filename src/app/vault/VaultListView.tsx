@@ -45,6 +45,7 @@ import {
 import { hasSupabaseEnv } from "@/lib/vaultCloud";
 import { deleteVaultItemEverywhere, deleteVaultItemsEverywhere } from "@/lib/vaultActions";
 import { getOnboardingStatus, getStoredActiveProfileId, listMyProfiles, type ProfileRow } from "@/lib/auth";
+import { readUniversePrefs, saveDisplayedUniverses } from "@/lib/universePrefs";
 
 const ACTIVE_PROFILE_EVENT = "vltd:active-profile";
 const SALES_KEY = "vltd_sales_history";
@@ -1353,9 +1354,37 @@ export default function VaultListView({ lockedUniverse }: { lockedUniverse?: Uni
       const base = current ?? defaultVisibleUniverseKeys;
       const next = Array.from(new Set(updater(base))).filter(isUniverseKey);
       window.localStorage.setItem(VISIBLE_UNIVERSE_CHIPS_LS_KEY, JSON.stringify(next));
+      // Also saved to the profile (Settings > Preferences > Universes displayed), so every device agrees.
+      const profileId = getStoredActiveProfileId();
+      if (profileId) void saveDisplayedUniverses(profileId, next).catch(() => {});
       return next;
     });
   }
+
+  // Universes displayed is a saved setting. When the profile has one, it decides which universe chips show here.
+  useEffect(() => {
+    let active = true;
+    async function loadDisplayed() {
+      try {
+        const status = await getOnboardingStatus();
+        if (!active || !status.activeProfile) return;
+        const prefs = readUniversePrefs(status.activeProfile as unknown as Record<string, unknown>);
+        if (prefs.displayed) {
+          setVisibleUniverseKeys(prefs.displayed);
+          window.localStorage.setItem(VISIBLE_UNIVERSE_CHIPS_LS_KEY, JSON.stringify(prefs.displayed));
+        } else {
+          setVisibleUniverseKeys(null);
+          window.localStorage.removeItem(VISIBLE_UNIVERSE_CHIPS_LS_KEY);
+        }
+      } catch {
+        /* keep what this device remembered */
+      }
+    }
+    void loadDisplayed();
+    return () => {
+      active = false;
+    };
+  }, []);
 
   // Same switch as the Home page (remembered on this device): count un-priced
   // items at purchase price ("fill", default) or show priced items only.

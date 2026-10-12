@@ -9,6 +9,7 @@ import { PageHeader } from "@/components/layout/PageHeader";
 import { DiscoverNav } from "@/components/SectionNav";
 import { Glyph } from "@/components/ui/Glyph";
 import { getCurrentUser, getOnboardingStatus } from "@/lib/auth";
+import { readUniversePrefs } from "@/lib/universePrefs";
 import { buildUserPreferences, sortByPersonalization } from "@/lib/personalization";
 import { getSeedAvatarUrlForProfile, isRenderableAvatarUrl } from "@/lib/seedAvatar";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
@@ -128,6 +129,9 @@ export default function DiscoverPage() {
   const [itemFactsById, setItemFactsById] = useState<Map<string, GalleryItemFact>>(new Map());
   const [userPrefs, setUserPrefs] = useState<ReturnType<typeof buildUserPreferences> | null>(null);
   const [signedIn, setSignedIn] = useState(false);
+  // Universes displayed (a saved setting, null = all). Separate from what you collect.
+  const [displayedUniverses, setDisplayedUniverses] = useState<UniverseKey[] | null>(null);
+  const visibleUniverseKeys = useMemo<UniverseKey[]>(() => displayedUniverses ?? UNIVERSE_KEYS, [displayedUniverses]);
 
   useEffect(() => {
     let active = true;
@@ -139,11 +143,11 @@ export default function DiscoverPage() {
       if (data.user) {
         try {
           const status = await getOnboardingStatus();
-          const focused = (status.activeProfile as Record<string, unknown> | null)?.focused_universes;
-          if (Array.isArray(focused)) {
-            const first = focused.find((key): key is UniverseKey => typeof key === "string" && isUniverseKey(key));
-            if (first) setActiveTab(first);
-          }
+          const prefs = readUniversePrefs(status.activeProfile as unknown as Record<string, unknown> | null);
+          setDisplayedUniverses(prefs.displayed);
+          // Start on what you collect, as long as that universe is one you chose to display.
+          const first = prefs.interests.find((key) => !prefs.displayed || prefs.displayed.includes(key));
+          if (first) setActiveTab(first);
         } catch {
           // Non-critical personalization hint.
         }
@@ -351,7 +355,7 @@ export default function DiscoverPage() {
       setReporting(false);
     }
   }
-  const universeCounts = UNIVERSE_KEYS.map((key) => ({
+  const universeCounts = visibleUniverseKeys.map((key) => ({
     key,
     count: galleries.filter((gallery) => gallery.universeKey === key).length,
   })).filter((item) => item.count > 0).slice(0, 7);
@@ -433,7 +437,7 @@ export default function DiscoverPage() {
               style={{ background: "var(--theme-card,rgba(15,25,45,0.85))", color: "var(--theme-text-primary,#ECEDEF)" }}
             >
               <option value="All">All universes</option>
-              {UNIVERSE_KEYS.map((key) => (
+              {visibleUniverseKeys.map((key) => (
                 <option key={key} value={key}>{UNIVERSE_LABEL[key]}</option>
               ))}
             </select>

@@ -240,7 +240,7 @@ export default function OnboardingPage() {
           if (supabase) {
             await supabase
               .from("profiles")
-              .update({ focused_universes: focusedUniverses })
+              .update({ collection_interests: focusedUniverses })
               .eq("id", profileData.id);
           }
         } catch (universeErr) {

@@ -14,8 +14,8 @@ import type { Object3D } from "three";
 
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 import { setRoomBakedAsset } from "@/lib/museumCampusConfig";
+import { BAKE_BUCKET } from "@/lib/museumBakeStorage";
 
-const BAKE_BUCKET = "museum-room-bakes";
 
 /** Exports a Three.js object (Museum Builder's own room scene/group) to a
  * binary .glb ArrayBuffer. Wrapped in a Promise since GLTFExporter's
@@ -65,12 +65,10 @@ export async function publishRoomBake(
     .upload(path, glb, { contentType: "model/gltf-binary", upsert: true });
   if (uploadError) return { ok: false, error: uploadError.message };
 
-  const { data: publicUrlData } = supabase.storage.from(BAKE_BUCKET).getPublicUrl(path);
-  const url = publicUrlData.publicUrl;
-  // Cache-bust: the path is fixed per room, so a stale browser/CDN cache of
-  // the previous bake needs busting on every publish, not just on the
-  // first one.
-  const bustedUrl = `${url}?v=${Date.now()}`;
+  // The bucket is private (Museum Alpha is owner-only), so what is stored is the file path plus a version,
+  // not a public link. Loading turns it into a short-lived signed link (museumBakeStorage.ts). The version
+  // changes on every publish so a stale cached copy is never used.
+  const bustedUrl = `${path}?v=${Date.now()}`;
 
   const saveResult = await setRoomBakedAsset(roomId, bustedUrl);
   if (!saveResult.ok) return { ok: false, error: saveResult.error ?? "Uploaded, but failed to save the link." };

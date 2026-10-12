@@ -9,6 +9,10 @@ export type ProfileRow = {
   display_name: string;
   profile_type: AuthProfileType;
   primary_focus?: string | null;
+  /** What you collect (profile, personalises Discover). Separate from displayed_universes. */
+  collection_interests?: string[] | null;
+  /** Which universes VLTD shows you (Vault chips, Discover); null = all. Separate from collection_interests. */
+  displayed_universes?: string[] | null;
   bio?: string | null;
   avatar_emoji?: string | null;
   avatar_url?: string | null;

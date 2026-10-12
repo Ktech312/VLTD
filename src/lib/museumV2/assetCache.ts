@@ -7,6 +7,7 @@
 import * as THREE from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 
+import { getBakeSignedUrl } from "@/lib/museumBakeStorage";
 import { disposeObject3D } from "./disposal";
 
 type CacheEntry = { promise: Promise<THREE.Group>; refCount: number };
@@ -28,14 +29,18 @@ export async function loadBakedRoom(url: string): Promise<THREE.Group> {
   let entry = cache.get(url);
   if (!entry) {
     entry = {
-      promise: new Promise<THREE.Group>((resolve, reject) => {
-        gltfLoader.load(
-          url,
-          (gltf) => resolve(gltf.scene),
-          undefined,
-          (error) => reject(error instanceof Error ? error : new Error(String(error)))
-        );
-      }),
+      // The bake bucket is private: turn the stored path into a short-lived signed link first.
+      promise: getBakeSignedUrl(url).then(
+        (signedUrl) =>
+          new Promise<THREE.Group>((resolve, reject) => {
+            gltfLoader.load(
+              signedUrl,
+              (gltf) => resolve(gltf.scene),
+              undefined,
+              (error) => reject(error instanceof Error ? error : new Error(String(error)))
+            );
+          })
+      ),
       refCount: 0,
     };
     cache.set(url, entry);
