@@ -99,7 +99,7 @@ export function ThemePicker() {
                   }}
                 >
                   {mode === 'dark' ? <MoonIcon /> : <SunIcon />}
-                  <span className="text-[8px] font-semibold uppercase tracking-wide">{mode === 'dark' ? 'Dark' : 'Light'}</span>
+                  <span className="text-[11px] font-semibold uppercase tracking-wide">{mode === 'dark' ? 'Dark' : 'Light'}</span>
                 </button>
               )
             })}
