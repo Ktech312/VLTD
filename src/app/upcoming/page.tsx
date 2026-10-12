@@ -123,7 +123,7 @@ function IssueCard({
                   title={COMIC_STATUS_LABEL[s]}
                   onClick={(e) => { e.preventDefault(); e.stopPropagation(); onStatus(issue, on ? null : s); }}
                   className={[
-                    "h-11 min-w-0 flex-1 rounded-[8px] px-1 text-[11px] ring-1 transition select-none md:h-9",
+                    "h-11 min-w-0 flex-1 rounded-[8px] px-0.5 text-[10px] ring-1 transition select-none md:h-9",
                     "focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--pill-active-ring)]",
                     on
                       ? "bg-[color:var(--pill)] font-semibold text-[color:var(--fg)] ring-[color:var(--pill-active-ring)] vltd-selected"
@@ -460,7 +460,7 @@ export default function UpcomingPage() {
                     <div className="vltd-skeleton-pulse mb-2.5 h-4 w-[60px] rounded-[6px] bg-[color:var(--pill)]" />
                     <div className="flex gap-2.5 overflow-hidden">
                       {[1, 2, 3, 4, 5].map((c) => (
-                        <div key={c} className="vltd-skeleton-pulse aspect-[2/3] w-[140px] shrink-0 rounded-[10px] bg-[color:var(--pill)]" />
+                        <div key={c} className="vltd-skeleton-pulse aspect-[2/3] w-[156px] shrink-0 rounded-[10px] bg-[color:var(--pill)]" />
                       ))}
                     </div>
                   </div>
@@ -480,7 +480,7 @@ export default function UpcomingPage() {
                 </div>
                 <div className="year-row flex snap-x snap-mandatory gap-2.5 overflow-x-auto pb-2">
                   {group.issues.map((issue) => (
-                    <div key={issue.id} className="w-[140px] shrink-0 snap-start">
+                    <div key={issue.id} className="w-[156px] shrink-0 snap-start">
                       <IssueCard issue={issue} status={statusOf(issue)} onStatus={handleStatus} />
                     </div>
                   ))}
