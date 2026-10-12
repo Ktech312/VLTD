@@ -224,20 +224,9 @@ export default function NewMuseumGalleryPage() {
                   <>
                     <div className="flex flex-wrap gap-2">
                       {ACCESS_PILLS.map((pill) => (
-                        <button
-                          key={pill.mode}
-                          type="button"
-                          onClick={() => setAccessMode(pill.mode)}
-                          className={[
-                            "vltd-selectable inline-flex min-h-[34px] items-center justify-center rounded-full px-3.5 py-1 text-xs font-semibold ring-1 transition",
-                            accessMode === pill.mode
-                              ? "vltd-pill-main-glow bg-[color:var(--pill-active-bg)] text-[color:var(--pill-active-fg)]"
-                              : "bg-[color:var(--pill)] text-[color:var(--pill-fg)] ring-[color:var(--border)] hover:bg-[color:var(--pill-hover)]",
-                          ].join(" ")}
-                          aria-pressed={accessMode === pill.mode}
-                        >
+                        <PillButton key={pill.mode} variant={accessMode === pill.mode ? "active" : "default"} onClick={() => setAccessMode(pill.mode)}>
                           {pill.label}
-                        </button>
+                        </PillButton>
                       ))}
                     </div>
                     <div className="mt-2 text-xs leading-5 text-[color:var(--muted)]">{accessDescription(accessMode)}</div>

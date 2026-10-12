@@ -91,7 +91,7 @@ export function ThemePicker() {
                   key={mode}
                   type="button"
                   onClick={() => pickMode(mode)}
-                  className="flex flex-1 flex-col items-center justify-center gap-0.5 rounded-lg transition"
+                  className="flex min-h-[44px] flex-1 flex-col items-center justify-center gap-0.5 rounded-lg transition md:min-h-0"
                   style={{
                     ...selectedStyle(active),
                     background: active ? 'rgba(79,211,238,0.08)' : 'rgba(255,255,255,0.03)',
@@ -128,7 +128,7 @@ export function ThemePicker() {
                 key={opt.id}
                 type="button"
                 onClick={() => setIconStyle(opt.id)}
-                className="rounded-xl px-2.5 py-2.5 text-center transition"
+                className="min-h-[44px] rounded-xl px-2.5 py-2.5 text-center transition md:min-h-0"
                 style={{
                   ...selectedStyle(active),
                   background: active ? 'rgba(79,211,238,0.08)' : 'rgba(255,255,255,0.04)',
@@ -166,7 +166,7 @@ export function ThemePicker() {
                 type="button"
                 onClick={() => setLogoVariant(opt.id)}
                 aria-pressed={active}
-                className="rounded-xl px-2.5 py-2.5 text-center transition"
+                className="min-h-[44px] rounded-xl px-2.5 py-2.5 text-center transition md:min-h-0"
                 style={{
                   ...selectedStyle(active),
                   background: active ? 'rgba(79,211,238,0.08)' : 'rgba(255,255,255,0.04)',
@@ -201,7 +201,7 @@ function SwatchButton({
     <button
       type="button"
       onClick={() => onSelect(t.id)}
-      className="group relative overflow-hidden rounded-lg transition-all"
+      className="group relative min-h-[44px] overflow-hidden rounded-lg transition-all md:min-h-0"
       style={{
         aspectRatio: '4/3',
         // Renders the REAL theme.background (the same value ThemeContext

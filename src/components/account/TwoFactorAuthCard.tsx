@@ -1,5 +1,6 @@
 "use client";
 
+import { PillButton } from "@/components/ui/PillButton";
 import { useEffect, useState } from "react";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 import { showToast } from "@/lib/toast";
@@ -143,27 +144,11 @@ export default function TwoFactorAuthCard() {
       </div>
 
       {status === "disabled" && (
-        <button
-          type="button"
-          onClick={startEnroll}
-          disabled={busy}
-          className="vltd-pill-main-glow mt-3 rounded-full px-4 py-1.5 text-xs font-bold transition disabled:opacity-50"
-          style={{ background: "var(--pill-active-bg)", border: "none", cursor: busy ? "default" : "pointer" }}
-        >
-          Enable 2FA
-        </button>
+        <PillButton variant="active" className="mt-3" onClick={startEnroll} disabled={busy}>Enable 2FA</PillButton>
       )}
 
       {status === "enabled" && (
-        <button
-          type="button"
-          onClick={disable}
-          disabled={busy}
-          className="vltd-pill-neutral mt-3 rounded-full px-4 py-1.5 text-xs font-semibold transition disabled:opacity-50"
-          style={{ background: "var(--pill)", border: "none", cursor: busy ? "default" : "pointer" }}
-        >
-          Disable 2FA
-        </button>
+        <PillButton className="mt-3" onClick={disable} disabled={busy}>Disable 2FA</PillButton>
       )}
 
       {status === "enrolling" && (
@@ -202,24 +187,8 @@ export default function TwoFactorAuthCard() {
           )}
 
           <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={verifyEnroll}
-              disabled={busy || code.length !== 6}
-              className="vltd-pill-main-glow flex-1 rounded-full px-4 py-2 text-xs font-bold transition disabled:opacity-50"
-              style={{ background: "var(--pill-active-bg)", border: "none", cursor: busy ? "default" : "pointer" }}
-            >
-              Verify &amp; enable
-            </button>
-            <button
-              type="button"
-              onClick={cancelEnroll}
-              disabled={busy}
-              className="vltd-pill-neutral rounded-full px-4 py-2 text-xs font-semibold transition disabled:opacity-50"
-              style={{ background: "var(--pill)", border: "none", cursor: busy ? "default" : "pointer" }}
-            >
-              Cancel
-            </button>
+            <PillButton variant="active" onClick={verifyEnroll} disabled={busy || code.length !== 6}>Verify &amp; enable</PillButton>
+            <PillButton onClick={cancelEnroll} disabled={busy}>Cancel</PillButton>
           </div>
         </div>
       )}

@@ -1,5 +1,6 @@
 "use client";
 
+import { PillButton as SharedPill } from "@/components/ui/PillButton";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 
@@ -104,14 +105,10 @@ function PillButton({
   active?: boolean;
   onClick?: () => void;
 }) {
-  const base = "inline-flex h-10 items-center rounded-full px-5 text-sm font-medium ring-1 transition select-none";
-  const styles = active
-    ? "bg-[color:var(--pill)] text-[color:var(--fg)] ring-[color:var(--pill-active-ring)] vltd-pill-main-glow hover:bg-[color:var(--pill-hover)]"
-    : "bg-[color:var(--pill)] text-[color:var(--pill-fg)] ring-[color:var(--border)] hover:bg-[color:var(--pill-hover)]";
   return (
-    <button type="button" onClick={onClick} className={[base, styles].join(" ")}>
+    <SharedPill variant={active ? "active" : "default"} onClick={onClick}>
       {children}
-    </button>
+    </SharedPill>
   );
 }
 
