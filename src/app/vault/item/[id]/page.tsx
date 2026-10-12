@@ -1148,16 +1148,9 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
               ) : (
                 <h1 className="mt-1 text-2xl font-semibold leading-tight sm:text-3xl">
                   {item.title}
-                  <button
-                    type="button"
-                    onClick={() => setHeaderEditing(true)}
-                    aria-label="Edit title and category"
-                    title="Edit title and category"
-                    className="ml-2 inline-flex h-6 w-6 items-center justify-center rounded-[6px] align-middle ring-1 ring-[color:var(--border)] transition hover:bg-[color:var(--pill)]"
-                    style={{ color: "var(--muted)" }}
-                  >
-                    <AppIcon name="edit" size={13} strokeWidth={1.8} />
-                  </button>
+                  <PillButton size="compact" className="ml-2 w-8 px-0! align-middle md:w-7" onClick={() => setHeaderEditing(true)} ariaLabel="Edit title and category" title="Edit title and category">
+                    <AppIcon name="edit" size={16} strokeWidth={1.8} />
+                  </PillButton>
                   {notable ? <span className="ml-2 inline-block align-middle"><NotableBadge reason={notableReason(item)} /></span> : null}
                 </h1>
               )}
@@ -1226,36 +1219,16 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
               )}
 
               <div className="mt-3 flex flex-wrap items-center gap-2">
-                <Link href="/vault" className="inline-flex h-10 items-center rounded-full bg-[color:var(--pill)] px-4 text-sm font-medium ring-1 ring-[color:var(--border)]">
-                  ← Vault
-                </Link>
-                <Link
-                  href={`/vault/item/${encodeURIComponent(item.id)}/present`}
-                  className="inline-flex h-10 items-center gap-1.5 rounded-full px-3 text-[12px] font-semibold ring-1 transition"
-                  style={{ background: "var(--surface)", color: "var(--muted)", borderColor: "var(--border)" }}
-                >
-                  Stream
-                </Link>
+                <PillButton href="/vault"><AppIcon name="arrowLeft" size={16} />Vault</PillButton>
+                <PillButton href={`/vault/item/${encodeURIComponent(item.id)}/present`}>Stream</PillButton>
                 <div className="ml-1 h-6 w-px bg-[color:var(--border)]" />
                 <ShareBar title={item.title} itemId={item.id} compact />
-                <button
-                  type="button"
-                  onClick={() => setSocialExportOpen(true)}
-                  className="mt-2 inline-flex items-center gap-1.5 rounded-[7px] px-3 py-1.5 text-xs font-semibold ring-1 ring-[color:var(--border)] transition hover:ring-[color:var(--theme-gold)]"
-                  style={{ background: "var(--pill)", color: "var(--fg)" }}
-                >
-                  <Glyph name="share" size={13} /> Export for Social
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setAuctionOpen(true)}
-                  className="mt-1 inline-flex items-center gap-1.5 rounded-[7px] px-3 py-1.5 text-xs font-semibold ring-1 ring-[color:var(--border)] transition hover:ring-[color:var(--theme-gold)]"
-                  style={{ background: "var(--pill)", color: "var(--fg)" }}
-                >
-                  <Glyph name="gavel" size={13} />
+                <PillButton onClick={() => setSocialExportOpen(true)}><Glyph name="share" size={16} /> Export for Social</PillButton>
+                <PillButton onClick={() => setAuctionOpen(true)}>
+                  <Glyph name="gavel" size={16} />
                   {item.auctionStatus === "ACTIVE" ? "Manage Auction" : "Start Auction"}
                   {item.auctionStatus === "ACTIVE" && <AuctionCountdownChip item={item} />}
-                </button>
+                </PillButton>
               </div>
               {socialExportOpen && (
                 <SocialExportSheet item={item} onClose={() => setSocialExportOpen(false)} />

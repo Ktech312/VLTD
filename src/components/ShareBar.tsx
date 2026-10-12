@@ -132,7 +132,8 @@ export default function ShareBar({ title, shareUrl, itemId, compact = false, hid
   const smsUrl = `sms:?body=${encodeURIComponent(`${title} — ${url}`)}`;
   const emailUrl = `mailto:?subject=${encodeURIComponent(`Check out: ${title}`)}&body=${encodeURIComponent(`${title}\n${url}`)}`;
 
-  const iconBtn = "flex shrink-0 items-center justify-center transition-all hover:opacity-70 active:scale-90";
+  // 24px branded glyphs with an invisible 44px touch target on phones and a visible keyboard focus ring.
+  const iconBtn = "relative flex shrink-0 items-center justify-center rounded-[6px] transition-all hover:opacity-70 active:scale-90 focus-visible:outline-2 focus-visible:outline-offset-2 max-md:after:absolute max-md:after:-inset-2.5 max-md:after:content-['']";
 
   const iconStyle: React.CSSProperties = {
     color: "var(--theme-gold, #C8CDD2)",
@@ -144,7 +145,7 @@ export default function ShareBar({ title, shareUrl, itemId, compact = false, hid
   };
 
   const icons = (
-    <div className="flex flex-wrap gap-2">
+    <div className="flex flex-wrap gap-x-4 gap-y-3">
       {hideCopy ? null : (
         <button type="button" onClick={() => void handleCopy()} className={iconBtn} style={iconStyle} title="Copy link" aria-label="Copy link">
           {copied ? <AppIcon name="checkmark" strokeWidth={2.5} /> : <AppIcon name="copy" />}
