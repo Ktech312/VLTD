@@ -2,14 +2,15 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient, type User } from "@supabase/supabase-js";
 
 import { getServiceClient } from "@/lib/serverAdmin";
-import { emailConfigured, replyInboxMonitored, sendEmail } from "@/lib/email/send";
+import { authEmailSenderVerified, SENDER_NOT_READY_MESSAGE } from "@/lib/email/senderGate";
 import { allow, handleSignupRequest, type AuthUserLite, type SignupDeps } from "@/lib/email/signupRecovery";
 
 export const dynamic = "force-dynamic";
 
 // The visitor always gets the same plain answer ({ ok: true }) whether the address is new, unconfirmed or already a member,
-// so this page cannot be used to find out who has an account. What differs is only the email that goes out.
-// The one visible exception is "founding spots full", which is already public on /api/launch-access.
+// so this page cannot be used to find out who has an account. What differs is only the email Supabase sends, and Supabase is
+// only allowed to send once the project sends as VLTD (the sender gate). The one visible exception is "founding spots full",
+// which is already public on /api/launch-access.
 
 function clientIp(req: NextRequest): string {
   const forwarded = req.headers.get("x-forwarded-for");
@@ -17,6 +18,11 @@ function clientIp(req: NextRequest): string {
 }
 
 export async function POST(req: NextRequest) {
+  // First check, before anything can send: no VLTD sender, no email, no account created.
+  if (!authEmailSenderVerified()) {
+    return NextResponse.json({ error: "sender_not_ready", message: SENDER_NOT_READY_MESSAGE }, { status: 503 });
+  }
+
   const svc = getServiceClient();
   if (!svc) return NextResponse.json({ error: "not_configured", message: "Sign up is unavailable right now." }, { status: 503 });
 
@@ -41,10 +47,9 @@ export async function POST(req: NextRequest) {
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || new URL(req.url).origin;
 
   const deps: SignupDeps = {
-    emailConfigured: emailConfigured(),
     async findUserByEmail(target) {
       for (let page = 1; page <= 20; page++) {
-        const { data, error } = await svc!.auth.admin.listUsers({ page, perPage: 1000 });
+        const { data, error } = await svc.auth.admin.listUsers({ page, perPage: 1000 });
         if (error) throw error;
         const hit = data.users.find((u: User) => (u.email ?? "").toLowerCase() === target);
         if (hit) return hit as AuthUserLite;
@@ -53,27 +58,21 @@ export async function POST(req: NextRequest) {
       return null;
     },
     async savedName(userId) {
-      const { data } = await svc!.from("profiles").select("display_name").eq("user_id", userId).order("created_at", { ascending: true }).limit(1);
+      const { data } = await svc.from("profiles").select("display_name").eq("user_id", userId).order("created_at", { ascending: true }).limit(1);
       const name = data?.[0]?.display_name;
       return typeof name === "string" && name.trim() ? name : null;
     },
-    async generateLink({ type, email: to, password: pw, redirectTo }) {
-      const params =
-        type === "signup"
-          ? { type: "signup" as const, email: to, password: pw ?? "", options: redirectTo ? { redirectTo } : undefined }
-          : type === "recovery"
-            ? { type: "recovery" as const, email: to, options: redirectTo ? { redirectTo } : undefined }
-            : { type: "magiclink" as const, email: to, options: redirectTo ? { redirectTo } : undefined };
-      const { data, error } = await svc!.auth.admin.generateLink(params);
-      if (error) return { errorMessage: error.message };
-      return { actionLink: data?.properties?.action_link };
+    async setFirstName(user, firstName) {
+      // Merge into the existing metadata so nothing already saved on the account is lost.
+      await svc.auth.admin.updateUserById(user.id, { user_metadata: { ...(user.user_metadata ?? {}), first_name: firstName } });
     },
-    sendEmail,
     async supabaseReset(to, redirectTo) {
-      await svc!.auth.resetPasswordForEmail(to, { redirectTo });
+      const { error } = await svc.auth.resetPasswordForEmail(to, { redirectTo });
+      if (error) throw error;
     },
     async supabaseResend(to) {
-      await svc!.auth.resend({ type: "signup", email: to });
+      const { error } = await svc.auth.resend({ type: "signup", email: to });
+      if (error) throw error;
     },
     async supabaseSignUp(to, pw) {
       const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -87,7 +86,7 @@ export async function POST(req: NextRequest) {
   };
 
   try {
-    const outcome = await handleSignupRequest({ email, password }, deps, { siteUrl, replyInvite: replyInboxMonitored() });
+    const outcome = await handleSignupRequest({ email, password }, deps, { siteUrl });
     if (outcome === "founding_full") {
       return NextResponse.json({ error: "founding_full", message: "All 50 founding spots have been claimed. Join the waitlist for the next opening." }, { status: 409 });
     }

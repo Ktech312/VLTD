@@ -11,7 +11,9 @@
     "gcd:sync": "node scripts/gcd-sync.js",
     "gcd:check": "node scripts/gcd-sync.js --check",
     "gcd:force": "node scripts/gcd-sync.js --force",
-    "gcd:import": "node scripts/gcd-import.js"
+    "gcd:import": "node scripts/gcd-import.js",
+    "check:auth-email": "node scripts/check-auth-email-gate.mjs",
+    "build:email-templates": "node scripts/build-supabase-email-templates.mjs"
   },
   "dependencies": {
     "@imgly/background-removal": "^1.7.0",
