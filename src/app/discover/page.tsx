@@ -1,6 +1,8 @@
 "use client";
 
 import { PillSelect } from "@/components/ui/PillSelect";
+import { PillButton } from "@/components/ui/PillButton";
+import { AppIcon } from "@/components/ui/AppIcon";
 import { publicItemsTable } from "@/lib/publicItemsSource";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -577,7 +579,7 @@ export default function DiscoverPage() {
           <aside className="h-fit rounded-[8px] border border-[rgba(203,208,213,0.32)] p-5 xl:sticky xl:top-24" style={{ background: "var(--theme-card,rgba(15,25,45,0.92))", boxShadow: "0 18px 55px rgba(0,0,0,0.26)" }}>
             <div className="flex items-center justify-between">
               <div className="text-[12px] font-black uppercase tracking-[0.16em]" style={{ color: "var(--theme-gold,#C8CDD2)" }}>Public Exhibition</div>
-              <button type="button" onClick={() => setSelectedId(null)} className="text-xl leading-none" style={{ color: "var(--theme-gold,#C8CDD2)" }}>x</button>
+              <PillButton onClick={() => setSelectedId(null)} ariaLabel="Close" title="Close" className="px-0! w-11 md:w-9"><AppIcon name="close" size={16} /></PillButton>
             </div>
             <div className="mt-4 h-[230px] rounded-[7px] border border-[rgba(203,208,213,0.22)]" style={coverStyle(selectedGallery)}>
               <div className="flex h-full items-start p-3">

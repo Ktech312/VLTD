@@ -1,5 +1,7 @@
 "use client";
 
+import { AppIcon } from "@/components/ui/AppIcon";
+import { VaultLocalNav } from "@/components/SectionNav";
 import { PillButton } from "@/components/ui/PillButton";
 import Link from "next/link";
 import type { ReactNode } from "react";
@@ -20,7 +22,7 @@ import {
   syncValueHistoryFromSupabase,
 } from "@/lib/valueHistory";
 import { getPrimaryImageUrl, type VaultItem } from "@/lib/vaultModel";
-import { activeItems } from "@/lib/vaultStats";
+import { activeItems, readValueMode, type ValueMode } from "@/lib/vaultStats";
 import { loadGoals, syncGoalsFromSupabase, type CollectionGoal } from "@/lib/collectionGoals";
 import { getCollectionValuationScore } from "@/lib/collectionValuationScore";
 import { PageHeader } from "@/components/layout/PageHeader";
@@ -517,8 +519,16 @@ function ReviewCard({ item, reason }: { item: VaultItem; reason: string }) {
   );
 }
 
-export default function InsightsOverview({ items: allItems }: { items: VaultItem[] }) {
+export default function InsightsOverview({ items: allItems, loading = false }: { items: VaultItem[]; loading?: boolean }) {
   const [recapOpen, setRecapOpen] = useState(false);
+  // Same valuation basis as Home, Vault and the recap.
+  const [valueMode, setValueMode] = useState<ValueMode>("fill");
+  useEffect(() => {
+    const sync = () => setValueMode(readValueMode());
+    sync();
+    window.addEventListener("vltd:value-mode", sync);
+    return () => window.removeEventListener("vltd:value-mode", sync);
+  }, []);
   // Insights describes what you CURRENTLY OWN. Filter sold items once, here,
   // so every number on the page (totals, stale prices, breakdown, movers)
   // agrees with the Vault instead of each block deciding for itself.
@@ -565,7 +575,7 @@ export default function InsightsOverview({ items: allItems }: { items: VaultItem
     };
   }, []);
 
-  const metrics = useMemo(() => getCollectionMetrics(items), [items]);
+  const metrics = useMemo(() => getCollectionMetrics(items, valueMode), [items, valueMode]);
   const totalValue = metrics.totalValue;
   const totalCost = metrics.totalCost;
   const totalGain = totalValue - totalCost;
@@ -699,6 +709,25 @@ export default function InsightsOverview({ items: allItems }: { items: VaultItem
 
   const rangeLabel = range === "all" ? "1Y" : range.toUpperCase();
 
+  if (items.length === 0 && loading) {
+    return (
+      <>
+        <PageHeader
+          title="Insights"
+          description="Performance, trends, and opportunities in your collection."
+          contentClassName="max-w-[1480px]"
+        />
+        <main className="min-h-screen text-[color:var(--fg)]">
+          <div className="mx-auto max-w-[1480px] px-4 pb-8 sm:px-8">
+            <Panel className="mt-6 p-8 text-center" >
+              <div role="status" className="text-sm" style={{ color: MUTED }}>Loading your collection…</div>
+            </Panel>
+          </div>
+        </main>
+      </>
+    );
+  }
+
   if (items.length === 0) {
     return (
       <>
@@ -749,6 +778,7 @@ export default function InsightsOverview({ items: allItems }: { items: VaultItem
       {recapOpen ? <VaultWrappedSheet onClose={() => setRecapOpen(false)} /> : null}
       <main className="min-h-screen pb-[calc(var(--bottomnav-h,86px)+20px)] text-[color:var(--fg)] md:pb-10">
       <div className="mx-auto max-w-[1480px] px-4 pb-6 sm:px-8">
+        <VaultLocalNav activeKey="insights" />
         <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
           <StatCard
             label="Total Vault Value"
@@ -900,7 +930,7 @@ export default function InsightsOverview({ items: allItems }: { items: VaultItem
                     <span className="text-right tabular-nums" style={{ color: MUTED }}>{formatMoney(row.value)}</span>
                     <span className="text-right tabular-nums" style={{ color: MUTED }}>{pct.toFixed(1)}%</span>
                     <span className="text-right tabular-nums" style={{ color: tone }}>
-                      <span className="mr-1">{gain >= 0 ? "↗" : "↘"}</span>
+                      <span className="mr-1 inline-flex align-middle"><AppIcon name={gain >= 0 ? "chevronUp" : "chevronDown"} size={14} /></span>
                       {gain >= 0 ? "+" : ""}{formatMoney(gain)}
                       <span className="ml-2">{fmtPct(gainPct, true)}</span>
                     </span>

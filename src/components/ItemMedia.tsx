@@ -7,6 +7,7 @@ import ImageViewer from "@/components/ImageViewer";
 import ScanCropEditor from "@/components/ScanCropEditor";
 import BackgroundSwatchPicker from "@/components/capture/BackgroundSwatchPicker";
 import { Glyph } from "@/components/ui/Glyph";
+import { AppIcon } from "@/components/ui/AppIcon";
 import { cropImageFile, type ScanCropRect } from "@/lib/scanners/cropImageFile";
 import { showToast } from "@/lib/toast";
 
@@ -684,6 +685,8 @@ export default function ItemMedia({
               : "bg-[color:var(--pill)] ring-[color:var(--border)]",
           ].join(" ")}
           title="Set as primary"
+          aria-label="Set as primary"
+          aria-pressed={entry.role === "primary"}
         >
           P
         </button>
@@ -697,6 +700,8 @@ export default function ItemMedia({
               : "bg-[color:var(--pill)] ring-[color:var(--border)]",
           ].join(" ")}
           title="Set as detail"
+          aria-label="Set as detail"
+          aria-pressed={entry.role === "detail"}
         >
           D
         </button>
@@ -710,8 +715,10 @@ export default function ItemMedia({
               : "bg-[color:var(--pill)] ring-[color:var(--border)]",
           ].join(" ")}
           title="Set as proof"
+          aria-label="Set as proof"
+          aria-pressed={entry.role === "proof"}
         >
-          ✓
+          <AppIcon name="checkmark" size={12} className="mx-auto" />
         </button>
       </div>
     );
@@ -728,6 +735,7 @@ export default function ItemMedia({
                 onClick={() => {
                   onSelect(entry.originalIndex);
                 }}
+                aria-label={`Show photo ${visibleIndex + 1}`}
                 className={[
                   "relative block h-[96px] w-[96px] overflow-hidden rounded-2xl bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.08),rgba(255,255,255,0.02))] ring-1 transition",
                   entry.originalIndex === (activeVisibleEntry?.originalIndex ?? -1)
@@ -762,8 +770,9 @@ export default function ItemMedia({
                   }
                   className="rounded-full bg-[color:var(--pill)] px-2 py-1 text-[10px] ring-1 ring-[color:var(--border)] disabled:opacity-30"
                   title="Move up"
+                  aria-label="Move up"
                 >
-                  ↑
+                  <AppIcon name="chevronUp" size={12} className="mx-auto" />
                 </button>
                 <button
                   type="button"
@@ -773,16 +782,18 @@ export default function ItemMedia({
                   }
                   className="rounded-full bg-[color:var(--pill)] px-2 py-1 text-[10px] ring-1 ring-[color:var(--border)] disabled:opacity-30"
                   title="Move down"
+                  aria-label="Move down"
                 >
-                  ↓
+                  <AppIcon name="chevronDown" size={12} className="mx-auto" />
                 </button>
                 <button
                   type="button"
                   onClick={() => onDeleteImage(entry.originalIndex)}
                   className="rounded-full bg-red-600/85 px-2 py-1 text-[10px] text-text-primary ring-1 ring-red-500/40"
                   title="Delete image"
+                  aria-label="Delete image"
                 >
-                  ×
+                  <AppIcon name="delete" size={12} className="mx-auto" />
                 </button>
               </div>
 
@@ -854,6 +865,7 @@ export default function ItemMedia({
               <button
                 type="button"
                 onClick={() => setPreviewOpen(true)}
+                aria-label="Open photo preview"
                 className="block h-full w-full"
               >
                 <img
@@ -915,6 +927,7 @@ export default function ItemMedia({
                         onSelect(entry.originalIndex);
                         setPreviewOpen(true);
                       }}
+                      aria-label="Open proof photo"
                       className="block h-[140px] w-full overflow-hidden rounded-xl"
                     >
                       <img
@@ -1004,9 +1017,10 @@ export default function ItemMedia({
                 <button
                   type="button"
                   onClick={() => setPreviewOpen(false)}
-                  className="absolute right-3 top-3 z-10 flex h-9 w-9 items-center justify-center rounded-full bg-black/50 text-xl leading-none text-white ring-1 ring-white/20 backdrop-blur"
+                  aria-label="Close preview"
+                  className="absolute right-3 top-3 z-10 flex h-9 w-9 items-center justify-center rounded-full bg-black/50 leading-none text-white ring-1 ring-white/20 backdrop-blur max-md:after:absolute max-md:after:-inset-1 max-md:after:content-['']"
                 >
-                  ×
+                  <AppIcon name="close" size={16} />
                 </button>
 
                 {/* Image */}

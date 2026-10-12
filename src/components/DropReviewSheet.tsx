@@ -1,9 +1,11 @@
 "use client";
 
+import { useDialogA11y } from "@/components/ui/useDialogA11y";
 import { useState } from "react";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { AppIcon } from "@/components/ui/AppIcon";
+import { PillButton } from "@/components/ui/PillButton";
 
 import {
   clearDropSession,
@@ -28,6 +30,7 @@ function money(value: number) {
 }
 
 export default function DropReviewSheet({ session, onClose, onFinish }: Props) {
+  const dialogRef = useDialogA11y<HTMLDivElement>(true, onClose);
   const router = useRouter();
   const [current, setCurrent] = useState(session);
   const stats = dropSessionStats(current);
@@ -56,6 +59,10 @@ export default function DropReviewSheet({ session, onClose, onFinish }: Props) {
   // MfaChallengeGate always does.
   return createPortal(
     <div
+      ref={dialogRef}
+      role="dialog"
+      aria-modal="true"
+      aria-label="Review drop"
       className="fixed inset-0 z-[10000] flex items-end justify-center bg-black/60 backdrop-blur-sm"
       onClick={onClose}
     >
@@ -72,13 +79,9 @@ export default function DropReviewSheet({ session, onClose, onFinish }: Props) {
               {stats.totalValue > 0 ? ` · ${money(stats.totalValue)} est.` : ""}
             </div>
           </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="flex h-7 w-7 items-center justify-center rounded-full bg-[color:var(--pill)] text-xs text-[color:var(--muted)] ring-1 ring-[color:var(--border)]"
-          >
-            &#x2715;
-          </button>
+          <PillButton size="compact" onClick={onClose} ariaLabel="Close" title="Close" className="w-8 px-0! md:w-7">
+            <AppIcon name="close" size={16} />
+          </PillButton>
         </div>
 
         <div className="flex-1 space-y-2 overflow-y-auto px-3 py-3">

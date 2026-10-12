@@ -1,5 +1,6 @@
 "use client";
 
+import { VaultLocalNav } from "@/components/SectionNav";
 import { PillButton } from "@/components/ui/PillButton";
 import { PillSelect } from "@/components/ui/PillSelect";
 import Link from "next/link";
@@ -323,6 +324,7 @@ export default function GoalsPage() {
         }
       />
       <main style={{ background: "var(--bg)" }}>
+      <div className="mx-auto max-w-[1480px] px-4 pb-4 sm:px-6 lg:px-8"><VaultLocalNav activeKey="goals" /></div>
       <div className="mx-auto grid max-w-[1480px] gap-6 px-4 pb-6 sm:px-6 lg:px-8 xl:grid-cols-[minmax(0,1fr)_420px]">
         <section className="min-w-0">
           <div className="mt-2 flex flex-wrap gap-3">

@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { useResolvedVaultImage } from "@/lib/useResolvedVaultImages";
 import { UNIVERSE_LABEL } from "@/lib/taxonomy";
 import { type VaultItem } from "@/lib/vaultModel";
+import { AppIcon } from "@/components/ui/AppIcon";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 type AspectMode = "fill" | "9x16" | "16x9";
@@ -298,11 +299,11 @@ export default function StreamDisplay({
                 <button
                   type="button"
                   onClick={(e) => { e.stopPropagation(); handleFlip(); resetControlsTimer(); }}
-                  className="rounded-full px-3 py-1.5 text-[11px] font-bold"
+                  className="inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-[11px] font-bold"
                   style={{ background: "rgba(255,255,255,0.15)", color: "#fff" }}
                   title="Flip card (F)"
                 >
-                  ↕ Flip
+                  <AppIcon name="flipVertical" size={12} /> Flip
                 </button>
               )}
             </div>
@@ -312,11 +313,12 @@ export default function StreamDisplay({
               <button
                 type="button"
                 onClick={(e) => { e.stopPropagation(); onClose(); }}
-                className="grid h-9 w-9 place-items-center rounded-full text-lg text-white"
+                aria-label="Close"
+                className="relative grid h-9 w-9 place-items-center rounded-full text-white max-md:after:absolute max-md:after:-inset-1 max-md:after:content-['']"
                 style={{ background: "rgba(255,255,255,0.15)" }}
                 title="Close (Esc)"
               >
-                ×
+                <AppIcon name="close" size={16} />
               </button>
             )}
           </div>

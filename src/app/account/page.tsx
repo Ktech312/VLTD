@@ -1,6 +1,7 @@
 "use client";
 // NOTE: primaryFocus uses taxonomy universe keys for personalisation
 
+import { AppIcon, type AppIconName } from "@/components/ui/AppIcon";
 import { Toggle } from "@/components/ui/Toggle";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -549,7 +550,7 @@ export default function AccountPage() {
                       <span className="text-[color:var(--muted2)]">Local {localItemCount}</span>
                     ) : localItemCount === cloudItemCount ? (
                       <span className="vltd-keep-color" style={{ "--vltd-keep-color": "var(--ok-text, #4ade80)" } as React.CSSProperties}>
-                        ✓ Synced ({localItemCount})
+                        <span className="inline-flex items-center gap-1"><AppIcon name="checkmark" size={14} /> Synced ({localItemCount})</span>
                       </span>
                     ) : (
                       <span className="vltd-keep-color" style={{ "--vltd-keep-color": "#f87171" } as React.CSSProperties}>
@@ -589,6 +590,7 @@ export default function AccountPage() {
                 <div className="rounded-2xl border border-[color:var(--border)] p-4" style={{ background: "var(--theme-card)" }}>
                   <div className="text-[11px] uppercase tracking-[0.22em] text-[color:var(--muted2)]">Handle</div>
                   <div className="mt-1 font-black text-text-primary">@{username || "username"}</div>
+                  {username ? <PillButton href={`/u/${username}`} className="mt-3">View public profile</PillButton> : null}
                 </div>
                 <div className="rounded-2xl border border-[color:var(--border)] p-4" style={{ background: "var(--theme-card)" }}>
                   <div className="text-[11px] uppercase tracking-[0.22em] text-[color:var(--muted2)]">Type</div>
@@ -950,6 +952,7 @@ export default function AccountPage() {
             Restore from a backup is not available. The old Restore Vault button looked for a backup that the app never saves, and replacing what is stored on this device has not been checked against your Personal and Business profiles, so it has been turned off. Your items are saved to your account automatically, and Export Vault JSON gives you your own copy.
           </p>
           <div className="flex flex-wrap gap-2">
+            <PillButton href="/vault/sync">Review device-only records</PillButton>
             <PillButton onClick={exportVaultJson}>Export Vault JSON</PillButton>
             <PillButton onClick={clearLocalCache} className="bg-red-500/10 text-red-200 ring-red-400/20 hover:bg-red-500/15">
               Clear Local Cache

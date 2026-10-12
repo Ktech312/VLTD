@@ -10,6 +10,7 @@ import type { DragEvent } from "react";
 import FavoriteButton from "@/components/FavoriteButton";
 import GalleryShelfScene from "@/components/gallery/GalleryShelfScene";
 import { PillButton } from "@/components/ui/PillButton";
+import { AppIcon } from "@/components/ui/AppIcon";
 import { getGallerySections, getGalleryAliasIdentity } from "@/lib/galleryModel";
 import { fetchPublicProfile } from "@/lib/publicProfile";
 import { getPrimaryImageUrl, type VaultItem } from "@/lib/vaultModel";
@@ -247,10 +248,10 @@ export function GuestItemModal({
           <button
             type="button"
             onClick={onClose}
-            className="absolute right-3 top-3 grid h-8 w-8 place-items-center rounded-full bg-black/60 text-white/80 ring-1 ring-white/15 hover:bg-black/80"
+            className="absolute right-3 top-3 grid h-8 w-8 place-items-center rounded-full bg-black/60 text-white/80 ring-1 ring-white/15 hover:bg-black/80 max-md:after:absolute max-md:after:-inset-2 max-md:after:content-['']"
             aria-label="Close"
           >
-            ✕
+            <AppIcon name="close" size={16} />
           </button>
         </div>
 
@@ -804,9 +805,9 @@ export default function GuestGalleryRenderer({
             type="button"
             onClick={() => setLightboxItem(null)}
             aria-label="Close"
-            className="absolute right-4 top-4 grid h-9 w-9 place-items-center rounded-full bg-white/10 text-white ring-1 ring-white/20 hover:bg-white/20"
+            className="absolute right-4 top-4 grid h-9 w-9 place-items-center rounded-full bg-white/10 text-white ring-1 ring-white/20 hover:bg-white/20 max-md:after:absolute max-md:after:-inset-1 max-md:after:content-['']"
           >
-            ✕
+            <AppIcon name="close" size={16} />
           </button>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
+import { AppIcon } from "@/components/ui/AppIcon";
 import type { Metadata } from "next";
 import { getArticles } from "@/lib/sanity";
 import { createImageUrlBuilder as imageUrlBuilder } from "@sanity/image-url";
@@ -103,7 +104,7 @@ export default async function ArticlesPage() {
                   border: "1px solid var(--theme-gold-border, rgba(203,208,213,0.2))",
                 }}
               >
-                ✦
+                <AppIcon name="learn" size={22} />
               </div>
               <div className="text-base font-semibold text-text-primary">No articles yet</div>
               <p className="mt-2 max-w-sm text-sm text-[color:var(--muted)]">
@@ -130,8 +131,8 @@ export default async function ArticlesPage() {
                       />
                     </div>
                   ) : (
-                    <div className="flex aspect-video w-full items-center justify-center bg-[color:var(--surface)] text-3xl text-[color:var(--muted2)]">
-                      ✦
+                    <div className="flex aspect-video w-full items-center justify-center bg-[color:var(--surface)] text-[color:var(--muted2)]">
+                      <AppIcon name="learn" size={32} />
                     </div>
                   )}
 

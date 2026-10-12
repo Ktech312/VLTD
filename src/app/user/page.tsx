@@ -8,7 +8,7 @@ import { showToast } from "@/lib/toast";
 
 import { DEMO_ITEMS } from "@/lib/demoVault";
 import { UNIVERSE_LABEL, type UniverseKey } from "@/lib/taxonomy";
-import { loadItemsOrSeed, saveItems, loadItems, syncVaultItemsFromSupabase, type VaultItem as ModelItem } from "@/lib/vaultModel";
+import { loadItemsOrSeed, loadItems, syncVaultItemsFromSupabase, type VaultItem as ModelItem } from "@/lib/vaultModel";
 import {
   MUSEUM_BG_EVENT,
   clearMuseumBackground,
@@ -211,7 +211,6 @@ export default function UserSettingsPage() {
   const [tier, setTier] = useState<Tier>("FREE");
 
   const [items, setItems] = useState<ModelItem[]>([]);
-  const fileRef = useRef<HTMLInputElement | null>(null);
   const museumBgRef = useRef<HTMLInputElement | null>(null);
 
   const [hydrated, setHydrated] = useState(false);
@@ -333,28 +332,6 @@ export default function UserSettingsPage() {
   function exportJsonBackup() {
     const today = new Date().toISOString().slice(0, 10);
     downloadTextFile(`VLTD_Backup_${today}.json`, JSON.stringify({ items }, null, 2), "application/json;charset=utf-8");
-  }
-
-  async function onImportBackup(file: File | null) {
-    if (!file) return;
-    try {
-      const text = await file.text();
-      const parsed = JSON.parse(text);
-
-      const nextItems = Array.isArray(parsed?.items) ? (parsed.items as ModelItem[]) : null;
-      if (!nextItems) {
-        showToast("That file doesn't look like a VLTD backup.");
-        return;
-      }
-
-      saveItems(nextItems);
-      setItems(nextItems);
-      showToast("Backup restored.");
-    } catch {
-      showToast("Could not read that file.");
-    } finally {
-      if (fileRef.current) fileRef.current.value = "";
-    }
   }
 
   async function onImportMuseumBackground(file: File | null) {
@@ -654,19 +631,10 @@ export default function UserSettingsPage() {
 
               <PillButton onClick={exportJsonBackup}>Download Backup (JSON)</PillButton>
 
-              <PillButton onClick={() => fileRef.current?.click()}>Restore Backup (JSON)</PillButton>
-
-              <input
-                ref={fileRef}
-                type="file"
-                accept="application/json,.json"
-                className="hidden"
-                onChange={(e) => onImportBackup(e.target.files?.[0] ?? null)}
-              />
             </div>
 
-            <div className="mt-3 text-xs text-[color:var(--muted2)]">
-              Tip: Download a backup before big changes. Insurance CSV is spreadsheet-friendly.
+            <div className="mt-3 text-xs text-[color:var(--muted)]">
+              Restore from a backup is not available. Replacing what is stored on this device has not been checked against your Personal and Business profiles, so it is turned off. Your items are saved to your account automatically, and the backup above is your own copy.
             </div>
           </section>
         </div>

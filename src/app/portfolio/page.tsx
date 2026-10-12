@@ -7,6 +7,8 @@ import { loadItems, syncVaultItemsFromSupabase, type VaultItem } from "@/lib/vau
 
 export default function PortfolioPage() {
   const [items, setItems] = useState<VaultItem[]>([]);
+  // Until the account has been read once, an empty list means "not loaded yet", not "no items".
+  const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -18,7 +20,10 @@ export default function PortfolioPage() {
       } catch {
         /* offline — the local cache still renders */
       }
-      if (active) setItems(loadItems());
+      if (active) {
+        setItems(loadItems());
+        setLoaded(true);
+      }
     }
     void load();
     return () => {
@@ -26,5 +31,5 @@ export default function PortfolioPage() {
     };
   }, []);
 
-  return <InsightsOverview items={items} />;
+  return <InsightsOverview items={items} loading={!loaded} />;
 }

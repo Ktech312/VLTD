@@ -1,10 +1,13 @@
 "use client";
 
+import { useDialogA11y } from "@/components/ui/useDialogA11y";
 import { useState } from "react";
 import { createPortal } from "react-dom";
 import type { CollectionGoal } from "@/lib/collectionGoals";
 import { UNIVERSE_KEYS, UNIVERSE_LABEL } from "@/lib/taxonomy";
 import { useSaveFeedback } from "@/lib/useSaveFeedback";
+import { AppIcon } from "@/components/ui/AppIcon";
+import { PillButton } from "@/components/ui/PillButton";
 
 type GoalFields = Omit<CollectionGoal, "id" | "createdAt">;
 
@@ -17,6 +20,7 @@ export default function AddGoalSheet({
   onSave: (fields: GoalFields) => void;
   initial?: Partial<GoalFields>;
 }) {
+  const dialogRef = useDialogA11y<HTMLDivElement>(true, onClose);
   const [name, setName] = useState(initial?.name ?? "");
   const [targetCount, setTargetCount] = useState(String(initial?.targetCount ?? ""));
   const [universe, setUniverse] = useState(initial?.universe ?? "");
@@ -53,6 +57,10 @@ export default function AddGoalSheet({
     <>
       <div className="fixed inset-0 z-[10000] bg-black/50" onClick={onClose} aria-hidden />
       <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Goal"
         className="fixed bottom-0 left-0 right-0 z-[10001] mx-auto max-w-xl rounded-t-[24px] px-5 pb-10 pt-6"
         style={{ background: "var(--surface)", boxShadow: "0 -4px 40px rgba(0,0,0,0.4)" }}
       >
@@ -60,9 +68,9 @@ export default function AddGoalSheet({
           <h2 className="text-[18px] font-bold" style={{ color: "var(--fg)" }}>
             New Collection Goal
           </h2>
-          <button type="button" onClick={onClose} className="text-[20px] leading-none" style={{ color: "var(--muted2)" }}>
-            x
-          </button>
+          <PillButton onClick={onClose} ariaLabel="Close" title="Close" className="px-0! w-11 md:w-9">
+            <AppIcon name="close" size={16} />
+          </PillButton>
         </div>
 
         <div className="space-y-4">

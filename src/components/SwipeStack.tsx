@@ -157,7 +157,7 @@ function CardFace({ item, isTop }: { item: ModelItem; isTop: boolean }) {
               borderColor: "rgba(203,208,213,0.45)",
             }}
           >
-            ★ Key Item
+            <span className="inline-flex items-center gap-1"><AppIcon name="star" size={11} /> Key Item</span>
           </span>
         )}
         {item.grade && (
@@ -579,7 +579,7 @@ function ActionBar({
           onClick={() => onAction("skip")}
           aria-label="Skip"
         >
-          ✕
+          <AppIcon name="close" size={22} strokeWidth={2.5} />
         </button>
 
         {/* Open detail */}
@@ -595,7 +595,7 @@ function ActionBar({
           onClick={() => onAction("open")}
           aria-label="Open detail"
         >
-          ↗
+          <AppIcon name="externalLink" size={18} />
         </button>
 
         {/* Want */}
@@ -611,7 +611,7 @@ function ActionBar({
           onClick={() => onAction("want")}
           aria-label="Want this item"
         >
-          ♥
+          <AppIcon name="favorite" size={22} />
         </button>
       </div>
     );
@@ -635,7 +635,7 @@ function ActionBar({
         disabled={!canPrev}
         aria-label="Previous"
       >
-        ←
+        <AppIcon name="arrowLeft" size={20} />
       </button>
 
       {/* Open / edit */}
@@ -670,7 +670,7 @@ function ActionBar({
         disabled={!canNext}
         aria-label="Next"
       >
-        →
+        <AppIcon name="next" size={20} />
       </button>
     </div>
   );
@@ -688,7 +688,7 @@ function EmptyState({ mode }: { mode: SwipeMode }) {
         className="text-[36px] font-black"
         style={{ color: "var(--theme-gold, #C8CDD2)", opacity: 0.4 }}
       >
-        {mode === "gallery" ? "✦" : "∅"}
+        <AppIcon name={mode === "gallery" ? "sparkle" : "layers"} size={36} />
       </div>
       <div className="text-center px-8">
         <div className="text-[15px] font-semibold" style={{ color: "var(--fg)" }}>
@@ -1282,10 +1282,10 @@ export default function SwipeStack({
           <button
             type="button"
             onClick={handleUndo}
-            className="text-[12px] transition-opacity hover:opacity-80"
+            className="inline-flex min-h-11 items-center gap-1 text-[12px] transition-opacity hover:opacity-80"
             style={{ color: "var(--muted)" }}
           >
-            ↩ Undo last swipe
+            <AppIcon name="rotate" size={12} /> Undo last swipe
           </button>
         </div>
       )}

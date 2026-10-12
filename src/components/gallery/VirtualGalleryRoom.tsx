@@ -3927,9 +3927,9 @@ export default function VirtualGalleryRoom({ guest = false }: { guest?: boolean 
                   type="button"
                   onClick={() => setHallNoticeDismissed(true)}
                   aria-label="Dismiss"
-                  className="absolute right-2 top-2 grid h-6 w-6 place-items-center rounded-[5px] bg-white/10 text-white/70 ring-1 ring-white/15 transition hover:bg-white/20 hover:text-white"
+                  className="absolute right-2 top-2 grid h-6 w-6 place-items-center rounded-[5px] bg-white/10 text-white/70 ring-1 ring-white/15 transition hover:bg-white/20 hover:text-white max-md:after:absolute max-md:after:-inset-2.5 max-md:after:content-['']"
                 >
-                  ✕
+                  <AppIcon name="close" size={14} />
                 </button>
                 <div className="text-[11px] font-black uppercase tracking-[0.2em] text-cyan-100/60">
                   Grand Hall

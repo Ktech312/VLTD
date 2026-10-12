@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 
 import { DropdownPill } from "@/components/ui/DropdownPill";
 import { Glyph } from "@/components/ui/Glyph";
+import { AppIcon } from "@/components/ui/AppIcon";
 import ScanReviewSheet, { type StagedItem } from "@/components/ScanReviewSheet";
 import ScanVerifySheet, { type ScanDraft } from "@/components/ScanVerifySheet";
 import { startOnDemandScan } from "@/lib/scanners/onDemandBarcodeScan";
@@ -813,10 +814,10 @@ export default function ScanCapturePanel({ onClose }: { onClose: () => void }) {
           <button
             type="button"
             onClick={onClose}
-            className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/8 text-white/60"
+            className="relative inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/8 text-white/60 max-md:after:absolute max-md:after:-inset-2 max-md:after:content-['']"
             aria-label="Close scanner"
           >
-            &#x2715;
+            <AppIcon name="close" size={16} />
           </button>
         </div>
 

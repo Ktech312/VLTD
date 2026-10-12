@@ -27,6 +27,7 @@
 // loop around it are local, since collision shape is necessarily
 // per-surface.
 import Link from "next/link";
+import { AppIcon } from "@/components/ui/AppIcon";
 import { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 
@@ -733,8 +734,13 @@ export default function MuseumPrototypeRoom() {
         {helpVisible ? (
           <div className="pointer-events-auto mx-auto flex items-center gap-3 rounded-full bg-black/55 px-4 py-2 text-xs font-medium text-white/75 ring-1 ring-white/15 backdrop-blur">
             <span>WASD/arrows to move · drag to look · scroll to step · click an item to inspect, Esc to return</span>
-            <button type="button" className="text-white/50 hover:text-white" onClick={() => setHelpVisible(false)}>
-              ✕
+            <button
+              type="button"
+              aria-label="Dismiss help"
+              className="relative inline-flex items-center text-white/50 hover:text-white max-md:after:absolute max-md:after:-inset-3 max-md:after:content-['']"
+              onClick={() => setHelpVisible(false)}
+            >
+              <AppIcon name="close" size={14} />
             </button>
           </div>
         ) : null}

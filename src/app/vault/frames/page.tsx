@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 
+import { AppIcon, type AppIconName } from "@/components/ui/AppIcon";
 import { loadItems, type VaultItem } from "@/lib/vaultModel";
 import { useResolvedVaultImage } from "@/lib/useResolvedVaultImages";
 
@@ -51,7 +52,7 @@ function CardImage({ src, title }: { src: string; title: string }) {
       display: "flex", alignItems: "center", justifyContent: "center",
       borderRadius: 3, flexDirection: "column", gap: 6,
     }}>
-      <div style={{ fontSize: 28, opacity: 0.4 }}>🖼</div>
+      <div style={{ opacity: 0.4, color: "#fff", display: "flex" }}><AppIcon name="layers" size={28} /></div>
       <div style={{ fontSize: 10, color: "rgba(255,255,255,0.3)", textAlign: "center", padding: "0 8px" }}>No image</div>
     </div>
   );
@@ -523,7 +524,7 @@ function StickerLayer({ item, activeStickers }: StickerLayerProps) {
           boxShadow: "0 2px 8px rgba(0,0,0,0.4)",
           whiteSpace: "nowrap",
         }}>
-          ⭐ Key Item
+          <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}><AppIcon name="star" size={11} /> Key Item</span>
         </div>
       )}
 
@@ -570,7 +571,7 @@ function StickerLayer({ item, activeStickers }: StickerLayerProps) {
           boxShadow: "0 2px 10px rgba(239,68,68,0.55)",
           whiteSpace: "nowrap",
         }}>
-          🔥 HOT
+          <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}><AppIcon name="flame" size={11} /> HOT</span>
         </div>
       )}
 
@@ -615,7 +616,7 @@ function ItemRow({ item, selected, onSelect }: { item: VaultItem; selected: bool
         {imageUrl
           // eslint-disable-next-line @next/next/no-img-element -- needs crossOrigin="anonymous" for canvas frame compositing; next/image doesn't support it
           ? <img src={imageUrl} alt="" crossOrigin="anonymous" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-          : <span style={{ fontSize: 16, opacity: 0.4 }}>🖼</span>
+          : <span style={{ opacity: 0.4, color: "#fff", display: "inline-flex" }}><AppIcon name="layers" size={16} /></span>
         }
       </div>
       {/* Info */}
@@ -746,12 +747,12 @@ export default function FramesPage() {
     { color: "#0a0014", label: "Void" },
   ];
 
-  const STICKER_OPTIONS: { key: StickerKey; label: string; bg: string; fg: string }[] = [
+  const STICKER_OPTIONS: { key: StickerKey; label: string; bg: string; fg: string; icon?: AppIconName }[] = [
     { key: "grade",   label: "Grade",    bg: "#001869", fg: "#fff" },
-    { key: "key",     label: "⭐ Key",   bg: "#f5c52a", fg: "#000" },
+    { key: "key",     label: "Key",      bg: "#f5c52a", fg: "#000", icon: "star" },
     { key: "forsale", label: "For Sale", bg: "#22c55e", fg: "#fff" },
     { key: "sold",    label: "SOLD",     bg: "#ef4444", fg: "#fff" },
-    { key: "hot",     label: "🔥 Hot",  bg: "#f97316", fg: "#fff" },
+    { key: "hot",     label: "Hot",      bg: "#f97316", fg: "#fff", icon: "flame" },
     { key: "edition", label: "Edition",  bg: "#6366f1", fg: "#fff" },
   ];
 
@@ -887,7 +888,7 @@ export default function FramesPage() {
                   opacity: downloading ? 0.7 : 1, flexShrink: 0,
                 }}
               >
-                {downloading ? "Rendering…" : "↓ Download PNG"}
+                {downloading ? "Rendering…" : (<span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}><AppIcon name="download" size={14} /> Download PNG</span>)}
               </button>
             )}
           </div>
@@ -918,8 +919,10 @@ export default function FramesPage() {
                       color: isActive ? s.fg : "var(--text, #555)",
                       border: isActive ? `1.5px solid ${s.bg}` : "1.5px solid var(--border, #ddd)",
                       opacity: noData ? 0.4 : 1,
+                      ...(s.icon ? { display: "inline-flex", alignItems: "center", gap: 4 } : {}),
                     }}
                   >
+                    {s.icon ? <AppIcon name={s.icon} size={12} /> : null}
                     {s.label}
                   </button>
                 );
@@ -931,7 +934,7 @@ export default function FramesPage() {
           <div style={{ flex: 1, overflow: "auto", display: "flex", alignItems: "center", justifyContent: "center", background: "#e8e0d4" }}>
             {!selectedItem ? (
               <div style={{ textAlign: "center", color: "#888" }}>
-                <div style={{ fontSize: 40, marginBottom: 12, opacity: 0.3 }}>🖼</div>
+                <div style={{ marginBottom: 12, opacity: 0.3, display: "flex", justifyContent: "center" }}><AppIcon name="layers" size={40} /></div>
                 <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 4 }}>Select an item</div>
                 <div style={{ fontSize: 12 }}>Choose from your vault to preview in a frame</div>
               </div>

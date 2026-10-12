@@ -14,7 +14,7 @@ import { LEARN_ARTICLES } from "@/lib/learnContent";
 import { listLoungePosts, type LoungePost } from "@/lib/loungePosts";
 import { priceCheckIsStale } from "@/lib/pricingMvp";
 import { syncPublicProfile } from "@/lib/publicProfile";
-import { computeVaultStats, effectiveMarketValue, readValueMode, totalsValue, writeValueMode, type ValueMode } from "@/lib/vaultStats";
+import { activeItems, computeVaultStats, effectiveMarketValue, readValueMode, totalsValue, writeValueMode, type ValueMode } from "@/lib/vaultStats";
 import { loadItems, syncVaultItemsFromSupabase, type VaultItem } from "@/lib/vaultModel";
 import { getPendingVaultSyncCount } from "@/lib/vaultSyncQueue";
 
@@ -156,8 +156,11 @@ export default function HomeClient() {
     return { totalItems: s.itemCount, totalCost: s.totalCost, totalValue: s.totalValue, totalGain: s.totalGain, gainPct: s.gainPct, pricedCount: s.pricedCount, ghostCount: s.ghostCount };
   }, [items, valueMode]);
 
-  const recent = useMemo(() => [...items].sort((a, b) => itemTimestamp(b) - itemTimestamp(a)).slice(0, 6), [items]);
-  const staleChecks = useMemo(() => items.filter((item) => effectiveMarketValue(item) > 0 && priceCheckIsStale(item)).length, [items]);
+  // Recently added and the price-check notice describe what you currently own: sold, supply and wishlist records are left out,
+  // the same rule the Vault, Insights and the recap use.
+  const owned = useMemo(() => activeItems(items), [items]);
+  const recent = useMemo(() => [...owned].sort((a, b) => itemTimestamp(b) - itemTimestamp(a)).slice(0, 6), [owned]);
+  const staleChecks = useMemo(() => owned.filter((item) => effectiveMarketValue(item) > 0 && priceCheckIsStale(item)).length, [owned]);
 
   const gainTone = stats.totalGain >= 0 ? ("gain" as const) : ("loss" as const);
   const pctText = stats.gainPct === null ? "—" : (stats.totalGain >= 0 ? "+" : "") + stats.gainPct.toFixed(1) + "%";

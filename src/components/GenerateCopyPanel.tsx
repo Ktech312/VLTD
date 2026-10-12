@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { generateItemCopy, type CopyMode } from "@/lib/generateItemCopy";
 import type { VaultItem } from "@/lib/vaultModel";
+import { AppIcon } from "@/components/ui/AppIcon";
 
 // ─── workspace prefs helper ────────────────────────────────────────────────────
 
@@ -79,10 +80,10 @@ export default function GenerateCopyPanel({
   const label =
     triggerLabel ??
     (mode === "description"
-      ? "✦ Generate description"
+      ? "Generate description"
       : mode === "listing"
-      ? "✦ Generate listing copy"
-      : "✦ Generate caption");
+      ? "Generate listing copy"
+      : "Generate caption");
 
   function handleGenerate() {
     setState("generating");
@@ -125,7 +126,8 @@ export default function GenerateCopyPanel({
           borderColor: "var(--border)",
         }}
       >
-        {label}
+        <AppIcon name="sparkleAI" size={14} />
+        {label.replace(/^✦\s*/, "")}
       </button>
     );
   }
@@ -190,10 +192,10 @@ export default function GenerateCopyPanel({
         <button
           type="button"
           onClick={handleDiscard}
-          className="text-[11px] transition hover:opacity-70"
+          className="inline-flex items-center gap-1 text-[11px] transition hover:opacity-70"
           style={{ color: "var(--muted)" }}
         >
-          ✕ Discard
+          <AppIcon name="close" size={12} /> Discard
         </button>
       </div>
 

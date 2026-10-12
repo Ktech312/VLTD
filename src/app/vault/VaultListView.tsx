@@ -1,5 +1,6 @@
 "use client";
 
+import { VaultLocalNav } from "@/components/SectionNav";
 import { useRouter } from "next/navigation";
 import AddItemMenu from "@/components/AddItemMenu";
 import VaultToolsMenu from "@/components/VaultToolsMenu";
@@ -23,7 +24,7 @@ import SwipeStack from "@/components/SwipeStack";
 import { computeItemIntelligence } from "@/lib/itemIntelligence";
 import { UNIVERSE_LABEL, TAXONOMY, getCategories, isUniverseKey, type UniverseKey } from "@/lib/taxonomy";
 import { showToast } from "@/lib/toast";
-import { collectibleItems, effectiveMarketValue, readValueMode, summarizeValues, writeValueMode, type ValueMode } from "@/lib/vaultStats";
+import { activeItems, collectibleItems, effectiveMarketValue, readValueMode, summarizeValues, writeValueMode, type ValueMode } from "@/lib/vaultStats";
 import { priceCheckIsStale } from "@/lib/pricingMvp";
 import { migrateExistingVaultImagesToSupabase } from "@/lib/vaultMigration";
 import {
@@ -694,8 +695,8 @@ function UniverseOverviewCard({
   isFocus?: boolean;
 }) {
   const thumbnailImage = category.thumbnailSrc;
-  const countedItems = collectibleItems(items);
-  const summary = summarizeValues(countedItems, "fill");
+  const countedItems = activeItems(items);
+  const summary = summarizeValues(countedItems, readValueMode());
   const totalValue = summary.totalValue;
   const totalCostValue = summary.totalCost;
   const totalGain = summary.totalGain;
@@ -905,7 +906,7 @@ function VaultSelectionDrawer({
                   <div key={row.label} className="flex items-center justify-between gap-3">
                     <span className="inline-flex min-w-0 items-center gap-2">
                       <span className={["inline-flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-full text-[9px] font-bold", row.complete ? "bg-emerald-500/80 text-black" : "bg-red-500/90 text-white"].join(" ")}>
-                        {row.complete ? "✓" : "!"}
+                        <AppIcon name={row.complete ? "checkmark" : "warning"} size={10} strokeWidth={3} />
                       </span>
                       <span className="truncate" style={{ color: "#ECEDEF" }}>{row.label}</span>
                     </span>
@@ -924,7 +925,7 @@ function VaultSelectionDrawer({
           <div className="text-[10px] font-semibold uppercase tracking-[0.28em]" style={{ color: "#C8CDD2" }}>Share / Sell</div>
           <div className="mt-3 flex items-center gap-2 text-[11px]" style={{ color: "#ECEDEF" }}>
             <span className="inline-flex items-center gap-2">
-              <span className="inline-flex h-3.5 w-3.5 items-center justify-center rounded-full bg-emerald-500/20 text-[9px] text-emerald-300 ring-1 ring-emerald-400/50">↗</span>
+              <span className="inline-flex h-3.5 w-3.5 items-center justify-center rounded-full bg-emerald-500/20 text-emerald-300 ring-1 ring-emerald-400/50"><AppIcon name="externalLink" size={10} /></span>
               Public Exhibition
             </span>
             <ItemVisibilityToggle item={item} />
@@ -1399,7 +1400,7 @@ export default function VaultListView({ lockedUniverse }: { lockedUniverse?: Uni
   const stats = useMemo(() => {
     // Supplies (boxes, cases) stay in the list but never count toward the
     // collection's value, insurance readiness or review counts.
-    const counted = collectibleItems(filteredItems);
+    const counted = activeItems(filteredItems);
     const totalItems = counted.length;
     const summary = summarizeValues(counted, valueMode);
     const totalCostValue = summary.totalCost;
@@ -1628,18 +1629,7 @@ export default function VaultListView({ lockedUniverse }: { lockedUniverse?: Uni
         }
       />
       <div className="mx-auto max-w-[1500px] px-3 pb-3 sm:px-5">
-        <LocalNav
-          activeKey="items"
-          items={[
-            { key: "items", label: "Items", href: "/vault" },
-            { key: "for-sale", label: "For Sale", href: "/vault/for-sale" },
-            { key: "sold", label: "Sold", href: "/vault/sold" },
-          ]}
-          trailing={[
-            { key: "insights", label: "Insights", href: "/portfolio" },
-            { key: "goals", label: "Goals", href: "/goals" },
-          ]}
-        />
+        <VaultLocalNav activeKey="items" />
       </div>
       <main className="text-[color:var(--fg)]">
       {!initialLoadComplete ? (
@@ -2126,6 +2116,8 @@ export default function VaultListView({ lockedUniverse }: { lockedUniverse?: Uni
                       <button
                         type="button"
                         onClick={() => toggleSelectItem(item.id)}
+                        aria-pressed={isSelected}
+                        aria-label={"Select " + item.title}
                         className="absolute inset-0 z-40 flex items-center justify-center rounded-[10px]"
                         style={{ background: isSelected ? "rgba(203,208,213,0.18)" : "rgba(0,0,0,0.04)" }}
                       >

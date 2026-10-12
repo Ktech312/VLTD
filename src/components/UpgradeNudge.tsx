@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { AppIcon } from "@/components/ui/AppIcon";
 
 /** Inline "you've hit the free limit → upgrade" prompt, shown wherever a save is
  *  blocked by the free-tier item cap. Links to the billing page. */
@@ -16,7 +17,7 @@ export default function UpgradeNudge({
       className="flex flex-wrap items-center gap-3 rounded-2xl px-4 py-3 ring-1"
       style={{ background: "rgba(203,208,213,0.10)", borderColor: "rgba(203,208,213,0.4)" }}
     >
-      <span className="text-lg" aria-hidden="true">✨</span>
+      <span className="inline-flex" aria-hidden="true"><AppIcon name="sparkleAI" size={20} /></span>
       <div className="min-w-0 flex-1">
         <div className="text-sm font-semibold" style={{ color: "#C8CDD2" }}>
           You&apos;ve reached your free limit
@@ -37,10 +38,10 @@ export default function UpgradeNudge({
           type="button"
           onClick={onDismiss}
           aria-label="Dismiss"
-          className="shrink-0 text-lg leading-none"
+          className="relative inline-flex shrink-0 items-center justify-center leading-none max-md:h-11 max-md:w-11"
           style={{ color: "var(--muted2)" }}
         >
-          ✕
+          <AppIcon name="close" size={16} />
         </button>
       ) : null}
     </div>

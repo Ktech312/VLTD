@@ -146,32 +146,32 @@ export default function ShareBar({ title, shareUrl, itemId, compact = false, hid
   const icons = (
     <div className="flex flex-wrap gap-2">
       {hideCopy ? null : (
-        <button type="button" onClick={() => void handleCopy()} className={iconBtn} style={iconStyle} title="Copy link">
+        <button type="button" onClick={() => void handleCopy()} className={iconBtn} style={iconStyle} title="Copy link" aria-label="Copy link">
           {copied ? <AppIcon name="checkmark" strokeWidth={2.5} /> : <AppIcon name="copy" />}
         </button>
       )}
-      <a href={tweetUrl} target="_blank" rel="noopener noreferrer" className={iconBtn} style={iconStyle} title="Post on X">
+      <a href={tweetUrl} target="_blank" rel="noopener noreferrer" className={iconBtn} style={iconStyle} title="Post on X" aria-label="Share on X">
         <XIcon />
       </a>
-      <a href={fbUrl} target="_blank" rel="noopener noreferrer" className={iconBtn} style={iconStyle} title="Share on Facebook">
+      <a href={fbUrl} target="_blank" rel="noopener noreferrer" className={iconBtn} style={iconStyle} title="Share on Facebook" aria-label="Share on Facebook">
         <FacebookIcon />
       </a>
-      <button type="button" onClick={() => void handleInstagram()} className={iconBtn} style={iconStyle} title={igCopied ? "Link copied — paste on Instagram" : "Share on Instagram"}>
+      <button type="button" onClick={() => void handleInstagram()} className={iconBtn} style={iconStyle} title={igCopied ? "Link copied — paste on Instagram" : "Share on Instagram"} aria-label={igCopied ? "Link copied — paste on Instagram" : "Share on Instagram"}>
         {igCopied ? <AppIcon name="checkmark" strokeWidth={2.5} /> : <InstagramIcon />}
       </button>
-      <a href={redditUrl} target="_blank" rel="noopener noreferrer" className={iconBtn} style={iconStyle} title="Share on Reddit">
+      <a href={redditUrl} target="_blank" rel="noopener noreferrer" className={iconBtn} style={iconStyle} title="Share on Reddit" aria-label="Share on Reddit">
         <RedditIcon />
       </a>
-      <a href={waUrl} target="_blank" rel="noopener noreferrer" className={iconBtn} style={iconStyle} title="Share on WhatsApp">
+      <a href={waUrl} target="_blank" rel="noopener noreferrer" className={iconBtn} style={iconStyle} title="Share on WhatsApp" aria-label="Share on WhatsApp">
         <WhatsAppIcon />
       </a>
-      <a href={tgUrl} target="_blank" rel="noopener noreferrer" className={iconBtn} style={iconStyle} title="Share on Telegram">
+      <a href={tgUrl} target="_blank" rel="noopener noreferrer" className={iconBtn} style={iconStyle} title="Share on Telegram" aria-label="Share on Telegram">
         <TelegramIcon />
       </a>
-      <a href={smsUrl} className={iconBtn} style={iconStyle} title="Share via SMS">
+      <a href={smsUrl} className={iconBtn} style={iconStyle} title="Share via SMS" aria-label="Share via SMS">
         <AppIcon name="sms" />
       </a>
-      <a href={emailUrl} className={iconBtn} style={iconStyle} title="Share via Email">
+      <a href={emailUrl} className={iconBtn} style={iconStyle} title="Share via Email" aria-label="Share via Email">
         <AppIcon name="email" />
       </a>
     </div>

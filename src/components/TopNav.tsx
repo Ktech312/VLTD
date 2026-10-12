@@ -477,6 +477,9 @@ function TopNavInner() {
                   }
                   setUserOpen((v) => !v);
                 }}
+                aria-label="Account menu"
+                aria-haspopup="menu"
+                aria-expanded={userOpen}
                 className="flex items-center gap-2 rounded-full p-1 transition"
                 style={{ background: "transparent", border: "none" }}
               >
@@ -657,10 +660,15 @@ function TopNavInner() {
                   </Link>
                   {/* Phones only: Help has no room in the top bar, so it sits here. */}
                   <div className="md:hidden sm:hidden">
+                    <Link href="/guide/walkthrough" onClick={() => setUserOpen(false)}
+                      className="flex min-h-[44px] items-center rounded-xl px-3 text-sm transition hover:bg-[rgba(203,208,213,0.06)]"
+                      style={{ color: "var(--theme-text-primary, #ECEDEF)" }}>
+                      Getting started
+                    </Link>
                     <Link href="/guide" onClick={() => setUserOpen(false)}
                       className="flex min-h-[44px] items-center rounded-xl px-3 text-sm transition hover:bg-[rgba(203,208,213,0.06)]"
                       style={{ color: "var(--theme-text-primary, #ECEDEF)" }}>
-                      Help
+                      Feature guide
                     </Link>
                     <button type="button"
                       onClick={() => { setUserOpen(false); window.dispatchEvent(new Event("vltd:open-support")); }}

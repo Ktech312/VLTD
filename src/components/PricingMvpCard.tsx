@@ -356,7 +356,7 @@ export default function PricingMvpCard({
                       <>
                         <span className={`flex items-center gap-1 text-[12px] font-semibold text-[color:var(--fg)] ${p.url ? "underline underline-offset-2" : ""}`}>
                           {p.label}
-                          {p.url ? <span aria-hidden="true">↗</span> : null}
+                          {p.url ? <span className="inline-flex" aria-hidden="true"><AppIcon name="externalLink" size={12} /></span> : null}
                         </span>
                         <span className="mt-0.5 flex flex-wrap items-baseline gap-x-2 text-[11px] leading-4">
                           {p.avg?.sold ? (
@@ -473,8 +473,8 @@ export default function PricingMvpCard({
                   {prefs.custom.map((c, i) => (
                     <span key={`${c.label}-${i}`} className="inline-flex items-center gap-1.5 rounded-full bg-[color:var(--surface)] px-2.5 py-0.5 ring-1 ring-[color:var(--border)]">
                       {c.label}
-                      <button type="button" aria-label={`Remove ${c.label}`} onClick={() => savePrefs({ ids: prefs.ids, custom: prefs.custom.filter((_, idx) => idx !== i) })} className="text-[color:var(--muted)]">
-                        ×
+                      <button type="button" aria-label={`Remove ${c.label}`} onClick={() => savePrefs({ ids: prefs.ids, custom: prefs.custom.filter((_, idx) => idx !== i) })} className="inline-flex text-[color:var(--muted)]">
+                        <AppIcon name="close" size={12} />
                       </button>
                     </span>
                   ))}

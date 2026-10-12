@@ -1,5 +1,6 @@
 "use client";
 
+import { AppIcon, type AppIconName } from "@/components/ui/AppIcon";
 import { PillButton } from "@/components/ui/PillButton";
 import { useEffect, useState } from "react";
 import Link from "next/link";
@@ -46,7 +47,7 @@ const PLANS: { key: Plan; name: string; price: string; features: string[] }[] = 
     key: "business",
     name: "Business",
     price: "$29 / mo",
-    features: ["Everything in Pro", "Team members & roles", "Multi-workspace", "Business billing & invoicing", "Priority support", "API access"],
+    features: ["Everything in Pro", "Team members", "Multi-workspace", "Business billing & invoicing", "Priority support", "API access"],
   },
 ];
 
@@ -236,7 +237,7 @@ export default function BillingPage() {
                   <ul className="mt-3 space-y-1.5">
                     {plan.features.map((f) => (
                       <li key={f} className="text-[11px] flex items-start gap-1.5" style={{ color: isCurrent ? "var(--fg)" : "var(--muted)" }}>
-                        <span style={{ color: "#4ade80" }}>✓</span> {f}
+                        <span style={{ color: "#4ade80" }} className="shrink-0"><AppIcon name="checkmark" size={12} /></span> {f}
                       </li>
                     ))}
                   </ul>

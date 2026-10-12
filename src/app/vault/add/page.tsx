@@ -1,5 +1,6 @@
 "use client";
 
+import { useDialogA11y } from "@/components/ui/useDialogA11y";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
@@ -271,13 +272,14 @@ function looksLikeBookBarcode(digits?: string) {
 
 function Field({
   label,
-  locked,
+  locked = false,
   onToggleLock,
   children,
 }: {
   label: string;
-  locked: boolean;
-  onToggleLock: () => void;
+  locked?: boolean;
+  /** Omit for fields that cannot be carried over to the next item -- no lock control is shown. */
+  onToggleLock?: () => void;
   children: React.ReactNode;
 }) {
   return (
@@ -286,20 +288,22 @@ function Field({
         <label className="text-xs font-medium tracking-[0.14em] text-[color:var(--muted2)]">
           {label}
         </label>
-        <PillButton
-          size="compact"
-          variant={locked ? "active" : "default"}
-          pressed={locked}
-          onClick={onToggleLock}
-          ariaLabel={locked ? "Locked for next item" : "Unlocked for next item"}
-          title={locked ? "Locked for next item" : "Unlocked for next item"}
-        >
-          {locked ? (
-            <AppIcon name="lock" size={14} strokeWidth={2.5} style={{ color: "var(--theme-gold, #C8CDD2)" }} />
-          ) : (
-            <AppIcon name="unlocked" size={14} strokeWidth={2.5} style={{ color: "var(--muted)" }} />
-          )}
-        </PillButton>
+        {onToggleLock ? (
+          <PillButton
+            size="compact"
+            variant={locked ? "active" : "default"}
+            pressed={locked}
+            onClick={onToggleLock}
+            ariaLabel={locked ? "Locked for next item" : "Unlocked for next item"}
+            title={locked ? "Locked for next item" : "Unlocked for next item"}
+          >
+            {locked ? (
+              <AppIcon name="lock" size={14} strokeWidth={2.5} style={{ color: "var(--theme-gold, #C8CDD2)" }} />
+            ) : (
+              <AppIcon name="unlocked" size={14} strokeWidth={2.5} style={{ color: "var(--muted)" }} />
+            )}
+          </PillButton>
+        ) : null}
       </div>
       {children}
     </div>
@@ -335,6 +339,9 @@ export default function AddPage() {
   const [draftMediaImages, setDraftMediaImages] = useState<DraftMediaImage[]>([]);
   const [activeMediaImageId, setActiveMediaImageId] = useState("");
   const [selectedMediaImageId, setSelectedMediaImageId] = useState("");
+  // Dialog behaviour (Escape, focus containment, focus return) for the photo options and crop editor.
+  const photoDialogRef = useDialogA11y<HTMLDivElement>(Boolean(selectedMediaImageId), () => setSelectedMediaImageId(""));
+  const cropDialogRef = useDialogA11y<HTMLDivElement>(isCropEditorOpen, () => setIsCropEditorOpen(false));
   const [cameraTarget, setCameraTarget] = useState<"scan" | "item">("scan");
   const [isCameraPanelOpen, setIsCameraPanelOpen] = useState(false);
   const [cameraPanelKey, setCameraPanelKey] = useState(0);
@@ -2671,7 +2678,7 @@ export default function AddPage() {
 
               {/* ── TCG fields ───────────────────────────────────── */}
               {values.universe === "TCG" && (<>
-                <Field label="Rarity" locked={false} onToggleLock={() => {}}>
+                <Field label="Rarity">
                   <input
                     className={inputClass()}
                     value={values.tcgRarity ?? ""}
@@ -2679,7 +2686,7 @@ export default function AddPage() {
                     placeholder="Holo Rare, Secret Rare, Ultra Rare, Common…"
                   />
                 </Field>
-                <Field label="Parallel / Finish" locked={false} onToggleLock={() => {}}>
+                <Field label="Parallel / Finish">
                   <input
                     className={inputClass()}
                     value={values.tcgParallelType ?? ""}
@@ -2687,7 +2694,7 @@ export default function AddPage() {
                     placeholder="Rainbow Rare, Gold, Reverse Holo…"
                   />
                 </Field>
-                <Field label="Holo / Foil Type" locked={false} onToggleLock={() => {}}>
+                <Field label="Holo / Foil Type">
                   <input
                     className={inputClass()}
                     value={values.tcgHoloType ?? ""}
@@ -2695,7 +2702,7 @@ export default function AddPage() {
                     placeholder="Cosmos Holo, Cracked Ice, Crosshatch…"
                   />
                 </Field>
-                <Field label="Set Code" locked={false} onToggleLock={() => {}}>
+                <Field label="Set Code">
                   <input
                     className={inputClass()}
                     value={values.tcgSetCode ?? ""}
@@ -2703,7 +2710,7 @@ export default function AddPage() {
                     placeholder="SV3pt5, BW1, EX Dragon…"
                   />
                 </Field>
-                <Field label="Language" locked={false} onToggleLock={() => {}}>
+                <Field label="Language">
                   <select
                     className={inputClass()}
                     value={values.tcgLanguage ?? ""}
@@ -2721,7 +2728,7 @@ export default function AddPage() {
                     <option>Portuguese</option>
                   </select>
                 </Field>
-                <Field label="Grading Company" locked={false} onToggleLock={() => {}}>
+                <Field label="Grading Company">
                   <select
                     className={inputClass()}
                     value={values.tcgGradingCompany ?? ""}
@@ -2739,7 +2746,7 @@ export default function AddPage() {
 
               {/* ── Sports Cards fields ───────────────────────────── */}
               {values.universe === "SPORTS" && selectedCategory === "Sports Cards" && (<>
-                <Field label="Sport" locked={false} onToggleLock={() => {}}>
+                <Field label="Sport">
                   <select
                     className={inputClass()}
                     value={values.sportsSport ?? ""}
@@ -2759,7 +2766,7 @@ export default function AddPage() {
                     <option>Other</option>
                   </select>
                 </Field>
-                <Field label="Team" locked={false} onToggleLock={() => {}}>
+                <Field label="Team">
                   <input
                     className={inputClass()}
                     value={values.sportsTeam ?? ""}
@@ -2767,7 +2774,7 @@ export default function AddPage() {
                     placeholder="Lakers, Yankees, Chiefs…"
                   />
                 </Field>
-                <Field label="Parallel / Color" locked={false} onToggleLock={() => {}}>
+                <Field label="Parallel / Color">
                   <input
                     className={inputClass()}
                     value={values.sportsParallelType ?? ""}
@@ -2775,7 +2782,7 @@ export default function AddPage() {
                     placeholder="Prizm Silver, Reactive Blue, Gold Refractor…"
                   />
                 </Field>
-                <Field label="Serial / Print Run" locked={false} onToggleLock={() => {}}>
+                <Field label="Serial / Print Run">
                   <input
                     className={inputClass()}
                     value={values.sportsSerialNumber ?? ""}
@@ -2783,7 +2790,7 @@ export default function AddPage() {
                     placeholder="/25, /10, 1/1…"
                   />
                 </Field>
-                <Field label="Grading Company" locked={false} onToggleLock={() => {}}>
+                <Field label="Grading Company">
                   <select
                     className={inputClass()}
                     value={values.sportsGradingCompany ?? ""}
@@ -2798,7 +2805,7 @@ export default function AddPage() {
                     <option>KSA</option>
                   </select>
                 </Field>
-                <Field label="Pop Report" locked={false} onToggleLock={() => {}}>
+                <Field label="Pop Report">
                   <input
                     className={inputClass()}
                     value={values.sportsPop ?? ""}
@@ -2813,7 +2820,7 @@ export default function AddPage() {
                   <span className="text-sm" style={{ color: "var(--fg)" }}>Relic / Patch Card</span>
                 </label>
                 {values.sportsIsRelic === "true" && (
-                  <Field label="Relic Description" locked={false} onToggleLock={() => {}}>
+                  <Field label="Relic Description">
                     <input className={inputClass()} value={values.sportsRelicDescription ?? ""}
                       onChange={(e) => setField("sportsRelicDescription", e.target.value)}
                       placeholder="Game-used jersey, 3-color patch…" />
@@ -2826,7 +2833,7 @@ export default function AddPage() {
                   <span className="text-sm" style={{ color: "var(--fg)" }}>Autograph</span>
                 </label>
                 {values.sportsIsAuto === "true" && (
-                  <Field label="Auto Authenticator" locked={false} onToggleLock={() => {}}>
+                  <Field label="Auto Authenticator">
                     <select className={inputClass()} value={values.sportsAutoAuth ?? ""}
                       onChange={(e) => setField("sportsAutoAuth", e.target.value)}>
                       <option value="">—</option>
@@ -2842,22 +2849,22 @@ export default function AddPage() {
 
               {/* ── Sports Memorabilia fields ─────────────────────── */}
               {values.universe === "SPORTS" && selectedCategory === "Memorabilia" && (<>
-                <Field label="Sport / Team" locked={false} onToggleLock={() => {}}>
+                <Field label="Sport / Team">
                   <input className={inputClass()} value={values.memorabiliaTeam ?? ""}
                     onChange={(e) => setField("memorabiliaTeam", e.target.value)}
                     placeholder="Lakers, Yankees, Team USA…" />
                 </Field>
-                <Field label="Event / Season" locked={false} onToggleLock={() => {}}>
+                <Field label="Event / Season">
                   <input className={inputClass()} value={values.memorabiliaEvent ?? ""}
                     onChange={(e) => setField("memorabiliaEvent", e.target.value)}
                     placeholder="2000 Finals, 1998 World Series, Super Bowl LV…" />
                 </Field>
-                <Field label="Signing Date" locked={false} onToggleLock={() => {}}>
+                <Field label="Signing Date">
                   <input className={inputClass()} value={values.memorabiliaSigningDate ?? ""}
                     onChange={(e) => setField("memorabiliaSigningDate", e.target.value)}
                     placeholder="March 12, 2023" />
                 </Field>
-                <Field label="Auth Company" locked={false} onToggleLock={() => {}}>
+                <Field label="Auth Company">
                   <select className={inputClass()} value={values.memorabiliaAuthCompany ?? ""}
                     onChange={(e) => setField("memorabiliaAuthCompany", e.target.value)}>
                     <option value="">—</option>
@@ -2878,7 +2885,7 @@ export default function AddPage() {
                   <span className="text-sm" style={{ color: "var(--fg)" }}>Game used / match worn</span>
                 </label>
                 {values.memorabiliaGameUsed === "true" && (
-                  <Field label="Game-Used Description" locked={false} onToggleLock={() => {}}>
+                  <Field label="Game-Used Description">
                     <input className={inputClass()} value={values.memorabiliaGameUsedDesc ?? ""}
                       onChange={(e) => setField("memorabiliaGameUsedDesc", e.target.value)}
                       placeholder="Jersey worn Game 7, bat used 2002 ALCS…" />
@@ -2888,22 +2895,22 @@ export default function AddPage() {
 
               {/* ── Vinyl / Music fields ──────────────────────────── */}
               {values.universe === "MUSIC" && (<>
-                <Field label="Pressing" locked={false} onToggleLock={() => {}}>
+                <Field label="Pressing">
                   <input className={inputClass()} value={values.vinylPressing ?? ""}
                     onChange={(e) => setField("vinylPressing", e.target.value)}
                     placeholder="Original Press, Reissue, 180g, Limited…" />
                 </Field>
-                <Field label="Label" locked={false} onToggleLock={() => {}}>
+                <Field label="Label">
                   <input className={inputClass()} value={values.vinylLabel ?? ""}
                     onChange={(e) => setField("vinylLabel", e.target.value)}
                     placeholder="Blue Note, Impulse!, Motown, Columbia…" />
                 </Field>
-                <Field label="Country of Pressing" locked={false} onToggleLock={() => {}}>
+                <Field label="Country of Pressing">
                   <input className={inputClass()} value={values.vinylCountry ?? ""}
                     onChange={(e) => setField("vinylCountry", e.target.value)}
                     placeholder="US, UK, Japan, Germany…" />
                 </Field>
-                <Field label="Speed (RPM)" locked={false} onToggleLock={() => {}}>
+                <Field label="Speed (RPM)">
                   <select className={inputClass()} value={values.vinylSpeedRpm ?? ""}
                     onChange={(e) => setField("vinylSpeedRpm", e.target.value)}>
                     <option value="">—</option>
@@ -2912,12 +2919,12 @@ export default function AddPage() {
                     <option value="78">78 RPM</option>
                   </select>
                 </Field>
-                <Field label="Vinyl Color" locked={false} onToggleLock={() => {}}>
+                <Field label="Vinyl Color">
                   <input className={inputClass()} value={values.vinylColor ?? ""}
                     onChange={(e) => setField("vinylColor", e.target.value)}
                     placeholder="Black, Clear, Red, Picture Disc…" />
                 </Field>
-                <Field label="Sleeve Condition" locked={false} onToggleLock={() => {}}>
+                <Field label="Sleeve Condition">
                   <select className={inputClass()} value={values.vinylSleeveCondition ?? ""}
                     onChange={(e) => setField("vinylSleeveCondition", e.target.value)}>
                     <option value="">—</option>
@@ -2927,7 +2934,7 @@ export default function AddPage() {
                   </select>
                 </Field>
                 <div className="sm:col-span-2">
-                  <Field label="Matrix / Runout" locked={false} onToggleLock={() => {}}>
+                  <Field label="Matrix / Runout">
                     <input className={inputClass()} value={values.vinylMatrix ?? ""}
                       onChange={(e) => setField("vinylMatrix", e.target.value)}
                       placeholder="Etched matrix info from the dead wax" />
@@ -2949,32 +2956,32 @@ export default function AddPage() {
 
               {/* ── Comics fields ─────────────────────────────────── */}
               {values.universe === "POP_CULTURE" && selectedCategory === "Comics" && (<>
-                <Field label="Publisher" locked={false} onToggleLock={() => {}}>
+                <Field label="Publisher">
                   <input className={inputClass()} value={values.comicPublisher ?? ""}
                     onChange={(e) => setField("comicPublisher", e.target.value)}
                     placeholder="Marvel, DC, Image, Dark Horse, IDW, Indie…" />
                 </Field>
-                <Field label="Issue Number" locked={false} onToggleLock={() => {}}>
+                <Field label="Issue Number">
                   <input className={inputClass()} value={values.comicIssueNumber ?? ""}
                     onChange={(e) => setField("comicIssueNumber", e.target.value)}
                     placeholder="#1, Vol 2 #4, Annual #1…" />
                 </Field>
-                <Field label="Cover Date" locked={false} onToggleLock={() => {}}>
+                <Field label="Cover Date">
                   <input className={inputClass()} value={values.comicCoverDate ?? ""}
                     onChange={(e) => setField("comicCoverDate", e.target.value)}
                     placeholder="July 1962, Dec 1939 (as printed on cover)" />
                 </Field>
-                <Field label="Cover Variant" locked={false} onToggleLock={() => {}}>
+                <Field label="Cover Variant">
                   <input className={inputClass()} value={values.comicCoverVariant ?? ""}
                     onChange={(e) => setField("comicCoverVariant", e.target.value)}
                     placeholder="Variant A, Incentive, Sketch, Foil…" />
                 </Field>
-                <Field label="Arc / Story Title" locked={false} onToggleLock={() => {}}>
+                <Field label="Arc / Story Title">
                   <input className={inputClass()} value={values.comicArcTitle ?? ""}
                     onChange={(e) => setField("comicArcTitle", e.target.value)}
                     placeholder="The Dark Phoenix Saga, Knightfall…" />
                 </Field>
-                <Field label="Grading Company" locked={false} onToggleLock={() => {}}>
+                <Field label="Grading Company">
                   <select className={inputClass()} value={values.comicGradingCompany ?? ""}
                     onChange={(e) => setField("comicGradingCompany", e.target.value)}>
                     <option value="">Raw (Ungraded)</option>
@@ -2982,7 +2989,7 @@ export default function AddPage() {
                   </select>
                 </Field>
                 {values.comicGradingCompany && values.comicGradingCompany !== "Raw (Ungraded)" && (<>
-                  <Field label="Page Quality" locked={false} onToggleLock={() => {}}>
+                  <Field label="Page Quality">
                     <select className={inputClass()} value={values.comicPageQuality ?? ""}
                       onChange={(e) => setField("comicPageQuality", e.target.value)}>
                       <option value="">—</option>
@@ -2990,7 +2997,7 @@ export default function AddPage() {
                       <option>Light Tan</option><option>Tan</option><option>Cream</option><option>Yellow</option>
                     </select>
                   </Field>
-                  <Field label="Restoration Status" locked={false} onToggleLock={() => {}}>
+                  <Field label="Restoration Status">
                     <select className={inputClass()} value={values.comicRestorationStatus ?? ""}
                       onChange={(e) => setField("comicRestorationStatus", e.target.value)}>
                       <option value="">—</option>
@@ -2998,7 +3005,7 @@ export default function AddPage() {
                       <option>Moderate</option><option>Extensive</option><option>Qualified</option>
                     </select>
                   </Field>
-                  <Field label="Holder Type" locked={false} onToggleLock={() => {}}>
+                  <Field label="Holder Type">
                     <select className={inputClass()} value={values.comicHolderType ?? ""}
                       onChange={(e) => setField("comicHolderType", e.target.value)}>
                       <option value="">—</option>
@@ -3006,7 +3013,7 @@ export default function AddPage() {
                       <option>Pedigree</option><option>Conserved</option><option>Restored</option>
                     </select>
                   </Field>
-                  <Field label="Census Rank" locked={false} onToggleLock={() => {}}>
+                  <Field label="Census Rank">
                     <input className={inputClass()} value={values.comicCensusRank ?? ""}
                       onChange={(e) => setField("comicCensusRank", e.target.value)}
                       placeholder="e.g., Highest Graded — 1 of 4" />
@@ -3016,22 +3023,22 @@ export default function AddPage() {
 
               {/* ── Toys fields ───────────────────────────────────── */}
               {values.universe === "POP_CULTURE" && selectedCategory === "Toys" && (<>
-                <Field label="Brand / Manufacturer" locked={false} onToggleLock={() => {}}>
+                <Field label="Brand / Manufacturer">
                   <input className={inputClass()} value={values.toyBrand ?? ""}
                     onChange={(e) => setField("toyBrand", e.target.value)}
                     placeholder="Hasbro, Mattel, NECA, McFarlane, Hot Toys, Funko…" />
                 </Field>
-                <Field label="Toy Line / Series" locked={false} onToggleLock={() => {}}>
+                <Field label="Toy Line / Series">
                   <input className={inputClass()} value={values.toyLine ?? ""}
                     onChange={(e) => setField("toyLine", e.target.value)}
                     placeholder="Marvel Legends, Star Wars Black Series, MOTU…" />
                 </Field>
-                <Field label="Scale" locked={false} onToggleLock={() => {}}>
+                <Field label="Scale">
                   <input className={inputClass()} value={values.toyScale ?? ""}
                     onChange={(e) => setField("toyScale", e.target.value)}
                     placeholder='1:6, 1:12, 3.75", 6", 12", Life-Size' />
                 </Field>
-                <Field label="Package Condition" locked={false} onToggleLock={() => {}}>
+                <Field label="Package Condition">
                   <select className={inputClass()} value={values.toyPackageCondition ?? ""}
                     onChange={(e) => setField("toyPackageCondition", e.target.value)}>
                     <option value="">—</option>
@@ -3062,17 +3069,17 @@ export default function AddPage() {
 
               {/* ── Art Cards fields ──────────────────────────────── */}
               {values.universe === "POP_CULTURE" && selectedCategory === "Art Cards" && (<>
-                <Field label="Artist" locked={false} onToggleLock={() => {}}>
+                <Field label="Artist">
                   <input className={inputClass()} value={values.artCardArtist ?? ""}
                     onChange={(e) => setField("artCardArtist", e.target.value)}
                     placeholder="Artist name" />
                 </Field>
-                <Field label="Card Set / Event" locked={false} onToggleLock={() => {}}>
+                <Field label="Card Set / Event">
                   <input className={inputClass()} value={values.artCardSet ?? ""}
                     onChange={(e) => setField("artCardSet", e.target.value)}
                     placeholder="SDCC 2024, Artist Alley, Convention sketch…" />
                 </Field>
-                <Field label="Card Type" locked={false} onToggleLock={() => {}}>
+                <Field label="Card Type">
                   <select className={inputClass()} value={values.artCardType ?? ""}
                     onChange={(e) => setField("artCardType", e.target.value)}>
                     <option value="">—</option>
@@ -3084,7 +3091,7 @@ export default function AddPage() {
 
               {/* ── Art & Prints (Fine Art) fields ────────────────── */}
               {values.universe === "MISC" && selectedCategory === "Art & Prints" && (<>
-                <Field label="Medium" locked={false} onToggleLock={() => {}}>
+                <Field label="Medium">
                   <select className={inputClass()} value={values.artMedium ?? ""}
                     onChange={(e) => setField("artMedium", e.target.value)}>
                     <option value="">—</option>
@@ -3096,20 +3103,20 @@ export default function AddPage() {
                     <option>Other</option>
                   </select>
                 </Field>
-                <Field label="Surface" locked={false} onToggleLock={() => {}}>
+                <Field label="Surface">
                   <input className={inputClass()} value={values.artSurface ?? ""}
                     onChange={(e) => setField("artSurface", e.target.value)}
                     placeholder="Canvas, Panel, Bristol, Paper, Illustration Board…" />
                 </Field>
-                <Field label="Width (in)" locked={false} onToggleLock={() => {}}>
+                <Field label="Width (in)">
                   <input className={inputClass()} value={values.artWidth ?? ""}
                     onChange={(e) => setField("artWidth", e.target.value)} placeholder='e.g., 11"' />
                 </Field>
-                <Field label="Height (in)" locked={false} onToggleLock={() => {}}>
+                <Field label="Height (in)">
                   <input className={inputClass()} value={values.artHeight ?? ""}
                     onChange={(e) => setField("artHeight", e.target.value)} placeholder='e.g., 17"' />
                 </Field>
-                <Field label="Depth (in)" locked={false} onToggleLock={() => {}}>
+                <Field label="Depth (in)">
                   <input className={inputClass()} value={values.artDepth ?? ""}
                     onChange={(e) => setField("artDepth", e.target.value)}
                     placeholder='e.g., 1.5" (optional)' />
@@ -3121,7 +3128,7 @@ export default function AddPage() {
                   <span className="text-sm" style={{ color: "var(--fg)" }}>Signed by artist</span>
                 </label>
                 {values.artIsSigned === "true" && (
-                  <Field label="Signature Location" locked={false} onToggleLock={() => {}}>
+                  <Field label="Signature Location">
                     <input className={inputClass()} value={values.artSignatureLocation ?? ""}
                       onChange={(e) => setField("artSignatureLocation", e.target.value)}
                       placeholder="Lower right, lower left, verso…" />
@@ -3134,14 +3141,14 @@ export default function AddPage() {
                   <span className="text-sm" style={{ color: "var(--fg)" }}>Framed</span>
                 </label>
                 <div className="sm:col-span-2">
-                  <Field label="Provenance" locked={false} onToggleLock={() => {}}>
+                  <Field label="Provenance">
                     <textarea className={textareaClass(false)} value={values.artProvenance ?? ""}
                       onChange={(e) => setField("artProvenance", e.target.value)}
                       placeholder="Purchased from gallery / artist directly, collection history…" />
                   </Field>
                 </div>
                 <div className="sm:col-span-2">
-                  <Field label="Exhibition History" locked={false} onToggleLock={() => {}}>
+                  <Field label="Exhibition History">
                     <textarea className={textareaClass(false)} value={values.artExhibitions ?? ""}
                       onChange={(e) => setField("artExhibitions", e.target.value)}
                       placeholder="Shows, galleries, or publications this piece has appeared in…" />
@@ -3151,17 +3158,17 @@ export default function AddPage() {
 
               {/* ── Watches fields ────────────────────────────────── */}
               {values.universe === "JEWELRY_APPAREL" && selectedCategory === "Watches" && (<>
-                <Field label="Brand" locked={false} onToggleLock={() => {}}>
+                <Field label="Brand">
                   <input className={inputClass()} value={values.watchBrand ?? ""}
                     onChange={(e) => setField("watchBrand", e.target.value)}
                     placeholder="Rolex, Patek Philippe, AP, Omega, Seiko…" />
                 </Field>
-                <Field label="Reference / Model" locked={false} onToggleLock={() => {}}>
+                <Field label="Reference / Model">
                   <input className={inputClass()} value={values.watchReference ?? ""}
                     onChange={(e) => setField("watchReference", e.target.value)}
                     placeholder="116610LN, 5711/1A-010…" />
                 </Field>
-                <Field label="Movement" locked={false} onToggleLock={() => {}}>
+                <Field label="Movement">
                   <select className={inputClass()} value={values.watchMovement ?? ""}
                     onChange={(e) => setField("watchMovement", e.target.value)}>
                     <option value="">—</option>
@@ -3169,7 +3176,7 @@ export default function AddPage() {
                     <option>Quartz</option><option>Solar</option><option>Spring Drive</option>
                   </select>
                 </Field>
-                <Field label="Case Material" locked={false} onToggleLock={() => {}}>
+                <Field label="Case Material">
                   <select className={inputClass()} value={values.watchCaseMaterial ?? ""}
                     onChange={(e) => setField("watchCaseMaterial", e.target.value)}>
                     <option value="">—</option>
@@ -3178,12 +3185,12 @@ export default function AddPage() {
                     <option>Titanium</option><option>Platinum</option><option>Ceramic</option><option>Other</option>
                   </select>
                 </Field>
-                <Field label="Case Size (mm)" locked={false} onToggleLock={() => {}}>
+                <Field label="Case Size (mm)">
                   <input className={inputClass()} value={values.watchCaseSize ?? ""}
                     onChange={(e) => setField("watchCaseSize", e.target.value)}
                     placeholder="40mm, 36mm, 41mm…" />
                 </Field>
-                <Field label="Dial Color" locked={false} onToggleLock={() => {}}>
+                <Field label="Dial Color">
                   <input className={inputClass()} value={values.watchDialColor ?? ""}
                     onChange={(e) => setField("watchDialColor", e.target.value)}
                     placeholder="Black, Blue, White, Champagne, Green…" />
@@ -3210,22 +3217,22 @@ export default function AddPage() {
 
               {/* ── Bags / Handbags fields ────────────────────────── */}
               {values.universe === "JEWELRY_APPAREL" && selectedCategory === "Bags" && (<>
-                <Field label="Brand" locked={false} onToggleLock={() => {}}>
+                <Field label="Brand">
                   <input className={inputClass()} value={values.bagBrand ?? ""}
                     onChange={(e) => setField("bagBrand", e.target.value)}
                     placeholder="Hermès, Chanel, Louis Vuitton, Gucci, Prada…" />
                 </Field>
-                <Field label="Color" locked={false} onToggleLock={() => {}}>
+                <Field label="Color">
                   <input className={inputClass()} value={values.bagColor ?? ""}
                     onChange={(e) => setField("bagColor", e.target.value)}
                     placeholder="Black, Togo Étoupe, Rose Gold…" />
                 </Field>
-                <Field label="Material / Leather" locked={false} onToggleLock={() => {}}>
+                <Field label="Material / Leather">
                   <input className={inputClass()} value={values.bagMaterial ?? ""}
                     onChange={(e) => setField("bagMaterial", e.target.value)}
                     placeholder="Togo, Clemence, Epsom, Canvas, Patent…" />
                 </Field>
-                <Field label="Hardware" locked={false} onToggleLock={() => {}}>
+                <Field label="Hardware">
                   <select className={inputClass()} value={values.bagHardware ?? ""}
                     onChange={(e) => setField("bagHardware", e.target.value)}>
                     <option value="">—</option>
@@ -3256,12 +3263,12 @@ export default function AddPage() {
 
               {/* ── Apparel / Streetwear fields ───────────────────── */}
               {values.universe === "JEWELRY_APPAREL" && selectedCategory === "Apparel" && (<>
-                <Field label="Size" locked={false} onToggleLock={() => {}}>
+                <Field label="Size">
                   <input className={inputClass()} value={values.apparelSize ?? ""}
                     onChange={(e) => setField("apparelSize", e.target.value)}
                     placeholder="S, M, L, XL, XXL, 32W 30L, US 10…" />
                 </Field>
-                <Field label="Colorway" locked={false} onToggleLock={() => {}}>
+                <Field label="Colorway">
                   <input className={inputClass()} value={values.apparelColorway ?? ""}
                     onChange={(e) => setField("apparelColorway", e.target.value)}
                     placeholder="Triple White, University Red, Black/Gum…" />
@@ -3276,7 +3283,7 @@ export default function AddPage() {
 
               {/* ── Games / Video Games fields ────────────────────── */}
               {values.universe === "GAMES" && selectedCategory === "Video Games" && (<>
-                <Field label="Platform" locked={false} onToggleLock={() => {}}>
+                <Field label="Platform">
                   <select className={inputClass()} value={values.gamePlatform ?? ""}
                     onChange={(e) => setField("gamePlatform", e.target.value)}>
                     <option value="">—</option>
@@ -3290,7 +3297,7 @@ export default function AddPage() {
                     <option>Atari 2600</option><option>PC</option><option>Other</option>
                   </select>
                 </Field>
-                <Field label="Region" locked={false} onToggleLock={() => {}}>
+                <Field label="Region">
                   <select className={inputClass()} value={values.gameRegion ?? ""}
                     onChange={(e) => setField("gameRegion", e.target.value)}>
                     <option value="">—</option>
@@ -3298,12 +3305,12 @@ export default function AddPage() {
                     <option>NTSC-J (Japan)</option><option>Other</option>
                   </select>
                 </Field>
-                <Field label="Publisher" locked={false} onToggleLock={() => {}}>
+                <Field label="Publisher">
                   <input className={inputClass()} value={values.gamePublisher ?? ""}
                     onChange={(e) => setField("gamePublisher", e.target.value)}
                     placeholder="Nintendo, Capcom, Konami, Square…" />
                 </Field>
-                <Field label="Grading Company" locked={false} onToggleLock={() => {}}>
+                <Field label="Grading Company">
                   <select className={inputClass()} value={values.gameGradingCompany ?? ""}
                     onChange={(e) => setField("gameGradingCompany", e.target.value)}>
                     <option value="">Raw (Ungraded)</option>
@@ -3332,39 +3339,39 @@ export default function AddPage() {
 
               {/* ── Coins & Currency fields ───────────────────────── */}
               {values.universe === "MISC" && selectedCategory === "Coins & Currency" && (<>
-                <Field label="Denomination" locked={false} onToggleLock={() => {}}>
+                <Field label="Denomination">
                   <input className={inputClass()} value={values.coinDenomination ?? ""}
                     onChange={(e) => setField("coinDenomination", e.target.value)}
                     placeholder="Morgan Dollar, Lincoln Cent, Double Eagle…" />
                 </Field>
-                <Field label="Country" locked={false} onToggleLock={() => {}}>
+                <Field label="Country">
                   <input className={inputClass()} value={values.coinCountry ?? ""}
                     onChange={(e) => setField("coinCountry", e.target.value)}
                     placeholder="USA, UK, Germany, Japan…" />
                 </Field>
-                <Field label="Mint" locked={false} onToggleLock={() => {}}>
+                <Field label="Mint">
                   <input className={inputClass()} value={values.coinMint ?? ""}
                     onChange={(e) => setField("coinMint", e.target.value)}
                     placeholder="Philadelphia, Denver, San Francisco, Carson City…" />
                 </Field>
-                <Field label="Mint Mark" locked={false} onToggleLock={() => {}}>
+                <Field label="Mint Mark">
                   <input className={inputClass()} value={values.coinMintMark ?? ""}
                     onChange={(e) => setField("coinMintMark", e.target.value)}
                     placeholder="P, D, S, CC, O, W — or none" />
                 </Field>
-                <Field label="Grading Company" locked={false} onToggleLock={() => {}}>
+                <Field label="Grading Company">
                   <select className={inputClass()} value={values.coinGradingCompany ?? ""}
                     onChange={(e) => setField("coinGradingCompany", e.target.value)}>
                     <option value="">Raw (Ungraded)</option>
                     <option>PCGS</option><option>NGC</option><option>ANACS</option><option>ICG</option>
                   </select>
                 </Field>
-                <Field label="Pop / Census" locked={false} onToggleLock={() => {}}>
+                <Field label="Pop / Census">
                   <input className={inputClass()} value={values.coinPopulation ?? ""}
                     onChange={(e) => setField("coinPopulation", e.target.value)}
                     placeholder="e.g., 12 at this grade, 3 finer" />
                 </Field>
-                <Field label="Error Type" locked={false} onToggleLock={() => {}}>
+                <Field label="Error Type">
                   <input className={inputClass()} value={values.coinError ?? ""}
                     onChange={(e) => setField("coinError", e.target.value)}
                     placeholder="Doubled Die, Off-Center, Struck Through… (blank if none)" />
@@ -3448,7 +3455,7 @@ export default function AddPage() {
         />
 
         {selectedMediaImage ? (
-          <div className="fixed inset-0 z-[80] bg-black/75 p-2 backdrop-blur-sm sm:p-4" role="dialog" aria-modal="true" aria-label="Photo options">
+          <div ref={photoDialogRef} className="fixed inset-0 z-[80] bg-black/75 p-2 backdrop-blur-sm sm:p-4" role="dialog" aria-modal="true" aria-label="Photo options" onMouseDown={(event) => { if (event.target === event.currentTarget) setSelectedMediaImageId(""); }}>
             <div className="mx-auto flex max-h-[calc(100dvh-1rem)] max-w-xl flex-col overflow-hidden rounded-[22px] bg-[color:var(--surface)] p-3 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)] sm:max-h-[calc(100dvh-2rem)] sm:p-4">
               <div className="flex items-start justify-between gap-3">
                 <div>
@@ -3482,6 +3489,7 @@ export default function AddPage() {
         {mounted && isCropEditorOpen && cropEditorImageUrl && typeof document !== "undefined"
           ? createPortal(
               <div
+                ref={cropDialogRef}
                 className="fixed inset-0 z-[120] flex h-[100dvh] w-[100dvw] items-start justify-center overflow-y-auto bg-black/75 px-2 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-[max(0.5rem,env(safe-area-inset-top))] backdrop-blur-sm sm:px-4 sm:py-4"
                 role="dialog"
                 aria-modal="true"
@@ -3528,7 +3536,7 @@ export default function AddPage() {
 
         {duplicateWarning ? (
           <div className="mx-auto mt-4 w-full max-w-5xl rounded-xl bg-amber-500/10 px-4 py-3 text-sm text-amber-200 ring-1 ring-amber-400/20">
-            ⚠ {duplicateWarning}
+            <span className="inline-flex items-start gap-2"><AppIcon name="warning" size={16} className="mt-0.5 shrink-0" /><span>{duplicateWarning}</span></span>
           </div>
         ) : null}
 

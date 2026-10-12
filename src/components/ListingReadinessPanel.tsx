@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { AppIcon } from "@/components/ui/AppIcon";
 import { getPrimaryImageUrl, type VaultItem } from "@/lib/vaultModel";
 
 // ─── types ────────────────────────────────────────────────────────────────────
@@ -156,10 +157,10 @@ function CheckRow({ check }: { check: ReadinessCheck }) {
     <div className="flex items-start gap-3 py-2">
       <div className="mt-0.5 shrink-0 text-base leading-none">
         {check.passed
-          ? <span style={{ color: "#4ade80" }}>✓</span>
+          ? <span role="img" aria-label="Ready" className="inline-flex" style={{ color: "#4ade80" }}><AppIcon name="checkmark" size={16} /></span>
           : check.required
-          ? <span style={{ color: "#f87171" }}>✕</span>
-          : <span style={{ color: "var(--muted)" }}>○</span>}
+          ? <span role="img" aria-label="Missing" className="inline-flex" style={{ color: "#f87171" }}><AppIcon name="close" size={16} /></span>
+          : <span role="img" aria-label="Optional" style={{ color: "var(--muted)" }}>○</span>}
       </div>
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2">

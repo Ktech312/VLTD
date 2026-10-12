@@ -1,5 +1,6 @@
 "use client";
 
+import { useDialogA11y } from "@/components/ui/useDialogA11y";
 import { PillButton, pillClassName } from "@/components/ui/PillButton";
 import { Toggle as Switch } from "@/components/ui/Toggle";
 import { useRef, useState, useMemo, useEffect, useCallback } from "react";
@@ -937,7 +938,7 @@ function ImageCardTab({ item }: { item: VaultItem }) {
       <Link href={`/vault/frames?id=${item.id}`}
         className="flex items-center justify-center gap-1.5 rounded-2xl py-2.5 text-xs font-semibold ring-1 transition hover:ring-[color:var(--theme-gold)] hover:text-[color:var(--theme-gold)]"
         style={{ background: "var(--pill)", color: "var(--muted)", borderColor: "var(--border)" }}>
-        <span>🖼</span>
+        <span className="inline-flex" aria-hidden="true"><AppIcon name="layers" size={14} /></span>
         <span>Open in Frame Studio</span>
         <span style={{ opacity: 0.4 }}>→</span>
       </Link>
@@ -1318,6 +1319,7 @@ const TAB_CONFIG: { id: Tab; label: string; icon: "camera" | "insights" | "play"
 ];
 
 export default function SocialExportSheet({ item, onClose, initialTab = "image" }: Props) {
+  const dialogRef = useDialogA11y<HTMLDivElement>(true, onClose);
   const [tab, setTab] = useState<Tab>(initialTab);
 
   if (typeof document === "undefined") return null;
@@ -1327,9 +1329,9 @@ export default function SocialExportSheet({ item, onClose, initialTab = "image" 
   // descendant to its own box regardless of z-index. Portaling escapes
   // that clipping ancestor entirely, same as MfaChallengeGate always does.
   return createPortal(
-    <div className="fixed inset-0 z-[10000] flex items-end sm:items-center justify-center p-0 sm:p-4">
+    <div ref={dialogRef} role="dialog" aria-modal="true" aria-label="Share as image or video" className="fixed inset-0 z-[10000] flex items-end sm:items-center justify-center p-0 sm:p-4">
       {/* Backdrop */}
-      <button type="button" className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} aria-label="Close" />
+      <button type="button" tabIndex={-1} className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} aria-label="Close" />
 
       <div
         className="relative w-full sm:max-w-lg rounded-t-3xl sm:rounded-3xl overflow-hidden ring-1 ring-[color:var(--border)] shadow-2xl max-h-[92dvh] overflow-y-auto"

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 
+import { AppIcon } from "@/components/ui/AppIcon";
 import { loadItems } from "@/lib/vaultModel";
 import type { VaultItem } from "@/lib/vaultModel";
 import { getVaultImagePublicUrl } from "@/lib/vaultCloud";
@@ -91,14 +92,14 @@ export default function VaultPrintPage() {
         .item-grade { font-size: 10px; font-weight: 700; background: #f0ede8; color: #7a6a55; border-radius: 4px; padding: 2px 5px; }
         .item-value { font-size: 11px; font-weight: 700; color: #1a1a1a; }
         .footer { margin-top: 48px; border-top: 1px solid #e5e5e5; padding-top: 16px; display: flex; justify-content: space-between; font-size: 11px; color: #aaa; }
-        .print-btn { position: fixed; bottom: 32px; right: 32px; background: #c9a84c; color: #000; border: none; border-radius: 999px; padding: 14px 28px; font-size: 15px; font-weight: 700; cursor: pointer; box-shadow: 0 4px 20px rgba(0,0,0,0.18); z-index: 100; }
+        .print-btn { display: inline-flex; align-items: center; gap: 8px; position: fixed; bottom: 32px; right: 32px; background: #c9a84c; color: #000; border: none; border-radius: 999px; padding: 14px 28px; font-size: 15px; font-weight: 700; cursor: pointer; box-shadow: 0 4px 20px rgba(0,0,0,0.18); z-index: 100; }
         .print-btn:hover { background: #b8963e; }
         .loading { text-align: center; padding: 80px 0; color: #aaa; font-size: 14px; }
       `}</style>
 
       {/* Print button — hidden when printing */}
       <button className="print-btn no-print" onClick={() => window.print()}>
-        Save as PDF ↓
+        <AppIcon name="download" size={16} /> Save as PDF
       </button>
 
       <div className="page-wrap">

@@ -2,6 +2,7 @@
 
 import { nativeSelectClass } from "@/components/ui/nativeSelect";
 import { PillButton } from "@/components/ui/PillButton";
+import { AppIcon } from "@/components/ui/AppIcon";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
@@ -114,11 +115,8 @@ function Info() {
   );
 }
 
-function More({ children = "View all", href }: { children?: React.ReactNode; href?: string }) {
-  const cls = "text-[11px] font-bold";
-  return href
-    ? <Link href={href} className={cls} style={{ color: CYAN }}>{children}</Link>
-    : <button type="button" className={cls} style={{ color: CYAN }}>{children}</button>;
+function More({ children = "View all", href }: { children?: React.ReactNode; href: string }) {
+  return <Link href={href} className="text-[11px] font-bold" style={{ color: CYAN }}>{children}</Link>;
 }
 
 /* Avatar — real profile image when available, initials otherwise. */
@@ -557,9 +555,9 @@ export default function VltLoungePage() {
                     <article key={post.id} style={{ borderColor: "var(--border)", background: expanded ? "var(--table-row-hover)" : "transparent" }}>
                       <div className="grid grid-cols-[46px_minmax(0,1fr)] gap-3 px-4 py-4 sm:grid-cols-[52px_minmax(0,1fr)] sm:px-5">
                         <div className="flex flex-col items-center gap-1">
-                          <button type="button" disabled={!viewerProfileId} aria-label="Upvote" onClick={() => void handleVote(post, 1)} className="grid h-7 w-7 place-items-center rounded-[5px] text-sm font-black disabled:opacity-40" style={{ background: post.viewerVote === 1 ? "rgba(79,211,238,0.16)" : "var(--pill)", color: post.viewerVote === 1 ? CYAN : "var(--muted)" }}>▲</button>
+                          <button type="button" disabled={!viewerProfileId} aria-label="Upvote" onClick={() => void handleVote(post, 1)} className="grid h-7 w-7 place-items-center rounded-[5px] text-sm font-black disabled:opacity-40" style={{ background: post.viewerVote === 1 ? "rgba(79,211,238,0.16)" : "var(--pill)", color: post.viewerVote === 1 ? CYAN : "var(--muted)" }}><AppIcon name="chevronUp" size={14} strokeWidth={2.5} /></button>
                           <span className="text-[12px] font-black" style={{ color: post.score > 0 ? CYAN : "var(--fg)" }}>{post.score}</span>
-                          <button type="button" disabled={!viewerProfileId} aria-label="Downvote" onClick={() => void handleVote(post, -1)} className="grid h-7 w-7 place-items-center rounded-[5px] text-sm font-black disabled:opacity-40" style={{ background: post.viewerVote === -1 ? "rgba(248,113,113,0.13)" : "var(--pill)", color: post.viewerVote === -1 ? "#f87171" : "var(--muted)" }}>▼</button>
+                          <button type="button" disabled={!viewerProfileId} aria-label="Downvote" onClick={() => void handleVote(post, -1)} className="grid h-7 w-7 place-items-center rounded-[5px] text-sm font-black disabled:opacity-40" style={{ background: post.viewerVote === -1 ? "rgba(248,113,113,0.13)" : "var(--pill)", color: post.viewerVote === -1 ? "#f87171" : "var(--muted)" }}><AppIcon name="chevronDown" size={14} strokeWidth={2.5} /></button>
                         </div>
                         <div className="min-w-0">
                           <div className="flex flex-wrap items-center gap-2 text-[10px]" style={{ color: "var(--muted2)" }}>

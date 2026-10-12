@@ -10,6 +10,7 @@ import { listViewerFavorites, type FavoriteRecord } from "@/lib/favorites";
 import { loadGalleries, type Gallery } from "@/lib/galleryModel";
 import { loadItems, getPrimaryImageUrl, type VaultItem } from "@/lib/vaultModel";
 import { Glyph } from "@/components/ui/Glyph";
+import { AppIcon } from "@/components/ui/AppIcon";
 
 // ─── helpers ──────────────────────────────────────────────────────────────────
 
@@ -131,8 +132,8 @@ function FavoriteCard({
       </div>
 
       {/* Arrow */}
-      <div className="shrink-0 text-lg opacity-30 transition group-hover:opacity-80" style={{ color: "var(--theme-gold)" }}>
-        →
+      <div className="shrink-0 opacity-30 transition group-hover:opacity-80" style={{ color: "var(--theme-gold)" }} aria-hidden="true">
+        <AppIcon name="next" size={18} />
       </div>
     </Link>
   );

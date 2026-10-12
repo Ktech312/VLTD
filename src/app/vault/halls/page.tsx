@@ -18,6 +18,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { PillButton } from "@/components/ui/PillButton";
+import { AppIcon } from "@/components/ui/AppIcon";
 import { Glyph } from "@/components/ui/Glyph";
 import ProgressiveImage from "@/components/ui/ProgressiveImage";
 import { universePlaceholder } from "@/lib/itemPlaceholder";
@@ -122,7 +123,7 @@ function TermInput({ terms, onAdd, onRemove }: { terms: string[]; onAdd: (t: str
         >
           {term}
           <button onClick={() => onRemove(term)} aria-label={`Remove ${term}`} className="opacity-70 hover:opacity-100">
-            &#x2715;
+            <AppIcon name="close" size={12} strokeWidth={2.5} />
           </button>
         </span>
       ))}

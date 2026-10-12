@@ -1,5 +1,6 @@
 "use client";
 
+import { useDialogA11y } from "@/components/ui/useDialogA11y";
 import { PillButton } from "@/components/ui/PillButton";
 import React, { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
@@ -287,8 +288,19 @@ export function ItemPickerSheet({
   // takeover on wide screens — same content-width convention used in the builder.
   const stageStyle: React.CSSProperties = { marginLeft: "auto", marginRight: "auto", width: "100%", maxWidth: 640 };
 
+  // Escape closes the innermost thing first (the new-page question, then the page menu), then the picker itself.
+  const dialogRef = useDialogA11y<HTMLDivElement>(true, () => {
+    if (confirmNewPageFor) setConfirmNewPageFor(null);
+    else if (pageMenuOpen) setPageMenuOpen(false);
+    else onClose();
+  });
+
   const overlay = (
     <div
+      ref={dialogRef}
+      role="dialog"
+      aria-modal="true"
+      aria-label={pickerTitle ? "Choose items: " + pickerTitle : "Choose items for the exhibit"}
       className="vltd-dark-surface"
       style={{
         position: "fixed",

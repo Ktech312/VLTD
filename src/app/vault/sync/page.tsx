@@ -1,5 +1,6 @@
 "use client";
 
+import { useDialogA11y } from "@/components/ui/useDialogA11y";
 import { PageHeader } from "@/components/layout/PageHeader";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -79,6 +80,7 @@ export default function VaultSyncPage() {
   const [reviewBusyId, setReviewBusyId] = useState("");
   const [reviewStatus, setReviewStatus] = useState("");
   const [removeCandidate, setRemoveCandidate] = useState<VaultItem | null>(null);
+  const dialogRef = useDialogA11y<HTMLDivElement>(removeCandidate !== null, () => setRemoveCandidate(null));
 
   const refresh = useCallback(() => {
     setSnapshot(readSnapshot());
@@ -339,8 +341,8 @@ export default function VaultSyncPage() {
       </div>
 
       {removeCandidate ? (
-        <div className="fixed inset-0 z-[10000] grid place-items-center bg-black/70 px-4" role="dialog" aria-modal="true" aria-label="Remove device-only record">
-          <div className="w-full max-w-md rounded-[20px] bg-[color:var(--surface)] p-5 ring-1 ring-[color:var(--border)]">
+        <div className="fixed inset-0 z-[10000] grid place-items-center bg-black/70 px-4" onClick={(event) => { if (event.target === event.currentTarget) setRemoveCandidate(null); }}>
+          <div ref={dialogRef} role="dialog" aria-modal="true" aria-label="Remove device-only record" className="w-full max-w-md rounded-[20px] bg-[color:var(--surface)] p-5 ring-1 ring-[color:var(--border)]">
             <h2 className="text-lg font-semibold">Remove this local copy?</h2>
             <p className="mt-2 text-sm text-[color:var(--muted)]">“{removeCandidate.title || "Untitled item"}” is not in the cloud. This removes it only from this browser and cannot be undone here.</p>
             <div className="mt-5 flex justify-end gap-2">

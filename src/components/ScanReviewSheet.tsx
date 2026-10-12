@@ -1,6 +1,9 @@
 "use client";
 
+import { useDialogA11y } from "@/components/ui/useDialogA11y";
 import { useState } from "react";
+import { AppIcon } from "@/components/ui/AppIcon";
+import { PillButton } from "@/components/ui/PillButton";
 import {
   getCategories,
   getDefaultCategory,
@@ -40,6 +43,7 @@ type Props = {
 };
 
 export default function ScanReviewSheet({ items, removed, onRemove, onUndo, onClose, onFinish, onPatch }: Props) {
+  const dialogRef = useDialogA11y<HTMLDivElement>(true, onClose);
   const remaining = items.filter((item) => !removed.has(item.id));
   const [preview, setPreview] = useState<{ front: string; back?: string; label: string } | null>(null);
 
@@ -51,6 +55,10 @@ export default function ScanReviewSheet({ items, removed, onRemove, onUndo, onCl
 
   return (
     <div
+      ref={dialogRef}
+      role="dialog"
+      aria-modal="true"
+      aria-label="Review scanned items"
       className="fixed inset-0 z-[100000] flex items-start justify-center bg-black/60 px-2 pt-[max(0.75rem,env(safe-area-inset-top))] backdrop-blur-sm"
       onClick={onClose}
     >
@@ -67,13 +75,9 @@ export default function ScanReviewSheet({ items, removed, onRemove, onUndo, onCl
               {remaining.length} item{remaining.length !== 1 ? "s" : ""} ready to vault — remove any bad captures
             </div>
           </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="flex h-7 w-7 items-center justify-center rounded-full bg-[color:var(--pill)] text-xs text-[color:var(--muted)] ring-1 ring-[color:var(--border)]"
-          >
-            &#x2715;
-          </button>
+          <PillButton size="compact" onClick={onClose} ariaLabel="Close" title="Close" className="w-8 px-0! md:w-7">
+            <AppIcon name="close" size={16} />
+          </PillButton>
         </div>
 
         {/* Item list — ~5 visible, then scroll. Removed items sink to the bottom. */}

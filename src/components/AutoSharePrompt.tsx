@@ -6,6 +6,8 @@ import type { ShareTrigger } from "@/hooks/useAutoShareTrigger";
 import { getAutoShareEnabled, setAutoShareEnabled } from "@/hooks/useAutoShareTrigger";
 import { fmtUsd } from "@/lib/format";
 import { Glyph, type GlyphName } from "@/components/ui/Glyph";
+import { AppIcon } from "@/components/ui/AppIcon";
+import { PillButton } from "@/components/ui/PillButton";
 
 
 type Props = {
@@ -69,12 +71,9 @@ export default function AutoSharePrompt({ trigger, onShare, onDismiss }: Props) 
             </div>
             <div className="mt-0.5 text-xs" style={{ color: "var(--muted)" }}>{sub}</div>
           </div>
-          <button type="button" onClick={onDismiss}
-            className="flex-shrink-0 rounded-full p-1.5 text-xs leading-none"
-            style={{ background: "var(--pill)", color: "var(--muted)" }}
-            aria-label="Dismiss">
-            ✕
-          </button>
+          <PillButton onClick={onDismiss} ariaLabel="Dismiss" title="Dismiss" className="flex-shrink-0 px-0! w-11 md:w-9">
+            <AppIcon name="close" size={16} />
+          </PillButton>
         </div>
 
         {/* Actions */}

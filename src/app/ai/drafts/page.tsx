@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Glyph } from "@/components/ui/Glyph";
+import { AppIcon } from "@/components/ui/AppIcon";
 import {
   deleteDraft,
   loadDrafts,
@@ -68,8 +69,8 @@ function DraftCard({
           // eslint-disable-next-line @next/next/no-img-element
           <img src={draft.frontImageUrl} alt="" className="h-14 w-14 shrink-0 rounded-xl object-cover" />
         ) : (
-          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl text-2xl"
-            style={{ background: "var(--pill)" }}>🤖</div>
+          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl"
+            style={{ background: "var(--pill)", color: "var(--muted)" }}><AppIcon name="sparkleAI" size={26} /></div>
         )}
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
@@ -118,12 +119,12 @@ function DraftCard({
 
       {/* Inline fields preview */}
       <div className="mt-3 flex flex-wrap gap-3 text-[11px]" style={{ color: "var(--muted)" }}>
-        {draft.categoryLabel && <span>📂 {draft.categoryLabel}</span>}
-        {draft.grade && <span>🏷 {draft.grade}</span>}
-        {draft.certNumber && <span>🔢 {draft.certNumber}</span>}
+        {draft.categoryLabel && <span className="inline-flex items-center gap-1"><AppIcon name="layers" size={12} /> {draft.categoryLabel}</span>}
+        {draft.grade && <span className="inline-flex items-center gap-1"><AppIcon name="tag" size={12} /> {draft.grade}</span>}
+        {draft.certNumber && <span className="inline-flex items-center gap-1"><AppIcon name="tag" size={12} /> {draft.certNumber}</span>}
         {draft.currentValue && (
           <span style={{ color: "var(--theme-gold)" }}>
-            💰 ${draft.currentValue.toLocaleString()}
+            <span className="inline-flex items-center gap-1"><AppIcon name="price" size={12} /> ${draft.currentValue.toLocaleString()}</span>
           </span>
         )}
       </div>
@@ -261,7 +262,7 @@ export default function AIDraftsPage() {
             className="mt-6 rounded-2xl px-6 py-14 text-center ring-1 ring-[color:var(--border)]"
             style={{ background: "var(--surface)" }}
           >
-            <div className="text-4xl">🤖</div>
+            <div className="flex justify-center" style={{ color: "var(--muted)" }}><AppIcon name="sparkleAI" size={40} /></div>
             <div className="mt-4 text-base font-semibold" style={{ color: "var(--fg)" }}>
               {filter === "all" ? "No drafts yet" : `No ${TABS.find(t => t.key === filter)?.label.toLowerCase()} drafts`}
             </div>

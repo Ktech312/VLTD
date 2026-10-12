@@ -1,5 +1,6 @@
 "use client";
 
+import { AppIcon, type AppIconName } from "@/components/ui/AppIcon";
 import { Toggle } from "@/components/ui/Toggle";
 import { useEffect, useMemo, useState } from "react";
 
@@ -98,7 +99,7 @@ export default function PrivacyIdentityCards() {
               Your vault and exhibitions are visible to other collectors. Turn this off to go incognito — your profile disappears from search and the Discover feed.
             </div>
             <div className="mt-2 inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[11px] font-semibold ring-1 ring-[color:var(--frame-ring)]" style={{ background: "var(--pill-active-bg)", color: "var(--theme-gold, #C8CDD2)" }}>
-              ✦ Paid feature — coming soon
+              <AppIcon name="sparkle" size={12} /> Paid feature — coming soon
             </div>
           </div>
           <Toggle on={isPublic} onChange={() => {}} disabled title="Going incognito is a paid feature" ariaLabel="Public profile" className="mt-0.5" />

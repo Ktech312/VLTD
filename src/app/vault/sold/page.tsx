@@ -1,5 +1,6 @@
 "use client";
 
+import { VaultLocalNav } from "@/components/SectionNav";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { PillButton } from "@/components/ui/PillButton";
 import { useEffect, useMemo, useState } from "react";
@@ -533,6 +534,8 @@ export default function SoldPage() {
   const [imagePreview, setImagePreview] = useState<{ title: string; imageUrl: string } | null>(null);
   const [search, setSearch] = useState("");
   const [universeFilter, setUniverseFilter] = useState("All");
+  // Until the account has been read once, an empty list means "not loaded yet", not "nothing sold".
+  const [hydrated, setHydrated] = useState(false);
 
   function load() {
     setItems(buildSoldItems());
@@ -540,7 +543,10 @@ export default function SoldPage() {
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
-      void syncVaultItemsFromSupabase().finally(load);
+      void syncVaultItemsFromSupabase().finally(() => {
+        load();
+        setHydrated(true);
+      });
     }, 0);
     window.addEventListener("vltd:vault-updated", load);
     return () => {
@@ -620,15 +626,11 @@ export default function SoldPage() {
       title="Sold Items"
       description="Realized sales history using the same compact management layout as Vault."
       contentClassName="max-w-[1500px]"
-      actions={
-        <>
-          <PillButton href="/sales">Sales History</PillButton>
-          <PillButton href="/vault">Back to Vault</PillButton>
-        </>
-      }
+      actions={<PillButton href="/sales">Sales History</PillButton>}
     />
     <main className="bg-[color:var(--bg)] text-[color:var(--fg)]">
       <div className="mx-auto max-w-[1500px] px-3 pb-3 sm:px-4 sm:pb-4">
+        <div className="mb-3"><VaultLocalNav activeKey="sold" /></div>
         <section className="relative overflow-hidden rounded-[18px] border border-[color:var(--theme-border)] bg-[color:var(--theme-card)] px-4 py-3 shadow-[0_14px_40px_rgba(0,0,0,0.2)]">
           <div className="relative flex flex-col gap-4">
             <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
@@ -686,7 +688,7 @@ export default function SoldPage() {
           )}
           {items.length === 0 ? (
             <div className="rounded-[18px] bg-[color:var(--surface)] p-8 text-center text-sm text-[color:var(--muted)] ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
-              No sold items yet.
+              {hydrated ? "No sold items yet." : <span role="status">Loading sold items…</span>}
             </div>
           ) : filteredItems.length === 0 ? (
             <div className="rounded-[18px] bg-[color:var(--surface)] p-8 text-center text-sm text-[color:var(--muted)] ring-1 ring-[color:var(--border)]">

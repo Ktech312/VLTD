@@ -1,9 +1,12 @@
 "use client";
 
+import { useDialogA11y } from "@/components/ui/useDialogA11y";
 import { useState } from "react";
 import { createPortal } from "react-dom";
 import { saveItem, type VaultItem } from "@/lib/vaultModel";
 import { Glyph } from "@/components/ui/Glyph";
+import { AppIcon } from "@/components/ui/AppIcon";
+import { PillButton } from "@/components/ui/PillButton";
 import { upsertVaultItemToSupabase } from "@/lib/vaultCloud";
 import { enqueueVaultItemSync } from "@/lib/vaultSyncQueue";
 import { showToast } from "@/lib/toast";
@@ -61,6 +64,7 @@ type Props = {
 };
 
 export default function AuctionSetupSheet({ item, onClose, onSaved }: Props) {
+  const dialogRef = useDialogA11y<HTMLDivElement>(true, onClose);
   const isActive = item.auctionStatus === "ACTIVE";
 
   const [startingBid, setStartingBid] = useState(
@@ -155,9 +159,10 @@ export default function AuctionSetupSheet({ item, onClose, onSaved }: Props) {
   // Portaling escapes that clipping ancestor entirely, the same way
   // MfaChallengeGate (mounted outside PullToRefresh) always does.
   return createPortal(
-    <div className="fixed inset-0 z-[10000] flex items-end sm:items-center justify-center p-0 sm:p-4">
+    <div ref={dialogRef} role="dialog" aria-modal="true" aria-label="Auction setup" className="fixed inset-0 z-[10000] flex items-end sm:items-center justify-center p-0 sm:p-4">
       <button
         type="button"
+        tabIndex={-1}
         className="absolute inset-0 bg-black/60 backdrop-blur-sm"
         onClick={onClose}
         aria-label="Close"
@@ -182,14 +187,9 @@ export default function AuctionSetupSheet({ item, onClose, onSaved }: Props) {
                 {item.title}
               </div>
             </div>
-            <button
-              type="button"
-              onClick={onClose}
-              className="rounded-full p-2 text-lg leading-none"
-              style={{ background: "var(--pill)", color: "var(--muted)" }}
-            >
-              ✕
-            </button>
+            <PillButton onClick={onClose} ariaLabel="Close" title="Close" className="px-0! w-11 md:w-9">
+              <AppIcon name="close" size={16} />
+            </PillButton>
           </div>
 
           {/* Active state */}

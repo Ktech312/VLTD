@@ -1,6 +1,7 @@
 "use client";
 
 import { PillButton } from "@/components/ui/PillButton";
+import { AppIcon } from "@/components/ui/AppIcon";
 import Link from "next/link";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { useEffect, useMemo, useState } from "react";
@@ -530,7 +531,7 @@ export default function ActivityPage() {
             <>
               <div className="flex items-start justify-between gap-4">
                 <h2 className="text-xl font-black">Activity Details</h2>
-                <button type="button" onClick={() => setSelectedId(null)} style={{ color: "var(--theme-gold,#C8CDD2)" }}>x</button>
+                <PillButton onClick={() => setSelectedId(null)} ariaLabel="Close" title="Close" className="px-0! w-11 md:w-9"><AppIcon name="close" size={16} /></PillButton>
               </div>
 
               <div className="mt-7 grid grid-cols-[128px_1fr] gap-5">

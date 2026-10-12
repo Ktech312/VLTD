@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { AppIcon } from "@/components/ui/AppIcon";
 
 type Point = { x: number; y: number };
 type TouchPoint = { clientX: number; clientY: number };
@@ -182,9 +183,9 @@ export default function ImageViewer({
         type="button"
         onClick={onClose}
         aria-label="Close image viewer"
-        className="fixed right-3 top-3 z-[110] inline-flex h-11 w-11 items-center justify-center rounded-full bg-white/14 text-2xl leading-none text-text-primary ring-1 ring-white/25 backdrop-blur transition hover:bg-white/20 sm:right-4 sm:top-4"
+        className="fixed right-3 top-3 z-[110] inline-flex h-11 w-11 items-center justify-center rounded-full bg-white/14 leading-none text-text-primary ring-1 ring-white/25 backdrop-blur transition hover:bg-white/20 sm:right-4 sm:top-4"
       >
-        ×
+        <AppIcon name="close" size={18} />
       </button>
 
       <div className="fixed left-3 top-3 z-[100] flex max-w-[calc(100dvw-72px)] flex-wrap gap-2 sm:left-4 sm:top-4">
@@ -234,7 +235,8 @@ export default function ImageViewer({
           type="button"
           onClick={() => zoomBy(-0.25)}
           disabled={scale <= 1}
-          className="rounded-full bg-white/10 px-3 py-2 text-sm text-text-primary ring-1 ring-[color:var(--border)] backdrop-blur disabled:opacity-40"
+          aria-label="Zoom out"
+          className="inline-flex items-center justify-center rounded-full bg-white/10 px-3 py-2 text-sm text-text-primary ring-1 ring-[color:var(--border)] backdrop-blur disabled:opacity-40 max-md:min-h-11 max-md:min-w-11"
         >
           −
         </button>
@@ -249,7 +251,8 @@ export default function ImageViewer({
           type="button"
           onClick={() => zoomBy(0.25)}
           disabled={scale >= 5}
-          className="rounded-full bg-white/10 px-3 py-2 text-sm text-text-primary ring-1 ring-[color:var(--border)] backdrop-blur disabled:opacity-40"
+          aria-label="Zoom in"
+          className="inline-flex items-center justify-center rounded-full bg-white/10 px-3 py-2 text-sm text-text-primary ring-1 ring-[color:var(--border)] backdrop-blur disabled:opacity-40 max-md:min-h-11 max-md:min-w-11"
         >
           +
         </button>

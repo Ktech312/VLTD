@@ -4,6 +4,7 @@ import { useState, useRef } from "react";
 import Image from "next/image";
 import type { PatreonCreator } from "@/app/api/patreon-comics/route";
 import { Glyph } from "@/components/ui/Glyph";
+import { AppIcon } from "@/components/ui/AppIcon";
 
 /* ── Creator card ────────────────────────────────────────────── */
 
@@ -151,6 +152,7 @@ function CreatorCard({ creator }: { creator: PatreonCreator }) {
 
       {/* Arrow */}
       <div
+        aria-hidden="true"
         style={{
           flexShrink: 0,
           fontSize: "14px",
@@ -158,7 +160,7 @@ function CreatorCard({ creator }: { creator: PatreonCreator }) {
           marginTop: "4px",
         }}
       >
-        →
+        <AppIcon name="next" size={16} />
       </div>
     </a>
   );

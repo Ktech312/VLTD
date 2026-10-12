@@ -40,7 +40,12 @@ export function LocalNav({
       {trailing && trailing.length > 0 ? (
         <div className="flex flex-wrap items-center gap-2">
           {trailing.map((item) => (
-            <Link key={item.key} href={item.href} className={pillClassName("default")}>
+            <Link
+              key={item.key}
+              href={item.href}
+              aria-current={item.key === activeKey ? "page" : undefined}
+              className={pillClassName(item.key === activeKey ? "active" : "default")}
+            >
               {item.label}
             </Link>
           ))}

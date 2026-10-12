@@ -1,7 +1,10 @@
 "use client";
 
+import { useDialogA11y } from "@/components/ui/useDialogA11y";
 import { useState } from "react";
 import { Glyph } from "@/components/ui/Glyph";
+import { AppIcon } from "@/components/ui/AppIcon";
+import { PillButton } from "@/components/ui/PillButton";
 
 import type { VisionAnalysisResult } from "@/lib/ai/openaiVision";
 import {
@@ -72,11 +75,16 @@ export default function ScanVerifySheet({
   onSave,
   onClose,
 }: Props) {
+  const dialogRef = useDialogA11y<HTMLDivElement>(true, onClose);
   const [preview, setPreview] = useState<{ front: string; back?: string; label: string } | null>(null);
   const outOfScans = metered && remaining !== null && remaining <= 0;
 
   return (
     <div
+      ref={dialogRef}
+      role="dialog"
+      aria-modal="true"
+      aria-label="Verify scanned items"
       className="fixed inset-0 z-[100000] flex items-start justify-center bg-black/60 px-2 pt-[max(0.75rem,env(safe-area-inset-top))] backdrop-blur-sm"
     >
       {/* No backdrop-tap-to-close here: these drafts cost AI scans, so only the
@@ -100,14 +108,9 @@ export default function ScanVerifySheet({
               <span className="text-[color:var(--muted)]">left</span>
             </div>
           ) : null}
-          <button
-            type="button"
-            onClick={onClose}
-            className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[color:var(--pill)] text-xs text-[color:var(--muted)] ring-1 ring-[color:var(--border)]"
-            aria-label="Close"
-          >
-            &#x2715;
-          </button>
+          <PillButton size="compact" onClick={onClose} ariaLabel="Close" title="Close" className="shrink-0 w-8 px-0! md:w-7">
+            <AppIcon name="close" size={16} />
+          </PillButton>
         </div>
 
         {/* Draft list */}

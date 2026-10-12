@@ -20,6 +20,8 @@ export default function ImageThumbnailRail({
           key={`${img}-${i}`}
           type="button"
           onClick={() => onSelect(i)}
+          aria-label={`Open photo ${i + 1}`}
+          aria-current={i === active ? "true" : undefined}
           className={[
             "overflow-hidden rounded border",
             i === active ? "border-white/60" : "border-[color:var(--border)]",

@@ -1,5 +1,6 @@
 "use client";
 
+import { useDialogA11y } from "@/components/ui/useDialogA11y";
 import { PillButton, pillClassName, type PillVariant } from "@/components/ui/PillButton";
 import Link from "next/link";
 import React, { useEffect, useState } from "react";
@@ -88,6 +89,7 @@ export default function CollectorBioModal({
   const [data, setData] = useState<BioData | null>(null);
   const [loadError, setLoadError] = useState(false);
   const [viewerProfileId, setViewerProfileId] = useState("");
+  const dialogRef = useDialogA11y<HTMLDivElement>(true, onClose);
 
   useEffect(() => {
     setMounted(true);
@@ -163,6 +165,10 @@ export default function CollectorBioModal({
       onClick={onClose}
     >
       <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Collector profile"
         className="vltd-dark-surface"
         onClick={(e) => e.stopPropagation()}
         style={{

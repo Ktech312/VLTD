@@ -39,3 +39,27 @@ export function LoungeNav({ activeKey }: { activeKey: "community" | "learn" }) {
     </Strip>
   );
 }
+
+const VAULT_ITEMS = [
+  { key: "items", label: "Items", href: "/vault" },
+  { key: "for-sale", label: "For Sale", href: "/vault/for-sale" },
+  { key: "sold", label: "Sold", href: "/vault/sold" },
+];
+const VAULT_TOOLS = [
+  { key: "insights", label: "Insights", href: "/portfolio" },
+  { key: "goals", label: "Goals", href: "/goals" },
+];
+
+/** Vault: Items, For Sale, Sold, then Insights and Goals. The same bar on every Vault page, so each one has a way back. */
+export function VaultLocalNav({ activeKey }: { activeKey: "items" | "for-sale" | "sold" | "insights" | "goals" }) {
+  return <LocalNav ariaLabel="Vault" items={VAULT_ITEMS} trailing={VAULT_TOOLS} activeKey={activeKey} />;
+}
+
+/** The Vault bar in the standard page strip, for pages that do not lay out their own container. */
+export function VaultNav({ activeKey }: { activeKey: "items" | "for-sale" | "sold" | "insights" | "goals" }) {
+  return (
+    <Strip>
+      <VaultLocalNav activeKey={activeKey} />
+    </Strip>
+  );
+}

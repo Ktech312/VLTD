@@ -1,9 +1,11 @@
 "use client";
 
+import { AppIcon, type AppIconName } from "@/components/ui/AppIcon";
+import { VaultLocalNav } from "@/components/SectionNav";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { PillButton } from "@/components/ui/PillButton";
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Glyph } from "@/components/ui/Glyph";
 
 import {
@@ -11,20 +13,20 @@ import {
   itemToListingInput,
 } from "@/lib/listingGenerator";
 import { enqueueVaultItemSync, processVaultSyncQueue } from "@/lib/vaultSyncQueue";
-import { getPrimaryImageUrl, loadItems, saveItem, type VaultItem } from "@/lib/vaultModel";
+import { getPrimaryImageUrl, loadItems, saveItem, syncVaultItemsFromSupabase, type VaultItem } from "@/lib/vaultModel";
 
 const SALES_KEY = "vltd_sales_history";
 
 type Platform = "EBAY" | "WHATNOT" | "MERCARI" | "DISCOGS" | "PWCC" | "FACEBOOK";
 type SaleRecord = VaultItem & { soldPrice: number; soldAt: number; salePlatform?: string };
 
-const PLATFORMS: { key: Platform; label: string; emoji: string }[] = [
-  { key: "EBAY",     label: "eBay",     emoji: "🛒" },
-  { key: "WHATNOT",  label: "Whatnot",  emoji: "📺" },
-  { key: "MERCARI",  label: "Mercari",  emoji: "📦" },
-  { key: "DISCOGS",  label: "Discogs",  emoji: "🎵" },
-  { key: "PWCC",     label: "PWCC",     emoji: "🏆" },
-  { key: "FACEBOOK", label: "Facebook", emoji: "👥" },
+const PLATFORMS: { key: Platform; label: string; icon: AppIconName }[] = [
+  { key: "EBAY",     label: "eBay",     icon: "cart" },
+  { key: "WHATNOT",  label: "Whatnot",  icon: "play" },
+  { key: "MERCARI",  label: "Mercari",  icon: "box" },
+  { key: "DISCOGS",  label: "Discogs",  icon: "music" },
+  { key: "PWCC",     label: "PWCC",     icon: "trophy" },
+  { key: "FACEBOOK", label: "Facebook", icon: "users" },
 ];
 
 // Per-platform required / recommended fields
@@ -122,7 +124,10 @@ function PlatformChip({ platform, item }: { platform: Platform; label: string; i
         ? { background: "rgba(74,222,128,0.15)", color: "#4ade80" }
         : { background: "rgba(248,113,113,0.12)", color: "#f87171" }}
     >
-      {PLATFORMS.find(p => p.key === platform)?.emoji} {PLATFORMS.find(p => p.key === platform)?.label}
+      <span className="inline-flex items-center gap-1">
+        {(() => { const icon = PLATFORMS.find(p => p.key === platform)?.icon; return icon ? <AppIcon name={icon} size={12} /> : null; })()}
+        {PLATFORMS.find(p => p.key === platform)?.label}
+      </span>
     </div>
   );
 }
@@ -235,12 +240,12 @@ function ItemCard({
       {expanded && platform === "ALL" && (
         <div className="border-t border-[color:var(--border)] px-4 py-3">
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-            {PLATFORMS.map(({ key, label, emoji }) => {
+            {PLATFORMS.map(({ key, label, icon }) => {
               const gaps = platformGaps(item, key);
               return (
                 <div key={key} className="rounded-xl p-2.5 ring-1" style={{ background: "var(--pill)", borderColor: gaps.length === 0 ? "rgba(74,222,128,0.3)" : "rgba(248,113,113,0.2)" }}>
                   <div className="text-xs font-semibold" style={{ color: gaps.length === 0 ? "#4ade80" : "#f87171" }}>
-                    {emoji} {label}
+                    <span className="inline-flex items-center gap-1"><AppIcon name={icon} size={12} />{label}</span>
                   </div>
                   {gaps.length === 0
                     ? <div className="mt-1 text-[10px]" style={{ color: "#4ade80" }}>Ready</div>
@@ -269,19 +274,14 @@ function ItemCard({
             className="w-20 bg-transparent py-1.5 pr-1 text-xs focus:outline-none"
             style={{ color: "var(--fg)" }}
           />
-          <button
-            type="button"
-            onClick={handlePriceSet}
-            className="px-2 py-1.5 text-xs font-semibold transition"
-            style={{ background: priceSaved ? "rgba(74,222,128,0.2)" : "var(--theme-gold)", color: priceSaved ? "#4ade80" : "#0B0B0B" }}
-          >
-            {priceSaved ? "✓" : "Set"}
-          </button>
+          <PillButton size="compact" variant={priceSaved ? "success" : "active"} onClick={handlePriceSet} ariaLabel={priceSaved ? "Price saved" : "Set price"}>
+            {priceSaved ? <AppIcon name="checkmark" size={14} /> : "Set"}
+          </PillButton>
         </div>
         <PillButton href={`/vault/item/${encodeURIComponent(item.id)}`}>Edit item</PillButton>
         <PillButton onClick={() => onMarkSold(item)} style={{ background: "rgba(74,222,128,0.12)", color: "#4ade80", boxShadow: "none" }}>Mark sold</PillButton>
         {platform === "ALL" && (
-          <PillButton className="ml-auto" onClick={() => setExpanded(!expanded)}>{expanded ? "Hide platforms ▲" : "All platforms ▼"}</PillButton>
+          <PillButton className="ml-auto" onClick={() => setExpanded(!expanded)}>{expanded ? "Hide platforms" : "All platforms"}<AppIcon name={expanded ? "chevronUp" : "chevronDown"} size={16} /></PillButton>
         )}
       </div>
     </article>
@@ -294,6 +294,23 @@ export default function ForSalePage() {
   const [items, setItems] = useState<VaultItem[]>(() => loadItems().filter(i => i.status === "FOR_SALE"));
   const [platform, setPlatform] = useState<Platform | "ALL">("ALL");
   const [status, setStatus] = useState("");
+  // Until the account has been read once, an empty list means "not loaded yet", not "nothing for sale".
+  const [hydrated, setHydrated] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+    const reload = () => setItems(loadItems().filter((i) => i.status === "FOR_SALE"));
+    void syncVaultItemsFromSupabase().catch(() => undefined).finally(() => {
+      if (!active) return;
+      reload();
+      setHydrated(true);
+    });
+    window.addEventListener("vltd:vault-updated", reload);
+    return () => {
+      active = false;
+      window.removeEventListener("vltd:vault-updated", reload);
+    };
+  }, []);
 
   const stats = useMemo(() => {
     const readyPerPlatform = Object.fromEntries(
@@ -335,15 +352,10 @@ export default function ForSalePage() {
         title="Listing Readiness"
         description={<>Per-platform gap analysis for your {items.length} for-sale item{items.length !== 1 ? "s" : ""}.</>}
         contentClassName="max-w-3xl"
-        actions={
-          <PillButton href="/vault">
-            <Glyph name="arrowLeft" size={16} strokeWidth={2} />
-            Vault
-          </PillButton>
-        }
       />
       <div>
         <div className="mx-auto max-w-3xl px-4">
+          <div className="mb-4"><VaultLocalNav activeKey="for-sale" /></div>
           {/* Stats bar */}
           {items.length > 0 && (
             <div className="flex flex-wrap gap-5">
@@ -375,14 +387,16 @@ export default function ForSalePage() {
           </div>
         )}
 
-        {items.length === 0 ? (
+        {items.length === 0 && !hydrated ? (
+          <div role="status" className="rounded-2xl px-6 py-14 text-center text-sm ring-1 ring-[color:var(--border)]" style={{ background: "var(--surface)", color: "var(--muted)" }}>
+            Loading your items…
+          </div>
+        ) : items.length === 0 ? (
           <div className="rounded-2xl px-6 py-14 text-center ring-1 ring-[color:var(--border)]" style={{ background: "var(--surface)" }}>
             <div className="flex justify-center opacity-60"><Glyph name="tag" size={36} /></div>
             <div className="mt-4 text-base font-semibold" style={{ color: "var(--fg)" }}>No items marked for sale</div>
             <p className="mt-2 text-sm" style={{ color: "var(--muted)" }}>Open any vault item and change its status to "For Sale" to see it here.</p>
-            <Link href="/vault" className="mt-6 inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold" style={{ background: "linear-gradient(180deg,#79E7FB,#41C6E4 55%,#2CB1D1)", color: "#06171d" }}>
-              Go to Vault →
-            </Link>
+            <PillButton variant="active" href="/vault" className="mt-6">Go to Vault →</PillButton>
           </div>
         ) : (
           <>
@@ -390,7 +404,7 @@ export default function ForSalePage() {
             <div className="rounded-2xl p-4 ring-1 ring-[color:var(--border)]" style={{ background: "var(--surface)" }}>
               <div className="text-xs font-semibold uppercase tracking-widest mb-3" style={{ color: "var(--muted)" }}>Platform readiness</div>
               <div className="grid grid-cols-3 gap-2 sm:grid-cols-6">
-                {PLATFORMS.map(({ key, label, emoji }) => {
+                {PLATFORMS.map(({ key, label, icon }) => {
                   const ready = stats.readyPerPlatform[key] ?? 0;
                   const pct = items.length ? Math.round((ready / items.length) * 100) : 0;
                   return (
@@ -404,7 +418,7 @@ export default function ForSalePage() {
                           : { background: "var(--pill)", color: "var(--fg)", borderColor: "var(--border)" }
                       }
                     >
-                      <div className="text-base">{emoji}</div>
+                      <div className="flex justify-center"><AppIcon name={icon} size={18} /></div>
                       <div className="mt-1 text-[10px] font-semibold">{label}</div>
                       <div className="text-xs font-bold" style={platform === key ? {} : { color: pct === 100 ? "#4ade80" : pct >= 50 ? "var(--theme-gold)" : "#f87171" }}>
                         {ready}/{items.length}
@@ -414,7 +428,7 @@ export default function ForSalePage() {
                 })}
               </div>
               {platform !== "ALL" && (
-                <PillButton className="mt-3" onClick={() => setPlatform("ALL")}>← Show all platforms</PillButton>
+                <PillButton className="mt-3" onClick={() => setPlatform("ALL")}><AppIcon name="arrowLeft" size={16} />Show all platforms</PillButton>
               )}
             </div>
 

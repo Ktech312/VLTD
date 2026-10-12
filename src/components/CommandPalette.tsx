@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
+import { AppIcon } from "@/components/ui/AppIcon";
 
 import {
   getAllCommands,
@@ -210,9 +211,9 @@ export default function CommandPalette({
                 type="button"
                 onClick={onClose}
                 aria-label="Close command palette"
-                className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-lg text-[color:var(--muted)] ring-1 ring-[color:var(--border)] transition hover:bg-[color:var(--pill)] hover:text-[color:var(--fg)]"
+                className="inline-flex h-11 w-11 md:h-9 md:w-9 shrink-0 items-center justify-center rounded-full text-[color:var(--muted)] ring-1 ring-[color:var(--border)] transition hover:bg-[color:var(--pill)] hover:text-[color:var(--fg)]"
               >
-                ✕
+                <AppIcon name="close" size={16} />
               </button>
             </div>
           </div>

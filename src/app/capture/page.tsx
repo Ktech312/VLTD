@@ -1069,7 +1069,7 @@ export default function CapturePage() {
                             aria-label="Remove photo"
                             className="absolute right-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-black/70 text-[11px] text-white"
                           >
-                            &#x2715;
+                            <AppIcon name="close" size={11} strokeWidth={2.5} />
                           </span>
                         </button>
                       );

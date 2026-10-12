@@ -488,8 +488,7 @@ export default function LoungePreviewPage() {
                   <p className="text-xs leading-5" style={{ color: muted }}>Optional external club link now; native VLTD groups later.</p>
                 </div>
               </div>
-              <div className="mt-4 grid grid-cols-2 gap-2">
-                <ActionButton href="/more" icon="share" label="Configure" purpose="Future admin panel for Discord invite URL and club visibility." />
+              <div className="mt-4 grid grid-cols-1 gap-2">
                 <ActionButton href="/community-board" icon="users" label="Club Lobby" purpose="Future native club index for universe-specific groups." />
               </div>
             </div>

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { Glyph, type GlyphName } from "@/components/ui/Glyph";
+import { AppIcon, type AppIconName } from "@/components/ui/AppIcon";
 import { useRouter } from "next/navigation";
 import { getCurrentUser, initAuthListener } from "@/lib/auth";
 import { HOME_FAQ } from "@/lib/homeFaq";
@@ -695,15 +696,15 @@ export default function PublicHomeClient() {
               </div>
               {/* Right — feature list */}
               <div className="flex flex-col justify-center gap-4 border-t border-[rgba(203,208,213,0.12)] px-8 py-10 lg:border-l lg:border-t-0 lg:py-14">
-                {[
-                  { icon: "◎", title: "Auto-Lock Scanner", desc: "Helps capture an image when the camera is steady. Review photo quality before saving." },
-                  { icon: "⟳", title: "Stream Mode", desc: "Scanner stays live between items. Continuous flow for large drops." },
-                  { icon: "▣", title: "AI Identification", desc: "Suggested item details for you to review and correct. Condition estimates are not professional grades." },
-                  { icon: "↗", title: "Collection Records", desc: "Keep purchase prices and estimated values with your saved items." },
-                ].map(({ icon, title, desc }) => (
+                {([
+                  { icon: "camera", title: "Auto-Lock Scanner", desc: "Helps capture an image when the camera is steady. Review photo quality before saving." },
+                  { icon: "rotate", title: "Stream Mode", desc: "Scanner stays live between items. Continuous flow for large drops." },
+                  { icon: "sparkleAI", title: "AI Identification", desc: "Suggested item details for you to review and correct. Condition estimates are not professional grades." },
+                  { icon: "insights", title: "Collection Records", desc: "Keep purchase prices and estimated values with your saved items." },
+                ] as { icon: AppIconName; title: string; desc: string }[]).map(({ icon, title, desc }) => (
                   <div key={title} className="flex items-start gap-4">
                     <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-[rgba(203,208,213,0.22)] bg-[rgba(203,208,213,0.08)] text-base" style={{ color: '#C8CDD2' }}>
-                      {icon}
+                      <AppIcon name={icon} size={18} />
                     </div>
                     <div>
                       <div className="text-sm font-black text-text-primary">{title}</div>

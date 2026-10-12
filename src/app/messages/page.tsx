@@ -1,6 +1,7 @@
 "use client";
 
 import { PillButton } from "@/components/ui/PillButton";
+import { AppIcon } from "@/components/ui/AppIcon";
 import { useEffect, useRef, useState, type MouseEvent } from "react";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Glyph } from "@/components/ui/Glyph";
@@ -244,15 +245,9 @@ export default function MessagesPage() {
               >
                 {pushBusy ? "Turning on…" : "Turn On"}
               </button>
-              <button
-                type="button"
-                onClick={() => setBannerDismissed(true)}
-                aria-label="Dismiss"
-                className="grid h-7 w-7 place-items-center rounded-full"
-                style={{ background: "var(--pill)", color: "var(--muted)" }}
-              >
-                ✕
-              </button>
+              <PillButton onClick={() => setBannerDismissed(true)} ariaLabel="Dismiss" title="Dismiss" className="px-0! w-11 md:w-9">
+                <AppIcon name="close" size={16} />
+              </PillButton>
             </div>
           </div>
         ) : null}
@@ -350,15 +345,9 @@ export default function MessagesPage() {
               ) : (
                 <>
                   <div className="flex items-center gap-2 px-4 py-3" style={{ borderBottom: "1px solid var(--border)" }}>
-                    <button
-                      type="button"
-                      onClick={() => setActiveId(null)}
-                      className="grid h-7 w-7 place-items-center rounded-full md:hidden"
-                      style={{ background: "var(--pill)", color: "var(--muted)" }}
-                      aria-label="Back"
-                    >
-                      ←
-                    </button>
+                    <PillButton onClick={() => setActiveId(null)} ariaLabel="Back to conversations" title="Back to conversations" className="px-0! w-11 md:hidden">
+                      <AppIcon name="arrowLeft" size={16} />
+                    </PillButton>
                     <Avatar src={active.otherAvatarSrc} name={active.otherName} size={28} />
                     <span className="text-sm font-bold">{active.otherName}</span>
                   </div>
@@ -436,7 +425,7 @@ export default function MessagesPage() {
           >
             <div className="flex items-center justify-between">
               <h2 className="text-[15px] font-black">New Message</h2>
-              <button type="button" onClick={() => setComposing(false)} aria-label="Close" className="grid h-7 w-7 place-items-center rounded-full" style={{ background: "var(--pill)", color: "var(--muted)" }}>✕</button>
+              <PillButton onClick={() => setComposing(false)} ariaLabel="Close" title="Close" className="px-0! w-11 md:w-9"><AppIcon name="close" size={16} /></PillButton>
             </div>
             <input
               autoFocus

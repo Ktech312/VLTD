@@ -468,7 +468,7 @@ function TagsEditor({ item, onSave }: { item: VaultItem; onSave: (tags: string[]
           >
             #{tag}
             <button onClick={() => removeTag(tag)} aria-label={`Remove ${tag}`} className="opacity-60 hover:opacity-100">
-              &#x2715;
+              <AppIcon name="close" size={12} strokeWidth={2.5} />
             </button>
           </span>
         ))}
@@ -1478,7 +1478,7 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
                 item={item}
                 mode="listing"
                 onAccept={(text) => void persist({ ...item, description: text })}
-                triggerLabel="✦ Generate listing copy"
+                triggerLabel="Generate listing copy"
               />
             </div>
           )}

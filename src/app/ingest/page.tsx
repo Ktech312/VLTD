@@ -80,7 +80,7 @@ export default function IngestHubPage() {
           <Card
             title="Capture"
             desc="Guided image-first item creation for slower, more detailed entry."
-            href="/vault/capture"
+            href="/capture"
             cta="Capture Item"
           />
         </div>

@@ -1,5 +1,6 @@
 "use client";
 
+import { useDialogA11y } from "@/components/ui/useDialogA11y";
 import { useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import { PillButton } from "@/components/ui/PillButton";
@@ -341,6 +342,7 @@ export default function VaultWrappedSheet({ onClose }: Props) {
 
   const [exporting, setExporting] = useState(false);
   const [preview, setPreview] = useState<string | null>(null);
+  const dialogRef = useDialogA11y<HTMLDivElement>(true, onClose);
 
   async function handleGenerate() {
     setExporting(true);
@@ -377,9 +379,13 @@ export default function VaultWrappedSheet({ onClose }: Props) {
   // that clipping ancestor entirely, same as MfaChallengeGate always does.
   return createPortal(
     <div className="fixed inset-0 z-[10000] flex items-end sm:items-center justify-center p-0 sm:p-4">
-      <button type="button" className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} aria-label="Close" />
+      <button type="button" tabIndex={-1} className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} aria-label="Close" />
 
       <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Collection recap"
         className="relative w-full sm:max-w-md rounded-t-3xl sm:rounded-3xl overflow-hidden ring-1 ring-[color:var(--border)] shadow-2xl max-h-[92dvh] overflow-y-auto"
         style={{ background: "var(--surface)" }}
       >
