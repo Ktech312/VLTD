@@ -64,6 +64,15 @@ export async function getAdminEmail(req: NextRequest, svc: SupabaseClient): Prom
   return role ? email : null;
 }
 
+/** True when this verified admin is the owner (the owner email, or a user_roles row with role owner). Only the owner may do owner-only things such as approving 3D Gallery access. */
+export async function isOwnerEmail(svc: SupabaseClient, email: string): Promise<boolean> {
+  const ownerEmail = (process.env.NEXT_PUBLIC_OWNER_EMAIL ?? "").toLowerCase();
+  const lowered = email.toLowerCase();
+  if (ownerEmail && lowered === ownerEmail) return true;
+  const { data } = await svc.from("user_roles").select("role").eq("email", lowered).maybeSingle();
+  return data?.role === "owner";
+}
+
 // The signed-in person behind a request (the browser sends its Supabase access token as a Bearer token).
 export async function getSignedInUserId(req: NextRequest, svc: SupabaseClient): Promise<string | null> {
   const header = req.headers.get("authorization") ?? "";

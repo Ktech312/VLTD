@@ -121,6 +121,9 @@ export default function AdminUsersPage() {
         setRows((current) =>
           current.map((r) => (r.id === row.id ? { ...r, museumBetaEnabled: !r.museumBetaEnabled } : r))
         );
+      } else {
+        const body = await res.json().catch(() => null);
+        setStatus(body?.message ?? "Could not change 3D Gallery access.");
       }
     } finally {
       setTogglingId(null);

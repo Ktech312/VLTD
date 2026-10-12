@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getAdminEmail, getServiceClient } from "@/lib/serverAdmin";
+import { getAdminEmail, getServiceClient, isOwnerEmail } from "@/lib/serverAdmin";
 
 // Real per-user analytics for EK's future use: time-on-app (already tracked
 // via profiles.last_seen_at / session_started_at / total_seconds_online /
@@ -109,6 +109,11 @@ export async function PATCH(req: NextRequest) {
   // (src/app/admin/characters/page.tsx), just routed through the service
   // client + verified admin check instead of a client-side RLS-trusting
   // update, matching the stronger pattern this route already uses below.
+  // 3D Gallery approval is the owner's decision alone; other admins cannot grant or remove it.
+  if (museumBetaEnabled !== null && !(await isOwnerEmail(svc, admin))) {
+    return NextResponse.json({ error: "forbidden", message: "Only the owner can approve 3D Gallery access." }, { status: 403 });
+  }
+
   const patch: Record<string, unknown> = {};
   if (museumBetaEnabled !== null) patch.museum_beta_enabled = museumBetaEnabled;
   if (tier !== null) {
