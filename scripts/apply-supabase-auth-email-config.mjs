@@ -6,12 +6,14 @@
 //   node scripts/apply-supabase-auth-email-config.mjs --apply
 //       Sets the sender and templates. Needs SMTP_* below. Prints the change list first and asks for the word APPLY.
 //
-// Environment (set in your shell, never committed):
+// Settings are read from the environment or from .env.local (git-ignored). Never paste them into chat.
 //   SUPABASE_ACCESS_TOKEN   personal access token
-//   SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS   VLTD's existing email provider's SMTP login
-//   SMTP_ADMIN_EMAIL        the verified VLTD sending address, e.g. hello@vltd.app (the From address)
+//   SMTP_USER, SMTP_PASS    the VLTD mailbox login at the existing provider (IONOS): the full address and its password
+//   SMTP_ADMIN_EMAIL        the VLTD sending address (the From address; IONOS requires it to be that mailbox)
+//   SMTP_HOST, SMTP_PORT    default to IONOS: smtp.ionos.com and 587 (STARTTLS)
 //   SMTP_SENDER_NAME        defaults to "VLTD"
-// The project ref is read from NEXT_PUBLIC_SUPABASE_URL in .env.local.
+// Add --confirm APPLY to skip the typed confirmation (for scripted runs).
+// The project ref is read from NEXT_PUBLIC_SUPABASE_URL.
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import readline from "node:readline/promises";
@@ -34,11 +36,12 @@ function envFromFile() {
 }
 
 const fileEnv = envFromFile();
-const url = process.env.NEXT_PUBLIC_SUPABASE_URL || fileEnv.NEXT_PUBLIC_SUPABASE_URL || "";
+const setting = (name) => process.env[name] || fileEnv[name] || "";
+const url = setting("NEXT_PUBLIC_SUPABASE_URL");
 const ref = new URL(url).hostname.split(".")[0];
-const token = process.env.SUPABASE_ACCESS_TOKEN;
+const token = setting("SUPABASE_ACCESS_TOKEN");
 if (!token) {
-  console.error("SUPABASE_ACCESS_TOKEN is not set. Create a personal access token at supabase.com/dashboard/account/tokens.");
+  console.error("SUPABASE_ACCESS_TOKEN is not set. Create a personal access token at supabase.com/dashboard/account/tokens and add it to .env.local (not to chat).");
   process.exit(1);
 }
 const api = `https://api.supabase.com/v1/projects/${ref}/config/auth`;
@@ -60,7 +63,7 @@ for (const key of ["confirmation", "invite", "magic_link", "recovery", "email_ch
 }
 if (mode === "check") process.exit(0);
 
-const need = ["SMTP_HOST", "SMTP_PORT", "SMTP_USER", "SMTP_PASS", "SMTP_ADMIN_EMAIL"].filter((k) => !process.env[k]);
+const need = ["SMTP_USER", "SMTP_PASS", "SMTP_ADMIN_EMAIL"].filter((k) => !setting(k));
 if (need.length) {
   console.error("Missing:", need.join(", "));
   process.exit(1);
@@ -68,12 +71,12 @@ if (need.length) {
 
 const subjects = JSON.parse(readFileSync(join(ROOT, "docs", "supabase-email-templates", "subjects.json"), "utf8"));
 const patch = {
-  smtp_host: process.env.SMTP_HOST,
-  smtp_port: String(process.env.SMTP_PORT),
-  smtp_user: process.env.SMTP_USER,
-  smtp_pass: process.env.SMTP_PASS,
-  smtp_admin_email: process.env.SMTP_ADMIN_EMAIL,
-  smtp_sender_name: process.env.SMTP_SENDER_NAME || "VLTD",
+  smtp_host: setting("SMTP_HOST") || "smtp.ionos.com",
+  smtp_port: String(setting("SMTP_PORT") || "587"),
+  smtp_user: setting("SMTP_USER"),
+  smtp_pass: setting("SMTP_PASS"),
+  smtp_admin_email: setting("SMTP_ADMIN_EMAIL"),
+  smtp_sender_name: setting("SMTP_SENDER_NAME") || "VLTD",
 };
 for (const key of Object.keys(subjects)) {
   patch[`mailer_subjects_${key}`] = subjects[key];
@@ -83,9 +86,13 @@ for (const key of Object.keys(subjects)) {
 console.log("\nAbout to change:");
 console.log(`  From:    ${patch.smtp_sender_name} <${patch.smtp_admin_email}> via ${patch.smtp_host}:${patch.smtp_port}`);
 for (const key of Object.keys(subjects)) console.log(`  ${key.padEnd(16)} -> subject ${JSON.stringify(subjects[key])} + VLTD template`);
-const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
-const answer = await rl.question('\nType APPLY to change the production project: ');
-rl.close();
+const confirmIndex = process.argv.indexOf("--confirm");
+let answer = confirmIndex >= 0 ? process.argv[confirmIndex + 1] ?? "" : "";
+if (!answer) {
+  const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
+  answer = await rl.question("\nType APPLY to change the production project: ");
+  rl.close();
+}
 if (answer.trim() !== "APPLY") {
   console.log("Cancelled. Nothing changed.");
   process.exit(0);

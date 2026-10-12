@@ -23,3 +23,32 @@ Limit: Supabase's public Auth API can still be called directly with the public k
    - repeat for a confirmation email (sign-up) with an authorized test address.
 
 A template preview or code deployment does not prove the production configuration changed. Only a received email does.
+
+## VLTD's existing provider: IONOS Mail
+Found from vltd.app's DNS: mail (MX) is IONOS (`mx00.ionos.com`, `mx01.ionos.com`), SPF already includes IONOS (`include:_spf-us.ionos.com`), and DMARC is published (`p=none`). So account email is sent through the existing IONOS mailbox, not a new service.
+
+### Entering the credentials (never in chat)
+Two places, both private to you. Use whichever you prefer; the first is simplest.
+
+**A. Supabase dashboard (nothing touches this computer)**
+1. supabase.com/dashboard > the VLTD project > Authentication > Emails > SMTP Settings > Enable custom SMTP.
+2. Sender email: the VLTD mailbox address. Sender name: `VLTD`.
+3. Host `smtp.ionos.com`, port `587`, username = the full mailbox address, password = that mailbox's password. Save.
+4. Authentication > Emails > Templates: for each of Confirm signup, Invite user, Magic link, Change email address, Reset password, Reauthentication, paste the matching file from `docs/supabase-email-templates/` and the subject from `subjects.json`.
+
+**B. Let the script do steps 1-4 (credentials stay in a git-ignored file on this computer)**
+1. Create a Supabase access token: supabase.com/dashboard/account/tokens > Generate new token.
+2. Open `C:\Users\EK\VLTD\.env.local` and add these lines at the bottom, then save (the file is git-ignored):
+   ```
+   SUPABASE_ACCESS_TOKEN=<the token>
+   SMTP_USER=<the full VLTD mailbox address>
+   SMTP_PASS=<that mailbox's password>
+   SMTP_ADMIN_EMAIL=<the same VLTD mailbox address>
+   ```
+3. Tell Claude "credentials are in .env.local". Claude runs `--check`, then `--apply`, and does not print the values.
+4. Afterwards, delete the SMTP_PASS and SUPABASE_ACCESS_TOKEN lines from `.env.local` and revoke the token on the Supabase tokens page.
+
+### IONOS notes
+- The From address must be the authenticated mailbox itself; IONOS rejects other From addresses.
+- Reply-To cannot be set in Supabase. Use the monitored support address as the mailbox, or set a reply-to rule/alias in IONOS.
+- IONOS signs outgoing mail with its own keys; the SPF record already covers it. If receivers show "via ionos" or the message lands in spam, add DKIM for the domain in IONOS (Email > the domain > DKIM) and then raise DMARC from `p=none` later.
