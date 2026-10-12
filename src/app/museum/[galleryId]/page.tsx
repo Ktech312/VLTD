@@ -204,6 +204,11 @@ function compactPill(variant: PillVariant = "default", extra = "") {
   return pillClassName(variant, false, extra, "compact");
 }
 
+// Checkbox wrapper: the 14px box stays visually the same; on phones the label supplies an invisible 44px hit area
+// (extra left margin keeps it clear of the neighbouring "i" button).
+const CHECKBOX_LABEL =
+  "relative inline-flex cursor-pointer items-center max-md:ml-[9px] max-md:after:absolute max-md:after:-inset-[15px] max-md:after:content-['']";
+
 function accessPillClass(active: boolean) {
   return compactPill(active ? "active" : "default");
 }
@@ -944,7 +949,7 @@ export default function GalleryPage() {
                         }
                         placeholder="Exhibit title"
                         aria-label="Exhibit title"
-                        className={INLINE_EDIT_LINE + " mx-auto mt-2 block w-full max-w-[320px] text-center text-2xl font-semibold xl:mt-1"}
+                        className={INLINE_EDIT_LINE + " mx-auto mt-2 block w-full max-w-[320px] text-center text-2xl font-semibold max-md:min-h-11 xl:mt-1"}
                       />
                       <textarea
                         value={draft.description ?? ""}
@@ -954,7 +959,7 @@ export default function GalleryPage() {
                         rows={1}
                         placeholder="Curated collection presentation"
                         aria-label="Exhibit description"
-                        className={INLINE_EDIT_LINE + " mx-auto mt-1 block w-full max-w-[320px] resize-none text-center text-sm leading-5 text-white/80 xl:text-xs xl:leading-4"}
+                        className={INLINE_EDIT_LINE + " mx-auto mt-1 block w-full max-w-[320px] resize-none text-center text-sm leading-5 text-white/80 max-md:min-h-11 xl:text-xs xl:leading-4"}
                       />
                     </>
                   ) : (
@@ -975,7 +980,7 @@ export default function GalleryPage() {
                     onClick={() => setHeaderEditing((value) => !value)}
                     aria-label={headerEditing ? "Done editing title and description" : "Edit title and description"}
                     title={headerEditing ? "Done" : "Edit title and description"}
-                    className="relative mx-auto mt-1 flex h-7 w-7 items-center justify-center rounded-[8px] text-white/80 ring-1 ring-white/30 transition hover:text-white max-md:after:absolute max-md:after:-inset-2 max-md:after:content-['']"
+                    className="relative mx-auto mt-1 flex h-7 w-7 max-md:mt-3 items-center justify-center rounded-[8px] text-white/80 ring-1 ring-white/30 transition hover:text-white max-md:after:absolute max-md:after:-inset-2 max-md:after:content-['']"
                   >
                     <AppIcon name={headerEditing ? "checkmark" : "edit"} size={12} strokeWidth={1.8} />
                   </button>
@@ -1021,7 +1026,7 @@ export default function GalleryPage() {
               </div>
                 </div>
 
-                <div className="mt-3 flex flex-wrap items-center justify-between gap-x-3 gap-y-2 xl:mt-2">
+                <div className="mt-3 flex flex-wrap items-center justify-between gap-x-3 gap-y-2 max-md:gap-y-4 xl:mt-2">
                 <div className="grid grid-cols-[auto_auto_auto] items-center justify-start gap-1.5">
                   <button
                     type="button"
@@ -1050,7 +1055,7 @@ export default function GalleryPage() {
                 </div>
 
                 {confirmRegenerate ? (
-                  <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px] text-[color:var(--muted)]">
+                  <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px] text-[color:var(--muted)] max-md:mt-3 max-md:gap-y-3">
                     <span>Regenerating stops the old link from working. Continue?</span>
                     <button
                       type="button"
@@ -1107,7 +1112,7 @@ export default function GalleryPage() {
                     </div>
                   ) : null}
 
-                  <div className="mt-2 flex flex-wrap items-center gap-1.5 xl:gap-1">
+                  <div className="mt-2 flex flex-wrap items-center gap-1.5 max-md:mt-3 max-md:gap-y-3 xl:gap-1">
                     <button
                       type="button"
                       onClick={() => updateAccessMode("private")}
@@ -1138,7 +1143,7 @@ export default function GalleryPage() {
                     </button>
                   </div>
                   {confirmPublic ? (
-                    <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px] text-[color:var(--muted)]">
+                    <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px] text-[color:var(--muted)] max-md:mt-3 max-md:gap-y-3">
                       <span>Make this exhibit public now? Anyone will be able to find it.</span>
                       <button
                         type="button"
@@ -1157,7 +1162,7 @@ export default function GalleryPage() {
                     </div>
                   ) : null}
 
-                  <div className="mt-3 flex flex-wrap items-center gap-1.5">
+                  <div className="mt-3 flex flex-wrap items-center gap-1.5 max-md:mt-4 max-md:gap-y-3">
                     <div className="relative inline-flex min-h-[30px] w-fit items-center gap-1.5 rounded-full bg-[color:var(--surface)] px-2.5 py-1 text-[10px] ring-1 ring-[color:var(--border)]">
                       <span className="font-semibold">18+ exhibit</span>
                       <button
@@ -1173,18 +1178,20 @@ export default function GalleryPage() {
                       >
                         i
                       </button>
-                      <input
-                        type="checkbox"
-                        aria-label="Require 18+ confirmation"
-                        checked={draft.adultOnly === true}
-                        onChange={(event) =>
-                          patchDraft((current) => ({
-                            ...current,
-                            adultOnly: event.target.checked,
-                          }))
-                        }
-                        className="h-3.5 w-3.5 accent-cyan-400"
-                      />
+                      <label className={CHECKBOX_LABEL}>
+                        <input
+                          type="checkbox"
+                          aria-label="Require 18+ confirmation"
+                          checked={draft.adultOnly === true}
+                          onChange={(event) =>
+                            patchDraft((current) => ({
+                              ...current,
+                              adultOnly: event.target.checked,
+                            }))
+                          }
+                          className="h-3.5 w-3.5 accent-cyan-400"
+                        />
+                      </label>
                       {adultInfoOpen ? (
                         <span id="gallery-adult-info" className="vltd-dark-surface absolute left-0 bottom-full z-20 mb-2 w-[min(360px,calc(100vw-48px))] rounded-xl px-3 py-2 text-[11px] leading-4 text-[color:var(--muted)] ring-1 ring-[color:var(--border)] shadow-[0_18px_44px_rgba(0,0,0,0.38)]">
                           Public viewers must confirm they are 18 or older before entering this exhibit.
@@ -1207,18 +1214,20 @@ export default function GalleryPage() {
                       >
                         i
                       </button>
-                      <input
-                        type="checkbox"
-                        aria-label="Show a made-up curator identity instead of your real name"
-                        checked={draft.aliasEnabled === true}
-                        onChange={(event) =>
-                          patchDraft((current) => ({
-                            ...current,
-                            aliasEnabled: event.target.checked,
-                          }))
-                        }
-                        className="h-3.5 w-3.5 accent-cyan-400"
-                      />
+                      <label className={CHECKBOX_LABEL}>
+                        <input
+                          type="checkbox"
+                          aria-label="Show a made-up curator identity instead of your real name"
+                          checked={draft.aliasEnabled === true}
+                          onChange={(event) =>
+                            patchDraft((current) => ({
+                              ...current,
+                              aliasEnabled: event.target.checked,
+                            }))
+                          }
+                          className="h-3.5 w-3.5 accent-cyan-400"
+                        />
+                      </label>
                       {aliasInfoOpen ? (
                         <span id="gallery-alias-info" className="vltd-dark-surface absolute left-0 bottom-full z-20 mb-2 w-[min(360px,calc(100vw-48px))] rounded-xl px-3 py-2 text-[11px] leading-4 text-[color:var(--muted)] ring-1 ring-[color:var(--border)] shadow-[0_18px_44px_rgba(0,0,0,0.38)]">
                           Hides your real name on THIS exhibition's public page. Visitors see the name you choose instead. You still manage this exhibition as yourself.
@@ -1237,7 +1246,7 @@ export default function GalleryPage() {
                         }
                         placeholder="Alias name"
                         aria-label="Alias name"
-                        className="h-[30px] w-[140px] min-w-0 rounded-full bg-[color:var(--pill)] px-3 text-[11px] ring-1 ring-[color:var(--border)] focus:outline-none"
+                        className="h-[30px] w-[140px] min-w-0 rounded-full max-md:h-11 bg-[color:var(--pill)] px-3 text-[11px] ring-1 ring-[color:var(--border)] focus:outline-none"
                       />
                     ) : null}
 
@@ -1339,7 +1348,7 @@ export default function GalleryPage() {
                   onChange={(e) => setInviteLabel(e.target.value)}
                   onKeyDown={(e) => { if (e.key === "Enter") handleCreateInviteToken(); }}
                   placeholder="Optional label, e.g. VIP preview"
-                  className="min-h-[36px] w-full rounded-xl bg-[color:var(--surface)] px-3 py-1.5 text-xs ring-1 ring-[color:var(--border)] focus:outline-none"
+                  className="min-h-[36px] w-full rounded-xl bg-[color:var(--surface)] px-3 py-1.5 text-xs max-md:min-h-11 ring-1 ring-[color:var(--border)] focus:outline-none"
                 />
                 <button
                   type="button"
@@ -1404,11 +1413,11 @@ export default function GalleryPage() {
                           value={inviteUrl}
                           readOnly
                           onFocus={(e) => e.target.select()}
-                          className="mt-2 min-h-[34px] w-full rounded-xl bg-[color:var(--surface)] px-3 py-1.5 text-[11px] ring-1 ring-[color:var(--border)] focus:outline-none cursor-text select-all"
+                          className="mt-2 min-h-[34px] max-md:min-h-11 w-full rounded-xl bg-[color:var(--surface)] px-3 py-1.5 text-[11px] ring-1 ring-[color:var(--border)] focus:outline-none cursor-text select-all"
                         />
 
                         {/* Action pills row */}
-                        <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                        <div className="mt-2 flex flex-wrap items-center gap-1.5 max-md:mt-3 max-md:gap-y-3">
                           <button
                             type="button"
                             onClick={() => copyInviteLink(entry.token)}
@@ -1478,7 +1487,7 @@ export default function GalleryPage() {
                                 ).map(({ key, label, desc }) => (
                                   <label
                                     key={key}
-                                    className="flex cursor-pointer items-start gap-2.5 rounded-xl px-2 py-1.5 transition hover:bg-[color:var(--input)]"
+                                    className="flex cursor-pointer items-start gap-2.5 rounded-xl px-2 py-1.5 max-md:min-h-11 max-md:items-center transition hover:bg-[color:var(--input)]"
                                   >
                                     <input
                                       type="checkbox"

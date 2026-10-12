@@ -133,7 +133,7 @@ export default function ShareBar({ title, shareUrl, itemId, compact = false, hid
   const emailUrl = `mailto:?subject=${encodeURIComponent(`Check out: ${title}`)}&body=${encodeURIComponent(`${title}\n${url}`)}`;
 
   // 24px branded glyphs with an invisible 44px touch target on phones and a visible keyboard focus ring.
-  const iconBtn = "relative flex shrink-0 items-center justify-center rounded-[6px] transition-all hover:opacity-70 active:scale-90 focus-visible:outline-2 focus-visible:outline-offset-2 max-md:after:absolute max-md:after:-inset-2.5 max-md:after:content-['']";
+  const iconBtn = "relative flex min-h-6 min-w-6 shrink-0 items-center justify-center rounded-[6px] transition-all hover:opacity-70 active:scale-90 focus-visible:outline-2 focus-visible:outline-offset-2 max-md:after:absolute max-md:after:-inset-2.5 max-md:after:content-['']";
 
   const iconStyle: React.CSSProperties = {
     color: "var(--theme-gold, #C8CDD2)",

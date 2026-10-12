@@ -946,7 +946,7 @@ export default function CameraCapturePanel({
                 onClick={() => setAdjustments(isBrightenActive(adjustments) ? DEFAULT_CAPTURE_ADJUSTMENTS : BRIGHTEN_ADJUSTMENTS)}
                 aria-pressed={isBrightenActive(adjustments)}
                 title="Brighten a dim photo"
-                className="inline-flex h-8 w-8 items-center justify-center rounded-full ring-1 transition"
+                className="inline-flex h-8 w-8 max-md:h-11 max-md:w-11 items-center justify-center rounded-full ring-1 transition"
                 style={{
                   background: isBrightenActive(adjustments) ? "var(--theme-gold-subtle, rgba(203,208,213,0.14))" : "var(--pill)",
                   borderColor: "var(--theme-gold-border, rgba(203,208,213,0.35))",
@@ -961,7 +961,7 @@ export default function CameraCapturePanel({
                 disabled={isRemovingBackground || !capturedFile}
                 aria-label={isBackgroundRemoved ? "Remove background again" : "Remove background"}
                 title="Remove background"
-                className="inline-flex h-8 w-8 items-center justify-center rounded-full ring-1 transition disabled:opacity-45"
+                className="inline-flex h-8 w-8 max-md:h-11 max-md:w-11 items-center justify-center rounded-full ring-1 transition disabled:opacity-45"
                 style={{
                   background: isBackgroundRemoved ? "var(--theme-gold-subtle, rgba(203,208,213,0.14))" : "var(--pill)",
                   borderColor: "var(--theme-gold-border, rgba(203,208,213,0.35))",
@@ -1021,7 +1021,7 @@ export default function CameraCapturePanel({
                   <button
                     type="button"
                     onClick={() => setAdjustments(DEFAULT_CAPTURE_ADJUSTMENTS)}
-                    className="rounded-[7px] bg-[color:var(--pill)] px-3 py-1.5 text-xs font-semibold text-[color:var(--muted)] ring-1 ring-[color:var(--border)]"
+                    className="rounded-[7px] bg-[color:var(--pill)] px-3 py-1.5 max-md:min-h-11 text-xs font-semibold text-[color:var(--muted)] ring-1 ring-[color:var(--border)]"
                   >
                     Reset
                   </button>
@@ -1088,7 +1088,7 @@ export default function CameraCapturePanel({
                 onClick={onUseFileInstead}
                 title="Upload from file"
                 aria-label="Upload from file"
-                className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-[7px] ring-1 ring-[color:var(--border)] transition hover:text-[color:var(--fg)]"
+                className="inline-flex h-8 w-8 max-md:h-11 max-md:w-11 shrink-0 items-center justify-center rounded-[7px] ring-1 ring-[color:var(--border)] transition hover:text-[color:var(--fg)]"
                 style={{ background: "var(--pill)", color: "var(--muted)" }}
               >
                 <Glyph name="upload" size={16} strokeWidth={1.8} />
@@ -1100,7 +1100,7 @@ export default function CameraCapturePanel({
                   onClick={toggleScan}
                   title={scanState === "scanning" ? "Cancel scan" : "Scan a barcode or QR code"}
                   aria-label={scanState === "scanning" ? "Cancel scan" : "Scan a barcode or QR code"}
-                  className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-[7px] ring-1 transition"
+                  className="inline-flex h-8 w-8 max-md:h-11 max-md:w-11 shrink-0 items-center justify-center rounded-[7px] ring-1 transition"
                   style={
                     scanState === "scanning"
                       ? { background: "rgba(74,155,255,0.16)", borderColor: "rgba(74,155,255,0.5)", color: "#4A9BFF" }
@@ -1115,7 +1115,7 @@ export default function CameraCapturePanel({
                 <button
                   type="button"
                   onClick={() => setBulkMode((v) => !v)}
-                  className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-[10px] px-2.5 text-xs font-semibold ring-1 transition"
+                  className="inline-flex h-8 max-md:h-11 shrink-0 items-center gap-1.5 rounded-[10px] px-2.5 text-xs font-semibold ring-1 transition"
                   style={bulkMode
                     ? { background: "rgba(203,208,213,0.12)", borderColor: "rgba(203,208,213,0.35)", color: "#C8CDD2" }
                     : { background: "var(--pill)", borderColor: "var(--border)", color: "var(--muted2)" }
@@ -1147,7 +1147,7 @@ export default function CameraCapturePanel({
                       setSelectedDeviceId(nextDeviceId);
                       setRetryCount((count) => count + 1);
                     }}
-                    className="h-8 min-w-0 flex-1 truncate rounded-[10px] bg-[color:var(--pill)] px-2 text-[11px] text-[color:var(--fg)] ring-1 ring-[color:var(--border)] focus:outline-none"
+                    className="h-8 max-md:h-11 min-w-0 flex-1 truncate rounded-[10px] bg-[color:var(--pill)] px-2 text-[11px] text-[color:var(--fg)] ring-1 ring-[color:var(--border)] focus:outline-none"
                     aria-label="Select camera"
                   >
                     {videoDevices.map((device, index) => (
@@ -1189,7 +1189,7 @@ export default function CameraCapturePanel({
                 type="button"
                 onClick={onClose}
                 aria-label="Close"
-                className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[color:var(--muted)] ring-1 ring-[color:var(--border)] transition hover:text-[color:var(--fg)]"
+                className="inline-flex h-8 w-8 max-md:h-11 max-md:w-11 shrink-0 items-center justify-center rounded-full text-[color:var(--muted)] ring-1 ring-[color:var(--border)] transition hover:text-[color:var(--fg)]"
                 style={{ background: "var(--pill)" }}
               >
                 <Glyph name="close" size={14} strokeWidth={2} />

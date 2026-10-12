@@ -270,6 +270,30 @@ function looksLikeBookBarcode(digits?: string) {
   return false;
 }
 
+/**
+ * Per-field "carry to next item" lock. On phones it is a real 44x44 box (so its hit area is the box itself and
+ * never overlaps the input below); on desktop it keeps the 28px compact geometry.
+ */
+function LockButton({ locked, onToggle }: { locked: boolean; onToggle: () => void }) {
+  const label = locked ? "Locked for next item" : "Unlocked for next item";
+  return (
+    <PillButton
+      variant={locked ? "active" : "default"}
+      pressed={locked}
+      onClick={onToggle}
+      ariaLabel={label}
+      title={label}
+      className="shrink-0 max-md:w-11 max-md:px-0! md:h-7! md:px-2.5!"
+    >
+      {locked ? (
+        <AppIcon name="lock" size={14} strokeWidth={2.5} style={{ color: "var(--theme-gold, #C8CDD2)" }} />
+      ) : (
+        <AppIcon name="unlocked" size={14} strokeWidth={2.5} style={{ color: "var(--muted)" }} />
+      )}
+    </PillButton>
+  );
+}
+
 function Field({
   label,
   locked = false,
@@ -289,20 +313,7 @@ function Field({
           {label}
         </label>
         {onToggleLock ? (
-          <PillButton
-            size="compact"
-            variant={locked ? "active" : "default"}
-            pressed={locked}
-            onClick={onToggleLock}
-            ariaLabel={locked ? "Locked for next item" : "Unlocked for next item"}
-            title={locked ? "Locked for next item" : "Unlocked for next item"}
-          >
-            {locked ? (
-              <AppIcon name="lock" size={14} strokeWidth={2.5} style={{ color: "var(--theme-gold, #C8CDD2)" }} />
-            ) : (
-              <AppIcon name="unlocked" size={14} strokeWidth={2.5} style={{ color: "var(--muted)" }} />
-            )}
-          </PillButton>
+          <LockButton locked={locked} onToggle={onToggleLock} />
         ) : null}
       </div>
       {children}
@@ -2486,13 +2497,13 @@ export default function AddPage() {
 
                   {checkboxOptions.length > 0 && (
                     <div className="sm:col-span-2 2xl:col-span-4">
-                      <div className="mb-1.5 flex items-center justify-between">
+                      <div className="mb-1.5 max-md:mb-3 flex items-center justify-between">
                         <span className="text-xs font-medium" style={{ color: "var(--fg-muted)" }}>Attributes</span>
                         {selectedAttributes.size > 0 && (
                           <PillButton size="compact" onClick={() => setField("itemAttributes", "")}>Clear</PillButton>
                         )}
                       </div>
-                      <div className="flex flex-wrap gap-1.5">
+                      <div className="flex flex-wrap gap-1.5 max-md:gap-y-3">
                         {checkboxOptions.map((attr) => {
                           const active = selectedAttributes.has(attr);
                           return (
@@ -2664,7 +2675,7 @@ export default function AddPage() {
                 />
               </Field>
 
-              <label className="flex min-h-10 items-center gap-3 rounded-xl bg-[color:var(--pill)] px-3 ring-1 ring-[color:var(--border)]">
+              <label className="flex min-h-11 md:min-h-10 items-center gap-3 rounded-xl bg-[color:var(--pill)] px-3 ring-1 ring-[color:var(--border)]">
                 <input
                   type="checkbox"
                   checked={values.isFirstEdition === "true"}
@@ -2813,7 +2824,7 @@ export default function AddPage() {
                     placeholder="e.g., 12 at this grade, 3 higher"
                   />
                 </Field>
-                <label className="flex min-h-10 items-center gap-3 rounded-xl bg-[color:var(--pill)] px-3 ring-1 ring-[color:var(--border)]">
+                <label className="flex min-h-11 md:min-h-10 items-center gap-3 rounded-xl bg-[color:var(--pill)] px-3 ring-1 ring-[color:var(--border)]">
                   <input type="checkbox" checked={values.sportsIsRelic === "true"}
                     onChange={(e) => setField("sportsIsRelic", e.target.checked ? "true" : "")}
                     className="h-4 w-4 rounded accent-[color:var(--theme-gold)]" />
@@ -2826,7 +2837,7 @@ export default function AddPage() {
                       placeholder="Game-used jersey, 3-color patch…" />
                   </Field>
                 )}
-                <label className="flex min-h-10 items-center gap-3 rounded-xl bg-[color:var(--pill)] px-3 ring-1 ring-[color:var(--border)]">
+                <label className="flex min-h-11 md:min-h-10 items-center gap-3 rounded-xl bg-[color:var(--pill)] px-3 ring-1 ring-[color:var(--border)]">
                   <input type="checkbox" checked={values.sportsIsAuto === "true"}
                     onChange={(e) => setField("sportsIsAuto", e.target.checked ? "true" : "")}
                     className="h-4 w-4 rounded accent-[color:var(--theme-gold)]" />
@@ -2872,13 +2883,13 @@ export default function AddPage() {
                     <option>Steiner</option><option>Fanatics</option><option>Unverified</option>
                   </select>
                 </Field>
-                <label className="flex min-h-10 items-center gap-3 rounded-xl bg-[color:var(--pill)] px-3 ring-1 ring-[color:var(--border)]">
+                <label className="flex min-h-11 md:min-h-10 items-center gap-3 rounded-xl bg-[color:var(--pill)] px-3 ring-1 ring-[color:var(--border)]">
                   <input type="checkbox" checked={values.memorabiliaWitnessed === "true"}
                     onChange={(e) => setField("memorabiliaWitnessed", e.target.checked ? "true" : "")}
                     className="h-4 w-4 rounded accent-[color:var(--theme-gold)]" />
                   <span className="text-sm" style={{ color: "var(--fg)" }}>Signing witnessed</span>
                 </label>
-                <label className="flex min-h-10 items-center gap-3 rounded-xl bg-[color:var(--pill)] px-3 ring-1 ring-[color:var(--border)]">
+                <label className="flex min-h-11 md:min-h-10 items-center gap-3 rounded-xl bg-[color:var(--pill)] px-3 ring-1 ring-[color:var(--border)]">
                   <input type="checkbox" checked={values.memorabiliaGameUsed === "true"}
                     onChange={(e) => setField("memorabiliaGameUsed", e.target.checked ? "true" : "")}
                     className="h-4 w-4 rounded accent-[color:var(--theme-gold)]" />
@@ -2940,13 +2951,13 @@ export default function AddPage() {
                       placeholder="Etched matrix info from the dead wax" />
                   </Field>
                 </div>
-                <label className="flex min-h-10 items-center gap-3 rounded-xl bg-[color:var(--pill)] px-3 ring-1 ring-[color:var(--border)]">
+                <label className="flex min-h-11 md:min-h-10 items-center gap-3 rounded-xl bg-[color:var(--pill)] px-3 ring-1 ring-[color:var(--border)]">
                   <input type="checkbox" checked={values.vinylInserts === "true"}
                     onChange={(e) => setField("vinylInserts", e.target.checked ? "true" : "")}
                     className="h-4 w-4 rounded accent-[color:var(--theme-gold)]" />
                   <span className="text-sm" style={{ color: "var(--fg)" }}>Inserts / lyric sheet included</span>
                 </label>
-                <label className="flex min-h-10 items-center gap-3 rounded-xl bg-[color:var(--pill)] px-3 ring-1 ring-[color:var(--border)]">
+                <label className="flex min-h-11 md:min-h-10 items-center gap-3 rounded-xl bg-[color:var(--pill)] px-3 ring-1 ring-[color:var(--border)]">
                   <input type="checkbox" checked={values.vinylGatefold === "true"}
                     onChange={(e) => setField("vinylGatefold", e.target.checked ? "true" : "")}
                     className="h-4 w-4 rounded accent-[color:var(--theme-gold)]" />
@@ -3047,19 +3058,19 @@ export default function AddPage() {
                     <option>C-8</option><option>Loose</option>
                   </select>
                 </Field>
-                <label className="flex min-h-10 items-center gap-3 rounded-xl bg-[color:var(--pill)] px-3 ring-1 ring-[color:var(--border)]">
+                <label className="flex min-h-11 md:min-h-10 items-center gap-3 rounded-xl bg-[color:var(--pill)] px-3 ring-1 ring-[color:var(--border)]">
                   <input type="checkbox" checked={values.toyBoxIncluded === "true"}
                     onChange={(e) => setField("toyBoxIncluded", e.target.checked ? "true" : "")}
                     className="h-4 w-4 rounded accent-[color:var(--theme-gold)]" />
                   <span className="text-sm" style={{ color: "var(--fg)" }}>Box included</span>
                 </label>
-                <label className="flex min-h-10 items-center gap-3 rounded-xl bg-[color:var(--pill)] px-3 ring-1 ring-[color:var(--border)]">
+                <label className="flex min-h-11 md:min-h-10 items-center gap-3 rounded-xl bg-[color:var(--pill)] px-3 ring-1 ring-[color:var(--border)]">
                   <input type="checkbox" checked={values.toyAccessoriesIncluded === "true"}
                     onChange={(e) => setField("toyAccessoriesIncluded", e.target.checked ? "true" : "")}
                     className="h-4 w-4 rounded accent-[color:var(--theme-gold)]" />
                   <span className="text-sm" style={{ color: "var(--fg)" }}>All accessories / inserts present</span>
                 </label>
-                <label className="flex min-h-10 items-center gap-3 rounded-xl bg-[color:var(--pill)] px-3 ring-1 ring-[color:var(--border)]">
+                <label className="flex min-h-11 md:min-h-10 items-center gap-3 rounded-xl bg-[color:var(--pill)] px-3 ring-1 ring-[color:var(--border)]">
                   <input type="checkbox" checked={values.toyIsComplete === "true"}
                     onChange={(e) => setField("toyIsComplete", e.target.checked ? "true" : "")}
                     className="h-4 w-4 rounded accent-[color:var(--theme-gold)]" />
@@ -3121,7 +3132,7 @@ export default function AddPage() {
                     onChange={(e) => setField("artDepth", e.target.value)}
                     placeholder='e.g., 1.5" (optional)' />
                 </Field>
-                <label className="flex min-h-10 items-center gap-3 rounded-xl bg-[color:var(--pill)] px-3 ring-1 ring-[color:var(--border)]">
+                <label className="flex min-h-11 md:min-h-10 items-center gap-3 rounded-xl bg-[color:var(--pill)] px-3 ring-1 ring-[color:var(--border)]">
                   <input type="checkbox" checked={values.artIsSigned === "true"}
                     onChange={(e) => setField("artIsSigned", e.target.checked ? "true" : "")}
                     className="h-4 w-4 rounded accent-[color:var(--theme-gold)]" />
@@ -3134,7 +3145,7 @@ export default function AddPage() {
                       placeholder="Lower right, lower left, verso…" />
                   </Field>
                 )}
-                <label className="flex min-h-10 items-center gap-3 rounded-xl bg-[color:var(--pill)] px-3 ring-1 ring-[color:var(--border)]">
+                <label className="flex min-h-11 md:min-h-10 items-center gap-3 rounded-xl bg-[color:var(--pill)] px-3 ring-1 ring-[color:var(--border)]">
                   <input type="checkbox" checked={values.artIsFramed === "true"}
                     onChange={(e) => setField("artIsFramed", e.target.checked ? "true" : "")}
                     className="h-4 w-4 rounded accent-[color:var(--theme-gold)]" />
@@ -3195,19 +3206,19 @@ export default function AddPage() {
                     onChange={(e) => setField("watchDialColor", e.target.value)}
                     placeholder="Black, Blue, White, Champagne, Green…" />
                 </Field>
-                <label className="flex min-h-10 items-center gap-3 rounded-xl bg-[color:var(--pill)] px-3 ring-1 ring-[color:var(--border)]">
+                <label className="flex min-h-11 md:min-h-10 items-center gap-3 rounded-xl bg-[color:var(--pill)] px-3 ring-1 ring-[color:var(--border)]">
                   <input type="checkbox" checked={values.watchBox === "true"}
                     onChange={(e) => setField("watchBox", e.target.checked ? "true" : "")}
                     className="h-4 w-4 rounded accent-[color:var(--theme-gold)]" />
                   <span className="text-sm" style={{ color: "var(--fg)" }}>Original box included</span>
                 </label>
-                <label className="flex min-h-10 items-center gap-3 rounded-xl bg-[color:var(--pill)] px-3 ring-1 ring-[color:var(--border)]">
+                <label className="flex min-h-11 md:min-h-10 items-center gap-3 rounded-xl bg-[color:var(--pill)] px-3 ring-1 ring-[color:var(--border)]">
                   <input type="checkbox" checked={values.watchPapers === "true"}
                     onChange={(e) => setField("watchPapers", e.target.checked ? "true" : "")}
                     className="h-4 w-4 rounded accent-[color:var(--theme-gold)]" />
                   <span className="text-sm" style={{ color: "var(--fg)" }}>Papers / warranty card included</span>
                 </label>
-                <label className="flex min-h-10 items-center gap-3 rounded-xl bg-[color:var(--pill)] px-3 ring-1 ring-[color:var(--border)]">
+                <label className="flex min-h-11 md:min-h-10 items-center gap-3 rounded-xl bg-[color:var(--pill)] px-3 ring-1 ring-[color:var(--border)]">
                   <input type="checkbox" checked={values.watchFullSet === "true"}
                     onChange={(e) => setField("watchFullSet", e.target.checked ? "true" : "")}
                     className="h-4 w-4 rounded accent-[color:var(--theme-gold)]" />
@@ -3241,19 +3252,19 @@ export default function AddPage() {
                     <option>Brushed Gold</option><option>Ruthenium</option>
                   </select>
                 </Field>
-                <label className="flex min-h-10 items-center gap-3 rounded-xl bg-[color:var(--pill)] px-3 ring-1 ring-[color:var(--border)]">
+                <label className="flex min-h-11 md:min-h-10 items-center gap-3 rounded-xl bg-[color:var(--pill)] px-3 ring-1 ring-[color:var(--border)]">
                   <input type="checkbox" checked={values.bagAuthCard === "true"}
                     onChange={(e) => setField("bagAuthCard", e.target.checked ? "true" : "")}
                     className="h-4 w-4 rounded accent-[color:var(--theme-gold)]" />
                   <span className="text-sm" style={{ color: "var(--fg)" }}>Authentication card included</span>
                 </label>
-                <label className="flex min-h-10 items-center gap-3 rounded-xl bg-[color:var(--pill)] px-3 ring-1 ring-[color:var(--border)]">
+                <label className="flex min-h-11 md:min-h-10 items-center gap-3 rounded-xl bg-[color:var(--pill)] px-3 ring-1 ring-[color:var(--border)]">
                   <input type="checkbox" checked={values.bagDustbag === "true"}
                     onChange={(e) => setField("bagDustbag", e.target.checked ? "true" : "")}
                     className="h-4 w-4 rounded accent-[color:var(--theme-gold)]" />
                   <span className="text-sm" style={{ color: "var(--fg)" }}>Dust bag included</span>
                 </label>
-                <label className="flex min-h-10 items-center gap-3 rounded-xl bg-[color:var(--pill)] px-3 ring-1 ring-[color:var(--border)]">
+                <label className="flex min-h-11 md:min-h-10 items-center gap-3 rounded-xl bg-[color:var(--pill)] px-3 ring-1 ring-[color:var(--border)]">
                   <input type="checkbox" checked={values.bagBox === "true"}
                     onChange={(e) => setField("bagBox", e.target.checked ? "true" : "")}
                     className="h-4 w-4 rounded accent-[color:var(--theme-gold)]" />
@@ -3273,7 +3284,7 @@ export default function AddPage() {
                     onChange={(e) => setField("apparelColorway", e.target.value)}
                     placeholder="Triple White, University Red, Black/Gum…" />
                 </Field>
-                <label className="flex min-h-10 items-center gap-3 rounded-xl bg-[color:var(--pill)] px-3 ring-1 ring-[color:var(--border)]">
+                <label className="flex min-h-11 md:min-h-10 items-center gap-3 rounded-xl bg-[color:var(--pill)] px-3 ring-1 ring-[color:var(--border)]">
                   <input type="checkbox" checked={values.apparelWorn === "true"}
                     onChange={(e) => setField("apparelWorn", e.target.checked ? "true" : "")}
                     className="h-4 w-4 rounded accent-[color:var(--theme-gold)]" />
@@ -3317,19 +3328,19 @@ export default function AddPage() {
                     <option>WATA</option><option>VGA</option><option>CGC</option>
                   </select>
                 </Field>
-                <label className="flex min-h-10 items-center gap-3 rounded-xl bg-[color:var(--pill)] px-3 ring-1 ring-[color:var(--border)]">
+                <label className="flex min-h-11 md:min-h-10 items-center gap-3 rounded-xl bg-[color:var(--pill)] px-3 ring-1 ring-[color:var(--border)]">
                   <input type="checkbox" checked={values.gameIsSealed === "true"}
                     onChange={(e) => setField("gameIsSealed", e.target.checked ? "true" : "")}
                     className="h-4 w-4 rounded accent-[color:var(--theme-gold)]" />
                   <span className="text-sm" style={{ color: "var(--fg)" }}>Sealed / factory sealed</span>
                 </label>
-                <label className="flex min-h-10 items-center gap-3 rounded-xl bg-[color:var(--pill)] px-3 ring-1 ring-[color:var(--border)]">
+                <label className="flex min-h-11 md:min-h-10 items-center gap-3 rounded-xl bg-[color:var(--pill)] px-3 ring-1 ring-[color:var(--border)]">
                   <input type="checkbox" checked={values.gameIsCIB === "true"}
                     onChange={(e) => setField("gameIsCIB", e.target.checked ? "true" : "")}
                     className="h-4 w-4 rounded accent-[color:var(--theme-gold)]" />
                   <span className="text-sm" style={{ color: "var(--fg)" }}>CIB (Complete In Box)</span>
                 </label>
-                <label className="flex min-h-10 items-center gap-3 rounded-xl bg-[color:var(--pill)] px-3 ring-1 ring-[color:var(--border)]">
+                <label className="flex min-h-11 md:min-h-10 items-center gap-3 rounded-xl bg-[color:var(--pill)] px-3 ring-1 ring-[color:var(--border)]">
                   <input type="checkbox" checked={values.gameHasManual === "true"}
                     onChange={(e) => setField("gameHasManual", e.target.checked ? "true" : "")}
                     className="h-4 w-4 rounded accent-[color:var(--theme-gold)]" />
@@ -3376,7 +3387,7 @@ export default function AddPage() {
                     onChange={(e) => setField("coinError", e.target.value)}
                     placeholder="Doubled Die, Off-Center, Struck Through… (blank if none)" />
                 </Field>
-                <label className="flex min-h-10 items-center gap-3 rounded-xl bg-[color:var(--pill)] px-3 ring-1 ring-[color:var(--border)]">
+                <label className="flex min-h-11 md:min-h-10 items-center gap-3 rounded-xl bg-[color:var(--pill)] px-3 ring-1 ring-[color:var(--border)]">
                   <input type="checkbox" checked={values.coinKeyDate === "true"}
                     onChange={(e) => setField("coinKeyDate", e.target.checked ? "true" : "")}
                     className="h-4 w-4 rounded accent-[color:var(--theme-gold)]" />
@@ -3404,20 +3415,7 @@ export default function AddPage() {
                         <AppIcon name="sun" size={14} strokeWidth={2} />
                         Auto
                       </PillButton>
-                      <PillButton
-                        size="compact"
-                        variant={locks.notes ? "active" : "default"}
-                        pressed={locks.notes}
-                        onClick={() => handleToggleLock("notes")}
-                        ariaLabel={locks.notes ? "Locked for next item" : "Unlocked for next item"}
-                        title={locks.notes ? "Locked for next item" : "Unlocked for next item"}
-                      >
-                        {locks.notes ? (
-                          <AppIcon name="lock" size={14} strokeWidth={2.5} style={{ color: "var(--theme-gold, #C8CDD2)" }} />
-                        ) : (
-                          <AppIcon name="unlocked" size={14} strokeWidth={2.5} style={{ color: "var(--muted)" }} />
-                        )}
-                      </PillButton>
+                      <LockButton locked={locks.notes} onToggle={() => handleToggleLock("notes")} />
                     </div>
                   </div>
                   <textarea

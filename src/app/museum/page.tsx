@@ -894,7 +894,7 @@ export default function MuseumPage() {
                               via its own theme-aware background and must not inherit
                               this button's forced-light text. */}
                           <button type="button" onClick={() => handleOpenCoverPicker(g)} disabled={isUploadingCover}
-                            className="vltd-dark-surface absolute right-2.5 top-2.5 inline-flex items-center gap-1.5 rounded-[7px] border px-2.5 py-1 text-[11px] font-semibold backdrop-blur transition disabled:opacity-50" style={{ borderColor: "var(--theme-gold-border, var(--theme-border))", background: "rgba(3,8,14,0.72)", boxShadow: "inset 0 1px 0 rgba(237,239,241,0.12)", color: "#fff" }}>
+                            className="vltd-dark-surface absolute right-2.5 top-2.5 inline-flex items-center gap-1.5 rounded-[7px] border px-2.5 py-1 text-[11px] font-semibold max-md:min-h-11 max-md:px-3.5 backdrop-blur transition disabled:opacity-50" style={{ borderColor: "var(--theme-gold-border, var(--theme-border))", background: "rgba(3,8,14,0.72)", boxShadow: "inset 0 1px 0 rgba(237,239,241,0.12)", color: "#fff" }}>
                             Edit cover
                           </button>
                         </div>
@@ -912,7 +912,7 @@ export default function MuseumPage() {
                           <button
                             type="button"
                             onClick={() => openGallery(g.id)}
-                            className="inline-flex h-8 w-8 shrink-0 items-center justify-center transition hover:text-[color:var(--theme-gold)]"
+                            className="inline-flex h-8 w-8 shrink-0 items-center justify-center transition hover:text-[color:var(--theme-gold)] max-md:-mr-1.5 max-md:-mt-1.5 max-md:h-11 max-md:w-11"
                             style={{ color: "var(--theme-gold)" }}
                             aria-label={`Open full exhibit page for ${g.title}`}
                           >
@@ -965,13 +965,13 @@ export default function MuseumPage() {
                         <div className="mt-5">
                           <div className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[color:var(--muted2)]">Share link</div>
                           <div className="mt-2 flex gap-2">
-                            <input readOnly value={shareUrl} className="h-9 min-w-0 flex-1 rounded-[7px] border px-3 text-xs" style={{ borderColor: "var(--theme-border)", background: "var(--theme-elevated)", color: "var(--muted)" }} />
-                            <button type="button" onClick={() => handleCopyShareLink(shareUrl)} className="inline-flex shrink-0 items-center gap-1.5 rounded-[7px] px-3 text-xs font-semibold ring-1" style={{ background: "var(--pill)", color: "var(--fg)", borderColor: "var(--border)" }}>
+                            <input readOnly value={shareUrl} className="h-9 min-w-0 flex-1 rounded-[7px] border px-3 text-xs max-md:h-11" style={{ borderColor: "var(--theme-border)", background: "var(--theme-elevated)", color: "var(--muted)" }} />
+                            <button type="button" onClick={() => handleCopyShareLink(shareUrl)} className="inline-flex shrink-0 items-center gap-1.5 rounded-[7px] px-3 text-xs font-semibold ring-1 max-md:min-h-11" style={{ background: "var(--pill)", color: "var(--fg)", borderColor: "var(--border)" }}>
                               <AppIcon name="link" size={12} strokeWidth={2} />
                               {copyOk ? "Copied" : "Copy link"}
                             </button>
                           </div>
-                          <button type="button" onClick={() => openGallery(g.id)} className="mt-2 inline-flex items-center gap-1 text-xs font-semibold" style={{ color: "var(--theme-gold)" }}>View public page ↗</button>
+                          <button type="button" onClick={() => openGallery(g.id)} className="mt-2 inline-flex items-center gap-1 text-xs font-semibold max-md:min-h-11" style={{ color: "var(--theme-gold)" }}>View public page ↗</button>
                         </div>
 
                         {/* Privacy & access */}
@@ -984,14 +984,14 @@ export default function MuseumPage() {
                               <div className="text-[11px] text-[color:var(--muted)]">{g.visibility === "PUBLIC" ? "Anyone can view this exhibition." : g.visibility === "INVITE" ? "Only invited people can view." : "Only you can view this exhibition."}</div>
                             </div>
                           </div>
-                          <button type="button" onClick={() => setGallerySettings(g)} className="shrink-0 rounded-[7px] px-3.5 py-1.5 text-xs font-semibold ring-1" style={{ background: "var(--pill)", color: "var(--fg)", borderColor: "var(--border)" }}>Change</button>
+                          <button type="button" onClick={() => setGallerySettings(g)} className="shrink-0 rounded-[7px] px-3.5 py-1.5 text-xs font-semibold ring-1 max-md:min-h-11" style={{ background: "var(--pill)", color: "var(--fg)", borderColor: "var(--border)" }}>Change</button>
                         </div>
 
                         {panelItems.length > 0 ? (
                           <div className="mt-5">
                             <div className="flex items-center justify-between">
                               <div className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[color:var(--muted2)]">Selected items ({panelItems.length})</div>
-                              <button type="button" onClick={() => openGallery(g.id)} className="inline-flex items-center gap-0.5 text-[11px] font-semibold" style={{ color: "var(--theme-gold)" }}>View all ›</button>
+                              <button type="button" onClick={() => openGallery(g.id)} className="inline-flex items-center gap-0.5 text-[11px] font-semibold max-md:min-h-11" style={{ color: "var(--theme-gold)" }}>View all ›</button>
                             </div>
                             <div
                               className="mt-2 flex cursor-grab touch-pan-x gap-2.5 overflow-x-auto overscroll-x-contain pb-1 active:cursor-grabbing"
@@ -1032,15 +1032,15 @@ export default function MuseumPage() {
                         ) : null}
 
                         <div className="mt-5 grid grid-cols-3 gap-2">
-                          <button type="button" onClick={() => openGallery(g.id)} className="inline-flex min-h-[40px] items-center justify-center gap-1.5 rounded-[7px] text-xs font-semibold ring-1" style={{ background: "var(--pill)", color: "var(--fg)", borderColor: "var(--border)" }}>
+                          <button type="button" onClick={() => openGallery(g.id)} className="inline-flex min-h-[40px] max-md:min-h-11 items-center justify-center gap-1.5 rounded-[7px] text-xs font-semibold ring-1" style={{ background: "var(--pill)", color: "var(--fg)", borderColor: "var(--border)" }}>
                             <AppIcon name="copy" size={13} strokeWidth={1.8} />
                             Duplicate
                           </button>
-                          <button type="button" onClick={() => openGallery(g.id)} className="inline-flex min-h-[40px] items-center justify-center gap-1.5 rounded-[7px] text-xs font-semibold ring-1" style={{ background: "var(--pill)", color: "var(--fg)", borderColor: "var(--border)" }}>
+                          <button type="button" onClick={() => openGallery(g.id)} className="inline-flex min-h-[40px] max-md:min-h-11 items-center justify-center gap-1.5 rounded-[7px] text-xs font-semibold ring-1" style={{ background: "var(--pill)", color: "var(--fg)", borderColor: "var(--border)" }}>
                             <AppIcon name="upload" size={13} strokeWidth={1.8} />
                             Export PDF
                           </button>
-                          <button type="button" onClick={() => handleAskDelete(g)} className="inline-flex min-h-[40px] items-center justify-center gap-1.5 rounded-[7px] text-xs font-semibold ring-1" style={{ background: "rgba(248,113,113,0.08)", color: "#f87171", borderColor: "rgba(248,113,113,0.3)" }}>
+                          <button type="button" onClick={() => handleAskDelete(g)} className="inline-flex min-h-[40px] max-md:min-h-11 items-center justify-center gap-1.5 rounded-[7px] text-xs font-semibold ring-1" style={{ background: "rgba(248,113,113,0.08)", color: "#f87171", borderColor: "rgba(248,113,113,0.3)" }}>
                             <AppIcon name="delete" size={13} strokeWidth={1.8} />
                             Delete
                           </button>

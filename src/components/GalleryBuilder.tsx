@@ -901,7 +901,7 @@ export default function GalleryBuilder({
           </div>
 
           {/* ── Row 1a: Theme | Shelf ── */}
-          <div className="mt-3 flex items-center gap-2 flex-wrap">
+          <div className="mt-3 flex items-center gap-2 flex-wrap max-md:gap-y-3">
             {/* Theme dropdown — shows "Theme: X" label */}
             <div className="relative">
               <PillSelect<GalleryViewOption>
@@ -1050,7 +1050,7 @@ export default function GalleryBuilder({
           </div>
 
           {/* ── Row 1b: Upload Background ── */}
-          <div className={["mt-2 flex flex-wrap items-center gap-2", shelfBackground ? "" : "hidden"].join(" ")}>
+          <div className={["mt-2 flex flex-wrap items-center gap-2 max-md:mt-3 max-md:gap-y-3", shelfBackground ? "" : "hidden"].join(" ")}>
             {shelfBackground ? (
               <button
                 type="button"
@@ -1069,7 +1069,7 @@ export default function GalleryBuilder({
           </div>
 
           {/* ── Row 2a: Section selector + inline title ── */}
-          <div className="mt-2 flex flex-wrap items-center gap-2">
+          <div className="mt-2 flex flex-wrap items-center gap-2 max-md:mt-3 max-md:gap-y-3">
             {/* Section selector — dropdown pill */}
             <div className="relative">
               <button
@@ -1111,7 +1111,7 @@ export default function GalleryBuilder({
                       <div className="px-3 py-2 text-sm text-[color:var(--muted)]">No exhibits yet</div>
                     ) : (
                       sections.map((s, i) => (
-                        <div key={s.id} className="flex items-center gap-1">
+                        <div key={s.id} className="flex items-center gap-1 max-md:gap-2">
                           <button
                             type="button"
                             onClick={() => {
@@ -1209,7 +1209,7 @@ export default function GalleryBuilder({
                 onGalleryChange((current) => syncSectionsAndLayout(current, updated));
               }}
               placeholder="Exhibit name…"
-              className="w-[38%] min-w-[150px] max-w-full shrink-0 min-h-[28px] rounded-full bg-[color:var(--pill)] px-3 text-[11px] font-semibold text-[color:var(--fg)] ring-1 ring-[color:var(--border)] shadow-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--fg)]/20 transition-all placeholder:text-[color:var(--muted)]"
+              className="w-[38%] min-w-[150px] max-w-full shrink-0 min-h-[28px] max-md:min-h-11 rounded-full bg-[color:var(--pill)] px-3 text-[11px] font-semibold text-[color:var(--fg)] ring-1 ring-[color:var(--border)] shadow-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--fg)]/20 transition-all placeholder:text-[color:var(--muted)]"
             />
 
             {/* Section description — sits to the right of the title; auto-expands on type, shrinks on blur */}
@@ -1234,7 +1234,7 @@ export default function GalleryBuilder({
                 }
               }}
               placeholder="Exhibit description…"
-              className="min-w-[150px] flex-1 resize-none overflow-hidden rounded-2xl bg-[color:var(--pill)] px-3 py-1.5 text-[11px] text-[color:var(--fg)] ring-1 ring-[color:var(--border)] shadow-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--fg)]/20 transition-all placeholder:text-[color:var(--muted)]"
+              className="min-w-[150px] flex-1 resize-none overflow-hidden rounded-2xl bg-[color:var(--pill)] px-3 py-1.5 max-md:min-h-11 max-md:py-3.5 text-[11px] text-[color:var(--fg)] ring-1 ring-[color:var(--border)] shadow-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--fg)]/20 transition-all placeholder:text-[color:var(--muted)]"
             />
           </div>
 
@@ -1305,18 +1305,22 @@ export default function GalleryBuilder({
                   onClick={() => stepExhibit(-1)}
                   aria-label="Previous exhibit"
                   title="Previous exhibit"
-                  className="vltd-dark-surface absolute left-3 top-3 z-30 grid h-8 w-8 place-items-center rounded-full bg-black/45 ring-1 ring-white/25 transition hover:bg-black/65 max-md:after:absolute max-md:after:-inset-1.5 max-md:after:content-['']"
+                  className="group vltd-dark-surface absolute left-1.5 top-1.5 z-30 grid h-11 w-11 place-items-center md:left-3 md:top-3 md:h-8 md:w-8"
                 >
-                  <AppIcon name="arrowLeft" size={16} strokeWidth={2.2} style={{ color: "#fff" }} />
+                  <span className="grid h-8 w-8 place-items-center rounded-full bg-black/45 ring-1 ring-white/25 transition group-hover:bg-black/65">
+                    <AppIcon name="arrowLeft" size={16} strokeWidth={2.2} style={{ color: "#fff" }} />
+                  </span>
                 </button>
                 <button
                   type="button"
                   onClick={() => stepExhibit(1)}
                   aria-label="Next exhibit"
                   title="Next exhibit"
-                  className="vltd-dark-surface absolute right-3 top-3 z-30 grid h-8 w-8 place-items-center rounded-full bg-black/45 ring-1 ring-white/25 transition hover:bg-black/65 max-md:after:absolute max-md:after:-inset-1.5 max-md:after:content-['']"
+                  className="group vltd-dark-surface absolute right-1.5 top-1.5 z-30 grid h-11 w-11 place-items-center md:right-3 md:top-3 md:h-8 md:w-8"
                 >
-                  <AppIcon name="arrowLeft" size={16} strokeWidth={2.2} style={{ color: "#fff", transform: "rotate(180deg)" }} />
+                  <span className="grid h-8 w-8 place-items-center rounded-full bg-black/45 ring-1 ring-white/25 transition group-hover:bg-black/65">
+                    <AppIcon name="arrowLeft" size={16} strokeWidth={2.2} style={{ color: "#fff", transform: "rotate(180deg)" }} />
+                  </span>
                 </button>
               </>
             ) : null}
@@ -1331,7 +1335,7 @@ export default function GalleryBuilder({
                 <button
                   type="button"
                   onClick={() => setWallZoom({ scale: 1, x: 0, y: 0 })}
-                  className="vltd-dark-surface absolute bottom-2 left-2 z-40 rounded-[8px] bg-black/60 px-3 py-1.5 text-xs font-medium ring-1 ring-white/25 max-md:after:absolute max-md:after:-inset-1.5 max-md:after:content-['']"
+                  className="vltd-dark-surface absolute bottom-2 left-2 z-40 rounded-[8px] bg-black/60 px-3 py-1.5 text-xs font-medium ring-1 ring-white/25 max-md:min-h-8 max-md:after:absolute max-md:after:-inset-1.5 max-md:after:content-['']"
                 >
                   Reset zoom
                 </button>
@@ -1522,11 +1526,16 @@ export default function GalleryBuilder({
                             <button
                               type="button"
                               onClick={(e) => { e.stopPropagation(); handlePreviewRemoveItem(item.id); }}
-                              className="absolute bottom-[26%] left-1 z-30 grid h-[18px] w-[18px] place-items-center rounded-full border border-red-400/70 bg-black/75 max-md:after:absolute max-md:after:-inset-3.5 max-md:after:content-['']"
-                              style={{ boxShadow: "0 0 8px rgba(248,113,113,0.75), 0 0 18px rgba(248,113,113,0.35)" }}
+                              className="absolute bottom-[26%] left-1 z-30 grid h-[18px] w-[18px] place-items-center max-md:bottom-[calc(26%-13px)] max-md:left-0 max-md:h-11 max-md:w-11"
                               aria-label={`Remove ${item.title}`}
                             >
-                              <span className="h-[2px] w-[8px] rounded-full bg-red-400" style={{ boxShadow: "0 0 4px rgba(248,113,113,0.9)" }} aria-hidden="true" />
+                              <span
+                                className="grid h-[18px] w-[18px] place-items-center rounded-full border border-red-400/70 bg-black/75 max-md:ml-1 max-md:justify-self-start"
+                                style={{ boxShadow: "0 0 8px rgba(248,113,113,0.75), 0 0 18px rgba(248,113,113,0.35)" }}
+                                aria-hidden="true"
+                              >
+                                <span className="h-[2px] w-[8px] rounded-full bg-red-400" style={{ boxShadow: "0 0 4px rgba(248,113,113,0.9)" }} />
+                              </span>
                             </button>
                           ) : null}
                           {canOrganize ? (
@@ -1577,11 +1586,16 @@ export default function GalleryBuilder({
                             <button
                               type="button"
                               onClick={(e) => { e.stopPropagation(); handlePreviewRemoveItem(item.id); }}
-                              className="absolute bottom-[26%] left-1 z-30 grid h-[18px] w-[18px] place-items-center rounded-full border border-red-400/70 bg-black/75 max-md:after:absolute max-md:after:-inset-3.5 max-md:after:content-['']"
-                              style={{ boxShadow: "0 0 8px rgba(248,113,113,0.75), 0 0 18px rgba(248,113,113,0.35)" }}
+                              className="absolute bottom-[26%] left-1 z-30 grid h-[18px] w-[18px] place-items-center max-md:bottom-[calc(26%-13px)] max-md:left-0 max-md:h-11 max-md:w-11"
                               aria-label={`Remove ${item.title}`}
                             >
-                              <span className="h-[2px] w-[8px] rounded-full bg-red-400" style={{ boxShadow: "0 0 4px rgba(248,113,113,0.9)" }} aria-hidden="true" />
+                              <span
+                                className="grid h-[18px] w-[18px] place-items-center rounded-full border border-red-400/70 bg-black/75 max-md:ml-1 max-md:justify-self-start"
+                                style={{ boxShadow: "0 0 8px rgba(248,113,113,0.75), 0 0 18px rgba(248,113,113,0.35)" }}
+                                aria-hidden="true"
+                              >
+                                <span className="h-[2px] w-[8px] rounded-full bg-red-400" style={{ boxShadow: "0 0 4px rgba(248,113,113,0.9)" }} />
+                              </span>
                             </button>
                           ) : null}
 
@@ -1689,14 +1703,14 @@ export default function GalleryBuilder({
                       <div className="mt-1 text-sm font-semibold">{section.title || `Exhibit ${sectionIndex + 1}`}</div>
                     </div>
 
-                    <div className="flex shrink-0 flex-wrap items-center gap-2">
+                    <div className="flex shrink-0 flex-wrap items-center gap-2 max-md:gap-y-3">
                       <select
                         value=""
                         onChange={(event) => {
                           assignItemToSection(section.id, event.target.value);
                           event.currentTarget.value = "";
                         }}
-                        className="w-auto min-h-[36px] rounded-full bg-[color:var(--input)] px-3 py-1 text-xs ring-1 ring-[color:var(--border)]"
+                        className="w-auto min-h-[36px] max-md:min-h-11 rounded-full bg-[color:var(--input)] px-3 py-1 text-xs ring-1 ring-[color:var(--border)]"
                       >
                         <option value="">+ Assign selected item</option>
                         {selectedItems.map((item) => (
@@ -1786,7 +1800,7 @@ export default function GalleryBuilder({
                                   </span>
                                 </div>
 
-                                <div className="mt-2 flex flex-wrap gap-2">
+                                <div className="mt-2 flex flex-wrap gap-2 max-md:mt-3 max-md:gap-y-3">
                                   <button
                                     type="button"
                                     onClick={() =>
@@ -1838,7 +1852,7 @@ export default function GalleryBuilder({
                                           return syncSectionsAndLayout(current, nextSections);
                                         })
                                       }
-                                      className="w-auto rounded-full bg-[color:var(--surface)] px-3 py-1 text-[11px] ring-1 ring-[color:var(--border)]"
+                                      className="w-auto rounded-full bg-[color:var(--surface)] px-3 py-1 max-md:min-h-11 text-[11px] ring-1 ring-[color:var(--border)]"
                                     >
                                       {sections.map((target) => (
                                         <option key={target.id} value={target.id}>
@@ -2055,7 +2069,7 @@ export default function GalleryBuilder({
               <button
                 type="button"
                 onClick={() => setPreviewExpanded(false)}
-                className={cp("default", "w-9 shrink-0 px-0! md:w-8")}
+                className={cp("default", "w-8 shrink-0 px-0! md:w-7")}
                 aria-label="Close preview"
               >
                 <AppIcon name="close" strokeWidth={1.8} className="h-4 w-4" />
