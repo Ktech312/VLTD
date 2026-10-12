@@ -277,7 +277,7 @@ function InlineEditSection({
           onClick={() => (all ? void saveAll() : startAll())}
           aria-label={all ? `Save ${title.toLowerCase()}` : `Edit ${title.toLowerCase()}`}
           title={all ? "Save (Esc to cancel)" : `Edit ${title.toLowerCase()}`}
-          className="inline-flex h-7 w-7 items-center justify-center rounded-[7px] ring-1 ring-[color:var(--border)] transition hover:bg-[color:var(--pill)]"
+          className="relative max-md:after:absolute max-md:after:-inset-2 max-md:after:content-[''] inline-flex h-7 w-7 items-center justify-center rounded-[7px] ring-1 ring-[color:var(--border)] transition hover:bg-[color:var(--pill)]"
           style={{ color: all ? "var(--theme-gold)" : "var(--muted)" }}
         >
           <AppIcon name={all ? "checkmark" : "edit"} size={14} strokeWidth={1.8} />
@@ -468,7 +468,7 @@ function TagsEditor({ item, onSave }: { item: VaultItem; onSave: (tags: string[]
             style={{ background: "var(--pill)", color: "var(--fg)", borderColor: "var(--border)" }}
           >
             #{tag}
-            <button onClick={() => removeTag(tag)} aria-label={`Remove ${tag}`} className="opacity-60 hover:opacity-100">
+            <button onClick={() => removeTag(tag)} aria-label={`Remove ${tag}`} className="relative opacity-60 hover:opacity-100 max-md:after:absolute max-md:after:-inset-4 max-md:after:content-['']">
               <AppIcon name="close" size={12} strokeWidth={2.5} />
             </button>
           </span>
@@ -484,7 +484,7 @@ function TagsEditor({ item, onSave }: { item: VaultItem; onSave: (tags: string[]
             }
           }}
           placeholder={tags.length ? "Add another tag…" : "Add a tag…"}
-          className="min-w-[120px] flex-1 rounded-full px-3 py-1 text-[12px] outline-none ring-1 focus:ring-[color:var(--theme-gold)]"
+          className="min-w-[120px] flex-1 rounded-full px-3 py-1 text-[12px] outline-none ring-1 focus:ring-[color:var(--theme-gold)] max-md:min-h-11"
           style={{ background: "transparent", color: "var(--fg)", borderColor: "var(--border)" }}
         />
       </div>
@@ -499,7 +499,7 @@ function TagsEditor({ item, onSave }: { item: VaultItem; onSave: (tags: string[]
               <button
                 key={tag}
                 onClick={() => addTag(tag)}
-                className="rounded-full px-2.5 py-0.5 text-[11px] font-semibold ring-1 transition hover:bg-[color:var(--pill)]"
+                className="relative max-md:after:absolute max-md:after:inset-x-0 max-md:after:-inset-y-3 max-md:after:content-[''] rounded-full px-2.5 py-0.5 text-[11px] font-semibold ring-1 transition hover:bg-[color:var(--pill)]"
                 style={{ color: "var(--muted)", borderColor: "var(--border)" }}
               >
                 + {tag}
@@ -1110,7 +1110,7 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
               <button
                 type="button"
                 onClick={() => setDeleteConfirm(true)}
-                className="absolute right-4 top-4 grid h-9 w-9 place-items-center rounded-full ring-1 transition-colors"
+                className="absolute right-4 top-4 grid h-9 w-9 place-items-center rounded-full ring-1 transition-colors max-md:after:absolute max-md:after:-inset-1 max-md:after:content-['']"
                 style={{ background: "rgba(248,113,113,0.08)", borderColor: "rgba(248,113,113,0.22)", color: "rgba(248,113,113,0.75)" }}
                 aria-label="Delete item"
                 title="Delete item"
@@ -1417,7 +1417,7 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
                         type="number"
                         defaultValue={item.askingPrice ?? effectiveMarketValue(item) ?? ""}
                         onBlur={(event) => void handleAskingPriceBlur(event.target.value)}
-                        className="h-10 rounded-xl bg-[color:var(--pill)] px-3 text-sm ring-1 ring-[color:var(--border)] focus:outline-none"
+                        className="h-10 rounded-xl bg-[color:var(--pill)] px-3 text-sm ring-1 ring-[color:var(--border)] focus:outline-none max-md:h-11"
                         placeholder={String(effectiveMarketValue(item) || "")}
                       />
                     </label>
@@ -1626,7 +1626,7 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
                   onClick={() => { setNotesDraft(item.notes ?? ""); setIsEditingNotes(true); }}
                   aria-label="Edit notes"
                   title="Edit notes"
-                  className="inline-flex h-7 w-7 items-center justify-center rounded-[7px] ring-1 ring-[color:var(--border)] transition hover:bg-[color:var(--pill)]"
+                  className="relative max-md:after:absolute max-md:after:-inset-2 max-md:after:content-[''] inline-flex h-7 w-7 items-center justify-center rounded-[7px] ring-1 ring-[color:var(--border)] transition hover:bg-[color:var(--pill)]"
                   style={{ color: "var(--muted)" }}
                 >
                   <AppIcon name="edit" size={14} strokeWidth={1.8} />
@@ -1675,7 +1675,7 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
                     <button
                       type="button"
                       onClick={() => void persist({ ...item, notes: "" })}
-                      className="rounded-[7px] px-3 py-1.5 text-xs font-semibold text-red-400 ring-1 ring-red-400/30 transition hover:bg-red-500/10"
+                      className="relative max-md:after:absolute max-md:after:inset-x-0 max-md:after:-inset-y-2 max-md:after:content-[''] rounded-[7px] px-3 py-1.5 text-xs font-semibold text-red-400 ring-1 ring-red-400/30 transition hover:bg-red-500/10"
                     >
                       Clear
                     </button>

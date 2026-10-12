@@ -386,7 +386,7 @@ export default function PricingMvpCard({
                 <button
                   type="button"
                   onClick={() => setPasteOpen((open) => !open)}
-                  className="inline-flex items-center rounded-[8px] px-2.5 py-1 text-[11px] font-bold"
+                  className="relative max-md:after:absolute max-md:after:inset-x-0 max-md:after:-inset-y-2.5 max-md:after:content-[''] inline-flex items-center rounded-[8px] px-2.5 py-1 text-[11px] font-bold"
                   style={{ background: "var(--theme-gold, #C8CDD2)", color: "#0A0800" }}
                 >
                   Paste sold results
@@ -394,14 +394,14 @@ export default function PricingMvpCard({
                 <button
                   type="button"
                   onClick={() => setChooserOpen((open) => !open)}
-                  className="inline-flex items-center rounded-[8px] bg-[color:var(--pill)] px-2.5 py-1 text-[11px] font-semibold text-[color:var(--fg)] ring-1 ring-[color:var(--border)]"
+                  className="relative max-md:after:absolute max-md:after:inset-x-0 max-md:after:-inset-y-2.5 max-md:after:content-[''] inline-flex items-center rounded-[8px] bg-[color:var(--pill)] px-2.5 py-1 text-[11px] font-semibold text-[color:var(--fg)] ring-1 ring-[color:var(--border)]"
                 >
                   {chooserOpen ? "Close site list" : "Choose sites"}
                 </button>
                 <button
                   type="button"
                   onClick={() => setDetailsOpen((open) => !open)}
-                  className="inline-flex items-center rounded-[8px] px-2.5 py-1 text-[11px] font-semibold text-[color:var(--muted)] ring-1 ring-[color:var(--border)]"
+                  className="relative max-md:after:absolute max-md:after:inset-x-0 max-md:after:-inset-y-2.5 max-md:after:content-[''] inline-flex items-center rounded-[8px] px-2.5 py-1 text-[11px] font-semibold text-[color:var(--muted)] ring-1 ring-[color:var(--border)]"
                 >
                   {showBody ? "Hide details" : "Details"}
                 </button>
@@ -593,7 +593,7 @@ export default function PricingMvpCard({
           onClick={() => (all ? void saveAll() : startAll())}
           aria-label={all ? "Save pricing" : "Edit pricing"}
           title={all ? "Save (Esc to cancel)" : "Edit pricing"}
-          className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-[7px] ring-1 ring-[color:var(--border)] transition hover:bg-[color:var(--pill)]"
+          className="relative max-md:after:absolute max-md:after:-inset-2 max-md:after:content-[''] inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-[7px] ring-1 ring-[color:var(--border)] transition hover:bg-[color:var(--pill)]"
           style={{ color: all ? "var(--theme-gold)" : "var(--muted)" }}
         >
           <AppIcon name={all ? "checkmark" : "edit"} size={14} strokeWidth={1.8} />
