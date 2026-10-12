@@ -242,6 +242,8 @@ export default function GoalsPage() {
   const [sort, setSort] = useState<SortMode>("priority");
   const [selectedGoalId, setSelectedGoalId] = useState<string | null>(null);
   const [showAllGoalItems, setShowAllGoalItems] = useState(false);
+  // Until goals have been read from the account once, an empty list means "not loaded yet", not "no goals".
+  const [goalsLoaded, setGoalsLoaded] = useState(false);
 
   useEffect(() => {
     const onFocus = () => {
@@ -256,6 +258,8 @@ export default function GoalsPage() {
     let active = true;
     void syncGoalsFromSupabase().then(() => {
       if (active) setGoals(loadGoals());
+    }).catch(() => undefined).finally(() => {
+      if (active) setGoalsLoaded(true);
     });
     return () => {
       active = false;
@@ -390,20 +394,18 @@ export default function GoalsPage() {
           </div>
 
           <div className="mt-3 space-y-2">
-            {visibleGoals.length === 0 && (
+            {visibleGoals.length === 0 && !goalsLoaded && (
+              <div role="status" className="grid min-h-[220px] place-items-center rounded-[7px] border border-[rgba(203,208,213,0.22)] text-sm" style={{ background: "var(--theme-card,rgba(15,25,45,0.86))", color: "var(--theme-text-muted,#61656B)" }}>
+                Loading your goals…
+              </div>
+            )}
+            {visibleGoals.length === 0 && goalsLoaded && (
               <div className="grid min-h-[220px] place-items-center rounded-[7px] border border-[rgba(203,208,213,0.22)] text-center" style={{ background: "var(--theme-card,rgba(15,25,45,0.86))" }}>
                 <div>
                   <Glyph name="target" size={42} style={{ color: "var(--theme-gold,#C8CDD2)" }} />
                   <h2 className="mt-4 text-xl font-black" style={{ color: "var(--theme-text-primary,#ECEDEF)" }}>No goals yet</h2>
                   <p className="mt-2 text-sm" style={{ color: "var(--theme-text-muted,#61656B)" }}>Create a real target for a set, value, insurance readiness, exhibition, or sale plan.</p>
-                  <button
-                    type="button"
-                    onClick={() => setShowAdd(true)}
-                    className="mt-5 rounded-[7px] px-5 py-3 text-sm font-black"
-                    style={{ background: "linear-gradient(135deg,#8C9298,#C8CDD2)", color: "#0B0B0B" }}
-                  >
-                    + Add your first goal
-                  </button>
+                  <PillButton variant="active" className="mt-5 font-black" onClick={() => setShowAdd(true)}>+ Add your first goal</PillButton>
                 </div>
               </div>
             )}
