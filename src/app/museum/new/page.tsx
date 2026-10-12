@@ -1,5 +1,6 @@
 "use client";
 
+import { nativeSelectClass } from "@/components/ui/nativeSelect";
 import { ACCESS_PILLS, accessDescription, applyAccessMode, type GalleryAccessPillMode } from "@/lib/galleryAccess";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
@@ -185,7 +186,7 @@ export default function NewMuseumGalleryPage() {
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder="e.g. Hall of Grails"
-                className="min-h-[46px] w-full rounded-2xl bg-[color:var(--input)] px-4 py-3 ring-1 ring-[color:var(--border)] focus:outline-none"
+                className={`w-full ${nativeSelectClass}`}
               />
             </div>
 
@@ -273,7 +274,7 @@ export default function NewMuseumGalleryPage() {
                 <select
                   value={themePack}
                   onChange={(e) => setThemePack(e.target.value as GalleryThemePack)}
-                  className="min-h-[46px] w-full rounded-2xl bg-[color:var(--input)] px-4 py-3 ring-1 ring-[color:var(--border)] focus:outline-none"
+                  className={`w-full ${nativeSelectClass}`}
                 >
                   {GALLERY_THEME_PACK_OPTIONS.map((option) => (
                     <option key={option.value} value={option.value}>
@@ -288,7 +289,7 @@ export default function NewMuseumGalleryPage() {
                 <select
                   value={displayMode}
                   onChange={(e) => setDisplayMode(e.target.value as "grid" | "shelf")}
-                  className="min-h-[46px] w-full rounded-2xl bg-[color:var(--input)] px-4 py-3 ring-1 ring-[color:var(--border)] focus:outline-none"
+                  className={`w-full ${nativeSelectClass}`}
                 >
                   <option value="grid">Grid</option>
                   <option value="shelf">Shelf</option>

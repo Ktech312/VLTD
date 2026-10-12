@@ -736,16 +736,12 @@ export default function InsightsOverview({ items: allItems }: { items: VaultItem
         contentClassName="max-w-[1480px]"
         actions={
           <>
-            <HeaderAction>
-              <Glyph name="search" size={15} />
-              Filters
-            </HeaderAction>
-            <HeaderAction onClick={() => exportItemsCsv(items)} primary>
-              Export Report
-            </HeaderAction>
             <ToolsMenu
               label="Collection tools"
-              items={[{ key: "recap", label: "Collection recap", description: "Your collection in review, with sharing", onClick: () => setRecapOpen(true) }]}
+              items={[
+                { key: "export", label: "Export report", description: "Download your collection as a CSV file", onClick: () => exportItemsCsv(items) },
+                { key: "recap", label: "Collection recap", description: "Your collection in review, with sharing", onClick: () => setRecapOpen(true) },
+              ]}
             />
           </>
         }

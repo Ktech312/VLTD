@@ -1,5 +1,6 @@
 "use client";
 
+import { nativeSelectClass } from "@/components/ui/nativeSelect";
 import { PillSelect } from "@/components/ui/PillSelect";
 import Link from "next/link";
 import { PageHeader } from "@/components/layout/PageHeader";
@@ -1121,7 +1122,7 @@ export default function MuseumPage() {
                   current ? { ...current, visibility: event.target.value as Gallery["visibility"] } : current
                 )
               }
-              className="mt-2 h-11 w-auto rounded-2xl bg-[color:var(--pill)] px-3 text-sm ring-1 ring-[color:var(--border)] focus:outline-none"
+              className={`mt-2 w-auto ${nativeSelectClass}`}
             >
               <option value="PUBLIC">Public</option>
               <option value="INVITE">Invite Only</option>
@@ -1138,7 +1139,7 @@ export default function MuseumPage() {
                   current ? { ...current, state: event.target.value as Gallery["state"] } : current
                 )
               }
-              className="mt-2 h-11 w-auto rounded-2xl bg-[color:var(--pill)] px-3 text-sm ring-1 ring-[color:var(--border)] focus:outline-none"
+              className={`mt-2 w-auto ${nativeSelectClass}`}
             >
               <option value="ACTIVE">Active</option>
               <option value="STORAGE">Storage</option>

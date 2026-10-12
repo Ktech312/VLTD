@@ -1,5 +1,6 @@
 "use client";
 
+import { nativeSelectClass } from "@/components/ui/nativeSelect";
 import { PillButton } from "@/components/ui/PillButton";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
@@ -811,7 +812,7 @@ export default function VltLoungePage() {
                 <select
                   value={composerCategory}
                   onChange={(e) => setComposerCategory(e.target.value as LoungeCategory)}
-                  className="mt-2 h-10 w-full rounded-[7px] bg-[color:var(--pill)] px-3 text-[12px] ring-1 ring-[color:var(--border)] focus:outline-none"
+                  className={`mt-2 w-full ${nativeSelectClass}`}
                   style={{ color: "var(--fg)" }}
                 >
                   <option value="discussion">Discussion</option>

@@ -1,6 +1,10 @@
 "use client";
 
 import { DiscoverNav } from "@/components/SectionNav";
+import { PageHeader } from "@/components/layout/PageHeader";
+import { PillButton } from "@/components/ui/PillButton";
+import { PillSelect } from "@/components/ui/PillSelect";
+import { AppIcon } from "@/components/ui/AppIcon";
 import { useState, useRef, useEffect, useMemo } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
@@ -64,22 +68,9 @@ function IssueCard({
       href={metronUrl}
       target="_blank"
       rel="noopener noreferrer"
-      style={{
-        background: "rgba(255,255,255,0.03)",
-        border: "1px solid rgba(203,208,213,0.10)",
-        borderRadius: "12px",
-        overflow: "hidden",
-        display: "flex",
-        flexDirection: "column",
-        textDecoration: "none",
-        cursor: "pointer",
-        transition: "border-color 0.15s",
-        height: "100%",
-      }}
-      onMouseEnter={(e) => (e.currentTarget.style.borderColor = "rgba(203,208,213,0.30)")}
-      onMouseLeave={(e) => (e.currentTarget.style.borderColor = "rgba(203,208,213,0.10)")}
+      className="flex h-full flex-col overflow-hidden rounded-[12px] bg-[color:var(--surface)] ring-1 ring-[color:var(--border)] transition hover:ring-[color:var(--pill-active-ring)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--pill-active-ring)]"
     >
-      <div style={{ position: "relative", width: "100%", aspectRatio: "2/3", background: "#111", flexShrink: 0 }}>
+      <div className="relative aspect-[2/3] w-full shrink-0 bg-[color:var(--pill)]">
         {issue.imageUrl && !imgError ? (
           <Image
             src={issue.imageUrl}
@@ -91,54 +82,37 @@ function IssueCard({
             unoptimized
           />
         ) : (
-          <div style={{
-            width: "100%", height: "100%", display: "flex", alignItems: "center",
-            justifyContent: "center", background: "linear-gradient(145deg, #1a1a2e 0%, #0d0d1a 100%)",
-          }}>
-            <span style={{ fontSize: "32px", opacity: 0.3 }}>&#128218;</span>
+          <div className="flex h-full w-full items-center justify-center text-[color:var(--muted)]">
+            <AppIcon name="book" size={34} />
           </div>
         )}
 
         {issue.isVariant && (
-          <div style={{
-            position: "absolute", top: "6px", left: "6px",
-            background: "rgba(180,100,220,0.85)", backdropFilter: "blur(4px)",
-            borderRadius: "4px", padding: "2px 6px",
-            fontSize: "9px", fontWeight: 700, color: "#fff", letterSpacing: "0.05em",
-          }}>VARIANT</div>
+          <div className="absolute left-1.5 top-1.5 rounded-[4px] px-1.5 py-0.5 text-[10px] font-bold tracking-[0.05em]" style={{ background: "#6b2fa0", color: "#fff" }}>
+            VARIANT
+          </div>
         )}
-
       </div>
 
-      <div style={{ padding: "9px 9px 11px", display: "flex", flexDirection: "column", gap: "3px", flex: 1 }}>
-        <div style={{
-          fontSize: "12px", fontWeight: 700, color: "#ECEDEF", lineHeight: 1.3,
-          overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical",
-        }}>
-          {issue.series}
-        </div>
-        <div style={{ fontSize: "11px", color: "rgba(203,208,213,0.75)", fontWeight: 600 }}>
-          #{issue.number}
-        </div>
+      <div className="flex flex-1 flex-col gap-1 px-2.5 pb-3 pt-2.5">
+        <div className="line-clamp-2 text-[12px] font-bold leading-[1.3] text-[color:var(--fg)]">{issue.series}</div>
+        <div className="text-[11px] font-semibold text-[color:var(--muted)]">#{issue.number}</div>
 
         {role && (
-          <span style={{
-            fontSize: "9px", fontWeight: 700, alignSelf: "flex-start",
-            color: isCoverOnly ? "rgba(180,100,220,0.9)" : "rgba(100,200,140,0.9)",
-            background: isCoverOnly ? "rgba(180,100,220,0.12)" : "rgba(100,200,140,0.10)",
-            border: isCoverOnly ? "1px solid rgba(180,100,220,0.25)" : "1px solid rgba(100,200,140,0.20)",
-            borderRadius: "4px", padding: "1px 4px",
-          }}>{role}</span>
+          <span
+            className="self-start rounded-[4px] px-1.5 py-0.5 text-[10px] font-bold"
+            style={isCoverOnly ? { background: "#6b2fa0", color: "#fff" } : { background: "var(--pill)", color: "var(--fg)", boxShadow: "inset 0 0 0 1px var(--border)" }}
+          >
+            {role}
+          </span>
         )}
 
-        <div style={{ marginTop: "auto", paddingTop: "3px", display: "flex", flexDirection: "column", gap: "1px" }}>
+        <div className="mt-auto flex flex-col gap-1 pt-1">
           {issue.storeDate && (
-            <div style={{ fontSize: "10px", color: "rgba(203,208,213,0.45)", fontWeight: 500 }}>
-              {formatStoreDate(issue.storeDate)}
-            </div>
+            <div className="text-[11px] font-medium text-[color:var(--muted)]">{formatStoreDate(issue.storeDate)}</div>
           )}
           {/* Want / Pre-ordered / Own -- tap the lit one again to clear it. */}
-          <div role="group" aria-label="My status" style={{ display: "flex", gap: "3px", margin: "3px 0 2px" }}>
+          <div role="group" aria-label="My status" className="my-1 flex gap-1">
             {STATUS_ORDER.map((s) => {
               const on = status === s;
               return (
@@ -148,23 +122,20 @@ function IssueCard({
                   aria-pressed={on}
                   title={COMIC_STATUS_LABEL[s]}
                   onClick={(e) => { e.preventDefault(); e.stopPropagation(); onStatus(issue, on ? null : s); }}
-                  style={{
-                    padding: "2px 4px", borderRadius: "100px", fontSize: "9px", fontWeight: 700,
-                    whiteSpace: "nowrap", cursor: "pointer", transition: "all 0.15s",
-                    border: on ? "1px solid #C8CDD2" : "1px solid rgba(255,255,255,0.14)",
-                    background: on ? "rgba(203,208,213,0.18)" : "transparent",
-                    color: on ? "#ECEDEF" : "rgba(240,234,214,0.5)",
-                  }}
-                >{CARD_LABEL[s]}</button>
+                  className={[
+                    "h-11 min-w-0 flex-1 rounded-[8px] px-1 text-[11px] ring-1 transition select-none md:h-9",
+                    "focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--pill-active-ring)]",
+                    on
+                      ? "bg-[color:var(--pill)] font-semibold text-[color:var(--fg)] ring-[color:var(--pill-active-ring)] vltd-selected"
+                      : "bg-[color:var(--pill)] font-medium text-[color:var(--fg)] ring-[color:var(--border)] hover:bg-[color:var(--pill-hover)]",
+                  ].join(" ")}
+                >
+                  {CARD_LABEL[s]}
+                </button>
               );
             })}
           </div>
-          <div style={{
-            fontSize: "10px", color: "rgba(255,255,255,0.25)",
-            whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
-          }}>
-            {issue.publisher}
-          </div>
+          <div className="truncate text-[11px] text-[color:var(--muted2)]">{issue.publisher}</div>
         </div>
       </div>
     </a>
@@ -366,230 +337,174 @@ export default function UpcomingPage() {
   const variantCount = filteredResults.filter((r) => r.isVariant).length;
   const creatorName  = fedResult?.resolvedCreator?.name;
 
+  const inputCls = "h-11 min-w-0 flex-1 rounded-[8px] bg-[color:var(--pill)] px-3 text-[13px] text-[color:var(--fg)] ring-1 ring-[color:var(--border)] placeholder:text-[color:var(--muted)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--pill-active-ring)] md:h-9";
+
   return (
-    <div className="vltd-dark-surface" style={{
-      minHeight: "100dvh", background: "#0A0A12", color: "#ECEDEF",
-      paddingTop: "env(safe-area-inset-top, 0px)",
-      paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 90px)",
-    }}>
-      <DiscoverNav activeKey="upcoming" />
-      {/* ── Sticky header ─── */}
-      <div style={{
-        position: "sticky", top: 0, zIndex: 40,
-        background: "rgba(10,10,18,0.95)", backdropFilter: "blur(12px)",
-        borderBottom: "1px solid rgba(203,208,213,0.08)",
-        padding: "16px 16px 12px",
-      }}>
-        <div style={{ maxWidth: "900px", margin: "0 auto" }}>
-
-          <div style={{ display: "flex", alignItems: "baseline", gap: "10px", marginBottom: "14px" }}>
-            <span style={{ fontSize: "22px", fontWeight: 900, letterSpacing: "-0.02em" }}>Upcoming Comics</span>
-            {statuses.size > 0 && (
-              <span style={{
-                fontSize: "12px", fontWeight: 700, color: "#C8CDD2",
-                background: "rgba(203,208,213,0.12)", border: "1px solid rgba(203,208,213,0.25)",
-                borderRadius: "100px", padding: "2px 9px",
-              }}>{statuses.size} saved</span>
-            )}
-          </div>
-
+    <>
+      <PageHeader
+        title="Upcoming Comics"
+        description={statuses.size > 0 ? `Releases by artist or series. ${statuses.size} saved.` : "Releases by artist or series."}
+        contentClassName="max-w-[900px]"
+      />
+      <main className="text-[color:var(--fg)]" style={{ paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 90px)" }}>
+        <DiscoverNav activeKey="upcoming" />
+        <div className="mx-auto max-w-[900px] px-4">
           {/* Mode toggle */}
-          <div style={{
-            display: "flex", background: "rgba(255,255,255,0.05)",
-            borderRadius: "10px", padding: "3px", marginBottom: "10px", width: "fit-content",
-          }}>
+          <div className="flex flex-wrap gap-2">
             {(["creator", "series"] as const).map((m) => (
-              <button key={m}
+              <PillButton
+                key={m}
+                variant={mode === m ? "active" : "default"}
                 onClick={() => { setMode(m); setFedResult(null); setNotFound(false); }}
-                style={{
-                  padding: "6px 18px", borderRadius: "8px", fontSize: "13px", fontWeight: 600,
-                  border: "none", cursor: "pointer", transition: "all 0.15s",
-                  background: mode === m ? "#C8CDD2" : "transparent",
-                  color: mode === m ? "#0A0A12" : "rgba(240,234,214,0.55)",
-                }}>{m === "creator" ? "By Artist" : "By Series"}</button>
+              >
+                {m === "creator" ? "By Artist" : "By Series"}
+              </PillButton>
             ))}
           </div>
 
           {/* Search bar */}
-          <form onSubmit={(e) => { e.preventDefault(); handleSearch(1); }}
-            style={{ display: "flex", gap: "8px", marginBottom: "10px" }}>
+          <form onSubmit={(e) => { e.preventDefault(); handleSearch(1); }} className="mt-3 flex gap-2">
             <input
               ref={inputRef} type="text" value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder={mode === "creator" ? "Artist name — e.g. Peach Momoko" : "Series title — e.g. Demon Days"}
-              style={{
-                flex: 1, background: "rgba(255,255,255,0.06)",
-                border: "1px solid rgba(203,208,213,0.20)", borderRadius: "10px",
-                padding: "11px 14px", fontSize: "15px", color: "#ECEDEF", outline: "none",
-              }}
+              aria-label={mode === "creator" ? "Artist name" : "Series title"}
+              placeholder={mode === "creator" ? "Artist name, for example Peach Momoko" : "Series title, for example Demon Days"}
+              className={inputCls}
             />
-            <button type="submit" disabled={loading}
-              style={{
-                background: "#C8CDD2", border: "none", borderRadius: "10px",
-                padding: "11px 18px", fontSize: "14px", fontWeight: 700,
-                color: "#0A0A12", cursor: loading ? "not-allowed" : "pointer",
-                opacity: loading ? 0.6 : 1, whiteSpace: "nowrap",
-              }}>{loading ? "…" : "Search"}</button>
+            <PillButton
+              type="submit"
+              disabled={loading}
+              className="font-black"
+              style={{ background: "linear-gradient(180deg, #79E7FB, #41C6E4 55%, #2CB1D1)", color: "#06171d", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.5), 0 0 16px rgba(79,211,238,0.25)" }}
+            >
+              <AppIcon name="search" size={16} />
+              {loading ? "Searching…" : "Search"}
+            </PillButton>
           </form>
 
-          {/* Publisher pills + days */}
-          <div style={{ display: "flex", gap: "6px", flexWrap: "wrap", alignItems: "center" }}>
-            <button
+          {/* Publisher pills + date range */}
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            <PillButton
+              variant={selectedPubs.size === 0 ? "active" : "default"}
               onClick={() => { setSelectedPubs(new Set()); if (fedResult) handleSearch(1, null); }}
-              style={{
-                padding: "5px 12px", borderRadius: "100px", fontSize: "12px", fontWeight: 600,
-                border: selectedPubs.size === 0 ? "1px solid #C8CDD2" : "1px solid rgba(255,255,255,0.12)",
-                background: selectedPubs.size === 0 ? "rgba(203,208,213,0.12)" : "transparent",
-                color: selectedPubs.size === 0 ? "#C8CDD2" : "rgba(240,234,214,0.55)",
-                cursor: "pointer", transition: "all 0.15s",
-              }}>All</button>
-
+            >
+              All publishers
+            </PillButton>
             {ALL_PUBLISHERS.map((p) => (
-              <button key={p.value} onClick={() => togglePub(p.value)}
-                style={{
-                  padding: "5px 12px", borderRadius: "100px", fontSize: "12px", fontWeight: 600,
-                  border: selectedPubs.has(p.value) ? "1px solid #C8CDD2" : "1px solid rgba(255,255,255,0.12)",
-                  background: selectedPubs.has(p.value) ? "rgba(203,208,213,0.12)" : "transparent",
-                  color: selectedPubs.has(p.value) ? "#C8CDD2" : "rgba(240,234,214,0.55)",
-                  cursor: "pointer", transition: "all 0.15s",
-                }}>{p.label}</button>
+              <PillButton key={p.value} variant={selectedPubs.has(p.value) ? "active" : "default"} onClick={() => togglePub(p.value)}>
+                {p.label}
+              </PillButton>
             ))}
-
-            <div style={{ marginLeft: "auto", display: "flex", gap: "4px" }}>
-              {[30, 60, 90, 180].map((d) => (
-                <button key={d} onClick={() => { setDays(d); setAllMode(false); }}
-                  style={{
-                    padding: "5px 10px", borderRadius: "100px", fontSize: "11px", fontWeight: 600,
-                    border: !allMode && days === d ? "1px solid rgba(203,208,213,0.5)" : "1px solid rgba(255,255,255,0.08)",
-                    background: !allMode && days === d ? "rgba(203,208,213,0.08)" : "transparent",
-                    color: !allMode && days === d ? "rgba(203,208,213,0.8)" : "rgba(240,234,214,0.35)",
-                    cursor: "pointer",
-                  }}>{d}d</button>
-              ))}
-              <button onClick={() => setAllMode((v) => !v)}
-                style={{
-                  padding: "5px 10px", borderRadius: "100px", fontSize: "11px", fontWeight: 600,
-                  border: allMode ? "1px solid rgba(203,208,213,0.5)" : "1px solid rgba(255,255,255,0.08)",
-                  background: allMode ? "rgba(203,208,213,0.08)" : "transparent",
-                  color: allMode ? "rgba(203,208,213,0.8)" : "rgba(240,234,214,0.35)",
-                  cursor: "pointer",
-                }}>All</button>
-            </div>
+            <PillSelect
+              value={allMode ? "all" : String(days)}
+              ariaLabel="Date range"
+              align="right"
+              minWidthPx={150}
+              onChange={(next) => {
+                if (next === "all") setAllMode(true);
+                else { setDays(Number(next)); setAllMode(false); }
+              }}
+              options={[
+                { value: "30", label: "Next 30 days" },
+                { value: "60", label: "Next 60 days" },
+                { value: "90", label: "Next 90 days" },
+                { value: "180", label: "Next 180 days" },
+                { value: "all", label: "All time" },
+              ]}
+            />
           </div>
-        </div>
-      </div>
 
-      {/* ── Body ─── */}
-      <div style={{ maxWidth: "900px", margin: "0 auto", padding: "16px" }}>
-
-        {/* Banner */}
-        {fedResult && (
-          <div style={{
-            background: "rgba(203,208,213,0.06)", border: "1px solid rgba(203,208,213,0.14)",
-            borderRadius: "10px", padding: "10px 14px", marginBottom: "14px",
-            fontSize: "13px", color: "rgba(203,208,213,0.85)",
-          }}>
-            {creatorName && <><strong style={{ color: "#C8CDD2" }}>{creatorName}</strong>{" · "}</>}
-            {selectedPubs.size > 1
-              ? <>{shownCount} shown of {totalCount} total</>
-              : <>{totalCount} issue{totalCount !== 1 ? "s" : ""}</>}
-            {allMode ? " (all time)" : ` in next ${days} days`}
-            {variantCount > 0 && (
-              <> · <span style={{ color: "rgba(180,100,220,0.8)" }}>{variantCount} variant{variantCount !== 1 ? "s" : ""}</span></>
+          <div className="mt-5">
+            {/* Banner */}
+            {fedResult && (
+              <div className="mb-3.5 rounded-[10px] bg-[color:var(--surface)] px-3.5 py-2.5 text-[13px] text-[color:var(--fg)] ring-1 ring-[color:var(--border)]">
+                {creatorName && <><strong>{creatorName}</strong>{" · "}</>}
+                {selectedPubs.size > 1
+                  ? <>{shownCount} shown of {totalCount} total</>
+                  : <>{totalCount} issue{totalCount !== 1 ? "s" : ""}</>}
+                {allMode ? " (all time)" : ` in next ${days} days`}
+                {variantCount > 0 && (
+                  <> · <span className="font-semibold">{variantCount} variant{variantCount !== 1 ? "s" : ""}</span></>
+                )}
+              </div>
             )}
-          </div>
-        )}
 
-        {/* Not found */}
-        {notFound && !loading && (
-          <div style={{ textAlign: "center", padding: "60px 20px", color: "rgba(240,234,214,0.35)" }}>
-            <div style={{ fontSize: "40px", marginBottom: "12px" }}>&#128269;</div>
-            <div style={{ fontSize: "16px", fontWeight: 600, marginBottom: "6px" }}>Nothing found</div>
-            <div style={{ fontSize: "13px" }}>
-              {mode === "creator" ? "Try the full name — e.g. \"Peach Momoko\" not just \"Momoko\""
-                : "Try a partial title or check the publisher filter"}
-            </div>
-          </div>
-        )}
+            {/* Not found */}
+            {notFound && !loading && (
+              <div className="px-5 py-14 text-center text-[color:var(--muted)]">
+                <div className="mb-3 flex justify-center"><AppIcon name="search" size={40} /></div>
+                <div className="mb-1.5 text-base font-semibold text-[color:var(--fg)]">Nothing found</div>
+                <div className="text-[13px]">
+                  {mode === "creator" ? "Try the full name, for example \"Peach Momoko\" rather than \"Momoko\"."
+                    : "Try a partial title or check the publisher filter."}
+                </div>
+              </div>
+            )}
 
-        {/* Empty state */}
-        {!fedResult && !notFound && !loading && (
-          <div style={{ textAlign: "center", padding: "60px 20px", color: "rgba(240,234,214,0.30)" }}>
-            <div style={{ fontSize: "48px", marginBottom: "14px" }}>&#128197;</div>
-            <div style={{ fontSize: "16px", fontWeight: 600, marginBottom: "6px", color: "rgba(240,234,214,0.5)" }}>
-              Find what&apos;s dropping soon
-            </div>
-            <div style={{ fontSize: "13px", lineHeight: 1.6 }}>
-              Search by artist or series — data from{" "}
-              <span style={{ color: "rgba(203,208,213,0.6)" }}>Metron</span>.
-              Variants are detected automatically.
-            </div>
-          </div>
-        )}
+            {/* Empty state */}
+            {!fedResult && !notFound && !loading && (
+              <div className="px-5 py-14 text-center text-[color:var(--muted)]">
+                <div className="mb-3.5 flex justify-center"><AppIcon name="events" size={44} /></div>
+                <div className="mb-1.5 text-base font-semibold text-[color:var(--fg)]">Find what&apos;s dropping soon</div>
+                <div className="text-[13px] leading-relaxed">
+                  Search by artist or series. Data from Metron. Variants are detected automatically.
+                </div>
+              </div>
+            )}
 
-        {/* Loading skeleton */}
-        {loading && (
-          <div style={{ display: "flex", flexDirection: "column", gap: "28px" }}>
-            {[2026, 2025].map((y) => (
-              <div key={y}>
-                <div style={{ height: "16px", width: "60px", borderRadius: "6px", background: "rgba(255,255,255,0.05)", marginBottom: "10px" }} />
-                <div style={{ display: "flex", gap: "10px", overflow: "hidden" }}>
-                  {[1, 2, 3, 4, 5].map((c) => (
-                    <div key={c} style={{ flexShrink: 0, width: "140px", aspectRatio: "2/3", borderRadius: "10px", background: "rgba(255,255,255,0.04)", animation: "pulse 1.5s ease-in-out infinite" }} />
+            {/* Loading skeleton */}
+            {loading && (
+              <div role="status" aria-label="Loading upcoming comics" className="flex flex-col gap-7">
+                {[2026, 2025].map((y) => (
+                  <div key={y}>
+                    <div className="vltd-skeleton-pulse mb-2.5 h-4 w-[60px] rounded-[6px] bg-[color:var(--pill)]" />
+                    <div className="flex gap-2.5 overflow-hidden">
+                      {[1, 2, 3, 4, 5].map((c) => (
+                        <div key={c} className="vltd-skeleton-pulse aspect-[2/3] w-[140px] shrink-0 rounded-[10px] bg-[color:var(--pill)]" />
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Release rows */}
+            {!loading && groups.map((group) => (
+              <div key={group.label} className="mb-7">
+                <div className="mb-2.5 flex items-center gap-2.5">
+                  <div className="text-sm font-extrabold tracking-[0.06em] text-[color:var(--fg)]">{group.label}</div>
+                  <div className="h-px flex-1 bg-[color:var(--border)]" />
+                  <div className="text-[11px] text-[color:var(--muted)]">
+                    {group.issues.length} issue{group.issues.length !== 1 ? "s" : ""}
+                  </div>
+                </div>
+                <div className="year-row flex snap-x snap-mandatory gap-2.5 overflow-x-auto pb-2">
+                  {group.issues.map((issue) => (
+                    <div key={issue.id} className="w-[140px] shrink-0 snap-start">
+                      <IssueCard issue={issue} status={statusOf(issue)} onStatus={handleStatus} />
+                    </div>
                   ))}
                 </div>
               </div>
             ))}
-          </div>
-        )}
 
-        {/* Year rows */}
-        {!loading && groups.map((group) => (
-          <div key={group.label} style={{ marginBottom: "28px" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "10px" }}>
-              <div style={{ fontSize: "14px", fontWeight: 800, color: "#C8CDD2", letterSpacing: "0.06em" }}>
-                {group.label}
+            {/* Load more */}
+            {!loading && fedResult?.hasMore && (
+              <div className="flex justify-center pb-4">
+                <PillButton onClick={() => handleSearch(currentPage + 1)} disabled={loadingMore}>
+                  {loadingMore ? "Loading…" : `Load more (${totalCount - shownCount} remaining)`}
+                </PillButton>
               </div>
-              <div style={{ flex: 1, height: "1px", background: "rgba(203,208,213,0.12)" }} />
-              <div style={{ fontSize: "11px", color: "rgba(240,234,214,0.3)" }}>
-                {group.issues.length} issue{group.issues.length !== 1 ? "s" : ""}
-              </div>
-            </div>
-            <div className="year-row" style={{
-              display: "flex", overflowX: "auto", gap: "10px",
-              paddingBottom: "8px", scrollSnapType: "x mandatory",
-            }}>
-              {group.issues.map((issue) => (
-                <div key={issue.id} style={{ flexShrink: 0, width: "140px", scrollSnapAlign: "start" }}>
-                  <IssueCard issue={issue} status={statusOf(issue)} onStatus={handleStatus} />
-                </div>
-              ))}
-            </div>
+            )}
           </div>
-        ))}
+        </div>
 
-        {/* Load more */}
-        {!loading && fedResult?.hasMore && (
-          <div style={{ textAlign: "center", paddingBottom: "16px" }}>
-            <button
-              onClick={() => handleSearch(currentPage + 1)}
-              disabled={loadingMore}
-              style={{
-                background: "transparent", border: "1px solid rgba(203,208,213,0.30)",
-                borderRadius: "10px", padding: "10px 28px",
-                fontSize: "13px", fontWeight: 600, color: "#C8CDD2",
-                cursor: loadingMore ? "not-allowed" : "pointer",
-                opacity: loadingMore ? 0.6 : 1, transition: "all 0.15s",
-              }}
-            >{loadingMore ? "Loading…" : `Load more (${totalCount - shownCount} remaining)`}</button>
-          </div>
-        )}
-      </div>
-
-      <style>{`
-        @keyframes pulse { 0%,100%{opacity:.4} 50%{opacity:.7} }
-        .year-row::-webkit-scrollbar { display: none }
-      `}</style>
-    </div>
+        <style>{`
+          @keyframes vltd-upcoming-pulse { 0%,100%{opacity:.5} 50%{opacity:.9} }
+          .vltd-skeleton-pulse { animation: vltd-upcoming-pulse 1.5s ease-in-out infinite }
+          .year-row::-webkit-scrollbar { display: none }
+        `}</style>
+      </main>
+    </>
   );
 }

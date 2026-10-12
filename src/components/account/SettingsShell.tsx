@@ -5,6 +5,7 @@ import { usePathname, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 
 import { PillSelect } from "@/components/ui/PillSelect";
+import { LocalNav } from "@/components/ui/LocalNav";
 import { getOnboardingStatus, listMyProfiles, setStoredActiveProfileId } from "@/lib/auth";
 
 type ProfileRow = { id: string; display_name: string; username: string; profile_type: "personal" | "business" };
@@ -31,6 +32,13 @@ const CATEGORIES: Category[] = [
     isActive: (p) => p.startsWith("/account/workspace") || p.startsWith("/account/team") || p.startsWith("/account/roles"),
   },
   { key: "data", label: "Data and maintenance", href: "/account?section=data", isActive: (p, s) => p === "/account" && s === "data" },
+];
+
+// Local navigation for the grouped "Workspace and team" category. Each page keeps its own permission checks.
+const WORKSPACE_NAV = [
+  { key: "workspace", label: "Workspace", href: "/account/workspace" },
+  { key: "team", label: "Team", href: "/account/team" },
+  { key: "roles", label: "Roles", href: "/account/roles" },
 ];
 
 /**
@@ -146,6 +154,15 @@ export default function SettingsShell({ children }: { children: React.ReactNode 
               >
                 <span aria-hidden="true">←</span> Settings{current ? ` · ${current.label}` : ""}
               </Link>
+            ) : null}
+            {current?.key === "workspace" ? (
+              <div className="mb-5">
+                <LocalNav
+                  ariaLabel="Workspace and team"
+                  activeKey={pathname.startsWith("/account/team") ? "team" : pathname.startsWith("/account/roles") ? "roles" : "workspace"}
+                  items={WORKSPACE_NAV}
+                />
+              </div>
             ) : null}
             {children}
           </div>

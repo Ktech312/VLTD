@@ -576,8 +576,9 @@ select {
 }
 
 option {
-  background-color: #04090F;
-  color: #f5f7fb;
+  /* The open list follows the theme: opaque surface and theme text on every theme. */
+  background-color: var(--surface);
+  color: var(--fg);
 }
 
 /* Give controls a consistent base + mobile-friendly sizing */
@@ -585,6 +586,13 @@ input,
 select,
 textarea {
   font-size: 16px; /* iOS no-zoom */
+}
+
+/* Native selects match the 13px control text on desktop; phones keep 16px so iOS does not zoom. */
+@media (min-width: 768px) {
+  select {
+    font-size: 13px;
+  }
 }
 
 /* Accessible focus ring that matches palette */

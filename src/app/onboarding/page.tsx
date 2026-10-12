@@ -1,5 +1,6 @@
 "use client";
 
+import { nativeSelectClass } from "@/components/ui/nativeSelect";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 
@@ -420,18 +421,18 @@ export default function OnboardingPage() {
                       <div className="grid gap-3 sm:grid-cols-2">
                         <label className="block">
                           <span className="text-xs text-[color:var(--muted)]">Business name</span>
-                          <input value={bizName} onChange={(e) => setBizName(e.target.value)} placeholder="The Kellogg Collection" className="mt-1 w-full rounded-xl border border-[color:var(--border)] bg-[var(--theme-card)] px-3 py-2 text-sm outline-none" />
+                          <input value={bizName} onChange={(e) => setBizName(e.target.value)} placeholder="The Kellogg Collection" className={`mt-1 w-full ${nativeSelectClass}`} />
                         </label>
                         <label className="block">
                           <span className="text-xs text-[color:var(--muted)]">Business handle</span>
-                          <input value={bizUsername} onChange={(e) => setBizUsername(e.target.value)} placeholder="kelloggcollection" className="mt-1 w-full rounded-xl border border-[color:var(--border)] bg-[var(--theme-card)] px-3 py-2 text-sm outline-none" />
+                          <input value={bizUsername} onChange={(e) => setBizUsername(e.target.value)} placeholder="kelloggcollection" className={`mt-1 w-full ${nativeSelectClass}`} />
                         </label>
                       </div>
                     )}
                     <div className="grid gap-3 sm:grid-cols-2">
                       <label className="block">
                         <span className="text-xs text-[color:var(--muted)]">Business type</span>
-                        <select value={bizType} onChange={(e) => setBizType(e.target.value)} className="mt-1 w-full rounded-xl border border-[color:var(--border)] bg-[var(--theme-card)] px-3 py-2 text-sm outline-none">
+                        <select value={bizType} onChange={(e) => setBizType(e.target.value)} className={`mt-1 w-full ${nativeSelectClass}`}>
                           <option value="dealer">Dealer</option>
                           <option value="gallery">Gallery</option>
                           <option value="brand">Brand</option>
@@ -441,12 +442,12 @@ export default function OnboardingPage() {
                       </label>
                       <label className="block">
                         <span className="text-xs text-[color:var(--muted)]">Website (optional)</span>
-                        <input value={bizWebsite} onChange={(e) => setBizWebsite(e.target.value)} placeholder="https://…" className="mt-1 w-full rounded-xl border border-[color:var(--border)] bg-[var(--theme-card)] px-3 py-2 text-sm outline-none" />
+                        <input value={bizWebsite} onChange={(e) => setBizWebsite(e.target.value)} placeholder="https://…" className={`mt-1 w-full ${nativeSelectClass}`} />
                       </label>
                     </div>
                     <label className="block">
                       <span className="text-xs text-[color:var(--muted)]">EIN / Tax ID (optional, private)</span>
-                      <input value={bizEin} onChange={(e) => setBizEin(e.target.value)} placeholder="XX-XXXXXXX" className="mt-1 w-full rounded-xl border border-[color:var(--border)] bg-[var(--theme-card)] px-3 py-2 text-sm outline-none" />
+                      <input value={bizEin} onChange={(e) => setBizEin(e.target.value)} placeholder="XX-XXXXXXX" className={`mt-1 w-full ${nativeSelectClass}`} />
                     </label>
                   </div>
                 )}
