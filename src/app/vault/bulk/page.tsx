@@ -9,6 +9,7 @@
 // Adding photos and typing by hand is always free; only AI identify is counted.
 // Path A (camera rapid-capture) will reuse this same review grid later.
 
+import { PillButton } from "@/components/ui/PillButton";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -359,12 +360,7 @@ export default function BulkUploadPage() {
               Add many at once
             </h1>
           </div>
-          <Link
-            href="/capture"
-            className="text-xs font-semibold text-[color:var(--muted)] underline-offset-2 hover:text-text-primary hover:underline"
-          >
-            ← Add one item instead
-          </Link>
+          <PillButton href="/capture">← Add one item instead</PillButton>
         </div>
 
         {/* Ticker */}
@@ -476,13 +472,7 @@ export default function BulkUploadPage() {
 
               <div className="mt-2 flex items-center gap-3 text-xs text-[color:var(--muted2)]">
                 <span className="uppercase tracking-[0.14em]">or</span>
-                <button
-                  type="button"
-                  onClick={() => setCameraOpen(true)}
-                  className="font-semibold text-text-primary underline-offset-2 hover:underline"
-                >
-                  Use the camera — snap them one after another
-                </button>
+                <PillButton onClick={() => setCameraOpen(true)}>Use the camera — snap them one after another</PillButton>
               </div>
 
               {drafts.length > 0 ? (

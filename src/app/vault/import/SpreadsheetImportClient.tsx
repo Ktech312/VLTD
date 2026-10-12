@@ -65,7 +65,7 @@ function SurfaceCard({ children, className = "" }: { children: ReactNode; classN
   return (
     <div
       className={[
-        "rounded-[28px] bg-[color:var(--surface)] ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]",
+        "min-w-0 max-w-full rounded-[28px] bg-[color:var(--surface)] ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]",
         className,
       ].join(" ")}
     >
@@ -406,19 +406,7 @@ export default function SpreadsheetImportClient() {
               <div className="text-[11px] uppercase tracking-[0.18em] text-[color:var(--muted2)]">Import Preset</div>
               <div className="mt-3 flex flex-wrap gap-2">
                 {IMPORT_PRESET_OPTIONS.map((option) => (
-                  <button
-                    key={option.value}
-                    type="button"
-                    onClick={() => handlePresetChange(option.value)}
-                    className={[
-                      "rounded-full px-4 py-2 text-sm ring-1 transition",
-                      importPreset === option.value
-                        ? "bg-[color:var(--pill-active-bg)] text-[color:var(--fg)] ring-[color:var(--pill-active-bg)]"
-                        : "bg-[color:var(--pill)] text-[color:var(--pill-fg)] ring-[color:var(--border)]",
-                    ].join(" ")}
-                  >
-                    {option.label}
-                  </button>
+                  <PillButton key={option.value} variant={importPreset === option.value ? "active" : "default"} pressed={importPreset === option.value} onClick={() => handlePresetChange(option.value)}>{option.label}</PillButton>
                 ))}
               </div>
               <div className="mt-3 rounded-[20px] bg-[color:var(--pill)] px-4 py-3 text-sm ring-1 ring-[color:var(--border)]">
@@ -612,19 +600,12 @@ export default function SpreadsheetImportClient() {
             </SurfaceCard>
 
             <SurfaceCard className="p-4 sm:p-5">
-              <div className="flex items-start justify-between gap-3">
-                <div>
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div className="min-w-0 flex-1 basis-56">
                   <div className="text-[11px] uppercase tracking-[0.18em] text-[color:var(--muted2)]">Import History</div>
                   <div className="mt-2 text-sm text-[color:var(--muted)]">Undo removes the most recent imported batch from the local vault and pending sync queue.</div>
                 </div>
-                <button
-                  type="button"
-                  onClick={handleUndoLastImport}
-                  disabled={importHistory.length === 0 || isImporting}
-                  className="shrink-0 rounded-[7px] bg-[color:var(--pill)] px-3 py-1.5 text-xs font-semibold ring-1 ring-[color:var(--border)] disabled:opacity-50"
-                >
-                  Undo last
-                </button>
+                <PillButton className="shrink-0" disabled={importHistory.length === 0 || isImporting} onClick={handleUndoLastImport}>Undo last</PillButton>
               </div>
 
               <div className="mt-4 space-y-3">

@@ -799,7 +799,7 @@ export default function EventsPage() {
         </section>
 
         <details className="mt-4 rounded-[7px] border border-[color:var(--border)] bg-[color:var(--surface)] p-4">
-          <summary className="cursor-pointer text-xs font-bold text-[color:var(--muted)]">Search beyond the catalog</summary>
+          <summary className="flex min-h-11 cursor-pointer items-center text-xs font-bold text-[color:var(--muted)] md:min-h-9">Search beyond the catalog</summary>
           <div className="mt-3 flex flex-col gap-3 lg:flex-row lg:items-end">
             <div className="min-w-0 flex-1">
               <div className="text-[11px] font-black uppercase tracking-[0.18em] text-[color:var(--theme-gold)]">Find Events</div>

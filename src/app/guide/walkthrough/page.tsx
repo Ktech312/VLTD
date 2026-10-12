@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { PillButton } from "@/components/ui/PillButton";
 import Link from "next/link";
 
 export const metadata: Metadata = {
@@ -40,13 +41,13 @@ const lessons = [
 export default function WalkthroughPage() {
   return (
     <main className="mx-auto max-w-5xl px-4 py-10 sm:px-6" style={{ color: "var(--fg)" }}>
-      <Link href="/guide" className="text-sm underline underline-offset-4">Back to Help</Link>
+      <PillButton href="/guide">← Back to Help</PillButton>
       <h1 className="mt-6 text-4xl font-black tracking-tight sm:text-5xl">Your first collection in VLTD</h1>
       <p className="mt-4 max-w-2xl text-lg leading-8" style={{ color: "var(--muted)" }}>
         Start with one favorite piece. Follow the steps at your own pace, then build an exhibition around the items you want to show.
       </p>
-      <nav aria-label="Walkthrough lessons" className="my-8 flex flex-wrap gap-5">
-        {lessons.map((lesson) => <a key={lesson.id} href={`#${lesson.id}`} className="font-semibold underline underline-offset-4">{lesson.title}</a>)}
+      <nav aria-label="Walkthrough lessons" className="my-8 flex flex-wrap gap-2">
+        {lessons.map((lesson) => <PillButton key={lesson.id} href={`#${lesson.id}`}>{lesson.title}</PillButton>)}
       </nav>
       {lessons.map((lesson) => (
         <section key={lesson.id} id={lesson.id} aria-labelledby={`${lesson.id}-title`} className="scroll-mt-24 border-t py-10" style={{ borderColor: "var(--border)" }}>

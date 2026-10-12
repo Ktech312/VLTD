@@ -609,7 +609,7 @@ export default function ActivityPage() {
               <section className="mt-5 border-b border-[rgba(203,208,213,0.16)] pb-5">
                 <div className="flex items-center justify-between">
                   <h3 className="text-[12px] font-black uppercase tracking-[0.16em]" style={{ color: "var(--theme-text-muted,#61656B)" }}>Notes</h3>
-                  <Link href={selected.href ?? "/vault"} className="rounded-[7px] border border-[rgba(203,208,213,0.34)] px-4 py-2 text-sm font-bold" style={{ color: "var(--theme-gold,#C8CDD2)" }}>Add note</Link>
+                  <PillButton size="compact" href={selected.href ?? "/vault"}>Add note</PillButton>
                 </div>
                 <p className="mt-3 text-sm leading-6" style={{ color: "var(--theme-text-muted,#61656B)" }}>{selected.detail}</p>
               </section>

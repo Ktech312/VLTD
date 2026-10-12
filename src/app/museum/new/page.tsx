@@ -1,5 +1,6 @@
 "use client";
 
+import { AppIcon } from "@/components/ui/AppIcon";
 import { nativeSelectClass } from "@/components/ui/nativeSelect";
 import { ACCESS_PILLS, accessDescription, applyAccessMode, type GalleryAccessPillMode } from "@/lib/galleryAccess";
 import Link from "next/link";
@@ -104,19 +105,9 @@ export default function NewMuseumGalleryPage() {
     <main className="text-[color:var(--fg)]">
       <div className="mx-auto max-w-4xl px-4 py-6 sm:px-6 sm:py-8">
         <div className="mb-5 flex flex-wrap items-center gap-3">
-          <Link
-            href="/museum"
-            className="inline-flex min-h-[38px] items-center justify-center rounded-full bg-[color:var(--pill)] px-4 py-2 text-sm font-medium text-[color:var(--pill-fg)] ring-1 ring-[color:var(--border)] transition hover:bg-[color:var(--pill-hover)]"
-          >
-            ← Back to Exhibitions
-          </Link>
+          <PillButton href="/museum"><AppIcon name="arrowLeft" size={16} />Back to Exhibitions</PillButton>
 
-          <Link
-            href="/dashboard"
-            className="inline-flex min-h-[38px] items-center justify-center rounded-full bg-[color:var(--pill)] px-4 py-2 text-sm font-medium text-[color:var(--pill-fg)] ring-1 ring-[color:var(--border)] transition hover:bg-[color:var(--pill-hover)]"
-          >
-            Curator Home
-          </Link>
+          <PillButton href="/dashboard">Home</PillButton>
         </div>
 
         <section className="relative overflow-hidden rounded-[26px] border border-[color:var(--theme-border)] bg-[color:var(--theme-card)] p-5 shadow-[0_18px_54px_rgba(0,0,0,0.3)] sm:p-6">

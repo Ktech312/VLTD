@@ -467,36 +467,8 @@ export default function WatchlistPage() {
                   { value: "target", label: "Target price" },
                 ]}
               />
-              <button
-                type="button"
-                onClick={() => setView("grid")}
-                aria-pressed={view === "grid"}
-                aria-label="Grid view"
-                title="Grid view"
-                className="grid h-10 w-10 place-items-center rounded-[7px] border transition"
-                style={{
-                  borderColor: view === "grid" ? "var(--theme-gold,#C8CDD2)" : "rgba(203,208,213,0.28)",
-                  background: view === "grid" ? "rgba(203,208,213,0.12)" : "transparent",
-                  color: "var(--theme-gold,#C8CDD2)",
-                }}
-              >
-                <Glyph name="cards" size={16} />
-              </button>
-              <button
-                type="button"
-                onClick={() => setView("list")}
-                aria-pressed={view === "list"}
-                aria-label="List view"
-                title="List view"
-                className="grid h-10 w-10 place-items-center rounded-[7px] border transition"
-                style={{
-                  borderColor: view === "list" ? "var(--theme-gold,#C8CDD2)" : "rgba(203,208,213,0.28)",
-                  background: view === "list" ? "rgba(203,208,213,0.12)" : "transparent",
-                  color: "var(--theme-gold,#C8CDD2)",
-                }}
-              >
-                <Glyph name="box" size={16} />
-              </button>
+              <PillButton variant={view === "grid" ? "active" : "default"} pressed={view === "grid"} onClick={() => setView("grid")} ariaLabel="Grid view" title="Grid view" className="w-11 px-0! md:w-9"><Glyph name="cards" size={16} /></PillButton>
+              <PillButton variant={view === "list" ? "active" : "default"} pressed={view === "list"} onClick={() => setView("list")} ariaLabel="List view" title="List view" className="w-11 px-0! md:w-9"><Glyph name="box" size={16} /></PillButton>
             </div>
           </div>
 
@@ -555,38 +527,9 @@ export default function WatchlistPage() {
                 {selected.kind}
               </span>
               <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => step(-1)}
-                  disabled={!canPrev}
-                  aria-label="Previous item"
-                  title="Previous item"
-                  className="grid h-8 w-8 place-items-center rounded-[6px] border border-[rgba(203,208,213,0.22)] transition disabled:opacity-35"
-                  style={{ color: "var(--theme-gold,#C8CDD2)" }}
-                >
-                  <Glyph name="back" size={14} strokeWidth={2.4} />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => step(1)}
-                  disabled={!canNext}
-                  aria-label="Next item"
-                  title="Next item"
-                  className="grid h-8 w-8 place-items-center rounded-[6px] border border-[rgba(203,208,213,0.22)] transition disabled:opacity-35"
-                  style={{ color: "var(--theme-gold,#C8CDD2)" }}
-                >
-                  <Glyph name="next" size={14} strokeWidth={2.4} />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setSelectedId(null)}
-                  aria-label="Close details"
-                  title="Close"
-                  className="grid h-8 w-8 place-items-center rounded-[6px] transition"
-                  style={{ color: "var(--theme-gold,#C8CDD2)" }}
-                >
-                  <Glyph name="close" size={15} strokeWidth={2.4} />
-                </button>
+                <PillButton size="compact" disabled={!canPrev} onClick={() => step(-1)} ariaLabel="Previous item" title="Previous item" className="w-8 px-0! md:w-7"><Glyph name="back" size={16} strokeWidth={2.4} /></PillButton>
+                <PillButton size="compact" disabled={!canNext} onClick={() => step(1)} ariaLabel="Next item" title="Next item" className="w-8 px-0! md:w-7"><Glyph name="next" size={16} strokeWidth={2.4} /></PillButton>
+                <PillButton size="compact" onClick={() => setSelectedId(null)} ariaLabel="Close details" title="Close" className="w-8 px-0! md:w-7"><Glyph name="close" size={16} strokeWidth={2.4} /></PillButton>
               </div>
             </div>
 

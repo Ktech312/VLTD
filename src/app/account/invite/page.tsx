@@ -1,5 +1,6 @@
 "use client";
 
+import { pillClassName } from "@/components/ui/PillButton";
 import { useEffect, useState } from "react";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 import { PillButton } from "@/components/ui/PillButton";
@@ -209,8 +210,7 @@ export default function InvitePage() {
                     href={t.href}
                     target={t.external ? "_blank" : undefined}
                     rel={t.external ? "noopener noreferrer" : undefined}
-                    className="flex items-center justify-center rounded-xl px-2 py-2.5 text-xs font-semibold ring-1 ring-[color:var(--border)] transition hover:bg-[color:var(--pill)]"
-                    style={{ color: "var(--fg)" }}
+                    className={pillClassName("default", false, "w-full")}
                   >
                     {t.label}
                   </a>
