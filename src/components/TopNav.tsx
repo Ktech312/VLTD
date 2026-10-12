@@ -334,7 +334,7 @@ function TopNavInner() {
         style={{ background: "var(--theme-nav-bg, rgba(11,19,32,0.96))", borderBottom: "1px solid var(--theme-nav-border, rgba(203,208,213,0.15))" }}
       >
         {/* ── Main nav row ── */}
-        <div className="mx-auto flex h-[64px] max-w-[1400px] items-center gap-4 px-4 sm:px-6">
+        <div className="mx-auto flex h-[64px] max-w-[1400px] items-center gap-2 px-4 sm:gap-4 sm:px-6">
 
           {/* Logo */}
           <Link href={signedIn ? "/dashboard" : "/"} className="shrink-0 flex items-center" aria-label="VLTD Home">
@@ -379,7 +379,7 @@ function TopNavInner() {
           </nav>
 
           {/* Right controls */}
-          <div className="ml-auto flex items-center gap-1.5 shrink-0 md:gap-2">
+          <div className="ml-auto flex items-center gap-1 shrink-0 md:gap-2">
 
             {/* Search: an icon on phones that opens the command palette; the full bar shows from 768px */}
             <button
@@ -392,7 +392,8 @@ function TopNavInner() {
               <AppIcon name="search" variant="navTop" size={26} />
             </button>
 
-            {/* Help: Getting started, Feature guide, Support */}
+            {/* Help: Getting started, Feature guide, Support. On phones it lives in the account menu to keep this row from overflowing. */}
+            <div className="hidden sm:block">
             <ActionMenu
               ariaLabel="Help"
               align="right"
@@ -408,6 +409,7 @@ function TopNavInner() {
                 </>
               }
             />
+            </div>
 
             {/* Search bar */}
             <form
@@ -653,6 +655,20 @@ function TopNavInner() {
                     style={{ color: "var(--theme-text-primary, #ECEDEF)" }}>
                     Invite Friends
                   </Link>
+                  {/* Phones only: Help has no room in the top bar, so it sits here. */}
+                  <div className="md:hidden sm:hidden">
+                    <Link href="/guide" onClick={() => setUserOpen(false)}
+                      className="flex min-h-[44px] items-center rounded-xl px-3 text-sm transition hover:bg-[rgba(203,208,213,0.06)]"
+                      style={{ color: "var(--theme-text-primary, #ECEDEF)" }}>
+                      Help
+                    </Link>
+                    <button type="button"
+                      onClick={() => { setUserOpen(false); window.dispatchEvent(new Event("vltd:open-support")); }}
+                      className="flex min-h-[44px] w-full items-center rounded-xl px-3 text-left text-sm transition hover:bg-[rgba(203,208,213,0.06)]"
+                      style={{ color: "var(--theme-text-primary, #ECEDEF)" }}>
+                      Support
+                    </button>
+                  </div>
                 </div>
               </>
             ) : (
