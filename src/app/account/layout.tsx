@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import ProtectedRoute from "@/components/ProtectedRoute";
+import SettingsShell from "@/components/account/SettingsShell";
 
 export const metadata: Metadata = {
   title: "Account Settings — VLTD",
@@ -7,5 +9,11 @@ export const metadata: Metadata = {
 };
 
 export default function AccountLayout({ children }: { children: React.ReactNode }) {
-  return <ProtectedRoute>{children}</ProtectedRoute>;
+  return (
+    <ProtectedRoute>
+      <Suspense fallback={null}>
+        <SettingsShell>{children}</SettingsShell>
+      </Suspense>
+    </ProtectedRoute>
+  );
 }

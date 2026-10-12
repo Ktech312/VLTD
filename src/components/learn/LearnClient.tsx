@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 
 import { Glyph } from "@/components/ui/Glyph";
 import { PageHeader } from "@/components/layout/PageHeader";
+import { LoungeNav } from "@/components/SectionNav";
 import CoverArt from "@/components/learn/CoverArt";
 import NewsletterSignup from "@/components/learn/NewsletterSignup";
 import {
@@ -86,6 +87,7 @@ export default function LearnClient() {
         description="Collector knowledge, insurance guidance, and market education."
         contentClassName="max-w-[1480px]"
       />
+      <LoungeNav activeKey="learn" />
       <main className="text-[color:var(--fg)]">
       <div className="mx-auto max-w-[1480px] px-4 pb-7 sm:px-6 lg:px-8">
         <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">

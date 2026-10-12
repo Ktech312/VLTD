@@ -431,6 +431,20 @@ export async function fetchVaultItemsDelta(
   return { items: rows.map(rowToItem), cursor: newestStamp(rows), delta: false };
 }
 
+/** How many items the cloud holds for a profile, without downloading any of them (one tiny request). */
+export async function countVaultItemsInSupabase(profileId?: string): Promise<number | null> {
+  const supabase = getSupabaseBrowserClient();
+  if (!supabase) return null;
+  const activeProfileId = String(profileId ?? getStoredActiveProfileId()).trim();
+  if (!activeProfileId) return null;
+  const { count, error } = await supabase
+    .from(VAULT_ITEMS_TABLE)
+    .select("id", { count: "exact", head: true })
+    .eq("profile_id", activeProfileId);
+  if (error || typeof count !== "number") return null;
+  return count;
+}
+
 export async function fetchVaultItemsFromSupabase(profileId?: string) {
   const supabase = getSupabaseBrowserClient();
   if (!supabase) return [];

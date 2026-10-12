@@ -20,6 +20,7 @@ import {
 } from "@/lib/loungePosts";
 import { listClubs, type Club } from "@/lib/clubs";
 import { PageHeader } from "@/components/layout/PageHeader";
+import { LoungeNav } from "@/components/SectionNav";
 import ReleaseRadar from "@/components/lounge/ReleaseRadar";
 
 const ACTIVE_PROFILE_KEY = "vltd_active_profile_id_v1";
@@ -423,6 +424,7 @@ export default function VltLoungePage() {
         }
       />
       <main className="mx-auto w-full max-w-[1440px] px-4 pb-16 sm:px-6 lg:px-8">
+      <LoungeNav activeKey="community" />
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,340px)_minmax(0,1fr)_minmax(0,340px)]">
         {/* ── LEFT: Lounge Live + Hot Threads ── */}
         <div className="flex flex-col gap-4">

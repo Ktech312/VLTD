@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import DiscoverSwipe from "@/components/DiscoverSwipe";
 import { PageHeader } from "@/components/layout/PageHeader";
+import { DiscoverNav } from "@/components/SectionNav";
 import { Glyph } from "@/components/ui/Glyph";
 import { getCurrentUser, getOnboardingStatus } from "@/lib/auth";
 import { buildUserPreferences, sortByPersonalization } from "@/lib/personalization";
@@ -416,6 +417,7 @@ export default function DiscoverPage() {
         contentClassName="max-w-[1480px]"
       />
       <main className="text-[color:var(--fg)]">
+      <DiscoverNav activeKey="explore" />
       <div className="mx-auto grid max-w-[1480px] gap-6 px-4 pb-6 sm:px-6 lg:px-8 xl:grid-cols-[minmax(0,1fr)_430px]">
         <div className="min-w-0">
           <div className="mt-5 grid gap-3 lg:grid-cols-[minmax(0,1fr)_200px_200px]">

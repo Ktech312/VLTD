@@ -1,5 +1,6 @@
 "use client";
 
+import { DiscoverNav } from "@/components/SectionNav";
 import { useState, useRef, useEffect, useMemo } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
@@ -371,6 +372,7 @@ export default function UpcomingPage() {
       paddingTop: "env(safe-area-inset-top, 0px)",
       paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 90px)",
     }}>
+      <DiscoverNav activeKey="upcoming" />
       {/* ── Sticky header ─── */}
       <div style={{
         position: "sticky", top: 0, zIndex: 40,

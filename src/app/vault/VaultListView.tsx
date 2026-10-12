@@ -1592,7 +1592,8 @@ export default function VaultListView({ lockedUniverse }: { lockedUniverse?: Uni
         actions={
           <>
             {lockedUniverse ? <PillButton href="/vault">All Universes</PillButton> : null}
-            <AddItemMenu />
+            {/* On phones the persistent Add Item above the bottom bar replaces this one. */}
+            <span className="hidden md:inline-flex"><AddItemMenu /></span>
             <VaultToolsMenu />
           </>
         }

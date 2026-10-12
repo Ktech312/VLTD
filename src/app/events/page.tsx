@@ -1,5 +1,6 @@
 "use client";
 
+import { DiscoverNav } from "@/components/SectionNav";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { AppIcon } from "@/components/ui/AppIcon";
 import { PillButton } from "@/components/ui/PillButton";
@@ -700,6 +701,7 @@ export default function EventsPage() {
   return (
     <main className="min-h-dvh bg-[color:var(--bg)] px-4 pb-24 pt-5 text-[color:var(--fg)] md:px-8 lg:px-10">
       <div className="mx-auto max-w-[1360px]">
+        <div className="-mx-4 md:-mx-8 lg:-mx-10"><DiscoverNav activeKey="events" /></div>
         {featuredEvent ? (
         <section className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_260px]">
           <div className="relative overflow-hidden rounded-[7px] border border-[color:var(--border)] bg-[color:var(--surface)] p-3 md:p-4">

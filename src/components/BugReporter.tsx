@@ -23,6 +23,13 @@ export default function BugReporter() {
     setMounted(true);
   }, []);
 
+  // Help > Support in the top bar opens this same reporter.
+  useEffect(() => {
+    const openFromHelp = () => setOpen(true);
+    window.addEventListener("vltd:open-support", openFromHelp);
+    return () => window.removeEventListener("vltd:open-support", openFromHelp);
+  }, []);
+
   useEffect(() => {
     initAuthListener();
     let active = true;

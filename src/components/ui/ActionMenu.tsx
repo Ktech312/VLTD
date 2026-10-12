@@ -27,6 +27,7 @@ export function ActionMenu({
   ariaLabel,
   align = "right",
   width = 260,
+  placement = "below",
 }: {
   items: ActionMenuItem[];
   triggerClassName: string;
@@ -35,6 +36,8 @@ export function ActionMenu({
   ariaLabel: string;
   align?: "left" | "right";
   width?: number;
+  /** Open below the button (default) or above it, for controls that sit at the bottom of the screen. */
+  placement?: "below" | "above";
 }) {
   const id = useId();
   const btnRef = useRef<HTMLButtonElement | null>(null);
@@ -119,7 +122,9 @@ export function ActionMenu({
                 className="z-[10001] rounded-[8px] bg-[color:var(--bg)]"
                 style={{
                   position: "fixed",
-                  top: (rect?.bottom ?? 0) + 6,
+                  ...(placement === "above"
+                    ? { bottom: (typeof window !== "undefined" ? window.innerHeight : 0) - (rect?.top ?? 0) + 6 }
+                    : { top: (rect?.bottom ?? 0) + 6 }),
                   ...(align === "left"
                     ? { left: Math.max(8, Math.min(rect?.left ?? 0, (typeof window !== "undefined" ? window.innerWidth : 0) - width - 8)) }
                     : { right: Math.max(8, (typeof window !== "undefined" ? window.innerWidth : 0) - (rect?.right ?? 0)) }),

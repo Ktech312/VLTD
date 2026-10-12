@@ -1,5 +1,6 @@
 "use client";
 
+import { DiscoverNav } from "@/components/SectionNav";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -44,6 +45,7 @@ export default function SavedPage() {
 
   return (
     <main className="text-[color:var(--fg)]">
+      <DiscoverNav activeKey="saved" />
       <div className="mx-auto max-w-2xl px-4 py-6 sm:px-6">
 
         {/* Header */}

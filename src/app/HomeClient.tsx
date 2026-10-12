@@ -1253,7 +1253,7 @@ export default function HomeClient() {
                   { label: "Vault",      href: "/vault",             accent: false, tip: "" },
                   { label: "Exhibitions",    href: "/museum",            accent: false, tip: "" },
                   { label: "Saved",      href: "/saved", accent: false, tip: "Items saved from The Flip." },
-                  { label: "Account",    href: "/account",           accent: false, tip: "" },
+                  { label: "Activity",   href: "/activity",          accent: false, tip: "Recent vault updates, sales and exhibition activity." },
                 ] as { label: string; href: string; accent: boolean; tip: string }[]).map(({ label, href, accent, tip }) => (
                   <div key={href + label} className="relative">
                     {tip && <div className="absolute -right-1 -top-1 z-10"><InfoTooltip text={tip} /></div>}

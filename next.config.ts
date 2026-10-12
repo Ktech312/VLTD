@@ -8,6 +8,12 @@ const nextConfig: NextConfig = {
             destination: "/watchlist",
             permanent: true,
           },
+          // The old Command Center is gone; everything in it now lives in Home, Vault, Settings and Help.
+          {
+            source: "/more",
+            destination: "/dashboard",
+            permanent: false,
+          },
         ];
       },
       turbopack: {

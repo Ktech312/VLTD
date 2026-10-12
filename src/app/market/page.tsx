@@ -1,5 +1,6 @@
 "use client";
 
+import { DiscoverNav } from "@/components/SectionNav";
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { fetchMarketItems, type MarketItem } from "@/lib/publicProfile";
@@ -206,6 +207,7 @@ export default function MarketPage() {
 
   return (
     <div className="" style={{ background: "var(--bg)" }}>
+      <DiscoverNav activeKey="market" />
       {/* Header */}
       <div className="border-b border-[color:var(--border)]" style={{ background: "var(--surface)" }}>
         <div className="mx-auto max-w-6xl px-4 py-6">

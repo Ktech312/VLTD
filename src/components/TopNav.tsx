@@ -7,7 +7,8 @@ import React, { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import VltdLogo from "@/components/VltdLogo";
 import AlertsBell from "@/components/AlertsBell";
 import CommandPalette from "@/components/CommandPalette";
-import { ThemePicker } from "@/components/ui/ThemePicker";
+import { ActionMenu, type ActionMenuItem } from "@/components/ui/ActionMenu";
+import { PRIMARY_NAV, isPrimaryNavActive } from "@/lib/primaryNav";
 import { AppIcon, type AppIconName } from "@/components/ui/AppIcon";
 import {
   getCurrentUser,
@@ -87,52 +88,19 @@ type Parsed = {
 // Icon art lives in AppIcon.tsx now (variant="navTop") — one component, so
 // a future icon change only has to happen in one place, including here.
 
-// Main nav bar items
-const MAIN_NAV_ITEMS: { label: string; href: string; icon: AppIconName; exact: boolean; desc: string; subpathOnly?: boolean }[] = [
+// Help replaces the old Guide dropdown. Learn is a section of Lounge, not a Help item.
+const HELP_MENU_ITEMS: ActionMenuItem[] = [
+  { key: "start", label: "Getting started", description: "A short walkthrough of VLTD", href: "/guide/walkthrough" },
+  { key: "features", label: "Feature guide", description: "What each part of VLTD does", href: "/guide" },
   {
-    label: "Vault",       href: "/vault",      icon: "vault",       exact: false,
-    desc: "Your private collection inventory.",
-  },
-  {
-    label: "Exhibitions", href: "/museum",     icon: "exhibitions", exact: false,
-    desc: "Curate and display collections for the world.",
-  },
-  {
-    label: "Discover",    href: "/discover",   icon: "discover",    exact: false,
-    desc: "Find collectors, museums and inspiration.",
-  },
-  {
-    label: "Events",      href: "/events",     icon: "events",      exact: false,
-    desc: "Shows, conventions & collector gatherings.",
-  },
-  {
-    label: "Insights",    href: "/portfolio",  icon: "insights",    exact: true,  subpathOnly: false,
-    desc: "Track value, growth, provenance and collection health.",
+    key: "support",
+    label: "Support",
+    description: "Report a problem or ask for help",
+    onClick: () => {
+      if (typeof window !== "undefined") window.dispatchEvent(new Event("vltd:open-support"));
+    },
   },
 ];
-
-// "More" dropdown items
-const MORE_NAV_ITEMS: { label: string; href: string; icon: AppIconName; exact: boolean; desc: string }[] = [
-  {
-    label: "Command Center", href: "/more", icon: "vault", exact: true,
-    desc: "Account, tools, data, sharing and quick panels.",
-  },
-  {
-    label: "VLT Lounge", href: "/community-board", icon: "communityBoard", exact: false,
-    desc: "Spotlights, MVPs & collector community.",
-  },
-  {
-    label: "Activity", href: "/activity", icon: "activity", exact: false,
-    desc: "Recent vault updates, sales and exhibition activity.",
-  },
-  {
-    label: "Learn", href: "/learn", icon: "learn", exact: false,
-    desc: "Guides on grading, provenance and getting started.",
-  },
-];
-
-// All items combined (for guide panel)
-const ALL_NAV_ITEMS = [...MAIN_NAV_ITEMS, ...MORE_NAV_ITEMS];
 
 /* ── Helpers ────────────────────────────────────────────── */
 
@@ -182,8 +150,6 @@ function TopNavInner() {
   const [userOpen, setUserOpen] = useState(false);
   const [levelInfoOpen, setLevelInfoOpen] = useState(false);
   const [commandOpen, setCommandOpen] = useState(false);
-  const [guideOpen, setGuideOpen] = useState(false);
-  const [moreOpen, setMoreOpen] = useState(false);
   const [searchExpanded, setSearchExpanded] = useState(false);
 
   const [signedIn, setSignedIn] = useState(false);
@@ -197,13 +163,9 @@ function TopNavInner() {
   const userMenuRef = useRef<HTMLDivElement | null>(null);
   const dropdownRef = useRef<HTMLDivElement | null>(null);
   const levelInfoRef = useRef<HTMLDivElement | null>(null);
-  const guideRef = useRef<HTMLDivElement | null>(null);
-  const moreRef = useRef<HTMLDivElement | null>(null);
-  const moreDropdownRef = useRef<HTMLDivElement | null>(null);
   const loadingAuthRef = useRef(false);
   const initializedRef = useRef(false);
   const [dropdownPos, setDropdownPos] = useState<{ top: number; right: number } | null>(null);
-  const [moreDropdownPos, setMoreDropdownPos] = useState<{ top: number; left: number } | null>(null);
 
   const activeProfile = useMemo(
     () => profiles.find((p) => p.id === activeProfileId) ?? null,
@@ -323,10 +285,6 @@ function TopNavInner() {
       const inDropdown = dropdownRef.current?.contains(target);
       if (!inTrigger && !inDropdown) setUserOpen(false);
       if (levelInfoRef.current && !levelInfoRef.current.contains(target)) setLevelInfoOpen(false);
-      if (guideRef.current && !guideRef.current.contains(target)) setGuideOpen(false);
-      const inMore = moreRef.current?.contains(target);
-      const inMoreDropdown = moreDropdownRef.current?.contains(target);
-      if (!inMore && !inMoreDropdown) setMoreOpen(false);
     }
     document.addEventListener("mousedown", handleOutside);
     return () => document.removeEventListener("mousedown", handleOutside);
@@ -360,19 +318,8 @@ function TopNavInner() {
     router.push("/login"); router.refresh();
   }
 
-  function isActive(item: { href: string; exact?: boolean; subpathOnly?: boolean }) {
-    if (item.subpathOnly) return pathname.startsWith(item.href + '/');
-    return item.exact ? pathname === item.href : pathname.startsWith(item.href);
-  }
-
-  // The home route isn't itself one of MAIN_NAV_ITEMS/MORE_NAV_ITEMS, so
-  // nothing in the bar lights up there even though the logo is how you get
-  // back to it. EK's stopgap: glow the logo instead, until there's a real
-  // "Home" nav state (2026-10-01).
+  // The signed-in logo returns to Home (/dashboard); visitors keep the public homepage.
   const isHome = pathname === "/" || pathname === "/dashboard";
-
-  // Check if any "more" item is active (to highlight the More button)
-  const isMoreActive = MORE_NAV_ITEMS.some((item) => isActive(item));
 
   const avatarText = signedIn
     ? (activeProfile?.display_name || accountEmail || "U").slice(0, 1).toUpperCase()
@@ -383,33 +330,29 @@ function TopNavInner() {
   return (
     <>
       <div
-        className={`fixed top-0 left-0 right-0 w-full backdrop-blur-xl ${userOpen || commandOpen || guideOpen || moreOpen ? "z-[9999]" : "z-[200]"}`}
+        className={`fixed top-0 left-0 right-0 w-full backdrop-blur-xl ${userOpen || commandOpen ? "z-[9999]" : "z-[200]"}`}
         style={{ background: "var(--theme-nav-bg, rgba(11,19,32,0.96))", borderBottom: "1px solid var(--theme-nav-border, rgba(203,208,213,0.15))" }}
       >
         {/* ── Main nav row ── */}
         <div className="mx-auto flex h-[64px] max-w-[1400px] items-center gap-4 px-4 sm:px-6">
 
           {/* Logo */}
-          <Link href="/" className="shrink-0 flex items-center">
+          <Link href={signedIn ? "/dashboard" : "/"} className="shrink-0 flex items-center" aria-label="VLTD Home">
             <VltdLogo height={38} glow={isHome} />
           </Link>
 
-          {/* Desktop icon nav — centered */}
-          <div className="hidden md:flex flex-1 items-center justify-center">
+          {/* Desktop navigation (768px and wider): the five primary destinations in the approved order */}
+          <nav aria-label="Primary" className="hidden md:flex flex-1 items-center justify-center">
             <div className="flex items-end gap-1">
-              {MAIN_NAV_ITEMS.map((item) => {
-                const active = isActive(item);
+              {PRIMARY_NAV.map((item) => {
+                const active = isPrimaryNavActive(item, pathname);
                 return (
                   <Link
-                    key={item.href + item.label}
+                    key={item.href}
                     href={item.href}
+                    aria-current={active ? "page" : undefined}
                     className="relative flex flex-col items-center gap-[4px] px-3 pt-1 pb-2"
                   >
-                    {/* Active state is icon/label accent color only
-                        (2026-09-30) -- dropped a blue drop-shadow glow
-                        (rgba(64,146,255,...)) left over from before this app
-                        settled on the platinum/gold accent system; it didn't
-                        match, and BottomNav's matching glow is gone too. */}
                     <AppIcon
                       name={item.icon}
                       variant="navTop"
@@ -432,68 +375,39 @@ function TopNavInner() {
                   </Link>
                 );
               })}
-
-              {/* More ··· dropdown trigger */}
-              <div ref={moreRef} className="relative">
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (!moreOpen && moreRef.current) {
-                      const r = moreRef.current.getBoundingClientRect();
-                      setMoreDropdownPos({ top: r.bottom + 6, left: r.left + r.width / 2 });
-                    }
-                    setMoreOpen((v) => !v);
-                  }}
-                  className="relative flex flex-col items-center gap-[4px] px-3 pt-1 pb-2"
-                >
-                  <AppIcon
-                    name="more"
-                    variant="navTop"
-                    active={isMoreActive || moreOpen}
-                    size={32}
-                    style={{ color: isMoreActive || moreOpen ? "#C8CDD2" : "var(--muted2, #61656B)" }}
-                  />
-                  <span
-                    className="text-[11px] font-semibold tracking-[0.04em] leading-none whitespace-nowrap"
-                    style={{ color: isMoreActive || moreOpen ? "#C8CDD2" : "var(--muted, #C4B07A)" }}
-                  >
-                    More
-                  </span>
-                  {isMoreActive && (
-                    <span
-                      className="absolute bottom-0 left-3 right-3 h-[2px] rounded-full"
-                      style={{ background: "linear-gradient(90deg, transparent, #4092FF, transparent)" }}
-                    />
-                  )}
-                </button>
-
-                {/* More dropdown panel — rendered via fixed portal to escape nav stacking context */}
-              </div>
             </div>
-          </div>
+          </nav>
 
           {/* Right controls */}
-          <div className="ml-auto flex items-center gap-2 shrink-0">
+          <div className="ml-auto flex items-center gap-1.5 shrink-0 md:gap-2">
 
-            {/* Guide button */}
-            <div ref={guideRef} className="relative hidden md:block">
-              <button
-                type="button"
-                onClick={() => setGuideOpen((v) => !v)}
-                aria-label="Guide"
-                className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[13px] font-semibold transition"
-                style={{
-                  background: guideOpen ? "rgba(203,208,213,0.12)" : "rgba(255,255,255,0.05)",
-                  border: `1px solid ${guideOpen ? "rgba(203,208,213,0.35)" : "rgba(255,255,255,0.10)"}`,
-                  color: guideOpen ? "#C8CDD2" : "var(--muted2, #61656B)",
-                }}
-              >
-                <AppIcon name="guide" variant="navTop" active={guideOpen} size={26} />
-                <span style={{ transform: guideOpen ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s", display: "inline-flex" }}>
-                  <AppIcon name="chevronDown" size={14} strokeWidth={2} />
-                </span>
-              </button>
-            </div>
+            {/* Search: an icon on phones that opens the command palette; the full bar shows from 768px */}
+            <button
+              type="button"
+              onClick={() => setCommandOpen(true)}
+              aria-label="Search"
+              className="grid h-11 w-9 place-items-center rounded-full md:hidden"
+              style={{ color: "var(--muted)" }}
+            >
+              <AppIcon name="search" variant="navTop" size={26} />
+            </button>
+
+            {/* Help: Getting started, Feature guide, Support */}
+            <ActionMenu
+              ariaLabel="Help"
+              align="right"
+              width={250}
+              items={HELP_MENU_ITEMS}
+              triggerClassName="flex h-11 items-center gap-1.5 rounded-full px-2.5 text-[13px] font-semibold transition md:h-9 md:px-3"
+              triggerStyle={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.10)", color: "var(--muted2, #61656B)" }}
+              triggerChildren={
+                <>
+                  <AppIcon name="guide" variant="navTop" size={22} />
+                  <span className="hidden md:inline">Help</span>
+                  <AppIcon name="chevronDown" size={14} strokeWidth={2} className="hidden md:block" />
+                </>
+              }
+            />
 
             {/* Search bar */}
             <form
@@ -588,144 +502,7 @@ function TopNavInner() {
           </div>
         </div>
 
-        {/* ── Guide dropdown panel ── */}
-        {guideOpen && (
-          <div
-            className="border-t"
-            style={{ borderColor: "var(--theme-border, rgba(203,208,213,0.10))", background: "var(--theme-nav-bg, rgba(11,11,11,0.98))" }}
-          >
-            <div className="mx-auto max-w-[1400px] px-6 py-3">
-              <p className="mb-2 text-[10px] font-bold uppercase tracking-[0.28em]" style={{ color: "var(--muted, #8A7A5A)" }}>
-                Explore VLTD
-              </p>
-              <div className="grid grid-cols-4 gap-2 lg:grid-cols-10">
-                {ALL_NAV_ITEMS.map((item) => {
-                  const active = isActive(item);
-                  return (
-                    <Link
-                      key={item.href + item.label + "guide"}
-                      href={item.href}
-                      onClick={() => setGuideOpen(false)}
-                      className="group flex min-h-[74px] flex-col gap-1 rounded-xl p-2 transition"
-                      style={{
-                        background: active ? "rgba(203,208,213,0.07)" : "rgba(255,255,255,0.02)",
-                        border: `1px solid ${active ? "rgba(203,208,213,0.20)" : "rgba(255,255,255,0.06)"}`,
-                      }}
-                      onMouseEnter={(e) => {
-                        (e.currentTarget as HTMLElement).style.background = "rgba(203,208,213,0.07)";
-                        (e.currentTarget as HTMLElement).style.borderColor = "rgba(203,208,213,0.20)";
-                      }}
-                      onMouseLeave={(e) => {
-                        (e.currentTarget as HTMLElement).style.background = active ? "rgba(203,208,213,0.07)" : "rgba(255,255,255,0.02)";
-                        (e.currentTarget as HTMLElement).style.borderColor = active ? "rgba(203,208,213,0.20)" : "rgba(255,255,255,0.06)";
-                      }}
-                    >
-                      <div className="[&_svg]:h-3.5 [&_svg]:w-3.5">
-                        <AppIcon name={item.icon} variant="navTop" active={active} size={20} style={{ color: active ? "#C8CDD2" : "var(--muted2, #61656B)" }} />
-                      </div>
-                      <div>
-                        <p className="text-[11px] font-bold leading-none" style={{ color: active ? "#C8CDD2" : "var(--theme-text-primary, #ECEDEF)" }}>
-                          {item.label}
-                        </p>
-                        <p className="mt-0.5 line-clamp-2 text-[10px] leading-tight" style={{ color: "var(--muted, #8A7A5A)" }}>
-                          {item.desc}
-                        </p>
-                      </div>
-                    </Link>
-                  );
-                })}
-
-                {/* Brand card */}
-                <div
-                  className="col-span-1 flex min-h-[74px] flex-col justify-between rounded-xl p-2"
-                  style={{
-                    background: "linear-gradient(135deg, rgba(42,36,24,0.90), rgba(26,20,8,0.90))",
-                    border: "1px solid rgba(203,208,213,0.25)",
-                    boxShadow: "0 0 24px rgba(203,208,213,0.08)",
-                  }}
-                >
-                  <div
-                    className="flex h-7 w-7 items-center justify-center self-end rounded-lg text-sm"
-                    style={{ background: "rgba(203,208,213,0.12)", border: "1px solid rgba(203,208,213,0.25)" }}
-                  >
-                    <AppIcon name="exhibition" size={16} />
-                  </div>
-                  <div>
-                    <p className="text-[10px] font-black leading-tight" style={{ color: "var(--theme-text-primary, #ECEDEF)" }}>
-                      Your Collection.<br />Your Exhibitions.<br />Your Legacy.
-                    </p>
-                    <Link
-                      href="/guide"
-                      onClick={() => setGuideOpen(false)}
-                      className="mt-1 inline-block text-[10px] font-semibold leading-tight"
-                      style={{ color: "#C8CDD2" }}
-                    >
-                      Learn more about VLTD →
-                    </Link>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
       </div>
-
-      {/* More dropdown — fixed positioning outside nav stacking context */}
-      {moreOpen && moreDropdownPos && (
-        <div
-          ref={moreDropdownRef}
-          style={{
-            position: "fixed",
-            top: moreDropdownPos.top,
-            left: moreDropdownPos.left,
-            transform: "translateX(-50%)",
-            minWidth: 200,
-            zIndex: 9999,
-            background: "var(--theme-nav-bg, rgba(11,19,32,0.99))",
-            border: "1px solid var(--theme-nav-border, rgba(203,208,213,0.18))",
-            backdropFilter: "blur(20px)",
-            borderRadius: "16px",
-            overflow: "hidden",
-            boxShadow: "0 18px 50px rgba(0,0,0,0.6)",
-          }}
-        >
-          <div className="py-1.5 px-1.5">
-            {MORE_NAV_ITEMS.map((item) => {
-              const active = isActive(item);
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  onClick={() => setMoreOpen(false)}
-                  className="relative flex items-center gap-3 rounded-xl px-3 py-2.5 transition hover:bg-[rgba(203,208,213,0.07)]"
-                  style={{ background: active ? "rgba(203,208,213,0.07)" : "transparent" }}
-                >
-                  {/* Same active signal as the main nav's bottom underline
-                      (#4092FF), rotated to a left-edge bar to fit a
-                      vertical list -- so the two share one "you're here"
-                      language instead of each inventing its own. */}
-                  {active && (
-                    <span
-                      className="absolute left-1 top-2 bottom-2 w-[2px] rounded-full"
-                      style={{ background: "linear-gradient(180deg, transparent, #4092FF, transparent)" }}
-                    />
-                  )}
-                  <div className="[&_svg]:h-4 [&_svg]:w-4 shrink-0">
-                    <AppIcon name={item.icon} variant="navTop" active={active} size={20} style={{ color: active ? "#C8CDD2" : "var(--muted2, #61656B)" }} />
-                  </div>
-                  <span
-                    className="text-sm font-semibold"
-                    style={{ color: active ? "#C8CDD2" : "var(--theme-text-primary, #ECEDEF)" }}
-                  >
-                    {item.label}
-                  </span>
-                </Link>
-              );
-            })}
-          </div>
-        </div>
-      )}
 
       {/* User dropdown — fixed positioning outside nav stacking context */}
       {userOpen && dropdownPos && (
@@ -820,20 +597,8 @@ function TopNavInner() {
           <div className="px-2 py-2">
             {signedIn ? (
               <>
-                <div className="flex items-center gap-2 px-1 py-1">
-                  <Link href="/account" onClick={() => setUserOpen(false)}
-                    className="flex-1 rounded-xl px-3 py-1.5 text-sm transition hover:bg-[rgba(203,208,213,0.06)]"
-                    style={{ color: "var(--theme-text-primary, #ECEDEF)" }}>
-                    Account Settings
-                  </Link>
-                  <Link href="/account/invite" onClick={() => setUserOpen(false)}
-                    className="shrink-0 rounded-lg px-2.5 py-1.5 text-[11px] font-semibold transition hover:opacity-85"
-                    style={{ background: "rgba(203,208,213,0.12)", color: "#C8CDD2", border: "1px solid rgba(203,208,213,0.3)" }}>
-                    Invite Friends
-                  </Link>
-                </div>
                 {profiles.length > 1 && (
-                  <div className="mt-1 pt-2" style={{ borderTop: "1px solid rgba(203,208,213,0.10)" }}>
+                  <div className="pb-1">
                     <div className="px-3 pb-1 text-[10px] font-semibold uppercase tracking-widest" style={{ color: "var(--muted2, #61656B)" }}>
                       Switch Profile
                     </div>
@@ -872,6 +637,23 @@ function TopNavInner() {
                     })}
                   </div>
                 )}
+                <div className={profiles.length > 1 ? "mt-1 pt-1" : ""} style={profiles.length > 1 ? { borderTop: "1px solid rgba(203,208,213,0.10)" } : undefined}>
+                  <Link href="/account" onClick={() => setUserOpen(false)}
+                    className="flex min-h-[44px] items-center rounded-xl px-3 text-sm transition hover:bg-[rgba(203,208,213,0.06)] md:min-h-[36px]"
+                    style={{ color: "var(--theme-text-primary, #ECEDEF)" }}>
+                    Settings
+                  </Link>
+                  <Link href="/account?section=preferences" onClick={() => setUserOpen(false)}
+                    className="flex min-h-[44px] items-center rounded-xl px-3 text-sm transition hover:bg-[rgba(203,208,213,0.06)] md:min-h-[36px]"
+                    style={{ color: "var(--theme-text-primary, #ECEDEF)" }}>
+                    Appearance
+                  </Link>
+                  <Link href="/account/invite" onClick={() => setUserOpen(false)}
+                    className="flex min-h-[44px] items-center rounded-xl px-3 text-sm transition hover:bg-[rgba(203,208,213,0.06)] md:min-h-[36px]"
+                    style={{ color: "var(--theme-text-primary, #ECEDEF)" }}>
+                    Invite Friends
+                  </Link>
+                </div>
               </>
             ) : (
               <>
@@ -883,9 +665,6 @@ function TopNavInner() {
                   style={{ color: "var(--theme-text-primary, #ECEDEF)" }}>Create Account</Link>
               </>
             )}
-          </div>
-          <div style={{ borderTop: "1px solid rgba(203,208,213,0.10)" }}>
-            <ThemePicker />
           </div>
           {signedIn && (
             <div className="flex items-center justify-between gap-2 px-3 py-2" style={{ borderTop: "1px solid rgba(203,208,213,0.10)" }}>

@@ -13,9 +13,10 @@ const ADD_ITEM_OPTIONS: ActionMenuItem[] = [
 ];
 
 /** The branded Add Item control. It opens the list of ways to add an item. */
-export default function AddItemMenu() {
+export default function AddItemMenu({ placement = "below" }: { placement?: "below" | "above" }) {
   return (
     <ActionMenu
+      placement={placement}
       items={ADD_ITEM_OPTIONS}
       ariaLabel="Add Item"
       triggerClassName="vltd-action-module vltd-action-module--shared shrink-0"

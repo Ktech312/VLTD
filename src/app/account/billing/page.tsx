@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { AccountTabs } from "@/components/account/AccountTabs";
 import { RedeemCodeCard } from "@/components/account/RedeemCodeCard";
 import { showToast } from "@/lib/toast";
@@ -165,6 +166,11 @@ export default function BillingPage() {
     <main className="px-4 py-6" style={{ background: "var(--bg)", color: "var(--fg)" }}>
       <div className="mx-auto max-w-5xl">
         <AccountTabs />
+        <div className="mb-3 flex justify-end">
+          <Link href="/account?section=contact" className="inline-flex h-11 items-center rounded-[8px] px-3 text-[13px] font-medium ring-1 ring-[color:var(--border)] transition hover:bg-[color:var(--pill-hover)] md:h-9">
+            Contact information
+          </Link>
+        </div>
         <section
           className="relative -mt-px overflow-hidden rounded-[34px] rounded-tl-none p-5 sm:p-7"
           style={{

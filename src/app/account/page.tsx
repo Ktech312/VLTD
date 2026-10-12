@@ -2,7 +2,7 @@
 // NOTE: primaryFocus uses taxonomy universe keys for personalisation
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { ThemePicker } from "@/components/ui/ThemePicker";
 import { PillButton } from "@/components/ui/PillButton";
@@ -15,8 +15,7 @@ import { syncPublicProfile } from "@/lib/publicProfile";
 import { getPendingVaultSyncCount, processVaultSyncQueue } from "@/lib/vaultSyncQueue";
 import { loadItems, syncVaultItemsFromSupabase } from "@/lib/vaultModel";
 import { exportVaultJson } from "@/lib/vaultExport";
-import { fetchVaultItemsFromSupabase, hasSupabaseEnv } from "@/lib/vaultCloud";
-import { loadWatchlist, removeFromWatchlist, type WatchlistItem } from "@/lib/watchlistModel";
+import { countVaultItemsInSupabase, hasSupabaseEnv } from "@/lib/vaultCloud";
 import { UNIVERSE_KEYS, UNIVERSE_LABEL, isUniverseKey } from "@/lib/taxonomy";
 import { getProfileSafe, setProfileSafe, broadcastProfileChange } from "@/lib/userProfile";
 import { showToast } from "@/lib/toast";
@@ -31,20 +30,12 @@ function normalizeFocus(value: unknown): string {
 import { migrateExistingVaultImagesToSupabase } from "@/lib/vaultMigration";
 import { prepareImageBlob } from "@/lib/vaultImageStore";
 
-function computeAge(dobStr: string) {
-  if (!dobStr) return null;
-  const d = new Date(dobStr);
-  if (Number.isNaN(d.getTime())) return null;
-  const now = new Date();
-  let age = now.getFullYear() - d.getFullYear();
-  const m = now.getMonth() - d.getMonth();
-  if (m < 0 || (m === 0 && now.getDate() < d.getDate())) age--;
-  if (age < 0 || age > 120) return null;
-  return age;
-}
-
 export default function AccountPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  // Settings categories on this page: profile (default), preferences, contact, data.
+  const rawSection = searchParams.get("section");
+  const section = rawSection === "preferences" || rawSection === "contact" || rawSection === "data" ? rawSection : "profile";
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -69,7 +60,6 @@ export default function AccountPage() {
   const [cloudItemCount, setCloudItemCount] = useState<number | null>(null);
   const [miniSyncBusy, setMiniSyncBusy] = useState(false);
   const [miniSyncMsg, setMiniSyncMsg] = useState("");
-  const [watchlist, setWatchlist] = useState<WatchlistItem[]>([]);
   // Contact info
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
@@ -91,12 +81,8 @@ export default function AccountPage() {
   const [avatarEmoji, setAvatarEmoji] = useState("🗝️");
   const [avatarUrl, setAvatarUrl] = useState("");
   const [avatarUploading, setAvatarUploading] = useState(false);
-  // Age verification (self-declared, not government ID) + marketing opt-in
-  const [dob, setDob] = useState("");
-  const [ageVerified, setAgeVerified] = useState(false);
-  const [marketingOptIn, setMarketingOptIn] = useState(true);
-  const [identitySaving, setIdentitySaving] = useState(false);
-  const [identitySuccess, setIdentitySuccess] = useState("");
+  const [avatarSaving, setAvatarSaving] = useState(false);
+  const [avatarSuccess, setAvatarSuccess] = useState("");
   // Push notifications
   const [pushState, setPushState] = useState<PushState>("unsupported");
   const [pushBusy, setPushBusy] = useState(false);
@@ -152,14 +138,10 @@ export default function AccountPage() {
         setAvatarUrl(status.activeProfile.avatar_url ?? "");
         setAvatarMode(status.activeProfile.avatar_url ? "IMAGE" : localProfile.avatarMode);
         setAvatarEmoji(status.activeProfile.avatar_emoji || localProfile.avatarEmoji || "🗝️");
-        setDob(status.activeProfile.date_of_birth ?? "");
-        setAgeVerified(Boolean(status.activeProfile.age_verified));
-        setMarketingOptIn(status.activeProfile.marketing_opt_in !== false);
       } catch (err) {
         setError(err instanceof Error ? err.message : "Failed to load account.");
       } finally {
-        setWatchlist(loadWatchlist());
-      setLoading(false);
+        setLoading(false);
       }
     }
     void load();
@@ -200,8 +182,9 @@ export default function AccountPage() {
       setLocalItemCount(loadItems().length);
       if (!hasSupabaseEnv()) return;
       try {
-        const cloud = await fetchVaultItemsFromSupabase();
-        if (active) setCloudItemCount(cloud.length);
+        // A count only: this page used to download every item in the vault (about 5 MB) just to count them.
+        const cloudCount = await countVaultItemsInSupabase();
+        if (active) setCloudItemCount(cloudCount);
       } catch {
         if (active) setCloudItemCount(null);
       }
@@ -220,8 +203,7 @@ export default function AccountPage() {
       setLocalItemCount(loadItems().length);
       if (hasSupabaseEnv()) {
         try {
-          const cloud = await fetchVaultItemsFromSupabase();
-          setCloudItemCount(cloud.length);
+          setCloudItemCount(await countVaultItemsInSupabase());
         } catch {
           setCloudItemCount(null);
         }
@@ -270,18 +252,11 @@ export default function AccountPage() {
   }
 
   useEffect(() => {
-    function onWatchlistUpdate() {
-      setWatchlist(loadWatchlist());
-    }
-    window.addEventListener("vltd:watchlist-updated", onWatchlistUpdate);
-
-    // Scroll to anchor if URL has a hash (e.g. #watchlist or #profile-setup)
+    // Scroll to anchor if URL has a hash (e.g. #profile-setup)
     if (window.location.hash) {
       const target = document.getElementById(window.location.hash.slice(1));
       if (target) setTimeout(() => target.scrollIntoView({ behavior: "smooth", block: "start" }), 400);
     }
-
-    return () => window.removeEventListener("vltd:watchlist-updated", onWatchlistUpdate);
   }, []);
 
   async function handleSave() {
@@ -358,16 +333,13 @@ export default function AccountPage() {
     }
   }
 
-  const age = useMemo(() => computeAge(dob), [dob]);
-  const canVerifyAge = age !== null && age >= 18;
   const avatarUploadRef = useRef<HTMLInputElement | null>(null);
 
-  async function handleIdentitySave() {
+  async function handleAvatarSave() {
     if (!profileId) return;
-    setIdentitySaving(true);
-    setIdentitySuccess("");
+    setAvatarSaving(true);
+    setAvatarSuccess("");
     try {
-      const nextAgeVerified = ageVerified && canVerifyAge;
       // Only "mode" (which tab was open) is worth caching locally now --
       // the emoji and the uploaded image URL are both real, synced via
       // profiles.avatar_emoji/avatar_url below.
@@ -380,18 +352,14 @@ export default function AccountPage() {
         // in the app (resolveAvatarSrc prefers avatar_url over avatar_emoji
         // whenever avatar_url is set at all).
         avatar_url: avatarMode === "IMAGE" ? avatarUrl || null : null,
-        date_of_birth: dob || null,
-        age_verified: nextAgeVerified,
-        marketing_opt_in: marketingOptIn,
       });
-      setAgeVerified(nextAgeVerified);
       void syncPublicProfile(profileId);
-      setIdentitySuccess("Saved.");
+      setAvatarSuccess("Saved.");
     } catch (err) {
-      setIdentitySuccess(err instanceof Error ? err.message : "Failed to save.");
+      setAvatarSuccess(err instanceof Error ? err.message : "Failed to save.");
     } finally {
-      setIdentitySaving(false);
-      setTimeout(() => setIdentitySuccess(""), 3000);
+      setAvatarSaving(false);
+      setTimeout(() => setAvatarSuccess(""), 3000);
     }
   }
 
@@ -428,6 +396,7 @@ export default function AccountPage() {
       <div className="mx-auto max-w-5xl">
         <AccountTabs />
 
+        {section === "profile" ? (
         <section
           id="profile-setup"
           className="relative -mt-px overflow-hidden rounded-[34px] rounded-tl-none p-5 sm:p-7"
@@ -440,10 +409,10 @@ export default function AccountPage() {
           <div className="relative grid gap-7 lg:grid-cols-[1fr_340px]">
             <div>
               <div className="text-[12px] font-semibold uppercase tracking-[0.34em] text-[color:var(--muted2)]">
-                Account
+                Profile
               </div>
-              <h1 className="mt-3 text-4xl font-black leading-[0.98] tracking-[-0.055em] text-text-primary sm:text-5xl">
-                Account settings
+              <h1 className="mt-3 text-3xl font-black leading-[1.05] tracking-[-0.04em] text-text-primary sm:text-4xl">
+                Your profile
               </h1>
               <p className="mt-4 max-w-2xl text-base leading-7 text-[color:var(--muted)]">
                 Keep your collector identity, workspace type, and primary focus aligned across VLTD.
@@ -515,7 +484,7 @@ export default function AccountPage() {
                 </div>
 
                 <div>
-                  <span className="text-sm font-semibold text-text-primary">Collection focus</span>
+                  <span className="text-sm font-semibold text-text-primary">Collection interests</span>
                   <p className="mt-0.5 text-xs text-[color:var(--muted2)]">
                     Used to personalise your Discover feed — pick every universe you focus on. Your first pick is your primary.
                   </p>
@@ -651,8 +620,10 @@ export default function AccountPage() {
             </aside>
           </div>
         </section>
+        ) : null}
 
         {/* Avatar */}
+        {section === "profile" ? (
         <section className="mt-6 rounded-[9px] border border-[color:var(--border)] bg-[color:var(--surface)] p-5 shadow-[0_8px_32px_rgba(0,0,0,0.24)]">
           <div className="text-[12px] font-semibold uppercase tracking-[0.34em] text-[color:var(--muted2)] px-1 mb-4">
             Avatar
@@ -765,123 +736,29 @@ export default function AccountPage() {
             <div className="mt-3 text-xs" style={{ color: "var(--muted)" }}>
               Shown across the app, on every device.
             </div>
-          </div>
-        </section>
-
-        {/* Identity & Security (self-declared age check, not government ID verification) */}
-        <section className="mt-6 rounded-[9px] border border-[color:var(--border)] bg-[color:var(--surface)] p-5 shadow-[0_8px_32px_rgba(0,0,0,0.24)]">
-          <div className="text-[12px] font-semibold uppercase tracking-[0.34em] text-[color:var(--muted2)] px-1 mb-1">
-            Identity &amp; Security
-          </div>
-          <p className="px-1 mb-4 text-xs text-[color:var(--muted)]">
-            Age verification is self-declared (you enter your birthdate) — not government ID verification.
-          </p>
-
-          <div className="grid gap-4 sm:grid-cols-2">
-            <label className="block">
-              <span className="text-sm font-semibold text-text-primary">Date of birth</span>
-              <input
-                type="date"
-                value={dob}
-                onChange={(e) => {
-                  setDob(e.target.value);
-                  const nextAge = computeAge(e.target.value);
-                  if (nextAge === null || nextAge < 18) setAgeVerified(false);
-                }}
-                className="mt-2 h-12 w-full rounded-2xl border border-[color:var(--border)] px-4 text-[color:var(--fg)] outline-none transition focus:border-[color:var(--accent)] focus:ring-4 focus:ring-[rgba(203,208,213,0.12)]"
-                style={{ background: "var(--theme-card)" }}
-              />
-              <span className="mt-1 block text-xs text-[color:var(--muted2)]">
-                {age === null ? "Enter a valid date." : `Computed age: ${age}`}
-              </span>
-            </label>
-
-            <div>
-              <span className="text-sm font-semibold text-text-primary">Age verification</span>
-              <p className="mt-0.5 text-xs text-[color:var(--muted2)]">
-                {canVerifyAge ? "Eligible to verify." : "Not eligible yet — enter a valid DOB and be 18+."}
-              </p>
-              <div className="mt-2 flex flex-wrap gap-2">
-                <PillButton
-                  variant={canVerifyAge ? "active" : "default"}
-                  onClick={() => {
-                    if (!canVerifyAge) {
-                      showToast("Must be 18+ with a valid DOB to verify.");
-                      return;
-                    }
-                    setAgeVerified(true);
-                  }}
-                  disabled={!canVerifyAge}
-                >
-                  {ageVerified ? <span className="inline-flex items-center gap-1">Verified <Glyph name="check" size={13} /></span> : "Verify Age"}
-                </PillButton>
-                {ageVerified ? (
-                  <PillButton onClick={() => setAgeVerified(false)} className="bg-red-500/10 text-red-200 ring-red-400/20 hover:bg-red-500/15">
-                    Remove Verification
-                  </PillButton>
-                ) : null}
-              </div>
+            <div className="mt-4 flex items-center gap-3">
+              <PillButton variant="active" onClick={() => void handleAvatarSave()} disabled={avatarSaving}>
+                {avatarSaving ? "Saving..." : "Save avatar"}
+              </PillButton>
+              {avatarSuccess ? <span className="text-sm text-emerald-400">{avatarSuccess}</span> : null}
             </div>
           </div>
-
-          <label className="mt-5 flex items-center gap-3 text-sm">
-            <input type="checkbox" checked={marketingOptIn} onChange={(e) => setMarketingOptIn(e.target.checked)} />
-            Receive product updates
-          </label>
-
-          <div className="mt-5 flex items-center gap-4">
-            <button
-              type="button"
-              disabled={identitySaving}
-              onClick={() => void handleIdentitySave()}
-              className="inline-flex h-12 items-center rounded-[8px] px-6 text-sm font-black text-[#0B0B0B] transition hover:-translate-y-0.5 hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-50"
-              style={{ background: "var(--theme-gold-gradient)", boxShadow: "var(--theme-gold-glow)" }}
-            >
-              {identitySaving ? "Saving..." : "Save identity settings"}
-            </button>
-            {identitySuccess && <span className="text-sm text-emerald-400">{identitySuccess}</span>}
-          </div>
         </section>
+        ) : null}
 
+
+        {section === "preferences" ? (
         <section className="mt-6 rounded-[9px] border border-[color:var(--border)] bg-[color:var(--surface)] p-5 shadow-[0_8px_32px_rgba(0,0,0,0.24)]">
           <div className="text-[12px] font-semibold uppercase tracking-[0.34em] text-[color:var(--muted2)] px-1 mb-1">
             Appearance
           </div>
           <ThemePicker />
         </section>
+        ) : null}
 
-        {/* Privacy */}
-        <section className="mt-6 rounded-[9px] border border-[color:var(--border)] bg-[color:var(--surface)] p-5 shadow-[0_8px_32px_rgba(0,0,0,0.24)]">
-          <div className="text-[12px] font-semibold uppercase tracking-[0.34em] text-[color:var(--muted2)] px-1 mb-4">
-            Privacy
-          </div>
-          <div className="flex items-start justify-between gap-4 rounded-2xl border border-[color:var(--border)] p-4" style={{ background: "var(--theme-card)" }}>
-            <div className="flex-1">
-              <div className="text-sm font-black text-text-primary">Public profile</div>
-              <div className="mt-1 text-xs leading-5 text-[color:var(--muted)]">
-                Your vault and exhibitions are visible to other collectors. Turn this off to go incognito — your profile disappears from search and the Discover feed.
-              </div>
-              <div className="mt-2 inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[11px] font-semibold ring-1 ring-[color:var(--frame-ring)]" style={{ background: "var(--pill-active-bg)", color: "var(--theme-gold, #C8CDD2)" }}>
-                ✦ Paid feature — coming soon
-              </div>
-            </div>
-            <button
-              type="button"
-              disabled={true}
-              title="Going incognito is a paid feature"
-              aria-pressed={isPublic}
-              className="relative mt-0.5 h-6 w-11 shrink-0 cursor-not-allowed rounded-full transition-colors opacity-50"
-              style={{ background: isPublic ? "#22C55E" : "rgba(255,255,255,0.12)" }}
-            >
-              <span
-                className="absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform"
-                style={{ transform: isPublic ? "translateX(20px)" : "translateX(0)" }}
-              />
-            </button>
-          </div>
-        </section>
 
         {/* Notifications */}
+        {section === "preferences" ? (
         <section className="mt-6 rounded-[9px] border border-[color:var(--border)] bg-[color:var(--surface)] p-5 shadow-[0_8px_32px_rgba(0,0,0,0.24)]">
           <div className="text-[12px] font-semibold uppercase tracking-[0.34em] text-[color:var(--muted2)] px-1 mb-4">
             Notifications
@@ -913,7 +790,9 @@ export default function AccountPage() {
             </button>
           </div>
         </section>
+        ) : null}
 
+        {section === "data" ? (
         <section className="mt-6 rounded-[9px] border border-[color:var(--border)] bg-[color:var(--surface)] p-5 shadow-[0_8px_32px_rgba(0,0,0,0.24)]">
           <div className="text-[12px] font-semibold uppercase tracking-[0.34em] text-[color:var(--muted2)] px-1 mb-4">
             Vault Maintenance
@@ -930,8 +809,10 @@ export default function AccountPage() {
             <p className="mt-3 text-sm text-[color:var(--muted)]">{syncStatus}</p>
           ) : null}
         </section>
+        ) : null}
 
         {/* Contact Info */}
+        {section === "contact" ? (
         <section className="mt-6 rounded-[9px] border border-[color:var(--border)] bg-[color:var(--surface)] p-5 shadow-[0_8px_32px_rgba(0,0,0,0.24)]">
           <div className="text-[12px] font-semibold uppercase tracking-[0.34em] text-[color:var(--muted2)] px-1 mb-4">
             Contact Information
@@ -1045,11 +926,13 @@ export default function AccountPage() {
             )}
           </div>
         </section>
+        ) : null}
 
         {/* Universe Focus */}
+        {section === "preferences" ? (
         <section className="mt-6 rounded-[9px] border border-[color:var(--border)] bg-[color:var(--surface)] p-5 shadow-[0_8px_32px_rgba(0,0,0,0.24)]">
           <div className="text-[12px] font-semibold uppercase tracking-[0.34em] text-[color:var(--muted2)] px-1 mb-1">
-            Universe Focus
+            Universes displayed
           </div>
           <p className="px-1 mb-4 text-xs text-[color:var(--muted)]">
             Choose which universes appear in your home, vault, and discover pages.
@@ -1124,8 +1007,10 @@ export default function AccountPage() {
             )}
           </div>
         </section>
+        ) : null}
 
         {/* Data Controls */}
+        {section === "data" ? (
         <section className="mt-6 rounded-[9px] border border-[color:var(--border)] bg-[color:var(--surface)] p-5 shadow-[0_8px_32px_rgba(0,0,0,0.24)]">
           <div className="text-[12px] font-semibold uppercase tracking-[0.34em] text-[color:var(--muted2)] px-1 mb-1">
             Data Controls
@@ -1143,63 +1028,8 @@ export default function AccountPage() {
             </PillButton>
           </div>
         </section>
+        ) : null}
 
-        {/* Watchlist */}
-        <section id="watchlist" className="mt-6 rounded-[9px] border border-[color:var(--border)] bg-[color:var(--surface)] p-5 shadow-[0_8px_32px_rgba(0,0,0,0.24)]">
-          <div className="flex items-center justify-between px-1 mb-4">
-            <div className="text-[12px] font-semibold uppercase tracking-[0.34em] text-[color:var(--muted2)]">
-              Watchlist
-            </div>
-            {watchlist.length > 0 && (
-              <span className="rounded-full px-2.5 py-0.5 text-xs font-bold" style={{ background: "var(--pill-active-bg)", color: "var(--theme-gold, #C8CDD2)" }}>
-                {watchlist.length}
-              </span>
-            )}
-          </div>
-
-          {watchlist.length === 0 ? (
-            <div className="flex flex-col items-center gap-2 py-6 text-center">
-              <Glyph name="cards" size={30} style={{ color: "var(--theme-gold)", opacity: 0.7 }} />
-              <p className="text-sm text-[color:var(--muted)]">Nothing saved yet — use The Flip in Discover to save items you like.</p>
-            </div>
-          ) : (
-            <div className="flex flex-col gap-3">
-              {watchlist.map((item) => (
-                <div key={item.id} className="flex items-center gap-3 rounded-2xl border border-[color:var(--border)] bg-[color:var(--bg)] p-3">
-                  {item.imageFrontUrl ? (
-                    <img
-                      src={item.imageFrontUrl}
-                      alt={item.title}
-                      className="h-14 w-14 shrink-0 rounded-xl object-cover"
-                    />
-                  ) : (
-                    <div className="h-14 w-14 shrink-0 rounded-xl bg-white/8 flex items-center justify-center text-xl">🎴</div>
-                  )}
-                  <div className="min-w-0 flex-1">
-                    <div className="truncate text-sm font-semibold text-[color:var(--fg)]">{item.title}</div>
-                    {item.subtitle && <div className="truncate text-xs text-[color:var(--muted)]">{item.subtitle}</div>}
-                    <div className="mt-0.5 flex items-center gap-2">
-                      {item.grade && (
-                        <span className="rounded px-1.5 py-0.5 text-[10px] font-bold" style={{ background: "rgba(203,208,213,0.18)", color: "var(--theme-gold, #C8CDD2)" }}>{item.grade}</span>
-                      )}
-                      {item.collectorName && (
-                        <span className="text-[11px] text-[color:var(--muted2)]">by {item.collectorName}</span>
-                      )}
-                    </div>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => removeFromWatchlist(item.id)}
-                    className="ml-1 grid h-9 w-9 shrink-0 place-items-center rounded-full text-[color:var(--muted)] transition hover:bg-red-500/12 hover:text-red-400"
-                    aria-label="Remove from watchlist"
-                  >
-                    <Glyph name="close" size={16} strokeWidth={2} />
-                  </button>
-                </div>
-              ))}
-            </div>
-          )}
-        </section>
 
       </div>
     </main>

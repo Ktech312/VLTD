@@ -5,6 +5,7 @@ import { AccountTabs } from "@/components/account/AccountTabs";
 import { getCurrentUser, signOut } from "@/lib/auth";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 import TwoFactorAuthCard from "@/components/account/TwoFactorAuthCard";
+import PrivacyIdentityCards from "@/components/account/PrivacyIdentityCards";
 
 // Matches the same flag in MfaChallengeGate.tsx — re-enabled 2026-09-29
 // after the trust_this_device() aal2 fix was independently verified live
@@ -338,6 +339,9 @@ export default function SecurityPage() {
             </div>
           </div>
         </section>
+
+        {/* Visibility and age verification moved here from the main Account page. */}
+        <PrivacyIdentityCards />
       </div>
     </main>
   );
