@@ -203,7 +203,7 @@ export default function BillingPage() {
               <div className="mt-1 text-xl font-black" style={{ color: "var(--fg)" }}>
                 {currentPlan === "free" ? "Free" : currentPlan === "pro" ? "Pro — $9 / month" : "Business — $29 / month"}
               </div>
-              <div className="mt-0.5 text-xs" style={{ color: "var(--muted)" }}>
+              <div className="mt-0.5 text-xs" style={{ color: "var(--fg)" }}>
                 {currentPlan === "free" ? "Upgrade to unlock more features" : "Cancel anytime"}
               </div>
             </div>
@@ -235,7 +235,7 @@ export default function BillingPage() {
                   <div className="mt-1 text-base font-black" style={{ color: isCurrent ? "var(--theme-gold)" : "var(--fg)" }}>{plan.price}</div>
                   <ul className="mt-3 space-y-1.5">
                     {plan.features.map((f) => (
-                      <li key={f} className="text-[11px] flex items-start gap-1.5" style={{ color: "var(--muted)" }}>
+                      <li key={f} className="text-[11px] flex items-start gap-1.5" style={{ color: isCurrent ? "var(--fg)" : "var(--muted)" }}>
                         <span style={{ color: "#4ade80" }}>✓</span> {f}
                       </li>
                     ))}
