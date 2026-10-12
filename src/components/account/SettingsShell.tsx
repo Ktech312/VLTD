@@ -89,7 +89,7 @@ export default function SettingsShell({ children }: { children: React.ReactNode 
         {/* Compact identity and profile switcher */}
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="min-w-0">
-            <div className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[color:var(--muted)]">Settings</div>
+            <div className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[color:var(--fg)]">Settings</div>
             <div className="mt-1 flex min-w-0 flex-wrap items-baseline gap-x-2">
               <span className="truncate text-lg font-semibold">{activeProfile?.display_name || "Your account"}</span>
               {activeProfile ? (
