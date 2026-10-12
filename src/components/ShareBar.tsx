@@ -145,7 +145,7 @@ export default function ShareBar({ title, shareUrl, itemId, compact = false, hid
   };
 
   const icons = (
-    <div className="flex flex-wrap gap-x-4 gap-y-3">
+    <div className="flex flex-wrap gap-x-4 gap-y-3 max-md:gap-y-5">
       {hideCopy ? null : (
         <button type="button" onClick={() => void handleCopy()} className={iconBtn} style={iconStyle} title="Copy link" aria-label="Copy link">
           {copied ? <AppIcon name="checkmark" strokeWidth={2.5} /> : <AppIcon name="copy" />}

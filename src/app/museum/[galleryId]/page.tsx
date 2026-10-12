@@ -207,7 +207,7 @@ function compactPill(variant: PillVariant = "default", extra = "") {
 // Checkbox wrapper: the 14px box stays visually the same; on phones the label supplies an invisible 44px hit area
 // (extra left margin keeps it clear of the neighbouring "i" button).
 const CHECKBOX_LABEL =
-  "relative inline-flex cursor-pointer items-center max-md:ml-[9px] max-md:after:absolute max-md:after:-inset-[15px] max-md:after:content-['']";
+  "relative inline-flex cursor-pointer items-center max-md:ml-[21px] max-md:after:absolute max-md:after:-inset-[15px] max-md:after:content-['']";
 
 function accessPillClass(active: boolean) {
   return compactPill(active ? "active" : "default");
