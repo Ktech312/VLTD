@@ -1,5 +1,7 @@
 "use client";
 
+import { PageHeader } from "@/components/layout/PageHeader";
+import { PillButton } from "@/components/ui/PillButton";
 import { PillSelect } from "@/components/ui/PillSelect";
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
@@ -288,25 +290,14 @@ export default function AuctionBrowsePage() {
 
   return (
     <div className="" style={{ background: "var(--bg)" }}>
-      {/* Header */}
-      <div className="border-b border-[color:var(--border)]" style={{ background: "var(--surface)" }}>
-        <div className="mx-auto max-w-6xl px-4 py-6">
-          {/* Breadcrumb */}
-          <div className="flex items-center gap-2">
-            <Link href="/" className="text-sm" style={{ color: "var(--muted)" }}>VLTD</Link>
-            <span style={{ color: "var(--muted)" }}>/</span>
-            <span className="text-sm font-semibold" style={{ color: "var(--fg)" }}>Auctions</span>
-          </div>
-
-          <div className="mt-3 flex items-start justify-between gap-4 flex-wrap">
-            <div>
-              <h1 className="text-2xl font-bold" style={{ color: "var(--fg)" }}>
-                Live Auctions
-              </h1>
-              <p className="mt-1 text-sm" style={{ color: "var(--muted)" }}>
-                Bid on rare collectibles before the clock runs out.
-              </p>
-            </div>
+      <PageHeader
+        title="Live Auctions"
+        description="Bid on rare collectibles before the clock runs out."
+        contentClassName="max-w-6xl"
+      />
+      <div>
+        <div className="mx-auto max-w-6xl px-4">
+          <div className="flex items-start justify-between gap-4 flex-wrap">
 
             {/* Stats strip */}
             {!loading && items.length > 0 && (
@@ -328,7 +319,7 @@ export default function AuctionBrowsePage() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search auctions..."
-              className="rounded-xl px-4 py-2 text-sm ring-1 ring-[color:var(--border)] focus:outline-none"
+              className="h-11 rounded-[8px] px-3 text-[13px] ring-1 ring-[color:var(--border)] focus:outline-none md:h-9"
               style={{ background: "var(--pill)", color: "var(--fg)", minWidth: 200 }}
             />
             <PillSelect value={sort} ariaLabel="Sort auctions" align="right" minWidthPx={150} onChange={(next) => setSort(next)} options={SORT_OPTIONS} />
@@ -340,20 +331,10 @@ export default function AuctionBrowsePage() {
               const count = u.key ? items.filter((i) => i.universe === u.key).length : items.length;
               if (u.key && count === 0) return null;
               return (
-                <button
-                  key={u.key}
-                  onClick={() => setUniverse(u.key)}
-                  className="rounded-full px-3 py-1 text-sm font-medium transition"
-                  style={{
-                    background: universe === u.key ? "var(--theme-gold)" : "var(--pill)",
-                    color: universe === u.key ? "#0B0B0B" : "var(--fg)",
-                  }}
-                >
+                <PillButton key={u.key} variant={universe === u.key ? "active" : "default"} onClick={() => setUniverse(u.key)}>
                   {u.label}
-                  {count > 0 && (
-                    <span className="opacity-60 text-[11px]"> ({count})</span>
-                  )}
-                </button>
+                  {count > 0 && <span className="opacity-60 text-[11px]"> ({count})</span>}
+                </PillButton>
               );
             })}
           </div>

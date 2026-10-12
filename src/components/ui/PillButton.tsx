@@ -8,7 +8,7 @@ export type PillVariant = "default" | "active" | "primary" | "success" | "danger
 type PillButtonProps = {
   children: React.ReactNode;
   variant?: PillVariant;
-  onClick?: () => void;
+  onClick?: (event: React.MouseEvent<HTMLElement>) => void;
   disabled?: boolean;
   title?: string;
   type?: "button" | "submit" | "reset";
@@ -97,7 +97,7 @@ export function PillButton({
         href={disabled ? "#" : href}
         onClick={(e) => {
           if (disabled) { e.preventDefault(); return; }
-          onClick?.();
+          onClick?.(e);
         }}
         aria-disabled={disabled || undefined}
         title={title}

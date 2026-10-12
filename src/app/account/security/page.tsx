@@ -1,5 +1,6 @@
 "use client";
 
+import { PillButton } from "@/components/ui/PillButton";
 import { useEffect, useState } from "react";
 import { AccountTabs } from "@/components/account/AccountTabs";
 import { getCurrentUser, signOut } from "@/lib/auth";
@@ -72,9 +73,7 @@ function Row({ label, value, action, actionLabel }: { label: string; value: stri
         <div className="mt-0.5 text-xs" style={{ color: "var(--muted)" }}>{value}</div>
       </div>
       {action && (
-        <button type="button" onClick={action} className="shrink-0 rounded-[7px] px-4 py-1.5 text-xs font-semibold ring-1" style={{ background: "var(--pill)", color: "var(--fg)", borderColor: "var(--border)" }}>
-          {actionLabel ?? "Change"}
-        </button>
+        <PillButton onClick={action}>{actionLabel ?? "Change"}</PillButton>
       )}
     </div>
   );
@@ -213,23 +212,10 @@ export default function SecurityPage() {
                         className="h-9 min-w-0 flex-1 rounded-[7px] bg-[color:var(--input)] px-3 text-sm ring-1 ring-[color:var(--border)] focus:outline-none"
                         style={{ color: "var(--fg)" }}
                       />
-                      <button
-                        type="button"
-                        onClick={() => void handleChangeEmail()}
-                        disabled={emailChangeSaving}
-                        className="shrink-0 rounded-[7px] px-4 py-1.5 text-xs font-semibold ring-1 disabled:opacity-50"
-                        style={{ background: "var(--pill)", color: "var(--fg)", borderColor: "var(--border)" }}
-                      >
+                      <PillButton onClick={() => void handleChangeEmail()} disabled={emailChangeSaving}>
                         {emailChangeSaving ? "Sending…" : "Send confirmation"}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => { setChangingEmail(false); setNewEmail(""); }}
-                        className="shrink-0 rounded-[7px] px-3 py-1.5 text-xs font-semibold"
-                        style={{ color: "var(--muted)" }}
-                      >
-                        Cancel
-                      </button>
+                      </PillButton>
+                      <PillButton onClick={() => { setChangingEmail(false); setNewEmail(""); }}>Cancel</PillButton>
                     </div>
                   )}
                 </div>
@@ -264,26 +250,14 @@ export default function SecurityPage() {
                           Last used {formatRelativeDate(d.last_used_at)} · expires {formatRelativeDate(d.expires_at)}
                         </div>
                       </div>
-                      <button
-                        type="button"
-                        onClick={() => void handleRevokeDevice(d.id)}
-                        disabled={revokingId === d.id}
-                        className="shrink-0 rounded-[7px] px-3 py-1.5 text-xs font-semibold ring-1 disabled:opacity-50"
-                        style={{ background: "var(--surface)", color: "var(--fg)", borderColor: "var(--border)" }}
-                      >
+                      <PillButton onClick={() => void handleRevokeDevice(d.id)} disabled={revokingId === d.id}>
                         {revokingId === d.id ? "Forgetting…" : "Forget"}
-                      </button>
+                      </PillButton>
                     </div>
                   ))}
-                  <button
-                    type="button"
-                    onClick={() => void handleRevokeDevice(null)}
-                    disabled={revokingId === "all"}
-                    className="mt-1 text-xs font-semibold underline disabled:opacity-50"
-                    style={{ color: "var(--muted)" }}
-                  >
+                  <PillButton onClick={() => void handleRevokeDevice(null)} disabled={revokingId === "all"}>
                     {revokingId === "all" ? "Forgetting all…" : "Forget all devices"}
-                  </button>
+                  </PillButton>
                 </div>
               )}
             </div>
@@ -315,8 +289,8 @@ export default function SecurityPage() {
                   <div className="text-sm font-semibold" style={{ color: "var(--fg)" }}>Sign out everywhere</div>
                   <div className="mt-0.5 text-xs" style={{ color: "var(--muted)" }}>Revoke all active sessions and sign out of all devices.</div>
                 </div>
-                <button
-                  type="button"
+                <PillButton
+                  variant="danger"
                   onClick={async () => {
                     const supabase = getSupabaseBrowserClient();
                     // Signing out everywhere is the "something's wrong" action —
@@ -330,11 +304,9 @@ export default function SecurityPage() {
                     await signOut({ scope: "global" });
                     window.location.href = "/login";
                   }}
-                  className="shrink-0 rounded-[7px] px-4 py-1.5 text-xs font-semibold ring-1"
-                  style={{ background: "rgba(248,113,113,0.1)", color: "#f87171", borderColor: "rgba(248,113,113,0.3)" }}
                 >
                   Sign out all
-                </button>
+                </PillButton>
               </div>
             </div>
           </div>

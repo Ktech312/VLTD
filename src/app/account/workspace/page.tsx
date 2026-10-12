@@ -1,5 +1,6 @@
 "use client";
 
+import { PillButton } from "@/components/ui/PillButton";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -240,15 +241,9 @@ export default function WorkspaceSettingsPage() {
           </Row>
 
           <div className="mt-4 flex items-center gap-3">
-            <button
-              type="button"
-              onClick={() => void handleSaveProfile()}
-              disabled={saving}
-              className="vltd-primary-button rounded-[4px] px-4 py-2 text-sm font-semibold transition"
-              style={{ opacity: saving ? 0.6 : 1 }}
-            >
+            <PillButton onClick={() => void handleSaveProfile()} disabled={saving} className="font-black" style={{ background: "linear-gradient(180deg, #79E7FB, #41C6E4 55%, #2CB1D1)", color: "#06171d", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.5), 0 0 16px rgba(79,211,238,0.25)" }}>
               {saving ? "Saving…" : "Save profile"}
-            </button>
+            </PillButton>
             {saveMsg && <span className="text-sm" style={{ color: "#4ade80" }}>{saveMsg}</span>}
           </div>
         </Section>
@@ -290,9 +285,7 @@ export default function WorkspaceSettingsPage() {
             <Toggle on={showConfidence} onChange={() => setShowConfidence((v) => { saveLocalPrefs({ showConfidence: !v }); return !v; })} />
           </Row>
           <div className="mt-3">
-            <Link href="/ai/drafts" className="inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-semibold ring-1 ring-[color:var(--border)] transition hover:ring-[color:var(--theme-gold)]" style={{ background: "var(--pill)", color: "var(--fg)" }}>
-              View AI draft queue →
-            </Link>
+            <PillButton href="/ai/drafts">View AI draft queue →</PillButton>
           </div>
         </Section>
 
@@ -303,33 +296,13 @@ export default function WorkspaceSettingsPage() {
           >
             {googleConnected ? (
               <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => void handleGoogleExport()}
-                  disabled={googleBusy}
-                  className="vltd-pill-main-glow rounded-full px-3 py-1.5 text-xs font-bold transition disabled:opacity-50"
-                  style={{ background: "var(--pill-active-bg)", border: "none", cursor: googleBusy ? "default" : "pointer" }}
-                >
+                <PillButton variant="active" onClick={() => void handleGoogleExport()} disabled={googleBusy}>
                   {googleBusy ? "Exporting…" : "Export now"}
-                </button>
-                <button
-                  type="button"
-                  onClick={handleGoogleDisconnect}
-                  className="vltd-pill-neutral rounded-[8px] px-3 py-1.5 text-xs font-semibold transition"
-                  style={{ background: "var(--pill)", border: "none", cursor: "pointer" }}
-                >
-                  Disconnect
-                </button>
+                </PillButton>
+                <PillButton onClick={handleGoogleDisconnect}>Disconnect</PillButton>
               </div>
             ) : (
-              <button
-                type="button"
-                onClick={() => void startGoogleConnect()}
-                className="rounded-[8px] px-3 py-1.5 text-xs font-semibold ring-1 ring-[color:var(--border)]"
-                style={{ background: "var(--pill)", color: "var(--fg)" }}
-              >
-                Connect
-              </button>
+              <PillButton onClick={() => void startGoogleConnect()}>Connect</PillButton>
             )}
           </Row>
           <Row label="CSV export" sub="Download your vault as a spreadsheet">

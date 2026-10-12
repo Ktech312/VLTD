@@ -1,5 +1,7 @@
 "use client";
 
+import { PageHeader } from "@/components/layout/PageHeader";
+import { PillButton } from "@/components/ui/PillButton";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { Glyph } from "@/components/ui/Glyph";
@@ -276,30 +278,10 @@ function ItemCard({
             {priceSaved ? "✓" : "Set"}
           </button>
         </div>
-        <Link
-          href={`/vault/item/${encodeURIComponent(item.id)}`}
-          className="inline-flex items-center gap-1 rounded-[7px] px-3 py-1.5 text-xs font-semibold ring-1 ring-[color:var(--border)]"
-          style={{ background: "var(--pill)", color: "var(--fg)" }}
-        >
-          Edit item
-        </Link>
-        <button
-          type="button"
-          onClick={() => onMarkSold(item)}
-          className="inline-flex items-center gap-1 rounded-[7px] px-3 py-1.5 text-xs font-semibold transition"
-          style={{ background: "rgba(74,222,128,0.12)", color: "#4ade80", border: "1px solid rgba(74,222,128,0.25)" }}
-        >
-          Mark sold
-        </button>
+        <PillButton href={`/vault/item/${encodeURIComponent(item.id)}`}>Edit item</PillButton>
+        <PillButton onClick={() => onMarkSold(item)} style={{ background: "rgba(74,222,128,0.12)", color: "#4ade80", boxShadow: "none" }}>Mark sold</PillButton>
         {platform === "ALL" && (
-          <button
-            type="button"
-            onClick={() => setExpanded(!expanded)}
-            className="ml-auto text-xs"
-            style={{ color: "var(--muted)" }}
-          >
-            {expanded ? "Hide platforms ▲" : "All platforms ▼"}
-          </button>
+          <PillButton className="ml-auto" onClick={() => setExpanded(!expanded)}>{expanded ? "Hide platforms ▲" : "All platforms ▼"}</PillButton>
         )}
       </div>
     </article>
@@ -349,22 +331,22 @@ export default function ForSalePage() {
 
   return (
     <div className="" style={{ background: "var(--bg)" }}>
-      {/* Header */}
-      <div className="border-b border-[color:var(--border)]" style={{ background: "var(--surface)" }}>
-        <div className="mx-auto max-w-3xl px-4 py-6">
-          <div className="flex items-center gap-3">
-            <Link href="/vault" className="text-sm" style={{ color: "var(--muted)" }}>Vault</Link>
-            <span style={{ color: "var(--muted)" }}>/</span>
-            <span className="text-sm font-semibold" style={{ color: "var(--fg)" }}>For Sale</span>
-          </div>
-          <h1 className="mt-3 text-2xl font-bold" style={{ color: "var(--fg)" }}>Listing Readiness</h1>
-          <p className="mt-1 text-sm" style={{ color: "var(--muted)" }}>
-            Per-platform gap analysis for your {items.length} for-sale item{items.length !== 1 ? "s" : ""}.
-          </p>
-
+      <PageHeader
+        title="Listing Readiness"
+        description={<>Per-platform gap analysis for your {items.length} for-sale item{items.length !== 1 ? "s" : ""}.</>}
+        contentClassName="max-w-3xl"
+        actions={
+          <PillButton href="/vault">
+            <Glyph name="arrowLeft" size={16} strokeWidth={2} />
+            Vault
+          </PillButton>
+        }
+      />
+      <div>
+        <div className="mx-auto max-w-3xl px-4">
           {/* Stats bar */}
           {items.length > 0 && (
-            <div className="mt-4 flex flex-wrap gap-5">
+            <div className="flex flex-wrap gap-5">
               <div>
                 <span className="text-lg font-bold" style={{ color: "var(--theme-gold)" }}>{items.length}</span>
                 <span className="ml-1.5 text-xs" style={{ color: "var(--muted)" }}>for sale</span>
@@ -432,9 +414,7 @@ export default function ForSalePage() {
                 })}
               </div>
               {platform !== "ALL" && (
-                <button onClick={() => setPlatform("ALL")} className="mt-3 text-xs" style={{ color: "var(--muted)" }}>
-                  ← Show all platforms
-                </button>
+                <PillButton className="mt-3" onClick={() => setPlatform("ALL")}>← Show all platforms</PillButton>
               )}
             </div>
 

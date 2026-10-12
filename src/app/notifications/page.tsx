@@ -1,5 +1,6 @@
 "use client";
 
+import { PageHeader } from "@/components/layout/PageHeader";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { getCurrentUser, getStoredActiveProfileId } from "@/lib/auth";
@@ -47,15 +48,12 @@ export default function NotificationsPage() {
 
   return (
     <div className="min-h-screen bg-[color:var(--bg)] text-[color:var(--fg)]">
-      <div className="mx-auto max-w-2xl px-4 py-10">
-
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-2xl font-bold tracking-tight">Alerts</h1>
-          <p className="mt-1 text-sm text-[color:var(--muted)]">
-            Follows, messages on your exhibitions, and bug reports
-          </p>
-        </div>
+      <PageHeader
+        title="Alerts"
+        description="Follows, messages on your exhibitions, and bug reports"
+        contentClassName="max-w-2xl"
+      />
+      <div className="mx-auto max-w-2xl px-4 pb-10">
 
         {loading && (
           <div className="flex items-center justify-center py-20 text-[color:var(--muted)]">

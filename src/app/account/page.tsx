@@ -494,9 +494,9 @@ export default function AccountPage() {
                     {UNIVERSE_KEYS.map((key) => {
                       const active = focusedUniverses.includes(key);
                       return (
-                        <button
+                        <PillButton
                           key={key}
-                          type="button"
+                          variant={active ? "active" : "default"}
                           onClick={() => {
                             const next = active
                               ? focusedUniverses.filter((k) => k !== key)
@@ -504,21 +504,10 @@ export default function AccountPage() {
                             setFocusedUniverses(next);
                             setPrimaryFocus(next[0] ?? "");
                           }}
-                          className="inline-flex items-center gap-1.5 rounded-full px-3 py-2 text-sm font-semibold transition ring-1"
-                          style={active ? {
-                            background: "var(--pill-active-bg)",
-                            border: "1px solid var(--frame-ring)",
-                            color: "var(--theme-text-primary, #ECEDEF)",
-                            boxShadow: "0 0 12px var(--frame-glow-soft)",
-                          } : {
-                            background: "var(--theme-card)",
-                            border: "1px solid var(--theme-border, rgba(203,208,213,0.12))",
-                            color: "var(--muted)",
-                          }}
                         >
                           <Glyph name={universeGlyphName(key)} size={16} />
                           <span>{UNIVERSE_LABEL[key]}</span>
-                        </button>
+                        </PillButton>
                       );
                     })}
                   </div>
@@ -540,15 +529,9 @@ export default function AccountPage() {
               </div>
 
               <div className="mt-6">
-                <button
-                  type="button"
-                  disabled={saving}
-                  onClick={() => void handleSave()}
-                  className="inline-flex h-12 items-center rounded-[8px] px-6 text-sm font-black text-[#0B0B0B] transition hover:-translate-y-0.5 hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-50"
-                  style={{ background: 'var(--theme-gold-gradient)', boxShadow: 'var(--theme-gold-glow)' }}
-                >
+                <PillButton onClick={() => void handleSave()} disabled={saving} className="font-black" style={{ background: "var(--theme-gold-gradient)", boxShadow: "var(--theme-gold-glow)", color: "#0B0B0B" }}>
                   {saving ? "Saving..." : "Save changes"}
-                </button>
+                </PillButton>
               </div>
             </div>
 
@@ -632,26 +615,8 @@ export default function AccountPage() {
           </div>
           <div className="rounded-2xl border border-[color:var(--border)] p-4" style={{ background: "var(--theme-card)" }}>
             <div className="flex flex-wrap gap-2">
-              <button
-                type="button"
-                onClick={() => setAvatarMode("EMOJI")}
-                className="rounded-full px-3 py-1.5 text-xs font-semibold ring-1"
-                style={avatarMode === "EMOJI"
-                  ? { background: "var(--pill-active-bg)", color: "var(--theme-gold, #C8CDD2)", borderColor: "var(--frame-ring)" }
-                  : { background: "var(--pill)", color: "var(--muted)", borderColor: "var(--border)" }}
-              >
-                Emoji
-              </button>
-              <button
-                type="button"
-                onClick={() => setAvatarMode("IMAGE")}
-                className="rounded-full px-3 py-1.5 text-xs font-semibold ring-1"
-                style={avatarMode === "IMAGE"
-                  ? { background: "var(--pill-active-bg)", color: "var(--theme-gold, #C8CDD2)", borderColor: "var(--frame-ring)" }
-                  : { background: "var(--pill)", color: "var(--muted)", borderColor: "var(--border)" }}
-              >
-                Image upload
-              </button>
+              <PillButton variant={avatarMode === "EMOJI" ? "active" : "default"} onClick={() => setAvatarMode("EMOJI")}>Emoji</PillButton>
+              <PillButton variant={avatarMode === "IMAGE" ? "active" : "default"} onClick={() => setAvatarMode("IMAGE")}>Image upload</PillButton>
             </div>
 
             {avatarMode === "EMOJI" ? (
@@ -914,15 +879,9 @@ export default function AccountPage() {
           </div>
 
           <div className="mt-5 flex items-center gap-4">
-            <button
-              type="button"
-              disabled={contactSaving}
-              onClick={() => void handleContactSave()}
-              className="inline-flex h-12 items-center rounded-[8px] px-6 text-sm font-black text-[#0B0B0B] transition hover:-translate-y-0.5 hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-50"
-              style={{ background: 'var(--theme-gold-gradient)', boxShadow: 'var(--theme-gold-glow)' }}
-            >
+            <PillButton onClick={() => void handleContactSave()} disabled={contactSaving} className="font-black" style={{ background: "var(--theme-gold-gradient)", boxShadow: "var(--theme-gold-glow)", color: "#0B0B0B" }}>
               {contactSaving ? "Saving..." : "Save contact info"}
-            </button>
+            </PillButton>
             {contactSuccess && (
               <span className="text-sm text-emerald-400">{contactSuccess}</span>
             )}
@@ -966,44 +925,27 @@ export default function AccountPage() {
               {UNIVERSE_KEYS.map((key) => {
                 const active = displayedUniverses.includes(key);
                 return (
-                  <button
+                  <PillButton
                     key={key}
-                    type="button"
+                    variant={active ? "active" : "default"}
                     onClick={() =>
                       setDisplayedUniverses((prev) =>
                         active ? prev.filter((k) => k !== key) : [...prev, key]
                       )
                     }
-                    className="inline-flex items-center gap-1.5 rounded-full px-3 py-2 text-sm font-semibold transition ring-1 min-h-[40px]"
-                    style={active ? {
-                      background: "var(--pill-active-bg)",
-                      border: "1px solid var(--frame-ring)",
-                      color: "var(--theme-text-primary, #ECEDEF)",
-                      boxShadow: "0 0 12px var(--frame-glow-soft)",
-                    } : {
-                      background: "var(--theme-card)",
-                      border: "1px solid var(--theme-border, rgba(203,208,213,0.12))",
-                      color: "var(--muted)",
-                    }}
                   >
                     <Glyph name={universeGlyphName(key)} size={16} />
                     <span>{UNIVERSE_LABEL[key]}</span>
-                  </button>
+                  </PillButton>
                 );
               })}
             </div>
           )}
 
           <div className="flex items-center gap-4">
-            <button
-              type="button"
-              disabled={universeFocusSaving}
-              onClick={() => void handleUniverseFocusSave()}
-              className="inline-flex h-12 items-center rounded-[8px] px-6 text-sm font-black text-[#0B0B0B] transition hover:-translate-y-0.5 hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-50"
-              style={{ background: "var(--theme-gold-gradient)", boxShadow: "var(--theme-gold-glow)" }}
-            >
+            <PillButton onClick={() => void handleUniverseFocusSave()} disabled={universeFocusSaving} className="font-black" style={{ background: "var(--theme-gold-gradient)", boxShadow: "var(--theme-gold-glow)", color: "#0B0B0B" }}>
               {universeFocusSaving ? "Saving..." : "Save"}
-            </button>
+            </PillButton>
             {universeFocusSuccess && (
               <span className="text-sm text-emerald-400">{universeFocusSuccess}</span>
             )}

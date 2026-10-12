@@ -1,5 +1,7 @@
 "use client";
 
+import { PillSelect } from "@/components/ui/PillSelect";
+import { PillButton } from "@/components/ui/PillButton";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -163,19 +165,8 @@ export default function TeamPage() {
                   className={`${inputCls} flex-1`}
                   style={inputStyle}
                 />
-                <select value={inviteRole} onChange={(e) => setInviteRole(e.target.value as "admin" | "member")} className={inputCls} style={{ ...inputStyle, maxWidth: 130 }}>
-                  <option value="member">Member</option>
-                  <option value="admin">Admin</option>
-                </select>
-                <button
-                  type="button"
-                  onClick={() => void handleInvite()}
-                  disabled={busy || !inviteEmail.trim()}
-                  className="rounded-[8px] px-4 py-2 text-sm font-bold text-black transition disabled:opacity-40"
-                  style={{ background: "linear-gradient(135deg,#8C9298,#C8CDD2)" }}
-                >
-                  {busy ? "…" : "Add"}
-                </button>
+                <PillSelect value={inviteRole} ariaLabel="Role" align="left" minWidthPx={120} onChange={(next) => setInviteRole(next as "admin" | "member")} options={[{ value: "member", label: "Member" }, { value: "admin", label: "Admin" }]} />
+                <PillButton onClick={() => void handleInvite()} disabled={busy || !inviteEmail.trim()} className="font-black" style={{ background: "linear-gradient(180deg, #79E7FB, #41C6E4 55%, #2CB1D1)", color: "#06171d", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.5), 0 0 16px rgba(79,211,238,0.25)" }}>{busy ? "…" : "Add"}</PillButton>
               </div>
               <p className="mt-2 text-[11px] text-[color:var(--muted2)]">
                 They need a VLTD account first. Admins can manage items and invite; members can view and add items (no delete/invite).
@@ -201,22 +192,10 @@ export default function TeamPage() {
                   </span>
                   {canManage && m.role !== "owner" && !isMe && (
                     <div className="flex shrink-0 items-center gap-1.5">
-                      <button
-                        type="button"
-                        onClick={() => void handleRole(m, m.role === "admin" ? "member" : "admin")}
-                        className="rounded-[7px] px-2.5 py-1 text-[10px] font-semibold ring-1 ring-[color:var(--border)] transition hover:bg-[color:var(--pill)]"
-                        style={{ color: "var(--muted)" }}
-                      >
+                      <PillButton onClick={() => void handleRole(m, m.role === "admin" ? "member" : "admin")}>
                         {m.role === "admin" ? "Make member" : "Make admin"}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => void handleRemove(m)}
-                        className="rounded-[7px] px-2.5 py-1 text-[10px] font-semibold ring-1 ring-red-400/30 transition hover:bg-red-500/10"
-                        style={{ color: "#f87171" }}
-                      >
-                        Remove
-                      </button>
+                      </PillButton>
+                      <PillButton variant="danger" onClick={() => void handleRemove(m)}>Remove</PillButton>
                     </div>
                   )}
                 </div>
@@ -247,15 +226,9 @@ export default function TeamPage() {
                 className={`${inputCls} mt-2`}
                 style={inputStyle}
               />
-              <button
-                type="button"
-                onClick={() => void handleTransfer()}
-                disabled={transferring || !transferEmail.trim() || transferConfirm.trim() !== profile.display_name}
-                className="mt-3 w-full rounded-[8px] px-4 py-2.5 text-sm font-bold transition disabled:opacity-40"
-                style={{ background: "rgba(248,113,113,0.15)", color: "#f87171", border: "1px solid rgba(248,113,113,0.4)" }}
-              >
+              <PillButton variant="danger" className="mt-3" onClick={() => void handleTransfer()} disabled={transferring || !transferEmail.trim() || transferConfirm.trim() !== profile.display_name}>
                 {transferring ? "Transferring…" : "Transfer ownership"}
-              </button>
+              </PillButton>
             </div>
           )}
         </>

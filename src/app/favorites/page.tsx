@@ -1,5 +1,7 @@
 "use client";
 
+import { PageHeader } from "@/components/layout/PageHeader";
+import { PillButton } from "@/components/ui/PillButton";
 import { PillSelect } from "@/components/ui/PillSelect";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
@@ -195,22 +197,16 @@ export default function FavoritesPage() {
 
   return (
     <div className="" style={{ background: "var(--bg)" }}>
-      {/* Header */}
-      <div className="mx-auto max-w-2xl px-4 pt-6">
-        <div className="rounded-[9px] border border-[color:var(--border)] px-4 py-5" style={{ background: "var(--surface)" }}>
-          <div className="flex items-center gap-3">
-            <Link href="/vault" className="text-sm" style={{ color: "var(--muted)" }}>Vault</Link>
-            <span style={{ color: "var(--muted)" }}>/</span>
-            <span className="text-sm font-semibold" style={{ color: "var(--fg)" }}>Favorites</span>
-          </div>
-          <h1 className="mt-3 text-2xl font-bold" style={{ color: "var(--fg)" }}>Favorites</h1>
-          <p className="mt-1 text-sm" style={{ color: "var(--muted)" }}>
-            Items and exhibitions you've saved from across VLTD.
-          </p>
-
+      <PageHeader
+        title="Favorites"
+        description="Items and exhibitions you've saved from across VLTD."
+        contentClassName="max-w-2xl"
+      />
+      <div className="mx-auto max-w-2xl px-4">
+        <div>
           {/* Stats bar */}
           {!loading && favorites.length > 0 && (
-            <div className="mt-4 flex items-center gap-6">
+            <div className="flex items-center gap-6">
               <div>
                 <span className="text-lg font-bold" style={{ color: "var(--theme-gold)" }}>{favorites.length}</span>
                 <span className="ml-1.5 text-xs" style={{ color: "var(--muted)" }}>saved</span>
@@ -246,39 +242,19 @@ export default function FavoritesPage() {
             <p className="mt-2 text-sm" style={{ color: "var(--muted)" }}>
               Browse the Discover page and tap the heart on any item or exhibition to save it here.
             </p>
-            <Link
-              href="/discover"
-              className="mt-6 inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold"
-              style={{ background: "linear-gradient(180deg,#79E7FB,#41C6E4 55%,#2CB1D1)", color: "#06171d" }}
-            >
-              Explore Discover →
-            </Link>
+            <PillButton href="/discover" className="mt-6 font-black" style={{ background: "linear-gradient(180deg, #79E7FB, #41C6E4 55%, #2CB1D1)", color: "#06171d", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.5), 0 0 16px rgba(79,211,238,0.25)" }}>Explore Discover →</PillButton>
           </div>
         ) : (
           <>
             {/* Filter + Sort bar */}
             <div className="flex flex-wrap items-center justify-between gap-3">
               {/* Tabs */}
-              <div
-                className="flex gap-1 rounded-xl p-1"
-                style={{ background: "var(--pill)" }}
-              >
+              <div className="flex flex-wrap gap-2">
                 {TABS.map((t) => (
-                  <button
-                    key={t.key}
-                    onClick={() => setFilter(t.key)}
-                    className="rounded-lg px-3 py-1.5 text-xs font-semibold transition"
-                    style={
-                      filter === t.key
-                        ? { background: "linear-gradient(180deg,#79E7FB,#41C6E4 55%,#2CB1D1)", color: "#06171d" }
-                        : { color: "var(--muted)" }
-                    }
-                  >
+                  <PillButton key={t.key} variant={filter === t.key ? "active" : "default"} onClick={() => setFilter(t.key)}>
                     {t.label}
-                    {t.count > 0 && (
-                      <span className="ml-1.5 opacity-70">{t.count}</span>
-                    )}
-                  </button>
+                    {t.count > 0 && <span className="opacity-70">{t.count}</span>}
+                  </PillButton>
                 ))}
               </div>
 
@@ -289,7 +265,7 @@ export default function FavoritesPage() {
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   placeholder="Search…"
-                  className="h-8 rounded-xl px-3 text-xs ring-1 ring-[color:var(--border)] focus:outline-none"
+                  className="h-11 rounded-[8px] px-3 text-[13px] ring-1 ring-[color:var(--border)] focus:outline-none md:h-9"
                   style={{ background: "var(--pill)", color: "var(--fg)", width: 140 }}
                 />
                 <PillSelect value={sort} ariaLabel="Sort favorites" align="right" minWidthPx={140} onChange={(next) => setSort(next as Sort)} options={[{ value: "saved", label: "Recently saved" }, { value: "alpha", label: "A → Z" }]} />

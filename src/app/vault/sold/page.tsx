@@ -1,5 +1,7 @@
 "use client";
 
+import { PageHeader } from "@/components/layout/PageHeader";
+import { PillButton } from "@/components/ui/PillButton";
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 
@@ -511,17 +513,15 @@ function SoldCard({
           </div>
         </div>
 
-        <button
-          type="button"
+        <PillButton
           onClick={(event) => {
             event.preventDefault();
             event.stopPropagation();
             onReturnToVault(item);
           }}
-          className="shrink-0 rounded-[7px] bg-gold/14 px-2.5 py-1.5 text-[10px] font-semibold text-cyan-100 ring-1 ring-cyan-300/25 transition hover:bg-gold/22"
         >
           Return
-        </button>
+        </PillButton>
       </div>
     </article>
   );
@@ -615,36 +615,22 @@ export default function SoldPage() {
   }
 
   return (
+    <>
+    <PageHeader
+      title="Sold Items"
+      description="Realized sales history using the same compact management layout as Vault."
+      contentClassName="max-w-[1500px]"
+      actions={
+        <>
+          <PillButton href="/sales">Sales History</PillButton>
+          <PillButton href="/vault">Back to Vault</PillButton>
+        </>
+      }
+    />
     <main className="bg-[color:var(--bg)] text-[color:var(--fg)]">
-      <div className="mx-auto max-w-[1500px] px-3 py-3 sm:px-4 sm:py-4">
+      <div className="mx-auto max-w-[1500px] px-3 pb-3 sm:px-4 sm:pb-4">
         <section className="relative overflow-hidden rounded-[18px] border border-[color:var(--theme-border)] bg-[color:var(--theme-card)] px-4 py-3 shadow-[0_14px_40px_rgba(0,0,0,0.2)]">
           <div className="relative flex flex-col gap-4">
-            <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-              <div className="max-w-2xl">
-                <div className="text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">SOLD VAULT</div>
-                <h1 className="mt-2 text-[1.7rem] font-semibold leading-tight sm:text-[1.9rem]">
-                  Sold Items
-                </h1>
-                <div className="mt-1.5 text-sm text-[color:var(--muted)]">
-                  Realized sales history using the same compact management layout as Vault.
-                </div>
-              </div>
-              <div className="shrink-0 flex flex-wrap gap-2">
-                <Link
-                  href="/sales"
-                  className="inline-flex h-9 items-center justify-center rounded-full bg-[color:var(--pill)] px-4 text-sm ring-1 ring-[color:var(--border)] hover:bg-[color:var(--surface-hover)]"
-                >
-                  Sales History
-                </Link>
-                <Link
-                  href="/vault"
-                  className="inline-flex h-9 items-center justify-center rounded-full bg-[color:var(--pill)] px-4 text-sm ring-1 ring-[color:var(--border)] hover:bg-[color:var(--surface-hover)]"
-                >
-                  Back to Vault
-                </Link>
-              </div>
-            </div>
-
             <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
               <div className="rounded-[14px] bg-[color:var(--theme-elevated)] px-3 py-2 ring-1 ring-[color:var(--theme-border)]">
                 <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[color:var(--muted2)]">Sold</div>
@@ -692,18 +678,7 @@ export default function SoldPage() {
               {universeOptions.length > 2 && (
                 <div className="flex flex-wrap gap-1.5">
                   {universeOptions.map((u) => (
-                    <button
-                      key={u}
-                      type="button"
-                      onClick={() => setUniverseFilter(u)}
-                      className="h-9 rounded-full px-3 text-xs font-semibold ring-1 transition"
-                      style={universeFilter === u
-                        ? { background: "linear-gradient(180deg,#79E7FB,#41C6E4 55%,#2CB1D1)", color: "#06171d", borderColor: "transparent" }
-                        : { background: "var(--pill)", color: "var(--muted)", borderColor: "var(--border)" }
-                      }
-                    >
-                      {u}
-                    </button>
+                    <PillButton key={u} variant={universeFilter === u ? "active" : "default"} onClick={() => setUniverseFilter(u)}>{u}</PillButton>
                   ))}
                 </div>
               )}
@@ -759,5 +734,6 @@ export default function SoldPage() {
         </button>
       ) : null}
     </main>
+    </>
   );
 }

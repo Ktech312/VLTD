@@ -1,5 +1,6 @@
 "use client";
 
+import { PillButton } from "@/components/ui/PillButton";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { useEffect, useMemo, useState } from "react";
@@ -203,33 +204,19 @@ function HeaderAction({
   href?: string;
   primary?: boolean;
 }) {
-  const style = primary
-    ? {
-        background: "linear-gradient(115deg, rgba(255,255,255,0.35) 0%, rgba(255,255,255,0) 45%, rgba(255,255,255,0.18) 100%), linear-gradient(180deg, #79E7FB 0%, #41C6E4 55%, #2CB1D1 100%)",
-        border: "1px solid rgba(79,211,238,0.5)",
-        color: "#06171d",
-        boxShadow: "inset 0 1px 0 rgba(255,255,255,0.5), 0 0 16px rgba(79,211,238,0.25)",
-      }
-    : {
-        background: "var(--surface)",
-        border: "1px solid rgba(203,208,213,0.34)",
-        color: "var(--fg)",
-      };
-
-  const className = "inline-flex items-center justify-center gap-2 rounded-[6px] px-4 py-1.5 text-sm font-bold transition hover:brightness-110";
-
-  if (href) {
-    return (
-      <Link href={href} className={className} style={style}>
-        {children}
-      </Link>
-    );
-  }
-
   return (
-    <button type="button" onClick={onClick} className={className} style={style}>
+    <PillButton
+      href={href}
+      onClick={onClick}
+      className={primary ? "font-black" : ""}
+      style={
+        primary
+          ? { background: "linear-gradient(180deg, #79E7FB, #41C6E4 55%, #2CB1D1)", color: "#06171d", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.5), 0 0 16px rgba(79,211,238,0.25)" }
+          : undefined
+      }
+    >
       {children}
-    </button>
+    </PillButton>
   );
 }
 

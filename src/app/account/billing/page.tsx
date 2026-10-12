@@ -1,5 +1,6 @@
 "use client";
 
+import { PillButton } from "@/components/ui/PillButton";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { AccountTabs } from "@/components/account/AccountTabs";
@@ -240,30 +241,17 @@ export default function BillingPage() {
                     ))}
                   </ul>
                   {!isCurrent && plan.key !== "free" && (
-                    <button
-                      type="button"
+                    <PillButton
                       onClick={() => handleUpgrade(plan.key)}
                       disabled={busyPlan !== null}
-                      className="mt-4 w-full rounded-[8px] py-2 text-xs font-semibold ring-1 disabled:opacity-50"
-                      style={{
-                        background: plan.key === "business" ? "var(--theme-gold)" : "var(--pill)",
-                        color: plan.key === "business" ? "#0B0B0B" : "var(--fg)",
-                        borderColor: "var(--border)",
-                      }}
+                      className="mt-4"
+                      style={plan.key === "business" ? { background: "var(--theme-gold)", color: "#0B0B0B" } : undefined}
                     >
                       {busyPlan === plan.key ? "Redirecting…" : "Upgrade →"}
-                    </button>
+                    </PillButton>
                   )}
                   {!isCurrent && plan.key === "free" && (
-                    <button
-                      type="button"
-                      onClick={openBillingPortal}
-                      disabled={busyPortal}
-                      className="mt-4 w-full rounded-[8px] py-2 text-xs font-semibold ring-1 disabled:opacity-50"
-                      style={{ background: "var(--pill)", color: "var(--fg)", borderColor: "var(--border)" }}
-                    >
-                      Downgrade
-                    </button>
+                    <PillButton onClick={openBillingPortal} disabled={busyPortal} className="mt-4">Downgrade</PillButton>
                   )}
                 </div>
               );
@@ -277,15 +265,7 @@ export default function BillingPage() {
             <div className="text-[11px] font-semibold uppercase tracking-widest mb-3" style={{ color: "var(--muted)" }}>Payment method</div>
             <div className="flex items-center justify-between gap-3">
               <div className="text-sm" style={{ color: "var(--muted)" }}>Managed via Stripe billing portal</div>
-              <button
-                type="button"
-                onClick={openBillingPortal}
-                disabled={busyPortal}
-                className="rounded-[7px] px-3 py-1.5 text-xs ring-1 disabled:opacity-50"
-                style={{ background: "var(--pill)", color: "var(--muted)", borderColor: "var(--border)" }}
-              >
-                {busyPortal ? "Opening…" : "Manage"}
-              </button>
+              <PillButton onClick={openBillingPortal} disabled={busyPortal}>{busyPortal ? "Opening…" : "Manage"}</PillButton>
             </div>
           </div>
         )}
@@ -303,15 +283,7 @@ export default function BillingPage() {
           <div className="rounded-2xl p-5 ring-1 ring-[color:rgba(248,113,113,0.3)]" style={{ background: "rgba(248,113,113,0.04)" }}>
             <div className="text-[11px] font-semibold uppercase tracking-widest mb-1" style={{ color: "#f87171" }}>Cancel subscription</div>
             <p className="text-xs mb-3" style={{ color: "var(--muted)" }}>Your vault data is always yours. Canceling downgrades to Free at the end of the billing period.</p>
-            <button
-              type="button"
-              onClick={openBillingPortal}
-              disabled={busyPortal}
-              className="rounded-[7px] px-4 py-1.5 text-xs font-semibold ring-1 disabled:opacity-50"
-              style={{ background: "rgba(248,113,113,0.08)", color: "#f87171", borderColor: "rgba(248,113,113,0.3)" }}
-            >
-              {busyPortal ? "Opening…" : "Cancel plan"}
-            </button>
+            <PillButton variant="danger" onClick={openBillingPortal} disabled={busyPortal}>{busyPortal ? "Opening…" : "Cancel plan"}</PillButton>
           </div>
         )}
           </div>

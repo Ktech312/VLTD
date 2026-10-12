@@ -1,5 +1,7 @@
 "use client";
 
+import { PageHeader } from "@/components/layout/PageHeader";
+import { PillButton } from "@/components/ui/PillButton";
 import { DiscoverNav } from "@/components/SectionNav";
 import Link from "next/link";
 import { useEffect, useState } from "react";
@@ -44,36 +46,28 @@ export default function SavedPage() {
   }
 
   return (
+    <>
+      <PageHeader
+        title="Your Saves"
+        description="Items you swiped right on in The Flip."
+        contentClassName="max-w-2xl"
+        actions={
+          <>
+            <PillButton onClick={() => router.back()} title="Back">
+              <Glyph name="arrowLeft" size={16} strokeWidth={2} />
+              Back
+            </PillButton>
+            {watchlist.length > 0 && (
+              <PillButton variant="danger" onClick={handleClearAll}>
+                Clear all
+              </PillButton>
+            )}
+          </>
+        }
+      />
     <main className="text-[color:var(--fg)]">
       <DiscoverNav activeKey="saved" />
-      <div className="mx-auto max-w-2xl px-4 py-6 sm:px-6">
-
-        {/* Header */}
-        <div className="flex items-center gap-3 mb-6">
-          <button
-            type="button"
-            onClick={() => router.back()}
-            className="grid h-9 w-9 shrink-0 place-items-center rounded-full border border-[color:var(--border)] bg-[color:var(--surface)] text-[color:var(--muted)] transition hover:text-[color:var(--fg)]"
-            aria-label="Back"
-          >
-            <Glyph name="arrowLeft" size={16} strokeWidth={2} />
-          </button>
-          <div className="flex-1 min-w-0">
-            <div className="text-[11px] tracking-[0.22em] text-[color:var(--muted2)] uppercase">Saved</div>
-            <h1 className="text-2xl font-black tracking-[-0.04em] leading-tight text-text-primary">
-              Your Saves
-            </h1>
-          </div>
-          {watchlist.length > 0 && (
-            <button
-              type="button"
-              onClick={handleClearAll}
-              className="text-xs text-[color:var(--muted)] hover:text-red-400 transition"
-            >
-              Clear all
-            </button>
-          )}
-        </div>
+      <div className="mx-auto max-w-2xl px-4 pb-6 sm:px-6">
 
         {/* Empty state */}
         {loaded && watchlist.length === 0 && (
@@ -200,5 +194,6 @@ export default function SavedPage() {
 
       </div>
     </main>
+    </>
   );
 }

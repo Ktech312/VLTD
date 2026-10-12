@@ -40,7 +40,7 @@ function SaveChip({ saved, onToggle }: { saved: boolean; onToggle: () => void })
         onToggle();
       }}
       aria-pressed={saved}
-      className="inline-flex items-center gap-1 text-[11px] font-semibold transition"
+      className="relative inline-flex items-center gap-1 text-[11px] font-semibold transition after:absolute after:-inset-x-2 after:-inset-y-4 after:content-['']"
       style={{ color: saved ? "var(--theme-gold,#C8CDD2)" : "var(--muted)" }}
     >
       <Glyph name="favorite" size={12} strokeWidth={2} filled={saved} />

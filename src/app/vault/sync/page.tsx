@@ -1,5 +1,6 @@
 "use client";
 
+import { PageHeader } from "@/components/layout/PageHeader";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
@@ -176,26 +177,16 @@ export default function VaultSyncPage() {
   }
 
   return (
+    <>
+    <PageHeader
+      title="Offline capture queue"
+      description="Review the item records and local images waiting to sync from this device."
+      contentClassName="max-w-6xl"
+      actions={<PillButton href="/vault">Back to Vault</PillButton>}
+    />
     <main className="bg-[color:var(--bg)] text-[color:var(--fg)]">
-      <div className="mx-auto flex w-full max-w-6xl flex-col px-4 py-5 sm:px-6 sm:py-8">
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div>
-            <div className="text-[11px] uppercase tracking-[0.22em] text-[color:var(--muted2)]">VLTD Sync</div>
-            <h1 className="mt-1 text-2xl font-semibold tracking-tight sm:text-3xl">Offline capture queue</h1>
-            <p className="mt-2 max-w-3xl text-sm text-[color:var(--muted)]">
-              Review the item records and local images waiting to sync from this device.
-            </p>
-          </div>
-
-          <Link
-            href="/vault"
-            className="inline-flex h-11 items-center rounded-full px-4 text-sm font-medium ring-1 ring-[color:var(--border)] transition hover:bg-[color:var(--pill)]"
-          >
-            Back to Vault
-          </Link>
-        </div>
-
-        <div className="mt-5 grid gap-4 lg:grid-cols-[0.85fr_1.15fr]">
+      <div className="mx-auto flex w-full max-w-6xl flex-col px-4 pb-5 sm:px-6 sm:pb-8">
+        <div className="grid gap-4 lg:grid-cols-[0.85fr_1.15fr]">
           <div className="space-y-4">
             <SurfaceCard className="p-4 sm:p-5">
               <div className="text-[11px] uppercase tracking-[0.18em] text-[color:var(--muted2)]">Status</div>
@@ -334,9 +325,9 @@ export default function VaultSyncPage() {
                         <div className="mt-1 text-xs text-[color:var(--muted)]">{item.status || "COLLECTION"} · ID {item.id}</div>
                       </div>
                       <div className="flex shrink-0 flex-wrap gap-2">
-                        <Link href={`/vault/item/${item.id}`} className="inline-flex min-h-11 items-center rounded-full px-4 text-xs font-semibold ring-1 ring-[color:var(--border)]">Review item</Link>
-                        <button type="button" onClick={() => void handleUploadOne(item)} disabled={Boolean(reviewBusyId)} className="min-h-11 rounded-full px-4 text-xs font-semibold ring-1 ring-[color:var(--border)] disabled:opacity-50">{reviewBusyId === String(item.id) ? "Uploading…" : "Keep and upload"}</button>
-                        <button type="button" onClick={() => setRemoveCandidate(item)} disabled={Boolean(reviewBusyId)} className="min-h-11 rounded-full px-4 text-xs font-semibold text-red-300 ring-1 ring-red-400/40 disabled:opacity-50">Remove local copy</button>
+                        <PillButton href={`/vault/item/${item.id}`}>Review item</PillButton>
+                        <PillButton onClick={() => void handleUploadOne(item)} disabled={Boolean(reviewBusyId)}>{reviewBusyId === String(item.id) ? "Uploading…" : "Keep and upload"}</PillButton>
+                        <PillButton variant="danger" onClick={() => setRemoveCandidate(item)} disabled={Boolean(reviewBusyId)}>Remove local copy</PillButton>
                       </div>
                     </div>
                   </RowCard>
@@ -354,11 +345,12 @@ export default function VaultSyncPage() {
             <p className="mt-2 text-sm text-[color:var(--muted)]">“{removeCandidate.title || "Untitled item"}” is not in the cloud. This removes it only from this browser and cannot be undone here.</p>
             <div className="mt-5 flex justify-end gap-2">
               <PillButton onClick={() => setRemoveCandidate(null)}>Cancel</PillButton>
-              <button type="button" onClick={handleRemoveLocal} className="min-h-11 rounded-full bg-red-500 px-5 text-sm font-semibold text-white">Remove local copy</button>
+              <PillButton variant="danger" onClick={handleRemoveLocal}>Remove local copy</PillButton>
             </div>
           </div>
         </div>
       ) : null}
     </main>
+    </>
   );
 }

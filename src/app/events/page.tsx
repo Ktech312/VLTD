@@ -1,5 +1,6 @@
 "use client";
 
+import { PageHeader } from "@/components/layout/PageHeader";
 import { DiscoverNav } from "@/components/SectionNav";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { AppIcon } from "@/components/ui/AppIcon";
@@ -701,7 +702,13 @@ export default function EventsPage() {
   ];
 
   return (
-    <main className="min-h-dvh bg-[color:var(--bg)] px-4 pb-24 pt-5 text-[color:var(--fg)] md:px-8 lg:px-10">
+    <>
+    <PageHeader
+      title="Events"
+      description="Conventions, card shows, auctions and drops."
+      contentClassName="max-w-[1360px]"
+    />
+    <main className="min-h-dvh bg-[color:var(--bg)] px-4 pb-24 text-[color:var(--fg)] md:px-8 lg:px-10">
       <div className="mx-auto max-w-[1360px]">
         <div className="-mx-4 md:-mx-8 lg:-mx-10"><DiscoverNav activeKey="events" /></div>
         {featuredEvent ? (
@@ -1026,5 +1033,6 @@ export default function EventsPage() {
         ) : null}
       </div>
     </main>
+    </>
   );
 }

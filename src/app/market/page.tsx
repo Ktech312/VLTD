@@ -1,5 +1,7 @@
 "use client";
 
+import { PageHeader } from "@/components/layout/PageHeader";
+import { PillButton } from "@/components/ui/PillButton";
 import { PillSelect } from "@/components/ui/PillSelect";
 import { DiscoverNav } from "@/components/SectionNav";
 import { useEffect, useMemo, useState } from "react";
@@ -208,22 +210,16 @@ export default function MarketPage() {
 
   return (
     <div className="" style={{ background: "var(--bg)" }}>
+      <PageHeader
+        title="VLTD Market"
+        description="Browse collectibles for sale by VLTD collectors. Contact sellers through their public vault."
+        contentClassName="max-w-6xl"
+      />
       <DiscoverNav activeKey="market" />
-      {/* Header */}
-      <div className="border-b border-[color:var(--border)]" style={{ background: "var(--surface)" }}>
-        <div className="mx-auto max-w-6xl px-4 py-6">
-          <div className="flex items-center gap-3">
-            <Link href="/" className="text-sm" style={{ color: "var(--muted)" }}>VLTD</Link>
-            <span style={{ color: "var(--muted)" }}>/</span>
-            <span className="text-sm font-semibold" style={{ color: "var(--fg)" }}>Market</span>
-          </div>
-          <h1 className="mt-3 text-2xl font-bold" style={{ color: "var(--fg)" }}>VLTD Market</h1>
-          <p className="mt-1 text-sm" style={{ color: "var(--muted)" }}>
-            Browse collectibles for sale by VLTD collectors. Contact sellers through their public vault.
-          </p>
-
+      <div>
+        <div className="mx-auto max-w-6xl px-4">
           {!loading && items.length > 0 && (
-            <div className="mt-4 flex flex-wrap gap-4 text-sm" style={{ color: "var(--muted)" }}>
+            <div className="flex flex-wrap gap-4 text-sm" style={{ color: "var(--muted)" }}>
               <span><strong style={{ color: "var(--fg)" }}>{items.length}</strong> items listed</span>
               {displayed.length !== items.length && (
                 <span><strong style={{ color: "var(--fg)" }}>{displayed.length}</strong> matching</span>
@@ -238,7 +234,7 @@ export default function MarketPage() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search listings..."
-              className="rounded-xl px-4 py-2 text-sm ring-1 ring-[color:var(--border)] focus:outline-none"
+              className="h-11 rounded-[8px] px-3 text-[13px] ring-1 ring-[color:var(--border)] focus:outline-none md:h-9"
               style={{ background: "var(--pill)", color: "var(--fg)", minWidth: 200 }}
             />
             <PillSelect value={sort} ariaLabel="Sort listings" align="left" minWidthPx={170} onChange={(next) => setSort(next)} options={SORT_OPTIONS} />
@@ -250,17 +246,9 @@ export default function MarketPage() {
               if (!u.key && items.length === 0) return null;
               if (u.key && count === 0) return null;
               return (
-                <button
-                  key={u.key}
-                  onClick={() => setUniverse(u.key)}
-                  className="rounded-full px-3 py-1 text-sm font-medium transition"
-                  style={{
-                    background: universe === u.key ? "var(--theme-gold)" : "var(--pill)",
-                    color: universe === u.key ? "#0B0B0B" : "var(--fg)",
-                  }}
-                >
+                <PillButton key={u.key} variant={universe === u.key ? "active" : "default"} onClick={() => setUniverse(u.key)}>
                   {u.label}{count > 0 && <span className="opacity-60 text-[11px]"> ({count})</span>}
-                </button>
+                </PillButton>
               );
             })}
           </div>
@@ -282,13 +270,7 @@ export default function MarketPage() {
                 : "No items for sale yet. Mark items as For Sale in your vault to list them here."}
             </div>
             {(search || universe) && (
-              <button
-                onClick={() => { setSearch(""); setUniverse(""); }}
-                className="mt-3 text-sm underline"
-                style={{ color: "var(--theme-gold)" }}
-              >
-                Clear filters
-              </button>
+              <PillButton className="mt-3" onClick={() => { setSearch(""); setUniverse(""); }}>Clear filters</PillButton>
             )}
           </div>
         ) : (
