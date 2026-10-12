@@ -17,6 +17,7 @@ function readLinkKind(): "invite" | "recovery" | "other" | "none" {
   return "none";
 }
 
+import { consumeAuthLinkFromHash } from "@/lib/authLink";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 
 export default function ResetPasswordPage() {
@@ -45,11 +46,19 @@ export default function ResetPasswordPage() {
         setReady(true);
       }
     });
-    void supabase.auth.getSession().then(({ data }) => {
-      if (data.session) setReady(true);
-    });
+    // Links the app's server sends carry the session after "#", which this site's PKCE client rejects: start the session from
+    // the link here (see src/lib/authLink.ts), then show the form.
+    let cancelled = false;
+    void (async () => {
+      await consumeAuthLinkFromHash();
+      const { data } = await supabase.auth.getSession();
+      if (!cancelled && data.session) setReady(true);
+    })();
 
-    return () => subscription.unsubscribe();
+    return () => {
+      cancelled = true;
+      subscription.unsubscribe();
+    };
   }, []);
 
   async function handleSubmit() {
