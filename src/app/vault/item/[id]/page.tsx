@@ -1,5 +1,6 @@
 "use client";
 
+import { Toggle } from "@/components/ui/Toggle";
 import { pillClassName } from "@/components/ui/PillButton";
 import { effectiveMarketValue } from "@/lib/vaultStats";
 import Link from "next/link";
@@ -1384,28 +1385,7 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
                           : "Adds a For Sale badge and unlocks listing copy."}
                       </div>
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => void handleToggleForSale()}
-                      aria-pressed={item.status === "FOR_SALE"}
-                      className="relative inline-flex h-7 w-12 shrink-0 rounded-full transition-colors"
-                      style={{
-                        background:
-                          item.status === "FOR_SALE"
-                            ? "var(--theme-gold)"
-                            : "var(--pill)",
-                      }}
-                    >
-                      <span
-                        className="mt-1 inline-block h-5 w-5 rounded-full bg-white shadow transition-transform"
-                        style={{
-                          transform:
-                            item.status === "FOR_SALE"
-                              ? "translateX(24px)"
-                              : "translateX(4px)",
-                        }}
-                      />
-                    </button>
+                    <Toggle on={item.status === "FOR_SALE"} onChange={() => void handleToggleForSale()} ariaLabel={item.status === "FOR_SALE" ? "Listed for sale" : "Mark for sale"} />
                   </div>
 
                   {item.status === "FOR_SALE" ? (

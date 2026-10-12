@@ -107,7 +107,7 @@ export default function CostToSellPanel({
           <input
             value={salePrice}
             onChange={(e) => setSalePrice(e.target.value)}
-            className="h-10 rounded-xl bg-[color:var(--pill)] px-3 text-sm ring-1 ring-[color:var(--border)] focus:outline-none"
+            className="h-10 rounded-xl bg-[color:var(--pill)] px-3 text-sm ring-1 ring-[color:var(--border)] focus:outline-none max-md:h-11"
             inputMode="decimal"
             placeholder="Estimated sale price"
           />
@@ -117,7 +117,7 @@ export default function CostToSellPanel({
           <input
             value={shipping}
             onChange={(e) => setShipping(e.target.value)}
-            className="h-10 rounded-xl bg-[color:var(--pill)] px-3 text-sm ring-1 ring-[color:var(--border)] focus:outline-none"
+            className="h-10 rounded-xl bg-[color:var(--pill)] px-3 text-sm ring-1 ring-[color:var(--border)] focus:outline-none max-md:h-11"
             inputMode="decimal"
             placeholder="Packing + postage"
           />
@@ -134,7 +134,7 @@ export default function CostToSellPanel({
         <input
           value={customRate}
           onChange={(e) => setCustomRate(e.target.value)}
-          className="mt-4 h-10 rounded-xl bg-[color:var(--pill)] px-3 text-sm ring-1 ring-[color:var(--border)] focus:outline-none"
+          className="mt-4 h-10 rounded-xl bg-[color:var(--pill)] px-3 text-sm ring-1 ring-[color:var(--border)] focus:outline-none max-md:h-11"
           placeholder="Custom fee %"
         />
       ) : null}
