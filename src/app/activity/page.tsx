@@ -1,5 +1,6 @@
 "use client";
 
+import { PillButton } from "@/components/ui/PillButton";
 import Link from "next/link";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { useEffect, useMemo, useState } from "react";
@@ -468,23 +469,17 @@ export default function ActivityPage() {
         description={<span style={{ color: "var(--theme-text-muted,#61656B)" }}>Everything that changed in your vault.</span>}
         contentClassName="max-w-[1420px]"
         actions={availableFilters.map((tab) => (
-          <button
+          <PillButton
             key={tab.key}
-            type="button"
+            variant={filter === tab.key ? "active" : "default"}
             onClick={() => {
               setFilter(tab.key);
               setVisibleCount(20);
             }}
-            className="inline-flex items-center gap-2 rounded-[6px] border px-4 py-1.5 text-sm font-bold"
-            style={{
-              background: filter === tab.key ? "linear-gradient(135deg,#8C9298,#C8CDD2)" : "var(--theme-card,rgba(15,25,45,0.86))",
-              borderColor: filter === tab.key ? "rgba(203,208,213,0.6)" : "rgba(203,208,213,0.24)",
-              color: filter === tab.key ? "#0B0B0B" : "var(--theme-gold,#C8CDD2)",
-            }}
           >
             <Glyph name={tab.icon} size={16} />
             {tab.label}
-          </button>
+          </PillButton>
         ))}
       />
       <main className="min-h-screen px-4 pb-7 text-[color:var(--theme-text-primary,#ECEDEF)] sm:px-6 lg:px-8" style={{ background: "var(--bg)" }}>

@@ -1,5 +1,6 @@
 "use client";
 
+import { PillButton } from "@/components/ui/PillButton";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
@@ -424,12 +425,12 @@ export default function VltLoungePage() {
         }
         actions={
           <>
-            <button type="button" onClick={() => openComposer("question")} className="inline-flex items-center gap-2 rounded-[6px] px-4 py-1.5 text-sm font-bold" style={{ ...CARD, color: "var(--fg)" }}>
+            <PillButton onClick={() => openComposer("question")}>
               <span aria-hidden style={{ color: CYAN }}>?</span> Ask the Lounge
-            </button>
-            <button type="button" onClick={() => openComposer("update")} className="vltd-primary-button inline-flex items-center gap-2 rounded-[6px] px-4 py-2.5 text-sm font-black">
+            </PillButton>
+            <PillButton onClick={() => openComposer("update")} className="font-black" style={{ background: "linear-gradient(180deg, #79E7FB, #41C6E4 55%, #2CB1D1)", color: "#06171d", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.5), 0 0 16px rgba(79,211,238,0.25)" }}>
               Post Update
-            </button>
+            </PillButton>
           </>
         }
       />

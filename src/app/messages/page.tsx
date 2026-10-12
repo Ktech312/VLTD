@@ -1,5 +1,6 @@
 "use client";
 
+import { PillButton } from "@/components/ui/PillButton";
 import { useEffect, useRef, useState, type MouseEvent } from "react";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Glyph } from "@/components/ui/Glyph";
@@ -219,13 +220,9 @@ export default function MessagesPage() {
         contentClassName="max-w-[1100px]"
         actions={
           signedIn ? (
-            <button
-              type="button"
-              onClick={() => setComposing(true)}
-              className="vltd-primary-button inline-flex items-center gap-2 rounded-[6px] px-4 py-2.5 text-sm font-black"
-            >
+            <PillButton onClick={() => setComposing(true)} className="font-black" style={{ background: "linear-gradient(180deg, #79E7FB, #41C6E4 55%, #2CB1D1)", color: "#06171d", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.5), 0 0 16px rgba(79,211,238,0.25)" }}>
               + New Message
-            </button>
+            </PillButton>
           ) : undefined
         }
       />

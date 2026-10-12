@@ -1,5 +1,7 @@
 "use client";
 
+import { PillButton } from "@/components/ui/PillButton";
+import { PillSelect } from "@/components/ui/PillSelect";
 import Link from "next/link";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { useEffect, useMemo, useState } from "react";
@@ -315,14 +317,9 @@ export default function GoalsPage() {
         description={<span style={{ color: "var(--theme-text-muted,#61656B)" }}>Turn a collection into a plan.</span>}
         contentClassName="max-w-[1480px]"
         actions={
-          <button
-            type="button"
-            onClick={() => setShowAdd(true)}
-            className="rounded-[7px] px-5 py-2.5 text-sm font-black transition hover:brightness-110"
-            style={{ background: "linear-gradient(135deg,#8C9298,#C8CDD2)", color: "#0B0B0B" }}
-          >
+          <PillButton onClick={() => setShowAdd(true)} className="font-black" style={{ background: "linear-gradient(180deg, #79E7FB, #41C6E4 55%, #2CB1D1)", color: "#06171d", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.5), 0 0 16px rgba(79,211,238,0.25)" }}>
             + Create Goal
-          </button>
+          </PillButton>
         }
       />
       <main style={{ background: "var(--bg)" }}>
@@ -384,11 +381,18 @@ export default function GoalsPage() {
             </h2>
             <div className="flex items-center gap-3 text-sm" style={{ color: "var(--theme-text-muted,#61656B)" }}>
               <span>Sort by:</span>
-              <select value={sort} onChange={(event) => setSort(event.target.value as SortMode)} className="bg-transparent font-bold outline-none" style={{ color: "var(--theme-text-primary,#ECEDEF)" }}>
-                <option value="priority">Priority</option>
-                <option value="progress">Progress</option>
-                <option value="recent">Recent</option>
-              </select>
+              <PillSelect
+                value={sort}
+                ariaLabel="Sort goals"
+                align="right"
+                minWidthPx={130}
+                onChange={(next) => setSort(next)}
+                options={[
+                  { value: "priority", label: "Priority" },
+                  { value: "progress", label: "Progress" },
+                  { value: "recent", label: "Recent" },
+                ]}
+              />
               <Glyph name="box" size={16} style={{ color: "var(--theme-gold,#C8CDD2)" }} />
             </div>
           </div>

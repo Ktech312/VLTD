@@ -1,5 +1,7 @@
 "use client";
 
+import { PillButton } from "@/components/ui/PillButton";
+import { PillSelect } from "@/components/ui/PillSelect";
 import Link from "next/link";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { DiscoverNav } from "@/components/SectionNav";
@@ -406,19 +408,11 @@ export default function WatchlistPage() {
         contentClassName="max-w-[1480px]"
         actions={
           <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => void shareWishlist()}
-              disabled={shareBusy}
-              className="rounded-[7px] border px-3 py-2 text-xs font-black"
-              style={{ borderColor: "rgba(203,208,213,0.32)", color: "var(--theme-gold,#C8CDD2)" }}
-            >
+            <PillButton onClick={() => void shareWishlist()} disabled={shareBusy}>
               {shareToken ? "Copy wishlist link" : "Share wishlist"}
-            </button>
+            </PillButton>
             {shareToken ? (
-              <button type="button" onClick={() => void stopSharingWishlist()} className="text-xs font-semibold underline" style={{ color: "var(--theme-text-muted,#61656B)" }}>
-                Stop sharing
-              </button>
+              <PillButton onClick={() => void stopSharingWishlist()}>Stop sharing</PillButton>
             ) : null}
           </div>
         }
@@ -487,16 +481,18 @@ export default function WatchlistPage() {
             ))}
             <div className="ml-auto flex items-center gap-2">
               <span className="text-xs" style={{ color: "var(--theme-text-muted,#61656B)" }}>Sort</span>
-              <select
+              <PillSelect
                 value={sort}
-                onChange={(event) => setSort(event.target.value as SortMode)}
-                className="h-10 rounded-[7px] border border-[rgba(203,208,213,0.22)] bg-transparent px-3 text-sm font-bold outline-none"
-                style={{ color: "var(--theme-text-primary,#ECEDEF)" }}
-              >
-                <option value="recent">Recently added</option>
-                <option value="value">Highest value</option>
-                <option value="target">Target price</option>
-              </select>
+                ariaLabel="Sort watchlist"
+                align="right"
+                minWidthPx={150}
+                onChange={(next) => setSort(next)}
+                options={[
+                  { value: "recent", label: "Recently added" },
+                  { value: "value", label: "Highest value" },
+                  { value: "target", label: "Target price" },
+                ]}
+              />
               <button
                 type="button"
                 onClick={() => setView("grid")}

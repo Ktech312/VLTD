@@ -1,5 +1,6 @@
 "use client";
 
+import { PillSelect } from "@/components/ui/PillSelect";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 
@@ -291,15 +292,7 @@ export default function FavoritesPage() {
                   className="h-8 rounded-xl px-3 text-xs ring-1 ring-[color:var(--border)] focus:outline-none"
                   style={{ background: "var(--pill)", color: "var(--fg)", width: 140 }}
                 />
-                <select
-                  value={sort}
-                  onChange={(e) => setSort(e.target.value as Sort)}
-                  className="h-8 rounded-xl px-2 text-xs ring-1 ring-[color:var(--border)] focus:outline-none"
-                  style={{ background: "var(--pill)", color: "var(--muted)" }}
-                >
-                  <option value="saved">Recently saved</option>
-                  <option value="alpha">A → Z</option>
-                </select>
+                <PillSelect value={sort} ariaLabel="Sort favorites" align="right" minWidthPx={140} onChange={(next) => setSort(next as Sort)} options={[{ value: "saved", label: "Recently saved" }, { value: "alpha", label: "A → Z" }]} />
               </div>
             </div>
 

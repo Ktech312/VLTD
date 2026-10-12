@@ -1,5 +1,6 @@
 "use client";
 
+import { PillSelect } from "@/components/ui/PillSelect";
 import Link from "next/link";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { type ChangeEvent, type PointerEvent, useEffect, useMemo, useRef, useState } from "react";
@@ -255,9 +256,9 @@ export default function MuseumPage() {
     void getMuseumBetaStatus().then(setMuseumBetaStatus);
   }, []);
 
-  function handleMuseumBetaClick(event: { preventDefault: () => void; stopPropagation: () => void }) {
-    event.preventDefault();
-    event.stopPropagation();
+  function handleMuseumBetaClick(event?: { preventDefault: () => void; stopPropagation: () => void }) {
+    event?.preventDefault();
+    event?.stopPropagation();
     if (museumBetaStatus.enabled) {
       router.push("/museum/virtual-room");
       return;
@@ -512,24 +513,15 @@ export default function MuseumPage() {
       {/* Desktop filter pills (mobile uses the inline dropdown in the toolbar) */}
       <div className="mt-4 hidden flex-wrap items-center gap-2 sm:flex">
         {EXHIBITION_FILTERS.map((f) => (
-          <button key={f.key} type="button" onClick={() => setFilter(f.key)} className={`inline-flex items-center rounded-[8px] px-4 py-1.5 text-sm font-semibold ring-1 transition ${filter === f.key ? "bg-[rgba(79,211,238,0.10)] text-[#5FDCF3] ring-[rgba(79,211,238,0.5)] shadow-[0_0_14px_rgba(79,211,238,0.22)]" : "bg-[color:var(--pill)] text-[color:var(--muted)] ring-[color:var(--border)]"}`}>{f.label}</button>
+          <PillButton key={f.key} variant={filter === f.key ? "active" : "default"} onClick={() => setFilter(f.key)}>{f.label}</PillButton>
         ))}
         {/* EK's ask: one button here, not one per card — clicking it
             always opens the same generic blank builder regardless of
             which exhibition you were looking at, so repeating it per
             card had no real reason to exist. */}
-        <button
-          type="button"
-          onClick={handleMuseumBetaClick}
-          className="inline-flex items-center rounded-[8px] px-4 py-1.5 text-sm font-semibold ring-1 ring-[color:var(--border)] transition"
-          style={
-            museumBetaStatus.enabled
-              ? { background: "#4FD3EE", color: "#06171d" }
-              : { background: "var(--pill)", color: "var(--muted)", borderColor: "var(--border)" }
-          }
-        >
+        <PillButton onClick={() => handleMuseumBetaClick()} style={museumBetaStatus.enabled ? { background: "#4FD3EE", color: "#06171d" } : undefined}>
           {museumBetaStatus.enabled ? "Open 3D Gallery" : museumBetaStatus.requestedAt ? "3D Gallery access requested" : "Request 3D Gallery access"}
-        </button>
+        </PillButton>
         {/* EK's ask: a second Beta pill next to 3D Gallery — the home for
             the separate public museum campus project (planning stage only
             right now, see the Museum Campus Blueprint doc). */}
@@ -538,22 +530,8 @@ export default function MuseumPage() {
             and MuseumBuilderOwnerGate.tsx. */}
         {isMuseumOwner ? (
           <>
-            <button
-              type="button"
-              onClick={() => router.push("/museum/vltd")}
-              className="inline-flex items-center rounded-[8px] px-4 py-1.5 text-sm font-semibold ring-1 ring-[color:var(--border)] transition"
-              style={{ background: "var(--pill)", color: "var(--muted)", borderColor: "var(--border)" }}
-            >
-              Museum Alpha
-            </button>
-            <button
-              type="button"
-              onClick={() => router.push("/museum/builder")}
-              className="inline-flex items-center rounded-[8px] px-4 py-1.5 text-sm font-semibold ring-1 ring-[color:var(--border)] transition"
-              style={{ background: "var(--pill)", color: "var(--muted)", borderColor: "var(--border)" }}
-            >
-              Museum Builder Alpha
-            </button>
+            <PillButton onClick={() => router.push("/museum/vltd")}>Museum Alpha</PillButton>
+            <PillButton onClick={() => router.push("/museum/builder")}>Museum Builder Alpha</PillButton>
           </>
         ) : null}
       </div>
@@ -572,13 +550,11 @@ export default function MuseumPage() {
             {galleries.length > 0 ? (
             <>
               {/* Mobile-only filter dropdown, grouped inline with sort */}
-              <select value={filter} onChange={(e) => setFilter(e.target.value as ExhibitionFilter)} className="shrink-0 rounded-[6px] border px-4 py-1.5 text-sm font-bold outline-none sm:hidden" style={{ borderColor: "var(--theme-border)", background: "var(--theme-elevated)", color: "var(--fg)", boxShadow: "inset 0 1px 0 rgba(237,239,241,0.08)" }}>
-                {EXHIBITION_FILTERS.map((f) => (<option key={f.key} value={f.key}>{f.label}</option>))}
-              </select>
-              <select value={sortMode} onChange={(e) => setSortMode(e.target.value as ExhibitionSort)} className="shrink-0 rounded-[6px] border px-4 py-1.5 text-sm font-bold outline-none" style={{ borderColor: "var(--theme-border)", background: "var(--theme-elevated)", color: "var(--fg)", boxShadow: "inset 0 1px 0 rgba(237,239,241,0.08)" }}>
-                {EXHIBITION_SORTS.map((s) => (<option key={s.key} value={s.key}>{s.label}</option>))}
-              </select>
-              <Link href="/museum/new" className="inline-flex shrink-0 items-center justify-center gap-1.5 rounded-[6px] px-4 py-2.5 text-sm font-black transition" style={{ background: "linear-gradient(180deg, #79E7FB, #41C6E4 55%, #2CB1D1)", color: "#06171d", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.5), 0 0 16px rgba(79,211,238,0.25)" }}>+ Create Exhibition</Link>
+              <span className="sm:hidden">
+                <PillSelect value={filter} ariaLabel="Filter exhibitions" align="right" onChange={(next) => setFilter(next)} options={EXHIBITION_FILTERS.map((f) => ({ value: f.key, label: f.label }))} />
+              </span>
+              <PillSelect value={sortMode} ariaLabel="Sort exhibitions" align="right" onChange={(next) => setSortMode(next)} options={EXHIBITION_SORTS.map((s) => ({ value: s.key, label: s.label }))} />
+              <PillButton href="/museum/new" className="font-black" style={{ background: "linear-gradient(180deg, #79E7FB, #41C6E4 55%, #2CB1D1)", color: "#06171d", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.5), 0 0 16px rgba(79,211,238,0.25)" }}>+ Create Exhibition</PillButton>
             </>
           ) : null}
           </>

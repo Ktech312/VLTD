@@ -1,6 +1,7 @@
 // src/app/reports/insurance/page.tsx
 "use client";
 
+import { PillSelect } from "@/components/ui/PillSelect";
 import { useEffect, useMemo, useState } from "react";
 import { collectibleItems, insuranceValue, PURCHASE_BASED_NOTE } from "@/lib/vaultStats";
 import Link from "next/link";
@@ -191,16 +192,12 @@ export default function InsuranceReportPage() {
               Include photos
             </label>
 
-            <select
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value as any)}
-              className="rounded-full bg-[color:var(--pill)] px-4 py-2 text-sm ring-1 ring-[color:var(--border)] focus:outline-none"
-            >
-              <option value="value_desc">Sort: Value (high → low)</option>
-              <option value="value_asc">Sort: Value (low → high)</option>
-              <option value="gain_desc">Sort: Gain (high → low)</option>
-              <option value="title_asc">Sort: Title (A → Z)</option>
-            </select>
+            <PillSelect value={sortBy} ariaLabel="Sort report" align="left" minWidthPx={200} onChange={(next) => setSortBy(next as typeof sortBy)} options={[
+              { value: "value_desc", label: "Sort: Value (high → low)" },
+              { value: "value_asc", label: "Sort: Value (low → high)" },
+              { value: "gain_desc", label: "Sort: Gain (high → low)" },
+              { value: "title_asc", label: "Sort: Title (A → Z)" },
+            ]} />
 
             <PillButton variant="active" onClick={() => window.print()}>
               Print / Save PDF

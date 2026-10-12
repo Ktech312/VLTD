@@ -1,5 +1,6 @@
 "use client";
 
+import { PillSelect } from "@/components/ui/PillSelect";
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { Glyph } from "@/components/ui/Glyph";
@@ -330,16 +331,7 @@ export default function AuctionBrowsePage() {
               className="rounded-xl px-4 py-2 text-sm ring-1 ring-[color:var(--border)] focus:outline-none"
               style={{ background: "var(--pill)", color: "var(--fg)", minWidth: 200 }}
             />
-            <select
-              value={sort}
-              onChange={(e) => setSort(e.target.value)}
-              className="rounded-xl px-3 py-2 text-sm ring-1 ring-[color:var(--border)] focus:outline-none"
-              style={{ background: "var(--pill)", color: "var(--fg)" }}
-            >
-              {SORT_OPTIONS.map((o) => (
-                <option key={o.value} value={o.value}>{o.label}</option>
-              ))}
-            </select>
+            <PillSelect value={sort} ariaLabel="Sort auctions" align="right" minWidthPx={150} onChange={(next) => setSort(next)} options={SORT_OPTIONS} />
           </div>
 
           {/* Universe filter chips */}

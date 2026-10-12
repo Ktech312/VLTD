@@ -1,5 +1,6 @@
 "use client";
 
+import { PillSelect } from "@/components/ui/PillSelect";
 import { publicItemsTable } from "@/lib/publicItemsSource";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -429,31 +430,28 @@ export default function DiscoverPage() {
               <Glyph name="search" size={15} className="opacity-60" />
               <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search exhibitions, items, and collectors..." className="min-w-0 flex-1 bg-transparent text-xs outline-none placeholder:opacity-45" />
             </label>
-            <select
+            <PillSelect
               value={activeTab}
-              onChange={(event) => setActiveTab(event.target.value === "All" ? "All" : (event.target.value as UniverseKey))}
-              aria-label="Filter by universe"
-              className="h-10 rounded-[7px] border border-[rgba(203,208,213,0.22)] px-3 text-xs font-semibold outline-none"
-              style={{ background: "var(--theme-card,rgba(15,25,45,0.85))", color: "var(--theme-text-primary,#ECEDEF)" }}
-            >
-              <option value="All">All universes</option>
-              {visibleUniverseKeys.map((key) => (
-                <option key={key} value={key}>{UNIVERSE_LABEL[key]}</option>
-              ))}
-            </select>
-            <select
+              ariaLabel="Filter by universe"
+              align="left"
+              minWidthPx={150}
+              onChange={(next) => setActiveTab(next === "All" ? "All" : (next as UniverseKey))}
+              options={[{ value: "All", label: "All universes" }, ...visibleUniverseKeys.map((key) => ({ value: key as string, label: UNIVERSE_LABEL[key] }))]}
+            />
+            <PillSelect
               value={sort}
-              onChange={(event) => setSort(event.target.value as typeof sort)}
-              aria-label="Sort exhibitions"
-              className="h-10 rounded-[7px] border border-[rgba(203,208,213,0.22)] px-3 text-xs font-semibold outline-none"
-              style={{ background: "var(--theme-card,rgba(15,25,45,0.85))", color: "var(--theme-text-primary,#ECEDEF)" }}
-            >
-              <option value="recommended">Recommended</option>
-              <option value="views">Most viewed</option>
-              <option value="items">Most items</option>
-              <option value="newest">Newest</option>
-              <option value="az">A to Z</option>
-            </select>
+              ariaLabel="Sort exhibitions"
+              align="right"
+              minWidthPx={150}
+              onChange={(next) => setSort(next)}
+              options={[
+                { value: "recommended", label: "Recommended" },
+                { value: "views", label: "Most viewed" },
+                { value: "items", label: "Most items" },
+                { value: "newest", label: "Newest" },
+                { value: "az", label: "A to Z" },
+              ]}
+            />
           </div>
 
           {fetchError && <div className="mt-3 rounded-[7px] border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs text-red-300">Query error: {fetchError}</div>}

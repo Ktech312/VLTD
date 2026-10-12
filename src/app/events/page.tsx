@@ -807,18 +807,14 @@ export default function EventsPage() {
             </div>
             <label className="block min-w-[170px]">
               <span className="mb-1 block text-[10px] font-black uppercase tracking-[0.14em] text-[color:var(--muted)]">Category</span>
-              <select
-                value={eventSearchCategory}
-                onChange={(event) => setEventSearchCategory(event.target.value as EventFilter)}
-                className="h-10 w-full rounded-[7px] border border-[color:var(--border)] bg-[color:var(--pill)] px-3 text-sm font-bold text-[color:var(--fg)] outline-none"
-              >
-                <option value="convention">Conventions</option>
-                <option value="card_show">Card Shows</option>
-                <option value="auction">Auctions</option>
-                <option value="drop">Drops</option>
-                <option value="gallery">Gallery Events</option>
-                <option value="music">Music / Vinyl</option>
-              </select>
+              <PillSelect value={eventSearchCategory} ariaLabel="Category" align="left" minWidthPx={170} onChange={(next) => setEventSearchCategory(next as EventFilter)} options={[
+                { value: "convention", label: "Conventions" },
+                { value: "card_show", label: "Card Shows" },
+                { value: "auction", label: "Auctions" },
+                { value: "drop", label: "Drops" },
+                { value: "gallery", label: "Gallery Events" },
+                { value: "music", label: "Music / Vinyl" },
+              ]} />
             </label>
             <label className="block w-full lg:w-[170px]">
               <span className="mb-1 block text-[10px] font-black uppercase tracking-[0.14em] text-[color:var(--muted)]">City or ZIP</span>
@@ -834,39 +830,26 @@ export default function EventsPage() {
             </label>
             <label className="block min-w-[130px]">
               <span className="mb-1 block text-[10px] font-black uppercase tracking-[0.14em] text-[color:var(--muted)]">Range</span>
-              <select
-                value={eventSearchRadius}
-                onChange={(event) => setEventSearchRadius(event.target.value)}
-                className="h-10 w-full rounded-[7px] border border-[color:var(--border)] bg-[color:var(--pill)] px-3 text-sm font-bold text-[color:var(--fg)] outline-none"
-              >
-                <option value="25">25 miles</option>
-                <option value="50">50 miles</option>
-                <option value="100">100 miles</option>
-                <option value="250">250 miles</option>
-              </select>
+              <PillSelect value={eventSearchRadius} ariaLabel="Range" align="left" minWidthPx={130} onChange={(next) => setEventSearchRadius(next)} options={[
+                { value: "25", label: "25 miles" },
+                { value: "50", label: "50 miles" },
+                { value: "100", label: "100 miles" },
+                { value: "250", label: "250 miles" },
+              ]} />
             </label>
             <label className="block min-w-[150px]">
               <span className="mb-1 block text-[10px] font-black uppercase tracking-[0.14em] text-[color:var(--muted)]">Date</span>
-              <select
-                value={eventSearchRange}
-                onChange={(event) => setEventSearchRange(event.target.value)}
-                className="h-10 w-full rounded-[7px] border border-[color:var(--border)] bg-[color:var(--pill)] px-3 text-sm font-bold text-[color:var(--fg)] outline-none"
-              >
-                <option value="next_90">Upcoming</option>
-                <option value="this_month">This month</option>
-                <option value="next_week">Next week</option>
-                <option value="today">Today</option>
-              </select>
+              <PillSelect value={eventSearchRange} ariaLabel="Date" align="left" minWidthPx={150} onChange={(next) => setEventSearchRange(next)} options={[
+                { value: "next_90", label: "Upcoming" },
+                { value: "this_month", label: "This month" },
+                { value: "next_week", label: "Next week" },
+                { value: "today", label: "Today" },
+              ]} />
             </label>
-            <button
-              type="button"
-              onClick={() => void searchEvents()}
-              disabled={eventSearchLoading}
-              className="vltd-primary-button inline-flex h-10 items-center justify-center gap-2 rounded-[4px] px-5 text-sm font-black disabled:opacity-60"
-            >
+            <PillButton onClick={() => void searchEvents()} disabled={eventSearchLoading} className="font-black" style={{ background: "linear-gradient(180deg, #79E7FB, #41C6E4 55%, #2CB1D1)", color: "#06171d", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.5), 0 0 16px rgba(79,211,238,0.25)" }}>
               {eventSearchLoading ? <AppIcon name="loader" size={16} className="animate-spin" /> : <AppIcon name="search" size={16} />}
               Search
-            </button>
+            </PillButton>
           </div>
 
           {(eventSearchError || eventSuggestions.length > 0) && (
