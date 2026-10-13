@@ -24,7 +24,9 @@ const button = (label, href) => `<tr><td align="center" style="padding:8px 0 24p
 </td></tr></table>
 </td></tr>`;
 
-function layout({ preheader, blocks }) {
+// No hidden "preheader" line: invisible text is a classic spam signal. Found 2026-10-13 when a real sign-up confirmation was not
+// delivered to a strict provider and a deliverability test flagged it (SpamAssassin FONT_INVIS_MSGID, -2.5 of the 3.4 points lost).
+function layout({ blocks }) {
   return `<!doctype html>
 <html lang="en">
 <head>
@@ -35,7 +37,6 @@ function layout({ preheader, blocks }) {
 <title>VLTD</title>
 </head>
 <body style="margin:0;padding:0;background:${C.page};">
-<div style="display:none;max-height:0;overflow:hidden;opacity:0;color:transparent;">${preheader}</div>
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="${C.page}" style="background:${C.page};">
 <tr><td align="center" style="padding:28px 12px 40px 12px;">
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:600px;">
