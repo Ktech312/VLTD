@@ -2,6 +2,7 @@
 
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 import { stillSignedInAs, storedSessionUserId } from "@/lib/sessionGuard";
+import { registerCloudSaveRetry, reportIdle, reportPending, reportSaved } from "@/lib/cloudSaveStatus";
 import { GalleryLayout, getDefaultGalleryLayout } from "./galleryLayout";
 import { type GalleryState, type GalleryVisibility } from "./galleryTier";
 
@@ -1162,6 +1163,80 @@ function getGallerySyncSignature(gallery: Gallery) {
   });
 }
 
+// Exhibitions are saved on the device first and sent to the cloud second. When the cloud does not accept one, its id is kept here
+// (it is parked/restored with the rest of the person's device data) so it is retried and the person is told it is not in their
+// account yet. See cloudSaveStatus.ts.
+const PENDING_GALLERY_SYNC_KEY = "vltd_gallery_sync_pending_v1";
+
+function readPendingGallerySyncIds(): string[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const parsed: unknown = JSON.parse(window.localStorage.getItem(PENDING_GALLERY_SYNC_KEY) || "[]");
+    return Array.isArray(parsed) ? parsed.filter((id): id is string => typeof id === "string") : [];
+  } catch {
+    return [];
+  }
+}
+
+function writePendingGallerySyncIds(ids: string[]) {
+  if (typeof window === "undefined") return;
+  try {
+    if (ids.length) window.localStorage.setItem(PENDING_GALLERY_SYNC_KEY, JSON.stringify(ids));
+    else window.localStorage.removeItem(PENDING_GALLERY_SYNC_KEY);
+  } catch {
+    /* storage full or blocked: the in-memory status below still tells the person */
+  }
+}
+
+function markGallerySyncPending(galleryId: string) {
+  const ids = readPendingGallerySyncIds();
+  if (!ids.includes(galleryId)) writePendingGallerySyncIds([...ids, galleryId]);
+  if (storedSessionUserId()) reportPending("exhibitions");
+}
+
+function markGallerySyncDone(galleryId: string) {
+  const ids = readPendingGallerySyncIds();
+  const wasPending = ids.includes(galleryId);
+  const rest = ids.filter((id) => id !== galleryId);
+  if (wasPending) writePendingGallerySyncIds(rest);
+  if (rest.length > 0) return;
+  // Say "saved" only when something that was waiting has now gone through; ordinary autosaves stay quiet.
+  if (wasPending) reportSaved("exhibitions");
+  else reportIdle("exhibitions");
+}
+
+async function retryPendingGallerySyncs() {
+  if (!storedSessionUserId()) {
+    reportIdle("exhibitions");
+    return;
+  }
+  const ids = readPendingGallerySyncIds();
+  if (ids.length === 0) {
+    reportIdle("exhibitions");
+    return;
+  }
+  const local = loadRawGalleries();
+  for (const id of ids) {
+    const gallery = local.find((entry) => entry.id === id);
+    if (!gallery) {
+      writePendingGallerySyncIds(readPendingGallerySyncIds().filter((x) => x !== id)); // deleted on this device: nothing to send
+      continue;
+    }
+    try {
+      await upsertGalleryToSupabase(syncGalleryShape(gallery), { throwOnError: true });
+    } catch {
+      /* still pending: upsertGalleryToSupabase has already recorded that */
+    }
+  }
+  if (readPendingGallerySyncIds().length === 0) reportIdle("exhibitions");
+}
+
+if (typeof window !== "undefined") {
+  registerCloudSaveRetry(retryPendingGallerySyncs);
+  // Left waiting by an earlier visit: say so again and keep trying.
+  if (readPendingGallerySyncIds().length > 0 && storedSessionUserId()) reportPending("exhibitions");
+}
+
 async function upsertGalleryToSupabase(
   gallery: Gallery,
   options?: { throwOnError?: boolean }
@@ -1195,9 +1270,11 @@ async function upsertGalleryToSupabase(
 
     if (error) {
       console.error("Failed to upsert gallery:", error);
+      markGallerySyncPending(gallery.id);
       if (options?.throwOnError) throw error;
       return;
     }
+    markGallerySyncDone(gallery.id);
 
     await syncGalleryItemsToSupabase(gallery, options);
 

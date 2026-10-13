@@ -23,6 +23,7 @@ type GalleryRow = {
 type ProfileRow = { display_name: string | null };
 type ItemRow = { title: string };
 
+// Public exhibitions only: a Locked or invite-only exhibition gets the generic card (see layout.tsx in this folder).
 async function fetchData(token: string) {
   const fallback = {
     title: "VLTD Exhibition", description: null as string | null,
@@ -33,7 +34,7 @@ async function fetchData(token: string) {
   const h = { apikey: SUPABASE_ANON, Authorization: `Bearer ${SUPABASE_ANON}` };
   try {
     const res = await fetch(
-      `${SUPABASE_URL}/rest/v1/galleries?public_token=eq.${encodeURIComponent(token)}&select=title,description,cover_image,layout,profile_id,alias_enabled,alias_name&limit=1`,
+      `${SUPABASE_URL}/rest/v1/galleries?public_token=eq.${encodeURIComponent(token)}&visibility=eq.PUBLIC&select=title,description,cover_image,layout,profile_id,alias_enabled,alias_name&limit=1`,
       { headers: h, cache: "no-store" }
     );
     const rows: GalleryRow[] = await res.json().catch(() => []);

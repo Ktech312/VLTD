@@ -14,6 +14,7 @@ import {
 import { getImageBlobFromIndexedDb } from "@/lib/vaultImageStore";
 import { getVaultLocalSignature, writeVaultLocalJson } from "@/lib/vaultLocalStore";
 import { stillSignedInAs, storedSessionUserId } from "@/lib/sessionGuard";
+import { registerCloudSaveRetry, reportIdle, reportPending, reportSaved, reportSaving } from "@/lib/cloudSaveStatus";
 
 export type VaultSyncQueueItem = {
   id: string;
@@ -75,6 +76,10 @@ function dedupeQueue(queue: VaultSyncQueueItem[]) {
 
   return next.sort((a, b) => Number(a.createdAt) - Number(b.createdAt));
 }
+
+// Retry button and automatic retries (cloudSaveStatus) run the queue again; the queue is upserted by item id, so a retry
+// can never create a second copy.
+if (typeof window !== "undefined") registerCloudSaveRetry(() => processVaultSyncQueue());
 
 export function getPendingVaultSyncCount() {
   return readQueue().length;
@@ -243,19 +248,25 @@ export async function processVaultSyncQueue() {
   }
 
   if (!navigator.onLine || !hasSupabaseEnv()) {
+    // Saved on this device only for now: say so (it is retried when the connection is back).
+    if (getPendingVaultSyncCount() > 0 && storedSessionUserId()) reportPending("items");
     return { processed: 0, remaining: getPendingVaultSyncCount() };
   }
 
   // Nobody signed in: there is no one to send for and nothing to pull. (A signed-out tab that kept running this wrote the last
   // person's queue back into storage after they had signed out, and spun without pause.)
   const startedAs = storedSessionUserId();
-  if (!startedAs) return { processed: 0, remaining: getPendingVaultSyncCount() };
+  if (!startedAs) {
+    reportIdle("items");
+    return { processed: 0, remaining: getPendingVaultSyncCount() };
+  }
 
   isProcessing = true;
 
   try {
     const queue = dedupeQueue(readQueue());
     writeQueue(queue);
+    if (queue.length > 0) reportSaving("items");
 
     let processed = 0;
 
@@ -292,6 +303,12 @@ export async function processVaultSyncQueue() {
     if (stillSignedInAs(startedAs) && (processed > 0 || getVaultLocalSignature() !== before)) {
       window.dispatchEvent(new Event("vltd:vault-updated"));
     }
+
+    // What the person is told: still waiting (the cloud refused, or the connection failed), saved, or nothing to say.
+    if (!stillSignedInAs(startedAs)) reportIdle("items");
+    else if (queue.length > 0) reportPending("items");
+    else if (processed > 0) reportSaved("items");
+    else reportIdle("items");
 
     return {
       processed,

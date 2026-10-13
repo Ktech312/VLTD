@@ -41,8 +41,9 @@ export type ProfileRow = {
   marketing_opt_in?: boolean | null;
 };
 
-import { reconcileLocalDataOwner, resolveLegacyOwner } from "./localDataOwner";
+import { currentLocalOwner, reconcileLocalDataOwner, resolveLegacyOwner } from "./localDataOwner";
 import { stillSignedInAs } from "./sessionGuard";
+import { resetCloudSaveStatus } from "./cloudSaveStatus";
 
 const ACTIVE_PROFILE_KEY = "vltd_active_profile_id_v1";
 const AUTH_TIMEOUT_MS = 8000;
@@ -151,7 +152,12 @@ function hydrateCacheFromStorage() {
 }
 
 function setCachedAuthFromSession(session: any) {
+  const previousOwner = currentLocalOwner();
   if (session?.user?.id) reconcileLocalDataOwner(session.user.id);
+  // Someone else has taken over this device: the previous account's push subscription must stop working here.
+  if (previousOwner && session?.user?.id && previousOwner !== session.user.id && typeof window !== "undefined") {
+    void import("./pushNotifications").then((m) => m.dropDevicePushSubscription()).catch(() => {});
+  }
   // A profile lookup started for the previous person must not be handed to the next one.
   if ((session?.user?.id ?? null) !== (cachedUser?.id ?? null)) profilesPromise = null;
   cachedSession = session ?? null;
@@ -173,7 +179,10 @@ export function initAuthListener() {
   hydrateCacheFromStorage();
 
   supabase.auth.onAuthStateChange((event, session) => {
-    if (event === "SIGNED_OUT") reconcileLocalDataOwner(null);
+    if (event === "SIGNED_OUT") {
+      reconcileLocalDataOwner(null);
+      resetCloudSaveStatus(); // whatever was being said belonged to the person who just left
+    }
     setCachedAuthFromSession(session);
     clearInFlightAuth();
     profilesPromise = null;
@@ -357,6 +366,14 @@ export async function resetPasswordForEmail(email: string, returnPath: "/reset-p
 export async function signOut(options?: { scope?: "local" | "global" }) {
   const supabase = getSupabase();
   if (!supabase) return;
+
+  // Stop this device receiving this account's push notifications while the account can still delete its own subscription row.
+  try {
+    const { releasePushOnSignOut } = await import("./pushNotifications");
+    await releasePushOnSignOut();
+  } catch {
+    /* never block sign-out */
+  }
 
   cachedUser = null;
   cachedSession = null;

@@ -16,7 +16,7 @@ const root = path.resolve(__dirname, "..");
 const out = fs.mkdtempSync(path.join(os.tmpdir(), "vltd-isolation-"));
 
 // Source files under test, transpiled flat into one folder.
-const FILES = ["localDataOwner", "sessionGuard", "vaultLocalStore", "vaultSyncQueue", "collectionGoals"];
+const FILES = ["localDataOwner", "sessionGuard", "vaultLocalStore", "vaultSyncQueue", "collectionGoals", "cloudSaveStatus", "pushNotifications"];
 for (const name of FILES) {
   const src = fs.readFileSync(path.join(root, "src", "lib", name + ".ts"), "utf8");
   const js = ts.transpileModule(src, { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2020 } }).outputText;
@@ -48,6 +48,7 @@ global.Event = class { constructor(n) { this.type = n; } };
 global.window = {
   localStorage: makeStorage(),
   dispatchEvent: (e) => { events.push(e.type); return true; },
+  addEventListener: () => {},
   btoa: (s) => Buffer.from(s, "binary").toString("base64"),
   atob: (s) => Buffer.from(s, "base64").toString("binary"),
 };
@@ -308,6 +309,91 @@ const galleriesA = JSON.stringify([{ id: "gA", profile_id: PA, title: "A locked"
   await queueB.processVaultSyncQueue();
   t("person changed mid-sync: no further uploads, and the queue run announces nothing of its own", uploads <= 1 && dispatched() === afterSwitch, `uploads=${uploads}`);
   t("person changed mid-sync: A's queue is not written back over the device's data", get("vltd_sync_queue_v1") === null || !/q1|q2/.test(get("vltd_sync_queue_v1")), get("vltd_sync_queue_v1"));
+
+  // === Defect: a refused cloud save was silent. The person must be told "saved on this device only", it must be kept and
+  //     retried, and the retry must not create a second copy ===
+  {
+    reset();
+    const status = load("cloudSaveStatus");
+    status.resetCloudSaveStatus();
+    set("vltd-auth", session(A)); owner.reconcileLocalDataOwner(A); owner.resolveLegacyOwner(A, [PA]);
+    set("vltd_sync_queue_v1", JSON.stringify([{ id: "q9", type: "upsert_item", itemId: "a1", createdAt: 1 }]));
+    const accepted = new Set(); let cloudUp = false; let calls = 0;
+    mocks.vaultCloud.upsertVaultItemToSupabase = async (row) => { calls++; if (!cloudUp) throw new Error("cloud refused"); accepted.add(String(row.id)); };
+    const q = load("vaultSyncQueue");
+    const r1 = await q.processVaultSyncQueue();
+    t("cloud refuses: the person is told it is saved on this device only (pending)", status.getCloudSavePhase() === "pending" && r1.remaining === 1, status.getCloudSavePhase());
+    t("cloud refuses: the item is kept in the queue, nothing lost", JSON.parse(get("vltd_sync_queue_v1") || "[]").length === 1);
+    cloudUp = true;
+    await status.retryCloudSavesNow();
+    t("retry after recovery: saved to the account, queue empty", status.getCloudSavePhase() === "saved" && JSON.parse(get("vltd_sync_queue_v1") || "[]").length === 0, status.getCloudSavePhase());
+    await status.retryCloudSavesNow(); await status.retryCloudSavesNow();
+    t("repeated retries create no second copy (one accepted row, no extra uploads)", accepted.size === 1 && calls === 2, "accepted=" + accepted.size + " calls=" + calls);
+    set("vltd_sync_queue_v1", JSON.stringify([{ id: "q10", type: "upsert_item", itemId: "a1", createdAt: 2 }]));
+    status.resetCloudSaveStatus(); calls = 0;
+    Object.defineProperty(global, "navigator", { value: { onLine: false }, configurable: true });
+    await q.processVaultSyncQueue();
+    t("offline: reported as saved on this device (pending), no cloud call", status.getCloudSavePhase() === "pending" && calls === 0);
+    Object.defineProperty(global, "navigator", { value: { onLine: true }, configurable: true });
+    status.resetCloudSaveStatus();
+    t("sign-out clears the status", status.getCloudSavePhase() === "idle");
+  }
+
+  // === Defect (2026-10-13): signing out left the account's push subscription active on the device, and the next account could not take
+  //     the device over (its save was refused) while the page still said "subscribed" ===
+  {
+    reset();
+    process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY = "BEl62iUYgUivxIkv69yViEuiBIa-Ib9-SkvMeAtA3LFgDzkrxZJjSgSnfckjBJuBkr3qBUYIHBQFLXYp5Nksh8U";
+    // simulated browser push: one device endpoint at a time, as a real browser keeps
+    let deviceSub = null; let counter = 0; const unsubscribed = [];
+    const makeSub = () => { counter += 1; const ep = "https://push.example/endpoint-" + counter; return { endpoint: ep, toJSON: () => ({ endpoint: ep, keys: { p256dh: "p" + counter, auth: "a" + counter } }), unsubscribe: async () => { unsubscribed.push(ep); if (deviceSub && deviceSub.endpoint === ep) deviceSub = null; return true; } }; };
+    const pushManager = { getSubscription: async () => deviceSub, subscribe: async () => { deviceSub = makeSub(); return deviceSub; } };
+    const reg = { pushManager };
+    Object.defineProperty(global, "navigator", { value: { onLine: true, serviceWorker: { getRegistration: async () => reg, register: async () => reg, ready: Promise.resolve(reg) } }, configurable: true });
+    global.window.PushManager = function () {};
+    global.window.Notification = { permission: "granted", requestPermission: async () => "granted" };
+    global.Notification = global.window.Notification;
+    global.window.atob = (x) => Buffer.from(x.replace(/-/g, "+").replace(/_/g, "/"), "base64").toString("binary");
+    global.atob = global.window.atob;
+
+    // the database: one row per endpoint, owned by one profile; an account may only see/change its own rows
+    let me = A; const rows = []; const profileOf = { [A]: PA, [B]: PB };
+    const owns = (row) => row.profile_id === profileOf[me];
+    mocks.supabaseClient = { getSupabaseBrowserClient: () => ({
+      from: () => ({
+        upsert: async (row) => { const i = rows.findIndex((r) => r.endpoint === row.endpoint); if (i >= 0) { if (!owns(rows[i])) return { error: { message: "row-level security" } }; rows[i] = { ...row }; return { error: null }; } if (row.profile_id !== profileOf[me]) return { error: { message: "row-level security" } }; rows.push({ ...row }); return { error: null }; },
+        select: () => ({ eq: (_c, v) => ({ limit: async () => ({ data: rows.filter((r) => r.endpoint === v && owns(r)).map((r) => ({ id: r.endpoint })), error: null }) }) }),
+        delete: () => ({ eq: async (_c, v) => { for (let i = rows.length - 1; i >= 0; i--) if (rows[i].endpoint === v && owns(rows[i])) rows.splice(i, 1); return { error: null }; } }),
+      }),
+    }) };
+    const push = load("pushNotifications");
+
+    me = A; set("vltd-auth", session(A));
+    const okA = await push.subscribeToPush(PA);
+    t("A turns notifications on: saved against A, device subscribed", okA && rows.length === 1 && rows[0].profile_id === PA && (await push.getPushSubscriptionState()) === "subscribed");
+
+    // old behaviour reproduced: A walks away without turning it off, B signs in on the same device
+    me = B; set("vltd-auth", session(B));
+    t("B does NOT see A's subscription as its own (state is unsubscribed, not 'subscribed')", (await push.getPushSubscriptionState()) === "unsubscribed");
+    const okB = await push.subscribeToPush(PB);
+    t("B can take the device over: fresh subscription saved against B", okB && rows.some((r) => r.profile_id === PB) && deviceSub && rows.find((r) => r.profile_id === PB).endpoint === deviceSub.endpoint);
+    t("A's old endpoint was ended in the browser (A's notifications no longer reach this device)", unsubscribed.includes("https://push.example/endpoint-1"));
+
+    // sign-out path
+    me = B;
+    await push.releasePushOnSignOut();
+    t("sign-out removes the account's row and the browser subscription", !rows.some((r) => r.profile_id === PB) && deviceSub === null);
+    t("sign-out keeps the opt-in so the same account can be restored on its next sign-in", get("vltd_push_optin_v1") === "1");
+    await push.restorePushIfOptedIn(PB);
+    t("next sign-in of the same account restores notifications without asking again", rows.some((r) => r.profile_id === PB) && deviceSub !== null);
+    // explicit turn-off forgets the opt-in
+    await push.unsubscribeFromPush();
+    t("turning notifications off yourself removes the opt-in and the row", get("vltd_push_optin_v1") === null && !rows.some((r) => r.profile_id === PB));
+    // takeover of a device by another account drops the browser subscription
+    me = A; await push.subscribeToPush(PA);
+    await push.dropDevicePushSubscription();
+    t("another account taking over drops the device's browser subscription", deviceSub === null);
+  }
 
   console.log("\n" + pass + " passed, " + fail + " failed");
   fs.rmSync(out, { recursive: true, force: true });

@@ -1,4 +1,9 @@
 // Server component — injects OG metadata for the public exhibit share page.
+//
+// Only a PUBLIC exhibition's title, description, item count and curator name go into the page title and link previews. This
+// runs with the server's key (no signed-in viewer), so anything else (Locked, invite-only) must come out as the generic
+// "VLTD Exhibition" — found 2026-10-13: a Locked exhibition's title was shown to anyone holding its share link. The page itself
+// still shows the owner and other authorised viewers what they are allowed to see.
 // The opengraph-image.tsx at this route segment fetches its own data,
 // so we only need to set the text metadata here.
 import type { Metadata } from "next";
@@ -32,7 +37,7 @@ async function fetchGalleryMeta(token: string) {
   const h = { apikey: SUPABASE_ANON, Authorization: `Bearer ${SUPABASE_ANON}` };
   try {
     const res = await fetch(
-      `${SUPABASE_URL}/rest/v1/galleries?public_token=eq.${encodeURIComponent(token)}&select=title,description,layout,profile_id,alias_enabled,alias_name&limit=1`,
+      `${SUPABASE_URL}/rest/v1/galleries?public_token=eq.${encodeURIComponent(token)}&visibility=eq.PUBLIC&select=title,description,layout,profile_id,alias_enabled,alias_name&limit=1`,
       { headers: h, next: { revalidate: 120 } }
     );
     const rows: GalleryRow[] = await res.json().catch(() => []);

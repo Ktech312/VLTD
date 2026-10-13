@@ -34,6 +34,8 @@ const USER_DATA_BASES = [
   "vltd_items",
   GALLERIES_KEY,
   "vltd_deleted_gallery_ids_v1",
+  "vltd_gallery_sync_pending_v1",
+  "vltd_push_optin_v1",
   "vltd_sync_queue_v1",
   "vltd_pending_moves_v1",
   "vltd_pull_cursor_v1",

@@ -18,7 +18,13 @@ export default function PublicProfileSync() {
       const { data } = await getCurrentUser();
       if (!data.user) return;
       const profileId = getStoredActiveProfileId();
-      if (profileId) void syncPublicProfile(profileId);
+      if (profileId) {
+        void syncPublicProfile(profileId);
+        // This account turned notifications on for this device before (signing out removes the subscription): turn them back on.
+        if (typeof window !== "undefined" && window.localStorage.getItem("vltd_push_optin_v1") === "1") {
+          void import("@/lib/pushNotifications").then((m) => m.restorePushIfOptedIn(profileId)).catch(() => {});
+        }
+      }
     }
 
     void sync();
