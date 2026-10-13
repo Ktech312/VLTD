@@ -41,6 +41,8 @@ export type ProfileRow = {
   marketing_opt_in?: boolean | null;
 };
 
+import { reconcileLocalDataOwner, resolveLegacyOwner } from "./localDataOwner";
+
 const ACTIVE_PROFILE_KEY = "vltd_active_profile_id_v1";
 const AUTH_TIMEOUT_MS = 8000;
 
@@ -136,6 +138,9 @@ function hydrateCacheFromStorage() {
     stored.session?.user ??
     null;
 
+  // Whose data is on this device must be settled before anything reads it (see localDataOwner.ts).
+  if (possibleUser?.id) reconcileLocalDataOwner(possibleUser.id);
+
   if (possibleSession && cachedSession === undefined) {
     cachedSession = possibleSession;
   }
@@ -145,6 +150,7 @@ function hydrateCacheFromStorage() {
 }
 
 function setCachedAuthFromSession(session: any) {
+  if (session?.user?.id) reconcileLocalDataOwner(session.user.id);
   cachedSession = session ?? null;
   cachedUser = session?.user ?? null;
 }
@@ -163,7 +169,8 @@ export function initAuthListener() {
   authListenerInitialized = true;
   hydrateCacheFromStorage();
 
-  supabase.auth.onAuthStateChange((_event, session) => {
+  supabase.auth.onAuthStateChange((event, session) => {
+    if (event === "SIGNED_OUT") reconcileLocalDataOwner(null);
     setCachedAuthFromSession(session);
     clearInFlightAuth();
     profilesPromise = null;
@@ -355,6 +362,9 @@ export async function signOut(options?: { scope?: "local" | "global" }) {
 
   await supabase.auth.signOut({ scope: options?.scope ?? "local" });
 
+  // Park this person's data on the device so the next person who signs in here never sees it.
+  reconcileLocalDataOwner(null);
+
   if (typeof window !== "undefined") {
     localStorage.removeItem(ACTIVE_PROFILE_KEY);
     window.dispatchEvent(new Event("vltd:active-profile"));
@@ -393,8 +403,11 @@ export async function listMyProfiles() {
         "Profile list lookup"
       );
 
+      const rows = (result.data ?? []) as ProfileRow[];
+      // Profiles are known: settle whose data older browsers are holding (see localDataOwner.ts).
+      if (!result.error) resolveLegacyOwner(userId, rows.map((row) => row.id));
       return {
-        data: (result.data ?? []) as ProfileRow[],
+        data: rows,
         error: result.error ?? null,
       };
     } catch (error) {
