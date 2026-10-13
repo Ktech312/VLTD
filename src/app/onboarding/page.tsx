@@ -149,6 +149,7 @@ export default function OnboardingPage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
+  const [draftLoaded, setDraftLoaded] = useState(false);
   const { theme, setTheme, setIconStyle, logoVariant, setLogoVariant } = useTheme();
   const lookMode = theme.mode;
   function chooseLook(next: "classic" | "bright") {
@@ -162,29 +163,37 @@ export default function OnboardingPage() {
   const [username, setUsername] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [avatarPreset, setAvatarPreset] = useState("key");
-  const [accountChoice, setAccountChoice] = useState<"personal" | "business" | "both">("personal");
+  const [addBusiness, setAddBusiness] = useState(false);
   const [focusedUniverses, setFocusedUniverses] = useState<string[]>([]);
 
-  // Business fields (shown for Business or Both)
+  // Optional second profile. Every VLTD account starts with a personal profile.
   const [bizName, setBizName] = useState("");
   const [bizUsername, setBizUsername] = useState("");
   const [bizType, setBizType] = useState("dealer");
   const [bizWebsite, setBizWebsite] = useState("");
   const [bizEin, setBizEin] = useState("");
 
-  // The PRIMARY profile is business only when "Business" is chosen; "Both" makes
-  // the primary personal and adds a separate business profile.
-  const profileType: "personal" | "business" = accountChoice === "business" ? "business" : "personal";
-
   useEffect(() => {
     const draft = loadOnboardingDraft();
+    const identityIsComplete = draft.display_name.trim().length >= 2 && slugifyUsername(draft.username).length >= 3;
+    const businessIsComplete = !draft.add_business || (
+      draft.business_name.trim().length >= 2 && slugifyUsername(draft.business_username).length >= 3
+    );
+    setStep(!identityIsComplete ? 1 : !businessIsComplete && draft.step > 2 ? 2 : draft.step);
     setUsername(draft.username);
     setDisplayName(draft.display_name);
-    setAccountChoice(draft.profile_type === "business" ? "business" : "personal");
+    setAddBusiness(draft.add_business);
+    setBizName(draft.business_name);
+    setBizUsername(draft.business_username);
+    setBizType(draft.business_type);
+    setBizWebsite(draft.business_website);
+    setBizEin(draft.business_ein);
+    setFocusedUniverses(draft.focused_universes);
     // The draft stores the chosen avatar preset id in the avatar_emoji slot.
     if (draft.avatar_emoji && AVATAR_PRESET_IDS.has(draft.avatar_emoji)) {
       setAvatarPreset(draft.avatar_emoji);
     }
+    setDraftLoaded(true);
 
     async function load() {
       const status = await getOnboardingStatus();
@@ -197,26 +206,37 @@ export default function OnboardingPage() {
 
   // Persist draft on any field change
   useEffect(() => {
+    if (!draftLoaded) return;
     saveOnboardingDraft({
+      step,
       username,
       display_name: displayName,
-      profile_type: profileType,
-      primary_focus: "",
       avatar_emoji: avatarPreset,
+      add_business: addBusiness,
+      business_name: bizName,
+      business_username: bizUsername,
+      business_type: bizType,
+      business_website: bizWebsite,
+      business_ein: bizEin,
+      focused_universes: focusedUniverses,
     });
-  }, [username, displayName, profileType, avatarPreset]);
+  }, [step, username, displayName, avatarPreset, addBusiness, bizName, bizUsername, bizType, bizWebsite, bizEin, focusedUniverses, draftLoaded]);
 
   const canContinueIdentity = useMemo(
     () => displayName.trim().length >= 2 && slugifyUsername(username).length >= 3,
     [displayName, username]
   );
 
+  const canContinueBusiness = useMemo(
+    () => !addBusiness || (bizName.trim().length >= 2 && slugifyUsername(bizUsername).length >= 3),
+    [addBusiness, bizName, bizUsername]
+  );
+
   async function handleFinish() {
-    if (!canContinueIdentity) return;
+    if (!canContinueIdentity || !canContinueBusiness) return;
     setSaving(true);
     setError("");
     try {
-      const isPrimaryBusiness = accountChoice === "business";
       // Primary focus is derived from the first universe the user picked (if any).
       const primaryFocus = focusedUniverses[0]
         ? UNIVERSE_LABEL[focusedUniverses[0] as keyof typeof UNIVERSE_LABEL] ?? ""
@@ -224,12 +244,9 @@ export default function OnboardingPage() {
       const profileData = await createProfile({
         username: slugifyUsername(username),
         display_name: displayName.trim(),
-        profile_type: isPrimaryBusiness ? "business" : "personal",
+        profile_type: "personal",
         primary_focus: primaryFocus || undefined,
         avatar_url: `__preset:${avatarPreset}`,
-        ...(isPrimaryBusiness
-          ? { business_type: bizType, website: bizWebsite, tax_id: bizEin }
-          : {}),
       });
 
       // Save focused_universes if any were chosen. This is best-effort: if the
@@ -248,11 +265,12 @@ export default function OnboardingPage() {
         }
       }
 
-      // "Both" — also create a separate business profile, then land on personal.
-      if (accountChoice === "both") {
+      // A business is always a separate second profile. The personal profile
+      // remains the active profile after setup.
+      if (addBusiness) {
         await createProfile({
-          username: slugifyUsername(bizUsername || `${username}-biz`),
-          display_name: bizName.trim() || `${displayName.trim()} Business`,
+          username: slugifyUsername(bizUsername),
+          display_name: bizName.trim(),
           profile_type: "business",
           avatar_url: "__preset:vault",
           business_type: bizType,
@@ -307,16 +325,16 @@ export default function OnboardingPage() {
               <span className="text-[11px] uppercase tracking-[0.2em] text-[color:var(--muted2)]">/ Setup</span>
             </div>
             <h1 className="mt-3 text-3xl font-black leading-[1] tracking-[-0.05em] text-text-primary sm:text-4xl">
-              {step === 1 && "Your identity."}
-              {step === 2 && "Account type."}
+              {step === 1 && "Your personal account."}
+              {step === 2 && "Add a business?"}
               {step === 3 && "Pick your look."}
-              {step === 4 && "What you collect."}
+              {step === 4 && "Review and finish."}
             </h1>
             <p className="mt-2 text-sm text-[color:var(--muted)]">
-              {step === 1 && "Pick an avatar, set your name. You can change all of this later."}
-              {step === 2 && "This shapes your dashboard and visibility defaults."}
+              {step === 1 && "Set up the personal profile every VLTD member starts with."}
+              {step === 2 && "Your personal details are ready. A separate business profile is optional."}
               {step === 3 && "Choose how VLTD looks for you. Change it anytime in your account menu."}
-              {step === 4 && "Pick the universes to focus your experience. You can change this anytime."}
+              {step === 4 && "Choose your interests and confirm exactly which profiles will be created."}
             </p>
 
             <StepIndicator step={step} total={TOTAL_STEPS} />
@@ -380,7 +398,7 @@ export default function OnboardingPage() {
                     className="mt-2 h-12 w-full rounded-2xl border border-[color:var(--border)] bg-vault-card px-4 text-[color:var(--fg)] placeholder:text-[color:var(--muted2)] outline-none transition focus:border-[color:var(--accent)] focus:ring-4 focus:ring-[rgba(203,208,213,0.12)]"
                   />
                   <div className="mt-1.5 text-xs text-[color:var(--muted2)]">
-                    Public URL: vltd.app/v/<span className="font-semibold text-[color:var(--muted)]">{slugifyUsername(username) || "username"}</span>
+                    Public URL: vltd.app/@<span className="font-semibold text-[color:var(--muted)]">{slugifyUsername(username) || "username"}</span>
                   </div>
                 </label>
 
@@ -390,19 +408,25 @@ export default function OnboardingPage() {
               </div>
             )}
 
-            {/* ── Step 2: Account type ── */}
+            {/* ── Step 2: Optional business profile ── */}
             {step === 2 && (
               <div className="mt-6 space-y-5">
-                <div className="grid gap-3 sm:grid-cols-3">
+                <div className="rounded-2xl border border-emerald-400/30 bg-emerald-400/10 px-4 py-3">
+                  <div className="text-sm font-black text-text-primary">Personal profile details complete</div>
+                  <div className="mt-1 text-xs leading-5 text-[color:var(--muted)]">
+                    {displayName.trim()} · @{slugifyUsername(username)}. Your profile will be created when you finish setup.
+                  </div>
+                </div>
+
+                <div className="grid gap-3 sm:grid-cols-2">
                   {([
-                    { key: "personal", icon: "person", title: "Curator", desc: "Personal vault, portfolio, and exhibitions." },
-                    { key: "business", icon: "store", title: "Business", desc: "Shop, resale inventory, or team workflow." },
-                    { key: "both", icon: "key", title: "Both", desc: "A personal vault plus a separate business." },
+                    { key: false, icon: "person", title: "Personal only", desc: "Continue with your personal vault without creating a business profile." },
+                    { key: true, icon: "store", title: "Add a business profile", desc: "Create a separate profile for a shop, dealer, brand, or team." },
                   ] as const).map(({ key, icon, title, desc }) => (
-                    <button key={key} type="button" onClick={() => setAccountChoice(key)} className={accountTypeCardClass(accountChoice === key)}>
+                    <button key={String(key)} type="button" onClick={() => setAddBusiness(key)} className={accountTypeCardClass(addBusiness === key)}>
                       <div className="flex items-center justify-between">
                         <div className="mb-2 text-[color:var(--theme-gold,#C8CDD2)]"><UiIcon name={icon} size={22} /></div>
-                        {accountChoice === key && (
+                        {addBusiness === key && (
                           <div className="rounded-full px-2 py-0.5 text-[10px] font-black uppercase tracking-[0.1em] text-[#0B0B0B]" style={{ background: "var(--theme-gold-gradient)" }}>✓</div>
                         )}
                       </div>
@@ -412,22 +436,20 @@ export default function OnboardingPage() {
                   ))}
                 </div>
 
-                {/* Business details — shown for Business or Both */}
-                {(accountChoice === "business" || accountChoice === "both") && (
+                {/* Business details — shown only when adding a second profile */}
+                {addBusiness && (
                   <div className="rounded-2xl border border-[color:var(--border)] bg-[rgba(255,255,255,0.02)] p-4 space-y-3">
                     <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[color:var(--muted2)]">Business details</div>
-                    {accountChoice === "both" && (
-                      <div className="grid gap-3 sm:grid-cols-2">
-                        <label className="block">
-                          <span className="text-xs text-[color:var(--muted)]">Business name</span>
-                          <input value={bizName} onChange={(e) => setBizName(e.target.value)} placeholder="The Kellogg Collection" className={`mt-1 w-full ${nativeSelectClass}`} />
-                        </label>
-                        <label className="block">
-                          <span className="text-xs text-[color:var(--muted)]">Business handle</span>
-                          <input value={bizUsername} onChange={(e) => setBizUsername(e.target.value)} placeholder="kelloggcollection" className={`mt-1 w-full ${nativeSelectClass}`} />
-                        </label>
-                      </div>
-                    )}
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      <label className="block">
+                        <span className="text-xs text-[color:var(--muted)]">Business name</span>
+                        <input value={bizName} onChange={(e) => setBizName(e.target.value)} placeholder="Business name" className={`mt-1 w-full ${nativeSelectClass}`} />
+                      </label>
+                      <label className="block">
+                        <span className="text-xs text-[color:var(--muted)]">Business handle</span>
+                        <input value={bizUsername} onChange={(e) => setBizUsername(slugifyUsername(e.target.value))} placeholder="business_handle" className={`mt-1 w-full ${nativeSelectClass}`} />
+                      </label>
+                    </div>
                     <div className="grid gap-3 sm:grid-cols-2">
                       <label className="block">
                         <span className="text-xs text-[color:var(--muted)]">Business type</span>
@@ -465,7 +487,7 @@ export default function OnboardingPage() {
                 </div>
 
                 <div className="flex flex-wrap items-center gap-3">
-                  <GoldButton onClick={() => setStep(3)}>Continue →</GoldButton>
+                  <GoldButton disabled={!canContinueBusiness} onClick={() => setStep(3)}>Continue →</GoldButton>
                   <GhostButton onClick={() => setStep(1)}>Back</GhostButton>
                 </div>
               </div>
@@ -554,21 +576,27 @@ export default function OnboardingPage() {
 
                 {/* Confirm summary */}
                 <div className="rounded-2xl border border-[color:var(--border)] bg-vault-card p-4 space-y-2">
-                  <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[color:var(--muted2)] mb-1">Confirming</div>
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[color:var(--muted2)] mb-1">Profiles to create</div>
                   <div className="flex items-center gap-3">
                     <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full ring-1 ring-[color:var(--border)]">
                       <AvatarThumb id={avatarPreset} />
                     </div>
                     <div>
                       <div className="font-semibold text-text-primary">{displayName.trim()}</div>
-                      <div className="text-xs text-[color:var(--muted2)]">@{slugifyUsername(username)} · {profileType === "business" ? "Business" : "Curator"}{focusedUniverses.length > 0 ? ` · ${focusedUniverses.length} ${focusedUniverses.length === 1 ? "universe" : "universes"}` : ""}</div>
+                      <div className="text-xs text-[color:var(--muted2)]">@{slugifyUsername(username)} · Personal{focusedUniverses.length > 0 ? ` · ${focusedUniverses.length} ${focusedUniverses.length === 1 ? "universe" : "universes"}` : ""}</div>
                     </div>
                   </div>
+                  {addBusiness && (
+                    <div className="mt-3 border-t border-[color:var(--border)] pt-3">
+                      <div className="font-semibold text-text-primary">{bizName.trim()}</div>
+                      <div className="text-xs text-[color:var(--muted2)]">@{slugifyUsername(bizUsername)} · Separate business profile</div>
+                    </div>
+                  )}
                 </div>
 
                 <div className="flex flex-wrap items-center gap-3">
-                  <GoldButton disabled={saving || !canContinueIdentity} onClick={() => void handleFinish()}>
-                    {saving ? "Setting up…" : "Launch my vault →"}
+                  <GoldButton disabled={saving || !canContinueIdentity || !canContinueBusiness} onClick={() => void handleFinish()}>
+                    {saving ? "Setting up…" : addBusiness ? "Create my profiles →" : "Create my profile →"}
                   </GoldButton>
                   <GhostButton onClick={() => setStep(3)}>Back</GhostButton>
                 </div>
@@ -579,7 +607,7 @@ export default function OnboardingPage() {
 
         {/* Fine print */}
         <p className="mt-5 text-center text-xs text-[color:var(--muted2)]">
-          You can change your name, avatar, and focus anytime in settings.
+          Your unfinished setup is saved on this device. You can change these details later in settings.
         </p>
       </div>
     </main>
