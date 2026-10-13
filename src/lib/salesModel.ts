@@ -7,6 +7,7 @@
 
 import { mayAdoptLegacyKey } from "./legacyKeys";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
+import { captureIdentity } from "@/lib/sessionGuard";
 
 export type Sale = {
   id: string;
@@ -238,6 +239,7 @@ export async function syncSalesFromSupabase(): Promise<Sale[]> {
     if (!pid) return local;
     const supabase = getSupabaseBrowserClient();
     if (!supabase) return local;
+    const stillSame = captureIdentity();
     const { data, error } = await supabase
       .from("sales")
       .select(
@@ -246,6 +248,7 @@ export async function syncSalesFromSupabase(): Promise<Sale[]> {
       .eq("profile_id", pid)
       .order("sold_at", { ascending: false });
     if (error || !data) return local;
+    if (!stillSame()) return local; // the person or profile changed while this was in flight: not theirs to save or push
 
     if (data.length === 0) {
       // Server empty — seed it from local (incl. anything just migrated).

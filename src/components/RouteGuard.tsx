@@ -5,6 +5,7 @@ import { useEffect, useState, type ReactNode } from "react";
 
 import { getOnboardingStatus } from "@/lib/auth";
 import { routeAccess } from "@/lib/routeAccess";
+import { storedSessionUserId } from "@/lib/sessionGuard";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 
 // Enforces the access rules in src/lib/routeAccess.ts on every route, not just by hiding links:
@@ -35,6 +36,31 @@ export default function RouteGuard({ children }: { children: ReactNode }) {
   const router = useRouter();
   const access = routeAccess(pathname);
   const [allowedFor, setAllowedFor] = useState<string | null>(null);
+
+  // Another tab signed out, or signed in as someone else, while this one had a page open. This tab's memory still holds the
+  // previous person's pages and data, and its running requests are for them. A signed-out tab on a private page leaves it for
+  // the sign-in page; a tab whose account changed starts over. (A full page load, not a client-side move: it clears everything
+  // this tab was holding in memory.)
+  useEffect(() => {
+    const supabase = getSupabaseBrowserClient();
+    if (!supabase) return;
+    let knownUser = storedSessionUserId();
+    const { data } = supabase.auth.onAuthStateChange((event, session) => {
+      const uid = session?.user?.id ?? null;
+      if (event === "SIGNED_OUT") {
+        const had = knownUser;
+        knownUser = null;
+        if (had && routeAccess(window.location.pathname) !== "public") window.location.replace("/login");
+        return;
+      }
+      if (uid) {
+        const previous = knownUser;
+        knownUser = uid;
+        if (previous && previous !== uid) window.location.reload();
+      }
+    });
+    return () => data.subscription.unsubscribe();
+  }, []);
 
   useEffect(() => {
     if (access === "public") return;

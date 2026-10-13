@@ -10,6 +10,7 @@ import {
   writeVaultLocalJson,
 } from "@/lib/vaultLocalStore";
 import { resolvePrivateImageUrlSync } from "@/lib/privatePhotos";
+import { stillSignedInAs, storedSessionUserId } from "@/lib/sessionGuard";
 import { newId } from "@/lib/id";
 import {
   normalizeComparables,
@@ -1223,6 +1224,10 @@ function writePullCursor(profileId: string, entry: { c: string; f: number } | nu
 }
 
 async function pullAndMergeFromSupabase(profileId: string): Promise<VaultItem[]> {
+  // The answer is only for the person who asked. If nobody is signed in there is nothing to pull; if someone else signs in
+  // (in this tab or another) before it arrives, it is dropped instead of being merged into the new person's copy.
+  const startedAs = storedSessionUserId();
+  if (!startedAs) return loadRawItems();
   try {
     if (profileId) await checkForceClearVault(profileId);
 
@@ -1230,6 +1235,7 @@ async function pullAndMergeFromSupabase(profileId: string): Promise<VaultItem[]>
     const dueForFull = !saved || Date.now() - saved.f > FULL_PULL_EVERY_MS;
     const knownLocalCount = loadRawItems().filter((item) => String(item.profile_id ?? "") === String(profileId)).length;
     const pulled = await fetchVaultItemsDelta(profileId || undefined, dueForFull ? undefined : saved?.c, knownLocalCount);
+    if (!stillSignedInAs(startedAs)) return loadRawItems();
     const remoteItems = pulled.items;
     if (pulled.cursor) {
       writePullCursor(profileId, { c: pulled.cursor, f: pulled.delta && saved ? saved.f : Date.now() });

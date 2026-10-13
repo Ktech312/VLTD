@@ -1,4 +1,5 @@
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
+import { captureIdentity } from "@/lib/sessionGuard";
 
 export type ActivityEventKind = "added" | "sold" | "valued" | "comment" | "exhibition" | "insurance" | "share";
 
@@ -104,12 +105,14 @@ export async function syncActivityEventsFromSupabase() {
   if (!client) return loadActivityEvents();
 
   const profileId = activeProfileId();
+  const stillSame = captureIdentity();
   try {
     let query = client.from("activity_events").select("*").order("created_at", { ascending: false }).limit(500);
     if (profileId) query = query.eq("profile_id", profileId);
 
     const { data, error } = await query;
     if (error || !Array.isArray(data)) return loadActivityEvents();
+    if (!stillSame()) return loadActivityEvents(); // the person or profile changed while this was in flight
 
     const events = data.map((row) => normalize(row as Record<string, unknown>));
     saveActivityEvents(events);

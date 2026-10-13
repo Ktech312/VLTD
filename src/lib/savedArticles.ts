@@ -1,5 +1,6 @@
 import { mayAdoptLegacyKey } from "./legacyKeys";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
+import { captureIdentity } from "@/lib/sessionGuard";
 
 // Saved Learn guides — profile-scoped localStorage cache + best-effort
 // Supabase sync, mirroring the wishlist/watchlist convention. Safe before the
@@ -104,11 +105,13 @@ export async function syncSavedArticlesFromSupabase(): Promise<string[]> {
     if (!pid) return local;
     const supabase = getSupabaseBrowserClient();
     if (!supabase) return local;
+    const stillSame = captureIdentity();
     const { data, error } = await supabase
       .from("saved_articles")
       .select("slug")
       .eq("profile_id", pid);
     if (error || !data) return local;
+    if (!stillSame()) return local; // the person or profile changed while this was in flight: not theirs to save or push
     if (data.length === 0) {
       for (const s of local) void pushSaved(s);
       return local;

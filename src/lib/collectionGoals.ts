@@ -1,5 +1,6 @@
 import { mayAdoptLegacyKey } from "./legacyKeys";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
+import { stillSignedInAs, storedSessionUserId } from "@/lib/sessionGuard";
 import type { VaultItem } from "@/lib/vaultModel";
 
 export type CollectionGoal = {
@@ -108,11 +109,15 @@ export async function syncGoalsFromSupabase(): Promise<CollectionGoal[]> {
     if (!pid) return local;
     const supabase = getSupabaseBrowserClient();
     if (!supabase) return local;
+    const startedAs = storedSessionUserId();
     const { data, error } = await supabase
       .from("collection_goals")
       .select("id,name,target_count,universe,subject,notes,created_at")
       .eq("profile_id", pid);
     if (error || !data) return local;
+    // The answer is for the person and profile that asked. If either changed while it was in flight, drop it: saving it would
+    // file one profile's goals under another's, and pushing the local copy would upload them to the wrong profile.
+    if (!stillSignedInAs(startedAs) || activeProfileId() !== pid) return local;
     if (data.length === 0) {
       for (const g of local) void pushGoal(g);
       return local;

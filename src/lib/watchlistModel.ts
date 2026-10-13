@@ -1,5 +1,6 @@
 import { mayAdoptLegacyKey } from "./legacyKeys";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
+import { captureIdentity } from "@/lib/sessionGuard";
 
 const LS_BASE = "vltd_watchlist_v1";
 const ACTIVE_PROFILE_KEY = "vltd_active_profile_id_v1";
@@ -108,6 +109,7 @@ export async function syncWatchlistFromSupabase(): Promise<WatchlistItem[]> {
     if (!pid) return local;
     const supabase = getSupabaseBrowserClient();
     if (!supabase) return local;
+    const stillSame = captureIdentity();
     const { data, error } = await supabase
       .from("watchlist")
       .select(
@@ -115,6 +117,7 @@ export async function syncWatchlistFromSupabase(): Promise<WatchlistItem[]> {
       )
       .eq("owner_profile_id", pid);
     if (error || !data) return local;
+    if (!stillSame()) return local; // the person or profile changed while this was in flight: not theirs to save or push
     if (data.length === 0) {
       for (const w of local) void pushWatch(w);
       return local;

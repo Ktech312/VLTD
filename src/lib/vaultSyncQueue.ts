@@ -12,7 +12,8 @@ import {
   uploadVaultImageToSupabase,
 } from "@/lib/vaultCloud";
 import { getImageBlobFromIndexedDb } from "@/lib/vaultImageStore";
-import { writeVaultLocalJson } from "@/lib/vaultLocalStore";
+import { getVaultLocalSignature, writeVaultLocalJson } from "@/lib/vaultLocalStore";
+import { stillSignedInAs, storedSessionUserId } from "@/lib/sessionGuard";
 
 export type VaultSyncQueueItem = {
   id: string;
@@ -154,7 +155,7 @@ function itemNeedsImageUpload(item: VaultItem) {
   return (item.images ?? []).some((image) => image?.localOnly);
 }
 
-async function syncAllImages(item: VaultItem): Promise<VaultItem> {
+async function syncAllImages(item: VaultItem, startedAs: string): Promise<VaultItem> {
   const nextItem: VaultItem = {
     ...item,
     images: [...(item.images ?? [])],
@@ -170,6 +171,8 @@ async function syncAllImages(item: VaultItem): Promise<VaultItem> {
       continue;
     }
 
+    // Never upload or save for a person who is no longer the one signed in (their change of account happened mid-upload).
+    if (!stillSignedInAs(startedAs)) throw new Error("The signed-in account changed during sync.");
     const blob = await getImageBlobFromIndexedDb(image.storageKey);
 
     if (!blob) {
@@ -208,18 +211,20 @@ async function syncAllImages(item: VaultItem): Promise<VaultItem> {
     nextItem.imageFrontStoragePath = undefined;
   }
 
+  if (!stillSignedInAs(startedAs)) throw new Error("The signed-in account changed during sync.");
   saveItem(nextItem);
   return nextItem;
 }
 
-async function syncOneItem(item: VaultItem) {
+async function syncOneItem(item: VaultItem, startedAs: string) {
   let nextItem: VaultItem = { ...item };
   const hadLocalImages = itemNeedsImageUpload(nextItem);
 
   if (hadLocalImages) {
-    nextItem = await syncAllImages(nextItem);
+    nextItem = await syncAllImages(nextItem, startedAs);
   }
 
+  if (!stillSignedInAs(startedAs)) throw new Error("The signed-in account changed during sync.");
   await upsertVaultItemToSupabase({
     ...nextItem,
     profile_id: nextItem.profile_id || getStoredActiveProfileId(),
@@ -228,7 +233,7 @@ async function syncOneItem(item: VaultItem) {
   // Only write back when image uploads changed the item. Otherwise this was a
   // full read + rewrite of the whole local vault that stored identical data
   // (and could overwrite an edit made while the upload was in flight).
-  if (hadLocalImages) saveItem(nextItem);
+  if (hadLocalImages && stillSignedInAs(startedAs)) saveItem(nextItem);
 }
 
 export async function processVaultSyncQueue() {
@@ -241,6 +246,11 @@ export async function processVaultSyncQueue() {
     return { processed: 0, remaining: getPendingVaultSyncCount() };
   }
 
+  // Nobody signed in: there is no one to send for and nothing to pull. (A signed-out tab that kept running this wrote the last
+  // person's queue back into storage after they had signed out, and spun without pause.)
+  const startedAs = storedSessionUserId();
+  if (!startedAs) return { processed: 0, remaining: getPendingVaultSyncCount() };
+
   isProcessing = true;
 
   try {
@@ -250,6 +260,8 @@ export async function processVaultSyncQueue() {
     let processed = 0;
 
     while (queue.length > 0) {
+      // Another person signed in (in this tab or another) while this was running: the queue now on the device is theirs.
+      if (!stillSignedInAs(startedAs)) break;
       const current = queue[0];
 
       const item = getAllLocalItems().find(
@@ -263,18 +275,23 @@ export async function processVaultSyncQueue() {
       }
 
       try {
-        await syncOneItem(item);
+        await syncOneItem(item, startedAs);
         processed += 1;
         queue.shift();
-        writeQueue(queue);
+        if (stillSignedInAs(startedAs)) writeQueue(queue);
       } catch (err) {
         console.error("Sync failed", err);
         break;
       }
     }
 
+    const before = getVaultLocalSignature();
     const fresh = await syncVaultItemsFromSupabase();
-    window.dispatchEvent(new Event("vltd:vault-updated"));
+    // Tell the open pages only when something actually changed. This used to fire after every run, and the Vault page re-runs
+    // this whenever it hears it, so an open Vault page made a full round of requests every fraction of a second, forever.
+    if (stillSignedInAs(startedAs) && (processed > 0 || getVaultLocalSignature() !== before)) {
+      window.dispatchEvent(new Event("vltd:vault-updated"));
+    }
 
     return {
       processed,

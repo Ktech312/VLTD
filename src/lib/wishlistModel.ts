@@ -1,5 +1,6 @@
 import { mayAdoptLegacyKey } from "./legacyKeys";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
+import { captureIdentity } from "@/lib/sessionGuard";
 
 /**
  * The Curator's wishlist: one per profile, saved to the account (`wishlist`
@@ -166,6 +167,7 @@ export async function syncWishlistFromSupabase(): Promise<WishlistItem[]> {
     if (!pid) return local;
     const supabase = getSupabaseBrowserClient();
     if (!supabase) return local;
+    const stillSame = captureIdentity();
     type Res = { data: unknown; error: { message: string } | null };
     const read = async (columns: string): Promise<Res> =>
       (await supabase.from("wishlist").select(columns).eq("profile_id", pid)) as unknown as Res;
@@ -176,6 +178,7 @@ export async function syncWishlistFromSupabase(): Promise<WishlistItem[]> {
     const { error } = res;
     const data = Array.isArray(res.data) ? (res.data as Record<string, unknown>[]) : null;
     if (error || !data) return local;
+    if (!stillSame()) return local; // the person or profile changed while this was in flight: not theirs to save or push
     if (data.length === 0) {
       for (const w of local) void pushWish(w);
       return local;

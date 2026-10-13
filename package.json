@@ -13,6 +13,7 @@
     "gcd:force": "node scripts/gcd-sync.js --force",
     "gcd:import": "node scripts/gcd-import.js",
     "check:auth-email": "node scripts/check-auth-email-gate.mjs",
+    "test:isolation": "node scripts/test-account-isolation.cjs",
     "build:email-templates": "node scripts/build-supabase-email-templates.mjs"
   },
   "dependencies": {

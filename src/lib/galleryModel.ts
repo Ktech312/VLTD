@@ -1,6 +1,7 @@
 "use client";
 
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
+import { stillSignedInAs, storedSessionUserId } from "@/lib/sessionGuard";
 import { GalleryLayout, getDefaultGalleryLayout } from "./galleryLayout";
 import { type GalleryState, type GalleryVisibility } from "./galleryTier";
 
@@ -195,6 +196,7 @@ export const GALLERY_EVENT = "vltd:galleries";
 
 let supabaseHydrationStarted = false;
 let supabaseHydrationInFlight: Promise<void> | null = null;
+let supabaseHydrationFor: string | null = null; // who the running request is for
 let lastSupabaseHydrationAt = 0;
 
 function emitGalleryChange() {
@@ -1388,7 +1390,9 @@ function readStoredGallerySnapshot() {
 
 async function hydrateLocalGalleriesFromSupabase(force = false) {
   if (typeof window === "undefined") return;
-  if (supabaseHydrationInFlight) return supabaseHydrationInFlight;
+  // A request that is already running for someone else (who has since signed out or been replaced) is not reused.
+  const startedAs = storedSessionUserId();
+  if (supabaseHydrationInFlight && supabaseHydrationFor === startedAs) return supabaseHydrationInFlight;
 
   const now = Date.now();
   if (!force && supabaseHydrationStarted && now - lastSupabaseHydrationAt < 15_000) {
@@ -1399,12 +1403,17 @@ async function hydrateLocalGalleriesFromSupabase(force = false) {
   const supabase = getSupabaseBrowserClient();
   if (!supabase) return;
 
-  supabaseHydrationInFlight = (async () => {
+  supabaseHydrationFor = startedAs;
+  const thisRun: { current: Promise<void> | null } = { current: null };
+  thisRun.current = supabaseHydrationInFlight = (async () => {
     try {
     const { data, error } = await supabase
       .from("galleries")
       .select("*")
       .order("created_at", { ascending: false });
+
+    // The answer is for whoever asked. If someone else signed in (or the person signed out) meanwhile, it is dropped.
+    if (!stillSignedInAs(startedAs)) return;
 
     if (error || !Array.isArray(data)) {
       if (error) console.error("Failed to hydrate galleries from Supabase:", error);
@@ -1451,6 +1460,8 @@ async function hydrateLocalGalleriesFromSupabase(force = false) {
       console.error("Failed to hydrate gallery invite tokens:", error);
     }
 
+    if (!stillSignedInAs(startedAs)) return;
+
     const local = (() => {
       try {
         const raw = window.localStorage.getItem(KEY);
@@ -1472,12 +1483,13 @@ async function hydrateLocalGalleriesFromSupabase(force = false) {
       }
     }
 
+      if (!stillSignedInAs(startedAs)) return;
       writeLocalCache(Array.from(merged.values()), true);
       lastSupabaseHydrationAt = Date.now();
     } catch (error) {
       console.error("Unexpected Supabase gallery hydration error:", error);
     } finally {
-      supabaseHydrationInFlight = null;
+      if (supabaseHydrationInFlight === thisRun.current) supabaseHydrationInFlight = null;
     }
   })();
 

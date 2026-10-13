@@ -1,5 +1,6 @@
 import { mayAdoptLegacyKey } from "./legacyKeys";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
+import { captureIdentity } from "@/lib/sessionGuard";
 
 const LS_BASE = "vltd_saved_event_ids_v1";
 const ACTIVE_PROFILE_KEY = "vltd_active_profile_id_v1";
@@ -94,6 +95,7 @@ export async function syncSavedEventIdsFromSupabase(): Promise<string[]> {
     if (!pid) return local;
     const supabase = getSupabaseBrowserClient();
     if (!supabase) return local;
+    const stillSame = captureIdentity();
 
     const { data, error } = await supabase
       .from("saved_events")
@@ -101,6 +103,7 @@ export async function syncSavedEventIdsFromSupabase(): Promise<string[]> {
       .eq("profile_id", pid);
 
     if (error || !data) return local;
+    if (!stillSame()) return local; // the person or profile changed while this was in flight: not theirs to save or push
 
     if (data.length === 0) {
       for (const id of local) void pushSavedEvent(id);

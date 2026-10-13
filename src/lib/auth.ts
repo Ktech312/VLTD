@@ -42,6 +42,7 @@ export type ProfileRow = {
 };
 
 import { reconcileLocalDataOwner, resolveLegacyOwner } from "./localDataOwner";
+import { stillSignedInAs } from "./sessionGuard";
 
 const ACTIVE_PROFILE_KEY = "vltd_active_profile_id_v1";
 const AUTH_TIMEOUT_MS = 8000;
@@ -151,6 +152,8 @@ function hydrateCacheFromStorage() {
 
 function setCachedAuthFromSession(session: any) {
   if (session?.user?.id) reconcileLocalDataOwner(session.user.id);
+  // A profile lookup started for the previous person must not be handed to the next one.
+  if ((session?.user?.id ?? null) !== (cachedUser?.id ?? null)) profilesPromise = null;
   cachedSession = session ?? null;
   cachedUser = session?.user ?? null;
 }
@@ -382,7 +385,8 @@ export async function listMyProfiles() {
 
   if (profilesPromise) return profilesPromise;
 
-  profilesPromise = (async () => {
+  let mine: Promise<{ data: ProfileRow[]; error: Error | null }> | null = null;
+  mine = profilesPromise = (async () => {
     const userResult = await getCurrentUser();
     const userId = userResult.data.user?.id;
     if (!userId) {
@@ -405,7 +409,8 @@ export async function listMyProfiles() {
 
       const rows = (result.data ?? []) as ProfileRow[];
       // Profiles are known: settle whose data older browsers are holding (see localDataOwner.ts).
-      if (!result.error) resolveLegacyOwner(userId, rows.map((row) => row.id));
+      // (Only if this person is still the one signed in: a slow answer for someone who has since signed out settles nothing.)
+      if (!result.error && stillSignedInAs(userId)) resolveLegacyOwner(userId, rows.map((row) => row.id));
       return {
         data: rows,
         error: result.error ?? null,
@@ -416,7 +421,7 @@ export async function listMyProfiles() {
         error: error instanceof Error ? error : new Error("Profile list lookup failed."),
       };
     } finally {
-      profilesPromise = null;
+      if (profilesPromise === mine) profilesPromise = null;
     }
   })();
 

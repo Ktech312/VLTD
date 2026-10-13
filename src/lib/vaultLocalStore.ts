@@ -44,6 +44,21 @@ function readStored(): string | null {
   }
 }
 
+/** Reads a stored copy of the local vault (compressed or plain) without touching the live one, e.g. a parked copy. */
+export function decodeVaultLocalCopy(stored: string): string | null {
+  return decode(stored);
+}
+
+/**
+ * Forgets the copies held in memory. They belong to whoever was signed in before: after the device's data moves to another
+ * person (or is parked on sign-out) the next read must come from storage.
+ */
+export function resetVaultLocalMemory() {
+  memoryJson = null;
+  lastStored = null;
+  lastJson = null;
+}
+
 /** The local vault as JSON text, or null if there is none. */
 export function readVaultLocalJson(): string | null {
   if (typeof window === "undefined") return null;
