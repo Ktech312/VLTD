@@ -187,7 +187,7 @@ function referencedProfileIds(): string[] {
 /**
  * Call once the signed-in person's profile ids are known. Browsers that hold data from before owners were recorded get an
  * owner now, and data that names someone else's profile is parked as "unattributed" instead of shown to this person.
- * Data parked that way goes back to whoever owns those profiles.
+ * Data parked that way goes back to whoever owns ALL the profiles it names.
  */
 export function resolveLegacyOwner(userId: string, ownProfileIds: string[]): void {
   const ls = storage();
@@ -208,12 +208,13 @@ export function resolveLegacyOwner(userId: string, ownProfileIds: string[]): voi
     ls.setItem(OWNER_KEY, userId);
   }
 
-  // Parked "unattributed" data that names one of this person's profiles belongs to them: return it.
+  // Parked "unattributed" data whose profiles are all this person's belongs to them: return it.
   const idsRaw = ls.getItem(UNATTRIBUTED_IDS_KEY);
   if (idsRaw && ls.getItem(OWNER_KEY) === userId) {
     try {
       const ids = JSON.parse(idsRaw) as string[];
-      if (ids.some((id) => ownProfileIds.includes(id))) {
+      // Only when EVERY profile it names is theirs: a copy that also names someone else's profile stays parked.
+      if (ids.length > 0 && ids.every((id) => ownProfileIds.includes(id))) {
         unpark(ls, UNATTRIBUTED);
         ls.removeItem(UNATTRIBUTED_IDS_KEY);
         announce();
