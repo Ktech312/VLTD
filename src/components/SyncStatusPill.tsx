@@ -72,6 +72,8 @@ export default function SyncStatusPill() {
         style={{
           background: "var(--surface-strong, rgba(6,12,20,0.96))",
           border: "1px solid var(--border, rgba(200,205,210,0.3))",
+          // a soft shadow keeps the edge visible on light themes, where the pill and the page are both near-white
+          boxShadow: "0 2px 10px rgba(0,0,0,0.22)",
           color: "var(--text, #f0f0f0)",
           ["--vltd-keep-color" as string]: "var(--text, #f0f0f0)",
         }}
