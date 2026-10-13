@@ -181,6 +181,12 @@ function TopNavInner() {
   useEffect(() => {
     let cancelled = false;
     async function refresh() {
+      // No level until there is a profile to score: before setup is finished the local cache can still hold another account's
+      // items, and a level worked out from that is wrong for this person.
+      if (!activeProfileId) {
+        if (!cancelled) setLevelInfo(null);
+        return;
+      }
       let followers = 0;
       if (activeProfileId) {
         try {
@@ -484,10 +490,10 @@ function TopNavInner() {
                 style={{ background: "transparent", border: "none" }}
               >
                 {/* Collector level — real, from the curator's items + exhibits. */}
-                {signedIn && (
+                {signedIn && levelInfo && (
                   <span className="hidden text-right leading-tight sm:block">
-                    <span className="block text-[8px] font-bold uppercase tracking-[0.16em]" style={{ color: "var(--muted2)" }}>{levelInfo?.title ?? "Collector"}</span>
-                    <span className="block text-[11px] font-black" style={{ color: "#4FD3EE" }}>Level {levelInfo?.level ?? 1}</span>
+                    <span className="block text-[8px] font-bold uppercase tracking-[0.16em]" style={{ color: "var(--muted2)" }}>{levelInfo.title}</span>
+                    <span className="block text-[11px] font-black" style={{ color: "#4FD3EE" }}>Level {levelInfo.level}</span>
                   </span>
                 )}
                 <div

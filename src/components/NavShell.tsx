@@ -5,6 +5,7 @@ import { useState } from "react";
 import TopNav from "@/components/TopNav";
 import BottomNav from "@/components/BottomNav";
 import PullToRefresh from "@/components/PullToRefresh";
+import RouteGuard from "@/components/RouteGuard";
 
 export default function NavShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -54,7 +55,9 @@ export default function NavShell({ children }: { children: React.ReactNode }) {
   return (
     <>
       <TopNav />
-      <PullToRefresh>{children}</PullToRefresh>
+      <PullToRefresh>
+        <RouteGuard>{children}</RouteGuard>
+      </PullToRefresh>
       <BottomNav />
     </>
   );
