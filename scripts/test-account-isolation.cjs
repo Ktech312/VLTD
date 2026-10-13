@@ -337,6 +337,16 @@ const galleriesA = JSON.stringify([{ id: "gA", profile_id: PA, title: "A locked"
     Object.defineProperty(global, "navigator", { value: { onLine: true }, configurable: true });
     status.resetCloudSaveStatus();
     t("sign-out clears the status", status.getCloudSavePhase() === "idle");
+    // never claim success while something is still waiting: an item save succeeding must not hide an exhibition that has not synced
+    status.reportPending("exhibitions"); status.reportSaved("items");
+    t("an item saved while an exhibition is still waiting: still reported as pending, never as saved", status.getCloudSavePhase() === "pending");
+    status.reportSaving("items");
+    t("saving in progress does not hide a pending save", status.getCloudSavePhase() === "pending");
+    status.reportSaved("exhibitions");
+    t("exhibition accepted but an item is still being sent: says saving, not saved", status.getCloudSavePhase() === "saving");
+    status.reportSaved("items");
+    t("only when nothing is waiting or in flight does it say saved", status.getCloudSavePhase() === "saved");
+    status.resetCloudSaveStatus();
   }
 
   // === Defect (2026-10-13): signing out left the account's push subscription active on the device, and the next account could not take
