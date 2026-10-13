@@ -61,7 +61,9 @@ export default function SyncStatusPill() {
       role="status"
       aria-live="polite"
       data-cloud-save-status={phase}
-      className="vltd-keep-color pointer-events-none fixed left-0 right-0 z-[10006] flex justify-center px-4 bottom-[88px] md:bottom-6"
+      // Placement (checked at phone width, 2026-10-13): above the floating Add Item button, which sits just over the bottom bar, so it never covers
+      // either; below every dialog and sheet (they start at z-index 10001), so a dialog's buttons are never hidden behind it.
+      className="vltd-keep-color pointer-events-none fixed left-0 right-0 z-[9990] flex justify-center px-4 bottom-[calc(env(safe-area-inset-bottom,0px)+152px)] md:bottom-6"
     >
       <div
         className="pointer-events-auto inline-flex min-h-[36px] max-w-full items-center gap-2 rounded-full px-4 text-xs"
