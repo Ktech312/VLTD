@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import type { User } from "@supabase/supabase-js";
 import { getAdminEmail, getServiceClient, isOwnerEmail } from "@/lib/serverAdmin";
 
 // Real per-user analytics for EK's future use: time-on-app (already tracked
@@ -43,14 +44,32 @@ export async function GET(req: NextRequest) {
 
   // Email lives in auth.users, not profiles -- join by user_id via the admin API.
   const emailByUserId = new Map<string, string>();
+  const authUsers: User[] = [];
   for (let page = 1; ; page += 1) {
     const { data, error } = await svc.auth.admin.listUsers({ page, perPage: 200 });
     if (error || !data?.users?.length) break;
     for (const u of data.users) {
+      authUsers.push(u);
       if (u.email) emailByUserId.set(u.id, u.email);
     }
     if (data.users.length < 200) break;
   }
+
+  // Sign-ups that have no profile yet: people who created an account but have not confirmed their email, or confirmed it and have not
+  // finished setup. They are not in the table above (that lists profiles), so without this an unconfirmed sign-up is invisible.
+  const withProfile = new Set((profiles ?? []).map((p) => p.user_id).filter(Boolean));
+  const pending = authUsers
+    .filter((u) => !withProfile.has(u.id))
+    .map((u) => ({
+      id: u.id,
+      email: u.email ?? null,
+      firstName: typeof u.user_metadata?.first_name === "string" ? (u.user_metadata.first_name as string) : null,
+      signedUpAt: u.created_at ?? null,
+      confirmedAt: u.email_confirmed_at ?? null,
+      confirmationSentAt: u.confirmation_sent_at ?? null,
+      lastSignInAt: u.last_sign_in_at ?? null,
+    }))
+    .sort((a, b) => Date.parse(b.signedUpAt ?? "") - Date.parse(a.signedUpAt ?? ""));
 
   const rows = (profiles ?? []).map((p) => {
     const usage = usageByProfile.get(p.id) ?? { calls: 0, inputTokens: 0, outputTokens: 0 };
@@ -76,7 +95,7 @@ export async function GET(req: NextRequest) {
     };
   });
 
-  return NextResponse.json({ rows });
+  return NextResponse.json({ rows, pending });
 }
 
 // Toggles the 3D Museum beta flag for one profile. Goes through the

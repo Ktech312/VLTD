@@ -37,6 +37,17 @@ type SortKey =
   | "museumBeta";
 type SortDir = "asc" | "desc";
 
+// A sign-up that has no profile yet (see the matching list in /api/admin/users).
+type PendingSignup = {
+  id: string;
+  email: string | null;
+  firstName: string | null;
+  signedUpAt: string | null;
+  confirmedAt: string | null;
+  confirmationSentAt: string | null;
+  lastSignInAt: string | null;
+};
+
 type UserRow = {
   id: string;
   displayName: string | null;
@@ -85,6 +96,7 @@ export default function AdminUsersPage() {
   const [role, setRole] = useState<AdminRole | "loading">("loading");
   const [mfaOk, setMfaOk] = useState(false);
   const [rows, setRows] = useState<UserRow[]>([]);
+  const [pending, setPending] = useState<PendingSignup[]>([]);
   const [status, setStatus] = useState("");
   const [togglingId, setTogglingId] = useState<string | null>(null);
   const [showSeed, setShowSeed] = useState(false);
@@ -103,6 +115,7 @@ export default function AdminUsersPage() {
         return;
       }
       setRows(data.rows ?? []);
+      setPending(data.pending ?? []);
       setStatus("");
     } catch {
       setStatus("Couldn't load users. Try again.");
@@ -397,6 +410,51 @@ export default function AdminUsersPage() {
             {status}
           </div>
         )}
+
+        {pending.length > 0 ? (
+          <div className="mt-6 rounded-2xl border border-[color:var(--border)] bg-[color:var(--surface)]">
+            <div className="flex items-baseline justify-between gap-3 px-4 pt-3">
+              <h2 className="text-sm font-bold">Pending sign-ups ({pending.length})</h2>
+              <span className="text-xs text-[color:var(--muted)]">Signed up, but no profile yet, so not in the list below</span>
+            </div>
+            <div className="overflow-x-auto px-2 pb-2 pt-1">
+              <table className="w-full text-left text-sm">
+                <tbody>
+                  {pending.map((p) => (
+                    <tr key={p.id} className="border-t border-[color:var(--border)] first:border-0">
+                      <td className="whitespace-nowrap px-2 py-1.5">
+                        <span className="font-medium text-text-primary">{p.firstName || "No name given"}</span>
+                        <span className="ml-2 text-[color:var(--muted)]">{p.email || "—"}</span>
+                      </td>
+                      <td className="whitespace-nowrap px-2 py-1.5 text-[color:var(--muted)]" title={exactDateTime(p.signedUpAt)}>
+                        Signed up {timeAgo(p.signedUpAt)}
+                      </td>
+                      <td className="whitespace-nowrap px-2 py-1.5">
+                        <span
+                          className={[
+                            "rounded-full px-2 py-0.5 text-[11px] font-semibold ring-1",
+                            p.confirmedAt
+                              ? "bg-[color:var(--pill)] text-[color:var(--muted)] ring-[color:var(--border)]"
+                              : "bg-[rgba(217,154,43,0.16)] text-[#d99a2b] ring-[rgba(217,154,43,0.45)]",
+                          ].join(" ")}
+                        >
+                          {p.confirmedAt ? "Confirmed, setup not finished" : "Waiting for email confirmation"}
+                        </span>
+                      </td>
+                      <td className="whitespace-nowrap px-2 py-1.5 text-xs text-[color:var(--muted)]" title={exactDateTime(p.confirmationSentAt)}>
+                        {p.confirmedAt
+                          ? `Confirmed ${timeAgo(p.confirmedAt)}`
+                          : p.confirmationSentAt
+                            ? `Last email sent ${timeAgo(p.confirmationSentAt)}`
+                            : "No email sent"}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        ) : null}
 
         <div className="mt-6 overflow-x-auto rounded-2xl border border-[color:var(--border)]">
           <table className="w-full text-left text-sm">
