@@ -13,6 +13,7 @@ import { clearOnboardingDraft, loadOnboardingDraft, saveOnboardingDraft } from "
 import { PillButton } from "@/components/ui/PillButton";
 import VltdLogo from "@/components/VltdLogo";
 import { useTheme } from "@/lib/ThemeContext";
+import { friendlyErrorMessage } from "@/lib/friendlyError";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 // Realistic preset avatars — the same illustrated set the app renders elsewhere
@@ -272,7 +273,7 @@ export default function OnboardingPage() {
       saveOnboardingDraft({ ...input, avatar_emoji: avatarPreset, personal_profile_id: profile.id, owner_user_id: onboardingUserId, step: 2 });
       setStep(2);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Could not save your personal profile.");
+      setError(friendlyErrorMessage(err, "Could not save your personal profile."));
     } finally {
       setIdentitySaving(false);
     }
@@ -343,7 +344,7 @@ export default function OnboardingPage() {
       router.replace("/");
       router.refresh();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to finish onboarding.");
+      setError(friendlyErrorMessage(err, "Failed to finish onboarding."));
     } finally {
       setSaving(false);
     }

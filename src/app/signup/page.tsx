@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import VltdLogo from "@/components/VltdLogo";
+import { friendlyErrorMessage } from "@/lib/friendlyError";
 
 type LaunchAccessStatus = {
   capacity: number;
@@ -68,7 +69,7 @@ export default function SignupPage() {
       setConfirmationSent(true);
     } catch (err) {
       await loadStatus();
-      const message = err instanceof Error ? err.message : "Account creation failed.";
+      const message = friendlyErrorMessage(err, "Account creation failed.");
       if (/50 of 50|founding access is full|database error saving new user/i.test(message)) {
         setError("All 50 founding spots have been claimed. Join the waitlist for the next opening.");
       } else {

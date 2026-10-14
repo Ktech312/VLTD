@@ -7,6 +7,7 @@ import { Suspense, useMemo, useState } from "react";
 import { getOnboardingStatus, signInWithGoogle, signInWithPassword } from "@/lib/auth";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 import VltdLogo from "@/components/VltdLogo";
+import { friendlyErrorMessage } from "@/lib/friendlyError";
 
 function LoginInner() {
   const router = useRouter();
@@ -63,7 +64,7 @@ function LoginInner() {
 
       await completeLogin();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Login failed.");
+      setError(friendlyErrorMessage(err, "Login failed."));
     } finally {
       setSubmitting(false);
     }
@@ -109,7 +110,7 @@ function LoginInner() {
     try {
       await signInWithGoogle();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Google sign in failed.");
+      setError(friendlyErrorMessage(err, "Google sign in failed."));
       setGoogleSubmitting(false);
     }
   }

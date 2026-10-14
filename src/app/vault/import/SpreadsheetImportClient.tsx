@@ -32,6 +32,7 @@ import {
   undoLastImport,
 } from "@/lib/spreadsheetImport";
 import { processVaultSyncQueue } from "@/lib/vaultSyncQueue";
+import { friendlyErrorMessage } from "@/lib/friendlyError";
 
 const PREVIEW_LIMIT = 150;
 const IGNORE_LIMIT = 50;
@@ -253,7 +254,7 @@ export default function SpreadsheetImportClient() {
       const nextSource = await parseSpreadsheetSource(file);
       applySource(nextSource);
     } catch (error) {
-      setStatus(error instanceof Error ? error.message : "Spreadsheet parse failed.");
+      setStatus(friendlyErrorMessage(error, "Spreadsheet parse failed."));
     } finally {
       setIsParsing(false);
       event.target.value = "";
@@ -351,7 +352,7 @@ export default function SpreadsheetImportClient() {
       if (error instanceof DOMException && error.name === "QuotaExceededError") {
         setStatus("Import failed: localStorage quota exceeded. Your vault is too large for more inline data.");
       } else {
-        setStatus(error instanceof Error ? error.message : "Import failed.");
+        setStatus(friendlyErrorMessage(error, "Import failed."));
       }
     } finally {
       setIsImporting(false);

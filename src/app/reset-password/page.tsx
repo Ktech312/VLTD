@@ -19,6 +19,7 @@ function readLinkKind(): "invite" | "recovery" | "other" | "none" {
 
 import { consumeAuthLinkFromHash } from "@/lib/authLink";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
+import { friendlyErrorMessage } from "@/lib/friendlyError";
 
 export default function ResetPasswordPage() {
   const router = useRouter();
@@ -99,7 +100,7 @@ export default function ResetPasswordPage() {
       setDone(true);
       setTimeout(() => router.replace("/login"), 2500);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to update password.");
+      setError(friendlyErrorMessage(err, "Failed to update password."));
     } finally {
       setSubmitting(false);
     }

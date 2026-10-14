@@ -17,7 +17,8 @@
     "build:email-templates": "node scripts/build-supabase-email-templates.mjs",
     "test:delete": "node scripts/test-vault-delete.cjs",
     "test:category": "node scripts/test-category-label.cjs",
-    "test:import": "node scripts/test-spreadsheet-import.cjs"
+    "test:import": "node scripts/test-spreadsheet-import.cjs",
+    "test:errors": "node scripts/test-friendly-error.cjs"
   },
   "dependencies": {
     "@imgly/background-removal": "^1.7.0",

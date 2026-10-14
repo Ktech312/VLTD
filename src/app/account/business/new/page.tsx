@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { nativeSelectClass } from "@/components/ui/nativeSelect";
 import { PillButton } from "@/components/ui/PillButton";
 import { createProfile, setStoredActiveProfileId } from "@/lib/auth";
+import { friendlyErrorMessage } from "@/lib/friendlyError";
 
 function slugifyUsername(value: string) {
   return value.toLowerCase().trim().replace(/[^a-z0-9_]+/g, "_").replace(/^_+|_+$/g, "").slice(0, 24);
@@ -40,7 +41,7 @@ export default function NewBusinessProfilePage() {
       router.replace("/account?section=profile");
       router.refresh();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Could not create the business profile.");
+      setError(friendlyErrorMessage(err, "Could not create the business profile."));
     } finally {
       setSaving(false);
     }

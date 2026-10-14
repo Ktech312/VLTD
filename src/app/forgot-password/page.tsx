@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 
 import { resetPasswordForEmail } from "@/lib/auth";
+import { friendlyErrorMessage } from "@/lib/friendlyError";
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
@@ -20,7 +21,7 @@ export default function ForgotPasswordPage() {
       await resetPasswordForEmail(email.trim());
       setSent(true);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Something went wrong.");
+      setError(friendlyErrorMessage(err, "Something went wrong."));
     } finally {
       setSubmitting(false);
     }
