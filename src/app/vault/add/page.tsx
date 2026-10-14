@@ -138,7 +138,7 @@ function parseMoney(input: string) {
 
 function inputClass(isAiFilled?: boolean) {
   return [
-    "h-11 rounded-xl px-3 text-sm focus:outline-none transition-all placeholder:text-[color:var(--muted)] placeholder:italic placeholder:text-xs",
+    "h-11 w-full min-w-0 rounded-xl px-3 text-sm focus:outline-none transition-all placeholder:text-[color:var(--muted)] placeholder:italic placeholder:text-xs",
     isAiFilled
       ? "bg-[rgba(203,208,213,0.18)] ring-2 ring-[rgba(203,208,213,0.7)] text-[#EDEFF1] font-semibold"
       : "bg-[color:var(--pill)] ring-1 ring-[color:var(--border)]",
@@ -308,7 +308,7 @@ function Field({
   children: React.ReactNode;
 }) {
   return (
-    <div className="grid gap-1">
+    <div className="grid min-w-0 grid-cols-1 gap-1">
       <div className="flex items-center justify-between gap-2">
         <label className="text-xs font-medium tracking-[0.14em] text-[color:var(--muted2)]">
           {label}
@@ -2525,7 +2525,7 @@ export default function AddPage() {
         </div>
 
         <section className="w-full max-w-5xl mx-auto rounded-[16px] bg-[color:var(--surface)] p-3 sm:p-4 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
-          <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
               <Field label="Subtitle / Set" locked={locks.subtitle} onToggleLock={() => handleToggleLock("subtitle")}>
                 <input
                   className={inputClass(aiFilledFields.has("subtitle"))}
