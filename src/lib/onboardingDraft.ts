@@ -12,6 +12,8 @@ export type OnboardingDraft = {
   business_website: string;
   business_ein: string;
   focused_universes: string[];
+  personal_profile_id: string;
+  business_profile_id: string;
 };
 
 const LS_KEY = "vltd_onboarding_draft_v3";
@@ -29,6 +31,8 @@ const EMPTY_DRAFT: OnboardingDraft = {
   business_website: "",
   business_ein: "",
   focused_universes: [],
+  personal_profile_id: "",
+  business_profile_id: "",
 };
 
 function normalizeStep(value: unknown): OnboardingStep {
@@ -53,6 +57,8 @@ function normalizeDraft(parsed: Record<string, unknown>): OnboardingDraft {
     focused_universes: Array.isArray(parsed.focused_universes)
       ? parsed.focused_universes.filter((value): value is string => typeof value === "string")
       : [],
+    personal_profile_id: String(parsed.personal_profile_id ?? ""),
+    business_profile_id: String(parsed.business_profile_id ?? ""),
   };
 }
 

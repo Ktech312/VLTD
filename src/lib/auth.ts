@@ -39,6 +39,7 @@ export type ProfileRow = {
   date_of_birth?: string | null;
   age_verified?: boolean | null;
   marketing_opt_in?: boolean | null;
+  onboarding_completed?: boolean | null;
 };
 
 import { currentLocalOwner, reconcileLocalDataOwner, resolveLegacyOwner } from "./localDataOwner";
@@ -455,6 +456,7 @@ export async function createProfile(input: {
   business_type?: string;
   website?: string;
   tax_id?: string;
+  onboarding_completed?: boolean;
 }) {
   const supabase = getSupabase();
   if (!supabase) throw new Error("Supabase not ready");
@@ -470,6 +472,7 @@ export async function createProfile(input: {
     profile_type: input.profile_type,
     primary_focus: input.primary_focus?.trim() || null,
     avatar_emoji: input.avatar_emoji?.trim() || "🗝️",
+    onboarding_completed: input.onboarding_completed ?? true,
   };
   if (input.avatar_url?.trim()) {
     payload.avatar_url = input.avatar_url.trim();
@@ -536,6 +539,7 @@ export async function updateProfile(profileId: string, patch: Partial<ProfileRow
   if ("date_of_birth" in patch) payload.date_of_birth = patch.date_of_birth || null;
   if (typeof patch.age_verified === "boolean") payload.age_verified = patch.age_verified;
   if (typeof patch.marketing_opt_in === "boolean") payload.marketing_opt_in = patch.marketing_opt_in;
+  if (typeof patch.onboarding_completed === "boolean") payload.onboarding_completed = patch.onboarding_completed;
 
   const result = await withTimeout(
     supabase
@@ -658,7 +662,9 @@ export async function getOnboardingStatus() {
 
   return {
     isAuthenticated: true,
-    needsOnboarding: profiles.length === 0,
+    needsOnboarding:
+      profiles.length === 0 ||
+      profiles.some((profile) => profile.profile_type === "personal" && profile.onboarding_completed === false),
     profiles,
     activeProfile,
     error: "",

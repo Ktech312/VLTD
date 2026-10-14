@@ -267,7 +267,6 @@ export default function AccountPage() {
       await updateProfile(profileId, {
         display_name: displayName,
         username,
-        profile_type: profileType,
         primary_focus: primaryFocus,
         bio: bio || null,
         is_public: isPublic,
@@ -456,35 +455,20 @@ export default function AccountPage() {
                   />
                 </label>
 
-                <div className="grid gap-3 sm:grid-cols-2">
-                  <button
-                    type="button"
-                    onClick={() => setProfileType("personal")}
-                    className={[
-                      "rounded-2xl border p-4 text-left transition",
-                      profileType === "personal"
-                        ? "border-[color:var(--frame-ring)] text-text-primary"
-                        : "border-[color:var(--border)] text-[color:var(--muted)] hover:text-text-primary",
-                    ].join(" ")}
-                    style={{ background: profileType === "personal" ? "var(--pill-active-bg)" : "var(--theme-card)" }}
-                  >
-                    <div className="text-sm font-black">Curator</div>
-                    <div className="mt-1 text-xs leading-5 text-[color:var(--muted)]">Personal vault and exhibitions.</div>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setProfileType("business")}
-                    className={[
-                      "rounded-2xl border p-4 text-left transition",
-                      profileType === "business"
-                        ? "border-[color:var(--frame-ring)] text-text-primary"
-                        : "border-[color:var(--border)] text-[color:var(--muted)] hover:text-text-primary",
-                    ].join(" ")}
-                    style={{ background: profileType === "business" ? "var(--pill-active-bg)" : "var(--theme-card)" }}
-                  >
-                    <div className="text-sm font-black">Business</div>
-                    <div className="mt-1 text-xs leading-5 text-[color:var(--muted)]">Shop, team, or inventory workflow.</div>
-                  </button>
+                <div className="rounded-2xl border border-[color:var(--border)] p-4" style={{ background: "var(--theme-card)" }}>
+                  <div className="text-sm font-black text-text-primary">
+                    {profileType === "business" ? "Business profile" : "Personal profile"}
+                  </div>
+                  <div className="mt-1 text-xs leading-5 text-[color:var(--muted)]">
+                    {profileType === "business"
+                      ? "This profile is a separate business workspace."
+                      : "Every VLTD member keeps a personal profile. Add a separate business profile whenever you need one."}
+                  </div>
+                  {profileType === "personal" ? (
+                    <Link href="/account/business/new" className="mt-3 inline-flex h-9 items-center rounded-[8px] px-3 text-xs font-semibold ring-1 ring-[color:var(--border)]">
+                      + Add business profile
+                    </Link>
+                  ) : null}
                 </div>
 
                 <div>

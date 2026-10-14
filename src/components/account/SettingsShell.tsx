@@ -99,8 +99,9 @@ export default function SettingsShell({ children }: { children: React.ReactNode 
               ) : null}
             </div>
           </div>
-          {profiles.length > 1 ? (
-            <PillSelect
+          <div className="flex flex-wrap items-center justify-end gap-2">
+            {profiles.length > 1 ? (
+              <PillSelect
               value={activeId}
               ariaLabel="Switch profile"
               align="right"
@@ -115,8 +116,17 @@ export default function SettingsShell({ children }: { children: React.ReactNode 
                 setStoredActiveProfileId(next);
                 window.location.reload();
               }}
-            />
-          ) : null}
+              />
+            ) : null}
+            {activeProfile ? (
+              <Link
+                href="/account/business/new"
+                className="inline-flex h-9 items-center rounded-[8px] px-3 text-[13px] font-semibold text-[color:var(--fg)] ring-1 ring-[color:var(--border)] transition hover:bg-[color:var(--pill-hover)]"
+              >
+                + Add business profile
+              </Link>
+            ) : null}
+          </div>
         </div>
 
         <div className="mt-5 md:grid md:grid-cols-[230px_minmax(0,1fr)] md:gap-8">

@@ -4,7 +4,7 @@ import { nativeSelectClass } from "@/components/ui/nativeSelect";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 
-import { createProfile, getOnboardingStatus, setStoredActiveProfileId } from "@/lib/auth";
+import { createProfile, getOnboardingStatus, setStoredActiveProfileId, updateProfile } from "@/lib/auth";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 import { UNIVERSE_KEYS, UNIVERSE_LABEL } from "@/lib/taxonomy";
 import { Glyph, universeGlyphName } from "@/components/ui/Glyph";
@@ -147,6 +147,7 @@ export default function OnboardingPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [identitySaving, setIdentitySaving] = useState(false);
   const [error, setError] = useState("");
   const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
   const [draftLoaded, setDraftLoaded] = useState(false);
@@ -163,6 +164,8 @@ export default function OnboardingPage() {
   const [username, setUsername] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [avatarPreset, setAvatarPreset] = useState("key");
+  const [personalProfileId, setPersonalProfileId] = useState("");
+  const [businessProfileId, setBusinessProfileId] = useState("");
   const [addBusiness, setAddBusiness] = useState(false);
   const [focusedUniverses, setFocusedUniverses] = useState<string[]>([]);
 
@@ -193,12 +196,28 @@ export default function OnboardingPage() {
     if (draft.avatar_emoji && AVATAR_PRESET_IDS.has(draft.avatar_emoji)) {
       setAvatarPreset(draft.avatar_emoji);
     }
-    setDraftLoaded(true);
-
     async function load() {
       const status = await getOnboardingStatus();
       if (!status.isAuthenticated) { router.replace("/login"); return; }
       if (!status.needsOnboarding) { router.replace("/"); return; }
+      const cloudPersonal = status.profiles.find(
+        (profile) => profile.profile_type === "personal" && profile.onboarding_completed === false
+      );
+      if (cloudPersonal) {
+        setPersonalProfileId(cloudPersonal.id);
+        setDisplayName(cloudPersonal.display_name ?? "");
+        setUsername(cloudPersonal.username ?? "");
+        const cloudAvatar = String(cloudPersonal.avatar_url ?? "");
+        if (cloudAvatar.startsWith("__preset:")) {
+          const preset = cloudAvatar.slice("__preset:".length);
+          if (AVATAR_PRESET_IDS.has(preset)) setAvatarPreset(preset);
+        }
+        setStep(draft.step > 1 ? draft.step : 2);
+      } else {
+        setPersonalProfileId(draft.personal_profile_id);
+      }
+      setBusinessProfileId(draft.business_profile_id);
+      setDraftLoaded(true);
       setLoading(false);
     }
     void load();
@@ -219,8 +238,10 @@ export default function OnboardingPage() {
       business_website: bizWebsite,
       business_ein: bizEin,
       focused_universes: focusedUniverses,
+      personal_profile_id: personalProfileId,
+      business_profile_id: businessProfileId,
     });
-  }, [step, username, displayName, avatarPreset, addBusiness, bizName, bizUsername, bizType, bizWebsite, bizEin, focusedUniverses, draftLoaded]);
+  }, [step, username, displayName, avatarPreset, addBusiness, bizName, bizUsername, bizType, bizWebsite, bizEin, focusedUniverses, personalProfileId, businessProfileId, draftLoaded]);
 
   const canContinueIdentity = useMemo(
     () => displayName.trim().length >= 2 && slugifyUsername(username).length >= 3,
@@ -232,6 +253,32 @@ export default function OnboardingPage() {
     [addBusiness, bizName, bizUsername]
   );
 
+  async function savePersonalCheckpoint() {
+    if (!canContinueIdentity || identitySaving) return;
+    setIdentitySaving(true);
+    setError("");
+    try {
+      const input = {
+        username: slugifyUsername(username),
+        display_name: displayName.trim(),
+        profile_type: "personal" as const,
+        avatar_url: `__preset:${avatarPreset}`,
+        onboarding_completed: false,
+      };
+      const profile = personalProfileId
+        ? await updateProfile(personalProfileId, input)
+        : await createProfile(input);
+      setPersonalProfileId(profile.id);
+      setStoredActiveProfileId(profile.id);
+      saveOnboardingDraft({ ...input, avatar_emoji: avatarPreset, personal_profile_id: profile.id, step: 2 });
+      setStep(2);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not save your personal profile.");
+    } finally {
+      setIdentitySaving(false);
+    }
+  }
+
   async function handleFinish() {
     if (!canContinueIdentity || !canContinueBusiness) return;
     setSaving(true);
@@ -241,13 +288,23 @@ export default function OnboardingPage() {
       const primaryFocus = focusedUniverses[0]
         ? UNIVERSE_LABEL[focusedUniverses[0] as keyof typeof UNIVERSE_LABEL] ?? ""
         : "";
-      const profileData = await createProfile({
+      const profileData = personalProfileId
+        ? await updateProfile(personalProfileId, {
+            username: slugifyUsername(username),
+            display_name: displayName.trim(),
+            profile_type: "personal",
+            primary_focus: primaryFocus || undefined,
+            avatar_url: `__preset:${avatarPreset}`,
+          })
+        : await createProfile({
         username: slugifyUsername(username),
         display_name: displayName.trim(),
         profile_type: "personal",
         primary_focus: primaryFocus || undefined,
         avatar_url: `__preset:${avatarPreset}`,
+        onboarding_completed: false,
       });
+      setPersonalProfileId(profileData.id);
 
       // Save focused_universes if any were chosen. This is best-effort: if the
       // column isn't present yet it must NOT block onboarding from completing.
@@ -267,8 +324,8 @@ export default function OnboardingPage() {
 
       // A business is always a separate second profile. The personal profile
       // remains the active profile after setup.
-      if (addBusiness) {
-        await createProfile({
+      if (addBusiness && !businessProfileId) {
+        const business = await createProfile({
           username: slugifyUsername(bizUsername),
           display_name: bizName.trim(),
           profile_type: "business",
@@ -277,8 +334,12 @@ export default function OnboardingPage() {
           website: bizWebsite,
           tax_id: bizEin,
         });
-        if (profileData?.id) setStoredActiveProfileId(profileData.id);
+        setBusinessProfileId(business.id);
+        saveOnboardingDraft({ business_profile_id: business.id });
       }
+
+      setStoredActiveProfileId(profileData.id);
+      await updateProfile(profileData.id, { onboarding_completed: true });
 
       clearOnboardingDraft();
       router.replace("/");
@@ -402,8 +463,8 @@ export default function OnboardingPage() {
                   </div>
                 </label>
 
-                <GoldButton disabled={!canContinueIdentity} onClick={() => setStep(2)}>
-                  Continue →
+                <GoldButton disabled={!canContinueIdentity || identitySaving} onClick={() => void savePersonalCheckpoint()}>
+                  {identitySaving ? "Saving…" : "Save and continue →"}
                 </GoldButton>
               </div>
             )}
@@ -414,7 +475,7 @@ export default function OnboardingPage() {
                 <div className="rounded-2xl border border-emerald-400/30 bg-emerald-400/10 px-4 py-3">
                   <div className="text-sm font-black text-text-primary">Personal profile details complete</div>
                   <div className="mt-1 text-xs leading-5 text-[color:var(--muted)]">
-                    {displayName.trim()} · @{slugifyUsername(username)}. Your profile will be created when you finish setup.
+                    {displayName.trim()} · @{slugifyUsername(username)}. Saved to your account, so you can continue on another device.
                   </div>
                 </div>
 
@@ -576,7 +637,7 @@ export default function OnboardingPage() {
 
                 {/* Confirm summary */}
                 <div className="rounded-2xl border border-[color:var(--border)] bg-vault-card p-4 space-y-2">
-                  <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[color:var(--muted2)] mb-1">Profiles to create</div>
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[color:var(--muted2)] mb-1">Setup summary</div>
                   <div className="flex items-center gap-3">
                     <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full ring-1 ring-[color:var(--border)]">
                       <AvatarThumb id={avatarPreset} />
@@ -596,7 +657,7 @@ export default function OnboardingPage() {
 
                 <div className="flex flex-wrap items-center gap-3">
                   <GoldButton disabled={saving || !canContinueIdentity || !canContinueBusiness} onClick={() => void handleFinish()}>
-                    {saving ? "Setting up…" : addBusiness ? "Create my profiles →" : "Create my profile →"}
+                    {saving ? "Setting up…" : addBusiness ? "Create business and finish →" : "Finish setup →"}
                   </GoldButton>
                   <GhostButton onClick={() => setStep(3)}>Back</GhostButton>
                 </div>
@@ -607,7 +668,7 @@ export default function OnboardingPage() {
 
         {/* Fine print */}
         <p className="mt-5 text-center text-xs text-[color:var(--muted2)]">
-          Your unfinished setup is saved on this device. You can change these details later in settings.
+          Your personal profile is saved to your account after Step 1. Later choices stay on this device until setup is finished.
         </p>
       </div>
     </main>
