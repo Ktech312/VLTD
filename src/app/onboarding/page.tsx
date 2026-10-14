@@ -264,6 +264,7 @@ export default function OnboardingPage() {
         profile_type: "personal" as const,
         avatar_url: `__preset:${avatarPreset}`,
         onboarding_completed: false,
+        is_public: false,
       };
       const profile = personalProfileId
         ? await updateProfile(personalProfileId, input)
@@ -339,7 +340,7 @@ export default function OnboardingPage() {
       }
 
       setStoredActiveProfileId(profileData.id);
-      await updateProfile(profileData.id, { onboarding_completed: true });
+      await updateProfile(profileData.id, { onboarding_completed: true, is_public: true });
 
       clearOnboardingDraft();
       router.replace("/");

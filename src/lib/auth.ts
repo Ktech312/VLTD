@@ -457,6 +457,7 @@ export async function createProfile(input: {
   website?: string;
   tax_id?: string;
   onboarding_completed?: boolean;
+  is_public?: boolean;
 }) {
   const supabase = getSupabase();
   if (!supabase) throw new Error("Supabase not ready");
@@ -473,6 +474,7 @@ export async function createProfile(input: {
     primary_focus: input.primary_focus?.trim() || null,
     avatar_emoji: input.avatar_emoji?.trim() || "🗝️",
     onboarding_completed: input.onboarding_completed ?? true,
+    is_public: input.is_public ?? true,
   };
   if (input.avatar_url?.trim()) {
     payload.avatar_url = input.avatar_url.trim();
@@ -540,6 +542,8 @@ export async function updateProfile(profileId: string, patch: Partial<ProfileRow
   if (typeof patch.age_verified === "boolean") payload.age_verified = patch.age_verified;
   if (typeof patch.marketing_opt_in === "boolean") payload.marketing_opt_in = patch.marketing_opt_in;
   if (typeof patch.onboarding_completed === "boolean") payload.onboarding_completed = patch.onboarding_completed;
+  if (typeof patch.is_public === "boolean") payload.is_public = patch.is_public;
+  if ("bio" in patch) payload.bio = patch.bio?.trim() || null;
 
   const result = await withTimeout(
     supabase
