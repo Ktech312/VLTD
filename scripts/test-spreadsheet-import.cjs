@@ -133,6 +133,16 @@ function fileFrom(name, content, type) {
   t("xlsx: a text serial number with leading zeros is kept", xi && xi.serialNumber === "00987", xi && xi.serialNumber);
   t("xlsx: a date cell is written as a date, not a serial number", xi && /Purchase Date: 2024-03-15/.test(xi.notes || ""), xi && xi.notes);
 
+  // ---- files that cannot be read: say why and what to do next ----
+  const pdf = await imp.parseSpreadsheetSource(fileFrom('fender.pdf', '%PDF-1.4', 'application/pdf'));
+  t('unreadable: a PDF is explained, not just "no rows"', pdf.sheets.length === 0 && /PDF/.test(pdf.problem || '') && /csv|xlsx/i.test(pdf.problem || ''), pdf.problem);
+  const empty = await imp.parseSpreadsheetSource(fileFrom('empty.csv', '', 'text/csv'));
+  t('unreadable: an empty file says it is empty', empty.sheets.length === 0 && /empty/i.test(empty.problem || ''), empty.problem);
+  const nohead = await imp.parseSpreadsheetSource(fileFrom('nohead.csv', 'foo,bar,baz\n1,2,3', 'text/csv'));
+  t('unreadable: no recognised column names says what is needed', nohead.sheets.length === 0 && /column names/i.test(nohead.problem || ''), nohead.problem);
+  const broken = await imp.parseSpreadsheetSource(fileFrom('broken.xlsx', Buffer.from([1,2,3,4,5]), 'application/octet-stream'));
+  t('unreadable: a damaged workbook says so', broken.sheets.length === 0 && typeof broken.problem === 'string' && broken.problem.length > 20, broken.problem);
+
   console.log(`\n${pass} passed, ${fail} failed`);
   process.exit(fail ? 1 : 0);
 })();

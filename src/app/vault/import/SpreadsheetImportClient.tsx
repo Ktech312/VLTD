@@ -223,7 +223,7 @@ export default function SpreadsheetImportClient() {
     setStatus(
       nextResult.items.length > 0
         ? `Parsed ${nextResult.items.length} items from ${nextSource.sourceLabel}. Review mappings before import.`
-        : `No importable rows found in ${nextSource.sourceLabel}.`
+        : nextSource.problem ?? `No importable rows found in ${nextSource.sourceLabel}.`
     );
   }
 

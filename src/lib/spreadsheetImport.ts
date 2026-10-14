@@ -101,7 +101,11 @@ export type ParsedSourceSheet = {
 export type ParsedImportSource = {
   sourceLabel: string;
   sheets: ParsedSourceSheet[];
+  /** Why nothing could be read, in plain words, with what to do next. */
+  problem?: string;
 };
+
+const TEMPLATE_HINT = 'Use "Download Blank Workbook" to see the layout.';
 
 export type MappingProfile = Record<string, Record<string, MappingField>>;
 
@@ -673,7 +677,20 @@ function decodeTextFile(buffer: ArrayBuffer) {
 }
 
 export async function parseSpreadsheetSource(file: File): Promise<ParsedImportSource> {
+  // A file type this importer cannot read at all: say so, and what to do instead (a PDF is a picture of a table, not a table).
+  if (/\.(pdf|docx?|pages|png|jpe?g|gif|webp|heic|zip|rtf)$/i.test(file.name)) {
+    const kind = /\.pdf$/i.test(file.name) ? "A PDF" : "That kind of file";
+    return {
+      sourceLabel: file.name,
+      sheets: [],
+      problem: `${kind} can't be imported. VLTD reads .xlsx, .xls, .csv and .tsv files. Export or copy the table into a spreadsheet and upload that. ${TEMPLATE_HINT}`,
+    };
+  }
+
   const buffer = await file.arrayBuffer();
+  if (buffer.byteLength === 0) {
+    return { sourceLabel: file.name, sheets: [], problem: `That file is empty. Choose a file that has your items in it. ${TEMPLATE_HINT}` };
+  }
 
   // Text files (.csv, .tsv, .txt) are read here, as text, and never through the spreadsheet reader: that reader guesses types
   // ("00123" became 123, "10-20" became a date, "Café" came out garbled), which silently changes what the person wrote.
@@ -684,12 +701,31 @@ export async function parseSpreadsheetSource(file: File): Promise<ParsedImportSo
     const delimiter = count("\t") > 0 && count("\t") >= count(",") ? "\t" : count(";") > count(",") ? ";" : ",";
     const rows = parseDelimitedRows(text, delimiter);
     const parsed = parseRowsToSheet(file.name.replace(/\.[^.]+$/, "") || "Sheet1", rows);
-    return { sourceLabel: file.name, sheets: parsed ? [parsed] : [] };
+    if (!parsed) {
+      return {
+        sourceLabel: file.name,
+        sheets: [],
+        problem: text.trim()
+          ? `I couldn't find a row of column names (such as Name, Purchase Price, Serial Number) near the top of that file. ${TEMPLATE_HINT}`
+          : `That file is empty. Choose a file that has your items in it. ${TEMPLATE_HINT}`,
+      };
+    }
+    return { sourceLabel: file.name, sheets: [parsed] };
   }
 
   const XLSX = await import("xlsx");
   // cellDates keeps dates as dates (not serial numbers such as 45366); raw keeps each cell as the file stores it.
-  const workbook = XLSX.read(buffer, { type: "array", cellDates: true });
+  let workbook: ReturnType<typeof XLSX.read>;
+  try {
+    workbook = XLSX.read(buffer, { type: "array", cellDates: true });
+  } catch {
+    return {
+      sourceLabel: file.name,
+      sheets: [],
+      problem:
+        "That file couldn't be opened as a spreadsheet. It may be damaged, password-protected, or not really an Excel file. Open it in Excel or Numbers, save it as .xlsx or .csv, and upload that.",
+    };
+  }
 
   const sheets: ParsedSourceSheet[] = [];
   workbook.SheetNames.forEach((sheetName) => {
@@ -699,6 +735,13 @@ export async function parseSpreadsheetSource(file: File): Promise<ParsedImportSo
     if (parsed) sheets.push(parsed);
   });
 
+  if (sheets.length === 0) {
+    return {
+      sourceLabel: file.name,
+      sheets,
+      problem: `I couldn't find a row of column names (such as Name, Purchase Price, Serial Number) near the top of any sheet in that file. ${TEMPLATE_HINT}`,
+    };
+  }
   return { sourceLabel: file.name, sheets };
 }
 
