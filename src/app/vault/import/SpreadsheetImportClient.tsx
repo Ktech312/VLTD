@@ -442,9 +442,9 @@ export default function SpreadsheetImportClient() {
                 "Paste rows directly from Excel or Google Sheets here.",
                 "Headers should stay in the first row when possible.",
                 "",
-                "Reference #\\tPlayer Name\\tBrand Name\\tCard #\\tEstimated Value\\tQuantity",
-                "NBA-0001\\tMichael Jordan\\tUpper Deck\\t23\\t450\\t1",
-              ].join("\\n")}
+                "Reference #\tPlayer Name\tBrand Name\tCard #\tEstimated Value\tQuantity",
+                "NBA-0001\tMichael Jordan\tUpper Deck\t23\t450\t1",
+              ].join("\n")}
               className={[
                 "mt-4 min-h-[280px] w-full rounded-[24px] bg-[color:var(--pill)] px-4 py-4 text-[15px] text-[color:var(--fg)]",
                 "ring-1 ring-[color:var(--border)] outline-none transition",
