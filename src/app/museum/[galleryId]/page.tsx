@@ -886,7 +886,7 @@ export default function GalleryPage() {
           <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.10),rgba(255,255,255,0)_28%),radial-gradient(circle_at_80%_0%,rgba(255,225,170,0.10),rgba(255,225,170,0)_24%)]" />
 
           <div className="relative md:mx-auto md:w-[690px] md:max-w-full">
-                  <div className="absolute right-0 top-0 z-10 flex flex-col items-end gap-1">
+                  <div className="mb-2 flex flex-wrap justify-end gap-1 sm:absolute sm:right-0 sm:top-0 sm:z-10 sm:mb-0 sm:flex-col sm:items-end">
                     <span className="rounded-full bg-[color:var(--theme-elevated)] px-2 py-[1px] text-[9px] tracking-[0.1em] text-[color:var(--muted2)] ring-1 ring-[color:var(--theme-border)]">
                       {visibilityLabel(draft.visibility)}
                     </span>
@@ -900,7 +900,7 @@ export default function GalleryPage() {
                     </span>
                   </div>
             <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between xl:justify-start xl:gap-5">
-              <div className="flex w-full items-start gap-2.5">
+              <div className="flex w-full flex-col items-center gap-2.5 sm:flex-row sm:items-start">
                 {/* Cover image portrait card */}
                 <div className="shrink-0">
                   {draft.coverImage ? (
@@ -935,7 +935,7 @@ export default function GalleryPage() {
                   </label>
                 </div>
 
-                <div className="vltd-dark-surface min-w-0 flex-1">
+                <div className="vltd-dark-surface w-full min-w-0 flex-1 sm:w-auto">
                   <div className="text-center text-[11px] tracking-[0.28em] text-white/55 xl:text-[10px]">
                     CURATED EXHIBIT
                   </div>
@@ -964,11 +964,11 @@ export default function GalleryPage() {
                     </>
                   ) : (
                     <>
-                      <h1 className="mt-2 text-center text-2xl font-semibold xl:mt-1 xl:text-2xl">
+                      <h1 className="mt-2 break-words text-center text-2xl font-semibold [overflow-wrap:anywhere] xl:mt-1 xl:text-2xl">
                         {draft.title}
                       </h1>
 
-                      <p className="mx-auto mt-1 max-w-2xl text-center text-sm leading-5 text-white/80 xl:text-xs xl:leading-4">
+                      <p className="mx-auto mt-1 max-w-2xl break-words text-center text-sm leading-5 text-white/80 [overflow-wrap:anywhere] xl:text-xs xl:leading-4">
                         {draft.description?.trim()
                           ? draft.description
                           : "Curated collection presentation"}

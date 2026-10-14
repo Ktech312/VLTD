@@ -1159,7 +1159,7 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
                   />
                 </>
               ) : (
-                <h1 className="mt-1 text-2xl font-semibold leading-tight sm:text-3xl">
+                <h1 className="mt-1 break-words pr-12 text-2xl font-semibold leading-tight [overflow-wrap:anywhere] sm:text-3xl">
                   {item.title}
                   <PillButton size="compact" className="ml-2 w-8 px-0! align-middle md:w-7" onClick={() => setHeaderEditing(true)} ariaLabel="Edit title and category" title="Edit title and category">
                     <AppIcon name="edit" size={16} strokeWidth={1.8} />
