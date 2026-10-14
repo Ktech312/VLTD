@@ -1,12 +1,31 @@
-# 2026-10-14 (latest, in progress) — Reliability & usability queue: progress record (written first so an interruption loses nothing)
+# 2026-10-14 (latest) — Reliability & usability queue: CONSOLIDATED REPORT (queue complete)
 
-Production commits this queue (all pushed to main; Vercel auto-deploys): `46cee0a` reset-link expired/used state · `012c1ed` refused delete no longer reported as success · `5985eee`+`643d253` importer parsing/duplicates/warnings/unreadable-file messages · `07e7252` exhibition preview caching · `149ca8a` fewer repeated requests · `40ccd15` sync queue no longer blocked by one refused item · `e4f8b4f` dialog keyboard focus · `c02a6c5` plain-language connection errors · `064c5ae` long titles/exhibition header at 320px · `30c00db` Add Item fields fit 320px (verified live) · `fc29282` Exhibitions list refresh 15s → 60s (**deploy + re-measure still to verify**).
+Production head after this queue: `e83adc7` (+ docs commits). Redesign stays closed; no tax-ID/category-assignment work; no customer email sent.
 
-LIVE evidence (isolated browser, production, QA accounts): reset link states; delete dialog role/focus/Escape/focus-return; 320px overflow audit clean on Vault, Exhibitions, Import, Account, Add Item (after fix); save-status pill sits above the bottom nav at 320px (dark). Request counts (fetch/XHR at load / idle per 30s, live build, QA account): Home 30/1, Vault 24/1, Exhibitions 25/5 (before `fc29282`), Lounge(community-board) 26/1, Discover 20/1, Settings(account) 20/1. Earlier "before" load counts: 42/29/31/30/29/25. Bytes were NOT measured (cross-origin timing).
-LOCAL tests (not production): `npm run test:isolation` 77, `test:delete` 9, `test:import` 32, `test:category` 6, `test:errors` 8; tsc clean, eslint 0 errors.
-QA cleanup: first batch (auth1, auth2, crud users and fixtures) removed; counts back to baseline 37/37/47/3478/46.
+## Deployed commits (all verified live unless noted)
+`46cee0a` expired/used reset link state · `012c1ed` refused delete no longer reported as success · `5985eee`+`643d253` importer parsing, duplicates, warnings, unreadable-file messages · `07e7252` exhibition preview caching · `149ca8a` fewer repeated requests · `40ccd15` sync queue not blocked by one refused item · `e4f8b4f` dialog keyboard focus · `c02a6c5` plain-language connection errors · `064c5ae` 320px item title / exhibition header · `30c00db` Add Item fields fit 320px · `fc29282` Exhibitions list refresh 15s → 60s · `e83adc7` toast stays inside the screen, wraps, sits above bottom nav.
 
-REMAINING (this queue's tail): verify `fc29282` live + own-change refresh; shared toast width (465px wide at 320px — not yet fixed); 390px pass; password set/login/reset via UI; consolidated report; walkthrough assets. Unverified until evidence: physical phone/push, Comcast receipt, invitation password typing.
+## Results
+| Item | Result | Evidence |
+|---|---|---|
+| 1 Authentication | **PASS (live, QA accounts)** | Typed-password login through the real form; reset email received (branded); new password set via the emailed link; old password refused ("Invalid login credentials"); new works; used link shows "This link has expired" with Send me a new link / Log in; other sessions are signed out by a password change; neutral wording on forgot-password. Earlier today: real invitation e-mail + link, duplicate signup. |
+| 2 Item create/edit/delete | **PASS (live + local tests)** | Defect fixed: refused delete reported success (`012c1ed`, `test:delete` 9). Added item through UI; pending/refused saves keep data and say so. |
+| 3 Spreadsheet import | **PASS (local harness)**; live UI import **not re-run** | `test:import` 32 checks on synthetic CSV/XLSX. Not touched: real Fender PDF, customer data. |
+| 4 Exhibitions | **PASS (live)** | Create / delete from list refresh immediately and stay correct after the 60 s poll change; preview cache fix. Profile switching refresh not re-exercised (single-profile QA user); unchanged code path. Public/private/invite share states verified earlier today. |
+| 5 Errors/recovery, dialogs, narrow screens | **PASS (live)** at 320 and 390 px: no horizontal overflow on Vault, Add Item, Import, Exhibitions, Account, item page; delete dialogs have role/aria-modal/focus/Escape/focus return. Defects fixed: Add Item fields ran past the edge at 320 px; toast was ~465 px wide. |
+| 6 Request volume | **MEASURED (counts only; bytes NOT measured)** | fetch/XHR at load / idle per 30 s, QA account, live build: Home 42→30 / 1, Vault 29→24 / 1, Exhibitions 31→25 / idle 5→~1 (one galleries+invites pair per 60 s, verified after `fc29282`), Lounge(community-board) 30→26 / 1, Discover 29→20 / 1, Settings(account) 25→20 / 1. Supabase dashboard readings (egress 1.506/5 GB, log ingestion 113%) are observations from earlier today, not forecasts. |
+| 7 Save status | **PASS (live)** | Pending pill + toast verified at 320 and 390 px, dark theme; pill above bottom nav; multi-pending, sign-out during retry and account switching verified earlier (isolation tests 77). **Light theme: NOT VERIFIED with the real theme toggle** (a class-swap hack was not a valid test; pill/toast use theme variables). |
+
+## Live vs local vs unverified
+- LIVE (production, isolated pane / Chrome profile with QA accounts): items above.
+- LOCAL tests: `test:isolation` 77, `test:delete` 9, `test:import` 32, `test:category` 6, `test:errors` 8; tsc clean; eslint 0 errors (pre-existing warnings).
+- NOT VERIFIED: physical phone / push delivery; Comcast (Denny) delivery of the resend; light-theme placement via the real toggle; live (UI) spreadsheet import with footage; profile switching refresh on the Exhibitions page; business-profile flows in this window.
+
+## Walkthrough assets
+`docs/walkthrough/2026-10-14-qa/` (index + workflows with steps, expected results, narration, outlines). **No screen recording or numbered screenshots were captured**; flagged in the index. Nothing published.
+
+## QA cleanup
+QA users auth1, auth2, crud, fin and all their profiles/items/exhibitions removed by exact id; counts back to baseline (profiles 37 / members 37 / public_profiles 47 / vault_items 3478 / galleries 46). Pane storage cleared; viewport reset; QA session key removed from the Chrome profile; temp link files deleted. The received QA emails remain in the vltdadmin inbox.
 
 ---
 
