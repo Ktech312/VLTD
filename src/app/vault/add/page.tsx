@@ -519,9 +519,11 @@ export default function AddPage() {
   );
 
   const selectedUniverse = safeUniverse(values.universe);
+  // After a save with the category kept for the next item the form holds only the stored code
+  // ("INSTRUMENTS_GEAR"); turn it back into the name people see instead of listing the raw code.
   const selectedCategory = safeCategoryForUniverse(
     selectedUniverse,
-    values.categoryLabel || values.category
+    resolveCategoryLabel(getCategories(selectedUniverse), values.categoryLabel, values.category)
   );
   const baseCategoryOptions = getCategories(selectedUniverse);
   const categoryOptions =
