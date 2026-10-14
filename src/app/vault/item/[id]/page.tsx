@@ -54,6 +54,7 @@ import {
   type VaultItem,
 } from "@/lib/vaultModel";
 import { deleteVaultItemEverywhere } from "@/lib/vaultActions";
+import { reportPending } from "@/lib/cloudSaveStatus";
 import { generateHashtags } from "@/lib/generateHashtags";
 import {
   generateVaultImageKey,
@@ -673,7 +674,10 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
         });
       } catch {
         enqueueVaultItemSync(nextItem.id);
-        showToast("Saved on this device — will sync when back online.");
+        // Tell the shared save status too: without this the edit sat in the queue with no "sync pending" note and no retry
+        // until some other page happened to run the queue.
+        reportPending("items");
+        showToast("Saved on this device — not in your account yet. We will keep trying.");
       }
     }
 

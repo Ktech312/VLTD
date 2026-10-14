@@ -98,6 +98,7 @@ import {
   UNIVERSE_LABEL,
   type UniverseKey,
 } from "@/lib/taxonomy";
+import { resolveCategoryLabel } from "@/lib/categoryLabels";
 
 const ACTIVE_PROFILE_KEY = "vltd_active_profile_id_v1";
 const HAUL_AUTOSTART_KEY = "vltd_drop_autostart_v1";
@@ -242,7 +243,7 @@ function normalizeHierarchy(values: FormValues): FormValues {
   const universe = safeUniverse(values.universe);
   const categoryLabel = safeCategoryForUniverse(
     universe,
-    values.categoryLabel || values.category
+    resolveCategoryLabel(getCategories(universe), values.categoryLabel, values.category)
   );
   const allowedSubcategories = getSubcategories(universe, categoryLabel);
   const requestedSubcategory = String(values.subcategoryLabel ?? "").trim();
