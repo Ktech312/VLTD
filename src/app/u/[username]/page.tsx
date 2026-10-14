@@ -22,11 +22,18 @@ async function resolveUsername(username: string): Promise<string | null> {
 
   const { data } = await supabase
     .from("profiles")
-    .select("id")
+    .select("id, is_public, onboarding_completed")
     .eq("username", username.toLowerCase())
     .maybeSingle();
 
-  return data?.id ?? null;
+  if (!data) return null;
+  // This lookup uses the server's full-access key, so it sees every profile. A profile
+  // that is unfinished (onboarding_completed = false) or set private (is_public = false)
+  // must look exactly like a username that does not exist -- otherwise this page
+  // confirms the handle is taken and offers Follow/Message for it.
+  if (data.is_public === false || data.onboarding_completed === false) return null;
+
+  return data.id ?? null;
 }
 
 type Params = { username: string };
