@@ -1,3 +1,52 @@
+# 2026-10-13 — Account isolation (two rounds), Vault sync loop, cloud-save status, owner membership, push, and the Comcast sign-up email that never arrived
+
+**Read this first if you are resuming.** Everything below is live (production commit at the time of writing: `334a766`). Redesign is CLOSED; only demonstrated defects were fixed. All QA accounts were created for testing and fully removed (see "QA cleanup").
+
+## 1. Account isolation (commits `bf21a23`, `c8f5a3d`, `4c5648f`)
+- **Found:** signing out left the previous person's data in browser storage, and the next account on that browser saw parts of it; a late cloud answer for A could be saved/uploaded under B (reproduced: A's goal uploaded into B's profile).
+- **Fix:** `src/lib/localDataOwner.ts` parks each person's device data under `vltd_stash:<userId>:` on sign-out / account change (never deletes), restores it for the same person, and quarantines pre-existing ownerless data as numbered `unattributed` slots (returned only to someone who owns every profile that slot's own contents name; public exhibitions in the cache are ignored as ownership evidence). Google tokens are removed, not parked. `src/lib/sessionGuard.ts` (`storedSessionUserId`, `stillSignedInAs`, `captureIdentity`) is used by the vault pull/queue, exhibitions, goals, wishlist, watchlist, saved events/articles, sales and activity syncs so a late answer for another person/profile is dropped. `RouteGuard` sends a tab to /login when another tab signs out and reloads when another tab signs in as someone else.
+- **Regression tests:** `npm run test:isolation` (`scripts/test-account-isolation.cjs`, 66 checks, no network). Add a test there for any new device-data key or cloud→local writer. New personal device-data keys must be added to `USER_DATA_BASES` in `localDataOwner.ts`.
+
+## 2. The Vault request loop (in `4c5648f`) — likely a major driver of the Supabase log/egress growth
+- `processVaultSyncQueue` announced `vltd:vault-updated` after every run and the open Vault page re-ran it on that event: ~15 requests/second per open Vault tab, forever (a signed-out tab froze). Now it announces only when something changed and does nothing when nobody is signed in.
+- **Measured:** idle /vault page 0 requests in 20 s (was ~154 per 10 s). Site-wide request logs: ~3,810/h before vs ~1,730/h after (both windows include my own test traffic, so this is consistent with, not proof of, the loop being the main cause).
+
+## 3. Owner membership (migrations applied by EK)
+- Profiles created after 2026-07-07 had no `profile_members` owner row, so their owners' cloud saves (items, exhibitions) were refused by RLS. `supabase/migrations/20261013_profile_owner_membership_for_new_profiles.sql` installs trigger `profiles_add_owner_member` and backfills profiles with no membership. `supabase/migrations/20261014_owner_membership_completion.sql` re-states the trigger and also covers "has members but no owner" (never touches a profile that already has an owner, so transfers are preserved). EK ran the read-only `supabase/verification/20261014_owner_membership_checks.sql`: **all 9 checks PASS** (37 profiles, every one has an owner, trigger installed, runs with owner rights). New Personal and Business profiles got owner rows automatically (tested through a normal signed-in insert); cross-account writes stayed blocked.
+- **Withdrawn claims:** an earlier note that 22 "showcase" profiles point at non-existent accounts was WRONG (the admin user listing I used was incomplete; check 6 = 0). Do not rely on `auth.admin.listUsers` totals as a baseline; use exact-email lookups.
+- Side effect: QA profiles consumed today's internal account codes (261013-0001…0012); codes are forward-only, so real accounts continue after that (gaps, no reuse).
+
+## 4. "Saved to your account" vs "Saved on this device — sync pending" (commits `6db934d`, `44f6ac5`, `1d56ce3`, `10d5f4b`)
+- `src/lib/cloudSaveStatus.ts` + `src/components/SyncStatusPill.tsx` (mounted in `NavShell`). Items (sync queue) and exhibitions (`galleryModel`, pending ids in `vltd_gallery_sync_pending_v1`) report saving/pending/saved; pending is kept, retried with backoff (15 s → 5 min) and has a Retry now button; a pending save is never reported as saved. Upserts are by id, so retries never duplicate (tested live: failure injected, recovery, exactly one cloud copy for an item and an exhibition).
+- Placement/theme checks: sits above the phone Add Item button (152 px + safe-area), z-index 9990 set **inline** (a site-wide `body > *` rule forces z-index 1, so a class cannot set it) so dialogs (10001+) always cover it; verified on all 6 themes (text contrast 11–17:1), phone and desktop widths, and with a real dialog open.
+
+## 5. Other fixes in `6db934d`
+- **Private exhibition titles:** share-link page titles and link previews (`src/app/museum/share/[token]/layout.tsx` and `opengraph-image.tsx`) now only use PUBLIC exhibitions; Locked/invite-only get the generic "VLTD Exhibition". (Note: free-tier profiles are coerced to PUBLIC by a database trigger by design; to test private exhibitions a profile needs a paid tier.)
+- **Push notifications:** `src/lib/pushNotifications.ts` — sign-out removes the device's subscription (row + browser), another account taking over drops the old browser subscription, saving over someone else's endpoint starts a fresh subscription, "subscribed" is reported only when the account can see its own row, opt-in (`vltd_push_optin_v1`) restores it on the same account's next sign-in. **Not verified on a real device** (notifications are blocked in the test browser); covered by database-level checks and simulated-browser tests.
+
+## 6. Email deliverability — the Comcast sign-up that never arrived (commit `66f4b5b`; live Supabase settings changed)
+- **Symptom:** a real person ("Denny", comcast.net) signed up at 20:44 UTC; Supabase recorded sends at 20:44 and 20:50 but nothing arrived.
+- **Cause found** by sending the real sign-up email to mail-tester.com: (a) every branded template carried a hidden preheader `<div style="display:none;…color:transparent">` — SpamAssassin FONT_INVIS_MSGID, −2.5 of the 3.4 points lost; (b) the domain `vltd.app` was only registered **2026-10-04** (FROM_FMBLA_NEWDOM14, −1.0; fades after ~2026-10-18 and fully ~2026-11-03); (c) HTML-only (Supabase cannot send a text part). SPF/DKIM (`s1-ionos`, `s2-ionos`)/DMARC (`p=none`) are valid and the IONOS sending IP is not blocklisted.
+- **Fix:** removed the hidden line from `scripts/build-supabase-email-templates.mjs`, rebuilt `docs/supabase-email-templates/*.html`, and saved all six enabled templates in the Supabase dashboard (confirm-sign-up, invite-user, magic-link-or-otp, change-email-address, reset-password, reauthentication). **Supabase took ~5 minutes to start using a saved template.** Re-test: 6.6 → **9.1/10**. The seven security-notice templates are disabled and were NOT updated (they still carry the hidden line; fix before enabling).
+- **Dashboard save recipe** (the editor is Monaco): open `/dashboard/project/<ref>/auth/templates/<slug>` (`confirm-sign-up`, `invite-user`, `magic-link-or-otp`, `change-email-address`, `reset-password`, `reauthentication`), `window.monaco.editor.getModels()[0].setValue(...)`, make a real edit via `getEditors()[0].executeEdits` (the form does not see `setValue` alone), scroll the Save button into view and click it; reload the page to confirm.
+- **Denny:** EK asked for him to be let in; his account was marked confirmed by hand (2026-10-13 22:03 UTC) and a branded confirmation had been re-sent at 21:52. **Whether the 21:52 email reached Comcast is unknown.** A bounce notice, if any, goes to the `ehren@vltd.app` mailbox (IONOS webmail; not signed in anywhere the assistant can reach). Hand-confirming skips proof of address ownership — EK accepted that for one known person; do not make it the default.
+- **Pending sign-ups list** (commit `334a766`): admin Users page (`src/app/admin/users/page.tsx`, data from `src/app/api/admin/users/route.ts` → `pending`) now shows accounts with no profile yet (unconfirmed or confirmed-but-not-set-up), because the Users table lists profiles only. Display only; no buttons.
+
+## 7. Supabase usage (read 2026-10-13 ~21:00 UTC; Free plan, cycle 10 Oct–10 Nov)
+- **Log ingestion 1.019 / 1 GB (102%)** — labelled "UPCOMING" in the dashboard: billing/enforcement "starts after the grace period ends at the start of 2027". A banner also warns that projects stop serving requests when a quota is used up; whether log ingestion counts toward that today is not confirmed. Egress 1.409 / 5 GB (28%), database 0.269 / 0.5 GB (54%), storage 0.114 / 1 GB. Logs per day: Oct 10 ≈188 MB, Oct 11 ≈341 MB, Oct 12 ≈251 MB, Oct 13 (partial) ≈187 MB. At ~6 MB/h the allowance will still be exceeded before 10 Nov. Nothing was purchased or changed. **Re-read the dashboard to see the effect of the loop fix** (it refreshes hourly).
+
+## 8. QA cleanup
+All QA accounts (`vltdadmin+qa-a/-b/-invite/-c/-d/-e@gmail.com`, the three mail-tester.com test accounts) and every row they created were identity-checked and deleted. No QA users or profiles remain; profile, item, exhibition and membership counts match their baselines. One caution if you repeat QA: set up profiles through a normal signed-in insert (so the owner trigger fires) and give them a paid tier before testing private exhibitions.
+
+## 9. Open / unverified (do not claim done)
+- Real invitation email receipt (`vltdadmin+qa-invite@gmail.com` was sent one; inbox not reachable) — UNVERIFIED.
+- Push on a physical device — UNVERIFIED. Physical-phone testing of the pill — NOT DONE (measured in an emulated 375×812 viewport only).
+- Denny's Comcast delivery — unknown (see §6). Comcast and other strict providers may keep delaying mail until the domain ages.
+- Capture: when the cloud refuses a save the item is kept and the new pill says so; there is still no per-item error detail.
+- The seven disabled security-notice email templates still carry the hidden line.
+- Roles stays "Preview" (not implemented, by instruction).
+
+
 # 2026-10-10 — Full authenticated production re-audit after launch; record mismatch measured exactly, unsafe recovery removed, seven live regressions fixed
 
 EK asked for a complete repeat audit after finding several post-launch inconsistencies, with special attention to the previously reported **1,507 local records versus 1,484 cloud records**.

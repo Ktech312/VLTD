@@ -52,3 +52,12 @@ Two places, both private to you. Use whichever you prefer; the first is simplest
 - The From address must be the authenticated mailbox itself; IONOS rejects other From addresses.
 - Reply-To cannot be set in Supabase. Use the monitored support address as the mailbox, or set a reply-to rule/alias in IONOS.
 - IONOS signs outgoing mail with its own keys; the SPF record already covers it. If receivers show "via ionos" or the message lands in spam, add DKIM for the domain in IONOS (Email > the domain > DKIM) and then raise DMARC from `p=none` later.
+
+
+## Deliverability notes (added 2026-10-13)
+
+- **No hidden text in the templates.** A hidden preheader line (`display:none; opacity:0`) made SpamAssassin penalise the sign-up email (-2.5) and a real Comcast sign-up never arrived. The line was removed from `scripts/build-supabase-email-templates.mjs` and from the six enabled templates in the dashboard. Do not add it back. The seven disabled security-notice templates still carry it: remove it before enabling them.
+- **New domain.** `vltd.app` was registered 2026-10-04; strict providers (Comcast, Yahoo, Microsoft) may delay or refuse mail from a domain this young. It eases after about 2026-10-18 and fully by about 2026-11-03. SPF, DKIM (`s1-ionos`, `s2-ionos`) and DMARC (`p=none`) are all in place and the sending IP is not blocklisted.
+- **How to test:** send the real sign-up email (`auth.signUp` with an anon client) to a fresh address from mail-tester.com and read the score (it was 9.1/10 after the fix). Delete the throwaway auth user afterwards.
+- **Saving templates takes a few minutes to take effect** on the Supabase side; re-test after waiting about 5 minutes.
+- A refusal by the receiving provider produces a bounce notice in the sending mailbox (`ehren@vltd.app`, IONOS webmail); Supabase does not show it.
