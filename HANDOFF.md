@@ -1,3 +1,29 @@
+# 2026-10-14 — Closeout checks: real-browser onboarding walkthrough PASSED; hidden-profile exposure found in the database, fix written, NOT yet applied
+
+Scope was exactly two checks. Category assignment was NOT started (separate, not authorized). No code was changed in the app; one migration file was added.
+
+## 1. Onboarding in an isolated real browser (the app's built-in browser pane, not EK's Chrome; production vltd.app)
+Two throwaway QA accounts (A, B), signed in with one-time links (no password typed), all steps through the app's own screens:
+- Step 1 saved to the cloud at once: incomplete + private, avatar kept, owner membership present, no public_profiles row.
+- **Refresh** mid-onboarding resumed at the right step (step 2 and, later, the business step with all five fields intact).
+- **Account switching:** sign-out parked A's draft (`vltd_stash:<uid>:vltd_onboarding_draft_v3`, nothing left under the plain key); B then saw an empty Step 1, no trace of A; B's own Step 1 saved; sign-out and sign back in as A returned A to A's own step with A's name/handle.
+- **Completion + Business profile:** "Create business and finish" produced A's personal profile (complete + public) and a business profile (complete + public, own owner membership, public_profiles rows written), landed on /dashboard; /onboarding then redirects a finished account to /dashboard. B was untouched (still unfinished/private).
+- Not exercised: Google/other sign-in methods, physical phone, push. Real e-mail confirmation click-through was not used (links came from the admin API, which sends no e-mail).
+- Cleanup: both users, their 3 profiles, memberships and public_profiles rows removed by exact id; counts back to baseline (profiles 37, members 37, public_profiles 47, vault_items 3478, galleries 46).
+
+## 2. Private / unfinished profile exposure (signed-out visitor; plus a signed-in stranger for the pages)
+Fixtures: unfinished, private-but-complete, public. Checked the `/u/<handle>` page and its HTML metadata, `/u/<handle>/opengraph-image`, `/v/<profileId>` (the direct URL), and the database API the pages read from.
+- **PASS** `/u/<handle>` for unfinished and private: not-found response (`noindex`), none of the saved name/bio/item/exhibition text in the HTML. (Title/description carry only the handle, which is in the URL and identical for a handle that does not exist.)
+- **PASS** `/u/<handle>/opengraph-image`: byte-identical to the blank card the same handle gets once the profile is gone (no name, bio, avatar or exhibition count). Note for later, not changed: the card never shows a real name/avatar even for public profiles, because the anon key cannot read `profiles` there.
+- **PASS** `/v/<profileId>` for an unfinished profile viewed by another signed-in account: "Collector", no name/avatar/bio, "Nothing public yet".
+- **FAIL (demonstrated)** the same `/v/<profileId>` URL for a **private** profile that has items marked public listed the items (title, grouping, stats) to the stranger, because `public_vault_items` only checks each item's own flag. Same data was returned to a signed-out visitor by the database API.
+- **FAIL (demonstrated, worst case)** `public_profiles` (name, bio, avatar) is readable by everyone, including for hidden profiles, if a row exists; and the "for all using (true)" rule also lets anyone write any row (pre-existing; reads are fixed below, writes deliberately left as they are).
+- Why this is latent, not live: production has **0** private or unfinished profiles, 0 public_profiles rows for hidden profiles, 0 public items/galleries for hidden profiles (read-only count, 2026-10-14). The app deletes a profile's public_profiles row when it goes private, the incognito switch is disabled (paid), and an unfinished profile cannot reach the vault. 10 public_profiles rows belong to no profile at all (seed/legacy; left visible).
+- **Fix written, not applied:** `supabase/migrations/20261016_public_data_respects_hidden_profiles.sql` (A: `profile_is_hidden()` helper; B: rebuild `public_vault_items` to leave out hidden profiles; C: public_profiles readable only for non-hidden profiles, write rules preserved). Per standing process EK applies migration SQL by hand; not run by Claude. After it is applied, re-run the same outside-in check (throwaway unfinished/private/public profiles, each given a public item and a stale public_profiles row; probe `/u/<handle>`, its opengraph-image, `/v/<id>`, `public_vault_items` and `public_profiles` with the anon key; delete the fixtures by exact id) and expect every hidden-profile check to pass. The migration also adds the helper function `profile_is_hidden(text)`.
+- **Open decision, not changed:** `galleries` marked PUBLIC for a private profile are still listable by profile id. Treated as a product decision (an exhibition set to Public is reachable by its link); unfinished profiles cannot own galleries.
+
+## 3. Still UNVERIFIED (unchanged): real invitation e-mail receipt; physical-phone / push checks; Comcast (Denny) delivery. Egress "exhaustion date" in the previous entry is an estimate, not a promise (dashboard snapshot).
+
 # 2026-10-13 (later) — Onboarding commits verified end to end; two defects fixed; seven disabled email templates cleaned; Supabase usage re-read
 
 Redesign stays CLOSED. Only demonstrated defects were fixed. No purchase, no plan change, no disabled security notice enabled, no account hand-confirmed.
