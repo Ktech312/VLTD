@@ -103,7 +103,10 @@ export default async function Image({ params }: { params: Promise<{ galleryId: s
         <div
           style={{
             position: "absolute",
-            inset: 0,
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
             background: hasCover
               ? "linear-gradient(90deg, #0B0B0B 45%, rgba(11,11,11,0.7) 65%, rgba(11,11,11,0.15) 100%)"
               : "radial-gradient(ellipse at 80% 50%, rgba(203,208,213,0.12) 0%, transparent 65%)",
@@ -163,7 +166,7 @@ export default async function Image({ params }: { params: Promise<{ galleryId: s
             {/* Category badge */}
             <div
               style={{
-                display: "inline-flex",
+                display: "flex",
                 alignItems: "center",
                 background: "rgba(203,208,213,0.14)",
                 border: "1px solid rgba(203,208,213,0.32)",
@@ -173,7 +176,7 @@ export default async function Image({ params }: { params: Promise<{ galleryId: s
                 fontWeight: 600,
                 letterSpacing: "0.18em",
                 color: "#C8CDD2",
-                width: "fit-content",
+                alignSelf: "flex-start",
               }}
             >
               PUBLIC GALLERY
@@ -201,9 +204,8 @@ export default async function Image({ params }: { params: Promise<{ galleryId: s
                   color: "rgba(240,234,214,0.55)",
                   lineHeight: 1.5,
                   maxWidth: "440px",
-                  display: "-webkit-box",
-                  WebkitLineClamp: 2,
-                  WebkitBoxOrient: "vertical",
+                  display: "flex",
+                  maxHeight: "48px",
                   overflow: "hidden",
                 }}
               >
