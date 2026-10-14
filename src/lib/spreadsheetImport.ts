@@ -13,6 +13,10 @@ export type ParsedImportItem = VaultItem & {
   sourceSheet?: string;
   structuredData?: Record<string, string>;
   missingCost?: boolean;
+  /** Sheet and row this item came from; copies made from one row's Quantity share it. */
+  sourceRowKey?: string;
+  /** Things in the row that could not be read cleanly. Nothing is guessed; the person decides. */
+  warnings?: string[];
 };
 
 export type IgnoredImportRow = {
@@ -193,16 +197,46 @@ function normalizeHeader(value: unknown) {
 
 function stringify(value: unknown) {
   if (value == null) return "";
+  if (value instanceof Date) {
+    if (Number.isNaN(value.getTime())) return "";
+    // Spreadsheet dates are read as UTC; show the calendar date (and the time only when there is one).
+    const iso = value.toISOString();
+    return iso.endsWith("T00:00:00.000Z") ? iso.slice(0, 10) : iso.slice(0, 16).replace("T", " ");
+  }
   return String(value).trim();
 }
 
-function parseSingleNumber(value: unknown): number | undefined {
+/**
+ * Reads one money amount without guessing. Accepts 12, 12.5, $12.50, 1,250.00, $1,300, USD 20. Anything else that is not
+ * empty ("abc", "12x", "10-20", "1.250,00") is reported back as a problem and no number is taken from it.
+ */
+export function parseAmount(value: unknown): { value?: number; problem?: string } {
+  if (typeof value === "number") return Number.isFinite(value) ? { value } : { problem: "not a number" };
   const text = stringify(value);
-  if (!text) return undefined;
-  const matches = text.match(/-?\d+(?:\.\d+)?/g);
-  if (!matches || matches.length !== 1) return undefined;
-  const next = Number(matches[0]);
-  return Number.isFinite(next) ? next : undefined;
+  if (!text) return {};
+  const cleaned = text.replace(/^(usd|us\$)\s*/i, "").replace(/^[$£€¥]\s*/, "").replace(/\s+/g, "");
+  if (/^-?\d+(\.\d+)?$/.test(cleaned)) return { value: Number(cleaned) };
+  if (/^-?\d{1,3}(,\d{3})+(\.\d+)?$/.test(cleaned)) return { value: Number(cleaned.replace(/,/g, "")) };
+  return { problem: `"${text}" is not a clear amount` };
+}
+
+function looksLikeDate(value: unknown): boolean {
+  if (value instanceof Date) return !Number.isNaN(value.getTime());
+  const text = stringify(value);
+  if (!text) return true;
+  const iso = text.match(/^(\d{4})-(\d{1,2})-(\d{1,2})(?:[ T].*)?$/);
+  if (iso) {
+    const y = Number(iso[1]), m = Number(iso[2]), d = Number(iso[3]);
+    const probe = new Date(Date.UTC(y, m - 1, d));
+    return probe.getUTCFullYear() === y && probe.getUTCMonth() === m - 1 && probe.getUTCDate() === d;
+  }
+  const us = text.match(/^(\d{1,2})[/.-](\d{1,2})[/.-](\d{2}|\d{4})$/);
+  if (us) {
+    const a = Number(us[1]), b = Number(us[2]);
+    return (a >= 1 && a <= 12 && b >= 1 && b <= 31) || (b >= 1 && b <= 12 && a >= 1 && a <= 31);
+  }
+  // Written-out dates such as "March 15, 2024" or "15 Mar 2024".
+  return !Number.isNaN(Date.parse(text)) && /[a-z]{3}/i.test(text) && /\d{4}/.test(text);
 }
 
 function parsePositiveInteger(value: unknown) {
@@ -423,10 +457,36 @@ function mapRowToItems(sheetName: string, rowNumber: number, row: RowRecord) {
     };
   }
 
+  // A row that only carries a total ("Total", "Grand total") is a sum line, not a collectible.
+  if (/^(grand\s+|sub[\s-]*)?totals?\s*:?$/i.test(title)) {
+    return {
+      items: [] as ParsedImportItem[],
+      ignored: {
+        source: sheetName,
+        rowNumber,
+        reason: "Looks like a totals row, not an item.",
+        raw: row,
+      },
+    };
+  }
+
+  const warnings: string[] = [];
   const quantity = parsePositiveInteger(row.quantity);
-  const currentValue = parseSingleNumber(row.estimatedValue ?? row.currentValue);
-  const purchasePriceRaw = parseSingleNumber(row.purchasePrice);
-  const askingPrice = parseSingleNumber(row.askingPrice);
+  const valueSource = row.estimatedValue ?? row.currentValue;
+  const valueParsed = parseAmount(valueSource);
+  const purchaseParsed = parseAmount(row.purchasePrice);
+  const askingParsed = parseAmount(row.askingPrice);
+  // A range such as "$20-$30" is kept as text in the notes (below) rather than reported as a problem.
+  const valueIsRange = (stringify(valueSource).match(/\d+(?:\.\d+)?/g) ?? []).length > 1 && /^[\s$£€¥\d.,\-–—to]+$/i.test(stringify(valueSource));
+  if (valueParsed.problem && !valueIsRange) warnings.push(`Current value: ${valueParsed.problem}; no value was taken from it.`);
+  if (purchaseParsed.problem) warnings.push(`Purchase price: ${purchaseParsed.problem}; the cost was left blank.`);
+  if (askingParsed.problem) warnings.push(`Asking price: ${askingParsed.problem}; no asking price was taken from it.`);
+  if (stringify(row.purchaseDate) && !looksLikeDate(row.purchaseDate)) {
+    warnings.push(`Purchase date: "${stringify(row.purchaseDate)}" is not a date I can read; it was kept as written in the notes.`);
+  }
+  const currentValue = valueParsed.value;
+  const purchasePriceRaw = purchaseParsed.value;
+  const askingPrice = askingParsed.value;
   const purchasePrice = purchasePriceRaw ?? 0;
   const missingCost = purchasePriceRaw == null;
 
@@ -480,7 +540,7 @@ function mapRowToItems(sheetName: string, rowNumber: number, row: RowRecord) {
     purchasePrice,
     currentValue,
     askingPrice,
-    notes: notes.length ? notes.join("\\n") : undefined,
+    notes: notes.length ? notes.join("\n") : undefined,
     purchaseSource: stringify(row.purchaseFrom) || undefined,
     purchaseLocation: stringify(row.purchaseLocation) || undefined,
     orderNumber: stringify(row.auctionNumber) || undefined,
@@ -501,6 +561,8 @@ function mapRowToItems(sheetName: string, rowNumber: number, row: RowRecord) {
     sourceSheet: sheetName,
     structuredData,
     missingCost,
+    sourceRowKey: `${sheetName}#${rowNumber}`,
+    ...(warnings.length ? { warnings } : {}),
     createdAt: Date.now() + rowNumber,
   };
 
@@ -540,7 +602,7 @@ function parseSimpleLines(input: string): ParsedImportSource {
   };
 }
 
-function parseDelimitedRows(input: string, delimiter: "," | "\t") {
+function parseDelimitedRows(input: string, delimiter: "," | "\t" | ";") {
   const rows: string[][] = [];
   let row: string[] = [];
   let cell = "";
@@ -600,15 +662,39 @@ export function parsePastedSource(input: string): ParsedImportSource {
   return { sourceLabel: "Paste", sheets: sheet ? [sheet] : [] };
 }
 
+function decodeTextFile(buffer: ArrayBuffer) {
+  const bytes = new Uint8Array(buffer);
+  try {
+    return new TextDecoder("utf-8", { fatal: true }).decode(bytes).replace(/^﻿/, "");
+  } catch {
+    // Not UTF-8 (an older Excel "CSV" export): read it as Windows-1252 rather than showing garbled letters.
+    return new TextDecoder("windows-1252").decode(bytes);
+  }
+}
+
 export async function parseSpreadsheetSource(file: File): Promise<ParsedImportSource> {
-  const XLSX = await import("xlsx");
   const buffer = await file.arrayBuffer();
-  const workbook = XLSX.read(buffer, { type: "array" });
+
+  // Text files (.csv, .tsv, .txt) are read here, as text, and never through the spreadsheet reader: that reader guesses types
+  // ("00123" became 123, "10-20" became a date, "Café" came out garbled), which silently changes what the person wrote.
+  if (/\.(csv|tsv|txt)$/i.test(file.name) || /^text\//i.test(file.type)) {
+    const text = decodeTextFile(buffer);
+    const firstLine = text.split(/\r?\n/, 1)[0] ?? "";
+    const count = (ch: string) => firstLine.split(ch).length - 1;
+    const delimiter = count("\t") > 0 && count("\t") >= count(",") ? "\t" : count(";") > count(",") ? ";" : ",";
+    const rows = parseDelimitedRows(text, delimiter);
+    const parsed = parseRowsToSheet(file.name.replace(/\.[^.]+$/, "") || "Sheet1", rows);
+    return { sourceLabel: file.name, sheets: parsed ? [parsed] : [] };
+  }
+
+  const XLSX = await import("xlsx");
+  // cellDates keeps dates as dates (not serial numbers such as 45366); raw keeps each cell as the file stores it.
+  const workbook = XLSX.read(buffer, { type: "array", cellDates: true });
 
   const sheets: ParsedSourceSheet[] = [];
   workbook.SheetNames.forEach((sheetName) => {
     const worksheet = workbook.Sheets[sheetName];
-    const rows = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: "" }) as unknown[][];
+    const rows = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: "", raw: true }) as unknown[][];
     const parsed = parseRowsToSheet(sheetName, rows);
     if (parsed) sheets.push(parsed);
   });
@@ -660,6 +746,7 @@ function normalizeItem(raw: unknown): VaultItem | null {
     purchaseSource: typeof record.purchaseSource === "string" ? record.purchaseSource : undefined,
     orderNumber: typeof record.orderNumber === "string" ? record.orderNumber : undefined,
     certNumber: typeof record.certNumber === "string" ? record.certNumber : undefined,
+    serialNumber: typeof record.serialNumber === "string" ? record.serialNumber : undefined,
     notes: typeof record.notes === "string" ? record.notes : undefined,
     universe: typeof record.universe === "string" ? record.universe : undefined,
     category: typeof record.category === "string" ? record.category : undefined,
@@ -693,10 +780,12 @@ export function readVaultForActiveProfile(): VaultItem[] {
 }
 
 function toVaultItem(item: ParsedImportItem): VaultItem {
-  const { sourceSheet, structuredData, missingCost, ...vaultItem } = item;
+  const { sourceSheet, structuredData, missingCost, sourceRowKey, warnings, ...vaultItem } = item;
   void sourceSheet;
   void structuredData;
   void missingCost;
+  void sourceRowKey;
+  void warnings;
   return vaultItem;
 }
 
@@ -807,7 +896,9 @@ export function buildImportSummary(items: ParsedImportItem[], ignoredRows: Ignor
   return {
     itemCount: items.length,
     ignoredCount: ignoredRows.length,
-    missingCostCount: items.filter((item) => item.missingCost || Number(item.purchasePrice ?? 0) <= 0).length,
+    // Only a cost that was blank in the file. An explicit 0 is a real price (a gift, a trade) and is not "missing".
+    missingCostCount: items.filter((item) => item.missingCost).length,
+    warningCount: items.filter((item) => item.warnings && item.warnings.length > 0).length,
     totalCost: items.reduce((sum, item) => sum + Number(item.purchasePrice ?? 0), 0),
     totalEstimatedValue: items.reduce((sum, item) => sum + Number(item.currentValue ?? 0), 0),
     byCategory: items.reduce<Record<string, number>>((acc, item) => {
@@ -818,10 +909,22 @@ export function buildImportSummary(items: ParsedImportItem[], ignoredRows: Ignor
   };
 }
 
+/**
+ * What makes two items "the same one" for exact-duplicate checks: the same description AND the same serial number. Two
+ * items with one description but different serial numbers are different pieces (five identical guitars, say), so the serial
+ * number is part of the key whenever there is one. Items with no serial number are compared by description alone.
+ */
+export function duplicateKeyOf(item: { title?: string; serialNumber?: string }) {
+  const title = (item.title || "").toLowerCase().replace(/\s+/g, " ").trim();
+  if (!title) return "";
+  const serial = String(item.serialNumber ?? "").toLowerCase().replace(/\s+/g, "").trim();
+  return serial ? `${title}\u0000serial:${serial}` : title;
+}
+
 export function detectDuplicateGroups(items: ParsedImportItem[]) {
   const map = new Map<string, ParsedImportItem[]>();
   items.forEach((item) => {
-    const key = (item.title || "").toLowerCase().replace(/\s+/g, " ").trim();
+    const key = duplicateKeyOf(item);
     if (!key) return;
     const existing = map.get(key) ?? [];
     existing.push(item);
@@ -829,15 +932,16 @@ export function detectDuplicateGroups(items: ParsedImportItem[]) {
   });
 
   return Array.from(map.entries())
-    .filter(([, group]) => group.length > 1)
-    .map(([key, group]) => ({ key, items: group }));
+    // Copies made from one row's Quantity are meant to be several; only rows that repeat count as duplicates.
+    .filter(([, group]) => new Set(group.map((item) => item.sourceRowKey ?? item.id)).size > 1)
+    .map(([key, group]) => ({ key: key.split("\u0000")[0], items: group }));
 }
 
 export function detectExistingDuplicateGroups(items: ParsedImportItem[], existingItems: VaultItem[]) {
   const existingByKey = new Map<string, VaultItem[]>();
 
   existingItems.forEach((item) => {
-    const key = (item.title || "").toLowerCase().replace(/\s+/g, " ").trim();
+    const key = duplicateKeyOf(item);
     if (!key) return;
     const group = existingByKey.get(key) ?? [];
     group.push(item);
@@ -846,7 +950,7 @@ export function detectExistingDuplicateGroups(items: ParsedImportItem[], existin
 
   const importByKey = new Map<string, ParsedImportItem[]>();
   items.forEach((item) => {
-    const key = (item.title || "").toLowerCase().replace(/\s+/g, " ").trim();
+    const key = duplicateKeyOf(item);
     if (!key || !existingByKey.has(key)) return;
     const group = importByKey.get(key) ?? [];
     group.push(item);
@@ -854,7 +958,7 @@ export function detectExistingDuplicateGroups(items: ParsedImportItem[], existin
   });
 
   return Array.from(importByKey.entries()).map(([key, importItems]) => ({
-    key,
+    key: key.split("\u0000")[0],
     importItems,
     existingItems: existingByKey.get(key) ?? [],
   }));

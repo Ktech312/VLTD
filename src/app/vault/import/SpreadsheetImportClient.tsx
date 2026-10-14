@@ -13,6 +13,7 @@ import {
   buildImportSummary,
   buildItemsFromSource,
   detectExistingDuplicateGroups,
+  duplicateKeyOf,
   detectDuplicateGroups,
   downloadBlankSpreadsheetTemplate,
   findLikelyDuplicateCandidates,
@@ -273,22 +274,22 @@ export default function SpreadsheetImportClient() {
   function getItemsToImport() {
     if (importMode === "all") return parsedItems;
 
-    const seen = new Set<string>();
+    // Same rule as the duplicate review: the same description AND serial number. Different serial numbers are different
+    // pieces, and copies made from one row's Quantity are meant to be several, so neither is skipped.
+    const seen = new Map<string, Set<string>>();
     const existingKeys =
       importMode === "skip-existing-duplicates"
-        ? new Set(
-            existingVault.map((item) =>
-              (item.title || "").toLowerCase().replace(/\s+/g, " ").trim()
-            )
-          )
+        ? new Set(existingVault.map((item) => duplicateKeyOf(item)).filter(Boolean))
         : new Set<string>();
 
     return parsedItems.filter((item) => {
-      const key = (item.title || "").toLowerCase().replace(/\s+/g, " ").trim();
+      const key = duplicateKeyOf(item);
       if (!key) return true;
       if (existingKeys.has(key)) return false;
-      if (seen.has(key)) return false;
-      seen.add(key);
+      const rowKey = item.sourceRowKey ?? item.id;
+      const rows = seen.get(key);
+      if (rows && !rows.has(rowKey)) return false;
+      if (!rows) seen.set(key, new Set([rowKey]));
       return true;
     });
   }
@@ -537,6 +538,7 @@ export default function SpreadsheetImportClient() {
                 <RowCard><div className="text-xs text-[color:var(--muted)]">Total Cost</div><div className="mt-1 text-lg font-semibold">{toMoney(summary.totalCost)}</div></RowCard>
                 <RowCard><div className="text-xs text-[color:var(--muted)]">Total Estimated Value</div><div className="mt-1 text-lg font-semibold">{toMoney(summary.totalEstimatedValue)}</div></RowCard>
                 <RowCard><div className="text-xs text-[color:var(--muted)]">Missing Cost</div><div className="mt-1 text-lg font-semibold">{summary.missingCostCount}</div></RowCard>
+                <RowCard><div className="text-xs text-[color:var(--muted)]">Needs a look</div><div className="mt-1 text-lg font-semibold">{summary.warningCount}</div></RowCard>
                 <RowCard><div className="text-xs text-[color:var(--muted)]">Batch Duplicates</div><div className="mt-1 text-lg font-semibold">{duplicateGroups.length}</div></RowCard>
                 <RowCard><div className="text-xs text-[color:var(--muted)]">Vault Matches</div><div className="mt-1 text-lg font-semibold">{existingDuplicateGroups.length}</div></RowCard>
                 <RowCard><div className="text-xs text-[color:var(--muted)]">Likely Matches</div><div className="mt-1 text-lg font-semibold">{likelyDuplicateCandidates.length}</div></RowCard>
@@ -564,7 +566,7 @@ export default function SpreadsheetImportClient() {
             <SurfaceCard className="p-4 sm:p-5">
               <div className="text-[11px] uppercase tracking-[0.18em] text-[color:var(--muted2)]">Duplicate Detection</div>
               <div className="mt-3 text-sm text-[color:var(--muted)]">
-                Checks exact duplicates plus likely matches using title tokens, card or issue number, cert, grade, and category.
+                An exact match is the same description and the same serial number (items with different serial numbers are different pieces). Likely matches use title words, card or issue number, cert, grade, and category.
               </div>
               <div className="mt-4 space-y-3">
                 {duplicateGroups.length === 0 && existingDuplicateGroups.length === 0 && likelyDuplicateCandidates.length === 0 ? (
@@ -591,13 +593,35 @@ export default function SpreadsheetImportClient() {
                     {duplicateGroups.slice(0, Math.max(0, DUP_LIMIT - existingDuplicateGroups.length)).map((group) => (
                       <RowCard key={`batch-${group.key}`}>
                         <div className="text-sm font-medium text-[color:var(--fg)]">{group.items[0]?.title}</div>
-                        <div className="mt-1 text-xs text-[color:var(--muted)]">{group.items.length} rows share this exact title in the batch.</div>
+                        <div className="mt-1 text-xs text-[color:var(--muted)]">{group.items.length} rows share this description and serial number in the batch.</div>
                       </RowCard>
                     ))}
                   </>
                 )}
               </div>
             </SurfaceCard>
+
+            {summary.warningCount > 0 ? (
+              <SurfaceCard className="p-4 sm:p-5">
+                <div className="text-[11px] uppercase tracking-[0.18em] text-[color:var(--muted2)]">Needs a look</div>
+                <div className="mt-3 text-sm text-[color:var(--muted)]">
+                  Nothing below was guessed. The row is still imported with what could be read; fix the file and import again, or correct the item afterwards.
+                </div>
+                <div className="mt-4 space-y-3">
+                  {parsedItems
+                    .filter((item) => item.warnings && item.warnings.length > 0)
+                    .slice(0, DUP_LIMIT)
+                    .map((item) => (
+                      <RowCard key={`warn-${item.id}`}>
+                        <div className="text-sm font-medium text-[color:var(--fg)]">{item.title}</div>
+                        {(item.warnings ?? []).map((warning) => (
+                          <div key={warning} className="mt-1 text-xs text-amber-300">{warning}</div>
+                        ))}
+                      </RowCard>
+                    ))}
+                </div>
+              </SurfaceCard>
+            ) : null}
 
             <SurfaceCard className="p-4 sm:p-5">
               <div className="flex flex-wrap items-start justify-between gap-3">
