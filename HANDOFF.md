@@ -1,3 +1,64 @@
+# 2026-10-14 (latest) — Bounded verification pass: one PASS / FAIL / NOT VERIFIED report (redesign stays closed)
+
+Scope: items 1-6 of EK's brief plus removal of the EIN / Tax ID field. No category assignment, no tax-ID editing, no new layouts, no further customer email. Production after this pass = commits `d369f32`, `c92ce9a`, `4a2738e` (all deployed, Vercel success).
+
+| # | Item | Result |
+|---|------|--------|
+| 0 | Remove EIN / Tax ID from onboarding, Add Business Profile, drafts and new-profile submissions | **PASS** (`d369f32`) |
+| 1 | Comcast resend: record, no second email | **PASS (recorded)**; delivery **NOT VERIFIED** |
+| 2 | Real invitation e-mail through the actual link | **PASS** for delivery, link, set-password page, onboarding and business creation; **NOT VERIFIED**: typing a password and logging in (see below) |
+| 3 | Privacy boundaries + public exhibition share links | **PASS**; one preview-image defect found and **fixed** (`4a2738e`) |
+| 4 | Save recovery in the browser | **PASS** |
+| 5 | Supabase usage / enforcement / request volume | **MEASURED**; request-volume comparison **NOT VERIFIED** (see below); one defect found and **fixed** (`c92ce9a`) |
+| 6 | Physical-device acceptance checklist | **WRITTEN**; every line **NOT VERIFIED** (`docs/physical-device-acceptance-checklist.md`) |
+
+## 0. Tax ID removed (`d369f32`)
+- Field removed from `src/app/onboarding/page.tsx` and `src/app/account/business/new/page.tsx`; `business_ein` removed from `src/lib/onboardingDraft.ts` (a leftover value in a saved draft is dropped on load and not written back); `tax_id` removed from `createProfile` input/payload and the profile type in `src/lib/auth.ts`. No tax verification, reporting or editing added. Existing database values were **not** touched.
+- Real accounts with a populated `tax_id`: **0** of 37 profiles (2 business profiles). Values not displayed.
+- tsc clean, eslint 0 errors (pre-existing warnings), `npm run test:isolation` 72/72. Live (Chrome, real invitation account): the business step has no tax-ID field; the draft survived a page refresh with all four business fields; no `business_ein` key in the stored draft; finishing created personal + business profiles with `tax_id` null. Earlier isolated-browser walkthrough proved Add Business Profile (account page) before the removal; the form is the same minus one field.
+
+## 1. Comcast resend (recorded; no further e-mail sent)
+- Resend: password-reset e-mail through the normal app route (`POST /api/auth/password-reset`) to the Comcast account created 2026-10-13 20:44 UTC (Denny; address starts with "d"). Sent **2026-10-14 15:34:44 UTC**; request result **HTTP 200 `{"ok":true}`**. That means Supabase accepted it, not that it arrived.
+- Awaiting EK's update from Denny. If it did not arrive, the only available evidence is a bounce notice in the `ehren@vltd.app` IONOS mailbox (not reachable from here) and Supabase Auth logs; templates and DNS are to stay untouched without a demonstrated cause.
+- **Correction:** Xfinity's Service Policy Assurance Team replied that they "confirmed that there is no CyberSecure block related to the reported website" (vltd.app/dashboard). So there is **no current CyberSecure block**. The earlier checker screenshot showing a block, and any connection between that block and e-mail delivery, remain **unproven**. The earlier wording that the site "is blocked" and that this "fits Denny's problem" is withdrawn.
+
+## 2. Real invitation (QA alias under the authorized vltdadmin@gmail.com inbox)
+- Sent one invitation (`inviteUserByEmail`, same call and redirect as the admin invite route) to an unused `vltdadmin+qa-invite-<id>` alias at 16:23:24 UTC. It was in the inbox within the same minute: sender "VLTD", subject "You're invited to join VLTD", logo, "Hello,", one button "Accept my invitation", help line, sign-off; fits a normal inbox view. **PASS.**
+- The real link (type `invite`, redirect `https://vltd.app/reset-password`) opened in a real Chrome profile that had no vltd.app session, signed the invitee in and showed the branded "Set your password" page. **PASS.** It then led straight into onboarding (personal profile, business profile, finish -> dashboard). **PASS.**
+- **NOT VERIFIED:** choosing/typing a password on the live site and logging in with it. Claude does not type passwords into the production site; this needs a human, or the same flow on a local build. Everything up to the password fields was exercised with the real link.
+- Cleanup: the QA account and its two profiles were removed by exact id (profiles 37 / members 37 / public_profiles 47 / vault_items 3478 / galleries 46 = baseline); the Chrome session was signed out. The invitation e-mail itself was left in the QA inbox. Pre-existing unrelated `vltd_stash:*` keys in EK's Chrome profile were left alone.
+
+## 3. Remaining privacy boundaries
+- Re-run after the migration (earlier today): private and unfinished profiles expose no name, avatar, bio or items through `/u/<handle>`, its HTML metadata, its share image, `/v/<profileId>`, `public_vault_items` or `public_profiles`. **PASS.**
+- Explicitly PUBLIC exhibition whose owner profile is PRIVATE (owner given a secret name/bio and a stale-style public row): `/museum/<id>/guest` and `/museum/<id>` return 200 and show the exhibition; the page byline is "Collector"; the owner's name, bio and handle appear nowhere (server HTML, rendered page signed out, share image); the owner's `profiles` and `public_profiles` rows are unreadable to a visitor. **PASS.** The unresolved product decision stays unresolved: a PUBLIC exhibition of a private profile can still be listed by profile id (`galleries`), and was not changed.
+- **FAIL, fixed (`4a2738e`):** `/museum/<id>/guest/opengraph-image` returned HTTP 200 with an **empty body** for every exhibition (shared links had no preview card). Cause: CSS the image renderer does not support (`inline-flex`, `fit-content`, `inset`, `-webkit-box` line clamp). Replaced with plain flex/explicit offsets; live result 70,178-byte PNG showing the title and "Collector" only. The card still needs a look by EK for design; only the failure was fixed.
+
+## 4. Save recovery in the browser (isolated Chrome pane, production)
+Failure injected for real: the QA profile's owner-membership row was removed, so the database refuses that account's item/exhibition writes (the same refusal as the old missing-membership bug). One QA item (Add Item form) and one QA exhibition (Create Exhibition):
+- Pending message: pill "Saved on this device — sync pending" with "Retry now"; cloud had **0** item and **0** exhibition rows. **PASS.**
+- Local data preserved: the item showed in the Vault (1 item) and the exhibition existed locally; sync queue and gallery-pending list kept. **PASS.**
+- Refresh while pending: pill, item, queue and pending list all still there. **PASS.**
+- Account switch while pending: sign-out parked A's items, queue, pending list and galleries under the per-account stash; B signed in with empty items/queue/pending, no pill, no trace of A's item or exhibition; signing A back in restored the pill, item, queue and pending exactly. **PASS** (no data or status crossed accounts).
+- Retry: after membership was restored the backoff retry completed on its own (queue and pending cleared, pill gone) before "Retry now" was pressed; the cloud then held **exactly 1** item row and **1** exhibition row. **PASS.** Observation, not changed: while sync is pending the Add Item form still shows "✓ Saved!" (a local save); the pill is what tells the truth about the cloud.
+- Fixtures removed (both QA users and their data); counts at baseline.
+
+## 5. Supabase after the request-loop fix (read-only; Free plan; cycle 10 Oct - 10 Nov)
+Measurements (dashboard, 2026-10-14 ~16:30 UTC):
+- Enforcement: grace period ended 10 Oct; Fair Use applies (over-quota projects can be restricted, requests answered 402). Nothing is over a quota that is enforced today. Log ingestion 1.134 / 1 GB (113%) is labelled UPCOMING; the dashboard says billing starts after the grace period ends at the start of 2027.
+- Egress 1.506 / 5 GB (30%). Earlier readings of the same counter: 1.24 GB (12 Oct), 1.409 GB (13 Oct ~21:00 UTC), 1.453 GB (earlier 14 Oct), 1.506 GB (now). Database 0.269 / 0.5 GB (54%; VLTD 256 MB), storage 0.114 / 1 GB, MAU 24 / 50,000, Realtime peak 3 / 200, Edge Functions 0.
+- Request volume: the API Gateway report only offers "last 60 minutes" here (the longer ranges tried in the log explorer returned no rows). The last-60-minute totals read 1,228 and then 1,329 requests, but that hour contains this pass's own QA traffic (invitation, onboarding, test sessions), so it is **not** an equivalent window to the earlier ~3,810 -> ~1,730 requests/hour readings (which also contained QA traffic). **Request-volume comparison: NOT VERIFIED.** No clean quiet-hour measurement exists yet.
+- Service health: no new incident beyond the Realtime latency notice recorded earlier (VLTD sends 0 Realtime messages).
+Projections (estimates, not measurements): at the recent egress rate the 5 GB mark is reached roughly late October to early November, before the 10 Nov reset. Treat as an estimate.
+No purchase, plan change or recurring job was made.
+
+**Defect found while reading the gateway report and fixed (`c92ce9a`):** 23 `POST /rest/v1/public_profiles?on_conflict=profile_id` requests were refused (403) within one minute during the invitation test. Reproduced in a clean browser by planting a stale active-profile id: each page load tried to publish a placeholder "Collector" row for a profile the signed-in account cannot read (3 refused requests per load). `syncPublicProfile` now returns without writing when the profile row is not readable (this also stops a failed read from overwriting a real owner's public name). Live re-test with the same stale id: 0 refused requests (only the expected 204 cleanups). The stale id itself most likely came from leftover local state in EK's own Chrome; it is not an RLS fault and the migration did not cause it.
+
+## 6. Physical-device checklist
+`docs/physical-device-acceptance-checklist.md`: sign-up and e-mail links, onboarding, keyboard-open forms, Add Item, bottom navigation, push sign-out and account switching. **Nothing on it has been run on a device; all NOT VERIFIED.** Emulation was not repeated as a substitute.
+
+## Still open / unverified
+Denny's Comcast delivery (resend sent, receipt unknown); typing a password and logging in on the live site; physical-phone and push checks; a clean request-volume comparison; profile-based exhibition discovery (product decision); tax-ID editing and category assignment (not authorized). One hung Supabase SQL-editor tab may remain open in EK's Chrome (it saved an empty "Untitled query" snippet; harmless).
+
 # 2026-10-14 — Onboarding / profile-privacy verification CLOSED: hidden-profile migration applied and re-verified
 
 ## Current status (read this first)
@@ -37,7 +98,7 @@ Fixtures: unfinished, private-but-complete, public. Checked the `/u/<handle>` pa
 Fresh throwaway account, isolated browser, production. All four passed: (1) **add a business later** from Account > Profile > "+ Add business profile" -> created, owner membership, app switches to it; (2) **switching** personal <-> business from the header dropdown, Home follows the active profile and it survives a reload; (3) **business public page** (`/u/<handle>`) as a signed-out visitor shows only the business name/avatar, no owner name, no website, no tax ID; (4) **tax ID**: it is write-only in the app (collected in onboarding and /account/business/new, never rendered on any page, not even to the owner; only `src/lib/auth.ts`, onboarding and business/new reference it), and the database refuses it to other accounts (checked earlier). Note: username/handle input stops at 24 characters. Fixtures deleted, counts back to baseline. Step-by-step screenshots: `docs/walkthrough/vltd-setup-walkthrough.html` (self-contained). Not shown in it: the account-menu "Switch profile" list (that screenshot displayed the QA login email, so it was left out).
 
 ### New evidence on Comcast (2026-10-14, from EK's screenshot)
-Comcast's CyberSecure Website Checker reports **https://vltd.app/dashboard "is currently blocked by CyberSecure"**. So Comcast/Xfinity's network filter is blocking the vltd.app site itself, which fits Denny's problem. It does not by itself prove e-mail is blocked (e-mail delivery is still unconfirmed), and the reason is unknown (likely a very new domain, registered 2026-10-04). The checker page offers "submit a request for re-assessment"; not yet submitted. Nothing in the app caused this.
+Comcast's CyberSecure Website Checker reports **https://vltd.app/dashboard "is currently blocked by CyberSecure"**. (Superseded: see the "Update (same day)" below and the 2026-10-14 (latest) entry: Xfinity later confirmed no current CyberSecure block; the earlier block and any e-mail link are unproven.) That screenshot suggested Comcast/Xfinity's filter was blocking the vltd.app site. It does not by itself prove e-mail is blocked (e-mail delivery is still unconfirmed), and the reason is unknown (likely a very new domain, registered 2026-10-04). The checker page offers "submit a request for re-assessment"; not yet submitted. Nothing in the app caused this.
 
 **Update (same day):** EK submitted the re-assessment. Comcast's Service Policy Assurance Team replied ("Our review is complete"; dated Tue 10/13/2026 per the mail header) that they **"confirmed that there is no CyberSecure block related to the reported website"** (URL reviewed: https://vltd.app/dashboard) and to contact the website owner if access issues persist. So the earlier "blocked" reading is not currently confirmed by Comcast, and the cause of Denny's access/delivery problem remains unknown. Per EK's request a fresh message was sent to the Comcast account created 2026-10-13 20:44 UTC (a password-reset e-mail through the normal app route, request accepted with HTTP 200 at 2026-10-14 15:34 UTC, rate-limited to 3/hour per address). **Whether it arrived is UNVERIFIED** until Denny confirms; a bounce, if any, lands in the `ehren@vltd.app` IONOS mailbox. There are two other Comcast addresses among accounts (older, created 2026-04 and 2026-05); they were not contacted.
 
