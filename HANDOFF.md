@@ -2,6 +2,13 @@
 
 Production head after this queue: `e83adc7` (+ docs commits). Redesign stays closed; no tax-ID/category-assignment work; no customer email sent.
 
+## Comcast incident evidence (added 2026-10-14, after the queue)
+- **Bounce received (EK, from the ehren@vltd.app mailbox):** the **2026-10-13 21:52:23 UTC** "Welcome to the VLTD Club — confirm your email" message to the Comcast customer (address starts with "d") was **DELIVERY FAILED**: relay perfora.net (mrelay mreueus003, 74.208.114.78) reported "Remote server returned '554 5.0.0 < #5.0.0>'". Message-ID `<0MGTcU-1xTvhn3qpU-008Wcb@mrelay.perfora.net>`; DKIM-signed d=vltd.app s=s1-ionos; X-Spam-Flag: NO. Pacific time 2:52 PM.
+- This is the **October 13 confirmation email**, not the October 14 15:34:44 UTC password-reset resend. **The resend's delivery is still UNVERIFIED** (no bounce seen, no receipt reported).
+- The code is generic. It does **not** identify the cause and does **not** prove any link to Comcast CyberSecure (Xfinity separately said it found no block).
+- **Full rejection reason: not available to us.** The only record of the remote reply is this bounce, which contains no text after the code. Supabase Auth logs record that the app handed the message to the SMTP relay, not the recipient server's reply (stated from how the pipeline works; the logs were not re-queried). Next step is an IONOS support ticket: a draft with timestamp, recipient and Message-ID is in `docs/comcast-bounce-ionos-support-request-DRAFT.md` (untracked on purpose: it contains the full address) **for EK's review; not sent**.
+- No further customer emails and no DNS/template changes, based on this generic code alone.
+
 ## Deployed commits (all verified live unless noted)
 `46cee0a` expired/used reset link state · `012c1ed` refused delete no longer reported as success · `5985eee`+`643d253` importer parsing, duplicates, warnings, unreadable-file messages · `07e7252` exhibition preview caching · `149ca8a` fewer repeated requests · `40ccd15` sync queue not blocked by one refused item · `e4f8b4f` dialog keyboard focus · `c02a6c5` plain-language connection errors · `064c5ae` 320px item title / exhibition header · `30c00db` Add Item fields fit 320px · `fc29282` Exhibitions list refresh 15s → 60s · `e83adc7` toast stays inside the screen, wraps, sits above bottom nav.
 
