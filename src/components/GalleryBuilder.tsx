@@ -363,6 +363,31 @@ export default function GalleryBuilder({
   const layoutType = getGalleryLayoutType(gallery);
   const sections = getGallerySections(gallery);
 
+  // Name / description of the exhibit being edited. A gallery that has never had an exhibit page yet
+  // used to ignore typing here (the text vanished); the first edit now creates exhibit 1 holding the
+  // items already in the gallery.
+  const patchActiveSection = (patch: { title?: string; description?: string }) => {
+    onGalleryChange((current) => {
+      const existing = getGallerySections(current);
+      if (existing.length === 0) {
+        return syncSectionsAndLayout(current, [
+          {
+            id: makeLocalSectionId(),
+            title: "Exhibit 1",
+            description: "",
+            itemIds: [...current.itemIds],
+            featuredItemId: undefined,
+            ...patch,
+          },
+        ]);
+      }
+      return syncSectionsAndLayout(
+        current,
+        existing.map((s, i) => (i === activeSectionIdx ? { ...s, ...patch } : s))
+      );
+    });
+  };
+
   const selectedValue = useMemo(() => {
     return selectedItems.reduce((sum, item) => sum + effectiveMarketValue(item), 0);
   }, [selectedItems]);
@@ -1202,12 +1227,7 @@ export default function GalleryBuilder({
             <input
               type="text"
               value={sections[activeSectionIdx]?.title ?? ""}
-              onChange={(e) => {
-                const updated = sections.map((s, i) =>
-                  i === activeSectionIdx ? { ...s, title: e.target.value } : s
-                );
-                onGalleryChange((current) => syncSectionsAndLayout(current, updated));
-              }}
+              onChange={(e) => patchActiveSection({ title: e.target.value })}
               placeholder="Exhibit name…"
               className="w-[38%] min-w-[150px] max-w-full shrink-0 min-h-[28px] max-md:min-h-11 rounded-full bg-[color:var(--pill)] px-3 text-[11px] font-semibold text-[color:var(--fg)] ring-1 ring-[color:var(--border)] shadow-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--fg)]/20 transition-all placeholder:text-[color:var(--muted)]"
             />
@@ -1217,12 +1237,7 @@ export default function GalleryBuilder({
               key={activeSectionIdx}
               rows={1}
               value={sections[activeSectionIdx]?.description ?? ""}
-              onChange={(e) => {
-                const updated = sections.map((s, i) =>
-                  i === activeSectionIdx ? { ...s, description: e.target.value } : s
-                );
-                onGalleryChange((current) => syncSectionsAndLayout(current, updated));
-              }}
+              onChange={(e) => patchActiveSection({ description: e.target.value })}
               onInput={(e) => {
                 const el = e.currentTarget;
                 el.style.height = "auto";
