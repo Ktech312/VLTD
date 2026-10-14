@@ -1,4 +1,16 @@
-# 2026-10-14 (latest) — Bounded verification pass: one PASS / FAIL / NOT VERIFIED report (redesign stays closed)
+# 2026-10-14 (latest, in progress) — Reliability & usability queue: progress record (written first so an interruption loses nothing)
+
+Production commits this queue (all pushed to main; Vercel auto-deploys): `46cee0a` reset-link expired/used state · `012c1ed` refused delete no longer reported as success · `5985eee`+`643d253` importer parsing/duplicates/warnings/unreadable-file messages · `07e7252` exhibition preview caching · `149ca8a` fewer repeated requests · `40ccd15` sync queue no longer blocked by one refused item · `e4f8b4f` dialog keyboard focus · `c02a6c5` plain-language connection errors · `064c5ae` long titles/exhibition header at 320px · `30c00db` Add Item fields fit 320px (verified live) · `fc29282` Exhibitions list refresh 15s → 60s (**deploy + re-measure still to verify**).
+
+LIVE evidence (isolated browser, production, QA accounts): reset link states; delete dialog role/focus/Escape/focus-return; 320px overflow audit clean on Vault, Exhibitions, Import, Account, Add Item (after fix); save-status pill sits above the bottom nav at 320px (dark). Request counts (fetch/XHR at load / idle per 30s, live build, QA account): Home 30/1, Vault 24/1, Exhibitions 25/5 (before `fc29282`), Lounge(community-board) 26/1, Discover 20/1, Settings(account) 20/1. Earlier "before" load counts: 42/29/31/30/29/25. Bytes were NOT measured (cross-origin timing).
+LOCAL tests (not production): `npm run test:isolation` 77, `test:delete` 9, `test:import` 32, `test:category` 6, `test:errors` 8; tsc clean, eslint 0 errors.
+QA cleanup: first batch (auth1, auth2, crud users and fixtures) removed; counts back to baseline 37/37/47/3478/46.
+
+REMAINING (this queue's tail): verify `fc29282` live + own-change refresh; shared toast width (465px wide at 320px — not yet fixed); 390px pass; password set/login/reset via UI; consolidated report; walkthrough assets. Unverified until evidence: physical phone/push, Comcast receipt, invitation password typing.
+
+---
+
+# 2026-10-14 — Bounded verification pass: one PASS / FAIL / NOT VERIFIED report (redesign stays closed)
 
 Scope: items 1-6 of EK's brief plus removal of the EIN / Tax ID field. No category assignment, no tax-ID editing, no new layouts, no further customer email. Production after this pass = commits `d369f32`, `c92ce9a`, `4a2738e` (all deployed, Vercel success).
 
