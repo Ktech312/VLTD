@@ -160,8 +160,13 @@ export async function syncPublicProfile(profileId = getStoredActiveProfileId()) 
     .eq("id", cleanProfileId)
     .maybeSingle();
 
+  // A profile this account cannot read (a stale active-profile id left in the browser, or a failed read) is not ours to
+  // publish: writing a placeholder "Collector" row for it only produces refused (403) requests, and on a transient read
+  // failure for a real owner it would overwrite their public name.
+  if (!profileRow) return null;
+
   // If the user has gone incognito, remove from public_profiles
-  if (profileRow && profileRow.is_public === false) {
+  if (profileRow.is_public === false) {
     await supabase.from("public_profiles").delete().eq("profile_id", cleanProfileId);
     return null;
   }
