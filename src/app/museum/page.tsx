@@ -342,7 +342,7 @@ export default function MuseumPage() {
       if (document.visibilityState === "visible") {
         void refreshGalleriesFromSupabase(true);
       }
-    }, 15000);
+    }, 60000);
 
     window.addEventListener(GALLERY_EVENT, onGalleryChange);
     window.addEventListener(ACTIVE_PROFILE_EVENT, onActiveProfileChange);
