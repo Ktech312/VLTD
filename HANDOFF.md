@@ -26,6 +26,9 @@ Fixtures: unfinished, private-but-complete, public. Checked the `/u/<handle>` pa
 - Hidden (unfinished/private) profiles: nothing readable by a visitor except public galleries (the open decision above). Items view and public_profiles are fixed; `/u`, share image and `/v/id` all pass; public profiles still show their items and public_profiles row.
 - Owner write path still works (a real signed-in test profile: upsert+return, readable by a stranger while public, unreadable the moment it went private, owner delete OK). Test user/profile removed; counts back to 37/37/47.
 
+### New evidence on Comcast (2026-10-14, from EK's screenshot)
+Comcast's CyberSecure Website Checker reports **https://vltd.app/dashboard "is currently blocked by CyberSecure"**. So Comcast/Xfinity's network filter is blocking the vltd.app site itself, which fits Denny's problem. It does not by itself prove e-mail is blocked (e-mail delivery is still unconfirmed), and the reason is unknown (likely a very new domain, registered 2026-10-04). The checker page offers "submit a request for re-assessment"; not yet submitted. Nothing in the app caused this.
+
 ## 3. Still UNVERIFIED (unchanged): real invitation e-mail receipt; physical-phone / push checks; Comcast (Denny) delivery. Egress "exhaustion date" in the previous entry is an estimate, not a promise (dashboard snapshot).
 
 # 2026-10-13 (later) — Onboarding commits verified end to end; two defects fixed; seven disabled email templates cleaned; Supabase usage re-read
