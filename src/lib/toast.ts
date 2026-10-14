@@ -1,43 +1,70 @@
 /**
  * Lightweight DOM toast — no React deps, works in components and lib files.
- * Stacks multiple toasts vertically above each other.
+ * Toasts sit in one fixed column at the bottom of the screen, never wider than the
+ * viewport; long messages wrap and the stack grows upward so nothing overlaps.
  */
-
-let offset = 0;
 
 /** Optional button inside the toast, e.g. Undo. Clicking it runs once and closes the toast. */
 export type ToastAction = { label: string; onClick: () => void };
 
+const STACK_ID = "vltd-toast-stack";
+
+function getStack(): HTMLElement {
+  let stack = document.getElementById(STACK_ID);
+  if (!stack) {
+    stack = document.createElement("div");
+    stack.id = STACK_ID;
+    stack.setAttribute("aria-live", "polite");
+    stack.setAttribute(
+      "style",
+      [
+        "position:fixed",
+        // Narrow screens have the bottom navigation bar; sit above it instead of over it.
+        window.innerWidth < 640 ? "bottom:calc(96px + env(safe-area-inset-bottom, 0px))" : "bottom:24px",
+        "left:50%",
+        "transform:translateX(-50%)",
+        "width:max-content",
+        "max-width:calc(100vw - 32px)",
+        "display:flex",
+        "flex-direction:column-reverse",
+        "align-items:center",
+        "gap:8px",
+        "z-index:99999",
+        "pointer-events:none",
+      ].join(";"),
+    );
+    document.body.appendChild(stack);
+  }
+  return stack;
+}
+
 export function showToast(msg: string, duration = 3000, action?: ToastAction) {
   if (typeof document === "undefined") return;
 
-  const id = `vltd-toast-${Date.now()}-${Math.random().toString(36).slice(2)}`;
-  offset += 52;
-  const bottom = 24 + offset - 52;
-
   const el = document.createElement("div");
-  el.id = id;
-  el.textContent = msg;
+  const text = document.createElement("span");
+  text.textContent = msg;
+  el.appendChild(text);
   let closed = false;
   el.setAttribute(
     "style",
     [
-      "position:fixed",
-      `bottom:${bottom}px`,
-      "left:50%",
-      "transform:translateX(-50%) translateY(0)",
+      "box-sizing:border-box",
+      "max-width:100%",
       "background:var(--surface,#1e1e1e)",
       "color:var(--fg,#f0ead6)",
       "border:1px solid var(--border,rgba(255,255,255,0.12))",
-      "padding:10px 20px",
+      "padding:10px 16px",
       "border-radius:14px",
       "font-size:13px",
       "font-weight:600",
-      "z-index:99999",
+      "line-height:1.35",
+      "text-align:center",
+      "overflow-wrap:anywhere",
       action ? "pointer-events:auto" : "pointer-events:none",
       "box-shadow:0 4px 24px rgba(0,0,0,0.45)",
-      "white-space:nowrap",
       "opacity:0",
+      "transform:translateY(0)",
       "transition:opacity 0.18s ease,transform 0.18s ease",
     ].join(";"),
   );
@@ -58,7 +85,7 @@ export function showToast(msg: string, duration = 3000, action?: ToastAction) {
     el.appendChild(btn);
   }
 
-  document.body.appendChild(el);
+  getStack().appendChild(el);
 
   // Animate in
   requestAnimationFrame(() => {
@@ -72,10 +99,11 @@ export function showToast(msg: string, duration = 3000, action?: ToastAction) {
     if (closed) return;
     closed = true;
     el.style.opacity = "0";
-    el.style.transform = "translateX(-50%) translateY(6px)";
+    el.style.transform = "translateY(6px)";
     setTimeout(() => {
       el.remove();
-      offset = Math.max(0, offset - 52);
+      const stack = document.getElementById(STACK_ID);
+      if (stack && stack.childElementCount === 0) stack.remove();
     }, 200);
   }
   setTimeout(close, duration);
