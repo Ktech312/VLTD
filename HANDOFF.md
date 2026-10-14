@@ -1,3 +1,20 @@
+# 2026-10-14 (latest) — Remaining checks + walkthroughs: FINAL REPORT
+
+Commits this round (all deployed and re-checked live): `9679c45` import paste box showed typed 
+/	 · `79fbb34` import result message counted skipped rows (value/missing cost) · `ee4f8fe` Add Item: kept category showed raw code INSTRUMENTS_GEAR · `97739e6` Exhibitions: exhibit name/description typed on a gallery with no exhibit page was silently dropped · earlier today `e83adc7` toast width, `fc29282` 60 s exhibitions refresh.
+
+| Check | Result | Evidence |
+|---|---|---|
+| Import through the live UI | **PASS (live, QA profile)** | CSV upload → summary → duplicate options → warnings + mapping preview → Review & Confirm → Confirm: 5 items imported, "Saved to your account"; cloud rows: Personal 5 / Business 0. Re-import: Vault matches 5; with "Skip exact titles already in vault" only the new item imported, message now reports only the imported item's value. 2 defects found and fixed (above). |
+| Exhibitions profile switching | **PASS (live)** | Personal vs Business with distinct exhibitions: switch reloads into the other profile at once, lists never mix, survive reload; cloud: Personal 7 items / 1 exhibition, Business 0 / 1. Polling: one galleries+invites pair per ~60 s (verified after `fc29282`); own create/delete/switch still immediate. |
+| Light theme via Appearance (Settings → Preferences → Light → Save) | **PASS for placement; 1 non-clipping defect noted** | 390 px: sync pill above bottom nav, long toast wraps (16–374 px, nav top 755 vs toast bottom 748). 320 px: delete dialog fits, Cancel/Delete Forever reachable, nav clear. NOT fixed (not clipping/overlap): exhibition page title is very low contrast in the light theme; toast can overlap the floating bug-report button briefly. |
+| Walkthroughs | **Screenshots + scripts, NO video** | `docs/walkthrough/2026-10-14-qa/index.html` (+ `img/`, 27 numbered captures; add item, exhibition build/share, import, profile switching, light/narrow evidence). Drag-arranging items not confirmed with a scripted drag (not captured). Delete is a separate Help topic (text only). Real camera capture not shown (camera blocked in the test browser). Nothing published. |
+
+Not verified / still open: physical phone and push; Comcast delivery of the Oct 14 resend (the Oct 13 confirmation email BOUNCED `554 5.0.0`; IONOS support draft at `docs/comcast-bounce-ionos-support-request-DRAFT.md`, untracked on purpose, not sent); real camera capture; Oct 14 message wording "Skipped 1 exact duplicates" (plural) is a cosmetic nit.
+QA cleanup: QA user wk and its profiles/items/exhibitions removed; counts back to baseline 37/37/47/3478/46; pane storage cleared, theme left on Dark, viewport desktop.
+
+---
+
 # 2026-10-14 (latest) — Reliability & usability queue: CONSOLIDATED REPORT (queue complete)
 
 Production head after this queue: `e83adc7` (+ docs commits). Redesign stays closed; no tax-ID/category-assignment work; no customer email sent.

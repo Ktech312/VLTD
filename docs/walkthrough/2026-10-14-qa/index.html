@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>VLTD walkthroughs — QA pass 2026-10-14</title>
+<style>
+:root{--bg:#0f1115;--card:#171a20;--fg:#eceef2;--muted:#a3a9b5;--accent:#c8cdd2;--line:#2a2f38}
+@media (prefers-color-scheme: light){:root{--bg:#f4f5f7;--card:#fff;--fg:#14171c;--muted:#5b6370;--accent:#2b3138;--line:#d9dde3}}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.5 system-ui,Segoe UI,Arial,sans-serif}
+main{max-width:760px;margin:0 auto;padding:24px 16px 64px}
+h1{font-size:28px;margin:8px 0 4px}
+.lead{color:var(--muted);margin:0 0 20px}
+h2{font-size:20px;margin:36px 0 12px;padding-top:12px;border-top:1px solid var(--line)}
+.step{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;margin:0 0 16px}
+.num{display:inline-flex;width:30px;height:30px;border-radius:50%;background:var(--accent);color:var(--bg);align-items:center;justify-content:center;font-weight:700;float:left;margin-right:12px}
+.txt{overflow:hidden}.txt h3{margin:0 0 4px;font-size:18px}.txt p{margin:0 0 8px;color:var(--muted)}
+.exp{color:var(--fg)!important}.exp b{color:var(--accent)}
+img{display:block;width:100%;height:auto;border-radius:10px;border:1px solid var(--line);margin-top:10px}
+.note{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 16px;color:var(--muted);margin:0 0 16px}
+.meta{font-size:14px;color:var(--muted)}
+table{width:100%;border-collapse:collapse;font-size:14px}td,th{border:1px solid var(--line);padding:6px 8px;text-align:left;vertical-align:top}
+code{background:var(--card);border:1px solid var(--line);border-radius:6px;padding:0 5px}
+a{color:var(--accent)}
+</style></head><body><main>
+<h1>VLTD walkthroughs</h1>
+<p class="lead">Add an item, build and share an exhibition, import a spreadsheet, and switch between Personal and Business profiles. Taken on the live site with a throwaway test account and made-up data (deleted afterwards).</p>
+
+<div class="note">
+<b>Tested:</b> 2026-10-14 against production <code>vltd.app</code>, code up to commit <code>97739e6</code> (import wording fixes <code>9679c45</code>/<code>79fbb34</code>, category label fix <code>ee4f8fe</code> and exhibit-name fix <code>97739e6</code> came in during the pass).<br>
+<b>Viewport:</b> desktop browser pane (1280 × 720) unless a step says otherwise. Narrow-screen checks used an <i>emulated</i> 320 / 390 px viewport, <b>not a physical phone</b>.<br>
+<b>Media:</b> numbered screenshots only. <b>No screen recording was produced</b> (the browser pane used for testing cannot record video); the narration scripts and shot lists below are ready for a later recording. If the app changes after the commit above, re-check the labels.<br>
+<b>Not captured / not verified:</b> real camera capture (blocked in the test browser), physical phone, push notifications, Comcast email delivery.
+</div>
+
+<ul>
+<li><a href="#add">1. Add an item</a></li>
+<li><a href="#exhibition">2. Build, preview and share an exhibition</a></li>
+<li><a href="#import">3. Import a spreadsheet</a></li>
+<li><a href="#profiles">4. Switch profiles (Personal / Business)</a></li>
+<li><a href="#themes">5. Light theme and narrow-screen checks (QA evidence)</a></li>
+<li><a href="#help-delete">Separate Help topic: deleting</a></li>
+<li><a href="#outlines">Video outlines</a></li>
+</ul>
+
+<h2 id="add">1. Add an item</h2>
+<p class="meta">Route: <code>/vault/add</code> (from Vault → <b>ADD ITEM</b>) · Prerequisite: signed in with a finished profile · Desktop</p>
+<div class="step"><span class="num">1</span><div class="txt"><h3>Add a photo</h3><p>On Vault choose <b>ADD ITEM</b>. Take a picture, or use the upload icon (top left of the capture panel) to choose a file. The photo appears in the photo strip.</p><p class="exp"><b>Expected:</b> the photo shows as the first thumbnail and the title box becomes "Ready to save" once named.</p><img src="img/add-1-photo-added.jpg" alt="Add Item form with a photo in the photo strip"></div></div>
+<div class="step"><span class="num">2</span><div class="txt"><h3>Name it and fill in what matters</h3><p>Type the <b>Title</b>, pick <b>Universe</b> and <b>Category</b>, then add the series, purchase price and current value.</p><p class="exp"><b>Expected:</b> the chosen universe and category show by name (for example Music · Instruments &amp; Gear).</p><img src="img/add-2-details.jpg" alt="Add Item form with title and category chosen"></div></div>
+<div class="step"><span class="num">3</span><div class="txt"><h3>Save</h3><p>Press <b>Save</b> (top right).</p><p class="exp"><b>Expected:</b> a green <b>✓ Saved!</b> banner. The form clears for the next item, keeping any fields whose lock is on. If your account cannot be reached, the item is kept on the device and a "Saved on this device — sync pending" note appears instead.</p><img src="img/add-3-saved.jpg" alt="Saved confirmation banner"></div></div>
+<div class="step"><span class="num">4</span><div class="txt"><h3>Find it in your Vault and reopen it</h3><p>Open <b>Vault</b>; the new item is in the list and the totals have moved. Open the item to see its details.</p><p class="exp"><b>Expected:</b> title, category, photo, cost and value are as saved; the item stays after a reload.</p><img src="img/add-4-vault-list.jpg" alt="Vault list with seven items"><img src="img/add-5-reopened-item.jpg" alt="Reopened item page with photo and market value"></div></div>
+<p class="meta"><b>Narration:</b> "Add Item opens ready for a photo. Take one, give it a name, choose where it belongs, add what you paid and what it's worth, and press Save. It's in your Vault straight away. Open it any time to see the photo, value and gain."</p>
+<p class="meta"><b>Shot list for recording:</b> Vault → ADD ITEM · photo added · title typed · category picker · prices · Save → banner · Vault list · open item.</p>
+<p class="meta"><b>Where next:</b> exhibition (section 2), or import many items at once (section 3).</p>
+
+<h2 id="exhibition">2. Build, preview and share an exhibition</h2>
+<p class="meta">Routes: <code>/museum</code> → <code>/museum/new</code> → <code>/museum/&lt;id&gt;</code> → <code>/museum/&lt;id&gt;/guest</code> · Prerequisite: at least a few items in the Vault · Desktop</p>
+<div class="step"><span class="num">1</span><div class="txt"><h3>Create the exhibition</h3><p>Exhibitions → <b>Create First Exhibition</b> (or <b>+ Create Exhibition</b>). Type a title and a short description.</p><p class="exp"><b>Expected:</b> the form lists your plan and remaining slots.</p><img src="img/exhibition-0-create-page.jpg" alt="Create Exhibition page"></div></div>
+<div class="step"><span class="num">2</span><div class="txt"><h3>Choose who can see it</h3><p>Under <b>Visibility</b> pick <b>Private</b>, <b>Public Exhibit</b>, <b>Guest View</b> or <b>Registered Users</b> (Private needs a paid plan), then <b>Create Exhibition</b>.</p><p class="exp"><b>Expected:</b> private is explained as "only for yourself, good for test beds before sharing".</p><img src="img/exhibition-1-visibility.jpg" alt="Visibility options on the Create Exhibition page"></div></div>
+<div class="step"><span class="num">3</span><div class="txt"><h3>Add items</h3><p>On the exhibition page choose <b>Edit/Add</b>, tick items in the picker (the counter shows how many of 18), then <b>Add to Exhibit (n)</b>.</p><p class="exp"><b>Expected:</b> the picked items appear on the shelf, "Saved to your account" shows, and the curated value and cost update.</p><img src="img/exhibition-3-pick-items.jpg" alt="Item picker with three items selected"><img src="img/exhibition-4-items-added.jpg" alt="Three items placed in the exhibit with value and cost totals"></div></div>
+<div class="step"><span class="num">4</span><div class="txt"><h3>Name the exhibit page and save</h3><p>Type an exhibit name and description in the builder and press <b>Save</b>.</p><p class="exp"><b>Expected:</b> the name is kept after a reload. (Before commit <code>97739e6</code> the name was silently dropped on a gallery with no exhibit page yet; that is fixed.) Reordering by drag was attempted with a scripted drag and not confirmed, so <b>arranging is not captured</b>.</p></div></div>
+<div class="step"><span class="num">5</span><div class="txt"><h3>Make it public and share</h3><p>Under <b>User access mode</b> choose <b>Public Exhibit</b>, then confirm <b>Make public</b>. Use <b>Copy Link</b> or the share icons.</p><p class="exp"><b>Expected:</b> "Exhibition published!", the status chip reads Public, and the link works signed out.</p><img src="img/exhibition-5-make-public-confirm.jpg" alt="Make this exhibit public confirmation"><img src="img/exhibition-7-published-state.jpg" alt="Exhibition shown as Public with share link"></div></div>
+<div class="step"><span class="num">6</span><div class="txt"><h3>Preview as a guest</h3><p>Open the exhibition's guest route (<b>Preview ↗</b> / <code>/guest</code>) to see what visitors see.</p><p class="exp"><b>Expected:</b> title, description, owner display name, item count and the items.</p><img src="img/exhibition-6-guest-view.jpg" alt="Guest preview of the exhibition"></div></div>
+<p class="meta"><b>Narration:</b> "Name your exhibition, choose who can see it, then pick items from your Vault. Add a title for the room, save, and when you're ready, make it public and copy the link. Use Preview to see exactly what a visitor sees."</p>
+<p class="meta"><b>Shot list:</b> Exhibitions → Create → title → visibility → Create → Edit/Add → pick → Add → value totals → exhibit name → Save → Public confirm → Copy Link → guest view.</p>
+
+<h2 id="import">3. Import a spreadsheet</h2>
+<p class="meta">Route: <code>/vault/import</code> · Prerequisite: a CSV or Excel file with a header row · Desktop · Data: a made-up guitar list with one blank cost, one "abc" value, one "not a date", and a totals row</p>
+<div class="step"><span class="num">1</span><div class="txt"><h3>Upload the file</h3><p>Choose <b>Upload Spreadsheet</b> and pick the file (or paste rows from Google Sheets and press <b>Parse Pasted Rows</b>).</p><p class="exp"><b>Expected:</b> "Parsed 5 items from finch-guitar-collection.csv. Review mappings before import." The blank line and the totals row are ignored (Ignored Rows 1).</p><img src="img/import-2-parsed-summary.jpg" alt="Import summary with items ready, cost, value, missing cost and needs-a-look counts"></div></div>
+<div class="step"><span class="num">2</span><div class="txt"><h3>Choose how duplicates are handled</h3><p>Pick <b>Import all parsed rows</b>, <b>Skip exact duplicate titles within this batch</b> or <b>Skip exact titles already in vault</b>.</p><p class="exp"><b>Expected:</b> the Duplicate detection panel explains that an exact match needs the same description <i>and</i> the same serial number.</p><img src="img/import-3-duplicate-options.jpg" alt="Duplicate options and Review and Confirm Import button"></div></div>
+<div class="step"><span class="num">3</span><div class="txt"><h3>Check the warnings and column mapping</h3><p>"Needs a look" lists anything that was not guessed (for example a value of "abc" or a date of "not a date"). Mapping preview shows which column went to which VLTD field and can be changed.</p><p class="exp"><b>Expected:</b> the row is still imported with what could be read, and the note says exactly what was not.</p><img src="img/import-4-warnings-mapping.jpg" alt="Needs a look warnings and column mapping preview"></div></div>
+<div class="step"><span class="num">4</span><div class="txt"><h3>Confirm</h3><p>Press <b>Review &amp; Confirm Import</b>, then <b>Confirm Import 5 Items</b>.</p><p class="exp"><b>Expected:</b> "Imported 5 items…", an import history entry with <b>Undo last</b>, and the "Saved to your account" note. The Vault then lists them; cloud check: 5 rows in the Personal profile, 0 in the Business profile.</p><img src="img/import-6-imported-saved.jpg" alt="Import finished with saved-to-account note"></div></div>
+<div class="step"><span class="num">5</span><div class="txt"><h3>Import the file again (duplicates)</h3><p>Upload an updated file with the same pieces plus one new guitar and choose <b>Skip exact titles already in vault</b>.</p><p class="exp"><b>Expected:</b> Vault matches 5, only the new piece is imported, and the message says "Skipped 5 exact duplicates (same description and serial number)". (Fixed in <code>79fbb34</code>: the message used to count the skipped rows' value and missing cost.)</p><img src="img/import-7-duplicate-detection.jpg" alt="Duplicate detection listing likely matches"></div></div>
+<p class="meta"><b>Narration:</b> "Upload your spreadsheet or paste rows. VLTD shows what it understood, flags anything it couldn't read without guessing, and tells you about duplicates before anything is added. Confirm, and your items are in your Vault, saved to your account."</p>
+<p class="meta"><b>Shot list:</b> import page · file chosen · summary · warnings · mapping · duplicate option · Review &amp; Confirm · Confirm · Vault list · re-import duplicates.</p>
+
+<h2 id="profiles">4. Switch profiles (Personal / Business)</h2>
+<p class="meta">Route: account menu (avatar, top right) → <b>Switch profile</b> · Prerequisite: a Business profile (created in onboarding or <b>Settings → + Add business profile</b>) · Desktop</p>
+<div class="step"><span class="num">1</span><div class="txt"><h3>Create the Business profile during setup</h3><p>On "Your personal account" pick an avatar, display name and username, then <b>Save and continue</b>. Choose <b>Add a business profile</b> and enter name, handle and type.</p><p class="exp"><b>Expected:</b> a Personal and a Business profile, each with its own vault and exhibitions.</p><img src="img/onboarding-1-start.jpg" alt="Onboarding personal account step"><img src="img/onboarding-2-profile-filled.jpg" alt="Personal profile filled in"><img src="img/onboarding-3-business-choice.jpg" alt="Personal only or add a business profile"><img src="img/onboarding-4-business-details.jpg" alt="Business details form"></div></div>
+<div class="step"><span class="num">2</span><div class="txt"><h3>Switch with the account menu</h3><p>Open the account menu and, under <b>Switch profile</b>, choose the other profile.</p><p class="exp"><b>Expected:</b> the app reloads into the other profile at once. Exhibitions on the Business profile start empty.</p><img src="img/profiles-1-business-empty.jpg" alt="Business profile with no exhibitions"></div></div>
+<div class="step"><span class="num">3</span><div class="txt"><h3>Each profile keeps its own exhibitions</h3><p>Create an exhibition on the Business profile, then switch back.</p><p class="exp"><b>Expected:</b> Business shows only its own exhibition; Personal shows only its own, also after a reload. Cloud check: the Personal profile held 7 items and 1 exhibition, the Business profile 0 items and 1 exhibition.</p><img src="img/profiles-2-business-exhibition.jpg" alt="Business exhibition list"><img src="img/profiles-3-personal-exhibition.jpg" alt="Personal exhibition list"></div></div>
+<p class="meta"><b>Narration:</b> "Your personal collection and your business stay completely separate. Switch from the account menu and VLTD loads the other vault, its exhibitions and its settings. Nothing mixes."</p>
+
+<h2 id="themes">5. Light theme and narrow screens (QA evidence)</h2>
+<div class="step"><span class="num">1</span><div class="txt"><h3>Appearance → Light</h3><p>Account menu → <b>Appearance</b> (opens Settings → Preferences). Choose <b>Light</b>, then <b>Save</b>. The page says "Light themes are in beta".</p><img src="img/light-1-appearance.jpg" alt="Appearance settings in light theme"></div></div>
+<div class="step"><span class="num">2</span><div class="txt"><h3>Save-status note and long message at 390 px (emulated)</h3><p><b>Expected:</b> the "Saved on this device — sync pending" note sits above the bottom navigation and the long toast wraps inside the screen without covering the nav.</p><img src="img/light-2-390-pill-and-toast.jpg" alt="Pending note and wrapped toast above bottom navigation at 390 px"></div></div>
+<div class="step"><span class="num">3</span><div class="txt"><h3>Delete dialog at 320 px (emulated)</h3><p><b>Expected:</b> the dialog fits the screen; <b>Cancel</b> and <b>Delete Forever</b> are both reachable above the bottom navigation.</p><img src="img/light-3-320-delete-dialog.jpg" alt="Delete dialog at 320 px in light theme"></div></div>
+<p class="meta">Known, not fixed (not clipping/overlap): in the light theme the exhibition page title is very low contrast against the cream card.</p>
+
+<h2 id="help-delete">Separate Help topic: deleting</h2>
+<p class="meta">Verified live earlier on 2026-10-14; no screenshots captured in this pass.</p>
+<ul>
+<li><b>Delete an item:</b> open the item → trash icon (<b>Delete item</b>) → read the warning → <b>Delete Forever</b> (or <b>Cancel</b>). Items removed from the cloud stay gone after a reload.</li>
+<li><b>Delete an exhibition:</b> Exhibitions → the trash icon on its card (<b>Delete exhibition …</b>) → <b>Yes Delete FOREVER</b> (or <b>Cancel, keep My Exhibition</b>).</li>
+<li>If the account cannot be reached the app says so and keeps the item; nothing is reported as deleted that was not.</li>
+</ul>
+
+<h2 id="outlines">Video outlines (not published)</h2>
+<p><b>Social cut (30–45 s):</b> hook "Your collection, on the record" → photo, name, Save (add item, 8 s) → pick items and publish (exhibition, 12 s) → Copy Link / guest view (6 s) → end card with the site name. Reuse screens from sections 1–2.</p>
+<p><b>Help / YouTube (about 6 min):</b> 0:00 what VLTD is · 0:30 set up profiles and switch (section 4) · 1:30 add an item (1) · 2:45 import a spreadsheet and read the warnings (3) · 4:15 build, preview and share an exhibition (2) · 5:30 where to get help; delete is a separate short video (Help topic above).</p>
+<p class="meta">Record at desktop width with the same synthetic data; show the phone layouts only from a real phone once one is available.</p>
+</main></body></html>
