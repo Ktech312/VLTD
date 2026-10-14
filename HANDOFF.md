@@ -1,3 +1,45 @@
+# 2026-10-13 (later) — Onboarding commits verified end to end; two defects fixed; seven disabled email templates cleaned; Supabase usage re-read
+
+Redesign stays CLOSED. Only demonstrated defects were fixed. No purchase, no plan change, no disabled security notice enabled, no account hand-confirmed.
+
+**State at the start:** production = `9b2184d` (Vercel status success, vltd.app 200). `supabase/migrations/20261015_onboarding_completion.sql` **is applied** — read-only query confirmed `profiles.onboarding_completed` exists; 37 profiles, 0 incomplete, 0 private (all existing profiles default to complete, as intended). `createProfile` now always sends `onboarding_completed` + `is_public`, so a missing migration would have broken every sign-up; it is not missing.
+
+## 1. Onboarding commits `33bd6ea` + `9fce043` + `9b2184d`, checked together
+Live database checks with two throwaway QA accounts (exact payloads the app sends; same RLS as the app; 19 checks, 18 pass, 1 was my wrong assumption — see below). Everything created was deleted by exact id; profiles 37 / members 37 before and after.
+- Step 1 checkpoint creates an incomplete, **private** personal profile; owner-membership trigger fires (saves allowed).
+- Identity persists in the cloud (name, handle, avatar) and a second device is sent back to onboarding.
+- Unfinished profile is invisible to another signed-in account and to a signed-out visitor.
+- Finish marks it complete + public; completion gating clears; adding a Business profile does not re-open onboarding; incomplete personal + complete business still gates.
+- Business profile creation works with owner membership; another account / a visitor cannot read its `tax_id`; the owner can. Personal contact fields are not readable by others.
+- Code-level gating confirmed: `ProtectedRoute`, `RouteGuard`, `HomeClient`, `login`, `auth/confirmed`, `account` all redirect on `needsOnboarding`; `listMyProfiles` uses `select("*")` so the new column is returned.
+- Not run: a real browser walkthrough of the onboarding screens (it would have meant signing the owner's own session out). Covered instead by the data-layer checks above, the code review, and the simulated-browser tests below.
+- Wrong assumption, not a defect: direct reads of another person's `profiles` row return nothing even when public — public profiles are served through `public_profiles` and server routes, so my "visible to others" check was testing the wrong path.
+
+## 2. Defects found and fixed
+- **Onboarding draft left behind on sign-out** (`00d5583`). The draft key was bumped to `vltd_onboarding_draft_v3` but only `_v2` was in `USER_DATA_BASES`, so the draft (profile ids, name, handle, business website, tax id) was never parked and stayed in the browser for the next person. `9b2184d` only stopped it loading into another account's form. Added `_v3` to the list; 6 new checks in `npm run test:isolation` (2 failed before the fix; now 72/72).
+- **`/@handle` served a normal page for unfinished or private profiles** (`de2d754`). `src/app/u/[username]/page.tsx` looked profiles up with the server's full-access key and ignored `is_public` / `onboarding_completed`, confirming the handle exists and offering Follow/Message. It now returns the same not-found response as a missing handle. Demonstrated and re-verified against production with QA profiles (unfinished/private → not-found, public → served). Note: the not-found text is present in every page's HTML; the reliable signal is the `noindex` meta, which only the real not-found response has.
+
+## 3. Email
+- The hidden preheader (`display:none; opacity:0; color:transparent`) is removed from the **seven disabled security-notice templates** in the Supabase dashboard: password-changed, email-address-changed, phone-number-changed, sign-in-method-linked, sign-in-method-removed, mfa-method-added, mfa-method-removed. Each saved ("Successfully updated email template"), reloaded, confirmed 0 hidden blocks, and **every "Enable notification" switch is still off**. Seven were saved one at a time; the first save needed a second attempt (the form only enables Save after a real edit).
+- **Comcast / Denny:** still UNRESOLVED. Receipt has not been established; a better mail-tester score is not proof, and domain age (`vltd.app` registered 2026-10-04) does not guarantee delivery on a given date. Nothing changed here.
+
+## 4. Supabase (read-only; Free plan, cycle 10 Oct – 10 Nov, org "Ktech312's Org")
+- **Enforcement:** the grace period ended 10 Oct. Fair Use applies: if the org is over a quota, projects can be restricted and requests answered 402. **Nothing is over a quota that is enforced today.**
+- Log ingestion **1.075 / 1 GB (107%)** — labelled UPCOMING; the dashboard says billing/enforcement starts after the grace period ends at the start of 2027. Log query 5.6 / 100 GB. Database 0.269 / 0.5 GB (54%; VLTD 256 MB, the separate Ergon project 40 MB). Egress **1.453 / 5 GB (29%)**, peak day ≈ 453 MB. Storage 0.115 / 1 GB. MAU 18 / 50,000. Realtime peak 3 / 200.
+- Trend: egress was 1.24 GB (12 Oct) → 1.409 (13 Oct ~21:00 UTC) → 1.453 now, so the daily rate has fallen since the loop fix; at 0.2–0.3 GB/day the 5 GB mark is reached roughly late October to early November, before the 10 Nov reset. Re-check; do not treat as a promise.
+- **Request volume after the loop fix:** NOT re-measured. The API Gateway report only offers the last 60 minutes and shows "no data" (Supabase says up to 24 h lag). The only measured figure is the earlier ~3,810 → ~1,730 requests/h, which included QA traffic.
+- **Service health:** status.supabase.com shows one ongoing "Realtime latency" incident (monitoring, ~1 day); VLTD sends 0 Realtime messages. Auth uptime 99.72%, everything else ≥ 99.9%. VLTD's own API answered every QA call.
+- Reminder: the 1,296 Pristine-imported items make every full Vault download larger; incremental sync is the next lever if egress climbs.
+
+## 5. QA cleanup
+Three runs, five throwaway auth users (`vltdadmin+qa-onb-*`, `vltdadmin+qa-route-*`), all profiles/memberships/users removed by exact id and verified (profiles 37, members 37). Side effect: those profiles consumed internal account codes (forward-only; gaps, no reuse).
+
+## 6. Still open / unverified (do not claim done)
+- Real invitation email receipt — UNVERIFIED (inbox not reachable).
+- Push on a physical device and physical-phone checks of the save pill / onboarding — UNVERIFIED (nothing here ran on real hardware).
+- Denny's Comcast delivery — unknown.
+- Roles remains "Preview" (by instruction).
+
 # 2026-10-13 — Account isolation (two rounds), Vault sync loop, cloud-save status, owner membership, push, and the Comcast sign-up email that never arrived
 
 **Read this first if you are resuming.** Everything below is live (production commit at the time of writing: `334a766`). Redesign is CLOSED; only demonstrated defects were fixed. All QA accounts were created for testing and fully removed (see "QA cleanup").
