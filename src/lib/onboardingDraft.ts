@@ -14,6 +14,7 @@ export type OnboardingDraft = {
   focused_universes: string[];
   personal_profile_id: string;
   business_profile_id: string;
+  owner_user_id: string;
 };
 
 const LS_KEY = "vltd_onboarding_draft_v3";
@@ -33,6 +34,7 @@ const EMPTY_DRAFT: OnboardingDraft = {
   focused_universes: [],
   personal_profile_id: "",
   business_profile_id: "",
+  owner_user_id: "",
 };
 
 function normalizeStep(value: unknown): OnboardingStep {
@@ -59,15 +61,18 @@ function normalizeDraft(parsed: Record<string, unknown>): OnboardingDraft {
       : [],
     personal_profile_id: String(parsed.personal_profile_id ?? ""),
     business_profile_id: String(parsed.business_profile_id ?? ""),
+    owner_user_id: String(parsed.owner_user_id ?? ""),
   };
 }
 
-export function loadOnboardingDraft(): OnboardingDraft {
+export function loadOnboardingDraft(expectedUserId?: string): OnboardingDraft {
   if (typeof window === "undefined") return EMPTY_DRAFT;
   try {
     const raw = window.localStorage.getItem(LS_KEY) ?? window.localStorage.getItem(LEGACY_LS_KEY);
     if (!raw) return EMPTY_DRAFT;
-    return normalizeDraft(JSON.parse(raw) as Record<string, unknown>);
+    const draft = normalizeDraft(JSON.parse(raw) as Record<string, unknown>);
+    if (expectedUserId && draft.owner_user_id !== expectedUserId) return EMPTY_DRAFT;
+    return draft;
   } catch {
     return EMPTY_DRAFT;
   }
@@ -75,7 +80,9 @@ export function loadOnboardingDraft(): OnboardingDraft {
 
 export function saveOnboardingDraft(draft: Partial<OnboardingDraft>) {
   if (typeof window === "undefined") return;
-  const next = { ...loadOnboardingDraft(), ...draft };
+  const current = loadOnboardingDraft();
+  const base = draft.owner_user_id && current.owner_user_id !== draft.owner_user_id ? EMPTY_DRAFT : current;
+  const next = { ...base, ...draft };
   window.localStorage.setItem(LS_KEY, JSON.stringify(next));
 }
 

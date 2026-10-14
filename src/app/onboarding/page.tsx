@@ -4,7 +4,7 @@ import { nativeSelectClass } from "@/components/ui/nativeSelect";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 
-import { createProfile, getOnboardingStatus, setStoredActiveProfileId, updateProfile } from "@/lib/auth";
+import { createProfile, getCurrentUser, getOnboardingStatus, setStoredActiveProfileId, updateProfile } from "@/lib/auth";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 import { UNIVERSE_KEYS, UNIVERSE_LABEL } from "@/lib/taxonomy";
 import { Glyph, universeGlyphName } from "@/components/ui/Glyph";
@@ -166,6 +166,7 @@ export default function OnboardingPage() {
   const [avatarPreset, setAvatarPreset] = useState("key");
   const [personalProfileId, setPersonalProfileId] = useState("");
   const [businessProfileId, setBusinessProfileId] = useState("");
+  const [onboardingUserId, setOnboardingUserId] = useState("");
   const [addBusiness, setAddBusiness] = useState(false);
   const [focusedUniverses, setFocusedUniverses] = useState<string[]>([]);
 
@@ -177,29 +178,28 @@ export default function OnboardingPage() {
   const [bizEin, setBizEin] = useState("");
 
   useEffect(() => {
-    const draft = loadOnboardingDraft();
-    const identityIsComplete = draft.display_name.trim().length >= 2 && slugifyUsername(draft.username).length >= 3;
-    const businessIsComplete = !draft.add_business || (
-      draft.business_name.trim().length >= 2 && slugifyUsername(draft.business_username).length >= 3
-    );
-    setStep(!identityIsComplete ? 1 : !businessIsComplete && draft.step > 2 ? 2 : draft.step);
-    setUsername(draft.username);
-    setDisplayName(draft.display_name);
-    setAddBusiness(draft.add_business);
-    setBizName(draft.business_name);
-    setBizUsername(draft.business_username);
-    setBizType(draft.business_type);
-    setBizWebsite(draft.business_website);
-    setBizEin(draft.business_ein);
-    setFocusedUniverses(draft.focused_universes);
-    // The draft stores the chosen avatar preset id in the avatar_emoji slot.
-    if (draft.avatar_emoji && AVATAR_PRESET_IDS.has(draft.avatar_emoji)) {
-      setAvatarPreset(draft.avatar_emoji);
-    }
     async function load() {
-      const status = await getOnboardingStatus();
+      const [status, userResult] = await Promise.all([getOnboardingStatus(), getCurrentUser()]);
       if (!status.isAuthenticated) { router.replace("/login"); return; }
       if (!status.needsOnboarding) { router.replace("/"); return; }
+      const userId = userResult.data.user?.id ?? "";
+      const draft = loadOnboardingDraft(userId);
+      const identityIsComplete = draft.display_name.trim().length >= 2 && slugifyUsername(draft.username).length >= 3;
+      const businessIsComplete = !draft.add_business || (
+        draft.business_name.trim().length >= 2 && slugifyUsername(draft.business_username).length >= 3
+      );
+      setOnboardingUserId(userId);
+      setStep(!identityIsComplete ? 1 : !businessIsComplete && draft.step > 2 ? 2 : draft.step);
+      setUsername(draft.username);
+      setDisplayName(draft.display_name);
+      setAddBusiness(draft.add_business);
+      setBizName(draft.business_name);
+      setBizUsername(draft.business_username);
+      setBizType(draft.business_type);
+      setBizWebsite(draft.business_website);
+      setBizEin(draft.business_ein);
+      setFocusedUniverses(draft.focused_universes);
+      if (draft.avatar_emoji && AVATAR_PRESET_IDS.has(draft.avatar_emoji)) setAvatarPreset(draft.avatar_emoji);
       const cloudPersonal = status.profiles.find(
         (profile) => profile.profile_type === "personal" && profile.onboarding_completed === false
       );
@@ -240,8 +240,9 @@ export default function OnboardingPage() {
       focused_universes: focusedUniverses,
       personal_profile_id: personalProfileId,
       business_profile_id: businessProfileId,
+      owner_user_id: onboardingUserId,
     });
-  }, [step, username, displayName, avatarPreset, addBusiness, bizName, bizUsername, bizType, bizWebsite, bizEin, focusedUniverses, personalProfileId, businessProfileId, draftLoaded]);
+  }, [step, username, displayName, avatarPreset, addBusiness, bizName, bizUsername, bizType, bizWebsite, bizEin, focusedUniverses, personalProfileId, businessProfileId, onboardingUserId, draftLoaded]);
 
   const canContinueIdentity = useMemo(
     () => displayName.trim().length >= 2 && slugifyUsername(username).length >= 3,
@@ -271,7 +272,7 @@ export default function OnboardingPage() {
         : await createProfile(input);
       setPersonalProfileId(profile.id);
       setStoredActiveProfileId(profile.id);
-      saveOnboardingDraft({ ...input, avatar_emoji: avatarPreset, personal_profile_id: profile.id, step: 2 });
+      saveOnboardingDraft({ ...input, avatar_emoji: avatarPreset, personal_profile_id: profile.id, owner_user_id: onboardingUserId, step: 2 });
       setStep(2);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not save your personal profile.");
