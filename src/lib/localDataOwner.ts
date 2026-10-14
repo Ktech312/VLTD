@@ -59,6 +59,9 @@ const USER_DATA_BASES = [
   "vltd_import_history_v1",
   "vltd_ai_drafts_v1",
   "vltd_onboarding_draft_v2",
+  // v3 holds the draft's profile ids, business website and tax id. It was missing here
+  // (only v2 was listed), so it stayed in the browser for the next person who signed in.
+  "vltd_onboarding_draft_v3",
   "vltd_capture_add_state_v1",
   "vltd_bulk_add_state_v1",
   "vltd_gallery_editor_draft_v1",

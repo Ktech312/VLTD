@@ -16,7 +16,7 @@ const root = path.resolve(__dirname, "..");
 const out = fs.mkdtempSync(path.join(os.tmpdir(), "vltd-isolation-"));
 
 // Source files under test, transpiled flat into one folder.
-const FILES = ["localDataOwner", "sessionGuard", "vaultLocalStore", "vaultSyncQueue", "collectionGoals", "cloudSaveStatus", "pushNotifications"];
+const FILES = ["localDataOwner", "sessionGuard", "vaultLocalStore", "vaultSyncQueue", "collectionGoals", "cloudSaveStatus", "pushNotifications", "onboardingDraft"];
 for (const name of FILES) {
   const src = fs.readFileSync(path.join(root, "src", "lib", name + ".ts"), "utf8");
   const js = ts.transpileModule(src, { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2020 } }).outputText;
@@ -403,6 +403,34 @@ const galleriesA = JSON.stringify([{ id: "gA", profile_id: PA, title: "A locked"
     me = A; await push.subscribeToPush(PA);
     await push.dropDevicePushSubscription();
     t("another account taking over drops the device's browser subscription", deviceSub === null);
+  }
+
+  // === Defect (2026-10-15 review of 33bd6ea/9b2184d): the onboarding draft key was bumped to _v3 but only _v2 was in
+  //     USER_DATA_BASES, so the draft (name, username, business website and tax id) was never parked on sign-out and stayed in the
+  //     browser for the next person; 9b2184d only stopped it being loaded into B's form, not left behind ===
+  {
+    reset();
+    const draftA = JSON.stringify({ step: 3, display_name: "Alex", username: "alex", add_business: true, business_name: "Alex Co", business_ein: "12-3456789", owner_user_id: A });
+    owner.reconcileLocalDataOwner(A); owner.resolveLegacyOwner(A, []);
+    set("vltd_onboarding_draft_v3", draftA);
+    owner.reconcileLocalDataOwner(B); owner.resolveLegacyOwner(B, []);
+    t("onboarding draft: B signing in after A does not find A's draft (name, tax id) in the browser", get("vltd_onboarding_draft_v3") === null);
+    t("onboarding draft: A's draft is parked, not deleted", get("vltd_stash:" + A + ":vltd_onboarding_draft_v3") === draftA);
+    owner.reconcileLocalDataOwner(null);
+    owner.reconcileLocalDataOwner(A); owner.resolveLegacyOwner(A, []);
+    t("onboarding draft: A signing back in gets the draft back", get("vltd_onboarding_draft_v3") === draftA);
+
+    // 9b2184d: a draft belongs to the account that wrote it
+    reset();
+    const od = load("onboardingDraft");
+    od.saveOnboardingDraft({ display_name: "Alex", username: "alex", owner_user_id: A, personal_profile_id: "p-A" });
+    const forB = od.loadOnboardingDraft(B);
+    t("onboarding draft: an account never loads another account's draft", forB.display_name === "" && forB.personal_profile_id === "");
+    const forA = od.loadOnboardingDraft(A);
+    t("onboarding draft: the owner still loads their own draft", forA.display_name === "Alex" && forA.personal_profile_id === "p-A");
+    od.saveOnboardingDraft({ display_name: "Bea", owner_user_id: B });
+    const mixed = od.loadOnboardingDraft(B);
+    t("onboarding draft: B's first save starts clean and keeps nothing of A's", mixed.display_name === "Bea" && mixed.username === "" && mixed.personal_profile_id === "");
   }
 
   console.log("\n" + pass + " passed, " + fail + " failed");
