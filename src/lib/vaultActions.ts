@@ -52,14 +52,36 @@ export type DeleteVaultItemResult = {
 // lookup error is treated as "can't tell" and still counts as a failure.
 async function isConfirmedAbsentFromCloud(
   supabase: NonNullable<ReturnType<typeof getSupabaseBrowserClient>>,
-  id: string
+  id: string,
+  profileId?: string
 ): Promise<boolean> {
   const { data, error } = await supabase
     .from(VAULT_ITEMS_TABLE)
     .select("id")
     .eq("id", id)
     .limit(1);
-  return !error && Array.isArray(data) && data.length === 0;
+  if (error || !Array.isArray(data) || data.length !== 0) return false;
+  // An empty answer is also what an account gets for a row it is NOT allowed to see (it is no longer a member of the
+  // profile). Only trust "not there" when this account can see its own membership of the item's profile; otherwise the
+  // delete was refused, not finished, and the item must be kept and reported.
+  return canSeeOwnMembership(supabase, profileId);
+}
+
+async function canSeeOwnMembership(
+  supabase: NonNullable<ReturnType<typeof getSupabaseBrowserClient>>,
+  profileId?: string
+): Promise<boolean> {
+  if (!profileId) return true; // nothing to check against: keep the earlier behaviour
+  const { data: userData } = await supabase.auth.getUser();
+  const userId = userData?.user?.id;
+  if (!userId) return false;
+  const { data, error } = await supabase
+    .from("profile_members")
+    .select("role")
+    .eq("profile_id", profileId)
+    .eq("user_id", userId)
+    .limit(1);
+  return !error && Array.isArray(data) && data.length > 0;
 }
 
 export async function deleteVaultItemEverywhere(id: string): Promise<DeleteVaultItemResult> {
@@ -77,7 +99,7 @@ export async function deleteVaultItemEverywhere(id: string): Promise<DeleteVault
         .eq("id", id)
         .select("id");
       const deletedNothing = !error && Boolean(data) && data!.length === 0;
-      const alreadyGone = deletedNothing && (await isConfirmedAbsentFromCloud(supabase, id));
+      const alreadyGone = deletedNothing && (await isConfirmedAbsentFromCloud(supabase, id, target?.profile_id ? String(target.profile_id) : undefined));
       if (!alreadyGone && (error || !data || data.length === 0)) {
         // Cloud still has this item — don't leave it looking deleted locally.
         if (target) {
@@ -115,6 +137,7 @@ export async function deleteVaultItemsEverywhere(ids: string[]): Promise<DeleteV
   if (hasSupabaseEnv()) {
     const supabase = getSupabaseBrowserClient();
     if (supabase) {
+      const profileOf = new Map(targets.map((item) => [String(item.id), item.profile_id ? String(item.profile_id) : undefined]));
       const results = await Promise.all(
         [...idSet].map(async (id) => {
           const { data, error } = await supabase
@@ -127,7 +150,7 @@ export async function deleteVaultItemsEverywhere(ids: string[]): Promise<DeleteV
           const deleted = !error && Boolean(data && data.length > 0);
           const ok =
             deleted ||
-            (!error && Boolean(data) && (await isConfirmedAbsentFromCloud(supabase, id)));
+            (!error && Boolean(data) && (await isConfirmedAbsentFromCloud(supabase, id, profileOf.get(String(id)))));
           return { id, error, ok };
         })
       );

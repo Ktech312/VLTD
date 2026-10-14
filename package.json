@@ -14,7 +14,8 @@
     "gcd:import": "node scripts/gcd-import.js",
     "check:auth-email": "node scripts/check-auth-email-gate.mjs",
     "test:isolation": "node scripts/test-account-isolation.cjs",
-    "build:email-templates": "node scripts/build-supabase-email-templates.mjs"
+    "build:email-templates": "node scripts/build-supabase-email-templates.mjs",
+    "test:delete": "node scripts/test-vault-delete.cjs"
   },
   "dependencies": {
     "@imgly/background-removal": "^1.7.0",
