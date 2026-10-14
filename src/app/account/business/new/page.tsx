@@ -18,7 +18,6 @@ export default function NewBusinessProfilePage() {
   const [username, setUsername] = useState("");
   const [businessType, setBusinessType] = useState("dealer");
   const [website, setWebsite] = useState("");
-  const [taxId, setTaxId] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
@@ -36,7 +35,6 @@ export default function NewBusinessProfilePage() {
         avatar_url: "__preset:vault",
         business_type: businessType,
         website,
-        tax_id: taxId,
       });
       setStoredActiveProfileId(profile.id);
       router.replace("/account?section=profile");
@@ -77,10 +75,6 @@ export default function NewBusinessProfilePage() {
           <label className="block">
             <span className="text-sm font-semibold text-text-primary">Website (optional)</span>
             <input value={website} onChange={(event) => setWebsite(event.target.value)} placeholder="https://…" className={`mt-2 w-full ${nativeSelectClass}`} />
-          </label>
-          <label className="block sm:col-span-2">
-            <span className="text-sm font-semibold text-text-primary">EIN / Tax ID (optional, private)</span>
-            <input value={taxId} onChange={(event) => setTaxId(event.target.value)} placeholder="XX-XXXXXXX" className={`mt-2 w-full ${nativeSelectClass}`} />
           </label>
         </div>
 

@@ -406,15 +406,15 @@ const galleriesA = JSON.stringify([{ id: "gA", profile_id: PA, title: "A locked"
   }
 
   // === Defect (2026-10-15 review of 33bd6ea/9b2184d): the onboarding draft key was bumped to _v3 but only _v2 was in
-  //     USER_DATA_BASES, so the draft (name, username, business website and tax id) was never parked on sign-out and stayed in the
+  //     USER_DATA_BASES, so the draft (name, username and business website) was never parked on sign-out and stayed in the
   //     browser for the next person; 9b2184d only stopped it being loaded into B's form, not left behind ===
   {
     reset();
-    const draftA = JSON.stringify({ step: 3, display_name: "Alex", username: "alex", add_business: true, business_name: "Alex Co", business_ein: "12-3456789", owner_user_id: A });
+    const draftA = JSON.stringify({ step: 3, display_name: "Alex", username: "alex", add_business: true, business_name: "Alex Co", owner_user_id: A });
     owner.reconcileLocalDataOwner(A); owner.resolveLegacyOwner(A, []);
     set("vltd_onboarding_draft_v3", draftA);
     owner.reconcileLocalDataOwner(B); owner.resolveLegacyOwner(B, []);
-    t("onboarding draft: B signing in after A does not find A's draft (name, tax id) in the browser", get("vltd_onboarding_draft_v3") === null);
+    t("onboarding draft: B signing in after A does not find A's draft (name, business details) in the browser", get("vltd_onboarding_draft_v3") === null);
     t("onboarding draft: A's draft is parked, not deleted", get("vltd_stash:" + A + ":vltd_onboarding_draft_v3") === draftA);
     owner.reconcileLocalDataOwner(null);
     owner.reconcileLocalDataOwner(A); owner.resolveLegacyOwner(A, []);

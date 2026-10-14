@@ -10,7 +10,6 @@ export type OnboardingDraft = {
   business_username: string;
   business_type: string;
   business_website: string;
-  business_ein: string;
   focused_universes: string[];
   personal_profile_id: string;
   business_profile_id: string;
@@ -30,7 +29,6 @@ const EMPTY_DRAFT: OnboardingDraft = {
   business_username: "",
   business_type: "dealer",
   business_website: "",
-  business_ein: "",
   focused_universes: [],
   personal_profile_id: "",
   business_profile_id: "",
@@ -55,7 +53,6 @@ function normalizeDraft(parsed: Record<string, unknown>): OnboardingDraft {
     business_username: String(parsed.business_username ?? ""),
     business_type: String(parsed.business_type ?? "dealer"),
     business_website: String(parsed.business_website ?? ""),
-    business_ein: String(parsed.business_ein ?? ""),
     focused_universes: Array.isArray(parsed.focused_universes)
       ? parsed.focused_universes.filter((value): value is string => typeof value === "string")
       : [],

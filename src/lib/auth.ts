@@ -25,7 +25,6 @@ export type ProfileRow = {
   stripe_customer_id?: string | null;
   business_type?: string | null;
   website?: string | null;
-  tax_id?: string | null;
   // Contact info (private, not on public profile)
   full_name?: string | null;
   phone?: string | null;
@@ -455,7 +454,6 @@ export async function createProfile(input: {
   avatar_url?: string;
   business_type?: string;
   website?: string;
-  tax_id?: string;
   onboarding_completed?: boolean;
   is_public?: boolean;
 }) {
@@ -482,7 +480,6 @@ export async function createProfile(input: {
   if (input.profile_type === "business") {
     payload.business_type = input.business_type?.trim() || null;
     payload.website = input.website?.trim() || null;
-    payload.tax_id = input.tax_id?.trim() || null;
   }
 
   const result = await withTimeout(

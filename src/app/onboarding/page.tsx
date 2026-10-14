@@ -175,7 +175,6 @@ export default function OnboardingPage() {
   const [bizUsername, setBizUsername] = useState("");
   const [bizType, setBizType] = useState("dealer");
   const [bizWebsite, setBizWebsite] = useState("");
-  const [bizEin, setBizEin] = useState("");
 
   useEffect(() => {
     async function load() {
@@ -197,7 +196,6 @@ export default function OnboardingPage() {
       setBizUsername(draft.business_username);
       setBizType(draft.business_type);
       setBizWebsite(draft.business_website);
-      setBizEin(draft.business_ein);
       setFocusedUniverses(draft.focused_universes);
       if (draft.avatar_emoji && AVATAR_PRESET_IDS.has(draft.avatar_emoji)) setAvatarPreset(draft.avatar_emoji);
       const cloudPersonal = status.profiles.find(
@@ -236,13 +234,12 @@ export default function OnboardingPage() {
       business_username: bizUsername,
       business_type: bizType,
       business_website: bizWebsite,
-      business_ein: bizEin,
       focused_universes: focusedUniverses,
       personal_profile_id: personalProfileId,
       business_profile_id: businessProfileId,
       owner_user_id: onboardingUserId,
     });
-  }, [step, username, displayName, avatarPreset, addBusiness, bizName, bizUsername, bizType, bizWebsite, bizEin, focusedUniverses, personalProfileId, businessProfileId, onboardingUserId, draftLoaded]);
+  }, [step, username, displayName, avatarPreset, addBusiness, bizName, bizUsername, bizType, bizWebsite, focusedUniverses, personalProfileId, businessProfileId, onboardingUserId, draftLoaded]);
 
   const canContinueIdentity = useMemo(
     () => displayName.trim().length >= 2 && slugifyUsername(username).length >= 3,
@@ -334,7 +331,6 @@ export default function OnboardingPage() {
           avatar_url: "__preset:vault",
           business_type: bizType,
           website: bizWebsite,
-          tax_id: bizEin,
         });
         setBusinessProfileId(business.id);
         saveOnboardingDraft({ business_profile_id: business.id });
@@ -529,10 +525,6 @@ export default function OnboardingPage() {
                         <input value={bizWebsite} onChange={(e) => setBizWebsite(e.target.value)} placeholder="https://…" className={`mt-1 w-full ${nativeSelectClass}`} />
                       </label>
                     </div>
-                    <label className="block">
-                      <span className="text-xs text-[color:var(--muted)]">EIN / Tax ID (optional, private)</span>
-                      <input value={bizEin} onChange={(e) => setBizEin(e.target.value)} placeholder="XX-XXXXXXX" className={`mt-1 w-full ${nativeSelectClass}`} />
-                    </label>
                   </div>
                 )}
 
