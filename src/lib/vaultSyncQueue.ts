@@ -241,6 +241,11 @@ async function syncOneItem(item: VaultItem, startedAs: string) {
   if (hadLocalImages && stillSignedInAs(startedAs)) saveItem(nextItem);
 }
 
+// Read fresh each time: the browser can lose its connection while an upload run is in progress.
+function connectionLooksDown() {
+  return typeof navigator !== "undefined" && navigator.onLine === false;
+}
+
 export async function processVaultSyncQueue() {
   if (typeof window === "undefined") return { processed: 0, remaining: 0 };
   if (isProcessing) {
@@ -269,6 +274,11 @@ export async function processVaultSyncQueue() {
     if (queue.length > 0) reportSaving("items");
 
     let processed = 0;
+    // Items the cloud refused or could not take this time. They stay in the queue and are tried again on the next run, but
+    // they no longer hold up the items behind them: one refused item (for instance in a profile this account may no longer
+    // write to) used to stop every later item, in every profile, from ever being uploaded.
+    const failed: typeof queue = [];
+    let networkFailures = 0;
 
     while (queue.length > 0) {
       // Another person signed in (in this tab or another) while this was running: the queue now on the device is theirs.
@@ -281,7 +291,7 @@ export async function processVaultSyncQueue() {
 
       if (!item) {
         queue.shift();
-        writeQueue(queue);
+        if (stillSignedInAs(startedAs)) writeQueue([...failed, ...queue]);
         continue;
       }
 
@@ -289,12 +299,23 @@ export async function processVaultSyncQueue() {
         await syncOneItem(item, startedAs);
         processed += 1;
         queue.shift();
-        if (stillSignedInAs(startedAs)) writeQueue(queue);
+        if (stillSignedInAs(startedAs)) writeQueue([...failed, ...queue]);
       } catch (err) {
         console.error("Sync failed", err);
-        break;
+        queue.shift();
+        failed.push(current);
+        if (stillSignedInAs(startedAs)) writeQueue([...failed, ...queue]);
+        // A lost connection fails every item the same way: stop instead of trying each one.
+        const text = String((err as { message?: unknown })?.message ?? err);
+        const offline = connectionLooksDown() || /failed to fetch|networkerror|network request failed|load failed/i.test(text);
+        if (offline) {
+          networkFailures += 1;
+          if (networkFailures >= 2) break;
+        }
       }
     }
+    // Whatever was refused (and anything not reached) is what is still waiting.
+    queue.unshift(...failed);
 
     const before = getVaultLocalSignature();
     const fresh = await syncVaultItemsFromSupabase();

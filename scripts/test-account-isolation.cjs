@@ -433,6 +433,45 @@ const galleriesA = JSON.stringify([{ id: "gA", profile_id: PA, title: "A locked"
     t("onboarding draft: B's first save starts clean and keeps nothing of A's", mixed.display_name === "Bea" && mixed.username === "" && mixed.personal_profile_id === "");
   }
 
+  // === Defect (demonstrated 2026-10-14, live): one refused item stopped every item behind it from uploading, in every profile.
+  //     A business item the cloud would accept sat behind a personal item it refused, "sync pending", for ever ===
+  {
+    reset();
+    const status = load("cloudSaveStatus");
+    status.resetCloudSaveStatus();
+    set("vltd-auth", session(A)); owner.reconcileLocalDataOwner(A); owner.resolveLegacyOwner(A, [PA]);
+    mocks.vaultModel.getAllLocalItems = () => [{ id: "bad" }, { id: "good1" }, { id: "good2" }];
+    const accepted = [];
+    mocks.vaultCloud.upsertVaultItemToSupabase = async (row) => {
+      if (String(row.id) === "bad") throw new Error("new row violates row-level security policy");
+      accepted.push(String(row.id));
+    };
+    set("vltd_sync_queue_v1", JSON.stringify([
+      { id: "q1", type: "upsert_item", itemId: "bad", createdAt: 1 },
+      { id: "q2", type: "upsert_item", itemId: "good1", createdAt: 2 },
+      { id: "q3", type: "upsert_item", itemId: "good2", createdAt: 3 },
+    ]));
+    const q = load("vaultSyncQueue");
+    const r = await q.processVaultSyncQueue();
+    t("refused item: the items behind it are still uploaded", accepted.join() === "good1,good2", accepted.join());
+    t("refused item: only the refused one is still waiting", r.remaining === 1 && JSON.parse(get("vltd_sync_queue_v1") || "[]").map((e) => e.itemId).join() === "bad", get("vltd_sync_queue_v1"));
+    t("refused item: the person is told something is still saved on this device only", status.getCloudSavePhase() === "pending", status.getCloudSavePhase());
+    // and when the cloud takes it later: nothing duplicated, status clears
+    mocks.vaultCloud.upsertVaultItemToSupabase = async (row) => { accepted.push(String(row.id)); };
+    await status.retryCloudSavesNow();
+    t("refused item accepted later: uploaded once, queue empty, saved", accepted.filter((id) => id === "bad").length === 1 && JSON.parse(get("vltd_sync_queue_v1") || "[]").length === 0 && status.getCloudSavePhase() === "saved");
+    // a lost connection stops the run instead of failing every item one by one
+    let calls = 0;
+    mocks.vaultCloud.upsertVaultItemToSupabase = async () => { calls++; throw new TypeError("Failed to fetch"); };
+    set("vltd_sync_queue_v1", JSON.stringify([
+      { id: "q4", type: "upsert_item", itemId: "bad", createdAt: 4 },
+      { id: "q5", type: "upsert_item", itemId: "good1", createdAt: 5 },
+      { id: "q6", type: "upsert_item", itemId: "good2", createdAt: 6 },
+    ]));
+    const r2 = await q.processVaultSyncQueue();
+    t("lost connection: the run stops early and keeps all three waiting", calls <= 2 && r2.remaining === 3 && JSON.parse(get("vltd_sync_queue_v1") || "[]").length === 3, `calls=${calls} remaining=${r2.remaining}`);
+  }
+
   console.log("\n" + pass + " passed, " + fail + " failed");
   fs.rmSync(out, { recursive: true, force: true });
   process.exit(fail ? 1 : 0);
