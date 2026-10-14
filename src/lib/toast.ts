@@ -1,7 +1,7 @@
 /**
  * Lightweight DOM toast — no React deps, works in components and lib files.
- * Toasts sit in one fixed column at the bottom of the screen, never wider than the
- * viewport; long messages wrap and the stack grows upward so nothing overlaps.
+ * Toasts sit in one fixed column (bottom on wide screens, just under the header on narrow
+ * ones), never wider than the viewport; long messages wrap so nothing overlaps.
  */
 
 /** Optional button inside the toast, e.g. Undo. Clicking it runs once and closes the toast. */
@@ -15,18 +15,20 @@ function getStack(): HTMLElement {
     stack = document.createElement("div");
     stack.id = STACK_ID;
     stack.setAttribute("aria-live", "polite");
+    const narrow = window.innerWidth < 768;
     stack.setAttribute(
       "style",
       [
         "position:fixed",
-        // Narrow screens have the bottom navigation bar; sit above it instead of over it.
-        window.innerWidth < 640 ? "bottom:calc(96px + env(safe-area-inset-bottom, 0px))" : "bottom:24px",
+        // Under 768px the bottom of the screen is taken (navigation bar, floating Add Item, bug-report
+        // button, save-status note), so toasts drop in just under the header instead.
+        narrow ? "top:calc(76px + env(safe-area-inset-top, 0px))" : "bottom:24px",
         "left:50%",
         "transform:translateX(-50%)",
         "width:max-content",
         "max-width:calc(100vw - 32px)",
         "display:flex",
-        "flex-direction:column-reverse",
+        narrow ? "flex-direction:column" : "flex-direction:column-reverse",
         "align-items:center",
         "gap:8px",
         "z-index:99999",

@@ -935,7 +935,10 @@ export default function GalleryPage() {
                   </label>
                 </div>
 
-                <div className="vltd-dark-surface w-full min-w-0 flex-1 sm:w-auto">
+                {/* Light text is only right when a cover image puts a dark scrim behind it; on the plain
+                    card it is the theme's own text colour (the dark-surface class made it near-invisible
+                    on light themes). */}
+                <div className={(draft.coverImage ? "vltd-dark-surface " : "") + "w-full min-w-0 flex-1 sm:w-auto"}>
                   <div className="text-center text-[11px] tracking-[0.28em] text-white/55 xl:text-[10px]">
                     CURATED EXHIBIT
                   </div>
