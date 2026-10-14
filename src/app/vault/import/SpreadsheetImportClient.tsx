@@ -334,11 +334,15 @@ export default function SpreadsheetImportClient() {
         sourceLabel,
       });
       refreshRecentVault();
+      // Describe only what was actually imported, not rows that were skipped as duplicates.
+      const importedSummary = buildImportSummary(finalItems, []);
       setStatus(
-        `Imported ${finalItems.length} items from ${sourceLabel}. ` +
-          (summary.missingCostCount > 0 ? `${summary.missingCostCount} items had missing cost and were set to $0. ` : "") +
+        `Imported ${finalItems.length} ${finalItems.length === 1 ? "item" : "items"} from ${sourceLabel}. ` +
+          (importedSummary.missingCostCount > 0
+            ? `${importedSummary.missingCostCount} ${importedSummary.missingCostCount === 1 ? "item" : "items"} had no cost and ${importedSummary.missingCostCount === 1 ? "was" : "were"} set to $0. `
+            : "") +
           (skippedDupCount > 0 ? `Skipped ${skippedDupCount} exact duplicates (same description and serial number). ` : "") +
-          (summary.totalEstimatedValue > 0 ? `Estimated value added: ${toMoney(summary.totalEstimatedValue)}.` : "")
+          (importedSummary.totalEstimatedValue > 0 ? `Estimated value added: ${toMoney(importedSummary.totalEstimatedValue)}.` : "")
       );
 
       setParsedItems([]);
