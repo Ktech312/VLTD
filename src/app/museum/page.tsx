@@ -8,6 +8,7 @@ import { type ChangeEvent, type PointerEvent, useEffect, useMemo, useRef, useSta
 import { useRouter } from "next/navigation";
 import { PillButton } from "@/components/ui/PillButton";
 import { AppIcon } from "@/components/ui/AppIcon";
+import { useDialogA11y } from "@/components/ui/useDialogA11y";
 import ProgressiveImage from "@/components/ui/ProgressiveImage";
 import { getGalleryScore } from "@/lib/galleryScore";
 import {
@@ -179,6 +180,14 @@ export default function MuseumPage() {
   const [museumBetaStatus, setMuseumBetaStatus] = useState<MuseumBetaStatus>({ enabled: false, requestedAt: null });
   const [showMuseumBetaModal, setShowMuseumBetaModal] = useState(false);
   const [isSendingMuseumBetaRequest, setIsSendingMuseumBetaRequest] = useState(false);
+  // Escape closes, Tab stays inside, focus goes in and returns to the button that opened each overlay.
+  const deleteDialogRef = useDialogA11y<HTMLDivElement>(galleryPendingDelete !== null, () => {
+    if (!isDeleting) setGalleryPendingDelete(null);
+  });
+  const settingsDialogRef = useDialogA11y<HTMLDivElement>(gallerySettings !== null, () => setGallerySettings(null));
+  const betaDialogRef = useDialogA11y<HTMLDivElement>(showMuseumBetaModal, () => {
+    if (!isSendingMuseumBetaRequest) setShowMuseumBetaModal(false);
+  });
   // VLTD Museum — the separate public campus project (see
   // VltdMuseumCampus.tsx). No beta gate yet since there's nothing to
   // protect: it's a first walkable pass, not a finished feature.
@@ -1057,7 +1066,7 @@ export default function MuseumPage() {
 
       {galleryPendingDelete ? (
         <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/70 px-4 backdrop-blur-sm">
-          <div className="w-full max-w-lg rounded-[28px] bg-[color:var(--surface)] p-6 ring-1 ring-[color:var(--border)] shadow-[0_30px_90px_rgba(0,0,0,0.42)]">
+          <div ref={deleteDialogRef} role="dialog" aria-modal="true" aria-label="Delete exhibition" className="w-full max-w-lg rounded-[28px] bg-[color:var(--surface)] p-6 ring-1 ring-[color:var(--border)] shadow-[0_30px_90px_rgba(0,0,0,0.42)]">
             <div className="text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">
               DELETE EXHIBITION
             </div>
@@ -1099,7 +1108,7 @@ export default function MuseumPage() {
 
       {gallerySettings ? (
         <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/70 px-4 backdrop-blur-sm">
-          <div className="w-full max-w-md rounded-[26px] bg-[color:var(--surface)] p-5 ring-1 ring-[color:var(--border)] shadow-[0_30px_90px_rgba(0,0,0,0.42)]">
+          <div ref={settingsDialogRef} role="dialog" aria-modal="true" aria-label="Exhibition status" className="w-full max-w-md rounded-[26px] bg-[color:var(--surface)] p-5 ring-1 ring-[color:var(--border)] shadow-[0_30px_90px_rgba(0,0,0,0.42)]">
             <div className="text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">
               EXHIBITION STATUS
             </div>
@@ -1155,7 +1164,7 @@ export default function MuseumPage() {
 
       {showMuseumBetaModal ? (
         <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/70 px-4 backdrop-blur-sm">
-          <div className="w-full max-w-md rounded-[26px] bg-[color:var(--surface)] p-6 ring-1 ring-[color:var(--border)] shadow-[0_30px_90px_rgba(0,0,0,0.42)]">
+          <div ref={betaDialogRef} role="dialog" aria-modal="true" aria-label="3D Gallery beta" className="w-full max-w-md rounded-[26px] bg-[color:var(--surface)] p-6 ring-1 ring-[color:var(--border)] shadow-[0_30px_90px_rgba(0,0,0,0.42)]">
             <div className="text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">
               3D GALLERY — BETA
             </div>

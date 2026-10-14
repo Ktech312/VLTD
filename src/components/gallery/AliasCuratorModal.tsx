@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { AppIcon } from "@/components/ui/AppIcon";
+import { useDialogA11y } from "@/components/ui/useDialogA11y";
 
 function formatExhibitSince(createdAt?: number): string | null {
   if (!createdAt) return null;
@@ -32,6 +33,7 @@ export default function AliasCuratorModal({
   onClose: () => void;
 }) {
   const [mounted, setMounted] = useState(false);
+  const dialogRef = useDialogA11y<HTMLDivElement>(true, onClose);
   useEffect(() => setMounted(true), []);
 
   useEffect(() => {
@@ -67,6 +69,10 @@ export default function AliasCuratorModal({
       onClick={onClose}
     >
       <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Exhibition curator"
         className="vltd-dark-surface"
         onClick={(e) => e.stopPropagation()}
         style={{

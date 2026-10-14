@@ -55,6 +55,7 @@ import {
 } from "@/lib/vaultModel";
 import { deleteVaultItemEverywhere } from "@/lib/vaultActions";
 import { reportPending } from "@/lib/cloudSaveStatus";
+import { useDialogA11y } from "@/components/ui/useDialogA11y";
 import { generateHashtags } from "@/lib/generateHashtags";
 import {
   generateVaultImageKey,
@@ -551,6 +552,12 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
   const [deleteConfirm, setDeleteConfirm] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState("");
+  // Escape closes, Tab stays inside, focus goes in and comes back to the Delete button (not while a delete is running).
+  const deleteDialogRef = useDialogA11y<HTMLDivElement>(deleteConfirm, () => {
+    if (isDeleting) return;
+    setDeleteConfirm(false);
+    setDeleteError("");
+  });
   const [isEditingNotes, setIsEditingNotes] = useState(false);
   const [headerEditing, setHeaderEditing] = useState(false);
   const [notesDraft, setNotesDraft] = useState("");
@@ -1693,12 +1700,16 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
         >
           <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
           <div
+            ref={deleteDialogRef}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="delete-item-title"
             className="relative z-10 w-full max-w-sm rounded-[24px] p-6 ring-1"
             style={{ background: "var(--surface)", borderColor: "var(--border)" }}
             onClick={(e) => e.stopPropagation()}
           >
             <div className="text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">DELETE ITEM</div>
-            <h2 className="mt-3 text-xl font-semibold">{item.title}</h2>
+            <h2 id="delete-item-title" className="mt-3 text-xl font-semibold">{item.title}</h2>
             <p className="mt-2 text-sm text-[color:var(--muted)]">
               This will permanently remove the item from your vault. This cannot be undone.
             </p>

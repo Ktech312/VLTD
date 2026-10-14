@@ -6,6 +6,7 @@ import { AppIcon } from "@/components/ui/AppIcon";
 import { getGallerySections, type Gallery } from "@/lib/galleryModel";
 import { type VaultItem } from "@/lib/vaultModel";
 import { CommentThread } from "@/components/social/CommentThread";
+import { useDialogA11y } from "@/components/ui/useDialogA11y";
 
 const ACTIVE_PROFILE_KEY = "vltd_active_profile_id_v1";
 
@@ -28,6 +29,7 @@ export default function ExhibitionInfoModal({
   onClose: () => void;
 }) {
   const [mounted, setMounted] = useState(false);
+  const dialogRef = useDialogA11y<HTMLDivElement>(true, onClose);
   const [viewerProfileId, setViewerProfileId] = useState("");
   useEffect(() => {
     setMounted(true);
@@ -78,6 +80,10 @@ export default function ExhibitionInfoModal({
       onClick={onClose}
     >
       <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Exhibition info"
         className="vltd-dark-surface"
         onClick={(e) => e.stopPropagation()}
         style={{
