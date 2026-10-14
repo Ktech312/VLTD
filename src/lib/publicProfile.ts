@@ -146,9 +146,27 @@ export function publicRowToItem(input: unknown): VaultItem {
   };
 }
 
-export async function syncPublicProfile(profileId = getStoredActiveProfileId()) {
-  const supabase = getSupabaseBrowserClient();
+// Several parts of every page ask for this at once (and again a moment later), and each ask used to be a read plus a write.
+// Concurrent asks for one profile share a single run, and a run that would write exactly what was last written (within five
+// minutes) is skipped. A changed name, bio or avatar changes the payload, so real edits are never skipped.
+const PUBLIC_SYNC_REUSE_MS = 5 * 60_000;
+const publicSyncInFlight = new Map<string, Promise<unknown>>();
+let lastPublicSync: { profileId: string; signature: string; at: number; row: unknown } | null = null;
+
+export function syncPublicProfile(profileId = getStoredActiveProfileId()): Promise<unknown> {
   const cleanProfileId = String(profileId ?? "").trim();
+  if (!cleanProfileId) return Promise.resolve(null);
+  const running = publicSyncInFlight.get(cleanProfileId);
+  if (running) return running;
+  const run = runSyncPublicProfile(cleanProfileId).finally(() => {
+    publicSyncInFlight.delete(cleanProfileId);
+  });
+  publicSyncInFlight.set(cleanProfileId, run);
+  return run;
+}
+
+async function runSyncPublicProfile(cleanProfileId: string) {
+  const supabase = getSupabaseBrowserClient();
   if (!supabase || !cleanProfileId) return null;
 
   // Fetch full profile row to check is_public and get the REAL identity
@@ -167,6 +185,7 @@ export async function syncPublicProfile(profileId = getStoredActiveProfileId()) 
 
   // If the user has gone incognito, remove from public_profiles
   if (profileRow.is_public === false) {
+    lastPublicSync = null;
     await supabase.from("public_profiles").delete().eq("profile_id", cleanProfileId);
     return null;
   }
@@ -179,7 +198,6 @@ export async function syncPublicProfile(profileId = getStoredActiveProfileId()) 
     profile_id: cleanProfileId,
     display_name: validName(profileRow?.display_name) || validName(profileRow?.username) || "Collector",
     avatar_emoji: profileRow?.avatar_emoji?.trim() || "🗝️",
-    updated_at: new Date().toISOString(),
   };
 
   if (profileRow?.bio) {
@@ -191,13 +209,24 @@ export async function syncPublicProfile(profileId = getStoredActiveProfileId()) 
     payload.avatar_url = resolvedAvatar;
   }
 
+  const signature = JSON.stringify(payload);
+  if (
+    lastPublicSync &&
+    lastPublicSync.profileId === cleanProfileId &&
+    lastPublicSync.signature === signature &&
+    Date.now() - lastPublicSync.at < PUBLIC_SYNC_REUSE_MS
+  ) {
+    return lastPublicSync.row;
+  }
+
   const { data, error } = await supabase
     .from("public_profiles")
-    .upsert(payload, { onConflict: "profile_id" })
+    .upsert({ ...payload, updated_at: new Date().toISOString() }, { onConflict: "profile_id" })
     .select("*")
     .single();
 
   if (error) throw new Error(error.message || "Failed to sync public profile.");
+  lastPublicSync = { profileId: cleanProfileId, signature, at: Date.now(), row: data };
   return data;
 }
 

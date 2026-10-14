@@ -192,13 +192,29 @@ export async function fetchAlerts(currentProfileId: string): Promise<AlertItem[]
     // in the bell dropdown have never worked for anyone. Same auth-header
     // pattern src/app/admin/bugs/page.tsx already uses for the same endpoint.
     const authHeader: Record<string, string> = {};
+    let forbiddenKey = "";
     if (supabase) {
       const { data } = await supabase.auth.getSession();
       const token = data.session?.access_token;
       if (token) authHeader.Authorization = `Bearer ${token}`;
+      forbiddenKey = "vltd_bugfeed_forbidden:" + (data.session?.user?.id ?? "");
     }
-    const res = await fetch("/api/admin/bugs", { cache: "no-store", headers: authHeader });
-    if (res.ok) {
+    // Everyone but an admin gets a refused answer here. Ask once per browser session for each account, not on every page.
+    let knownForbidden = false;
+    try {
+      knownForbidden = Boolean(forbiddenKey) && window.sessionStorage.getItem(forbiddenKey) === "1";
+    } catch {
+      /* storage unavailable: just ask */
+    }
+    const res = knownForbidden ? null : await fetch("/api/admin/bugs", { cache: "no-store", headers: authHeader });
+    if (res && (res.status === 403 || res.status === 401)) {
+      try {
+        if (forbiddenKey) window.sessionStorage.setItem(forbiddenKey, "1");
+      } catch {
+        /* ignore */
+      }
+    }
+    if (res && res.ok) {
       const json = (await res.json()) as {
         rows?: { id: string; message: string; status: string; page_path: string | null; created_at: string }[];
       };
