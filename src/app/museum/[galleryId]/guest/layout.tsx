@@ -23,7 +23,7 @@ async function fetchMeta(galleryId: string) {
   try {
     const res = await fetch(
       `${SUPABASE_URL}/rest/v1/galleries?id=eq.${galleryId}&visibility=eq.PUBLIC&select=title,description,layout,profile_id,alias_enabled,alias_name&limit=1`,
-      { headers: h, next: { revalidate: 120 } }
+      { headers: h, cache: "no-store" }
     );
     const rows: GalleryRow[] = await res.json().catch(() => []);
     const g = rows[0];
@@ -40,7 +40,7 @@ async function fetchMeta(galleryId: string) {
     try {
       const pRes = await fetch(
         `${SUPABASE_URL}/rest/v1/public_profiles?profile_id=eq.${g.profile_id}&select=display_name&limit=1`,
-        { headers: h, next: { revalidate: 120 } }
+        { headers: h, cache: "no-store" }
       );
       const profiles: ProfileRow[] = await pRes.json().catch(() => []);
       const rawName = profiles[0]?.display_name ?? "";

@@ -336,7 +336,7 @@ export default function SpreadsheetImportClient() {
       setStatus(
         `Imported ${finalItems.length} items from ${sourceLabel}. ` +
           (summary.missingCostCount > 0 ? `${summary.missingCostCount} items had missing cost and were set to $0. ` : "") +
-          (skippedDupCount > 0 ? `Skipped ${skippedDupCount} exact duplicate titles. ` : "") +
+          (skippedDupCount > 0 ? `Skipped ${skippedDupCount} exact duplicates (same description and serial number). ` : "") +
           (summary.totalEstimatedValue > 0 ? `Estimated value added: ${toMoney(summary.totalEstimatedValue)}.` : "")
       );
 
