@@ -93,7 +93,7 @@ export default function ScanPanel({
           value={titleValue}
           onChange={(e) => onTitleChange(e.target.value)}
           placeholder="Name this item to save it…"
-          className="h-11 w-full rounded-2xl bg-[color:var(--pill)] px-4 text-sm ring-1 focus:outline-none"
+          className="h-11 md:h-9 w-full rounded-2xl bg-[color:var(--pill)] px-4 text-sm ring-1 focus:outline-none"
           style={{ borderColor: titleValue.trim() ? "var(--border)" : "rgba(203,208,213,0.5)", boxShadow: titleValue.trim() ? undefined : "0 0 0 1px rgba(203,208,213,0.4)" }}
         />
       </div>
