@@ -1,0 +1,28 @@
+Suggested title (YouTube / Help):
+How to import your collection from a spreadsheet into VLTD
+
+Short title (Help section):
+Import your collection
+
+Description:
+Choose a CSV or Excel file, check the summary, mapping and warnings, handle duplicates, confirm the import and see your items in your Vault.
+
+What you need:
+- A CSV or Excel file with a header row
+- One item per row
+- About 3 minutes
+
+Chapters:
+0:00 Introduction
+0:06 Open Import
+0:16 Choose your spreadsheet
+0:27 Check the summary
+0:37 Review duplicates and warnings
+0:48 Check the column mapping
+0:58 Choose how to handle duplicates
+1:09 Confirm
+1:19 See your items
+
+Notes:
+- Made from tested screenshots with step captions; there is no voice-over.
+- Captions are burned in; import-your-collection.vtt / .srt carry the same text.

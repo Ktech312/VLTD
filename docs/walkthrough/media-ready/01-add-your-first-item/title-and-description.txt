@@ -1,0 +1,27 @@
+Suggested title (YouTube / Help):
+How to add your first item to your VLTD Vault
+
+Short title (Help section):
+Add your first item
+
+Description:
+Upload a photo, name your item, choose its category, add optional details, save it and open it again. A 2-minute start to your collection on VLTD.
+
+What you need:
+- A photo of the item on your device
+- About 2 minutes
+
+Chapters:
+0:00 Introduction
+0:06 Open Add Item
+0:16 Choose Manual entry
+0:27 Add a photo
+0:37 Name your item
+0:48 Choose a category and add details
+0:58 Save
+1:09 Find it in your Vault
+1:19 Open it any time
+
+Notes:
+- Made from tested screenshots with step captions; there is no voice-over.
+- Captions are burned in; add-your-first-item.vtt / .srt carry the same text.

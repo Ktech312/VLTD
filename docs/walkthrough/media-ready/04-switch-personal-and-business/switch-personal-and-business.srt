@@ -1,0 +1,35 @@
+1
+00:00:00,600 --> 00:00:05,200
+Switch between Personal and Business. A VLTD account. A business name and handle. About 2 minutes.
+
+2
+00:00:06,100 --> 00:00:15,600
+Add a business profile. In Settings, choose + Add business profile.
+
+3
+00:00:16,600 --> 00:00:26,100
+Enter the details. Enter a business name and handle, then choose a business type.
+
+4
+00:00:27,100 --> 00:00:36,600
+You are in the Business profile. Settings now shows your Business profile as active.
+
+5
+00:00:37,600 --> 00:00:47,100
+A separate, empty Vault. The Business profile starts with its own empty Vault.
+
+6
+00:00:48,100 --> 00:00:57,600
+Add items to this profile. Items you add or import here stay in the Business profile.
+
+7
+00:00:58,600 --> 00:01:08,100
+Switch profile. Open the account menu and choose a profile under Switch profile.
+
+8
+00:01:09,100 --> 00:01:18,600
+Your Personal Vault is unchanged. Your Personal Vault shows only your personal items.
+
+9
+00:01:19,600 --> 00:01:25,500
+Personal and Business collections stay separate. Next: add an item to either profile.

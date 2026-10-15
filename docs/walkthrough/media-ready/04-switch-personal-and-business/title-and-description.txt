@@ -1,0 +1,27 @@
+Suggested title (YouTube / Help):
+Personal and Business profiles on VLTD: create one and switch
+
+Short title (Help section):
+Switch between Personal and Business
+
+Description:
+Create a Business profile, switch between Personal and Business, and see that each profile keeps its own separate collection.
+
+What you need:
+- A VLTD account
+- A business name and handle
+- About 2 minutes
+
+Chapters:
+0:00 Introduction
+0:06 Add a business profile
+0:16 Enter the details
+0:27 You are in the Business profile
+0:37 A separate, empty Vault
+0:48 Add items to this profile
+0:58 Switch profile
+1:09 Your Personal Vault is unchanged
+
+Notes:
+- Made from tested screenshots with step captions; there is no voice-over.
+- Captions are burned in; switch-personal-and-business.vtt / .srt carry the same text.

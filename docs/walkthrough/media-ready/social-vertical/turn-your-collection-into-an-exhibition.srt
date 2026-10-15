@@ -1,0 +1,19 @@
+1
+00:00:00,400 --> 00:00:03,700
+Turn your collection into an exhibition
+
+2
+00:00:04,400 --> 00:00:11,200
+1: Select your items
+
+3
+00:00:11,900 --> 00:00:18,700
+2: Preview it
+
+4
+00:00:19,400 --> 00:00:26,200
+3: Share it
+
+5
+00:00:26,900 --> 00:00:30,700
+Build yours at vltd.app

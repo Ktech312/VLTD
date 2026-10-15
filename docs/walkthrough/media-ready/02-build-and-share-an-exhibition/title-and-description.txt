@@ -1,0 +1,29 @@
+Suggested title (YouTube / Help):
+How to build and share an exhibition on VLTD
+
+Short title (Help section):
+Build and share an exhibition
+
+Description:
+Create an exhibition, choose items from your Vault, save it, preview it as a visitor, choose who can see it and share the link.
+
+What you need:
+- At least three items in your Vault
+- About 3 minutes
+
+Chapters:
+0:00 Introduction
+0:06 Create First Exhibition
+0:16 Title and description
+0:27 Choose who can see it
+0:37 Your exhibition page
+0:48 Choose items
+0:58 Add them
+1:09 Review and save
+1:19 Preview as a visitor
+1:30 Choose visibility
+1:40 Share it
+
+Notes:
+- Made from tested screenshots with step captions; there is no voice-over.
+- Captions are burned in; build-and-share-an-exhibition.vtt / .srt carry the same text.

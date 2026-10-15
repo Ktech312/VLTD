@@ -1,3 +1,29 @@
+# 2026-10-14 (latest) — Tutorial videos and Help package prepared (review only; nothing published)
+
+Location: `docs/walkthrough/media-ready/` — open `index.html` (review page with all six videos playable and every file linked). Detail and file roles are in that folder's `README.md`.
+
+| Deliverable | Path | Format |
+|---|---|---|
+| Add your first item | `01-add-your-first-item/add-your-first-item.mp4` | 1920×1080, 1:37, captions burned in, + .vtt .srt |
+| Build and share an exhibition | `02-build-and-share-an-exhibition/build-and-share-an-exhibition.mp4` | 1920×1080, 1:58 |
+| Import your collection | `03-import-your-collection/import-your-collection.mp4` | 1920×1080, 1:37 |
+| Switch between Personal and Business | `04-switch-personal-and-business/switch-personal-and-business.mp4` | 1920×1080, 1:26 |
+| Social: Add it to your Vault | `social-vertical/add-it-to-your-vault.mp4` | 1080×1920, 0:39 |
+| Social: Turn your collection into an exhibition | `social-vertical/turn-your-collection-into-an-exhibition.mp4` | 1080×1920, 0:31 |
+| Help guide (HTML, numbered screenshots with alt text, links to videos) | `help-guide/index.html` + topics `delete-an-item-or-exhibition.html`, `reset-your-password.html` | not connected to any route |
+
+Each tutorial folder also has `narration-script.md`, `title-and-description.txt`, `thumbnail.jpg` and `screenshots/` (numbered); social files have script, post text and thumbnail.
+
+**What they are:** screenshot-based videos (captions, zooms, crossfades) made from captures of production on 2026-10-14 with synthetic data — **not screen recordings**, no voice-over, no music, no cursor. Built with a local script (sharp + h264-mp4-encoder in the scratchpad); no paid tool or service.
+**Verified:** every MP4 opened in a browser (right size, plays, caption track loads); frames from start, transitions, steps and end inspected; account email redacted from the one screenshot that showed it (solid fill); no passwords or auth links. Photos use the verified upload path; camera capture and dragging are not shown.
+**Limitations:** desktop only; captured with a QA account in a browser that was not in the foreground, so a few frames were retaken; light/dark: dark theme only; zoomed crops are upscaled screenshots (readable at 1080p, softer on close-ups); MP4s (~60 MB) are **not committed to git** — everything else is. Existing Help page wording that no longer matches the app is listed in the README (not edited).
+**Fixes made on the way (earlier today):** none needed this round beyond prior commits.
+**Observation, not touched:** a real new account (2 profiles, 1 item, 1 exhibition) was created on production at 23:23–23:51 UTC; database counts therefore read 39/39/49/3479/47 instead of the earlier QA baseline (37/37/47/3478/46). Those rows are not QA fixtures and were left alone.
+**QA cleanup:** QA user `med` (Personal + Business profile, 4+5 items, 2 exhibitions) removed by id; the local-data keys it created in the Chrome profile were removed (other stash keys untouched); the QA Chrome tab was closed (the browser window was resized to 1366×768 for captures); local review servers stopped; pane reset.
+Still UNVERIFIED: physical phone and push; Comcast resend delivery; cover-image title case; real mouse/touch arranging.
+
+---
+
 # 2026-10-14 (latest) — Bounded corrections: light-theme title, toast placement, item arranging
 
 Commit `75b59aa` (deployed, verified live). Redesign untouched.

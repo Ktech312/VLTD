@@ -1,0 +1,47 @@
+1
+00:00:00,600 --> 00:00:05,200
+Build and share an exhibition. At least three items in your Vault. About 3 minutes.
+
+2
+00:00:06,100 --> 00:00:15,600
+Create First Exhibition. Open Exhibitions and choose Create First Exhibition.
+
+3
+00:00:16,600 --> 00:00:26,100
+Title and description. Give it a title and a short description.
+
+4
+00:00:27,100 --> 00:00:36,600
+Choose who can see it. Start with Private while you build. Then choose Create Exhibition.
+
+5
+00:00:37,600 --> 00:00:47,100
+Your exhibition page. Your exhibition is created, private and ready to fill.
+
+6
+00:00:48,100 --> 00:00:57,600
+Choose items. Choose Edit/Add. Your Vault items appear to pick from.
+
+7
+00:00:58,600 --> 00:01:08,100
+Add them. Tick the items you want, then choose Add to Exhibit.
+
+8
+00:01:09,100 --> 00:01:18,600
+Review and save. Your items sit on the shelf with their total value. Choose Save.
+
+9
+00:01:19,600 --> 00:01:29,100
+Preview as a visitor. Open the guest preview to see what visitors will see.
+
+10
+00:01:30,100 --> 00:01:39,600
+Choose visibility. Choose Public Exhibit, then confirm Make public.
+
+11
+00:01:40,600 --> 00:01:50,100
+Share it. The exhibition is Public. Use Copy Link or the share buttons.
+
+12
+00:01:51,100 --> 00:01:57,000
+Your exhibition is public and ready to share. Next: import more of your collection with a spreadsheet.
