@@ -185,7 +185,9 @@ export function initAuthListener() {
     }
     setCachedAuthFromSession(session);
     clearInFlightAuth();
-    profilesPromise = null;
+    // A session that is merely restored or refreshed (INITIAL_SESSION, TOKEN_REFRESHED, a repeated SIGNED_IN on tab focus) does
+    // not change the profile list; setCachedAuthFromSession already drops it when the person is a different one.
+    if (event === "SIGNED_OUT" || event === "USER_UPDATED" || event === "PASSWORD_RECOVERY") profilesPromise = null;
   });
 }
 
@@ -295,7 +297,7 @@ export function onAuthStateChange(callback: any) {
   return supabase.auth.onAuthStateChange((event, session) => {
     setCachedAuthFromSession(session);
     clearInFlightAuth();
-    profilesPromise = null;
+    if (event === "SIGNED_OUT" || event === "USER_UPDATED" || event === "PASSWORD_RECOVERY") profilesPromise = null;
     callback(event, session);
   });
 }
@@ -391,6 +393,8 @@ export async function signOut(options?: { scope?: "local" | "global" }) {
   }
 }
 
+const PROFILES_REUSE_MS = 8_000;
+
 export async function listMyProfiles() {
   const supabase = getSupabase();
   if (!supabase) {
@@ -438,7 +442,13 @@ export async function listMyProfiles() {
         error: error instanceof Error ? error : new Error("Profile list lookup failed."),
       };
     } finally {
-      if (profilesPromise === mine) profilesPromise = null;
+      // The list is asked for by the route check, the header, the page and its menus within the same second; each used to be
+      // its own request for every column of every profile. The answer is reused briefly. Anything that changes a profile, a
+      // sign-in or a sign-out clears it (profilesPromise = null above). A failed lookup is kept for the same few seconds: the route
+      // check, the Vault's own gate and the page used to wait out the same 8-second timeout one after another.
+      setTimeout(() => {
+        if (profilesPromise === mine) profilesPromise = null;
+      }, PROFILES_REUSE_MS);
     }
   })();
 

@@ -14,6 +14,8 @@ let memoryJson: string | null = null; // only set while a storage write is faili
 let lastStored: string | null = null; // last raw value read from / written to storage
 let lastJson: string | null = null; // its decoded JSON text
 let warned = false;
+let failedAt = 0; // when the last storage write failed (a full browser store is retried at most every 30 s, not on every read)
+const RETRY_AFTER_FAILURE_MS = 30_000;
 
 function pack(json: string): string {
   const bytes = zlibSync(strToU8(json), { level: 6 });
@@ -88,6 +90,10 @@ export function writeVaultLocalJson(json: string): boolean {
     return true;
   }
 
+  // The browser refused the last write and this is the very same text: compressing multi megabytes again on every read
+  // just to be refused again froze the page. The in-memory copy is already current.
+  if (memoryJson !== null && json === memoryJson && Date.now() - failedAt < RETRY_AFTER_FAILURE_MS) return false;
+
   const previous = readStored();
   try {
     const packed = pack(json);
@@ -103,9 +109,11 @@ export function writeVaultLocalJson(json: string): boolean {
     lastStored = packed;
     lastJson = json;
     memoryJson = null;
+    failedAt = 0;
     return true;
   } catch {
     memoryJson = json;
+    failedAt = Date.now();
     if (!warned) {
       warned = true;
       console.warn("VLTD: could not save the local vault copy; keeping it in memory for this session.");

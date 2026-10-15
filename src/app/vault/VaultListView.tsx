@@ -38,7 +38,7 @@ import {
   loadItems,
   saveItem,
   saveItems,
-  syncVaultItemsFromSupabase,
+  syncVaultItemsFromSupabaseChecked,
   type VaultItem,
   markPendingMoves,
   clearPendingMoves,
@@ -47,6 +47,30 @@ import { hasSupabaseEnv } from "@/lib/vaultCloud";
 import { deleteVaultItemEverywhere, deleteVaultItemsEverywhere } from "@/lib/vaultActions";
 import { getOnboardingStatus, getStoredActiveProfileId, listMyProfiles, type ProfileRow } from "@/lib/auth";
 import { readUniversePrefs, saveDisplayedUniverses } from "@/lib/universePrefs";
+import { currentLocalOwner } from "@/lib/localDataOwner";
+import { storedSessionUserId } from "@/lib/sessionGuard";
+
+// How long the page waits for the account check and for the cloud before it stops waiting and says so.
+const ACCOUNT_CHECK_TIMEOUT_MS = 12_000;
+const CLOUD_PULL_TIMEOUT_MS = 20_000;
+// With nothing yet to show, after this long the loading state says it is taking longer than usual.
+const SLOW_LOAD_NOTICE_MS = 6_000;
+
+function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error("timed out")), ms);
+    promise.then(
+      (value) => {
+        clearTimeout(timer);
+        resolve(value);
+      },
+      (error) => {
+        clearTimeout(timer);
+        reject(error);
+      }
+    );
+  });
+}
 
 const ACTIVE_PROFILE_EVENT = "vltd:active-profile";
 const SALES_KEY = "vltd_sales_history";
@@ -208,6 +232,37 @@ function readFocusUniverseKey(): UniverseKey | null {
   } catch {
     return null;
   }
+}
+
+function sameItemContent(a: VaultItem, b: VaultItem) {
+  const left = a as unknown as Record<string, unknown>;
+  const right = b as unknown as Record<string, unknown>;
+  const keys = Object.keys(left);
+  if (keys.length !== Object.keys(right).length) return false;
+  for (const key of keys) {
+    const x = left[key];
+    const y = right[key];
+    if (x === y) continue;
+    if (typeof x !== "object" || x === null || typeof y !== "object" || y === null) return false;
+    if (JSON.stringify(x) !== JSON.stringify(y)) return false;
+  }
+  return true;
+}
+
+function reuseUnchangedItems(prev: VaultItem[], next: VaultItem[]): VaultItem[] {
+  if (prev.length === 0) return next;
+  const before = new Map(prev.map((item) => [String(item.id), item]));
+  let identical = prev.length === next.length;
+  const merged = next.map((item, index) => {
+    const old = before.get(String(item.id));
+    if (old && sameItemContent(old, item)) {
+      if (prev[index] !== old) identical = false;
+      return old;
+    }
+    identical = false;
+    return item;
+  });
+  return identical ? prev : merged;
 }
 
 function ensureVaultItemUniverses() {
@@ -476,6 +531,7 @@ function VaultCard({
             <ProgressiveImage
               src={image}
               alt={item.title}
+              deferOffscreen
               className="h-full w-full"
               imageClassName="object-contain object-center transition duration-500 group-hover:scale-[1.035]"
               draggable={false}
@@ -574,15 +630,41 @@ const MemoVaultCard = memo(VaultCard);
 // cold load rendered VaultEmptyState ("Your vault is empty...") for however
 // long the sync took, which read as a broken/empty account rather than a
 // still-loading one (NYCC launch blocker: mobile access gate feeling stalled).
-function VaultLoadingSkeleton() {
+function VaultLoadingSkeleton({ slow = false }: { slow?: boolean }) {
   return (
     <section className="mt-4 grid grid-cols-2 gap-2 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6" aria-label="Loading your vault">
+      {slow ? (
+        <p className="col-span-full text-sm text-[color:var(--muted)]" role="status">
+          Still loading your Vault. This is taking longer than usual. Your items are safe.
+        </p>
+      ) : null}
       {Array.from({ length: 12 }).map((_, index) => (
         <div
           key={index}
           className="aspect-square animate-pulse rounded-[14px] bg-[color:var(--surface)] ring-1 ring-[color:var(--border)]"
         />
       ))}
+    </section>
+  );
+}
+
+// Shown when there is nothing saved on this device yet AND the cloud could not be reached (or the account check timed out).
+// It must not look like an empty Vault: the items are safe, they just have not arrived.
+function VaultLoadError({ onRetry }: { onRetry: () => void }) {
+  return (
+    <section className="mt-3 rounded-[18px] bg-[color:var(--surface)] p-8 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]" role="alert">
+      <div className="mx-auto max-w-xl text-center">
+        <div className="text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">COULD NOT LOAD</div>
+        <h2 className="mt-2 text-2xl font-semibold">We could not load your Vault just now</h2>
+        <div className="mt-2 text-sm text-[color:var(--muted)]">
+          Your items are safe. Check your connection and try again.
+        </div>
+        <div className="mt-5 flex justify-center">
+          <PillButton variant="primary" onClick={onRetry}>
+            Try again
+          </PillButton>
+        </div>
+      </div>
     </section>
   );
 }
@@ -998,26 +1080,126 @@ export default function VaultListView({ lockedUniverse }: { lockedUniverse?: Uni
   });
 
   function refresh(profileId?: string) {
-    setItems(loadItems(profileId ? { profileId } : undefined));
+    const next = loadItems(profileId ? { profileId } : undefined);
+    // Re-reading the device copy gives new objects for the same items. Keep the ones that did not change (and the whole list,
+    // when nothing did) so a re-read that found nothing new does not redraw every card.
+    setItems((prev) => reuseUnchangedItems(prev, next));
     setSales(readSales());
     setPendingSyncCount(getPendingVaultSyncCount());
   }
 
-  async function hydrateAll() {
-    const { activeProfile } = await getOnboardingStatus();
-    const profileId = activeProfile?.id ?? "";
+  // Loading, in this order:
+  //  1. The copy saved on this device, when it is recorded as belonging to the person signed in and a profile is chosen.
+  //     Shown straight away (no network), so the Vault is usable while everything else happens.
+  //  2. Who is signed in and which profile is active, checked with a time limit. A different answer replaces what is shown.
+  //  3. Uploads waiting on this device and the cloud pull, in the background. They never hold the page; when they bring
+  //     something new it is read back in.
+  // A device copy that is not recorded as this person's is never shown. If there is nothing to show yet, the page says it is
+  // loading, and if the cloud cannot be reached it says that (with a Try again button) instead of looking like an empty Vault.
+  const hydrateSeq = useRef(0);
+  const shownProfileRef = useRef("");
+  const [loadFailed, setLoadFailed] = useState(false);
+  const [loadSlow, setLoadSlow] = useState(false);
+
+  function showDeviceCopy(profileId: string) {
+    shownProfileRef.current = profileId;
     refresh(profileId);
-    if (promoteLegacySalesToItems()) {
-      refresh(profileId);
-    }
-    await processVaultSyncQueue();
-    await syncVaultItemsFromSupabase(profileId);
-    if (ensureVaultItemUniverses()) {
-      await processVaultSyncQueue();
-    }
-    refresh(profileId);
-    setInitialLoadComplete(true);
+    if (promoteLegacySalesToItems()) refresh(profileId);
   }
+
+  async function hydrateAll() {
+    const mine = ++hydrateSeq.current;
+    const stillCurrent = () => mine === hydrateSeq.current;
+    setLoadFailed(false);
+    setLoadSlow(false);
+    window.setTimeout(() => {
+      if (stillCurrent()) setLoadSlow(true);
+    }, SLOW_LOAD_NOTICE_MS);
+
+    // 1. This device's copy, if it is verifiably this person's.
+    const signedInAs = storedSessionUserId();
+    let profileId = "";
+    const storedProfileId = getStoredActiveProfileId();
+    if (signedInAs && storedProfileId && currentLocalOwner() === signedInAs) {
+      profileId = storedProfileId;
+      showDeviceCopy(profileId);
+      if (loadItems({ profileId }).length > 0) setInitialLoadComplete(true);
+    }
+
+    // The cloud half (uploads, then the download). For one profile; it only changes the page while that is still the profile
+    // being shown. Started at once when the profile is already known, so it runs alongside the account check, not after it.
+    let target = profileId;
+    async function finishCloud(forProfile: string) {
+      let answered = false;
+      try {
+        // Changes waiting to be sent go first, exactly as before: a download that landed first would lay the cloud's older copy
+        // over an edit that has not been sent yet (and the upload would then send the old values). The upload run ends with
+        // a download of its own; the checked one below reuses it when nothing changed since.
+        if (hasSupabaseEnv() && getPendingVaultSyncCount() > 0) {
+          await withTimeout(processVaultSyncQueue(), CLOUD_PULL_TIMEOUT_MS);
+        }
+        const result = await withTimeout(syncVaultItemsFromSupabaseChecked(forProfile), CLOUD_PULL_TIMEOUT_MS);
+        answered = result.ok;
+      } catch {
+        answered = false;
+      }
+      if (stillCurrent()) setPendingSyncCount(getPendingVaultSyncCount());
+      if (!stillCurrent() || target !== forProfile) return;
+      if (ensureVaultItemUniverses()) void processVaultSyncQueue();
+      showDeviceCopy(forProfile);
+      const hasItems = loadItems({ profileId: forProfile }).length > 0;
+      if (!answered && !hasItems) setLoadFailed(true);
+      if (!answered && hasItems && hasSupabaseEnv()) {
+        setSyncStatus("Could not reach the cloud just now. Showing what is saved on this device.");
+      }
+      setInitialLoadComplete(true);
+    }
+    let cloud: Promise<void> | null = null;
+    if (profileId) cloud = finishCloud(profileId);
+
+    // 2. Who is signed in, which profile (bounded; nothing already on screen waits for it).
+    let status: Awaited<ReturnType<typeof getOnboardingStatus>> | null = null;
+    try {
+      status = await withTimeout(getOnboardingStatus(), ACCOUNT_CHECK_TIMEOUT_MS);
+    } catch {
+      status = null;
+    }
+    if (!stillCurrent()) return;
+
+    if (status && !status.isAuthenticated) {
+      // Signed out or the session ended: the route check sends the person to sign in. Nothing is shown for nobody.
+      target = "";
+      shownProfileRef.current = "";
+      setItems([]);
+      setInitialLoadComplete(true);
+      return;
+    }
+    const verifiedProfileId = status?.activeProfile?.id ?? "";
+    if (verifiedProfileId && verifiedProfileId !== profileId) {
+      // The profile in use is not the one remembered: show the right one and fetch for it.
+      profileId = verifiedProfileId;
+      target = verifiedProfileId;
+      showDeviceCopy(verifiedProfileId);
+      cloud = finishCloud(verifiedProfileId);
+    } else if (verifiedProfileId && shownProfileRef.current !== profileId) {
+      showDeviceCopy(profileId);
+    }
+    if (!profileId) {
+      // Could not tell who this is or which profile (account check failed or timed out) and nothing verified is on screen.
+      setLoadFailed(true);
+      setInitialLoadComplete(true);
+      return;
+    }
+    if (loadItems({ profileId }).length > 0) setInitialLoadComplete(true);
+    if (!cloud) cloud = finishCloud(profileId);
+    // With something to show the page is already usable; with nothing, wait for the answer (it ends in items, "empty" or
+    // "could not load", never in an open-ended skeleton).
+    if (loadItems({ profileId }).length === 0) await cloud;
+  }
+
+  useEffect(() => {
+    if (initialLoadComplete) setLoadSlow(false);
+  }, [initialLoadComplete]);
 
   useEffect(() => {
     void hydrateAll();
@@ -1026,8 +1208,21 @@ export default function VaultListView({ lockedUniverse }: { lockedUniverse?: Uni
       void hydrateAll();
     }
 
+    // Something changed the device copy (a save, a finished upload, another page). Read it again; no cloud round trip. This
+    // used to start the whole upload-and-download sequence again, and finishing that fired this event again.
+    let refreshTimer: number | undefined;
     function onVaultUpdate() {
-      void hydrateAll();
+      if (refreshTimer !== undefined) return;
+      refreshTimer = window.setTimeout(() => {
+        refreshTimer = undefined;
+        const signedInAs = storedSessionUserId();
+        const profileId = getStoredActiveProfileId();
+        if (!signedInAs || !profileId || currentLocalOwner() !== signedInAs || profileId !== shownProfileRef.current) {
+          void hydrateAll(); // who or which profile changed: verify again before showing anything
+          return;
+        }
+        refresh(profileId);
+      }, 120);
     }
 
     function onOnline() {
@@ -1046,6 +1241,8 @@ export default function VaultListView({ lockedUniverse }: { lockedUniverse?: Uni
     window.addEventListener("online", onOnline);
 
     return () => {
+      hydrateSeq.current += 1; // an answer that arrives after the page is gone changes nothing
+      if (refreshTimer !== undefined) window.clearTimeout(refreshTimer);
       window.removeEventListener(ACTIVE_PROFILE_EVENT, onActiveProfileChange);
       window.removeEventListener("vltd:vault-updated", onVaultUpdate);
       window.removeEventListener("online", onOnline);
@@ -1667,7 +1864,7 @@ export default function VaultListView({ lockedUniverse }: { lockedUniverse?: Uni
               />
             ))}
           </section>
-          <VaultLoadingSkeleton />
+          <VaultLoadingSkeleton slow={loadSlow} />
         </div>
       ) : (
       <div className="mx-auto max-w-[1480px] px-4 pb-4 sm:px-6 sm:pb-5 lg:px-8">
@@ -1978,6 +2175,8 @@ export default function VaultListView({ lockedUniverse }: { lockedUniverse?: Uni
 
         {items.length === 0 && !initialLoadComplete ? (
           <VaultLoadingSkeleton />
+        ) : items.length === 0 && loadFailed ? (
+          <VaultLoadError onRetry={() => void hydrateAll()} />
         ) : items.length === 0 ? (
           <VaultEmptyState hasFilters={false} onClearFilters={handleClearFilters} />
         ) : vaultViewMode === "wall" ? (

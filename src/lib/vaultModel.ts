@@ -865,15 +865,47 @@ function stripEphemeralForPersistence(item: VaultItem): VaultItem {
   };
 }
 
+// The repaired list is remembered against the exact stored text it was made from. Every screen (cards, badges, the upload queue,
+// the cloud pull) reads the local vault many times per page, and each read used to decode, repair and re-write every item: about
+// half a second for 1,500 items, repeated dozens of times per page load, which is what froze the Vault. Any save, another tab's
+// save, a restore or a change of account changes the stored text, so a different key can never be served a stale list.
+let repairedItemsCache: { sig: string; items: VaultItem[] } | null = null;
+
+// Callers get their own copy of every item (they edit items and save them back), never the remembered objects.
+function copyForCaller(items: VaultItem[]): VaultItem[] {
+  return items.map((item) => ({ ...item }));
+}
+
+// A repaired item carries about a hundred keys, most of them undefined (they never reach storage). The remembered copy leaves
+// those out, so handing a copy to every caller is a handful of fields per item instead of a hundred.
+function withoutUndefined(item: VaultItem): VaultItem {
+  const out: Record<string, unknown> = {};
+  for (const key of Object.keys(item)) {
+    const value = (item as unknown as Record<string, unknown>)[key];
+    if (value !== undefined) out[key] = value;
+  }
+  return out as unknown as VaultItem;
+}
+
 function saveRawItems(items: VaultItem[]) {
   if (typeof window === "undefined") return;
   const safeItems = items.map((item) => stripEphemeralForPersistence(syncPrimaryFields(item)));
-  writeVaultLocalJson(JSON.stringify(safeItems));
+  const written = writeVaultLocalJson(JSON.stringify(safeItems));
+  // What was just saved is what the next read would produce: remember it so the read after a save does not repeat the work.
+  // (Only when every item is a complete record; an untitled or id-less entry is dropped by the repair step on the next read.)
+  const sig = getVaultLocalSignature();
+  if (written && sig !== null && safeItems.every((item) => item && item.id && String(item.title ?? "").trim())) {
+    repairedItemsCache = { sig, items: safeItems.map(withoutUndefined) };
+  }
 }
 
 function loadRawItems() {
   if (typeof window === "undefined") return [];
   try {
+    const stamp = getVaultLocalSignature();
+    if (stamp !== null && repairedItemsCache && repairedItemsCache.sig === stamp) {
+      return copyForCaller(repairedItemsCache.items);
+    }
     let raw = readVaultLocalJson();
     if (!raw) {
       const legacy = window.localStorage.getItem(LEGACY_LS_KEY);
@@ -886,6 +918,11 @@ function loadRawItems() {
     const parsed = JSON.parse(raw);
     const normalized = normalizeAll(parsed);
     saveRawItems(normalized.items);
+    const after = getVaultLocalSignature();
+    if (after !== null) {
+      repairedItemsCache = { sig: after, items: normalized.items.map(withoutUndefined) };
+      return copyForCaller(repairedItemsCache.items);
+    }
     return normalized.items;
   } catch {
     return [];
@@ -1187,7 +1224,9 @@ async function checkForceClearVault(profileId: string) {
 // added, edited or deleted since). Any local change, profile switch or
 // restore changes that signature and forces a real pull, exactly as before.
 const PULL_REUSE_MS = 4000;
-let pullInFlight: { promise: Promise<VaultItem[]>; startSig: string | null; profileId: string } | null = null;
+// "ok" is whether the cloud really answered (a failed or abandoned pull leaves the device copy as it was; the Vault page
+// must be able to tell "the cloud says empty" from "the cloud could not be reached").
+let pullInFlight: { promise: Promise<{ ok: boolean }>; startSig: string | null; profileId: string } | null = null;
 let lastPull: { finishedAt: number; sig: string | null; profileId: string } | null = null;
 
 function localItemsSignature() {
@@ -1223,19 +1262,23 @@ function writePullCursor(profileId: string, entry: { c: string; f: number } | nu
   }
 }
 
-async function pullAndMergeFromSupabase(profileId: string): Promise<VaultItem[]> {
+async function pullAndMergeFromSupabase(profileId: string): Promise<{ ok: boolean }> {
   // The answer is only for the person who asked. If nobody is signed in there is nothing to pull; if someone else signs in
   // (in this tab or another) before it arrives, it is dropped instead of being merged into the new person's copy.
   const startedAs = storedSessionUserId();
-  if (!startedAs) return loadRawItems();
+  if (!startedAs) return { ok: false };
   try {
-    if (profileId) await checkForceClearVault(profileId);
+    // The admin "clear this device's copy" flag is checked first. It must not hold the pull when the cloud is slow: on a
+    // connection that cannot reach the cloud one request took about 7 seconds to give up.
+    if (profileId) {
+      await Promise.race([checkForceClearVault(profileId), new Promise<void>((resolve) => setTimeout(resolve, 4000))]);
+    }
 
     const saved = readPullCursor(profileId);
     const dueForFull = !saved || Date.now() - saved.f > FULL_PULL_EVERY_MS;
     const knownLocalCount = loadRawItems().filter((item) => String(item.profile_id ?? "") === String(profileId)).length;
     const pulled = await fetchVaultItemsDelta(profileId || undefined, dueForFull ? undefined : saved?.c, knownLocalCount);
-    if (!stillSignedInAs(startedAs)) return loadRawItems();
+    if (!stillSignedInAs(startedAs)) return { ok: false };
     const remoteItems = pulled.items;
     if (pulled.cursor) {
       writePullCursor(profileId, { c: pulled.cursor, f: pulled.delta && saved ? saved.f : Date.now() });
@@ -1249,9 +1292,9 @@ async function pullAndMergeFromSupabase(profileId: string): Promise<VaultItem[]>
     // taking the signature, so an unchanged vault compares equal later.
     loadRawItems();
     lastPull = { finishedAt: Date.now(), sig: localItemsSignature(), profileId };
-    return merged;
+    return { ok: true };
   } catch {
-    return loadRawItems();
+    return { ok: false };
   }
 }
 
@@ -1261,9 +1304,23 @@ export async function syncVaultItemsFromSupabase(explicitProfileId?: string): Pr
   return explicitProfileId ? loadItems({ profileId: explicitProfileId }) : loadItems();
 }
 
-async function syncVaultItemsInternal(explicitProfileId?: string) {
-  if (typeof window === "undefined") return [];
-  if (!hasSupabaseEnv()) return loadRawItems();
+/**
+ * Same pull, but says whether the cloud really answered. A page showing "your vault is empty" must know the difference
+ * between "the cloud has nothing" (ok) and "the cloud could not be reached / the answer was dropped" (not ok).
+ */
+export async function syncVaultItemsFromSupabaseChecked(
+  explicitProfileId?: string
+): Promise<{ ok: boolean; items: VaultItem[] }> {
+  const { ok } = await syncVaultItemsInternal(explicitProfileId);
+  return {
+    ok,
+    items: explicitProfileId ? loadItems({ profileId: explicitProfileId }) : loadItems(),
+  };
+}
+
+async function syncVaultItemsInternal(explicitProfileId?: string): Promise<{ ok: boolean }> {
+  if (typeof window === "undefined") return { ok: false };
+  if (!hasSupabaseEnv()) return { ok: false };
 
   const profileId = explicitProfileId ?? getActiveProfileId();
   const sig = localItemsSignature();
@@ -1274,12 +1331,11 @@ async function syncVaultItemsInternal(explicitProfileId?: string) {
     lastPull.sig === sig &&
     Date.now() - lastPull.finishedAt < PULL_REUSE_MS
   ) {
-    return loadRawItems();
+    return { ok: true };
   }
 
   if (pullInFlight && pullInFlight.profileId === profileId && pullInFlight.startSig === sig) {
-    await pullInFlight.promise;
-    return loadRawItems();
+    return pullInFlight.promise;
   }
 
   const entry = { promise: pullAndMergeFromSupabase(profileId), startSig: sig, profileId };

@@ -2,8 +2,41 @@
 
 /* eslint-disable @next/next/no-img-element -- This is the app-owned progressive image primitive. */
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { CSSProperties } from "react";
+
+// A page of cards used to start every photo at once. On a slow link they then all shared the bandwidth and all finished late,
+// together, so nothing appeared for a long time. Photos that opt in (deferOffscreen) are asked for a few at a time, in page order,
+// so the first row is there while the rest are still on their way.
+const MAX_CONCURRENT_PHOTOS = 6;
+const PHOTO_SLOT_TIMEOUT_MS = 20_000;
+let activePhotoLoads = 0;
+const waitingForSlot: Array<() => void> = [];
+
+function takePhotoSlot(start: () => void): () => void {
+  let released = false;
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const run = () => {
+    activePhotoLoads += 1;
+    timer = setTimeout(release, PHOTO_SLOT_TIMEOUT_MS); // a photo that never answers must not hold up the others
+    start();
+  };
+  function release() {
+    if (released) return;
+    released = true;
+    if (timer) clearTimeout(timer);
+    if (waitingForSlot.includes(run)) {
+      waitingForSlot.splice(waitingForSlot.indexOf(run), 1); // it never started
+      return;
+    }
+    activePhotoLoads = Math.max(0, activePhotoLoads - 1);
+    const next = waitingForSlot.shift();
+    if (next) next();
+  }
+  if (activePhotoLoads < MAX_CONCURRENT_PHOTOS) run();
+  else waitingForSlot.push(run);
+  return release;
+}
 
 type ProgressiveImageProps = {
   src?: string | null;
@@ -12,6 +45,12 @@ type ProgressiveImageProps = {
   imageClassName?: string;
   placeholderClassName?: string;
   loading?: "eager" | "lazy";
+  /**
+   * Ask for the photo only once it is near the screen. The browser's own lazy loading looks further ahead on slow connections
+   * (up to about 2,500 px), which is exactly when bandwidth is scarce: a page of 60 cards then started ~100 photo requests that
+   * all shared the same slow link, so the ones on screen arrived last.
+   */
+  deferOffscreen?: boolean;
   draggable?: boolean;
   style?: CSSProperties;
 };
@@ -23,14 +62,59 @@ export default function ProgressiveImage({
   imageClassName = "object-cover",
   placeholderClassName = "",
   loading = "lazy",
+  deferOffscreen = false,
   draggable = false,
   style,
 }: ProgressiveImageProps) {
   const [loaded, setLoaded] = useState(false);
-  const imageSrc = typeof src === "string" ? src.trim() : "";
+  const [near, setNear] = useState(!deferOffscreen);
+  const [allowed, setAllowed] = useState(!deferOffscreen);
+  const boxRef = useRef<HTMLDivElement>(null);
+  const releaseSlotRef = useRef<(() => void) | null>(null);
+  const fullSrc = typeof src === "string" ? src.trim() : "";
+  const imageSrc = near && allowed ? fullSrc : "";
+
+  // Near the screen: wait for a free download slot, then start. The slot is given back when the photo finishes (or fails).
+  const slotRequestedRef = useRef(false);
+  useEffect(() => {
+    if (!deferOffscreen || !near || slotRequestedRef.current || !fullSrc) return;
+    slotRequestedRef.current = true;
+    releaseSlotRef.current = takePhotoSlot(() => setAllowed(true));
+  }, [deferOffscreen, near, fullSrc]);
+  useEffect(() => {
+    return () => {
+      releaseSlotRef.current?.();
+      releaseSlotRef.current = null;
+    };
+  }, []);
+  function photoDone() {
+    releaseSlotRef.current?.();
+    releaseSlotRef.current = null;
+  }
+
+  useEffect(() => {
+    if (near) return;
+    const box = boxRef.current;
+    if (!box || typeof IntersectionObserver === "undefined") {
+      queueMicrotask(() => setNear(true));
+      return;
+    }
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((entry) => entry.isIntersecting)) {
+          setNear(true);
+          observer.disconnect();
+        }
+      },
+      { rootMargin: "500px 0px" }
+    );
+    observer.observe(box);
+    return () => observer.disconnect();
+  }, [near]);
 
   return (
     <div
+      ref={boxRef}
       className={[
         "relative isolate overflow-hidden bg-[radial-gradient(circle_at_35%_20%,rgba(255,255,255,0.14),rgba(104,220,255,0.06)_35%,rgba(255,255,255,0.025)_62%,rgba(0,0,0,0.18)_100%)]",
         className,
@@ -54,7 +138,7 @@ export default function ProgressiveImage({
               alt=""
               aria-hidden="true"
               className={["absolute inset-0 h-full w-full scale-105 blur-xl transition-opacity duration-300", imageClassName, "opacity-70"].join(" ")}
-              loading={loading}
+              loading={deferOffscreen ? "eager" : loading}
               decoding="async"
               draggable={false}
             />
@@ -63,8 +147,12 @@ export default function ProgressiveImage({
             src={imageSrc}
             alt={alt}
             className={["relative z-10 h-full w-full transition-opacity duration-300", imageClassName, loaded ? "opacity-100" : "opacity-0"].join(" ")}
-            onLoad={() => setLoaded(true)}
-            loading={loading}
+            onLoad={() => {
+              setLoaded(true);
+              photoDone();
+            }}
+            onError={photoDone}
+            loading={deferOffscreen ? "eager" : loading}
             decoding="async"
             draggable={draggable}
           />

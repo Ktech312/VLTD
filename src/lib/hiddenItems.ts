@@ -130,31 +130,66 @@ export async function makeBlurThumb(item: VaultItem): Promise<string | undefined
   }
 }
 
-/** Names of the exhibits this item sits in, for the "this will hide it" note. */
-export function exhibitNamesForItem(itemId: string): string[] {
-  const names: string[] = [];
+// One pass over the exhibitions answers every item. Each card on the Vault asks "which exhibits hold me, am I hidden there" when it
+// appears, and each answer used to re-read, repair and compare the whole saved exhibition list (60 cards = 120 full reads per page).
+// The answer is remembered against the exact stored text of the list, so any save (here or in another tab) rebuilds it.
+const GALLERIES_STORAGE_KEY = "vltd_galleries"; // same key as galleryModel
+let exhibitIndex: { stored: string | null; names: Map<string, string[]>; hidden: Set<string> } | null = null;
+
+function readStoredGalleries(): string | null {
+  try {
+    return typeof window === "undefined" ? null : window.localStorage.getItem(GALLERIES_STORAGE_KEY);
+  } catch {
+    return null;
+  }
+}
+
+function buildExhibitIndex() {
+  const names = new Map<string, string[]>();
+  const hidden = new Set<string>();
   for (const gallery of loadGalleries({ includeAllProfiles: true })) {
-    if (!gallery.itemIds.includes(itemId)) continue;
-    const sections = getGallerySections(gallery).filter((section) => section.itemIds.includes(itemId));
-    if (sections.length === 0) {
-      names.push(gallery.title || "Exhibition");
-      continue;
+    const held = new Set(gallery.itemIds);
+    for (const snapshot of gallery.publicItemSnapshots ?? []) {
+      if (snapshot.hidden === true && held.has(snapshot.id)) hidden.add(snapshot.id);
     }
-    for (const section of sections) {
+    const titlesByItem = new Map<string, string[]>();
+    for (const section of getGallerySections(gallery)) {
       const title = section.title?.trim();
-      names.push(title && title !== "Untitled Section" ? title : gallery.title || "Exhibit");
+      const shown = title && title !== "Untitled Section" ? title : gallery.title || "Exhibit";
+      for (const id of section.itemIds) {
+        const list = titlesByItem.get(id) ?? [];
+        list.push(shown);
+        titlesByItem.set(id, list);
+      }
+    }
+    for (const id of held) {
+      const list = names.get(id) ?? [];
+      const inSections = titlesByItem.get(id);
+      if (inSections && inSections.length > 0) list.push(...inSections);
+      else list.push(gallery.title || "Exhibition");
+      names.set(id, list);
     }
   }
-  return Array.from(new Set(names));
+  for (const [id, list] of names) names.set(id, Array.from(new Set(list)));
+  // Read the text AFTER the list was loaded: loading can tidy and re-save it.
+  exhibitIndex = { stored: readStoredGalleries(), names, hidden };
+  return exhibitIndex;
+}
+
+function currentExhibitIndex() {
+  const stored = readStoredGalleries();
+  if (exhibitIndex && exhibitIndex.stored === stored) return exhibitIndex;
+  return buildExhibitIndex();
+}
+
+/** Names of the exhibits this item sits in, for the "this will hide it" note. */
+export function exhibitNamesForItem(itemId: string): string[] {
+  return [...(currentExhibitIndex().names.get(itemId) ?? [])];
 }
 
 /** True when the item is hidden in any exhibit that holds it. */
 export function isHiddenInExhibits(itemId: string): boolean {
-  return loadGalleries({ includeAllProfiles: true }).some(
-    (gallery) =>
-      gallery.itemIds.includes(itemId) &&
-      (gallery.publicItemSnapshots ?? []).some((snapshot) => snapshot.id === itemId && snapshot.hidden === true)
-  );
+  return currentExhibitIndex().hidden.has(itemId);
 }
 
 /** After an item is hidden or shown again, update every exhibit that holds it. */

@@ -18,7 +18,8 @@
     "test:delete": "node scripts/test-vault-delete.cjs",
     "test:category": "node scripts/test-category-label.cjs",
     "test:import": "node scripts/test-spreadsheet-import.cjs",
-    "test:errors": "node scripts/test-friendly-error.cjs"
+    "test:errors": "node scripts/test-friendly-error.cjs",
+    "test:vault-load": "node scripts/test-vault-load.cjs"
   },
   "dependencies": {
     "@imgly/background-removal": "^1.7.0",
