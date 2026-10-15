@@ -14,13 +14,14 @@ What you need:
 Chapters:
 0:00 Introduction
 0:06 Open Add Item
-0:16 Choose Manual entry
-0:27 Add a photo
-0:37 Name your item
-0:48 Choose a category and add details
-0:58 Save
-1:09 Find it in your Vault
-1:19 Open it any time
+0:13 Choose Manual entry
+0:21 Add a photo
+0:30 Name your item
+0:38 Choose a category and add details
+0:48 Save
+0:56 Confirmation
+1:01 Your saved item
+1:09 Open it any time
 
 Notes:
 - Made from tested screenshots with step captions; there is no voice-over.

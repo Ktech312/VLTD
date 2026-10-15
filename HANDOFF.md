@@ -1,15 +1,31 @@
-# 2026-10-14 (latest) — Tutorial videos and Help package prepared (review only; nothing published)
+# 2026-10-14 (latest) — Media polish pass (existing media only; no app changes; nothing published)
+
+Full detail: `docs/walkthrough/media-ready/CHANGE-REPORT.md`. Everything below is in `docs/walkthrough/media-ready/` (MP4s untracked on purpose).
+
+| Request | Result |
+|---|---|
+| Vertical exhibition preview: full title and selected items visible; Copy Link emphasised | Done: wide panel holds title and all four items; Copy Link zoomed about 3x with a ring |
+| Small controls: focus shots, sharper captures | 19 new high-resolution focus captures; each small control has its own zoomed, ringed step (tutorial 2 is 12 steps instead of 10) |
+| Add Item save sequence | Save (ringed) → "Saved!" banner alone (cropped, no reset form) → saved item in the Vault |
+| Play every export | All six played to the end without error; 230 frames sampled at segment starts, after dissolves, zoomed and before cuts. Fixed: caption text overlapping during step dissolves, crops under the app header, a clipped ring, a too-thin Copy Link crop |
+| Thumbnails, captions, Help screenshots | Regenerated (6 thumbnails, VTT/SRT, narration scripts, 36 numbered Help screenshots now zoomed/ringed, review index, README) |
+
+New lengths: 1:24, 1:44, 1:17, 1:08 (tutorials), 0:39, 0:33 (vertical). v1 files kept at `C:\Users\EK\VLTD-media-archive\v1-2026-10-14\` (outside the repo). The review is a sample, not each of ~6,000 frames; still screenshot-based (no recording, voice-over or cursor). Still UNVERIFIED: physical phone and push; Comcast resend delivery; cover-image title case; real mouse/touch arranging.
+
+---
+
+# 2026-10-14 — Tutorial videos and Help package prepared (review only; nothing published; lengths below are superseded by the polish pass above)
 
 Location: `docs/walkthrough/media-ready/` — open `index.html` (review page with all six videos playable and every file linked). Detail and file roles are in that folder's `README.md`.
 
 | Deliverable | Path | Format |
 |---|---|---|
-| Add your first item | `01-add-your-first-item/add-your-first-item.mp4` | 1920×1080, 1:37, captions burned in, + .vtt .srt |
-| Build and share an exhibition | `02-build-and-share-an-exhibition/build-and-share-an-exhibition.mp4` | 1920×1080, 1:58 |
-| Import your collection | `03-import-your-collection/import-your-collection.mp4` | 1920×1080, 1:37 |
-| Switch between Personal and Business | `04-switch-personal-and-business/switch-personal-and-business.mp4` | 1920×1080, 1:26 |
+| Add your first item | `01-add-your-first-item/add-your-first-item.mp4` | 1920×1080, 1:24, captions burned in, + .vtt .srt |
+| Build and share an exhibition | `02-build-and-share-an-exhibition/build-and-share-an-exhibition.mp4` | 1920×1080, 1:44 |
+| Import your collection | `03-import-your-collection/import-your-collection.mp4` | 1920×1080, 1:17 |
+| Switch between Personal and Business | `04-switch-personal-and-business/switch-personal-and-business.mp4` | 1920×1080, 1:08 |
 | Social: Add it to your Vault | `social-vertical/add-it-to-your-vault.mp4` | 1080×1920, 0:39 |
-| Social: Turn your collection into an exhibition | `social-vertical/turn-your-collection-into-an-exhibition.mp4` | 1080×1920, 0:31 |
+| Social: Turn your collection into an exhibition | `social-vertical/turn-your-collection-into-an-exhibition.mp4` | 1080×1920, 0:33 |
 | Help guide (HTML, numbered screenshots with alt text, links to videos) | `help-guide/index.html` + topics `delete-an-item-or-exhibition.html`, `reset-your-password.html` | not connected to any route |
 
 Each tutorial folder also has `narration-script.md`, `title-and-description.txt`, `thumbnail.jpg` and `screenshots/` (numbered); social files have script, post text and thumbnail.

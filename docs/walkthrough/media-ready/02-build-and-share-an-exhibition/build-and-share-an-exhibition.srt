@@ -3,45 +3,53 @@
 Build and share an exhibition. At least three items in your Vault. About 3 minutes.
 
 2
-00:00:06,100 --> 00:00:15,600
+00:00:06,100 --> 00:00:12,600
 Create First Exhibition. Open Exhibitions and choose Create First Exhibition.
 
 3
-00:00:16,600 --> 00:00:26,100
+00:00:13,600 --> 00:00:19,600
 Title and description. Give it a title and a short description.
 
 4
-00:00:27,100 --> 00:00:36,600
-Choose who can see it. Start with Private while you build. Then choose Create Exhibition.
+00:00:20,600 --> 00:00:27,100
+Choose who can see it. Start with Private while you build. You can open it up later.
 
 5
-00:00:37,600 --> 00:00:47,100
-Your exhibition page. Your exhibition is created, private and ready to fill.
+00:00:28,100 --> 00:00:33,600
+Create Exhibition. Then choose Create Exhibition.
 
 6
-00:00:48,100 --> 00:00:57,600
-Choose items. Choose Edit/Add. Your Vault items appear to pick from.
+00:00:34,600 --> 00:00:40,600
+Your exhibition page. Your exhibition is created, private and ready to fill.
 
 7
-00:00:58,600 --> 00:01:08,100
-Add them. Tick the items you want, then choose Add to Exhibit.
+00:00:41,600 --> 00:00:48,600
+Edit/Add. Choose Edit/Add to pick items from your Vault.
 
 8
-00:01:09,100 --> 00:01:18,600
-Review and save. Your items sit on the shelf with their total value. Choose Save.
+00:00:49,600 --> 00:00:56,600
+Choose items. Tick the items you want. A tick shows each item that is selected.
 
 9
-00:01:19,600 --> 00:01:29,100
-Preview as a visitor. Open the guest preview to see what visitors will see.
+00:00:57,600 --> 00:01:03,600
+Add to Exhibit. Choose Add to Exhibit. The number shows how many items you picked.
 
 10
-00:01:30,100 --> 00:01:39,600
-Choose visibility. Choose Public Exhibit, then confirm Make public.
+00:01:04,600 --> 00:01:11,600
+Review and save. Your items sit on the shelf. Choose Save.
 
 11
-00:01:40,600 --> 00:01:50,100
-Share it. The exhibition is Public. Use Copy Link or the share buttons.
+00:01:12,600 --> 00:01:19,600
+Preview as a visitor. Open the guest preview to see what visitors will see.
 
 12
-00:01:51,100 --> 00:01:57,000
+00:01:20,600 --> 00:01:27,600
+Choose visibility. Choose Public Exhibit, then confirm Make public.
+
+13
+00:01:28,600 --> 00:01:36,600
+Share it. The exhibition is Public. Choose Copy Link, or use a share button.
+
+14
+00:01:37,600 --> 00:01:43,500
 Your exhibition is public and ready to share. Next: import more of your collection with a spreadsheet.

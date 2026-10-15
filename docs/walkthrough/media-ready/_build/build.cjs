@@ -21,19 +21,33 @@ function wrap(text, maxChars) {
 }
 
 const shotCache = {};
-async function loadShot(name) {
-  if (shotCache[name]) return shotCache[name];
-  let img = sharp(path.join(SHOTS, name + ".jpg"));
-  let buf = await img.removeAlpha().raw().toBuffer({ resolveWithObject: true });
-  // redact the account email line in the account-menu screenshot
-  if (name === "t4-07-account-menu") {
-    const rx = 1040, ry = 96, rw = 215, rh = 18;
-    const out = Buffer.from(buf.data); const sp = ((ry + 1) * buf.info.width + (rx - 6)) * 3; const col = [out[sp], out[sp + 1], out[sp + 2]];
-    for (let y = 0; y < rh; y++) for (let x = 0; x < rw; x++) for (let c = 0; c < 3; c++) out[((ry + y) * buf.info.width + rx + x) * 3 + c] = col[c];
-    buf = { data: out, info: buf.info };
+const REDACT = {
+  "t4-07-account-menu": [[1040, 96, 215, 18]],
+  "f4-03-menu": [[1194, 132, 212, 22]],
+};
+async function loadShot(name, padAspect) {
+  const key = name + "|" + (padAspect ? padAspect.toFixed(4) : "");
+  if (shotCache[key]) return shotCache[key];
+  let buf = await sharp(path.join(SHOTS, name + ".jpg")).removeAlpha().raw().toBuffer({ resolveWithObject: true });
+  let data = Buffer.from(buf.data); let w = buf.info.width, h = buf.info.height;
+  for (const [rx, ry, rw, rh] of REDACT[name] || []) {
+    const sp = ((ry + 1) * w + (rx - 6)) * 3; const col = [data[sp], data[sp + 1], data[sp + 2]];
+    for (let y = 0; y < rh; y++) for (let x = 0; x < rw; x++) for (let c = 0; c < 3; c++) data[((ry + y) * w + rx + x) * 3 + c] = col[c];
   }
-  shotCache[name] = { raw: buf.data, w: buf.info.width, h: buf.info.height };
-  return shotCache[name];
+  let oy = 0;
+  if (padAspect && w / h > padAspect + 0.01) { // letterbox so the whole shot stays visible
+    const nh = Math.round(w / padAspect); const total = nh - h; const top = Math.floor(total / 2);
+    const rowAvg = (yy) => { let r = 0, g = 0, b = 0; for (let x = 0; x < w; x++) { const i = (yy * w + x) * 3; r += data[i]; g += data[i + 1]; b += data[i + 2]; } return [r / w | 0, g / w | 0, b / w | 0]; };
+    const tc = rowAvg(2), bc = rowAvg(h - 3);
+    const out = Buffer.alloc(w * nh * 3);
+    for (let y = 0; y < nh; y++) {
+      const sy = y - top; const c = sy < 0 ? tc : sy >= h ? bc : null;
+      for (let x = 0; x < w; x++) { const o = (y * w + x) * 3; if (c) { out[o] = c[0]; out[o + 1] = c[1]; out[o + 2] = c[2]; } else { const i = (sy * w + x) * 3; out[o] = data[i]; out[o + 1] = data[i + 1]; out[o + 2] = data[i + 2]; } }
+    }
+    data = out; h = nh; oy = top;
+  }
+  shotCache[key] = { raw: data, w, h, oy };
+  return shotCache[key];
 }
 
 // crop rect with the panel's aspect ratio, clamped to the source
@@ -50,17 +64,48 @@ function cropFor(roi, aspect, w, h, minFrac = 0.5) {
   return { x, y, w: rw, h: rh };
 }
 const lerp = (a, b, t) => a + (b - a) * t;
+// focus shots (no explicit roi) zoom toward the highlighted controls, keeping surrounding context
+function autoRoi(step, shot) {
+  if (step.roi || !step.marks || !step.marks.length || step.noZoom) return step.roi || null;
+  let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9;
+  for (const [x, y, w, h] of step.marks) { x0 = Math.min(x0, x); y0 = Math.min(y0, y); x1 = Math.max(x1, x + w); y1 = Math.max(y1, y + h); }
+  const m = 90; return [x0 - m, y0 - m, x1 - x0 + 2 * m, y1 - y0 + 2 * m];
+}
 
-async function panelFrame(shot, roi, aspect, PW, PH, t, minFrac = 0.5) {
-  // t in 0..1: 0 = full view (slightly framed), 1 = zoomed to roi
-  const full = cropFor(null, aspect, shot.w, shot.h);
-  const zoom = cropFor(roi, aspect, shot.w, shot.h, minFrac);
+function rectFor(roi, aspect, w, h, t, minFrac, startScale) {
+  const zoom = cropFor(roi, aspect, w, h, minFrac);
+  let from;
+  if (startScale) { // gentle push-in toward the focus rect
+    const cx = zoom.x + zoom.w / 2, cy = zoom.y + zoom.h / 2; let fw = Math.min(w, zoom.w * startScale), fh = fw / aspect;
+    if (fh > h) { fh = h; fw = fh * aspect; }
+    from = { x: Math.max(0, Math.min(w - fw, cx - fw / 2)), y: Math.max(0, Math.min(h - fh, cy - fh / 2)), w: fw, h: fh };
+  } else from = cropFor(null, aspect, w, h);
   const k = smooth(t);
-  const r = { x: lerp(full.x, zoom.x, k), y: lerp(full.y, zoom.y, k), w: lerp(full.w, zoom.w, k), h: lerp(full.h, zoom.h, k) };
+  return { x: lerp(from.x, zoom.x, k), y: lerp(from.y, zoom.y, k), w: lerp(from.w, zoom.w, k), h: lerp(from.h, zoom.h, k) };
+}
+async function panelFrame(shot, r, PW, PH) {
   const left = Math.round(r.x), top = Math.round(r.y), width = Math.max(8, Math.round(r.w)), height = Math.max(8, Math.round(r.h));
   return sharp(shot.raw, { raw: { width: shot.w, height: shot.h, channels: 3 } })
     .extract({ left: Math.min(left, shot.w - width), top: Math.min(top, shot.h - height), width, height })
     .resize(PW, PH, { kernel: "lanczos3", fit: "fill" }).raw().toBuffer();
+}
+
+// highlight rings drawn in panel coordinates (so they stay crisp at any zoom)
+function marksSvg(marks, r, PW, PH, oy, alpha, pulse) {
+  const sx = PW / r.w, sy = PH / r.h;
+  const rects = marks.map(([x, y, w, h]) => {
+    const pad = 7, X = (x - r.x) * sx - pad, Y = (y + oy - r.y) * sy - pad, W = w * sx + pad * 2, H = h * sy + pad * 2;
+    return `<rect x="${X}" y="${Y}" width="${W}" height="${H}" rx="12" fill="none" stroke="#000" stroke-opacity="${0.55 * alpha}" stroke-width="11"/>
+      <rect x="${X}" y="${Y}" width="${W}" height="${H}" rx="12" fill="none" stroke="#52D6F4" stroke-opacity="${alpha * pulse}" stroke-width="6"/>`;
+  }).join("");
+  return Buffer.from(`<svg width="${PW}" height="${PH}" xmlns="http://www.w3.org/2000/svg">${rects}</svg>`);
+}
+async function withMarks(raw, PW, PH, marks, r, oy, lt, t0) {
+  if (!marks || !marks.length) return raw;
+  const a = smooth((lt - t0) / 0.5); if (a <= 0) return raw;
+  const pulse = 0.82 + 0.18 * Math.sin((lt - t0) * 4.2);
+  return sharp(raw, { raw: { width: PW, height: PH, channels: 3 } })
+    .composite([{ input: marksSvg(marks, r, PW, PH, oy, a, pulse) }]).removeAlpha().raw().toBuffer();
 }
 
 function blendRaw(a, b, alpha) { // both RGBA same size; returns new buffer
@@ -87,7 +132,7 @@ async function buildTutorial(T, outDir) {
 
   const segs = []; // {kind, dur, ...}
   segs.push({ kind: "intro", dur: 5.5 });
-  T.steps.forEach((s, i) => segs.push({ kind: "step", idx: i, dur: 10.5, step: s }));
+  T.steps.forEach((s, i) => segs.push({ kind: "step", idx: i, dur: s.dur || 10.5, step: s }));
   segs.push({ kind: "outro", dur: 7 });
 
   const total = segs.reduce((a, s) => a + s.dur, 0);
@@ -111,7 +156,7 @@ async function buildTutorial(T, outDir) {
       seg.layer = await sharp(baseBg).composite([{ input: Buffer.from(svg) }, { input: logo, left: 160, top: 120 }]).raw().ensureAlpha().toBuffer();
     } else if (seg.kind === "outro") {
       const shot = await loadShot(T.result.shot);
-      const thumb = await sharp(shot.raw, { raw: { width: shot.w, height: shot.h, channels: 3 } }).resize(840, Math.round(840 * SRC_H / SRC_W)).png().toBuffer();
+      const thumb = await sharp(shot.raw, { raw: { width: shot.w, height: shot.h, channels: 3 } }).resize(840, Math.round(840 * shot.h / shot.w)).png().toBuffer();
       const svg = `<svg width="${W}" height="${H}" xmlns="http://www.w3.org/2000/svg">
         <text x="120" y="400" font-size="30" letter-spacing="6" fill="#52D6F4" font-family="Segoe UI, Arial, sans-serif" font-weight="600">DONE</text>
         ${wrap(T.result.text, 24).map((l, i) => `<text x="120" y="${480 + i * 84}" font-size="68" font-weight="700" fill="#eceef2" font-family="Segoe UI, Arial, sans-serif">${esc(l)}</text>`).join("")}
@@ -121,8 +166,14 @@ async function buildTutorial(T, outDir) {
     } else {
       const s = seg.step; const n = T.steps.length;
       const capLines = wrap(s.text, 88);
+      let box = { left: panelLeft, top: panelTop, w: PW, h: PH };
+      if (s.strip) { // callout: just the strip, enlarged, centred in the panel zone
+        const sc = PW / s.strip[2]; const sh = Math.round(s.strip[3] * sc);
+        box = { left: panelLeft, top: panelTop + Math.round((PH - sh) / 2), w: PW, h: sh };
+      }
+      seg.box = box;
       const svg = `<svg width="${W}" height="${H}" xmlns="http://www.w3.org/2000/svg">
-        <rect x="${panelLeft - 3}" y="${panelTop - 3}" width="${PW + 6}" height="${PH + 6}" fill="none" stroke="#2f3744" stroke-width="3" rx="6"/>
+        <rect x="${box.left - 3}" y="${box.top - 3}" width="${box.w + 6}" height="${box.h + 6}" fill="none" stroke="#2f3744" stroke-width="3" rx="6"/>
         <rect x="0" y="${panelTop + PH + 24}" width="${W}" height="${H - (panelTop + PH + 24)}" fill="#0a0c10"/>
         <rect x="${panelLeft}" y="${panelTop + PH + 24}" width="6" height="150" fill="#52D6F4"/>
         <text x="${panelLeft + 28}" y="${panelTop + PH + 78}" font-size="46" font-weight="700" fill="#ffffff" font-family="Segoe UI, Arial, sans-serif">${esc(s.title)}</text>
@@ -131,7 +182,11 @@ async function buildTutorial(T, outDir) {
         <text x="${W - panelLeft - 105}" y="60" font-size="24" fill="#eceef2" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-weight="600">Step ${seg.idx + 1} of ${n}</text>
       </svg>`;
       seg.overlay = await sharp(baseBg).composite([{ input: Buffer.from(svg) }, { input: logo, left: panelLeft, top: 24 }]).raw().ensureAlpha().toBuffer();
-      seg.shot = await loadShot(s.shot);
+      if (s.strip) {
+        const full = await loadShot(s.shot); const [sx, sy, sw, sh] = s.strip;
+        seg.stripRaw = await sharp(full.raw, { raw: { width: full.w, height: full.h, channels: 3 } }).extract({ left: sx, top: sy, width: sw, height: sh })
+          .resize(box.w, box.h, { kernel: "lanczos3", fit: "fill" }).raw().toBuffer();
+      } else seg.shot = await loadShot(s.shot, SRC_W / SRC_H);
     }
   }
 
@@ -146,17 +201,33 @@ async function buildTutorial(T, outDir) {
     const lt = t - tl.start; const seg = tl.seg;
     let frame;
     if (seg.kind === "step") {
-      const zoomT = smooth((lt - 1.4) / 3.0);
-      const panel = await panelFrame(seg.shot, seg.step.roi, SRC_W / SRC_H, PW, PH, zoomT);
-      const rgbaPanel = Buffer.allocUnsafe(PW * PH * 4);
+      const bw = seg.box.w, bh = seg.box.h; let panel;
+      if (seg.stripRaw) panel = seg.stripRaw;
+      else {
+        const sh = seg.shot; const ar = autoRoi(seg.step, sh); const roi = ar ? [ar[0], ar[1] + sh.oy, ar[2], ar[3]] : null;
+        const zoomT = smooth((lt - 1.4) / 3.0);
+        const r = roi ? rectFor(roi, SRC_W / SRC_H, sh.w, sh.h, zoomT, 0.5) : cropFor(null, SRC_W / SRC_H, sh.w, sh.h);
+        panel = await panelFrame(sh, r, bw, bh);
+        panel = await withMarks(panel, bw, bh, seg.step.marks, r, sh.oy, lt, roi ? 3.4 : 1.0);
+      }
+      const rgbaPanel = Buffer.allocUnsafe(bw * bh * 4);
       for (let i = 0, j = 0; i < panel.length; i += 3, j += 4) { rgbaPanel[j] = panel[i]; rgbaPanel[j + 1] = panel[i + 1]; rgbaPanel[j + 2] = panel[i + 2]; rgbaPanel[j + 3] = 255; }
       frame = await sharp(seg.overlay, { raw: { width: W, height: H, channels: 4 } })
-        .composite([{ input: rgbaPanel, raw: { width: PW, height: PH, channels: 4 }, left: panelLeft, top: panelTop }]).raw().toBuffer();
+        .composite([{ input: rgbaPanel, raw: { width: bw, height: bh, channels: 4 }, left: seg.box.left, top: seg.box.top }]).raw().toBuffer();
     } else {
       frame = seg.layer;
     }
     // crossfade from previous segment's last frame
-    if (lt < 0.6 && lastFrame && tl.start > 0) frame = blendRaw(lastFrame, frame, smooth(lt / 0.6));
+    if (lt < 0.6 && lastFrame && tl.start > 0) {
+      const prevSeg = timeline[timeline.indexOf(tl) - 1];
+      const cur = frame; frame = blendRaw(lastFrame, frame, smooth(lt / 0.6));
+      if (prevSeg && prevSeg.seg.kind === "step" && seg.kind === "step") {
+        // step -> step: only the screenshot panel dissolves; caption band and header cut cleanly so text never overlaps
+        const src = lt < 0.3 ? lastFrame : cur; const stride = W * 4;
+        src.copy(frame, 0, 0, panelTop * stride);
+        src.copy(frame, (panelTop + PH) * stride, (panelTop + PH) * stride, H * stride);
+      }
+    }
     enc.addFrameRgba(frame);
     if (lt > seg.dur - 0.1) lastFrame = frame;
     if (f % 150 === 0) process.stdout.write(`\r${T.file} ${f}/${nFrames}`);
@@ -185,7 +256,7 @@ async function buildSocial(S, outDir) {
   const bg = (extra) => `<svg width="${W}" height="${H}" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0c0f14"/><stop offset="1" stop-color="#182029"/></linearGradient></defs><rect width="100%" height="100%" fill="url(#g)"/>${extra || ""}</svg>`;
   const base = await sharp(Buffer.from(bg())).png().toBuffer();
   const segs = [{ kind: "hook", dur: 4 }];
-  S.steps.forEach((s, i) => segs.push({ kind: "step", step: s, idx: i, dur: 7.5 }));
+  S.steps.forEach((s, i) => segs.push({ kind: "step", step: s, idx: i, dur: s.dur || 7.5 }));
   segs.push({ kind: "end", dur: 4.5 });
   const total = segs.reduce((a, s) => a + s.dur, 0);
   const enc = await HME.createH264MP4Encoder();
@@ -204,9 +275,13 @@ async function buildSocial(S, outDir) {
       seg.layer = await sharp(base).composite([{ input: Buffer.from(svg) }, { input: logo, left: Math.round((W - (await sharp(logo).metadata()).width) / 2), top: 640 }]).raw().ensureAlpha().toBuffer();
     } else {
       const lines = wrap(seg.step.text.replace(/^\d+\s+/, ""), 20);
+      // panel adapts to the focus area so wide shots are never cut off
+      const sRoi0 = seg.step.roi || seg.step.strip;
+      const bhs = Math.max(220, Math.min(PH, Math.round(PW / (sRoi0[2] / sRoi0[3]))));
+      seg.box = { left: panelLeft, top: panelTop + Math.round((PH - bhs) / 2), w: PW, h: bhs };
       const num = seg.step.text.match(/^(\d+)/)[1];
       const svg = `<svg width="${W}" height="${H}" xmlns="http://www.w3.org/2000/svg">
-        <rect x="${panelLeft - 4}" y="${panelTop - 4}" width="${PW + 8}" height="${PH + 8}" fill="none" stroke="#2f3744" stroke-width="4" rx="8"/>
+        <rect x="${seg.box.left - 4}" y="${seg.box.top - 4}" width="${seg.box.w + 8}" height="${seg.box.h + 8}" fill="none" stroke="#2f3744" stroke-width="4" rx="8"/>
         <circle cx="${panelLeft + 56}" cy="1520" r="52" fill="#52D6F4"/>
         <text x="${panelLeft + 56}" y="1538" font-size="56" font-weight="800" fill="#0a0c10" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif">${num}</text>
         ${lines.map((l, i) => `<text x="${panelLeft + 140}" y="${1532 + i * 92}" font-size="78" font-weight="700" fill="#ffffff" font-family="Segoe UI, Arial, sans-serif">${esc(l)}</text>`).join("")}
@@ -221,12 +296,23 @@ async function buildSocial(S, outDir) {
     const t = f / FPS; const x = tl.find((q) => t >= q.start && t < q.end) || tl[tl.length - 1]; const lt = t - x.start; const seg = x.seg;
     let frame;
     if (seg.kind === "step") {
-      const panel = await panelFrame(seg.shot, seg.step.roi, PW / PH, PW, PH, smooth((lt - 0.8) / 2.5), 0.25);
-      const rgba = Buffer.allocUnsafe(PW * PH * 4);
+      const bw = seg.box.w, bh = seg.box.h; const sh = seg.shot; const sRoi = seg.step.roi || seg.step.strip;
+      const r = rectFor(sRoi, bw / bh, sh.w, sh.h, smooth((lt - 0.6) / 2.0), 0.05, seg.step.startScale || 1.18);
+      let panel = await panelFrame(sh, r, bw, bh);
+      panel = await withMarks(panel, bw, bh, seg.step.marks, r, 0, lt, 2.6);
+      const rgba = Buffer.allocUnsafe(bw * bh * 4);
       for (let i = 0, j = 0; i < panel.length; i += 3, j += 4) { rgba[j] = panel[i]; rgba[j + 1] = panel[i + 1]; rgba[j + 2] = panel[i + 2]; rgba[j + 3] = 255; }
-      frame = await sharp(seg.overlay, { raw: { width: W, height: H, channels: 4 } }).composite([{ input: rgba, raw: { width: PW, height: PH, channels: 4 }, left: panelLeft, top: panelTop }]).raw().toBuffer();
+      frame = await sharp(seg.overlay, { raw: { width: W, height: H, channels: 4 } }).composite([{ input: rgba, raw: { width: bw, height: bh, channels: 4 }, left: seg.box.left, top: seg.box.top }]).raw().toBuffer();
     } else frame = seg.layer;
-    if (lt < 0.5 && lastFrame && x.start > 0) frame = blendRaw(lastFrame, frame, smooth(lt / 0.5));
+    if (lt < 0.5 && lastFrame && x.start > 0) {
+      const prevSeg = tl[tl.indexOf(x) - 1]; const cur = frame;
+      frame = blendRaw(lastFrame, frame, smooth(lt / 0.5));
+      if (prevSeg && prevSeg.seg.kind === "step" && seg.kind === "step") { // only the screenshot dissolves; caption and header cut cleanly
+        const src = lt < 0.25 ? lastFrame : cur; const stride = W * 4;
+        src.copy(frame, 0, 0, panelTop * stride);
+        src.copy(frame, (panelTop + PH) * stride, (panelTop + PH) * stride, H * stride);
+      }
+    }
     enc.addFrameRgba(frame);
     if (lt > seg.dur - 0.08) lastFrame = frame;
     if (f % 150 === 0) process.stdout.write(`\r${S.file} ${f}/${nFrames}`);
@@ -251,7 +337,7 @@ function writeSubs(dir, base, cues) {
   fs.writeFileSync(path.join(dir, base + ".srt"), cues.map((c, i) => `${i + 1}\n${tc(c.s, true)} --> ${tc(c.e, true)}\n${c.text}\n`).join("\n"));
 }
 
-module.exports = { buildTutorial, buildSocial, writeSubs, loadShot, SRC_W, SRC_H };
+module.exports = { autoRoi, rectFor, panelFrame, withMarks, cropFor, buildTutorial, buildSocial, writeSubs, loadShot, SRC_W, SRC_H };
 
 if (require.main === module) {
   (async () => {

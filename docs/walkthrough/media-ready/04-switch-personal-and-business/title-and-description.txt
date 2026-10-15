@@ -15,12 +15,12 @@ What you need:
 Chapters:
 0:00 Introduction
 0:06 Add a business profile
-0:16 Enter the details
-0:27 You are in the Business profile
-0:37 A separate, empty Vault
-0:48 Add items to this profile
-0:58 Switch profile
-1:09 Your Personal Vault is unchanged
+0:14 Enter the details
+0:23 You are in the Business profile
+0:30 A separate, empty Vault
+0:37 Add items to this profile
+0:44 Switch profile
+0:53 Your Personal Vault is unchanged
 
 Notes:
 - Made from tested screenshots with step captions; there is no voice-over.

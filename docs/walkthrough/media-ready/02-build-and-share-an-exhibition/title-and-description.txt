@@ -14,15 +14,17 @@ What you need:
 Chapters:
 0:00 Introduction
 0:06 Create First Exhibition
-0:16 Title and description
-0:27 Choose who can see it
-0:37 Your exhibition page
-0:48 Choose items
-0:58 Add them
-1:09 Review and save
-1:19 Preview as a visitor
-1:30 Choose visibility
-1:40 Share it
+0:13 Title and description
+0:20 Choose who can see it
+0:28 Create Exhibition
+0:34 Your exhibition page
+0:41 Edit/Add
+0:49 Choose items
+0:57 Add to Exhibit
+1:04 Review and save
+1:12 Preview as a visitor
+1:20 Choose visibility
+1:28 Share it
 
 Notes:
 - Made from tested screenshots with step captions; there is no voice-over.

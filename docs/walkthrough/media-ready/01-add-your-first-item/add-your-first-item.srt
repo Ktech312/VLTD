@@ -3,37 +3,41 @@
 Add your first item. A photo of the item on your device. About 2 minutes.
 
 2
-00:00:06,100 --> 00:00:15,600
+00:00:06,100 --> 00:00:12,600
 Open Add Item. In your Vault, choose ADD ITEM.
 
 3
-00:00:16,600 --> 00:00:26,100
+00:00:13,600 --> 00:00:20,600
 Choose Manual entry. Pick Manual entry to type the details yourself.
 
 4
-00:00:27,100 --> 00:00:36,600
+00:00:21,600 --> 00:00:29,600
 Add a photo. Upload a photo from your device. It appears in the photo strip.
 
 5
-00:00:37,600 --> 00:00:47,100
+00:00:30,600 --> 00:00:37,600
 Name your item. Type a title. The form shows Ready to save.
 
 6
-00:00:48,100 --> 00:00:57,600
+00:00:38,600 --> 00:00:47,600
 Choose a category and add details. Pick a Universe and Category. Series, purchase price and current value are optional.
 
 7
-00:00:58,600 --> 00:01:08,100
-Save. Choose Save. You will see a green Saved! banner.
+00:00:48,600 --> 00:00:55,600
+Save. When the form says Ready to save, choose Save.
 
 8
-00:01:09,100 --> 00:01:18,600
-Find it in your Vault. Your item is in the Vault with its photo, category and value.
+00:00:56,600 --> 00:01:00,600
+Confirmation. A green Saved! banner confirms it.
 
 9
-00:01:19,600 --> 00:01:29,100
-Open it any time. Open the item to see its photo, details, value and gain.
+00:01:01,600 --> 00:01:08,600
+Your saved item. Your item is in the Vault with its photo, category and value.
 
 10
-00:01:30,100 --> 00:01:36,000
+00:01:09,600 --> 00:01:16,100
+Open it any time. Open the item to see its photo, details, value and gain.
+
+11
+00:01:17,100 --> 00:01:23,000
 Your first item is saved to your Vault. Next: build an exhibition from your items.

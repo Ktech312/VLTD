@@ -2,11 +2,16 @@
 
 Open **[index.html](index.html)** for a page with every video playable in place and links to every file. **Nothing here is published, uploaded or linked from the app.**
 
+## Revision 2 (2026-10-14, polish pass)
+
+Videos, thumbnails, captions and Help screenshots were rebuilt with larger focus shots and highlighted controls. See **[CHANGE-REPORT.md](CHANGE-REPORT.md)** for what changed and how it was checked. Nothing in the VLTD app was changed.
+
 ## What these are
 
 - **Screenshot-based videos with captions and zooms, not screen recordings.** They were built from screenshots of the live site (tested in a desktop browser with synthetic data). No cursor movement is shown, so nothing here pretends to be an interaction that was not tested.
 - No voice-over and no music. The text is burned in; `.vtt` / `.srt` files carry the same text. `narration-script.md` is ready if a voice is recorded later.
 - Captured against production on 2026-10-14 (code through commit `75b59aa`). Re-check the labels if the app changes.
+- Cyan rings mark the control being demonstrated. Zooms stay at about 2x or less of the original capture; the Help screenshots show the same zoomed, marked view.
 
 ## Which file is for what
 
@@ -18,12 +23,12 @@ Open **[index.html](index.html)** for a page with every video playable in place 
 
 | Video | Length | Folder |
 |---|---|---|
-| Add your first item | 1:37 | `01-add-your-first-item/` |
-| Build and share an exhibition | 1:58 | `02-build-and-share-an-exhibition/` |
-| Import your collection | 1:37 | `03-import-your-collection/` |
-| Switch between Personal and Business | 1:26 | `04-switch-personal-and-business/` |
+| Add your first item | 1:24 | `01-add-your-first-item/` |
+| Build and share an exhibition | 1:44 | `02-build-and-share-an-exhibition/` |
+| Import your collection | 1:17 | `03-import-your-collection/` |
+| Switch between Personal and Business | 1:08 | `04-switch-personal-and-business/` |
 | Add it to your Vault (social) | 0:39 | `social-vertical/add-it-to-your-vault.mp4` |
-| Turn your collection into an exhibition (social) | 0:31 | `social-vertical/turn-your-collection-into-an-exhibition.mp4` |
+| Turn your collection into an exhibition (social) | 0:33 | `social-vertical/turn-your-collection-into-an-exhibition.mp4` |
 
 ## Not shown on purpose
 

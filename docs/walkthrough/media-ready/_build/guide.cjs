@@ -3,7 +3,7 @@ const fs = require("fs");
 const path = require("path");
 const C = require("./content.cjs");
 const L = JSON.parse(fs.readFileSync(path.join(__dirname, "package-listing.json"), "utf8"));
-const OUT = "C:/Users/EK/VLTD/docs/walkthrough/media-ready";
+const OUT = process.env.PKG_OUT || path.join(__dirname, "stage");
 const esc = (s) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 const mm = (s) => { s = Math.round(s); return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`; };
 
@@ -48,7 +48,7 @@ fs.writeFileSync(path.join(OUT, "help-guide", "reset-your-password.html"), page(
 <div class="box"><b>"This link has expired"</b> Reset links work once and only for a short time. Choose <b>Send me a new link</b> to get another.</div>`));
 
 // ---- review index ----
-let idx = `<h1>VLTD tutorial videos: review package</h1><p class="lead">Prepared 2026-10-14 for review. <b>Nothing is published.</b> All videos are caption-led and built from screenshots of the live site (tested desktop browser, synthetic data). They are <b>screenshot-based videos, not screen recordings</b>, and have no voice-over.</p>
+let idx = `<h1>VLTD tutorial videos: review package</h1><p class="lead">Prepared 2026-10-14 for review (revision 2: see <a href="CHANGE-REPORT.md">CHANGE-REPORT.md</a>). <b>Nothing is published.</b> All videos are caption-led and built from screenshots of the live site (tested desktop browser, synthetic data). They are <b>screenshot-based videos, not screen recordings</b>, and have no voice-over.</p>
 <div class="box"><b>Which file is for what</b><ul>
 <li><b>YouTube / landscape 16:9 (1920×1080):</b> the four tutorial MP4s below, with matching .vtt/.srt caption files.</li>
 <li><b>Vertical social (1080×1920):</b> the two MP4s under "Social cuts".</li>

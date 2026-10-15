@@ -3,9 +3,9 @@ const fs = require("fs");
 const path = require("path");
 const sharp = require("C:/Users/EK/VLTD/node_modules/sharp");
 const C = require("./content.cjs");
-const { loadShot, SRC_W, SRC_H } = require("./build.cjs");
+const { loadShot, SRC_W, SRC_H, autoRoi, rectFor, cropFor, panelFrame, withMarks } = require("./build.cjs");
 
-const OUT = "C:/Users/EK/VLTD/docs/walkthrough/media-ready";
+const OUT = process.env.PKG_OUT || path.join(__dirname, "stage");
 const BUILT = path.join(__dirname, "out");
 const SHOTS = path.join(__dirname, "shots");
 const LOGO = "C:/Users/EK/VLTD/marketing/logos/vltd-logo-platinum.png";
@@ -19,13 +19,23 @@ const TITLES = {
   "04-switch-personal-and-business": { yt: "Personal and Business profiles on VLTD: create one and switch", desc: "Create a Business profile, switch between Personal and Business, and see that each profile keeps its own separate collection." },
 };
 
-async function redactedShot(name) {
-  const s = await loadShot(name);
-  return sharp(s.raw, { raw: { width: s.w, height: s.h, channels: 3 } }).jpeg({ quality: 92 }).toBuffer();
+async function helpShot(step) {
+  const PW = 1506, PH = 800, aspect = 1354 / 719;
+  if (step.strip) {
+    const s = await loadShot(step.shot); const [x, y, w, h] = step.strip;
+    return sharp(s.raw, { raw: { width: s.w, height: s.h, channels: 3 } }).extract({ left: x, top: y, width: w, height: h }).resize(PW, Math.round(PW * h / w), { kernel: "lanczos3" }).jpeg({ quality: 92 }).toBuffer();
+  }
+  const sh = await loadShot(step.shot, aspect); const ar = autoRoi(step, sh);
+  const roi = ar ? [ar[0], ar[1] + sh.oy, ar[2], ar[3]] : null;
+  const r = roi ? rectFor(roi, aspect, sh.w, sh.h, 1, 0.5) : cropFor(null, aspect, sh.w, sh.h);
+  let panel = await panelFrame(sh, r, PW, PH);
+  panel = await withMarks(panel, PW, PH, step.marks, r, sh.oy, 10, 0);
+  return sharp(panel, { raw: { width: PW, height: PH, channels: 3 } }).jpeg({ quality: 92 }).toBuffer();
 }
 
-async function thumb(title, shotName, dest) {
-  const s = await loadShot(shotName);
+async function thumb(title, shotName, dest, roi) {
+  let s = await loadShot(shotName);
+  if (roi) { const [x, y, w, h] = roi; const cw = Math.min(w, s.w - x), ch = Math.min(h, s.h - y); s = { raw: await sharp(s.raw, { raw: { width: s.w, height: s.h, channels: 3 } }).extract({ left: x, top: y, width: cw, height: ch }).raw().toBuffer(), w: cw, h: ch }; }
   const logo = await sharp(LOGO).resize({ height: 46 }).png().toBuffer();
   const img = await sharp(s.raw, { raw: { width: s.w, height: s.h, channels: 3 } }).resize(820, Math.round(820 * s.h / s.w)).png().toBuffer();
   const svg = `<svg width="1280" height="720" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#0c0f14"/><stop offset="1" stop-color="#18202a"/></linearGradient></defs>
@@ -39,15 +49,16 @@ async function thumb(title, shotName, dest) {
 
 async function socialThumb(title, shotName, roi, dest) {
   const s = await loadShot(shotName);
-  const [x, y, w, h] = roi; const size = Math.min(w, h);
-  const crop = await sharp(s.raw, { raw: { width: s.w, height: s.h, channels: 3 } }).extract({ left: Math.round(x), top: Math.round(y), width: Math.round(Math.min(size, s.w - x)), height: Math.round(Math.min(size, s.h - y)) }).resize(900, 900).png().toBuffer();
+  const [x, y, w0, h0] = roi || [0, 0, s.w, s.h]; const w = Math.min(w0, s.w - x), h = Math.min(h0, s.h - y);
+  const ch = Math.round(900 * h / w);
+  const crop = await sharp(s.raw, { raw: { width: s.w, height: s.h, channels: 3 } }).extract({ left: Math.round(x), top: Math.round(y), width: Math.round(w), height: Math.round(h) }).resize(900, ch).png().toBuffer();
   const logo = await sharp(LOGO).resize({ height: 70 }).png().toBuffer();
   const lines = []; let cur = "";
   for (const wd of title.split(/\s+/)) { if ((cur + " " + wd).trim().length > 18) { lines.push(cur); cur = wd; } else cur = (cur + " " + wd).trim(); }
   if (cur) lines.push(cur);
   const svg = `<svg width="1080" height="1920" xmlns="http://www.w3.org/2000/svg"><rect width="100%" height="100%" fill="#0c0f14"/>
     ${lines.map((l, i) => `<text x="540" y="${1380 + i * 100}" font-size="84" font-weight="700" fill="#eceef2" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif">${esc(l)}</text>`).join("")}</svg>`;
-  await sharp(Buffer.from(svg)).composite([{ input: logo, left: 60, top: 100 }, { input: crop, left: 90, top: 300 }]).jpeg({ quality: 90 }).toFile(dest);
+  await sharp(Buffer.from(svg)).composite([{ input: logo, left: 60, top: 100 }, { input: crop, left: 90, top: 300 + Math.round((900 - ch) / 2) }]).jpeg({ quality: 90 }).toFile(dest);
 }
 
 (async () => {
@@ -60,13 +71,13 @@ async function socialThumb(title, shotName, roi, dest) {
     const dir = path.join(OUT, T.id);
     fs.mkdirSync(path.join(dir, "screenshots"), { recursive: true });
     for (const ext of ["mp4", "vtt", "srt"]) fs.copyFileSync(path.join(BUILT, T.id, `${T.file}.${ext}`), path.join(dir, `${T.file}.${ext}`));
-    await thumb(T.title, T.result.shot, path.join(dir, "thumbnail.jpg"));
+    await thumb(T.title, T.thumb.shot, path.join(dir, "thumbnail.jpg"), T.thumb.roi);
     // numbered screenshots (unique, in step order)
     const seen = []; const shots = [];
-    T.steps.forEach((s, i) => { shots.push({ n: i + 1, shot: s.shot, title: s.title, text: s.text }); });
+    T.steps.forEach((s, i) => { shots.push({ n: i + 1, shot: s.shot, title: s.title, text: s.text, step: s }); });
     for (const sh of shots) {
-      const name = `${String(sh.n).padStart(2, "0")}-${sh.shot.replace(/^t\d-\d+-/, "")}.jpg`;
-      fs.writeFileSync(path.join(dir, "screenshots", name), await redactedShot(sh.shot));
+      const name = `${String(sh.n).padStart(2, "0")}-${sh.title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")}.jpg`;
+      fs.writeFileSync(path.join(dir, "screenshots", name), await helpShot(sh.step));
       sh.file = `screenshots/${name}`;
     }
     const m = meta[T.id] || { cues: [], duration: 0 };
@@ -89,7 +100,7 @@ async function socialThumb(title, shotName, roi, dest) {
   const socialList = [];
   for (const S of C.social) {
     for (const ext of ["mp4", "vtt", "srt"]) fs.copyFileSync(path.join(BUILT, "social-vertical", `${S.file}.${ext}`), path.join(sdir, `${S.file}.${ext}`));
-    await socialThumb(S.title, S.steps[S.steps.length - 1].shot, S.steps[S.steps.length - 1].roi, path.join(sdir, `${S.file}-thumbnail.jpg`));
+    await socialThumb(S.title, S.thumb.shot, S.thumb.roi, path.join(sdir, `${S.file}-thumbnail.jpg`));
     const m = meta[S.id] || { duration: 0 };
     const script = `# On-screen script: ${S.title}\n\nVertical 1080x1920 · ${mm(m.duration)} · captions only (no voice-over).\n\n- Hook: ${S.hook}\n${S.steps.map((s) => "- " + s.text.replace(/\s+/, ": ")).join("\n")}\n- End card: ${S.end}\n`;
     fs.writeFileSync(path.join(sdir, `${S.file}-script.md`), script);

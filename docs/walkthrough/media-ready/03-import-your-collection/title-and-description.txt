@@ -15,13 +15,13 @@ What you need:
 Chapters:
 0:00 Introduction
 0:06 Open Import
-0:16 Choose your spreadsheet
-0:27 Check the summary
-0:37 Review duplicates and warnings
-0:48 Check the column mapping
-0:58 Choose how to handle duplicates
-1:09 Confirm
-1:19 See your items
+0:13 Choose your spreadsheet
+0:21 Check the summary
+0:30 Review duplicates and warnings
+0:39 Check the column mapping
+0:46 Handle duplicates and confirm
+0:54 See what was imported
+1:03 See your items
 
 Notes:
 - Made from tested screenshots with step captions; there is no voice-over.
