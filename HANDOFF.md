@@ -1,4 +1,50 @@
-# 2026-10-14 (latest) — Media polish pass (existing media only; no app changes; nothing published)
+# 2026-10-15 (latest) — Vault responsiveness incident: root causes, fixes, measurements (then Add Item corrections)
+
+Commits (both deployed, production build verified): `365b2e9` Vault load/read performance · `826d00b` Add Item (explicit identify, Manual entry, compact desktop). Media/video work was paused as asked.
+
+**Root causes (measured, not assumed).** Test copy: 1,484 items shaped like Ehren's real collection (3.9 MB of item data, ~2.2 photos each), local production build, matched conditions before/after.
+1. **Whole page behind skeletons until uploads AND a full cloud download finished** (`hydrateAll`, old since 10-06). Cold load showed nothing for ~6 s even though the device copy was already there.
+2. **Every read of the device copy decoded, repaired and re-saved all items** (`loadRawItems`, old since June): ~0.4 s each at 1,500 items, dozens of calls per page load (sync steps, cards, nav). These were the 2–3 s freezes. The 3.9 MB write could also be recompressed on every read when the browser store was full.
+3. **Each Vault card re-read and re-parsed the whole saved exhibition list twice** (`exhibitNamesForItem` / `isHiddenInExhibits`, from 10-06): 60 cards = 120 full reads per page.
+4. `vltd:vault-updated` events restarted the whole upload-and-download sequence (the page both listened to the event and caused it).
+5. Smaller: profile list fetched 6× per load (auth events cleared the reuse); failing lookups waited out the same 8 s timeout three times in series (route check, Vault gate, page); every card asked for its photo at once, including the ones far off screen.
+
+Not a single recent commit: the structure is 1–3 weeks old; it became unbearable as the collection grew to ~1,500 items and the Oct 12–14 account-isolation/route-check work added gates and reads on top. **No rollback was needed or done**; nothing in isolation, owner-membership, access rules or migrations was touched.
+
+**What changed.** Device copy shown immediately when it is recorded as the signed-in person's and a profile is chosen (never an unverified copy; a different person gets an empty page, verified); account check, uploads and download run in the background with time limits. With nothing saved the page says loading → "still loading" (6 s) → "could not load" with Try again (about 27 s worst case with the cloud unreachable), never a false empty Vault and never an open-ended skeleton. A pull now reports whether the cloud really answered. Read cache keyed on the exact stored text. Exhibit-lookup index. Local refresh events re-read the device copy only. Photos near the screen only, six at a time, in page order. A pending edit still uploads before a download can touch it (scripted scenario: edit kept, uploaded, queue empty). Tests: `npm run test:vault-load` (15), plus isolation (77), delete (9), category (6), import (32), errors (8) all pass.
+
+**Measured (fast link 5 MB/s / 40 ms; 1,484 items; items + controls usable).**
+
+| | before | after |
+|---|---|---|
+| cold load | 6.3 s | 2.3 s |
+| warm reload | 2.7 s | 0.8 s |
+| main-thread long tasks, cold (total / worst) | 8.6 s / 2.1 s | 2.8 s / 1.0 s |
+| long tasks, warm | 3.8 s / 0.8 s | 0.9 s / 0.3 s |
+| typing in search (key event) | 650–850 ms | 90–240 ms |
+| profile requests per load | 6 | 3 |
+
+Slow link (200 KB/s, 300 ms): cold usable 10.3 s → 5.4 s; warm usable 5.9 s → 1.1 s and first photo 7.0 s → 1.4 s. Scenarios (before → after): reload with background sync 5.3 → 1.5 s; away to Exhibitions and back 2.2 → 0.2 s; other person signs in, then first person back 3.1 → 0.7 s; 20 uploads pending, usable 3.8 → 0.6 s (lag 1.4 → 0.3 s); empty copy + cloud unreachable: skeleton forever → error panel with Try again at ~27 s (Try again then loaded). Profile switch shows the other profile's items with none of the first's; connection lost with a saved copy stays usable; account switch shows nothing of the other account. Production build (365b2e9, real internet, QA account): items + controls 2.3 s cold / 0.6 s warm.
+On Ehren's real account (read-only, background tab, same method as the first measurement): items + controls 2.9 s, was 9.3 s.
+
+**Still slow / not fixed.**
+- **Photos on a slow connection are still slow**: they are the sellers' original files (Pristine images ~1,600 px, 225 KB–1.7 MB, shown at ~190 px; 3,025 of Ehren's 3,277 photos). Only a resizing service would fix that (Vercel image optimizer has free-tier limits; Supabase transforms are a paid feature): not done (no budget). On a cold slow link the first photo arrived later than before (20 s vs 14 s) because the page now starts earlier while app code is still downloading; warm repeat visits are much better.
+- Cloud unreachable with nothing on the device: about 27 s before the error panel (8 s account check + 20 s download limit).
+- The very first load of a changed copy still does one full repair pass (~0.4 s).
+
+**Add Item (after performance).** AI: choosing or cropping a picture ("Use This Picture") started barcode reading and the identify chain by itself; it now only sets the picture and identification starts from Auto Identify (checked with request interception, AI requests stopped in the browser so no credits were used: nothing from upload, crop or save; identification starts only after the button). Manual entry / "Add manually" (/vault/add) opened the live camera on arrival (since July); it no longer does (the camera is one tap in the photo box; Scan = /capture). Desktop text fields, selects and checkbox rows 44 → 36 px (shared control size); phones stay 44 px (390 px width checked, production verified).
+
+**Open decision for EK (not changed: I could not find the "two-method" structure written down).** History has (a) the pre-Oct-11 Vault header: Quick Add + Add Item buttons plus a Single/Batch upload icon menu, and (b) today's 5-item Add Item menu (Scan, Quick Add, Manual entry, Upload photos for one item, Batch upload; from Oct 11). Say which to restore. Also: Quick Add (`/vault/quick`) still runs AI at "Add N to Vault" (the locked, metered flow); confirm that counts as the explicit identification action.
+
+**Other issues seen, not touched.** Every page load issues `DELETE public_profiles` for a private profile (harmless, wasteful); `/vault/add` pulls the whole vault on arrival for the duplicate check; the exhibition list (`vltd_galleries`, 449 KB) is parsed and re-saved on every read on other screens (the same pattern the Vault copy had); this browser holds ~1.2 MB of parked copies from QA accounts; PostgREST retries a failed request for ~7 s so offline error states are slow everywhere; RouteGuard and ProtectedRoute both check the account (the second is now cheap).
+
+**QA cleanup.** Created QA users `perf` and `perf2` (+ profiles, 29 uploaded test rows, one saved Add Item test row): all removed by exact id; counts back to baseline 39/39/49/3479/47 (the real new account from Oct 13 untouched). No change to Ehren's account, storage or collection. Local test servers, headless browsers and temporary build folders removed. Harness scripts are in the session scratchpad (perf/run.cjs, scen.cjs, addprobe.cjs, fixture.cjs).
+
+Still UNVERIFIED: physical phone and push; Comcast resend delivery; cover-image title case; real mouse/touch arranging.
+
+---
+
+# 2026-10-14 — Media polish pass (existing media only; no app changes; nothing published)
 
 Full detail: `docs/walkthrough/media-ready/CHANGE-REPORT.md`. Everything below is in `docs/walkthrough/media-ready/` (MP4s untracked on purpose).
 
