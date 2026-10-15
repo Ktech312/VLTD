@@ -803,9 +803,9 @@ export default function AddPage() {
       const digits = barcode.digits;
       const raw = barcode.rawValue ?? digits;
       setScanSession((prev) => setScanSessionBarcode(prev, raw, digits));
-      setStatus("Picture + barcode captured. Run Auto Identify or save the item.");
+      setStatus("Picture + barcode captured. Choose Identify with AI or save the item.");
     } else {
-      setStatus("Picture added. Run Auto Identify or save the item.");
+      setStatus("Picture added. Choose Identify with AI or save the item.");
     }
   }
 
@@ -839,7 +839,7 @@ export default function AddPage() {
     setActiveMediaImageId(image.id);
     replaceScanImage(image.file);
     setSelectedMediaImageId("");
-    setStatus("Selected picture ready. Crop if needed, then run Auto Identify.");
+    setStatus("Selected picture ready. Crop if needed, then choose Identify with AI.");
   }
 
   function openScanCropEditor() {
@@ -1873,7 +1873,7 @@ export default function AddPage() {
     setCropEditorTarget("scan");
     setCropMediaImageId("");
     setIsCropEditorOpen(true);
-    setStatus("Picture added. Crop if needed, then run Auto Identify or save the item.");
+    setStatus("Picture added. Crop if needed, then choose Identify with AI or save the item.");
   }
 
   async function handleApplyScanCrop() {
@@ -1896,7 +1896,7 @@ export default function AddPage() {
       setIsCropEditorOpen(false);
       // Choosing or cropping the picture only sets the picture. Nothing is looked up or sent to the AI until the person
       // chooses Auto Identify (handleScanAutofill); it used to start by itself here.
-      setStatus("Picture ready. Choose Auto Identify to fill in the details, or fill them in yourself.");
+      setStatus("Picture ready. Choose Identify with AI to fill in the details, or fill them in yourself.");
     } catch (error) {
       setStatus(error instanceof Error ? error.message : "Failed to crop scan image.");
     } finally {

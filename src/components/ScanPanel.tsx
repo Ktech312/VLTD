@@ -221,7 +221,7 @@ export default function ScanPanel({
             style={hasImage ? { background: "linear-gradient(135deg, #8C9298, #C8CDD2)", color: "#0B0B0B", boxShadow: "0 4px 18px rgba(203,208,213,0.28)" } : undefined}
           >
             <AppIcon name="flash" size={16} strokeWidth={2.2} />
-            {isIdentifying ? "Reading..." : hasImage ? "Auto Identify" : "Take a picture first"}
+            {isIdentifying ? "Reading..." : hasImage ? "Identify with AI" : "Take a picture first"}
           </PillButton>
 
           <p className="text-center text-[10px] leading-4 text-[color:var(--muted2)]">

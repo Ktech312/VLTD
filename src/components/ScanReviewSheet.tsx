@@ -147,7 +147,7 @@ export default function ScanReviewSheet({ items, removed, onRemove, onUndo, onCl
                           ? "Looking up barcode…"
                           : item.barcodeLookupState === "found"
                             ? `Matched: ${item.barcodeSummary}`
-                            : "No barcode match — AI will identify"}
+                            : "No barcode match"}
                       </div>
                     ) : null}
                     {!isRemoved ? (
@@ -185,18 +185,6 @@ export default function ScanReviewSheet({ items, removed, onRemove, onUndo, onCl
                     )}
                   </div>
 
-                  {/* Skip AI — opposite side of the thumbnail */}
-                  {!isRemoved ? (
-                    <label className="flex shrink-0 flex-col items-center justify-center gap-1 max-md:min-h-11 max-md:min-w-11 text-[9px] font-semibold uppercase tracking-wide text-[color:var(--muted)]">
-                      <input
-                        type="checkbox"
-                        checked={Boolean(item.skipAi)}
-                        onChange={(e) => onPatch(item.id, { skipAi: e.target.checked })}
-                        className="h-4 w-4 accent-[color:var(--theme-gold,#C8CDD2)]"
-                      />
-                      Skip AI
-                    </label>
-                  ) : null}
 
                   {/* Action */}
                   {isRemoved ? (

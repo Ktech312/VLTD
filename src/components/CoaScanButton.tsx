@@ -96,7 +96,7 @@ export default function CoaScanButton({ onApply }: Props) {
       {phase === "idle" && (
         <PillButton onClick={() => inputRef.current?.click()}>
           <AppIcon name="document" size={14} strokeWidth={2.5} />
-          Scan Certificate
+          Scan certificate with AI
         </PillButton>
       )}
 

@@ -1,7 +1,7 @@
 "use client";
 
-// Quick Add = the camera scanner. Capture many → review/remove → AI fills them in
-// → verify → save to the Vault. The old manual "type it all in by hand" form that
+// Quick Add = the camera scanner. Capture many → review/remove → add to the Vault sheet → fill in by hand, or press
+// "Identify with AI" (the only thing that sends photos to the AI) → save to the Vault. The old manual "type it all in by hand" form that
 // used to live here was removed; that flow now lives in the scanner (camera) and,
 // for uploading existing photo files, in Bulk Upload (/vault/bulk).
 

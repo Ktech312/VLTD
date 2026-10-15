@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 
-import AddItemMenu from "@/components/AddItemMenu";
+import AddItemActions from "@/components/AddItemActions";
 import SeasonalBanner from "@/components/SeasonalBanner";
 import { PillButton } from "@/components/ui/PillButton";
 import { Glyph } from "@/components/ui/Glyph";
@@ -222,7 +222,7 @@ export default function HomeClient() {
           )}
 
           <div style={{ display: "flex", gap: 8, marginTop: 20, flexWrap: "wrap", alignItems: "center" }}>
-            <span className="hidden md:inline-flex"><AddItemMenu /></span>
+            <span className="hidden md:inline-flex"><AddItemActions /></span>
             <PillButton href="/portfolio">Insights</PillButton>
             <PillButton href="/activity">Activity</PillButton>
           </div>

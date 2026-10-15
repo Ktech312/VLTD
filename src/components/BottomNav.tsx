@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { CSSProperties } from "react";
 
-import AddItemMenu from "@/components/AddItemMenu";
+import AddItemActions from "@/components/AddItemActions";
 import { AppIcon } from "@/components/ui/AppIcon";
 import { PRIMARY_NAV, isPrimaryNavActive, showMobileAddItem } from "@/lib/primaryNav";
 
@@ -56,8 +56,8 @@ export default function BottomNav() {
     >
       {/* Persistent Add Item: sits directly above the bar, inside the nav so the safe area is already respected. */}
       {showAdd ? (
-        <div className="absolute bottom-full right-3 mb-2" data-mobile-add-item>
-          <AddItemMenu placement="above" />
+        <div className="absolute bottom-full right-[68px] mb-2" data-mobile-add-item>
+          <AddItemActions placement="above" />
         </div>
       ) : null}
 

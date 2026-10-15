@@ -955,7 +955,7 @@ export default function CapturePage() {
                         icon={<AppIcon name="rotate" size={15} strokeWidth={1.7} />}
                       />
                       <ActionButton
-                        label={analyzing ? "Identifying…" : "Identify"}
+                        label={analyzing ? "Identifying…" : "Identify with AI"}
                         disabled={analyzing}
                         onClick={() => void runAiIdentify()}
                         icon={<AppIcon name="sparkleAI" size={15} strokeWidth={1.7} />}

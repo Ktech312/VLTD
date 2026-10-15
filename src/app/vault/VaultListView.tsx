@@ -2,7 +2,7 @@
 
 import { VaultNav } from "@/components/SectionNav";
 import { useRouter } from "next/navigation";
-import AddItemMenu from "@/components/AddItemMenu";
+import AddItemActions from "@/components/AddItemActions";
 import VaultToolsMenu from "@/components/VaultToolsMenu";
 import { LocalNav } from "@/components/ui/LocalNav";
 import { PillButton } from "@/components/ui/PillButton";
@@ -1847,7 +1847,7 @@ export default function VaultListView({ lockedUniverse }: { lockedUniverse?: Uni
           <>
             {lockedUniverse ? <PillButton href="/vault">All Universes</PillButton> : null}
             {/* On phones the persistent Add Item above the bottom bar replaces this one. */}
-            <span className="hidden md:inline-flex"><AddItemMenu /></span>
+            <span className="hidden md:inline-flex"><AddItemActions /></span>
             <VaultToolsMenu />
           </>
         }

@@ -585,13 +585,26 @@ export default function ScanCapturePanel({ onClose }: { onClose: () => void }) {
     if (initial.length === 0) { onClose(); return; }
 
     // Committed to this batch — release the camera (no return to live view after this).
+    // Nothing is sent to the AI here: identification only runs from the explicit "Identify with AI" buttons on the next sheet.
     stopCamera();
     setDrafts(initial);
     setShowReview(false);
     setVerifyStatus("");
-    setFlowPhase("scanning");
-    await runAiScan(initial);
     setFlowPhase("verify");
+  }
+
+  async function identifyAllWithAi() {
+    if (scanningId) return;
+    const pending = drafts.filter((d) => !d.scanned);
+    if (pending.length === 0) return;
+    setScanningId("*all*");
+    setVerifyStatus(`Identifying ${pending.length} item${pending.length === 1 ? "" : "s"} with AI…`);
+    try {
+      await runAiScan(pending);
+    } finally {
+      setScanningId(null);
+      setVerifyStatus("");
+    }
   }
 
   async function runAiScan(list: ScanDraft[]) {
@@ -1009,6 +1022,7 @@ export default function ScanCapturePanel({ onClose }: { onClose: () => void }) {
         onPatch={(id, patch) => setDrafts((prev) => prev.map((d) => (d.id === id ? { ...d, ...patch } : d)))}
         onRemove={(id) => setDrafts((prev) => prev.filter((d) => d.id !== id))}
         onRescan={(id) => void rescanOne(id)}
+        onIdentifyAll={() => void identifyAllWithAi()}
         onSave={() => void handleSaveVerified()}
         onClose={onClose}
       />

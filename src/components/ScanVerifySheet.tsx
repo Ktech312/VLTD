@@ -50,6 +50,8 @@ type Props = {
   onPatch: (id: string, patch: Partial<ScanDraft>) => void;
   onRemove: (id: string) => void;
   onRescan: (id: string) => void;
+  /** Explicit AI action: identify every item that has not been identified yet. Nothing here runs unless this is pressed. */
+  onIdentifyAll: () => void;
   onSave: () => void;
   onClose: () => void;
 };
@@ -72,6 +74,7 @@ export default function ScanVerifySheet({
   onPatch,
   onRemove,
   onRescan,
+  onIdentifyAll,
   onSave,
   onClose,
 }: Props) {
@@ -98,7 +101,7 @@ export default function ScanVerifySheet({
           <div className="min-w-0">
             <div className="text-sm font-bold">Verify your Drop</div>
             <div className="truncate text-[11px] text-[color:var(--muted)]">
-              AI filled these in — fix anything it got wrong, then save.
+              Fill these in yourself, or choose Identify with AI. Nothing is identified until you ask.
             </div>
           </div>
           {metered && remaining !== null && scanLimit !== null ? (
@@ -251,7 +254,7 @@ export default function ScanVerifySheet({
                           className={`${FIELD_CLS} w-20 shrink-0`}
                         />
                         <PillButton size="compact" className="ml-auto shrink-0" onClick={() => onRescan(d.id)} disabled={scanningId !== null || outOfScans}>
-                          {isScanning ? "Scanning…" : d.scanned ? "Rescan" : "Scan with AI"}
+                          {isScanning ? "Identifying…" : d.scanned ? "Identify again with AI" : "Identify with AI"}
                         </PillButton>
                         <PillButton size="compact" variant="danger" className="shrink-0" onClick={() => onRemove(d.id)}>Remove</PillButton>
                       </div>
@@ -271,6 +274,18 @@ export default function ScanVerifySheet({
 
         {/* Footer */}
         <div className="shrink-0 border-t border-[color:var(--border)] px-4 pb-4 pt-3">
+          {drafts.some((d) => !d.scanned) ? (
+            <PillButton
+              className="mb-2 w-full"
+              onClick={onIdentifyAll}
+              disabled={committing || scanningId !== null || outOfScans}
+              title="Sends the photos to the AI. Uses one AI scan per photo."
+            >
+              {scanningId !== null
+                ? "Identifying…"
+                : `Identify ${drafts.filter((d) => !d.scanned).length} with AI${metered ? " (1 AI scan each)" : ""}`}
+            </PillButton>
+          ) : null}
           <button
             type="button"
             onClick={onSave}
