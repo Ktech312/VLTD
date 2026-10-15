@@ -1,4 +1,16 @@
-# 2026-10-15 (latest) — Vault responsiveness incident: root causes, fixes, measurements (then Add Item corrections)
+# 2026-10-15 (latest) — Entry structure restored; no AI unless explicitly asked (`bef525d`, deployed and checked live)
+
+Per EK's decision. Performance work from `365b2e9` and Add Item corrections from `826d00b` are kept; account-isolation, save-reliability and the exhibit/Vault read fixes were not touched (isolation 77, delete 9, category 6, import 32, errors 8, vault-load 15 all pass).
+
+- **Entry structure (original, pre-Oct-11):** Vault and Home headers and the phone bar show **Quick Add** (`/vault/quick`), **Add Item** (`/capture`) and the **Single item / Batch** upload choice (icon button). The five-option Add Item menu (`AddItemMenu`) is deleted; no replacement menu. On phones the group floats above the bottom bar, clear of the bug-report button. Manual entry stays on empty states and "Add manually" links.
+- **AI only from an explicit, plainly named action.** Nothing is sent to the AI on upload, capture, crop, "Add N items to Vault" or save. Named actions: **Identify with AI** (Add Item page and Scan screen), **Identify N with AI (1 AI scan each)** and per-item **Identify with AI** on the Quick Add sheet, **Scan with AI to fill details** (Batch upload, unchanged), **Scan certificate with AI** (item page). Quick Add's "Add N items to Vault" now goes straight to the sheet where items are filled in by hand or identified on request; the "Skip AI" checkbox and "AI will identify" wording are gone. Free barcode database lookups at capture are unchanged (they are not AI).
+- **Checked with request interception (AI requests stopped in the browser, no credits used), production build:** upload, crop and save: 0 AI requests, no "Reading…" state; Quick Add capture → add to Vault: 0; AI request appears only after pressing Identify with AI. Header/phone structure confirmed at 1,400 px and 390 px.
+- **Still open:** the dedicated Add Item "Manual entry" door is now only reachable from empty states/"Add manually" (as in the original header); say if it should also be in the header. Tutorial videos/Help screenshots still show the five-option menu and "Auto Identify" (media work paused; needs a re-record before use).
+- QA user removed again; counts back to baseline 39/39/49/3479/47; local servers and test browsers stopped.
+
+---
+
+# 2026-10-15 — Vault responsiveness incident: root causes, fixes, measurements (then Add Item corrections)
 
 Commits (both deployed, production build verified): `365b2e9` Vault load/read performance · `826d00b` Add Item (explicit identify, Manual entry, compact desktop). Media/video work was paused as asked.
 
