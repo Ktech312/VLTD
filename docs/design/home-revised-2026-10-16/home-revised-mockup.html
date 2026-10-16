@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Home summary, revised proposal (mock, sample numbers)</title>
+<style>
+  :root { --bg:#14161a; --card:#1d2025; --elev:#23272d; --bd:#343a42; --text:#eceff2; --muted:#a3acb6; --gold:#f0c36a; --gain:#5fcf97; --cyan:#59d4ee; }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--text); font:14px/1.4 Inter, "Segoe UI", system-ui, sans-serif; padding:20px; }
+  .wrap { max-width: 1100px; margin: 0 auto; }
+  .tag { display:inline-block; font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:#e9b44c; border:1px dashed #6b5a2e; border-radius:6px; padding:3px 8px; margin-bottom:10px; }
+  .card { background:var(--elev); border:1px solid var(--bd); border-radius:10px; padding:22px 24px; box-shadow:0 10px 30px rgba(0,0,0,.35); }
+  .eyebrow { font-size:11px; letter-spacing:.16em; text-transform:uppercase; color:var(--muted); font-weight:800; }
+  h1 { font-size:34px; line-height:1.05; margin:6px 0 2px; font-weight:700; }
+  .sub { color:var(--muted); font-size:13px; }
+  .sect { margin-top:18px; font-size:11px; letter-spacing:.16em; text-transform:uppercase; color:var(--muted); font-weight:800; }
+  .tiles { display:grid; grid-template-columns:repeat(4, minmax(0,1fr)); gap:10px; margin-top:8px; }
+  a.tile { display:block; text-decoration:none; color:inherit; background:var(--card); border:1px solid var(--bd); border-radius:10px; padding:12px 14px; min-height:44px; }
+  a.tile:focus-visible, a.dest:focus-visible, button:focus-visible { outline:2px solid var(--cyan); outline-offset:2px; }
+  .tl { font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:var(--muted); font-weight:800; }
+  .tv { font-size:28px; font-weight:800; margin-top:4px; letter-spacing:-.02em; }
+  .tv.gold { color:var(--gold); } .tv.gain { color:var(--gain); }
+  .tc { font-size:12px; color:var(--muted); margin-top:2px; }
+  .go { display:inline-block; margin-top:8px; font-size:12px; font-weight:700; color:var(--cyan); }
+  .note { margin-top:10px; font-size:12px; color:var(--muted); }
+  .basis { margin-top:12px; display:flex; flex-wrap:wrap; gap:8px; align-items:center; font-size:12px; color:var(--muted); }
+  button, .pill { font:inherit; font-weight:700; font-size:13px; color:var(--text); background:#2c3138; border:1px solid var(--bd); border-radius:8px; padding:9px 14px; min-height:44px; cursor:pointer; }
+  .explain { margin-top:10px; background:var(--card); border:1px solid var(--bd); border-radius:10px; padding:12px 14px; font-size:12.5px; }
+  .explain table { border-collapse:collapse; width:100%; }
+  .explain th, .explain td { text-align:left; vertical-align:top; padding:6px 8px 6px 0; border-top:1px solid #2c3138; }
+  .explain th { color:var(--muted); font-weight:700; width:24%; border-top:0; }
+  .dests { display:grid; grid-template-columns:repeat(3, minmax(0,1fr)); gap:10px; margin-top:8px; }
+  a.dest { display:flex; gap:10px; text-decoration:none; color:inherit; background:var(--card); border:1px solid var(--bd); border-radius:10px; padding:12px 14px; min-height:44px; align-items:flex-start; }
+  .dest b { display:block; font-size:14px; } .dest span { font-size:12px; color:var(--muted); }
+  .ico { flex:none; width:28px; height:28px; border-radius:8px; border:1px solid var(--bd); display:grid; place-items:center; color:var(--cyan); }
+  .actions { margin-top:18px; display:flex; flex-wrap:wrap; gap:8px; }
+  .primary { background:linear-gradient(90deg,#22262c,#3bc5e3); border-color:#3bc5e3; }
+  @media (max-width: 700px) {
+    body { padding:12px; }
+    .card { padding:16px; }
+    h1 { font-size:28px; }
+    .tiles { grid-template-columns:repeat(2, minmax(0,1fr)); }
+    .tv { font-size:24px; }
+    .dests { grid-template-columns:1fr; }
+    .explain th { width:34%; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+<span class="tag">Design mock, sample numbers. Not the live app.</span>
+<section class="card" aria-label="Collection summary">
+  <div class="eyebrow">Welcome back,</div>
+  <h1>Curator Name</h1>
+  <div class="sub">41 items in 3 universes</div>
+
+  <div class="sect">Your collection's money, four separate figures</div>
+  <div class="tiles">
+    <a class="tile" href="#cost">
+      <div class="tl">Purchase cost</div>
+      <div class="tv">$9,850</div>
+      <div class="tc">What you paid, with tax, shipping and fees</div>
+      <span class="go">Cost breakdown &rsaquo;</span>
+    </a>
+    <a class="tile" href="#value">
+      <div class="tl">Estimated value</div>
+      <div class="tv gold">$12,400</div>
+      <div class="tc">38 of 41 priced. 3 counted at cost</div>
+      <span class="go">Value history &rsaquo;</span>
+    </a>
+    <a class="tile" href="#movers">
+      <div class="tl">Unrealized change</div>
+      <div class="tv gain">+$2,550 <span style="font-size:15px">+25.9%</span></div>
+      <div class="tc">Value minus cost, items you still own</div>
+      <span class="go">Biggest movers &rsaquo;</span>
+    </a>
+    <a class="tile" href="#sales">
+      <div class="tl">Realized sales</div>
+      <div class="tv">$2,100</div>
+      <div class="tc">6 sold. +$640 profit after estimated fees</div>
+      <span class="go">Sales analytics &rsaquo;</span>
+    </a>
+  </div>
+  <div class="note">Sold items are never inside the first three figures. Estimated value is not money received.</div>
+
+  <div class="basis">
+    <span>Value basis: 3 of 41 counted at purchase price</span>
+    <button type="button" aria-expanded="true">Show priced only</button>
+    <button type="button" aria-expanded="true" style="background:transparent">What does this change? &#9662;</button>
+  </div>
+  <div class="explain">
+    <table>
+      <tr><th>Purchase cost</th><td>No change. Always every item you own.</td></tr>
+      <tr><th>Estimated value</th><td><b>Include unpriced</b> (now): 3 items without a value count at their purchase price, in grey. <b>Priced only</b>: those 3 are left out, so the number is smaller.</td></tr>
+      <tr><th>Unrealized change</th><td><b>Include unpriced</b>: all 41 items against their cost, so unpriced items add nothing to the gain. <b>Priced only</b>: only the 38 items that have both a value and a cost, shown against their own cost ($8,700).</td></tr>
+      <tr><th>Realized sales</th><td>No change. Real sales only, never mixed with estimates.</td></tr>
+    </table>
+  </div>
+
+  <div class="sect">Go deeper</div>
+  <div class="dests">
+    <a class="dest" href="#insights"><span class="ico">&#9638;</span><span><b>Insights</b><span>Value history, movers, stale prices, insurance documentation</span></span></a>
+    <a class="dest" href="#sales"><span class="ico">&#164;</span><span><b>Sales analytics</b><span>Revenue and profit after estimated fees, by month</span></span></a>
+    <a class="dest" href="#activity"><span class="ico">&#8635;</span><span><b>Activity</b><span>Recent value changes, sales and additions</span></span></a>
+  </div>
+
+  <div class="actions">
+    <button type="button" style="border-color:#3bc5e3">Quick Add</button>
+    <button type="button" class="primary">ADD ITEM +</button>
+  </div>
+</section>
+</div>
+</body>
+</html>
