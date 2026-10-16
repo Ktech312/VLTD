@@ -1139,8 +1139,30 @@ export function clearPendingMoves(ids: string[]) {
   }
 }
 
-function mergeById(localItems: VaultItem[], remoteItems: VaultItem[]) {
+// Items with an edit that has not reached the account yet (waiting in the upload queue). Same key as vaultSyncQueue.ts.
+const SYNC_QUEUE_STORAGE_KEY = "vltd_sync_queue_v1";
+function readQueuedItemIds(): Set<string> {
+  const ids = new Set<string>();
+  if (typeof window === "undefined") return ids;
+  try {
+    const parsed: unknown = JSON.parse(window.localStorage.getItem(SYNC_QUEUE_STORAGE_KEY) || "[]");
+    if (Array.isArray(parsed)) for (const entry of parsed) if (entry && typeof entry === "object" && "itemId" in entry) ids.add(String((entry as { itemId: unknown }).itemId));
+  } catch {
+    /* unreadable queue: treated as empty */
+  }
+  return ids;
+}
+
+// When each item last finished uploading from this page. A pull that STARTED before that holds an older copy of the item and
+// must not lay it over the newer one.
+const uploadedAtById = new Map<string, number>();
+export function noteItemUploaded(itemId: string) {
+  uploadedAtById.set(String(itemId), Date.now());
+}
+
+function mergeById(localItems: VaultItem[], remoteItems: VaultItem[], pullStartedAt = 0) {
   const pendingMoves = readPendingMoves();
+  const queuedIds = readQueuedItemIds();
   const byId = new Map<string, VaultItem>();
 
   for (const item of localItems) {
@@ -1152,6 +1174,15 @@ function mergeById(localItems: VaultItem[], remoteItems: VaultItem[]) {
 
     if (!existing) {
       byId.set(String(remoteItem.id), syncPrimaryFields(remoteItem));
+      continue;
+    }
+
+    // A newer edit on this device that the account has not got yet (or got after this pull began) is never replaced by the
+    // older copy the pull brought back. Only the permanent code the database assigns is taken from the cloud copy.
+    if (queuedIds.has(String(remoteItem.id)) || (pullStartedAt > 0 && (uploadedAtById.get(String(remoteItem.id)) ?? 0) >= pullStartedAt)) {
+      if (remoteItem.itemCode && remoteItem.itemCode !== existing.itemCode) {
+        byId.set(String(remoteItem.id), syncPrimaryFields({ ...existing, itemCode: remoteItem.itemCode }));
+      }
       continue;
     }
 
@@ -1293,6 +1324,7 @@ async function pullAndMergeFromSupabase(profileId: string): Promise<{ ok: boolea
       await Promise.race([checkForceClearVault(profileId), new Promise<void>((resolve) => setTimeout(resolve, 4000))]);
     }
 
+    const pullStartedAt = Date.now();
     const saved = readPullCursor(profileId);
     const dueForFull = !saved || Date.now() - saved.f > FULL_PULL_EVERY_MS;
     const knownLocalCount = loadRawItems().filter((item) => String(item.profile_id ?? "") === String(profileId)).length;
@@ -1305,7 +1337,7 @@ async function pullAndMergeFromSupabase(profileId: string): Promise<{ ok: boolea
       writePullCursor(profileId, null);
     }
     const localItems = loadRawItems();
-    const merged = mergeById(localItems, remoteItems);
+    const merged = mergeById(localItems, remoteItems, pullStartedAt);
     saveRawItems(merged);
     // Settle the stored form (loadRawItems normalizes and re-saves) before
     // taking the signature, so an unchanged vault compares equal later.

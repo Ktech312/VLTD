@@ -271,7 +271,7 @@ const galleriesA = JSON.stringify([{ id: "gA", profile_id: PA, title: "A locked"
   let pulls = 0, uploads = 0, localSig = "sig1", signatureOnPull = null;
   mocks.vaultModel = {
     getAllLocalItems: () => [{ id: "a1" }],
-    saveItem: () => {}, saveItemsBatch: () => {},
+    saveItem: () => {}, saveItemsBatch: () => {}, noteItemUploaded: () => {},
     syncVaultItemsFromSupabase: async () => { pulls++; if (signatureOnPull) localSig = signatureOnPull; return []; },
   };
   mocks.vaultCloud = { hasSupabaseEnv: () => true, upsertVaultItemToSupabase: async () => { uploads++; }, uploadVaultImageToSupabase: async () => ({}) };
@@ -470,6 +470,47 @@ const galleriesA = JSON.stringify([{ id: "gA", profile_id: PA, title: "A locked"
     ]));
     const r2 = await q.processVaultSyncQueue();
     t("lost connection: the run stops early and keeps all three waiting", calls <= 2 && r2.remaining === 3 && JSON.parse(get("vltd_sync_queue_v1") || "[]").length === 3, `calls=${calls} remaining=${r2.remaining}`);
+  }
+
+  // === Defect (2026-10-16): an edit made while the same item was uploading, or just before the page was left, could be lost ===
+  {
+    reset();
+    const status = load("cloudSaveStatus");
+    status.resetCloudSaveStatus();
+    set("vltd-auth", session(A)); owner.reconcileLocalDataOwner(A); owner.resolveLegacyOwner(A, [PA]);
+    set("vltd_sync_queue_v1", "[]");
+    mocks.vaultModel.getAllLocalItems = () => [{ id: "a1", title: "x" }];
+    const q = load("vaultSyncQueue");
+    const sent = [];
+    // the person edits the same item again while its first upload is still in flight
+    let editedDuringUpload = false;
+    mocks.vaultCloud.upsertVaultItemToSupabase = async (row) => {
+      sent.push(JSON.stringify(row));
+      if (!editedDuringUpload) { editedDuringUpload = true; q.enqueueVaultItemSync("a1"); }
+    };
+    q.enqueueVaultItemSync("a1");
+    const r = await q.processVaultSyncQueue();
+    t("edit during an upload: the newer edit is uploaded too (two uploads, not one)", sent.length === 2, sent.length);
+    t("edit during an upload: nothing is left waiting afterwards", r.remaining === 0 && JSON.parse(get("vltd_sync_queue_v1") || "[]").length === 0, get("vltd_sync_queue_v1"));
+    // edited again while waiting (not yet uploading): still one waiting entry, no duplicates
+    set("vltd_sync_queue_v1", "[]");
+    q.enqueueVaultItemSync("a1"); q.enqueueVaultItemSync("a1"); q.enqueueVaultItemSync("a1");
+    t("edited three times while waiting: one entry (no duplicate writes)", JSON.parse(get("vltd_sync_queue_v1")).length === 1);
+    sent.length = 0; editedDuringUpload = true;
+    await q.processVaultSyncQueue();
+    t("edited three times while waiting: sent once", sent.length === 1, sent.length);
+    // saveItemDurably: the edit is waiting on this device BEFORE the network is used
+    set("vltd_sync_queue_v1", "[]");
+    let waitingWhenSent = null;
+    mocks.vaultCloud.upsertVaultItemToSupabase = async () => { waitingWhenSent = JSON.parse(get("vltd_sync_queue_v1") || "[]").length; };
+    const d = await q.saveItemDurably({ id: "a1", title: "x" });
+    t("durable save: the edit was recorded as waiting before the upload started", waitingWhenSent === 1, waitingWhenSent);
+    t("durable save: not pending once the account has it", d.pending === false && JSON.parse(get("vltd_sync_queue_v1") || "[]").length === 0);
+    // the connection is down: the edit stays and the answer says pending
+    mocks.vaultCloud.upsertVaultItemToSupabase = async () => { throw new TypeError("Failed to fetch"); };
+    const d2 = await q.saveItemDurably({ id: "a1", title: "x" });
+    t("durable save with the cloud unreachable: kept and reported pending", d2.pending === true && JSON.parse(get("vltd_sync_queue_v1") || "[]").length === 1);
+    t("durable save with the cloud unreachable: the person is told it is on this device only", status.getCloudSavePhase() === "pending", status.getCloudSavePhase());
   }
 
   console.log("\n" + pass + " passed, " + fail + " failed");

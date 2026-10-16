@@ -37,9 +37,8 @@ import {
   deleteVaultImageFromSupabase,
   hasSupabaseEnv,
   uploadVaultImageToSupabase,
-  upsertVaultItemToSupabase,
 } from "@/lib/vaultCloud";
-import { enqueueVaultItemSync } from "@/lib/vaultSyncQueue";
+import { enqueueVaultItemSync, saveItemDurably } from "@/lib/vaultSyncQueue";
 import { showToast } from "@/lib/toast";
 import {
   appendImage,
@@ -667,29 +666,19 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
     saveItem(nextItem);
     setItems((prev) => prev.map((entry) => (entry.id === nextItem.id ? nextItem : entry)));
 
-    // This is the save path for every edit on this page (title, value,
-    // notes, tags, asking price, video clip...). upsertVaultItemToSupabase
-    // always throws on a genuine failure, and most callers below do
-    // `void persist(...)` — an uncaught rejection here was a silent,
-    // invisible failure: the local edit looked saved, nothing told the
-    // user the cloud never got it, and vltd:vault-updated never fired
-    // (skipped by the throw) so other open views wouldn't even refresh
-    // to the locally-correct state. Now it's caught, queued for the
-    // existing retry mechanism, and the update event always fires.
+    // This is the save path for every edit on this page (title, value, notes, tags, asking price, video clip, Details...).
+    // The edit is already on this device; saveItemDurably records it as "waiting to upload" BEFORE the network is touched and
+    // then sends it through the shared upload queue. Leaving the page, refreshing, closing the tab or losing the connection
+    // therefore cannot lose it: the next visit finishes the upload, and a download from the account never replaces it while
+    // it is waiting. If the account has not got it yet, the status pill and a note say so.
     if (hasSupabaseEnv()) {
-      try {
-        await upsertVaultItemToSupabase({
-          ...nextItem,
-          profile_id: nextItem.profile_id || getStoredActiveProfileId(),
-        });
-        // The cloud took the item but the database has no place for its specialist details yet.
-        if (isSpecsDeviceOnly(nextItem.id)) showToast(SPECS_DEVICE_ONLY_NOTE);
-      } catch {
-        enqueueVaultItemSync(nextItem.id);
-        // Tell the shared save status too: without this the edit sat in the queue with no "sync pending" note and no retry
-        // until some other page happened to run the queue.
+      const { pending } = await saveItemDurably(nextItem);
+      if (pending) {
         reportPending("items");
         showToast("Saved on this device — not in your account yet. We will keep trying.");
+      } else if (isSpecsDeviceOnly(nextItem.id)) {
+        // The account took the item but the database has no place for its specialist details yet.
+        showToast(SPECS_DEVICE_ONLY_NOTE);
       }
     }
 
@@ -860,18 +849,8 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
     setMediaMessage("Image order updated.");
 
     if (hasSupabaseEnv()) {
-      try {
-        await upsertVaultItemToSupabase({
-          ...nextItem,
-          profile_id: nextItem.profile_id || getStoredActiveProfileId(),
-        });
-      } catch (error) {
-        setMediaMessage(
-          error instanceof Error
-            ? `${error.message} Order changed locally only.`
-            : "Order changed locally only."
-        );
-      }
+      const { pending } = await saveItemDurably(nextItem);
+      if (pending) setMediaMessage("Order changed on this device — not in your account yet. We will keep trying.");
     }
   }
 
@@ -888,21 +867,15 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
     setMediaMessage("Image deleted.");
 
     if (hasSupabaseEnv()) {
-      try {
-        await upsertVaultItemToSupabase({
-          ...nextItem,
-          profile_id: nextItem.profile_id || getStoredActiveProfileId(),
-        });
-
-        if (target && target.storageKey && !target.localOnly) {
+      const { pending } = await saveItemDurably(nextItem);
+      if (pending) {
+        setMediaMessage("Image removed on this device — not in your account yet. We will keep trying.");
+      } else if (target && target.storageKey && !target.localOnly) {
+        try {
           await deleteVaultImageFromSupabase(target.storageKey);
+        } catch (error) {
+          setMediaMessage(error instanceof Error ? `${error.message} The picture file is still stored.` : "The picture file is still stored.");
         }
-      } catch (error) {
-        setMediaMessage(
-          error instanceof Error
-            ? `${error.message} Delete applied locally only.`
-            : "Delete applied locally only."
-        );
       }
     }
   }

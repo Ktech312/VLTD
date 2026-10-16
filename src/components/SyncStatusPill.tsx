@@ -56,8 +56,11 @@ export default function SyncStatusPill() {
 
   const pending = phase === "pending";
   // "Saved to your account" is only said when everything that was saved is really there, specialist details included.
+  const offline = typeof navigator !== "undefined" && navigator.onLine === false;
   const text = pending
-    ? "Saved on this device — sync pending"
+    ? offline
+      ? "Saved on this device — you are offline. It uploads when you are back online."
+      : "Saved on this device — not in your account yet. Retrying."
     : phase === "saving"
       ? "Saving to your account…"
       : specsOnDevice

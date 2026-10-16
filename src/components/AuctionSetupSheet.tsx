@@ -7,8 +7,7 @@ import { saveItem, type VaultItem } from "@/lib/vaultModel";
 import { Glyph } from "@/components/ui/Glyph";
 import { AppIcon } from "@/components/ui/AppIcon";
 import { PillButton } from "@/components/ui/PillButton";
-import { upsertVaultItemToSupabase } from "@/lib/vaultCloud";
-import { enqueueVaultItemSync } from "@/lib/vaultSyncQueue";
+import { saveItemDurably } from "@/lib/vaultSyncQueue";
 import { showToast } from "@/lib/toast";
 
 // ─── Countdown helper ─────────────────────────────────────────────────────────
@@ -89,12 +88,9 @@ export default function AuctionSetupSheet({ item, onClose, onSaved }: Props) {
   // existing retry mechanism and tells the user instead of pretending it
   // synced.
   async function syncAuctionChange(updated: VaultItem, failureMessage: string) {
-    try {
-      await upsertVaultItemToSupabase(updated);
-    } catch {
-      enqueueVaultItemSync(updated.id);
-      showToast(failureMessage);
-    }
+    // Recorded as "waiting to upload" before the network is used, so leaving the page cannot drop it.
+    const { pending } = await saveItemDurably(updated);
+    if (pending) showToast(failureMessage);
   }
 
   async function handleStart() {

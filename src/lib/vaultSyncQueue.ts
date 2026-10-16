@@ -3,6 +3,7 @@ import {
   getAllLocalItems,
   saveItem,
   saveItemsBatch,
+  noteItemUploaded,
   syncVaultItemsFromSupabase,
   type VaultItem,
 } from "@/lib/vaultModel";
@@ -22,6 +23,9 @@ export type VaultSyncQueueItem = {
   type: "upsert_item";
   itemId: string;
   createdAt: number;
+  /** Goes up each time the item is edited again while it is already waiting. An upload only clears the entry it started
+   *  with: an edit made during the upload leaves a newer revision, which is sent next instead of being lost. */
+  rev?: number;
 };
 
 export type VaultSyncQueueSnapshotItem = VaultSyncQueueItem & {
@@ -39,7 +43,6 @@ export type VaultSyncQueueSnapshot = {
 };
 
 const LS_QUEUE_KEY = "vltd_sync_queue_v1";
-let isProcessing = false;
 
 function readQueue(): VaultSyncQueueItem[] {
   if (typeof window === "undefined") return [];
@@ -125,9 +128,16 @@ export function getVaultSyncQueueSnapshot(): VaultSyncQueueSnapshot {
 }
 
 export function enqueueVaultItemSync(itemId: string) {
+  queuedDuringRun = true;
   const queue = readQueue();
 
-  if (queue.find((entry) => String(entry.itemId) === String(itemId))) return;
+  const existing = queue.find((entry) => String(entry.itemId) === String(itemId));
+  if (existing) {
+    // Already waiting (or being uploaded right now): note that it changed again.
+    existing.rev = (existing.rev ?? 0) + 1;
+    writeQueue(queue);
+    return;
+  }
 
   queue.push({
     id: `${itemId}_${Date.now()}`,
@@ -150,7 +160,11 @@ export function commitVaultItemEdits(items: VaultItem[]) {
   const queued = new Set(queue.map((entry) => String(entry.itemId)));
   for (const item of items) {
     const itemId = String(item.id);
-    if (queued.has(itemId)) continue;
+    if (queued.has(itemId)) {
+      const entry = queue.find((e) => String(e.itemId) === itemId);
+      if (entry) entry.rev = (entry.rev ?? 0) + 1;
+      continue;
+    }
     queued.add(itemId);
     queue.push({ id: `${itemId}_${Date.now()}`, type: "upsert_item", itemId, createdAt: Date.now() });
   }
@@ -235,6 +249,7 @@ async function syncOneItem(item: VaultItem, startedAs: string) {
     ...nextItem,
     profile_id: nextItem.profile_id || getStoredActiveProfileId(),
   });
+  noteItemUploaded(String(nextItem.id));
 
   // Only write back when image uploads changed the item. Otherwise this was a
   // full read + rewrite of the whole local vault that stored identical data
@@ -260,12 +275,62 @@ export function requeueSpecsDeviceOnly() {
   }
 }
 
-export async function processVaultSyncQueue() {
-  if (typeof window === "undefined") return { processed: 0, remaining: 0 };
-  if (isProcessing) {
-    return { processed: 0, remaining: getPendingVaultSyncCount() };
-  }
+type VaultSyncRunResult = { processed: number; remaining: number; fresh?: VaultItem[] };
 
+let runPromise: Promise<VaultSyncRunResult> | null = null;
+let queuedDuringRun = false;
+
+/** Removes the waiting entry for an upload that finished, unless the item was edited again since the upload began. */
+function settleEntry(done: VaultSyncQueueItem) {
+  const stored = readQueue();
+  const next = stored.filter((entry) => !(String(entry.itemId) === String(done.itemId) && (entry.rev ?? 0) === (done.rev ?? 0)));
+  if (next.length !== stored.length) writeQueue(next);
+}
+
+/** Is an edit of this item still waiting to reach the account? */
+export function isItemSyncPending(itemId: string) {
+  return readQueue().some((entry) => String(entry.itemId) === String(itemId));
+}
+
+/**
+ * Save an edited item so that leaving the page, refreshing, closing the tab or losing the connection cannot lose it:
+ * written on this device and recorded as "waiting to upload" BEFORE anything goes over the network, then uploaded by the
+ * shared queue (one writer: no duplicate writes, same account checks, same status). Resolves once the upload attempt is over.
+ */
+export async function saveItemDurably(item: VaultItem): Promise<{ pending: boolean }> {
+  saveItem(item);
+  if (!hasSupabaseEnv()) return { pending: false };
+  enqueueVaultItemSync(String(item.id));
+  try {
+    await processVaultSyncQueue();
+  } catch {
+    /* the entry stays queued and is retried */
+  }
+  return { pending: isItemSyncPending(String(item.id)) };
+}
+
+export function processVaultSyncQueue(): Promise<VaultSyncRunResult> {
+  if (typeof window === "undefined") return Promise.resolve({ processed: 0, remaining: 0 });
+  // A run is already going: it reads the queue again after each upload, so anything queued meanwhile is picked up by it.
+  // This caller simply waits for that whole run.
+  if (runPromise) return runPromise;
+  runPromise = (async () => {
+    let result = await runVaultSyncQueue();
+    // An edit queued while the run was finishing (after its last look at the queue) gets its own run straight away.
+    for (let again = 0; again < 3 && queuedDuringRun; again++) {
+      queuedDuringRun = false;
+      const next = await runVaultSyncQueue();
+      result = { ...next, processed: result.processed + next.processed };
+    }
+    return result;
+  })().finally(() => {
+    runPromise = null;
+  });
+  queuedDuringRun = false;
+  return runPromise;
+}
+
+async function runVaultSyncQueue(): Promise<VaultSyncRunResult> {
   if (!navigator.onLine || !hasSupabaseEnv()) {
     // Saved on this device only for now: say so (it is retried when the connection is back).
     if (getPendingVaultSyncCount() > 0 && storedSessionUserId()) reportPending("items");
@@ -280,82 +345,78 @@ export async function processVaultSyncQueue() {
     return { processed: 0, remaining: getPendingVaultSyncCount() };
   }
 
-  isProcessing = true;
+  // Items whose specialist details never reached the account (the database had no place for them yet) are sent again,
+  // at most once every few minutes, so they upload on their own once it does.
+  requeueSpecsDeviceOnly();
 
-  try {
-    // Items whose specialist details never reached the account (the database had no place for them yet) are sent again,
-    // at most once every few minutes, so they upload on their own once it does.
-    requeueSpecsDeviceOnly();
-    const queue = dedupeQueue(readQueue());
-    writeQueue(queue);
-    if (queue.length > 0) reportSaving("items");
+  let processed = 0;
+  // Items the cloud refused or could not take this time. They stay in the queue and are tried again on the next run, but
+  // they no longer hold up the items behind them: one refused item (for instance in a profile this account may no longer
+  // write to) used to stop every later item, in every profile, from ever being uploaded.
+  const failedIds = new Set<string>();
+  let networkFailures = 0;
+  let stop = false;
+  let announced = false;
 
-    let processed = 0;
-    // Items the cloud refused or could not take this time. They stay in the queue and are tried again on the next run, but
-    // they no longer hold up the items behind them: one refused item (for instance in a profile this account may no longer
-    // write to) used to stop every later item, in every profile, from ever being uploaded.
-    const failed: typeof queue = [];
-    let networkFailures = 0;
+  // Each pass reads the queue as it is NOW, so an edit made while an upload was running is picked up by the next pass.
+  for (let pass = 0; pass < 50 && !stop; pass++) {
+    const work = dedupeQueue(readQueue()).filter((entry) => !failedIds.has(String(entry.itemId)));
+    if (work.length === 0) break;
+    if (!announced) {
+      reportSaving("items");
+      announced = true;
+    }
 
-    while (queue.length > 0) {
+    for (const current of work) {
       // Another person signed in (in this tab or another) while this was running: the queue now on the device is theirs.
-      if (!stillSignedInAs(startedAs)) break;
-      const current = queue[0];
+      if (!stillSignedInAs(startedAs)) {
+        stop = true;
+        break;
+      }
 
-      const item = getAllLocalItems().find(
-        (entry) => String(entry.id) === String(current.itemId)
-      );
-
+      const item = getAllLocalItems().find((entry) => String(entry.id) === String(current.itemId));
       if (!item) {
-        queue.shift();
-        if (stillSignedInAs(startedAs)) writeQueue([...failed, ...queue]);
+        settleEntry(current);
         continue;
       }
 
       try {
         await syncOneItem(item, startedAs);
         processed += 1;
-        queue.shift();
-        if (stillSignedInAs(startedAs)) writeQueue([...failed, ...queue]);
+        if (stillSignedInAs(startedAs)) settleEntry(current);
       } catch (err) {
         console.error("Sync failed", err);
-        queue.shift();
-        failed.push(current);
-        if (stillSignedInAs(startedAs)) writeQueue([...failed, ...queue]);
+        failedIds.add(String(current.itemId));
         // A lost connection fails every item the same way: stop instead of trying each one.
         const text = String((err as { message?: unknown })?.message ?? err);
         const offline = connectionLooksDown() || /failed to fetch|networkerror|network request failed|load failed/i.test(text);
         if (offline) {
           networkFailures += 1;
-          if (networkFailures >= 2) break;
+          if (networkFailures >= 2) {
+            stop = true;
+            break;
+          }
         }
       }
     }
-    // Whatever was refused (and anything not reached) is what is still waiting.
-    queue.unshift(...failed);
-
-    const before = getVaultLocalSignature();
-    const fresh = await syncVaultItemsFromSupabase();
-    // Tell the open pages only when something actually changed. This used to fire after every run, and the Vault page re-runs
-    // this whenever it hears it, so an open Vault page made a full round of requests every fraction of a second, forever.
-    if (stillSignedInAs(startedAs) && (processed > 0 || getVaultLocalSignature() !== before)) {
-      window.dispatchEvent(new Event("vltd:vault-updated"));
-    }
-
-    // What the person is told: still waiting (the cloud refused, or the connection failed), saved, or nothing to say.
-    if (!stillSignedInAs(startedAs)) reportIdle("items");
-    else if (queue.length > 0) reportPending("items");
-    else if (processed > 0) reportSaved("items");
-    else reportIdle("items");
-
-    return {
-      processed,
-      remaining: queue.length,
-      fresh,
-    };
-  } finally {
-    isProcessing = false;
   }
+
+  const before = getVaultLocalSignature();
+  const fresh = await syncVaultItemsFromSupabase();
+  // Tell the open pages only when something actually changed. This used to fire after every run, and the Vault page re-runs
+  // this whenever it hears it, so an open Vault page made a full round of requests every fraction of a second, forever.
+  if (stillSignedInAs(startedAs) && (processed > 0 || getVaultLocalSignature() !== before)) {
+    window.dispatchEvent(new Event("vltd:vault-updated"));
+  }
+
+  const remaining = getPendingVaultSyncCount();
+  // What the person is told: still waiting (the cloud refused, or the connection failed), saved, or nothing to say.
+  if (!stillSignedInAs(startedAs)) reportIdle("items");
+  else if (remaining > 0) reportPending("items");
+  else if (processed > 0) reportSaved("items");
+  else reportIdle("items");
+
+  return { processed, remaining, fresh };
 }
 
 /**
