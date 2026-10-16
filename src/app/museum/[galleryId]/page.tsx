@@ -848,7 +848,7 @@ export default function GalleryPage() {
                   backgroundPosition: "center",
                 }}
               />
-              <div className="absolute inset-0 bg-black/55" />
+              <div className="absolute inset-0 bg-black/68" />
             </>
           ) : null}
 
