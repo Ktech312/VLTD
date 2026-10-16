@@ -139,7 +139,16 @@ export type BulkAddFieldKey =
   | "coinKeyDate"
   // Universal type + attributes (new taxonomy fields)
   | "itemType"
-  | "itemAttributes";
+  | "itemAttributes"
+  // Category-specific Details that live on the item itself or in its specs (JSON text)
+  | "year"
+  | "brand"
+  | "condition"
+  | "consoleControllerCount"
+  | "consoleCables"
+  | "consoleBox"
+  | "consoleTested"
+  | "specs";
 
 export type BulkAddValues = Record<BulkAddFieldKey, string>;
 export type BulkAddLocks = Record<BulkAddFieldKey, boolean>;
@@ -273,6 +282,14 @@ export const EMPTY_BULK_ADD_VALUES: BulkAddValues = {
   coinKeyDate: "",
   itemType: "",
   itemAttributes: "",
+  year: "",
+  brand: "",
+  condition: "",
+  consoleControllerCount: "",
+  consoleCables: "",
+  consoleBox: "",
+  consoleTested: "",
+  specs: "",
 };
 
 export const DEFAULT_BULK_ADD_LOCKS: BulkAddLocks = {
@@ -402,6 +419,14 @@ export const DEFAULT_BULK_ADD_LOCKS: BulkAddLocks = {
   coinKeyDate: false,
   itemType: false,
   itemAttributes: false,
+  year: false,
+  brand: false,
+  condition: false,
+  consoleControllerCount: false,
+  consoleCables: false,
+  consoleBox: false,
+  consoleTested: false,
+  specs: false,
 };
 
 export type BulkAddState = {

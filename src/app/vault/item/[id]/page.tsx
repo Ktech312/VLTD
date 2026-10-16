@@ -15,6 +15,8 @@ import ExportListingButton from "@/components/ExportListingButton";
 import InsurancePdfButton from "@/components/InsurancePdfButton";
 import ItemVisibilityToggle from "@/components/ItemVisibilityToggle";
 import ItemMedia from "@/components/ItemMedia";
+import ItemDetailsSection from "@/components/ItemDetailsSection";
+import { resolveItemDetailProfile } from "@/lib/detailFields";
 import DocumentsSection from "@/components/DocumentsSection";
 import { Glyph } from "@/components/ui/Glyph";
 import NotableBadge from "@/components/NotableBadge";
@@ -1110,6 +1112,10 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
       : baseRecordCategoryOptions;
   const recordSubcategoryOptions = getSubcategories(recordDraft.universe, recordSelectedCategory);
   const notable = isNotable(item);
+  // The Details card lists Edition and Variant as rows for some categories; the chips below then skip them so they are not shown twice.
+  const detailTargets = new Set(resolveItemDetailProfile(item).all.map((field) => field.target));
+  const editionShownAbove = detailTargets.has("edition");
+  const variantShownAbove = detailTargets.has("variant");
 
   return (
     <>
@@ -1486,22 +1492,8 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
         </div>
 
         <div className="mt-5 grid gap-4 lg:grid-cols-2 xl:grid-cols-3">
-          <InlineEditSection
-            title="DETAILS"
-            item={item}
-            onSave={(patch) => persist({ ...item, ...patch })}
-            rows={[
-                { label: "Subtitle", field: { key: "subtitle", kind: "text" }, value: detailValue(item.subtitle) },
-                { label: "Number / Model", field: { key: "number", kind: "text" }, value: detailValue(item.number) },
-                { label: "Grade", field: { key: "grade", kind: "text" }, value: detailValue(item.grade) },
-                { label: "Serial #", field: { key: "serialNumber", kind: "text" }, value: detailValue(item.serialNumber) },
-                { label: "Cert #", field: { key: "certNumber", kind: "text" }, value: detailValue(item.certNumber) },
-                { label: "Subject", field: { key: "subject", kind: "text" }, value: detailValue(item.subject) },
-                { label: "Year", field: { key: "year", kind: "text" }, value: detailValue(item.year) },
-                { label: "Brand", field: { key: "brand", kind: "text" }, value: detailValue(item.brand) },
-            ]}
-          >
-            {(item.edition || item.variant || item.printRun || item.isFirstEdition) && (
+          <ItemDetailsSection item={item} onSave={(patch) => persist({ ...item, ...patch })}>
+            {(((item.edition && !editionShownAbove) || (item.variant && !variantShownAbove)) || item.printRun || item.isFirstEdition) && (
               <div className="mt-4 rounded-2xl bg-[color:var(--pill)] p-4 ring-1 ring-[color:var(--border)]">
                 <div className="text-[11px] uppercase tracking-[0.24em] text-[color:var(--muted2)]">
                   Edition / Variant
@@ -1519,7 +1511,7 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
                       1st Edition
                     </span>
                   ) : null}
-                  {item.edition && !item.isFirstEdition ? (
+                  {item.edition && !item.isFirstEdition && !editionShownAbove ? (
                     <span
                       className="rounded-full px-3 py-1 text-xs ring-1 ring-[color:var(--border)]"
                       style={{ color: "var(--fg)" }}
@@ -1527,7 +1519,7 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
                       {item.edition}
                     </span>
                   ) : null}
-                  {item.variant ? (
+                  {item.variant && !variantShownAbove ? (
                     <span
                       className="rounded-full px-3 py-1 text-xs ring-1 ring-[color:var(--border)]"
                       style={{ color: "var(--fg)" }}
@@ -1577,7 +1569,7 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
                 )}
               </div>
             ) : null}
-          </InlineEditSection>
+          </ItemDetailsSection>
 
           <InlineEditSection
             title="PURCHASE"

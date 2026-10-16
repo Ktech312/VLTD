@@ -19,7 +19,9 @@
     "test:category": "node scripts/test-category-label.cjs",
     "test:import": "node scripts/test-spreadsheet-import.cjs",
     "test:errors": "node scripts/test-friendly-error.cjs",
-    "test:vault-load": "node scripts/test-vault-load.cjs"
+    "test:vault-load": "node scripts/test-vault-load.cjs",
+    "test:details": "node scripts/test-detail-fields.cjs",
+    "build:detail-matrix": "node scripts/build-detail-matrix.cjs"
   },
   "dependencies": {
     "@imgly/background-removal": "^1.7.0",

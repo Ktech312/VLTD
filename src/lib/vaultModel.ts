@@ -268,6 +268,9 @@ export type VaultItem = {
   // Universal taxonomy extras (Type dropdown + Attributes checkboxes)
   itemType?: string;
   itemAttributes?: string[];
+  /** Category-specific details that have no field of their own (material, catalog number, dimensions...), keyed by a stable id
+   *  from src/lib/detailFields.ts. Values are plain text; "unknown" is simply absent. */
+  specs?: Record<string, string>;
 };
 
 type LoadItemsOptions = {
@@ -346,6 +349,19 @@ function normalizeStringArray(value: unknown): string[] | undefined {
     .map((v) => v.trim())
     .filter(Boolean);
   return out.length ? out : undefined;
+}
+
+/** The category-specific details kept in `item.specs`: plain text values by id. An empty set is kept as {} (it is how a cleared set
+ *  reaches the cloud); anything that is not text is dropped. */
+export function normalizeSpecs(value: unknown): Record<string, string> | undefined {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return undefined;
+  const out: Record<string, string> = {};
+  for (const [key, raw] of Object.entries(value as Record<string, unknown>)) {
+    if (!key || typeof raw !== "string") continue;
+    const text = raw.trim();
+    if (text) out[key] = text;
+  }
+  return out;
 }
 
 /** Lowercase, trim, drop empties/dupes, strip a leading "#" (users may paste
@@ -679,9 +695,9 @@ function normalizeOne(input: unknown): VaultItem | null {
     tcgHoloType: raw.tcgHoloType ?? undefined,
     // Sports
     sportsParallelType: raw.sportsParallelType ?? undefined,
-    sportsIsRelic: raw.sportsIsRelic === true ? true : undefined,
+    sportsIsRelic: typeof raw.sportsIsRelic === "boolean" ? raw.sportsIsRelic : undefined,
     sportsRelicDescription: raw.sportsRelicDescription ?? undefined,
-    sportsIsAuto: raw.sportsIsAuto === true ? true : undefined,
+    sportsIsAuto: typeof raw.sportsIsAuto === "boolean" ? raw.sportsIsAuto : undefined,
     sportsSerialNumber: raw.sportsSerialNumber ?? undefined,
     // Vinyl
     vinylPressing: raw.vinylPressing ?? undefined,
@@ -711,9 +727,9 @@ function normalizeOne(input: unknown): VaultItem | null {
     toyLine: raw.toyLine ?? undefined,
     toyScale: raw.toyScale ?? undefined,
     toyPackageCondition: raw.toyPackageCondition ?? undefined,
-    toyBoxIncluded: raw.toyBoxIncluded === true ? true : undefined,
-    toyAccessoriesIncluded: raw.toyAccessoriesIncluded === true ? true : undefined,
-    toyIsComplete: raw.toyIsComplete === true ? true : undefined,
+    toyBoxIncluded: typeof raw.toyBoxIncluded === "boolean" ? raw.toyBoxIncluded : undefined,
+    toyAccessoriesIncluded: typeof raw.toyAccessoriesIncluded === "boolean" ? raw.toyAccessoriesIncluded : undefined,
+    toyIsComplete: typeof raw.toyIsComplete === "boolean" ? raw.toyIsComplete : undefined,
     // Art Cards
     artCardArtist: raw.artCardArtist ?? undefined,
     artCardSet: raw.artCardSet ?? undefined,
@@ -728,9 +744,9 @@ function normalizeOne(input: unknown): VaultItem | null {
     memorabiliaTeam: raw.memorabiliaTeam ?? undefined,
     memorabiliaEvent: raw.memorabiliaEvent ?? undefined,
     memorabiliaSigningDate: raw.memorabiliaSigningDate ?? undefined,
-    memorabiliaWitnessed: raw.memorabiliaWitnessed === true ? true : undefined,
+    memorabiliaWitnessed: typeof raw.memorabiliaWitnessed === "boolean" ? raw.memorabiliaWitnessed : undefined,
     memorabiliaAuthCompany: raw.memorabiliaAuthCompany ?? undefined,
-    memorabiliaGameUsed: raw.memorabiliaGameUsed === true ? true : undefined,
+    memorabiliaGameUsed: typeof raw.memorabiliaGameUsed === "boolean" ? raw.memorabiliaGameUsed : undefined,
     memorabiliaGameUsedDesc: raw.memorabiliaGameUsedDesc ?? undefined,
     // TCG additions
     tcgRarity: raw.tcgRarity ?? undefined,
@@ -743,34 +759,34 @@ function normalizeOne(input: unknown): VaultItem | null {
     watchCaseMaterial: raw.watchCaseMaterial ?? undefined,
     watchCaseSize: raw.watchCaseSize ?? undefined,
     watchDialColor: raw.watchDialColor ?? undefined,
-    watchBox: raw.watchBox === true ? true : undefined,
-    watchPapers: raw.watchPapers === true ? true : undefined,
-    watchFullSet: raw.watchFullSet === true ? true : undefined,
+    watchBox: typeof raw.watchBox === "boolean" ? raw.watchBox : undefined,
+    watchPapers: typeof raw.watchPapers === "boolean" ? raw.watchPapers : undefined,
+    watchFullSet: typeof raw.watchFullSet === "boolean" ? raw.watchFullSet : undefined,
     // Bags
     bagBrand: raw.bagBrand ?? undefined,
     bagColor: raw.bagColor ?? undefined,
     bagMaterial: raw.bagMaterial ?? undefined,
     bagHardware: raw.bagHardware ?? undefined,
-    bagAuthCard: raw.bagAuthCard === true ? true : undefined,
-    bagDustbag: raw.bagDustbag === true ? true : undefined,
-    bagBox: raw.bagBox === true ? true : undefined,
+    bagAuthCard: typeof raw.bagAuthCard === "boolean" ? raw.bagAuthCard : undefined,
+    bagDustbag: typeof raw.bagDustbag === "boolean" ? raw.bagDustbag : undefined,
+    bagBox: typeof raw.bagBox === "boolean" ? raw.bagBox : undefined,
     // Apparel
     apparelSize: raw.apparelSize ?? undefined,
     apparelColorway: raw.apparelColorway ?? undefined,
-    apparelWorn: raw.apparelWorn === true ? true : undefined,
+    apparelWorn: typeof raw.apparelWorn === "boolean" ? raw.apparelWorn : undefined,
     // Vinyl additions
     vinylCountry: raw.vinylCountry ?? undefined,
     vinylSleeveCondition: raw.vinylSleeveCondition ?? undefined,
-    vinylInserts: raw.vinylInserts === true ? true : undefined,
-    vinylGatefold: raw.vinylGatefold === true ? true : undefined,
+    vinylInserts: typeof raw.vinylInserts === "boolean" ? raw.vinylInserts : undefined,
+    vinylGatefold: typeof raw.vinylGatefold === "boolean" ? raw.vinylGatefold : undefined,
     // Art & Prints
     artMedium: raw.artMedium ?? undefined,
     artSurface: raw.artSurface ?? undefined,
     artHeight: raw.artHeight ?? undefined,
     artWidth: raw.artWidth ?? undefined,
     artDepth: raw.artDepth ?? undefined,
-    artIsFramed: raw.artIsFramed === true ? true : undefined,
-    artIsSigned: raw.artIsSigned === true ? true : undefined,
+    artIsFramed: typeof raw.artIsFramed === "boolean" ? raw.artIsFramed : undefined,
+    artIsSigned: typeof raw.artIsSigned === "boolean" ? raw.artIsSigned : undefined,
     artSignatureLocation: raw.artSignatureLocation ?? undefined,
     artProvenance: raw.artProvenance ?? undefined,
     artExhibitions: raw.artExhibitions ?? undefined,
@@ -782,19 +798,19 @@ function normalizeOne(input: unknown): VaultItem | null {
     coinGradingCompany: raw.coinGradingCompany ?? undefined,
     coinPopulation: raw.coinPopulation ?? undefined,
     coinError: raw.coinError ?? undefined,
-    coinKeyDate: raw.coinKeyDate === true ? true : undefined,
+    coinKeyDate: typeof raw.coinKeyDate === "boolean" ? raw.coinKeyDate : undefined,
     // Games
     gamePlatform: raw.gamePlatform ?? undefined,
     gameRegion: raw.gameRegion ?? undefined,
     gameGradingCompany: raw.gameGradingCompany ?? undefined,
-    gameIsSealed: raw.gameIsSealed === true ? true : undefined,
-    gameIsCIB: raw.gameIsCIB === true ? true : undefined,
-    gameHasManual: raw.gameHasManual === true ? true : undefined,
+    gameIsSealed: typeof raw.gameIsSealed === "boolean" ? raw.gameIsSealed : undefined,
+    gameIsCIB: typeof raw.gameIsCIB === "boolean" ? raw.gameIsCIB : undefined,
+    gameHasManual: typeof raw.gameHasManual === "boolean" ? raw.gameHasManual : undefined,
     gamePublisher: raw.gamePublisher ?? undefined,
     consoleControllerCount: raw.consoleControllerCount ?? undefined,
-    consoleCables: raw.consoleCables === true ? true : undefined,
-    consoleBox: raw.consoleBox === true ? true : undefined,
-    consoleTested: raw.consoleTested === true ? true : undefined,
+    consoleCables: typeof raw.consoleCables === "boolean" ? raw.consoleCables : undefined,
+    consoleBox: typeof raw.consoleBox === "boolean" ? raw.consoleBox : undefined,
+    consoleTested: typeof raw.consoleTested === "boolean" ? raw.consoleTested : undefined,
     // Universal Type dropdown + Attributes checkboxes -- these were declared
     // on the VaultItem type and written correctly on save, but missing here
     // meant loadRawItems() silently stripped them (and immediately
@@ -802,6 +818,7 @@ function normalizeOne(input: unknown): VaultItem | null {
     // Real, active UI (vault/add's Type/Attributes section) -- not dead code.
     itemType: typeof raw.itemType === "string" && raw.itemType.trim() ? raw.itemType.trim() : undefined,
     itemAttributes: normalizeStringArray(raw.itemAttributes),
+    specs: normalizeSpecs(raw.specs),
     // Video clip (beta) -- same bug: already synced correctly to Supabase
     // (vaultCloud.ts's video_clip_url/video_clip_duration), but the
     // LOCAL copy lost it on every reload before any sync could restore it.
@@ -1161,6 +1178,8 @@ function mergeById(localItems: VaultItem[], remoteItems: VaultItem[]) {
       // or the next upload would save the blanks back.
       addedVia: remoteItem.addedVia ?? existing.addedVia,
       catalogRef: remoteItem.catalogRef ?? existing.catalogRef,
+      // Older databases have no specs column yet: a row without it must not blank what was typed on this device.
+      specs: remoteItem.specs ?? existing.specs,
       images: remoteHasImages ? remoteItem.images : existing.images,
       primaryImageKey: remoteItem.primaryImageKey || existing.primaryImageKey,
       imageFrontUrl: remoteItem.imageFrontUrl || existing.imageFrontUrl,
