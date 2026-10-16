@@ -22,6 +22,7 @@ import SwipeStack from "@/components/SwipeStack";
 import { computeItemIntelligence } from "@/lib/itemIntelligence";
 import { UNIVERSE_LABEL, TAXONOMY, getCategories, isUniverseKey, type UniverseKey } from "@/lib/taxonomy";
 import { showToast } from "@/lib/toast";
+import { REVIEW_GAPS, REVIEW_GAP_LABEL, REVIEW_GAP_SHORT, matchesReview, reviewCounts, reviewGaps, type ReviewFilter, type ReviewGap } from "@/lib/vaultReview";
 import { activeItems, collectibleItems, effectiveMarketValue, readValueMode, summarizeValues, writeValueMode, type ValueMode } from "@/lib/vaultStats";
 import { priceCheckIsStale } from "@/lib/pricingMvp";
 import { migrateExistingVaultImagesToSupabase } from "@/lib/vaultMigration";
@@ -80,6 +81,8 @@ const INITIAL_VISIBLE_ITEM_COUNT = 60;
 const VISIBLE_ITEM_INCREMENT = 60;
 
 type SortMode = "newest" | "value_desc" | "value_asc" | "gain_desc" | "gain_asc" | "title";
+const SUMMARY_CARD_FOCUS =
+  "block w-full rounded-[inherit] text-left focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[color:var(--theme-gold,#C8CDD2)]";
 type ReadinessFilter = "all" | "high" | "moderate" | "low";
 type UniverseFilter = "ALL" | UniverseKey;
 // The private Vault has three views. (Shelf and Museum were removed; saved choices of those fall back to Wall.)
@@ -1034,6 +1037,9 @@ export default function VaultListView({ lockedUniverse }: { lockedUniverse?: Uni
     setUniverseFilter(lockedUniverse ?? "ALL");
   }, [lockedUniverse]);
   const [readinessFilter, setReadinessFilter] = useState<ReadinessFilter>("all");
+  // Opened by the "Insurance Ready" and "Needs Review" cards (or a link with ?review=...): the same rule as the card's count.
+  const [reviewFilter, setReviewFilter] = useState<ReviewFilter>("all");
+  const [reviewGap, setReviewGap] = useState<ReviewGap | null>(null);
   const [gradedOnly, setGradedOnly] = useState(false);
   const [uncategorizedOnly, setUncategorizedOnly] = useState(false);
   const [categoryFilter, setCategoryFilter] = useState<string[]>([]);
@@ -1042,7 +1048,7 @@ export default function VaultListView({ lockedUniverse }: { lockedUniverse?: Uni
   const [showSoldItems, setShowSoldItems] = useState(false);
   // The current filters, kept in a ref so opening an item can remember them and Back can put them back.
   const filtersRef = useRef<Record<string, unknown>>({});
-  filtersRef.current = { query, universeFilter, readinessFilter, gradedOnly, uncategorizedOnly, categoryFilter, subFilter, sortMode, showSoldItems, locked: lockedUniverse ?? null };
+  filtersRef.current = { query, universeFilter, readinessFilter, reviewFilter, reviewGap, gradedOnly, uncategorizedOnly, categoryFilter, subFilter, sortMode, showSoldItems, locked: lockedUniverse ?? null };
   const [sales, setSales] = useState<SaleInfo[]>([]);
   const [pendingSyncCount, setPendingSyncCount] = useState(0);
   const [syncStatus, setSyncStatus] = useState("");
@@ -1342,6 +1348,8 @@ export default function VaultListView({ lockedUniverse }: { lockedUniverse?: Uni
         if (typeof f.query === "string") setQuery(f.query);
         if (!lockedUniverse && typeof f.universeFilter === "string") setUniverseFilter(f.universeFilter as UniverseFilter);
         if (typeof f.readinessFilter === "string") setReadinessFilter(f.readinessFilter as ReadinessFilter);
+        if (f.reviewFilter === "insurance_ready" || f.reviewFilter === "needs_review") setReviewFilter(f.reviewFilter);
+        if (typeof f.reviewGap === "string" && (REVIEW_GAPS as string[]).includes(f.reviewGap)) setReviewGap(f.reviewGap as ReviewGap);
         if (typeof f.gradedOnly === "boolean") setGradedOnly(f.gradedOnly);
         if (typeof f.uncategorizedOnly === "boolean") setUncategorizedOnly(f.uncategorizedOnly);
         if (Array.isArray(f.categoryFilter)) setCategoryFilter(f.categoryFilter.filter((x): x is string => typeof x === "string"));
@@ -1396,7 +1404,7 @@ export default function VaultListView({ lockedUniverse }: { lockedUniverse?: Uni
     };
   }, []);
 
-  const filteredItems = useMemo(() => {
+  const filteredBase = useMemo(() => {
     const q = query.trim().toLowerCase();
     const saleMap = Object.fromEntries(sales.map((sale) => [String(sale.id), sale]));
     const next = items.filter((item) => {
@@ -1455,6 +1463,14 @@ export default function VaultListView({ lockedUniverse }: { lockedUniverse?: Uni
     return next;
   }, [items, query, universeFilter, categoryFilter, subFilter, gradedOnly, uncategorizedOnly, sortMode, readinessFilter, intelligenceMap, sales, showSoldItems]);
 
+  // The list the summary cards open. The cards count `filteredBase` (everything the person has filtered by EXCEPT this), and this
+  // applies the same rule to that same list, so a card's number is always the length of the list it opens.
+  const filteredItems = useMemo(() => {
+    if (reviewFilter === "all") return filteredBase;
+    const counted = new Set(activeItems(filteredBase).map((item) => item.id));
+    return filteredBase.filter((item) => counted.has(item.id) && matchesReview(item, reviewFilter, reviewGap));
+  }, [filteredBase, reviewFilter, reviewGap]);
+
   const universeScopedItems = useMemo(
     () => (universeFilter === "ALL" ? [] : items.filter((item) => universeForItem(item) === universeFilter)),
     [items, universeFilter]
@@ -1472,7 +1488,7 @@ export default function VaultListView({ lockedUniverse }: { lockedUniverse?: Uni
 
   useEffect(() => {
     setVisibleItemCount(INITIAL_VISIBLE_ITEM_COUNT);
-  }, [query, universeFilter, readinessFilter, gradedOnly, uncategorizedOnly, sortMode, showSoldItems, vaultViewMode]);
+  }, [query, universeFilter, readinessFilter, reviewFilter, reviewGap, gradedOnly, uncategorizedOnly, sortMode, showSoldItems, vaultViewMode]);
 
   useEffect(() => {
     if (filteredItems.length === 0) {
@@ -1619,21 +1635,16 @@ export default function VaultListView({ lockedUniverse }: { lockedUniverse?: Uni
   const stats = useMemo(() => {
     // Supplies (boxes, cases) stay in the list but never count toward the
     // collection's value, insurance readiness or review counts.
-    const counted = activeItems(filteredItems);
+    const counted = activeItems(filteredBase);
     const totalItems = counted.length;
     const summary = summarizeValues(counted, valueMode);
     const totalCostValue = summary.totalCost;
     const totalValue = summary.totalValue;
     const totalGain = summary.totalGain;
     const universeCount = new Set(counted.map((item) => universeForItem(item))).size;
-    const insuranceReadyCount = counted.filter((item) => {
-      const intelligence = intelligenceMap[item.id];
-      return (intelligence?.readiness ?? "Low") === "High";
-    }).length;
-    const needsReviewCount = counted.filter((item) => {
-      const intelligence = intelligenceMap[item.id];
-      return (intelligence?.readiness ?? "Low") !== "High";
-    }).length;
+    const review = reviewCounts(counted);
+    const insuranceReadyCount = review.ready;
+    const needsReviewCount = review.needsReview;
     const insuranceReadyPct = totalItems ? Math.round((insuranceReadyCount / totalItems) * 100) : 0;
     const valuedCount = summary.pricedCount;
     const ghostCount = summary.ghostCount;
@@ -1650,8 +1661,9 @@ export default function VaultListView({ lockedUniverse }: { lockedUniverse?: Uni
       insuranceReadyCount,
       insuranceReadyPct,
       needsReviewCount,
+      gapCounts: review.byGap,
     };
-  }, [filteredItems, intelligenceMap, valueMode]);
+  }, [filteredBase, valueMode]);
 
   const hasActiveFilters =
     query.trim().length > 0 ||
@@ -1659,6 +1671,7 @@ export default function VaultListView({ lockedUniverse }: { lockedUniverse?: Uni
     categoryFilter.length > 0 ||
     subFilter.length > 0 ||
     readinessFilter !== "all" ||
+    reviewFilter !== "all" ||
     gradedOnly ||
     uncategorizedOnly ||
     showSoldItems ||
@@ -1823,10 +1836,30 @@ export default function VaultListView({ lockedUniverse }: { lockedUniverse?: Uni
     setCategoryFilter([]);
     setSubFilter([]);
     setReadinessFilter("all");
+    setReviewFilter("all");
+    setReviewGap(null);
+    setShowSoldItems(false);
     setGradedOnly(false);
     setUncategorizedOnly(false);
     setSortMode("newest");
   }
+
+  /** Opens a summary card's list (or goes back to the complete list). */
+  function openReview(next: ReviewFilter) {
+    setReviewGap(null);
+    setReviewFilter((current) => (current === next ? "all" : next));
+    window.setTimeout(() => document.getElementById("vault-list-start")?.scrollIntoView({ block: "start", behavior: "smooth" }), 60);
+  }
+  function showCompleteList() {
+    handleClearFilters();
+    window.setTimeout(() => document.getElementById("vault-list-start")?.scrollIntoView({ block: "start", behavior: "smooth" }), 60);
+  }
+
+  // A link such as /vault?review=needs_review (from Home) opens the same list the card opens.
+  useEffect(() => {
+    const wanted = new URLSearchParams(window.location.search).get("review");
+    if (wanted === "needs_review" || wanted === "insurance_ready") setReviewFilter(wanted);
+  }, []);
 
   return (
     <>
@@ -1952,61 +1985,110 @@ export default function VaultListView({ lockedUniverse }: { lockedUniverse?: Uni
 
           <div className="mt-5 flex gap-2 overflow-x-auto pb-2 sm:grid sm:grid-cols-2 sm:gap-3 sm:overflow-visible xl:grid-cols-4">
             <div className="w-[140px] shrink-0 vltd-brushed vltd-status-cyan p-2.5 sm:w-auto sm:p-4">
-              <div className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-[color:var(--muted2)] sm:text-[11px] sm:tracking-[0.18em]">
-                <AppIcon name="price" size={12} strokeWidth={1.8} />
-                Total Value
-              </div>
-              {valueMode === "priced" && stats.valuedCount === 0 ? (
-                <>
-                  <div className="mt-1.5 text-lg font-extrabold tracking-[-0.02em] text-[color:var(--muted)] sm:mt-2.5 sm:text-2xl">No items priced yet</div>
-                  <div className="mt-0.5 text-[11px] text-[color:var(--muted)] sm:text-sm">Total cost {formatMoney(stats.totalCost)}</div>
-                </>
-              ) : (
-                <>
-                  <div
-                    className={"mt-1.5 text-xl font-extrabold tracking-[-0.02em] sm:mt-2.5 sm:text-3xl " + (valueMode === "fill" && stats.ghostCount > 0 ? "text-[color:var(--muted)]" : "text-[color:var(--data-color)]")}
-                    title={valueMode === "fill" && stats.ghostCount > 0 ? "Includes purchase price for items not priced yet" : undefined}
-                  >{formatMoney(stats.totalValue)}</div>
-                  <div className={(stats.totalGain >= 0 ? "text-emerald-300" : "text-red-300") + " mt-0.5 text-[11px] sm:text-sm"}>{stats.totalGain >= 0 ? "+" : ""}{formatMoney(stats.totalGain)}</div>
-                  {stats.valuedCount < stats.totalItems ? (
-                    <div className="mt-0.5 text-[11px] text-[color:var(--muted)]">
-                      {valueMode === "fill" ? `${stats.ghostCount} of ${stats.totalItems} at purchase price` : `${stats.valuedCount} of ${stats.totalItems} priced`}
-                    </div>
-                  ) : null}
-                  {stats.totalItems > 0 && stats.valuedCount < stats.totalItems ? (
-                    <PillButton size="compact" className="mt-1" onClick={() => writeValueMode(valueMode === "fill" ? "priced" : "fill")}>
-                      {valueMode === "fill" ? "Show priced only" : "Include unpriced"}
-                    </PillButton>
-                  ) : null}
-                  {stats.staleCheckCount > 0 ? (
-                    <div className="mt-0.5 text-[11px] text-amber-400">{stats.staleCheckCount} {stats.staleCheckCount === 1 ? "item hasn't" : "items haven't"} had a price check in 6 months</div>
-                  ) : null}
-                </>
-              )}
+              <Link
+                href="/portfolio"
+                aria-label={`Total value ${formatMoney(stats.totalValue)}. Open the financial breakdown`}
+                title="Open the financial breakdown (Insights)"
+                className={SUMMARY_CARD_FOCUS}
+              >
+                <div className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-[color:var(--muted2)] sm:text-[11px] sm:tracking-[0.18em]">
+                  <AppIcon name="price" size={12} strokeWidth={1.8} />
+                  Total Value
+                </div>
+                {valueMode === "priced" && stats.valuedCount === 0 ? (
+                  <>
+                    <div className="mt-1.5 text-lg font-extrabold tracking-[-0.02em] text-[color:var(--muted)] sm:mt-2.5 sm:text-2xl">No items priced yet</div>
+                    <div className="mt-0.5 text-[11px] text-[color:var(--muted)] sm:text-sm">Total cost {formatMoney(stats.totalCost)}</div>
+                  </>
+                ) : (
+                  <>
+                    <div
+                      className={"mt-1.5 text-xl font-extrabold tracking-[-0.02em] sm:mt-2.5 sm:text-3xl " + (valueMode === "fill" && stats.ghostCount > 0 ? "text-[color:var(--muted)]" : "text-[color:var(--data-color)]")}
+                      title={valueMode === "fill" && stats.ghostCount > 0 ? "Includes purchase price for items not priced yet" : undefined}
+                    >{formatMoney(stats.totalValue)}</div>
+                    <div className={(stats.totalGain >= 0 ? "text-emerald-300" : "text-red-300") + " mt-0.5 text-[11px] sm:text-sm"}>{stats.totalGain >= 0 ? "+" : ""}{formatMoney(stats.totalGain)}</div>
+                    {stats.valuedCount < stats.totalItems ? (
+                      <div className="mt-0.5 text-[11px] text-[color:var(--muted)]">
+                        {valueMode === "fill" ? `${stats.ghostCount} of ${stats.totalItems} at purchase price` : `${stats.valuedCount} of ${stats.totalItems} priced`}
+                      </div>
+                    ) : null}
+                  </>
+                )}
+                <span className="mt-1 inline-flex items-center gap-1 text-[11px] font-semibold text-[color:var(--data-color)]">
+                  Financial breakdown <AppIcon name="next" size={11} strokeWidth={2} />
+                </span>
+              </Link>
+              {!(valueMode === "priced" && stats.valuedCount === 0) && stats.totalItems > 0 && stats.valuedCount < stats.totalItems ? (
+                <PillButton size="compact" className="mt-1" onClick={() => writeValueMode(valueMode === "fill" ? "priced" : "fill")}>
+                  {valueMode === "fill" ? "Show priced only" : "Include unpriced"}
+                </PillButton>
+              ) : null}
+              {!(valueMode === "priced" && stats.valuedCount === 0) && stats.staleCheckCount > 0 ? (
+                <div className="mt-0.5 text-[11px] text-amber-400">{stats.staleCheckCount} {stats.staleCheckCount === 1 ? "item hasn't" : "items haven't"} had a price check in 6 months</div>
+              ) : null}
             </div>
-            <div className="w-[140px] shrink-0 vltd-brushed p-2.5 sm:w-auto sm:p-4">
-              <div className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-[color:var(--muted2)] sm:text-[11px] sm:tracking-[0.18em]">
-                <AppIcon name="box" size={12} strokeWidth={1.8} />
-                Items
-              </div>
-              <div className="mt-1.5 text-xl font-extrabold tracking-[-0.02em] sm:mt-2.5 sm:text-3xl">{stats.totalItems}</div>
-              <div className="mt-0.5 text-[11px] text-[color:var(--muted)] sm:text-sm">{stats.universeCount} {stats.universeCount === 1 ? "universe" : "universes"}</div>
+
+            <div className={"w-[140px] shrink-0 vltd-brushed p-2.5 sm:w-auto sm:p-4 " + (!hasActiveFilters ? "ring-1 ring-[color:var(--pill-active-ring)]" : "")}>
+              <button
+                type="button"
+                onClick={showCompleteList}
+                aria-pressed={!hasActiveFilters}
+                aria-label={`${stats.totalItems} items. Show the complete list${hasActiveFilters ? " (clears all filters)" : ""}`}
+                title="Show the complete list"
+                className={SUMMARY_CARD_FOCUS}
+              >
+                <div className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-[color:var(--muted2)] sm:text-[11px] sm:tracking-[0.18em]">
+                  <AppIcon name="box" size={12} strokeWidth={1.8} />
+                  Items
+                </div>
+                <div className="mt-1.5 text-xl font-extrabold tracking-[-0.02em] sm:mt-2.5 sm:text-3xl">{stats.totalItems}</div>
+                <div className="mt-0.5 text-[11px] text-[color:var(--muted)] sm:text-sm">{stats.universeCount} {stats.universeCount === 1 ? "universe" : "universes"}</div>
+                <span className="mt-1 inline-flex items-center gap-1 text-[11px] font-semibold text-[color:var(--data-color)]">
+                  {hasActiveFilters ? "Show all items" : "All items shown"}
+                </span>
+              </button>
             </div>
-            <div className="w-[140px] shrink-0 vltd-brushed vltd-status-cyan p-2.5 sm:w-auto sm:p-4">
-              <div className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-[color:var(--muted2)] sm:text-[11px] sm:tracking-[0.18em]">
-                <AppIcon name="shield" size={12} strokeWidth={1.8} />
-                Insurance Ready
-              </div>
-              <div className="mt-1.5 text-xl font-extrabold tracking-[-0.02em] text-[color:var(--data-color)] sm:mt-2.5 sm:text-3xl">{stats.insuranceReadyPct}%</div>
-              <div className="mt-0.5 text-[11px] text-[color:var(--muted)] sm:text-sm">{stats.insuranceReadyCount} of {stats.totalItems} items</div>
+
+            <div className={"w-[140px] shrink-0 vltd-brushed vltd-status-cyan p-2.5 sm:w-auto sm:p-4 " + (reviewFilter === "insurance_ready" ? "ring-2 ring-[color:var(--pill-active-ring)]" : "")}>
+              <button
+                type="button"
+                onClick={() => openReview("insurance_ready")}
+                aria-pressed={reviewFilter === "insurance_ready"}
+                aria-label={`Insurance ready: ${stats.insuranceReadyCount} of ${stats.totalItems} items. ${reviewFilter === "insurance_ready" ? "Showing them. Press to go back to the complete list" : "Show these items"}`}
+                title="Show the insurance-ready items"
+                className={SUMMARY_CARD_FOCUS}
+              >
+                <div className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-[color:var(--muted2)] sm:text-[11px] sm:tracking-[0.18em]">
+                  <AppIcon name="shield" size={12} strokeWidth={1.8} />
+                  Insurance Ready
+                </div>
+                <div className="mt-1.5 text-xl font-extrabold tracking-[-0.02em] text-[color:var(--data-color)] sm:mt-2.5 sm:text-3xl">{stats.insuranceReadyPct}%</div>
+                <div className="mt-0.5 text-[11px] text-[color:var(--muted)] sm:text-sm">{stats.insuranceReadyCount} of {stats.totalItems} items</div>
+                <span className="mt-1 inline-flex items-center gap-1 text-[11px] font-semibold text-[color:var(--data-color)]">
+                  {reviewFilter === "insurance_ready" ? "Showing these" : "View items"} <AppIcon name="next" size={11} strokeWidth={2} />
+                </span>
+              </button>
             </div>
-            <div className="w-[140px] shrink-0 vltd-brushed p-2.5 sm:w-auto sm:p-4">
-              <div className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-[color:var(--muted2)] sm:text-[11px] sm:tracking-[0.18em]">
-                <AppIcon name="warning" size={12} strokeWidth={1.8} />
-                Needs Review
-              </div>
-              <div className="mt-1.5 text-xl font-extrabold tracking-[-0.02em] sm:mt-2.5 sm:text-3xl">{stats.needsReviewCount}</div>
-              <div className="mt-0.5 text-[11px] text-[color:var(--muted)] sm:text-sm">Items missing info</div>
+
+            <div className={"w-[140px] shrink-0 vltd-brushed p-2.5 sm:w-auto sm:p-4 " + (reviewFilter === "needs_review" ? "ring-2 ring-[color:var(--pill-active-ring)]" : "")}>
+              <button
+                type="button"
+                onClick={() => openReview("needs_review")}
+                aria-pressed={reviewFilter === "needs_review"}
+                aria-label={`Needs review: ${stats.needsReviewCount} items missing information. ${reviewFilter === "needs_review" ? "Showing them. Press to go back to the complete list" : "Show these items"}`}
+                title="Show the items that need review"
+                className={SUMMARY_CARD_FOCUS}
+              >
+                <div className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-[color:var(--muted2)] sm:text-[11px] sm:tracking-[0.18em]">
+                  <AppIcon name="warning" size={12} strokeWidth={1.8} />
+                  Needs Review
+                </div>
+                <div className="mt-1.5 text-xl font-extrabold tracking-[-0.02em] sm:mt-2.5 sm:text-3xl">{stats.needsReviewCount}</div>
+                <div className="mt-0.5 text-[11px] text-[color:var(--muted)] sm:text-sm">Items missing info</div>
+                <span className="mt-1 inline-flex items-center gap-1 text-[11px] font-semibold text-[color:var(--data-color)]">
+                  {reviewFilter === "needs_review" ? "Showing these" : "See what is missing"} <AppIcon name="next" size={11} strokeWidth={2} />
+                </span>
+              </button>
             </div>
           </div>
 
@@ -2166,6 +2248,68 @@ export default function VaultListView({ lockedUniverse }: { lockedUniverse?: Uni
           </div>
         </section>
 
+        <div id="vault-list-start" className="scroll-mt-24" />
+        {items.length > 0 ? (
+          <section aria-label="Active filters" className="mt-3">
+            {reviewFilter !== "all" ? (
+              <div role="status" className="rounded-[12px] p-3 text-sm ring-1 ring-[color:var(--pill-active-ring)]" style={{ background: "var(--theme-card)" }}>
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div className="font-semibold">
+                    {reviewFilter === "insurance_ready"
+                      ? `Insurance ready: ${filteredItems.length} of ${stats.totalItems} ${stats.totalItems === 1 ? "item" : "items"}`
+                      : `Needs review: ${filteredItems.length} ${filteredItems.length === 1 ? "item" : "items"}${reviewGap ? ` missing ${REVIEW_GAP_LABEL[reviewGap]}` : ""}`}
+                  </div>
+                  <PillButton size="compact" onClick={() => { setReviewFilter("all"); setReviewGap(null); }}>Back to all items</PillButton>
+                </div>
+                <p className="mt-1 text-[12px] leading-relaxed text-[color:var(--muted)]">
+                  {reviewFilter === "insurance_ready"
+                    ? "An item is insurance ready when it has a photo, a value that was entered or looked up, a purchase price, and something that identifies it (grade, cert or serial number, or a set / number). Boxes and display supplies are not counted."
+                    : "These items are missing something an insurance packet shows. Choose a missing piece to narrow the list, or open an item to fill it in. Boxes and display supplies are not counted."}
+                </p>
+                {reviewFilter === "needs_review" ? (
+                  <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                    {REVIEW_GAPS.map((gap) => (
+                      <PillButton key={gap} size="compact" variant={reviewGap === gap ? "active" : "default"} pressed={reviewGap === gap} onClick={() => setReviewGap((current) => (current === gap ? null : gap))}>
+                        Missing {REVIEW_GAP_SHORT[gap].toLowerCase()} <span className="text-[11px] opacity-70">{stats.gapCounts[gap]}</span>
+                      </PillButton>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                    <PillButton size="compact" href="/insurance">Open the insurance packet</PillButton>
+                    <PillButton size="compact" href="/portfolio/insurance">Insurance summary</PillButton>
+                  </div>
+                )}
+                {filteredItems.length === 0 ? (
+                  <p className="mt-2 text-[13px] font-medium">
+                    {reviewFilter === "insurance_ready"
+                      ? "No items are insurance ready yet. Choose Needs Review to see what each one is missing."
+                      : reviewGap
+                        ? `Nothing here is missing ${REVIEW_GAP_LABEL[reviewGap]}.`
+                        : "Nothing needs review. Every item has what an insurance packet needs."}
+                  </p>
+                ) : null}
+              </div>
+            ) : null}
+            {hasActiveFilters ? (
+              <div className="mt-2 flex flex-wrap items-center gap-1.5" aria-live="polite">
+                <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[color:var(--muted2)]">Filters</span>
+                {query.trim() ? <PillButton size="compact" onClick={() => setQuery("")} ariaLabel={`Clear search ${query.trim()}`}>Search “{query.trim()}” <AppIcon name="close" size={12} /></PillButton> : null}
+                {universeFilter !== (lockedUniverse ?? "ALL") ? <PillButton size="compact" onClick={() => setUniverseFilter(lockedUniverse ?? "ALL")} ariaLabel="Clear universe filter">{UNIVERSE_LABEL[universeFilter as UniverseKey] ?? universeFilter} <AppIcon name="close" size={12} /></PillButton> : null}
+                {categoryFilter.length > 0 ? <PillButton size="compact" onClick={() => { setCategoryFilter([]); setSubFilter([]); }} ariaLabel="Clear category filter">{categoryFilter.length === 1 ? "1 category" : `${categoryFilter.length} categories`} <AppIcon name="close" size={12} /></PillButton> : null}
+                {subFilter.length > 0 ? <PillButton size="compact" onClick={() => setSubFilter([])} ariaLabel="Clear subcategory filter">{subFilter.length === 1 ? "1 subcategory" : `${subFilter.length} subcategories`} <AppIcon name="close" size={12} /></PillButton> : null}
+                {gradedOnly ? <PillButton size="compact" onClick={() => setGradedOnly(false)} ariaLabel="Clear graded filter">Graded only <AppIcon name="close" size={12} /></PillButton> : null}
+                {uncategorizedOnly ? <PillButton size="compact" onClick={() => setUncategorizedOnly(false)} ariaLabel="Clear uncategorized filter">Uncategorized only <AppIcon name="close" size={12} /></PillButton> : null}
+                {showSoldItems ? <PillButton size="compact" onClick={() => setShowSoldItems(false)} ariaLabel="Hide sold items again">Sold items shown <AppIcon name="close" size={12} /></PillButton> : null}
+                {readinessFilter !== "all" ? <PillButton size="compact" onClick={() => setReadinessFilter("all")} ariaLabel="Clear value-rank filter">Value rank: {readinessFilter} <AppIcon name="close" size={12} /></PillButton> : null}
+                {reviewFilter !== "all" ? <PillButton size="compact" onClick={() => { setReviewFilter("all"); setReviewGap(null); }} ariaLabel="Clear review filter">{reviewFilter === "insurance_ready" ? "Insurance ready" : "Needs review"}{reviewGap ? ` · ${REVIEW_GAP_SHORT[reviewGap].toLowerCase()}` : ""} <AppIcon name="close" size={12} /></PillButton> : null}
+                {sortMode !== "newest" ? <PillButton size="compact" onClick={() => setSortMode("newest")} ariaLabel="Back to newest first">Sorted: {sortMode.replace("_", " ")} <AppIcon name="close" size={12} /></PillButton> : null}
+                <PillButton size="compact" variant="active" onClick={handleClearFilters}>Clear all</PillButton>
+              </div>
+            ) : null}
+          </section>
+        ) : null}
+
         {items.length === 0 && !initialLoadComplete ? (
           <VaultLoadingSkeleton />
         ) : items.length === 0 && loadFailed ? (
@@ -2232,6 +2376,11 @@ export default function VaultListView({ lockedUniverse }: { lockedUniverse?: Uni
                       onDeleteItem={handleDeleteItem}
                       displayMode={vaultViewMode}
                     />
+                    {reviewFilter === "needs_review" ? (
+                      <div className="mt-1 px-1 text-[11px] font-medium text-amber-300">
+                        Missing: {reviewGaps(item).map((gap) => REVIEW_GAP_SHORT[gap].toLowerCase()).join(", ")}
+                      </div>
+                    ) : null}
                   </div>
                 );
               })}
