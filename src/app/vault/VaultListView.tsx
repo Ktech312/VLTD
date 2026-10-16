@@ -1,12 +1,10 @@
 "use client";
 
 import { VaultNav } from "@/components/SectionNav";
-import { useRouter } from "next/navigation";
 import AddItemActions from "@/components/AddItemActions";
 import VaultToolsMenu from "@/components/VaultToolsMenu";
 import { LocalNav } from "@/components/ui/LocalNav";
 import { PillButton } from "@/components/ui/PillButton";
-import VaultMuseumView from "@/components/VaultMuseumView";
 import VaultCategoryChips, { chipKey, vaultItemCategory, vaultItemSubcategory } from "@/components/VaultCategoryChips";
 import { normalizeUniverse, universeForItem } from "@/lib/universeMatch";
 import Link from "next/link";
@@ -83,7 +81,8 @@ const VISIBLE_ITEM_INCREMENT = 60;
 type SortMode = "newest" | "value_desc" | "value_asc" | "gain_desc" | "gain_asc" | "title";
 type ReadinessFilter = "all" | "high" | "moderate" | "low";
 type UniverseFilter = "ALL" | UniverseKey;
-type VaultViewMode = "wall" | "gallery" | "museum" | "shelf" | "flip";
+// The private Vault has three views. (Shelf and Museum were removed; saved choices of those fall back to Wall.)
+type VaultViewMode = "wall" | "gallery" | "flip";
 type InlineField = "" | "value" | "cost";
 type SaleInfo = {
   id: string;
@@ -207,10 +206,6 @@ const VAULT_UNIVERSES: VaultUniverseEntry[] = [
 
 function universeDisplayName(key: UniverseKey) {
   return UNIVERSE_LABEL[key] ?? "Misc";
-}
-
-function universeToSlug(key: UniverseKey): VaultUniverseSlug {
-  return VAULT_UNIVERSES.find((entry) => entry.key === key)?.slug ?? "misc";
 }
 
 export function universeFromSlug(value: unknown): UniverseKey {
@@ -490,7 +485,7 @@ function VaultCard({
     <div
       className={[
         "group relative flex flex-col overflow-hidden rounded-[4px] vltd-brushed p-3 transition hover:-translate-y-0.5",
-        displayMode === "shelf" ? "min-h-[264px]" : displayMode === "flip" ? "min-h-[340px] hover:[transform:rotateY(2deg)_translateY(-2px)]" : "min-h-[324px]",
+        displayMode === "flip" ? "min-h-[340px] hover:[transform:rotateY(2deg)_translateY(-2px)]" : "min-h-[324px]",
         marketValue > 0 ? "border-l-2 border-l-[color:var(--status-cyan)]" : "",
       ].join(" ")}
     >
@@ -525,7 +520,7 @@ function VaultCard({
         </button>
       </div>
 
-      <div className={["relative z-0 overflow-visible rounded-[8px]", displayMode === "shelf" ? "h-[138px]" : displayMode === "flip" ? "h-[212px]" : "h-[190px]"].join(" ")}>
+      <div className={["relative z-0 overflow-visible rounded-[8px]", displayMode === "flip" ? "h-[212px]" : "h-[190px]"].join(" ")}>
         <Link href={detailHref} className="absolute inset-x-0 top-0 bottom-[-58px] z-0 block overflow-hidden rounded-[8px] bg-black/24 vltd-dark-surface">
           {image ? (
             <ProgressiveImage
@@ -1029,7 +1024,6 @@ function VaultSelectionDrawer({
  * the same screen locked to that one universe (no chips, universe title, a way back to all).
  */
 export default function VaultListView({ lockedUniverse }: { lockedUniverse?: UniverseKey } = {}) {
-  const router = useRouter();
   const [focusKey] = useState<UniverseKey | null>(() => readFocusUniverseKey());
   const [items, setItems] = useState<VaultItem[]>([]);
   const [query, setQuery] = useState("");
@@ -1054,7 +1048,7 @@ export default function VaultListView({ lockedUniverse }: { lockedUniverse?: Uni
   const [isMigrating, setIsMigrating] = useState(false);
   const [isOnline, setIsOnline] = useState<boolean | null>(null);
   const [initialLoadComplete, setInitialLoadComplete] = useState(false);
-  const [vaultViewMode, setVaultViewMode] = useState<VaultViewMode>("shelf");
+  const [vaultViewMode, setVaultViewMode] = useState<VaultViewMode>("wall");
   const [myProfiles, setMyProfiles] = useState<ProfileRow[]>([]);
   const [activeProfileId, setActiveProfileId] = useState("");
   const [confirmProfileMove, setConfirmProfileMove] = useState<ProfileRow | null>(null);
@@ -1282,10 +1276,9 @@ export default function VaultListView({ lockedUniverse }: { lockedUniverse?: Uni
   useEffect(() => {
     try {
       const saved = window.localStorage.getItem(VIEW_MODE_KEY);
-      const known: Record<string, VaultViewMode> = {
-        wall: "wall", gallery: "gallery", museum: "museum", shelf: "shelf", flip: "flip", swipe: "flip",
-      };
-      if (saved && known[saved]) setVaultViewMode(known[saved]);
+      // Anything else that was saved (the removed Shelf and Museum views, unknown values) falls back to Wall.
+      const known: Record<string, VaultViewMode> = { wall: "wall", gallery: "gallery", flip: "flip", swipe: "flip" };
+      setVaultViewMode(saved && known[saved] ? known[saved] : "wall");
     } catch {
       // storage unavailable: keep the default view
     }
@@ -2026,8 +2019,6 @@ export default function VaultListView({ lockedUniverse }: { lockedUniverse?: Uni
                     [
                       ["wall", "Wall"],
                       ["gallery", "Gallery"],
-                      ["shelf", "Shelf"],
-                      ["museum", "Museum"],
                       ["flip", "Flip"],
                     ] as const
                   ).map(([mode, label]) => (
@@ -2183,16 +2174,6 @@ export default function VaultListView({ lockedUniverse }: { lockedUniverse?: Uni
           <VaultWallView items={filteredItems} saleMap={saleMap} />
         ) : filteredItems.length === 0 ? (
           <VaultEmptyState hasFilters={hasActiveFilters} onClearFilters={handleClearFilters} />
-        ) : vaultViewMode === "museum" ? (
-          <section className="mt-4">
-            <VaultMuseumView
-              items={filteredItems}
-              onFilterToUniverse={(universe) => {
-                if (lockedUniverse) router.push(`/vault/${universeToSlug(universe)}`);
-                else setUniverseFilter(universe);
-              }}
-            />
-          </section>
         ) : vaultViewMode === "flip" ? (
           <section className="mt-4">
             <div className="mx-auto max-w-3xl">
@@ -2210,9 +2191,7 @@ export default function VaultListView({ lockedUniverse }: { lockedUniverse?: Uni
             <div
               className={[
                 "grid",
-                vaultViewMode === "shelf"
-                  ? "gap-2 grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6"
-                  : "gap-3 grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5",
+                "gap-3 grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5",
               ].join(" ")}
             >
               {visibleItems.map((item) => {

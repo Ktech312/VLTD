@@ -67,20 +67,13 @@ export default function ProgressiveImage({
   style,
 }: ProgressiveImageProps) {
   const [loaded, setLoaded] = useState(false);
-  const [near, setNear] = useState(!deferOffscreen);
   const [allowed, setAllowed] = useState(!deferOffscreen);
   const boxRef = useRef<HTMLDivElement>(null);
   const releaseSlotRef = useRef<(() => void) | null>(null);
   const fullSrc = typeof src === "string" ? src.trim() : "";
-  const imageSrc = near && allowed ? fullSrc : "";
+  const imageSrc = allowed ? fullSrc : "";
 
-  // Near the screen: wait for a free download slot, then start. The slot is given back when the photo finishes (or fails).
-  const slotRequestedRef = useRef(false);
-  useEffect(() => {
-    if (!deferOffscreen || !near || slotRequestedRef.current || !fullSrc) return;
-    slotRequestedRef.current = true;
-    releaseSlotRef.current = takePhotoSlot(() => setAllowed(true));
-  }, [deferOffscreen, near, fullSrc]);
+  const startedRef = useRef(false);
   useEffect(() => {
     return () => {
       releaseSlotRef.current?.();
@@ -92,25 +85,45 @@ export default function ProgressiveImage({
     releaseSlotRef.current = null;
   }
 
+  // Near the screen: wait for a free download slot, then start; the slot is given back when the photo finishes (or fails).
+  // A card scrolled past while it was still waiting gives its place back, so a fast scroll does not leave the photos on screen
+  // queued behind ones nobody can see any more.
   useEffect(() => {
-    if (near) return;
+    if (!deferOffscreen || !fullSrc) return;
     const box = boxRef.current;
     if (!box || typeof IntersectionObserver === "undefined") {
-      queueMicrotask(() => setNear(true));
+      queueMicrotask(() => setAllowed(true));
       return;
     }
+    let waiting = false;
     const observer = new IntersectionObserver(
       (entries) => {
-        if (entries.some((entry) => entry.isIntersecting)) {
-          setNear(true);
-          observer.disconnect();
+        const latest = entries[entries.length - 1];
+        if (!latest || startedRef.current) return;
+        if (latest.isIntersecting) {
+          if (waiting) return;
+          waiting = true;
+          releaseSlotRef.current = takePhotoSlot(() => {
+            startedRef.current = true;
+            setAllowed(true);
+          });
+        } else if (waiting) {
+          waiting = false;
+          releaseSlotRef.current?.();
+          releaseSlotRef.current = null;
         }
       },
       { rootMargin: "500px 0px" }
     );
     observer.observe(box);
-    return () => observer.disconnect();
-  }, [near]);
+    return () => {
+      observer.disconnect();
+      if (!startedRef.current) {
+        releaseSlotRef.current?.();
+        releaseSlotRef.current = null;
+      }
+    };
+  }, [deferOffscreen, fullSrc]);
 
   return (
     <div

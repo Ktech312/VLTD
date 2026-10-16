@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import ProgressiveImage from "@/components/ui/ProgressiveImage";
 import { AppIcon } from "@/components/ui/AppIcon";
@@ -40,6 +40,9 @@ const SHORT_LABEL: Record<UniverseKey, string> = {
 
 const LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ#".split("");
 
+// The wall draws its tiles in pages as you scroll (a 1,500-item wall used to put every tile and photo on the page at once).
+const WALL_PAGE = 60;
+
 /* ── Small cover tile ──────────────────────────────────────────── */
 
 function WallTile({
@@ -65,7 +68,7 @@ function WallTile({
           alt={item.title}
           className="h-full w-full"
           imageClassName="object-cover object-center"
-          loading="lazy"
+          deferOffscreen
           draggable={false}
         />
       ) : (
@@ -99,6 +102,8 @@ export default function VaultWallView({ items, saleMap }: VaultWallViewProps) {
   const [query, setQuery] = useState("");
   const [showAdvanced, setShowAdvanced] = useState(false);
   const letterRefs = useRef<Record<string, HTMLDivElement | null>>({});
+  const [renderLimit, setRenderLimit] = useState(WALL_PAGE);
+  const moreRef = useRef<HTMLDivElement | null>(null);
 
   // Advanced filter state
   const [gradeFilter, setGradeFilter] = useState("");
@@ -197,9 +202,41 @@ export default function VaultWallView({ items, saleMap }: VaultWallViewProps) {
 
   const activeLetters = useMemo(() => new Set(Object.keys(grouped)), [grouped]);
 
+  // A new filter or search starts the wall from the top again.
+  useEffect(() => {
+    setRenderLimit(WALL_PAGE);
+  }, [filtered]);
+
   function jumpTo(letter: string) {
-    letterRefs.current[letter]?.scrollIntoView({ behavior: "smooth", block: "start" });
+    // Make sure the letter's group has been drawn (it may be further down than what is on the page yet).
+    let end = 0;
+    for (const l of LETTERS) {
+      end += grouped[l]?.length ?? 0;
+      if (l === letter) break;
+    }
+    if (end > renderLimit) setRenderLimit(end);
+    window.setTimeout(() => {
+      letterRefs.current[letter]?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, end > renderLimit ? 80 : 0);
   }
+
+  const hasMoreToDraw = renderLimit < filtered.length;
+  useEffect(() => {
+    if (!hasMoreToDraw) return;
+    const node = moreRef.current;
+    if (!node || typeof IntersectionObserver === "undefined") {
+      queueMicrotask(() => setRenderLimit(filtered.length));
+      return;
+    }
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((entry) => entry.isIntersecting)) setRenderLimit((n) => n + WALL_PAGE);
+      },
+      { rootMargin: "900px 0px" }
+    );
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [hasMoreToDraw, renderLimit, filtered.length]);
 
   /* Universe counts (unfiltered, for pill badges) */
   const universeCounts = useMemo(() => {
@@ -458,6 +495,9 @@ export default function VaultWallView({ items, saleMap }: VaultWallViewProps) {
           {LETTERS.map((letter) => {
             const group = grouped[letter];
             if (!group?.length) return null;
+            const before = LETTERS.slice(0, LETTERS.indexOf(letter)).reduce((n, l) => n + (grouped[l]?.length ?? 0), 0);
+            if (before >= renderLimit) return null;
+            const shown = group.slice(0, Math.max(0, renderLimit - before));
             return (
               <div
                 key={letter}
@@ -470,7 +510,7 @@ export default function VaultWallView({ items, saleMap }: VaultWallViewProps) {
                   className="grid gap-1.5"
                   style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` }}
                 >
-                  {group.map((item) => (
+                  {shown.map((item) => (
                     <WallTile
                       key={item.id}
                       item={item}
@@ -481,6 +521,7 @@ export default function VaultWallView({ items, saleMap }: VaultWallViewProps) {
               </div>
             );
           })}
+          {hasMoreToDraw ? <div ref={moreRef} className="h-10" aria-hidden="true" /> : null}
         </div>
       )}
     </div>
