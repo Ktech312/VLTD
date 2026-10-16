@@ -16,6 +16,10 @@ type SaleInfo = { id: string; soldPrice?: number; soldAt?: number };
 interface VaultWallViewProps {
   items: VaultItem[];
   saleMap: Record<string, SaleInfo | undefined>;
+  /** The Vault page's Sort: value and gain sorts are followed; Newest and Title A-Z give the A-Z wall. */
+  sortMode?: "newest" | "value_desc" | "value_asc" | "gain_desc" | "gain_asc" | "title";
+  /** The Vault page's Show Sold switch (the wall no longer has a second one). */
+  showSold?: boolean;
 }
 
 /* ── Constants ─────────────────────────────────────────────────── */
@@ -42,6 +46,7 @@ const LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ#".split("");
 
 // The wall draws its tiles in pages as you scroll (a 1,500-item wall used to put every tile and photo on the page at once).
 const WALL_PAGE = 60;
+const WALL_LIMIT_KEY = "vltd_wall_render_limit";
 
 /* ── Small cover tile ──────────────────────────────────────────── */
 
@@ -95,14 +100,29 @@ function WallTile({
 
 /* ── Main component ────────────────────────────────────────────── */
 
-export default function VaultWallView({ items, saleMap }: VaultWallViewProps) {
+export default function VaultWallView({ items, saleMap, sortMode = "newest", showSold = false }: VaultWallViewProps) {
   // Universe multi-select: empty Set = All
   const [selectedUniverses, setSelectedUniverses] = useState<Set<UniverseKey>>(new Set());
   const [cols, setCols] = useState(7);
   const [query, setQuery] = useState("");
   const [showAdvanced, setShowAdvanced] = useState(false);
   const letterRefs = useRef<Record<string, HTMLDivElement | null>>({});
-  const [renderLimit, setRenderLimit] = useState(WALL_PAGE);
+  const [renderLimit, setRenderLimit] = useState(() => {
+    if (typeof window === "undefined") return WALL_PAGE;
+    try {
+      const saved = Number(window.sessionStorage.getItem(WALL_LIMIT_KEY));
+      if (Number.isFinite(saved) && saved > WALL_PAGE) {
+        window.sessionStorage.removeItem(WALL_LIMIT_KEY);
+        return saved;
+      }
+    } catch {
+      /* storage unavailable */
+    }
+    return WALL_PAGE;
+  });
+  const mountedAt = useRef(0);
+  const renderLimitRef = useRef(renderLimit);
+  renderLimitRef.current = renderLimit;
   const moreRef = useRef<HTMLDivElement | null>(null);
 
   // Advanced filter state
@@ -110,7 +130,6 @@ export default function VaultWallView({ items, saleMap }: VaultWallViewProps) {
   const [categoryFilter, setCategoryFilter] = useState("");
   const [storageFilter, setStorageFilter] = useState("");
   const [sourceFilter, setSourceFilter] = useState("");
-  const [showSold, setShowSold] = useState(false);
   const [gradedOnly, setGradedOnly] = useState(false);
   const [statusFilter, setStatusFilter] = useState<"" | "FOR_SALE" | "COLLECTION" | "AUCTION">("");
 
@@ -133,6 +152,9 @@ export default function VaultWallView({ items, saleMap }: VaultWallViewProps) {
       return next;
     });
   }
+
+  // Value and gain sorts keep the Vault page's order, shown as one run with no letter headings. Newest / Title A-Z stay the A-Z wall.
+  const flat = sortMode === "value_desc" || sortMode === "value_asc" || sortMode === "gain_desc" || sortMode === "gain_asc";
 
   /* Filtered + sorted items */
   const filtered = useMemo(() => {
@@ -186,8 +208,8 @@ export default function VaultWallView({ items, saleMap }: VaultWallViewProps) {
 
         return true;
       })
-      .sort((a, b) => String(a.title ?? "").localeCompare(String(b.title ?? "")));
-  }, [items, selectedUniverses, query, gradeFilter, categoryFilter, storageFilter, sourceFilter, showSold, gradedOnly, statusFilter, saleMap]);
+      .sort((a, b) => (flat ? 0 : String(a.title ?? "").localeCompare(String(b.title ?? ""))));
+  }, [flat, items, selectedUniverses, query, gradeFilter, categoryFilter, storageFilter, sourceFilter, showSold, gradedOnly, statusFilter, saleMap]);
 
   /* Group by first letter */
   const grouped = useMemo(() => {
@@ -203,9 +225,26 @@ export default function VaultWallView({ items, saleMap }: VaultWallViewProps) {
   const activeLetters = useMemo(() => new Set(Object.keys(grouped)), [grouped]);
 
   // A new filter or search starts the wall from the top again.
+  // (Not during the first moments after opening, while saved filters and the saved depth are being put back.)
   useEffect(() => {
+    if (mountedAt.current === 0) mountedAt.current = Date.now();
+    if (Date.now() - mountedAt.current < 4000 && renderLimitRef.current > WALL_PAGE) return;
     setRenderLimit(WALL_PAGE);
   }, [filtered]);
+  useEffect(() => {
+    // Opening an item leaves the page: keep how much of the wall was drawn.
+    function remember(event: MouseEvent) {
+      if ((event.target as HTMLElement).closest("a[href^='/vault/item/']")) {
+        try {
+          window.sessionStorage.setItem(WALL_LIMIT_KEY, String(renderLimitRef.current));
+        } catch {
+          /* storage unavailable */
+        }
+      }
+    }
+    document.addEventListener("click", remember, true);
+    return () => document.removeEventListener("click", remember, true);
+  }, []);
 
   function jumpTo(letter: string) {
     // Make sure the letter's group has been drawn (it may be further down than what is on the page yet).
@@ -333,7 +372,8 @@ export default function VaultWallView({ items, saleMap }: VaultWallViewProps) {
         {/* Row 3: A–Z nav + Advanced toggle */}
         <div className="mt-2 flex items-center gap-1">
           <div className="flex gap-0.5 overflow-x-auto pb-0.5 flex-1" style={{ scrollbarWidth: "none" }}>
-            {LETTERS.map((letter) => {
+            {flat ? <span className="px-1 text-[11px] text-white/40">Ordered by the Sort you chose</span> : null}
+            {(flat ? [] : LETTERS).map((letter) => {
               const active = activeLetters.has(letter);
               return (
                 <button
@@ -453,16 +493,7 @@ export default function VaultWallView({ items, saleMap }: VaultWallViewProps) {
                 />
                 <span className="text-[12px] text-white/70">Graded only</span>
               </label>
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={showSold}
-                  onChange={(e) => setShowSold(e.target.checked)}
-                  className="accent-gold h-3.5 w-3.5"
-                />
-                <span className="text-[12px] text-white/70">Show sold items</span>
-              </label>
-            </div>
+              </div>
 
             {/* Clear advanced */}
             {hasAdvancedFilters && (
@@ -492,7 +523,14 @@ export default function VaultWallView({ items, saleMap }: VaultWallViewProps) {
         <div className="py-20 text-center text-[13px] text-white/30">No items match.</div>
       ) : (
         <div className="space-y-6 pb-16">
-          {LETTERS.map((letter) => {
+          {flat ? (
+            <div className="grid gap-1.5" style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` }}>
+              {filtered.slice(0, renderLimit).map((item) => (
+                <WallTile key={item.id} item={item} isSold={Boolean(saleMap[item.id]) || item.status === "SOLD"} />
+              ))}
+            </div>
+          ) : null}
+          {(flat ? [] : LETTERS).map((letter) => {
             const group = grouped[letter];
             if (!group?.length) return null;
             const before = LETTERS.slice(0, LETTERS.indexOf(letter)).reduce((n, l) => n + (grouped[l]?.length ?? 0), 0);

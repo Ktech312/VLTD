@@ -2317,16 +2317,24 @@ export default function VaultListView({ lockedUniverse }: { lockedUniverse?: Uni
         ) : items.length === 0 ? (
           <VaultEmptyState hasFilters={false} onClearFilters={handleClearFilters} />
         ) : vaultViewMode === "wall" ? (
-          <VaultWallView items={filteredItems} saleMap={saleMap} />
+          <VaultWallView items={filteredItems} saleMap={saleMap} sortMode={sortMode} showSold={showSoldItems} />
         ) : filteredItems.length === 0 ? (
           <VaultEmptyState hasFilters={hasActiveFilters} onClearFilters={handleClearFilters} />
         ) : vaultViewMode === "flip" ? (
           <section className="mt-4">
             <div className="mx-auto max-w-3xl">
               <SwipeStack
+                // A new search, filter or sort starts the stack at the first card (it used to keep the old position, e.g. "4 / 10").
+                key={[query, universeFilter, categoryFilter.join(","), subFilter.join(","), gradedOnly, uncategorizedOnly, showSoldItems, sortMode, readinessFilter, reviewFilter, reviewGap].join("|")}
                 items={filteredItems}
                 mode="vault"
                 onOpen={(item) => {
+                  // This view opens the item by loading the page, so remember the filters first (the other views do it on the link click).
+                  try {
+                    sessionStorage.setItem("vltd_vault_filters", JSON.stringify(filtersRef.current));
+                  } catch {
+                    /* storage unavailable */
+                  }
                   window.location.href = `/vault/item/${item.id}`;
                 }}
               />
