@@ -108,24 +108,25 @@ export type ValueSummary = {
   ghostCount: number;
   /** Total value for the chosen mode. */
   totalValue: number;
-  /** Value minus what it is measured against, for the chosen mode. */
+  /** Unrealized change: value minus cost over the items that have BOTH a real value and a known cost. Never depends on the mode. */
   totalGain: number;
   /** Gain as % of the cost base. null = nothing to measure against (hide it). */
   gainPct: number | null;
-  /** What gainPct is measured against. */
+  /** The cost of those eligible items (what gainPct is measured against). */
   costBase: number;
-  /** Items behind the gain number ("on 6 priced items"). */
+  /** How many items the gain is measured over ("on 6 items"). */
   gainItemCount: number;
 };
 
 /**
  * Totals for an already-chosen set of items (callers decide sold/supplies).
  *
- * fill (default): every item counts; un-priced ones at purchase price.
- *   Value = priced values + purchase price of the rest; gain vs all cost.
- * priced: only items with a real value. Gain/% use just those that also
- *   have a purchase price -- an item entered as $0 paid would otherwise turn
- *   one comic into a +9,000% "return".
+ * The mode only changes the TOTAL VALUE:
+ *   fill (default): every item counts; un-priced ones at purchase price.
+ *   priced: only items with a real value.
+ * The unrealized change (gain, %, cost base, item count) is the same in both modes: only items that have a real value AND a
+ * purchase price are measured. An un-priced item has no gain to report, and an item entered as $0 paid would otherwise turn
+ * one comic into a +9,000% "return".
  */
 export function summarizeValues(items: VaultItem[], mode: ValueMode = "fill"): ValueSummary {
   let totalCostAll = 0;
@@ -161,26 +162,14 @@ export function summarizeValues(items: VaultItem[], mode: ValueMode = "fill"): V
     ghostCount: items.length - pricedCount,
   };
 
-  if (mode === "priced") {
-    const gain = pricedWithCostValue - pricedWithCostCost;
-    return {
-      ...base,
-      totalValue: pricedValue,
-      totalGain: gain,
-      gainPct: pricedWithCostCost > 0 ? (gain / pricedWithCostCost) * 100 : null,
-      costBase: pricedWithCostCost,
-      gainItemCount: pricedWithCostCount,
-    };
-  }
-
-  const gain = filledValue - totalCostAll;
+  const gain = pricedWithCostValue - pricedWithCostCost;
   return {
     ...base,
-    totalValue: filledValue,
+    totalValue: mode === "priced" ? pricedValue : filledValue,
     totalGain: gain,
-    gainPct: totalCostAll > 0 ? (gain / totalCostAll) * 100 : null,
-    costBase: totalCostAll,
-    gainItemCount: items.length,
+    gainPct: pricedWithCostCost > 0 ? (gain / pricedWithCostCost) * 100 : null,
+    costBase: pricedWithCostCost,
+    gainItemCount: pricedWithCostCount,
   };
 }
 

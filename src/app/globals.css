@@ -2647,3 +2647,6 @@ html:not([data-vltd-logo="b"]) .vltd-logo.vltd-logo-on-dark .vltd-logo-black { d
   .vltd-glass-tile { transition: none; }
   .vltd-glass-destination:hover .vltd-glass-tile { transform: none; }
 }
+
+/* The part of a page a link such as /portfolio#movers lands on: outlined for a moment so it is easy to find. */
+.vltd-hash-target { outline: 2px solid var(--pill-active-ring, #59d4ee); outline-offset: 3px; }

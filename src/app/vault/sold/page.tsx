@@ -4,6 +4,7 @@ import { VaultLocalNav } from "@/components/SectionNav";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { PillButton } from "@/components/ui/PillButton";
 import { useEffect, useMemo, useState } from "react";
+import { useHashTarget } from "@/lib/useHashTarget";
 import Link from "next/link";
 
 import ProgressiveImage from "@/components/ui/ProgressiveImage";
@@ -12,64 +13,14 @@ import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 import { UNIVERSE_LABEL, type UniverseKey } from "@/lib/taxonomy";
 import { getPrimaryImageUrl, loadItems, saveItem, syncVaultItemsFromSupabase, type VaultItem } from "@/lib/vaultModel";
 import { enqueueVaultItemSync, processVaultSyncQueue } from "@/lib/vaultSyncQueue";
-import { estimateSaleFees } from "@/lib/sellerFees";
+import { SALES_KEY, buildSoldItems, cost, profitOf, readSales, removeSaleRecord, saleFees, soldStats, writeSales, type SoldItem } from "@/lib/soldItems";
 
-const SALES_KEY = "vltd_sales_history";
-
-type SoldItem = {
-  id: string;
-  title: string;
-  subtitle?: string;
-  number?: string;
-  grade?: string;
-  universe?: string;
-  category?: string;
-  categoryLabel?: string;
-  customCategoryLabel?: string;
-  subcategoryLabel?: string;
-  imageFrontUrl?: string;
-  purchasePrice?: number;
-  purchaseTax?: number;
-  purchaseShipping?: number;
-  purchaseFees?: number;
-  soldPrice: number;
-  soldAt: number;
-  itemId?: string;
-  soldPlatform?: string;
-  /** Older local sale records (For Sale page) kept the platform under this name. */
-  salePlatform?: string;
-};
-
-type SoldStats = {
-  count: number;
-  realizedRevenue: number;
-  totalCost: number;
-  totalProfit: number;
-};
 
 function money(n: number) {
   if (!Number.isFinite(n)) return "$0";
   return `$${Math.round(n).toLocaleString()}`;
 }
 
-function cost(i: SoldItem) {
-  return (
-    Number(i.purchasePrice ?? 0) +
-    Number(i.purchaseTax ?? 0) +
-    Number(i.purchaseShipping ?? 0) +
-    Number(i.purchaseFees ?? 0)
-  );
-}
-
-/** Estimated seller fees for where it sold; 0 when the platform is unknown. */
-function saleFees(i: SoldItem) {
-  return estimateSaleFees(i.soldPlatform, Number(i.soldPrice ?? 0), i.categoryLabel || i.category);
-}
-
-/** Profit after purchase costs and estimated seller fees. */
-function profitOf(i: SoldItem) {
-  return Number(i.soldPrice ?? 0) - cost(i) - saleFees(i);
-}
 
 function normalizeUniverseText(value: unknown) {
   return String(value ?? "")
@@ -140,94 +91,6 @@ function itemMeta(item: SoldItem) {
     .join(" • ");
   return fallback || "Sold item record";
 }
-
-function readSales(): SoldItem[] {
-  if (typeof window === "undefined") return [];
-  try {
-    const data: unknown = JSON.parse(localStorage.getItem(SALES_KEY) || "[]");
-    if (!Array.isArray(data)) return [];
-    // This older shared list holds sales from every profile: keep only the active profile's.
-    const activeProfileId = getStoredActiveProfileId();
-    return (data as (SoldItem & { profile_id?: string })[]).filter(
-      (sale) => !activeProfileId || !sale.profile_id || sale.profile_id === activeProfileId
-    );
-  } catch {
-    return [];
-  }
-}
-
-function writeSales(items: SoldItem[]) {
-  if (typeof window === "undefined") return;
-  try {
-    localStorage.setItem(SALES_KEY, JSON.stringify(items));
-  } catch {
-    // Sales history is a compatibility cache. Cloud item state remains primary.
-  }
-}
-
-function removeSaleRecord(itemId: string) {
-  writeSales(
-    readSales().filter((sale) => String(sale.id) !== String(itemId) && String(sale.itemId ?? "") !== String(itemId))
-  );
-}
-
-function soldItemFromVaultItem(item: VaultItem): SoldItem | null {
-  if (item.status !== "SOLD" && !item.soldAt && item.soldPrice === undefined) return null;
-
-  return {
-    id: item.id,
-    title: item.title,
-    subtitle: item.subtitle,
-    number: item.number,
-    grade: item.grade,
-    universe: item.universe,
-    category: item.category,
-    categoryLabel: item.categoryLabel,
-    customCategoryLabel: item.customCategoryLabel,
-    subcategoryLabel: item.subcategoryLabel,
-    imageFrontUrl: getPrimaryImageUrl(item) || item.imageFrontUrl,
-    purchasePrice: item.purchasePrice,
-    purchaseTax: item.purchaseTax,
-    purchaseShipping: item.purchaseShipping,
-    purchaseFees: item.purchaseFees,
-    soldPrice: Number(item.soldPrice ?? 0),
-    soldAt: Number(item.soldAt ?? Date.now()),
-    soldPlatform: item.soldPlatform,
-  };
-}
-
-function buildSoldItems() {
-  const byId = new Map<string, SoldItem>();
-
-  for (const item of loadItems()) {
-    const sold = soldItemFromVaultItem(item);
-    if (sold) byId.set(String(sold.id), sold);
-  }
-
-  for (const sale of readSales()) {
-    const existing = byId.get(String(sale.id));
-    if (!existing) byId.set(String(sale.id), { ...sale, soldPlatform: sale.soldPlatform ?? sale.salePlatform });
-    // Platform typed before it was saved on the item lives only in this older list.
-    else if (!existing.soldPlatform && sale.salePlatform) existing.soldPlatform = sale.salePlatform;
-  }
-
-  return Array.from(byId.values()).sort((a, b) => Number(b.soldAt) - Number(a.soldAt));
-}
-
-function soldStats(items: SoldItem[]): SoldStats {
-  return items.reduce(
-    (stats, item) => {
-      const itemCost = cost(item);
-      stats.count += 1;
-      stats.realizedRevenue += Number(item.soldPrice ?? 0);
-      stats.totalCost += itemCost;
-      stats.totalProfit += profitOf(item);
-      return stats;
-    },
-    { count: 0, realizedRevenue: 0, totalCost: 0, totalProfit: 0 }
-  );
-}
-
 
 // ─── Analytics helpers ────────────────────────────────────────────────────────
 
@@ -556,6 +419,7 @@ export default function SoldPage() {
   }, []);
 
   const stats = useMemo(() => soldStats(items), [items]);
+  useHashTarget(hydrated);
 
   const universeOptions = useMemo(() => {
     const seen = new Set<string>();
@@ -631,7 +495,7 @@ export default function SoldPage() {
     <main className="bg-[color:var(--bg)] text-[color:var(--fg)]">
       <div className="mx-auto max-w-[1480px] px-4 pb-3 sm:px-6 sm:pb-4 lg:px-8">
         <div className="mb-3"><VaultLocalNav activeKey="sold" /></div>
-        <section className="relative overflow-hidden rounded-[18px] border border-[color:var(--theme-border)] bg-[color:var(--theme-card)] px-4 py-3 shadow-[0_14px_40px_rgba(0,0,0,0.2)]">
+        <section id="sales-analytics" className="relative overflow-hidden rounded-[18px] border border-[color:var(--theme-border)] bg-[color:var(--theme-card)] px-4 py-3 shadow-[0_14px_40px_rgba(0,0,0,0.2)]">
           <div className="relative flex flex-col gap-4">
             <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
               <div className="rounded-[14px] bg-[color:var(--theme-elevated)] px-3 py-2 ring-1 ring-[color:var(--theme-border)]">

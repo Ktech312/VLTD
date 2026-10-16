@@ -9,7 +9,7 @@ import VaultCategoryChips, { chipKey, vaultItemCategory, vaultItemSubcategory } 
 import { normalizeUniverse, universeForItem } from "@/lib/universeMatch";
 import Link from "next/link";
 import { PageHeader } from "@/components/layout/PageHeader";
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { memo, startTransition, useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import ItemVisibilityToggle from "@/components/ItemVisibilityToggle";
 import SellItemButton from "@/components/SellItemButton";
@@ -78,6 +78,8 @@ const FOCUS_LS_KEY = "vltd_primary_focus";
 const VIEW_MODE_KEY = "vltd_vault_view_mode";
 const VISIBLE_UNIVERSE_CHIPS_LS_KEY = "vltd_visible_universe_chips";
 const INITIAL_VISIBLE_ITEM_COUNT = 60;
+// The first screen draws this many cards at once; the rest of the first page follows in small slices (the reset effect below).
+const FIRST_PAINT_ITEM_COUNT = 24;
 const VISIBLE_ITEM_INCREMENT = 60;
 
 type SortMode = "newest" | "value_desc" | "value_asc" | "gain_desc" | "gain_asc" | "title";
@@ -104,13 +106,9 @@ function readSales(): SaleInfo[] {
   }
 }
 
+const MONEY_FORMAT = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 });
 function formatMoney(value?: number) {
-  const num = Number(value ?? 0);
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-    maximumFractionDigits: 0,
-  }).format(num);
+  return MONEY_FORMAT.format(Number(value ?? 0));
 }
 
 function totalCost(item: VaultItem) {
@@ -625,6 +623,70 @@ function VaultCard({
 // one of the (thousands of) cards re-rendered too, which is the select lag.
 const MemoVaultCard = memo(VaultCard);
 
+// One cell of the Gallery grid. Memoised so adding 60 more cells does not re-render the hundreds already shown.
+const GalleryCell = memo(function GalleryCell({
+  item,
+  readiness,
+  sale,
+  selected,
+  selectMode,
+  missingText,
+  displayMode,
+  onSaveItem,
+  onDeleteItem,
+  onToggleSelect,
+  onOpenDetail,
+}: {
+  item: VaultItem;
+  readiness: ReturnType<typeof computeItemIntelligence>["readiness"] | string;
+  sale: SaleInfo | null;
+  selected: boolean;
+  selectMode: boolean;
+  missingText: string | null;
+  displayMode: string;
+  onSaveItem: (item: VaultItem) => Promise<void>;
+  onDeleteItem: (item: VaultItem) => Promise<void>;
+  onToggleSelect: (id: string) => void;
+  onOpenDetail: (id: string) => void;
+}) {
+  return (
+    <div
+      // Cards far off screen skip layout and painting: with hundreds of cards the page used to take about a second to respond to "Show more".
+      className="relative [content-visibility:auto] [contain-intrinsic-size:auto_330px]"
+      onClick={(e) => {
+        // Open the quick-look on a real tap only. A scroll gesture
+        // isn't a click, so scrolling anywhere on the card is safe.
+        // Skip taps on interactive children: the image/title links
+        // navigate to the full item page; value/Sell do their thing.
+        if ((e.target as HTMLElement).closest("a, button, input")) return;
+        onOpenDetail(item.id);
+      }}
+    >
+      {selectMode && (
+        <button
+          type="button"
+          onClick={() => onToggleSelect(item.id)}
+          aria-pressed={selected}
+          aria-label={"Select " + item.title}
+          className="absolute inset-0 z-40 flex items-center justify-center rounded-[10px]"
+          style={{ background: selected ? "rgba(203,208,213,0.18)" : "rgba(0,0,0,0.04)" }}
+        >
+          <SelectCircle selected={selected} />
+        </button>
+      )}
+      <MemoVaultCard
+        item={item}
+        readiness={readiness as never}
+        sale={sale}
+        onSaveItem={onSaveItem}
+        onDeleteItem={onDeleteItem}
+        displayMode={displayMode as never}
+      />
+      {missingText ? <div className="mt-1 px-1 text-[11px] font-medium text-amber-300">Missing: {missingText}</div> : null}
+    </div>
+  );
+});
+
 // Shown only until the first hydrateAll() pass finishes — without this, a
 // cold load rendered VaultEmptyState ("Your vault is empty...") for however
 // long the sync took, which read as a broken/empty account rather than a
@@ -1059,7 +1121,7 @@ export default function VaultListView({ lockedUniverse }: { lockedUniverse?: Uni
   const [myProfiles, setMyProfiles] = useState<ProfileRow[]>([]);
   const [activeProfileId, setActiveProfileId] = useState("");
   const [confirmProfileMove, setConfirmProfileMove] = useState<ProfileRow | null>(null);
-  const [visibleItemCount, setVisibleItemCount] = useState(INITIAL_VISIBLE_ITEM_COUNT);
+  const [visibleItemCount, setVisibleItemCount] = useState(FIRST_PAINT_ITEM_COUNT);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(() => new Set());
   const [selectMode, setSelectMode] = useState(false);
   const [moveTargetUniverse, setMoveTargetUniverse] = useState<string>("");
@@ -1487,7 +1549,8 @@ export default function VaultListView({ lockedUniverse }: { lockedUniverse?: Uni
   );
 
   useEffect(() => {
-    setVisibleItemCount(INITIAL_VISIBLE_ITEM_COUNT);
+    // Runs on the first render too: the first screen is already drawn, so the rest of the first page is a transition.
+    startTransition(() => setVisibleItemCount(INITIAL_VISIBLE_ITEM_COUNT));
   }, [query, universeFilter, readinessFilter, reviewFilter, reviewGap, gradedOnly, uncategorizedOnly, sortMode, showSoldItems, vaultViewMode]);
 
   useEffect(() => {
@@ -1855,10 +1918,22 @@ export default function VaultListView({ lockedUniverse }: { lockedUniverse?: Uni
     window.setTimeout(() => document.getElementById("vault-list-start")?.scrollIntoView({ block: "start", behavior: "smooth" }), 60);
   }
 
+  // Stable handlers for the memoised Gallery cells.
+  const toggleSelectRef = useRef(toggleSelectItem);
+  toggleSelectRef.current = toggleSelectItem;
+  const onToggleSelectStable = useCallback((id: string) => toggleSelectRef.current(id), []);
+  const onOpenDetailStable = useCallback((id: string) => {
+    setSelectedDetailId(id);
+    setIsDetailDrawerDismissed(false);
+  }, []);
+
   // A link such as /vault?review=needs_review (from Home) opens the same list the card opens.
   useEffect(() => {
-    const wanted = new URLSearchParams(window.location.search).get("review");
+    const params = new URLSearchParams(window.location.search);
+    const wanted = params.get("review");
     if (wanted === "needs_review" || wanted === "insurance_ready") setReviewFilter(wanted);
+    const gap = params.get("gap");
+    if (wanted === "needs_review" && (REVIEW_GAPS as string[]).includes(gap ?? "")) setReviewGap(gap as ReviewGap);
   }, []);
 
   return (
@@ -2357,57 +2432,28 @@ export default function VaultListView({ lockedUniverse }: { lockedUniverse?: Uni
                 "gap-3 grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5",
               ].join(" ")}
             >
-              {visibleItems.map((item) => {
-                const isSelected = selectedIds.has(item.id);
-                return (
-                  <div
-                    key={item.id}
-                    // Cards far off screen skip layout and painting: with hundreds of cards the page used to take about a second to respond to "Show more".
-                    className="relative [content-visibility:auto] [contain-intrinsic-size:auto_330px]"
-                    onClick={(e) => {
-                      // Open the quick-look on a real tap only. A scroll gesture
-                      // isn't a click, so scrolling anywhere on the card is safe.
-                      // Skip taps on interactive children: the image/title links
-                      // navigate to the full item page; value/Sell do their thing.
-                      if ((e.target as HTMLElement).closest("a, button, input")) return;
-                      setSelectedDetailId(item.id);
-                      setIsDetailDrawerDismissed(false);
-                    }}
-                  >
-                    {selectMode && (
-                      <button
-                        type="button"
-                        onClick={() => toggleSelectItem(item.id)}
-                        aria-pressed={isSelected}
-                        aria-label={"Select " + item.title}
-                        className="absolute inset-0 z-40 flex items-center justify-center rounded-[10px]"
-                        style={{ background: isSelected ? "rgba(203,208,213,0.18)" : "rgba(0,0,0,0.04)" }}
-                      >
-                        <SelectCircle selected={isSelected} />
-                      </button>
-                    )}
-                    <MemoVaultCard
-                      item={item}
-                      readiness={intelligenceMap[item.id]?.readiness ?? "Low"}
-                      sale={saleInfoForItem(item, saleMap)}
-                      onSaveItem={handleSaveItem}
-                      onDeleteItem={handleDeleteItem}
-                      displayMode={vaultViewMode}
-                    />
-                    {reviewFilter === "needs_review" ? (
-                      <div className="mt-1 px-1 text-[11px] font-medium text-amber-300">
-                        Missing: {reviewGaps(item).map((gap) => REVIEW_GAP_SHORT[gap].toLowerCase()).join(", ")}
-                      </div>
-                    ) : null}
-                  </div>
-                );
-              })}
+              {visibleItems.map((item) => (
+                <GalleryCell
+                  key={item.id}
+                  item={item}
+                  readiness={intelligenceMap[item.id]?.readiness ?? "Low"}
+                  sale={saleInfoForItem(item, saleMap)}
+                  selected={selectedIds.has(item.id)}
+                  selectMode={selectMode}
+                  missingText={reviewFilter === "needs_review" ? reviewGaps(item).map((gap) => REVIEW_GAP_SHORT[gap].toLowerCase()).join(", ") : null}
+                  displayMode={vaultViewMode}
+                  onSaveItem={handleSaveItem}
+                  onDeleteItem={handleDeleteItem}
+                  onToggleSelect={onToggleSelectStable}
+                  onOpenDetail={onOpenDetailStable}
+                />
+              ))}
             </div>
             {visibleItems.length < filteredItems.length ? (
               <div className="mt-5 flex justify-center">
                 <button
                   type="button"
-                  onClick={() => setVisibleItemCount((count) => count + VISIBLE_ITEM_INCREMENT)}
+                  onClick={() => startTransition(() => setVisibleItemCount((count) => count + VISIBLE_ITEM_INCREMENT))}
                   className="min-h-11 rounded-[9px] px-5 text-sm font-semibold ring-1 ring-[color:var(--border)]"
                   style={{ background: "var(--pill)", color: "var(--text)" }}
                 >

@@ -14,6 +14,7 @@ import { LEARN_ARTICLES } from "@/lib/learnContent";
 import { listLoungePosts, type LoungePost } from "@/lib/loungePosts";
 import { priceCheckIsStale } from "@/lib/pricingMvp";
 import { syncPublicProfile } from "@/lib/publicProfile";
+import { buildSoldItems, soldStats } from "@/lib/soldItems";
 import { activeItems, computeVaultStats, effectiveMarketValue, readValueMode, totalsValue, writeValueMode, type ValueMode } from "@/lib/vaultStats";
 import { loadItems, syncVaultItemsFromSupabase, type VaultItem } from "@/lib/vaultModel";
 import { getPendingVaultSyncCount } from "@/lib/vaultSyncQueue";
@@ -65,18 +66,39 @@ function excerpt(text: string, max = 120) {
   return flat.length > max ? flat.slice(0, max - 1).trimEnd() + "…" : flat;
 }
 
-// ── Bare stat: serif number + tiny label ──────────────────────────
-function Stat({ label, value, tone = "default", ghost = false, onClick, title }: { label: string; value: string; tone?: "default" | "gold" | "gain" | "loss"; ghost?: boolean; onClick?: () => void; title?: string }) {
+// ── One money figure: label, number, short caption, and a link to the breakdown behind it ──
+function MoneyTile({ href, label, value, tone = "default", ghost = false, caption, extra, go }: { href: string; label: string; value: React.ReactNode; tone?: "default" | "gold" | "gain" | "loss"; ghost?: boolean; caption: string; extra?: React.ReactNode; go: string }) {
   const color = ghost ? C.muted : tone === "gold" ? C.gold : tone === "gain" ? C.green : tone === "loss" ? C.red : C.text;
-  const box: React.CSSProperties = { display: "flex", flexDirection: "column", gap: 4, minWidth: 94, padding: "10px 12px", border: `1px solid ${C.bd2}`, borderRadius: 6, background: C.elevated, textAlign: "left" };
-  const inner = (
-    <>
-      <span style={{ fontFamily: C.r, fontSize: 28, fontWeight: 800, letterSpacing: "-0.02em", lineHeight: 1, color }}>{value}</span>
+  return (
+    <Link
+      href={href}
+      className="flex min-h-[44px] flex-col gap-1 rounded-[6px] p-3 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[color:var(--pill-active-ring)]"
+      style={{ border: `1px solid ${C.bd2}`, background: C.elevated, textDecoration: "none", color: "inherit" }}
+    >
       <span style={{ fontSize: 10, color: C.muted, letterSpacing: "0.10em", textTransform: "uppercase", fontWeight: 800 }}>{label}</span>
-    </>
+      <span style={{ fontFamily: C.r, fontSize: 28, fontWeight: 800, letterSpacing: "-0.02em", lineHeight: 1.05, color }}>{value}</span>
+      <span style={{ fontSize: 12, color: C.muted, lineHeight: 1.35 }}>{caption}</span>
+      {extra}
+      <span style={{ marginTop: 4, fontSize: 12, fontWeight: 700, color: C.gold }}>{go} ›</span>
+    </Link>
   );
-  if (!onClick) return <div style={box} title={title}>{inner}</div>;
-  return <button type="button" onClick={onClick} title={title} style={{ ...box, cursor: "pointer", font: "inherit" }}>{inner}</button>;
+}
+
+// ── A labelled destination: where the detail behind the summary lives ──
+function DestinationCard({ href, title, text, glyph }: { href: string; title: string; text: string; glyph: "chart" | "tag" | "clock" }) {
+  return (
+    <Link
+      href={href}
+      className="flex min-h-[44px] items-start gap-3 rounded-[8px] p-3 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[color:var(--pill-active-ring)]"
+      style={{ border: `1px solid ${C.bd2}`, background: C.elevated, textDecoration: "none", color: "inherit" }}
+    >
+      <span style={{ flex: "none", color: C.gold, marginTop: 1 }}><Glyph name={glyph} size={22} /></span>
+      <span style={{ minWidth: 0 }}>
+        <span style={{ display: "block", fontSize: 14, fontWeight: 800 }}>{title} ›</span>
+        <span style={{ display: "block", fontSize: 12, color: C.muted, lineHeight: 1.35 }}>{text}</span>
+      </span>
+    </Link>
+  );
 }
 
 // ── Card with a header: label on the left, one link on the right ──
@@ -153,8 +175,14 @@ export default function HomeClient() {
   // The same shared totals as the Vault and Insights (sold items excluded), so Home never counts differently.
   const stats = useMemo(() => {
     const s = computeVaultStats(items, valueMode);
-    return { totalItems: s.itemCount, totalCost: s.totalCost, totalValue: s.totalValue, totalGain: s.totalGain, gainPct: s.gainPct, pricedCount: s.pricedCount, ghostCount: s.ghostCount };
+    return { totalItems: s.itemCount, totalCost: s.totalCost, totalValue: s.totalValue, totalGain: s.totalGain, gainPct: s.gainPct, costBase: s.costBase, gainItemCount: s.gainItemCount, pricedCount: s.pricedCount, ghostCount: s.ghostCount };
   }, [items, valueMode]);
+  // Realized sales: the same numbers as /vault/sold (shared code). Never mixed with the estimates above.
+  const sales = useMemo(() => {
+    const s = soldStats(buildSoldItems(items));
+    return { count: s.count, revenue: s.realizedRevenue, profit: s.totalProfit };
+  }, [items]);
+  const [basisOpen, setBasisOpen] = useState(false);
 
   // Recently added and the price-check notice describe what you currently own: sold, supply and wishlist records are left out,
   // the same rule the Vault, Insights and the recap use.
@@ -162,10 +190,22 @@ export default function HomeClient() {
   const recent = useMemo(() => [...owned].sort((a, b) => itemTimestamp(b) - itemTimestamp(a)).slice(0, 6), [owned]);
   const staleChecks = useMemo(() => owned.filter((item) => effectiveMarketValue(item) > 0 && priceCheckIsStale(item)).length, [owned]);
 
+  // Unrealized change: only items with BOTH a value and a cost; the display setting below never changes it.
+  const gainKnown = stats.gainItemCount > 0 && stats.gainPct !== null;
   const gainTone = stats.totalGain >= 0 ? ("gain" as const) : ("loss" as const);
-  const pctText = stats.gainPct === null ? "—" : (stats.totalGain >= 0 ? "+" : "") + stats.gainPct.toFixed(1) + "%";
-  const allGhost = valueMode === "fill" && stats.pricedCount === 0;
+  const gainSign = stats.totalGain >= 0 ? "+" : "-";
+  const gainText = gainKnown ? (
+    <>
+      {gainSign}{formatMoney(Math.abs(stats.totalGain))} <span style={{ fontSize: 15, fontWeight: 700 }}>({gainSign}{Math.abs(stats.gainPct ?? 0).toFixed(1)}%)</span>
+    </>
+  ) : "—";
   const valueIsGhost = valueMode === "fill" && stats.ghostCount > 0;
+  const valueCaption =
+    stats.pricedCount === 0
+      ? "No item has a value yet"
+      : valueMode === "fill"
+        ? stats.ghostCount > 0 ? `${stats.pricedCount} of ${stats.totalItems} priced · ${stats.ghostCount} counted at cost` : "All items priced"
+        : `${stats.pricedCount} of ${stats.totalItems} priced · ${stats.ghostCount} left out`;
   // The valuation basis, stated plainly.
   const basis =
     valueMode === "fill"
@@ -197,34 +237,65 @@ export default function HomeClient() {
 
         <SeasonalBanner />
 
-        {/* 1. Collection summary: count, value and its basis, Insights and Activity links, Add Item on desktop */}
-        <section aria-label="Collection summary" style={{ background: C.elevated, border: premiumBorder, borderRadius: 10, padding: "24px 26px", boxShadow: premiumShadow }}>
+        {/* 1. Collection overview: item count, four separate money figures, labelled destinations, entry controls */}
+        <section aria-label="Collection overview" style={{ background: C.elevated, border: premiumBorder, borderRadius: 10, padding: "24px 26px", boxShadow: premiumShadow }}>
           <div style={{ fontSize: 11, color: C.muted, letterSpacing: "0.16em", textTransform: "uppercase", fontWeight: 800 }}>
             {stats.totalItems === 0 ? "Your vault is ready," : "Welcome back,"}
           </div>
           <h1 style={{ fontFamily: C.r, fontSize: 36, fontWeight: 700, lineHeight: 1.05, marginTop: 6 }}>{displayName || "Curator"}</h1>
 
-          {stats.totalItems === 0 ? (
+          {stats.totalItems === 0 && sales.count === 0 ? (
             <p style={{ fontSize: 15, color: C.muted, marginTop: 10 }}>Scan your first item to start building a real collection record.</p>
           ) : (
             <>
-              <div style={{ display: "flex", gap: 10, marginTop: 20, flexWrap: "wrap" }}>
-                <Stat label="Items" value={String(stats.totalItems)} />
-                <Stat label="Invested" value={formatMoney(stats.totalCost)} />
-                <Stat label={allGhost ? "Value (at cost)" : "Value"} value={valueMode === "priced" && stats.pricedCount === 0 ? "—" : formatMoney(stats.totalValue)} tone="gold" ghost={valueIsGhost} title={basis} />
-                <Stat label="Return" value={pctText} tone={gainTone} ghost={valueIsGhost} onClick={toggleValueMode} title={basis} />
+              <div style={{ marginTop: 10 }}>
+                <PillButton href="/vault" ariaLabel={`Open your Vault: ${stats.totalItems} ${stats.totalItems === 1 ? "item" : "items"}`}>{stats.totalItems} {stats.totalItems === 1 ? "item" : "items"} · Open Vault</PillButton>
               </div>
+
+              <h2 style={{ marginTop: 20, fontSize: 11, color: C.muted, letterSpacing: "0.16em", textTransform: "uppercase", fontWeight: 800 }}>Collection overview</h2>
+              <div className="mt-2 grid grid-cols-2 gap-2.5 lg:grid-cols-4">
+                <MoneyTile href="/portfolio#cost-breakdown" label="Purchase cost" value={formatMoney(stats.totalCost)} caption="What you paid, with tax, shipping and fees" go="Cost breakdown" />
+                <MoneyTile href="/portfolio#value-history" label="Estimated value" value={valueMode === "priced" && stats.pricedCount === 0 ? "—" : formatMoney(stats.totalValue)} tone="gold" ghost={valueIsGhost} caption={valueCaption} go="Value history" />
+                <MoneyTile href="/portfolio#movers" label="Unrealized change" value={gainText} tone={gainKnown ? gainTone : "default"} ghost={!gainKnown} caption={gainKnown ? `On ${stats.gainItemCount} of ${stats.totalItems} items · cost basis ${formatMoney(stats.costBase)}` : "Needs an item with both a value and a cost"} go="Biggest movers" />
+                <MoneyTile
+                  href="/vault/sold#sales-analytics"
+                  label="Sales revenue"
+                  value={sales.count > 0 ? formatMoney(sales.revenue) : "—"}
+                  caption={sales.count > 0 ? `${sales.count} sold` : "No sales yet"}
+                  extra={sales.count > 0 ? (
+                    <span style={{ fontSize: 12, lineHeight: 1.35, color: C.muted }}>
+                      Profit <b style={{ color: sales.profit >= 0 ? C.green : C.red }}>{sales.profit >= 0 ? "+" : "-"}{formatMoney(Math.abs(sales.profit))}</b> after estimated fees
+                    </span>
+                  ) : undefined}
+                  go="Sales analytics"
+                />
+              </div>
+
               <div style={{ marginTop: 10, display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
                 <span style={{ fontSize: 12, color: C.muted }}>Value basis: {basis}</span>
                 <PillButton onClick={toggleValueMode}>{valueMode === "fill" ? "Show priced only" : "Include unpriced"}</PillButton>
+                <PillButton onClick={() => setBasisOpen((open) => !open)} ariaExpanded={basisOpen} ariaControls="home-basis-explainer">What does this change?</PillButton>
+              </div>
+              {basisOpen ? (
+                <div id="home-basis-explainer" style={{ marginTop: 10, border: `1px solid ${C.bd2}`, borderRadius: 8, padding: "10px 12px", fontSize: 12.5, color: C.muted, lineHeight: 1.45 }}>
+                  <p><b style={{ color: C.text }}>Purchase cost</b>: every item you own. The setting does not change it.</p>
+                  <p style={{ marginTop: 6 }}><b style={{ color: C.text }}>Estimated value</b>: <i>Include unpriced</i> counts items without a value at their purchase price, in grey. <i>Priced only</i> leaves them out, so the number is smaller.</p>
+                  <p style={{ marginTop: 6 }}><b style={{ color: C.text }}>Unrealized change</b>: value minus cost, measured only on items that have both a value and a cost (the caption says how many and their cost). The setting does not change it.</p>
+                  <p style={{ marginTop: 6 }}><b style={{ color: C.text }}>Sales revenue</b>: real sales only, never mixed with estimates. Profit is after estimated seller fees. The setting does not change it. Sold items are never in the other three figures.</p>
+                </div>
+              ) : null}
+
+              <h2 style={{ marginTop: 20, fontSize: 11, color: C.muted, letterSpacing: "0.16em", textTransform: "uppercase", fontWeight: 800 }}>Go deeper</h2>
+              <div className="mt-2 grid grid-cols-1 gap-2.5 sm:grid-cols-3">
+                <DestinationCard href="/portfolio" title="Insights" text="Value history, biggest movers, stale prices and documentation" glyph="chart" />
+                <DestinationCard href="/vault/sold#sales-analytics" title="Sales analytics" text="Revenue and profit after estimated fees, by month" glyph="tag" />
+                <DestinationCard href="/activity" title="Activity" text="Recent value changes, sales and additions" glyph="clock" />
               </div>
             </>
           )}
 
           <div style={{ display: "flex", gap: 8, marginTop: 20, flexWrap: "wrap", alignItems: "center" }}>
             <span className="hidden md:inline-flex"><AddItemActions /></span>
-            <PillButton href="/portfolio">Insights</PillButton>
-            <PillButton href="/activity">Activity</PillButton>
           </div>
         </section>
 

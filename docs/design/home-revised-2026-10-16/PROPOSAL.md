@@ -1,6 +1,6 @@
 # Home money summary and Organize entry: revised proposals (2026-10-16)
 
-Status: **proposals for review. Nothing here is built.** Replaces the "Collection finances band" in `docs/design/home-financial-audit-2026-10-16.md` (that version added a second set of the same numbers; this one does not).
+Status (updated 2026-10-17): **sections 1 and 3 are now BUILT** (see HANDOFF.md, Queue revision 3, for the commit and the checks). **Section 2 (Curator Strength) was NOT acted on: it is untouched and its restoration decision is explicitly OPEN.** The text below is the original proposal; where the built version differs it is listed under "Built differently". Replaces the "Collection finances band" in `docs/design/home-financial-audit-2026-10-16.md` (that version added a second set of the same numbers; this one does not).
 
 Images in this folder (sample numbers, a design mock, not the live app): `home-revised-desktop.png`, `home-revised-phone.png`. Source: `home-revised-mockup.html`. The current Home, for comparison, is the single "Collection summary" card with Items, Invested, Value and Return.
 
@@ -34,7 +34,9 @@ Layout. Desktop: four tiles in one row, three destination cards in one row. Phon
 
 Not changed: Notices, Recently added, Your exhibitions, Lounge, Learn.
 
-## 2. Curator Strength (identified as lost in the audit): recommendation
+## 2. Curator Strength (identified as lost in the audit): decision OPEN, nothing changed
+
+The recommendation below (retire the score) was NOT adopted. Curator Strength was not retired, replaced or altered. Its code (`src/lib/collectorStrength.ts`) is exactly as it was. Whether to restore it stays open for you. The reasoning is kept here only so the decision can be made later.
 
 **Do not bring it back on Home, and do not bring it back as a score.** Reasons, from what the code actually does (`src/lib/collectorStrength.ts`, unused today):
 - It is part money ranking: 25 of 100 points reward total value and 20 reward return, so it ranks people by how much they have spent or gained, and the label "Premier Curator" reads as a verdict on a collection's worth.
@@ -60,3 +62,11 @@ Checks I would run before shipping: Organize visible with and without an exhibit
 1. Approve or change the Home card in section 1.
 2. Choose A, B or C in section 2 (recommended: A).
 3. Approve or change the Organize entry in section 3.
+
+## Built differently from the proposal (2026-10-17)
+- Section heading is "Collection overview"; the item count is a link pill ("8 items · Open Vault").
+- Fourth tile is **Sales revenue** with the profit shown separately underneath ("Profit +$400 after estimated fees"); the explanation is collapsed by default.
+- **Unrealized change** is the same in both display settings: items with both a real value and a known cost, shown as "On 3 of 8 items · cost basis $300". Estimated value is the only figure the setting changes (and the Vault, Insights and recap now use the same rule).
+- Links open the right part of the page: Insights panels (`#cost-breakdown`, `#value-history`, `#movers`) and `/vault/sold#sales-analytics`.
+- Insights: the "Insurance Covered" and "Insurance Gap" tiles are replaced by **Documentation Complete**, **Needs Documentation** and **Value Not Fully Documented**, using the Vault's four-point checklist, with items and value percentages shown separately and a plain "not insurance coverage" statement.
+- Organize: the always-visible button and the **Create first exhibit / Not now** notice are built as described. More than 18 pieces become several exhibit pages (18 each), in picked order, so none is dropped.

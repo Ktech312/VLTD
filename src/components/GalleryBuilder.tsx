@@ -9,6 +9,7 @@ import { useSaveFeedback, SAVE_FEEDBACK_STYLE } from "@/lib/useSaveFeedback";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { DragEvent, ReactNode } from "react";
 import { createPortal } from "react-dom";
+import { useDialogA11y } from "@/components/ui/useDialogA11y";
 import { AppIcon } from "@/components/ui/AppIcon";
 
 import { type VaultItem, getPrimaryImageUrl } from "@/lib/vaultModel";
@@ -312,6 +313,12 @@ export default function GalleryBuilder({
   const [slotDragIdx, setSlotDragIdx] = useState<number | null>(null);
   const [slotDragOverIdx, setSlotDragOverIdx] = useState<number | null>(null);
   const [isOrganizing, setIsOrganizing] = useState(false);
+  // Organize with no exhibit page yet: a notice that explains it and offers an explicit "Create first exhibit".
+  const [organizeNoticeOpen, setOrganizeNoticeOpen] = useState(false);
+  const [creatingExhibit, setCreatingExhibit] = useState(false);
+  const creatingExhibitRef = useRef(false);
+  const closeOrganizeNotice = () => setOrganizeNoticeOpen(false);
+  const organizeNoticeRef = useDialogA11y<HTMLDivElement>(organizeNoticeOpen, closeOrganizeNotice);
   const [isAdvancedOpen, setIsAdvancedOpen] = useState(false);
   const { justSaved: quickSaveJustSaved, flashSaved: flashQuickSaved } = useSaveFeedback();
   const touchSlotFromRef = useRef<number | null>(null);
@@ -634,6 +641,39 @@ export default function GalleryBuilder({
     setShelfFileName("");
     setBackgroundUploadError("");
   }
+
+  // Pieces split into exhibit pages of at most SHELF_SLOT_COUNT, in the order they were picked, so none is dropped.
+  const firstExhibitChunks = useMemo(() => {
+    const chunks: string[][] = [];
+    for (let i = 0; i < gallery.itemIds.length; i += SHELF_SLOT_COUNT) chunks.push(gallery.itemIds.slice(i, i + SHELF_SLOT_COUNT));
+    return chunks;
+  }, [gallery.itemIds]);
+
+  function createFirstExhibits() {
+    // One press makes the pages once: the ref blocks repeated clicks until the new pages appear.
+    if (creatingExhibitRef.current || sections.length > 0 || firstExhibitChunks.length === 0) return;
+    creatingExhibitRef.current = true;
+    setCreatingExhibit(true);
+    const nextSections = firstExhibitChunks.map((chunk, index) => ({
+      id: makeLocalSectionId(),
+      title: "Exhibit " + (index + 1),
+      description: "",
+      itemIds: chunk,
+      featuredItemId: undefined,
+    }));
+    onGalleryChange((current) => (getGallerySections(current).length > 0 ? current : syncSectionsAndLayout(current, nextSections)));
+    onQuickSave?.(gallery.itemIds, nextSections);
+    setActiveSectionIdx(0);
+    setIsOrganizing(true);
+    setOrganizeNoticeOpen(false);
+  }
+  // Once the pages exist (or the notice is reopened with none), the guard resets.
+  useEffect(() => {
+    if (sections.length > 0 || !organizeNoticeOpen) {
+      creatingExhibitRef.current = false;
+      setCreatingExhibit(false);
+    }
+  }, [sections.length, organizeNoticeOpen]);
 
   const [capMessage, setCapMessage] = useState("");
   function warnFull() {
@@ -1053,24 +1093,27 @@ export default function GalleryBuilder({
               );
             })()}
 
-            {/* Organize pill — same shared toggle-pill system, no bespoke green text/fill */}
-            {sections.length > 0 ? (
-              <button
-                type="button"
-                onClick={() => {
-                  const next = !isOrganizing;
-                  setIsOrganizing(next);
-                  if (!next) {
-                    // Re-save current slot layout on Done — belt+suspenders over per-drag saves
-                    commitSlots([...latestPreviewSlotsRef.current]);
-                  }
-                }}
-                aria-pressed={isOrganizing}
-                className={cp(isOrganizing ? "active" : "default")}
-              >
-                {isOrganizing ? "Done" : "Organize"}
-              </button>
-            ) : null}
+            {/* Organize pill — always shown. With an exhibit page it turns arranging on; without one it explains why and offers to create the first exhibit (never silently). */}
+            <button
+              type="button"
+              onClick={() => {
+                if (sections.length === 0) {
+                  setOrganizeNoticeOpen(true);
+                  return;
+                }
+                const next = !isOrganizing;
+                setIsOrganizing(next);
+                if (!next) {
+                  // Re-save current slot layout on Done — belt+suspenders over per-drag saves
+                  commitSlots([...latestPreviewSlotsRef.current]);
+                }
+              }}
+              aria-pressed={sections.length > 0 ? isOrganizing : undefined}
+              aria-haspopup={sections.length === 0 ? "dialog" : undefined}
+              className={cp(isOrganizing && sections.length > 0 ? "active" : "default")}
+            >
+              {isOrganizing && sections.length > 0 ? "Done" : "Organize"}
+            </button>
 
           </div>
 
@@ -1678,11 +1721,56 @@ export default function GalleryBuilder({
               </div>
               <div className="mt-2 text-center text-[10px] font-semibold uppercase tracking-widest text-white/25">
                 {capMessage ? <span className="mb-1 block normal-case tracking-normal text-red-300">{capMessage}</span> : null}
+                {isOrganizing && sections.length > 0 ? <span className="mb-1 block normal-case tracking-normal text-white/60">Drag a card onto another to swap them. Press Done when finished.</span> : null}
                 {previewItems.length} / {SHELF_SLOT_COUNT} items · {displayMode === "grid" ? "Plain cards" : getGalleryThemeLabel(themePack)}
               </div>
             </div>
           </div>
         </div>
+
+        {organizeNoticeOpen && typeof document !== "undefined"
+          ? createPortal(
+              <div className="fixed inset-0 z-[10001] flex items-end justify-center sm:items-center" onClick={closeOrganizeNotice}>
+                <div className="absolute inset-0 bg-black/60 backdrop-blur-[2px]" aria-hidden="true" />
+                <div
+                  ref={organizeNoticeRef}
+                  role="dialog"
+                  aria-modal="true"
+                  aria-labelledby="organize-notice-title"
+                  onClick={(event) => event.stopPropagation()}
+                  className="vltd-dark-surface relative z-10 w-full rounded-t-[26px] p-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] text-white shadow-2xl ring-1 ring-white/10 sm:max-w-[460px] sm:rounded-[22px]"
+                  style={{ background: "linear-gradient(180deg, rgba(26,31,39,0.98), rgba(13,16,21,0.99))" }}
+                >
+                  <h2 id="organize-notice-title" className="text-base font-semibold">Organize needs an exhibit page</h2>
+                  <p className="mt-2 text-sm leading-relaxed text-white/80">
+                    Arranging happens inside an exhibit page, which is one wall that holds up to {SHELF_SLOT_COUNT} pieces. This exhibition does not have one yet.
+                  </p>
+                  {gallery.itemIds.length === 0 ? (
+                    <p className="mt-2 text-sm leading-relaxed text-white/80">It has no pieces yet either. Add some with Edit/Add first, then come back.</p>
+                  ) : firstExhibitChunks.length === 1 ? (
+                    <p className="mt-2 text-sm leading-relaxed text-white/80">
+                      Create first exhibit makes &ldquo;Exhibit 1&rdquo; with your {gallery.itemIds.length} {gallery.itemIds.length === 1 ? "piece" : "pieces"}, in the order you picked them, and turns arranging on. Nothing is created unless you choose it.
+                    </p>
+                  ) : (
+                    <p className="mt-2 text-sm leading-relaxed text-white/80">
+                      You have {gallery.itemIds.length} pieces and one wall holds {SHELF_SLOT_COUNT}. Create first exhibit makes {firstExhibitChunks.length} exhibit pages ({firstExhibitChunks.map((chunk) => chunk.length).join(", ")} pieces), in the order you picked them. No piece is left out. Nothing is created unless you choose it.
+                    </p>
+                  )}
+                  <div className="mt-4 flex flex-wrap justify-end gap-2">
+                    <button type="button" onClick={closeOrganizeNotice} className={cp("default", "min-h-11")}>Not now</button>
+                    {gallery.itemIds.length === 0 ? (
+                      <button type="button" onClick={() => { setOrganizeNoticeOpen(false); onOpenPicker?.(); }} className={cp("active", "min-h-11")}>Add pieces</button>
+                    ) : (
+                      <button type="button" onClick={createFirstExhibits} disabled={creatingExhibit} className={cp("active", "min-h-11")}>
+                        {creatingExhibit ? "Creating…" : "Create first exhibit"}
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>,
+              document.body
+            )
+          : null}
 
         <button
           type="button"

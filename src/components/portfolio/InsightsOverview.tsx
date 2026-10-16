@@ -15,6 +15,8 @@ import {
   itemTotalCost,
 } from "@/lib/portfolioMetrics";
 import { getUniverseThumbnail } from "@/lib/universeImages";
+import { useHashTarget } from "@/lib/useHashTarget";
+import { REVIEW_CHECKLIST, REVIEW_CHECKLIST_NOTE, REVIEW_GAPS, REVIEW_GAP_SHORT, reviewCounts, reviewGaps } from "@/lib/vaultReview";
 import {
   readHistory,
   sliceHistory,
@@ -108,10 +110,6 @@ function hasPhoto(item: VaultItem) {
   return (item.images?.length ?? 0) > 0 || Boolean(item.imageFrontUrl || item.imageBackUrl);
 }
 
-function insuranceReady(item: VaultItem) {
-  return Boolean(item.title?.trim()) && hasPhoto(item) && itemCurrentValue(item) > 0;
-}
-
 function itemConfidence(item: VaultItem): "high" | "medium" | "low" {
   if (item.priceConfidence) return item.priceConfidence;
   const hasComps = (item.comparables?.length ?? 0) > 0 || (item.priceSources?.length ?? 0) > 0;
@@ -120,9 +118,10 @@ function itemConfidence(item: VaultItem): "high" | "medium" | "low" {
   return "low";
 }
 
-function Panel({ children, className = "" }: { children: ReactNode; className?: string }) {
+function Panel({ children, className = "", id }: { children: ReactNode; className?: string; id?: string }) {
   return (
     <div
+      id={id}
       className={`relative overflow-hidden rounded-[8px] ${className}`}
       style={{ background: PANEL_BG, border: `1px solid ${PANEL_BORDER}`, boxShadow: PANEL_SHADOW }}
     >
@@ -229,6 +228,7 @@ function StatCard({
   icon,
   tone = CYAN,
   trend,
+  href,
 }: {
   label: string;
   value: ReactNode;
@@ -236,9 +236,11 @@ function StatCard({
   icon: ReactNode;
   tone?: string;
   trend?: number[];
+  /** When set, the whole card opens what it counts. */
+  href?: string;
 }) {
   const hasTrend = Boolean(trend && trend.length > 1);
-  return (
+  const card = (
     <Panel className="min-h-[94px] p-3.5">
       <div
         className={`grid h-full items-center gap-3 ${
@@ -272,6 +274,12 @@ function StatCard({
         ) : null}
       </div>
     </Panel>
+  );
+  if (!href) return card;
+  return (
+    <Link href={href} className="block rounded-[8px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[color:var(--pill-active-ring)]">
+      {card}
+    </Link>
   );
 }
 
@@ -607,17 +615,16 @@ export default function InsightsOverview({ items: allItems, loading = false }: {
     return metrics.roi;
   }, [metrics.roi, monthChange, thirtyDaySeries]);
 
-  const insurance = useMemo(() => {
-    let readyCount = 0;
-    let readyValue = 0;
+  // Documentation checklist: the SAME rule and counts as the Vault's "Documentation Complete" card (src/lib/vaultReview.ts).
+  const documentation = useMemo(() => {
+    const counts = reviewCounts(items);
+    let completeValue = 0;
     for (const item of items) {
-      if (insuranceReady(item)) {
-        readyCount += 1;
-        readyValue += itemCurrentValue(item);
-      }
+      if (reviewGaps(item).length === 0) completeValue += itemCurrentValue(item);
     }
-    const pct = items.length > 0 ? Math.round((readyCount / items.length) * 100) : 0;
-    return { readyCount, readyValue, pct, notReady: Math.max(0, items.length - readyCount), gap: Math.max(0, totalValue - readyValue) };
+    const pctItems = items.length > 0 ? Math.round((counts.ready / items.length) * 100) : 0;
+    const pctValue = totalValue > 0 ? Math.min(100, Math.round((completeValue / totalValue) * 100)) : 0;
+    return { ...counts, completeValue, pctItems, pctValue, remainingValue: Math.max(0, totalValue - completeValue) };
   }, [items, totalValue]);
 
   // Real pricing sources: tally each item's actual comparables (by source) and
@@ -670,7 +677,7 @@ export default function InsightsOverview({ items: allItems, loading = false }: {
         const pct = cost > 0 ? (gain / cost) * 100 : 0;
         return { item, gain, pct };
       })
-      .filter((row) => row.gain !== 0 && Number.isFinite(row.gain))
+      .filter((row) => itemCurrentValue(row.item) > 0 && itemTotalCost(row.item) > 0 && row.gain !== 0 && Number.isFinite(row.gain))
       .sort((a, b) => Math.abs(b.gain) - Math.abs(a.gain))
       .slice(0, 6);
   }, [items]);
@@ -708,6 +715,8 @@ export default function InsightsOverview({ items: allItems, loading = false }: {
   }, [items]);
 
   const rangeLabel = range === "all" ? "1Y" : range.toUpperCase();
+  // Links such as /portfolio#movers land on that panel once the page has its data.
+  useHashTarget(!loading && items.length > 0 && historyHydrated);
 
   if (items.length === 0 && loading) {
     return (
@@ -795,10 +804,11 @@ export default function InsightsOverview({ items: allItems, loading = false }: {
             trend={historyHydrated ? thirtyDaySeries : undefined}
           />
           <StatCard
-            label="Insurance Covered"
-            value={formatMoney(insurance.readyValue)}
-            sub={`${insurance.pct}% of total value`}
+            label="Documentation Complete"
+            value={`${documentation.ready} of ${items.length}`}
+            sub={<>{documentation.pctItems}% of items, {documentation.pctValue}% of estimated value.<br />A record checklist, not insurance coverage.</>}
             icon={<Glyph name="shield" size={28} />}
+            href="/vault?review=insurance_ready"
           />
           <StatCard
             label="Stale Prices"
@@ -810,7 +820,7 @@ export default function InsightsOverview({ items: allItems, loading = false }: {
         </div>
 
         <div className="mt-3 grid gap-3 xl:grid-cols-[minmax(0,2fr)_minmax(360px,0.9fr)]">
-          <Panel className="p-4">
+          <Panel id="value-history" className="p-4">
             <div className="flex items-center justify-between gap-3">
               <Label>Value History</Label>
               <div className="flex flex-wrap gap-1.5">
@@ -858,7 +868,7 @@ export default function InsightsOverview({ items: allItems, loading = false }: {
         </div>
 
         <div className="mt-3 grid gap-3 xl:grid-cols-[minmax(650px,1.45fr)_minmax(340px,0.82fr)_minmax(340px,0.82fr)]">
-          <Panel className="p-3.5">
+          <Panel id="movers" className="p-3.5">
             <div className="flex items-center justify-between gap-3">
               <Label>Portfolio Movers</Label>
               <Link href="/vault" className="text-xs font-bold" style={{ color: GOLD }}>View all movers &gt;</Link>
@@ -900,17 +910,18 @@ export default function InsightsOverview({ items: allItems, loading = false }: {
             </div>
           </Panel>
 
-          <Panel className="p-4">
+          <Panel id="cost-breakdown" className="p-4">
             <div className="flex items-center gap-1.5">
-              <Label>Allocation By Universe</Label>
+              <Label>Cost And Value By Universe</Label>
               <InfoMark />
             </div>
-            <div className="mt-4 grid grid-cols-[26px_minmax(0,1fr)_74px_42px_112px] gap-2 text-[10px] font-bold uppercase tracking-[0.16em]" style={{ color: MUTED2 }}>
+            <div className="mt-4 grid grid-cols-[26px_minmax(0,1fr)_64px_64px_40px_104px] gap-2 text-[10px] font-bold uppercase tracking-[0.16em]" style={{ color: MUTED2 }}>
               <span />
               <span>Universe</span>
+              <span className="text-right">Cost</span>
               <span className="text-right">Value</span>
               <span className="text-right">%</span>
-              <span className="text-right">Change (30d)</span>
+              <span className="text-right">Change vs cost</span>
             </div>
             <div className="mt-2 grid">
               {categoryRows.map((row) => {
@@ -922,11 +933,12 @@ export default function InsightsOverview({ items: allItems, loading = false }: {
                   <Link
                     key={row.label}
                     href={`/portfolio/universe/${encodeURIComponent(row.label)}`}
-                    className="grid grid-cols-[26px_minmax(0,1fr)_74px_42px_112px] items-center gap-2 border-b py-2 text-xs last:border-b-0 hover:bg-white/[0.035]"
+                    className="grid grid-cols-[26px_minmax(0,1fr)_64px_64px_40px_104px] items-center gap-2 border-b py-2 text-xs last:border-b-0 hover:bg-white/[0.035]"
                     style={{ color: "var(--fg)", borderColor: "rgba(203,208,213,0.16)" }}
                   >
                     <span style={{ color: GOLD }}><Glyph name={universeGlyphName(row.label)} size={18} /></span>
                     <span className="truncate font-semibold">{displayLabel(row.label)}</span>
+                    <span className="text-right tabular-nums" style={{ color: MUTED }}>{formatMoney(row.cost)}</span>
                     <span className="text-right tabular-nums" style={{ color: MUTED }}>{formatMoney(row.value)}</span>
                     <span className="text-right tabular-nums" style={{ color: MUTED }}>{pct.toFixed(1)}%</span>
                     <span className="text-right tabular-nums" style={{ color: tone }}>
@@ -1015,9 +1027,16 @@ export default function InsightsOverview({ items: allItems, loading = false }: {
 
         <div className="mt-3 grid gap-3 sm:grid-cols-3">
           <Panel className="p-4">
-            <Label>Missing Data</Label>
-            <div className="mt-2 text-2xl font-black" style={{ color: insurance.notReady > 0 ? RED : GREEN }}>{insurance.notReady}</div>
-            <div className="text-sm" style={{ color: MUTED }}>items missing key details</div>
+            <Label>Needs Documentation</Label>
+            <Link href="/vault?review=needs_review" className="mt-2 block text-2xl font-black focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2" style={{ color: documentation.needsReview > 0 ? RED : GREEN }}>{documentation.needsReview}</Link>
+            <div className="text-sm" style={{ color: MUTED }}>items missing part of the checklist{items.length > 0 ? ` (${100 - documentation.pctItems}% of items)` : ""}</div>
+            <div className="mt-2 flex flex-wrap gap-1.5">
+              {REVIEW_GAPS.map((gap) => (
+                <PillButton key={gap} size="compact" href={`/vault?review=needs_review&gap=${gap}`}>
+                  Missing {REVIEW_GAP_SHORT[gap].toLowerCase()} <span className="text-[11px] opacity-70">{documentation.byGap[gap]}</span>
+                </PillButton>
+              ))}
+            </div>
           </Panel>
           <Panel className="p-4">
             <Label>Pricing Alerts</Label>
@@ -1025,11 +1044,27 @@ export default function InsightsOverview({ items: allItems, loading = false }: {
             <div className="text-sm" style={{ color: MUTED }}>items with stale or missing prices</div>
           </Panel>
           <Panel className="p-4">
-            <Label>Insurance Gap</Label>
-            <div className="mt-2 text-2xl font-black" style={{ color: insurance.gap > 0 ? GOLD : GREEN }}>{formatMoney(insurance.gap)}</div>
-            <Link href="/insurance" className="mt-1 inline-block text-sm font-bold" style={{ color: GOLD }}>Review &gt;</Link>
+            <Label>Value Not Fully Documented</Label>
+            <Link href="/vault?review=needs_review" className="mt-2 block text-2xl font-black focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2" style={{ color: documentation.remainingValue > 0 ? GOLD : GREEN }}>{formatMoney(documentation.remainingValue)}</Link>
+            <div className="text-sm" style={{ color: MUTED }}>{100 - documentation.pctValue}% of estimated value, in {documentation.needsReview} {documentation.needsReview === 1 ? "item" : "items"}</div>
+            <Link href="/insurance" className="mt-1 inline-block text-sm font-bold" style={{ color: GOLD }}>Open the insurance packet &gt;</Link>
           </Panel>
         </div>
+
+        <Panel id="documentation" className="mt-3 p-4">
+          <Label>What &ldquo;Documentation Complete&rdquo; Means</Label>
+          <ol className="mt-3 grid gap-2 text-sm sm:grid-cols-2" aria-label="Documentation checklist">
+            {REVIEW_GAPS.map((gap, index) => (
+              <li key={gap} className="flex gap-2">
+                <span className="font-bold" style={{ color: GOLD }}>{index + 1}.</span>
+                <span><span className="font-semibold">{REVIEW_CHECKLIST[gap].title}</span> <span style={{ color: MUTED }}>&ndash; {REVIEW_CHECKLIST[gap].rule}</span></span>
+              </li>
+            ))}
+          </ol>
+          <p className="mt-3 text-xs leading-relaxed" style={{ color: MUTED }}>
+            {REVIEW_CHECKLIST_NOTE} The percentage of items counts items; the percentage of value counts what those items are worth. They are different measures and will rarely match. Boxes and display supplies are not counted.
+          </p>
+        </Panel>
 
         {/* Collection Intelligence -- deeper analysis beyond the stat cards
             above: concentration risk, a single strength score, goal

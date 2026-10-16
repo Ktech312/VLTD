@@ -23,6 +23,9 @@ type PillButtonProps = {
   size?: PillSize;
   /** Toggle-style pills: exposes the on/off state to assistive technology. */
   pressed?: boolean;
+  /** Disclosure-style pills: whether the controlled region is open, and which region it controls. */
+  ariaExpanded?: boolean;
+  ariaControls?: string;
   ariaLabel?: string;
   /** Renders as a Next.js Link instead of a <button> -- for nav-style pills. */
   href?: string;
@@ -112,6 +115,8 @@ export function PillButton({
   style,
   size = "default",
   pressed,
+  ariaExpanded,
+  ariaControls,
   ariaLabel,
 }: PillButtonProps) {
   const fullClassName = pillClassName(variant, !!disabled, className, size);
@@ -141,6 +146,8 @@ export function PillButton({
       onClick={disabled ? undefined : onClick}
       disabled={disabled}
       aria-pressed={pressed}
+      aria-expanded={ariaExpanded}
+      aria-controls={ariaControls}
       aria-label={ariaLabel}
       title={title}
       className={fullClassName}
