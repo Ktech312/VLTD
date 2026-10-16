@@ -16,6 +16,10 @@ import {
 import { getPrimaryImageUrl, type VaultItem } from "@/lib/vaultModel";
 import { getFollowerCount, isFollowing } from "@/lib/follows";
 import { FollowButton } from "@/components/social/FollowButton";
+import ContentActionBar, { type ActionBarCollector } from "@/components/share/ContentActionBar";
+import { useItemVibe } from "@/components/social/useItemVibe";
+import { useDialogA11y } from "@/components/ui/useDialogA11y";
+import { isSupplyItem } from "@/lib/vaultStats";
 import { MessageButton } from "@/components/social/MessageButton";
 import OnlineDot from "@/components/OnlineDot";
 import { fetchLastSeen } from "@/lib/presence";
@@ -140,15 +144,23 @@ function ProfileItemModal({
   listTitle,
   onClose,
   onSelectItem,
+  ownerProfileId = "",
+  viewerProfileId = "",
+  collector = null,
 }: {
   singleItem?: VaultItem | null;
   listItems?: VaultItem[];
   listTitle?: string;
   onClose: () => void;
   onSelectItem?: (item: VaultItem) => void;
+  ownerProfileId?: string;
+  viewerProfileId?: string;
+  collector?: ActionBarCollector | null;
 }) {
   const [mounted, setMounted] = useState(false);
   useEffect(() => { setMounted(true); }, []);
+  const vibe = useItemVibe(singleItem ? String(singleItem.id) : "", viewerProfileId, !singleItem);
+  const dialogRef = useDialogA11y<HTMLDivElement>(true, onClose);
 
   useEffect(() => {
     const html = document.documentElement;
@@ -181,6 +193,10 @@ function ProfileItemModal({
       onClick={onClose}
     >
       <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-label={singleItem?.title ?? listTitle ?? "Items"}
         onClick={(e) => e.stopPropagation()}
         style={{
           position: "relative",
@@ -223,6 +239,22 @@ function ProfileItemModal({
                   {new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(singleItem.currentValue)}
                 </div>
               )}
+            </div>
+            <div style={{ marginTop: 14 }}>
+              <ContentActionBar
+                key={`${singleItem.id}:${vibe ? "ready" : "wait"}`}
+                kind="item"
+                contentId={String(singleItem.id)}
+                title={singleItem.title ?? "Untitled"}
+                previewUrl={getPrimaryImageUrl(singleItem) || undefined}
+                shareUrl={typeof window !== "undefined" ? `${window.location.origin}/share/${encodeURIComponent(String(singleItem.id))}` : ""}
+                canShare={singleItem.isPublic !== false && !isSupplyItem({ universe: singleItem.universe, categoryLabel: singleItem.categoryLabel })}
+                shareRestriction="This item has no public link."
+                isOwner={Boolean(viewerProfileId) && viewerProfileId === ownerProfileId}
+                viewerProfileId={viewerProfileId}
+                collector={collector}
+                vibe={{ count: vibe?.count ?? 0, vibed: vibe?.vibed ?? false, ownerProfileId }}
+              />
             </div>
           </>
         ) : (
@@ -475,6 +507,7 @@ export default function PublicVaultPage({
                 viewerProfileId={viewerProfileId}
                 targetProfileId={profileId}
                 initialFollowing={viewerFollowing}
+                signInHref={`/login?next=${encodeURIComponent(`/v/${profileId}`)}`}
               />
               <MessageButton viewerProfileId={viewerProfileId} targetProfileId={profileId} />
             </div>
@@ -591,7 +624,13 @@ export default function PublicVaultPage({
       </div>
 
       {selectedItem ? (
-        <ProfileItemModal singleItem={selectedItem} onClose={() => setSelectedItem(null)} />
+        <ProfileItemModal
+          singleItem={selectedItem}
+          onClose={() => setSelectedItem(null)}
+          ownerProfileId={profileId}
+          viewerProfileId={viewerProfileId}
+          collector={{ profileId, name: displayName, avatarUrl: avatarUrl || undefined, avatarEmoji, followable: true }}
+        />
       ) : null}
 
       {subjectFilter ? (

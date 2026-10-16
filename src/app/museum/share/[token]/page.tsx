@@ -8,12 +8,9 @@ import { PUBLIC_ITEM_COLUMNS } from "@/lib/publicItemColumns";
 import Link from "next/link";
 import type { CSSProperties, ReactNode } from "react";
 import { useEffect, useMemo, useState } from "react";
-import { createPortal } from "react-dom";
 import { useParams } from "next/navigation";
 
 import GuestGalleryRenderer from "@/components/gallery/GuestGalleryRenderer";
-import ShareBar from "@/components/ShareBar";
-import { Glyph } from "@/components/ui/Glyph";
 import {
   getGalleryByPublicToken,
   recordGalleryView,
@@ -24,7 +21,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { resolveGuestGalleryViewModel } from "@/lib/guestGalleryViewModel";
 import { type VaultItem } from "@/lib/vaultModel";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
-import { AdultContentGate, ReportContentButton, useAdultGate } from "@/components/PublicSafetyControls";
+import { AdultContentGate, useAdultGate } from "@/components/PublicSafetyControls";
 
 type GateMode = "loading" | "guest_allowed" | "registered_only" | "entered";
 type ShareAccessMode = "private" | "public_gallery" | "guest_view" | "registered_users";
@@ -140,7 +137,6 @@ export default function SharedGalleryPage() {
   const [error, setError] = useState("");
   const [gateMode, setGateMode] = useState<GateMode>("loading");
   const [isSignedIn, setIsSignedIn] = useState(false);
-  const [showShare, setShowShare] = useState(false);
 
   useEffect(() => {
     let isCancelled = false;
@@ -412,51 +408,6 @@ export default function SharedGalleryPage() {
 
   return (
     <>
-      {/* In-flow page-level action row — same fix as the guest-preview
-          page (museum/[galleryId]/guest/page.tsx): this used to be `fixed
-          right-4 top-4`, which visually stacked it inside the global
-          TopNav's own fixed 64px band (both viewport-fixed, so they
-          rendered into the same screen strip despite being unrelated
-          component trees). */}
-      <div className="relative z-10 mx-auto flex max-w-5xl items-center justify-end gap-2 px-4 pt-20">
-        <button
-          type="button"
-          onClick={() => setShowShare((s) => !s)}
-          className="flex items-center gap-1.5 rounded-full bg-[rgba(203,208,213,0.12)] px-3 py-2 text-xs font-semibold text-[#C8CDD2] ring-1 ring-[rgba(203,208,213,0.35)] backdrop-blur-sm transition-all hover:bg-[rgba(203,208,213,0.2)]"
-          aria-label="Share this exhibition"
-        >
-          <Glyph name="share" size={13} strokeWidth={2.5} />
-          Share
-        </button>
-        <ReportContentButton contentType="gallery" contentId={gallery.id} />
-      </div>
-
-      {/* Share sheet — slides up from bottom. Portaled to document.body:
-          NavShell renders this page's content inside PullToRefresh, whose
-          scrolling wrapper (position:fixed + overflow-y:auto, bottom
-          pinned to var(--bottomnav-h)) clips ANY fixed-position descendant
-          to its own box regardless of z-index — a z-index bump alone fixes
-          stacking order but not this clipping, which happens first.
-          Portaling escapes the clipping ancestor entirely, same as
-          MfaChallengeGate (mounted outside PullToRefresh) always does. */}
-      {showShare && typeof document !== "undefined"
-        ? createPortal(
-            <>
-              <div
-                className="fixed inset-0 z-[10000] bg-black/40 backdrop-blur-[2px]"
-                onClick={() => setShowShare(false)}
-              />
-              <div className="vltd-dark-surface fixed bottom-0 left-0 right-0 z-[10001] rounded-t-3xl bg-[#111827] p-6 pb-10 ring-1 ring-white/10 shadow-2xl">
-                <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-white/20" />
-                <p className="mb-1 text-sm font-semibold text-white">{gallery.title}</p>
-                <p className="mb-4 text-xs text-white/40">Share this exhibition</p>
-                <ShareBar title={gallery.title} compact />
-              </div>
-            </>,
-            document.body
-          )
-        : null}
-
       <div style={{ isolation: "isolate", background: "#0B1320" }}>
         <GuestGalleryRenderer model={model} />
       </div>

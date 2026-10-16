@@ -2,7 +2,7 @@
 
 import { Toggle } from "@/components/ui/Toggle";
 import { pillClassName } from "@/components/ui/PillButton";
-import { effectiveMarketValue } from "@/lib/vaultStats";
+import { effectiveMarketValue, isSupplyItem } from "@/lib/vaultStats";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { use, useEffect, useMemo, useRef, useState } from "react";
@@ -22,7 +22,7 @@ import { Glyph } from "@/components/ui/Glyph";
 import NotableBadge from "@/components/NotableBadge";
 import PricingMvpCard from "@/components/PricingMvpCard";
 import { PillButton } from "@/components/ui/PillButton";
-import ShareBar from "@/components/ShareBar";
+import ContentActionBar from "@/components/share/ContentActionBar";
 import SocialExportSheet from "@/components/SocialExportSheet";
 import AutoSharePrompt from "@/components/AutoSharePrompt";
 import AuctionSetupSheet, { AuctionCountdownChip } from "@/components/AuctionSetupSheet";
@@ -1217,8 +1217,22 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
                 <PillButton href="/vault"><AppIcon name="arrowLeft" size={16} />Vault</PillButton>
                 <PillButton href={`/vault/item/${encodeURIComponent(item.id)}/present`}>Stream</PillButton>
                 <div className="ml-1 h-6 w-px bg-[color:var(--border)]" />
-                <ShareBar title={item.title} itemId={item.id} compact />
-                <PillButton onClick={() => setSocialExportOpen(true)}><Glyph name="share" size={16} /> Export for Social</PillButton>
+                <ContentActionBar
+                  kind="item"
+                  contentId={item.id}
+                  title={item.title}
+                  previewUrl={getOrderedImageUrls(item)[0]}
+                  shareUrl={typeof window !== "undefined" ? `${window.location.origin}/share/${encodeURIComponent(item.id)}` : ""}
+                  canShare={Boolean(item.isPublic) && !isSupplyItem({ universe: item.universe, categoryLabel: item.categoryLabel })}
+                  shareRestriction={
+                    isSupplyItem({ universe: item.universe, categoryLabel: item.categoryLabel })
+                      ? "Storage and display supplies are never shared publicly, so this item has no public link."
+                      : "This item is private, so it has no public link. If you want to share it, turn on Public with the Visibility switch lower on this page. Nothing is made public for you."
+                  }
+                  isOwner
+                  viewerProfileId=""
+                  onExport={() => setSocialExportOpen(true)}
+                />
                 <PillButton onClick={() => setAuctionOpen(true)}>
                   <Glyph name="gavel" size={16} />
                   {item.auctionStatus === "ACTIVE" ? "Manage Auction" : "Start Auction"}

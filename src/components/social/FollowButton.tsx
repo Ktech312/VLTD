@@ -1,33 +1,42 @@
 "use client";
 
 import { useState } from "react";
+import { AppIcon } from "@/components/ui/AppIcon";
+import { PillButton } from "@/components/ui/PillButton";
 import { followProfile, unfollowProfile } from "@/lib/follows";
 
 /**
- * Follow/unfollow toggle for a collector's profile. Same pill-glow rules as
- * VibeButton - "Following" never gets a different text color, only the
- * shared gold glow. Renders nothing at all when viewing your own profile
- * (no read-only count here - follower totals belong on the profile's own
- * stats display, not duplicated onto this button).
+ * Follow/unfollow toggle for a collector's profile. Same pill rules as the rest of the controls: "Following" gets the shared
+ * selected look (gold glow + check), never a different text color. Renders nothing when viewing your own profile.
+ *
+ * Signed out: pass `signInHref` and the button sends the person to sign in, then back to this page (the existing sign-in page's
+ * `next` link), instead of sitting there disabled.
  */
 export function FollowButton({
   viewerProfileId,
   targetProfileId,
   initialFollowing = false,
+  signInHref,
 }: {
   viewerProfileId: string;
   targetProfileId: string;
   initialFollowing?: boolean;
+  signInHref?: string;
 }) {
   const [following, setFollowing] = useState(initialFollowing);
   const [busy, setBusy] = useState(false);
 
   if (!targetProfileId || viewerProfileId === targetProfileId) return null;
 
-  const canInteract = Boolean(viewerProfileId) && !busy;
+  const signedOut = !viewerProfileId;
+  const canInteract = !busy && (!signedOut || Boolean(signInHref));
 
   async function toggle() {
-    if (!canInteract) return;
+    if (signedOut) {
+      if (signInHref) window.location.assign(signInHref);
+      return;
+    }
+    if (busy) return;
     const next = !following;
     setFollowing(next);
     setBusy(true);
@@ -42,29 +51,17 @@ export function FollowButton({
   }
 
   return (
-    <button
-      type="button"
-      onClick={toggle}
+    <PillButton
+      onClick={() => void toggle()}
       disabled={!canInteract}
-      aria-pressed={following}
-      className={[
-        "vltd-selectable transition",
-        following
-          ? "vltd-selected bg-[color:var(--pill-active-bg)] text-[color:var(--fg)]"
-          : "bg-[color:var(--pill)] text-[color:var(--fg)] ring-1 ring-[color:var(--border)]",
-      ].join(" ")}
-      style={{
-        borderRadius: 999,
-        padding: "7px 16px",
-        fontSize: 12,
-        fontWeight: 700,
-        border: "none",
-        cursor: canInteract ? "pointer" : "default",
-        minHeight: 44,
-        opacity: viewerProfileId ? 1 : 0.5,
-      }}
+      variant={following ? "active" : "default"}
+      pressed={following}
+      ariaLabel={following ? "Following. Unfollow this collector" : signedOut ? "Sign in to follow this collector" : "Follow this collector"}
+      title={signedOut ? "Sign in to follow" : following ? "Following — click to unfollow" : "Follow this collector"}
+      className="font-semibold"
     >
+      {following ? <AppIcon name="checkmark" size={14} strokeWidth={2.4} /> : null}
       {following ? "Following" : "Follow"}
-    </button>
+    </PillButton>
   );
 }

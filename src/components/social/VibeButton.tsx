@@ -22,6 +22,7 @@ export function VibeButton({
   initialCount = 0,
   initialVibed = false,
   size = "default",
+  signInHref,
 }: {
   itemId: string;
   profileId: string;
@@ -29,16 +30,23 @@ export function VibeButton({
   initialCount?: number;
   initialVibed?: boolean;
   size?: "default" | "compact";
+  /** Signed out: the button sends the person to sign in and back to this page instead of sitting disabled. */
+  signInHref?: string;
 }) {
   const [vibed, setVibed] = useState(initialVibed);
   const [count, setCount] = useState(initialCount);
   const [busy, setBusy] = useState(false);
   const [burstKey, setBurstKey] = useState(0);
 
-  const canInteract = !isOwner && Boolean(profileId) && !busy;
+  const signedOut = !profileId;
+  const canInteract = !isOwner && !busy && (!signedOut || Boolean(signInHref));
 
   async function toggle() {
     if (!canInteract) return;
+    if (signedOut) {
+      if (signInHref) window.location.assign(signInHref);
+      return;
+    }
     const next = !vibed;
     setVibed(next);
     setCount((c) => Math.max(0, c + (next ? 1 : -1)));
@@ -98,7 +106,7 @@ export function VibeButton({
       pressed={vibed}
       onClick={toggle}
       disabled={!canInteract}
-      ariaLabel={vibed ? "Remove Vibe" : "Vibe this item"}
+      ariaLabel={vibed ? `Vibed, ${count} ${count === 1 ? "vibe" : "vibes"}. Remove your Vibe` : signedOut ? "Sign in to Vibe this item" : `Vibe this item, ${count} ${count === 1 ? "vibe" : "vibes"}`}
       className="relative"
     >
       {icon}

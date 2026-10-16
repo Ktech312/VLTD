@@ -50,8 +50,12 @@ function favoriteValue(r: FavoriteRecord, items: VaultItem[]) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(v);
 }
 
-function favoriteHref(r: FavoriteRecord) {
-  if (r.content_type === "item") return `/vault/item/${r.content_id}`;
+function favoriteHref(r: FavoriteRecord, items: VaultItem[]) {
+  // Your own item opens in your Vault; someone else's saved item opens its public page (their Vault item page would say "not found").
+  if (r.content_type === "item") {
+    const mine = items.some((x) => String(x.id) === String(r.content_id));
+    return mine ? `/vault/item/${r.content_id}` : `/share/${encodeURIComponent(String(r.content_id))}`;
+  }
   return `/museum/${r.content_id}/guest`;
 }
 
@@ -79,7 +83,7 @@ function FavoriteCard({
   const image = favoriteImage(record, items, galleries);
   const title = favoriteTitle(record, items, galleries);
   const subtitle = favoriteSubtitle(record, items, galleries);
-  const href = favoriteHref(record);
+  const href = favoriteHref(record, items);
   const isItem = record.content_type === "item";
   const value = favoriteValue(record, items);
 

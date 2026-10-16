@@ -6,7 +6,7 @@ import { buildPublicSnapshot, vaultItemFromPublicSnapshot as vaultItemFromGaller
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useParams } from "next/navigation";
-import ShareBar from "@/components/ShareBar";
+import ContentActionBar from "@/components/share/ContentActionBar";
 import { AppIcon } from "@/components/ui/AppIcon";
 import { Glyph } from "@/components/ui/Glyph";
 
@@ -84,20 +84,6 @@ function cloneGallery<T>(value: T): T {
 
 function getGalleryDraftCacheKey(galleryId: string) {
   return `${GALLERY_DRAFT_CACHE_PREFIX}:${galleryId}`;
-}
-
-function compactShareUrl(value: string) {
-  if (!value) return "";
-
-  try {
-    const url = new URL(value);
-    const token = url.pathname.split("/").filter(Boolean).at(-1) ?? "";
-    const shortToken = token.length > 14 ? `${token.slice(0, 8)}...${token.slice(-4)}` : token;
-    const host = url.hostname.replace(/^www\./, "").replace(/\.vercel\.app$/, "");
-    return `${host}/.../${shortToken}`;
-  } catch {
-    return value.length > 24 ? `${value.slice(0, 14)}...${value.slice(-5)}` : value;
-  }
 }
 
 function loadCachedGalleryDraft(galleryId: string): Gallery | null {
@@ -228,7 +214,6 @@ export default function GalleryPage() {
   const [pickerSectionTitle, setPickerSectionTitle] = useState("Section 1");
   const [pickerSectionIds, setPickerSectionIds] = useState<string[] | null>(null);
   const [pickerSectionIdx, setPickerSectionIdx] = useState<number | null>(null);
-  const [copied, setCopied] = useState(false);
   const [accessInfoOpen, setAccessInfoOpen] = useState(false);
   const [adultInfoOpen, setAdultInfoOpen] = useState(false);
   const [aliasInfoOpen, setAliasInfoOpen] = useState(false);
@@ -386,13 +371,6 @@ export default function GalleryPage() {
   }, [id]);
 
   const shareUrl = useMemo(() => (draft ? getGalleryShareUrl(draft) : ""), [draft]);
-  const shareUrlPreview = useMemo(() => compactShareUrl(shareUrl), [shareUrl]);
-
-  useEffect(() => {
-    if (!copied) return;
-    const timer = window.setTimeout(() => setCopied(false), 1800);
-    return () => window.clearTimeout(timer);
-  }, [copied]);
 
   useEffect(() => {
     if (!inviteCopiedToken) return;
@@ -736,15 +714,6 @@ export default function GalleryPage() {
     }
   }
 
-  async function copyShareLink() {
-    if (!shareUrl) return;
-
-    try {
-      await navigator.clipboard.writeText(shareUrl);
-      setCopied(true);
-    } catch {}
-  }
-
   async function copyInviteLink(token: string) {
     if (!draft) return;
 
@@ -1030,31 +999,26 @@ export default function GalleryPage() {
                 </div>
 
                 <div className="mt-3 flex flex-wrap items-center justify-between gap-x-3 gap-y-2 max-md:gap-y-4 xl:mt-2">
-                <div className="grid grid-cols-[auto_auto_auto] items-center justify-start gap-1.5">
-                  <button
-                    type="button"
-                    onClick={copyShareLink}
-                    className={compactPill("active", "shrink-0")}
-                  >
-                    {copied ? "Copied" : "Copy Link"}
-                  </button>
-                  <div
-                    title={shareUrl}
-                    className="min-h-[30px] min-w-0 truncate rounded-full bg-[color:var(--input)] px-2 py-1.5 text-[10px] font-semibold text-[color:var(--fg)] ring-1 ring-[color:var(--border)] xl:min-h-[28px]"
-                  >
-                    {shareUrlPreview}
-                  </div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <ContentActionBar
+                    kind="exhibition"
+                    contentId={draft.id}
+                    title={draft?.title ?? gallery?.title ?? "My Exhibition"}
+                    previewUrl={draft.coverImage || undefined}
+                    shareUrl={shareUrl}
+                    canShare={Boolean(shareUrl)}
+                    shareRestriction="This exhibition has no public link yet, so there is nothing to share."
+                    isOwner
+                    viewerProfileId=""
+                  />
                   <button
                     type="button"
                     onClick={() => setConfirmRegenerate(true)}
                     className={compactPill("default")}
                   >
-                    Regenerate
+                    Regenerate link
                   </button>
                 </div>
-                  {shareUrl ? (
-                    <ShareBar title={draft?.title ?? gallery?.title ?? "My Exhibition"} shareUrl={shareUrl} compact hideCopy />
-                  ) : null}
                 </div>
 
                 {confirmRegenerate ? (

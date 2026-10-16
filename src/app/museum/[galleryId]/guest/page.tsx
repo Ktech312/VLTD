@@ -7,10 +7,7 @@ import { PUBLIC_ITEM_COLUMNS } from "@/lib/publicItemColumns";
 import Link from "next/link";
 import { isSupplyItem } from "@/lib/vaultStats";
 import { useEffect, useMemo, useState } from "react";
-import { createPortal } from "react-dom";
 import { useParams, useSearchParams } from "next/navigation";
-import ShareBar from "@/components/ShareBar";
-import { Glyph } from "@/components/ui/Glyph";
 
 import GuestGalleryRenderer from "@/components/gallery/GuestGalleryRenderer";
 import {
@@ -23,7 +20,7 @@ import {
 import { resolveGuestGalleryViewModel } from "@/lib/guestGalleryViewModel";
 import { loadItems, syncVaultItemsFromSupabase, type VaultItem } from "@/lib/vaultModel";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
-import { AdultContentGate, ReportContentButton, useAdultGate } from "@/components/PublicSafetyControls";
+import { AdultContentGate, useAdultGate } from "@/components/PublicSafetyControls";
 
 const ACTIVE_PROFILE_KEY = "vltd_active_profile_id_v1";
 
@@ -42,7 +39,6 @@ export default function GuestGalleryPage() {
   const [items, setItems] = useState<VaultItem[]>([]);
   const [isResolved, setIsResolved] = useState(false);
   const [isOwner, setIsOwner] = useState(false);
-  const [showShare, setShowShare] = useState(false);
 
   useEffect(() => {
     if (!galleryId) return;
@@ -199,72 +195,19 @@ export default function GuestGalleryPage() {
     return <AdultContentGate onConfirm={adultGate.confirm} />;
   }
 
-  const publicShareUrl = gallery.share?.publicToken
-    ? `${process.env.NEXT_PUBLIC_SITE_URL ?? "https://vltd.app"}/museum/share/${gallery.share.publicToken}`
-    : typeof window !== "undefined" ? window.location.href : "";
-
   return (
     <>
-      {/* In-flow page-level action row — this used to be `fixed right-4
-          top-4`, which visually stacked it inside the global TopNav's own
-          fixed 64px band (both are viewport-fixed, so they rendered into
-          the same screen strip even though they're unrelated component
-          trees). Now a normal in-flow row, pushed below the fixed nav with
-          pt-20, so it's unambiguously page-level, never inside the global
-          nav. */}
-      <div className="relative z-10 mx-auto flex max-w-5xl items-center justify-end gap-2 px-4 pt-20">
-        {isOwner ? (
-          <>
-            <Link
-              href={`/museum/${gallery.id}`}
-              className="inline-flex min-h-[34px] items-center justify-center rounded-full bg-black/45 px-3 py-1 text-xs font-semibold ring-1 backdrop-blur transition hover:bg-black/65"
-              style={{ color: "var(--theme-gold, #C8CDD2)", borderColor: "rgba(203,208,213,0.35)" }}
-            >
-              Edit Exhibition
-            </Link>
-            <button
-              type="button"
-              onClick={() => setShowShare((s) => !s)}
-              className="flex items-center gap-1.5 rounded-full bg-[rgba(203,208,213,0.12)] px-3 py-2 text-xs font-semibold text-[#C8CDD2] ring-1 ring-[rgba(203,208,213,0.35)] backdrop-blur-sm transition-all hover:bg-[rgba(203,208,213,0.2)]"
-              aria-label="Share this exhibition"
-            >
-              <Glyph name="share" size={13} strokeWidth={2.5} />
-              Share
-            </button>
-          </>
-        ) : (
-          // Report is a visitor-facing control — the owner never needs to
-          // report their own exhibition, and it previously rendered for
-          // both owner and guest unconditionally.
-          <ReportContentButton contentType="gallery" contentId={gallery.id} />
-        )}
-      </div>
-
-      {showShare && typeof document !== "undefined"
-        ? createPortal(
-            // Portaled to document.body, not left in the normal page tree —
-            // NavShell renders this page's content inside PullToRefresh,
-            // whose scrolling wrapper (position:fixed + overflow-y:auto,
-            // bottom pinned to var(--bottomnav-h)) clips ANY fixed-position
-            // descendant to its own box, no matter the z-index. A z-index
-            // bump alone (10000/10001, comfortably above BottomNav's real
-            // rendered z-index of 9999 — see its own inline style) fixed
-            // the STACKING order but not this clipping, which happens
-            // before stacking is even considered. Portaling to body escapes
-            // the clipping ancestor entirely, the same way MfaChallengeGate
-            // (mounted at the app root, outside PullToRefresh) always has.
-            <>
-              <div className="fixed inset-0 z-[10000] bg-black/40 backdrop-blur-[2px]" onClick={() => setShowShare(false)} />
-              <div className="vltd-dark-surface fixed bottom-0 left-0 right-0 z-[10001] rounded-t-3xl bg-[#111827] p-6 pb-10 ring-1 ring-white/10 shadow-2xl">
-                <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-white/20" />
-                <p className="mb-1 text-sm font-semibold text-white">{gallery.title}</p>
-                <p className="mb-4 text-xs text-white/40">Share this exhibition</p>
-                <ShareBar title={gallery.title} shareUrl={publicShareUrl} compact />
-              </div>
-            </>,
-            document.body
-          )
-        : null}
+      {isOwner ? (
+        <div className="relative z-10 mx-auto flex max-w-5xl items-center justify-end gap-2 px-4 pt-20">
+          <Link
+            href={`/museum/${gallery.id}`}
+            className="inline-flex min-h-[34px] items-center justify-center rounded-full bg-black/45 px-3 py-1 text-xs font-semibold ring-1 backdrop-blur transition hover:bg-black/65"
+            style={{ color: "var(--theme-gold, #C8CDD2)", borderColor: "rgba(203,208,213,0.35)" }}
+          >
+            Edit Exhibition
+          </Link>
+        </div>
+      ) : null}
 
       <GuestGalleryRenderer model={model} focusCommentId={focusCommentId} />
     </>

@@ -6,11 +6,11 @@ import type { GalleryInvitePermissions } from "@/lib/galleryModel";
 import { Fragment, useEffect, useRef, useState } from "react";
 import type { DragEvent } from "react";
 
-import FavoriteButton from "@/components/FavoriteButton";
+import ContentActionBar, { type ActionBarCollector } from "@/components/share/ContentActionBar";
 import GalleryShelfScene from "@/components/gallery/GalleryShelfScene";
 import { PillButton } from "@/components/ui/PillButton";
 import { AppIcon } from "@/components/ui/AppIcon";
-import { getGallerySections, getGalleryAliasIdentity } from "@/lib/galleryModel";
+import { getGallerySections, getGalleryAliasIdentity, getGalleryShareUrl } from "@/lib/galleryModel";
 import { fetchPublicProfile } from "@/lib/publicProfile";
 import { getPrimaryImageUrl, type VaultItem } from "@/lib/vaultModel";
 import type { GuestGalleryViewModel } from "@/lib/guestGalleryViewModel";
@@ -19,6 +19,7 @@ import AliasCuratorModal from "@/components/gallery/AliasCuratorModal";
 import ExhibitionInfoModal from "@/components/gallery/ExhibitionInfoModal";
 import { VibeButton } from "@/components/social/VibeButton";
 import { getAppreciationCounts, getAppreciatedSet } from "@/lib/appreciations";
+import { useItemVibe } from "@/components/social/useItemVibe";
 
 const ACTIVE_PROFILE_KEY = "vltd_active_profile_id_v1";
 
@@ -197,9 +198,10 @@ export function GuestItemModal({
   onClose,
   ownerProfileId,
   viewerProfileId,
-  vibeCount = 0,
-  viewerVibed = false,
+  vibeCount,
+  viewerVibed,
   showFinancials = false,
+  collector,
 }: {
   item: VaultItem;
   onClose: () => void;
@@ -207,6 +209,8 @@ export function GuestItemModal({
   viewerProfileId?: string;
   vibeCount?: number;
   viewerVibed?: boolean;
+  /** Who made this collection, for the byline and Follow. Left out when the identity is hidden (an alias) or not known. */
+  collector?: ActionBarCollector | null;
   /** Invite links can allow paid and value to be shown; public pages never do. */
   showFinancials?: boolean;
 }) {
@@ -221,6 +225,18 @@ export function GuestItemModal({
       : null;
 
   const dialogRef = useDialogA11y<HTMLDivElement>(true, onClose);
+
+  // Callers that do not know the viewer or the Vibes (the museum campus) get them looked up here.
+  const [lookedUpViewer, setLookedUpViewer] = useState("");
+  useEffect(() => {
+    if (viewerProfileId === undefined) setLookedUpViewer(getActiveProfileId());
+  }, [viewerProfileId]);
+  const viewer = viewerProfileId ?? lookedUpViewer;
+  const lookedUpVibe = useItemVibe(String(item.id), viewer, vibeCount !== undefined);
+  const vibeNow = { count: vibeCount ?? lookedUpVibe?.count ?? 0, vibed: viewerVibed ?? lookedUpVibe?.vibed ?? false };
+  const isOwnItem = Boolean(viewer) && Boolean(ownerProfileId) && viewer === ownerProfileId;
+  // An item shown in an exhibition is not necessarily public on its own: only a public item has a link of its own.
+  const itemIsPublic = item.isPublic === true;
 
   return (
     <div
@@ -305,13 +321,20 @@ export function GuestItemModal({
             </div>
           ) : null}
 
-          <div className="mt-4 flex justify-center">
-            <VibeButton
-              itemId={String(item.id)}
-              profileId={viewerProfileId ?? ""}
-              isOwner={Boolean(viewerProfileId) && ownerProfileId === viewerProfileId}
-              initialCount={vibeCount}
-              initialVibed={viewerVibed}
+          <div className="mt-4">
+            <ContentActionBar
+              key={`${item.id}:${vibeNow.count}:${vibeNow.vibed}`}
+              kind="item"
+              contentId={String(item.id)}
+              title={item.title}
+              previewUrl={imageUrl || undefined}
+              shareUrl={typeof window !== "undefined" ? `${window.location.origin}/share/${encodeURIComponent(String(item.id))}` : ""}
+              canShare={itemIsPublic}
+              shareRestriction="This item is shown in an exhibition but is not public on its own, so it has no link of its own. Share the exhibition instead."
+              isOwner={isOwnItem}
+              viewerProfileId={viewer}
+              collector={collector}
+              vibe={{ count: vibeNow.count, vibed: vibeNow.vibed, ownerProfileId }}
             />
           </div>
         </div>
@@ -336,6 +359,8 @@ type OwnerProfile = {
   avatar: string;
   avatarUrl?: string;
   isAlias?: boolean;
+  /** False when the identity is hidden (an alias) or not public: nothing about the real account may be offered, Follow included. */
+  followable?: boolean;
 };
 
 export default function GuestGalleryRenderer({
@@ -432,6 +457,7 @@ export default function GuestGalleryRenderer({
         avatarUrl: undefined,
         avatar: alias.avatar,
         isAlias: true,
+        followable: false,
       });
       return;
     }
@@ -443,6 +469,7 @@ export default function GuestGalleryRenderer({
           profileId: profile.profileId,
           avatarUrl: profile.avatarUrl,
           avatar: profile.avatarEmoji,
+          followable: true,
         });
       } else {
         // No public_profiles row yet — fall back to profiles table via seed avatar
@@ -451,6 +478,7 @@ export default function GuestGalleryRenderer({
           profileId,
           avatarUrl: undefined,
           avatar: "🗝️",
+          followable: false,
         });
       }
     });
@@ -514,6 +542,22 @@ export default function GuestGalleryRenderer({
   const displayItems: VaultItem[] = baseItems;
   const backgroundImageUrl = model.background.url;
   const coverImageUrl = typeof model.gallery?.coverImage === "string" ? model.gallery.coverImage.trim() : "";
+  // The exhibition's public link: its share link when it has one, otherwise its public guest page. Never made up for a private one.
+  const exhibitionShareUrl = model.gallery
+    ? getGalleryShareUrl(model.gallery) ||
+      (model.gallery.visibility === "PUBLIC" && typeof window !== "undefined" ? `${window.location.origin}/museum/${model.gallery.id}/guest` : "")
+    : "";
+  // Who the byline names. An alias shows only the made-up identity (never the real account's id, name or Follow target).
+  const collector: ActionBarCollector | null = owner
+    ? {
+        profileId: owner.isAlias || !owner.followable ? undefined : owner.profileId,
+        name: owner.displayName,
+        avatarUrl: owner.avatarUrl,
+        avatarEmoji: owner.avatar,
+        onOpen: () => setBioOpen(true),
+        followable: Boolean(owner.followable) && !owner.isAlias,
+      }
+    : null;
   // Items and positions must come from the same exhibit. Previously the first
   // exhibit's positions were reused on every tab, leaving later exhibits blank.
   const shelfSlotLayout = activeSection
@@ -580,29 +624,36 @@ export default function GuestGalleryRenderer({
                     {model.galleryDescription}
                   </p>
 
+                  {/* Collector + Follow · Share · Save · more. Hidden inside embedded previews. */}
+                  {model.gallery ? (
+                    <div className="mt-4 max-w-2xl">
+                      <ContentActionBar
+                        kind="exhibition"
+                        contentId={String(model.gallery.id || model.galleryTitle)}
+                        title={model.galleryTitle}
+                        previewUrl={coverImageUrl || undefined}
+                        shareUrl={exhibitionShareUrl}
+                        canShare={Boolean(exhibitionShareUrl) && !invitePermissions}
+                        shareRestriction={
+                          invitePermissions
+                            ? "This exhibition was opened with a private invitation, so it has no public link to share."
+                            : "This exhibition has no public link, so there is nothing to share."
+                        }
+                        isOwner={Boolean(viewerProfileId) && viewerProfileId === model.gallery.profile_id}
+                        viewerProfileId={viewerProfileId}
+                        collector={collector}
+                        saveMetadata={{ itemCount: model.galleryItems.length }}
+                      />
+                    </div>
+                  ) : null}
+
                   {/* Owner byline + stats */}
                   <div className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-1">
-                    {owner ? (
+                    {model.gallery ? (
                       <>
-                        {owner.avatarUrl ? (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img src={owner.avatarUrl} alt="" className="h-7 w-7 rounded-full object-cover ring-1 ring-white/15" />
-                        ) : (
-                          <span className="text-lg leading-none">{owner.avatar}</span>
-                        )}
-                        <button
-                          type="button"
-                          onClick={() => setBioOpen(true)}
-                          className="relative inline-flex h-7 items-center text-sm font-semibold transition-opacity hover:opacity-80 max-md:after:absolute max-md:after:inset-x-0 max-md:after:-inset-y-2 max-md:after:content-['']"
-                          style={{ color: "var(--gold, #C8CDD2)", background: "none", border: "none", cursor: "pointer", padding: 0 }}
-                        >
-                          {owner.displayName}
-                        </button>
-                        {model.gallery ? (
-                          <PillButton size="compact" onClick={() => setInfoOpen(true)}>
-                            Info
-                          </PillButton>
-                        ) : null}
+                        <PillButton size="compact" onClick={() => setInfoOpen(true)}>
+                          Info
+                        </PillButton>
                         <span className="text-[color:var(--muted2)]" aria-hidden="true">·</span>
                       </>
                     ) : null}
@@ -638,15 +689,6 @@ export default function GuestGalleryRenderer({
                   ) : null}
                 </div>
 
-                <div className="flex shrink-0 flex-col items-end gap-2">
-                  <FavoriteButton
-                    contentType="gallery"
-                    contentId={String(model.gallery?.id || model.galleryTitle)}
-                    metadata={{ title: model.galleryTitle, itemCount: model.galleryItems.length }}
-                    label="Favorite exhibition"
-                    showMessage={false}
-                  />
-                </div>
               </div>
             </div>
           </section> : null}
@@ -810,6 +852,7 @@ export default function GuestGalleryRenderer({
           viewerProfileId={viewerProfileId}
           vibeCount={vibeCounts.get(String(selectedItem.id)) ?? 0}
           viewerVibed={vibedSet.has(String(selectedItem.id))}
+          collector={collector}
         />
       ) : null}
 

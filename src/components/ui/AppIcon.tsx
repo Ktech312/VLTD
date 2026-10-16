@@ -37,6 +37,7 @@ export type AppIconName =
   | "upload"
   | "camera"
   | "share"
+  | "bookmark"
   | "favorite"
   | "delete"
   // ── Natural extensions found while centralizing real usages ──────────
@@ -141,6 +142,7 @@ const PATHS: Record<AppIconName, ReactNode> = {
   addItem: (<><path d="M12 5v14M5 12h14" /></>),
   organize: (<><rect x="4" y="4" width="7" height="7" rx="1.2" /><rect x="13" y="4" width="7" height="7" rx="1.2" /><rect x="4" y="13" width="7" height="7" rx="1.2" /><rect x="13" y="13" width="7" height="7" rx="1.2" /></>),
   editRoom: (<><rect x="4" y="5" width="12" height="12" rx="1.3" /><path d="M14 15.5 20 9.5a1.5 1.5 0 0 0-2-2L12 14v2h2Z" /></>),
+  bookmark: (<path d="M7 4h10a1 1 0 0 1 1 1v15l-6-4-6 4V5a1 1 0 0 1 1-1Z" />),
   save: (<><path d="M5 4h11l3 3v13a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1Z" /><path d="M8 4v5h7V4" /><path d="M8 14h8v6H8z" /></>),
   viewGallery: (<><rect x="3" y="4.5" width="18" height="12" rx="1.5" /><path d="M8 20h8M12 16.5V20" /></>),
   // Generic fallback picture — the real destination-tab look lives in
