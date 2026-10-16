@@ -10,6 +10,10 @@ export type ValueSegment = {
   value: number;
   cost: number;
   count: number;
+  /** Unrealized change in this segment: value minus cost over the items that have BOTH a real value and a known cost. */
+  gain: number;
+  /** The cost of those same items (what the segment's percentage change is measured against). */
+  gainCost: number;
 };
 
 export type CollectionMetrics = {
@@ -103,11 +107,19 @@ function makeSegments(
       value: 0,
       cost: 0,
       count: 0,
+      gain: 0,
+      gainCost: 0,
     };
 
     existing.value += valueOf(item);
     existing.cost += itemTotalCost(item);
     existing.count += 1;
+    const realValue = itemCurrentValue(item);
+    const knownCost = itemTotalCost(item);
+    if (realValue > 0 && knownCost > 0) {
+      existing.gain += realValue - knownCost;
+      existing.gainCost += knownCost;
+    }
 
     map.set(key, existing);
   }

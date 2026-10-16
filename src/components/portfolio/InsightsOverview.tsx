@@ -586,7 +586,7 @@ export default function InsightsOverview({ items: allItems, loading = false }: {
   const metrics = useMemo(() => getCollectionMetrics(items, valueMode), [items, valueMode]);
   const totalValue = metrics.totalValue;
   const totalCost = metrics.totalCost;
-  const totalGain = totalValue - totalCost;
+  const totalGain = metrics.delta; // unrealized change over items with a value and a cost (same rule as Home and the Vault)
   const valuationScore = useMemo(() => getCollectionValuationScore(metrics), [metrics]);
 
   // Keep the day with each value so the chart can label its own axes.
@@ -659,11 +659,13 @@ export default function InsightsOverview({ items: allItems, loading = false }: {
 
   const categoryRows = useMemo(() => {
     const segments = metrics.topValueSegments.filter((segment) => segment.value > 0);
-    const top = segments.slice(0, 6).map((segment) => ({ label: segment.label, value: segment.value, cost: segment.cost, count: segment.count }));
+    const top = segments.slice(0, 6).map((segment) => ({ label: segment.label, value: segment.value, cost: segment.cost, count: segment.count, gain: segment.gain, gainCost: segment.gainCost }));
     const rest = segments.slice(6).reduce((sum, segment) => sum + segment.value, 0);
     const restCost = segments.slice(6).reduce((sum, segment) => sum + segment.cost, 0);
     const restCount = segments.slice(6).reduce((sum, segment) => sum + segment.count, 0);
-    if (rest > 0) top.push({ label: "Other", value: rest, cost: restCost, count: restCount });
+    const restGain = segments.slice(6).reduce((sum, segment) => sum + segment.gain, 0);
+    const restGainCost = segments.slice(6).reduce((sum, segment) => sum + segment.gainCost, 0);
+    if (rest > 0) top.push({ label: "Other", value: rest, cost: restCost, count: restCount, gain: restGain, gainCost: restGainCost });
     return top;
   }, [metrics]);
 
@@ -915,30 +917,31 @@ export default function InsightsOverview({ items: allItems, loading = false }: {
               <Label>Cost And Value By Universe</Label>
               <InfoMark />
             </div>
-            <div className="mt-4 grid grid-cols-[26px_minmax(0,1fr)_64px_64px_40px_104px] gap-2 text-[10px] font-bold uppercase tracking-[0.16em]" style={{ color: MUTED2 }}>
+            <div className="mt-4 grid grid-cols-[22px_minmax(0,1fr)_62px_36px_100px] gap-2 text-[10px] font-bold uppercase tracking-[0.16em]" style={{ color: MUTED2 }}>
               <span />
               <span>Universe</span>
-              <span className="text-right">Cost</span>
               <span className="text-right">Value</span>
               <span className="text-right">%</span>
-              <span className="text-right">Change vs cost</span>
+              <span className="text-right">Change</span>
             </div>
             <div className="mt-2 grid">
               {categoryRows.map((row) => {
                 const pct = totalValue > 0 ? (row.value / totalValue) * 100 : 0;
-                const gain = row.value - row.cost;
-                const gainPct = row.cost > 0 ? (gain / row.cost) * 100 : 0;
+                const gain = row.gain;
+                const gainPct = row.gainCost > 0 ? (gain / row.gainCost) * 100 : 0;
                 const tone = gain >= 0 ? GREEN : RED;
                 return (
                   <Link
                     key={row.label}
                     href={`/portfolio/universe/${encodeURIComponent(row.label)}`}
-                    className="grid grid-cols-[26px_minmax(0,1fr)_64px_64px_40px_104px] items-center gap-2 border-b py-2 text-xs last:border-b-0 hover:bg-white/[0.035]"
+                    className="grid grid-cols-[22px_minmax(0,1fr)_62px_36px_100px] items-center gap-2 border-b py-2 text-xs last:border-b-0 hover:bg-white/[0.035]"
                     style={{ color: "var(--fg)", borderColor: "rgba(203,208,213,0.16)" }}
                   >
                     <span style={{ color: GOLD }}><Glyph name={universeGlyphName(row.label)} size={18} /></span>
-                    <span className="truncate font-semibold">{displayLabel(row.label)}</span>
-                    <span className="text-right tabular-nums" style={{ color: MUTED }}>{formatMoney(row.cost)}</span>
+                    <span className="min-w-0">
+                      <span className="block truncate font-semibold">{displayLabel(row.label)}</span>
+                      <span className="block truncate text-[10px] tabular-nums" style={{ color: MUTED }}>Cost {formatMoney(row.cost)}</span>
+                    </span>
                     <span className="text-right tabular-nums" style={{ color: MUTED }}>{formatMoney(row.value)}</span>
                     <span className="text-right tabular-nums" style={{ color: MUTED }}>{pct.toFixed(1)}%</span>
                     <span className="text-right tabular-nums" style={{ color: tone }}>
