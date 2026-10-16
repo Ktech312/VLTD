@@ -2,7 +2,7 @@
 // One definition, used by the Vault's summary cards (the counts) AND by the list they open (the destination), so a number and
 // the items behind it can never disagree.
 //
-// An item is INSURANCE READY when everything the insurance packet shows for it is actually there:
+// An item has its DOCUMENTATION COMPLETE (internally still called insurance ready) when everything the insurance packet shows for it is actually there:
 //   photo     at least one picture
 //   value     a value someone entered or looked up (a purchase price standing in for a value does not count; the packet marks those *)
 //   cost      a purchase price
@@ -28,6 +28,18 @@ export const REVIEW_GAP_SHORT: Record<ReviewGap, string> = {
 };
 
 export const REVIEW_GAPS: ReviewGap[] = ["photo", "value", "cost", "identity"];
+
+/** The exact documentation checklist, in the words shown to people. Each item is checked against these four things only. */
+export const REVIEW_CHECKLIST: Record<ReviewGap, { title: string; rule: string }> = {
+  photo: { title: "Photo", rule: "at least one picture of the item" },
+  value: { title: "Value", rule: "a value you entered or looked up (a purchase price standing in for a value does not count)" },
+  cost: { title: "Purchase price", rule: "what you paid, greater than zero" },
+  identity: { title: "Identifying detail", rule: "a grade, cert number, serial number, or set / number" },
+};
+
+/** Plain statement of what the checklist is and is not. Shown wherever the checklist is explained. */
+export const REVIEW_CHECKLIST_NOTE =
+  "This is a record-keeping checklist for your own insurance packet. It does not mean an item is insured, and it does not mean an insurer will accept it.";
 
 function has(text: unknown) {
   return typeof text === "string" && text.trim() !== "";

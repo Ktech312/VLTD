@@ -22,7 +22,7 @@ import SwipeStack from "@/components/SwipeStack";
 import { computeItemIntelligence } from "@/lib/itemIntelligence";
 import { UNIVERSE_LABEL, TAXONOMY, getCategories, isUniverseKey, type UniverseKey } from "@/lib/taxonomy";
 import { showToast } from "@/lib/toast";
-import { REVIEW_GAPS, REVIEW_GAP_LABEL, REVIEW_GAP_SHORT, matchesReview, reviewCounts, reviewGaps, type ReviewFilter, type ReviewGap } from "@/lib/vaultReview";
+import { REVIEW_CHECKLIST, REVIEW_CHECKLIST_NOTE, REVIEW_GAPS, REVIEW_GAP_LABEL, REVIEW_GAP_SHORT, matchesReview, reviewCounts, reviewGaps, type ReviewFilter, type ReviewGap } from "@/lib/vaultReview";
 import { activeItems, collectibleItems, effectiveMarketValue, readValueMode, summarizeValues, writeValueMode, type ValueMode } from "@/lib/vaultStats";
 import { priceCheckIsStale } from "@/lib/pricingMvp";
 import { migrateExistingVaultImagesToSupabase } from "@/lib/vaultMigration";
@@ -2054,18 +2054,18 @@ export default function VaultListView({ lockedUniverse }: { lockedUniverse?: Uni
                 type="button"
                 onClick={() => openReview("insurance_ready")}
                 aria-pressed={reviewFilter === "insurance_ready"}
-                aria-label={`Insurance ready: ${stats.insuranceReadyCount} of ${stats.totalItems} items. ${reviewFilter === "insurance_ready" ? "Showing them. Press to go back to the complete list" : "Show these items"}`}
-                title="Show the insurance-ready items"
+                aria-label={`Documentation complete: ${stats.insuranceReadyCount} of ${stats.totalItems} items have a photo, a value, a purchase price and an identifying detail. ${reviewFilter === "insurance_ready" ? "Showing them. Press to go back to the complete list" : "Show these items"}`}
+                title="Show the items whose documentation is complete (photo, value, purchase price, identifying detail)"
                 className={SUMMARY_CARD_FOCUS}
               >
                 <div className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-[color:var(--muted2)] sm:text-[11px] sm:tracking-[0.18em]">
                   <AppIcon name="shield" size={12} strokeWidth={1.8} />
-                  Insurance Ready
+                  Documentation Complete
                 </div>
                 <div className="mt-1.5 text-xl font-extrabold tracking-[-0.02em] text-[color:var(--data-color)] sm:mt-2.5 sm:text-3xl">{stats.insuranceReadyPct}%</div>
-                <div className="mt-0.5 text-[11px] text-[color:var(--muted)] sm:text-sm">{stats.insuranceReadyCount} of {stats.totalItems} items</div>
+                <div className="mt-0.5 text-[11px] text-[color:var(--muted)] sm:text-sm">{stats.insuranceReadyCount} of {stats.totalItems} items · 4-point checklist</div>
                 <span className="mt-1 inline-flex items-center gap-1 text-[11px] font-semibold text-[color:var(--data-color)]">
-                  {reviewFilter === "insurance_ready" ? "Showing these" : "View items"} <AppIcon name="next" size={11} strokeWidth={2} />
+                  {reviewFilter === "insurance_ready" ? "Showing these" : "See checklist and items"} <AppIcon name="next" size={11} strokeWidth={2} />
                 </span>
               </button>
             </div>
@@ -2075,7 +2075,7 @@ export default function VaultListView({ lockedUniverse }: { lockedUniverse?: Uni
                 type="button"
                 onClick={() => openReview("needs_review")}
                 aria-pressed={reviewFilter === "needs_review"}
-                aria-label={`Needs review: ${stats.needsReviewCount} items missing information. ${reviewFilter === "needs_review" ? "Showing them. Press to go back to the complete list" : "Show these items"}`}
+                aria-label={`Needs review: ${stats.needsReviewCount} items missing part of the documentation checklist. ${reviewFilter === "needs_review" ? "Showing them. Press to go back to the complete list" : "Show these items"}`}
                 title="Show the items that need review"
                 className={SUMMARY_CARD_FOCUS}
               >
@@ -2256,16 +2256,25 @@ export default function VaultListView({ lockedUniverse }: { lockedUniverse?: Uni
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <div className="font-semibold">
                     {reviewFilter === "insurance_ready"
-                      ? `Insurance ready: ${filteredItems.length} of ${stats.totalItems} ${stats.totalItems === 1 ? "item" : "items"}`
+                      ? `Documentation complete: ${filteredItems.length} of ${stats.totalItems} ${stats.totalItems === 1 ? "item" : "items"}`
                       : `Needs review: ${filteredItems.length} ${filteredItems.length === 1 ? "item" : "items"}${reviewGap ? ` missing ${REVIEW_GAP_LABEL[reviewGap]}` : ""}`}
                   </div>
                   <PillButton size="compact" onClick={() => { setReviewFilter("all"); setReviewGap(null); }}>Back to all items</PillButton>
                 </div>
                 <p className="mt-1 text-[12px] leading-relaxed text-[color:var(--muted)]">
                   {reviewFilter === "insurance_ready"
-                    ? "An item is insurance ready when it has a photo, a value that was entered or looked up, a purchase price, and something that identifies it (grade, cert or serial number, or a set / number). Boxes and display supplies are not counted."
-                    : "These items are missing something an insurance packet shows. Choose a missing piece to narrow the list, or open an item to fill it in. Boxes and display supplies are not counted."}
+                    ? "An item’s documentation is complete when all four of these are recorded. Boxes and display supplies are not counted."
+                    : "These items are missing part of the documentation checklist below. Choose a missing piece to narrow the list, or open an item to fill it in. Boxes and display supplies are not counted."}
                 </p>
+                <ol className="mt-2 grid gap-1 text-[12px] leading-snug sm:grid-cols-2" aria-label="Documentation checklist">
+                  {REVIEW_GAPS.map((gap, index) => (
+                    <li key={gap} className="flex gap-1.5">
+                      <span className="shrink-0 font-semibold text-[color:var(--data-color)]">{index + 1}.</span>
+                      <span><span className="font-semibold">{REVIEW_CHECKLIST[gap].title}</span> <span className="text-[color:var(--muted)]">– {REVIEW_CHECKLIST[gap].rule}</span></span>
+                    </li>
+                  ))}
+                </ol>
+                <p className="mt-2 text-[12px] leading-relaxed text-[color:var(--muted)]">{REVIEW_CHECKLIST_NOTE}</p>
                 {reviewFilter === "needs_review" ? (
                   <div className="mt-2 flex flex-wrap items-center gap-1.5">
                     {REVIEW_GAPS.map((gap) => (
@@ -2283,10 +2292,10 @@ export default function VaultListView({ lockedUniverse }: { lockedUniverse?: Uni
                 {filteredItems.length === 0 ? (
                   <p className="mt-2 text-[13px] font-medium">
                     {reviewFilter === "insurance_ready"
-                      ? "No items are insurance ready yet. Choose Needs Review to see what each one is missing."
+                      ? "No items have all four checklist items yet. Choose Needs Review to see what each one is missing."
                       : reviewGap
                         ? `Nothing here is missing ${REVIEW_GAP_LABEL[reviewGap]}.`
-                        : "Nothing needs review. Every item has what an insurance packet needs."}
+                        : "Nothing needs review. Every item has all four checklist items."}
                   </p>
                 ) : null}
               </div>
@@ -2302,7 +2311,7 @@ export default function VaultListView({ lockedUniverse }: { lockedUniverse?: Uni
                 {uncategorizedOnly ? <PillButton size="compact" onClick={() => setUncategorizedOnly(false)} ariaLabel="Clear uncategorized filter">Uncategorized only <AppIcon name="close" size={12} /></PillButton> : null}
                 {showSoldItems ? <PillButton size="compact" onClick={() => setShowSoldItems(false)} ariaLabel="Hide sold items again">Sold items shown <AppIcon name="close" size={12} /></PillButton> : null}
                 {readinessFilter !== "all" ? <PillButton size="compact" onClick={() => setReadinessFilter("all")} ariaLabel="Clear value-rank filter">Value rank: {readinessFilter} <AppIcon name="close" size={12} /></PillButton> : null}
-                {reviewFilter !== "all" ? <PillButton size="compact" onClick={() => { setReviewFilter("all"); setReviewGap(null); }} ariaLabel="Clear review filter">{reviewFilter === "insurance_ready" ? "Insurance ready" : "Needs review"}{reviewGap ? ` · ${REVIEW_GAP_SHORT[reviewGap].toLowerCase()}` : ""} <AppIcon name="close" size={12} /></PillButton> : null}
+                {reviewFilter !== "all" ? <PillButton size="compact" onClick={() => { setReviewFilter("all"); setReviewGap(null); }} ariaLabel="Clear review filter">{reviewFilter === "insurance_ready" ? "Documentation complete" : "Needs review"}{reviewGap ? ` · ${REVIEW_GAP_SHORT[reviewGap].toLowerCase()}` : ""} <AppIcon name="close" size={12} /></PillButton> : null}
                 {sortMode !== "newest" ? <PillButton size="compact" onClick={() => setSortMode("newest")} ariaLabel="Back to newest first">Sorted: {sortMode.replace("_", " ")} <AppIcon name="close" size={12} /></PillButton> : null}
                 <PillButton size="compact" variant="active" onClick={handleClearFilters}>Clear all</PillButton>
               </div>
@@ -2353,7 +2362,8 @@ export default function VaultListView({ lockedUniverse }: { lockedUniverse?: Uni
                 return (
                   <div
                     key={item.id}
-                    className="relative"
+                    // Cards far off screen skip layout and painting: with hundreds of cards the page used to take about a second to respond to "Show more".
+                    className="relative [content-visibility:auto] [contain-intrinsic-size:auto_330px]"
                     onClick={(e) => {
                       // Open the quick-look on a real tap only. A scroll gesture
                       // isn't a click, so scrolling anywhere on the card is safe.
