@@ -14,6 +14,7 @@ import {
 import { getImageBlobFromIndexedDb } from "@/lib/vaultImageStore";
 import { getVaultLocalSignature, writeVaultLocalJson } from "@/lib/vaultLocalStore";
 import { stillSignedInAs, storedSessionUserId } from "@/lib/sessionGuard";
+import { clearSpecsDeviceOnly, getSpecsDeviceOnlyIds } from "@/lib/specsDeviceOnly";
 import { registerCloudSaveRetry, reportIdle, reportPending, reportSaved, reportSaving } from "@/lib/cloudSaveStatus";
 
 export type VaultSyncQueueItem = {
@@ -246,6 +247,19 @@ function connectionLooksDown() {
   return typeof navigator !== "undefined" && navigator.onLine === false;
 }
 
+let lastSpecsRequeueAt = 0;
+export function requeueSpecsDeviceOnly() {
+  if (Date.now() - lastSpecsRequeueAt < 5 * 60 * 1000) return;
+  const ids = getSpecsDeviceOnlyIds();
+  if (!ids.length) return;
+  lastSpecsRequeueAt = Date.now();
+  const local = new Set(getAllLocalItems().map((entry) => String(entry.id)));
+  for (const id of ids) {
+    if (local.has(id)) enqueueVaultItemSync(id);
+    else clearSpecsDeviceOnly(id); // the item is gone from this device; nothing left to send
+  }
+}
+
 export async function processVaultSyncQueue() {
   if (typeof window === "undefined") return { processed: 0, remaining: 0 };
   if (isProcessing) {
@@ -269,6 +283,9 @@ export async function processVaultSyncQueue() {
   isProcessing = true;
 
   try {
+    // Items whose specialist details never reached the account (the database had no place for them yet) are sent again,
+    // at most once every few minutes, so they upload on their own once it does.
+    requeueSpecsDeviceOnly();
     const queue = dedupeQueue(readQueue());
     writeQueue(queue);
     if (queue.length > 0) reportSaving("items");

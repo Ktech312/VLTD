@@ -4,6 +4,7 @@ import { useEffect, useState, useSyncExternalStore } from "react";
 
 import { getCloudSavePhase, reportPending, retryCloudSavesNow, subscribeCloudSave } from "@/lib/cloudSaveStatus";
 import { storedSessionUserId } from "@/lib/sessionGuard";
+import { hasAnySpecsDeviceOnly, subscribeSpecsDeviceOnly } from "@/lib/specsDeviceOnly";
 
 // Says plainly where a save is: in the person's account, or only on this device so far.
 //   "Saved on this device — sync pending"  the cloud has not accepted it yet; it is kept and retried (Retry now tries at once)
@@ -28,6 +29,7 @@ function hasLeftover(key: string): boolean {
 export default function SyncStatusPill() {
   const phase = useSyncExternalStore(subscribeCloudSave, getCloudSavePhase, () => "idle" as const);
   const [retrying, setRetrying] = useState(false);
+  const specsOnDevice = useSyncExternalStore(subscribeSpecsDeviceOnly, hasAnySpecsDeviceOnly, () => false);
 
   // Changes made on an earlier visit that never reached the account: say so now, and try again.
   useEffect(() => {
@@ -53,7 +55,14 @@ export default function SyncStatusPill() {
   if (phase === "idle" || !storedSessionUserId()) return null;
 
   const pending = phase === "pending";
-  const text = pending ? "Saved on this device — sync pending" : phase === "saving" ? "Saving to your account…" : "Saved to your account";
+  // "Saved to your account" is only said when everything that was saved is really there, specialist details included.
+  const text = pending
+    ? "Saved on this device — sync pending"
+    : phase === "saving"
+      ? "Saving to your account…"
+      : specsOnDevice
+        ? "Saved. Specialist details are on this device only for now."
+        : "Saved to your account";
   const dot = pending ? "var(--theme-warning, #d99a2b)" : "var(--accent, #C8CDD2)";
 
   return (

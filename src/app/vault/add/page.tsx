@@ -101,6 +101,7 @@ import {
 import { resolveCategoryLabel } from "@/lib/categoryLabels";
 import AddDetailFields from "@/components/AddDetailFields";
 import { resolveDetailProfile } from "@/lib/detailFields";
+import { isSpecsDeviceOnly, SPECS_DEVICE_ONLY_NOTE } from "@/lib/specsDeviceOnly";
 
 const ACTIVE_PROFILE_KEY = "vltd_active_profile_id_v1";
 
@@ -2323,9 +2324,11 @@ export default function AddPage() {
       setStatus(
         dropMode
           ? "✓ Saved to batch. Ready for the next item."
-          : saveAndNext
-            ? "✓ Saved. Ready for next item."
-            : "✓ Saved!"
+          : isSpecsDeviceOnly(item.id)
+            ? `✓ Saved. ${SPECS_DEVICE_ONLY_NOTE}`
+            : saveAndNext
+              ? "✓ Saved. Ready for next item."
+              : "✓ Saved!"
       );
       clearAllImages();
       clearPricing();

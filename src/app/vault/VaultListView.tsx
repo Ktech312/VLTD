@@ -30,6 +30,7 @@ import {
   enqueueVaultItemSync,
   getPendingVaultSyncCount,
   processVaultSyncQueue,
+  requeueSpecsDeviceOnly,
 } from "@/lib/vaultSyncQueue";
 import { useResolvedVaultImage } from "@/lib/useResolvedVaultImages";
 import {
@@ -1129,6 +1130,7 @@ export default function VaultListView({ lockedUniverse }: { lockedUniverse?: Uni
         // Changes waiting to be sent go first, exactly as before: a download that landed first would lay the cloud's older copy
         // over an edit that has not been sent yet (and the upload would then send the old values). The upload run ends with
         // a download of its own; the checked one below reuses it when nothing changed since.
+        if (hasSupabaseEnv()) requeueSpecsDeviceOnly(); // items whose specialist details never reached the account go again
         if (hasSupabaseEnv() && getPendingVaultSyncCount() > 0) {
           await withTimeout(processVaultSyncQueue(), CLOUD_PULL_TIMEOUT_MS);
         }

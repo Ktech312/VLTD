@@ -57,6 +57,7 @@ import {
 } from "@/lib/vaultModel";
 import { deleteVaultItemEverywhere } from "@/lib/vaultActions";
 import { reportPending } from "@/lib/cloudSaveStatus";
+import { isSpecsDeviceOnly, SPECS_DEVICE_ONLY_NOTE } from "@/lib/specsDeviceOnly";
 import { useDialogA11y } from "@/components/ui/useDialogA11y";
 import { generateHashtags } from "@/lib/generateHashtags";
 import {
@@ -681,6 +682,8 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
           ...nextItem,
           profile_id: nextItem.profile_id || getStoredActiveProfileId(),
         });
+        // The cloud took the item but the database has no place for its specialist details yet.
+        if (isSpecsDeviceOnly(nextItem.id)) showToast(SPECS_DEVICE_ONLY_NOTE);
       } catch {
         enqueueVaultItemSync(nextItem.id);
         // Tell the shared save status too: without this the edit sat in the queue with no "sync pending" note and no retry

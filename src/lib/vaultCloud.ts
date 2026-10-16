@@ -1,6 +1,7 @@
 import { getStoredActiveProfileId } from "@/lib/auth";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 import type { VaultImage, VaultItem } from "@/lib/vaultModel";
+import { clearSpecsDeviceOnly, markSpecsDeviceOnly } from "@/lib/specsDeviceOnly";
 
 export const VAULT_IMAGES_BUCKET = "vault-images";
 export const VAULT_ITEMS_TABLE = "vault_items";
@@ -780,6 +781,9 @@ export async function upsertVaultItemToSupabase(item: VaultItem) {
   for (let attempt = 0; attempt < 150; attempt++) {
     const { error } = await supabase.from(VAULT_ITEMS_TABLE).upsert(row);
     if (!error) {
+      // Specialist details only count as saved in the account when the database took them.
+      if (item.specs && Object.keys(item.specs).length > 0 && droppedColumns.includes("specs")) markSpecsDeviceOnly(String(item.id));
+      else clearSpecsDeviceOnly(String(item.id));
       if (droppedColumns.length) {
         console.warn(
           "vault_items upsert: dropped column(s) missing from the database — run the pending migration",

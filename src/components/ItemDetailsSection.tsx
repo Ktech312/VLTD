@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { useMemo, useRef, useState, useSyncExternalStore } from "react";
 import type { ReactNode } from "react";
 import { AppIcon } from "@/components/ui/AppIcon";
 import { INLINE_EDIT_LINE } from "@/lib/inlineEdit";
@@ -17,6 +17,7 @@ import {
   type DetailField,
 } from "@/lib/detailFields";
 import type { VaultItem } from "@/lib/vaultModel";
+import { isSpecsDeviceOnly, SPECS_DEVICE_ONLY_NOTE, subscribeSpecsDeviceOnly } from "@/lib/specsDeviceOnly";
 
 const OTHER_CHOICE = "__other__";
 
@@ -154,6 +155,7 @@ export default function ItemDetailsSection({
   onSave: (patch: Partial<VaultItem>) => Promise<void> | void;
   children?: ReactNode;
 }) {
+  const deviceOnly = useSyncExternalStore(subscribeSpecsDeviceOnly, () => isSpecsDeviceOnly(item.id), () => false);
   const profile = useMemo(() => resolveItemDetailProfile(item), [item]);
   const others = useMemo(() => otherSavedDetails(item, profile), [item, profile]);
   const [expanded, setExpanded] = useState(false);
@@ -268,6 +270,11 @@ export default function ItemDetailsSection({
       </div>
       <div className="mt-4">
         {sourceNote ? <div className="mb-3 text-[11px] text-[color:var(--muted2)]">{sourceNote}</div> : null}
+        {deviceOnly ? (
+          <div role="status" data-testid="specs-device-only" className="mb-3 rounded-lg bg-[color:var(--pill)] px-3 py-2 text-[12px] text-[color:var(--muted)] ring-1 ring-[color:var(--border)]">
+            {SPECS_DEVICE_ONLY_NOTE}
+          </div>
+        ) : null}
         <div className="grid gap-3 text-sm">{rows.map(row)}</div>
         {emptyMore.length > 0 && !all ? (
           <button
