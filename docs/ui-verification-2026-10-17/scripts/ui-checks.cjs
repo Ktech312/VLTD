@@ -307,7 +307,7 @@ async function interceptWrites(S, tableRe) {
         const O = await session(BASE, { width: 1440, height: 900 });
         try {
           await O.go("/"); await O.waitFor(`document.querySelector('[aria-roledescription="carousel"]')`, 120000, "carousel with one"); await sleep(1500);
-          const one = await O.evaluate(`(() => { const c = document.querySelector('[aria-roledescription="carousel"]'); return { cards: c.querySelectorAll('a[aria-label^="Open "], button[aria-label^="Show "]').length, prev: !!c.querySelector('button[aria-label="Previous exhibition"]'), next: !!c.querySelector('button[aria-label="Next exhibition"]'), text: c.innerText.replace(/\s+/g, ' ') }; })()`);
+          const one = await O.evaluate(`(() => { const c = document.querySelector('[aria-roledescription="carousel"]'); return { cards: c.querySelectorAll('a[aria-label^="Open "], button[aria-label^="Show "]').length, prev: !!c.querySelector('button[aria-label="Previous exhibition"]'), next: !!c.querySelector('button[aria-label="Next exhibition"]'), text: c.innerText.replace(/\\s+/g, ' ') }; })()`);
           check("[carousel] one exhibition: the card is shown, no arrows, no counter", one.cards === 1 && !one.prev && !one.next && !/ of /.test(one.text), one);
           await O.reveal("^your exhibitions$", 600); await sleep(800); await O.shot(OUT + "/home-carousel-one.png");
         } finally { await O.close(); }

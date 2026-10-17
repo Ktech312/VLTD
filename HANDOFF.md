@@ -1,3 +1,26 @@
+# 2026-10-17 (revision 8) — THE QUEUE (takeover; one list, newest state on top)
+
+States: not started / in progress / blocked / verified complete. Limits are stated next to each line. "Verified" here means checked in a real headless Chrome against synthetic QA data; resized-browser phone checks are NOT a physical phone.
+
+| # | Item | State | Evidence / limit |
+|---|---|---|---|
+| C-A | Phone: install prompt drew on top of the floating Quick Add / Add Item / upload row | verified complete (local) | Prompt now sits above the Add row and the Sync pill band on pages that show the Add row; unchanged elsewhere. Measured at 390 and 320 px on /, /vault, /discover, /portfolio: no overlap with Add row, bottom bar or Sync pill, no sideways scroll; dismiss removes it and stores the 7-day pause. `scripts\overlap.cjs`, screenshots `after\m3-home-install-prompt-390.png` / `-320.png`. Resized browser, synthetic prompt event; real Android/iOS prompt UNVERIFIED. Control sizes and Home layout unchanged. |
+| C-B | The 4 failed live checks | verified complete | Cause was the TEST: the earlier short script put `\s` inside a JavaScript template string, where it becomes a plain `s`, so every "s" in the page text turned into a space ("Mercari" fine, "Cu tom", "Fee  u ed"). Product text was correct. Re-written as `scripts\closeout-checks.cjs` (8 checks: comic marketplaces; eBay and Mercari "Read from"; Whatnot "Unverified in part"; Override fee % 5 / 0 / 2.5 / cleared / invalid / negative; exhibition sharing wording; opening Share changes nothing). Result on the current code against synthetic data: 8 passed, 0 failed. One more real mistake of mine on the way (page prints "FEES" in capitals; pattern was case-sensitive) fixed in the test, no product change. The same single-backslash slip existed once in `ui-checks.cjs` (carousel one-exhibition text, assertion unaffected); fixed. Not run against the deployed site (deploy polling stopped). |
+| NEW | 320 px: the Quick Add / Add Item / upload row is 262 px wide and starts about 10 px left of the screen edge, so the left edge of Quick Add is clipped | not started | Seen while measuring C-A (`after\m3-home-install-prompt-320.png`). Belongs to queue G. Not fixed in the closeout. |
+| A | Item creation/editing, upload, photos, no AI on ordinary actions, details, offline/refresh, delete | not started | |
+| B | Sharing / export, item and exhibition | not started | Native photo sharing stays SIMULATED, not device-verified. |
+| C | Home / financial consistency | not started | |
+| D | Selling tools (fee rules, override, Listing Copy) | not started | Fee-status text and override already re-checked under C-B. Note for D: `ui-checks.cjs` sell-maths patterns such as `/Fees \$12\.20/` are case-sensitive and the page prints "FEES"; confirm they still pass when D is run. |
+| E | Exhibitions / carousel | not started | Real touch dragging UNVERIFIED. |
+| F | Account / profile isolation (two synthetic accounts) | not started | |
+| G | Responsive / keyboard at 320, 390, desktop | not started | Physical phone, native sharing, push need real hardware: see `docs\physical-device-acceptance-checklist.md`. |
+| Inc-1 | Item count 3,479 → 3,478 → 3,477 | OPEN, causes unknown | Neither drop attributed to a customer or to QA. Not yet inspected by me. |
+| Inc-2 | Intermittent blank Vault | OPEN | One idle cold load still to do; no repro campaign. |
+| Inc-3 | Slower-device rendering stalls (4x CPU slowdown) | OPEN | Existing evidence in `docs\perf-evidence-2026-10-17\`; no new profiling without new evidence. CPU slowdown is not a phone. |
+| Inc-4 | Physical phone / touch, native photo sharing, push delivery, Comcast resend | UNVERIFIED | Human steps only; no further customer email will be sent. |
+
+---
+
 # 2026-10-17 (latest, revision 7) — Closeout corrections to the seven fixes
 
 1. **Comics are no longer suggested Fanatics Collect.** The site can technically take comics; we do not suggest it. Cards and sports memorabilia keep it. Custom and the new Override fee % are always available.
