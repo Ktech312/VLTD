@@ -598,6 +598,16 @@ export function resolveActiveProfile(profiles: ProfileRow[], storedId = "") {
   );
 }
 
+// A failure to REACH the account service (no connection, a timeout, a server error, too many requests) says nothing about whether the
+// person is signed in. Only an answer from the service that there is no valid session means signed out.
+function looksTransient(error: unknown): boolean {
+  const e = error as { name?: string; status?: number; message?: string } | null;
+  if (!e) return false;
+  if (e.name === "AuthRetryableFetchError") return true;
+  if (typeof e.status === "number" && (e.status === 0 || e.status === 429 || e.status >= 500)) return true;
+  return /failed to fetch|network|timeout|timed out|load failed|offline|unreachable/i.test(String(e.message ?? ""));
+}
+
 export async function getOnboardingStatus() {
   const supabase = getSupabase();
   if (!supabase) {
@@ -611,6 +621,17 @@ export async function getOnboardingStatus() {
   }
 
   const userResult = await getCurrentUser();
+  if (userResult.error && looksTransient(userResult.error)) {
+    // The account service could not be reached: that must neither sign the person out nor look like an account with nothing in it.
+    // Pages carry on with what is on this device and show their own "could not load" when there is nothing.
+    return {
+      isAuthenticated: true,
+      needsOnboarding: false,
+      profiles: [] as ProfileRow[],
+      activeProfile: null as ProfileRow | null,
+      error: "Could not reach your account just now.",
+    };
+  }
   if (userResult.error) {
     return {
       isAuthenticated: false,

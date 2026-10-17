@@ -3,7 +3,7 @@
 
 import { PillSelect } from "@/components/ui/PillSelect";
 import { useEffect, useMemo, useState } from "react";
-import { collectibleItems, insuranceValue, PURCHASE_BASED_NOTE } from "@/lib/vaultStats";
+import { activeItems, describeGainExclusions, insuranceValue, itemGain, PURCHASE_BASED_NOTE, summarizeGain, totalCost as sharedTotalCost } from "@/lib/vaultStats";
 import Link from "next/link";
 
 import { DEMO_ITEMS } from "@/lib/demoVault";
@@ -15,8 +15,12 @@ import { PillButton } from "@/components/ui/PillButton";
 function clamp(n: number) {
   return Number.isFinite(n) ? n : 0;
 }
-function gain(i: ModelItem) {
-  return (Number(i.currentValue ?? 0) > 0 ? clamp(Number(i.currentValue ?? 0)) - clamp(Number(i.purchasePrice ?? 0)) : 0);
+// Unrealized change of one item: only with both a value and a recorded cost (the shared rule); otherwise "—".
+function gain(i: ModelItem): number | null {
+  return itemGain(i)?.gain ?? null;
+}
+function gainText(g: number | null) {
+  return g === null ? "—" : `${g >= 0 ? "+" : ""}${fmtMoney(g)}`;
 }
 function fmtMoney(n: number) {
   const v = clamp(n);
@@ -81,11 +85,11 @@ export default function InsuranceReportPage() {
   useEffect(() => {
     const seed = toSeedItemsFromDemo();
     const loaded = loadItemsOrSeed(seed);
-    setItems(collectibleItems(loaded));
+    setItems(activeItems(loaded));
     setHydrated(true);
     let active = true;
     void syncVaultItemsFromSupabase().then(() => {
-      if (active) setItems(collectibleItems(loadItems()));
+      if (active) setItems(activeItems(loadItems()));
     });
     return () => {
       active = false;
@@ -97,7 +101,11 @@ export default function InsuranceReportPage() {
     arr.sort((a, b) => {
       if (sortBy === "title_asc") return String(a.title).localeCompare(String(b.title));
       if (sortBy === "value_asc") return clamp(insuranceValue(a).amount) - clamp(insuranceValue(b).amount);
-      if (sortBy === "gain_desc") return gain(b) - gain(a);
+      if (sortBy === "gain_desc") {
+        const x = gain(a) ?? Number.NEGATIVE_INFINITY;
+        const y = gain(b) ?? Number.NEGATIVE_INFINITY;
+        return x === y ? 0 : y > x ? 1 : -1;
+      }
       return clamp(insuranceValue(b).amount) - clamp(insuranceValue(a).amount);
     });
     return arr;
@@ -106,10 +114,10 @@ export default function InsuranceReportPage() {
   // Items stated at purchase price (not priced yet) carry a * and the footnote below.
   const purchaseBasedCount = useMemo(() => sorted.filter((i) => insuranceValue(i).purchaseBased).length, [sorted]);
   const totals = useMemo(() => {
-    const cost = sorted.reduce((s, i) => s + clamp(Number(i.purchasePrice ?? 0)), 0);
+    // Value is the stated insurance basis (an item not yet priced is stated at its purchase price, marked *); it is not a return.
+    const cost = sorted.reduce((s, i) => s + sharedTotalCost(i), 0);
     const value = sorted.reduce((s, i) => s + clamp(insuranceValue(i).amount), 0);
-    const g = value - cost;
-    return { cost, value, gain: g };
+    return { cost, value, gainSummary: summarizeGain(sorted) };
   }, [sorted]);
 
   const byUniverse = useMemo(() => {
@@ -195,7 +203,7 @@ export default function InsuranceReportPage() {
             <PillSelect value={sortBy} ariaLabel="Sort report" align="left" minWidthPx={200} onChange={(next) => setSortBy(next as typeof sortBy)} options={[
               { value: "value_desc", label: "Sort: Value (high → low)" },
               { value: "value_asc", label: "Sort: Value (low → high)" },
-              { value: "gain_desc", label: "Sort: Gain (high → low)" },
+              { value: "gain_desc", label: "Sort: Change (high → low)" },
               { value: "title_asc", label: "Sort: Title (A → Z)" },
             ]} />
 
@@ -220,15 +228,18 @@ export default function InsuranceReportPage() {
             </div>
 
             <div className="rounded-2xl bg-[color:var(--surface)] p-4 ring-1 ring-[color:var(--border)]">
-              <div className="text-xs tracking-widest text-[color:var(--muted2)]">TOTAL VALUE</div>
+              <div className="text-xs tracking-widest text-[color:var(--muted2)]">STATED VALUE</div>
               <div className="mt-2 text-2xl font-semibold">{fmtMoney(totals.value)}{purchaseBasedCount > 0 ? "*" : ""}</div>
-              <div className="mt-1 text-sm text-[color:var(--muted)]">Cost {fmtMoney(totals.cost)}</div>
+              <div className="mt-1 text-sm text-[color:var(--muted)]">Purchase cost {fmtMoney(totals.cost)}</div>
             </div>
 
             <div className="rounded-2xl bg-[color:var(--surface)] p-4 ring-1 ring-[color:var(--border)]">
-              <div className="text-xs tracking-widest text-[color:var(--muted2)]">TOTAL GAIN</div>
-              <div className="mt-2 text-2xl font-semibold">{fmtMoney(totals.gain)}</div>
-              <div className="mt-1 text-sm text-[color:var(--muted)]">Value − Cost</div>
+              <div className="text-xs tracking-widest text-[color:var(--muted2)]">UNREALIZED CHANGE</div>
+              <div className="mt-2 text-2xl font-semibold" data-testid="rep-gain">{totals.gainSummary.eligibleCount > 0 ? gainText(totals.gainSummary.gain) : "—"}</div>
+              <div className="mt-1 text-sm text-[color:var(--muted)]" data-testid="rep-gain-basis">
+                On {totals.gainSummary.eligibleCount} of {totals.gainSummary.totalCount} items · cost basis {fmtMoney(totals.gainSummary.costBasis)}
+                {describeGainExclusions(totals.gainSummary) ? ` · not counted: ${describeGainExclusions(totals.gainSummary)}` : ""}
+              </div>
             </div>
           </div>
 
@@ -284,7 +295,7 @@ export default function InsuranceReportPage() {
                   <th className="border-b border-[color:var(--border)] pb-2 pr-3">#</th>
                   <th className="border-b border-[color:var(--border)] pb-2 pr-3">Cost</th>
                   <th className="border-b border-[color:var(--border)] pb-2 pr-3">Value</th>
-                  <th className="border-b border-[color:var(--border)] pb-2 pr-3">Gain</th>
+                  <th className="border-b border-[color:var(--border)] pb-2 pr-3">Change</th>
                   <th className="border-b border-[color:var(--border)] pb-2 pr-3">Storage</th>
                   <th className="border-b border-[color:var(--border)] pb-2 pr-3">Cert #</th>
                   <th className="border-b border-[color:var(--border)] pb-2 pr-3">Serial #</th>
@@ -320,9 +331,9 @@ export default function InsuranceReportPage() {
                     <td className="border-b border-[color:var(--border)] py-3 pr-3">{itemSubcategory(i) ?? ""}</td>
                     <td className="border-b border-[color:var(--border)] py-3 pr-3">{i.grade ?? ""}</td>
                     <td className="border-b border-[color:var(--border)] py-3 pr-3">{i.number ?? ""}</td>
-                    <td className="border-b border-[color:var(--border)] py-3 pr-3">{fmtMoney(Number(i.purchasePrice ?? 0))}</td>
+                    <td className="border-b border-[color:var(--border)] py-3 pr-3">{fmtMoney(sharedTotalCost(i))}</td>
                     <td className="border-b border-[color:var(--border)] py-3 pr-3">{fmtMoney(insuranceValue(i).amount)}{insuranceValue(i).purchaseBased ? "*" : ""}</td>
-                    <td className="border-b border-[color:var(--border)] py-3 pr-3">{fmtMoney(gain(i))}</td>
+                    <td className="border-b border-[color:var(--border)] py-3 pr-3">{gainText(gain(i))}</td>
                     <td className="border-b border-[color:var(--border)] py-3 pr-3">{i.storageLocation ?? ""}</td>
                     <td className="border-b border-[color:var(--border)] py-3 pr-3">{i.certNumber ?? ""}</td>
                     <td className="border-b border-[color:var(--border)] py-3 pr-3">{i.serialNumber ?? ""}</td>

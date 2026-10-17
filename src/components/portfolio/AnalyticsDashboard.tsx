@@ -9,6 +9,7 @@ import { PillSelect } from "@/components/ui/PillSelect";
 import { DEMO_ITEMS } from "@/lib/demoVault";
 import { UNIVERSE_LABEL, UNIVERSE_KEYS, isUniverseKey, type UniverseKey } from "@/lib/taxonomy";
 import { loadItemsOrSeed, loadItems, syncVaultItemsFromSupabase, type VaultItem as ModelItem } from "@/lib/vaultModel";
+import { activeItems, describeGainExclusions, effectiveMarketValue, itemGain, readValueMode, summarizeGain, summarizeValues, totalCost as sharedTotalCost, type ValueMode } from "@/lib/vaultStats";
 import { readHistory, sliceHistory, takeDailySnapshotIfNeeded } from "@/lib/valueHistory";
 
 type RankMode = "gain" | "value";
@@ -26,8 +27,19 @@ const LS_VIEW_MODE = "vltd_portfolio_view";
 function clamp(n: number) {
   return Number.isFinite(n) ? n : 0;
 }
-function gain(i: ModelItem) {
-  return clamp(Number(i.currentValue ?? 0)) - clamp(Number(i.purchasePrice ?? 0));
+// Unrealized change of one item: only when it has both a value and a recorded cost (the same rule as Home, the Vault and Insights).
+function gain(i: ModelItem): number | null {
+  return itemGain(i)?.gain ?? null;
+}
+function gainText(g: number | null) {
+  return g === null ? "—" : `${g >= 0 ? "+" : ""}${fmtMoney(g)}`;
+}
+// Items that cannot be measured sort after those that can.
+function gainRank(g: number | null) {
+  return g === null ? Number.NEGATIVE_INFINITY : g;
+}
+function descBy(a: number, b: number) {
+  return a === b ? 0 : b > a ? 1 : -1;
 }
 function fmtMoney(n: number) {
   const v = clamp(n);
@@ -305,6 +317,13 @@ export function AnalyticsDashboard(props: {
 
   const [items, setItems] = useState<ModelItem[]>([]);
   const [rankMode, setRankMode] = useState<RankMode>("gain");
+  const [valueMode, setValueMode] = useState<ValueMode>("fill");
+  useEffect(() => {
+    const sync = () => setValueMode(readValueMode());
+    sync();
+    window.addEventListener("vltd:value-mode", sync);
+    return () => window.removeEventListener("vltd:value-mode", sync);
+  }, []);
   const [range, setRange] = useState<TimeRange>("30d");
   const [allocMode, setAllocMode] = useState<AllocationMode>("dollars");
   const [view, setView] = useState<ViewMode>("bars");
@@ -371,7 +390,8 @@ export function AnalyticsDashboard(props: {
   }, [range]);
 
   const scopeFiltered = useMemo(() => {
-    let pool = items;
+    // Owned items only: sold, wishlist and supply items are not part of what you hold.
+    let pool = activeItems(items);
 
     if (uKey) pool = pool.filter((i) => normUniverse((i as any).universe) === uKey);
 
@@ -400,12 +420,10 @@ export function AnalyticsDashboard(props: {
   }, [items, uKey, cat, sub, rangeWindowMs, q]);
 
   const totals = useMemo(() => {
-    const cost = scopeFiltered.reduce((s, i) => s + clamp(Number(i.purchasePrice ?? 0)), 0);
-    const value = scopeFiltered.reduce((s, i) => s + clamp(Number(i.currentValue ?? 0)), 0);
-    const g = value - cost;
-    const roi = cost > 0 ? (g / cost) * 100 : 0;
-    return { cost, value, gain: g, roi };
-  }, [scopeFiltered]);
+    const summary = summarizeValues(scopeFiltered, valueMode);
+    const g = summarizeGain(scopeFiltered);
+    return { cost: summary.totalCost, value: summary.totalValue, gain: g.gain, roi: g.gainPct, gainSummary: g };
+  }, [scopeFiltered, valueMode]);
 
   const bestThisWeek = useMemo(() => {
     const now = Date.now();
@@ -415,7 +433,7 @@ export function AnalyticsDashboard(props: {
       .filter((x) => x.created >= weekAgo);
 
     if (recent.length === 0) return null;
-    recent.sort((a, b) => gain(b.i) - gain(a.i));
+    recent.sort((a, b) => descBy(gainRank(gain(a.i)), gainRank(gain(b.i))));
     return recent[0];
   }, [scopeFiltered]);
 
@@ -428,22 +446,36 @@ export function AnalyticsDashboard(props: {
 
   // ---- breakdown dimension (next drill step)
   const breakdownRows = useMemo(() => {
+    // value and cost follow the chosen basis; the change counts only items with a value AND a recorded cost
+    const rowFor = (label: string, list: ModelItem[]) => {
+      const summary = summarizeValues(list, valueMode);
+      const g = summarizeGain(list);
+      return { label, value: summary.totalValue, cost: summary.totalCost, gain: g.gain, eligible: g.eligibleCount, count: list.length };
+    };
+    const groupBy = (keyOf: (i: ModelItem) => string) => {
+      const groups = new Map<string, ModelItem[]>();
+      for (const i of scopeFiltered) {
+        const k = keyOf(i);
+        const list = groups.get(k);
+        if (list) list.push(i);
+        else groups.set(k, [i]);
+      }
+      return groups;
+    };
+
     // If we're "all" -> breakdown by universe
     if (scope === "all") {
       const universes: UniverseKey[] = UNIVERSE_KEYS;
       const rows = universes.map((u) => {
         const pool = scopeFiltered.filter((i) => normUniverse((i as any).universe) === u);
-        const value = pool.reduce((s, i) => s + clamp(Number(i.currentValue ?? 0)), 0);
-        const cost = pool.reduce((s, i) => s + clamp(Number(i.purchasePrice ?? 0)), 0);
-        const g = value - cost;
-
-        const metric = rankMode === "value" ? value : g;
+        const r = rowFor(UNIVERSE_LABEL[u], pool);
         return {
           key: u,
-          label: UNIVERSE_LABEL[u],
-          value,
-          gain: g,
-          metric,
+          label: r.label,
+          value: r.value,
+          gain: r.gain,
+          eligible: r.eligible,
+          metric: rankMode === "value" ? r.value : r.gain,
           count: pool.length,
           href: `/portfolio/universe/${u}`,
         };
@@ -454,55 +486,35 @@ export function AnalyticsDashboard(props: {
 
     // If we're in universe -> breakdown by category
     if (scope === "universe" && uKey) {
-      const map = new Map<string, { label: string; value: number; gain: number; count: number }>();
-      for (const i of scopeFiltered) {
-        const label = String((i as any).categoryLabel ?? "—") || "—";
-        const v = clamp(Number(i.currentValue ?? 0));
-        const c = clamp(Number(i.purchasePrice ?? 0));
-        const g = v - c;
-
-        const row = map.get(label) ?? { label, value: 0, gain: 0, count: 0 };
-        row.value += v;
-        row.gain += g;
-        row.count += 1;
-        map.set(label, row);
-      }
-      const rows = Array.from(map.values()).map((r) => ({
-        ...r,
-        metric: rankMode === "value" ? r.value : r.gain,
-        href: `/portfolio/universe/${uKey}/category/${encodeSeg(r.label)}`,
-      }));
+      const rows = Array.from(groupBy((i) => String((i as any).categoryLabel ?? "—") || "—").entries()).map(([label, list]) => {
+        const r = rowFor(label, list);
+        return {
+          ...r,
+          metric: rankMode === "value" ? r.value : r.gain,
+          href: `/portfolio/universe/${uKey}/category/${encodeSeg(r.label)}`,
+        };
+      });
       rows.sort((a, b) => b.metric - a.metric);
       return rows;
     }
 
     // If we're in category -> breakdown by subcategory
     if (scope === "category" && uKey && cat) {
-      const map = new Map<string, { label: string; value: number; gain: number; count: number }>();
-      for (const i of scopeFiltered) {
-        const label = String((i as any).subcategoryLabel ?? "—") || "—";
-        const v = clamp(Number(i.currentValue ?? 0));
-        const c = clamp(Number(i.purchasePrice ?? 0));
-        const g = v - c;
-
-        const row = map.get(label) ?? { label, value: 0, gain: 0, count: 0 };
-        row.value += v;
-        row.gain += g;
-        row.count += 1;
-        map.set(label, row);
-      }
-      const rows = Array.from(map.values()).map((r) => ({
-        ...r,
-        metric: rankMode === "value" ? r.value : r.gain,
-        href: r.label === "—" ? undefined : `/portfolio/universe/${uKey}/category/${encodeSeg(cat)}/subcategory/${encodeSeg(r.label)}`,
-      }));
+      const rows = Array.from(groupBy((i) => String((i as any).subcategoryLabel ?? "—") || "—").entries()).map(([label, list]) => {
+        const r = rowFor(label, list);
+        return {
+          ...r,
+          metric: rankMode === "value" ? r.value : r.gain,
+          href: r.label === "—" ? undefined : `/portfolio/universe/${uKey}/category/${encodeSeg(cat)}/subcategory/${encodeSeg(r.label)}`,
+        };
+      });
       rows.sort((a, b) => b.metric - a.metric);
       return rows;
     }
 
     // Subcategory scope -> no further breakdown
     return [];
-  }, [scope, scopeFiltered, rankMode, uKey, cat]);
+  }, [scope, scopeFiltered, rankMode, uKey, cat, valueMode]);
 
   const allocationBaseTotal = useMemo(() => {
     // Allocation always based on VALUE by default, regardless of rankMode
@@ -513,10 +525,10 @@ export function AnalyticsDashboard(props: {
   const top5 = useMemo(() => {
     const rows = scopeFiltered
       .map((i) => {
-        const v = clamp(Number(i.currentValue ?? 0));
-        const c = clamp(Number(i.purchasePrice ?? 0));
-        const g = v - c;
-        const score = rankMode === "value" ? v : g;
+        const v = effectiveMarketValue(i);
+        const c = sharedTotalCost(i);
+        const g = gain(i);
+        const score = rankMode === "value" ? v : gainRank(g);
         return {
           id: i.id,
           title: i.title,
@@ -529,7 +541,7 @@ export function AnalyticsDashboard(props: {
           added: getCreatedAtMs(i as any),
         };
       })
-      .sort((a, b) => b.score - a.score)
+      .sort((a, b) => descBy(a.score, b.score))
       .slice(0, 5);
 
     return rows;
@@ -538,10 +550,10 @@ export function AnalyticsDashboard(props: {
   const tableRows = useMemo(() => {
     const rows = scopeFiltered
       .map((i) => {
-        const v = clamp(Number(i.currentValue ?? 0));
-        const c = clamp(Number(i.purchasePrice ?? 0));
-        const g = v - c;
-        const score = rankMode === "value" ? v : g;
+        const v = effectiveMarketValue(i);
+        const c = sharedTotalCost(i);
+        const g = gain(i);
+        const score = rankMode === "value" ? v : gainRank(g);
         return {
           id: i.id,
           title: i.title,
@@ -554,7 +566,7 @@ export function AnalyticsDashboard(props: {
           added: getCreatedAtMs(i as any),
         };
       })
-      .sort((a, b) => b.score - a.score);
+      .sort((a, b) => descBy(a.score, b.score));
 
     return rows;
   }, [scopeFiltered, rankMode]);
@@ -581,8 +593,8 @@ export function AnalyticsDashboard(props: {
       i.categoryLabel ?? "",
       i.subcategoryLabel ?? "",
       clamp(Number(i.purchasePrice ?? 0)),
-      clamp(Number(i.currentValue ?? 0)),
-      gain(i),
+      effectiveMarketValue(i),
+      gain(i) ?? "",
       i.storageLocation ?? "",
       i.certNumber ?? "",
       i.notes ?? "",
@@ -718,10 +730,14 @@ export function AnalyticsDashboard(props: {
 
         {/* KPIs */}
         <div className="mt-6 grid gap-3 md:grid-cols-3">
-          <Card title="TOTAL" right={<div className="text-xs text-[color:var(--muted2)]">ROI {fmtPct(totals.roi)}</div>}>
+          <Card title="TOTAL" right={<div className="text-xs text-[color:var(--muted2)]">Return {totals.roi === null ? "—" : fmtPct(totals.roi)}</div>}>
             <div className="text-2xl font-semibold">{fmtMoney(totals.value)}</div>
-            <div className="mt-1 text-sm text-[color:var(--muted)]">
-              Cost {fmtMoney(totals.cost)} • Gain {fmtMoney(totals.gain)} • Items {scopeFiltered.length}
+            <div className="mt-1 text-sm text-[color:var(--muted)]" data-testid="dash-gain">
+              Cost {fmtMoney(totals.cost)} • Unrealized change {totals.gainSummary.eligibleCount > 0 ? gainText(totals.gain) : "—"} • Items {scopeFiltered.length}
+            </div>
+            <div className="mt-0.5 text-xs text-[color:var(--muted)]" data-testid="dash-gain-basis">
+              Change measured on {totals.gainSummary.eligibleCount} of {totals.gainSummary.totalCount} items · cost basis {fmtMoney(totals.gainSummary.costBasis)}
+              {describeGainExclusions(totals.gainSummary) ? ` · not counted: ${describeGainExclusions(totals.gainSummary)}` : ""}
             </div>
           </Card>
 
@@ -730,7 +746,7 @@ export function AnalyticsDashboard(props: {
               <>
                 <div className="text-lg font-semibold">{bestThisWeek.i.title}</div>
                 <div className="mt-1 text-sm text-[color:var(--muted)]">
-                  Added {fmtMonthDay(bestThisWeek.created)} • Gain {fmtMoney(gain(bestThisWeek.i))}
+                  Added {fmtMonthDay(bestThisWeek.created)} • Gain {gainText(gain(bestThisWeek.i))}
                 </div>
               </>
             ) : (
@@ -749,10 +765,10 @@ export function AnalyticsDashboard(props: {
                   <div className="min-w-0">
                     <div className="text-sm font-semibold truncate">{r.title}</div>
                     <div className="text-xs text-[color:var(--muted)] truncate">
-                      {r.categoryLabel}{r.subcategoryLabel !== "—" ? ` • ${r.subcategoryLabel}` : ""} • Gain {fmtMoney(r.gain)}
+                      {r.categoryLabel}{r.subcategoryLabel !== "—" ? ` • ${r.subcategoryLabel}` : ""} • Gain {gainText(r.gain)}
                     </div>
                   </div>
-                  <div className="text-sm font-semibold">{rankMode === "value" ? fmtMoney(r.value) : fmtMoney(r.gain)}</div>
+                  <div className="text-sm font-semibold">{rankMode === "value" ? fmtMoney(r.value) : gainText(r.gain)}</div>
                 </Link>
               ))}
               {top5.length === 0 ? <div className="text-sm text-[color:var(--muted)]">No data.</div> : null}
@@ -812,7 +828,7 @@ export function AnalyticsDashboard(props: {
                     <div className="flex items-center justify-between gap-3">
                       <div className="text-sm font-semibold truncate">{r.label}</div>
                       <div className="text-sm text-[color:var(--fg)]">
-                        {rankMode === "value" ? fmtMoney(r.value) : fmtMoney(r.gain)}
+                        {rankMode === "value" ? fmtMoney(r.value) : ((r as { eligible?: number }).eligible ? gainText(r.gain) : "—")}
                       </div>
                     </div>
                     <div className="mt-2 text-xs text-[color:var(--muted)]">
@@ -835,7 +851,7 @@ export function AnalyticsDashboard(props: {
                 {breakdownRows.map((r: any) => {
                   const allocPct = (Math.max(0, r.value) / allocationBaseTotal) * 100;
                   const allocLabel = allocMode === "percent" ? fmtPct(allocPct) : fmtMoney(r.value);
-                  const metricLabel = rankMode === "value" ? fmtMoney(r.value) : fmtMoney(r.gain);
+                  const metricLabel = rankMode === "value" ? fmtMoney(r.value) : ((r as { eligible?: number }).eligible ? gainText(r.gain) : "—");
 
                   return (
                     <Link
@@ -902,7 +918,7 @@ export function AnalyticsDashboard(props: {
                     <div className="text-sm font-semibold truncate">{r.title}</div>
                     <div className="mt-0.5 text-xs text-[color:var(--muted)]">
                       {r.categoryLabel}{r.subcategoryLabel !== "—" ? ` • ${r.subcategoryLabel}` : ""} • Added{" "}
-                      {fmtMonthDay(r.added)} • Gain {fmtMoney(r.gain)}
+                      {fmtMonthDay(r.added)} • Gain {gainText(r.gain)}
                     </div>
                   </div>
                   <div className="col-span-3 min-w-0">

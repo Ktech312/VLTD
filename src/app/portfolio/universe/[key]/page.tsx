@@ -10,6 +10,7 @@ import { DEMO_ITEMS } from "@/lib/demoVault";
 import { computeItemIntelligence } from "@/lib/itemIntelligence";
 import { UNIVERSE_LABEL, isUniverseKey, type UniverseKey } from "@/lib/taxonomy";
 import { loadItemsOrSeed, loadItems, syncVaultItemsFromSupabase, type VaultItem as ModelItem } from "@/lib/vaultModel";
+import { activeItems, describeGainExclusions, effectiveMarketValue, itemGain, readValueMode, summarizeGain, summarizeValues, totalCost as sharedTotalCost, type ValueMode } from "@/lib/vaultStats";
 
 type RankMode = "gain" | "value";
 type TimeRange = "7d" | "30d" | "90d" | "all";
@@ -22,20 +23,31 @@ function clamp(n: number) {
 }
 
 function totalCost(i: ModelItem) {
-  return (
-    clamp(Number(i.purchasePrice ?? 0)) +
-    clamp(Number((i as any).purchaseTax ?? 0)) +
-    clamp(Number((i as any).purchaseShipping ?? 0)) +
-    clamp(Number((i as any).purchaseFees ?? 0))
-  );
+  return sharedTotalCost(i);
 }
 
 function marketValue(i: ModelItem) {
-  return clamp(Number(i.currentValue ?? 0));
+  return clamp(effectiveMarketValue(i));
 }
 
-function fullGain(i: ModelItem) {
-  return marketValue(i) - totalCost(i);
+// Unrealized change of one item: only when it has both a value and a recorded cost (otherwise null, shown as "—").
+function fullGain(i: ModelItem): number | null {
+  return itemGain(i)?.gain ?? null;
+}
+
+function gainLabel(i: ModelItem) {
+  const g = fullGain(i);
+  return g === null ? "—" : `${g >= 0 ? "+" : ""}${fmtMoney(g)}`;
+}
+
+function gainRank(n: number | null) {
+  return n === null ? Number.NEGATIVE_INFINITY : n;
+}
+
+function byGainDesc(a: number | null, b: number | null) {
+  const x = gainRank(a);
+  const y = gainRank(b);
+  return x === y ? 0 : y > x ? 1 : -1;
 }
 
 function fmtMoney(n: number) {
@@ -214,6 +226,13 @@ export default function UniverseDrillPage({
   const [items, setItems] = useState<ModelItem[]>([]);
   const [hydrated, setHydrated] = useState(false);
   const [rankMode, setRankMode] = useState<RankMode>("gain");
+  const [valueMode, setValueMode] = useState<ValueMode>("fill");
+  useEffect(() => {
+    const sync = () => setValueMode(readValueMode());
+    sync();
+    window.addEventListener("vltd:value-mode", sync);
+    return () => window.removeEventListener("vltd:value-mode", sync);
+  }, []);
   const [range, setRange] = useState<TimeRange>("30d");
   const [q, setQ] = useState("");
 
@@ -253,7 +272,7 @@ export default function UniverseDrillPage({
   }, [range]);
 
   const pool = useMemo(() => {
-    const onlyU = items.filter((i) => normUniverse((i as any).universe) === uKey);
+    const onlyU = activeItems(items).filter((i) => normUniverse((i as any).universe) === uKey);
     if (!rangeWindowMs) return onlyU;
     const since = Date.now() - rangeWindowMs;
     return onlyU.filter((i) => getCreatedAtMs(i as any) >= since);
@@ -277,61 +296,32 @@ export default function UniverseDrillPage({
 }, [items.length]);
 
   const totals = useMemo(() => {
-    const cost = filtered.reduce((s, i) => s + totalCost(i), 0);
-    const value = filtered.reduce((s, i) => s + marketValue(i), 0);
-    const g = value - cost;
-    const roi = cost > 0 ? (g / cost) * 100 : 0;
-
-    return { cost, value, gain: g, roi };
-  }, [filtered]);
+    const summary = summarizeValues(filtered, valueMode);
+    const g = summarizeGain(filtered);
+    return { cost: summary.totalCost, value: summary.totalValue, gain: g.gain, roi: g.gainPct, gainSummary: g };
+  }, [filtered, valueMode]);
 
   const byCategory = useMemo(() => {
-    const map = new Map<
-      string,
-      {
-        category: string;
-        count: number;
-        value: number;
-        gain: number;
-        cost: number;
-        roi: number;
-      }
-    >();
-
+    const groups = new Map<string, ModelItem[]>();
     for (const i of filtered) {
       const cat = categoryLabel(i);
-      const v = marketValue(i);
-      const c = totalCost(i);
-      const g = v - c;
-
-      const row = map.get(cat) ?? {
-        category: cat,
-        count: 0,
-        value: 0,
-        gain: 0,
-        cost: 0,
-        roi: 0,
-      };
-
-      row.count += 1;
-      row.value += v;
-      row.gain += g;
-      row.cost += c;
-
-      map.set(cat, row);
+      const list = groups.get(cat);
+      if (list) list.push(i);
+      else groups.set(cat, [i]);
     }
 
-    const rows = Array.from(map.values()).map((row) => ({
-      ...row,
-      roi: row.cost > 0 ? (row.gain / row.cost) * 100 : 0,
-    }));
+    const rows = Array.from(groups.entries()).map(([category, list]) => {
+      const summary = summarizeValues(list, valueMode);
+      const g = summarizeGain(list);
+      return { category, count: list.length, value: summary.totalValue, cost: summary.totalCost, gain: g.gain, roi: g.gainPct, eligible: g.eligibleCount };
+    });
 
     rows.sort((a, b) => {
       return rankMode === "value" ? b.value - a.value : b.gain - a.gain;
     });
 
     return rows;
-  }, [filtered.length, rankMode]);
+  }, [filtered, rankMode, valueMode]);
 
   const tableRows = useMemo(() => {
     const rows = filtered.map((i) => ({
@@ -344,13 +334,14 @@ export default function UniverseDrillPage({
       cost: totalCost(i),
       value: marketValue(i),
       gain: fullGain(i),
+      gainText: gainLabel(i),
       image: itemImage(i),
       item: i,
     }));
 
     rows.sort((a, b) => {
       if (rankMode === "value") return b.value - a.value;
-      return b.gain - a.gain;
+      return byGainDesc(a.gain, b.gain);
     });
 
     return rows;
@@ -378,7 +369,9 @@ export default function UniverseDrillPage({
 
   const topGainItem = useMemo(() => {
     if (filtered.length === 0) return null;
-    return [...filtered].sort((a, b) => fullGain(b) - fullGain(a))[0];
+    const measured = filtered.filter((i) => fullGain(i) !== null);
+    if (measured.length === 0) return null;
+    return [...measured].sort((a, b) => byGainDesc(fullGain(a), fullGain(b)))[0];
   }, [filtered]);
 
   const newestItem = useMemo(() => {
@@ -438,7 +431,7 @@ export default function UniverseDrillPage({
       clamp(Number(i.purchaseFees ?? 0)),
       totalCost(i),
       marketValue(i),
-      fullGain(i),
+      fullGain(i) ?? "",
       i.storageLocation ?? "",
       i.certNumber ?? "",
       i.notes ?? "",
@@ -512,7 +505,7 @@ export default function UniverseDrillPage({
               </div>
               <div className="mt-2 text-2xl font-semibold">{fmtMoney(totals.value)}</div>
               <div className="mt-1 text-sm text-[color:var(--muted)]">
-                Filtered universe value
+                {valueMode === "fill" ? "Unpriced items counted at cost" : "Priced items only"}
               </div>
             </div>
 
@@ -528,22 +521,24 @@ export default function UniverseDrillPage({
 
             <div className="rounded-[20px] bg-[color:var(--theme-elevated)] p-4 ring-1 ring-[color:var(--theme-border)]">
               <div className="text-[11px] tracking-[0.18em] text-[color:var(--muted2)]">
-                NET GAIN
+                UNREALIZED CHANGE
               </div>
-              <div className="mt-2 text-2xl font-semibold">
-                {totals.gain >= 0 ? "+" : ""}
-                {fmtMoney(totals.gain)}
+              <div className="mt-2 text-2xl font-semibold" data-testid="universe-gain">
+                {totals.gainSummary.eligibleCount > 0 ? `${totals.gain >= 0 ? "+" : ""}${fmtMoney(totals.gain)}` : "—"}
               </div>
-              <div className="mt-1 text-sm text-[color:var(--muted)]">
-                Universe-wide delta
+              <div className="mt-1 text-sm text-[color:var(--muted)]" data-testid="universe-gain-basis">
+                On {totals.gainSummary.eligibleCount} of {totals.gainSummary.totalCount} items · cost basis {fmtMoney(totals.gainSummary.costBasis)}
               </div>
+              {describeGainExclusions(totals.gainSummary) ? (
+                <div className="mt-0.5 text-xs text-[color:var(--muted)]">Not counted: {describeGainExclusions(totals.gainSummary)}</div>
+              ) : null}
             </div>
 
             <div className="rounded-[20px] bg-[color:var(--theme-elevated)] p-4 ring-1 ring-[color:var(--theme-border)]">
-              <div className="text-[11px] tracking-[0.18em] text-[color:var(--muted2)]">ROI</div>
-              <div className="mt-2 text-2xl font-semibold">{fmtPct(totals.roi)}</div>
+              <div className="text-[11px] tracking-[0.18em] text-[color:var(--muted2)]">RETURN</div>
+              <div className="mt-2 text-2xl font-semibold">{totals.roi === null ? "—" : fmtPct(totals.roi)}</div>
               <div className="mt-1 text-sm text-[color:var(--muted)]">
-                {filtered.length} filtered items
+                Change as a share of the measured cost · {filtered.length} items in view
               </div>
             </div>
           </div>
@@ -651,13 +646,10 @@ export default function UniverseDrillPage({
                 <div className="mt-1 text-sm text-[color:var(--muted)]">
                   {itemMeta(topGainItem) || "—"}
                 </div>
-                <div className="mt-3 text-sm font-semibold">
-                  {fullGain(topGainItem) >= 0 ? "+" : ""}
-                  {fmtMoney(fullGain(topGainItem))}
-                </div>
+                <div className="mt-3 text-sm font-semibold">{gainLabel(topGainItem)}</div>
               </>
             ) : (
-              <div className="text-sm text-[color:var(--muted)]">No items yet.</div>
+              <div className="text-sm text-[color:var(--muted)]">No item has both a value and a recorded cost yet.</div>
             )}
           </Card>
 
@@ -725,7 +717,7 @@ export default function UniverseDrillPage({
 
                 <div className="mt-3 flex flex-wrap gap-2">
                   <span className="rounded-full bg-[color:var(--theme-elevated)] px-3 py-1 text-xs ring-1 ring-black/10">
-                    ROI {fmtPct(r.roi)}
+                    Return {r.roi === null ? "—" : fmtPct(r.roi)} ({r.eligible} of {r.count} measured)
                   </span>
                   <span className="rounded-full bg-[color:var(--theme-elevated)] px-3 py-1 text-xs ring-1 ring-black/10">
                     Cost {fmtMoney(r.cost)}
@@ -755,7 +747,6 @@ export default function UniverseDrillPage({
                 const intelligence = intelligenceMap[item.id];
                 const readiness = intelligence?.readiness ?? "Low";
                 const value = marketValue(item);
-                const gainValue = fullGain(item);
                 const meta = itemMeta(item);
 
                 return (
@@ -787,8 +778,7 @@ export default function UniverseDrillPage({
                         Value {fmtMoney(value)}
                       </span>
                       <span className="rounded-full bg-[color:var(--theme-elevated)] px-3 py-1 text-xs ring-1 ring-black/10">
-                        Gain {gainValue >= 0 ? "+" : ""}
-                        {fmtMoney(gainValue)}
+                        Gain {gainLabel(item)}
                       </span>
                     </div>
 
@@ -851,8 +841,7 @@ export default function UniverseDrillPage({
                     <div className="truncate text-sm font-semibold">{r.title}</div>
                     <div className="mt-0.5 text-xs text-[color:var(--theme-text-muted)]">
                       {r.subcategory !== "—" ? `${r.category} • ${r.subcategory}` : r.category} • Added{" "}
-                      {fmtMonthDay(r.added)} • Gain {r.gain >= 0 ? "+" : ""}
-                      {fmtMoney(r.gain)}
+                      {fmtMonthDay(r.added)} • Gain {r.gainText}
                     </div>
                   </div>
 

@@ -46,6 +46,50 @@ function readStored(): string | null {
   }
 }
 
+// A fingerprint of the exact stored text. It is kept in its own small key to say "this exact text has already been through the
+// repair step and comes out of it unchanged", so the next page load can read it without repairing every item again. It describes
+// text, not a person: if the stored text is different in any way (another tab, a restore, another account's copy, an interrupted
+// save) the fingerprint does not match and the full repair runs, exactly as it always did.
+const REPAIRED_KEY = "vltd_vault_items_repaired_v1";
+
+function fingerprint(text: string): string {
+  let h = 0x811c9dc5;
+  let g = 5381;
+  for (let i = 0; i < text.length; i++) {
+    const c = text.charCodeAt(i);
+    h ^= c;
+    h = Math.imul(h, 0x01000193) >>> 0;
+    g = (Math.imul(g, 33) + c) >>> 0;
+  }
+  return text.length + ":" + h.toString(16) + ":" + g.toString(16);
+}
+
+/** Says the stored text, exactly as it is right now, is already in its repaired form. Not possible while the copy only lives in memory. */
+export function markVaultLocalRepaired(): boolean {
+  if (typeof window === "undefined" || memoryJson !== null) return false;
+  const stored = readStored();
+  if (stored === null) return false;
+  try {
+    window.localStorage.setItem(REPAIRED_KEY, fingerprint(stored));
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/** True only when the stored text is byte-for-byte the text that was marked as already repaired. */
+export function isVaultLocalRepaired(): boolean {
+  if (typeof window === "undefined" || memoryJson !== null) return false;
+  try {
+    const mark = window.localStorage.getItem(REPAIRED_KEY);
+    if (!mark) return false;
+    const stored = readStored();
+    return stored !== null && mark === fingerprint(stored);
+  } catch {
+    return false;
+  }
+}
+
 /** Reads a stored copy of the local vault (compressed or plain) without touching the live one, e.g. a parked copy. */
 export function decodeVaultLocalCopy(stored: string): string | null {
   return decode(stored);

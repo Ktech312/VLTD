@@ -1,5 +1,6 @@
 import { loadGalleries, type Gallery } from "@/lib/galleryModel";
 import { loadItems, type VaultItem } from "@/lib/vaultModel";
+import { itemGain } from "@/lib/vaultStats";
 
 export type CommandSection =
   | "navigation"
@@ -40,17 +41,10 @@ function itemValue(item: VaultItem) {
   return safeNumber(item.currentValue);
 }
 
-function itemCost(item: VaultItem) {
-  return (
-    safeNumber(item.purchasePrice) +
-    safeNumber(item.purchaseTax) +
-    safeNumber(item.purchaseShipping) +
-    safeNumber(item.purchaseFees)
-  );
-}
 
+// Unrealized change of one item: only an item with both a value and a recorded cost has one (shared rule, see vaultStats.gainStatus).
 function itemProfit(item: VaultItem) {
-  return itemValue(item) - itemCost(item);
+  return itemGain(item)?.gain ?? 0;
 }
 
 function formatMoney(value: number) {
@@ -167,8 +161,9 @@ function getProductivityCommands(
   const itemsById = new Map(items.map((item) => [item.id, item]));
 
   const highestValueItem = [...items].sort((a, b) => itemValue(b) - itemValue(a))[0];
-  const bestPerformingItem = [...items].sort((a, b) => itemProfit(b) - itemProfit(a))[0];
-  const mostUnderwaterItem = [...items].sort((a, b) => itemProfit(a) - itemProfit(b))[0];
+  const measuredItems = items.filter((item) => itemGain(item) !== null);
+  const bestPerformingItem = [...measuredItems].sort((a, b) => itemProfit(b) - itemProfit(a))[0];
+  const mostUnderwaterItem = [...measuredItems].sort((a, b) => itemProfit(a) - itemProfit(b))[0];
 
   const topGalleryByViews = [...galleries].sort(
     (a, b) => safeNumber(b.analytics?.views) - safeNumber(a.analytics?.views)
@@ -278,13 +273,12 @@ function getItemCommands(items: VaultItem[]): CommandItem[] {
 
   return sorted.map((item) => {
     const value = itemValue(item);
-    const cost = itemCost(item);
-    const profit = value - cost;
+    const measured = itemGain(item);
 
     return {
       id: `item_${item.id}`,
       label: item.title?.trim() || "Untitled Item",
-      subtitle: `${formatMoney(value)} value${cost > 0 ? ` • ${profit >= 0 ? "+" : ""}${formatMoney(profit)}` : ""}`,
+      subtitle: `${formatMoney(value)} value${measured ? ` • ${measured.gain >= 0 ? "+" : ""}${formatMoney(measured.gain)}` : ""}`,
       href: `/vault?q=${encodeURIComponent(item.title ?? "")}`,
       section: "vault",
       keywords: [

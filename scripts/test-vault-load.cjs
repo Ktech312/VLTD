@@ -48,6 +48,7 @@ Object.defineProperty(global, "localStorage", { get: () => global.window.localSt
 // ---- fakes for what vaultModel imports ----
 let cloudRows = []; // what the fake cloud holds for the profile
 let cloudFails = false;
+let clientSession = true; // does the fake browser client hold a signed-in session?
 let deltaCalls = 0;
 const mocks = {
   vaultCloud: {
@@ -60,6 +61,7 @@ const mocks = {
       return { items: cloudRows.map((r) => ({ ...r })), cursor: undefined, delta: false };
     },
   },
+  supabaseClient: { getSupabaseBrowserClient: () => ({ auth: { getSession: async () => ({ data: { session: clientSession ? { access_token: "x" } : null } }) } }) },
   privatePhotos: { resolvePrivateImageUrlSync: () => "" },
   id: { newId: () => "gen-" + Math.random().toString(36).slice(2) },
   pricingMvp: { normalizeComparables: (v) => v, normalizePriceSources: (v) => v },
@@ -182,6 +184,18 @@ function seed(items) {
   store.delete("vltd-auth");
   const nobody = await model.syncVaultItemsFromSupabaseChecked("p-nobody");
   t("with nobody signed in the pull is not reported as answered", nobody.ok === false);
+
+  // 7. An answer from a cloud we could not ask properly is never read as "empty".
+  store.set("vltd-auth", JSON.stringify({ user: { id: "user-1" } })); // (signed in again)
+  cloudFails = false; cloudRows = [];
+  clientSession = false;
+  const noSession = await model.syncVaultItemsFromSupabaseChecked("p-nosession");
+  t("a client that holds no signed-in session has not been answered (the database would say no rows)", noSession.ok === false);
+  clientSession = true;
+  const noProfile = await model.syncVaultItemsFromSupabaseChecked("");
+  t("no active profile: not answered, not empty", noProfile.ok === false);
+  const fine = await model.syncVaultItemsFromSupabaseChecked("p-fine");
+  t("with a session and a profile the same empty answer is a real one", fine.ok === true);
 
   console.log(`
 ${pass} passed, ${fail} failed`);

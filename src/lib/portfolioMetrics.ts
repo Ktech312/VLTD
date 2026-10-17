@@ -3,7 +3,7 @@ import type {
   Gallery,
 } from "@/lib/galleryModel";
 import type { VaultItem } from "@/lib/vaultModel";
-import { activeItems, effectiveMarketValue, summarizeValues, totalCost as vaultTotalCost, totalsValue, type ValueMode } from "@/lib/vaultStats";
+import { activeItems, effectiveMarketValue, itemGain, summarizeGain, summarizeValues, totalCost as vaultTotalCost, totalsValue, type ValueMode } from "@/lib/vaultStats";
 
 export type ValueSegment = {
   label: string;
@@ -42,6 +42,8 @@ export type GalleryMetrics = {
   totalValue: number;
   delta: number;
   roi: number;
+  /** How many of the exhibition's items the change and the return were measured on (items with a value and a recorded cost). */
+  gainItemCount: number;
   notesCount: number;
   notesCoverage: number;
   views: number;
@@ -86,10 +88,9 @@ export function itemCurrentValue(item: VaultItem) {
   return effectiveMarketValue(item);
 }
 
-/** Gain on a priced item. Un-priced items have no gain or loss yet (not a loss of everything paid). */
+/** Unrealized change of one item. Only an item with both a value and a recorded cost has one: otherwise 0 (see vaultStats.gainStatus). */
 export function itemProfit(item: VaultItem) {
-  const value = itemCurrentValue(item);
-  return value > 0 ? value - itemTotalCost(item) : 0;
+  return itemGain(item)?.gain ?? 0;
 }
 
 function makeSegments(
@@ -114,11 +115,10 @@ function makeSegments(
     existing.value += valueOf(item);
     existing.cost += itemTotalCost(item);
     existing.count += 1;
-    const realValue = itemCurrentValue(item);
-    const knownCost = itemTotalCost(item);
-    if (realValue > 0 && knownCost > 0) {
-      existing.gain += realValue - knownCost;
-      existing.gainCost += knownCost;
+    const measured = itemGain(item);
+    if (measured) {
+      existing.gain += measured.gain;
+      existing.gainCost += measured.cost;
     }
 
     map.set(key, existing);
@@ -241,8 +241,10 @@ export function getGalleryMetrics(gallery: Gallery, allItems: VaultItem[]): Gall
   const totalItems = items.length;
   const totalCost = items.reduce((sum, item) => sum + itemTotalCost(item), 0);
   const totalValue = items.reduce((sum, item) => sum + itemCurrentValue(item), 0);
-  const delta = totalValue - totalCost;
-  const roi = totalCost > 0 ? (delta / totalCost) * 100 : 0;
+  // The change and the return count only items with both a value and a recorded cost (the shared rule).
+  const measured = summarizeGain(items);
+  const delta = measured.gain;
+  const roi = measured.gainPct ?? 0;
 
   const notesCount = safeArray(gallery.itemNotes).filter((note) => safeString(optionalRecord(note).note).length > 0).length;
 
@@ -298,6 +300,7 @@ export function getGalleryMetrics(gallery: Gallery, allItems: VaultItem[]): Gall
     totalValue,
     delta,
     roi,
+    gainItemCount: measured.eligibleCount,
     notesCount,
     notesCoverage,
     views,

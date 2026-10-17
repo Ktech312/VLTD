@@ -5,6 +5,8 @@ import { useMemo, useState } from "react";
 
 import { formatPrice } from "@/lib/pricingMvp";
 import { getOrderedImages, loadItems, type VaultItem } from "@/lib/vaultModel";
+import { buildSoldItems, soldStats } from "@/lib/soldItems";
+import { activeItems, describeGainExclusions, effectiveMarketValue, readValueMode, summarizeGain, summarizeValues } from "@/lib/vaultStats";
 
 type GapKind = "photo" | "cost" | "value" | "condition" | "insurance";
 
@@ -26,7 +28,7 @@ function itemCost(item: VaultItem) {
 }
 
 function itemValue(item: VaultItem) {
-  return clampMoney(item.currentValue ?? item.valueMedian ?? item.estimatedValue ?? item.lastCompValue);
+  return clampMoney(effectiveMarketValue(item));
 }
 
 function itemCreatedAt(item: VaultItem) {
@@ -164,9 +166,13 @@ export default function WeeklyVaultReportPage() {
       });
     });
 
-    const totalValue = collectionItems.reduce((sum, item) => sum + itemValue(item), 0);
-    const totalCost = collectionItems.reduce((sum, item) => sum + itemCost(item), 0);
+    // What you hold now: sold, wishlist and supply items are not part of it (same as the Vault, Home and Insights).
+    const owned = activeItems(items);
+    const ownedSummary = summarizeValues(owned, readValueMode());
+    const totalValue = ownedSummary.totalValue;
+    const totalCost = ownedSummary.totalCost;
     const valueAdded = newItems.reduce((sum, item) => sum + itemValue(item), 0);
+    const newWithValue = newItems.filter((item) => itemValue(item) > 0).length;
     const costAdded = newItems.reduce((sum, item) => sum + itemCost(item), 0);
     const soldValue = soldItems.reduce((sum, item) => sum + clampMoney(item.soldPrice), 0);
 
@@ -179,13 +185,12 @@ export default function WeeklyVaultReportPage() {
        (total - missingCondition.length) * 25) / total
     );
 
-    // P&L
-    const unrealizedGain = totalValue - totalCost;
-    const realizedGain = soldItems.reduce((sum, item) => {
-      const sold = clampMoney(item.soldPrice);
-      const cost = itemCost(item);
-      return sum + (sold - cost);
-    }, 0);
+    // Unrealized change: the shared rule (only items with a value AND a recorded cost), with what it left out.
+    const unrealized = summarizeGain(owned);
+    const unrealizedGain = unrealized.gain;
+    // Realized: the same figures as the Sold page (profit after estimated seller fees).
+    const sales = soldStats(buildSoldItems(items));
+    const realizedGain = sales.totalProfit;
 
     return {
       collectionItems,
@@ -202,7 +207,10 @@ export default function WeeklyVaultReportPage() {
       totalValue,
       totalCost,
       valueAdded,
+      newWithValue,
       costAdded,
+      unrealized,
+      ownedCount: owned.length,
       soldValue,
       healthScore: healthScoreRaw,
       unrealizedGain,
@@ -247,13 +255,13 @@ export default function WeeklyVaultReportPage() {
         </div>
 
         <section className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-          <StatCard label="Vault Value" value={formatPrice(report.totalValue)} helper={`Cost basis ${formatPrice(report.totalCost)}`} />
+          <StatCard label="Vault Value" value={formatPrice(report.totalValue)} helper={`${report.ownedCount} items you own. Purchase cost ${formatPrice(report.totalCost)}`} />
           <StatCard
-            label="Unrealized P&L"
-            value={(report.unrealizedGain >= 0 ? "+" : "") + formatPrice(report.unrealizedGain)}
-            helper={report.realizedGain !== 0 ? `Realized ${report.realizedGain >= 0 ? "+" : ""}${formatPrice(report.realizedGain)}` : "No sales recorded"}
+            label="Unrealized change"
+            value={report.unrealized.eligibleCount > 0 ? (report.unrealizedGain >= 0 ? "+" : "") + formatPrice(report.unrealizedGain) : "—"}
+            helper={`On ${report.unrealized.eligibleCount} of ${report.unrealized.totalCount} items, cost basis ${formatPrice(report.unrealized.costBasis)}${describeGainExclusions(report.unrealized) ? `. Not counted: ${describeGainExclusions(report.unrealized)}` : ""}. Sales profit ${report.realizedGain >= 0 ? "+" : ""}${formatPrice(report.realizedGain)} after estimated fees`}
           />
-          <StatCard label="New This Week" value={String(report.newItems.length)} helper={`${formatPrice(report.valueAdded)} value added`} />
+          <StatCard label="New This Week" value={String(report.newItems.length)} helper={`${formatPrice(report.valueAdded)} estimated value of items added (${report.newWithValue} of ${report.newItems.length} have a value). Not a change in value`} />
           <StatCard label="Sold Recorded" value={String(report.soldItems.length)} helper={`${formatPrice(report.soldValue)} sold proceeds`} />
           <StatCard label="For Sale" value={String(report.forSaleItems.length)} helper="Ready for listing review" />
           <StatCard label="Public Items" value={String(report.publicItems.length)} helper={`${report.collectionItems.length - report.publicItems.length} private`} />

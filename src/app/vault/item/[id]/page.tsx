@@ -2,7 +2,7 @@
 
 import { Toggle } from "@/components/ui/Toggle";
 import { pillClassName } from "@/components/ui/PillButton";
-import { effectiveMarketValue, isSupplyItem } from "@/lib/vaultStats";
+import { effectiveMarketValue, isSupplyItem, itemGain } from "@/lib/vaultStats";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { use, useEffect, useMemo, useRef, useState } from "react";
@@ -157,14 +157,13 @@ function totalCost(item: VaultItem) {
   return clamp(item.purchasePrice) + clamp(item.purchaseTax) + clamp(item.purchaseShipping) + clamp(item.purchaseFees);
 }
 
-function gain(item: VaultItem) {
-  return effectiveMarketValue(item) - totalCost(item);
+// Unrealized change of this item: only with both a value and a recorded cost (the same rule as every total); otherwise null ("—").
+function gain(item: VaultItem): number | null {
+  return itemGain(item)?.gain ?? null;
 }
 
-function roi(item: VaultItem) {
-  const cost = totalCost(item);
-  if (cost <= 0) return 0;
-  return (gain(item) / cost) * 100;
+function roi(item: VaultItem): number | null {
+  return itemGain(item)?.pct ?? null;
 }
 
 function detailValue(value?: string | number | null) {
@@ -1371,9 +1370,9 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
                 <div className="mt-4 border-t border-[color:var(--theme-border)] pt-3">
                   <DetailGrid
                     rows={[
-                      { label: "ROI", value: effectiveMarketValue(item) > 0 ? fmtPct(roi(item)) : "—" },
-                      { label: "Total cost", value: fmtMoney(totalCost(item)) },
-                      { label: "Gain", value: effectiveMarketValue(item) > 0 ? fmtMoney(gain(item)) : "—" },
+                      { label: "ROI", value: roi(item) !== null ? fmtPct(roi(item) as number) : "—" },
+                      { label: "Total cost", value: totalCost(item) > 0 || typeof item.purchasePrice === "number" ? fmtMoney(totalCost(item)) : "Not recorded" },
+                      { label: "Gain", value: gain(item) !== null ? fmtMoney(gain(item) as number) : "—" },
                     ]}
                   />
                 </div>

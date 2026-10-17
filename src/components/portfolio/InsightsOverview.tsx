@@ -24,7 +24,7 @@ import {
   syncValueHistoryFromSupabase,
 } from "@/lib/valueHistory";
 import { getPrimaryImageUrl, type VaultItem } from "@/lib/vaultModel";
-import { activeItems, readValueMode, type ValueMode } from "@/lib/vaultStats";
+import { activeItems, itemGain, readValueMode, type ValueMode } from "@/lib/vaultStats";
 import { loadGoals, syncGoalsFromSupabase, type CollectionGoal } from "@/lib/collectionGoals";
 import { getCollectionValuationScore } from "@/lib/collectionValuationScore";
 import { PageHeader } from "@/components/layout/PageHeader";
@@ -586,7 +586,6 @@ export default function InsightsOverview({ items: allItems, loading = false }: {
   const metrics = useMemo(() => getCollectionMetrics(items, valueMode), [items, valueMode]);
   const totalValue = metrics.totalValue;
   const totalCost = metrics.totalCost;
-  const totalGain = metrics.delta; // unrealized change over items with a value and a cost (same rule as Home and the Vault)
   const valuationScore = useMemo(() => getCollectionValuationScore(metrics), [metrics]);
 
   // Keep the day with each value so the chart can label its own axes.
@@ -596,24 +595,36 @@ export default function InsightsOverview({ items: allItems, loading = false }: {
   }, [historyHydrated, mounted, range, tick]);
   const historySeries = useMemo(() => historyPoints.map((point) => point.totalValue), [historyPoints]);
 
-  const thirtyDaySeries = useMemo(() => {
-    if (!mounted || !historyHydrated) return [] as number[];
-    return sliceHistory(readHistory(), "30d").map((point) => point.totalValue);
+  const thirtyDayPoints = useMemo(() => {
+    if (!mounted || !historyHydrated) return [] as { t: number; day: string; totalValue: number }[];
+    return sliceHistory(readHistory(), "30d").map((point) => ({ t: point.t, day: point.day, totalValue: point.totalValue }));
   }, [historyHydrated, mounted, tick]);
+  const thirtyDaySeries = useMemo(() => thirtyDayPoints.map((point) => point.totalValue), [thirtyDayPoints]);
 
+  // PERIOD change: how the total value moved between two recorded days. It is not a gain on cost, and it moves when items are added,
+  // sold or re-priced, so with fewer than two recorded days it shows nothing (it used to fall back to the all-time gain, a different
+  // figure under the same name). The counts below say what else changed in the period.
   const monthChange = useMemo(() => {
     if (thirtyDaySeries.length >= 2) {
       return thirtyDaySeries[thirtyDaySeries.length - 1] - thirtyDaySeries[0];
     }
-    return totalGain;
-  }, [thirtyDaySeries, totalGain]);
+    return null;
+  }, [thirtyDaySeries]);
 
   const monthPct = useMemo(() => {
-    if (thirtyDaySeries.length >= 2 && thirtyDaySeries[0] > 0) {
+    if (monthChange !== null && thirtyDaySeries[0] > 0) {
       return (monthChange / thirtyDaySeries[0]) * 100;
     }
-    return metrics.roi;
-  }, [metrics.roi, monthChange, thirtyDaySeries]);
+    return null;
+  }, [monthChange, thirtyDaySeries]);
+
+  const monthContext = useMemo(() => {
+    if (thirtyDayPoints.length < 2) return null;
+    const since = thirtyDayPoints[0].t;
+    const added = allItems.filter((item) => Number(item.createdAt ?? 0) >= since && !(item.status === "SOLD" || item.soldAt)).length;
+    const sold = allItems.filter((item) => (item.status === "SOLD" || item.soldAt) && Number(item.soldAt ?? 0) >= since).length;
+    return { day: thirtyDayPoints[0].day, added, sold };
+  }, [thirtyDayPoints, allItems]);
 
   // Documentation checklist: the SAME rule and counts as the Vault's "Documentation Complete" card (src/lib/vaultReview.ts).
   const documentation = useMemo(() => {
@@ -673,13 +684,10 @@ export default function InsightsOverview({ items: allItems, loading = false }: {
   const movers = useMemo(() => {
     return items
       .map((item) => {
-        const cost = itemTotalCost(item);
-        const value = itemCurrentValue(item);
-        const gain = value - cost;
-        const pct = cost > 0 ? (gain / cost) * 100 : 0;
-        return { item, gain, pct };
+        const measured = itemGain(item);
+        return { item, gain: measured?.gain ?? 0, pct: measured?.pct ?? 0, measured: measured !== null };
       })
-      .filter((row) => itemCurrentValue(row.item) > 0 && itemTotalCost(row.item) > 0 && row.gain !== 0 && Number.isFinite(row.gain))
+      .filter((row) => row.measured && row.gain !== 0 && Number.isFinite(row.gain))
       .sort((a, b) => Math.abs(b.gain) - Math.abs(a.gain))
       .slice(0, 6);
   }, [items]);
@@ -799,10 +807,20 @@ export default function InsightsOverview({ items: allItems, loading = false }: {
           />
           <StatCard
             label="Month Change"
-            value={historyHydrated ? `${monthChange >= 0 ? "+" : ""}${formatMoney(monthChange)}` : "Loading…"}
-            sub={historyHydrated ? <span style={{ color: monthChange >= 0 ? GREEN : RED }}>{fmtPct(monthPct, true)}</span> : <span style={{ color: MUTED }}>Syncing history</span>}
+            value={!historyHydrated ? "Loading…" : monthChange === null ? "—" : `${monthChange >= 0 ? "+" : ""}${formatMoney(monthChange)}`}
+            sub={
+              !historyHydrated ? (
+                <span style={{ color: MUTED }}>Syncing history</span>
+              ) : monthChange === null || !monthContext ? (
+                <span style={{ color: MUTED }}>Needs two recorded days. Total value now, not a gain on cost.</span>
+              ) : (
+                <>
+                  {monthPct !== null ? <span style={{ color: monthChange >= 0 ? GREEN : RED }}>{fmtPct(monthPct, true)}</span> : null} change in total value since {monthContext.day}. Includes {monthContext.added} added, {monthContext.sold} sold and any re-pricing.
+                </>
+              )
+            }
             icon={<Glyph name="chart" size={28} />}
-            tone={monthChange >= 0 ? GREEN : RED}
+            tone={monthChange === null || monthChange >= 0 ? GREEN : RED}
             trend={historyHydrated ? thirtyDaySeries : undefined}
           />
           <StatCard

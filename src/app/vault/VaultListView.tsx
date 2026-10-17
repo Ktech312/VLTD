@@ -23,7 +23,7 @@ import { computeItemIntelligence } from "@/lib/itemIntelligence";
 import { UNIVERSE_LABEL, TAXONOMY, getCategories, isUniverseKey, type UniverseKey } from "@/lib/taxonomy";
 import { showToast } from "@/lib/toast";
 import { REVIEW_CHECKLIST, REVIEW_CHECKLIST_NOTE, REVIEW_GAPS, REVIEW_GAP_LABEL, REVIEW_GAP_SHORT, matchesReview, reviewCounts, reviewGaps, type ReviewFilter, type ReviewGap } from "@/lib/vaultReview";
-import { activeItems, collectibleItems, effectiveMarketValue, readValueMode, summarizeValues, writeValueMode, type ValueMode } from "@/lib/vaultStats";
+import { activeItems, collectibleItems, describeGainExclusions, effectiveMarketValue, readValueMode, summarizeValues, writeValueMode, type ValueMode } from "@/lib/vaultStats";
 import { priceCheckIsStale } from "@/lib/pricingMvp";
 import { migrateExistingVaultImagesToSupabase } from "@/lib/vaultMigration";
 import {
@@ -1162,6 +1162,8 @@ export default function VaultListView({ lockedUniverse }: { lockedUniverse?: Uni
   const hydrateSeq = useRef(0);
   const shownProfileRef = useRef("");
   const [loadFailed, setLoadFailed] = useState(false);
+  // The account says nobody is signed in: the page must say so (the route check also sends the person to sign in), never "your vault is empty".
+  const [signedOut, setSignedOut] = useState(false);
   const [loadSlow, setLoadSlow] = useState(false);
 
   function showDeviceCopy(profileId: string) {
@@ -1174,6 +1176,7 @@ export default function VaultListView({ lockedUniverse }: { lockedUniverse?: Uni
     const mine = ++hydrateSeq.current;
     const stillCurrent = () => mine === hydrateSeq.current;
     setLoadFailed(false);
+    setSignedOut(false);
     setLoadSlow(false);
     window.setTimeout(() => {
       if (stillCurrent()) setLoadSlow(true);
@@ -1235,6 +1238,7 @@ export default function VaultListView({ lockedUniverse }: { lockedUniverse?: Uni
       target = "";
       shownProfileRef.current = "";
       setItems([]);
+      setSignedOut(true);
       setInitialLoadComplete(true);
       return;
     }
@@ -1720,6 +1724,9 @@ export default function VaultListView({ lockedUniverse }: { lockedUniverse?: Uni
       totalCost: totalCostValue,
       totalValue,
       totalGain,
+      gainItemCount: summary.gainItemCount,
+      gainCostBase: summary.costBase,
+      gainExcludedText: describeGainExclusions({ noValueCount: summary.gainExcluded.noValue, noCostCount: summary.gainExcluded.noCost, zeroCostCount: summary.gainExcluded.zeroCost }),
       universeCount,
       insuranceReadyCount,
       insuranceReadyPct,
@@ -2081,7 +2088,11 @@ export default function VaultListView({ lockedUniverse }: { lockedUniverse?: Uni
                       className={"mt-1.5 text-xl font-extrabold tracking-[-0.02em] sm:mt-2.5 sm:text-3xl " + (valueMode === "fill" && stats.ghostCount > 0 ? "text-[color:var(--muted)]" : "text-[color:var(--data-color)]")}
                       title={valueMode === "fill" && stats.ghostCount > 0 ? "Includes purchase price for items not priced yet" : undefined}
                     >{formatMoney(stats.totalValue)}</div>
-                    <div className={(stats.totalGain >= 0 ? "text-emerald-300" : "text-red-300") + " mt-0.5 text-[11px] sm:text-sm"}>{stats.totalGain >= 0 ? "+" : ""}{formatMoney(stats.totalGain)}</div>
+                    <div className={(stats.gainItemCount === 0 ? "text-[color:var(--muted)]" : stats.totalGain >= 0 ? "text-emerald-300" : "text-red-300") + " mt-0.5 text-[11px] sm:text-sm"} data-testid="vault-gain">{stats.gainItemCount === 0 ? "—" : `${stats.totalGain >= 0 ? "+" : ""}${formatMoney(stats.totalGain)}`}</div>
+                    <div className="mt-0.5 text-[11px] text-[color:var(--muted)]" data-testid="vault-gain-basis">
+                      Change on {stats.gainItemCount} of {stats.totalItems} items · cost basis {formatMoney(stats.gainCostBase)}
+                      {stats.gainExcludedText ? ` · not counted: ${stats.gainExcludedText}` : ""}
+                    </div>
                     {stats.valuedCount < stats.totalItems ? (
                       <div className="mt-0.5 text-[11px] text-[color:var(--muted)]">
                         {valueMode === "fill" ? `${stats.ghostCount} of ${stats.totalItems} at purchase price` : `${stats.valuedCount} of ${stats.totalItems} priced`}
@@ -2396,6 +2407,17 @@ export default function VaultListView({ lockedUniverse }: { lockedUniverse?: Uni
 
         {items.length === 0 && !initialLoadComplete ? (
           <VaultLoadingSkeleton />
+        ) : items.length === 0 && signedOut ? (
+          <section className="mt-3 rounded-[18px] bg-[color:var(--surface)] p-8 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]" role="alert">
+            <div className="mx-auto max-w-xl text-center">
+              <div className="text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">SIGNED OUT</div>
+              <h2 className="mt-2 text-2xl font-semibold">Sign in to see your Vault</h2>
+              <div className="mt-2 text-sm text-[color:var(--muted)]">Your session has ended. Your items are safe.</div>
+              <div className="mt-5 flex justify-center">
+                <PillButton variant="primary" href="/login?next=%2Fvault">Sign in</PillButton>
+              </div>
+            </div>
+          </section>
         ) : items.length === 0 && loadFailed ? (
           <VaultLoadError onRetry={() => void hydrateAll()} />
         ) : items.length === 0 ? (

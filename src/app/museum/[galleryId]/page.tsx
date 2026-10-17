@@ -982,7 +982,7 @@ export default function GalleryPage() {
                 <div className="rounded-2xl bg-[color:var(--surface)] px-3.5 py-2.5 ring-1 ring-[color:var(--border)] xl:rounded-xl xl:px-2.5 xl:py-2">
                   <div className="text-[9px] tracking-[0.18em] text-[color:var(--muted2)]">ROI</div>
                   <div className="mt-0.5 text-lg font-semibold leading-tight xl:text-base">
-                    {metrics.roi >= 0 ? "+" : ""}{metrics.roi.toFixed(1)}%
+                    {metrics.gainItemCount > 0 ? `${metrics.roi >= 0 ? "+" : ""}${metrics.roi.toFixed(1)}%` : "—"}
                   </div>
                 </div>
 

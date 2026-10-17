@@ -15,7 +15,7 @@ import { listLoungePosts, type LoungePost } from "@/lib/loungePosts";
 import { priceCheckIsStale } from "@/lib/pricingMvp";
 import { syncPublicProfile } from "@/lib/publicProfile";
 import { buildSoldItems, soldStats } from "@/lib/soldItems";
-import { activeItems, computeVaultStats, effectiveMarketValue, readValueMode, totalsValue, writeValueMode, type ValueMode } from "@/lib/vaultStats";
+import { activeItems, computeVaultStats, describeGainExclusions, effectiveMarketValue, readValueMode, totalsValue, writeValueMode, type ValueMode } from "@/lib/vaultStats";
 import { loadItems, syncVaultItemsFromSupabase, type VaultItem } from "@/lib/vaultModel";
 import { getPendingVaultSyncCount } from "@/lib/vaultSyncQueue";
 
@@ -175,7 +175,7 @@ export default function HomeClient() {
   // The same shared totals as the Vault and Insights (sold items excluded), so Home never counts differently.
   const stats = useMemo(() => {
     const s = computeVaultStats(items, valueMode);
-    return { totalItems: s.itemCount, totalCost: s.totalCost, totalValue: s.totalValue, totalGain: s.totalGain, gainPct: s.gainPct, costBase: s.costBase, gainItemCount: s.gainItemCount, pricedCount: s.pricedCount, ghostCount: s.ghostCount };
+    return { totalItems: s.itemCount, totalCost: s.totalCost, totalValue: s.totalValue, totalGain: s.totalGain, gainPct: s.gainPct, costBase: s.costBase, gainItemCount: s.gainItemCount, gainExcluded: s.gainExcluded, pricedCount: s.pricedCount, ghostCount: s.ghostCount };
   }, [items, valueMode]);
   // Realized sales: the same numbers as /vault/sold (shared code). Never mixed with the estimates above.
   const sales = useMemo(() => {
@@ -192,6 +192,7 @@ export default function HomeClient() {
 
   // Unrealized change: only items with BOTH a value and a cost; the display setting below never changes it.
   const gainKnown = stats.gainItemCount > 0 && stats.gainPct !== null;
+  const gainExcludedText = describeGainExclusions({ noValueCount: stats.gainExcluded.noValue, noCostCount: stats.gainExcluded.noCost, zeroCostCount: stats.gainExcluded.zeroCost });
   const gainTone = stats.totalGain >= 0 ? ("gain" as const) : ("loss" as const);
   const gainSign = stats.totalGain >= 0 ? "+" : "-";
   const gainText = gainKnown ? (
@@ -256,7 +257,7 @@ export default function HomeClient() {
               <div className="mt-2 grid grid-cols-2 gap-2.5 lg:grid-cols-4">
                 <MoneyTile href="/portfolio#cost-breakdown" label="Purchase cost" value={formatMoney(stats.totalCost)} caption="What you paid, with tax, shipping and fees" go="Cost breakdown" />
                 <MoneyTile href="/portfolio#value-history" label="Estimated value" value={valueMode === "priced" && stats.pricedCount === 0 ? "—" : formatMoney(stats.totalValue)} tone="gold" ghost={valueIsGhost} caption={valueCaption} go="Value history" />
-                <MoneyTile href="/portfolio#movers" label="Unrealized change" value={gainText} tone={gainKnown ? gainTone : "default"} ghost={!gainKnown} caption={gainKnown ? `On ${stats.gainItemCount} of ${stats.totalItems} items · cost basis ${formatMoney(stats.costBase)}` : "Needs an item with both a value and a cost"} go="Biggest movers" />
+                <MoneyTile href="/portfolio#movers" label="Unrealized change" value={gainText} tone={gainKnown ? gainTone : "default"} ghost={!gainKnown} caption={gainKnown ? `On ${stats.gainItemCount} of ${stats.totalItems} items · cost basis ${formatMoney(stats.costBase)}` : "Needs an item with both a value and a recorded cost"} extra={gainExcludedText ? <span style={{ fontSize: 12, lineHeight: 1.35, color: C.muted }}>Not counted: {gainExcludedText}</span> : undefined} go="Biggest movers" />
                 <MoneyTile
                   href="/vault/sold#sales-analytics"
                   label="Sales revenue"
@@ -280,7 +281,7 @@ export default function HomeClient() {
                 <div id="home-basis-explainer" style={{ marginTop: 10, border: `1px solid ${C.bd2}`, borderRadius: 8, padding: "10px 12px", fontSize: 12.5, color: C.muted, lineHeight: 1.45 }}>
                   <p><b style={{ color: C.text }}>Purchase cost</b>: every item you own. The setting does not change it.</p>
                   <p style={{ marginTop: 6 }}><b style={{ color: C.text }}>Estimated value</b>: <i>Include unpriced</i> counts items without a value at their purchase price, in grey. <i>Priced only</i> leaves them out, so the number is smaller.</p>
-                  <p style={{ marginTop: 6 }}><b style={{ color: C.text }}>Unrealized change</b>: value minus cost, measured only on items that have both a value and a cost (the caption says how many and their cost). The setting does not change it.</p>
+                  <p style={{ marginTop: 6 }}><b style={{ color: C.text }}>Unrealized change</b>: value minus cost, measured only on items that have both a value and a recorded cost (the caption says how many, their cost, and what was not counted: no value, no recorded cost, or a price entered as $0). The setting does not change it.</p>
                   <p style={{ marginTop: 6 }}><b style={{ color: C.text }}>Sales revenue</b>: real sales only, never mixed with estimates. Profit is after estimated seller fees. The setting does not change it. Sold items are never in the other three figures.</p>
                 </div>
               ) : null}

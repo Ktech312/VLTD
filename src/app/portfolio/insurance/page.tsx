@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { activeItems, insuranceValue, PURCHASE_BASED_NOTE } from "@/lib/vaultStats";
+import { activeItems, describeGainExclusions, insuranceValue, PURCHASE_BASED_NOTE, summarizeGain, totalCost as sharedTotalCost } from "@/lib/vaultStats";
 import { useEffect, useMemo, useState } from "react";
 
 import { loadItems, type VaultItem } from "@/lib/vaultModel";
@@ -25,11 +25,13 @@ export default function InsuranceReportPage() {
   }, []);
 
   const totals = useMemo(() => {
-    const cost = items.reduce((s, i) => s + clamp(Number(i.purchasePrice ?? 0)), 0);
+    // Value is the stated insurance basis (an item not yet priced is stated at its purchase price, marked *). It is a statement for
+    // the packet, not a return: the unrealized change below is the shared one (items with a value and a recorded cost).
+    const cost = items.reduce((s, i) => s + sharedTotalCost(i), 0);
     const value = items.reduce((s, i) => s + clamp(insuranceValue(i).amount), 0);
-    const gain = value - cost;
+    const gainSummary = summarizeGain(items);
     const purchaseBased = items.filter((i) => insuranceValue(i).purchaseBased).length;
-    return { cost, value, gain, purchaseBased };
+    return { cost, value, gainSummary, purchaseBased };
   }, [items]);
 
   const today = useMemo(() => new Date().toLocaleDateString(), []);
@@ -86,10 +88,16 @@ export default function InsuranceReportPage() {
 
             <div className="mt-3 sm:mt-0 grid gap-1 text-right">
               <div className="text-sm">
-                Total Value: <span className="font-semibold">{fmtMoney(totals.value)}{totals.purchaseBased > 0 ? "*" : ""}</span>
+                Stated value: <span className="font-semibold">{fmtMoney(totals.value)}{totals.purchaseBased > 0 ? "*" : ""}</span>
               </div>
-              <div className="text-sm text-[color:var(--muted)]">Total Cost: {fmtMoney(totals.cost)}</div>
-              <div className="text-sm text-[color:var(--muted)]">Total Gain: {fmtMoney(totals.gain)}</div>
+              <div className="text-sm text-[color:var(--muted)]">Purchase cost: {fmtMoney(totals.cost)}</div>
+              <div className="text-sm text-[color:var(--muted)]" data-testid="ins-gain">
+                Unrealized change: {totals.gainSummary.eligibleCount > 0 ? `${totals.gainSummary.gain >= 0 ? "+" : ""}${fmtMoney(totals.gainSummary.gain)}` : "—"}
+              </div>
+              <div className="text-xs text-[color:var(--muted)]" data-testid="ins-gain-basis">
+                On {totals.gainSummary.eligibleCount} of {totals.gainSummary.totalCount} items · cost basis {fmtMoney(totals.gainSummary.costBasis)}
+                {describeGainExclusions(totals.gainSummary) ? ` · not counted: ${describeGainExclusions(totals.gainSummary)}` : ""}
+              </div>
             </div>
           </div>
 

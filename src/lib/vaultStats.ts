@@ -97,6 +97,75 @@ export function totalCost(item: VaultItem): number {
   );
 }
 
+// ---- Unrealized change: ONE rule, used by every page that shows a gain or a return ----------------------------------------------
+// An item is measured only when it has BOTH a value someone entered or looked up AND a recorded cost. Everything else is left out
+// of the figure and counted, with the reason, so a page can say what it did not measure:
+//   no-value   no value yet (never counted as a total loss of what was paid)
+//   no-cost    a value, but no cost recorded (the whole value would otherwise look like profit)
+//   zero-cost  a value, and the price was entered as $0 (a known zero is not an unknown, but a return on $0 has no percentage, so
+//              it is reported on its own line and not folded into the measured cost)
+export type GainStatus = "eligible" | "no-value" | "no-cost" | "zero-cost";
+
+export function gainStatus(item: VaultItem): GainStatus {
+  if (!(effectiveMarketValue(item) > 0)) return "no-value";
+  if (totalCost(item) > 0) return "eligible";
+  return typeof item.purchasePrice === "number" && Number.isFinite(item.purchasePrice) ? "zero-cost" : "no-cost";
+}
+
+/** The unrealized change of one item, or null when it is not measurable (see gainStatus). */
+export function itemGain(item: VaultItem): { gain: number; pct: number; cost: number } | null {
+  if (gainStatus(item) !== "eligible") return null;
+  const cost = totalCost(item);
+  const gain = effectiveMarketValue(item) - cost;
+  return { gain, pct: (gain / cost) * 100, cost };
+}
+
+export type GainSummary = {
+  /** Value minus cost over the measured items. */
+  gain: number;
+  /** As a percentage of the measured items' cost; null when nothing was measured. */
+  gainPct: number | null;
+  /** The cost of the measured items. */
+  costBasis: number;
+  /** How many items were measured, and how many were looked at. */
+  eligibleCount: number;
+  totalCount: number;
+  /** Items left out, by reason. */
+  noValueCount: number;
+  noCostCount: number;
+  zeroCostCount: number;
+};
+
+export function summarizeGain(items: VaultItem[]): GainSummary {
+  let gain = 0;
+  let costBasis = 0;
+  let eligibleCount = 0;
+  let noValueCount = 0;
+  let noCostCount = 0;
+  let zeroCostCount = 0;
+  for (const item of items) {
+    const status = gainStatus(item);
+    if (status === "eligible") {
+      const cost = totalCost(item);
+      gain += effectiveMarketValue(item) - cost;
+      costBasis += cost;
+      eligibleCount += 1;
+    } else if (status === "no-value") noValueCount += 1;
+    else if (status === "no-cost") noCostCount += 1;
+    else zeroCostCount += 1;
+  }
+  return { gain, gainPct: costBasis > 0 ? (gain / costBasis) * 100 : null, costBasis, eligibleCount, totalCount: items.length, noValueCount, noCostCount, zeroCostCount };
+}
+
+/** What a figure did not measure, in plain words ("2 without a cost, 3 without a value"); empty when everything was measured. */
+export function describeGainExclusions(summary: Pick<GainSummary, "noValueCount" | "noCostCount" | "zeroCostCount">): string {
+  const parts: string[] = [];
+  if (summary.noCostCount > 0) parts.push(`${summary.noCostCount} without a recorded cost`);
+  if (summary.zeroCostCount > 0) parts.push(`${summary.zeroCostCount} bought for $0`);
+  if (summary.noValueCount > 0) parts.push(`${summary.noValueCount} without a value`);
+  return parts.join(", ");
+}
+
 export type ValueSummary = {
   /** Items counted. */
   itemCount: number;
@@ -116,6 +185,8 @@ export type ValueSummary = {
   costBase: number;
   /** How many items the gain is measured over ("on 6 items"). */
   gainItemCount: number;
+  /** Items the gain left out, by reason (see gainStatus). */
+  gainExcluded: { noValue: number; noCost: number; zeroCost: number };
 };
 
 /**
@@ -133,9 +204,6 @@ export function summarizeValues(items: VaultItem[], mode: ValueMode = "fill"): V
   let pricedCount = 0;
   let filledValue = 0;
   let pricedValue = 0;
-  let pricedWithCostValue = 0;
-  let pricedWithCostCost = 0;
-  let pricedWithCostCount = 0;
 
   for (const item of items) {
     const cost = totalCost(item);
@@ -145,31 +213,23 @@ export function summarizeValues(items: VaultItem[], mode: ValueMode = "fill"): V
       pricedCount += 1;
       pricedValue += real;
       filledValue += real;
-      if (cost > 0) {
-        pricedWithCostValue += real;
-        pricedWithCostCost += cost;
-        pricedWithCostCount += 1;
-      }
     } else {
       filledValue += cost;
     }
   }
 
-  const base = {
+  const g = summarizeGain(items);
+  return {
     itemCount: items.length,
     totalCost: totalCostAll,
     pricedCount,
     ghostCount: items.length - pricedCount,
-  };
-
-  const gain = pricedWithCostValue - pricedWithCostCost;
-  return {
-    ...base,
     totalValue: mode === "priced" ? pricedValue : filledValue,
-    totalGain: gain,
-    gainPct: pricedWithCostCost > 0 ? (gain / pricedWithCostCost) * 100 : null,
-    costBase: pricedWithCostCost,
-    gainItemCount: pricedWithCostCount,
+    totalGain: g.gain,
+    gainPct: g.gainPct,
+    costBase: g.costBasis,
+    gainItemCount: g.eligibleCount,
+    gainExcluded: { noValue: g.noValueCount, noCost: g.noCostCount, zeroCost: g.zeroCostCount },
   };
 }
 

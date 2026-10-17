@@ -6,6 +6,8 @@ import {
 } from "@/lib/vaultCloud";
 import {
   getVaultLocalSignature,
+  isVaultLocalRepaired,
+  markVaultLocalRepaired,
   readVaultLocalJson,
   writeVaultLocalJson,
 } from "@/lib/vaultLocalStore";
@@ -574,7 +576,8 @@ function normalizeOne(input: unknown): VaultItem | null {
         ? raw.addedVia
         : undefined,
     catalogRef: typeof raw.catalogRef === "string" && raw.catalogRef ? raw.catalogRef : undefined,
-    purchasePrice: clampNum(raw.purchasePrice, 0),
+    // A blank price is an unknown cost and stays unknown; only a price someone entered (including 0) is a recorded cost.
+    purchasePrice: raw.purchasePrice == null || raw.purchasePrice === "" ? undefined : clampNum(raw.purchasePrice, 0),
     purchaseTax: clampNum(raw.purchaseTax, 0),
     purchaseShipping: clampNum(raw.purchaseShipping, 0),
     purchaseFees: clampNum(raw.purchaseFees, 0),
@@ -835,7 +838,11 @@ function normalizeOne(input: unknown): VaultItem | null {
 
 function normalizeAll(rawList: unknown) {
   if (!Array.isArray(rawList)) return { items: [] as VaultItem[], repaired: false };
-  const normalized = rawList.map(normalizeOne).filter(Boolean) as VaultItem[];
+  const normalized: VaultItem[] = [];
+  for (const raw of rawList) {
+    const one = normalizeOne(raw);
+    if (one) normalized.push(withoutUndefined(one));
+  }
   const unique = ensureUniqueIds(normalized);
   const migrated = migrateMissingProfileIds(unique.items);
   return { items: migrated.items, repaired: unique.repaired || migrated.repaired };
@@ -886,7 +893,9 @@ function stripEphemeralForPersistence(item: VaultItem): VaultItem {
 // the cloud pull) reads the local vault many times per page, and each read used to decode, repair and re-write every item: about
 // half a second for 1,500 items, repeated dozens of times per page load, which is what froze the Vault. Any save, another tab's
 // save, a restore or a change of account changes the stored text, so a different key can never be served a stale list.
-let repairedItemsCache: { sig: string; items: VaultItem[] } | null = null;
+// `stable`: every item in the list is already in the form the repair step would give it (checked, not assumed), so the stored text
+// can be marked as repaired and the next page load can skip the repair.
+let repairedItemsCache: { sig: string; items: VaultItem[]; stable: boolean } | null = null;
 
 // Callers get their own copy of every item (they edit items and save them back), never the remembered objects.
 function copyForCaller(items: VaultItem[]): VaultItem[] {
@@ -904,16 +913,75 @@ function withoutUndefined(item: VaultItem): VaultItem {
   return out as unknown as VaultItem;
 }
 
-function saveRawItems(items: VaultItem[]) {
-  if (typeof window === "undefined") return;
-  const safeItems = items.map((item) => stripEphemeralForPersistence(syncPrimaryFields(item)));
+// The form an item is stored in.
+function toStorageForm(item: VaultItem): VaultItem {
+  return stripEphemeralForPersistence(syncPrimaryFields(item));
+}
+
+// Checks every item of a short list, and an even spread of about sixty of a long one.
+function areStableForms(list: VaultItem[]): boolean {
+  const step = list.length > 80 ? Math.ceil(list.length / 60) : 1;
+  for (let i = 0; i < list.length; i += step) if (!isStableForm(list[i])) return false;
+  return true;
+}
+
+// Does the repair step leave this stored item exactly as it is? (Only then may a whole stored list be marked as repaired.)
+function isStableForm(item: VaultItem): boolean {
+  try {
+    const again = normalizeOne(JSON.parse(JSON.stringify(item)));
+    return Boolean(again) && JSON.stringify(toStorageForm(again as VaultItem)) === JSON.stringify(item);
+  } catch {
+    return false;
+  }
+}
+
+// A stored list the repair step would have nothing to do with: every item has an id (all different), a title, and, when a profile
+// is active, a profile.
+function listNeedsNoRepair(list: unknown): list is VaultItem[] {
+  if (!Array.isArray(list)) return false;
+  const activeProfileId = getActiveProfileId();
+  const seen = new Set<string>();
+  for (const entry of list) {
+    if (!entry || typeof entry !== "object") return false;
+    const item = entry as Record<string, unknown>;
+    const id = typeof item.id === "string" ? item.id.trim() : "";
+    if (!id || seen.has(id)) return false;
+    seen.add(id);
+    if (typeof item.title !== "string" || !item.title.trim()) return false;
+    if (activeProfileId && !item.profile_id) return false;
+  }
+  return true;
+}
+
+/**
+ * Saves the whole local list. `changedIds` (only passed by callers that took `items` from loadRawItems() and changed just those
+ * items) means the other items are already in their stored form, so only the changed ones are processed again; without it every
+ * item is, as before. Returns the stored form of every item (null if nothing could be saved here).
+ */
+function saveRawItems(items: VaultItem[], changedIds?: Set<string>): VaultItem[] | null {
+  if (typeof window === "undefined") return null;
+  const sigBefore = changedIds ? getVaultLocalSignature() : null;
+  const base = changedIds && sigBefore !== null && repairedItemsCache && repairedItemsCache.sig === sigBefore ? repairedItemsCache : null;
+  const reusable = changedIds && base ? new Set(base.items.map((entry) => String(entry.id))) : null;
+  const processedNow: VaultItem[] = [];
+  const safeItems = items.map((item) => {
+    if (changedIds && reusable && !changedIds.has(String(item.id)) && reusable.has(String(item.id))) return item;
+    const stored = toStorageForm(item);
+    processedNow.push(stored);
+    return stored;
+  });
   const written = writeVaultLocalJson(JSON.stringify(safeItems));
   // What was just saved is what the next read would produce: remember it so the read after a save does not repeat the work.
   // (Only when every item is a complete record; an untitled or id-less entry is dropped by the repair step on the next read.)
   const sig = getVaultLocalSignature();
   if (written && sig !== null && safeItems.every((item) => item && item.id && String(item.title ?? "").trim())) {
-    repairedItemsCache = { sig, items: safeItems.map(withoutUndefined) };
+    // The list is in repaired form if the list it grew from was (or there was nothing before it) and every item added or changed is.
+    const grewFromRepaired = Boolean(changedIds) && (sigBefore === null || Boolean(base && base.stable));
+    const stable = grewFromRepaired && areStableForms(processedNow) && new Set(safeItems.map((item) => String(item.id))).size === safeItems.length;
+    repairedItemsCache = { sig, items: safeItems.map(withoutUndefined), stable };
+    if (stable) markVaultLocalRepaired();
   }
+  return safeItems;
 }
 
 function loadRawItems() {
@@ -933,12 +1001,24 @@ function loadRawItems() {
     }
     if (!raw) return [];
     const parsed = JSON.parse(raw);
+
+    // This exact stored text was repaired before and came out unchanged: nothing to repair, rewrite or re-check.
+    if (stamp !== null && isVaultLocalRepaired() && listNeedsNoRepair(parsed)) {
+      repairedItemsCache = { sig: stamp, items: parsed, stable: true };
+      return copyForCaller(parsed);
+    }
+
     const normalized = normalizeAll(parsed);
-    saveRawItems(normalized.items);
+    const stored = saveRawItems(normalized.items);
     const after = getVaultLocalSignature();
     if (after !== null) {
-      repairedItemsCache = { sig: after, items: normalized.items.map(withoutUndefined) };
-      return copyForCaller(repairedItemsCache.items);
+      // The list the next read would produce. If a sample of it comes through the repair step unchanged, the stored text is marked
+      // as repaired, so the next page load can skip all of this.
+      const items = (stored ?? normalized.items).map(withoutUndefined);
+      const stable = stored !== null && items.length > 0 && areStableForms(items) && listNeedsNoRepair(items);
+      repairedItemsCache = { sig: after, items, stable };
+      if (stable) markVaultLocalRepaired();
+      return copyForCaller(items);
     }
     return normalized.items;
   } catch {
@@ -1160,20 +1240,25 @@ export function noteItemUploaded(itemId: string) {
   uploadedAtById.set(String(itemId), Date.now());
 }
 
+// `localItems` come from loadRawItems(), so they are already in their stored form: only what the pull changes is processed again.
+// `changed` is the set of item ids the merge added or altered.
 function mergeById(localItems: VaultItem[], remoteItems: VaultItem[], pullStartedAt = 0) {
   const pendingMoves = readPendingMoves();
   const queuedIds = readQueuedItemIds();
   const byId = new Map<string, VaultItem>();
+  const changed = new Set<string>();
 
   for (const item of localItems) {
-    byId.set(String(item.id), syncPrimaryFields(item));
+    byId.set(String(item.id), item);
   }
 
   for (const remoteItem of remoteItems) {
     const existing = byId.get(String(remoteItem.id));
 
     if (!existing) {
-      byId.set(String(remoteItem.id), syncPrimaryFields(remoteItem));
+      const repairedRemote = normalizeOne(remoteItem);
+      byId.set(String(remoteItem.id), syncPrimaryFields(withoutUndefined(repairedRemote ?? remoteItem)));
+      changed.add(String(remoteItem.id));
       continue;
     }
 
@@ -1182,6 +1267,7 @@ function mergeById(localItems: VaultItem[], remoteItems: VaultItem[], pullStarte
     if (queuedIds.has(String(remoteItem.id)) || (pullStartedAt > 0 && (uploadedAtById.get(String(remoteItem.id)) ?? 0) >= pullStartedAt)) {
       if (remoteItem.itemCode && remoteItem.itemCode !== existing.itemCode) {
         byId.set(String(remoteItem.id), syncPrimaryFields({ ...existing, itemCode: remoteItem.itemCode }));
+        changed.add(String(remoteItem.id));
       }
       continue;
     }
@@ -1222,13 +1308,22 @@ function mergeById(localItems: VaultItem[], remoteItems: VaultItem[], pullStarte
     });
 
     if (merged) {
-      byId.set(String(remoteItem.id), syncPrimaryFields(merged));
+      byId.set(String(remoteItem.id), syncPrimaryFields(withoutUndefined(merged)));
+      changed.add(String(remoteItem.id));
     }
   }
 
-  return [...byId.values()].sort(
-    (a, b) => Number(b.createdAt ?? 0) - Number(a.createdAt ?? 0)
-  );
+  return {
+    items: [...byId.values()].sort((a, b) => Number(b.createdAt ?? 0) - Number(a.createdAt ?? 0)),
+    changed,
+  };
+}
+
+function isNewestFirst(items: VaultItem[]) {
+  for (let i = 1; i < items.length; i++) {
+    if (Number(items[i - 1].createdAt ?? 0) < Number(items[i].createdAt ?? 0)) return false;
+  }
+  return true;
 }
 
 async function checkForceClearVault(profileId: string) {
@@ -1317,7 +1412,17 @@ async function pullAndMergeFromSupabase(profileId: string): Promise<{ ok: boolea
   // (in this tab or another) before it arrives, it is dropped instead of being merged into the new person's copy.
   const startedAs = storedSessionUserId();
   if (!startedAs) return { ok: false };
+  // Without a profile there is nothing to ask the cloud for: that is "not answered", never "your vault is empty".
+  if (!profileId) return { ok: false };
   try {
+    // The cloud only answers truthfully to a signed-in client. A client whose sign-in could not be renewed asks as nobody, and the
+    // database then answers "no rows" with no error: that must not be read as an empty vault.
+    const { getSupabaseBrowserClient } = await import("@/lib/supabaseClient");
+    const client = getSupabaseBrowserClient();
+    if (!client) return { ok: false };
+    const { data: sessionData } = await client.auth.getSession();
+    if (!sessionData?.session) return { ok: false };
+
     // The admin "clear this device's copy" flag is checked first. It must not hold the pull when the cloud is slow: on a
     // connection that cannot reach the cloud one request took about 7 seconds to give up.
     if (profileId) {
@@ -1337,8 +1442,10 @@ async function pullAndMergeFromSupabase(profileId: string): Promise<{ ok: boolea
       writePullCursor(profileId, null);
     }
     const localItems = loadRawItems();
-    const merged = mergeById(localItems, remoteItems, pullStartedAt);
-    saveRawItems(merged);
+    if (remoteItems.length > 0 || !isNewestFirst(localItems)) {
+      const { items: merged, changed } = mergeById(localItems, remoteItems, pullStartedAt);
+      saveRawItems(merged, changed);
+    }
     // Settle the stored form (loadRawItems normalizes and re-saves) before
     // taking the signature, so an unchanged vault compares equal later.
     loadRawItems();
@@ -1433,14 +1540,15 @@ export function appendItems(items: VaultItem[]) {
     }
   }
 
-  saveRawItems([...existing, ...items.map(syncPrimaryFields)]);
+  const added = items.map(syncPrimaryFields);
+  saveRawItems([...existing, ...added], new Set(added.map((item) => String(item.id))));
 }
 
 export function markItemViewed(itemId: string) {
   const next = loadRawItems().map((item) =>
     String(item.id) === String(itemId) ? { ...item, isNew: false } : item
   );
-  saveRawItems(next);
+  saveRawItems(next, new Set([String(itemId)]));
 }
 
 export function saveItem(item: VaultItem) {
@@ -1448,13 +1556,13 @@ export function saveItem(item: VaultItem) {
   const existing = loadRawItems();
   const idx = existing.findIndex((entry) => String(entry.id) === String(normalized.id));
   if (idx === -1) {
-    saveRawItems([...existing, normalized]);
+    saveRawItems([...existing, normalized], new Set([String(normalized.id)]));
     return;
   }
   const previous = existing[idx] as VaultItem | undefined;
   const next = [...existing];
   next[idx] = normalized;
-  saveRawItems(next);
+  saveRawItems(next, new Set([String(normalized.id)]));
 
   // Log a real before/after value change. This is the single funnel every
   // save path goes through, so it captures the moment a value actually moves.
@@ -1505,7 +1613,7 @@ export function saveItemsBatch(items: VaultItem[]) {
   for (const [key, item] of incoming) {
     if (!placed.has(key)) next.push(item);
   }
-  saveRawItems(next);
+  saveRawItems(next, new Set(incoming.keys()));
 }
 
 export function loadItemsOrSeed(seed?: VaultItem[]) {
