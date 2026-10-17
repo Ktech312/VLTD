@@ -467,7 +467,7 @@ function TopNavInner() {
             <Link
               href="/messages"
               aria-label={unreadDmCount > 0 ? `Messages — ${unreadDmCount} unread` : "Messages"}
-              className="relative grid h-9 w-9 place-items-center rounded-full transition hover:opacity-90"
+              className="vltd-tap-y relative grid h-9 w-9 place-items-center rounded-full transition hover:opacity-90"
               style={{ color: "var(--muted)" }}
             >
               <AppIcon name="message" variant="navTop" size={28} strokeWidth={1.7} />
@@ -498,7 +498,7 @@ function TopNavInner() {
                 aria-label="Account menu"
                 aria-haspopup="menu"
                 aria-expanded={userOpen}
-                className="flex items-center gap-2 rounded-full p-1 transition"
+                className="vltd-tap-y flex items-center gap-2 rounded-full p-1 transition"
                 style={{ background: "transparent", border: "none" }}
               >
                 {/* Collector level — real, from the curator's items + exhibits. */}

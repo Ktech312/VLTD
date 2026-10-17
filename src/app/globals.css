@@ -2650,3 +2650,24 @@ html:not([data-vltd-logo="b"]) .vltd-logo.vltd-logo-on-dark .vltd-logo-black { d
 
 /* The part of a page a link such as /portfolio#movers lands on: outlined for a moment so it is easy to find. */
 .vltd-hash-target { outline: 2px solid var(--pill-active-ring, #59d4ee); outline-offset: 3px; }
+
+
+/* Phone tap targets: an invisible, centered hit area (at least 44px) around a small control, WITHOUT changing how it looks or
+   where anything sits. .vltd-tap grows both ways; .vltd-tap-y grows the height only (for controls with close neighbours at
+   the sides). Override the size with --tap-h / --tap-w on the element when its neighbours are closer than 44px apart.
+   Not for controls that already draw their own ::after (shared pills do), and not inside overflow-hidden boxes that clip it. */
+@media (max-width: 767px) {
+  .vltd-tap:not(.absolute):not(.fixed):not(.sticky) { position: relative; }
+  .vltd-tap::after,
+  .vltd-tap-y::after {
+    content: "";
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: max(100%, var(--tap-w, 44px));
+    height: max(100%, var(--tap-h, 44px));
+  }
+  .vltd-tap-y { --tap-w: 0px; }
+  .vltd-tap-y:not(.absolute):not(.fixed):not(.sticky) { position: relative; }
+}

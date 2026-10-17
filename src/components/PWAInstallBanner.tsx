@@ -120,7 +120,7 @@ export default function PWAInstallBanner() {
       onClick={dismiss}
       aria-label="Dismiss"
       style={{ minHeight: 36, minWidth: 36, color: "rgba(255,255,255,0.7)" }}
-      className="flex items-center justify-center hover:text-white transition flex-shrink-0"
+      className="vltd-tap-y flex items-center justify-center hover:text-white transition flex-shrink-0"
     >
       <AppIcon name="close" size={14} strokeWidth={2.5} />
     </button>
@@ -139,7 +139,7 @@ export default function PWAInstallBanner() {
           onClick={() => void install()}
           aria-label="Install"
           style={{ minHeight: 28, minWidth: 28 }}
-          className="flex items-center justify-center rounded-full bg-amber-500 hover:bg-amber-400 transition flex-shrink-0"
+          className="vltd-tap-y flex items-center justify-center rounded-full bg-amber-500 hover:bg-amber-400 transition flex-shrink-0"
         >
           <AppIcon name="download" size={13} strokeWidth={2.5} style={{ color: "black" }} />
         </button>

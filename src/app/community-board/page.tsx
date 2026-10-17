@@ -116,7 +116,7 @@ function Info() {
 }
 
 function More({ children = "View all", href }: { children?: React.ReactNode; href: string }) {
-  return <Link href={href} className="text-[11px] font-bold" style={{ color: CYAN }}>{children}</Link>;
+  return <Link href={href} className="vltd-tap-y text-[11px] font-bold" style={{ color: CYAN }}>{children}</Link>;
 }
 
 /* Avatar — real profile image when available, initials otherwise. */

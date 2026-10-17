@@ -65,7 +65,7 @@ export default function AlertsBell({ profileId, active }: { profileId?: string; 
       href="/notifications"
       onClick={markSeen}
       aria-label={hasUnread ? "Alerts — you have new activity" : "Alerts"}
-      className="relative flex h-[36px] w-[36px] items-center justify-center rounded-full transition"
+      className="vltd-tap-y relative flex h-[36px] w-[36px] items-center justify-center rounded-full transition"
       style={{
         background: active ? "rgba(203,208,213,0.12)" : "rgba(255,255,255,0.04)",
         border: `1px solid ${

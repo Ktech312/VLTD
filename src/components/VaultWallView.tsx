@@ -332,13 +332,14 @@ export default function VaultWallView({ items, saleMap, sortMode = "newest", sho
         </div>
 
         {/* Row 2: universe pills (multi-select) */}
-        <div className="mt-2 flex gap-1.5 overflow-x-auto pb-0.5" style={{ scrollbarWidth: "none" }}>
+        {/* The padding gives each chip a taller tap area inside the scroll box; the margins cancel it so the layout is unchanged. */}
+        <div className="mt-0.5 -mb-[5px] flex gap-1.5 overflow-x-auto pb-[7px] pt-1.5" style={{ scrollbarWidth: "none" }}>
           {/* All pill */}
           <button
             type="button"
             onClick={() => setSelectedUniverses(new Set())}
             className={[
-              "shrink-0 rounded-full px-3 py-1 text-[11px] font-semibold ring-1 transition",
+              "vltd-tap-y shrink-0 rounded-full px-3 py-1 text-[11px] font-semibold ring-1 transition",
               isAllSelected
                 ? "bg-gold/20 text-gold ring-gold/40"
                 : "bg-white/6 text-white/55 ring-white/12 hover:text-white/80",
@@ -357,7 +358,7 @@ export default function VaultWallView({ items, saleMap, sortMode = "newest", sho
                 type="button"
                 onClick={() => toggleUniverse(key)}
                 className={[
-                  "shrink-0 rounded-full px-3 py-1 text-[11px] font-semibold ring-1 transition",
+                  "vltd-tap-y shrink-0 rounded-full px-3 py-1 text-[11px] font-semibold ring-1 transition",
                   active
                     ? "bg-gold/20 text-gold ring-gold/40"
                     : "bg-white/6 text-white/55 ring-white/12 hover:text-white/80",
@@ -371,7 +372,7 @@ export default function VaultWallView({ items, saleMap, sortMode = "newest", sho
 
         {/* Row 3: A–Z nav + Advanced toggle */}
         <div className="mt-2 flex items-center gap-1">
-          <div className="flex gap-0.5 overflow-x-auto pb-0.5 flex-1" style={{ scrollbarWidth: "none" }}>
+          <div className="-my-1.5 flex gap-0.5 overflow-x-auto pb-3 pt-2.5 flex-1" style={{ scrollbarWidth: "none" }}>
             {flat ? <span className="px-1 text-[11px] text-white/40">Ordered by the Sort you chose</span> : null}
             {(flat ? [] : LETTERS).map((letter) => {
               const active = activeLetters.has(letter);
@@ -382,7 +383,7 @@ export default function VaultWallView({ items, saleMap, sortMode = "newest", sho
                   disabled={!active}
                   onClick={() => jumpTo(letter)}
                   className={[
-                    "shrink-0 rounded px-1.5 py-0.5 text-[11px] font-mono font-semibold transition",
+                    "vltd-tap-y shrink-0 rounded px-1.5 py-0.5 text-[11px] font-mono font-semibold transition",
                     active
                       ? "text-white/80 hover:bg-gold/20 hover:text-gold"
                       : "text-white/18 cursor-default",
@@ -399,7 +400,7 @@ export default function VaultWallView({ items, saleMap, sortMode = "newest", sho
             type="button"
             onClick={() => setShowAdvanced((v) => !v)}
             className={[
-              "ml-2 shrink-0 rounded-full px-3 py-1 text-[11px] font-semibold ring-1 transition flex items-center gap-1",
+              "vltd-tap-y ml-2 shrink-0 rounded-full px-3 py-1 text-[11px] font-semibold ring-1 transition flex items-center gap-1",
               showAdvanced || hasAdvancedFilters
                 ? "bg-gold/20 text-gold ring-gold/40"
                 : "bg-white/6 text-white/50 ring-white/12 hover:text-white/80",

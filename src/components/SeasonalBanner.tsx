@@ -237,7 +237,7 @@ export default function SeasonalBanner() {
               jumpTo((idx - 1 + slides.length) % slides.length);
             }}
             aria-label="Previous"
-            className="flex h-6 w-6 flex-shrink-0 items-center justify-center transition hover:brightness-125"
+            className="vltd-tap-y flex h-6 w-6 flex-shrink-0 items-center justify-center transition hover:brightness-125"
             style={{
               background: "rgba(255,255,255,0.035)",
               border: "1px solid rgba(203,208,213,0.30)",
@@ -289,7 +289,7 @@ export default function SeasonalBanner() {
               jumpTo((idx + 1) % slides.length);
             }}
             aria-label="Next"
-            className="flex h-6 w-6 flex-shrink-0 items-center justify-center transition hover:brightness-125"
+            className="vltd-tap-y flex h-6 w-6 flex-shrink-0 items-center justify-center transition hover:brightness-125"
             style={{
               background: "rgba(255,255,255,0.035)",
               border: "1px solid rgba(203,208,213,0.30)",
@@ -311,8 +311,9 @@ export default function SeasonalBanner() {
                 e.stopPropagation();
                 jumpTo(i);
               }}
-              className="transition-all duration-300"
+              className="vltd-tap-y transition-all duration-300"
               style={{
+                ["--tap-h" as string]: "28px",
                 width: i === idx ? 14 : 5,
                 height: 3,
                 background: i === idx ? "#E6C46A" : "rgba(203,208,213,0.24)",
