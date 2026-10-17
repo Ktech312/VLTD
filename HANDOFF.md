@@ -7,6 +7,8 @@
 5. **Native photo sharing is SIMULATED, not device-verified** (the share sheet was a test stand-in). A real phone share sheet and real touch dragging stay UNVERIFIED.
 6. Exhibition "Turn on public sharing?" now reads "Anyone with the link can view this exhibition. It is not added to public discovery, and a hidden collector name stays hidden." Checked in code: Guest View is not PUBLIC (the only value the Discover page lists), and the alias (hidden collector) setting is not touched by it.
 
+Checked on the live site at `0ef6c93` with a short run (test account since removed; 0 test rows left): comic offers eBay, Mercari, Whatnot, Custom; eBay and Mercari show "Read from ..."; Whatnot shows "Unverified in part" with the reason; Override fee % at 5% gives $5.00 on $100 and says it is your own rate; the exhibition question has the new wording. The short script reported 4 failures that were its own text clean-up deleting the letter "s" from the page text it compared; the page text itself was correct (screenshots in the folder above). Not re-run.
+
 Tutorials stay paused until EK has reviewed the screenshots.
 
 ---

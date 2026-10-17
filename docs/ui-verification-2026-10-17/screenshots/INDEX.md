@@ -2,7 +2,7 @@
 
 **Folder (exact path):** `C:\Users\EK\VLTD\docs\ui-verification-2026-10-17\screenshots\`
 - `before\` = the live site before the fixes (old code).
-- `after\` = the live site after the fixes, commit `f9a60dc`, except `after\5-cost-to-sell.png`, which was re-taken after the closeout corrections (see its row).
+- `after\` = the live site after the fixes, commit `f9a60dc`, except `after\5-cost-to-sell.png`, `after\cost-to-sell-whatnot-unverified.png` and `after\exhibition-share-prompt-wording.png`, which were taken on the live site after the closeout corrections (commit `0ef6c93`).
 
 All screens use one synthetic test account (QA data, art from `public/collectibles`), 1440 x 900 desktop unless marked "phone" (a browser window at 390 px with phone emulation; **not a physical phone**). The test account was deleted afterwards.
 
@@ -16,6 +16,7 @@ All screens use one synthetic test account (QA data, art from `public/collectibl
 | 3 (extra states) | 9:16 format; drawing failure with Try again | n/a | `after\export-9x16.png`, `after\export-error.png` |
 | 4 (title + classification) | Title editor open, Universe > Category > Subcategory | `before\4-item-edit.png` | `after\4-item-edit.png` |
 | 5 (Cost to Sell + Listing copy) | Selling tools for a comic | `before\5-cost-to-sell.png` | `after\5-cost-to-sell.png` (re-taken after the closeout: no Fanatics Collect for a comic, fee status line, Override fee %) |
+| 5 (closeout extras) | Whatnot shown as "Unverified in part" with the reason and the Override fee % box; exhibition sharing question with the "Anyone with the link can view this exhibition" wording | n/a | `after\cost-to-sell-whatnot-unverified.png`, `after\exhibition-share-prompt-wording.png` |
 | 6 and 8 (Home) | Top of Home | `before\6-home-top.png` | `after\6-home-top.png` |
 | 7 and 9 (exhibitions on Home) | Exhibition block | `before\7-home-exhibitions.png` | `after\7-home-exhibitions.png` |
 | 7 and 9 (extra states) | One exhibition; no exhibitions | n/a | `after\home-carousel-one.png`, `after\home-carousel-zero.png` |
