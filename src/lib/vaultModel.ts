@@ -578,9 +578,11 @@ function normalizeOne(input: unknown): VaultItem | null {
     catalogRef: typeof raw.catalogRef === "string" && raw.catalogRef ? raw.catalogRef : undefined,
     // A blank price is an unknown cost and stays unknown; only a price someone entered (including 0) is a recorded cost.
     purchasePrice: raw.purchasePrice == null || raw.purchasePrice === "" ? undefined : clampNum(raw.purchasePrice, 0),
-    purchaseTax: clampNum(raw.purchaseTax, 0),
-    purchaseShipping: clampNum(raw.purchaseShipping, 0),
-    purchaseFees: clampNum(raw.purchaseFees, 0),
+    // Same rule as the price: blank = unknown (stays unknown), a typed 0 = recorded as 0. Saving anything else on the item
+    // used to turn every blank tax / shipping / fee into 0 in the account.
+    purchaseTax: raw.purchaseTax == null || raw.purchaseTax === "" ? undefined : clampNum(raw.purchaseTax, 0),
+    purchaseShipping: raw.purchaseShipping == null || raw.purchaseShipping === "" ? undefined : clampNum(raw.purchaseShipping, 0),
+    purchaseFees: raw.purchaseFees == null || raw.purchaseFees === "" ? undefined : clampNum(raw.purchaseFees, 0),
     // A value is only ever a value someone entered or looked up: when it is missing it stays missing
     // (it used to be filled in with what the item cost, which looked like a market price).
     currentValue: raw.currentValue == null || raw.currentValue === "" ? undefined : clampNum(raw.currentValue, 0),
@@ -626,7 +628,8 @@ function normalizeOne(input: unknown): VaultItem | null {
     edition: raw.edition ?? undefined,
     variant: raw.variant ?? undefined,
     printRun: raw.printRun ?? undefined,
-    isFirstEdition: raw.isFirstEdition === true,
+    // Yes / No / Unknown: only an answer someone gave is kept (unknown used to be saved as No).
+    isFirstEdition: typeof raw.isFirstEdition === "boolean" ? raw.isFirstEdition : undefined,
     valueSource: raw.valueSource ?? undefined,
     valueUpdatedAt:
       typeof raw.valueUpdatedAt === "number" && Number.isFinite(raw.valueUpdatedAt)

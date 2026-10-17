@@ -1646,10 +1646,10 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
             item={item}
             onSave={(patch) => persist({ ...item, ...patch })}
             rows={[
-                { label: "Purchase price", field: { key: "purchasePrice", kind: "money", nonNegative: true }, value: fmtMoney(clamp(item.purchasePrice)) },
-                { label: "Tax", field: { key: "purchaseTax", kind: "money", nonNegative: true }, value: fmtMoney(clamp(item.purchaseTax)) },
-                { label: "Shipping", field: { key: "purchaseShipping", kind: "money", nonNegative: true }, value: fmtMoney(clamp(item.purchaseShipping)) },
-                { label: "Fees", field: { key: "purchaseFees", kind: "money", nonNegative: true }, value: fmtMoney(clamp(item.purchaseFees)) },
+                { label: "Purchase price", field: { key: "purchasePrice", kind: "money", nonNegative: true }, value: item.purchasePrice == null ? "—" : fmtMoney(clamp(item.purchasePrice)) },
+                { label: "Tax", field: { key: "purchaseTax", kind: "money", nonNegative: true }, value: item.purchaseTax == null ? "—" : fmtMoney(clamp(item.purchaseTax)) },
+                { label: "Shipping", field: { key: "purchaseShipping", kind: "money", nonNegative: true }, value: item.purchaseShipping == null ? "—" : fmtMoney(clamp(item.purchaseShipping)) },
+                { label: "Fees", field: { key: "purchaseFees", kind: "money", nonNegative: true }, value: item.purchaseFees == null ? "—" : fmtMoney(clamp(item.purchaseFees)) },
                 { label: "Source", field: { key: "purchaseSource", kind: "text" }, value: detailValue(item.purchaseSource) },
                 { label: "Location", field: { key: "purchaseLocation", kind: "text" }, value: detailValue(item.purchaseLocation) },
                 { label: "Order #", field: { key: "orderNumber", kind: "text" }, value: detailValue(item.orderNumber) },

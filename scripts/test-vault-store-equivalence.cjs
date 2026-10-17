@@ -125,10 +125,23 @@ function snapshotStorage() { return new Map(store); }
 function restoreStorage(snap) { store = new Map(snap); }
 
 // what the app would show, and what is on the device, in a comparable form
+// ONE intended difference from the build this test compares against (2026-10-17): a blank purchase tax / shipping / fee and an
+// unanswered "first edition" now stay unknown (undefined) instead of being saved as 0 / false. Both sides are shown in the old
+// form (0 / false) here so that every OTHER difference still fails the test.
+function canon(list) {
+  if (!Array.isArray(list)) return list;
+  return list.map((item) => {
+    if (!item || typeof item !== "object") return item;
+    const next = { ...item };
+    for (const k of ["purchaseTax", "purchaseShipping", "purchaseFees"]) if (next[k] === undefined || next[k] === null) next[k] = 0;
+    if (next.isFirstEdition === undefined || next.isFirstEdition === null) next.isFirstEdition = false;
+    return next;
+  });
+}
 function observe(page) {
-  const shown = sortKeys(page.model.loadItems({ includeAllProfiles: true }));
+  const shown = sortKeys(canon(page.model.loadItems({ includeAllProfiles: true })));
   const stored = page.local.readVaultLocalJson();
-  return { shown: JSON.stringify(shown), stored: stored ? JSON.stringify(sortKeys(JSON.parse(stored))) : null };
+  return { shown: JSON.stringify(shown), stored: stored ? JSON.stringify(sortKeys(canon(JSON.parse(stored)))) : null };
 }
 
 // a scenario is a list of steps; each step is { name, run(page, which) }. Both builds run it from the same starting storage.
@@ -220,7 +233,7 @@ const item = (page, id) => page.model.loadItems({ includeAllProfiles: true }).fi
     const viaMark = page.model.loadItems({ includeAllProfiles: true });
     const oldPage = (() => { const snap = snapshotStorage(); const p0 = freshPage("old"); p0.model.loadItems({ includeAllProfiles: true }); const p = freshPage("old"); const r = p.model.loadItems({ includeAllProfiles: true }); restoreStorage(snap); return r; })();
     const viaMark2 = freshPage("new").model.loadItems({ includeAllProfiles: true });
-    t("another tab's different list is repaired in full, not trusted because of the old mark", JSON.stringify(sortKeys(viaMark2)) === JSON.stringify(sortKeys(oldPage)), viaMark2.length + " vs " + oldPage.length);
+    t("another tab's different list is repaired in full, not trusted because of the old mark", JSON.stringify(sortKeys(canon(viaMark2))) === JSON.stringify(sortKeys(canon(oldPage))), viaMark2.length + " vs " + oldPage.length);
   }
   {
     // (b) an interrupted save: the new text is stored but the mark was not updated (the mark write fails)
@@ -306,7 +319,7 @@ const item = (page, id) => page.model.loadItems({ includeAllProfiles: true }).fi
     old.model.saveItem({ id: "form-1", profile_id: PROFILE, title: "From the Add Item form", universe: "SPORTS", purchasePrice: 12, addedVia: "manual", images: [], createdAt: Date.UTC(2026, 9, 2) });
     old = freshPage("old");
     const shownOld = sortKeys(old.model.loadItems({ includeAllProfiles: true }).find((x) => x.id === "form-1"));
-    t("the added item reads the same as the old build shows it after its repair step", JSON.stringify(shownNew) === JSON.stringify(shownOld), JSON.stringify(shownNew).slice(0, 200) + " vs " + JSON.stringify(shownOld).slice(0, 200));
+    t("the added item reads the same as the old build shows it after its repair step", JSON.stringify(sortKeys(canon([shownNew])[0])) === JSON.stringify(sortKeys(canon([shownOld])[0])), JSON.stringify(shownNew).slice(0, 200) + " vs " + JSON.stringify(shownOld).slice(0, 200));
     restoreStorage(snap);
   }
 
@@ -333,6 +346,22 @@ const item = (page, id) => page.model.loadItems({ includeAllProfiles: true }).fi
     const editMs = median(newTimes).toFixed(0), editOld = median(oldTimes).toFixed(0);
     t(`1,500 items: saving one edit (median ${editMs} ms) is not slower than before (${editOld} ms)`, Number(editMs) <= Number(editOld) * 1.25 + 2, `${editMs} vs ${editOld}`);
     t("after the edit the copy is still marked (so the next reload is fast too)", freshPage("new").local.isVaultLocalRepaired() === true);
+  }
+
+  // ---- unknown stays unknown; a typed 0 / an answered No stays recorded (the one intended difference from the old build) ----
+  {
+    const base = { title: "Unknown vs zero", universe: "SPORTS", profile_id: PROFILE, status: "COLLECTION", createdAt: 1790899200000, images: [], isNew: false, isPublic: false };
+    seedStore([
+      { ...base, id: "U1" },
+      { ...base, id: "U2", purchasePrice: 0, purchaseTax: 0, purchaseShipping: 0, purchaseFees: 0, isFirstEdition: false },
+      { ...base, id: "U3", purchasePrice: 5, purchaseTax: 1.5, purchaseShipping: 2, purchaseFees: 0.25, isFirstEdition: true },
+    ], false); // not settled by the old build first: the new build reads the raw items itself
+    const shown = freshPage("new").model.loadItems({ includeAllProfiles: true });
+    const U = (id) => shown.find((x) => x.id === id);
+    t("unknown cost parts stay unknown: blank tax / shipping / fees are not turned into 0", U("U1") && U("U1").purchasePrice === undefined && U("U1").purchaseTax === undefined && U("U1").purchaseShipping === undefined && U("U1").purchaseFees === undefined, U("U1"));
+    t("an unanswered 'first edition' stays unknown (not No)", U("U1") && U("U1").isFirstEdition === undefined, U("U1") && U("U1").isFirstEdition);
+    t("a typed 0 stays 0 (price, tax, shipping, fees) and an answered No stays No", U("U2") && U("U2").purchasePrice === 0 && U("U2").purchaseTax === 0 && U("U2").purchaseShipping === 0 && U("U2").purchaseFees === 0 && U("U2").isFirstEdition === false, U("U2"));
+    t("positive amounts and an answered Yes are unchanged", U("U3") && U("U3").purchaseTax === 1.5 && U("U3").purchaseShipping === 2 && U("U3").purchaseFees === 0.25 && U("U3").isFirstEdition === true, U("U3"));
   }
 
   console.log(`\n${pass} passed, ${fail} failed`);
