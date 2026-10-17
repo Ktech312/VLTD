@@ -484,12 +484,14 @@ function mapRowToItems(sheetName: string, rowNumber: number, row: RowRecord) {
   const valueIsRange = (stringify(valueSource).match(/\d+(?:\.\d+)?/g) ?? []).length > 1 && /^[\s$£€¥\d.,\-–—to]+$/i.test(stringify(valueSource));
   if (valueParsed.problem && !valueIsRange) warnings.push(`Current value: ${valueParsed.problem}; no value was taken from it.`);
   if (purchaseParsed.problem) warnings.push(`Purchase price: ${purchaseParsed.problem}; the cost was left blank.`);
+  const purchaseNegative = purchaseParsed.value !== undefined && purchaseParsed.value < 0;
+  if (purchaseNegative) warnings.push(`Purchase price: ${purchaseParsed.value} is negative, and a cost can't be negative; the cost was left blank.`);
   if (askingParsed.problem) warnings.push(`Asking price: ${askingParsed.problem}; no asking price was taken from it.`);
   if (stringify(row.purchaseDate) && !looksLikeDate(row.purchaseDate)) {
     warnings.push(`Purchase date: "${stringify(row.purchaseDate)}" is not a date I can read; it was kept as written in the notes.`);
   }
   const currentValue = valueParsed.value;
-  const purchasePriceRaw = purchaseParsed.value;
+  const purchasePriceRaw = purchaseNegative ? undefined : purchaseParsed.value;
   const askingPrice = askingParsed.value;
   const purchasePrice = purchasePriceRaw ?? 0;
   const missingCost = purchasePriceRaw == null;

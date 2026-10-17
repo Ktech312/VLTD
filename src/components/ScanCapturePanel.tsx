@@ -1,5 +1,6 @@
 "use client";
 
+import { parseCostInput } from "@/lib/costInput";
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { useRouter } from "next/navigation";
 
@@ -446,7 +447,8 @@ export default function ScanCapturePanel({ onClose }: { onClose: () => void }) {
       category: categoryLabel ? categoryCode(categoryLabel) : undefined,
       categoryLabel: categoryLabel || undefined,
       subcategoryLabel: draft.subcategoryLabel || undefined,
-      purchasePrice: parseValue(draft.purchasePrice),
+      // A cost keeps an explicit 0 (blank stays unknown); a negative one never gets here (the sheet refuses it).
+      purchasePrice: parseCostInput(draft.purchasePrice).value,
       currentValue: parseValue(draft.currentValue),
       status: "COLLECTION",
       // AI-detected details, carried through so the item page is populated like a normal scan.
@@ -814,7 +816,7 @@ export default function ScanCapturePanel({ onClose }: { onClose: () => void }) {
           <button
             type="button"
             onClick={handleFinished}
-            className="ml-auto shrink-0 rounded-md px-3.5 py-1.5 text-xs font-bold transition active:scale-95"
+            className="vltd-tap-y ml-auto shrink-0 rounded-md px-3.5 py-1.5 text-xs font-bold transition active:scale-95"
             style={{
               background: "linear-gradient(145deg, #EDEFF1 0%, #C8CDD2 30%, #A8AEB4 60%, #8C9298 100%)",
               color: "#171717",

@@ -22,7 +22,8 @@
     "test:vault-load": "node scripts/test-vault-load.cjs",
     "test:details": "node scripts/test-detail-fields.cjs",
     "test:sell": "node scripts/test-sell-tools.cjs",
-    "build:detail-matrix": "node scripts/build-detail-matrix.cjs"
+    "build:detail-matrix": "node scripts/build-detail-matrix.cjs",
+    "test:costs": "node scripts/test-cost-input.cjs"
   },
   "dependencies": {
     "@imgly/background-removal": "^1.7.0",

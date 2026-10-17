@@ -1,5 +1,6 @@
 "use client";
 
+import { NEGATIVE_COST_MESSAGE, isNegativeCostText } from "@/lib/costInput";
 import { Toggle } from "@/components/ui/Toggle";
 import { pillClassName } from "@/components/ui/PillButton";
 import { effectiveMarketValue, isSupplyItem, itemGain } from "@/lib/vaultStats";
@@ -197,7 +198,7 @@ function Section({
 type InlineRow = {
   label: string;
   /** Present = this row's value can be edited in place. */
-  field?: { key: keyof VaultItem; kind: "text" | "money" };
+  field?: { key: keyof VaultItem; kind: "text" | "money"; /** A cost: a negative amount is refused (blank and 0 are fine). */ nonNegative?: boolean };
   value: React.ReactNode;
 };
 
@@ -224,6 +225,7 @@ function InlineEditSection({
   const [drafts, setDrafts] = useState<Record<string, string>>({});
   const [editingKey, setEditingKey] = useState<string | null>(null);
   const [draft, setDraft] = useState("");
+  const [fieldError, setFieldError] = useState("");
   const skipCommit = useRef(false);
 
   type FieldRow = InlineRow & { field: NonNullable<InlineRow["field"]> };
@@ -244,6 +246,7 @@ function InlineEditSection({
   }
 
   function startAll() {
+    setFieldError("");
     const next: Record<string, string> = {};
     for (const row of fieldRows) next[String(row.field.key)] = rawOf(row);
     setDrafts(next);
@@ -255,13 +258,20 @@ function InlineEditSection({
     const patch: Record<string, string | number | undefined> = {};
     for (const row of fieldRows) {
       const key = String(row.field.key);
+      if (row.field.nonNegative && isNegativeCostText(drafts[key])) {
+        // Stay in edit mode: nothing is saved until every cost is blank, 0 or positive.
+        setFieldError(NEGATIVE_COST_MESSAGE);
+        return;
+      }
       if ((drafts[key] ?? "").trim() !== rawOf(row).trim()) patch[key] = parse(row.field.kind, drafts[key] ?? "");
     }
+    setFieldError("");
     setAll(false);
     if (Object.keys(patch).length) await onSave(patch as Partial<VaultItem>);
   }
 
   function startOne(row: FieldRow) {
+    setFieldError("");
     skipCommit.current = false;
     setDraft(rawOf(row));
     setEditingKey(String(row.field.key));
@@ -269,6 +279,12 @@ function InlineEditSection({
 
   async function commitOne(row: FieldRow) {
     if (skipCommit.current) return;
+    if (row.field.nonNegative && isNegativeCostText(draft)) {
+      // Keep the line open on the wrong value so it can be fixed (Esc cancels).
+      setFieldError(NEGATIVE_COST_MESSAGE);
+      return;
+    }
+    setFieldError("");
     skipCommit.current = true;
     setEditingKey(null);
     if (draft.trim() === rawOf(row).trim()) return;
@@ -292,6 +308,9 @@ function InlineEditSection({
       }
     >
       <div className="grid gap-3 text-sm">
+        {fieldError ? (
+          <div role="alert" className="text-[12px] leading-snug text-red-300">{fieldError}</div>
+        ) : null}
         {rows.map((row) => {
           const field = row.field ? (row as FieldRow) : null;
           const key = field ? String(field.field.key) : "";
@@ -1627,10 +1646,10 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
             item={item}
             onSave={(patch) => persist({ ...item, ...patch })}
             rows={[
-                { label: "Purchase price", field: { key: "purchasePrice", kind: "money" }, value: fmtMoney(clamp(item.purchasePrice)) },
-                { label: "Tax", field: { key: "purchaseTax", kind: "money" }, value: fmtMoney(clamp(item.purchaseTax)) },
-                { label: "Shipping", field: { key: "purchaseShipping", kind: "money" }, value: fmtMoney(clamp(item.purchaseShipping)) },
-                { label: "Fees", field: { key: "purchaseFees", kind: "money" }, value: fmtMoney(clamp(item.purchaseFees)) },
+                { label: "Purchase price", field: { key: "purchasePrice", kind: "money", nonNegative: true }, value: fmtMoney(clamp(item.purchasePrice)) },
+                { label: "Tax", field: { key: "purchaseTax", kind: "money", nonNegative: true }, value: fmtMoney(clamp(item.purchaseTax)) },
+                { label: "Shipping", field: { key: "purchaseShipping", kind: "money", nonNegative: true }, value: fmtMoney(clamp(item.purchaseShipping)) },
+                { label: "Fees", field: { key: "purchaseFees", kind: "money", nonNegative: true }, value: fmtMoney(clamp(item.purchaseFees)) },
                 { label: "Source", field: { key: "purchaseSource", kind: "text" }, value: detailValue(item.purchaseSource) },
                 { label: "Location", field: { key: "purchaseLocation", kind: "text" }, value: detailValue(item.purchaseLocation) },
                 { label: "Order #", field: { key: "orderNumber", kind: "text" }, value: detailValue(item.orderNumber) },

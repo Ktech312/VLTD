@@ -161,6 +161,10 @@ function parseRows(input: string): { validRows: ParsedRow[]; ignoredRows: Ignore
       ignoredRows.push({ lineNumber, raw, reason: "Invalid purchase price." });
       return;
     }
+    if (purchasePrice !== undefined && purchasePrice < 0) {
+      ignoredRows.push({ lineNumber, raw, reason: "Negative purchase price (a cost can't be negative; leave it blank or use 0)." });
+      return;
+    }
 
     const quantity = parseQuantity(quantityRaw || "1");
     if (quantity === undefined) {

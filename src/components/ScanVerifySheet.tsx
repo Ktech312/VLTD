@@ -1,5 +1,6 @@
 "use client";
 
+import { NEGATIVE_COST_MESSAGE, isNegativeCostText } from "@/lib/costInput";
 import { useDialogA11y } from "@/components/ui/useDialogA11y";
 import { useState } from "react";
 import { Glyph } from "@/components/ui/Glyph";
@@ -243,8 +244,13 @@ export default function ScanVerifySheet({
                           onChange={(e) => onPatch(d.id, { purchasePrice: e.target.value })}
                           placeholder="Cost ($)"
                           inputMode="decimal"
+                          aria-label="Cost"
+                          aria-invalid={isNegativeCostText(d.purchasePrice) ? true : undefined}
                           className={`${FIELD_CLS} w-20 shrink-0`}
                         />
+                        {isNegativeCostText(d.purchasePrice) ? (
+                          <span role="alert" className="basis-full text-[12px] leading-snug text-red-300">{NEGATIVE_COST_MESSAGE}</span>
+                        ) : null}
                         <input
                           value={d.currentValue}
                           onChange={(e) => onPatch(d.id, { currentValue: e.target.value })}
@@ -289,7 +295,7 @@ export default function ScanVerifySheet({
           <button
             type="button"
             onClick={onSave}
-            disabled={drafts.length === 0 || committing || scanningId !== null}
+            disabled={drafts.length === 0 || committing || scanningId !== null || drafts.some((d) => isNegativeCostText(d.purchasePrice))}
             className="w-full rounded-2xl py-3 text-sm font-bold disabled:opacity-40"
             style={{ background: "var(--theme-gold, #C8CDD2)", color: "#0A0800" }}
           >

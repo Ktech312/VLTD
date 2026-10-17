@@ -24,7 +24,7 @@ export async function convertWishlistToVault(item: WishlistItem): Promise<VaultI
   const now = Date.now();
   const activeProfileId = getActiveProfileId();
   const targetPrice =
-    typeof item.targetPrice === "number" && Number.isFinite(item.targetPrice)
+    typeof item.targetPrice === "number" && Number.isFinite(item.targetPrice) && item.targetPrice >= 0
       ? item.targetPrice
       : undefined;
 

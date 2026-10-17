@@ -1,5 +1,6 @@
 "use client";
 
+import { NEGATIVE_COST_MESSAGE, isNegativeCostText } from "@/lib/costInput";
 import { useDialogA11y } from "@/components/ui/useDialogA11y";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -2033,6 +2034,10 @@ export default function AddPage() {
       setStatus("Title / Series is required.");
       return;
     }
+    if (isNegativeCostText(normalizedValues.purchasePrice)) {
+      setStatus(NEGATIVE_COST_MESSAGE);
+      return;
+    }
 
     setIsSaving(true);
 
@@ -2392,7 +2397,7 @@ export default function AddPage() {
           ) : null}
 
           {/* Only surface important alerts (saved / errors / limits) — not routine nudges */}
-          {status && (status.startsWith("✓") || /limit|failed|error|required|unavailable|deleted|removed/i.test(status)) ? (
+          {status && (status.startsWith("✓") || /limit|failed|error|required|unavailable|deleted|removed|negative/i.test(status)) ? (
             <div
               className="mt-2 rounded-xl px-3 py-2 text-sm ring-1"
               style={

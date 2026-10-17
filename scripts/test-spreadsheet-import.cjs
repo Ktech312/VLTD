@@ -143,6 +143,16 @@ function fileFrom(name, content, type) {
   const broken = await imp.parseSpreadsheetSource(fileFrom('broken.xlsx', Buffer.from([1,2,3,4,5]), 'application/octet-stream'));
   t('unreadable: a damaged workbook says so', broken.sheets.length === 0 && typeof broken.problem === 'string' && broken.problem.length > 20, broken.problem);
 
+  // ---- negative cost: not imported as a negative; explicit 0 and positive amounts unchanged ----
+  const negCsv = ["Name,Purchase Price,Current Value,Notes", "Neg Cost Item,-5,10,n", "Neg Paren Item,(7.50),10,n", "Zero Item,0,10,n", "Pos Item,12.5,10,n"].join("\n");
+  const negSource = await imp.parseSpreadsheetSource(fileFrom("neg.csv", negCsv, "text/csv"));
+  const negBuilt = imp.buildItemsFromSource(negSource, imp.buildDefaultMappingProfile(negSource));
+  const nb = (title) => negBuilt.items.find((i) => i.title === title);
+  t("negative cost (-5): the cost is not imported as -5", nb("Neg Cost Item") && nb("Neg Cost Item").purchasePrice >= 0, nb("Neg Cost Item") && nb("Neg Cost Item").purchasePrice);
+  t("negative cost (-5): the row is flagged as missing cost and warns why", nb("Neg Cost Item") && nb("Neg Cost Item").missingCost === true && (nb("Neg Cost Item").warnings || []).some((w) => /negative/i.test(w)), nb("Neg Cost Item") && nb("Neg Cost Item").warnings);
+  t("negative cost in brackets ((7.50)) is not imported as a cost either", nb("Neg Paren Item") && nb("Neg Paren Item").purchasePrice >= 0, nb("Neg Paren Item") && nb("Neg Paren Item").purchasePrice);
+  t("explicit 0 and a positive cost are unchanged next to a negative one", nb("Zero Item").purchasePrice === 0 && nb("Zero Item").missingCost === false && nb("Pos Item").purchasePrice === 12.5);
+
   console.log(`\n${pass} passed, ${fail} failed`);
   process.exit(fail ? 1 : 0);
 })();

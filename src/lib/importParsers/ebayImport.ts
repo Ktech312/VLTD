@@ -15,7 +15,16 @@ function money(row: Record<string, unknown>, ...keys: string[]) {
   const value = text(row, ...keys).replace(/[^0-9.-]/g, "");
   if (!value) return undefined;
   const next = Number(value);
-  return Number.isFinite(next) ? next : undefined;
+  if (!Number.isFinite(next)) return undefined;
+  // A cost can't be negative: a negative amount in the file (a refund line, say) is not imported as a cost.
+  if (next < 0) return undefined;
+  return next;
+}
+
+/** True when the file holds a negative amount in one of these columns (such a cost is not imported). */
+function hasNegative(row: Record<string, unknown>, ...keys: string[]) {
+  const value = text(row, ...keys).replace(/[^0-9.-]/g, "");
+  return Boolean(value) && Number(value) < 0;
 }
 
 export function parseEbayImportRow(row: Record<string, unknown>): VaultItem | null {
@@ -32,9 +41,17 @@ export function parseEbayImportRow(row: Record<string, unknown>): VaultItem | nu
     purchaseSource: "eBay",
     purchaseLocation: text(row, "Seller username", "Seller") || "eBay",
     orderNumber: text(row, "Order number", "Order number legacy") || undefined,
-    notes: text(row, "Item number", "Item ID")
+    notes:
+      [
+        text(row, "Item number", "Item ID")
       ? `eBay item: ${text(row, "Item number", "Item ID")}`
       : undefined,
+        hasNegative(row, "Item price", "Purchase price", "Price") || hasNegative(row, "Shipping and handling", "Shipping") || hasNegative(row, "Tax")
+          ? "Import note: a negative amount in the file was not imported (a cost can't be negative)."
+          : undefined,
+      ]
+        .filter(Boolean)
+        .join("\n") || undefined,
     createdAt: Date.now(),
   };
 }
