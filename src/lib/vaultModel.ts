@@ -966,7 +966,11 @@ function saveRawItems(items: VaultItem[], changedIds?: Set<string>): VaultItem[]
   const processedNow: VaultItem[] = [];
   const safeItems = items.map((item) => {
     if (changedIds && reusable && !changedIds.has(String(item.id)) && reusable.has(String(item.id))) return item;
-    const stored = toStorageForm(item);
+    // A brand-new item comes from a form that fills in only some fields; the repair step would add the rest (zero tax, not first edition,
+    // new, private ...) the next time the copy is read, and so make the whole saved copy "not yet repaired". Doing that for this one item
+    // now gives the stored copy the same content without a whole-collection repair on the next load.
+    const brandNew = Boolean(changedIds && reusable && !reusable.has(String(item.id)));
+    const stored = toStorageForm(brandNew ? normalizeOne(item) ?? item : item);
     processedNow.push(stored);
     return stored;
   });

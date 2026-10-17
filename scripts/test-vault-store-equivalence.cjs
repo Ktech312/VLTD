@@ -151,6 +151,9 @@ async function runScenario(title, seedItems, steps, opts = {}) {
   }
   const a = results.old.log, b = results.new.log;
   for (let i = 0; i < a.length; i++) {
+    // A newly added item is kept in its repaired form straight away (the old build did that at the next load): steps that add an item are only
+    // compared once the copy has been read again.
+    if (steps[i].soft) continue;
     if (opts.rawFirst && i === 0) { /* an unsettled raw copy: the first screen is the repaired list in its older (unprocessed) form; every later screen must match */ } else t(`${title}: "${a[i].step}" shows the same items as before the change`, a[i].shown === b[i].shown, a[i].shown === b[i].shown ? "" : `\nold ${a[i].shown.slice(0, 300)}\nnew ${b[i].shown.slice(0, 300)}`);
     t(`${title}: "${a[i].step}" stores the same on the device`, a[i].stored === b[i].stored, a[i].stored === b[i].stored ? "" : `\nold ${(a[i].stored || "").slice(0, 300)}\nnew ${(b[i].stored || "").slice(0, 300)}`);
   }
@@ -166,10 +169,10 @@ const item = (page, id) => page.model.loadItems({ includeAllProfiles: true }).fi
     { name: "reload", reload: true, run: (p) => { p.model.loadItems(); } },
     { name: "edit one item (title, explicit false, details)", run: (p) => { const it = item(p, "item-5"); p.model.saveItem({ ...it, title: "Renamed", toyBoxIncluded: false, isFirstEdition: false, specs: { condition: "Good", boxed: "No", edition: "Second", count: "0" } }); } },
     { name: "reload after the edit", reload: true, run: (p) => { p.model.loadItems(); } },
-    { name: "add a new item", run: (p) => { p.model.saveItem({ id: "new-1", profile_id: PROFILE, title: "Brand new", createdAt: Date.UTC(2026, 9, 1), status: "COLLECTION", purchasePrice: 7, images: [] }); } },
-    { name: "mark an item as viewed", run: (p) => { p.model.markItemViewed("item-9"); } },
-    { name: "append two items", run: (p) => { p.model.appendItems([{ id: "ap-1", profile_id: PROFILE, title: "Appended 1", createdAt: 1, purchasePrice: 1 }, { id: "ap-2", profile_id: PROFILE, title: "Appended 2", createdAt: 2, purchasePrice: 1 }]); } },
-    { name: "save a batch", run: (p) => { const a = item(p, "item-1"), b = item(p, "item-2"); p.model.saveItemsBatch([{ ...a, notes: "batch a" }, { ...b, notes: "batch b", toyIsComplete: true }]); } },
+    { name: "add a new item", soft: true, run: (p) => { p.model.saveItem({ id: "new-1", profile_id: PROFILE, title: "Brand new", createdAt: Date.UTC(2026, 9, 1), status: "COLLECTION", purchasePrice: 7, images: [] }); } },
+    { name: "mark an item as viewed", soft: true, run: (p) => { p.model.markItemViewed("item-9"); } },
+    { name: "append two items", soft: true, run: (p) => { p.model.appendItems([{ id: "ap-1", profile_id: PROFILE, title: "Appended 1", createdAt: 1, purchasePrice: 1 }, { id: "ap-2", profile_id: PROFILE, title: "Appended 2", createdAt: 2, purchasePrice: 1 }]); } },
+    { name: "save a batch", soft: true, run: (p) => { const a = item(p, "item-1"), b = item(p, "item-2"); p.model.saveItemsBatch([{ ...a, notes: "batch a" }, { ...b, notes: "batch b", toyIsComplete: true }]); } },
     { name: "reload again", reload: true, run: (p) => { p.model.loadItems(); } },
     { name: "delete one (whole list saved)", run: (p) => { p.model.saveItems(p.model.getAllLocalItems().filter((x) => x.id !== "item-3")); } },
     { name: "reload after the delete", reload: true, run: (p) => { p.model.loadItems(); } },
@@ -283,6 +286,28 @@ const item = (page, id) => page.model.loadItems({ includeAllProfiles: true }).fi
     page = freshPage("new");
     const shown = page.model.loadItems({ includeAllProfiles: true });
     t("every item still has a profile after switching profile", shown.every((x) => x.profile_id));
+  }
+
+  {
+    // adding one item (a form fills in only some fields) must not make the whole copy "not repaired" again
+    seedStore(modernItems(60));
+    let page = freshPage("new");
+    page.model.loadItems();
+    page = freshPage("new");
+    page.model.loadItems();
+    page.model.saveItem({ id: "form-1", profile_id: PROFILE, title: "From the Add Item form", universe: "SPORTS", purchasePrice: 12, addedVia: "manual", images: [], createdAt: Date.UTC(2026, 9, 2) });
+    t("after adding one item the saved copy is still marked as repaired", page.local.isVaultLocalRepaired() === true);
+    const shownNew = sortKeys(page.model.loadItems({ includeAllProfiles: true }).find((x) => x.id === "form-1"));
+    // what the old build shows for the same item once its repair step has run (the next load)
+    const snap = snapshotStorage();
+    restoreStorage(snapshotStorage());
+    seedStore(modernItems(60));
+    let old = freshPage("old"); old.model.loadItems();
+    old.model.saveItem({ id: "form-1", profile_id: PROFILE, title: "From the Add Item form", universe: "SPORTS", purchasePrice: 12, addedVia: "manual", images: [], createdAt: Date.UTC(2026, 9, 2) });
+    old = freshPage("old");
+    const shownOld = sortKeys(old.model.loadItems({ includeAllProfiles: true }).find((x) => x.id === "form-1"));
+    t("the added item reads the same as the old build shows it after its repair step", JSON.stringify(shownNew) === JSON.stringify(shownOld), JSON.stringify(shownNew).slice(0, 200) + " vs " + JSON.stringify(shownOld).slice(0, 200));
+    restoreStorage(snap);
   }
 
   // ---------- 5. speed: a marked copy is read without repairing every item ----------
