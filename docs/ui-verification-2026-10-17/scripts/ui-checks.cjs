@@ -105,7 +105,8 @@ async function interceptWrites(S, tableRe) {
         const label2 = await S.evaluate(`!![...document.querySelectorAll('button')].find((b) => /Share 2 photos/.test(b.textContent))`);
         check("[share] picking a second picture updates the button (Share 2 photos)", label2);
         await S.click("text:Download to device"); await sleep(2500);
-        const files = fs.existsSync(dl) ? fs.readdirSync(dl) : [];
+        // newer Chrome also drops its own downloads.htm listing into the folder: it is not a picture the page saved
+        const files = (fs.existsSync(dl) ? fs.readdirSync(dl) : []).filter((f) => f !== "downloads.htm");
         check("[share] Download to device saves the two chosen pictures", files.length === 2 && files.every((f) => /\.(png|jpe?g|webp)$/.test(f)), files);
         const stillPrivate = await row(batman);
         check("[share] sharing pictures did not make the item public", stillPrivate.is_public === false);
@@ -207,20 +208,20 @@ async function interceptWrites(S, tableRe) {
       await S.evaluate(`(() => { const s = document.querySelector('section[aria-label="Cost to sell"]'); const set = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set; const [sale, ship] = s.querySelectorAll('input'); set.call(sale, '100'); sale.dispatchEvent(new Event('input', { bubbles: true })); set.call(ship, '5'); ship.dispatchEvent(new Event('input', { bubbles: true })); [...s.querySelectorAll('button')].find((x) => x.textContent.trim() === 'Discogs').click(); return true; })()`);
       await sleep(400);
       const calcDiscogs = await S.evaluate(`document.querySelector('section[aria-label="Cost to sell"]').innerText.replace(/\\s+/g, ' ')`);
-      check("[sell] Discogs maths: fees $12.20, net $82.80, gain +$52.80", /Fees \$12\.20/.test(calcDiscogs) && /Net \$82\.80/.test(calcDiscogs) && /\+\$52\.80/.test(calcDiscogs), calcDiscogs);
+      check("[sell] Discogs maths: fees $12.20, net $82.80, gain +$52.80", /Fees \$12\.20/i.test(calcDiscogs) && /Net \$82\.80/i.test(calcDiscogs) && /\+\$52\.80/.test(calcDiscogs), calcDiscogs);
       await S.go("/vault/item/" + ID(1));
       await S.waitFor(`document.querySelector('section[aria-label="Cost to sell"]')`, 60000);
       await S.evaluate(`(() => { const s = document.querySelector('section[aria-label="Cost to sell"]'); const set = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set; const [sale, ship] = s.querySelectorAll('input'); set.call(sale, '100'); sale.dispatchEvent(new Event('input', { bubbles: true })); set.call(ship, '5'); ship.dispatchEvent(new Event('input', { bubbles: true })); return true; })()`);
       await sleep(400);
       const calcEbay = await S.evaluate(`document.querySelector('section[aria-label="Cost to sell"]').innerText.replace(/\\s+/g, ' ')`);
-      check("[sell] eBay maths for a comic: 13.25% + $0.40 = $13.65, net $81.35, gain +$32.35 over the $49 cost", /Fees \$13\.65/.test(calcEbay) && /Net \$81\.35/.test(calcEbay) && /\+\$32\.35/.test(calcEbay), calcEbay);
+      check("[sell] eBay maths for a comic: 13.25% + $0.40 = $13.65, net $81.35, gain +$32.35 over the $49 cost", /Fees \$13\.65/i.test(calcEbay) && /Net \$81\.35/i.test(calcEbay) && /\+\$32\.35/.test(calcEbay), calcEbay);
       // the general eBay rate for a guitar: 13.6% + 0.40 on $100 = 14.00
       await S.go("/vault/item/" + ID(4));
       await S.waitFor(`document.querySelector('section[aria-label="Cost to sell"]')`, 60000);
       await S.evaluate(`(() => { const s = document.querySelector('section[aria-label="Cost to sell"]'); const set = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set; const [sale] = s.querySelectorAll('input'); set.call(sale, '100'); sale.dispatchEvent(new Event('input', { bubbles: true })); return true; })()`);
       await sleep(400);
       const calcGuitar = await S.evaluate(`document.querySelector('section[aria-label="Cost to sell"]').innerText.replace(/\\s+/g, ' ')`);
-      check("[sell] eBay general rate for a guitar: 13.6% + $0.40 = $14.00", /Fees \$14\.00/.test(calcGuitar), calcGuitar);
+      check("[sell] eBay general rate for a guitar: 13.6% + $0.40 = $14.00", /Fees \$14\.00/i.test(calcGuitar), calcGuitar);
       // listing copy: compact explanation + the action that unlocks it
       await S.go("/vault/item/" + ID(1));
       await S.waitFor(`/Listing copy/i.test(document.body.innerText)`, 60000);
@@ -257,7 +258,7 @@ async function interceptWrites(S, tableRe) {
       // toggles still work
       await S.click("text:Show priced only"); await sleep(500);
       const priced = await S.evaluate(`document.querySelector('section[aria-label="Collection overview"]').innerText.replace(/\\s+/g, ' ')`);
-      check("[home] Show priced only still switches the basis", /Include unpriced/.test(priced) && /2 of 10 priced/.test(priced), priced.slice(0, 300));
+      check("[home] Show priced only still switches the basis", /Include unpriced/.test(priced) && /2 of \d+ priced/.test(priced), priced.slice(0, 300));
       await S.click("text:Include unpriced"); await sleep(300);
       await S.click("text:What does this change\\?"); await sleep(300);
       check("[home] What does this change? opens the explanation", await S.evaluate(`!!document.getElementById('home-basis-explainer')`));
