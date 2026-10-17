@@ -1321,12 +1321,15 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
                       { label: "Sold Price", value: fmtMoney(clamp(displayedSale.soldPrice)) },
                       {
                         label: "Profit / Loss",
-                        value: (
-                          <span className={saleProfit >= 0 ? "text-green-400" : "text-red-400"}>
-                            {saleProfit >= 0 ? "+" : ""}
-                            {fmtMoney(saleProfit)}
-                          </span>
-                        ),
+                        value:
+                          item.purchasePrice === undefined || item.purchasePrice === null ? (
+                            <span className="text-[color:var(--muted)]" title="No purchase price is recorded for this item, so its profit is unknown.">Unknown (no cost recorded)</span>
+                          ) : (
+                            <span className={saleProfit >= 0 ? "text-green-400" : "text-red-400"}>
+                              {saleProfit >= 0 ? "+" : ""}
+                              {fmtMoney(saleProfit)}
+                            </span>
+                          ),
                       },
                       {
                         label: "Sold Date",

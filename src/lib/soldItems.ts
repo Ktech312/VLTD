@@ -33,9 +33,20 @@ export type SoldItem = {
 export type SoldStats = {
   count: number;
   realizedRevenue: number;
+  /** Purchase cost of the sales whose cost is known. */
   totalCost: number;
+  /** Profit of the sales whose cost is known (a sale with no recorded cost is left out, not counted as pure profit). */
   totalProfit: number;
+  /** How many sales have a recorded cost (an explicit 0 counts). */
+  profitCount: number;
+  /** How many sales have no recorded cost, so their profit is unknown. */
+  unknownCostCount: number;
 };
+
+/** True when a purchase price was recorded (an explicit 0 counts). A sale without one has an unknown profit, not a profit equal to its price. */
+export function hasKnownCost(i: SoldItem) {
+  return i.purchasePrice !== undefined && i.purchasePrice !== null && Number.isFinite(Number(i.purchasePrice));
+}
 
 export function cost(i: SoldItem) {
   return (
@@ -132,14 +143,18 @@ export function buildSoldItems(items: VaultItem[] = loadItems()) {
 export function soldStats(items: SoldItem[]): SoldStats {
   return items.reduce(
     (stats, item) => {
-      const itemCost = cost(item);
       stats.count += 1;
       stats.realizedRevenue += Number(item.soldPrice ?? 0);
-      stats.totalCost += itemCost;
-      stats.totalProfit += profitOf(item);
+      if (hasKnownCost(item)) {
+        stats.totalCost += cost(item);
+        stats.totalProfit += profitOf(item);
+        stats.profitCount += 1;
+      } else {
+        stats.unknownCostCount += 1;
+      }
       return stats;
     },
-    { count: 0, realizedRevenue: 0, totalCost: 0, totalProfit: 0 }
+    { count: 0, realizedRevenue: 0, totalCost: 0, totalProfit: 0, profitCount: 0, unknownCostCount: 0 }
   );
 }
 

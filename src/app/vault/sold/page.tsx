@@ -13,12 +13,12 @@ import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 import { UNIVERSE_LABEL, type UniverseKey } from "@/lib/taxonomy";
 import { getPrimaryImageUrl, loadItems, saveItem, syncVaultItemsFromSupabase, type VaultItem } from "@/lib/vaultModel";
 import { enqueueVaultItemSync, processVaultSyncQueue } from "@/lib/vaultSyncQueue";
-import { SALES_KEY, buildSoldItems, cost, profitOf, readSales, removeSaleRecord, saleFees, soldStats, writeSales, type SoldItem } from "@/lib/soldItems";
+import { SALES_KEY, buildSoldItems, cost, hasKnownCost, profitOf, readSales, removeSaleRecord, saleFees, soldStats, writeSales, type SoldItem } from "@/lib/soldItems";
 
 
 function money(n: number) {
   if (!Number.isFinite(n)) return "$0";
-  return `$${Math.round(n).toLocaleString()}`;
+  return `${n < 0 && Math.round(n) !== 0 ? "-" : ""}$${Math.abs(Math.round(n)).toLocaleString()}`;
 }
 
 
@@ -101,7 +101,7 @@ function groupByMonth(items: SoldItem[]) {
     const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
     const prev = map.get(key) ?? { revenue: 0, profit: 0, count: 0 };
     prev.revenue += Number(item.soldPrice ?? 0);
-    prev.profit += profitOf(item);
+    if (hasKnownCost(item)) prev.profit += profitOf(item);
     prev.count += 1;
     map.set(key, prev);
   }
@@ -116,7 +116,7 @@ function groupByUniverse(items: SoldItem[]) {
     const u = UNIVERSE_LABEL[inferSoldUniverse(item)] ?? "Other";
     const prev = map.get(u) ?? { revenue: 0, profit: 0, count: 0 };
     prev.revenue += Number(item.soldPrice ?? 0);
-    prev.profit += profitOf(item);
+    if (hasKnownCost(item)) prev.profit += profitOf(item);
     prev.count += 1;
     map.set(u, prev);
   }
@@ -173,12 +173,14 @@ function AnalyticsPanel({ items }: { items: SoldItem[] }) {
   const byUniverse = groupByUniverse(items);
   const roiPct = items.length > 0
     ? (() => {
-        const net = items.reduce((s, i) => s + profitOf(i), 0);
-        const c = items.reduce((s, i) => s + cost(i), 0);
+        // Only sales with a recorded cost: a sale with no cost is not "all profit".
+        const known = items.filter(hasKnownCost);
+        const net = known.reduce((s, i) => s + profitOf(i), 0);
+        const c = known.reduce((s, i) => s + cost(i), 0);
         return c > 0 ? (net / c) * 100 : null;
       })()
     : null;
-  const bestItem = [...items].sort((a, b) => profitOf(b) - profitOf(a))[0];
+  const bestItem = [...items].filter(hasKnownCost).sort((a, b) => profitOf(b) - profitOf(a))[0];
 
   if (items.length === 0) return null;
 
@@ -360,10 +362,16 @@ function SoldCard({
       <div className="mt-auto flex items-end justify-between gap-2 pt-2">
         <div className="min-w-0">
           <div className="text-[13px] font-extrabold leading-none text-text-primary">{money(item.soldPrice)}</div>
-          <div className={profit >= 0 ? "mt-1 text-[10px] font-bold leading-none text-emerald-300" : "mt-1 text-[10px] font-bold leading-none text-red-300"}>
-            {profit >= 0 ? "+" : ""}
-            {money(profit)}
-          </div>
+          {hasKnownCost(item) ? (
+            <div className={profit >= 0 ? "mt-1 text-[10px] font-bold leading-none text-emerald-300" : "mt-1 text-[10px] font-bold leading-none text-red-300"}>
+              {profit >= 0 ? "+" : ""}
+              {money(profit)}
+            </div>
+          ) : (
+            <div className="mt-1 text-[10px] font-semibold leading-none text-[color:var(--muted2)]" title="No purchase price is recorded for this item, so its profit is unknown.">
+              Profit unknown (no cost)
+            </div>
+          )}
           <div
             className="mt-1 truncate text-[9px] font-semibold text-[color:var(--muted2)]"
             title={fees > 0 ? `Profit is after about ${money(fees)} in ${item.soldPlatform} seller fees (estimate from current fee tables)` : undefined}

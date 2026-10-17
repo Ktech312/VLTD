@@ -241,7 +241,7 @@ export default function HomeClient() {
   // Realized sales: the same numbers as /vault/sold (shared code). Never mixed with the estimates above.
   const sales = useMemo(() => {
     const s = soldStats(buildSoldItems(items));
-    return { count: s.count, revenue: s.realizedRevenue, profit: s.totalProfit };
+    return { count: s.count, revenue: s.realizedRevenue, profit: s.totalProfit, profitCount: s.profitCount, unknownCostCount: s.unknownCostCount };
   }, [items]);
   const [basisOpen, setBasisOpen] = useState(false);
   const soldRows = useMemo(() => buildSoldItems(items), [items]);
@@ -380,7 +380,12 @@ export default function HomeClient() {
                   caption={sales.count > 0 ? `${sales.count} sold` : "No sales yet"}
                   extra={sales.count > 0 ? (
                     <span style={{ fontSize: 12, lineHeight: 1.35, color: C.muted }}>
-                      Profit <b style={{ color: sales.profit >= 0 ? C.green : C.red }}>{sales.profit >= 0 ? "+" : "-"}{formatMoney(Math.abs(sales.profit))}</b> after estimated fees
+                      {sales.profitCount > 0 ? (
+                        <>Profit <b style={{ color: sales.profit >= 0 ? C.green : C.red }}>{sales.profit >= 0 ? "+" : "-"}{formatMoney(Math.abs(sales.profit))}</b> after estimated fees</>
+                      ) : (
+                        <>Profit unknown: no cost recorded</>
+                      )}
+                      {sales.unknownCostCount > 0 && sales.profitCount > 0 ? <>. Not counted: {sales.unknownCostCount} sold without a recorded cost</> : null}
                     </span>
                   ) : undefined}
                   go="Sales analytics"
@@ -405,7 +410,7 @@ export default function HomeClient() {
                     <>
                       <MonthColumns months={salesMonths} />
                       <span style={{ fontSize: 12, color: C.muted }}>
-                        {formatMoney(sales.revenue)} from {sales.count} sold · profit <b style={{ color: sales.profit >= 0 ? C.green : C.red }}>{sales.profit >= 0 ? "+" : "-"}{formatMoney(Math.abs(sales.profit))}</b> after estimated fees
+                        {formatMoney(sales.revenue)} from {sales.count} sold · {sales.profitCount > 0 ? (<>profit <b style={{ color: sales.profit >= 0 ? C.green : C.red }}>{sales.profit >= 0 ? "+" : "-"}{formatMoney(Math.abs(sales.profit))}</b> after estimated fees{sales.unknownCostCount > 0 ? <> (not counting {sales.unknownCostCount} sold without a recorded cost)</> : null}</>) : <>profit unknown: no cost recorded</>}
                       </span>
                     </>
                   )}
