@@ -5,6 +5,9 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import AddItemActions from "@/components/AddItemActions";
+import ExhibitionCarousel from "@/components/home/ExhibitionCarousel";
+import { loadActivityEvents, type ActivityEventRecord } from "@/lib/activityEvents";
+import { UNIVERSE_LABEL, isUniverseKey } from "@/lib/taxonomy";
 import SeasonalBanner from "@/components/SeasonalBanner";
 import { PillButton } from "@/components/ui/PillButton";
 import { Glyph } from "@/components/ui/Glyph";
@@ -84,30 +87,86 @@ function MoneyTile({ href, label, value, tone = "default", ghost = false, captio
   );
 }
 
-// ── A labelled destination: where the detail behind the summary lives ──
-function DestinationCard({ href, title, text, glyph }: { href: string; title: string; text: string; glyph: "chart" | "tag" | "clock" }) {
+// ── A summary panel that is also the link to the full page behind it ──
+function SummaryPanel({ href, title, glyph, children }: { href: string; title: string; glyph: "chart" | "tag" | "clock"; children: React.ReactNode }) {
   return (
     <Link
       href={href}
-      className="flex min-h-[44px] items-start gap-3 rounded-[8px] p-3 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[color:var(--pill-active-ring)]"
+      className="flex min-h-[44px] min-w-0 flex-col gap-2 rounded-[8px] p-3 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[color:var(--pill-active-ring)]"
       style={{ border: `1px solid ${C.bd2}`, background: C.elevated, textDecoration: "none", color: "inherit" }}
     >
-      <span style={{ flex: "none", color: C.gold, marginTop: 1 }}><Glyph name={glyph} size={22} /></span>
-      <span style={{ minWidth: 0 }}>
-        <span style={{ display: "block", fontSize: 14, fontWeight: 800 }}>{title} ›</span>
-        <span style={{ display: "block", fontSize: 12, color: C.muted, lineHeight: 1.35 }}>{text}</span>
+      <span style={{ display: "flex", alignItems: "center", gap: 8, color: C.gold }}>
+        <Glyph name={glyph} size={18} />
+        <span style={{ fontSize: 14, fontWeight: 800, color: C.text }}>{title} ›</span>
       </span>
+      {children}
     </Link>
   );
 }
 
+// A row of labelled bars drawn from real numbers: label, bar (width = share of the largest), value.
+function MiniBars({ rows }: { rows: { label: string; value: number; text: string }[] }) {
+  const max = Math.max(1, ...rows.map((r) => r.value));
+  return (
+    <span style={{ display: "flex", flexDirection: "column", gap: 5 }}>
+      {rows.map((r) => (
+        <span key={r.label} style={{ display: "grid", gridTemplateColumns: "minmax(0,92px) 1fr auto", alignItems: "center", gap: 8, fontSize: 12 }}>
+          <span style={{ color: C.muted, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{r.label}</span>
+          <span aria-hidden="true" style={{ height: 8, borderRadius: 4, background: C.bd2, overflow: "hidden" }}>
+            <span style={{ display: "block", height: "100%", width: `${Math.max(3, Math.round((r.value / max) * 100))}%`, background: C.gold, borderRadius: 4 }} />
+          </span>
+          <span style={{ color: C.text, fontVariantNumeric: "tabular-nums" }}>{r.text}</span>
+        </span>
+      ))}
+    </span>
+  );
+}
+
+// Month columns for the sales panel: the last six calendar months, heights relative to the best month.
+function MonthColumns({ months }: { months: { label: string; revenue: number }[] }) {
+  const max = Math.max(1, ...months.map((m) => m.revenue));
+  return (
+    <span style={{ display: "grid", gridTemplateColumns: `repeat(${months.length}, 1fr)`, alignItems: "end", gap: 6, height: 64 }} role="img" aria-label={"Revenue by month: " + months.map((m) => `${m.label} ${formatMoney(m.revenue)}`).join(", ")}>
+      {months.map((m) => (
+        <span key={m.label} style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "flex-end", height: "100%", gap: 3 }}>
+          <span aria-hidden="true" style={{ width: "100%", maxWidth: 28, height: m.revenue > 0 ? `${Math.max(6, Math.round((m.revenue / max) * 44))}px` : "2px", background: m.revenue > 0 ? C.gold : C.bd2, borderRadius: 3 }} />
+          <span aria-hidden="true" style={{ fontSize: 10, color: C.muted }}>{m.label}</span>
+        </span>
+      ))}
+    </span>
+  );
+}
+
+// A quiet text control (no pill around it) with a 44px touch area on a phone.
+function TextAction({ onClick, children, ariaExpanded, ariaControls }: { onClick: () => void; children: React.ReactNode; ariaExpanded?: boolean; ariaControls?: string }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-expanded={ariaExpanded}
+      aria-controls={ariaControls}
+      className="min-h-[44px] rounded-[4px] px-1 text-[12px] font-semibold underline underline-offset-2 hover:opacity-80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[color:var(--pill-active-ring)] md:min-h-0"
+      style={{ color: C.gold, background: "transparent" }}
+    >
+      {children}
+    </button>
+  );
+}
+
 // ── Card with a header: label on the left, one link on the right ──
-function Block({ label, link, children }: { label: string; link?: { href: string; text: string }; children: React.ReactNode }) {
+function Block({ label, link, labelLink, action, children }: { label: string; link?: { href: string; text: string }; labelLink?: { href: string; text: string; ariaLabel: string }; action?: React.ReactNode; children: React.ReactNode }) {
   return (
     <section style={{ background: panelBg, border: premiumBorder, borderRadius: 8, overflow: "hidden", boxShadow: premiumShadow }}>
       <div style={{ padding: "12px 16px", borderBottom: `1px solid ${C.bd2}`, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
-        <h2 style={{ fontSize: 10, letterSpacing: "1.8px", textTransform: "uppercase", color: C.muted, fontWeight: 800 }}>{label}</h2>
-        {link ? <PillButton href={link.href}>{link.text}</PillButton> : null}
+        <div style={{ display: "flex", alignItems: "center", gap: 14, minWidth: 0, flexWrap: "wrap" }}>
+          <h2 style={{ fontSize: 10, letterSpacing: "1.8px", textTransform: "uppercase", color: C.muted, fontWeight: 800 }}>{label}</h2>
+          {labelLink ? (
+            <Link href={labelLink.href} aria-label={labelLink.ariaLabel} className="inline-flex min-h-[44px] items-center rounded-[4px] text-[12px] font-semibold hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[color:var(--pill-active-ring)] md:min-h-0" style={{ color: C.gold, textDecoration: "none" }}>
+              {labelLink.text} →
+            </Link>
+          ) : null}
+        </div>
+        {action ?? (link ? <PillButton href={link.href}>{link.text}</PillButton> : null)}
       </div>
       {children}
     </section>
@@ -126,6 +185,7 @@ export default function HomeClient() {
   // null = still loading, "error" = could not load, array = loaded
   const [posts, setPosts] = useState<LoungePost[] | "error" | null>(null);
   const [pendingSync, setPendingSync] = useState(0);
+  const [logged, setLogged] = useState<ActivityEventRecord[]>([]);
 
   useEffect(() => {
     let active = true;
@@ -144,6 +204,7 @@ export default function HomeClient() {
         if (!active) return;
         setItems(loadItems());
         setPendingSync(getPendingVaultSyncCount());
+        try { setLogged(loadActivityEvents()); } catch { setLogged([]); }
         void refreshGalleriesFromSupabase(true).then(() => {
           if (active) setGalleries(loadGalleries().filter((g) => g.state === "ACTIVE"));
         });
@@ -183,6 +244,7 @@ export default function HomeClient() {
     return { count: s.count, revenue: s.realizedRevenue, profit: s.totalProfit };
   }, [items]);
   const [basisOpen, setBasisOpen] = useState(false);
+  const soldRows = useMemo(() => buildSoldItems(items), [items]);
 
   // Recently added and the price-check notice describe what you currently own: sold, supply and wishlist records are left out,
   // the same rule the Vault, Insights and the recap use.
@@ -219,6 +281,38 @@ export default function HomeClient() {
   if (pendingSync > 0) notices.push({ key: "sync", text: `${pendingSync} change${pendingSync === 1 ? "" : "s"} waiting to upload to your account.`, href: "/account?section=data", cta: "Review sync" });
   if (staleChecks > 0) notices.push({ key: "price", text: `${staleChecks} valued item${staleChecks === 1 ? " has" : "s have"} not had a price check in 6 months.`, href: "/vault", cta: "Open Vault" });
 
+  // Summary panels: only numbers that already exist in this account. Nothing is estimated or looked up.
+  const mix = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const item of owned) {
+      const key = isUniverseKey(String(item.universe ?? "").toUpperCase()) ? String(item.universe).toUpperCase() : "MISC";
+      counts.set(key, (counts.get(key) ?? 0) + 1);
+    }
+    const rows = [...counts.entries()].sort((a, b) => b[1] - a[1]);
+    return { total: owned.length, kinds: rows.length, top: rows.slice(0, 4).map(([key, value]) => ({ label: UNIVERSE_LABEL[key as keyof typeof UNIVERSE_LABEL] ?? key, value, text: String(value) })) };
+  }, [owned]);
+  const salesMonths = useMemo(() => {
+    const now = new Date();
+    const months = Array.from({ length: 6 }, (_, i) => {
+      const d = new Date(now.getFullYear(), now.getMonth() - (5 - i), 1);
+      return { key: d.getFullYear() * 12 + d.getMonth(), label: d.toLocaleDateString("en-US", { month: "short" }), revenue: 0 };
+    });
+    for (const row of soldRows) {
+      const when = new Date(Number(row.soldAt));
+      const key = when.getFullYear() * 12 + when.getMonth();
+      const bucket = months.find((m) => m.key === key);
+      if (bucket) bucket.revenue += Number(row.soldPrice ?? 0);
+    }
+    return months;
+  }, [soldRows]);
+  const recentActivity = useMemo(() => {
+    const rows: { id: string; text: string; at: number }[] = [];
+    for (const item of owned) { const at = Number(item.createdAt ?? 0); if (at > 0) rows.push({ id: "a" + item.id, text: `Added ${item.title || "an item"}`, at }); }
+    for (const sold of soldRows) { const at = Number(sold.soldAt); if (at > 0) rows.push({ id: "s" + sold.id, text: `Sold ${sold.title || "an item"} for ${formatMoney(Number(sold.soldPrice ?? 0))}`, at }); }
+    for (const event of logged) { if (event.timestamp > 0) rows.push({ id: "e" + event.id, text: [event.subtitle, event.title].filter(Boolean).join(": "), at: event.timestamp }); }
+    return rows.sort((a, b) => b.at - a.at).slice(0, 4);
+  }, [owned, soldRows, logged]);
+
   const learn = LEARN_ARTICLES[0];
 
   if (loading) return (
@@ -238,22 +332,43 @@ export default function HomeClient() {
 
         <SeasonalBanner />
 
-        {/* 1. Collection overview: item count, four separate money figures, labelled destinations, entry controls */}
-        <section aria-label="Collection overview" style={{ background: C.elevated, border: premiumBorder, borderRadius: 10, padding: "24px 26px", boxShadow: premiumShadow }}>
-          <div style={{ fontSize: 11, color: C.muted, letterSpacing: "0.16em", textTransform: "uppercase", fontWeight: 800 }}>
-            {stats.totalItems === 0 ? "Your vault is ready," : "Welcome back,"}
+        {/* 1. Collection overview: heading with the add controls beside it, four separate money figures with the value-basis controls above them, then three summary panels that each open their full page */}
+        <section aria-label="Collection overview" style={{ background: C.elevated, border: premiumBorder, borderRadius: 10, padding: "20px 24px 22px", boxShadow: premiumShadow }}>
+          <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 16, flexWrap: "wrap" }}>
+            <div style={{ minWidth: 0 }}>
+              <div style={{ fontSize: 11, color: C.muted, letterSpacing: "0.16em", textTransform: "uppercase", fontWeight: 800 }}>
+                {stats.totalItems === 0 ? "Your vault is ready," : "Welcome back,"}
+              </div>
+              <h1 style={{ fontFamily: C.r, fontSize: 36, fontWeight: 700, lineHeight: 1.05, marginTop: 4 }}>{displayName || "Curator"}</h1>
+              {stats.totalItems === 0 && sales.count === 0 ? null : (
+                <div style={{ marginTop: 8 }}>
+                  <PillButton href="/vault" ariaLabel={`Open your Vault: ${stats.totalItems} ${stats.totalItems === 1 ? "item" : "items"}`}>{stats.totalItems} {stats.totalItems === 1 ? "item" : "items"} · Open Vault</PillButton>
+                </div>
+              )}
+            </div>
+            <span className="hidden md:inline-flex"><AddItemActions /></span>
           </div>
-          <h1 style={{ fontFamily: C.r, fontSize: 36, fontWeight: 700, lineHeight: 1.05, marginTop: 6 }}>{displayName || "Curator"}</h1>
 
           {stats.totalItems === 0 && sales.count === 0 ? (
             <p style={{ fontSize: 15, color: C.muted, marginTop: 10 }}>Scan your first item to start building a real collection record.</p>
           ) : (
             <>
-              <div style={{ marginTop: 10 }}>
-                <PillButton href="/vault" ariaLabel={`Open your Vault: ${stats.totalItems} ${stats.totalItems === 1 ? "item" : "items"}`}>{stats.totalItems} {stats.totalItems === 1 ? "item" : "items"} · Open Vault</PillButton>
+              <div style={{ marginTop: 14, display: "flex", alignItems: "center", justifyContent: "space-between", gap: "2px 16px", flexWrap: "wrap" }}>
+                <h2 style={{ fontSize: 11, color: C.muted, letterSpacing: "0.16em", textTransform: "uppercase", fontWeight: 800 }}>Collection overview</h2>
+                <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", fontSize: 12, color: C.muted }}>
+                  <span>Value basis: {basis}</span>
+                  <TextAction onClick={toggleValueMode}>{valueMode === "fill" ? "Show priced only" : "Include unpriced"}</TextAction>
+                  <TextAction onClick={() => setBasisOpen((open) => !open)} ariaExpanded={basisOpen} ariaControls="home-basis-explainer">What does this change?</TextAction>
+                </div>
               </div>
-
-              <h2 style={{ marginTop: 20, fontSize: 11, color: C.muted, letterSpacing: "0.16em", textTransform: "uppercase", fontWeight: 800 }}>Collection overview</h2>
+              {basisOpen ? (
+                <div id="home-basis-explainer" style={{ marginTop: 8, border: `1px solid ${C.bd2}`, borderRadius: 8, padding: "10px 12px", fontSize: 12.5, color: C.muted, lineHeight: 1.45 }}>
+                  <p><b style={{ color: C.text }}>Purchase cost</b>: every item you own. The setting does not change it.</p>
+                  <p style={{ marginTop: 6 }}><b style={{ color: C.text }}>Estimated value</b>: <i>Include unpriced</i> counts items without a value at their purchase price, in grey. <i>Priced only</i> leaves them out, so the number is smaller.</p>
+                  <p style={{ marginTop: 6 }}><b style={{ color: C.text }}>Unrealized change</b>: value minus cost, measured only on items that have both a value and a recorded cost (the caption says how many, their cost, and what was not counted: no value, no recorded cost, or a price entered as $0). The setting does not change it.</p>
+                  <p style={{ marginTop: 6 }}><b style={{ color: C.text }}>Sales revenue</b>: real sales only, never mixed with estimates. Profit is after estimated seller fees. The setting does not change it. Sold items are never in the other three figures.</p>
+                </div>
+              ) : null}
               <div className="mt-2 grid grid-cols-2 gap-2.5 lg:grid-cols-4">
                 <MoneyTile href="/portfolio#cost-breakdown" label="Purchase cost" value={formatMoney(stats.totalCost)} caption="What you paid, with tax, shipping and fees" go="Cost breakdown" />
                 <MoneyTile href="/portfolio#value-history" label="Estimated value" value={valueMode === "priced" && stats.pricedCount === 0 ? "—" : formatMoney(stats.totalValue)} tone="gold" ghost={valueIsGhost} caption={valueCaption} go="Value history" />
@@ -272,32 +387,46 @@ export default function HomeClient() {
                 />
               </div>
 
-              <div style={{ marginTop: 10, display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-                <span style={{ fontSize: 12, color: C.muted }}>Value basis: {basis}</span>
-                <PillButton onClick={toggleValueMode}>{valueMode === "fill" ? "Show priced only" : "Include unpriced"}</PillButton>
-                <PillButton onClick={() => setBasisOpen((open) => !open)} ariaExpanded={basisOpen} ariaControls="home-basis-explainer">What does this change?</PillButton>
-              </div>
-              {basisOpen ? (
-                <div id="home-basis-explainer" style={{ marginTop: 10, border: `1px solid ${C.bd2}`, borderRadius: 8, padding: "10px 12px", fontSize: 12.5, color: C.muted, lineHeight: 1.45 }}>
-                  <p><b style={{ color: C.text }}>Purchase cost</b>: every item you own. The setting does not change it.</p>
-                  <p style={{ marginTop: 6 }}><b style={{ color: C.text }}>Estimated value</b>: <i>Include unpriced</i> counts items without a value at their purchase price, in grey. <i>Priced only</i> leaves them out, so the number is smaller.</p>
-                  <p style={{ marginTop: 6 }}><b style={{ color: C.text }}>Unrealized change</b>: value minus cost, measured only on items that have both a value and a recorded cost (the caption says how many, their cost, and what was not counted: no value, no recorded cost, or a price entered as $0). The setting does not change it.</p>
-                  <p style={{ marginTop: 6 }}><b style={{ color: C.text }}>Sales revenue</b>: real sales only, never mixed with estimates. Profit is after estimated seller fees. The setting does not change it. Sold items are never in the other three figures.</p>
-                </div>
-              ) : null}
-
-              <h2 style={{ marginTop: 20, fontSize: 11, color: C.muted, letterSpacing: "0.16em", textTransform: "uppercase", fontWeight: 800 }}>Go deeper</h2>
-              <div className="mt-2 grid grid-cols-1 gap-2.5 sm:grid-cols-3">
-                <DestinationCard href="/portfolio" title="Insights" text="Value history, biggest movers, stale prices and documentation" glyph="chart" />
-                <DestinationCard href="/vault/sold#sales-analytics" title="Sales analytics" text="Revenue and profit after estimated fees, by month" glyph="tag" />
-                <DestinationCard href="/activity" title="Activity" text="Recent value changes, sales and additions" glyph="clock" />
+              <div className="mt-3 grid grid-cols-1 gap-2.5 sm:grid-cols-3">
+                <SummaryPanel href="/portfolio" title="Insights" glyph="chart">
+                  {mix.total === 0 ? (
+                    <span style={{ fontSize: 12, color: C.muted }}>Add items to see how your collection is spread out.</span>
+                  ) : (
+                    <>
+                      <MiniBars rows={mix.top} />
+                      <span style={{ fontSize: 12, color: C.muted }}>{mix.total} {mix.total === 1 ? "item" : "items"} across {mix.kinds} {mix.kinds === 1 ? "universe" : "universes"}</span>
+                    </>
+                  )}
+                </SummaryPanel>
+                <SummaryPanel href="/vault/sold#sales-analytics" title="Sales analytics" glyph="tag">
+                  {sales.count === 0 ? (
+                    <span style={{ fontSize: 12, color: C.muted }}>No sales yet. Sales you record show up here by month.</span>
+                  ) : (
+                    <>
+                      <MonthColumns months={salesMonths} />
+                      <span style={{ fontSize: 12, color: C.muted }}>
+                        {formatMoney(sales.revenue)} from {sales.count} sold · profit <b style={{ color: sales.profit >= 0 ? C.green : C.red }}>{sales.profit >= 0 ? "+" : "-"}{formatMoney(Math.abs(sales.profit))}</b> after estimated fees
+                      </span>
+                    </>
+                  )}
+                </SummaryPanel>
+                <SummaryPanel href="/activity" title="Activity" glyph="clock">
+                  {recentActivity.length === 0 ? (
+                    <span style={{ fontSize: 12, color: C.muted }}>No activity yet. Additions, sales and value changes appear here.</span>
+                  ) : (
+                    <span style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                      {recentActivity.map((row) => (
+                        <span key={row.id} style={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) auto", gap: 8, fontSize: 12 }}>
+                          <span style={{ color: C.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{row.text}</span>
+                          <span style={{ color: C.muted }}>{timeAgo(row.at)}</span>
+                        </span>
+                      ))}
+                    </span>
+                  )}
+                </SummaryPanel>
               </div>
             </>
           )}
-
-          <div style={{ display: "flex", gap: 8, marginTop: 20, flexWrap: "wrap", alignItems: "center" }}>
-            <span className="hidden md:inline-flex"><AddItemActions /></span>
-          </div>
         </section>
 
         {/* Notices appear only when there is something to act on */}
@@ -339,27 +468,17 @@ export default function HomeClient() {
           )}
         </Block>
 
-        {/* 3. Your exhibitions: one compact preview */}
-        <Block label="Your exhibitions" link={{ href: "/museum", text: "View all" }}>
-          <div style={{ padding: 14, display: "flex", gap: 14, alignItems: "center", flexWrap: "wrap" }}>
-            {galleries.length > 0 ? (
-              <Link href={"/gallery/" + galleries[0].id} style={{ display: "flex", gap: 12, alignItems: "center", textDecoration: "none", flex: "1 1 260px", minWidth: 0 }}>
-                <div style={{ width: 96, height: 72, borderRadius: 6, overflow: "hidden", border: `1px solid ${C.bd}`, background: C.card, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", color: C.muted }}>
-                  {galleries[0].coverImage ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={galleries[0].coverImage} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                  ) : <Glyph name="exhibition" size={22} />}
-                </div>
-                <div style={{ minWidth: 0 }}>
-                  <div style={{ fontFamily: C.r, fontSize: 18, fontWeight: 700, color: C.text, lineHeight: 1.1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{galleries[0].title || "Untitled"}</div>
-                  <div style={{ fontSize: 12, color: C.muted, marginTop: 3 }}>{galleries[0].itemIds?.length ?? 0} piece{(galleries[0].itemIds?.length ?? 0) === 1 ? "" : "s"}</div>
-                </div>
-              </Link>
-            ) : (
-              <div style={{ flex: "1 1 260px", fontSize: 13, color: C.muted }}>No exhibitions yet. Show a few pieces from your vault.</div>
-            )}
-            <PillButton href="/museum/new">Create exhibition</PillButton>
-          </div>
+        {/* 3. Your exhibitions: flip through all of them; Create sits in the header, a labelled arrow opens the full page */}
+        <Block
+          label="Your exhibitions"
+          labelLink={{ href: "/museum", text: "All exhibitions", ariaLabel: "Open all exhibitions" }}
+          action={<PillButton href="/museum/new">Create exhibition</PillButton>}
+        >
+          {galleries.length > 0 ? (
+            <ExhibitionCarousel galleries={galleries} />
+          ) : (
+            <div style={quiet}>No exhibitions yet. Show a few pieces from your vault.</div>
+          )}
         </Block>
 
         {/* 4 and 5. From the Lounge, and a Learn preview */}
