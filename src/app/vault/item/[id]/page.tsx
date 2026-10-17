@@ -70,9 +70,11 @@ import {
   getSubcategories,
   getUniverses,
   isUniverseKey,
+  resolveCategoryLabel,
   UNIVERSE_LABEL,
   type UniverseKey,
 } from "@/lib/taxonomy";
+import { setItemPublic } from "@/lib/itemVisibility";
 import { fetchRegistrySubjects, type RegistrySubject } from "@/lib/registryModel";
 import ListingReadinessPanel from "@/components/ListingReadinessPanel";
 import GenerateCopyPanel from "@/components/GenerateCopyPanel";
@@ -121,8 +123,9 @@ function fmtPct(value: number) {
   return `${value.toFixed(1)}%`;
 }
 
+// The header, the summary, the editor and the selling tools all ask the shared resolver, so they can never disagree.
 function categoryLabel(item: VaultItem) {
-  return item.categoryLabel ?? (item.category === "CUSTOM" ? item.customCategoryLabel ?? "Collector’s Choice" : "Collector’s Choice");
+  return resolveCategoryLabel(item);
 }
 
 function normUniverse(value: unknown): UniverseKey {
@@ -536,6 +539,8 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
   const [uploading, setUploading] = useState(false);
   const [mediaMessage, setMediaMessage] = useState("");
   const [recordMessage, setRecordMessage] = useState("");
+  const recordMessageRef = useRef("");
+  recordMessageRef.current = recordMessage;
   const [recordDraft, setRecordDraft] = useState({
     universe: "MISC" as UniverseKey,
     categoryLabel: "Collectors Choice",
@@ -561,6 +566,8 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
   });
   const [isEditingNotes, setIsEditingNotes] = useState(false);
   const [headerEditing, setHeaderEditing] = useState(false);
+  const [headerSaving, setHeaderSaving] = useState(false);
+  const [headerError, setHeaderError] = useState("");
   const [notesDraft, setNotesDraft] = useState("");
   const router = useRouter();
   const [registryEntry, setRegistryEntry] = useState<import("@/lib/registryModel").RegistrySubject | null>(null);
@@ -635,7 +642,7 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
   useEffect(() => {
     if (!item) return;
     const nextUniverse = normUniverse(item.universe);
-    const nextCategory = safeCategoryForUniverse(nextUniverse, item.categoryLabel || item.category);
+    const nextCategory = categoryLabel(item);
     setRecordDraft({
       universe: nextUniverse,
       categoryLabel: nextCategory,
@@ -702,11 +709,20 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
     }));
   }
 
+  // "Turn on public sharing?" -> Yes. The Share panel only shows its public-link choices once this has been saved to the account.
+  async function enablePublicSharing() {
+    if (!item) return;
+    const result = await setItemPublic(item, true);
+    if (!result.ok) throw new Error(result.error || "It could not be saved.");
+    setItems((prev) => prev.map((entry) => (String(entry.id) === String(result.item.id) ? result.item : entry)));
+  }
+
   async function handleSaveBasicRecord(): Promise<boolean> {
     if (!item) return false;
     const title = recordDraft.title.trim();
     if (!title) {
       setRecordMessage("Title is required.");
+      recordMessageRef.current = "Title is required.";
       return false;
     }
 
@@ -714,17 +730,31 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
     const categoryLabelValue = safeCategoryForUniverse(universe, recordDraft.categoryLabel);
     const subcategoryOptions = getSubcategories(universe, categoryLabelValue);
     const requestedSubcategory = recordDraft.subcategoryLabel.trim();
+    // A subcategory you did not touch is kept even when it is not on today's list; one you picked must be on the list.
+    const subcategoryUnchanged = requestedSubcategory !== "" && requestedSubcategory === (item.subcategoryLabel ?? "");
     const subcategoryLabel =
-      requestedSubcategory && subcategoryOptions.length && !subcategoryOptions.includes(requestedSubcategory)
+      requestedSubcategory && !subcategoryUnchanged && subcategoryOptions.length && !subcategoryOptions.includes(requestedSubcategory)
         ? ""
         : requestedSubcategory;
+
+    // Classification: only rewritten when you changed it. Left alone, a category the item already had stays as it was (an older item
+    // that only had the code "comics" gains the matching label "Comics", so every screen now says the same thing). The item's own
+    // specialist Details are never touched here.
+    const universeChanged = universe !== normUniverse(item.universe);
+    const categoryChanged = categoryLabelValue !== categoryLabel(item);
+    const knownCategory = getCategories(universe).includes(categoryLabelValue);
+    const classification: Partial<VaultItem> =
+      universeChanged || categoryChanged
+        ? { category: categoryCode(categoryLabelValue), categoryLabel: categoryLabelValue }
+        : item.categoryLabel || !knownCategory
+          ? {}
+          : { categoryLabel: categoryLabelValue };
 
     const nextItem: VaultItem = {
       ...item,
       title,
       universe,
-      category: categoryCode(categoryLabelValue),
-      categoryLabel: categoryLabelValue,
+      ...classification,
       subcategoryLabel: subcategoryLabel || undefined,
       subject: recordDraft.subject.trim() || undefined,
     };
@@ -735,7 +765,17 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
   }
 
   async function saveHeaderEdit() {
-    if (await handleSaveBasicRecord()) setHeaderEditing(false);
+    if (headerSaving) return;
+    setHeaderSaving(true);
+    setHeaderError("");
+    try {
+      if (await handleSaveBasicRecord()) setHeaderEditing(false);
+      else setHeaderError(recordMessageRef.current || "Could not save.");
+    } catch (error) {
+      setHeaderError(error instanceof Error && error.message ? error.message : "Could not save. Your edits are still here.");
+    } finally {
+      setHeaderSaving(false);
+    }
   }
 
   function cancelHeaderEdit() {
@@ -743,13 +783,14 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
       const nextUniverse = normUniverse(item.universe);
       setRecordDraft({
         universe: nextUniverse,
-        categoryLabel: safeCategoryForUniverse(nextUniverse, item.categoryLabel || item.category),
+        categoryLabel: categoryLabel(item),
         subcategoryLabel: item.subcategoryLabel ?? "",
         title: item.title ?? "",
         subject: item.subject ?? "",
       });
     }
     setRecordMessage("");
+    setHeaderError("");
     setHeaderEditing(false);
   }
 
@@ -1086,7 +1127,14 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
       ? [recordSelectedCategory, ...baseRecordCategoryOptions]
       : baseRecordCategoryOptions;
   const recordSubcategoryOptions = getSubcategories(recordDraft.universe, recordSelectedCategory);
+  // The item's own subcategory stays selectable even when it is not on today's list, so editing the title never silently drops it.
+  const recordSubcategoryChoices =
+    recordDraft.subcategoryLabel && !recordSubcategoryOptions.includes(recordDraft.subcategoryLabel)
+      ? [recordDraft.subcategoryLabel, ...recordSubcategoryOptions]
+      : recordSubcategoryOptions;
   const notable = isNotable(item);
+  const itemIsSupply = isSupplyItem({ universe: item.universe, categoryLabel: item.categoryLabel });
+  const itemShareUrl = typeof window !== "undefined" ? `${window.location.origin}/share/${encodeURIComponent(item.id)}` : "";
   // The Details card lists Edition and Variant as rows for some categories; the chips below then skip them so they are not shown twice.
   const detailTargets = new Set(resolveItemDetailProfile(item).all.map((field) => field.target));
   const editionShownAbove = detailTargets.has("edition");
@@ -1113,34 +1161,37 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
               <div className="text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">ITEM</div>
               {headerEditing ? (
                 <>
-                  <button
-                    type="button"
+                  {/* Green check: saves the title and the classification together. Enter does the same; Esc cancels. */}
+                  <PillButton
+                    variant="success"
                     onClick={() => void saveHeaderEdit()}
-                    aria-label="Save title and category"
-                    title="Save (Esc to cancel)"
-                    className="absolute right-16 top-4 grid h-9 w-9 place-items-center rounded-full ring-1 ring-[color:var(--border)] transition hover:bg-[color:var(--pill)]"
-                    style={{ color: "var(--theme-gold)" }}
+                    disabled={headerSaving}
+                    ariaLabel="Save title and classification"
+                    title="Save (Enter). Esc cancels."
+                    className="absolute right-16 top-4 w-11 px-0! md:w-9"
                   >
-                    <AppIcon name="checkmark" size={16} strokeWidth={1.8} />
-                  </button>
-                  <textarea
+                    <AppIcon name={headerSaving ? "loader" : "checkmark"} size={18} strokeWidth={2.4} className={headerSaving ? "animate-spin" : ""} />
+                  </PillButton>
+                  <input
+                    type="text"
                     autoFocus
-                    rows={1}
                     aria-label="Title"
-                    className={`${INLINE_EDIT_LINE} mt-1 block w-full resize-none text-2xl font-semibold leading-tight sm:text-3xl`}
+                    className={`${INLINE_EDIT_LINE} mt-0.5 block h-8 w-[calc(100%-7rem)] text-xl font-semibold leading-tight sm:text-2xl`}
                     value={recordDraft.title}
                     onChange={(event) => setRecordDraft((prev) => ({ ...prev, title: event.target.value }))}
                     onKeyDown={(event) => {
-                      if (event.key === "Enter" && !event.shiftKey) {
+                      if (event.key === "Enter") {
                         event.preventDefault();
                         void saveHeaderEdit();
                       }
                       if (event.key === "Escape") cancelHeaderEdit();
                     }}
                   />
+                  <div role="status" aria-live="polite" className="text-xs text-[color:var(--muted)]">{headerSaving ? "Saving…" : ""}</div>
+                  {headerError ? <div role="alert" className="text-xs text-red-300">{headerError}</div> : null}
                 </>
               ) : (
-                <h1 className="mt-1 break-words pr-12 text-2xl font-semibold leading-tight [overflow-wrap:anywhere] sm:text-3xl">
+                <h1 className="mt-0.5 break-words pr-12 text-2xl font-semibold leading-tight [overflow-wrap:anywhere] sm:text-3xl">
                   {item.title}
                   <PillButton size="compact" className="ml-2 w-8 px-0! align-middle md:w-7" onClick={() => setHeaderEditing(true)} ariaLabel="Edit title and category" title="Edit title and category">
                     <AppIcon name="edit" size={16} strokeWidth={1.8} />
@@ -1161,10 +1212,10 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
                 )}
               />
               {headerEditing ? (
-                <div className="mt-1.5 text-sm text-[color:var(--muted)]">
+                <div className="mt-1 flex flex-wrap items-center gap-x-1.5 gap-y-1 text-sm text-[color:var(--muted)]">
                   <select
                     aria-label="Universe"
-                    className={`${INLINE_EDIT_LINE} h-5 w-auto`}
+                    className={`${INLINE_EDIT_LINE} h-6 w-auto max-md:h-9`}
                     value={recordDraft.universe}
                     onChange={(event) => setDraftUniverse(normUniverse(event.target.value))}
                     onKeyDown={(event) => { if (event.key === "Escape") cancelHeaderEdit(); }}
@@ -1173,10 +1224,10 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
                       <option key={key} value={key}>{UNIVERSE_LABEL[key]}</option>
                     ))}
                   </select>
-                  {" • "}
+                  <span aria-hidden="true">›</span>
                   <select
                     aria-label="Category"
-                    className={`${INLINE_EDIT_LINE} h-5 w-auto`}
+                    className={`${INLINE_EDIT_LINE} h-6 w-auto max-md:h-9`}
                     value={recordSelectedCategory}
                     onChange={(event) => setDraftCategory(event.target.value)}
                     onKeyDown={(event) => { if (event.key === "Escape") cancelHeaderEdit(); }}
@@ -1185,24 +1236,22 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
                       <option key={category} value={category}>{category}</option>
                     ))}
                   </select>
-                  {recordSubcategoryOptions.length ? (
-                    <>
-                      {" • "}
-                      <select
-                        aria-label="Subcategory"
-                        className={`${INLINE_EDIT_LINE} h-5 w-auto`}
-                        value={recordDraft.subcategoryLabel}
-                        onChange={(event) => setRecordDraft((prev) => ({ ...prev, subcategoryLabel: event.target.value }))}
-                        onKeyDown={(event) => { if (event.key === "Escape") cancelHeaderEdit(); }}
-                      >
-                        <option value="">(none)</option>
-                        {recordSubcategoryOptions.map((subcategory) => (
-                          <option key={subcategory} value={subcategory}>{subcategory}</option>
-                        ))}
-                      </select>
-                    </>
-                  ) : null}
-                  {" • "}Added {fmtDate(addedAt)}
+                  <span aria-hidden="true">›</span>
+                  <select
+                    aria-label="Subcategory"
+                    className={`${INLINE_EDIT_LINE} h-6 w-auto max-md:h-9`}
+                    value={recordDraft.subcategoryLabel}
+                    disabled={recordSubcategoryChoices.length === 0}
+                    onChange={(event) => setRecordDraft((prev) => ({ ...prev, subcategoryLabel: event.target.value }))}
+                    onKeyDown={(event) => { if (event.key === "Escape") cancelHeaderEdit(); }}
+                  >
+                    <option value="">{recordSubcategoryChoices.length === 0 ? "No subcategories" : "(none)"}</option>
+                    {recordSubcategoryChoices.map((subcategory) => (
+                      <option key={subcategory} value={subcategory}>{subcategory}</option>
+                    ))}
+                  </select>
+                  <span aria-hidden="true">•</span>
+                  <span>Added {fmtDate(addedAt)}</span>
                 </div>
               ) : (
                 <div className="mt-1.5 text-sm text-[color:var(--muted)]">
@@ -1220,14 +1269,12 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
                   kind="item"
                   contentId={item.id}
                   title={item.title}
-                  previewUrl={getOrderedImageUrls(item)[0]}
-                  shareUrl={typeof window !== "undefined" ? `${window.location.origin}/share/${encodeURIComponent(item.id)}` : ""}
-                  canShare={Boolean(item.isPublic) && !isSupplyItem({ universe: item.universe, categoryLabel: item.categoryLabel })}
-                  shareRestriction={
-                    isSupplyItem({ universe: item.universe, categoryLabel: item.categoryLabel })
-                      ? "Storage and display supplies are never shared publicly, so this item has no public link."
-                      : "This item is private, so it has no public link. If you want to share it, turn on Public with the Visibility switch lower on this page. Nothing is made public for you."
-                  }
+                  previewUrl={images[0]}
+                  shareUrl={itemShareUrl}
+                  canShare={Boolean(item.isPublic) && !itemIsSupply}
+                  shareRestriction="Storage and display supplies are never shared publicly, so this item has no public link."
+                  onEnablePublic={itemIsSupply ? undefined : enablePublicSharing}
+                  sharePhotos={images.map((url, index) => ({ url, label: index === 0 ? "Main photo" : `Photo ${index + 1}` }))}
                   isOwner
                   viewerProfileId=""
                   onExport={() => setSocialExportOpen(true)}
@@ -1239,7 +1286,12 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
                 </PillButton>
               </div>
               {socialExportOpen && (
-                <SocialExportSheet item={item} onClose={() => setSocialExportOpen(false)} />
+                <SocialExportSheet
+                  item={item}
+                  onClose={() => setSocialExportOpen(false)}
+                  shareUrl={itemIsSupply ? "" : itemShareUrl}
+                  onEnablePublic={itemIsSupply ? undefined : enablePublicSharing}
+                />
               )}
               {auctionOpen && (
                 <AuctionSetupSheet
@@ -1427,10 +1479,12 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
             costBasis={totalCost(item)}
             shippingCost={clamp(item.purchaseShipping)}
             category={categoryLabel(item)}
+            universe={item.universe}
+            subcategory={item.subcategoryLabel}
           />
         </div>
 
-        <div className="mt-5">
+        <div className="mt-4">
           {item.status === "FOR_SALE" && (
             <div className="mb-4 space-y-3">
               <ListingReadinessPanel item={item} />
@@ -1445,13 +1499,18 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
           {item.status === "FOR_SALE" ? (
             <ExportListingButton item={item} />
           ) : (
-            <div className="rounded-[24px] bg-[color:var(--surface)] p-5 text-center ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
-              <div className="text-[11px] uppercase tracking-[0.24em] text-[color:var(--muted2)]">
-                Listing Copy
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-[18px] bg-[color:var(--surface)] px-4 py-3 ring-1 ring-[color:var(--border)]">
+              <div className="min-w-0 flex-1 basis-[280px]">
+                <div className="text-[11px] uppercase tracking-[0.2em] text-[color:var(--muted2)]">Listing copy</div>
+                <p className="mt-0.5 text-xs leading-snug text-[color:var(--muted)]">
+                  Writes paste-ready text for marketplaces like eBay, Mercari and Whatnot from this item&apos;s details. You copy it and paste it into the marketplace yourself; nothing is listed or published for you.
+                </p>
               </div>
-              <div className="mt-2 text-sm text-[color:var(--muted)]">
-                Mark this item for sale to unlock multi-channel listing copy.
-              </div>
+              {item.status !== "SOLD" ? (
+                <PillButton onClick={() => void handleToggleForSale()}>Mark for sale to unlock</PillButton>
+              ) : (
+                <span className="text-xs text-[color:var(--muted)]">Available while an item is for sale.</span>
+              )}
             </div>
           )}
         </div>

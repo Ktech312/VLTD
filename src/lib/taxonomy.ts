@@ -193,6 +193,48 @@ export function coerceUniverseAndCategory(input: {
   return { universe: u, categoryLabel };
 }
 
+/** "Comics" and "comics" and "COMICS" and "Collectors Choice" / "COLLECTORS_CHOICE" compare equal. */
+function categoryKey(value: unknown): string {
+  return normalizeLabel(value).toUpperCase().replace(/[^A-Z0-9]+/g, "");
+}
+
+/**
+ * The one answer to "what category is this item?", used by the header, the summary, the editor and the selling tools.
+ * Older items only have the stored code (for example "comics") and no label: the label comes from the matching category
+ * in the item's Universe (or any Universe), so every place on the page shows the same word. Nothing is written back.
+ * An item with nothing recorded reads "Collector’s Choice", the same wording the page always used.
+ */
+export function resolveCategoryLabel(item: {
+  universe?: unknown;
+  category?: unknown;
+  categoryLabel?: unknown;
+  customCategoryLabel?: unknown;
+}): string {
+  const universeRaw = String(item.universe ?? "").trim().toUpperCase();
+  const universe: UniverseKey = isUniverseKey(universeRaw) ? universeRaw : "MISC";
+  const own = getCategories(universe);
+  const all = getUniverses().flatMap((key) => getCategories(key));
+  const match = (wanted: string) => {
+    const key = categoryKey(wanted);
+    if (!key) return "";
+    return own.find((name) => categoryKey(name) === key) ?? all.find((name) => categoryKey(name) === key) ?? "";
+  };
+
+  const label = normalizeLabel(item.categoryLabel);
+  if (label) return match(label) || label;
+
+  const code = normalizeLabel(item.category);
+  if (code && code.toUpperCase() !== "CUSTOM") {
+    const found = match(code);
+    if (found) return found;
+    // A code that is not one of our categories (an import, say): make it readable instead of shouting it.
+    return code.replace(/[_-]+/g, " ").toLowerCase().replace(/\b\w/g, (c) => c.toUpperCase());
+  }
+  const custom = normalizeLabel(item.customCategoryLabel);
+  if (custom) return custom;
+  return "Collector’s Choice";
+}
+
 // ─── Form Data: Type dropdown + Checkbox options per category ──────────────────
 
 type FormDef = {

@@ -3,15 +3,16 @@
 import { PillButton } from "@/components/ui/PillButton";
 import { useMemo, useState } from "react";
 import { FEE_RULES, type Channel } from "@/lib/sellerFees";
+import { marketplaceAdvice, marketplacesFor, type ItemPlace } from "@/lib/marketplaces";
 
-const CHANNELS: Array<{ id: Channel; label: string }> = [
-  { id: "ebay", label: "eBay" },
-  { id: "mercari", label: "Mercari" },
-  { id: "whatnot", label: "Whatnot" },
-  { id: "pwcc", label: "Fanatics Collect (PWCC)" },
-  { id: "discogs", label: "Discogs" },
-  { id: "custom", label: "Custom" },
-];
+const CHANNEL_LABEL: Record<Channel, string> = {
+  ebay: "eBay",
+  mercari: "Mercari",
+  whatnot: "Whatnot",
+  pwcc: "Fanatics Collect",
+  discogs: "Discogs",
+  custom: "Custom",
+};
 
 function money(value: number) {
   return new Intl.NumberFormat("en-US", {
@@ -21,37 +22,36 @@ function money(value: number) {
   }).format(value);
 }
 
-function recommendedChannel(category?: string): Channel {
-  const label = String(category ?? "").toLowerCase();
-  if (label.includes("vinyl") || label.includes("record")) return "discogs";
-  if (label.includes("card") || label.includes("tcg") || label.includes("sports")) return "ebay";
-  if (label.includes("comic")) return "ebay";
-  if (label.includes("game")) return "ebay";
-  return "ebay";
-}
+const INPUT =
+  "h-9 w-full rounded-lg bg-[color:var(--pill)] px-3 text-sm ring-1 ring-[color:var(--border)] focus:outline-none max-md:h-11";
+const LABEL = "text-[10px] font-semibold uppercase tracking-[0.16em] text-[color:var(--muted2)]";
 
-function platformNote(category?: string) {
-  const label = String(category ?? "").toLowerCase();
-  if (label.includes("vinyl") || label.includes("record")) return "Discogs is often strongest for vinyl, with eBay as a broader fallback.";
-  if (label.includes("card") || label.includes("tcg") || label.includes("sports")) return "Cards usually start with eBay; PWCC can make sense for higher-end graded pieces.";
-  if (label.includes("comic")) return "Comics usually start with eBay; MyComicShop or Heritage can be better for stronger keys.";
-  if (label.includes("game")) return "Games usually start with eBay; specialty buyers can work for graded or sealed pieces.";
-  return "eBay is the broadest default until category-specific marketplace data is available.";
-}
-
+/**
+ * Cost to Sell: what an item would net after marketplace fees and shipping. The marketplaces offered fit the item's category
+ * (see lib/marketplaces.ts); Custom (your own fee percentage) is always there.
+ */
 export default function CostToSellPanel({
   price = 0,
   costBasis = 0,
   shippingCost = 0,
   category,
+  universe,
+  subcategory,
 }: {
   price?: number;
   costBasis?: number;
   shippingCost?: number;
   category?: string;
+  universe?: string;
+  subcategory?: string;
 }) {
-  const suggestedChannel = recommendedChannel(category);
-  const [channel, setChannel] = useState<Channel>(suggestedChannel);
+  const place: ItemPlace = useMemo(() => ({ universe, category, subcategory }), [universe, category, subcategory]);
+  const allowed = useMemo<Channel[]>(() => [...marketplacesFor(place), "custom"], [place]);
+  const advice = useMemo(() => marketplaceAdvice(place), [place]);
+
+  const [picked, setPicked] = useState<Channel | null>(null);
+  // If the item's category changes, a choice that no longer fits falls back to the suggestion.
+  const channel: Channel = picked && allowed.includes(picked) ? picked : advice.suggested;
   const [salePrice, setSalePrice] = useState(String(price || ""));
   const [shipping, setShipping] = useState(String(shippingCost || ""));
   const [customRate, setCustomRate] = useState("12.9");
@@ -67,120 +67,87 @@ export default function CostToSellPanel({
       fees = gross * rate;
       feeSummary = `${Number.isFinite(parsed) ? parsed : 0}% (your own rate)`;
     } else {
-      const result = FEE_RULES[channel](gross, category);
+      const result = FEE_RULES[channel](gross, category, subcategory);
       fees = result.total;
       feeSummary = result.summary;
     }
     const net = gross - fees - shipCost;
     const gain = net - Number(costBasis ?? 0);
-    return {
-      gross,
-      shipCost,
-      fees,
-      feeSummary,
-      net,
-      gain,
-    };
-  }, [salePrice, shipping, channel, customRate, category, costBasis]);
+    return { gross, shipCost, fees, feeSummary, net, gain };
+  }, [salePrice, shipping, channel, customRate, category, subcategory, costBasis]);
 
   const hasPrice = payout.gross > 0;
 
   return (
-    <div className="rounded-[24px] bg-[color:var(--surface)] p-6 ring-1 ring-[color:var(--border)]">
-      <div className="flex items-start justify-between gap-3">
+    <section aria-label="Cost to sell" className="rounded-[18px] bg-[color:var(--surface)] px-4 py-3 ring-1 ring-[color:var(--border)]">
+      <div className="flex flex-wrap items-baseline justify-between gap-x-3">
+        <div className="text-[11px] uppercase tracking-[0.2em] text-[color:var(--muted2)]">Cost to Sell</div>
+        <div className="text-[11px] text-[color:var(--muted)]">Try first: <span className="font-semibold text-[color:var(--theme-gold)]">{CHANNEL_LABEL[advice.suggested]}</span></div>
+      </div>
+
+      <div className="mt-2 grid gap-x-3 gap-y-2 sm:grid-cols-[minmax(0,160px)_minmax(0,160px)_1fr]">
+        <label className="grid gap-1">
+          <span className={LABEL}>Sale price</span>
+          <input value={salePrice} onChange={(e) => setSalePrice(e.target.value)} className={INPUT} inputMode="decimal" placeholder="What you expect" />
+        </label>
+        <label className="grid gap-1">
+          <span className={LABEL}>Shipping cost</span>
+          <input value={shipping} onChange={(e) => setShipping(e.target.value)} className={INPUT} inputMode="decimal" placeholder="Postage" />
+        </label>
+        <div className="grid gap-1">
+          <span className={LABEL}>Marketplace</span>
+          <div className="flex flex-wrap items-center gap-1.5">
+            {allowed.map((id) => (
+              <PillButton key={id} size="compact" variant={channel === id ? "active" : "default"} pressed={channel === id} onClick={() => setPicked(id)}>
+                {CHANNEL_LABEL[id]}
+              </PillButton>
+            ))}
+            {channel === "custom" ? (
+              <input
+                value={customRate}
+                onChange={(e) => setCustomRate(e.target.value)}
+                className="h-8 w-24 rounded-lg bg-[color:var(--pill)] px-2 text-sm ring-1 ring-[color:var(--border)] focus:outline-none max-md:h-11"
+                inputMode="decimal"
+                aria-label="Custom fee percent"
+                placeholder="Fee %"
+              />
+            ) : null}
+          </div>
+        </div>
+      </div>
+
+      <dl className="mt-3 grid grid-cols-2 gap-x-4 gap-y-2 border-t border-[color:var(--border)] pt-2.5 sm:grid-cols-5">
         <div>
-          <div className="text-[11px] uppercase tracking-[0.24em] text-[color:var(--muted2)]">
-            Cost to Sell
-          </div>
-          <div className="mt-2 text-sm text-[color:var(--muted)]">
-            Estimate fees, shipping, and net gain before marking an item sold.
-          </div>
+          <dt className={LABEL}>Gross</dt>
+          <dd className="text-base font-semibold">{money(payout.gross)}</dd>
         </div>
-        <div className="rounded-full bg-[color:var(--pill)] px-3 py-1 text-[11px] font-semibold text-[color:var(--theme-gold)] ring-1 ring-[color:var(--border)]">
-          Suggest: {CHANNELS.find((option) => option.id === suggestedChannel)?.label}
+        <div>
+          <dt className={LABEL}>Fees</dt>
+          <dd className="text-base font-semibold">{hasPrice ? money(payout.fees) : "—"}</dd>
         </div>
-      </div>
+        <div>
+          <dt className={LABEL}>Ship cost</dt>
+          <dd className="text-base font-semibold">{money(payout.shipCost)}</dd>
+        </div>
+        <div>
+          <dt className={LABEL}>Net</dt>
+          <dd className="text-base font-semibold">{hasPrice ? money(payout.net) : "—"}</dd>
+        </div>
+        <div className="col-span-2 sm:col-span-1">
+          <dt className={LABEL}>Net gain / loss</dt>
+          <dd className={["text-base font-semibold", !hasPrice ? "" : payout.gain >= 0 ? "text-emerald-300" : "text-red-300"].join(" ")}>
+            {hasPrice ? `${payout.gain >= 0 ? "+" : ""}${money(payout.gain)}` : "—"}
+            <span className="ml-2 text-[11px] font-normal text-[color:var(--muted)]">Cost basis {money(Number(costBasis ?? 0))}</span>
+          </dd>
+        </div>
+      </dl>
 
-      <div className="mt-5 grid gap-3 sm:grid-cols-2">
-        <label className="grid gap-1.5">
-          <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[color:var(--muted2)]">Sale Price</span>
-          <input
-            value={salePrice}
-            onChange={(e) => setSalePrice(e.target.value)}
-            className="h-10 rounded-xl bg-[color:var(--pill)] px-3 text-sm ring-1 ring-[color:var(--border)] focus:outline-none max-md:h-11"
-            inputMode="decimal"
-            placeholder="Estimated sale price"
-          />
-        </label>
-        <label className="grid gap-1.5">
-          <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[color:var(--muted2)]">Shipping Cost</span>
-          <input
-            value={shipping}
-            onChange={(e) => setShipping(e.target.value)}
-            className="h-10 rounded-xl bg-[color:var(--pill)] px-3 text-sm ring-1 ring-[color:var(--border)] focus:outline-none max-md:h-11"
-            inputMode="decimal"
-            placeholder="Packing + postage"
-          />
-        </label>
-      </div>
-
-      <div className="mt-4 flex flex-wrap gap-2">
-        {CHANNELS.map((option) => (
-          <PillButton key={option.id} variant={channel === option.id ? "active" : "default"} pressed={channel === option.id} onClick={() => setChannel(option.id)}>{option.label}</PillButton>
-        ))}
-      </div>
-
-      {channel === "custom" ? (
-        <input
-          value={customRate}
-          onChange={(e) => setCustomRate(e.target.value)}
-          className="mt-4 h-10 rounded-xl bg-[color:var(--pill)] px-3 text-sm ring-1 ring-[color:var(--border)] focus:outline-none max-md:h-11"
-          placeholder="Custom fee %"
-        />
-      ) : null}
-
-      <div className="mt-2 text-[11px] leading-4 text-[color:var(--muted)]">
+      <p className="mt-2 text-[11px] leading-snug text-[color:var(--muted)]">
         {hasPrice
-          ? `Fees used: ${payout.feeSummary}. Checked October 2026. Marketplaces change their fees, so confirm in your seller account.`
-          : "Type the price you expect to sell it for. Fees for each marketplace are worked out from published rates."}
-      </div>
-
-      <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <div className="rounded-2xl bg-[color:var(--pill)] p-4 ring-1 ring-[color:var(--border)]">
-          <div className="text-[11px] uppercase tracking-[0.18em] text-[color:var(--muted2)]">Gross</div>
-          <div className="mt-2 text-lg font-semibold">{money(payout.gross)}</div>
-        </div>
-        <div className="rounded-2xl bg-[color:var(--pill)] p-4 ring-1 ring-[color:var(--border)]">
-          <div className="text-[11px] uppercase tracking-[0.18em] text-[color:var(--muted2)]">Fees</div>
-          <div className="mt-2 text-lg font-semibold">{hasPrice ? money(payout.fees) : "—"}</div>
-        </div>
-        <div className="rounded-2xl bg-[color:var(--pill)] p-4 ring-1 ring-[color:var(--border)]">
-          <div className="text-[11px] uppercase tracking-[0.18em] text-[color:var(--muted2)]">Ship Cost</div>
-          <div className="mt-2 text-lg font-semibold">{money(payout.shipCost)}</div>
-        </div>
-        <div className="rounded-2xl bg-[color:var(--pill)] p-4 ring-1 ring-[color:var(--border)]">
-          <div className="text-[11px] uppercase tracking-[0.18em] text-[color:var(--muted2)]">Net</div>
-          <div className="mt-2 text-lg font-semibold">{hasPrice ? money(payout.net) : "—"}</div>
-        </div>
-      </div>
-
-      <div className="mt-3 rounded-2xl bg-[color:var(--theme-elevated)] p-4 ring-1 ring-[color:var(--theme-border)]">
-        <div className="flex items-center justify-between gap-4">
-          <div>
-            <div className="text-[11px] uppercase tracking-[0.18em] text-[color:var(--muted2)]">Net Gain / Loss</div>
-            <div className={["mt-2 text-2xl font-semibold", !hasPrice ? "" : payout.gain >= 0 ? "text-emerald-300" : "text-red-300"].join(" ")}>
-              {hasPrice ? (payout.gain >= 0 ? "+" : "") : ""}
-              {hasPrice ? money(payout.gain) : "—"}
-            </div>
-          </div>
-          <div className="text-right text-xs text-[color:var(--muted)]">
-            Cost basis: {money(Number(costBasis ?? 0))}
-          </div>
-        </div>
-        <div className="mt-3 text-xs leading-5 text-[color:var(--muted)]">
-          {platformNote(category)}
-        </div>
-      </div>
-    </div>
+          ? `Fees used: ${payout.feeSummary}. Checked October 2026; marketplaces change their fees, so confirm in your seller account. `
+          : "Type the price you expect to sell it for; fees come from each marketplace's published rates. "}
+        {advice.note}
+      </p>
+    </section>
   );
 }

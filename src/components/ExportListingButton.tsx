@@ -16,6 +16,8 @@ import {
   type ListingOutput,
 } from "@/lib/listingGenerator";
 import type { VaultItem } from "@/lib/vaultModel";
+import { discogsFits, fanaticsCollectFits } from "@/lib/marketplaces";
+import { resolveCategoryLabel } from "@/lib/taxonomy";
 
 type Platform = "ebay" | "mercari" | "facebook" | "etsy" | "whatnot" | "discogs" | "pwcc" | "icona";
 
@@ -26,7 +28,7 @@ const PLATFORM_LABEL: Record<Platform, string> = {
   etsy: "Etsy",
   whatnot: "Whatnot",
   discogs: "Discogs",
-  pwcc: "PWCC",
+  pwcc: "Fanatics Collect",
   icona: "Icona",
 };
 
@@ -64,24 +66,31 @@ export default function ExportListingButton({ item }: { item: VaultItem }) {
   const [platform, setPlatform] = useState<Platform>("ebay");
   const [message, setMessage] = useState("");
 
+  // Discogs and Fanatics Collect only take certain categories (see lib/marketplaces.ts); the rest are offered for everything.
+  const platforms = useMemo(() => {
+    const place = { universe: item.universe, category: resolveCategoryLabel(item), subcategory: item.subcategoryLabel };
+    return (Object.keys(PLATFORM_LABEL) as Platform[]).filter((id) => (id === "discogs" ? discogsFits(place) : id === "pwcc" ? fanaticsCollectFits(place) : true));
+  }, [item]);
+  const activePlatform: Platform = platforms.includes(platform) ? platform : "ebay";
+
   const input = useMemo(() => itemToListingInput(item), [item]);
   const listing = useMemo(() => {
-    if (platform === "mercari") return generateMercariListing(input);
-    if (platform === "facebook") return generateFacebookListing(input);
-    if (platform === "etsy") return generateEtsyListing(input);
-    if (platform === "whatnot") return generateWhatnotListing(input);
-    if (platform === "discogs") return generateDiscogsListing(input);
-    if (platform === "pwcc") return generatePwccListing(input);
-    if (platform === "icona") return generateIconaListing(input);
+    if (activePlatform === "mercari") return generateMercariListing(input);
+    if (activePlatform === "facebook") return generateFacebookListing(input);
+    if (activePlatform === "etsy") return generateEtsyListing(input);
+    if (activePlatform === "whatnot") return generateWhatnotListing(input);
+    if (activePlatform === "discogs") return generateDiscogsListing(input);
+    if (activePlatform === "pwcc") return generatePwccListing(input);
+    if (activePlatform === "icona") return generateIconaListing(input);
     return generateEbayListing(input);
-  }, [input, platform]);
+  }, [input, activePlatform]);
 
   const copy = buildCopyText(listing);
 
   async function handleCopy() {
     try {
       await copyText(copy);
-      setMessage(`${PLATFORM_LABEL[platform]} listing copied.`);
+      setMessage(`${PLATFORM_LABEL[activePlatform]} listing copied.`);
     } catch {
       setMessage("Copy failed. Select the text and copy manually.");
     }
@@ -95,12 +104,12 @@ export default function ExportListingButton({ item }: { item: VaultItem }) {
             Listing Copy
           </div>
           <div className="mt-2 text-sm text-[color:var(--muted)]">
-            Generate paste-ready marketplace text from this vault record.
+            Paste-ready text for each marketplace, written from this record. Copy it and paste it into the marketplace yourself; nothing is listed or posted for you.
           </div>
         </div>
         <div className="flex flex-wrap gap-2">
-          {(Object.keys(PLATFORM_LABEL) as Platform[]).map((option) => (
-            <PillButton key={option} variant={platform === option ? "active" : "default"} pressed={platform === option} onClick={() => { setPlatform(option); setMessage(""); }}>{PLATFORM_LABEL[option]}</PillButton>
+          {platforms.map((option) => (
+            <PillButton key={option} variant={activePlatform === option ? "active" : "default"} pressed={activePlatform === option} onClick={() => { setPlatform(option); setMessage(""); }}>{PLATFORM_LABEL[option]}</PillButton>
           ))}
         </div>
       </div>

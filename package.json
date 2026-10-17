@@ -21,6 +21,7 @@
     "test:errors": "node scripts/test-friendly-error.cjs",
     "test:vault-load": "node scripts/test-vault-load.cjs",
     "test:details": "node scripts/test-detail-fields.cjs",
+    "test:sell": "node scripts/test-sell-tools.cjs",
     "build:detail-matrix": "node scripts/build-detail-matrix.cjs"
   },
   "dependencies": {

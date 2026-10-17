@@ -1,6 +1,7 @@
 // Sold items and realized-sales maths, shared by the Sold page (/vault/sold) and Home so the two always agree.
 import { getStoredActiveProfileId } from "@/lib/auth";
 import { estimateSaleFees } from "@/lib/sellerFees";
+import { resolveCategoryLabel } from "@/lib/taxonomy";
 import { getPrimaryImageUrl, loadItems, type VaultItem } from "@/lib/vaultModel";
 
 export const SALES_KEY = "vltd_sales_history";
@@ -47,7 +48,7 @@ export function cost(i: SoldItem) {
 
 /** Estimated seller fees for where it sold; 0 when the platform is unknown. */
 export function saleFees(i: SoldItem) {
-  return estimateSaleFees(i.soldPlatform, Number(i.soldPrice ?? 0), i.categoryLabel || i.category);
+  return estimateSaleFees(i.soldPlatform, Number(i.soldPrice ?? 0), resolveCategoryLabel(i), i.subcategoryLabel);
 }
 
 /** Profit after purchase costs and estimated seller fees. */
