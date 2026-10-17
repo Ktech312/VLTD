@@ -104,6 +104,9 @@ const NOTE = "PRIVATE-NOTE-LINKS-" + stamp, SHELF = "PRIVATE-SHELF-LINKS-" + sta
 
     // ---- what the page shows to a visitor's browser (aliased Guest View link) ----
     if (!NOPAGE) {
+      // The owner's OTHER Public exhibition would put the owner's profile id on the page through the public exhibitions list (a Public
+      // exhibition is listed with its profile id by design). Make it Private for this page check so the check is about the aliased link alone.
+      await setG(g1, { visibility: "LOCKED" });
       const V = await launch(9800 + Math.floor(Math.random() * 150));
       try {
         await V.send("Page.enable"); await V.send("Network.enable"); await V.send("Runtime.enable");
