@@ -110,7 +110,7 @@ export default function BugReporter() {
         onClick={() => setOpen(true)}
         aria-label="Report a bug"
         title="Report a bug"
-        className="fixed right-4 bottom-24 max-[339px]:bottom-[calc(env(safe-area-inset-bottom,0px)+152px)] z-[60] flex h-12 w-12 items-center justify-center rounded-full transition hover:-translate-y-0.5 sm:right-6 sm:bottom-6"
+        className="fixed right-4 bottom-24 max-[339px]:bottom-[calc(env(safe-area-inset-bottom,0px)+208px)] z-[60] flex h-12 w-12 items-center justify-center rounded-full transition hover:-translate-y-0.5 sm:right-6 sm:bottom-6"
         style={{
           // Force fixed positioning inline — a global button rule overrides the
           // `fixed` class with position:relative, which shoved this off-screen.
