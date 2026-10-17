@@ -7,9 +7,8 @@ import { AppIcon } from "@/components/ui/AppIcon";
 import { applyVisibilityToExhibits, exhibitNamesForItem, isHiddenInExhibits, makeBlurThumb } from "@/lib/hiddenItems";
 
 import { emitVaultUpdate } from "@/lib/vaultEvents";
-import { saveItem, type VaultItem } from "@/lib/vaultModel";
-import { hasSupabaseEnv, upsertVaultItemToSupabase } from "@/lib/vaultCloud";
-import { canUsePrivatePhotos, migrateItemImagesToPrivate, migrateItemImagesToPublic } from "@/lib/privatePhotos";
+import type { VaultItem } from "@/lib/vaultModel";
+import { setItemPublic } from "@/lib/itemVisibility";
 
 // Compact shared pill: 32px (28px on desktop) with a 44px touch target on phones.
 const cp = (variant: PillVariant = "default", extra = "") => pillClassName(variant, false, extra, "compact");
@@ -87,53 +86,18 @@ export default function ItemVisibilityToggle({
       return;
     }
 
-    const previousPublic = isPublic;
-    let nextItem: VaultItem = { ...item, isPublic: !previousPublic };
-
     setLoading(true);
     setMessage("");
 
-    try {
-      // Private Photos (paid feature, see privatePhotos.ts) — only paid
-      // profiles actually move the underlying image files; a free profile
-      // toggling Private still works exactly as before (hidden in the
-      // app's own UI, photo stays on the existing public bucket).
-      if (previousPublic && !nextItem.isPublic) {
-        // Going Public -> Private.
-        if (await canUsePrivatePhotos()) {
-          nextItem = await migrateItemImagesToPrivate(nextItem);
-        }
-      } else if (nextItem.isPublic) {
-        // Going Private -> Public — always move any private-stored images
-        // back, regardless of current tier (someone who downgraded should
-        // still be able to make an item public again).
-        nextItem = await migrateItemImagesToPublic(nextItem);
-      }
-    } catch {
-      // Migration failed — keep going with the visibility flip on the
-      // images as they already are rather than blocking the whole toggle
-      // on a storage hiccup; the images simply stay wherever they were.
-    }
-
-    setIsPublic(nextItem.isPublic ?? false);
-    saveItem(nextItem);
-    onChange?.(nextItem);
-    emitVaultUpdate();
-
-    try {
-      if (hasSupabaseEnv()) {
-        await upsertVaultItemToSupabase(nextItem);
-      }
-    } catch (error) {
-      const reverted = { ...item, isPublic: previousPublic };
-      setIsPublic(previousPublic);
-      saveItem(reverted);
-      onChange?.(reverted);
-      emitVaultUpdate();
-      setMessage(error instanceof Error ? error.message : "Visibility could not be updated.");
-    } finally {
-      setLoading(false);
-    }
+    // The same routine the Share panel uses when it asks "Turn on public sharing?" (see lib/itemVisibility.ts).
+    const result = await setItemPublic({ ...item, isPublic }, !isPublic, {
+      onLocal: (local) => {
+        setIsPublic(local.isPublic ?? false);
+        onChange?.(local);
+      },
+    });
+    if (!result.ok) setMessage(result.error ?? "Visibility could not be updated.");
+    setLoading(false);
   }
 
   const label = inExhibit ? (showing ? "Shown in exhibit" : "Hidden in exhibit") : isPublic ? "Public" : "Private";

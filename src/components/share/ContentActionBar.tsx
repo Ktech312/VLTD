@@ -7,7 +7,7 @@ import FavoriteButton from "@/components/FavoriteButton";
 import { FollowButton } from "@/components/social/FollowButton";
 import { VibeButton } from "@/components/social/VibeButton";
 import { ReportDialog } from "@/components/PublicSafetyControls";
-import ShareDialog from "@/components/share/ShareDialog";
+import ShareDialog, { type SharePhoto } from "@/components/share/ShareDialog";
 import { isFollowing } from "@/lib/follows";
 
 export type ActionBarCollector = {
@@ -44,6 +44,8 @@ export default function ContentActionBar({
   canSave = true,
   canReport = true,
   onExport,
+  onEnablePublic,
+  sharePhotos,
   shareFooter,
   className = "",
 }: {
@@ -63,6 +65,10 @@ export default function ContentActionBar({
   canSave?: boolean;
   canReport?: boolean;
   onExport?: () => void;
+  /** Owner only: turns public sharing on and resolves once it is saved (rejects with a plain message when it is not). */
+  onEnablePublic?: () => Promise<void>;
+  /** Owner only: pictures that can be shared as pictures from the Share panel. */
+  sharePhotos?: SharePhoto[];
   shareFooter?: React.ReactNode;
   className?: string;
 }) {
@@ -112,6 +118,8 @@ export default function ContentActionBar({
   }, [menuOpen]);
 
   const showMenu = !isOwner && canReport;
+  // Your own content shows one Share button and nothing else: no frame around it, so it lines up with the buttons beside it.
+  const bare = isOwner && !collector && !vibe;
   const kindWord = kind === "item" ? "item" : "exhibition";
 
   function closeMenu(returnFocus = true) {
@@ -123,7 +131,7 @@ export default function ContentActionBar({
     <div
       role="toolbar"
       aria-label={`Actions for this ${kindWord}`}
-      className={["vltd-glass-dock flex flex-wrap items-center gap-x-3 gap-y-2.5 px-3 py-2.5", collector ? "justify-between" : "justify-end", className].filter(Boolean).join(" ")}
+      className={[bare ? "flex items-center" : "vltd-glass-dock flex flex-wrap items-center gap-x-3 gap-y-2.5 px-3 py-2.5", !bare && collector ? "justify-between" : !bare ? "justify-end" : "", className].filter(Boolean).join(" ")}
     >
       {collector ? (
         <div className="flex min-w-0 items-center gap-2.5">
@@ -259,6 +267,8 @@ export default function ContentActionBar({
         url={shareUrl}
         canShare={canShare}
         restriction={shareRestriction}
+        onEnablePublic={onEnablePublic}
+        photos={sharePhotos}
         onExport={onExport}
         footer={shareFooter}
       />

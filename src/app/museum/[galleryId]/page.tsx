@@ -2,7 +2,7 @@
 
 import { pillClassName, type PillVariant } from "@/components/ui/PillButton";
 import { accessDescription, applyAccessMode, getAccessMode, type GalleryAccessPillMode } from "@/lib/galleryAccess";
-import { buildPublicSnapshot, vaultItemFromPublicSnapshot as vaultItemFromGallerySnapshot } from "@/lib/hiddenItems";
+import { buildPublicSnapshot, isHiddenInExhibits, vaultItemFromPublicSnapshot as vaultItemFromGallerySnapshot } from "@/lib/hiddenItems";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useParams } from "next/navigation";
@@ -30,7 +30,7 @@ import {
   removeItemIdsFromAllGalleriesConfirmed,
 } from "@/lib/galleryModel";
 
-import { loadItems, syncVaultItemsFromSupabase, type VaultItem } from "@/lib/vaultModel";
+import { getPrimaryImageUrl, loadItems, syncVaultItemsFromSupabase, type VaultItem } from "@/lib/vaultModel";
 import { isSupplyItem } from "@/lib/vaultStats";
 import { logExhibitionPublished, logExhibitionAnnouncement } from "@/lib/exhibitionEvents";
 import { getVaultImagePublicUrl } from "@/lib/vaultCloud";
@@ -370,6 +370,7 @@ export default function GalleryPage() {
     };
   }, [id]);
 
+  const [enablingShare, setEnablingShare] = useState(false);
   const shareUrl = useMemo(() => (draft ? getGalleryShareUrl(draft) : ""), [draft]);
 
   useEffect(() => {
@@ -419,6 +420,24 @@ export default function GalleryPage() {
       })
       .filter(Boolean) as VaultItem[];
   }, [draft, items]);
+
+  // Pictures that can be shared as pictures from the Share panel: the cover, then the photos of the exhibition's items, leaving
+  // out any item hidden from viewers. Nothing is published by sharing a picture.
+  const sharePhotos = useMemo(() => {
+    const out: { url: string; label: string }[] = [];
+    const seen = new Set<string>();
+    const add = (url: string | undefined, label: string) => {
+      if (!url || seen.has(url) || out.length >= 16) return;
+      seen.add(url);
+      out.push({ url, label });
+    };
+    add(draft?.coverImage || undefined, "Cover");
+    for (const item of galleryItems) {
+      if (isHiddenInExhibits(item.id) || isSupplyItem(item)) continue;
+      add(getPrimaryImageUrl(item), item.title || "Item photo");
+    }
+    return out;
+  }, [draft?.coverImage, galleryItems]);
 
   // The item picker only offers this exhibit's own profile (a personal vault and a business vault are separate).
   const ownProfileItems = useMemo(() => {
@@ -766,6 +785,30 @@ export default function GalleryPage() {
     setOpenExpiryToken(null);
   }
 
+  // "Turn on public sharing?" -> Yes: anyone with the link may view it (Guest View, not listed on Home). Resolves only once the
+  // exhibition is saved; on a failure the exhibition goes back to what it was and the Share panel shows why.
+  async function enablePublicSharing() {
+    const base = latestDraftRef.current ?? draft;
+    if (!base) throw new Error("The exhibition is not loaded yet.");
+    const before = cloneGallery(base);
+    const next = applyAccessMode(cloneGallery(base), "guest_view");
+    latestDraftRef.current = next;
+    setDraft(cloneGallery(next));
+    // Until the save has gone through, the Share panel keeps asking: no link and no destinations are offered early.
+    setEnablingShare(true);
+    try {
+      // Only the exhibition itself is saved here (the same light save the autosave uses), not a full item sync.
+      const ok = await saveDraft(undefined, undefined, true);
+      if (!ok) {
+        latestDraftRef.current = before;
+        setDraft(before);
+        throw new Error("The exhibition could not be saved just now.");
+      }
+    } finally {
+      setEnablingShare(false);
+    }
+  }
+
   function handleRegeneratePublicLink() {
     if (!draft) return;
     regenerateGalleryPublicToken(draft.id);
@@ -1006,8 +1049,10 @@ export default function GalleryPage() {
                     title={draft?.title ?? gallery?.title ?? "My Exhibition"}
                     previewUrl={draft.coverImage || undefined}
                     shareUrl={shareUrl}
-                    canShare={Boolean(shareUrl)}
+                    canShare={Boolean(shareUrl) && selectedAccessMode !== "private" && !enablingShare}
                     shareRestriction="This exhibition has no public link yet, so there is nothing to share."
+                    onEnablePublic={shareUrl ? enablePublicSharing : undefined}
+                    sharePhotos={sharePhotos}
                     isOwner
                     viewerProfileId=""
                   />

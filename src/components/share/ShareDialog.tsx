@@ -47,6 +47,82 @@ type Destination = {
   how: string;
 };
 
+export type SharePhoto = { url: string; label: string };
+
+/** Fetches a photo as a file (through our image proxy for other sites' pictures, so the browser lets us read it). */
+async function photoToFile(photo: SharePhoto, name: string): Promise<File> {
+  const direct = photo.url.startsWith("blob:") || photo.url.startsWith("data:") || photo.url.startsWith("/");
+  const attempts = direct ? [photo.url] : [`/api/image-proxy?url=${encodeURIComponent(photo.url)}`, photo.url];
+  let lastError: unknown = null;
+  for (const src of attempts) {
+    try {
+      const res = await fetch(src);
+      if (!res.ok) throw new Error(`The picture could not be loaded (${res.status}).`);
+      const blob = await res.blob();
+      const type = blob.type && blob.type.startsWith("image/") ? blob.type : "image/jpeg";
+      const ext = type.includes("png") ? "png" : type.includes("webp") ? "webp" : type.includes("gif") ? "gif" : "jpg";
+      return new File([blob], `${name}.${ext}`, { type });
+    } catch (error) {
+      lastError = error;
+    }
+  }
+  throw lastError instanceof Error ? lastError : new Error("The picture could not be loaded.");
+}
+
+/**
+ * The short question shown wherever sharing needs the item or exhibition to be public. Nothing is changed until "Yes" is pressed, and
+ * the answer is only believed once it has been saved: on a failure the item stays private and the reason is shown.
+ */
+export function PublicSharePrompt({ kind, onEnable }: { kind: "item" | "exhibition"; onEnable: () => Promise<void> }) {
+  const [state, setState] = useState<"ask" | "saving" | "declined">("ask");
+  const [error, setError] = useState("");
+  const word = kind === "item" ? "item" : "exhibition";
+
+  async function yes() {
+    setState("saving");
+    setError("");
+    try {
+      await onEnable();
+    } catch (e) {
+      setError(e instanceof Error && e.message ? e.message : "It could not be saved, so it is still private.");
+      setState("ask");
+    }
+  }
+
+  if (state === "declined") {
+    return (
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[12px] text-white/60">
+        <span>Public sharing is off. This {word} stays private.</span>
+        <button type="button" onClick={() => setState("ask")} className="min-h-[44px] underline underline-offset-2 hover:text-white md:min-h-0">
+          Turn it on
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="rounded-2xl bg-amber-400/10 p-3 ring-1 ring-amber-300/30">
+      <div className="text-[13px] font-semibold text-amber-100">Turn on public sharing?</div>
+      <p className="mt-0.5 text-[12px] leading-snug text-amber-100/80">
+        {kind === "item" ? "Anyone with the link will see this item's public details." : "Anyone with the link will be able to view this exhibition."}
+      </p>
+      <div className="mt-2 flex items-center gap-2">
+        <PillButton variant="active" onClick={() => void yes()} disabled={state === "saving"}>
+          {state === "saving" ? "Saving…" : "Yes"}
+        </PillButton>
+        <PillButton onClick={() => setState("declined")} disabled={state === "saving"}>
+          Not now
+        </PillButton>
+      </div>
+      {error ? (
+        <p role="alert" className="mt-2 text-[12px] leading-snug text-red-300">
+          {error} It is still private.
+        </p>
+      ) : null}
+    </div>
+  );
+}
+
 export default function ShareDialog({
   open,
   onClose,
@@ -56,6 +132,8 @@ export default function ShareDialog({
   url,
   canShare,
   restriction,
+  onEnablePublic,
+  photos,
   onExport,
   footer,
 }: {
@@ -69,6 +147,10 @@ export default function ShareDialog({
   /** False for private content: no link and no destinations are offered, the restriction is explained instead. */
   canShare: boolean;
   restriction?: string;
+  /** Owners: turns public sharing on and resolves only once it is saved (rejects with a plain message when it is not). */
+  onEnablePublic?: () => Promise<void>;
+  /** Owners: the pictures that can be shared as pictures, without publishing anything. */
+  photos?: SharePhoto[];
   /** The existing "Export for social" action (owners). */
   onExport?: () => void;
   /** Owner extras, for example regenerating the link. */
@@ -77,11 +159,21 @@ export default function ShareDialog({
   const [mounted, setMounted] = useState(false);
   const [copy, setCopy] = useState<"idle" | "copied" | "failed">("idle");
   const [note, setNote] = useState("");
+  const [picked, setPicked] = useState<Set<string>>(new Set());
+  const [photoBusy, setPhotoBusy] = useState<"" | "share" | "download">("");
+  const [photoNote, setPhotoNote] = useState<{ tone: "ok" | "error"; text: string } | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const dialogRef = useDialogA11y<HTMLDivElement>(open, onClose);
 
   useEffect(() => setMounted(true), []);
+  const photoKey = (photos ?? []).map((p) => p.url).join("|");
+  useEffect(() => {
+    // A fresh set of pictures starts with the first (main) one chosen.
+    setPicked(new Set((photos ?? []).slice(0, 1).map((p) => p.url)));
+    setPhotoNote(null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [photoKey, open]);
   useEffect(() => {
     if (!open) {
       setCopy("idle");
@@ -131,6 +223,71 @@ export default function ShareDialog({
     }
   }
 
+  const chosen = (photos ?? []).filter((p) => picked.has(p.url));
+  const slug = title.replace(/[^a-z0-9]+/gi, "-").replace(/^-+|-+$/g, "").toLowerCase().slice(0, 40) || "vltd";
+  const canShareFiles = typeof navigator !== "undefined" && typeof navigator.share === "function" && typeof navigator.canShare === "function";
+
+  function togglePhoto(photoUrl: string) {
+    setPicked((prev) => {
+      const next = new Set(prev);
+      if (next.has(photoUrl)) next.delete(photoUrl);
+      else next.add(photoUrl);
+      return next;
+    });
+    setPhotoNote(null);
+  }
+
+  async function buildFiles(): Promise<File[]> {
+    return Promise.all(chosen.map((photo, index) => photoToFile(photo, `${slug}-${index + 1}`)));
+  }
+
+  async function handleSharePhotos() {
+    if (chosen.length === 0 || photoBusy) return;
+    setPhotoBusy("share");
+    setPhotoNote(null);
+    try {
+      const files = await buildFiles();
+      if (!navigator.canShare?.({ files })) {
+        setPhotoNote({ tone: "error", text: "This device cannot share these pictures directly. Use Download instead." });
+        return;
+      }
+      // Only the chosen pictures go out: no link, no text, nothing from the record.
+      await navigator.share({ files });
+      setPhotoNote({ tone: "ok", text: "Shared. Nothing was published." });
+    } catch (error) {
+      if ((error as Error)?.name === "AbortError") return;
+      setPhotoNote({ tone: "error", text: error instanceof Error && error.message ? error.message : "The pictures could not be shared. Use Download instead." });
+    } finally {
+      setPhotoBusy("");
+    }
+  }
+
+  async function handleDownloadPhotos() {
+    if (chosen.length === 0 || photoBusy) return;
+    setPhotoBusy("download");
+    setPhotoNote(null);
+    try {
+      const files = await buildFiles();
+      for (const file of files) {
+        const href = URL.createObjectURL(file);
+        const a = document.createElement("a");
+        a.href = href;
+        a.download = file.name;
+        a.style.display = "none";
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        window.setTimeout(() => URL.revokeObjectURL(href), 10000);
+        await new Promise((resolve) => window.setTimeout(resolve, 300));
+      }
+      setPhotoNote({ tone: "ok", text: `Saved ${files.length} picture${files.length === 1 ? "" : "s"} to your device.` });
+    } catch (error) {
+      setPhotoNote({ tone: "error", text: error instanceof Error && error.message ? error.message : "The pictures could not be saved." });
+    } finally {
+      setPhotoBusy("");
+    }
+  }
+
   const destinations: Destination[] = hasLink
     ? [
         { id: "messages", label: "Messages", tile: "linear-gradient(160deg,#4ADE80,#16A34A)", icon: <AppIcon name="sms" size={26} strokeWidth={1.9} />, href: `sms:?body=${encodeURIComponent(`${title} — ${url}`)}`, how: "Opens your messaging app with the link ready to send" },
@@ -171,90 +328,140 @@ export default function ShareDialog({
         </div>
 
         {/* what is being shared */}
-        <div className="mt-3 flex items-center gap-3 rounded-2xl bg-white/5 p-2.5 ring-1 ring-white/10">
-          <div className="h-16 w-12 shrink-0 overflow-hidden rounded-lg bg-black/40 ring-1 ring-white/10">
+        <div className="mt-3 flex items-center gap-3 rounded-2xl bg-white/5 p-2 ring-1 ring-white/10">
+          <div className="h-12 w-9 shrink-0 overflow-hidden rounded-lg bg-black/40 ring-1 ring-white/10">
             {previewUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img src={previewUrl} alt="" className="h-full w-full object-cover" draggable={false} />
             ) : (
               <div className="grid h-full w-full place-items-center text-white/40">
-                <AppIcon name={kind === "item" ? "key" : "exhibition"} size={20} />
+                <AppIcon name={kind === "item" ? "key" : "exhibition"} size={18} />
               </div>
             )}
           </div>
           <div className="min-w-0">
             <div className="line-clamp-2 text-sm font-semibold leading-snug">{title}</div>
-            <div className="mt-0.5 text-[11px] uppercase tracking-[0.14em] text-white/50">{kind === "item" ? "Item" : "Exhibition"}</div>
+            <div className="text-[11px] uppercase tracking-[0.14em] text-white/50">{kind === "item" ? "Item" : "Exhibition"}</div>
           </div>
         </div>
 
-        {hasLink ? (
-          <>
-            <div className="mt-4 text-[11px] font-semibold uppercase tracking-[0.16em] text-white/55">Send it with</div>
-            <div className="vltd-glass-dock mt-2 grid grid-cols-4 gap-x-1 gap-y-3 p-3">
-              {destinations.map((d) =>
-                d.href ? (
-                  <a key={d.id} href={d.href} {...(d.newTab ? { target: "_blank", rel: "noopener noreferrer" } : {})} {...tileProps(d)}>
-                    <span className="vltd-glass-tile" style={{ background: d.tile }}>{d.icon}</span>
-                    <span className="w-full truncate">{d.label}</span>
-                  </a>
-                ) : (
-                  <button key={d.id} type="button" onClick={d.onActivate} {...tileProps(d)}>
-                    <span className="vltd-glass-tile" style={{ background: d.tile }}>{d.icon}</span>
-                    <span className="w-full truncate">{d.label}</span>
+        {/* 1. Pictures: shared like photos from your phone. Publishes nothing and carries no record details. */}
+        {photos && photos.length > 0 ? (
+          <section aria-label="Share photos" className="mt-4">
+            <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-white/55">Share photos</div>
+            <p className="mt-1 text-[11.5px] leading-snug text-white/55">Sends only the pictures you pick. Works for private items too.</p>
+            <div className="mt-2 flex gap-2 overflow-x-auto pb-1" role="group" aria-label="Pictures to share">
+              {photos.map((photo, index) => {
+                const on = picked.has(photo.url);
+                return (
+                  <button
+                    key={photo.url}
+                    type="button"
+                    onClick={() => togglePhoto(photo.url)}
+                    aria-pressed={on}
+                    aria-label={`${on ? "Selected" : "Not selected"}: ${photo.label || `Picture ${index + 1}`}`}
+                    className={`relative h-[72px] w-[56px] shrink-0 overflow-hidden rounded-lg bg-black/40 ring-2 transition focus-visible:outline-2 focus-visible:outline-offset-2 ${on ? "ring-[color:var(--theme-gold,#C8CDD2)]" : "opacity-60 ring-white/10 hover:opacity-100"}`}
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={photo.url} alt="" className="h-full w-full object-cover" draggable={false} />
+                    {on ? (
+                      <span className="absolute right-0.5 top-0.5 grid h-4 w-4 place-items-center rounded-full bg-emerald-500 text-white">
+                        <AppIcon name="checkmark" size={10} strokeWidth={3} />
+                      </span>
+                    ) : null}
                   </button>
-                )
-              )}
+                );
+              })}
             </div>
-            <p className="mt-2 text-[11.5px] leading-relaxed text-white/55">
-              These open the app or website with your link ready. Nothing is posted until you confirm it there.
-            </p>
-            {note ? (
-              <p role="status" className="mt-2 rounded-xl bg-white/5 px-3 py-2 text-[12px] leading-snug text-white/80 ring-1 ring-white/10">
-                {note}
-              </p>
-            ) : null}
-
-            <div className="mt-4 text-[11px] font-semibold uppercase tracking-[0.16em] text-white/55">Link</div>
-            <div className="mt-2 flex items-center gap-2 rounded-2xl bg-black/50 p-1.5 pl-3 ring-1 ring-white/10">
-              <input
-                ref={inputRef}
-                readOnly
-                value={url}
-                aria-label={`Link to this ${kindWord}`}
-                onFocus={(event) => event.currentTarget.select()}
-                className="min-w-0 flex-1 bg-transparent py-2 text-[13px] text-white/90 focus:outline-none"
-                style={{ background: "transparent", color: "rgba(255,255,255,0.92)" }}
-              />
-              <PillButton variant={copy === "copied" ? "success" : "default"} onClick={() => void handleCopy()} className="shrink-0">
-                {copy === "copied" ? (
-                  <>
-                    <AppIcon name="checkmark" size={16} strokeWidth={2.4} />
-                    Copied
-                  </>
-                ) : (
-                  <>
-                    <AppIcon name="copy" size={16} />
-                    Copy link
-                  </>
-                )}
+            <div className="mt-2 flex flex-wrap items-center gap-2">
+              {canShareFiles ? (
+                <PillButton variant="active" onClick={() => void handleSharePhotos()} disabled={chosen.length === 0 || photoBusy !== ""}>
+                  <AppIcon name="share" size={16} />
+                  {photoBusy === "share" ? "Preparing…" : chosen.length > 0 ? `Share ${chosen.length} photo${chosen.length === 1 ? "" : "s"}` : "Share photos"}
+                </PillButton>
+              ) : null}
+              <PillButton variant={canShareFiles ? "default" : "active"} onClick={() => void handleDownloadPhotos()} disabled={chosen.length === 0 || photoBusy !== ""}>
+                <AppIcon name="download" size={16} />
+                {photoBusy === "download" ? "Saving…" : "Download to device"}
               </PillButton>
             </div>
-            <div role="status" aria-live="polite" className="mt-1.5 min-h-[18px] text-[12px]">
-              {copy === "copied" ? <span className="text-emerald-300">Link copied to your clipboard.</span> : null}
-              {copy === "failed" ? (
-                <span className="text-amber-300">Your browser would not copy it. The link is selected: press Ctrl+C (Cmd+C on a Mac).</span>
-              ) : null}
+            {!canShareFiles ? <p className="mt-1 text-[11.5px] text-white/50">This browser cannot open a share sheet, so pictures are saved to your device.</p> : null}
+            <div role="status" aria-live="polite" className="min-h-[16px] text-[12px]">
+              {photoNote ? <span className={photoNote.tone === "ok" ? "text-emerald-300" : "text-red-300"}>{photoNote.text}</span> : null}
             </div>
-          </>
-        ) : (
-          <div role="status" className="mt-4 rounded-2xl bg-amber-400/10 p-3 text-[13px] leading-relaxed text-amber-100 ring-1 ring-amber-300/30">
-            {restriction || `This ${kindWord} has no public link, so there is nothing to share.`}
-          </div>
-        )}
+          </section>
+        ) : null}
+
+        {/* 2. The public link: only when the item or exhibition is public. Otherwise one short question. */}
+        <section aria-label="Share public link" className="mt-4">
+          <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-white/55">Share public link</div>
+          {hasLink ? (
+            <>
+              <div className="vltd-glass-dock mt-2 grid grid-cols-4 gap-x-1 gap-y-3 p-3">
+                {destinations.map((d) =>
+                  d.href ? (
+                    <a key={d.id} href={d.href} {...(d.newTab ? { target: "_blank", rel: "noopener noreferrer" } : {})} {...tileProps(d)}>
+                      <span className="vltd-glass-tile" style={{ background: d.tile }}>{d.icon}</span>
+                      <span className="w-full truncate">{d.label}</span>
+                    </a>
+                  ) : (
+                    <button key={d.id} type="button" onClick={d.onActivate} {...tileProps(d)}>
+                      <span className="vltd-glass-tile" style={{ background: d.tile }}>{d.icon}</span>
+                      <span className="w-full truncate">{d.label}</span>
+                    </button>
+                  )
+                )}
+              </div>
+              <p className="mt-2 text-[11.5px] leading-relaxed text-white/55">These open the app or website with your link ready. Nothing is posted until you confirm it there.</p>
+              {note ? (
+                <p role="status" className="mt-2 rounded-xl bg-white/5 px-3 py-2 text-[12px] leading-snug text-white/80 ring-1 ring-white/10">
+                  {note}
+                </p>
+              ) : null}
+              <div className="mt-3 flex items-center gap-2 rounded-2xl bg-black/50 p-1.5 pl-3 ring-1 ring-white/10">
+                <input
+                  ref={inputRef}
+                  readOnly
+                  value={url}
+                  aria-label={`Link to this ${kindWord}`}
+                  onFocus={(event) => event.currentTarget.select()}
+                  className="min-w-0 flex-1 bg-transparent py-2 text-[13px] text-white/90 focus:outline-none"
+                  style={{ background: "transparent", color: "rgba(255,255,255,0.92)" }}
+                />
+                <PillButton variant={copy === "copied" ? "success" : "default"} onClick={() => void handleCopy()} className="shrink-0">
+                  {copy === "copied" ? (
+                    <>
+                      <AppIcon name="checkmark" size={16} strokeWidth={2.4} />
+                      Copied
+                    </>
+                  ) : (
+                    <>
+                      <AppIcon name="copy" size={16} />
+                      Copy link
+                    </>
+                  )}
+                </PillButton>
+              </div>
+              <div role="status" aria-live="polite" className="mt-1.5 min-h-[18px] text-[12px]">
+                {copy === "copied" ? <span className="text-emerald-300">Link copied to your clipboard.</span> : null}
+                {copy === "failed" ? (
+                  <span className="text-amber-300">Your browser would not copy it. The link is selected: press Ctrl+C (Cmd+C on a Mac).</span>
+                ) : null}
+              </div>
+            </>
+          ) : onEnablePublic ? (
+            <div className="mt-2">
+              <PublicSharePrompt kind={kind} onEnable={onEnablePublic} />
+            </div>
+          ) : (
+            <div role="status" className="mt-2 rounded-2xl bg-amber-400/10 p-3 text-[13px] leading-relaxed text-amber-100 ring-1 ring-amber-300/30">
+              {restriction || `This ${kindWord} has no public link, so there is nothing to share.`}
+            </div>
+          )}
+        </section>
 
         {onExport ? (
-          <div className="mt-4 border-t border-white/10 pt-4">
+          <div className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-white/10 pt-3">
             <PillButton
               onClick={() => {
                 onClose();
@@ -263,7 +470,7 @@ export default function ShareDialog({
             >
               <AppIcon name="share" size={16} /> Export for social
             </PillButton>
-            <p className="mt-1.5 text-[11.5px] leading-relaxed text-white/55">Makes a picture or video you can save and post yourself. It does not post anything.</p>
+            <p className="min-w-0 flex-1 text-[11.5px] leading-snug text-white/55">Makes a picture or video you can save and post yourself. It does not post anything.</p>
           </div>
         ) : null}
 
