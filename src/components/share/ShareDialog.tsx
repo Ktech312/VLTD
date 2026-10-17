@@ -104,7 +104,7 @@ export function PublicSharePrompt({ kind, onEnable }: { kind: "item" | "exhibiti
     <div className="rounded-2xl bg-amber-400/10 p-3 ring-1 ring-amber-300/30">
       <div className="text-[13px] font-semibold text-amber-100">Turn on public sharing?</div>
       <p className="mt-0.5 text-[12px] leading-snug text-amber-100/80">
-        {kind === "item" ? "Anyone with the link can see this item's public details." : "Anyone with the link can view this exhibition. It is not added to public discovery, and a hidden collector name stays hidden."}
+        {kind === "item" ? "Anyone with the link can see this item's public details." : "Anyone with the link can view this exhibition. It is not added to public discovery."}
       </p>
       <div className="mt-2 flex items-center gap-2">
         <PillButton variant="active" onClick={() => void yes()} disabled={state === "saving"}>

@@ -47,7 +47,7 @@ const pick = (S, label) => S.evaluate(`(() => { const s = document.querySelector
     await S.evaluate(`document.querySelector('button[aria-label="Share this exhibition"]').click(); true`);
     await S.waitFor(`document.querySelector('[role="dialog"][aria-label="Share exhibition"]')`, 20000, "share dialog"); await sleep(900);
     const dlg = await S.evaluate(`document.querySelector('[role="dialog"][aria-label="Share exhibition"]').innerText.replace(/\\s+/g, ' ').trim()`);
-    check("5 exhibition question says anyone with the link can view it, not in public discovery, hidden collector name stays hidden", /Turn on public sharing\?/.test(dlg) && /Anyone with the link can view this exhibition\. It is not added to public discovery, and a hidden collector name stays hidden\./.test(dlg), dlg);
+    check("5 exhibition question says anyone with the link can view it, not in public discovery (and no promise that a collector name stays hidden)", /Turn on public sharing\?/.test(dlg) && /Anyone with the link can view this exhibition\. It is not added to public discovery\./.test(dlg), dlg);
     const vis = (await admin.from("galleries").select("visibility").eq("id", gid).maybeSingle()).data;
     check("5b merely opening the Share panel left the exhibition private", vis && vis.visibility === "LOCKED", vis);
   } finally { await S.close(); }
