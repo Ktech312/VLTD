@@ -17,7 +17,7 @@ States: not started / in progress / blocked / verified complete. Limits sit next
 | Inc-2 | Intermittent blank Vault | OPEN, not reproduced | ONE idle cold load (120 s idle, fresh browser, synthetic account): skeleton at 0.6 s, loaded at 1.6 s with 17 items, 0 failed requests, 0 console errors (`scripts\blank-vault-idle.cjs`). Diagnostic capture stays on. No repro campaign. |
 | Inc-3 | Slower-device rendering stalls (4x CPU slowdown) | OPEN | Existing evidence read: `docs\perf-evidence-2026-10-17\README.md` (repeat visits 179-879 ms longest task under 4x slowdown; CSS experiments H1/H2 gave no fix; normal speed <= 208 ms). No new profiling without new evidence. CPU slowdown is not a phone. |
 | Inc-4 | Physical phone / touch, native photo sharing, push delivery, Comcast resend | UNVERIFIED | Human steps only; no further customer email sent. |
-| Fixtures | Synthetic QA data | in use until the final cleanup | Account A (`qa_ui_*`, 19 rows) still exists for the recap run; B and C were removed by their own script (0 left). Final cleanup: `ui-cleanup.cjs`, then confirm 3,477 real items / 39 profiles / 47 exhibitions unchanged. |
+| Fixtures | Synthetic QA data | removed; verified | All QA accounts (A, B, C), profiles, items, exhibitions removed by exact id; re-counted afterwards with no browsers open: vault_items 3,477 / profiles 39 / exhibitions 47, 0 QA profiles, 0 QA-titled items, 0 QA auth users. Dev server and headless browsers stopped. Nothing of any customer was read for content or changed (read-only counts only). |
 
 ---
 
