@@ -35,8 +35,14 @@ export const PUBLIC_ITEM_COLUMNS = [
   "images_json",
 ].join(", ");
 
+// The same list without the owner's profile id. Used where an exhibition shows an alias instead of its curator: the response
+// must not hand the visitor the real account's id (it resolves to the public profile name).
+export const PUBLIC_ITEM_COLUMNS_NO_OWNER = PUBLIC_ITEM_COLUMNS.split(", ").filter((c) => c !== "profile_id").join(", ");
+
 // Public profile and market pages show an item's value on purpose.
 export const PUBLIC_ITEM_COLUMNS_WITH_VALUE = `${PUBLIC_ITEM_COLUMNS}, current_value`;
 
 // Invite links can grant "financial history": only then do value and cost columns come along.
 export const PUBLIC_ITEM_COLUMNS_FINANCIAL = `${PUBLIC_ITEM_COLUMNS}, current_value, purchase_price`;
+
+export const PUBLIC_ITEM_COLUMNS_WITH_VALUE_NO_OWNER = `${PUBLIC_ITEM_COLUMNS_NO_OWNER}, current_value`;

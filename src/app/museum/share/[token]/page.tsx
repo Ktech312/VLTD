@@ -4,7 +4,7 @@ import { PillButton } from "@/components/ui/PillButton";
 import { publicItemsTable } from "@/lib/publicItemsSource";
 import { vaultItemFromPublicSnapshot as vaultItemFromGallerySnapshot } from "@/lib/hiddenItems";
 import { publicRowToItem as normalizeVaultItem } from "@/lib/publicProfile";
-import { PUBLIC_ITEM_COLUMNS } from "@/lib/publicItemColumns";
+import { PUBLIC_ITEM_COLUMNS, PUBLIC_ITEM_COLUMNS_NO_OWNER } from "@/lib/publicItemColumns";
 import Link from "next/link";
 import type { CSSProperties, ReactNode } from "react";
 import { useEffect, useMemo, useState } from "react";
@@ -243,7 +243,7 @@ export default function SharedGalleryPage() {
             if (uniqueArtifactIds.length > 0) {
               let itemQuery = supabase
                 .from(await publicItemsTable(supabase))
-                .select(PUBLIC_ITEM_COLUMNS)
+                .select(gallery.aliasEnabled ? PUBLIC_ITEM_COLUMNS_NO_OWNER : PUBLIC_ITEM_COLUMNS)
                 .in("id", uniqueArtifactIds);
               // An exhibit only shows items from its own profile.
               if (gallery.profile_id) itemQuery = itemQuery.eq("profile_id", gallery.profile_id);

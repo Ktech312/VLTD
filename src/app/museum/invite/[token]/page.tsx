@@ -3,7 +3,7 @@
 import { publicItemsTable } from "@/lib/publicItemsSource";
 import { vaultItemFromPublicSnapshot as vaultItemFromSnapshot } from "@/lib/hiddenItems";
 import { publicRowToItem as normalizeVaultItem } from "@/lib/publicProfile";
-import { PUBLIC_ITEM_COLUMNS_WITH_VALUE } from "@/lib/publicItemColumns";
+import { PUBLIC_ITEM_COLUMNS_WITH_VALUE, PUBLIC_ITEM_COLUMNS_WITH_VALUE_NO_OWNER } from "@/lib/publicItemColumns";
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useParams } from "next/navigation";
@@ -138,7 +138,7 @@ export default function InviteGalleryPage() {
           if (uniqueIds.length > 0) {
             let itemQuery = supabase
               .from(await publicItemsTable(supabase))
-              .select(PUBLIC_ITEM_COLUMNS_WITH_VALUE)
+              .select(gallery.aliasEnabled ? PUBLIC_ITEM_COLUMNS_WITH_VALUE_NO_OWNER : PUBLIC_ITEM_COLUMNS_WITH_VALUE)
               .in("id", uniqueIds);
             // An exhibit only shows items from its own profile.
             if (gallery.profile_id) itemQuery = itemQuery.eq("profile_id", gallery.profile_id);

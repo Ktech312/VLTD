@@ -443,17 +443,19 @@ export default function GuestGalleryRenderer({
   }, [model.galleryItems, viewerProfileId]);
 
   useEffect(() => {
+    if (embedded) return;
     const profileId = model.gallery?.profile_id;
-    if (!profileId || embedded) return;
 
     // Aliased exhibition: show the made-up identity and skip fetching the
     // real public profile entirely — nothing about the real account needs
-    // to reach this page at all.
+    // to reach this page at all. (Share and invite links no longer send the
+    // real profile_id for an aliased exhibition to anyone but its owner, so
+    // this must work without one.)
     const alias = getGalleryAliasIdentity(model.gallery);
     if (alias) {
       setOwner({
         displayName: alias.name,
-        profileId,
+        profileId: "",
         avatarUrl: undefined,
         avatar: alias.avatar,
         isAlias: true,
@@ -461,6 +463,7 @@ export default function GuestGalleryRenderer({
       });
       return;
     }
+    if (!profileId) return;
 
     void fetchPublicProfile(profileId).then((profile) => {
       if (profile) {
