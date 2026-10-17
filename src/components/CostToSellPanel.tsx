@@ -127,7 +127,7 @@ export default function CostToSellPanel({
               <input
                 value={override}
                 onChange={(e) => setOverride(e.target.value)}
-                className="h-8 w-28 rounded-lg bg-[color:var(--pill)] px-2 text-sm ring-1 ring-[color:var(--border)] focus:outline-none max-md:h-11"
+                className="h-8 w-36 rounded-lg bg-[color:var(--pill)] px-2 text-sm ring-1 ring-[color:var(--border)] focus:outline-none max-md:h-11"
                 inputMode="decimal"
                 aria-label="Override fee percent (optional)"
                 placeholder="Override fee %"
