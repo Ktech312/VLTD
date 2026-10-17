@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
 import { AppIcon } from "@/components/ui/AppIcon";
+import { showMobileAddItem } from "@/lib/primaryNav";
 
 interface BeforeInstallPromptEvent extends Event {
   prompt(): Promise<void>;
@@ -12,7 +14,13 @@ const DISMISSED_KEY = "vltd_pwa_dismissed_until";
 const INSTALLED_KEY = "vltd_pwa_installed";
 const COOLDOWN_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
 
+function isGuestGalleryRoute(pathname: string) {
+  const parts = pathname.split("/");
+  return parts.length >= 4 && parts[1] === "museum" && parts[3] === "guest";
+}
+
 export default function PWAInstallBanner() {
+  const pathname = usePathname() ?? "";
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [isIOS, setIsIOS] = useState(false);
   const [show, setShow] = useState(false);
@@ -92,10 +100,16 @@ export default function PWAInstallBanner() {
 
   if (!show) return null;
 
-  // Small floating pill — bottom-left, above the bottom nav
+  // Small floating pill — bottom-left, above the bottom nav. On phones, pages that show the
+  // floating Add group (Quick Add / Add Item / upload) put that group right above the bar, and the
+  // centered Sync status pill sits above that group (SyncStatusPill: safe-area + 152px, up to
+  // 44px tall). So on those pages the prompt clears both instead of drawing on top of them.
+  const aboveAddGroup = showMobileAddItem(pathname) && !isGuestGalleryRoute(pathname);
+  const pillPosition = aboveAddGroup
+    ? "bottom-[calc(max(env(safe-area-inset-bottom,0px),0px)+204px)] md:bottom-3"
+    : "bottom-[calc(var(--bottomnav-h,64px)+max(env(safe-area-inset-bottom,0px),0px)+12px)] md:bottom-3";
   const pillStyle: React.CSSProperties = {
     position: "fixed",
-    bottom: "calc(var(--bottomnav-h, 64px) + max(env(safe-area-inset-bottom, 0px), 0px) + 12px)",
     left: 16,
     zIndex: 9998,
     maxWidth: 280,
@@ -117,7 +131,7 @@ export default function PWAInstallBanner() {
     return (
       <div
         style={pillStyle}
-        className="vltd-dark-surface flex items-center gap-1.5 rounded-xl border border-white/10 bg-[#12101C]/95 px-2 py-1.5 shadow-xl backdrop-blur-xl"
+        className={`${pillPosition} vltd-dark-surface flex items-center gap-1.5 rounded-xl border border-white/10 bg-[#12101C]/95 px-2 py-1.5 shadow-xl backdrop-blur-xl`}
       >
         <img src="/icons/icon-96x96.png" alt="" className="h-6 w-6 rounded-lg flex-shrink-0" />
         <p className="text-[11px] font-semibold whitespace-nowrap" style={{ color: "#fff" }}>Add to Home Screen</p>
@@ -140,7 +154,7 @@ export default function PWAInstallBanner() {
     return (
       <div
         style={pillStyle}
-        className="vltd-dark-surface flex flex-col gap-1.5 rounded-xl border border-white/10 bg-[#12101C]/95 px-2 py-1.5 shadow-xl backdrop-blur-xl"
+        className={`${pillPosition} vltd-dark-surface flex flex-col gap-1.5 rounded-xl border border-white/10 bg-[#12101C]/95 px-2 py-1.5 shadow-xl backdrop-blur-xl`}
       >
         <div className="flex items-center gap-1.5">
           <img src="/icons/icon-96x96.png" alt="" className="h-6 w-6 rounded-lg flex-shrink-0" />

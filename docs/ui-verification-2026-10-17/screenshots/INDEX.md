@@ -25,3 +25,11 @@ All screens use one synthetic test account (QA data, art from `public/collectibl
 ## What these do NOT show
 - **Native photo sharing is SIMULATED, not device-verified.** In every test the browser's share sheet was replaced by a stand-in that recorded what would be handed over (picture files only, no link or text). No real phone share sheet was opened.
 - Real touch dragging of the carousel was not tested on a device.
+
+## Closeout 2026-10-17 (install prompt on phone)
+| What | Before | After |
+|---|---|---|
+| "Add to Home Screen" prompt vs the floating Quick Add / Add Item / upload row (390 px, resized browser, synthetic prompt event) | `before\m3-home.png` (prompt drawn on top of Quick Add) | `after\m3-home-install-prompt-390.png`; also checked at 320 px: `after\m3-home-install-prompt-320.png` |
+
+Measured with `scripts\overlap.cjs` (prompt box vs Add row, bottom bar and Sync pill, on /, /vault, /discover, /portfolio at 390 and 320 px): no overlap, no sideways scroll, dismissal removes the prompt and stores the 7-day pause. Resized browser, not a physical phone.
+Seen at 320 px and NOT part of this fix: the Add row (Quick Add / Add Item / upload) is 262 px wide and starts about 10 px left of the screen edge, so the left edge of Quick Add is clipped on a 320 px screen. Logged in HANDOFF.md as an open item.
