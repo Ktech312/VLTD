@@ -23,7 +23,7 @@ Unit suites (`npm run test:*`) run no browser and no deployed code.
 | Inc-2 | Intermittent blank Vault | **OPEN, not reproduced** | One idle cold load: skeleton 0.6 s, loaded 1.6 s, 0 failures. Diagnostics stay on. |
 | Inc-3 | Slower-device rendering stalls (4x CPU slowdown) | **OPEN** | `docs/perf-evidence-2026-10-17/`. CPU slowdown is not a phone. |
 | Inc-4 | Physical phone / touch, native photo sharing, push, Comcast resend | **UNVERIFIED** | `docs/physical-device-acceptance-checklist.md`. No customer e-mail sent. Tutorials stay paused. |
-| Fixtures | Synthetic QA data | in use until the final cleanup (this round) | Account A (`qa_ui_*`) exists for the closing live runs; the extra accounts, storage uploads and gallery/invite rows created by the tests were removed by the tests themselves. Final cleanup: `ui-cleanup.cjs`, then confirm 3,477 real items / 39 profiles / 47 exhibitions. |
+| Fixtures | Synthetic QA data | **removed; verified** | Every QA account, profile, item, exhibition, invite and storage upload removed by exact id; re-counted with no browser open: vault_items 3,477 / profiles 39 / exhibitions 47, 0 QA profiles, 0 QA-titled items, 0 QA auth users. To rerun the checks after the SQL: recreate with `ui-setup.cjs` (needs the scratch `qa/env.cjs` described in the README), run, then `ui-cleanup.cjs`. |
 
 Earlier revision-8 notes that are superseded by the rows above: the Sold-list/Home "unknown cost" fix and the 320 px Add-row / account-menu Escape fixes were verified LOCAL then; they are LIVE-verified in rows 2 and 5 now. The proposal file `docs/proposals/private-exhibition-share-token-2026-10-17.md` was replaced by the migration in row 1.
 
