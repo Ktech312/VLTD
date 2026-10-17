@@ -308,6 +308,18 @@ function TopNavInner() {
     return () => window.removeEventListener("keydown", onKey);
   }, [levelInfoOpen]);
 
+  // Escape closes the account menu and puts focus back on its button (the Level popover, when open, takes the first Escape).
+  useEffect(() => {
+    if (!userOpen) return;
+    function onKey(e: KeyboardEvent) {
+      if (e.key !== "Escape" || levelInfoOpen) return;
+      setUserOpen(false);
+      userMenuRef.current?.querySelector("button")?.focus();
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [userOpen, levelInfoOpen]);
+
   function applySearch(raw: string) {
     const parsed = parseQuerySmart(raw);
     const params = new URLSearchParams();

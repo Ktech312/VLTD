@@ -54,9 +54,11 @@ export default function BottomNav() {
       style={{ position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 9999 }}
       aria-label="Main navigation"
     >
-      {/* Persistent Add Item: sits directly above the bar, inside the nav so the safe area is already respected. */}
+      {/* Persistent Add Item: sits directly above the bar, inside the nav so the safe area is already respected.
+          It leaves room (68px) for the round bug-report button at the right; on a 320px screen the row is wider than
+          that space, so there it moves to the edge margin and the bug-report button moves up above it (BugReporter). */}
       {showAdd ? (
-        <div className="absolute bottom-full right-[68px] mb-2" data-mobile-add-item>
+        <div className="absolute bottom-full right-[68px] mb-2 max-[339px]:right-3" data-mobile-add-item>
           <AddItemActions placement="above" />
         </div>
       ) : null}
