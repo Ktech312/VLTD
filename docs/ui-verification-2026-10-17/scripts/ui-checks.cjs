@@ -198,7 +198,7 @@ async function interceptWrites(S, tableRe) {
         return S.evaluate(`(() => { const s = document.querySelector('section[aria-label="Cost to sell"]'); return { chips: [...s.querySelectorAll('button')].map((b) => b.textContent.trim()), h: Math.round(s.getBoundingClientRect().height), advice: s.innerText.slice(-200) }; })()`);
       };
       const b = await chips(ID(1));
-      check("[sell] a comic is offered eBay, Mercari, Whatnot, Fanatics Collect and Custom, and not Discogs", JSON.stringify(b.chips) === JSON.stringify(["eBay", "Mercari", "Whatnot", "Fanatics Collect", "Custom"]), b.chips);
+      check("[sell] a comic is offered eBay, Mercari, Whatnot and Custom (not Fanatics Collect, not Discogs)", JSON.stringify(b.chips.filter((c) => !/override/i.test(c))) === JSON.stringify(["eBay", "Mercari", "Whatnot", "Custom"]), b.chips);
       console.log("   Cost to Sell panel height (desktop):", b.h);
       const sp = await chips(ID(2)); check("[sell] a sports card: eBay, Mercari, Whatnot, Fanatics Collect, Custom", JSON.stringify(sp.chips) === JSON.stringify(["eBay", "Mercari", "Whatnot", "Fanatics Collect", "Custom"]), sp.chips);
       const gt = await chips(ID(4)); check("[sell] a guitar: eBay, Mercari, Whatnot, Custom (no Discogs, no Fanatics Collect)", JSON.stringify(gt.chips) === JSON.stringify(["eBay", "Mercari", "Whatnot", "Custom"]), gt.chips);
@@ -231,7 +231,7 @@ async function interceptWrites(S, tableRe) {
       await S.waitFor(`document.querySelector('textarea[readonly]')`, 30000, "listing textarea");
       await sleep(600);
       const listing = await S.evaluate(`(() => { const ta = document.querySelector('textarea[readonly]'); const chips = [...document.querySelectorAll('button[aria-pressed]')].map((b) => b.textContent.trim()).filter((t) => /^(eBay|Mercari|Facebook|Etsy|Whatnot|Discogs|Fanatics Collect|Icona)$/.test(t)); return { text: ta.value.slice(0, 300), chips }; })()`);
-      check("[listing] unlocked: platforms fit the comic (Fanatics Collect yes, Discogs no) and the text names the item", /QA Batman/.test(listing.text) && listing.chips.includes("Fanatics Collect") && !listing.chips.includes("Discogs"), listing);
+      check("[listing] unlocked: platforms fit the comic (no Fanatics Collect, no Discogs) and the text names the item", /QA Batman/.test(listing.text) && !listing.chips.includes("Fanatics Collect") && !listing.chips.includes("Discogs"), listing);
       await S.evaluate(`navigator.clipboard.writeText = async () => { window.__copied = true; }; true`);
       await S.click("text:Copy Listing"); await sleep(800);
       const copied = await S.evaluate(`({ copied: !!window.__copied, msg: document.body.innerText.match(/listing copied\\./i)?.[0] || '' })`);

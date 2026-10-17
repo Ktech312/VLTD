@@ -2,7 +2,8 @@
 //
 // What was checked against each marketplace's own pages (October 2026):
 //   Discogs        - only sells music releases that match an entry in its music database ("How To Sell Music On Discogs").
-//   Fanatics Collect - Buy Now lists "sports cards, TCG, pop culture cards, comic books, memorabilia, and more".
+//   Fanatics Collect - Buy Now lists "sports cards, TCG, pop culture cards, comic books, memorabilia, and more". That is what the site
+//                    CAN take. What we SUGGEST is narrower: cards and sports memorabilia only, so comic books are not suggested there.
 //   eBay, Mercari, Whatnot - general marketplaces; every category is offered. Each one still has its own list of items it
 //                    will not allow (firearms, alcohol, live plants...). That list was NOT audited here: check it before listing.
 // "Custom" (your own fee percentage) is always available.
@@ -23,13 +24,13 @@ export function discogsFits(place: ItemPlace): boolean {
   return String(place.universe ?? "").toUpperCase() === "MUSIC" && has(place.category, /audio formats?|record|vinyl|music/) && !has(place.category, /player|instrument|print|ephemera/);
 }
 
-/** Fanatics Collect Buy Now: cards (sports, TCG, non-sport, art cards), comic books and memorabilia. */
+/** Fanatics Collect, as a suggestion: cards (sports, TCG, art cards) and sports memorabilia. Comic books are deliberately left out. */
 export function fanaticsCollectFits(place: ItemPlace): boolean {
   const universe = String(place.universe ?? "").toUpperCase();
   const category = normalizeLabel(place.category).toLowerCase();
   if (universe === "SPORTS") return /card|memorabilia/.test(category);
   if (universe === "TCG") return !/accessor/.test(category);
-  if (universe === "POP_CULTURE") return /^comics$|art cards/.test(category);
+  if (universe === "POP_CULTURE") return /art cards/.test(category);
   if (universe === "ART") return /art cards/.test(category);
   return false;
 }
@@ -47,10 +48,7 @@ export function marketplacesFor(place: ItemPlace): MarketplaceId[] {
 /** What to try first, and the one-line reason shown under the figures. */
 export function marketplaceAdvice(place: ItemPlace): { suggested: MarketplaceId; note: string } {
   if (discogsFits(place)) return { suggested: "discogs", note: "Discogs is built for music releases, with eBay as a broader fallback." };
-  const category = normalizeLabel(place.category).toLowerCase();
-  if (fanaticsCollectFits(place)) {
-    if (/comic/.test(category)) return { suggested: "ebay", note: "Comics usually start with eBay; Whatnot and Fanatics Collect also take comic books." };
-    return { suggested: "ebay", note: "Cards usually start with eBay; Fanatics Collect can make sense for higher-end graded pieces." };
-  }
+  if (fanaticsCollectFits(place)) return { suggested: "ebay", note: "Cards usually start with eBay; Fanatics Collect can make sense for higher-end graded pieces." };
+  if (/^comics$/.test(normalizeLabel(place.category).toLowerCase())) return { suggested: "ebay", note: "Comics usually start with eBay; Whatnot also has a comics category." };
   return { suggested: "ebay", note: "eBay is the broadest default; Mercari and Whatnot are also open to most categories." };
 }

@@ -4,14 +4,18 @@
 export type Channel = "ebay" | "mercari" | "whatnot" | "pwcc" | "discogs" | "custom";
 
 /**
- * Seller fee tables, checked October 2026. eBay, Discogs, Whatnot (commission starts at 8%, 2.9% + $0.30 processing) and
- * Fanatics Collect were read from their own pages; Mercari comes from published guides, and the "no Whatnot commission above
- * $1,500" line below comes from published guides too (Whatnot's own page does not state it). Whatnot's commission depends on your
- * four-week sales tier. Marketplaces change these, so each line says where it came from, and "Custom" lets you
- * type your own percentage.
- * Fees are worked out on the sale price you enter (include shipping if you charge the buyer for it).
+ * Seller fee tables. Each rule says how far it could be checked (status), October 2026:
+ *  - "verified": every number was read from the marketplace's own page (eBay selling fees; Mercari "Fees on Mercari";
+ *    Fanatics Collect "Buy Now fees").
+ *  - "partly": the main rate is from the marketplace's own page, but something that changes the answer was NOT confirmed:
+ *    Whatnot (8% is its published starting rate; the real rate depends on your four-week tier and category, and the US rate card
+ *    could not be read; the "no commission above $1,500" line is a limited-time promotion for listed categories) and Discogs (the
+ *    9% fee is from its page; the payment processor's 2.9% + $0.30 is an estimate, Discogs does not state it).
+ * Nothing is presented as an established rate unless its status is "verified". Fees are worked out on the sale price you enter
+ * (include shipping if you charge the buyer for it). A fee-percent override in the panel always wins over these tables.
  */
-export type FeeBreakdown = { total: number; summary: string };
+export type FeeStatus = "verified" | "partly";
+export type FeeBreakdown = { total: number; summary: string; status: FeeStatus; /** Where the numbers were read. */ source: string; /** What was not confirmed (partly only). */ caveat?: string };
 export type FeeRule = (gross: number, category?: string, subcategory?: string) => FeeBreakdown;
 
 const money2 = (n: number) => `$${n.toFixed(2)}`;
@@ -37,11 +41,20 @@ export const FEE_RULES: Record<Exclude<Channel, "custom">, FeeRule> = {
     const rate = ebayRate(category, subcategory);
     const base = Math.min(gross, 7500) * rate + Math.max(gross - 7500, 0) * 0.0235;
     const perOrder = gross <= 0 ? 0 : gross <= 10 ? 0.3 : 0.4;
-    return { total: base + perOrder, summary: `${Number((rate * 100).toFixed(2))}% (2.35% over $7,500) + ${money2(perOrder)} per order (from eBay's fee page)` };
+    // Jewelry, watches, handbags, guitars and bullion have their own eBay tiers that are not modelled: say so instead of presenting 13.6% as theirs.
+    const own = /jewel|watch|bag|handbag|guitar|bass|instrument/.test(`${category ?? ""} ${subcategory ?? ""}`.toLowerCase()) || /bullion/i.test(String(subcategory ?? ""));
+    return {
+      total: base + perOrder,
+      summary: `${Number((rate * 100).toFixed(2))}% (2.35% over $7,500) + ${money2(perOrder)} per order`,
+      status: own ? "partly" : "verified",
+      source: "eBay's selling fees page",
+      ...(own ? { caveat: "eBay has its own fee tiers for this kind of item (jewelry, watches, handbags, guitars, bullion) that are not built in here, so the general 13.6% is only an estimate." } : {}),
+    };
   },
-  // Mercari: a flat 10% of the sale, payment processing included.
-  mercari: (gross) => ({ total: gross * 0.1, summary: "10% flat, payment processing included (published guides; confirm in your account)" }),
-  // Whatnot: 8% commission (none on the part of a card, comic or coin sale above $1,500) + 2.9% + $0.30 payment processing.
+  // Mercari: 10% of the item price plus buyer-paid shipping; no separate payment-processing fee for sellers.
+  mercari: (gross) => ({ total: gross * 0.1, summary: "10% of item price + buyer-paid shipping, no separate processing fee", status: "verified", source: "Mercari's \"Fees on Mercari\" help page" }),
+  // Whatnot: 8% starting commission + 2.9% + $0.30 processing on the full order. 0% commission on the part above $1,500 is a limited-time
+  // promotion for listed categories (comics, toys, coins, card games, entertainment cards, sports singles, bags, jewelry).
   whatnot: (gross, category) => {
     const label = String(category ?? "").toLowerCase();
     const waived = /card|tcg|comic|coin/.test(label);
@@ -49,15 +62,21 @@ export const FEE_RULES: Record<Exclude<Channel, "custom">, FeeRule> = {
     const processing = gross <= 0 ? 0 : gross * 0.029 + 0.3;
     return {
       total: commissionBase * 0.08 + processing,
-      summary: `${waived ? "8% (none above $1,500)" : "8%"} + 2.9% + $0.30 processing. Whatnot's commission now depends on your four-week sales tier, so check your rate card`,
+      summary: `${waived ? "8% (0% on the part above $1,500, a limited-time promotion)" : "8%"} + 2.9% + $0.30 processing`,
+      status: "partly",
+      source: "Whatnot's seller fees and high-value-orders help pages",
+      caveat: "8% is Whatnot's starting rate. Your real commission depends on your four-week sales tier and the category, and the US rate card could not be read here.",
     };
   },
-  // Fanatics Collect (formerly PWCC): 6% on Buy Now sales (12% if it sells well above market value, which this cannot know).
-  pwcc: (gross) => ({ total: gross * 0.06, summary: "6% Buy Now when priced under 120% of market value, 12% at or above it (Fanatics Collect's support page; this assumes under)" }),
+  // Fanatics Collect (formerly PWCC): 6% on Buy Now sales priced under 120% of market value, 12% at or above (this cannot know market value).
+  pwcc: (gross) => ({ total: gross * 0.06, summary: "6% Buy Now when priced under 120% of market value (12% at or above it)", status: "verified", source: "Fanatics Collect's Buy Now fees page" }),
   // Discogs: 9% of the sale (item and shipping), at least $0.10 and at most $150, plus the payment processor's fee.
   discogs: (gross) => ({
     total: gross <= 0 ? 0 : Math.min(150, Math.max(0.1, gross * 0.09)) + gross * 0.029 + 0.3,
-    summary: "9% (min $0.10, max $150; from Discogs' fee page) + about 2.9% + $0.30 payment processing (estimate)",
+    summary: "9% (min $0.10, max $150) + about 2.9% + $0.30 payment processing",
+    status: "partly",
+    source: "Discogs' selling fees page (the 9%)",
+    caveat: "The 2.9% + $0.30 payment processing is an estimate: Discogs' pages do not state the rate your payment account charges.",
   }),
 };
 

@@ -55,13 +55,22 @@ export default function CostToSellPanel({
   const [salePrice, setSalePrice] = useState(String(price || ""));
   const [shipping, setShipping] = useState(String(shippingCost || ""));
   const [customRate, setCustomRate] = useState("12.9");
+  // Optional: your own fee percent for the chosen marketplace. When filled in it replaces the built-in table.
+  const [override, setOverride] = useState("");
 
   const payout = useMemo(() => {
     const gross = Number(salePrice || 0);
     const shipCost = Number(shipping || 0);
     let fees: number;
     let feeSummary: string;
-    if (channel === "custom") {
+    let status: "verified" | "partly" | "yours" = "yours";
+    let source = "";
+    let caveat = "";
+    const overrideNum = override.trim() === "" ? null : Number(override);
+    if (channel !== "custom" && overrideNum !== null && Number.isFinite(overrideNum) && overrideNum >= 0) {
+      fees = gross * (overrideNum / 100);
+      feeSummary = `${overrideNum}% (your own rate, overriding the table)`;
+    } else if (channel === "custom") {
       const parsed = Number(customRate);
       const rate = Number.isFinite(parsed) ? parsed / 100 : 0;
       fees = gross * rate;
@@ -70,11 +79,14 @@ export default function CostToSellPanel({
       const result = FEE_RULES[channel](gross, category, subcategory);
       fees = result.total;
       feeSummary = result.summary;
+      status = result.status;
+      source = result.source;
+      caveat = result.caveat ?? "";
     }
     const net = gross - fees - shipCost;
     const gain = net - Number(costBasis ?? 0);
-    return { gross, shipCost, fees, feeSummary, net, gain };
-  }, [salePrice, shipping, channel, customRate, category, subcategory, costBasis]);
+    return { gross, shipCost, fees, feeSummary, net, gain, status, source, caveat };
+  }, [salePrice, shipping, channel, customRate, override, category, subcategory, costBasis]);
 
   const hasPrice = payout.gross > 0;
 
@@ -111,7 +123,16 @@ export default function CostToSellPanel({
                 aria-label="Custom fee percent"
                 placeholder="Fee %"
               />
-            ) : null}
+            ) : (
+              <input
+                value={override}
+                onChange={(e) => setOverride(e.target.value)}
+                className="h-8 w-28 rounded-lg bg-[color:var(--pill)] px-2 text-sm ring-1 ring-[color:var(--border)] focus:outline-none max-md:h-11"
+                inputMode="decimal"
+                aria-label="Override fee percent (optional)"
+                placeholder="Override fee %"
+              />
+            )}
           </div>
         </div>
       </div>
@@ -143,9 +164,22 @@ export default function CostToSellPanel({
       </dl>
 
       <p className="mt-2 text-[11px] leading-snug text-[color:var(--muted)]">
-        {hasPrice
-          ? `Fees used: ${payout.feeSummary}. Checked October 2026; marketplaces change their fees, so confirm in your seller account. `
-          : "Type the price you expect to sell it for; fees come from each marketplace's published rates. "}
+        {hasPrice ? (
+          <>
+            Fees used: {payout.feeSummary}.{" "}
+            {payout.status === "verified" ? (
+              <>Read from {payout.source}, October 2026. Marketplaces change their fees, so confirm in your seller account. </>
+            ) : payout.status === "partly" ? (
+              <>
+                <b className="text-[color:var(--fg)]">Unverified in part:</b> {payout.caveat} Source for the rest: {payout.source}. If you know your rate, type it in Override fee %.{" "}
+              </>
+            ) : (
+              <>This is your own rate; nothing here was checked against the marketplace. </>
+            )}
+          </>
+        ) : (
+          "Type the price you expect to sell it for. Each marketplace's rate shows whether it was read from its own page or is an unverified estimate; Override fee % lets you use your own. "
+        )}
         {advice.note}
       </p>
     </section>

@@ -32,7 +32,8 @@ check("nothing recorded reads Collector’s Choice, as it always did", resolveCa
 
 // --- marketplaces ---
 const place = (universe, category, subcategory) => ({ universe, category, subcategory });
-check("a comic: eBay, Mercari, Whatnot, Fanatics Collect (no Discogs)", eq(marketplacesFor(place("POP_CULTURE", "Comics")), ["ebay", "mercari", "whatnot", "pwcc"]));
+check("a comic: eBay, Mercari, Whatnot only (not suggested Fanatics Collect, no Discogs)", eq(marketplacesFor(place("POP_CULTURE", "Comics")), ["ebay", "mercari", "whatnot"]));
+check("art cards are still suggested Fanatics Collect", marketplacesFor(place("POP_CULTURE", "Art Cards")).includes("pwcc"));
 check("a sports card: Fanatics Collect yes, Discogs no", eq(marketplacesFor(place("SPORTS", "Sports Cards", "Baseball")), ["ebay", "mercari", "whatnot", "pwcc"]));
 check("sports apparel: no Fanatics Collect", eq(marketplacesFor(place("SPORTS", "Apparel")), ["ebay", "mercari", "whatnot"]));
 check("a TCG card: Fanatics Collect yes; TCG accessories: no", marketplacesFor(place("TCG", "TCG / CCG")).includes("pwcc") && !marketplacesFor(place("TCG", "Accessories")).includes("pwcc"));
@@ -53,6 +54,12 @@ check("eBay above $7,500: 2.35% on the rest (comic at $10,000 = 7500 x 13.25% + 
 check("eBay per order: $0.30 up to $10, $0.40 over", Math.abs(FEE_RULES.ebay(10, "Comics").total - (1.325 + 0.3)) < 1e-9 && Math.abs(FEE_RULES.ebay(10.01, "Comics").total - (10.01 * 0.1325 + 0.4)) < 1e-9);
 check("Discogs on $100: 9% + 2.9% + $0.30 = 12.20", Math.abs(FEE_RULES.discogs(100).total - 12.2) < 1e-9);
 check("Fanatics Collect on $100: 6%", Math.abs(FEE_RULES.pwcc(100).total - 6) < 1e-9);
+// --- every rule says how far it was verified; nothing uncertain is presented as an established rate ---
+check("eBay, Mercari and Fanatics Collect read from their own pages: verified", ["ebay", "mercari", "pwcc"].every((k) => FEE_RULES[k](100, "Comics").status === "verified" && FEE_RULES[k](100, "Comics").source));
+check("Whatnot is only partly verified and says what is missing", FEE_RULES.whatnot(100, "Comics").status === "partly" && /rate card|tier/i.test(FEE_RULES.whatnot(100, "Comics").caveat || ""));
+check("Discogs is only partly verified (processing fee is an estimate)", FEE_RULES.discogs(100).status === "partly" && /estimate/i.test(FEE_RULES.discogs(100).caveat || ""));
+check("eBay is partly verified for jewelry, watches, bags, guitars and bullion (own tiers not built in)", ["Jewelry", "Watches", "Bags & Luggage", "Instruments & Gear"].every((c) => FEE_RULES.ebay(100, c).status === "partly") && FEE_RULES.ebay(100, "Comics").status === "verified");
+check("Mercari is 10% of the sale with no separate processing fee", Math.abs(FEE_RULES.mercari(100).total - 10) < 1e-9);
 check("a sale recorded on eBay is estimated with the item's own category", estimateSaleFees("eBay", 100, "Comics", undefined) === 13.65 && estimateSaleFees("eBay", 100, "Toys & Figures") === 14);
 
 console.log(`\n${pass} passed, ${fail} failed`);

@@ -11,4 +11,19 @@ Everything here used ONE synthetic QA account created for the run (4 exhibitions
 ## Limits (said plainly)
 - Sizes marked "phone" are a browser window resized to 390 px with mobile emulation. No physical phone, no real touch, no real share sheet: the share sheet is replaced by a stand-in that records exactly what would be handed over.
 - Failure cases (the account refusing a change) are simulated by failing the network write inside the test browser only.
-- Marketplace rules: eBay, Discogs, Whatnot (fees page) and Fanatics Collect (Buy Now fee page) were read from their own pages. Mercari's fee, Whatnot's "no commission above $1,500" line, and each marketplace's list of prohibited items were NOT confirmed from an official page.
+- **Native photo sharing is SIMULATED, not device-verified.** No real phone share sheet was opened.
+- Prohibited-item lists for each marketplace were not audited.
+
+## Screenshots
+Before/after files with an index: `C:\Users\EK\VLTD\docs\ui-verification-2026-10-17\screenshots\INDEX.md` (folders `before\` and `after\`).
+
+## Fee assumptions: how far each was verified (October 2026)
+| Marketplace | Status shown in the app | Read from the marketplace's own page | NOT confirmed |
+|---|---|---|---|
+| eBay | verified (unverified estimate for jewelry, watches, handbags, guitars, bullion) | selling fees page: 13.25% comics/cards/CCG/coins; 15.3% books/magazines/movies/non-vinyl music; 13.6% most others; 2.35% above $7,500; $0.30 / $0.40 per order | its own tiers for jewelry, watches, handbags, guitars, bullion are not built in |
+| Mercari | verified | "Fees on Mercari" help page: 10% of item price + buyer-paid shipping; no separate processing fee for sellers | nothing |
+| Fanatics Collect | verified | Buy Now fees page: 6% under 120% of market value, 12% at or above | whether a listing is under 120% (assumed under) |
+| Whatnot | unverified in part | seller fees page: starts at 8%, 2.9% + $0.30 processing; high-value help page: 0% commission on the part above $1,500 in listed categories, a limited-time promotion | real rate depends on your four-week tier and category; the US rate card could not be read |
+| Discogs | unverified in part | selling fees page: 9% of item + shipping, min $0.10, max $150 | the payment processor's 2.9% + $0.30 (Discogs' pages do not state it) |
+
+The Cost to Sell panel shows each marketplace's status under the figures and has an **Override fee %** box that replaces the built-in table.
