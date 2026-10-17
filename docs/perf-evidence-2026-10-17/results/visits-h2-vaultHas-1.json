@@ -1,0 +1,109 @@
+{
+ "label": "h2-vaultHas-1",
+ "base": "http://localhost:3100",
+ "cpu": 4,
+ "n": 1500,
+ "visits": [
+  {
+   "visit": 1,
+   "cssMode": "vaultHas",
+   "stripped": 1,
+   "cssSeen": 3,
+   "calibMs": 164,
+   "readyMs": 9237,
+   "longTasks": [
+    59,
+    587,
+    143,
+    89,
+    69,
+    210,
+    219,
+    53,
+    65,
+    72,
+    60,
+    69,
+    62,
+    54,
+    356,
+    172,
+    51,
+    276,
+    57,
+    714,
+    420,
+    54
+   ],
+   "worst": 714,
+   "marked": true,
+   "storedChars": 51384,
+   "chunkCount": 35
+  },
+  {
+   "visit": 2,
+   "cssMode": "vaultHas",
+   "stripped": 1,
+   "cssSeen": 3,
+   "calibMs": 297,
+   "readyMs": 2764,
+   "longTasks": [
+    69,
+    52,
+    359,
+    98,
+    66,
+    78,
+    249,
+    373,
+    52
+   ],
+   "worst": 373,
+   "marked": true,
+   "storedChars": 51384,
+   "chunkCount": 32
+  },
+  {
+   "visit": 3,
+   "cssMode": "vaultHas",
+   "stripped": 1,
+   "cssSeen": 3,
+   "calibMs": 259,
+   "readyMs": 1578,
+   "longTasks": [
+    277,
+    74,
+    60,
+    258,
+    241,
+    59,
+    140,
+    70
+   ],
+   "worst": 277,
+   "marked": true,
+   "storedChars": 51384,
+   "chunkCount": 25
+  },
+  {
+   "visit": 4,
+   "cssMode": "vaultHas",
+   "stripped": 1,
+   "cssSeen": 3,
+   "calibMs": 123,
+   "readyMs": 1534,
+   "longTasks": [
+    188,
+    65,
+    55,
+    229,
+    244,
+    81
+   ],
+   "worst": 244,
+   "marked": true,
+   "storedChars": 51384,
+   "chunkCount": 29
+  }
+ ]
+}

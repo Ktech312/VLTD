@@ -1,0 +1,99 @@
+{
+ "label": "i1",
+ "base": "http://localhost:3100",
+ "cpu": 4,
+ "n": 1500,
+ "visits": [
+  {
+   "visit": 1,
+   "calibMs": 141,
+   "readyMs": 7415,
+   "longTasks": [
+    331,
+    56,
+    61,
+    123,
+    182,
+    98,
+    221,
+    221,
+    214,
+    61,
+    590,
+    443,
+    116
+   ],
+   "worst": 590,
+   "marked": true,
+   "storedChars": 51380,
+   "chunkCount": 30
+  },
+  {
+   "visit": 2,
+   "calibMs": 166,
+   "readyMs": 3521,
+   "longTasks": [
+    82,
+    267,
+    150,
+    106,
+    158,
+    1082,
+    577,
+    200,
+    58,
+    181,
+    496,
+    59,
+    103
+   ],
+   "worst": 1082,
+   "marked": true,
+   "storedChars": 51380,
+   "chunkCount": 34
+  },
+  {
+   "visit": 3,
+   "calibMs": 161,
+   "readyMs": 2292,
+   "longTasks": [
+    53,
+    302,
+    121,
+    582,
+    281,
+    67,
+    98,
+    135,
+    462
+   ],
+   "worst": 582,
+   "marked": true,
+   "storedChars": 51380,
+   "chunkCount": 27
+  },
+  {
+   "visit": 4,
+   "calibMs": 162,
+   "readyMs": 2646,
+   "longTasks": [
+    51,
+    52,
+    221,
+    91,
+    80,
+    64,
+    582,
+    380,
+    53,
+    103,
+    510,
+    53
+   ],
+   "worst": 582,
+   "marked": true,
+   "storedChars": 51380,
+   "chunkCount": 26
+  }
+ ]
+}

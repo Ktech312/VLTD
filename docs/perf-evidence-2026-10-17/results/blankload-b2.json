@@ -1,0 +1,2203 @@
+[
+ {
+  "iter": 0,
+  "port": 9333,
+  "sessionExpiresInSec": 3600,
+  "loads": [
+   {
+    "label": "cold",
+    "result": "loaded",
+    "ms": 1556,
+    "timeline": [
+     {
+      "atMs": 14,
+      "stage": "blank",
+      "path": "/vault",
+      "textLen": 0
+     },
+     {
+      "atMs": 522,
+      "stage": "checking-account",
+      "path": "/vault",
+      "textLen": 70
+     },
+     {
+      "atMs": 1025,
+      "stage": "skeleton",
+      "path": "/vault",
+      "textLen": 183
+     },
+     {
+      "atMs": 1556,
+      "stage": "loaded",
+      "path": "/vault",
+      "textLen": 1653
+     }
+    ],
+    "final": {
+     "stage": "loaded",
+     "path": "/vault",
+     "textLen": 1653,
+     "items": 30,
+     "search": true,
+     "ready": "complete",
+     "hasSession": true,
+     "profile": "60a03c63",
+     "deviceCopy": true,
+     "mark": true,
+     "commit": "04d1669"
+    },
+    "requests": [
+     "GET user 200 user-jwt",
+     "OPTIONS user 200 none",
+     "OPTIONS seasonal_themes 200 none",
+     "OPTIONS profiles 200 none",
+     "GET seasonal_themes 200 user-jwt",
+     "GET profiles 200 user-jwt",
+     "POST touch_presence 204 user-jwt",
+     "OPTIONS touch_presence 200 none",
+     "GET profiles 200 user-jwt",
+     "GET galleries 200 user-jwt",
+     "GET user 200 user-jwt",
+     "OPTIONS profiles 200 none",
+     "OPTIONS galleries 200 none",
+     "GET user_roles 200 user-jwt",
+     "OPTIONS user_roles 200 none",
+     "DELETE public_profiles 204 user-jwt",
+     "OPTIONS public_profiles 200 none",
+     "OPTIONS follows 200 none",
+     "GET follows 200 user-jwt",
+     "GET conversations 200 user-jwt",
+     "GET follows 200 user-jwt",
+     "OPTIONS conversations 200 none",
+     "OPTIONS follows 200 none",
+     "GET profiles 200 user-jwt",
+     "OPTIONS profiles 200 none",
+     "GET gallery_invites 200 user-jwt",
+     "OPTIONS gallery_invites 200 none",
+     "GET galleries 200 user-jwt",
+     "OPTIONS galleries 200 none",
+     "GET vault_items 200 user-jwt",
+     "GET vault_items 200 user-jwt",
+     "GET vault_items 200 user-jwt",
+     "OPTIONS vault_items 200 none",
+     "OPTIONS vault_items 200 none",
+     "OPTIONS vault_items 200 none",
+     "GET user ? user-jwt"
+    ],
+    "failures": [],
+    "errors": [],
+    "navigations": [
+     "/vault"
+    ]
+   },
+   {
+    "label": "repeat",
+    "result": "loaded",
+    "ms": 545,
+    "timeline": [
+     {
+      "atMs": 32,
+      "stage": "checking-account",
+      "path": "/vault",
+      "textLen": 0
+     },
+     {
+      "atMs": 545,
+      "stage": "loaded",
+      "path": "/vault",
+      "textLen": 1656
+     }
+    ],
+    "final": {
+     "stage": "loaded",
+     "path": "/vault",
+     "textLen": 1656,
+     "items": 30,
+     "search": true,
+     "ready": "complete",
+     "hasSession": true,
+     "profile": "60a03c63",
+     "deviceCopy": true,
+     "mark": true,
+     "commit": "04d1669"
+    },
+    "requests": [
+     "GET bug_reports ? user-jwt",
+     "OPTIONS bug_reports ? none",
+     "GET galleries 200 user-jwt",
+     "GET profiles 200 user-jwt",
+     "POST touch_presence 204 user-jwt",
+     "GET profiles 200 user-jwt",
+     "GET user 200 user-jwt",
+     "GET follows 200 user-jwt",
+     "GET follows 200 user-jwt",
+     "GET conversations 200 user-jwt",
+     "GET user_roles 200 user-jwt",
+     "GET profiles 200 user-jwt",
+     "DELETE public_profiles 204 user-jwt",
+     "GET gallery_invites 200 user-jwt",
+     "OPTIONS gallery_invites 200 none",
+     "HEAD vault_items 200 user-jwt",
+     "OPTIONS vault_items 200 none",
+     "GET galleries 200 user-jwt",
+     "GET user ? user-jwt"
+    ],
+    "failures": [
+     {
+      "error": "net::ERR_ABORTED",
+      "canceled": true
+     },
+     {
+      "error": "net::ERR_ABORTED",
+      "canceled": true
+     },
+     {
+      "table": "vault_items",
+      "error": "net::ERR_ABORTED",
+      "canceled": true
+     },
+     {
+      "error": "net::ERR_ABORTED",
+      "canceled": true
+     }
+    ],
+    "errors": [],
+    "navigations": [
+     "/vault"
+    ]
+   },
+   {
+    "label": "repeat",
+    "result": "loaded",
+    "ms": 547,
+    "timeline": [
+     {
+      "atMs": 40,
+      "stage": "checking-account",
+      "path": "/vault",
+      "textLen": 0
+     },
+     {
+      "atMs": 547,
+      "stage": "loaded",
+      "path": "/vault",
+      "textLen": 1656
+     }
+    ],
+    "final": {
+     "stage": "loaded",
+     "path": "/vault",
+     "textLen": 1656,
+     "items": 30,
+     "search": true,
+     "ready": "complete",
+     "hasSession": true,
+     "profile": "60a03c63",
+     "deviceCopy": true,
+     "mark": true,
+     "commit": "04d1669"
+    },
+    "requests": [
+     "OPTIONS vault_items 200 none",
+     "OPTIONS vault_items ? none",
+     "OPTIONS vault_items ? none",
+     "GET vault_items ? user-jwt",
+     "GET vault_items ? user-jwt",
+     "GET vault_items ? user-jwt",
+     "GET bug_reports ? user-jwt",
+     "GET galleries 200 user-jwt",
+     "GET profiles 200 user-jwt",
+     "POST touch_presence 204 user-jwt",
+     "GET profiles 200 user-jwt",
+     "GET user 200 user-jwt",
+     "DELETE public_profiles 204 user-jwt",
+     "GET follows 200 user-jwt",
+     "GET follows 200 user-jwt",
+     "GET conversations 200 user-jwt",
+     "GET user_roles 200 user-jwt",
+     "GET profiles 200 user-jwt",
+     "GET gallery_invites 200 user-jwt",
+     "OPTIONS gallery_invites 200 none",
+     "GET galleries 200 user-jwt",
+     "HEAD vault_items 200 user-jwt",
+     "GET user ? user-jwt"
+    ],
+    "failures": [
+     {
+      "error": "net::ERR_ABORTED",
+      "canceled": true
+     },
+     {
+      "error": "net::ERR_ABORTED",
+      "canceled": true
+     },
+     {
+      "table": "vault_items",
+      "error": "net::ERR_ABORTED",
+      "canceled": true
+     },
+     {
+      "error": "net::ERR_ABORTED",
+      "canceled": true
+     }
+    ],
+    "errors": [],
+    "navigations": [
+     "/vault"
+    ]
+   }
+  ]
+ },
+ {
+  "iter": 1,
+  "port": 9333,
+  "sessionExpiresInSec": 3599,
+  "loads": [
+   {
+    "label": "cold",
+    "result": "loaded",
+    "ms": 1547,
+    "timeline": [
+     {
+      "atMs": 14,
+      "stage": "blank",
+      "path": "/vault",
+      "textLen": 0
+     },
+     {
+      "atMs": 532,
+      "stage": "checking-account",
+      "path": "/vault",
+      "textLen": 70
+     },
+     {
+      "atMs": 1034,
+      "stage": "skeleton",
+      "path": "/vault",
+      "textLen": 198
+     },
+     {
+      "atMs": 1547,
+      "stage": "loaded",
+      "path": "/vault",
+      "textLen": 1653
+     }
+    ],
+    "final": {
+     "stage": "loaded",
+     "path": "/vault",
+     "textLen": 1653,
+     "items": 30,
+     "search": true,
+     "ready": "complete",
+     "hasSession": true,
+     "profile": "60a03c63",
+     "deviceCopy": true,
+     "mark": true,
+     "commit": "04d1669"
+    },
+    "requests": [
+     "GET user 200 user-jwt",
+     "OPTIONS user 200 none",
+     "OPTIONS seasonal_themes 200 none",
+     "OPTIONS profiles 200 none",
+     "OPTIONS touch_presence 200 none",
+     "OPTIONS profiles 200 none",
+     "GET seasonal_themes 200 user-jwt",
+     "GET profiles 200 user-jwt",
+     "POST touch_presence 204 user-jwt",
+     "GET profiles 200 user-jwt",
+     "GET galleries 200 user-jwt",
+     "GET user 200 user-jwt",
+     "OPTIONS galleries 200 none",
+     "GET user_roles 200 user-jwt",
+     "OPTIONS user_roles 200 none",
+     "OPTIONS follows 200 none",
+     "GET follows 200 user-jwt",
+     "GET conversations 200 user-jwt",
+     "GET follows 200 user-jwt",
+     "OPTIONS conversations 200 none",
+     "OPTIONS follows 200 none",
+     "GET profiles 200 user-jwt",
+     "OPTIONS profiles 200 none",
+     "DELETE public_profiles 204 user-jwt",
+     "OPTIONS public_profiles 200 none",
+     "GET gallery_invites 200 user-jwt",
+     "OPTIONS gallery_invites 200 none",
+     "GET galleries 200 user-jwt",
+     "OPTIONS galleries 200 none",
+     "OPTIONS vault_items 200 none",
+     "GET vault_items 200 user-jwt",
+     "GET vault_items 200 user-jwt",
+     "GET vault_items 200 user-jwt",
+     "OPTIONS vault_items 200 none",
+     "OPTIONS vault_items 200 none",
+     "GET user 200 user-jwt",
+     "GET bug_reports ? user-jwt",
+     "OPTIONS bug_reports 200 none"
+    ],
+    "failures": [],
+    "errors": [],
+    "navigations": [
+     "/vault"
+    ]
+   },
+   {
+    "label": "repeat",
+    "result": "loaded",
+    "ms": 598,
+    "timeline": [
+     {
+      "atMs": 84,
+      "stage": "checking-account",
+      "path": "/vault",
+      "textLen": 0
+     },
+     {
+      "atMs": 598,
+      "stage": "loaded",
+      "path": "/vault",
+      "textLen": 1656
+     }
+    ],
+    "final": {
+     "stage": "loaded",
+     "path": "/vault",
+     "textLen": 1656,
+     "items": 30,
+     "search": true,
+     "ready": "complete",
+     "hasSession": true,
+     "profile": "60a03c63",
+     "deviceCopy": true,
+     "mark": true,
+     "commit": "04d1669"
+    },
+    "requests": [
+     "GET conversations ? user-jwt",
+     "GET galleries 200 user-jwt",
+     "GET profiles 200 user-jwt",
+     "POST touch_presence 204 user-jwt",
+     "GET profiles 200 user-jwt",
+     "GET user 200 user-jwt",
+     "GET follows 200 user-jwt",
+     "GET follows 200 user-jwt",
+     "GET conversations 200 user-jwt",
+     "DELETE public_profiles 204 user-jwt",
+     "GET user_roles 200 user-jwt",
+     "GET profiles 200 user-jwt",
+     "GET gallery_invites 200 user-jwt",
+     "OPTIONS gallery_invites 200 none",
+     "GET galleries ? user-jwt",
+     "HEAD vault_items ? user-jwt",
+     "OPTIONS vault_items 200 none"
+    ],
+    "failures": [
+     {
+      "error": "net::ERR_ABORTED",
+      "canceled": true
+     }
+    ],
+    "errors": [],
+    "navigations": [
+     "/vault"
+    ]
+   },
+   {
+    "label": "repeat",
+    "result": "loaded",
+    "ms": 613,
+    "timeline": [
+     {
+      "atMs": 80,
+      "stage": "checking-account",
+      "path": "/vault",
+      "textLen": 0
+     },
+     {
+      "atMs": 613,
+      "stage": "loaded",
+      "path": "/vault",
+      "textLen": 1656
+     }
+    ],
+    "final": {
+     "stage": "loaded",
+     "path": "/vault",
+     "textLen": 1656,
+     "items": 30,
+     "search": true,
+     "ready": "complete",
+     "hasSession": true,
+     "profile": "60a03c63",
+     "deviceCopy": true,
+     "mark": true,
+     "commit": "04d1669"
+    },
+    "requests": [
+     "GET user ? user-jwt",
+     "GET galleries 200 user-jwt",
+     "GET profiles 200 user-jwt",
+     "POST touch_presence 204 user-jwt",
+     "GET profiles 200 user-jwt",
+     "GET user 200 user-jwt",
+     "DELETE public_profiles 204 user-jwt",
+     "GET follows 200 user-jwt",
+     "GET follows 200 user-jwt",
+     "GET conversations 200 user-jwt",
+     "GET gallery_invites 200 user-jwt",
+     "GET user_roles 200 user-jwt",
+     "OPTIONS gallery_invites 200 none",
+     "GET profiles 200 user-jwt",
+     "HEAD vault_items ? user-jwt",
+     "GET galleries ? user-jwt"
+    ],
+    "failures": [],
+    "errors": [],
+    "navigations": [
+     "/vault"
+    ]
+   }
+  ]
+ },
+ {
+  "iter": 2,
+  "port": 9333,
+  "sessionExpiresInSec": 3599,
+  "loads": [
+   {
+    "label": "cold",
+    "result": "loaded",
+    "ms": 1557,
+    "timeline": [
+     {
+      "atMs": 15,
+      "stage": "blank",
+      "path": "/vault",
+      "textLen": 0
+     },
+     {
+      "atMs": 533,
+      "stage": "checking-account",
+      "path": "/vault",
+      "textLen": 50
+     },
+     {
+      "atMs": 1045,
+      "stage": "skeleton",
+      "path": "/vault",
+      "textLen": 198
+     },
+     {
+      "atMs": 1557,
+      "stage": "loaded",
+      "path": "/vault",
+      "textLen": 1653
+     }
+    ],
+    "final": {
+     "stage": "loaded",
+     "path": "/vault",
+     "textLen": 1653,
+     "items": 30,
+     "search": true,
+     "ready": "complete",
+     "hasSession": true,
+     "profile": "60a03c63",
+     "deviceCopy": true,
+     "mark": true,
+     "commit": "04d1669"
+    },
+    "requests": [
+     "GET user 200 user-jwt",
+     "OPTIONS user 200 none",
+     "OPTIONS seasonal_themes 200 none",
+     "OPTIONS profiles 200 none",
+     "OPTIONS touch_presence 200 none",
+     "OPTIONS profiles 200 none",
+     "OPTIONS galleries 200 none",
+     "GET seasonal_themes 200 user-jwt",
+     "GET profiles 200 user-jwt",
+     "POST touch_presence 204 user-jwt",
+     "GET profiles 200 user-jwt",
+     "GET galleries 200 user-jwt",
+     "GET user 200 user-jwt",
+     "GET user_roles 200 user-jwt",
+     "OPTIONS user_roles 200 none",
+     "DELETE public_profiles 204 user-jwt",
+     "OPTIONS public_profiles 200 none",
+     "GET follows 200 user-jwt",
+     "GET conversations 200 user-jwt",
+     "GET follows 200 user-jwt",
+     "OPTIONS follows 200 none",
+     "OPTIONS conversations 200 none",
+     "OPTIONS follows 200 none",
+     "GET profiles 200 user-jwt",
+     "OPTIONS profiles 200 none",
+     "GET gallery_invites 200 user-jwt",
+     "OPTIONS gallery_invites 200 none",
+     "GET galleries 200 user-jwt",
+     "OPTIONS galleries 200 none",
+     "GET vault_items 200 user-jwt",
+     "GET vault_items 200 user-jwt",
+     "GET vault_items 200 user-jwt",
+     "OPTIONS vault_items 200 none",
+     "OPTIONS vault_items 200 none",
+     "OPTIONS vault_items 200 none",
+     "GET user 200 user-jwt",
+     "GET bug_reports ? user-jwt",
+     "OPTIONS bug_reports ? none"
+    ],
+    "failures": [
+     {
+      "error": "net::ERR_ABORTED",
+      "canceled": true
+     }
+    ],
+    "errors": [],
+    "navigations": [
+     "/vault"
+    ]
+   },
+   {
+    "label": "repeat",
+    "result": "loaded",
+    "ms": 593,
+    "timeline": [
+     {
+      "atMs": 60,
+      "stage": "checking-account",
+      "path": "/vault",
+      "textLen": 0
+     },
+     {
+      "atMs": 593,
+      "stage": "loaded",
+      "path": "/vault",
+      "textLen": 1656
+     }
+    ],
+    "final": {
+     "stage": "loaded",
+     "path": "/vault",
+     "textLen": 1656,
+     "items": 30,
+     "search": true,
+     "ready": "complete",
+     "hasSession": true,
+     "profile": "60a03c63",
+     "deviceCopy": true,
+     "mark": true,
+     "commit": "04d1669"
+    },
+    "requests": [
+     "GET galleries 200 user-jwt",
+     "GET profiles 200 user-jwt",
+     "POST touch_presence 204 user-jwt",
+     "GET profiles 200 user-jwt",
+     "GET user 200 user-jwt",
+     "DELETE public_profiles 204 user-jwt",
+     "GET follows 200 user-jwt",
+     "GET follows 200 user-jwt",
+     "GET conversations 200 user-jwt",
+     "GET user_roles 200 user-jwt",
+     "GET profiles 200 user-jwt",
+     "GET gallery_invites ? user-jwt",
+     "OPTIONS gallery_invites 200 none",
+     "GET galleries 200 user-jwt",
+     "HEAD vault_items ? user-jwt",
+     "OPTIONS vault_items 200 none",
+     "GET user ? user-jwt"
+    ],
+    "failures": [],
+    "errors": [],
+    "navigations": [
+     "/vault"
+    ]
+   },
+   {
+    "label": "repeat",
+    "result": "loaded",
+    "ms": 651,
+    "timeline": [
+     {
+      "atMs": 118,
+      "stage": "checking-account",
+      "path": "/vault",
+      "textLen": 0
+     },
+     {
+      "atMs": 651,
+      "stage": "loaded",
+      "path": "/vault",
+      "textLen": 1656
+     }
+    ],
+    "final": {
+     "stage": "loaded",
+     "path": "/vault",
+     "textLen": 1656,
+     "items": 30,
+     "search": true,
+     "ready": "complete",
+     "hasSession": true,
+     "profile": "60a03c63",
+     "deviceCopy": true,
+     "mark": true,
+     "commit": "04d1669"
+    },
+    "requests": [
+     "OPTIONS vault_items ? none",
+     "OPTIONS vault_items ? none",
+     "OPTIONS vault_items ? none",
+     "GET vault_items ? user-jwt",
+     "GET vault_items ? user-jwt",
+     "GET vault_items ? user-jwt",
+     "GET bug_reports ? user-jwt",
+     "GET profiles 200 user-jwt",
+     "POST touch_presence 204 user-jwt",
+     "GET profiles 200 user-jwt",
+     "GET galleries 200 user-jwt",
+     "GET user 200 user-jwt",
+     "DELETE public_profiles 204 user-jwt",
+     "GET follows 200 user-jwt",
+     "GET follows 200 user-jwt",
+     "GET conversations 200 user-jwt",
+     "GET user_roles 200 user-jwt",
+     "GET profiles 200 user-jwt",
+     "GET gallery_invites 200 user-jwt",
+     "OPTIONS gallery_invites 200 none",
+     "GET galleries ? user-jwt",
+     "HEAD vault_items ? user-jwt"
+    ],
+    "failures": [
+     {
+      "error": "net::ERR_ABORTED",
+      "canceled": true
+     }
+    ],
+    "errors": [],
+    "navigations": [
+     "/vault"
+    ]
+   }
+  ]
+ },
+ {
+  "iter": 3,
+  "port": 9333,
+  "sessionExpiresInSec": 3599,
+  "loads": [
+   {
+    "label": "cold",
+    "result": "loaded",
+    "ms": 1592,
+    "timeline": [
+     {
+      "atMs": 15,
+      "stage": "blank",
+      "path": "/vault",
+      "textLen": 0
+     },
+     {
+      "atMs": 517,
+      "stage": "checking-account",
+      "path": "/vault",
+      "textLen": 70
+     },
+     {
+      "atMs": 1046,
+      "stage": "skeleton",
+      "path": "/vault",
+      "textLen": 198
+     },
+     {
+      "atMs": 1592,
+      "stage": "loaded",
+      "path": "/vault",
+      "textLen": 1653
+     }
+    ],
+    "final": {
+     "stage": "loaded",
+     "path": "/vault",
+     "textLen": 1653,
+     "items": 30,
+     "search": true,
+     "ready": "complete",
+     "hasSession": true,
+     "profile": "60a03c63",
+     "deviceCopy": true,
+     "mark": true,
+     "commit": "04d1669"
+    },
+    "requests": [
+     "GET user 200 user-jwt",
+     "OPTIONS user 200 none",
+     "OPTIONS seasonal_themes 200 none",
+     "OPTIONS profiles 200 none",
+     "OPTIONS touch_presence 200 none",
+     "OPTIONS profiles 200 none",
+     "OPTIONS galleries 200 none",
+     "GET seasonal_themes 200 user-jwt",
+     "GET profiles 200 user-jwt",
+     "POST touch_presence 204 user-jwt",
+     "GET profiles 200 user-jwt",
+     "GET galleries 200 user-jwt",
+     "GET user 200 user-jwt",
+     "GET user_roles 200 user-jwt",
+     "OPTIONS user_roles 200 none",
+     "DELETE public_profiles 204 user-jwt",
+     "OPTIONS public_profiles 200 none",
+     "GET follows 200 user-jwt",
+     "GET conversations 200 user-jwt",
+     "GET follows 200 user-jwt",
+     "OPTIONS follows 200 none",
+     "OPTIONS conversations 200 none",
+     "OPTIONS follows 200 none",
+     "GET profiles 200 user-jwt",
+     "OPTIONS profiles 200 none",
+     "GET gallery_invites 200 user-jwt",
+     "OPTIONS gallery_invites 200 none",
+     "GET galleries 200 user-jwt",
+     "OPTIONS galleries 200 none",
+     "OPTIONS vault_items 200 none",
+     "GET vault_items 200 user-jwt",
+     "GET vault_items 200 user-jwt",
+     "OPTIONS vault_items 200 none",
+     "GET vault_items 200 user-jwt",
+     "OPTIONS vault_items 200 none",
+     "GET user 200 user-jwt",
+     "GET bug_reports ? user-jwt",
+     "OPTIONS bug_reports 200 none"
+    ],
+    "failures": [],
+    "errors": [],
+    "navigations": [
+     "/vault"
+    ]
+   },
+   {
+    "label": "repeat",
+    "result": "loaded",
+    "ms": 570,
+    "timeline": [
+     {
+      "atMs": 60,
+      "stage": "checking-account",
+      "path": "/vault",
+      "textLen": 0
+     },
+     {
+      "atMs": 570,
+      "stage": "loaded",
+      "path": "/vault",
+      "textLen": 1656
+     }
+    ],
+    "final": {
+     "stage": "loaded",
+     "path": "/vault",
+     "textLen": 1656,
+     "items": 30,
+     "search": true,
+     "ready": "complete",
+     "hasSession": true,
+     "profile": "60a03c63",
+     "deviceCopy": true,
+     "mark": true,
+     "commit": "04d1669"
+    },
+    "requests": [
+     "GET galleries 200 user-jwt",
+     "GET profiles 200 user-jwt",
+     "POST touch_presence 204 user-jwt",
+     "GET profiles 200 user-jwt",
+     "GET user 200 user-jwt",
+     "GET follows 200 user-jwt",
+     "GET follows 200 user-jwt",
+     "GET conversations 200 user-jwt",
+     "DELETE public_profiles 204 user-jwt",
+     "GET user_roles 200 user-jwt",
+     "GET profiles 200 user-jwt",
+     "GET gallery_invites 200 user-jwt",
+     "OPTIONS gallery_invites 200 none",
+     "GET galleries ? user-jwt",
+     "HEAD vault_items ? user-jwt",
+     "OPTIONS vault_items ? none"
+    ],
+    "failures": [
+     {
+      "error": "net::ERR_ABORTED",
+      "canceled": true
+     },
+     {
+      "error": "net::ERR_ABORTED",
+      "canceled": true
+     }
+    ],
+    "errors": [],
+    "navigations": [
+     "/vault"
+    ]
+   },
+   {
+    "label": "repeat",
+    "result": "loaded",
+    "ms": 616,
+    "timeline": [
+     {
+      "atMs": 99,
+      "stage": "checking-account",
+      "path": "/vault",
+      "textLen": 0
+     },
+     {
+      "atMs": 616,
+      "stage": "loaded",
+      "path": "/vault",
+      "textLen": 1656
+     }
+    ],
+    "final": {
+     "stage": "loaded",
+     "path": "/vault",
+     "textLen": 1656,
+     "items": 30,
+     "search": true,
+     "ready": "complete",
+     "hasSession": true,
+     "profile": "60a03c63",
+     "deviceCopy": true,
+     "mark": true,
+     "commit": "04d1669"
+    },
+    "requests": [
+     "GET user ? user-jwt",
+     "GET galleries 200 user-jwt",
+     "GET profiles 200 user-jwt",
+     "POST touch_presence 204 user-jwt",
+     "GET profiles 200 user-jwt",
+     "GET user 200 user-jwt",
+     "OPTIONS gallery_invites 200 none",
+     "GET follows 200 user-jwt",
+     "GET follows 200 user-jwt",
+     "GET conversations 200 user-jwt",
+     "DELETE public_profiles 204 user-jwt",
+     "GET gallery_invites ? user-jwt",
+     "GET user_roles 200 user-jwt",
+     "GET profiles 200 user-jwt",
+     "GET galleries ? user-jwt",
+     "HEAD vault_items ? user-jwt"
+    ],
+    "failures": [
+     {
+      "error": "net::ERR_ABORTED",
+      "canceled": true
+     }
+    ],
+    "errors": [],
+    "navigations": [
+     "/vault"
+    ]
+   }
+  ]
+ },
+ {
+  "iter": 4,
+  "port": 9333,
+  "sessionExpiresInSec": 3599,
+  "loads": [
+   {
+    "label": "cold",
+    "result": "loaded",
+    "ms": 1557,
+    "timeline": [
+     {
+      "atMs": 18,
+      "stage": "blank",
+      "path": "/vault",
+      "textLen": 0
+     },
+     {
+      "atMs": 523,
+      "stage": "checking-account",
+      "path": "/vault",
+      "textLen": 50
+     },
+     {
+      "atMs": 1044,
+      "stage": "skeleton",
+      "path": "/vault",
+      "textLen": 198
+     },
+     {
+      "atMs": 1557,
+      "stage": "loaded",
+      "path": "/vault",
+      "textLen": 1653
+     }
+    ],
+    "final": {
+     "stage": "loaded",
+     "path": "/vault",
+     "textLen": 1653,
+     "items": 30,
+     "search": true,
+     "ready": "complete",
+     "hasSession": true,
+     "profile": "60a03c63",
+     "deviceCopy": true,
+     "mark": true,
+     "commit": "04d1669"
+    },
+    "requests": [
+     "GET user 200 user-jwt",
+     "OPTIONS user 200 none",
+     "OPTIONS seasonal_themes 200 none",
+     "OPTIONS profiles 200 none",
+     "OPTIONS touch_presence 200 none",
+     "OPTIONS profiles 200 none",
+     "GET seasonal_themes 200 user-jwt",
+     "GET profiles 200 user-jwt",
+     "POST touch_presence 204 user-jwt",
+     "GET profiles 200 user-jwt",
+     "GET galleries 200 user-jwt",
+     "GET user 200 user-jwt",
+     "OPTIONS galleries 200 none",
+     "GET user_roles 200 user-jwt",
+     "OPTIONS user_roles 200 none",
+     "DELETE public_profiles 204 user-jwt",
+     "OPTIONS public_profiles 200 none",
+     "GET follows 200 user-jwt",
+     "GET conversations 200 user-jwt",
+     "GET follows 200 user-jwt",
+     "OPTIONS follows 200 none",
+     "OPTIONS conversations 200 none",
+     "OPTIONS follows 200 none",
+     "GET profiles 200 user-jwt",
+     "OPTIONS profiles 200 none",
+     "GET gallery_invites 200 user-jwt",
+     "OPTIONS gallery_invites 200 none",
+     "GET galleries 200 user-jwt",
+     "OPTIONS galleries 200 none",
+     "GET vault_items 200 user-jwt",
+     "OPTIONS vault_items 200 none",
+     "GET vault_items 200 user-jwt",
+     "GET vault_items 200 user-jwt",
+     "OPTIONS vault_items 200 none",
+     "OPTIONS vault_items 200 none",
+     "GET user 200 user-jwt",
+     "GET bug_reports ? user-jwt",
+     "OPTIONS bug_reports 200 none"
+    ],
+    "failures": [],
+    "errors": [],
+    "navigations": [
+     "/vault"
+    ]
+   },
+   {
+    "label": "repeat",
+    "result": "loaded",
+    "ms": 592,
+    "timeline": [
+     {
+      "atMs": 59,
+      "stage": "checking-account",
+      "path": "/vault",
+      "textLen": 0
+     },
+     {
+      "atMs": 592,
+      "stage": "loaded",
+      "path": "/vault",
+      "textLen": 1656
+     }
+    ],
+    "final": {
+     "stage": "loaded",
+     "path": "/vault",
+     "textLen": 1656,
+     "items": 30,
+     "search": true,
+     "ready": "complete",
+     "hasSession": true,
+     "profile": "60a03c63",
+     "deviceCopy": true,
+     "mark": true,
+     "commit": "04d1669"
+    },
+    "requests": [
+     "GET galleries 200 user-jwt",
+     "GET profiles 200 user-jwt",
+     "POST touch_presence 204 user-jwt",
+     "GET profiles 200 user-jwt",
+     "GET user 200 user-jwt",
+     "OPTIONS gallery_invites 200 none",
+     "GET follows 200 user-jwt",
+     "GET follows 200 user-jwt",
+     "GET conversations 200 user-jwt",
+     "DELETE public_profiles 204 user-jwt",
+     "GET gallery_invites ? user-jwt",
+     "GET user_roles 200 user-jwt",
+     "GET profiles 200 user-jwt",
+     "GET galleries ? user-jwt",
+     "HEAD vault_items ? user-jwt",
+     "OPTIONS vault_items 200 none"
+    ],
+    "failures": [
+     {
+      "error": "net::ERR_ABORTED",
+      "canceled": true
+     },
+     {
+      "error": "net::ERR_ABORTED",
+      "canceled": true
+     }
+    ],
+    "errors": [],
+    "navigations": [
+     "/vault"
+    ]
+   },
+   {
+    "label": "repeat",
+    "result": "loaded",
+    "ms": 579,
+    "timeline": [
+     {
+      "atMs": 71,
+      "stage": "checking-account",
+      "path": "/vault",
+      "textLen": 0
+     },
+     {
+      "atMs": 579,
+      "stage": "loaded",
+      "path": "/vault",
+      "textLen": 1656
+     }
+    ],
+    "final": {
+     "stage": "loaded",
+     "path": "/vault",
+     "textLen": 1656,
+     "items": 30,
+     "search": true,
+     "ready": "complete",
+     "hasSession": true,
+     "profile": "60a03c63",
+     "deviceCopy": true,
+     "mark": true,
+     "commit": "04d1669"
+    },
+    "requests": [
+     "GET user ? user-jwt",
+     "GET galleries 200 user-jwt",
+     "GET profiles 200 user-jwt",
+     "POST touch_presence 204 user-jwt",
+     "GET profiles 200 user-jwt",
+     "GET user 200 user-jwt",
+     "GET follows 200 user-jwt",
+     "GET follows 200 user-jwt",
+     "GET conversations 200 user-jwt",
+     "DELETE public_profiles 204 user-jwt",
+     "GET user_roles 200 user-jwt",
+     "GET profiles 200 user-jwt",
+     "GET gallery_invites ? user-jwt",
+     "OPTIONS gallery_invites 200 none",
+     "GET galleries ? user-jwt",
+     "HEAD vault_items ? user-jwt"
+    ],
+    "failures": [],
+    "errors": [],
+    "navigations": [
+     "/vault"
+    ]
+   }
+  ]
+ },
+ {
+  "iter": 5,
+  "port": 9333,
+  "sessionExpiresInSec": 3600,
+  "loads": [
+   {
+    "label": "cold",
+    "result": "loaded",
+    "ms": 1552,
+    "timeline": [
+     {
+      "atMs": 14,
+      "stage": "blank",
+      "path": "/vault",
+      "textLen": 0
+     },
+     {
+      "atMs": 527,
+      "stage": "checking-account",
+      "path": "/vault",
+      "textLen": 70
+     },
+     {
+      "atMs": 1046,
+      "stage": "skeleton",
+      "path": "/vault",
+      "textLen": 198
+     },
+     {
+      "atMs": 1552,
+      "stage": "loaded",
+      "path": "/vault",
+      "textLen": 1653
+     }
+    ],
+    "final": {
+     "stage": "loaded",
+     "path": "/vault",
+     "textLen": 1653,
+     "items": 30,
+     "search": true,
+     "ready": "complete",
+     "hasSession": true,
+     "profile": "60a03c63",
+     "deviceCopy": true,
+     "mark": true,
+     "commit": "04d1669"
+    },
+    "requests": [
+     "GET user 200 user-jwt",
+     "OPTIONS user 200 none",
+     "OPTIONS seasonal_themes 200 none",
+     "OPTIONS profiles 200 none",
+     "OPTIONS touch_presence 200 none",
+     "OPTIONS profiles 200 none",
+     "GET seasonal_themes 200 user-jwt",
+     "GET profiles 200 user-jwt",
+     "POST touch_presence 204 user-jwt",
+     "GET profiles 200 user-jwt",
+     "GET galleries 200 user-jwt",
+     "GET user 200 user-jwt",
+     "OPTIONS galleries 200 none",
+     "GET user_roles 200 user-jwt",
+     "OPTIONS user_roles 200 none",
+     "OPTIONS follows 200 none",
+     "GET follows 200 user-jwt",
+     "GET conversations 200 user-jwt",
+     "GET follows 200 user-jwt",
+     "OPTIONS conversations 200 none",
+     "OPTIONS follows 200 none",
+     "GET profiles 200 user-jwt",
+     "OPTIONS profiles 200 none",
+     "DELETE public_profiles 204 user-jwt",
+     "OPTIONS public_profiles 200 none",
+     "GET gallery_invites 200 user-jwt",
+     "OPTIONS gallery_invites 200 none",
+     "GET galleries 200 user-jwt",
+     "OPTIONS galleries 200 none",
+     "GET vault_items 200 user-jwt",
+     "GET vault_items 200 user-jwt",
+     "GET vault_items 200 user-jwt",
+     "OPTIONS vault_items 200 none",
+     "OPTIONS vault_items 200 none",
+     "OPTIONS vault_items 200 none",
+     "GET user 200 user-jwt",
+     "GET bug_reports ? user-jwt",
+     "OPTIONS bug_reports 200 none"
+    ],
+    "failures": [
+     {
+      "error": "net::ERR_ABORTED",
+      "canceled": true
+     }
+    ],
+    "errors": [],
+    "navigations": [
+     "/vault"
+    ]
+   },
+   {
+    "label": "repeat",
+    "result": "loaded",
+    "ms": 577,
+    "timeline": [
+     {
+      "atMs": 61,
+      "stage": "checking-account",
+      "path": "/vault",
+      "textLen": 0
+     },
+     {
+      "atMs": 577,
+      "stage": "loaded",
+      "path": "/vault",
+      "textLen": 1656
+     }
+    ],
+    "final": {
+     "stage": "loaded",
+     "path": "/vault",
+     "textLen": 1656,
+     "items": 30,
+     "search": true,
+     "ready": "complete",
+     "hasSession": true,
+     "profile": "60a03c63",
+     "deviceCopy": true,
+     "mark": true,
+     "commit": "04d1669"
+    },
+    "requests": [
+     "GET galleries 200 user-jwt",
+     "GET profiles 200 user-jwt",
+     "POST touch_presence 204 user-jwt",
+     "GET profiles 200 user-jwt",
+     "GET user 200 user-jwt",
+     "GET follows 200 user-jwt",
+     "GET follows 200 user-jwt",
+     "GET conversations 200 user-jwt",
+     "GET user_roles 200 user-jwt",
+     "DELETE public_profiles 204 user-jwt",
+     "GET profiles 200 user-jwt",
+     "GET gallery_invites 200 user-jwt",
+     "OPTIONS gallery_invites 200 none",
+     "GET galleries 200 user-jwt",
+     "HEAD vault_items ? user-jwt",
+     "OPTIONS vault_items 200 none",
+     "GET user ? user-jwt"
+    ],
+    "failures": [],
+    "errors": [],
+    "navigations": [
+     "/vault"
+    ]
+   },
+   {
+    "label": "repeat",
+    "result": "loaded",
+    "ms": 581,
+    "timeline": [
+     {
+      "atMs": 75,
+      "stage": "checking-account",
+      "path": "/vault",
+      "textLen": 0
+     },
+     {
+      "atMs": 581,
+      "stage": "loaded",
+      "path": "/vault",
+      "textLen": 1638
+     }
+    ],
+    "final": {
+     "stage": "loaded",
+     "path": "/vault",
+     "textLen": 1638,
+     "items": 30,
+     "search": true,
+     "ready": "complete",
+     "hasSession": true,
+     "profile": "60a03c63",
+     "deviceCopy": true,
+     "mark": true,
+     "commit": "04d1669"
+    },
+    "requests": [
+     "OPTIONS vault_items ? none",
+     "OPTIONS vault_items ? none",
+     "OPTIONS vault_items ? none",
+     "GET galleries 200 user-jwt",
+     "GET profiles 200 user-jwt",
+     "POST touch_presence 204 user-jwt",
+     "GET profiles 200 user-jwt",
+     "GET user 200 user-jwt",
+     "GET follows 200 user-jwt",
+     "GET follows ? user-jwt",
+     "GET conversations 200 user-jwt",
+     "DELETE public_profiles 204 user-jwt",
+     "GET user_roles 200 user-jwt",
+     "GET profiles 200 user-jwt",
+     "GET gallery_invites ? user-jwt",
+     "OPTIONS gallery_invites 200 none",
+     "HEAD vault_items ? user-jwt",
+     "GET galleries ? user-jwt"
+    ],
+    "failures": [
+     {
+      "error": "net::ERR_ABORTED",
+      "canceled": true
+     }
+    ],
+    "errors": [],
+    "navigations": [
+     "/vault"
+    ]
+   }
+  ]
+ },
+ {
+  "iter": 6,
+  "port": 9333,
+  "sessionExpiresInSec": 3600,
+  "loads": [
+   {
+    "label": "cold",
+    "result": "loaded",
+    "ms": 1541,
+    "timeline": [
+     {
+      "atMs": 13,
+      "stage": "blank",
+      "path": "/vault",
+      "textLen": 0
+     },
+     {
+      "atMs": 516,
+      "stage": "checking-account",
+      "path": "/vault",
+      "textLen": 70
+     },
+     {
+      "atMs": 1018,
+      "stage": "skeleton",
+      "path": "/vault",
+      "textLen": 198
+     },
+     {
+      "atMs": 1541,
+      "stage": "loaded",
+      "path": "/vault",
+      "textLen": 1653
+     }
+    ],
+    "final": {
+     "stage": "loaded",
+     "path": "/vault",
+     "textLen": 1653,
+     "items": 30,
+     "search": true,
+     "ready": "complete",
+     "hasSession": true,
+     "profile": "60a03c63",
+     "deviceCopy": true,
+     "mark": true,
+     "commit": "04d1669"
+    },
+    "requests": [
+     "GET user 200 user-jwt",
+     "OPTIONS user 200 none",
+     "OPTIONS seasonal_themes 200 none",
+     "OPTIONS profiles 200 none",
+     "GET seasonal_themes 200 user-jwt",
+     "GET profiles 200 user-jwt",
+     "POST touch_presence 204 user-jwt",
+     "GET profiles 200 user-jwt",
+     "GET galleries 200 user-jwt",
+     "GET user 200 user-jwt",
+     "OPTIONS touch_presence 200 none",
+     "OPTIONS profiles 200 none",
+     "OPTIONS galleries 200 none",
+     "GET user_roles 200 user-jwt",
+     "OPTIONS user_roles 200 none",
+     "GET follows 200 user-jwt",
+     "GET conversations 200 user-jwt",
+     "GET follows 200 user-jwt",
+     "OPTIONS follows 200 none",
+     "OPTIONS conversations 200 none",
+     "OPTIONS follows 200 none",
+     "GET profiles 200 user-jwt",
+     "OPTIONS profiles 200 none",
+     "DELETE public_profiles 204 user-jwt",
+     "OPTIONS public_profiles 200 none",
+     "GET gallery_invites 200 user-jwt",
+     "OPTIONS gallery_invites 200 none",
+     "GET galleries 200 user-jwt",
+     "OPTIONS galleries 200 none",
+     "GET vault_items 200 user-jwt",
+     "GET vault_items 200 user-jwt",
+     "GET vault_items 200 user-jwt",
+     "OPTIONS vault_items 200 none",
+     "OPTIONS vault_items 200 none",
+     "OPTIONS vault_items 200 none",
+     "GET user 200 user-jwt",
+     "GET bug_reports ? user-jwt",
+     "OPTIONS bug_reports 200 none"
+    ],
+    "failures": [],
+    "errors": [],
+    "navigations": [
+     "/vault"
+    ]
+   },
+   {
+    "label": "repeat",
+    "result": "loaded",
+    "ms": 620,
+    "timeline": [
+     {
+      "atMs": 70,
+      "stage": "checking-account",
+      "path": "/vault",
+      "textLen": 0
+     },
+     {
+      "atMs": 620,
+      "stage": "loaded",
+      "path": "/vault",
+      "textLen": 1656
+     }
+    ],
+    "final": {
+     "stage": "loaded",
+     "path": "/vault",
+     "textLen": 1656,
+     "items": 30,
+     "search": true,
+     "ready": "complete",
+     "hasSession": true,
+     "profile": "60a03c63",
+     "deviceCopy": true,
+     "mark": true,
+     "commit": "04d1669"
+    },
+    "requests": [
+     "GET profiles 200 user-jwt",
+     "POST touch_presence 204 user-jwt",
+     "GET profiles 200 user-jwt",
+     "GET galleries 200 user-jwt",
+     "GET user 200 user-jwt",
+     "DELETE public_profiles 204 user-jwt",
+     "GET follows 200 user-jwt",
+     "GET follows 200 user-jwt",
+     "GET conversations 200 user-jwt",
+     "GET user_roles 200 user-jwt",
+     "GET profiles 200 user-jwt",
+     "GET gallery_invites ? user-jwt",
+     "OPTIONS gallery_invites 200 none",
+     "GET galleries ? user-jwt",
+     "HEAD vault_items ? user-jwt",
+     "OPTIONS vault_items ? none"
+    ],
+    "failures": [],
+    "errors": [],
+    "navigations": [
+     "/vault"
+    ]
+   },
+   {
+    "label": "repeat",
+    "result": "loaded",
+    "ms": 608,
+    "timeline": [
+     {
+      "atMs": 93,
+      "stage": "checking-account",
+      "path": "/vault",
+      "textLen": 50
+     },
+     {
+      "atMs": 608,
+      "stage": "loaded",
+      "path": "/vault",
+      "textLen": 1656
+     }
+    ],
+    "final": {
+     "stage": "loaded",
+     "path": "/vault",
+     "textLen": 1656,
+     "items": 30,
+     "search": true,
+     "ready": "complete",
+     "hasSession": true,
+     "profile": "60a03c63",
+     "deviceCopy": true,
+     "mark": true,
+     "commit": "04d1669"
+    },
+    "requests": [
+     "OPTIONS vault_items ? none",
+     "OPTIONS vault_items ? none",
+     "GET vault_items ? user-jwt",
+     "GET vault_items ? user-jwt",
+     "GET vault_items ? user-jwt",
+     "OPTIONS vault_items ? none",
+     "GET galleries 200 user-jwt",
+     "GET profiles 200 user-jwt",
+     "POST touch_presence 204 user-jwt",
+     "GET profiles 200 user-jwt",
+     "GET user 200 user-jwt",
+     "GET follows 200 user-jwt",
+     "GET follows 200 user-jwt",
+     "GET conversations 200 user-jwt",
+     "GET user_roles 200 user-jwt",
+     "DELETE public_profiles 204 user-jwt",
+     "GET profiles 200 user-jwt",
+     "GET gallery_invites 200 user-jwt",
+     "OPTIONS gallery_invites 200 none",
+     "GET galleries 200 user-jwt",
+     "HEAD vault_items ? user-jwt",
+     "GET user ? user-jwt"
+    ],
+    "failures": [
+     {
+      "error": "net::ERR_ABORTED",
+      "canceled": true
+     },
+     {
+      "error": "net::ERR_ABORTED",
+      "canceled": true
+     },
+     {
+      "error": "net::ERR_ABORTED",
+      "canceled": true
+     },
+     {
+      "error": "net::ERR_ABORTED",
+      "canceled": true
+     }
+    ],
+    "errors": [],
+    "navigations": [
+     "/vault"
+    ]
+   }
+  ]
+ },
+ {
+  "iter": 7,
+  "port": 9333,
+  "sessionExpiresInSec": 3600,
+  "loads": [
+   {
+    "label": "cold",
+    "result": "loaded",
+    "ms": 1551,
+    "timeline": [
+     {
+      "atMs": 14,
+      "stage": "blank",
+      "path": "/vault",
+      "textLen": 0
+     },
+     {
+      "atMs": 521,
+      "stage": "checking-account",
+      "path": "/vault",
+      "textLen": 70
+     },
+     {
+      "atMs": 1026,
+      "stage": "skeleton",
+      "path": "/vault",
+      "textLen": 183
+     },
+     {
+      "atMs": 1551,
+      "stage": "loaded",
+      "path": "/vault",
+      "textLen": 1653
+     }
+    ],
+    "final": {
+     "stage": "loaded",
+     "path": "/vault",
+     "textLen": 1653,
+     "items": 30,
+     "search": true,
+     "ready": "complete",
+     "hasSession": true,
+     "profile": "60a03c63",
+     "deviceCopy": true,
+     "mark": true,
+     "commit": "04d1669"
+    },
+    "requests": [
+     "GET user 200 user-jwt",
+     "OPTIONS user 200 none",
+     "OPTIONS seasonal_themes 200 none",
+     "OPTIONS profiles 200 none",
+     "OPTIONS touch_presence 200 none",
+     "OPTIONS profiles 200 none",
+     "GET seasonal_themes 200 user-jwt",
+     "GET profiles 200 user-jwt",
+     "POST touch_presence 204 user-jwt",
+     "GET profiles 200 user-jwt",
+     "GET galleries 200 user-jwt",
+     "GET user 200 user-jwt",
+     "OPTIONS galleries 200 none",
+     "GET user_roles 200 user-jwt",
+     "OPTIONS user_roles 200 none",
+     "GET follows 200 user-jwt",
+     "GET conversations 200 user-jwt",
+     "GET follows 200 user-jwt",
+     "OPTIONS follows 200 none",
+     "OPTIONS conversations 200 none",
+     "OPTIONS follows 200 none",
+     "DELETE public_profiles 204 user-jwt",
+     "OPTIONS public_profiles 200 none",
+     "GET profiles 200 user-jwt",
+     "OPTIONS profiles 200 none",
+     "GET gallery_invites 200 user-jwt",
+     "OPTIONS gallery_invites 200 none",
+     "GET galleries 200 user-jwt",
+     "OPTIONS galleries 200 none",
+     "GET vault_items 200 user-jwt",
+     "GET vault_items 200 user-jwt",
+     "GET vault_items 200 user-jwt",
+     "OPTIONS vault_items 200 none",
+     "OPTIONS vault_items 200 none",
+     "OPTIONS vault_items 200 none",
+     "GET user ? user-jwt"
+    ],
+    "failures": [],
+    "errors": [],
+    "navigations": [
+     "/vault"
+    ]
+   },
+   {
+    "label": "repeat",
+    "result": "loaded",
+    "ms": 596,
+    "timeline": [
+     {
+      "atMs": 77,
+      "stage": "checking-account",
+      "path": "/vault",
+      "textLen": 0
+     },
+     {
+      "atMs": 596,
+      "stage": "loaded",
+      "path": "/vault",
+      "textLen": 1656
+     }
+    ],
+    "final": {
+     "stage": "loaded",
+     "path": "/vault",
+     "textLen": 1656,
+     "items": 30,
+     "search": true,
+     "ready": "complete",
+     "hasSession": true,
+     "profile": "60a03c63",
+     "deviceCopy": true,
+     "mark": true,
+     "commit": "04d1669"
+    },
+    "requests": [
+     "GET bug_reports ? user-jwt",
+     "OPTIONS bug_reports ? none",
+     "GET galleries 200 user-jwt",
+     "GET profiles 200 user-jwt",
+     "POST touch_presence 204 user-jwt",
+     "GET profiles 200 user-jwt",
+     "GET user 200 user-jwt",
+     "DELETE public_profiles 204 user-jwt",
+     "GET follows 200 user-jwt",
+     "GET follows 200 user-jwt",
+     "GET conversations 200 user-jwt",
+     "GET user_roles 200 user-jwt",
+     "GET profiles 200 user-jwt",
+     "GET gallery_invites ? user-jwt",
+     "OPTIONS gallery_invites 200 none",
+     "GET galleries ? user-jwt"
+    ],
+    "failures": [],
+    "errors": [],
+    "navigations": [
+     "/vault"
+    ]
+   },
+   {
+    "label": "repeat",
+    "result": "loaded",
+    "ms": 640,
+    "timeline": [
+     {
+      "atMs": 125,
+      "stage": "checking-account",
+      "path": "/vault",
+      "textLen": 0
+     },
+     {
+      "atMs": 640,
+      "stage": "loaded",
+      "path": "/vault",
+      "textLen": 1656
+     }
+    ],
+    "final": {
+     "stage": "loaded",
+     "path": "/vault",
+     "textLen": 1656,
+     "items": 30,
+     "search": true,
+     "ready": "complete",
+     "hasSession": true,
+     "profile": "60a03c63",
+     "deviceCopy": true,
+     "mark": true,
+     "commit": "04d1669"
+    },
+    "requests": [
+     "HEAD vault_items ? user-jwt",
+     "OPTIONS vault_items 200 none",
+     "GET galleries 200 user-jwt",
+     "GET profiles 200 user-jwt",
+     "POST touch_presence 204 user-jwt",
+     "GET profiles 200 user-jwt",
+     "GET user 200 user-jwt",
+     "DELETE public_profiles 204 user-jwt",
+     "GET follows 200 user-jwt",
+     "GET follows 200 user-jwt",
+     "GET conversations 200 user-jwt",
+     "GET user_roles 200 user-jwt",
+     "GET profiles 200 user-jwt",
+     "GET gallery_invites ? user-jwt",
+     "OPTIONS gallery_invites 200 none",
+     "GET galleries ? user-jwt",
+     "HEAD vault_items ? user-jwt"
+    ],
+    "failures": [
+     {
+      "error": "net::ERR_ABORTED",
+      "canceled": true
+     }
+    ],
+    "errors": [],
+    "navigations": [
+     "/vault"
+    ]
+   }
+  ]
+ },
+ {
+  "iter": 8,
+  "port": 9333,
+  "sessionExpiresInSec": 3600,
+  "loads": [
+   {
+    "label": "cold",
+    "result": "loaded",
+    "ms": 1596,
+    "timeline": [
+     {
+      "atMs": 26,
+      "stage": "blank",
+      "path": "/vault",
+      "textLen": 0
+     },
+     {
+      "atMs": 529,
+      "stage": "checking-account",
+      "path": "/vault",
+      "textLen": 70
+     },
+     {
+      "atMs": 1047,
+      "stage": "skeleton",
+      "path": "/vault",
+      "textLen": 183
+     },
+     {
+      "atMs": 1596,
+      "stage": "loaded",
+      "path": "/vault",
+      "textLen": 1653
+     }
+    ],
+    "final": {
+     "stage": "loaded",
+     "path": "/vault",
+     "textLen": 1653,
+     "items": 30,
+     "search": true,
+     "ready": "complete",
+     "hasSession": true,
+     "profile": "60a03c63",
+     "deviceCopy": true,
+     "mark": true,
+     "commit": "04d1669"
+    },
+    "requests": [
+     "GET user 200 user-jwt",
+     "OPTIONS user 200 none",
+     "OPTIONS seasonal_themes 200 none",
+     "OPTIONS profiles 200 none",
+     "OPTIONS touch_presence 200 none",
+     "OPTIONS profiles 200 none",
+     "GET seasonal_themes 200 user-jwt",
+     "GET profiles 200 user-jwt",
+     "POST touch_presence 204 user-jwt",
+     "GET profiles 200 user-jwt",
+     "GET galleries 200 user-jwt",
+     "GET user 200 user-jwt",
+     "OPTIONS galleries 200 none",
+     "GET user_roles 200 user-jwt",
+     "OPTIONS user_roles 200 none",
+     "GET follows 200 user-jwt",
+     "GET conversations 200 user-jwt",
+     "GET follows 200 user-jwt",
+     "OPTIONS follows 200 none",
+     "OPTIONS conversations 200 none",
+     "OPTIONS follows 200 none",
+     "GET profiles 200 user-jwt",
+     "OPTIONS profiles 200 none",
+     "DELETE public_profiles 204 user-jwt",
+     "OPTIONS public_profiles 200 none",
+     "GET gallery_invites 200 user-jwt",
+     "OPTIONS gallery_invites 200 none",
+     "GET galleries 200 user-jwt",
+     "OPTIONS galleries 200 none",
+     "OPTIONS vault_items 200 none",
+     "GET vault_items 200 user-jwt",
+     "GET vault_items 200 user-jwt",
+     "GET vault_items 200 user-jwt",
+     "OPTIONS vault_items 200 none",
+     "OPTIONS vault_items 200 none",
+     "GET user ? user-jwt"
+    ],
+    "failures": [],
+    "errors": [],
+    "navigations": [
+     "/vault"
+    ]
+   },
+   {
+    "label": "repeat",
+    "result": "loaded",
+    "ms": 641,
+    "timeline": [
+     {
+      "atMs": 74,
+      "stage": "checking-account",
+      "path": "/vault",
+      "textLen": 0
+     },
+     {
+      "atMs": 641,
+      "stage": "loaded",
+      "path": "/vault",
+      "textLen": 1656
+     }
+    ],
+    "final": {
+     "stage": "loaded",
+     "path": "/vault",
+     "textLen": 1656,
+     "items": 30,
+     "search": true,
+     "ready": "complete",
+     "hasSession": true,
+     "profile": "60a03c63",
+     "deviceCopy": true,
+     "mark": true,
+     "commit": "04d1669"
+    },
+    "requests": [
+     "GET bug_reports ? user-jwt",
+     "OPTIONS bug_reports ? none",
+     "GET galleries 200 user-jwt",
+     "GET profiles 200 user-jwt",
+     "POST touch_presence 204 user-jwt",
+     "GET profiles 200 user-jwt",
+     "GET user 200 user-jwt",
+     "DELETE public_profiles 204 user-jwt",
+     "GET user_roles 200 user-jwt",
+     "GET follows 200 user-jwt",
+     "GET conversations 200 user-jwt",
+     "GET follows 200 user-jwt",
+     "GET gallery_invites 200 user-jwt",
+     "OPTIONS gallery_invites 200 none",
+     "GET profiles 200 user-jwt",
+     "GET galleries ? user-jwt",
+     "HEAD vault_items ? user-jwt",
+     "OPTIONS vault_items 200 none"
+    ],
+    "failures": [
+     {
+      "error": "net::ERR_ABORTED",
+      "canceled": true
+     }
+    ],
+    "errors": [],
+    "navigations": [
+     "/vault"
+    ]
+   },
+   {
+    "label": "repeat",
+    "result": "loaded",
+    "ms": 601,
+    "timeline": [
+     {
+      "atMs": 98,
+      "stage": "checking-account",
+      "path": "/vault",
+      "textLen": 0
+     },
+     {
+      "atMs": 601,
+      "stage": "loaded",
+      "path": "/vault",
+      "textLen": 1656
+     }
+    ],
+    "final": {
+     "stage": "loaded",
+     "path": "/vault",
+     "textLen": 1656,
+     "items": 30,
+     "search": true,
+     "ready": "complete",
+     "hasSession": true,
+     "profile": "60a03c63",
+     "deviceCopy": true,
+     "mark": true,
+     "commit": "04d1669"
+    },
+    "requests": [
+     "GET user ? user-jwt",
+     "GET galleries 200 user-jwt",
+     "GET profiles 200 user-jwt",
+     "POST touch_presence 204 user-jwt",
+     "GET profiles 200 user-jwt",
+     "GET user 200 user-jwt",
+     "DELETE public_profiles 204 user-jwt",
+     "GET follows 200 user-jwt",
+     "GET follows 200 user-jwt",
+     "GET conversations 200 user-jwt",
+     "GET user_roles 200 user-jwt",
+     "GET profiles 200 user-jwt",
+     "GET gallery_invites ? user-jwt",
+     "OPTIONS gallery_invites 200 none",
+     "GET galleries ? user-jwt",
+     "HEAD vault_items ? user-jwt"
+    ],
+    "failures": [],
+    "errors": [],
+    "navigations": [
+     "/vault"
+    ]
+   }
+  ]
+ },
+ {
+  "iter": 9,
+  "port": 9333,
+  "sessionExpiresInSec": 3600,
+  "loads": [
+   {
+    "label": "cold",
+    "result": "loaded",
+    "ms": 2555,
+    "timeline": [
+     {
+      "atMs": 13,
+      "stage": "blank",
+      "path": "/vault",
+      "textLen": 0
+     },
+     {
+      "atMs": 514,
+      "stage": "checking-account",
+      "path": "/vault",
+      "textLen": 50
+     },
+     {
+      "atMs": 2048,
+      "stage": "skeleton",
+      "path": "/vault",
+      "textLen": 183
+     },
+     {
+      "atMs": 2555,
+      "stage": "loaded",
+      "path": "/vault",
+      "textLen": 1653
+     }
+    ],
+    "final": {
+     "stage": "loaded",
+     "path": "/vault",
+     "textLen": 1653,
+     "items": 30,
+     "search": true,
+     "ready": "complete",
+     "hasSession": true,
+     "profile": "60a03c63",
+     "deviceCopy": true,
+     "mark": true,
+     "commit": "04d1669"
+    },
+    "requests": [
+     "GET user 200 user-jwt",
+     "OPTIONS user 200 none",
+     "OPTIONS seasonal_themes 200 none",
+     "OPTIONS profiles 200 none",
+     "OPTIONS touch_presence 200 none",
+     "OPTIONS profiles 200 none",
+     "GET seasonal_themes 200 user-jwt",
+     "GET profiles 200 user-jwt",
+     "POST touch_presence 204 user-jwt",
+     "GET profiles 200 user-jwt",
+     "GET galleries 200 user-jwt",
+     "GET user 200 user-jwt",
+     "OPTIONS galleries 200 none",
+     "GET user_roles 200 user-jwt",
+     "OPTIONS user_roles 200 none",
+     "DELETE public_profiles 204 user-jwt",
+     "OPTIONS public_profiles 200 none",
+     "GET gallery_invites 200 user-jwt",
+     "OPTIONS gallery_invites 200 none",
+     "GET follows 200 user-jwt",
+     "GET conversations 200 user-jwt",
+     "GET follows 200 user-jwt",
+     "OPTIONS follows 200 none",
+     "OPTIONS conversations 200 none",
+     "OPTIONS follows 200 none",
+     "GET profiles 200 user-jwt",
+     "OPTIONS profiles 200 none",
+     "OPTIONS vault_items 200 none",
+     "OPTIONS vault_items 200 none",
+     "GET vault_items 200 user-jwt",
+     "GET vault_items 200 user-jwt",
+     "GET vault_items 200 user-jwt",
+     "OPTIONS vault_items 200 none",
+     "GET galleries 200 user-jwt",
+     "OPTIONS galleries 200 none"
+    ],
+    "failures": [],
+    "errors": [],
+    "navigations": [
+     "/vault"
+    ]
+   },
+   {
+    "label": "repeat",
+    "result": "loaded",
+    "ms": 592,
+    "timeline": [
+     {
+      "atMs": 88,
+      "stage": "checking-account",
+      "path": "/vault",
+      "textLen": 0
+     },
+     {
+      "atMs": 592,
+      "stage": "loaded",
+      "path": "/vault",
+      "textLen": 1656
+     }
+    ],
+    "final": {
+     "stage": "loaded",
+     "path": "/vault",
+     "textLen": 1656,
+     "items": 30,
+     "search": true,
+     "ready": "complete",
+     "hasSession": true,
+     "profile": "60a03c63",
+     "deviceCopy": true,
+     "mark": true,
+     "commit": "04d1669"
+    },
+    "requests": [
+     "GET user ? user-jwt",
+     "GET galleries 200 user-jwt",
+     "GET profiles 200 user-jwt",
+     "POST touch_presence 204 user-jwt",
+     "GET profiles 200 user-jwt",
+     "GET user 200 user-jwt",
+     "DELETE public_profiles 204 user-jwt",
+     "GET follows 200 user-jwt",
+     "GET follows 200 user-jwt",
+     "GET conversations 200 user-jwt",
+     "GET user_roles 200 user-jwt",
+     "GET profiles 200 user-jwt",
+     "GET gallery_invites ? user-jwt",
+     "OPTIONS gallery_invites 200 none",
+     "GET galleries ? user-jwt",
+     "HEAD vault_items ? user-jwt",
+     "OPTIONS vault_items ? none"
+    ],
+    "failures": [
+     {
+      "error": "net::ERR_ABORTED",
+      "canceled": true
+     },
+     {
+      "error": "net::ERR_ABORTED",
+      "canceled": true
+     }
+    ],
+    "errors": [],
+    "navigations": [
+     "/vault"
+    ]
+   },
+   {
+    "label": "repeat",
+    "result": "loaded",
+    "ms": 583,
+    "timeline": [
+     {
+      "atMs": 65,
+      "stage": "checking-account",
+      "path": "/vault",
+      "textLen": 0
+     },
+     {
+      "atMs": 583,
+      "stage": "loaded",
+      "path": "/vault",
+      "textLen": 1656
+     }
+    ],
+    "final": {
+     "stage": "loaded",
+     "path": "/vault",
+     "textLen": 1656,
+     "items": 30,
+     "search": true,
+     "ready": "complete",
+     "hasSession": true,
+     "profile": "60a03c63",
+     "deviceCopy": true,
+     "mark": true,
+     "commit": "04d1669"
+    },
+    "requests": [
+     "GET galleries 200 user-jwt",
+     "GET profiles 200 user-jwt",
+     "POST touch_presence 204 user-jwt",
+     "GET profiles 200 user-jwt",
+     "GET user 200 user-jwt",
+     "OPTIONS gallery_invites 200 none",
+     "GET follows 200 user-jwt",
+     "GET follows 200 user-jwt",
+     "GET conversations 200 user-jwt",
+     "GET gallery_invites ? user-jwt",
+     "DELETE public_profiles 204 user-jwt",
+     "GET user_roles 200 user-jwt",
+     "GET profiles 200 user-jwt",
+     "GET galleries ? user-jwt",
+     "HEAD vault_items ? user-jwt"
+    ],
+    "failures": [],
+    "errors": [],
+    "navigations": [
+     "/vault"
+    ]
+   }
+  ]
+ }
+]

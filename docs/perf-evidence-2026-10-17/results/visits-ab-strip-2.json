@@ -1,0 +1,107 @@
+{
+ "label": "ab-strip-2",
+ "base": "http://localhost:3100",
+ "cpu": 4,
+ "n": 1500,
+ "visits": [
+  {
+   "visit": 1,
+   "cssMode": "strip",
+   "stripped": 1,
+   "cssSeen": 3,
+   "calibMs": 162,
+   "readyMs": 8728,
+   "longTasks": [
+    66,
+    62,
+    361,
+    148,
+    157,
+    59,
+    228,
+    216,
+    58,
+    61,
+    57,
+    55,
+    71,
+    66,
+    304,
+    216,
+    53,
+    210,
+    629,
+    312
+   ],
+   "worst": 629,
+   "marked": true,
+   "storedChars": 51384,
+   "chunkCount": 35
+  },
+  {
+   "visit": 2,
+   "cssMode": "strip",
+   "stripped": 1,
+   "cssSeen": 3,
+   "calibMs": 290,
+   "readyMs": 2515,
+   "longTasks": [
+    72,
+    64,
+    300,
+    113,
+    57,
+    94,
+    343,
+    414,
+    159,
+    53,
+    70
+   ],
+   "worst": 414,
+   "marked": true,
+   "storedChars": 51384,
+   "chunkCount": 31
+  },
+  {
+   "visit": 3,
+   "cssMode": "strip",
+   "stripped": 1,
+   "cssSeen": 3,
+   "calibMs": 139,
+   "readyMs": 1608,
+   "longTasks": [
+    208,
+    100,
+    55,
+    278,
+    192,
+    106
+   ],
+   "worst": 278,
+   "marked": true,
+   "storedChars": 51384,
+   "chunkCount": 27
+  },
+  {
+   "visit": 4,
+   "cssMode": "strip",
+   "stripped": 1,
+   "cssSeen": 3,
+   "calibMs": 114,
+   "readyMs": 1760,
+   "longTasks": [
+    209,
+    77,
+    100,
+    240,
+    240,
+    94
+   ],
+   "worst": 240,
+   "marked": true,
+   "storedChars": 51384,
+   "chunkCount": 25
+  }
+ ]
+}

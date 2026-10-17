@@ -1,0 +1,101 @@
+{
+ "label": "r1",
+ "base": "https://vltd.app",
+ "cpu": 4,
+ "n": 1500,
+ "visits": [
+  {
+   "visit": 1,
+   "readyMs": 10859,
+   "longTasks": [
+    88,
+    580,
+    220,
+    166,
+    80,
+    363,
+    304,
+    58,
+    97,
+    74,
+    312,
+    193,
+    61,
+    400,
+    638,
+    262,
+    67,
+    58
+   ],
+   "worst": 638,
+   "marked": true,
+   "storedChars": 50020,
+   "chunkCount": 34
+  },
+  {
+   "visit": 2,
+   "readyMs": 2746,
+   "longTasks": [
+    75,
+    86,
+    480,
+    118,
+    54,
+    118,
+    257,
+    277,
+    90
+   ],
+   "worst": 480,
+   "marked": true,
+   "storedChars": 50020,
+   "chunkCount": 32
+  },
+  {
+   "visit": 3,
+   "readyMs": 1258,
+   "longTasks": [
+    163,
+    57,
+    188,
+    180,
+    91
+   ],
+   "worst": 188,
+   "marked": true,
+   "storedChars": 50020,
+   "chunkCount": 25
+  },
+  {
+   "visit": 4,
+   "readyMs": 2750,
+   "longTasks": [
+    165,
+    252,
+    505,
+    602,
+    89,
+    58,
+    63
+   ],
+   "worst": 602,
+   "marked": true,
+   "storedChars": 50020,
+   "chunkCount": 24
+  },
+  {
+   "visit": 5,
+   "readyMs": 1216,
+   "longTasks": [
+    152,
+    53,
+    163,
+    179
+   ],
+   "worst": 179,
+   "marked": true,
+   "storedChars": 50020,
+   "chunkCount": 25
+  }
+ ]
+}

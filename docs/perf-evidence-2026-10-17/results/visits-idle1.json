@@ -1,0 +1,76 @@
+{
+ "label": "idle1",
+ "base": "http://localhost:3100",
+ "cpu": 4,
+ "n": 1500,
+ "visits": [
+  {
+   "visit": 1,
+   "cssMode": "off",
+   "stripped": 0,
+   "cssSeen": 0,
+   "calibMs": 137,
+   "readyMs": 7068,
+   "longTasks": [
+    283,
+    59,
+    72,
+    69,
+    65,
+    53,
+    211,
+    209,
+    51,
+    51,
+    452,
+    669,
+    350
+   ],
+   "worst": 669,
+   "marked": true,
+   "storedChars": 51384,
+   "chunkCount": 35
+  },
+  {
+   "visit": 2,
+   "cssMode": "off",
+   "stripped": 0,
+   "cssSeen": 0,
+   "calibMs": 138,
+   "readyMs": 2566,
+   "longTasks": [
+    88,
+    104,
+    420,
+    79,
+    50,
+    317,
+    307
+   ],
+   "worst": 420,
+   "marked": true,
+   "storedChars": 51384,
+   "chunkCount": 30
+  },
+  {
+   "visit": 3,
+   "cssMode": "off",
+   "stripped": 0,
+   "cssSeen": 0,
+   "calibMs": 110,
+   "readyMs": 1545,
+   "longTasks": [
+    265,
+    87,
+    213,
+    278,
+    108,
+    79
+   ],
+   "worst": 278,
+   "marked": true,
+   "storedChars": 51384,
+   "chunkCount": 26
+  }
+ ]
+}

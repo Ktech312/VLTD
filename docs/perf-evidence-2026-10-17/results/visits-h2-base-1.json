@@ -1,0 +1,104 @@
+{
+ "label": "h2-base-1",
+ "base": "http://localhost:3100",
+ "cpu": 4,
+ "n": 1500,
+ "visits": [
+  {
+   "visit": 1,
+   "cssMode": "base",
+   "stripped": 0,
+   "cssSeen": 3,
+   "calibMs": 143,
+   "readyMs": 6355,
+   "longTasks": [
+    189,
+    54,
+    59,
+    93,
+    56,
+    169,
+    59,
+    59,
+    70,
+    152,
+    199,
+    748,
+    284,
+    50
+   ],
+   "worst": 748,
+   "marked": true,
+   "storedChars": 51376,
+   "chunkCount": 36
+  },
+  {
+   "visit": 2,
+   "cssMode": "base",
+   "stripped": 0,
+   "cssSeen": 3,
+   "calibMs": 154,
+   "readyMs": 3960,
+   "longTasks": [
+    93,
+    89,
+    551,
+    121,
+    71,
+    207,
+    452,
+    70,
+    76,
+    74
+   ],
+   "worst": 551,
+   "marked": true,
+   "storedChars": 51376,
+   "chunkCount": 32
+  },
+  {
+   "visit": 3,
+   "cssMode": "base",
+   "stripped": 0,
+   "cssSeen": 3,
+   "calibMs": 146,
+   "readyMs": 2449,
+   "longTasks": [
+    79,
+    386,
+    149,
+    70,
+    273,
+    323,
+    138,
+    59
+   ],
+   "worst": 386,
+   "marked": true,
+   "storedChars": 51376,
+   "chunkCount": 25
+  },
+  {
+   "visit": 4,
+   "cssMode": "base",
+   "stripped": 0,
+   "cssSeen": 3,
+   "calibMs": 177,
+   "readyMs": 1657,
+   "longTasks": [
+    212,
+    63,
+    92,
+    245,
+    246,
+    61,
+    66,
+    58
+   ],
+   "worst": 246,
+   "marked": true,
+   "storedChars": 51376,
+   "chunkCount": 25
+  }
+ ]
+}
