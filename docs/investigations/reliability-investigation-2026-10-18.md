@@ -73,3 +73,61 @@ The root cause of the single blank after a deploy. A failed script download afte
 - Existing traces (4× slowdown, tracing on): the long tasks are style recalculation, layout and paint of about 1,000 elements (881 ms task: UpdateLayoutTree 467, Paint 227, Layout 215). The same passes took 190 ms in a quicker visit of the same run: the work is the same, the machine was busier. Earlier hypotheses (global `:has()` rules, never-matching search rules) were tested and not supported.
 - **Conclusion:** at normal speed the Vault is responsive (repeat visits have no task over 50 ms; scrolling and typing are well under one frame budget). The slow numbers exist only under CPU slowdown, which is not a phone. **No targeted fix is supported by the evidence**, and none is proposed. What would change that: real-device numbers. They are now collected automatically (`perf:long-tasks` in the load record, attached to bug reports).
 - Invalid earlier run: a first attempt in this pass (`normal1`) ran against a fixture the free-plan item limit had cut to 50 items; its numbers are void and not used.
+
+---
+
+## Update 2026-10-18 (second pass): the two records, the eight eBay items, and the blank-loading failure paths
+
+Read-only for customer data again (service-key SELECTs only; nothing restored, changed or deleted). Scripts: `docs/investigations/scripts/`.
+
+### A. The two later drops: identified by id (cause, actor and exact time still unknown)
+**Method.** `vault_value_backup_20261008` is a table of item ids and values saved on **2026-10-08 16:37 UTC** (2,592 rows: 1,481 in `260312-0001`, 1,111 in `260310-0001`). Comparing it with the current `vault_items` by id gives exactly **two** ids that were in the backup and are gone now, both in `260312-0001`:
+
+| id | title (source) | cost | what we know |
+|---|---|---|---|
+| `1778653394369_vb7r3n` | "Absolute Superman" (an earlier browser log in the session transcripts shows this id with the Kellogg profile) | $0 / value $0 | created 2026-05-13; its two photos still sit in storage (an app delete never removes photos, so that neither dates nor explains anything) |
+| `1791239191686_d49872` | "Chicago Bears 2024 Topps Resurgence Football 4x Monster Box Break #625-12" (eBay import manifest, order 23-13200-25122) | $34.23 | the 1 of the 8 absent eBay imports that was still alive on 2026-10-08 |
+
+**Why this is the pair.** The arithmetic closes exactly: the 3 current items missing from the backup are old (March/April; the backup simply did not cover them), so on 10-08 the collection held 1,481 + 3 = 1,484, which is the cloud count measured on 10-15; now 1,482 = 1,484 minus 2. The **$34.23** matches to the cent the fall in the collection's recorded total cost between the 10-15 06:07 UTC and 10-17 06:03 UTC value snapshots (113,691.87 to 113,657.64); "Absolute Superman" cost $0 so it cannot show in a cost total. Residual risk: an item both added and removed after 10-08 would leave no trace in any of these sources.
+**Which window each fell in** cannot be separated: no snapshot exists for 10-16, and the cost figure cannot see a $0 item.
+
+### B. The eight absent eBay imports are NOT the same event as the two drops
+Of the 8 manifest ids missing today, **7 are absent from the 10-08 backup and 1 (`1791239191686_d49872`) is in it.** The backup covers imported items uniformly (every eBay item that exists today, 130 of 130, is in it; Whatnot 1,261 of 1,261; Celebrity Authentics 83 of 83), so the 7 almost certainly did not exist on 10-08. The import log says the collection held **1,491** items right after the eBay import (2026-10-05 22:27 UTC: "1,353 before, 1,491 now"); 1,491 minus 7 = **1,484**, the count on 10-08/10-15. So: **7 items removed between 2026-10-05 22:27 and 2026-10-08 16:37 UTC, then 2 more after 2026-10-15.** The 7 are an inference from coverage, not a record. The transcripts of that period contain no delete of those ids (that session had offered to remove the non-collectibles and was told to build a Supplies and Display group instead), so who removed them is unknown.
+
+### C. Deletion logs and QA scripts reviewed
+- **Deletion log:** none exists (no table, trigger or audit). Supabase API/Postgres logs for the windows are older than the Free plan's retention and are only readable in the dashboard.
+- **My own tool calls:** all 20 session transcripts (2026-10-05 onward) were scanned for any call able to delete vault items (`.delete()` on `vault_items`, SQL `DELETE`/`TRUNCATE`, the delete helpers): 126 calls. **None names the Kellogg or EK collection, none names either of the two ids, and none is a bulk delete scoped to a real collection.** The delete calls inside the two windows are QA cleanup scripts, which delete by the manifest's own profile id (checked: a synthetic account, not Kellogg or EK) or by exact QA ids. A delete aimed at the wrong profile would have removed that collection wholesale, not two items.
+- **Code paths:** an app delete also removes the id from every exhibition; neither id is referenced by any exhibition now (consistent with either never having been in one, or an app delete). `force_clear_vault` only clears the browser's own copy.
+- **Not evidence:** numbering gaps (a trigger consumes a number on every insert attempt).
+
+### D. What cannot be established, and what would resolve it
+Unavailable: who or what deleted each item, the exact time of each, and whether it was the app, a script run from a file not in these transcripts, or the SQL editor. There is no log, no backup after 10-08 and no per-row delete time.
+What would resolve it (each optional and read-only):
+1. **The Kellogg owner's browser copy** (`docs/investigations/local-vault-copy-ids.js`, one read-only console snippet on vltd.app). Its specific value: it can now be checked for these two exact ids. If the copy still holds them, the removal did not come from that browser's app, and the copy also restores titles and fields for the record; if it lacks them, the removal may have been made from that browser (an app delete removes the local copy first). It cannot show who else acted.
+2. **Supabase Logs for `vault_items` DELETE**, only if still retained (unlikely at this age).
+3. **The deletion audit** (`docs/proposals/vault-items-deletion-audit-2026-10-18.md`, v2, NOT applied): from adoption onward, the next removal names the account or role, the origin (browser app, script or SQL editor), the network and the statement.
+Separate small lead, not a deletion: the "Grails" exhibition references 3 item ids (`1778655365753_3k16cx`, `1774058559479_5e0xgy`, `1779168854923_xrxb2m`) that exist nowhere in `vault_items` or the 10-08 backup. They may be device-only items that never reached the cloud (the 10-15 recount found 23 device-only ids on the owner's device); unresolved.
+
+## Blank loading: failure paths, verified by injected failures (isolated browsers, synthetic account, production)
+Nothing was reloaded hoping the old failure returns; every failure below is made by the browser's own network interception.
+
+| Path | Result |
+|---|---|
+| Page code fails to load (all files blocked) | **Verified** (15/15 suite): message after 10 s naming the failed files; Reload recovers |
+| Deploy skew: page-code files answer 404 after the first 3 / 6 / 10 / 16 | **Verified**: in all four the watchdog message appears ("This page did not finish loading... Reload") with the failed file paths; never blank |
+| In-app navigation while its page-data request answers 404 | **Verified**: the Vault still opens |
+| Account/profile lookup held | **Verified**: gate answers at about 8 s (its own 10 s message is never reached); Vault says "Could not load", never empty; with a saved copy the items show at once |
+| Session rejected (401 JWT expired) | **Verified**: sent to sign-in (`/login?next=/vault`), never an empty Vault |
+| Cloud download fails or answers 500, saved copy present | **Verified**: items shown from the device, never empty (see defect 2 below) |
+| Cloud download answers 500, no saved copy | **Verified**: "Could not load" + Try again, which recovers once the cloud answers |
+| Cloud answers an empty list while the device holds items | **Verified**: the device items stay (a pull never removes anything) |
+| Writes blocked, item added, reload with profile lookup held | **Verified**: change stays queued, no false empty Vault, reaches the database exactly once after unblocking |
+| Stalled account check then "Try again" | **Defect found and fixed** (`58997b7`): the failed lookup was reused for a few seconds |
+| A drawing error (`error.tsx`) | **Local dev build only.** Bad data in the saved copy could not provoke one on production (the repair layer absorbs it; 5 corruptions tried), so this stays unverified on production |
+
+**Reproducible defects found in this pass**
+1. **Home stayed on "Loading Home..." for ever when the cloud download hung** (60 s+ observed, nothing but the navigation visible), even with a complete saved copy on the device; the Vault under the same fault showed its 26 items at once. This is a reproducible blank-for-a-long-time path and a plausible contributor to what was seen; **it is not proven to be the historical cause**. Fixed in this pass: Home shows the saved copy at once when it verifiably belongs to the signed-in person and updates when the download finishes; with nothing saved and no answer within 20 s it says "We could not load your collection just now..." instead of waiting or showing an empty collection. (Verification on production: see the final report.)
+2. **Silent staleness (open, not changed):** when the cloud is unreachable and a saved copy exists, the Vault shows the saved items but never tells the person. The message is set in code (`syncStatus`) but nothing renders it. The load record does show `vault:cloud-pull FAILED`.
+3. **Retry volume (open, not changed):** with the cloud failing, one open Vault tab made 69 failed requests in 45 s (fallback page sizes 200 down to 2 with repeated retries). Failed requests transfer no data, but it is avoidable load during an outage.
+
+**Historical cause: unknown.** What the tests support: recovery paths for failed code, account/profile lookup, cloud download and stale-deploy files are verified; failed requests are never shown as an empty collection on the Vault; pending changes survive and upload once. Not supported: that the one historical blank is explained by any of these. Home's unbounded wait was a real blank-looking path, but it was not recorded at the time.

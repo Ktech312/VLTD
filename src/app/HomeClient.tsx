@@ -21,7 +21,9 @@ import { syncPublicProfile } from "@/lib/publicProfile";
 import { INSIGHTS_BREAKDOWN_COLORS, INSIGHTS_GREEN, INSIGHTS_RED, INSIGHTS_REVENUE } from "@/lib/insightsPalette";
 import { buildSoldItems, hasKnownCost, profitOf, soldStats } from "@/lib/soldItems";
 import { activeItems, computeVaultStats, describeGainExclusions, effectiveMarketValue, readValueMode, totalsValue, writeValueMode, type ValueMode } from "@/lib/vaultStats";
-import { loadItems, syncVaultItemsFromSupabase, type VaultItem } from "@/lib/vaultModel";
+import { loadItems, syncVaultItemsFromSupabaseChecked, type VaultItem } from "@/lib/vaultModel";
+import { currentLocalOwner } from "@/lib/localDataOwner";
+import { storedSessionUserId } from "@/lib/sessionGuard";
 import { getPendingVaultSyncCount } from "@/lib/vaultSyncQueue";
 
 const FOCUS_LS_KEY = "vltd_primary_focus";
@@ -61,6 +63,8 @@ function itemTimestamp(item: VaultItem) {
 }
 
 const RECENT_LIMIT = 24;
+// How long Home waits for the cloud download when this device has nothing of this person's to show yet (the Vault uses the same 20 s).
+const HOME_CLOUD_WAIT_MS = 20_000;
 
 function timeAgo(timestamp: number) {
   if (!timestamp) return "";
@@ -230,9 +234,24 @@ export default function HomeClient() {
         shownProfile = profile?.id ?? "";
         setDisplayName(profile?.display_name ?? "");
         try { window.localStorage.setItem(FOCUS_LS_KEY, profile?.primary_focus ?? ""); } catch { /* ignore */ }
-        await syncVaultItemsFromSupabase();
+        // The copy saved on this device is shown at once when it verifiably belongs to this person; the cloud download then updates it.
+        // Home used to wait for the download with no limit, so a download that never answered left it on "Loading Home…" for good.
+        const signedInAs = storedSessionUserId();
+        const deviceCopyUsable = !!signedInAs && !!profile?.id && currentLocalOwner() === signedInAs && loadItems().length > 0;
+        const pull = syncVaultItemsFromSupabaseChecked().then((r) => r.ok).catch(() => false);
+        let answered = true;
+        if (deviceCopyUsable) {
+          void pull.then(() => { if (active) { setItems(loadItems()); setPendingSync(getPendingVaultSyncCount()); } });
+        } else {
+          answered = await Promise.race([pull, new Promise<boolean>((resolve) => window.setTimeout(() => resolve(false), HOME_CLOUD_WAIT_MS))]);
+        }
         void syncPublicProfile(profile?.id ?? undefined);
         if (!active) return;
+        if (!deviceCopyUsable && !answered && loadItems().length === 0) {
+          // Nothing on this device and the cloud did not answer: that is a failed load, not an empty collection.
+          setError("We could not load your collection just now. Your items are safe: nothing has been changed or lost. Reload the page to try again.");
+          return;
+        }
         setItems(loadItems());
         setPendingSync(getPendingVaultSyncCount());
         try { setLogged(loadActivityEvents()); } catch { setLogged([]); }
