@@ -71,3 +71,14 @@ export function describeLoadFailure(): string {
   const failed = readLoadDiagnostics().filter((m) => !m.ok).slice(-4);
   return failed.map((m) => (m.note ? `${m.stage} (${m.note})` : m.stage)).join("; ");
 }
+
+/**
+ * The record as plain text for a bug report the person chooses to send: one line per step ("1234 ms  ok  guard:account-check  signed in in 312 ms"),
+ * the last 25 steps. Steps, timings and short codes only (see the privacy note at the top). "" when there is nothing recorded.
+ */
+export function loadRecordForReport(): string {
+  const list = readLoadDiagnostics().slice(-25);
+  if (list.length === 0) return "";
+  const lines = list.map((m) => String(m.ms).padStart(6) + " ms  " + (m.ok ? "ok    " : "FAILED") + "  " + m.stage + (m.note ? "  " + m.note : ""));
+  return "--- load record (steps and timings only, no content) ---\n" + lines.join("\n");
+}

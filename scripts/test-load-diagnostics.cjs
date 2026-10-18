@@ -9,7 +9,7 @@ const t = (n, ok, d) => { if (ok) { pass++; console.log("PASS", n); } else { fai
 let store = {}; let broken = false;
 global.window = { sessionStorage: { getItem: (k) => { if (broken) throw new Error("blocked"); return k in store ? store[k] : null; }, setItem: (k, v) => { if (broken) throw new Error("full"); store[k] = String(v); } } };
 global.performance = { now: () => 1234.6 };
-const { markLoadStage, readLoadDiagnostics, describeLoadFailure, cleanNote } = require(path.join(out, "f.js"));
+const { markLoadStage, readLoadDiagnostics, describeLoadFailure, cleanNote, loadRecordForReport } = require(path.join(out, "f.js"));
 
 markLoadStage("guard:account-check", true, "signed in in 312 ms");
 let r = readLoadDiagnostics();
@@ -27,6 +27,10 @@ t("an account or profile id is replaced", cleanNote("profile 3cbff34b-7029-4b66-
 t("a long note is cut to 90 characters", cleanNote("x".repeat(500)).length === 90);
 markLoadStage("t", false, "see https://x.test/a?token=SECRET and a@b.co");
 t("a stored note never contains the secret, host or e-mail", !/SECRET|x\.test|a@b\.co/.test(JSON.stringify(readLoadDiagnostics())), JSON.stringify(readLoadDiagnostics().slice(-1)));
+const rep1 = loadRecordForReport();
+const repLines = rep1.split(String.fromCharCode(10));
+t("the bug-report text lists the last 25 steps, one per line, with timing and result", rep1.startsWith("--- load record") && repLines.length === 26 && /FAILED|ok /.test(rep1), repLines.length);
+t("the bug-report text never contains the secret, host or e-mail", !/SECRET|x\.test|a@b\.co/.test(rep1), rep1.slice(-120));
 broken = true;
 let threw = false; try { markLoadStage("z", true, ""); readLoadDiagnostics(); describeLoadFailure(); } catch { threw = true; }
 t("blocked or full storage never breaks the page (nothing throws)", threw === false);

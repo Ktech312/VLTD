@@ -23,6 +23,8 @@ const SETUP_OK_MS = 60_000;
 // The account check had no limit: if it never answered (a stalled connection) or threw, the page stayed on an empty placeholder for ever.
 // After this long the person is told, with a way to try again; the check keeps running and a late answer still lets the page through.
 const GUARD_STALL_MS = 10_000;
+// Before that, after this long the empty placeholder says it is still working, so a slow check does not look like a blank page.
+const GUARD_SLOW_MS = 4_000;
 let setupOkUntil = 0;
 let listening = false;
 
@@ -43,6 +45,7 @@ export default function RouteGuard({ children }: { children: ReactNode }) {
   const [allowedFor, setAllowedFor] = useState<string | null>(null);
   const [problem, setProblem] = useState<null | "stalled" | "error">(null);
   const [attempt, setAttempt] = useState(0);
+  const [slow, setSlow] = useState(false);
 
   // Another tab signed out, or signed in as someone else, while this one had a page open. This tab's memory still holds the
   // previous person's pages and data, and its running requests are for them. A signed-out tab on a private page leaves it for
@@ -77,6 +80,12 @@ export default function RouteGuard({ children }: { children: ReactNode }) {
     let settled = false;
     const here = pathname ?? "/";
     const startedAt = Date.now();
+    setSlow(false);
+    const slowTimer = window.setTimeout(() => {
+      if (cancelled || settled) return;
+      markLoadStage("guard:account-check:slow", true, "still waiting after 4 s");
+      setSlow(true);
+    }, GUARD_SLOW_MS);
     const stallTimer = window.setTimeout(() => {
       if (cancelled || settled) return;
       markLoadStage("guard:account-check", false, `no answer after ${Math.round(GUARD_STALL_MS / 1000)} s`);
@@ -125,6 +134,7 @@ export default function RouteGuard({ children }: { children: ReactNode }) {
     return () => {
       cancelled = true;
       window.clearTimeout(stallTimer);
+      window.clearTimeout(slowTimer);
     };
   }, [pathname, access, router, attempt]);
 
@@ -134,7 +144,11 @@ export default function RouteGuard({ children }: { children: ReactNode }) {
   if (allowedFor !== (pathname ?? "/")) {
     // Never a silent blank: if the check did not answer or failed, say so and offer to try again.
     if (problem) return <GuardProblem onRetry={() => { setProblem(null); setAttempt((n) => n + 1); }} />;
-    return <div aria-busy="true" aria-label="Checking your account" className="min-h-[60vh]" />;
+    return (
+      <div aria-busy="true" aria-label="Checking your account" className="min-h-[60vh]">
+        {slow ? <p role="status" className="pt-10 text-center text-sm text-[color:var(--muted)]">Still checking your account. This is taking longer than usual.</p> : null}
+      </div>
+    );
   }
   return <>{children}</>;
 }

@@ -6,6 +6,7 @@ import { AppIcon } from "@/components/ui/AppIcon";
 
 import { getCurrentUser, initAuthListener, onAuthStateChange } from "@/lib/auth";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
+import { loadRecordForReport } from "@/lib/loadDiagnostics";
 
 type SubmitState = "idle" | "sending" | "done" | "error";
 
@@ -82,7 +83,8 @@ export default function BugReporter() {
       const { error } = await supabase.from("bug_reports").insert({
         user_id: user?.id ?? null,
         email: user?.email ?? null,
-        message: message.trim().slice(0, 4000),
+        // The page's load record (steps, timings, short codes: no content) rides along so "the page was blank / slow" can be explained.
+        message: (message.trim().slice(0, 3000) + (loadRecordForReport() ? "\n\n" + loadRecordForReport() : "")).slice(0, 4000),
         screenshot_url: screenshotUrl,
         page_path: typeof window !== "undefined" ? window.location.pathname : null,
         user_agent: typeof navigator !== "undefined" ? navigator.userAgent.slice(0, 400) : null,

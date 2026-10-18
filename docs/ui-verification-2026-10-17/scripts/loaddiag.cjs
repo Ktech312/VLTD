@@ -63,7 +63,10 @@ async function intercept(S, rules) {
     // ---------- S2b: the profile lookup never answers (the gate passes on its own inner timeout; the Vault must not show an empty list) ----------
     S = await browser(BASE);
     const r2b = await intercept(S, [{ url: "/rest/v1/profiles", mode: "hold" }]);
-    await S.go("/vault"); await S.waitFor("document.body.innerText.includes('COULD NOT LOAD') || document.body.innerText.includes('Your vault is empty')", 90000, "failure or empty");
+    await S.go("/vault"); await sleep(6500);
+    const slowText = await S.text();
+    check("[profile lookup stalls] after ~4 s the empty placeholder says it is still checking (not a blank page)", /Still checking your account/.test(slowText), slowText.slice(0, 200));
+    await S.waitFor("document.body.innerText.includes('COULD NOT LOAD') || document.body.innerText.includes('Your vault is empty')", 90000, "failure or empty");
     await sleep(1500);
     mk = await marks(S); const t2b = await S.text();
     info("S2b profile lookup held: recorded steps", names(mk));
