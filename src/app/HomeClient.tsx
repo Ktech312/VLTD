@@ -89,8 +89,8 @@ function MoneyTile({ href, label, value, tone = "default", ghost = false, captio
       style={{ border: `1px solid ${C.bd2}`, background: C.elevated, textDecoration: "none", color: "inherit" }}
     >
       <span style={{ fontSize: 10, color: C.muted, letterSpacing: "0.10em", textTransform: "uppercase", fontWeight: 800 }}>{label}</span>
-      {/* vltd-keep-color: the light-theme text rule would otherwise turn green/red/grey figures the same dark colour */}
-      <span className="vltd-keep-color" style={{ fontFamily: C.r, fontSize: 28, fontWeight: 800, letterSpacing: "-0.02em", lineHeight: 1.05, color }}>{value}</span>
+      {/* vltd-keep-color + its variable: the light-theme text rule would otherwise turn green/red/grey figures the same dark colour */}
+      <span className="vltd-keep-color" style={{ fontFamily: C.r, fontSize: 28, fontWeight: 800, letterSpacing: "-0.02em", lineHeight: 1.05, color, "--vltd-keep-color": color } as React.CSSProperties}>{value}</span>
       <span style={{ fontSize: 12, color: C.muted, lineHeight: 1.35 }}>{caption}</span>
       {extra}
       <span style={{ marginTop: 4, fontSize: 12, fontWeight: 700, color: C.gold }}>{go} ›</span>
