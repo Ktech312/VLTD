@@ -7,6 +7,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useHashTarget } from "@/lib/useHashTarget";
 import Link from "next/link";
 
+import { MonthlyBars } from "@/components/ui/MonthlyBars";
 import ProgressiveImage from "@/components/ui/ProgressiveImage";
 import { getStoredActiveProfileId } from "@/lib/auth";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
@@ -95,13 +96,13 @@ function itemMeta(item: SoldItem) {
 // ─── Analytics helpers ────────────────────────────────────────────────────────
 
 function groupByMonth(items: SoldItem[]) {
-  const map = new Map<string, { revenue: number; profit: number; count: number }>();
+  const map = new Map<string, { revenue: number; profit: number; count: number; known: number }>();
   for (const item of items) {
     const d = new Date(Number(item.soldAt));
     const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
-    const prev = map.get(key) ?? { revenue: 0, profit: 0, count: 0 };
+    const prev = map.get(key) ?? { revenue: 0, profit: 0, count: 0, known: 0 };
     prev.revenue += Number(item.soldPrice ?? 0);
-    if (hasKnownCost(item)) prev.profit += profitOf(item);
+    if (hasKnownCost(item)) { prev.profit += profitOf(item); prev.known += 1; }
     prev.count += 1;
     map.set(key, prev);
   }
@@ -131,41 +132,6 @@ function avgDaysToSell(items: SoldItem[]) {
   return null;
 }
 
-// ─── Sparkline bar chart (pure SVG, no deps) ──────────────────────────────────
-
-function MiniBarChart({
-  data,
-  color = "var(--theme-gold)",
-  height = 48,
-}: {
-  data: number[];
-  color?: string;
-  height?: number;
-}) {
-  if (data.length === 0) return null;
-  const max = Math.max(...data, 1);
-  const w = 100 / data.length;
-  return (
-    <svg viewBox={`0 0 100 ${height}`} className="w-full" preserveAspectRatio="none">
-      {data.map((v, i) => {
-        const barH = Math.max(2, (v / max) * height);
-        return (
-          <rect
-            key={i}
-            x={i * w + 0.5}
-            y={height - barH}
-            width={w - 1}
-            height={barH}
-            fill={color}
-            opacity={v > 0 ? 0.85 : 0.15}
-            rx="2"
-          />
-        );
-      })}
-    </svg>
-  );
-}
-
 // ─── Analytics panel ──────────────────────────────────────────────────────────
 
 function AnalyticsPanel({ items }: { items: SoldItem[] }) {
@@ -187,48 +153,33 @@ function AnalyticsPanel({ items }: { items: SoldItem[] }) {
   return (
     <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
       {/* Monthly revenue chart */}
-      {monthly.length > 1 && (
-        <div
-          className="rounded-[14px] p-4 ring-1 ring-[color:var(--theme-border)]"
-          style={{ background: "var(--theme-elevated)" }}
-        >
-          <div className="text-[10px] font-semibold uppercase tracking-[0.18em]" style={{ color: "var(--muted2)" }}>
-            Monthly Revenue
-          </div>
-          <MiniBarChart data={monthly.map((m) => m[1].revenue)} height={48} />
-          <div className="mt-2 flex justify-between text-[9px]" style={{ color: "var(--muted)" }}>
-            <span>{monthly[0]?.[0]}</span>
-            <span>{monthly[monthly.length - 1]?.[0]}</span>
-          </div>
+      <div className="rounded-[14px] p-4 ring-1 ring-[color:var(--theme-border)]" style={{ background: "var(--theme-elevated)" }}>
+        <div className="mb-2 text-[10px] font-semibold uppercase tracking-[0.18em]" style={{ color: "var(--muted2)" }}>
+          Monthly Revenue
         </div>
-      )}
+        <MonthlyBars
+          months={monthly.map(([key, v]) => ({ key, value: v.revenue }))}
+          ariaLabel={"Revenue by month: " + monthly.map(([k, v]) => `${k} ${money(v.revenue)}`).join(", ")}
+        />
+        {monthly.length === 1 ? (
+          <div className="mt-2 text-[11px]" style={{ color: "var(--muted)" }}>One month of sales so far.</div>
+        ) : null}
+      </div>
 
       {/* Monthly profit chart */}
-      {monthly.length > 1 && (
-        <div
-          className="rounded-[14px] p-4 ring-1 ring-[color:var(--theme-border)]"
-          style={{ background: "var(--theme-elevated)" }}
-        >
-          <div className="text-[10px] font-semibold uppercase tracking-[0.18em]" style={{ color: "var(--muted2)" }}>
-            Monthly Profit/Loss
-          </div>
-          <MiniBarChart
-            data={monthly.map((m) => Math.max(0, m[1].profit))}
-            color="var(--theme-gold)"
-            height={48}
-          />
-          <div className="mt-2 flex gap-3 flex-wrap text-[10px]" style={{ color: "var(--muted)" }}>
-            {monthly.slice(-3).map(([k, v]) => (
-              <span key={k}>
-                <span className="font-semibold" style={{ color: v.profit >= 0 ? "rgb(52,211,153)" : "rgb(252,165,165)" }}>
-                  {v.profit >= 0 ? "+" : ""}{money(v.profit)}
-                </span>
-                {" "}{k}
-              </span>
-            ))}
-          </div>
+      <div className="rounded-[14px] p-4 ring-1 ring-[color:var(--theme-border)]" style={{ background: "var(--theme-elevated)" }}>
+        <div className="mb-2 text-[10px] font-semibold uppercase tracking-[0.18em]" style={{ color: "var(--muted2)" }}>
+          Monthly Profit/Loss
         </div>
-      )}
+        <MonthlyBars
+          signed
+          months={monthly.map(([key, v]) => ({ key, value: v.known > 0 ? v.profit : null }))}
+          ariaLabel={"Profit or loss by month: " + monthly.map(([k, v]) => `${k} ${v.known > 0 ? money(v.profit) : "no recorded cost"}`).join(", ")}
+        />
+        <div className="mt-2 text-[11px]" style={{ color: "var(--muted)" }}>
+          Only sales with a recorded cost count toward profit.
+        </div>
+      </div>
 
       {/* By universe */}
       {byUniverse.length > 0 && (

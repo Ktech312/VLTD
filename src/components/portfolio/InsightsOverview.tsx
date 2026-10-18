@@ -34,12 +34,13 @@ import PortfolioIntelligencePanel from "@/components/PortfolioIntelligencePanel"
 import CollectionValuationScoreCard from "@/components/CollectionValuationScoreCard";
 import GoalsProgressWidget from "@/components/GoalsProgressWidget";
 import SubjectRankingsWidget from "@/components/SubjectRankingsWidget";
+import { INSIGHTS_BREAKDOWN_COLORS, INSIGHTS_CYAN, INSIGHTS_GREEN, INSIGHTS_RED } from "@/lib/insightsPalette";
 
 type TimeRange = "7d" | "30d" | "90d" | "all";
 
-const CYAN = "#52D6F4";
-const GREEN = "#52C27A";
-const RED = "#FF705C";
+const CYAN = INSIGHTS_CYAN;
+const GREEN = INSIGHTS_GREEN;
+const RED = INSIGHTS_RED;
 const GOLD = "var(--accent, #C8CDD2)";
 const MUTED = "var(--muted, #9BA0A6)";
 const MUTED2 = "var(--muted2, #61656B)";
@@ -47,16 +48,7 @@ const PANEL_BG = "var(--surface, rgba(28,31,36,0.94))";
 const PANEL_BORDER = "rgba(203,208,213, 0.34)";
 const PANEL_SHADOW = "0 18px 54px rgba(0,0,0,0.32), inset 0 1px 0 rgba(237,239,241,0.07)";
 
-const BREAKDOWN_COLORS = [
-  "#2C8CE4",
-  "#54B8D8",
-  "#E3B341",
-  "#55B879",
-  "#7C61C6",
-  "#D64E5F",
-  "#8A63B8",
-  "#7D858E",
-];
+const BREAKDOWN_COLORS = INSIGHTS_BREAKDOWN_COLORS;
 
 function fmtPct(n: number, withSign = false) {
   if (!Number.isFinite(n)) return "0.0%";
