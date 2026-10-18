@@ -6,18 +6,20 @@ import { useRouter } from "next/navigation";
 
 import AddItemActions from "@/components/AddItemActions";
 import ExhibitionCarousel from "@/components/home/ExhibitionCarousel";
+import SwipeStrip from "@/components/home/SwipeStrip";
 import { loadActivityEvents, type ActivityEventRecord } from "@/lib/activityEvents";
 import { UNIVERSE_LABEL, isUniverseKey } from "@/lib/taxonomy";
 import SeasonalBanner from "@/components/SeasonalBanner";
 import { PillButton } from "@/components/ui/PillButton";
 import { Glyph } from "@/components/ui/Glyph";
-import { getOnboardingStatus } from "@/lib/auth";
+import { getOnboardingStatus, getStoredActiveProfileId } from "@/lib/auth";
 import { loadGalleries, refreshGalleriesFromSupabase, type Gallery } from "@/lib/galleryModel";
 import { LEARN_ARTICLES } from "@/lib/learnContent";
 import { listLoungePosts, type LoungePost } from "@/lib/loungePosts";
 import { priceCheckIsStale } from "@/lib/pricingMvp";
 import { syncPublicProfile } from "@/lib/publicProfile";
-import { buildSoldItems, soldStats } from "@/lib/soldItems";
+import { INSIGHTS_BREAKDOWN_COLORS, INSIGHTS_GREEN, INSIGHTS_RED, INSIGHTS_REVENUE } from "@/lib/insightsPalette";
+import { buildSoldItems, hasKnownCost, profitOf, soldStats } from "@/lib/soldItems";
 import { activeItems, computeVaultStats, describeGainExclusions, effectiveMarketValue, readValueMode, totalsValue, writeValueMode, type ValueMode } from "@/lib/vaultStats";
 import { loadItems, syncVaultItemsFromSupabase, type VaultItem } from "@/lib/vaultModel";
 import { getPendingVaultSyncCount } from "@/lib/vaultSyncQueue";
@@ -48,9 +50,17 @@ function formatMoney(v?: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(Number(v ?? 0));
 }
 
+// "Recently added" means when the item was added to the Vault, never when it was last edited or re-priced. Records that
+// predate the created-at field carry the time in their id (item_<13 digits>); anything else sorts last rather than guessing.
 function itemTimestamp(item: VaultItem) {
-  return Number(item.createdAt ?? item.valueUpdatedAt ?? item.priceUpdatedAt ?? 0);
+  const created = Number(item.createdAt);
+  if (Number.isFinite(created) && created > 0) return created;
+  const m = /(?:^|\D)(\d{13})(?:\D|$)/.exec(String(item.id ?? ""));
+  const fromId = m ? Number(m[1]) : 0;
+  return fromId > 946684800000 && fromId < Date.now() + 86400000 ? fromId : 0;
 }
+
+const RECENT_LIMIT = 24;
 
 function timeAgo(timestamp: number) {
   if (!timestamp) return "";
@@ -109,11 +119,11 @@ function MiniBars({ rows }: { rows: { label: string; value: number; text: string
   const max = Math.max(1, ...rows.map((r) => r.value));
   return (
     <span style={{ display: "flex", flexDirection: "column", gap: 5 }}>
-      {rows.map((r) => (
+      {rows.map((r, i) => (
         <span key={r.label} style={{ display: "grid", gridTemplateColumns: "minmax(0,92px) 1fr auto", alignItems: "center", gap: 8, fontSize: 12 }}>
           <span style={{ color: C.muted, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{r.label}</span>
           <span aria-hidden="true" style={{ height: 8, borderRadius: 4, background: C.bd2, overflow: "hidden" }}>
-            <span style={{ display: "block", height: "100%", width: `${Math.max(3, Math.round((r.value / max) * 100))}%`, background: C.gold, borderRadius: 4 }} />
+            <span style={{ display: "block", height: "100%", width: `${Math.max(3, Math.round((r.value / max) * 100))}%`, background: INSIGHTS_BREAKDOWN_COLORS[i % INSIGHTS_BREAKDOWN_COLORS.length], borderRadius: 4 }} />
           </span>
           <span style={{ color: C.text, fontVariantNumeric: "tabular-nums" }}>{r.text}</span>
         </span>
@@ -122,17 +132,32 @@ function MiniBars({ rows }: { rows: { label: string; value: number; text: string
   );
 }
 
-// Month columns for the sales panel: the last six calendar months, heights relative to the best month.
-function MonthColumns({ months }: { months: { label: string; revenue: number }[] }) {
-  const max = Math.max(1, ...months.map((m) => m.revenue));
+// Month columns for the sales panel: the last six calendar months. Two series per month, told apart by colour AND by the legend:
+// revenue (blue) and profit (green) or loss (red, drawn the same way but red). Heights share one scale. Profit counts only sales with a recorded cost.
+type SalesMonth = { label: string; revenue: number; profit: number; known: number };
+function MonthColumns({ months }: { months: SalesMonth[] }) {
+  const max = Math.max(1, ...months.map((m) => Math.max(m.revenue, m.known > 0 ? Math.abs(m.profit) : 0)));
+  const anyLoss = months.some((m) => m.known > 0 && m.profit < 0);
+  const h = (v: number) => (v > 0 ? `${Math.max(4, Math.round((v / max) * 44))}px` : "2px");
+  const money = (n: number) => (n < 0 ? "-" : "") + formatMoney(Math.abs(n));
   return (
-    <span style={{ display: "grid", gridTemplateColumns: `repeat(${months.length}, 1fr)`, alignItems: "end", gap: 6, height: 64 }} role="img" aria-label={"Revenue by month: " + months.map((m) => `${m.label} ${formatMoney(m.revenue)}`).join(", ")}>
-      {months.map((m) => (
-        <span key={m.label} style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "flex-end", height: "100%", gap: 3 }}>
-          <span aria-hidden="true" style={{ width: "100%", maxWidth: 28, height: m.revenue > 0 ? `${Math.max(6, Math.round((m.revenue / max) * 44))}px` : "2px", background: m.revenue > 0 ? C.gold : C.bd2, borderRadius: 3 }} />
-          <span aria-hidden="true" style={{ fontSize: 10, color: C.muted }}>{m.label}</span>
-        </span>
-      ))}
+    <span style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+      <span style={{ display: "grid", gridTemplateColumns: `repeat(${months.length}, 1fr)`, alignItems: "end", gap: 6, height: 64 }} role="img" aria-label={"Revenue and profit by month: " + months.map((m) => `${m.label} revenue ${formatMoney(m.revenue)}, ${m.known > 0 ? "profit " + money(m.profit) : "no profit recorded"}`).join("; ")}>
+        {months.map((m) => (
+          <span key={m.label} style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "flex-end", height: "100%", gap: 3 }}>
+            <span aria-hidden="true" style={{ display: "flex", alignItems: "flex-end", justifyContent: "center", gap: 2, width: "100%", height: 46 }}>
+              <span style={{ width: "100%", maxWidth: 14, height: h(m.revenue), background: m.revenue > 0 ? INSIGHTS_REVENUE : C.bd2, borderRadius: 3 }} />
+              <span style={{ width: "100%", maxWidth: 14, height: m.known > 0 ? h(Math.abs(m.profit)) : "2px", background: m.known > 0 && m.profit !== 0 ? (m.profit < 0 ? INSIGHTS_RED : INSIGHTS_GREEN) : C.bd2, borderRadius: 3 }} />
+            </span>
+            <span aria-hidden="true" style={{ fontSize: 10, color: C.muted }}>{m.label}</span>
+          </span>
+        ))}
+      </span>
+      <span aria-hidden="true" style={{ display: "flex", flexWrap: "wrap", gap: "2px 12px", fontSize: 10.5, color: C.muted }}>
+        <span><i style={{ display: "inline-block", width: 8, height: 8, borderRadius: 2, background: INSIGHTS_REVENUE, marginRight: 4 }} />Revenue</span>
+        <span><i style={{ display: "inline-block", width: 8, height: 8, borderRadius: 2, background: INSIGHTS_GREEN, marginRight: 4 }} />Profit</span>
+        {anyLoss ? <span><i style={{ display: "inline-block", width: 8, height: 8, borderRadius: 2, background: INSIGHTS_RED, marginRight: 4 }} />Loss</span> : null}
+      </span>
     </span>
   );
 }
@@ -153,22 +178,25 @@ function TextAction({ onClick, children, ariaExpanded, ariaControls }: { onClick
   );
 }
 
-// ── Card with a header: label on the left, one link on the right ──
-function Block({ label, link, labelLink, action, children }: { label: string; link?: { href: string; text: string }; labelLink?: { href: string; text: string; ariaLabel: string }; action?: React.ReactNode; children: React.ReactNode }) {
+// ── Card with a header: label, then a compact text link beside it ("Recently added · View Vault →"); an optional action stays on the right ──
+function Block({ label, labelLink, action, children }: { label: string; labelLink?: { href: string; text: string; ariaLabel?: string }; action?: React.ReactNode; children: React.ReactNode }) {
   return (
-    <section style={{ background: panelBg, border: premiumBorder, borderRadius: 8, overflow: "hidden", boxShadow: premiumShadow }}>
+    <section style={{ background: panelBg, border: premiumBorder, borderRadius: 8, overflow: "hidden", boxShadow: premiumShadow, minWidth: 0, display: "flex", flexDirection: "column" }}>
       <div style={{ padding: "12px 16px", borderBottom: `1px solid ${C.bd2}`, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 14, minWidth: 0, flexWrap: "wrap" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 0, flexWrap: "wrap" }}>
           <h2 style={{ fontSize: 10, letterSpacing: "1.8px", textTransform: "uppercase", color: C.muted, fontWeight: 800 }}>{label}</h2>
           {labelLink ? (
-            <Link href={labelLink.href} aria-label={labelLink.ariaLabel} className="inline-flex min-h-[44px] items-center rounded-[4px] text-[12px] font-semibold hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[color:var(--pill-active-ring)] md:min-h-0" style={{ color: C.gold, textDecoration: "none" }}>
-              {labelLink.text} →
-            </Link>
+            <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
+              <span aria-hidden="true" style={{ color: C.muted }}>·</span>
+              <Link href={labelLink.href} aria-label={labelLink.ariaLabel} className="inline-flex min-h-[44px] items-center rounded-[4px] text-[12px] font-semibold hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[color:var(--pill-active-ring)] md:min-h-0" style={{ color: C.gold, textDecoration: "none" }}>
+                {labelLink.text} →
+              </Link>
+            </span>
           ) : null}
         </div>
-        {action ?? (link ? <PillButton href={link.href}>{link.text}</PillButton> : null)}
+        {action ?? null}
       </div>
-      {children}
+      <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", minWidth: 0 }}>{children}</div>
     </section>
   );
 }
@@ -189,6 +217,7 @@ export default function HomeClient() {
 
   useEffect(() => {
     let active = true;
+    let shownProfile = "";
     async function load() {
       setLoading(true);
       setError("");
@@ -197,6 +226,7 @@ export default function HomeClient() {
         if (!status.isAuthenticated) { router.replace("/login"); return; }
         if (status.needsOnboarding) { router.replace("/onboarding"); return; }
         const profile = status.activeProfile;
+        shownProfile = profile?.id ?? "";
         setDisplayName(profile?.display_name ?? "");
         try { window.localStorage.setItem(FOCUS_LS_KEY, profile?.primary_focus ?? ""); } catch { /* ignore */ }
         await syncVaultItemsFromSupabase();
@@ -220,7 +250,29 @@ export default function HomeClient() {
       }
     }
     void load();
-    return () => { active = false; };
+
+    // Items that arrive after the first paint (a finished upload, a cloud download, another page saving) and a switch of the
+    // active profile must change what Home shows without a reload. Reading the device copy is cheap, so it is debounced only.
+    let refreshTimer: number | undefined;
+    const onVaultUpdated = () => {
+      if (refreshTimer !== undefined) return;
+      refreshTimer = window.setTimeout(() => {
+        refreshTimer = undefined;
+        if (!active) return;
+        setItems(loadItems());
+        setPendingSync(getPendingVaultSyncCount());
+      }, 120);
+    };
+    // Only a real change of the active profile (or sign-out) reloads; the one-time self-correction during load does not.
+    const onProfileChanged = () => { if (active && getStoredActiveProfileId() !== shownProfile) void load(); };
+    window.addEventListener("vltd:vault-updated", onVaultUpdated);
+    window.addEventListener("vltd:active-profile", onProfileChanged);
+    return () => {
+      active = false;
+      if (refreshTimer !== undefined) window.clearTimeout(refreshTimer);
+      window.removeEventListener("vltd:vault-updated", onVaultUpdated);
+      window.removeEventListener("vltd:active-profile", onProfileChanged);
+    };
   }, [router]);
 
   // How totals treat un-priced items. "fill" (default): at purchase price. "priced": only items with a real value.
@@ -249,7 +301,9 @@ export default function HomeClient() {
   // Recently added and the price-check notice describe what you currently own: sold, supply and wishlist records are left out,
   // the same rule the Vault, Insights and the recap use.
   const owned = useMemo(() => activeItems(items), [items]);
-  const recent = useMemo(() => [...owned].sort((a, b) => itemTimestamp(b) - itemTimestamp(a)).slice(0, 6), [owned]);
+  const recentAll = useMemo(() => [...owned].sort((a, b) => itemTimestamp(b) - itemTimestamp(a)), [owned]);
+  const recent = useMemo(() => recentAll.slice(0, RECENT_LIMIT), [recentAll]);
+  const latestAddedAt = recentAll.length > 0 ? itemTimestamp(recentAll[0]) : 0;
   const staleChecks = useMemo(() => owned.filter((item) => effectiveMarketValue(item) > 0 && priceCheckIsStale(item)).length, [owned]);
 
   // Unrealized change: only items with BOTH a value and a cost; the display setting below never changes it.
@@ -295,21 +349,24 @@ export default function HomeClient() {
     const now = new Date();
     const months = Array.from({ length: 6 }, (_, i) => {
       const d = new Date(now.getFullYear(), now.getMonth() - (5 - i), 1);
-      return { key: d.getFullYear() * 12 + d.getMonth(), label: d.toLocaleDateString("en-US", { month: "short" }), revenue: 0 };
+      return { key: d.getFullYear() * 12 + d.getMonth(), label: d.toLocaleDateString("en-US", { month: "short" }), revenue: 0, profit: 0, known: 0 };
     });
     for (const row of soldRows) {
       const when = new Date(Number(row.soldAt));
       const key = when.getFullYear() * 12 + when.getMonth();
       const bucket = months.find((m) => m.key === key);
-      if (bucket) bucket.revenue += Number(row.soldPrice ?? 0);
+      if (bucket) {
+        bucket.revenue += Number(row.soldPrice ?? 0);
+        if (hasKnownCost(row)) { bucket.profit += profitOf(row); bucket.known += 1; }
+      }
     }
     return months;
   }, [soldRows]);
   const recentActivity = useMemo(() => {
-    const rows: { id: string; text: string; at: number }[] = [];
-    for (const item of owned) { const at = Number(item.createdAt ?? 0); if (at > 0) rows.push({ id: "a" + item.id, text: `Added ${item.title || "an item"}`, at }); }
-    for (const sold of soldRows) { const at = Number(sold.soldAt); if (at > 0) rows.push({ id: "s" + sold.id, text: `Sold ${sold.title || "an item"} for ${formatMoney(Number(sold.soldPrice ?? 0))}`, at }); }
-    for (const event of logged) { if (event.timestamp > 0) rows.push({ id: "e" + event.id, text: [event.subtitle, event.title].filter(Boolean).join(": "), at: event.timestamp }); }
+    const rows: { id: string; text: string; at: number; tone: string }[] = [];
+    for (const item of owned) { const at = Number(item.createdAt ?? 0); if (at > 0) rows.push({ id: "a" + item.id, text: `Added ${item.title || "an item"}`, at, tone: INSIGHTS_REVENUE }); }
+    for (const sold of soldRows) { const at = Number(sold.soldAt); if (at > 0) rows.push({ id: "s" + sold.id, text: `Sold ${sold.title || "an item"} for ${formatMoney(Number(sold.soldPrice ?? 0))}`, at, tone: INSIGHTS_GREEN }); }
+    for (const event of logged) { if (event.timestamp > 0) rows.push({ id: "e" + event.id, text: [event.subtitle, event.title].filter(Boolean).join(": "), at: event.timestamp, tone: C.gold }); }
     return rows.sort((a, b) => b.at - a.at).slice(0, 4);
   }, [owned, soldRows, logged]);
 
@@ -422,7 +479,7 @@ export default function HomeClient() {
                     <span style={{ display: "flex", flexDirection: "column", gap: 6 }}>
                       {recentActivity.map((row) => (
                         <span key={row.id} style={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) auto", gap: 8, fontSize: 12 }}>
-                          <span style={{ color: C.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{row.text}</span>
+                          <span style={{ color: C.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}><i aria-hidden="true" style={{ display: "inline-block", width: 7, height: 7, borderRadius: "50%", background: row.tone, marginRight: 7 }} />{row.text}</span>
                           <span style={{ color: C.muted }}>{timeAgo(row.at)}</span>
                         </span>
                       ))}
@@ -446,49 +503,54 @@ export default function HomeClient() {
           </div>
         ) : null}
 
-        {/* 2. Recently added: up to six items; a short row you can swipe on a phone */}
-        <Block label="Recently added" link={{ href: "/vault", text: "View Vault" }}>
-          {recent.length === 0 ? (
-            <div style={quiet}>No items yet. Add your first collectible.</div>
-          ) : (
-            <div className="flex gap-2 overflow-x-auto p-3 md:grid md:grid-cols-3 md:overflow-visible lg:grid-cols-6">
-              {recent.map((item) => {
-                const v = totalsValue(item);
-                return (
-                  <Link key={item.id} href={"/vault/item/" + item.id} className="w-[132px] shrink-0 md:w-auto" style={{ display: "block", textDecoration: "none", border: `1px solid ${C.bd}`, borderRadius: 8, background: C.elevated, overflow: "hidden" }}>
-                    <div style={{ height: 120, background: C.card, display: "flex", alignItems: "center", justifyContent: "center", color: C.muted }}>
-                      {item.imageFrontUrl ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img src={item.imageFrontUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                      ) : <Glyph name="box" size={22} />}
-                    </div>
-                    <div style={{ padding: "8px 10px" }}>
-                      <div style={{ fontSize: 12, fontWeight: 600, color: C.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{item.title}</div>
-                      <div style={{ fontSize: 11, color: C.muted, marginTop: 2 }}>{v.amount > 0 ? (v.isGhost ? formatMoney(v.amount) + " at cost" : formatMoney(v.amount)) : "Not valued"}</div>
-                    </div>
-                  </Link>
-                );
-              })}
-            </div>
-          )}
-        </Block>
+        {/* 2 and 3. Recently added (left) and Your exhibitions (right) side by side on a desktop; stacked on a phone */}
+        <div className="grid items-stretch gap-6 lg:grid-cols-2">
+          <Block label="Recently added" labelLink={{ href: "/vault", text: "View Vault" }}>
+            {recent.length === 0 ? (
+              <div style={quiet}>No items yet. Add your first collectible.</div>
+            ) : (
+              <div>
+                <SwipeStrip label="Recently added items" caption={<span data-testid="recent-count">{recentAll.length.toLocaleString()} {recentAll.length === 1 ? "item" : "items"} in your Vault
+                  {latestAddedAt > 0 ? <> · newest added {new Date(latestAddedAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}</> : null}
+                  {recentAll.length > recent.length ? <> · browsing the newest {recent.length}</> : null}</span>}>
+                  {recent.map((item) => {
+                    const v = totalsValue(item);
+                    return (
+                      <Link key={item.id} href={"/vault/item/" + item.id} data-recent-item={item.id} className="w-[132px] shrink-0 snap-start" style={{ display: "block", textDecoration: "none", border: `1px solid ${C.bd}`, borderRadius: 8, background: C.elevated, overflow: "hidden" }}>
+                        <div style={{ height: 120, background: C.card, display: "flex", alignItems: "center", justifyContent: "center", color: C.muted }}>
+                          {item.imageFrontUrl ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img src={item.imageFrontUrl} alt="" loading="lazy" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                          ) : <Glyph name="box" size={22} />}
+                        </div>
+                        <div style={{ padding: "8px 10px" }}>
+                          <div style={{ fontSize: 12, fontWeight: 600, color: C.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{item.title}</div>
+                          <div style={{ fontSize: 11, color: C.muted, marginTop: 2 }}>{v.amount > 0 ? (v.isGhost ? formatMoney(v.amount) + " at cost" : formatMoney(v.amount)) : "Not valued"}</div>
+                        </div>
+                      </Link>
+                    );
+                  })}
+                </SwipeStrip>
+              </div>
+            )}
+          </Block>
 
-        {/* 3. Your exhibitions: flip through all of them; Create sits in the header, a labelled arrow opens the full page */}
-        <Block
-          label="Your exhibitions"
-          labelLink={{ href: "/museum", text: "All exhibitions", ariaLabel: "Open all exhibitions" }}
-          action={<PillButton href="/museum/new">Create exhibition</PillButton>}
-        >
-          {galleries.length > 0 ? (
-            <ExhibitionCarousel galleries={galleries} />
-          ) : (
-            <div style={quiet}>No exhibitions yet. Show a few pieces from your vault.</div>
-          )}
-        </Block>
+          <Block
+            label="Your exhibitions"
+            labelLink={{ href: "/museum", text: "All exhibitions", ariaLabel: "Open all exhibitions" }}
+            action={<PillButton href="/museum/new">Create exhibition</PillButton>}
+          >
+            {galleries.length > 0 ? (
+              <ExhibitionCarousel galleries={galleries} />
+            ) : (
+              <div style={quiet}>No exhibitions yet. Show a few pieces from your vault.</div>
+            )}
+          </Block>
+        </div>
 
         {/* 4 and 5. From the Lounge, and a Learn preview */}
         <div className="grid gap-6 lg:grid-cols-2">
-          <Block label="From the Lounge" link={{ href: "/community-board", text: "Open Lounge" }}>
+          <Block label="From the Lounge" labelLink={{ href: "/community-board", text: "Open Lounge" }}>
             {posts === null ? (
               <div style={quiet}>Loading posts…</div>
             ) : posts === "error" ? (
@@ -512,7 +574,7 @@ export default function HomeClient() {
             )}
           </Block>
 
-          <Block label="Learn" link={{ href: "/learn", text: "Open Learn" }}>
+          <Block label="Learn" labelLink={{ href: "/learn", text: "Open Learn" }}>
             {learn ? (
               <Link href={"/learn/" + learn.slug} style={{ display: "block", padding: "14px 16px", textDecoration: "none" }}>
                 <div style={{ fontSize: 11, color: C.muted }}>{learn.category} · {learn.readMinutes} min read</div>
