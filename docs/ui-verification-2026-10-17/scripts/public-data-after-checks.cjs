@@ -1,4 +1,4 @@
-// Production check for the public-data restriction (docs/proposals/public-data-minimum-restrictions-2026-10-17.sql), through the real API:
+// Production check for the public-data restriction (supabase/migrations/20261018_restrict_visitor_reads_referral_codes_appreciations.sql), through the real API:
 // what an anonymous visitor can and cannot retrieve, that the public Vibe counts still work, and that a signed-in user's follow-up actions still work.
 // Run it BEFORE the SQL (the "visitor cannot ..." rows fail: that is today's exposure) and AFTER (every row must pass).
 //   node public-data-after-checks.cjs <label>
