@@ -339,7 +339,7 @@ export default function SpreadsheetImportClient() {
       setStatus(
         `Imported ${finalItems.length} ${finalItems.length === 1 ? "item" : "items"} from ${sourceLabel}. ` +
           (importedSummary.missingCostCount > 0
-            ? `${importedSummary.missingCostCount} ${importedSummary.missingCostCount === 1 ? "item" : "items"} had no cost and ${importedSummary.missingCostCount === 1 ? "was" : "were"} set to $0. `
+            ? `${importedSummary.missingCostCount} ${importedSummary.missingCostCount === 1 ? "item" : "items"} had no cost: the cost was left blank (unknown), not $0. `
             : "") +
           (skippedDupCount > 0 ? `Skipped ${skippedDupCount} exact duplicates (same description and serial number). ` : "") +
           (importedSummary.totalEstimatedValue > 0 ? `Estimated value added: ${toMoney(importedSummary.totalEstimatedValue)}.` : "")
@@ -735,7 +735,7 @@ export default function SpreadsheetImportClient() {
                       <div className="text-right text-xs text-[color:var(--muted)]">
                         <div>{item.currentValue != null ? toMoney(Number(item.currentValue)) : "No estimate"}</div>
                         <div className="mt-1">{item.purchasePrice != null ? `Cost ${toMoney(Number(item.purchasePrice))}` : "No cost"}</div>
-                        {item.missingCost ? <div className="mt-1 text-amber-300">Missing cost → set to $0</div> : null}
+                        {item.missingCost ? <div className="mt-1 text-amber-300">Missing cost → left blank (unknown)</div> : null}
                       </div>
                     </div>
                   </RowCard>

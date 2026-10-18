@@ -493,7 +493,9 @@ function mapRowToItems(sheetName: string, rowNumber: number, row: RowRecord) {
   const currentValue = valueParsed.value;
   const purchasePriceRaw = purchaseNegative ? undefined : purchaseParsed.value;
   const askingPrice = askingParsed.value;
-  const purchasePrice = purchasePriceRaw ?? 0;
+  // A blank (or unreadable / negative) cost stays UNKNOWN: it used to be saved as $0, which looked like a recorded cost of nothing and made
+  // an imported item's whole value read as gain. An explicit 0 in the file is still 0. The row is flagged as missing a cost either way.
+  const purchasePrice = purchasePriceRaw;
   const missingCost = purchasePriceRaw == null;
 
   const notes: string[] = [];

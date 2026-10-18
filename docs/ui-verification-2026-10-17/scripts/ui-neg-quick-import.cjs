@@ -85,8 +85,10 @@ const removeStored = async (rows) => { for (const r of rows) for (const x of (r.
     if (ONLY.includes("import")) {
       const files = {
         generic: ["Name,Purchase Price,Current Value,Notes", "QA Imp Neg,-5,10,n", "QA Imp Paren,(7.50),10,n", "QA Imp Zero,0,10,n", "QA Imp Blank,,10,n", "QA Imp Pos,12.5,10,n"].join("\n"),
-        ebay: ["Title,Item price,Shipping and handling,Tax", "QA Imp eBay Neg,-5,2,1", "QA Imp eBay NegShip,10,-3,0", "QA Imp eBay Zero,0,0,0", "QA Imp eBay Blank,,,", "QA Imp eBay Pos,12.5,1.25,0.9"].join("\n"),
-        whatnot: ["Item Name,Price,Shipping,Tax", "QA Imp Whatnot Neg,-5,2,1", "QA Imp Whatnot Zero,0,0,0", "QA Imp Whatnot Blank,,,", "QA Imp Whatnot Pos,7,1,0.5"].join("\n"),
+        // The presets only read a file whose header row has at least three column names the importer knows, so the order files carry
+        // the usual extra columns (Order date, Seller).
+        ebay: ["Order date,Title,Seller,Item price,Shipping and handling,Tax", "2026-10-01,QA Imp eBay Neg,s1,-5,2,1", "2026-10-01,QA Imp eBay NegShip,s1,10,-3,0", "2026-10-01,QA Imp eBay Zero,s1,0,0,0", "2026-10-01,QA Imp eBay Blank,s1,,,", "2026-10-01,QA Imp eBay Pos,s1,12.5,1.25,0.9"].join("\n"),
+        whatnot: ["Order Date,Item Name,Seller,Price,Shipping,Tax", "2026-10-01,QA Imp Whatnot Neg,s1,-5,2,1", "2026-10-01,QA Imp Whatnot Zero,s1,0,0,0", "2026-10-01,QA Imp Whatnot Blank,s1,,,", "2026-10-01,QA Imp Whatnot Pos,s1,7,1,0.5"].join("\n"),
       };
       const importOne = async (S, presetLabel, csvText, fileName) => {
         const fp = path.join(OUT, fileName); fs.writeFileSync(fp, csvText);

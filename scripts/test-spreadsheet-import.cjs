@@ -89,6 +89,7 @@ function fileFrom(name, content, type) {
   const missing = byTitle("Missing Cost Item")[0];
   t("zero vs missing: an explicit 0 is not flagged as missing", zero && zero.purchasePrice === 0 && zero.missingCost === false, zero && { p: zero.purchasePrice, m: zero.missingCost });
   t("zero vs missing: a blank cost is flagged as missing", missing && missing.missingCost === true);
+  t("zero vs missing: a blank cost stays UNKNOWN (undefined), different from the explicit 0", missing && missing.purchasePrice === undefined && zero && zero.purchasePrice === 0, missing && missing.purchasePrice);
   const summary = imp.buildImportSummary(built.items, built.ignoredRows);
   t("summary: only blank costs are counted as missing (not explicit zeros)", summary.missingCostCount === 2, summary.missingCostCount);
   // Missing Cost Item (blank) and Bad Amount Item ("abc") are missing; Zero Cost Item and Cafe Racer are explicit zeros.
@@ -148,9 +149,9 @@ function fileFrom(name, content, type) {
   const negSource = await imp.parseSpreadsheetSource(fileFrom("neg.csv", negCsv, "text/csv"));
   const negBuilt = imp.buildItemsFromSource(negSource, imp.buildDefaultMappingProfile(negSource));
   const nb = (title) => negBuilt.items.find((i) => i.title === title);
-  t("negative cost (-5): the cost is not imported as -5", nb("Neg Cost Item") && nb("Neg Cost Item").purchasePrice >= 0, nb("Neg Cost Item") && nb("Neg Cost Item").purchasePrice);
+  t("negative cost (-5): the cost is not imported as -5, and not as 0 either (it stays blank)", nb("Neg Cost Item") && nb("Neg Cost Item").purchasePrice === undefined, nb("Neg Cost Item") && nb("Neg Cost Item").purchasePrice);
   t("negative cost (-5): the row is flagged as missing cost and warns why", nb("Neg Cost Item") && nb("Neg Cost Item").missingCost === true && (nb("Neg Cost Item").warnings || []).some((w) => /negative/i.test(w)), nb("Neg Cost Item") && nb("Neg Cost Item").warnings);
-  t("negative cost in brackets ((7.50)) is not imported as a cost either", nb("Neg Paren Item") && nb("Neg Paren Item").purchasePrice >= 0, nb("Neg Paren Item") && nb("Neg Paren Item").purchasePrice);
+  t("negative cost in brackets ((7.50)) is not imported as a cost either (stays blank)", nb("Neg Paren Item") && nb("Neg Paren Item").purchasePrice === undefined, nb("Neg Paren Item") && nb("Neg Paren Item").purchasePrice);
   t("explicit 0 and a positive cost are unchanged next to a negative one", nb("Zero Item").purchasePrice === 0 && nb("Zero Item").missingCost === false && nb("Pos Item").purchasePrice === 12.5);
 
   console.log(`\n${pass} passed, ${fail} failed`);
