@@ -1,8 +1,6 @@
 "use client";
 
 import { AppIcon, type AppIconName } from "@/components/ui/AppIcon";
-import { VaultLocalNav } from "@/components/SectionNav";
-import { PageHeader } from "@/components/layout/PageHeader";
 import { PillButton } from "@/components/ui/PillButton";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
@@ -348,14 +346,8 @@ export default function ForSalePage() {
 
   return (
     <div className="" style={{ background: "var(--bg)" }}>
-      <PageHeader
-        title="Listing Readiness"
-        description={<>Per-platform gap analysis for your {items.length} for-sale item{items.length !== 1 ? "s" : ""}.</>}
-        contentClassName="max-w-3xl"
-      />
       <div>
-        <div className="mx-auto max-w-3xl px-4">
-          <div className="mb-4"><VaultLocalNav activeKey="for-sale" /></div>
+        <div className="mx-auto max-w-[1480px] px-4 sm:px-6 lg:px-8">
           {/* Stats bar */}
           {items.length > 0 && (
             <div className="flex flex-wrap gap-5">

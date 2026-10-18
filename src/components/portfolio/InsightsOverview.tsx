@@ -1,7 +1,7 @@
 "use client";
 
 import { AppIcon } from "@/components/ui/AppIcon";
-import { VaultLocalNav } from "@/components/SectionNav";
+import { WorkspaceActions } from "@/components/vault/VaultWorkspace";
 import { PillButton } from "@/components/ui/PillButton";
 import Link from "next/link";
 import type { ReactNode } from "react";
@@ -27,7 +27,6 @@ import { getPrimaryImageUrl, type VaultItem } from "@/lib/vaultModel";
 import { activeItems, itemGain, readValueMode, type ValueMode } from "@/lib/vaultStats";
 import { loadGoals, syncGoalsFromSupabase, type CollectionGoal } from "@/lib/collectionGoals";
 import { getCollectionValuationScore } from "@/lib/collectionValuationScore";
-import { PageHeader } from "@/components/layout/PageHeader";
 import { ToolsMenu } from "@/components/ui/ToolsMenu";
 import VaultWrappedSheet from "@/components/VaultWrappedSheet";
 import PortfolioIntelligencePanel from "@/components/PortfolioIntelligencePanel";
@@ -723,11 +722,6 @@ export default function InsightsOverview({ items: allItems, loading = false }: {
   if (items.length === 0 && loading) {
     return (
       <>
-        <PageHeader
-          title="Insights"
-          description="Performance, trends, and opportunities in your collection."
-          contentClassName="max-w-[1480px]"
-        />
         <main className="min-h-screen text-[color:var(--fg)]">
           <div className="mx-auto max-w-[1480px] px-4 pb-8 sm:px-8">
             <Panel className="mt-6 p-8 text-center" >
@@ -742,11 +736,6 @@ export default function InsightsOverview({ items: allItems, loading = false }: {
   if (items.length === 0) {
     return (
       <>
-        <PageHeader
-          title="Insights"
-          description="Performance, trends, and opportunities in your collection."
-          contentClassName="max-w-[1480px]"
-        />
         <main className="min-h-screen text-[color:var(--fg)]">
         <div className="mx-auto max-w-[1480px] px-4 pb-8 sm:px-8">
           <Panel className="mt-6 p-8 text-center">
@@ -770,26 +759,18 @@ export default function InsightsOverview({ items: allItems, loading = false }: {
 
   return (
     <>
-      <PageHeader
-        title="Insights"
-        description="Know what your vault is worth and why."
-        contentClassName="max-w-[1480px]"
-        actions={
-          <>
-            <ToolsMenu
-              label="Collection tools"
-              items={[
-                { key: "export", label: "Export report", description: "Download your collection as a CSV file", onClick: () => exportItemsCsv(items) },
-                { key: "recap", label: "Collection recap", description: "Your collection in review, with sharing", onClick: () => setRecapOpen(true) },
-              ]}
-            />
-          </>
-        }
-      />
+      <WorkspaceActions>
+        <ToolsMenu
+          label="Collection tools"
+          items={[
+            { key: "export", label: "Export report", description: "Download your collection as a CSV file", onClick: () => exportItemsCsv(items) },
+            { key: "recap", label: "Collection recap", description: "Your collection in review, with sharing", onClick: () => setRecapOpen(true) },
+          ]}
+        />
+      </WorkspaceActions>
       {recapOpen ? <VaultWrappedSheet onClose={() => setRecapOpen(false)} /> : null}
       <main className="min-h-screen pb-[calc(var(--bottomnav-h,86px)+20px)] text-[color:var(--fg)] md:pb-10">
       <div className="mx-auto max-w-[1480px] px-4 pb-6 sm:px-8">
-        <VaultLocalNav activeKey="insights" />
         <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
           <StatCard
             label="Total Vault Value"

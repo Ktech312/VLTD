@@ -1,7 +1,6 @@
 "use client";
 
-import { VaultLocalNav } from "@/components/SectionNav";
-import { PageHeader } from "@/components/layout/PageHeader";
+import { WorkspaceActions } from "@/components/vault/VaultWorkspace";
 import { PillButton } from "@/components/ui/PillButton";
 import { useEffect, useMemo, useState } from "react";
 import { useHashTarget } from "@/lib/useHashTarget";
@@ -445,15 +444,9 @@ export default function SoldPage() {
 
   return (
     <>
-    <PageHeader
-      title="Sold Items"
-      description="Realized sales history using the same compact management layout as Vault."
-      contentClassName="max-w-[1480px]"
-      actions={<PillButton href="/sales">Sales History</PillButton>}
-    />
+    <WorkspaceActions><PillButton href="/sales">Sales History</PillButton></WorkspaceActions>
     <main className="bg-[color:var(--bg)] text-[color:var(--fg)]">
       <div className="mx-auto max-w-[1480px] px-4 pb-3 sm:px-6 sm:pb-4 lg:px-8">
-        <div className="mb-3"><VaultLocalNav activeKey="sold" /></div>
         <section id="sales-analytics" className="relative overflow-hidden rounded-[18px] border border-[color:var(--theme-border)] bg-[color:var(--theme-card)] px-4 py-3 shadow-[0_14px_40px_rgba(0,0,0,0.2)]">
           <div className="relative flex flex-col gap-4">
             <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">

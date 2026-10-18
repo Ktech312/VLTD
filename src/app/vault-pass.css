@@ -144,3 +144,11 @@ body:has(input[placeholder="Search vault items..."]) div.group.relative[class*="
     min-height: 36px;
   }
 }
+
+/* Vault workspace (Items / For Sale / Sold / Insights / Goals): every tab uses the same 1480px column as the shared header and
+   tab row. The older page-specific rules above and in vault-utility-pass.css / portfolio-pass.css capped some tabs at 1180px,
+   which made the tab row and the content under it start at different places. The doubled attribute raises specificity over
+   those body:has(...) rules. */
+[data-vault-workspace][data-vault-workspace] main > div {
+  max-width: 1480px !important;
+}

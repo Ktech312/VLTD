@@ -9,6 +9,7 @@ import VaultCategoryChips, { chipKey, vaultItemCategory, vaultItemSubcategory } 
 import { normalizeUniverse, universeForItem } from "@/lib/universeMatch";
 import Link from "next/link";
 import { PageHeader } from "@/components/layout/PageHeader";
+import { WorkspaceActions, useInVaultWorkspace } from "@/components/vault/VaultWorkspace";
 import { memo, startTransition, useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import ItemVisibilityToggle from "@/components/ItemVisibilityToggle";
@@ -1091,6 +1092,8 @@ function VaultSelectionDrawer({
  * the same screen locked to that one universe (no chips, universe title, a way back to all).
  */
 export default function VaultListView({ lockedUniverse }: { lockedUniverse?: UniverseKey } = {}) {
+  // On /vault the shared Vault workspace draws the header and the tab row; a universe page (/vault/<universe>) keeps its own.
+  const inWorkspace = useInVaultWorkspace() && !lockedUniverse;
   const [focusKey] = useState<UniverseKey | null>(() => readFocusUniverseKey());
   const [items, setItems] = useState<VaultItem[]>([]);
   const [query, setQuery] = useState("");
@@ -1968,6 +1971,14 @@ export default function VaultListView({ lockedUniverse }: { lockedUniverse?: Uni
 
   return (
     <>
+      {inWorkspace ? (
+        <WorkspaceActions>
+          {/* On phones the persistent Add Item above the bottom bar replaces this one. */}
+          <span className="hidden md:inline-flex"><AddItemActions /></span>
+          <VaultToolsMenu />
+        </WorkspaceActions>
+      ) : (
+      <>
       <PageHeader
         title={lockedUniverse ? universeDisplayName(lockedUniverse) : "Vault"}
         description={
@@ -1986,6 +1997,8 @@ export default function VaultListView({ lockedUniverse }: { lockedUniverse?: Uni
         }
       />
       <VaultNav activeKey="items" />
+      </>
+      )}
       <main className="text-[color:var(--fg)]">
       {!initialLoadComplete ? (
         <div className="mx-auto max-w-[1480px] px-4 pb-4 sm:px-6 sm:pb-5 lg:px-8" aria-label="Loading your vault summary">

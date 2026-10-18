@@ -1,10 +1,9 @@
 "use client";
 
-import { VaultLocalNav } from "@/components/SectionNav";
+import { WorkspaceActions } from "@/components/vault/VaultWorkspace";
 import { PillButton } from "@/components/ui/PillButton";
 import { PillSelect } from "@/components/ui/PillSelect";
 import Link from "next/link";
-import { PageHeader } from "@/components/layout/PageHeader";
 import { useEffect, useMemo, useState } from "react";
 import AddGoalSheet from "@/components/AddGoalSheet";
 import {
@@ -317,18 +316,12 @@ export default function GoalsPage() {
 
   return (
     <>
-      <PageHeader
-        title="Goals"
-        description={<span style={{ color: "var(--theme-text-muted,#61656B)" }}>Turn a collection into a plan.</span>}
-        contentClassName="max-w-[1480px]"
-        actions={
-          <PillButton onClick={() => setShowAdd(true)} className="font-black" style={{ background: "linear-gradient(180deg, #79E7FB, #41C6E4 55%, #2CB1D1)", color: "#06171d", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.5), 0 0 16px rgba(79,211,238,0.25)" }}>
-            + Create Goal
-          </PillButton>
-        }
-      />
+      <WorkspaceActions>
+        <PillButton onClick={() => setShowAdd(true)} className="font-black" style={{ background: "linear-gradient(180deg, #79E7FB, #41C6E4 55%, #2CB1D1)", color: "#06171d", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.5), 0 0 16px rgba(79,211,238,0.25)" }}>
+          + Create Goal
+        </PillButton>
+      </WorkspaceActions>
       <main style={{ background: "var(--bg)" }}>
-      <div className="mx-auto max-w-[1480px] px-4 pb-4 sm:px-6 lg:px-8"><VaultLocalNav activeKey="goals" /></div>
       <div className="mx-auto grid max-w-[1480px] gap-6 px-4 pb-6 sm:px-6 lg:px-8 xl:grid-cols-[minmax(0,1fr)_420px]">
         <section className="min-w-0">
           <div className="mt-2 flex flex-wrap gap-3">

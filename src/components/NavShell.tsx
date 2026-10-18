@@ -7,6 +7,7 @@ import BottomNav from "@/components/BottomNav";
 import PullToRefresh from "@/components/PullToRefresh";
 import RouteGuard from "@/components/RouteGuard";
 import SyncStatusPill from "@/components/SyncStatusPill";
+import VaultWorkspace from "@/components/vault/VaultWorkspace";
 
 export default function NavShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -57,7 +58,7 @@ export default function NavShell({ children }: { children: React.ReactNode }) {
     <>
       <TopNav />
       <PullToRefresh>
-        <RouteGuard>{children}</RouteGuard>
+        <RouteGuard><VaultWorkspace>{children}</VaultWorkspace></RouteGuard>
       </PullToRefresh>
       <BottomNav />
       <SyncStatusPill />
