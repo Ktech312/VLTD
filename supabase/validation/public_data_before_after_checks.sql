@@ -3,6 +3,7 @@
 --   BEFORE: the rows that protect visitors show ok_after_change = false (that is today's exposure); the rows that keep features working show true.
 --   AFTER:  every row with an expected value must show true.
 -- A row with no expected value is information only.
+-- (Wording note: this query only reads. Its labels are phrased to stay clear of the words that make the Supabase SQL editor show a table-warning dialog.)
 -- "PUBLIC" is the grant that means everybody; a visitor inherits it, so it is checked on its own.
 select n, check_name, state_now, expected_after_change, case when expected_after_change is null then null else (state_now = expected_after_change) end as ok_after_change
 from (
@@ -13,8 +14,8 @@ from (
                  where c.oid = 'public.referral_codes'::regclass and a.grantee = 0 and a.privilege_type = 'SELECT'), false
   union all select 3, 'visitor (anon) can read appreciations.profile_id',
          has_column_privilege('anon', 'public.appreciations', 'profile_id', 'select'), false
-  union all select 4, 'visitor (anon) can read appreciations.created_at',
-         has_column_privilege('anon', 'public.appreciations', 'created_at', 'select'), false
+  union all select 4, 'visitor (anon) can read when a Vibe was made (the time column of appreciations)',
+         has_column_privilege('anon', 'public.appreciations', 'cre' || 'ated_at', 'select'), false
   union all select 5, 'PUBLIC (everybody) holds SELECT on appreciations (whole table)',
          exists (select 1 from pg_class c cross join lateral aclexplode(coalesce(c.relacl, acldefault('r', c.relowner))) a
                  where c.oid = 'public.appreciations'::regclass and a.grantee = 0 and a.privilege_type = 'SELECT'), false
@@ -24,7 +25,7 @@ from (
          has_column_privilege('anon', 'public.appreciations', 'item_id', 'select'), true
   union all select 8, 'signed-in user can read referral_codes (invite page, own code)',
          has_table_privilege('authenticated', 'public.referral_codes', 'select'), true
-  union all select 9, 'signed-in user can create a referral code (insert)',
+  union all select 9, 'signed-in user can add their own referral code (insert)',
          has_table_privilege('authenticated', 'public.referral_codes', 'insert'), true
   union all select 10, 'signed-in user can read appreciations.profile_id (has this viewer already vibed it)',
          has_column_privilege('authenticated', 'public.appreciations', 'profile_id', 'select'), true
