@@ -1501,7 +1501,6 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
           <CostToSellPanel
             price={effectiveMarketValue(item)}
             costBasis={totalCost(item)}
-            shippingCost={clamp(item.purchaseShipping)}
             category={categoryLabel(item)}
             universe={item.universe}
             subcategory={item.subcategoryLabel}

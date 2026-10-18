@@ -33,14 +33,12 @@ const LABEL = "text-[10px] font-semibold uppercase tracking-[0.16em] text-[color
 export default function CostToSellPanel({
   price = 0,
   costBasis = 0,
-  shippingCost = 0,
   category,
   universe,
   subcategory,
 }: {
   price?: number;
   costBasis?: number;
-  shippingCost?: number;
   category?: string;
   universe?: string;
   subcategory?: string;
@@ -53,14 +51,18 @@ export default function CostToSellPanel({
   // If the item's category changes, a choice that no longer fits falls back to the suggestion.
   const channel: Channel = picked && allowed.includes(picked) ? picked : advice.suggested;
   const [salePrice, setSalePrice] = useState(String(price || ""));
-  const [shipping, setShipping] = useState(String(shippingCost || ""));
+  // Estimated OUTBOUND postage to the buyer. Left empty until the person supplies it: what was paid to receive the item (acquisition shipping)
+  // is already part of the cost basis and is never copied in here, so it cannot be counted twice.
+  const [shipping, setShipping] = useState("");
   const [customRate, setCustomRate] = useState("12.9");
   // Optional: your own fee percent for the chosen marketplace. When filled in it replaces the built-in table.
   const [override, setOverride] = useState("");
 
   const payout = useMemo(() => {
     const gross = Number(salePrice || 0);
-    const shipCost = Number(shipping || 0);
+    // Empty = not entered (net excludes postage); 0 = the person said shipping is free; both leave net unchanged, but they are reported differently.
+    const shippingEntered = shipping.trim() !== "" && Number.isFinite(Number(shipping));
+    const shipCost = shippingEntered ? Math.max(0, Number(shipping)) : 0;
     let fees: number;
     let feeSummary: string;
     let status: "verified" | "partly" | "yours" = "yours";
@@ -85,7 +87,7 @@ export default function CostToSellPanel({
     }
     const net = gross - fees - shipCost;
     const gain = net - Number(costBasis ?? 0);
-    return { gross, shipCost, fees, feeSummary, net, gain, status, source, caveat };
+    return { gross, shipCost, shippingEntered, fees, feeSummary, net, gain, status, source, caveat };
   }, [salePrice, shipping, channel, customRate, override, category, subcategory, costBasis]);
 
   const hasPrice = payout.gross > 0;
@@ -103,8 +105,8 @@ export default function CostToSellPanel({
           <input value={salePrice} onChange={(e) => setSalePrice(e.target.value)} className={INPUT} inputMode="decimal" placeholder="What you expect" />
         </label>
         <label className="grid gap-1">
-          <span className={LABEL}>Shipping cost</span>
-          <input value={shipping} onChange={(e) => setShipping(e.target.value)} className={INPUT} inputMode="decimal" placeholder="Postage" />
+          <span className={LABEL}>Estimated outbound shipping</span>
+          <input value={shipping} onChange={(e) => setShipping(e.target.value)} className={INPUT} inputMode="decimal" placeholder="Postage to the buyer (0 if free)" aria-label="Estimated outbound shipping" />
         </label>
         <div className="grid gap-1">
           <span className={LABEL}>Marketplace</span>
@@ -147,8 +149,8 @@ export default function CostToSellPanel({
           <dd className="text-base font-semibold">{hasPrice ? money(payout.fees) : "—"}</dd>
         </div>
         <div>
-          <dt className={LABEL}>Ship cost</dt>
-          <dd className="text-base font-semibold">{money(payout.shipCost)}</dd>
+          <dt className={LABEL}>Outbound shipping</dt>
+          <dd className="text-base font-semibold">{payout.shippingEntered ? (payout.shipCost === 0 ? "Free ($0)" : money(payout.shipCost)) : "Not entered"}</dd>
         </div>
         <div>
           <dt className={LABEL}>Net</dt>
@@ -163,6 +165,13 @@ export default function CostToSellPanel({
         </div>
       </dl>
 
+      {hasPrice ? (
+        <p className="mt-2 text-[11px] leading-snug text-[color:var(--muted)]" data-testid="cost-to-sell-shipping-note">
+          {payout.shippingEntered
+            ? `Net = sale price − fees − the ${payout.shipCost === 0 ? "free (\$0)" : "outbound"} shipping you entered. Net gain / loss then subtracts the cost basis (${money(Number(costBasis ?? 0))}), which already includes what you paid for tax, shipping and fees when you bought it, so nothing is counted twice.`
+            : `No outbound shipping was entered, so this net does NOT include postage to the buyer (type 0 if shipping is free). The cost basis (${money(Number(costBasis ?? 0))}) already includes what you paid for shipping when you bought it; that is not postage to the buyer and is not added again here.`}
+        </p>
+      ) : null}
       <p className="mt-2 text-[11px] leading-snug text-[color:var(--muted)]">
         {hasPrice ? (
           <>

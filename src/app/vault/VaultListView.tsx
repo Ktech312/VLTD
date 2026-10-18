@@ -22,7 +22,7 @@ import SwipeStack from "@/components/SwipeStack";
 import { computeItemIntelligence } from "@/lib/itemIntelligence";
 import { UNIVERSE_LABEL, TAXONOMY, getCategories, isUniverseKey, type UniverseKey } from "@/lib/taxonomy";
 import { showToast } from "@/lib/toast";
-import { REVIEW_CHECKLIST, REVIEW_CHECKLIST_NOTE, REVIEW_GAPS, REVIEW_GAP_LABEL, REVIEW_GAP_SHORT, matchesReview, reviewCounts, reviewGaps, type ReviewFilter, type ReviewGap } from "@/lib/vaultReview";
+import { REVIEW_CHECKLIST, REVIEW_CHECKLIST_NOTE, REVIEW_GAPS, REVIEW_GAP_FILTERS, REVIEW_GAP_HEADING, REVIEW_GAP_PILL, REVIEW_GAP_ROW, matchesReview, reviewCounts, reviewGaps, type ReviewFilter, type ReviewGap } from "@/lib/vaultReview";
 import { activeItems, collectibleItems, describeGainExclusions, effectiveMarketValue, readValueMode, summarizeValues, writeValueMode, type ValueMode } from "@/lib/vaultStats";
 import { priceCheckIsStale } from "@/lib/pricingMvp";
 import { migrateExistingVaultImagesToSupabase } from "@/lib/vaultMigration";
@@ -1415,7 +1415,7 @@ export default function VaultListView({ lockedUniverse }: { lockedUniverse?: Uni
         if (!lockedUniverse && typeof f.universeFilter === "string") setUniverseFilter(f.universeFilter as UniverseFilter);
         if (typeof f.readinessFilter === "string") setReadinessFilter(f.readinessFilter as ReadinessFilter);
         if (f.reviewFilter === "insurance_ready" || f.reviewFilter === "needs_review") setReviewFilter(f.reviewFilter);
-        if (typeof f.reviewGap === "string" && (REVIEW_GAPS as string[]).includes(f.reviewGap)) setReviewGap(f.reviewGap as ReviewGap);
+        if (typeof f.reviewGap === "string" && (REVIEW_GAP_FILTERS as string[]).includes(f.reviewGap)) setReviewGap(f.reviewGap as ReviewGap);
         if (typeof f.gradedOnly === "boolean") setGradedOnly(f.gradedOnly);
         if (typeof f.uncategorizedOnly === "boolean") setUncategorizedOnly(f.uncategorizedOnly);
         if (Array.isArray(f.categoryFilter)) setCategoryFilter(f.categoryFilter.filter((x): x is string => typeof x === "string"));
@@ -1940,7 +1940,7 @@ export default function VaultListView({ lockedUniverse }: { lockedUniverse?: Uni
     const wanted = params.get("review");
     if (wanted === "needs_review" || wanted === "insurance_ready") setReviewFilter(wanted);
     const gap = params.get("gap");
-    if (wanted === "needs_review" && (REVIEW_GAPS as string[]).includes(gap ?? "")) setReviewGap(gap as ReviewGap);
+    if (wanted === "needs_review" && (REVIEW_GAP_FILTERS as string[]).includes(gap ?? "")) setReviewGap(gap as ReviewGap);
   }, []);
 
   return (
@@ -2343,7 +2343,7 @@ export default function VaultListView({ lockedUniverse }: { lockedUniverse?: Uni
                   <div className="font-semibold">
                     {reviewFilter === "insurance_ready"
                       ? `Documentation complete: ${filteredItems.length} of ${stats.totalItems} ${stats.totalItems === 1 ? "item" : "items"}`
-                      : `Needs review: ${filteredItems.length} ${filteredItems.length === 1 ? "item" : "items"}${reviewGap ? ` missing ${REVIEW_GAP_LABEL[reviewGap]}` : ""}`}
+                      : `Needs review: ${filteredItems.length} ${filteredItems.length === 1 ? "item" : "items"}${reviewGap ? ` ${REVIEW_GAP_HEADING[reviewGap]}` : ""}`}
                   </div>
                   <PillButton size="compact" onClick={() => { setReviewFilter("all"); setReviewGap(null); }}>Back to all items</PillButton>
                 </div>
@@ -2363,9 +2363,9 @@ export default function VaultListView({ lockedUniverse }: { lockedUniverse?: Uni
                 <p className="mt-2 text-[12px] leading-relaxed text-[color:var(--muted)]">{REVIEW_CHECKLIST_NOTE}</p>
                 {reviewFilter === "needs_review" ? (
                   <div className="mt-2 flex flex-wrap items-center gap-1.5">
-                    {REVIEW_GAPS.map((gap) => (
+                    {REVIEW_GAP_FILTERS.map((gap) => (
                       <PillButton key={gap} size="compact" variant={reviewGap === gap ? "active" : "default"} pressed={reviewGap === gap} onClick={() => setReviewGap((current) => (current === gap ? null : gap))}>
-                        Missing {REVIEW_GAP_SHORT[gap].toLowerCase()} <span className="text-[11px] opacity-70">{stats.gapCounts[gap]}</span>
+                        {REVIEW_GAP_PILL[gap]} <span className="text-[11px] opacity-70">{stats.gapCounts[gap]}</span>
                       </PillButton>
                     ))}
                   </div>
@@ -2380,7 +2380,7 @@ export default function VaultListView({ lockedUniverse }: { lockedUniverse?: Uni
                     {reviewFilter === "insurance_ready"
                       ? "No items have all four checklist items yet. Choose Needs Review to see what each one is missing."
                       : reviewGap
-                        ? `Nothing here is missing ${REVIEW_GAP_LABEL[reviewGap]}.`
+                        ? `No items match "${REVIEW_GAP_PILL[reviewGap]}".`
                         : "Nothing needs review. Every item has all four checklist items."}
                   </p>
                 ) : null}
@@ -2397,7 +2397,7 @@ export default function VaultListView({ lockedUniverse }: { lockedUniverse?: Uni
                 {uncategorizedOnly ? <PillButton size="compact" onClick={() => setUncategorizedOnly(false)} ariaLabel="Clear uncategorized filter">Uncategorized only <AppIcon name="close" size={12} /></PillButton> : null}
                 {showSoldItems ? <PillButton size="compact" onClick={() => setShowSoldItems(false)} ariaLabel="Hide sold items again">Sold items shown <AppIcon name="close" size={12} /></PillButton> : null}
                 {readinessFilter !== "all" ? <PillButton size="compact" onClick={() => setReadinessFilter("all")} ariaLabel="Clear value-rank filter">Value rank: {readinessFilter} <AppIcon name="close" size={12} /></PillButton> : null}
-                {reviewFilter !== "all" ? <PillButton size="compact" onClick={() => { setReviewFilter("all"); setReviewGap(null); }} ariaLabel="Clear review filter">{reviewFilter === "insurance_ready" ? "Documentation complete" : "Needs review"}{reviewGap ? ` · ${REVIEW_GAP_SHORT[reviewGap].toLowerCase()}` : ""} <AppIcon name="close" size={12} /></PillButton> : null}
+                {reviewFilter !== "all" ? <PillButton size="compact" onClick={() => { setReviewFilter("all"); setReviewGap(null); }} ariaLabel="Clear review filter">{reviewFilter === "insurance_ready" ? "Documentation complete" : "Needs review"}{reviewGap ? ` · ${REVIEW_GAP_PILL[reviewGap].toLowerCase()}` : ""} <AppIcon name="close" size={12} /></PillButton> : null}
                 {sortMode !== "newest" ? <PillButton size="compact" onClick={() => setSortMode("newest")} ariaLabel="Back to newest first">Sorted: {sortMode.replace("_", " ")} <AppIcon name="close" size={12} /></PillButton> : null}
                 <PillButton size="compact" variant="active" onClick={handleClearFilters}>Clear all</PillButton>
               </div>
@@ -2462,7 +2462,7 @@ export default function VaultListView({ lockedUniverse }: { lockedUniverse?: Uni
                   sale={saleInfoForItem(item, saleMap)}
                   selected={selectedIds.has(item.id)}
                   selectMode={selectMode}
-                  missingText={reviewFilter === "needs_review" ? reviewGaps(item).map((gap) => REVIEW_GAP_SHORT[gap].toLowerCase()).join(", ") : null}
+                  missingText={reviewFilter === "needs_review" ? reviewGaps(item).map((gap) => REVIEW_GAP_ROW[gap]).join(", ") : null}
                   displayMode={vaultViewMode}
                   onSaveItem={handleSaveItem}
                   onDeleteItem={handleDeleteItem}

@@ -16,7 +16,7 @@ import {
 } from "@/lib/portfolioMetrics";
 import { getUniverseThumbnail } from "@/lib/universeImages";
 import { useHashTarget } from "@/lib/useHashTarget";
-import { REVIEW_CHECKLIST, REVIEW_CHECKLIST_NOTE, REVIEW_GAPS, REVIEW_GAP_SHORT, reviewCounts, reviewGaps } from "@/lib/vaultReview";
+import { REVIEW_CHECKLIST, REVIEW_CHECKLIST_NOTE, REVIEW_GAPS, REVIEW_GAP_FILTERS, REVIEW_GAP_PILL, reviewCounts, reviewGaps } from "@/lib/vaultReview";
 import {
   readHistory,
   sliceHistory,
@@ -1052,9 +1052,9 @@ export default function InsightsOverview({ items: allItems, loading = false }: {
             <Link href="/vault?review=needs_review" className="mt-2 block text-2xl font-black focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2" style={{ color: documentation.needsReview > 0 ? RED : GREEN }}>{documentation.needsReview}</Link>
             <div className="text-sm" style={{ color: MUTED }}>items missing part of the checklist{items.length > 0 ? ` (${100 - documentation.pctItems}% of items)` : ""}</div>
             <div className="mt-2 flex flex-wrap gap-1.5">
-              {REVIEW_GAPS.map((gap) => (
+              {REVIEW_GAP_FILTERS.map((gap) => (
                 <PillButton key={gap} size="compact" href={`/vault?review=needs_review&gap=${gap}`}>
-                  Missing {REVIEW_GAP_SHORT[gap].toLowerCase()} <span className="text-[11px] opacity-70">{documentation.byGap[gap]}</span>
+                  {REVIEW_GAP_PILL[gap]} <span className="text-[11px] opacity-70">{documentation.byGap[gap]}</span>
                 </PillButton>
               ))}
             </div>
