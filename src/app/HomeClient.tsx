@@ -89,7 +89,8 @@ function MoneyTile({ href, label, value, tone = "default", ghost = false, captio
       style={{ border: `1px solid ${C.bd2}`, background: C.elevated, textDecoration: "none", color: "inherit" }}
     >
       <span style={{ fontSize: 10, color: C.muted, letterSpacing: "0.10em", textTransform: "uppercase", fontWeight: 800 }}>{label}</span>
-      <span style={{ fontFamily: C.r, fontSize: 28, fontWeight: 800, letterSpacing: "-0.02em", lineHeight: 1.05, color }}>{value}</span>
+      {/* vltd-keep-color: the light-theme text rule would otherwise turn green/red/grey figures the same dark colour */}
+      <span className="vltd-keep-color" style={{ fontFamily: C.r, fontSize: 28, fontWeight: 800, letterSpacing: "-0.02em", lineHeight: 1.05, color }}>{value}</span>
       <span style={{ fontSize: 12, color: C.muted, lineHeight: 1.35 }}>{caption}</span>
       {extra}
       <span style={{ marginTop: 4, fontSize: 12, fontWeight: 700, color: C.gold }}>{go} ›</span>
@@ -313,7 +314,7 @@ export default function HomeClient() {
   const gainSign = stats.totalGain >= 0 ? "+" : "-";
   const gainText = gainKnown ? (
     <>
-      {gainSign}{formatMoney(Math.abs(stats.totalGain))} <span style={{ fontSize: 15, fontWeight: 700 }}>({gainSign}{Math.abs(stats.gainPct ?? 0).toFixed(1)}%)</span>
+      {gainSign}{formatMoney(Math.abs(stats.totalGain))} <span className="vltd-keep-color" style={{ fontSize: 15, fontWeight: 700 }}>({gainSign}{Math.abs(stats.gainPct ?? 0).toFixed(1)}%)</span>
     </>
   ) : "—";
   const valueIsGhost = valueMode === "fill" && stats.ghostCount > 0;
