@@ -234,19 +234,19 @@ function StatCard({
   const hasTrend = Boolean(trend && trend.length > 1);
   const card = (
     <Panel className="h-full min-h-[94px] p-3.5">
-      <div className="grid h-full grid-cols-[46px_minmax(0,1fr)] items-start gap-3 sm:grid-cols-[52px_minmax(0,1fr)]">
+      <div className="grid h-full grid-cols-[40px_minmax(0,1fr)] items-start gap-3 2xl:grid-cols-[52px_minmax(0,1fr)]">
         <div
-          className="grid h-11 w-11 self-center place-items-center rounded-full sm:h-12 sm:w-12"
+          className="grid h-10 w-10 self-center place-items-center rounded-full 2xl:h-12 2xl:w-12"
           style={{ border: "1px solid rgba(203,208,213,0.55)", color: GOLD, background: "rgba(203,208,213,0.05)" }}
         >
           {icon}
         </div>
         <div className="min-w-0">
-          <div className="flex items-center gap-1.5">
-            <Label>{label}</Label>
+          <div className="flex items-center gap-1.5 whitespace-nowrap">
+            <div className="truncate text-[10px] font-bold uppercase tracking-[0.16em]" style={{ color: MUTED2 }}>{label}</div>
             <InfoMark />
           </div>
-          <div className="mt-1 flex items-center justify-between gap-2">
+          <div className="mt-1 flex min-h-8 items-center justify-between gap-2">
             <div className="min-w-0 text-[27px] font-black leading-none tracking-[-0.02em]" style={{ color: tone }}>
               {value}
             </div>
