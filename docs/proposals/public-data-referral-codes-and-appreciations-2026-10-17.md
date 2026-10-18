@@ -38,10 +38,10 @@ So a visitor can see which profile appreciated which item, and the name where th
 - Vibe / un-vibe: signed in, by the policies in `20260622_appreciations.sql` (insert/delete only as your own profile). That migration also sets "Appreciations are publicly readable" with `using (true)`.
 - The app never selects `profile_id` or `created_at` for a visitor, and never uses `select *` on this table.
 
-## Final proposal: STATUS = PROPOSED (not applied; stays proposed until production verification passes)
+## Final proposal: STATUS = APPLIED by EK on 2026-10-17 and VERIFIED on production (the SQL is now `supabase/migrations/20261018_restrict_visitor_reads_referral_codes_appreciations.sql`)
 Files, to be used together and in this order:
 1. `supabase/validation/public_data_before_after_checks.sql`: read-only. Run it BEFORE (it shows today's exposure) and again AFTER.
-2. `docs/proposals/public-data-minimum-restrictions-2026-10-17.sql`: the change (grants only; repeatable; wrapped in a transaction).
+2. `supabase/migrations/20261018_restrict_visitor_reads_referral_codes_appreciations.sql`: the change (grants only; repeatable; wrapped in a transaction).
 3. the checks file again: every row that has an expected value must read `true`.
 
 What the SQL does
@@ -54,7 +54,7 @@ Review against the real grants, including inherited ones
 - Real-engine test (`supabase/validation/test-public-data-sql-in-postgres.cjs`, 61 checks, in-process Postgres with the real appreciations policies): in each of three starting situations (direct grants, PUBLIC-only grants, both) the BEFORE query shows the exposure, the SQL (run twice) removes it, the AFTER query is all true, a visitor gets "permission denied" for codes, authentication ids, Vibe profile ids, times and `select *`, the public counts still work (count of `id`, `item_id` for a list), and signed-in actions still work (read/create own code; "have I vibed it"; "which have I vibed"; Vibe; un-Vibe; counts) with row-level security and all five policies unchanged; visitors cannot Vibe or create codes as someone else.
 - Production API check (`public-data-after-checks.cjs`, anonymous client plus the synthetic QA user): BEFORE-baseline measured on production today: 5 visitor checks fail (visitors read codes with authentication ids, look up owner from code, read Vibe profile ids, times and `select *`), 10 pass (counts, signed-in actions). After the SQL it must be 15 of 15.
 
-Not verified (so still proposed): the SQL has not run on production; the real grants are unknown until you run the checks file; the production API check after the change has not been run.
+Production verification (after EK ran the SQL): the production API check passes 15 of 15 (visitor: referral codes, authentication ids, owner/code look-ups, Vibe profile ids, times and select * are all "permission denied"; the public Vibe count and batch counts still work; signed-in user: reads and adds their own referral code, "which have I vibed", "have I vibed this", Vibe, un-Vibe, counts, and cannot Vibe as somebody else); a signed-out visitor's real exhibition page still gets its Vibe counts (the request is accepted with status 200); the visitor view of both tables shows `referral_codes` denied and `appreciations` denied for `select *`. EK's BEFORE rows showed the exposure came from direct grants to visitors (nothing inherited from PUBLIC). EK's AFTER rows from the checks file are still welcome as the final confirmation of the grants themselves.
 
 Found while checking, NOT changed by this SQL: a signed-in user can read other people's referral codes (the QA account saw 2 codes, its own plus another person's), so authentication user ids and codes remain visible to every signed-in account. The checks file shows whether row-level security is on for `referral_codes` (row 16, information only). Limiting signed-in reads to the person's own row (plus admin) is a separate decision.
 

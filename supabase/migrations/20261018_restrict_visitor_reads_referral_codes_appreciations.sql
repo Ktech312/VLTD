@@ -1,6 +1,6 @@
--- PROPOSED, NOT APPLIED (kept out of supabase/migrations on purpose; it is moved there only after production verification passes).
--- Why and what to check: docs/proposals/public-data-referral-codes-and-appreciations-2026-10-17.md
--- Run order: 1) supabase/validation/public_data_before_after_checks.sql (BEFORE: shows today's exposure)  2) this file  3) the same checks file (AFTER: every row must be true).
+-- APPLIED to production by EK on 2026-10-17 and verified there (see HANDOFF.md row 7). Recorded here as the migration that was run.
+-- Why and what was checked: docs/proposals/public-data-referral-codes-and-appreciations-2026-10-17.md
+-- Run order that was used: 1) supabase/validation/public_data_before_after_checks.sql (BEFORE: showed the exposure)  2) this file  3) the same checks file (AFTER).
 -- Safe to run more than once. Changes grants only: no table, policy, row or column is changed or deleted.
 --
 -- Who gets what afterwards

@@ -1,4 +1,4 @@
--- READ-ONLY. Changes nothing. Run it BEFORE and again AFTER docs/proposals/public-data-minimum-restrictions-2026-10-17.sql in the Supabase SQL editor.
+-- READ-ONLY. Changes nothing. Run it BEFORE and again AFTER supabase/migrations/20261018_restrict_visitor_reads_referral_codes_appreciations.sql in the Supabase SQL editor.
 -- Columns: what is true now, what must be true after the change, and whether they match.
 --   BEFORE: the rows that protect visitors show ok_after_change = false (that is today's exposure); the rows that keep features working show true.
 --   AFTER:  every row with an expected value must show true.

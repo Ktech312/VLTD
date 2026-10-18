@@ -1,4 +1,4 @@
-// Tests docs/proposals/public-data-minimum-restrictions-2026-10-17.sql and supabase/validation/public_data_before_after_checks.sql in a real
+// Tests supabase/migrations/20261018_restrict_visitor_reads_referral_codes_appreciations.sql and supabase/validation/public_data_before_after_checks.sql in a real
 // (in-process) Postgres, for the three ways visitors can hold access today: a grant made to them directly (Supabase's default), a grant to PUBLIC
 // that they inherit, and both. Needs @electric-sql/pglite (not a project dependency): npm i @electric-sql/pglite in a scratch folder and run from there.
 //   node test-public-data-sql-in-postgres.cjs
@@ -6,7 +6,7 @@ const fs = require("fs");
 const path = require("path");
 const { PGlite } = require("@electric-sql/pglite");
 const ROOT = path.resolve(__dirname, "..", "..");
-const FINAL = fs.readFileSync(path.join(ROOT, "docs/proposals/public-data-minimum-restrictions-2026-10-17.sql"), "utf8");
+const FINAL = fs.readFileSync(path.join(ROOT, "supabase/migrations/20261018_restrict_visitor_reads_referral_codes_appreciations.sql"), "utf8");
 const CHECKS = fs.readFileSync(path.join(ROOT, "supabase/validation/public_data_before_after_checks.sql"), "utf8");
 let pass = 0, fail = 0;
 const t = (name, ok, d) => { ok ? pass++ : fail++; console.log(ok ? "PASS" : "FAIL", name, ok ? "" : JSON.stringify(d ?? "").slice(0, 300)); };
