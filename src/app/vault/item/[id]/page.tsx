@@ -1051,7 +1051,9 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
       valueHigh: pricingPatch.valueHigh,
       comparables: pricingPatch.comparables,
       priceSources: pricingPatch.priceSources,
-      currentValue: displayPrimaryValue(pricingPatch) ?? item.currentValue,
+      // The card now shows the item's whole value (see the value passed to the card), so what it saves IS the value: clearing the box clears the
+      // valuation instead of silently keeping the old one.
+      currentValue: displayPrimaryValue(pricingPatch),
     };
 
     await persist(nextItem);
@@ -1548,7 +1550,8 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
               priceUpdatedAt: item.priceUpdatedAt,
               priceNotes: item.priceNotes,
               valueLow: item.valueLow,
-              valueMedian: item.valueMedian,
+              // A valuation typed on the Add page lives only in currentValue: show it here so it can be seen, edited and cleared.
+              valueMedian: item.valueMedian ?? (item.estimatedValue === undefined && item.lastCompValue === undefined ? item.currentValue : undefined),
               valueHigh: item.valueHigh,
               comparables: item.comparables,
               priceSources: item.priceSources,

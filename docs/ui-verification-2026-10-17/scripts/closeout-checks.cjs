@@ -32,7 +32,7 @@ const pick = (S, label) => S.evaluate(`(() => { const s = document.querySelector
     check("3 Whatnot: shows 'Unverified in part' with the reason and points to Override fee %", /Unverified in part:/.test(wn) && /Override fee %/.test(wn), wn);
     await setInput(S, 2, "5"); await sleep(300);
     const ov = await panelText(S);
-    check("4 Override fee % = 5 on $100: Fees $5.00, says it is your own rate", /Fees \$5\.00/i.test(ov) && /5% \(your own rate, overriding the table\)/.test(ov) && /This is your own rate; nothing here was checked/.test(ov), ov);
+    check("4 Override fee % = 5 on $100: Fees $5.00, says it is your own rate", /Fees \$5\.00/i.test(ov) && /5% of the sale price \(your own rate\)/.test(ov) && /This is your own rate; nothing here was checked/.test(ov), ov);
     const more = [];
     for (const [v, re, name] of [["0", /Fees \$0\.00/i, "zero"], ["2.5", /Fees \$2\.50/i, "decimal"], ["", /Unverified in part/, "cleared (back to the table)"], ["abc", /Unverified in part/, "invalid text (ignored, table used)"], ["-3", /Unverified in part/, "negative (ignored, table used)"]]) {
       await setInput(S, 2, v); await sleep(300); const t = await panelText(S); more.push([name, re.test(t)]);

@@ -69,7 +69,7 @@ export default function CostToSellPanel({
     const overrideNum = override.trim() === "" ? null : Number(override);
     if (channel !== "custom" && overrideNum !== null && Number.isFinite(overrideNum) && overrideNum >= 0) {
       fees = gross * (overrideNum / 100);
-      feeSummary = `${overrideNum}% (your own rate, overriding the table)`;
+      feeSummary = `${overrideNum}% of the sale price (your own rate). It replaces the marketplace's whole fee, so any fixed per-order charge is not added on top`;
     } else if (channel === "custom") {
       const parsed = Number(customRate);
       const rate = Number.isFinite(parsed) ? parsed / 100 : 0;
@@ -171,14 +171,14 @@ export default function CostToSellPanel({
               <>Read from {payout.source}, October 2026. Marketplaces change their fees, so confirm in your seller account. </>
             ) : payout.status === "partly" ? (
               <>
-                <b className="text-[color:var(--fg)]">Unverified in part:</b> {payout.caveat} Source for the rest: {payout.source}. If you know your rate, type it in Override fee %.{" "}
+                <b className="text-[color:var(--fg)]">Unverified in part:</b> {payout.caveat} Source for the rest: {payout.source}. If you know your rate, type it in Override fee % (it replaces the whole fee, fixed per-order charge included).{" "}
               </>
             ) : (
               <>This is your own rate; nothing here was checked against the marketplace. </>
             )}
           </>
         ) : (
-          "Type the price you expect to sell it for. Each marketplace's rate shows whether it was read from its own page or is an unverified estimate; Override fee % lets you use your own. "
+          "Type the price you expect to sell it for. Each marketplace's rate shows whether it was read from its own page or is an unverified estimate; Override fee % replaces the marketplace's whole fee, fixed per-order charge included, with your own percentage of the sale price. "
         )}
         {advice.note}
       </p>
