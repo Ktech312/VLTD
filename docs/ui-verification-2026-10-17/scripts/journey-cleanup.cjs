@@ -29,12 +29,13 @@ const { admin, MANIFEST, fs, sleep } = require("./journey-lib.cjs");
   // storage the journey may have uploaded (a photo-less run leaves none; checked anyway, by the exact user folder)
   try { const f = await admin.storage.from("vault-images").list(m.userId, { limit: 100 }); if (f.data?.length) console.log("storage objects under the user folder:", f.data.length); } catch { /* none */ }
   // referral rows made by the referral checks, by the exact synthetic user ids only
-  const users = [m.userId, m.k?.userId].filter(Boolean);
+  const users = [m.userId, m.k?.userId, m.c?.userId].filter(Boolean);
   for (const u of users) {
     await admin.from("referral_redemptions").delete().or(`referrer_id.eq.${u},referred_id.eq.${u}`);
     await admin.from("referral_codes").delete().eq("user_id", u);
     await admin.from("user_perks").delete().eq("user_id", u);
   }
+  if (m.c?.profileId) { const d = await admin.from("profiles").delete().eq("id", m.c.profileId); if (d.error) console.log("C profile delete:", d.error.message); }
   if (m.k?.profileId) { const d = await admin.from("profiles").delete().eq("id", m.k.profileId); if (d.error) console.log("K profile delete:", d.error.message); }
   for (const u of users) { const du = await admin.auth.admin.deleteUser(u); if (du.error) console.log("user delete:", du.error.message); }
   const refLeft = (await admin.from("referral_codes").select("id", { count: "exact", head: true }).in("user_id", users)).count;

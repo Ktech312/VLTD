@@ -12,7 +12,7 @@ const admin = createClient(env.NEXT_PUBLIC_SUPABASE_URL, env.SUPABASE_SERVICE_RO
 const man = () => JSON.parse(fs.readFileSync(MANIFEST, "utf8"));
 
 // One browser. withSession: true injects the QA account's session (what a signed-in tab holds); false is a clean visitor.
-async function browser(base, { withSession = true, activeProfile, width = 1440, height = 900, mobile = false } = {}) {
+async function browser(base, { withSession = true, activeProfile, width = 1440, height = 900, mobile = false, creds } = {}) {
   const m = fs.existsSync(MANIFEST) ? man() : null;
   const c = await launch(9700 + Math.floor(Math.random() * 200));
   const { send, evaluate } = c;
@@ -21,11 +21,11 @@ async function browser(base, { withSession = true, activeProfile, width = 1440, 
   const reqs = [];
   c.on((e) => { if (e.method === "Network.requestWillBeSent") reqs.push({ method: e.params.request.method, url: e.params.request.url.replace(/^https?:\/\/[^/]+/, "").slice(0, 140), host: (() => { try { return new URL(e.params.request.url).hostname; } catch { return ""; } })() }); });
   await send("Page.navigate", { url: base + "/robots.txt" }); await sleep(1500);
-  if (withSession && m) {
+  if (withSession && (m || creds)) {
     const sb = createClient(env.NEXT_PUBLIC_SUPABASE_URL, env.NEXT_PUBLIC_SUPABASE_ANON_KEY, { auth: { persistSession: false } });
-    const { data, error } = await sb.auth.signInWithPassword({ email: m.email, password: m.password });
+    const { data, error } = await sb.auth.signInWithPassword({ email: (creds || m).email, password: (creds || m).password });
     if (error) throw error;
-    await evaluate(`localStorage.setItem('vltd-auth', ${JSON.stringify(JSON.stringify(data.session))}); localStorage.setItem('vltd_active_profile_id_v1', ${JSON.stringify(activeProfile || m.personalId)}); localStorage.setItem('vltd-theme', 'deep-vault'); true`);
+    await evaluate(`localStorage.setItem('vltd-auth', ${JSON.stringify(JSON.stringify(data.session))}); localStorage.setItem('vltd_active_profile_id_v1', ${JSON.stringify(activeProfile || (creds ? creds.profileId : m.personalId))}); localStorage.setItem('vltd-theme', 'deep-vault'); true`);
   }
   const S = {
     c, send, evaluate, base, reqs,
