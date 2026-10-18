@@ -1,4 +1,4 @@
-# Signed-in referral-code exposure (2026-10-17): STATUS = PROPOSED (written, tested in a real Postgres engine, NOT yet applied, NOT yet verified on production)
+# Signed-in referral-code exposure (2026-10-17): STATUS = APPLIED by EK and VERIFIED on production
 
 ## The problem (measured on production, two synthetic accounts J and K, ordinary user keys; no real person's code or id printed)
 | Check (signed in as J) | Result BEFORE any change |
@@ -31,7 +31,10 @@ Not changed (deliberately): visitors, `referral_redemptions` and `user_perks` po
 ## Tested before anyone runs it
 `supabase/validation/test-referral-sql-in-postgres.cjs` (30/30): a real Postgres rebuilt from the pasted policies, grants, constraints and function bodies. Before: lists everyone, finds owner ids. After (run twice): own read/create works, cross-account list and lookup return nothing, cross-account insert/delete/update still refused, visitors still blocked, admin and owner address still list everything, a non-admin sees only its own row, redemption works through the function and returns only `ok`, repeat/self/unknown/empty/visitor all refused, no galleries granted, other tables' policies untouched. Read-only before/after checks: `supabase/validation/referral_codes_own_only_checks.sql` (15 rows with an expected value; today rows 1, 2, 4, 5, 6, 7 and 10 show false, after the change all are true).
 
-## Not complete until verified on production
+## Production verification (done, 2026-10-17)
+EK ran the migration and the read-only checks: all 15 rows true, and the info row lists exactly the two remaining policies. The two-account production probe then passed 25/25: J lists 0 other accounts' rows and finds 0 by id or by code (before: 2, 1 and 1); own read/create works; cross-account insert/delete/change and visitor reads are still refused; redemption through the function returns only `{ok:true}` and is recorded with K as referrer; repeat, own-code, unknown-code and visitor calls are refused with plain messages; no galleries are granted; the admin read still works (a synthetic address in `user_roles` listed every code; the throwaway row was removed). The synthetic accounts and their rows were then removed.
+
+(Original plan, kept for the record:)
 Plan after EK runs the migration: the same two synthetic accounts against production (`referral-probe.cjs AFTER`): own access works, cross-account listing and lookup return nothing, redemption works through the function and returns no id, repeat/self/unknown/visitor refused, and the admin read still works (checked with a throwaway `user_roles` row for the synthetic address only, removed straight away).
 
 ## Found while reading the real rules (not changed; for EK)
