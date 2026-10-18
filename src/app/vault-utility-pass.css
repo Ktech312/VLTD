@@ -63,74 +63,26 @@ body:has(input[type="file"][accept=".xlsx,.xls,.csv"]) a:hover {
   border-color: rgba(203,208,213, 0.38) !important;
 }
 
-/* Sold page */
-body:has(a[href*="?sold=1"]) main > div {
-  max-width: 1180px !important;
-}
-
-body:has(a[href*="?sold=1"]) section:first-of-type {
-  border-radius: 30px !important;
-  border-color: rgba(203,208,213, 0.25) !important;
-  background: var(--theme-card, rgba(15,25,45,0.85)) !important;
-  box-shadow:
-    0 0 0 1px rgba(203,208,213, 0.06),
-    0 26px 86px rgba(203,208,213, 0.06),
-    0 24px 88px rgba(0, 0, 0, 0.50) !important;
-}
-
-body:has(a[href*="?sold=1"]) section:first-of-type h1 {
-  font-weight: 900 !important;
-  letter-spacing: -0.045em !important;
-}
-
-body:has(a[href*="?sold=1"]) a[href*="?sold=1"] {
-  height: 136px !important;
-  border-radius: 20px !important;
-  padding: 10px !important;
-  background: var(--theme-card, rgba(15,25,45,0.85)) !important;
-  border-color: rgba(203,208,213, 0.20) !important;
-  box-shadow:
-    0 0 0 1px rgba(203,208,213, 0.04),
-    0 16px 46px rgba(0, 0, 0, 0.40) !important;
-}
-
-body:has(a[href*="?sold=1"]) a[href*="?sold=1"]:hover {
-  transform: translateY(-1px);
-  border-color: rgba(203,208,213, 0.40) !important;
-  box-shadow:
-    0 0 0 1px rgba(203,208,213, 0.08),
-    0 18px 48px rgba(203,208,213, 0.08),
-    0 18px 70px rgba(0, 0, 0, 0.40) !important;
-}
+/* (The old Sold-page block lived here. It restyled every a[href*="?sold=1"] card link into a fixed 136px bubble, capped the page at 1180px and forced
+   the first section into a 30px panel. The Sold page now styles its own cards and layout; removing the block also stops it reaching Sold cards shown in the Vault.) */
 
 @media (max-width: 700px) {
   body:has(textarea[placeholder^="Paste rows directly"]) main > div,
-  body:has(input[type="file"][accept=".xlsx,.xls,.csv"]) main > div,
-  body:has(a[href*="?sold=1"]) main > div {
+  body:has(input[type="file"][accept=".xlsx,.xls,.csv"]) main > div {
     padding-left: 12px !important;
     padding-right: 12px !important;
   }
 
   body:has(textarea[placeholder^="Paste rows directly"]) main > div > div:first-child,
-  body:has(input[type="file"][accept=".xlsx,.xls,.csv"]) main > div > div:first-child,
-  body:has(a[href*="?sold=1"]) section:first-of-type {
+  body:has(input[type="file"][accept=".xlsx,.xls,.csv"]) main > div > div:first-child {
     border-radius: 22px !important;
     padding: 14px !important;
   }
 
   body:has(textarea[placeholder^="Paste rows directly"]) h1,
-  body:has(input[type="file"][accept=".xlsx,.xls,.csv"]) h1,
-  body:has(a[href*="?sold=1"]) h1 {
+  body:has(input[type="file"][accept=".xlsx,.xls,.csv"]) h1 {
     font-size: 2rem !important;
     line-height: 1 !important;
   }
 
-  body:has(a[href*="?sold=1"]) section:nth-of-type(2) > div {
-    grid-template-columns: 1fr !important;
-  }
-
-  body:has(a[href*="?sold=1"]) a[href*="?sold=1"] {
-    height: auto !important;
-    min-height: 136px !important;
-  }
 }

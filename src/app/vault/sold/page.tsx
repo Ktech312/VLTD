@@ -150,9 +150,9 @@ function AnalyticsPanel({ items }: { items: SoldItem[] }) {
   if (items.length === 0) return null;
 
   return (
-    <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+    <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
       {/* Monthly revenue chart */}
-      <div className="rounded-[14px] p-4 ring-1 ring-[color:var(--theme-border)]" style={{ background: "var(--theme-elevated)" }}>
+      <div className="min-w-0 rounded-[8px] p-3 ring-1 ring-[color:var(--theme-border)]" style={{ background: "var(--theme-elevated)" }}>
         <div className="mb-2 text-[10px] font-semibold uppercase tracking-[0.18em]" style={{ color: "var(--muted2)" }}>
           Monthly Revenue
         </div>
@@ -166,7 +166,7 @@ function AnalyticsPanel({ items }: { items: SoldItem[] }) {
       </div>
 
       {/* Monthly profit chart */}
-      <div className="rounded-[14px] p-4 ring-1 ring-[color:var(--theme-border)]" style={{ background: "var(--theme-elevated)" }}>
+      <div className="min-w-0 rounded-[8px] p-3 ring-1 ring-[color:var(--theme-border)]" style={{ background: "var(--theme-elevated)" }}>
         <div className="mb-2 text-[10px] font-semibold uppercase tracking-[0.18em]" style={{ color: "var(--muted2)" }}>
           Monthly Profit/Loss
         </div>
@@ -183,7 +183,7 @@ function AnalyticsPanel({ items }: { items: SoldItem[] }) {
       {/* By universe */}
       {byUniverse.length > 0 && (
         <div
-          className="rounded-[14px] p-4 ring-1 ring-[color:var(--theme-border)]"
+          className="min-w-0 rounded-[8px] p-3 ring-1 ring-[color:var(--theme-border)]"
           style={{ background: "var(--theme-elevated)" }}
         >
           <div className="text-[10px] font-semibold uppercase tracking-[0.18em] mb-2" style={{ color: "var(--muted2)" }}>
@@ -214,7 +214,7 @@ function AnalyticsPanel({ items }: { items: SoldItem[] }) {
 
       {/* ROI + best item */}
       <div
-        className="rounded-[14px] p-4 ring-1 ring-[color:var(--theme-border)] flex flex-col gap-3"
+        className="min-w-0 rounded-[8px] p-3 ring-1 ring-[color:var(--theme-border)] flex flex-col gap-3"
         style={{ background: "var(--theme-elevated)" }}
       >
         <div>
@@ -246,6 +246,21 @@ function AnalyticsPanel({ items }: { items: SoldItem[] }) {
   );
 }
 
+function SummaryChip({ label, value, tone }: { label: string; value: string; tone?: "gain" | "loss" }) {
+  return (
+    <div className="inline-flex min-w-0 items-baseline gap-2 rounded-[8px] px-3 py-1.5 ring-1 ring-[color:var(--theme-border)]" style={{ background: "var(--theme-elevated)" }}>
+      <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[color:var(--muted)]">{label}</span>
+      <span
+        className="text-[15px] font-extrabold leading-none vltd-keep-color"
+        style={{ "--vltd-keep-color": tone === "gain" ? "var(--status-gain, #54C98A)" : tone === "loss" ? "var(--status-loss, #E05252)" : "var(--fg)" } as React.CSSProperties}
+      >
+        {value}
+      </span>
+    </div>
+  );
+}
+
+// The same compact card the Vault uses (brushed surface, status badge top-left, title and subtitle styles), with the sale on the bottom row.
 function SoldCard({
   item,
   onReturnToVault,
@@ -260,12 +275,11 @@ function SoldCard({
   const universe = inferSoldUniverse(item);
   const detailHref = `/vault/item/${item.id}?sold=1`;
   const imageUrl = getPrimaryImageUrl(item as unknown as VaultItem) || item.imageFrontUrl || "";
+  const imageBox = "relative block h-[150px] w-full overflow-hidden rounded-[8px] bg-black/24 vltd-dark-surface";
 
   return (
-    <article
-      className="group relative flex h-[250px] flex-col overflow-hidden rounded-[14px] border border-[color:var(--theme-border)] bg-[#141414]/88 p-2 shadow-[0_10px_24px_rgba(0,0,0,0.22)] ring-1 ring-gold/10 transition hover:-translate-y-0.5 hover:ring-cyan-300/30"
-    >
-      <span className="absolute right-2 top-2 z-10 rounded-full bg-amber-500/20 px-1.5 py-0.5 text-[8px] font-semibold text-amber-100 ring-1 ring-amber-400/30">
+    <article className="group relative flex flex-col overflow-hidden rounded-[4px] vltd-brushed p-3 transition hover:-translate-y-0.5">
+      <span className="absolute left-2 top-2 z-10 rounded-full bg-amber-500/18 px-1.5 py-0.5 text-[8px] font-semibold text-amber-100 ring-1 ring-amber-400/30">
         SOLD
       </span>
 
@@ -277,60 +291,47 @@ function SoldCard({
             event.stopPropagation();
             onViewImage(item, imageUrl);
           }}
-          className="block h-[162px] overflow-hidden rounded-[10px] bg-black/18"
+          className={imageBox}
           aria-label={`View image for ${item.title}`}
         >
-          <div className="flex h-full items-center justify-center bg-[color:var(--theme-elevated)] p-1">
-            <ProgressiveImage
-              src={imageUrl}
-              alt={item.title}
-              className="h-full w-full"
-              imageClassName="object-contain object-center"
-              draggable={false}
-            />
-          </div>
+          <ProgressiveImage src={imageUrl} alt={item.title} className="h-full w-full" imageClassName="object-contain object-center" draggable={false} />
         </button>
       ) : (
-        <Link href={detailHref} className="block h-[162px] overflow-hidden rounded-[10px] bg-black/18">
-          <div className="flex h-full items-center justify-center bg-[color:var(--theme-elevated)] p-1">
-            <div className="flex h-full w-full items-center justify-center px-1 text-center text-[9px] font-semibold text-[color:var(--muted)]">
-              No image
-            </div>
-          </div>
+        <Link href={detailHref} className={imageBox} aria-label={`Open ${item.title}`}>
+          <span className="flex h-full w-full items-center justify-center text-[10px] font-semibold uppercase tracking-[0.14em] text-white/45">No image</span>
         </Link>
       )}
 
-      <Link href={detailHref} className="mt-2 min-w-0">
-        <div className="line-clamp-1 text-[13px] font-extrabold leading-tight text-text-primary sm:text-[14px]">
+      <Link href={detailHref} className="mt-3 min-w-0">
+        <div className="line-clamp-1 text-[15px] font-semibold leading-tight vltd-keep-color" style={{ "--vltd-keep-color": "var(--vault-title-color)" } as React.CSSProperties}>
           {item.title}
         </div>
-        <div className="mt-0.5 line-clamp-1 text-[10px] font-medium text-cyan-100/55">
-          {UNIVERSE_LABEL[universe] ?? "Misc"} - {itemMeta(item)}
+        <div className="mt-1 line-clamp-1 text-[11px] font-semibold vltd-keep-color" style={{ "--vltd-keep-color": "var(--data-color)" } as React.CSSProperties}>
+          {UNIVERSE_LABEL[universe] ?? "Misc"} · {itemMeta(item)}
         </div>
       </Link>
 
-      <div className="mt-auto flex items-end justify-between gap-2 pt-2">
+      <div className="mt-3 flex flex-wrap items-end justify-between gap-x-2 gap-y-2">
         <div className="min-w-0">
-          <div className="text-[13px] font-extrabold leading-none text-text-primary">{money(item.soldPrice)}</div>
+          <div className="text-[18px] font-semibold leading-none text-[color:var(--fg)]">{money(item.soldPrice)}</div>
           {hasKnownCost(item) ? (
-            <div className={profit >= 0 ? "mt-1 text-[10px] font-bold leading-none text-emerald-300" : "mt-1 text-[10px] font-bold leading-none text-red-300"}>
+            <div
+              className="mt-1 text-[11px] font-semibold leading-none vltd-keep-color"
+              style={{ "--vltd-keep-color": profit >= 0 ? "var(--status-gain, #54C98A)" : "var(--status-loss, #E05252)" } as React.CSSProperties}
+            >
               {profit >= 0 ? "+" : ""}
-              {money(profit)}
+              {money(profit)} profit
             </div>
           ) : (
-            <div className="mt-1 text-[10px] font-semibold leading-none text-[color:var(--muted2)]" title="No purchase price is recorded for this item, so its profit is unknown.">
+            <div className="mt-1 text-[11px] font-semibold leading-none text-[color:var(--muted2)]" title="No purchase price is recorded for this item, so its profit is unknown.">
               Profit unknown (no cost)
             </div>
           )}
           <div
-            className="mt-1 truncate text-[9px] font-semibold text-[color:var(--muted2)]"
+            className="mt-1 truncate text-[10px] font-semibold text-[color:var(--muted2)]"
             title={fees > 0 ? `Profit is after about ${money(fees)} in ${item.soldPlatform} seller fees (estimate from current fee tables)` : undefined}
           >
-            {new Date(item.soldAt).toLocaleDateString(undefined, {
-              month: "short",
-              day: "numeric",
-              year: "2-digit",
-            })}
+            {new Date(item.soldAt).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "2-digit" })}
             {fees > 0 && ` · ${money(fees)} fees`}
           </div>
         </div>
@@ -446,52 +447,37 @@ export default function SoldPage() {
     <>
     <WorkspaceActions><PillButton href="/sales">Sales History</PillButton></WorkspaceActions>
     <main className="bg-[color:var(--bg)] text-[color:var(--fg)]">
-      <div className="mx-auto max-w-[1480px] px-4 pb-3 sm:px-6 sm:pb-4 lg:px-8">
-        <section id="sales-analytics" className="relative overflow-hidden rounded-[18px] border border-[color:var(--theme-border)] bg-[color:var(--theme-card)] px-4 py-3 shadow-[0_14px_40px_rgba(0,0,0,0.2)]">
-          <div className="relative flex flex-col gap-4">
-            <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
-              <div className="rounded-[14px] bg-[color:var(--theme-elevated)] px-3 py-2 ring-1 ring-[color:var(--theme-border)]">
-                <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[color:var(--muted)]">Sold</div>
-                <div className="mt-1 text-lg font-extrabold leading-none">{stats.count}</div>
-              </div>
-              <div className="rounded-[14px] bg-[color:var(--theme-elevated)] px-3 py-2 ring-1 ring-[color:var(--theme-border)]">
-                <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[color:var(--muted)]">Revenue</div>
-                <div className="mt-1 text-lg font-extrabold leading-none">{money(stats.realizedRevenue)}</div>
-              </div>
-              <div className="rounded-[14px] bg-[color:var(--theme-elevated)] px-3 py-2 ring-1 ring-[color:var(--theme-border)]">
-                <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[color:var(--muted)]">Cost Basis</div>
-                <div className="mt-1 text-lg font-extrabold leading-none">{money(stats.totalCost)}</div>
-              </div>
-              <div className="rounded-[14px] bg-[color:var(--theme-elevated)] px-3 py-2 ring-1 ring-[color:var(--theme-border)]">
-                <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[color:var(--muted)]">Realized Profit</div>
-                <div className={stats.totalProfit >= 0 ? "mt-1 text-lg font-extrabold leading-none text-emerald-300" : "mt-1 text-lg font-extrabold leading-none text-red-300"}>
-                  {stats.totalProfit >= 0 ? "+" : ""}
-                  {money(stats.totalProfit)}
-                </div>
-              </div>
-            </div>
-
-            <AnalyticsPanel items={items} />
-
-            {status ? (
-              <div className="rounded-[14px] bg-gold/10 px-3 py-2 text-sm text-cyan-100 ring-1 ring-cyan-300/20">
-                {status}
-              </div>
-            ) : null}
+      <div className="mx-auto max-w-[1480px] px-4 pb-4 sm:px-6 lg:px-8">
+        <section id="sales-analytics" className="flex flex-col gap-3">
+          {/* Compact summary: content-sized chips, not four stretched tiles */}
+          <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
+            <SummaryChip label="Sold" value={String(stats.count)} />
+            <SummaryChip label="Revenue" value={money(stats.realizedRevenue)} />
+            <SummaryChip label="Cost basis" value={money(stats.totalCost)} />
+            <SummaryChip label="Realized profit" value={(stats.totalProfit >= 0 ? "+" : "") + money(stats.totalProfit)} tone={stats.totalProfit >= 0 ? "gain" : "loss"} />
           </div>
+
+          <AnalyticsPanel items={items} />
+
+          {status ? (
+            <div className="rounded-[8px] bg-gold/10 px-3 py-2 text-sm text-cyan-100 ring-1 ring-cyan-300/20">
+              {status}
+            </div>
+          ) : null}
         </section>
 
         <section className="mt-3">
           {/* Search + filter bar */}
           {items.length > 0 && (
-            <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center">
+            <div className="mb-3 flex flex-wrap items-center gap-2">
               <input
                 type="text"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search sold items…"
-                className="h-9 flex-1 rounded-full px-4 text-sm ring-1 ring-[color:var(--border)] focus:outline-none min-w-[140px]"
-                style={{ background: "var(--pill)", color: "var(--fg)" }}
+                placeholder="Search..."
+                aria-label="Search sold items"
+                className="h-11 w-full rounded-[8px] bg-[color:var(--input)] px-3 text-[13px] ring-1 ring-[color:var(--border)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--pill-active-ring)] sm:w-[180px] md:h-9"
+                style={{ borderColor: "var(--theme-border)" }}
               />
               {universeOptions.length > 2 && (
                 <div className="flex flex-wrap gap-1.5">
@@ -511,7 +497,7 @@ export default function SoldPage() {
               No items match your filter.
             </div>
           ) : (
-            <div className="grid gap-2 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
+            <div className="grid grid-cols-2 gap-3 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
               {filteredItems.map((item) => (
                 <SoldCard
                   key={item.id}
