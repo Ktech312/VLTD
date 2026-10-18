@@ -34,6 +34,8 @@ import SeasonalThemeProvider from "@/components/SeasonalThemeProvider";
 import RouteTransition from "@/components/RouteTransition";
 import { ThemeBoot } from "@/components/ThemeBoot";
 import ThemeScript from "@/components/ThemeScript";
+import { LoadWatchdogScript, LoadStalledBanner } from "@/components/LoadWatchdog";
+import LoadHydratedMark from "@/components/LoadHydratedMark";
 import { ThemeProvider } from "@/lib/ThemeContext";
 import { SITE_URL } from "@/lib/siteUrl";
 
@@ -120,6 +122,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" suppressHydrationWarning className={`${inter.variable} ${cormorant.variable}`}>
       <head>
+        <LoadWatchdogScript />
         <ThemeScript />
         <link rel="icon" href="/favicon.ico" sizes="any" />
         <link rel="icon" href="/icons/icon-192x192.png" type="image/png" sizes="192x192" />
@@ -131,6 +134,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <meta name="mobile-web-app-capable" content="yes" />
       </head>
       <body className={`${inter.className} bg-vault-base min-h-screen`}>
+        <LoadStalledBanner />
+        <LoadHydratedMark />
         <ThemeBoot />
         <AddressBarHider />
 

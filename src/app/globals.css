@@ -2671,3 +2671,21 @@ html:not([data-vltd-logo="b"]) .vltd-logo.vltd-logo-on-dark .vltd-logo-black { d
   .vltd-tap-y { --tap-w: 0px; }
   .vltd-tap-y:not(.absolute):not(.fixed):not(.sticky) { position: relative; }
 }
+
+
+/* Load watchdog (src/components/LoadWatchdog.tsx): hidden unless the app's code did not start within 10 seconds. */
+#vltd-load-stalled { display: none; }
+html[data-load-stalled="1"] #vltd-load-stalled {
+  display: block;
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 2147483000;
+  padding: 14px 16px;
+  background: #14171c;
+  color: #ecedef;
+  border-bottom: 1px solid rgba(203, 208, 213, 0.28);
+  font: 14px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+#vltd-load-stalled .vltd-load-stalled-inner { max-width: 640px; margin: 0 auto; }
+#vltd-load-stalled a { display: inline-block; margin-top: 8px; padding: 8px 14px; border-radius: 999px; background: #ecedef; color: #14171c; font-weight: 600; text-decoration: none; }
+#vltd-load-stalled code { display: block; margin-top: 8px; font: 12px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace; color: #a9aeb4; word-break: break-word; }

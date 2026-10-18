@@ -13,6 +13,7 @@ import { memo, startTransition, useCallback, useEffect, useMemo, useRef, useStat
 
 import ItemVisibilityToggle from "@/components/ItemVisibilityToggle";
 import SellItemButton from "@/components/SellItemButton";
+import { markLoadStage } from "@/lib/loadDiagnostics";
 import VaultWallView from "@/components/VaultWallView";
 import { AppIcon } from "@/components/ui/AppIcon";
 import { SelectCircle } from "@/components/ui/SelectCircle";
@@ -1162,6 +1163,9 @@ export default function VaultListView({ lockedUniverse }: { lockedUniverse?: Uni
   const hydrateSeq = useRef(0);
   const shownProfileRef = useRef("");
   const [loadFailed, setLoadFailed] = useState(false);
+  // Did the cloud answer on this load? null = not asked yet. Used only to explain an empty list in the load record.
+  const cloudAnsweredRef = useRef<boolean | null>(null);
+  const renderMarkRef = useRef("");
   // The account says nobody is signed in: the page must say so (the route check also sends the person to sign in), never "your vault is empty".
   const [signedOut, setSignedOut] = useState(false);
   const [loadSlow, setLoadSlow] = useState(false);
@@ -1191,6 +1195,7 @@ export default function VaultListView({ lockedUniverse }: { lockedUniverse?: Uni
       showDeviceCopy(profileId);
       if (loadItems({ profileId }).length > 0) setInitialLoadComplete(true);
     }
+    markLoadStage("vault:device-copy", true, profileId ? loadItems({ profileId }).length + " items" : "none usable");
 
     // The cloud half (uploads, then the download). For one profile; it only changes the page while that is still the profile
     // being shown. Started at once when the profile is already known, so it runs alongside the account check, not after it.
@@ -1210,6 +1215,8 @@ export default function VaultListView({ lockedUniverse }: { lockedUniverse?: Uni
       } catch {
         answered = false;
       }
+      markLoadStage("vault:cloud-pull", answered, answered ? "ok" : "failed or timed out");
+      cloudAnsweredRef.current = answered;
       if (stillCurrent()) setPendingSyncCount(getPendingVaultSyncCount());
       if (!stillCurrent() || target !== forProfile) return;
       if (ensureVaultItemUniverses()) void processVaultSyncQueue();
@@ -1231,6 +1238,7 @@ export default function VaultListView({ lockedUniverse }: { lockedUniverse?: Uni
     } catch {
       status = null;
     }
+    markLoadStage("vault:account-check", status !== null, status === null ? "no answer or error" : status.isAuthenticated ? (status.error ? "answered with a warning" : "signed in") : "signed out");
     if (!stillCurrent()) return;
 
     if (status && !status.isAuthenticated) {
@@ -1252,6 +1260,7 @@ export default function VaultListView({ lockedUniverse }: { lockedUniverse?: Uni
     } else if (verifiedProfileId && shownProfileRef.current !== profileId) {
       showDeviceCopy(profileId);
     }
+    markLoadStage("vault:profile", !!profileId, profileId ? "selected" : "none resolved");
     if (!profileId) {
       // Could not tell who this is or which profile (account check failed or timed out) and nothing verified is on screen.
       setLoadFailed(true);
@@ -1268,6 +1277,20 @@ export default function VaultListView({ lockedUniverse }: { lockedUniverse?: Uni
   useEffect(() => {
     if (initialLoadComplete) setLoadSlow(false);
   }, [initialLoadComplete]);
+
+  // What the person was actually shown once loading ended, recorded once per kind of screen. An empty list that appears while the cloud
+  // never answered is flagged (ok = false): that would be a failed load looking like an empty collection.
+  useEffect(() => {
+    if (!initialLoadComplete) return;
+    let kind: string; let ok = true; let note: string;
+    if (items.length > 0) { kind = "items"; note = items.length + " items"; }
+    else if (signedOut) { kind = "signed-out"; note = "signed-out message"; }
+    else if (loadFailed) { kind = "could-not-load"; ok = false; note = "could-not-load message shown"; }
+    else { kind = "empty"; ok = cloudAnsweredRef.current === true; note = "empty list shown; cloud answered: " + (cloudAnsweredRef.current === null ? "not asked" : String(cloudAnsweredRef.current)); }
+    if (renderMarkRef.current === kind) return;
+    renderMarkRef.current = kind;
+    markLoadStage("vault:rendered", ok, note);
+  }, [initialLoadComplete, items.length, signedOut, loadFailed]);
 
   useEffect(() => {
     void hydrateAll();
