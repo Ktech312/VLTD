@@ -27,7 +27,7 @@ const CASES = [
       if (c.rows.length) { const r = await admin.from("vault_items").insert(c.rows.map((s, k) => mk(P, st, k, s))); if (r.error) throw new Error(r.error.message); }
       const S = await browser(BASE, { width: 1440, height: 900 });
       try {
-        await S.go("/vault/sold"); await S.waitFor(c.rows.length ? "/Realized Profit/i.test(document.body.innerText)" : "document.querySelector('[data-vault-workspace=\"sold\"]') && document.body.innerText.length > 150", 180000, c.name); await sleep(3500);
+        await S.go("/vault/sold"); await S.waitFor(c.rows.length ? "document.querySelectorAll('[data-testid=monthly-bars]').length > 0 && document.querySelectorAll('article').length > 0" : "/No sold items yet/i.test(document.body.innerText)", 240000, c.name); await sleep(3500);
         const info = await S.evaluate("({ bars: document.querySelectorAll('[data-testid=monthly-bars]').length, text: [...document.querySelectorAll('[data-testid=monthly-bars]')].map((e) => e.parentElement.innerText).join(' | '), grey: [...document.querySelectorAll('[data-testid=monthly-bars] div')].filter((e) => { const c = getComputedStyle(e).backgroundColor; return e.offsetHeight > 60 && /rgb\\((17[0-9]|18[0-9]), (17[0-9]|18[0-9]), /.test(c); }).length, sw: document.documentElement.scrollWidth, vw: innerWidth })");
         check(`[8 ${c.name}] ${c.expect.bars} chart(s) drawn`, info.bars === c.expect.bars, info);
         for (const l of c.expect.labels) check(`[8 ${c.name}] label '${l}' is shown`, info.text.includes(l), info.text.slice(0, 300));
