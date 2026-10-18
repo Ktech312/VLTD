@@ -24,6 +24,8 @@ export type IgnoredImportRow = {
   rowNumber: number;
   reason: string;
   raw: Record<string, unknown>;
+  /** The row is not imported because something in it is wrong and the person should correct it in their file (a negative cost). */
+  needsCorrection?: boolean;
 };
 
 export type DuplicateGroup = {
@@ -480,21 +482,35 @@ function mapRowToItems(sheetName: string, rowNumber: number, row: RowRecord) {
   const valueParsed = parseAmount(valueSource);
   const purchaseParsed = parseAmount(row.purchasePrice);
   const askingParsed = parseAmount(row.askingPrice);
+  // A NEGATIVE cost is an error to correct, which is different from a MISSING cost (blank, which simply stays unknown). The row is held
+  // back and listed with the fix, instead of being imported with its cost quietly blanked.
+  const costText = stringify(row.purchasePrice);
+  const bracketNegative = purchaseParsed.value === undefined && /^\(\s*[$£€¥]?\s*\d[\d.,]*\s*\)$/.test(costText);
+  if ((purchaseParsed.value !== undefined && purchaseParsed.value < 0) || bracketNegative) {
+    return {
+      items: [] as ParsedImportItem[],
+      ignored: {
+        source: sheetName,
+        rowNumber,
+        reason: `Negative purchase cost (${stringify(row.purchasePrice)}): this row was NOT imported. A cost can't be negative. Correct it in your file (leave the cost blank if you don't know it, or 0 if it cost nothing) and import again.`,
+        raw: row,
+        needsCorrection: true,
+      },
+    };
+  }
   // A range such as "$20-$30" is kept as text in the notes (below) rather than reported as a problem.
   const valueIsRange = (stringify(valueSource).match(/\d+(?:\.\d+)?/g) ?? []).length > 1 && /^[\s$£€¥\d.,\-–—to]+$/i.test(stringify(valueSource));
   if (valueParsed.problem && !valueIsRange) warnings.push(`Current value: ${valueParsed.problem}; no value was taken from it.`);
   if (purchaseParsed.problem) warnings.push(`Purchase price: ${purchaseParsed.problem}; the cost was left blank.`);
-  const purchaseNegative = purchaseParsed.value !== undefined && purchaseParsed.value < 0;
-  if (purchaseNegative) warnings.push(`Purchase price: ${purchaseParsed.value} is negative, and a cost can't be negative; the cost was left blank.`);
   if (askingParsed.problem) warnings.push(`Asking price: ${askingParsed.problem}; no asking price was taken from it.`);
   if (stringify(row.purchaseDate) && !looksLikeDate(row.purchaseDate)) {
     warnings.push(`Purchase date: "${stringify(row.purchaseDate)}" is not a date I can read; it was kept as written in the notes.`);
   }
   const currentValue = valueParsed.value;
-  const purchasePriceRaw = purchaseNegative ? undefined : purchaseParsed.value;
+  const purchasePriceRaw = purchaseParsed.value;
   const askingPrice = askingParsed.value;
-  // A blank (or unreadable / negative) cost stays UNKNOWN: it used to be saved as $0, which looked like a recorded cost of nothing and made
-  // an imported item's whole value read as gain. An explicit 0 in the file is still 0. The row is flagged as missing a cost either way.
+  // A blank (or unreadable) cost stays UNKNOWN: it used to be saved as $0, which looked like a recorded cost of nothing and made
+  // an imported item's whole value read as gain. An explicit 0 in the file is still 0. (A negative cost never gets here: see above.)
   const purchasePrice = purchasePriceRaw;
   const missingCost = purchasePriceRaw == null;
 

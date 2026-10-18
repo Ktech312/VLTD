@@ -27,6 +27,15 @@ function hasNegative(row: Record<string, unknown>, ...keys: string[]) {
   return Boolean(value) && Number(value) < 0;
 }
 
+/** Which amounts in this order row are negative (price, shipping, tax). Such a row is held back for correction by the import review. */
+export function negativeEbayAmounts(row: Record<string, unknown>): { label: string; shown: string }[] {
+  const out: { label: string; shown: string }[] = [];
+  for (const [label, keys] of [["price", ["Item price", "Purchase price", "Price"]], ["shipping", ["Shipping and handling", "Shipping"]], ["tax", ["Tax"]]] as const) {
+    if (hasNegative(row, ...keys)) out.push({ label, shown: text(row, ...keys) });
+  }
+  return out;
+}
+
 export function parseEbayImportRow(row: Record<string, unknown>): VaultItem | null {
   const title = text(row, "Title", "Item title", "Item Title");
   if (!title) return null;

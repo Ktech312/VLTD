@@ -82,6 +82,8 @@ const removeStored = async (rows) => { for (const r of rows) for (const x of (r.
     }
 
     // =============================== IMPORT SCREEN ===============================
+    // Rules: a MISSING (blank) cost is imported and stays unknown; an explicit 0 stays 0; a NEGATIVE cost is an error: the row is held
+    // back (not imported), flagged on the review screen with the fix, and mentioned again after the import. Never quietly blanked.
     if (ONLY.includes("import")) {
       const files = {
         generic: ["Name,Purchase Price,Current Value,Notes", "QA Imp Neg,-5,10,n", "QA Imp Paren,(7.50),10,n", "QA Imp Zero,0,10,n", "QA Imp Blank,,10,n", "QA Imp Pos,12.5,10,n"].join("\n"),
@@ -90,6 +92,7 @@ const removeStored = async (rows) => { for (const r of rows) for (const x of (r.
         ebay: ["Order date,Title,Seller,Item price,Shipping and handling,Tax", "2026-10-01,QA Imp eBay Neg,s1,-5,2,1", "2026-10-01,QA Imp eBay NegShip,s1,10,-3,0", "2026-10-01,QA Imp eBay Zero,s1,0,0,0", "2026-10-01,QA Imp eBay Blank,s1,,,", "2026-10-01,QA Imp eBay Pos,s1,12.5,1.25,0.9"].join("\n"),
         whatnot: ["Order Date,Item Name,Seller,Price,Shipping,Tax", "2026-10-01,QA Imp Whatnot Neg,s1,-5,2,1", "2026-10-01,QA Imp Whatnot Zero,s1,0,0,0", "2026-10-01,QA Imp Whatnot Blank,s1,,,", "2026-10-01,QA Imp Whatnot Pos,s1,7,1,0.5"].join("\n"),
       };
+      const confirmTwice = async (S) => { for (let k = 0; k < 2; k++) { await S.evaluate("[...document.querySelectorAll('button')].find((b) => /Confirm Import/.test(b.textContent)).click(); true"); await sleep(1500); } };
       const importOne = async (S, presetLabel, csvText, fileName) => {
         const fp = path.join(OUT, fileName); fs.writeFileSync(fp, csvText);
         await S.go("/vault/import"); await S.waitFor("[...document.querySelectorAll('button')].some((b) => b.textContent.trim() === 'Upload Spreadsheet')", 90000, "import page"); await sleep(1500);
@@ -100,52 +103,54 @@ const removeStored = async (rows) => { for (const r of rows) for (const x of (r.
         await S.send("DOM.setFileInputFiles", { nodeId: q.nodeId, files: [fp.replace(/\\/g, "/")] });
         await S.waitFor("/Confirm Import/.test(document.body.innerText)", 60000, "preview " + fileName); await sleep(1500);
         const preview = await S.evaluate("document.body.innerText");
+        const banner = await S.evaluate("(document.querySelector('[role=alert]') || {}).innerText || ''");
         await S.shot(OUT + "/" + fileName.replace(".csv", "") + "-preview.png");
-        for (let k = 0; k < 2; k++) { await S.evaluate("[...document.querySelectorAll('button')].find((b) => /Confirm Import/.test(b.textContent)).click(); true"); await sleep(1500); }
+        await confirmTwice(S);
         await sleep(6000);
-        return preview;
+        return { preview, banner, after: await S.evaluate("document.body.innerText") };
       };
+      const tile = (text, label) => { const m = new RegExp(label + "\\s*\\n\\s*(\\d+)").exec(text); return m ? Number(m[1]) : null; };
       const S = await session(BASE, { width: 1440, height: 900 });
       try {
-        // generic file upload
-        const pv = await importOne(S, null, files.generic, "generic.csv");
-        info("[import generic] preview mentions", { negativeWarning: /negative/i.test(pv), missingNote: (pv.match(/Missing cost[^\n]*/g) || []).slice(0, 3) });
-        let rows = await poll(async () => { const r = await byTitle("QA Imp "); return r.filter((x) => /^QA Imp (Neg|Paren|Zero|Blank|Pos)$/.test(x.title)).length >= 4 ? r : null; }, 60000) || await byTitle("QA Imp ");
+        // ---- generic upload ----
+        const g1 = await importOne(S, null, files.generic, "generic.csv");
+        let rows = await poll(async () => { const r = await byTitle("QA Imp "); return r.filter((x) => /^QA Imp (Zero|Blank|Pos)$/.test(x.title)).length >= 3 ? r : null; }, 60000) || await byTitle("QA Imp ");
         created.push(...rows);
         const g = (t) => rows.find((r) => r.title === t);
-        check("[import generic] the preview warns that the negative cost is not taken", /negative/i.test(pv), pv.slice(pv.search(/Warnings/i), pv.search(/Warnings/i) + 300));
-        check("[import generic] -5 is never saved as a negative cost", rows.every((r) => r.purchase_price === null || Number(r.purchase_price) >= 0) && !!g("QA Imp Neg"), rows.map((r) => [r.title, r.purchase_price]));
-        check("[import generic] (7.50) in brackets is not saved as a negative cost either", g("QA Imp Paren") && (g("QA Imp Paren").purchase_price === null || Number(g("QA Imp Paren").purchase_price) >= 0), g("QA Imp Paren") && g("QA Imp Paren").purchase_price);
-        check("[import generic] explicit 0 is saved as 0", g("QA Imp Zero") && g("QA Imp Zero").purchase_price === 0, g("QA Imp Zero") && g("QA Imp Zero").purchase_price);
-        check("[import generic] 12.5 is saved as 12.5", g("QA Imp Pos") && Number(g("QA Imp Pos").purchase_price) === 12.5);
-        check("[import generic] a BLANK cost stays unknown (null) and is different from the explicit 0", g("QA Imp Blank") && g("QA Imp Blank").purchase_price === null, g("QA Imp Blank") && g("QA Imp Blank").purchase_price);
-        check("[import generic] the negative row is also not turned into an explicit 0", g("QA Imp Neg") && g("QA Imp Neg").purchase_price === null, g("QA Imp Neg") && g("QA Imp Neg").purchase_price);
+        check("[import generic] the review flags the two negative rows in plain words and says they will NOT be imported", /2 rows have a negative cost and will NOT be imported/.test(g1.banner) && /blank if you don't know it/.test(g1.banner) && /0 if it cost nothing/.test(g1.banner), g1.banner);
+        check("[import generic] the Ignored Rows panel lists them with the amount and the fix", /Negative purchase cost \(-5\)/.test(g1.preview) && /Negative purchase cost \(\(7\.50\)\)/.test(g1.preview), g1.preview.slice(g1.preview.indexOf("IGNORED ROWS"), g1.preview.indexOf("IGNORED ROWS") + 400));
+        check("[import generic] 'Missing Cost' counts only the blank one (1); 'Ignored Rows' counts the two negatives (2): they are not mixed up", tile(g1.preview, "Missing Cost") === 1 && tile(g1.preview, "Ignored Rows") === 2, { missing: tile(g1.preview, "Missing Cost"), ignored: tile(g1.preview, "Ignored Rows") });
+        check("[import generic] after importing, the message says 2 rows were NOT imported because of a negative cost", /2 rows were NOT imported because of a negative cost/.test(g1.after), g1.after.slice(0, 400));
+        check("[import generic] the negative rows are NOT in the account at all (not blanked into items)", !g("QA Imp Neg") && !g("QA Imp Paren"), rows.map((r) => [r.title, r.purchase_price]));
+        check("[import generic] a BLANK cost is imported and stays unknown (null)", g("QA Imp Blank") && g("QA Imp Blank").purchase_price === null, g("QA Imp Blank") && g("QA Imp Blank").purchase_price);
+        check("[import generic] explicit 0 is saved as 0, 12.5 as 12.5", g("QA Imp Zero") && g("QA Imp Zero").purchase_price === 0 && g("QA Imp Pos") && Number(g("QA Imp Pos").purchase_price) === 12.5, rows.map((r) => [r.title, r.purchase_price]));
 
-        // pasted rows (tab separated, as copied from a sheet)
-        await admin.from("vault_items").delete().eq("profile_id", qa.profileId).like("title", "QA Imp Paste%");
+        // ---- pasted rows ----
         await S.go("/vault/import"); await S.waitFor("document.querySelector('textarea')", 90000); await sleep(1500);
         await setNative(S, "document.querySelector('textarea')", ["Name\tPurchase Price\tCurrent Value", "QA Imp Paste Neg\t-5\t10", "QA Imp Paste Zero\t0\t10", "QA Imp Paste Blank\t\t10", "QA Imp Paste Pos\t12.5\t10"].join("\n"));
         await S.evaluate("[...document.querySelectorAll('button')].find((b) => b.textContent.trim() === 'Parse Pasted Rows').click(); true");
         await S.waitFor("/Confirm Import/.test(document.body.innerText)", 60000, "paste preview"); await sleep(1500);
-        for (let k = 0; k < 2; k++) { await S.evaluate("[...document.querySelectorAll('button')].find((b) => /Confirm Import/.test(b.textContent)).click(); true"); await sleep(1500); }
-        const prow = await poll(async () => { const r = await byTitle("QA Imp Paste"); return r.length >= 4 ? r : null; }, 60000) || await byTitle("QA Imp Paste");
+        const pbanner = await S.evaluate("(document.querySelector('[role=alert]') || {}).innerText || ''");
+        await confirmTwice(S);
+        const prow = await poll(async () => { const r = await byTitle("QA Imp Paste"); return r.length >= 3 ? r : null; }, 60000) || await byTitle("QA Imp Paste");
         created.push(...prow);
-        const p = (t) => prow.find((r) => r.title === t);
-        check("[import pasted rows] -5 is not saved as a negative, not as an explicit 0", p("QA Imp Paste Neg") && p("QA Imp Paste Neg").purchase_price === null, p("QA Imp Paste Neg") && p("QA Imp Paste Neg").purchase_price);
-        check("[import pasted rows] 0 stays 0, blank stays unknown, 12.5 stays 12.5", p("QA Imp Paste Zero") && p("QA Imp Paste Zero").purchase_price === 0 && p("QA Imp Paste Blank") && p("QA Imp Paste Blank").purchase_price === null && p("QA Imp Paste Pos") && Number(p("QA Imp Paste Pos").purchase_price) === 12.5, prow.map((r) => [r.title, r.purchase_price]));
+        const pp = (t) => prow.find((r) => r.title === t);
+        check("[import pasted rows] the review flags the negative row; it is NOT imported", /1 row has a negative cost and will NOT be imported/.test(pbanner) && !pp("QA Imp Paste Neg"), { pbanner, saved: prow.map((r) => r.title) });
+        check("[import pasted rows] 0 stays 0, blank stays unknown, 12.5 stays 12.5", pp("QA Imp Paste Zero") && pp("QA Imp Paste Zero").purchase_price === 0 && pp("QA Imp Paste Blank") && pp("QA Imp Paste Blank").purchase_price === null && pp("QA Imp Paste Pos") && Number(pp("QA Imp Paste Pos").purchase_price) === 12.5, prow.map((r) => [r.title, r.purchase_price]));
 
-        // eBay and Whatnot presets
-        await importOne(S, "eBay Purchases", files.ebay, "ebay.csv");
-        const erows = await poll(async () => { const r = await byTitle("QA Imp eBay"); return r.length >= 5 ? r : null; }, 60000) || await byTitle("QA Imp eBay");
+        // ---- eBay and Whatnot presets ----
+        const e1 = await importOne(S, "eBay Purchases", files.ebay, "ebay.csv");
+        const erows = await poll(async () => { const r = await byTitle("QA Imp eBay"); return r.length >= 3 ? r : null; }, 60000) || await byTitle("QA Imp eBay");
         created.push(...erows);
         const e = (t) => erows.find((r) => r.title === t);
-        check("[import eBay] a negative price / negative shipping is not saved as a negative cost, and the item says why", e("QA Imp eBay Neg") && e("QA Imp eBay Neg").purchase_price === null && e("QA Imp eBay NegShip") && e("QA Imp eBay NegShip").purchase_shipping === null && /negative amount in the file was not imported/.test((e("QA Imp eBay Neg").notes || "")), erows.map((r) => [r.title, r.purchase_price, r.purchase_shipping]));
+        check("[import eBay] the review flags the two rows with a negative price / negative shipping and says they will NOT be imported", /2 rows have a negative cost and will NOT be imported/.test(e1.banner) && /Negative price \(-5\)/.test(e1.preview) && /Negative shipping \(-3\)/.test(e1.preview), { banner: e1.banner });
+        check("[import eBay] those two rows are not in the account", !e("QA Imp eBay Neg") && !e("QA Imp eBay NegShip"), erows.map((r) => r.title));
         check("[import eBay] explicit 0 stays 0, blank stays unknown, positive unchanged", e("QA Imp eBay Zero") && e("QA Imp eBay Zero").purchase_price === 0 && e("QA Imp eBay Blank") && e("QA Imp eBay Blank").purchase_price === null && e("QA Imp eBay Pos") && Number(e("QA Imp eBay Pos").purchase_price) === 12.5 && Number(e("QA Imp eBay Pos").purchase_shipping) === 1.25, erows.map((r) => [r.title, r.purchase_price]));
-        await importOne(S, "Whatnot Orders", files.whatnot, "whatnot.csv").catch(async (err) => { info("[import Whatnot] preset button label not found, trying the label list", String(err).slice(0, 120)); });
-        const wrows = await poll(async () => { const r = await byTitle("QA Imp Whatnot"); return r.length >= 4 ? r : null; }, 45000) || await byTitle("QA Imp Whatnot");
+        const w1 = await importOne(S, "Whatnot Orders", files.whatnot, "whatnot.csv");
+        const wrows = await poll(async () => { const r = await byTitle("QA Imp Whatnot"); return r.length >= 3 ? r : null; }, 60000) || await byTitle("QA Imp Whatnot");
         created.push(...wrows);
         const w = (t) => wrows.find((r) => r.title === t);
-        check("[import Whatnot] a negative price is not saved as a negative cost", w("QA Imp Whatnot Neg") && w("QA Imp Whatnot Neg").purchase_price === null, wrows.map((r) => [r.title, r.purchase_price]));
+        check("[import Whatnot] the review flags the negative row and says it will NOT be imported; it is not in the account", /1 row has a negative cost and will NOT be imported/.test(w1.banner) && !w("QA Imp Whatnot Neg"), { banner: w1.banner, saved: wrows.map((r) => r.title) });
         check("[import Whatnot] explicit 0 stays 0, blank stays unknown, positive unchanged", w("QA Imp Whatnot Zero") && w("QA Imp Whatnot Zero").purchase_price === 0 && w("QA Imp Whatnot Blank") && w("QA Imp Whatnot Blank").purchase_price === null && w("QA Imp Whatnot Pos") && Number(w("QA Imp Whatnot Pos").purchase_price) === 7, wrows.map((r) => [r.title, r.purchase_price]));
       } finally { await S.close(); }
     }

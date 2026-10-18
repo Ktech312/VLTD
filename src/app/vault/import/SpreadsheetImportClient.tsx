@@ -4,8 +4,8 @@ import Link from "next/link";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 
 import { PillButton } from "@/components/ui/PillButton";
-import { parseEbayImportRow } from "@/lib/importParsers/ebayImport";
-import { parseWhatnotImportRow } from "@/lib/importParsers/whatnotImport";
+import { negativeEbayAmounts, parseEbayImportRow } from "@/lib/importParsers/ebayImport";
+import { negativeWhatnotAmounts, parseWhatnotImportRow } from "@/lib/importParsers/whatnotImport";
 import { emitVaultUpdate } from "@/lib/vaultEvents";
 import {
   appendImportedItems,
@@ -103,11 +103,24 @@ function parseSourceWithPreset(source: ParsedImportSource, preset: ImportPreset)
   }
 
   const parser = preset === "ebay" ? parseEbayImportRow : parseWhatnotImportRow;
+  const negativeAmounts = preset === "ebay" ? negativeEbayAmounts : negativeWhatnotAmounts;
   const items: ParsedImportItem[] = [];
   const ignoredRows: IgnoredImportRow[] = [];
 
   source.sheets.forEach((sheet) => {
     sheet.rows.forEach((row, index) => {
+      // A negative amount is an error to correct (different from a blank one, which stays unknown): hold the row back and say how to fix it.
+      const negatives = negativeAmounts(row);
+      if (negatives.length > 0) {
+        ignoredRows.push({
+          source: sheet.sheetName,
+          rowNumber: index + 1,
+          reason: `Negative ${negatives.map((n) => `${n.label} (${n.shown})`).join(", ")}: this row was NOT imported. A cost can't be negative. If it is a refund, leave it out; otherwise correct the amount in your file (blank if you don't know it, 0 if it cost nothing) and import again.`,
+          raw: row,
+          needsCorrection: true,
+        });
+        return;
+      }
       const parsed = parser(row);
 
       if (!parsed) {
@@ -336,12 +349,14 @@ export default function SpreadsheetImportClient() {
       refreshRecentVault();
       // Describe only what was actually imported, not rows that were skipped as duplicates.
       const importedSummary = buildImportSummary(finalItems, []);
+      const heldBack = ignoredRows.filter((row) => row.needsCorrection).length;
       setStatus(
         `Imported ${finalItems.length} ${finalItems.length === 1 ? "item" : "items"} from ${sourceLabel}. ` +
           (importedSummary.missingCostCount > 0
             ? `${importedSummary.missingCostCount} ${importedSummary.missingCostCount === 1 ? "item" : "items"} had no cost: the cost was left blank (unknown), not $0. `
             : "") +
           (skippedDupCount > 0 ? `Skipped ${skippedDupCount} exact duplicates (same description and serial number). ` : "") +
+          (heldBack > 0 ? `${heldBack} ${heldBack === 1 ? "row was" : "rows were"} NOT imported because of a negative cost: correct ${heldBack === 1 ? "it" : "them"} in your file (blank if unknown, 0 if free) and import again. ` : "") +
           (importedSummary.totalEstimatedValue > 0 ? `Estimated value added: ${toMoney(importedSummary.totalEstimatedValue)}.` : "")
       );
 
@@ -537,6 +552,12 @@ export default function SpreadsheetImportClient() {
           <div className="space-y-4">
             <SurfaceCard className="p-4 sm:p-5">
               <div className="text-[11px] uppercase tracking-[0.18em] text-[color:var(--muted2)]">Import Summary</div>
+              {ignoredRows.some((row) => row.needsCorrection) ? (
+                <div role="alert" className="mt-4 rounded-[14px] px-4 py-3 text-sm text-amber-200 ring-1 ring-amber-300/40" style={{ background: "rgba(251,191,36,0.08)" }}>
+                  <b>{ignoredRows.filter((row) => row.needsCorrection).length} {ignoredRows.filter((row) => row.needsCorrection).length === 1 ? "row has" : "rows have"} a negative cost and will NOT be imported.</b>{" "}
+                  A cost can't be negative. Correct {ignoredRows.filter((row) => row.needsCorrection).length === 1 ? "it" : "them"} in your file (leave the cost blank if you don't know it, or 0 if it cost nothing) and import again. The rows are listed under Ignored Rows.
+                </div>
+              ) : null}
               <div className="mt-4 grid gap-3 sm:grid-cols-2">
                 <RowCard><div className="text-xs text-[color:var(--muted)]">Items Ready</div><div className="mt-1 text-lg font-semibold">{summary.itemCount}</div></RowCard>
                 <RowCard><div className="text-xs text-[color:var(--muted)]">Ignored Rows</div><div className="mt-1 text-lg font-semibold">{summary.ignoredCount}</div></RowCard>

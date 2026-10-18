@@ -43,6 +43,9 @@ for (const [file, fn, keys] of [["ebayImport.ts", "parseEbayImportRow", { title:
   t(file + ": explicit 0 amounts stay 0 and add no note", zero.purchasePrice === 0 && zero.purchaseShipping === 0 && zero.purchaseTax === 0 && !/not imported/.test(zero.notes || ""), zero);
   const blank = parse(row("", "", ""));
   t(file + ": blank amounts stay unknown", blank.purchasePrice === undefined && blank.purchaseShipping === undefined && blank.purchaseTax === undefined, blank);
+  const namer = mod[fn === "parseEbayImportRow" ? "negativeEbayAmounts" : "negativeWhatnotAmounts"];
+  t(file + ": the review can name which amounts are negative (price, shipping, tax)", JSON.stringify(namer(row("-5", "-3", "-1")).map((x) => x.label)) === JSON.stringify(["price", "shipping", "tax"]) && namer(row("-5", "2", "1")).length === 1 && namer(row("-5", "2", "1"))[0].shown === "-5", namer(row("-5", "-3", "-1")));
+  t(file + ": blank, 0 and positive amounts are not reported as negative", namer(row("", "", "")).length === 0 && namer(row("0", "0", "0")).length === 0 && namer(row("12.5", "1", "1")).length === 0);
   const pos = parse(row("$12.50", "1.25", "0.9"));
   t(file + ": positive amounts are unchanged", pos.purchasePrice === 12.5 && pos.purchaseShipping === 1.25 && pos.purchaseTax === 0.9, pos);
 }

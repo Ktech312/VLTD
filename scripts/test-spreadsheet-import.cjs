@@ -144,15 +144,20 @@ function fileFrom(name, content, type) {
   const broken = await imp.parseSpreadsheetSource(fileFrom('broken.xlsx', Buffer.from([1,2,3,4,5]), 'application/octet-stream'));
   t('unreadable: a damaged workbook says so', broken.sheets.length === 0 && typeof broken.problem === 'string' && broken.problem.length > 20, broken.problem);
 
-  // ---- negative cost: not imported as a negative; explicit 0 and positive amounts unchanged ----
-  const negCsv = ["Name,Purchase Price,Current Value,Notes", "Neg Cost Item,-5,10,n", "Neg Paren Item,(7.50),10,n", "Zero Item,0,10,n", "Pos Item,12.5,10,n"].join("\n");
+  // ---- a MISSING cost stays unknown; a NEGATIVE cost is an error held back for correction (never quietly blanked) ----
+  const negCsv = ["Name,Purchase Price,Current Value,Notes", "Neg Cost Item,-5,10,n", "Neg Paren Item,(7.50),10,n", "Zero Item,0,10,n", "Blank Item,,10,n", "Pos Item,12.5,10,n"].join("\n");
   const negSource = await imp.parseSpreadsheetSource(fileFrom("neg.csv", negCsv, "text/csv"));
   const negBuilt = imp.buildItemsFromSource(negSource, imp.buildDefaultMappingProfile(negSource));
   const nb = (title) => negBuilt.items.find((i) => i.title === title);
-  t("negative cost (-5): the cost is not imported as -5, and not as 0 either (it stays blank)", nb("Neg Cost Item") && nb("Neg Cost Item").purchasePrice === undefined, nb("Neg Cost Item") && nb("Neg Cost Item").purchasePrice);
-  t("negative cost (-5): the row is flagged as missing cost and warns why", nb("Neg Cost Item") && nb("Neg Cost Item").missingCost === true && (nb("Neg Cost Item").warnings || []).some((w) => /negative/i.test(w)), nb("Neg Cost Item") && nb("Neg Cost Item").warnings);
-  t("negative cost in brackets ((7.50)) is not imported as a cost either (stays blank)", nb("Neg Paren Item") && nb("Neg Paren Item").purchasePrice === undefined, nb("Neg Paren Item") && nb("Neg Paren Item").purchasePrice);
-  t("explicit 0 and a positive cost are unchanged next to a negative one", nb("Zero Item").purchasePrice === 0 && nb("Zero Item").missingCost === false && nb("Pos Item").purchasePrice === 12.5);
+  const held = negBuilt.ignoredRows.filter((r) => r.needsCorrection);
+  t("negative cost (-5): the row is NOT imported (not blanked into an item)", !nb("Neg Cost Item"), nb("Neg Cost Item"));
+  t("negative cost (-5): it is listed as needing correction, with the amount and the fix", held.some((r) => /-5/.test(r.reason) && /NOT imported/.test(r.reason) && /blank if you don't know it/.test(r.reason) && /0 if it cost nothing/.test(r.reason)), held.map((r) => r.reason));
+  t("negative cost in brackets ((7.50)) is held back the same way", !nb("Neg Paren Item") && held.some((r) => /7\.50/.test(r.reason)), held.map((r) => r.reason));
+  t("exactly the two negative rows are held back; nothing else is", held.length === 2 && negBuilt.ignoredRows.length === 2, negBuilt.ignoredRows.map((r) => r.reason));
+  t("a BLANK cost is imported and stays unknown (not an error, not 0)", nb("Blank Item") && nb("Blank Item").purchasePrice === undefined && nb("Blank Item").missingCost === true, nb("Blank Item"));
+  t("explicit 0 and a positive cost are unchanged next to the others", nb("Zero Item") && nb("Zero Item").purchasePrice === 0 && nb("Zero Item").missingCost === false && nb("Pos Item") && nb("Pos Item").purchasePrice === 12.5);
+  const negSummary = imp.buildImportSummary(negBuilt.items, negBuilt.ignoredRows);
+  t("the summary keeps them apart: Missing Cost counts only the blank one (1); Ignored counts the two negatives", negSummary.missingCostCount === 1 && negSummary.ignoredCount === 2, negSummary);
 
   console.log(`\n${pass} passed, ${fail} failed`);
   process.exit(fail ? 1 : 0);
