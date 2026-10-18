@@ -47,7 +47,7 @@ import {
 } from "@/lib/vaultModel";
 import { hasSupabaseEnv } from "@/lib/vaultCloud";
 import { deleteVaultItemEverywhere, deleteVaultItemsEverywhere } from "@/lib/vaultActions";
-import { getOnboardingStatus, getStoredActiveProfileId, listMyProfiles, type ProfileRow } from "@/lib/auth";
+import { getOnboardingStatus, getStoredActiveProfileId, listMyProfiles, retryAccountLookups, type ProfileRow } from "@/lib/auth";
 import { readUniversePrefs, saveDisplayedUniverses } from "@/lib/universePrefs";
 import { currentLocalOwner } from "@/lib/localDataOwner";
 import { storedSessionUserId } from "@/lib/sessionGuard";
@@ -2455,7 +2455,7 @@ export default function VaultListView({ lockedUniverse }: { lockedUniverse?: Uni
             </div>
           </section>
         ) : items.length === 0 && loadFailed ? (
-          <VaultLoadError onRetry={() => void hydrateAll()} />
+          <VaultLoadError onRetry={() => { retryAccountLookups(); void hydrateAll(); }} />
         ) : items.length === 0 ? (
           <VaultEmptyState hasFilters={false} onClearFilters={handleClearFilters} />
         ) : vaultViewMode === "wall" ? (

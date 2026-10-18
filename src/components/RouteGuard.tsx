@@ -3,7 +3,7 @@
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
 
-import { getOnboardingStatus } from "@/lib/auth";
+import { getOnboardingStatus, retryAccountLookups } from "@/lib/auth";
 import { routeAccess } from "@/lib/routeAccess";
 import { storedSessionUserId } from "@/lib/sessionGuard";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
@@ -143,7 +143,7 @@ export default function RouteGuard({ children }: { children: ReactNode }) {
   if (access === "public" || recentlyChecked) return <>{children}</>;
   if (allowedFor !== (pathname ?? "/")) {
     // Never a silent blank: if the check did not answer or failed, say so and offer to try again.
-    if (problem) return <GuardProblem onRetry={() => { setProblem(null); setAttempt((n) => n + 1); }} />;
+    if (problem) return <GuardProblem onRetry={() => { retryAccountLookups(); setProblem(null); setAttempt((n) => n + 1); }} />;
     return (
       <div aria-busy="true" aria-label="Checking your account" className="min-h-[60vh]">
         {slow ? <p role="status" className="pt-10 text-center text-sm text-[color:var(--muted)]">Still checking your account. This is taking longer than usual.</p> : null}

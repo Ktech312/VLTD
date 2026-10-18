@@ -191,6 +191,12 @@ export function initAuthListener() {
   });
 }
 
+/** For a person's own "Try again": forget a failed or stuck account lookup so the next one really asks again instead of reusing the failure. */
+export function retryAccountLookups() {
+  profilesPromise = null;
+  clearInFlightAuth();
+}
+
 export async function getCurrentSession() {
   const supabase = getSupabase();
   if (!supabase) {
