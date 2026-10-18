@@ -1,12 +1,44 @@
--- PROPOSAL ONLY, NOT APPLIED, deliberately kept out of supabase/migrations. See
--- docs/proposals/public-data-referral-codes-and-appreciations-2026-10-17.md for the reasons and the checks to run afterwards.
--- Run supabase/validation/public_data_policies_read_only.sql first (read-only) to see the current grants and policies.
+-- PROPOSED, NOT APPLIED (kept out of supabase/migrations on purpose; it is moved there only after production verification passes).
+-- Why and what to check: docs/proposals/public-data-referral-codes-and-appreciations-2026-10-17.md
+-- Run order: 1) supabase/validation/public_data_before_after_checks.sql (BEFORE: shows today's exposure)  2) this file  3) the same checks file (AFTER: every row must be true).
+-- Safe to run more than once. Changes grants only: no table, policy, row or column is changed or deleted.
+--
+-- Who gets what afterwards
+--   visitors (anon)      referral_codes: nothing.   appreciations: only id and item_id (enough for the public Vibe counts).
+--   signed-in (authenticated) and the service key: exactly what they have today (nothing is taken from them).
+-- Visitors could be getting access in two ways: a grant made to them directly, or one inherited from PUBLIC (a grant to everybody). Removing only the
+-- direct one would leave the inherited one working, so both are removed. Step 0 first gives signed-in users and the service key their OWN grant of
+-- what they hold now, so removing the inherited one cannot take it away from them.
 
--- 1. referral_codes: no feature reads it as a visitor (invite page and admin page are signed in; redeem is signed in and not used yet).
+begin;
+
+-- Step 0: keep what signed-in users and the service key can read today, as a grant of their own.
+do $$
+declare
+  t text;
+  r text;
+begin
+  foreach t in array array['public.referral_codes', 'public.appreciations'] loop
+    foreach r in array array['authenticated', 'service_role'] loop
+      if has_table_privilege(r, t, 'select') then
+        execute format('grant select on %s to %I', t, r);
+      end if;
+    end loop;
+  end loop;
+end
+$$;
+
+-- Step 1: referral_codes. No feature reads it as a visitor (the invite page and admin page are signed in; redeeming is signed in and not used yet).
+revoke select on public.referral_codes from public;
 revoke select on public.referral_codes from anon;
--- undo: grant select on public.referral_codes to anon;
 
--- 2. appreciations: visitors only need the item and the row id for the public Vibe counts.
+-- Step 2: appreciations. Visitors keep only what the public Vibe counts use.
+revoke select on public.appreciations from public;
 revoke select on public.appreciations from anon;
 grant select (id, item_id) on public.appreciations to anon;
--- undo: grant select on public.appreciations to anon;
+
+commit;
+
+-- UNDO (restores the earlier, wider access):
+--   grant select on public.referral_codes to anon;
+--   grant select on public.appreciations to anon;

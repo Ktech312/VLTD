@@ -38,13 +38,24 @@ So a visitor can see which profile appreciated which item, and the name where th
 - Vibe / un-vibe: signed in, by the policies in `20260622_appreciations.sql` (insert/delete only as your own profile). That migration also sets "Appreciations are publicly readable" with `using (true)`.
 - The app never selects `profile_id` or `created_at` for a visitor, and never uses `select *` on this table.
 
-## Smallest restriction (PROPOSAL, nothing applied)
-Files: `docs/proposals/public-data-minimum-restrictions-2026-10-17.sql` (the two changes) and `supabase/validation/public_data_policies_read_only.sql` (a read-only listing of the real policies and grants, to run first because the `referral_codes` rules are not in the repo).
+## Final proposal: STATUS = PROPOSED (not applied; stays proposed until production verification passes)
+Files, to be used together and in this order:
+1. `supabase/validation/public_data_before_after_checks.sql`: read-only. Run it BEFORE (it shows today's exposure) and again AFTER.
+2. `docs/proposals/public-data-minimum-restrictions-2026-10-17.sql`: the change (grants only; repeatable; wrapped in a transaction).
+3. the checks file again: every row that has an expected value must read `true`.
 
-1. **`referral_codes`: take reading away from visitors.** `revoke select on public.referral_codes from anon;` No feature loses anything (none is anonymous). Signed-in behaviour is unchanged. Undo: `grant select on public.referral_codes to anon;`.
-2. **`appreciations`: leave visitors only what the counts use.** `revoke select on public.appreciations from anon; grant select (id, item_id) on public.appreciations to anon;` Public counts keep working; `profile_id` and `created_at` are no longer visible to visitors; signed-in viewers are unchanged. (Same column-grant pattern already used for `vault_items` in `20261007_public_item_columns.sql`.) Undo: `grant select on public.appreciations to anon;`.
-3. **Not proposed now (needs EK's decision, bigger):** limiting what other SIGNED-IN accounts can read of these two tables (own rows plus admin for `referral_codes`; counts only for `appreciations`), and a tracked migration that records the current `referral_codes` rules. Run the read-only listing first.
+What the SQL does
+- Visitors (anon) lose all reading of `referral_codes`.
+- Visitors keep only `id` and `item_id` on `appreciations` (what the public Vibe counts use). `profile_id` and `created_at` are withheld.
+- Signed-in users and the service key keep exactly what they hold today.
 
-After applying 1 and 2, rerun `public-data-assessment.cjs`: `referral_codes` should be denied outright, and for `appreciations` `profile_id` and `created_at` should be denied while `item_id` and the counts stay readable; then check an exhibition's Vibe counts on the live site as a signed-out visitor.
+Review against the real grants, including inherited ones
+- I cannot read the production grants myself (no SQL access; the API does not expose them), so the SQL is written to be correct whichever way visitors hold access today: **a grant made to them directly (Supabase's default) or a grant to PUBLIC (everybody) that they inherit.** The first draft only revoked from visitors; a test showed that would have left both tables readable if the access is inherited from PUBLIC. The final SQL therefore revokes from both, after Step 0 gives signed-in users and the service key a grant of their own for what they hold now (so removing PUBLIC cannot take it from them). Table-level revokes also remove any column-level grants on those tables (PostgreSQL documents this).
+- Real-engine test (`supabase/validation/test-public-data-sql-in-postgres.cjs`, 61 checks, in-process Postgres with the real appreciations policies): in each of three starting situations (direct grants, PUBLIC-only grants, both) the BEFORE query shows the exposure, the SQL (run twice) removes it, the AFTER query is all true, a visitor gets "permission denied" for codes, authentication ids, Vibe profile ids, times and `select *`, the public counts still work (count of `id`, `item_id` for a list), and signed-in actions still work (read/create own code; "have I vibed it"; "which have I vibed"; Vibe; un-Vibe; counts) with row-level security and all five policies unchanged; visitors cannot Vibe or create codes as someone else.
+- Production API check (`public-data-after-checks.cjs`, anonymous client plus the synthetic QA user): BEFORE-baseline measured on production today: 5 visitor checks fail (visitors read codes with authentication ids, look up owner from code, read Vibe profile ids, times and `select *`), 10 pass (counts, signed-in actions). After the SQL it must be 15 of 15.
 
-Status: assessment only; no change applied, none requested to apply.
+Not verified (so still proposed): the SQL has not run on production; the real grants are unknown until you run the checks file; the production API check after the change has not been run.
+
+Found while checking, NOT changed by this SQL: a signed-in user can read other people's referral codes (the QA account saw 2 codes, its own plus another person's), so authentication user ids and codes remain visible to every signed-in account. The checks file shows whether row-level security is on for `referral_codes` (row 16, information only). Limiting signed-in reads to the person's own row (plus admin) is a separate decision.
+
+Not proposed (needs EK's decision, bigger): limiting what other SIGNED-IN accounts can read of these two tables, and a tracked migration that records the current `referral_codes` rules.
