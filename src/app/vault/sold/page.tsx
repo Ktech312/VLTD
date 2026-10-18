@@ -176,7 +176,7 @@ function AnalyticsPanel({ items }: { items: SoldItem[] }) {
           ariaLabel={"Profit or loss by month: " + monthly.map(([k, v]) => `${k} ${v.known > 0 ? money(v.profit) : "no recorded cost"}`).join(", ")}
         />
         <div className="mt-2 text-[11px]" style={{ color: "var(--muted)" }}>
-          Only sales with a recorded cost count toward profit.
+          Profit is after estimated fees. Only sales with a recorded cost count.
         </div>
       </div>
 
