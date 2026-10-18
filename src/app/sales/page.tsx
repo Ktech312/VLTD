@@ -7,6 +7,7 @@ import { syncSalesFromSupabase } from "@/lib/salesModel";
 import { loadItems, getPrimaryImageUrl, type VaultItem } from "@/lib/vaultModel";
 import { Glyph } from "@/components/ui/Glyph";
 import { estimateSaleFees } from "@/lib/sellerFees";
+import { buildSoldItems } from "@/lib/soldItems";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -165,8 +166,13 @@ export default function SalesHistoryPage() {
   const [sort, setSort] = useState<SortKey>("date");
   const [search, setSearch] = useState("");
   const [universeFilter, setUniverseFilter] = useState("All");
+  // Sales recorded from the Vault, For Sale and Sold pages live on the Sold page, not in this older list.
+  const [soldOnSoldPage, setSoldOnSoldPage] = useState(0);
 
   useEffect(() => {
+    const countSold = () => setSoldOnSoldPage(buildSoldItems().length);
+    countSold();
+    window.addEventListener("vltd:vault-updated", countSold);
     const records = loadSales();
     setSales(records);
     const items = loadItems({ includeAllProfiles: true });
@@ -179,6 +185,7 @@ export default function SalesHistoryPage() {
     });
     return () => {
       active = false;
+      window.removeEventListener("vltd:vault-updated", countSold);
     };
   }, []);
 
@@ -326,11 +333,11 @@ export default function SalesHistoryPage() {
         {sales.length === 0 && (
           <div className="rounded-2xl p-10 text-center ring-1 ring-[color:var(--border)]" style={{ background: "var(--surface)" }}>
             <div className="mb-3 flex justify-center" style={{ color: "var(--theme-gold)" }}><Glyph name="tag" size={40} /></div>
-            <h2 className="text-lg font-semibold mb-1">No sales yet</h2>
-            <p className="text-sm mb-5" style={{ color: "var(--muted)" }}>Mark vault items as sold to start tracking your P&L here.</p>
-            <Link href="/vault" className="inline-flex items-center rounded-full px-5 py-2 text-sm font-semibold ring-1 ring-[color:var(--border)]"
+            <h2 className="text-lg font-semibold mb-1">{soldOnSoldPage > 0 ? "Your sales are on the Sold page" : "No sales yet"}</h2>
+            <p className="text-sm mb-5" style={{ color: "var(--muted)" }}>{soldOnSoldPage > 0 ? `${soldOnSoldPage} sold ${soldOnSoldPage === 1 ? "item" : "items"}, with revenue, profit and analytics, are listed there.` : "Mark vault items as sold to start tracking your P&L here."}</p>
+            <Link href={soldOnSoldPage > 0 ? "/vault/sold" : "/vault"} className="inline-flex items-center rounded-full px-5 py-2 text-sm font-semibold ring-1 ring-[color:var(--border)]"
               style={{ background: "var(--pill)" }}>
-              Go to Vault
+              {soldOnSoldPage > 0 ? "Open Sold" : "Go to Vault"}
             </Link>
           </div>
         )}
