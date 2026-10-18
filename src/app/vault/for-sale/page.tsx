@@ -9,7 +9,7 @@ import { Glyph } from "@/components/ui/Glyph";
 import { itemToListingInput } from "@/lib/listingGenerator";
 import { INSIGHTS_AMBER } from "@/lib/insightsPalette";
 import { marketplacesFor, type MarketplaceId } from "@/lib/marketplaces";
-import { resolveCategoryLabel } from "@/lib/taxonomy";
+import { UNIVERSE_LABEL, resolveCategoryLabel, type UniverseKey } from "@/lib/taxonomy";
 import { enqueueVaultItemSync, processVaultSyncQueue } from "@/lib/vaultSyncQueue";
 import { getPrimaryImageUrl, loadItems, saveItem, syncVaultItemsFromSupabase, type VaultItem } from "@/lib/vaultModel";
 
@@ -154,7 +154,7 @@ function ItemCard({ item, onMarkSold }: { item: VaultItem; onMarkSold: (item: Va
             <div className="min-w-0">
               <div className="truncate text-sm font-semibold" style={{ color: "var(--fg)" }}>{item.title}</div>
               <div className="mt-0.5 truncate text-xs" style={{ color: "var(--muted)" }}>
-                {[item.universe, item.grade].filter(Boolean).join(" · ") || "No details yet"}
+                {[item.universe ? (UNIVERSE_LABEL[String(item.universe).toUpperCase() as UniverseKey] ?? item.universe) : "", item.grade].filter(Boolean).join(" · ") || "No details yet"}
               </div>
             </div>
             <div className="shrink-0 text-sm font-bold" style={{ color: price > 0 ? "var(--theme-gold)" : "var(--muted)" }}>
