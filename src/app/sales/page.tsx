@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { loadSales, type SaleRecord } from "@/lib/salesHistory";
 import { syncSalesFromSupabase } from "@/lib/salesModel";
-import { loadItems, getPrimaryImageUrl, type VaultItem } from "@/lib/vaultModel";
+import { loadItems, getPrimaryImageUrl, syncVaultItemsFromSupabase, type VaultItem } from "@/lib/vaultModel";
 import { Glyph } from "@/components/ui/Glyph";
 import { estimateSaleFees } from "@/lib/sellerFees";
 import { buildSoldItems } from "@/lib/soldItems";
@@ -172,6 +172,8 @@ export default function SalesHistoryPage() {
   useEffect(() => {
     const countSold = () => setSoldOnSoldPage(buildSoldItems().length);
     countSold();
+    // In a browser that has not loaded the Vault yet the sold items are not here until the cloud copy arrives.
+    void syncVaultItemsFromSupabase().then(() => countSold()).catch(() => undefined);
     window.addEventListener("vltd:vault-updated", countSold);
     const records = loadSales();
     setSales(records);
