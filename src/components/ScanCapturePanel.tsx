@@ -1,6 +1,6 @@
 "use client";
 
-import { parseCostInput } from "@/lib/costInput";
+import { NEGATIVE_COST_MESSAGE, isNegativeCostText, parseCostInput } from "@/lib/costInput";
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { useRouter } from "next/navigation";
 
@@ -720,6 +720,12 @@ export default function ScanCapturePanel({ onClose }: { onClose: () => void }) {
 
   async function handleSaveVerified() {
     if (drafts.length === 0) { onClose(); return; }
+    // The Save button is held while a cost is negative, but the save itself refuses too: nothing is saved with a negative cost,
+    // and a negative cost is never quietly turned into a blank one.
+    if (drafts.some((d) => isNegativeCostText(d.purchasePrice))) {
+      setVerifyStatus(NEGATIVE_COST_MESSAGE);
+      return;
+    }
     setCommitting(true);
     try {
       const items = await Promise.all(drafts.map((d, i) => draftToVaultItem(d, i)));

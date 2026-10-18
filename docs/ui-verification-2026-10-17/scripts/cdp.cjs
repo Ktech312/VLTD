@@ -8,7 +8,7 @@ const net = require("net");
 const freePort = () => new Promise((res) => { const sv = net.createServer(); sv.listen(0, "127.0.0.1", () => { const p = sv.address().port; sv.close(() => res(p)); }); });
 const answers = (port) => new Promise((res) => { const r = http.get(`http://127.0.0.1:${port}/json/version`, (x) => { x.resume(); res(true); }); r.on("error", () => res(false)); r.setTimeout(800, () => { r.destroy(); res(false); }); });
 let launchCount = 0;
-async function launch(port = 9333, userDir = path.join(__dirname, "chrome-profile-" + Date.now() + "-" + process.pid + "-" + ++launchCount)) {
+async function launch(port = 9333, userDir = process.env.CHROME_PROFILE_ROOT ? path.join(process.env.CHROME_PROFILE_ROOT, "p" + (Date.now() % 1e7) + "-" + ++launchCount) : path.join(__dirname, "chrome-profile-" + Date.now() + "-" + process.pid + "-" + ++launchCount)) {
   // A browser left over from an earlier (killed) run may still be listening on this port: the new browser would fail to start and a
   // test would silently drive the old one. Take a port nobody is using instead, and say so.
   if (await answers(port)) { const next = await freePort(); console.log(`[cdp] port ${port} was already answered by an earlier browser; using ${next}`); port = next; }
