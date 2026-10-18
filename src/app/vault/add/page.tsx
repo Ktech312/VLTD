@@ -2123,11 +2123,12 @@ export default function AddPage() {
         priceConfidence: pricingValues.priceConfidence,
         priceNotes: pricingValues.priceNotes,
       });
+      // Only a valuation the person typed (or a price source they chose) becomes the item's value. What was paid is NOT a valuation:
+      // an item with no value stays unvalued and is shown "at cost" by the shared ghost-value rule (never saved), like Quick Add does.
       const currentValue =
         parseMoney(normalizedValues.currentValue) ??
         pricingPatch.estimatedValue ??
-        pricingPatch.lastCompValue ??
-        purchasePrice;
+        pricingPatch.lastCompValue;
 
       const item: VaultItem = {
         id,

@@ -8,9 +8,6 @@ import { AppIcon } from "@/components/ui/AppIcon";
 import {
   getOrCreateReferralCode,
   getReferralStats,
-  getUserBonusGalleries,
-  REFERRAL_BONUS_GALLERIES,
-  REFERRED_BONUS_GALLERIES,
 } from "@/lib/referral";
 
 function CopyIcon({ size = 16 }: { size?: number }) {
@@ -29,16 +26,10 @@ function UsersIcon() {
   return <AppIcon name="users" size={22} strokeWidth={1.75} />;
 }
 
-function ExhibitIcon() {
-  return <AppIcon name="organize" size={22} strokeWidth={1.75} />;
-}
-
 export default function InvitePage() {
   const [userId, setUserId] = useState<string | null>(null);
   const [code, setCode] = useState<string | null>(null);
   const [referralCount, setReferralCount] = useState(0);
-  const [bonusEarned, setBonusEarned] = useState(0);
-  const [totalBonus, setTotalBonus] = useState(0);
   const [copied, setCopied] = useState(false);
   const [loading, setLoading] = useState(true);
 
@@ -55,16 +46,13 @@ export default function InvitePage() {
 
       setUserId(user.id);
 
-      const [myCode, stats, bonus] = await Promise.all([
+      const [myCode, stats] = await Promise.all([
         getOrCreateReferralCode(user.id),
         getReferralStats(user.id),
-        getUserBonusGalleries(user.id),
       ]);
 
       setCode(myCode);
       setReferralCount(stats.referralCount);
-      setBonusEarned(stats.bonusEarned);
-      setTotalBonus(bonus);
       setLoading(false);
     }
     void load();
@@ -89,7 +77,7 @@ export default function InvitePage() {
 
   function handleShare() {
     if (!referralUrl) return;
-    const text = `Join me on VLTD — the collector's vault app. Use my invite link to get ${REFERRED_BONUS_GALLERIES} bonus Exhibition${REFERRED_BONUS_GALLERIES !== 1 ? "s" : ""} free:`;
+    const text = `Join me on VLTD — the collector's vault app:`;
     if (typeof navigator !== "undefined" && "share" in navigator) {
       void navigator.share({ title: "Join me on VLTD", text, url: referralUrl });
     } else {
@@ -99,7 +87,7 @@ export default function InvitePage() {
   }
 
 
-  const shareMessage = `Join me on VLTD — the collector's vault app. Grab ${REFERRED_BONUS_GALLERIES} free Exhibition${REFERRED_BONUS_GALLERIES !== 1 ? "s" : ""} with my invite:`;
+  const shareMessage = `Join me on VLTD — the collector's vault app:`;
   const enc = encodeURIComponent;
   const shareTargets = referralUrl
     ? [
@@ -120,8 +108,8 @@ export default function InvitePage() {
           <GiftIcon />
         </div>
         <div>
-          <h1 className="text-xl font-semibold" style={{ color: "var(--fg)" }}>Invite &amp; Earn</h1>
-          <p className="text-sm" style={{ color: "var(--muted)" }}>Share VLTD, unlock more Exhibitions</p>
+          <h1 className="text-xl font-semibold" style={{ color: "var(--fg)" }}>Invite friends</h1>
+          <p className="text-sm" style={{ color: "var(--muted)" }}>Share VLTD with friends and fellow collectors</p>
         </div>
       </div>
 
@@ -138,12 +126,7 @@ export default function InvitePage() {
             {
               icon: <UsersIcon />,
               label: "They join VLTD",
-              desc: `Your friend signs up and gets +${REFERRED_BONUS_GALLERIES} free Exhibition${REFERRED_BONUS_GALLERIES !== 1 ? "s" : ""} instantly.`,
-            },
-            {
-              icon: <ExhibitIcon />,
-              label: `You earn +${REFERRAL_BONUS_GALLERIES} Exhibition`,
-              desc: "For every friend who joins, your Exhibition limit grows.",
+              desc: "Your friend opens the link and signs up.",
             },
           ].map(({ icon, label, desc }, i) => (
             <div key={i} className="flex items-start gap-3">
@@ -228,8 +211,6 @@ export default function InvitePage() {
         <div className="grid grid-cols-3 gap-3">
           {[
             { label: "Friends Invited", value: referralCount },
-            { label: "Bonus Earned", value: `+${bonusEarned}` },
-            { label: "Total Bonus", value: `+${totalBonus}` },
           ].map(({ label, value }) => (
             <div key={label} className="rounded-2xl p-3 ring-1 ring-[color:var(--border)] text-center" style={{ background: "var(--surface)" }}>
               <p className="text-2xl font-bold" style={{ color: "#C8CDD2" }}>{value}</p>
@@ -241,7 +222,7 @@ export default function InvitePage() {
 
       {/* Fine print */}
       <p className="mt-6 text-center text-xs leading-relaxed" style={{ color: "var(--muted2)" }}>
-        Bonus Exhibitions apply to your Free account. Each friend who joins adds +{REFERRAL_BONUS_GALLERIES} Exhibition to your limit. No cap.
+        Invitation rewards are not available right now.
       </p>
     </main>
   );

@@ -2,10 +2,10 @@ import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
-/** How many bonus galleries a referrer earns per successful invite */
+/** Not granted today: referral rewards are unavailable pending a separate product decision (see HANDOFF.md). Kept only as the admin perk form default. */
 export const REFERRAL_BONUS_GALLERIES = 1;
 
-/** How many bonus galleries the new user earns when they sign up via invite */
+/** Not granted today (see above). Unused. */
 export const REFERRED_BONUS_GALLERIES = 1;
 
 // ─── Code helpers ─────────────────────────────────────────────────────────────
@@ -89,13 +89,13 @@ export async function getUserBonusGalleries(userId: string): Promise<number> {
 }
 
 /**
- * How many people this user has referred + total bonus galleries earned via referrals.
+ * How many people have redeemed this user's referral code. No reward is attached (referral rewards are not available).
  */
 export async function getReferralStats(
   userId: string
-): Promise<{ referralCount: number; bonusEarned: number }> {
+): Promise<{ referralCount: number }> {
   const supabase = getSupabaseBrowserClient();
-  if (!supabase) return { referralCount: 0, bonusEarned: 0 };
+  if (!supabase) return { referralCount: 0 };
 
   // Overnight QA pass (2026-09-22): same fix as follows.ts's getFollowerCount
   // - narrowed select("*") to select("id") for this HEAD+count query, since
@@ -105,11 +105,7 @@ export async function getReferralStats(
     .select("id", { count: "exact", head: true })
     .eq("referrer_id", userId);
 
-  const referralCount = count ?? 0;
-  return {
-    referralCount,
-    bonusEarned: referralCount * REFERRAL_BONUS_GALLERIES,
-  };
+  return { referralCount: count ?? 0 };
 }
 
 // ─── Admin API ────────────────────────────────────────────────────────────────
