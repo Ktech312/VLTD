@@ -1,0 +1,59 @@
+INFO deployed commit "ec9627ff3ca40bf188736e67f59870a729ef3342"
+PASS [1 sign in] the signed-in tab lands on Home as the Personal profile 
+PASS [1 sign in] Home of a brand-new account is an honest empty state (no items, no fake data) 
+PASS [2 profile] the account menu lists both profiles and the Business one can be chosen 
+PASS [2 profile] after choosing Business, Home shows the Business profile and it is the stored active profile 
+PASS [2 profile] choosing Personal again returns to the Personal profile 
+PASS [3 add] "QA Journey Slab" saved to the Personal profile 
+PASS [3 add] "QA Journey Vinyl" saved to the Personal profile 
+PASS [3 add] "QA Journey Poster" saved to the Personal profile 
+PASS [3 add] three items, all in the Personal profile and none in the Business profile 
+PASS [3 add] the entered costs are saved exactly (120, 30) and the blank cost is unknown (null), not 0 
+PASS [3 add] no AI request was made while adding the items 
+PASS [3 add] the AI usage log has no entry for this account's profiles 
+PASS [4 details] the edited cost, source, location and storage location are saved to the database 
+PASS [4 details] the page shows the saved values without a reload 
+INFO fixture note "two items set public by the service key (the item Visibility toggle is covered by earlier checks); profile left PRIVATE"
+14 passed, 0 failed
+PASS [5 create] the exhibition exists in the database under the Personal profile, titled as typed, Private (locked) by default 
+INFO picker add button ["Add to Exhibit (3)"]
+PASS [6 add] the three chosen items are saved in the exhibition 
+PASS [6 add] the editor shows 3 items and a curated cost that counts only recorded costs (125 + 30 = $155; the blank cost is not added as 0) 
+PASS [7 arrange] Organize on an exhibition with no exhibit page yet explains why and offers 'Create first exhibit' (never silent) 
+PASS [7 arrange] after 'Create first exhibit' Organize is on (the button now reads Done) and the items are on Exhibit 1 
+INFO slot geometry {"n":18,"a":{"x":605.328125,"y":486.28125},"c":{"x":830.65625,"y":486.28125},"draggable":["true","true","true"]}
+INFO order before/after real drag {"before":["i09cm7","1cjdeo","0nihpy"],"after":["0nihpy","1cjdeo","i09cm7"]}
+PASS [7 arrange] dragging the first item onto the third swaps them and the new order is saved (real mouse drag) 
+PASS [7 arrange] after reloading the page the arranged order is unchanged 
+PASS [8 share] choosing Guest View makes it a link-only (Invite) exhibition, still active 
+INFO share dialog "Share\nQA Journey Exhibition\nEXHIBITION\nSHARE PUBLIC LINK\nMessages\nFacebook\nWhatsApp\nX\nEmail\nReddit\nTelegram\nInstagram\n\nThese open the app or website with your link ready. Nothing is posted until you confirm it there.\n\nCopy link"
+PASS [8 share] the exhibition has a share token (the link is /museum/share/<token>) 
+INFO visitor path "/museum/share/pub_mvd6j6l3_fazsrzff"
+PASS [9 visitor] a signed-out visitor sees the exhibition title through the link 
+PASS [9 visitor] the visitor sees the public items (Slab, Vinyl) 
+INFO [9 visitor] the placed-but-private Poster is shown to the visitor (by design; open question for EK) true
+PASS [9 visitor] the visitor page carries no price or value for any item 
+PASS [9 visitor] none of the owner's private details leak (cost 125, source, location, storage shelf) 
+PASS [9 visitor] a wrong link shows a not-available page, not an exhibition 
+14 passed, 0 failed
+INFO arranged order saved in the database ["QA Journey Poster","QA Journey Vinyl","QA Journey Slab"]
+PASS [10 home] Home counts the 3 items saved by the first browser 
+PASS [10 home] Purchase cost on Home equals the database total (155); the item with no cost adds nothing 
+PASS [10 home] Estimated value on Home equals the stored values (150) and says how many are priced 
+PASS [10 home] the item with no cost and no value shows 'Not valued', not $0 
+PASS [10 home] Sales revenue is honest for an account with no sales ('No sales yet', not $0) 
+PASS [10 home] the exhibition is listed with its piece count 
+INFO FINDING: Home 'unrealized change' after the cost was edited 120 -> 125 (the stored value stayed at 120) {"shown":"-$5 (-3.2%)","note":"manual Add saves current value = purchase price at entry; a later cost edit does not move it"}
+PASS [11 vault] the Vault lists all three items in the clean browser 
+PASS [11 vault] Vault total value matches Home's estimated value 
+PASS [12 item] the edited details (cost $125, source, location, storage) are all present in the clean browser 
+PASS [13 exhibition] the exhibition is in the clean browser's Exhibitions list 
+PASS [13 exhibition] the editor shows the arranged order (not the order they were picked) 
+PASS [14 visitor] the visitor sees the pieces in the arranged order 
+PASS [15 nav] 'Back to Exhibitions' returns to the Exhibitions list 
+PASS [15 nav] 'Home' returns to Home 
+PASS [15 nav] tapping an item card in the Vault opens that item 
+PASS [15 nav] browser Back from the item returns to the Vault with the items still listed (no blank Vault) 
+INFO page load times (ms), clean browser, live {"Home":1575,"Vault":794,"Item page":698,"Exhibitions list":796,"Exhibition page":885,"Exhibition page (nav)":487,"Vault (nav)":392}
+INFO failed (non-cancelled) network requests during this part 0
+16 passed, 0 failed

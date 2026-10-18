@@ -55,66 +55,21 @@ export async function getOrCreateReferralCode(userId: string): Promise<string | 
 
 /**
  * Redeem a referral code when a new user signs up.
- * - Looks up the referrer from the code
- * - Records the redemption
- * - Grants bonus galleries to both parties via user_perks (upsert)
+ * The database function redeem_referral_code does the whole job for the signed-in caller (the code must exist, no
+ * self-referral, one redemption per account) and answers with only ok or a plain message: no account id or code owner
+ * ever reaches the browser, because signed-in accounts can read only their own referral code.
+ * It records the redemption. It does NOT grant bonus galleries: that grant (increment_user_perk_galleries) is refused by
+ * row-level security on user_perks for ordinary accounts, as it was before this function existed. Granting them, and
+ * limiting how often one person can earn them, is a separate decision.
  */
-export async function redeemReferralCode(
-  code: string,
-  referredUserId: string
-): Promise<{ ok: boolean; error?: string }> {
+export async function redeemReferralCode(code: string): Promise<{ ok: boolean; error?: string }> {
   const supabase = getSupabaseBrowserClient();
   if (!supabase) return { ok: false, error: "No Supabase connection" };
 
-  const upperCode = code.trim().toUpperCase();
-
-  // Look up the referrer
-  const { data: codeRow, error: codeErr } = await supabase
-    .from("referral_codes")
-    .select("user_id")
-    .eq("code", upperCode)
-    .maybeSingle();
-
-  if (codeErr || !codeRow) return { ok: false, error: "Invalid referral code" };
-  if (codeRow.user_id === referredUserId) return { ok: false, error: "Cannot refer yourself" };
-
-  const referrerId = codeRow.user_id;
-
-  // Check if this user already redeemed a code
-  const { data: already } = await supabase
-    .from("referral_redemptions")
-    .select("id")
-    .eq("referred_id", referredUserId)
-    .maybeSingle();
-
-  if (already) return { ok: false, error: "Already redeemed a referral code" };
-
-  // Record the redemption
-  const { error: insertErr } = await supabase.from("referral_redemptions").insert({
-    code: upperCode,
-    referrer_id: referrerId,
-    referred_id: referredUserId,
-  });
-
-  if (insertErr) return { ok: false, error: insertErr.message };
-
-  // Grant bonus to referrer: upsert user_perks, incrementing by REFERRAL_BONUS_GALLERIES
-  await supabase.rpc("increment_user_perk_galleries", {
-    p_user_id: referrerId,
-    p_amount: REFERRAL_BONUS_GALLERIES,
-    p_reason: "referral",
-    p_granted_by: "referral",
-  });
-
-  // Grant bonus to referred user
-  await supabase.rpc("increment_user_perk_galleries", {
-    p_user_id: referredUserId,
-    p_amount: REFERRED_BONUS_GALLERIES,
-    p_reason: "joined via referral",
-    p_granted_by: "referral",
-  });
-
-  return { ok: true };
+  const { data, error } = await supabase.rpc("redeem_referral_code", { p_code: code });
+  if (error) return { ok: false, error: error.message };
+  const answer = (data ?? {}) as { ok?: boolean; error?: string };
+  return answer.ok === true ? { ok: true } : { ok: false, error: answer.error ?? "Could not redeem this code" };
 }
 
 /**
