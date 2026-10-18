@@ -1,4 +1,4 @@
-# Saved content: who saved what is readable by any visitor (2026-10-17): STATUS = SUPERSEDED by the tested migration `supabase/migrations/20261019_public_favorites_not_readable_by_others.sql` (HANDOFF row 22): written, tested 37/37 in a real Postgres, NOT yet applied
+# Saved content: who saved what is readable by any visitor (2026-10-17): STATUS = SUPERSEDED by the tested migration `supabase/migrations/20261019_public_favorites_not_readable_by_others.sql` (HANDOFF row 22): APPLIED by EK on 2026-10-17 and VERIFIED on production (see HANDOFF row 22)
 
 ## What was measured (production, synthetic accounts)
 A signed-out visitor, with only the public key, could list another account's saves:
