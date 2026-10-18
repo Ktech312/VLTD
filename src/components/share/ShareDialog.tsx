@@ -6,6 +6,7 @@ import { createPortal } from "react-dom";
 import { AppIcon } from "@/components/ui/AppIcon";
 import { PillButton } from "@/components/ui/PillButton";
 import { useDialogA11y } from "@/components/ui/useDialogA11y";
+import { friendlyErrorMessage } from "@/lib/friendlyError";
 import { FacebookIcon, InstagramIcon, RedditIcon, TelegramIcon, WhatsAppIcon, XIcon } from "@/components/share/socialIcons";
 
 /** Copies text. Resolves false when the browser refused, so the person is never told "copied" when it was not. */
@@ -84,7 +85,7 @@ export function PublicSharePrompt({ kind, onEnable }: { kind: "item" | "exhibiti
     try {
       await onEnable();
     } catch (e) {
-      setError(e instanceof Error && e.message ? e.message : "It could not be saved, so it is still private.");
+      setError(friendlyErrorMessage(e, "It could not be saved."));
       setState("ask");
     }
   }
