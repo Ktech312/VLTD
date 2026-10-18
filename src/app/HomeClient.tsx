@@ -536,11 +536,11 @@ export default function HomeClient() {
                   {recent.map((item) => {
                     const v = totalsValue(item);
                     return (
-                      <Link key={item.id} href={"/vault/item/" + item.id} data-recent-item={item.id} className="w-[132px] shrink-0 snap-start" style={{ display: "block", textDecoration: "none", border: `1px solid ${C.bd}`, borderRadius: 8, background: C.elevated, overflow: "hidden" }}>
+                      <Link key={item.id} href={"/vault/item/" + item.id} data-recent-item={item.id} draggable={false} className="w-[132px] shrink-0 snap-start" style={{ display: "block", textDecoration: "none", border: `1px solid ${C.bd}`, borderRadius: 8, background: C.elevated, overflow: "hidden" }}>
                         <div style={{ height: 120, background: C.card, display: "flex", alignItems: "center", justifyContent: "center", color: C.muted }}>
                           {item.imageFrontUrl ? (
                             // eslint-disable-next-line @next/next/no-img-element
-                            <img src={item.imageFrontUrl} alt="" loading="lazy" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                            <img src={item.imageFrontUrl} alt="" loading="lazy" draggable={false} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                           ) : <Glyph name="box" size={22} />}
                         </div>
                         <div style={{ padding: "8px 10px" }}>
