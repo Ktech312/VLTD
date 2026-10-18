@@ -57,6 +57,15 @@
   border-color: transparent !important;
 }
 
+/* Local tab rows (Items / For Sale / Sold / Insights / Goals, and the same row on Discover, Lounge, Account) are
+   page content made of pill links, not the site navigation bar. The rule above painted a dark rectangle behind them
+   (EK: "remove the black rectangle behind the tabs"). LocalNav marks itself with data-local-nav. */
+[data-vltd-theme] body nav[data-local-nav],
+.theme-light body nav[data-local-nav] {
+  background: transparent !important;
+  border-color: transparent !important;
+}
+
 /* ── INPUTS ── */
 [data-vltd-theme] body input:not([type="checkbox"]):not([type="radio"]),
 [data-vltd-theme] body textarea,

@@ -24,7 +24,7 @@ export function LocalNav({
   ariaLabel?: string;
 }) {
   return (
-    <nav aria-label={ariaLabel} className="flex flex-wrap items-center gap-x-4 gap-y-2">
+    <nav aria-label={ariaLabel} data-local-nav="true" className="flex flex-wrap items-center gap-x-4 gap-y-2">
       <div className="flex flex-wrap items-center gap-2">
         {items.map((item) => (
           <Link

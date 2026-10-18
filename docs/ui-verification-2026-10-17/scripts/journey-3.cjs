@@ -16,7 +16,8 @@ const money = (s) => Number(String(s).replace(/[^0-9.\-]/g, ""));
   const expectOrder = order.map((id) => titleOf[id]);
   info("arranged order saved in the database", expectOrder);
   const costDb = items.reduce((s, i) => s + (Number(i.purchase_price) || 0) + (Number(i.purchase_tax) || 0) + (Number(i.purchase_shipping) || 0) + (Number(i.purchase_fees) || 0), 0);
-  const valDb = items.reduce((s, i) => s + (Number(i.current_value) || 0), 0);
+  // Since 2026-10-17 (commit 21e128f) Manual Add no longer copies the cost into the value, so an unvalued item counts at what was paid (grey, never saved):
+  const valDb = items.reduce((s, i) => s + (Number(i.current_value) > 0 ? Number(i.current_value) : (Number(i.purchase_price) || 0)), 0);
   const S = await browser(BASE); // a brand-new browser profile: nothing cached from the first session except the account's sign-in
   const timing = {};
   const open = async (path, ready, label) => { const t0 = Date.now(); await S.go(path); try { await S.waitFor(ready, 120000, label); } catch (e) { const d = await S.c.captureDiag(label + " did not appear", "journey3-diag"); console.log("BLANK/SLOW DIAG", JSON.stringify({ state: d.state, failures: d.failures.slice(0, 5), errors: d.errors.slice(0, 5), navs: d.navigations.slice(-5) }).slice(0, 900)); throw e; } timing[label] = Date.now() - t0; };
@@ -29,7 +30,7 @@ const money = (s) => Number(String(s).replace(/[^0-9.\-]/g, ""));
     const pc = flat.match(/PURCHASE COST \| \$([\d,]+(?:\.\d+)?)/); const ev = flat.match(/ESTIMATED VALUE \| \$([\d,]+(?:\.\d+)?)/);
     check("[10 home] Home counts the 3 items saved by the first browser", /3 items/.test(home), home.slice(0, 300));
     check(`[10 home] Purchase cost on Home equals the database total (${costDb}); the item with no cost adds nothing`, pc && money(pc[1]) === costDb, pc);
-    check(`[10 home] Estimated value on Home equals the stored values (${valDb}) and says how many are priced`, ev && money(ev[1]) === valDb && /\d of 3 priced/.test(home), { ev, valDb });
+    check(`[10 home] Estimated value on Home equals each item's value, or what was paid when it has none (${valDb}), and says so`, ev && money(ev[1]) === valDb && (/\d of 3 priced/.test(home) || /No item has a value yet/.test(home)), { ev, valDb });
     check("[10 home] the item with no cost and no value shows 'Not valued', not $0", /QA Journey Poster\s*\n?\s*Not valued/.test(home), flat.match(/QA Journey Poster[^|]*\|[^|]*/));
     check("[10 home] Sales revenue is honest for an account with no sales ('No sales yet', not $0)", /No sales yet/.test(home));
     check("[10 home] the exhibition is listed with its piece count", /QA Journey Exhibition/.test(home) && /3 pieces/.test(home));
