@@ -33,13 +33,14 @@ import PortfolioIntelligencePanel from "@/components/PortfolioIntelligencePanel"
 import CollectionValuationScoreCard from "@/components/CollectionValuationScoreCard";
 import GoalsProgressWidget from "@/components/GoalsProgressWidget";
 import SubjectRankingsWidget from "@/components/SubjectRankingsWidget";
-import { INSIGHTS_BREAKDOWN_COLORS, INSIGHTS_CYAN, INSIGHTS_GREEN, INSIGHTS_RED } from "@/lib/insightsPalette";
+import { INSIGHTS_AMBER, INSIGHTS_BREAKDOWN_COLORS, INSIGHTS_CYAN, INSIGHTS_GREEN, INSIGHTS_RED } from "@/lib/insightsPalette";
 
 type TimeRange = "7d" | "30d" | "90d" | "all";
 
 const CYAN = INSIGHTS_CYAN;
 const GREEN = INSIGHTS_GREEN;
 const RED = INSIGHTS_RED;
+const AMBER = INSIGHTS_AMBER;
 const GOLD = "var(--accent, #C8CDD2)";
 const MUTED = "var(--muted, #9BA0A6)";
 const MUTED2 = "var(--muted2, #61656B)";
@@ -232,16 +233,10 @@ function StatCard({
 }) {
   const hasTrend = Boolean(trend && trend.length > 1);
   const card = (
-    <Panel className="min-h-[94px] p-3.5">
-      <div
-        className={`grid h-full items-center gap-3 ${
-          hasTrend
-            ? "grid-cols-[46px_minmax(0,1fr)_102px] sm:grid-cols-[52px_minmax(0,1fr)_118px]"
-            : "grid-cols-[46px_minmax(0,1fr)] sm:grid-cols-[52px_minmax(0,1fr)]"
-        }`}
-      >
+    <Panel className="h-full min-h-[94px] p-3.5">
+      <div className="grid h-full grid-cols-[46px_minmax(0,1fr)] items-start gap-3 sm:grid-cols-[52px_minmax(0,1fr)]">
         <div
-          className="grid h-11 w-11 place-items-center rounded-full sm:h-12 sm:w-12"
+          className="grid h-11 w-11 self-center place-items-center rounded-full sm:h-12 sm:w-12"
           style={{ border: "1px solid rgba(203,208,213,0.55)", color: GOLD, background: "rgba(203,208,213,0.05)" }}
         >
           {icon}
@@ -251,24 +246,26 @@ function StatCard({
             <Label>{label}</Label>
             <InfoMark />
           </div>
-          <div className="mt-1 text-[27px] font-black leading-none tracking-[-0.02em]" style={{ color: tone }}>
-            {value}
+          <div className="mt-1 flex items-center justify-between gap-2">
+            <div className="min-w-0 text-[27px] font-black leading-none tracking-[-0.02em]" style={{ color: tone }}>
+              {value}
+            </div>
+            {hasTrend ? (
+              <div className="h-8 w-20 shrink-0 opacity-95">
+                <Sparkline values={trend ?? []} color={tone === RED || tone === GREEN ? tone : CYAN} />
+              </div>
+            ) : null}
           </div>
-          <div className="mt-1.5 text-xs" style={{ color: MUTED }}>
+          <div className="mt-1.5 min-h-[32px] text-xs leading-4" style={{ color: MUTED }}>
             {sub}
           </div>
         </div>
-        {hasTrend ? (
-          <div className="min-w-0 self-center opacity-95">
-            <Sparkline values={trend ?? []} color={tone === RED ? RED : GREEN} />
-          </div>
-        ) : null}
       </div>
     </Panel>
   );
   if (!href) return card;
   return (
-    <Link href={href} className="block rounded-[8px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[color:var(--pill-active-ring)]">
+    <Link href={href} className="block h-full rounded-[8px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[color:var(--pill-active-ring)]">
       {card}
     </Link>
   );
@@ -478,8 +475,8 @@ function MoverRow({
           <span
             className="shrink-0 rounded-[4px] px-1 py-[1px] text-[8px] font-bold leading-none"
             style={{
-              border: `1px solid ${confidenceBand === "high" ? "rgba(82,194,122,0.45)" : confidenceBand === "medium" ? "rgba(203,208,213,0.5)" : "rgba(255,112,92,0.45)"}`,
-              color: confidenceBand === "high" ? GREEN : confidenceBand === "medium" ? GOLD : RED,
+              border: `1px solid ${confidenceBand === "high" ? "rgba(82,194,122,0.45)" : confidenceBand === "medium" ? "rgba(203,208,213,0.5)" : "rgba(227,179,65,0.5)"}`,
+              color: confidenceBand === "high" ? GREEN : confidenceBand === "medium" ? GOLD : AMBER,
               background: "var(--surface)",
             }}
           >
@@ -509,7 +506,7 @@ function ReviewCard({ item, reason }: { item: VaultItem; reason: string }) {
       <div className="min-w-0">
         <div className="text-sm font-bold leading-tight">{item.title || "Untitled item"}</div>
         <div className="mt-1 truncate text-xs" style={{ color: MUTED }}>{[item.grade, item.universe].filter(Boolean).join(" - ")}</div>
-        <div className="mt-3 text-xs" style={{ color: RED }}>{reason}</div>
+        <div className="mt-3 text-xs" style={{ color: AMBER }}>{reason}</div>
         <div className="mt-2.5 inline-flex h-7 items-center rounded-[7px] px-4 text-[11px] font-bold" style={{ border: "1px solid rgba(203,208,213,0.44)", color: GOLD }}>
           Review
         </div>
@@ -775,11 +772,11 @@ export default function InsightsOverview({ items: allItems, loading = false }: {
           <StatCard
             label="Total Vault Value"
             value={formatMoney(totalValue)}
-            sub={<><span style={{ color: metrics.roi >= 0 ? GREEN : RED }}>{fmtPct(metrics.roi, true)}</span> all-time</>}
+            sub={<><span style={{ color: Math.abs(metrics.roi) < 0.05 ? MUTED : metrics.roi > 0 ? GREEN : RED }}>{fmtPct(metrics.roi, true)}</span> against what you paid, all-time</>}
             icon={<Glyph name="box" size={28} />}
           />
           <StatCard
-            label="Month Change"
+            label="Total Value Change"
             value={!historyHydrated ? "Loading…" : monthChange === null ? "—" : `${monthChange >= 0 ? "+" : ""}${formatMoney(monthChange)}`}
             sub={
               !historyHydrated ? (
@@ -788,12 +785,12 @@ export default function InsightsOverview({ items: allItems, loading = false }: {
                 <span style={{ color: MUTED }}>Needs two recorded days. Total value now, not a gain on cost.</span>
               ) : (
                 <>
-                  {monthPct !== null ? <span style={{ color: monthChange >= 0 ? GREEN : RED }}>{fmtPct(monthPct, true)}</span> : null} change in total value since {monthContext.day}. Includes {monthContext.added} added, {monthContext.sold} sold and any re-pricing.
+                  {monthPct !== null ? <>{fmtPct(monthPct, true)} </> : null}since {monthContext.day}. Recorded total, not profit: includes adds, sales, removals and re-pricing.
                 </>
               )
             }
             icon={<Glyph name="chart" size={28} />}
-            tone={monthChange === null || monthChange >= 0 ? GREEN : RED}
+            tone={CYAN}
             trend={historyHydrated ? thirtyDaySeries : undefined}
           />
           <StatCard
@@ -806,9 +803,9 @@ export default function InsightsOverview({ items: allItems, loading = false }: {
           <StatCard
             label="Stale Prices"
             value={staleItems.length}
-            sub={`${Math.min(staleItems.length, items.length)} items need updates`}
+            sub={`${Math.min(staleItems.length, items.length)} items need a price check`}
             icon={<Glyph name="clock" size={28} />}
-            tone={staleItems.length > 0 ? RED : GREEN}
+            tone={staleItems.length > 0 ? AMBER : GREEN}
           />
         </div>
 
@@ -957,7 +954,7 @@ export default function InsightsOverview({ items: allItems, loading = false }: {
             <div className="mt-4 grid grid-cols-[minmax(0,0.92fr)_1px_minmax(0,1fr)] gap-5">
               <div>
                 <div className="text-[10px] font-bold uppercase tracking-[0.16em]" style={{ color: MUTED2 }}>Median Confidence</div>
-                <div className="mt-2 text-2xl font-semibold leading-none" style={{ color: confidence.band === "High" ? GREEN : confidence.band === "Medium" ? GOLD : RED }}>
+                <div className="mt-2 text-2xl font-semibold leading-none" style={{ color: confidence.band === "High" ? GREEN : confidence.band === "Medium" ? GOLD : AMBER }}>
                   {confidence.band}
                 </div>
                 <div className="mt-3">
@@ -1022,7 +1019,7 @@ export default function InsightsOverview({ items: allItems, loading = false }: {
         <div className="mt-3 grid gap-3 sm:grid-cols-3">
           <Panel className="p-4">
             <Label>Needs Documentation</Label>
-            <Link href="/vault?review=needs_review" className="mt-2 block text-2xl font-black focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2" style={{ color: documentation.needsReview > 0 ? RED : GREEN }}>{documentation.needsReview}</Link>
+            <Link href="/vault?review=needs_review" className="mt-2 block text-2xl font-black focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2" style={{ color: documentation.needsReview > 0 ? AMBER : GREEN }}>{documentation.needsReview}</Link>
             <div className="text-sm" style={{ color: MUTED }}>items missing part of the checklist{items.length > 0 ? ` (${100 - documentation.pctItems}% of items)` : ""}</div>
             <div className="mt-2 flex flex-wrap gap-1.5">
               {REVIEW_GAP_FILTERS.map((gap) => (
