@@ -7,7 +7,7 @@ These are browser captures of the real site. They are **not** a physical phone: 
 
 | EK's annotated screenshot | What was asked | Before | After |
 |---|---|---|---|
-| 1. Home: "View Vault" link beside the heading | Compact left text links on all four headings | `before/home-desktop.png` | `after/home-desktop.png` |
+| 1. Home: "View Vault" link beside the heading | Compact left text links on all four headings | `before/home-desktop.png` | `after-settled/home-desktop-dark.png` |
 | 2. Home: red boxes | Recently added left, Your exhibitions right (stacked on a phone) | `before/home-desktop.png`, `before/home-phone.png` | `after-settled/home-desktop-dark.png`, `after-settled/home-phone-dark.png` |
 | 3. Home lower sections (Lounge, Learn underlined) | Same link style | `before/home-desktop.png` | `after-settled/home-desktop-dark.png` |
 | 4. Home collection overview (grey $, flat colour) | Insights palette, green/red/neutral, revenue vs profit, grey "at cost" kept | `before/home-desktop.png` | `after-settled/home-desktop-dark.png`; light: `before/home-desktop-light.png` / `after-settled/home-desktop-light.png`; phone: `after-settled/home-phone-dark.png`, `after-settled/home-phone-light.png` |
