@@ -77,6 +77,9 @@ export default function AuctionSetupSheet({ item, onClose, onSaved }: Props) {
   );
   const [durationHours, setDurationHours] = useState(168);
   const [saving, setSaving] = useState(false);
+  // Cancelling asks one question first: should the item stay public? Closing that question changes nothing.
+  const [confirmingCancel, setConfirmingCancel] = useState(false);
+  const cancelDialogRef = useDialogA11y<HTMLDivElement>(confirmingCancel, () => setConfirmingCancel(false));
 
   // The auction/cancel flows below always saveItem() first, so the local
   // record is already correct regardless of what happens next — a failed
@@ -118,7 +121,10 @@ export default function AuctionSetupSheet({ item, onClose, onSaved }: Props) {
     onClose();
   }
 
-  async function handleCancel() {
+  // Starting an auction made the item public, and what it was before was not recorded, so the person decides here.
+  // Cancellation and the chosen visibility are saved together in one record (one durable save).
+  async function handleCancel(visibility: "private" | "public") {
+    setConfirmingCancel(false);
     const updated: VaultItem = {
       ...item,
       status: "COLLECTION",
@@ -127,6 +133,7 @@ export default function AuctionSetupSheet({ item, onClose, onSaved }: Props) {
       auctionCurrentBid: undefined,
       auctionBidCount: 0,
       auctionWinnerId: undefined,
+      isPublic: visibility === "public",
     };
     saveItem(updated);
     window.dispatchEvent(new Event("vltd:vault-updated"));
@@ -325,6 +332,11 @@ export default function AuctionSetupSheet({ item, onClose, onSaved }: Props) {
             className="rounded-xl px-3 py-2.5 text-[11px] ring-1 ring-[color:var(--border)]"
             style={{ background: "var(--pill)", color: "var(--muted)" }}
           >
+            {!isActive ? (
+              <div className="mb-1 font-semibold" style={{ color: "var(--fg)" }} data-testid="auction-start-public-notice">
+                Starting this auction makes the item public.
+              </div>
+            ) : null}
             <strong style={{ color: "var(--fg)" }}>Live auction.</strong> Your item will appear on the VLTD Auctions page. Bidders must be signed in. Payments are arranged directly between buyer and seller.
           </div>
 
@@ -342,7 +354,7 @@ export default function AuctionSetupSheet({ item, onClose, onSaved }: Props) {
                 </button>
                 <button
                   type="button"
-                  onClick={handleCancel}
+                  onClick={() => setConfirmingCancel(true)}
                   className="rounded-[8px] px-5 py-3 text-sm font-bold ring-1 ring-red-400/30"
                   style={{ background: "rgba(239,68,68,0.15)", color: "rgb(252,165,165)" }}
                 >
@@ -373,6 +385,33 @@ export default function AuctionSetupSheet({ item, onClose, onSaved }: Props) {
           </div>
         </div>
       </div>
+      {confirmingCancel ? (
+        <div className="absolute inset-0 z-[10001] flex items-center justify-center p-4">
+          <button
+            type="button"
+            tabIndex={-1}
+            className="absolute inset-0 bg-black/60"
+            onClick={() => setConfirmingCancel(false)}
+            aria-label="Go back"
+          />
+          <div
+            ref={cancelDialogRef}
+            role="dialog"
+            aria-modal="true"
+            aria-label="Cancel auction"
+            className="relative w-full max-w-sm rounded-2xl p-5 ring-1 ring-[color:var(--border)] shadow-2xl"
+            style={{ background: "var(--surface)" }}
+          >
+            <div className="text-base font-bold" style={{ color: "var(--fg)" }}>Cancel auction</div>
+            <p className="mt-2 text-sm" style={{ color: "var(--muted)" }}>Choose whether this item should remain publicly visible.</p>
+            <div className="mt-4 flex flex-wrap gap-2">
+              <PillButton variant="active" onClick={() => void handleCancel("private")}>Cancel auction and make private</PillButton>
+              <PillButton onClick={() => void handleCancel("public")}>Cancel auction and keep public</PillButton>
+              <PillButton onClick={() => setConfirmingCancel(false)}>Go back</PillButton>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>,
     document.body
   );
