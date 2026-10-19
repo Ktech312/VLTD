@@ -1,22 +1,23 @@
 {
- "generated": "2026-10-19T10:52:31.080Z",
- "rows": 9773,
- "behaviourRows": 3751,
+ "generated": "2026-10-19T15:36:10.301Z",
+ "rows": 9776,
+ "behaviourRows": 3754,
  "smokeRows": 6022,
  "byResult": {
-  "FAIL": 561,
-  "PASS": 5073,
-  "NOT TESTED": 3885,
+  "FAIL": 562,
+  "PASS": 5074,
+  "NOT TESTED": 3886,
   "SUPERSEDED": 226,
   "BLOCKED": 28
  },
- "confirmedDefectRows": 315,
- "unreconciledFailRows": 193,
- "rootCauses": 33,
+ "confirmedDefectRows": 316,
+ "historicalFailRows": 5,
+ "unreconciledFailRows": 188,
+ "rootCauses": 34,
  "behaviourByResult": {
-  "FAIL": 508,
-  "PASS": 2769,
-  "NOT TESTED": 220,
+  "FAIL": 509,
+  "PASS": 2770,
+  "NOT TESTED": 221,
   "SUPERSEDED": 226,
   "BLOCKED": 28
  },
@@ -77,9 +78,9 @@
    "BLOCKED": 1
   },
   "CRW": {
-   "FAIL": 8,
-   "PASS": 9,
-   "NOT TESTED": 6
+   "FAIL": 9,
+   "PASS": 10,
+   "NOT TESTED": 7
   },
   "SMK": {
    "PASS": 2168,

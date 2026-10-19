@@ -1,5 +1,7 @@
 # VLTD application audit - 2026-10-18/19 (inventory and behaviour results; nothing was fixed)
 
+Coverage and operations log: `COVERAGE.md` (what was actually exercised by status and depth, by area and by route; load, failed commands and their effect).
+
 Browsable report: `report.html` (filter by result, area, depth, impact; evidence links open the screenshots). CSVs: `results.csv` (every row), `inventory-pages.csv`, `inventory-controls.csv`, `api-inventory.csv`, `routes-static.csv`.
 
 ## Totals
@@ -9,16 +11,16 @@ Browsable report: `report.html` (filter by result, area, depth, impact; evidence
 | Routes in the repository (pages / API) | 108 / 37 |
 | Page visits recorded (state x width) | 471 |
 | Controls inventoried | 18082 |
-| Result rows | 9773 |
-| FAIL | 561 |
-| PASS | 5073 |
-| NOT TESTED | 3885 |
+| Result rows | 9776 |
+| FAIL | 562 |
+| PASS | 5074 |
+| NOT TESTED | 3886 |
 | SUPERSEDED | 226 |
 | BLOCKED | 28 |
 
-Behaviour-asserted rows (a test checked the outcome): 3751 = 508 FAIL, 2769 PASS, 220 NOT TESTED, 226 SUPERSEDED, 28 BLOCKED. The rest are **smoke** rows (a control responded to a click; the outcome was NOT judged) and link rows (the link resolves).
+Behaviour-asserted rows (a test checked the outcome): 3754 = 509 FAIL, 2770 PASS, 221 NOT TESTED, 226 SUPERSEDED, 28 BLOCKED. The rest are **smoke** rows (a control responded to a click; the outcome was NOT judged) and link rows (the link resolves).
 
-**How to read FAIL:** 315 behaviour FAIL rows belong to the 33 root causes below (confirmed by the auditors after setting their own test mistakes aside). 193 further behaviour FAIL rows are first-run failures the auditors describe as mostly their own test mistakes; they are kept as first-failure evidence, marked "UNRECONCILED" in the Triage column, and need triage rather than repair. 226 rows are SUPERSEDED (first-run result replaced by a corrected row; both stay visible).
+**How to read FAIL:** 316 behaviour FAIL rows belong to the 34 root causes below (confirmed by the auditors after setting their own test mistakes aside). 188 further behaviour FAIL rows are first-run failures the auditors describe as mostly their own test mistakes; they are kept as first-failure evidence, marked "UNRECONCILED" in the Triage column, and need triage rather than repair. 5 FAIL rows (KNO-001..005) are the ORIGINAL Discover failures, kept as historical first-failure evidence, fixed before the audit and re-verified separately: they are not current defects. 226 rows are SUPERSEDED (first-run result replaced by a corrected row; both stay visible).
 
 ## Prioritized defect list (root causes, genuine failures only)
 
@@ -33,9 +35,6 @@ Behaviour-asserted rows (a test checked the outcome): 3751 = 508 FAIL, 2769 PASS
 - **RC-03 Cancelling an auction leaves a previously private item public**  
   Starting an auction makes the item public; Cancel Auction does not undo it (is_public stays true).  
   Rows (2): ITM-253, ITM-634
-- **RC-04 Sign out when the sign-out request fails looks signed out but the session stays**  
-  The UI goes to /login with no error, but reopening /dashboard is still signed in. (The audit refuses the sign-out request, so this is the interrupted-connection case.)  
-  Rows (3): ACC-850, ACC-286, ACC-344
 - **RC-05 A public exhibition with an alias still hands the real profile id to anyone reading its row; alias/shelf-style edits do not autosave; Announce is refused by the database**  
   Direct read of the public row exposes profile_id despite an alias; the owner's insert into exhibition_events is refused by row-level security while the button reads 'Announced' (an unapplied migration is possible).  
   Rows (8): EXH-281, EXH-165, EXH-179, EXH-161, EXH-123, EXH-124 (+2 more)
@@ -78,6 +77,9 @@ Behaviour-asserted rows (a test checked the outcome): 3751 = 508 FAIL, 2769 PASS
 
 ### P3 - misleading result
 
+- **RC-04 SIMULATED interrupted connection: when the sign-out request fails, the page shows the login screen and gives no error while the session continues**  
+  These rows were made with the sign-out request REFUSED by the audit, so they do not show that sign-out fails in normal use. A REAL sign-out of a synthetic QA session was verified separately and PASSED (CRW-025, CRW-026: session cleared, refresh token revoked, old session refused in a clean browser). Only the failed-request case is a finding: no error is shown and the session remains.  
+  Rows (5): ACC-850, ACC-286, ACC-344, CRW-025, CRW-026
 - **RC-17 Values: letters, blanks and negatives become money; negative values accepted; numbers parsed wrongly**  
   'abc' saves $0 or blank under a green Saved; blanking an asking price saves $0; negative cost/price/value saved; '1e3' becomes 13 and '1,5' becomes 15; auction accepts a negative starting bid and a Buy It Now below the reserve.  
   Rows (20): ADD-005, ADD-115, ADD-404, ADD-139, ADD-141, ADD-142 (+14 more)
@@ -129,10 +131,13 @@ Behaviour-asserted rows (a test checked the outcome): 3751 = 508 FAIL, 2769 PASS
 - **RC-32 Misc. navigation and wording defects**  
   Footer 'Exhibitions' link goes to login; onboarding header links bounce silently; dead CGC link; Lounge drops show an all-day event a day early (US Pacific); /lounge-preview shows developer wording; 'Open Exhibitions' wrong targets elsewhere.  
   Rows (9): ACC-029, ACC-098, ACC-105, ACC-184, ACC-479, DIS-345 (+3 more)
+- **RC-33 Legacy /api/vault/[id] accepts anonymous writes (reachable, not durable, not used)**  
+  Probed with a synthetic payload only, after reading the code: POST/DELETE answer 200 to an anonymous caller; the route keeps items only in server process memory (no database or file), has no read endpoint, and nothing in the app calls it. Hygiene finding (unauthenticated memory use), not data exposure or loss.  
+  Rows (1): CRW-027
 
 ### P5 - cosmetic
 
-- **RC-33 Cosmetic: emoji icons (standing project rule), raw labels and placeholders**  
+- **RC-34 Cosmetic: emoji icons (standing project rule), raw labels and placeholders**  
   /shop and /saved use emoji; avatar emoji tab; 'key' shown as avatar in Switch Profile; category label 'Tv'; raw POP_CULTURE headings on print; placeholder subtitle; 'insured items' wording.  
   Rows (8): DIS-414, CRW-019, ACC-872, ACC-851, VLT-401, VLT-423 (+2 more)
 

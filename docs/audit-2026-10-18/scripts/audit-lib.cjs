@@ -40,6 +40,7 @@ async function session(kind, { width = 1440, height = 900, mobile = false } = {}
     const p = e.params;
     if (e.method === "Fetch.requestPaused") {
       const url = p.request.url;
+      if (process.env.AUDIT_ALLOW_SIGNOUT === '1' && url.includes("supabase.co/auth/v1/logout")) { S.send('Fetch.continueRequest', { requestId: p.requestId }).catch(() => {}); S.signoutPassed = (S.signoutPassed || 0) + 1; return; }
       if (PASS_THROUGH.some((re) => re.test(url)) && !(p.request.method === "PUT" || p.request.method === "PATCH" || p.request.method === "DELETE")) { S.send("Fetch.continueRequest", { requestId: p.requestId }).catch(() => {}); return; }
       S.intercepted.push({ method: p.request.method, url: url.replace(/^https?:\/\/[^/]+/, "").slice(0, 120), host: (() => { try { return new URL(url).hostname; } catch { return ""; } })() });
       S.send("Fetch.fulfillRequest", { requestId: p.requestId, responseCode: 503, responseHeaders: [{ name: "content-type", value: "application/json" }, { name: "access-control-allow-origin", value: "*" }], body: Buffer.from('{"error":"intercepted by audit"}').toString("base64") }).catch(() => {});

@@ -38,14 +38,16 @@
  },
  {
   "id": "RC-04",
-  "priority": 1,
-  "impact": "privacy/data loss",
-  "title": "Sign out when the sign-out request fails looks signed out but the session stays",
-  "summary": "The UI goes to /login with no error, but reopening /dashboard is still signed in. (The audit refuses the sign-out request, so this is the interrupted-connection case.)",
+  "priority": 3,
+  "impact": "misleading result",
+  "title": "SIMULATED interrupted connection: when the sign-out request fails, the page shows the login screen and gives no error while the session continues",
+  "summary": "These rows were made with the sign-out request REFUSED by the audit, so they do not show that sign-out fails in normal use. A REAL sign-out of a synthetic QA session was verified separately and PASSED (CRW-025, CRW-026: session cleared, refresh token revoked, old session refused in a clean browser). Only the failed-request case is a finding: no error is shown and the session remains.",
   "rowIds": [
    "ACC-850",
    "ACC-286",
-   "ACC-344"
+   "ACC-344",
+   "CRW-025",
+   "CRW-026"
   ]
  },
  {
@@ -609,6 +611,16 @@
  },
  {
   "id": "RC-33",
+  "priority": 4,
+  "impact": "usability",
+  "title": "Legacy /api/vault/[id] accepts anonymous writes (reachable, not durable, not used)",
+  "summary": "Probed with a synthetic payload only, after reading the code: POST/DELETE answer 200 to an anonymous caller; the route keeps items only in server process memory (no database or file), has no read endpoint, and nothing in the app calls it. Hygiene finding (unauthenticated memory use), not data exposure or loss.",
+  "rowIds": [
+   "CRW-027"
+  ]
+ },
+ {
+  "id": "RC-34",
   "priority": 5,
   "impact": "cosmetic",
   "title": "Cosmetic: emoji icons (standing project rule), raw labels and placeholders",
