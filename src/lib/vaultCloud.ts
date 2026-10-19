@@ -327,14 +327,38 @@ function rowToItem(input: unknown): VaultItem {
 // A few pages load at once, and a failed page is retried before giving up.
 const CLOUD_PAGE_SIZE = 200;
 const CLOUD_PAGE_CONCURRENCY = 3;
-const CLOUD_PAGE_RETRIES = 2;
+// One retry per page (two requests in all), with a pause before it. When one page finally fails, the others stop retrying.
+// This used to be 3 attempts per page, a second full read with fewer columns, and then a third read from the "delta" fallback:
+// one failing download made about 37 requests, and a page that retried on top of it reached 69 requests in 45 seconds.
+const CLOUD_PAGE_ATTEMPTS = 2;
+
+/** A request that never got an answer (offline, blocked, dropped): the next request would fail the same way. */
+export function isNetworkFailure(error: unknown): boolean {
+  const e = error as { message?: string; code?: string; status?: number } | null;
+  if (!e) return false;
+  if (e.status === 0) return true;
+  return /failed to fetch|networkerror|network request failed|load failed|fetch failed|err_internet|aborted/i.test(String(e.message ?? ""));
+}
+/** Worth asking again: no answer at all, a server error, or the database's own timeout. A refusal (401, 403, 404) is not. */
+function isRetryable(error: unknown): boolean {
+  const e = error as { code?: string; status?: number } | null;
+  return isNetworkFailure(error) || (typeof e?.status === "number" && e.status >= 500) || e?.code === "57014";
+}
+/** The extra columns are missing from an older database: only that case justifies reading again with fewer columns. */
+function isMissingColumn(error: unknown): boolean {
+  const e = error as { message?: string; code?: string } | null;
+  return e?.code === "42703" || /images_json|primary_image_key/i.test(String(e?.message ?? ""));
+}
 
 async function fetchRowsWithOptionalGallery(profileId: string, since?: string) {
   const supabase = getSupabaseBrowserClient();
   if (!supabase) return [];
 
+  const state = { stopped: false };
   async function readPage(columns: string, from: number) {
-    for (let attempt = 0; ; attempt++) {
+    let lastError: unknown = null;
+    for (let attempt = 0; attempt < CLOUD_PAGE_ATTEMPTS; attempt++) {
+      if (state.stopped) throw lastError ?? new Error("The download was stopped after another page failed.");
       let query = supabase!
         .from(VAULT_ITEMS_TABLE)
         .select(columns)
@@ -348,9 +372,12 @@ async function fetchRowsWithOptionalGallery(profileId: string, since?: string) {
         .range(from, from + CLOUD_PAGE_SIZE - 1);
 
       if (!error) return data ?? [];
-      if (attempt >= CLOUD_PAGE_RETRIES) throw error;
-      await new Promise((resolve) => setTimeout(resolve, 500 * (attempt + 1)));
+      lastError = error;
+      if (!isRetryable(error) || attempt + 1 >= CLOUD_PAGE_ATTEMPTS) break;
+      await new Promise((resolve) => setTimeout(resolve, 800 * 2 ** attempt));
     }
+    state.stopped = true;
+    throw lastError;
   }
 
   async function readAll(columns: string) {
@@ -377,7 +404,10 @@ async function fetchRowsWithOptionalGallery(profileId: string, since?: string) {
 
   try {
     return await readAll("*, images_json, primary_image_key");
-  } catch {
+  } catch (error) {
+    // Only an older database without the photo columns is worth a second, narrower read; any other failure would repeat.
+    if (!isMissingColumn(error)) throw error;
+    state.stopped = false;
     return await readAll("*");
   }
 }
@@ -424,8 +454,9 @@ export async function fetchVaultItemsDelta(
         const rows = await fetchRowsWithOptionalGallery(activeProfileId, since);
         return { items: rows.map(rowToItem), cursor: newestStamp(rows, since), delta: true };
       }
-    } catch {
-      /* fall through to a full pull */
+    } catch (error) {
+      // A missing column or a refused delta is worth one full pull; a request that got no answer would fail the same way again.
+      if (isNetworkFailure(error)) throw error;
     }
   }
 

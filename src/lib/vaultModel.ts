@@ -1378,7 +1378,19 @@ async function checkForceClearVault(profileId: string) {
 const PULL_REUSE_MS = 4000;
 // "ok" is whether the cloud really answered (a failed or abandoned pull leaves the device copy as it was; the Vault page
 // must be able to tell "the cloud says empty" from "the cloud could not be reached").
-let pullInFlight: { promise: Promise<{ ok: boolean }>; startSig: string | null; profileId: string } | null = null;
+// After a download that could not reach the cloud, automatic downloads wait (3 s, 6 s, 12 s … up to 5 minutes) instead of each asking
+// again at once. A person pressing Retry (resetCloudBackoff) is never made to wait. Only a failed REQUEST starts the wait; "nobody is
+// signed in" or "no profile yet" make no request and do not.
+let cloudFailures = 0;
+let cloudNextTryAt = 0;
+export function resetCloudBackoff() { cloudFailures = 0; cloudNextTryAt = 0; }
+function noteCloudResult(result: { ok: boolean; requestFailed?: boolean }) {
+  if (result.ok) { cloudFailures = 0; cloudNextTryAt = 0; return; }
+  if (!result.requestFailed) return;
+  cloudFailures += 1;
+  cloudNextTryAt = Date.now() + Math.min(300_000, 3000 * 2 ** (cloudFailures - 1));
+}
+let pullInFlight: { promise: Promise<{ ok: boolean; requestFailed?: boolean }>; startSig: string | null; profileId: string } | null = null;
 let lastPull: { finishedAt: number; sig: string | null; profileId: string } | null = null;
 
 function localItemsSignature() {
@@ -1414,7 +1426,7 @@ function writePullCursor(profileId: string, entry: { c: string; f: number } | nu
   }
 }
 
-async function pullAndMergeFromSupabase(profileId: string): Promise<{ ok: boolean }> {
+async function pullAndMergeFromSupabase(profileId: string): Promise<{ ok: boolean; requestFailed?: boolean }> {
   // The answer is only for the person who asked. If nobody is signed in there is nothing to pull; if someone else signs in
   // (in this tab or another) before it arrives, it is dropped instead of being merged into the new person's copy.
   const startedAs = storedSessionUserId();
@@ -1459,7 +1471,7 @@ async function pullAndMergeFromSupabase(profileId: string): Promise<{ ok: boolea
     lastPull = { finishedAt: Date.now(), sig: localItemsSignature(), profileId };
     return { ok: true };
   } catch {
-    return { ok: false };
+    return { ok: false, requestFailed: true };
   }
 }
 
@@ -1503,7 +1515,10 @@ async function syncVaultItemsInternal(explicitProfileId?: string): Promise<{ ok:
     return pullInFlight.promise;
   }
 
-  const entry = { promise: pullAndMergeFromSupabase(profileId), startSig: sig, profileId };
+  // The last download could not reach the cloud a moment ago: say so without asking again until the wait is over.
+  if (Date.now() < cloudNextTryAt) return { ok: false };
+
+  const entry = { promise: pullAndMergeFromSupabase(profileId).then((r) => { noteCloudResult(r); return r; }), startSig: sig, profileId };
   pullInFlight = entry;
   try {
     return await entry.promise;
