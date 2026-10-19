@@ -30,6 +30,7 @@ export function LocalNav({
           <Link
             key={item.key}
             href={item.href}
+            data-local-tab="true"
             aria-current={item.key === activeKey ? "page" : undefined}
             className={pillClassName(item.key === activeKey ? "active" : "default")}
           >
@@ -43,6 +44,7 @@ export function LocalNav({
             <Link
               key={item.key}
               href={item.href}
+              data-local-tab="true"
               aria-current={item.key === activeKey ? "page" : undefined}
               className={pillClassName(item.key === activeKey ? "active" : "default")}
             >

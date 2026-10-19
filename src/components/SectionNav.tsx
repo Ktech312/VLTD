@@ -48,15 +48,16 @@ const VAULT_ITEMS = [
 const VAULT_TOOLS = [
   { key: "insights", label: "Insights", href: "/portfolio" },
   { key: "goals", label: "Goals", href: "/goals" },
+  { key: "insurance", label: "Insurance", href: "/insurance" },
 ];
 
-/** Vault: Items, For Sale, Sold, then Insights and Goals. The same bar on every Vault page, so each one has a way back. */
-export function VaultLocalNav({ activeKey }: { activeKey: "items" | "for-sale" | "sold" | "insights" | "goals" }) {
+/** Vault: Items, For Sale, Sold, then Insights, Goals and Insurance. The same bar on every Vault page, so each one has a way back. */
+export function VaultLocalNav({ activeKey }: { activeKey: "items" | "for-sale" | "sold" | "insights" | "goals" | "insurance" }) {
   return <LocalNav ariaLabel="Vault" items={VAULT_ITEMS} trailing={VAULT_TOOLS} activeKey={activeKey} />;
 }
 
 /** The Vault bar in the standard page strip, for pages that do not lay out their own container. */
-export function VaultNav({ activeKey }: { activeKey: "items" | "for-sale" | "sold" | "insights" | "goals" }) {
+export function VaultNav({ activeKey }: { activeKey: "items" | "for-sale" | "sold" | "insights" | "goals" | "insurance" }) {
   return (
     <Strip>
       <VaultLocalNav activeKey={activeKey} />

@@ -19,7 +19,7 @@ export type PrimaryNavItem = {
 
 export const PRIMARY_NAV: PrimaryNavItem[] = [
   { label: "Home", href: "/dashboard", icon: "dashboard", match: ["/dashboard"], exactOnly: true },
-  { label: "Vault", href: "/vault", icon: "vault", match: ["/vault", "/portfolio", "/goals"] },
+  { label: "Vault", href: "/vault", icon: "vault", match: ["/vault", "/portfolio", "/goals", "/insurance"] },
   { label: "Exhibitions", href: "/museum", icon: "exhibitions", match: ["/museum"] },
   { label: "Lounge", href: "/community-board", icon: "communityBoard", match: ["/community-board", "/learn"] },
   { label: "Discover", href: "/discover", icon: "discover", match: ["/discover", "/saved", "/watchlist", "/market", "/upcoming", "/events"] },

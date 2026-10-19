@@ -2689,3 +2689,8 @@ html[data-load-stalled="1"] #vltd-load-stalled {
 #vltd-load-stalled .vltd-load-stalled-inner { max-width: 640px; margin: 0 auto; }
 #vltd-load-stalled a { display: inline-block; margin-top: 8px; padding: 8px 14px; border-radius: 999px; background: #ecedef; color: #14171c; font-weight: 600; text-decoration: none; }
 #vltd-load-stalled code { display: block; margin-top: 8px; font: 12px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace; color: #a9aeb4; word-break: break-word; }
+
+/* The Vault workspace header and tab row are navigation: they never print (Insurance inventory, item sheets, packet). */
+@media print {
+  [data-vault-chrome] { display: none !important; }
+}

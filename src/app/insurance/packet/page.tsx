@@ -3,10 +3,11 @@
 
 import Link from "next/link";
 import { collectibleItems, insuranceValue, PURCHASE_BASED_NOTE } from "@/lib/vaultStats";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import { DEMO_ITEMS } from "@/lib/demoVault";
-import { loadItemsOrSeed, loadItems, syncVaultItemsFromSupabase, type VaultItem as ModelItem } from "@/lib/vaultModel";
+import { loadItems, type VaultItem as ModelItem } from "@/lib/vaultModel";
+import { LoadErrorCard, StaleDataNotice, useCloudRefresh } from "@/components/vault/CloudStatus";
 import { UNIVERSE_LABEL, type UniverseKey } from "@/lib/taxonomy";
 import { EmptyVault } from "@/components/ui/EmptyVault";
 
@@ -82,19 +83,24 @@ export default function InsurancePacketPage() {
   const [pageIndex, setPageIndex] = useState(0);
   const [excludedIds, setExcludedIds] = useState<Set<string>>(new Set());
   const [hydrated, setHydrated] = useState(false);
+  const reloadRef = useRef<() => void>(() => undefined);
+  const retryRef = useRef<() => void>(() => undefined);
+  const cloud = useCloudRefresh(() => reloadRef.current());
+  retryRef.current = cloud.retry;
 
   useEffect(() => {
-    const seed = toSeedItemsFromDemo();
-    const loaded = loadItemsOrSeed(seed as any) as any as Item[];
-    setItems(collectibleItems(loaded));
+    const reload = () => setItems(collectibleItems(loadItems() as any as Item[]));
+    reloadRef.current = reload;
+    reload();
     setExcludedIds(readExcludedIds());
     setHydrated(true);
-    let active = true;
-    void syncVaultItemsFromSupabase().then(() => {
-      if (active) setItems(collectibleItems(loadItems() as any as Item[]));
-    });
+    // A switch of profile (or a change made elsewhere) re-reads the saved copy and asks the cloud again; the page never keeps the previous profile's items.
+    const onProfile = () => { reload(); retryRef.current(); };
+    window.addEventListener("vltd:active-profile", onProfile);
+    window.addEventListener("vltd:vault-updated", reload);
     return () => {
-      active = false;
+      window.removeEventListener("vltd:active-profile", onProfile);
+      window.removeEventListener("vltd:vault-updated", reload);
     };
   }, []);
 
@@ -119,6 +125,15 @@ export default function InsurancePacketPage() {
   const visibleItems = selectedItems.slice(start, start + itemsPerPage);
   const printHref = `/insurance/packet/print?page=${safePageIndex}&images=${includeImages ? "1" : "0"}`;
 
+  if (hydrated && items.length === 0 && cloud.state !== "ok") {
+    return (
+      <main className="px-4 py-6 text-[color:var(--fg)] sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-[1480px]">
+          {cloud.state === "failed" ? <LoadErrorCard what="insurance packet" onRetry={cloud.retry} busy={cloud.busy} /> : <div role="status" className="rounded-[8px] px-6 py-8 text-center text-sm ring-1 ring-[color:var(--border)]" style={{ background: "var(--surface)", color: "var(--muted)" }}>Loading your items…</div>}
+        </div>
+      </main>
+    );
+  }
   if (hydrated && items.length === 0) {
     return (
       <EmptyVault
@@ -133,6 +148,7 @@ export default function InsurancePacketPage() {
   return (
     <main className="px-4 py-6 text-[color:var(--fg)] sm:px-6 lg:px-8">
       <div className="packet-shell mx-auto max-w-6xl">
+        {cloud.state === "failed" && items.length > 0 ? <StaleDataNotice onRetry={cloud.retry} busy={cloud.busy} /> : null}
         <div className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-[24px] border border-[color:var(--border)] bg-vault-card p-3 shadow-[0_18px_56px_rgba(0,0,0,0.22)]">
           <Link href="/insurance" className="rounded-full border border-[color:var(--border)] bg-vault-card px-4 py-2 text-sm font-semibold text-[color:var(--accent)] transition hover:border-[rgba(203,208,213,0.42)]">
             ← Back to Insurance

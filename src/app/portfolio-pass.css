@@ -1,67 +1,68 @@
 /* Path: src/app/portfolio-pass.css */
-/* Pass 7: Portfolio page visual alignment. Scoped by the Insurance PDF action. */
+/* Pass 7: Portfolio (Insights) page visual alignment. Scoped by the .vltd-portfolio-page marker on the Insights page. It used to be scoped by
+   'a link to /insurance exists', which also matched every page that shows the Insurance tab or an insurance link. */
 
-body:has(a[href="/insurance"]) main > div {
+body:has(.vltd-portfolio-page) main > div {
   max-width: 1180px !important;
 }
 
-body:has(a[href="/insurance"]) section:first-of-type {
+body:has(.vltd-portfolio-page) section:first-of-type {
   border-color: rgba(203,208,213, 0.12) !important;
   background: var(--theme-card, rgba(15, 25, 45, 0.85)) !important;
   box-shadow: 0 14px 40px rgba(0, 0, 0, 0.2) !important;
 }
 
-body:has(a[href="/insurance"]) section:first-of-type h1 {
+body:has(.vltd-portfolio-page) section:first-of-type h1 {
   font-weight: 900 !important;
   letter-spacing: -0.045em !important;
 }
 
-body:has(a[href="/insurance"]) a[href="/insurance"] {
+body:has(.vltd-portfolio-page) .vltd-portfolio-page a[href="/insurance"] {
   background: linear-gradient(135deg, #8C9298 0%, #A8AEB4 25%, #C8CDD2 50%, #EDEFF1 70%, #A8AEB4 100%) !important;
   color: #0B0B0B !important;
   border-color: rgba(203,208,213, 0.50) !important;
   box-shadow: 0 8px 28px rgba(203,208,213, 0.30) !important;
 }
 
-body:has(a[href="/insurance"]) .vltd-panel-main,
-body:has(a[href="/insurance"]) .vltd-panel-soft {
+body:has(.vltd-portfolio-page) .vltd-panel-main,
+body:has(.vltd-portfolio-page) .vltd-panel-soft {
   border-color: rgba(203,208,213, 0.12) !important;
   background: var(--theme-card, rgba(15, 25, 45, 0.85)) !important;
   box-shadow: 0 14px 40px rgba(0, 0, 0, 0.2) !important;
 }
 
-body:has(a[href="/insurance"]) .vltd-panel-main:hover,
-body:has(a[href="/insurance"]) .vltd-panel-soft:hover {
+body:has(.vltd-portfolio-page) .vltd-panel-main:hover,
+body:has(.vltd-portfolio-page) .vltd-panel-soft:hover {
   border-color: rgba(203,208,213, 0.35) !important;
 }
 
-body:has(a[href="/insurance"]) svg polyline {
+body:has(.vltd-portfolio-page) svg polyline {
   filter: drop-shadow(0 0 8px rgba(203,208,213, 0.30));
 }
 
-body:has(a[href="/insurance"]) button,
-body:has(a[href="/insurance"]) a {
+body:has(.vltd-portfolio-page) button,
+body:has(.vltd-portfolio-page) a {
   border-color: rgba(203,208,213, 0.16);
 }
 
 @media (max-width: 700px) {
-  body:has(a[href="/insurance"]) main > div {
+  body:has(.vltd-portfolio-page) main > div {
     padding-left: 12px !important;
     padding-right: 12px !important;
   }
 
-  body:has(a[href="/insurance"]) section:first-of-type {
+  body:has(.vltd-portfolio-page) section:first-of-type {
     border-radius: 24px !important;
     padding: 16px !important;
   }
 
-  body:has(a[href="/insurance"]) section:first-of-type h1 {
+  body:has(.vltd-portfolio-page) section:first-of-type h1 {
     font-size: 2rem !important;
     line-height: 1 !important;
   }
 
-  body:has(a[href="/insurance"]) .vltd-panel-main,
-  body:has(a[href="/insurance"]) .vltd-panel-soft {
+  body:has(.vltd-portfolio-page) .vltd-panel-main,
+  body:has(.vltd-portfolio-page) .vltd-panel-soft {
     border-radius: 22px !important;
     padding: 16px !important;
   }

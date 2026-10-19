@@ -3,10 +3,13 @@
 
 import Link from "next/link";
 import { collectibleItems, insuranceValue, PURCHASE_BASED_NOTE } from "@/lib/vaultStats";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import { DEMO_ITEMS } from "@/lib/demoVault";
-import { loadItemsOrSeed, loadItems, syncVaultItemsFromSupabase, type VaultItem as ModelItem } from "@/lib/vaultModel";
+import { loadItems, type VaultItem as ModelItem } from "@/lib/vaultModel";
+import { LoadErrorCard, StaleDataNotice, useCloudRefresh } from "@/components/vault/CloudStatus";
+import { WorkspaceActions } from "@/components/vault/VaultWorkspace";
+import { REVIEW_CHECKLIST_NOTE, reviewCounts } from "@/lib/vaultReview";
 import { UNIVERSE_LABEL, type UniverseKey } from "@/lib/taxonomy";
 import { Glyph } from "@/components/ui/Glyph";
 import { PillButton } from "@/components/ui/PillButton";
@@ -103,21 +106,27 @@ export default function InsuranceExportPage() {
   const [items, setItems] = useState<Item[]>([]);
   const [excludedIds, setExcludedIds] = useState<Set<string>>(new Set());
   const [hydrated, setHydrated] = useState(false);
+  const reloadRef = useRef<() => void>(() => undefined);
+  const retryRef = useRef<() => void>(() => undefined);
+  const cloud = useCloudRefresh(() => reloadRef.current());
+  retryRef.current = cloud.retry;
 
   useEffect(() => {
-    const seed = toSeedItemsFromDemo();
-    const loaded = loadItemsOrSeed(seed as any) as any as Item[];
-    setItems(collectibleItems(loaded));
+    const reload = () => setItems(collectibleItems(loadItems() as any as Item[]));
+    reloadRef.current = reload;
+    reload();
     setExcludedIds(readExcludedIds());
     setHydrated(true);
-    let active = true;
-    void syncVaultItemsFromSupabase().then(() => {
-      if (active) setItems(collectibleItems(loadItems() as any as Item[]));
-    });
+    // A switch of profile (or a change made elsewhere) re-reads the saved copy and asks the cloud again; the page never keeps the previous profile's items.
+    const onProfile = () => { reload(); retryRef.current(); };
+    window.addEventListener("vltd:active-profile", onProfile);
+    window.addEventListener("vltd:vault-updated", reload);
     return () => {
-      active = false;
+      window.removeEventListener("vltd:active-profile", onProfile);
+      window.removeEventListener("vltd:vault-updated", reload);
     };
   }, []);
+  const readiness = useMemo(() => reviewCounts(items as any), [items]);
 
   const selectedItems = useMemo(() => items.filter((item) => !excludedIds.has(String(item.id))), [items, excludedIds]);
   // Items stated at purchase price (not priced yet) carry a * and the footnote below.
@@ -154,6 +163,16 @@ export default function InsuranceExportPage() {
     saveExcludedIds(next);
   }
 
+  // An empty list is only "nothing to insure" once the cloud has answered; before that, or after a failed answer, it is not.
+  if (hydrated && items.length === 0 && cloud.state !== "ok") {
+    return (
+      <main className="vltd-ins-light px-4 py-6 text-[color:var(--fg)] sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-[1480px]">
+          {cloud.state === "failed" ? <LoadErrorCard what="insurance inventory" onRetry={cloud.retry} busy={cloud.busy} /> : <div role="status" className="rounded-[8px] px-6 py-8 text-center text-sm ring-1 ring-[color:var(--border)]" style={{ background: "var(--surface)", color: "var(--muted)" }}>Loading your items…</div>}
+        </div>
+      </main>
+    );
+  }
   if (hydrated && items.length === 0) {
     return (
       <main className="vltd-ins-light px-4 py-10 text-[color:var(--fg)] sm:px-6">
@@ -220,37 +239,21 @@ export default function InsuranceExportPage() {
       `}</style>
 
       <div className="print-wrap mx-auto max-w-6xl">
-        <div className="no-print mb-6 flex flex-wrap items-center justify-between gap-3 rounded-[9px] border border-[color:var(--border)] bg-vault-card p-3 shadow-[0_18px_56px_rgba(0,0,0,0.22)]">
-          <div className="flex flex-wrap items-center gap-2">
-            <PillButton href="/vault">
-              ← Back to Vault
-            </PillButton>
-            <PillButton href="/portfolio">
-              Portfolio
-            </PillButton>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-2">
-            <PillButton onClick={includeAll}>
-              Include all
-            </PillButton>
-            <PillButton onClick={excludeZeroValue}>
-              Exclude $0 value
-            </PillButton>
-            <PillButton
-              href="/insurance/packet"
-              style={{ background: 'rgba(203,208,213,0.10)', color: 'var(--theme-gold, #C8CDD2)' }}
-            >
-              Policy Packet (PDF)
-            </PillButton>
-            <button onClick={() => window.print()} className="rounded-[8px] px-4 py-2 text-sm font-black text-[#0B0B0B]" style={{ background: 'var(--theme-gold-gradient)', boxShadow: 'var(--theme-gold-glow)' }}>
-              Print Inventory PDF
-            </button>
-          </div>
+        <WorkspaceActions>
+          <PillButton href="/insurance/packet" style={{ background: "rgba(203,208,213,0.10)", color: "var(--theme-gold, #C8CDD2)" }}>
+            Policy Packet (PDF)
+          </PillButton>
+          <PillButton onClick={() => window.print()}>Print Inventory PDF</PillButton>
+        </WorkspaceActions>
+        {cloud.state === "failed" && items.length > 0 ? <StaleDataNotice onRetry={cloud.retry} busy={cloud.busy} /> : null}
+        {/* Documentation readiness is a record-keeping checklist. It is not insurance coverage, and nothing here says an item is insured. */}
+        <div className="no-print mb-3 flex flex-wrap items-center gap-x-3 gap-y-1 rounded-[8px] px-3 py-2 text-[12px] ring-1 ring-[color:var(--border)]" style={{ background: "var(--surface)", color: "var(--muted)" }} data-testid="readiness-note">
+          <span><b style={{ color: "var(--fg)" }}>Documentation readiness:</b> {readiness.ready} of {items.length} items complete. {REVIEW_CHECKLIST_NOTE}</span>
+          <Link href="/vault?review=needs_review" className="font-semibold text-[color:var(--accent)] underline underline-offset-4">See what is missing</Link>
         </div>
 
         <section
-          className="card rounded-[30px] p-5 sm:p-6"
+          className="card rounded-[12px] p-4"
           style={{
             background: 'var(--theme-elevated, rgba(20,32,55,0.9))',
             border: '1px solid var(--theme-gold-border, rgba(203,208,213,0.25))',
@@ -258,9 +261,13 @@ export default function InsuranceExportPage() {
           }}
         >
           <div className="insurance-eyebrow text-[11px] font-semibold uppercase tracking-[0.30em] text-[color:var(--muted2)]">Insurance Inventory</div>
-          <h1 className="insurance-title mt-2 text-3xl font-black tracking-[-0.045em] text-text-primary">Vault Inventory Report</h1>
+          <h2 className="insurance-title mt-1 text-xl font-black tracking-[-0.03em] text-text-primary">Vault Inventory Report</h2>
           <div className="insurance-summary mt-2 text-sm text-[color:var(--muted)]">
             Generated {new Date().toLocaleString()} • Included {selectedItems.length} of {items.length} items • Total Value {fmtMoney(totals.value)}{purchaseBasedCount > 0 ? "*" : ""} • Total Cost {fmtMoney(totals.cost)}
+          </div>
+          <div className="no-print mt-3 flex flex-wrap items-center gap-2">
+            <PillButton size="compact" onClick={includeAll}>Include all</PillButton>
+            <PillButton size="compact" onClick={excludeZeroValue}>Exclude $0 value</PillButton>
           </div>
           <div className="no-print mt-3 rounded-[9px] border border-[rgba(203,208,213,0.18)] bg-[rgba(203,208,213,0.06)] px-4 py-3 text-sm text-[color:var(--muted)]">
             Checked items are included in insurance reports and the policy packet. Uncheck anything that should not be part of insurance documentation. Inventory print uses compact landscape formatting.

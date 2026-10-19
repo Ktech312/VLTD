@@ -724,7 +724,7 @@ export default function InsightsOverview({ items: allItems, loading = false }: {
   if (items.length === 0 && loading) {
     return (
       <>
-        <main className="min-h-screen text-[color:var(--fg)]">
+        <main className="vltd-portfolio-page min-h-screen text-[color:var(--fg)]">
           <div className="mx-auto max-w-[1480px] px-4 pb-8 sm:px-8">
             <Panel className="mt-6 p-8 text-center" >
               <div role="status" className="text-sm" style={{ color: MUTED }}>Loading your collection…</div>
@@ -738,7 +738,7 @@ export default function InsightsOverview({ items: allItems, loading = false }: {
   if (items.length === 0) {
     return (
       <>
-        <main className="min-h-screen text-[color:var(--fg)]">
+        <main className="vltd-portfolio-page min-h-screen text-[color:var(--fg)]">
         <div className="mx-auto max-w-[1480px] px-4 pb-8 sm:px-8">
           <Panel className="mt-6 p-8 text-center">
             <div className="mx-auto grid h-16 w-16 place-items-center rounded-full" style={{ border: "1px solid rgba(203,208,213,0.45)", color: GOLD }}>
@@ -771,7 +771,7 @@ export default function InsightsOverview({ items: allItems, loading = false }: {
         />
       </WorkspaceActions>
       {recapOpen ? <VaultWrappedSheet onClose={() => setRecapOpen(false)} /> : null}
-      <main className="min-h-screen pb-[calc(var(--bottomnav-h,86px)+20px)] text-[color:var(--fg)] md:pb-10">
+      <main className="vltd-portfolio-page min-h-screen pb-[calc(var(--bottomnav-h,86px)+20px)] text-[color:var(--fg)] md:pb-10">
       <div className="mx-auto max-w-[1480px] px-4 pb-6 sm:px-8">
         <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
           <StatCard
