@@ -80,12 +80,13 @@ export function computeReadiness(item: VaultItem): ReadinessResult {
     },
     {
       key: "description",
-      label: "Description",
-      detail: item.notes && item.notes.trim().length >= 10
-        ? `${item.notes.trim().slice(0, 60)}${item.notes.length > 60 ? "…" : ""}`
-        : "A short description builds buyer confidence.",
+      // Buyers see the PUBLIC description only: private notes never count here and are never shown in this checklist.
+      label: "Public description",
+      detail: item.description && item.description.trim().length >= 10
+        ? `${item.description.trim().slice(0, 60)}${item.description.length > 60 ? "…" : ""}`
+        : "Public description needed.",
       required: false,
-      passed: !!(item.notes && item.notes.trim().length >= 10),
+      passed: !!(item.description && item.description.trim().length >= 10),
       actionLabel: "Add description",
       actionHref: `/vault/item/${item.id}`,
     },
