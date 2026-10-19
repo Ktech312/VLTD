@@ -50,7 +50,7 @@ function fieldScore(item: VaultItem): number {
     !!(item.grade || item.condition),
     !!item.certNumber?.trim(),
     !!(item.askingPrice && item.askingPrice > 0),
-    !!(item.notes?.trim()),
+    !!(item.description?.trim()),
     !!(item.images?.length),
   ];
   return checks.filter(Boolean).length;
@@ -85,7 +85,8 @@ function escapeRegExp(text: string): string {
 }
 
 function findArtist(item: VaultItem): string {
-  const haystack = [item.title, item.subject, item.notes].filter(Boolean).join(" \n ");
+  // Public fields only: private notes must never feed text that can be shown to buyers.
+  const haystack = [item.title, item.subject].filter(Boolean).join(" \n ");
   const by = haystack.match(/\b(?:art|artwork|illustrat\w*)\s+by\s+([A-Z][A-Za-z.'-]+(?:\s+[A-Z][A-Za-z.'-]+){0,2})/);
   if (by) return by[1].trim();
   const known = KNOWN_ARTISTS.find((name) => new RegExp(escapeRegExp(name), "i").test(haystack));
@@ -187,11 +188,6 @@ function generateListing(item: VaultItem): GeneratedCopy {
     parts.push(`Asking ${price}. Serious inquiries only.`);
   } else {
     parts.push(`Price available upon request.`);
-  }
-
-  // Existing notes as closing detail
-  if (item.notes?.trim() && item.notes.trim().length > 10) {
-    parts.push(item.notes.trim());
   }
 
   const confidence = toConfidence(fieldScore(item), 8);

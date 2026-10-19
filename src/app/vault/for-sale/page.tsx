@@ -41,7 +41,7 @@ function platformGaps(item: VaultItem, platform: Platform): string[] {
   // Marketplace-specific
   if (platform === "EBAY") {
     if (!item.grade?.trim())     gaps.push("Condition / grade");
-    if (!item.notes?.trim() && !inp.description?.trim()) gaps.push("Item description");
+    if (!inp.description?.trim()) gaps.push("Public description needed");
     if (!item.category && !item.categoryLabel) gaps.push("Category");
     if (/psa|bgs|cgc|beckett/i.test(item.grade ?? "") && !item.certNumber) gaps.push("Cert number (graded)");
   }
@@ -51,7 +51,7 @@ function platformGaps(item: VaultItem, platform: Platform): string[] {
   }
   if (platform === "MERCARI") {
     if (!item.grade?.trim())     gaps.push("Condition / grade");
-    if (!item.notes?.trim() && !inp.description?.trim()) gaps.push("Item description");
+    if (!inp.description?.trim()) gaps.push("Public description needed");
   }
   if (platform === "DISCOGS") {
     if (!item.serialNumber) gaps.push("Catalog / serial number");

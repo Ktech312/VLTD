@@ -10,12 +10,11 @@ export type ListingInput = {
   category?: string;
   categoryLabel?: string;
   subcategoryLabel?: string;
+  /** The item's PUBLIC description. Private notes and what was paid are deliberately not part of this input: buyer-facing text is built from public fields only. */
   description?: string;
-  notes?: string;
   price?: number;
   currentValue?: number;
   estimatedValue?: number;
-  purchasePrice?: number;
   edition?: string;
   variant?: string;
   printRun?: string;
@@ -144,7 +143,7 @@ export function buildListingReadiness(input: ListingInput) {
   if (!input.title?.trim()) missing.push("Title");
   if (!askingPrice(input)) missing.push("Asking price or current value");
   if (!input.grade?.trim()) warnings.push("Condition or grade is blank.");
-  if (!input.notes?.trim() && !input.description?.trim()) warnings.push("Description notes are blank.");
+  if (!input.description?.trim()) warnings.push("Public description needed.");
   if (!input.categoryLabel && !input.category) warnings.push("Category is blank.");
   if (!input.certNumber && /psa|bgs|cgc|beckett|slab/i.test(input.grade ?? "")) warnings.push("Graded item has no cert number.");
 
@@ -170,7 +169,6 @@ function ebayItemSpecifics(input: ListingInput) {
 function listingDescription(input: ListingInput, platform: ListingOutput["platform"]) {
   const category = categoryLabel(input);
   const value = money(askingPrice(input));
-  const cost = money(input.purchasePrice);
   const conditionNote = conditionLanguage(input);
   const shipping = shippingNote(input);
   const specifics = platform === "EBAY" ? ebayItemSpecifics(input) : "";
@@ -190,12 +188,11 @@ function listingDescription(input: ListingInput, platform: ListingOutput["platfo
     input.certNumber ? `Certification #: ${input.certNumber}` : "",
     input.serialNumber ? `Serial / ISBN: ${input.serialNumber}` : "",
     value ? `Asking price: ${value}` : "",
-    cost ? `Recorded cost basis: ${cost}` : "",
     "",
     shipping,
     guidance,
     "",
-    input.notes || input.description || "Collector-owned item from a cataloged VLTD vault. Please review all photos carefully.",
+    input.description?.trim() || "Collector-owned item from a cataloged VLTD vault. Please review all photos carefully.",
     specifics,
     "",
     `Prepared for ${platform}. Please confirm final condition, shipping terms, and marketplace-specific details before publishing.`,
@@ -246,10 +243,9 @@ export function itemToListingInput(item: VaultItem): ListingInput {
     category: item.category,
     categoryLabel: item.categoryLabel,
     subcategoryLabel: item.subcategoryLabel,
-    notes: item.notes,
+    description: item.description,
     currentValue: item.currentValue,
     estimatedValue: item.estimatedValue,
-    purchasePrice: item.purchasePrice,
     askingPrice: item.askingPrice,
     edition: item.edition,
     variant: item.variant,
