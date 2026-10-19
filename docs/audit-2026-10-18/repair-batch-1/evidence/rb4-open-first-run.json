@@ -1,0 +1,140 @@
+{
+ "label": "first-run",
+ "fixtureOnly": true,
+ "scenarios": [
+  {
+   "name": "V1: Personal owner opens every exhibition (stale snapshots, missing token, 1-based positions)",
+   "ok": true,
+   "differences": [],
+   "writes": [],
+   "pageText": "Back to Exhibitions Locked 6 ITEMS 0 VIEWS Cover Artwork CURATED EXHIBIT Guitars synthetic PU"
+  },
+  {
+   "name": "V2: Business profile active opens every Personal exhibition",
+   "ok": true,
+   "differences": [],
+   "writes": [],
+   "pageText": "MUSEUM Exhibition not found This exhibition could not be found. It may have been deleted, or it "
+  },
+  {
+   "name": "V3: profile switched Personal -> Business -> Personal while open",
+   "ok": true,
+   "differences": [],
+   "writes": [],
+   "pageText": "Back to Exhibitions Public 6 ITEMS 3 VIEWS Cover Artwork CURATED EXHIBIT Sports Slabs synthet"
+  },
+  {
+   "name": "V4: vault read refused",
+   "ok": true,
+   "differences": [],
+   "writes": [],
+   "pageText": "Back to Exhibitions Locked 0 ITEMS 8 NOT LOADED 0 VIEWS Cover Artwork CURATED EXHIBIT Movie P"
+  },
+  {
+   "name": "V5: unrelated viewer and signed-out visitor",
+   "ok": false,
+   "differences": [],
+   "writes": [
+    {
+     "method": "PATCH",
+     "table": "galleries",
+     "filter": "id=eq.410937cb-017b-463d-960a-5682e7db6ea3"
+    }
+   ],
+   "pageText": "EXHIBITION Exhibition not found This exhibition could not be loaded. Back to Discover"
+  },
+  {
+   "name": "V6: refreshing the stale-snapshot exhibition three times",
+   "ok": true,
+   "differences": [],
+   "writes": [],
+   "pageText": "Back to Exhibitions Public 6 ITEMS 3 VIEWS Cover Artwork CURATED EXHIBIT Sports Slabs synthet"
+  },
+  {
+   "name": "I1: intentional edit",
+   "ok": true,
+   "target": "Remove QA Album 11 - Original Motion Picture Soundtrack",
+   "removed": [
+    "qa_vz_mvfvdmjs_11"
+   ],
+   "writes": [
+    {
+     "method": "POST",
+     "table": "vault_items",
+     "filter": ""
+    },
+    {
+     "method": "POST",
+     "table": "galleries",
+     "filter": "on_conflict=id"
+    },
+    {
+     "method": "POST",
+     "table": "vault_items",
+     "filter": ""
+    },
+    {
+     "method": "PATCH",
+     "table": "gallery_items",
+     "filter": "id=eq.831c1910-909b-4efb-b611-9ba717109864"
+    },
+    {
+     "method": "POST",
+     "table": "vault_items",
+     "filter": ""
+    },
+    {
+     "method": "POST",
+     "table": "vault_items",
+     "filter": ""
+    },
+    {
+     "method": "PATCH",
+     "table": "gallery_items",
+     "filter": "id=eq.9fa0fcbd-0fe0-44f0-adae-e0dc24bafd06"
+    },
+    {
+     "method": "POST",
+     "table": "vault_items",
+     "filter": ""
+    },
+    {
+     "method": "PATCH",
+     "table": "gallery_items",
+     "filter": "id=eq.8f405462-25c4-447a-832c-1ccdc96397aa"
+    },
+    {
+     "method": "POST",
+     "table": "vault_items",
+     "filter": ""
+    },
+    {
+     "method": "PATCH",
+     "table": "gallery_items",
+     "filter": "id=eq.5eab6181-cfc5-4f5b-885c-70fd0bd01bc4"
+    },
+    {
+     "method": "PATCH",
+     "table": "gallery_items",
+     "filter": "id=eq.c23f9f20-3463-4b77-a7f7-dff7c583ec6d"
+    },
+    {
+     "method": "PATCH",
+     "table": "gallery_items",
+     "filter": "id=eq.4d9059f3-df5a-4200-a7e5-f72f009a0935"
+    },
+    {
+     "method": "DELETE",
+     "table": "gallery_items",
+     "filter": "id=in.(55a9b419-53e0-4668-8a07-6f877a5b5f99)"
+    },
+    {
+     "method": "DELETE",
+     "table": "gallery_invites",
+     "filter": "gallery_id=eq.ff08dcc5-f529-4a5d-bfb8-377913af488a"
+    }
+   ],
+   "positionsAfter": "[0,1,2,3,4,5]"
+  }
+ ]
+}

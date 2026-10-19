@@ -1,0 +1,258 @@
+{
+ "label": "third-run",
+ "fixtureOnly": true,
+ "scenarios": [
+  {
+   "name": "M1",
+   "before": {
+    "items": {
+     "qa_vz_mvfvdmjs_16": {
+      "profile": "Personal",
+      "public": false
+     },
+     "qa_vz_mvfvdmjs_6": {
+      "profile": "Personal",
+      "public": false
+     }
+    },
+    "inExhibit": {
+     "qa_vz_mvfvdmjs_6": true,
+     "qa_vz_mvfvdmjs_16": true
+    },
+    "galleryCounts": {
+     "410937cb": 6,
+     "f2779d81": 5,
+     "cf374661": 8,
+     "d1cea859": 6,
+     "ff08dcc5": 6
+    },
+    "links": 26
+   },
+   "after": {
+    "items": {
+     "qa_vz_mvfvdmjs_16": {
+      "profile": "Business",
+      "public": false
+     },
+     "qa_vz_mvfvdmjs_6": {
+      "profile": "Business",
+      "public": false
+     }
+    },
+    "inExhibit": {
+     "qa_vz_mvfvdmjs_6": false,
+     "qa_vz_mvfvdmjs_16": false
+    },
+    "galleryCounts": {
+     "410937cb": 5,
+     "f2779d81": 5,
+     "cf374661": 7,
+     "d1cea859": 6,
+     "ff08dcc5": 5
+    },
+    "links": 23
+   },
+   "ask": "Move 2 to QA Journey Business?",
+   "msg": "Moved 2 items. They are private in the other profile and no longer in this profile's exhibitions.",
+   "clickedProfile": true,
+   "stillListed": [
+    false,
+    false
+   ],
+   "listedAfterReload": [
+    false,
+    false
+   ],
+   "shot": "shots/rb4-third-run-move-M1-normal.jpg"
+  },
+  {
+   "name": "M2",
+   "before": {
+    "items": {
+     "qa_vz_mvfvdmjs_16": {
+      "profile": "Personal",
+      "public": false
+     },
+     "qa_vz_mvfvdmjs_6": {
+      "profile": "Personal",
+      "public": false
+     }
+    },
+    "inExhibit": {
+     "qa_vz_mvfvdmjs_6": true,
+     "qa_vz_mvfvdmjs_16": true
+    },
+    "galleryCounts": {
+     "410937cb": 6,
+     "f2779d81": 5,
+     "cf374661": 8,
+     "d1cea859": 6,
+     "ff08dcc5": 6
+    },
+    "links": 26
+   },
+   "after": {
+    "items": {
+     "qa_vz_mvfvdmjs_16": {
+      "profile": "Personal",
+      "public": false
+     },
+     "qa_vz_mvfvdmjs_6": {
+      "profile": "Personal",
+      "public": false
+     }
+    },
+    "inExhibit": {
+     "qa_vz_mvfvdmjs_6": true,
+     "qa_vz_mvfvdmjs_16": true
+    },
+    "galleryCounts": {
+     "410937cb": 6,
+     "f2779d81": 5,
+     "cf374661": 8,
+     "d1cea859": 6,
+     "ff08dcc5": 6
+    },
+    "links": 26
+   },
+   "ask": "Move 2 to QA Journey Business?",
+   "msg": "2 items could not be moved and were left exactly as before (still in this profile and in their exhibitions).",
+   "clickedProfile": true,
+   "stillListed": [
+    true,
+    true
+   ],
+   "listedAfterReload": [
+    true,
+    true
+   ],
+   "shot": "shots/rb4-third-run-move-M2-refused.jpg"
+  },
+  {
+   "name": "M3",
+   "before": {
+    "items": {
+     "qa_vz_mvfvdmjs_16": {
+      "profile": "Personal",
+      "public": false
+     },
+     "qa_vz_mvfvdmjs_6": {
+      "profile": "Personal",
+      "public": false
+     }
+    },
+    "inExhibit": {
+     "qa_vz_mvfvdmjs_6": true,
+     "qa_vz_mvfvdmjs_16": true
+    },
+    "galleryCounts": {
+     "410937cb": 6,
+     "f2779d81": 5,
+     "cf374661": 8,
+     "d1cea859": 6,
+     "ff08dcc5": 6
+    },
+    "links": 26
+   },
+   "after": {
+    "items": {
+     "qa_vz_mvfvdmjs_16": {
+      "profile": "Business",
+      "public": false
+     },
+     "qa_vz_mvfvdmjs_6": {
+      "profile": "Business",
+      "public": false
+     }
+    },
+    "inExhibit": {
+     "qa_vz_mvfvdmjs_6": false,
+     "qa_vz_mvfvdmjs_16": false
+    },
+    "galleryCounts": {
+     "410937cb": 5,
+     "f2779d81": 5,
+     "cf374661": 7,
+     "d1cea859": 6,
+     "ff08dcc5": 5
+    },
+    "links": 23
+   },
+   "ask": "Move 2 to QA Journey Business?",
+   "msg": "Moved 2 items. They are private in the other profile and no longer in this profile's exhibitions.",
+   "clickedProfile": true,
+   "stillListed": [
+    false,
+    false
+   ],
+   "listedAfterReload": [
+    false,
+    false
+   ],
+   "shot": "shots/rb4-third-run-move-M3-answer-lost.jpg"
+  },
+  {
+   "name": "M4",
+   "before": {
+    "items": {
+     "qa_vz_mvfvdmjs_16": {
+      "profile": "Personal",
+      "public": false
+     },
+     "qa_vz_mvfvdmjs_6": {
+      "profile": "Personal",
+      "public": false
+     }
+    },
+    "inExhibit": {
+     "qa_vz_mvfvdmjs_6": true,
+     "qa_vz_mvfvdmjs_16": true
+    },
+    "galleryCounts": {
+     "410937cb": 6,
+     "f2779d81": 5,
+     "cf374661": 8,
+     "d1cea859": 6,
+     "ff08dcc5": 6
+    },
+    "links": 26
+   },
+   "after": {
+    "items": {
+     "qa_vz_mvfvdmjs_16": {
+      "profile": "Business",
+      "public": false
+     },
+     "qa_vz_mvfvdmjs_6": {
+      "profile": "Business",
+      "public": false
+     }
+    },
+    "inExhibit": {
+     "qa_vz_mvfvdmjs_6": true,
+     "qa_vz_mvfvdmjs_16": true
+    },
+    "galleryCounts": {
+     "410937cb": 6,
+     "f2779d81": 5,
+     "cf374661": 8,
+     "d1cea859": 6,
+     "ff08dcc5": 6
+    },
+    "links": 26
+   },
+   "ask": "Move 2 to QA Journey Business?",
+   "msg": "2 items could not be moved and were left exactly as before (still in this profile and in their exhibitions).",
+   "clickedProfile": true,
+   "stillListed": [
+    true,
+    true
+   ],
+   "listedAfterReload": [
+    false,
+    false
+   ],
+   "shot": "shots/rb4-third-run-move-M4-unknown.jpg"
+  }
+ ]
+}

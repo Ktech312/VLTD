@@ -1,0 +1,212 @@
+{
+ "label": "before-fix",
+ "theme": "deep-vault",
+ "docs": [
+  {
+   "name": "inventory",
+   "path": "/insurance",
+   "dom": {
+    "htmlDisplay": "block",
+    "bodyHeight": 900,
+    "tableRows": 37,
+    "topChromeDisplayed": 1,
+    "textElements": 166,
+    "worstTextContrast": 1,
+    "moneyCells": 74,
+    "worstMoneyContrast": 21
+   },
+   "pdf": "insurance-batch2/before-fix/deep-vault-inventory.pdf",
+   "pdfBytes": 767677,
+   "pdfPages": 1,
+   "pdfTextChars": 2409,
+   "pdfRows": 35,
+   "pdfHasSiteBar": true,
+   "pdfHasTitle": true,
+   "pdfFirstLines": [
+    "?               NOVICE",
+    "Level 1",
+    "INSURANCE INVENTORY",
+    "Vault Inventory Report"
+   ]
+  },
+  {
+   "name": "packet-screen",
+   "path": "/insurance/packet",
+   "dom": {
+    "htmlDisplay": "block",
+    "bodyHeight": 900,
+    "tableRows": 25,
+    "topChromeDisplayed": 1,
+    "textElements": 146,
+    "worstTextContrast": 1.26,
+    "moneyCells": 50,
+    "worstMoneyContrast": 14.11
+   },
+   "pdf": "insurance-batch2/before-fix/deep-vault-packet-screen.pdf",
+   "pdfBytes": 781305,
+   "pdfPages": 1,
+   "pdfTextChars": 686,
+   "pdfRows": 4,
+   "pdfHasSiteBar": true,
+   "pdfHasTitle": true,
+   "pdfFirstLines": [
+    "?                  COLLECTOR",
+    "Level 4",
+    "Back to Insurance            Prev Page 1 of 2 Next      Open Printable Page",
+    "Include images (25/page)"
+   ]
+  },
+  {
+   "name": "packet-print-p1",
+   "path": "/insurance/packet/print?page=0&images=0",
+   "dom": {
+    "htmlDisplay": "none",
+    "bodyHeight": 0,
+    "tableRows": 25,
+    "topChromeDisplayed": 0,
+    "textElements": 0,
+    "worstTextContrast": 0,
+    "moneyCells": 0,
+    "worstMoneyContrast": null
+   },
+   "pdf": "insurance-batch2/before-fix/deep-vault-packet-print-p1.pdf",
+   "pdfBytes": 909,
+   "pdfPages": 1,
+   "pdfTextChars": 0,
+   "pdfRows": 0,
+   "pdfHasSiteBar": false,
+   "pdfHasTitle": false,
+   "pdfFirstLines": []
+  },
+  {
+   "name": "packet-print-p2",
+   "path": "/insurance/packet/print?page=1&images=0",
+   "dom": {
+    "htmlDisplay": "none",
+    "bodyHeight": 0,
+    "tableRows": 12,
+    "topChromeDisplayed": 0,
+    "textElements": 0,
+    "worstTextContrast": 0,
+    "moneyCells": 0,
+    "worstMoneyContrast": null
+   },
+   "pdf": "insurance-batch2/before-fix/deep-vault-packet-print-p2.pdf",
+   "pdfBytes": 909,
+   "pdfPages": 1,
+   "pdfTextChars": 0,
+   "pdfRows": 0,
+   "pdfHasSiteBar": false,
+   "pdfHasTitle": false,
+   "pdfFirstLines": []
+  },
+  {
+   "name": "item-sheet",
+   "path": "/insurance/item?id=qa_ins_mvfvdmjs_allin",
+   "dom": {
+    "htmlDisplay": "block",
+    "bodyHeight": 900,
+    "tableRows": 0,
+    "topChromeDisplayed": 1,
+    "textElements": 16,
+    "worstTextContrast": 1,
+    "moneyCells": 2,
+    "worstMoneyContrast": 1.17
+   },
+   "pdf": "insurance-batch2/before-fix/deep-vault-item-sheet.pdf",
+   "pdfBytes": 624740,
+   "pdfPages": 1,
+   "pdfTextChars": 325,
+   "pdfRows": 1,
+   "pdfHasSiteBar": true,
+   "pdfHasTitle": true,
+   "pdfFirstLines": [
+    "?            COLLECTOR",
+    "INSURANCE ITEM SHEET                                                                                                                                                     Level 4",
+    "QA INS cost with tax shipping fees",
+    "Pop Culture � Comics"
+   ]
+  },
+  {
+   "name": "item-sheet-sold",
+   "path": "/insurance/item?id=qa_vz_mvfvdmjs_s0",
+   "dom": {
+    "htmlDisplay": "block",
+    "bodyHeight": 900,
+    "tableRows": 0,
+    "topChromeDisplayed": 1,
+    "textElements": 15,
+    "worstTextContrast": 1,
+    "moneyCells": 2,
+    "worstMoneyContrast": 1.17
+   },
+   "pdf": "insurance-batch2/before-fix/deep-vault-item-sheet-sold.pdf",
+   "pdfBytes": 912522,
+   "pdfPages": 1,
+   "pdfTextChars": 342,
+   "pdfRows": 1,
+   "pdfHasSiteBar": true,
+   "pdfHasTitle": true,
+   "pdfFirstLines": [
+    "?            COLLECTOR",
+    "INSURANCE ITEM SHEET                                                                                                                                                     Level 4",
+    "QA Sold Spider-Man 300",
+    "Pop Culture � Comics"
+   ]
+  },
+  {
+   "name": "report",
+   "path": "/reports/insurance",
+   "dom": {
+    "htmlDisplay": "block",
+    "bodyHeight": 900,
+    "tableRows": 31,
+    "topChromeDisplayed": 1,
+    "textElements": 223,
+    "worstTextContrast": 1.01,
+    "moneyCells": 65,
+    "worstMoneyContrast": 1.14
+   },
+   "pdf": "insurance-batch2/before-fix/deep-vault-report.pdf",
+   "pdfBytes": 687491,
+   "pdfPages": 1,
+   "pdfTextChars": 453,
+   "pdfRows": 0,
+   "pdfHasSiteBar": true,
+   "pdfHasTitle": true,
+   "pdfFirstLines": [
+    "?                 COLLECTOR",
+    "Level 4",
+    "INSURANCE INVENTORY REPORT",
+    "VLTD Inventory Summary"
+   ]
+  },
+  {
+   "name": "schedule",
+   "path": "/portfolio/insurance",
+   "dom": {
+    "htmlDisplay": "block",
+    "bodyHeight": 900,
+    "tableRows": 31,
+    "topChromeDisplayed": 1,
+    "textElements": 139,
+    "worstTextContrast": 5.68,
+    "moneyCells": 32,
+    "worstMoneyContrast": 14.11
+   },
+   "pdf": "insurance-batch2/before-fix/deep-vault-schedule.pdf",
+   "pdfBytes": 741663,
+   "pdfPages": 1,
+   "pdfTextChars": 1013,
+   "pdfRows": 12,
+   "pdfHasSiteBar": true,
+   "pdfHasTitle": true,
+   "pdfFirstLines": [
+    "?                              COLLECTOR",
+    "Level 4",
+    "INSURANCE REPORT                                                                 Stated value: $1,501*",
+    "Inventory Schedule                                                                Purchase cost: $796"
+   ]
+  }
+ ]
+}

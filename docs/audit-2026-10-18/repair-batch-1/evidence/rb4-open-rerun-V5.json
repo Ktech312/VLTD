@@ -1,0 +1,21 @@
+{
+ "label": "rerun-V5",
+ "fixtureOnly": true,
+ "scenarios": [
+  {
+   "name": "V5: unrelated viewer and signed-out visitor",
+   "ok": true,
+   "differences": [],
+   "writes": [
+    {
+     "method": "PATCH",
+     "table": "galleries",
+     "filter": "id=eq.410937cb-017b-463d-960a-5682e7db6ea3",
+     "bodyKeys": "analytics_views,analytics_unique_view_keys,analytics_last_viewed_at",
+     "analyticsOnly": true
+    }
+   ],
+   "pageText": "EXHIBITION Exhibition not found This exhibition could not be loaded. Back to Discover"
+  }
+ ]
+}
