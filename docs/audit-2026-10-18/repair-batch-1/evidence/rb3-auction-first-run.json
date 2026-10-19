@@ -1,0 +1,71 @@
+{
+ "label": "first-run",
+ "fixtureOnly": true,
+ "steps": [
+  {
+   "ok": true,
+   "control": "Start Auction (sheet)",
+   "actual": "notice: \"Starting this auction makes the item public.\"; dialog: Auction setup"
+  },
+  {
+   "ok": true,
+   "control": "Start Auction -> Start",
+   "actual": "{\"status\":\"AUCTION\",\"is_public\":true,\"auction_status\":\"ACTIVE\",\"auction_ends_at\":1793034660104,\"auction_bid_count\":0}"
+  },
+  {
+   "ok": true,
+   "control": "Cancel Auction -> question",
+   "actual": "Cancel auction Choose whether this item should remain publicly visible. Cancel auction and make private Cancel auction a | buttons: Cancel auction and make private / Cancel auction and keep public / Go back"
+  },
+  {
+   "ok": true,
+   "control": "wording",
+   "actual": "Cancel auction Choose whether this item should remain publicly visible. Cancel auction and make private Cancel auction and keep public Go back"
+  },
+  {
+   "ok": true,
+   "control": "Go back",
+   "actual": "{\"status\":\"AUCTION\",\"is_public\":true,\"auction_status\":\"ACTIVE\",\"auction_ends_at\":1793034660104,\"auction_bid_count\":0}; question still open: false"
+  },
+  {
+   "ok": true,
+   "control": "Escape on the question",
+   "actual": "{\"status\":\"AUCTION\",\"is_public\":true,\"auction_status\":\"ACTIVE\",\"auction_ends_at\":1793034660104,\"auction_bid_count\":0}; dialogs open: Auction setup"
+  },
+  {
+   "ok": true,
+   "control": "click outside the question",
+   "actual": "{\"status\":\"AUCTION\",\"is_public\":true,\"auction_status\":\"ACTIVE\",\"auction_ends_at\":1793034660104,\"auction_bid_count\":0}"
+  },
+  {
+   "ok": true,
+   "control": "Cancel auction and make private",
+   "actual": "{\"status\":\"COLLECTION\",\"is_public\":false,\"auction_status\":\"CANCELLED\",\"auction_ends_at\":1793034660104,\"auction_bid_count\":0}"
+  },
+  {
+   "ok": true,
+   "control": "persistence after reload",
+   "actual": "{\"status\":\"COLLECTION\",\"is_public\":false,\"auction_status\":\"CANCELLED\",\"auction_ends_at\":1793034660104,\"auction_bid_count\":0}; page shows 'Start Auction' again: true"
+  },
+  {
+   "ok": false,
+   "control": "Cancel auction and keep public",
+   "actual": "{\"status\":\"COLLECTION\",\"is_public\":true,\"auction_status\":\"CANCELLED\",\"auction_ends_at\":1793034713244,\"auction_bid_count\":0}; visitor sees the item: false"
+  },
+  {
+   "ok": false,
+   "control": "Cancel auction and make private while the save is refused",
+   "actual": "cloud: {\"status\":\"AUCTION\",\"is_public\":true,\"auction_status\":\"ACTIVE\",\"auction_ends_at\":1793034749100,\"auction_bid_count\":0}; notice shown: false"
+  },
+  {
+   "ok": true,
+   "control": "local state after reload",
+   "actual": "shows Start Auction: true; shows Manage Auction: false"
+  },
+  {
+   "ok": true,
+   "control": "queued cancellation delivered",
+   "actual": "{\"status\":\"COLLECTION\",\"is_public\":false,\"auction_status\":\"CANCELLED\",\"auction_ends_at\":1793034749100,\"auction_bid_count\":0}"
+  }
+ ]
+}

@@ -1,0 +1,36 @@
+{
+ "label": "third-run",
+ "fixtureOnly": true,
+ "steps": [
+  {
+   "ok": true,
+   "control": "Listing Copy: every marketplace chip + Copy Listing",
+   "actual": "6 platform chips (eBay, Mercari, Facebook, Etsy, Whatnot, Icona); results: [{\"label\":\"eBay\",\"copied\":843,\"leaksNote\":false,\"leaksCost\":false},{\"label\":\"Mercari\",\"copied\":843,\"leaksNote\":false,\"leaksCost\":false},{\"label\":\"Facebook\",\"copied\":814,\"leaksNote\":false,\"leaksCost\":false},{\"label\":\"Etsy\",\"copied\":795,\"leaksNote\":false,\"leaksCost\":false},{\"label\":\"Whatnot\",\"copied\":795,\"leaksNote\":false,\"leaksCost\":false},{\"label\":\"Icona\",\"copied\":797,\"leaksNote\":false,\"leaksCost\":false}]"
+  },
+  {
+   "ok": true,
+   "control": "Listing readiness: Public description",
+   "actual": "label on the page: true; private note text inside the readiness panel: false; readiness panel text: 67 LISTING READINESS Almost ready 3/3 required · 4/6 total Title \"QA Album 23 - Original Motion Picture Soundtrack\" Asking price $120 Photo "
+  },
+  {
+   "ok": true,
+   "control": "Generate listing copy (draft)",
+   "actual": "draft length 133; contains private note: false; contains cost: false"
+  },
+  {
+   "ok": true,
+   "control": "Accept — apply to item",
+   "actual": "description saved: true; description leaks note: false; leaks cost: false; private note preserved: true; purchase price preserved: true"
+  },
+  {
+   "ok": true,
+   "control": "public share page",
+   "actual": "visible text leaks note: false, cost: false; page source leaks note: false, cost: false; page has content: true"
+  },
+  {
+   "ok": null,
+   "control": "For Sale page text",
+   "actual": "contains 'Public description needed': true"
+  }
+ ]
+}

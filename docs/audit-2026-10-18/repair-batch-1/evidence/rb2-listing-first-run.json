@@ -1,0 +1,36 @@
+{
+ "label": "first-run",
+ "fixtureOnly": true,
+ "steps": [
+  {
+   "ok": false,
+   "control": "Listing Copy: every marketplace chip + Copy Listing",
+   "actual": "7 platform chips (eBay, Mercari, Facebook, Etsy, Whatnot, Fanatics Collect, Icona); results: [{\"label\":\"eBay\",\"copied\":895,\"leaksNote\":false,\"leaksCost\":false},{\"label\":\"Mercari\",\"copied\":895,\"leaksNote\":false,\"leaksCost\":false},{\"label\":\"Facebook\",\"copied\":866,\"leaksNote\":false,\"leaksCost\":false},{\"label\":\"Etsy\",\"copied\":847,\"leaksNote\":false,\"leaksCost\":false},{\"label\":\"Whatnot\",\"copied\":847,\"leaksNote\":false,\"leaksCost\":false},{\"label\":\"Fanatics Collect\",\"copied\":847,\"leaksNote\":false,\"leaksCost\":false},{\"label\":\"Icona\",\"copied\":849,\"leaksNote\":false,\"leaksCost\":false}]"
+  },
+  {
+   "ok": false,
+   "control": "Listing readiness: Public description",
+   "actual": "label present: true; private note text on page outside the notes box: false"
+  },
+  {
+   "ok": true,
+   "control": "Generate listing copy (draft)",
+   "actual": "draft length 117; contains private note: false; contains cost: false"
+  },
+  {
+   "ok": true,
+   "control": "Accept — apply to item",
+   "actual": "description saved: true; description leaks note: false; leaks cost: false; private note preserved: true; purchase price preserved: true"
+  },
+  {
+   "ok": true,
+   "control": "public share page",
+   "actual": "visible text leaks note: false, cost: false; page source leaks note: false, cost: false; page has content: true"
+  },
+  {
+   "ok": null,
+   "control": "For Sale page text",
+   "actual": "contains 'Public description needed': true"
+  }
+ ]
+}

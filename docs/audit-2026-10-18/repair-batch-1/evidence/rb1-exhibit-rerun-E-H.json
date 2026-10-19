@@ -1,0 +1,51 @@
+{
+ "label": "rerun-E-H",
+ "fixtureOnly": true,
+ "scenarios": [
+  {
+   "name": "E: profile switching while an exhibition is open",
+   "kind": "owner",
+   "ok": true,
+   "differences": [],
+   "galleriesRewrittenWithSameContent": [
+    "bc22ce9c"
+   ],
+   "snapshotsAddedOn": [
+    "bc22ce9c"
+   ],
+   "writes": [
+    {
+     "method": "POST",
+     "table": "galleries",
+     "galleryWriteItemIds": 8,
+     "dbItemIdsBefore": 8,
+     "fewerIdsThanDatabase": false
+    },
+    {
+     "method": "DELETE",
+     "table": "gallery_items",
+     "galleryWriteItemIds": null,
+     "dbItemIdsBefore": null,
+     "fewerIdsThanDatabase": false
+    },
+    {
+     "method": "POST",
+     "table": "gallery_items",
+     "galleryWriteItemIds": null,
+     "dbItemIdsBefore": null,
+     "fewerIdsThanDatabase": false
+    }
+   ],
+   "destructiveWrites": 0,
+   "pageText": "Back to Exhibitions Saved Locked 8 ITEMS 0 VIEWS Cover Artwork CURATED EXHIBIT Movie Posters synthetic PUBLIC SHARE LINK Uses a dedic"
+  },
+  {
+   "name": "H: confirmed delete",
+   "item": "one synthetic item",
+   "deleted": true,
+   "galleriesHoldingIt": 1,
+   "galleriesChanged": 1,
+   "idStillListed": false
+  }
+ ]
+}

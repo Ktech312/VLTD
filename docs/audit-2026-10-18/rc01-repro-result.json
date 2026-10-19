@@ -1,0 +1,86 @@
+{
+ "fixtureOnly": true,
+ "before": {
+  "layoutIds": 7,
+  "exIds": 7,
+  "snapshots": 0,
+  "links": 7,
+  "updated": "2026-10-19T16:16:54.245+00:00"
+ },
+ "runs": [
+  {
+   "name": "A-business-active-opens-personal-exhibition",
+   "activeProfile": "Business",
+   "itemReadBlocked": false,
+   "pageText": "MUSEUM Exhibition not found This exhibition could not be found. It may have been deleted, or it ",
+   "after": {
+    "layoutIds": 0,
+    "exIds": 0,
+    "snapshots": 0,
+    "links": 0,
+    "updated": "2026-10-19T16:17:53.225+00:00"
+   },
+   "writesSeen": [
+    {
+     "method": "POST",
+     "table": "galleries",
+     "layoutItemIdsInBody": 0,
+     "galleryIdPrefix": "652bb048",
+     "thisGallery": true,
+     "status": 200
+    },
+    {
+     "method": "DELETE",
+     "table": "gallery_items",
+     "layoutItemIdsInBody": null,
+     "galleryIdPrefix": null,
+     "thisGallery": false,
+     "status": 204
+    }
+   ]
+  },
+  {
+   "name": "B-personal-active-item-read-blocked",
+   "activeProfile": "Personal",
+   "itemReadBlocked": true,
+   "pageText": "Back to Exhibitions Locked 0 ITEMS 0 VIEWS Cover Artwork CURATED EXHIBIT Vinyl Wall synthetic PU",
+   "after": {
+    "layoutIds": 7,
+    "exIds": 7,
+    "snapshots": 0,
+    "links": 7,
+    "updated": "2026-10-19T16:17:53.225+00:00"
+   },
+   "writesSeen": [
+    {
+     "method": "POST",
+     "table": "galleries",
+     "layoutItemIdsInBody": 0,
+     "galleryIdPrefix": "652bb048",
+     "thisGallery": true
+    }
+   ]
+  },
+  {
+   "name": "C-control-personal-active-normal",
+   "activeProfile": "Personal",
+   "itemReadBlocked": false,
+   "pageText": "Back to Exhibitions Locked 7 ITEMS 0 VIEWS Cover Artwork CURATED EXHIBIT Vinyl Wall synthetic PU",
+   "after": {
+    "layoutIds": 7,
+    "exIds": 7,
+    "snapshots": 0,
+    "links": 7,
+    "updated": "2026-10-19T16:17:53.225+00:00"
+   },
+   "writesSeen": []
+  }
+ ],
+ "restoredTo": {
+  "layoutIds": 7,
+  "exIds": 7,
+  "snapshots": 0,
+  "links": 7,
+  "updated": "2026-10-19T16:17:53.225+00:00"
+ }
+}

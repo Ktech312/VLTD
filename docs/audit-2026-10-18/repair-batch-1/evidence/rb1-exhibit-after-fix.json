@@ -1,0 +1,143 @@
+{
+ "label": "after-fix",
+ "fixtureOnly": true,
+ "scenarios": [
+  {
+   "name": "A: wrong active profile (Business) opens every Personal exhibition",
+   "kind": "business",
+   "ok": true,
+   "differences": [],
+   "galleriesRewrittenWithSameContent": [],
+   "writes": [],
+   "destructiveWrites": 0,
+   "pageText": "MUSEUM Exhibition not found This exhibition could not be found. It may have been deleted, or it belongs to another profile. Back to Exhi"
+  },
+  {
+   "name": "B: vault read refused (Personal active)",
+   "kind": "owner",
+   "ok": true,
+   "differences": [],
+   "galleriesRewrittenWithSameContent": [],
+   "writes": [],
+   "destructiveWrites": 0,
+   "pageText": "Back to Exhibitions Locked 0 ITEMS 8 NOT LOADED 0 VIEWS Cover Artwork CURATED EXHIBIT Movie Posters synthetic PUBLIC SHARE LINK Uses "
+  },
+  {
+   "name": "C: incomplete read (cloud answers 'no items')",
+   "kind": "owner",
+   "ok": true,
+   "differences": [],
+   "galleriesRewrittenWithSameContent": [],
+   "writes": [],
+   "destructiveWrites": 0,
+   "pageText": "Back to Exhibitions Locked 0 ITEMS 8 NOT LOADED 0 VIEWS Cover Artwork CURATED EXHIBIT Movie Posters synthetic PUBLIC SHARE LINK Uses "
+  },
+  {
+   "name": "D: delayed read (vault read held for 20 s)",
+   "kind": "owner",
+   "ok": true,
+   "differences": [],
+   "galleriesRewrittenWithSameContent": [],
+   "writes": [],
+   "destructiveWrites": 0,
+   "pageText": "Back to Exhibitions Locked 7 ITEMS 0 VIEWS Cover Artwork CURATED EXHIBIT Vinyl Wall synthetic PUBLIC SHARE LINK Uses a dedicated public "
+  },
+  {
+   "name": "E: profile switching while an exhibition is open",
+   "kind": "owner",
+   "ok": false,
+   "differences": [
+    "9eae87cf: snaps changed"
+   ],
+   "galleriesRewrittenWithSameContent": [
+    "9eae87cf"
+   ],
+   "writes": [
+    {
+     "method": "POST",
+     "table": "galleries",
+     "galleryWriteItemIds": 7,
+     "dbItemIdsBefore": 7,
+     "fewerIdsThanDatabase": false
+    },
+    {
+     "method": "DELETE",
+     "table": "gallery_items",
+     "galleryWriteItemIds": null,
+     "dbItemIdsBefore": null,
+     "fewerIdsThanDatabase": false
+    },
+    {
+     "method": "POST",
+     "table": "gallery_items",
+     "galleryWriteItemIds": null,
+     "dbItemIdsBefore": null,
+     "fewerIdsThanDatabase": false
+    }
+   ],
+   "destructiveWrites": 0,
+   "pageText": "Back to Exhibitions Saved Locked 7 ITEMS 0 VIEWS Cover Artwork CURATED EXHIBIT Vinyl Wall synthetic PUBLIC SHARE LINK Uses a dedicate"
+  },
+  {
+   "name": "F1: unrelated signed-in viewer opens the editor and guest addresses",
+   "kind": "viewer",
+   "ok": true,
+   "differences": [],
+   "galleriesRewrittenWithSameContent": [],
+   "writes": [
+    {
+     "method": "PATCH",
+     "table": "galleries",
+     "galleryWriteItemIds": null,
+     "dbItemIdsBefore": null,
+     "fewerIdsThanDatabase": false
+    }
+   ],
+   "destructiveWrites": 0,
+   "pageText": "Guest View Back to Discover GUEST PREVIEW Sports Slabs synthetic QA public exhibition 🗝️ Collector Share Save Info · 6 items · 1 exhibi"
+  },
+  {
+   "name": "F2: signed-out visitor opens guest and share addresses",
+   "kind": "visitor",
+   "ok": true,
+   "differences": [],
+   "galleriesRewrittenWithSameContent": [],
+   "writes": [
+    {
+     "method": "PATCH",
+     "table": "galleries",
+     "galleryWriteItemIds": null,
+     "dbItemIdsBefore": null,
+     "fewerIdsThanDatabase": false
+    },
+    {
+     "method": "PATCH",
+     "table": "galleries",
+     "galleryWriteItemIds": null,
+     "dbItemIdsBefore": null,
+     "fewerIdsThanDatabase": false
+    }
+   ],
+   "destructiveWrites": 0,
+   "pageText": "Home Vault Exhibitions Lounge Discover ? Help ⌘K G SHARED EXHIBITION Sports Slabs synthetic QA public exhibition 🗝️ Collector Share Save Info · 6 items · 1 exh"
+  },
+  {
+   "name": "G: refreshing the exhibition page three times",
+   "kind": "owner",
+   "ok": true,
+   "differences": [],
+   "galleriesRewrittenWithSameContent": [],
+   "writes": [],
+   "destructiveWrites": 0,
+   "pageText": "Back to Exhibitions Locked 7 ITEMS 0 VIEWS Cover Artwork CURATED EXHIBIT Vinyl Wall synthetic PUBLIC SHARE LINK Uses a dedicated publ"
+  },
+  {
+   "name": "H: confirmed delete",
+   "item": "one synthetic item",
+   "deleted": true,
+   "galleriesHoldingIt": 1,
+   "galleriesChanged": 1,
+   "idStillListed": true
+  }
+ ]
+}
