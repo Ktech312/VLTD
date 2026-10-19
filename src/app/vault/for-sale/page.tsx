@@ -11,7 +11,8 @@ import { INSIGHTS_AMBER } from "@/lib/insightsPalette";
 import { marketplacesFor, type MarketplaceId } from "@/lib/marketplaces";
 import { UNIVERSE_LABEL, resolveCategoryLabel, type UniverseKey } from "@/lib/taxonomy";
 import { enqueueVaultItemSync, processVaultSyncQueue } from "@/lib/vaultSyncQueue";
-import { getPrimaryImageUrl, loadItems, saveItem, syncVaultItemsFromSupabase, type VaultItem } from "@/lib/vaultModel";
+import { getPrimaryImageUrl, loadItems, saveItem, type VaultItem } from "@/lib/vaultModel";
+import { LoadErrorCard, StaleDataNotice, useCloudRefresh } from "@/components/vault/CloudStatus";
 
 const SALES_KEY = "vltd_sales_history";
 
@@ -243,22 +244,15 @@ function Stat({ value, label, accent }: { value: string | number; label: string;
 export default function ForSalePage() {
   const [items, setItems] = useState<VaultItem[]>(() => loadItems().filter(i => i.status === "FOR_SALE"));
   const [status, setStatus] = useState("");
-  // Until the account has been read once, an empty list means "not loaded yet", not "nothing for sale".
-  const [hydrated, setHydrated] = useState(false);
+  // Until the account has been read once, an empty list means "not loaded yet", not "nothing for sale". If the cloud could not be
+  // reached, saved items stay on screen under a short notice; with none saved, a load error with Retry takes the list's place.
+  const reload = () => setItems(loadItems().filter((i) => i.status === "FOR_SALE"));
+  const cloud = useCloudRefresh(reload);
+  const hydrated = cloud.state === "ok";
 
   useEffect(() => {
-    let active = true;
-    const reload = () => setItems(loadItems().filter((i) => i.status === "FOR_SALE"));
-    void syncVaultItemsFromSupabase().catch(() => undefined).finally(() => {
-      if (!active) return;
-      reload();
-      setHydrated(true);
-    });
     window.addEventListener("vltd:vault-updated", reload);
-    return () => {
-      active = false;
-      window.removeEventListener("vltd:vault-updated", reload);
-    };
+    return () => window.removeEventListener("vltd:vault-updated", reload);
   }, []);
 
   const stats = useMemo(() => {
@@ -293,6 +287,7 @@ export default function ForSalePage() {
   return (
     <div data-for-sale style={{ background: "var(--bg)" }}>
       <div className="mx-auto max-w-[1480px] px-4 pb-6 sm:px-6 lg:px-8">
+        {cloud.state === "failed" && items.length > 0 ? <StaleDataNotice onRetry={cloud.retry} busy={cloud.busy} /> : null}
         {items.length > 0 && (
           <div className="mb-3 flex flex-wrap gap-x-5 gap-y-1">
             <Stat value={items.length} label="for sale" accent />
@@ -308,7 +303,9 @@ export default function ForSalePage() {
           </div>
         )}
 
-        {items.length === 0 && !hydrated ? (
+        {items.length === 0 && cloud.state === "failed" ? (
+          <LoadErrorCard what="items for sale" onRetry={cloud.retry} busy={cloud.busy} />
+        ) : items.length === 0 && !hydrated ? (
           <div role="status" className="rounded-[8px] px-6 py-8 text-center text-sm ring-1 ring-[color:var(--border)]" style={{ background: "var(--surface)", color: "var(--muted)" }}>
             Loading your items…
           </div>

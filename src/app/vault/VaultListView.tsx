@@ -25,7 +25,7 @@ import { computeItemIntelligence } from "@/lib/itemIntelligence";
 import { UNIVERSE_LABEL, TAXONOMY, getCategories, isUniverseKey, type UniverseKey } from "@/lib/taxonomy";
 import { showToast } from "@/lib/toast";
 import { REVIEW_CHECKLIST, REVIEW_CHECKLIST_NOTE, REVIEW_GAPS, REVIEW_GAP_FILTERS, REVIEW_GAP_HEADING, REVIEW_GAP_PILL, REVIEW_GAP_ROW, matchesReview, reviewCounts, reviewGaps, type ReviewFilter, type ReviewGap } from "@/lib/vaultReview";
-import { activeItems, collectibleItems, describeGainExclusions, effectiveMarketValue, readValueMode, summarizeValues, writeValueMode, type ValueMode } from "@/lib/vaultStats";
+import { activeItems, collectibleItems, describeGainExclusions, effectiveMarketValue, hasExplicitValue, hasRecordedCost, readValueMode, summarizeValues, writeValueMode, type ValueMode } from "@/lib/vaultStats";
 import { priceCheckIsStale } from "@/lib/pricingMvp";
 import { migrateExistingVaultImagesToSupabase } from "@/lib/vaultMigration";
 import {
@@ -44,12 +44,14 @@ import {
   type VaultItem,
   markPendingMoves,
   clearPendingMoves,
+  resetCloudBackoff,
 } from "@/lib/vaultModel";
 import { hasSupabaseEnv } from "@/lib/vaultCloud";
 import { deleteVaultItemEverywhere, deleteVaultItemsEverywhere } from "@/lib/vaultActions";
 import { getOnboardingStatus, getStoredActiveProfileId, listMyProfiles, retryAccountLookups, type ProfileRow } from "@/lib/auth";
 import { readUniversePrefs, saveDisplayedUniverses } from "@/lib/universePrefs";
 import { currentLocalOwner } from "@/lib/localDataOwner";
+import { StaleDataNotice } from "@/components/vault/CloudStatus";
 import { storedSessionUserId } from "@/lib/sessionGuard";
 
 // How long the page waits for the account check and for the cloud before it stops waiting and says so.
@@ -592,19 +594,17 @@ function VaultCard({
                 "relative block text-left font-semibold leading-none hover:opacity-80 vltd-keep-color max-md:after:absolute max-md:after:inset-x-0 max-md:after:-inset-y-3 max-md:after:content-['']",
                 marketValue > 0 || totalCost(item) > 0 ? "text-[20px]" : "text-[15px]",
               ].join(" ")}
-              title={marketValue <= 0 && totalCost(item) > 0 ? "Purchase price. Not priced yet. Tap to add a value." : undefined}
+              title={!hasExplicitValue(item) ? (hasRecordedCost(item) ? "At purchase cost. Not valued yet. Tap to add a valuation." : "Missing value: no valuation and no purchase cost recorded. Tap to add one.") : undefined}
               style={{
                 "--vltd-keep-color":
-                  marketValue <= 0
-                    ? totalCost(item) > 0
-                      ? "var(--muted2, #8C9298)"
-                      : "var(--status-gain, #54C98A)"
+                  !hasExplicitValue(item)
+                    ? "var(--muted2, #8C9298)"
                     : gain >= 0
                       ? "var(--status-gain, #54C98A)"
                       : "var(--status-loss, #E05252)",
               } as React.CSSProperties}
             >
-              {marketValue > 0 ? formatMoney(marketValue) : totalCost(item) > 0 ? formatMoney(totalCost(item)) : "+ Add Value"}
+              {hasExplicitValue(item) ? formatMoney(marketValue) : hasRecordedCost(item) ? formatMoney(totalCost(item)) : "Missing value"}
             </button>
           )}
         </div>
@@ -1006,9 +1006,9 @@ function VaultSelectionDrawer({
               {item.variant ? <span className="rounded-[5px] px-1.5 py-0.5 text-[10px] ring-1 ring-[color:var(--border)]" style={{ color: "#ECEDEF" }}>{item.variant}</span> : null}
               <span className="rounded-[5px] px-1.5 py-0.5 text-[10px] ring-1 ring-[color:var(--border)]" style={{ color: "#C8CDD2" }}>{item.isPublic ? "Public" : "Private"}</span>
             </div>
-            <div className="mt-3 text-[21px] font-bold leading-none" style={{ color: value > 0 ? "#44D9F2" : "#8C9298" }} title={value <= 0 && paid > 0 ? "Purchase price. Not priced yet." : undefined}>{value > 0 ? formatMoney(value) : paid > 0 ? `${formatMoney(paid)} paid` : "Not valued"}</div>
+            <div className="mt-3 text-[21px] font-bold leading-none" style={{ color: value > 0 ? "#44D9F2" : "#8C9298" }} title={!hasExplicitValue(item) && paid > 0 ? "At purchase cost. Not valued yet." : undefined}>{hasExplicitValue(item) ? formatMoney(value) : hasRecordedCost(item) ? `${formatMoney(paid)} at purchase cost` : "Missing value"}</div>
             <div className="mt-1 text-[11px]" style={{ color: gain >= 0 ? "var(--color-gain, #4CAF82)" : "var(--color-loss, #E05252)" }}>
-              {value <= 0 ? "Add a value to see return" : paid > 0 ? `${gain >= 0 ? "+" : ""}${gainPct.toFixed(1)}% since purchase` : "Add cost basis for return"}
+              {!hasExplicitValue(item) ? "Add a valuation to see return" : paid > 0 ? `${gain >= 0 ? "+" : ""}${gainPct.toFixed(1)}% since purchase` : "Add cost basis for return"}
             </div>
           </div>
         </div>
@@ -1118,6 +1118,8 @@ export default function VaultListView({ lockedUniverse }: { lockedUniverse?: Uni
   const [sales, setSales] = useState<SaleInfo[]>([]);
   const [pendingSyncCount, setPendingSyncCount] = useState(0);
   const [syncStatus, setSyncStatus] = useState("");
+  // Saved items are on screen because the cloud could not be refreshed (pending uploads have their own status: pendingSyncCount).
+  const [cloudStale, setCloudStale] = useState(false);
   const [isMigrating, setIsMigrating] = useState(false);
   const [isOnline, setIsOnline] = useState<boolean | null>(null);
   const [initialLoadComplete, setInitialLoadComplete] = useState(false);
@@ -1226,6 +1228,7 @@ export default function VaultListView({ lockedUniverse }: { lockedUniverse?: Uni
       showDeviceCopy(forProfile);
       const hasItems = loadItems({ profileId: forProfile }).length > 0;
       if (!answered && !hasItems) setLoadFailed(true);
+      setCloudStale(!answered && hasItems && hasSupabaseEnv());
       if (!answered && hasItems && hasSupabaseEnv()) {
         setSyncStatus("Could not reach the cloud just now. Showing what is saved on this device.");
       }
@@ -1741,12 +1744,14 @@ export default function VaultListView({ lockedUniverse }: { lockedUniverse?: Uni
     const insuranceReadyPct = totalItems ? Math.round((insuranceReadyCount / totalItems) * 100) : 0;
     const valuedCount = summary.pricedCount;
     const ghostCount = summary.ghostCount;
+    const missingCount = summary.missingCount;
     const staleCheckCount = counted.filter((item) => effectiveMarketValue(item) > 0 && priceCheckIsStale(item)).length;
     return {
       staleCheckCount,
       totalItems,
       valuedCount,
       ghostCount,
+      missingCount,
       totalCost: totalCostValue,
       totalValue,
       totalGain,
@@ -2014,6 +2019,7 @@ export default function VaultListView({ lockedUniverse }: { lockedUniverse?: Uni
         </div>
       ) : (
       <div className="mx-auto max-w-[1480px] px-4 pb-4 sm:px-6 sm:pb-5 lg:px-8">
+        {cloudStale ? <StaleDataNotice onRetry={() => { resetCloudBackoff(); retryAccountLookups(); void hydrateAll(); }} /> : null}
         <section className="mb-5">
           {items.length > 0 ? (
             <div className="mb-3 hidden flex-wrap gap-2 text-xs text-[color:var(--muted)] sm:flex">
@@ -2131,7 +2137,7 @@ export default function VaultListView({ lockedUniverse }: { lockedUniverse?: Uni
                     </div>
                     {stats.valuedCount < stats.totalItems ? (
                       <div className="mt-0.5 text-[11px] text-[color:var(--muted)]">
-                        {valueMode === "fill" ? `${stats.ghostCount} of ${stats.totalItems} at purchase price` : `${stats.valuedCount} of ${stats.totalItems} priced`}
+                        {valueMode === "fill" ? [stats.ghostCount > 0 ? `${stats.ghostCount} of ${stats.totalItems} at purchase cost` : "", stats.missingCount > 0 ? `${stats.missingCount} missing value, not counted` : ""].filter(Boolean).join(" · ") : `${stats.valuedCount} of ${stats.totalItems} priced`}
                       </div>
                     ) : null}
                   </>
@@ -2455,7 +2461,7 @@ export default function VaultListView({ lockedUniverse }: { lockedUniverse?: Uni
             </div>
           </section>
         ) : items.length === 0 && loadFailed ? (
-          <VaultLoadError onRetry={() => { retryAccountLookups(); void hydrateAll(); }} />
+          <VaultLoadError onRetry={() => { resetCloudBackoff(); retryAccountLookups(); void hydrateAll(); }} />
         ) : items.length === 0 ? (
           <VaultEmptyState hasFilters={false} onClearFilters={handleClearFilters} />
         ) : vaultViewMode === "wall" ? (

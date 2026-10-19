@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import AddItemActions from "@/components/AddItemActions";
@@ -21,7 +21,8 @@ import { syncPublicProfile } from "@/lib/publicProfile";
 import { INSIGHTS_BREAKDOWN_COLORS, INSIGHTS_GREEN, INSIGHTS_RED, INSIGHTS_REVENUE } from "@/lib/insightsPalette";
 import { buildSoldItems, hasKnownCost, profitOf, soldStats } from "@/lib/soldItems";
 import { activeItems, computeVaultStats, describeGainExclusions, effectiveMarketValue, readValueMode, totalsValue, writeValueMode, type ValueMode } from "@/lib/vaultStats";
-import { loadItems, syncVaultItemsFromSupabaseChecked, type VaultItem } from "@/lib/vaultModel";
+import { loadItems, resetCloudBackoff, syncVaultItemsFromSupabaseChecked, type VaultItem } from "@/lib/vaultModel";
+import { StaleDataNotice } from "@/components/vault/CloudStatus";
 import { currentLocalOwner } from "@/lib/localDataOwner";
 import { storedSessionUserId } from "@/lib/sessionGuard";
 import { getPendingVaultSyncCount } from "@/lib/vaultSyncQueue";
@@ -218,6 +219,9 @@ export default function HomeClient() {
   // null = still loading, "error" = could not load, array = loaded
   const [posts, setPosts] = useState<LoungePost[] | "error" | null>(null);
   const [pendingSync, setPendingSync] = useState(0);
+  // Saved items are on screen because the cloud could not be refreshed.
+  const [stale, setStale] = useState(false);
+  const reloadHome = useRef<() => void>(() => undefined);
   const [logged, setLogged] = useState<ActivityEventRecord[]>([]);
 
   useEffect(() => {
@@ -241,7 +245,7 @@ export default function HomeClient() {
         const pull = syncVaultItemsFromSupabaseChecked().then((r) => r.ok).catch(() => false);
         let answered = true;
         if (deviceCopyUsable) {
-          void pull.then(() => { if (active) { setItems(loadItems()); setPendingSync(getPendingVaultSyncCount()); } });
+          void pull.then((ok) => { if (active) { setItems(loadItems()); setPendingSync(getPendingVaultSyncCount()); setStale(!ok); } });
         } else {
           answered = await Promise.race([pull, new Promise<boolean>((resolve) => window.setTimeout(() => resolve(false), HOME_CLOUD_WAIT_MS))]);
         }
@@ -269,6 +273,7 @@ export default function HomeClient() {
         if (active) setLoading(false);
       }
     }
+    reloadHome.current = () => { resetCloudBackoff(); setStale(false); void load(); };
     void load();
 
     // Items that arrive after the first paint (a finished upload, a cloud download, another page saving) and a switch of the
@@ -308,7 +313,7 @@ export default function HomeClient() {
   // The same shared totals as the Vault and Insights (sold items excluded), so Home never counts differently.
   const stats = useMemo(() => {
     const s = computeVaultStats(items, valueMode);
-    return { totalItems: s.itemCount, totalCost: s.totalCost, totalValue: s.totalValue, totalGain: s.totalGain, gainPct: s.gainPct, costBase: s.costBase, gainItemCount: s.gainItemCount, gainExcluded: s.gainExcluded, pricedCount: s.pricedCount, ghostCount: s.ghostCount };
+    return { totalItems: s.itemCount, totalCost: s.totalCost, totalValue: s.totalValue, totalGain: s.totalGain, gainPct: s.gainPct, costBase: s.costBase, gainItemCount: s.gainItemCount, gainExcluded: s.gainExcluded, pricedCount: s.pricedCount, ghostCount: s.ghostCount, missingCount: s.missingCount };
   }, [items, valueMode]);
   // Realized sales: the same numbers as /vault/sold (shared code). Never mixed with the estimates above.
   const sales = useMemo(() => {
@@ -337,17 +342,19 @@ export default function HomeClient() {
     </>
   ) : "—";
   const valueIsGhost = valueMode === "fill" && stats.ghostCount > 0;
+  // The value rule: explicit valuation, else recorded purchase cost ("At purchase cost"), else "Missing value" (left out and counted here).
+  const missingNote = stats.missingCount > 0 ? `${stats.missingCount} missing value, not counted` : "";
   const valueCaption =
     stats.pricedCount === 0
-      ? "No item has a value yet"
+      ? ["No item has a value yet", stats.ghostCount > 0 && valueMode === "fill" ? `${stats.ghostCount} at purchase cost` : "", missingNote].filter(Boolean).join(" · ")
       : valueMode === "fill"
-        ? stats.ghostCount > 0 ? `${stats.pricedCount} of ${stats.totalItems} priced · ${stats.ghostCount} counted at cost` : "All items priced"
-        : `${stats.pricedCount} of ${stats.totalItems} priced · ${stats.ghostCount} left out`;
+        ? [`${stats.pricedCount} of ${stats.totalItems} priced`, stats.ghostCount > 0 ? `${stats.ghostCount} at purchase cost` : "", missingNote].filter(Boolean).join(" · ")
+        : `${stats.pricedCount} of ${stats.totalItems} priced · ${stats.ghostCount + stats.missingCount} left out`;
   // The valuation basis, stated plainly.
   const basis =
     valueMode === "fill"
-      ? stats.ghostCount > 0
-        ? `${stats.ghostCount} of ${stats.totalItems} counted at purchase price`
+      ? stats.ghostCount > 0 || stats.missingCount > 0
+        ? [stats.ghostCount > 0 ? `${stats.ghostCount} of ${stats.totalItems} at purchase cost` : "", missingNote].filter(Boolean).join(" · ")
         : "All items priced"
       : `${stats.pricedCount} of ${stats.totalItems} priced`;
 
@@ -408,6 +415,8 @@ export default function HomeClient() {
       <div style={{ maxWidth: 1100, margin: "0 auto", display: "flex", flexDirection: "column", gap: 24 }} className="px-4 py-5 sm:px-5 lg:px-7">
 
         <SeasonalBanner />
+
+        {stale ? <StaleDataNotice onRetry={() => reloadHome.current()} /> : null}
 
         {/* 1. Collection overview: heading with the add controls beside it, four separate money figures with the value-basis controls above them, then three summary panels that each open their full page */}
         <section aria-label="Collection overview" style={{ background: C.elevated, border: premiumBorder, borderRadius: 10, padding: "20px 24px 22px", boxShadow: premiumShadow }}>
@@ -545,7 +554,7 @@ export default function HomeClient() {
                         </div>
                         <div style={{ padding: "8px 10px" }}>
                           <div style={{ fontSize: 12, fontWeight: 600, color: C.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{item.title}</div>
-                          <div style={{ fontSize: 11, color: C.muted, marginTop: 2 }}>{v.amount > 0 ? (v.isGhost ? formatMoney(v.amount) + " at cost" : formatMoney(v.amount)) : "Not valued"}</div>
+                          <div style={{ fontSize: 11, color: C.muted, marginTop: 2 }}>{v.basis === "explicit" ? formatMoney(v.amount) : v.basis === "purchase" ? formatMoney(v.amount) + " at purchase cost" : "Missing value"}</div>
                         </div>
                       </Link>
                     );

@@ -12,6 +12,7 @@ import { getStoredActiveProfileId } from "@/lib/auth";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 import { UNIVERSE_LABEL, type UniverseKey } from "@/lib/taxonomy";
 import { getPrimaryImageUrl, loadItems, saveItem, syncVaultItemsFromSupabase, type VaultItem } from "@/lib/vaultModel";
+import { LoadErrorCard, StaleDataNotice, useCloudRefresh } from "@/components/vault/CloudStatus";
 import { enqueueVaultItemSync, processVaultSyncQueue } from "@/lib/vaultSyncQueue";
 import { SALES_KEY, buildSoldItems, cost, hasKnownCost, profitOf, readSales, removeSaleRecord, saleFees, soldStats, writeSales, type SoldItem } from "@/lib/soldItems";
 
@@ -356,25 +357,17 @@ export default function SoldPage() {
   const [imagePreview, setImagePreview] = useState<{ title: string; imageUrl: string } | null>(null);
   const [search, setSearch] = useState("");
   const [universeFilter, setUniverseFilter] = useState("All");
-  // Until the account has been read once, an empty list means "not loaded yet", not "nothing sold".
-  const [hydrated, setHydrated] = useState(false);
-
+  // Until the account has been read once, an empty list means "not loaded yet", not "nothing sold". If the cloud could not be reached,
+  // saved sales stay on screen under a short notice; with none saved, a load error with Retry takes the list's place.
   function load() {
     setItems(buildSoldItems());
   }
+  const cloud = useCloudRefresh(load);
+  const hydrated = cloud.state === "ok";
 
   useEffect(() => {
-    const timer = window.setTimeout(() => {
-      void syncVaultItemsFromSupabase().finally(() => {
-        load();
-        setHydrated(true);
-      });
-    }, 0);
     window.addEventListener("vltd:vault-updated", load);
-    return () => {
-      window.clearTimeout(timer);
-      window.removeEventListener("vltd:vault-updated", load);
-    };
+    return () => window.removeEventListener("vltd:vault-updated", load);
   }, []);
 
   const stats = useMemo(() => soldStats(items), [items]);
@@ -448,14 +441,17 @@ export default function SoldPage() {
     <WorkspaceActions><PillButton href="/sales">Sales History</PillButton></WorkspaceActions>
     <main className="bg-[color:var(--bg)] text-[color:var(--fg)]">
       <div className="mx-auto max-w-[1480px] px-4 pb-4 sm:px-6 lg:px-8">
+        {cloud.state === "failed" && items.length > 0 ? <StaleDataNotice onRetry={cloud.retry} busy={cloud.busy} /> : null}
         <section id="sales-analytics" className="flex flex-col gap-3">
           {/* Compact summary: content-sized chips, not four stretched tiles */}
+          {items.length > 0 || hydrated ? (
           <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
             <SummaryChip label="Sold" value={String(stats.count)} />
             <SummaryChip label="Revenue" value={money(stats.realizedRevenue)} />
             <SummaryChip label="Cost basis" value={money(stats.totalCost)} />
             <SummaryChip label="Realized profit" value={(stats.totalProfit >= 0 ? "+" : "") + money(stats.totalProfit)} tone={stats.totalProfit >= 0 ? "gain" : "loss"} />
           </div>
+          ) : null}
 
           <AnalyticsPanel items={items} />
 
@@ -488,7 +484,9 @@ export default function SoldPage() {
               )}
             </div>
           )}
-          {items.length === 0 ? (
+          {items.length === 0 && cloud.state === "failed" ? (
+            <LoadErrorCard what="sold items" onRetry={cloud.retry} busy={cloud.busy} />
+          ) : items.length === 0 ? (
             <div className="rounded-[18px] bg-[color:var(--surface)] p-8 text-center text-sm text-[color:var(--muted)] ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
               {hydrated ? "No sold items yet." : <span role="status">Loading sold items…</span>}
             </div>
