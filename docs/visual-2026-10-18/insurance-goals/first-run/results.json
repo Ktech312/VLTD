@@ -1,0 +1,87 @@
+{
+ "label": "first-run",
+ "base": "https://vltd.app",
+ "at": "2026-10-19T05:31:38.324Z",
+ "pass": 17,
+ "fail": 2,
+ "results": [
+  {
+   "n": "[A] /vault: one tab row, Insurance sits after Goals (Items,For Sale,Sold,Insights,Goals,Insurance)",
+   "ok": true
+  },
+  {
+   "n": "[A] /vault/for-sale: one tab row, Insurance sits after Goals (Items,For Sale,Sold,Insights,Goals,Insurance)",
+   "ok": true
+  },
+  {
+   "n": "[A] /vault/sold: one tab row, Insurance sits after Goals (Items,For Sale,Sold,Insights,Goals,Insurance)",
+   "ok": true
+  },
+  {
+   "n": "[A] /portfolio: one tab row, Insurance sits after Goals (Items,For Sale,Sold,Insights,Goals,Insurance)",
+   "ok": true
+  },
+  {
+   "n": "[A] /goals: one tab row, Insurance sits after Goals (Items,For Sale,Sold,Insights,Goals,Insurance)",
+   "ok": true
+  },
+  {
+   "n": "[A] /insurance: one tab row, Insurance sits after Goals (Items,For Sale,Sold,Insights,Goals,Insurance)",
+   "ok": true
+  },
+  {
+   "n": "[B] clicking the Insurance tab opens /insurance, marked current, inside the same Vault header (not rebuilt)",
+   "ok": true
+  },
+  {
+   "n": "[B] the inventory lists the QA items with Per-item sheet links",
+   "ok": true
+  },
+  {
+   "n": "[B] documentation readiness is stated and kept distinct from coverage ('not insurance coverage' / 'does not mean an item is insured')",
+   "ok": true
+  },
+  {
+   "n": "[B] nothing on the page claims the items are insured",
+   "ok": true
+  },
+  {
+   "n": "[C] the per-item sheet opens inside the Vault shell with Insurance current",
+   "ok": true
+  },
+  {
+   "n": "[C] the sheet shows the item (title, Identification, Financial) from the existing sheet",
+   "ok": false,
+   "d": "Home Vault Exhibitions Lounge Discover ? Help ⌘K COLLECTOR Level 4 Vault Your records for a policy. Documentation readiness is not insurance coverage. Items For Sale Sold Insights Goals Insurance ← Ba"
+  },
+  {
+   "n": "[C] Back from the item sheet returns to the inventory with the list intact",
+   "ok": true
+  },
+  {
+   "n": "[C] Forward returns to the same item sheet",
+   "ok": true
+  },
+  {
+   "n": "[C] the Policy Packet opens from the header action inside the Vault shell with Insurance current",
+   "ok": true
+  },
+  {
+   "n": "[C] refreshing the packet keeps the packet, the shell and the items",
+   "ok": true
+  },
+  {
+   "n": "STOPPED",
+   "ok": false,
+   "d": "timeout waiting for: print route"
+  },
+  {
+   "n": "[G @390] Insurance is reachable in the tab row on a phone (all six tabs, no sideways scroll)",
+   "ok": true
+  },
+  {
+   "n": "[G @320] Insurance is reachable in the tab row on a phone (all six tabs, no sideways scroll)",
+   "ok": true
+  }
+ ]
+}

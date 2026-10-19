@@ -1,0 +1,14 @@
+Comics (Misc. & Peach cards) snaps: 71 hiddenSnaps: 0 snapWithValue: 0 pack marble tpl CUSTOM shelf  overlay true metal
+New Live snaps: 0 hiddenSnaps: 0 snapWithValue: 0 pack cold-blue tpl CUSTOM shelf 8a-f30399454bc9/1791583243384_alcove.jpg overlay false none
+Music snaps: 25 hiddenSnaps: 0 snapWithValue: 0 pack cold-blue tpl CUSTOM shelf  overlay true metal
+Grails snaps: 15 hiddenSnaps: 0 snapWithValue: 0 pack cold-blue tpl CUSTOM shelf  overlay true glass
+{
+  'marble|bg:no|tpl:CUSTOM|disp:grid': 1,
+  'marble|bg:no|tpl:CUSTOM|disp:shelf': 6,
+  'midnight|bg:no|tpl:CUSTOM|disp:shelf': 8,
+  'cold-blue|bg:yes|tpl:CUSTOM|disp:shelf': 1,
+  'cold-blue|bg:no|tpl:CUSTOM|disp:shelf': 6,
+  'classic|bg:no|tpl:CUSTOM|disp:shelf': 13,
+  'walnut|bg:no|tpl:CUSTOM|disp:shelf': 10,
+  'classic|bg:no|tpl:CUSTOM|disp:grid': 1
+}

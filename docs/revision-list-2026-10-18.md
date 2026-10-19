@@ -5,10 +5,16 @@ One list for the owner's review of normal behaviour and appearance. **Specific c
 ## A. Authorized corrections (sent by the owner; proceed without further approval)
 | # | Where | Correction | Status |
 |---|---|---|---|
-| A1 | Vault tab row | **Restore Insurance as a first-class Vault section**: an Insurance tab beside Goals in the shared Vault tab row on every Vault page; connected to the existing `/insurance` workflow (inventory, item sheet, policy packet, print/export); inside the persistent Vault shell; documentation readiness kept distinct from insurance coverage | in progress (2026-10-18) |
-| A2 | Goals | Remove Insurance from the goal-type filter row (it must not stand in for the Insurance section); hide the remaining type filters when there are no goals and show an explanation with a Create Goal action; keep existing goal records and the other goal types; verify the filters with populated QA goals (selection changes results; an unmatched filter shows an explicit empty state) | in progress |
-| A3 | Goals | Remove the visible development-placeholder text ("Milestones will appear here after goal due dates are added to the goal model") | in progress |
-| A4 | Verification record | The earlier tests did not establish that the Goals filter controls were useful or that Insurance stayed discoverable. This gap is recorded in HANDOFF; results are reported as focused production checks, not as a claim that the whole app was tested | in progress |
+| A1 | Vault tab row | **Restore Insurance as a first-class Vault section**: an Insurance tab beside Goals in the shared Vault tab row on every Vault page; connected to the existing `/insurance` workflow (inventory, item sheet, policy packet, print/export); inside the persistent Vault shell; documentation readiness kept distinct from insurance coverage | **done, verified on production** (2026-10-18) |
+| A2 | Goals | Remove Insurance from the goal-type filter row (it must not stand in for the Insurance section); hide the remaining type filters when there are no goals and show an explanation with a Create Goal action; keep existing goal records and the other goal types; verify the filters with populated QA goals (selection changes results; an unmatched filter shows an explicit empty state) | **done, verified on production** |
+| A3 | Goals | Remove the visible development-placeholder text ("Milestones will appear here after goal due dates are added to the goal model") | **done, verified on production** |
+| A4 | Verification record | The earlier tests did not establish that the Goals filter controls were useful or that Insurance stayed discoverable. This gap is recorded in HANDOFF; results are reported as focused production checks, not as a claim that the whole app was tested | **done, verified on production** |
+| A5 | Discover data | Exhibition counts and values: find why Discover showed 1 item and $0; verify source, refresh and totals; a missing value must not be shown as a confirmed $0 | **done, verified on production** (`94b4522`) |
+| A6 | Discover privacy | Calculate only from information approved for public display; never expose private purchase cost | **done, verified** (item reads ask for no price column; a recognisable purchase cost never appears) |
+| A7 | Collector Rooms | Use the exhibition's configured background, not its cover thumbnail | **done, verified** |
+| A8 | Discover carousel | Mouse drag, finger swipe (browser-emulated), arrows and dots change slides; image, title and destination stay together | **done, verified** (physical-device swipe UNVERIFIED) |
+| A9 | Featured Rooms link | 'Explore featured rooms' opens the featured collection; a one-room button names that room | **done, verified** |
+| A10 | Discover verification | Test with updated, populated exhibitions; confirm changes reach Discover | **done** (second run 30/30; evidence in `docs/visual-2026-10-18/discover/`) |
 
 ## B. Owner feedback from the review of normal behaviour and appearance (to be filled in)
 | # | Where | What was seen | What was expected | Status |

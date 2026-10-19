@@ -1,0 +1,10 @@
+{
+  "pass": 1,
+  "fail": 0,
+  "results": [
+    {
+      "n": "[F] the Goals stat no longer calls goal progress 'Insurance Coverage' (label drawn in capitals; case-insensitive)",
+      "ok": true
+    }
+  ]
+}

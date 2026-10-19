@@ -1,0 +1,161 @@
+{
+ "label": "second-run",
+ "base": "https://vltd.app",
+ "at": "2026-10-19T05:33:58.722Z",
+ "pass": 37,
+ "fail": 1,
+ "results": [
+  {
+   "n": "[A] /vault: one tab row, Insurance sits after Goals (Items,For Sale,Sold,Insights,Goals,Insurance)",
+   "ok": true
+  },
+  {
+   "n": "[A] /vault/for-sale: one tab row, Insurance sits after Goals (Items,For Sale,Sold,Insights,Goals,Insurance)",
+   "ok": true
+  },
+  {
+   "n": "[A] /vault/sold: one tab row, Insurance sits after Goals (Items,For Sale,Sold,Insights,Goals,Insurance)",
+   "ok": true
+  },
+  {
+   "n": "[A] /portfolio: one tab row, Insurance sits after Goals (Items,For Sale,Sold,Insights,Goals,Insurance)",
+   "ok": true
+  },
+  {
+   "n": "[A] /goals: one tab row, Insurance sits after Goals (Items,For Sale,Sold,Insights,Goals,Insurance)",
+   "ok": true
+  },
+  {
+   "n": "[A] /insurance: one tab row, Insurance sits after Goals (Items,For Sale,Sold,Insights,Goals,Insurance)",
+   "ok": true
+  },
+  {
+   "n": "[B] clicking the Insurance tab opens /insurance, marked current, inside the same Vault header (not rebuilt)",
+   "ok": true
+  },
+  {
+   "n": "[B] the inventory lists the QA items with Per-item sheet links",
+   "ok": true
+  },
+  {
+   "n": "[B] documentation readiness is stated and kept distinct from coverage ('not insurance coverage' / 'does not mean an item is insured')",
+   "ok": true
+  },
+  {
+   "n": "[B] nothing on the page claims the items are insured",
+   "ok": true
+  },
+  {
+   "n": "[C] the per-item sheet opens inside the Vault shell with Insurance current",
+   "ok": true
+  },
+  {
+   "n": "[C] the sheet shows the item (title, Identification, Financial) from the existing sheet",
+   "ok": true
+  },
+  {
+   "n": "[C] Back from the item sheet returns to the inventory with the list intact",
+   "ok": true
+  },
+  {
+   "n": "[C] Forward returns to the same item sheet",
+   "ok": true
+  },
+  {
+   "n": "[C] the Policy Packet opens from the header action inside the Vault shell with Insurance current",
+   "ok": true
+  },
+  {
+   "n": "[C] refreshing the packet keeps the packet, the shell and the items",
+   "ok": true
+  },
+  {
+   "n": "[C] 'Open Printable Page' is a link to the print-only route that opens in its own tab",
+   "ok": true
+  },
+  {
+   "n": "[C] the printable page opens (print-only route: no Vault shell on it) with the packet and a print control",
+   "ok": true
+  },
+  {
+   "n": "[C] the print control on the printable page calls the browser's print",
+   "ok": true
+  },
+  {
+   "n": "[C] print layout of /insurance: the Vault header and tab row do not print",
+   "ok": true
+  },
+  {
+   "n": "[C] print layout of /insurance/packet: the Vault header and tab row do not print",
+   "ok": true
+  },
+  {
+   "n": "[C] 'Print Inventory PDF' (header action) calls the browser's print",
+   "ok": true
+  },
+  {
+   "n": "[E] switching to the Business profile on /insurance replaces the list: none of the Personal items remain",
+   "ok": true
+  },
+  {
+   "n": "[E] switching back to Personal restores the Personal inventory",
+   "ok": true
+  },
+  {
+   "n": "[E] the tab row stays on the page through both switches",
+   "ok": true
+  },
+  {
+   "n": "[F] with no goals the goal-type filters are hidden",
+   "ok": true
+  },
+  {
+   "n": "[F] with no goals it explains what a goal is and offers Create Goal",
+   "ok": true
+  },
+  {
+   "n": "[F] the development placeholder is gone everywhere on the page",
+   "ok": true
+  },
+  {
+   "n": "[F] with goals the filters are All Goals, Completion, Value, Sell, Exhibition - and NOT Insurance",
+   "ok": true
+  },
+  {
+   "n": "[F] All Goals lists all four goals, including the existing insurance-type goal (records intact)",
+   "ok": true
+  },
+  {
+   "n": "[F] Completion shows only the completion goal",
+   "ok": true
+  },
+  {
+   "n": "[F] Value shows only the value goal",
+   "ok": true
+  },
+  {
+   "n": "[F] Sell shows only the sell goal",
+   "ok": true
+  },
+  {
+   "n": "[F] Exhibition (no such goal) shows an explicit empty state, not a blank list and not 'No goals yet'",
+   "ok": true
+  },
+  {
+   "n": "[F] 'Show all goals' from the empty state restores all four",
+   "ok": true
+  },
+  {
+   "n": "[F] the Goals stat no longer calls goal progress 'Insurance Coverage'",
+   "ok": false
+  },
+  {
+   "n": "[G @390] Insurance is reachable in the tab row on a phone (all six tabs, no sideways scroll)",
+   "ok": true
+  },
+  {
+   "n": "[G @320] Insurance is reachable in the tab row on a phone (all six tabs, no sideways scroll)",
+   "ok": true
+  }
+ ]
+}

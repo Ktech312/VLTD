@@ -1,0 +1,11 @@
+{
+  "pass": 0,
+  "fail": 1,
+  "results": [
+    {
+      "n": "[F] the Goals stat no longer calls goal progress 'Insurance Coverage' (label drawn in capitals; case-insensitive)",
+      "ok": false,
+      "d": "INSURANCE GOAL PROGRESS 100% 26 of 20 items documented. Not insurance coverage. COMPLETED THIS YEAR 1 Great job! Keep building momentu"
+    }
+  ]
+}

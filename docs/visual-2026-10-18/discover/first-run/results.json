@@ -1,0 +1,127 @@
+{
+  "pass": 29,
+  "fail": 1,
+  "results": [
+    {
+      "n": "[a] Room A (6 items in the room; 2 public items valued 100 + 250): '6 items', '$350', 'from 2 of 6 items'",
+      "ok": true
+    },
+    {
+      "n": "[a] Room B (4 items, none public with a value): '4 items' and 'Value not shown' - not $0",
+      "ok": true
+    },
+    {
+      "n": "[a] Room C (3 public items valued 10 + 20 + 30): '3 items', '$60', no partial note",
+      "ok": true
+    },
+    {
+      "n": "[b] no private purchase cost appears anywhere on Discover",
+      "ok": true
+    },
+    {
+      "n": "[b] the item reads on Discover never ask for a purchase/cost column",
+      "ok": true
+    },
+    {
+      "n": "[a] the detail panel for Room B says 'Value not shown' (not $0) and 4 items",
+      "ok": true
+    },
+    {
+      "n": "[a] the detail panel for Room A shows $350 'from 2 of 6 items' and 6 items, with the room's own thumbnails",
+      "ok": false,
+      "d": "PUBLIC EXHIBITION Public QA Disc Room A mvetehqv by Collector - 6 items ESTIMATED EXHIBITION VALUE $350 from 2 of 6 items ROOM VIEWS 9,000,003 synthetic QA exhibition FEATURED ITEMS +2 VISIBILITY Public ITEMS 6 VIEWS 9,000,003 View room Share Report"
+    },
+    {
+      "n": "[c] Room A's slide uses its configured (uploaded) background, not its cover thumbnail",
+      "ok": true
+    },
+    {
+      "n": "[c] rooms with no uploaded background use their theme's background (Room B midnight, Room C walnut), still not the cover",
+      "ok": true
+    },
+    {
+      "n": "[d] each slide's title, destination and button name come from the same room",
+      "ok": true
+    },
+    {
+      "n": "[d] the carousel has several slides (3 synthetic + real rooms), starting on the first",
+      "ok": true
+    },
+    {
+      "n": "[d] the next arrow moves to the second slide",
+      "ok": true
+    },
+    {
+      "n": "[d] the previous arrow moves back to the first slide",
+      "ok": true
+    },
+    {
+      "n": "[d] a dot moves to its slide (third)",
+      "ok": true
+    },
+    {
+      "n": "[d] the third slide (Room C) is actually the one in view after the dot",
+      "ok": true
+    },
+    {
+      "n": "[d] the Left arrow key moves back a slide",
+      "ok": true
+    },
+    {
+      "n": "[d] mouse-dragging left moves to the next slide",
+      "ok": true
+    },
+    {
+      "n": "[d] mouse-dragging right moves back a slide",
+      "ok": true
+    },
+    {
+      "n": "[d] a tiny drag does not change slide",
+      "ok": true
+    },
+    {
+      "n": "[d] a drag that starts on the room's button does not open the room",
+      "ok": true
+    },
+    {
+      "n": "[d] (browser-emulated touch, not a physical phone) swiping left moves forward and swiping right moves back",
+      "ok": true
+    },
+    {
+      "n": "[d] stepping through every slide: each is in view with a title and destination from its own room",
+      "ok": true
+    },
+    {
+      "n": "[e] 'Explore featured rooms' stays on Discover and brings the Featured Rooms collection into view (not one room)",
+      "ok": true
+    },
+    {
+      "n": "[e] the Featured Rooms collection lists several rooms once opened",
+      "ok": true
+    },
+    {
+      "n": "[e] the button that opens one room names that room ('View <room title>')",
+      "ok": true
+    },
+    {
+      "n": "[e] clicking a slide's 'View <room>' opens exactly that room",
+      "ok": true
+    },
+    {
+      "n": "[f] after the owner removes an item and two more public values appear, Room A reads 5 items, $430 from 4 of 5 items",
+      "ok": true
+    },
+    {
+      "n": "[f] Room B, which gained one public value, now reads $500 from 1 of 4 items",
+      "ok": true
+    },
+    {
+      "n": "[f] making that item private again takes its value back out: Room B returns to 'Value not shown'",
+      "ok": true
+    },
+    {
+      "n": "[f] on a phone-width screen (browser-emulated) Discover has no sideways scroll and the carousel fits",
+      "ok": true
+    }
+  ]
+}
