@@ -18,8 +18,8 @@ check("exhibition page lists items that could not be loaded (unavailable) instea
 // every caller of the pruning function, anywhere in src
 const walk = (d, acc = []) => { for (const e of fs.readdirSync(d, { withFileTypes: true })) { const p = path.join(d, e.name); if (e.isDirectory()) walk(p, acc); else if (/\.(ts|tsx)$/.test(e.name)) acc.push(p); } return acc; };
 const callers = walk(path.join(root, "src")).filter((f) => /removeItemIdsFromAllGalleriesConfirmed/.test(fs.readFileSync(f, "utf8"))).map((f) => path.relative(root, f).replace(/\\/g, "/")).sort();
-const allowed = ["src/app/vault/VaultListView.tsx", "src/lib/galleryModel.ts", "src/lib/vaultActions.ts"];
-check("only the delete workflow, the move-to-profile action and the definition use the pruning function", JSON.stringify(callers) === JSON.stringify(allowed), "callers: " + callers.join(", "));
+const allowed = ["src/lib/galleryModel.ts", "src/lib/vaultActions.ts"];
+check("only the confirmed delete workflow, the confirmed profile move and the definition use the pruning function", JSON.stringify(callers) === JSON.stringify(allowed), "callers: " + callers.join(", "));
 
 const model = fs.readFileSync(path.join(root, "src/lib/galleryModel.ts"), "utf8");
 check("the pruning function is documented as delete/move only", /Only call this after an item has been confirmed deleted or has been explicitly moved/.test(model), "comment missing in galleryModel.ts");

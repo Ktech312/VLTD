@@ -28,7 +28,8 @@
     "test:loaddiag": "node scripts/test-load-diagnostics.cjs",
     "test:exhibit-no-prune": "node scripts/test-exhibition-no-prune.cjs",
     "test:listing-privacy": "node scripts/test-listing-privacy.cjs",
-    "test:exhibit-sync": "node scripts/test-gallery-item-sync.cjs"
+    "test:exhibit-sync": "node scripts/test-gallery-item-sync.cjs",
+    "test:move-profile": "node scripts/test-move-profile.cjs"
   },
   "dependencies": {
     "@imgly/background-removal": "^1.7.0",

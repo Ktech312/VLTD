@@ -42,12 +42,10 @@ import {
   saveItems,
   syncVaultItemsFromSupabaseChecked,
   type VaultItem,
-  markPendingMoves,
-  clearPendingMoves,
   resetCloudBackoff,
 } from "@/lib/vaultModel";
 import { hasSupabaseEnv } from "@/lib/vaultCloud";
-import { deleteVaultItemEverywhere, deleteVaultItemsEverywhere } from "@/lib/vaultActions";
+import { deleteVaultItemEverywhere, deleteVaultItemsEverywhere, moveItemsToProfileConfirmed } from "@/lib/vaultActions";
 import { getOnboardingStatus, getStoredActiveProfileId, listMyProfiles, retryAccountLookups, type ProfileRow } from "@/lib/auth";
 import { readUniversePrefs, saveDisplayedUniverses } from "@/lib/universePrefs";
 import { currentLocalOwner } from "@/lib/localDataOwner";
@@ -1127,6 +1125,7 @@ export default function VaultListView({ lockedUniverse }: { lockedUniverse?: Uni
   const [myProfiles, setMyProfiles] = useState<ProfileRow[]>([]);
   const [activeProfileId, setActiveProfileId] = useState("");
   const [confirmProfileMove, setConfirmProfileMove] = useState<ProfileRow | null>(null);
+  const [movingProfile, setMovingProfile] = useState(false);
   const [visibleItemCount, setVisibleItemCount] = useState(FIRST_PAINT_ITEM_COUNT);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(() => new Set());
   const [selectMode, setSelectMode] = useState(false);
@@ -1903,30 +1902,28 @@ export default function VaultListView({ lockedUniverse }: { lockedUniverse?: Uni
     }
   }
 
-  /** Move the selected items to another profile (personal <-> business). */
-  function handleMoveToProfile(targetProfileId: string) {
-    if (!targetProfileId || selectedIds.size === 0) return;
-    const movedItems = items
-      .filter((item) => selectedIds.has(item.id))
-      // A moved item starts private in its new profile; it is never made public by the move.
-      .map((item) => ({ ...item, profile_id: targetProfileId, isPublic: false }));
-    markPendingMoves(movedItems.map((item) => item.id), targetProfileId);
-    commitVaultItemEdits(movedItems);
-    // An exhibit only holds its own profile's items, so the moved ones leave this profile's exhibits.
-    void import("@/lib/galleryModel").then((m) => m.removeItemIdsFromAllGalleriesConfirmed(movedItems.map((item) => item.id)));
-    // Moved items now belong to another profile: drop them from this view.
-    setItems((prev) => prev.filter((item) => !selectedIds.has(item.id)));
-    setSelectedIds(new Set());
-    setSelectMode(false);
+  /** Move the selected items to another profile (personal <-> business). The account confirms first; only confirmed items leave this profile and its exhibitions. */
+  async function handleMoveToProfile(targetProfileId: string) {
+    if (!targetProfileId || selectedIds.size === 0 || movingProfile) return;
+    const selected = items.filter((item) => selectedIds.has(item.id));
+    setMovingProfile(true);
     setConfirmProfileMove(null);
-    if (hasSupabaseEnv()) {
-      const movedIds = movedItems.map((item) => item.id);
-      void processVaultSyncQueue().then((result) => {
-        if (result.remaining === 0) clearPendingMoves(movedIds);
-        else showToast("The move is saved here and will finish uploading when you are back online.", 6000);
-        window.dispatchEvent(new Event("vltd:vault-updated"));
-      });
-    } else {
+    try {
+      const result = await moveItemsToProfileConfirmed(selected, targetProfileId);
+      const moved = new Set(result.movedIds);
+      if (moved.size > 0) {
+        // A moved item starts private in its new profile (the move never makes anything public) and has left this profile's exhibitions.
+        setItems((prev) => prev.filter((item) => !moved.has(String(item.id))));
+        showToast(`Moved ${moved.size} item${moved.size === 1 ? "" : "s"}. ${moved.size === 1 ? "It is" : "They are"} private in the other profile and no longer in this profile's exhibitions.`, 6000);
+      }
+      if (result.failed.length > 0) {
+        showToast(`${result.failed.length} item${result.failed.length === 1 ? "" : "s"} could not be moved and ${result.failed.length === 1 ? "was" : "were"} left exactly as before (still in this profile and in their exhibitions). Try again when you are online.`, 8000);
+      }
+      // Items that did not move stay selected so the move can be tried again.
+      setSelectedIds(new Set(result.failed.map((f) => f.id)));
+      if (result.failed.length === 0) setSelectMode(false);
+    } finally {
+      setMovingProfile(false);
       window.dispatchEvent(new Event("vltd:vault-updated"));
     }
   }
@@ -2352,7 +2349,7 @@ export default function VaultListView({ lockedUniverse }: { lockedUniverse?: Uni
                           <span className="text-xs font-semibold" style={{ color: "#93c5fd" }}>
                             Move {selectedIds.size} to {confirmProfileMove.display_name}? They leave this profile.
                           </span>
-                          <PillButton variant="active" onClick={() => handleMoveToProfile(confirmProfileMove.id)}>Yes, move</PillButton>
+                          <PillButton variant="active" disabled={movingProfile} onClick={() => void handleMoveToProfile(confirmProfileMove.id)}>{movingProfile ? "Moving…" : "Yes, move"}</PillButton>
                           <PillButton onClick={() => setConfirmProfileMove(null)}>No</PillButton>
                         </>
                       ) : (

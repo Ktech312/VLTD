@@ -193,3 +193,79 @@ export async function deleteVaultItemsEverywhere(ids: string[]): Promise<DeleteV
   emitVaultUpdate();
   return { ok: true };
 }
+
+export type MoveItemsResult = {
+  /** Items the cloud CONFIRMED are now in the other profile (and have left this profile's exhibitions). */
+  movedIds: string[];
+  /** Items left exactly as they were (still in the original profile and in their exhibitions), with the reason. */
+  failed: { id: string; reason: string }[];
+};
+
+// Move items to another profile (Personal <-> Business). The cloud answers FIRST: an item is only treated as moved once the account has
+// confirmed it, and only then does it leave this profile on screen and in the exhibitions that held it. If the cloud does not confirm
+// (offline, refused, an item that has not finished uploading), nothing changes for that item: it stays in its original profile and in its
+// exhibitions. A lost answer is checked by reading the rows back, so an item that did move is not reported as failed (and the other way round).
+export async function moveItemsToProfileConfirmed(items: VaultItem[], targetProfileId: string): Promise<MoveItemsResult> {
+  const ids = items.map((item) => String(item.id));
+  const result: MoveItemsResult = { movedIds: [], failed: [] };
+  if (ids.length === 0 || !targetProfileId) return result;
+
+  const supabase = hasSupabaseEnv() ? getSupabaseBrowserClient() : null;
+  let confirmed: string[] = [];
+  const reasons = new Map<string, string>();
+
+  if (!supabase) {
+    // No cloud configured (local-only use): there is nothing to confirm against.
+    confirmed = ids;
+  } else {
+    const CHUNK = 100;
+    for (let i = 0; i < ids.length; i += CHUNK) {
+      const chunk = ids.slice(i, i + CHUNK);
+      let done: string[] | null = null;
+      let failure = "The account did not confirm the move.";
+      try {
+        const { data, error } = await supabase
+          .from(VAULT_ITEMS_TABLE)
+          .update({ profile_id: targetProfileId, is_public: false })
+          .in("id", chunk)
+          .neq("profile_id", targetProfileId)
+          .select("id");
+        if (error) failure = error.message || failure;
+        else done = (data ?? []).map((row: { id: unknown }) => String(row.id));
+      } catch (error) {
+        failure = error instanceof Error ? error.message : failure;
+      }
+      if (done === null) {
+        // The answer was lost or refused: read the rows back before deciding (the move may have gone through).
+        try {
+          const { data, error } = await supabase.from(VAULT_ITEMS_TABLE).select("id, profile_id").in("id", chunk);
+          if (!error && data) done = data.filter((row: { profile_id: unknown }) => String(row.profile_id) === targetProfileId).map((row: { id: unknown }) => String(row.id));
+        } catch {
+          /* cannot tell: treated as not moved */
+        }
+      }
+      for (const id of chunk) {
+        if (done && done.includes(id)) confirmed.push(id);
+        else reasons.set(id, done === null ? failure : "Not found in your account yet (it may still be uploading), so it was left where it is.");
+      }
+    }
+  }
+
+  const confirmedSet = new Set(confirmed);
+  for (const id of ids) if (!confirmedSet.has(id)) result.failed.push({ id, reason: reasons.get(id) ?? "The account did not confirm the move." });
+  if (confirmed.length === 0) return result;
+
+  // Confirmed in the account: now update this device's copy (no upload queue: the cloud already has it), then take the items out of the
+  // exhibitions that held them (an exhibition only holds its own profile's items).
+  const local = loadItems({ includeAllProfiles: true });
+  saveItems(local.map((item) => (confirmedSet.has(String(item.id)) ? { ...item, profile_id: targetProfileId, isPublic: false } : item)));
+  result.movedIds = confirmed;
+  emitVaultUpdate();
+  try {
+    await removeItemIdsFromAllGalleriesConfirmed(confirmed);
+  } catch (error) {
+    console.error("Moved items could not be taken out of their exhibitions yet:", error);
+  }
+  emitVaultUpdate();
+  return result;
+}
