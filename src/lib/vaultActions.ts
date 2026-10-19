@@ -1,7 +1,7 @@
 import { loadItems, saveItem, saveItems, type VaultItem } from "./vaultModel";
 import { emitVaultUpdate } from "./vaultEvents";
 import { getSupabaseBrowserClient } from "./supabaseClient";
-import { hasSupabaseEnv, VAULT_ITEMS_TABLE } from "./vaultCloud";
+import { hasSupabaseEnv, isNetworkFailure, VAULT_ITEMS_TABLE } from "./vaultCloud";
 import { removeItemIdsFromAllGalleriesConfirmed } from "./galleryModel";
 
 export function addItemAndNotify(item: VaultItem) {
@@ -198,7 +198,7 @@ export type MoveItemsResult = {
   /** Items the cloud CONFIRMED are now in the other profile (and have left this profile's exhibitions). */
   movedIds: string[];
   /** Items left exactly as they were (still in the original profile and in their exhibitions), with the reason. */
-  failed: { id: string; reason: string }[];
+  failed: { id: string; reason: string; /** true when the account answered and the item is known to be where it was; false when the answer was lost and could not be checked. */ certain: boolean }[];
 };
 
 // Move items to another profile (Personal <-> Business). The cloud answers FIRST: an item is only treated as moved once the account has
@@ -213,6 +213,7 @@ export async function moveItemsToProfileConfirmed(items: VaultItem[], targetProf
   const supabase = hasSupabaseEnv() ? getSupabaseBrowserClient() : null;
   let confirmed: string[] = [];
   const reasons = new Map<string, string>();
+  const certainty = new Map<string, boolean>();
 
   if (!supabase) {
     // No cloud configured (local-only use): there is nothing to confirm against.
@@ -223,6 +224,8 @@ export async function moveItemsToProfileConfirmed(items: VaultItem[], targetProf
       const chunk = ids.slice(i, i + CHUNK);
       let done: string[] | null = null;
       let failure = "The account did not confirm the move.";
+      let refused = false; // the account ANSWERED with a refusal (not a lost or missing answer)
+      let readBackOk = false;
       try {
         const { data, error } = await supabase
           .from(VAULT_ITEMS_TABLE)
@@ -230,7 +233,7 @@ export async function moveItemsToProfileConfirmed(items: VaultItem[], targetProf
           .in("id", chunk)
           .neq("profile_id", targetProfileId)
           .select("id");
-        if (error) failure = error.message || failure;
+        if (error) { failure = error.message || failure; refused = !isNetworkFailure(error); }
         else done = (data ?? []).map((row: { id: unknown }) => String(row.id));
       } catch (error) {
         failure = error instanceof Error ? error.message : failure;
@@ -239,20 +242,24 @@ export async function moveItemsToProfileConfirmed(items: VaultItem[], targetProf
         // The answer was lost or refused: read the rows back before deciding (the move may have gone through).
         try {
           const { data, error } = await supabase.from(VAULT_ITEMS_TABLE).select("id, profile_id").in("id", chunk);
-          if (!error && data) done = data.filter((row: { profile_id: unknown }) => String(row.profile_id) === targetProfileId).map((row: { id: unknown }) => String(row.id));
+          if (!error && data) { readBackOk = true; done = data.filter((row: { profile_id: unknown }) => String(row.profile_id) === targetProfileId).map((row: { id: unknown }) => String(row.id)); }
         } catch {
           /* cannot tell: treated as not moved */
         }
       }
       for (const id of chunk) {
         if (done && done.includes(id)) confirmed.push(id);
-        else reasons.set(id, done === null ? failure : "Not found in your account yet (it may still be uploading), so it was left where it is.");
+        else {
+          reasons.set(id, done === null ? failure : "Not found in your account yet (it may still be uploading), so it was left where it is.");
+          // known: the account answered with a refusal, or it was read back and is still where it was. Unknown: the answer was lost and could not be checked.
+          certainty.set(id, refused || readBackOk || done !== null);
+        }
       }
     }
   }
 
   const confirmedSet = new Set(confirmed);
-  for (const id of ids) if (!confirmedSet.has(id)) result.failed.push({ id, reason: reasons.get(id) ?? "The account did not confirm the move." });
+  for (const id of ids) if (!confirmedSet.has(id)) result.failed.push({ id, reason: reasons.get(id) ?? "The account did not confirm the move.", certain: certainty.get(id) ?? false });
   if (confirmed.length === 0) return result;
 
   // Confirmed in the account: now update this device's copy (no upload queue: the cloud already has it), then take the items out of the

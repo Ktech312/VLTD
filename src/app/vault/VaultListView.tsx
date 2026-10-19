@@ -1916,8 +1916,14 @@ export default function VaultListView({ lockedUniverse }: { lockedUniverse?: Uni
         setItems((prev) => prev.filter((item) => !moved.has(String(item.id))));
         showToast(`Moved ${moved.size} item${moved.size === 1 ? "" : "s"}. ${moved.size === 1 ? "It is" : "They are"} private in the other profile and no longer in this profile's exhibitions.`, 6000);
       }
-      if (result.failed.length > 0) {
-        showToast(`${result.failed.length} item${result.failed.length === 1 ? "" : "s"} could not be moved and ${result.failed.length === 1 ? "was" : "were"} left exactly as before (still in this profile and in their exhibitions). Try again when you are online.`, 8000);
+      const certainFails = result.failed.filter((f) => f.certain);
+      const unknownFails = result.failed.filter((f) => !f.certain);
+      if (certainFails.length > 0) {
+        showToast(`${certainFails.length} item${certainFails.length === 1 ? "" : "s"} could not be moved and ${certainFails.length === 1 ? "was" : "were"} left exactly as before (still in this profile and in their exhibitions). Try again when you are online.`, 8000);
+      }
+      if (unknownFails.length > 0) {
+        // The answer was lost and could not be checked: do not claim either outcome. Exhibitions were not touched.
+        showToast(`${unknownFails.length} item${unknownFails.length === 1 ? "" : "s"}: the account did not confirm whether the move happened. Your exhibitions were not changed. Reload to see where ${unknownFails.length === 1 ? "it is" : "they are"}, then try again if needed.`, 9000);
       }
       // Items that did not move stay selected so the move can be tried again.
       setSelectedIds(new Set(result.failed.map((f) => f.id)));
