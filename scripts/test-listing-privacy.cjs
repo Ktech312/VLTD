@@ -52,5 +52,12 @@ check("artist-name inference still reads the public title", /Alex Ross/.test(art
 // the private data is untouched (nothing here writes to the item)
 check("the item's private note is still stored on the item object", base.notes.includes(PRIVATE_NOTE));
 
+// the places that decide whether an item is "ready to list" must not count or display private notes either
+for (const f of ["src/components/ListingReadinessPanel.tsx", "src/app/vault/for-sale/page.tsx", "src/lib/listingGenerator.ts", "src/lib/generateItemCopy.ts"]) {
+  const src = fs.readFileSync(path.join(root, f), "utf8").replace(/\/\/.*$/gm, "");
+  check(f + " does not read item.notes", !/\bitem\.notes\b|input\.notes\b/.test(src), "reads private notes");
+}
+check('the readiness checklist says "Public description needed."', /Public description needed\./.test(fs.readFileSync(path.join(root, "src/components/ListingReadinessPanel.tsx"), "utf8")));
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);
