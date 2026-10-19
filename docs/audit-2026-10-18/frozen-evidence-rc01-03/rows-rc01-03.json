@@ -1,0 +1,175 @@
+{
+ "frozenAt": "2026-10-19T16:13:55.437Z",
+ "appCommitTested": "94b4522",
+ "rootCauses": [
+  {
+   "id": "RC-01",
+   "priority": 1,
+   "impact": "privacy/data loss",
+   "title": "Opening another profile's exhibition by its address (Business active, Personal exhibition) EMPTIES it",
+   "summary": "Reproduced independently by the coordinator (CRW-012): 7 items, 7 links and 7 layout entries became 0 although the page only said 'Exhibition not found'. The control visit on the matching profile changed nothing.",
+   "rowIds": [
+    "EXH-433",
+    "CRW-012"
+   ]
+  },
+  {
+   "id": "RC-02",
+   "priority": 1,
+   "impact": "privacy/data loss",
+   "title": "Private notes and 'Recorded cost basis' flow into public/buyer-facing text",
+   "summary": "Marketplace listing copy contains the cost-basis line and the private internal note; 'Generate listing copy' puts the private note in its draft and Accept saves it as the public description; the public /share page then shows it to a signed-out visitor.",
+   "rowIds": [
+    "ITM-230",
+    "ITM-624",
+    "ITM-262",
+    "ITM-263",
+    "ITM-264",
+    "ITM-645"
+   ]
+  },
+  {
+   "id": "RC-03",
+   "priority": 1,
+   "impact": "privacy/data loss",
+   "title": "Cancelling an auction leaves a previously private item public",
+   "summary": "Starting an auction makes the item public; Cancel Auction does not undo it (is_public stays true).",
+   "rowIds": [
+    "ITM-253",
+    "ITM-634"
+   ]
+  }
+ ],
+ "rows": [
+  {
+   "id": "ITM-230",
+   "area": "ITM",
+   "page": "/vault/item/[id] | owner, Personal, desktop 1440, for sale; cost 40+tax 4; internal note and public description both set",
+   "control": "Listing copy for a marketplace (what it contains)",
+   "expected": "Paste-ready text for strangers must not contain what the Curator paid or the notes labelled 'ONLY YOU SEE THESE'; it should use the PUBLIC description",
+   "actual": "copy text contains: cost basis line (what was paid); the private INTERNAL NOTE text. Uses description text: false; excerpt: Title: QA ITM sell item CGC 9.4 Cert CERT-SELL-1 | Platform: EBAY | Category: Comics | Price: $99 |  | QA ITM sell item |  | Mint condition with only minor handling or print imperfections expected at this grade. |  | Category: Comics |  | Condition / grade: CGC 9.4 |  | Certification #: CERT-SELL-1 |  | Asking price: $99 | Recorded cost basis: $40 |  | Ships boxed with padding.",
+   "result": "FAIL",
+   "evidence": "shots/itm-fail-mvevq81y-3.jpg",
+   "impact": "privacy/data loss",
+   "repro": "Mark an item for sale that has a purchase price and an internal note; open Listing Copy; read the text / Copy Listing",
+   "at": "2026-10-19T06:34:40.703Z"
+  },
+  {
+   "id": "ITM-253",
+   "area": "ITM",
+   "page": "/vault/item/[id] | owner, Personal, desktop 1440, item was private before the auction",
+   "control": "Cancel Auction restores the item's privacy",
+   "expected": "After cancelling, an item that was private is private again (the Curator never made it public)",
+   "actual": "is_public=true after Cancel Auction (still publicly visible: true)",
+   "result": "FAIL",
+   "evidence": "shots/itm-fail-mvevqxbc-14.jpg",
+   "impact": "privacy/data loss",
+   "repro": "Private item -> Start Auction -> Manage Auction -> Cancel Auction; read is_public",
+   "at": "2026-10-19T06:35:13.468Z"
+  },
+  {
+   "id": "ITM-262",
+   "area": "ITM",
+   "page": "/vault/item/[id] | owner, Personal, desktop 1440, internal note set",
+   "control": "Generated listing copy content",
+   "expected": "The draft is built from public facts; the internal note ('ONLY YOU SEE THESE') must not be copied into buyer-facing text",
+   "actual": "[POSSIBLY INTERCEPTED: this control calls AI/billing/email/lookup/sign-out services that the audit refuses; treat as handling of a refusal, not an end-to-end result] draft contains the private note: true; draft: CGC 9.4 QA ITM sell item 2 (Pop Culture) — now available. Authenticated and graded — cert #CERT-SELL-2. Asking $99. Serious inquiries only. PRIVATE-NOTE-GEN-QA never publish this",
+   "result": "FAIL",
+   "evidence": "shots/itm-fail-mvevt1dh-3.jpg",
+   "impact": "privacy/data loss",
+   "repro": "Add an internal note; Generate listing copy; read the draft",
+   "at": "2026-10-19T06:36:51.993Z"
+  },
+  {
+   "id": "ITM-263",
+   "area": "ITM",
+   "page": "/vault/item/[id] | owner, Personal, desktop 1440",
+   "control": "Generate listing copy -> Accept (saves as the item's public description)",
+   "expected": "Accepting stores buyer-facing text as the public description without the private note",
+   "actual": "[POSSIBLY INTERCEPTED: this control calls AI/billing/email/lookup/sign-out services that the audit refuses; treat as handling of a refusal, not an end-to-end result] db description=\"CGC 9.4 QA ITM sell item 2 (Pop Culture) — now available. Authenticated and graded — cert #CERT-SELL-2. Asking $99. Serious inquiries only. PRIVATE-NOTE-GEN-QA never publish this\"; contains private note=true",
+   "result": "FAIL",
+   "evidence": "shots/itm-fail-mvevt3lq-4.jpg",
+   "impact": "privacy/data loss",
+   "repro": "Generate listing copy -> Accept; read the item's description (it is what /share shows)",
+   "at": "2026-10-19T06:36:54.854Z"
+  },
+  {
+   "id": "ITM-264",
+   "area": "ITM",
+   "page": "/share/[itemId] | signed out, item public after Accept",
+   "control": "Public share page after Generate -> Accept",
+   "expected": "The public page never shows the internal note",
+   "actual": "public page contains the private note=true; description shown=true",
+   "result": "FAIL",
+   "evidence": "shots/itm-fail-mvevt5q6-5.jpg",
+   "impact": "privacy/data loss",
+   "repro": "After Accept, open /share/<id> signed out (profile public)",
+   "at": "2026-10-19T06:36:57.613Z"
+  },
+  {
+   "id": "ITM-624",
+   "area": "ITM",
+   "page": "/vault/item/[id] | owner, Personal, phone 390 (browser-emulated), for sale; cost 40+tax 4; internal note and public description both set",
+   "control": "Listing copy for a marketplace (what it contains)",
+   "expected": "Paste-ready text for strangers must not contain what the Curator paid or the notes labelled 'ONLY YOU SEE THESE'; it should use the PUBLIC description",
+   "actual": "copy text contains: cost basis line (what was paid); the private INTERNAL NOTE text. Uses description text: false; excerpt: Title: QA ITM sell item CGC 9.4 Cert CERT-SELL-1 | Platform: EBAY | Category: Comics | Price: $99 |  | QA ITM sell item |  | Mint condition with only minor handling or print imperfections expected at this grade. |  | Category: Comics |  | Condition / grade: CGC 9.4 |  | Certification #: CERT-SELL-1 |  | Asking price: $99 | Recorded cost basis: $40 |  | Ships boxed with padding.",
+   "result": "FAIL",
+   "evidence": "shots/itm-fail-mvexgqfr-3.jpg",
+   "impact": "privacy/data loss",
+   "repro": "Mark an item for sale that has a purchase price and an internal note; open Listing Copy; read the text / Copy Listing",
+   "at": "2026-10-19T07:23:17.232Z"
+  },
+  {
+   "id": "ITM-634",
+   "area": "ITM",
+   "page": "/vault/item/[id] | owner, Personal, phone 390 (browser-emulated), item was private before the auction",
+   "control": "Cancel Auction restores the item's privacy",
+   "expected": "After cancelling, an item that was private is private again (the Curator never made it public)",
+   "actual": "is_public=true after Cancel Auction (still publicly visible: true)",
+   "result": "FAIL",
+   "evidence": "shots/itm-fail-mvexhczj-7.jpg",
+   "impact": "privacy/data loss",
+   "repro": "Private item -> Start Auction -> Manage Auction -> Cancel Auction; read is_public",
+   "at": "2026-10-19T07:23:46.367Z"
+  },
+  {
+   "id": "ITM-645",
+   "area": "ITM",
+   "page": "/share/[itemId] | signed out, item public after Accept",
+   "control": "Public share page after Generate -> Accept",
+   "expected": "The public page never shows the internal note",
+   "actual": "public page contains the private note=true; description shown=true",
+   "result": "FAIL",
+   "evidence": "shots/itm-fail-mvexi4tu-5.jpg",
+   "impact": "privacy/data loss",
+   "repro": "After Accept, open /share/<id> signed out (profile public)",
+   "at": "2026-10-19T07:24:25.063Z"
+  },
+  {
+   "id": "EXH-433",
+   "area": "EXH",
+   "page": "/museum/[galleryId] | owner with the BUSINESS profile active opens a PERSONAL exhibition's URL, clean browser",
+   "control": "Opening the other profile's exhibition by its address",
+   "expected": "The page says it belongs to another profile and changes nothing (items 5)",
+   "actual": "page: 'MUSEUM Exhibition not found This exhibition could not be found. It may have been'; database items 5 -> 0 (the exhibition's items were removed just by opening it)",
+   "result": "FAIL",
+   "evidence": "shots/exh-profilewipe-business-opens-personal.jpg",
+   "impact": "privacy/data loss",
+   "repro": "Switch to the Business profile in a fresh browser, open /museum/<id of a Personal exhibition that has items>, wait 15 s, check the Personal exhibition",
+   "at": "2026-10-19T09:13:10.221Z"
+  },
+  {
+   "id": "CRW-012",
+   "area": "CRW",
+   "page": "/museum/<Personal exhibition id> | owner with the BUSINESS profile active",
+   "control": "opening another profile's exhibition (independent confirmation of EXH-433)",
+   "expected": "opening an exhibition that belongs to the other profile changes nothing (shows not-found or asks to switch profile)",
+   "actual": "DB before: layout ids 7, links 7; after opening on Personal: 7/7; after opening with Business active: 0/0. Page text: Home Vault Exhibitions Lounge Discover ? Help ⌘K NOVICE Level 1 MUSEUM Exhibition not found This exhibition could not be",
+   "result": "FAIL",
+   "evidence": "shots/crw-wipe-business-profile.jpg",
+   "impact": "privacy/data loss",
+   "repro": "Sign in as a user with Personal and Business profiles, switch to Business, open /museum/<id of a Personal exhibition>, wait 15 s, check its items.",
+   "at": "2026-10-19T09:16:23.958Z"
+  }
+ ]
+}
