@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32" fill="none">
+  <defs>
+    <linearGradient id="glass" x1="7" y1="5" x2="26" y2="28" gradientUnits="userSpaceOnUse"><stop stop-color="#a5f5ff"/><stop offset=".35" stop-color="#19d7ff"/><stop offset="1" stop-color="#0664e5"/></linearGradient>
+    <linearGradient id="edge" x1="9" y1="8" x2="23" y2="28" gradientUnits="userSpaceOnUse"><stop stop-color="#e1fcff"/><stop offset="1" stop-color="#2998ff"/></linearGradient>
+  </defs>
+  <!-- Open interior and doorway stay dark; highlights never cross those gaps. -->
+  <path d="M3 15 16 3 29 15" stroke="#063e72" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M3 15 16 3 29 15" stroke="url(#glass)" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M4 14 16 3.5 28 14" stroke="#c6f8ff" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M7 15v13h7v-8h4v8h7V15" stroke="#063e72" stroke-width="5" stroke-linejoin="round"/>
+  <path d="M7 15v13h7v-8h4v8h7V15" stroke="url(#glass)" stroke-width="3" stroke-linejoin="round"/>
+  <path d="M6.5 15v12.5M14 21v6M18 21v6M24.5 15v12.5" stroke="url(#edge)" stroke-width="1" stroke-linecap="round"/>
+</svg>
