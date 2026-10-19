@@ -59,5 +59,9 @@ for (const f of ["src/components/ListingReadinessPanel.tsx", "src/app/vault/for-
 }
 check('the readiness checklist says "Public description needed."', /Public description needed\./.test(fs.readFileSync(path.join(root, "src/components/ListingReadinessPanel.tsx"), "utf8")));
 
+// the public description must survive loading: the item normalizer once never copied it, so every load dropped it from the local copy
+const vm = fs.readFileSync(path.join(root, "src/lib/vaultModel.ts"), "utf8");
+check("the item normalizer keeps the public description", /notes: raw\.notes \?\? undefined,\s*(\/\/[^\n]*\n\s*)*description: typeof raw\.description === "string"/.test(vm), "description line missing next to notes in normalizeItem");
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

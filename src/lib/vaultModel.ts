@@ -613,6 +613,9 @@ function normalizeOne(input: unknown): VaultItem | null {
     images,
     primaryImageKey,
     notes: raw.notes ?? undefined,
+    // The PUBLIC description (shown when the item is shared). It was written to the cloud but never copied here, so every load dropped it from the
+    // local copy: listing text and the readiness checklist could never see it (audit RC-02 follow-up). Private notes stay in `notes`.
+    description: typeof raw.description === "string" ? raw.description : undefined,
     storageLocation: raw.storageLocation ?? undefined,
     certNumber: raw.certNumber ?? undefined,
     serialNumber: raw.serialNumber ?? undefined,
