@@ -274,7 +274,7 @@ export default function GalleryPage() {
   useEffect(() => {
     if (!id) return;
 
-    ensureGalleryPublicToken(id);
+    // Loading only reads. A share token is created by an intentional save (or when sharing is enabled), never by opening the page.
     loadState();
     void refreshGalleriesFromSupabase(true);
 
@@ -444,33 +444,9 @@ export default function GalleryPage() {
 
   const selectedAccessMode = useMemo(() => getAccessMode(draft), [draft]);
 
-  // Older saved exhibits lack year, description and category in their public record, so Timeline and
-  // the details popup came up empty for items that are not public in the vault. Refresh them once.
-  const snapshotsRefreshedRef = useRef(false);
-  useEffect(() => {
-    if (snapshotsRefreshedRef.current || !draft || items.length === 0) return;
-    const byId = new Map(items.map((item) => [item.id, item]));
-    const snapshots = draft.publicItemSnapshots ?? [];
-    const stale = snapshots.some((snapshot) => {
-      const item = byId.get(snapshot.id);
-      if (!item || snapshot.hidden) return false;
-      return (
-        (item.year && snapshot.year === undefined) ||
-        (item.description && snapshot.description === undefined) ||
-        ((item.categoryLabel || item.category) && snapshot.categoryLabel === undefined)
-      );
-    });
-    snapshotsRefreshedRef.current = true;
-    if (!stale) return;
-    patchDraft((current) => ({
-      ...current,
-      publicItemSnapshots: (current.publicItemSnapshots ?? []).map((snapshot) => {
-        const item = byId.get(snapshot.id);
-        return item && !isSupplyItem(item) ? buildPublicSnapshot(item, snapshot) : snapshot;
-      }),
-    }));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [draft, items]);
+  // Public details of older exhibits (year, description, category) are refreshed by the next intentional save, which rebuilds every
+  // public snapshot from the items (saveDraft). Opening the page never saves: it used to patch the draft here, which triggered an autosave
+  // of the whole exhibition (and of its link rows) just because someone looked at it.
 
   // Autosave: every change (items, exhibits, title, description, layout, background) saves
   // itself about a second after the last edit, so nothing depends on pressing Save Changes.

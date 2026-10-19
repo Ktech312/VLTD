@@ -1,5 +1,6 @@
 "use client";
 
+import { planGalleryItemSync } from "./galleryItemSync";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 import { stillSignedInAs, storedSessionUserId } from "@/lib/sessionGuard";
 import { registerCloudSaveRetry, reportIdle, reportPending, reportSaved } from "@/lib/cloudSaveStatus";
@@ -1045,7 +1046,7 @@ async function syncGalleryItemsToSupabase(
   try {
     const { data: existingRows, error: existingError } = await supabase
       .from("gallery_items")
-      .select("gallery_id, artifact_id, position")
+      .select("id, gallery_id, artifact_id, position")
       .eq("gallery_id", gallery.id)
       .order("position", { ascending: true });
 
@@ -1055,9 +1056,9 @@ async function syncGalleryItemsToSupabase(
       return;
     }
 
-    const normalizedExisting = Array.isArray(existingRows)
+    const existing = Array.isArray(existingRows)
       ? existingRows.map((row: any, index: number) => ({
-          gallery_id: gallery.id,
+          id: row?.id,
           artifact_id: String(row?.artifact_id ?? "").trim(),
           position:
             typeof row?.position === "number" && Number.isFinite(row.position)
@@ -1066,80 +1067,36 @@ async function syncGalleryItemsToSupabase(
         }))
       : [];
 
-    const existingSignature = JSON.stringify(
-      normalizedExisting.map((row) => ({
-        artifact_id: row.artifact_id,
-        position: row.position,
-      }))
-    );
+    // ADDITIVE: only what must change is changed, and in a safe order (insert what is missing, fix positions, then delete only rows that
+    // no longer belong). The exhibition is never left without its links, and nothing is deleted just to be written again. If the
+    // insert fails, nothing has been removed.
+    const plan = planGalleryItemSync(existing, rows);
+    if (plan.toInsert.length === 0 && plan.toUpdate.length === 0 && plan.toDelete.length === 0) return;
 
-    const nextSignature = JSON.stringify(
-      rows.map((row) => ({
-        artifact_id: row.artifact_id,
-        position: row.position,
-      }))
-    );
-
-    if (existingSignature === nextSignature) {
-      return;
+    if (plan.toInsert.length > 0) {
+      const { error: insertError } = await supabase
+        .from("gallery_items")
+        .insert(plan.toInsert.map((row) => ({ gallery_id: gallery.id, ...row })));
+      if (insertError) {
+        console.error("Failed inserting gallery_items rows (nothing was removed):", insertError);
+        if (options?.throwOnError) throw insertError;
+        return;
+      }
     }
 
-    if (rows.length === 0) {
-      const { error: deleteError } = await supabase
-        .from("gallery_items")
-        .delete()
-        .eq("gallery_id", gallery.id);
+    for (const change of plan.toUpdate) {
+      const { error: updateError } = await supabase.from("gallery_items").update({ position: change.position }).eq("id", change.id);
+      if (updateError) console.error("Failed updating a gallery_items position (the link itself is untouched):", updateError);
+    }
 
+    if (plan.toDelete.length > 0) {
+      const { error: deleteError } = await supabase.from("gallery_items").delete().in("id", plan.toDelete);
       if (deleteError) {
-        console.error("Failed clearing gallery_items rows:", deleteError);
+        // Rows that should have gone are still there: a superset, never fewer links. The next save removes them.
+        console.error("Failed removing gallery_items rows that no longer belong:", deleteError);
         if (options?.throwOnError) throw deleteError;
       }
-
-      return;
     }
-
-    const { error: deleteError } = await supabase
-      .from("gallery_items")
-      .delete()
-      .eq("gallery_id", gallery.id);
-
-    if (deleteError) {
-      console.error("Failed clearing gallery_items rows:", deleteError);
-      if (options?.throwOnError) throw deleteError;
-      return;
-    }
-
-    const { error: insertError } = await supabase.from("gallery_items").insert(rows);
-
-    if (!insertError) {
-      return;
-    }
-
-    console.error("Failed inserting gallery_items rows:", insertError);
-
-    // This table's own rows were already deleted above (delete-then-insert,
-    // not atomic) — a failed insert here leaves gallery_items genuinely
-    // empty for this gallery, which is what the public share route reads
-    // directly. The restore attempt must always run before any throw, or a
-    // throwOnError caller (syncGalleryToSupabaseNow — the editor's Save
-    // button and the exhibition self-heal both go through it) skips
-    // straight past this recovery and leaves the row gone.
-    if (normalizedExisting.length > 0) {
-      const { error: restoreError } = await supabase
-        .from("gallery_items")
-        .insert(normalizedExisting);
-
-      if (restoreError) {
-        console.error("Failed restoring previous gallery_items rows:", restoreError);
-      } else {
-        console.warn("Restored previous gallery_items rows after failed sync.", {
-          galleryId: gallery.id,
-          restoredCount: normalizedExisting.length,
-        });
-      }
-    }
-
-    if (options?.throwOnError) throw insertError;
   } catch (error) {
     console.error("Unexpected gallery_items sync error:", error);
     if (options?.throwOnError) throw error;
