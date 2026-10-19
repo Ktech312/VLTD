@@ -1,0 +1,207 @@
+{
+ "label": "after-home-rerun",
+ "base": "https://vltd.app",
+ "at": "2026-10-19T01:47:48.728Z",
+ "pass": 9,
+ "fail": 0,
+ "results": [
+  {
+   "page": "home",
+   "name": "WITH SAVED COPY, cloud failing: saved data stays available",
+   "ok": true,
+   "detail": {
+    "10": {
+     "items": 5,
+     "stale": false,
+     "loading": false,
+     "zeroFigures": false,
+     "errorMsg": false,
+     "emptyClaim": false,
+     "retry": false,
+     "head": "Home Vault Exhibitions Lounge Discover ? Help ⌘K COLLECTOR Level 3 🎃 Trick or Treat Horror, comics, and dark collectibles await Explore Spooky Vaults Switch ap"
+    },
+    "25": {
+     "items": 5,
+     "stale": true,
+     "loading": false,
+     "zeroFigures": false,
+     "errorMsg": false,
+     "emptyClaim": false,
+     "retry": true,
+     "head": "Home Vault Exhibitions Lounge Discover ? Help ⌘K COLLECTOR Level 3 🎃 Trick or Treat Horror, comics, and dark collectibles await Explore Spooky Vaults Switch ap"
+    },
+    "45": {
+     "items": 5,
+     "stale": true,
+     "loading": false,
+     "zeroFigures": false,
+     "errorMsg": false,
+     "emptyClaim": false,
+     "retry": true,
+     "head": "Home Vault Exhibitions Lounge Discover ? Help ⌘K COLLECTOR Level 3 🎟️ Propstore: James Bond Online Auction – London Happening now! Learn More Showing saved dat"
+    }
+   }
+  },
+  {
+   "page": "home",
+   "name": "…and says “Showing saved data—couldn’t refresh.”",
+   "ok": true,
+   "detail": {
+    "s10": "Home Vault Exhibitions Lounge Discover ? Help ⌘K COLLECTOR Level 3 🎃 Trick or Treat Horror, comics, and dark collectibles await Explore Spooky Vaults Switch ap",
+    "s45": "Home Vault Exhibitions Lounge Discover ? Help ⌘K COLLECTOR Level 3 🎟️ Propstore: James Bond Online Auction – London Happening now! Learn More Showing saved dat"
+   }
+  },
+  {
+   "page": "home",
+   "name": "…with a Retry action",
+   "ok": true,
+   "detail": {
+    "items": 5,
+    "stale": true,
+    "loading": false,
+    "zeroFigures": false,
+    "errorMsg": false,
+    "emptyClaim": false,
+    "retry": true,
+    "head": "Home Vault Exhibitions Lounge Discover ? Help ⌘K COLLECTOR Level 3 🎟️ Propstore: James Bond Online Auction – London Happening now! Learn More Showing saved dat"
+   }
+  },
+  {
+   "page": "home",
+   "name": "…never presents the failure as an empty collection or as $0 figures",
+   "ok": true,
+   "detail": {
+    "items": 5,
+    "stale": true,
+    "loading": false,
+    "zeroFigures": false,
+    "errorMsg": false,
+    "emptyClaim": false,
+    "retry": true,
+    "head": "Home Vault Exhibitions Lounge Discover ? Help ⌘K COLLECTOR Level 3 🎟️ Propstore: James Bond Online Auction – London Happening now! Learn More Showing saved dat"
+   }
+  },
+  {
+   "page": "home",
+   "name": "…request count while failing stays bounded (<= 30 failed requests in 45 s)",
+   "ok": true,
+   "detail": {
+    "failedRequests": 24,
+    "at": [
+     0.7,
+     0.7,
+     0.7,
+     1.7,
+     1.7,
+     1.7,
+     3.7,
+     3.7,
+     3.7,
+     7.8,
+     7.8,
+     7.8,
+     8.6,
+     8.6,
+     8.6,
+     9.6,
+     9.6,
+     9.6,
+     11.6,
+     11.6,
+     11.6,
+     15.6,
+     15.6,
+     15.6
+    ]
+   }
+  },
+  {
+   "page": "home",
+   "name": "…Retry works once the cloud is back (message gone, data still there)",
+   "ok": true,
+   "detail": {
+    "clicked": true,
+    "after": {
+     "items": 5,
+     "stale": false,
+     "loading": false,
+     "zeroFigures": false,
+     "errorMsg": false,
+     "emptyClaim": false,
+     "retry": false,
+     "head": "Home Vault Exhibitions Lounge Discover ? Help ⌘K COLLECTOR Level 3 🎃 Trick or Treat Horror, comics, and dark collectibles await Explore Spooky Vaults Switch ap"
+    }
+   }
+  },
+  {
+   "page": "home",
+   "name": "NO SAVED COPY (clean browser), cloud failing: a clear load error with Retry, not endless 'Loading…'",
+   "ok": true,
+   "detail": {
+    "10": {
+     "items": 0,
+     "stale": false,
+     "loading": true,
+     "zeroFigures": false,
+     "errorMsg": false,
+     "emptyClaim": false,
+     "retry": false,
+     "head": "Home Vault Exhibitions Lounge Discover ? Help ⌘K NOVICE Level 1 Loading Home… Add to Home Screen"
+    },
+    "25": {
+     "items": 0,
+     "stale": false,
+     "loading": false,
+     "zeroFigures": false,
+     "errorMsg": true,
+     "emptyClaim": false,
+     "retry": true,
+     "head": "Home Vault Exhibitions Lounge Discover ? Help ⌘K NOVICE Level 1 COULD NOT LOAD We couldn't load your collection just now Your items are safe: nothing has been c"
+    },
+    "45": {
+     "items": 0,
+     "stale": false,
+     "loading": false,
+     "zeroFigures": false,
+     "errorMsg": true,
+     "emptyClaim": false,
+     "retry": true,
+     "head": "Home Vault Exhibitions Lounge Discover ? Help ⌘K NOVICE Level 1 COULD NOT LOAD We couldn't load your collection just now Your items are safe: nothing has been c"
+    }
+   }
+  },
+  {
+   "page": "home",
+   "name": "…no $0 figures and no empty-collection claim",
+   "ok": true,
+   "detail": {
+    "items": 0,
+    "stale": false,
+    "loading": false,
+    "zeroFigures": false,
+    "errorMsg": true,
+    "emptyClaim": false,
+    "retry": true,
+    "head": "Home Vault Exhibitions Lounge Discover ? Help ⌘K NOVICE Level 1 COULD NOT LOAD We couldn't load your collection just now Your items are safe: nothing has been c"
+   }
+  },
+  {
+   "page": "home",
+   "name": "…Retry brings the data once the cloud answers",
+   "ok": true,
+   "detail": {
+    "clicked": true,
+    "after": {
+     "items": 5,
+     "stale": false,
+     "loading": false,
+     "zeroFigures": false,
+     "errorMsg": false,
+     "emptyClaim": false,
+     "retry": false,
+     "head": "Home Vault Exhibitions Lounge Discover ? Help ⌘K NOVICE Level 1 🎃 Trick or Treat Horror, comics, and dark collectibles await Explore Spooky Vaults Switch app t"
+    }
+   }
+  }
+ ]
+}

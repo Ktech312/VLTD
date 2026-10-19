@@ -1,0 +1,89 @@
+fixture ready: { owned: 26, sold: 5, galleries: 5 }
+for-sale items: 3
+=== PASS3 AFTER
+PASS [vault] WITH SAVED COPY, cloud failing: saved data stays available 
+PASS [vault] …and says “Showing saved data—couldn’t refresh.” 
+PASS [vault] …with a Retry action 
+PASS [vault] …never presents the failure as an empty collection or as $0 figures 
+PASS [vault] …request count while failing stays bounded (<= 30 failed requests in 45 s) 
+PASS [vault] …Retry works once the cloud is back (message gone, data still there) 
+PASS [vault] NO SAVED COPY (clean browser), cloud failing: a clear load error with Retry, not endless 'Loading…' 
+PASS [vault] …no $0 figures and no empty-collection claim 
+PASS [vault] …Retry brings the data once the cloud answers 
+PASS [sold] WITH SAVED COPY, cloud failing: saved data stays available 
+PASS [sold] …and says “Showing saved data—couldn’t refresh.” 
+PASS [sold] …with a Retry action 
+PASS [sold] …never presents the failure as an empty collection or as $0 figures 
+PASS [sold] …request count while failing stays bounded (<= 30 failed requests in 45 s) 
+PASS [sold] …Retry works once the cloud is back (message gone, data still there) 
+PASS [sold] NO SAVED COPY (clean browser), cloud failing: a clear load error with Retry, not endless 'Loading…' 
+PASS [sold] …no $0 figures and no empty-collection claim 
+PASS [sold] …Retry brings the data once the cloud answers 
+PASS [forsale] WITH SAVED COPY, cloud failing: saved data stays available 
+PASS [forsale] …and says “Showing saved data—couldn’t refresh.” 
+PASS [forsale] …with a Retry action 
+PASS [forsale] …never presents the failure as an empty collection or as $0 figures 
+PASS [forsale] …request count while failing stays bounded (<= 30 failed requests in 45 s) 
+PASS [forsale] …Retry works once the cloud is back (message gone, data still there) 
+PASS [forsale] NO SAVED COPY (clean browser), cloud failing: a clear load error with Retry, not endless 'Loading…' 
+PASS [forsale] …no $0 figures and no empty-collection claim 
+PASS [forsale] …Retry brings the data once the cloud answers 
+PASS [home] WITH SAVED COPY, cloud failing: saved data stays available 
+PASS [home] …and says “Showing saved data—couldn’t refresh.” 
+PASS [home] …with a Retry action 
+PASS [home] …never presents the failure as an empty collection or as $0 figures 
+PASS [home] …request count while failing stays bounded (<= 30 failed requests in 45 s) 
+PASS [home] …Retry works once the cloud is back (message gone, data still there) 
+FAIL [home] NO SAVED COPY (clean browser), cloud failing: a clear load error with Retry, not endless 'Loading…' {"10":{"items":0,"stale":false,"loading":true,"zeroFigures":false,"errorMsg":false,"emptyClaim":false,"retry":false,"head":"Home Vault Exhibitions Lounge Discover ? Help ⌘K COLLECTOR Level 3 Loading Home… Add to Home Screen"},"25":{"items":0,"stale":false,"loading":false,"zeroFigures":false,"errorMsg"
+PASS [home] …no $0 figures and no empty-collection claim 
+FAIL [home] …Retry brings the data once the cloud answers {"clicked":false,"after":{"items":0,"stale":false,"loading":false,"zeroFigures":false,"errorMsg":true,"emptyClaim":false,"retry":false,"head":"Home Vault Exhibitions Lounge Discover ? Help ⌘K COLLECTOR Level 3 We could not load your collection just now. Your items are safe: nothing has been changed or "}}
+
+34 passed, 2 failed -> C:/Users/EK/VLTD/.claude/worktrees/quizzical-hamilton-a45b28/docs/investigations/evidence-2026-10-18-pass3/paths-after.json
+=== LOADDIAG
+PASS [normal] every stage is recorded, in order, all ok 
+PASS [normal] the stall message stays hidden and the Vault shows its items 
+PASS [normal] the record holds no title, price or id (privacy) 
+PASS [page code fails] after 10 s a plain message replaces the blank page (with a Reload link) 
+PASS [page code fails] the message names the step and the failed files (paths only) 
+PASS [page code fails] the record has resource:failed and hydration:stalled 
+PASS [page code fails] the link reloads the same page (href is empty, no JavaScript needed) 
+PASS [page code fails] once the files can load, Reload brings the Vault back and the message is gone 
+PASS [profile lookup stalls] after ~4 s the empty placeholder says it is still checking (not a blank page) 
+PASS [profile lookup stalls] the route gate answered (it did not hang) and let the page through 
+PASS [profile lookup stalls] the Vault says 'could not load' and NEVER 'Your vault is empty' 
+PASS [profile lookup stalls] the record names the failing stage: vault:profile (none resolved) and the screen kind could-not-load 
+PASS [cloud fails] the page says 'could not load' with Try again, and NEVER 'Your vault is empty' 
+PASS [cloud fails] the record shows cloud-pull FAILED and the screen kind 'could-not-load' (flagged, not 'empty') 
+PASS [cloud fails] Try again, once the cloud answers, shows the items 
+
+15 passed, 0 failed
+=== VALUE RULE UI
+PASS the database keeps nothing written into valuation fields for B, C, E (null) and keeps D's explicit 0 
+PASS [Home] estimated value = known total: explicit 50 + at-purchase-cost 30 + explicit 0 + recorded-$0 cost 0 = $80 (the missing item adds nothing) 
+PASS [Home] discloses the counts: '2 of 5 priced', '2 at purchase cost', '1 missing value, not counted' 
+PASS [Home] card A shows its explicit value ($50) 
+PASS [Home] card B shows '$30 at purchase cost' 
+PASS [Home] card C shows 'Missing value' (not $0, not a cost) 
+PASS [Home] card D shows its explicit $0 (not replaced by its $10 cost) 
+PASS [Home] card E (recorded $0 cost, no valuation) shows '$0 at purchase cost', not 'Missing value' 
+PASS [Home] unrealized change measures only valued items with a cost: +$30 (A) and -$10 (D, an explicit $0) = +$20; the three unvalued items are not counted and create no loss 
+FAIL [Vault] the checklist pill says 'Needs valuation 3' (B, C, E) and nothing calls those items 'Missing value' there ""
+FAIL [Vault] only item C carries the words 'Missing value' on its card 0
+PASS [Vault] the summary says '1 missing value, not counted' 
+PASS [Item page] C shows 'Missing value' and says no valuation and no purchase cost are recorded 
+PASS [Insights] review reasons keep 'Needs valuation' (cost only) apart from 'Missing value' (neither) 
+PASS [Insights] the total card discloses the missing item 
+PASS [Insights] those reasons are amber, never loss-red 
+
+14 passed, 2 failed
+fixture ready: { owned: 26, sold: 5, galleries: 5 }
+for-sale items: 3
+history ok
+=== REGRESSION
+
+39 passed, 0 failed
+
+24 passed, 0 failed
+
+11 passed, 0 failed
+PASS3FINAL

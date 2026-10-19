@@ -4,6 +4,8 @@ Read-only for customer data. No record was restored, recreated, changed or delet
 
 ## 1. The two item-count drops (3,479 → 3,478 → 3,477)
 
+> **Status after the second pass (see the update at the end):** the two records ARE identified by id and title: `1778653394369_vb7r3n` "Absolute Superman" and `1791239191686_d49872` "Chicago Bears 2024 Topps Resurgence Football 4x Monster Box Break #625-12". **Who or what removed them, and exactly when, is still not established.** The deletion audit is proposed, not applied. The text below is the first pass as written.
+
 ### Confirmed
 - **The arithmetic is exact.** 3,477 = 880 demo items (22 demo profiles × 40, every one intact) + 1,482 in the collection `260312-0001` ("Kellogg") + 1,114 in the collection `260310-0001` ("EK") + 1 in the real account created on 2026-10-14.
 - **Where they went.** `260312-0001` measured **1,484 cloud items on 2026-10-15** (CHECKLIST recount "1,507 local / 1,484 cloud"; the 1,484-item performance test copy in HANDOFF) and has **1,482 now**. `260310-0001` was 1,111 on 2026-10-06 plus 3 items created 2026-10-11 = 1,114, unchanged. The 3,478 baseline of 2026-10-14 minus 880 minus 1,114 is 1,484. So **both drops are in `260312-0001`**, unless two opposite changes cancelled elsewhere (nothing suggests that).
@@ -131,3 +133,30 @@ Nothing was reloaded hoping the old failure returns; every failure below is made
 3. **Retry volume (open, not changed):** with the cloud failing, one open Vault tab made 69 failed requests in 45 s (fallback page sizes 200 down to 2 with repeated retries). Failed requests transfer no data, but it is avoidable load during an outage.
 
 **Historical cause: unknown.** What the tests support: recovery paths for failed code, account/profile lookup, cloud download and stale-deploy files are verified; failed requests are never shown as an empty collection on the Vault; pending changes survive and upload once. Not supported: that the one historical blank is explained by any of these. Home's unbounded wait was a real blank-looking path, but it was not recorded at the time.
+
+---
+
+## Third pass (2026-10-18): saved-data notice, failed-request loops, Sold/For Sale loading, the value rule
+
+Evidence folder: `docs/investigations/evidence-2026-10-18-pass3/` (`paths-before.json` and `log-before-first-run.log` are the FIRST run on production before any fix; `paths-after.json` and `log-after-first-run.log` are the FIRST run after the fix, including its two failures; `paths-after-home-rerun.json` is the rerun after Home's missing Retry was fixed). Nothing was retried to turn a failure into a pass: each scenario ran once, in an isolated browser, with a clean second browser for the "no saved copy" cases; failures are kept in the files.
+
+### The failed-request loop (69 requests in 45 seconds)
+- **Reproduced first, before changing code:** with the cloud download failing, all four pages (Vault, Home, Sold, For Sale) made exactly **69 failed requests in 45 s** (batches of three at 0.7, 1.7, 3.7, 7.8, 8.3, 9.3, 11.3, 15.3 … seconds). 13 of 36 checks passed; 23 failed.
+- **Cause (code):** one failing download multiplied itself: each of three pages retried 3 times, every failure then triggered a second full read with fewer columns, and the delta download then fell back to a full download that did the same again (about 37 requests per download), while several callers started downloads of their own. There was no pause between downloads.
+- **Fix:** one retry per page with a pause; the other pages stop as soon as one gives up; the narrower read happens only when the photo columns are really missing; a request that got no answer no longer triggers the full-download fallback; and after a failure automatic downloads wait 3 s, 6 s, 12 s … up to 5 minutes. Retry clears the wait, so a person never waits. Pending uploads are untouched.
+- **After (first run on production):** **24 failed requests in 45 s** on every page (was 69), spaced by doubling waits (0.7, 1.7, 3.7, 7.7 s …). Retry works once the cloud answers. The remaining 24 are a bounded 8 batches of 3 during a deliberately total outage; they grow further apart.
+
+### The four pages, with and without saved data
+- **Saved data, cloud failing:** saved data stays available; the page says "Showing saved data—couldn't refresh." with a Retry button; no empty-collection claim and no $0 figures. Verified on Vault, Home, Sold and For Sale. Pending-save status (the pending upload count) is separate and unchanged.
+- **No saved copy (clean browser), cloud failing:** before the fix Sold sat on "Loading sold items…" with $0 figures indefinitely and For Sale on "Loading your items…"; after it, each shows a load error with Retry within the 20 s limit, no $0 figures, and Retry brings the data once the cloud answers.
+- **First run after the fix: 34 of 36 passed. The two failures were real:** Home with no saved copy showed an error message but no Retry button. Fixed (the shared load error with Retry) and re-verified: Home 9 of 9 (`paths-after-home-rerun.json`).
+
+### The value rule (verified; nothing written into valuation fields)
+Rule, in one place (`src/lib/vaultStats.ts`): an explicit valuation is used (an explicit $0 is valid); otherwise a recorded total purchase cost is counted "At purchase cost"; with neither the item is "Missing value": excluded from the known total, with the excluded count disclosed. "Needs valuation" (no valuation: at purchase cost or missing) is a different statement from "Missing value" (no valuation and no cost). Missing information never creates a loss: such items are left out of every gain.
+- Real data first: current values are stored as null (never 0) in all collections (Kellogg 1,479 of 1,482 null, 3 above zero; EK's 1,114 null), so treating a typed 0 as explicit changes no stored record, and no fallback cost was written into any valuation field.
+- Unit tests on the real functions: 15 of 15 (`supabase/validation/test-value-rule.ts`).
+- Clean second browser, synthetic items A (valuation $50, cost $20), B (cost $30 only), C (neither), D (explicit $0, cost $10), E (recorded $0 cost): Home shows estimated value $80, "2 of 5 priced · 2 at purchase cost · 1 missing value, not counted", card labels "$50", "$30 at purchase cost", "Missing value", "$0", "$0 at purchase cost"; unrealized change +$20 (A +$30, D an explicit $0 = -$10) with the three unvalued items not counted; the Vault checklist pill reads "Needs valuation 3" while only C carries "Missing value"; the item page and Insights agree; "Needs valuation" and "Missing value" are amber, not loss-red. 16 of 16 on the rerun. (The first run of this check, 14 of 16, failed only because the test looked for labels in the Vault's default Wall view and in a panel that is closed until "Needs review" is opened; the product was right and the test was corrected, and that first run is kept in `log-after-first-run.log`.)
+- Changed behaviour to know about: the CSV export now leaves value and gain blank for unvalued items and adds a "value_basis" column (before, an unvalued item exported value 0 and a gain of minus its cost).
+
+### Missing-item incident: unchanged conclusion
+The two records are identified (`1778653394369_vb7r3n` "Absolute Superman"; `1791239191686_d49872` "Chicago Bears 2024 Topps Resurgence Football 4x Monster Box Break #625-12"). Who or what removed them, and exactly when, remains unresolved. The deletion audit (v2) stays PROPOSED and is not applied.
