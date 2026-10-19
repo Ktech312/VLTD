@@ -23,6 +23,15 @@ import { universePlaceholder } from "@/lib/itemPlaceholder";
 type GoalFilter = "all" | "completion" | "value" | "insurance" | "sell" | "gallery";
 type SortMode = "priority" | "progress" | "recent";
 
+// The type filters. Insurance is not here: it is the Insurance tab of the Vault. Existing goals of that type still appear under All Goals.
+const GOAL_FILTERS: [GoalFilter, string, string][] = [
+  ["all", "All Goals", "target"],
+  ["completion", "Completion", "check"],
+  ["value", "Value", "chart"],
+  ["sell", "Sell", "tag"],
+  ["gallery", "Exhibition", "exhibition"],
+];
+
 type GoalView = {
   id: string;
   name: string;
@@ -324,21 +333,16 @@ export default function GoalsPage() {
       <main style={{ background: "var(--bg)" }}>
       <div className="mx-auto grid max-w-[1480px] gap-6 px-4 pb-6 sm:px-6 lg:px-8 xl:grid-cols-[minmax(0,1fr)_420px]">
         <section className="min-w-0">
-          <div className="mt-2 flex flex-wrap gap-3">
-            {[
-              ["all", "All Goals", "target"],
-              ["completion", "Completion", "check"],
-              ["value", "Value", "chart"],
-              ["insurance", "Insurance", "shield"],
-              ["sell", "Sell", "tag"],
-              ["gallery", "Exhibition", "exhibition"],
-            ].map(([key, label, icon]) => (
-              <PillButton key={key} variant={filter === key ? "active" : "default"} pressed={filter === key} onClick={() => setFilter(key as GoalFilter)}>
-                <Glyph name={icon as "target"} size={16} />
-                {label}
-              </PillButton>
-            ))}
-          </div>
+          {goalViews.length > 0 ? (
+            <div className="mt-2 flex flex-wrap gap-3" role="group" aria-label="Goal types">
+              {GOAL_FILTERS.map(([key, label, icon]) => (
+                <PillButton key={key} variant={filter === key ? "active" : "default"} pressed={filter === key} onClick={() => setFilter(key as GoalFilter)}>
+                  <Glyph name={icon as "target"} size={16} />
+                  {label}
+                </PillButton>
+              ))}
+            </div>
+          ) : null}
 
           <div className="mt-5 grid gap-0 overflow-hidden rounded-[7px] border border-[rgba(203,208,213,0.28)] lg:grid-cols-[1.2fr_1.15fr_1fr_1fr]" style={{ background: "var(--theme-card,rgba(15,25,45,0.86))" }}>
             <StatPanel label="Overall Progress" icon={<Ring pct={averageProgress} size={98} />}>
@@ -352,10 +356,10 @@ export default function GoalsPage() {
               <div className="mt-2 text-[32px] font-black text-[color:var(--info,#52D6F4)]">{money(goalValueImpact)}</div>
               <p className="text-sm leading-5" style={{ color: "var(--theme-text-muted,#61656B)" }}>Potential increase across all goals</p>
             </StatPanel>
-            <StatPanel label="Insurance Coverage" icon={<Glyph name="shield" size={34} style={{ color: "var(--theme-gold,#C8CDD2)" }} />}>
+            <StatPanel label="Insurance Goal Progress" icon={<Glyph name="shield" size={34} style={{ color: "var(--theme-gold,#C8CDD2)" }} />}>
               <div className="text-[32px] font-black text-[color:var(--info,#52D6F4)]">{insuranceGoal?.pct ?? 0}%</div>
               <p className="text-sm" style={{ color: "var(--theme-text-muted,#61656B)" }}>
-                {insuranceGoal ? `${insuranceGoal.ownedCount} of ${insuranceGoal.targetCount} items` : "No insurance goal yet"}
+                {insuranceGoal ? `${insuranceGoal.ownedCount} of ${insuranceGoal.targetCount} items documented. Not insurance coverage.` : "No insurance goal yet"}
               </p>
             </StatPanel>
             <StatPanel label="Completed This Year" icon={<Glyph name="check" size={34} style={{ color: "#8DD35F" }} />}>
@@ -392,13 +396,25 @@ export default function GoalsPage() {
                 Loading your goals…
               </div>
             )}
-            {visibleGoals.length === 0 && goalsLoaded && (
+            {visibleGoals.length === 0 && goalsLoaded && goalViews.length > 0 && (
+              <div className="grid min-h-[160px] place-items-center rounded-[7px] border border-[rgba(203,208,213,0.22)] p-6 text-center" style={{ background: "var(--theme-card,rgba(15,25,45,0.86))" }} data-testid="goals-filter-empty">
+                <div>
+                  <h2 className="text-lg font-black" style={{ color: "var(--theme-text-primary,#ECEDEF)" }}>No {GOAL_FILTERS.find(([key]) => key === filter)?.[1] ?? ""} goals</h2>
+                  <p className="mt-1 text-sm" style={{ color: "var(--theme-text-muted,#61656B)" }}>You have {goalViews.length} {goalViews.length === 1 ? "goal" : "goals"}, but none of this type.</p>
+                  <div className="mt-4 flex flex-wrap justify-center gap-2">
+                    <PillButton onClick={() => setFilter("all")}>Show all goals</PillButton>
+                    <PillButton variant="active" onClick={() => setShowAdd(true)}>+ Create Goal</PillButton>
+                  </div>
+                </div>
+              </div>
+            )}
+            {visibleGoals.length === 0 && goalsLoaded && goalViews.length === 0 && (
               <div className="grid min-h-[220px] place-items-center rounded-[7px] border border-[rgba(203,208,213,0.22)] text-center" style={{ background: "var(--theme-card,rgba(15,25,45,0.86))" }}>
                 <div>
                   <Glyph name="target" size={42} style={{ color: "var(--theme-gold,#C8CDD2)" }} />
                   <h2 className="mt-4 text-xl font-black" style={{ color: "var(--theme-text-primary,#ECEDEF)" }}>No goals yet</h2>
-                  <p className="mt-2 text-sm" style={{ color: "var(--theme-text-muted,#61656B)" }}>Create a real target for a set, value, insurance readiness, exhibition, or sale plan.</p>
-                  <PillButton variant="active" className="mt-5 font-black" onClick={() => setShowAdd(true)}>+ Add your first goal</PillButton>
+                  <p className="mx-auto mt-2 max-w-md text-sm" style={{ color: "var(--theme-text-muted,#61656B)" }}>A goal is something you are working toward: completing a set, reaching a collection value, building an exhibition, or selling duplicates. Create one and its progress is tracked here from the items in your Vault.</p>
+                  <PillButton variant="active" className="mt-5 font-black" onClick={() => setShowAdd(true)}>+ Create Goal</PillButton>
                 </div>
               </div>
             )}
@@ -413,12 +429,6 @@ export default function GoalsPage() {
             ))}
           </div>
 
-          <section className="mt-4 rounded-[7px] border border-[rgba(203,208,213,0.22)] p-4" style={{ background: "var(--theme-card,rgba(15,25,45,0.86))" }}>
-            <h2 className="mb-2 text-[12px] font-black uppercase tracking-[0.18em]" style={{ color: "var(--theme-gold,#C8CDD2)" }}>Upcoming Milestones</h2>
-            <p className="text-sm leading-6" style={{ color: "var(--theme-text-muted,#61656B)" }}>
-              Milestones will appear here after goal due dates are added to the goal model.
-            </p>
-          </section>
         </section>
 
         {selectedGoal && (
