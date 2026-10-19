@@ -8,6 +8,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import DiscoverSwipe from "@/components/DiscoverSwipe";
+import FeaturedRoomsCarousel, { type FeaturedRoomSlide } from "@/components/discover/FeaturedRoomsCarousel";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { DiscoverNav } from "@/components/SectionNav";
 import { Glyph } from "@/components/ui/Glyph";
@@ -16,7 +17,7 @@ import { readUniversePrefs } from "@/lib/universePrefs";
 import { buildUserPreferences, sortByPersonalization } from "@/lib/personalization";
 import { getSeedAvatarUrlForProfile, isRenderableAvatarUrl } from "@/lib/seedAvatar";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
-import { normalizeSupabaseItemIds } from "@/lib/galleryModel";
+import { getGalleryThemeBackground, normalizeSupabaseItemIds } from "@/lib/galleryModel";
 import { showToast } from "@/lib/toast";
 import { isUniverseKey, type UniverseKey, UNIVERSE_KEYS, UNIVERSE_LABEL } from "@/lib/taxonomy";
 import { loadItems } from "@/lib/vaultModel";
@@ -35,7 +36,11 @@ const UNIVERSE_THUMB: Record<UniverseKey, string> = {
   ART: "/universe-thumbnails/art.png",
 };
 
-type GalleryItemFact = { value: number; imageUrl: string | null; title: string };
+// value is null unless the owner's public item record carries an explicit current value. A missing value is "not shown", never $0.
+type GalleryItemFact = { value: number | null; imageUrl: string | null; title: string };
+
+// What the exhibition itself publishes about an item (its public snapshot): enough to count and picture it, never a price.
+type SnapshotFact = { title: string; imageUrl: string | null; hidden: boolean };
 
 type PublicGallery = {
   id: string;
@@ -48,6 +53,9 @@ type PublicGallery = {
   theme_pack: string | null;
   layout: Record<string, unknown> | null;
   itemIds: string[];
+  /** The exhibition's configured room background (uploaded image), if any. The theme pack background is the fallback. */
+  shelfBackground: string | null;
+  snapshots: Record<string, SnapshotFact>;
   universeKey: UniverseKey;
   created_at?: string | null;
   collector_name?: string;
@@ -82,6 +90,20 @@ function rowToGallery(row: Record<string, unknown>): PublicGallery {
   // disagree with everywhere else (NYCC launch blocker #1).
   const itemIds = normalizeSupabaseItemIds(row);
   const themePack = typeof layout?.themePack === "string" ? layout.themePack : null;
+  const exLayout = row.exhibition_layout && typeof row.exhibition_layout === "object" ? (row.exhibition_layout as Record<string, unknown>) : null;
+  const rawShelf = layout?.shelfBackground ?? exLayout?.shelfBackground;
+  const rawSnaps = layout?.publicItemSnapshots ?? exLayout?.publicItemSnapshots;
+  const snapshots: Record<string, SnapshotFact> = {};
+  if (Array.isArray(rawSnaps)) {
+    for (const snap of rawSnaps) {
+      const rec = snap as Record<string, unknown> | null;
+      const id = rec && typeof rec.id === "string" ? rec.id : "";
+      if (!id) continue;
+      const hidden = rec?.hidden === true;
+      const image = typeof rec?.imageFrontUrl === "string" && rec.imageFrontUrl ? rec.imageFrontUrl : null;
+      snapshots[id] = { title: hidden ? "Hidden Item" : String(rec?.title ?? ""), imageUrl: hidden ? null : image, hidden };
+    }
+  }
 
   return {
     id: String(row.id),
@@ -94,6 +116,8 @@ function rowToGallery(row: Record<string, unknown>): PublicGallery {
     theme_pack: themePack,
     layout,
     itemIds,
+    shelfBackground: typeof rawShelf === "string" && rawShelf.trim() ? rawShelf.trim() : null,
+    snapshots,
     universeKey: "MISC",
     created_at: typeof row.created_at === "string" ? row.created_at : null,
   };
@@ -192,10 +216,16 @@ export default function DiscoverPage() {
         if (allItemIds.length > 0) {
           // Pull value + image too, so gallery value and featured items are the
           // real items rather than invented numbers and a repeated cover.
-          const { data: itemRows, error: itemRowsError } = await supabase
-            .from(await publicItemsTable(supabase))
+          // In chunks: hundreds of ids in one request make a URL some servers refuse.
+          const table = await publicItemsTable(supabase);
+          const chunks: string[][] = [];
+          for (let i = 0; i < allItemIds.length; i += 80) chunks.push(allItemIds.slice(i, i + 80));
+          const chunkResults = await Promise.all(chunks.map((ids) => supabase
+            .from(table)
             .select("id, profile_id, universe, current_value, image_front_url, title")
-            .in("id", allItemIds);
+            .in("id", ids)));
+          const itemRows = chunkResults.flatMap((result) => result.data ?? []);
+          const itemRowsError = chunkResults.find((result) => result.error)?.error ?? null;
           if (itemRowsError) {
             // Non-fatal — the gallery list above already rendered. Items
             // just fall back to $0/no-image until this succeeds, but that
@@ -212,8 +242,9 @@ export default function DiscoverPage() {
             if (!ownedPairs.has(`${id}|${String(row.profile_id ?? "")}`) && !ownedPairs.has(`${id}|*`)) continue;
             const universe = String(row.universe ?? "").toUpperCase();
             if (isUniverseKey(universe)) itemUniverseMap.set(id, universe);
+            const explicitValue = Number(row.current_value ?? 0);
             itemFacts.set(id, {
-              value: Number(row.current_value ?? 0) || 0,
+              value: explicitValue > 0 ? explicitValue : null,
               imageUrl: typeof row.image_front_url === "string" ? row.image_front_url : null,
               title: String(row.title ?? ""),
             });
@@ -223,7 +254,11 @@ export default function DiscoverPage() {
             // Stored gallery layouts can retain an id after its vault item is
             // deleted.  Public counts and featured-item previews must describe
             // the rows a visitor can actually see, not stale layout ids.
-            gallery.itemIds = gallery.itemIds.filter((itemId) => itemFacts.has(itemId));
+            // A visitor sees an item if it is public in the vault OR the exhibition itself published it (its public snapshot) -
+            // the room shows all of those, so the count on Discover must too. When the public read failed, keep the room's own list.
+            gallery.itemIds = itemRowsError
+              ? gallery.itemIds
+              : gallery.itemIds.filter((itemId) => itemFacts.has(itemId) || gallery.snapshots[itemId]);
             gallery.item_count = gallery.itemIds.length;
             gallery.universeKey = computeGalleryUniverse(gallery.itemIds, itemUniverseMap, gallery);
           }
@@ -368,15 +403,54 @@ export default function DiscoverPage() {
     return { background: `url(${UNIVERSE_THUMB[gallery.universeKey] ?? UNIVERSE_THUMB.MISC}) center/cover no-repeat` };
   }
 
-  function galleryValue(gallery: PublicGallery) {
-    // Real value: sum of what the items in this room are actually worth.
-    // (This used to be views * 1250 + items * 700, which was invented and made
-    // the same room read $58,300 here and $3,940 on Exhibitions.)
-    return gallery.itemIds.reduce((sum, id) => sum + (itemFactsById.get(id)?.value ?? 0), 0);
+  // Public figure only: the explicit current value on the public item records. Purchase cost is never read here, and an item
+  // with no published value adds nothing. If no item carries one, the answer is "not shown", not a confirmed $0.
+  function galleryValue(gallery: PublicGallery): { text: string; note: string | null } {
+    let total = 0;
+    let valued = 0;
+    for (const id of gallery.itemIds) {
+      const value = itemFactsById.get(id)?.value;
+      if (typeof value === "number" && value > 0) { total += value; valued += 1; }
+    }
+    if (valued === 0) return { text: "Value not shown", note: null };
+    const count = gallery.itemIds.length;
+    return { text: `$${total.toLocaleString()}`, note: valued < count ? `from ${valued} of ${count} items` : null };
+  }
+
+  // The room's configured background: its uploaded image, else its theme pack's. Never the cover thumbnail.
+  function roomBackground(gallery: PublicGallery): string {
+    return gallery.shelfBackground ?? getGalleryThemeBackground(gallery.theme_pack ?? undefined);
+  }
+
+  const featuredRooms = displayGalleries.filter((gallery) => gallery.item_count > 0).slice(0, 8);
+  const carouselSlides: FeaturedRoomSlide[] = featuredRooms.slice(0, 5).map((gallery) => ({
+    id: gallery.id,
+    title: gallery.title,
+    collectorName: gallery.collector_name ?? "Collector",
+    itemCount: gallery.item_count,
+    universeLabel: UNIVERSE_LABEL[gallery.universeKey],
+    backgroundUrl: roomBackground(gallery),
+    coverUrl: gallery.cover_image,
+    href: `/museum/${gallery.id}/guest`,
+  }));
+  function showFeaturedRooms() {
+    setExpanded((prev) => ({ ...prev, featured: true }));
+    window.setTimeout(() => document.getElementById("featured-rooms")?.scrollIntoView({ behavior: "smooth", block: "start" }), 0);
   }
 
   function openGallery(gallery: PublicGallery) {
     router.push(`/museum/${gallery.id}/guest`);
+  }
+
+  function GalleryValueText({ gallery, large = false }: { gallery: PublicGallery; large?: boolean }) {
+    const { text, note } = galleryValue(gallery);
+    const missing = note === null && text === "Value not shown";
+    return (
+      <div className={large ? "mt-2" : "mt-1"} data-testid="gallery-value">
+        <div className={large ? "text-[28px] font-black" : "text-[14px] font-black"} style={{ color: missing ? "var(--theme-text-muted,#61656B)" : "var(--info,#52D6F4)", fontSize: missing ? (large ? 18 : 12) : undefined, fontWeight: missing ? 700 : undefined }}>{text}</div>
+        {note && <div className="text-[10px]" style={{ color: "var(--theme-text-muted,#61656B)" }}>{note}</div>}
+      </div>
+    );
   }
 
   function GalleryCard({ gallery, compact = false }: { gallery: PublicGallery; compact?: boolean }) {
@@ -408,9 +482,9 @@ export default function DiscoverPage() {
               <span>{gallery.item_count || 0} items</span>
               <span>Public</span>
             </div>
-            {!compact && <div className="mt-1 text-[14px] font-black text-[color:var(--info,#52D6F4)]">${galleryValue(gallery).toLocaleString()}</div>}
+            {!compact && <GalleryValueText gallery={gallery} />}
           </div>
-          {compact && <div className="self-center text-[14px] font-black text-[color:var(--info,#52D6F4)]">${galleryValue(gallery).toLocaleString()}</div>}
+          {compact && <div className="self-center text-right"><GalleryValueText gallery={gallery} /></div>}
         </div>
       </button>
     );
@@ -458,25 +532,27 @@ export default function DiscoverPage() {
 
           {fetchError && <div className="mt-3 rounded-[7px] border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs text-red-300">Query error: {fetchError}</div>}
 
-          {selectedGallery && (
-            <section className="mt-4 overflow-hidden rounded-[7px] border border-[rgba(203,208,213,0.22)]" style={{ background: "var(--theme-card,rgba(15,25,45,0.85))" }}>
-              <div className="vltd-dark-surface relative min-h-[180px]" style={coverStyle(selectedGallery)}>
-                <div className="absolute inset-0 bg-gradient-to-r from-[#040909] via-[#040909]/75 to-transparent" />
-                {/* This card's scrim (line above, #040909) is a fixed dark
-                    gradient over a cover photo -- always dark regardless of
-                    site theme. vltd-dark-surface on the outer wrapper (this
-                    div) makes every descendant below inherit light text
-                    automatically, instead of needing its own keep-white
-                    class -- one class for the whole card. */}
-                <div className="relative max-w-[360px] p-6">
-                  <div className="text-[11px] font-black uppercase tracking-[0.18em]" style={{ color: "#C8CDD2" }}>Collector Spotlight</div>
-                  <h2 className="mt-3 font-serif text-[33px] font-black leading-[0.95]" style={{ color: "#ECEDEF" }}>Collector Rooms Worth Seeing</h2>
-                  <p className="mt-4 text-sm leading-6" style={{ color: "#ECEDEF" }}>Hand-picked public exhibitions from serious collectors around the world.</p>
-                  <PillButton className="mt-4 font-black" onClick={() => openGallery(selectedGallery)} style={{ background: "linear-gradient(135deg,#8C9298,#C8CDD2)", color: "#0B0B0B" }}>Explore featured rooms &rarr;</PillButton>
+          {carouselSlides.length > 0 && (
+            <section className="mt-4" aria-label="Collector spotlight">
+              <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+                <div className="min-w-0">
+                  <div className="text-[11px] font-black uppercase tracking-[0.18em]" style={{ color: "var(--theme-gold,#C8CDD2)" }}>Collector Spotlight</div>
+                  <h2 className="font-serif text-[22px] font-black leading-tight" style={{ color: "var(--theme-text-primary,#ECEDEF)" }}>Collector Rooms Worth Seeing</h2>
                 </div>
-                <div className="absolute bottom-3 left-1/2 flex -translate-x-1/2 gap-2">
-                  {[0, 1, 2, 3, 4].map((dot) => <span key={dot} className="h-2 w-2 rounded-full" style={{ background: dot === 0 ? "var(--theme-gold,#C8CDD2)" : "rgba(240,234,214,0.28)" }} />)}
-                </div>
+                <PillButton variant="active" onClick={showFeaturedRooms}>Explore featured rooms &rarr;</PillButton>
+              </div>
+              <FeaturedRoomsCarousel slides={carouselSlides} />
+            </section>
+          )}
+
+          {!loading && featuredRooms.length > 0 && (
+            <section className="mt-5" id="featured-rooms" data-testid="featured-rooms">
+              <div className="mb-2 flex items-center justify-between">
+                <h2 className="text-[12px] font-black uppercase tracking-[0.16em]" style={{ color: "var(--theme-gold,#C8CDD2)" }}>Featured Rooms</h2>
+                <PillButton size="compact" onClick={() => toggleSection("featured")}>{expanded.featured ? "Show less" : "View all"}</PillButton>
+              </div>
+              <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+                {shown(featuredRooms, "featured").map((gallery) => <GalleryCard key={gallery.id} gallery={gallery} />)}
               </div>
             </section>
           )}
@@ -592,7 +668,7 @@ export default function DiscoverPage() {
             <div className="mt-5 grid grid-cols-2 gap-4 border-y border-[rgba(203,208,213,0.18)] py-4">
               <div>
                 <div className="text-[11px] font-black uppercase tracking-[0.14em]" style={{ color: "var(--theme-text-muted,#61656B)" }}>Estimated Exhibition Value</div>
-                <div className="mt-2 text-[28px] font-black text-[color:var(--info,#52D6F4)]">${galleryValue(selectedGallery).toLocaleString()}</div>
+                <GalleryValueText gallery={selectedGallery} large />
               </div>
               <div className="border-l border-[rgba(203,208,213,0.18)] pl-5">
                 <div className="text-[11px] font-black uppercase tracking-[0.14em]" style={{ color: "var(--theme-text-muted,#61656B)" }}>Room Views</div>
@@ -604,14 +680,16 @@ export default function DiscoverPage() {
               <div className="text-[11px] font-black uppercase tracking-[0.16em]" style={{ color: "var(--theme-text-muted,#61656B)" }}>Featured Items</div>
               <div className="mt-3 flex gap-2 overflow-hidden">
                 {selectedGallery.itemIds.slice(0, 4).map((id) => {
-                  const fact = itemFactsById.get(id);
+                  const snap = selectedGallery.snapshots[id];
+                  // Prefer the public item record; the room's own public snapshot covers items that are only public inside the room.
+                  const fact = snap?.hidden ? undefined : (itemFactsById.get(id)?.imageUrl ? itemFactsById.get(id) : snap ? { imageUrl: snap.imageUrl, title: snap.title } : itemFactsById.get(id));
                   return (
                     <div key={id} className="grid h-20 flex-1 place-items-center overflow-hidden rounded-[6px] border border-[rgba(203,208,213,0.22)] bg-black/20">
                       {fact?.imageUrl ? (
                         // eslint-disable-next-line @next/next/no-img-element
                         <img src={fact.imageUrl} alt={fact.title || ""} className="h-full w-full object-cover" />
                       ) : (
-                        <span className="px-1 text-center text-[8px] uppercase tracking-[0.1em]" style={{ color: "var(--theme-text-muted,#61656B)" }}>No photo</span>
+                        <span className="px-1 text-center text-[8px] uppercase tracking-[0.1em]" style={{ color: "var(--theme-text-muted,#61656B)" }}>{snap?.hidden ? "Hidden item" : "No photo"}</span>
                       )}
                     </div>
                   );
