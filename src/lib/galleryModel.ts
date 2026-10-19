@@ -2266,6 +2266,10 @@ export type GalleryCleanupResult = {
 // re-fetched from Supabase and that server version REPLACES the local
 // cache entry outright (see replaceLocalGalleryWithServerVersion) so an
 // older local updatedAt elsewhere can't resurrect the ids we just removed.
+//
+// DESTRUCTIVE. Only call this after an item has been confirmed deleted or has been explicitly moved to another profile. Never call it
+// from a page load, a refresh or a failed/partial read: an item that is merely missing from what was loaded is not a deleted item
+// (audit RC-01: an exhibition was emptied by opening it under the other profile). scripts/test-exhibition-no-prune.cjs guards the callers.
 export async function removeItemIdsFromAllGalleriesConfirmed(
   itemIds: string[],
   options?: { onlyGalleryId?: string }

@@ -27,7 +27,6 @@ import {
   getGalleryInviteUrl,
   getActiveInviteTokens,
   syncGalleryToSupabaseNow,
-  removeItemIdsFromAllGalleriesConfirmed,
 } from "@/lib/galleryModel";
 
 import { getPrimaryImageUrl, loadItems, syncVaultItemsFromSupabase, type VaultItem } from "@/lib/vaultModel";
@@ -321,40 +320,15 @@ export default function GalleryPage() {
 
     let cancelled = false;
 
+    // Reading only. Opening, refreshing or failing to load an exhibition must never change what it holds: no item ids,
+    // links or public snapshots are removed here, whatever the vault read returns (an item can be missing because it
+    // belongs to another profile, the read failed or was partial, or it has not arrived yet). Items that cannot be shown
+    // are listed as unavailable below; ids leave an exhibition only through the confirmed delete workflow
+    // (vaultActions) or an explicit edit in this editor.
     async function hydrateVaultItems() {
       await syncVaultItemsFromSupabase();
       if (cancelled) return;
-      const freshItems = loadItems({ includeAllProfiles: true });
-      setItems(freshItems);
-
-      // Self-heal (NYCC launch blocker #1): after a genuine fresh cloud
-      // sync, any itemId this gallery still lists that resolves to no real
-      // vault item anywhere is a permanently deleted item that was never
-      // cleaned out of this exhibition — prune it everywhere so the raw
-      // itemIds count (what /museum and Discover show) stops drifting from
-      // what the editor actually resolves.
-      const localIds = new Set(freshItems.map((item) => item.id));
-      const currentGallery = loadGalleries({ includeAllProfiles: true }).find((g) => g.id === id);
-      const deadIds = (currentGallery?.itemIds ?? []).filter((itemId) => !localIds.has(itemId));
-
-      // Profiles are separate accounts: an exhibit can only hold items from its own profile. Older
-      // exhibits that picked up items from another profile lose them (the items stay in their vault).
-      const ownerProfile = currentGallery?.profile_id;
-      if (ownerProfile && !/^0+(-0+)*$/.test(ownerProfile)) {
-        const foreignIds = new Set(
-          freshItems.filter((item) => item.profile_id && item.profile_id !== ownerProfile).map((item) => item.id)
-        );
-        const crossIds = (currentGallery?.itemIds ?? []).filter((itemId) => foreignIds.has(itemId));
-        if (crossIds.length > 0) {
-          await removeItemIdsFromAllGalleriesConfirmed(crossIds, { onlyGalleryId: id });
-        }
-      }
-      if (deadIds.length > 0) {
-        const results = await removeItemIdsFromAllGalleriesConfirmed(deadIds);
-        if (results.some((r) => !r.ok)) {
-          console.error("Exhibition self-heal did not confirm against Supabase:", results);
-        }
-      }
+      setItems(loadItems({ includeAllProfiles: true }));
     }
 
     void hydrateVaultItems();
@@ -420,6 +394,10 @@ export default function GalleryPage() {
       })
       .filter(Boolean) as VaultItem[];
   }, [draft, items]);
+
+  // Items the exhibition still lists but that cannot be shown right now (not loaded yet, a failed or partial read, or the owner
+  // profile is not the active one). They stay in the exhibition: this only tells the person they are not on screen.
+  const unavailableCount = draft ? Math.max(0, draft.itemIds.length - galleryItems.length) : 0;
 
   // Pictures that can be shared as pictures from the Share panel: the cover, then the photos of the exhibition's items, leaving
   // out any item hidden from viewers. Nothing is published by sharing a picture.
@@ -906,6 +884,16 @@ export default function GalleryPage() {
                     <span className="rounded-full bg-[color:var(--theme-elevated)] px-2 py-[1px] text-[9px] tracking-[0.1em] text-[color:var(--muted2)] ring-1 ring-[color:var(--theme-border)]">
                       {metrics.totalItems} ITEMS
                     </span>
+
+                    {unavailableCount > 0 ? (
+                      <span
+                        className="rounded-full bg-[color:var(--theme-elevated)] px-2 py-[1px] text-[9px] tracking-[0.1em] text-[color:var(--muted2)] ring-1 ring-[color:var(--theme-border)]"
+                        title="These items are still in this exhibition but could not be loaded right now. Nothing was removed."
+                        data-testid="unavailable-items"
+                      >
+                        {unavailableCount} NOT LOADED
+                      </span>
+                    ) : null}
 
                     <span className="rounded-full bg-[color:var(--theme-elevated)] px-2 py-[1px] text-[9px] tracking-[0.1em] text-[color:var(--muted2)] ring-1 ring-[color:var(--theme-border)]">
                       {metrics.views} VIEWS
