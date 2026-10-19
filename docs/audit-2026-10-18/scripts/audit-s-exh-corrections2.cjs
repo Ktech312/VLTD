@@ -1,0 +1,3 @@
+const X = require("./audit-s-exh-lib.cjs"); const R = X.rows();
+R.nt({ page: "AUDIT TEST CORRECTION (EXH)", control: "EXH-403 (Business profile opening a Personal exhibition: page check)", expected: "Note only", actual: "EXH-403 only checked what the page shows ('Exhibition not found', no editor). The controlled rerun EXH-433 shows the same visit also removes every item from that exhibition in the database (5 -> 0), so the page check passing is misleading on its own. The exhibition emptied during this audit's later suites (leave test: card showed 0 items) came from that visit, not from the audit's own edits.", evidence: "shots/exh-profilewipe-business-opens-personal.jpg", impact: "privacy/data loss" });
+process.exit(0);

@@ -1,0 +1,5 @@
+// Corrected row: /vault/add silently ignores a text file chosen as the photo (ADD-173 / ADD-174 passed because 'no photo attached' satisfied the check).
+const T = require("./audit-s-add-lib.cjs");
+const { A } = T;
+A.fail({ page: "/vault/add | owner, Personal", control: "Upload a photo from a file (a .txt file) (corrects ADD-173 / ADD-174)", expected: "A message that the file is not a photo (the person asked to add a photo and should be told why none appeared)", actual: "Nothing happens and nothing is said: no crop step, no photo, no message (the page text stays as before). Saving afterwards works and stores no photo.", evidence: "shots/add-vaultadd-wrongtype.jpg", impact: "usability", repro: "/vault/add, Upload a photo from a file, choose a .txt file" });
+A.nt({ page: "(audit test note)", control: "TEST NOTE ADD-173 / ADD-174", expected: "Honest record", actual: "Those two PASS rows accepted 'no photo attached' as success without a message; the corrected FAIL is the row just before this note. ADD-180 (Unlock All) is superseded by ADD-199 (the button clears the form, it does not unlock).", evidence: "", impact: "none", repro: "n/a" });

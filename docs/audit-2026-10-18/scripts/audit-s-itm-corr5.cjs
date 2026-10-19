@@ -1,0 +1,6 @@
+const X = require("./audit-s-itm-lib.cjs");
+X.corr(["ITM-296", "ITM-307"], "script errors in the sales suite (a NodeList returned across CDP; a card looked up after my own admin edit that the app's local copy did not see). The checks were redone in later runs.", "ITM-297..ITM-364");
+X.corr(["ITM-339", "ITM-340", "ITM-341", "ITM-342", "ITM-345"], "the first Sales History run was contaminated: the For Sale 'Mark sold' calls made earlier in the same browser had already written sales into the ledger (so it was not empty and had 3 extra rows), and the sort expectation ignored the no-cost sale. Redone in clean browsers.", "ITM-350..ITM-364");
+X.corr(["ITM-310"], "the assertion's regular expression was wrong; the page did show 'QA ITM mark sold OK sold for $85 on Whatnot.' (see its actual text).", "this row");
+X.rr.pass({ page: "/vault/for-sale | owner, Personal, desktop 1440", control: "Mark sold confirmation [re-evaluated]", expected: "A visible message 'QA ITM mark sold OK sold for $85 on Whatnot.'", actual: "ITM-310 actual text: 'QA ITM mark sold OK sold for $85 on Whatnot.' shown after the sale", evidence: "itm-sales3-1440.log", impact: "none", repro: "Mark sold; $85; Whatnot" });
+X.corr(["ITM-343"], "duplicate of ITM-354 (kept as the canonical row).", "ITM-354");

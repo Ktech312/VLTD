@@ -1,0 +1,1090 @@
+[
+ {
+  "path": "/dashboard",
+  "status": 200,
+  "redirect": "",
+  "linkedFromPages": 112,
+  "example": "/account",
+  "label": "VLTD Home"
+ },
+ {
+  "path": "/vault",
+  "status": 200,
+  "redirect": "",
+  "linkedFromPages": 112,
+  "example": "/account",
+  "label": "Vault"
+ },
+ {
+  "path": "/museum",
+  "status": 200,
+  "redirect": "",
+  "linkedFromPages": 112,
+  "example": "/account",
+  "label": "Exhibitions"
+ },
+ {
+  "path": "/community-board",
+  "status": 200,
+  "redirect": "",
+  "linkedFromPages": 112,
+  "example": "/account",
+  "label": "Lounge"
+ },
+ {
+  "path": "/discover",
+  "status": 200,
+  "redirect": "",
+  "linkedFromPages": 112,
+  "example": "/account",
+  "label": "Discover"
+ },
+ {
+  "path": "/messages",
+  "status": 200,
+  "redirect": "",
+  "linkedFromPages": 112,
+  "example": "/account",
+  "label": "Messages"
+ },
+ {
+  "path": "/notifications",
+  "status": 200,
+  "redirect": "",
+  "linkedFromPages": 112,
+  "example": "/account",
+  "label": "Alerts"
+ },
+ {
+  "path": "/account/business/new",
+  "status": 200,
+  "redirect": "",
+  "linkedFromPages": 9,
+  "example": "/account",
+  "label": "+ Add business profile"
+ },
+ {
+  "path": "/account",
+  "status": 200,
+  "redirect": "",
+  "linkedFromPages": 12,
+  "example": "/account",
+  "label": "Profile"
+ },
+ {
+  "path": "/account/security",
+  "status": 200,
+  "redirect": "",
+  "linkedFromPages": 9,
+  "example": "/account",
+  "label": "Privacy and security"
+ },
+ {
+  "path": "/account/billing",
+  "status": 200,
+  "redirect": "",
+  "linkedFromPages": 9,
+  "example": "/account",
+  "label": "Billing and contact"
+ },
+ {
+  "path": "/account/workspace",
+  "status": 200,
+  "redirect": "",
+  "linkedFromPages": 4,
+  "example": "/account",
+  "label": "Workspace and team"
+ },
+ {
+  "path": "/u/qa_jr_b_mvetehqv",
+  "status": 200,
+  "redirect": "",
+  "linkedFromPages": 1,
+  "example": "/account",
+  "label": "View public profile"
+ },
+ {
+  "path": "/account/team",
+  "status": 200,
+  "redirect": "",
+  "linkedFromPages": 3,
+  "example": "/account/roles",
+  "label": "Team"
+ },
+ {
+  "path": "/account/roles",
+  "status": 200,
+  "redirect": "",
+  "linkedFromPages": 3,
+  "example": "/account/roles",
+  "label": "Roles"
+ },
+ {
+  "path": "/v/qa_jr_b_mvetehqv",
+  "status": 200,
+  "redirect": "",
+  "linkedFromPages": 1,
+  "example": "/account/workspace",
+  "label": "Visit"
+ },
+ {
+  "path": "/ai/drafts",
+  "status": 200,
+  "redirect": "",
+  "linkedFromPages": 2,
+  "example": "/account/workspace",
+  "label": "View AI draft queue →"
+ },
+ {
+  "path": "/vault/quick",
+  "status": 200,
+  "redirect": "",
+  "linkedFromPages": 35,
+  "example": "/dashboard",
+  "label": "Quick Add"
+ },
+ {
+  "path": "/capture",
+  "status": 200,
+  "redirect": "",
+  "linkedFromPages": 40,
+  "example": "/dashboard",
+  "label": "ADD ITEM"
+ },
+ {
+  "path": "/museum/new",
+  "status": 200,
+  "redirect": "",
+  "linkedFromPages": 7,
+  "example": "/dashboard",
+  "label": "Create exhibition"
+ },
+ {
+  "path": "/learn",
+  "status": 200,
+  "redirect": "",
+  "linkedFromPages": 9,
+  "example": "/dashboard",
+  "label": "Open Learn →"
+ },
+ {
+  "path": "/learn/before-you-sell",
+  "status": 200,
+  "redirect": "",
+  "linkedFromPages": 5,
+  "example": "/dashboard",
+  "label": "Selling Smart · 7 min read Before You Sell From Your Collection Smart "
+ },
+ {
+  "path": "/saved",
+  "status": 200,
+  "redirect": "",
+  "linkedFromPages": 6,
+  "example": "/discover",
+  "label": "Saved"
+ },
+ {
+  "path": "/watchlist",
+  "status": 200,
+  "redirect": "",
+  "linkedFromPages": 7,
+  "example": "/discover",
+  "label": "Watchlist"
+ },
+ {
+  "path": "/market",
+  "status": 200,
+  "redirect": "",
+  "linkedFromPages": 7,
+  "example": "/discover",
+  "label": "Marketplace"
+ },
+ {
+  "path": "/upcoming",
+  "status": 200,
+  "redirect": "",
+  "linkedFromPages": 8,
+  "example": "/discover",
+  "label": "Upcoming Comics"
+ },
+ {
+  "path": "/events",
+  "status": 200,
+  "redirect": "",
+  "linkedFromPages": 8,
+  "example": "/discover",
+  "label": "Events"
+ },
+ {
+  "path": "/museum/06efc847-c010-49f2-8a5d-0487879d9e5f/guest",
+  "status": 200,
+  "redirect": "",
+  "linkedFromPages": 1,
+  "example": "/discover",
+  "label": "View QA dis Alpha Sports Room mveuhn39 →"
+ },
+ {
+  "path": "/museum/54629933-cfed-4239-9623-44dd283d9afd/guest",
+  "status": 200,
+  "redirect": "",
+  "linkedFromPages": 1,
+  "example": "/discover",
+  "label": "View QA dis Bravo Midnight Room mveuhn39 →"
+ },
+ {
+  "path": "/museum/56e0c9f5-7e31-41b5-94a8-cbb341a4783c/guest",
+  "status": 200,
+  "redirect": "",
+  "linkedFromPages": 1,
+  "example": "/discover",
+  "label": "View QA dis Charlie Walnut Room mveuhn39 →"
+ },
+ {
+  "path": "/museum/6a562cbf-15e3-47cd-8469-1dc39e3fc0d7/guest",
+  "status": 200,
+  "redirect": "",
+  "linkedFromPages": 1,
+  "example": "/discover",
+  "label": "View QA dis Delta Zero Value mveuhn39 →"
+ },
+ {
+  "path": "/museum/c1243458-db47-4af1-a0bf-59b7d6bfba0e/guest",
+  "status": 200,
+  "redirect": "",
+  "linkedFromPages": 1,
+  "example": "/discover",
+  "label": "View Comics (Misc. & Peach cards) →"
+ },
+ {
+  "path": "/vault/for-sale",
+  "status": 200,
+  "redirect": "",
+  "linkedFromPages": 11,
+  "example": "/goals",
+  "label": "For Sale"
+ },
+ {
+  "path": "/vault/sold",
+  "status": 200,
+  "redirect": "",
+  "linkedFromPages": 16,
+  "example": "/goals",
+  "label": "Sold"
+ },
+ {
+  "path": "/portfolio",
+  "status": 200,
+  "redirect": "",
+  "linkedFromPages": 18,
+  "example": "/goals",
+  "label": "Insights"
+ },
+ {
+  "path": "/goals",
+  "status": 200,
+  "redirect": "",
+  "linkedFromPages": 11,
+  "example": "/goals",
+  "label": "Goals"
+ },
+ {
+  "path": "/insurance",
+  "status": 200,
+  "redirect": "",
+  "linkedFromPages": 12,
+  "example": "/goals",
+  "label": "Insurance"
+ },
+ {
+  "path": "/vault/add",
+  "status": 200,
+  "redirect": "",
+  "linkedFromPages": 5,
+  "example": "/insurance",
+  "label": "Add manually"
+ },
+ {
+  "path": "/vault/import",
+  "status": 200,
+  "redirect": "",
+  "linkedFromPages": 4,
+  "example": "/vault",
+  "label": "Import"
+ },
+ {
+  "path": "/sales",
+  "status": 200,
+  "redirect": "",
+  "linkedFromPages": 2,
+  "example": "/vault/sold",
+  "label": "Sales History"
+ },
+ {
+  "path": "/activity",
+  "status": 200,
+  "redirect": "",
+  "linkedFromPages": 4,
+  "example": "/",
+  "label": "Activity › Sold QA Sold Poster for $40 2d ago Sold QA Sold Unknown Cos"
+ },
+ {
+  "path": "/vault/item/qa_vz_mvetehqv_1",
+  "status": 200,
+  "redirect": "",
+  "linkedFromPages": 10,
+  "example": "/",
+  "label": "QA Album 1 - Original Motion Picture Soundtrack $120"
+ },
+ {
+  "path": "/vault/item/qa_vz_mvetehqv_2",
+  "status": 200,
+  "redirect": "",
+  "linkedFromPages": 8,
+  "example": "/",
+  "label": "QA Album 2 - Original Motion Picture Soundtrack $7,778 at purchase cos"
+ },
+ {
+  "path": "/vault/item/qa_vz_mvetehqv_3",
+  "status": 200,
+  "redirect": "",
+  "linkedFromPages": 9,
+  "example": "/",
+  "label": "QA Album 3 - Original Motion Picture Soundtrack $7,778 at purchase cos"
+ },
+ {
+  "path": "/vault/item/qa_vz_mvetehqv_4",
+  "status": 200,
+  "redirect": "",
+  "linkedFromPages": 8,
+  "example": "/",
+  "label": "QA Album 4 - Original Motion Picture Soundtrack $7,778 at purchase cos"
+ },
+ {
+  "path": "/vault/item/qa_vz_mvetehqv_5",
+  "status": 200,
+  "redirect": "",
+  "linkedFromPages": 8,
+  "example": "/",
+  "label": "QA Album 5 - Original Motion Picture Soundtrack $7,778 at purchase cos"
+ },
+ {
+  "path": "/vault/item/qa_vz_mvetehqv_6",
+  "status": 200,
+  "redirect": "",
+  "linkedFromPages": 9,
+  "example": "/",
+  "label": "QA Album 6 - Original Motion Picture Soundtrack $7,778 at purchase cos"
+ },
+ {
+  "path": "/vault/item/qa_vz_mvetehqv_7",
+  "status": 200,
+  "redirect": "",
+  "linkedFromPages": 8,
+  "example": "/",
+  "label": "QA Album 7 - Original Motion Picture Soundtrack $7,778 at purchase cos"
+ },
+ {
+  "path": "/vault/item/qa_vz_mvetehqv_8",
+  "status": 200,
+  "redirect": "",
+  "linkedFromPages": 7,
+  "example": "/",
+  "label": "QA Album 8 - Original Motion Picture Soundtrack $7,778 at purchase cos"
+ },
+ {
+  "path": "/vault/item/qa_vz_mvetehqv_9",
+  "status": 200,
+  "redirect": "",
+  "linkedFromPages": 7,
+  "example": "/",
+  "label": "QA Album 9 - Original Motion Picture Soundtrack $7,778 at purchase cos"
+ },
+ {
+  "path": "/vault/item/qa_vz_mvetehqv_10",
+  "status": 200,
+  "redirect": "",
+  "linkedFromPages": 6,
+  "example": "/",
+  "label": "QA Album 10 - Original Motion Picture Soundtrack $0"
+ },
+ {
+  "path": "/vault/item/qa_vz_mvetehqv_11",
+  "status": 200,
+  "redirect": "",
+  "linkedFromPages": 5,
+  "example": "/",
+  "label": "QA Album 11 - Original Motion Picture Soundtrack $25 at purchase cost"
+ },
+ {
+  "path": "/vault/item/qa_vz_mvetehqv_12",
+  "status": 200,
+  "redirect": "",
+  "linkedFromPages": 5,
+  "example": "/",
+  "label": "QA Album 12 - Original Motion Picture Soundtrack Missing value"
+ },
+ {
+  "path": "/vault/item/qa_vz_mvetehqv_13",
+  "status": 200,
+  "redirect": "",
+  "linkedFromPages": 9,
+  "example": "/",
+  "label": "QA Album 13 - Original Motion Picture Soundtrack $7,778 at purchase co"
+ },
+ {
+  "path": "/vault/item/qa_vz_mvetehqv_14",
+  "status": 200,
+  "redirect": "",
+  "linkedFromPages": 8,
+  "example": "/",
+  "label": "QA Album 14 - Original Motion Picture Soundtrack $24 at purchase cost"
+ },
+ {
+  "path": "/vault/item/qa_vz_mvetehqv_15",
+  "status": 200,
+  "redirect": "",
+  "linkedFromPages": 8,
+  "example": "/",
+  "label": "QA Album 15 - Original Motion Picture Soundtrack $65"
+ },
+ {
+  "path": "/vault/item/qa_vz_mvetehqv_16",
+  "status": 200,
+  "redirect": "",
+  "linkedFromPages": 8,
+  "example": "/",
+  "label": "QA Album 16 - Original Motion Picture Soundtrack $38 at purchase cost"
+ },
+ {
+  "path": "/vault/item/qa_vz_mvetehqv_17",
+  "status": 200,
+  "redirect": "",
+  "linkedFromPages": 7,
+  "example": "/",
+  "label": "QA Album 17 - Original Motion Picture Soundtrack $300"
+ },
+ {
+  "path": "/vault/item/qa_vz_mvetehqv_18",
+  "status": 200,
+  "redirect": "",
+  "linkedFromPages": 6,
+  "example": "/",
+  "label": "QA Album 18 - Original Motion Picture Soundtrack $75"
+ },
+ {
+  "path": "/vault/item/qa_vz_mvetehqv_19",
+  "status": 200,
+  "redirect": "",
+  "linkedFromPages": 6,
+  "example": "/",
+  "label": "QA Album 19 - Original Motion Picture Soundtrack $19 at purchase cost"
+ },
+ {
+  "path": "/vault/item/qa_vz_mvetehqv_20",
+  "status": 200,
+  "redirect": "",
+  "linkedFromPages": 5,
+  "example": "/",
+  "label": "QA Album 20 - Original Motion Picture Soundtrack $26 at purchase cost"
+ },
+ {
+  "path": "/vault/item/qa_vz_mvetehqv_21",
+  "status": 200,
+  "redirect": "",
+  "linkedFromPages": 6,
+  "example": "/",
+  "label": "QA Album 21 - Original Motion Picture Soundtrack $83"
+ },
+ {
+  "path": "/vault/item/qa_vz_mvetehqv_22",
+  "status": 200,
+  "redirect": "",
+  "linkedFromPages": 6,
+  "example": "/",
+  "label": "QA Album 22 - Original Motion Picture Soundtrack $40 at purchase cost"
+ },
+ {
+  "path": "/vault/item/qa_vz_mvetehqv_23",
+  "status": 200,
+  "redirect": "",
+  "linkedFromPages": 6,
+  "example": "/",
+  "label": "QA Album 23 - Original Motion Picture Soundtrack $7 at purchase cost"
+ },
+ {
+  "path": "/vault/item/qa_vz_mvetehqv_24",
+  "status": 200,
+  "redirect": "",
+  "linkedFromPages": 7,
+  "example": "/",
+  "label": "QA Album 24 - Original Motion Picture Soundtrack $92"
+ },
+ {
+  "path": "/gallery/08581cef-49c5-449b-8d72-e29c356bacb5",
+  "status": 200,
+  "redirect": "",
+  "linkedFromPages": 3,
+  "example": "/",
+  "label": "Open Sports Slabs, exhibition 1 of 5"
+ },
+ {
+  "path": "/u/qa_jr_p_mvetehqv",
+  "status": 200,
+  "redirect": "",
+  "linkedFromPages": 6,
+  "example": "/account",
+  "label": "View public profile"
+ },
+ {
+  "path": "/admin/characters",
+  "status": 200,
+  "redirect": "",
+  "linkedFromPages": 1,
+  "example": "/admin/themes",
+  "label": "← Admin Home"
+ },
+ {
+  "path": "/auction",
+  "status": 200,
+  "redirect": "",
+  "linkedFromPages": 1,
+  "example": "/auction/qa_vz_mvetehqv_14",
+  "label": "Browse all auctions"
+ },
+ {
+  "path": "/vault/bulk",
+  "status": 200,
+  "redirect": "",
+  "linkedFromPages": 1,
+  "example": "/capture",
+  "label": "+ Adding a lot? Bulk upload"
+ },
+ {
+  "path": "/clubs",
+  "status": 200,
+  "redirect": "",
+  "linkedFromPages": 2,
+  "example": "/community-board",
+  "label": "View all"
+ },
+ {
+  "path": "/museum/f08239af-04c6-4040-a8bc-3536b97789f9/guest",
+  "status": 200,
+  "redirect": "",
+  "linkedFromPages": 1,
+  "example": "/discover",
+  "label": "View Grails →"
+ },
+ {
+  "path": "/museum/01de4cda-8ccb-4375-94b0-af7dd42e12ec/guest",
+  "status": 200,
+  "redirect": "",
+  "linkedFromPages": 1,
+  "example": "/discover",
+  "label": "View Music →"
+ },
+ {
+  "path": "/museum/08581cef-49c5-449b-8d72-e29c356bacb5/guest",
+  "status": 200,
+  "redirect": "",
+  "linkedFromPages": 1,
+  "example": "/discover",
+  "label": "View Sports Slabs →"
+ },
+ {
+  "path": "/museum/7145a395-1b09-6789-d294-3c67851da2c4/guest",
+  "status": 200,
+  "redirect": "",
+  "linkedFromPages": 1,
+  "example": "/discover",
+  "label": "View The Hughes Aviation Collection →"
+ },
+ {
+  "path": "/login",
+  "status": 200,
+  "redirect": "",
+  "linkedFromPages": 6,
+  "example": "/forgot-password",
+  "label": "‹ Back to login"
+ },
+ {
+  "path": "/museum/08581cef-49c5-449b-8d72-e29c356bacb5",
+  "status": 200,
+  "redirect": "",
+  "linkedFromPages": 3,
+  "example": "/gallery/08581cef-49c5-449b-8d72-e29c356bacb5",
+  "label": "Edit Exhibition"
+ },
+ {
+  "path": "/guide/walkthrough",
+  "status": 200,
+  "redirect": "",
+  "linkedFromPages": 1,
+  "example": "/guide",
+  "label": "Getting started: item and exhibition walkthroughs"
+ },
+ {
+  "path": "/vault/readiness",
+  "status": 200,
+  "redirect": "",
+  "linkedFromPages": 1,
+  "example": "/guide",
+  "label": "Vault / Readiness →"
+ },
+ {
+  "path": "/guide",
+  "status": 200,
+  "redirect": "",
+  "linkedFromPages": 1,
+  "example": "/guide/walkthrough",
+  "label": "← Back to Help"
+ },
+ {
+  "path": "/insurance/packet",
+  "status": 200,
+  "redirect": "",
+  "linkedFromPages": 2,
+  "example": "/insurance",
+  "label": "Policy Packet (PDF)"
+ },
+ {
+  "path": "/insurance/item",
+  "status": 200,
+  "redirect": "",
+  "linkedFromPages": 1,
+  "example": "/insurance",
+  "label": "Per-item sheet →"
+ },
+ {
+  "path": "/insurance/packet/print",
+  "status": 200,
+  "redirect": "",
+  "linkedFromPages": 1,
+  "example": "/insurance/packet",
+  "label": "Open Printable Page"
+ },
+ {
+  "path": "/learn/insurance-basics",
+  "status": 200,
+  "redirect": "",
+  "linkedFromPages": 1,
+  "example": "/learn",
+  "label": "INSURANCE Insurance Basics for Collectors What insurers need, common p"
+ },
+ {
+  "path": "/learn/pricing-with-confidence",
+  "status": 200,
+  "redirect": "",
+  "linkedFromPages": 1,
+  "example": "/learn",
+  "label": "PRICING Pricing With Confidence Use data, comps, and condition to set "
+ },
+ {
+  "path": "/learn/photographing-items",
+  "status": 200,
+  "redirect": "",
+  "linkedFromPages": 1,
+  "example": "/learn",
+  "label": "DOCUMENTATION Photographing Items Like a Pro Lighting, angles, and gea"
+ },
+ {
+  "path": "/learn/storage-and-labels",
+  "status": 200,
+  "redirect": "",
+  "linkedFromPages": 1,
+  "example": "/learn",
+  "label": "STORAGE Storage & QR Labels Best practices to protect your collection "
+ },
+ {
+  "path": "/learn/building-exhibitions",
+  "status": 200,
+  "redirect": "",
+  "linkedFromPages": 1,
+  "example": "/learn",
+  "label": "SHOWCASE Building Great Exhibitions Curate compelling rooms that engag"
+ },
+ {
+  "path": "/learn/market-comps",
+  "status": 200,
+  "redirect": "",
+  "linkedFromPages": 1,
+  "example": "/learn",
+  "label": "MARKET INSIGHTS Understanding Market Comps How comps work and how to r"
+ },
+ {
+  "path": "/learn/getting-started",
+  "status": 200,
+  "redirect": "",
+  "linkedFromPages": 1,
+  "example": "/learn",
+  "label": "Getting Started Your first 7 steps in VLTD."
+ },
+ {
+  "path": "/learn/protect-your-collection",
+  "status": 200,
+  "redirect": "",
+  "linkedFromPages": 1,
+  "example": "/learn",
+  "label": "Protect Your Collection Insurance, storage, and documentation."
+ },
+ {
+  "path": "/learn/value-with-confidence",
+  "status": 200,
+  "redirect": "",
+  "linkedFromPages": 1,
+  "example": "/learn",
+  "label": "Value With Confidence Pricing, comps, and market timing."
+ },
+ {
+  "path": "/learn/share-and-showcase",
+  "status": 200,
+  "redirect": "",
+  "linkedFromPages": 1,
+  "example": "/learn",
+  "label": "Share & Showcase Exhibitions and stream mode."
+ },
+ {
+  "path": "/learn/sell-anywhere",
+  "status": 200,
+  "redirect": "",
+  "linkedFromPages": 1,
+  "example": "/learn",
+  "label": "Sell Anywhere List, export, and close the deal."
+ },
+ {
+  "path": "/learn/scan-and-add",
+  "status": 200,
+  "redirect": "",
+  "linkedFromPages": 1,
+  "example": "/learn",
+  "label": "Scan & Add Items From photos to a complete record."
+ },
+ {
+  "path": "/learn/insurance-readiness",
+  "status": 200,
+  "redirect": "",
+  "linkedFromPages": 1,
+  "example": "/learn",
+  "label": "Insurance Readiness Checklist Make sure you're fully protected."
+ },
+ {
+  "path": "/learn/export-and-sell",
+  "status": 200,
+  "redirect": "",
+  "linkedFromPages": 1,
+  "example": "/learn",
+  "label": "Export & Sell Anywhere List on eBay, Heritage, PWCC, and more."
+ },
+ {
+  "path": "/signup",
+  "status": 200,
+  "redirect": "",
+  "linkedFromPages": 69,
+  "example": "/learn/before-you-sell",
+  "label": "Start your collection"
+ },
+ {
+  "path": "/",
+  "status": 200,
+  "redirect": "",
+  "linkedFromPages": 107,
+  "example": "/learn/articles",
+  "label": "VLTD"
+ },
+ {
+  "path": "/learn/articles",
+  "status": 200,
+  "redirect": "",
+  "linkedFromPages": 1,
+  "example": "/learn/articles",
+  "label": "Articles"
+ },
+ {
+  "path": "/forgot-password",
+  "status": 200,
+  "redirect": "",
+  "linkedFromPages": 65,
+  "example": "/login",
+  "label": "Forgot password?"
+ },
+ {
+  "path": "/admin/spotlights",
+  "status": 200,
+  "redirect": "",
+  "linkedFromPages": 1,
+  "example": "/lounge-preview",
+  "label": "Post Update"
+ },
+ {
+  "path": "/museum/06efc847-c010-49f2-8a5d-0487879d9e5f",
+  "status": 200,
+  "redirect": "",
+  "linkedFromPages": 1,
+  "example": "/lounge-preview",
+  "label": "View Room"
+ },
+ {
+  "path": "/community-board/POP_CULTURE",
+  "status": 200,
+  "redirect": "",
+  "linkedFromPages": 1,
+  "example": "/lounge-preview",
+  "label": "Pop Culture 1"
+ },
+ {
+  "path": "/community-board/SPORTS",
+  "status": 200,
+  "redirect": "",
+  "linkedFromPages": 1,
+  "example": "/lounge-preview",
+  "label": "Sports 1"
+ },
+ {
+  "path": "/community-board/MISC",
+  "status": 200,
+  "redirect": "",
+  "linkedFromPages": 1,
+  "example": "/lounge-preview",
+  "label": "Misc 4"
+ },
+ {
+  "path": "/v/undefined",
+  "status": 200,
+  "redirect": "",
+  "linkedFromPages": 1,
+  "example": "/market",
+  "label": "FOR SALE 1mo ago QA Album 13 - Original Motion Picture Soundtrack Spor"
+ },
+ {
+  "path": "/vault/item/qa_vz_mvetehqv_25",
+  "status": 200,
+  "redirect": "",
+  "linkedFromPages": 3,
+  "example": "/museum",
+  "label": "Open QA Album 25 - Original Motion Picture Soundtrack"
+ },
+ {
+  "path": "/vault/item/qa_vz_mvetehqv_26",
+  "status": 200,
+  "redirect": "",
+  "linkedFromPages": 2,
+  "example": "/museum",
+  "label": "Open QA Album 26 - Original Motion Picture Soundtrack"
+ },
+ {
+  "path": "/museum/virtual-room",
+  "status": 200,
+  "redirect": "",
+  "linkedFromPages": 1,
+  "example": "/museum/virtual-room/guest",
+  "label": "BUILDER"
+ },
+ {
+  "path": "/gallery/9a001721-5dcd-4563-b7ea-b4dd9e47666a",
+  "status": 200,
+  "redirect": "",
+  "linkedFromPages": 1,
+  "example": "/onboarding",
+  "label": "Open Guitars, exhibition 1 of 5"
+ },
+ {
+  "path": "/portfolio/universe/Sports%20Cards",
+  "status": 200,
+  "redirect": "",
+  "linkedFromPages": 1,
+  "example": "/portfolio",
+  "label": "Sports Cards $15,716 (22.1%)"
+ },
+ {
+  "path": "/portfolio/universe/Movies%20%2F%20TV%20%2F%20Film",
+  "status": 200,
+  "redirect": "",
+  "linkedFromPages": 1,
+  "example": "/portfolio",
+  "label": "Movies / Tv / Film $15,704 (22.1%)"
+ },
+ {
+  "path": "/portfolio/universe/Audio%20Formats",
+  "status": 200,
+  "redirect": "",
+  "linkedFromPages": 1,
+  "example": "/portfolio",
+  "label": "Audio Formats $15,634 (22.0%)"
+ },
+ {
+  "path": "/portfolio/universe/Trading%20Card%20Games",
+  "status": 200,
+  "redirect": "",
+  "linkedFromPages": 1,
+  "example": "/portfolio",
+  "label": "Trading Card Games $8,110 (11.4%)"
+ },
+ {
+  "path": "/portfolio/universe/Comics",
+  "status": 200,
+  "redirect": "",
+  "linkedFromPages": 1,
+  "example": "/portfolio",
+  "label": "Comics $7,945 (11.2%)"
+ },
+ {
+  "path": "/portfolio/universe/Instruments%20%26%20Gear",
+  "status": 200,
+  "redirect": "",
+  "linkedFromPages": 1,
+  "example": "/portfolio",
+  "label": "Instruments & Gear $7,856 (11.1%)"
+ },
+ {
+  "path": "/portfolio/universe/POP_CULTURE/category/Movies%20%2F%20TV%20%2F%20Film",
+  "status": 200,
+  "redirect": "",
+  "linkedFromPages": 1,
+  "example": "/portfolio/universe/POP_CULTURE",
+  "label": "Movies / TV / Film 2 items $0 Gain Return — (0 of 2 measured) Cost $15"
+ },
+ {
+  "path": "/portfolio/universe/POP_CULTURE/category/Comics",
+  "status": 200,
+  "redirect": "",
+  "linkedFromPages": 1,
+  "example": "/portfolio/universe/POP_CULTURE",
+  "label": "Comics 1 items $0 Gain Return — (0 of 1 measured) Cost $7,778"
+ },
+ {
+  "path": "/portfolio/universe/POP_CULTURE",
+  "status": 200,
+  "redirect": "",
+  "linkedFromPages": 1,
+  "example": "/portfolio/universe/POP_CULTURE/category/comics",
+  "label": "← Back"
+ },
+ {
+  "path": "/portfolio/universe/POP_CULTURE/category/comics",
+  "status": 200,
+  "redirect": "",
+  "linkedFromPages": 1,
+  "example": "/portfolio/universe/POP_CULTURE/category/comics/subcategory/comics",
+  "label": "← Back"
+ },
+ {
+  "path": "/reports/insurance",
+  "status": 200,
+  "redirect": "",
+  "linkedFromPages": 1,
+  "example": "/reports/weekly",
+  "label": "Insurance Report"
+ },
+ {
+  "path": "/vault/item/qa_vz_mvetehqv_s3",
+  "status": 200,
+  "redirect": "",
+  "linkedFromPages": 2,
+  "example": "/reports/weekly",
+  "label": "QA Sold Poster Sold for $40 — POP CULTURE"
+ },
+ {
+  "path": "/vault/item/qa_vz_mvetehqv_s4",
+  "status": 200,
+  "redirect": "",
+  "linkedFromPages": 2,
+  "example": "/reports/weekly",
+  "label": "QA Sold Unknown Cost Sold for $55 — POP CULTURE"
+ },
+ {
+  "path": "/vault/item/qa_vz_mvetehqv_s2",
+  "status": 200,
+  "redirect": "",
+  "linkedFromPages": 2,
+  "example": "/reports/weekly",
+  "label": "QA Sold Rookie Card Sold for $420 — POP CULTURE"
+ },
+ {
+  "path": "/vault/item/qa_vz_mvetehqv_s1",
+  "status": 200,
+  "redirect": "",
+  "linkedFromPages": 2,
+  "example": "/reports/weekly",
+  "label": "QA Sold Batman 1988 Sold for $160 — POP CULTURE"
+ },
+ {
+  "path": "/vault/item/qa_vz_mvetehqv_s0",
+  "status": 200,
+  "redirect": "",
+  "linkedFromPages": 2,
+  "example": "/reports/weekly",
+  "label": "QA Sold Spider-Man 300 Sold for $680 — POP CULTURE"
+ },
+ {
+  "path": "/api/og",
+  "status": 200,
+  "redirect": "",
+  "linkedFromPages": 1,
+  "example": "/share/qa_vz_mvetehqv_17",
+  "label": "QA Album 17 - Original Motion Picture Soundtrack — VLTD card"
+ },
+ {
+  "path": "/museum/9a001721-5dcd-4563-b7ea-b4dd9e47666a",
+  "status": 200,
+  "redirect": "",
+  "linkedFromPages": 1,
+  "example": "/vault/halls",
+  "label": "Guitars 6 items · Private"
+ },
+ {
+  "path": "/museum/254beab2-3983-4319-b3ea-5d08c8f69747",
+  "status": 200,
+  "redirect": "",
+  "linkedFromPages": 1,
+  "example": "/vault/halls",
+  "label": "Comics (Misc. & Peach cards) 5 items · Private"
+ },
+ {
+  "path": "/museum/741b9fd1-5455-4638-b417-9f04bb7ee764",
+  "status": 200,
+  "redirect": "",
+  "linkedFromPages": 1,
+  "example": "/vault/halls",
+  "label": "Vinyl Wall 7 items · Private"
+ },
+ {
+  "path": "/museum/eab2876f-7317-4e89-ac2b-17ac1beb0d16",
+  "status": 200,
+  "redirect": "",
+  "linkedFromPages": 1,
+  "example": "/vault/halls",
+  "label": "Movie Posters 8 items · Private"
+ },
+ {
+  "path": "/vault/item/qa_vz_mvetehqv_1/present",
+  "status": 200,
+  "redirect": "",
+  "linkedFromPages": 1,
+  "example": "/vault/item/qa_vz_mvetehqv_1",
+  "label": "Stream"
+ },
+ {
+  "path": "/u/qa_au_viewer_mvetehqv",
+  "status": 200,
+  "redirect": "",
+  "linkedFromPages": 1,
+  "example": "/account",
+  "label": "View public profile"
+ },
+ {
+  "path": "/museum/share/pub_mr6nb8k6_vp2iwm7i",
+  "status": 200,
+  "redirect": "",
+  "linkedFromPages": 1,
+  "example": "/",
+  "label": "Grails COLLECTOR SHOWCASE Open the exhibition and explore the individu"
+ },
+ {
+  "path": "/museum/bc3c3f3b-e082-4a5a-9c03-3c805ed489f8/guest",
+  "status": 200,
+  "redirect": "",
+  "linkedFromPages": 1,
+  "example": "/discover",
+  "label": "View The Commodore →"
+ }
+]

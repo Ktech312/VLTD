@@ -1,0 +1,5 @@
+// Corrected row for the Set / Series label (ADD-022 / ADD-461 / ADD-462 matched the word 'set' in the neighbouring 'Subtitle / set' label).
+const T = require("./audit-s-add-lib.cjs");
+const { A } = T;
+A.fail({ page: "/vault/item/<id> | owner, Personal", control: "Value typed under 'Set / Series' on /capture, as the item page shows it (corrects ADD-022, ADD-461, ADD-462)", expected: "Shown under a label that matches what was typed into (Set / Series)", actual: "The /capture form stores 'Set / Series' in the item's Number column. The item page shows it in the 'Number / model' line (the line beside it, 'Subtitle / set', stays '-'). So text typed as a set or series name appears as a number.", evidence: "", impact: "misleading result", repro: "/capture, type SetSeries-Token in Set / Series, Save, open the item, read DETAILS > General details" });
+A.nt({ page: "(audit test note)", control: "TEST NOTE ADD-022 / ADD-461 / ADD-462", expected: "Honest record", actual: "These three PASS rows matched the word 'set' in the neighbouring 'Subtitle / set' label; they are void. The corrected row is the FAIL recorded after them.", evidence: "", impact: "none", repro: "n/a" });

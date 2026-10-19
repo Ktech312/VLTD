@@ -1,0 +1,93 @@
+{
+ "generated": "2026-10-19T10:52:31.080Z",
+ "rows": 9773,
+ "behaviourRows": 3751,
+ "smokeRows": 6022,
+ "byResult": {
+  "FAIL": 561,
+  "PASS": 5073,
+  "NOT TESTED": 3885,
+  "SUPERSEDED": 226,
+  "BLOCKED": 28
+ },
+ "confirmedDefectRows": 315,
+ "unreconciledFailRows": 193,
+ "rootCauses": 33,
+ "behaviourByResult": {
+  "FAIL": 508,
+  "PASS": 2769,
+  "NOT TESTED": 220,
+  "SUPERSEDED": 226,
+  "BLOCKED": 28
+ },
+ "pages": 471,
+ "controls": 18082,
+ "apiRoutes": 37,
+ "staticRoutes": 108,
+ "byArea": {
+  "KNO": {
+   "FAIL": 5,
+   "PASS": 9,
+   "NOT TESTED": 1
+  },
+  "VLT": {
+   "PASS": 397,
+   "SUPERSEDED": 20,
+   "FAIL": 90,
+   "NOT TESTED": 2
+  },
+  "ACC": {
+   "PASS": 686,
+   "SUPERSEDED": 49,
+   "FAIL": 110,
+   "NOT TESTED": 16,
+   "BLOCKED": 18
+  },
+  "DIS": {
+   "NOT TESTED": 18,
+   "PASS": 341,
+   "FAIL": 54,
+   "BLOCKED": 3
+  },
+  "ITM": {
+   "PASS": 513,
+   "SUPERSEDED": 77,
+   "FAIL": 51,
+   "NOT TESTED": 92,
+   "BLOCKED": 4
+  },
+  "GIN": {
+   "FAIL": 65,
+   "PASS": 158,
+   "SUPERSEDED": 6,
+   "NOT TESTED": 32
+  },
+  "ADD": {
+   "SUPERSEDED": 56,
+   "FAIL": 87,
+   "PASS": 307,
+   "NOT TESTED": 24,
+   "BLOCKED": 2
+  },
+  "EXH": {
+   "FAIL": 38,
+   "PASS": 349,
+   "NOT TESTED": 29,
+   "SUPERSEDED": 18,
+   "BLOCKED": 1
+  },
+  "CRW": {
+   "FAIL": 8,
+   "PASS": 9,
+   "NOT TESTED": 6
+  },
+  "SMK": {
+   "PASS": 2168,
+   "NOT TESTED": 3665,
+   "FAIL": 53
+  },
+  "LNK": {
+   "PASS": 136
+  }
+ }
+}

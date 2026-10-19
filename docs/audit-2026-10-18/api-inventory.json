@@ -1,0 +1,261 @@
+[
+ {
+  "route": "/api/admin/bugs",
+  "methods": "GET/PATCH",
+  "file": "src/app/api/admin/bugs/route.ts",
+  "authSignals": "admin-ref",
+  "probe": "anonymous GET -> 403"
+ },
+ {
+  "route": "/api/admin/events",
+  "methods": "GET/PATCH/DELETE",
+  "file": "src/app/api/admin/events/route.ts",
+  "authSignals": "admin-ref",
+  "probe": "anonymous GET -> 403"
+ },
+ {
+  "route": "/api/admin/events/quick-add",
+  "methods": "POST",
+  "file": "src/app/api/admin/events/quick-add/route.ts",
+  "authSignals": "admin-ref",
+  "probe": "not called (would act, spend, notify or write)"
+ },
+ {
+  "route": "/api/admin/users",
+  "methods": "GET/PATCH",
+  "file": "src/app/api/admin/users/route.ts",
+  "authSignals": "admin-ref",
+  "probe": "anonymous GET -> 403"
+ },
+ {
+  "route": "/api/admin/waitlist",
+  "methods": "GET/POST",
+  "file": "src/app/api/admin/waitlist/route.ts",
+  "authSignals": "admin-ref",
+  "probe": "anonymous GET -> 403"
+ },
+ {
+  "route": "/api/ai/analyze-coa",
+  "methods": "POST",
+  "file": "src/app/api/ai/analyze-coa/route.ts",
+  "authSignals": "admin-ref",
+  "probe": "not called (would act, spend, notify or write)"
+ },
+ {
+  "route": "/api/ai/analyze-item",
+  "methods": "POST",
+  "file": "src/app/api/ai/analyze-item/route.ts",
+  "authSignals": "admin-ref",
+  "probe": "not called (would act, spend, notify or write)"
+ },
+ {
+  "route": "/api/auth/change-email",
+  "methods": "POST",
+  "file": "src/app/api/auth/change-email/route.ts",
+  "authSignals": "bearer-token+user-lookup",
+  "probe": "not called (would act, spend, notify or write)"
+ },
+ {
+  "route": "/api/auth/password-reset",
+  "methods": "POST",
+  "file": "src/app/api/auth/password-reset/route.ts",
+  "authSignals": "admin-ref",
+  "probe": "not called (would act, spend, notify or write)"
+ },
+ {
+  "route": "/api/auth/signup",
+  "methods": "POST",
+  "file": "src/app/api/auth/signup/route.ts",
+  "authSignals": "admin-ref",
+  "probe": "not called (would act, spend, notify or write)"
+ },
+ {
+  "route": "/api/billing/checkout",
+  "methods": "POST",
+  "file": "src/app/api/billing/checkout/route.ts",
+  "authSignals": "admin-ref",
+  "probe": "not called (would act, spend, notify or write)"
+ },
+ {
+  "route": "/api/billing/portal",
+  "methods": "POST",
+  "file": "src/app/api/billing/portal/route.ts",
+  "authSignals": "admin-ref",
+  "probe": "not called (would act, spend, notify or write)"
+ },
+ {
+  "route": "/api/billing/session",
+  "methods": "GET",
+  "file": "src/app/api/billing/session/route.ts",
+  "authSignals": "NONE FOUND",
+  "probe": "not called (would act, spend, notify or write)"
+ },
+ {
+  "route": "/api/billing/webhook",
+  "methods": "POST",
+  "file": "src/app/api/billing/webhook/route.ts",
+  "authSignals": "admin-ref+stripe-signature+service-role",
+  "probe": "not called (would act, spend, notify or write)"
+ },
+ {
+  "route": "/api/card-lookup",
+  "methods": "GET",
+  "file": "src/app/api/card-lookup/route.ts",
+  "authSignals": "NONE FOUND",
+  "probe": "not called (would act, spend, notify or write)"
+ },
+ {
+  "route": "/api/clubs/notify-reddit",
+  "methods": "POST",
+  "file": "src/app/api/clubs/notify-reddit/route.ts",
+  "authSignals": "bearer-token",
+  "probe": "not called (would act, spend, notify or write)"
+ },
+ {
+  "route": "/api/comic-lookup",
+  "methods": "GET",
+  "file": "src/app/api/comic-lookup/route.ts",
+  "authSignals": "bearer-token",
+  "probe": "not called (would act, spend, notify or write)"
+ },
+ {
+  "route": "/api/comic-releases",
+  "methods": "GET",
+  "file": "src/app/api/comic-releases/route.ts",
+  "authSignals": "NONE FOUND",
+  "probe": "not called (would act, spend, notify or write)"
+ },
+ {
+  "route": "/api/comic-upcoming",
+  "methods": "GET",
+  "file": "src/app/api/comic-upcoming/route.ts",
+  "authSignals": "bearer-token",
+  "probe": "not called (would act, spend, notify or write)"
+ },
+ {
+  "route": "/api/cron/refresh-events",
+  "methods": "GET",
+  "file": "src/app/api/cron/refresh-events/route.ts",
+  "authSignals": "bearer-token+admin-ref+cron-secret",
+  "probe": "not called (would act, spend, notify or write)"
+ },
+ {
+  "route": "/api/cron/refresh-major-events",
+  "methods": "GET",
+  "file": "src/app/api/cron/refresh-major-events/route.ts",
+  "authSignals": "bearer-token+admin-ref+cron-secret",
+  "probe": "not called (would act, spend, notify or write)"
+ },
+ {
+  "route": "/api/events/search",
+  "methods": "GET",
+  "file": "src/app/api/events/search/route.ts",
+  "authSignals": "NONE FOUND",
+  "probe": "not called (would act, spend, notify or write)"
+ },
+ {
+  "route": "/api/gcd-search",
+  "methods": "GET",
+  "file": "src/app/api/gcd-search/route.ts",
+  "authSignals": "NONE FOUND",
+  "probe": "not called (would act, spend, notify or write)"
+ },
+ {
+  "route": "/api/google/oauth-callback",
+  "methods": "GET",
+  "file": "src/app/api/google/oauth-callback/route.ts",
+  "authSignals": "bearer-token",
+  "probe": "not called (would act, spend, notify or write)"
+ },
+ {
+  "route": "/api/google/oauth-config",
+  "methods": "GET",
+  "file": "src/app/api/google/oauth-config/route.ts",
+  "authSignals": "NONE FOUND",
+  "probe": "not called (would act, spend, notify or write)"
+ },
+ {
+  "route": "/api/image-proxy",
+  "methods": "GET",
+  "file": "src/app/api/image-proxy/route.ts",
+  "authSignals": "NONE FOUND",
+  "probe": "not called (would act, spend, notify or write)"
+ },
+ {
+  "route": "/api/kickstarter-comics",
+  "methods": "GET",
+  "file": "src/app/api/kickstarter-comics/route.ts",
+  "authSignals": "NONE FOUND",
+  "probe": "not called (would act, spend, notify or write)"
+ },
+ {
+  "route": "/api/launch-access",
+  "methods": "GET",
+  "file": "src/app/api/launch-access/route.ts",
+  "authSignals": "user-lookup+admin-ref+service-role",
+  "probe": "not called (would act, spend, notify or write)"
+ },
+ {
+  "route": "/api/newsletter",
+  "methods": "POST",
+  "file": "src/app/api/newsletter/route.ts",
+  "authSignals": "admin-ref",
+  "probe": "not called (would act, spend, notify or write)"
+ },
+ {
+  "route": "/api/og",
+  "methods": "GET",
+  "file": "src/app/api/og/route.tsx",
+  "authSignals": "NONE FOUND",
+  "probe": "not called (would act, spend, notify or write)"
+ },
+ {
+  "route": "/api/patreon-comics",
+  "methods": "GET",
+  "file": "src/app/api/patreon-comics/route.ts",
+  "authSignals": "NONE FOUND",
+  "probe": "not called (would act, spend, notify or write)"
+ },
+ {
+  "route": "/api/psa-lookup",
+  "methods": "GET",
+  "file": "src/app/api/psa-lookup/route.ts",
+  "authSignals": "bearer-token+service-role",
+  "probe": "not called (would act, spend, notify or write)"
+ },
+ {
+  "route": "/api/push/send-internal",
+  "methods": "POST",
+  "file": "src/app/api/push/send-internal/route.ts",
+  "authSignals": "bearer-token+admin-ref",
+  "probe": "not called (would act, spend, notify or write)"
+ },
+ {
+  "route": "/api/upc-lookup",
+  "methods": "GET",
+  "file": "src/app/api/upc-lookup/route.ts",
+  "authSignals": "bearer-token",
+  "probe": "not called (would act, spend, notify or write)"
+ },
+ {
+  "route": "/api/vault/[id]",
+  "methods": "POST/DELETE",
+  "file": "src/app/api/vault/[id]/route.ts",
+  "authSignals": "NONE FOUND",
+  "probe": "not called (would act, spend, notify or write)"
+ },
+ {
+  "route": "/api/vinyl-lookup",
+  "methods": "GET",
+  "file": "src/app/api/vinyl-lookup/route.ts",
+  "authSignals": "bearer-token",
+  "probe": "not called (would act, spend, notify or write)"
+ },
+ {
+  "route": "/api/waitlist",
+  "methods": "POST",
+  "file": "src/app/api/waitlist/route.ts",
+  "authSignals": "service-role",
+  "probe": "not called (would act, spend, notify or write)"
+ }
+]

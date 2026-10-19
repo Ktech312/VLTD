@@ -1,0 +1,3 @@
+const C = require("./audit-s-dis-common.cjs"); const r = C.R("DIS");
+r.fail({ page: "/upcoming | visitor (signed out), synthetic catalogue (intercepted)", control: "Want (status button) while signed out", expected: "asks the visitor to sign in (or says it only saves on this device)", actual: "button does not light and the toast reads \"Couldn't save to your account. Try again.\" (nothing is stored on the device either: vltd_wishlist stays []); retrying cannot work until the visitor signs in", evidence: "n/a (probe audit-s-dis-probe7.cjs)", impact: "misleading result", repro: "Signed out, open /upcoming, click Want on any issue" });
+process.exit(0);

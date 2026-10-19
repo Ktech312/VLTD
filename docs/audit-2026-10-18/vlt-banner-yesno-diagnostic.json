@@ -1,0 +1,212 @@
+{
+ "deep-vault (fixture default) / none": {
+  "before": {
+   "dataSeasonal": "halloween-2026",
+   "inlineSeasonalVars": "#FF6B00|#1A0A2E|",
+   "themeGold": "#C8CDD2",
+   "accent": "#C8CDD2",
+   "accentSecondary": "#C8CDD2",
+   "quickAddBorder": "rgba(203, 208, 213, 0.34)",
+   "bodyBg": "rgba(0, 0, 0, 0)",
+   "promptShown": true,
+   "stored": null
+  },
+  "after": {
+   "dataSeasonal": "halloween-2026",
+   "inlineSeasonalVars": "#FF6B00|#1A0A2E|",
+   "themeGold": "#C8CDD2",
+   "accent": "#C8CDD2",
+   "accentSecondary": "#C8CDD2",
+   "quickAddBorder": "rgba(203, 208, 213, 0.34)",
+   "bodyBg": "rgba(0, 0, 0, 0)",
+   "promptShown": true,
+   "stored": null
+  },
+  "reload": {
+   "dataSeasonal": "halloween-2026",
+   "inlineSeasonalVars": "#FF6B00|#1A0A2E|",
+   "themeGold": "#C8CDD2",
+   "accent": "#C8CDD2",
+   "accentSecondary": "#C8CDD2",
+   "quickAddBorder": "rgba(203, 208, 213, 0.34)",
+   "bodyBg": "rgba(0, 0, 0, 0)",
+   "promptShown": true,
+   "stored": null
+  }
+ },
+ "deep-vault (fixture default) / No": {
+  "before": {
+   "dataSeasonal": "halloween-2026",
+   "inlineSeasonalVars": "#FF6B00|#1A0A2E|",
+   "themeGold": "#C8CDD2",
+   "accent": "#C8CDD2",
+   "accentSecondary": "#C8CDD2",
+   "quickAddBorder": "rgba(203, 208, 213, 0.34)",
+   "bodyBg": "rgba(0, 0, 0, 0)",
+   "promptShown": true,
+   "stored": null
+  },
+  "after": {
+   "dataSeasonal": "halloween-2026",
+   "inlineSeasonalVars": "#FF6B00|#1A0A2E|",
+   "themeGold": "#C8CDD2",
+   "accent": "#C8CDD2",
+   "accentSecondary": "#C8CDD2",
+   "quickAddBorder": "rgba(203, 208, 213, 0.34)",
+   "bodyBg": "rgba(0, 0, 0, 0)",
+   "promptShown": false,
+   "stored": "{\"halloween-2026\":\"dismissed\"}"
+  },
+  "reload": {
+   "dataSeasonal": "halloween-2026",
+   "inlineSeasonalVars": "#FF6B00|#1A0A2E|",
+   "themeGold": "#C8CDD2",
+   "accent": "#C8CDD2",
+   "accentSecondary": "#C8CDD2",
+   "quickAddBorder": "rgba(203, 208, 213, 0.34)",
+   "bodyBg": "rgba(0, 0, 0, 0)",
+   "promptShown": false,
+   "stored": "{\"halloween-2026\":\"dismissed\"}"
+  }
+ },
+ "deep-vault (fixture default) / Yes": {
+  "before": {
+   "dataSeasonal": "halloween-2026",
+   "inlineSeasonalVars": "#FF6B00|#1A0A2E|",
+   "themeGold": "#C8CDD2",
+   "accent": "#C8CDD2",
+   "accentSecondary": "#C8CDD2",
+   "quickAddBorder": "rgba(203, 208, 213, 0.34)",
+   "bodyBg": "rgba(0, 0, 0, 0)",
+   "promptShown": true,
+   "stored": null
+  },
+  "after": {
+   "dataSeasonal": "halloween-2026",
+   "inlineSeasonalVars": "#FF6B00|#1A0A2E|",
+   "themeGold": "#C8CDD2",
+   "accent": "#C8CDD2",
+   "accentSecondary": "#C8CDD2",
+   "quickAddBorder": "rgba(203, 208, 213, 0.34)",
+   "bodyBg": "rgba(0, 0, 0, 0)",
+   "promptShown": false,
+   "stored": "{\"halloween-2026\":\"accepted\"}"
+  },
+  "reload": {
+   "dataSeasonal": "halloween-2026",
+   "inlineSeasonalVars": "#FF6B00|#1A0A2E|",
+   "themeGold": "#C8CDD2",
+   "accent": "#C8CDD2",
+   "accentSecondary": "#C8CDD2",
+   "quickAddBorder": "rgba(203, 208, 213, 0.34)",
+   "bodyBg": "rgba(0, 0, 0, 0)",
+   "promptShown": false,
+   "stored": "{\"halloween-2026\":\"accepted\"}"
+  }
+ },
+ "no theme chosen / none": {
+  "before": {
+   "dataSeasonal": "halloween-2026",
+   "inlineSeasonalVars": "#FF6B00|#1A0A2E|",
+   "themeGold": "#C8CDD2",
+   "accent": "#C8CDD2",
+   "accentSecondary": "#C8CDD2",
+   "quickAddBorder": "rgba(203, 208, 213, 0.34)",
+   "bodyBg": "rgba(0, 0, 0, 0)",
+   "promptShown": true,
+   "stored": null
+  },
+  "after": {
+   "dataSeasonal": "halloween-2026",
+   "inlineSeasonalVars": "#FF6B00|#1A0A2E|",
+   "themeGold": "#C8CDD2",
+   "accent": "#C8CDD2",
+   "accentSecondary": "#C8CDD2",
+   "quickAddBorder": "rgba(203, 208, 213, 0.34)",
+   "bodyBg": "rgba(0, 0, 0, 0)",
+   "promptShown": true,
+   "stored": null
+  },
+  "reload": {
+   "dataSeasonal": "halloween-2026",
+   "inlineSeasonalVars": "#FF6B00|#1A0A2E|",
+   "themeGold": "#C8CDD2",
+   "accent": "#C8CDD2",
+   "accentSecondary": "#C8CDD2",
+   "quickAddBorder": "rgba(203, 208, 213, 0.34)",
+   "bodyBg": "rgba(0, 0, 0, 0)",
+   "promptShown": true,
+   "stored": null
+  }
+ },
+ "no theme chosen / No": {
+  "before": {
+   "dataSeasonal": "halloween-2026",
+   "inlineSeasonalVars": "#FF6B00|#1A0A2E|",
+   "themeGold": "#C8CDD2",
+   "accent": "#C8CDD2",
+   "accentSecondary": "#C8CDD2",
+   "quickAddBorder": "rgba(203, 208, 213, 0.34)",
+   "bodyBg": "rgba(0, 0, 0, 0)",
+   "promptShown": true,
+   "stored": null
+  },
+  "after": {
+   "dataSeasonal": "halloween-2026",
+   "inlineSeasonalVars": "#FF6B00|#1A0A2E|",
+   "themeGold": "#C8CDD2",
+   "accent": "#C8CDD2",
+   "accentSecondary": "#C8CDD2",
+   "quickAddBorder": "rgba(203, 208, 213, 0.34)",
+   "bodyBg": "rgba(0, 0, 0, 0)",
+   "promptShown": false,
+   "stored": "{\"halloween-2026\":\"dismissed\"}"
+  },
+  "reload": {
+   "dataSeasonal": "halloween-2026",
+   "inlineSeasonalVars": "#FF6B00|#1A0A2E|",
+   "themeGold": "#C8CDD2",
+   "accent": "#C8CDD2",
+   "accentSecondary": "#C8CDD2",
+   "quickAddBorder": "rgba(203, 208, 213, 0.34)",
+   "bodyBg": "rgba(0, 0, 0, 0)",
+   "promptShown": false,
+   "stored": "{\"halloween-2026\":\"dismissed\"}"
+  }
+ },
+ "no theme chosen / Yes": {
+  "before": {
+   "dataSeasonal": "halloween-2026",
+   "inlineSeasonalVars": "#FF6B00|#1A0A2E|",
+   "themeGold": "#C8CDD2",
+   "accent": "#C8CDD2",
+   "accentSecondary": "#C8CDD2",
+   "quickAddBorder": "rgba(203, 208, 213, 0.34)",
+   "bodyBg": "rgba(0, 0, 0, 0)",
+   "promptShown": true,
+   "stored": null
+  },
+  "after": {
+   "dataSeasonal": "halloween-2026",
+   "inlineSeasonalVars": "#FF6B00|#1A0A2E|",
+   "themeGold": "#C8CDD2",
+   "accent": "#C8CDD2",
+   "accentSecondary": "#C8CDD2",
+   "quickAddBorder": "rgba(203, 208, 213, 0.34)",
+   "bodyBg": "rgba(0, 0, 0, 0)",
+   "promptShown": false,
+   "stored": "{\"halloween-2026\":\"accepted\"}"
+  },
+  "reload": {
+   "dataSeasonal": "halloween-2026",
+   "inlineSeasonalVars": "#FF6B00|#1A0A2E|",
+   "themeGold": "#C8CDD2",
+   "accent": "#C8CDD2",
+   "accentSecondary": "#C8CDD2",
+   "quickAddBorder": "rgba(203, 208, 213, 0.34)",
+   "bodyBg": "rgba(0, 0, 0, 0)",
+   "promptShown": false,
+   "stored": "{\"halloween-2026\":\"accepted\"}"
+  }
+ }
+}

@@ -1,0 +1,42 @@
+{
+ "/dashboard": {
+  "inflightNow": 0,
+  "requestsIn20sAfterLoad": 1,
+  "top": [
+   [
+    "GET /rest/v1/conversations",
+    1
+   ]
+  ]
+ },
+ "/community-board": {
+  "inflightNow": 0,
+  "requestsIn20sAfterLoad": 1,
+  "top": [
+   [
+    "GET /rest/v1/conversations",
+    1
+   ]
+  ]
+ },
+ "/clubs": {
+  "inflightNow": 0,
+  "requestsIn20sAfterLoad": 1,
+  "top": [
+   [
+    "GET /rest/v1/conversations",
+    1
+   ]
+  ]
+ },
+ "/vault": {
+  "inflightNow": 0,
+  "requestsIn20sAfterLoad": 1,
+  "top": [
+   [
+    "GET /rest/v1/conversations",
+    1
+   ]
+  ]
+ }
+}

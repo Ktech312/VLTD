@@ -1,0 +1,3 @@
+const X = require("./audit-s-itm-lib.cjs");
+X.corr(["ITM-447", "ITM-449", "ITM-451", "ITM-452", "ITM-453", "ITM-454"], "assumed signed-out visitors can open /auction pages; the app sends them to sign in (a design choice, recorded as a PASS row in the rerun).", "audit-s-itm-auction2.cjs rows");
+X.corr(["ITM-464", "ITM-465", "ITM-466", "ITM-470"], "regular expressions did not allow for '$30.00' formatting or the upper-casing of CURRENT BID, the bid box was looked up by a placeholder that changed after the first bid, and the owner's list was read after the viewer's bid had changed the number. The bid itself worked (db row, current bid and count correct).", "audit-s-itm-auction2.cjs rows");
