@@ -22,7 +22,7 @@ import { INSIGHTS_BREAKDOWN_COLORS, INSIGHTS_GREEN, INSIGHTS_RED, INSIGHTS_REVEN
 import { buildSoldItems, hasKnownCost, profitOf, soldStats } from "@/lib/soldItems";
 import { activeItems, computeVaultStats, describeGainExclusions, effectiveMarketValue, readValueMode, totalsValue, writeValueMode, type ValueMode } from "@/lib/vaultStats";
 import { loadItems, resetCloudBackoff, syncVaultItemsFromSupabaseChecked, type VaultItem } from "@/lib/vaultModel";
-import { StaleDataNotice } from "@/components/vault/CloudStatus";
+import { LoadErrorCard, StaleDataNotice } from "@/components/vault/CloudStatus";
 import { currentLocalOwner } from "@/lib/localDataOwner";
 import { storedSessionUserId } from "@/lib/sessionGuard";
 import { getPendingVaultSyncCount } from "@/lib/vaultSyncQueue";
@@ -406,7 +406,10 @@ export default function HomeClient() {
   );
   if (error) return (
     <main style={{ minHeight: "100vh", padding: "32px 22px" }}>
-      <div style={{ maxWidth: 1100, margin: "0 auto", background: "rgba(224,82,82,0.08)", border: "1px solid rgba(224,82,82,0.30)", borderRadius: 10, padding: 16, color: C.red }}>{error}</div>
+      <div style={{ maxWidth: 1100, margin: "0 auto" }}>
+        <LoadErrorCard what="collection" onRetry={() => reloadHome.current()} />
+        {/—|could not load/i.test(error) ? null : <p style={{ marginTop: 10, fontSize: 12, color: C.muted }}>{error}</p>}
+      </div>
     </main>
   );
 
