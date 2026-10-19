@@ -1,0 +1,37 @@
+{
+ "generatedAt": "2026-10-19T16:20:15.853Z",
+ "note": "aggregate counts only; read-only; QA rows excluded",
+ "population": {
+  "realProfiles": 39,
+  "usersWithMoreThanOneProfile": 2,
+  "realItems": 3477,
+  "realGalleries": 47
+ },
+ "rc02": {
+  "itemsWithPrivateNotes": 3424,
+  "itemsWithDescription": 1,
+  "descriptionsContainingTheirOwnNote": 0,
+  "ofWhichPublicOnAPublicProfile": 0,
+  "descriptionsThatLookLikeGeneratedOrPastedListingCopy": 0,
+  "ofWhichContainRecordedCostBasisLine": 0,
+  "generatedCopyAlsoContainingTheNote": 0,
+  "markerCopyPublicOnAPublicProfile": 0
+ },
+ "rc03": {
+  "itemsWithAnAuctionRecord": 0,
+  "cancelledAuctions": 0,
+  "cancelledAndStillPublic": 0,
+  "cancelledStillPublicOnPublicProfile": 0,
+  "note": "the prior visibility is not stored, so which of these were private before the auction cannot be determined from the data"
+ },
+ "rc01": {
+  "galleries": 47,
+  "galleriesWithZeroItems": 3,
+  "emptyButStillHoldingPublicSnapshots": 0,
+  "emptyButStillHoldingLinkRows": 0,
+  "emptyButStillHoldingItemNotes": 0,
+  "emptyWithViews": 2,
+  "ownersWithBothProfilesAndExhibitions": 2,
+  "note": "an empty exhibition can be genuine (just created); leftover snapshots/links/notes are the only signs of a past wipe, and a wipe that also pruned snapshots leaves no trace"
+ }
+}

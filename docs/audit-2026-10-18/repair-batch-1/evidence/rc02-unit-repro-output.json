@@ -1,0 +1,56 @@
+{
+ "itemToListingInputPassesDescription": false,
+ "perPlatform": {
+  "ebay": {
+   "privateNote": true,
+   "publicDescription": false,
+   "purchasePrice": true,
+   "costBasisLine": true
+  },
+  "etsy": {
+   "privateNote": true,
+   "publicDescription": false,
+   "purchasePrice": true,
+   "costBasisLine": true
+  },
+  "icona": {
+   "privateNote": true,
+   "publicDescription": false,
+   "purchasePrice": true,
+   "costBasisLine": true
+  },
+  "whatnot": {
+   "privateNote": true,
+   "publicDescription": false,
+   "purchasePrice": true,
+   "costBasisLine": true
+  },
+  "discogs": {
+   "privateNote": true,
+   "publicDescription": false,
+   "purchasePrice": true,
+   "costBasisLine": true
+  },
+  "mercari": {
+   "privateNote": true,
+   "publicDescription": false,
+   "purchasePrice": true,
+   "costBasisLine": true
+  },
+  "facebook": {
+   "privateNote": true,
+   "publicDescription": false,
+   "purchasePrice": true,
+   "costBasisLine": true
+  },
+  "pwcc": {
+   "privateNote": true,
+   "publicDescription": false,
+   "purchasePrice": true,
+   "costBasisLine": true
+  }
+ },
+ "generateListingModeContainsPrivateNote": true,
+ "generateDescriptionModeContainsPrivateNote": false,
+ "generateSocialModeContainsPrivateNote": false
+}

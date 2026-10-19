@@ -1,0 +1,40 @@
+{
+ "note": "read-only; no titles/content",
+ "emptyExhibitions": [
+  {
+   "ownerHasOtherProfile": false,
+   "ownerProfileType": "business",
+   "visibility": "PUBLIC",
+   "hasCover": false,
+   "hasUploadedBackground": false,
+   "itemIdsInSections": 0,
+   "minutesBetweenCreateAndLastUpdate": 24078,
+   "views": 3,
+   "ageDays": 186
+  },
+  {
+   "ownerHasOtherProfile": true,
+   "ownerProfileType": "business",
+   "visibility": "PUBLIC",
+   "hasCover": true,
+   "hasUploadedBackground": true,
+   "itemIdsInSections": 0,
+   "minutesBetweenCreateAndLastUpdate": 257532,
+   "views": 4,
+   "ageDays": 189
+  },
+  {
+   "ownerHasOtherProfile": true,
+   "ownerProfileType": "personal",
+   "visibility": "PUBLIC",
+   "hasCover": false,
+   "hasUploadedBackground": false,
+   "itemIdsInSections": 0,
+   "minutesBetweenCreateAndLastUpdate": 0,
+   "views": 0,
+   "ageDays": 5
+  }
+ ],
+ "exhibitionsOwnedByUsersWithTwoProfiles": 6,
+ "ofWhichEmpty": 2
+}
