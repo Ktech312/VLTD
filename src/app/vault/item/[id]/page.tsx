@@ -3,7 +3,7 @@
 import { NEGATIVE_COST_MESSAGE, isNegativeCostText } from "@/lib/costInput";
 import { Toggle } from "@/components/ui/Toggle";
 import { pillClassName } from "@/components/ui/PillButton";
-import { effectiveMarketValue, isSupplyItem, itemGain } from "@/lib/vaultStats";
+import { effectiveMarketValue, hasExplicitValue, hasRecordedCost, isSupplyItem, itemGain } from "@/lib/vaultStats";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { use, useEffect, useMemo, useRef, useState } from "react";
@@ -1435,7 +1435,8 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
 
               <div className="mt-5 rounded-[20px] bg-[color:var(--theme-elevated)] p-4 ring-1 ring-[color:var(--theme-border)]">
                 <div className="text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">MARKET</div>
-                <div className={"mt-3 text-[40px] font-semibold leading-none" + (effectiveMarketValue(item) > 0 ? "" : " text-[color:var(--muted2)]")}>{effectiveMarketValue(item) > 0 ? fmtMoney(effectiveMarketValue(item)) : totalCost(item) > 0 ? fmtMoney(totalCost(item)) : "Not valued"}</div>
+                <div className={"mt-3 text-[40px] font-semibold leading-none" + (hasExplicitValue(item) ? "" : " text-[color:var(--muted2)]")}>{hasExplicitValue(item) ? fmtMoney(effectiveMarketValue(item)) : hasRecordedCost(item) ? fmtMoney(totalCost(item)) : "Missing value"}</div>
+                {!hasExplicitValue(item) ? <div className="mt-1 text-xs text-[color:var(--muted)]">{hasRecordedCost(item) ? "At purchase cost. Not valued yet." : "No valuation and no purchase cost recorded."}</div> : null}
                 {effectiveMarketValue(item) > 0 ? (
                   item.priceSource ? (
                     <div className="mt-2 text-xs text-[color:var(--muted)]">Estimated price based on: {item.priceSource}</div>

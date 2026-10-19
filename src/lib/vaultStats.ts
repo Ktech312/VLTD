@@ -56,15 +56,39 @@ export function effectiveMarketValue(item: VaultItem): number {
   return 0;
 }
 
+/** An explicit valuation: a value above zero from any source, or a valuation of exactly $0 that someone typed (zero is a valid value). */
+export function hasExplicitValue(item: VaultItem): boolean {
+  if (effectiveMarketValue(item) > 0) return true;
+  return typeof item.currentValue === "number" && item.currentValue === 0;
+}
+
+/** A purchase cost was recorded (price, tax, shipping or fees), including a recorded $0. Not recorded = nothing entered. */
+export function hasRecordedCost(item: VaultItem): boolean {
+  return [item.purchasePrice, item.purchaseTax, item.purchaseShipping, item.purchaseFees].some((v) => typeof v === "number" && Number.isFinite(v));
+}
+
 /**
- * Value used in totals. Values are never auto-filled, so an item nobody has
- * priced yet counts at what was paid for it (a "ghost" value: shown in grey,
- * never saved). Without this, 1,000 un-priced items read as a $100K loss.
+ * THE VALUE RULE (one place, used by every total and label):
+ *   explicit    an explicit valuation -> use it (an explicit $0 is valid)
+ *   purchase    no valuation, but a recorded total purchase cost -> counted "At purchase cost" (shown, never saved into a valuation field)
+ *   missing     neither -> "Missing value": counted as nothing and EXCLUDED from the known total, and the excluded count is disclosed
+ * "Needs valuation" (no explicit valuation: purchase or missing) is a different statement from "Missing value" (no valuation AND no cost).
+ * Missing information never produces a financial loss: a missing value is left out of every gain, it is not read as $0.
  */
-export function totalsValue(item: VaultItem): { amount: number; isGhost: boolean } {
-  const real = effectiveMarketValue(item);
-  if (real > 0) return { amount: real, isGhost: false };
-  return { amount: totalCost(item), isGhost: true };
+export type ValueBasis = "explicit" | "purchase" | "missing";
+export function valueBasis(item: VaultItem): { basis: ValueBasis; amount: number } {
+  if (hasExplicitValue(item)) return { basis: "explicit", amount: effectiveMarketValue(item) };
+  if (hasRecordedCost(item)) return { basis: "purchase", amount: totalCost(item) };
+  return { basis: "missing", amount: 0 };
+}
+
+/**
+ * Value used in totals (see the rule above). Values are never auto-filled: a purchase-cost amount is a "ghost" (grey, never saved).
+ * Without it, 1,000 un-priced items read as a $100K loss.
+ */
+export function totalsValue(item: VaultItem): { amount: number; isGhost: boolean; basis: ValueBasis } {
+  const v = valueBasis(item);
+  return { amount: v.amount, isGhost: v.basis === "purchase", basis: v.basis };
 }
 
 /** "fill" = un-priced items count at purchase price (default). "priced" = only items with a real value. */
@@ -107,7 +131,7 @@ export function totalCost(item: VaultItem): number {
 export type GainStatus = "eligible" | "no-value" | "no-cost" | "zero-cost";
 
 export function gainStatus(item: VaultItem): GainStatus {
-  if (!(effectiveMarketValue(item) > 0)) return "no-value";
+  if (!hasExplicitValue(item)) return "no-value";
   if (totalCost(item) > 0) return "eligible";
   return typeof item.purchasePrice === "number" && Number.isFinite(item.purchasePrice) ? "zero-cost" : "no-cost";
 }
@@ -173,8 +197,10 @@ export type ValueSummary = {
   totalCost: number;
   /** Items with a real value entered. */
   pricedCount: number;
-  /** Items counted at purchase price because they aren't priced yet. */
+  /** Items counted "At purchase cost" because they have no valuation but a recorded cost. */
   ghostCount: number;
+  /** Items with neither a valuation nor a recorded cost: "Missing value", left out of the total and disclosed. */
+  missingCount: number;
   /** Total value for the chosen mode. */
   totalValue: number;
   /** Unrealized change: value minus cost over the items that have BOTH a real value and a known cost. Never depends on the mode. */
@@ -202,19 +228,23 @@ export type ValueSummary = {
 export function summarizeValues(items: VaultItem[], mode: ValueMode = "fill"): ValueSummary {
   let totalCostAll = 0;
   let pricedCount = 0;
+  let purchaseCount = 0;
+  let missingCount = 0;
   let filledValue = 0;
   let pricedValue = 0;
 
   for (const item of items) {
-    const cost = totalCost(item);
-    const real = effectiveMarketValue(item);
-    totalCostAll += cost;
-    if (real > 0) {
+    totalCostAll += totalCost(item);
+    const v = valueBasis(item);
+    if (v.basis === "explicit") {
       pricedCount += 1;
-      pricedValue += real;
-      filledValue += real;
+      pricedValue += v.amount;
+      filledValue += v.amount;
+    } else if (v.basis === "purchase") {
+      purchaseCount += 1;
+      filledValue += v.amount;
     } else {
-      filledValue += cost;
+      missingCount += 1;
     }
   }
 
@@ -223,7 +253,8 @@ export function summarizeValues(items: VaultItem[], mode: ValueMode = "fill"): V
     itemCount: items.length,
     totalCost: totalCostAll,
     pricedCount,
-    ghostCount: items.length - pricedCount,
+    ghostCount: purchaseCount,
+    missingCount,
     totalValue: mode === "priced" ? pricedValue : filledValue,
     totalGain: g.gain,
     gainPct: g.gainPct,

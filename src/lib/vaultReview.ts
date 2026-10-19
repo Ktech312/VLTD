@@ -8,7 +8,7 @@
 //   cost      a purchase price above $0 (not recorded, and recorded as $0, are flagged separately: a recorded $0 is not "missing")
 //   identity  something that identifies it: grade, cert number, serial number, or a set / number
 // An item that is missing any of these NEEDS REVIEW. Supplies (boxes, cases) are not counted either way.
-import { insuranceValue } from "@/lib/vaultStats";
+import { valueBasis } from "@/lib/vaultStats";
 import { getPrimaryImageUrl, type VaultItem } from "@/lib/vaultModel";
 
 /** The four things on the checklist. */
@@ -21,7 +21,7 @@ export type ReviewGap = ChecklistItem | "cost_zero";
 
 export const REVIEW_GAP_LABEL: Record<ReviewGap, string> = {
   photo: "a photo",
-  value: "a value",
+  value: "a valuation",
   cost: "a purchase price",
   cost_zero: "a purchase price above $0",
   identity: "grade, cert or serial number, or set / number",
@@ -29,7 +29,7 @@ export const REVIEW_GAP_LABEL: Record<ReviewGap, string> = {
 
 export const REVIEW_GAP_SHORT: Record<ReviewGap, string> = {
   photo: "Photo",
-  value: "Value",
+  value: "Valuation",
   cost: "Purchase price",
   cost_zero: "Purchase price above $0",
   identity: "Identifying detail",
@@ -38,7 +38,7 @@ export const REVIEW_GAP_SHORT: Record<ReviewGap, string> = {
 /** The full text of each filter button. A cost recorded as $0 is never called missing: it is recorded, it just is not above zero. */
 export const REVIEW_GAP_PILL: Record<ReviewGap, string> = {
   photo: "Missing photo",
-  value: "Missing value",
+  value: "Needs valuation",
   cost: "Purchase price not recorded",
   cost_zero: "Purchase price recorded as $0",
   identity: "Missing identifying detail",
@@ -47,7 +47,7 @@ export const REVIEW_GAP_PILL: Record<ReviewGap, string> = {
 /** How an item's own card names what is wrong with it ("Missing: ..."). */
 export const REVIEW_GAP_ROW: Record<ReviewGap, string> = {
   photo: "photo",
-  value: "value",
+  value: "valuation",
   cost: "purchase price",
   cost_zero: "purchase price above $0 (recorded as $0)",
   identity: "identifying detail",
@@ -56,7 +56,7 @@ export const REVIEW_GAP_ROW: Record<ReviewGap, string> = {
 /** The heading of a filtered list, after "Needs review: N items". */
 export const REVIEW_GAP_HEADING: Record<ReviewGap, string> = {
   photo: "missing a photo",
-  value: "missing a value",
+  value: "needing a valuation",
   cost: "with no purchase price recorded",
   cost_zero: "with a purchase price recorded as $0",
   identity: "missing grade, cert or serial number, or set / number",
@@ -70,7 +70,7 @@ export const REVIEW_GAP_FILTERS: ReviewGap[] = ["photo", "value", "cost", "cost_
 /** The exact documentation checklist, in the words shown to people. Each item is checked against these four things only. */
 export const REVIEW_CHECKLIST: Record<ChecklistItem, { title: string; rule: string }> = {
   photo: { title: "Photo", rule: "at least one picture of the item" },
-  value: { title: "Value", rule: "a value you entered or looked up (a purchase price standing in for a value does not count)" },
+  value: { title: "Valuation", rule: "a value you entered or looked up (a purchase price standing in for a value does not count; an explicit $0 does)" },
   cost: { title: "Purchase price", rule: "what you paid, as an amount above $0. A cost you recorded as $0 stays recorded as $0; this checklist just asks for more than zero, so such an item is listed as \"Purchase price recorded as $0\", not as missing" },
   identity: { title: "Identifying detail", rule: "a grade, cert number, serial number, or set / number" },
 };
@@ -88,8 +88,7 @@ export function reviewGaps(item: VaultItem): ReviewGap[] {
   const gaps: ReviewGap[] = [];
   const hasPhoto = Boolean(getPrimaryImageUrl(item)) || (Array.isArray(item.images) && item.images.length > 0);
   if (!hasPhoto) gaps.push("photo");
-  const value = insuranceValue(item);
-  if (!(value.amount > 0) || value.purchaseBased) gaps.push("value");
+  if (valueBasis(item).basis !== "explicit") gaps.push("value"); // needs a valuation (an explicit $0 counts as one)
   const price = item.purchasePrice;
   if (price === undefined || price === null || !Number.isFinite(Number(price))) gaps.push("cost"); // nothing recorded
   else if (!(Number(price) > 0)) gaps.push("cost_zero"); // recorded as $0

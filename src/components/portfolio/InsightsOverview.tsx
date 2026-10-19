@@ -24,7 +24,7 @@ import {
   syncValueHistoryFromSupabase,
 } from "@/lib/valueHistory";
 import { getPrimaryImageUrl, type VaultItem } from "@/lib/vaultModel";
-import { activeItems, itemGain, readValueMode, type ValueMode } from "@/lib/vaultStats";
+import { activeItems, hasExplicitValue, itemGain, readValueMode, valueBasis, type ValueMode } from "@/lib/vaultStats";
 import { loadGoals, syncGoalsFromSupabase, type CollectionGoal } from "@/lib/collectionGoals";
 import { getCollectionValuationScore } from "@/lib/collectionValuationScore";
 import { ToolsMenu } from "@/components/ui/ToolsMenu";
@@ -73,7 +73,7 @@ function displayLabel(label: string) {
 
 function exportItemsCsv(items: VaultItem[]) {
   if (typeof window === "undefined") return;
-  const header = ["vault_id", "title", "universe", "category", "grade", "invested", "value", "gain"];
+  const header = ["vault_id", "title", "universe", "category", "grade", "invested", "value", "gain", "value_basis"];
   const esc = (v: unknown) => {
     const s = String(v ?? "");
     return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
@@ -85,8 +85,10 @@ function exportItemsCsv(items: VaultItem[]) {
     i.categoryLabel ?? i.category ?? "",
     i.grade ?? "",
     itemTotalCost(i),
-    itemCurrentValue(i),
-    itemCurrentValue(i) - itemTotalCost(i),
+    // A blank value or gain means "not valued", never $0 and never a loss of what was paid.
+    hasExplicitValue(i) ? itemCurrentValue(i) : "",
+    hasExplicitValue(i) && itemTotalCost(i) > 0 ? itemCurrentValue(i) - itemTotalCost(i) : "",
+    { explicit: "Valuation", purchase: "At purchase cost", missing: "Missing value" }[valueBasis(i).basis],
   ]);
   const csv = [header, ...rows].map((r) => r.map(esc).join(",")).join("\n");
   const blob = new Blob([csv], { type: "text/csv" });
@@ -646,6 +648,9 @@ export default function InsightsOverview({ items: allItems, loading = false }: {
       .map(([label, value]) => ({ label, value }));
   }, [items]);
 
+  // Items with neither a valuation nor a recorded cost: left out of the total, and said so beside it.
+  const missingValueCount = useMemo(() => items.filter((item) => valueBasis(item).basis === "missing").length, [items]);
+
   const staleItems = useMemo(() => {
     const now = Date.now();
     const staleAfter = 1000 * 60 * 60 * 24 * 30;
@@ -700,7 +705,7 @@ export default function InsightsOverview({ items: allItems, loading = false }: {
       .map((item) => {
         let reason = "";
         if (!hasPhoto(item)) reason = "Missing photo";
-        else if (itemCurrentValue(item) <= 0) reason = "Needs value";
+        else if (!hasExplicitValue(item)) reason = valueBasis(item).basis === "missing" ? "Missing value" : "Needs valuation";
         else {
           const updated = Math.max(safeTime(item.valueUpdatedAt), safeTime(item.priceUpdatedAt));
           if (updated <= 0) reason = "No recent comps";
@@ -772,7 +777,7 @@ export default function InsightsOverview({ items: allItems, loading = false }: {
           <StatCard
             label="Total Vault Value"
             value={formatMoney(totalValue)}
-            sub={<><span style={{ color: Math.abs(metrics.roi) < 0.05 ? MUTED : metrics.roi > 0 ? GREEN : RED }}>{fmtPct(metrics.roi, true)}</span> against what you paid, all-time</>}
+            sub={<><span style={{ color: Math.abs(metrics.roi) < 0.05 ? MUTED : metrics.roi > 0 ? GREEN : RED }}>{fmtPct(metrics.roi, true)}</span> against what you paid, all-time{missingValueCount > 0 ? <> · {missingValueCount} missing value, not counted</> : null}</>}
             icon={<Glyph name="box" size={28} />}
           />
           <StatCard
