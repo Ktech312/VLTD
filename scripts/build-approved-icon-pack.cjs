@@ -29,7 +29,11 @@ for (const name of names) {
   // Bounds are measured from the complete symbol in its local coordinate system,
   // not the 32px canvas or individual paths. Every silhouette gets the full palette.
   const b = bounds[name] || { x: 3, y: 3, width: 18, height: 18 };
-  const defs = `<linearGradient id="ink" x1="${b.x}" y1="${b.y}" x2="${b.x + b.width}" y2="${b.y + b.height}" gradientUnits="userSpaceOnUse"><stop stop-color="#27e3ff"/><stop offset=".32" stop-color="#4e85ff"/><stop offset=".62" stop-color="#a46bff"/><stop offset=".88" stop-color="#fc46e3"/></linearGradient>`;
+  // Preserve the approved chair. Other symbols span the palette horizontally:
+  // even shallow shapes (chevrons, cards) reach the pink/purple end of the mix.
+  const defs = name === "communityBoard"
+    ? `<linearGradient id="ink" x1="${b.x}" y1="${b.y}" x2="${b.x + b.width}" y2="${b.y + b.height}" gradientUnits="userSpaceOnUse"><stop stop-color="#27e3ff"/><stop offset=".32" stop-color="#4e85ff"/><stop offset=".62" stop-color="#a46bff"/><stop offset=".88" stop-color="#fc46e3"/></linearGradient>`
+    : `<linearGradient id="ink" x1="${b.x}" y1="${b.y}" x2="${b.x + Math.max(b.width, 1)}" y2="${b.y}" gradientUnits="userSpaceOnUse"><stop stop-color="#27e3ff"/><stop offset=".2" stop-color="#41c6ff"/><stop offset=".45" stop-color="#9866ff"/><stop offset=".7" stop-color="#dc55f4"/><stop offset="1" stop-color="#fc46e3"/></linearGradient>`;
   // Same 32px canvas, dark edge, 2px gradient stroke and restrained halo as Home/Vault.
   // Compensate for the path coordinate scale to keep the final stroke width constant.
   const layer = (stroke, width, opacity = 1) => `<g stroke="${stroke}" stroke-width="${width / 1.25}" opacity="${opacity}">${art.replaceAll("currentColor", stroke)}</g>`;
