@@ -11,7 +11,7 @@ import {
   upsertDraft,
   type AICatalogDraft,
 } from "@/lib/aiCatalogDrafts";
-import { saveItem } from "@/lib/vaultModel";
+import { saveItemDurably } from "@/lib/vaultSyncQueue";
 import { dispatchItemGraded } from "@/hooks/useAutoShareTrigger";
 
 // ─── helpers ─────────────────────────────────────────────────────────────────
@@ -99,6 +99,8 @@ function ReviewInner() {
   const [notes, setNotes] = useState("");
   const [reviewNotes, setReviewNotes] = useState("");
   const [toast, setToast] = useState("");
+  // One approval at a time: a second click (or a retry) must not create a second item.
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -147,11 +149,14 @@ function ReviewInner() {
     showToast(status === "NEEDS_REVIEW" ? "Draft flagged for more info." : "Draft saved.");
   }
 
-  function handleApproveAndSave() {
+  async function handleApproveAndSave() {
+    if (saving || !draft || draft.status === "CONVERTED") return;
     if (!title.trim()) { showToast("Title is required."); return; }
+    setSaving(true);
 
     const vaultItem = {
-      id: `ai_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+      // Derived from the draft, so approving the same draft twice (double click, retry, second tab) writes ONE item.
+      id: `ai_${draft.id}`,
       title: title.trim(),
       subtitle: subtitle.trim() || undefined,
       categoryLabel: categoryLabel.trim() || undefined,
@@ -171,7 +176,16 @@ function ReviewInner() {
       addedVia: "scan" as const,
     };
 
-    saveItem(vaultItem);
+    // Same path as every other save: written on this device, queued, uploaded by the shared queue. Says whether it is still waiting.
+    let pending = false;
+    try {
+      ({ pending } = await saveItemDurably(vaultItem));
+    } catch (e) {
+      console.error("approve draft failed", e);
+      setSaving(false);
+      showToast("This item could not be saved. The draft is unchanged: try again.");
+      return;
+    }
     window.dispatchEvent(new Event("vltd:vault-updated"));
     if (vaultItem.grade) dispatchItemGraded(vaultItem, vaultItem.grade);
 
@@ -179,8 +193,8 @@ function ReviewInner() {
     upsertDraft(converted);
     setDraft(converted);
 
-    showToast("✓ Saved to vault!");
-    setTimeout(() => router.push("/ai/drafts"), 1800);
+    showToast(pending ? "Saved on this device. Sync pending: it will upload to your account when the connection is back." : "✓ Saved to your vault.");
+    setTimeout(() => router.push("/ai/drafts"), pending ? 3500 : 1800);
   }
 
   function handleReject() {
@@ -296,8 +310,9 @@ function ReviewInner() {
         <div className="mt-4 flex flex-wrap items-center gap-3">
           <button
             type="button"
-            onClick={handleApproveAndSave}
-            className="flex-1 rounded-[8px] py-3 text-sm font-bold transition sm:flex-none sm:px-8"
+            onClick={() => void handleApproveAndSave()}
+            disabled={saving}
+            className={`flex-1 rounded-[8px] py-3 text-sm font-bold transition sm:flex-none sm:px-8 ${saving ? "vltd-disabled" : ""}`}
             style={{ background: "linear-gradient(180deg,#79E7FB,#41C6E4 55%,#2CB1D1)", color: "#06171d" }}
           >
             ✓ Approve & save to vault

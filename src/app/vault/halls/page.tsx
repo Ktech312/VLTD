@@ -33,7 +33,8 @@ import { syncAllItemsToCloud } from "@/lib/vaultSyncQueue";
 import { searchVaultItems } from "@/lib/vaultSearch";
 import { suggestAutoTags } from "@/lib/generateHashtags";
 import { getUniverses, getCategories, UNIVERSE_LABEL, type UniverseKey } from "@/lib/taxonomy";
-import { createGallery, updateGallery, setGalleryItemIds, loadGalleries, type Gallery } from "@/lib/galleryModel";
+import { loadGalleries, type Gallery } from "@/lib/galleryModel";
+import { saveHall } from "@/lib/hallSave";
 
 const ACTIVE_PROFILE_EVENT = "vltd:active-profile";
 
@@ -151,10 +152,14 @@ function TermInput({ terms, onAdd, onRemove }: { terms: string[]; onAdd: (t: str
 
 function SaveHallModal({
   selectedCount,
+  saving,
+  error,
   onSave,
   onCancel,
 }: {
   selectedCount: number;
+  saving: boolean;
+  error: string;
   onSave: (title: string) => void;
   onCancel: () => void;
 }) {
@@ -186,8 +191,9 @@ function SaveHallModal({
           onChange={(e) => setTitle(e.target.value)}
           placeholder="e.g. Spider-Man Everything"
           className="mt-5 w-full rounded-xl bg-[color:var(--pill)] px-4 py-2.5 text-sm text-[color:var(--fg)] placeholder:text-[color:var(--muted2)] ring-1 ring-[color:var(--border)] focus:outline-none focus:ring-[color:var(--theme-gold)]"
-          onKeyDown={(e) => e.key === "Enter" && title.trim() && onSave(title.trim())}
+          onKeyDown={(e) => e.key === "Enter" && title.trim() && !saving && onSave(title.trim())}
         />
+        {error ? <p role="alert" data-testid="hall-error" className="mt-3 text-[13px] font-semibold text-red-400">{error}</p> : null}
         <div className="mt-5 flex gap-3">
           <button
             onClick={onCancel}
@@ -196,11 +202,11 @@ function SaveHallModal({
             Cancel
           </button>
           <button
-            onClick={() => title.trim() && onSave(title.trim())}
-            disabled={!title.trim()}
+            onClick={() => title.trim() && !saving && onSave(title.trim())}
+            disabled={!title.trim() || saving}
             className="flex-1 rounded-xl bg-[color:var(--theme-gold)] py-2.5 text-sm font-black text-black hover:opacity-85 transition-opacity disabled:opacity-40"
           >
-            Save Hall
+            {saving ? "Saving…" : "Save Hall"}
           </button>
         </div>
       </div>
@@ -251,6 +257,9 @@ export default function VaultHallsPage() {
   const [deselectedIds, setDeselectedIds] = useState<Set<string>>(new Set());
   const [showSaveModal, setShowSaveModal] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [hallError, setHallError] = useState("");
+  // A retry after a failed save reuses the same hall (never a second one); repeated clicks are ignored while saving.
+  const hallIdRef = useRef<string | undefined>(undefined);
   const [backfilling, setBackfilling] = useState(false);
   const [backfillStatus, setBackfillStatus] = useState("");
 
@@ -350,16 +359,17 @@ export default function VaultHallsPage() {
   async function handleSave(title: string) {
     if (selectedItems.length === 0 || saving) return;
     setSaving(true);
-    try {
-      const gallery = createGallery(title);
-      updateGallery({ ...gallery, visibility: "LOCKED" });
-      setGalleryItemIds(gallery.id, selectedItems.map((i) => i.id));
-      setShowSaveModal(false);
-      router.push(`/museum/${gallery.id}`);
-    } catch (e) {
-      console.error("Failed to save hall", e);
+    setHallError("");
+    const result = await saveHall(title, selectedItems.map((i) => i.id), hallIdRef.current);
+    if (!result.ok) {
+      if (result.galleryId) hallIdRef.current = result.galleryId;
+      setHallError(result.error);
       setSaving(false);
+      return;
     }
+    hallIdRef.current = undefined;
+    setShowSaveModal(false);
+    router.push(`/museum/${result.galleryId}`);
   }
 
   const isEmptyVault = items.length === 0;
@@ -540,7 +550,7 @@ export default function VaultHallsPage() {
       </div>
 
       {showSaveModal && (
-        <SaveHallModal selectedCount={selectedItems.length} onSave={handleSave} onCancel={() => setShowSaveModal(false)} />
+        <SaveHallModal selectedCount={selectedItems.length} saving={saving} error={hallError} onSave={handleSave} onCancel={() => { setShowSaveModal(false); setHallError(""); }} />
       )}
     </>
   );
