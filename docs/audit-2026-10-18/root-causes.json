@@ -94,7 +94,7 @@
    "VLT-288"
   ],
   "status": "PARTLY CLOSED",
-  "statusNote": "batch 3 (D-01, D-02, D-06 to D-10): ADD-357, ADD-365, ADD-267, ADD-371, ADD-432, ADD-035, ADD-037, VLT-256, VLT-288 closed; ADD-272 not rechecked; D-09 cross-account on one browser unverified"
+  "statusNote": "batch 3 (D-01, D-02, D-06 to D-10): ADD-357, ADD-365, ADD-267, ADD-371, ADD-432, ADD-035, ADD-037, VLT-256, VLT-288 closed; ADD-272 not rechecked"
  },
  {
   "id": "RC-07",

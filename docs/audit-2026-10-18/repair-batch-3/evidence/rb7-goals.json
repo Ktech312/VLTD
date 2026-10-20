@@ -1,0 +1,31 @@
+{
+ "label": "goals",
+ "fixtureOnly": true,
+ "hall": [],
+ "goals": [
+  {
+   "case": "device-only goals, account has none",
+   "accountGoalsBefore": 0,
+   "rowsAfter": 2,
+   "listed": [
+    "QA RB7 local biz 2",
+    "QA RB7 local biz 1"
+   ],
+   "notice": "",
+   "keys": {
+    "pending": "[]",
+    "deleted": null
+   },
+   "second": [
+    "QA RB7 local biz 2",
+    "QA RB7 local biz 1"
+   ]
+  },
+  {
+   "case": "device-only goal, account already has goals",
+   "extraListed": false,
+   "extraUploaded": 0
+  }
+ ],
+ "account": []
+}

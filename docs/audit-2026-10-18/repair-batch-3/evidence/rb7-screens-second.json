@@ -1,0 +1,235 @@
+{
+ "label": "second",
+ "shots": [
+  {
+   "file": "deep-vault-390-goals-sheet-error",
+   "tag": "deep-vault-390",
+   "name": "goals-sheet-error",
+   "facts": {
+    "found": true,
+    "inViewportX": true,
+    "top": 712,
+    "bottom": 731,
+    "vh": 844,
+    "contrast": 1.49,
+    "overflowX": 0,
+    "buttons": []
+   }
+  },
+  {
+   "file": "deep-vault-390-goals-waiting-notice",
+   "tag": "deep-vault-390",
+   "name": "goals-waiting-notice",
+   "facts": {
+    "found": true,
+    "inViewportX": true,
+    "top": 326,
+    "bottom": 448,
+    "vh": 844,
+    "contrast": null,
+    "overflowX": 0,
+    "buttons": [
+     {
+      "t": "Retry now",
+      "w": 87,
+      "h": 44,
+      "inView": true
+     }
+    ]
+   }
+  },
+  {
+   "file": "deep-vault-390-import-banner",
+   "tag": "deep-vault-390",
+   "name": "import-banner",
+   "facts": {
+    "found": true,
+    "inViewportX": true,
+    "top": 346,
+    "bottom": 476,
+    "vh": 844,
+    "contrast": 1.21,
+    "overflowX": 0,
+    "buttons": [
+     {
+      "t": "Check again",
+      "w": 116,
+      "h": 36,
+      "inView": true
+     }
+    ]
+   }
+  },
+  {
+   "file": "deep-vault-390-undo-prompt",
+   "tag": "deep-vault-390",
+   "name": "undo-prompt",
+   "facts": {
+    "found": true,
+    "inViewportX": true,
+    "top": 279,
+    "bottom": 539,
+    "vh": 844,
+    "contrast": 14.11,
+    "overflowX": 0,
+    "buttons": [
+     {
+      "t": "Remove all 2",
+      "w": 103,
+      "h": 44,
+      "inView": true
+     },
+     {
+      "t": "Keep the changed ones, r",
+      "w": 233,
+      "h": 44,
+      "inView": true
+     },
+     {
+      "t": "Cancel",
+      "w": 67,
+      "h": 44,
+      "inView": true
+     }
+    ]
+   }
+  },
+  {
+   "file": "deep-vault-390-capture-draft-banner",
+   "tag": "deep-vault-390",
+   "name": "capture-draft-banner",
+   "facts": {
+    "found": true,
+    "inViewportX": true,
+    "top": 88,
+    "bottom": 214,
+    "vh": 844,
+    "contrast": null,
+    "overflowX": 0,
+    "buttons": [
+     {
+      "t": "Discard draft",
+      "w": 119,
+      "h": 36,
+      "inView": true
+     }
+    ]
+   }
+  },
+  {
+   "file": "pearl-light-390-goals-sheet-error",
+   "tag": "pearl-light-390",
+   "name": "goals-sheet-error",
+   "facts": {
+    "found": true,
+    "inViewportX": true,
+    "top": 712,
+    "bottom": 731,
+    "vh": 844,
+    "contrast": 16.25,
+    "overflowX": 0,
+    "buttons": []
+   }
+  },
+  {
+   "file": "pearl-light-390-goals-waiting-notice",
+   "tag": "pearl-light-390",
+   "name": "goals-waiting-notice",
+   "facts": {
+    "found": true,
+    "inViewportX": true,
+    "top": 326,
+    "bottom": 448,
+    "vh": 844,
+    "contrast": 16.25,
+    "overflowX": 0,
+    "buttons": [
+     {
+      "t": "Retry now",
+      "w": 87,
+      "h": 44,
+      "inView": true
+     }
+    ]
+   }
+  },
+  {
+   "file": "pearl-light-390-import-banner",
+   "tag": "pearl-light-390",
+   "name": "import-banner",
+   "facts": {
+    "found": true,
+    "inViewportX": true,
+    "top": 346,
+    "bottom": 476,
+    "vh": 844,
+    "contrast": 16.25,
+    "overflowX": 0,
+    "buttons": [
+     {
+      "t": "Check again",
+      "w": 116,
+      "h": 36,
+      "inView": true
+     }
+    ]
+   }
+  },
+  {
+   "file": "pearl-light-390-undo-prompt",
+   "tag": "pearl-light-390",
+   "name": "undo-prompt",
+   "facts": {
+    "found": true,
+    "inViewportX": true,
+    "top": 279,
+    "bottom": 539,
+    "vh": 844,
+    "contrast": 16.25,
+    "overflowX": 0,
+    "buttons": [
+     {
+      "t": "Remove all 2",
+      "w": 103,
+      "h": 44,
+      "inView": true
+     },
+     {
+      "t": "Keep the changed ones, r",
+      "w": 233,
+      "h": 44,
+      "inView": true
+     },
+     {
+      "t": "Cancel",
+      "w": 67,
+      "h": 44,
+      "inView": true
+     }
+    ]
+   }
+  },
+  {
+   "file": "pearl-light-390-capture-draft-banner",
+   "tag": "pearl-light-390",
+   "name": "capture-draft-banner",
+   "facts": {
+    "found": true,
+    "inViewportX": true,
+    "top": 88,
+    "bottom": 214,
+    "vh": 844,
+    "contrast": 16.25,
+    "overflowX": 0,
+    "buttons": [
+     {
+      "t": "Discard draft",
+      "w": 119,
+      "h": 36,
+      "inView": true
+     }
+    ]
+   }
+  }
+ ]
+}

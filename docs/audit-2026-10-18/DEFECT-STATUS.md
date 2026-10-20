@@ -32,7 +32,7 @@ The frozen audit evidence (`rows.jsonl` first-failure rows, `results.csv`, scree
 | RC-06 silent data loss in Add / Import / Halls | ADD-371 (D-01), VLT-256 and VLT-288 (D-02), ADD-357 (D-06), ADD-365 and ADD-267 (D-07), ADD-432 (D-08), ADD-035 (D-09), ADD-037 (D-10) | `20b1461`, `87154b8`, `d2597c7`, `0942548`, `292847c`, `f332a51` | rows RB6-029 to RB6-076 |
 | RC-07 writes that look saved but are lost | GIN-066 (D-05), GIN-068 (D-03), GIN-070 (D-04) | `14661a8`, `748ab2b` | rows RB6-052 to RB6-069 |
 
-Still open inside these: **ADD-272** (Vault Matches tile, not rechecked); **D-09 cross-account on one browser** (RB6-077, not tested end to end); RC-07's six profile-validation rows (ACC-381, ACC-796, ACC-390, ACC-811, ACC-395, ACC-819) stay with RC-28.
+Still open inside these: **ADD-272** (Vault Matches tile, not rechecked); D-09 cross-account on one browser is now verified (RB6-078); RC-07's six profile-validation rows (ACC-381, ACC-796, ACC-390, ACC-811, ACC-395, ACC-819) stay with RC-28.
 
 ## 2. Partly closed: still open inside RC-19
 | Row | Why still open |

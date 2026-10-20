@@ -37,3 +37,19 @@ RB6-004, 006, 007 (selected-count read before the results loaded); RB6-014, 016 
 
 ## Cleanup
 Fixture dropped by manifest; leftover check found no `QA RB6` items, halls, goals or `ai_rb6_` rows; after 20 s the database reads 3,477 items, 39 profiles, 47 exhibitions (baseline); no QA-named profiles; `Temp\qa-c` scratch profiles deleted; `C:\qa-chrome` untouched (66 entries); no audit browser left running.
+
+## Follow-up testing (after the first closeout): what was left, and the result
+Fixture rb7, synthetic only; rows RB6-078 to RB6-117; evidence `evidence/rb7-*.json`, screenshots `screens/`, scripts `scripts/rb7-*.cjs`.
+
+| Left over | Result | Rows |
+|---|---|---|
+| D-09 a REAL second account on the same browser | **PASS.** The second account (signed in with its own real session) saw no draft and kept its own; the first account's draft was still there when it returned; each draft key carries its own account id. This replaces the NOT TESTED row RB6-077. | RB6-078 |
+| Hall "exhibition limit reached" | **PASS** (after fixing my own test: the app takes the tier from the account on every load, so the fixture account's tier was set to FREE, then MID, then restored to FULL). At 5 exhibitions with a limit of 4: refused with a plain message, the name box kept, nothing created, not listed after a reload. Under the limit (MID): created and opened. First failure RB6-080 kept (my tier setup was wrong, the app was right: the account is FULL). | RB6-091, 093 |
+| Goals that exist only on the device | **PASS** when the account has none (Business profile): both upload exactly once, stay after reload and in a clean browser, no notice left. **Observed, not a pass/fail:** when the account already holds goals for that profile, a device-only goal is not uploaded (the account's list wins, as before this batch). | RB6-079, RB6-081 |
+| Undo "moved" and "in an exhibition" flags | **PASS.** One item moved with the app's own Move action and one placed in an exhibition are both named in the prompt ("moved to another profile", "is in 1 exhibition"), the untouched one is not; "Keep the changed ones" removed only the untouched one and said 2 were kept. The exhibition membership was set on the device directly (there is no quick UI path), the move was the real Move action. | RB6-105, 106 |
+| New screens on a phone and in the light theme | **PASS after one fix.** Goals sheet error, goals waiting notice, import banner, Undo prompt and Capture draft banner, dark and light, 390 and 1440 wide (20 captures, reviewed by eye): readable, inside the viewport, no sideways overflow. The script's contrast figure was wrong for the dark theme (it cannot see semi-transparent backgrounds; RB6-082, 085, 095, 097, 107, 109 FAIL kept). Real finding: the import banner's "Check again" and the Bulk "Dismiss" were 20 px text links; now 36 px buttons (`96677b9`). | RB6-082 to 117 |
+| The 3 `test-vault-load` failures | **Test was stale, not the app.** A failed download makes the next automatic one wait (3 s, 6 s, up to 5 min, added in `3d26569`); the test never cleared that wait between scenarios. It now calls `resetCloudBackoff()` like the Retry button: 18 of 18 pass. They also failed identically at `dcaf677`, before this batch. | commit `96677b9` |
+
+Still not done, said plainly: ADD-272 (the "Vault Matches" tile for an existing title) was not rechecked; the "Add to Home Screen" banner overlapping lower content on phones (RC-14) is unchanged and open.
+
+Cleanup: fixture rb7 dropped; no leftover `QA RB7` items, exhibitions or goals; the fixture account's tier is back to FULL; database at 3,477 items, 39 profiles, 47 exhibitions; `Temp\qa-c` scratch profiles deleted; `C:\qa-chrome` untouched (66 entries); no audit browser or script running. My mistake this round: removing a temporary comparison worktree emptied this worktree's `node_modules` (the main checkout was untouched); restored with `npm ci`.

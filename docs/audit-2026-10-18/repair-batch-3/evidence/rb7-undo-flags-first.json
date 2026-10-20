@@ -1,0 +1,12 @@
+{
+ "label": "first",
+ "cases": [
+  {
+   "importMsg": "Imported 3 items from rb7-flags.csv.",
+   "rows": 3,
+   "movedToBusiness": true,
+   "inExhibition": "82bfd846-4182-4b23-a740-1af31f4e7dda",
+   "prompt": "2 of 3 imported items have changed or are in use since the import.\nQA RB7 flag moved mvgb9zl6: moved to another profile, edited since the import\nQA RB7 flag exhibition mvgb9zl6: is in 1 exhibition\nRemove all 3\nKeep the changed ones, remove 1\nCancel"
+  }
+ ]
+}

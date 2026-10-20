@@ -1,0 +1,34 @@
+{
+ "label": "account",
+ "fixtureOnly": true,
+ "hall": [],
+ "goals": [],
+ "account": [
+  {
+   "keysOwner": [
+    "vltd_capture_draft_v1:7610301e-de5e-4073-9659-7a98a70e0d79:b9f122a1-f33f-4251-9c4f-4ac3c8de7fe9"
+   ],
+   "keysViewer": [
+    "vltd_capture_draft_v1:7610301e-de5e-4073-9659-7a98a70e0d79:b9f122a1-f33f-4251-9c4f-4ac3c8de7fe9"
+   ],
+   "keysEnd": [
+    "vltd_capture_draft_v1:2cdc6793-798d-42fe-a4bd-78e27e7ff3ef:d92ff943-4f08-417d-b701-ea5287ee3037",
+    "vltd_capture_draft_v1:7610301e-de5e-4073-9659-7a98a70e0d79:b9f122a1-f33f-4251-9c4f-4ac3c8de7fe9"
+   ],
+   "asViewer": {
+    "rendered": true,
+    "name": "",
+    "notice": ""
+   },
+   "asOwnerAgain": {
+    "rendered": true,
+    "name": "QA RB7 draft owner only mvgb9zl6",
+    "notice": "Restored your unsaved draft from 10/19/2026, 11:38:57 PM. Nothing was sent anywhere: AI only runs when you press Identify.\nDiscard draft"
+   },
+   "viewerAgain": {
+    "rendered": true,
+    "name": "QA RB7 draft viewer mvgb9zl6"
+   }
+  }
+ ]
+}

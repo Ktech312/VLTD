@@ -1,0 +1,25 @@
+{
+ "label": "hall",
+ "fixtureOnly": true,
+ "hall": [
+  {
+   "case": "FREE tier, at the limit",
+   "before": 5,
+   "after": 6,
+   "path": "/museum/a80a2f0a-930d-4a4c-9949-f6730186cece",
+   "err": "",
+   "modalName": "",
+   "rows": 1,
+   "afterReload": true
+  },
+  {
+   "case": "MID tier, under the limit",
+   "before": 6,
+   "after": 7,
+   "path": "/museum/db9576a9-4dc0-4c49-9f7f-f6506d934dae",
+   "rows": 1
+  }
+ ],
+ "goals": [],
+ "account": []
+}

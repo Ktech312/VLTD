@@ -1,0 +1,26 @@
+{
+ "label": "hall2",
+ "fixtureOnly": true,
+ "hall": [
+  {
+   "case": "FREE tier, at the limit",
+   "before": 5,
+   "after": 5,
+   "path": "/vault/halls",
+   "err": "You have reached your exhibition limit, so this Hall was not created. Remove an exhibition or upgrade, then try again.",
+   "modalName": "QA RB7 Hall limit mvgb9zl6",
+   "rows": 0,
+   "afterReload": false
+  },
+  {
+   "case": "MID tier, under the limit",
+   "before": 5,
+   "after": 6,
+   "path": "/museum/4e614dbd-c40f-44c8-8dab-d19cf2f28040",
+   "rows": 1
+  }
+ ],
+ "goals": [],
+ "account": [],
+ "tierSeen": null
+}
