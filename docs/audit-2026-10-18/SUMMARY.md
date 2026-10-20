@@ -24,7 +24,7 @@ Behaviour-asserted rows (a test checked the outcome): 3754 = 509 FAIL, 2770 PASS
 
 ## Repair status (updated 2026-10-19)
 
-Full table with commits and evidence: `DEFECT-STATUS.md`. Closed and re-tested on production: **RC-01, RC-02, RC-03, RC-09**, **7 of 11 rows of RC-19**, **9 of 10 rows of RC-06** and **3 of 9 rows of RC-07** (36 specific rows in total; batch 3 in `repair-batch-3/CLOSEOUT.md`). Deferred migrations and unresolved incidents are listed separately in `DEFECT-STATUS.md` (sections 3 and 4); they are not counted as closed. Tags below: [CLOSED], [PARTLY CLOSED]; untagged means still open.
+Full table with commits and evidence: `DEFECT-STATUS.md`. Closed and re-tested on production: **RC-01, RC-02, RC-03, RC-06, RC-09**, **7 of 11 rows of RC-19** and **3 of 9 rows of RC-07** (37 specific rows in total; batch 3 in `repair-batch-3/CLOSEOUT.md`). Deferred migrations and unresolved incidents are listed separately in `DEFECT-STATUS.md` (sections 3 and 4); they are not counted as closed. Tags below: [CLOSED], [PARTLY CLOSED]; untagged means still open.
 
 ## Prioritized defect list (root causes, genuine failures only)
 
@@ -42,7 +42,7 @@ Full table with commits and evidence: `DEFECT-STATUS.md`. Closed and re-tested o
 - **RC-05 A public exhibition with an alias still hands the real profile id to anyone reading its row; alias/shelf-style edits do not autosave; Announce is refused by the database**  
   Direct read of the public row exposes profile_id despite an alias; the owner's insert into exhibition_events is refused by row-level security while the button reads 'Announced' (an unapplied migration is possible).  
   Rows (8): EXH-281, EXH-165, EXH-179, EXH-161, EXH-123, EXH-124 (+2 more)
-- **[PARTLY CLOSED] RC-06 Silent data loss in Add / Import / Halls**  
+- **[CLOSED] RC-06 Silent data loss in Add / Import / Halls**  
   Import 'Undo last' says it undid items that stay in the account; 'Skip exact titles' imports duplicates in a clean browser; approving an AI draft is not saved until /vault is opened; Bulk takes 60 of 62 files without saying; /capture loses typed data on leaving; 'Save as Hall' creates nothing and opens 'Exhibition not found'.  
   Rows (10): ADD-357, ADD-365, ADD-267, ADD-272, ADD-371, ADD-432 (+4 more)
 - **[PARTLY CLOSED] RC-07 Writes that look saved but are lost (Goals, profile fields)**  

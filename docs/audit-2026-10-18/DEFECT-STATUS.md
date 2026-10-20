@@ -2,7 +2,7 @@
 
 The frozen audit evidence (`rows.jsonl` first-failure rows, `results.csv`, screenshots) is unchanged. This file is the status layer on top of it; `SUMMARY.md` and `root-causes.json` carry the same status tags. "Closed" means re-tested on production with synthetic data after the fix (evidence named). Anything not shown here is still open as written in `SUMMARY.md`.
 
-**Closed so far: 36 specific audit rows** (RC-01: 2, RC-02: 6, RC-03: 2, RC-09: 7, RC-19: 7, RC-06: 9, RC-07: 3). Open P1 root causes: RC-05 (untouched), and the unclosed rows of RC-06 and RC-07 listed below. **Insurance is not fully closed** (section 2 and the open items RC-14 and RC-31).
+**Closed so far: 37 specific audit rows** (RC-01: 2, RC-02: 6, RC-03: 2, RC-09: 7, RC-19: 7, RC-06: 10, RC-07: 3). Open P1 root causes: RC-05 (untouched) and the six profile-validation rows of RC-07 (kept with RC-28). **Insurance is not fully closed** (section 2 and the open items RC-14 and RC-31).
 
 ## 1. Closed findings
 
@@ -29,10 +29,10 @@ The frozen audit evidence (`rows.jsonl` first-failure rows, `results.csv`, scree
 ### Batch 3: save and import failures (closeout `repair-batch-3/CLOSEOUT.md`)
 | Root cause | Audit rows closed | Defect IDs and commits | Evidence |
 |---|---|---|---|
-| RC-06 silent data loss in Add / Import / Halls | ADD-371 (D-01), VLT-256 and VLT-288 (D-02), ADD-357 (D-06), ADD-365 and ADD-267 (D-07), ADD-432 (D-08), ADD-035 (D-09), ADD-037 (D-10) | `20b1461`, `87154b8`, `d2597c7`, `0942548`, `292847c`, `f332a51` | rows RB6-029 to RB6-076 |
-| RC-07 writes that look saved but are lost | GIN-066 (D-05), GIN-068 (D-03), GIN-070 (D-04) | `14661a8`, `748ab2b` | rows RB6-052 to RB6-069 |
+| RC-06 silent data loss in Add / Import / Halls | ADD-371 (D-01), VLT-256 and VLT-288 (D-02), ADD-357 (D-06), ADD-365, ADD-267 and ADD-272 (D-07), ADD-432 (D-08), ADD-035 (D-09), ADD-037 (D-10) | `20b1461`, `87154b8`, `d2597c7`, `0942548`, `f4761cb`, `292847c`, `96677b9`, `f332a51` | rows RB6-029 to RB6-137 |
+| RC-07 writes that look saved but are lost | GIN-066 (D-05), GIN-068 (D-03), GIN-070 (D-04) | `14661a8`, `748ab2b`, `f4761cb` | rows RB6-052 to RB6-137 |
 
-Still open inside these: **ADD-272** (Vault Matches tile, not rechecked); D-09 cross-account on one browser is now verified (RB6-078); RC-07's six profile-validation rows (ACC-381, ACC-796, ACC-390, ACC-811, ACC-395, ACC-819) stay with RC-28.
+Still open inside these: RC-07's six profile-validation rows (ACC-381, ACC-796, ACC-390, ACC-811, ACC-395, ACC-819) stay with RC-28. ADD-272 and the cross-account Capture draft are now verified (RB6-118, RB6-078). Goal ownership with cloud goals present is verified (RB6-120 to RB6-125; a first check recorded it only as an observation and RB6-138 corrects that: it was a failing case, fixed in `f4761cb`). Open elsewhere, unchanged: **RC-14** install-banner overlap and **RC-31** small tap targets.
 
 ## 2. Partly closed: still open inside RC-19
 | Row | Why still open |

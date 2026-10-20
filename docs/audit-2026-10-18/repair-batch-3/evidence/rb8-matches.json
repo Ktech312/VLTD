@@ -1,0 +1,31 @@
+{
+ "label": "matches",
+ "fixtureOnly": true,
+ "goals": [],
+ "matches": [
+  {
+   "accountTotal": 31,
+   "early": {
+    "vault": "1",
+    "checking": false
+   },
+   "settled": "1",
+   "matches": {
+    "vault": "1",
+    "likely": "2",
+    "batch": "0"
+   },
+   "listed": true,
+   "msg": "Imported 2 items from rb8-matches.csv. Skipped 1 exact duplicates (same description and serial number).",
+   "beforeExisting": 1,
+   "afterExisting": 1,
+   "beforeOther": 1,
+   "afterOther": 2,
+   "freshN": 1
+  },
+  {
+   "unreachableTile": "Not checked",
+   "banner": "Your account could not be checked just now, so duplicate detection only covers items already on this device and may be incomplete. Check again"
+  }
+ ]
+}

@@ -93,8 +93,8 @@
    "VLT-256",
    "VLT-288"
   ],
-  "status": "PARTLY CLOSED",
-  "statusNote": "batch 3 (D-01, D-02, D-06 to D-10): ADD-357, ADD-365, ADD-267, ADD-371, ADD-432, ADD-035, ADD-037, VLT-256, VLT-288 closed; ADD-272 not rechecked"
+  "status": "CLOSED",
+  "statusNote": "batch 3 (D-01, D-02, D-06 to D-10): all 10 rows verified on production (ADD-272 through the real Vault Matches tile)"
  },
  {
   "id": "RC-07",
@@ -114,7 +114,7 @@
    "ACC-819"
   ],
   "status": "PARTLY CLOSED",
-  "statusNote": "batch 3 (D-03, D-04, D-05): GIN-066, GIN-068, GIN-070 closed; the six profile-validation rows (ACC-381, 796, 390, 811, 395, 819) stay open with RC-28"
+  "statusNote": "batch 3 (D-03, D-04, D-05, goal ownership): GIN-066, GIN-068, GIN-070 closed; the six profile-validation rows (ACC-381, 796, 390, 811, 395, 819) stay open with RC-28"
  },
  {
   "id": "RC-08",

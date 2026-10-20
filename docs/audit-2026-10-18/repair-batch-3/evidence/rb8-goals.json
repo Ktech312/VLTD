@@ -1,0 +1,129 @@
+{
+ "label": "goals",
+ "fixtureOnly": true,
+ "goals": [
+  {
+   "case": "online, cloud goals present",
+   "listed": [
+    "QA RB8 pending mvguzec6",
+    "QA RB8 device2 mvguzec6",
+    "Complete the Spider-Man run",
+    "QA RB8 device1 mvguzec6",
+    "Sell duplicate comics"
+   ],
+   "dbFinal": [
+    "qa_goal_mvguzec6_1",
+    "qa_goal_mvguzec6_3",
+    "qa_rb8_pending_mvguzec6",
+    "qa_rb8_device1_mvguzec6",
+    "qa_rb8_device2_mvguzec6"
+   ],
+   "notice": "",
+   "reloaded": [
+    "QA RB8 pending mvguzec6",
+    "QA RB8 device2 mvguzec6",
+    "Complete the Spider-Man run",
+    "QA RB8 device1 mvguzec6",
+    "Sell duplicate comics"
+   ],
+   "second": [
+    "QA RB8 pending mvguzec6",
+    "QA RB8 device2 mvguzec6",
+    "Complete the Spider-Man run",
+    "QA RB8 device1 mvguzec6",
+    "Sell duplicate comics"
+   ]
+  },
+  {
+   "case": "unreachable at load, then reconnect",
+   "offlineList": [
+    "QA RB8 pending mvguzec6",
+    "QA RB8 deletedelsewhere mvguzec6",
+    "Complete the Spider-Man run",
+    "QA RB8 device2 mvguzec6",
+    "QA RB8 device1 mvguzec6",
+    "Sell duplicate comics"
+   ],
+   "offlineDbQA": [],
+   "notice": "1 goal change is saved on this device only; 1 deleted goal is still on your account. Sync pending.\nRetry now",
+   "listed": [
+    "QA RB8 pending mvguzec6",
+    "QA RB8 device2 mvguzec6",
+    "Complete the Spider-Man run",
+    "QA RB8 device1 mvguzec6",
+    "Sell duplicate comics"
+   ],
+   "ids": [
+    "qa_goal_mvguzec6_1",
+    "qa_goal_mvguzec6_3",
+    "qa_rb8_pending_mvguzec6",
+    "qa_rb8_device1_mvguzec6",
+    "qa_rb8_device2_mvguzec6"
+   ],
+   "notice2": "",
+   "second": [
+    "QA RB8 pending mvguzec6",
+    "QA RB8 device2 mvguzec6",
+    "Complete the Spider-Man run",
+    "QA RB8 device1 mvguzec6",
+    "Sell duplicate comics"
+   ]
+  },
+  {
+   "case": "uncertain: device owned by someone else",
+   "listed": [
+    "Reach $2,000 collection value",
+    "Complete the Spider-Man run",
+    "Sell duplicate comics"
+   ],
+   "db": [
+    "qa_goal_mvguzec6_1",
+    "qa_goal_mvguzec6_2",
+    "qa_goal_mvguzec6_3"
+   ],
+   "stash": [
+    "vltd_stash:00000000-0000-4000-8000-0000000000aa:vltd_collection_goals_v1"
+   ],
+   "live": null,
+   "note": "",
+   "sh": "shots/rb6-goals-legacy-foreign-owner.jpg"
+  },
+  {
+   "case": "uncertain: no recorded owner, foreign profile on the device",
+   "listed": [
+    "Reach $2,000 collection value",
+    "Complete the Spider-Man run",
+    "Sell duplicate comics"
+   ],
+   "db": [
+    "qa_goal_mvguzec6_1",
+    "qa_goal_mvguzec6_2",
+    "qa_goal_mvguzec6_3"
+   ],
+   "stash": [
+    "vltd_stash:unattributed:vltd_collection_goals_v1"
+   ],
+   "live": null,
+   "note": "",
+   "sh": "shots/rb6-goals-legacy-unattributed.jpg"
+  },
+  {
+   "case": "confirmed: device owned by this person",
+   "listed": [
+    "Reach $2,000 collection value",
+    "QA RB8 legacy2 mvguzec6",
+    "QA RB8 legacy1 mvguzec6",
+    "Complete the Spider-Man run",
+    "Sell duplicate comics"
+   ],
+   "dbNow": [
+    "qa_goal_mvguzec6_1",
+    "qa_goal_mvguzec6_2",
+    "qa_goal_mvguzec6_3",
+    "qa_rb8_legacy1_mvguzec6",
+    "qa_rb8_legacy2_mvguzec6"
+   ]
+  }
+ ],
+ "matches": []
+}
