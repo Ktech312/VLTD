@@ -1,6 +1,7 @@
 "use client";
 
-import { NEGATIVE_COST_MESSAGE, isNegativeCostText } from "@/lib/costInput";
+import { itemMoneyProblem, parseMoneyInput } from "@/lib/moneyInput";
+import { saleOutcome, soldItemOf } from "@/lib/soldItems";
 import { Toggle } from "@/components/ui/Toggle";
 import { pillClassName } from "@/components/ui/PillButton";
 import { effectiveMarketValue, hasExplicitValue, hasRecordedCost, isSupplyItem, itemGain } from "@/lib/vaultStats";
@@ -236,11 +237,19 @@ function InlineEditSection({
     return raw === undefined || raw === null ? "" : String(raw);
   }
 
+  // A typed amount is checked, never guessed: blank = not recorded, 0 = an explicit zero, letters / malformed numbers / negatives are refused
+  // with a message and nothing is saved (src/lib/moneyInput.ts).
+  function problemOf(row: FieldRow, text: string): string {
+    if (row.field.kind !== "money") return "";
+    const r = parseMoneyInput(text, { label: row.label, allowNegative: !row.field.nonNegative });
+    return r.ok ? "" : r.message;
+  }
+
   function parse(kind: "text" | "money", text: string): string | number | undefined {
     const t = text.trim();
     if (kind === "money") {
-      const num = Number(t.replace(/[^0-9.\-]/g, ""));
-      return t && Number.isFinite(num) ? num : undefined;
+      const r = parseMoneyInput(t);
+      return r.ok && !r.blank ? r.value : undefined;
     }
     return t || undefined;
   }
@@ -258,9 +267,10 @@ function InlineEditSection({
     const patch: Record<string, string | number | undefined> = {};
     for (const row of fieldRows) {
       const key = String(row.field.key);
-      if (row.field.nonNegative && isNegativeCostText(drafts[key])) {
-        // Stay in edit mode: nothing is saved until every cost is blank, 0 or positive.
-        setFieldError(NEGATIVE_COST_MESSAGE);
+      const problem = problemOf(row, drafts[key] ?? "");
+      if (problem) {
+        // Stay in edit mode: nothing is saved until every amount is blank, 0 or a valid positive amount.
+        setFieldError(problem);
         return;
       }
       if ((drafts[key] ?? "").trim() !== rawOf(row).trim()) patch[key] = parse(row.field.kind, drafts[key] ?? "");
@@ -279,9 +289,10 @@ function InlineEditSection({
 
   async function commitOne(row: FieldRow) {
     if (skipCommit.current) return;
-    if (row.field.nonNegative && isNegativeCostText(draft)) {
+    const problem = problemOf(row, draft);
+    if (problem) {
       // Keep the line open on the wrong value so it can be fixed (Esc cancels).
-      setFieldError(NEGATIVE_COST_MESSAGE);
+      setFieldError(problem);
       return;
     }
     setFieldError("");
@@ -557,6 +568,7 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
   const [items, setItems] = useState<VaultItem[]>([]);
   const [uploading, setUploading] = useState(false);
   const [mediaMessage, setMediaMessage] = useState("");
+  const [askingError, setAskingError] = useState("");
   const [recordMessage, setRecordMessage] = useState("");
   const recordMessageRef = useRef("");
   recordMessageRef.current = recordMessage;
@@ -688,6 +700,14 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
   }
 
   async function persist(nextItem: VaultItem) {
+    // Defence for every edit on this page: an amount that CHANGED in this save must be a valid, non-negative number. (Old records that
+    // already hold something odd are not rewritten and do not block unrelated edits.)
+    const problem = item ? itemMoneyProblem(item, nextItem) : undefined;
+    if (problem) {
+      showToast(problem);
+      setMediaMessage(problem);
+      return;
+    }
     saveItem(nextItem);
     setItems((prev) => prev.map((entry) => (entry.id === nextItem.id ? nextItem : entry)));
 
@@ -1070,6 +1090,7 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
       status: "COLLECTION",
       soldPrice: undefined,
       soldAt: undefined,
+      soldPlatform: undefined,
     };
 
     saveItem(nextItem);
@@ -1088,6 +1109,7 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
             status: "COLLECTION",
             sold_price: null,
             sold_at: null,
+            sold_platform: null,
           })
           .eq("id", item.id);
 
@@ -1121,11 +1143,16 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
 
   async function handleAskingPriceBlur(value: string) {
     if (!item) return;
-    const trimmed = value.trim();
-    const parsed = Number(trimmed);
-    const askingPrice = trimmed && Number.isFinite(parsed) && parsed > 0 ? parsed : undefined;
+    // blank clears the asking price; 0 is an explicit $0; letters, malformed numbers and negatives are refused with a message and not saved
+    const parsed = parseMoneyInput(value, { label: "Asking price" });
+    if (!parsed.ok) {
+      setAskingError(parsed.message);
+      return;
+    }
+    setAskingError("");
+    const askingPrice = parsed.blank ? undefined : parsed.value;
     await persist({ ...item, askingPrice });
-    setMediaMessage(askingPrice ? "Asking price saved." : "Asking price cleared.");
+    setMediaMessage(askingPrice === undefined ? "Asking price cleared." : "Asking price saved.");
   }
 
   const universe = normUniverse(item.universe);
@@ -1139,8 +1166,9 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
           soldAt: item.soldAt,
         }
       : null);
-  const saleProfit =
-    displayedSale ? Number(displayedSale.soldPrice ?? 0) - totalCost(item) : 0;
+  // The same sale rule as the Sold page, Home and Sales History: revenue - all-in cost - estimated seller fees; unknown cost = unknown profit.
+  const saleInfo = displayedSale ? soldItemOf({ ...item, soldPrice: displayedSale.soldPrice ?? item.soldPrice, soldAt: displayedSale.soldAt ?? item.soldAt }) : null;
+  const saleResult = saleInfo ? saleOutcome(saleInfo) : null;
   const recordSelectedCategory = safeCategoryForUniverse(recordDraft.universe, recordDraft.categoryLabel);
   const baseRecordCategoryOptions = getCategories(recordDraft.universe);
   const recordCategoryOptions =
@@ -1339,16 +1367,18 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
                 <Section title="SALE DETAILS">
                   <DetailGrid
                     rows={[
-                      { label: "Sold Price", value: fmtMoney(clamp(displayedSale.soldPrice)) },
+                      { label: "Sold Price", value: <span data-testid="sale-revenue">{fmtMoney(clamp(displayedSale.soldPrice))}</span> },
+                      { label: "Cost (all-in)", value: <span data-testid="sale-cost">{saleResult && saleResult.cost !== null ? fmtMoney(saleResult.cost) : "Unknown"}</span> },
+                      { label: "Estimated fees", value: <span data-testid="sale-fees">{saleResult && saleResult.fees > 0 ? fmtMoney(saleResult.fees) : "—"}</span> },
                       {
                         label: "Profit / Loss",
                         value:
-                          item.purchasePrice === undefined || item.purchasePrice === null ? (
-                            <span className="text-[color:var(--muted)]" title="No purchase price is recorded for this item, so its profit is unknown.">Unknown (no cost recorded)</span>
+                          !saleResult || saleResult.profit === null ? (
+                            <span data-testid="sale-profit" className="text-[color:var(--muted)]" title="No purchase cost is recorded for this item, so its profit is unknown.">Unknown (no cost recorded)</span>
                           ) : (
-                            <span className={saleProfit >= 0 ? "text-green-400" : "text-red-400"}>
-                              {saleProfit >= 0 ? "+" : ""}
-                              {fmtMoney(saleProfit)}
+                            <span data-testid="sale-profit" className={saleResult.profit >= 0 ? "text-green-400" : "text-red-400"}>
+                              {saleResult.profit >= 0 ? "+" : ""}
+                              {fmtMoney(saleResult.profit)}
                             </span>
                           ),
                       },
@@ -1478,12 +1508,16 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
                         Asking Price
                       </span>
                       <input
-                        type="number"
+                        type="text"
+                        inputMode="decimal"
+                        aria-label="Asking price"
+                        aria-invalid={askingError ? true : undefined}
                         defaultValue={item.askingPrice ?? effectiveMarketValue(item) ?? ""}
                         onBlur={(event) => void handleAskingPriceBlur(event.target.value)}
                         className="h-10 rounded-xl bg-[color:var(--pill)] px-3 text-sm ring-1 ring-[color:var(--border)] focus:outline-none max-md:h-11"
                         placeholder={String(effectiveMarketValue(item) || "")}
                       />
+                      {askingError ? <span role="alert" data-testid="asking-error" className="text-[12px] leading-snug text-red-300">{askingError}</span> : null}
                     </label>
                   ) : null}
                 </div>

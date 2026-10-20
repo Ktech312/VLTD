@@ -6,48 +6,73 @@ import { loadSales, type SaleRecord } from "@/lib/salesHistory";
 import { syncSalesFromSupabase } from "@/lib/salesModel";
 import { loadItems, getPrimaryImageUrl, syncVaultItemsFromSupabase, type VaultItem } from "@/lib/vaultModel";
 import { Glyph } from "@/components/ui/Glyph";
-import { estimateSaleFees } from "@/lib/sellerFees";
-import { buildSoldItems } from "@/lib/soldItems";
+import { buildSoldItems, saleOutcome, type SoldItem } from "@/lib/soldItems";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-function fmtMoney(n: number | undefined) {
-  const v = Number(n ?? 0);
-  if (!v) return "—";
-  return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(v);
+/** "—" only for an amount that is not known; an explicit $0 is shown as $0. */
+function fmtMoney(n: number | null | undefined) {
+  if (n === null || n === undefined || !Number.isFinite(Number(n))) return "—";
+  return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(Number(n));
+}
+
+/**
+ * One row of the history. The Sold page, Home and this page all read the same sale from the item itself (src/lib/soldItems.ts), so
+ * revenue, cost, fees and profit agree. Older ledger rows that belong to no item in the Vault are listed too.
+ */
+type SalesRow = { key: string; itemId: string; item: SoldItem; revenueKnown: boolean; ledgerOnly: boolean };
+
+function buildRows(): SalesRow[] {
+  const sold = buildSoldItems();
+  const soldIds = new Set(sold.map((x) => String(x.id)));
+  const known = new Set(loadItems({ includeAllProfiles: true }).map((i) => String(i.id)));
+  const rows: SalesRow[] = sold.map((x) => ({ key: String(x.id), itemId: String(x.id), item: x, revenueKnown: true, ledgerOnly: false }));
+  for (const r of loadSales()) {
+    const ref = String(r.itemId || r.id);
+    // A ledger row for an item that is in the Vault is that item's own sale (listed above) or a stale copy of one that was returned.
+    if (soldIds.has(ref) || known.has(ref)) continue;
+    rows.push({
+      key: r.id,
+      itemId: String(r.itemId || r.id),
+      revenueKnown: typeof r.salePrice === "number" && Number.isFinite(r.salePrice),
+      ledgerOnly: true,
+      item: { id: r.id, title: r.title ?? "Untitled", universe: r.universe, categoryLabel: r.categoryLabel, purchasePrice: r.purchasePrice, soldPrice: Number(r.salePrice ?? 0), soldAt: r.soldAt, soldPlatform: r.platform },
+    });
+  }
+  return rows.sort((a, b) => Number(b.item.soldAt) - Number(a.item.soldAt));
+}
+
+/** Profit after the acquisition cost and estimated seller fees, or null when it cannot be known (no recorded cost, or no recorded sale price). */
+function profit(r: SalesRow): number | null {
+  if (!r.revenueKnown) return null;
+  return saleOutcome(r.item).profit;
+}
+
+function margin(r: SalesRow): string | null {
+  if (!r.revenueKnown) return null;
+  const m = saleOutcome(r.item).margin;
+  return m === null ? null : m.toFixed(0);
 }
 
 function fmtDate(ms: number) {
   return new Date(ms).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
 }
 
-/** After estimated seller fees for the platform it sold on (0 if unknown). */
-function profit(s: SaleRecord) {
-  const sale = Number(s.salePrice ?? 0);
-  return sale - Number(s.purchasePrice ?? 0) - estimateSaleFees(s.platform, sale, s.categoryLabel);
-}
-
-function margin(s: SaleRecord) {
-  const cost = Number(s.purchasePrice ?? 0);
-  if (!cost) return null;
-  return ((profit(s) / cost) * 100).toFixed(0);
-}
-
 type SortKey = "date" | "profit" | "sale";
 
 // ─── Mini bar sparkline ───────────────────────────────────────────────────────
 
-function groupByMonth(sales: SaleRecord[]) {
+function groupByMonth(sales: SalesRow[]) {
   const map = new Map<string, number>();
   for (const s of sales) {
-    const d = new Date(s.soldAt);
+    const d = new Date(s.item.soldAt);
     const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
-    map.set(key, (map.get(key) ?? 0) + Number(s.salePrice ?? 0));
+    map.set(key, (map.get(key) ?? 0) + (s.revenueKnown ? Number(s.item.soldPrice ?? 0) : 0));
   }
   return Array.from(map.entries()).sort((a, b) => a[0].localeCompare(b[0])).slice(-12);
 }
 
-function MiniSparkline({ sales }: { sales: SaleRecord[] }) {
+function MiniSparkline({ sales }: { sales: SalesRow[] }) {
   const monthly = groupByMonth(sales);
   if (monthly.length < 2) return null;
   const values = monthly.map((m) => m[1]);
@@ -90,12 +115,14 @@ function StatPill({ label, value, sub, accent }: { label: string; value: string;
 
 // ─── Sale card ────────────────────────────────────────────────────────────────
 
-function SaleCard({ sale, imageUrl }: { sale: SaleRecord; imageUrl?: string }) {
-  const p = profit(sale);
-  const m = margin(sale);
-  const isProfit = p > 0;
-  const isLoss = p < 0;
-  const itemHref = `/vault/item/${sale.itemId || sale.id}`;
+function SaleCard({ row, imageUrl }: { row: SalesRow; imageUrl?: string }) {
+  const outcome = saleOutcome(row.item);
+  const p = profit(row);
+  const m = margin(row);
+  const isProfit = p !== null && p > 0;
+  const isLoss = p !== null && p < 0;
+  const itemHref = `/vault/item/${row.itemId}`;
+  const sale = { title: row.item.title, universe: row.item.universe, categoryLabel: row.item.categoryLabel, soldAt: Number(row.item.soldAt) };
 
   return (
     <div className="rounded-2xl ring-1 ring-[color:var(--border)] overflow-hidden transition hover:ring-[color:var(--theme-gold-border)]"
@@ -136,13 +163,14 @@ function SaleCard({ sale, imageUrl }: { sale: SaleRecord; imageUrl?: string }) {
                 color: isProfit ? "#4ade80" : isLoss ? "#ef4444" : "var(--muted)",
               }}
             >
-              {isProfit ? "+" : ""}{fmtMoney(p)}
+              {p === null ? "Profit unknown" : `${isProfit ? "+" : ""}${fmtMoney(p)}`}
             </div>
           </div>
 
           <div className="flex flex-wrap gap-x-4 gap-y-0.5 text-[11px]" style={{ color: "var(--muted)" }}>
-            <span>Bought <span className="font-semibold" style={{ color: "var(--fg)" }}>{fmtMoney(sale.purchasePrice)}</span></span>
-            <span>Sold <span className="font-semibold" style={{ color: "var(--fg)" }}>{fmtMoney(sale.salePrice)}</span></span>
+            <span>Cost <span className="font-semibold" style={{ color: "var(--fg)" }}>{fmtMoney(outcome.cost)}</span></span>
+            <span>Sold <span className="font-semibold" style={{ color: "var(--fg)" }}>{row.revenueKnown ? fmtMoney(outcome.revenue) : "—"}</span></span>
+            {outcome.fees > 0 && row.revenueKnown ? <span>Est. fees <span className="font-semibold" style={{ color: "var(--fg)" }}>{fmtMoney(outcome.fees)}</span></span> : null}
             {m !== null && (
               <span>
                 Margin{" "}
@@ -161,7 +189,7 @@ function SaleCard({ sale, imageUrl }: { sale: SaleRecord; imageUrl?: string }) {
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function SalesHistoryPage() {
-  const [sales, setSales] = useState<SaleRecord[]>([]);
+  const [sales, setSales] = useState<SalesRow[]>([]);
   const [itemMap, setItemMap] = useState<Map<string, VaultItem>>(new Map());
   const [sort, setSort] = useState<SortKey>("date");
   const [search, setSearch] = useState("");
@@ -175,37 +203,47 @@ export default function SalesHistoryPage() {
     // In a browser that has not loaded the Vault yet the sold items are not here until the cloud copy arrives.
     void syncVaultItemsFromSupabase().then(() => countSold()).catch(() => undefined);
     window.addEventListener("vltd:vault-updated", countSold);
-    const records = loadSales();
-    setSales(records);
+    setSales(buildRows());
     const items = loadItems({ includeAllProfiles: true });
     const map = new Map<string, VaultItem>();
     for (const item of items) map.set(item.id, item);
     setItemMap(map);
     let active = true;
-    void syncSalesFromSupabase().then(() => {
-      if (active) setSales(loadSales());
-    });
+    const refresh = () => { if (active) setSales(buildRows()); };
+    void syncSalesFromSupabase().then(refresh);
+    void syncVaultItemsFromSupabase().then(refresh).catch(() => undefined);
+    window.addEventListener("vltd:vault-updated", refresh);
     return () => {
       active = false;
       window.removeEventListener("vltd:vault-updated", countSold);
     };
   }, []);
 
+  // Totals count only what is known: a sale with no recorded cost has an unknown profit (left out of the P&L, wins and losses, and said so),
+  // never a profit equal to its price.
   const stats = useMemo(() => {
-    const totalSold = sales.reduce((sum, s) => sum + Number(s.salePrice ?? 0), 0);
-    const totalCost = sales.reduce((sum, s) => sum + Number(s.purchasePrice ?? 0), 0);
-    const totalProfit = sales.reduce((sum, s) => sum + profit(s), 0);
-    const avgMargin = totalCost > 0 ? ((totalProfit / totalCost) * 100).toFixed(0) : null;
-    const wins = sales.filter((s) => profit(s) > 0).length;
-    const losses = sales.filter((s) => profit(s) < 0).length;
-    return { totalSold, totalCost, totalProfit, avgMargin, wins, losses };
+    const totalSold = sales.reduce((sum, s) => sum + (s.revenueKnown ? Number(s.item.soldPrice ?? 0) : 0), 0);
+    let totalCost = 0, totalProfit = 0, known = 0, costForMargin = 0, wins = 0, losses = 0;
+    for (const s of sales) {
+      const p = profit(s);
+      if (p === null) continue;
+      const o = saleOutcome(s.item);
+      known += 1;
+      totalCost += o.cost ?? 0;
+      totalProfit += p;
+      if ((o.cost ?? 0) > 0) costForMargin += o.cost ?? 0;
+      if (p > 0) wins += 1;
+      if (p < 0) losses += 1;
+    }
+    const avgMargin = costForMargin > 0 ? ((totalProfit / costForMargin) * 100).toFixed(0) : null;
+    return { totalSold, totalCost, totalProfit, avgMargin, wins, losses, known, unknown: sales.length - known };
   }, [sales]);
 
   // Universe options for filter
   const universes = useMemo(() => {
     const seen = new Set<string>();
     for (const s of sales) {
-      const u = s.universe || s.categoryLabel;
+      const u = s.item.universe || s.item.categoryLabel;
       if (u) seen.add(u);
     }
     return ["All", ...Array.from(seen).sort()];
@@ -217,17 +255,17 @@ export default function SalesHistoryPage() {
     if (q) {
       result = result.filter(
         (s) =>
-          (s.title ?? "").toLowerCase().includes(q) ||
-          (s.universe ?? "").toLowerCase().includes(q) ||
-          (s.categoryLabel ?? "").toLowerCase().includes(q)
+          (s.item.title ?? "").toLowerCase().includes(q) ||
+          (s.item.universe ?? "").toLowerCase().includes(q) ||
+          (s.item.categoryLabel ?? "").toLowerCase().includes(q)
       );
     }
     if (universeFilter !== "All") {
-      result = result.filter((s) => s.universe === universeFilter || s.categoryLabel === universeFilter);
+      result = result.filter((s) => s.item.universe === universeFilter || s.item.categoryLabel === universeFilter);
     }
-    if (sort === "date") result.sort((a, b) => b.soldAt - a.soldAt);
-    else if (sort === "profit") result.sort((a, b) => profit(b) - profit(a));
-    else if (sort === "sale") result.sort((a, b) => Number(b.salePrice ?? 0) - Number(a.salePrice ?? 0));
+    if (sort === "date") result.sort((a, b) => Number(b.item.soldAt) - Number(a.item.soldAt));
+    else if (sort === "profit") result.sort((a, b) => (profit(b) ?? Number.NEGATIVE_INFINITY) - (profit(a) ?? Number.NEGATIVE_INFINITY));
+    else if (sort === "sale") result.sort((a, b) => Number(b.item.soldPrice ?? 0) - Number(a.item.soldPrice ?? 0));
     return result;
   }, [sales, sort, search, universeFilter]);
 
@@ -268,7 +306,7 @@ export default function SalesHistoryPage() {
               <StatPill
                 label="Total P&L"
                 value={(stats.totalProfit >= 0 ? "+" : "") + fmtMoney(stats.totalProfit)}
-                sub={stats.avgMargin !== null ? `${stats.avgMargin}% avg margin` : undefined}
+                sub={[stats.avgMargin !== null ? `${stats.avgMargin}% avg margin` : "", stats.unknown > 0 ? `${stats.unknown} with unknown cost not counted` : ""].filter(Boolean).join(" · ") || undefined}
                 accent={stats.totalProfit > 0}
               />
               <StatPill label="Wins" value={String(stats.wins)} sub="Profitable sales" />
@@ -348,9 +386,9 @@ export default function SalesHistoryPage() {
         {filtered.length > 0 && (
           <div className="space-y-2">
             {filtered.map((s) => {
-              const vaultItem = itemMap.get(s.itemId || s.id);
+              const vaultItem = itemMap.get(s.itemId);
               const imageUrl = vaultItem ? getPrimaryImageUrl(vaultItem) || undefined : undefined;
-              return <SaleCard key={s.id} sale={s} imageUrl={imageUrl} />;
+              return <SaleCard key={s.key} row={s} imageUrl={imageUrl} />;
             })}
           </div>
         )}

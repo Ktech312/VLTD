@@ -405,6 +405,7 @@ export default function SoldPage() {
       status: "COLLECTION",
       soldPrice: undefined,
       soldAt: undefined,
+      soldPlatform: undefined,
       createdAt: existing?.createdAt ?? Date.now(),
     };
 
@@ -421,6 +422,7 @@ export default function SoldPage() {
           status: "COLLECTION",
           sold_price: null,
           sold_at: null,
+          sold_platform: null,
         })
         .eq("id", item.id);
 

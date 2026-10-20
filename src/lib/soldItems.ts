@@ -43,9 +43,12 @@ export type SoldStats = {
   unknownCostCount: number;
 };
 
-/** True when a purchase price was recorded (an explicit 0 counts). A sale without one has an unknown profit, not a profit equal to its price. */
+/**
+ * True when an acquisition cost was recorded (price, tax, shipping or fees, an explicit 0 counts): the same test the Insurance pages and
+ * Home use (vaultStats.hasRecordedCost). A sale without one has an UNKNOWN profit, not a profit equal to its price and not a -100% loss.
+ */
 export function hasKnownCost(i: SoldItem) {
-  return i.purchasePrice !== undefined && i.purchasePrice !== null && Number.isFinite(Number(i.purchasePrice));
+  return [i.purchasePrice, i.purchaseTax, i.purchaseShipping, i.purchaseFees].some((v) => v !== undefined && v !== null && Number.isFinite(Number(v)));
 }
 
 export function cost(i: SoldItem) {
@@ -65,6 +68,31 @@ export function saleFees(i: SoldItem) {
 /** Profit after purchase costs and estimated seller fees. */
 export function profitOf(i: SoldItem) {
   return Number(i.soldPrice ?? 0) - cost(i) - saleFees(i);
+}
+
+export type SaleOutcome = {
+  /** What it sold for (an explicit $0 sale is a real $0). */
+  revenue: number;
+  /** All-in acquisition cost (price + tax + shipping + fees), or null when none was recorded (an explicit $0 is known). */
+  cost: number | null;
+  /** Estimated seller fees for the platform it sold on (0 when the platform is unknown). */
+  fees: number;
+  /** revenue - cost - fees, or null when the cost is unknown. Never revenue alone. */
+  profit: number | null;
+  /** profit as a percentage of cost, only when the profit is known and the cost is above 0 (a $0 cost has no margin). */
+  margin: number | null;
+};
+
+/**
+ * THE sale rule, used by the Sold page, Home, the Sales History page and the item page, so cost, fees, revenue and profit agree everywhere.
+ */
+export function saleOutcome(i: SoldItem): SaleOutcome {
+  const revenue = Number(i.soldPrice ?? 0);
+  const fees = saleFees(i);
+  if (!hasKnownCost(i)) return { revenue, cost: null, fees, profit: null, margin: null };
+  const allIn = cost(i);
+  const profit = revenue - allIn - fees;
+  return { revenue, cost: allIn, fees, profit, margin: allIn > 0 ? (profit / allIn) * 100 : null };
 }
 
 export function readSales(): SoldItem[] {
@@ -95,6 +123,11 @@ export function removeSaleRecord(itemId: string) {
   writeSales(
     readSales().filter((sale) => String(sale.id) !== String(itemId) && String(sale.itemId ?? "") !== String(itemId))
   );
+}
+
+/** The sale an item records, or null when it was never sold. Exported for the item page and the Sales History page. */
+export function soldItemOf(item: VaultItem): SoldItem | null {
+  return soldItemFromVaultItem(item);
 }
 
 function soldItemFromVaultItem(item: VaultItem): SoldItem | null {

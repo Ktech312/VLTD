@@ -57,9 +57,10 @@ function genId() {
 function normalize(raw: Record<string, unknown>): Sale {
   const purchasePrice = num(raw.purchasePrice);
   const salePrice = num(raw.salePrice);
+  // Profit is only known when BOTH prices are: a sale with no recorded cost is "profit unknown", not a profit equal to its price (an explicit $0 cost is known).
   const profit =
     num(raw.profit) ??
-    (salePrice != null || purchasePrice != null ? (salePrice ?? 0) - (purchasePrice ?? 0) : undefined);
+    (salePrice != null && purchasePrice != null ? salePrice - purchasePrice : undefined);
   return {
     id: String(raw.id ?? genId()),
     itemId: raw.itemId != null ? String(raw.itemId) : undefined,
@@ -294,11 +295,14 @@ export async function syncSalesFromSupabase(): Promise<Sale[]> {
 export function getSalesMetrics() {
   const sales = loadSales();
   const totalRevenue = sales.reduce((s, r) => s + (r.salePrice ?? 0), 0);
-  const totalCost = sales.reduce((s, r) => s + (r.purchasePrice ?? 0), 0);
+  // Cost and profit count only the sales whose cost is known (a sale with no recorded cost has an unknown profit).
+  const known = sales.filter((r) => r.purchasePrice != null && r.salePrice != null);
+  const totalCost = known.reduce((s, r) => s + (r.purchasePrice ?? 0), 0);
   return {
     totalSold: sales.length,
     totalRevenue,
     totalCost,
-    totalProfit: totalRevenue - totalCost,
+    totalProfit: known.reduce((s, r) => s + (r.salePrice ?? 0) - (r.purchasePrice ?? 0), 0),
+    unknownCostCount: sales.length - known.length,
   };
 }
