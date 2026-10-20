@@ -1,0 +1,24 @@
+{
+ "label": "third",
+ "fixtureOnly": true,
+ "d01": [],
+ "d02": [
+  {
+   "case": "normal + 3 rapid clicks",
+   "selected": 11,
+   "path": "/museum/daeec2e7-ff06-4c6c-9f9a-fc06704191e2",
+   "hallRows": 1,
+   "linkRows": 11,
+   "onSecondBrowser": true
+  },
+  {
+   "case": "account unreachable",
+   "selected": 11,
+   "path": "/museum/40cf8883-fdc4-45fc-8af7-5e8cd4e9a9f5",
+   "rowsWhileBlocked": 0,
+   "rowsAfterRestore": 1,
+   "linkRows": 11
+  }
+ ],
+ "lastSelectedText": " Bar Misc Gears & Gasoline Art 11 of 11 selected · $683 Select all Save as Hall Add to H"
+}

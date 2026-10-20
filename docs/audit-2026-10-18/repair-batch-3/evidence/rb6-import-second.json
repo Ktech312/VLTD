@@ -1,0 +1,68 @@
+{
+ "label": "second",
+ "fixtureOnly": true,
+ "d06": [
+  {
+   "case": "normal undo",
+   "msg": "Undid 2 of 2 items from rb6-u1.csv.",
+   "rowsLeft": false,
+   "sameTitleStillThere": true,
+   "secondBrowserShowsImported": false
+  },
+  {
+   "case": "edited record flagged",
+   "prompt": "1 of 2 imported items has changed or is in use since the import.\nQA RB6 imp u2 1 mvg8emz2: edited since the import\nRemove all 2\nKeep the changed ones, remove 1\nCancel",
+   "msg": "Undid 1 of 2 items from rb6-u2.csv. 1 you had changed was kept.",
+   "editedStillThere": 1,
+   "untouchedStillThere": 0
+  },
+  {
+   "case": "partial failure",
+   "msg": "Removed 1 of 2 items from rb6-u3.csv. 1 could not be removed from your account and is still there: press Undo last to try again.",
+   "keptRefused": 1,
+   "removed": true,
+   "undoStillAvailable": true,
+   "secondUndo": "Undid 1 of 1 item from rb6-u3.csv.",
+   "afterSecond": 0
+  },
+  {
+   "case": "account unreachable",
+   "msg": "Removed 0 of 2 items from rb6-u4.csv. 2 could not be removed from your account and are still there: press Undo last to try again.",
+   "rowsStill": 2,
+   "undoStillAvailable": true
+  },
+  {
+   "case": "other profile",
+   "enabledForOwnProfile": true,
+   "enabledForOtherProfile": false
+  }
+ ],
+ "d07": [
+  {
+   "case": "clean browser skip existing",
+   "before": 1,
+   "afterExisting": 1,
+   "afterFresh": 1,
+   "msg": "Imported 1 item from rb6-d07a.csv. Skipped 1 exact duplicates (same description and serial number).",
+   "recentText": "RECENT VAULT ITEMS QA Album 1 - Original Motion Picture Soundtrack $120.00 QA Album 2 - Original Motion Picture Soundtra"
+  },
+  {
+   "case": "account unreadable",
+   "banner": "Your account could not be checked just now, so duplicate detection only covers items already on this device and may be incomplete. Check again",
+   "firstConfirm": "Review the import summary, then click Confirm Import again. Your account could not be checked for existing items, so duplicates of items that are in your account but not on this device cannot be skipped.",
+   "final": "Review the import summary, then click Confirm Import again. Your account could not be checked for existing items, so duplicates of items that are in your account but not on this device cannot be skipped.",
+   "copiesBefore": 1,
+   "copiesAfter": 1,
+   "uploaded": false
+  },
+  {
+   "case": "pending local additions",
+   "first": "Imported 1 item from rb6-d07c1.csv.",
+   "second": "Review the import summary, then click Confirm Import again.",
+   "copiesInAccount": 1
+  }
+ ],
+ "cleanup": {
+  "leftoverRows": 0
+ }
+}

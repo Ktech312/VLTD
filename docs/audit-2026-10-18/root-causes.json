@@ -93,8 +93,8 @@
    "VLT-256",
    "VLT-288"
   ],
-  "status": "PLANNED",
-  "statusNote": "repair-batch-3/PLAN.md (D-01, D-02, D-06, D-07, D-08, D-09, D-10)"
+  "status": "PARTLY CLOSED",
+  "statusNote": "batch 3 (D-01, D-02, D-06 to D-10): ADD-357, ADD-365, ADD-267, ADD-371, ADD-432, ADD-035, ADD-037, VLT-256, VLT-288 closed; ADD-272 not rechecked; D-09 cross-account on one browser unverified"
  },
  {
   "id": "RC-07",
@@ -113,8 +113,8 @@
    "ACC-395",
    "ACC-819"
   ],
-  "status": "PLANNED",
-  "statusNote": "repair-batch-3/PLAN.md (D-03, D-04, D-05; profile-validation rows ACC-381/796/390/811/395/819 excluded, stay with RC-28)"
+  "status": "PARTLY CLOSED",
+  "statusNote": "batch 3 (D-03, D-04, D-05): GIN-066, GIN-068, GIN-070 closed; the six profile-validation rows (ACC-381, 796, 390, 811, 395, 819) stay open with RC-28"
  },
  {
   "id": "RC-08",

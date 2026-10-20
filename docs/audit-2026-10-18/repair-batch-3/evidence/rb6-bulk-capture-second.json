@@ -1,0 +1,39 @@
+{
+ "label": "second",
+ "fixtureOnly": true,
+ "d08": [],
+ "capture": [
+  {
+   "case": "navigate and refresh",
+   "back": "QA RB6 capture draft mvg8emz2",
+   "reloaded": "QA RB6 capture draft mvg8emz2",
+   "keys": [
+    "vltd_capture_draft_v1:db663249-bbdd-48ea-a72a-d7d06581d8b5:79648949-0227-4403-8dd6-4eb9383d0faf"
+   ],
+   "aiRequests": 0
+  },
+  {
+   "case": "isolation and discard",
+   "otherName": "",
+   "ownAgain": "QA RB6 capture draft mvg8emz2",
+   "afterDiscard": "",
+   "keysAfter": 0
+  },
+  {
+   "case": "photo restore",
+   "photosBefore": 2,
+   "photosAfter": 2,
+   "aiRequests": 0
+  },
+  {
+   "case": "save clears",
+   "rows": 1,
+   "keys": 0
+  },
+  {
+   "case": "other account",
+   "storedKey": "vltd_capture_draft_v1:db663249-bbdd-48ea-a72a-d7d06581d8b5:79648949-0227-4403-8dd6-4eb9383d0faf",
+   "otherAccountSees": "false||"
+  }
+ ]
+}

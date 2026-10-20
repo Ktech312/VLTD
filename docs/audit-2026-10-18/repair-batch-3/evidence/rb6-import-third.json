@@ -1,0 +1,33 @@
+{
+ "label": "third",
+ "fixtureOnly": true,
+ "d06": [],
+ "d07": [
+  {
+   "case": "clean browser skip existing",
+   "before": 1,
+   "afterExisting": 1,
+   "afterFresh": 1,
+   "msg": "Imported 1 item from rb6-d07a.csv. Skipped 1 exact duplicates (same description and serial number).",
+   "recentText": "RECENT VAULT ITEMS QA Album 1 - Original Motion Picture Soundtrack $120.00 QA Album 2 - Original Motion Picture Soundtra"
+  },
+  {
+   "case": "account unreadable",
+   "banner": "Your account could not be checked just now, so duplicate detection only covers items already on this device and may be incomplete. Check again",
+   "firstConfirm": "Review the import summary, then click Confirm Import again. Your account could not be checked for existing items, so duplicates of items that are in your account but not on this device cannot be skipped.",
+   "final": "Imported 1 item from rb6-d07b.csv. Duplicate check incomplete: your account could not be read, so items that are in your account but not on this device may have been imported again.",
+   "copiesBefore": 1,
+   "copiesAfter": 2,
+   "uploaded": true
+  },
+  {
+   "case": "pending local additions",
+   "first": "Imported 1 item from rb6-d07c1.csv.",
+   "second": "Imported 0 items from rb6-d07c2.csv. Skipped 1 exact duplicates (same description and serial number). Duplicate check incomplete: your account could not be read, so items that are in your account but not on this device may have been imported again.",
+   "copiesInAccount": 1
+  }
+ ],
+ "cleanup": {
+  "leftoverRows": 0
+ }
+}

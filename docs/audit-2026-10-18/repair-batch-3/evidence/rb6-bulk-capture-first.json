@@ -1,0 +1,50 @@
+{
+ "label": "first",
+ "fixtureOnly": true,
+ "d08": [
+  {
+   "selected1": 60,
+   "note1": "One upload takes up to 60 photos. Added 60; 2 not added: rb6-bulk-61.png, rb6-bulk-62.png. Add them in another upload after this one.\nDismiss",
+   "selected2": 60,
+   "note2": "One upload takes up to 60 photos. Added 0; 2 not added: rb6-bulk-01.png, rb6-bulk-02.png. Add them in another upload after this one. 1 file is not a photo and was not added: rb6-notes.txt.\nDismiss",
+   "selected3": 60,
+   "note3": "One upload takes up to 60 photos. Added 3; 1 not added: rb6-bulk-02.png. Add them in another upload after this one.\nDismiss",
+   "before": 31,
+   "after": 31
+  }
+ ],
+ "capture": [
+  {
+   "case": "navigate and refresh",
+   "back": "QA RB6 capture draft mvg8emz2",
+   "reloaded": "QA RB6 capture draft mvg8emz2",
+   "keys": [
+    "vltd_capture_draft_v1:db663249-bbdd-48ea-a72a-d7d06581d8b5:79648949-0227-4403-8dd6-4eb9383d0faf"
+   ],
+   "aiRequests": 0
+  },
+  {
+   "case": "isolation and discard",
+   "otherName": "",
+   "ownAgain": "QA RB6 capture draft mvg8emz2",
+   "afterDiscard": "",
+   "keysAfter": 0
+  },
+  {
+   "case": "photo restore",
+   "photosBefore": 2,
+   "photosAfter": 2,
+   "aiRequests": 0
+  },
+  {
+   "case": "save clears",
+   "rows": 1,
+   "keys": 0
+  },
+  {
+   "case": "other account",
+   "storedKey": "vltd_capture_draft_v1:db663249-bbdd-48ea-a72a-d7d06581d8b5:79648949-0227-4403-8dd6-4eb9383d0faf",
+   "otherAccountSees": "|"
+  }
+ ]
+}

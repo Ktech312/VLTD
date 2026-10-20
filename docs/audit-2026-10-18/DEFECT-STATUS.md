@@ -2,7 +2,7 @@
 
 The frozen audit evidence (`rows.jsonl` first-failure rows, `results.csv`, screenshots) is unchanged. This file is the status layer on top of it; `SUMMARY.md` and `root-causes.json` carry the same status tags. "Closed" means re-tested on production with synthetic data after the fix (evidence named). Anything not shown here is still open as written in `SUMMARY.md`.
 
-**Closed so far: 24 specific audit rows** (RC-01: 2, RC-02: 6, RC-03: 2, RC-09: 7, RC-19: 7). Open P1 root causes now: RC-05, RC-06, RC-07 (RC-06 and RC-07 are planned in `repair-batch-3/PLAN.md`).
+**Closed so far: 36 specific audit rows** (RC-01: 2, RC-02: 6, RC-03: 2, RC-09: 7, RC-19: 7, RC-06: 9, RC-07: 3). Open P1 root causes: RC-05 (untouched), and the unclosed rows of RC-06 and RC-07 listed below. **Insurance is not fully closed** (section 2 and the open items RC-14 and RC-31).
 
 ## 1. Closed findings
 
@@ -25,6 +25,14 @@ The frozen audit evidence (`rows.jsonl` first-failure rows, `results.csv`, scree
 | RC-09 blank packet, unreadable and site-bar prints | GIN-122, GIN-123, GIN-227, GIN-228, GIN-229, GIN-230, GIN-231 | `2bd446b`, `9903f96`, `f00ff32`, `67985e1` | actual PDFs and renders, `insurance-batch2/after-fix/` |
 | RC-19 totals and counts disagree (part) | GIN-087 (sold counted), GIN-240 / GIN-243 / VLT-297 (Vault Insurance PDF count and content), GIN-260 (cost definition), GIN-097 / GIN-098 (exclusion not applied to report and schedule) | `5ac1d30` | same totals in every document; excluded-by-you run |
 | Found during batch 2 verification (not audit rows) | Packet screen controls printed; dark theme painted dark panels behind printed pages; "Open Printable Page" and item-sheet "Print / Save as PDF" labels near-invisible in the dark theme; printable packet unreadable on screen in the dark theme | `9903f96`, `67985e1`, `05322fd` | `insurance-batch2/screens/` (dark and light, 1440 and 390 wide) |
+
+### Batch 3: save and import failures (closeout `repair-batch-3/CLOSEOUT.md`)
+| Root cause | Audit rows closed | Defect IDs and commits | Evidence |
+|---|---|---|---|
+| RC-06 silent data loss in Add / Import / Halls | ADD-371 (D-01), VLT-256 and VLT-288 (D-02), ADD-357 (D-06), ADD-365 and ADD-267 (D-07), ADD-432 (D-08), ADD-035 (D-09), ADD-037 (D-10) | `20b1461`, `87154b8`, `d2597c7`, `0942548`, `292847c`, `f332a51` | rows RB6-029 to RB6-076 |
+| RC-07 writes that look saved but are lost | GIN-066 (D-05), GIN-068 (D-03), GIN-070 (D-04) | `14661a8`, `748ab2b` | rows RB6-052 to RB6-069 |
+
+Still open inside these: **ADD-272** (Vault Matches tile, not rechecked); **D-09 cross-account on one browser** (RB6-077, not tested end to end); RC-07's six profile-validation rows (ACC-381, ACC-796, ACC-390, ACC-811, ACC-395, ACC-819) stay with RC-28.
 
 ## 2. Partly closed: still open inside RC-19
 | Row | Why still open |

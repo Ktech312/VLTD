@@ -1,0 +1,68 @@
+{
+ "label": "first",
+ "fixtureOnly": true,
+ "d06": [
+  {
+   "case": "normal undo",
+   "msg": "Imported 2 items from rb6-u1.csv.",
+   "rowsLeft": true,
+   "sameTitleStillThere": true,
+   "secondBrowserShowsImported": true
+  },
+  {
+   "case": "edited record flagged",
+   "prompt": "2 of 2 imported items have changed or are in use since the import.\nQA RB6 imp u2 1 mvg8emz2: edited since the import\nQA RB6 imp u2 2 mvg8emz2: edited since the import\nRemove all 2\nCancel",
+   "msg": "Nothing parsed yet.",
+   "editedStillThere": 1,
+   "untouchedStillThere": 1
+  },
+  {
+   "case": "partial failure",
+   "msg": "Imported 2 items from rb6-u3.csv.",
+   "keptRefused": 1,
+   "removed": false,
+   "undoStillAvailable": true,
+   "secondUndo": "Imported 2 items from rb6-u3.csv.",
+   "afterSecond": 1
+  },
+  {
+   "case": "account unreachable",
+   "msg": "Imported 2 items from rb6-u4.csv.",
+   "rowsStill": 2,
+   "undoStillAvailable": true
+  },
+  {
+   "case": "other profile",
+   "enabledForOwnProfile": true,
+   "enabledForOtherProfile": false
+  }
+ ],
+ "d07": [
+  {
+   "case": "clean browser skip existing",
+   "before": 1,
+   "afterExisting": 1,
+   "afterFresh": 1,
+   "msg": "Imported 1 item from rb6-d07a.csv. Skipped 1 exact duplicates (same description and serial number).",
+   "recentText": "RECENT VAULT ITEMS QA Album 1 - Original Motion Picture Soundtrack $120.00 QA Album 2 - Original Motion Picture Soundtra"
+  },
+  {
+   "case": "account unreadable",
+   "banner": "",
+   "firstConfirm": "No import history yet.",
+   "final": "Imported 1 item from rb6-d07b.csv. Duplicate check incomplete: your account could not be read, so items that are in your account but not on this device may have been imported again.",
+   "copiesBefore": 1,
+   "copiesAfter": 2,
+   "uploaded": true
+  },
+  {
+   "case": "pending local additions",
+   "first": "Imported 1 item from rb6-d07c1.csv.",
+   "second": "",
+   "copiesInAccount": 1
+  }
+ ],
+ "cleanup": {
+  "leftoverRows": 0
+ }
+}

@@ -1,0 +1,23 @@
+{
+ "label": "first",
+ "fixtureOnly": true,
+ "d01": [],
+ "d02": [
+  {
+   "case": "normal + 3 rapid clicks",
+   "selected": 0,
+   "path": "/museum/ec77fb58-9395-4b87-ae87-de4b1aaf7fb8",
+   "hallRows": 1,
+   "linkRows": 11,
+   "onSecondBrowser": true
+  },
+  {
+   "case": "account unreachable",
+   "selected": 0,
+   "path": "/museum/8c8909db-44d0-41d0-82e2-a030cb530e8c",
+   "rowsWhileBlocked": 0,
+   "rowsAfterRestore": 1,
+   "linkRows": 11
+  }
+ ]
+}

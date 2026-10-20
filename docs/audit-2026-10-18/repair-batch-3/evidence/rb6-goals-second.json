@@ -1,0 +1,123 @@
+{
+ "label": "second",
+ "fixtureOnly": true,
+ "cases": [
+  {
+   "case": "D-05 invalid targets",
+   "results": [
+    {
+     "label": "99999999999",
+     "error": "Enter a number no larger than 2,147,483,647.",
+     "sheetOpen": true,
+     "formKept": true,
+     "dbRows": 0,
+     "inList": false
+    },
+    {
+     "label": "2147483648",
+     "error": "Enter a number no larger than 2,147,483,647.",
+     "sheetOpen": true,
+     "formKept": true,
+     "dbRows": 0,
+     "inList": false
+    },
+    {
+     "label": "2.5",
+     "error": "Enter a whole number, using digits only (no decimals, signs or letters).",
+     "sheetOpen": true,
+     "formKept": true,
+     "dbRows": 0,
+     "inList": false
+    },
+    {
+     "label": "1e3",
+     "error": "Enter a whole number, using digits only (no decimals, signs or letters).",
+     "sheetOpen": true,
+     "formKept": true,
+     "dbRows": 0,
+     "inList": false
+    },
+    {
+     "label": "0",
+     "error": "The set must have at least 1 item.",
+     "sheetOpen": true,
+     "formKept": true,
+     "dbRows": 0,
+     "inList": false
+    },
+    {
+     "label": "-4",
+     "error": "Enter a whole number, using digits only (no decimals, signs or letters).",
+     "sheetOpen": true,
+     "formKept": true,
+     "dbRows": 0,
+     "inList": false
+    }
+   ]
+  },
+  {
+   "case": "create normal",
+   "dbRows": 2,
+   "afterReload": true,
+   "second": true,
+   "onBusiness": false
+  },
+  {
+   "case": "create while unreachable",
+   "toast": "Saved on this device — not in your account yet. Retrying.",
+   "waitingNotice": "1 goal change is saved on this device only. Sync pending.\nRetry now",
+   "listed": true,
+   "rowsWhileBlocked": 0,
+   "afterReloadBlocked": true,
+   "afterRetryRows": 1,
+   "noticeAfterRetry": "",
+   "second": true
+  },
+  {
+   "case": "create, answer lost",
+   "toast": "Saved on this device — not in your account yet. Retrying.",
+   "rowsBeforeRetry": 1,
+   "rowsAfterRetry": 1,
+   "listedTimes": 1,
+   "noticeAfter": ""
+  },
+  {
+   "case": "create refused",
+   "sheet": {
+    "open": true,
+    "name": "QA RB6 goal refused mvg8emz2",
+    "target": "5",
+    "error": "The goal was not saved: permission denied for table",
+    "button": "Save Goal"
+   },
+   "listed": false,
+   "rows": 0
+  },
+  {
+   "case": "delete normal",
+   "rows": 0,
+   "listed": false,
+   "afterReload": false,
+   "second": false
+  },
+  {
+   "case": "delete while unreachable",
+   "toast": "Saved on this device — not in your account yet. Retrying.",
+   "notice": "1 deleted goal is still on your account. Sync pending.\nRetry now",
+   "listedAfterDelete": false,
+   "rowStillInAccountWhileBlocked": 1,
+   "reappearedAfterReloadBlocked": false,
+   "rowsAfterRetry": 0,
+   "noticeAfterRetry": "",
+   "finalListed": false,
+   "second": false
+  },
+  {
+   "case": "delete refused",
+   "toast": "",
+   "listed": true,
+   "rows": 1,
+   "afterReload": true
+  }
+ ]
+}

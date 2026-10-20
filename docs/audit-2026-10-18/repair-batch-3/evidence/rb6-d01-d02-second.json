@@ -1,0 +1,26 @@
+{
+ "label": "second",
+ "fixtureOnly": true,
+ "d01": [
+  {
+   "case": "normal + 3 rapid clicks + clean second browser",
+   "toast": "Saved to your vault.",
+   "rowsInAccount": 1,
+   "onSecondBrowser": true
+  },
+  {
+   "case": "account unreachable",
+   "toast": "Saved on this device. Sync pending: it will upload to your account when the connection is back.",
+   "rowsWhileBlocked": 0,
+   "listedOnDevice": true,
+   "rowsAfterRestore": 1
+  },
+  {
+   "case": "answer lost (account applied it)",
+   "toast": "Saved on this device. Sync pending: it will upload to your account when the connection is back.",
+   "rowsAfterRetry": 1,
+   "rowsBeforeRetry": 1
+  }
+ ],
+ "d02": []
+}
