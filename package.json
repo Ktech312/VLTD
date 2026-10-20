@@ -29,7 +29,8 @@
     "test:exhibit-no-prune": "node scripts/test-exhibition-no-prune.cjs",
     "test:listing-privacy": "node scripts/test-listing-privacy.cjs",
     "test:exhibit-sync": "node scripts/test-gallery-item-sync.cjs",
-    "test:move-profile": "node scripts/test-move-profile.cjs"
+    "test:move-profile": "node scripts/test-move-profile.cjs",
+    "test:insurance-docs": "node scripts/test-insurance-docs.cjs"
   },
   "dependencies": {
     "@imgly/background-removal": "^1.7.0",

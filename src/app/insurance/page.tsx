@@ -2,7 +2,7 @@
 "use client";
 
 import Link from "next/link";
-import { collectibleItems, insuranceValue, PURCHASE_BASED_NOTE } from "@/lib/vaultStats";
+import { COST_LABEL, COST_NOTE, ESTIMATE_LABEL, EXCLUSIONS_ARE_DEVICE_ONLY, fmtCost, fmtEstimate, insuranceCost, insuranceEstimate, insuranceScope, insuranceTotals, noEstimateNote, notCountedLine, readInsuranceExcludedIds, saveInsuranceExcludedIds, totalsSentence } from "@/lib/insuranceDocs";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import { DEMO_ITEMS } from "@/lib/demoVault";
@@ -23,8 +23,6 @@ type Item = ModelItem & {
   valueUpdatedAt?: number;
   valueConfidence?: number;
 };
-
-const LS_INSURANCE_EXCLUDED = "vltd_insurance_excluded_item_ids_v1";
 
 function clamp(n: number) {
   return Number.isFinite(n) ? n : 0;
@@ -87,21 +85,6 @@ function itemLabel(i: Item) {
   return s ? `${u} • ${c} • ${s}` : `${u} • ${c}`;
 }
 
-function readExcludedIds() {
-  if (typeof window === "undefined") return new Set<string>();
-  try {
-    const parsed = JSON.parse(window.localStorage.getItem(LS_INSURANCE_EXCLUDED) ?? "[]");
-    return new Set(Array.isArray(parsed) ? parsed.map(String) : []);
-  } catch {
-    return new Set<string>();
-  }
-}
-
-function saveExcludedIds(ids: Set<string>) {
-  if (typeof window === "undefined") return;
-  window.localStorage.setItem(LS_INSURANCE_EXCLUDED, JSON.stringify(Array.from(ids)));
-}
-
 export default function InsuranceExportPage() {
   const [items, setItems] = useState<Item[]>([]);
   const [excludedIds, setExcludedIds] = useState<Set<string>>(new Set());
@@ -112,10 +95,10 @@ export default function InsuranceExportPage() {
   retryRef.current = cloud.retry;
 
   useEffect(() => {
-    const reload = () => setItems(collectibleItems(loadItems() as any as Item[]));
+    const reload = () => setItems(loadItems() as any as Item[]);
     reloadRef.current = reload;
     reload();
-    setExcludedIds(readExcludedIds());
+    setExcludedIds(readInsuranceExcludedIds());
     setHydrated(true);
     // A switch of profile (or a change made elsewhere) re-reads the saved copy and asks the cloud again; the page never keeps the previous profile's items.
     const onProfile = () => { reload(); retryRef.current(); };
@@ -126,24 +109,21 @@ export default function InsuranceExportPage() {
       window.removeEventListener("vltd:vault-updated", reload);
     };
   }, []);
-  const readiness = useMemo(() => reviewCounts(items as any), [items]);
-
-  const selectedItems = useMemo(() => items.filter((item) => !excludedIds.has(String(item.id))), [items, excludedIds]);
-  // Items stated at purchase price (not priced yet) carry a * and the footnote below.
-  const purchaseBasedCount = useMemo(() => selectedItems.filter((i) => insuranceValue(i).purchaseBased).length, [selectedItems]);
-
-  const totals = useMemo(() => {
-    const cost = selectedItems.reduce((s, i) => s + clamp(Number(i.purchasePrice ?? 0)), 0);
-    const value = selectedItems.reduce((s, i) => s + clamp(insuranceValue(i).amount), 0);
-    return { cost, value };
-  }, [selectedItems]);
+  // ONE rule set (src/lib/insuranceDocs.ts): owned items only; sold, supply and wishlist items and your own exclusions are counted out and said so.
+  const scope = useMemo(() => insuranceScope(items, excludedIds), [items, excludedIds]);
+  const listed = scope.eligible;
+  const readiness = useMemo(() => reviewCounts(listed as any), [listed]);
+  const selectedItems = scope.included;
+  const totals = useMemo(() => insuranceTotals(selectedItems), [selectedItems]);
+  const notCounted = notCountedLine(scope);
+  const noEstimate = noEstimateNote(totals);
 
   function setItemIncluded(id: string, included: boolean) {
     setExcludedIds((prev) => {
       const next = new Set(prev);
       if (included) next.delete(id);
       else next.add(id);
-      saveExcludedIds(next);
+      saveInsuranceExcludedIds(next);
       return next;
     });
   }
@@ -151,16 +131,16 @@ export default function InsuranceExportPage() {
   function includeAll() {
     const next = new Set<string>();
     setExcludedIds(next);
-    saveExcludedIds(next);
+    saveInsuranceExcludedIds(next);
   }
 
   function excludeZeroValue() {
     const next = new Set(excludedIds);
-    items.forEach((item) => {
-      if (insuranceValue(item).amount <= 0) next.add(String(item.id));
+    listed.forEach((item) => {
+      if ((insuranceEstimate(item) ?? 0) <= 0) next.add(String(item.id));
     });
     setExcludedIds(next);
-    saveExcludedIds(next);
+    saveInsuranceExcludedIds(next);
   }
 
   // An empty list is only "nothing to insure" once the cloud has answered; before that, or after a failed answer, it is not.
@@ -173,7 +153,7 @@ export default function InsuranceExportPage() {
       </main>
     );
   }
-  if (hydrated && items.length === 0) {
+  if (hydrated && listed.length === 0) {
     return (
       <main className="vltd-ins-light px-4 py-10 text-[color:var(--fg)] sm:px-6">
         <div className="mx-auto max-w-2xl">
@@ -206,7 +186,7 @@ export default function InsuranceExportPage() {
   }
 
   return (
-    <main className="vltd-ins-light px-4 py-6 text-[color:var(--fg)] sm:px-6 lg:px-8">
+    <main className="vltd-ins-light vltd-print-document px-4 py-6 text-[color:var(--fg)] sm:px-6 lg:px-8">
       <style>{`
         @media print {
           @page { size: landscape; margin: 0.28in; }
@@ -248,7 +228,7 @@ export default function InsuranceExportPage() {
         {cloud.state === "failed" && items.length > 0 ? <StaleDataNotice onRetry={cloud.retry} busy={cloud.busy} /> : null}
         {/* Documentation readiness is a record-keeping checklist. It is not insurance coverage, and nothing here says an item is insured. */}
         <div className="no-print mb-3 flex flex-wrap items-center gap-x-3 gap-y-1 rounded-[8px] px-3 py-2 text-[12px] ring-1 ring-[color:var(--border)]" style={{ background: "var(--surface)", color: "var(--muted)" }} data-testid="readiness-note">
-          <span><b style={{ color: "var(--fg)" }}>Documentation readiness:</b> {readiness.ready} of {items.length} items complete. {REVIEW_CHECKLIST_NOTE}</span>
+          <span><b style={{ color: "var(--fg)" }}>Documentation readiness:</b> {readiness.ready} of {listed.length} items complete. {REVIEW_CHECKLIST_NOTE}</span>
           <Link href="/vault?review=needs_review" className="font-semibold text-[color:var(--accent)] underline underline-offset-4">See what is missing</Link>
         </div>
 
@@ -263,14 +243,17 @@ export default function InsuranceExportPage() {
           <div className="insurance-eyebrow text-[11px] font-semibold uppercase tracking-[0.30em] text-[color:var(--muted2)]">Insurance Inventory</div>
           <h2 className="insurance-title mt-1 text-xl font-black tracking-[-0.03em] text-text-primary">Vault Inventory Report</h2>
           <div className="insurance-summary mt-2 text-sm text-[color:var(--muted)]">
-            Generated {new Date().toLocaleString()} • Included {selectedItems.length} of {items.length} items • Total Value {fmtMoney(totals.value)}{purchaseBasedCount > 0 ? "*" : ""} • Total Cost {fmtMoney(totals.cost)}
+            Generated {new Date().toLocaleString()} • Included {selectedItems.length} of {listed.length} owned items • {totalsSentence(totals)}
+            {notCounted ? <div className="mt-1" data-testid="not-counted">{notCounted}</div> : null}
+            {noEstimate ? <div className="mt-1" data-testid="no-estimate-note">{noEstimate}</div> : null}
+            <div className="mt-1 vltd-print-muted" style={{ opacity: 0.85 }}>{COST_NOTE}</div>
           </div>
           <div className="no-print mt-3 flex flex-wrap items-center gap-2">
             <PillButton size="compact" onClick={includeAll}>Include all</PillButton>
             <PillButton size="compact" onClick={excludeZeroValue}>Exclude $0 value</PillButton>
           </div>
           <div className="no-print mt-3 rounded-[9px] border border-[rgba(203,208,213,0.18)] bg-[rgba(203,208,213,0.06)] px-4 py-3 text-sm text-[color:var(--muted)]">
-            Checked items are included in insurance reports and the policy packet. Uncheck anything that should not be part of insurance documentation. Inventory print uses compact landscape formatting.
+            Checked items are included in the inventory, the policy packet and the reports on this device. {EXCLUSIONS_ARE_DEVICE_ONLY} Uncheck anything that should not be part of insurance documentation. Inventory print uses compact landscape formatting.
           </div>
 
           <div className="insurance-table-wrap mt-6 overflow-x-auto rounded-[9px] border border-[color:var(--border)] bg-vault-card">
@@ -284,13 +267,13 @@ export default function InsuranceExportPage() {
                   <th className="col-cert py-3 pr-3">Cert #</th>
                   <th className="col-serial py-3 pr-3">Serial #</th>
                   <th className="col-storage py-3 pr-3">Storage</th>
-                  <th className="col-money py-3 pr-3">Cost</th>
-                  <th className="col-money py-3 pr-3">Value</th>
+                  <th className="col-money py-3 pr-3" title={COST_NOTE}>{COST_LABEL}</th>
+                  <th className="col-money py-3 pr-3">{ESTIMATE_LABEL}</th>
                   <th className="col-appraisal py-3 pr-4">Appraisal</th>
                 </tr>
               </thead>
               <tbody>
-                {items.map((i) => {
+                {listed.map((i) => {
                   const included = !excludedIds.has(String(i.id));
                   if (!included) {
                     return (
@@ -306,7 +289,7 @@ export default function InsuranceExportPage() {
                         </td>
                         <td className="py-3 pl-4 pr-3" colSpan={9}>
                           <div className="font-black text-text-primary">{i.title}</div>
-                          <div className="mt-0.5 text-xs text-[color:var(--muted)]">Excluded from insurance packet.</div>
+                          <div className="mt-0.5 text-xs text-[color:var(--muted)]">Excluded from the insurance documents on this device.</div>
                         </td>
                       </tr>
                     );
@@ -340,8 +323,8 @@ export default function InsuranceExportPage() {
                       <td className="py-3 pr-3">{i.certNumber ?? ""}</td>
                       <td className="py-3 pr-3">{i.serialNumber ?? ""}</td>
                       <td className="py-3 pr-3">{i.storageLocation ?? ""}</td>
-                      <td className="py-3 pr-3 font-semibold text-text-primary">{fmtMoney(Number(i.purchasePrice ?? 0))}</td>
-                      <td className="py-3 pr-3 font-semibold text-text-primary">{fmtMoney(insuranceValue(i).amount)}{insuranceValue(i).purchaseBased ? "*" : ""}</td>
+                      <td className="py-3 pr-3 font-semibold text-text-primary" data-testid="cost-cell">{fmtCost(insuranceCost(i))}</td>
+                      <td className="py-3 pr-3 font-semibold text-text-primary" data-testid="estimate-cell">{fmtEstimate(insuranceEstimate(i))}</td>
                       <td className="py-3 pr-4 text-xs text-[color:var(--muted)]">
                         <div>{(i as any).valueSource ?? ""}</div>
                         <div className="muted-print">
@@ -354,9 +337,7 @@ export default function InsuranceExportPage() {
                 })}
               </tbody>
             </table>
-            {purchaseBasedCount > 0 ? <div className="mt-3 text-xs" style={{ opacity: 0.8 }}>{PURCHASE_BASED_NOTE} ({purchaseBasedCount} of {selectedItems.length} items)</div> : null}
-
-            {items.length === 0 ? <div className="py-6 text-center text-[color:var(--muted)]">No items found.</div> : null}
+            {listed.length === 0 ? <div className="py-6 text-center text-[color:var(--muted)]">No items found.</div> : null}
           </div>
         </section>
       </div>

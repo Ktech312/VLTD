@@ -8,7 +8,8 @@ import { DEMO_ITEMS } from "@/lib/demoVault";
 import { loadItems, type VaultItem as ModelItem } from "@/lib/vaultModel";
 import { LoadErrorCard, StaleDataNotice, useCloudRefresh } from "@/components/vault/CloudStatus";
 import { UNIVERSE_LABEL, type UniverseKey } from "@/lib/taxonomy";
-import { insuranceValue } from "@/lib/vaultStats";
+import { COST_LABEL, COST_NOTE, ESTIMATE_LABEL, EXCLUSIONS_ARE_DEVICE_ONLY, fmtCost, fmtEstimate, insuranceCost, insuranceEstimate, insuranceScope, notCountedLine, readInsuranceExcludedIds } from "@/lib/insuranceDocs";
+import { isSoldItem } from "@/lib/vaultStats";
 import { EmptyVault } from "@/components/ui/EmptyVault";
 import { PillButton } from "@/components/ui/PillButton";
 
@@ -109,6 +110,9 @@ export default function InsuranceItemPage() {
 
   const id = sp.get("id") ?? "";
   const item = useMemo(() => items.find((x) => String(x.id) === String(id)), [items, id]);
+  // An owner's historical sheet stays reachable for a sold item (marked Sold); the sheet also says whether the item is counted in the current totals.
+  const sold = item ? isSoldItem(item) : false;
+  const countedLine = useMemo(() => (item ? notCountedLine(insuranceScope([item], readInsuranceExcludedIds())) : null), [item]);
 
   if (hydrated && items.length === 0 && cloud.state !== "ok") {
     return (
@@ -131,7 +135,7 @@ export default function InsuranceItemPage() {
   }
 
   return (
-    <main className="px-4 py-6 text-[color:var(--fg)] sm:px-6 lg:px-8">
+    <main className="vltd-print-document px-4 py-6 text-[color:var(--fg)] sm:px-6 lg:px-8">
       <style>{`
         @media print {
           .no-print { display: none !important; }
@@ -172,6 +176,11 @@ export default function InsuranceItemPage() {
             </div>
           ) : (
             <>
+              {sold ? (
+                <div className="mt-2 inline-block rounded-[6px] border border-[color:var(--border)] px-2 py-0.5 text-[11px] font-black uppercase tracking-[0.14em]" data-testid="sold-marker">
+                  Sold{item.soldAt ? ` ${fmtDate(item.soldAt)}` : ""}{typeof item.soldPrice === "number" ? ` for ${fmtCost(item.soldPrice)}` : ""}: historical record, not part of the current inventory or its totals
+                </div>
+              ) : null}
               <h1 className="mt-2 text-3xl font-black tracking-[-0.045em] text-text-primary">{item.title}</h1>
               <div className="mt-2 text-sm text-[color:var(--muted)]">
                 {itemLabel(item)} {item.subtitle ? `• ${item.subtitle}` : ""} {item.number ? `• ${item.number}` : ""}
@@ -195,7 +204,7 @@ export default function InsuranceItemPage() {
                 <div className="grid gap-3 sm:grid-cols-2">
                   <div className="rounded-2xl border border-[rgba(104,146,196,0.20)] bg-vault-card p-4">
                     <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[color:var(--muted2)]">Identification</div>
-                    <div className="mt-3 space-y-1 text-sm text-[#dbeafe]">
+                    <div className="mt-3 space-y-1 text-sm text-[color:var(--fg)]">
                       <div><span className="text-[color:var(--muted)]">Grade:</span> {item.grade ?? ""}</div>
                       <div><span className="text-[color:var(--muted)]">Certificate #:</span> {item.certNumber ?? ""}</div>
                       <div><span className="text-[color:var(--muted)]">Serial #:</span> {item.serialNumber ?? ""}</div>
@@ -204,22 +213,23 @@ export default function InsuranceItemPage() {
 
                   <div className="rounded-2xl border border-[rgba(104,146,196,0.20)] bg-vault-card p-4">
                     <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[color:var(--muted2)]">Storage</div>
-                    <div className="mt-3 space-y-1 text-sm text-[#dbeafe]">
+                    <div className="mt-3 space-y-1 text-sm text-[color:var(--fg)]">
                       <div><span className="text-[color:var(--muted)]">Location:</span> {item.storageLocation ?? ""}</div>
                     </div>
                   </div>
 
                   <div className="rounded-2xl border border-[rgba(104,146,196,0.20)] bg-vault-card p-4">
                     <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[color:var(--muted2)]">Financial</div>
-                    <div className="mt-3 space-y-1 text-sm text-[#dbeafe]">
-                      <div><span className="text-[color:var(--muted)]">Purchase Cost:</span> <span className="font-semibold text-text-primary">{fmtMoney(Number(item.purchasePrice ?? 0))}</span></div>
-                      <div><span className="text-[color:var(--muted)]">Current Value:</span> <span className="font-semibold text-text-primary">{fmtMoney(insuranceValue(item).amount)}{insuranceValue(item).purchaseBased ? "*" : ""}</span>{insuranceValue(item).purchaseBased ? <span className="text-[color:var(--muted)]"> (* based on purchase price, not priced yet)</span> : null}</div>
+                    <div className="mt-3 space-y-1 text-sm text-[color:var(--fg)]">
+                      <div><span className="text-[color:var(--muted)]">{COST_LABEL}:</span> <span className="font-semibold text-text-primary" data-testid="item-cost">{fmtCost(insuranceCost(item))}</span></div>
+                      <div className="text-xs vltd-print-muted text-[color:var(--muted)]">{COST_NOTE}</div>
+                      <div><span className="text-[color:var(--muted)]">{ESTIMATE_LABEL}:</span> <span className="font-semibold text-text-primary" data-testid="item-estimate">{fmtEstimate(insuranceEstimate(item))}</span>{insuranceEstimate(item) === null ? <span className="text-[color:var(--muted)]"> (no value entered; the cost above is not an estimate of value)</span> : null}</div>
                     </div>
                   </div>
 
                   <div className="rounded-2xl border border-[rgba(104,146,196,0.20)] bg-vault-card p-4">
                     <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[color:var(--muted2)]">Appraisal</div>
-                    <div className="mt-3 space-y-1 text-sm text-[#dbeafe]">
+                    <div className="mt-3 space-y-1 text-sm text-[color:var(--fg)]">
                       <div><span className="text-[color:var(--muted)]">Source:</span> {item.valueSource ?? ""}</div>
                       <div><span className="text-[color:var(--muted)]">Updated:</span> {item.valueUpdatedAt ? fmtDate(item.valueUpdatedAt) : ""}</div>
                       <div><span className="text-[color:var(--muted)]">Confidence:</span> {typeof item.valueConfidence === "number" ? `${item.valueConfidence}%` : ""}</div>
@@ -231,10 +241,11 @@ export default function InsuranceItemPage() {
               {item.notes ? (
                 <div className="mt-6 rounded-2xl border border-[rgba(104,146,196,0.20)] bg-vault-card p-4">
                   <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[color:var(--muted2)]">Notes</div>
-                  <div className="mt-3 whitespace-pre-wrap text-sm text-[#dbeafe]">{item.notes}</div>
+                  <div className="mt-3 whitespace-pre-wrap text-sm text-[color:var(--fg)]">{item.notes}</div>
                 </div>
               ) : null}
 
+              {countedLine ? <div className="mt-4 text-xs text-[color:var(--muted)]" data-testid="not-counted">{countedLine} {EXCLUSIONS_ARE_DEVICE_ONLY}</div> : null}
               <div className="mt-6 text-xs text-[color:var(--muted2)]">
                 Generated {new Date().toLocaleString()} • Item ID {String(item.id)}
               </div>

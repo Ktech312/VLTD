@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { activeItems, describeGainExclusions, insuranceValue, PURCHASE_BASED_NOTE, summarizeGain, totalCost as sharedTotalCost } from "@/lib/vaultStats";
+import { describeGainExclusions, summarizeGain } from "@/lib/vaultStats";
+import { COST_LABEL, COST_NOTE, ESTIMATE_LABEL, EXCLUSIONS_ARE_DEVICE_ONLY, fmtCost, fmtEstimate, insuranceCost, insuranceEstimate, insuranceScope, insuranceTotals, noEstimateNote, notCountedLine, readInsuranceExcludedIds } from "@/lib/insuranceDocs";
 import { useEffect, useMemo, useState } from "react";
 
 import { loadItems, type VaultItem } from "@/lib/vaultModel";
@@ -17,22 +18,21 @@ function fmtMoney(n: number) {
 }
 
 export default function InsuranceReportPage() {
-  const [items, setItems] = useState<VaultItem[]>([]);
+  const [allItems, setAllItems] = useState<VaultItem[]>([]);
+  const [excludedIds, setExcludedIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
-    // Owned items only (sold/wishlist/supplies out), same as every vault total.
-    setItems(activeItems(loadItems()));
+    setAllItems(loadItems());
+    setExcludedIds(readInsuranceExcludedIds());
   }, []);
 
-  const totals = useMemo(() => {
-    // Value is the stated insurance basis (an item not yet priced is stated at its purchase price, marked *). It is a statement for
-    // the packet, not a return: the unrealized change below is the shared one (items with a value and a recorded cost).
-    const cost = items.reduce((s, i) => s + sharedTotalCost(i), 0);
-    const value = items.reduce((s, i) => s + clamp(insuranceValue(i).amount), 0);
-    const gainSummary = summarizeGain(items);
-    const purchaseBased = items.filter((i) => insuranceValue(i).purchaseBased).length;
-    return { cost, value, gainSummary, purchaseBased };
-  }, [items]);
+  // ONE rule set (src/lib/insuranceDocs.ts), the same as the inventory, the packet, the reports and the PDFs.
+  const scope = useMemo(() => insuranceScope(allItems, excludedIds), [allItems, excludedIds]);
+  const items = scope.included;
+  const notCounted = notCountedLine(scope);
+
+  const totals = useMemo(() => ({ ...insuranceTotals(items), gainSummary: summarizeGain(items) }), [items]);
+  const noEstimate = noEstimateNote(totals);
 
   const today = useMemo(() => new Date().toLocaleDateString(), []);
 
@@ -41,7 +41,7 @@ export default function InsuranceReportPage() {
   }
 
   return (
-    <main className="text-[color:var(--fg)]">
+    <main className="vltd-print-document text-[color:var(--fg)]">
       {/* Print styles */}
       <style>{`
         @media print {
@@ -87,10 +87,10 @@ export default function InsuranceReportPage() {
             </div>
 
             <div className="mt-3 sm:mt-0 grid gap-1 text-right">
-              <div className="text-sm">
-                Stated value: <span className="font-semibold">{fmtMoney(totals.value)}{totals.purchaseBased > 0 ? "*" : ""}</span>
+              <div className="text-sm" data-testid="sch-cost">
+                Total cost (all-in): <span className="font-semibold">{fmtMoney(totals.cost)}</span> <span className="text-xs text-[color:var(--muted)]">({totals.costRecorded} of {totals.count} items with a recorded cost)</span>
               </div>
-              <div className="text-sm text-[color:var(--muted)]">Purchase cost: {fmtMoney(totals.cost)}</div>
+              <div className="text-sm text-[color:var(--muted)]" data-testid="sch-estimate">{ESTIMATE_LABEL}: {fmtMoney(totals.estimate)} ({totals.estimated} of {totals.count} have an estimate)</div>
               <div className="text-sm text-[color:var(--muted)]" data-testid="ins-gain">
                 Unrealized change: {totals.gainSummary.eligibleCount > 0 ? `${totals.gainSummary.gain >= 0 ? "+" : ""}${fmtMoney(totals.gainSummary.gain)}` : "—"}
               </div>
@@ -101,9 +101,11 @@ export default function InsuranceReportPage() {
             </div>
           </div>
 
-          <div className="mt-4 text-xs text-[color:var(--muted2)]">
-            Includes title, category, grade, value, storage location, and cert/serial number.
+          <div className="mt-4 text-xs text-[color:var(--muted)]">
+            Includes title, category, grade, cost, estimated value, storage location, and cert number. {COST_NOTE}
           </div>
+          {notCounted ? <div className="mt-1 text-xs text-[color:var(--muted)]" data-testid="not-counted">{notCounted} {EXCLUSIONS_ARE_DEVICE_ONLY}</div> : null}
+          {noEstimate ? <div className="mt-1 text-xs text-[color:var(--muted)]" data-testid="no-estimate-note">{noEstimate}</div> : null}
         </div>
 
         {/* Table */}
@@ -116,14 +118,15 @@ export default function InsuranceReportPage() {
                   <th className="py-3 pr-3 text-left text-xs tracking-widest text-[color:var(--muted2)]">DETAILS</th>
                   <th className="py-3 pr-3 text-left text-xs tracking-widest text-[color:var(--muted2)]">STORAGE</th>
                   <th className="py-3 pr-3 text-left text-xs tracking-widest text-[color:var(--muted2)]">CERT #</th>
-                  <th className="py-3 text-right text-xs tracking-widest text-[color:var(--muted2)]">VALUE</th>
+                  <th className="py-3 pr-3 text-right text-xs tracking-widest text-[color:var(--muted2)]" title={COST_NOTE}>{COST_LABEL.toUpperCase()}</th>
+                  <th className="py-3 text-right text-xs tracking-widest text-[color:var(--muted2)]">{ESTIMATE_LABEL.toUpperCase()}</th>
                 </tr>
               </thead>
 
               <tbody>
                 {items.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="py-6 text-sm text-[color:var(--muted)]">
+                    <td colSpan={6} className="py-6 text-sm text-[color:var(--muted)]">
                       No items found. Add items in Exhibitions first.
                     </td>
                   </tr>
@@ -155,7 +158,8 @@ export default function InsuranceReportPage() {
                         {i.certNumber?.trim() ? i.certNumber : "—"}
                       </td>
 
-                      <td className="py-3 align-top text-right font-semibold">{fmtMoney(insuranceValue(i).amount)}{insuranceValue(i).purchaseBased ? "*" : ""}</td>
+                      <td className="py-3 pr-3 align-top text-right font-semibold" data-testid="sch-cost-cell">{fmtCost(insuranceCost(i))}</td>
+                      <td className="py-3 align-top text-right font-semibold" data-testid="sch-estimate-cell">{fmtEstimate(insuranceEstimate(i))}</td>
                     </tr>
                   ))
                 )}
@@ -163,9 +167,6 @@ export default function InsuranceReportPage() {
             </table>
           </div>
 
-          {totals.purchaseBased > 0 ? (
-            <div className="mt-4 text-xs text-[color:var(--muted)]">{PURCHASE_BASED_NOTE} ({totals.purchaseBased} of {items.length} items)</div>
-          ) : null}
           <div className="mt-4 text-xs text-[color:var(--muted2)]">
             Print tip: In the print dialog, choose <span className="font-semibold">Save as PDF</span>.
           </div>

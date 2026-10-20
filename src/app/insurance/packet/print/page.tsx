@@ -2,7 +2,7 @@
 "use client";
 
 import Link from "next/link";
-import { collectibleItems, insuranceValue, PURCHASE_BASED_NOTE } from "@/lib/vaultStats";
+import { COST_LABEL, COST_NOTE, ESTIMATE_LABEL, EXCLUSIONS_ARE_DEVICE_ONLY, fmtCost, fmtEstimate, insuranceCost, insuranceEstimate, insuranceScope, insuranceTotals, noEstimateNote, notCountedLine, readInsuranceExcludedIds, totalsSentence } from "@/lib/insuranceDocs";
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 
@@ -19,7 +19,6 @@ type Item = ModelItem & {
   valueConfidence?: number;
 };
 
-const LS_INSURANCE_EXCLUDED = "vltd_insurance_excluded_item_ids_v1";
 const ITEMS_PER_PAGE_NO_IMAGES = 25;
 const ITEMS_PER_PAGE_WITH_IMAGES = 5;
 
@@ -64,16 +63,6 @@ function toSeedItemsFromDemo(): Item[] {
   })) as Item[];
 }
 
-function readExcludedIds() {
-  if (typeof window === "undefined") return new Set<string>();
-  try {
-    const parsed = JSON.parse(window.localStorage.getItem(LS_INSURANCE_EXCLUDED) ?? "[]");
-    return new Set(Array.isArray(parsed) ? parsed.map(String) : []);
-  } catch {
-    return new Set<string>();
-  }
-}
-
 export default function InsurancePacketPrintPage() {
   const params = useSearchParams();
   const includeImages = params.get("images") === "1";
@@ -84,37 +73,35 @@ export default function InsurancePacketPrintPage() {
   useEffect(() => {
     const seed = toSeedItemsFromDemo();
     const loaded = loadItemsOrSeed(seed as any) as any as Item[];
-    setItems(collectibleItems(loaded));
-    setExcludedIds(readExcludedIds());
+    setItems(loaded);
+    setExcludedIds(readInsuranceExcludedIds());
     let active = true;
     void syncVaultItemsFromSupabase().then(() => {
-      if (active) setItems(collectibleItems(loadItems() as any as Item[]));
+      if (active) setItems(loadItems() as any as Item[]);
     });
     return () => {
       active = false;
     };
   }, []);
 
-  const selectedItems = useMemo(() => items.filter((item) => !excludedIds.has(String(item.id))), [items, excludedIds]);
-  // Items stated at purchase price (not priced yet) carry a * and the footnote below.
-  const purchaseBasedCount = useMemo(() => selectedItems.filter((i) => insuranceValue(i).purchaseBased).length, [selectedItems]);
+  // ONE rule set (src/lib/insuranceDocs.ts), the same as the packet screen, the inventory and the reports.
+  const scope = useMemo(() => insuranceScope(items, excludedIds), [items, excludedIds]);
+  const selectedItems = scope.included;
+  const notCounted = notCountedLine(scope);
   const itemsPerPage = includeImages ? ITEMS_PER_PAGE_WITH_IMAGES : ITEMS_PER_PAGE_NO_IMAGES;
   const totalPages = Math.max(1, Math.ceil(selectedItems.length / itemsPerPage));
   const pageIndex = Math.min(requestedPage, totalPages - 1);
   const visibleItems = selectedItems.slice(pageIndex * itemsPerPage, pageIndex * itemsPerPage + itemsPerPage);
 
-  const totals = useMemo(() => {
-    const cost = selectedItems.reduce((s, i) => s + clamp(Number(i.purchasePrice ?? 0)), 0);
-    const value = selectedItems.reduce((s, i) => s + clamp(insuranceValue(i).amount), 0);
-    return { cost, value };
-  }, [selectedItems]);
+  const totals = useMemo(() => insuranceTotals(selectedItems), [selectedItems]);
+  const noEstimate = noEstimateNote(totals);
 
   return (
-    <main className="vltd-ins-light bg-white px-5 py-5 text-black">
+    <main className="vltd-ins-light vltd-print-document bg-white px-5 py-5 text-black">
       <style>{`
         :root { color-scheme: light; }
         body { background: white !important; color: black !important; }
-        header, nav, [style*="--topnav"], [class*="TopNav"] { display: none !important; }
+        [data-site-chrome] { display: none !important; }
         @page { size: landscape; margin: 0.25in; }
         @media print {
           .no-print { display: none !important; }
@@ -142,8 +129,11 @@ export default function InsurancePacketPrintPage() {
         <div className="text-[8px] font-bold uppercase tracking-[0.14em]">VLTD Insurance Packet</div>
         <h1 className="mt-1 text-base font-black leading-none">Insurance Policy Packet</h1>
         <div className="mt-1 text-[8px] text-slate-700">
-          Generated {new Date().toLocaleString()} • Page {pageIndex + 1} of {totalPages} • Showing {visibleItems.length} of {selectedItems.length} insured items • Total Value {fmtMoney(totals.value)}{purchaseBasedCount > 0 ? "*" : ""} • Total Cost {fmtMoney(totals.cost)} • Images {includeImages ? "included" : "excluded"}
+          Generated {new Date().toLocaleString()} • Page {pageIndex + 1} of {totalPages} • Showing {visibleItems.length} of {selectedItems.length} counted items • {totalsSentence(totals)} • Images {includeImages ? "included" : "excluded"}
         </div>
+        {notCounted ? <div className="mt-1 text-[8px] text-slate-700" data-testid="not-counted">{notCounted} {EXCLUSIONS_ARE_DEVICE_ONLY}</div> : null}
+        {noEstimate ? <div className="mt-1 text-[8px] text-slate-700" data-testid="no-estimate-note">{noEstimate}</div> : null}
+        <div className="mt-1 text-[8px] text-slate-700">{COST_NOTE}</div>
       </section>
 
       <table className="w-full table-fixed border-collapse text-[7.5px] leading-tight">
@@ -154,8 +144,8 @@ export default function InsurancePacketPrintPage() {
             <th className="w-[22%] border border-slate-300 bg-slate-100 p-1 text-left">Category</th>
             <th className="w-[10%] border border-slate-300 bg-slate-100 p-1 text-left">ID</th>
             <th className="w-[12%] border border-slate-300 bg-slate-100 p-1 text-left">Storage</th>
-            <th className="w-[8%] border border-slate-300 bg-slate-100 p-1 text-left">Cost</th>
-            <th className="w-[8%] border border-slate-300 bg-slate-100 p-1 text-left">Value</th>
+            <th className="w-[8%] border border-slate-300 bg-slate-100 p-1 text-left">{COST_LABEL}</th>
+            <th className="w-[8%] border border-slate-300 bg-slate-100 p-1 text-left">{ESTIMATE_LABEL}</th>
             <th className="w-[12%] border border-slate-300 bg-slate-100 p-1 text-left">Appraisal</th>
           </tr>
         </thead>
@@ -178,8 +168,8 @@ export default function InsurancePacketPrintPage() {
                 <div>Serial: {item.serialNumber ?? "-"}</div>
               </td>
               <td className="border border-slate-300 p-1 align-top">{item.storageLocation ?? "-"}</td>
-              <td className="border border-slate-300 p-1 align-top font-bold">{fmtMoney(item.purchasePrice)}</td>
-              <td className="border border-slate-300 p-1 align-top font-bold">{fmtMoney(insuranceValue(item).amount)}{insuranceValue(item).purchaseBased ? "*" : ""}</td>
+              <td className="border border-slate-300 p-1 align-top font-bold">{fmtCost(insuranceCost(item))}</td>
+              <td className="border border-slate-300 p-1 align-top font-bold">{fmtEstimate(insuranceEstimate(item))}</td>
               <td className="border border-slate-300 p-1 align-top">
                 <div>{item.valueSource ?? ""}</div>
                 <div>{item.valueUpdatedAt ? fmtDate(item.valueUpdatedAt) : ""}{typeof item.valueConfidence === "number" ? ` • ${item.valueConfidence}%` : ""}</div>
@@ -188,7 +178,6 @@ export default function InsurancePacketPrintPage() {
           ))}
         </tbody>
       </table>
-      {purchaseBasedCount > 0 ? <div className="mt-3 text-xs" style={{ opacity: 0.8 }}>{PURCHASE_BASED_NOTE} ({purchaseBasedCount} of {selectedItems.length} items)</div> : null}
     </main>
   );
 }

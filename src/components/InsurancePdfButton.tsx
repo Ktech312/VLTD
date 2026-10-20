@@ -1,14 +1,16 @@
 "use client";
 
 import { pillClassName } from "@/components/ui/PillButton";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 
 import { printInsurancePdf } from "@/lib/insurancePdf";
+import { EXCLUSIONS_ARE_DEVICE_ONLY, insuranceScope, notCountedLine, readInsuranceExcludedIds } from "@/lib/insuranceDocs";
 import type { VaultItem } from "@/lib/vaultModel";
 
 export default function InsurancePdfButton({
-  items,
+  items: allItems,
+  single = false,
   collectorName,
   label = "Insurance PDF",
   className,
@@ -17,6 +19,8 @@ export default function InsurancePdfButton({
   hideTrigger = false,
 }: {
   items: VaultItem[];
+  /** One item the owner picked (e.g. from its own page): no eligibility filter, a sold item is printed and marked Sold. A collection export always applies the shared Insurance rules. */
+  single?: boolean;
   collectorName?: string;
   label?: string;
   className?: string;
@@ -31,6 +35,10 @@ export default function InsurancePdfButton({
     if (controlledOpen === undefined) setInnerOpen(next);
     onOpenChange?.(next);
   };
+  // Collection export = the same eligibility rules as the Insurance pages (owned only; sold, supplies, wishlist and your exclusions are counted out and said so).
+  const scope = useMemo(() => (open && !single ? insuranceScope(allItems, readInsuranceExcludedIds()) : null), [open, single, allItems]);
+  const items = scope ? scope.included : allItems;
+  const notCounted = scope ? notCountedLine(scope) : null;
   const [name, setName] = useState(collectorName ?? "");
   const [includeNotes, setIncludeNotes] = useState(true);
   const [includeComparables, setIncludeComparables] = useState(true);
@@ -42,6 +50,7 @@ export default function InsurancePdfButton({
       collectorName: name,
       includeNotes,
       includeComparables,
+      notCounted,
     });
 
     setTimeout(() => {
@@ -78,6 +87,7 @@ export default function InsurancePdfButton({
               </div>
               <div className="mt-1 text-[12px]" style={{ color: "var(--muted)" }}>
                 {items.length} item{items.length !== 1 ? "s" : ""}. Opens print dialog so you can save as PDF.
+                {notCounted ? <span data-testid="pdf-not-counted"> {notCounted} {EXCLUSIONS_ARE_DEVICE_ONLY}</span> : null}
               </div>
             </div>
 

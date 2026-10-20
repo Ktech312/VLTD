@@ -1,13 +1,16 @@
 import { formatPrice } from "@/lib/pricingMvp";
 import { UNIVERSE_LABEL } from "@/lib/taxonomy";
 import type { VaultItem } from "@/lib/vaultModel";
-import { insuranceValue, PURCHASE_BASED_NOTE } from "@/lib/vaultStats";
+import { COST_LABEL, COST_NOTE, ESTIMATE_LABEL, fmtCost, fmtEstimate, insuranceCost, insuranceEstimate, insuranceTotals, noEstimateNote } from "@/lib/insuranceDocs";
+import { isSoldItem } from "@/lib/vaultStats";
 
 export type InsurancePdfOptions = {
   collectorName?: string;
   asOfDate?: string;
   includeNotes?: boolean;
   includeComparables?: boolean;
+  /** "Not counted: ..." line from insuranceScope, printed on the cover so the reader knows what the totals leave out. */
+  notCounted?: string | null;
 };
 
 function escapeHtml(value: unknown) {
@@ -32,11 +35,6 @@ function safeDate(timestamp?: number) {
   }
 }
 
-// Shared rule (lib/vaultStats): priced value, or purchase price marked with *.
-function effectiveValue(item: VaultItem) {
-  return insuranceValue(item).amount;
-}
-
 function universeLabel(item: VaultItem) {
   const key = item.universe?.toUpperCase();
   if (!key) return item.categoryLabel ?? "-";
@@ -50,7 +48,6 @@ function detailRow(label: string, value: unknown) {
 }
 
 function itemHtml(item: VaultItem, index: number, opts: InsurancePdfOptions) {
-  const value = effectiveValue(item);
   const comparables = item.comparables ?? [];
   const hasComparables = Boolean(opts.includeComparables) && comparables.length > 0;
 
@@ -92,12 +89,14 @@ function itemHtml(item: VaultItem, index: number, opts: InsurancePdfOptions) {
   <div class="item-header">
     <span class="item-number">#${index + 1}</span>
     <div class="item-title-block">
+      ${isSoldItem(item) ? `<div class="sold-marker">Sold: historical record, not part of the current inventory</div>` : ""}
       <div class="item-title">${escapeHtml(item.title)}${item.subtitle ? ` - ${escapeHtml(item.subtitle)}` : ""}</div>
       <div class="item-meta">${escapeHtml(universeLabel(item))}${item.categoryLabel ? ` | ${escapeHtml(item.categoryLabel)}` : ""}${item.number ? ` | #${escapeHtml(item.number)}` : ""}</div>
     </div>
     <div class="item-value-block">
-      <div class="item-value">${escapeHtml(formatPrice(value))}${insuranceValue(item).purchaseBased ? "*" : ""}</div>
-      <div class="item-value-label">${insuranceValue(item).purchaseBased ? "Stated Value (purchase price)*" : "Stated Value"}</div>
+      <div class="item-value">${escapeHtml(fmtEstimate(insuranceEstimate(item)))}</div>
+      <div class="item-value-label">${escapeHtml(ESTIMATE_LABEL)}</div>
+      <div class="value-range">${escapeHtml(COST_LABEL)}: ${escapeHtml(fmtCost(insuranceCost(item)))}</div>
       ${valueRangeLine}
     </div>
   </div>
@@ -118,7 +117,7 @@ function itemHtml(item: VaultItem, index: number, opts: InsurancePdfOptions) {
         ${detailRow("Subject / Featured", item.subject)}
         ${detailRow("Value Source", item.priceSource)}
         ${item.priceUpdatedAt ? detailRow("Valuation Date", safeDate(item.priceUpdatedAt)) : ""}
-        ${item.purchasePrice ? detailRow("Purchase Price", formatPrice(item.purchasePrice)) : ""}
+        ${insuranceCost(item) !== null ? detailRow(COST_LABEL, fmtCost(insuranceCost(item))) : ""}
         ${detailRow("Purchased From", item.purchaseSource)}
         ${item.createdAt ? detailRow("Added to Vault", safeDate(item.createdAt)) : ""}
       </table>
@@ -149,8 +148,8 @@ export function buildInsurancePdfHtml(items: VaultItem[], opts: InsurancePdfOpti
       day: "numeric",
     });
 
-  const totalValue = items.reduce((sum, item) => sum + effectiveValue(item), 0);
-  const purchaseBasedCount = items.filter((item) => insuranceValue(item).purchaseBased).length;
+  const totals = insuranceTotals(items);
+  const noEstimate = noEstimateNote(totals);
   const collectorName = opts.collectorName?.trim() || "VLTD Collector";
   const itemsHtml = items.map((item, index) => itemHtml(item, index, opts)).join("\n");
 
@@ -163,25 +162,28 @@ export function buildInsurancePdfHtml(items: VaultItem[], opts: InsurancePdfOpti
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: Georgia, 'Times New Roman', serif; color: #111; background: #fff; font-size: 12pt; }
   .cover { page-break-after: always; padding: 80px 60px; display: flex; flex-direction: column; justify-content: space-between; min-height: 100vh; }
-  .cover-logo { font-size: 11pt; letter-spacing: 0.3em; text-transform: uppercase; color: #888; margin-bottom: 60px; }
+  .cover-logo { font-size: 11pt; letter-spacing: 0.3em; text-transform: uppercase; color: #555; margin-bottom: 60px; }
   .cover-title { font-size: 28pt; font-weight: bold; line-height: 1.2; margin-bottom: 16px; }
   .cover-subtitle { font-size: 14pt; color: #555; margin-bottom: 60px; }
   .cover-stats { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 32px; }
-  .cover-stat-label { font-size: 9pt; letter-spacing: 0.2em; text-transform: uppercase; color: #888; margin-bottom: 6px; }
+  .cover-stat-label { font-size: 9pt; letter-spacing: 0.2em; text-transform: uppercase; color: #555; margin-bottom: 6px; }
   .cover-stat-value { font-size: 20pt; font-weight: bold; }
-  .cover-footer { font-size: 10pt; color: #777; }
-  .cover-disclaimer { margin-top: 24px; font-size: 9pt; color: #888; line-height: 1.6; max-width: 520px; }
+  .cover-stat-sub { font-size: 9pt; color: #555; margin-top: 4px; }
+  .cover-notes { font-size: 10pt; color: #333; line-height: 1.5; margin-bottom: 14px; max-width: 620px; }
+  .sold-marker { display: inline-block; font-size: 9pt; font-weight: bold; text-transform: uppercase; letter-spacing: 0.08em; border: 1px solid #111; padding: 2px 6px; margin-bottom: 6px; }
+  .cover-footer { font-size: 10pt; color: #444; }
+  .cover-disclaimer { margin-top: 24px; font-size: 9pt; color: #555; line-height: 1.6; max-width: 520px; }
   .item-block { padding: 40px 60px; }
   .page-break { page-break-before: always; }
   .item-header { display: flex; align-items: flex-start; gap: 20px; margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid #e5e5e5; }
-  .item-number { font-size: 10pt; color: #aaa; min-width: 28px; padding-top: 4px; }
+  .item-number { font-size: 10pt; color: #666; min-width: 28px; padding-top: 4px; }
   .item-title-block { flex: 1; }
   .item-title { font-size: 16pt; font-weight: bold; line-height: 1.3; }
   .item-meta { font-size: 10pt; color: #666; margin-top: 4px; }
   .item-value-block { text-align: right; flex-shrink: 0; }
   .item-value { font-size: 20pt; font-weight: bold; }
-  .item-value-label { font-size: 9pt; color: #888; text-transform: uppercase; letter-spacing: 0.1em; }
-  .value-range { font-size: 9pt; color: #888; margin-top: 4px; }
+  .item-value-label { font-size: 9pt; color: #555; text-transform: uppercase; letter-spacing: 0.1em; }
+  .value-range { font-size: 9pt; color: #555; margin-top: 4px; }
   .item-body { display: flex; gap: 24px; }
   .item-image { width: 160px; height: 220px; object-fit: contain; border: 1px solid #e5e5e5; flex-shrink: 0; }
   .item-image-placeholder { width: 160px; height: 220px; background: #f5f5f5; border: 1px solid #e5e5e5; flex-shrink: 0; }
@@ -191,7 +193,7 @@ export function buildInsurancePdfHtml(items: VaultItem[], opts: InsurancePdfOpti
   .details-table td:first-child { color: #666; width: 38%; }
   .item-notes { margin-top: 12px; font-size: 10pt; color: #555; line-height: 1.5; }
   .comparables { margin-top: 20px; padding-top: 16px; border-top: 1px solid #e5e5e5; }
-  .comparables-title { font-size: 9pt; letter-spacing: 0.2em; text-transform: uppercase; color: #888; margin-bottom: 10px; }
+  .comparables-title { font-size: 9pt; letter-spacing: 0.2em; text-transform: uppercase; color: #555; margin-bottom: 10px; }
   .comparables-table { width: 100%; border-collapse: collapse; font-size: 10pt; }
   .comparables-table th { text-align: left; padding: 6px 10px; background: #f9f9f9; border: 1px solid #e5e5e5; font-weight: 600; }
   .comparables-table td { padding: 6px 10px; border: 1px solid #e5e5e5; }
@@ -210,17 +212,18 @@ export function buildInsurancePdfHtml(items: VaultItem[], opts: InsurancePdfOpti
     <div class="cover-subtitle">${escapeHtml(collectorName)} | ${escapeHtml(date)}</div>
   </div>
   <div class="cover-stats">
-    <div><div class="cover-stat-label">Total Items</div><div class="cover-stat-value">${items.length.toLocaleString()}</div></div>
-    <div><div class="cover-stat-label">Total Stated Value</div><div class="cover-stat-value">${escapeHtml(formatPrice(totalValue))}${purchaseBasedCount > 0 ? "*" : ""}</div></div>
+    <div><div class="cover-stat-label">Items Counted</div><div class="cover-stat-value">${items.length.toLocaleString()}</div></div>
+    <div><div class="cover-stat-label">Total Cost (all-in)</div><div class="cover-stat-value">${escapeHtml(fmtCost(totals.cost))}</div><div class="cover-stat-sub">${totals.costRecorded.toLocaleString()} of ${totals.count.toLocaleString()} with a recorded cost</div></div>
+    <div><div class="cover-stat-label">${escapeHtml(ESTIMATE_LABEL)}</div><div class="cover-stat-value">${escapeHtml(fmtCost(totals.estimate))}</div><div class="cover-stat-sub">${totals.estimated.toLocaleString()} of ${totals.count.toLocaleString()} have an estimate</div></div>
     <div><div class="cover-stat-label">Report Generated</div><div class="cover-stat-value" style="font-size: 13pt; padding-top: 4px;">${escapeHtml(date)}</div></div>
   </div>
   <div class="cover-footer">
     <div>This document was generated by VLTD for insurance documentation purposes.</div>
-    <div class="cover-disclaimer">Stated values are based on collector-entered pricing data, recent comparable sales, and/or AI-assisted valuation estimates. This document is not a certified appraisal. For high-value items, an independent professional appraisal may be required by your insurer.</div>
+    <div class="cover-notes" data-testid="pdf-notes">${escapeHtml(COST_NOTE)}${opts.notCounted ? ` ${escapeHtml(opts.notCounted)}` : ""}${noEstimate ? ` ${escapeHtml(noEstimate)}` : ""}</div>
+    <div class="cover-disclaimer">Estimated values are based on collector-entered pricing data, recent comparable sales, and/or AI-assisted valuation estimates. This document is not a certified appraisal. For high-value items, an independent professional appraisal may be required by your insurer.</div>
   </div>
 </div>
 ${itemsHtml}
-${purchaseBasedCount > 0 ? `<div style="margin-top:18px;font-size:10pt;color:#555;">${escapeHtml(PURCHASE_BASED_NOTE)} (${purchaseBasedCount.toLocaleString()} of ${items.length.toLocaleString()} items)</div>` : ""}
 </body>
 </html>`;
 }

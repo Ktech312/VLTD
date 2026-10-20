@@ -1405,6 +1405,7 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
                 <div className="mt-4 flex flex-wrap gap-2">
                   <InsurancePdfButton
                     items={[item]}
+                    single
                     label="Add to Insurance"
                     className={pillClassName("default")}
                   />
