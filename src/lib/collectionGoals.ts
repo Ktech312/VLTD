@@ -4,7 +4,8 @@ import { stillSignedInAs, storedSessionUserId } from "@/lib/sessionGuard";
 import type { VaultItem } from "@/lib/vaultModel";
 import { isNetworkFailure } from "@/lib/vaultCloud";
 import { registerCloudSaveRetry, reportPending, reportSaved, reportSaving } from "@/lib/cloudSaveStatus";
-import { mergeCloudGoals, validateGoalTarget } from "@/lib/goalRules";
+import { mayAdoptDeviceWideGoals, mergeCloudGoals, validateGoalTarget } from "@/lib/goalRules";
+import { currentLocalOwner } from "@/lib/localDataOwner";
 
 export type CollectionGoal = {
   id: string;
@@ -48,7 +49,9 @@ export function loadGoals(): CollectionGoal[] {
     let raw = localStorage.getItem(key);
     if (!raw && key !== LS_BASE) {
       const legacy = localStorage.getItem(LS_BASE);
-      if (legacy && mayAdoptLegacyKey(LS_BASE, key)) {
+      // Older builds kept one list for the whole device. It goes to this profile only when the device has recorded THIS signed-in
+      // person as the owner of what it holds; before that is settled its owner is uncertain and it is left alone (see legacyDeviceWideGoalCount).
+      if (legacy && mayAdoptLegacyKey(LS_BASE, key) && mayAdoptDeviceWideGoals(currentLocalOwner(), storedSessionUserId())) {
         localStorage.setItem(key, legacy);
         raw = legacy;
       }
@@ -58,6 +61,22 @@ export function loadGoals(): CollectionGoal[] {
     return Array.isArray(parsed) ? (parsed as CollectionGoal[]) : [];
   } catch {
     return [];
+  }
+}
+
+/** Goals an older version left in the device-wide list that this profile has NOT been given because their owner is uncertain. They are kept untouched. */
+export function legacyDeviceWideGoalCount(): number {
+  if (typeof window === "undefined") return 0;
+  try {
+    const key = lsKey();
+    if (key === LS_BASE || localStorage.getItem(key)) return 0;
+    const legacy = localStorage.getItem(LS_BASE);
+    if (!legacy) return 0;
+    if (mayAdoptDeviceWideGoals(currentLocalOwner(), storedSessionUserId()) && mayAdoptLegacyKey(LS_BASE, key)) return 0;
+    const parsed: unknown = JSON.parse(legacy);
+    return Array.isArray(parsed) ? parsed.length : 0;
+  } catch {
+    return 0;
   }
 }
 
@@ -74,6 +93,9 @@ export function saveGoals(goals: CollectionGoal[]) {
 //   - a request the account REFUSES (not just unreachable) is reported, and the goal is not kept.
 const LS_PENDING = "vltd_collection_goals_pending_v1";
 const LS_DELETED = "vltd_collection_goals_deleted_v1";
+// Ids this device has seen in the account (confirmed uploads and every read): a goal on the device that is in this list but no longer in
+// the account was deleted on another device.
+const LS_SYNCED = "vltd_collection_goals_synced_v1";
 
 function idSetKey(base: string, pid: string) {
   return `${base}:${pid}`;
@@ -185,6 +207,7 @@ export async function retryPendingGoals(): Promise<void> {
     const r = await deleteGoalConfirmed(id, pid);
     // saved: done. refused: the account keeps the goal, so it comes back on the next load (the person was told when they deleted it).
     if (r.state !== "unreachable") removeFromSet(LS_DELETED, pid, id);
+    if (r.state === "saved") removeFromSet(LS_SYNCED, pid, id);
   }
   for (const id of Array.from(pending)) {
     const goal = local.find((g) => g.id === id);
@@ -194,6 +217,7 @@ export async function retryPendingGoals(): Promise<void> {
     }
     const r = await pushGoalConfirmed(goal, pid);
     if (r.state !== "unreachable") removeFromSet(LS_PENDING, pid, id);
+    if (r.state === "saved") addToSet(LS_SYNCED, pid, id);
   }
   reportOutcome(pid);
 }
@@ -225,15 +249,6 @@ export async function syncGoalsFromSupabase(): Promise<CollectionGoal[]> {
     // The answer is for the person and profile that asked. If either changed while it was in flight, drop it: saving it would
     // file one profile's goals under another's, and pushing the local copy would upload them to the wrong profile.
     if (!stillSignedInAs(startedAs) || activeProfileId() !== pid) return local;
-    if (data.length === 0) {
-      // The account has none: goals that only exist here (made before goals were uploaded) are owed to it.
-      const pending = readIdSet(LS_PENDING, pid);
-      const deleted = readIdSet(LS_DELETED, pid);
-      for (const g of local) if (!deleted.has(g.id)) pending.add(g.id);
-      writeIdSet(LS_PENDING, pid, pending);
-      await retryPendingGoals().catch(() => undefined);
-      return loadGoals();
-    }
     const fromCloud: CollectionGoal[] = data.map((r: Record<string, unknown>) => ({
       id: String(r.id),
       name: String(r.name ?? ""),
@@ -243,9 +258,22 @@ export async function syncGoalsFromSupabase(): Promise<CollectionGoal[]> {
       notes: (r.notes as string) ?? undefined,
       createdAt: Date.parse(String(r.created_at)) || Date.now(),
     }));
-    const goals = mergeCloudGoals(fromCloud, local, readIdSet(LS_PENDING, pid), readIdSet(LS_DELETED, pid));
-    saveGoals(goals);
-    return goals;
+    const merged = mergeCloudGoals(fromCloud, local, readIdSet(LS_PENDING, pid), readIdSet(LS_DELETED, pid), readIdSet(LS_SYNCED, pid));
+    // What the account holds is now known to this device.
+    const synced = readIdSet(LS_SYNCED, pid);
+    for (const g of fromCloud) synced.add(g.id);
+    for (const id of merged.deletedElsewhere) synced.delete(id);
+    writeIdSet(LS_SYNCED, pid, synced);
+    saveGoals(merged.goals);
+    // Goals that exist only on this device are owed to the account: queue them and upload (they stay listed meanwhile).
+    if (merged.deviceOnly.length > 0) {
+      const pending = readIdSet(LS_PENDING, pid);
+      for (const id of merged.deviceOnly) pending.add(id);
+      writeIdSet(LS_PENDING, pid, pending);
+      await retryPendingGoals().catch(() => undefined);
+      return loadGoals();
+    }
+    return merged.goals;
   } catch {
     return local;
   }
@@ -272,6 +300,7 @@ export async function addGoal(fields: Omit<CollectionGoal, "id" | "createdAt">, 
   const r = await pushGoalConfirmed(goal, pid);
   if (r.state === "saved") {
     removeFromSet(LS_PENDING, pid, goal.id);
+    addToSet(LS_SYNCED, pid, goal.id);
     reportOutcome(pid);
     return { ok: true, pending: false };
   }
@@ -304,6 +333,7 @@ export async function updateGoal(id: string, patch: Partial<Omit<CollectionGoal,
   const r = await pushGoalConfirmed(updated, pid);
   if (r.state === "saved") {
     removeFromSet(LS_PENDING, pid, id);
+    addToSet(LS_SYNCED, pid, id);
     reportOutcome(pid);
     return { ok: true, pending: false };
   }
@@ -334,6 +364,7 @@ export async function deleteGoal(id: string): Promise<GoalWriteResult> {
   const r = await deleteGoalConfirmed(id, pid);
   if (r.state === "saved") {
     removeFromSet(LS_DELETED, pid, id);
+    removeFromSet(LS_SYNCED, pid, id);
     reportOutcome(pid);
     return { ok: true, pending: false };
   }

@@ -11,6 +11,7 @@ import {
   computeAllGoalProgress,
   deleteGoal,
   loadGoals,
+  legacyDeviceWideGoalCount,
   pendingGoalCounts,
   retryPendingGoals,
   syncGoalsFromSupabase,
@@ -258,6 +259,8 @@ export default function GoalsPage() {
   // Goal changes the account has not confirmed yet (saved or deleted on this device only): said out loud, never silent.
   const [waiting, setWaiting] = useState({ saves: 0, deletes: 0 });
   const [retrying, setRetrying] = useState(false);
+  // Goals an older version left on this device that cannot be tied to this account: kept, never added automatically.
+  const [legacyHeld, setLegacyHeld] = useState(0);
   const refreshWaiting = () => setWaiting(pendingGoalCounts());
 
   useEffect(() => {
@@ -285,6 +288,7 @@ export default function GoalsPage() {
       if (active) {
         setGoalsLoaded(true);
         refreshWaiting();
+        setLegacyHeld(legacyDeviceWideGoalCount());
       }
     });
     return () => {
@@ -362,6 +366,11 @@ export default function GoalsPage() {
       <main style={{ background: "var(--bg)" }}>
       <div className="mx-auto grid max-w-[1480px] gap-6 px-4 pb-6 sm:px-6 lg:px-8 xl:grid-cols-[minmax(0,1fr)_420px]">
         <section className="min-w-0">
+          {legacyHeld > 0 ? (
+            <div role="status" data-testid="goals-legacy-note" className="mt-2 rounded-[7px] border border-[rgba(203,208,213,0.28)] px-4 py-3 text-sm" style={{ color: "var(--theme-text-primary,#ECEDEF)" }}>
+              {legacyHeld} goal{legacyHeld === 1 ? "" : "s"} saved on this device by an older version cannot be matched to your account, so {legacyHeld === 1 ? "it was" : "they were"} not added. {legacyHeld === 1 ? "It is" : "They are"} kept on this device, untouched.
+            </div>
+          ) : null}
           {waiting.saves + waiting.deletes > 0 ? (
             <div role="status" data-testid="goals-waiting" className="mt-2 flex flex-wrap items-center gap-3 rounded-[7px] border border-[rgba(203,208,213,0.28)] px-4 py-3 text-sm" style={{ color: "var(--theme-text-primary,#ECEDEF)" }}>
               <span>

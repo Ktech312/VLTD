@@ -628,8 +628,8 @@ export default function SpreadsheetImportClient() {
                 <RowCard><div className="text-xs text-[color:var(--muted)]">Missing Cost</div><div className="mt-1 text-lg font-semibold">{summary.missingCostCount}</div></RowCard>
                 <RowCard><div className="text-xs text-[color:var(--muted)]">Needs a look</div><div className="mt-1 text-lg font-semibold">{summary.warningCount}</div></RowCard>
                 <RowCard><div className="text-xs text-[color:var(--muted)]">Batch Duplicates</div><div className="mt-1 text-lg font-semibold">{duplicateGroups.length}</div></RowCard>
-                <RowCard><div className="text-xs text-[color:var(--muted)]">Vault Matches</div><div className="mt-1 text-lg font-semibold">{existingDuplicateGroups.length}</div></RowCard>
-                <RowCard><div className="text-xs text-[color:var(--muted)]">Likely Matches</div><div className="mt-1 text-lg font-semibold">{likelyDuplicateCandidates.length}</div></RowCard>
+                <RowCard><div className="text-xs text-[color:var(--muted)]">Vault Matches</div><div className="mt-1 text-lg font-semibold" data-testid="tile-vault-matches">{accountCheck === "ok" || existingDuplicateGroups.length > 0 ? existingDuplicateGroups.length : "Not checked"}</div></RowCard>
+                <RowCard><div className="text-xs text-[color:var(--muted)]">Likely Matches</div><div className="mt-1 text-lg font-semibold" data-testid="tile-likely-matches">{accountCheck === "ok" || likelyDuplicateCandidates.length > 0 ? likelyDuplicateCandidates.length : "Not checked"}</div></RowCard>
               </div>
 
               <div className="mt-4">

@@ -35,15 +35,31 @@ check("a number type value is accepted", v(7).ok && v(7).value === 7 && !v(7.5).
 
 // ---- D-03/D-04 merge after reading the account
 const g = (id, createdAt, extra) => ({ id, createdAt, name: id, ...extra });
-const m1 = G.mergeCloudGoals([g("a", 3), g("b", 2)], [g("a", 3), g("b", 2), g("new", 9)], new Set(["new"]), new Set());
+const mg = (...a) => G.mergeCloudGoals(...a).goals;
+const m1 = mg([g("a", 3), g("b", 2)], [g("a", 3), g("b", 2), g("new", 9)], new Set(["new"]), new Set());
 check("a goal still waiting to upload survives a read of the account", m1.some((x) => x.id === "new") && m1.length === 3);
 check("newest first", m1[0].id === "new");
-const m2 = G.mergeCloudGoals([g("a", 3), g("b", 2)], [g("a", 3)], new Set(), new Set(["b"]));
+const m2 = mg([g("a", 3), g("b", 2)], [g("a", 3)], new Set(), new Set(["b"]));
 check("a goal deleted here does not come back from the account before the account confirmed the delete", !m2.some((x) => x.id === "b") && m2.length === 1);
-const m3 = G.mergeCloudGoals([g("a", 3, { name: "old" })], [g("a", 3, { name: "edited here" })], new Set(["a"]), new Set());
+const m3 = mg([g("a", 3, { name: "old" })], [g("a", 3, { name: "edited here" })], new Set(["a"]), new Set());
 check("an edit waiting to upload is not overwritten by the account's older copy", m3[0].name === "edited here");
-const m4 = G.mergeCloudGoals([g("a", 3, { name: "cloud" })], [g("a", 3, { name: "local" })], new Set(), new Set());
+const m4 = mg([g("a", 3, { name: "cloud" })], [g("a", 3, { name: "local" })], new Set(), new Set());
 check("an edit that is not waiting follows the account", m4[0].name === "cloud");
+// device-only goals (ownership = the profile they are stored under) are kept next to the account's goals
+const cl = [g("c1", 8), g("c2", 7), g("c3", 6)];
+const mo = G.mergeCloudGoals(cl, [...cl, g("dev1", 5), g("dev2", 4)], new Set(), new Set(), new Set(["c1", "c2", "c3"]));
+check("device-only goals are kept next to the account's existing goals (not suppressed)", mo.goals.length === 5 && ["dev1", "dev2"].every((id) => mo.goals.some((x) => x.id === id)) && mo.deviceOnly.join() === "dev1,dev2");
+const md = G.mergeCloudGoals(cl, [...cl, g("gone", 5)], new Set(), new Set(), new Set(["c1", "gone"]));
+check("a goal this device saw in the account that the account no longer holds was deleted elsewhere: not brought back", !md.goals.some((x) => x.id === "gone") && md.deletedElsewhere.join() === "gone" && md.deviceOnly.length === 0);
+const me = G.mergeCloudGoals([], [g("a", 3), g("b", 2)], new Set(), new Set(), new Set(["a", "b"]));
+check("an EMPTY answer from the account drops nothing (it may be a lapsed session): both kept and owed to the account", me.goals.length === 2 && me.deviceOnly.length === 2 && me.deletedElsewhere.length === 0);
+const mt = G.mergeCloudGoals(cl, [...cl, g("dev1", 5)], new Set(), new Set(["c2", "dev1"]), new Set());
+check("goals deleted here (waiting for the account) stay hidden, device-only or not", !mt.goals.some((x) => x.id === "c2" || x.id === "dev1") && mt.goals.length === 2);
+const mp = G.mergeCloudGoals(cl, [...cl, g("new", 9)], new Set(["new"]), new Set(), new Set(["c1", "c2", "c3"]));
+check("a pending goal is kept and is not counted as device-only", mp.goals.some((x) => x.id === "new") && mp.deviceOnly.length === 0);
+const mx = G.mergeCloudGoals(cl, [...cl, ...cl, g("dev1", 5), g("dev1", 5)], new Set(), new Set(), new Set(["c1", "c2", "c3"]));
+check("no duplicates however often the same goals are read", mx.goals.length === 4 && new Set(mx.goals.map((x) => x.id)).size === 4);
+check("the device-wide list of an older version is adopted only for the recorded owner", G.mayAdoptDeviceWideGoals("u1", "u1") === true && G.mayAdoptDeviceWideGoals("u1", "u2") === false && G.mayAdoptDeviceWideGoals(null, "u1") === false && G.mayAdoptDeviceWideGoals("u1", null) === false);
 
 // ---- D-06 undo plan: exact ids, edited / moved / in-use records flagged
 const item = (id, extra) => ({ id, title: "T " + id, purchasePrice: 10, status: "COLLECTION", profile_id: "P1", ...extra });
@@ -118,6 +134,7 @@ const ui = read("src/app/vault/import/SpreadsheetImportClient.tsx");
 check("D-07 the page loads the account's items (checked) and says when it could not", /syncVaultItemsFromSupabaseChecked\(\)/.test(ui) && /account-check-failed/.test(ui));
 check("D-07 skip-existing re-checks the account right before importing and uses the refreshed list", /duplicateCheckIncomplete = !\(await checkAccount\(\)\)/.test(ui) && /getItemsToImport\(readVaultForActiveProfile\(\)/.test(ui));
 check("D-07 the documented title rule is unchanged (duplicateKeyOf still the key)", /duplicateKeyOf\(item\)/.test(ui) && /replace\(\/\\s\+\/g, " "\)\.trim\(\)/.test(imp));
+check("D-07/ADD-272 the match tiles say Not checked (not 0) until the account has been read", /tile-vault-matches/.test(ui) && /tile-likely-matches/.test(ui) && /"Not checked"/.test(ui));
 const bulk = read("src/app/vault/bulk/page.tsx");
 check("D-08 bulk intake uses the planner and names what was left out", /planBulkIntake\(files, draftCountRef\.current, MAX_FILES\)/.test(bulk) && /intake-note/.test(bulk));
 const cap = read("src/app/capture/page.tsx");
