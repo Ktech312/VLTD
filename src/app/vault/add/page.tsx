@@ -2399,8 +2399,9 @@ export default function AddPage() {
           ) : null}
 
           {/* Only surface important alerts (saved / errors / limits) — not routine nudges */}
-          {status && (status.startsWith("✓") || /limit|failed|error|required|unavailable|deleted|removed|negative/i.test(status)) ? (
+          {status && (status.startsWith("✓") || /limit|failed|error|required|unavailable|deleted|removed|negative|numbers only|not a number|enter an amount|enter one amount|decimal|not supported|too large|spaces inside|period for cents/i.test(status)) ? (
             <div
+              role={status.startsWith("✓") ? "status" : "alert"}
               className="mt-2 rounded-xl px-3 py-2 text-sm ring-1"
               style={
                 status.startsWith("✓")

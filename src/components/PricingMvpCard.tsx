@@ -213,7 +213,7 @@ export default function PricingMvpCard({
   }
 
   async function saveAll() {
-    const c = check([[draft.low, "Low value"], [draft.median, "Median value"], [draft.high, "High value"], [draft.last, "Last comp"], [draft.estimate, "Value"]]);
+    const c = check([[draft.low, "Low value"], [draft.median, "Value"], [draft.high, "High value"], [draft.last, "Last comp"], [draft.estimate, "Value"]]);
     if (!c.ok) { setProblem(c.message); return; }
     setProblem("");
     setAll(false);

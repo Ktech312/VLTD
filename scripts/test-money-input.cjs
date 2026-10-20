@@ -91,5 +91,17 @@ t("estimated seller fees come off the profit on a known platform", ebay.fees > 0
 const stats = sold.soldStats([{ ...base, id: "1", soldPrice: 100, purchasePrice: 40 }, { ...base, id: "2", soldPrice: 50 }]);
 t("totals leave the unknown-cost sale out of profit and say so", stats.profitCount === 1 && stats.unknownCostCount === 1 && stats.totalProfit === 60 && stats.realizedRevenue === 150, stats);
 
+// ---- the Add page only shows some status lines (a refusal that is not shown would be a silent refusal)
+const addSrc = fs.readFileSync(path.join(root, "src", "app", "vault", "add", "page.tsx"), "utf8");
+const visible = addSrc.match(/status\.startsWith\("✓"\) \|\| (\/[^\n]+\/i)\.test\(status\)/);
+t("the Add page status filter is found", !!visible);
+if (visible) {
+  const re = new Function("return " + visible[1])();
+  for (const raw of ["abc", "1e3", "1,5", "5-3", "-40", "12.345", "1 000", "99999999999", "$"]) {
+    const m = p(raw, { label: "Current value" });
+    t(`the Add page shows the refusal for ${JSON.stringify(raw)}`, m.ok === false && re.test(m.message), m);
+  }
+}
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);
