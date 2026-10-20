@@ -2706,9 +2706,11 @@ html[data-load-stalled="1"] #vltd-load-stalled {
     top: auto !important; right: auto !important; bottom: auto !important; left: auto !important;
     height: auto !important; overflow: visible !important;
   }
-  html:has(.vltd-print-document), body:has(.vltd-print-document) { height: auto !important; overflow: visible !important; background: #ffffff !important; }
+  html:has(.vltd-print-document), body:has(.vltd-print-document) { height: auto !important; min-height: 0 !important; overflow: visible !important; background: #ffffff !important; background-image: none !important; }
+  body:has(.vltd-print-document)::before, body:has(.vltd-print-document)::after { display: none !important; }
   .vltd-print-document, .vltd-print-document * { color: #000000 !important; text-shadow: none !important; box-shadow: none !important; -webkit-text-fill-color: #000000 !important; }
   .vltd-print-document, .vltd-print-document section, .vltd-print-document div, .vltd-print-document table, .vltd-print-document tr, .vltd-print-document th, .vltd-print-document td { background: #ffffff !important; background-image: none !important; }
   .vltd-print-document th { background: #efefef !important; }
+  .vltd-print-document .vltd-no-print { display: none !important; }
   .vltd-print-document .vltd-print-muted { color: #333333 !important; -webkit-text-fill-color: #333333 !important; }
 }

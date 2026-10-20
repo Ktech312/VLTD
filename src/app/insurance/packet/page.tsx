@@ -136,7 +136,7 @@ export default function InsurancePacketPage() {
     <main className="vltd-print-document px-4 py-6 text-[color:var(--fg)] sm:px-6 lg:px-8">
       <div className="packet-shell mx-auto max-w-6xl">
         {cloud.state === "failed" && items.length > 0 ? <StaleDataNotice onRetry={cloud.retry} busy={cloud.busy} /> : null}
-        <div className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-[24px] border border-[color:var(--border)] bg-vault-card p-3 shadow-[0_18px_56px_rgba(0,0,0,0.22)]">
+        <div className="vltd-no-print mb-6 flex flex-wrap items-center justify-between gap-3 rounded-[24px] border border-[color:var(--border)] bg-vault-card p-3 shadow-[0_18px_56px_rgba(0,0,0,0.22)]">
           <Link href="/insurance" className="rounded-full border border-[color:var(--border)] bg-vault-card px-4 py-2 text-sm font-semibold text-[color:var(--accent)] transition hover:border-[rgba(203,208,213,0.42)]">
             ← Back to Insurance
           </Link>
@@ -194,7 +194,7 @@ export default function InsurancePacketPage() {
           {notCounted ? <div className="mt-2 text-sm text-[color:var(--muted)]" data-testid="not-counted">{notCounted} {EXCLUSIONS_ARE_DEVICE_ONLY}</div> : null}
           {noEstimate ? <div className="mt-1 text-sm text-[color:var(--muted)]" data-testid="no-estimate-note">{noEstimate}</div> : null}
           <div className="mt-1 text-xs text-[color:var(--muted)]">{COST_NOTE}</div>
-          <div className="mt-3 rounded-2xl border border-[rgba(203,208,213,0.18)] bg-[rgba(203,208,213,0.06)] px-4 py-3 text-sm text-[color:var(--muted)]">
+          <div className="vltd-no-print mt-3 rounded-2xl border border-[rgba(203,208,213,0.18)] bg-[rgba(203,208,213,0.06)] px-4 py-3 text-sm text-[color:var(--muted)]">
             Use Open Printable Page to generate the PDF from a lightweight print-only route. Without images: 25 items per page. With images: 5 items per page.
           </div>
         </section>
