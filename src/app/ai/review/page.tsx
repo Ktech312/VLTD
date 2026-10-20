@@ -179,7 +179,13 @@ function ReviewInner() {
     // Same path as every other save: written on this device, queued, uploaded by the shared queue. Says whether it is still waiting.
     let pending = false;
     try {
-      ({ pending } = await saveItemDurably(vaultItem));
+      // The local write happens first and synchronously inside saveItemDurably; only the upload is awaited, and only for a few seconds:
+      // a slow or unreachable connection must not leave the person waiting, so past that the answer is "saved on this device, sync pending".
+      const outcome = await Promise.race([
+        saveItemDurably(vaultItem),
+        new Promise<{ pending: boolean }>((resolve) => window.setTimeout(() => resolve({ pending: true }), 6000)),
+      ]);
+      pending = outcome.pending;
     } catch (e) {
       console.error("approve draft failed", e);
       setSaving(false);
