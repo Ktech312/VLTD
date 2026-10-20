@@ -2708,6 +2708,8 @@ html[data-load-stalled="1"] #vltd-load-stalled {
   }
   html:has(.vltd-print-document), body:has(.vltd-print-document) { height: auto !important; min-height: 0 !important; overflow: visible !important; background: #ffffff !important; background-image: none !important; }
   body:has(.vltd-print-document)::before, body:has(.vltd-print-document)::after { display: none !important; }
+  /* the theme sets the body background with [data-vltd-theme] body { ... !important }: this needs one more level of specificity to win */
+  :root body:has(.vltd-print-document) { background: #ffffff !important; background-image: none !important; background-attachment: scroll !important; color: #000000 !important; }
   .vltd-print-document, .vltd-print-document * { color: #000000 !important; text-shadow: none !important; box-shadow: none !important; -webkit-text-fill-color: #000000 !important; }
   .vltd-print-document, .vltd-print-document section, .vltd-print-document div, .vltd-print-document table, .vltd-print-document tr, .vltd-print-document th, .vltd-print-document td { background: #ffffff !important; background-image: none !important; }
   .vltd-print-document th { background: #efefef !important; }
