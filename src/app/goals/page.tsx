@@ -20,6 +20,7 @@ import { addWishlistItem } from "@/lib/wishlistModel";
 import { loadItems, type VaultItem } from "@/lib/vaultModel";
 import { Glyph } from "@/components/ui/Glyph";
 import { showToast } from "@/lib/toast";
+import { subscribeCloudSave } from "@/lib/cloudSaveStatus";
 import { universePlaceholder } from "@/lib/itemPlaceholder";
 
 type GoalFilter = "all" | "completion" | "value" | "insurance" | "sell" | "gallery";
@@ -266,6 +267,14 @@ export default function GoalsPage() {
     };
     window.addEventListener("focus", onFocus);
     return () => window.removeEventListener("focus", onFocus);
+  }, []);
+
+  // The retry timer and the Retry button both change what is waiting: keep the notice and the list in step with the status pill.
+  useEffect(() => {
+    return subscribeCloudSave(() => {
+      setWaiting(pendingGoalCounts());
+      setGoals(loadGoals());
+    });
   }, []);
 
   useEffect(() => {
