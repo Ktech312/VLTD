@@ -17,10 +17,19 @@ new Function("React", "module", code)(React, mod);
 const out = path.join(root, "public/ui/icon-themes/cyan-purple-neon-v1");
 fs.mkdirSync(out, { recursive: true });
 const names = Object.keys(mod.exports);
-const defs = '<linearGradient id="ink" x1="3" y1="4" x2="28" y2="28" gradientUnits="userSpaceOnUse"><stop stop-color="#27e3ff"/><stop offset=".45" stop-color="#4e85ff"/><stop offset=".72" stop-color="#a46bff"/><stop offset="1" stop-color="#fc46e3"/></linearGradient>';
+const boundsPath = path.join(__dirname, "approved-icon-bounds.json");
+const bounds = fs.existsSync(boundsPath) ? JSON.parse(fs.readFileSync(boundsPath, "utf8")) : {};
+// Simple armchair: open back, substantial arms and seat, two short legs.
+const lounge = '<path d="M6 11V7a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v4M6 15h12M5 11H3v8h18v-8h-3v4M6 11v4M6 19l-2 3h3l2-3m6 0 2 3h3l-2-3"/>';
 for (const name of names) {
   if (name === "dashboard" || name === "vault") continue;
-  const art = renderToStaticMarkup(React.createElement("g", { transform: "translate(1 1) scale(1.25)" }, mod.exports[name]));
+  const art = name === "communityBoard"
+    ? `<g transform="translate(1 1) scale(1.25)">${lounge}</g>`
+    : renderToStaticMarkup(React.createElement("g", { transform: "translate(1 1) scale(1.25)" }, mod.exports[name]));
+  // Bounds are measured from the complete symbol in its local coordinate system,
+  // not the 32px canvas or individual paths. Every silhouette gets the full palette.
+  const b = bounds[name] || { x: 3, y: 3, width: 18, height: 18 };
+  const defs = `<linearGradient id="ink" x1="${b.x}" y1="${b.y}" x2="${b.x + b.width}" y2="${b.y + b.height}" gradientUnits="userSpaceOnUse"><stop stop-color="#27e3ff"/><stop offset=".32" stop-color="#4e85ff"/><stop offset=".62" stop-color="#a46bff"/><stop offset=".88" stop-color="#fc46e3"/></linearGradient>`;
   // Same 32px canvas, dark edge, 2px gradient stroke and restrained halo as Home/Vault.
   // Compensate for the path coordinate scale to keep the final stroke width constant.
   const layer = (stroke, width, opacity = 1) => `<g stroke="${stroke}" stroke-width="${width / 1.25}" opacity="${opacity}">${art.replaceAll("currentColor", stroke)}</g>`;
