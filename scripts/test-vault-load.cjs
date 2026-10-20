@@ -171,6 +171,9 @@ function seed(items) {
   const failed = await model.syncVaultItemsFromSupabaseChecked("p-fail");
   t("a failed pull is reported as not answered (not as an empty vault)", failed.ok === false && failed.items.length === 0);
 
+  // A failed download makes the next automatic one wait (3 s, 6 s ... 5 min; added in 3d26569). That wait is the app working as designed,
+  // so the test clears it between scenarios the way the Retry button does.
+  model.resetCloudBackoff();
   cloudFails = false;
   cloudRows = [];
   const empty = await model.syncVaultItemsFromSupabaseChecked("p-empty");

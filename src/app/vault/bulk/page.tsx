@@ -486,7 +486,7 @@ export default function BulkUploadPage() {
               {intakeNote ? (
                 <div role="alert" data-testid="intake-note" className="mt-3 flex flex-wrap items-start gap-3 rounded-xl border border-amber-400/40 px-4 py-3 text-sm text-amber-300">
                   <span className="min-w-0 flex-1">{intakeNote}</span>
-                  <button type="button" className="underline" onClick={() => setIntakeNote("")}>Dismiss</button>
+                  <button type="button" className="inline-flex min-h-9 items-center rounded-full px-4 py-1 text-sm font-semibold underline ring-1 ring-current" onClick={() => setIntakeNote("")}>Dismiss</button>
                 </div>
               ) : null}
 

@@ -529,7 +529,7 @@ export default function SpreadsheetImportClient() {
             {accountCheck === "failed" ? (
               <div role="status" data-testid="account-check-failed" className="mb-3 rounded-xl border border-amber-400/40 px-4 py-3 text-sm text-amber-300">
                 Your account could not be checked just now, so duplicate detection only covers items already on this device and may be incomplete.{" "}
-                <button type="button" className="underline" onClick={() => void checkAccount()}>Check again</button>
+                <button type="button" className="mt-2 inline-flex min-h-9 items-center rounded-full px-4 py-1 text-sm font-semibold underline ring-1 ring-current" onClick={() => void checkAccount()}>Check again</button>
               </div>
             ) : accountCheck === "checking" ? (
               <div role="status" className="mb-3 text-xs text-[color:var(--muted)]">Checking your account for existing items…</div>
