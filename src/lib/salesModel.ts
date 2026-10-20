@@ -32,6 +32,8 @@ const ACTIVE_PROFILE_KEY = "vltd_active_profile_id_v1";
 const LEGACY_KEYS = ["vltd_sales_ledger_v1", "vltd_sales_history", "vltd_sale_history_v1"];
 
 function num(v: unknown): number | undefined {
+  // null / blank is NOT zero: an unknown cost must stay unknown (Number(null) is 0)
+  if (v === null || v === undefined || (typeof v === "string" && v.trim() === "")) return undefined;
   const n = Number(v);
   return Number.isFinite(n) ? n : undefined;
 }
