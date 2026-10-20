@@ -50,6 +50,7 @@ export default function BottomNav() {
 
   return (
     <nav
+      data-site-chrome="true"
       className="fixed bottom-0 left-0 right-0 z-50 px-3 pb-[max(env(safe-area-inset-bottom,0px),10px)] md:hidden no-select"
       style={{ position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 9999 }}
       aria-label="Main navigation"

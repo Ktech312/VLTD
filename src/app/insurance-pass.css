@@ -117,24 +117,7 @@ body:not(:has(.vltd-ins-light)):has(a[href="/insurance/item"]) a:hover {
   border-color: rgba(82, 214, 244, 0.44) !important;
 }
 
-@media print {
-  body:not(:has(.vltd-ins-light)):has(a[href="/insurance/packet"]) main,
-  body:not(:has(.vltd-ins-light)):has(a[href="/insurance/item"]) main,
-  body:not(:has(.vltd-ins-light)):has(a[href="/insurance/packet"]) section,
-  body:not(:has(.vltd-ins-light)):has(a[href="/insurance/item"]) section,
-  body:not(:has(.vltd-ins-light)):has(a[href="/insurance/packet"]) table,
-  body:not(:has(.vltd-ins-light)):has(a[href="/insurance/item"]) table,
-  body:not(:has(.vltd-ins-light)):has(a[href="/insurance/packet"]) th,
-  body:not(:has(.vltd-ins-light)):has(a[href="/insurance/item"]) th,
-  body:not(:has(.vltd-ins-light)):has(a[href="/insurance/packet"]) td,
-  body:not(:has(.vltd-ins-light)):has(a[href="/insurance/item"]) td,
-  body:not(:has(.vltd-ins-light)):has(a[href="/insurance/packet"]) section *,
-  body:not(:has(.vltd-ins-light)):has(a[href="/insurance/item"]) section * {
-    background: #ffffff !important;
-    color: #000000 !important;
-    box-shadow: none !important;
-  }
-}
+/* Printing is handled by .vltd-print-document in globals.css (a page marker, not link-presence selectors that matched the site nav). */
 
 @media (max-width: 700px) {
   body:not(:has(.vltd-ins-light)):has(a[href="/insurance/packet"]) main > div,

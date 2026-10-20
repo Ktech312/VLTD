@@ -130,6 +130,7 @@ export default function PWAInstallBanner() {
   if (deferredPrompt) {
     return (
       <div
+        data-site-chrome="true"
         style={pillStyle}
         className={`${pillPosition} vltd-dark-surface flex items-center gap-1.5 rounded-xl border border-white/10 bg-[#12101C]/95 px-2 py-1.5 shadow-xl backdrop-blur-xl`}
       >
@@ -153,6 +154,7 @@ export default function PWAInstallBanner() {
   if (isIOS) {
     return (
       <div
+        data-site-chrome="true"
         style={pillStyle}
         className={`${pillPosition} vltd-dark-surface flex flex-col gap-1.5 rounded-xl border border-white/10 bg-[#12101C]/95 px-2 py-1.5 shadow-xl backdrop-blur-xl`}
       >

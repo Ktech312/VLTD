@@ -2694,3 +2694,21 @@ html[data-load-stalled="1"] #vltd-load-stalled {
 @media print {
   [data-vault-chrome] { display: none !important; }
 }
+
+/* PRINTED INSURANCE DOCUMENTS. A page marks its <main> with .vltd-print-document; only those pages change when printed:
+   - the site's own bars and floating buttons (data-site-chrome) do not print;
+   - the app's scrolling content area is a fixed-position box, which a printer clips to ONE page: release it so the document can run to as many pages as it needs;
+   - text is black on white (the dark theme's light grey text would print almost invisible). */
+@media print {
+  body:has(.vltd-print-document) [data-site-chrome] { display: none !important; }
+  body:has(.vltd-print-document) .vltd-content-wrap {
+    position: static !important;
+    top: auto !important; right: auto !important; bottom: auto !important; left: auto !important;
+    height: auto !important; overflow: visible !important;
+  }
+  html:has(.vltd-print-document), body:has(.vltd-print-document) { height: auto !important; overflow: visible !important; background: #ffffff !important; }
+  .vltd-print-document, .vltd-print-document * { color: #000000 !important; text-shadow: none !important; box-shadow: none !important; -webkit-text-fill-color: #000000 !important; }
+  .vltd-print-document, .vltd-print-document section, .vltd-print-document div, .vltd-print-document table, .vltd-print-document tr, .vltd-print-document th, .vltd-print-document td { background: #ffffff !important; background-image: none !important; }
+  .vltd-print-document th { background: #efefef !important; }
+  .vltd-print-document .vltd-print-muted { color: #333333 !important; -webkit-text-fill-color: #333333 !important; }
+}
