@@ -30,7 +30,8 @@
     "test:listing-privacy": "node scripts/test-listing-privacy.cjs",
     "test:exhibit-sync": "node scripts/test-gallery-item-sync.cjs",
     "test:move-profile": "node scripts/test-move-profile.cjs",
-    "test:insurance-docs": "node scripts/test-insurance-docs.cjs"
+    "test:insurance-docs": "node scripts/test-insurance-docs.cjs",
+    "test:repair-batch3": "node scripts/test-repair-batch3.cjs"
   },
   "dependencies": {
     "@imgly/background-removal": "^1.7.0",
