@@ -8,7 +8,9 @@
   "rowIds": [
    "EXH-433",
    "CRW-012"
-  ]
+  ],
+  "status": "CLOSED",
+  "statusNote": "batch 1 (a9e23fb); historical attribution of one empty exhibition unresolved, see DEFECT-STATUS.md"
  },
  {
   "id": "RC-02",
@@ -23,7 +25,9 @@
    "ITM-263",
    "ITM-264",
    "ITM-645"
-  ]
+  ],
+  "status": "CLOSED",
+  "statusNote": "batch 1 (9c70219, 03d6200, ce16903, 27d06cd)"
  },
  {
   "id": "RC-03",
@@ -34,7 +38,9 @@
   "rowIds": [
    "ITM-253",
    "ITM-634"
-  ]
+  ],
+  "status": "CLOSED",
+  "statusNote": "batch 1 (37ab253); remembering prior visibility deferred (needs a stored field)"
  },
  {
   "id": "RC-04",
@@ -48,7 +54,8 @@
    "ACC-344",
    "CRW-025",
    "CRW-026"
-  ]
+  ],
+  "status": "OPEN"
  },
  {
   "id": "RC-05",
@@ -65,7 +72,8 @@
    "EXH-124",
    "EXH-126",
    "EXH-127"
-  ]
+  ],
+  "status": "OPEN"
  },
  {
   "id": "RC-06",
@@ -84,7 +92,9 @@
    "ADD-037",
    "VLT-256",
    "VLT-288"
-  ]
+  ],
+  "status": "PLANNED",
+  "statusNote": "repair-batch-3/PLAN.md (D-01, D-02, D-06, D-07, D-08, D-09, D-10)"
  },
  {
   "id": "RC-07",
@@ -102,7 +112,9 @@
    "ACC-811",
    "ACC-395",
    "ACC-819"
-  ]
+  ],
+  "status": "PLANNED",
+  "statusNote": "repair-batch-3/PLAN.md (D-03, D-04, D-05; profile-validation rows ACC-381/796/390/811/395/819 excluded, stay with RC-28)"
  },
  {
   "id": "RC-08",
@@ -118,7 +130,8 @@
    "ACC-405",
    "ACC-459",
    "ACC-528"
-  ]
+  ],
+  "status": "OPEN"
  },
  {
   "id": "RC-09",
@@ -134,7 +147,9 @@
    "GIN-229",
    "GIN-230",
    "GIN-231"
-  ]
+  ],
+  "status": "CLOSED",
+  "statusNote": "batch 2 (2bd446b, 9903f96, f00ff32, 67985e1)"
  },
  {
   "id": "RC-10",
@@ -144,7 +159,8 @@
   "summary": "Every avatar upload fails with a raw row-level-security message (verified with the QA login directly).",
   "rowIds": [
    "ACC-871"
-  ]
+  ],
+  "status": "OPEN"
  },
  {
   "id": "RC-11",
@@ -160,7 +176,8 @@
    "DIS-366",
    "DIS-367",
    "DIS-369"
-  ]
+  ],
+  "status": "OPEN"
  },
  {
   "id": "RC-12",
@@ -171,7 +188,8 @@
   "rowIds": [
    "DIS-346",
    "DIS-341"
-  ]
+  ],
+  "status": "OPEN"
  },
  {
   "id": "RC-13",
@@ -188,7 +206,8 @@
    "ACC-243",
    "ACC-309",
    "ACC-844"
-  ]
+  ],
+  "status": "OPEN"
  },
  {
   "id": "RC-14",
@@ -203,7 +222,8 @@
    "ITM-424",
    "ITM-425",
    "ACC-832"
-  ]
+  ],
+  "status": "OPEN"
  },
  {
   "id": "RC-15",
@@ -221,7 +241,8 @@
    "EXH-387",
    "EXH-388",
    "EXH-389"
-  ]
+  ],
+  "status": "OPEN"
  },
  {
   "id": "RC-16",
@@ -246,7 +267,8 @@
    "ADD-168",
    "ADD-190",
    "ADD-417"
-  ]
+  ],
+  "status": "OPEN"
  },
  {
   "id": "RC-17",
@@ -275,7 +297,8 @@
    "ITM-249",
    "ITM-629",
    "ITM-630"
-  ]
+  ],
+  "status": "OPEN"
  },
  {
   "id": "RC-18",
@@ -293,7 +316,8 @@
    "ITM-666",
    "ITM-043",
    "ITM-527"
-  ]
+  ],
+  "status": "OPEN"
  },
  {
   "id": "RC-19",
@@ -313,7 +337,9 @@
    "GIN-155",
    "VLT-297",
    "VLT-353"
-  ]
+  ],
+  "status": "PARTLY CLOSED",
+  "statusNote": "batch 2 (5ac1d30): GIN-087, GIN-240, GIN-243, GIN-260, GIN-097, GIN-098, VLT-297 closed; GIN-095 deferred (migration), GIN-092/GIN-155/VLT-353 open"
  },
  {
   "id": "RC-20",
@@ -344,7 +370,8 @@
    "GIN-033",
    "GIN-237",
    "GIN-041"
-  ]
+  ],
+  "status": "OPEN"
  },
  {
   "id": "RC-21",
@@ -379,7 +406,8 @@
    "ITM-615",
    "CRW-005",
    "CRW-006"
-  ]
+  ],
+  "status": "OPEN"
  },
  {
   "id": "RC-22",
@@ -397,7 +425,8 @@
    "ACC-418",
    "ACC-848",
    "ACC-849"
-  ]
+  ],
+  "status": "OPEN"
  },
  {
   "id": "RC-23",
@@ -421,7 +450,8 @@
    "DIS-240",
    "DIS-241",
    "DIS-242"
-  ]
+  ],
+  "status": "OPEN"
  },
  {
   "id": "RC-24",
@@ -446,7 +476,8 @@
    "VLT-275",
    "GIN-146",
    "GIN-152"
-  ]
+  ],
+  "status": "OPEN"
  },
  {
   "id": "RC-25",
@@ -462,7 +493,8 @@
    "VLT-287",
    "VLT-278",
    "GIN-013"
-  ]
+  ],
+  "status": "OPEN"
  },
  {
   "id": "RC-26",
@@ -495,7 +527,8 @@
    "ITM-220",
    "ACC-359",
    "ACC-403"
-  ]
+  ],
+  "status": "OPEN"
  },
  {
   "id": "RC-27",
@@ -516,7 +549,8 @@
    "EXH-334",
    "ITM-482",
    "DIS-404"
-  ]
+  ],
+  "status": "OPEN"
  },
  {
   "id": "RC-28",
@@ -530,7 +564,8 @@
    "EXH-077",
    "ACC-869",
    "ACC-870"
-  ]
+  ],
+  "status": "OPEN"
  },
  {
   "id": "RC-29",
@@ -551,7 +586,8 @@
    "ACC-737",
    "VLT-463",
    "VLT-464"
-  ]
+  ],
+  "status": "OPEN"
  },
  {
   "id": "RC-30",
@@ -564,7 +600,8 @@
    "DIS-065",
    "DIS-115",
    "EXH-013"
-  ]
+  ],
+  "status": "OPEN"
  },
  {
   "id": "RC-31",
@@ -589,7 +626,8 @@
    "DIS-276",
    "DIS-302",
    "DIS-036"
-  ]
+  ],
+  "status": "OPEN"
  },
  {
   "id": "RC-32",
@@ -607,7 +645,8 @@
    "DIS-362",
    "DIS-363",
    "CRW-020"
-  ]
+  ],
+  "status": "OPEN"
  },
  {
   "id": "RC-33",
@@ -617,7 +656,8 @@
   "summary": "Probed with a synthetic payload only, after reading the code: POST/DELETE answer 200 to an anonymous caller; the route keeps items only in server process memory (no database or file), has no read endpoint, and nothing in the app calls it. Hygiene finding (unauthenticated memory use), not data exposure or loss.",
   "rowIds": [
    "CRW-027"
-  ]
+  ],
+  "status": "OPEN"
  },
  {
   "id": "RC-34",
@@ -634,6 +674,7 @@
    "VLT-423",
    "VLT-235",
    "GIN-124"
-  ]
+  ],
+  "status": "OPEN"
  }
 ]

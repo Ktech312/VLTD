@@ -22,17 +22,21 @@ Behaviour-asserted rows (a test checked the outcome): 3754 = 509 FAIL, 2770 PASS
 
 **How to read FAIL:** 316 behaviour FAIL rows belong to the 34 root causes below (confirmed by the auditors after setting their own test mistakes aside). 188 further behaviour FAIL rows are first-run failures the auditors describe as mostly their own test mistakes; they are kept as first-failure evidence, marked "UNRECONCILED" in the Triage column, and need triage rather than repair. 5 FAIL rows (KNO-001..005) are the ORIGINAL Discover failures, kept as historical first-failure evidence, fixed before the audit and re-verified separately: they are not current defects. 226 rows are SUPERSEDED (first-run result replaced by a corrected row; both stay visible).
 
+## Repair status (updated 2026-10-19)
+
+Full table with commits and evidence: `DEFECT-STATUS.md`. Closed and re-tested on production: **RC-01, RC-02, RC-03, RC-09**, and **7 of 11 rows of RC-19** (24 specific rows in total). Next planned: **RC-06 and RC-07** (`repair-batch-3/PLAN.md`). Deferred migrations and unresolved incidents are listed separately in `DEFECT-STATUS.md` (sections 3 and 4); they are not counted as closed. Tags below: [CLOSED], [PARTLY CLOSED]; untagged means still open.
+
 ## Prioritized defect list (root causes, genuine failures only)
 
 ### P1 - privacy / data loss
 
-- **RC-01 Opening another profile's exhibition by its address (Business active, Personal exhibition) EMPTIES it**  
+- **[CLOSED] RC-01 Opening another profile's exhibition by its address (Business active, Personal exhibition) EMPTIES it**  
   Reproduced independently by the coordinator (CRW-012): 7 items, 7 links and 7 layout entries became 0 although the page only said 'Exhibition not found'. The control visit on the matching profile changed nothing.  
   Rows (2): EXH-433, CRW-012
-- **RC-02 Private notes and 'Recorded cost basis' flow into public/buyer-facing text**  
+- **[CLOSED] RC-02 Private notes and 'Recorded cost basis' flow into public/buyer-facing text**  
   Marketplace listing copy contains the cost-basis line and the private internal note; 'Generate listing copy' puts the private note in its draft and Accept saves it as the public description; the public /share page then shows it to a signed-out visitor.  
   Rows (6): ITM-230, ITM-624, ITM-262, ITM-263, ITM-264, ITM-645
-- **RC-03 Cancelling an auction leaves a previously private item public**  
+- **[CLOSED] RC-03 Cancelling an auction leaves a previously private item public**  
   Starting an auction makes the item public; Cancel Auction does not undo it (is_public stays true).  
   Rows (2): ITM-253, ITM-634
 - **RC-05 A public exhibition with an alias still hands the real profile id to anyone reading its row; alias/shelf-style edits do not autosave; Announce is refused by the database**  
@@ -50,7 +54,7 @@ Behaviour-asserted rows (a test checked the outcome): 3754 = 509 FAIL, 2770 PASS
 - **RC-08 Admin screens (/admin/themes, /studio) are shown to signed-out visitors and non-admins**  
   The theme manager with + New Theme / Edit / Delete is visible to everyone; /studio shows its setup screen. By reading the table policy, writes need an admin role, and no write was attempted. Exposure, not a confirmed data-loss path.  
   Rows (7): CRW-001, ACC-396, ACC-439, ACC-515, ACC-405, ACC-459 (+1 more)
-- **RC-09 Printable insurance packet is a blank white page; item-sheet and inventory prints are unreadable**  
+- **[CLOSED] RC-09 Printable insurance packet is a blank white page; item-sheet and inventory prints are unreadable**  
   A print rule in the page ([style*="--topnav"]{display:none}) matches the <html> element (it carries --topnav-shift), hiding the whole document, on screen and in print. Item-sheet print has near-white text on white; the top bar prints on four pages. NOTE: the coordinator's earlier production check of this page only confirmed the text existed, which could not detect this.  
   Rows (7): GIN-122, GIN-123, GIN-227, GIN-228, GIN-229, GIN-230 (+1 more)
 - **RC-10 Avatar upload is refused by storage for ordinary users**  
@@ -86,7 +90,7 @@ Behaviour-asserted rows (a test checked the outcome): 3754 = 509 FAIL, 2770 PASS
 - **RC-18 Sales ledger and profit figures break the value rule or disagree**  
   A sale with no cost reads as pure profit; a recorded $0 cost shows a dash; a sale made from For Sale shows its sold price missing and -100%; the item page and the Sold card show different profits for one sale; the Pricing card shows an explicit $0 value as '—'.  
   Rows (9): ITM-354, ITM-353, ITM-357, ITM-364, ITM-333, ITM-430 (+3 more)
-- **RC-19 Totals and counts disagree between Insurance, packet, reports, PDFs and Insights**  
+- **[PARTLY CLOSED] RC-19 Totals and counts disagree between Insurance, packet, reports, PDFs and Insights**  
   Insurance and packet list the 5 sold items, the reports do not; totals $1,431 vs $1,226 vs $1,443; Vault Insurance PDF says 44 items where 36 belong; exclusions are device-only; weekly gap count 31 vs 30; three pages report stale prices as three numbers.  
   Rows (11): GIN-087, GIN-092, GIN-240, GIN-243, GIN-260, GIN-095 (+5 more)
 - **RC-20 Goal progress and labels wrong; goal type guessed from words**  

@@ -48,3 +48,14 @@ Fixture: 31 counted items, 5 sold, 1 supply, 1 wishlist.
 - Print preview was exercised as print-media emulation + Chrome print-to-PDF, not a human clicking the browser's Print button.
 - The inventory fits 31 rows on one landscape page, so it is not a multi-page proof by itself.
 - Exclusions remain per device until the proposed column exists.
+
+## On-screen check, light and dark, desktop and phone (added 2026-10-19)
+Settled screenshots (waited for the rows, 4 s settle, no "loading" text) of all seven Insurance pages in the dark and light themes at 1440 and at 390 wide (browser-emulated phone): `screens/*.png`, facts in `screens/screens-summary.json`, hashes in `screens/SHA256SUMS.txt`, script `scripts/ins-screens.cjs`. Rows `RB5-001` to `RB5-003` in `rows.jsonl`.
+
+First run found three real on-screen defects (print output was already right):
+- The printable packet (what "Open Printable Page" opens) was unreadable on screen in the dark theme: black text on the dark page, and "Print This Page" black on black.
+- "Open Printable Page" and the item sheet's "Print / Save as PDF" had a near-invisible label in the dark theme (a legacy link-colour rule overrode the button text).
+- Fixed in `05322fd`; the final run is clean: 28 of 28 captures settled, 0 px sideways overflow, both buttons readable in both themes, printable packet white with black text in both themes, packet controls (Back, Include images, Prev/Next, Open Printable Page) visible and reachable on the phone.
+- My mistake: the first-run screenshots were overwritten by the rerun in the same folder, so they are not kept (the rows say so). The findings come from those screenshots and the measured contrast.
+
+Not changed, already in the audit: the "Add to Home Screen" banner overlaps lower content on the phone but not the packet controls (RC-14); several controls are under 44 px on the phone (RC-31). The script's contrast figure is only a rough screen check (it cannot see gradient backgrounds); the screenshots are the evidence.

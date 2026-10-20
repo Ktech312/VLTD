@@ -1,0 +1,944 @@
+[
+ {
+  "width": 1440,
+  "theme": "deep-vault",
+  "page": "inventory",
+  "facts": {
+   "loadingText": false,
+   "overflowX": 0,
+   "worstContrast": [
+    {
+     "r": 1.2645724538244103,
+     "t": "See what is missing"
+    },
+    {
+     "r": 1.2645724538244103,
+     "t": "Per-item sheet →"
+    },
+    {
+     "r": 1.2645724538244103,
+     "t": "Per-item sheet →"
+    },
+    {
+     "r": 1.2645724538244103,
+     "t": "Per-item sheet →"
+    }
+   ],
+   "textCount": 173,
+   "controlsSmallerThan44": 10,
+   "controlCount": 65,
+   "coveredControls": [
+    {
+     "t": "Per-item sheet →",
+     "w": 101,
+     "h": 15,
+     "y": 846,
+     "onScreen": true,
+     "covered": "site-chrome"
+    }
+   ],
+   "docHeight": 900
+  },
+  "file": "deep-vault-1440-inventory"
+ },
+ {
+  "width": 1440,
+  "theme": "deep-vault",
+  "page": "packet",
+  "facts": {
+   "loadingText": false,
+   "overflowX": 0,
+   "worstContrast": [
+    {
+     "r": 1.1911221848766602,
+     "t": "Open Printable Page"
+    },
+    {
+     "r": 1.2645724538244103,
+     "t": "← Back to Insurance"
+    },
+    {
+     "r": 5.025526842033043,
+     "t": "INSURANCE PACKET"
+    },
+    {
+     "r": 5.548577234684537,
+     "t": "Generated 10/19/2026, 9:46:25 PM • Inclu"
+    }
+   ],
+   "textCount": 193,
+   "controlsSmallerThan44": 6,
+   "controlCount": 6,
+   "coveredControls": [],
+   "docHeight": 900
+  },
+  "file": "deep-vault-1440-packet"
+ },
+ {
+  "width": 1440,
+  "theme": "deep-vault",
+  "page": "packet-print",
+  "facts": {
+   "loadingText": false,
+   "overflowX": 0,
+   "worstContrast": [
+    {
+     "r": 17.117460400719345,
+     "t": "Item"
+    },
+    {
+     "r": 17.117460400719345,
+     "t": "Category"
+    },
+    {
+     "r": 17.117460400719345,
+     "t": "ID"
+    },
+    {
+     "r": 17.117460400719345,
+     "t": "Storage"
+    }
+   ],
+   "textCount": 189,
+   "controlsSmallerThan44": 2,
+   "controlCount": 2,
+   "coveredControls": [],
+   "docHeight": 900
+  },
+  "file": "deep-vault-1440-packet-print"
+ },
+ {
+  "width": 1440,
+  "theme": "deep-vault",
+  "page": "item-sheet",
+  "facts": {
+   "loadingText": false,
+   "overflowX": 0,
+   "worstContrast": [
+    {
+     "r": 1.1911221848766602,
+     "t": "Print / Save as PDF"
+    },
+    {
+     "r": 1.2645724538244103,
+     "t": "← Back to Insurance"
+    },
+    {
+     "r": 1.2645724538244103,
+     "t": "Vault"
+    },
+    {
+     "r": 5.025526842033043,
+     "t": "INSURANCE ITEM SHEET"
+    }
+   ],
+   "textCount": 24,
+   "controlsSmallerThan44": 3,
+   "controlCount": 3,
+   "coveredControls": [],
+   "docHeight": 900
+  },
+  "file": "deep-vault-1440-item-sheet"
+ },
+ {
+  "width": 1440,
+  "theme": "deep-vault",
+  "page": "item-sheet-sold",
+  "facts": {
+   "loadingText": false,
+   "overflowX": 0,
+   "worstContrast": [
+    {
+     "r": 1.1911221848766602,
+     "t": "Print / Save as PDF"
+    },
+    {
+     "r": 1.2645724538244103,
+     "t": "← Back to Insurance"
+    },
+    {
+     "r": 1.2645724538244103,
+     "t": "Vault"
+    },
+    {
+     "r": 5.025526842033043,
+     "t": "INSURANCE ITEM SHEET"
+    }
+   ],
+   "textCount": 26,
+   "controlsSmallerThan44": 3,
+   "controlCount": 3,
+   "coveredControls": [],
+   "docHeight": 900
+  },
+  "file": "deep-vault-1440-item-sheet-sold"
+ },
+ {
+  "width": 1440,
+  "theme": "deep-vault",
+  "page": "schedule",
+  "facts": {
+   "loadingText": false,
+   "overflowX": 0,
+   "worstContrast": [
+    {
+     "r": 1.1537020372064364,
+     "t": "← Back to Portfolio"
+    },
+    {
+     "r": 1.1537020372064364,
+     "t": "Open Exhibitions"
+    },
+    {
+     "r": 5.6821303575881315,
+     "t": "INSURANCE REPORT"
+    },
+    {
+     "r": 5.6821303575881315,
+     "t": "ITEM"
+    }
+   ],
+   "textCount": 143,
+   "controlsSmallerThan44": 3,
+   "controlCount": 3,
+   "coveredControls": [],
+   "docHeight": 900
+  },
+  "file": "deep-vault-1440-schedule"
+ },
+ {
+  "width": 1440,
+  "theme": "deep-vault",
+  "page": "report",
+  "facts": {
+   "loadingText": false,
+   "overflowX": 0,
+   "worstContrast": [
+    {
+     "r": 1.1537020372064364,
+     "t": "← Back to Portfolio"
+    },
+    {
+     "r": 1.1537020372064364,
+     "t": "Open Exhibitions"
+    },
+    {
+     "r": 5.6821303575881315,
+     "t": "INSURANCE INVENTORY REPORT"
+    },
+    {
+     "r": 5.6821303575881315,
+     "t": "ITEMS COUNTED"
+    }
+   ],
+   "textCount": 224,
+   "controlsSmallerThan44": 6,
+   "controlCount": 6,
+   "coveredControls": [],
+   "docHeight": 900
+  },
+  "file": "deep-vault-1440-report"
+ },
+ {
+  "width": 1440,
+  "theme": "pearl-light",
+  "page": "inventory",
+  "facts": {
+   "loadingText": false,
+   "overflowX": 0,
+   "worstContrast": [
+    {
+     "r": 5.8008920057323685,
+     "t": "INSURE"
+    },
+    {
+     "r": 5.8008920057323685,
+     "t": "ITEM"
+    },
+    {
+     "r": 5.8008920057323685,
+     "t": "CATEGORY"
+    },
+    {
+     "r": 5.8008920057323685,
+     "t": "GRADE"
+    }
+   ],
+   "textCount": 173,
+   "controlsSmallerThan44": 10,
+   "controlCount": 65,
+   "coveredControls": [
+    {
+     "t": "Per-item sheet →",
+     "w": 101,
+     "h": 15,
+     "y": 846,
+     "onScreen": true,
+     "covered": "site-chrome"
+    }
+   ],
+   "docHeight": 900
+  },
+  "file": "pearl-light-1440-inventory"
+ },
+ {
+  "width": 1440,
+  "theme": "pearl-light",
+  "page": "packet",
+  "facts": {
+   "loadingText": false,
+   "overflowX": 0,
+   "worstContrast": [
+    {
+     "r": 5.8008920057323685,
+     "t": "ITEM"
+    },
+    {
+     "r": 5.8008920057323685,
+     "t": "CATEGORY"
+    },
+    {
+     "r": 5.8008920057323685,
+     "t": "ID"
+    },
+    {
+     "r": 5.8008920057323685,
+     "t": "STORAGE"
+    }
+   ],
+   "textCount": 193,
+   "controlsSmallerThan44": 6,
+   "controlCount": 6,
+   "coveredControls": [],
+   "docHeight": 900
+  },
+  "file": "pearl-light-1440-packet"
+ },
+ {
+  "width": 1440,
+  "theme": "pearl-light",
+  "page": "packet-print",
+  "facts": {
+   "loadingText": false,
+   "overflowX": 0,
+   "worstContrast": [
+    {
+     "r": 1.1898217773787747,
+     "t": "Print This Page"
+    },
+    {
+     "r": 16.25330324007597,
+     "t": "VLTD INSURANCE PACKET"
+    },
+    {
+     "r": 16.25330324007597,
+     "t": "Insurance Policy Packet"
+    },
+    {
+     "r": 16.25330324007597,
+     "t": "Generated 10/19/2026, 9:47:22 PM • Page "
+    }
+   ],
+   "textCount": 189,
+   "controlsSmallerThan44": 2,
+   "controlCount": 2,
+   "coveredControls": [],
+   "docHeight": 900
+  },
+  "file": "pearl-light-1440-packet-print"
+ },
+ {
+  "width": 1440,
+  "theme": "pearl-light",
+  "page": "item-sheet",
+  "facts": {
+   "loadingText": false,
+   "overflowX": 0,
+   "worstContrast": [
+    {
+     "r": 16.25330324007597,
+     "t": "← Back to Insurance"
+    },
+    {
+     "r": 16.25330324007597,
+     "t": "Vault"
+    },
+    {
+     "r": 16.25330324007597,
+     "t": "Print / Save as PDF"
+    },
+    {
+     "r": 16.25330324007597,
+     "t": "INSURANCE ITEM SHEET"
+    }
+   ],
+   "textCount": 24,
+   "controlsSmallerThan44": 3,
+   "controlCount": 3,
+   "coveredControls": [],
+   "docHeight": 900
+  },
+  "file": "pearl-light-1440-item-sheet"
+ },
+ {
+  "width": 1440,
+  "theme": "pearl-light",
+  "page": "item-sheet-sold",
+  "facts": {
+   "loadingText": false,
+   "overflowX": 0,
+   "worstContrast": [
+    {
+     "r": 16.25330324007597,
+     "t": "← Back to Insurance"
+    },
+    {
+     "r": 16.25330324007597,
+     "t": "Vault"
+    },
+    {
+     "r": 16.25330324007597,
+     "t": "Print / Save as PDF"
+    },
+    {
+     "r": 16.25330324007597,
+     "t": "INSURANCE ITEM SHEET"
+    }
+   ],
+   "textCount": 26,
+   "controlsSmallerThan44": 3,
+   "controlCount": 3,
+   "coveredControls": [],
+   "docHeight": 900
+  },
+  "file": "pearl-light-1440-item-sheet-sold"
+ },
+ {
+  "width": 1440,
+  "theme": "pearl-light",
+  "page": "schedule",
+  "facts": {
+   "loadingText": false,
+   "overflowX": 0,
+   "worstContrast": [
+    {
+     "r": 5.8008920057323685,
+     "t": "ITEM"
+    },
+    {
+     "r": 5.8008920057323685,
+     "t": "DETAILS"
+    },
+    {
+     "r": 5.8008920057323685,
+     "t": "STORAGE"
+    },
+    {
+     "r": 5.8008920057323685,
+     "t": "CERT #"
+    }
+   ],
+   "textCount": 143,
+   "controlsSmallerThan44": 3,
+   "controlCount": 3,
+   "coveredControls": [],
+   "docHeight": 900
+  },
+  "file": "pearl-light-1440-schedule"
+ },
+ {
+  "width": 1440,
+  "theme": "pearl-light",
+  "page": "report",
+  "facts": {
+   "loadingText": false,
+   "overflowX": 0,
+   "worstContrast": [
+    {
+     "r": 14.582426949211083,
+     "t": "← Back to Portfolio"
+    },
+    {
+     "r": 14.582426949211083,
+     "t": "Open Exhibitions"
+    },
+    {
+     "r": 14.582426949211083,
+     "t": "Sort: Value (high → low)"
+    },
+    {
+     "r": 14.582426949211083,
+     "t": "Print / Save PDF"
+    }
+   ],
+   "textCount": 224,
+   "controlsSmallerThan44": 6,
+   "controlCount": 6,
+   "coveredControls": [],
+   "docHeight": 900
+  },
+  "file": "pearl-light-1440-report"
+ },
+ {
+  "width": 390,
+  "theme": "deep-vault",
+  "page": "inventory",
+  "facts": {
+   "loadingText": false,
+   "overflowX": 0,
+   "worstContrast": [
+    {
+     "r": 1.2645724538244103,
+     "t": "See what is missing"
+    },
+    {
+     "r": 1.2645724538244103,
+     "t": "Per-item sheet →"
+    },
+    {
+     "r": 1.2645724538244103,
+     "t": "Per-item sheet →"
+    },
+    {
+     "r": 1.2645724538244103,
+     "t": "Per-item sheet →"
+    }
+   ],
+   "textCount": 173,
+   "controlsSmallerThan44": 1,
+   "controlCount": 65,
+   "coveredControls": [],
+   "docHeight": 844
+  },
+  "file": "deep-vault-390-inventory"
+ },
+ {
+  "width": 390,
+  "theme": "deep-vault",
+  "page": "packet",
+  "facts": {
+   "loadingText": false,
+   "overflowX": 0,
+   "worstContrast": [
+    {
+     "r": 1.1911221848766602,
+     "t": "Open Printable Page"
+    },
+    {
+     "r": 1.2645724538244103,
+     "t": "← Back to Insurance"
+    },
+    {
+     "r": 5.025526842033043,
+     "t": "INSURANCE PACKET"
+    },
+    {
+     "r": 5.548577234684537,
+     "t": "Generated 10/19/2026, 9:48:09 PM • Inclu"
+    }
+   ],
+   "textCount": 193,
+   "controlsSmallerThan44": 6,
+   "controlCount": 6,
+   "coveredControls": [],
+   "docHeight": 844
+  },
+  "file": "deep-vault-390-packet"
+ },
+ {
+  "width": 390,
+  "theme": "deep-vault",
+  "page": "packet-print",
+  "facts": {
+   "loadingText": false,
+   "overflowX": 0,
+   "worstContrast": [
+    {
+     "r": 17.117460400719345,
+     "t": "Item"
+    },
+    {
+     "r": 17.117460400719345,
+     "t": "Category"
+    },
+    {
+     "r": 17.117460400719345,
+     "t": "ID"
+    },
+    {
+     "r": 17.117460400719345,
+     "t": "Storage"
+    }
+   ],
+   "textCount": 189,
+   "controlsSmallerThan44": 2,
+   "controlCount": 2,
+   "coveredControls": [],
+   "docHeight": 844
+  },
+  "file": "deep-vault-390-packet-print"
+ },
+ {
+  "width": 390,
+  "theme": "deep-vault",
+  "page": "item-sheet",
+  "facts": {
+   "loadingText": false,
+   "overflowX": 0,
+   "worstContrast": [
+    {
+     "r": 1.1911221848766602,
+     "t": "Print / Save as PDF"
+    },
+    {
+     "r": 1.2645724538244103,
+     "t": "← Back to Insurance"
+    },
+    {
+     "r": 1.2645724538244103,
+     "t": "Vault"
+    },
+    {
+     "r": 5.025526842033043,
+     "t": "INSURANCE ITEM SHEET"
+    }
+   ],
+   "textCount": 24,
+   "controlsSmallerThan44": 1,
+   "controlCount": 3,
+   "coveredControls": [],
+   "docHeight": 844
+  },
+  "file": "deep-vault-390-item-sheet"
+ },
+ {
+  "width": 390,
+  "theme": "deep-vault",
+  "page": "item-sheet-sold",
+  "facts": {
+   "loadingText": false,
+   "overflowX": 0,
+   "worstContrast": [
+    {
+     "r": 1.1911221848766602,
+     "t": "Print / Save as PDF"
+    },
+    {
+     "r": 1.2645724538244103,
+     "t": "← Back to Insurance"
+    },
+    {
+     "r": 1.2645724538244103,
+     "t": "Vault"
+    },
+    {
+     "r": 5.025526842033043,
+     "t": "INSURANCE ITEM SHEET"
+    }
+   ],
+   "textCount": 26,
+   "controlsSmallerThan44": 1,
+   "controlCount": 3,
+   "coveredControls": [],
+   "docHeight": 844
+  },
+  "file": "deep-vault-390-item-sheet-sold"
+ },
+ {
+  "width": 390,
+  "theme": "deep-vault",
+  "page": "schedule",
+  "facts": {
+   "loadingText": false,
+   "overflowX": 0,
+   "worstContrast": [
+    {
+     "r": 1.1537020372064364,
+     "t": "← Back to Portfolio"
+    },
+    {
+     "r": 1.1537020372064364,
+     "t": "Open Exhibitions"
+    },
+    {
+     "r": 5.6821303575881315,
+     "t": "INSURANCE REPORT"
+    },
+    {
+     "r": 5.6821303575881315,
+     "t": "ITEM"
+    }
+   ],
+   "textCount": 143,
+   "controlsSmallerThan44": 1,
+   "controlCount": 3,
+   "coveredControls": [],
+   "docHeight": 844
+  },
+  "file": "deep-vault-390-schedule"
+ },
+ {
+  "width": 390,
+  "theme": "deep-vault",
+  "page": "report",
+  "facts": {
+   "loadingText": false,
+   "overflowX": 0,
+   "worstContrast": [
+    {
+     "r": 1.1537020372064364,
+     "t": "← Back to Portfolio"
+    },
+    {
+     "r": 1.1537020372064364,
+     "t": "Open Exhibitions"
+    },
+    {
+     "r": 5.6821303575881315,
+     "t": "INSURANCE INVENTORY REPORT"
+    },
+    {
+     "r": 5.6821303575881315,
+     "t": "ITEMS COUNTED"
+    }
+   ],
+   "textCount": 224,
+   "controlsSmallerThan44": 4,
+   "controlCount": 6,
+   "coveredControls": [],
+   "docHeight": 844
+  },
+  "file": "deep-vault-390-report"
+ },
+ {
+  "width": 390,
+  "theme": "pearl-light",
+  "page": "inventory",
+  "facts": {
+   "loadingText": false,
+   "overflowX": 0,
+   "worstContrast": [
+    {
+     "r": 5.8008920057323685,
+     "t": "INSURE"
+    },
+    {
+     "r": 5.8008920057323685,
+     "t": "ITEM"
+    },
+    {
+     "r": 5.8008920057323685,
+     "t": "CATEGORY"
+    },
+    {
+     "r": 5.8008920057323685,
+     "t": "GRADE"
+    }
+   ],
+   "textCount": 173,
+   "controlsSmallerThan44": 1,
+   "controlCount": 65,
+   "coveredControls": [],
+   "docHeight": 844
+  },
+  "file": "pearl-light-390-inventory"
+ },
+ {
+  "width": 390,
+  "theme": "pearl-light",
+  "page": "packet",
+  "facts": {
+   "loadingText": false,
+   "overflowX": 0,
+   "worstContrast": [
+    {
+     "r": 5.8008920057323685,
+     "t": "ITEM"
+    },
+    {
+     "r": 5.8008920057323685,
+     "t": "CATEGORY"
+    },
+    {
+     "r": 5.8008920057323685,
+     "t": "ID"
+    },
+    {
+     "r": 5.8008920057323685,
+     "t": "STORAGE"
+    }
+   ],
+   "textCount": 193,
+   "controlsSmallerThan44": 6,
+   "controlCount": 6,
+   "coveredControls": [],
+   "docHeight": 844
+  },
+  "file": "pearl-light-390-packet"
+ },
+ {
+  "width": 390,
+  "theme": "pearl-light",
+  "page": "packet-print",
+  "facts": {
+   "loadingText": false,
+   "overflowX": 0,
+   "worstContrast": [
+    {
+     "r": 1.1898217773787747,
+     "t": "Print This Page"
+    },
+    {
+     "r": 16.25330324007597,
+     "t": "VLTD INSURANCE PACKET"
+    },
+    {
+     "r": 16.25330324007597,
+     "t": "Insurance Policy Packet"
+    },
+    {
+     "r": 16.25330324007597,
+     "t": "Generated 10/19/2026, 9:49:06 PM • Page "
+    }
+   ],
+   "textCount": 189,
+   "controlsSmallerThan44": 2,
+   "controlCount": 2,
+   "coveredControls": [],
+   "docHeight": 844
+  },
+  "file": "pearl-light-390-packet-print"
+ },
+ {
+  "width": 390,
+  "theme": "pearl-light",
+  "page": "item-sheet",
+  "facts": {
+   "loadingText": false,
+   "overflowX": 0,
+   "worstContrast": [
+    {
+     "r": 16.25330324007597,
+     "t": "← Back to Insurance"
+    },
+    {
+     "r": 16.25330324007597,
+     "t": "Vault"
+    },
+    {
+     "r": 16.25330324007597,
+     "t": "Print / Save as PDF"
+    },
+    {
+     "r": 16.25330324007597,
+     "t": "INSURANCE ITEM SHEET"
+    }
+   ],
+   "textCount": 24,
+   "controlsSmallerThan44": 1,
+   "controlCount": 3,
+   "coveredControls": [],
+   "docHeight": 844
+  },
+  "file": "pearl-light-390-item-sheet"
+ },
+ {
+  "width": 390,
+  "theme": "pearl-light",
+  "page": "item-sheet-sold",
+  "facts": {
+   "loadingText": false,
+   "overflowX": 0,
+   "worstContrast": [
+    {
+     "r": 16.25330324007597,
+     "t": "← Back to Insurance"
+    },
+    {
+     "r": 16.25330324007597,
+     "t": "Vault"
+    },
+    {
+     "r": 16.25330324007597,
+     "t": "Print / Save as PDF"
+    },
+    {
+     "r": 16.25330324007597,
+     "t": "INSURANCE ITEM SHEET"
+    }
+   ],
+   "textCount": 26,
+   "controlsSmallerThan44": 1,
+   "controlCount": 3,
+   "coveredControls": [],
+   "docHeight": 844
+  },
+  "file": "pearl-light-390-item-sheet-sold"
+ },
+ {
+  "width": 390,
+  "theme": "pearl-light",
+  "page": "schedule",
+  "facts": {
+   "loadingText": false,
+   "overflowX": 0,
+   "worstContrast": [
+    {
+     "r": 5.8008920057323685,
+     "t": "ITEM"
+    },
+    {
+     "r": 5.8008920057323685,
+     "t": "DETAILS"
+    },
+    {
+     "r": 5.8008920057323685,
+     "t": "STORAGE"
+    },
+    {
+     "r": 5.8008920057323685,
+     "t": "CERT #"
+    }
+   ],
+   "textCount": 143,
+   "controlsSmallerThan44": 1,
+   "controlCount": 3,
+   "coveredControls": [],
+   "docHeight": 844
+  },
+  "file": "pearl-light-390-schedule"
+ },
+ {
+  "width": 390,
+  "theme": "pearl-light",
+  "page": "report",
+  "facts": {
+   "loadingText": false,
+   "overflowX": 0,
+   "worstContrast": [
+    {
+     "r": 14.582426949211083,
+     "t": "← Back to Portfolio"
+    },
+    {
+     "r": 14.582426949211083,
+     "t": "Open Exhibitions"
+    },
+    {
+     "r": 14.582426949211083,
+     "t": "Sort: Value (high → low)"
+    },
+    {
+     "r": 14.582426949211083,
+     "t": "Print / Save PDF"
+    }
+   ],
+   "textCount": 224,
+   "controlsSmallerThan44": 4,
+   "controlCount": 6,
+   "coveredControls": [],
+   "docHeight": 844
+  },
+  "file": "pearl-light-390-report"
+ }
+]
