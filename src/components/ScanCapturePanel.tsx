@@ -1,6 +1,6 @@
 "use client";
 
-import { NEGATIVE_COST_MESSAGE, isNegativeCostText, parseCostInput } from "@/lib/costInput";
+import { draftMoneyProblem, moneyOrUndefined } from "@/lib/moneyInput";
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { useRouter } from "next/navigation";
 
@@ -106,13 +106,6 @@ function categoryCode(label: string) {
 }
 
 // Parse a money string that may include $ / commas (curator-typed or AI value).
-function parseValue(input: string): number | undefined {
-  const cleaned = input.replace(/[^0-9.]/g, "").trim();
-  if (!cleaned) return undefined;
-  const n = Number(cleaned);
-  return Number.isFinite(n) && n > 0 ? n : undefined;
-}
-
 async function captureFrame(video: HTMLVideoElement, canvas: HTMLCanvasElement, crop?: CameraCaptureCrop) {
   const ctx = canvas.getContext("2d");
   if (!ctx || !video.videoWidth || !video.videoHeight) return null;
@@ -448,8 +441,9 @@ export default function ScanCapturePanel({ onClose }: { onClose: () => void }) {
       categoryLabel: categoryLabel || undefined,
       subcategoryLabel: draft.subcategoryLabel || undefined,
       // A cost keeps an explicit 0 (blank stays unknown); a negative one never gets here (the sheet refuses it).
-      purchasePrice: parseCostInput(draft.purchasePrice).value,
-      currentValue: parseValue(draft.currentValue),
+      // blank stays unknown, an explicit 0 stays 0; an invalid or negative entry never gets here (the sheet and the save refuse it)
+      purchasePrice: moneyOrUndefined(draft.purchasePrice),
+      currentValue: moneyOrUndefined(draft.currentValue),
       status: "COLLECTION",
       // AI-detected details, carried through so the item page is populated like a normal scan.
       subtitle: v?.subtitle || undefined,
@@ -722,9 +716,12 @@ export default function ScanCapturePanel({ onClose }: { onClose: () => void }) {
     if (drafts.length === 0) { onClose(); return; }
     // The Save button is held while a cost is negative, but the save itself refuses too: nothing is saved with a negative cost,
     // and a negative cost is never quietly turned into a blank one.
-    if (drafts.some((d) => isNegativeCostText(d.purchasePrice))) {
-      setVerifyStatus(NEGATIVE_COST_MESSAGE);
-      return;
+    for (const d of drafts) {
+      const problem = draftMoneyProblem(d);
+      if (problem) {
+        setVerifyStatus(problem);
+        return;
+      }
     }
     setCommitting(true);
     try {

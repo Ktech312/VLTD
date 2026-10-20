@@ -48,6 +48,7 @@ import {
 } from "@/lib/captureAddState";
 import { getStoredActiveProfileId } from "@/lib/auth";
 import { storedSessionUserId } from "@/lib/sessionGuard";
+import { parseMoneyInput } from "@/lib/moneyInput";
 import { captureDraftScope, clearCaptureDraft, draftHasContent, loadCaptureDraft, saveCaptureDraft } from "@/lib/captureDraft";
 import { getBulkScanStatus, consumeBulkScans } from "@/lib/bulkScanQuota";
 
@@ -803,12 +804,17 @@ export default function CapturePage() {
       }
       return;
     }
-    if (isNegativeCostText(fields.purchasePrice)) {
-      // Nothing is saved with a negative cost. Open the Value section so the field is in view.
-      setSaveError(NEGATIVE_COST_MESSAGE);
+    // Typed amounts are checked in the save itself: letters, malformed numbers and negatives are refused with a message (nothing is
+    // saved), blank stays unknown and an explicit 0 stays 0 (src/lib/moneyInput.ts).
+    const purchaseParsed = parseMoneyInput(fields.purchasePrice, { label: "Purchase price" });
+    const valueParsed = parseMoneyInput(fields.currentValue, { label: "Current value" });
+    if (!purchaseParsed.ok || !valueParsed.ok) {
+      setSaveError(!purchaseParsed.ok ? purchaseParsed.message : (valueParsed as { ok: false; message: string }).message);
+      // Open the Value section so the field is in view.
       setOpenSections((prev) => new Set(prev).add(4));
+      const targetId = !purchaseParsed.ok ? "capture-purchase-price" : "capture-current-value";
       window.setTimeout(() => {
-        const input = document.getElementById("capture-purchase-price");
+        const input = document.getElementById(targetId);
         if (input instanceof HTMLElement) {
           input.scrollIntoView({ block: "center", behavior: "smooth" });
           input.focus({ preventScroll: true });
@@ -841,8 +847,8 @@ export default function CapturePage() {
         condition: fields.condition || undefined,
         tcgRarity: fields.tcgRarity || undefined,
         storageLocation: fields.storageLocation.trim() || undefined,
-        currentValue: fields.currentValue ? Number(fields.currentValue) : undefined,
-        purchasePrice: fields.purchasePrice ? Number(fields.purchasePrice) : undefined,
+        currentValue: valueParsed.value,
+        purchasePrice: purchaseParsed.value,
         status: "COLLECTION" as const,
         createdAt: Date.now(),
         addedVia: identified ? "scan" : "manual",
@@ -1485,6 +1491,7 @@ export default function CapturePage() {
                           inputMode="decimal"
                           className={INPUT_CLS}
                           style={INPUT_STYLE}
+                          id="capture-current-value"
                           value={fields.currentValue}
                           onChange={(e) => setFields((p) => ({ ...p, currentValue: e.target.value }))}
                           placeholder="0"

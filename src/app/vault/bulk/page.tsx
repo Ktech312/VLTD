@@ -21,6 +21,7 @@ import { appendItems, type VaultImage, type VaultItem } from "@/lib/vaultModel";
 import { emitVaultUpdate } from "@/lib/vaultEvents";
 import { enqueueVaultItemSync, processVaultSyncQueue } from "@/lib/vaultSyncQueue";
 import { intakeNotice, planBulkIntake } from "@/lib/bulkIntake";
+import { moneyOrUndefined, parseMoneyInput } from "@/lib/moneyInput";
 import { hasSupabaseEnv, uploadVaultImageToSupabase } from "@/lib/vaultCloud";
 import {
   generateVaultImageKey,
@@ -316,6 +317,14 @@ export default function BulkUploadPage() {
   /* ── Commit ── */
   const addAllToVault = useCallback(async () => {
     if (drafts.length === 0 || !universe) return;
+    // Every typed value is checked before anything is saved: a bad or negative value is named (by its photo's position) and nothing is added.
+    for (let i = 0; i < drafts.length; i++) {
+      const check = parseMoneyInput(drafts[i].currentValue, { label: `Current value (photo ${i + 1})` });
+      if (!check.ok) {
+        setStatus(check.message);
+        return;
+      }
+    }
     setCommitting(true);
     setStatus("");
     try {
@@ -329,7 +338,7 @@ export default function BulkUploadPage() {
           universe,
           categoryLabel: category || undefined,
           subcategoryLabel: subcategory || undefined,
-          currentValue: d.currentValue ? Number(d.currentValue) : undefined,
+          currentValue: moneyOrUndefined(d.currentValue),
           status: "COLLECTION",
           createdAt: Date.now(),
           addedVia: d.scanned ? "scan" : "manual",

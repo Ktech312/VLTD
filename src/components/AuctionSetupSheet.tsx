@@ -9,6 +9,7 @@ import { AppIcon } from "@/components/ui/AppIcon";
 import { PillButton } from "@/components/ui/PillButton";
 import { saveItemDurably } from "@/lib/vaultSyncQueue";
 import { showToast } from "@/lib/toast";
+import { validateAuctionPrices } from "@/lib/moneyInput";
 
 // ─── Countdown helper ─────────────────────────────────────────────────────────
 
@@ -77,6 +78,7 @@ export default function AuctionSetupSheet({ item, onClose, onSaved }: Props) {
   );
   const [durationHours, setDurationHours] = useState(168);
   const [saving, setSaving] = useState(false);
+  const [priceError, setPriceError] = useState("");
   // Cancelling asks one question first: should the item stay public? Closing that question changes nothing.
   const [confirmingCancel, setConfirmingCancel] = useState(false);
   const cancelDialogRef = useDialogA11y<HTMLDivElement>(confirmingCancel, () => setConfirmingCancel(false));
@@ -97,7 +99,14 @@ export default function AuctionSetupSheet({ item, onClose, onSaved }: Props) {
   }
 
   async function handleStart() {
-    const parsedStartingBid = startingBid ? Number(startingBid) : 1;
+    // Checked in the save itself: nothing starts with a negative or malformed price, or a Buy It Now below the reserve / starting bid.
+    const check = validateAuctionPrices({ startingBid, reservePrice, buyItNow });
+    if (!check.ok) {
+      setPriceError(check.message);
+      return;
+    }
+    setPriceError("");
+    const parsedStartingBid = check.startingBid;
     setSaving(true);
     const endsAt = Date.now() + durationHours * 3600000;
     const updated: VaultItem = {
@@ -108,8 +117,8 @@ export default function AuctionSetupSheet({ item, onClose, onSaved }: Props) {
       auctionCurrentBid: undefined,
       auctionBidCount: 0,
       auctionWinnerId: undefined,
-      reservePrice: reservePrice ? Number(reservePrice) : undefined,
-      buyItNowPrice: buyItNow ? Number(buyItNow) : undefined,
+      reservePrice: check.reservePrice,
+      buyItNowPrice: check.buyItNowPrice,
       auctionEndsAt: endsAt,
       isPublic: true,
     };
@@ -240,9 +249,9 @@ export default function AuctionSetupSheet({ item, onClose, onSaved }: Props) {
                 <div className="relative">
                   <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm" style={{ color: "var(--muted)" }}>$</span>
                   <input
-                    type="number"
-                    min="1"
-                    step="1"
+                    type="text"
+                    inputMode="decimal"
+                    aria-label="Starting bid"
                     value={startingBid}
                     onChange={(e) => setStartingBid(e.target.value)}
                     placeholder="e.g. 25"
@@ -263,9 +272,9 @@ export default function AuctionSetupSheet({ item, onClose, onSaved }: Props) {
                 <div className="relative">
                   <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm" style={{ color: "var(--muted)" }}>$</span>
                   <input
-                    type="number"
-                    min="0"
-                    step="1"
+                    type="text"
+                    inputMode="decimal"
+                    aria-label="Reserve price"
                     value={reservePrice}
                     onChange={(e) => setReservePrice(e.target.value)}
                     placeholder="Minimum acceptable price"
@@ -286,9 +295,9 @@ export default function AuctionSetupSheet({ item, onClose, onSaved }: Props) {
                 <div className="relative">
                   <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm" style={{ color: "var(--muted)" }}>$</span>
                   <input
-                    type="number"
-                    min="0"
-                    step="1"
+                    type="text"
+                    inputMode="decimal"
+                    aria-label="Buy It Now price"
                     value={buyItNow}
                     onChange={(e) => setBuyItNow(e.target.value)}
                     placeholder="Instant purchase price"
@@ -339,6 +348,8 @@ export default function AuctionSetupSheet({ item, onClose, onSaved }: Props) {
             ) : null}
             <strong style={{ color: "var(--fg)" }}>Live auction.</strong> Your item will appear on the VLTD Auctions page. Bidders must be signed in. Payments are arranged directly between buyer and seller.
           </div>
+
+          {priceError ? <div role="alert" data-testid="auction-price-error" className="text-[12px] leading-snug text-red-300">{priceError}</div> : null}
 
           {/* Actions */}
           <div className="flex gap-2">

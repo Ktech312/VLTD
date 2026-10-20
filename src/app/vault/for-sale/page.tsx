@@ -12,6 +12,7 @@ import { marketplacesFor, type MarketplaceId } from "@/lib/marketplaces";
 import { UNIVERSE_LABEL, resolveCategoryLabel, type UniverseKey } from "@/lib/taxonomy";
 import { enqueueVaultItemSync, processVaultSyncQueue } from "@/lib/vaultSyncQueue";
 import { getPrimaryImageUrl, loadItems, saveItem, type VaultItem } from "@/lib/vaultModel";
+import { parseMoneyInput } from "@/lib/moneyInput";
 import { LoadErrorCard, StaleDataNotice, useCloudRefresh } from "@/components/vault/CloudStatus";
 
 const SALES_KEY = "vltd_sales_history";
@@ -90,10 +91,6 @@ function readinessScore(item: VaultItem): number {
 function money(v: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(Number.isFinite(v) ? v : 0);
 }
-function parseMoney(s: string) {
-  const v = Number(s.replace(/[^0-9.-]/g, "").trim());
-  return Number.isFinite(v) ? v : undefined;
-}
 function readSales(): SaleRecord[] {
   try { const p: unknown = JSON.parse(localStorage.getItem(SALES_KEY) || "[]"); return Array.isArray(p) ? (p as SaleRecord[]) : []; }
   catch { return []; }
@@ -121,6 +118,7 @@ function ReadinessBar({ score }: { score: number }) {
 function ItemCard({ item, onMarkSold }: { item: VaultItem; onMarkSold: (item: VaultItem) => void }) {
   const [askingInput, setAskingInput] = useState(item.askingPrice != null ? String(item.askingPrice) : "");
   const [priceSaved, setPriceSaved] = useState(false);
+  const [askError, setAskError] = useState("");
   const askRef = useRef<HTMLInputElement>(null);
   const imageUrl = getPrimaryImageUrl(item);
   const score = readinessScore(item);
@@ -129,8 +127,15 @@ function ItemCard({ item, onMarkSold }: { item: VaultItem; onMarkSold: (item: Va
   const editHref = `/vault/item/${encodeURIComponent(item.id)}`;
 
   function handlePriceSet() {
-    const parsed = parseMoney(askingInput);
-    const updated = { ...item, askingPrice: parsed };
+    // blank clears the asking price, 0 is an explicit $0; letters, malformed numbers and negatives are refused with a message and not saved
+    const checked = parseMoneyInput(askingInput, { label: "Asking price" });
+    if (!checked.ok) {
+      setAskError(checked.message);
+      setPriceSaved(false);
+      return;
+    }
+    setAskError("");
+    const updated = { ...item, askingPrice: checked.blank ? undefined : checked.value };
     saveItem(updated);
     enqueueVaultItemSync(updated.id);
     void processVaultSyncQueue();
@@ -208,11 +213,11 @@ function ItemCard({ item, onMarkSold }: { item: VaultItem; onMarkSold: (item: Va
           <span className="pl-2 text-xs" style={{ color: "var(--muted)" }}>$</span>
           <input
             ref={askRef}
-            type="number"
-            min="0"
-            step="1"
+            type="text"
+            inputMode="decimal"
+            aria-invalid={askError ? true : undefined}
             value={askingInput}
-            onChange={(e) => setAskingInput(e.target.value)}
+            onChange={(e) => { setAskingInput(e.target.value); if (askError) setAskError(""); }}
             onKeyDown={(e) => e.key === "Enter" && handlePriceSet()}
             placeholder="Asking price"
             aria-label="Asking price"
@@ -223,6 +228,7 @@ function ItemCard({ item, onMarkSold }: { item: VaultItem; onMarkSold: (item: Va
             {priceSaved ? <AppIcon name="checkmark" size={14} /> : "Set"}
           </PillButton>
         </div>
+        {askError ? <div role="alert" data-testid="asking-error" className="basis-full text-[12px] leading-snug text-red-300">{askError}</div> : null}
         <PillButton href={editHref}>Edit item</PillButton>
         <PillButton onClick={() => onMarkSold(item)} style={{ background: "rgba(74,222,128,0.12)", color: "#4ade80", boxShadow: "none" }}>Mark sold</PillButton>
       </div>
@@ -268,9 +274,12 @@ export default function ForSalePage() {
 
   async function handleMarkSold(item: VaultItem) {
     const priceInput = window.prompt("Sale price:", String(Number(item.askingPrice ?? item.currentValue ?? 0) || ""));
-    if (!priceInput) return;
-    const soldPrice = parseMoney(priceInput);
-    if (soldPrice === undefined) { setStatus("Invalid price."); return; }
+    if (priceInput === null) return;
+    // The sale price is required: blank, letters, malformed numbers and negatives are refused and nothing is marked sold. An explicit 0 is a real $0 sale.
+    const checked = parseMoneyInput(priceInput, { label: "Sale price" });
+    if (!checked.ok) { setStatus(`${checked.message} Nothing was marked sold.`); return; }
+    if (checked.blank) { setStatus("Enter the sale price (0 if it sold for nothing). Nothing was marked sold."); return; }
+    const soldPrice = checked.value;
     const platformInput = window.prompt("Platform (eBay, Whatnot, in person…):", "eBay");
     const salePlatform = platformInput?.trim() || undefined;
     const soldItem: VaultItem = { ...item, status: "SOLD", soldPrice, soldAt: Date.now(), soldPlatform: salePlatform };

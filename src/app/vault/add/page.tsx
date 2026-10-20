@@ -1,6 +1,6 @@
 "use client";
 
-import { NEGATIVE_COST_MESSAGE, isNegativeCostText } from "@/lib/costInput";
+import { parseMoneyInput } from "@/lib/moneyInput";
 import { useDialogA11y } from "@/components/ui/useDialogA11y";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -152,13 +152,6 @@ function getActiveProfileId() {
   } catch {
     return "";
   }
-}
-
-function parseMoney(input: string) {
-  const cleaned = input.replace(/[^0-9.-]/g, "").trim();
-  if (!cleaned) return undefined;
-  const value = Number(cleaned);
-  return Number.isFinite(value) ? value : undefined;
 }
 
 function inputClass(isAiFilled?: boolean) {
@@ -2034,8 +2027,16 @@ export default function AddPage() {
       setStatus("Title / Series is required.");
       return;
     }
-    if (isNegativeCostText(normalizedValues.purchasePrice)) {
-      setStatus(NEGATIVE_COST_MESSAGE);
+    // Typed amounts are checked here, in the save itself, not only in the box: letters, malformed numbers ("1e3", "1,5", "5-3") and
+    // negatives are refused with a message; blank stays unknown and an explicit 0 stays 0 (src/lib/moneyInput.ts).
+    const purchaseParsed = parseMoneyInput(normalizedValues.purchasePrice, { label: "Purchase price" });
+    if (!purchaseParsed.ok) {
+      setStatus(purchaseParsed.message);
+      return;
+    }
+    const valueParsed = parseMoneyInput(normalizedValues.currentValue, { label: "Current value" });
+    if (!valueParsed.ok) {
+      setStatus(valueParsed.message);
       return;
     }
 
@@ -2115,7 +2116,7 @@ export default function AddPage() {
         imageFrontStoragePath = primaryImage?.storageKey;
       }
 
-      const purchasePrice = parseMoney(normalizedValues.purchasePrice);
+      const purchasePrice = purchaseParsed.value;
       const pricingPatch = buildPricingPatch({
         estimatedValue: pricingValues.estimatedValue,
         lastCompValue: pricingValues.lastCompValue,
@@ -2126,7 +2127,7 @@ export default function AddPage() {
       // Only a valuation the person typed (or a price source they chose) becomes the item's value. What was paid is NOT a valuation:
       // an item with no value stays unvalued and is shown "at cost" by the shared ghost-value rule (never saved), like Quick Add does.
       const currentValue =
-        parseMoney(normalizedValues.currentValue) ??
+        valueParsed.value ??
         pricingPatch.estimatedValue ??
         pricingPatch.lastCompValue;
 

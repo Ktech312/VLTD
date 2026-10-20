@@ -1,6 +1,6 @@
 "use client";
 
-import { NEGATIVE_COST_MESSAGE, isNegativeCostText } from "@/lib/costInput";
+import { parseMoneyInput } from "@/lib/moneyInput";
 import { useDialogA11y } from "@/components/ui/useDialogA11y";
 import { useState } from "react";
 import { Glyph } from "@/components/ui/Glyph";
@@ -22,6 +22,12 @@ import {
 const SCAN_UNIVERSES = UNIVERSE_KEYS.filter((k) => k !== "BUILT_BOTANY");
 
 // One item on its way to the vault, pre-filled by AI and editable by the curator.
+/** The message for a typed amount that cannot be saved, or "" when it is blank or valid. */
+function costCheck(raw: string, label: string): string {
+  const r = parseMoneyInput(raw, { label });
+  return r.ok ? "" : r.message;
+}
+
 export type ScanDraft = {
   id: string;
   frontObjectUrl: string;
@@ -245,11 +251,11 @@ export default function ScanVerifySheet({
                           placeholder="Cost ($)"
                           inputMode="decimal"
                           aria-label="Cost"
-                          aria-invalid={isNegativeCostText(d.purchasePrice) ? true : undefined}
+                          aria-invalid={costCheck(d.purchasePrice, "Cost") ? true : undefined}
                           className={`${FIELD_CLS} w-20 shrink-0`}
                         />
-                        {isNegativeCostText(d.purchasePrice) ? (
-                          <span role="alert" className="basis-full text-[12px] leading-snug text-red-300">{NEGATIVE_COST_MESSAGE}</span>
+                        {costCheck(d.purchasePrice, "Cost") ? (
+                          <span role="alert" className="basis-full text-[12px] leading-snug text-red-300">{costCheck(d.purchasePrice, "Cost")}</span>
                         ) : null}
                         <input
                           value={d.currentValue}
@@ -257,8 +263,13 @@ export default function ScanVerifySheet({
                           placeholder={d.vision?.estimatedValue ? `AI: $${d.vision.estimatedValue}` : "Value ($)"}
                           title={d.vision?.estimatedValue ? "The AI's guess. It is only saved if you type it in." : undefined}
                           inputMode="decimal"
+                          aria-label="Value"
+                          aria-invalid={costCheck(d.currentValue, "Value") ? true : undefined}
                           className={`${FIELD_CLS} w-20 shrink-0`}
                         />
+                        {costCheck(d.currentValue, "Value") ? (
+                          <span role="alert" className="basis-full text-[12px] leading-snug text-red-300">{costCheck(d.currentValue, "Value")}</span>
+                        ) : null}
                         <PillButton size="compact" className="ml-auto shrink-0" onClick={() => onRescan(d.id)} disabled={scanningId !== null || outOfScans}>
                           {isScanning ? "Identifying…" : d.scanned ? "Identify again with AI" : "Identify with AI"}
                         </PillButton>
@@ -295,7 +306,7 @@ export default function ScanVerifySheet({
           <button
             type="button"
             onClick={onSave}
-            disabled={drafts.length === 0 || committing || scanningId !== null || drafts.some((d) => isNegativeCostText(d.purchasePrice))}
+            disabled={drafts.length === 0 || committing || scanningId !== null || drafts.some((d) => costCheck(d.purchasePrice, "Cost") || costCheck(d.currentValue, "Value"))}
             className="w-full rounded-2xl py-3 text-sm font-bold disabled:opacity-40"
             style={{ background: "var(--theme-gold, #C8CDD2)", color: "#0A0800" }}
           >

@@ -24,13 +24,12 @@ import {
   confidenceTone,
   displayPrimaryValue,
   effectiveValueRange,
-  formatPrice,
   formatPriceUpdatedAt,
   getPricingSuggestions,
   normalizeComparables,
   normalizePriceConfidence,
   parsePastedSoldResults,
-  parsePriceInput,
+  formatPrice,
   resolveSearchLinks,
   SEARCH_SITES,
   summarizeComps,
@@ -39,6 +38,7 @@ import {
   type PricingMvpFields,
   type SearchSitePrefs,
 } from "@/lib/pricingMvp";
+import { parseMoneyInput } from "@/lib/moneyInput";
 
 type FieldKey = "range" | "lastComp" | "estimate" | "source" | "notes";
 
@@ -83,6 +83,12 @@ function numText(n?: number) {
  * them) and the text turns into a line you can type on; the card never changes
  * size. Enter saves, Esc cancels, the check saves everything.
  */
+/** An amount someone recorded: an explicit $0 is shown as $0; only a value that was never set is a dash. */
+function fmtKnown(v: number | undefined): string {
+  if (v === undefined || v === null || !Number.isFinite(Number(v))) return "—";
+  return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(Number(v));
+}
+
 export default function PricingMvpCard({
   value,
   compact = false,
@@ -107,6 +113,7 @@ export default function PricingMvpCard({
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [draft, setDraft] = useState({ low: "", median: "", high: "", last: "", estimate: "", source: "", notes: "" });
   const [addingComp, setAddingComp] = useState(false);
+  const [problem, setProblem] = useState("");
   const [compDraft, setCompDraft] = useState({ source: "", price: "", date: "", url: "" });
   const skipCommit = useRef(false);
   const sectionRef = useRef<HTMLElement>(null);
@@ -193,14 +200,29 @@ export default function PricingMvpCard({
     setAll(true);
   }
 
+  // Typed amounts are checked, never guessed (src/lib/moneyInput.ts): blank = not set, 0 = an explicit $0, letters / malformed numbers /
+  // negatives are refused with a message and the box stays open on what was typed.
+  function check(fields: Array<[string, string]>): { ok: true; values: Array<number | undefined> } | { ok: false; message: string } {
+    const values: Array<number | undefined> = [];
+    for (const [raw, label] of fields) {
+      const r = parseMoneyInput(raw, { label });
+      if (!r.ok) return { ok: false, message: r.message };
+      values.push(r.blank ? undefined : r.value);
+    }
+    return { ok: true, values };
+  }
+
   async function saveAll() {
+    const c = check([[draft.low, "Low value"], [draft.median, "Median value"], [draft.high, "High value"], [draft.last, "Last comp"], [draft.estimate, "Value"]]);
+    if (!c.ok) { setProblem(c.message); return; }
+    setProblem("");
     setAll(false);
     await commit({
-      valueLow: parsePriceInput(draft.low),
-      valueMedian: parsePriceInput(draft.median),
-      valueHigh: parsePriceInput(draft.high),
-      lastCompValue: parsePriceInput(draft.last),
-      estimatedValue: parsePriceInput(draft.estimate),
+      valueLow: c.values[0],
+      valueMedian: c.values[1],
+      valueHigh: c.values[2],
+      lastCompValue: c.values[3],
+      estimatedValue: c.values[4],
       priceSource: draft.source.trim(),
       priceNotes: draft.notes.trim(),
     });
@@ -209,22 +231,34 @@ export default function PricingMvpCard({
   async function finishOne() {
     if (skipCommit.current || !editing) return;
     const field = editing;
+    // A wrong amount keeps the box open (and says why) instead of saving something else.
+    if (field === "range") {
+      const c = check([[draft.low, "Low value"], [draft.median, "Value"], [draft.high, "High value"]]);
+      if (!c.ok) { setProblem(c.message); return; }
+    } else if (field === "lastComp") {
+      const c = check([[draft.last, "Last comp"]]);
+      if (!c.ok) { setProblem(c.message); return; }
+    } else if (field === "estimate") {
+      const c = check([[draft.estimate, "Value"]]);
+      if (!c.ok) { setProblem(c.message); return; }
+    }
+    setProblem("");
     // Enter and blur can both fire for one edit; only save once.
     skipCommit.current = true;
     setEditing(null);
     if (field === "range") {
-      const next = {
-        valueLow: parsePriceInput(draft.low),
-        valueMedian: parsePriceInput(draft.median),
-        valueHigh: parsePriceInput(draft.high),
-      };
+      const c = check([[draft.low, "Low value"], [draft.median, "Value"], [draft.high, "High value"]]);
+      if (!c.ok) return;
+      const next = { valueLow: c.values[0], valueMedian: c.values[1], valueHigh: c.values[2] };
       if (next.valueLow !== value.valueLow || next.valueMedian !== value.valueMedian || next.valueHigh !== value.valueHigh) await commit(next);
     } else if (field === "lastComp") {
-      const next = parsePriceInput(draft.last);
-      if (next !== value.lastCompValue) await commit({ lastCompValue: next });
+      const c = check([[draft.last, "Last comp"]]);
+      if (!c.ok) return;
+      if (c.values[0] !== value.lastCompValue) await commit({ lastCompValue: c.values[0] });
     } else if (field === "estimate") {
-      const next = parsePriceInput(draft.estimate);
-      if (next !== value.estimatedValue) await commit({ estimatedValue: next });
+      const c = check([[draft.estimate, "Value"]]);
+      if (!c.ok) return;
+      if (c.values[0] !== value.estimatedValue) await commit({ estimatedValue: c.values[0] });
     } else if (field === "source") {
       if (draft.source.trim() !== (value.priceSource ?? "").trim()) await commit({ priceSource: draft.source.trim() });
     } else if (field === "notes") {
@@ -234,6 +268,7 @@ export default function PricingMvpCard({
 
   function cancel() {
     skipCommit.current = true;
+    setProblem("");
     setEditing(null);
     setAll(false);
   }
@@ -253,9 +288,12 @@ export default function PricingMvpCard({
   };
 
   async function addComp() {
-    const salePrice = parsePriceInput(compDraft.price);
     const source = compDraft.source.trim();
+    const priced = parseMoneyInput(compDraft.price, { label: "Sale price" });
+    if (!priced.ok) { setProblem(priced.message); return; }
+    const salePrice = priced.blank ? undefined : priced.value;
     if (!source || !salePrice || salePrice <= 0) return;
+    setProblem("");
     const comp: PriceComparable = {
       source,
       salePrice,
@@ -597,6 +635,8 @@ export default function PricingMvpCard({
         </PillButton>
       </div>
 
+      {problem ? <div role="alert" data-testid="pricing-error" className="mt-2 text-[12px] leading-snug text-red-300">{problem}</div> : null}
+
       {showBody ? (
       <div className="mt-3 grid gap-3">
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
@@ -619,7 +659,7 @@ export default function PricingMvpCard({
             ) : (
               <div className="mt-1 flex flex-wrap items-baseline gap-1.5">
                 {range.low ? <span className="text-xs text-[color:var(--muted)]">{formatPrice(range.low)}</span> : null}
-                <span className="text-lg font-semibold">{formatPrice(primaryValue)}</span>
+                <span className="text-lg font-semibold">{fmtKnown(primaryValue)}</span>
                 {range.high ? <span className="text-xs text-[color:var(--muted)]">{formatPrice(range.high)}</span> : null}
               </div>
             )}
@@ -631,7 +671,7 @@ export default function PricingMvpCard({
             {isOpen("lastComp") ? (
               <input aria-label="Last comp" autoFocus={!all} inputMode="decimal" className={`${INLINE_EDIT_LINE} mt-1 h-7 w-full text-lg font-semibold`} value={draft.last} onChange={(e) => setDraft((d) => ({ ...d, last: e.target.value }))} onBlur={blurSave} onKeyDown={keys} />
             ) : (
-              <div className="mt-1 text-lg font-semibold">{formatPrice(value.lastCompValue)}</div>
+              <div className="mt-1 text-lg font-semibold">{fmtKnown(value.lastCompValue)}</div>
             )}
           </div>
 
@@ -737,7 +777,7 @@ export default function PricingMvpCard({
         <div className="grid gap-2 text-sm leading-5">
           {(
             [
-              ["estimate", "Estimate", formatPrice(value.estimatedValue)],
+              ["estimate", "Estimate", fmtKnown(value.estimatedValue)],
               ["source", "Price source", value.priceSource?.trim() || "—"],
               ["notes", "Notes", value.priceNotes?.trim() || "—"],
             ] as const
