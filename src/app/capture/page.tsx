@@ -47,6 +47,8 @@ import {
   type CaptureFieldLocks,
 } from "@/lib/captureAddState";
 import { getStoredActiveProfileId } from "@/lib/auth";
+import { storedSessionUserId } from "@/lib/sessionGuard";
+import { captureDraftScope, clearCaptureDraft, draftHasContent, loadCaptureDraft, saveCaptureDraft } from "@/lib/captureDraft";
 import { getBulkScanStatus, consumeBulkScans } from "@/lib/bulkScanQuota";
 
 const UNIVERSES = getUniverses();
@@ -449,6 +451,60 @@ export default function CapturePage() {
     });
   }, [locks, fields]);
 
+  /* ── Draft: an unsaved item survives leaving the page and refreshing ── */
+  // Kept per signed-in account AND profile (never visible to another account), restored without running any AI, and cleared only
+  // after the item is saved or the person presses "Discard draft".
+  const draftScopeRef = useRef("");
+  const draftBaselineRef = useRef<ReviewFields>(EMPTY_FIELDS);
+  const draftReadyRef = useRef(false); // autosave stays off until the restore check has finished, so an empty form can't erase a draft
+  const [draftNotice, setDraftNotice] = useState<{ savedAt: number } | null>(null);
+
+  useEffect(() => {
+    let alive = true;
+    const scope = captureDraftScope(storedSessionUserId(), getStoredActiveProfileId());
+    draftScopeRef.current = scope;
+    const state = readCaptureAddState();
+    draftBaselineRef.current = { ...EMPTY_FIELDS, ...applyCaptureLockedValues(state.rememberedValues, state.locks) } as ReviewFields;
+    void (async () => {
+      const draft = await loadCaptureDraft<ReviewFields>(scope);
+      if (!alive) return;
+      if (draft && (draft.files.length > 0 || draftHasContent(draft.fields as unknown as Record<string, unknown>, draftBaselineRef.current as unknown as Record<string, unknown>, 0))) {
+        setFields((prev) => ({ ...prev, ...draft.fields }));
+        setCapturedImages(draft.files);
+        setDraftNotice({ savedAt: draft.savedAt });
+      }
+      draftReadyRef.current = true;
+    })();
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!draftReadyRef.current) return;
+    const timer = window.setTimeout(() => {
+      const scope = draftScopeRef.current;
+      if (!scope || savingRef.current) return;
+      if (draftHasContent(fields as unknown as Record<string, unknown>, draftBaselineRef.current as unknown as Record<string, unknown>, capturedImages.length)) {
+        void saveCaptureDraft(scope, fields, capturedImages);
+      } else {
+        void clearCaptureDraft(scope);
+        setDraftNotice(null);
+      }
+    }, 500);
+    return () => window.clearTimeout(timer);
+  }, [fields, capturedImages]);
+
+  const discardDraft = useCallback(() => {
+    setFields({ ...draftBaselineRef.current });
+    setCapturedImages([]);
+    setIdentified(false);
+    setErrorMsg("");
+    setSaveError("");
+    setDraftNotice(null);
+    void clearCaptureDraft(draftScopeRef.current);
+  }, []);
+
   /* ── AI flow triggered by photo capture ── */
   // Capture-first: attach the photo instantly. AI identify is opt-in (the
   // "Identify with AI" / "Auto ID" buttons), so taking a photo never blocks
@@ -808,6 +864,8 @@ export default function CapturePage() {
       // spreadsheet/wishlist import) already does this.
       enqueueVaultItemSync(id);
       void processVaultSyncQueue();
+      // The item is saved: only now is the draft done with.
+      await clearCaptureDraft(draftScopeRef.current);
       router.push("/vault");
     } catch (err) {
       const msg = err instanceof Error ? err.message : "";
@@ -954,6 +1012,12 @@ export default function CapturePage() {
                   the "New Vault Item" heading) -- every extra line here
                   pushed real controls further down, forcing a scroll on
                   mobile before you could reach them. */}
+              {draftNotice ? (
+                <div role="status" data-testid="capture-draft-notice" className="mb-3 flex flex-wrap items-center gap-3 rounded-xl border border-[color:var(--border)] px-4 py-3 text-sm" style={{ background: "var(--pill)", color: "var(--fg)" }}>
+                  <span className="min-w-0 flex-1">Restored your unsaved draft from {new Date(draftNotice.savedAt).toLocaleString()}. Nothing was sent anywhere: AI only runs when you press Identify.</span>
+                  <button type="button" data-testid="capture-draft-discard" onClick={discardDraft} className="rounded-full px-4 py-2 text-sm font-semibold ring-1 ring-[color:var(--border)]">Discard draft</button>
+                </div>
+              ) : null}
               <div className="flex flex-wrap items-start justify-between gap-2">
                 <h1 className="text-[34px] font-extrabold uppercase leading-[0.9] tracking-[-0.03em] text-text-primary sm:text-[42px]">
                   New Vault Item
