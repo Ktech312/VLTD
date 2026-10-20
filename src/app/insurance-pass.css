@@ -4,6 +4,8 @@
    Broad :has(checkbox) selectors were removed — they matched vault, portfolio,
    and gallery pages that happen to contain checkboxes. */
 
+/* Screen styling only. These rules are keyed on links present in the page (the site nav carries them), so they must never apply to print: printing is owned by .vltd-print-document in globals.css. */
+@media screen {
 body:not(:has(.vltd-ins-light)):has(a[href="/insurance/packet"]),
 body:not(:has(.vltd-ins-light)):has(a[href="/insurance/item"]) {
   background: var(--theme-bg, #0B1320);
@@ -137,4 +139,5 @@ body:not(:has(.vltd-ins-light)):has(a[href="/insurance/item"]) a:hover {
     font-size: 2rem !important;
     line-height: 1 !important;
   }
+}
 }
