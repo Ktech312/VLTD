@@ -2,8 +2,12 @@
 
 import { newId } from "@/lib/id";
 import { readVaultLocalJson } from "@/lib/vaultLocalStore";
-import { appendItems, getAllLocalItems, saveItems, type VaultItem } from "@/lib/vaultModel";
+import { appendItems, getAllLocalItems, type VaultItem } from "@/lib/vaultModel";
 import { enqueueVaultItemSync, removeVaultItemFromSyncQueue } from "@/lib/vaultSyncQueue";
+import { deleteVaultItemsEverywhere } from "@/lib/vaultActions";
+import { loadAllGalleries } from "@/lib/galleryModel";
+import { storedSessionUserId } from "@/lib/sessionGuard";
+import { importFingerprint, planImportUndo, undoResultMessage, type UndoPlan } from "@/lib/importUndo";
 
 export const LS_KEY = "vltd_vault_items_v1";
 export const ACTIVE_PROFILE_KEY = "vltd_active_profile_id_v1";
@@ -53,6 +57,11 @@ export type ImportHistoryEntry = {
   itemIds: string[];
   itemCount: number;
   skippedCount: number;
+  /** Who and which profile imported it (older entries have neither): Undo only offers an import to the person and profile that made it. */
+  userId?: string;
+  profileId?: string;
+  /** Fingerprint of each imported record at import time, to tell edited records from untouched ones before Undo removes anything. */
+  fingerprints?: Record<string, string>;
 };
 
 export type MappingField =
@@ -889,6 +898,9 @@ function readImportHistoryRaw(): ImportHistoryEntry[] {
           itemIds,
           itemCount: Number.isFinite(Number(record.itemCount)) ? Number(record.itemCount) : itemIds.length,
           skippedCount: Number.isFinite(Number(record.skippedCount)) ? Number(record.skippedCount) : 0,
+          userId: typeof record.userId === "string" && record.userId ? record.userId : undefined,
+          profileId: typeof record.profileId === "string" && record.profileId ? record.profileId : undefined,
+          fingerprints: record.fingerprints && typeof record.fingerprints === "object" ? (record.fingerprints as Record<string, string>) : undefined,
         } satisfies ImportHistoryEntry;
       })
       .filter(Boolean) as ImportHistoryEntry[];
@@ -897,8 +909,18 @@ function readImportHistoryRaw(): ImportHistoryEntry[] {
   }
 }
 
+/** The history this person may act on: entries made by another account or another profile on this browser are not offered. */
+function visibleToCurrentPerson(entry: ImportHistoryEntry) {
+  const user = storedSessionUserId();
+  if (entry.userId && user && entry.userId !== user) return false;
+  const profile = getActiveProfileId();
+  if (entry.profileId && profile && entry.profileId !== profile) return false;
+  return true;
+}
+
 export function readImportHistory() {
   return readImportHistoryRaw()
+    .filter(visibleToCurrentPerson)
     .sort((a, b) => Number(b.importedAt) - Number(a.importedAt))
     .slice(0, 10);
 }
@@ -907,6 +929,8 @@ export function recordImportHistory(input: {
   sourceLabel: string;
   itemIds: string[];
   skippedCount?: number;
+  /** The records as saved, for the change check at Undo time. */
+  items?: Array<Record<string, unknown>>;
 }) {
   if (typeof window === "undefined") return null;
   const itemIds = input.itemIds.map((id) => String(id)).filter(Boolean);
@@ -919,6 +943,11 @@ export function recordImportHistory(input: {
     itemIds,
     itemCount: itemIds.length,
     skippedCount: input.skippedCount ?? 0,
+    userId: storedSessionUserId() ?? undefined,
+    profileId: getActiveProfileId() || undefined,
+    fingerprints: input.items
+      ? Object.fromEntries(input.items.map((item) => [String(item.id), importFingerprint(item)]))
+      : undefined,
   };
 
   const next = [entry, ...readImportHistoryRaw()].slice(0, 10);
@@ -926,23 +955,67 @@ export function recordImportHistory(input: {
   return entry;
 }
 
-export function undoLastImport() {
-  if (typeof window === "undefined") return { removed: 0, entry: null as ImportHistoryEntry | null };
-  const history = readImportHistory();
-  const entry = history[0] ?? null;
-  if (!entry) return { removed: 0, entry };
+function exhibitionCounts(ids: Set<string>): Record<string, number> {
+  const counts: Record<string, number> = {};
+  try {
+    for (const gallery of loadAllGalleries()) {
+      for (const id of gallery.itemIds ?? []) if (ids.has(String(id))) counts[String(id)] = (counts[String(id)] ?? 0) + 1;
+    }
+  } catch {
+    /* no exhibitions readable: no warning from them */
+  }
+  return counts;
+}
 
-  const ids = new Set(entry.itemIds.map((id) => String(id)));
-  const allItems = getAllLocalItems();
-  const nextItems = allItems.filter((item) => !ids.has(String(item.id)));
+/** The most recent import this person made (in this profile), and what undoing it would touch. Nothing is changed. */
+export function planLastImportUndo(): { entry: ImportHistoryEntry; plan: UndoPlan } | null {
+  const entry = readImportHistory()[0] ?? null;
+  if (!entry) return null;
+  const ids = new Set(entry.itemIds.map(String));
+  const plan = planImportUndo(entry, getAllLocalItems() as unknown as Array<Record<string, unknown> & { id: string }>, exhibitionCounts(ids));
+  return { entry, plan };
+}
 
-  saveItems(nextItems);
-  entry.itemIds.forEach(removeVaultItemFromSyncQueue);
+export type UndoImportOutcome = { entry: ImportHistoryEntry; removed: number; stillThere: number; keptChanged: number; alreadyGone: number; message: string };
 
-  const remainingHistory = readImportHistoryRaw().filter((record) => String(record.id) !== String(entry.id));
-  window.localStorage.setItem(IMPORT_HISTORY_KEY, JSON.stringify(remainingHistory));
+/**
+ * Undo an import on its exact ids. mode "unchanged" keeps every flagged record. The account is asked to delete each one and only
+ * records the account confirmed are counted as removed; the rest stay in the vault AND in the history, so Undo can be pressed again.
+ */
+export async function undoImport(entryId: string, mode: "all" | "unchanged"): Promise<UndoImportOutcome | null> {
+  const all = readImportHistoryRaw();
+  const entry = all.find((e) => String(e.id) === String(entryId));
+  if (!entry) return null;
+  const ids = new Set(entry.itemIds.map(String));
+  const plan = planImportUndo(entry, getAllLocalItems() as unknown as Array<Record<string, unknown> & { id: string }>, exhibitionCounts(ids));
+  const flaggedIds = new Set(plan.flagged.map((f) => f.id));
+  const toRemove = plan.present.map((p) => p.id).filter((id) => mode === "all" || !flaggedIds.has(id));
+  const kept = plan.present.map((p) => p.id).filter((id) => !toRemove.includes(id));
 
-  return { removed: allItems.length - nextItems.length, entry };
+  // A queued upload of a record about to be removed must not run after it is gone.
+  toRemove.forEach(removeVaultItemFromSyncQueue);
+  if (toRemove.length > 0) await deleteVaultItemsEverywhere(toRemove);
+
+  const local = new Set(getAllLocalItems().map((item) => String(item.id)));
+  const stillThere = toRemove.filter((id) => local.has(id));
+  stillThere.forEach(enqueueVaultItemSync); // restored by the failed delete: keep them uploading as before
+  const removed = toRemove.length - stillThere.length;
+
+  // The history keeps only what is still to be decided: records that could not be removed. Records kept on purpose, records
+  // already gone and records removed are done.
+  const remainingIds = entry.itemIds.filter((id) => stillThere.includes(String(id)));
+  const rest = readImportHistoryRaw().filter((record) => String(record.id) !== String(entry.id));
+  const next = remainingIds.length > 0 ? [{ ...entry, itemIds: remainingIds, itemCount: remainingIds.length }, ...rest] : rest;
+  window.localStorage.setItem(IMPORT_HISTORY_KEY, JSON.stringify(next));
+
+  return {
+    entry,
+    removed,
+    stillThere: stillThere.length,
+    keptChanged: kept.length,
+    alreadyGone: plan.missingIds.length,
+    message: undoResultMessage({ sourceLabel: entry.sourceLabel, removed, total: entry.itemIds.length, stillThere: stillThere.length, keptChanged: kept.length, alreadyGone: plan.missingIds.length }),
+  };
 }
 
 export async function downloadBlankSpreadsheetTemplate(filename = "vltd-blank-import-template.xlsx") {

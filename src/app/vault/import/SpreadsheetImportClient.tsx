@@ -24,13 +24,16 @@ import {
   parseSpreadsheetSource,
   readImportHistory,
   readVaultForActiveProfile,
+  planLastImportUndo,
   recordImportHistory,
   type MappingField,
   type MappingProfile,
   type ParsedImportItem,
   type ParsedImportSource,
-  undoLastImport,
+  undoImport,
 } from "@/lib/spreadsheetImport";
+import type { UndoItemFlag } from "@/lib/importUndo";
+import { syncVaultItemsFromSupabaseChecked } from "@/lib/vaultModel";
 import { processVaultSyncQueue } from "@/lib/vaultSyncQueue";
 import { friendlyErrorMessage } from "@/lib/friendlyError";
 
@@ -169,6 +172,10 @@ export default function SpreadsheetImportClient() {
   const [importPreset, setImportPreset] = useState<ImportPreset>("generic");
   const [importHistory, setImportHistory] = useState<ImportHistoryEntry[]>([]);
   const [lastImportResult, setLastImportResult] = useState<LastImportResult | null>(null);
+  // Has this browser's copy of the vault been checked against the account? Duplicate detection is only complete when it has.
+  const [accountCheck, setAccountCheck] = useState<"checking" | "ok" | "failed">("checking");
+  const [undoPrompt, setUndoPrompt] = useState<{ entryId: string; total: number; flagged: UndoItemFlag[]; unverifiable: boolean } | null>(null);
+  const [undoBusy, setUndoBusy] = useState(false);
 
   const previewItems = useMemo(() => parsedItems.slice(0, PREVIEW_LIMIT), [parsedItems]);
   const duplicateGroups = useMemo(() => detectDuplicateGroups(parsedItems), [parsedItems]);
@@ -192,9 +199,26 @@ export default function SpreadsheetImportClient() {
     setImportHistory(readImportHistory());
   }
 
+  // The duplicate list, the matches and "recent items" must come from the account, not only from whatever this browser already holds
+  // (a second device or a fresh browser holds nothing until the vault has been opened).
+  async function checkAccount() {
+    setAccountCheck("checking");
+    try {
+      const { ok } = await syncVaultItemsFromSupabaseChecked();
+      refreshRecentVault();
+      setAccountCheck(ok ? "ok" : "failed");
+      return ok;
+    } catch {
+      setAccountCheck("failed");
+      return false;
+    }
+  }
+
   useEffect(() => {
     setHasMounted(true);
     refreshRecentVault();
+    void checkAccount();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   function handlePresetChange(nextPreset: ImportPreset) {
@@ -285,7 +309,7 @@ export default function SpreadsheetImportClient() {
     rebuildFromMapping(nextMapping);
   }
 
-  function getItemsToImport() {
+  function getItemsToImport(existingList: ParsedImportItem[] = existingVault) {
     if (importMode === "all") return parsedItems;
 
     // Same rule as the duplicate review: the same description AND serial number. Different serial numbers are different
@@ -293,7 +317,7 @@ export default function SpreadsheetImportClient() {
     const seen = new Map<string, Set<string>>();
     const existingKeys =
       importMode === "skip-existing-duplicates"
-        ? new Set(existingVault.map((item) => duplicateKeyOf(item)).filter(Boolean))
+        ? new Set(existingList.map((item) => duplicateKeyOf(item)).filter(Boolean))
         : new Set<string>();
 
     return parsedItems.filter((item) => {
@@ -316,13 +340,23 @@ export default function SpreadsheetImportClient() {
 
     if (!hasConfirmed) {
       setHasConfirmed(true);
-      setStatus("Review the import summary, then click Confirm Import again.");
+      setStatus(
+        importMode === "skip-existing-duplicates" && accountCheck !== "ok"
+          ? "Review the import summary, then click Confirm Import again. Your account could not be checked for existing items, so duplicates of items that are in your account but not on this device cannot be skipped."
+          : "Review the import summary, then click Confirm Import again."
+      );
       return;
     }
 
     setIsImporting(true);
     try {
-      const finalItems = getItemsToImport();
+      // Skipping items that already exist must look at the account's items too, as of now (not as of when the page opened).
+      let duplicateCheckIncomplete = false;
+      if (importMode === "skip-existing-duplicates") {
+        duplicateCheckIncomplete = !(await checkAccount());
+      }
+      // The list the account check just refreshed (state would still hold the one from before the check).
+      const finalItems = getItemsToImport(readVaultForActiveProfile() as ParsedImportItem[]);
       const savedItems = appendImportedItems(finalItems);
       emitVaultUpdate();
       void processVaultSyncQueue();
@@ -340,6 +374,7 @@ export default function SpreadsheetImportClient() {
         sourceLabel,
         itemIds: savedItems.map((item) => item.id),
         skippedCount: skippedDupCount,
+        items: savedItems as unknown as Array<Record<string, unknown>>,
       });
       setLastImportResult({
         count: savedItems.length,
@@ -356,6 +391,7 @@ export default function SpreadsheetImportClient() {
             ? `${importedSummary.missingCostCount} ${importedSummary.missingCostCount === 1 ? "item" : "items"} had no cost: the cost was left blank (unknown), not $0. `
             : "") +
           (skippedDupCount > 0 ? `Skipped ${skippedDupCount} exact duplicates (same description and serial number). ` : "") +
+          (duplicateCheckIncomplete ? "Duplicate check incomplete: your account could not be read, so items that are in your account but not on this device may have been imported again. " : "") +
           (heldBack > 0 ? `${heldBack} ${heldBack === 1 ? "row was" : "rows were"} NOT imported because of a negative cost: correct ${heldBack === 1 ? "it" : "them"} in your file (blank if unknown, 0 if free) and import again. ` : "") +
           (importedSummary.totalEstimatedValue > 0 ? `Estimated value added: ${toMoney(importedSummary.totalEstimatedValue)}.` : "")
       );
@@ -378,15 +414,32 @@ export default function SpreadsheetImportClient() {
     }
   }
 
+  async function runUndo(entryId: string, mode: "all" | "unchanged") {
+    setUndoBusy(true);
+    try {
+      const result = await undoImport(entryId, mode);
+      setUndoPrompt(null);
+      refreshRecentVault();
+      emitVaultUpdate();
+      setStatus(result ? result.message : "No import history to undo.");
+    } finally {
+      setUndoBusy(false);
+    }
+  }
+
   function handleUndoLastImport() {
-    const result = undoLastImport();
-    refreshRecentVault();
-    emitVaultUpdate();
-    setStatus(
-      result.entry
-        ? `Undid ${result.removed} item${result.removed === 1 ? "" : "s"} from ${result.entry.sourceLabel}.`
-        : "No import history to undo."
-    );
+    if (undoBusy) return;
+    const found = planLastImportUndo();
+    if (!found) {
+      setStatus("No import history to undo.");
+      return;
+    }
+    // Records edited or moved since the import, or sitting in an exhibition, are named first: removing them is the person's call.
+    if (found.plan.flagged.length > 0 || (found.plan.unverifiable && found.plan.present.length > 0)) {
+      setUndoPrompt({ entryId: found.entry.id, total: found.plan.present.length, flagged: found.plan.flagged, unverifiable: found.plan.unverifiable });
+      return;
+    }
+    void runUndo(found.entry.id, "all");
   }
 
   async function handleDownloadTemplate() {
@@ -472,6 +525,14 @@ export default function SpreadsheetImportClient() {
               spellCheck={false}
             />
 
+            {accountCheck === "failed" ? (
+              <div role="status" data-testid="account-check-failed" className="mb-3 rounded-xl border border-amber-400/40 px-4 py-3 text-sm text-amber-300">
+                Your account could not be checked just now, so duplicate detection only covers items already on this device and may be incomplete.{" "}
+                <button type="button" className="underline" onClick={() => void checkAccount()}>Check again</button>
+              </div>
+            ) : accountCheck === "checking" ? (
+              <div role="status" className="mb-3 text-xs text-[color:var(--muted)]">Checking your account for existing items…</div>
+            ) : null}
             {status ? (
               <div className="mt-3 rounded-[20px] bg-[color:var(--pill)] px-4 py-3 text-sm ring-1 ring-[color:var(--border)]">
                 {status}
@@ -653,10 +714,33 @@ export default function SpreadsheetImportClient() {
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div className="min-w-0 flex-1 basis-56">
                   <div className="text-[11px] uppercase tracking-[0.18em] text-[color:var(--muted2)]">Import History</div>
-                  <div className="mt-2 text-sm text-[color:var(--muted)]">Undo removes the most recent imported batch from the local vault and pending sync queue.</div>
+                  <div className="mt-2 text-sm text-[color:var(--muted)]">Undo removes the items the latest import created, from this device and from your account. Anything you have changed since is shown to you first.</div>
                 </div>
-                <PillButton className="shrink-0" disabled={importHistory.length === 0 || isImporting} onClick={handleUndoLastImport}>Undo last</PillButton>
+                <PillButton className="shrink-0" disabled={importHistory.length === 0 || isImporting || undoBusy} onClick={handleUndoLastImport}>{undoBusy ? "Undoing…" : "Undo last"}</PillButton>
               </div>
+
+              {undoPrompt ? (
+                <div className="mt-4" role="alertdialog" aria-label="Undo import" data-testid="undo-prompt">
+                  <RowCard>
+                    <div className="text-sm font-medium text-[color:var(--fg)]">
+                      {undoPrompt.flagged.length > 0
+                        ? `${undoPrompt.flagged.length} of ${undoPrompt.total} imported item${undoPrompt.total === 1 ? "" : "s"} ${undoPrompt.flagged.length === 1 ? "has" : "have"} changed or ${undoPrompt.flagged.length === 1 ? "is" : "are"} in use since the import.`
+                        : "This import was recorded before change tracking, so VLTD cannot tell whether you have edited these items since."}
+                    </div>
+                    {undoPrompt.flagged.slice(0, 5).map((flag) => (
+                      <div key={flag.id} className="mt-1 text-xs text-amber-300">{flag.title}: {flag.reasons.join(", ")}</div>
+                    ))}
+                    {undoPrompt.flagged.length > 5 ? <div className="mt-1 text-xs text-[color:var(--muted)]">and {undoPrompt.flagged.length - 5} more</div> : null}
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      <PillButton disabled={undoBusy} onClick={() => void runUndo(undoPrompt.entryId, "all")}>{`Remove all ${undoPrompt.total}`}</PillButton>
+                      {undoPrompt.flagged.length > 0 && undoPrompt.flagged.length < undoPrompt.total ? (
+                        <PillButton disabled={undoBusy} onClick={() => void runUndo(undoPrompt.entryId, "unchanged")}>{`Keep the changed ones, remove ${undoPrompt.total - undoPrompt.flagged.length}`}</PillButton>
+                      ) : null}
+                      <PillButton disabled={undoBusy} onClick={() => setUndoPrompt(null)}>Cancel</PillButton>
+                    </div>
+                  </RowCard>
+                </div>
+              ) : null}
 
               <div className="mt-4 space-y-3">
                 {importHistory.length === 0 ? (

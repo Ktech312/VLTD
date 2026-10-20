@@ -25,8 +25,14 @@ fs.writeFileSync(
   ts.transpileModule(src, { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2020 } }).outputText
 );
 
+// importUndo is pure: use the real one.
+fs.writeFileSync(path.join(out, "importUndo.js"), ts.transpileModule(fs.readFileSync(path.join(root, "src", "lib", "importUndo.ts"), "utf8"), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2020 } }).outputText);
 let n = 0;
 const mocks = {
+  vaultActions: { deleteVaultItemsEverywhere: async () => ({ ok: true }) },
+  galleryModel: { loadAllGalleries: () => [] },
+  sessionGuard: { storedSessionUserId: () => null },
+  importUndo: require(path.join(out, "importUndo.js")),
   id: { newId: () => "id-" + ++n },
   vaultLocalStore: { readVaultLocalJson: () => null },
   vaultModel: { appendItems: () => {}, getAllLocalItems: () => [], saveItems: () => {} },
