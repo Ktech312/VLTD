@@ -2695,6 +2695,17 @@ html[data-load-stalled="1"] #vltd-load-stalled {
   [data-vault-chrome] { display: none !important; }
 }
 
+/* ON-SCREEN INSURANCE FIXES. (1) The gold primary buttons keep dark text: the legacy link/button colour rules made their label near-invisible on the silver dark-theme gradient.
+   (2) The printable packet route is a sheet of paper: it stays white with black text on screen in every theme (the themes force transparent <main> and light text).
+   The repeated classes only raise specificity above those theme rules. */
+@media screen {
+  :root body .vltd-ins-primary.vltd-ins-primary.vltd-ins-primary.vltd-ins-primary { color: #0b0b0b !important; -webkit-text-fill-color: #0b0b0b !important; }
+  :root body main.vltd-paper.vltd-paper.vltd-paper { background: #ffffff !important; min-height: 100vh; }
+  :root body main.vltd-paper.vltd-paper.vltd-paper * { color: #0b0b0b !important; -webkit-text-fill-color: #0b0b0b !important; text-shadow: none !important; }
+  :root body main.vltd-paper.vltd-paper.vltd-paper .vltd-paper-btn { background: #0b0b0b !important; color: #ffffff !important; -webkit-text-fill-color: #ffffff !important; }
+  :root body main.vltd-paper.vltd-paper.vltd-paper th { background: #efefef !important; }
+}
+
 /* PRINTED INSURANCE DOCUMENTS. A page marks its <main> with .vltd-print-document; only those pages change when printed:
    - the site's own bars and floating buttons (data-site-chrome) do not print;
    - the app's scrolling content area is a fixed-position box, which a printer clips to ONE page: release it so the document can run to as many pages as it needs;

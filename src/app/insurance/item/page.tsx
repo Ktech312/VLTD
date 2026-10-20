@@ -155,7 +155,7 @@ export default function InsuranceItemPage() {
               Vault
             </PillButton>
           </div>
-          <button onClick={() => window.print()} className="rounded-[8px] px-4 py-2 text-sm font-black text-[#0B0B0B]" style={{ background: 'var(--theme-gold-gradient)', boxShadow: 'var(--theme-gold-glow)' }}>
+          <button onClick={() => window.print()} className="vltd-ins-primary rounded-[8px] px-4 py-2 text-sm font-black text-[#0B0B0B]" style={{ background: 'var(--theme-gold-gradient)', boxShadow: 'var(--theme-gold-glow)' }}>
             Print / Save as PDF
           </button>
         </div>

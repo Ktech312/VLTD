@@ -170,7 +170,7 @@ export default function InsurancePacketPage() {
             <Link
               href={printHref}
               target="_blank"
-              className="rounded-full px-4 py-2 text-sm font-black text-[#0B0B0B]"
+              className="vltd-ins-primary rounded-full px-4 py-2 text-sm font-black text-[#0B0B0B]"
               style={{ background: 'var(--theme-gold-gradient)', boxShadow: 'var(--theme-gold-glow)' }}
             >
               Open Printable Page

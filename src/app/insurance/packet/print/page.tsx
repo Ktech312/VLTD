@@ -97,7 +97,7 @@ export default function InsurancePacketPrintPage() {
   const noEstimate = noEstimateNote(totals);
 
   return (
-    <main className="vltd-ins-light vltd-print-document bg-white px-5 py-5 text-black">
+    <main className="vltd-ins-light vltd-print-document vltd-paper bg-white px-5 py-5 text-black">
       <style>{`
         :root { color-scheme: light; }
         body { background: white !important; color: black !important; }
@@ -120,7 +120,7 @@ export default function InsurancePacketPrintPage() {
         <Link href="/insurance/packet" className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-900">
           ← Back to Packet
         </Link>
-        <button onClick={() => window.print()} className="rounded-lg bg-slate-950 px-4 py-2 text-sm font-bold text-text-primary">
+        <button onClick={() => window.print()} className="vltd-paper-btn rounded-lg bg-slate-950 px-4 py-2 text-sm font-bold text-text-primary">
           Print This Page
         </button>
       </div>
