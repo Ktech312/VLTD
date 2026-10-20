@@ -2,6 +2,9 @@ import { mayAdoptLegacyKey } from "./legacyKeys";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 import { stillSignedInAs, storedSessionUserId } from "@/lib/sessionGuard";
 import type { VaultItem } from "@/lib/vaultModel";
+import { isNetworkFailure } from "@/lib/vaultCloud";
+import { registerCloudSaveRetry, reportPending, reportSaved, reportSaving } from "@/lib/cloudSaveStatus";
+import { mergeCloudGoals, validateGoalTarget } from "@/lib/goalRules";
 
 export type CollectionGoal = {
   id: string;
@@ -63,7 +66,51 @@ export function saveGoals(goals: CollectionGoal[]) {
   localStorage.setItem(lsKey(), JSON.stringify(goals));
 }
 
-// ── Supabase sync (best-effort; local cache always works) ───────────
+// ── Account sync ─────────────────────────────────────────────────────
+// Device first, account second, and NEVER "saved" before the account said so (audit GIN-066/068/070: a refused or lost request
+// used to look saved, and the next load of the account's list silently undid it).
+//   - a goal made or edited here is "waiting to upload" until the account confirms it (kept across reloads, retried automatically);
+//   - a goal deleted here is hidden but remembered as "waiting to delete" until the account confirms, so a load can't bring it back;
+//   - a request the account REFUSES (not just unreachable) is reported, and the goal is not kept.
+const LS_PENDING = "vltd_collection_goals_pending_v1";
+const LS_DELETED = "vltd_collection_goals_deleted_v1";
+
+function idSetKey(base: string, pid: string) {
+  return `${base}:${pid}`;
+}
+function readIdSet(base: string, pid: string): Set<string> {
+  if (typeof window === "undefined" || !pid) return new Set();
+  try {
+    const parsed: unknown = JSON.parse(localStorage.getItem(idSetKey(base, pid)) ?? "[]");
+    return new Set(Array.isArray(parsed) ? parsed.map(String) : []);
+  } catch {
+    return new Set();
+  }
+}
+function writeIdSet(base: string, pid: string, ids: Set<string>) {
+  if (typeof window === "undefined" || !pid) return;
+  try {
+    localStorage.setItem(idSetKey(base, pid), JSON.stringify(Array.from(ids)));
+  } catch {
+    /* storage full or blocked: the goal itself is still saved */
+  }
+}
+function addToSet(base: string, pid: string, id: string) {
+  const ids = readIdSet(base, pid);
+  ids.add(id);
+  writeIdSet(base, pid, ids);
+}
+function removeFromSet(base: string, pid: string, id: string) {
+  const ids = readIdSet(base, pid);
+  if (ids.delete(id)) writeIdSet(base, pid, ids);
+}
+
+/** Goals of the active profile that the account has not confirmed yet (new, edited) and deletions it has not confirmed. */
+export function pendingGoalCounts(): { saves: number; deletes: number } {
+  const pid = activeProfileId();
+  return { saves: readIdSet(LS_PENDING, pid).size, deletes: readIdSet(LS_DELETED, pid).size };
+}
+
 function goalRow(goal: CollectionGoal, pid: string) {
   return {
     id: goal.id,
@@ -77,32 +124,92 @@ function goalRow(goal: CollectionGoal, pid: string) {
   };
 }
 
-async function pushGoal(goal: CollectionGoal) {
+type WriteOutcome = { state: "saved" } | { state: "unreachable" } | { state: "refused"; message: string };
+
+function classify(error: { message?: string; status?: number } | null): WriteOutcome {
+  if (!error) return { state: "saved" };
+  const status = typeof error.status === "number" ? error.status : undefined;
+  if (isNetworkFailure(error) || (status !== undefined && status >= 500)) return { state: "unreachable" };
+  return { state: "refused", message: String(error.message ?? "The account refused this change.") };
+}
+
+async function pushGoalConfirmed(goal: CollectionGoal, pid: string): Promise<WriteOutcome> {
   try {
-    const pid = activeProfileId();
-    if (!pid) return;
+    if (!pid) return { state: "unreachable" };
     const supabase = getSupabaseBrowserClient();
-    if (!supabase) return;
-    await supabase.from("collection_goals").upsert(goalRow(goal, pid), { onConflict: "id" });
-  } catch {
-    /* table may not exist yet — local still holds it */
+    if (!supabase) return { state: "unreachable" };
+    const { data, error } = await supabase.from("collection_goals").upsert(goalRow(goal, pid), { onConflict: "id" }).select("id");
+    if (error) return classify(error);
+    if (!data || data.length === 0) return { state: "refused", message: "The account did not accept this goal." };
+    return { state: "saved" };
+  } catch (error) {
+    return classify(error as { message?: string });
   }
 }
 
-async function deleteGoalRow(id: string) {
+async function deleteGoalConfirmed(id: string, pid: string): Promise<WriteOutcome> {
   try {
-    const pid = activeProfileId();
-    if (!pid) return;
+    if (!pid) return { state: "unreachable" };
     const supabase = getSupabaseBrowserClient();
-    if (!supabase) return;
-    await supabase.from("collection_goals").delete().eq("id", id).eq("profile_id", pid);
-  } catch {
-    /* ignore */
+    if (!supabase) return { state: "unreachable" };
+    const { data, error } = await supabase.from("collection_goals").delete().eq("id", id).eq("profile_id", pid).select("id");
+    if (error) return classify(error);
+    if (data && data.length > 0) return { state: "saved" };
+    // Nothing was deleted: either it is already gone, or the account would not let this person delete it. Read it back.
+    const check = await supabase.from("collection_goals").select("id").eq("id", id).eq("profile_id", pid);
+    if (check.error) return classify(check.error);
+    return check.data && check.data.length === 0 ? { state: "saved" } : { state: "refused", message: "The account would not delete this goal." };
+  } catch (error) {
+    return classify(error as { message?: string });
   }
+}
+
+function reportOutcome(pid: string) {
+  const counts = { saves: readIdSet(LS_PENDING, pid).size, deletes: readIdSet(LS_DELETED, pid).size };
+  if (counts.saves + counts.deletes > 0) reportPending("goals");
+  else reportSaved("goals");
+}
+
+export type GoalWriteResult = { ok: true; pending: boolean } | { ok: false; error: string };
+
+/** Try again for everything of the active profile that the account has not confirmed (retry timer, page load, "Retry now"). */
+export async function retryPendingGoals(): Promise<void> {
+  const pid = activeProfileId();
+  if (!pid) return;
+  const pending = readIdSet(LS_PENDING, pid);
+  const deleted = readIdSet(LS_DELETED, pid);
+  if (pending.size + deleted.size === 0) return;
+  reportSaving("goals");
+  const local = loadGoals();
+  for (const id of Array.from(deleted)) {
+    const r = await deleteGoalConfirmed(id, pid);
+    // saved: done. refused: the account keeps the goal, so it comes back on the next load (the person was told when they deleted it).
+    if (r.state !== "unreachable") removeFromSet(LS_DELETED, pid, id);
+  }
+  for (const id of Array.from(pending)) {
+    const goal = local.find((g) => g.id === id);
+    if (!goal) {
+      removeFromSet(LS_PENDING, pid, id);
+      continue;
+    }
+    const r = await pushGoalConfirmed(goal, pid);
+    if (r.state !== "unreachable") removeFromSet(LS_PENDING, pid, id);
+  }
+  reportOutcome(pid);
+}
+
+let retryRegistered = false;
+function ensureRetryRegistered() {
+  if (retryRegistered || typeof window === "undefined") return;
+  retryRegistered = true;
+  registerCloudSaveRetry(() => retryPendingGoals());
 }
 
 export async function syncGoalsFromSupabase(): Promise<CollectionGoal[]> {
   if (typeof window === "undefined") return [];
+  ensureRetryRegistered();
+  // First finish what this device still owes the account, so the list read below already includes it.
+  if (activeProfileId()) await retryPendingGoals().catch(() => undefined);
   const local = loadGoals();
   try {
     const pid = activeProfileId();
@@ -119,10 +226,15 @@ export async function syncGoalsFromSupabase(): Promise<CollectionGoal[]> {
     // file one profile's goals under another's, and pushing the local copy would upload them to the wrong profile.
     if (!stillSignedInAs(startedAs) || activeProfileId() !== pid) return local;
     if (data.length === 0) {
-      for (const g of local) void pushGoal(g);
-      return local;
+      // The account has none: goals that only exist here (made before goals were uploaded) are owed to it.
+      const pending = readIdSet(LS_PENDING, pid);
+      const deleted = readIdSet(LS_DELETED, pid);
+      for (const g of local) if (!deleted.has(g.id)) pending.add(g.id);
+      writeIdSet(LS_PENDING, pid, pending);
+      await retryPendingGoals().catch(() => undefined);
+      return loadGoals();
     }
-    const goals: CollectionGoal[] = data.map((r: Record<string, unknown>) => ({
+    const fromCloud: CollectionGoal[] = data.map((r: Record<string, unknown>) => ({
       id: String(r.id),
       name: String(r.name ?? ""),
       targetCount: Number(r.target_count ?? 1),
@@ -131,7 +243,7 @@ export async function syncGoalsFromSupabase(): Promise<CollectionGoal[]> {
       notes: (r.notes as string) ?? undefined,
       createdAt: Date.parse(String(r.created_at)) || Date.now(),
     }));
-    goals.sort((a, b) => b.createdAt - a.createdAt);
+    const goals = mergeCloudGoals(fromCloud, local, readIdSet(LS_PENDING, pid), readIdSet(LS_DELETED, pid));
     saveGoals(goals);
     return goals;
   } catch {
@@ -139,30 +251,100 @@ export async function syncGoalsFromSupabase(): Promise<CollectionGoal[]> {
   }
 }
 
-export function addGoal(fields: Omit<CollectionGoal, "id" | "createdAt">): CollectionGoal {
-  const goal: CollectionGoal = {
-    id: `goal_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
-    createdAt: Date.now(),
-    ...fields,
-  };
+/**
+ * Create a goal. Stored on this device first, then confirmed by the account:
+ *  ok, pending=false  the account has it
+ *  ok, pending=true   saved on this device, the account was unreachable: it will upload (and the page says so)
+ *  not ok             the target is invalid or the account refused it: nothing was kept, the form stays as typed
+ * `id` makes a retry or a repeated click write the SAME goal, never a second one.
+ */
+export async function addGoal(fields: Omit<CollectionGoal, "id" | "createdAt">, id?: string): Promise<GoalWriteResult> {
+  ensureRetryRegistered();
+  const target = validateGoalTarget(fields.targetCount);
+  if (!target.ok) return { ok: false, error: target.message };
+  const pid = activeProfileId();
+  const goalId = id || `goal_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+  const existing = loadGoals().find((g) => g.id === goalId);
+  const goal: CollectionGoal = existing ?? { id: goalId, createdAt: Date.now(), ...fields, targetCount: target.value };
+  if (!existing) saveGoals([...loadGoals(), goal]);
+  addToSet(LS_PENDING, pid, goal.id);
+  reportSaving("goals");
+  const r = await pushGoalConfirmed(goal, pid);
+  if (r.state === "saved") {
+    removeFromSet(LS_PENDING, pid, goal.id);
+    reportOutcome(pid);
+    return { ok: true, pending: false };
+  }
+  if (r.state === "unreachable") {
+    reportPending("goals");
+    return { ok: true, pending: true };
+  }
+  // Refused: do not keep a goal the account will never take.
+  removeFromSet(LS_PENDING, pid, goal.id);
+  saveGoals(loadGoals().filter((g) => g.id !== goal.id));
+  reportOutcome(pid);
+  return { ok: false, error: `The goal was not saved: ${r.message}` };
+}
+
+export async function updateGoal(id: string, patch: Partial<Omit<CollectionGoal, "id" | "createdAt">>): Promise<GoalWriteResult> {
+  ensureRetryRegistered();
+  if (patch.targetCount !== undefined) {
+    const target = validateGoalTarget(patch.targetCount);
+    if (!target.ok) return { ok: false, error: target.message };
+    patch = { ...patch, targetCount: target.value };
+  }
+  const pid = activeProfileId();
+  const before = loadGoals();
+  const previous = before.find((g) => g.id === id);
+  if (!previous) return { ok: false, error: "That goal no longer exists." };
+  const updated = { ...previous, ...patch };
+  saveGoals(before.map((g) => (g.id === id ? updated : g)));
+  addToSet(LS_PENDING, pid, id);
+  reportSaving("goals");
+  const r = await pushGoalConfirmed(updated, pid);
+  if (r.state === "saved") {
+    removeFromSet(LS_PENDING, pid, id);
+    reportOutcome(pid);
+    return { ok: true, pending: false };
+  }
+  if (r.state === "unreachable") {
+    reportPending("goals");
+    return { ok: true, pending: true };
+  }
+  removeFromSet(LS_PENDING, pid, id);
+  saveGoals(loadGoals().map((g) => (g.id === id ? previous : g)));
+  reportOutcome(pid);
+  return { ok: false, error: `The change was not saved: ${r.message}` };
+}
+
+/**
+ * Delete a goal. It leaves the list at once but is remembered as "waiting to delete" until the account confirms, so a reload
+ * cannot bring it back unannounced. If the account refuses, the goal is put back and the person is told.
+ */
+export async function deleteGoal(id: string): Promise<GoalWriteResult> {
+  ensureRetryRegistered();
+  const pid = activeProfileId();
+  const all = loadGoals();
+  const goal = all.find((g) => g.id === id);
+  if (!goal) return { ok: true, pending: false };
+  addToSet(LS_DELETED, pid, id);
+  removeFromSet(LS_PENDING, pid, id);
+  saveGoals(all.filter((g) => g.id !== id));
+  reportSaving("goals");
+  const r = await deleteGoalConfirmed(id, pid);
+  if (r.state === "saved") {
+    removeFromSet(LS_DELETED, pid, id);
+    reportOutcome(pid);
+    return { ok: true, pending: false };
+  }
+  if (r.state === "unreachable") {
+    reportPending("goals");
+    return { ok: true, pending: true };
+  }
+  removeFromSet(LS_DELETED, pid, id);
   saveGoals([...loadGoals(), goal]);
-  void pushGoal(goal);
-  return goal;
-}
-
-export function updateGoal(
-  id: string,
-  patch: Partial<Omit<CollectionGoal, "id" | "createdAt">>
-) {
-  const next = loadGoals().map((goal) => (goal.id === id ? { ...goal, ...patch } : goal));
-  saveGoals(next);
-  const updated = next.find((g) => g.id === id);
-  if (updated) void pushGoal(updated);
-}
-
-export function deleteGoal(id: string) {
-  saveGoals(loadGoals().filter((goal) => goal.id !== id));
-  void deleteGoalRow(id);
+  reportOutcome(pid);
+  return { ok: false, error: `The goal was not deleted: ${r.message}` };
 }
 
 function activeItems(items: VaultItem[]) {

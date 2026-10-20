@@ -12,12 +12,12 @@
 // The one shown to the person is the most worrying: pending > saving > saved > idle.
 
 export type CloudSavePhase = "idle" | "saving" | "pending" | "saved";
-export type CloudSaveSource = "items" | "exhibitions";
+export type CloudSaveSource = "items" | "exhibitions" | "goals";
 
 const SAVED_SHOWN_MS = 4000;
 const RETRY_DELAYS_MS = [15_000, 30_000, 60_000, 120_000, 300_000];
 
-const phases: Record<CloudSaveSource, CloudSavePhase> = { items: "idle", exhibitions: "idle" };
+const phases: Record<CloudSaveSource, CloudSavePhase> = { items: "idle", exhibitions: "idle", goals: "idle" };
 const retries = new Set<() => Promise<unknown> | unknown>();
 const listeners = new Set<() => void>();
 let savedTimer: ReturnType<typeof setTimeout> | null = null;

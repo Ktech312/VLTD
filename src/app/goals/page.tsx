@@ -11,6 +11,8 @@ import {
   computeAllGoalProgress,
   deleteGoal,
   loadGoals,
+  pendingGoalCounts,
+  retryPendingGoals,
   syncGoalsFromSupabase,
   type GoalProgress,
 } from "@/lib/collectionGoals";
@@ -252,6 +254,10 @@ export default function GoalsPage() {
   const [showAllGoalItems, setShowAllGoalItems] = useState(false);
   // Until goals have been read from the account once, an empty list means "not loaded yet", not "no goals".
   const [goalsLoaded, setGoalsLoaded] = useState(false);
+  // Goal changes the account has not confirmed yet (saved or deleted on this device only): said out loud, never silent.
+  const [waiting, setWaiting] = useState({ saves: 0, deletes: 0 });
+  const [retrying, setRetrying] = useState(false);
+  const refreshWaiting = () => setWaiting(pendingGoalCounts());
 
   useEffect(() => {
     const onFocus = () => {
@@ -267,7 +273,10 @@ export default function GoalsPage() {
     void syncGoalsFromSupabase().then(() => {
       if (active) setGoals(loadGoals());
     }).catch(() => undefined).finally(() => {
-      if (active) setGoalsLoaded(true);
+      if (active) {
+        setGoalsLoaded(true);
+        refreshWaiting();
+      }
     });
     return () => {
       active = false;
@@ -316,11 +325,22 @@ export default function GoalsPage() {
     }
   }
 
-  function handleDeleteGoal(goal: GoalView) {
+  async function handleDeleteGoal(goal: GoalView) {
     if (!goal.real) return;
-    deleteGoal(goal.real.id);
-    setGoals(loadGoals());
     setSelectedGoalId(null);
+    const result = await deleteGoal(goal.real.id);
+    setGoals(loadGoals());
+    refreshWaiting();
+    if (!result.ok) showToast(result.error + " It is back in your list.");
+    else if (result.pending) showToast("Deleted on this device. Sync pending: your account will be updated when the connection is back.");
+  }
+
+  async function handleRetryWaiting() {
+    setRetrying(true);
+    await retryPendingGoals().catch(() => undefined);
+    setGoals(loadGoals());
+    refreshWaiting();
+    setRetrying(false);
   }
 
   return (
@@ -333,6 +353,14 @@ export default function GoalsPage() {
       <main style={{ background: "var(--bg)" }}>
       <div className="mx-auto grid max-w-[1480px] gap-6 px-4 pb-6 sm:px-6 lg:px-8 xl:grid-cols-[minmax(0,1fr)_420px]">
         <section className="min-w-0">
+          {waiting.saves + waiting.deletes > 0 ? (
+            <div role="status" data-testid="goals-waiting" className="mt-2 flex flex-wrap items-center gap-3 rounded-[7px] border border-[rgba(203,208,213,0.28)] px-4 py-3 text-sm" style={{ color: "var(--theme-text-primary,#ECEDEF)" }}>
+              <span>
+                {[waiting.saves > 0 ? `${waiting.saves} goal ${waiting.saves === 1 ? "change is" : "changes are"} saved on this device only` : "", waiting.deletes > 0 ? `${waiting.deletes} deleted ${waiting.deletes === 1 ? "goal is" : "goals are"} still on your account` : ""].filter(Boolean).join("; ")}. Sync pending.
+              </span>
+              <PillButton onClick={() => void handleRetryWaiting()} disabled={retrying}>{retrying ? "Retrying…" : "Retry now"}</PillButton>
+            </div>
+          ) : null}
           {goalViews.length > 0 ? (
             <div className="mt-2 flex flex-wrap gap-3" role="group" aria-label="Goal types">
               {GOAL_FILTERS.map(([key, label, icon]) => (
@@ -540,7 +568,7 @@ export default function GoalsPage() {
               </button>
               <div className="grid grid-cols-2 gap-3">
                 <button type="button" onClick={() => shareGoal(selectedGoal)} className="rounded-[7px] border border-[rgba(203,208,213,0.22)] px-4 py-3 text-sm font-bold" style={{ color: "var(--theme-gold,#C8CDD2)" }}>Share goal</button>
-                <button type="button" onClick={() => handleDeleteGoal(selectedGoal)} className="rounded-[7px] border border-red-500/45 px-4 py-3 text-sm font-bold text-red-400">Delete goal</button>
+                <button type="button" onClick={() => void handleDeleteGoal(selectedGoal)} className="rounded-[7px] border border-red-500/45 px-4 py-3 text-sm font-bold text-red-400">Delete goal</button>
               </div>
             </div>
           </aside>
@@ -550,10 +578,12 @@ export default function GoalsPage() {
       {showAdd && (
         <AddGoalSheet
           onClose={() => setShowAdd(false)}
-          onSave={(fields) => {
-            addGoal(fields);
+          onSave={async (fields, id) => {
+            const result = await addGoal(fields, id);
             setGoals(loadGoals());
-            setShowAdd(false);
+            refreshWaiting();
+            if (result.ok && result.pending) showToast("Saved on this device. Sync pending: it will upload to your account when the connection is back.");
+            return result;
           }}
         />
       )}

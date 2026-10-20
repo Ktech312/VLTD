@@ -1,9 +1,10 @@
 "use client";
 
 import { useDialogA11y } from "@/components/ui/useDialogA11y";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import type { CollectionGoal } from "@/lib/collectionGoals";
+import type { CollectionGoal, GoalWriteResult } from "@/lib/collectionGoals";
+import { validateGoalTarget } from "@/lib/goalRules";
 import { UNIVERSE_KEYS, UNIVERSE_LABEL } from "@/lib/taxonomy";
 import { useSaveFeedback } from "@/lib/useSaveFeedback";
 import { AppIcon } from "@/components/ui/AppIcon";
@@ -17,7 +18,8 @@ export default function AddGoalSheet({
   initial,
 }: {
   onClose: () => void;
-  onSave: (fields: GoalFields) => void;
+  /** Resolves once the goal is stored (and the account has answered). `id` is the same for every attempt from this sheet, so a retry or repeated click never makes a second goal. */
+  onSave: (fields: GoalFields, id: string) => Promise<GoalWriteResult>;
   initial?: Partial<GoalFields>;
 }) {
   const dialogRef = useDialogA11y<HTMLDivElement>(true, onClose);
@@ -27,22 +29,43 @@ export default function AddGoalSheet({
   const [subject, setSubject] = useState(initial?.subject ?? "");
   const [notes, setNotes] = useState(initial?.notes ?? "");
   const { justSaved, flashSaved } = useSaveFeedback();
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  const [waiting, setWaiting] = useState(false);
+  // One id per sheet: every attempt from this sheet writes the same goal.
+  const goalId = useRef(`goal_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`);
 
-  const canSave = !!name.trim() && Number(targetCount) > 0;
+  const canSave = !!name.trim() && targetCount.trim() !== "";
 
-  function handleSave() {
-    if (!canSave) return;
-    const fields = {
-      name: name.trim(),
-      targetCount: Math.max(1, Math.round(Number(targetCount))),
-      universe: universe || undefined,
-      subject: subject.trim() || undefined,
-      notes: notes.trim() || undefined,
-    };
+  async function handleSave() {
+    if (!canSave || busy || justSaved) return;
+    const target = validateGoalTarget(targetCount);
+    if (!target.ok) {
+      // The form stays exactly as typed.
+      setError(target.message);
+      return;
+    }
+    setError("");
+    setBusy(true);
+    const result = await onSave(
+      {
+        name: name.trim(),
+        targetCount: target.value,
+        universe: universe || undefined,
+        subject: subject.trim() || undefined,
+        notes: notes.trim() || undefined,
+      },
+      goalId.current
+    );
+    setBusy(false);
+    if (!result.ok) {
+      setError(result.error);
+      return;
+    }
+    // "Saved" only now that the goal is stored: either the account has it, or it is safely on this device and uploading is pending.
+    setWaiting(result.pending);
     flashSaved();
-    // Hold the sheet open briefly so the green "Saved" state is visible
-    // before the parent closes it via onSave.
-    setTimeout(() => onSave(fields), 450);
+    setTimeout(onClose, result.pending ? 1400 : 450);
   }
 
   if (typeof document === "undefined") return null;
@@ -95,9 +118,11 @@ export default function AddGoalSheet({
             <input
               type="number"
               value={targetCount}
-              onChange={(event) => setTargetCount(event.target.value)}
+              onChange={(event) => { setTargetCount(event.target.value); setError(""); }}
               placeholder="102"
               min={1}
+              step={1}
+              aria-invalid={error ? true : undefined}
               className="w-full rounded-xl px-3 py-2.5 text-[14px] outline-none ring-1"
               style={{ background: "var(--pill)", borderColor: "var(--border)", color: "var(--fg)" }}
             />
@@ -152,17 +177,23 @@ export default function AddGoalSheet({
           </label>
         </div>
 
+        {error ? (
+          <p role="alert" data-testid="goal-error" className="mt-4 text-[13px] font-semibold text-red-400">
+            {error}
+          </p>
+        ) : null}
+
         <button
           type="button"
-          onClick={handleSave}
-          disabled={!canSave || justSaved}
+          onClick={() => void handleSave()}
+          disabled={!canSave || justSaved || busy}
           className="mt-6 w-full rounded-full py-3.5 text-[14px] font-bold transition"
           style={{
             background: justSaved ? "rgba(16,185,129,0.92)" : canSave ? "var(--theme-gold)" : "var(--pill)",
             color: justSaved ? "#ffffff" : canSave ? "var(--ink, #0A0800)" : "var(--muted2)",
           }}
         >
-          {justSaved ? "Saved ✓" : "Save Goal"}
+          {justSaved ? (waiting ? "Saved on this device. Sync pending" : "Saved ✓") : busy ? "Saving…" : "Save Goal"}
         </button>
       </div>
     </>,
