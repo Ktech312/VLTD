@@ -374,7 +374,8 @@ export default function SpreadsheetImportClient() {
         sourceLabel,
         itemIds: savedItems.map((item) => item.id),
         skippedCount: skippedDupCount,
-        items: savedItems as unknown as Array<Record<string, unknown>>,
+        // the records as they now sit in the vault (after the app has normalised them), not as parsed from the file
+        items: refreshed.filter((saved) => savedItems.some((item) => String(item.id) === String(saved.id))) as unknown as Array<Record<string, unknown>>,
       });
       setLastImportResult({
         count: savedItems.length,

@@ -4,18 +4,30 @@
 // is compared with a fingerprint taken when it was imported, so a record the person has since edited or moved, or that now sits
 // in an exhibition, is named and needs an explicit choice. (Audit ADD-357: Undo only removed the device's copy.)
 
-/** The fields a person can edit; deliberately NOT everything on the record (cloud sync adds codes and timestamps that are not edits). */
-export const FINGERPRINT_FIELDS = [
-  "title", "subtitle", "category", "categoryLabel", "subcategoryLabel", "universe", "grade", "number", "certNumber", "serialNumber",
-  "purchasePrice", "purchaseTax", "purchaseShipping", "purchaseFees", "currentValue", "askingPrice", "notes", "description", "subject",
-  "status", "storageLocation", "imageFrontUrl", "imageBackUrl", "profile_id",
-] as const;
+/**
+ * What counts as an edit: the fields a person types or changes, compared in a normalised form. Deliberately NOT everything on the
+ * record: the import saves a record one way, and loading it back from the account fills in codes, timestamps, categories and
+ * defaults that nobody edited. Comparing those would flag every record as "changed".
+ */
+const TEXT_FIELDS = ["title", "subtitle", "notes", "description", "serialNumber", "certNumber", "grade", "number", "storageLocation", "imageFrontUrl", "imageBackUrl"] as const;
+const MONEY_FIELDS = ["purchasePrice", "purchaseTax", "purchaseShipping", "purchaseFees", "currentValue", "askingPrice"] as const;
+
+function text(value: unknown): string {
+  return value === undefined || value === null ? "" : String(value).trim();
+}
+function money(value: unknown): string {
+  if (value === undefined || value === null || value === "") return "";
+  const n = Number(value);
+  return Number.isFinite(n) ? n.toFixed(2) : text(value);
+}
 
 export function importFingerprint(item: Record<string, unknown>): string {
-  return JSON.stringify(FINGERPRINT_FIELDS.map((key) => {
-    const value = item[key];
-    return value === undefined || value === null || value === "" ? null : value;
-  }));
+  return JSON.stringify([
+    ...TEXT_FIELDS.map((key) => text(item[key])),
+    ...MONEY_FIELDS.map((key) => money(item[key])),
+    (text(item.status) || "COLLECTION").toUpperCase(),
+    text(item.profile_id),
+  ]);
 }
 
 export type UndoEntry = { itemIds: string[]; fingerprints?: Record<string, string>; profileId?: string };
