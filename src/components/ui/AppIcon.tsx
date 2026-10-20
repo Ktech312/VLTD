@@ -527,6 +527,25 @@ export function AppIcon({
   active?: boolean;
 }) {
   if (variant === "navTop" || variant === "navBottom") {
+    // Approved navigation art: render at an integer size without raster scaling.
+    if (name === "dashboard" || name === "vault") {
+      const artworkSize = Math.min(size, 28);
+      return (
+        <span
+          className={className}
+          style={{ display: "inline-grid", placeItems: "center", width: size, height: size, lineHeight: 0, ...style }}
+        >
+          <img
+            src={`/ui/icon-themes/cyan-purple-neon-v1/${name}.svg`}
+            alt=""
+            aria-hidden="true"
+            width={artworkSize}
+            height={artworkSize}
+            style={{ display: "block", width: artworkSize, height: artworkSize, objectFit: "contain" }}
+          />
+        </span>
+      );
+    }
     const renderer = (variant === "navTop" ? NAV_TOP_CONTENT : NAV_BOTTOM_CONTENT)[name];
     const hasConceptAsset = NAV_CONCEPT_NAMES.has(name);
     return (
