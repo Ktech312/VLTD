@@ -20,6 +20,7 @@ import { newId } from "@/lib/id";
 import { appendItems, type VaultImage, type VaultItem } from "@/lib/vaultModel";
 import { emitVaultUpdate } from "@/lib/vaultEvents";
 import { enqueueVaultItemSync, processVaultSyncQueue } from "@/lib/vaultSyncQueue";
+import { intakeNotice, planBulkIntake } from "@/lib/bulkIntake";
 import { hasSupabaseEnv, uploadVaultImageToSupabase } from "@/lib/vaultCloud";
 import {
   generateVaultImageKey,
@@ -129,6 +130,10 @@ export default function BulkUploadPage() {
   const [subcategory, setSubcategory] = useState("");
   const [drafts, setDrafts] = useState<BulkDraft[]>([]);
   const [status, setStatus] = useState("");
+  // Files that were NOT taken from the last choice (over the limit, or not photos), named until dismissed.
+  const [intakeNote, setIntakeNote] = useState("");
+  const draftCountRef = useRef(0);
+  draftCountRef.current = drafts.length;
   const [committing, setCommitting] = useState(false);
   const [cameraOpen, setCameraOpen] = useState(false);
   const [scanningId, setScanningId] = useState<string | null>(null);
@@ -182,7 +187,10 @@ export default function BulkUploadPage() {
 
   /* ── Add files (from the device picker or the camera) ── */
   const addFiles = useCallback((files: File[]) => {
-    const picked = files.filter((f) => f.type.startsWith("image/")).slice(0, MAX_FILES);
+    // The limit is for the whole upload (what is already queued counts), and whatever does not fit is named, never dropped silently.
+    const plan = planBulkIntake(files, draftCountRef.current, MAX_FILES);
+    setIntakeNote(intakeNotice(plan, MAX_FILES));
+    const picked = plan.accepted;
     if (picked.length === 0) return;
     const next: BulkDraft[] = picked.map((file) => {
       const previewUrl = URL.createObjectURL(file);
@@ -467,13 +475,20 @@ export default function BulkUploadPage() {
                       ? "Add more photos"
                       : "Choose photos, or drag them here"}
                 </span>
-                <span className="text-[11px] text-[color:var(--muted2)]">Up to {MAX_FILES} at a time</span>
+                <span className="text-[11px] text-[color:var(--muted2)]">Up to {MAX_FILES} photos per upload</span>
               </button>
 
               <div className="mt-2 flex items-center gap-3 text-xs text-[color:var(--muted2)]">
                 <span className="uppercase tracking-[0.14em]">or</span>
                 <PillButton className="h-auto! min-h-11 whitespace-normal! py-2 text-left" onClick={() => setCameraOpen(true)}>Use the camera — snap them one after another</PillButton>
               </div>
+
+              {intakeNote ? (
+                <div role="alert" data-testid="intake-note" className="mt-3 flex flex-wrap items-start gap-3 rounded-xl border border-amber-400/40 px-4 py-3 text-sm text-amber-300">
+                  <span className="min-w-0 flex-1">{intakeNote}</span>
+                  <button type="button" className="underline" onClick={() => setIntakeNote("")}>Dismiss</button>
+                </div>
+              ) : null}
 
               {drafts.length > 0 ? (
                 <div className="mt-4">
