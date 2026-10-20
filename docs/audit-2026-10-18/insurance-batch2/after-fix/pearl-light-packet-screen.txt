@@ -1,0 +1,207 @@
+INSURANCE PACKET
+
+Insurance Policy Packet
+
+Generated 10/19/2026, 7:39:29 PM � Included 31 of 31 owned items � Total cost $796 (29 of 31
+with a recorded cost) � Estimated value $1,084 (14 of 31 have an estimate) � Page 1 of 2 �
+Showing 25 items
+
+Not counted: 5 sold, 1 supply item (boxes, cases), 1 wishlist item. Exclusions are saved on this
+device only. They do not follow your account.
+17 items have no estimated value. Their acquisition cost ($417) is shown in the Cost column for
+reference and is not counted as value.
+
+Cost = purchase price + tax + shipping + fees. A dash means no cost was recorded.
+
+ITEM             CATEGORY       ID                  COST  ESTIMATED  APPRAISAL
+                                    STORAGE (ALL-         VALUE
+
+                                                    IN)
+
+QA INS cost with Pop Culture �  Grade: -   $115 $150
+tax shipping fees Comics
+                                -
+
+                                Cert: -
+                                Serial: -
+
+QA INS no        Pop Culture �  Grade: -   $40 No estimate
+
+estimate cost 40 Comics         -
+
+                                Cert: -
+                                Serial: -
+
+QA INS unknown Pop Culture �    Grade: -   -              $60
+
+cost             Comics         -
+
+                                Cert: -
+                                Serial: -
+
+QA INS explicit  Pop Culture �  Grade: -   $0 $25
+zero cost        Comics
+                                -
+
+                                Cert: -
+                                Serial: -
+
+QA INS explicit  Pop Culture �  Grade: -   $10 $0
+zero value       Comics
+                                -
+
+                                Cert: -
+                                Serial: -
+ITEM             CATEGORY         ID                  COST  ESTIMATED  APPRAISAL
+                                                            VALUE
+QA Album 1 -                          STORAGE (ALL-
+Original Motion                                       IN)
+Picture
+Soundtrack       Sports � Sports  Grade: -           $40 $120          manual
+                 Cards
+QA Album 2 -                      -
+Original Motion
+Picture                           Cert: -
+Soundtrack                        Serial: -
+
+QA Album 3 -     Music � Audio    Grade: -           $20 No estimate
+Original Motion  Formats
+Picture                           -
+Soundtrack
+                                  Cert: -
+QA Album 4 -                      Serial: -
+Original Motion
+Picture          Pop Culture � Grade: -              $27 $29
+Soundtrack
+                 Movies / TV / Film -
+QA Album 5 -
+Original Motion                           Cert: -
+Picture                                   Serial: -
+Soundtrack
+                 Music �          Grade: -           $34 No estimate
+QA Album 6 -     Instruments &
+Original Motion  Gear             -
+Picture
+Soundtrack                        Cert: -
+                                  Serial: -
+QA Album 7 -
+Original Motion  TCG & Non Sport  Grade: -           $41 No estimate
+Picture          Card � Trading
+Soundtrack       Card Games       -
+
+QA Album 8 -                      Cert: -
+Original Motion                   Serial: -
+Picture
+Soundtrack       Pop Culture �    Grade: -           $8 $38
+                 Comics
+                                  -
+
+                                  Cert: -
+                                  Serial: -
+
+                 Sports � Sports  Grade: -           $15 No estimate
+                 Cards
+                                  -
+
+                                  Cert: -
+                                  Serial: -
+
+                 Music � Audio    Grade: -           $22 No estimate
+                 Formats
+                                  -
+
+                                  Cert: -
+                                  Serial: -
+ITEM             CATEGORY         ID                  COST  ESTIMATED    APPRAISAL
+                                                            VALUE
+QA Album 9 -                          STORAGE (ALL-
+Original Motion                                       IN)
+Picture
+Soundtrack       Pop Culture � Grade: -              $29 $47
+
+QA Album 10 -    Movies / TV / Film -
+Original Motion
+Picture                                   Cert: -
+Soundtrack                                Serial: -
+
+QA Album 11 -    Music �          Grade: -           $15 $0
+Original Motion  Instruments &
+Picture          Gear             -
+Soundtrack
+                                  Cert: -
+QA Album 12 -                     Serial: -
+Original Motion
+Picture          TCG & Non Sport  Grade: -           $25 No estimate
+Soundtrack       Card � Trading
+                 Card Games       -
+QA Album 13 -
+Original Motion                   Cert: -
+Picture                           Serial: -
+Soundtrack
+                 Pop Culture �    Grade: -           -      No estimate
+QA Album 14 -    Comics
+Original Motion                   -
+Picture
+Soundtrack                        Cert: -
+                                  Serial: -
+QA Album 15 -
+Original Motion  Sports � Sports  Grade: -           $17 No estimate
+Picture          Cards
+Soundtrack                        -
+
+QA Album 16 -                     Cert: -
+Original Motion                   Serial: -
+Picture
+Soundtrack       Music � Audio    Grade: -           $24 No estimate
+                 Formats
+QA Album 17 -                     -
+Original Motion
+                                  Cert: -
+                                  Serial: -
+
+                 Pop Culture � Grade: -              $31 $65
+
+                 Movies / TV / Film -
+
+                                          Cert: -
+                                          Serial: -
+
+                 Music �          Grade: -           $38 No estimate
+                 Instruments &
+                 Gear             -
+
+                                  Cert: -
+                                  Serial: -
+
+                 TCG & Non Sport Grade: -            $45 $300
+                 Card � Trading -
+                                             COST           ESTIMATED
+                                                            VALUE
+ITEM             CATEGORY         ID         STORAGE (ALL-             APPRAISAL
+
+Picture          Card Games                  IN)
+Soundtrack
+                                  Cert: -
+QA Album 18 -                     Serial: -
+Original Motion
+Picture          Pop Culture �    Grade: -   $12 $75
+Soundtrack       Comics
+                                  -
+QA Album 19 -
+Original Motion                   Cert: -
+Picture                           Serial: -
+Soundtrack
+                 Sports � Sports  Grade: -   $19 No estimate
+QA Album 20 -    Cards
+Original Motion                   -
+Picture
+Soundtrack                        Cert: -
+                                  Serial: -
+
+                 Music � Audio    Grade: -   $26 No estimate
+                 Formats
+                                  -
+
+                                  Cert: -
+                                  Serial: -
+

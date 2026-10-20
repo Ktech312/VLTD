@@ -1,0 +1,90 @@
+VLTD INSURANCE PACKET
+
+Insurance Policy Packet
+
+Generated 10/19/2026, 5:44:55 PM � Page 1 of 2 � Showing 25 of 30 counted items � Total cost $681 (28 of 30 with a recorded cost) � Estimated value $934 (13 of 30 have an estimate) � Images excluded
+
+Not counted: 5 sold, 1 supply item (boxes, cases), 1 wishlist item, 1 excluded by you on this device. Exclusions are saved on this device only. They do not follow your account.
+
+17 items have no estimated value. Their acquisition cost ($417) is shown in the Cost column for reference and is not counted as value.
+
+Cost = purchase price + tax + shipping + fees. A dash means no cost was recorded.
+
+ITEM                                              CATEGORY                                   ID         STORAGE  COST (ALL-IN)                                                                          ESTIMATED VALUE  APPRAISAL
+QA INS no estimate cost 40                        Pop Culture � Comics                       Grade: -   -        $40                                                                                    No estimate      manual
+QA INS unknown cost                               Pop Culture � Comics                       Cert: -    -        -                                                                                      $60
+QA INS explicit zero cost                         Pop Culture � Comics                       Serial: -  -        $0                                                                                     $25
+QA INS explicit zero value                        Pop Culture � Comics                       Grade: -   -        $10                                                                                    $0
+QA Album 1 - Original Motion Picture Soundtrack   Sports � Sports Cards                      Cert: -    -        $40                                                                                    $120
+QA Album 2 - Original Motion Picture Soundtrack   Music � Audio Formats                      Serial: -  -        $20                                                                                    No estimate
+QA Album 3 - Original Motion Picture Soundtrack   Pop Culture � Movies / TV / Film           Grade: -   -        $27                                                                                    $29
+QA Album 4 - Original Motion Picture Soundtrack   Music � Instruments & Gear                 Cert: -    -        $34                                                                                    No estimate
+QA Album 5 - Original Motion Picture Soundtrack   TCG & Non Sport Card � Trading Card Games  Serial: -  -        $41                                                                                    No estimate
+QA Album 6 - Original Motion Picture Soundtrack   Pop Culture � Comics                       Grade: -   -        $8                                                                                     $38
+QA Album 7 - Original Motion Picture Soundtrack   Sports � Sports Cards                      Cert: -    -        $15                                                                                    No estimate
+QA Album 8 - Original Motion Picture Soundtrack   Music � Audio Formats                      Serial: -  -        $22                                                                                    No estimate
+QA Album 9 - Original Motion Picture Soundtrack   Pop Culture � Movies / TV / Film           Grade: -   -        $29                                                                                    $47
+QA Album 10 - Original Motion Picture Soundtrack  Music � Instruments & Gear                 Cert: -    -        $15                                                                                    $0
+QA Album 11 - Original Motion Picture Soundtrack  TCG & Non Sport Card � Trading Card Games  Serial: -  -        $25                                                                                    No estimate
+QA Album 12 - Original Motion Picture Soundtrack  Pop Culture � Comics                       Grade: -   -        -                                                                                      No estimate
+QA Album 13 - Original Motion Picture Soundtrack  Sports � Sports Cards                      Cert: -    -        $17                                                                                    No estimate
+QA Album 14 - Original Motion Picture Soundtrack  Music � Audio Formats                      Serial: -  -        $24                                                                                    No estimate
+QA Album 15 - Original Motion Picture Soundtrack  Pop Culture � Movies / TV / Film           Grade: -   -        $31                                                                                    $65
+QA Album 16 - Original Motion Picture Soundtrack  Music � Instruments & Gear                 Cert: -    -        $38                                                                                    No estimate
+QA Album 17 - Original Motion Picture Soundtrack  TCG & Non Sport Card � Trading Card Games  Serial: -  -        $45                                                                                    $300
+                                                                                             Grade: -
+                                                                                             Cert: -
+                                                                                             Serial: -
+                                                                                             Grade: -
+                                                                                             Cert: -
+                                                                                             Serial: -
+                                                                                             Grade: -
+                                                                                             Cert: -
+                                                                                             Serial: -
+                                                                                             Grade: -
+                                                                                             Cert: -
+                                                                                             Serial: -
+                                                                                             Grade: -
+                                                                                             Cert: -
+                                                                                             Serial: -
+                                                                                             Grade: -
+                                                                                             Cert: -
+                                                                                             Serial: -
+                                                                                             Grade: -
+                                                                                             Cert: -
+                                                                                             Serial: -
+                                                                                             Grade: -
+                                                                                             Cert: -
+                                                                                             Serial: -
+                                                                                             Grade: -
+                                                                                             Cert: -
+                                                                                             Serial: -
+                                                                                             Grade: -
+                                                                                             Cert: -
+                                                                                             Serial: -
+                                                                                             Grade: -
+                                                                                             Cert: -
+                                                                                             Serial: -
+                                                                                             Grade: -
+                                                                                             Cert: -
+                                                                                             Serial: -
+                                                                                             Grade: -
+                                                                                             Cert: -
+                                                                                             Serial: -
+                                                                                             Grade: -
+                                                                                             Cert: -
+                                                                                             Serial: -
+ITEM                                              CATEGORY                          ID         STORAGE  COST (ALL-IN)  ESTIMATED VALUE  APPRAISAL
+QA Album 18 - Original Motion Picture Soundtrack  Pop Culture � Comics              Grade: -   -        $12            $75
+                                                                                    Cert: -
+QA Album 19 - Original Motion Picture Soundtrack  Sports � Sports Cards             Serial: -  -        $19            No estimate
+                                                                                    Grade: -
+QA Album 20 - Original Motion Picture Soundtrack  Music � Audio Formats             Cert: -    -        $26            No estimate
+                                                                                    Serial: -
+QA Album 21 - Original Motion Picture Soundtrack  Pop Culture � Movies / TV / Film  Grade: -   -        $33            $83
+                                                                                    Cert: -
+                                                                                    Serial: -
+                                                                                    Grade: -
+                                                                                    Cert: -
+                                                                                    Serial: -
+

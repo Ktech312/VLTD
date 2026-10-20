@@ -1,0 +1,46 @@
+INSURANCE INVENTORY
+
+Vault Inventory Report
+
+Generated 10/19/2026, 7:39:20 PM � Included 31 of 31 owned items � Total cost $796 (29 of 31 with a recorded cost) � Estimated value $1,084 (14 of 31 have an estimate)
+Not counted: 5 sold, 1 supply item (boxes, cases), 1 wishlist item.
+
+17 items have no estimated value. Their acquisition cost ($417) is shown in the Cost column for reference and is not counted as value.
+
+Cost = purchase price + tax + shipping + fees. A dash means no cost was recorded.
+
+ITEM                                              CATEGORY                                   GRADE  CERT #  SERIAL #  STORAGE                                            COST (ALL-IN)  ESTIMATED    APPRAISAL
+                                                                                                                                                                                        VALUE
+QA INS cost with tax shipping fees                Pop Culture � Comics                                                                                                   $115           $150         manual
+QA INS no estimate cost 40                        Pop Culture � Comics                                                                                                   $40            No estimate
+QA INS unknown cost                               Pop Culture � Comics                                                                                                   -              $60
+QA INS explicit zero cost                         Pop Culture � Comics                                                                                                   $0             $25
+QA INS explicit zero value                        Pop Culture � Comics                                                                                                   $10            $0
+QA Album 1 - Original Motion Picture Soundtrack   Sports � Sports Cards                                                                                                  $40            $120
+
+QA Album 2 - Original Motion Picture Soundtrack   Music � Audio Formats                                                                                                  $20            No estimate
+QA Album 3 - Original Motion Picture Soundtrack   Pop Culture � Movies / TV / Film                                                                                       $27            $29
+QA Album 4 - Original Motion Picture Soundtrack   Music � Instruments & Gear                                                                                             $34            No estimate
+QA Album 5 - Original Motion Picture Soundtrack   TCG & Non Sport Card � Trading Card Games                                                                              $41            No estimate
+QA Album 6 - Original Motion Picture Soundtrack   Pop Culture � Comics                                                                                                   $8             $38
+QA Album 7 - Original Motion Picture Soundtrack   Sports � Sports Cards                                                                                                  $15            No estimate
+QA Album 8 - Original Motion Picture Soundtrack   Music � Audio Formats                                                                                                  $22            No estimate
+QA Album 9 - Original Motion Picture Soundtrack   Pop Culture � Movies / TV / Film                                                                                       $29            $47
+QA Album 10 - Original Motion Picture Soundtrack  Music � Instruments & Gear                                                                                             $15            $0
+QA Album 11 - Original Motion Picture Soundtrack  TCG & Non Sport Card � Trading Card Games                                                                              $25            No estimate
+QA Album 12 - Original Motion Picture Soundtrack  Pop Culture � Comics                                                                                                   -              No estimate
+QA Album 13 - Original Motion Picture Soundtrack  Sports � Sports Cards                                                                                                  $17            No estimate
+QA Album 14 - Original Motion Picture Soundtrack  Music � Audio Formats                                                                                                  $24            No estimate
+QA Album 15 - Original Motion Picture Soundtrack  Pop Culture � Movies / TV / Film                                                                                       $31            $65
+QA Album 16 - Original Motion Picture Soundtrack  Music � Instruments & Gear                                                                                             $38            No estimate
+QA Album 17 - Original Motion Picture Soundtrack  TCG & Non Sport Card � Trading Card Games                                                                              $45            $300
+QA Album 18 - Original Motion Picture Soundtrack  Pop Culture � Comics                                                                                                   $12            $75
+QA Album 19 - Original Motion Picture Soundtrack  Sports � Sports Cards                                                                                                  $19            No estimate
+QA Album 20 - Original Motion Picture Soundtrack  Music � Audio Formats                                                                                                  $26            No estimate
+QA Album 21 - Original Motion Picture Soundtrack  Pop Culture � Movies / TV / Film                                                                                       $33            $83
+QA Album 22 - Original Motion Picture Soundtrack  Music � Instruments & Gear                                                                                             $40            No estimate
+QA Album 23 - Original Motion Picture Soundtrack  TCG & Non Sport Card � Trading Card Games                                                                              $7             No estimate
+QA Album 24 - Original Motion Picture Soundtrack  Pop Culture � Comics                                                                                                   $14            $92
+QA Album 25 - Original Motion Picture Soundtrack  Sports � Sports Cards                                                                                                  $21            No estimate
+QA Album 26 - Original Motion Picture Soundtrack  Music � Audio Formats                                                                                                  $28            No estimate
+

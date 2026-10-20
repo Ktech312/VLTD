@@ -1,0 +1,303 @@
+INSURANCE INVENTORY REPORT
+
+VLTD Inventory Summary
+
+Generated: Oct 19, 2026, 05:45 PM
+
+   ITEMS COUNTED
+
+ 30
+
+  Not counted: 5 sold, 1 supply item (boxes, cases), 1 wishlist item, 1 excluded by you on this
+  device.
+
+   TOTAL COST (ALL-IN)
+
+ $681
+
+  28 of 30 items with a recorded cost � Estimated value $934 (13 of 30 have an estimate)
+
+   UNREALIZED CHANGE
+
+ +$585
+
+  On 11 of 30 items � cost basis $264 � not counted: 1 without a recorded cost, 1 bought for $0,
+  17 without a value
+
+17 items have no estimated value. Their acquisition cost ($417) is shown in the Cost column for reference and is
+not counted as value.
+Cost = purchase price + tax + shipping + fees. A dash means no cost was recorded. Exclusions are saved on this
+device only. They do not follow your account.
+BREAKDOWN                               Sports
+                                        5 items � $120 (4 with no estimate)
+Estimated value by Universe
+                                        Music
+  Pop Culture                           9 items � $0 (8 with no estimate)
+  12 items � $514 (2 with no estimate)
+                                        Games
+  TCG & Non Sport Card                  0 items � $0
+  4 items � $300 (3 with no estimate)
+                                        Misc
+  Jewelry & Apparel                     0 items � $0
+  0 items � $0
+                                        Art
+  Built, Botany & Bar                   0 items � $0
+  0 items � $0
+
+  Gears & Gasoline
+  0 items � $0
+
+FULL INVENTORY                                                                  Sorted: value desc
+
+Itemized List
+
+Includes Storage Location, Certificate #, and Serial # for insurers.
+
+Photo Title  Universe Category          Subcat  Grade  #              Cost   Estimated  Change  Sto
+                                                                      (all-  value
+                                                                      in)
+
+QA Album TCG &     Trading                                            $45 $300 +$255
+                   Card
+17 -         Non   Games
+
+Original Sport
+
+Motion Card
+
+Picture
+
+Soundtrack
+
+QA Album 1 Sports  Sports                                             $40 $120          +$80
+- Original         Cards
+Motion
+Photo Title  Universe Category   Subcat  Grade  #  Cost   Estimated  Change  Sto
+                                                   (all-  value
+                                                   in)
+
+Picture
+Soundtrack
+
+QA Album Pop          Comics                       $14 $92           +$78
+
+24 -         Culture
+
+Original
+
+Motion
+
+Picture
+
+Soundtrack
+
+QA Album Pop          Movies /                     $33 $83           +$50
+                      TV / Film
+21 -         Culture
+
+Original
+
+Motion
+
+Picture
+
+Soundtrack
+
+QA Album Pop          Comics                       $12 $75           +$63
+
+18 -         Culture
+
+Original
+
+Motion
+
+Picture
+
+Soundtrack
+
+QA Album Pop          Movies /                     $31 $65           +$34
+                      TV / Film
+15 -         Culture
+
+Original
+
+Motion
+
+Picture
+
+Soundtrack
+
+QA INS       Pop      Comics                       - $60             --
+unknown
+cost         Culture
+
+QA Album Pop          Movies /                     $29 $47           +$18
+9 - Original Culture  TV / Film
+Motion
+Picture
+Soundtrack
+Photo Title  Universe Category     Subcat  Grade  #  Cost   Estimated  Change  Sto
+                                                     (all-  value
+                                                     in)
+
+QA Album Pop          Comics                         $8 $38            +$30
+6 - Original Culture
+Motion
+Picture
+Soundtrack
+
+QA Album Pop          Movies /                       $27 $29           +$2
+3 - Original Culture  TV / Film
+Motion
+Picture
+Soundtrack
+
+QA INS       Pop      Comics                         $0 $25            --
+explicit
+zero cost    Culture
+
+QA INS Pop            Comics                         $10 $0            -$10
+
+explicit Culture
+
+zero value
+
+QA Album Music        Instruments                    $15 $0            -$15
+10 -                  & Gear
+Original
+Motion
+Picture
+Soundtrack
+
+QA INS no Pop         Comics                         $40 No            --
+
+estimate Culture                                            estimate
+
+cost 40
+
+QA Album Music        Audio                          $20 No            --
+2 - Original          Formats
+Motion                                                      estimate
+Picture
+Soundtrack
+
+QA Album Music        Instruments                    $34 No            --
+4 - Original          & Gear
+Motion                                                      estimate
+Picture
+Soundtrack
+Photo Title  Universe Category  Subcat  Grade  #  Cost   Estimated  Change  Sto
+                                                  (all-  value
+                                                  in)
+
+QA Album TCG &        Trading                     $41 No            --
+5 - Original Non      Card
+Motion Sport          Games                              estimate
+Picture Card
+Soundtrack
+
+QA Album Sports       Sports                      $15 No            --
+7 - Original          Cards
+Motion                                                   estimate
+Picture
+Soundtrack
+
+QA Album Music        Audio                       $22 No            --
+8 - Original          Formats
+Motion                                                   estimate
+Picture
+Soundtrack
+
+QA Album TCG &        Trading                     $25 No            --
+11 - Original Non     Card
+Motion Sport          Games                              estimate
+Picture Card
+Soundtrack
+
+QA Album Pop          Comics                      - No              --
+
+12 -         Culture                                     estimate
+
+Original
+
+Motion
+
+Picture
+
+Soundtrack
+
+QA Album Sports       Sports                      $17 No            --
+13 -                  Cards
+Original                                                 estimate
+Motion
+Picture
+Soundtrack
+
+QA Album     Music    Audio                       $24 No            --
+14 -                  Formats
+Original                                                 estimate
+Motion
+Photo Title  Universe Category  Subcat  Grade  #  Cost   Estimated  Change  Sto
+                                                  (all-  value
+                                                  in)
+
+Picture
+Soundtrack
+
+QA Album Music    Instruments                     $38 No            --
+16 -              & Gear
+Original                                                 estimate
+Motion
+Picture
+Soundtrack
+
+QA Album Sports   Sports                          $19 No            --
+19 -              Cards
+Original                                                 estimate
+Motion
+Picture
+Soundtrack
+
+QA Album Music    Audio                           $26 No            --
+20 -              Formats
+Original                                                 estimate
+Motion
+Picture
+Soundtrack
+
+QA Album Music    Instruments                     $40 No            --
+22 -              & Gear
+Original                                                 estimate
+Motion
+Picture
+Soundtrack
+
+QA Album TCG &    Trading                         $7 No             --
+                  Card
+23 -         Non  Games                                  estimate
+
+Original Sport
+
+Motion Card
+
+Picture
+
+Soundtrack
+Photo Title  Universe Category  Subcat  Grade  #  Cost   Estimated  Change  Sto
+                                                  (all-  value
+                                                  in)
+
+QA Album Sports  Sports                           $21 No            --
+25 -             Cards
+Original                                                 estimate
+Motion
+Picture
+Soundtrack
+
+QA Album Music   Audio                            $28 No            --
+26 -             Formats
+Original                                                 estimate
+Motion
+Picture
+Soundtrack
+

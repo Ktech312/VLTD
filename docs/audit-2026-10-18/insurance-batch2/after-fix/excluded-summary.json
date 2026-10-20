@@ -1,0 +1,42 @@
+[
+ {
+  "doc": "inventory",
+  "excludedItemAbsent": true,
+  "excludedLine": "1 excluded by you on this device",
+  "totalCost": "681",
+  "estimate": "934",
+  "notCountedLine": "Not counted: 5 sold, 1 supply item (boxes, cases), 1 wishlist item, 1 excluded by you on this device.\r"
+ },
+ {
+  "doc": "packet-screen",
+  "excludedItemAbsent": true,
+  "excludedLine": null,
+  "totalCost": "681",
+  "estimate": "934",
+  "notCountedLine": "Not counted: 5 sold, 1 supply item (boxes, cases), 1 wishlist item, 1 excluded by you on this\r"
+ },
+ {
+  "doc": "packet-print-p1",
+  "excludedItemAbsent": true,
+  "excludedLine": "1 excluded by you on this device",
+  "totalCost": "681",
+  "estimate": "934",
+  "notCountedLine": "Not counted: 5 sold, 1 supply item (boxes, cases), 1 wishlist item, 1 excluded by you on this device. Exclusions are saved on this device only. They do not follow your account.\r"
+ },
+ {
+  "doc": "report",
+  "excludedItemAbsent": true,
+  "excludedLine": null,
+  "totalCost": "681",
+  "estimate": "934",
+  "notCountedLine": "Not counted: 5 sold, 1 supply item (boxes, cases), 1 wishlist item, 1 excluded by you on this\r"
+ },
+ {
+  "doc": "schedule",
+  "excludedItemAbsent": true,
+  "excludedLine": "1 excluded by you on this device",
+  "totalCost": "681",
+  "estimate": "934",
+  "notCountedLine": "Not counted: 5 sold, 1 supply item (boxes, cases), 1 wishlist item, 1 excluded by you on this device. Exclusions are saved\r"
+ }
+]

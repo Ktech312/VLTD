@@ -1,0 +1,111 @@
+INSURANCE REPORT                            Total cost (all-in): $681 (28 of 30 items with a recorded cost)
+
+Inventory Schedule                               Estimated value: $934 (13 of 30 have an estimate)
+
+Print-ready list for insurance                                             Unrealized change: +$585
+documentation � Generated 10/19/2026
+                                                On 11 of 30 items � cost basis $264 � not counted: 1 without a
+                                                            recorded cost, 1 bought for $0, 17 without a value
+
+Includes title, category, grade, cost, estimated value, storage location, and cert number. Cost = purchase price + tax +
+shipping + fees. A dash means no cost was recorded.
+
+Not counted: 5 sold, 1 supply item (boxes, cases), 1 wishlist item, 1 excluded by you on this device. Exclusions are saved
+on this device only. They do not follow your account.
+
+17 items have no estimated value. Their acquisition cost ($417) is shown in the Cost column for reference and is not
+counted as value.
+
+ITEM                          DETAILS       STORAGE  CERT     COST    ESTIMATED
+                              Comics                 #     (ALL-IN)         VALUE
+QA INS no estimate cost 40    Comics
+                              Comics        --       --         $40   No estimate
+QA INS unknown cost           Comics                               -          $60
+                              Sports Cards  --       --                        $25
+QA INS explicit zero cost                                        $0             $0
+                                            --       --         $10          $120
+QA INS explicit zero value                                      $40
+                                            --       --
+QA Album 1 - Original Motion
+Picture Soundtrack                          --       --
+
+QA Album 2 - Original Motion  Audio Formats --       --    $20 No estimate
+Picture Soundtrack
+                              Movies / TV / --       --    $27        $29
+QA Album 3 - Original Motion
+Picture Soundtrack            Film
+
+QA Album 4 - Original Motion  Instruments & --       --    $34 No estimate
+Picture Soundtrack
+                              Gear
+QA Album 5 - Original Motion
+Picture Soundtrack            Trading Card --        --    $41 No estimate
+
+QA Album 6 - Original Motion  Games
+Picture Soundtrack
+                              Comics        --       --    $8         $38
+ITEM                           DETAILS       STORAGE  CERT     COST   ESTIMATED
+                               Sports Cards           #     (ALL-IN)        VALUE
+QA Album 7 - Original Motion
+Picture Soundtrack                           --       --         $15  No estimate
+                                                                      No estimate
+QA Album 8 - Original Motion   Audio Formats --       --    $22
+Picture Soundtrack                                                            $47
+                               Movies / TV / --       --    $29                 $0
+QA Album 9 - Original Motion                                          No estimate
+Picture Soundtrack             Film                                   No estimate
+                                                                      No estimate
+QA Album 10 - Original Motion  Instruments & --       --    $15       No estimate
+Picture Soundtrack                                                            $65
+                               Gear                                   No estimate
+QA Album 11 - Original Motion                                                $300
+Picture Soundtrack             Trading Card --        --    $25                $75
+                                                                      No estimate
+QA Album 12 - Original Motion  Games                                  No estimate
+Picture Soundtrack
+                               Comics        --       --    -
+QA Album 13 - Original Motion
+Picture Soundtrack             Sports Cards --        --    $17
+
+QA Album 14 - Original Motion  Audio Formats --       --    $24
+Picture Soundtrack
+                               Movies / TV / --       --    $31
+QA Album 15 - Original Motion
+Picture Soundtrack             Film
+
+QA Album 16 - Original Motion  Instruments & --       --    $38
+Picture Soundtrack
+                               Gear
+QA Album 17 - Original Motion
+Picture Soundtrack             Trading Card --        --    $45
+
+QA Album 18 - Original Motion  Games
+Picture Soundtrack
+                               Comics        --       --    $12
+QA Album 19 - Original Motion
+Picture Soundtrack             Sports Cards --        --    $19
+
+QA Album 20 - Original Motion  Audio Formats --       --    $26
+Picture Soundtrack
+ITEM                           DETAILS               STORAGE  CERT     COST   ESTIMATED
+                                                              #     (ALL-IN)        VALUE
+QA Album 21 - Original Motion  Movies / TV /
+Picture Soundtrack             Film                  --       --         $33          $83
+
+QA Album 22 - Original Motion  Instruments & --               --         $40  No estimate
+Picture Soundtrack
+                               Gear                                       $7  No estimate
+QA Album 23 - Original Motion
+Picture Soundtrack             Trading Card --                --         $14          $92
+
+QA Album 24 - Original Motion  Games                                     $21  No estimate
+Picture Soundtrack
+                               Comics                --       --         $28  No estimate
+QA Album 25 - Original Motion
+Picture Soundtrack             Sports Cards --                --
+
+QA Album 26 - Original Motion  Audio Formats --               --
+Picture Soundtrack
+
+Print tip: In the print dialog, choose Save as PDF.
+

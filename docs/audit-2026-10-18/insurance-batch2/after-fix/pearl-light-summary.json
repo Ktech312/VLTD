@@ -1,0 +1,222 @@
+{
+ "label": "after-fix",
+ "theme": "pearl-light",
+ "docs": [
+  {
+   "name": "inventory",
+   "path": "/insurance",
+   "dom": {
+    "htmlDisplay": "block",
+    "bodyHeight": 606.765625,
+    "tableRows": 31,
+    "topChromeDisplayed": 0,
+    "textElements": 135,
+    "worstTextContrast": 16.25,
+    "moneyCells": 43,
+    "worstMoneyContrast": 16.54
+   },
+   "pdf": "insurance-batch2/after-fix/pearl-light-inventory.pdf",
+   "pdfBytes": 230626,
+   "pdfPages": 1,
+   "pdfTextChars": 2601,
+   "pdfRows": 31,
+   "pdfHasSiteBar": false,
+   "pdfHasTitle": true,
+   "pdfFirstLines": [
+    "INSURANCE INVENTORY",
+    "Vault Inventory Report",
+    "Generated 10/19/2026, 7:39:20 PM � Included 31 of 31 owned items � Total cost $796 (29 of 31 with a recorded cost) � Estimated value $1,084 (14 of 31 have an estimate)",
+    "Not counted: 5 sold, 1 supply item (boxes, cases), 1 wishlist item."
+   ]
+  },
+  {
+   "name": "packet-screen",
+   "path": "/insurance/packet",
+   "dom": {
+    "htmlDisplay": "block",
+    "bodyHeight": 2269.203125,
+    "tableRows": 25,
+    "topChromeDisplayed": 0,
+    "textElements": 134,
+    "worstTextContrast": 16.25,
+    "moneyCells": 35,
+    "worstMoneyContrast": 16.54
+   },
+   "pdf": "insurance-batch2/after-fix/pearl-light-packet-screen.pdf",
+   "pdfBytes": 244681,
+   "pdfPages": 4,
+   "pdfTextChars": 2946,
+   "pdfRows": 25,
+   "pdfHasSiteBar": false,
+   "pdfHasTitle": true,
+   "pdfFirstLines": [
+    "INSURANCE PACKET",
+    "Insurance Policy Packet",
+    "Generated 10/19/2026, 7:39:29 PM � Included 31 of 31 owned items � Total cost $796 (29 of 31",
+    "with a recorded cost) � Estimated value $1,084 (14 of 31 have an estimate) � Page 1 of 2 �"
+   ]
+  },
+  {
+   "name": "packet-print-p1",
+   "path": "/insurance/packet/print?page=0&images=0",
+   "dom": {
+    "htmlDisplay": "block",
+    "bodyHeight": 876.125,
+    "tableRows": 25,
+    "topChromeDisplayed": 0,
+    "textElements": 108,
+    "worstTextContrast": 16.25,
+    "moneyCells": 35,
+    "worstMoneyContrast": 21
+   },
+   "pdf": "insurance-batch2/after-fix/pearl-light-packet-print-p1.pdf",
+   "pdfBytes": 218297,
+   "pdfPages": 2,
+   "pdfTextChars": 2839,
+   "pdfRows": 25,
+   "pdfHasSiteBar": false,
+   "pdfHasTitle": true,
+   "pdfFirstLines": [
+    "VLTD INSURANCE PACKET",
+    "Insurance Policy Packet",
+    "Generated 10/19/2026, 7:39:37 PM � Page 1 of 2 � Showing 25 of 31 counted items � Total cost $796 (29 of 31 with a recorded cost) � Estimated value $1,084 (14 of 31 have an estimate) � Images excluded",
+    "Not counted: 5 sold, 1 supply item (boxes, cases), 1 wishlist item. Exclusions are saved on this device only. They do not follow your account."
+   ]
+  },
+  {
+   "name": "packet-print-p2",
+   "path": "/insurance/packet/print?page=1&images=0",
+   "dom": {
+    "htmlDisplay": "block",
+    "bodyHeight": 302.859375,
+    "tableRows": 6,
+    "topChromeDisplayed": 0,
+    "textElements": 32,
+    "worstTextContrast": 16.25,
+    "moneyCells": 8,
+    "worstMoneyContrast": 21
+   },
+   "pdf": "insurance-batch2/after-fix/pearl-light-packet-print-p2.pdf",
+   "pdfBytes": 143599,
+   "pdfPages": 1,
+   "pdfTextChars": 1124,
+   "pdfRows": 6,
+   "pdfHasSiteBar": false,
+   "pdfHasTitle": true,
+   "pdfFirstLines": [
+    "VLTD INSURANCE PACKET",
+    "Insurance Policy Packet",
+    "Generated 10/19/2026, 7:39:45 PM � Page 2 of 2 � Showing 6 of 31 counted items � Total cost $796 (29 of 31 with a recorded cost) � Estimated value $1,084 (14 of 31 have an estimate) � Images excluded",
+    "Not counted: 5 sold, 1 supply item (boxes, cases), 1 wishlist item. Exclusions are saved on this device only. They do not follow your account."
+   ]
+  },
+  {
+   "name": "item-sheet",
+   "path": "/insurance/item?id=qa_ins_mvfvdmjs_allin",
+   "dom": {
+    "htmlDisplay": "block",
+    "bodyHeight": 522.5,
+    "tableRows": 0,
+    "topChromeDisplayed": 0,
+    "textElements": 9,
+    "worstTextContrast": 16.25,
+    "moneyCells": 2,
+    "worstMoneyContrast": 16.54
+   },
+   "pdf": "insurance-batch2/after-fix/pearl-light-item-sheet.pdf",
+   "pdfBytes": 100793,
+   "pdfPages": 1,
+   "pdfTextChars": 327,
+   "pdfRows": 1,
+   "pdfHasSiteBar": false,
+   "pdfHasTitle": true,
+   "pdfFirstLines": [
+    "INSURANCE ITEM SHEET",
+    "QA INS cost with tax shipping fees",
+    "Pop Culture � Comics",
+    "NO IMG"
+   ]
+  },
+  {
+   "name": "item-sheet-sold",
+   "path": "/insurance/item?id=qa_vz_mvfvdmjs_s0",
+   "dom": {
+    "htmlDisplay": "block",
+    "bodyHeight": 617,
+    "tableRows": 0,
+    "topChromeDisplayed": 0,
+    "textElements": 9,
+    "worstTextContrast": 16.25,
+    "moneyCells": 1,
+    "worstMoneyContrast": 16.54
+   },
+   "pdf": "insurance-batch2/after-fix/pearl-light-item-sheet-sold.pdf",
+   "pdfBytes": 379595,
+   "pdfPages": 1,
+   "pdfTextChars": 522,
+   "pdfRows": 1,
+   "pdfHasSiteBar": false,
+   "pdfHasTitle": true,
+   "pdfFirstLines": [
+    "INSURANCE ITEM SHEET",
+    "SOLD APR 12, 2026 FOR $680: HISTORICAL RECORD, NOT PART OF THE CURRENT INVENTORY",
+    "OR ITS TOTALS",
+    "QA Sold Spider-Man 300"
+   ]
+  },
+  {
+   "name": "report",
+   "path": "/reports/insurance",
+   "dom": {
+    "htmlDisplay": "block",
+    "bodyHeight": 3694,
+    "tableRows": 31,
+    "topChromeDisplayed": 0,
+    "textElements": 216,
+    "worstTextContrast": 16.54,
+    "moneyCells": 47,
+    "worstMoneyContrast": 16.54
+   },
+   "pdf": "insurance-batch2/after-fix/pearl-light-report.pdf",
+   "pdfBytes": 1128819,
+   "pdfPages": 7,
+   "pdfTextChars": 3585,
+   "pdfRows": 31,
+   "pdfHasSiteBar": false,
+   "pdfHasTitle": true,
+   "pdfFirstLines": [
+    "INSURANCE INVENTORY REPORT",
+    "VLTD Inventory Summary",
+    "Generated: Oct 19, 2026, 07:40 PM",
+    "ITEMS COUNTED"
+   ]
+  },
+  {
+   "name": "schedule",
+   "path": "/portfolio/insurance",
+   "dom": {
+    "htmlDisplay": "block",
+    "bodyHeight": 1768,
+    "tableRows": 31,
+    "topChromeDisplayed": 0,
+    "textElements": 164,
+    "worstTextContrast": 16.54,
+    "moneyCells": 44,
+    "worstMoneyContrast": 16.54
+   },
+   "pdf": "insurance-batch2/after-fix/pearl-light-schedule.pdf",
+   "pdfBytes": 215072,
+   "pdfPages": 3,
+   "pdfTextChars": 2802,
+   "pdfRows": 31,
+   "pdfHasSiteBar": false,
+   "pdfHasTitle": true,
+   "pdfFirstLines": [
+    "INSURANCE REPORT                           Total cost (all-in): $796 (29 of 31 items with a recorded cost)",
+    "Inventory Schedule                             Estimated value: $1,084 (14 of 31 have an estimate)",
+    "Print-ready list for insurance                                            Unrealized change: +$620",
+    "documentation � Generated 10/19/2026"
+   ]
+  }
+ ]
+}
