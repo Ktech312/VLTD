@@ -1,20 +1,140 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>Home & Vault icon test · VLTD</title>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>Complete cyan–purple icon test · VLTD</title>
 <style>
 *{box-sizing:border-box}body{margin:0;background:#101316;color:#e6e9ec;font:15px/1.5 system-ui,sans-serif}main{max-width:960px;margin:auto;padding:28px 18px 60px}a{color:#69d8ff}h1{font-size:26px;margin:14px 0 6px}h2{font-size:18px;margin:24px 0 12px}p{color:#aeb8c2;margin:6px 0 20px}.controls{display:flex;align-items:center;flex-wrap:wrap;gap:12px;margin:18px 0}button{font:inherit;color:inherit;background:#242a31;border:1px solid #48535e;border-radius:8px;padding:9px 14px;cursor:pointer}button[aria-pressed=true]{border-color:#66dfff;background:#123848}button:focus-visible{outline:2px solid #66dfff;outline-offset:3px}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}.panel{background:#171c21;border:1px solid #30383f;border-radius:12px;padding:20px}.stage{background:#0e1114;border-radius:8px;padding:22px 10px;color:#bdc4cb}.pair{display:flex;justify-content:center;gap:40px}.nav{display:flex;flex-direction:column;align-items:center;gap:5px;font-size:11px;font-weight:600;letter-spacing:.04em}.slot{width:32px;height:32px;display:grid;place-items:center}.slot img{display:block;width:32px;height:32px;object-fit:contain}.original img{transform:scale(.78)}.sizes{display:grid;grid-template-columns:52px 1fr 1fr;align-items:center;gap:18px 10px;text-align:center}.sizes .label{font-size:12px;color:#aeb8c2}.sizes img{display:block;margin:auto;object-fit:contain}.large{display:flex;gap:32px;justify-content:center;padding:24px}.large img{width:96px;height:96px;object-fit:contain}.light .stage{background:#f4f6f8;color:#29313a}.note{font-size:13px}.tag{color:#7de5fa;font-size:12px;text-transform:uppercase;letter-spacing:.08em}@media(max-width:600px){.grid{grid-template-columns:1fr}.panel{padding:14px}}
-</style></head><body><main>
-<a href="/dashboard">← Back to VLTD</a><h1>Home & Vault · sharpness test</h1>
-<p>Compare the original glass icons with sharper glass, neon outlines, and blue–purple finishes.</p>
+.pack-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}.pack-grid .panel{padding:12px}.pack-grid h3{font-size:14px;margin:0 0 12px;overflow-wrap:anywhere}.pack-grid .pair{gap:22px}.pack-grid .large{padding:14px 0 0}.pack-grid .large img{width:64px;height:64px}.pack-grid [hidden]{display:none}</style></head><body><main>
+<a href="/dashboard">← Back to VLTD</a><h1>Complete cyan–purple icon test</h1>
+<p>The complete matching set is ready to compare. Home and Vault retain the approved artwork.</p>
 <div class="controls" aria-label="Comparison background"><button id="dark" aria-pressed="true">Dark background</button><button id="light" aria-pressed="false">Light background</button></div>
-<h2>New style comparisons</h2><p class="note">Top row in each panel: actual size. Bottom row: 64px detail. Same Home and Vault concepts throughout.</p>
+<div id="size-control-anchor"></div><h2>Complete approved-style set</h2><p class="note">Original PNG / new SVG at actual size, plus a larger view of the new icon. These remaining icons are for testing; Home and Vault are already live.</p><label for="icon-filter">Find an icon</label> <input id="icon-filter" type="search" placeholder="Search icons" style="padding:10px;max-width:100%;margin-bottom:16px"><p id="pack-count" aria-live="polite"></p><div id="complete-pack" class="pack-grid"></div><h2>Home & Vault style references</h2><p class="note">Top row in each panel: actual size. Bottom row: 64px detail. Same Home and Vault concepts throughout.</p>
 <div class="controls" id="style-sizes" aria-label="Icon display size"><button data-size="24" aria-pressed="false">24px</button><button data-size="28" aria-pressed="true">28px</button><button data-size="32" aria-pressed="false">32px</button></div>
 <div class="grid" id="style-studies"></div>
 <h2>Original vs sharper glass</h2>
 <div class="grid"><section class="panel"><span class="tag">Original</span><h2>Current navigation rendering</h2><div class="stage pair" id="old-nav"></div><p class="note">32px slot with the existing 0.78 scaling (about 25px).</p></section><section class="panel"><span class="tag">Test · v1</span><h2>Recreated at navigation size</h2><div class="stage pair" id="new-nav"></div><p class="note">Direct 25px rendering for a comparable footprint. No scaling transform.</p></section></div>
 <div class="grid" id="size-tests"></div>
 <h2>Detail view · 96px</h2><p class="note">Use the smaller comparisons above to judge navigation sharpness.</p><div class="grid" id="detail"></div>
-<p class="note" style="margin-top:24px">Comparison only. The normal navigation icons have not been replaced.</p>
+<p class="note" style="margin-top:24px">Home and Vault are live. The rest of this matching set is available here for testing.</p>
 <script>
+document.getElementById('size-control-anchor').append(document.getElementById('style-sizes'));
+const packNames=[
+    "addItem",
+    "organize",
+    "editRoom",
+    "bookmark",
+    "save",
+    "viewGallery",
+    "vault",
+    "exhibitions",
+    "discover",
+    "events",
+    "notifications",
+    "search",
+    "account",
+    "settings",
+    "close",
+    "back",
+    "next",
+    "upload",
+    "camera",
+    "share",
+    "favorite",
+    "delete",
+    "door",
+    "chevronDown",
+    "chevronUp",
+    "externalLink",
+    "layers",
+    "map",
+    "mapPin",
+    "price",
+    "paintbrush",
+    "edit",
+    "rotate",
+    "loader",
+    "ticket",
+    "eyeOff",
+    "more",
+    "communityBoard",
+    "insights",
+    "learn",
+    "activity",
+    "dashboard",
+    "guide",
+    "checkmark",
+    "sparkleAI",
+    "download",
+    "ruler",
+    "flipVertical",
+    "unlocked",
+    "expand",
+    "eraser",
+    "document",
+    "copy",
+    "sms",
+    "email",
+    "flash",
+    "vibe",
+    "play",
+    "dragHandle",
+    "gift",
+    "arrowLeft",
+    "bell",
+    "message",
+    "exhibition",
+    "bug",
+    "chart",
+    "target",
+    "trophy",
+    "tag",
+    "heart",
+    "bag",
+    "gavel",
+    "box",
+    "sofa",
+    "sparkle",
+    "flame",
+    "key",
+    "cart",
+    "shield",
+    "cards",
+    "music",
+    "gem",
+    "game",
+    "leaf",
+    "star",
+    "car",
+    "palette",
+    "burst",
+    "users",
+    "check",
+    "clock",
+    "eye",
+    "building",
+    "warning",
+    "lock",
+    "megaphone",
+    "moon",
+    "sun",
+    "frame",
+    "rocket",
+    "globe",
+    "book",
+    "wrench",
+    "scan",
+    "info",
+    "link",
+    "selectItems",
+    "card",
+    "cloud",
+    "dollar",
+    "inbox"
+  ];
+const primary=['dashboard','vault','exhibitions','communityBoard','discover','guide','search','message','notifications','account'];
+packNames.sort((a,b)=>(primary.includes(a)?primary.indexOf(a):100)-(primary.includes(b)?primary.indexOf(b):100)||a.localeCompare(b));
+const labels={dashboard:'Home',communityBoard:'Lounge'};
+for(const name of packNames){const card=document.createElement('section');card.className='panel';card.dataset.name=name;const h=document.createElement('h3');h.textContent=labels[name]||name.replace(/([A-Z])/g,' $1').replace(/^./,s=>s.toUpperCase());const stage=document.createElement('div');stage.className='stage';const row=document.createElement('div');row.className='pair';for(const old of [true,false]){const cell=document.createElement('div');cell.className='nav';const im=new Image(28,28);im.className='study-actual';im.src='/ui/icon-themes/'+(old?'simple-glass-v1/':'cyan-purple-neon-v1/')+name+(old?'.png':'.svg');im.alt=h.textContent+(old?' original':' new');if(old&&['bookmark','vibe'].includes(name)){im.removeAttribute('src');cell.append(document.createTextNode('No PNG'));}else{cell.append(im,document.createTextNode(old?'Original':'New'));}row.append(cell);}const detail=document.createElement('div');detail.className='large';const im=new Image(64,64);im.src='/ui/icon-themes/cyan-purple-neon-v1/'+name+'.svg';im.alt=h.textContent+' detail';detail.append(im);stage.append(row,detail);card.append(h,stage);document.getElementById('complete-pack').append(card);}
+document.getElementById('pack-count').textContent=packNames.length+' icons';
+document.getElementById('icon-filter').oninput=e=>{let count=0;for(const card of document.querySelectorAll('#complete-pack .panel')){card.hidden=!card.textContent.toLowerCase().includes(e.target.value.toLowerCase());if(!card.hidden)count++;}document.getElementById('pack-count').textContent=count+' of '+packNames.length+' icons';};
 const icons=[['dashboard','Home'],['vault','Vault']];
 const oldBase='/ui/icon-themes/simple-glass-v1/';const newBase='/ui/icon-themes/sharp-glass-test-v1/';
 const styles=[['','Sharper cyan glass','The first test, retained for comparison.'],['-neon','Crisp neon','Single cyan outline with open dark interiors.'],['-duotone','Cyan–purple neon','The same outlines with a cyan-to-magenta gradient.'],['-violet','Blue–purple glass','Solid faceted color, bright edges, and dark recesses.']];
