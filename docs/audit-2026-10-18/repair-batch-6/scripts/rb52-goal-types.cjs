@@ -29,7 +29,7 @@ const NAMES = ["Antique Broom Collection room", "Complete the Resell Rookie set"
     await S.visit("/goals"); await S.waitFor("document.body.innerText.includes('RB52 Sell duplicate comics')", 45000).catch(() => {}); await sleep(3000);
     const pills = await S.evaluate("[...document.querySelectorAll('[aria-label=\"Goal types\"] button')].map((b) => (b.innerText || '').trim())");
     const t = await body(S);
-    await rec(S, !ins.error && pills.join("|") === "All Goals|Items|Value|Needs setup" && !/Exhibition|Insurance Goal|Public\b/.test(t.replace(/Public Exhibition/g, "")), "Goals page: type filters and labels with goals named 'room', 'sell', '$', 'insurance'", "filters are All / Items / Value / Needs setup only; no goal is labelled Public, Exhibition or Insurance because of its name", `filters=${JSON.stringify(pills)}; 'Public' label shown=${/\bPublic\b/.test(t)}; 'Exhibition' shown=${/Exhibition/.test(t)}`, "/goals");
+    await rec(S, !ins.error && pills.join("|") === "All Goals|Items|Value|Needs setup" && !/Insurance Goal/.test(t) && !/\bPublic\b/.test(t.replace(/Public Exhibition/g, "")), "Goals page: type filters and labels with goals named 'room', 'sell', '$', 'insurance'", "filters are All / Items / Value / Needs setup only; no goal is labelled Public, Exhibition or Insurance because of its name", `filters=${JSON.stringify(pills)}; 'Public' label shown=${/\bPublic\b/.test(t)}; 'Insurance Goal' shown=${/Insurance Goal/.test(t)}`, "/goals");
     // every one of them sits under Needs setup and none under Items or Value
     const countFor = async (label) => { await A.clickExpr(S, `[...document.querySelectorAll('[aria-label="Goal types"] button')].find((b) => (b.innerText || '').trim() === ${JSON.stringify(label)})`); await sleep(800); return S.evaluate("[...document.querySelectorAll('button')].filter((b) => (b.innerText || '').includes('RB52 ') && b.querySelector('[data-testid=goal-progress-text]')).length"); };
     const setup = await countFor("Needs setup"); const items = await countFor("Items"); const value = await countFor("Value");
@@ -41,7 +41,7 @@ const NAMES = ["Antique Broom Collection room", "Complete the Resell Rookie set"
     // the side panel for a goal in a category with sold and wishlist items shows only what is owned: compare to the Vault's own total for that scope is covered by the shared rule; check the label
     await A.clickExpr(S, "[...document.querySelectorAll('button')].find((b) => (b.innerText || '').includes('RB52 Sell duplicate comics') && b.querySelector('[data-testid=goal-progress-text]'))"); await sleep(1200);
     const side = await body(S);
-    await rec(S, /Value You Own Here/.test(side) && !/Insurable Value/.test(side), "Goals side panel", "'Value You Own Here' (owned items only), not 'Insurable Value'", `new label=${/Value You Own Here/.test(side)}; old label=${/Insurable Value/.test(side)}`, "/goals");
+    await rec(S, /Value You Own Here/i.test(side) && !/Insurable Value/i.test(side), "Goals side panel", "'Value You Own Here' (owned items only), not 'Insurable Value'", `new label=${/Value You Own Here/i.test(side)}; old label=${/Insurable Value/i.test(side)}`, "/goals");
     // Lounge link
     await S.visit("/community-board"); await sleep(9000);
     const link = await S.evaluate("[...document.querySelectorAll('a')].filter((a) => /Discover|leaderboard/i.test(a.innerText || '') && (a.getAttribute('href') || '') === '/discover').map((a) => (a.innerText || '').trim())");

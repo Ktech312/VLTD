@@ -40,6 +40,17 @@ const err = (e) => (e ? `${e.code || e.statusCode || ""} ${String(e.message).sli
     const sy = await U.rpc("consume_bulk_scan", { p_profile: P, p_count: 0 });
     await rec(null, !!sy.error && /not authorized/.test(sy.error.message), "Unrelated account calls consume_bulk_scan on the owner's profile", "refused ('not authorized')", sy.error ? err(sy.error) : "ALLOWED", "rpc/consume_bulk_scan");
 
+    // ---- the hole found while correcting file 1: a caller with NO session must not read or spend any profile's allowance (consume is called with 0: nothing is spent either way)
+    const visitor = createClient(env.NEXT_PUBLIC_SUPABASE_URL, env.NEXT_PUBLIC_SUPABASE_ANON_KEY, { auth: { persistSession: false } });
+    for (const [label, call, args] of [["reads", "bulk_scan_status", { p_profile: P }], ["calls consume (0) on", "consume_bulk_scan", { p_profile: P, p_count: 0 }], ["reads the Business profile's allowance of", "bulk_scan_status", { p_profile: B }]]) {
+      const v = await visitor.rpc(call, args);
+      await rec(null, !!v.error && /permission denied|not authorized/i.test(v.error.message), `A visitor with no session ${label} the owner's scan allowance (${call})`, "refused ('permission denied' or 'not authorized'); nothing returned", v.error ? err(v.error) : "ANSWERED: " + JSON.stringify(v.data), "rpc/" + call);
+    }
+    const g1 = await visitor.rpc("bulk_scan_guard", { p_profile: P });
+    await rec(null, !!g1.error, "A visitor with no session calls the internal guard function directly", "refused", g1.error ? err(g1.error) : "ANSWERED", "rpc/bulk_scan_guard");
+    const g2 = await A.rpc("bulk_scan_guard", { p_profile: P });
+    await rec(null, !!g2.error, "A signed-in owner calls the internal guard function directly", "refused (it is only for the database's own functions)", g2.error ? err(g2.error) : "ANSWERED", "rpc/bulk_scan_guard");
+
     // ---- RC-10 at the storage API
     const jpg = Buffer.from("/9j/4AAQSkZJRgABAQEASABIAAD/2wBDAP//////////////////////////////////////////////////////////////////////////////////////wgALCAABAAEBAREA/8QAFBABAAAAAAAAAAAAAAAAAAAAAP/aAAgBAQABPxA=", "base64");
     const blob = () => new Blob([jpg], { type: "image/jpeg" });

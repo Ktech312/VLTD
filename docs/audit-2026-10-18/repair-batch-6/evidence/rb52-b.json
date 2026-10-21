@@ -1,0 +1,40 @@
+{
+ "label": "b",
+ "cases": [
+  {
+   "control": "Goals page: type filters and labels with goals named 'room', 'sell', '$', 'insurance'",
+   "expected": "filters are All / Items / Value / Needs setup only; no goal is labelled Public, Exhibition or Insurance because of its name",
+   "ok": true,
+   "actual": "filters=[\"All Goals\",\"Items\",\"Value\",\"Needs setup\"]; 'Public' label shown=false; 'Insurance Goal' shown=false",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb52-b-1.jpg"
+  },
+  {
+   "control": "Goals page: filing of older goals",
+   "expected": "all 7 older goals are under 'Needs setup' and none is filed under Items or Value from its words",
+   "ok": true,
+   "actual": "needs setup=7; items=0; value=0",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb52-b-2.jpg"
+  },
+  {
+   "control": "Goals page: the old 'Goal Value Impact' and 'Insurable Value' figures",
+   "expected": "replaced by 'Value Still To Reach' (dollars left on value goals only) and 'Value You Own Here' (owned items only)",
+   "ok": false,
+   "actual": "panel=null; old labels present=true",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb52-b-3.jpg"
+  },
+  {
+   "control": "Goals side panel",
+   "expected": "'Value You Own Here' (owned items only), not 'Insurable Value'",
+   "ok": false,
+   "actual": "new label=false; old label=false",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb52-b-4.jpg"
+  },
+  {
+   "control": "Lounge: the link under Top Collectors",
+   "expected": "says 'Browse Discover' (there is no full leaderboard page to open)",
+   "ok": false,
+   "actual": "links=[\"Discover\",\"View full leaderboard →\",\"Discover\"]; old text present=true",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb52-b-5.jpg"
+  }
+ ]
+}
