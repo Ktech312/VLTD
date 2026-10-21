@@ -230,6 +230,8 @@ export default function MuseumPage() {
     try { window.sessionStorage.setItem("vltd_museum_view", JSON.stringify({ filter, sortMode })); } catch { /* storage unavailable */ }
   }, [filter, sortMode]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  // On phones the details panel is a sheet over the list: closed until a card is tapped, with a Close button. On wide screens it is always the side panel.
+  const [sheetOpen, setSheetOpen] = useState(false);
   const [copyOk, setCopyOk] = useState(false);
 
   function refresh() {
@@ -737,11 +739,12 @@ export default function MuseumPage() {
                 return (
                   <article
                     key={gallery.id}
-                    onClick={() => setSelectedId(gallery.id)}
+                    onClick={() => { setSelectedId(gallery.id); setSheetOpen(true); }}
                     onKeyDown={(event) => {
                       if (event.key === "Enter" || event.key === " ") {
                         event.preventDefault();
                         setSelectedId(gallery.id);
+                        setSheetOpen(true);
                       }
                     }}
                     role="button"
@@ -865,7 +868,7 @@ export default function MuseumPage() {
               </div>
 
               {/* Right: Exhibition Details */}
-              <aside className="fixed inset-x-2 bottom-[calc(var(--bottomnav-h,120px)+8px)] z-40 max-h-[74vh] overflow-y-auto lg:static lg:inset-x-auto lg:bottom-auto lg:z-auto lg:max-h-none lg:overflow-visible lg:sticky lg:top-4">
+              <aside className={`${sheetOpen ? "" : "max-lg:hidden"} fixed inset-x-2 bottom-[calc(var(--bottomnav-h,120px)+8px)] z-40 max-h-[74vh] overflow-y-auto lg:static lg:inset-x-auto lg:bottom-auto lg:z-auto lg:max-h-none lg:overflow-visible lg:sticky lg:top-4`}>
                 {selectedEntry ? (() => {
                   const g = selectedEntry.gallery;
                   const s = selectedEntry.score;
@@ -888,6 +891,9 @@ export default function MuseumPage() {
                       <div className="flex justify-center pt-2 lg:hidden"><span className="h-1 w-10 rounded-full bg-white/20" /></div>
                       <div className="flex items-center justify-between border-b px-4 py-3" style={{ borderColor: "var(--theme-border)" }}>
                         <div className="text-sm font-black">Exhibition Details</div>
+                        <button type="button" onClick={() => setSheetOpen(false)} aria-label="Close exhibition details" className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-[8px] text-[color:var(--muted)] hover:text-[color:var(--fg)] lg:hidden">
+                          <AppIcon name="close" size={16} strokeWidth={2.2} />
+                        </button>
                       </div>
 
                       <div className="px-3 pt-3">
