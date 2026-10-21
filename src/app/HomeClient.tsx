@@ -256,6 +256,8 @@ export default function HomeClient() {
           setError("We could not load your collection just now. Your items are safe: nothing has been changed or lost. Reload the page to try again.");
           return;
         }
+        // The cloud did not answer but items saved on this device are shown: say so, never present them as fresh.
+        if (!deviceCopyUsable && !answered) setStale(true);
         setItems(loadItems());
         setPendingSync(getPendingVaultSyncCount());
         try { setLogged(loadActivityEvents()); } catch { setLogged([]); }
