@@ -1,0 +1,40 @@
+{
+ "label": "second",
+ "cases": [
+  {
+   "control": "Subject board for a subject with one public QA collector",
+   "expected": "'1 collector · 2 items' and the collector listed",
+   "ok": true,
+   "actual": "database function returns 1 row(s); page: Home Vault Exhibitions Lounge Discover Help ⌘K NOVICE Level 1 Discover / Community Board / qa-rb25-mvhnhleu qa-rb25-mvhnhleu 1 collector · 2 items Share Leaderboard 1 key QA Visual Collection 2 items Share Add to Home Sc",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb25-second-1.jpg"
+  },
+  {
+   "control": "Subject board: the leaderboard request",
+   "expected": "answered without an error",
+   "ok": true,
+   "actual": "failed requests: []",
+   "screenshot": ""
+  },
+  {
+   "control": "Subject board when the request fails",
+   "expected": "says it could not load, offers Try again, never 'No public collectors'",
+   "ok": true,
+   "actual": "page: Home Vault Exhibitions Lounge Discover Help ⌘K NOVICE Level 1 Discover / Community Board / qa-rb25-mvhnhleu qa-rb25-mvhnhleu Could not load Share Leaderboard Couldn't load this leaderboard. Check your",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb25-second-2.jpg"
+  },
+  {
+   "control": "Subject board: Try again after the connection returns",
+   "expected": "the board loads",
+   "ok": true,
+   "actual": "page: Home Vault Exhibitions Lounge Discover Help ⌘K NOVICE Level 1 Discover / Community Board / qa-rb25-mvhnhleu qa-rb25-mvhnhleu 1 collector · 2 items Share Leaderb",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb25-second-3.jpg"
+  },
+  {
+   "control": "Scan with AI when the scan allowance could not be read",
+   "expected": "says the allowance could not be checked (not 'used all'); no AI call made",
+   "ok": true,
+   "actual": "message=\"Couldn't check your AI scan allowance, so AI scanning is paused.\"; used-all shown=false; AI requests=0",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb25-second-4.jpg"
+  }
+ ]
+}

@@ -1,0 +1,40 @@
+{
+ "label": "first",
+ "cases": [
+  {
+   "control": "Subject board for a subject with one public QA collector",
+   "expected": "'1 collector · 2 items' and the collector listed",
+   "ok": false,
+   "actual": "database function returns 0 row(s); page: Home Vault Exhibitions Lounge Discover Help ⌘K G ‹ Back to VLTD WELCOME BACK Log in to your vault Get back into your vault. Email Password Forgot password? Log in or G Continue with Google New to VLTD? Claim one of the f",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb25-first-1.jpg"
+  },
+  {
+   "control": "Subject board: the leaderboard request",
+   "expected": "answered without an error",
+   "ok": true,
+   "actual": "failed requests: []",
+   "screenshot": ""
+  },
+  {
+   "control": "Subject board when the request fails",
+   "expected": "says it could not load, offers Try again, never 'No public collectors'",
+   "ok": false,
+   "actual": "page: Home Vault Exhibitions Lounge Discover Help ⌘K G ‹ Back to VLTD WELCOME BACK Log in to your vault Get back into your vault. Email Password Forgot password? Log in or G Continue with Google New to VLTD",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb25-first-2.jpg"
+  },
+  {
+   "control": "Subject board: Try again after the connection returns",
+   "expected": "the board loads",
+   "ok": false,
+   "actual": "page: Home Vault Exhibitions Lounge Discover Help ⌘K G ‹ Back to VLTD WELCOME BACK Log in to your vault Get back into your vault. Email Password Forgot password? Log ",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb25-first-3.jpg"
+  },
+  {
+   "control": "Scan with AI when the scan allowance could not be read",
+   "expected": "says the allowance could not be checked (not 'used all'); no AI call made",
+   "ok": true,
+   "actual": "message=\"Couldn't check your AI scan allowance, so AI scanning is paused.\"; used-all shown=false; AI requests=0",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb25-first-4.jpg"
+  }
+ ]
+}
