@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { CloudWait, useCloudRefresh } from "@/components/vault/CloudStatus";
 import { computeReadiness } from "@/components/ListingReadinessPanel";
 import { getPrimaryImageUrl, loadItems, type VaultItem } from "@/lib/vaultModel";
 import { Glyph } from "@/components/ui/Glyph";
@@ -135,10 +136,17 @@ type LevelFilter = "all" | "ready" | "almost" | "incomplete";
 export default function ReadinessPage() {
   const [filter, setFilter] = useState<LevelFilter>("all");
 
-  const forSaleItems = useMemo(() => {
-    const all = loadItems({ includeAllProfiles: false });
-    return all.filter((i) => i.status === "FOR_SALE");
+  const [allItems, setAllItems] = useState<VaultItem[]>(() => loadItems({ includeAllProfiles: false }));
+  const reloadRef = useRef<() => void>(() => undefined);
+  // The listings come from the account too (a fresh browser held none and said "No for-sale listings yet").
+  const cloud = useCloudRefresh(() => reloadRef.current());
+  useEffect(() => {
+    const reload = () => setAllItems(loadItems({ includeAllProfiles: false }));
+    reloadRef.current = reload;
+    window.addEventListener("vltd:vault-updated", reload);
+    return () => window.removeEventListener("vltd:vault-updated", reload);
   }, []);
+  const forSaleItems = useMemo(() => allItems.filter((i) => i.status === "FOR_SALE"), [allItems]);
 
   const withScores = useMemo(
     () =>
@@ -199,7 +207,9 @@ export default function ReadinessPage() {
       </div>
 
       <div className="mx-auto max-w-2xl px-4 py-6">
-        {forSaleItems.length === 0 ? (
+        {forSaleItems.length === 0 && allItems.length === 0 && cloud.state !== "ok" ? (
+          <CloudWait what="for-sale listings" cloud={cloud} />
+        ) : forSaleItems.length === 0 ? (
           <div
             className="rounded-2xl px-6 py-14 text-center ring-1"
             style={{ background: "var(--surface)", borderColor: "var(--border)" }}

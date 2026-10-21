@@ -23,7 +23,7 @@ import { getGalleryLimits } from "@/lib/galleryTier";
 import { getUserBonusGalleries } from "@/lib/referral";
 import { getTierSafe, onTierChange, type Tier } from "@/lib/subscription";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
-import { getPrimaryImageUrl, loadItems, type VaultItem } from "@/lib/vaultModel";
+import { getPrimaryImageUrl, loadItems, syncVaultItemsFromSupabaseChecked, type VaultItem } from "@/lib/vaultModel";
 import { getVaultImagePublicUrl } from "@/lib/vaultCloud";
 import { ToolsMenu } from "@/components/ui/ToolsMenu";
 import { getMuseumBetaStatus, requestMuseumBetaAccess, type MuseumBetaStatus } from "@/lib/museumBeta";
@@ -308,7 +308,8 @@ export default function MuseumPage() {
     refresh();
     async function hydrateGalleries() {
       try {
-        await refreshGalleriesFromSupabase(true);
+        // The cards count and value their items from the account's items, so those are pulled too (a fresh browser held none: every card read 0 items, $0).
+        await Promise.allSettled([refreshGalleriesFromSupabase(true), syncVaultItemsFromSupabaseChecked()]);
       } finally {
         if (active) {
           refresh();

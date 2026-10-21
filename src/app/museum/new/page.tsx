@@ -11,6 +11,7 @@ import {
   createGallery,
   GALLERY_THEME_PACK_OPTIONS,
   loadGalleries,
+  refreshGalleriesFromSupabase,
   saveGalleries,
   type Gallery,
   type GalleryThemePack,
@@ -30,7 +31,18 @@ export default function NewMuseumGalleryPage() {
 
   const tier = getTierSafe();
   const baseLimits = useMemo(() => getGalleryLimits(tier), [tier]);
-  const existingGalleries = useMemo(() => loadGalleries(), []);
+  // The count (and the exhibition limit) must come from the account's exhibitions, not only what this browser happens to hold.
+  const [existingGalleries, setExistingGalleries] = useState(() => loadGalleries());
+  const [galleriesReady, setGalleriesReady] = useState(false);
+  useEffect(() => {
+    let active = true;
+    void refreshGalleriesFromSupabase(true).catch(() => undefined).finally(() => {
+      if (!active) return;
+      setExistingGalleries(loadGalleries());
+      setGalleriesReady(true);
+    });
+    return () => { active = false; };
+  }, []);
   const forcePublic = mustBePublicGallery(tier);
 
   const [bonusGalleries, setBonusGalleries] = useState(0);
@@ -73,7 +85,7 @@ export default function NewMuseumGalleryPage() {
 
   async function handleCreate() {
     if (submitting || createStartedRef.current) return;
-    if (!canCreate) return;
+    if (!canCreate || !galleriesReady) return;
 
     const cleanTitle = safeTrim(title);
     if (!cleanTitle) return;
@@ -310,9 +322,9 @@ export default function NewMuseumGalleryPage() {
             <PillButton
               variant="active"
               onClick={handleCreate}
-              disabled={!canCreate || !safeTrim(title) || submitting}
+              disabled={!canCreate || !galleriesReady || !safeTrim(title) || submitting}
             >
-              {submitting ? "Creating..." : "Create Exhibition"}
+              {submitting ? "Creating..." : !galleriesReady ? "Checking your exhibitions…" : "Create Exhibition"}
             </PillButton>
 
             <PillButton href="/museum">

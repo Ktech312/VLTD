@@ -547,6 +547,8 @@ export default function AccountPage() {
                       <span className="vltd-keep-color" style={{ "--vltd-keep-color": "var(--ok-text, #4ade80)" } as React.CSSProperties}>
                         <span className="inline-flex items-center gap-1"><AppIcon name="checkmark" size={14} /> Synced ({localItemCount})</span>
                       </span>
+                    ) : localItemCount === 0 && cloudItemCount > 0 ? (
+                      <span className="text-[color:var(--muted2)]" data-testid="vault-not-downloaded">Your vault ({cloudItemCount} items) has not been downloaded to this device yet. Open the Vault to load it.</span>
                     ) : (
                       <span className="vltd-keep-color" style={{ "--vltd-keep-color": "#f87171" } as React.CSSProperties}>
                         Out of sync — Local {localItemCount}, Cloud {cloudItemCount}

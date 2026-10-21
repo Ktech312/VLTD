@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { CloudWait, useCloudRefresh } from "@/components/vault/CloudStatus";
 
 import { AppIcon } from "@/components/ui/AppIcon";
 import { loadItems } from "@/lib/vaultModel";
@@ -32,8 +33,11 @@ function itemValue(item: VaultItem) {
 export default function VaultPrintPage() {
   const [items, setItems] = useState<VaultItem[]>([]);
   const [ready, setReady] = useState(false);
+  const reloadRef = useRef<() => void>(() => undefined);
+  const cloud = useCloudRefresh(() => reloadRef.current());
 
   useEffect(() => {
+    const reload = () => {
     const all = activeItems(loadItems());
     // Sort by universe then title
     all.sort((a, b) => {
@@ -45,7 +49,15 @@ export default function VaultPrintPage() {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- one-time client-only load from localStorage on mount (hydration-safe: can't run during render); batches to a single re-render, not a cascade
     setItems(all);
     setReady(true);
+    };
+    reloadRef.current = reload;
+    reload();
+    window.addEventListener("vltd:vault-updated", reload);
+    return () => window.removeEventListener("vltd:vault-updated", reload);
   }, []);
+
+  // The report is only "0 items" once the account has answered.
+  if (ready && items.length === 0 && cloud.state !== "ok") return <CloudWait what="collection report" cloud={cloud} />;
 
   const totalValue = items.reduce((sum, i) => sum + itemValue(i), 0);
   const purchaseBasedCount = items.filter((i) => insuranceValue(i).purchaseBased).length;
