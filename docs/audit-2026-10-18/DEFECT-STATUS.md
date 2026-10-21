@@ -2,7 +2,7 @@
 
 The frozen audit evidence (`rows.jsonl` first-failure rows, `results.csv`, screenshots) is unchanged. This file is the status layer on top of it; `SUMMARY.md` and `root-causes.json` carry the same status tags. "Closed" means re-tested on production with synthetic data after the fix (evidence named). Anything not shown here is still open as written in `SUMMARY.md`.
 
-**Closed so far: 66 specific audit rows** (RC-01: 2, RC-02: 6, RC-03: 2, RC-09: 7, RC-19: 7, RC-06: 10, RC-07: 3, RC-17: 20, RC-18: 9). Open P1 root causes: RC-05 (untouched) and the six profile-validation rows of RC-07 (kept with RC-28). **Insurance is not fully closed** (section 2 and the open items RC-14 and RC-31).
+**Closed so far: 71 specific audit rows** (RC-01: 2, RC-02: 6, RC-03: 2, RC-09: 7, RC-19: 7, RC-06: 10, RC-07: 3, RC-17: 20, RC-18: 9, RC-05: 5). Open P1 root causes: RC-05 (untouched) and the six profile-validation rows of RC-07 (kept with RC-28). **Insurance is not fully closed** (section 2 and the open items RC-14 and RC-31).
 
 ## 1. Closed findings
 
@@ -41,6 +41,16 @@ Still open inside these: RC-07's six profile-validation rows (ACC-381, ACC-796, 
 | RC-18 sales ledger and profit figures break the value rule or disagree | ITM-354, ITM-353, ITM-357, ITM-364, ITM-333, ITM-430, ITM-666, ITM-043, ITM-527 (9 of 9) | `8eea0fc`, `b38f5f7` | rows RB9-188 to RB9-217; clean second browser RB9-204, RB9-205 |
 
 Final deployed commit `b38f5f7`. Two defects in the first fix were found by the production recheck and fixed (Add page showed no refusal message; ledger loader turned a blank cost into 0); first-run rows RB9-002 to RB9-005 and RB9-066, RB9-068, RB9-074 are kept and explained by rows RB9-218 to RB9-221. Not claimed: Quick Add has no before/after pair (checked after the fix only). A second pass drove Bulk `1e3` and the Vault card Sell button directly on production (RB10-011 to RB10-022). **New, not fixed:** the value box on a Vault card still uses an old lenient parser (RB10-024, found by code reading, no audit row).
+
+### Batch 5: Vault-card value box and RC-05 (closeout `repair-batch-5/CLOSEOUT.md`)
+| Item | Rows / defect | Commits | Evidence |
+|---|---|---|---|
+| Vault-card value box (RB10-024, no audit row) | letters, 1e3, 1,5 and negatives refused; explicit 0 saved; blank leaves the value | `37081c7` | RB11-001 to RB11-009 |
+| RC-05 alias and shelf-style edits do not persist | EXH-165, EXH-123, EXH-124, EXH-126, EXH-127 (closed) | `525438b` | RB12-017 to RB12-019 |
+| RC-05 Announce / Make public report success after a refused write | EXH-179, EXH-161: reporting fixed (message stays until next action; one accurate publish message); the notice itself cannot be recorded until migration file 1 | `525438b`, `5c79c31`, `3ff509e` | RB12-020, RB12-021 |
+| Discover shows the real collector under an alias (same family) | not an audit row | `d1b6293` | RB13-001, RB13-002 |
+
+Migration-blocked, held for review (nothing applied): EXH-281 (public row returns the real profile id; `sql/2` and `sql/3` plus a code change held until the view exists) and the refused follower-notice insert (`sql/1`; optional `sql/1b`; decision D2 in `MIGRATION-PROPOSAL-RC05.md`). Not fixed, recorded: the profile page lists no exhibitions at all (wrong column names); an alias gives no anonymity against item/content matching; the same-parser callers outside the card (text import copy, AI-draft review, auction bid, watchlist target).
 
 ## 2. Partly closed: still open inside RC-19
 | Row | Why still open |

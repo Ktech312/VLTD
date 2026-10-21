@@ -73,7 +73,8 @@
    "EXH-126",
    "EXH-127"
   ],
-  "status": "OPEN"
+  "status": "PARTLY CLOSED",
+  "statusNote": "batch 5: alias and shelf-style autosave (EXH-165, 123, 124, 126, 127) closed on production; Announce and Make public now report a refused write honestly (EXH-179, EXH-161) but the notices cannot be recorded until migration file 1 is applied; EXH-281 (profile id on the public row) open, migration-blocked; Discover alias display fixed. SQL held for review in repair-batch-5/sql, nothing applied"
  },
  {
   "id": "RC-06",

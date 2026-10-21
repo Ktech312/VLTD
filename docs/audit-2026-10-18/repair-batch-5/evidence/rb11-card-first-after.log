@@ -1,0 +1,11 @@
+PASS       RB11-001 | /vault (Gallery card) | owner, Personal, desktop 1440 | Card value 'abc' (letters) | db current_value=120; visible message='Value: use numbers only (no letters or exponents like 1e3).'
+PASS       RB11-002 | /vault (Gallery card) | owner, Personal, desktop 1440 | Card value '1e3' (exponent) | db current_value=120; visible message='Value: use numbers only (no letters or exponents like 1e3).'
+PASS       RB11-003 | /vault (Gallery card) | owner, Personal, desktop 1440 | Card value '-40' (negative) | db current_value=120; visible message='Value can't be negative. Leave it blank if you don't know it, or enter 0 if it's nothing.'
+PASS       RB11-004 | /vault (Gallery card) | owner, Personal, desktop 1440 | Card value '1,5' (comma as decimal) | db current_value=120; visible message='Value: use a period for cents and commas only for thousands, like 1,250.50 (1,5 is not supported).'
+PASS       RB11-005 | /vault (Gallery card) | owner, Personal, desktop 1440 | Card value left blank | db current_value=120
+PASS       RB11-006 | /vault (Gallery card) | owner, Personal, desktop 1440 | Card value typed 0 on an item with no value yet | db current_value=0
+PASS       RB11-007 | /vault (Gallery card) | owner, Personal, desktop 1440 | Card value '$250.50' | db current_value=250.5
+PASS       RB11-008 | /vault (Gallery card) | owner, Personal, desktop 1440 | Card after reload | card text: NEW QA RB11 card mvhe73sd a Pop Culture · Comics $251 Sell
+PASS       RB11-009 | /vault (Gallery card) | owner, Personal, desktop 1440 | Clean second browser | first: NEW QA RB11 card mvhe73sd a Pop Culture · Comics $251 Sell | second: NEW QA RB11 card mvhe73sd b Pop Culture · Comics $0 Sell
+
+9 ok, 0 not ok of 9

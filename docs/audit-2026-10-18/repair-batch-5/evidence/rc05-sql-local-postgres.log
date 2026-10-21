@@ -1,0 +1,32 @@
+﻿--- before any file
+PASS BEFORE: anon reads the alias exhibition and gets the real profile_id (the defect) 
+PASS BEFORE: a member's insert of a follower notice is refused by row-level security (42501), as on production 
+PASS BEFORE: using the auth uid as profile id fails on the foreign key (23503): the old rule is the one in force, as on production 
+--- after file 1
+PASS F1: the profile's member can record an announcement 
+PASS F1: the profile's member can record a published notice 
+PASS F1: someone who is not a member of that profile is refused 
+PASS F1: a signed-out visitor is refused 
+PASS F1: events are still publicly readable (nothing else changed) 
+PASS F1: safe to run twice 
+--- after file 2 (view), before file 3
+PASS F2: the view lists exactly the public + active exhibitions (no locked / invite / stored) 
+PASS F2: in the view the alias exhibition's profile_id is NULL 
+PASS F2: in the view a non-alias exhibition keeps its profile_id (discovery and profile pages keep working) 
+PASS F2: a profile page query (by profile_id) on the view returns only that profile's non-alias public exhibitions 
+PASS F2: a signed-in non-member also gets NULL for the alias exhibition 
+PASS F2: the table itself is unchanged until file 3 (the leak remains open: expected) 
+PASS F2: the view has every column of the table (no consumer loses a field) 
+--- after file 3
+PASS F3: anon reading the table no longer gets alias exhibitions at all 
+PASS F3: a signed-in non-member gets no alias row from the table either 
+PASS F3: the alias exhibition is still publicly reachable through the view, profile_id hidden 
+PASS F3: the profile's own member still sees all of their exhibitions (including the locked alias one) with profile_id 
+PASS F3: a public exhibition without an alias is still readable from the table (existing consumers unchanged) 
+PASS F3: running it a second time still finds exactly one public rule and succeeds 
+PASS F3 guard: with two public rules it stops with a message and changes nothing 
+--- after optional file 1b
+PASS F1b: anon no longer sees events of the alias exhibition, still sees the others 
+PASS F1b: the profile's own member can still read the alias exhibition's events 
+
+25 passed, 0 failed

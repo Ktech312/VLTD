@@ -1,0 +1,69 @@
+{
+ "label": "first",
+ "phase": "after",
+ "cases": [
+  {
+   "control": "Card value 'abc' (letters)",
+   "expected": "refused with a visible message; the saved value stays $120",
+   "ok": true,
+   "actual": "db current_value=120; visible message='Value: use numbers only (no letters or exponents like 1e3).'",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb11-card-first-after-1.jpg"
+  },
+  {
+   "control": "Card value '1e3' (exponent)",
+   "expected": "refused with a visible message; the saved value stays $120",
+   "ok": true,
+   "actual": "db current_value=120; visible message='Value: use numbers only (no letters or exponents like 1e3).'",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb11-card-first-after-2.jpg"
+  },
+  {
+   "control": "Card value '-40' (negative)",
+   "expected": "refused with a visible message; the saved value stays $120",
+   "ok": true,
+   "actual": "db current_value=120; visible message='Value can't be negative. Leave it blank if you don't know it, or enter 0 if it's nothing.'",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb11-card-first-after-3.jpg"
+  },
+  {
+   "control": "Card value '1,5' (comma as decimal)",
+   "expected": "refused with a visible message; the saved value stays $120",
+   "ok": true,
+   "actual": "db current_value=120; visible message='Value: use a period for cents and commas only for thousands, like 1,250.50 (1,5 is not supported).'",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb11-card-first-after-4.jpg"
+  },
+  {
+   "control": "Card value left blank",
+   "expected": "no change (blank is not turned into 0)",
+   "ok": true,
+   "actual": "db current_value=120",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb11-card-first-after-5.jpg"
+  },
+  {
+   "control": "Card value typed 0 on an item with no value yet",
+   "expected": "saved as an explicit $0 value (known), not ignored",
+   "ok": true,
+   "actual": "db current_value=0",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb11-card-first-after-6.jpg"
+  },
+  {
+   "control": "Card value '$250.50'",
+   "expected": "saved as 250.5",
+   "ok": true,
+   "actual": "db current_value=250.5",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb11-card-first-after-7.jpg"
+  },
+  {
+   "control": "Card after reload",
+   "expected": "the card shows the saved $250.50 (rounded display)",
+   "ok": true,
+   "actual": "card text: NEW QA RB11 card mvhe73sd a Pop Culture · Comics $251 Sell",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb11-card-first-after-8.jpg"
+  },
+  {
+   "control": "Clean second browser",
+   "expected": "shows $250.50 on the first card and $0 on the second",
+   "ok": true,
+   "actual": "first: NEW QA RB11 card mvhe73sd a Pop Culture · Comics $251 Sell | second: NEW QA RB11 card mvhe73sd b Pop Culture · Comics $0 Sell",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb11-card-first-after-9.jpg"
+  }
+ ]
+}

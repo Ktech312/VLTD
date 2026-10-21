@@ -1,0 +1,11 @@
+FAILS   Card value 'abc' (letters) | db current_value=0; visible message='This page did not finish loading. Your items are safe: nothing here has been changed or lost. Reload the page. If it keeps happening, tell us what the line below says.Reload this page
+FAILS   Card value '1e3' (exponent) | db current_value=13; visible message='This page did not finish loading. Your items are safe: nothing here has been changed or lost. Reload the page. If it keeps happening, tell us what the line below says.Reload this pag
+FAILS   Card value '-40' (negative) | db current_value=-40; visible message='This page did not finish loading. Your items are safe: nothing here has been changed or lost. Reload the page. If it keeps happening, tell us what the line below says.Reload this pa
+FAILS   Card value '1,5' (comma as decimal) | db current_value=15; visible message='This page did not finish loading. Your items are safe: nothing here has been changed or lost. Reload the page. If it keeps happening, tell us what the line below says.Reload this pag
+FAILS   Card value left blank | db current_value=15
+FAILS   Card value typed 0 on an item with no value yet | db current_value=null
+OK-NOW  Card value '$250.50' | db current_value=250.5
+OK-NOW  Card after reload | card text: NEW QA RB11 card mvhe73sd a Pop Culture · Comics $251 Sell
+FAILS   Clean second browser | first: NEW QA RB11 card mvhe73sd a Pop Culture · Comics $251 Sell | second: NEW QA RB11 card mvhe73sd b Pop Culture · Comics $50 Sell
+
+2 ok, 7 not ok of 9

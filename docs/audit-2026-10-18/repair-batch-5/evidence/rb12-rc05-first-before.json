@@ -1,0 +1,104 @@
+{
+ "label": "first",
+ "phase": "before",
+ "cases": [
+  {
+   "control": "Owner's own insert into exhibition_events (follower notice) for their profile",
+   "expected": "accepted for the profile's own member",
+   "ok": false,
+   "actual": "result={\"code\":\"42501\",\"message\":\"new row violates row-level security policy for table \\\"exhibition_events\\\"\"}; member row in profile_members=1; insert with auth uid as profile id={\"code\":\"23503\",\"message\":\"insert or update on table \\\"exhibition_events\\\" violates foreign key constraint \\\"exhibition_events_profile_id_fkey\\\"\"}",
+   "screenshot": ""
+  },
+  {
+   "control": "Public read of an alias exhibition row (anonymous visitor)",
+   "expected": "does not return the real profile id",
+   "ok": false,
+   "actual": "profile_id returned=true; columns via select=*: [\"id\",\"profile_id\",\"title\",\"description\",\"visibility\",\"state\",\"cover_image\",\"layout\",\"exhibition_layout\",\"public_token\",\"analytics_views\",\"analytics_last_viewed_at\",\"created_at\",\"updated_at\",\"alias_enabled\",\"alias_name\",\"alias_avatar\",\"item_notes\",\"analytics_unique_view_keys\"]; public_profiles lookup: {\"error\":\"column public_profiles.id does not exist\"}",
+   "screenshot": ""
+  },
+  {
+   "control": "Use an alias + Alias name (no Save pressed)",
+   "expected": "saved by itself: alias_enabled true and alias_name set",
+   "ok": false,
+   "actual": "db alias_enabled=false; alias_name=null",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb12-first-before-1.jpg"
+  },
+  {
+   "control": "Shelf style button (no Save pressed)",
+   "expected": "the style shown on the button is what the account holds a few seconds later",
+   "ok": false,
+   "actual": "button 'Shelf: None'; db layout.shelfOverlayStyle undefined -> undefined",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb12-first-before-2.jpg"
+  },
+  {
+   "control": "Clean second browser: alias and shelf style",
+   "expected": "same alias and shelf style as the first browser",
+   "ok": false,
+   "actual": "alias checked=false; alias name=''; shelf 'Shelf: None' (first browser 'Shelf: None')",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb12-first-before-3.jpg"
+  },
+  {
+   "control": "Announce",
+   "expected": "either an announcement row exists, or the page says plainly that it was not announced; never '✓ Announced' without a row",
+   "ok": false,
+   "actual": "button 'Announce'; announcement rows 0 -> 0; page says not announced=false",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb12-first-before-4.jpg"
+  },
+  {
+   "control": "Make public",
+   "expected": "the exhibition is public; if the follower notice row is missing the page says followers were not notified, otherwise a row exists",
+   "ok": false,
+   "actual": "db visibility=LOCKED; published-notice rows 0 -> 0; page: ''",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb12-first-before-5.jpg"
+  }
+ ],
+ "probes": {
+  "followersOfFixtureProfile": 0,
+  "ownerIsMemberRow": 1,
+  "ownerInsertForOwnProfile": {
+   "code": "42501",
+   "message": "new row violates row-level security policy for table \"exhibition_events\""
+  },
+  "ownerInsertWithAuthUidAsProfile": {
+   "code": "23503",
+   "message": "insert or update on table \"exhibition_events\" violates foreign key constraint \"exhibition_events_profile_id_fkey\""
+  },
+  "anonReadsAliasExhibition": {
+   "returnedProfileId": true,
+   "row": [
+    "id",
+    "profile_id",
+    "alias_enabled",
+    "alias_name",
+    "visibility"
+   ]
+  },
+  "anonSelectStarColumns": [
+   "id",
+   "profile_id",
+   "title",
+   "description",
+   "visibility",
+   "state",
+   "cover_image",
+   "layout",
+   "exhibition_layout",
+   "public_token",
+   "analytics_views",
+   "analytics_last_viewed_at",
+   "created_at",
+   "updated_at",
+   "alias_enabled",
+   "alias_name",
+   "alias_avatar",
+   "item_notes",
+   "analytics_unique_view_keys"
+  ],
+  "publicProfileForThatId": {
+   "error": "column public_profiles.id does not exist"
+  },
+  "anonRelation_public_galleries": "PGRST205 Could not find the table 'public.public_galleries' in the sc",
+  "anonRelation_public_exhibitions": "PGRST205 Could not find the table 'public.public_exhibitions' in the ",
+  "anonRelation_public_gallery_view": "PGRST205 Could not find the table 'public.public_gallery_view' in the"
+ }
+}

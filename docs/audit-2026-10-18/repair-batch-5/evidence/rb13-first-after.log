@@ -1,0 +1,5 @@
+PASS       RB13-001 | /discover | signed-out visitor, desktop 1440 | Discover: the curator line of an exhibition that uses an alias | alias exhibition card: TCG & NON SPORT CARD · 2 OF 5 QA RB13 alias mvhe73sd by QA Alias Curator · 2 items View QA RB13 alias mvhe73sd →
+PASS       RB13-002 | /discover | signed-out visitor, desktop 1440 | Discover: an exhibition WITHOUT an alias still shows the real collector (nothing else changed) | plain exhibition card: TCG & NON SPORT CARD · 1 OF 5 QA RB13 plain mvhe73sd by QA Real Collector Name · 2 items View QA RB13 plain mvhe73sd 
+FAIL       RB13-003 | /v/[profileId] | signed-out visitor, desktop 1440 | Real collector's public profile page: the exhibition list | page loaded for the real name=true; plain listed=false; alias exhibition listed=false
+
+2 ok, 1 not ok of 3

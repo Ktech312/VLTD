@@ -1,0 +1,84 @@
+Batch 5 exact local screenshot paths (the shots folder is gitignored; files stay on this PC)
+
+## RB11 card value (after)  (rb11-card-first-after.json)
+  ok   Card value 'abc' (letters)
+       C:\Users\EK\VLTD\.claude\worktrees\quizzical-hamilton-a45b28\docs\audit-2026-10-18\shots\rb11-card-first-after-1.jpg
+  ok   Card value '1e3' (exponent)
+       C:\Users\EK\VLTD\.claude\worktrees\quizzical-hamilton-a45b28\docs\audit-2026-10-18\shots\rb11-card-first-after-2.jpg
+  ok   Card value '-40' (negative)
+       C:\Users\EK\VLTD\.claude\worktrees\quizzical-hamilton-a45b28\docs\audit-2026-10-18\shots\rb11-card-first-after-3.jpg
+  ok   Card value '1,5' (comma as decimal)
+       C:\Users\EK\VLTD\.claude\worktrees\quizzical-hamilton-a45b28\docs\audit-2026-10-18\shots\rb11-card-first-after-4.jpg
+  ok   Card value left blank
+       C:\Users\EK\VLTD\.claude\worktrees\quizzical-hamilton-a45b28\docs\audit-2026-10-18\shots\rb11-card-first-after-5.jpg
+  ok   Card value typed 0 on an item with no value yet
+       C:\Users\EK\VLTD\.claude\worktrees\quizzical-hamilton-a45b28\docs\audit-2026-10-18\shots\rb11-card-first-after-6.jpg
+  ok   Card value '$250.50'
+       C:\Users\EK\VLTD\.claude\worktrees\quizzical-hamilton-a45b28\docs\audit-2026-10-18\shots\rb11-card-first-after-7.jpg
+  ok   Card after reload
+       C:\Users\EK\VLTD\.claude\worktrees\quizzical-hamilton-a45b28\docs\audit-2026-10-18\shots\rb11-card-first-after-8.jpg
+  ok   Clean second browser
+       C:\Users\EK\VLTD\.claude\worktrees\quizzical-hamilton-a45b28\docs\audit-2026-10-18\shots\rb11-card-first-after-9.jpg
+## RB12 builder (final after)  (rb12-rc05-third-after.json)
+  FAIL Owner's own insert into exhibition_events (follower notice) for their profile
+       (no screenshot: database check)
+  FAIL Public read of an alias exhibition row (anonymous visitor)
+       (no screenshot: database check)
+  ok   Use an alias + Alias name (no Save pressed)
+       C:\Users\EK\VLTD\.claude\worktrees\quizzical-hamilton-a45b28\docs\audit-2026-10-18\shots\rb12-third-after-1.jpg
+  ok   Shelf style button (no Save pressed)
+       C:\Users\EK\VLTD\.claude\worktrees\quizzical-hamilton-a45b28\docs\audit-2026-10-18\shots\rb12-third-after-2.jpg
+  ok   Clean second browser: alias and shelf style
+       C:\Users\EK\VLTD\.claude\worktrees\quizzical-hamilton-a45b28\docs\audit-2026-10-18\shots\rb12-third-after-3.jpg
+  ok   Announce
+       C:\Users\EK\VLTD\.claude\worktrees\quizzical-hamilton-a45b28\docs\audit-2026-10-18\shots\rb12-third-after-4.jpg
+  ok   Make public
+       C:\Users\EK\VLTD\.claude\worktrees\quizzical-hamilton-a45b28\docs\audit-2026-10-18\shots\rb12-third-after-5.jpg
+## RB13 Discover alias (after)  (rb13-alias-first-after.json)
+  ok   Discover: the curator line of an exhibition that uses an alias
+       C:\Users\EK\VLTD\.claude\worktrees\quizzical-hamilton-a45b28\docs\audit-2026-10-18\shots\rb13-first-after-1.jpg
+  ok   Discover: an exhibition WITHOUT an alias still shows the real collector (nothi
+       C:\Users\EK\VLTD\.claude\worktrees\quizzical-hamilton-a45b28\docs\audit-2026-10-18\shots\rb13-first-after-2.jpg
+  FAIL Real collector's public profile page: the exhibition list
+       C:\Users\EK\VLTD\.claude\worktrees\quizzical-hamilton-a45b28\docs\audit-2026-10-18\shots\rb13-first-after-3.jpg
+## RB11 card value (before)  (rb11-card-first-before.json)
+  FAIL Card value 'abc' (letters)
+       C:\Users\EK\VLTD\.claude\worktrees\quizzical-hamilton-a45b28\docs\audit-2026-10-18\shots\rb11-card-first-before-1.jpg
+  FAIL Card value '1e3' (exponent)
+       C:\Users\EK\VLTD\.claude\worktrees\quizzical-hamilton-a45b28\docs\audit-2026-10-18\shots\rb11-card-first-before-2.jpg
+  FAIL Card value '-40' (negative)
+       C:\Users\EK\VLTD\.claude\worktrees\quizzical-hamilton-a45b28\docs\audit-2026-10-18\shots\rb11-card-first-before-3.jpg
+  FAIL Card value '1,5' (comma as decimal)
+       C:\Users\EK\VLTD\.claude\worktrees\quizzical-hamilton-a45b28\docs\audit-2026-10-18\shots\rb11-card-first-before-4.jpg
+  FAIL Card value left blank
+       C:\Users\EK\VLTD\.claude\worktrees\quizzical-hamilton-a45b28\docs\audit-2026-10-18\shots\rb11-card-first-before-5.jpg
+  FAIL Card value typed 0 on an item with no value yet
+       C:\Users\EK\VLTD\.claude\worktrees\quizzical-hamilton-a45b28\docs\audit-2026-10-18\shots\rb11-card-first-before-6.jpg
+  ok   Card value '$250.50'
+       C:\Users\EK\VLTD\.claude\worktrees\quizzical-hamilton-a45b28\docs\audit-2026-10-18\shots\rb11-card-first-before-7.jpg
+  ok   Card after reload
+       C:\Users\EK\VLTD\.claude\worktrees\quizzical-hamilton-a45b28\docs\audit-2026-10-18\shots\rb11-card-first-before-8.jpg
+  FAIL Clean second browser
+       C:\Users\EK\VLTD\.claude\worktrees\quizzical-hamilton-a45b28\docs\audit-2026-10-18\shots\rb11-card-first-before-9.jpg
+## RB12 builder (final before)  (rb12-rc05-fourth-before.json)
+  FAIL Owner's own insert into exhibition_events (follower notice) for their profile
+       (no screenshot: database check)
+  FAIL Public read of an alias exhibition row (anonymous visitor)
+       (no screenshot: database check)
+  FAIL Use an alias + Alias name (no Save pressed)
+       C:\Users\EK\VLTD\.claude\worktrees\quizzical-hamilton-a45b28\docs\audit-2026-10-18\shots\rb12-fourth-before-1.jpg
+  FAIL Shelf style button (no Save pressed)
+       C:\Users\EK\VLTD\.claude\worktrees\quizzical-hamilton-a45b28\docs\audit-2026-10-18\shots\rb12-fourth-before-2.jpg
+  FAIL Clean second browser: alias and shelf style
+       C:\Users\EK\VLTD\.claude\worktrees\quizzical-hamilton-a45b28\docs\audit-2026-10-18\shots\rb12-fourth-before-3.jpg
+  FAIL Announce
+       C:\Users\EK\VLTD\.claude\worktrees\quizzical-hamilton-a45b28\docs\audit-2026-10-18\shots\rb12-fourth-before-4.jpg
+  FAIL Make public
+       C:\Users\EK\VLTD\.claude\worktrees\quizzical-hamilton-a45b28\docs\audit-2026-10-18\shots\rb12-fourth-before-5.jpg
+## RB13 Discover alias (before)  (rb13-alias-second-before.json)
+  FAIL Discover: the curator line of an exhibition that uses an alias
+       C:\Users\EK\VLTD\.claude\worktrees\quizzical-hamilton-a45b28\docs\audit-2026-10-18\shots\rb13-second-before-1.jpg
+  ok   Discover: an exhibition WITHOUT an alias still shows the real collector (nothi
+       C:\Users\EK\VLTD\.claude\worktrees\quizzical-hamilton-a45b28\docs\audit-2026-10-18\shots\rb13-second-before-2.jpg
+  FAIL Real collector's public profile page: the exhibition list
+       C:\Users\EK\VLTD\.claude\worktrees\quizzical-hamilton-a45b28\docs\audit-2026-10-18\shots\rb13-second-before-3.jpg

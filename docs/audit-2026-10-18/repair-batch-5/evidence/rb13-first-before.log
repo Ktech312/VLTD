@@ -1,0 +1,5 @@
+FAILS   Discover: the curator line of an exhibition that uses an alias | alias exhibition card: QA RB13 alias mvhe73sd by QA Real Collector Name 0 items Public Value not shown
+OK-NOW  Discover: an exhibition WITHOUT an alias still shows the real collector (nothing else changed) | plain exhibition card: QA RB13 plain mvhe73sd by QA Real Collector Name 0 items Public Value not shown
+FAILS   Real collector's public profile page: the exhibition list | page loaded for the real name=true; plain listed=false; alias exhibition listed=false
+
+1 ok, 2 not ok of 3

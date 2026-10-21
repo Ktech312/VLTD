@@ -1,0 +1,8 @@
+{
+ "query": "exact columns of fetchPublicGalleriesForProfile",
+ "error": {
+  "code": "42703",
+  "message": "column galleries.analytics does not exist"
+ },
+ "rows": 0
+}

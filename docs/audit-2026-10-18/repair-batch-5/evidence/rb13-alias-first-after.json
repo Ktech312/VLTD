@@ -1,0 +1,27 @@
+{
+ "label": "first",
+ "phase": "after",
+ "cases": [
+  {
+   "control": "Discover: the curator line of an exhibition that uses an alias",
+   "expected": "shows the alias \"QA Alias Curator\", never the real collector \"QA Real Collector Name\"",
+   "ok": true,
+   "actual": "alias exhibition card: TCG & NON SPORT CARD · 2 OF 5 QA RB13 alias mvhe73sd by QA Alias Curator · 2 items View QA RB13 alias mvhe73sd →",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb13-first-after-1.jpg"
+  },
+  {
+   "control": "Discover: an exhibition WITHOUT an alias still shows the real collector (nothing else changed)",
+   "expected": "shows \"QA Real Collector Name\"",
+   "ok": true,
+   "actual": "plain exhibition card: TCG & NON SPORT CARD · 1 OF 5 QA RB13 plain mvhe73sd by QA Real Collector Name · 2 items View QA RB13 plain mvhe73sd →",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb13-first-after-2.jpg"
+  },
+  {
+   "control": "Real collector's public profile page: the exhibition list",
+   "expected": "lists the exhibition without an alias and does NOT list the one that uses an alias (that would link it to the real name)",
+   "ok": false,
+   "actual": "page loaded for the real name=true; plain listed=false; alias exhibition listed=false",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb13-first-after-3.jpg"
+  }
+ ]
+}

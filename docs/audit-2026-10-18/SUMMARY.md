@@ -24,7 +24,7 @@ Behaviour-asserted rows (a test checked the outcome): 3754 = 509 FAIL, 2770 PASS
 
 ## Repair status (updated 2026-10-19)
 
-Full table with commits and evidence: `DEFECT-STATUS.md`. Closed and re-tested on production: **RC-01, RC-02, RC-03, RC-06, RC-09, RC-17, RC-18**, **7 of 11 rows of RC-19** and **3 of 9 rows of RC-07** (66 specific rows in total; batch 3 in `repair-batch-3/CLOSEOUT.md`, batch 4 in `repair-batch-4/CLOSEOUT.md`). Deferred migrations and unresolved incidents are listed separately in `DEFECT-STATUS.md` (sections 3 and 4); they are not counted as closed. Tags below: [CLOSED], [PARTLY CLOSED]; untagged means still open.
+Full table with commits and evidence: `DEFECT-STATUS.md`. Closed and re-tested on production: **RC-01, RC-02, RC-03, RC-06, RC-09, RC-17, RC-18**, **7 of 11 rows of RC-19** and **3 of 9 rows of RC-07** (66 specific rows in total; batch 3 in `repair-batch-3/CLOSEOUT.md`, batch 4 in `repair-batch-4/CLOSEOUT.md`), plus **5 of 8 rows of RC-05** (EXH-165, 123, 124, 126, 127: batch 5, `repair-batch-5/CLOSEOUT.md`; the other three are migration-blocked or reporting-only). Deferred migrations and unresolved incidents are listed separately in `DEFECT-STATUS.md` (sections 3 and 4); they are not counted as closed. Tags below: [CLOSED], [PARTLY CLOSED]; untagged means still open.
 
 ## Prioritized defect list (root causes, genuine failures only)
 
@@ -39,7 +39,7 @@ Full table with commits and evidence: `DEFECT-STATUS.md`. Closed and re-tested o
 - **[CLOSED] RC-03 Cancelling an auction leaves a previously private item public**  
   Starting an auction makes the item public; Cancel Auction does not undo it (is_public stays true).  
   Rows (2): ITM-253, ITM-634
-- **RC-05 A public exhibition with an alias still hands the real profile id to anyone reading its row; alias/shelf-style edits do not autosave; Announce is refused by the database**  
+- **[PARTLY CLOSED] RC-05 A public exhibition with an alias still hands the real profile id to anyone reading its row; alias/shelf-style edits do not autosave; Announce is refused by the database**  
   Direct read of the public row exposes profile_id despite an alias; the owner's insert into exhibition_events is refused by row-level security while the button reads 'Announced' (an unapplied migration is possible).  
   Rows (8): EXH-281, EXH-165, EXH-179, EXH-161, EXH-123, EXH-124 (+2 more)
 - **[CLOSED] RC-06 Silent data loss in Add / Import / Halls**  

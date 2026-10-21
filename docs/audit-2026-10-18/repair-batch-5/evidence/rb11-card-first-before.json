@@ -1,0 +1,69 @@
+{
+ "label": "first",
+ "phase": "before",
+ "cases": [
+  {
+   "control": "Card value 'abc' (letters)",
+   "expected": "refused with a visible message; the saved value stays $120",
+   "ok": false,
+   "actual": "db current_value=0; visible message='This page did not finish loading. Your items are safe: nothing here has been changed or lost. Reload the page. If it keeps happening, tell us what the line below says.Reload this page'",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb11-card-first-before-1.jpg"
+  },
+  {
+   "control": "Card value '1e3' (exponent)",
+   "expected": "refused with a visible message; the saved value stays $120",
+   "ok": false,
+   "actual": "db current_value=13; visible message='This page did not finish loading. Your items are safe: nothing here has been changed or lost. Reload the page. If it keeps happening, tell us what the line below says.Reload this page'",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb11-card-first-before-2.jpg"
+  },
+  {
+   "control": "Card value '-40' (negative)",
+   "expected": "refused with a visible message; the saved value stays $120",
+   "ok": false,
+   "actual": "db current_value=-40; visible message='This page did not finish loading. Your items are safe: nothing here has been changed or lost. Reload the page. If it keeps happening, tell us what the line below says.Reload this page'",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb11-card-first-before-3.jpg"
+  },
+  {
+   "control": "Card value '1,5' (comma as decimal)",
+   "expected": "refused with a visible message; the saved value stays $120",
+   "ok": false,
+   "actual": "db current_value=15; visible message='This page did not finish loading. Your items are safe: nothing here has been changed or lost. Reload the page. If it keeps happening, tell us what the line below says.Reload this page'",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb11-card-first-before-4.jpg"
+  },
+  {
+   "control": "Card value left blank",
+   "expected": "no change (blank is not turned into 0)",
+   "ok": false,
+   "actual": "db current_value=15",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb11-card-first-before-5.jpg"
+  },
+  {
+   "control": "Card value typed 0 on an item with no value yet",
+   "expected": "saved as an explicit $0 value (known), not ignored",
+   "ok": false,
+   "actual": "db current_value=null",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb11-card-first-before-6.jpg"
+  },
+  {
+   "control": "Card value '$250.50'",
+   "expected": "saved as 250.5",
+   "ok": true,
+   "actual": "db current_value=250.5",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb11-card-first-before-7.jpg"
+  },
+  {
+   "control": "Card after reload",
+   "expected": "the card shows the saved $250.50 (rounded display)",
+   "ok": true,
+   "actual": "card text: NEW QA RB11 card mvhe73sd a Pop Culture · Comics $251 Sell",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb11-card-first-before-8.jpg"
+  },
+  {
+   "control": "Clean second browser",
+   "expected": "shows $250.50 on the first card and $0 on the second",
+   "ok": false,
+   "actual": "first: NEW QA RB11 card mvhe73sd a Pop Culture · Comics $251 Sell | second: NEW QA RB11 card mvhe73sd b Pop Culture · Comics $50 Sell",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb11-card-first-before-9.jpg"
+  }
+ ]
+}
