@@ -26,3 +26,6 @@ See `root-causes.json` for IDs; each batch below gets its own CLOSEOUT.
 
 ## Cleanup (2026-10-21)
 QA fixture `rb24` dropped by exact manifest ids; recount after 20 s: 3,477 items / 39 profiles / 47 exhibitions / 3 sales / 0 activity events / 0 QA-named profiles = baseline. Scratch credentials file removed. A new fixture is created when the SQL re-checks run.
+
+## Cleanup (2026-10-21, batch 15)
+QA fixture `rb48` dropped by exact manifest ids; recount: 3,477 items / 39 profiles / 47 exhibitions / 3 sales / 0 activity events / 0 QA-named profiles = baseline. The temporary goals, watch entry and Universes displayed setting used in the checks were restored or removed by the scripts. Scratch credentials file removed (`qa/env.cjs` is just a parse of `.env.local`; recreate it before creating a new fixture).
