@@ -24,6 +24,8 @@ Behaviour-asserted rows (a test checked the outcome): 3754 = 509 FAIL, 2770 PASS
 
 ## Repair status (updated 2026-10-20)
 
+**Batch 12 (2026-10-21, `repair-batch-12/CLOSEOUT.md`): RC-25 6 of 7 rows and RC-27 8 of 12 rows closed; the view counter needs SQL file 3, VLT-147 is a decision.**
+
 **Batch 11 (2026-10-21, `repair-batch-11/CLOSEOUT.md`): RC-23 13 of 15 rows closed; the other 2 (Market asking price) need SQL file 2.**
 
 **Batch 10 (2026-10-21, `repair-batch-10/CLOSEOUT.md`): RC-22 closed (9 of 9 rows).**
@@ -120,13 +122,13 @@ Full table with commits and evidence: `DEFECT-STATUS.md`. Closed and re-tested o
 - **RC-24 Insights/Vault links and drill-downs lead to the wrong or an empty place**  
   Breakdown and cost rows link to an empty 'Misc' page; 'View all movers', '+ Add note', 'Open Exhibitions' go to plain /vault; unknown universe/slug silently shows Misc; empty gallery pages say 'Your vault is empty'; the universe drill-down defaults to a 30-day window.  
   Rows (16): VLT-364, VLT-366, VLT-368, VLT-377, VLT-378, VLT-385 (+10 more)
-- **RC-25 Sort and Halls arithmetic wrong**  
+- **[PARTLY CLOSED] RC-25 Sort and Halls arithmetic wrong**  
   Gain sort mishandles value-with-no-cost and explicit $0; default Wall view says 'Newest' but is A to Z; Halls ignore tax/shipping/fees and offer sold items; 'Recent' goal sort is not newest-first.  
   Rows (7): VLT-143, VLT-144, VLT-147, VLT-252, VLT-287, VLT-278 (+1 more)
 - **RC-26 Buttons that do something other than their label**  
   Exhibition list Duplicate/Export PDF/'View public page' only open the editor; Watchlist '+ Add Watch' goes to Add Item; 'Add to Insurance' only opens a print dialog; 'The Flip' links go to Discover; sign-out-all has no confirmation; 'Unlock All' clears the form; Universes-displayed setting is ignored by most pages; 'Switch app theme? Yes' changes nothing; '/auth/confirmed' says the email is confirmed with no code.  
   Rows (24): EXH-028, EXH-029, EXH-027, DIS-166, DIS-176, DIS-170 (+18 more)
-- **RC-27 Counters and messages that cannot be believed**  
+- **[PARTLY CLOSED] RC-27 Counters and messages that cannot be believed**  
   Exhibition view counter never increments for visitors; Upcoming date range edits the banner without refetching; signed-out Want says it could not save to your account; messages show 'Collector' for every partner and silently cut at 4,000 chars; expired invite says 'Link not available'; Bid History lists one bid twice.  
   Rows (12): EXH-283, EXH-284, EXH-285, EXH-292, DIS-252, DIS-271 (+6 more)
 - **[CLOSED] RC-28 Create/profile forms give poor or wrong validation**  

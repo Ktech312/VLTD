@@ -1,0 +1,23 @@
+const path = require("path");
+const crypto = require("crypto");
+const SD = path.join(__dirname, "..", "..", "scripts");
+const A = require(path.join(SD, "audit-s-acc-lib.cjs"));
+const { admin, sleep, session } = A; const m = A.man(); const P = m.personalId;
+(async () => {
+  const g = (await admin.from("galleries").select("id").eq("profile_id", P).limit(1)).data[0];
+  const tok = `qarb37dbg${m.stamp}`;
+  await admin.from("gallery_invites").delete().eq("token", tok);
+  const gi = await admin.from("gallery_invites").insert([{ token: tok, gallery_id: g.id, label: "dbg", disabled: false, expires_at: new Date(Date.now() - 86400e3).toISOString(), permissions: { images: true } }]);
+  console.log("invite insert", JSON.stringify(gi.error));
+  const V = await session("visitor", { width: 1440, height: 900 });
+  await V.visit(`/museum/invite/${tok}`); await sleep(9000);
+  console.log("EXPIRED PAGE:", (await V.text()).replace(/\s+/g, " ").slice(0, 300));
+  await V.visit(`/museum/invite/qarb37nonexistent`); await sleep(9000);
+  console.log("UNKNOWN PAGE:", (await V.text()).replace(/\s+/g, " ").slice(0, 300));
+  await V.close();
+  await admin.from("gallery_invites").delete().eq("token", tok);
+  const K = await session("visitor", { width: 1440, height: 900 });
+  await K.visit("/kickstarter"); await sleep(5000);
+  console.log("KS inputs:", JSON.stringify(await K.evaluate("[...document.querySelectorAll('input')].map((i) => i.placeholder)")));
+  await K.close(); process.exit(0);
+})();

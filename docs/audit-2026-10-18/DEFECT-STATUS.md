@@ -106,3 +106,9 @@ Migration-blocked (stage-0 production output reviewed 2026-10-21: matches; stage
 | Root cause | Audit rows closed | Commits | Evidence |
 |---|---|---|---|
 | RC-23 (13 of 15) | DIS-144, 145, 146, 147, 149, 213, 085, 234, 235, 236, 238, 240, 241 | `0b9a57e` | RB35, RB36 (open: DIS-233 and DIS-242 need SQL file 2) |
+
+### Batch 12: sorts, Halls, counters and messages (closeout `repair-batch-12/CLOSEOUT.md`)
+| Root cause | Audit rows closed | Commits | Evidence |
+|---|---|---|---|
+| RC-25 (6 of 7) | VLT-143, 144, 252, 287, 278, GIN-013 | `1e70578` | RB37, RB31 (open: VLT-147 decision) |
+| RC-27 (8 of 12) | DIS-252, 271, 308, 314, 404; EXH-322, 334; ITM-482 | `1e70578` | RB37, RB38 (open: EXH-283/284/285/292 need SQL file 3) |

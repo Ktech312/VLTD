@@ -510,7 +510,8 @@
    "VLT-278",
    "GIN-013"
   ],
-  "status": "OPEN"
+  "status": "PARTLY CLOSED",
+  "statusNote": "batch 12: 6 of 7 rows verified on production (RB37, RB31). VLT-147 (Wall view \"Newest\" is A to Z by design) is a decision: flat newest-first list, or relabel the wall."
  },
  {
   "id": "RC-26",
@@ -566,7 +567,8 @@
    "ITM-482",
    "DIS-404"
   ],
-  "status": "OPEN"
+  "status": "PARTLY CLOSED",
+  "statusNote": "batch 12: 8 of 12 rows verified on production (RB37, RB38). EXH-283, 284, 285, 292 (visitor view counter) need the third SQL file (record_exhibition_view; tested locally 13 of 13; not applied). DIS-404: the failed-search message and cleared result line verified; the stale-line starting condition did not occur on the QA run."
  },
  {
   "id": "RC-28",

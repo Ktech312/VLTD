@@ -1,0 +1,12 @@
+{
+ "label": "second",
+ "cases": [
+  {
+   "control": "Auction: Bid History after placing one bid",
+   "expected": "one bid in the database, the header says 1 bid, and the bid is listed once",
+   "ok": true,
+   "actual": "database bids=1; headers seen: 1 bid; listed rows=1",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb38-second-1.jpg"
+  }
+ ]
+}
