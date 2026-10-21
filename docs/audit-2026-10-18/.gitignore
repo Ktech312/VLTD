@@ -1,2 +1,6 @@
 shots/
 counters-*.txt
+qa/
+scripts/qa_audit_*.json
+scripts/qa_audit_*.json.done
+scripts/add-tmp/
