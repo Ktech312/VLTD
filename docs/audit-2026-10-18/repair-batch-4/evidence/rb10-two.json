@@ -1,0 +1,75 @@
+{
+ "label": "two",
+ "cases": [
+  {
+   "control": "Vault list row for the synthetic item shows the Sell button",
+   "expected": "the Sell button is on the item's row (this is the app's Sell action; the item detail page has no Sell button, it has the For Sale toggle and Cost to Sell)",
+   "ok": true,
+   "actual": "Sell button found=true",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb10-two-1.jpg"
+  },
+  {
+   "control": "Sell with letters 'abc' as the sale price",
+   "expected": "a visible refusal; nothing is sold and nothing is written (database, this browser's sales list, the row); the platform question is never asked",
+   "ok": true,
+   "actual": "status=COLLECTION; sold_price=null; sold_platform=null; this browser's sales list has it=false; prompts asked=1; visible message='use numbers only'",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb10-two-2.jpg"
+  },
+  {
+   "control": "Sell with negative -50 as the sale price",
+   "expected": "a visible refusal; nothing is sold and nothing is written (database, this browser's sales list, the row); the platform question is never asked",
+   "ok": true,
+   "actual": "status=COLLECTION; sold_price=null; sold_platform=null; this browser's sales list has it=false; prompts asked=1; visible message='can't be negative'",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb10-two-3.jpg"
+  },
+  {
+   "control": "Sell with exponent '1e3' as the sale price",
+   "expected": "a visible refusal; nothing is sold and nothing is written (database, this browser's sales list, the row); the platform question is never asked",
+   "ok": true,
+   "actual": "status=COLLECTION; sold_price=null; sold_platform=null; this browser's sales list has it=false; prompts asked=1; visible message='use numbers only'",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb10-two-4.jpg"
+  },
+  {
+   "control": "Sell with comma '1,5' as the sale price",
+   "expected": "a visible refusal; nothing is sold and nothing is written (database, this browser's sales list, the row); the platform question is never asked",
+   "ok": true,
+   "actual": "status=COLLECTION; sold_price=null; sold_platform=null; this browser's sales list has it=false; prompts asked=1; visible message='use a period for cents and commas only for thousands, like 1,250'",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb10-two-5.jpg"
+  },
+  {
+   "control": "Sell with blank as the sale price",
+   "expected": "a visible refusal; nothing is sold and nothing is written (database, this browser's sales list, the row); the platform question is never asked",
+   "ok": true,
+   "actual": "status=COLLECTION; sold_price=null; sold_platform=null; this browser's sales list has it=false; prompts asked=1; visible message='Enter the sale price (0 if it sold for nothing)'",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb10-two-6.jpg"
+  },
+  {
+   "control": "Sell with cancelled price prompt as the sale price",
+   "expected": "nothing changes (cancel)",
+   "ok": true,
+   "actual": "status=COLLECTION; sold_price=null; sold_platform=null; this browser's sales list has it=false; prompts asked=1; visible message=''",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb10-two-7.jpg"
+  },
+  {
+   "control": "Sell with a valid price ($120 on eBay)",
+   "expected": "the item is SOLD in the account with sold_price 120, platform eBay and a sold date",
+   "ok": true,
+   "actual": "status=SOLD; sold_price=120; sold_platform=eBay; sold_at=1792542911684",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb10-two-8.jpg"
+  },
+  {
+   "control": "After reload: price, cost and profit on the item page, the Sold card and Sales History",
+   "expected": "sold price $120, cost $44 (40 + 4 tax), estimated fees shown, and the same profit (120 - 44 - fees) on all three pages",
+   "ok": true,
+   "actual": "item page {\"price\":\"$120\",\"cost\":\"$44\",\"fees\":\"$16\",\"profit\":\"+$60\"}; Sold card {\"text\":\"SOLD QA RB10 sell mvhdlwel Pop Culture · Comics $120 +$60 profit Oct 20, 26 · $16 fees Return\",\"price\":\"$120\",\"profit\":\"+$60\"}; Sales History {\"text\":\"QA RB10 sell mvhdlwel POP_CULTURE · Comics · Oct 20, 2026 +$60 Cost $44 Sold $120 Est. fees $16 Margin +136%\",\"price\":\"$120\",\"cost\":\"$44\",\"profit\":\"+$60\"}; expected profit about 60.00",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb10-two-9.jpg"
+  },
+  {
+   "control": "Clean second browser: price, cost and profit on the item page, the Sold card and Sales History",
+   "expected": "same figures as in the first browser",
+   "ok": true,
+   "actual": "item page {\"price\":\"$120\",\"cost\":\"$44\",\"fees\":\"$16\",\"profit\":\"+$60\"}; Sold card {\"text\":\"SOLD QA RB10 sell mvhdlwel Pop Culture · Comics $120 +$60 profit Oct 20, 26 · $16 fees Return\",\"price\":\"$120\",\"profit\":\"+$60\"}; Sales History {\"text\":\"QA RB10 sell mvhdlwel POP_CULTURE · Comics · Oct 20, 2026 +$60 Cost $44 Sold $120 Est. fees $16 Margin +136%\",\"price\":\"$120\",\"cost\":\"$44\",\"profit\":\"+$60\"}",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb10-two-10.jpg"
+  }
+ ]
+}

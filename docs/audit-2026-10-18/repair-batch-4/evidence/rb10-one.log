@@ -1,0 +1,14 @@
+FAIL       RB10-001 | /vault | owner, Personal, desktop 1440 | Vault list row for the synthetic item shows the Sell button | Sell button found=false
+FAIL       RB10-002 | /vault | owner, Personal, desktop 1440 | Sell with letters 'abc' as the sale price | status=COLLECTION; sold_price=null; sold_platform=null; this browser's sales list has it=false; prompts asked=0; visible message=''
+FAIL       RB10-003 | /vault | owner, Personal, desktop 1440 | Sell with negative -50 as the sale price | status=COLLECTION; sold_price=null; sold_platform=null; this browser's sales list has it=false; prompts asked=0; visible message=''
+FAIL       RB10-004 | /vault | owner, Personal, desktop 1440 | Sell with exponent '1e3' as the sale price | status=COLLECTION; sold_price=null; sold_platform=null; this browser's sales list has it=false; prompts asked=0; visible message=''
+FAIL       RB10-005 | /vault | owner, Personal, desktop 1440 | Sell with comma '1,5' as the sale price | status=COLLECTION; sold_price=null; sold_platform=null; this browser's sales list has it=false; prompts asked=0; visible message=''
+FAIL       RB10-006 | /vault | owner, Personal, desktop 1440 | Sell with blank as the sale price | status=COLLECTION; sold_price=null; sold_platform=null; this browser's sales list has it=false; prompts asked=0; visible message=''
+FAIL       RB10-007 | /vault | owner, Personal, desktop 1440 | Sell with cancelled price prompt as the sale price | status=COLLECTION; sold_price=null; sold_platform=null; this browser's sales list has it=false; prompts asked=0; visible message=''
+FAIL       RB10-008 | /vault | owner, Personal, desktop 1440 | Sell with a valid price ($120 on eBay) | status=COLLECTION; sold_price=null; sold_platform=null; sold_at=null
+FAIL       RB10-009 | /vault/item/[id]?sold=1, /vault/sold, /sales | owner, Personal, desktop 1440 | After reload: price, cost and profit on the item page, the Sold card and Sales History | item page {}; Sold card {"text":""}; Sales History {"text":""}; expected profit about 76.00
+FAIL       RB10-010 | /vault/item/[id]?sold=1, /vault/sold, /sales | owner, Personal, desktop 1440 | Clean second browser: price, cost and profit on the item page, the Sold card and Sales History | item page {}; Sold card {"text":""}; Sales History {"text":""}
+PASS       RB10-011 | /vault/bulk | owner, Personal, desktop 1440 | Bulk: '1e3' in the Current value field, Add all | field value typed=["1e3","0"]; moved to Vault=false; visible message='Current value (photo 1): use numbers only (no letters or exponents lik
+PASS       RB10-012 | /vault/bulk | owner, Personal, desktop 1440 | Bulk: corrected to 1000, Add all | moved=true; first current_value=1000; second current_value=0
+
+2 ok, 10 not ok of 12

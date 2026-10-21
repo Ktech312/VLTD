@@ -1,0 +1,21 @@
+Batch 4 gap closure: exact local screenshot paths (the shots folder is gitignored, so these stay on this PC)
+Folder: C:\Users\EK\VLTD\.claude\worktrees\quizzical-hamilton-a45b28\docs\audit-2026-10-18\shots\
+
+Sell button on the Vault Gallery card (rows RB10-013 to RB10-022, run "two"):
+  rb10-two-1.jpg   Sell button present on the item's card
+  rb10-two-2.jpg   Sell 'abc'  -> refused, nothing written
+  rb10-two-3.jpg   Sell -50    -> refused, nothing written
+  rb10-two-4.jpg   Sell 1e3    -> refused, nothing written
+  rb10-two-5.jpg   Sell 1,5    -> refused, nothing written
+  rb10-two-6.jpg   Sell blank  -> refused, nothing written
+  rb10-two-7.jpg   Sell, price prompt cancelled -> nothing changes
+  rb10-two-8.jpg   Sell $120 on eBay -> sold
+  rb10-two-9.jpg   after reload (last page shown: Sales History)
+  rb10-two-10.jpg  clean second browser (last page shown: Sales History)
+
+Bulk 1e3 (rows RB10-011 and RB10-012, run "one"):
+  rb10-one-11.jpg  Bulk with 1e3: visible refusal, still on the review grid
+  rb10-one-12.jpg  Bulk corrected to 1000: saved, moved to the Vault
+
+First Sell run (test mistake, Wall view has no Sell button; kept): rb10-one-1.jpg to rb10-one-10.jpg
+Data behind each shot: repair-batch-4\evidence\rb10-one.json, rb10-two.json (and the .log files)

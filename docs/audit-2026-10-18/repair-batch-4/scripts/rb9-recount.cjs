@@ -12,6 +12,7 @@ const cnt = async (t, f) => { let q = admin.from(t).select("*", { count: "exact"
     exhibitions: await cnt("galleries"),
     sales: await cnt("sales"),
     items_titled_QA_RB9: await cnt("vault_items", (q) => q.like("title", "QA RB9%")),
+    items_titled_QA_RB10: await cnt("vault_items", (q) => q.like("title", "QA RB10%")),
     items_with_qa_vz_id: await cnt("vault_items", (q) => q.like("id", "qa_vz_%")),
     exhibitions_titled_QA: await cnt("galleries", (q) => q.like("title", "QA %")),
     qa_sales_ledger_rows: await cnt("sales", (q) => q.like("id", "qa_sale_%")),

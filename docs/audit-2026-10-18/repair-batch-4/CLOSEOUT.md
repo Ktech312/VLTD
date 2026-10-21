@@ -59,12 +59,28 @@ Chrome synthetic camera, 3 captures -> review -> Verify sheet, no AI button pres
 - RB9-066, RB9-068, RB9-074: a sale with no cost, loaded from the account's sales ledger, still showed Cost $0 and +$70, because `Number(null)` is 0 in the ledger loader. Fixed in `b38f5f7`. Passing rows RB9-196, RB9-198, RB9-204.
 - Test mistakes, explained by correction rows RB9-218 to RB9-221: the Pricing-card tile check (the tile is behind the card's Details toggle: RB9-019, 050, 083, 121, 142) and one desktop run that stopped at the For Sale page (last row RB9-134; did not recur).
 
-## 5. Limits, stated plainly
-1. ITM-043 / ITM-527: my first query could not read the tile, so there is no first-run reproduction on this batch; the original audit rows are the failure evidence.
-2. Bulk was checked with -5 only on production; `1e3` there goes through the same parser and the same visible status line (not separately run).
-3. The item-page "Sell" button (`SellItemButton`) uses the same strict check as the For Sale page but was not driven on production.
-4. Nothing historical was changed: existing saved values, sales and ledger rows are untouched (the fixes only check what is typed or saved now, and show old rows with the new rule).
-5. Quick Add is the only part without a before/after pair (section 3).
+## 5. What was tested directly on production, and what is covered by the shared parser
+Every typed amount goes through one function (`parseMoneyInput`, 89 unit checks). The table separates what was driven on production from what relies on that shared function.
+
+| Entry point | Direct production test | Shared-parser coverage only |
+|---|---|---|
+| /vault/add | letters, `1e3`, `1,5`, `5-3`, `-40`, 0, blank, `$1,250.50` (RB9-161 to 168) | |
+| /capture | `-40`, `1e3`, 0 (RB9-169 to 171) | letters (number box cannot hold them) |
+| Bulk review grid | `-5` (RB9-172); `1e3` refused with no write, then corrected to 1000 and saved (RB10-011, RB10-012) | |
+| Quick Add Verify sheet | letters, `1e3`, `1,5`, `-5`, `-4`, `5-3`, then 0 / blank / `$1,250.50` saved (RB9-147 to 160) | |
+| Item page price and Pricing card | `abc`, `1e3`, `1,5`, 0, `-40`, explicit $0 value (RB9-173 to 180, phone RB9-206 to 213) | |
+| Item page asking price, For Sale asking price | `-5`, `abc`, blank, 0 | |
+| Auction setup | negative start, Buy It Now below reserve, `1e3`, valid prices (RB9-184 to 187, phone 214 to 216) | |
+| For Sale "Mark sold" | `abc`, `-50`, 0, `$85`, no-cost sale (RB9-192 to 195) | |
+| Vault card "Sell" button | `abc`, `-50`, `1e3`, `1,5`, blank, cancel (nothing written), then one valid sale $120 on eBay, checked after reload and in a clean second browser (RB10-013 to 022) | |
+
+Covered by the shared parser only (not typed on production): letters in /capture (its number box cannot hold them), and any spelling not named in the table (for example `5-3` was typed in Add and Quick Add but not in the Pricing card).
+
+Other limits:
+1. ITM-043 / ITM-527: the first run could not read the tile, so there is no first-run reproduction for this batch; the original audit rows are the failure evidence. That does not weaken the after-check, which reads the tile after opening Details and finds $0 (RB9-180, RB9-213).
+2. Quick Add has no before/after pair (checked after the fix only).
+3. Nothing historical was changed: existing saved values, sales and ledger rows are untouched.
+4. **Found while closing the Sell gap, NOT fixed (outside batch 4):** the value box on a Vault card (`src/app/vault/VaultListView.tsx`, local `parseMoneyInput`) still uses an old lenient parser (blank or letters become 0, `1e3` becomes 13, negatives accepted). Read from code only; row RB10-024. It is not one of the 29 audit rows.
 
 ## 6. QA cleanup (exact)
 - Fixture `rb9` dropped by manifest ids: items 0, exhibitions 0, profiles left 0, auth users left 0.
@@ -73,5 +89,13 @@ Chrome synthetic camera, 3 captures -> review -> Verify sheet, no AI button pres
 - `Temp\qa-c` scratch browser profiles: 25 folders deleted, 0 left. `C:\qa-chrome` untouched (66 entries). No audit browser or script running.
 - Scripts and evidence kept: `repair-batch-4/scripts/` (`rb9-money-sales.cjs`, `rb9-quickadd.cjs`, `rb9-corrections.cjs`, `rb9-recount.cjs`, `probe-deploy.cjs`, `dbg-*.cjs`), `repair-batch-4/evidence/` (before and after logs and JSON).
 
-## 7. Master status
+## 7. Gap closure (second pass, 2026-10-20)
+Only two checks were rerun; the 29-row suite was not repeated. Fixture `rb10`, no code change.
+- **Sell button** (it is on the Gallery and Flip cards of the Vault list, not on the item detail page; the Wall view has none): `abc`, `-50`, `1e3`, `1,5` and blank each show a refusal and change nothing (database, this browser's sales list, the card); cancelling changes nothing; one valid synthetic sale ($120, eBay, item cost $40 + $4 tax) records price 120 and platform eBay. After reload the item page, the Sold card and Sales History all show price $120, cost $44, estimated fees $16 and profit +$60; a clean second browser shows the same (RB10-013 to RB10-022).
+- **Bulk `1e3`**: refused with "Current value (photo 1): use numbers only...", no item written; corrected to 1000 and saved (first item 1000, second explicit 0) (RB10-011, RB10-012).
+- A first Sell run (RB10-001 to RB10-010) was a test mistake (Wall view has no Sell button) and is explained by RB10-023.
+- Exact local screenshot paths: `repair-batch-4/evidence/rb10-screenshots.txt` (folder `C:UsersEKVLTD.claudeworktreesquizzical-hamilton-a45b28docsaudit-2026-10-18shots`, files `rb10-two-1.jpg` to `rb10-two-10.jpg` and `rb10-one-11.jpg`, `rb10-one-12.jpg`; the folder is gitignored).
+- Cleanup for this pass: fixture `rb10` dropped by manifest ids (items, exhibitions, profiles, auth users all 0), the two Bulk items removed with their photos (0 storage objects left), recount after 20 s 3,477 / 39 / 47 / `sales` 3, 0 leftovers (`QA RB10`, `qa_vz_`, `qa_sale_`, QA profiles, QA auth users), scratch service-key helper and manifest deleted, 5 `Tempqa-c` folders deleted, `C:qa-chrome` untouched (66), no audit process running.
+
+## 8. Master status
 RC-17 and RC-18 are CLOSED (every row of both groups verified above; no unresolved finding remains inside either). Not touched and still open: Insurance (GIN-092, GIN-095, GIN-155, VLT-353; not labelled fully closed), install-banner overlap (RC-14), small tap targets (RC-31), RC-05, RC-28 profile-validation rows. Tutorials remain paused.

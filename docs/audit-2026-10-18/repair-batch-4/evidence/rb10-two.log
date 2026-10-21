@@ -1,0 +1,12 @@
+PASS       RB10-013 | /vault | owner, Personal, desktop 1440 | Vault list row for the synthetic item shows the Sell button | Sell button found=true
+PASS       RB10-014 | /vault | owner, Personal, desktop 1440 | Sell with letters 'abc' as the sale price | status=COLLECTION; sold_price=null; sold_platform=null; this browser's sales list has it=false; prompts asked=1; visible message='use number
+PASS       RB10-015 | /vault | owner, Personal, desktop 1440 | Sell with negative -50 as the sale price | status=COLLECTION; sold_price=null; sold_platform=null; this browser's sales list has it=false; prompts asked=1; visible message='can't be n
+PASS       RB10-016 | /vault | owner, Personal, desktop 1440 | Sell with exponent '1e3' as the sale price | status=COLLECTION; sold_price=null; sold_platform=null; this browser's sales list has it=false; prompts asked=1; visible message='use number
+PASS       RB10-017 | /vault | owner, Personal, desktop 1440 | Sell with comma '1,5' as the sale price | status=COLLECTION; sold_price=null; sold_platform=null; this browser's sales list has it=false; prompts asked=1; visible message='use a peri
+PASS       RB10-018 | /vault | owner, Personal, desktop 1440 | Sell with blank as the sale price | status=COLLECTION; sold_price=null; sold_platform=null; this browser's sales list has it=false; prompts asked=1; visible message='Enter the 
+PASS       RB10-019 | /vault | owner, Personal, desktop 1440 | Sell with cancelled price prompt as the sale price | status=COLLECTION; sold_price=null; sold_platform=null; this browser's sales list has it=false; prompts asked=1; visible message=''
+PASS       RB10-020 | /vault | owner, Personal, desktop 1440 | Sell with a valid price ($120 on eBay) | status=SOLD; sold_price=120; sold_platform=eBay; sold_at=1792542911684
+PASS       RB10-021 | /vault/item/[id]?sold=1, /vault/sold, /sales | owner, Personal, desktop 1440 | After reload: price, cost and profit on the item page, the Sold card and Sales History | item page {"price":"$120","cost":"$44","fees":"$16","profit":"+$60"}; Sold card {"text":"SOLD QA RB10 sell mvhdlwel Pop Culture · Comics $12
+PASS       RB10-022 | /vault/item/[id]?sold=1, /vault/sold, /sales | owner, Personal, desktop 1440 | Clean second browser: price, cost and profit on the item page, the Sold card and Sales History | item page {"price":"$120","cost":"$44","fees":"$16","profit":"+$60"}; Sold card {"text":"SOLD QA RB10 sell mvhdlwel Pop Culture · Comics $12
+
+10 ok, 0 not ok of 10

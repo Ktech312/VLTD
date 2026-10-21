@@ -1,0 +1,89 @@
+{
+ "label": "one",
+ "cases": [
+  {
+   "control": "Vault list row for the synthetic item shows the Sell button",
+   "expected": "the Sell button is on the item's row (this is the app's Sell action; the item detail page has no Sell button, it has the For Sale toggle and Cost to Sell)",
+   "ok": false,
+   "actual": "Sell button found=false",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb10-one-1.jpg"
+  },
+  {
+   "control": "Sell with letters 'abc' as the sale price",
+   "expected": "a visible refusal; nothing is sold and nothing is written (database, this browser's sales list, the row); the platform question is never asked",
+   "ok": false,
+   "actual": "status=COLLECTION; sold_price=null; sold_platform=null; this browser's sales list has it=false; prompts asked=0; visible message=''",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb10-one-2.jpg"
+  },
+  {
+   "control": "Sell with negative -50 as the sale price",
+   "expected": "a visible refusal; nothing is sold and nothing is written (database, this browser's sales list, the row); the platform question is never asked",
+   "ok": false,
+   "actual": "status=COLLECTION; sold_price=null; sold_platform=null; this browser's sales list has it=false; prompts asked=0; visible message=''",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb10-one-3.jpg"
+  },
+  {
+   "control": "Sell with exponent '1e3' as the sale price",
+   "expected": "a visible refusal; nothing is sold and nothing is written (database, this browser's sales list, the row); the platform question is never asked",
+   "ok": false,
+   "actual": "status=COLLECTION; sold_price=null; sold_platform=null; this browser's sales list has it=false; prompts asked=0; visible message=''",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb10-one-4.jpg"
+  },
+  {
+   "control": "Sell with comma '1,5' as the sale price",
+   "expected": "a visible refusal; nothing is sold and nothing is written (database, this browser's sales list, the row); the platform question is never asked",
+   "ok": false,
+   "actual": "status=COLLECTION; sold_price=null; sold_platform=null; this browser's sales list has it=false; prompts asked=0; visible message=''",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb10-one-5.jpg"
+  },
+  {
+   "control": "Sell with blank as the sale price",
+   "expected": "a visible refusal; nothing is sold and nothing is written (database, this browser's sales list, the row); the platform question is never asked",
+   "ok": false,
+   "actual": "status=COLLECTION; sold_price=null; sold_platform=null; this browser's sales list has it=false; prompts asked=0; visible message=''",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb10-one-6.jpg"
+  },
+  {
+   "control": "Sell with cancelled price prompt as the sale price",
+   "expected": "nothing changes (cancel)",
+   "ok": false,
+   "actual": "status=COLLECTION; sold_price=null; sold_platform=null; this browser's sales list has it=false; prompts asked=0; visible message=''",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb10-one-7.jpg"
+  },
+  {
+   "control": "Sell with a valid price ($120 on eBay)",
+   "expected": "the item is SOLD in the account with sold_price 120, platform eBay and a sold date",
+   "ok": false,
+   "actual": "status=COLLECTION; sold_price=null; sold_platform=null; sold_at=null",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb10-one-8.jpg"
+  },
+  {
+   "control": "After reload: price, cost and profit on the item page, the Sold card and Sales History",
+   "expected": "sold price $120, cost $44 (40 + 4 tax), estimated fees shown, and the same profit (120 - 44 - fees) on all three pages",
+   "ok": false,
+   "actual": "item page {}; Sold card {\"text\":\"\"}; Sales History {\"text\":\"\"}; expected profit about 76.00",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb10-one-9.jpg"
+  },
+  {
+   "control": "Clean second browser: price, cost and profit on the item page, the Sold card and Sales History",
+   "expected": "same figures as in the first browser",
+   "ok": false,
+   "actual": "item page {}; Sold card {\"text\":\"\"}; Sales History {\"text\":\"\"}",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb10-one-10.jpg"
+  },
+  {
+   "control": "Bulk: '1e3' in the Current value field, Add all",
+   "expected": "a visible refusal naming the photo and the problem; the page stays on the review grid; nothing is written (no item rows)",
+   "ok": true,
+   "actual": "field value typed=[\"1e3\",\"0\"]; moved to Vault=false; visible message='Current value (photo 1): use numbers only (no letters or exponents like 1e3).'; item rows for this title=0",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb10-one-11.jpg"
+  },
+  {
+   "control": "Bulk: corrected to 1000, Add all",
+   "expected": "saved: the first item with current_value 1000 and the second with an explicit 0; the app moves to the Vault",
+   "ok": true,
+   "actual": "moved=true; first current_value=1000; second current_value=0",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb10-one-12.jpg"
+  }
+ ]
+}
