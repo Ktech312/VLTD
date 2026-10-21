@@ -1,0 +1,40 @@
+{
+ "label": "b",
+ "cases": [
+  {
+   "control": "Public home footer: Exhibitions / Discover",
+   "expected": "no footer link sends a visitor to /museum (login); Discover opens /discover",
+   "ok": true,
+   "actual": "href=[\"/signup\",\"/login\",\"/learn\",\"#public-galleries\",\"/discover\",\"/discover\",\"#early-access\",\"#early-access\",\"#early-access\"]",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb42-b-1.jpg"
+  },
+  {
+   "control": "Discover: Close on the details panel",
+   "expected": "the panel closes and stays closed (it used to be replaced by the first room)",
+   "ok": true,
+   "actual": "open before=true; close=clicked; open after=false",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb42-b-2.jpg"
+  },
+  {
+   "control": "Discover: a search that matches nothing",
+   "expected": "says 'No exhibitions match' and lists no rooms underneath",
+   "ok": true,
+   "actual": "message shown=true; panel open=false",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb42-b-3.jpg"
+  },
+  {
+   "control": "/shop product thumbnails",
+   "expected": "line-art glyphs, no emoji",
+   "ok": false,
+   "actual": "emoji present=false; svg count=0",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb42-b-4.jpg"
+  },
+  {
+   "control": "/saved link to The Flip",
+   "expected": "no emoji in the link",
+   "ok": true,
+   "actual": "emoji present=false",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb42-b-5.jpg"
+  }
+ ]
+}

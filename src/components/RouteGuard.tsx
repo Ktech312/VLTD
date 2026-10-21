@@ -123,6 +123,8 @@ export default function RouteGuard({ children }: { children: ReactNode }) {
       }
       if (access === "setup" && status.needsOnboarding) {
         setupOkUntil = 0;
+        // Tell the setup page why the person landed there, so the bounce is explained instead of silent.
+        try { window.sessionStorage.setItem("vltd:setup-bounce", "1"); } catch { /* the notice is optional */ }
         router.replace("/onboarding");
         return;
       }

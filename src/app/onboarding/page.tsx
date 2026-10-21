@@ -150,6 +150,16 @@ export default function OnboardingPage() {
   const [saving, setSaving] = useState(false);
   const [identitySaving, setIdentitySaving] = useState(false);
   const [error, setError] = useState("");
+  // Set when another page sent the person here because setup is unfinished (see RouteGuard).
+  const [bounced, setBounced] = useState(false);
+  useEffect(() => {
+    try {
+      if (window.sessionStorage.getItem("vltd:setup-bounce")) {
+        window.sessionStorage.removeItem("vltd:setup-bounce");
+        setBounced(true);
+      }
+    } catch { /* storage unavailable: no notice */ }
+  }, []);
   const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
   const [draftLoaded, setDraftLoaded] = useState(false);
   const { theme, setTheme, setIconStyle, logoVariant, setLogoVariant } = useTheme();
@@ -384,6 +394,11 @@ export default function OnboardingPage() {
               <span className="text-[11px] font-bold uppercase tracking-[0.3em] text-[color:var(--theme-gold,#C8CDD2)]">VLTD</span>
               <span className="text-[11px] uppercase tracking-[0.2em] text-[color:var(--muted2)]">/ Setup</span>
             </div>
+            {bounced ? (
+              <p role="status" data-testid="setup-bounce-note" className="mt-3 rounded-[10px] px-3 py-2 text-sm text-[color:var(--muted)]" style={{ background: "var(--theme-gold-subtle, rgba(203,208,213,0.06))", border: "1px solid var(--theme-gold-border, rgba(203,208,213,0.25))" }}>
+                Finish setting up your account first. The rest of VLTD opens as soon as you are done.
+              </p>
+            ) : null}
             <h1 className="mt-3 text-3xl font-black leading-[1] tracking-[-0.05em] text-text-primary sm:text-4xl">
               {step === 1 && "Your personal account."}
               {step === 2 && "Add a business?"}

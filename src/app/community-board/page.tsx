@@ -86,13 +86,17 @@ function money(n: number) {
   if (n >= 1e3) return `$${(n / 1e3).toFixed(1)}K`;
   return `$${Math.round(n)}`;
 }
+// Events are calendar days stored as midnight UTC (the Events page reads them in UTC). Reading them in the viewer's own zone showed an
+// all-day event a day early west of UTC, with an invented clock time, so the date is read in UTC and a midnight start shows "All day".
 function dropDate(iso: string) {
   const d = new Date(iso);
-  return Number.isNaN(d.getTime()) ? "" : d.toLocaleDateString("en-US", { month: "short", day: "numeric" }).toUpperCase();
+  return Number.isNaN(d.getTime()) ? "" : d.toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "UTC" }).toUpperCase();
 }
 function dropTime(iso: string) {
   const d = new Date(iso);
-  return Number.isNaN(d.getTime()) ? "" : d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
+  if (Number.isNaN(d.getTime())) return "";
+  if (d.getUTCHours() === 0 && d.getUTCMinutes() === 0) return "All day";
+  return d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
 }
 
 /* ── Shared bits ─────────────────────────────────────────────── */

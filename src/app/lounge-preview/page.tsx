@@ -7,6 +7,7 @@ import { loadActivityEvents, syncActivityEventsFromSupabase, type ActivityEventR
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 import { queryPublicGalleries } from "@/lib/publicGalleries";
 import { isUniverseKey, type UniverseKey, UNIVERSE_LABEL } from "@/lib/taxonomy";
+import { getMyAdminRole } from "@/lib/adminAuth";
 
 const gold = "#D9A23A";
 const gold2 = "#F1C15B";
@@ -212,6 +213,13 @@ export default function LoungePreviewPage() {
   const [mvps, setMvps] = useState<UniverseMVP[]>([]);
   const [activity, setActivity] = useState<ActivityEventRecord[]>([]);
   const [loading, setLoading] = useState(true);
+  // Links into the admin pages are shown only to an admin; everyone else would land on "no access".
+  const [isAdmin, setIsAdmin] = useState(false);
+  useEffect(() => {
+    let alive = true;
+    void getMyAdminRole().then((role) => { if (alive) setIsAdmin(Boolean(role)); }).catch(() => {});
+    return () => { alive = false; };
+  }, []);
 
   useEffect(() => {
     let alive = true;
@@ -310,9 +318,9 @@ export default function LoungePreviewPage() {
             </div>
           </div>
           <div className="flex flex-wrap gap-2">
-            <ActionButton href="/notifications" icon="bell" label="Open Alerts" purpose="Routes mail/messages/notifications into the existing Alerts system." />
-            <ActionButton href="/community-board" icon="message" label="Ask the Lounge" purpose="Future post drawer for collector questions, item help, and market chatter." />
-            <ActionButton href="/admin/spotlights" icon="palette" label="Post Update" purpose="Admin/creator entry point until native Lounge posting is built." primary />
+            <ActionButton href="/notifications" icon="bell" label="Open Alerts" purpose="Your mail, messages and notifications." />
+            <ActionButton href="/community-board" icon="message" label="Ask the Lounge" purpose="Ask collectors a question in the Lounge." />
+            {isAdmin ? <ActionButton href="/admin/spotlights" icon="palette" label="Post Update" purpose="Post an update from the admin pages." primary /> : null}
           </div>
         </header>
 
@@ -351,7 +359,7 @@ export default function LoungePreviewPage() {
                 <EmptyState
                   icon="message"
                   title="No live Lounge activity yet"
-                  copy="When activity_events and Lounge posts exist, this becomes the live feed. No fake posts are being shown."
+                  copy="Nothing has happened here yet. Collector activity will show up in this feed as it happens."
                 />
               )}
             </div>
@@ -387,9 +395,9 @@ export default function LoungePreviewPage() {
                   {featuredRoom ? (
                     <ActionButton href={`/museum/${featuredRoom.id}`} icon="eye" label="View Room" purpose="Opens the featured public room." primary />
                   ) : (
-                    <ActionButton href="/admin/spotlights" icon="star" label="Choose Feature" purpose="Admin chooses the featured Lounge room until auto suggestions exist." primary />
+                    isAdmin ? <ActionButton href="/admin/spotlights" icon="star" label="Choose Feature" purpose="Choose the featured room from the admin pages." primary /> : null
                   )}
-                  <ActionButton href="/discover" icon="search" label="Find Rooms" purpose="Sends users to Discover when they want to browse, keeping Lounge focused." />
+                  <ActionButton href="/discover" icon="search" label="Find Rooms" purpose="Browse public exhibitions in Discover." />
                 </div>
               </div>
               <div className="grid grid-cols-3 border" style={{ borderColor: borderSoft }}>
@@ -429,7 +437,7 @@ export default function LoungePreviewPage() {
                     </Link>
                   ))
                 ) : (
-                  <EmptyState icon="trophy" title="No MVP data yet" copy="This will use rank events and existing universe leaderboards. No fake rankings shown." />
+                  <EmptyState icon="trophy" title="No MVP data yet" copy="Rankings will show up here once collectors earn them." />
                 )}
               </div>
             </Panel>
@@ -462,8 +470,8 @@ export default function LoungePreviewPage() {
             <div className="mt-4 space-y-2">
               <EmptyState
                 icon="message"
-                title="Threads are not wired yet"
-                copy="This area should show real discussions, Q&A, and item chatter once lounge_posts and comments are added."
+                title="No discussions yet"
+                copy="Discussions, questions and item chatter will show up here."
               />
             </div>
           </Panel>
@@ -486,7 +494,7 @@ export default function LoungePreviewPage() {
                 </div>
               </div>
               <div className="mt-4 grid grid-cols-1 gap-2">
-                <ActionButton href="/community-board" icon="users" label="Club Lobby" purpose="Future native club index for universe-specific groups." />
+                <ActionButton href="/community-board" icon="users" label="Club Lobby" purpose="Find clubs for your universes." />
               </div>
             </div>
           </Panel>
@@ -513,7 +521,7 @@ export default function LoungePreviewPage() {
                   </Link>
                 ))
               ) : (
-                <EmptyState icon="sofa" title="No active universe tables" copy="Tables populate from public room/category activity and future Lounge posts." />
+                <EmptyState icon="sofa" title="No active universe tables" copy="Tables fill in as collectors share public exhibitions and categories." />
               )}
             </div>
           </Panel>
@@ -523,7 +531,7 @@ export default function LoungePreviewPage() {
           <Panel className="rounded-[8px] p-5">
             <div className="flex items-center justify-between">
               <p className="text-[11px] font-black uppercase tracking-[0.28em]" style={{ color: gold }}>Spotlight Bench</p>
-              <Link href="/admin/spotlights" className="text-xs font-bold" style={{ color: gold }}>Manage spotlights</Link>
+              {isAdmin ? <Link href="/admin/spotlights" className="text-xs font-bold" style={{ color: gold }}>Manage spotlights</Link> : null}
             </div>
             <div className="mt-4 grid gap-3 md:grid-cols-2">
               {spotlights.length ? (
@@ -552,7 +560,7 @@ export default function LoungePreviewPage() {
                   </a>
                 ))
               ) : (
-                <EmptyState icon="palette" title="No spotlights approved yet" copy="Admin-created spotlight records will appear here. This stays empty until real records exist." />
+                <EmptyState icon="palette" title="No spotlights approved yet" copy="Collectors, artists and brands chosen by the VLTD team will appear here." />
               )}
             </div>
           </Panel>
@@ -565,8 +573,8 @@ export default function LoungePreviewPage() {
             <div className="mt-4">
               <EmptyState
                 icon="clock"
-                title="Drops should come from Events"
-                copy="Future rows should be SerpApi/admin-approved events, Discord meetups, auctions, or community challenges. No fake drops here."
+                title="No drops yet"
+                copy="Upcoming events, meetups, auctions and community challenges will show up here."
               />
             </div>
           </Panel>
