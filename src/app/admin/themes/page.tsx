@@ -10,6 +10,7 @@ import {
 } from "@/lib/seasonalTheme";
 import { showToast } from "@/lib/toast";
 import { useSaveFeedback } from "@/lib/useSaveFeedback";
+import AdminGate from "@/components/admin/AdminGate";
 
 const ACCENT_STYLES: AccentStyle[] = ["none", "snowflakes", "confetti", "stars", "leaves"];
 const ACCENT_STYLE_LABELS: Record<AccentStyle, string> = {
@@ -65,7 +66,7 @@ function isUpcoming(t: SeasonalTheme) {
   return t.enabled && new Date(t.starts_at).getTime() > Date.now();
 }
 
-export default function AdminThemesPage() {
+function AdminThemesInner() {
   const [themes, setThemes] = useState<SeasonalTheme[]>([]);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState<Partial<SeasonalTheme> | null>(null);
@@ -506,5 +507,14 @@ function Toggle({ label, value, onChange }: { label: string; value: boolean; onC
       </span>
       {label}
     </button>
+  );
+}
+
+// Admins only: a visitor or a non-admin sees a plain message and none of the theme manager (RC-08).
+export default function AdminThemesPage() {
+  return (
+    <AdminGate>
+      <AdminThemesInner />
+    </AdminGate>
   );
 }
