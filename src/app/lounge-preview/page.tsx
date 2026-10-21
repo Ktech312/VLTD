@@ -465,7 +465,7 @@ export default function LoungePreviewPage() {
           <Panel className="rounded-[8px] p-5">
             <div className="flex items-center justify-between">
               <p className="text-[11px] font-black uppercase tracking-[0.28em]" style={{ color: gold }}>Hot Threads</p>
-              <span className="text-xs" style={{ color: quiet }}>Needs lounge_posts</span>
+              <span className="text-xs" style={{ color: quiet }}>Coming soon</span>
             </div>
             <div className="mt-4 space-y-2">
               <EmptyState

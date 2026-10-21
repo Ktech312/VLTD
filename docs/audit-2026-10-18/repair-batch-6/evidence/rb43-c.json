@@ -1,0 +1,40 @@
+{
+ "label": "c",
+ "cases": [
+  {
+   "control": "/lounge-preview as a non-admin: links to admin pages",
+   "expected": "none offered",
+   "ok": true,
+   "actual": "admin links=0",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb43-c-1.jpg"
+  },
+  {
+   "control": "/lounge-preview wording",
+   "expected": "customer-facing only (no table names, 'fake', 'not wired', 'Future')",
+   "ok": false,
+   "actual": "developer phrases found=[\"lounge_posts\"]",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb43-c-2.jpg"
+  },
+  {
+   "control": "Lounge: Upcoming Lounge Drops in a US Pacific browser",
+   "expected": "shows OCT 22 and 'All day' for 'Anaheim Card Show — October 22, 2026' (the Events page's own date), not the day before",
+   "ok": true,
+   "actual": "shows OCT 22=true; All day shown=true; start=2026-10-22T00:00:00+00:00",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb43-c-3.jpg"
+  },
+  {
+   "control": "A signed-in person with unfinished setup opens /vault",
+   "expected": "lands on setup and is told why",
+   "ok": true,
+   "actual": "path=/onboarding; note shown=true",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb43-c-4.jpg"
+  },
+  {
+   "control": "Opening /onboarding directly",
+   "expected": "no bounce note (the person was not sent here)",
+   "ok": true,
+   "actual": "note shown=false",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb43-c-5.jpg"
+  }
+ ]
+}

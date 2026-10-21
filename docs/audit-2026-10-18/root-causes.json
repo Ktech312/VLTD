@@ -493,7 +493,8 @@
    "GIN-146",
    "GIN-152"
   ],
-  "status": "OPEN"
+  "status": "PARTLY CLOSED",
+  "statusNote": "batch 13: 15 of 16 rows verified on production (RB39, RB40, RB41). VLT-385 (Insights Goals widget \"9 of 2,000\") needs explicit goal types: same decision as RC-20."
  },
  {
   "id": "RC-25",
@@ -545,7 +546,8 @@
    "ACC-359",
    "ACC-403"
   ],
-  "status": "OPEN"
+  "status": "PARTLY CLOSED",
+  "statusNote": "batch 13: 19 of 24 rows verified on production (RB39 to RB41; ACC-808 and ACC-817 under RC-28). Open decisions: DIS-166 (Add Watch tile goes to Add Item), ACC-375/441/721 (\"Universes displayed\" setting does not filter home, Vault or Discover), VLT-073 (seasonal-theme banner Yes changes nothing visible)."
  },
  {
   "id": "RC-27",
