@@ -47,10 +47,10 @@ const body = async (S) => (await S.text().catch(() => "")).replace(/\s+/g, " ").
     const open1 = (await body(S)).includes("Use This Picture");
     const blobsBefore = await S.evaluate("document.querySelectorAll('img[src^=\"blob:\"]').length");
     await T.click(S, "[...document.querySelectorAll('[role=dialog][aria-label=\"Edit photo crop\"] button')].find((b) => (b.innerText || '').trim() === 'Cancel')");
-    await sleep(1800);
+    await sleep(900);
     t = await body(S);
     const blobsAfter = await S.evaluate("document.querySelectorAll('img[src^=\"blob:\"]').length");
-    await rec(S, open1 && !t.includes("Use This Picture") && /Picture discarded/.test(t) && blobsAfter === 0, "Add Item: choose a photo, then Cancel in the crop step", "the photo that was just chosen is discarded (nothing attached)", `crop step was open=${open1}; closed=${!t.includes("Use This Picture")}; says discarded=${/Picture discarded/.test(t)}; picture elements ${blobsBefore} -> ${blobsAfter}`, "/vault/add");
+    await rec(S, open1 && !t.includes("Use This Picture") && /(Picture|That picture was) discarded/.test(t) && blobsAfter === 0, "Add Item: choose a photo, then Cancel in the crop step", "the photo that was just chosen is discarded (nothing attached)", `crop step was open=${open1}; closed=${!t.includes("Use This Picture")}; says discarded=${/(Picture|That picture was) discarded/.test(t)}; picture elements ${blobsBefore} -> ${blobsAfter}`, "/vault/add");
     await chooseViaButton(S, T.btnExpr("Upload a photo from a file"), mkPng(tmp("rb53b-" + Date.now() + ".png"), 640, 480, [160, 90, 60])); await sleep(3500);
     await clickText(S, "^Use This Picture$", "button"); await sleep(2500);
     t = await body(S);
@@ -59,7 +59,7 @@ const body = async (S) => (await S.text().catch(() => "")).replace(/\s+/g, " ").
     await chooseViaButton(S, T.btnExpr("Upload a photo from a file"), mkPng(tmp("rb53c-" + Date.now() + ".png"), 640, 480, [20, 160, 90])); await sleep(3500);
     await S.send("Input.dispatchKeyEvent", { type: "keyDown", key: "Escape", code: "Escape", windowsVirtualKeyCode: 27 }); await S.send("Input.dispatchKeyEvent", { type: "keyUp", key: "Escape", code: "Escape", windowsVirtualKeyCode: 27 }); await sleep(1800);
     t = await body(S);
-    await rec(S, !t.includes("Use This Picture") && /Picture discarded/.test(t), "Add Item: choose a second photo, then press Escape in the crop step", "Escape is a Cancel: the newly chosen photo is discarded, the first one stays", `closed=${!t.includes("Use This Picture")}; says discarded=${/Picture discarded/.test(t)}; picture elements=${await S.evaluate("document.querySelectorAll('img[src^=\"blob:\"]').length")}`, "/vault/add");
+    await rec(S, !t.includes("Use This Picture") && /(Picture|That picture was) discarded/.test(t), "Add Item: choose a second photo, then press Escape in the crop step", "Escape is a Cancel: the newly chosen photo is discarded, the first one stays", `closed=${!t.includes("Use This Picture")}; says discarded=${/(Picture|That picture was) discarded/.test(t)}; picture elements=${await S.evaluate("document.querySelectorAll('img[src^=\"blob:\"]').length")}`, "/vault/add");
   } catch (e) { console.error("RUNNER ERROR", e); out.error = String(e && e.stack || e).slice(0, 600); }
   finally {
     try { if (S) await S.close(); } catch {}

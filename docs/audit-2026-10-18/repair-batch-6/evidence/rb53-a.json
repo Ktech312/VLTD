@@ -1,0 +1,61 @@
+{
+ "label": "a",
+ "cases": [
+  {
+   "control": "Insurance tab while the account cannot hold exclusions yet",
+   "expected": "says plainly that exclusions are on this device only",
+   "ok": true,
+   "actual": "note shown=true",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb53-a-1.jpg"
+  },
+  {
+   "control": "Insurance tab: untick one item",
+   "expected": "the row says excluded on this device, the not-counted line counts it, and the device keeps it",
+   "ok": true,
+   "actual": "row text=true; not-counted=true; stored=[\"qa_vz_mviibes4_1\"]",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb53-a-2.jpg"
+  },
+  {
+   "control": "Insurance tab after reloading",
+   "expected": "the exclusion is still there",
+   "ok": true,
+   "actual": "still excluded=true",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb53-a-3.jpg"
+  },
+  {
+   "control": "Policy packet: the exclusion and where it lives",
+   "expected": "counts the exclusion and says it is on this device",
+   "ok": true,
+   "actual": "text=Not counted: 5 sold, 1 excluded by you on this device. Exclusions are saved on this device only.",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb53-a-4.jpg"
+  },
+  {
+   "control": "Insurance tab: Include all",
+   "expected": "every item is included again",
+   "ok": true,
+   "actual": "stored=[]",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb53-a-5.jpg"
+  },
+  {
+   "control": "Add Item: choose a photo, then Cancel in the crop step",
+   "expected": "the photo that was just chosen is discarded (nothing attached)",
+   "ok": false,
+   "actual": "crop step was open=true; closed=true; says discarded=false; picture elements 2 -> 0",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb53-a-6.jpg"
+  },
+  {
+   "control": "Add Item: choose a photo, then Use This Picture",
+   "expected": "the photo stays attached",
+   "ok": true,
+   "actual": "crop step closed=true; picture elements=1",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb53-a-7.jpg"
+  },
+  {
+   "control": "Add Item: choose a second photo, then press Escape in the crop step",
+   "expected": "Escape is a Cancel: the newly chosen photo is discarded, the first one stays",
+   "ok": false,
+   "actual": "closed=true; says discarded=false; picture elements=1",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb53-a-8.jpg"
+  }
+ ]
+}

@@ -4,6 +4,7 @@ import { parseMoneyInput } from "@/lib/moneyInput";
 import { useDialogA11y } from "@/components/ui/useDialogA11y";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { showToast } from "@/lib/toast";
 import { createPortal } from "react-dom";
 import UpgradeNudge, { isFreeTierLimitError } from "@/components/UpgradeNudge";
 
@@ -878,6 +879,7 @@ export default function AddPage() {
       removeDraftMediaImage(fresh);
       setIsCropEditorOpen(false);
       setStatus("Picture discarded. Choose another when you are ready.");
+      showToast("That picture was discarded. Choose another when you are ready.");
       return;
     }
     setIsCropEditorOpen(false);
