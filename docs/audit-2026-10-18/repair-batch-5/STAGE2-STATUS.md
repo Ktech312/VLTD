@@ -1,6 +1,6 @@
 ﻿# Stage 2: applied by you; VERIFIED on production by me (2026-10-21)
 
-The view `public_galleries` exists and the link functions answer with sanitised rows. Verified with isolated QA exhibitions (ordinary, a deliberately hostile alias exhibition, private, guest-only, draft) as a visitor, an unrelated signed-in account (QA account B) and the owner (QA account A). Result: **31 passed, 1 expected "still open" (RB19-054 region: the old table read, closed only by stage 4)** in the final run (rows RB19-033 to RB19-064; first run RB19-001 to RB19-032 kept; RB19-065 explains the one first-run test mistake). Evidence: `evidence/rb19-stage2-second.json` / `.log`, first run `rb19-stage2-first.*`.
+The view `public_galleries` exists and the link functions answer with sanitised rows. Verified with isolated QA exhibitions (ordinary, a deliberately hostile alias exhibition, private, guest-only, draft) as a visitor, an unrelated signed-in account (QA account B) and the owner (QA account A). Result: **31 passed, 1 expected "still open" (RB19-059: the old table read, closed only by stage 4)** in the final run (rows RB19-033 to RB19-064; first run RB19-001 to RB19-032 kept; RB19-065 explains the one first-run test mistake). Evidence: `evidence/rb19-stage2-second.json` / `.log`, first run `rb19-stage2-first.*`.
 
 | Check | Result |
 |---|---|
