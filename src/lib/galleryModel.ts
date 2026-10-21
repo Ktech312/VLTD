@@ -1457,11 +1457,26 @@ async function hydrateLocalGalleriesFromSupabase(force = false) {
       return;
     }
 
-    const remote = data
+    let remote = data
       .map((row) => normalizeSupabaseGallery(row))
       .filter(Boolean) as Gallery[];
 
-    if (remote.length === 0) return;
+    // Only exhibitions of the signed-in person's OWN profiles belong in this cache. Public exhibitions of other people are read by the
+    // public pages straight from the sanitised public view and are never stored here (they would carry their owner's profile id, and
+    // an entry without one would be taken over as the visitor's own). If the person's profiles cannot be read, nothing is filtered.
+    let ownProfileIds: Set<string> | null = null;
+    try {
+      const memberships = await supabase.from("profile_members").select("profile_id").eq("user_id", startedAs);
+      if (!memberships.error && Array.isArray(memberships.data) && memberships.data.length > 0) {
+        ownProfileIds = new Set(memberships.data.map((row: { profile_id: unknown }) => String(row.profile_id)));
+      }
+    } catch {
+      ownProfileIds = null;
+    }
+    const isOwnGallery = (gallery: Gallery) => !ownProfileIds || (Boolean(gallery.profile_id) && ownProfileIds.has(String(gallery.profile_id)));
+    remote = remote.filter(isOwnGallery);
+
+    if (remote.length === 0 && !ownProfileIds) return;
 
     // Invite tokens were previously write-only: upsertGalleryToSupabase
     // (and its delete-pruning) kept gallery_invites current, but nothing
@@ -1470,7 +1485,7 @@ async function hydrateLocalGalleriesFromSupabase(force = false) {
     // an empty invite list even though real tokens existed server-side.
     // Fetch them here, for the owner's own galleries only.
     try {
-      const { data: inviteRows, error: inviteError } = await supabase
+      const { data: inviteRows, error: inviteError } = remote.length === 0 ? { data: [], error: null } : await supabase
         .from("gallery_invites")
         .select("*")
         .in("gallery_id", remote.map((gallery) => gallery.id));
@@ -1509,9 +1524,13 @@ async function hydrateLocalGalleriesFromSupabase(force = false) {
       }
     })();
 
+    // stale copies of other people's PUBLIC exhibitions stored by earlier versions leave the cache too
+    const localKept = ownProfileIds
+      ? local.filter((gallery) => isOwnGallery(gallery) || !(gallery.visibility === "PUBLIC" && gallery.profile_id))
+      : local;
     const merged = new Map<string, Gallery>();
     for (const gallery of remote) merged.set(gallery.id, gallery);
-    for (const gallery of local) {
+    for (const gallery of localKept) {
       const existing = merged.get(gallery.id);
       if (!existing || gallery.updatedAt >= existing.updatedAt) {
         merged.set(gallery.id, withPreservedSlotLayout(gallery, existing));

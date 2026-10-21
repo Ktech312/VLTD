@@ -1,0 +1,42 @@
+OK-NOW  Discover (visitor): the exhibition under an alias | card: MISC · 2 OF 5 QA RB20 alias mvhk9mik by QA Alias Curator · 2 items View QA RB20 alias mvhk9mik →
+OK-NOW  Discover (visitor): an exhibition without an alias still shows the real collector | card: MISC · 1 OF 5 QA RB20 plain mvhk9mik by QA Real Collector Name · 2 items View QA RB20 plain mvhk9mik →
+OK-NOW  Discover (visitor): private, guest-only and draft exhibitions are not listed | listed: none
+FAILS   Discover reads the exhibitions through the public view | ["table:49rows","table:49rows"]
+OK-NOW  Discover: no response from the public view names the alias exhibition's real profile | view responses naming it: 0
+FAILS   Discover: no response from the exhibitions TABLE names it either | table responses naming it: 2
+OK-NOW  Guest page of an alias exhibition (visitor) | title=true; alias=true; real name on page=false
+OK-NOW  Guest page of an ordinary public exhibition (visitor): its items render | title=true; card=true
+OK-NOW  Guest page of a private exhibition (visitor) | title shown=false
+OK-NOW  Guest page of a draft exhibition (visitor) | title shown=false
+OK-NOW  Guest page of a guest exhibition (visitor) | title shown=false
+OK-NOW  Share-link page of an alias exhibition (visitor) | title=true; alias=true; real=false
+OK-NOW  Share-link page of an ordinary exhibition (visitor) | title=true; card=true
+OK-NOW  Share-link page of a private exhibition (visitor) | shown=false
+OK-NOW  Public home (visitor): the featured exhibition card | featured title on page=true
+FAILS   Visitor's browser storage after the whole visit: no exhibition of anyone else is stored | stored: QA RB20 alias mvhk9mik(profile ac8f826b); QA RB20 plain mvhk9mik(profile ac8f826b); total stored 49
+FAILS   Visitor's browser storage never holds the alias exhibition together with the real profile id | alias exhibition stored with the real profile id=true
+OK-NOW  Guest page title / preview text (alias exhibition) | status 200; alias in head=true; real name in the page source=false; <title>QA RB20 alias mvhk9mik · VLTD</title> | name="description" content="synthetic · 2 items · Curated by QA Alias Curator" | property="og:title" content="QA 
+OK-NOW  Guest page title / preview text (ordinary exhibition) | status 200; title in head=true
+OK-NOW  Share link title / preview text (alias exhibition) | status 200; alias=true; real name in source=false
+OK-NOW  Preview image: guest page, alias exhibition | 200 image/png
+OK-NOW  Preview image: guest page, ordinary exhibition | 200 image/png
+OK-NOW  Preview image: share link, alias exhibition | 200 image/png
+OK-NOW  Preview image: share link, ordinary exhibition | 200 image/png
+OK-NOW  Preview image: Discover | 200 image/png
+OK-NOW  Preview image: collector profile | 200 image/png
+OK-NOW  Discover (signed-in unrelated account): the alias exhibition shows the alias | card: MISC · 2 OF 5 QA RB20 alias mvhk9mik by QA Alias Curator · 2 items View QA RB20 alias mvhk9mik →
+OK-NOW  Guest page of the alias exhibition (signed-in unrelated account) | alias=true; real=false
+OK-NOW  Share-link page (signed-in unrelated account) | ok=true
+OK-NOW  Invite-link page (signed-in unrelated account) | ok=true
+OK-NOW  Follower feed (QA account B follows QA profile A): the ordinary exhibition's event is listed, the alias exhibition's is not | plain=true; alias=false
+OK-NOW  Signed-in unrelated account: its own Exhibitions list shows none of QA account A's exhibitions | listed: none
+OK-NOW  Cache ownership: none of A's exhibitions is stored in B's browser as B's own | adopted as B's: 0; stored at all: QA RB20 alias mvhk9mik(profile ac8f826b); QA RB20 plain mvhk9mik(profile ac8f826b)
+OK-NOW  Cache ownership: after B's whole visit every QA exhibition still belongs to A in the account (nothing was uploaded under B) | owners: A
+OK-NOW  Owner: the Exhibitions list shows their public, alias, private and guest-only exhibitions (a draft is archived and not listed, as designed) | listed: plain,alias,private,guest
+OK-NOW  Owner: builder of the alias exhibition opens with the alias control | title=true; alias control=true
+OK-NOW  Owner: guest preview of their own private exhibition | title=true
+OK-NOW  Owner's browser storage holds their own exhibitions under their own profile | stored 5; all under A=true
+OK-NOW  Owner: another own-exhibition screen (Halls) still loads | page text length 1119
+
+35 ok, 4 not ok of 39
+facts {"discoverTableResponsesNamingAliasProfile":2,"featuredExhibitionExists":true,"feedText":"Home Vault Exhibitions Lounge Discover Help ⌘K NOVICE Level 1 Alerts Follows, messages on your exhibitions, and bug reports FOLLOW · New exhibition by QA Real Collector Name · QA RB20 plain 2m ago Add to Home Screen","foreignRowsCachedForSignedInViewer":2,"signedInViewerTableResponsesNamingAliasProfile":1}
