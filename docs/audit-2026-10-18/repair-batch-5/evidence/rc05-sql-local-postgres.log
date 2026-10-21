@@ -1,32 +1,82 @@
-﻿--- before any file
-PASS BEFORE: anon reads the alias exhibition and gets the real profile_id (the defect) 
-PASS BEFORE: a member's insert of a follower notice is refused by row-level security (42501), as on production 
-PASS BEFORE: using the auth uid as profile id fails on the foreign key (23503): the old rule is the one in force, as on production 
---- after file 1
-PASS F1: the profile's member can record an announcement 
-PASS F1: the profile's member can record a published notice 
-PASS F1: someone who is not a member of that profile is refused 
-PASS F1: a signed-out visitor is refused 
-PASS F1: events are still publicly readable (nothing else changed) 
-PASS F1: safe to run twice 
---- after file 2 (view), before file 3
-PASS F2: the view lists exactly the public + active exhibitions (no locked / invite / stored) 
-PASS F2: in the view the alias exhibition's profile_id is NULL 
-PASS F2: in the view a non-alias exhibition keeps its profile_id (discovery and profile pages keep working) 
-PASS F2: a profile page query (by profile_id) on the view returns only that profile's non-alias public exhibitions 
-PASS F2: a signed-in non-member also gets NULL for the alias exhibition 
-PASS F2: the table itself is unchanged until file 3 (the leak remains open: expected) 
-PASS F2: the view has every column of the table (no consumer loses a field) 
---- after file 3
-PASS F3: anon reading the table no longer gets alias exhibitions at all 
-PASS F3: a signed-in non-member gets no alias row from the table either 
-PASS F3: the alias exhibition is still publicly reachable through the view, profile_id hidden 
-PASS F3: the profile's own member still sees all of their exhibitions (including the locked alias one) with profile_id 
-PASS F3: a public exhibition without an alias is still readable from the table (existing consumers unchanged) 
-PASS F3: running it a second time still finds exactly one public rule and succeeds 
-PASS F3 guard: with two public rules it stops with a message and changes nothing 
---- after optional file 1b
-PASS F1b: anon no longer sees events of the alias exhibition, still sees the others 
-PASS F1b: the profile's own member can still read the alias exhibition's events 
+--- before any file
+PASS BEFORE: a visitor reads the real profile_id, curator notes and visitor keys of an alias exhibition from the table 
+PASS BEFORE: the owner's own event insert is refused (42501), as on production 
+PASS BEFORE: with the auth id as profile id it fails on the foreign key (23503): the old rule is in force, as on production 
+PASS S1 guard: with an unknown policy present it stops with a message and changes NOTHING (policies as before, no helper left behind) 
+--- after step 1
+PASS S1 insert: a member records an event for THEIR OWN exhibition 
+PASS S1 insert: QA user's profile combined with ANOTHER account's exhibition is refused 
+PASS S1 insert: a profile the user is not a member of is refused even with its own exhibition id 
+PASS S1 insert: an exhibition that does not exist is refused 
+PASS S1 insert: a malformed exhibition id is refused 
+PASS S1 insert: an unrelated signed-in account is refused 
+PASS S1 insert: the other profile's member can record for their own exhibition 
+PASS S1 insert: a signed-out visitor is refused (no privilege) 
+PASS S1 read (visitor): only events of exhibitions that are public, active and WITHOUT an alias 
+PASS S1 read (unrelated account): the same, nothing about alias / private / guest-only / draft 
+PASS S1 read (other profile's member): public ones only, none of the first profile's private events 
+PASS S1 read (owner): all seven of their exhibitions' events are readable 
+PASS S1 privacy: switching a public exhibition to PRIVATE hides its earlier events from visitors and other accounts at once 
+PASS S1 privacy: the owner still sees them 
+PASS S1 privacy: switching to Guest View / Registered also hides them 
+PASS S1 privacy: a draft (state STORAGE) is hidden 
+PASS S1 privacy: turning an alias ON hides them 
+PASS S1 privacy: back to public without alias they are visible again 
+PASS S1 privacy: an event whose exhibition was deleted is hidden from visitors 
+PASS S1 no update: the owner cannot edit an event (no privilege) 
+PASS S1 no delete: the owner cannot delete an event (no privilege) 
+PASS S1 probe-safe: an unrelated account asking 'does this alias exhibition belong to this profile?' always gets false 
+PASS S1 probe-safe: a visitor cannot call the ownership helper at all 
+PASS S1: the public-check helper answers false for an alias exhibition (same as for a missing one) 
+PASS S1: safe to run again 
+PASS order guard: step 4 before step 2 stops (no view) and changes nothing 
+PASS order guard: step 2 without the 20261018 link functions stops and creates nothing 
+--- after step 2
+PASS S2 view: the columns are EXACTLY the allowlist (no visitor keys, notes, last-viewed time, updated_at, or any future column) 
+PASS S2 view rows: only public + active (no private, guest-only, draft, alias-private) 
+PASS S2 view rows: an unrelated signed-in account sees the same 
+PASS S2 alias: profile_id is NULL, alias name kept (alias display still works) 
+PASS S2 plain: profile_id kept for Discover / profile lookups; a stale alias name stored while the alias is OFF is not exposed 
+PASS S2 hostile row: layout keeps ONLY allowlisted keys (owner id / email / private note / stray numeric keys are gone) 
+PASS S2 hostile row: exhibition_layout keeps only allowlisted keys plus sections and type 
+PASS S2 hostile row: itemIds keep only text ids (object and number entries dropped) 
+PASS S2 hostile row: only object snapshots with a plain id survive; every snapshot key is on the allowlist 
+PASS S2 public card: the visible snapshot keeps everything the public card needs (title, numbers, images, categories) and none of purchase price / value / owner fields 
+PASS S2 hidden item: only id, hidden, blur thumbnail and created time remain (real title, images, description removed even from an old row) 
+PASS S2 sections: only id, title, description, featuredItemId, itemIds, slotLayout (nulls in slots kept; junk and extra keys dropped) 
+PASS S2 no leaks anywhere in the view: no curator note, owner email, hidden title, hidden image, visitor key, or any profile id on an alias row 
+PASS S2 alias row text contains no profile or account id at all 
+PASS S2 ordinary row: the layout a normal exhibition needs is unchanged (themePack, itemIds, sections) 
+PASS S2 share link (visitor, alias exhibition): profile_id empty, no curator notes, no visitor keys, no last-viewed time, sanitised layout 
+PASS S2 share link (visitor, hostile row): the layout is the sanitised one 
+PASS S2 share link (owner): still gets the whole row including profile_id and notes 
+PASS S2 share link: a private exhibition returns nothing to an unrelated account 
+PASS S2 share link: ...but the owner still reaches it 
+PASS S2 share link: a draft returns nothing to a visitor 
+PASS S2: the row helper is not callable by visitors 
+PASS S2: the table itself is unchanged by step 2 (public read still works: this is the old path step 4 will close) 
+PASS S2: safe to run again 
+PASS S4 guard: with two public rules it stops, restores everything (the gallery_items rule is still the old one) and drops nothing 
+--- after step 4
+PASS S4 visitor: the table returns NOTHING any more (no profile_id, no layout, nothing) 
+PASS S4 unrelated account: the table returns nothing 
+PASS S4 member: still reads ALL of their own exhibitions (public, alias, private, guest-only, draft) 
+PASS S4 other profile's member: only their own 
+PASS S4 view: public exhibitions (including the alias one) are still listed for visitors 
+PASS S4 items: a visitor still reads the items of a public exhibition, alias included 
+PASS S4 items: a visitor reads none of a private exhibition's items 
+PASS S4 items: ...nor a draft's 
+PASS S4 items: the owner still reads their private exhibition's items 
+PASS S4 share link: still works for a visitor (definer function) 
+PASS S4 events: public events are still readable by a visitor (helper runs with owner rights) 
+PASS S4: the owner can still update their own exhibition 
+PASS S4: a second run stops with 'found 0' (expected, the rule is already gone) 
+PASS ROLLBACK 4: visitors read the public exhibitions from the table again 
+PASS ROLLBACK 4: public items readable the old way 
+PASS ROLLBACK 2: the view is gone 
+PASS ROLLBACK 2: view and sanitising helpers removed, link function back to the 20261018 behaviour 
+PASS ROLLBACK 2: share link still hides profile_id for an alias (20261018 behaviour) 
+PASS ROLLBACK 1: events readable by everyone again (the original rule) 
+PASS ROLLBACK 1: recording is refused again (the original rule) 
 
-25 passed, 0 failed
+76 passed, 0 failed

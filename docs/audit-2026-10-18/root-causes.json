@@ -74,7 +74,7 @@
    "EXH-127"
   ],
   "status": "PARTLY CLOSED",
-  "statusNote": "batch 5: alias and shelf-style autosave (EXH-165, 123, 124, 126, 127) closed on production; Announce and Make public now report a refused write honestly (EXH-179, EXH-161) but the notices cannot be recorded until migration file 1 is applied; EXH-281 (profile id on the public row) open, migration-blocked; Discover alias display fixed. SQL held for review in repair-batch-5/sql, nothing applied"
+  "statusNote": "batch 5: alias and shelf-style autosave (EXH-165, 123, 124, 126, 127) closed on production; Announce and Make public now report a refused write honestly (EXH-179, EXH-161) but the notices cannot be recorded until migration file 1 is applied; EXH-281 (profile id on the public row) open, migration-blocked; Discover alias display fixed. notification recording and public-data privacy remain migration-blocked; SQL package revision 2 (events authorization + privacy, allowlist view, staged table restriction) held for review in repair-batch-5/sql, nothing applied"
  },
  {
   "id": "RC-06",
