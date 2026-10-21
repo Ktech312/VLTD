@@ -4,7 +4,7 @@ import { AppIcon } from "@/components/ui/AppIcon";
 import { nativeSelectClass } from "@/components/ui/nativeSelect";
 import { ACCESS_PILLS, accessDescription, applyAccessMode, type GalleryAccessPillMode } from "@/lib/galleryAccess";
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import {
@@ -68,13 +68,17 @@ export default function NewMuseumGalleryPage() {
       ? Infinity
       : Math.max(0, effectiveLimit - existingGalleries.length);
 
+  // A ref, not state: a fast second click lands before React re-renders, and creation here finishes synchronously.
+  const createStartedRef = useRef(false);
+
   async function handleCreate() {
-    if (submitting) return;
+    if (submitting || createStartedRef.current) return;
     if (!canCreate) return;
 
     const cleanTitle = safeTrim(title);
     if (!cleanTitle) return;
 
+    createStartedRef.current = true;
     setSubmitting(true);
 
     try {
@@ -96,8 +100,11 @@ export default function NewMuseumGalleryPage() {
 
       saveGalleries([...existingGalleries, updated]);
       router.push(`/museum/${updated.id}`);
-    } finally {
+      // Stay in the "Creating..." state until the page changes; releasing the guard here is what let a double-click make two.
+    } catch (error) {
+      createStartedRef.current = false;
       setSubmitting(false);
+      throw error;
     }
   }
 
@@ -175,7 +182,8 @@ export default function NewMuseumGalleryPage() {
               <label className="mb-2 block text-sm font-medium">Exhibition Title</label>
               <input
                 value={title}
-                onChange={(e) => setTitle(e.target.value)}
+                onChange={(e) => setTitle(e.target.value.slice(0, 80))}
+                maxLength={80}
                 placeholder="e.g. Hall of Grails"
                 className={`w-full ${nativeSelectClass}`}
               />
@@ -289,6 +297,12 @@ export default function NewMuseumGalleryPage() {
           {!canCreate ? (
             <div className="mt-4 rounded-[20px] bg-[color:var(--input)] p-4 text-sm text-[color:var(--muted)] ring-1 ring-[color:var(--border)]">
               You have reached your current exhibition limit for this profile.
+            </div>
+          ) : null}
+
+          {canCreate && !safeTrim(title) ? (
+            <div data-testid="create-needs-title" className="mt-4 text-sm text-[color:var(--muted)]">
+              Enter an exhibition title above to create it.
             </div>
           ) : null}
 

@@ -12,6 +12,8 @@ import { Glyph, universeGlyphName } from "@/components/ui/Glyph";
 import { AccountTabs } from "@/components/account/AccountTabs";
 
 import { getOnboardingStatus, updateProfile } from "@/lib/auth";
+import { USERNAME_TAKEN_MESSAGE, isUsernameTakenError } from "@/lib/friendlyError";
+import { displayNameProblem, usernameProblem } from "@/lib/profileRules";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 import { syncPublicProfile } from "@/lib/publicProfile";
 import { getPendingVaultSyncCount, processVaultSyncQueue } from "@/lib/vaultSyncQueue";
@@ -47,6 +49,7 @@ export default function AccountPage() {
   const [profileId, setProfileId] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [username, setUsername] = useState("");
+  const [savedUsername, setSavedUsername] = useState("");
   const [profileType, setProfileType] = useState<"personal" | "business">("personal");
   const [primaryFocus, setPrimaryFocus] = useState("");
   const [bio, setBio] = useState("");
@@ -109,6 +112,7 @@ export default function AccountPage() {
         setProfileId(status.activeProfile.id);
         setDisplayName(status.activeProfile.display_name ?? "");
         setUsername(status.activeProfile.username ?? "");
+        setSavedUsername(status.activeProfile.username ?? "");
         setProfileType(status.activeProfile.profile_type ?? "personal");
         setPrimaryFocus(normalizeFocus(status.activeProfile.primary_focus));
         setBio(String(status.activeProfile.bio ?? ""));
@@ -260,9 +264,15 @@ export default function AccountPage() {
 
   async function handleSave() {
     if (!profileId) return;
-    setSaving(true);
     setError("");
     setSuccess("");
+    // Nothing is sent until the name and username are acceptable, so a refused save never looks like a saved one.
+    const problem = displayNameProblem(displayName) ?? (username !== savedUsername ? usernameProblem(username) : null);
+    if (problem) {
+      setError(problem);
+      return;
+    }
+    setSaving(true);
     try {
       await updateProfile(profileId, {
         display_name: displayName,
@@ -281,10 +291,11 @@ export default function AccountPage() {
         );
       }
       void syncPublicProfile(profileId);
+      setSavedUsername(username.trim());
       setSuccess("Account updated.");
       router.refresh();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to save account.");
+      setError(isUsernameTakenError(err) ? USERNAME_TAKEN_MESSAGE : err instanceof Error ? err.message : "Failed to save account.");
     } finally {
       setSaving(false);
     }
