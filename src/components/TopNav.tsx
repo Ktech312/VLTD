@@ -77,12 +77,6 @@ type ProfileRow = {
   avatar_url?: string | null;
 };
 
-type Parsed = {
-  q?: string;
-  cat?: string;
-  graded?: string;
-  grade?: string;
-};
 
 /* ── Nav items ──────────────────────────────────────────── */
 // Icon art lives in AppIcon.tsx now (variant="navTop") — one component, so
@@ -108,36 +102,6 @@ function normalize(s: string) {
   return s.trim().replace(/\s+/g, " ");
 }
 
-function parseQuerySmart(raw: string): Parsed {
-  const s = normalize(raw).toLowerCase();
-  const out: Parsed = {};
-  let leftover = s;
-
-  const catMap: Record<string, string> = {
-    comics: "COMICS", comic: "COMICS", sports: "SPORTS", sport: "SPORTS",
-    pokemon: "POKEMON", "pokémon": "POKEMON", mtg: "MTG", magic: "MTG", custom: "CUSTOM",
-  };
-  for (const key of Object.keys(catMap)) {
-    const re = new RegExp(`\\b${key}\\b`, "i");
-    if (re.test(leftover)) { out.cat = catMap[key]; leftover = leftover.replace(re, " "); }
-  }
-
-  const graders = ["cgc", "psa", "bgs", "sgc"];
-  for (const g of graders) {
-    const re = new RegExp(`\\b${g}\\b`, "i");
-    if (re.test(leftover)) { out.graded = g.toUpperCase(); leftover = leftover.replace(re, " "); }
-  }
-
-  const gradeInline = leftover.match(/\b(\d{1,2}(?:\.\d)?)\b/);
-  if (gradeInline?.[1]) {
-    const maybe = gradeInline[1];
-    if (Number(maybe) >= 1 && Number(maybe) <= 10) { out.grade = maybe; leftover = leftover.replace(gradeInline[0], " "); }
-  }
-
-  const cleaned = normalize(leftover).trim();
-  if (cleaned) out.q = cleaned;
-  return out;
-}
 
 /* ── Main component ─────────────────────────────────────── */
 
@@ -322,13 +286,9 @@ function TopNavInner() {
   }, [userOpen, levelInfoOpen]);
 
   function applySearch(raw: string) {
-    const parsed = parseQuerySmart(raw);
-    const params = new URLSearchParams();
-    if (parsed.q) params.set("q", parsed.q);
-    if (parsed.cat) params.set("cat", parsed.cat);
-    if (parsed.graded) params.set("graded", parsed.graded);
-    if (parsed.grade) params.set("grade", parsed.grade);
-    router.push("/vault" + (params.toString() ? `?${params.toString()}` : ""));
+    // The whole text goes to the Vault's own search box (it matches titles, numbers, grades, notes and more).
+    const q = normalize(raw);
+    router.push("/vault" + (q ? `?q=${encodeURIComponent(q)}` : ""));
   }
 
   async function handleSignOut() {

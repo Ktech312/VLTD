@@ -8,6 +8,7 @@ import { PillButton } from "@/components/ui/PillButton";
 import VaultCategoryChips, { chipKey, vaultItemCategory, vaultItemSubcategory } from "@/components/VaultCategoryChips";
 import { normalizeUniverse, universeForItem } from "@/lib/universeMatch";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { WorkspaceActions, useInVaultWorkspace } from "@/components/vault/VaultWorkspace";
 import { memo, startTransition, useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -1105,6 +1106,11 @@ export default function VaultListView({ lockedUniverse }: { lockedUniverse?: Uni
   const [focusKey] = useState<UniverseKey | null>(() => readFocusUniverseKey());
   const [items, setItems] = useState<VaultItem[]>([]);
   const [query, setQuery] = useState("");
+  // The header search box and the command palette open /vault?q=...: the list follows that text. (Typing in this page's own search box changes the box, not the address.)
+  const urlQuery = useSearchParams().get("q") ?? "";
+  useEffect(() => {
+    if (urlQuery) setQuery(urlQuery);
+  }, [urlQuery]);
   const [universeFilter, setUniverseFilter] = useState<UniverseFilter>(lockedUniverse ?? "ALL");
   // Moving between universe routes reuses this component: follow the route.
   useEffect(() => {
