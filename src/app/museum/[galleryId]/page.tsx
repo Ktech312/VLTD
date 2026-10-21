@@ -170,6 +170,12 @@ function normalizeDraftForCompare(gallery: Gallery | null) {
     visibility: gallery.visibility,
     guestViewMode: gallery.guestViewMode,
     adultOnly: gallery.adultOnly ?? false,
+    // the curator alias and the shelf style are edited here too: without them a change to either never counted as an edit, so it was
+    // never autosaved (RB: alias and shelf-style edits lived only in this browser)
+    aliasEnabled: gallery.aliasEnabled ?? false,
+    aliasName: gallery.aliasName ?? "",
+    aliasAvatar: gallery.aliasAvatar ?? "",
+    shelfOverlayStyle: gallery.shelfOverlayStyle ?? "",
     itemIds: gallery.itemIds,
     coverImage: gallery.coverImage || "",
     shelfBackground: gallery.shelfBackground || "",
@@ -652,14 +658,19 @@ export default function GalleryPage() {
         );
       }
 
-      // Log publish event after a successful save — fire-and-forget.
+      // Record the publish event after a successful save. The exhibition itself is public either way; if the account refuses the
+      // follower notice the page says so instead of claiming followers were told.
       if (justPublished) {
         const profileId =
           typeof window !== "undefined"
             ? String(window.localStorage.getItem("vltd_active_profile_id_v1") ?? "").trim()
             : "";
         if (profileId) {
-          void logExhibitionPublished(nextDraft.id, profileId, nextDraft.title);
+          const noticeRecorded = await logExhibitionPublished(nextDraft.id, profileId, nextDraft.title);
+          if (!noticeRecorded) {
+            setStatusTone("neutral");
+            setStatus("Exhibition published, but followers were not notified: the account did not accept the notice.");
+          }
         }
       }
       return true;
@@ -679,9 +690,15 @@ export default function GalleryPage() {
     if (!profileId) return;
     setAnnouncing(true);
     try {
-      await logExhibitionAnnouncement(gallery.id, profileId, gallery.title, gallery.itemIds.length);
-      setAnnounced(true);
-      setTimeout(() => setAnnounced(false), 3000);
+      const recorded = await logExhibitionAnnouncement(gallery.id, profileId, gallery.title, gallery.itemIds.length);
+      if (recorded) {
+        setAnnounced(true);
+        setTimeout(() => setAnnounced(false), 3000);
+      } else {
+        // The account refused (or could not be reached): say so, never "Announced".
+        setStatusTone("neutral");
+        setStatus("Not announced: your followers were not told, because the account did not accept the announcement. Nothing was sent. Try again later.");
+      }
     } finally {
       setAnnouncing(false);
     }
