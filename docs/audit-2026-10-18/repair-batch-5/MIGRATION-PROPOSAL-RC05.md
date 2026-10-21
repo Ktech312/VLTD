@@ -64,11 +64,39 @@ Switching an exhibition to Private, Guest View, Registered, draft, or turning an
 
 ## 6. Exact staged order
 Stop at any failed check and tell me; each stage has a rollback.
-1. **Stage 0 (you).** Run `0-inspect-read-only.sql`, send me all result sets. If 0.5 errors with "function does not exist", 20261018 was never applied: stop. **I compare it to section 1 and confirm before anything else.**
+1. **Stage 0 (you).** Run [0-inspect-read-only-single.sql](sql/0-inspect-read-only-single.sql): it is one query with one result cell (the Supabase editor shows only the last result of a script), copy that whole cell and send it to me. (The ten-block version, [0-inspect-read-only.sql](sql/0-inspect-read-only.sql), prints the same material if you run its blocks one at a time.) I cannot read production's policies myself, so **no modifying file is authorised until I have reviewed this output** against the checklist in section 6a and told you it matches. The 76 local checks show the SQL behaves as designed on the schema I assumed; they do not show that production has that schema.
 2. **Stage 1 (you).** Run `1-events-authorization-and-privacy.sql`. Then run the stage-1 block of `validation-queries.sql` and send the output. **(me, on your word)** I create isolated QA content with two QA accounts and check on production: the owner records an event for their own exhibition; the same user's profile with the other account's exhibition is refused; an unrelated account is refused; a visitor and an unrelated account read none of the alias / private / guest-only / draft events; setting the exhibition to Private hides its event, setting it back shows it; Announce on a QA exhibition (QA profile has 0 followers, so nothing reaches a real person) shows "✓ Announced" with exactly one row; the follower notice on Make public is recorded. Rollback: `rollback-1.sql`.
 3. **Stage 2 (you).** Run `2-public-galleries-view-and-link-sanitising.sql`; run the stage-2 validation block; send the output. **(me)** I create a QA exhibition with deliberately hostile data and read the view and the share link as a visitor and as an unrelated account. Rollback: `rollback-2.sql`.
 4. **Stage 3 (me, no SQL).** I deploy the site change (section 7) and verify every consumer on production before you do anything else: visitor, unrelated account, member, with alias, public, private and draft QA exhibitions; Discover, the guest page, share and invite pages, the public home, the preview images, the follower feed, the owner's builder and list, and the local-cache step. I report a table; you decide whether to continue. The old table read path is still open here, so this stage can be reverted by reverting the deploy.
 5. **Stage 4 (you).** Run `4-restrict-galleries-table-read.sql` only after the stage-3 table is clean. Run the stage-4 validation block. **(me)** I repeat the full matrix, including a visitor, an unrelated account and a member, and confirm nothing public broke. Rollback: `rollback-4.sql`.
+
+### 6a. What I check in the stage-0 output (any mismatch stops the package and I revise it)
+| Item in the output | Must show | If it differs |
+|---|---|---|
+| `rls` | row security on for galleries, gallery_items, exhibition_events | stop: different protection model |
+| `policies` for exhibition_events | exactly "Public read exhibition_events" (select, true) and "Owner insert exhibition_events" (insert, auth.uid() = profile_id); no others | an extra rule could re-open event reads or inserts; step 1 would refuse to run, I revise it |
+| `policies` for galleries | one public SELECT rule (public + active), `galleries_select_member`, member insert / update / delete rules; nothing permissive for anon beyond the public read | an extra anon rule would keep exposing alias rows after step 4 |
+| `policies` for gallery_items | the 20260823 public read rule (sub-query on galleries) | step 4's rewrite must match what is there |
+| `table_grants` | anon: select (no insert/update/delete) on galleries and gallery_items; whatever is on exhibition_events (step 1 normalises it) | a write grant for anon on galleries would be a separate, more serious finding |
+| `column_grants_of_note` | none (table-level select only) | column-level rules change what a "view" can hide |
+| `functions` and the two link-function definitions | `gallery_public_row` present, security definer, not executable by anon/authenticated; share/invite functions as in 20261018 | if absent, 20261018 was never applied: that is its own stage before this package |
+| `triggers` and `other_policies_mentioning_galleries` / `views_mentioning_galleries` | nothing beyond the known per-profile item trigger | any other reader of galleries under the caller's rights would break at step 4 |
+| `public_galleries_view_exists` | false (or, if true, I read its definition before replacing it) | |
+| `exhibition_events_rows` | 0 (or I review each row's exhibition before step 1 changes who can read them) | |
+| `exhibitions_with_account_ids_in_public_columns` | 0 | any hit is fixed in the data or the sanitising before stage 2 |
+
+### 6b. The gate for step 4 (no step 4 until every required consumer is verified on production)
+Required, each verified with QA data as a visitor, an unrelated signed-in account, a member (owner), and with public / alias / private / guest-only / draft exhibitions, after the stage-3 deploy and **before** you are asked to run step 4:
+1. Discover list and detail panel (alias shown under the alias, real name otherwise)
+2. Guest page of a public exhibition, a public alias exhibition, and the owner's own (including a private one)
+3. Share-link page and invite-link page (visitor and owner)
+4. Public home featured exhibitions
+5. Preview images / page titles: Discover, share link, guest page, profile
+6. Follower feed (events and links)
+7. Owner: builder, Exhibitions list, Save, the local-cache step (no alias row adopted, no other person's exhibition cached)
+8. Public items of a public exhibition (visitor) and none of a private or draft one
+9. Admin characters page still reads and updates
+Step 4 is offered only when all nine pass; otherwise it stays unrun.
 
 ## 7. Site change for stage 3 (prepared in design, not written or deployed)
 Consumers of the galleries table, and what each must do (list only; code follows after stage 2):
