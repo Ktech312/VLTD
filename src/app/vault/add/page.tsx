@@ -1263,7 +1263,7 @@ export default function AddPage() {
     // Flip back to true once decode reliability is confirmed.
     const ENABLE_PSA_LOOKUP = false;
     if (!ENABLE_PSA_LOOKUP) {
-      setStatus("PSA lookups are paused for now (testing barcode reading) — cert number not looked up.");
+      setStatus("PSA cert lookup is unavailable right now, so the cert number was not looked up. It is still saved with the item.");
       return false;
     }
 
@@ -1743,8 +1743,8 @@ export default function AddPage() {
 
       return safeToAutofill;
     } catch (error) {
-      const message =
-        error instanceof Error ? error.message : "Image identify failed.";
+      const detail = error instanceof Error ? error.message.trim() : "";
+      const message = `Image identify failed${detail ? ` (${detail.replace(/\.$/, "")})` : ""}. Fill in the details by hand, or try again.`;
       setScanSession((prev) => markScanSessionFailed(prev, message));
       setStatus(message);
       return false;
@@ -2399,7 +2399,7 @@ export default function AddPage() {
           ) : null}
 
           {/* Only surface important alerts (saved / errors / limits) — not routine nudges */}
-          {status && (status.startsWith("✓") || /limit|failed|error|required|unavailable|deleted|removed|negative|numbers only|not a number|enter an amount|enter one amount|decimal|not supported|too large|spaces inside|period for cents/i.test(status)) ? (
+          {status && (status.startsWith("✓") || /limit|failed|error|required|unavailable|deleted|removed|negative|numbers only|not a number|enter an amount|enter one amount|decimal|not supported|too large|spaces inside|period for cents|not an image|not confident|paused|not found|no match|no isbn|couldn.?t|could not|unable|try again|no longer available|take a photo first|take or choose/i.test(status)) ? (
             <div
               role={status.startsWith("✓") ? "status" : "alert"}
               className="mt-2 rounded-xl px-3 py-2 text-sm ring-1"
@@ -2861,6 +2861,12 @@ export default function AddPage() {
                         applyLabel={cropEditorTarget === "media" ? "Save Photo" : "Use This Picture"}
                         onApply={() => void handleApplyCropEditor()}
                         onReset={() => setScanCrop(DEFAULT_SCAN_CROP)}
+                        onUseFull={() => {
+                          // The whole photo, as it is: close the step (the crop frame is back to full).
+                          setScanCrop(DEFAULT_SCAN_CROP);
+                          setIsCropEditorOpen(false);
+                          setStatus(cropEditorTarget === "media" ? "Photo kept as it was." : "Picture ready. Choose Identify with AI to fill in the details, or fill them in yourself.");
+                        }}
                         onCancel={() => setIsCropEditorOpen(false)}
                         isApplying={isApplyingCrop}
                         compact

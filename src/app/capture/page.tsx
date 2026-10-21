@@ -510,6 +510,25 @@ export default function CapturePage() {
   // Capture-first: attach the photo instantly. AI identify is opt-in (the
   // "Identify with AI" / "Auto ID" buttons), so taking a photo never blocks
   // on the vision call or spends a scan you didn't ask for.
+  // A chosen file must really be a readable photo; otherwise say so now instead of adding a tile that decodes to nothing.
+  const [photoProblem, setPhotoProblem] = useState("");
+  async function photoIsReadable(file: File): Promise<boolean> {
+    const label = file.name ? `"${file.name}"` : "That file";
+    if (file.type && !file.type.startsWith("image/")) {
+      setPhotoProblem(`${label} is not a photo. Choose a JPEG, PNG or similar image.`);
+      return false;
+    }
+    try {
+      const bitmap = await createImageBitmap(file);
+      bitmap.close();
+    } catch {
+      setPhotoProblem(`${label} couldn't be read as a photo. Choose a different image.`);
+      return false;
+    }
+    setPhotoProblem("");
+    return true;
+  }
+
   const handleCapture = useCallback((file: File) => {
     // Append (never overwrite). First photo becomes the cover; the rest are angles.
     setCapturedImages((prev) => [...prev, file]);
@@ -1081,6 +1100,9 @@ export default function CapturePage() {
                         </div>
                       )}
                     </div>
+                    {photoProblem ? (
+                      <p role="alert" data-testid="photo-problem" className="mt-2 text-[11px] leading-4 text-[#EF4444]">{photoProblem}</p>
+                    ) : null}
                     {previewUrl ? (
                       <>
                         <a
@@ -1139,6 +1161,7 @@ export default function CapturePage() {
                           key={url}
                           data-thumb-index={i}
                           onPointerDown={(event) => handleThumbPointerDown(event, i)}
+                          onDragStart={(event) => event.preventDefault()}
                           onKeyDown={(event) => {
                             if (event.key === "Enter" || event.key === " ") setSelectedPreviewIndex(i);
                           }}
@@ -1162,7 +1185,7 @@ export default function CapturePage() {
                           }}
                         >
                           {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img src={url} alt="" className="h-full w-full object-cover" />
+                          <img src={url} alt="" draggable={false} className="h-full w-full object-cover" />
                           <span
                             className="pointer-events-none absolute left-1 top-1 rounded px-1.5 py-0.5 text-[9px] font-black uppercase tracking-wide"
                             style={{ background: i === 0 ? "var(--theme-gold, #C8CDD2)" : "rgba(2,9,12,0.72)", color: i === 0 ? "#0B0B0B" : "var(--theme-gold, #C8CDD2)" }}
@@ -1582,7 +1605,7 @@ export default function CapturePage() {
           onChange={(event) => {
             const file = event.currentTarget.files?.[0];
             event.currentTarget.value = "";
-            if (file) void handleCapture(file);
+            if (file) void photoIsReadable(file).then((ok) => { if (ok) handleCapture(file); });
           }}
         />
 
@@ -1599,7 +1622,7 @@ export default function CapturePage() {
           onChange={(event) => {
             const file = event.currentTarget.files?.[0];
             event.currentTarget.value = "";
-            if (file) handleNativeCameraFile(file);
+            if (file) void photoIsReadable(file).then((ok) => { if (ok) handleNativeCameraFile(file); });
           }}
         />
 
@@ -1621,6 +1644,7 @@ export default function CapturePage() {
                   applyLabel="Save"
                   onApply={() => void applyNativeCropEditor()}
                   onReset={() => setPendingNativeCrop(DEFAULT_NATIVE_CROP)}
+                  onUseFull={() => { if (pendingNativeFile) handleCapture(pendingNativeFile); closeNativeCropEditor(); }}
                   onCancel={closeNativeCropEditor}
                   isApplying={isApplyingNativeCrop}
                   compact

@@ -101,6 +101,7 @@ export default function ScanCropEditor({
   onChange,
   onApply,
   onReset,
+  onUseFull,
   onCancel,
   onRotate,
   rotation = 0,
@@ -121,6 +122,8 @@ export default function ScanCropEditor({
   onChange: (next: ScanCropRect) => void;
   onApply: () => void;
   onReset: () => void;
+  /** When given, "Use Full Photo" accepts the whole photo and carries on, instead of only resetting the crop frame. */
+  onUseFull?: () => void;
   onCancel: () => void;
   onRotate?: () => void;
   rotation?: number;
@@ -566,7 +569,7 @@ export default function ScanCropEditor({
           <PillButton variant="primary" onClick={onApply} disabled={isApplying}>
             {isApplying ? "Saving..." : applyLabel}
           </PillButton>
-          <PillButton onClick={handleReset}>Use Full Photo</PillButton>
+          <PillButton onClick={() => { handleReset(); onUseFull?.(); }}>Use Full Photo</PillButton>
           <PillButton onClick={requestCancel}>Cancel</PillButton>
         </div>
       ) : null}

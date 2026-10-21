@@ -220,6 +220,8 @@ export default function ScanCapturePanel({ onClose }: { onClose: () => void }) {
   const [scanningId, setScanningId] = useState<string | null>(null);
   const [committing, setCommitting] = useState(false);
   const [verifyStatus, setVerifyStatus] = useState("");
+  // Why the live camera is not showing (blank until a start attempt fails), so the person is told instead of seeing an empty viewfinder.
+  const [cameraProblem, setCameraProblem] = useState("");
   // Only signed-in curators are metered; anonymous/local use isn't charged.
   const metered = Boolean(profileId);
 
@@ -300,6 +302,7 @@ export default function ScanCapturePanel({ onClose }: { onClose: () => void }) {
           : { video: { facingMode: { ideal: "environment" }, width: { ideal: 1280 }, zoom: true } as MediaTrackConstraints, audio: false };
         const stream = await navigator.mediaDevices.getUserMedia(constraints);
         if (!active) { stream.getTracks().forEach((t) => t.stop()); return; }
+        setCameraProblem("");
         streamRef.current = stream;
         if (videoRef.current) {
           videoRef.current.srcObject = stream;
@@ -309,8 +312,15 @@ export default function ScanCapturePanel({ onClose }: { onClose: () => void }) {
         // Camera labels are only available after permission is granted.
         const list = (await navigator.mediaDevices.enumerateDevices()).filter((d) => d.kind === "videoinput");
         if (active) setDevices(list);
-      } catch {
-        /* camera unavailable — user can still Finish/close */
+      } catch (error) {
+        // The camera is unavailable: say why; the person can still Finish or close.
+        if (!active) return;
+        const text = error instanceof Error ? `${error.name} ${error.message}` : "";
+        if (typeof window !== "undefined" && !window.isSecureContext) setCameraProblem("Camera access needs a secure (https) connection.");
+        else if (/NotAllowedError|Permission/i.test(text)) setCameraProblem("Camera access is blocked for this site. Allow the camera in your browser settings, then reopen Quick Add.");
+        else if (/NotReadableError|TrackStartError|Could not start video source/i.test(text)) setCameraProblem("The camera is busy in another app or browser tab.");
+        else if (/NotFoundError|DevicesNotFoundError/i.test(text)) setCameraProblem("No camera was found on this device.");
+        else setCameraProblem("The camera couldn't start on this device.");
       }
     }
     void start();
@@ -595,18 +605,22 @@ export default function ScanCapturePanel({ onClose }: { onClose: () => void }) {
     if (pending.length === 0) return;
     setScanningId("*all*");
     setVerifyStatus(`Identifying ${pending.length} item${pending.length === 1 ? "" : "s"} with AI…`);
+    let summary = "";
     try {
-      await runAiScan(pending);
+      summary = await runAiScan(pending);
     } finally {
       setScanningId(null);
-      setVerifyStatus("");
+      setVerifyStatus(summary);
     }
   }
 
-  async function runAiScan(list: ScanDraft[]) {
+  // Returns the sentence to leave on screen when it ends (blank when everything was identified).
+  async function runAiScan(list: ScanDraft[]): Promise<string> {
     setScanTotal(list.length);
     setScanDone(0);
     let localRemaining: number | null = scanRemaining;
+    let failed = 0;
+    let stopped = "";
 
     for (let i = 0; i < list.length; i += 1) {
       setScanDone(i);
@@ -628,7 +642,7 @@ export default function ScanCapturePanel({ onClose }: { onClose: () => void }) {
       // Only stop early when we KNOW the cycle is spent; if the quota hasn't
       // loaded yet (null), let the server's atomic consume decide.
       if (metered && localRemaining !== null && localRemaining <= 0) {
-        setVerifyStatus("You've used all your AI scans for this cycle — fill the rest in by hand.");
+        stopped = "You've used all your AI scans for this cycle — fill the rest in by hand.";
         break;
       }
 
@@ -652,7 +666,7 @@ export default function ScanCapturePanel({ onClose }: { onClose: () => void }) {
             localRemaining = res.remaining;
             setScanRemaining(res.remaining);
             if (res.granted === 0) {
-              setVerifyStatus("You've used all your AI scans for this cycle — fill the rest in by hand.");
+              stopped = "You've used all your AI scans for this cycle — fill the rest in by hand.";
               break;
             }
           }
@@ -661,11 +675,15 @@ export default function ScanCapturePanel({ onClose }: { onClose: () => void }) {
         const patch = visionToDraftPatch(vision, draft.universe, draft.categoryLabel);
         setDrafts((prev) => prev.map((d) => (d.id === draft.id ? { ...d, ...patch } : d)));
       } catch {
-        // Leave this draft blank for manual entry.
+        // Leave this draft blank for manual entry, and count it so the person is told.
+        failed += 1;
       }
     }
 
     setScanDone(list.length);
+    if (stopped) return stopped;
+    if (failed > 0) return `${failed} of ${list.length} couldn't be identified. Fill ${failed === 1 ? "it" : "them"} in by hand, or try again.`;
+    return "";
   }
 
   async function rescanOne(id: string) {
@@ -859,6 +877,11 @@ export default function ScanCapturePanel({ onClose }: { onClose: () => void }) {
                 : undefined
             }
           />
+          {cameraProblem ? (
+            <div role="alert" data-testid="camera-problem" className="absolute inset-x-3 top-1/3 z-10 rounded-xl bg-black/70 px-3 py-2 text-center text-xs font-semibold text-white">
+              {cameraProblem}
+            </div>
+          ) : null}
           <FrameOverlay frameType={frameType} capturing={capturing} />
 
           {/* Live zoom control -- hardware zoom when the browser/hardware
