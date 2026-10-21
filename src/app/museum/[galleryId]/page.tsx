@@ -235,6 +235,9 @@ export default function GalleryPage() {
   const [loadedOnce, setLoadedOnce] = useState(false);
   const [headerEditing, setHeaderEditing] = useState(false);
   const [announcing, setAnnouncing] = useState(false);
+  // A refused follower notice stays on screen next to the buttons until the next action (the page-wide status line clears itself in 2 s
+  // and can sit above the visible part of the page).
+  const [noticeProblem, setNoticeProblem] = useState("");
   const [announced, setAnnounced] = useState(false);
 
   const [originalSnapshot, setOriginalSnapshot] = useState("");
@@ -668,6 +671,8 @@ export default function GalleryPage() {
         if (profileId) {
           const noticeRecorded = await logExhibitionPublished(nextDraft.id, profileId, nextDraft.title);
           if (!noticeRecorded) {
+            const msg = "Published, but followers were not notified: the account did not accept the notice.";
+            setNoticeProblem(msg);
             setStatusTone("neutral");
             setStatus("Exhibition published, but followers were not notified: the account did not accept the notice.");
           }
@@ -689,6 +694,7 @@ export default function GalleryPage() {
         : "";
     if (!profileId) return;
     setAnnouncing(true);
+    setNoticeProblem("");
     try {
       const recorded = await logExhibitionAnnouncement(gallery.id, profileId, gallery.title, gallery.itemIds.length);
       if (recorded) {
@@ -696,6 +702,7 @@ export default function GalleryPage() {
         setTimeout(() => setAnnounced(false), 3000);
       } else {
         // The account refused (or could not be reached): say so, never "Announced".
+        setNoticeProblem("Not announced: your followers were not told, because the account did not accept the announcement. Nothing was sent.");
         setStatusTone("neutral");
         setStatus("Not announced: your followers were not told, because the account did not accept the announcement. Nothing was sent. Try again later.");
       }
@@ -1255,6 +1262,9 @@ export default function GalleryPage() {
                       )}
                     </button>
                   </div>
+                  {noticeProblem ? (
+                    <div role="alert" data-testid="follower-notice-problem" className="mt-2 text-[12px] leading-snug text-amber-300">{noticeProblem}</div>
+                  ) : null}
                 </div>
               </div>
 
