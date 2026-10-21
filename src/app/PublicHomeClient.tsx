@@ -800,7 +800,6 @@ export default function PublicHomeClient() {
                 <div className="flex flex-col gap-1.5">
                   <Link href="#public-galleries" className="text-[color:var(--muted)] hover:text-text-primary transition">Exhibitions</Link>
                   <Link href="/discover" className="text-[color:var(--muted)] hover:text-text-primary transition">Discover</Link>
-                  <Link href="/discover" className="text-[color:var(--muted)] hover:text-text-primary transition">Exhibitions</Link>
                 </div>
               </div>
               <div>
