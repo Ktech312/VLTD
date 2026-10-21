@@ -143,7 +143,7 @@ function SaleCard({ row, imageUrl }: { row: SalesRow; imageUrl?: string }) {
         <div className="flex flex-1 min-w-0 flex-col justify-between gap-1 p-3">
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0">
-              <Link href={itemHref} className="block truncate font-semibold text-sm hover:underline" style={{ color: "var(--fg)" }}>
+              <Link href={itemHref} className="block truncate font-semibold text-sm hover:underline max-md:-my-3 max-md:py-3" style={{ color: "var(--fg)" }}>
                 {sale.title ?? "Untitled"}
               </Link>
               <div className="mt-0.5 flex items-center gap-1.5 flex-wrap text-[11px]" style={{ color: "var(--muted)" }}>
@@ -326,7 +326,7 @@ export default function SalesHistoryPage() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search sales…"
-              className="h-11 md:h-9 flex-1 rounded-full px-4 text-sm ring-1 ring-[color:var(--border)] focus:outline-none min-w-[140px]"
+              className="h-11 md:h-9 max-sm:flex-none sm:flex-1 rounded-full px-4 text-sm ring-1 ring-[color:var(--border)] focus:outline-none min-w-[140px]"
               style={{ background: "var(--pill)", color: "var(--fg)" }}
             />
             <div className="flex flex-wrap gap-1.5">

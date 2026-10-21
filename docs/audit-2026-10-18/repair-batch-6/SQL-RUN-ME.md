@@ -1,41 +1,37 @@
-# Batch 6 to 11 SQL: three small files (RC-11 scan allowance, RC-10 avatar upload, RC-23 Market asking prices, RC-27 exhibition view counter)
+# SQL to run (updated 2026-10-21): four files, in this order
 
-Run each file once in the Supabase SQL editor, in this order, then its check. All three are safe to run again and none changes any existing data.
+RC-05 stage 4 (the old exhibitions-table read) is done and verified (database checks 20 of 20, page matrix 41 of 41), so nothing below waits on it any more.
+Run each file once in the Supabase SQL editor, then its check. All are safe to run again. None changes customer data. Each has a rollback.
 
-## File 1: scan allowance + avatar upload (RC-11, RC-10)
-**What it fixes for people**
-- Business profiles and the Personal profiles whose profile id differs from their user id (17 of 39 real profiles) cannot see or use their AI-scan allowance: the Bulk ticker never shows and scanning is blocked.
-- Nobody can upload an avatar picture today (every upload is refused). After the file runs, a member can upload into their own profile's folder only.
+For each file: open it, paste the whole file, Run. Then open its `validation-N.sql`, Run, and paste me the single result cell. I verify on production with a synthetic account and update the status files.
 
-**Touches**: one function (`bulk_scan_guard`, adds "is a member of that profile") and four storage rules on the public `avatars` bucket.
+## File 1: scan allowance + avatar upload. **Run this one first: it closes a hole.**
+[1-scan-quota-guard-and-avatar-uploads.sql](sql/1-scan-quota-guard-and-avatar-uploads.sql), then [validation-1.sql](sql/validation-1.sql). Rollback: [rollback-1.sql](sql/rollback-1.sql) (it puts the hole back, so use it only if the app breaks).
 
-1. Run [1-scan-quota-guard-and-avatar-uploads.sql](sql/1-scan-quota-guard-and-avatar-uploads.sql). Expect "Success. No rows returned".
-2. Run [validation-1.sql](sql/validation-1.sql). Expect one row where the first, second and fourth values are `true` and `avatar_policies` is `4`.
-3. If anything looks wrong: [rollback-1.sql](sql/rollback-1.sql).
+**The hole (found while correcting this file, shown on a synthetic profile only):** the live scan-allowance functions let anyone with no session read and spend any profile's AI-scan allowance, because the guard had `auth.uid() is null` as an allowed case and the "anonymous" role could call the functions. With only the site's public key and a profile id, someone could use up another person's monthly scans. No customer's allowance was touched by me.
 
-Tested locally in a real in-process Postgres (apply, re-run, validation, rollback; 23 of 23, `scripts/test-batch6-sql-in-postgres.cjs`): a member can read/spend only their own profile's allowance and write only their own profile's avatar folder; other profiles, other accounts, the bucket root and other buckets stay refused.
+**What it does:**
+- Removes that bypass, and removes the anonymous role's right to call the allowance functions at all.
+- The owner of a profile, or a member of it, can read and spend that profile's allowance (this also fixes Business profiles and Personal profiles whose id differs from their user id, who could not use their allowance: RC-11).
+- Admins (the owner email and anyone in the user_roles table) can READ an allowance, not spend someone else's. The server's service role can do both.
+- Members can write only inside their own profile's avatar folder (RC-10 avatar upload), and nobody else can.
+
+Tested in a real local Postgres, 42 of 42 (`scripts/test-batch6-sql-in-postgres.cjs`): it first shows the anonymous read and spend working on the current rules, then shows them refused after the file, plus members, other accounts, admins, the owner email, the service role, the avatar folders, re-run, validation and rollback.
 
 ## File 2: the Market shows the seller's asking price (RC-23)
-**What it fixes**: the Market page showed each item's estimated value as if it were the price, because the public items view had no asking-price column. The page already reads the new column when it exists (and labels prices "asking" or "value"); this file adds it.
+[2-public-view-asking-price.sql](sql/2-public-view-asking-price.sql), then [validation-2.sql](sql/validation-2.sql). Rollback: [rollback-2.sql](sql/rollback-2.sql).
 
-**Touches**: the public items view `public_vault_items` only: one new last column `asking_price`, filled only for items that are public AND for sale (empty for everything else). Same columns, same public-only rows, same hidden-profile filter, no private column exposed.
-
-1. Run [2-public-view-asking-price.sql](sql/2-public-view-asking-price.sql). Expect "Success. No rows returned".
-2. Run [validation-2.sql](sql/validation-2.sql). Expect one row where every value is `true`.
-3. If anything looks wrong: [rollback-2.sql](sql/rollback-2.sql) (rebuilds the view without the column).
-
-Tested locally (apply, re-run, validation, rollback; 11 of 11, `scripts/test-view-sql-in-postgres.cjs`) against a stand-in built from the production migrations' own view definitions, including a hidden profile, a private item and a stale asking price on an item that is not for sale.
+It no longer rebuilds the public items view from a column list. It wraps the view exactly as it is in production, so every existing column and its order, the public-only rule, the hidden-profile rule, the grants and any view options stay as they are, and `asking_price` is added last (filled only for public items that are for sale). **It stops without changing anything** if the privacy helper `profile_is_hidden(text)` is missing, if the view is missing or no longer filters on `is_public` and on the hidden-profile rule, if the needed columns are missing, or if anon / signed-in people cannot read the view today (it never adds or widens a grant). Tested 24 of 24 in a local Postgres, including each "stops" case leaving the view untouched, view options kept, grants identical, and a rollback that restores the exact previous definition.
 
 ## File 3: exhibition view counter (RC-27)
-**What it fixes**: an exhibition's view counter never goes up for visitors (EXH-283, 284, 285, 292): the page tried to write to the exhibition row, which only its owner's team may do, and the refusal was silent.
+[3-exhibition-view-counter.sql](sql/3-exhibition-view-counter.sql), then [validation-3.sql](sql/validation-3.sql). Rollback: [rollback-3.sql](sql/rollback-3.sql).
 
-**Touches**: adds one function, `record_exhibition_view(gallery id, viewer key)`. For a public, active exhibition it adds one view per distinct viewer key, never counts the exhibition's own team, keeps the keys on the server (not returned to anyone), and does nothing for private or draft exhibitions. No table, column, policy or existing data changes. The site already calls it (and ignores the answer until it exists).
+Kept separate and run last, as you asked, now that stage 4 has passed. **The number is approximate and can be inflated:** a "viewer key" is a random value the visitor's own browser makes up, so anyone can call the function with made-up keys to raise a public exhibition's counter, and the same person on a new browser counts again. It is a friendly "people looked" figure, not a measurement. The function only ever touches the counter of a public, active exhibition. Tested 13 of 13.
 
-1. Run [3-exhibition-view-counter.sql](sql/3-exhibition-view-counter.sql). Expect "Success. No rows returned".
-2. Run [validation-3.sql](sql/validation-3.sql). Expect one row where every value is `true`.
-3. If anything looks wrong: [rollback-3.sql](sql/rollback-3.sql).
+## File 4 (new): goals store an explicit type and unit
+[5-goal-type-and-unit.sql](../repair-batch-15/sql/5-goal-type-and-unit.sql), then [validation-5.sql](../repair-batch-15/sql/validation-5.sql). Rollback: [rollback-5.sql](../repair-batch-15/sql/rollback-5.sql).
 
-Tested locally (visitor counts once per viewer key, a second viewer and a signed-in non-member count, the owner's team, private and draft exhibitions do not, bad keys ignored, direct table writes still refused, key list trimmed to 500, validation, rollback; 13 of 13, `scripts/test-views-sql-in-postgres.cjs`). One limit to know: anyone can call it with made-up viewer keys, so the counter is a friendly figure, not a defence against deliberate inflation.
+Adds two empty columns to goals (`goal_type`: items or value, `unit`: items or usd, always matching). Existing goals are not changed and not guessed: they show "needs setup" until the person chooses. **The site already works without this file:** until it runs, the choice a person makes is kept on that device and the page says so; after it runs, the choice is saved in the account and follows them. Tested 8 of 8.
 
-## After you run them
-I verify on production with a synthetic account (`scripts/rb26-sql-verify.cjs` for file 1: allowance reads for Personal and Business with nothing spent, avatar upload through the account page and the cross-profile refusals; the Market check for file 2) and update the status files. Nothing else is waiting on these files.
+## Not requested yet, prepared for review
+[PROPOSAL-insurance-exclusions.md](../repair-batch-15/PROPOSAL-insurance-exclusions.md): a small table so "left out of the insurance documents" follows the account instead of living in one browser (GIN-095). SQL, validation, rollback and a 12-of-12 local test are ready; I will not wire the site to it until you decide.

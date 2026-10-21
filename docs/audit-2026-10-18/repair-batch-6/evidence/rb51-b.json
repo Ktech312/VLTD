@@ -1,0 +1,26 @@
+{
+ "label": "b",
+ "cases": [
+  {
+   "control": "Discover on a phone: tap a room card",
+   "expected": "the details panel comes into view (it used to sit thousands of pixels below)",
+   "ok": true,
+   "actual": "panel position={\"top\":64,\"bottom\":939,\"vh\":800}",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb51-b-1.jpg"
+  },
+  {
+   "control": "Discover on a desktop window: the details panel",
+   "expected": "after a short scroll the panel is pinned and fits the window; it scrolls inside itself, so 'View room' is reachable without scrolling the whole page to the end",
+   "ok": false,
+   "actual": "panel={\"aside\":{\"top\":168,\"bottom\":956},\"btn\":{\"top\":909,\"bottom\":957},\"scrollable\":true,\"vh\":900,\"btnText\":\"View room\"}",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb51-b-2.jpg"
+  },
+  {
+   "control": "Events: the universe filter menu",
+   "expected": "fits the window; a long list scrolls inside the menu",
+   "ok": true,
+   "actual": "menu={\"top\":554,\"bottom\":888,\"vh\":900,\"scrollable\":true}",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb51-b-3.jpg"
+  }
+ ]
+}

@@ -1,0 +1,145 @@
+{
+ "label": "b",
+ "cases": [
+  {
+   "control": "Goals: an older goal whose name mentions dollars",
+   "expected": "shows 'Choose how this goal is measured', not a guessed '9 of 2,000 value'",
+   "ok": true,
+   "actual": "row text=\"— RB49 Reach $2,000 collection value Choose how this goal is measured Private NOT MEASURED YET This goal was made before goals had a type. It has a target of 2,000, but nothing says whether that is items or dollars, so no progress is shown until you choose. NEXT ACTION Choose how to measure it Not set up Count items Measure value ($)\"",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb49-b-1.jpg"
+  },
+  {
+   "control": "Goals: overview counts goals that need setup",
+   "expected": "'Measured By' panel counts goals by items / value / need setup",
+   "ok": true,
+   "actual": "needs setup shown=true",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb49-b-2.jpg"
+  },
+  {
+   "control": "Insights goals widget: the same older goal",
+   "expected": "shows 'Set up' (no percentage, no '9 / 2000')",
+   "ok": true,
+   "actual": "near name: RB49 Reach $2,000 collection value Set up Choose how this goal is measured Complete the Spider-Man run Set up Choose how this goal is measur",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb49-b-3.jpg"
+  },
+  {
+   "control": "Goals: choose 'Measure value ($)' on the older goal",
+   "expected": "the goal now reads '$X of $2,000' (money), measured from the items' value",
+   "ok": true,
+   "actual": "row text=\"61% RB49 Reach $2,000 collection value $1,226 of $2,000 Private VALUE PROGRESS CURRENT VALUE $1,226 TARGET $2,000 NEXT ACTION $774 to go $774 short\"",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb49-b-4.jpg"
+  },
+  {
+   "control": "Goals: after reloading the page",
+   "expected": "the choice is kept",
+   "ok": true,
+   "actual": "row text=\"61% RB49 Reach $2,000 collection value $1,226 of $2,000 Private VALUE PROGRESS CURRENT VALUE $1,226 TARGET $2,000 NEXT ACTION $774 to go $774 short\"",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb49-b-5.jpg"
+  },
+  {
+   "control": "Goals: new goal measured by 'Number of items'",
+   "expected": "the row uses the unit the person chose",
+   "ok": true,
+   "actual": "row text=\"100% RB49 Count Goal 26 of 12 items Private RECENTLY ADDED NEXT ACTION Goal complete Ready Goal complete\"",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb49-b-6.jpg"
+  },
+  {
+   "control": "Goals: new goal measured by 'Collection value'",
+   "expected": "the row uses the unit the person chose",
+   "ok": true,
+   "actual": "row text=\"82% RB49 Value Goal $1,226 of $1,500 Private VALUE PROGRESS CURRENT VALUE $1,226 TARGET $1,500 NEXT ACTION $274 to go $274 short\"",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb49-b-7.jpg"
+  },
+  {
+   "control": "Goals: a value target of 12.5",
+   "expected": "refused with 'whole dollars' wording",
+   "ok": true,
+   "actual": "message shown=true",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb49-b-8.jpg"
+  },
+  {
+   "control": "Vault Wall view with the default sort 'Newest'",
+   "expected": "one flat newest-first wall (no A to Z letter headings)",
+   "ok": true,
+   "actual": "note=\"Newest first\"",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb49-b-9.jpg"
+  },
+  {
+   "control": "Vault Wall view with 'Title A-Z'",
+   "expected": "the lettered A-Z wall",
+   "ok": true,
+   "actual": "flat note present=false; letter buttons=26",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb49-b-10.jpg"
+  },
+  {
+   "control": "Watchlist: 'Add Watch' tile",
+   "expected": "opens a watch-entry form (not Add Item); a bad target is refused; a good one adds the watch with its target price",
+   "ok": true,
+   "actual": "sheet=true; error=\"Target price: use numbers only (no letters or exponents like 1e3).\"; saved row={\"id\":\"wish_1792598838490_rj6sby\",\"title\":\"RB49 Watch Item\",\"target_price\":150}; listed=true; path=/watchlist",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb49-b-11.jpg"
+  },
+  {
+   "control": "Universes displayed = Music only: Vault, Home, Insights",
+   "expected": "each says how many items are held back and that nothing was deleted",
+   "ok": true,
+   "actual": "vault=\"Your Universes displayed setting is hiding 22 items from 3 universes. Nothing was deleted. Show all Change setting\"; home=\"Your Universes displayed setting is hiding 22 items from 3 universes. Nothing was deleted. Show all Change setting\"; insights=\"Your Universes displayed setting is hiding 22 items from 3 universes. Nothing was deleted. Show all Change setting\"",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb49-b-12.jpg"
+  },
+  {
+   "control": "Discover's universe filter with Universes displayed = Music only",
+   "expected": "still offers every universe and is labelled as public browsing",
+   "ok": true,
+   "actual": "label shown=true; options=11; opened=1",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb49-b-13.jpg"
+  },
+  {
+   "control": "Vault: 'Show all' on the notice",
+   "expected": "the notice goes away and the account setting is cleared (items were never deleted)",
+   "ok": true,
+   "actual": "notice still shown=false; account setting=null",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb49-b-14.jpg"
+  },
+  {
+   "control": "Seasonal theme banner",
+   "expected": "no theme before a choice; 'No' leaves the app unchanged; 'Yes' applies it and keeps it",
+   "ok": true,
+   "actual": "before=null; after No=null; after Yes=halloween-2026; after reload=halloween-2026",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb49-b-15.jpg"
+  },
+  {
+   "control": "Activity details panel: the red 'Dismiss' button",
+   "expected": "relabelled 'Close' (it only closes the panel)",
+   "ok": true,
+   "actual": "Dismiss present=false; Close present=true",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb49-b-16.jpg"
+  },
+  {
+   "control": "Account > Avatar: the emoji tab",
+   "expected": "labelled 'Custom emoji'",
+   "ok": true,
+   "actual": "label shown=true",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb49-b-17.jpg"
+  },
+  {
+   "control": "Shop: the CGC grading link",
+   "expected": "points at CGC's current how-to-submit page (loads in a real browser)",
+   "ok": true,
+   "actual": "hrefs=[\"https://www.cgccomics.com/submit/how-to-submit/\"]",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb49-b-18.jpg"
+  },
+  {
+   "control": "Insurance numbers: Insurance tab vs Vault vs weekly report",
+   "expected": "the weekly report's 'Insurance report (N)' equals the items the Insurance tab and the Vault say still need documentation",
+   "ok": false,
+   "actual": "insurance tab needs=26; vault=26; weekly=31",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb49-b-19.jpg"
+  },
+  {
+   "control": "Stale price count: Insights vs Vault vs Home",
+   "expected": "the same number in all three (valued items with no price check in 6 months)",
+   "ok": false,
+   "actual": "insights=26; vault=9; home=9",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb49-b-20.jpg"
+  }
+ ]
+}

@@ -575,8 +575,8 @@ export default function GoalsPage() {
               <div className="mt-2 text-sm" style={{ color: "var(--theme-text-muted,#61656B)" }}>{selectedGoal.progressText}</div>
               {selectedGoal.needsSetup ? (
                 <div className="mt-3 flex flex-wrap gap-2" data-testid="goal-setup-choices-panel">
-                  <button type="button" onClick={() => void configureGoal(selectedGoal, "count")} className="rounded-[7px] border border-[rgba(203,208,213,0.36)] px-3 py-2 text-xs font-black" style={{ color: "var(--theme-gold,#C8CDD2)" }}>Count items ({selectedGoal.targetCount.toLocaleString()} items)</button>
-                  <button type="button" onClick={() => void configureGoal(selectedGoal, "value")} className="rounded-[7px] border border-[rgba(203,208,213,0.36)] px-3 py-2 text-xs font-black" style={{ color: "var(--theme-gold,#C8CDD2)" }}>Measure value ({money(selectedGoal.targetCount)})</button>
+                  <button type="button" onClick={() => void configureGoal(selectedGoal, "count")} className="rounded-[7px] border border-[rgba(203,208,213,0.36)] px-3 py-2 text-xs font-black max-md:min-h-11" style={{ color: "var(--theme-gold,#C8CDD2)" }}>Count items ({selectedGoal.targetCount.toLocaleString()} items)</button>
+                  <button type="button" onClick={() => void configureGoal(selectedGoal, "value")} className="rounded-[7px] border border-[rgba(203,208,213,0.36)] px-3 py-2 text-xs font-black max-md:min-h-11" style={{ color: "var(--theme-gold,#C8CDD2)" }}>Measure value ({money(selectedGoal.targetCount)})</button>
                 </div>
               ) : null}
             </div>

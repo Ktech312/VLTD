@@ -527,7 +527,7 @@ export default function DiscoverPage() {
             Browsing public exhibitions from every collector. These filters do not change what your own Vault shows.
           </p>
           <div className="mt-2 grid gap-3 lg:grid-cols-[minmax(0,1fr)_200px_200px]">
-            <label className="flex h-10 items-center gap-2 rounded-[7px] border border-[rgba(203,208,213,0.22)] px-3" style={{ background: "var(--theme-card,rgba(15,25,45,0.85))" }}>
+            <label className="flex h-11 md:h-10 items-center gap-2 rounded-[7px] border border-[rgba(203,208,213,0.22)] px-3" style={{ background: "var(--theme-card,rgba(15,25,45,0.85))" }}>
               <Glyph name="search" size={15} className="opacity-60" />
               <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search exhibitions, items, and collectors..." className="h-full min-w-0 flex-1 bg-transparent text-xs outline-none placeholder:opacity-45" />
             </label>
@@ -678,7 +678,7 @@ export default function DiscoverPage() {
         </div>
 
         {selectedGallery && (
-          <aside ref={panelRef} className="h-fit rounded-[8px] border border-[rgba(203,208,213,0.32)] p-5 xl:sticky xl:top-24 xl:max-h-[calc(100vh-7rem)] xl:overflow-y-auto" style={{ background: "var(--theme-card,rgba(15,25,45,0.92))", boxShadow: "0 18px 55px rgba(0,0,0,0.26)" }}>
+          <aside ref={panelRef} className="h-fit rounded-[8px] border border-[rgba(203,208,213,0.32)] p-5 xl:sticky xl:top-24 xl:max-h-[calc(100vh-var(--topnav-h,4rem)-7rem)] xl:overflow-y-auto" style={{ background: "var(--theme-card,rgba(15,25,45,0.92))", boxShadow: "0 18px 55px rgba(0,0,0,0.26)" }}>
             <div className="flex items-center justify-between">
               <div className="text-[12px] font-black uppercase tracking-[0.16em]" style={{ color: "var(--theme-gold,#C8CDD2)" }}>Public Exhibition</div>
               <PillButton onClick={() => { setSelectedId(null); setPanelClosed(true); }} ariaLabel="Close" title="Close" className="px-0! w-11 md:w-9"><AppIcon name="close" size={16} /></PillButton>
