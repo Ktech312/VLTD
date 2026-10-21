@@ -473,6 +473,12 @@ export default function WatchlistPage() {
           </div>
 
           <div className={`mt-4 grid gap-3 ${view === "grid" ? "lg:grid-cols-2 2xl:grid-cols-3" : "grid-cols-1"}`}>
+            {filteredEntries.length === 0 && (query.trim() || filter !== "all") ? (
+              <div role="status" data-testid="watchlist-no-match" className="col-span-full flex flex-wrap items-center gap-3 rounded-[7px] border border-[rgba(203,208,213,0.22)] px-4 py-3 text-sm" style={{ color: "var(--theme-text-muted,#61656B)" }}>
+                <span>{query.trim() ? `Nothing on your watchlist matches “${query.trim()}”.` : "Nothing here for this filter yet."}</span>
+                <PillButton size="compact" onClick={() => { setQuery(""); setFilter("all"); }}>Show everything</PillButton>
+              </div>
+            ) : null}
             {filteredEntries.map((entry) => (
               <WatchCard
                 key={`${entry.sourceType}-${entry.id}`}
