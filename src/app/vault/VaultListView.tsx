@@ -2518,6 +2518,8 @@ export default function VaultListView({ lockedUniverse }: { lockedUniverse?: Uni
           <VaultLoadError onRetry={() => { resetCloudBackoff(); retryAccountLookups(); void hydrateAll(); }} />
         ) : items.length === 0 ? (
           <VaultEmptyState hasFilters={false} onClearFilters={handleClearFilters} />
+        ) : lockedUniverse && filteredItems.length === 0 && !hasActiveFilters ? (
+          <VaultEmptyState hasFilters={false} onClearFilters={handleClearFilters} universeName={universeDisplayName(lockedUniverse)} />
         ) : vaultViewMode === "wall" ? (
           <VaultWallView items={filteredItems} saleMap={saleMap} sortMode={sortMode} showSold={showSoldItems} />
         ) : filteredItems.length === 0 ? (
