@@ -187,7 +187,7 @@ function NotAuthorized({
         <div className="mt-2 text-sm font-semibold text-white">Not Authorized</div>
         <div className="mt-1 text-xs text-white/40">{userEmail} does not have admin access.</div>
         <button
-          onClick={() => signOut().then(() => window.location.reload())}
+          onClick={() => signOut().then((failure) => (failure ? window.alert(failure) : window.location.reload()))}
           className="mt-3 w-full rounded-xl bg-white/10 py-2.5 text-sm text-white/60 transition hover:bg-white/20"
         >
           Sign Out
@@ -1949,7 +1949,7 @@ export default function AdminCharactersPage() {
         <div className="shrink-0 p-3 border-t border-white/8 flex items-center justify-between">
           <span className="text-[10px] text-white/30 truncate">{userEmail}</span>
           <button
-            onClick={() => signOut().then(() => setAuthState("signed-out"))}
+            onClick={() => signOut().then((failure) => (failure ? window.alert(failure) : setAuthState("signed-out")))}
             className="text-[10px] text-white/30 hover:text-white/60 transition ml-2 shrink-0"
           >
             Sign out

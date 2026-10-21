@@ -148,6 +148,7 @@ function TopNavInner() {
 
   const [input, setInput] = useState("");
   const [userOpen, setUserOpen] = useState(false);
+  const [signOutError, setSignOutError] = useState("");
   const [levelInfoOpen, setLevelInfoOpen] = useState(false);
   const [commandOpen, setCommandOpen] = useState(false);
   const [searchExpanded, setSearchExpanded] = useState(false);
@@ -331,7 +332,9 @@ function TopNavInner() {
   }
 
   async function handleSignOut() {
-    await signOut();
+    setSignOutError("");
+    const failure = await signOut();
+    if (failure) { setSignOutError(failure); return; }
     setUserOpen(false); setSignedIn(false); setAccountEmail(""); setProfiles([]); setActiveProfileId("");
     router.push("/login"); router.refresh();
   }
@@ -709,6 +712,11 @@ function TopNavInner() {
               </>
             )}
           </div>
+          {signedIn && signOutError && (
+            <div role="alert" data-testid="sign-out-error" className="px-3 py-2 text-xs" style={{ borderTop: "1px solid rgba(203,208,213,0.10)", color: "#E05252" }}>
+              {signOutError}
+            </div>
+          )}
           {signedIn && (
             <div className="flex items-center justify-between gap-2 px-3 py-2" style={{ borderTop: "1px solid rgba(203,208,213,0.10)" }}>
               {adminRole ? (

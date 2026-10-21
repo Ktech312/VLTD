@@ -371,9 +371,11 @@ export async function resetPasswordForEmail(email: string, returnPath: "/reset-p
 // TopNav "Sign Out" button, admin pages, etc.) is correct with zero change;
 // the one deliberate exception is Account -> Security's "Sign out all
 // devices" action, which passes { scope: "global" } explicitly.
-export async function signOut(options?: { scope?: "local" | "global" }) {
+// Returns null when the session really ended, or a plain message when the sign-out request failed
+// (the session then continues, so callers must not behave as if the person were signed out).
+export async function signOut(options?: { scope?: "local" | "global" }): Promise<string | null> {
   const supabase = getSupabase();
-  if (!supabase) return;
+  if (!supabase) return null;
 
   // Stop this device receiving this account's push notifications while the account can still delete its own subscription row.
   try {
@@ -383,12 +385,21 @@ export async function signOut(options?: { scope?: "local" | "global" }) {
     /* never block sign-out */
   }
 
+  let failure: string | null = null;
+  try {
+    const { error } = await supabase.auth.signOut({ scope: options?.scope ?? "local" });
+    if (error) failure = error.message || "The sign-out request failed.";
+  } catch (e) {
+    failure = e instanceof Error && e.message ? e.message : "The sign-out request failed.";
+  }
+  if (failure) {
+    return `Couldn't sign you out (${failure.replace(/\.$/, "")}). You are still signed in. Check your connection and try again.`;
+  }
+
   cachedUser = null;
   cachedSession = null;
   clearInFlightAuth();
   profilesPromise = null;
-
-  await supabase.auth.signOut({ scope: options?.scope ?? "local" });
 
   // Park this person's data on the device so the next person who signs in here never sees it.
   reconcileLocalDataOwner(null);
@@ -397,6 +408,7 @@ export async function signOut(options?: { scope?: "local" | "global" }) {
     localStorage.removeItem(ACTIVE_PROFILE_KEY);
     window.dispatchEvent(new Event("vltd:active-profile"));
   }
+  return null;
 }
 
 const PROFILES_REUSE_MS = 8_000;

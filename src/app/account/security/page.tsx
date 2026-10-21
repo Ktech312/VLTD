@@ -307,7 +307,8 @@ export default function SecurityPage() {
                     } catch {
                       // Not fatal — proceed with the sign-out regardless.
                     }
-                    await signOut({ scope: "global" });
+                    const failure = await signOut({ scope: "global" });
+                    if (failure) { showToast(failure); return; }
                     window.location.href = "/login";
                   }}
                 >
