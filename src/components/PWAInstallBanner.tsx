@@ -91,13 +91,8 @@ export default function PWAInstallBanner() {
     const visible = show && !suppressed && (deferredPrompt !== null || isIOS);
     const space = visible ? (iosExpanded ? "132px" : "72px") : "0px";
     document.documentElement.style.setProperty("--pwa-banner-space", space);
-    // The public home page scrolls the window itself (no scroller inside the app shell), so it gets the room as page padding.
-    if (pathname === "/") document.body.style.paddingBottom = visible ? space : "";
-    return () => {
-      document.documentElement.style.removeProperty("--pwa-banner-space");
-      document.body.style.paddingBottom = "";
-    };
-  }, [show, suppressed, deferredPrompt, isIOS, iosExpanded, pathname]);
+    return () => { document.documentElement.style.removeProperty("--pwa-banner-space"); };
+  }, [show, suppressed, deferredPrompt, isIOS, iosExpanded]);
 
   function dismiss() {
     localStorage.setItem(DISMISSED_KEY, String(Date.now() + COOLDOWN_MS));

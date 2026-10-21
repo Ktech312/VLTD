@@ -817,6 +817,8 @@ export default function PublicHomeClient() {
             © 2026 VLTD. Pronounced “Vaulted.” — founding access
           </div>
         </div>
+        {/* Room for the "Add to Home Screen" pill, so the last links can be scrolled clear of it (PWAInstallBanner sets the variable). */}
+        <div aria-hidden="true" style={{ height: "var(--pwa-banner-space, 0px)" }} />
       </footer>
     </main>
   );
