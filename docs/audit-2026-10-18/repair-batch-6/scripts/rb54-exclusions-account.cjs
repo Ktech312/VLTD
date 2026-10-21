@@ -66,7 +66,8 @@ const tick = (S, label) => T.click(S, `[...document.querySelectorAll('input[type
     await admin.from("insurance_exclusions").delete().eq("profile_id", P);
     S3 = await session("owner", { width: 1440, height: 900 });
     await S3.visit("/vault"); await sleep(5000);
-    await S3.evaluate(`localStorage.setItem('vltd_insurance_excluded_item_ids_v1', JSON.stringify([${JSON.stringify(items[2].id)}])); true`);
+    // Make this browser look like one that has only ever run the older version: no per-profile list, nothing waiting, nothing seen in the account; just the old browser-wide list.
+    await S3.evaluate(`Object.keys(localStorage).filter((k) => k.startsWith('vltd_insurance_excluded')).forEach((k) => localStorage.removeItem(k)); localStorage.setItem('vltd_insurance_excluded_item_ids_v1', JSON.stringify([${JSON.stringify(items[2].id)}])); true`);
     await S3.visit("/insurance"); await sleep(9000);
     rows = await rowsOf();
     await rec(S3, rows.length === 1 && rows[0] === items[2].id, "An exclusion that only existed on the device (older version)", "is copied up to the account once", `account rows=${JSON.stringify(rows)}`, "/insurance");

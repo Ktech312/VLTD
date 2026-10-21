@@ -101,6 +101,22 @@ export function readInsuranceExcludedIds(): Set<string> {
   }
 }
 
+/**
+ * True while this profile has no list of its own on the device yet, an older browser-wide list exists, and this profile's items are not on the device yet
+ * (so there is no way to tell which of the old ids belong to it). The old list must then be left alone, not replaced by an empty one.
+ */
+export function legacyAdoptionPending(): boolean {
+  const pid = activeProfileId();
+  if (typeof window === "undefined" || !pid) return false;
+  try {
+    if (window.localStorage.getItem(key(DEVICE_KEY, pid)) !== null) return false;
+    if (readSet(LEGACY_EXCLUDED_KEY).size === 0) return false;
+    return loadItems({ profileId: pid }).length === 0;
+  } catch {
+    return false;
+  }
+}
+
 export function pendingExclusionCount(): number {
   const pid = activeProfileId();
   if (!pid) return 0;
@@ -220,9 +236,11 @@ export async function syncInsuranceExclusions(): Promise<ExclusionsSync> {
   }
   for (const id of account) synced.add(id);
   for (const id of deletedElsewhere) synced.delete(id);
+  const waitingForItems = legacyAdoptionPending();
   writeSet(key(SYNCED_KEY, pid), synced);
   writeSet(key(PENDING_ADD_KEY, pid), pendingAdd);
-  writeSet(key(DEVICE_KEY, pid), merged);
+  // Do not write an empty list of its own while the old browser-wide list is still waiting to be adopted (the items that tell whose ids they are have not arrived).
+  if (!waitingForItems) writeSet(key(DEVICE_KEY, pid), merged);
   mode = "account";
   if (pendingAdd.size > 0) await flushPending(pid);
   const ids = readInsuranceExcludedIds();

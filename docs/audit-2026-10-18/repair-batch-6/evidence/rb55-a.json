@@ -1,0 +1,77 @@
+{
+ "label": "a",
+ "cases": [
+  {
+   "control": "A visitor with no session opens a public exhibition (viewer key one)",
+   "expected": "the counter goes from 0 to 1",
+   "ok": true,
+   "actual": "views=1"
+  },
+  {
+   "control": "The same viewer key again",
+   "expected": "still 1 (one view per key)",
+   "ok": true,
+   "actual": "views=1"
+  },
+  {
+   "control": "A second viewer key",
+   "expected": "2",
+   "ok": true,
+   "actual": "views=2"
+  },
+  {
+   "control": "A too-short key and a too-long key",
+   "expected": "ignored (still 2)",
+   "ok": true,
+   "actual": "views=2"
+  },
+  {
+   "control": "A signed-in account that does not own the exhibition",
+   "expected": "counted (3)",
+   "ok": true,
+   "actual": "views=3"
+  },
+  {
+   "control": "The exhibition's own team looking at it",
+   "expected": "not a visit (still 3)",
+   "ok": true,
+   "actual": "views=3"
+  },
+  {
+   "control": "A visit to a private exhibition",
+   "expected": "nothing is counted",
+   "ok": true,
+   "actual": "views=0"
+  },
+  {
+   "control": "A visit to a draft exhibition",
+   "expected": "nothing is counted",
+   "ok": true,
+   "actual": "views=0"
+  },
+  {
+   "control": "What the function returns to a visitor",
+   "expected": "nothing (the viewer keys are not returned)",
+   "ok": true,
+   "actual": "null"
+  },
+  {
+   "control": "The public share link for that exhibition",
+   "expected": "shows the count but not the viewer keys",
+   "ok": true,
+   "actual": "views=4; keys=null"
+  },
+  {
+   "control": "A visitor and an unrelated account try to write the counter directly",
+   "expected": "refused (the counter only moves through the function; 4 after the fourth key)",
+   "ok": true,
+   "actual": "visitor=0; other=0; views=4"
+  },
+  {
+   "control": "A visitor opens the exhibition's public link in a clean browser, then opens it again",
+   "expected": "counted once (0 -> 1), not again on the second visit",
+   "ok": true,
+   "actual": "before=0; after first=1; after second=1; page shows QA title=true"
+  }
+ ]
+}

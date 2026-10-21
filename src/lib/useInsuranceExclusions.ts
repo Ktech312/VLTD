@@ -5,6 +5,7 @@ import {
   EXCLUSIONS_CHANGED_EVENT,
   excludedByYouWhere,
   exclusionsMode,
+  legacyAdoptionPending,
   exclusionsNoteFor,
   pendingExclusionCount,
   readInsuranceExcludedIds,
@@ -53,11 +54,23 @@ export function useInsuranceExclusions(): {
       .catch(() => undefined)
       .finally(() => { window.clearTimeout(giveUp); if (alive.current) setReady(true); });
     const onChanged = () => refreshFromDevice();
+    // When the profile's items arrive from the account, an older on-device list can finally be matched to them and copied up.
+    const onItems = () => {
+      if (!legacyAdoptionPending()) return;
+      void syncInsuranceExclusions().then((result) => {
+        if (!alive.current) return;
+        setExcludedState(result.ids);
+        setMode(result.mode);
+        setPending(result.pending);
+      }).catch(() => undefined);
+    };
+    window.addEventListener("vltd:vault-updated", onItems);
     window.addEventListener(EXCLUSIONS_CHANGED_EVENT, onChanged);
     window.addEventListener("vltd:active-profile", onChanged);
     return () => {
       alive.current = false;
       window.clearTimeout(giveUp);
+      window.removeEventListener("vltd:vault-updated", onItems);
       window.removeEventListener(EXCLUSIONS_CHANGED_EVENT, onChanged);
       window.removeEventListener("vltd:active-profile", onChanged);
     };

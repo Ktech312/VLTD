@@ -1,0 +1,68 @@
+{
+ "label": "b",
+ "cases": [
+  {
+   "control": "Insurance tab with the account table in place",
+   "expected": "no 'saved on this device only' warning (the exclusions follow the account)",
+   "ok": true,
+   "actual": "warning shown=false",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb54-b-1.jpg"
+  },
+  {
+   "control": "Untick two items in browser A",
+   "expected": "two rows exist in the account (confirmed by the account, not just on the device)",
+   "ok": true,
+   "actual": "account rows=[\"qa_vz_mvik4qix_1\",\"qa_vz_mvik4qix_2\"]",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb54-b-2.jpg"
+  },
+  {
+   "control": "Insurance tab not-counted line",
+   "expected": "'2 excluded by you.' (no 'on this device')",
+   "ok": true,
+   "actual": "line=Not counted: 5 sold, 2 excluded by you.",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb54-b-3.jpg"
+  },
+  {
+   "control": "Insurance tab in a second, clean browser",
+   "expected": "the same two items show as excluded",
+   "ok": true,
+   "actual": "excluded rows shown=2",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb54-b-4.jpg"
+  },
+  {
+   "control": "Policy packet in the second browser",
+   "expected": "counts the two exclusions and has no device-only warning: the packet matches the first browser's",
+   "ok": true,
+   "actual": "line=Not counted: 5 sold, 2 excluded by you.; warning=false",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb54-b-5.jpg"
+  },
+  {
+   "control": "Re-include one item in the second browser",
+   "expected": "the account row is removed",
+   "ok": true,
+   "actual": "account rows=[\"qa_vz_mvik4qix_2\"]",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb54-b-6.jpg"
+  },
+  {
+   "control": "An exclusion that only existed on the device (older version)",
+   "expected": "is copied up to the account once",
+   "ok": true,
+   "actual": "account rows=[\"qa_vz_mvik4qix_11\"]",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb54-b-7.jpg"
+  },
+  {
+   "control": "A different account tries to read, add and remove this profile's exclusions",
+   "expected": "reads nothing, cannot add, cannot remove",
+   "ok": true,
+   "actual": "read=0 rows; add error=new row violates row-level security policy for table \"insura; removed=0; rows left=1",
+   "screenshot": ""
+  },
+  {
+   "control": "A visitor with no session reads the exclusions",
+   "expected": "refused or nothing",
+   "ok": true,
+   "actual": "permission denied for table insurance_exclusions",
+   "screenshot": ""
+  }
+ ]
+}

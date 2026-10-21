@@ -84,6 +84,17 @@ const signIn = (uid, pid) => { store.set("vltd-auth", JSON.stringify({ user: { i
   t("mode is account, nothing waiting, no note", r.mode === "account" && r.pending === 0 && X.exclusionsNoteFor(r.mode, r.pending) === "" && X.excludedByYouWhere(r.mode) === "account", r);
   t("the legacy browser-wide list is left untouched", JSON.parse(store.get(X.LEGACY_EXCLUDED_KEY)).length === 3);
 
+  // ---- 2b. the page opens before the profile's items are on the device: the old list is kept waiting, then adopted and copied up
+  X = fresh(); signIn("u1", "P");
+  const savedItems = itemsByProfile.P; itemsByProfile.P = [];
+  store.set(X.LEGACY_EXCLUDED_KEY, JSON.stringify(["a1"]));
+  r = await X.syncInsuranceExclusions();
+  t("items not on the device yet: nothing is uploaded and no empty list of its own is written", account.rows.length === 0 && store.get("vltd_insurance_excluded_v2:P") === undefined && X.legacyAdoptionPending(), { rows: account.rows, own: store.get("vltd_insurance_excluded_v2:P") });
+  itemsByProfile.P = savedItems;
+  t("once the items are there the adoption is no longer pending", X.legacyAdoptionPending() === false);
+  r = await X.syncInsuranceExclusions();
+  t("the next sync adopts the old list and copies it up", setOf(r.ids) === "a1" && account.rows.length === 1 && account.rows[0].item_id === "a1", { ids: setOf(r.ids), rows: account.rows });
+
   // ---- 3. another device excluded an item: it shows up here
   account.rows.push({ profile_id: "P", item_id: "b1" });
   account.rows.push({ profile_id: "Q", item_id: "q2" });
