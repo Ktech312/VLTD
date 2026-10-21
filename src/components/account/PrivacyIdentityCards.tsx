@@ -33,9 +33,11 @@ export default function PrivacyIdentityCards() {
   const [isPublic, setIsPublic] = useState(true);
   const [dob, setDob] = useState("");
   const [ageVerified, setAgeVerified] = useState(false);
+  const [savedAgeVerified, setSavedAgeVerified] = useState(false);
   const [marketingOptIn, setMarketingOptIn] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
+  const [messageIsError, setMessageIsError] = useState(false);
   const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
@@ -48,6 +50,7 @@ export default function PrivacyIdentityCards() {
         setIsPublic(status.activeProfile.is_public !== false);
         setDob(status.activeProfile.date_of_birth ?? "");
         setAgeVerified(Boolean(status.activeProfile.age_verified));
+        setSavedAgeVerified(Boolean(status.activeProfile.age_verified));
         setMarketingOptIn(status.activeProfile.marketing_opt_in !== false);
       } finally {
         if (active) setLoaded(true);
@@ -66,6 +69,7 @@ export default function PrivacyIdentityCards() {
     if (!profileId) return;
     setSaving(true);
     setMessage("");
+    setMessageIsError(false);
     try {
       const nextAgeVerified = ageVerified && canVerifyAge;
       await updateProfile(profileId, {
@@ -74,9 +78,11 @@ export default function PrivacyIdentityCards() {
         marketing_opt_in: marketingOptIn,
       });
       setAgeVerified(nextAgeVerified);
+      setSavedAgeVerified(nextAgeVerified);
       void syncPublicProfile(profileId);
       setMessage("Saved.");
     } catch (err) {
+      setMessageIsError(true);
       setMessage(err instanceof Error ? err.message : "Failed to save.");
     } finally {
       setSaving(false);
@@ -156,6 +162,11 @@ export default function PrivacyIdentityCards() {
                 </PillButton>
               ) : null}
             </div>
+            {ageVerified !== savedAgeVerified ? (
+              <p data-testid="age-unsaved-note" className="mt-2 text-xs text-[color:var(--muted2)]">
+                {ageVerified ? "Not saved yet. Press Save to keep the verification." : "Not saved yet. Press Save to remove the verification."}
+              </p>
+            ) : null}
           </div>
         </div>
 
@@ -174,7 +185,7 @@ export default function PrivacyIdentityCards() {
           >
             {saving ? "Saving..." : "Save"}
           </button>
-          {message ? <span className="text-sm text-emerald-400">{message}</span> : null}
+          {message ? <span className={`text-sm ${messageIsError ? "text-red-300" : "text-emerald-400"}`}>{message}</span> : null}
         </div>
       </section>
     </>
