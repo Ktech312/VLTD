@@ -1,0 +1,61 @@
+{
+ "label": "fifth",
+ "cases": [
+  {
+   "control": "Direct visit to /goals in a fresh browser: a goal's progress",
+   "expected": "shows the 8 matching items the account holds (not 0)",
+   "ok": true,
+   "actual": "row: 2% RB31 Alpha 8 of 400 items Private RECENTLY ADDED +392 NEXT ACTION Find 392 more 392 items missing Add missing to Wishlist; page: Home Vault Exhibitions Lounge Discover Help ⌘K NOVICE Level 1 Vault Turn a collection into a plan. + Create Goal Items For Sale Sold Insights Goals Insurance All Goals Completion Value Sell Exhibition 26% OVERALL PROGRESS 3 of 4 goals active 3 need work 1 not started GOAL VALUE IMPACT $816 Potential increase across all goals INSURANCE GOAL PROGRESS 0% No insurance goal yet COMPLETED GOALS 1 Great job! Keep building m",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb31-fifth-1.jpg"
+  },
+  {
+   "control": "A completed goal's row button",
+   "expected": "reads 'Goal complete' and is disabled (it used to look clickable and do nothing)",
+   "ok": true,
+   "actual": "{\"text\":\"Goal complete\",\"disabled\":true}",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb31-fifth-2.jpg"
+  },
+  {
+   "control": "Goal row 'Add missing to Wishlist' pressed twice",
+   "expected": "says what it does: one wishlist entry (not two), with a confirming message",
+   "ok": true,
+   "actual": "wishlist rows 0 -> 1 -> 1; message seen=true/true",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb31-fifth-3.jpg"
+  },
+  {
+   "control": "Goals sorted by Recent",
+   "expected": "newest created first (Beta 1 day, Gamma 5 days, Alpha 10 days)",
+   "ok": true,
+   "actual": "order=[\"RB31 Beta\",\"RB31 Gamma\",\"RB31 Alpha\"]",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb31-fifth-4.jpg"
+  },
+  {
+   "control": "Goal panel: Items In Goal, then View all",
+   "expected": "the heading counts the 8 owned matching items and View all lists all of them",
+   "ok": true,
+   "actual": "heading=ITEMS IN GOAL (8); thumbnails after View all=8",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb31-fifth-5.jpg"
+  },
+  {
+   "control": "Delete goal, then Cancel in the confirmation",
+   "expected": "a confirmation is asked; cancelling keeps the goal",
+   "ok": true,
+   "actual": "dialog=[{\"type\":\"confirm\",\"message\":\"Delete the goal \\\"RB31 Gamma\\\"? This can't be undone.\"}]; goal deleted=false",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb31-fifth-6.jpg"
+  },
+  {
+   "control": "Delete goal, then OK in the confirmation",
+   "expected": "the goal is deleted",
+   "ok": true,
+   "actual": "dialogs=1; goal deleted=true",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb31-fifth-7.jpg"
+  },
+  {
+   "control": "Stat panel label",
+   "expected": "'Completed Goals' (goals carry no completion date, so it cannot mean 'this year')",
+   "ok": true,
+   "actual": "label shown=true",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb31-fifth-8.jpg"
+  }
+ ]
+}

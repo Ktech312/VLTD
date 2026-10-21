@@ -1,0 +1,26 @@
+{
+ "label": "first",
+ "cases": [
+  {
+   "control": "Insights with saved items on this device and the refresh refused",
+   "expected": "the saved figures are shown with a 'Showing saved data—couldn't refresh' notice (not a load error, not silence)",
+   "ok": true,
+   "actual": "notice=true; figures present=true; saved items key count=0",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb32-first-1.jpg"
+  },
+  {
+   "control": "Goals with saved items on this device and the refresh refused",
+   "expected": "the saved figures are shown with a 'Showing saved data—couldn't refresh' notice (not a load error, not silence)",
+   "ok": true,
+   "actual": "notice=true; figures present=true; saved items key count=0",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb32-first-2.jpg"
+  },
+  {
+   "control": "Home with saved items on this device and the refresh refused",
+   "expected": "the saved figures are shown with a 'Showing saved data—couldn't refresh' notice (not a load error, not silence)",
+   "ok": false,
+   "actual": "notice=false; figures present=true; saved items key count=0",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb32-first-3.jpg"
+  }
+ ]
+}

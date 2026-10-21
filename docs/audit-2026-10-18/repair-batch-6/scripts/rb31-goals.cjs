@@ -19,7 +19,7 @@ async function rec(S, ok, control, expected, actual) {
 const body = async (S) => (await S.text().catch(() => "")).replace(/\s+/g, " ").trim();
 const day = 86400e3;
 const goalIds = ["rb31_a_" + m.stamp, "rb31_b_" + m.stamp, "rb31_c_" + m.stamp];
-const rowOf = (name) => `[...document.querySelectorAll('button')].find((b) => b.innerText.includes(${JSON.stringify(name)}) && /Next Action/.test(b.innerText))`;
+const rowOf = (name) => `[...document.querySelectorAll('button')].find((b) => b.innerText.includes(${JSON.stringify(name)}) && /next action/i.test(b.innerText))`;
 (async () => {
   let S;
   try {
@@ -36,7 +36,7 @@ const rowOf = (name) => `[...document.querySelectorAll('button')].find((b) => b.
     let t = await body(S);
     const expect = `${popOwned} of 400`;
     const rowText = await S.evaluate(`(() => { const b = ${rowOf("RB31 Alpha")}; return b ? b.innerText.replace(/\\s+/g, ' ') : null; })()`);
-    await rec(S, !!rowText && new RegExp(`\\b${popOwned}\\b`).test(rowText) && !/\b0 of 400\b/.test(rowText), "Direct visit to /goals in a fresh browser: a goal's progress", `shows the ${popOwned} matching items the account holds (not 0)`, `row: ${String(rowText).slice(0, 160)}`);
+    await rec(S, !!rowText && new RegExp(`\\b${popOwned}\\b`).test(rowText) && !/\b0 of 400\b/.test(rowText), "Direct visit to /goals in a fresh browser: a goal's progress", `shows the ${popOwned} matching items the account holds (not 0)`, `row: ${String(rowText).slice(0, 160)}; page: ${t.slice(0, 420)}`);
     // Beta (target 3) is complete: its button is disabled and says so
     const betaBtn = await S.evaluate(`(() => { const b = ${rowOf("RB31 Beta")}; const x = b ? [...b.querySelectorAll('button')].find((y) => /Goal complete|Add missing/.test(y.innerText)) : null; return x ? { text: x.innerText.trim(), disabled: x.disabled } : null; })()`);
     await rec(S, betaBtn && betaBtn.text === "Goal complete" && betaBtn.disabled === true, "A completed goal's row button", "reads 'Goal complete' and is disabled (it used to look clickable and do nothing)", JSON.stringify(betaBtn));
@@ -52,17 +52,18 @@ const rowOf = (name) => `[...document.querySelectorAll('button')].find((b) => b.
     // sort by Recent
     await A.clickSel(S, '[aria-label="Sort goals"]'); await sleep(600);
     await A.clickText(S, "^Recent$", "[role=option],[role=menuitem],button,li"); await sleep(1200);
-    const order = await S.evaluate("[...document.querySelectorAll('button')].filter((b) => /Next Action/.test(b.innerText)).map((b) => (b.innerText.match(/RB31 (Alpha|Beta|Gamma)/) || [''])[0]).filter(Boolean)");
+    const order = await S.evaluate("[...document.querySelectorAll('button')].filter((b) => /next action/i.test(b.innerText)).map((b) => (b.innerText.match(/RB31 (Alpha|Beta|Gamma)/) || [''])[0]).filter(Boolean)");
     await rec(S, JSON.stringify(order) === JSON.stringify(["RB31 Beta", "RB31 Gamma", "RB31 Alpha"]), "Goals sorted by Recent", "newest created first (Beta 1 day, Gamma 5 days, Alpha 10 days)", `order=${JSON.stringify(order)}`);
     // View all
     await A.clickExpr(S, rowOf("RB31 Alpha")); await sleep(1500);
-    const before = await S.evaluate("(() => { const h = [...document.querySelectorAll('h3')].find((x) => /Items In Goal/.test(x.innerText)); return { heading: h ? h.innerText.trim() : null }; })()");
+    const before = await S.evaluate("(() => { const h = [...document.querySelectorAll('h3')].find((x) => /Items In Goal/i.test(x.innerText)); return { heading: h ? h.innerText.trim() : null }; })()");
     await A.clickText(S, "^View all$", "button"); await sleep(1000);
-    const thumbs = await S.evaluate("(() => { const h = [...document.querySelectorAll('h3')].find((x) => /Items In Goal/.test(x.innerText)); const sec = h && h.closest('section'); return sec ? sec.querySelectorAll('img').length : -1; })()");
+    const thumbs = await S.evaluate("(() => { const h = [...document.querySelectorAll('h3')].find((x) => /Items In Goal/i.test(x.innerText)); const sec = h && h.closest('section'); return sec ? sec.querySelectorAll('img').length : -1; })()");
     await rec(S, new RegExp(`\\(${popOwned}\\)`).test(before.heading || "") && thumbs === Math.min(popOwned, 60), "Goal panel: Items In Goal, then View all", `the heading counts the ${popOwned} owned matching items and View all lists all of them`, `heading=${before.heading}; thumbnails after View all=${thumbs}`);
     // delete confirmation: dismissed first (goal stays), then accepted (goal removed)
     const gone = async () => ((await admin.from("collection_goals").select("id").eq("id", goalIds[2])).data || []).length === 0;
-    await A.clickExpr(S, rowOf("RB31 Gamma")); await sleep(1200);
+    const gammaRow = await A.clickExpr(S, rowOf("RB31 Gamma")); await sleep(1200);
+    if (!gammaRow) throw new Error("RB31 Gamma row not on the page; delete checks not run so no other goal is touched");
     S.dialogs.length = 0; S.dialogMode = "dismiss";
     await A.clickText(S, "^Delete goal$", "button"); await sleep(2500);
     const dlg1 = S.dialogs.slice();
@@ -72,7 +73,7 @@ const rowOf = (name) => `[...document.querySelectorAll('button')].find((b) => b.
     await rec(S, S.dialogs.length === 1 && (await gone()), "Delete goal, then OK in the confirmation", "the goal is deleted", `dialogs=${S.dialogs.length}; goal deleted=${await gone()}`);
     S.dialogMode = "dismiss";
     t = await body(S);
-    await rec(S, /Completed Goals/.test(t) && !/Completed This Year/.test(t), "Stat panel label", "'Completed Goals' (goals carry no completion date, so it cannot mean 'this year')", `label shown=${/Completed Goals/.test(t)}`);
+    await rec(S, /Completed Goals/i.test(t) && !/Completed This Year/i.test(t), "Stat panel label", "'Completed Goals' (goals carry no completion date, so it cannot mean 'this year')", `label shown=${/Completed Goals/i.test(t)}`);
   } catch (e) { console.error("RUNNER ERROR", e); out.error = String(e && e.stack || e).slice(0, 600); }
   finally {
     try { await admin.from("collection_goals").delete().in("id", goalIds); } catch {}

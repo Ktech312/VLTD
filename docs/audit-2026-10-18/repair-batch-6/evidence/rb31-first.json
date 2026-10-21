@@ -1,0 +1,61 @@
+{
+ "label": "first",
+ "cases": [
+  {
+   "control": "Direct visit to /goals in a fresh browser: a goal's progress",
+   "expected": "shows the 8 matching items the account holds (not 0)",
+   "ok": false,
+   "actual": "row: null",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb31-first-1.jpg"
+  },
+  {
+   "control": "A completed goal's row button",
+   "expected": "reads 'Goal complete' and is disabled (it used to look clickable and do nothing)",
+   "ok": false,
+   "actual": "null",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb31-first-2.jpg"
+  },
+  {
+   "control": "Goal row 'Add missing to Wishlist' pressed twice",
+   "expected": "says what it does: one wishlist entry (not two), with a confirming message",
+   "ok": false,
+   "actual": "wishlist rows 0 -> 0 -> 0; message seen=false/false",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb31-first-3.jpg"
+  },
+  {
+   "control": "Goals sorted by Recent",
+   "expected": "newest created first (Beta 1 day, Gamma 5 days, Alpha 10 days)",
+   "ok": false,
+   "actual": "order=[]",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb31-first-4.jpg"
+  },
+  {
+   "control": "Goal panel: Items In Goal, then View all",
+   "expected": "the heading counts the 8 owned matching items and View all lists all of them",
+   "ok": false,
+   "actual": "heading=null; thumbnails after View all=-1",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb31-first-5.jpg"
+  },
+  {
+   "control": "Delete goal, then Cancel in the confirmation",
+   "expected": "a confirmation is asked; cancelling keeps the goal",
+   "ok": true,
+   "actual": "dialog=[{\"type\":\"confirm\",\"message\":\"Delete the goal \\\"Sell duplicate comics\\\"? This can't be undone.\"}]; goal deleted=false",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb31-first-6.jpg"
+  },
+  {
+   "control": "Delete goal, then OK in the confirmation",
+   "expected": "the goal is deleted",
+   "ok": false,
+   "actual": "dialogs=1; goal deleted=false",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb31-first-7.jpg"
+  },
+  {
+   "control": "Stat panel label",
+   "expected": "'Completed Goals' (goals carry no completion date, so it cannot mean 'this year')",
+   "ok": false,
+   "actual": "label shown=false",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb31-first-8.jpg"
+  }
+ ]
+}

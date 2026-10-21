@@ -1,0 +1,41 @@
+{
+ "label": "third",
+ "cases": [
+  {
+   "control": "Direct visit to /goals in a fresh browser: a goal's progress",
+   "expected": "shows the 8 matching items the account holds (not 0)",
+   "ok": false,
+   "actual": "row: null; page: Home Vault Exhibitions Lounge Discover Help ⌘K NOVICE Level 1 Vault Turn a collection into a plan. + Create Goal Items For Sale Sold Insights Goals Insurance All Goals Completion Value Sell Exhibition 26% OVERALL PROGRESS 3 of 4 goals active 3 need work 1 not started GOAL VALUE IMPACT $816 Potential increase across all goals INSURANCE GOAL PROGRESS 0% No insurance goal yet COMPLETED GOALS 1 Great job! Keep building m",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb31-third-1.jpg"
+  },
+  {
+   "control": "A completed goal's row button",
+   "expected": "reads 'Goal complete' and is disabled (it used to look clickable and do nothing)",
+   "ok": false,
+   "actual": "null",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb31-third-2.jpg"
+  },
+  {
+   "control": "Goal row 'Add missing to Wishlist' pressed twice",
+   "expected": "says what it does: one wishlist entry (not two), with a confirming message",
+   "ok": false,
+   "actual": "wishlist rows 0 -> 0 -> 0; message seen=false/false",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb31-third-3.jpg"
+  },
+  {
+   "control": "Goals sorted by Recent",
+   "expected": "newest created first (Beta 1 day, Gamma 5 days, Alpha 10 days)",
+   "ok": false,
+   "actual": "order=[]",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb31-third-4.jpg"
+  },
+  {
+   "control": "Goal panel: Items In Goal, then View all",
+   "expected": "the heading counts the 8 owned matching items and View all lists all of them",
+   "ok": false,
+   "actual": "heading=null; thumbnails after View all=-1",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb31-third-5.jpg"
+  }
+ ],
+ "error": "Error: RB31 Gamma row not on the page; delete checks not run so no other goal is touched\n    at C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\repair-batch-6\\scripts\\rb31-goals.cjs:66:26"
+}
