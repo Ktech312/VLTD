@@ -653,7 +653,7 @@ export function AnalyticsDashboard(props: {
             {breadcrumb}
             <h1 className="mt-2 text-4xl font-semibold">{pageTitle}</h1>
             <p className="mt-2 text-sm text-[color:var(--muted)]">
-              Fast drill-down • Allocation ($ / %) • Top 5 • Export • Future DB-ready structure
+              Allocation by value and share • Top 5 • Export
             </p>
           </div>
 

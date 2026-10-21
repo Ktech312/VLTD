@@ -603,8 +603,13 @@ function TopNavInner() {
                           }}
                           className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-left transition hover:bg-[rgba(203,208,213,0.06)] disabled:cursor-default disabled:hover:bg-transparent"
                         >
-                          <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-sm" style={{ background: "rgba(203,208,213,0.10)" }}>
-                            {p.avatar_emoji || (p.profile_type === "business" ? "🏛️" : "👤")}
+                          <span className="flex h-7 w-7 shrink-0 items-center justify-center overflow-hidden rounded-full text-xs font-bold" style={{ background: "rgba(203,208,213,0.10)" }}>
+                            {(() => {
+                              // The profile's own picture (the same one the header shows), else its initial: never the raw avatar id or an emoji.
+                              const src = resolveAvatarImageSrc(p.avatar_url || emojiToPresetUrl(p.avatar_emoji));
+                              // eslint-disable-next-line @next/next/no-img-element
+                              return src ? <img src={src} alt="" className="h-full w-full object-cover" /> : (p.display_name || "?").slice(0, 1).toUpperCase();
+                            })()}
                           </span>
                           <div className="min-w-0 flex-1">
                             <div className="truncate text-sm font-medium" style={{ color: "var(--theme-text-primary, #ECEDEF)" }}>

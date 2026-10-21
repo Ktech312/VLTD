@@ -358,6 +358,8 @@ export default function ActivityPage() {
   const [filter, setFilter] = useState<ActivityKind | "all">("all");
   const [visibleCount, setVisibleCount] = useState(20);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  // Close and Dismiss really close the details panel (the first activity used to take its place).
+  const [panelClosed, setPanelClosed] = useState(false);
 
   useEffect(() => {
     let isActive = true;
@@ -472,7 +474,7 @@ export default function ActivityPage() {
     return filter === "all" ? allEvents : allEvents.filter((event) => event.kind === filter);
   }, [allEvents, filter]);
 
-  const selected = filteredEvents.find((event) => event.id === selectedId) ?? filteredEvents[0] ?? allEvents[0] ?? null;
+  const selected = panelClosed ? null : filteredEvents.find((event) => event.id === selectedId) ?? filteredEvents[0] ?? allEvents[0] ?? null;
   const availableFilters = FILTERS.filter((tab) => tab.key === "all" || allEvents.some((event) => event.kind === tab.key));
   const showSelectedValue = Boolean(selected && (selected.kind === "valued" || selected.kind === "sold") && selected.newValue);
   const showSelectedEvidence = Boolean(selected && (selected.source || selected.confidence || selected.comps));
@@ -524,7 +526,7 @@ export default function ActivityPage() {
                         key={event.id}
                         event={event}
                         selected={selected?.id === event.id}
-                        onSelect={() => setSelectedId(event.id)}
+                        onSelect={() => { setSelectedId(event.id); setPanelClosed(false); }}
                       />
                     ))}
                   </div>
@@ -556,7 +558,7 @@ export default function ActivityPage() {
             <>
               <div className="flex items-start justify-between gap-4">
                 <h2 className="text-xl font-black">Activity Details</h2>
-                <PillButton onClick={() => setSelectedId(null)} ariaLabel="Close" title="Close" className="px-0! w-11 md:w-9"><AppIcon name="close" size={16} /></PillButton>
+                <PillButton onClick={() => { setSelectedId(null); setPanelClosed(true); }} ariaLabel="Close" title="Close" className="px-0! w-11 md:w-9"><AppIcon name="close" size={16} /></PillButton>
               </div>
 
               <div className="mt-7 grid grid-cols-[128px_1fr] gap-5">
@@ -643,7 +645,7 @@ export default function ActivityPage() {
                 <h3 className="text-[12px] font-black uppercase tracking-[0.16em]" style={{ color: "var(--theme-text-muted,#61656B)" }}>Related Activity</h3>
                 <div className="mt-3 grid gap-2">
                   {allEvents.filter((event) => event.id !== selected.id && event.item?.id && event.item.id === selected.item?.id).slice(0, 2).map((event) => (
-                    <button key={event.id} type="button" onClick={() => setSelectedId(event.id)} className="flex items-center justify-between rounded-[7px] border border-[rgba(203,208,213,0.16)] px-4 py-3 text-left text-sm">
+                    <button key={event.id} type="button" onClick={() => { setSelectedId(event.id); setPanelClosed(false); }} className="flex items-center justify-between rounded-[7px] border border-[rgba(203,208,213,0.16)] px-4 py-3 text-left text-sm">
                       <span>{event.subtitle}</span>
                       <span style={{ color: "var(--theme-text-muted,#61656B)" }}>{formatFullDate(event.timestamp).split(",")[0]}</span>
                     </button>
@@ -657,7 +659,7 @@ export default function ActivityPage() {
               <div className="mt-6 grid grid-cols-3 gap-3">
                 <Link href={selected.href ?? "/vault"} className="rounded-[7px] px-4 py-3 text-center text-sm font-black" style={{ background: "linear-gradient(135deg,#8C9298,#C8CDD2)", color: "#0B0B0B" }}>Open record</Link>
                 <Link href="/watchlist" className="rounded-[7px] border border-[rgba(203,208,213,0.34)] px-4 py-3 text-center text-sm font-bold" style={{ color: "var(--theme-gold,#C8CDD2)" }}>Add target</Link>
-                <button type="button" onClick={() => setSelectedId(null)} className="rounded-[7px] border border-red-500/45 px-4 py-3 text-sm font-bold text-red-400">Dismiss</button>
+                <button type="button" onClick={() => { setSelectedId(null); setPanelClosed(true); }} className="rounded-[7px] border border-red-500/45 px-4 py-3 text-sm font-bold text-red-400">Dismiss</button>
               </div>
             </>
           ) : (

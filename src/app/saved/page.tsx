@@ -186,7 +186,7 @@ export default function SavedPage() {
                   background: "rgba(203,208,213,0.06)",
                 }}
               >
-                🃏 Find more in The Flip
+                Find more in The Flip
               </Link>
             </div>
           </div>

@@ -160,6 +160,8 @@ export default function DiscoverPage() {
     if (new URLSearchParams(window.location.search).get("flip") === "1") setSwipeOpen(true);
   }, []);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  // Close on the details panel really closes it (the first room used to take its place).
+  const [panelClosed, setPanelClosed] = useState(false);
   const [sort, setSort] = useState<"recommended" | "views" | "items" | "newest" | "az">("recommended");
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
   const [reporting, setReporting] = useState(false);
@@ -350,7 +352,8 @@ export default function DiscoverPage() {
   const hasActiveFilter = activeTab !== "All" || query.trim() !== "";
   const galleryTime = (gallery: PublicGallery) => (gallery.created_at ? Date.parse(gallery.created_at) : 0);
   const displayGalleries = (() => {
-    const base = filtered.length > 0 ? filtered : galleries;
+    // Exactly what matched: when nothing does, the empty message stands alone (it used to fall back to listing every room underneath).
+    const base = filtered;
     const list = [...base];
     if (sort === "views") list.sort((a, b) => (b.analytics_views ?? 0) - (a.analytics_views ?? 0));
     else if (sort === "items") list.sort((a, b) => (b.item_count ?? 0) - (a.item_count ?? 0));
@@ -358,7 +361,7 @@ export default function DiscoverPage() {
     else if (sort === "newest") list.sort((a, b) => galleryTime(b) - galleryTime(a));
     return list;
   })();
-  const selectedGallery = displayGalleries.find((gallery) => gallery.id === selectedId) ?? displayGalleries[0] ?? null;
+  const selectedGallery = panelClosed ? null : displayGalleries.find((gallery) => gallery.id === selectedId) ?? displayGalleries[0] ?? null;
 
   // Real groupings rather than arbitrary slices of the same list.
   const trending = [...displayGalleries].sort((a, b) => (b.analytics_views ?? 0) - (a.analytics_views ?? 0));
@@ -471,7 +474,7 @@ export default function DiscoverPage() {
     return (
       <button
         type="button"
-        onClick={() => setSelectedId(gallery.id)}
+        onClick={() => { setSelectedId(gallery.id); setPanelClosed(false); }}
         onDoubleClick={() => openGallery(gallery)}
         className="group overflow-hidden rounded-[7px] border text-left transition hover:-translate-y-0.5"
         style={{
@@ -670,7 +673,7 @@ export default function DiscoverPage() {
           <aside className="h-fit rounded-[8px] border border-[rgba(203,208,213,0.32)] p-5 xl:sticky xl:top-24" style={{ background: "var(--theme-card,rgba(15,25,45,0.92))", boxShadow: "0 18px 55px rgba(0,0,0,0.26)" }}>
             <div className="flex items-center justify-between">
               <div className="text-[12px] font-black uppercase tracking-[0.16em]" style={{ color: "var(--theme-gold,#C8CDD2)" }}>Public Exhibition</div>
-              <PillButton onClick={() => setSelectedId(null)} ariaLabel="Close" title="Close" className="px-0! w-11 md:w-9"><AppIcon name="close" size={16} /></PillButton>
+              <PillButton onClick={() => { setSelectedId(null); setPanelClosed(true); }} ariaLabel="Close" title="Close" className="px-0! w-11 md:w-9"><AppIcon name="close" size={16} /></PillButton>
             </div>
             <div className="mt-4 h-[230px] rounded-[7px] border border-[rgba(203,208,213,0.22)]" style={coverStyle(selectedGallery)}>
               <div className="flex h-full items-start p-3">

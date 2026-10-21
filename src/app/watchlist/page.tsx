@@ -217,6 +217,8 @@ export default function WatchlistPage() {
   const [filter, setFilter] = useState<FilterKey>("all");
   const [sort, setSort] = useState<SortMode>("recent");
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  // Close details really closes the panel (the first card used to take its place).
+  const [panelClosed, setPanelClosed] = useState(false);
   const [movingId, setMovingId] = useState<string | null>(null);
   const [view, setView] = useState<"grid" | "list">("grid");
   const [editingTarget, setEditingTarget] = useState(false);
@@ -268,7 +270,7 @@ export default function WatchlistPage() {
     return list;
   }, [entries, filter, query, sort]);
 
-  const selected = filteredEntries.find((entry) => entry.id === selectedId) ?? filteredEntries[0] ?? null;
+  const selected = panelClosed ? null : filteredEntries.find((entry) => entry.id === selectedId) ?? filteredEntries[0] ?? null;
   const itemCount = entries.filter((entry) => entry.kind === "item" || entry.kind === "comic").length;
   const wishlistCount = entries.filter((entry) => entry.sourceType === "wishlist").length;
   const exhibitionCount = entries.filter((entry) => entry.kind === "exhibition").length;
@@ -331,6 +333,7 @@ export default function WatchlistPage() {
     const next = filteredEntries[selectedIndex + delta];
     if (next) {
       setSelectedId(next.id);
+      setPanelClosed(false);
       setEditingTarget(false);
       setEditingNotes(false);
     }
@@ -501,7 +504,7 @@ export default function WatchlistPage() {
                 key={`${entry.sourceType}-${entry.id}`}
                 entry={entry}
                 selected={selected?.id === entry.id}
-                onSelect={() => setSelectedId(entry.id)}
+                onSelect={() => { setSelectedId(entry.id); setPanelClosed(false); }}
                 onMove={() => handleMove(entry)}
               />
             ))}
@@ -552,7 +555,7 @@ export default function WatchlistPage() {
               <div className="flex items-center gap-2">
                 <PillButton size="compact" disabled={!canPrev} onClick={() => step(-1)} ariaLabel="Previous item" title="Previous item" className="w-8 px-0! md:w-7"><Glyph name="back" size={16} strokeWidth={2.4} /></PillButton>
                 <PillButton size="compact" disabled={!canNext} onClick={() => step(1)} ariaLabel="Next item" title="Next item" className="w-8 px-0! md:w-7"><Glyph name="next" size={16} strokeWidth={2.4} /></PillButton>
-                <PillButton size="compact" onClick={() => setSelectedId(null)} ariaLabel="Close details" title="Close" className="w-8 px-0! md:w-7"><Glyph name="close" size={16} strokeWidth={2.4} /></PillButton>
+                <PillButton size="compact" onClick={() => { setSelectedId(null); setPanelClosed(true); }} ariaLabel="Close details" title="Close" className="w-8 px-0! md:w-7"><Glyph name="close" size={16} strokeWidth={2.4} /></PillButton>
               </div>
             </div>
 

@@ -67,7 +67,7 @@ function displayLabel(label: string) {
   if (/^(TCG|MTG|CGC|PSA)$/i.test(clean)) return clean.toUpperCase();
   return clean
     .toLowerCase()
-    .replace(/\b(tcg|mtg|cgc|psa)\b/g, (m) => m.toUpperCase())
+    .replace(/\b(tcg|mtg|cgc|psa|tv|dvd|cd|vhs|lp|3d)\b/g, (m) => m.toUpperCase())
     .replace(/\b\w/g, (m) => m.toUpperCase());
 }
 

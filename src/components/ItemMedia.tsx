@@ -11,6 +11,7 @@ import { Glyph } from "@/components/ui/Glyph";
 import { AppIcon } from "@/components/ui/AppIcon";
 import { cropImageFile, type ScanCropRect } from "@/lib/scanners/cropImageFile";
 import { showToast } from "@/lib/toast";
+import { useDialogA11y } from "@/components/ui/useDialogA11y";
 
 type ImageRole = "primary" | "detail" | "proof";
 
@@ -339,6 +340,8 @@ export default function ItemMedia({
   const [mounted, setMounted] = useState(false);
   const [viewerOpen, setViewerOpen] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
+  // Escape closes the photo preview.
+  const previewDialogRef = useDialogA11y<HTMLDivElement>(previewOpen, () => setPreviewOpen(false));
   const [draftFile, setDraftFile] = useState<File | null>(null);
   const [draftPreviewUrl, setDraftPreviewUrl] = useState<string>("");
   const [rotation, setRotation] = useState(0);
@@ -613,6 +616,9 @@ export default function ItemMedia({
     if (editTarget?.url.startsWith("blob:")) URL.revokeObjectURL(editTarget.url);
     setEditTarget(null);
   }
+
+  // Escape closes the editor, asking first when there are unsaved changes (the same question the Cancel button asks).
+  const editDialogRef = useDialogA11y<HTMLDivElement>(Boolean(editTarget), () => requestCloseImageEdit());
 
   function requestCloseImageEdit() {
     if (editTarget && (editTarget.reoriented || !cropsEqual(editTarget.crop, FULL_CROP))) {
@@ -915,7 +921,7 @@ export default function ItemMedia({
                   inline zIndex:9999 (higher than its own z-50 className),
                   so anything below 10000 on mobile renders behind the
                   bottom tab bar instead of over it. */}
-              <div className="fixed inset-x-0 top-0 z-[10001] rounded-b-[32px] bg-[color:var(--surface)] shadow-[0_8px_48px_rgba(0,0,0,0.55)] ring-1 ring-[color:var(--border)]">
+              <div ref={previewDialogRef} role="dialog" aria-modal="true" aria-label="Photo preview" className="fixed inset-x-0 top-0 z-[10001] rounded-b-[32px] bg-[color:var(--surface)] shadow-[0_8px_48px_rgba(0,0,0,0.55)] ring-1 ring-[color:var(--border)]">
                 {/* Close */}
                 <button
                   type="button"
@@ -1002,6 +1008,7 @@ export default function ItemMedia({
       {mounted && editTarget && typeof document !== "undefined"
         ? createPortal(
             <div
+              ref={editDialogRef}
               className="fixed inset-0 z-[10005] flex h-[100dvh] w-[100dvw] items-center justify-center overflow-y-auto bg-black/90 px-3 py-4 backdrop-blur-sm sm:px-4"
               role="dialog"
               aria-modal="true"

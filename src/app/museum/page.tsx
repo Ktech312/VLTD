@@ -762,6 +762,12 @@ export default function MuseumPage() {
             <div className={`grid gap-6 lg:items-start ${selectedEntry ? "lg:grid-cols-[minmax(0,1fr)_440px]" : ""}`}>
               <div className="min-w-0">
                 {headerBlock}
+                {displayedGalleries.length === 0 && sortedGalleries.length > 0 ? (
+                  <div role="status" data-testid="exhibitions-no-match" className="mt-4 flex flex-wrap items-center gap-3 rounded-[8px] px-4 py-3 text-sm ring-1 ring-[color:var(--border)]" style={{ background: "var(--surface)", color: "var(--muted)" }}>
+                    <span>No exhibitions match this filter. You have {sortedGalleries.length} in total.</span>
+                    <PillButton size="compact" onClick={() => setFilter("ALL" as ExhibitionFilter)}>Show all</PillButton>
+                  </div>
+                ) : null}
                 <div className={`mt-5 grid gap-3 ${selectedEntry ? "grid-cols-2 xl:grid-cols-3" : "grid-cols-2 sm:grid-cols-3 lg:grid-cols-4"}`}>
               {displayedGalleries.map((entry) => {
                 const { gallery, totalValue, itemCount } = entry;

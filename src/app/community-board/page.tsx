@@ -25,6 +25,7 @@ import { listClubs, type Club } from "@/lib/clubs";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { LoungeNav } from "@/components/SectionNav";
 import ReleaseRadar from "@/components/lounge/ReleaseRadar";
+import { useDialogA11y } from "@/components/ui/useDialogA11y";
 
 const ACTIVE_PROFILE_KEY = "vltd_active_profile_id_v1";
 function getActiveProfileId(): string {
@@ -169,6 +170,8 @@ export default function VltLoungePage() {
   const [viewerProfileId, setViewerProfileId] = useState("");
   const [clubs, setClubs] = useState<Club[] | null>(null);
   const [composerKind, setComposerKind] = useState<LoungePostKind | null>(null);
+  // Escape closes the composer (it used to close only with its X or a click outside).
+  const composerDialogRef = useDialogA11y<HTMLDivElement>(composerKind !== null, () => setComposerKind(null));
   const [composerTitle, setComposerTitle] = useState("");
   const [composerBody, setComposerBody] = useState("");
   const [composerCategory, setComposerCategory] = useState<LoungeCategory>("discussion");
@@ -777,6 +780,10 @@ export default function VltLoungePage() {
           onClick={() => setComposerKind(null)}
         >
           <div
+            ref={composerDialogRef}
+            role="dialog"
+            aria-modal="true"
+            aria-label={composerKind === "question" ? "Ask the Lounge" : "Post an Update"}
             className="w-full max-w-[440px] rounded-[10px] p-5"
             style={CARD}
             onClick={(e) => e.stopPropagation()}

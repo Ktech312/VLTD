@@ -23,7 +23,6 @@ type Product = {
   category: ProductCategory;
   tags: string[];
   price: string;
-  emoji: string;
   description: string;
   url: string;
   badge?: string;
@@ -49,7 +48,6 @@ const PRODUCTS: Product[] = [
     category: "sleeves",
     tags: ["TCG", "Sports"],
     price: "$7–$9",
-    emoji: "🐉",
     description: "Inner sleeves for double-sleeving. Sealable to lock cards in place.",
     url: "https://www.amazon.com/s?k=dragon+shield+perfect+fit+sealable",
     badge: "Best Seller",
@@ -61,7 +59,6 @@ const PRODUCTS: Product[] = [
     category: "sleeves",
     tags: ["TCG", "Sports"],
     price: "$10–$14",
-    emoji: "🛡️",
     description: "100-pack premium matte finish. Non-glare surface perfect for shuffling.",
     url: "https://www.amazon.com/s?k=dragon+shield+matte+sleeves+100",
   },
@@ -72,7 +69,6 @@ const PRODUCTS: Product[] = [
     category: "sleeves",
     tags: ["TCG", "Sports", "Budget"],
     price: "$2–$5",
-    emoji: "💰",
     description: "100-pack basic poly sleeves. Great for bulk storage or budget protection.",
     url: "https://www.amazon.com/s?k=ultra+pro+penny+sleeves+100",
   },
@@ -83,7 +79,6 @@ const PRODUCTS: Product[] = [
     category: "sleeves",
     tags: ["Sports", "TCG", "Display"],
     price: "$1–$3 each",
-    emoji: "🧲",
     description: "Rigid magnetic snap case. Perfect for single-card display and protection.",
     url: "https://www.amazon.com/s?k=ultra+pro+one+touch+magnetic+card+holder",
     badge: "Popular",
@@ -97,7 +92,6 @@ const PRODUCTS: Product[] = [
     category: "slabs",
     tags: ["Sports", "TCG"],
     price: "From $25/card",
-    emoji: "🏆",
     description: "The gold standard. PSA-graded cards carry the highest market premiums.",
     url: "https://www.psacard.com/services/tradingcardgrading",
     badge: "Most Trusted",
@@ -109,7 +103,6 @@ const PRODUCTS: Product[] = [
     category: "slabs",
     tags: ["Sports", "TCG"],
     price: "From $22/card",
-    emoji: "📊",
     description: "Sub-grades for centering, corners, edges, and surface. Loved by vintage sports collectors.",
     url: "https://www.beckett.com/grading",
   },
@@ -120,7 +113,6 @@ const PRODUCTS: Product[] = [
     category: "slabs",
     tags: ["Comics"],
     price: "From $38/book",
-    emoji: "💥",
     description: "Industry leader for comic book grading. Universal label for standard issues.",
     url: "https://www.cgccomics.com/submit/",
   },
@@ -131,7 +123,6 @@ const PRODUCTS: Product[] = [
     category: "slabs",
     tags: ["Games"],
     price: "From $50/game",
-    emoji: "🎮",
     description: "Certified grading for video games and cartridges. Seal rating + box grade.",
     url: "https://www.watagames.com/",
   },
@@ -144,7 +135,6 @@ const PRODUCTS: Product[] = [
     category: "display",
     tags: ["Sports", "TCG", "Vinyl"],
     price: "$15–$40",
-    emoji: "🖼️",
     description: "UV-blocking acrylic frames designed for wall display of graded or raw cards.",
     url: "https://www.amazon.com/s?k=wall+mount+acrylic+card+display+frame",
   },
@@ -155,7 +145,6 @@ const PRODUCTS: Product[] = [
     category: "display",
     tags: ["Sports", "TCG"],
     price: "$5–$15",
-    emoji: "🔲",
     description: "Desk stand for graded slabs. Angled or upright styles available.",
     url: "https://www.amazon.com/s?k=acrylic+graded+card+stand+display",
   },
@@ -166,7 +155,6 @@ const PRODUCTS: Product[] = [
     category: "display",
     tags: ["Vinyl"],
     price: "$12–$30",
-    emoji: "🎵",
     description: "Display your most prized records on the wall. Floats record in front of sleeves.",
     url: "https://www.amazon.com/s?k=vinyl+record+wall+display+frame",
     badge: "Fan Fave",
@@ -178,7 +166,6 @@ const PRODUCTS: Product[] = [
     category: "display",
     tags: ["Toys"],
     price: "$5–$12",
-    emoji: "🗿",
     description: "Clear acrylic cases sized for standard Funko Pop boxes. UV-resistant options available.",
     url: "https://www.amazon.com/s?k=funko+pop+acrylic+protector+case",
   },
@@ -191,7 +178,6 @@ const PRODUCTS: Product[] = [
     category: "storage",
     tags: ["Sports", "TCG"],
     price: "$3–$6",
-    emoji: "📦",
     description: "Corrugated cardboard storage boxes. Holds ~800 single-sleeved cards or 400 double-sleeved.",
     url: "https://www.amazon.com/s?k=bcw+800+count+card+storage+box",
     badge: "Best Value",
@@ -203,7 +189,6 @@ const PRODUCTS: Product[] = [
     category: "storage",
     tags: ["Comics"],
     price: "$7–$12",
-    emoji: "📚",
     description: "Acid-free corrugated boxes designed for comic book storage. Holds ~175 bagged & boarded comics.",
     url: "https://www.amazon.com/s?k=bcw+short+comic+book+box",
   },
@@ -214,7 +199,6 @@ const PRODUCTS: Product[] = [
     category: "storage",
     tags: ["Vinyl"],
     price: "$25–$60",
-    emoji: "🗃️",
     description: "Wooden or plastic crates sized for 12\" LPs. Holds 50–80 records upright.",
     url: "https://www.amazon.com/s?k=vinyl+record+storage+crate+wood",
   },
@@ -227,7 +211,6 @@ const PRODUCTS: Product[] = [
     category: "binders",
     tags: ["TCG", "Sports"],
     price: "$12–$25",
-    emoji: "📓",
     description: "9-pocket pages for 360-card binders. D-ring or O-ring options. Available in many colors.",
     url: "https://www.amazon.com/s?k=ultra+pro+9+pocket+binder+trading+cards",
   },
@@ -238,7 +221,6 @@ const PRODUCTS: Product[] = [
     category: "binders",
     tags: ["TCG", "Sports"],
     price: "$20–$35",
-    emoji: "🔐",
     description: "Side-loading pockets and a zippered outer shell. Prevents cards from falling out.",
     url: "https://www.amazon.com/s?k=vault+x+exo-tec+9+pocket+binder",
     badge: "Collector Fave",
@@ -250,7 +232,6 @@ const PRODUCTS: Product[] = [
     category: "binders",
     tags: ["Comics"],
     price: "$15–$20",
-    emoji: "🦸",
     description: "3-inch D-ring binder with comic-sized pockets. Stores up to 28 bagged comics.",
     url: "https://www.amazon.com/s?k=comic+book+binder+storage",
   },
@@ -263,7 +244,6 @@ const PRODUCTS: Product[] = [
     category: "tools",
     tags: ["All"],
     price: "$5–$10",
-    emoji: "🧤",
     description: "Lint-free cotton gloves for handling raw cards, books, and vinyl without skin oils.",
     url: "https://www.amazon.com/s?k=cotton+handling+gloves+archival",
   },
@@ -274,7 +254,6 @@ const PRODUCTS: Product[] = [
     category: "tools",
     tags: ["All"],
     price: "$8–$20",
-    emoji: "🔍",
     description: "10x magnification for inspecting card edges, surface scratches, and print defects.",
     url: "https://www.amazon.com/s?k=10x+jewelers+loupe+magnifying+glass",
   },
@@ -285,7 +264,6 @@ const PRODUCTS: Product[] = [
     category: "tools",
     tags: ["Sports", "TCG", "Comics"],
     price: "$10–$25",
-    emoji: "🔦",
     description: "Reveals restoration, trimming, and reprints invisible to the naked eye.",
     url: "https://www.amazon.com/s?k=uv+blacklight+flashlight+authentication",
   },
@@ -296,7 +274,6 @@ const PRODUCTS: Product[] = [
     category: "tools",
     tags: ["Sports", "TCG"],
     price: "$5–$15",
-    emoji: "📐",
     description: "Precision ruler for measuring left/right and top/bottom centering percentages pre-submission.",
     url: "https://www.amazon.com/s?k=card+centering+tool+grading",
   },
@@ -309,7 +286,6 @@ const PRODUCTS: Product[] = [
     category: "grading",
     tags: ["Sports", "TCG"],
     price: "$5–$10",
-    emoji: "📫",
     description: "Specially sized poly sleeves for submission packaging. Fits PSA and BGS requirements.",
     url: "https://www.amazon.com/s?k=card+grading+submission+sleeves",
   },
@@ -320,7 +296,6 @@ const PRODUCTS: Product[] = [
     category: "grading",
     tags: ["Sports", "TCG", "Comics"],
     price: "$5–$12",
-    emoji: "🗂️",
     description: "Acid-free resealable poly bags for comics and oversized cards. Standard grading requirement.",
     url: "https://www.amazon.com/s?k=ultra+pro+team+bags+resealable",
   },
@@ -331,7 +306,6 @@ const PRODUCTS: Product[] = [
     category: "grading",
     tags: ["All"],
     price: "$8–$15 /25pk",
-    emoji: "✉️",
     description: "Padded self-sealing mailers for safely shipping cards, comics, and small items.",
     url: "https://www.amazon.com/s?k=bubble+mailers+6x9+shipping",
   },
@@ -342,7 +316,6 @@ const PRODUCTS: Product[] = [
     category: "grading",
     tags: ["Sports", "TCG"],
     price: "$10–$15 /200pk",
-    emoji: "🦺",
     description: "Semi-rigid Card Saver I holders required by PSA and many other graders for submission.",
     url: "https://www.amazon.com/s?k=card+saver+1+semi+rigid+holders",
     badge: "PSA Required",
@@ -360,16 +333,16 @@ function ProductCard({ product }: { product: Product }) {
       className="group flex flex-col rounded-2xl overflow-hidden ring-1 ring-[color:var(--border)] transition hover:ring-[color:var(--theme-gold)] hover:shadow-lg"
       style={{ background: "var(--surface)" }}
     >
-      {/* Emoji thumbnail */}
+      {/* Category glyph thumbnail */}
       <div
-        className="flex items-center justify-center text-5xl"
+        className="flex items-center justify-center" aria-hidden="true"
         style={{
           background: "var(--pill)",
           aspectRatio: "4 / 3",
           minHeight: 0,
         }}
       >
-        {product.emoji}
+        <Glyph name={CATEGORIES.find((c) => c.key === product.category)?.glyph ?? "search"} size={44} strokeWidth={1.3} />
       </div>
 
       <div className="flex flex-col flex-1 gap-2 p-3">

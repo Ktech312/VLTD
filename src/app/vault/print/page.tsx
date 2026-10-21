@@ -5,6 +5,7 @@ import { CloudWait, useCloudRefresh } from "@/components/vault/CloudStatus";
 
 import { AppIcon } from "@/components/ui/AppIcon";
 import { loadItems } from "@/lib/vaultModel";
+import { UNIVERSE_LABEL, type UniverseKey } from "@/lib/taxonomy";
 import type { VaultItem } from "@/lib/vaultModel";
 import { getVaultImagePublicUrl } from "@/lib/vaultCloud";
 import { activeItems, insuranceValue, PURCHASE_BASED_NOTE } from "@/lib/vaultStats";
@@ -152,7 +153,7 @@ export default function VaultPrintPage() {
               return (
                 <div key={universe}>
                   <div className="group-header">
-                    {universe} &nbsp;·&nbsp; {groupItems.length} item{groupItems.length !== 1 ? "s" : ""} &nbsp;·&nbsp; {fmt(groupTotal)}
+                    {UNIVERSE_LABEL[universe as UniverseKey] ?? universe} &nbsp;·&nbsp; {groupItems.length} item{groupItems.length !== 1 ? "s" : ""} &nbsp;·&nbsp; {fmt(groupTotal)}
                   </div>
                   <div className="item-grid">
                     {groupItems.map((item) => {
