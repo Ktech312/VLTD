@@ -58,6 +58,8 @@ type PublicGallery = {
   snapshots: Record<string, SnapshotFact>;
   universeKey: UniverseKey;
   created_at?: string | null;
+  /** Set when the exhibition's curator is shown under an alias. */
+  alias_name?: string;
   collector_name?: string;
   collector_avatar_url?: string;
 };
@@ -111,6 +113,8 @@ function rowToGallery(row: Record<string, unknown>): PublicGallery {
     description: typeof row.description === "string" ? row.description : null,
     cover_image: typeof row.cover_image === "string" && row.cover_image ? row.cover_image : null,
     profile_id: String(row.profile_id ?? ""),
+    // An exhibition that uses an alias is shown under the alias, never under the real collector.
+    alias_name: row.alias_enabled === true && typeof row.alias_name === "string" && row.alias_name.trim() ? row.alias_name.trim().slice(0, 60) : undefined,
     analytics_views: typeof row.analytics_views === "number" ? row.analytics_views : 0,
     item_count: itemIds.length,
     theme_pack: themePack,
@@ -198,7 +202,7 @@ export default function DiscoverPage() {
       try {
         const { data, error } = await supabase
           .from("galleries")
-          .select("id, title, description, cover_image, profile_id, analytics_views, layout, exhibition_layout, created_at")
+          .select("id, title, description, cover_image, profile_id, analytics_views, layout, exhibition_layout, created_at, alias_enabled, alias_name, alias_avatar")
           .eq("visibility", "PUBLIC")
           .eq("state", "ACTIVE")
           .order("analytics_views", { ascending: false })
@@ -266,7 +270,8 @@ export default function DiscoverPage() {
           for (const gallery of mapped) gallery.universeKey = inferUniverseKeyFromText(gallery);
         }
 
-        const profileIds = [...new Set(mapped.map((gallery) => gallery.profile_id).filter(Boolean))];
+        // The real profile of an alias exhibition is not looked up at all (its name and avatar must not reach the page).
+        const profileIds = [...new Set(mapped.filter((gallery) => !gallery.alias_name).map((gallery) => gallery.profile_id).filter(Boolean))];
         if (profileIds.length > 0) {
           const { data: profiles } = await supabase
             .from("public_profiles")
@@ -288,11 +293,11 @@ export default function DiscoverPage() {
 
           setGalleries(mapped.map((gallery) => ({
             ...gallery,
-            collector_name: profileMap.get(gallery.profile_id)?.name ?? "Collector",
-            collector_avatar_url: profileMap.get(gallery.profile_id)?.avatarUrl ?? "",
+            collector_name: gallery.alias_name ?? profileMap.get(gallery.profile_id)?.name ?? "Collector",
+            collector_avatar_url: gallery.alias_name ? "" : profileMap.get(gallery.profile_id)?.avatarUrl ?? "",
           })));
         } else {
-          setGalleries(mapped);
+          setGalleries(mapped.map((gallery) => (gallery.alias_name ? { ...gallery, collector_name: gallery.alias_name, collector_avatar_url: "" } : gallery)));
         }
 
         try {
