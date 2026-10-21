@@ -650,33 +650,29 @@ export default function GalleryPage() {
       }
 
       setSaveState("saved");
-      if (!auto || justPublished || vaultSyncError) {
-        setStatusTone(vaultSyncError ? "neutral" : "good");
-        setStatus(
-          vaultSyncError
-            ? "Exhibition saved. Some vault sync tasks still need retrying."
-            : justPublished
-              ? "Exhibition published!"
-              : "Exhibition saved."
-        );
-      }
 
-      // Record the publish event after a successful save. The exhibition itself is public either way; if the account refuses the
-      // follower notice the page says so instead of claiming followers were told.
+      // The follower notice is recorded BEFORE the page says anything about publishing, so there is one accurate message: the
+      // exhibition itself is public either way; if the account refuses the notice the page says followers were not notified.
+      let noticeRecorded = true;
       if (justPublished) {
         const profileId =
           typeof window !== "undefined"
             ? String(window.localStorage.getItem("vltd_active_profile_id_v1") ?? "").trim()
             : "";
-        if (profileId) {
-          const noticeRecorded = await logExhibitionPublished(nextDraft.id, profileId, nextDraft.title);
-          if (!noticeRecorded) {
-            const msg = "Published, but followers were not notified: the account did not accept the notice.";
-            setNoticeProblem(msg);
-            setStatusTone("neutral");
-            setStatus("Exhibition published, but followers were not notified: the account did not accept the notice.");
-          }
-        }
+        if (profileId) noticeRecorded = await logExhibitionPublished(nextDraft.id, profileId, nextDraft.title);
+      }
+      if (!noticeRecorded) setNoticeProblem("Published, but followers were not notified: the account did not accept the notice.");
+      if (!auto || justPublished || vaultSyncError) {
+        setStatusTone(vaultSyncError || !noticeRecorded ? "neutral" : "good");
+        setStatus(
+          vaultSyncError
+            ? "Exhibition saved. Some vault sync tasks still need retrying."
+            : justPublished
+              ? noticeRecorded
+                ? "Exhibition published!"
+                : "Exhibition published, but followers were not notified: the account did not accept the notice."
+              : "Exhibition saved."
+        );
       }
       return true;
     } catch (error) {
