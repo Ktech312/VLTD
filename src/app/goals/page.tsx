@@ -18,7 +18,8 @@ import {
   type GoalProgress,
 } from "@/lib/collectionGoals";
 import { addWishlistItem } from "@/lib/wishlistModel";
-import { loadItems, resetCloudBackoff, type VaultItem } from "@/lib/vaultModel";
+import { loadItems, resetCloudBackoff, syncVaultItemsFromSupabaseChecked, type VaultItem } from "@/lib/vaultModel";
+import { loadWishlist } from "@/lib/wishlistModel";
 import { LoadErrorCard, StaleDataNotice } from "@/components/vault/CloudStatus";
 import { Glyph } from "@/components/ui/Glyph";
 import { showToast } from "@/lib/toast";
@@ -116,6 +117,11 @@ function buildGoalViews(progress: GoalProgress[], items: VaultItem[]): GoalView[
         return true;
       })
       .slice(0, 5);
+    const ownedMatching = items.filter((item) => item.status !== "SOLD" && item.status !== "WISHLIST").filter((item) => {
+      if (goal.subject?.trim()) return (item.subject ?? "").toLowerCase() === goal.subject.trim().toLowerCase();
+      if (goal.universe) return item.universe === goal.universe;
+      return true;
+    }).slice(0, 60);
 
     const type = goalType(goal);
     const valueImpact = matching.reduce((sum, item) => sum + (item.currentValue ?? item.purchasePrice ?? 0), 0);
@@ -135,7 +141,7 @@ function buildGoalViews(progress: GoalProgress[], items: VaultItem[]): GoalView[
       actionLabel: type === "insurance" ? "Review items" : type === "gallery" ? "Create room" : type === "sell" ? "Review duplicates" : "View set",
       notes: goal.notes,
       real: goal,
-      thumbnails: matching.length ? matching.map((item) => thumbForItem(item)) : [universePlaceholder(goal.universe)],
+      thumbnails: ownedMatching.length ? ownedMatching.map((item) => thumbForItem(item)) : [universePlaceholder(goal.universe)],
     };
   });
 }
@@ -237,10 +243,12 @@ function GoalRow({
             event.stopPropagation();
             onWishlist();
           }}
-          className="mt-3 rounded-[7px] border border-[rgba(203,208,213,0.36)] px-5 py-1.5 text-xs font-black"
+          disabled={goal.missing <= 0}
+          title={goal.missing > 0 ? "Adds what is missing from this goal to your wishlist" : "Nothing is missing: this goal is complete"}
+          className="mt-3 rounded-[7px] border border-[rgba(203,208,213,0.36)] px-5 py-1.5 text-xs font-black disabled:cursor-not-allowed disabled:opacity-60"
           style={{ color: "var(--theme-gold,#C8CDD2)" }}
         >
-          {goal.actionLabel}
+          {goal.missing > 0 ? "Add missing to Wishlist" : "Goal complete"}
         </button>
       </div>
     </button>
@@ -273,7 +281,11 @@ export default function GoalsPage() {
       setItems(loadItems());
     };
     window.addEventListener("focus", onFocus);
-    return () => window.removeEventListener("focus", onFocus);
+    window.addEventListener("vltd:vault-updated", onFocus);
+    return () => {
+      window.removeEventListener("focus", onFocus);
+      window.removeEventListener("vltd:vault-updated", onFocus);
+    };
   }, []);
 
   // The retry timer and the Retry button both change what is waiting: keep the notice and the list in step with the status pill.
@@ -290,6 +302,8 @@ export default function GoalsPage() {
     const timer = window.setTimeout(() => {
       if (active) { setLoadFailed(true); setGoalsLoaded(true); }
     }, 20_000);
+    // Progress is measured against the account's items, so they are pulled too (not only what this device already holds).
+    void syncVaultItemsFromSupabaseChecked().then(() => { if (active) setItems(loadItems()); }).catch(() => undefined);
     void syncGoalsFromSupabaseChecked().then((result) => {
       if (!active) return;
       setGoals(loadGoals());
@@ -321,7 +335,7 @@ export default function GoalsPage() {
   const visibleGoals = useMemo(() => {
     let list = goalViews.filter((goal) => filter === "all" || goal.type === filter);
     if (sort === "progress") list = [...list].sort((a, b) => b.pct - a.pct);
-    if (sort === "recent") list = [...list].reverse();
+    if (sort === "recent") list = [...list].sort((a, b) => (b.real?.createdAt ?? 0) - (a.real?.createdAt ?? 0));
     if (sort === "priority") list = [...list].sort((a, b) => b.missing - a.missing);
     return list;
   }, [filter, goalViews, sort]);
@@ -334,8 +348,14 @@ export default function GoalsPage() {
 
   function addGoalToWishlist(goal: GoalView) {
     if (!goal.real || goal.real.missing <= 0) return;
+    const title = `${goal.real.name} - ${goal.real.missing} missing`;
+    if (loadWishlist().some((entry) => entry.title === title)) {
+      showToast("Already on your wishlist.");
+      return;
+    }
+    showToast(`Added to your wishlist: ${title}`);
     addWishlistItem({
-      title: `${goal.real.name} - ${goal.real.missing} missing`,
+      title,
       notes: `${goal.real.ownedCount} of ${goal.real.targetCount} owned (${goal.real.pct}% complete)`,
       universe: goal.real.universe,
       subject: goal.real.subject,
@@ -359,6 +379,7 @@ export default function GoalsPage() {
 
   async function handleDeleteGoal(goal: GoalView) {
     if (!goal.real) return;
+    if (!window.confirm(`Delete the goal "${goal.name}"? This can't be undone.`)) return;
     setSelectedGoalId(null);
     const result = await deleteGoal(goal.real.id);
     setGoals(loadGoals());
@@ -427,7 +448,7 @@ export default function GoalsPage() {
                 {insuranceGoal ? `${insuranceGoal.ownedCount} of ${insuranceGoal.targetCount} items documented. Not insurance coverage.` : "No insurance goal yet"}
               </p>
             </StatPanel>
-            <StatPanel label="Completed This Year" icon={<Glyph name="check" size={34} style={{ color: "#8DD35F" }} />}>
+            <StatPanel label="Completed Goals" icon={<Glyph name="check" size={34} style={{ color: "#8DD35F" }} />}>
               <div className="text-[32px] font-black text-[#8DD35F]">{completed}</div>
               <p className="text-sm" style={{ color: "var(--theme-text-muted,#61656B)" }}>Great job! Keep building momentum.</p>
             </StatPanel>
@@ -588,7 +609,7 @@ export default function GoalsPage() {
 
             <section className="mt-5">
               <div className="mb-3 flex justify-between">
-                <h3 className="text-[12px] font-black uppercase tracking-[0.16em]" style={{ color: "var(--theme-gold,#C8CDD2)" }}>Items In Goal ({selectedGoal.targetCount})</h3>
+                <h3 className="text-[12px] font-black uppercase tracking-[0.16em]" style={{ color: "var(--theme-gold,#C8CDD2)" }}>Items In Goal ({selectedGoal.ownedCount})</h3>
                 <button type="button" onClick={() => setShowAllGoalItems((v) => !v)} className="text-xs font-bold" style={{ color: "var(--theme-gold,#C8CDD2)" }}>{showAllGoalItems ? "Show less" : "View all"}</button>
               </div>
               <div className="flex flex-wrap gap-2">
@@ -597,15 +618,15 @@ export default function GoalsPage() {
                     <img src={src} alt="" className="max-h-14 max-w-14 object-contain" />
                   </div>
                 ))}
-                {!showAllGoalItems && selectedGoal.targetCount > 5 && (
-                  <div className="grid h-16 w-16 place-items-center rounded-[6px] border border-[rgba(203,208,213,0.22)] text-sm font-black" style={{ color: "var(--theme-gold,#C8CDD2)" }}>+{selectedGoal.targetCount - 5}</div>
+                {!showAllGoalItems && selectedGoal.thumbnails.length > 5 && (
+                  <div className="grid h-16 w-16 place-items-center rounded-[6px] border border-[rgba(203,208,213,0.22)] text-sm font-black" style={{ color: "var(--theme-gold,#C8CDD2)" }}>+{selectedGoal.thumbnails.length - 5}</div>
                 )}
               </div>
             </section>
 
             <div className="mt-5 grid gap-3">
-              <button type="button" onClick={() => addGoalToWishlist(selectedGoal)} className="rounded-[7px] px-4 py-3 text-sm font-black" style={{ background: "linear-gradient(135deg,#8C9298,#C8CDD2)", color: "#0B0B0B" }}>
-                Review items
+              <button type="button" onClick={() => addGoalToWishlist(selectedGoal)} disabled={selectedGoal.missing <= 0} className="rounded-[7px] px-4 py-3 text-sm font-black disabled:cursor-not-allowed disabled:opacity-60" style={{ background: "linear-gradient(135deg,#8C9298,#C8CDD2)", color: "#0B0B0B" }}>
+                {selectedGoal.missing > 0 ? "Add missing to Wishlist" : "Goal complete"}
               </button>
               <div className="grid grid-cols-2 gap-3">
                 <button type="button" onClick={() => shareGoal(selectedGoal)} className="rounded-[7px] border border-[rgba(203,208,213,0.22)] px-4 py-3 text-sm font-bold" style={{ color: "var(--theme-gold,#C8CDD2)" }}>Share goal</button>
