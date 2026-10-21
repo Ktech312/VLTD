@@ -1827,6 +1827,17 @@ export default function VaultListView({ lockedUniverse }: { lockedUniverse?: Uni
     showSoldItems ||
     sortMode !== "newest";
 
+  // Filters that can hide items (the sort order never hides any): an empty universe is only "empty" when none of these is on.
+  const hasItemFilters =
+    query.trim().length > 0 ||
+    categoryFilter.length > 0 ||
+    subFilter.length > 0 ||
+    readinessFilter !== "all" ||
+    reviewFilter !== "all" ||
+    gradedOnly ||
+    uncategorizedOnly ||
+    showSoldItems;
+
   const selectedDetailItem =
     // Quick-look stays hidden until an item is tapped (desktop + mobile).
     filteredItems.find((item) => String(item.id) === String(selectedDetailId)) ?? null;
@@ -2518,12 +2529,12 @@ export default function VaultListView({ lockedUniverse }: { lockedUniverse?: Uni
           <VaultLoadError onRetry={() => { resetCloudBackoff(); retryAccountLookups(); void hydrateAll(); }} />
         ) : items.length === 0 ? (
           <VaultEmptyState hasFilters={false} onClearFilters={handleClearFilters} />
-        ) : lockedUniverse && filteredItems.length === 0 && !hasActiveFilters ? (
+        ) : lockedUniverse && filteredItems.length === 0 && !hasItemFilters ? (
           <VaultEmptyState hasFilters={false} onClearFilters={handleClearFilters} universeName={universeDisplayName(lockedUniverse)} />
         ) : vaultViewMode === "wall" ? (
           <VaultWallView items={filteredItems} saleMap={saleMap} sortMode={sortMode} showSold={showSoldItems} />
         ) : filteredItems.length === 0 ? (
-          <VaultEmptyState hasFilters={hasActiveFilters} onClearFilters={handleClearFilters} universeName={lockedUniverse && !hasActiveFilters ? universeDisplayName(lockedUniverse) : undefined} />
+          <VaultEmptyState hasFilters={hasActiveFilters} onClearFilters={handleClearFilters} universeName={lockedUniverse && !hasItemFilters ? universeDisplayName(lockedUniverse) : undefined} />
         ) : vaultViewMode === "flip" ? (
           <section className="mt-4">
             <div className="mx-auto max-w-3xl">
