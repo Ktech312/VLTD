@@ -2,7 +2,7 @@
 
 The frozen audit evidence (`rows.jsonl` first-failure rows, `results.csv`, screenshots) is unchanged. This file is the status layer on top of it; `SUMMARY.md` and `root-causes.json` carry the same status tags. "Closed" means re-tested on production with synthetic data after the fix (evidence named). Anything not shown here is still open as written in `SUMMARY.md`.
 
-**Closed so far: 37 specific audit rows** (RC-01: 2, RC-02: 6, RC-03: 2, RC-09: 7, RC-19: 7, RC-06: 10, RC-07: 3). Open P1 root causes: RC-05 (untouched) and the six profile-validation rows of RC-07 (kept with RC-28). **Insurance is not fully closed** (section 2 and the open items RC-14 and RC-31).
+**Closed so far: 66 specific audit rows** (RC-01: 2, RC-02: 6, RC-03: 2, RC-09: 7, RC-19: 7, RC-06: 10, RC-07: 3, RC-17: 20, RC-18: 9). Open P1 root causes: RC-05 (untouched) and the six profile-validation rows of RC-07 (kept with RC-28). **Insurance is not fully closed** (section 2 and the open items RC-14 and RC-31).
 
 ## 1. Closed findings
 
@@ -33,6 +33,14 @@ The frozen audit evidence (`rows.jsonl` first-failure rows, `results.csv`, scree
 | RC-07 writes that look saved but are lost | GIN-066 (D-05), GIN-068 (D-03), GIN-070 (D-04) | `14661a8`, `748ab2b`, `f4761cb` | rows RB6-052 to RB6-137 |
 
 Still open inside these: RC-07's six profile-validation rows (ACC-381, ACC-796, ACC-390, ACC-811, ACC-395, ACC-819) stay with RC-28. ADD-272 and the cross-account Capture draft are now verified (RB6-118, RB6-078). Goal ownership with cloud goals present is verified (RB6-120 to RB6-125; a first check recorded it only as an observation and RB6-138 corrects that: it was a failing case, fixed in `f4761cb`). Open elsewhere, unchanged: **RC-14** install-banner overlap and **RC-31** small tap targets.
+
+### Batch 4: money inputs and sales agreement (closeout `repair-batch-4/CLOSEOUT.md`)
+| Root cause | Audit rows closed | Commits | Evidence |
+|---|---|---|---|
+| RC-17 letters, blanks and negatives become money; numbers parsed wrongly | ADD-005, ADD-115, ADD-404, ADD-139, ADD-141, ADD-142, ADD-164, ITM-070, ITM-558, ITM-294, ITM-306, ITM-044, ITM-529, ITM-292, ITM-227, ITM-308, ITM-248, ITM-249, ITM-629, ITM-630 (20 of 20) | `97c1e9b`, `a07fabc` | rows RB9-147 to RB9-217 (Quick Add manual path included) |
+| RC-18 sales ledger and profit figures break the value rule or disagree | ITM-354, ITM-353, ITM-357, ITM-364, ITM-333, ITM-430, ITM-666, ITM-043, ITM-527 (9 of 9) | `8eea0fc`, `b38f5f7` | rows RB9-188 to RB9-217; clean second browser RB9-204, RB9-205 |
+
+Final deployed commit `b38f5f7`. Two defects in the first fix were found by the production recheck and fixed (Add page showed no refusal message; ledger loader turned a blank cost into 0); first-run rows RB9-002 to RB9-005 and RB9-066, RB9-068, RB9-074 are kept and explained by rows RB9-218 to RB9-221. Not claimed: Quick Add has no before/after pair (checked after the fix only); Bulk `1e3` and the item-page Sell button were not separately driven on production.
 
 ## 2. Partly closed: still open inside RC-19
 | Row | Why still open |

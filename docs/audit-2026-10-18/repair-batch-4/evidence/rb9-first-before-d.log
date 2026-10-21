@@ -1,0 +1,46 @@
+FAILS   ADD-115 | Purchase Price null / Current Value "-40" | saved: purchase_price=null, current_value=-40; message='Saved to your account'
+FAILS   ADD-139 | Purchase Price "1e3" / Current Value "1e3" | saved: purchase_price=13, current_value=13; message='Saved to your account'
+FAILS   ADD-141 | Purchase Price "1,5" / Current Value "1,5" | saved: purchase_price=15, current_value=15; message='Saved to your account'
+FAILS   ADD-142 | Purchase Price "5-3" / Current Value "5-3" | saved: purchase_price=null, current_value=null; message='Saved to your account'
+FAILS   ADD-164 | Purchase Price "abc" / Current Value "abc" | saved: purchase_price=null, current_value=null; message='Saved to your account'
+OK-NOW  RC-17 control | Purchase Price "0" / Current Value "0" (explicit zero stays 0) | saved: purchase_price=0, current_value=0; message='Saved to your account'
+OK-NOW  RC-17 control | Purchase Price null / Current Value null (blank stays unknown) | saved: purchase_price=null, current_value=null; message='Saved to your account'
+OK-NOW  RC-17 control | Purchase Price "$1,250.50" / Current Value "2,000" (supported currency format) | saved: purchase_price=1250.5, current_value=2000; message='Saved to your account'
+FAILS   ADD-005 | Purchase price "5" / Current value "-40" then Save to Vault | saved: purchase_price=5, current_value=-40
+OK-NOW  RC-17 control | Purchase price "0" / Current value "0" then Save to Vault | saved: purchase_price=0, current_value=0
+FAILS   ADD-404 | Current value -5 typed in the review grid, Add all | saved current_value=-5 (moved=true)
+FAILS   ITM-070 | Purchase price (letters 'abc' typed into a money field) | db purchase_price=0 (was 75); message='Saved to your account'; panel: Purchase price $0
+FAILS   RC-17 extra | Purchase price '1e3' (exponent) | db purchase_price=13; message='Saved to your account'
+FAILS   RC-17 extra | Purchase price '1,5' (comma decimal) | db purchase_price=15; message='Saved to your account'
+OK-NOW  RC-17 control | Purchase price typed 0 | db purchase_price=0
+OK-NOW  fallback | Purchase-cost fallback shown for an unvalued item | MARKET $50 At purchase cost. Not valued yet. Not priced yet, so va; db current_value=null, estimated_value=null
+FAILS   ITM-044 | Pricing Value (negative -40) | db current_value=-40; message='Saved to your account'
+OK-NOW  RC-17 extra | Pricing Value '1e3' | db current_value=-40; message='Saved to your account'
+FAILS   ITM-043 | Pricing card VALUE RANGE shows an explicit $0 | db current_value=0; tile ""; MARKET $0 Not priced yet, so vault totals use 
+FAILS   ITM-227 | Asking Price (negative -5) | db asking_price=null; box shows "-5"; message='Saved to your account'
+OK-NOW  RC-17 control | Asking Price blank | db asking_price=null
+FAILS   RC-17 control | Asking Price typed 0 | db asking_price=null
+FAILS   ITM-248 | Start Auction with a negative starting bid | db auction_status=ACTIVE; starting_bid=-5; reserve=2; buy_it_now=1; message='Saved to your account'
+FAILS   ITM-249 | Start Auction with Buy It Now below the reserve | db auction_status=ACTIVE; reserve=2; buy_it_now=1; message=''
+FAILS   RC-17 extra | Start Auction with starting bid '1e3' | db auction_status=ACTIVE; starting_bid=-5; message=''
+FAILS   RC-17 control | Start Auction with valid prices (10 / 50 / 100) | db auction_status=ACTIVE; starting_bid=-5; reserve=2; buy_it_now=1
+FAILS   ITM-430 | Return to Vault clears the sold platform too | status=COLLECTION; sold_price=null; sold_at=null; sold_platform=eBay
+FAILS   ITM-292 | Asking price (negative -5) then Set | db asking_price=-5; message='Saved to your account'
+FAILS   RC-17 extra | Asking price 'abc' then Set | db asking_price=0; message='Saved to your account'
+FAILS   ITM-294 | Asking price (blank) then Set clears it | db asking_price=0
+FAILS   ITM-306 | Mark sold with letters as the sale price ('abc') | status=SOLD; sold_price=0; message='Saved to your account'
+FAILS   ITM-308 | Mark sold with a negative price (-50) | status=SOLD; sold_price=-50; message='Saved to your account'
+OK-NOW  ITM-364 | Mark sold ($85 on Whatnot) keeps the actual sale price | status=SOLD; sold_price=85; platform=Whatnot
+OK-NOW  RC-17 control | Mark sold typed 0 | status=SOLD; sold_price=0
+FAILS   ITM-354 | Sale card with no purchase price | QA RB9 Ledger No Cost POP_CULTURE · Comics · Sep 10, 2026 +$70 Bought — Sold $70
+FAILS   ITM-357 | Sale card with a recorded $0 cost | QA RB9 Ledger Zero Cost MUSIC · Audio Formats · Aug 11, 2026 +$30 Bought — Sold $30
+OK-NOW  ITM-353 | Wins / Losses cards | Wins 3 vs 3 gain cards; Losses 5 vs 5 loss cards (11 cards)
+FAILS   ITM-364 | Total Sold card equals the Sold amounts on the cards | Total Sold 250 vs sum of cards 250; cards with Sold —: 5
+FAILS   ITM-364 | Sales History card for the sale made on For Sale ($85) | QA RB9 FS sold 85 POP_CULTURE · comics · Oct 20, 2026 -$30 Bought $30 Sold — Margin -100%
+FAILS   ITM-354 | Sale made from For Sale on an item with no cost | QA RB9 FS sold nocost POP_CULTURE · comics · Oct 20, 2026 — Bought — Sold —
+FAILS   ITM-333 | Profit for the same sale on the item page, the Sold card and the Sales History card | item page +$638 (cost undefined, fees undefined); Sold card +$548; Sales History undefined
+OK-NOW  ITM-333 | Home sales profit equals the Sold page profit | Home +$1,430; Sold page +$1,430; ({"homeProfit":"+$1,430","homeRev":"$2,180 from 12 sold","soldPageProfit":"+$1,430","soldHeader":"Home Vault Exhibitions Lounge Discover Help ⌘K COLLECTOR Level 4 Vaul
+FAILS   ITM-364,ITM-354,ITM-333 | Sales History in a clean browser | QA RB9 FS sold 85 POP_CULTURE · comics · Oct 20, 2026 -$30 Bought $30 Sold — Margin -100% | QA RB9 Ledger No Cost POP_CULTURE · Comics · Sep 10, 2026 +$70 Bought — Sold $70 | 
+OK-NOW  ITM-333 | Sold card in a clean browser | SOLD QA RB9 profit item Pop Culture · Comics $680 +$548 profit Oct 19, 26 · $91 fees Return
+
+13 ok, 31 not ok of 44

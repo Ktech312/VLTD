@@ -1,0 +1,140 @@
+{
+ "label": "final2",
+ "phase": "after",
+ "width": 390,
+ "fixtureOnly": true,
+ "cases": [
+  {
+   "rows": [
+    "ITM-558"
+   ],
+   "page": "/vault/item/[id] | owner, Personal",
+   "control": "Purchase price (letters 'abc' typed into a money field)",
+   "expected": "refused with a message; the recorded cost stays $75 (never silently $0)",
+   "ok": true,
+   "actual": "db purchase_price=75 (was 75); message='Purchase price: use numbers only (no letters or exponents like 1e3).'; panel: Purchase price:",
+   "evidence": "shots/rb9-final2-after-m-1.jpg"
+  },
+  {
+   "rows": [
+    "RC-17 extra"
+   ],
+   "page": "/vault/item/[id] | owner, Personal",
+   "control": "Purchase price '1e3' (exponent)",
+   "expected": "refused; the saved cost is unchanged ($75), never 13 or 15",
+   "ok": true,
+   "actual": "db purchase_price=75; message='Purchase price: use numbers only (no letters or exponents like 1e3).'",
+   "evidence": "shots/rb9-final2-after-m-2.jpg"
+  },
+  {
+   "rows": [
+    "RC-17 extra"
+   ],
+   "page": "/vault/item/[id] | owner, Personal",
+   "control": "Purchase price '1,5' (comma decimal)",
+   "expected": "refused; the saved cost is unchanged ($75), never 13 or 15",
+   "ok": true,
+   "actual": "db purchase_price=75; message='Purchase price: use a period for cents and commas only for thousands, like 1,250.50 (1,5 is not supported).'",
+   "evidence": "shots/rb9-final2-after-m-3.jpg"
+  },
+  {
+   "rows": [
+    "RC-17 control"
+   ],
+   "page": "/vault/item/[id] | owner, Personal",
+   "control": "Purchase price typed 0",
+   "expected": "saved as an explicit $0 cost (known), not blank",
+   "ok": true,
+   "actual": "db purchase_price=0",
+   "evidence": "shots/rb9-final2-after-m-4.jpg"
+  },
+  {
+   "rows": [
+    "fallback"
+   ],
+   "page": "/vault/item/[id] | owner, Personal",
+   "control": "Purchase-cost fallback shown for an unvalued item",
+   "expected": "MARKET shows the purchase cost ($50, 'At purchase cost') and no valuation field is written (current_value / estimated_value stay blank)",
+   "ok": true,
+   "actual": "MARKET $50 At purchase cost. Not valued yet. Not priced yet, so va; db current_value=null, estimated_value=null",
+   "evidence": "shots/rb9-final2-after-m-5.jpg"
+  },
+  {
+   "rows": [
+    "ITM-529"
+   ],
+   "page": "/vault/item/[id] | owner, Personal",
+   "control": "Pricing Value (negative -40)",
+   "expected": "refused with a message; no negative value stored",
+   "ok": true,
+   "actual": "db current_value=null; message='Value can't be negative. Leave it blank if you don't know it, or enter 0 if it's nothing.'",
+   "evidence": "shots/rb9-final2-after-m-6.jpg"
+  },
+  {
+   "rows": [
+    "RC-17 extra"
+   ],
+   "page": "/vault/item/[id] | owner, Personal",
+   "control": "Pricing Value '1e3'",
+   "expected": "refused; never saved as 13",
+   "ok": true,
+   "actual": "db current_value=null; message='Value: use numbers only (no letters or exponents like 1e3).'",
+   "evidence": "shots/rb9-final2-after-m-7.jpg"
+  },
+  {
+   "rows": [
+    "ITM-527"
+   ],
+   "page": "/vault/item/[id] | owner, Personal",
+   "control": "Pricing card VALUE RANGE shows an explicit $0",
+   "expected": "the tile shows $0 where the MARKET panel shows $0 (stored as 0, not blank)",
+   "ok": true,
+   "actual": "db current_value=0; tile \"VALUE RANGE $0\"; MARKET $0 Not priced yet, so vault totals use ",
+   "evidence": "shots/rb9-final2-after-m-8.jpg"
+  },
+  {
+   "rows": [
+    "ITM-629"
+   ],
+   "page": "/vault/item/[id] | owner, Personal",
+   "control": "Start Auction with a negative starting bid",
+   "expected": "refused with a message; no auction started",
+   "ok": true,
+   "actual": "db auction_status=null; starting_bid=null; reserve=null; buy_it_now=null; message='Starting bid can't be negative. Leave it blank if you don't know it, or enter 0 if it's nothing.'",
+   "evidence": "shots/rb9-final2-after-m-9.jpg"
+  },
+  {
+   "rows": [
+    "ITM-630"
+   ],
+   "page": "/vault/item/[id] | owner, Personal",
+   "control": "Start Auction with Buy It Now below the reserve",
+   "expected": "refused with a message; no auction started",
+   "ok": true,
+   "actual": "db auction_status=null; reserve=null; buy_it_now=null; message='Buy It Now can't be lower than the reserve price.'",
+   "evidence": "shots/rb9-final2-after-m-10.jpg"
+  },
+  {
+   "rows": [
+    "RC-17 extra"
+   ],
+   "page": "/vault/item/[id] | owner, Personal",
+   "control": "Start Auction with starting bid '1e3'",
+   "expected": "refused; never started at $13",
+   "ok": true,
+   "actual": "db auction_status=null; starting_bid=null; message='Starting bid: use numbers only (no letters or exponents like 1e3).'",
+   "evidence": "shots/rb9-final2-after-m-11.jpg"
+  },
+  {
+   "rows": [
+    "ITM-666"
+   ],
+   "page": "/vault/item/[id] | owner, Personal (sold)",
+   "control": "Return to Vault clears the sold platform too",
+   "expected": "status back to COLLECTION with sold_price, sold_at and sold_platform all cleared",
+   "ok": true,
+   "actual": "status=COLLECTION; sold_price=null; sold_at=null; sold_platform=null",
+   "evidence": "shots/rb9-final2-after-m-12.jpg"
+  }
+ ]
+}

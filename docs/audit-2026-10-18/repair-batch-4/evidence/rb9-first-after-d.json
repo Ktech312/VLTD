@@ -1,0 +1,339 @@
+{
+ "label": "first",
+ "phase": "after",
+ "width": 1440,
+ "fixtureOnly": true,
+ "cases": [
+  {
+   "rows": [
+    "ADD-115"
+   ],
+   "page": "/vault/add",
+   "control": "Purchase Price null / Current Value \"-40\"",
+   "expected": "refused with a visible message, nothing saved",
+   "ok": true,
+   "actual": "not saved; message='can't be negative'",
+   "evidence": "shots/rb9-first-after-d-1.jpg"
+  },
+  {
+   "rows": [
+    "ADD-139"
+   ],
+   "page": "/vault/add",
+   "control": "Purchase Price \"1e3\" / Current Value \"1e3\"",
+   "expected": "refused with a visible message, nothing saved",
+   "ok": false,
+   "actual": "not saved; message=''",
+   "evidence": "shots/rb9-first-after-d-2.jpg"
+  },
+  {
+   "rows": [
+    "ADD-141"
+   ],
+   "page": "/vault/add",
+   "control": "Purchase Price \"1,5\" / Current Value \"1,5\"",
+   "expected": "refused with a visible message, nothing saved",
+   "ok": false,
+   "actual": "not saved; message=''",
+   "evidence": "shots/rb9-first-after-d-3.jpg"
+  },
+  {
+   "rows": [
+    "ADD-142"
+   ],
+   "page": "/vault/add",
+   "control": "Purchase Price \"5-3\" / Current Value \"5-3\"",
+   "expected": "refused with a visible message, nothing saved",
+   "ok": false,
+   "actual": "not saved; message=''",
+   "evidence": "shots/rb9-first-after-d-4.jpg"
+  },
+  {
+   "rows": [
+    "ADD-164"
+   ],
+   "page": "/vault/add",
+   "control": "Purchase Price \"abc\" / Current Value \"abc\"",
+   "expected": "refused with a visible message, nothing saved",
+   "ok": false,
+   "actual": "not saved; message=''",
+   "evidence": "shots/rb9-first-after-d-5.jpg"
+  },
+  {
+   "rows": [
+    "RC-17 control"
+   ],
+   "page": "/vault/add",
+   "control": "Purchase Price \"0\" / Current Value \"0\" (explicit zero stays 0)",
+   "expected": "saved as 0 / 0",
+   "ok": true,
+   "actual": "saved: purchase_price=0, current_value=0; message='Saved to your account'",
+   "evidence": "shots/rb9-first-after-d-6.jpg"
+  },
+  {
+   "rows": [
+    "RC-17 control"
+   ],
+   "page": "/vault/add",
+   "control": "Purchase Price null / Current Value null (blank stays unknown)",
+   "expected": "saved as unknown (null) / unknown (null)",
+   "ok": true,
+   "actual": "saved: purchase_price=null, current_value=null; message='Saved to your account'",
+   "evidence": "shots/rb9-first-after-d-7.jpg"
+  },
+  {
+   "rows": [
+    "RC-17 control"
+   ],
+   "page": "/vault/add",
+   "control": "Purchase Price \"$1,250.50\" / Current Value \"2,000\" (supported currency format)",
+   "expected": "saved as 1250.5 / 2000",
+   "ok": true,
+   "actual": "saved: purchase_price=1250.5, current_value=2000; message='Saved to your account'",
+   "evidence": "shots/rb9-first-after-d-8.jpg"
+  },
+  {
+   "rows": [
+    "ADD-005"
+   ],
+   "page": "/capture",
+   "control": "Purchase price \"5\" / Current value \"-40\" then Save to Vault",
+   "expected": "refused with a visible message, nothing saved",
+   "ok": true,
+   "actual": "not saved (redirected=false); message='Current value can't be negative. Leave it blank if you don't know it, or enter 0 if it's nothing.'",
+   "evidence": "shots/rb9-first-after-d-9.jpg"
+  },
+  {
+   "rows": [
+    "RC-17 control"
+   ],
+   "page": "/capture",
+   "control": "Purchase price \"0\" / Current value \"0\" then Save to Vault",
+   "expected": "saved as 0 / 0",
+   "ok": true,
+   "actual": "saved: purchase_price=0, current_value=0",
+   "evidence": "shots/rb9-first-after-d-10.jpg"
+  },
+  {
+   "rows": [
+    "ADD-404"
+   ],
+   "page": "/vault/bulk",
+   "control": "Current value -5 typed in the review grid, Add all",
+   "expected": "refused with a visible message, nothing added (never a negative value saved)",
+   "ok": true,
+   "actual": "not added (moved=false); message='can't be negative'",
+   "evidence": "shots/rb9-first-after-d-11.jpg"
+  },
+  {
+   "rows": [
+    "ITM-070"
+   ],
+   "page": "/vault/item/[id] | owner, Personal",
+   "control": "Purchase price (letters 'abc' typed into a money field)",
+   "expected": "refused with a message; the recorded cost stays $75 (never silently $0)",
+   "ok": true,
+   "actual": "db purchase_price=75 (was 75); message='Purchase price: use numbers only (no letters or exponents like 1e3).'; panel: Purchase price:",
+   "evidence": "shots/rb9-first-after-d-12.jpg"
+  },
+  {
+   "rows": [
+    "RC-17 extra"
+   ],
+   "page": "/vault/item/[id] | owner, Personal",
+   "control": "Purchase price '1e3' (exponent)",
+   "expected": "refused; the saved cost is unchanged ($75), never 13 or 15",
+   "ok": true,
+   "actual": "db purchase_price=75; message='Purchase price: use numbers only (no letters or exponents like 1e3).'",
+   "evidence": "shots/rb9-first-after-d-13.jpg"
+  },
+  {
+   "rows": [
+    "RC-17 extra"
+   ],
+   "page": "/vault/item/[id] | owner, Personal",
+   "control": "Purchase price '1,5' (comma decimal)",
+   "expected": "refused; the saved cost is unchanged ($75), never 13 or 15",
+   "ok": true,
+   "actual": "db purchase_price=75; message='Purchase price: use a period for cents and commas only for thousands, like 1,250.50 (1,5 is not supported).'",
+   "evidence": "shots/rb9-first-after-d-14.jpg"
+  },
+  {
+   "rows": [
+    "RC-17 control"
+   ],
+   "page": "/vault/item/[id] | owner, Personal",
+   "control": "Purchase price typed 0",
+   "expected": "saved as an explicit $0 cost (known), not blank",
+   "ok": true,
+   "actual": "db purchase_price=0",
+   "evidence": "shots/rb9-first-after-d-15.jpg"
+  },
+  {
+   "rows": [
+    "fallback"
+   ],
+   "page": "/vault/item/[id] | owner, Personal",
+   "control": "Purchase-cost fallback shown for an unvalued item",
+   "expected": "MARKET shows the purchase cost ($50, 'At purchase cost') and no valuation field is written (current_value / estimated_value stay blank)",
+   "ok": true,
+   "actual": "MARKET $50 At purchase cost. Not valued yet. Not priced yet, so va; db current_value=null, estimated_value=null",
+   "evidence": "shots/rb9-first-after-d-16.jpg"
+  },
+  {
+   "rows": [
+    "ITM-044"
+   ],
+   "page": "/vault/item/[id] | owner, Personal",
+   "control": "Pricing Value (negative -40)",
+   "expected": "refused with a message; no negative value stored",
+   "ok": true,
+   "actual": "db current_value=null; message='Median value can't be negative. Leave it blank if you don't know it, or enter 0 if it's nothing.'",
+   "evidence": "shots/rb9-first-after-d-17.jpg"
+  },
+  {
+   "rows": [
+    "RC-17 extra"
+   ],
+   "page": "/vault/item/[id] | owner, Personal",
+   "control": "Pricing Value '1e3'",
+   "expected": "refused; never saved as 13",
+   "ok": true,
+   "actual": "db current_value=null; message='Median value: use numbers only (no letters or exponents like 1e3).'",
+   "evidence": "shots/rb9-first-after-d-18.jpg"
+  },
+  {
+   "rows": [
+    "ITM-043"
+   ],
+   "page": "/vault/item/[id] | owner, Personal",
+   "control": "Pricing card VALUE RANGE shows an explicit $0",
+   "expected": "the tile shows $0 where the MARKET panel shows $0 (stored as 0, not blank)",
+   "ok": false,
+   "actual": "db current_value=0; tile \"\"; MARKET $0 Not priced yet, so vault totals use ",
+   "evidence": "shots/rb9-first-after-d-19.jpg"
+  },
+  {
+   "rows": [
+    "ITM-227"
+   ],
+   "page": "/vault/item/[id] | owner, Personal (for sale)",
+   "control": "Asking Price (negative -5)",
+   "expected": "refused with a message; the saved price is unchanged ($99) and the box does not pretend -5 was saved",
+   "ok": true,
+   "actual": "db asking_price=99; box shows \"-5\"; message='Asking price can't be negative. Leave it blank if you don't know it, or enter 0 if it's nothing.'",
+   "evidence": "shots/rb9-first-after-d-20.jpg"
+  },
+  {
+   "rows": [
+    "RC-17 control"
+   ],
+   "page": "/vault/item/[id] | owner, Personal (for sale)",
+   "control": "Asking Price blank",
+   "expected": "blank clears the asking price (null), not $0",
+   "ok": true,
+   "actual": "db asking_price=null",
+   "evidence": "shots/rb9-first-after-d-21.jpg"
+  },
+  {
+   "rows": [
+    "RC-17 control"
+   ],
+   "page": "/vault/item/[id] | owner, Personal (for sale)",
+   "control": "Asking Price typed 0",
+   "expected": "an explicit $0 is kept as 0",
+   "ok": true,
+   "actual": "db asking_price=0",
+   "evidence": "shots/rb9-first-after-d-22.jpg"
+  },
+  {
+   "rows": [
+    "ITM-248"
+   ],
+   "page": "/vault/item/[id] | owner, Personal",
+   "control": "Start Auction with a negative starting bid",
+   "expected": "refused with a message; no auction started",
+   "ok": true,
+   "actual": "db auction_status=null; starting_bid=null; reserve=null; buy_it_now=null; message='Starting bid can't be negative. Leave it blank if you don't know it, or enter 0 if it's nothing.'",
+   "evidence": "shots/rb9-first-after-d-23.jpg"
+  },
+  {
+   "rows": [
+    "ITM-249"
+   ],
+   "page": "/vault/item/[id] | owner, Personal",
+   "control": "Start Auction with Buy It Now below the reserve",
+   "expected": "refused with a message; no auction started",
+   "ok": true,
+   "actual": "db auction_status=null; reserve=null; buy_it_now=null; message='Buy It Now can't be lower than the reserve price.'",
+   "evidence": "shots/rb9-first-after-d-24.jpg"
+  },
+  {
+   "rows": [
+    "RC-17 extra"
+   ],
+   "page": "/vault/item/[id] | owner, Personal",
+   "control": "Start Auction with starting bid '1e3'",
+   "expected": "refused; never started at $13",
+   "ok": true,
+   "actual": "db auction_status=null; starting_bid=null; message='Starting bid: use numbers only (no letters or exponents like 1e3).'",
+   "evidence": "shots/rb9-first-after-d-25.jpg"
+  },
+  {
+   "rows": [
+    "RC-17 control"
+   ],
+   "page": "/vault/item/[id] | owner, Personal",
+   "control": "Start Auction with valid prices (10 / 50 / 100)",
+   "expected": "starts with exactly those prices",
+   "ok": true,
+   "actual": "db auction_status=ACTIVE; starting_bid=10; reserve=50; buy_it_now=100",
+   "evidence": "shots/rb9-first-after-d-26.jpg"
+  },
+  {
+   "rows": [
+    "ITM-430"
+   ],
+   "page": "/vault/item/[id] | owner, Personal (sold)",
+   "control": "Return to Vault clears the sold platform too",
+   "expected": "status back to COLLECTION with sold_price, sold_at and sold_platform all cleared",
+   "ok": true,
+   "actual": "status=COLLECTION; sold_price=null; sold_at=null; sold_platform=null",
+   "evidence": "shots/rb9-first-after-d-27.jpg"
+  },
+  {
+   "rows": [
+    "ITM-292"
+   ],
+   "page": "/vault/for-sale",
+   "control": "Asking price (negative -5) then Set",
+   "expected": "refused with a message; the saved asking price is unchanged ($120)",
+   "ok": true,
+   "actual": "db asking_price=120; message='Asking price can't be negative. Leave it blank if you don't know it, or enter 0 if it's nothing.'",
+   "evidence": "shots/rb9-first-after-d-28.jpg"
+  },
+  {
+   "rows": [
+    "RC-17 extra"
+   ],
+   "page": "/vault/for-sale",
+   "control": "Asking price 'abc' then Set",
+   "expected": "refused; unchanged ($120)",
+   "ok": true,
+   "actual": "db asking_price=120; message='Asking price: use numbers only (no letters or exponents like 1e3).'",
+   "evidence": "shots/rb9-first-after-d-29.jpg"
+  },
+  {
+   "rows": [
+    "ITM-294"
+   ],
+   "page": "/vault/for-sale",
+   "control": "Asking price (blank) then Set clears it",
+   "expected": "blank clears the price (null), never $0",
+   "ok": true,
+   "actual": "db asking_price=null",
+   "evidence": "shots/rb9-first-after-d-30.jpg"
+  }
+ ],
+ "error": "Error: TypeError: Cannot read properties of undefined (reading 'querySelectorAll')\n    at <anonymous>:1:119\n    at <anonymous>:1:404\n    at Object.evaluate (C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\scripts\\cdp.cjs:65:35)\n    at async mclick (C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\scripts\\audit-s-itm-lib.cjs:32:13)\n    at async markSold (C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\repair-batch-4\\scripts\\rb9-money-sales.cjs:253:83)\n    at async C:\\Users\\EK\\VLTD\\.claude\\wor"
+}

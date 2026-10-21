@@ -1,0 +1,47 @@
+PASS       RB9-161 | /vault/add | desktop 1440 | Purchase Price null / Current Value "-40" | not saved; message='Current value can't be negative. Leave it blank if you don't know it, or enter 0 if it's nothing.'
+PASS       RB9-162 | /vault/add | desktop 1440 | Purchase Price "1e3" / Current Value "1e3" | not saved; message='Purchase price: use numbers only (no letters or exponents like 1e3).'
+PASS       RB9-163 | /vault/add | desktop 1440 | Purchase Price "1,5" / Current Value "1,5" | not saved; message='Purchase price: use a period for cents and commas only for thousands, like 1,250.50 (1,5 is not supported).'
+PASS       RB9-164 | /vault/add | desktop 1440 | Purchase Price "5-3" / Current Value "5-3" | not saved; message='Purchase price: enter one amount (a dash between numbers is not supported).'
+PASS       RB9-165 | /vault/add | desktop 1440 | Purchase Price "abc" / Current Value "abc" | not saved; message='Purchase price: use numbers only (no letters or exponents like 1e3).'
+PASS       RB9-166 | /vault/add | desktop 1440 | Purchase Price "0" / Current Value "0" (explicit zero stays 0) | saved: purchase_price=0, current_value=0; message='✓ Saved! | Saved to your account'
+PASS       RB9-167 | /vault/add | desktop 1440 | Purchase Price null / Current Value null (blank stays unknown) | saved: purchase_price=null, current_value=null; message='✓ Saved! | Saved to your account'
+PASS       RB9-168 | /vault/add | desktop 1440 | Purchase Price "$1,250.50" / Current Value "2,000" (supported currency format) | saved: purchase_price=1250.5, current_value=2000; message='✓ Saved! | Saved to your account'
+PASS       RB9-169 | /capture | desktop 1440 | Purchase price "5" / Current value "-40" then Save to Vault | not saved (redirected=false); message='Current value can't be negative. Leave it blank if you don't know it, or enter 0 if it's nothing.'
+PASS       RB9-170 | /capture | desktop 1440 | Purchase price "1e3" / Current value "1e3" then Save to Vault | not saved (redirected=false); message='Restored your unsaved draft from 10/20/2026, 4:59:46 PM. Nothing was sent anywhere: AI only runs when
+PASS       RB9-171 | /capture | desktop 1440 | Purchase price "0" / Current value "0" then Save to Vault | saved: purchase_price=0, current_value=0
+PASS       RB9-172 | /vault/bulk | desktop 1440 | Current value -5 typed in the review grid, Add all | not added (moved=false); message='can't be negative'
+PASS       RB9-173 | /vault/item/[id] | owner, Personal | desktop 1440 | Purchase price (letters 'abc' typed into a money field) | db purchase_price=75 (was 75); message='Purchase price: use numbers only (no letters or exponents like 1e3).'; panel: Purchase price:
+PASS       RB9-174 | /vault/item/[id] | owner, Personal | desktop 1440 | Purchase price '1e3' (exponent) | db purchase_price=75; message='Purchase price: use numbers only (no letters or exponents like 1e3).'
+PASS       RB9-175 | /vault/item/[id] | owner, Personal | desktop 1440 | Purchase price '1,5' (comma decimal) | db purchase_price=75; message='Purchase price: use a period for cents and commas only for thousands, like 1,250.50 (1,5 is not supported).'
+PASS       RB9-176 | /vault/item/[id] | owner, Personal | desktop 1440 | Purchase price typed 0 | db purchase_price=0
+PASS       RB9-177 | /vault/item/[id] | owner, Personal | desktop 1440 | Purchase-cost fallback shown for an unvalued item | MARKET $50 At purchase cost. Not valued yet. Not priced yet, so va; db current_value=null, estimated_value=null
+PASS       RB9-178 | /vault/item/[id] | owner, Personal | desktop 1440 | Pricing Value (negative -40) | db current_value=null; message='Value can't be negative. Leave it blank if you don't know it, or enter 0 if it's nothing.'
+PASS       RB9-179 | /vault/item/[id] | owner, Personal | desktop 1440 | Pricing Value '1e3' | db current_value=null; message='Value: use numbers only (no letters or exponents like 1e3).'
+PASS       RB9-180 | /vault/item/[id] | owner, Personal | desktop 1440 | Pricing card VALUE RANGE shows an explicit $0 | db current_value=0; tile "VALUE RANGE $0"; MARKET $0 Not priced yet, so vault totals use 
+PASS       RB9-181 | /vault/item/[id] | owner, Personal (for sale) | desktop 1440 | Asking Price (negative -5) | db asking_price=99; box shows "-5"; message='Asking price can't be negative. Leave it blank if you don't know it, or enter 0 if it's nothing
+PASS       RB9-182 | /vault/item/[id] | owner, Personal (for sale) | desktop 1440 | Asking Price blank | db asking_price=null
+PASS       RB9-183 | /vault/item/[id] | owner, Personal (for sale) | desktop 1440 | Asking Price typed 0 | db asking_price=0
+PASS       RB9-184 | /vault/item/[id] | owner, Personal | desktop 1440 | Start Auction with a negative starting bid | db auction_status=null; starting_bid=null; reserve=null; buy_it_now=null; message='Starting bid can't be negative. Leave it blank if you don
+PASS       RB9-185 | /vault/item/[id] | owner, Personal | desktop 1440 | Start Auction with Buy It Now below the reserve | db auction_status=null; reserve=null; buy_it_now=null; message='Buy It Now can't be lower than the reserve price.'
+PASS       RB9-186 | /vault/item/[id] | owner, Personal | desktop 1440 | Start Auction with starting bid '1e3' | db auction_status=null; starting_bid=null; message='Starting bid: use numbers only (no letters or exponents like 1e3).'
+PASS       RB9-187 | /vault/item/[id] | owner, Personal | desktop 1440 | Start Auction with valid prices (10 / 50 / 100) | db auction_status=ACTIVE; starting_bid=10; reserve=50; buy_it_now=100
+PASS       RB9-188 | /vault/item/[id] | owner, Personal (sold) | desktop 1440 | Return to Vault clears the sold platform too | status=COLLECTION; sold_price=null; sold_at=null; sold_platform=null
+PASS       RB9-189 | /vault/for-sale | desktop 1440 | Asking price (negative -5) then Set | db asking_price=120; message='Asking price can't be negative. Leave it blank if you don't know it, or enter 0 if it's nothing.'
+PASS       RB9-190 | /vault/for-sale | desktop 1440 | Asking price 'abc' then Set | db asking_price=120; message='Asking price: use numbers only (no letters or exponents like 1e3).'
+PASS       RB9-191 | /vault/for-sale | desktop 1440 | Asking price (blank) then Set clears it | db asking_price=null
+PASS       RB9-192 | /vault/for-sale | desktop 1440 | Mark sold with letters as the sale price ('abc') | status=FOR_SALE; sold_price=null; message='use numbers only (no letters or exponents like 1e3)'
+PASS       RB9-193 | /vault/for-sale | desktop 1440 | Mark sold with a negative price (-50) | status=FOR_SALE; sold_price=null; message='can't be negative'
+PASS       RB9-194 | /vault/for-sale | desktop 1440 | Mark sold ($85 on Whatnot) keeps the actual sale price | status=SOLD; sold_price=85; platform=Whatnot
+PASS       RB9-195 | /vault/for-sale | desktop 1440 | Mark sold typed 0 | status=SOLD; sold_price=0
+PASS       RB9-196 | /sales | desktop 1440 | Sale card with no purchase price | QA RB9 Ledger No Cost POP_CULTURE · Comics · Sep 10, 2026 Profit unknown Cost — Sold $70
+PASS       RB9-197 | /sales | desktop 1440 | Sale card with a recorded $0 cost | QA RB9 Ledger Zero Cost MUSIC · Audio Formats · Aug 11, 2026 +$30 Cost $0 Sold $30
+PASS       RB9-198 | /sales | desktop 1440 | Wins / Losses cards | no-cost card gain=false; Wins 8 vs 8 gain cards; Losses 3 vs 3 loss cards (16 cards)
+PASS       RB9-199 | /sales | desktop 1440 | Total Sold card equals the Sold amounts on the cards | Total Sold 2480 vs sum of cards 2480; cards with Sold —: 0
+PASS       RB9-200 | /sales | desktop 1440 | Sales History card for the sale made on For Sale ($85) | QA RB9 FS sold 85 POP_CULTURE · Comics · Oct 20, 2026 +$45 Cost $30 Sold $85 Est. fees $10 Margin +151%
+PASS       RB9-201 | /sales | desktop 1440 | Sale made from For Sale on an item with no cost | QA RB9 FS sold nocost POP_CULTURE · Comics · Oct 20, 2026 Profit unknown Cost — Sold $70
+PASS       RB9-202 | /vault/item/[id]?sold=1 vs /vault/sold vs /sales | desktop 1440 | Profit for the same sale on the item page, the Sold card and the Sales History card | item page +$548 (cost $42, fees $91); Sold card +$548; Sales History +$548
+PASS       RB9-203 | / vs /vault/sold | desktop 1440 | Home sales profit equals the Sold page profit | Home +$1,540; Sold page +$1,540; ({"homeProfit":"+$1,540","homeRev":"$2,230 from 10 sold","soldPageProfit":"+$1,540","soldHeader":"Home Vaul
+PASS       RB9-204 | /sales (clean second browser) | desktop 1440 | Sales History in a clean browser | QA RB9 FS sold 85 POP_CULTURE · Comics · Oct 20, 2026 +$45 Cost $30 Sold $85 Est. fees $10 | QA RB9 Ledger No Cost POP_CULTURE · Comics · Se
+PASS       RB9-205 | /vault/sold (clean second browser) | desktop 1440 | Sold card in a clean browser | SOLD QA RB9 profit item Pop Culture · Comics $680 +$548 profit Oct 19, 26 · $91 fees Return
+
+45 ok, 0 not ok of 45

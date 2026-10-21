@@ -1,0 +1,103 @@
+{
+ "label": "final",
+ "cases": [
+  {
+   "control": "Quick Add: 3 synthetic-camera photos -> review -> Verify sheet (manual path)",
+   "expected": "the Verify sheet opens with 3 items without any AI call",
+   "ok": true,
+   "actual": "sheet open=true; AI requests seen=0",
+   "evidence": "shots/rb9-quick-final-1.jpg"
+  },
+  {
+   "control": "Quick Add Cost typed 'abc'",
+   "expected": "a plain message names the problem and Save is held (nothing is turned into $0 or blank)",
+   "ok": true,
+   "actual": "message='Cost: use numbers only (no letters or exponents like 1e3).'; Save disabled=true",
+   "evidence": "shots/rb9-quick-final-2.jpg"
+  },
+  {
+   "control": "Quick Add Cost typed '1e3'",
+   "expected": "a plain message names the problem and Save is held (nothing is turned into $0 or blank)",
+   "ok": true,
+   "actual": "message='Cost: use numbers only (no letters or exponents like 1e3).'; Save disabled=true",
+   "evidence": "shots/rb9-quick-final-3.jpg"
+  },
+  {
+   "control": "Quick Add Cost typed '1,5'",
+   "expected": "a plain message names the problem and Save is held (nothing is turned into $0 or blank)",
+   "ok": true,
+   "actual": "message='Cost: use a period for cents and commas only for thousands, like 1,250.50 (1,5 is not supported).'; Save disabled=true",
+   "evidence": "shots/rb9-quick-final-4.jpg"
+  },
+  {
+   "control": "Quick Add Cost typed '-5'",
+   "expected": "a plain message names the problem and Save is held (nothing is turned into $0 or blank)",
+   "ok": true,
+   "actual": "message='Cost can't be negative. Leave it blank if you don't know it, or enter 0 if it's nothing.'; Save disabled=true",
+   "evidence": "shots/rb9-quick-final-5.jpg"
+  },
+  {
+   "control": "Quick Add Value typed 'abc'",
+   "expected": "a plain message names the problem and Save is held (nothing is turned into $0 or blank)",
+   "ok": true,
+   "actual": "message='Value: use numbers only (no letters or exponents like 1e3).'; Save disabled=true",
+   "evidence": "shots/rb9-quick-final-6.jpg"
+  },
+  {
+   "control": "Quick Add Value typed '-4'",
+   "expected": "a plain message names the problem and Save is held (nothing is turned into $0 or blank)",
+   "ok": true,
+   "actual": "message='Value can't be negative. Leave it blank if you don't know it, or enter 0 if it's nothing.'; Save disabled=true",
+   "evidence": "shots/rb9-quick-final-7.jpg"
+  },
+  {
+   "control": "Quick Add Value typed '5-3'",
+   "expected": "a plain message names the problem and Save is held (nothing is turned into $0 or blank)",
+   "ok": true,
+   "actual": "message='Value: enter one amount (a dash between numbers is not supported).'; Save disabled=true",
+   "evidence": "shots/rb9-quick-final-8.jpg"
+  },
+  {
+   "control": "Quick Add valid entries (0 / blank / $1,250.50 & 2,000)",
+   "expected": "no message and Save is available",
+   "ok": true,
+   "actual": "Save disabled=false; alert=''",
+   "evidence": "shots/rb9-quick-final-9.jpg"
+  },
+  {
+   "control": "Quick Add explicit 0 cost and 0 value are kept",
+   "expected": "saved as 0 / 0 (a known zero, not blank)",
+   "ok": true,
+   "actual": "moved=true; purchase_price=0; current_value=0",
+   "evidence": "shots/rb9-quick-final-10.jpg"
+  },
+  {
+   "control": "Quick Add blank cost and value stay unknown",
+   "expected": "saved as null / null (not $0)",
+   "ok": true,
+   "actual": "purchase_price=null; current_value=null",
+   "evidence": "shots/rb9-quick-final-11.jpg"
+  },
+  {
+   "control": "Quick Add '$1,250.50' / '2,000' supported formats",
+   "expected": "saved as 1250.5 / 2000",
+   "ok": true,
+   "actual": "purchase_price=1250.5; current_value=2000",
+   "evidence": "shots/rb9-quick-final-12.jpg"
+  },
+  {
+   "control": "Quick Add manual path makes no AI request",
+   "expected": "0 AI requests (any would have been blocked by the audit and counted) and no AI usage logged for the account",
+   "ok": true,
+   "actual": "AI requests seen and blocked=0; ai_usage_log 0 -> 0",
+   "evidence": "shots/rb9-quick-final-13.jpg"
+  },
+  {
+   "control": "Quick Add item after reload and in a clean second browser",
+   "expected": "the item is listed after reload and opens in a clean browser",
+   "ok": true,
+   "actual": "listed after reload=true; second browser shows it=true",
+   "evidence": "shots/rb9-quick-final-14.jpg"
+  }
+ ]
+}

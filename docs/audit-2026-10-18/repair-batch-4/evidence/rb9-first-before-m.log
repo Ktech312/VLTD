@@ -1,0 +1,14 @@
+FAILS   ITM-558 | Purchase price (letters 'abc' typed into a money field) | db purchase_price=0 (was 75); message='Saved to your account'; panel: Purchase price $0
+FAILS   RC-17 extra | Purchase price '1e3' (exponent) | db purchase_price=13; message='Saved to your account'
+FAILS   RC-17 extra | Purchase price '1,5' (comma decimal) | db purchase_price=15; message='Saved to your account'
+OK-NOW  RC-17 control | Purchase price typed 0 | db purchase_price=0
+OK-NOW  fallback | Purchase-cost fallback shown for an unvalued item | MARKET $50 At purchase cost. Not valued yet. Not priced yet, so va; db current_value=null, estimated_value=null
+FAILS   ITM-529 | Pricing Value (negative -40) | db current_value=-40; message='Saved to your account'
+OK-NOW  RC-17 extra | Pricing Value '1e3' | db current_value=-40; message='Saved to your account'
+FAILS   ITM-527 | Pricing card VALUE RANGE shows an explicit $0 | db current_value=0; tile ""; MARKET $0 Not priced yet, so vault totals use 
+FAILS   ITM-629 | Start Auction with a negative starting bid | db auction_status=ACTIVE; starting_bid=-5; reserve=2; buy_it_now=1; message='Saved to your account'
+FAILS   ITM-630 | Start Auction with Buy It Now below the reserve | db auction_status=ACTIVE; reserve=2; buy_it_now=1; message=''
+FAILS   RC-17 extra | Start Auction with starting bid '1e3' | db auction_status=ACTIVE; starting_bid=-5; message=''
+FAILS   ITM-666 | Return to Vault clears the sold platform too | status=COLLECTION; sold_price=null; sold_at=null; sold_platform=eBay
+
+3 ok, 9 not ok of 12

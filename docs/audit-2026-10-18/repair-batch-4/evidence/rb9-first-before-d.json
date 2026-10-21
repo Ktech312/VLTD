@@ -1,0 +1,500 @@
+{
+ "label": "first",
+ "phase": "before",
+ "width": 1440,
+ "fixtureOnly": true,
+ "cases": [
+  {
+   "rows": [
+    "ADD-115"
+   ],
+   "page": "/vault/add",
+   "control": "Purchase Price null / Current Value \"-40\"",
+   "expected": "refused with a visible message, nothing saved",
+   "ok": false,
+   "actual": "saved: purchase_price=null, current_value=-40; message='Saved to your account'",
+   "evidence": "shots/rb9-first-before-d-1.jpg"
+  },
+  {
+   "rows": [
+    "ADD-139"
+   ],
+   "page": "/vault/add",
+   "control": "Purchase Price \"1e3\" / Current Value \"1e3\"",
+   "expected": "refused with a visible message, nothing saved",
+   "ok": false,
+   "actual": "saved: purchase_price=13, current_value=13; message='Saved to your account'",
+   "evidence": "shots/rb9-first-before-d-2.jpg"
+  },
+  {
+   "rows": [
+    "ADD-141"
+   ],
+   "page": "/vault/add",
+   "control": "Purchase Price \"1,5\" / Current Value \"1,5\"",
+   "expected": "refused with a visible message, nothing saved",
+   "ok": false,
+   "actual": "saved: purchase_price=15, current_value=15; message='Saved to your account'",
+   "evidence": "shots/rb9-first-before-d-3.jpg"
+  },
+  {
+   "rows": [
+    "ADD-142"
+   ],
+   "page": "/vault/add",
+   "control": "Purchase Price \"5-3\" / Current Value \"5-3\"",
+   "expected": "refused with a visible message, nothing saved",
+   "ok": false,
+   "actual": "saved: purchase_price=null, current_value=null; message='Saved to your account'",
+   "evidence": "shots/rb9-first-before-d-4.jpg"
+  },
+  {
+   "rows": [
+    "ADD-164"
+   ],
+   "page": "/vault/add",
+   "control": "Purchase Price \"abc\" / Current Value \"abc\"",
+   "expected": "refused with a visible message, nothing saved",
+   "ok": false,
+   "actual": "saved: purchase_price=null, current_value=null; message='Saved to your account'",
+   "evidence": "shots/rb9-first-before-d-5.jpg"
+  },
+  {
+   "rows": [
+    "RC-17 control"
+   ],
+   "page": "/vault/add",
+   "control": "Purchase Price \"0\" / Current Value \"0\" (explicit zero stays 0)",
+   "expected": "saved as 0 / 0",
+   "ok": true,
+   "actual": "saved: purchase_price=0, current_value=0; message='Saved to your account'",
+   "evidence": ""
+  },
+  {
+   "rows": [
+    "RC-17 control"
+   ],
+   "page": "/vault/add",
+   "control": "Purchase Price null / Current Value null (blank stays unknown)",
+   "expected": "saved as unknown (null) / unknown (null)",
+   "ok": true,
+   "actual": "saved: purchase_price=null, current_value=null; message='Saved to your account'",
+   "evidence": ""
+  },
+  {
+   "rows": [
+    "RC-17 control"
+   ],
+   "page": "/vault/add",
+   "control": "Purchase Price \"$1,250.50\" / Current Value \"2,000\" (supported currency format)",
+   "expected": "saved as 1250.5 / 2000",
+   "ok": true,
+   "actual": "saved: purchase_price=1250.5, current_value=2000; message='Saved to your account'",
+   "evidence": ""
+  },
+  {
+   "rows": [
+    "ADD-005"
+   ],
+   "page": "/capture",
+   "control": "Purchase price \"5\" / Current value \"-40\" then Save to Vault",
+   "expected": "refused with a visible message, nothing saved",
+   "ok": false,
+   "actual": "saved: purchase_price=5, current_value=-40",
+   "evidence": "shots/rb9-first-before-d-6.jpg"
+  },
+  {
+   "rows": [
+    "RC-17 control"
+   ],
+   "page": "/capture",
+   "control": "Purchase price \"0\" / Current value \"0\" then Save to Vault",
+   "expected": "saved as 0 / 0",
+   "ok": true,
+   "actual": "saved: purchase_price=0, current_value=0",
+   "evidence": ""
+  },
+  {
+   "rows": [
+    "ADD-404"
+   ],
+   "page": "/vault/bulk",
+   "control": "Current value -5 typed in the review grid, Add all",
+   "expected": "refused with a visible message, nothing added (never a negative value saved)",
+   "ok": false,
+   "actual": "saved current_value=-5 (moved=true)",
+   "evidence": "shots/rb9-first-before-d-7.jpg"
+  },
+  {
+   "rows": [
+    "ITM-070"
+   ],
+   "page": "/vault/item/[id] | owner, Personal",
+   "control": "Purchase price (letters 'abc' typed into a money field)",
+   "expected": "refused with a message; the recorded cost stays $75 (never silently $0)",
+   "ok": false,
+   "actual": "db purchase_price=0 (was 75); message='Saved to your account'; panel: Purchase price $0",
+   "evidence": "shots/rb9-first-before-d-8.jpg"
+  },
+  {
+   "rows": [
+    "RC-17 extra"
+   ],
+   "page": "/vault/item/[id] | owner, Personal",
+   "control": "Purchase price '1e3' (exponent)",
+   "expected": "refused; the saved cost is unchanged ($75), never 13 or 15",
+   "ok": false,
+   "actual": "db purchase_price=13; message='Saved to your account'",
+   "evidence": "shots/rb9-first-before-d-9.jpg"
+  },
+  {
+   "rows": [
+    "RC-17 extra"
+   ],
+   "page": "/vault/item/[id] | owner, Personal",
+   "control": "Purchase price '1,5' (comma decimal)",
+   "expected": "refused; the saved cost is unchanged ($75), never 13 or 15",
+   "ok": false,
+   "actual": "db purchase_price=15; message='Saved to your account'",
+   "evidence": "shots/rb9-first-before-d-10.jpg"
+  },
+  {
+   "rows": [
+    "RC-17 control"
+   ],
+   "page": "/vault/item/[id] | owner, Personal",
+   "control": "Purchase price typed 0",
+   "expected": "saved as an explicit $0 cost (known), not blank",
+   "ok": true,
+   "actual": "db purchase_price=0",
+   "evidence": ""
+  },
+  {
+   "rows": [
+    "fallback"
+   ],
+   "page": "/vault/item/[id] | owner, Personal",
+   "control": "Purchase-cost fallback shown for an unvalued item",
+   "expected": "MARKET shows the purchase cost ($50, 'At purchase cost') and no valuation field is written (current_value / estimated_value stay blank)",
+   "ok": true,
+   "actual": "MARKET $50 At purchase cost. Not valued yet. Not priced yet, so va; db current_value=null, estimated_value=null",
+   "evidence": ""
+  },
+  {
+   "rows": [
+    "ITM-044"
+   ],
+   "page": "/vault/item/[id] | owner, Personal",
+   "control": "Pricing Value (negative -40)",
+   "expected": "refused with a message; no negative value stored",
+   "ok": false,
+   "actual": "db current_value=-40; message='Saved to your account'",
+   "evidence": "shots/rb9-first-before-d-11.jpg"
+  },
+  {
+   "rows": [
+    "RC-17 extra"
+   ],
+   "page": "/vault/item/[id] | owner, Personal",
+   "control": "Pricing Value '1e3'",
+   "expected": "refused; never saved as 13",
+   "ok": true,
+   "actual": "db current_value=-40; message='Saved to your account'",
+   "evidence": ""
+  },
+  {
+   "rows": [
+    "ITM-043"
+   ],
+   "page": "/vault/item/[id] | owner, Personal",
+   "control": "Pricing card VALUE RANGE shows an explicit $0",
+   "expected": "the tile shows $0 where the MARKET panel shows $0 (stored as 0, not blank)",
+   "ok": false,
+   "actual": "db current_value=0; tile \"\"; MARKET $0 Not priced yet, so vault totals use ",
+   "evidence": "shots/rb9-first-before-d-12.jpg"
+  },
+  {
+   "rows": [
+    "ITM-227"
+   ],
+   "page": "/vault/item/[id] | owner, Personal (for sale)",
+   "control": "Asking Price (negative -5)",
+   "expected": "refused with a message; the saved price is unchanged ($99) and the box does not pretend -5 was saved",
+   "ok": false,
+   "actual": "db asking_price=null; box shows \"-5\"; message='Saved to your account'",
+   "evidence": "shots/rb9-first-before-d-13.jpg"
+  },
+  {
+   "rows": [
+    "RC-17 control"
+   ],
+   "page": "/vault/item/[id] | owner, Personal (for sale)",
+   "control": "Asking Price blank",
+   "expected": "blank clears the asking price (null), not $0",
+   "ok": true,
+   "actual": "db asking_price=null",
+   "evidence": ""
+  },
+  {
+   "rows": [
+    "RC-17 control"
+   ],
+   "page": "/vault/item/[id] | owner, Personal (for sale)",
+   "control": "Asking Price typed 0",
+   "expected": "an explicit $0 is kept as 0",
+   "ok": false,
+   "actual": "db asking_price=null",
+   "evidence": "shots/rb9-first-before-d-14.jpg"
+  },
+  {
+   "rows": [
+    "ITM-248"
+   ],
+   "page": "/vault/item/[id] | owner, Personal",
+   "control": "Start Auction with a negative starting bid",
+   "expected": "refused with a message; no auction started",
+   "ok": false,
+   "actual": "db auction_status=ACTIVE; starting_bid=-5; reserve=2; buy_it_now=1; message='Saved to your account'",
+   "evidence": "shots/rb9-first-before-d-15.jpg"
+  },
+  {
+   "rows": [
+    "ITM-249"
+   ],
+   "page": "/vault/item/[id] | owner, Personal",
+   "control": "Start Auction with Buy It Now below the reserve",
+   "expected": "refused with a message; no auction started",
+   "ok": false,
+   "actual": "db auction_status=ACTIVE; reserve=2; buy_it_now=1; message=''",
+   "evidence": "shots/rb9-first-before-d-16.jpg"
+  },
+  {
+   "rows": [
+    "RC-17 extra"
+   ],
+   "page": "/vault/item/[id] | owner, Personal",
+   "control": "Start Auction with starting bid '1e3'",
+   "expected": "refused; never started at $13",
+   "ok": false,
+   "actual": "db auction_status=ACTIVE; starting_bid=-5; message=''",
+   "evidence": "shots/rb9-first-before-d-17.jpg"
+  },
+  {
+   "rows": [
+    "RC-17 control"
+   ],
+   "page": "/vault/item/[id] | owner, Personal",
+   "control": "Start Auction with valid prices (10 / 50 / 100)",
+   "expected": "starts with exactly those prices",
+   "ok": false,
+   "actual": "db auction_status=ACTIVE; starting_bid=-5; reserve=2; buy_it_now=1",
+   "evidence": "shots/rb9-first-before-d-18.jpg"
+  },
+  {
+   "rows": [
+    "ITM-430"
+   ],
+   "page": "/vault/item/[id] | owner, Personal (sold)",
+   "control": "Return to Vault clears the sold platform too",
+   "expected": "status back to COLLECTION with sold_price, sold_at and sold_platform all cleared",
+   "ok": false,
+   "actual": "status=COLLECTION; sold_price=null; sold_at=null; sold_platform=eBay",
+   "evidence": "shots/rb9-first-before-d-19.jpg"
+  },
+  {
+   "rows": [
+    "ITM-292"
+   ],
+   "page": "/vault/for-sale",
+   "control": "Asking price (negative -5) then Set",
+   "expected": "refused with a message; the saved asking price is unchanged ($120)",
+   "ok": false,
+   "actual": "db asking_price=-5; message='Saved to your account'",
+   "evidence": "shots/rb9-first-before-d-20.jpg"
+  },
+  {
+   "rows": [
+    "RC-17 extra"
+   ],
+   "page": "/vault/for-sale",
+   "control": "Asking price 'abc' then Set",
+   "expected": "refused; unchanged ($120)",
+   "ok": false,
+   "actual": "db asking_price=0; message='Saved to your account'",
+   "evidence": "shots/rb9-first-before-d-21.jpg"
+  },
+  {
+   "rows": [
+    "ITM-294"
+   ],
+   "page": "/vault/for-sale",
+   "control": "Asking price (blank) then Set clears it",
+   "expected": "blank clears the price (null), never $0",
+   "ok": false,
+   "actual": "db asking_price=0",
+   "evidence": "shots/rb9-first-before-d-22.jpg"
+  },
+  {
+   "rows": [
+    "ITM-306"
+   ],
+   "page": "/vault/for-sale",
+   "control": "Mark sold with letters as the sale price ('abc')",
+   "expected": "refused with a message; nothing is sold (never recorded at $0)",
+   "ok": false,
+   "actual": "status=SOLD; sold_price=0; message='Saved to your account'",
+   "evidence": "shots/rb9-first-before-d-23.jpg"
+  },
+  {
+   "rows": [
+    "ITM-308"
+   ],
+   "page": "/vault/for-sale",
+   "control": "Mark sold with a negative price (-50)",
+   "expected": "refused; nothing is sold",
+   "ok": false,
+   "actual": "status=SOLD; sold_price=-50; message='Saved to your account'",
+   "evidence": "shots/rb9-first-before-d-24.jpg"
+  },
+  {
+   "rows": [
+    "ITM-364"
+   ],
+   "page": "/vault/for-sale",
+   "control": "Mark sold ($85 on Whatnot) keeps the actual sale price",
+   "expected": "status SOLD with sold_price 85 and platform Whatnot",
+   "ok": true,
+   "actual": "status=SOLD; sold_price=85; platform=Whatnot",
+   "evidence": ""
+  },
+  {
+   "rows": [
+    "RC-17 control"
+   ],
+   "page": "/vault/for-sale",
+   "control": "Mark sold typed 0",
+   "expected": "an explicit $0 sale is recorded as $0",
+   "ok": true,
+   "actual": "status=SOLD; sold_price=0",
+   "evidence": ""
+  },
+  {
+   "rows": [
+    "ITM-354"
+   ],
+   "page": "/sales",
+   "control": "Sale card with no purchase price",
+   "expected": "profit unknown: not shown as a +$70 gain equal to the sale price",
+   "ok": false,
+   "actual": "QA RB9 Ledger No Cost POP_CULTURE · Comics · Sep 10, 2026 +$70 Bought — Sold $70",
+   "evidence": "shots/rb9-first-before-d-25.jpg"
+  },
+  {
+   "rows": [
+    "ITM-357"
+   ],
+   "page": "/sales",
+   "control": "Sale card with a recorded $0 cost",
+   "expected": "shows a cost of $0 (a recorded zero), not a dash that reads as unknown",
+   "ok": false,
+   "actual": "QA RB9 Ledger Zero Cost MUSIC · Audio Formats · Aug 11, 2026 +$30 Bought — Sold $30",
+   "evidence": "shots/rb9-first-before-d-26.jpg"
+  },
+  {
+   "rows": [
+    "ITM-353"
+   ],
+   "page": "/sales",
+   "control": "Wins / Losses cards",
+   "expected": "Wins and Losses equal the cards shown with a gain / a loss; a sale with no recorded cost is neither (so the no-cost ledger sale adds to neither)",
+   "ok": true,
+   "actual": "Wins 3 vs 3 gain cards; Losses 5 vs 5 loss cards (11 cards)",
+   "evidence": ""
+  },
+  {
+   "rows": [
+    "ITM-364"
+   ],
+   "page": "/sales",
+   "control": "Total Sold card equals the Sold amounts on the cards",
+   "expected": "revenue total = sum of the cards' Sold amounts (a sale never shows 'Sold —' with the money missing from the total)",
+   "ok": false,
+   "actual": "Total Sold 250 vs sum of cards 250; cards with Sold —: 5",
+   "evidence": "shots/rb9-first-before-d-27.jpg"
+  },
+  {
+   "rows": [
+    "ITM-364"
+   ],
+   "page": "/sales",
+   "control": "Sales History card for the sale made on For Sale ($85)",
+   "expected": "shows Sold $85, cost $30 and a +$55 style profit (not 'Sold —' / -100%)",
+   "ok": false,
+   "actual": "QA RB9 FS sold 85 POP_CULTURE · comics · Oct 20, 2026 -$30 Bought $30 Sold — Margin -100%",
+   "evidence": "shots/rb9-first-before-d-28.jpg"
+  },
+  {
+   "rows": [
+    "ITM-354"
+   ],
+   "page": "/sales",
+   "control": "Sale made from For Sale on an item with no cost",
+   "expected": "profit unknown (not +$70, not -100%)",
+   "ok": false,
+   "actual": "QA RB9 FS sold nocost POP_CULTURE · comics · Oct 20, 2026 — Bought — Sold —",
+   "evidence": "shots/rb9-first-before-d-29.jpg"
+  },
+  {
+   "rows": [
+    "ITM-333"
+   ],
+   "page": "/vault/item/[id]?sold=1 vs /vault/sold vs /sales",
+   "control": "Profit for the same sale on the item page, the Sold card and the Sales History card",
+   "expected": "the same profit on all three (revenue 680 - cost 42 - estimated fees)",
+   "ok": false,
+   "actual": "item page +$638 (cost undefined, fees undefined); Sold card +$548; Sales History undefined",
+   "evidence": "shots/rb9-first-before-d-30.jpg"
+  },
+  {
+   "rows": [
+    "ITM-333"
+   ],
+   "page": "/ vs /vault/sold",
+   "control": "Home sales profit equals the Sold page profit",
+   "expected": "same profit figure on Home and on the Sold page (both from the one sale rule)",
+   "ok": true,
+   "actual": "Home +$1,430; Sold page +$1,430; ({\"homeProfit\":\"+$1,430\",\"homeRev\":\"$2,180 from 12 sold\",\"soldPageProfit\":\"+$1,430\",\"soldHeader\":\"Home Vault Exhibitions Lounge Discover Help ⌘K COLLECTOR Level 4 Vault Realized sales history. Sales History Items For Sale Sold Insights Goals Insurance SOLD \"})",
+   "evidence": ""
+  },
+  {
+   "rows": [
+    "ITM-364",
+    "ITM-354",
+    "ITM-333"
+   ],
+   "page": "/sales (clean second browser)",
+   "control": "Sales History in a clean browser",
+   "expected": "same figures: $85 sale, no-cost ledger sale profit unknown, the 680 sale profit as in the first browser",
+   "ok": false,
+   "actual": "QA RB9 FS sold 85 POP_CULTURE · comics · Oct 20, 2026 -$30 Bought $30 Sold — Margin -100% | QA RB9 Ledger No Cost POP_CULTURE · Comics · Sep 10, 2026 +$70 Bought — Sold $70 | ",
+   "evidence": "shots/rb9-first-before-d-31.jpg"
+  },
+  {
+   "rows": [
+    "ITM-333"
+   ],
+   "page": "/vault/sold (clean second browser)",
+   "control": "Sold card in a clean browser",
+   "expected": "same profit as in the first browser",
+   "ok": true,
+   "actual": "SOLD QA RB9 profit item Pop Culture · Comics $680 +$548 profit Oct 19, 26 · $91 fees Return",
+   "evidence": ""
+  }
+ ],
+ "home": {
+  "homeProfit": "+$1,430",
+  "homeRev": "$2,180 from 12 sold",
+  "soldPageProfit": "+$1,430",
+  "soldHeader": "Home Vault Exhibitions Lounge Discover Help ⌘K COLLECTOR Level 4 Vault Realized sales history. Sales History Items For Sale Sold Insights Goals Insurance SOLD "
+ }
+}

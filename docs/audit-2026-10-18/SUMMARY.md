@@ -24,7 +24,7 @@ Behaviour-asserted rows (a test checked the outcome): 3754 = 509 FAIL, 2770 PASS
 
 ## Repair status (updated 2026-10-19)
 
-Full table with commits and evidence: `DEFECT-STATUS.md`. Closed and re-tested on production: **RC-01, RC-02, RC-03, RC-06, RC-09**, **7 of 11 rows of RC-19** and **3 of 9 rows of RC-07** (37 specific rows in total; batch 3 in `repair-batch-3/CLOSEOUT.md`). Deferred migrations and unresolved incidents are listed separately in `DEFECT-STATUS.md` (sections 3 and 4); they are not counted as closed. Tags below: [CLOSED], [PARTLY CLOSED]; untagged means still open.
+Full table with commits and evidence: `DEFECT-STATUS.md`. Closed and re-tested on production: **RC-01, RC-02, RC-03, RC-06, RC-09, RC-17, RC-18**, **7 of 11 rows of RC-19** and **3 of 9 rows of RC-07** (66 specific rows in total; batch 3 in `repair-batch-3/CLOSEOUT.md`, batch 4 in `repair-batch-4/CLOSEOUT.md`). Deferred migrations and unresolved incidents are listed separately in `DEFECT-STATUS.md` (sections 3 and 4); they are not counted as closed. Tags below: [CLOSED], [PARTLY CLOSED]; untagged means still open.
 
 ## Prioritized defect list (root causes, genuine failures only)
 
@@ -84,10 +84,10 @@ Full table with commits and evidence: `DEFECT-STATUS.md`. Closed and re-tested o
 - **RC-04 SIMULATED interrupted connection: when the sign-out request fails, the page shows the login screen and gives no error while the session continues**  
   These rows were made with the sign-out request REFUSED by the audit, so they do not show that sign-out fails in normal use. A REAL sign-out of a synthetic QA session was verified separately and PASSED (CRW-025, CRW-026: session cleared, refresh token revoked, old session refused in a clean browser). Only the failed-request case is a finding: no error is shown and the session remains.  
   Rows (5): ACC-850, ACC-286, ACC-344, CRW-025, CRW-026
-- **RC-17 Values: letters, blanks and negatives become money; negative values accepted; numbers parsed wrongly**  
+- **[CLOSED] RC-17 Values: letters, blanks and negatives become money; negative values accepted; numbers parsed wrongly**  
   'abc' saves $0 or blank under a green Saved; blanking an asking price saves $0; negative cost/price/value saved; '1e3' becomes 13 and '1,5' becomes 15; auction accepts a negative starting bid and a Buy It Now below the reserve.  
   Rows (20): ADD-005, ADD-115, ADD-404, ADD-139, ADD-141, ADD-142 (+14 more)
-- **RC-18 Sales ledger and profit figures break the value rule or disagree**  
+- **[CLOSED] RC-18 Sales ledger and profit figures break the value rule or disagree**  
   A sale with no cost reads as pure profit; a recorded $0 cost shows a dash; a sale made from For Sale shows its sold price missing and -100%; the item page and the Sold card show different profits for one sale; the Pricing card shows an explicit $0 value as '—'.  
   Rows (9): ITM-354, ITM-353, ITM-357, ITM-364, ITM-333, ITM-430 (+3 more)
 - **[PARTLY CLOSED] RC-19 Totals and counts disagree between Insurance, packet, reports, PDFs and Insights**  

@@ -1,0 +1,39 @@
+PASS       RB9-001 | /vault/add | desktop 1440 | Purchase Price null / Current Value "-40" | not saved; message='can't be negative'
+FAIL       RB9-002 | /vault/add | desktop 1440 | Purchase Price "1e3" / Current Value "1e3" | not saved; message=''
+FAIL       RB9-003 | /vault/add | desktop 1440 | Purchase Price "1,5" / Current Value "1,5" | not saved; message=''
+FAIL       RB9-004 | /vault/add | desktop 1440 | Purchase Price "5-3" / Current Value "5-3" | not saved; message=''
+FAIL       RB9-005 | /vault/add | desktop 1440 | Purchase Price "abc" / Current Value "abc" | not saved; message=''
+PASS       RB9-006 | /vault/add | desktop 1440 | Purchase Price "0" / Current Value "0" (explicit zero stays 0) | saved: purchase_price=0, current_value=0; message='Saved to your account'
+PASS       RB9-007 | /vault/add | desktop 1440 | Purchase Price null / Current Value null (blank stays unknown) | saved: purchase_price=null, current_value=null; message='Saved to your account'
+PASS       RB9-008 | /vault/add | desktop 1440 | Purchase Price "$1,250.50" / Current Value "2,000" (supported currency format) | saved: purchase_price=1250.5, current_value=2000; message='Saved to your account'
+PASS       RB9-009 | /capture | desktop 1440 | Purchase price "5" / Current value "-40" then Save to Vault | not saved (redirected=false); message='Current value can't be negative. Leave it blank if you don't know it, or enter 0 if it's nothing.'
+PASS       RB9-010 | /capture | desktop 1440 | Purchase price "0" / Current value "0" then Save to Vault | saved: purchase_price=0, current_value=0
+PASS       RB9-011 | /vault/bulk | desktop 1440 | Current value -5 typed in the review grid, Add all | not added (moved=false); message='can't be negative'
+PASS       RB9-012 | /vault/item/[id] | owner, Personal | desktop 1440 | Purchase price (letters 'abc' typed into a money field) | db purchase_price=75 (was 75); message='Purchase price: use numbers only (no letters or exponents like 1e3).'; panel: Purchase price:
+PASS       RB9-013 | /vault/item/[id] | owner, Personal | desktop 1440 | Purchase price '1e3' (exponent) | db purchase_price=75; message='Purchase price: use numbers only (no letters or exponents like 1e3).'
+PASS       RB9-014 | /vault/item/[id] | owner, Personal | desktop 1440 | Purchase price '1,5' (comma decimal) | db purchase_price=75; message='Purchase price: use a period for cents and commas only for thousands, like 1,250.50 (1,5 is not supported).'
+PASS       RB9-015 | /vault/item/[id] | owner, Personal | desktop 1440 | Purchase price typed 0 | db purchase_price=0
+PASS       RB9-016 | /vault/item/[id] | owner, Personal | desktop 1440 | Purchase-cost fallback shown for an unvalued item | MARKET $50 At purchase cost. Not valued yet. Not priced yet, so va; db current_value=null, estimated_value=null
+PASS       RB9-017 | /vault/item/[id] | owner, Personal | desktop 1440 | Pricing Value (negative -40) | db current_value=null; message='Median value can't be negative. Leave it blank if you don't know it, or enter 0 if it's nothing.'
+PASS       RB9-018 | /vault/item/[id] | owner, Personal | desktop 1440 | Pricing Value '1e3' | db current_value=null; message='Median value: use numbers only (no letters or exponents like 1e3).'
+FAIL       RB9-019 | /vault/item/[id] | owner, Personal | desktop 1440 | Pricing card VALUE RANGE shows an explicit $0 | db current_value=0; tile ""; MARKET $0 Not priced yet, so vault totals use 
+PASS       RB9-020 | /vault/item/[id] | owner, Personal (for sale) | desktop 1440 | Asking Price (negative -5) | db asking_price=99; box shows "-5"; message='Asking price can't be negative. Leave it blank if you don't know it, or enter 0 if it's nothing
+PASS       RB9-021 | /vault/item/[id] | owner, Personal (for sale) | desktop 1440 | Asking Price blank | db asking_price=null
+PASS       RB9-022 | /vault/item/[id] | owner, Personal (for sale) | desktop 1440 | Asking Price typed 0 | db asking_price=0
+PASS       RB9-023 | /vault/item/[id] | owner, Personal | desktop 1440 | Start Auction with a negative starting bid | db auction_status=null; starting_bid=null; reserve=null; buy_it_now=null; message='Starting bid can't be negative. Leave it blank if you don
+PASS       RB9-024 | /vault/item/[id] | owner, Personal | desktop 1440 | Start Auction with Buy It Now below the reserve | db auction_status=null; reserve=null; buy_it_now=null; message='Buy It Now can't be lower than the reserve price.'
+PASS       RB9-025 | /vault/item/[id] | owner, Personal | desktop 1440 | Start Auction with starting bid '1e3' | db auction_status=null; starting_bid=null; message='Starting bid: use numbers only (no letters or exponents like 1e3).'
+PASS       RB9-026 | /vault/item/[id] | owner, Personal | desktop 1440 | Start Auction with valid prices (10 / 50 / 100) | db auction_status=ACTIVE; starting_bid=10; reserve=50; buy_it_now=100
+PASS       RB9-027 | /vault/item/[id] | owner, Personal (sold) | desktop 1440 | Return to Vault clears the sold platform too | status=COLLECTION; sold_price=null; sold_at=null; sold_platform=null
+PASS       RB9-028 | /vault/for-sale | desktop 1440 | Asking price (negative -5) then Set | db asking_price=120; message='Asking price can't be negative. Leave it blank if you don't know it, or enter 0 if it's nothing.'
+PASS       RB9-029 | /vault/for-sale | desktop 1440 | Asking price 'abc' then Set | db asking_price=120; message='Asking price: use numbers only (no letters or exponents like 1e3).'
+PASS       RB9-030 | /vault/for-sale | desktop 1440 | Asking price (blank) then Set clears it | db asking_price=null
+RUNNER ERROR Error: TypeError: Cannot read properties of undefined (reading 'querySelectorAll')
+    at <anonymous>:1:119
+    at <anonymous>:1:404
+    at Object.evaluate (C:\Users\EK\VLTD\.claude\worktrees\quizzical-hamilton-a45b28\docs\audit-2026-10-18\scripts\cdp.cjs:65:35)
+    at async mclick (C:\Users\EK\VLTD\.claude\worktrees\quizzical-hamilton-a45b28\docs\audit-2026-10-18\scripts\audit-s-itm-lib.cjs:32:13)
+    at async markSold (C:\Users\EK\VLTD\.claude\worktrees\quizzical-hamilton-a45b28\docs\audit-2026-10-18\repair-batch-4\scripts\rb9-money-sales.cjs:253:83)
+    at async C:\Users\EK\VLTD\.claude\worktrees\quizzical-hamilton-a45b28\docs\audit-2026-10-18\repair-batch-4\scripts\rb9-money-sales.cjs:254:7
+
+25 ok, 5 not ok of 30 | RUNNER ERROR

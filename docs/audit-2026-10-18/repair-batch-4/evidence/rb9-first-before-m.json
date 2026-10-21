@@ -1,0 +1,140 @@
+{
+ "label": "first",
+ "phase": "before",
+ "width": 390,
+ "fixtureOnly": true,
+ "cases": [
+  {
+   "rows": [
+    "ITM-558"
+   ],
+   "page": "/vault/item/[id] | owner, Personal",
+   "control": "Purchase price (letters 'abc' typed into a money field)",
+   "expected": "refused with a message; the recorded cost stays $75 (never silently $0)",
+   "ok": false,
+   "actual": "db purchase_price=0 (was 75); message='Saved to your account'; panel: Purchase price $0",
+   "evidence": "shots/rb9-first-before-m-1.jpg"
+  },
+  {
+   "rows": [
+    "RC-17 extra"
+   ],
+   "page": "/vault/item/[id] | owner, Personal",
+   "control": "Purchase price '1e3' (exponent)",
+   "expected": "refused; the saved cost is unchanged ($75), never 13 or 15",
+   "ok": false,
+   "actual": "db purchase_price=13; message='Saved to your account'",
+   "evidence": "shots/rb9-first-before-m-2.jpg"
+  },
+  {
+   "rows": [
+    "RC-17 extra"
+   ],
+   "page": "/vault/item/[id] | owner, Personal",
+   "control": "Purchase price '1,5' (comma decimal)",
+   "expected": "refused; the saved cost is unchanged ($75), never 13 or 15",
+   "ok": false,
+   "actual": "db purchase_price=15; message='Saved to your account'",
+   "evidence": "shots/rb9-first-before-m-3.jpg"
+  },
+  {
+   "rows": [
+    "RC-17 control"
+   ],
+   "page": "/vault/item/[id] | owner, Personal",
+   "control": "Purchase price typed 0",
+   "expected": "saved as an explicit $0 cost (known), not blank",
+   "ok": true,
+   "actual": "db purchase_price=0",
+   "evidence": ""
+  },
+  {
+   "rows": [
+    "fallback"
+   ],
+   "page": "/vault/item/[id] | owner, Personal",
+   "control": "Purchase-cost fallback shown for an unvalued item",
+   "expected": "MARKET shows the purchase cost ($50, 'At purchase cost') and no valuation field is written (current_value / estimated_value stay blank)",
+   "ok": true,
+   "actual": "MARKET $50 At purchase cost. Not valued yet. Not priced yet, so va; db current_value=null, estimated_value=null",
+   "evidence": ""
+  },
+  {
+   "rows": [
+    "ITM-529"
+   ],
+   "page": "/vault/item/[id] | owner, Personal",
+   "control": "Pricing Value (negative -40)",
+   "expected": "refused with a message; no negative value stored",
+   "ok": false,
+   "actual": "db current_value=-40; message='Saved to your account'",
+   "evidence": "shots/rb9-first-before-m-4.jpg"
+  },
+  {
+   "rows": [
+    "RC-17 extra"
+   ],
+   "page": "/vault/item/[id] | owner, Personal",
+   "control": "Pricing Value '1e3'",
+   "expected": "refused; never saved as 13",
+   "ok": true,
+   "actual": "db current_value=-40; message='Saved to your account'",
+   "evidence": ""
+  },
+  {
+   "rows": [
+    "ITM-527"
+   ],
+   "page": "/vault/item/[id] | owner, Personal",
+   "control": "Pricing card VALUE RANGE shows an explicit $0",
+   "expected": "the tile shows $0 where the MARKET panel shows $0 (stored as 0, not blank)",
+   "ok": false,
+   "actual": "db current_value=0; tile \"\"; MARKET $0 Not priced yet, so vault totals use ",
+   "evidence": "shots/rb9-first-before-m-5.jpg"
+  },
+  {
+   "rows": [
+    "ITM-629"
+   ],
+   "page": "/vault/item/[id] | owner, Personal",
+   "control": "Start Auction with a negative starting bid",
+   "expected": "refused with a message; no auction started",
+   "ok": false,
+   "actual": "db auction_status=ACTIVE; starting_bid=-5; reserve=2; buy_it_now=1; message='Saved to your account'",
+   "evidence": "shots/rb9-first-before-m-6.jpg"
+  },
+  {
+   "rows": [
+    "ITM-630"
+   ],
+   "page": "/vault/item/[id] | owner, Personal",
+   "control": "Start Auction with Buy It Now below the reserve",
+   "expected": "refused with a message; no auction started",
+   "ok": false,
+   "actual": "db auction_status=ACTIVE; reserve=2; buy_it_now=1; message=''",
+   "evidence": "shots/rb9-first-before-m-7.jpg"
+  },
+  {
+   "rows": [
+    "RC-17 extra"
+   ],
+   "page": "/vault/item/[id] | owner, Personal",
+   "control": "Start Auction with starting bid '1e3'",
+   "expected": "refused; never started at $13",
+   "ok": false,
+   "actual": "db auction_status=ACTIVE; starting_bid=-5; message=''",
+   "evidence": "shots/rb9-first-before-m-8.jpg"
+  },
+  {
+   "rows": [
+    "ITM-666"
+   ],
+   "page": "/vault/item/[id] | owner, Personal (sold)",
+   "control": "Return to Vault clears the sold platform too",
+   "expected": "status back to COLLECTION with sold_price, sold_at and sold_platform all cleared",
+   "ok": false,
+   "actual": "status=COLLECTION; sold_price=null; sold_at=null; sold_platform=eBay",
+   "evidence": "shots/rb9-first-before-m-9.jpg"
+  }
+ ]
+}

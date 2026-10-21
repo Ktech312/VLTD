@@ -1,0 +1,16 @@
+PASS       RB9-147 | /vault/quick | owner, Personal, desktop 1440, synthetic camera | Quick Add: 3 synthetic-camera photos -> review -> Verify sheet (manual path) | sheet open=true; AI requests seen=0
+PASS       RB9-148 | /vault/quick | owner, Personal, desktop 1440, synthetic camera | Quick Add Cost typed 'abc' | message='Cost: use numbers only (no letters or exponents like 1e3).'; Save disabled=true
+PASS       RB9-149 | /vault/quick | owner, Personal, desktop 1440, synthetic camera | Quick Add Cost typed '1e3' | message='Cost: use numbers only (no letters or exponents like 1e3).'; Save disabled=true
+PASS       RB9-150 | /vault/quick | owner, Personal, desktop 1440, synthetic camera | Quick Add Cost typed '1,5' | message='Cost: use a period for cents and commas only for thousands, like 1,250.50 (1,5 is not supported).'; Save disabled=true
+PASS       RB9-151 | /vault/quick | owner, Personal, desktop 1440, synthetic camera | Quick Add Cost typed '-5' | message='Cost can't be negative. Leave it blank if you don't know it, or enter 0 if it's nothing.'; Save disabled=true
+PASS       RB9-152 | /vault/quick | owner, Personal, desktop 1440, synthetic camera | Quick Add Value typed 'abc' | message='Value: use numbers only (no letters or exponents like 1e3).'; Save disabled=true
+PASS       RB9-153 | /vault/quick | owner, Personal, desktop 1440, synthetic camera | Quick Add Value typed '-4' | message='Value can't be negative. Leave it blank if you don't know it, or enter 0 if it's nothing.'; Save disabled=true
+PASS       RB9-154 | /vault/quick | owner, Personal, desktop 1440, synthetic camera | Quick Add Value typed '5-3' | message='Value: enter one amount (a dash between numbers is not supported).'; Save disabled=true
+PASS       RB9-155 | /vault/quick | owner, Personal, desktop 1440, synthetic camera | Quick Add valid entries (0 / blank / $1,250.50 & 2,000) | Save disabled=false; alert=''
+PASS       RB9-156 | /vault/quick | owner, Personal, desktop 1440, synthetic camera | Quick Add explicit 0 cost and 0 value are kept | moved=true; purchase_price=0; current_value=0
+PASS       RB9-157 | /vault/quick | owner, Personal, desktop 1440, synthetic camera | Quick Add blank cost and value stay unknown | purchase_price=null; current_value=null
+PASS       RB9-158 | /vault/quick | owner, Personal, desktop 1440, synthetic camera | Quick Add '$1,250.50' / '2,000' supported formats | purchase_price=1250.5; current_value=2000
+PASS       RB9-159 | /vault/quick | owner, Personal, desktop 1440, synthetic camera | Quick Add manual path makes no AI request | AI requests seen and blocked=0; ai_usage_log 0 -> 0
+PASS       RB9-160 | /vault + /vault/item/[id] | owner, Personal, desktop 1440, synthetic camera | Quick Add item after reload and in a clean second browser | listed after reload=true; second browser shows it=true
+
+14 ok, 0 not ok of 14

@@ -1,0 +1,14 @@
+PASS       RB9-206 | /vault/item/[id] | owner, Personal | phone 390 (browser-emulated) | Purchase price (letters 'abc' typed into a money field) | db purchase_price=75 (was 75); message='Purchase price: use numbers only (no letters or exponents like 1e3).'; panel: Purchase price:
+PASS       RB9-207 | /vault/item/[id] | owner, Personal | phone 390 (browser-emulated) | Purchase price '1e3' (exponent) | db purchase_price=75; message='Purchase price: use numbers only (no letters or exponents like 1e3).'
+PASS       RB9-208 | /vault/item/[id] | owner, Personal | phone 390 (browser-emulated) | Purchase price '1,5' (comma decimal) | db purchase_price=75; message='Purchase price: use a period for cents and commas only for thousands, like 1,250.50 (1,5 is not supported).'
+PASS       RB9-209 | /vault/item/[id] | owner, Personal | phone 390 (browser-emulated) | Purchase price typed 0 | db purchase_price=0
+PASS       RB9-210 | /vault/item/[id] | owner, Personal | phone 390 (browser-emulated) | Purchase-cost fallback shown for an unvalued item | MARKET $50 At purchase cost. Not valued yet. Not priced yet, so va; db current_value=null, estimated_value=null
+PASS       RB9-211 | /vault/item/[id] | owner, Personal | phone 390 (browser-emulated) | Pricing Value (negative -40) | db current_value=null; message='Value can't be negative. Leave it blank if you don't know it, or enter 0 if it's nothing.'
+PASS       RB9-212 | /vault/item/[id] | owner, Personal | phone 390 (browser-emulated) | Pricing Value '1e3' | db current_value=null; message='Value: use numbers only (no letters or exponents like 1e3).'
+PASS       RB9-213 | /vault/item/[id] | owner, Personal | phone 390 (browser-emulated) | Pricing card VALUE RANGE shows an explicit $0 | db current_value=0; tile "VALUE RANGE $0"; MARKET $0 Not priced yet, so vault totals use 
+PASS       RB9-214 | /vault/item/[id] | owner, Personal | phone 390 (browser-emulated) | Start Auction with a negative starting bid | db auction_status=null; starting_bid=null; reserve=null; buy_it_now=null; message='Starting bid can't be negative. Leave it blank if you don
+PASS       RB9-215 | /vault/item/[id] | owner, Personal | phone 390 (browser-emulated) | Start Auction with Buy It Now below the reserve | db auction_status=null; reserve=null; buy_it_now=null; message='Buy It Now can't be lower than the reserve price.'
+PASS       RB9-216 | /vault/item/[id] | owner, Personal | phone 390 (browser-emulated) | Start Auction with starting bid '1e3' | db auction_status=null; starting_bid=null; message='Starting bid: use numbers only (no letters or exponents like 1e3).'
+PASS       RB9-217 | /vault/item/[id] | owner, Personal (sold) | phone 390 (browser-emulated) | Return to Vault clears the sold platform too | status=COLLECTION; sold_price=null; sold_at=null; sold_platform=null
+
+12 ok, 0 not ok of 12

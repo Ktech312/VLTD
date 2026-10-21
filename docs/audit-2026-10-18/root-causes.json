@@ -298,7 +298,8 @@
    "ITM-629",
    "ITM-630"
   ],
-  "status": "OPEN"
+  "status": "CLOSED",
+  "statusNote": "batch 4: all 20 rows verified on production (RB9-161 to RB9-217) on b38f5f7, plus the Quick Add manual path (RB9-147 to RB9-160); two defects in the first fix found and fixed (a07fabc, b38f5f7)"
  },
  {
   "id": "RC-18",
@@ -317,7 +318,8 @@
    "ITM-043",
    "ITM-527"
   ],
-  "status": "OPEN"
+  "status": "CLOSED",
+  "statusNote": "batch 4: all 9 rows verified on production (RB9-188 to RB9-217) on b38f5f7, clean second browser checked; one defect in the first fix found and fixed (b38f5f7)"
  },
  {
   "id": "RC-19",
