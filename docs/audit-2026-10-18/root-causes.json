@@ -278,7 +278,7 @@
    "ADD-417"
   ],
   "status": "PARTLY CLOSED",
-  "statusNote": "batch 8: 14 of 16 rows verified on production (RB28, RB29): the Add page now shows every problem message (it hid any that lacked a few keywords: \"not an image\", \"paused\", \"not found\"...), Identify failures name the problem and offer hand entry, Quick Add says when the camera cannot start and how many items the AI could not identify (the message used to be wiped), /capture refuses non-photo and unreadable files when chosen, \"Use Full Photo\" accepts the whole photo and closes the step, PSA Look up explains itself, thumbnail mouse-drag reorder works (browser image drag no longer cancels it). Bulk intake notices and the empty-import message were already in place (RB29). Open: ADD-415 (Bulk single-card scan failure message: the card button needs a readable allowance, which needs the batch 6 SQL); ADD-168 (Cancel in the crop step keeps the photo that was already attached: the page says \"Picture added. Crop if needed\", so whether Cancel should discard the photo is a product decision)."
+  "statusNote": "batch 8 (14 rows) and batch 16 (ADD-168: Cancel in the crop step discards the photo that was just chosen; RB53). Only ADD-415 remains: the Bulk single-card Scan needs a readable scan allowance, which needs SQL file 1 (repair-batch-6/SQL-RUN-ME.md)."
  },
  {
   "id": "RC-17",
@@ -351,7 +351,7 @@
    "VLT-353"
   ],
   "status": "PARTLY CLOSED",
-  "statusNote": "batch 2 (5ac1d30): GIN-087, GIN-240, GIN-243, GIN-260, GIN-097, GIN-098, VLT-297 closed; GIN-095 deferred (migration), GIN-092/GIN-155/VLT-353 open"
+  "statusNote": "batches 1 to 3 and 15: GIN-092, GIN-155 and VLT-353 verified (RB49). GIN-095 (exclusions follow the account): code live and verified in device-only mode (RB53 8 of 8, tests 25 of 25); it becomes account-wide when repair-batch-15/sql/6-insurance-exclusions.sql is run, then rb54-exclusions-account.cjs."
  },
  {
   "id": "RC-20",

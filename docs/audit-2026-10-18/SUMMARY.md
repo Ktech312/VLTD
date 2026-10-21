@@ -24,6 +24,8 @@ Behaviour-asserted rows (a test checked the outcome): 3754 = 509 FAIL, 2770 PASS
 
 ## Repair status (updated 2026-10-20)
 
+**Batch 16 (2026-10-21, `repair-batch-16/CLOSEOUT.md`): insurance exclusions follow the account (code live, SQL file 6 waiting for you) and Cancel in the crop step discards a just-chosen photo (ADD-168 closed).**
+
 **Batch 15 (2026-10-21, `repair-batch-15/CLOSEOUT.md`): RC-05 closed (stage 4 ran and passed); RC-12, RC-20, RC-24, RC-25, RC-26, RC-29, RC-31, RC-32, RC-34 closed by your decisions and the phone pass; GIN-092, GIN-155, VLT-353 closed; the held SQL corrected (a live hole in the scan-allowance functions closed by file 1). Open: the SQL you run, GIN-095 (proposal), ADD-168 (decision).**
 
 **Batch 14 (2026-10-21, `repair-batch-14/CLOSEOUT.md`): RC-30 closed (4 of 4); RC-29 10 of 12, RC-32 8 of 9, RC-34 7 of 8 rows closed. Open: Activity Dismiss behaviour, the dead CGC link, the Avatar emoji tab (all decisions).**

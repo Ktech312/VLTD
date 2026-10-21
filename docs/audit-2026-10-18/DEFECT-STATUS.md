@@ -135,3 +135,9 @@ Migration-blocked (stage-0 production output reviewed 2026-10-21: matches; stage
 | RC-24, RC-25, RC-26, RC-29, RC-32, RC-34, RC-12 (the open rows) | VLT-385; VLT-147; DIS-166, ACC-375, 441, 721, VLT-073; ACC-737, VLT-464; CRW-020; ACC-872; DIS-341 | `b063299`, `c7edce6` | RB49, RB52 |
 | RC-31 (16 of 16) | ITM-590, 607, 597, 603, 226, 620; GIN-079, 080, 224, 259; EXH-375, 396; DIS-141, 276, 302, 036 | `dd80dfd`, `7d3f592`, `5b1b386` | RB50, RB51 |
 | Insurance | GIN-092 (re-verified), GIN-155, VLT-353 | `dd80dfd` | RB49 |
+
+### Batch 16: account-synced exclusions, crop Cancel (closeout `repair-batch-16/CLOSEOUT.md`)
+| Root cause | Audit rows | Commits | Evidence |
+|---|---|---|---|
+| RC-16 | ADD-168 closed | `10cf188`, `37a8703` | RB53 |
+| RC-19 | GIN-095: code live and verified device-only; account-wide after SQL file 6 | `10cf188` | RB53, tests 25 of 25; RB54 after the SQL |

@@ -1,4 +1,4 @@
-# SQL to run (updated 2026-10-21): four files, in this order
+# SQL to run (updated 2026-10-21): five files, in this order
 
 RC-05 stage 4 (the old exhibitions-table read) is done and verified (database checks 20 of 20, page matrix 41 of 41), so nothing below waits on it any more.
 Run each file once in the Supabase SQL editor, then its check. All are safe to run again. None changes customer data. Each has a rollback.
@@ -33,5 +33,8 @@ Kept separate and run last, as you asked, now that stage 4 has passed. **The num
 
 Adds two empty columns to goals (`goal_type`: items or value, `unit`: items or usd, always matching). Existing goals are not changed and not guessed: they show "needs setup" until the person chooses. **The site already works without this file:** until it runs, the choice a person makes is kept on that device and the page says so; after it runs, the choice is saved in the account and follows them. Tested 8 of 8.
 
-## Not requested yet, prepared for review
-[PROPOSAL-insurance-exclusions.md](../repair-batch-15/PROPOSAL-insurance-exclusions.md): a small table so "left out of the insurance documents" follows the account instead of living in one browser (GIN-095). SQL, validation, rollback and a 12-of-12 local test are ready; I will not wire the site to it until you decide.
+## File 5 (new, for your review): insurance exclusions that follow the account (GIN-095)
+[6-insurance-exclusions.sql](../repair-batch-15/sql/6-insurance-exclusions.sql), then [validation-6.sql](../repair-batch-15/sql/validation-6.sql). Rollback: [rollback-6.sql](../repair-batch-15/sql/rollback-6.sql).
+
+One small table: one row per excluded item per profile; only members of the profile can read, add or remove rows; nobody else and no visitor sees anything; rows cannot be edited. **The site is already switched over and works before and after this file:** until it runs, every Insurance page says exclusions are on this device only; after it runs, the first visit to Insurance copies each profile's on-device exclusions up (never removing anything) and the warning goes away. Tested 14 of 14 in a local Postgres; the site's side 25 of 25. Details: [PROPOSAL-insurance-exclusions.md](../repair-batch-15/PROPOSAL-insurance-exclusions.md). After you run it, `rb54-exclusions-account.cjs` proves it on production.
+

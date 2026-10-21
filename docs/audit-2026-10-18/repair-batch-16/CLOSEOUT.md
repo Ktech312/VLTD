@@ -1,0 +1,22 @@
+# Batch 16 closeout (account-synced insurance exclusions: GIN-095; crop Cancel: ADD-168), 2026-10-21
+
+Commits `10cf188`, `37a8703`. Scripts in `repair-batch-6/scripts/`: `rb53-exclusions-crop.cjs` (RB53, run now), `rb54-exclusions-account.cjs` (RB54, **run after the SQL**), `corr-rb53.cjs`; tests `scripts/test-insurance-exclusions.cjs` (`npm run test:exclusions`) and `repair-batch-15/scripts/test-exclusions-sql-in-postgres.cjs`.
+
+## GIN-095: insurance exclusions follow the account
+**The SQL for your review** (not run): [6-insurance-exclusions.sql](../repair-batch-15/sql/6-insurance-exclusions.sql), [validation-6.sql](../repair-batch-15/sql/validation-6.sql), [rollback-6.sql](../repair-batch-15/sql/rollback-6.sql). One small table, one row per excluded item per profile. Members of the profile can read, add and remove rows; a signed-out visitor and other accounts get nothing; rows cannot be edited. Because new tables here are granted to anon and signed-in people by default, the file revokes everything first and gives back only select, insert and delete to signed-in people (this was caught by the local test, which first showed an edit right slipping through). 14 of 14 local checks, including the exact statements the site sends. Details and the design: [PROPOSAL-insurance-exclusions.md](../repair-batch-15/PROPOSAL-insurance-exclusions.md).
+
+**The site (live now, works before and after the SQL):**
+- Every Insurance page (the tab, the policy packet and its print page, the schedule, the report, the per-item sheet, the PDF button) reads one shared module. Each profile keeps its exclusions on the device (instant, offline) and in the account.
+- A change shows at once, is sent to the account, and is called saved only when the account answered. If the account cannot be reached the page says "Some exclusions have not reached your account yet" and retries; re-including an item is remembered as waiting, so a reload cannot bring it back.
+- The first visit after the SQL copies each profile's on-device exclusions up. The old browser-wide list is split by profile (each profile adopts only the ids of its own items) and never deleted. Nothing is removed from the device because the account lacks it, except an item this device saw in the account that another device has since re-included.
+- Until the table exists (or if the account refuses), the pages say "Exclusions are saved on this device only", as before. After it exists that sentence disappears and the not-counted line reads "excluded by you" (no "on this device").
+- Tests: 25 of 25 against the real module (table missing, copy-up, other device's changes, re-included elsewhere, unreachable then recovered, refused, separate profiles, signed out, wording); all other `npm run test:*` suites still pass (insurance-docs 49, isolation 85, repair-batch3 75 and the rest).
+- **Verified on production now (no table yet): RB53 8 of 8**: the device-only warning shows; unticking an item shows "Excluded ... on this device", counts it in the not-counted line and keeps it after a reload; the policy packet agrees; Include all clears it.
+- **After you run the SQL**, `rb54-exclusions-account.cjs` proves the account path on production: two untick actions become two account rows and no warning; a second, clean browser shows the same two as excluded and its packet matches; re-including there removes the row; an old on-device list is copied up once; a different account can read, add and remove nothing; a visitor reads nothing.
+
+## ADD-168: Cancel in the crop step
+Choosing a photo opens the crop step. Cancel (and Close, clicking outside it, and Escape) now **discards the photo that was just chosen**, with a toast "That picture was discarded. Choose another when you are ready."; Use This Picture and Use Full Photo keep it. Cancel on a photo that was already part of the item only closes the step and leaves it as it was. (/capture already worked this way: a photo is added only when it is applied.) Verified on production (RB53): after Cancel the picture elements went from 2 to 0 and the toast showed; Use This Picture keeps the picture; Escape on a second chosen photo discards only that one.
+First-run RB53-006 and 008 failed only because the check also looked for a status line (the Add page shows status lines for problems only); they have a correction row and passing re-runs.
+
+## Status
+GIN-095: code live, verified in device-only mode; becomes account-wide when you run file 6 (then RB54). ADD-168 closed.
