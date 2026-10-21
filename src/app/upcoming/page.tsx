@@ -31,6 +31,7 @@ import {
   type ComicStatus,
 } from "@/lib/comicWishlistModel";
 import { showToast } from "@/lib/toast";
+import { storedSessionUserId } from "@/lib/sessionGuard";
 
 const STATUS_ORDER: ComicStatus[] = ["want", "preordered", "own"];
 // Short labels so all three fit one row on a 140px card.
@@ -201,6 +202,14 @@ export default function UpcomingPage() {
     return () => { cancelled = true; };
   }, []);
 
+  // Changing the date range fetches the list for that range; it used to rewrite only the sentence above the list.
+  const rangeFirstRun = useRef(true);
+  useEffect(() => {
+    if (rangeFirstRun.current) { rangeFirstRun.current = false; return; }
+    void handleSearch(1);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [days, allMode]);
+
   /**
    * pubOverride: undefined = use current selectedPubs; null = no filter; string = specific publisher
    */
@@ -254,6 +263,10 @@ export default function UpcomingPage() {
 
   async function handleStatus(issue: UpcomingIssue, next: ComicStatus | null) {
     if (saving.has(issue.id)) return;
+    if (!storedSessionUserId()) {
+      showToast("Sign in to save comics to your wishlist.", 6000, { label: "Sign in", onClick: () => router.push("/login?next=%2Fupcoming") });
+      return;
+    }
     const prev = statusOf(issue);
     const apply = (value: ComicStatus | null) =>
       setStatuses((m) => { const n = new Map(m); if (value) n.set(issue.id, value); else n.delete(issue.id); return n; });

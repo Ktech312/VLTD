@@ -11,6 +11,7 @@ import { AppIcon } from "@/components/ui/AppIcon";
 
 import {
   getGalleryByInviteToken,
+  isInviteTokenExpired,
   markGalleryInviteTokenUsedByToken,
   type Gallery,
   type GalleryInvitePermissions,
@@ -100,7 +101,10 @@ export default function InviteGalleryPage() {
       if (cancelled) return;
 
       if (!lookup) {
-        setPageState({ status: "invalid" });
+        // A link that was real but has run out says so; a wrong or disabled link says "not available".
+        const expired = await isInviteTokenExpired(token);
+        if (cancelled) return;
+        setPageState({ status: expired ? "expired" : "invalid" });
         return;
       }
 

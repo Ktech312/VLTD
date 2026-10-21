@@ -380,6 +380,7 @@ export default function MessagesPage() {
                   <div className="flex items-center gap-2 p-3" style={{ borderTop: "1px solid var(--border)" }}>
                     <input
                       value={draft}
+                      maxLength={4000}
                       onChange={(e) => setDraft(e.target.value.slice(0, 4000))}
                       onKeyDown={(e) => {
                         if (e.key === "Enter" && !e.shiftKey) {
@@ -400,6 +401,11 @@ export default function MessagesPage() {
                       Send
                     </button>
                   </div>
+                  {draft.length >= 3900 ? (
+                    <div role="status" data-testid="message-limit" className="px-3 pb-2 text-xs" style={{ color: draft.length >= 4000 ? "#f87171" : "var(--muted)" }}>
+                      {draft.length >= 4000 ? "That is the 4,000-character limit: nothing more can be added to this message." : `${4000 - draft.length} characters left (messages are limited to 4,000).`}
+                    </div>
+                  ) : null}
                 </>
               )}
             </div>

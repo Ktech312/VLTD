@@ -2556,6 +2556,21 @@ async function markSupabaseInviteTokenUsed(token: string) {
   }
 }
 
+/** True when the link is a real invite that has passed its expiry date (so the page can say "expired" rather than "not available"). */
+export async function isInviteTokenExpired(token: string): Promise<boolean> {
+  const cleanToken = safeString(token);
+  const supabase = getSupabaseBrowserClient();
+  if (!cleanToken || !supabase) return false;
+  try {
+    const { data } = await supabase.rpc("get_invite_token_info", { p_token: cleanToken }).maybeSingle();
+    const row = data as Record<string, unknown> | null;
+    if (!row || row.disabled) return false;
+    return row.expires_at != null && new Date(String(row.expires_at)).getTime() < Date.now();
+  } catch {
+    return false;
+  }
+}
+
 export async function getGalleryByInviteToken(
   token: string
 ): Promise<GalleryInviteLookupResult | null> {
@@ -2669,7 +2684,13 @@ export function recordGalleryView(galleryId: string) {
   const viewerKey = getViewerKey();
   const galleries = loadRawGalleries();
   const target = galleries.find((gallery) => gallery.id === galleryId);
-  if (!target) return;
+  if (!target) {
+    // Someone else's exhibition (a visitor has none of it saved): the server counts one view per viewer key (record_exhibition_view);
+    // a visitor is not allowed to write the exhibition row themselves. Until that function exists the call is simply ignored.
+    const visitorClient = getSupabaseBrowserClient();
+    if (visitorClient) void Promise.resolve(visitorClient.rpc("record_exhibition_view", { p_gallery_id: galleryId, p_viewer_key: viewerKey })).catch(() => undefined);
+    return;
+  }
 
   const analytics = normalizeAnalytics(target.analytics);
   const alreadySeen = analytics.uniqueViewKeys.includes(viewerKey);

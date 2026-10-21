@@ -31,6 +31,7 @@ import {
 } from "@/lib/vaultModel";
 import { syncAllItemsToCloud } from "@/lib/vaultSyncQueue";
 import { searchVaultItems } from "@/lib/vaultSearch";
+import { activeItems, insuranceValue } from "@/lib/vaultStats";
 import { suggestAutoTags } from "@/lib/generateHashtags";
 import { getUniverses, getCategories, UNIVERSE_LABEL, type UniverseKey } from "@/lib/taxonomy";
 import { loadGalleries, type Gallery } from "@/lib/galleryModel";
@@ -279,14 +280,17 @@ export default function VaultHallsPage() {
     return () => window.removeEventListener(ACTIVE_PROFILE_EVENT, refresh);
   }, []);
 
+  // A Hall is built from items still owned: sold items and wishlist entries are not offered.
+  const ownedItems = useMemo(() => activeItems(items), [items]);
   const { results, matchedTermsByItemId } = useMemo(
-    () => searchVaultItems(items, terms, { universe: universe || undefined, categoryLabel: categoryLabel || undefined }),
-    [items, terms, universe, categoryLabel]
+    () => searchVaultItems(ownedItems, terms, { universe: universe || undefined, categoryLabel: categoryLabel || undefined }),
+    [ownedItems, terms, universe, categoryLabel]
   );
 
   const selectedItems = useMemo(() => results.filter((i) => !deselectedIds.has(i.id)), [results, deselectedIds]);
   const totalValue = useMemo(
-    () => selectedItems.reduce((s, i) => s + (i.currentValue ?? i.purchasePrice ?? 0), 0),
+    // The shared value rule: the priced value, else what was paid in all (price + tax + shipping + fees).
+    () => selectedItems.reduce((s, i) => s + insuranceValue(i).amount, 0),
     [selectedItems]
   );
 

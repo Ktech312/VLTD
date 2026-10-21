@@ -241,12 +241,23 @@ export default function KickstarterPage() {
     else { setLoading(true); setError(null); }
 
     const params = new URLSearchParams({ q, sort: s, page: String(pg) });
-    const res = await fetch(`/api/kickstarter-comics?${params}`);
-    const json = await res.json();
+    let res: Response | null = null;
+    let json: { error?: string; projects?: KickstarterProject[]; total_hits?: number; hasMore?: boolean } = {};
+    try {
+      res = await fetch(`/api/kickstarter-comics?${params}`);
+      json = await res.json();
+    } catch {
+      res = null;
+    }
 
-    if (!res.ok || json.error) {
-      setError(json.error ?? "Failed to load campaigns");
-      if (!isLoadMore) setProjects([]);
+    if (!res || !res.ok || json.error) {
+      setError(!res ? "Couldn't reach the campaign search. Check your connection and try again." : json.error ?? "Failed to load campaigns");
+      if (!isLoadMore) {
+        // No stale result line from the previous search: this one failed.
+        setProjects([]);
+        setTotalHits(0);
+        setSearched(false);
+      }
     } else {
       if (isLoadMore) {
         setProjects((prev) => [...prev, ...(json.projects ?? [])]);

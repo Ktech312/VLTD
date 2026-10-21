@@ -323,7 +323,8 @@ export default function AuctionItemPage() {
   useEffect(() => {
     if (!id) return;
     const unsub1 = subscribeToBids(id, (newBid) => {
-      setBids((prev) => [newBid, ...prev]);
+      // The bidder's own bid can arrive here AND from onBidPlaced: list each bid once.
+      setBids((prev) => (prev.some((b) => b.id === newBid.id) ? prev : [newBid, ...prev]));
     });
     const unsub2 = subscribeToAuctionItem(id, (updatedItem) => {
       setItem(updatedItem);

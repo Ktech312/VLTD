@@ -107,8 +107,10 @@ export async function listConversations(profileId: string): Promise<Conversation
   const otherIds = [...new Set(rows.map((c) => (c.profile_a_id === profileId ? c.profile_b_id : c.profile_a_id)))];
   const convIds = rows.map((c) => c.id);
 
-  const [profilesRes, messagesRes, prefsRes] = await Promise.all([
+  const [profilesRes, publicRes, messagesRes, prefsRes] = await Promise.all([
     supabase.from("profiles").select("id, display_name, username, avatar_url, avatar_emoji").in("id", otherIds),
+    // Another person's own profile row is not readable by you; their public profile (name and avatar) is, unless they are hidden.
+    supabase.from("public_profiles").select("profile_id, display_name, avatar_url, avatar_emoji").in("profile_id", otherIds),
     supabase
       .from("direct_messages")
       .select("id, conversation_id, sender_profile_id, body, created_at, read_at")
@@ -124,6 +126,10 @@ export async function listConversations(profileId: string): Promise<Conversation
   const profileById = new Map<string, ProfileRow>(
     ((profilesRes.data ?? []) as ProfileRow[]).map((p) => [p.id, p])
   );
+  for (const pub of (publicRes.data ?? []) as { profile_id: string; display_name: string | null; avatar_url: string | null; avatar_emoji: string | null }[]) {
+    const have = profileById.get(pub.profile_id);
+    if (!have) profileById.set(pub.profile_id, { id: pub.profile_id, display_name: pub.display_name, username: null, avatar_url: pub.avatar_url, avatar_emoji: pub.avatar_emoji } as ProfileRow);
+  }
 
   const latestByConv = new Map<string, MessageRow>();
   const unreadByConv = new Map<string, number>();

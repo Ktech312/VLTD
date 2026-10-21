@@ -26,7 +26,7 @@ import { computeItemIntelligence } from "@/lib/itemIntelligence";
 import { UNIVERSE_LABEL, TAXONOMY, getCategories, isUniverseKey, type UniverseKey } from "@/lib/taxonomy";
 import { showToast } from "@/lib/toast";
 import { REVIEW_CHECKLIST, REVIEW_CHECKLIST_NOTE, REVIEW_GAPS, REVIEW_GAP_FILTERS, REVIEW_GAP_HEADING, REVIEW_GAP_PILL, REVIEW_GAP_ROW, matchesReview, reviewCounts, reviewGaps, type ReviewFilter, type ReviewGap } from "@/lib/vaultReview";
-import { activeItems, collectibleItems, describeGainExclusions, effectiveMarketValue, hasExplicitValue, hasRecordedCost, readValueMode, summarizeValues, writeValueMode, type ValueMode } from "@/lib/vaultStats";
+import { activeItems, collectibleItems, describeGainExclusions, effectiveMarketValue, hasExplicitValue, hasRecordedCost, itemGain as measuredGain, readValueMode, summarizeValues, writeValueMode, type ValueMode } from "@/lib/vaultStats";
 import { priceCheckIsStale } from "@/lib/pricingMvp";
 import { migrateExistingVaultImagesToSupabase } from "@/lib/vaultMigration";
 import {
@@ -1565,8 +1565,13 @@ export default function VaultListView({ lockedUniverse }: { lockedUniverse?: Uni
       if (sortMode === "newest") return getCreatedAtMs(b) - getCreatedAtMs(a);
       if (sortMode === "value_desc") return effectiveMarketValue(b) - effectiveMarketValue(a);
       if (sortMode === "value_asc") return effectiveMarketValue(a) - effectiveMarketValue(b);
-      if (sortMode === "gain_desc") return itemGain(b) - itemGain(a);
-      if (sortMode === "gain_asc") return itemGain(a) - itemGain(b);
+      if (sortMode === "gain_desc" || sortMode === "gain_asc") {
+        // Only an item with a value AND a recorded cost has a gain (the same rule as every other page). The others sort after the measured ones in either direction.
+        const ga = measuredGain(a)?.gain ?? null;
+        const gb = measuredGain(b)?.gain ?? null;
+        if (ga === null || gb === null) return ga === gb ? 0 : ga === null ? 1 : -1;
+        return sortMode === "gain_desc" ? gb - ga : ga - gb;
+      }
       return String(a.title ?? "").localeCompare(String(b.title ?? ""));
     });
 
