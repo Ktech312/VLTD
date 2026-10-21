@@ -2467,7 +2467,7 @@ export default function AddPage() {
                   <div className="text-[11px] font-semibold tracking-[0.18em] text-[color:var(--muted2)]">
                     BASIC ITEM RECORD
                   </div>
-                  <PillButton size="compact" onClick={resetUnlockedFields} disabled={isSaving}>Unlock All</PillButton>
+                  <PillButton size="compact" onClick={resetUnlockedFields} disabled={isSaving} title="Clears every field that is not locked. Locked fields keep their values for the next item.">Clear Unlocked Fields</PillButton>
                 </div>
                 <div className="mt-3 grid gap-3 sm:grid-cols-2 2xl:grid-cols-4">
                   <Field label="Universe" locked={locks.universe} onToggleLock={() => handleToggleLock("universe")}>

@@ -1,11 +1,13 @@
 "use client";
 
 import { PillButton } from "@/components/ui/PillButton";
+import { parseMoneyInput } from "@/lib/moneyInput";
 import { PillSelect } from "@/components/ui/PillSelect";
 import Link from "next/link";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { DiscoverNav } from "@/components/SectionNav";
 import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { Glyph } from "@/components/ui/Glyph";
 import {
   loadWishlist,
@@ -206,6 +208,7 @@ function WatchCard({
 }
 
 export default function WatchlistPage() {
+  const router = useRouter();
   const [wishlist, setWishlist] = useState<WishlistItem[]>(() => loadWishlist());
   const [watchlist, setWatchlist] = useState<WatchlistItem[]>(() => loadWatchlist());
   const [shareToken, setShareToken] = useState<string | null>(null);
@@ -301,7 +304,7 @@ export default function WatchlistPage() {
     }
 
     if (entry.sourceType === "watchlist") {
-      showToast("Open Add Item to finish moving this watched item.");
+      router.push("/vault/add");
       return;
     }
 
@@ -338,8 +341,13 @@ export default function WatchlistPage() {
 
   function saveTarget() {
     if (!selected || !canEditSelected) return;
-    const parsed = Number(targetDraft.replace(/[^0-9.]/g, ""));
-    const value = Number.isFinite(parsed) && parsed > 0 ? parsed : 0;
+    // The shared money rule: blank clears the target, 0 is an explicit zero, anything that is not an amount is refused and the old target is kept.
+    const parsed = parseMoneyInput(targetDraft, { label: "Target price" });
+    if (!parsed.ok) {
+      showToast(parsed.message);
+      return;
+    }
+    const value = parsed.blank ? 0 : parsed.value;
     updateWishlistItem(selected.id, { targetPrice: value });
     setWishlist(loadWishlist());
     setEditingTarget(false);

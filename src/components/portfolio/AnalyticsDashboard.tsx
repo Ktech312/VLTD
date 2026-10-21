@@ -660,7 +660,7 @@ export function AnalyticsDashboard(props: {
           <div className="flex flex-wrap items-center gap-2">
             {backHref ? <PillLink href={backHref}>← Back</PillLink> : null}
             <PillLink href="/">Home</PillLink>
-            <PillLink href="/vault">Open Exhibitions</PillLink>
+            <PillLink href="/museum">Open Exhibitions</PillLink>
             <PillLink href="/insurance">Insurance PDF</PillLink>
             <PillLink href="/account">Settings</PillLink>
           </div>

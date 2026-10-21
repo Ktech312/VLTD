@@ -846,7 +846,7 @@ export default function InsightsOverview({ items: allItems, loading = false }: {
                   return (
                     <Link
                       key={row.label}
-                      href={`/portfolio/universe/${encodeURIComponent(row.label)}`}
+                      href={`/vault?q=${encodeURIComponent(row.label)}`}
                       className="grid grid-cols-[14px_minmax(0,1fr)_78px_54px] items-center gap-2 text-xs leading-tight"
                       style={{ color: "var(--fg)" }}
                     >
@@ -866,7 +866,7 @@ export default function InsightsOverview({ items: allItems, loading = false }: {
           <Panel id="movers" className="p-3.5">
             <div className="flex items-center justify-between gap-3">
               <Label>Portfolio Movers</Label>
-              <Link href="/vault" className="text-xs font-bold" style={{ color: GOLD }}>View all movers &gt;</Link>
+              <Link href="/vault?sort=gain_desc" className="text-xs font-bold" style={{ color: GOLD }}>View all movers &gt;</Link>
             </div>
             <div className="mt-3 grid gap-3 md:grid-cols-2">
               <div>
@@ -907,12 +907,12 @@ export default function InsightsOverview({ items: allItems, loading = false }: {
 
           <Panel id="cost-breakdown" className="p-4">
             <div className="flex items-center gap-1.5">
-              <Label>Cost And Value By Universe</Label>
+              <Label>Cost And Value By Category</Label>
               <InfoMark />
             </div>
             <div className="mt-4 grid grid-cols-[22px_minmax(0,1fr)_62px_36px_100px] gap-2 text-[10px] font-bold uppercase tracking-[0.16em]" style={{ color: MUTED2 }}>
               <span />
-              <span>Universe</span>
+              <span>Category</span>
               <span className="text-right">Value</span>
               <span className="text-right">%</span>
               <span className="text-right">Change</span>
@@ -926,7 +926,7 @@ export default function InsightsOverview({ items: allItems, loading = false }: {
                 return (
                   <Link
                     key={row.label}
-                    href={`/portfolio/universe/${encodeURIComponent(row.label)}`}
+                    href={`/vault?q=${encodeURIComponent(row.label)}`}
                     className="grid grid-cols-[22px_minmax(0,1fr)_62px_36px_100px] items-center gap-2 border-b py-2 text-xs last:border-b-0 hover:bg-white/[0.035]"
                     style={{ color: "var(--fg)", borderColor: "rgba(203,208,213,0.16)" }}
                   >
@@ -954,7 +954,7 @@ export default function InsightsOverview({ items: allItems, loading = false }: {
                 <Label>Value Evidence</Label>
                 <InfoMark />
               </div>
-              <Link href="/vault" className="text-xs font-bold" style={{ color: GOLD }}>View all &gt;</Link>
+              <Link href="/vault?review=needs_review&gap=value" className="text-xs font-bold" style={{ color: GOLD }}>View all &gt;</Link>
             </div>
             <div className="mt-4 grid grid-cols-[minmax(0,0.92fr)_1px_minmax(0,1fr)] gap-5">
               <div>
@@ -998,7 +998,7 @@ export default function InsightsOverview({ items: allItems, loading = false }: {
         <Panel className="mt-3 p-4">
           <div className="flex items-center justify-between gap-3">
             <Label>Items Needing Review ({reviewItems.length})</Label>
-            <Link href="/vault" className="text-xs font-bold" style={{ color: GOLD }}>View all &gt;</Link>
+            <Link href="/vault?review=needs_review" className="text-xs font-bold" style={{ color: GOLD }}>View all &gt;</Link>
           </div>
           <div className="mt-4 flex gap-3 overflow-x-auto pb-1">
             {reviewItems.length > 0 ? (
@@ -1009,13 +1009,13 @@ export default function InsightsOverview({ items: allItems, loading = false }: {
               </div>
             )}
             <Link
-              href="/vault"
+              href="/vault?review=needs_review"
               className="grid min-w-[190px] place-items-center rounded-[7px] p-4 text-center"
               style={{ color: GOLD, border: "1px dashed rgba(203,208,213,0.38)", background: "var(--surface)" }}
             >
               <div>
                 <Glyph name="tag" size={30} />
-                <div className="mt-3 text-base font-bold">+ Add note</div>
+                <div className="mt-3 text-base font-bold">Review items</div>
               </div>
             </Link>
           </div>

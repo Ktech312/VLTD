@@ -87,7 +87,7 @@ export default function SavedPage() {
               </p>
             </div>
             <Link
-              href="/discover"
+              href="/discover?flip=1"
               className="mt-2 inline-flex h-11 items-center rounded-full px-6 text-sm font-black text-[#0B0B0B] transition hover:brightness-105"
               style={{ background: "linear-gradient(135deg, #8C9298 0%, #A8AEB4 30%, #C8CDD2 60%, #A8AEB4 100%)" }}
             >
@@ -105,7 +105,7 @@ export default function SavedPage() {
                 {watchlist.length} saved {watchlist.length === 1 ? "item" : "items"}
               </span>
               <Link
-                href="/discover"
+                href="/discover?flip=1"
                 className="text-xs font-semibold transition hover:underline"
                 style={{ color: "var(--theme-gold, #C8CDD2)" }}
               >
@@ -178,7 +178,7 @@ export default function SavedPage() {
             {/* Discover CTA at bottom */}
             <div className="pt-4 flex justify-center">
               <Link
-                href="/discover"
+                href="/discover?flip=1"
                 className="inline-flex items-center gap-2 rounded-full border px-5 py-2.5 text-sm font-semibold transition hover:brightness-110"
                 style={{
                   borderColor: "rgba(203,208,213,0.28)",

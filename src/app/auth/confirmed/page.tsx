@@ -22,11 +22,20 @@ function linkProblem(): boolean {
   return Boolean(hash.get("error") || hash.get("error_description") || query.get("error") || query.get("error_description"));
 }
 
+// True when the address carries a confirmation link (a session in the "#" part, or a code in the query). A bare visit carries none.
+function linkPresent(): boolean {
+  if (typeof window === "undefined") return false;
+  const hash = new URLSearchParams(window.location.hash.replace(/^#/, ""));
+  const query = new URLSearchParams(window.location.search);
+  return Boolean(hash.get("access_token") || hash.get("refresh_token") || hash.get("token_hash") || hash.get("type") || query.get("code") || query.get("token_hash"));
+}
+
 export default function EmailConfirmedPage() {
   const router = useRouter();
   const [phase, setPhase] = useState<Phase>("checking");
   // Read before the auth client consumes the link and clears it from the address bar.
   const [problem] = useState(linkProblem);
+  const [hadLink] = useState(linkPresent);
   const moved = useRef(false);
 
   async function goOn() {
@@ -69,7 +78,8 @@ export default function EmailConfirmedPage() {
     })();
     // The address is confirmed even if this browser could not keep the session: say so and send them to log in.
     const giveUp = window.setTimeout(() => {
-      if (!done) setPhase("needs_login");
+      // Without a confirmation link the address was not confirmed by this visit: say the link is missing instead.
+      if (!done) setPhase(hadLink ? "needs_login" : "bad_link");
     }, 7000);
 
     return () => {

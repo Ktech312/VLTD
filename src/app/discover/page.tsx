@@ -155,6 +155,10 @@ export default function DiscoverPage() {
   const [fetchError, setFetchError] = useState<string | null>(null);
   const [attempt, setAttempt] = useState(0);
   const [swipeOpen, setSwipeOpen] = useState(false);
+  // /discover?flip=1 (the links named "The Flip" on Saved) opens the deck straight away.
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get("flip") === "1") setSwipeOpen(true);
+  }, []);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [sort, setSort] = useState<"recommended" | "views" | "items" | "newest" | "az">("recommended");
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});

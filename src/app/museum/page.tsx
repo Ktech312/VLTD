@@ -13,12 +13,16 @@ import ProgressiveImage from "@/components/ui/ProgressiveImage";
 import { getGalleryScore } from "@/lib/galleryScore";
 import {
   GALLERY_EVENT,
+  createGallery,
   deleteGallery,
   loadGalleries,
   refreshGalleriesFromSupabase,
+  saveGalleries,
   updateGallery,
   type Gallery,
 } from "@/lib/galleryModel";
+import { applyAccessMode } from "@/lib/galleryAccess";
+import { showToast } from "@/lib/toast";
 import { getGalleryLimits } from "@/lib/galleryTier";
 import { getUserBonusGalleries } from "@/lib/referral";
 import { getTierSafe, onTierChange, type Tier } from "@/lib/subscription";
@@ -466,6 +470,32 @@ export default function MuseumPage() {
 
   function openGallery(galleryId: string) {
     router.push(`/museum/${galleryId}`);
+  }
+
+  // A real copy: new id and share link, private until the person chooses otherwise, same items and layout. Respects the exhibition limit.
+  function handleDuplicate(source: Gallery) {
+    if (limits.galleries !== Infinity && galleries.length >= limits.galleries) {
+      showToast("You have reached your exhibition limit, so this one can't be duplicated.");
+      return;
+    }
+    const base = createGallery(`${source.title} (copy)`.slice(0, 80));
+    const clone = <T,>(value: T): T => JSON.parse(JSON.stringify(value)) as T;
+    const copy = applyAccessMode(
+      {
+        ...clone(source),
+        id: base.id,
+        share: base.share,
+        analytics: base.analytics,
+        title: base.title,
+        state: "ACTIVE",
+        updatedAt: Date.now(),
+      },
+      "private"
+    );
+    saveGalleries([...loadGalleries(), copy]);
+    refresh();
+    setSelectedId(copy.id);
+    showToast(`Duplicated as "${copy.title}". The copy is private.`);
   }
 
   function handleAskDelete(gallery: Gallery) {
@@ -987,7 +1017,7 @@ export default function MuseumPage() {
                               {copyOk ? "Copied" : "Copy link"}
                             </button>
                           </div>
-                          <button type="button" onClick={() => openGallery(g.id)} className="mt-2 inline-flex items-center gap-1 text-xs font-semibold max-md:min-h-11" style={{ color: "var(--theme-gold)" }}>View public page ↗</button>
+                          <button type="button" onClick={() => window.open(shareUrl, "_blank", "noopener")} className="mt-2 inline-flex items-center gap-1 text-xs font-semibold max-md:min-h-11" style={{ color: "var(--theme-gold)" }}>View public page ↗</button>
                         </div>
 
                         {/* Privacy & access */}
@@ -1048,13 +1078,13 @@ export default function MuseumPage() {
                         ) : null}
 
                         <div className="mt-5 grid grid-cols-3 gap-2">
-                          <button type="button" onClick={() => openGallery(g.id)} className="inline-flex min-h-[40px] max-md:min-h-11 items-center justify-center gap-1.5 rounded-[7px] text-xs font-semibold ring-1" style={{ background: "var(--pill)", color: "var(--fg)", borderColor: "var(--border)" }}>
+                          <button type="button" onClick={() => handleDuplicate(g)} className="inline-flex min-h-[40px] max-md:min-h-11 items-center justify-center gap-1.5 rounded-[7px] text-xs font-semibold ring-1" style={{ background: "var(--pill)", color: "var(--fg)", borderColor: "var(--border)" }}>
                             <AppIcon name="copy" size={13} strokeWidth={1.8} />
                             Duplicate
                           </button>
                           <button type="button" onClick={() => openGallery(g.id)} className="inline-flex min-h-[40px] max-md:min-h-11 items-center justify-center gap-1.5 rounded-[7px] text-xs font-semibold ring-1" style={{ background: "var(--pill)", color: "var(--fg)", borderColor: "var(--border)" }}>
-                            <AppIcon name="upload" size={13} strokeWidth={1.8} />
-                            Export PDF
+                            <AppIcon name="edit" size={13} strokeWidth={1.8} />
+                            Open editor
                           </button>
                           <button type="button" onClick={() => handleAskDelete(g)} className="inline-flex min-h-[40px] max-md:min-h-11 items-center justify-center gap-1.5 rounded-[7px] text-xs font-semibold ring-1" style={{ background: "rgba(248,113,113,0.08)", color: "#f87171", borderColor: "rgba(248,113,113,0.3)" }}>
                             <AppIcon name="delete" size={13} strokeWidth={1.8} />

@@ -298,6 +298,7 @@ export default function SecurityPage() {
                 <PillButton
                   variant="danger"
                   onClick={async () => {
+                    if (!window.confirm("Sign out of every device, including this one? You will need to log in again everywhere.")) return;
                     const supabase = getSupabaseBrowserClient();
                     // Signing out everywhere is the "something's wrong" action —
                     // forget every trusted device too, so a fresh 2FA code is

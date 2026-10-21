@@ -190,7 +190,7 @@ export default function InsuranceReportPage() {
               ← Back to Portfolio
             </Link>
             <Link
-              href="/vault"
+              href="/museum"
               className="rounded-full bg-[color:var(--pill)] px-4 py-2 text-sm ring-1 ring-[color:var(--border)] hover:bg-[color:var(--pill-hover)]"
             >
               Open Exhibitions

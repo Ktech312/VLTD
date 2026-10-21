@@ -1436,7 +1436,7 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
                   <InsurancePdfButton
                     items={[item]}
                     single
-                    label="Add to Insurance"
+                    label="Insurance Documents"
                     className={pillClassName("default")}
                   />
                   <CoaScanButton onApply={(data, file) => void handleApplyCoa(data, file)} />

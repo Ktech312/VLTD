@@ -76,7 +76,7 @@ export default function InsuranceReportPage() {
             >
               ← Back to Portfolio
             </Link>
-            <PillButton href="/vault">
+            <PillButton href="/museum">
               Open Exhibitions
             </PillButton>
           </div>

@@ -221,6 +221,22 @@ export default function UniverseDrillPage({
   params: Promise<{ key: string }>;
 }) {
   const { key } = use(params);
+  if (!isUniverseKey(String(key ?? "").toUpperCase())) {
+    return (
+      <main className="mx-auto max-w-xl px-4 py-16 text-center">
+        <div role="alert" data-testid="portfolio-universe-not-found" className="rounded-[18px] bg-[color:var(--surface)] p-8 ring-1 ring-[color:var(--border)]">
+          <h1 className="text-2xl font-semibold">That universe doesn&apos;t exist</h1>
+          <p className="mt-2 text-sm text-[color:var(--muted)]">Check the address, or go back to Insights.</p>
+          <div className="mt-5 flex justify-center"><SharedPill variant="primary" href="/portfolio">Back to Insights</SharedPill></div>
+        </div>
+      </main>
+    );
+  }
+  return <UniverseDrillInner uniKey={key} />;
+}
+
+function UniverseDrillInner({ uniKey }: { uniKey: string }) {
+  const key = uniKey;
   const uKey = normUniverse(key) as UniverseKey;
 
   const [items, setItems] = useState<ModelItem[]>([]);
@@ -233,7 +249,8 @@ export default function UniverseDrillPage({
     window.addEventListener("vltd:value-mode", sync);
     return () => window.removeEventListener("vltd:value-mode", sync);
   }, []);
-  const [range, setRange] = useState<TimeRange>("30d");
+  // A drill-down from a universe figure shows the whole universe; a narrower window is the person's own choice (remembered below).
+  const [range, setRange] = useState<TimeRange>("all");
   const [q, setQ] = useState("");
 
   useEffect(() => {

@@ -214,6 +214,12 @@ function universeDisplayName(key: UniverseKey) {
   return UNIVERSE_LABEL[key] ?? "Misc";
 }
 
+/** True when the address names a real universe (so an unknown address can say "not found" instead of quietly showing Misc). */
+export function isKnownUniverseSlug(value: unknown): boolean {
+  const slug = String(value ?? "").trim().toLowerCase().replace(/_/g, "-");
+  return VAULT_UNIVERSES.some((entry) => entry.slug === slug);
+}
+
 export function universeFromSlug(value: unknown): UniverseKey {
   const slug = String(value ?? "")
     .trim()
@@ -744,10 +750,28 @@ function VaultLoadError({ onRetry }: { onRetry: () => void }) {
 function VaultEmptyState({
   hasFilters,
   onClearFilters,
+  universeName,
 }: {
   hasFilters: boolean;
   onClearFilters: () => void;
+  /** Set on a universe page that has nothing in it while the vault itself has items. */
+  universeName?: string;
 }) {
+  if (universeName) {
+    return (
+      <section className="mt-3 rounded-[18px] bg-[color:var(--surface)] p-8 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
+        <div className="mx-auto max-w-xl text-center" data-testid="empty-universe">
+          <div className="text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">EMPTY UNIVERSE</div>
+          <h2 className="mt-2 text-2xl font-semibold">Nothing in {universeName} yet</h2>
+          <div className="mt-2 text-sm text-[color:var(--muted)]">Your other items are in the Vault. Add something here, or go back to all of your items.</div>
+          <div className="mt-5 flex flex-wrap items-center justify-center gap-2">
+            <PillButton variant="primary" href="/capture">Add Item</PillButton>
+            <PillButton href="/vault">All Universes</PillButton>
+          </div>
+        </div>
+      </section>
+    );
+  }
   if (hasFilters) {
     return (
       <section className="mt-3 rounded-[18px] bg-[color:var(--surface)] p-8 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]">
@@ -1107,7 +1131,12 @@ export default function VaultListView({ lockedUniverse }: { lockedUniverse?: Uni
   const [items, setItems] = useState<VaultItem[]>([]);
   const [query, setQuery] = useState("");
   // The header search box and the command palette open /vault?q=...: the list follows that text. (Typing in this page's own search box changes the box, not the address.)
-  const urlQuery = useSearchParams().get("q") ?? "";
+  const urlParams = useSearchParams();
+  const urlQuery = urlParams.get("q") ?? "";
+  const urlSort = urlParams.get("sort") ?? "";
+  useEffect(() => {
+    if (["newest", "value_desc", "value_asc", "gain_desc", "gain_asc", "title"].includes(urlSort)) setSortMode(urlSort as SortMode);
+  }, [urlSort]);
   useEffect(() => {
     if (urlQuery) setQuery(urlQuery);
   }, [urlQuery]);
@@ -2492,7 +2521,7 @@ export default function VaultListView({ lockedUniverse }: { lockedUniverse?: Uni
         ) : vaultViewMode === "wall" ? (
           <VaultWallView items={filteredItems} saleMap={saleMap} sortMode={sortMode} showSold={showSoldItems} />
         ) : filteredItems.length === 0 ? (
-          <VaultEmptyState hasFilters={hasActiveFilters} onClearFilters={handleClearFilters} />
+          <VaultEmptyState hasFilters={hasActiveFilters} onClearFilters={handleClearFilters} universeName={lockedUniverse && !hasActiveFilters ? universeDisplayName(lockedUniverse) : undefined} />
         ) : vaultViewMode === "flip" ? (
           <section className="mt-4">
             <div className="mx-auto max-w-3xl">
