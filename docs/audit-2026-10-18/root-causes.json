@@ -74,8 +74,8 @@
    "EXH-126",
    "EXH-127"
   ],
-  "status": "PARTLY CLOSED",
-  "statusNote": "batch 5: alias and shelf-style autosave (EXH-165, 123, 124, 126, 127) closed on production; Announce and Make public now report a refused write honestly (EXH-179, EXH-161) but the notices cannot be recorded until migration file 1 is applied; EXH-281 (profile id on the public row) open, migration-blocked; Discover alias display fixed. notification recording and public-data privacy remain migration-blocked; SQL package revision 2 (events authorization + privacy, allowlist view, staged table restriction) held for review in repair-batch-5/sql, nothing applied"
+  "status": "CLOSED",
+  "statusNote": "batch 15: stage 4 (the old exhibitions-table read) run by the owner 2026-10-21 and verified on production: database checks 20 of 20 (RB22), page matrix and cache-ownership checks 41 of 41 (RB20 stage4)."
  },
  {
   "id": "RC-06",
@@ -194,8 +194,8 @@
    "DIS-346",
    "DIS-341"
   ],
-  "status": "PARTLY CLOSED",
-  "statusNote": "batch 7: subject leaderboards (DIS-346) fixed: the function is called with p_subject/p_limit (lounge preview too) and a failed load says so with Try again instead of \"No public collectors\" (RB25-006..009). DIS-341 (\"View full leaderboard\" goes to Discover) is NOT changed: there is no full-leaderboard page, so what it should open is a product decision."
+  "status": "CLOSED",
+  "statusNote": "batch 7 (DIS-346) and batch 15 (DIS-341: the link under Top Collectors now says \"Browse Discover\"; there is no full leaderboard page)."
  },
  {
   "id": "RC-13",
@@ -383,8 +383,8 @@
    "GIN-237",
    "GIN-041"
   ],
-  "status": "PARTLY CLOSED",
-  "statusNote": "batch 9: 10 of 22 rows closed (GIN-001, 013, 025 label, 029, 030, 031, 032, 033, 041, 237; RB31). The remaining 12 (GIN-004, 005, 006, 015, 016, 018 to 023, 026) share one cause that needs a decision: goals store no type, dollar target or exhibition link, so the type is guessed from the name."
+  "status": "CLOSED",
+  "statusNote": "batch 9 (10 rows) and batch 15 (12 rows): goals store an explicit type and unit (items or whole dollars); older goals show \"needs setup\" and are never guessed; value goals measure owned items' value by the one value rule; no word-based labels (RB49, RB52). Cloud storage of the type needs repair-batch-15/sql/5-goal-type-and-unit.sql (until then it is kept on the device and the page says so)."
  },
  {
   "id": "RC-21",
@@ -493,8 +493,8 @@
    "GIN-146",
    "GIN-152"
   ],
-  "status": "PARTLY CLOSED",
-  "statusNote": "batch 13: 15 of 16 rows verified on production (RB39, RB40, RB41). VLT-385 (Insights Goals widget \"9 of 2,000\") needs explicit goal types: same decision as RC-20."
+  "status": "CLOSED",
+  "statusNote": "batch 13 (15 rows) and batch 15 (VLT-385: the Insights widget shows \"Set up\" for an untyped goal and a real figure for a typed one)."
  },
  {
   "id": "RC-25",
@@ -511,8 +511,8 @@
    "VLT-278",
    "GIN-013"
   ],
-  "status": "PARTLY CLOSED",
-  "statusNote": "batch 12: 6 of 7 rows verified on production (RB37, RB31). VLT-147 (Wall view \"Newest\" is A to Z by design) is a decision: flat newest-first list, or relabel the wall."
+  "status": "CLOSED",
+  "statusNote": "batch 12 (6 rows) and batch 15 (VLT-147: Newest is a flat newest-first Wall; Title A-Z is the lettered wall; RB49)."
  },
  {
   "id": "RC-26",
@@ -546,8 +546,8 @@
    "ACC-359",
    "ACC-403"
   ],
-  "status": "PARTLY CLOSED",
-  "statusNote": "batch 13: 19 of 24 rows verified on production (RB39 to RB41; ACC-808 and ACC-817 under RC-28). Open decisions: DIS-166 (Add Watch tile goes to Add Item), ACC-375/441/721 (\"Universes displayed\" setting does not filter home, Vault or Discover), VLT-073 (seasonal-theme banner Yes changes nothing visible)."
+  "status": "CLOSED",
+  "statusNote": "batch 13 (19 rows) and batch 15: DIS-166 (Add Watch opens a watch-entry form), ACC-375/441/721 (Universes displayed filters Vault, Home and Insights with a notice and Show all; Discover separate and labelled), VLT-073 (the seasonal theme is applied only after Yes). RB49."
  },
  {
   "id": "RC-27",
@@ -610,8 +610,8 @@
    "VLT-463",
    "VLT-464"
   ],
-  "status": "PARTLY CLOSED",
-  "statusNote": "batch 14: 10 of 12 rows verified on production (RB42, RB44, RB45). ACC-737 and VLT-464 (Activity \"Dismiss\" only closes the panel; the rows expected it to remove the entry) are a decision. DIS-335, ITM-584, ITM-610 share components with rows that were run."
+  "status": "CLOSED",
+  "statusNote": "batch 14 (10 rows) and batch 15: ACC-737 and VLT-464 (the Activity button is now \"Close\"; no history is deleted). DIS-335, ITM-584, ITM-610 share components with rows that were run."
  },
  {
   "id": "RC-30",
@@ -652,7 +652,8 @@
    "DIS-302",
    "DIS-036"
   ],
-  "status": "OPEN"
+  "status": "CLOSED",
+  "statusNote": "batch 15: checked on production at 390 px (RB50, RB51): no control under about 40 px without an enlarged hit area, no page scrolls sideways for the user, the Discover room tap brings the panel into view, the desktop panel fits the window, the Events universe menu fits, the asking-price message is visible where the person is looking."
  },
  {
   "id": "RC-32",
@@ -671,8 +672,8 @@
    "DIS-363",
    "CRW-020"
   ],
-  "status": "PARTLY CLOSED",
-  "statusNote": "batch 14: 8 of 9 rows verified on production (RB42, RB43). CRW-020 (Shop CGC link ends on a 404) is open: the supplier's site answers 404 everywhere, so the replacement address is unknown; decision for you."
+  "status": "CLOSED",
+  "statusNote": "batch 14 (8 rows) and batch 15: CRW-020 (the CGC link opens CGC's current how-to-submit page; it loads in a real browser, the audit's 404 was a refused server request)."
  },
  {
   "id": "RC-33",
@@ -702,7 +703,7 @@
    "VLT-235",
    "GIN-124"
   ],
-  "status": "PARTLY CLOSED",
-  "statusNote": "batch 14: 7 of 8 rows verified on production (RB42, RB47; GIN-124 fixed earlier). ACC-872 (Account > Avatar > Emoji tab has no preset picker) needs a Settings preset picker: a feature, decision for you."
+  "status": "CLOSED",
+  "statusNote": "batch 14 (7 rows) and batch 15: ACC-872 (the avatar input and tab are labelled \"Custom emoji\")."
  }
 ]

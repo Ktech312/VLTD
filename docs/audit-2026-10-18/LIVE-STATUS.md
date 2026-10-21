@@ -2,10 +2,9 @@
 
 Last updated: 2026-10-21.
 
-## Waiting on you (external, two ready files; nothing else is blocked)
-- **Market asking price (RC-23) and exhibition view counter (RC-27) SQL**: files 2 and 3 in the same `repair-batch-6/SQL-RUN-ME.md`.
-- **RC-10 / RC-11 SQL** (avatar upload, Business-profile scan allowance): `repair-batch-6/SQL-RUN-ME.md`.
-- **RC-05 stage 4 SQL**: one ready package, `repair-batch-5/STAGE4-RUN-ME.md`. Nothing else is blocked on it; work continues meanwhile.
+## Waiting on you (external SQL, four ready files in one run order: [SQL-RUN-ME.md](repair-batch-6/SQL-RUN-ME.md); everything else is done)
+- **File 1 first: scan allowance + avatar upload (RC-10, RC-11) and a hole in the live allowance functions** (anyone with no session could read and spend any profile's allowance). **File 2** Market asking price (RC-23), **file 3** exhibition view counter (RC-27, approximate and inflatable), **file 4** goal type and unit (optional; the site works without it).
+- **Decisions for you:** GIN-095 (account-wide insurance exclusions: proposal and SQL ready, [PROPOSAL-insurance-exclusions.md](repair-batch-15/PROPOSAL-insurance-exclusions.md)); ADD-168 (should Cancel in the crop step discard the photo you just chose?).
 
 ## Done and verified on production
 - Batches 1 to 4 and the batch-4 gap closure (see their CLOSEOUT files); RB10-024 (Vault card value box).
@@ -19,6 +18,7 @@ Last updated: 2026-10-21.
 - **Batch 12 (2026-10-21)**: RC-25 6 of 7 and RC-27 8 of 12 rows closed on production (gain sort, Halls, Upcoming, invites, Messages, bid history); view counter needs SQL file 3.
 - **Batch 13 (2026-10-21)**: RC-24 15 of 16 and RC-26 19 of 24 rows closed on production (links lead somewhere real, buttons do what they say) (`repair-batch-13/CLOSEOUT.md`).
 - **Batch 14 (2026-10-21)**: RC-30 closed; RC-29 10 of 12, RC-32 8 of 9, RC-34 7 of 8 rows closed on production (Close/Escape, empty results, setup notice, Lounge dates, no emoji on Shop) (`repair-batch-14/CLOSEOUT.md`).
+- **Batch 15 (2026-10-21)**: RC-05 stage 4 verified (20 of 20 + 41 of 41); your decisions applied; the held SQL corrected; the phone pass (RC-31) and the Insurance count rows verified (`repair-batch-15/CLOSEOUT.md`).
 - `test:isolation` repaired (real network-failure rule and the goal rules module wired into the test; 85 checks pass, assertions unchanged).
 
 ## Queue (order: data loss / private exposure / false "saved", then Insurance and core workflows, then figures / search / filters / misleading actions, then navigation and interaction, then cosmetics)

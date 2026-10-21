@@ -126,3 +126,12 @@ Migration-blocked (stage-0 production output reviewed 2026-10-21: matches; stage
 | RC-30 (4 of 4) | DIS-057, 065, 115; EXH-013 | `a71052a` | RB42, RB45, RB46 (DIS-065 not run on production) |
 | RC-32 (8 of 9) | ACC-029, 098, 105, 184, 479; DIS-345, 362, 363 | `a71052a` to `d52e26b` | RB42, RB43 (open: CRW-020, dead CGC link) |
 | RC-34 (7 of 8) | DIS-414, CRW-019, ACC-851, VLT-401, 423, 235, GIN-124 | `a71052a` | RB42, RB47 (open: ACC-872, Avatar emoji tab) |
+
+### Batch 15: decisions, SQL corrections, phone pass (closeout `repair-batch-15/CLOSEOUT.md`)
+| Root cause | Audit rows closed | Commits | Evidence |
+|---|---|---|---|
+| RC-05 (stage 4) | exhibitions-table read closed | owner's SQL run | RB22 (20 of 20), RB20 stage4 (41 of 41) |
+| RC-20 (12 more, now 22 of 22) | GIN-004, 005, 006, 015, 016, 018, 019, 020, 021, 022, 023, 026 | `b063299`, `c7edce6` | RB49, RB52 |
+| RC-24, RC-25, RC-26, RC-29, RC-32, RC-34, RC-12 (the open rows) | VLT-385; VLT-147; DIS-166, ACC-375, 441, 721, VLT-073; ACC-737, VLT-464; CRW-020; ACC-872; DIS-341 | `b063299`, `c7edce6` | RB49, RB52 |
+| RC-31 (16 of 16) | ITM-590, 607, 597, 603, 226, 620; GIN-079, 080, 224, 259; EXH-375, 396; DIS-141, 276, 302, 036 | `dd80dfd`, `7d3f592`, `5b1b386` | RB50, RB51 |
+| Insurance | GIN-092 (re-verified), GIN-155, VLT-353 | `dd80dfd` | RB49 |
