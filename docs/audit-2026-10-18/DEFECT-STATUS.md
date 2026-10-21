@@ -85,3 +85,8 @@ Migration-blocked (stage-0 production output reviewed 2026-10-21: matches; stage
 | RC-14 install pill covers controls | ADD-235, ADD-379, ADD-380, ITM-424, ITM-425, ACC-832 | (same commits) | RB27-045..048 |
 | RC-15 phone exhibitions sheet | EXH-381 to EXH-389 | (same commits) | RB27-038..044 |
 | RC-12 subject leaderboards (part) | DIS-346 | (same commits) | RB25-006..009 |
+
+### Batch 8: silent camera / image / PSA failures (closeout `repair-batch-8/CLOSEOUT.md`)
+| Root cause | Audit rows closed | Commits | Evidence |
+|---|---|---|---|
+| RC-16 (14 of 16) | ADD-197, 218, 237, 200, 202, 204, 465, 394, 395, 474, 195, 424, 190, 417 | `1c7dec1`, `9d52e16` | RB28, RB29 (open: ADD-415 needs the SQL, ADD-168 is a decision) |

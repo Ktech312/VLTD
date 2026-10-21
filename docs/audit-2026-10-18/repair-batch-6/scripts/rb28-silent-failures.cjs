@@ -71,7 +71,7 @@ const png = (name, w, h, rgb) => mkPng(tmp(name), w, h, rgb);
     const big = png("rb28-big.png", 800, 600, [200, 60, 60]); const small = png("rb28-small.png", 400, 300, [60, 60, 200]);
     await uploadFiles(C, "input[type=file]:not([capture])", big, 0); await sleep(2500);
     await uploadFiles(C, "input[type=file]:not([capture])", small, 0); await sleep(2500);
-    const widths = () => C.evaluate("[...document.querySelectorAll('[data-thumb-index] img')].map((i) => i.naturalWidth)");
+    const widths = () => C.evaluate("[...document.querySelectorAll('[data-thumb-index] > img')].map((i) => i.naturalWidth)");
     const w0 = await widths();
     const rc = (i) => C.evaluate(`(() => { const b = document.querySelectorAll('[data-thumb-index]')[${i}]; if (!b) return null; const r = b.getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2 }; })()`);
     const p1 = await rc(1), p0 = await rc(0);
@@ -83,7 +83,7 @@ const png = (name, w, h, rgb) => mkPng(tmp(name), w, h, rgb);
     }
     await sleep(1200);
     const w1 = await widths();
-    await rec(C, w0.length === 2 && w0[0] !== w1[0] && w1[0] === w0[1], "/capture: press and drag the second thumbnail onto the first with a mouse", "the dragged photo becomes the cover (the order swaps)", `widths before=${JSON.stringify(w0)}; after=${JSON.stringify(w1)}`, "/capture");
+    await rec(C, w0.length >= 2 && w0[0] !== w1[0] && w1[0] === w0[1] && w1[1] === w0[0], "/capture: press and drag the second thumbnail onto the first with a mouse", "the dragged photo becomes the cover (the order swaps)", `widths before=${JSON.stringify(w0)}; after=${JSON.stringify(w1)}`, "/capture");
     await C.close();
 
     // ================= Quick Add
@@ -112,7 +112,8 @@ const png = (name, w, h, rgb) => mkPng(tmp(name), w, h, rgb);
     const cats = await B.evaluate("[...document.querySelectorAll('select')[1].options].map((o) => o.text.trim()).filter((x) => x && !/Select/.test(x))"); await pickSelect(B, "document.querySelectorAll('select')[1]", cats[0]);
     await clickText(B, "Skip — I.ll fill in by hand"); await sleep(2500);
     const aiB = B.intercepted.filter((x) => /api\/ai/.test(x.url)).length;
-    const clicked = await clickText(B, "^Scan with AI$"); await sleep(3500);
+    await B.waitFor("[...document.querySelectorAll('button')].some((b) => (b.innerText || '').trim() === 'Scan with AI')", 20000, "card button").catch(() => {}); await sleep(800);
+    const clicked = await clickText(B, "^Scan with AI$"); await sleep(4500);
     t = await text(B);
     await rec(B, clicked && /Couldn.t check your AI scan allowance/i.test(t) && B.intercepted.filter((x) => /api\/ai/.test(x.url)).length === aiB, "/vault/bulk: a card's own 'Scan with AI' when the allowance cannot be read", "clickable, and says the allowance could not be checked; no AI call", `clicked=${clicked}; message shown=${/Couldn.t check your AI scan allowance/i.test(t)}`, "/vault/bulk");
   } catch (e) { console.error("RUNNER ERROR", e); out.error = String(e && e.stack || e).slice(0, 600); }

@@ -11,6 +11,7 @@ Last updated: 2026-10-20.
 - RC-05: alias and shelf-style persistence, honest Announce / Make public messages, event privacy (stage 1), sanitised view and link responses (stage 2), public-view consumers and cache ownership (stage 3, all nine consumers including the admin page, verified with a disposable QA admin, role and factor removed and verified).
 - **Batch 6 (2026-10-20)**: RC-04, RC-07, RC-08, RC-28, RC-33 closed and re-tested on production, 21 of 21 checks (`repair-batch-6/CLOSEOUT.md`).
 - **Batch 7 (2026-10-20)**: RC-13, RC-14, RC-15 closed; RC-12 and RC-11 code halves shipped; all re-tested on production (`repair-batch-7/CLOSEOUT.md`).
+- **Batch 8 (2026-10-20)**: RC-16 (silent camera / image / PSA failures) 14 of 16 rows closed and re-tested on production (`repair-batch-8/CLOSEOUT.md`).
 - `test:isolation` repaired (real network-failure rule and the goal rules module wired into the test; 85 checks pass, assertions unchanged).
 
 ## Queue (order: data loss / private exposure / false "saved", then Insurance and core workflows, then figures / search / filters / misleading actions, then navigation and interaction, then cosmetics)

@@ -277,7 +277,8 @@
    "ADD-190",
    "ADD-417"
   ],
-  "status": "OPEN"
+  "status": "PARTLY CLOSED",
+  "statusNote": "batch 8: 14 of 16 rows verified on production (RB28, RB29): the Add page now shows every problem message (it hid any that lacked a few keywords: \"not an image\", \"paused\", \"not found\"...), Identify failures name the problem and offer hand entry, Quick Add says when the camera cannot start and how many items the AI could not identify (the message used to be wiped), /capture refuses non-photo and unreadable files when chosen, \"Use Full Photo\" accepts the whole photo and closes the step, PSA Look up explains itself, thumbnail mouse-drag reorder works (browser image drag no longer cancels it). Bulk intake notices and the empty-import message were already in place (RB29). Open: ADD-415 (Bulk single-card scan failure message: the card button needs a readable allowance, which needs the batch 6 SQL); ADD-168 (Cancel in the crop step keeps the photo that was already attached: the page says \"Picture added. Crop if needed\", so whether Cancel should discard the photo is a product decision)."
  },
  {
   "id": "RC-17",

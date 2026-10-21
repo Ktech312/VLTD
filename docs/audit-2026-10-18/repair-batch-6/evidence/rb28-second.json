@@ -1,0 +1,89 @@
+{
+ "label": "second",
+ "cases": [
+  {
+   "control": "/vault/add: choose a .txt file as the photo",
+   "expected": "a visible message that the file is not an image",
+   "ok": true,
+   "actual": "alert=\"That scan file is not an image.\"; crop step opened=false",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb28-second-1.jpg"
+  },
+  {
+   "control": "/vault/add: Use Full Photo in the crop step",
+   "expected": "accepts the whole photo and closes the step; Identify with AI is available",
+   "ok": true,
+   "actual": "crop step still open=false; Identify offered=true",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb28-second-2.jpg"
+  },
+  {
+   "control": "/vault/add: Identify with AI when the AI call is refused (simulated by the harness)",
+   "expected": "a visible message that identify failed and the form can be filled by hand; typed name kept",
+   "ok": true,
+   "actual": "alert=\"Image identify failed (intercepted by audit). Fill in the details by hand, or try again.\"; name kept=true; AI requests refused=1",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb28-second-3.jpg"
+  },
+  {
+   "control": "/vault/add: PSA Look up",
+   "expected": "a visible message (the lookup is switched off), not silence",
+   "ok": true,
+   "actual": "alert=\"PSA cert lookup is unavailable right now, so the cert number was not looked up. It is still saved with the item.\"",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb28-second-4.jpg"
+  },
+  {
+   "control": "/capture: upload a .txt file",
+   "expected": "refused when chosen with a plain message; no photo tile",
+   "ok": true,
+   "actual": "message=\"\\\"rb28-notes.txt\\\" is not a photo. Choose a JPEG, PNG or similar image.\"; photo tiles=0",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb28-second-5.jpg"
+  },
+  {
+   "control": "/capture: upload a .pdf file",
+   "expected": "refused when chosen with a plain message; no photo tile",
+   "ok": true,
+   "actual": "message=\"\\\"rb28-doc.pdf\\\" is not a photo. Choose a JPEG, PNG or similar image.\"; photo tiles=0",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb28-second-6.jpg"
+  },
+  {
+   "control": "/capture: upload a corrupt .png file",
+   "expected": "refused when chosen with a plain message; no photo tile",
+   "ok": true,
+   "actual": "message=\"\\\"rb28-bad.png\\\" couldn't be read as a photo. Choose a different image.\"; photo tiles=0",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb28-second-7.jpg"
+  },
+  {
+   "control": "/capture: Use Full Photo in the crop step (native camera hand-off)",
+   "expected": "accepts the whole photo: the step closes and the photo is attached",
+   "ok": true,
+   "actual": "crop step opened=true; after: {\"dialog\":false,\"photo\":true}",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb28-second-8.jpg"
+  },
+  {
+   "control": "/capture: press and drag the second thumbnail onto the first with a mouse",
+   "expected": "the dragged photo becomes the cover (the order swaps)",
+   "ok": true,
+   "actual": "widths before=[640,800,400]; after=[800,640,400]",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb28-second-9.jpg"
+  },
+  {
+   "control": "/vault/quick: the camera cannot start (no camera in this browser)",
+   "expected": "the screen says the camera is unavailable and why",
+   "ok": true,
+   "actual": "message=\"Camera access is blocked for this site. Allow the camera in your browser settings, then reopen Quick Add.\"",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb28-second-10.jpg"
+  },
+  {
+   "control": "/vault/quick: Identify 2 with AI when the AI call is refused (simulated by the harness)",
+   "expected": "the sheet says how many could not be identified and to fill them in by hand; no camera warning when the camera works",
+   "ok": true,
+   "actual": "camera warning shown=false; sheet: 2 of 2 couldn't be identified.; AI requests refused=2",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb28-second-11.jpg"
+  },
+  {
+   "control": "/vault/bulk: a card's own 'Scan with AI' when the allowance cannot be read",
+   "expected": "clickable, and says the allowance could not be checked; no AI call",
+   "ok": true,
+   "actual": "clicked=[object Object]; message shown=true",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb28-second-12.jpg"
+  }
+ ]
+}

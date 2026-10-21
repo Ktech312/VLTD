@@ -1,0 +1,26 @@
+{
+ "label": "first",
+ "cases": [
+  {
+   "control": "/vault/bulk: choose only a .txt file",
+   "expected": "refused with a message that it is not a photo; nothing added",
+   "ok": true,
+   "actual": "photos=0; message=\" STEP 2 — ADD YOUR PHOTOS + Choose photos, or drag them here Up to 60 photos per upload OR Use the camera — snap them one after another 1 file is not a photo an\"",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb29-first-1.jpg"
+  },
+  {
+   "control": "/vault/bulk: choose one photo and one .txt together",
+   "expected": "the photo is added and the text file is reported as left out by name",
+   "ok": true,
+   "actual": "photos=1; names the file=true",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb29-first-2.jpg"
+  },
+  {
+   "control": "/vault/import: upload an empty (0-byte) file",
+   "expected": "the page says the file was empty",
+   "ok": true,
+   "actual": "message=\"That file is empty.\"",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb29-first-3.jpg"
+  }
+ ]
+}

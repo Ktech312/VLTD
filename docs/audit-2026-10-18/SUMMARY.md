@@ -24,6 +24,8 @@ Behaviour-asserted rows (a test checked the outcome): 3754 = 509 FAIL, 2770 PASS
 
 ## Repair status (updated 2026-10-20)
 
+**Batch 8 (2026-10-20, `repair-batch-8/CLOSEOUT.md`): RC-16 14 of 16 rows closed on production; ADD-415 waits for the SQL file, ADD-168 is a product decision.**
+
 **Batch 7 (2026-10-20, `repair-batch-7/CLOSEOUT.md`): RC-13, RC-14, RC-15 closed and RC-12 partly closed (code), all re-tested on production; RC-10 and RC-11 need one SQL file, ready in `repair-batch-6/SQL-RUN-ME.md`.**
 
 **Batch 6 (2026-10-20, `repair-batch-6/CLOSEOUT.md`): RC-04, RC-07 (remaining six rows), RC-08, RC-28 and RC-33 closed and re-tested on production (21 of 21 checks).**
@@ -79,7 +81,7 @@ Full table with commits and evidence: `DEFECT-STATUS.md`. Closed and re-tested o
 - **[CLOSED] RC-15 Exhibitions page on a phone opens a details sheet over ~74% of the screen that cannot be closed**  
   Filter, sort, Tools and Create sit under it in the first view.  
   Rows (9): EXH-381, EXH-382, EXH-383, EXH-384, EXH-385, EXH-386 (+3 more)
-- **RC-16 Camera / image / PSA controls fail silently**  
+- **[PARTLY CLOSED] RC-16 Camera / image / PSA controls fail silently**  
   Refused Identify with AI, Quick Add camera start failure, wrong-type photos and empty import files give no clear message; 'Use Full Photo' and crop Cancel do the wrong thing; PSA 'Look up' does nothing visible; mouse drag-reorder of photos fails.  
   Rows (16): ADD-197, ADD-218, ADD-415, ADD-237, ADD-200, ADD-202 (+10 more)
 
