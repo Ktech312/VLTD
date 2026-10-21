@@ -24,6 +24,8 @@ Behaviour-asserted rows (a test checked the outcome): 3754 = 509 FAIL, 2770 PASS
 
 ## Repair status (updated 2026-10-20)
 
+**Batch 11 (2026-10-21, `repair-batch-11/CLOSEOUT.md`): RC-23 13 of 15 rows closed; the other 2 (Market asking price) need SQL file 2.**
+
 **Batch 10 (2026-10-21, `repair-batch-10/CLOSEOUT.md`): RC-22 closed (9 of 9 rows).**
 
 **Batch 9 (2026-10-21, `repair-batch-9/CLOSEOUT.md`): RC-21 closed (26 of 26 rows); RC-20 10 of 22 rows closed, the other 12 need a product decision (explicit goal types).**
@@ -112,7 +114,7 @@ Full table with commits and evidence: `DEFECT-STATUS.md`. Closed and re-tested o
 - **[CLOSED] RC-22 Direct load in a clean browser shows zeros until the Vault has been opened**  
   /museum shows every card as 0 items / $0, /museum/new 0 current exhibitions, /vault/print 0 items, /vault/readiness 'No for-sale listings', /portfolio/insurance and /reports/weekly zeros, Settings export is a 64-byte empty file, sync line 'Out of sync - Local 0, Cloud 31'.  
   Rows (9): EXH-001, EXH-064, GIN-174, GIN-216, VLT-232, VLT-233 (+3 more)
-- **RC-23 Watchlist, Favorites and Market show invented or wrong numbers and broken links**  
+- **[PARTLY CLOSED] RC-23 Watchlist, Favorites and Market show invented or wrong numbers and broken links**  
   A wish's 'Current Value' is target x 1.18; watched items show a made-up Target Price and totals computed from them; Market cards link to /v/undefined (raw database error) and rank/total by current value not asking price; Favorites counts differ.  
   Rows (15): DIS-144, DIS-145, DIS-146, DIS-147, DIS-149, DIS-213 (+9 more)
 - **RC-24 Insights/Vault links and drill-downs lead to the wrong or an empty place**  

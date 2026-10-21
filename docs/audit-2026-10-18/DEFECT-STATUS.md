@@ -101,3 +101,8 @@ Migration-blocked (stage-0 production output reviewed 2026-10-21: matches; stage
 | Root cause | Audit rows closed | Commits | Evidence |
 |---|---|---|---|
 | RC-22 (9 of 9) | EXH-001, EXH-064, GIN-174, GIN-216, VLT-232, VLT-233, ACC-418, ACC-848, ACC-849 | `294ca45` (and `d5a7ec7` for the two report pages) | RB34 |
+
+### Batch 11: Watchlist, Market, Favorites (closeout `repair-batch-11/CLOSEOUT.md`)
+| Root cause | Audit rows closed | Commits | Evidence |
+|---|---|---|---|
+| RC-23 (13 of 15) | DIS-144, 145, 146, 147, 149, 213, 085, 234, 235, 236, 238, 240, 241 | `0b9a57e` | RB35, RB36 (open: DIS-233 and DIS-242 need SQL file 2) |

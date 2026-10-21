@@ -466,7 +466,8 @@
    "DIS-241",
    "DIS-242"
   ],
-  "status": "OPEN"
+  "status": "PARTLY CLOSED",
+  "statusNote": "batch 11: 13 of 15 rows verified on production (RB35, RB36). DIS-233 and DIS-242 (the Market showing the seller's ASKING price and the total of asking prices) need the public items view to carry asking_price: repair-batch-6/sql/2-public-view-asking-price.sql (tested locally 11 of 11; not applied). Until then cards show the amount labelled \"value\"."
  },
  {
   "id": "RC-24",

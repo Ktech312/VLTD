@@ -1,0 +1,71 @@
+{
+ "label": "first",
+ "cases": [
+  {
+   "control": "Wishlist cards: Current Value for a wish that only has a target price",
+   "expected": "'--' for Current Value (a wish has no market value), the target shown as entered",
+   "ok": true,
+   "actual": "A: ITEM RB35 Wish A Saved target Target watch Current Value -- Target Price $100 + Add to Vault | B: ITEM RB35 Wish B Saved target Target watch Current Value -- Target Price $2,500 + Add to Vault",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb35-first-1.jpg"
+  },
+  {
+   "control": "Watched item card: Target Price",
+   "expected": "'--' (no target was entered); the real value $250",
+   "ok": true,
+   "actual": "watched: ITEM RB35 Watched A Public exhibition save Exhibition watch Current Value $250 Target Price -- + Add to Vault",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb35-first-2.jpg"
+  },
+  {
+   "control": "Watchlist summary strip",
+   "expected": "Watchlist value = the real values of watched items ($250); Alerts active 0",
+   "ok": true,
+   "actual": "watchlist value=250; alerts active=0",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb35-first-3.jpg"
+  },
+  {
+   "control": "Watchlist sort: Recently added",
+   "expected": "newest first across wishlist and watched items (1h, 3h, 30h)",
+   "ok": true,
+   "actual": "order=[\"RB35 Wish A\",\"RB35 Watched A\",\"RB35 Wish B\"]",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb35-first-4.jpg"
+  },
+  {
+   "control": "Market cards: seller and link",
+   "expected": "each card names the seller (RB35 Seller) and links to /v/<seller profile id>",
+   "ok": true,
+   "actual": "links to the seller=4 of 4; names=true",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb35-first-5.jpg"
+  },
+  {
+   "control": "Market cards: price (asking price not offered by the public view yet: the item's value, labelled 'value')",
+   "expected": "value amounts, each labelled 'value'",
+   "ok": true,
+   "actual": "cards: $100value | $40value | $200value | $65value",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb35-first-6.jpg"
+  },
+  {
+   "control": "Market universe pills",
+   "expected": "the universe pills add up to All",
+   "ok": true,
+   "actual": "pills=[\"All\\n(4)\",\"Music\\n(1)\",\"Pop Culture\\n(1)\",\"Sports\\n(1)\",\"TCG & Non Sport Card\\n(1)\"]",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb35-first-7.jpg"
+  },
+  {
+   "control": "Market sort: Price low to high",
+   "expected": "ascending prices, no NaN, unpriced items last",
+   "ok": true,
+   "actual": "amounts in order: [40,65,100,200]",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb35-first-8.jpg"
+  },
+  {
+   "control": "Market: Total asking",
+   "expected": "at least $405 (the four QA listings)",
+   "ok": true,
+   "actual": "total=405",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb35-first-9.jpg"
+  }
+ ],
+ "facts": {
+  "publicViewHasAskingPrice": false
+ }
+}

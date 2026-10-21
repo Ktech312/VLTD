@@ -1,0 +1,24 @@
+{
+ "label": "first",
+ "cases": [
+  {
+   "control": "Favorites: a saved exhibition's item count",
+   "expected": "the 6 items a visitor can see (not the stale 99 saved with the favourite, and not the room's own list that names a private item)",
+   "ok": true,
+   "actual": "shown=6; layout names 6",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb36-first-1.jpg"
+  },
+  {
+   "control": "Discover when the public item read fails: the exhibition's count",
+   "expected": "only the 6 items the exhibition itself published (never the room's own list of 6)",
+   "ok": true,
+   "actual": "card says 6; text: Sports Slabs by QA Visual Collection 6 items Public",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb36-first-2.jpg"
+  }
+ ],
+ "facts": {
+  "layoutIds": 6,
+  "snapshots": 6,
+  "visible": 6
+ }
+}
