@@ -117,6 +117,18 @@ export function legacyAdoptionPending(): boolean {
   }
 }
 
+/** True while an older browser-wide list exists that this profile has not yet adopted (it has no list of its own on the device). Items arriving is the cue to try again. */
+export function legacyListUnadopted(): boolean {
+  const pid = activeProfileId();
+  if (typeof window === "undefined" || !pid) return false;
+  try {
+    if (window.localStorage.getItem(key(DEVICE_KEY, pid)) !== null) return false;
+    return readSet(LEGACY_EXCLUDED_KEY).size > 0;
+  } catch {
+    return false;
+  }
+}
+
 export function pendingExclusionCount(): number {
   const pid = activeProfileId();
   if (!pid) return 0;

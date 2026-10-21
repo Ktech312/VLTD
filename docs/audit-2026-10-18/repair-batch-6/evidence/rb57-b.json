@@ -1,0 +1,54 @@
+{
+ "label": "b",
+ "cases": [
+  {
+   "control": "Bulk page, Personal profile: the AI scans ticker",
+   "expected": "shows the remaining and the limit the database holds; the allowance request is made for THIS profile and succeeds",
+   "ok": false,
+   "actual": "ticker=500 of 500 AI scans left; database limit=500, remaining=500; allowance request statuses=[200,200]; asked about profile [\"98c4c458\",\"undefine\"] (expected 98c4c458)",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb57-b-1.jpg"
+  },
+  {
+   "control": "/capture, Personal profile: the allowance request",
+   "expected": "no failed allowance request on page load",
+   "ok": true,
+   "actual": "statuses=[200]",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb57-b-2.jpg"
+  },
+  {
+   "control": "/vault/quick, Personal profile: the allowance request",
+   "expected": "no failed allowance request on page load",
+   "ok": true,
+   "actual": "statuses=[200]",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb57-b-3.jpg"
+  },
+  {
+   "control": "Bulk page, Business profile: the AI scans ticker",
+   "expected": "shows the remaining and the limit the database holds; the allowance request is made for THIS profile and succeeds",
+   "ok": true,
+   "actual": "ticker=500 of 500 AI scans left; database limit=500, remaining=500; allowance request statuses=[200]; asked about profile [\"04a8aa44\"] (expected 04a8aa44)",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb57-b-4.jpg"
+  },
+  {
+   "control": "/capture, Business profile: the allowance request",
+   "expected": "no failed allowance request on page load",
+   "ok": true,
+   "actual": "statuses=[200]",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb57-b-5.jpg"
+  },
+  {
+   "control": "/vault/quick, Business profile: the allowance request",
+   "expected": "no failed allowance request on page load",
+   "ok": true,
+   "actual": "statuses=[200]",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb57-b-6.jpg"
+  },
+  {
+   "control": "Bulk page: a card's own 'Scan with AI' when the allowance is readable and the AI call is refused",
+   "expected": "the card says 'Couldn't identify that one - try again or fill it in by hand' (the allowance is no longer the problem)",
+   "ok": true,
+   "actual": "clicked=[object Object]; failure message=true; says allowance unreadable=false; AI requests refused by the harness 0 -> 1",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb57-b-7.jpg"
+  }
+ ]
+}

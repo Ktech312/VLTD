@@ -91,9 +91,10 @@ const signIn = (uid, pid) => { store.set("vltd-auth", JSON.stringify({ user: { i
   r = await X.syncInsuranceExclusions();
   t("items not on the device yet: nothing is uploaded and no empty list of its own is written", account.rows.length === 0 && store.get("vltd_insurance_excluded_v2:P") === undefined && X.legacyAdoptionPending(), { rows: account.rows, own: store.get("vltd_insurance_excluded_v2:P") });
   itemsByProfile.P = savedItems;
-  t("once the items are there the adoption is no longer pending", X.legacyAdoptionPending() === false);
+  t("once the items are there the old list still counts as unadopted (the cue to sync again), not as pending", X.legacyAdoptionPending() === false && X.legacyListUnadopted() === true);
   r = await X.syncInsuranceExclusions();
   t("the next sync adopts the old list and copies it up", setOf(r.ids) === "a1" && account.rows.length === 1 && account.rows[0].item_id === "a1", { ids: setOf(r.ids), rows: account.rows });
+  t("after adoption nothing is left to adopt", X.legacyListUnadopted() === false);
 
   // ---- 3. another device excluded an item: it shows up here
   account.rows.push({ profile_id: "P", item_id: "b1" });

@@ -1,0 +1,71 @@
+{
+ "label": "a",
+ "cases": [
+  {
+   "control": "Older goals in the account after the SQL",
+   "expected": "exist with no type (the SQL changed no existing goal)",
+   "ok": true,
+   "actual": "goal_type=null"
+  },
+  {
+   "control": "Browser A: the older goal",
+   "expected": "asks how it is measured",
+   "ok": true,
+   "actual": "row=\"— RB56 Reach $2,000 collection value Choose how this goal is measured Private NOT MEASURED YET This goal was made before goals had a type. It has a target of 2,000, but nothing says whether that is items or dollars, so no progress is shown until you choose. NEXT ACTION Choose how to measure it Not set up Count items Measure value ($)\""
+  },
+  {
+   "control": "Browser A: choose 'Measure value ($)'",
+   "expected": "the account now holds goal_type value, unit usd, and the same target 2000",
+   "ok": true,
+   "actual": "account row={\"id\":\"rb56_a_mvik4qix\",\"name\":\"RB56 Reach $2,000 collection value\",\"target_count\":2000,\"goal_type\":\"value\",\"unit\":\"usd\"}"
+  },
+  {
+   "control": "Browser A: no 'kept on this device' warning needed",
+   "expected": "the account stored it (no device-only fallback message was needed)",
+   "ok": true,
+   "actual": "n/a: checked through the account row above"
+  },
+  {
+   "control": "Browser A: create a goal measured by 'Number of items'",
+   "expected": "stored with goal_type count, unit items",
+   "ok": true,
+   "actual": "account row={\"id\":\"goal_1792614872633_bedjp8\",\"goal_type\":\"count\",\"unit\":\"items\",\"target_count\":12}"
+  },
+  {
+   "control": "Browser B (a second, clean browser): the same goals",
+   "expected": "the value goal reads dollars, the count goal reads items, the untouched older goal still asks",
+   "ok": true,
+   "actual": "fresh before visit: true; value=\"61% RB56 Reach $2,000 collection value $1,226 of $2,000 Private VALUE \"; count=\"100% RB56 Count Goal 26 of 12 items Private RECENTLY ADDED N\"; older=\"— RB56 Older goal left untouched Choose how this goal is measured Priv\""
+  },
+  {
+   "control": "Browser B: the Insights goals widget",
+   "expected": "shows the value goal in dollars",
+   "ok": true,
+   "actual": "near name: RB56 Reach $2,000 collection value 61% $1,226 of $2,000 RB56 Older goal left untouched Set up Choose how this goal is me"
+  },
+  {
+   "control": "Browser B: choose 'Count items' on the older goal",
+   "expected": "the account holds goal_type count, unit items, target 7",
+   "ok": true,
+   "actual": "account row={\"id\":\"rb56_b_mvik4qix\",\"name\":\"RB56 Older goal left untouched\",\"target_count\":7,\"goal_type\":\"count\",\"unit\":\"items\"}"
+  },
+  {
+   "control": "Browser C (a third, clean browser): the goal chosen in browser B",
+   "expected": "reads 'of 7 items'",
+   "ok": true,
+   "actual": "row=\"100% RB56 Older goal left untouched 26 of 7 items Private RECENTLY ADDED NEXT AC\""
+  },
+  {
+   "control": "A mismatched type and unit sent straight to the account",
+   "expected": "refused by the database; the goal keeps value / usd",
+   "ok": true,
+   "actual": "value+items: new row for relation \"collection_goals\" violates check const; count+null: new row for relation \"collection_goals\" violates check const; row=value/usd"
+  },
+  {
+   "control": "A different account tries to read and change the type",
+   "expected": "sees nothing, changes nothing",
+   "ok": true,
+   "actual": "changed=0; read=0"
+  }
+ ]
+}

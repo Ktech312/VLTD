@@ -5,7 +5,7 @@ import {
   EXCLUSIONS_CHANGED_EVENT,
   excludedByYouWhere,
   exclusionsMode,
-  legacyAdoptionPending,
+  legacyListUnadopted,
   exclusionsNoteFor,
   pendingExclusionCount,
   readInsuranceExcludedIds,
@@ -56,7 +56,7 @@ export function useInsuranceExclusions(): {
     const onChanged = () => refreshFromDevice();
     // When the profile's items arrive from the account, an older on-device list can finally be matched to them and copied up.
     const onItems = () => {
-      if (!legacyAdoptionPending()) return;
+      if (!legacyListUnadopted()) return;
       void syncInsuranceExclusions().then((result) => {
         if (!alive.current) return;
         setExcludedState(result.ids);
