@@ -65,11 +65,19 @@ export function useInsuranceExclusions(): {
       }).catch(() => undefined);
     };
     window.addEventListener("vltd:vault-updated", onItems);
+    // The items can reach the device without anyone announcing it, so while an older list is waiting to be adopted, look again every few seconds (for up to 40 s).
+    let tries = 0;
+    const retry = window.setInterval(() => {
+      tries += 1;
+      if (tries > 16 || !legacyListUnadopted()) { window.clearInterval(retry); return; }
+      onItems();
+    }, 2500);
     window.addEventListener(EXCLUSIONS_CHANGED_EVENT, onChanged);
     window.addEventListener("vltd:active-profile", onChanged);
     return () => {
       alive.current = false;
       window.clearTimeout(giveUp);
+      window.clearInterval(retry);
       window.removeEventListener("vltd:vault-updated", onItems);
       window.removeEventListener(EXCLUSIONS_CHANGED_EVENT, onChanged);
       window.removeEventListener("vltd:active-profile", onChanged);
