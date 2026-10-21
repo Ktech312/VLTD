@@ -1,0 +1,44 @@
+PASS       RB20-040 | /discover | Discover (visitor): the exhibition under an alias | card: MISC · 2 OF 5 QA RB20 alias mvhk9mik by QA Alias Curator · 2 items View QA RB20 alias mvhk9mik →
+PASS       RB20-041 | /discover | Discover (visitor): an exhibition without an alias still shows the real collector | card: MISC · 1 OF 5 QA RB20 plain mvhk9mik by QA Real Collector Name · 2 items View QA RB20 plain mvhk9mik →
+PASS       RB20-042 | /discover | Discover (visitor): private, guest-only and draft exhibitions are not listed | listed: none
+PASS       RB20-043 | /discover | Discover reads the exhibitions through the public view | ["view:49rows"]
+PASS       RB20-044 | /discover | Discover: no response from the public view names the alias exhibition's real profile | view responses naming it: 0
+PASS       RB20-045 | /discover | Discover: no response from the exhibitions TABLE names it either | table responses naming it: 0
+PASS       RB20-046 | /museum/[galleryId]/guest | Guest page of an alias exhibition (visitor) | title=true; alias=true; real name on page=false
+PASS       RB20-047 | /museum/[galleryId]/guest | Guest page of an ordinary public exhibition (visitor): its items render | title=true; card=true
+PASS       RB20-048 | /museum/[galleryId]/guest | Guest page of a private exhibition (visitor) | title shown=false
+PASS       RB20-049 | /museum/[galleryId]/guest | Guest page of a draft exhibition (visitor) | title shown=false
+PASS       RB20-050 | /museum/[galleryId]/guest | Guest page of a guest exhibition (visitor) | title shown=false
+PASS       RB20-051 | /museum/share/[token] | Share-link page of an alias exhibition (visitor) | title=true; alias=true; real=false
+PASS       RB20-052 | /museum/share/[token] | Share-link page of an ordinary exhibition (visitor) | title=true; card=true
+PASS       RB20-053 | /museum/share/[token] | Share-link page of a private exhibition (visitor) | shown=false
+PASS       RB20-054 | / | Public home (visitor): the featured exhibition card | featured title on page=true
+PASS       RB20-055 | / (browser storage) | Visitor's browser storage after the whole visit: no exhibition of anyone else is stored | stored: none; total stored 0
+PASS       RB20-056 | / (browser storage) | Visitor's browser storage never holds the alias exhibition together with the real profile id | alias exhibition stored with the real profile id=false
+PASS       RB20-057 | /museum/[galleryId]/guest (server) | Guest page title / preview text (alias exhibition) | status 200; alias in head=true; real name in the page source=false; <title>QA RB20 alias mvhk9mik · VLTD</title> | name="description" conten
+PASS       RB20-058 | /museum/[galleryId]/guest (server) | Guest page title / preview text (ordinary exhibition) | status 200; title in head=true
+PASS       RB20-059 | /museum/share/[token] (server) | Share link title / preview text (alias exhibition) | status 200; alias=true; real name in source=false
+PASS       RB20-060 | /museum/6a94014c-7ce3-4fb7-a789-371caeb972bf/guest/opengraph-image (server) | Preview image: guest page, alias exhibition | 200 image/png
+PASS       RB20-061 | /museum/3a21e935-cede-4780-b415-87fc5cf50802/guest/opengraph-image (server) | Preview image: guest page, ordinary exhibition | 200 image/png
+PASS       RB20-062 | /museum/share/qarb20mvhk9mikalias/opengraph-image (server) | Preview image: share link, alias exhibition | 200 image/png
+PASS       RB20-063 | /museum/share/qarb20mvhk9mikplain/opengraph-image (server) | Preview image: share link, ordinary exhibition | 200 image/png
+PASS       RB20-064 | /discover/opengraph-image (server) | Preview image: Discover | 200 image/png
+PASS       RB20-065 | /u/qarb20mvhk9mik/opengraph-image (server) | Preview image: collector profile | 200 image/png
+PASS       RB20-066 | /discover | Discover (signed-in unrelated account): the alias exhibition shows the alias | card: MISC · 2 OF 5 QA RB20 alias mvhk9mik by QA Alias Curator · 2 items View QA RB20 alias mvhk9mik →
+PASS       RB20-067 | /museum/[galleryId]/guest | Guest page of the alias exhibition (signed-in unrelated account) | alias=true; real=false
+PASS       RB20-068 | /museum/share/[token] | Share-link page (signed-in unrelated account) | ok=true
+PASS       RB20-069 | /museum/invite/[token] | Invite-link page (signed-in unrelated account) | ok=true
+PASS       RB20-070 | /notifications | Follower feed (QA account B follows QA profile A): the ordinary exhibition's event is listed, the alias exhibition's is not | plain=true; alias=false
+PASS       RB20-071 | /museum | Signed-in unrelated account: its own Exhibitions list shows none of QA account A's exhibitions | listed: none
+PASS       RB20-072 | / (browser storage) | Cache ownership: none of A's exhibitions is stored in B's browser as B's own | adopted as B's: 0; stored at all: none
+PASS       RB20-073 | / (browser storage) | Cache ownership: B's browser stores NO exhibition of A at all (public pages read the view and keep nothing) | stored: none
+PASS       RB20-074 | / (browser storage) | Cache ownership: a stale copy of someone else's public exhibition left by an older version is removed from B's browser | still stored: 0
+PASS       RB20-075 | database | Cache ownership: after B's whole visit every QA exhibition still belongs to A in the account (nothing was uploaded under B) | owners: A
+PASS       RB20-076 | /museum | Owner: the Exhibitions list shows their public, alias, private and guest-only exhibitions (a draft is archived and not listed, as designed) | listed: plain,alias,private,guest
+PASS       RB20-077 | /museum/[galleryId] | Owner: builder of the alias exhibition opens with the alias control | title=true; alias control=true
+PASS       RB20-078 | /museum/[galleryId]/guest | Owner: guest preview of their own private exhibition | title=true
+PASS       RB20-079 | / (browser storage) | Owner's browser storage holds their own exhibitions under their own profile | stored 5; all under A=true
+PASS       RB20-080 | /vault/halls | Owner: another own-exhibition screen (Halls) still loads | page text length 1119
+
+41 ok, 0 not ok of 41
+facts {"discoverTableResponsesNamingAliasProfile":0,"featuredExhibitionExists":true,"feedText":"Home Vault Exhibitions Lounge Discover Help ⌘K NOVICE Level 1 Alerts Follows, messages on your exhibitions, and bug reports FOLLOW · New exhibition by QA Real Collector Name · QA RB20 plain 2m ago Add to Home Screen","foreignRowsCachedForSignedInViewer":0,"signedInViewerTableResponsesNamingAliasProfile":1}

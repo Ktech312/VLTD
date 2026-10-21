@@ -1,0 +1,300 @@
+{
+ "label": "second",
+ "phase": "after",
+ "cases": [
+  {
+   "control": "Discover (visitor): the exhibition under an alias",
+   "expected": "shown under \"QA Alias Curator\", never \"QA Real Collector Name\"",
+   "ok": true,
+   "actual": "card: MISC · 2 OF 5 QA RB20 alias mvhk9mik by QA Alias Curator · 2 items View QA RB20 alias mvhk9mik →",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb20-second-after-1.jpg"
+  },
+  {
+   "control": "Discover (visitor): an exhibition without an alias still shows the real collector",
+   "expected": "QA Real Collector Name",
+   "ok": true,
+   "actual": "card: MISC · 1 OF 5 QA RB20 plain mvhk9mik by QA Real Collector Name · 2 items View QA RB20 plain mvhk9mik →",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb20-second-after-2.jpg"
+  },
+  {
+   "control": "Discover (visitor): private, guest-only and draft exhibitions are not listed",
+   "expected": "none listed",
+   "ok": true,
+   "actual": "listed: none",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb20-second-after-3.jpg"
+  },
+  {
+   "control": "Discover reads the exhibitions through the public view",
+   "expected": "a response from public_galleries with rows",
+   "ok": true,
+   "actual": "[\"view:49rows\"]",
+   "screenshot": ""
+  },
+  {
+   "control": "Discover: no response from the public view names the alias exhibition's real profile",
+   "expected": "none",
+   "ok": true,
+   "actual": "view responses naming it: 0",
+   "screenshot": ""
+  },
+  {
+   "control": "Discover: no response from the exhibitions TABLE names it either",
+   "expected": "none",
+   "ok": true,
+   "actual": "table responses naming it: 0",
+   "screenshot": ""
+  },
+  {
+   "control": "Guest page of an alias exhibition (visitor)",
+   "expected": "renders under the alias; real name nowhere",
+   "ok": true,
+   "actual": "title=true; alias=true; real name on page=false",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb20-second-after-4.jpg"
+  },
+  {
+   "control": "Guest page of an ordinary public exhibition (visitor): its items render",
+   "expected": "title and cards",
+   "ok": true,
+   "actual": "title=true; card=true",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb20-second-after-5.jpg"
+  },
+  {
+   "control": "Guest page of a private exhibition (visitor)",
+   "expected": "not shown",
+   "ok": true,
+   "actual": "title shown=false",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb20-second-after-6.jpg"
+  },
+  {
+   "control": "Guest page of a draft exhibition (visitor)",
+   "expected": "not shown",
+   "ok": true,
+   "actual": "title shown=false",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb20-second-after-7.jpg"
+  },
+  {
+   "control": "Guest page of a guest exhibition (visitor)",
+   "expected": "not shown",
+   "ok": true,
+   "actual": "title shown=false",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb20-second-after-8.jpg"
+  },
+  {
+   "control": "Share-link page of an alias exhibition (visitor)",
+   "expected": "renders under the alias",
+   "ok": true,
+   "actual": "title=true; alias=true; real=false",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb20-second-after-9.jpg"
+  },
+  {
+   "control": "Share-link page of an ordinary exhibition (visitor)",
+   "expected": "title and cards",
+   "ok": true,
+   "actual": "title=true; card=true",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb20-second-after-10.jpg"
+  },
+  {
+   "control": "Share-link page of a private exhibition (visitor)",
+   "expected": "not shown",
+   "ok": true,
+   "actual": "shown=false",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb20-second-after-11.jpg"
+  },
+  {
+   "control": "Public home (visitor): the featured exhibition card",
+   "expected": "its title is on the page",
+   "ok": true,
+   "actual": "featured title on page=true",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb20-second-after-12.jpg"
+  },
+  {
+   "control": "Visitor's browser storage after the whole visit: no exhibition of anyone else is stored",
+   "expected": "none of the QA exhibitions in the visitor's local exhibition list",
+   "ok": true,
+   "actual": "stored: none; total stored 0",
+   "screenshot": ""
+  },
+  {
+   "control": "Visitor's browser storage never holds the alias exhibition together with the real profile id",
+   "expected": "not stored",
+   "ok": true,
+   "actual": "alias exhibition stored with the real profile id=false",
+   "screenshot": ""
+  },
+  {
+   "control": "Guest page title / preview text (alias exhibition)",
+   "expected": "mentions the alias, never the real collector",
+   "ok": true,
+   "actual": "status 200; alias in head=true; real name in the page source=false; <title>QA RB20 alias mvhk9mik · VLTD</title> | name=\"description\" content=\"synthetic · 2 items · Curated by QA Alias Curator\" | property=\"og:title\" content=\"QA ",
+   "screenshot": ""
+  },
+  {
+   "control": "Guest page title / preview text (ordinary exhibition)",
+   "expected": "its title",
+   "ok": true,
+   "actual": "status 200; title in head=true",
+   "screenshot": ""
+  },
+  {
+   "control": "Share link title / preview text (alias exhibition)",
+   "expected": "mentions the alias, never the real collector",
+   "ok": true,
+   "actual": "status 200; alias=true; real name in source=false",
+   "screenshot": ""
+  },
+  {
+   "control": "Preview image: guest page, alias exhibition",
+   "expected": "200 image/png",
+   "ok": true,
+   "actual": "200 image/png",
+   "screenshot": ""
+  },
+  {
+   "control": "Preview image: guest page, ordinary exhibition",
+   "expected": "200 image/png",
+   "ok": true,
+   "actual": "200 image/png",
+   "screenshot": ""
+  },
+  {
+   "control": "Preview image: share link, alias exhibition",
+   "expected": "200 image/png",
+   "ok": true,
+   "actual": "200 image/png",
+   "screenshot": ""
+  },
+  {
+   "control": "Preview image: share link, ordinary exhibition",
+   "expected": "200 image/png",
+   "ok": true,
+   "actual": "200 image/png",
+   "screenshot": ""
+  },
+  {
+   "control": "Preview image: Discover",
+   "expected": "200 image/png",
+   "ok": true,
+   "actual": "200 image/png",
+   "screenshot": ""
+  },
+  {
+   "control": "Preview image: collector profile",
+   "expected": "200 image/png",
+   "ok": true,
+   "actual": "200 image/png",
+   "screenshot": ""
+  },
+  {
+   "control": "Discover (signed-in unrelated account): the alias exhibition shows the alias",
+   "expected": "QA Alias Curator",
+   "ok": true,
+   "actual": "card: MISC · 2 OF 5 QA RB20 alias mvhk9mik by QA Alias Curator · 2 items View QA RB20 alias mvhk9mik →",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb20-second-after-13.jpg"
+  },
+  {
+   "control": "Guest page of the alias exhibition (signed-in unrelated account)",
+   "expected": "alias, no real name",
+   "ok": true,
+   "actual": "alias=true; real=false",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb20-second-after-14.jpg"
+  },
+  {
+   "control": "Share-link page (signed-in unrelated account)",
+   "expected": "title and cards",
+   "ok": true,
+   "actual": "ok=true",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb20-second-after-15.jpg"
+  },
+  {
+   "control": "Invite-link page (signed-in unrelated account)",
+   "expected": "title and cards",
+   "ok": true,
+   "actual": "ok=true",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb20-second-after-16.jpg"
+  },
+  {
+   "control": "Follower feed (QA account B follows QA profile A): the ordinary exhibition's event is listed, the alias exhibition's is not",
+   "expected": "plain listed; alias not",
+   "ok": true,
+   "actual": "plain=true; alias=false",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb20-second-after-17.jpg"
+  },
+  {
+   "control": "Signed-in unrelated account: its own Exhibitions list shows none of QA account A's exhibitions",
+   "expected": "none listed",
+   "ok": true,
+   "actual": "listed: none",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb20-second-after-18.jpg"
+  },
+  {
+   "control": "Cache ownership: none of A's exhibitions is stored in B's browser as B's own",
+   "expected": "0 stored under B's profile id",
+   "ok": true,
+   "actual": "adopted as B's: 0; stored at all: none",
+   "screenshot": ""
+  },
+  {
+   "control": "Cache ownership: B's browser stores NO exhibition of A at all (public pages read the view and keep nothing)",
+   "expected": "none stored",
+   "ok": true,
+   "actual": "stored: none",
+   "screenshot": ""
+  },
+  {
+   "control": "Cache ownership: a stale copy of someone else's public exhibition left by an older version is removed from B's browser",
+   "expected": "removed",
+   "ok": true,
+   "actual": "still stored: 0",
+   "screenshot": ""
+  },
+  {
+   "control": "Cache ownership: after B's whole visit every QA exhibition still belongs to A in the account (nothing was uploaded under B)",
+   "expected": "all A's",
+   "ok": true,
+   "actual": "owners: A",
+   "screenshot": ""
+  },
+  {
+   "control": "Owner: the Exhibitions list shows their public, alias, private and guest-only exhibitions (a draft is archived and not listed, as designed)",
+   "expected": "four listed, the draft not",
+   "ok": true,
+   "actual": "listed: plain,alias,private,guest",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb20-second-after-19.jpg"
+  },
+  {
+   "control": "Owner: builder of the alias exhibition opens with the alias control",
+   "expected": "opens",
+   "ok": true,
+   "actual": "title=true; alias control=true",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb20-second-after-20.jpg"
+  },
+  {
+   "control": "Owner: guest preview of their own private exhibition",
+   "expected": "renders for the owner",
+   "ok": true,
+   "actual": "title=true",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb20-second-after-21.jpg"
+  },
+  {
+   "control": "Owner's browser storage holds their own exhibitions under their own profile",
+   "expected": "all under A",
+   "ok": true,
+   "actual": "stored 5; all under A=true",
+   "screenshot": ""
+  },
+  {
+   "control": "Owner: another own-exhibition screen (Halls) still loads",
+   "expected": "loads",
+   "ok": true,
+   "actual": "page text length 1119",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb20-second-after-22.jpg"
+  }
+ ],
+ "facts": {
+  "discoverTableResponsesNamingAliasProfile": 0,
+  "featuredExhibitionExists": true,
+  "feedText": "Home Vault Exhibitions Lounge Discover Help ⌘K NOVICE Level 1 Alerts Follows, messages on your exhibitions, and bug reports FOLLOW · New exhibition by QA Real Collector Name · QA RB20 plain 2m ago Add to Home Screen",
+  "foreignRowsCachedForSignedInViewer": 0,
+  "signedInViewerTableResponsesNamingAliasProfile": 1
+ }
+}
