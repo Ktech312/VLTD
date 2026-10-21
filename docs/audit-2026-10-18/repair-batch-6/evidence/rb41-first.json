@@ -1,0 +1,47 @@
+{
+ "label": "first",
+ "cases": [
+  {
+   "control": "Exhibition details panel: third action",
+   "expected": "'Open editor' (it opened the editor under the label 'Export PDF')",
+   "ok": true,
+   "actual": "Open editor shown=true; Export PDF shown=false",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb41-first-1.jpg"
+  },
+  {
+   "control": "Item page: the insurance button",
+   "expected": "labelled 'Insurance Documents' (it opens the document export)",
+   "ok": true,
+   "actual": "new label=true; old label=false",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb41-first-2.jpg"
+  },
+  {
+   "control": "Item Share panel for a public item of a private profile",
+   "expected": "says nobody else can open the link because the profile is private",
+   "ok": true,
+   "actual": "note=\"Your profile is private, so nobody else can open this link.\"",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb41-first-3.jpg"
+  },
+  {
+   "control": "Add page: the button that used to say 'Unlock All'",
+   "expected": "labelled 'Clear Unlocked Fields' (it clears the fields that are not locked)",
+   "ok": true,
+   "actual": "new=true; old=false",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb41-first-4.jpg"
+  },
+  {
+   "control": "Watchlist: '+ Add to Vault' on a watched item",
+   "expected": "opens Add Item (it only showed a message and did nothing)",
+   "ok": false,
+   "actual": "landed on /watchlist",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb41-first-5.jpg"
+  },
+  {
+   "control": "Portfolio category page: 'Open Exhibitions'",
+   "expected": "opens /museum",
+   "ok": true,
+   "actual": "href=[\"/museum\"]",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb41-first-6.jpg"
+  }
+ ]
+}

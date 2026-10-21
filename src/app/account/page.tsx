@@ -587,7 +587,9 @@ export default function AccountPage() {
                 <div className="rounded-2xl border border-[color:var(--border)] p-4" style={{ background: "var(--theme-card)" }}>
                   <div className="text-[11px] uppercase tracking-[0.22em] text-[color:var(--muted2)]">Handle</div>
                   <div className="mt-1 font-black text-text-primary">@{username || "username"}</div>
-                  {username ? <PillButton href={`/u/${username}`} className="mt-3">View public profile</PillButton> : null}
+                  {username ? (
+                    isPublic ? <PillButton href={`/u/${username}`} className="mt-3">View public profile</PillButton> : <div className="mt-3 text-xs text-[color:var(--muted)]" data-testid="profile-private-note">Your profile is private, so it has no public page to view.</div>
+                  ) : null}
                 </div>
                 <div className="rounded-2xl border border-[color:var(--border)] p-4" style={{ background: "var(--theme-card)" }}>
                   <div className="text-[11px] uppercase tracking-[0.22em] text-[color:var(--muted2)]">Type</div>

@@ -1,0 +1,19 @@
+{
+ "label": "second",
+ "cases": [
+  {
+   "control": "/vault/automotive (empty universe) with a non-default sort order",
+   "expected": "says there is nothing in this universe yet, with a way to add or go back",
+   "ok": true,
+   "actual": "text: Nothing in Gears & Gasoline yet; 'No items match' shown=false",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb40-second-1.jpg"
+  },
+  {
+   "control": "Watchlist: target price 'abc' then Save",
+   "expected": "refused with a message; the existing $150 is kept",
+   "ok": false,
+   "actual": "database target=150; message=(none)",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb40-second-2.jpg"
+  }
+ ]
+}

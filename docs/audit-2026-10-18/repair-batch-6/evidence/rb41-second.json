@@ -1,0 +1,34 @@
+{
+ "label": "second",
+ "cases": [
+  {
+   "control": "Exhibition details panel: third action",
+   "expected": "'Open editor' (it opened the editor under the label 'Export PDF')",
+   "ok": true,
+   "actual": "Open editor shown=true; Export PDF shown=false",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb41-second-1.jpg"
+  },
+  {
+   "control": "Item page: the insurance button",
+   "expected": "labelled 'Insurance Documents' (it opens the document export)",
+   "ok": true,
+   "actual": "new label=true; old label=false",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb41-second-2.jpg"
+  },
+  {
+   "control": "Item Share panel for a public item of a private profile",
+   "expected": "says nobody else can open the link because the profile is private",
+   "ok": true,
+   "actual": "note=\"Your profile is private, so nobody else can open this link.\"",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb41-second-3.jpg"
+  },
+  {
+   "control": "Add page: the button that used to say 'Unlock All'",
+   "expected": "labelled 'Clear Unlocked Fields' (it clears the fields that are not locked)",
+   "ok": true,
+   "actual": "new=true; old=false",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb41-second-4.jpg"
+  }
+ ],
+ "error": "Error: SyntaxError: Invalid regular expression: /^+ Add to Vault$/: Nothing to repeat\n    at Object.evaluate (C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\scripts\\cdp.cjs:65:35)\n    at async Object.clickExpr (C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\scripts\\audit-s-acc-lib.cjs:24:11)\n    at async C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\repair-batch-6\\scripts\\rb41-labels.cjs:57:5"
+}

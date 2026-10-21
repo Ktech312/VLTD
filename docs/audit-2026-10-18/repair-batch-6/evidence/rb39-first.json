@@ -1,0 +1,110 @@
+{
+ "label": "first",
+ "cases": [
+  {
+   "control": "Insights: breakdown heading and row links",
+   "expected": "headed 'By Category' (the rows are categories); each row links to the Vault filtered to that category",
+   "ok": false,
+   "actual": "heading ok=false; first row link=null",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb39-first-1.jpg"
+  },
+  {
+   "control": "Insights: 'View all movers', 'View all', and the dashed tile",
+   "expected": "go to a gain-sorted Vault, the needs-review list, and the review list (not a plain /vault)",
+   "ok": false,
+   "actual": "movers=[\"/vault\"]; view all=[\"/vault\",\"/vault\",\"/vault\"]; tile=[\"/vault\"]",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb39-first-2.jpg"
+  },
+  {
+   "control": "/vault?sort=gain_desc (what 'View all movers' opens)",
+   "expected": "the Vault opens sorted by gain, biggest first (QA Album 17 - Original Motion Picture Soundtrack)",
+   "ok": true,
+   "actual": "first card: QA Album 17 - Original Motion Picture Soundtrack",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb39-first-3.jpg"
+  },
+  {
+   "control": "'Open Exhibitions' on /portfolio/insurance",
+   "expected": "opens /museum",
+   "ok": true,
+   "actual": "href=[\"/museum\"]",
+   "screenshot": ""
+  },
+  {
+   "control": "'Open Exhibitions' on /reports/insurance",
+   "expected": "opens /museum",
+   "ok": true,
+   "actual": "href=[\"/museum\"]",
+   "screenshot": ""
+  },
+  {
+   "control": "/vault/not-a-universe",
+   "expected": "says the universe doesn't exist (not another universe's list)",
+   "ok": true,
+   "actual": "text: Home Vault Exhibitions Lounge Discover Help ⌘K COLLECTOR Level 4 That universe doesn't exist Check the address, or go ba",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb39-first-4.jpg"
+  },
+  {
+   "control": "/vault/automotive (empty universe, the vault itself has items)",
+   "expected": "says there is nothing in this universe yet, with a way to add or go back (not 'Your vault is empty')",
+   "ok": false,
+   "actual": "text: (none); old wording=false",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb39-first-5.jpg"
+  },
+  {
+   "control": "/portfolio/universe/NOPE",
+   "expected": "not found (not the Misc universe)",
+   "ok": true,
+   "actual": "text: Home Vault Exhibitions Lounge Discover Help ⌘K COLLECTOR Level 4 That universe doesn't exist Check the address, or go ba",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb39-first-6.jpg"
+  },
+  {
+   "control": "/portfolio/universe/MUSIC default window",
+   "expected": "the whole universe (not only the last 30 days)",
+   "ok": true,
+   "actual": "shows 'Last 30 days'=false; text sample: All time • Ranking by gain Gain Value 7d 30d 90d",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb39-first-7.jpg"
+  },
+  {
+   "control": "Exhibition details: View public page",
+   "expected": "opens the public (share) page, not the owner's editor",
+   "ok": true,
+   "actual": "window.open called with: [\"https://vltd.app/museum/share/qavzmvhnhleu0\"]",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb39-first-8.jpg"
+  },
+  {
+   "control": "Exhibition details: Duplicate",
+   "expected": "a copy appears (one more exhibition, titled '(copy)', private)",
+   "ok": true,
+   "actual": "exhibitions 5 -> 6; copy=Comics (Misc. & Peach cards) (copy) / LOCKED",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb39-first-9.jpg"
+  },
+  {
+   "control": "Sign out all, then Cancel in the confirmation",
+   "expected": "a confirmation is asked; cancelling keeps the person signed in on this page",
+   "ok": true,
+   "actual": "dialog=[{\"type\":\"confirm\",\"message\":\"Sign out of every device, including this one? You will need to log in again everywhere.\"}]; stayed=true",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb39-first-10.jpg"
+  },
+  {
+   "control": "Watchlist: target price 'abc' then Save",
+   "expected": "refused; $150 kept",
+   "ok": false,
+   "actual": "could not open the target editor in this test",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb39-first-11.jpg"
+  },
+  {
+   "control": "/auth/confirmed opened with no confirmation link",
+   "expected": "does not say the email is confirmed; says the link is missing or expired",
+   "ok": true,
+   "actual": "text: ",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb39-first-12.jpg"
+  },
+  {
+   "control": "Saved: the links named The Flip",
+   "expected": "link to /discover?flip=1 and the deck opens there",
+   "ok": true,
+   "actual": "links=[\"/discover?flip=1\"]; deck opened=true",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb39-first-13.jpg"
+  }
+ ]
+}
