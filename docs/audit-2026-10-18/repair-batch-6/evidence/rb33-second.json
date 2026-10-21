@@ -1,0 +1,26 @@
+{
+ "label": "second",
+ "cases": [
+  {
+   "control": "Upcoming: search for a name while the release feed cannot be reached",
+   "expected": "says it could not load, with Try again; never 'Nothing found'",
+   "ok": true,
+   "actual": "text: Home Vault Exhibitions Lounge Discover Help ⌘K COLLECTOR Level 3 Upcoming Comics Releases by artist or series. Explore Saved Watchlist Marketplace Upcoming Comics Events By Artist By Series Search All",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb33-second-1.jpg"
+  },
+  {
+   "control": "Watchlist: search with no match",
+   "expected": "an explicit 'Nothing on your watchlist matches ...' message",
+   "ok": true,
+   "actual": "message shown=true",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb33-second-2.jpg"
+  },
+  {
+   "control": "Watchlist: the Exhibitions chip when no exhibitions are watched",
+   "expected": "an explicit 'Nothing here for this filter yet' message",
+   "ok": true,
+   "actual": "message shown=true",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb33-second-3.jpg"
+  }
+ ]
+}

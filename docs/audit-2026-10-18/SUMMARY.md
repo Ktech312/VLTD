@@ -24,6 +24,8 @@ Behaviour-asserted rows (a test checked the outcome): 3754 = 509 FAIL, 2770 PASS
 
 ## Repair status (updated 2026-10-20)
 
+**Batch 9 (2026-10-21, `repair-batch-9/CLOSEOUT.md`): RC-21 closed (26 of 26 rows); RC-20 10 of 22 rows closed, the other 12 need a product decision (explicit goal types).**
+
 **Batch 8 (2026-10-20, `repair-batch-8/CLOSEOUT.md`): RC-16 14 of 16 rows closed on production; ADD-415 waits for the SQL file, ADD-168 is a product decision.**
 
 **Batch 7 (2026-10-20, `repair-batch-7/CLOSEOUT.md`): RC-13, RC-14, RC-15 closed and RC-12 partly closed (code), all re-tested on production; RC-10 and RC-11 need one SQL file, ready in `repair-batch-6/SQL-RUN-ME.md`.**
@@ -99,10 +101,10 @@ Full table with commits and evidence: `DEFECT-STATUS.md`. Closed and re-tested o
 - **[PARTLY CLOSED] RC-19 Totals and counts disagree between Insurance, packet, reports, PDFs and Insights**  
   Insurance and packet list the 5 sold items, the reports do not; totals $1,431 vs $1,226 vs $1,443; Vault Insurance PDF says 44 items where 36 belong; exclusions are device-only; weekly gap count 31 vs 30; three pages report stale prices as three numbers.  
   Rows (11): GIN-087, GIN-092, GIN-240, GIN-243, GIN-260, GIN-095 (+5 more)
-- **RC-20 Goal progress and labels wrong; goal type guessed from words**  
+- **[PARTLY CLOSED] RC-20 Goal progress and labels wrong; goal type guessed from words**  
   Direct URL shows every goal at 0%; Value/Sell/Exhibition goals count items, not dollars/duplicates/exhibitions; 'Insurable Value' counts items; type inferred from name text ('bedroom' becomes Exhibition); 'Completed This Year' has no year logic; 'View set'/'Review items' silently add a wishlist entry; Delete has no confirmation.  
   Rows (22): GIN-001, GIN-004, GIN-005, GIN-006, GIN-015, GIN-016 (+16 more)
-- **RC-21 A failed load is shown as an empty collection (or stays on 'Loading…')**  
+- **[CLOSED] RC-21 A failed load is shown as an empty collection (or stays on 'Loading…')**  
   With the connection refused, Insights says 'No items yet', Activity/Alerts 'No activity yet', Goals 'No goals yet', reports an empty collection, Discover 'No public exhibitions yet', Upcoming/Watchlist/Home show empty or no stale notice; unknown club and the stream page for another user's item stay on 'Loading…' forever.  
   Rows (26): VLT-434, VLT-484, VLT-485, VLT-343, VLT-437, VLT-086 (+20 more)
 - **RC-22 Direct load in a clean browser shows zeros until the Vault has been opened**  

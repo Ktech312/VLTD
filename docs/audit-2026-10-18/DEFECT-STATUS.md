@@ -90,3 +90,9 @@ Migration-blocked (stage-0 production output reviewed 2026-10-21: matches; stage
 | Root cause | Audit rows closed | Commits | Evidence |
 |---|---|---|---|
 | RC-16 (14 of 16) | ADD-197, 218, 237, 200, 202, 204, 465, 394, 395, 474, 195, 424, 190, 417 | `1c7dec1`, `9d52e16` | RB28, RB29 (open: ADD-415 needs the SQL, ADD-168 is a decision) |
+
+### Batch 9: failed loads and Goals (closeout `repair-batch-9/CLOSEOUT.md`)
+| Root cause | Audit rows closed | Commits | Evidence |
+|---|---|---|---|
+| RC-21 (26 of 26) | VLT-434, 484, 485, 343, 437, 086; GIN-067, 188, 193, 196, 197, 069; DIS-086, 267, 268, 359, 360, 159, 154; ACC-599, 738, 647, 748; ITM-615; CRW-005, 006 | `d5a7ec7`, `1e7c19f`, `b8a2aa6` | RB30, RB32, RB33 |
+| RC-20 (10 of 22) | GIN-001, 013, 025, 029, 030, 031, 032, 033, 041, 237 | `3064380` (Goals) | RB31 (open: the 12 type-guessing rows, a decision) |

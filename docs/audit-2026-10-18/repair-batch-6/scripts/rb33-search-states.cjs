@@ -22,8 +22,8 @@ const body = async (S) => (await S.text().catch(() => "")).replace(/\s+/g, " ").
     await S.visit("/upcoming"); await sleep(8000);
     await S.send("Network.setBlockedURLs", { urls: ["*/api/comic-upcoming*"] });
     const typed = await S.evaluate("(() => { const i = [...document.querySelectorAll('main input, input')].find((x) => x.type === 'text' || x.type === 'search' || !x.type); return !!i; })()");
-    await A.typeInto(S, "main input[type=text], main input:not([type]), main input[type=search]", "Momoko");
-    await A.clickText(S, "^Search$", "button"); await sleep(5000);
+    await A.typeInto(S, "form input[type=text]", "Momoko");
+    await A.press(S, "Enter"); await sleep(6000);
     let t = await body(S);
     await rec(S, typed && /couldn.t load the upcoming releases/i.test(t) && !/Nothing found/i.test(t), "Upcoming: search for a name while the release feed cannot be reached", "says it could not load, with Try again; never 'Nothing found'", `text: ${t.slice(0, 200)}`, "/upcoming");
     await S.send("Network.setBlockedURLs", { urls: [] });

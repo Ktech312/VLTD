@@ -383,7 +383,8 @@
    "GIN-237",
    "GIN-041"
   ],
-  "status": "OPEN"
+  "status": "PARTLY CLOSED",
+  "statusNote": "batch 9: 10 of 22 rows closed (GIN-001, 013, 025 label, 029, 030, 031, 032, 033, 041, 237; RB31). The remaining 12 (GIN-004, 005, 006, 015, 016, 018 to 023, 026) share one cause that needs a decision: goals store no type, dollar target or exhibition link, so the type is guessed from the name."
  },
  {
   "id": "RC-21",
@@ -419,7 +420,8 @@
    "CRW-005",
    "CRW-006"
   ],
-  "status": "OPEN"
+  "status": "CLOSED",
+  "statusNote": "batch 9: all 26 rows verified on production (RB30, RB32, RB33): failed loads read as a plain could-not-load card with Retry (or the saved-data notice), never as an empty collection; missing clubs/items are said to be missing. See repair-batch-9/CLOSEOUT.md."
  },
  {
   "id": "RC-22",
