@@ -1,0 +1,117 @@
+{
+ "label": "third",
+ "cases": [
+  {
+   "control": "Header search 'Album 17' + Enter",
+   "expected": "the Vault lists only items titled Album 17",
+   "ok": true,
+   "actual": "url=/vault?q=Album%2017; cards=[\"QA Album 17 - Original Motion Picture Soundtrack\"]",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb27-third-1.jpg"
+  },
+  {
+   "control": "Header search with no match",
+   "expected": "no cards and an explicit 'No items match' message",
+   "ok": true,
+   "actual": "cards=0; message shown=true",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb27-third-2.jpg"
+  },
+  {
+   "control": "Command palette: typing the name of a main page",
+   "expected": "each page is offered",
+   "ok": true,
+   "actual": "found=[\"goals\",\"discover\",\"lounge\",\"insurance\",\"messages\",\"alerts\",\"for sale\",\"insights\",\"billing\",\"sold\",\"settings\"]; missing=[]",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb27-third-3.jpg"
+  },
+  {
+   "control": "Command palette: 'goals' then Enter",
+   "expected": "opens /goals",
+   "ok": true,
+   "actual": "opened /goals",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb27-third-4.jpg"
+  },
+  {
+   "control": "Command palette: 'Album 17' then Enter",
+   "expected": "opens that item's page",
+   "ok": true,
+   "actual": "first results=[\"QA Album 17 - Original Motion Picture Soundtrack $300 value • +$255\",\"Open Best Performing Item QA Album 17 - Original Motion Picture Soundtrack • +$255\",\"Open Highest Value Item QA Album 17 - Original Motion Picture Soundtrack • $300\"]; opened /vault/item/qa_vz_mvhnhleu_17",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb27-third-5.jpg"
+  },
+  {
+   "control": "Exhibitions on a phone: first view",
+   "expected": "no details sheet covering the list",
+   "ok": true,
+   "actual": "{\"exists\":true,\"shown\":false,\"h\":0}",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb27-third-6.jpg"
+  },
+  {
+   "control": "Exhibitions on a phone: 'Filter exhibitions' in the first view",
+   "expected": "visible and tappable (nothing on top)",
+   "ok": true,
+   "actual": "{\"ok\":true,\"top\":\"BUTTON:Active\",\"y\":163}",
+   "screenshot": ""
+  },
+  {
+   "control": "Exhibitions on a phone: 'Sort exhibitions' in the first view",
+   "expected": "visible and tappable (nothing on top)",
+   "ok": true,
+   "actual": "{\"ok\":true,\"top\":\"SPAN:Recently updated\",\"y\":217}",
+   "screenshot": ""
+  },
+  {
+   "control": "Exhibitions on a phone: 'Create Exhibition' in the first view",
+   "expected": "visible and tappable (nothing on top)",
+   "ok": true,
+   "actual": "{\"ok\":true,\"top\":\"A:+ Create Exhibition\",\"y\":217}",
+   "screenshot": ""
+  },
+  {
+   "control": "Exhibitions on a phone: tap an exhibition card",
+   "expected": "the details sheet opens",
+   "ok": true,
+   "actual": "{\"exists\":true,\"shown\":true,\"h\":625}",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb27-third-7.jpg"
+  },
+  {
+   "control": "Exhibitions on a phone: Close on the details sheet",
+   "expected": "the sheet closes",
+   "ok": true,
+   "actual": "{\"exists\":true,\"shown\":false,\"h\":0}",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb27-third-8.jpg"
+  },
+  {
+   "control": "Exhibitions on a wide screen",
+   "expected": "the details side panel is still shown",
+   "ok": true,
+   "actual": "shown=true",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb27-third-9.jpg"
+  },
+  {
+   "control": "Install pill on /vault/quick (phone)",
+   "expected": "not shown here (it does show on other pages, e.g. Home)",
+   "ok": true,
+   "actual": "shown on Home=true; shown here=false",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb27-third-10.jpg"
+  },
+  {
+   "control": "Install pill on /vault/bulk (phone)",
+   "expected": "not shown here (it does show on other pages, e.g. Home)",
+   "ok": true,
+   "actual": "shown on Home=true; shown here=false",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb27-third-11.jpg"
+  },
+  {
+   "control": "Landing page footer links with the install pill showing (phone)",
+   "expected": "every footer link can be tapped (not the pill)",
+   "ok": true,
+   "actual": "[{\"label\":\"TCG\",\"ok\":true,\"top\":\"A:TCG\",\"firstTry\":true},{\"label\":\"Sports\",\"ok\":true,\"top\":\"A:Sports\",\"firstTry\":true},{\"label\":\"Pop Culture\",\"ok\":true,\"top\":\"A:Pop Culture\",\"firstTry\":true}]",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb27-third-12.jpg"
+  },
+  {
+   "control": "Item page: suggested tag chips at the end of the page with the pill showing (desktop)",
+   "expected": "every chip can be clicked",
+   "ok": true,
+   "actual": "[{\"chip\":\"+ VLTD\",\"ok\":true,\"top\":\"+ VLTD\"},{\"chip\":\"+ collector\",\"ok\":true,\"top\":\"+ collector\"},{\"chip\":\"+ vault\",\"ok\":true,\"top\":\"+ vault\"},{\"chip\":\"+ sportscards\",\"ok\":true,\"top\":\"+ sportscards\"},{\"chip\":\"+ cardcollector\",\"ok\":true,\"top\":\"+ cardcollector\"},{\"chip\":\"+ hobbylife\",\"ok\":true,\"top\":\"+ hobbylife\"},{\"chip\":\"+ waxlife\",\"ok\":true,\"top\":\"+ waxlife\"},{\"chip\":\"+ sportscard\",\"ok\":true,\"top\":\"+ sportscard\"}]",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb27-third-13.jpg"
+  }
+ ]
+}

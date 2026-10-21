@@ -2,7 +2,7 @@
 
 The frozen audit evidence (`rows.jsonl` first-failure rows, `results.csv`, screenshots) is unchanged. This file is the status layer on top of it; `SUMMARY.md` and `root-causes.json` carry the same status tags. "Closed" means re-tested on production with synthetic data after the fix (evidence named). Anything not shown here is still open as written in `SUMMARY.md`.
 
-**Closed so far: 71 specific audit rows through batch 5; batch 6 adds 24 more (see the last section)** (RC-01: 2, RC-02: 6, RC-03: 2, RC-09: 7, RC-19: 7, RC-06: 10, RC-07: 3, RC-17: 20, RC-18: 9, RC-05: 5). Open P1 root causes: RC-05 (untouched) and the six profile-validation rows of RC-07 (kept with RC-28). **Insurance is not fully closed** (section 2 and the open items RC-14 and RC-31).
+**Closed so far: 71 specific audit rows through batch 5; batches 6 and 7 add 24 + 24 more (see the last sections)** (RC-01: 2, RC-02: 6, RC-03: 2, RC-09: 7, RC-19: 7, RC-06: 10, RC-07: 3, RC-17: 20, RC-18: 9, RC-05: 5). Open P1 root causes: RC-05 (untouched) and the six profile-validation rows of RC-07 (kept with RC-28). **Insurance is not fully closed** (section 2 and the open items RC-14 and RC-31).
 
 ## 1. Closed findings
 
@@ -77,3 +77,11 @@ Migration-blocked (stage-0 production output reviewed 2026-10-21: matches; stage
 | RC-04 failed sign-out request looks like a sign-out | ACC-850, ACC-286, ACC-344 | `67d037e` | RB23-015, 016 |
 | RC-07 profile validation (rest of the group) | ACC-381, ACC-796, ACC-390, ACC-811, ACC-395, ACC-819 | `86ed798` | RB23-007 to 011 |
 | RC-28 create/profile form validation | EXH-076, EXH-063, EXH-077, ACC-869, ACC-870, ACC-808, ACC-817 | `86ed798`, `cad5cc5` | RB23-010, 012 to 014, 017; RB24-001 to 004 |
+
+### Batch 7: core workflows (closeout `repair-batch-7/CLOSEOUT.md`)
+| Root cause | Audit rows closed | Commits | Evidence |
+|---|---|---|---|
+| RC-13 header search / palette | ACC-230, ACC-232, ACC-244, ACC-311, ACC-875, ACC-243, ACC-309, ACC-844 | `065f152`, `baac35b`, `62df159`, `d046ae6` | RB27 |
+| RC-14 install pill covers controls | ADD-235, ADD-379, ADD-380, ITM-424, ITM-425, ACC-832 | (same commits) | RB27-045..048 |
+| RC-15 phone exhibitions sheet | EXH-381 to EXH-389 | (same commits) | RB27-038..044 |
+| RC-12 subject leaderboards (part) | DIS-346 | (same commits) | RB25-006..009 |

@@ -163,7 +163,8 @@
   "rowIds": [
    "ACC-871"
   ],
-  "status": "OPEN"
+  "status": "OPEN",
+  "statusNote": "batch 7: needs the batch 6 SQL (storage rules for the avatars bucket): repair-batch-6/SQL-RUN-ME.md (tested locally; not applied). Production reproduced again with a QA login: every upload path refused (403), bucket is public and empty."
  },
  {
   "id": "RC-11",
@@ -180,7 +181,8 @@
    "DIS-367",
    "DIS-369"
   ],
-  "status": "OPEN"
+  "status": "OPEN",
+  "statusNote": "batch 7: code half done (Bulk no longer says scans are used up when the allowance could not be read, RB25-010). The cause in the database (bulk_scan_guard refuses profiles whose id differs from the user id) needs the batch 6 SQL: repair-batch-6/SQL-RUN-ME.md (tested locally 23 of 23; not applied)."
  },
  {
   "id": "RC-12",
@@ -192,7 +194,8 @@
    "DIS-346",
    "DIS-341"
   ],
-  "status": "OPEN"
+  "status": "PARTLY CLOSED",
+  "statusNote": "batch 7: subject leaderboards (DIS-346) fixed: the function is called with p_subject/p_limit (lounge preview too) and a failed load says so with Try again instead of \"No public collectors\" (RB25-006..009). DIS-341 (\"View full leaderboard\" goes to Discover) is NOT changed: there is no full-leaderboard page, so what it should open is a product decision."
  },
  {
   "id": "RC-13",
@@ -210,7 +213,8 @@
    "ACC-309",
    "ACC-844"
   ],
-  "status": "OPEN"
+  "status": "CLOSED",
+  "statusNote": "batch 7: the Vault follows ?q= (header search, palette), no-match shows \"No items match\", the palette offers every main page and puts the best match first, and item commands open the item page (RB27 final run, 16 of 16). The header no longer splits words such as \"comic\" or \"psa\" into URL filters the Vault never read; the whole text is the search."
  },
  {
   "id": "RC-14",
@@ -226,7 +230,8 @@
    "ITM-425",
    "ACC-832"
   ],
-  "status": "OPEN"
+  "status": "CLOSED",
+  "statusNote": "batch 7: the install pill is not shown on /vault/quick and /vault/bulk (their own controls sit there) and pages scroll 72px further while it shows (public home footer, item page tag chips) (RB27-045..048). Item page was checked on desktop; the phone item page uses the same mechanism and was not separately tapped."
  },
  {
   "id": "RC-15",
@@ -245,7 +250,8 @@
    "EXH-388",
    "EXH-389"
   ],
-  "status": "OPEN"
+  "status": "CLOSED",
+  "statusNote": "batch 7: on phones the exhibition details sheet starts closed, opens when a card is tapped and has a Close button; Filter, Sort and Create are tappable in the first view; the wide-screen side panel is unchanged (RB27-038..044)."
  },
  {
   "id": "RC-16",

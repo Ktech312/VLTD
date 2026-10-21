@@ -24,6 +24,8 @@ Behaviour-asserted rows (a test checked the outcome): 3754 = 509 FAIL, 2770 PASS
 
 ## Repair status (updated 2026-10-20)
 
+**Batch 7 (2026-10-20, `repair-batch-7/CLOSEOUT.md`): RC-13, RC-14, RC-15 closed and RC-12 partly closed (code), all re-tested on production; RC-10 and RC-11 need one SQL file, ready in `repair-batch-6/SQL-RUN-ME.md`.**
+
 **Batch 6 (2026-10-20, `repair-batch-6/CLOSEOUT.md`): RC-04, RC-07 (remaining six rows), RC-08, RC-28 and RC-33 closed and re-tested on production (21 of 21 checks).**
 
 Full table with commits and evidence: `DEFECT-STATUS.md`. Closed and re-tested on production: **RC-01, RC-02, RC-03, RC-06, RC-09, RC-17, RC-18**, **7 of 11 rows of RC-19** and **3 of 9 rows of RC-07** (66 specific rows in total; batch 3 in `repair-batch-3/CLOSEOUT.md`, batch 4 in `repair-batch-4/CLOSEOUT.md`), plus **5 of 8 rows of RC-05** (EXH-165, 123, 124, 126, 127: batch 5, `repair-batch-5/CLOSEOUT.md`; the other three are migration-blocked or reporting-only). Deferred migrations and unresolved incidents are listed separately in `DEFECT-STATUS.md` (sections 3 and 4); they are not counted as closed. Tags below: [CLOSED], [PARTLY CLOSED]; untagged means still open.
@@ -65,16 +67,16 @@ Full table with commits and evidence: `DEFECT-STATUS.md`. Closed and re-tested o
 - **RC-11 Bulk scan quota function refuses profiles whose id differs from the user id**  
   bulk_scan_status answers 'not authorized' unless profile id = user id; 17 of 39 real profiles (all 3 Business, 14 Personal) have different ids. Effect: no quota ticker; 'Scan with AI' says all scans are used without calling the AI.  
   Rows (7): ADD-428, ADD-429, ADD-430, ADD-431, DIS-366, DIS-367 (+1 more)
-- **RC-12 Lounge subject boards call the leaderboard function with the wrong argument name**  
+- **[PARTLY CLOSED] RC-12 Lounge subject boards call the leaderboard function with the wrong argument name**  
   registryModel.ts sends {subject_name}; the current database function takes p_subject, so every subject board 404s and reads '0 collectors'. The function works when called correctly.  
   Rows (2): DIS-346, DIS-341
-- **RC-13 Header search ignores its query; Command Palette finds almost nothing**  
+- **[CLOSED] RC-13 Header search ignores its query; Command Palette finds almost nothing**  
   The URL gets ?q= but the Vault ignores it ('zzzznomatch' still lists all items). Palette typed 'goals', 'discover', 'insurance', 'lounge' etc. finds nothing; only 'sold' and 'settings' work.  
   Rows (8): ACC-230, ACC-232, ACC-244, ACC-311, ACC-875, ACC-243 (+2 more)
-- **RC-14 Install banner covers controls on phones (browser-emulated)**  
+- **[CLOSED] RC-14 Install banner covers controls on phones (browser-emulated)**  
   The Add to Home Screen banner covers the Quick Add shutter, the Bulk 'Add all' button, landing-page footer links and tag chips; a tap hits the banner.  
   Rows (6): ADD-235, ADD-379, ADD-380, ITM-424, ITM-425, ACC-832
-- **RC-15 Exhibitions page on a phone opens a details sheet over ~74% of the screen that cannot be closed**  
+- **[CLOSED] RC-15 Exhibitions page on a phone opens a details sheet over ~74% of the screen that cannot be closed**  
   Filter, sort, Tools and Create sit under it in the first view.  
   Rows (9): EXH-381, EXH-382, EXH-383, EXH-384, EXH-385, EXH-386 (+3 more)
 - **RC-16 Camera / image / PSA controls fail silently**  
