@@ -51,6 +51,7 @@ import { readUniversePrefs, saveDisplayedUniverses } from "@/lib/universePrefs";
 import { currentLocalOwner } from "@/lib/localDataOwner";
 import { StaleDataNotice } from "@/components/vault/CloudStatus";
 import { storedSessionUserId } from "@/lib/sessionGuard";
+import { parseMoneyInput } from "@/lib/moneyInput";
 
 // How long the page waits for the account check and for the cloud before it stops waiting and says so.
 const ACCOUNT_CHECK_TIMEOUT_MS = 12_000;
@@ -319,13 +320,6 @@ function itemMeta(item: VaultItem) {
   return fallback || "Basic item record";
 }
 
-function parseMoneyInput(value: string) {
-  const cleaned = value.replace(/[^0-9.-]/g, "").trim();
-  if (!cleaned) return 0;
-  const parsed = Number(cleaned);
-  return Number.isFinite(parsed) ? parsed : 0;
-}
-
 function PercentDonut({ percent }: { percent: number }) {
   const size = 58;
   const radius = 23;
@@ -439,22 +433,32 @@ function VaultCard({
   const isSold = Boolean(sale);
 
   const [editingField, setEditingField] = useState<InlineField>("");
-  const [valueDraft, setValueDraft] = useState(String(Number(item.currentValue ?? 0)));
+  // blank when the item has no value yet (an unknown value is not "0"); an explicit $0 shows as 0
+  const [valueDraft, setValueDraft] = useState(item.currentValue === undefined || item.currentValue === null ? "" : String(item.currentValue));
+  const [valueError, setValueError] = useState("");
   const [isDeleting, setIsDeleting] = useState(false);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
 
   useEffect(() => {
-    setValueDraft(String(Number(item.currentValue ?? 0)));
+    setValueDraft(item.currentValue === undefined || item.currentValue === null ? "" : String(item.currentValue));
   }, [item.currentValue]);
 
   async function saveValueInline() {
-    if (!valueDraft.trim()) {
-      setValueDraft(String(Number(item.currentValue ?? 0)));
+    // Same strict rule as every other value box (src/lib/moneyInput.ts): blank leaves the value as it is, 0 is an explicit $0,
+    // letters / "1e3" / "1,5" / negatives are refused with a message and nothing is saved.
+    const parsed = parseMoneyInput(valueDraft, { label: "Value" });
+    if (!parsed.ok) {
+      setValueError(parsed.message);
+      return;
+    }
+    setValueError("");
+    if (parsed.blank) {
+      setValueDraft(item.currentValue === undefined || item.currentValue === null ? "" : String(item.currentValue));
       setEditingField("");
       return;
     }
-    const nextValue = parseMoneyInput(valueDraft);
-    if (nextValue === Number(item.currentValue ?? 0)) {
+    const nextValue = parsed.value;
+    if (nextValue === item.currentValue) {
       setEditingField("");
       return;
     }
@@ -566,20 +570,26 @@ function VaultCard({
       <div className="mt-auto flex items-end justify-between gap-2 pt-4">
         <div className="min-w-0">
           {editingField === "value" ? (
+            <>
             <input
               autoFocus
+              inputMode="decimal"
+              aria-invalid={valueError ? true : undefined}
               value={valueDraft}
-              onChange={(e) => setValueDraft(e.target.value)}
+              onChange={(e) => { setValueDraft(e.target.value); if (valueError) setValueError(""); }}
               onBlur={() => void saveValueInline()}
               onKeyDown={(e) => {
                 if (e.key === "Enter") void saveValueInline();
                 if (e.key === "Escape") {
-                  setValueDraft(String(Number(item.currentValue ?? 0)));
+                  setValueDraft(item.currentValue === undefined || item.currentValue === null ? "" : String(item.currentValue));
+                  setValueError("");
                   setEditingField("");
                 }
               }}
               aria-label="Value" className="h-9 w-24 rounded-[8px] bg-[color:var(--pill)] px-2 text-[13px] ring-1 ring-[color:var(--border)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--pill-active-ring)] md:h-7"
             />
+            {valueError ? <span role="alert" data-testid="card-value-error" className="mt-1 block max-w-[220px] text-[11px] leading-snug text-red-300">{valueError}</span> : null}
+            </>
           ) : (
             // Single number: the current value itself, colored by gain/loss
             // (green up, red down) instead of a separate, often-redundant
