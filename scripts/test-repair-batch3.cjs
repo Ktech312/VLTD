@@ -119,11 +119,11 @@ check("D-02 the hall is read back before it is opened", /loadAllGalleries\(\)\.f
 check("D-02 a retry reuses the same hall id", /reuseId/.test(hs) && /hallIdRef/.test(read("src/app/vault/halls/page.tsx")));
 check("D-02 the page never opens a hall that failed", /if \(!result\.ok\)[\s\S]{0,200}return;[\s\S]*router\.push/.test(read("src/app/vault/halls/page.tsx")));
 const gl = read("src/lib/collectionGoals.ts");
-check("D-03/04 goal writes read the account's answer (select + error)", /upsert\(goalRow\(goal, pid\), \{ onConflict: "id" \}\)\.select\("id"\)/.test(gl) && /delete\(\)\.eq\("id", id\)\.eq\("profile_id", pid\)\.select\("id"\)/.test(gl));
+check("D-03/04 goal writes read the account's answer (select + error)", /upsert\(goalRow\(goal, pid, (withType|false)\), \{ onConflict: "id" \}\)\.select\("id"\)/.test(gl) && /delete\(\)\.eq\("id", id\)\.eq\("profile_id", pid\)\.select\("id"\)/.test(gl));
 check("D-03/04 no fire-and-forget pushes remain", !/void pushGoal\(|void deleteGoalRow\(/.test(gl));
 check("D-04 a deleted goal is remembered until the account confirms", /LS_DELETED/.test(gl) && /mergeCloudGoals\(/.test(gl));
 const sheet = read("src/components/AddGoalSheet.tsx");
-check("D-05 the sheet validates before saving and keeps the form on failure", /validateGoalTarget\(targetCount\)/.test(sheet) && /setError\(target\.message\)/.test(sheet));
+check("D-05 the sheet validates before saving and keeps the form on failure", /validateGoalTarget\(targetCount, kind\)/.test(sheet) && /setError\(target\.message\)/.test(sheet));
 check("D-03 the sheet says Saved only after the goal is stored", /const result = await onSave\(/.test(sheet) && sheet.indexOf("await onSave(") < sheet.indexOf("flashSaved();"));
 check("D-03 one goal id per sheet (repeated clicks write one goal)", /goalId = useRef/.test(sheet));
 const imp = read("src/lib/spreadsheetImport.ts");

@@ -15,6 +15,9 @@ import {
   pendingGoalCounts,
   retryPendingGoals,
   syncGoalsFromSupabaseChecked,
+  updateGoal,
+  describeGoalProgress,
+  type GoalKind,
   type GoalProgress,
 } from "@/lib/collectionGoals";
 import { addWishlistItem } from "@/lib/wishlistModel";
@@ -26,16 +29,15 @@ import { showToast } from "@/lib/toast";
 import { subscribeCloudSave } from "@/lib/cloudSaveStatus";
 import { universePlaceholder } from "@/lib/itemPlaceholder";
 
-type GoalFilter = "all" | "completion" | "value" | "insurance" | "sell" | "gallery";
+// How a goal is measured is stored with it (items or value); a goal made before that existed is "setup" until the person chooses.
+type GoalFilter = "all" | "count" | "value" | "setup";
 type SortMode = "priority" | "progress" | "recent";
 
-// The type filters. Insurance is not here: it is the Insurance tab of the Vault. Existing goals of that type still appear under All Goals.
 const GOAL_FILTERS: [GoalFilter, string, string][] = [
   ["all", "All Goals", "target"],
-  ["completion", "Completion", "check"],
+  ["count", "Items", "check"],
   ["value", "Value", "chart"],
-  ["sell", "Sell", "tag"],
-  ["gallery", "Exhibition", "exhibition"],
+  ["setup", "Needs setup", "warning"],
 ];
 
 type GoalView = {
@@ -49,6 +51,10 @@ type GoalView = {
   valueImpact: number;
   visibility: "Private" | "Public";
   previewLabel: string;
+  needsSetup: boolean;
+  progressText: string;
+  /** How many owned items the goal covers (not the goal's own number). */
+  scopeCount: number;
   nextAction: string;
   actionLabel: string;
   notes?: string;
@@ -64,7 +70,7 @@ function money(value: number) {
   }).format(value);
 }
 
-function Ring({ pct, size = 92 }: { pct: number; size?: number }) {
+function Ring({ pct, size = 92, label }: { pct: number; size?: number; label?: string }) {
   const radius = size / 2 - 9;
   const circ = 2 * Math.PI * radius;
   const clamped = Math.min(100, Math.max(0, pct));
@@ -87,7 +93,7 @@ function Ring({ pct, size = 92 }: { pct: number; size?: number }) {
         />
       </svg>
       <div className="absolute inset-0 grid place-items-center text-[24px] font-black" style={{ color: "var(--theme-text-primary,#ECEDEF)" }}>
-        {clamped}%
+        {label ?? `${clamped}%`}
       </div>
     </div>
   );
@@ -99,15 +105,6 @@ function thumbForItem(item: VaultItem | undefined) {
   return item?.imageFrontUrl || universePlaceholder(item?.universe);
 }
 
-function goalType(goal: GoalProgress): GoalFilter {
-  const text = `${goal.name} ${goal.notes ?? ""} ${goal.universe ?? ""}`.toLowerCase();
-  if (text.includes("insurance")) return "insurance";
-  if (text.includes("sell") || text.includes("duplicate")) return "sell";
-  if (text.includes("gallery") || text.includes("room")) return "gallery";
-  if (text.includes("value") || text.includes("$")) return "value";
-  return "completion";
-}
-
 function buildGoalViews(progress: GoalProgress[], items: VaultItem[]): GoalView[] {
   return progress.map((goal, index) => {
     const matching = items
@@ -117,13 +114,15 @@ function buildGoalViews(progress: GoalProgress[], items: VaultItem[]): GoalView[
         return true;
       })
       .slice(0, 5);
-    const ownedMatching = items.filter((item) => item.status !== "SOLD" && item.status !== "WISHLIST").filter((item) => {
+    const ownedAll = items.filter((item) => item.status !== "SOLD" && item.status !== "WISHLIST").filter((item) => {
       if (goal.subject?.trim()) return (item.subject ?? "").toLowerCase() === goal.subject.trim().toLowerCase();
       if (goal.universe) return item.universe === goal.universe;
       return true;
-    }).slice(0, 60);
+    });
+    const ownedMatching = ownedAll.slice(0, 60);
 
-    const type = goalType(goal);
+    // The goal's own stored kind. Never worked out from its name or notes.
+    const type: GoalFilter = goal.needsSetup ? "setup" : goal.kind === "value" ? "value" : "count";
     const valueImpact = matching.reduce((sum, item) => sum + (item.currentValue ?? item.purchasePrice ?? 0), 0);
 
     return {
@@ -135,10 +134,13 @@ function buildGoalViews(progress: GoalProgress[], items: VaultItem[]): GoalView[
       targetCount: goal.targetCount,
       missing: goal.missing,
       valueImpact,
-      visibility: type === "gallery" ? "Public" : "Private",
-      previewLabel: type === "insurance" ? "Top Items In Goal" : type === "gallery" ? "Exhibition Preview" : type === "sell" ? "Duplicates Ready To List" : type === "value" ? "Value Progress" : "Recently Added",
-      nextAction: goal.missing > 0 ? (type === "insurance" ? "Add purchase info" : `Find ${goal.missing} more`) : "Goal complete",
-      actionLabel: type === "insurance" ? "Review items" : type === "gallery" ? "Create room" : type === "sell" ? "Review duplicates" : "View set",
+      visibility: "Private",
+      previewLabel: type === "value" ? "Value Progress" : type === "setup" ? "Not measured yet" : "Recently Added",
+      needsSetup: goal.needsSetup,
+      progressText: describeGoalProgress(goal),
+      scopeCount: ownedAll.length,
+      nextAction: type === "setup" ? "Choose how to measure it" : goal.missing > 0 ? (type === "value" ? `${money(goal.missing)} to go` : `Find ${goal.missing} more`) : "Goal complete",
+      actionLabel: type === "setup" ? "Set up goal" : type === "value" ? "Review values" : "View set",
       notes: goal.notes,
       real: goal,
       thumbnails: ownedMatching.length ? ownedMatching.map((item) => thumbForItem(item)) : [universePlaceholder(goal.universe)],
@@ -173,11 +175,13 @@ function GoalRow({
   selected,
   onSelect,
   onWishlist,
+  onConfigure,
 }: {
   goal: GoalView;
   selected: boolean;
   onSelect: () => void;
   onWishlist: () => void;
+  onConfigure: (kind: GoalKind) => void;
 }) {
   return (
     <button
@@ -190,24 +194,26 @@ function GoalRow({
         boxShadow: selected ? "0 0 0 1px rgba(203,208,213,0.16), 0 18px 42px rgba(0,0,0,0.26)" : "none",
       }}
     >
-      <Ring pct={goal.pct} size={82} />
+      <Ring pct={goal.pct} size={82} label={goal.needsSetup ? "—" : undefined} />
 
       <div className="min-w-0">
         <div className="flex items-center gap-2">
           <h2 className="truncate font-serif text-[23px] font-black leading-tight" style={{ color: "var(--theme-text-primary,#ECEDEF)" }}>{goal.name}</h2>
-          {goal.type === "insurance" && <Glyph name="shield" size={17} style={{ color: "var(--theme-gold,#C8CDD2)" }} />}
           {goal.type === "value" && <Glyph name="chart" size={17} style={{ color: "var(--theme-gold,#C8CDD2)" }} />}
-          {goal.type === "gallery" && <Glyph name="exhibition" size={17} style={{ color: "var(--theme-gold,#C8CDD2)" }} />}
         </div>
         <div className="mt-2 flex flex-wrap gap-5 text-sm" style={{ color: "var(--theme-text-primary,#ECEDEF)" }}>
-          <span>{goal.ownedCount.toLocaleString()} of {goal.targetCount.toLocaleString()} {goal.type === "value" ? "value" : "items"}</span>
+          <span data-testid="goal-progress-text">{goal.progressText}</span>
           <span>{goal.visibility === "Private" ? "Private" : "Public"}</span>
         </div>
       </div>
 
       <div className="min-w-0 border-l border-r border-[rgba(203,208,213,0.16)] px-5">
         <div className="mb-2 text-[11px] font-black uppercase tracking-[0.16em]" style={{ color: "var(--theme-text-muted,#61656B)" }}>{goal.previewLabel}</div>
-        {goal.type === "value" ? (
+        {goal.type === "setup" ? (
+          <p className="text-sm" style={{ color: "var(--theme-text-muted,#61656B)" }}>
+            This goal was made before goals had a type. It has a target of {goal.targetCount.toLocaleString()}, but nothing says whether that is items or dollars, so no progress is shown until you choose.
+          </p>
+        ) : goal.type === "value" ? (
           <div>
             <div className="h-2 overflow-hidden rounded-full bg-white/10">
               <div className="h-full rounded-full bg-[#56D879]" style={{ width: `${Math.min(100, goal.pct)}%` }} />
@@ -236,8 +242,14 @@ function GoalRow({
       <div>
         <div className="text-[11px] font-black uppercase tracking-[0.16em]" style={{ color: "var(--theme-text-muted,#61656B)" }}>Next Action</div>
         <div className="mt-1 text-lg font-bold leading-tight" style={{ color: "var(--theme-text-primary,#ECEDEF)" }}>{goal.nextAction}</div>
-        <div className="text-xs" style={{ color: "var(--theme-text-muted,#61656B)" }}>{goal.missing > 0 ? `${goal.missing} items missing` : "Ready"}</div>
-        <button
+        <div className="text-xs" style={{ color: "var(--theme-text-muted,#61656B)" }}>{goal.type === "setup" ? "Not set up" : goal.type === "value" ? (goal.missing > 0 ? `${money(goal.missing)} short` : "Reached") : goal.missing > 0 ? `${goal.missing} items missing` : "Ready"}</div>
+        {goal.type === "setup" ? (
+          <div className="mt-3 flex flex-wrap gap-2" data-testid="goal-setup-choices">
+            <button type="button" onClick={(event) => { event.stopPropagation(); onConfigure("count"); }} className="rounded-[7px] border border-[rgba(203,208,213,0.36)] px-3 py-1.5 text-xs font-black" style={{ color: "var(--theme-gold,#C8CDD2)" }}>Count items</button>
+            <button type="button" onClick={(event) => { event.stopPropagation(); onConfigure("value"); }} className="rounded-[7px] border border-[rgba(203,208,213,0.36)] px-3 py-1.5 text-xs font-black" style={{ color: "var(--theme-gold,#C8CDD2)" }}>Measure value ($)</button>
+          </div>
+        ) : null}
+        {goal.type === "count" ? <button
           type="button"
           onClick={(event) => {
             event.stopPropagation();
@@ -249,7 +261,7 @@ function GoalRow({
           style={{ color: "var(--theme-gold,#C8CDD2)" }}
         >
           {goal.missing > 0 ? "Add missing to Wishlist" : "Goal complete"}
-        </button>
+        </button> : null}
       </div>
     </button>
   );
@@ -341,13 +353,17 @@ export default function GoalsPage() {
   }, [filter, goalViews, sort]);
 
   const selectedGoal = visibleGoals.find((goal) => goal.id === selectedGoalId) ?? visibleGoals[0] ?? null;
-  const averageProgress = Math.round(goalViews.reduce((sum, goal) => sum + goal.pct, 0) / Math.max(1, goalViews.length));
+  // Goals that are not set up have no progress to average or count.
+  const measured = goalViews.filter((goal) => !goal.needsSetup);
+  const needSetup = goalViews.length - measured.length;
+  const averageProgress = Math.round(measured.reduce((sum, goal) => sum + goal.pct, 0) / Math.max(1, measured.length));
   const goalValueImpact = goalViews.reduce((sum, goal) => sum + goal.valueImpact, 0);
-  const insuranceGoal = goalViews.find((goal) => goal.type === "insurance") ?? null;
-  const completed = goalViews.filter((goal) => goal.pct >= 100).length;
+  const completed = measured.filter((goal) => goal.pct >= 100).length;
+  const countGoals = goalViews.filter((goal) => goal.type === "count").length;
+  const valueGoals = goalViews.filter((goal) => goal.type === "value").length;
 
   function addGoalToWishlist(goal: GoalView) {
-    if (!goal.real || goal.real.missing <= 0) return;
+    if (!goal.real || goal.type !== "count" || goal.real.missing <= 0) return;
     const title = `${goal.real.name} - ${goal.real.missing} missing`;
     if (loadWishlist().some((entry) => entry.title === title)) {
       showToast("Already on your wishlist.");
@@ -363,8 +379,20 @@ export default function GoalsPage() {
     });
   }
 
+  // The person picks how an older goal is measured. Its stored number is kept; only the unit is chosen.
+  async function configureGoal(goal: GoalView, kind: GoalKind) {
+    if (!goal.real) return;
+    const result = await updateGoal(goal.real.id, { goalType: kind });
+    setGoals(loadGoals());
+    refreshWaiting();
+    if (!result.ok) showToast(result.error);
+    else if (result.typeOnDeviceOnly) showToast("Saved. How this goal is measured is kept on this device until your account can store it.");
+    else if (result.pending) showToast("Saved on this device. Sync pending: your account will be updated when the connection is back.");
+    else showToast(kind === "value" ? "This goal now measures collection value." : "This goal now counts items.");
+  }
+
   async function shareGoal(goal: GoalView) {
-    const text = [goal.name, goal.pct + "% complete", goal.missing > 0 ? goal.missing + " to go" : "Complete"].filter(Boolean).join(" — ");
+    const text = goal.needsSetup ? goal.name : [goal.name, goal.pct + "% complete", goal.missing > 0 ? (goal.type === "value" ? money(goal.missing) : goal.missing) + " to go" : "Complete"].filter(Boolean).join(" — ");
     try {
       if (typeof navigator !== "undefined" && navigator.share) {
         await navigator.share({ title: goal.name, text });
@@ -433,20 +461,21 @@ export default function GoalsPage() {
           <div className="mt-5 grid gap-0 overflow-hidden rounded-[7px] border border-[rgba(203,208,213,0.28)] lg:grid-cols-[1.2fr_1.15fr_1fr_1fr]" style={{ background: "var(--theme-card,rgba(15,25,45,0.86))" }}>
             <StatPanel label="Overall Progress" icon={<Ring pct={averageProgress} size={98} />}>
               <div className="mt-1 text-sm leading-6" style={{ color: "var(--theme-text-primary,#ECEDEF)" }}>
-                <strong>{goalViews.filter((goal) => goal.pct > 0).length}</strong> of <strong>{goalViews.length}</strong> goals active<br />
-                <span style={{ color: "var(--theme-gold,#C8CDD2)" }}>{goalViews.filter((goal) => goal.missing > 0).length} need work</span><br />
-                <span style={{ color: "var(--theme-text-muted,#61656B)" }}>{goalViews.filter((goal) => goal.pct === 0).length} not started</span>
+                <strong>{measured.filter((goal) => goal.pct > 0).length}</strong> of <strong>{measured.length}</strong> goals active<br />
+                <span style={{ color: "var(--theme-gold,#C8CDD2)" }}>{measured.filter((goal) => goal.missing > 0).length} need work</span><br />
+                <span style={{ color: "var(--theme-text-muted,#61656B)" }}>{measured.filter((goal) => goal.pct === 0).length} not started{needSetup > 0 ? ` · ${needSetup} need setup` : ""}</span>
               </div>
             </StatPanel>
             <StatPanel label="Goal Value Impact">
               <div className="mt-2 text-[32px] font-black text-[color:var(--info,#52D6F4)]">{money(goalValueImpact)}</div>
               <p className="text-sm leading-5" style={{ color: "var(--theme-text-muted,#61656B)" }}>Potential increase across all goals</p>
             </StatPanel>
-            <StatPanel label="Insurance Goal Progress" icon={<Glyph name="shield" size={34} style={{ color: "var(--theme-gold,#C8CDD2)" }} />}>
-              <div className="text-[32px] font-black text-[color:var(--info,#52D6F4)]">{insuranceGoal?.pct ?? 0}%</div>
-              <p className="text-sm" style={{ color: "var(--theme-text-muted,#61656B)" }}>
-                {insuranceGoal ? `${insuranceGoal.ownedCount} of ${insuranceGoal.targetCount} items documented. Not insurance coverage.` : "No insurance goal yet"}
-              </p>
+            <StatPanel label="Measured By" icon={<Glyph name="chart" size={34} style={{ color: "var(--theme-gold,#C8CDD2)" }} />}>
+              <div className="text-sm leading-6" style={{ color: "var(--theme-text-primary,#ECEDEF)" }} data-testid="goals-measured-by">
+                <strong>{countGoals}</strong> by items<br />
+                <strong>{valueGoals}</strong> by value<br />
+                <span style={{ color: needSetup > 0 ? "var(--theme-gold,#C8CDD2)" : "var(--theme-text-muted,#61656B)" }}>{needSetup} need setup</span>
+              </div>
             </StatPanel>
             <StatPanel label="Completed Goals" icon={<Glyph name="check" size={34} style={{ color: "#8DD35F" }} />}>
               <div className="text-[32px] font-black text-[#8DD35F]">{completed}</div>
@@ -515,6 +544,7 @@ export default function GoalsPage() {
                 selected={selectedGoal?.id === goal.id}
                 onSelect={() => setSelectedGoalId(goal.id)}
                 onWishlist={() => addGoalToWishlist(goal)}
+                onConfigure={(kind) => void configureGoal(goal, kind)}
               />
             ))}
           </div>
@@ -525,7 +555,7 @@ export default function GoalsPage() {
           <aside className="h-fit rounded-[8px] border border-[rgba(203,208,213,0.32)] p-5 xl:sticky xl:top-24" style={{ background: "var(--theme-card,rgba(15,25,45,0.92))", boxShadow: "0 18px 55px rgba(0,0,0,0.26)" }}>
             <div className="flex items-start justify-between">
               <div className="flex gap-3">
-                <Glyph name={selectedGoal.type === "insurance" ? "shield" : selectedGoal.type === "value" ? "chart" : selectedGoal.type === "gallery" ? "exhibition" : "target"} size={34} style={{ color: "var(--theme-gold,#C8CDD2)" }} />
+                <Glyph name={selectedGoal.type === "value" ? "chart" : "target"} size={34} style={{ color: "var(--theme-gold,#C8CDD2)" }} />
                 <div>
                   <h2 className="font-serif text-[25px] font-black leading-tight" style={{ color: "var(--theme-text-primary,#ECEDEF)" }}>{selectedGoal.name}</h2>
                   <div className="mt-2 flex gap-2 text-xs">
@@ -540,16 +570,22 @@ export default function GoalsPage() {
                 <div className="h-2 flex-1 overflow-hidden rounded-full bg-white/10">
                   <div className="h-full rounded-full bg-[#56D879]" style={{ width: `${selectedGoal.pct}%` }} />
                 </div>
-                <div className="ml-5 text-[38px] font-black text-[#56D879]">{selectedGoal.pct}%</div>
+                <div className="ml-5 text-[38px] font-black text-[#56D879]">{selectedGoal.needsSetup ? "—" : `${selectedGoal.pct}%`}</div>
               </div>
-              <div className="mt-2 text-sm" style={{ color: "var(--theme-text-muted,#61656B)" }}>{selectedGoal.ownedCount} of {selectedGoal.targetCount} items ready</div>
+              <div className="mt-2 text-sm" style={{ color: "var(--theme-text-muted,#61656B)" }}>{selectedGoal.progressText}</div>
+              {selectedGoal.needsSetup ? (
+                <div className="mt-3 flex flex-wrap gap-2" data-testid="goal-setup-choices-panel">
+                  <button type="button" onClick={() => void configureGoal(selectedGoal, "count")} className="rounded-[7px] border border-[rgba(203,208,213,0.36)] px-3 py-2 text-xs font-black" style={{ color: "var(--theme-gold,#C8CDD2)" }}>Count items ({selectedGoal.targetCount.toLocaleString()} items)</button>
+                  <button type="button" onClick={() => void configureGoal(selectedGoal, "value")} className="rounded-[7px] border border-[rgba(203,208,213,0.36)] px-3 py-2 text-xs font-black" style={{ color: "var(--theme-gold,#C8CDD2)" }}>Measure value ({money(selectedGoal.targetCount)})</button>
+                </div>
+              ) : null}
             </div>
 
             <div className="mt-5 grid grid-cols-2 border-y border-[rgba(203,208,213,0.18)] py-4">
               <div>
                 <div className="text-[11px] font-black uppercase tracking-[0.16em]" style={{ color: "var(--theme-text-muted,#61656B)" }}>Target</div>
-                <div className="mt-1 text-lg font-black" style={{ color: "var(--theme-text-primary,#ECEDEF)" }}>{selectedGoal.targetCount.toLocaleString()} items</div>
-                <div className="text-xs" style={{ color: "var(--theme-text-muted,#61656B)" }}>Top items by value</div>
+                <div className="mt-1 text-lg font-black" style={{ color: "var(--theme-text-primary,#ECEDEF)" }}>{selectedGoal.type === "value" ? money(selectedGoal.targetCount) : selectedGoal.type === "setup" ? `${selectedGoal.targetCount.toLocaleString()} (not set up)` : `${selectedGoal.targetCount.toLocaleString()} items`}</div>
+                <div className="text-xs" style={{ color: "var(--theme-text-muted,#61656B)" }}>{selectedGoal.type === "value" ? "Collection value to reach" : selectedGoal.type === "setup" ? "Items or dollars: you choose" : "Items in the complete set"}</div>
               </div>
               <div className="border-l border-[rgba(203,208,213,0.18)] pl-5">
                 <div className="text-[11px] font-black uppercase tracking-[0.16em]" style={{ color: "var(--theme-text-muted,#61656B)" }}>Insurable Value</div>
@@ -561,17 +597,17 @@ export default function GoalsPage() {
                         <section className="mt-5">
               <div className="mb-3 flex justify-between">
                 <h3 className="text-[12px] font-black uppercase tracking-[0.16em]" style={{ color: "var(--theme-gold,#C8CDD2)" }}>Goal Progress</h3>
-                <span className="text-xs" style={{ color: "var(--theme-text-primary,#ECEDEF)" }}>{selectedGoal.ownedCount} / {selectedGoal.targetCount}</span>
+                <span className="text-xs" style={{ color: "var(--theme-text-primary,#ECEDEF)" }}>{selectedGoal.needsSetup ? "Not set up" : selectedGoal.progressText}</span>
               </div>
               {[
-                ["Ready items", selectedGoal.ownedCount, selectedGoal.ownedCount >= selectedGoal.targetCount],
+                [selectedGoal.type === "value" ? "Value reached" : "Ready items", selectedGoal.ownedCount, selectedGoal.ownedCount >= selectedGoal.targetCount],
                 ["Missing to target", selectedGoal.missing, selectedGoal.missing === 0],
                 ["Current progress", selectedGoal.pct, selectedGoal.pct >= 100],
               ].map(([label, count, ok]) => (
                 <div key={String(label)} className="grid grid-cols-[1fr_72px_22px] items-center gap-2 border-b border-[rgba(203,208,213,0.10)] py-2 text-sm">
                   <span style={{ color: "var(--theme-text-primary,#ECEDEF)" }}>{label}</span>
                   <span className="text-right" style={{ color: "var(--theme-text-muted,#61656B)" }}>
-                    {label === "Current progress" ? `${count}%` : Number(count).toLocaleString()}
+                    {selectedGoal.needsSetup ? "—" : label === "Current progress" ? `${count}%` : selectedGoal.type === "value" ? money(Number(count)) : Number(count).toLocaleString()}
                   </span>
                   <span className={ok ? "text-green-400" : "text-[color:var(--theme-gold,#C8CDD2)]"}>{ok ? "ok" : "!"}</span>
                 </div>
@@ -585,9 +621,13 @@ export default function GoalsPage() {
               <div className="rounded-[7px] border border-[rgba(203,208,213,0.14)] p-3 text-sm" style={{ color: "var(--theme-text-primary,#ECEDEF)" }}>
                 <div className="font-black">{selectedGoal.nextAction}</div>
                 <div className="mt-1 text-xs" style={{ color: "var(--theme-text-muted,#61656B)" }}>
-                  {selectedGoal.missing > 0
-                    ? `${selectedGoal.missing} more ${selectedGoal.type === "value" ? "value" : "item"} ${selectedGoal.missing === 1 ? "step is" : "steps are"} needed for this goal.`
-                    : "This goal is complete."}
+                  {selectedGoal.needsSetup
+                    ? "Choose how this goal is measured to see its progress."
+                    : selectedGoal.missing > 0
+                      ? selectedGoal.type === "value"
+                        ? `${money(selectedGoal.missing)} more collection value is needed for this goal.`
+                        : `${selectedGoal.missing} more ${selectedGoal.missing === 1 ? "item is" : "items are"} needed for this goal.`
+                      : "This goal is complete."}
                 </div>
               </div>
             </section>
@@ -595,10 +635,10 @@ export default function GoalsPage() {
             <section className="mt-5">
               <h3 className="mb-3 text-[12px] font-black uppercase tracking-[0.16em]" style={{ color: "var(--theme-gold,#C8CDD2)" }}>Suggested Action</h3>
               <Link
-                href={selectedGoal.type === "insurance" ? "/insurance" : selectedGoal.type === "gallery" ? "/museum" : "/vault"}
+                href="/vault"
                 className="mb-2 grid w-full grid-cols-[34px_1fr_auto] items-center gap-2 rounded-[7px] border border-[rgba(203,208,213,0.16)] p-3 text-left transition hover:border-[rgba(203,208,213,0.4)]"
               >
-                <Glyph name={selectedGoal.type === "insurance" ? "shield" : selectedGoal.type === "gallery" ? "exhibition" : "target"} size={20} style={{ color: "var(--theme-gold,#C8CDD2)" }} />
+                <Glyph name="target" size={20} style={{ color: "var(--theme-gold,#C8CDD2)" }} />
                 <span>
                   <span className="block text-sm font-black" style={{ color: "var(--theme-text-primary,#ECEDEF)" }}>{selectedGoal.actionLabel}</span>
                   <span className="block text-xs" style={{ color: "var(--theme-text-muted,#61656B)" }}>Uses the current goal and matching vault items.</span>
@@ -609,7 +649,7 @@ export default function GoalsPage() {
 
             <section className="mt-5">
               <div className="mb-3 flex justify-between">
-                <h3 className="text-[12px] font-black uppercase tracking-[0.16em]" style={{ color: "var(--theme-gold,#C8CDD2)" }}>Items In Goal ({selectedGoal.ownedCount})</h3>
+                <h3 className="text-[12px] font-black uppercase tracking-[0.16em]" style={{ color: "var(--theme-gold,#C8CDD2)" }}>Items In Goal ({selectedGoal.scopeCount})</h3>
                 <button type="button" onClick={() => setShowAllGoalItems((v) => !v)} className="text-xs font-bold" style={{ color: "var(--theme-gold,#C8CDD2)" }}>{showAllGoalItems ? "Show less" : "View all"}</button>
               </div>
               <div className="flex flex-wrap gap-2">
@@ -625,8 +665,8 @@ export default function GoalsPage() {
             </section>
 
             <div className="mt-5 grid gap-3">
-              <button type="button" onClick={() => addGoalToWishlist(selectedGoal)} disabled={selectedGoal.missing <= 0} className="rounded-[7px] px-4 py-3 text-sm font-black disabled:cursor-not-allowed disabled:opacity-60" style={{ background: "linear-gradient(135deg,#8C9298,#C8CDD2)", color: "#0B0B0B" }}>
-                {selectedGoal.missing > 0 ? "Add missing to Wishlist" : "Goal complete"}
+              <button type="button" onClick={() => addGoalToWishlist(selectedGoal)} disabled={selectedGoal.type !== "count" || selectedGoal.missing <= 0} className="rounded-[7px] px-4 py-3 text-sm font-black disabled:cursor-not-allowed disabled:opacity-60" style={{ background: "linear-gradient(135deg,#8C9298,#C8CDD2)", color: "#0B0B0B" }}>
+                {selectedGoal.type === "setup" ? "Set up the goal first" : selectedGoal.type === "value" ? "Wishlist is for item goals" : selectedGoal.missing > 0 ? "Add missing to Wishlist" : "Goal complete"}
               </button>
               <div className="grid grid-cols-2 gap-3">
                 <button type="button" onClick={() => shareGoal(selectedGoal)} className="rounded-[7px] border border-[rgba(203,208,213,0.22)] px-4 py-3 text-sm font-bold" style={{ color: "var(--theme-gold,#C8CDD2)" }}>Share goal</button>
@@ -645,6 +685,7 @@ export default function GoalsPage() {
             setGoals(loadGoals());
             refreshWaiting();
             if (result.ok && result.pending) showToast("Saved on this device. Sync pending: it will upload to your account when the connection is back.");
+            else if (result.ok && result.typeOnDeviceOnly) showToast("Saved. How this goal is measured is kept on this device until your account can store it.");
             return result;
           }}
         />

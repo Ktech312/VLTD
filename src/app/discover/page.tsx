@@ -168,9 +168,9 @@ export default function DiscoverPage() {
   const [itemFactsById, setItemFactsById] = useState<Map<string, GalleryItemFact>>(new Map());
   const [userPrefs, setUserPrefs] = useState<ReturnType<typeof buildUserPreferences> | null>(null);
   const [signedIn, setSignedIn] = useState(false);
-  // Universes displayed (a saved setting, null = all). Separate from what you collect.
-  const [displayedUniverses, setDisplayedUniverses] = useState<UniverseKey[] | null>(null);
-  const visibleUniverseKeys = useMemo<UniverseKey[]>(() => displayedUniverses ?? UNIVERSE_KEYS, [displayedUniverses]);
+  // Discover browses OTHER people's public exhibitions, so its universe filter always offers every universe. Your own "Universes displayed"
+  // setting only filters your own collection (Vault, Home, Insights) and is not applied here.
+  const visibleUniverseKeys: UniverseKey[] = UNIVERSE_KEYS;
 
   useEffect(() => {
     let active = true;
@@ -183,9 +183,8 @@ export default function DiscoverPage() {
         try {
           const status = await getOnboardingStatus();
           const prefs = readUniversePrefs(status.activeProfile as unknown as Record<string, unknown> | null);
-          setDisplayedUniverses(prefs.displayed);
-          // Start on what you collect, as long as that universe is one you chose to display.
-          const first = prefs.interests.find((key) => !prefs.displayed || prefs.displayed.includes(key));
+          // Start on what you collect.
+          const first = prefs.interests[0];
           if (first) setActiveTab(first);
         } catch {
           // Non-critical personalization hint.
@@ -518,14 +517,17 @@ export default function DiscoverPage() {
       <DiscoverNav activeKey="explore" />
       <div className="mx-auto grid max-w-[1480px] gap-6 px-4 pb-6 sm:px-6 lg:px-8 xl:grid-cols-[minmax(0,1fr)_430px]">
         <div className="min-w-0">
-          <div className="mt-5 grid gap-3 lg:grid-cols-[minmax(0,1fr)_200px_200px]">
+          <p className="mt-5 text-xs" style={{ color: "var(--theme-text-muted,#61656B)" }} data-testid="discover-filter-note">
+            Browsing public exhibitions from every collector. These filters do not change what your own Vault shows.
+          </p>
+          <div className="mt-2 grid gap-3 lg:grid-cols-[minmax(0,1fr)_200px_200px]">
             <label className="flex h-10 items-center gap-2 rounded-[7px] border border-[rgba(203,208,213,0.22)] px-3" style={{ background: "var(--theme-card,rgba(15,25,45,0.85))" }}>
               <Glyph name="search" size={15} className="opacity-60" />
               <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search exhibitions, items, and collectors..." className="min-w-0 flex-1 bg-transparent text-xs outline-none placeholder:opacity-45" />
             </label>
             <PillSelect
               value={activeTab}
-              ariaLabel="Filter by universe"
+              ariaLabel="Filter public exhibitions by universe"
               align="left"
               minWidthPx={150}
               onChange={(next) => setActiveTab(next === "All" ? "All" : (next as UniverseKey))}

@@ -2,7 +2,7 @@
 
 import { useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { computeAllGoalProgress, type CollectionGoal } from "@/lib/collectionGoals";
+import { computeAllGoalProgress, describeGoalProgress, type CollectionGoal } from "@/lib/collectionGoals";
 import type { VaultItem } from "@/lib/vaultModel";
 
 export default function GoalsProgressWidget({
@@ -47,7 +47,7 @@ export default function GoalsProgressWidget({
                 className="ml-2 shrink-0 text-[12px] font-bold"
                 style={{ color: goal.isComplete ? "var(--theme-gold)" : "var(--muted)" }}
               >
-                {goal.pct}%
+                {goal.needsSetup ? "Set up" : `${goal.pct}%`}
               </span>
             </div>
             <div className="h-1.5 overflow-hidden rounded-full" style={{ background: "var(--pill)" }}>
@@ -66,7 +66,7 @@ export default function GoalsProgressWidget({
               />
             </div>
             <div className="mt-1 text-[11px]" style={{ color: "var(--muted2)" }}>
-              {goal.ownedCount} / {goal.targetCount}
+              {describeGoalProgress(goal)}
               {goal.isAlmostThere && !goal.isComplete ? (
                 <span style={{ color: "var(--success, #4ade80)" }}> - Almost there</span>
               ) : null}

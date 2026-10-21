@@ -5,18 +5,37 @@ export const GOAL_TARGET_MAX = 2147483647;
 
 export type GoalTargetCheck = { ok: true; value: number } | { ok: false; message: string };
 
+/**
+ * How a goal is measured, chosen by the person and stored with the goal. Never worked out from the goal's name or notes.
+ *  count: the number of items owned (unit "items");  value: what the items are worth, in whole US dollars (unit "usd").
+ */
+export type GoalKind = "count" | "value";
+export type GoalUnit = "items" | "usd";
+export const GOAL_UNIT: Record<GoalKind, GoalUnit> = { count: "items", value: "usd" };
+
+export function isGoalKind(value: unknown): value is GoalKind {
+  return value === "count" || value === "value";
+}
+
+/** The kind and unit that were stored, only when they agree with each other. A missing or contradictory pair is "not set up". */
+export function readStoredKind(kind: unknown, unit: unknown): GoalKind | undefined {
+  if (!isGoalKind(kind)) return undefined;
+  return unit === undefined || unit === null || unit === GOAL_UNIT[kind] ? kind : undefined;
+}
+
 /** A valid target is a whole number from 1 to the database limit. Nothing is rounded or guessed. */
-export function validateGoalTarget(raw: unknown): GoalTargetCheck {
-  const text = String(raw ?? "").trim();
-  if (!text) return { ok: false, message: "Enter how many items the complete set has." };
+export function validateGoalTarget(raw: unknown, kind: GoalKind = "count"): GoalTargetCheck {
+  let text = String(raw ?? "").trim();
+  if (kind === "value" && text.startsWith("$")) text = text.slice(1).trim();
+  if (!text) return { ok: false, message: kind === "value" ? "Enter the target value in dollars." : "Enter how many items the complete set has." };
   // Thousands commas are fine ("1,000"); decimals, signs, exponents and letters are not.
   const digits = /^\d{1,3}(,\d{3})+$/.test(text) ? text.replace(/,/g, "") : text;
-  if (!/^\d+$/.test(digits)) return { ok: false, message: "Enter a whole number, using digits only (no decimals, signs or letters)." };
+  if (!/^\d+$/.test(digits)) return { ok: false, message: kind === "value" ? "Enter whole dollars, using digits only (no cents, signs or letters)." : "Enter a whole number, using digits only (no decimals, signs or letters)." };
   const value = Number(digits);
   if (!Number.isSafeInteger(value) || value > GOAL_TARGET_MAX) {
     return { ok: false, message: `Enter a number no larger than ${GOAL_TARGET_MAX.toLocaleString("en-US")}.` };
   }
-  if (value < 1) return { ok: false, message: "The set must have at least 1 item." };
+  if (value < 1) return { ok: false, message: kind === "value" ? "The target must be at least $1." : "The set must have at least 1 item." };
   return { ok: true, value };
 }
 

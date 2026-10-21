@@ -4,13 +4,20 @@ import { stillSignedInAs, storedSessionUserId } from "@/lib/sessionGuard";
 import type { VaultItem } from "@/lib/vaultModel";
 import { isNetworkFailure } from "@/lib/vaultCloud";
 import { registerCloudSaveRetry, reportPending, reportSaved, reportSaving } from "@/lib/cloudSaveStatus";
-import { mayAdoptDeviceWideGoals, mergeCloudGoals, validateGoalTarget } from "@/lib/goalRules";
+import { GOAL_UNIT, mayAdoptDeviceWideGoals, mergeCloudGoals, readStoredKind, validateGoalTarget, type GoalKind, type GoalUnit } from "@/lib/goalRules";
+import { activeItems as ownedItems, summarizeValues } from "@/lib/vaultStats";
 import { currentLocalOwner } from "@/lib/localDataOwner";
+
+export type { GoalKind, GoalUnit };
 
 export type CollectionGoal = {
   id: string;
   name: string;
+  /** The target in the goal's own unit: items for a "count" goal, whole US dollars for a "value" goal. */
   targetCount: number;
+  /** How the goal is measured, chosen by the person. Absent on goals made before this existed: those are "not set up", never guessed. */
+  goalType?: GoalKind;
+  unit?: GoalUnit;
   universe?: string;
   subject?: string;
   notes?: string;
@@ -18,6 +25,10 @@ export type CollectionGoal = {
 };
 
 export type GoalProgress = CollectionGoal & {
+  /** The explicit kind, or null while the goal has not been set up (old goals): nothing is measured until the person chooses. */
+  kind: GoalKind | null;
+  needsSetup: boolean;
+  /** Items owned (count goals) or whole dollars of value (value goals). */
   ownedCount: number;
   pct: number;
   missing: number;
@@ -133,7 +144,17 @@ export function pendingGoalCounts(): { saves: number; deletes: number } {
   return { saves: readIdSet(LS_PENDING, pid).size, deletes: readIdSet(LS_DELETED, pid).size };
 }
 
-function goalRow(goal: CollectionGoal, pid: string) {
+// The account's goal table gets goal_type / unit columns in a separate SQL step. Until it has them (or if it never does) the goal still saves
+// without those two fields and the choice is kept on this device; the page says so. null = not tried yet.
+let typeColumns: boolean | null = null;
+
+function isMissingTypeColumn(error: { message?: string; code?: string } | null): boolean {
+  if (!error) return false;
+  const text = String(error.message ?? "");
+  return error.code === "PGRST204" || error.code === "42703" || (/goal_type|\bunit\b/.test(text) && /column|schema cache/i.test(text));
+}
+
+function goalRow(goal: CollectionGoal, pid: string, withType: boolean) {
   return {
     id: goal.id,
     profile_id: pid,
@@ -143,10 +164,11 @@ function goalRow(goal: CollectionGoal, pid: string) {
     subject: goal.subject ?? null,
     notes: goal.notes ?? null,
     created_at: new Date(goal.createdAt || Date.now()).toISOString(),
+    ...(withType && goal.goalType ? { goal_type: goal.goalType, unit: GOAL_UNIT[goal.goalType] } : {}),
   };
 }
 
-type WriteOutcome = { state: "saved" } | { state: "unreachable" } | { state: "refused"; message: string };
+type WriteOutcome = { state: "saved"; typeKept?: boolean } | { state: "unreachable" } | { state: "refused"; message: string };
 
 function classify(error: { message?: string; status?: number } | null): WriteOutcome {
   if (!error) return { state: "saved" };
@@ -160,10 +182,20 @@ async function pushGoalConfirmed(goal: CollectionGoal, pid: string): Promise<Wri
     if (!pid) return { state: "unreachable" };
     const supabase = getSupabaseBrowserClient();
     if (!supabase) return { state: "unreachable" };
-    const { data, error } = await supabase.from("collection_goals").upsert(goalRow(goal, pid), { onConflict: "id" }).select("id");
+    const wantsType = Boolean(goal.goalType);
+    let withType = wantsType && typeColumns !== false;
+    let { data, error } = await supabase.from("collection_goals").upsert(goalRow(goal, pid, withType), { onConflict: "id" }).select("id");
+    if (error && withType && isMissingTypeColumn(error)) {
+      typeColumns = false;
+      withType = false;
+      ({ data, error } = await supabase.from("collection_goals").upsert(goalRow(goal, pid, false), { onConflict: "id" }).select("id"));
+    } else if (!error && withType) {
+      typeColumns = true;
+    }
     if (error) return classify(error);
     if (!data || data.length === 0) return { state: "refused", message: "The account did not accept this goal." };
-    return { state: "saved" };
+    // typeKept: the account holds how the goal is measured (or there is nothing to hold). false = it is on this device only for now.
+    return { state: "saved", typeKept: !wantsType || withType };
   } catch (error) {
     return classify(error as { message?: string });
   }
@@ -192,7 +224,8 @@ function reportOutcome(pid: string) {
   else reportSaved("goals");
 }
 
-export type GoalWriteResult = { ok: true; pending: boolean } | { ok: false; error: string };
+/** typeOnDeviceOnly: the goal is saved, but how it is measured could not be stored in the account yet (kept on this device, uploaded when the account can hold it). */
+export type GoalWriteResult = { ok: true; pending: boolean; typeOnDeviceOnly?: boolean } | { ok: false; error: string };
 
 /** Try again for everything of the active profile that the account has not confirmed (retry timer, page load, "Retry now"). */
 export async function retryPendingGoals(): Promise<void> {
@@ -246,23 +279,45 @@ export async function syncGoalsFromSupabaseChecked(): Promise<{ goals: Collectio
     const supabase = getSupabaseBrowserClient();
     if (!supabase) return { goals: local, ok: false };
     const startedAs = storedSessionUserId();
-    const { data, error } = await supabase
-      .from("collection_goals")
-      .select("id,name,target_count,universe,subject,notes,created_at")
-      .eq("profile_id", pid);
+    const baseColumns = "id,name,target_count,universe,subject,notes,created_at";
+    type Pulled = { data: Record<string, unknown>[] | null; error: { message?: string; code?: string } | null };
+    let pulled = (await supabase.from("collection_goals").select(typeColumns === false ? baseColumns : baseColumns + ",goal_type,unit").eq("profile_id", pid)) as unknown as Pulled;
+    if (pulled.error && typeColumns !== false && isMissingTypeColumn(pulled.error)) {
+      typeColumns = false;
+      pulled = (await supabase.from("collection_goals").select(baseColumns).eq("profile_id", pid)) as unknown as Pulled;
+    } else if (!pulled.error && typeColumns === null) {
+      typeColumns = true;
+    }
+    const { data, error } = pulled;
     if (error || !data) return { goals: local, ok: false };
     // The answer is for the person and profile that asked. If either changed while it was in flight, drop it: saving it would
     // file one profile's goals under another's, and pushing the local copy would upload them to the wrong profile.
     if (!stillSignedInAs(startedAs) || activeProfileId() !== pid) return { goals: local, ok: false };
-    const fromCloud: CollectionGoal[] = data.map((r: Record<string, unknown>) => ({
-      id: String(r.id),
-      name: String(r.name ?? ""),
-      targetCount: Number(r.target_count ?? 1),
-      universe: (r.universe as string) ?? undefined,
-      subject: (r.subject as string) ?? undefined,
-      notes: (r.notes as string) ?? undefined,
-      createdAt: Date.parse(String(r.created_at)) || Date.now(),
-    }));
+    const needTypeUpload: string[] = [];
+    const fromCloud: CollectionGoal[] = data.map((r: Record<string, unknown>) => {
+      const id = String(r.id);
+      let goalType = readStoredKind(r.goal_type, r.unit);
+      // The account has no stored kind for this goal. If this device holds the person's choice, keep it (and send it up when the account can hold it).
+      if (!goalType) {
+        const mine = local.find((g) => g.id === id)?.goalType;
+        if (mine) { goalType = mine; if (typeColumns !== false) needTypeUpload.push(id); }
+      }
+      return {
+        id,
+        name: String(r.name ?? ""),
+        targetCount: Number(r.target_count ?? 1),
+        universe: (r.universe as string) ?? undefined,
+        subject: (r.subject as string) ?? undefined,
+        notes: (r.notes as string) ?? undefined,
+        createdAt: Date.parse(String(r.created_at)) || Date.now(),
+        ...(goalType ? { goalType, unit: GOAL_UNIT[goalType] } : {}),
+      };
+    });
+    if (needTypeUpload.length > 0) {
+      const queued = readIdSet(LS_PENDING, pid);
+      for (const id of needTypeUpload) queued.add(id);
+      writeIdSet(LS_PENDING, pid, queued);
+    }
     const merged = mergeCloudGoals(fromCloud, local, readIdSet(LS_PENDING, pid), readIdSet(LS_DELETED, pid), readIdSet(LS_SYNCED, pid));
     // What the account holds is now known to this device.
     const synced = readIdSet(LS_SYNCED, pid);
@@ -293,12 +348,12 @@ export async function syncGoalsFromSupabaseChecked(): Promise<{ goals: Collectio
  */
 export async function addGoal(fields: Omit<CollectionGoal, "id" | "createdAt">, id?: string): Promise<GoalWriteResult> {
   ensureRetryRegistered();
-  const target = validateGoalTarget(fields.targetCount);
+  const target = validateGoalTarget(fields.targetCount, fields.goalType ?? "count");
   if (!target.ok) return { ok: false, error: target.message };
   const pid = activeProfileId();
   const goalId = id || `goal_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
   const existing = loadGoals().find((g) => g.id === goalId);
-  const goal: CollectionGoal = existing ?? { id: goalId, createdAt: Date.now(), ...fields, targetCount: target.value };
+  const goal: CollectionGoal = existing ?? { id: goalId, createdAt: Date.now(), ...fields, targetCount: target.value, ...(fields.goalType ? { unit: GOAL_UNIT[fields.goalType] } : {}) };
   if (!existing) saveGoals([...loadGoals(), goal]);
   addToSet(LS_PENDING, pid, goal.id);
   reportSaving("goals");
@@ -307,7 +362,7 @@ export async function addGoal(fields: Omit<CollectionGoal, "id" | "createdAt">, 
     removeFromSet(LS_PENDING, pid, goal.id);
     addToSet(LS_SYNCED, pid, goal.id);
     reportOutcome(pid);
-    return { ok: true, pending: false };
+    return { ok: true, pending: false, ...(r.typeKept === false ? { typeOnDeviceOnly: true } : {}) };
   }
   if (r.state === "unreachable") {
     reportPending("goals");
@@ -322,15 +377,16 @@ export async function addGoal(fields: Omit<CollectionGoal, "id" | "createdAt">, 
 
 export async function updateGoal(id: string, patch: Partial<Omit<CollectionGoal, "id" | "createdAt">>): Promise<GoalWriteResult> {
   ensureRetryRegistered();
-  if (patch.targetCount !== undefined) {
-    const target = validateGoalTarget(patch.targetCount);
-    if (!target.ok) return { ok: false, error: target.message };
-    patch = { ...patch, targetCount: target.value };
-  }
   const pid = activeProfileId();
   const before = loadGoals();
   const previous = before.find((g) => g.id === id);
   if (!previous) return { ok: false, error: "That goal no longer exists." };
+  if (patch.targetCount !== undefined) {
+    const target = validateGoalTarget(patch.targetCount, patch.goalType ?? previous.goalType ?? "count");
+    if (!target.ok) return { ok: false, error: target.message };
+    patch = { ...patch, targetCount: target.value };
+  }
+  if (patch.goalType) patch = { ...patch, unit: GOAL_UNIT[patch.goalType] };
   const updated = { ...previous, ...patch };
   saveGoals(before.map((g) => (g.id === id ? updated : g)));
   addToSet(LS_PENDING, pid, id);
@@ -340,7 +396,7 @@ export async function updateGoal(id: string, patch: Partial<Omit<CollectionGoal,
     removeFromSet(LS_PENDING, pid, id);
     addToSet(LS_SYNCED, pid, id);
     reportOutcome(pid);
-    return { ok: true, pending: false };
+    return { ok: true, pending: false, ...(r.typeKept === false ? { typeOnDeviceOnly: true } : {}) };
   }
   if (r.state === "unreachable") {
     reportPending("goals");
@@ -387,32 +443,58 @@ function activeItems(items: VaultItem[]) {
   return items.filter((item) => item.status !== "SOLD" && item.status !== "WISHLIST");
 }
 
-export function computeGoalProgress(goal: CollectionGoal, vaultItems: VaultItem[]): GoalProgress {
-  const active = activeItems(vaultItems);
-  let ownedCount: number;
-
+/** The items a goal covers: its subject, else its category, else everything owned. Scope only: never decides how the goal is measured. */
+function inScope(goal: CollectionGoal, items: VaultItem[]): VaultItem[] {
   if (goal.subject?.trim()) {
     const key = goal.subject.trim().toLowerCase();
-    ownedCount = active.filter((item) => (item.subject ?? "").toLowerCase() === key).length;
-  } else if (goal.universe) {
-    ownedCount = active.filter((item) => item.universe === goal.universe).length;
-  } else {
-    ownedCount = active.length;
+    return items.filter((item) => (item.subject ?? "").toLowerCase() === key);
+  }
+  if (goal.universe) return items.filter((item) => item.universe === goal.universe);
+  return items;
+}
+
+export function computeGoalProgress(goal: CollectionGoal, vaultItems: VaultItem[]): GoalProgress {
+  const kind = readStoredKind(goal.goalType, goal.unit) ?? null;
+  const targetCount = Math.max(1, goal.targetCount);
+
+  // Not set up (a goal made before goals had an explicit type): the person has not said whether it counts items or measures money, and the name
+  // is not read to guess. No progress is shown until they choose.
+  if (!kind) {
+    return { ...goal, targetCount, kind: null, needsSetup: true, ownedCount: 0, pct: 0, missing: 0, isComplete: false, isAlmostThere: false };
   }
 
-  const targetCount = Math.max(1, goal.targetCount);
+  let ownedCount: number;
+  if (kind === "value") {
+    // What the owned items in scope are worth, by the one value rule the Vault and Insights use (un-priced items count at what was paid).
+    ownedCount = Math.round(summarizeValues(inScope(goal, ownedItems(vaultItems))).totalValue);
+  } else {
+    ownedCount = inScope(goal, activeItems(vaultItems)).length;
+  }
+
   const pct = Math.min(100, Math.round((ownedCount / targetCount) * 100));
   const missing = Math.max(0, targetCount - ownedCount);
 
   return {
     ...goal,
     targetCount,
+    kind,
+    needsSetup: false,
     ownedCount,
     pct,
     missing,
     isComplete: ownedCount >= targetCount,
     isAlmostThere: pct >= 90 && ownedCount < targetCount,
   };
+}
+
+/** "9 of 12 items" / "$1,200 of $2,000"; a goal that is not set up says so instead of showing a figure. */
+export function describeGoalProgress(goal: GoalProgress): string {
+  if (goal.needsSetup) return "Choose how this goal is measured";
+  if (goal.kind === "value") {
+    const money = (n: number) => "$" + Math.round(n).toLocaleString("en-US");
+    return money(goal.ownedCount) + " of " + money(goal.targetCount);
+  }
+  return goal.ownedCount.toLocaleString("en-US") + " of " + goal.targetCount.toLocaleString("en-US") + " items";
 }
 
 export function computeAllGoalProgress(

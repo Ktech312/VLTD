@@ -27,6 +27,7 @@ import { COMIC_STATUS_LABEL, ownComicFromWish } from "@/lib/comicWishlistModel";
 import { disableWishlistShare, enableWishlistShare, loadWishlistShareToken, wishlistShareUrl } from "@/lib/wishlistShare";
 import { showToast } from "@/lib/toast";
 import { universePlaceholder } from "@/lib/itemPlaceholder";
+import WatchEntrySheet from "@/components/WatchEntrySheet";
 
 type WatchKind = "item" | "exhibition" | "comic";
 type FilterKey = "all" | "wishlist" | "items" | "exhibitions" | "alerts" | "undecided";
@@ -225,6 +226,7 @@ export default function WatchlistPage() {
   const [targetDraft, setTargetDraft] = useState("");
   const [editingNotes, setEditingNotes] = useState(false);
   const [notesDraft, setNotesDraft] = useState("");
+  const [addingWatch, setAddingWatch] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -508,16 +510,16 @@ export default function WatchlistPage() {
                 onMove={() => handleMove(entry)}
               />
             ))}
-            <Link href="/vault/add" className="grid min-h-[264px] place-items-center rounded-[7px] border border-dashed border-[rgba(203,208,213,0.42)] text-center transition hover:bg-[rgba(203,208,213,0.05)]">
+            <button type="button" onClick={() => setAddingWatch(true)} data-testid="add-watch-tile" className="grid min-h-[264px] place-items-center rounded-[7px] border border-dashed border-[rgba(203,208,213,0.42)] text-center transition hover:bg-[rgba(203,208,213,0.05)]">
               <span>
                 <span className="block text-3xl" style={{ color: "var(--theme-gold,#C8CDD2)" }}>+</span>
                 <span className="mt-2 block text-lg font-black" style={{ color: "var(--theme-gold,#C8CDD2)" }}>Add Watch</span>
-                <span className="mt-1 block text-sm" style={{ color: "var(--theme-text-muted,#61656B)" }}>Track items or exhibitions you&apos;re watching.</span>
+                <span className="mt-1 block text-sm" style={{ color: "var(--theme-text-muted,#61656B)" }}>Add something you are watching, with an optional target price.</span>
                 <span className="mt-6 flex justify-center" style={{ color: "var(--theme-gold,#C8CDD2)" }}>
                   <Glyph name="search" size={28} />
                 </span>
               </span>
-            </Link>
+            </button>
           </div>
 
           <div className="mt-4 grid rounded-[7px] border border-[rgba(203,208,213,0.22)] md:grid-cols-[1.8fr_repeat(4,1fr)]" style={{ background: "var(--theme-card,rgba(15,25,45,0.85))" }}>
@@ -682,6 +684,12 @@ export default function WatchlistPage() {
         )}
       </div>
       </main>
+      {addingWatch ? (
+        <WatchEntrySheet
+          onClose={() => setAddingWatch(false)}
+          onAdded={(item) => { setWishlist(loadWishlist()); setSelectedId(item.id); setPanelClosed(false); showToast(`Added to your watchlist: ${item.title}`); }}
+        />
+      ) : null}
     </>
   );
 }

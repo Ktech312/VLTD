@@ -4,7 +4,7 @@ import { useDialogA11y } from "@/components/ui/useDialogA11y";
 import { useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import type { CollectionGoal, GoalWriteResult } from "@/lib/collectionGoals";
-import { validateGoalTarget } from "@/lib/goalRules";
+import { validateGoalTarget, type GoalKind } from "@/lib/goalRules";
 import { UNIVERSE_KEYS, UNIVERSE_LABEL } from "@/lib/taxonomy";
 import { useSaveFeedback } from "@/lib/useSaveFeedback";
 import { AppIcon } from "@/components/ui/AppIcon";
@@ -24,6 +24,8 @@ export default function AddGoalSheet({
 }) {
   const dialogRef = useDialogA11y<HTMLDivElement>(true, onClose);
   const [name, setName] = useState(initial?.name ?? "");
+  // How the goal is measured is always the person's explicit choice (never read from the name).
+  const [kind, setKind] = useState<GoalKind>(initial?.goalType ?? "count");
   const [targetCount, setTargetCount] = useState(String(initial?.targetCount ?? ""));
   const [universe, setUniverse] = useState(initial?.universe ?? "");
   const [subject, setSubject] = useState(initial?.subject ?? "");
@@ -39,7 +41,7 @@ export default function AddGoalSheet({
 
   async function handleSave() {
     if (!canSave || busy || justSaved) return;
-    const target = validateGoalTarget(targetCount);
+    const target = validateGoalTarget(targetCount, kind);
     if (!target.ok) {
       // The form stays exactly as typed.
       setError(target.message);
@@ -51,6 +53,7 @@ export default function AddGoalSheet({
       {
         name: name.trim(),
         targetCount: target.value,
+        goalType: kind,
         universe: universe || undefined,
         subject: subject.trim() || undefined,
         notes: notes.trim() || undefined,
@@ -111,17 +114,29 @@ export default function AddGoalSheet({
             />
           </label>
 
+          <div role="group" aria-label="How is this goal measured?">
+            <span className="mb-1.5 block text-[12px] font-semibold" style={{ color: "var(--muted)" }}>
+              How is this goal measured? *
+            </span>
+            <div className="flex flex-wrap gap-2">
+              <PillButton variant={kind === "count" ? "active" : "default"} pressed={kind === "count"} onClick={() => { setKind("count"); setError(""); }}>Number of items</PillButton>
+              <PillButton variant={kind === "value" ? "active" : "default"} pressed={kind === "value"} onClick={() => { setKind("value"); setError(""); }}>Collection value ($)</PillButton>
+            </div>
+            <p className="mt-1 text-[11px]" style={{ color: "var(--muted2)" }} data-testid="goal-kind-help">
+              {kind === "value" ? "Progress is what the matching items you own are worth, in dollars." : "Progress is how many of the matching items you own."}
+            </p>
+          </div>
+
           <label className="block">
             <span className="mb-1.5 block text-[12px] font-semibold" style={{ color: "var(--muted)" }}>
-              Total Items In Complete Set *
+              {kind === "value" ? "Target Value (US dollars) *" : "Total Items In Complete Set *"}
             </span>
             <input
-              type="number"
+              type="text"
+              inputMode="numeric"
               value={targetCount}
               onChange={(event) => { setTargetCount(event.target.value); setError(""); }}
-              placeholder="102"
-              min={1}
-              step={1}
+              placeholder={kind === "value" ? "2,000" : "102"}
               aria-invalid={error ? true : undefined}
               className="w-full rounded-xl px-3 py-2.5 text-[14px] outline-none ring-1"
               style={{ background: "var(--pill)", borderColor: "var(--border)", color: "var(--fg)" }}

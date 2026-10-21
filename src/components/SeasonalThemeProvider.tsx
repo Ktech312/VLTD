@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useEffect, useState } from "react";
 import { fetchActiveTheme, type SeasonalTheme } from "@/lib/seasonalTheme";
+import { applyThemeVars, clearThemeVars, hasAcceptedTheme } from "@/lib/seasonalConsent";
 
 interface SeasonalThemeCtx {
   theme: SeasonalTheme | null;
@@ -22,7 +23,9 @@ export default function SeasonalThemeProvider({ children }: { children: React.Re
     fetchActiveTheme().then((t) => {
       setTheme(t);
       setLoading(false);
-      applyThemeVars(t);
+      // Never before consent: the theme is applied only when the person already said Yes to it. Otherwise the app is left as it is.
+      if (!t) clearThemeVars();
+      else if (hasAcceptedTheme(t.slug)) applyThemeVars(t);
     });
   }, []);
 
@@ -31,19 +34,4 @@ export default function SeasonalThemeProvider({ children }: { children: React.Re
       {children}
     </Ctx.Provider>
   );
-}
-
-function applyThemeVars(theme: SeasonalTheme | null) {
-  const root = document.documentElement;
-  if (!theme) {
-    root.style.removeProperty("--seasonal-accent");
-    root.style.removeProperty("--seasonal-accent-secondary");
-    root.style.removeProperty("--seasonal-bg-tint");
-    root.removeAttribute("data-seasonal");
-    return;
-  }
-  if (theme.accent_color)     root.style.setProperty("--seasonal-accent", theme.accent_color);
-  if (theme.accent_secondary) root.style.setProperty("--seasonal-accent-secondary", theme.accent_secondary);
-  if (theme.bg_tint)          root.style.setProperty("--seasonal-bg-tint", theme.bg_tint);
-  root.setAttribute("data-seasonal", theme.slug);
 }

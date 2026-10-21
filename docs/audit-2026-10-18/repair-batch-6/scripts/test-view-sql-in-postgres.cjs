@@ -11,6 +11,7 @@ let pass = 0, fail = 0;
 const check = (n, ok, d) => { ok ? pass++ : fail++; console.log(ok ? "PASS" : "FAIL", n, ok ? "" : JSON.stringify(d ?? "").slice(0, 400)); };
 
 (async () => {
+  const build = async (opts = {}) => {
   const db = new PGlite();
   await db.exec(`
     create role anon nologin; create role authenticated nologin; create role service_role nologin;
@@ -28,9 +29,12 @@ const check = (n, ok, d) => { ok ? pass++ : fail++; console.log(ok ? "PASS" : "F
   // the helper and the view exactly as the migrations leave them
   const hid = fs.readFileSync(path.join(MIG, "20261016_public_data_respects_hidden_profiles.sql"), "utf8");
   await db.exec(hid.slice(hid.indexOf("create or replace function public.profile_is_hidden"), hid.indexOf("-- B. the public items view")));
+  if (opts.skipHelper) await db.exec("drop function public.profile_is_hidden(text) cascade");
   const v1 = fs.readFileSync(path.join(MIG, "20261008_public_vault_items_view.sql"), "utf8");
   await db.exec(v1.slice(v1.indexOf("do $$")));
-  await db.exec(hid.slice(hid.indexOf("-- B. the public items view"), hid.indexOf("-- C. public_profiles")));
+  if (!opts.plainView && !opts.skipHelper) await db.exec(hid.slice(hid.indexOf("-- B. the public items view"), hid.indexOf("-- C. public_profiles")));
+  if (opts.noAnonGrant) await db.exec("revoke select on public.public_vault_items from anon");
+  if (opts.viewOptions) await db.exec(`alter view public.public_vault_items set (${opts.viewOptions})`);
   const PA = "11111111-1111-1111-1111-111111111111", PH = "22222222-2222-2222-2222-222222222222";
   await db.query("insert into public.profiles values ($1, true, true), ($2, false, true)", [PA, PH]);
   const ins = (id, prof, status, pub, ask, val) => db.query("insert into public.vault_items (id, profile_id, title, status, is_public, asking_price, current_value, notes, purchase_price) values ($1,$2,$3,$4,$5,$6,$7,'PRIVATE NOTE',5)", [id, prof, id, status, pub, ask, val]);
@@ -41,6 +45,9 @@ const check = (n, ok, d) => { ok ? pass++ : fail++; console.log(ok ? "PASS" : "F
   await ins("hiddenProfile", PH, "FOR_SALE", true, 77, 7);
   const asAnon = async (sql) => { await db.exec("set role anon"); try { return (await db.query(sql)).rows; } catch (e) { return { error: String(e.message) }; } finally { await db.exec("reset role"); } };
 
+  return { db, asAnon };
+  };
+  const { db, asAnon } = await build();
   let r = await asAnon("select asking_price from public.public_vault_items limit 1");
   check("BEFORE: the view has no asking_price", !!r.error && /asking_price/.test(r.error), r);
 
@@ -68,6 +75,42 @@ const check = (n, ok, d) => { ok ? pass++ : fail++; console.log(ok ? "PASS" : "F
   r = await asAnon("select id from public.public_vault_items order by id");
   check("ROLLBACK: same public rows as before (hidden profile and private item still excluded)", Array.isArray(r) && r.map((x) => x.id).join(",") === "owned1,sale1,sale2", r);
 
-  console.log(`\n${pass} pass, ${fail} fail`);
+  // ---------- stops safely when production is not what was reviewed
+  const sqlText = fs.readFileSync(path.join(SQL, "2-public-view-asking-price.sql"), "utf8");
+  const viewState = async (d) => JSON.stringify((await d.query("select column_name from information_schema.columns where table_schema='public' and table_name='public_vault_items' order by ordinal_position")).rows.map((x) => x.column_name));
+  for (const [name, opts, re] of [
+    ["the privacy helper is missing", { skipHelper: true }, /profile_is_hidden\(text\) is missing/],
+    ["the view no longer filters hidden profiles (a less-protected view)", { plainView: true }, /does not filter hidden profiles/],
+    ["anon cannot read the view today (the file must not add grants)", { noAnonGrant: true }, /anon or authenticated cannot read the view/],
+  ]) {
+    const t = await build(opts);
+    const before = await viewState(t.db);
+    let err = null; try { await t.db.exec(sqlText); } catch (e) { err = String(e.message || e); try { await t.db.exec("rollback"); } catch {} }
+    check("STOPS: " + name, !!err && re.test(err), err);
+    check("STOPS: " + name + " -- the view is untouched", (await viewState(t.db)) === before && !before.includes("asking_price"), before);
+  }
+  // options and grants and column order survive; rollback restores everything
+  {
+    const t = await build({ viewOptions: "security_barrier=true" });
+    const before = JSON.parse(await viewState(t.db));
+    const g0 = (await t.db.query("select grantee, privilege_type from information_schema.role_table_grants where table_name='public_vault_items' order by 1,2")).rows;
+    await t.db.exec(sqlText);
+    const after = JSON.parse(await viewState(t.db));
+    check("every earlier column keeps its name and position; asking_price is appended", JSON.stringify(after.slice(0, -1)) === JSON.stringify(before) && after[after.length - 1] === "asking_price", { before, after });
+    const opts = (await t.db.query("select reloptions from pg_class where oid = 'public.public_vault_items'::regclass")).rows[0].reloptions;
+    check("view options (security_barrier) are kept", Array.isArray(opts) && opts.includes("security_barrier=true"), opts);
+    const g1 = (await t.db.query("select grantee, privilege_type from information_schema.role_table_grants where table_name='public_vault_items' order by 1,2")).rows;
+    check("grants are exactly as before (nothing added or removed)", JSON.stringify(g1) === JSON.stringify(g0), { g0, g1 });
+    await t.db.exec(fs.readFileSync(path.join(SQL, "rollback-2.sql"), "utf8"));
+    check("ROLLBACK restores the exact previous columns", (await viewState(t.db)) === JSON.stringify(before), await viewState(t.db));
+    const opts2 = (await t.db.query("select reloptions from pg_class where oid = 'public.public_vault_items'::regclass")).rows[0].reloptions;
+    check("ROLLBACK restores the view options", Array.isArray(opts2) && opts2.includes("security_barrier=true"), opts2);
+    const g2 = (await t.db.query("select grantee, privilege_type from information_schema.role_table_grants where table_name='public_vault_items' order by 1,2")).rows;
+    check("ROLLBACK restores the grants", JSON.stringify(g2) === JSON.stringify(g0), { g0, g2 });
+    const still = (await t.db.query("select pg_get_viewdef('public.public_vault_items'::regclass, true) d")).rows[0].d;
+    check("ROLLBACK keeps the hidden-profile filter", /profile_is_hidden/.test(still), still.slice(0, 200));
+  }
+
+  console.log("\n" + pass + " pass, " + fail + " fail");
   process.exit(fail ? 1 : 0);
 })();

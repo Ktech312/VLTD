@@ -7,9 +7,9 @@ import { useEffect, useRef, useState } from "react";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 import { fetchActiveThemes, type SeasonalTheme } from "@/lib/seasonalTheme";
 import { Glyph } from "@/components/ui/Glyph";
+import { applyThemeVars, clearThemeVars, getThemePrefs, setThemePref } from "@/lib/seasonalConsent";
 
 const ROTATE_MS = 35_000;
-const THEME_PREF_KEY = "vltd_theme_overrides";
 
 // Color map for collector events by slug
 const EVENT_COLOR_MAP: Record<string, { accent: string; secondary: string }> = {
@@ -34,23 +34,6 @@ type CollectorEvent = {
 type Slide =
   | { type: "theme"; theme: SeasonalTheme }
   | { type: "event"; event: CollectorEvent };
-
-function getThemePrefs(): Record<string, "accepted" | "dismissed"> {
-  try { return JSON.parse(localStorage.getItem(THEME_PREF_KEY) ?? "{}"); } catch { return {}; }
-}
-function setThemePref(slug: string, val: "accepted" | "dismissed") {
-  try {
-    const prefs = getThemePrefs();
-    localStorage.setItem(THEME_PREF_KEY, JSON.stringify({ ...prefs, [slug]: val }));
-  } catch {}
-}
-function applyThemeVars(theme: SeasonalTheme) {
-  const root = document.documentElement;
-  if (theme.accent_color)     root.style.setProperty("--seasonal-accent", theme.accent_color);
-  if (theme.accent_secondary) root.style.setProperty("--seasonal-accent-secondary", theme.accent_secondary);
-  if (theme.bg_tint)          root.style.setProperty("--seasonal-bg-tint", theme.bg_tint);
-  root.setAttribute("data-seasonal", theme.slug);
-}
 
 function getEventCountdown(event: CollectorEvent): string {
   const now = new Date();
@@ -157,6 +140,8 @@ export default function SeasonalBanner() {
       setThemePrefs((p) => ({ ...p, [theme.slug]: "accepted" }));
     };
     handleDismissTheme = () => {
+      // No: the app stays exactly as it is. If this theme had been applied earlier, it is taken off.
+      if (pref === "accepted") clearThemeVars();
       setThemePref(theme.slug, "dismissed");
       setThemePrefs((p) => ({ ...p, [theme.slug]: "dismissed" }));
     };

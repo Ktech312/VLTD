@@ -617,22 +617,27 @@ export default function AccountPage() {
           </div>
           <div className="rounded-2xl border border-[color:var(--border)] p-4" style={{ background: "var(--theme-card)" }}>
             <div className="flex flex-wrap gap-2">
-              <PillButton variant={avatarMode === "EMOJI" ? "active" : "default"} onClick={() => setAvatarMode("EMOJI")}>Emoji</PillButton>
+              <PillButton variant={avatarMode === "EMOJI" ? "active" : "default"} onClick={() => setAvatarMode("EMOJI")}>Custom emoji</PillButton>
               <PillButton variant={avatarMode === "IMAGE" ? "active" : "default"} onClick={() => setAvatarMode("IMAGE")}>Image upload</PillButton>
             </div>
 
             {avatarMode === "EMOJI" ? (
-              <div className="mt-4 flex items-center gap-3">
-                <input
-                  value={avatarEmoji}
-                  onChange={(e) => setAvatarEmoji(e.target.value.slice(0, 4))}
-                  placeholder="🗝️"
-                  className="h-11 w-24 rounded-xl px-3 text-center text-lg ring-1 ring-[color:var(--border)] focus:outline-none"
-                  style={{ background: "var(--theme-card)" }}
-                />
-                <div className="grid h-12 w-12 place-items-center rounded-2xl text-xl ring-1 ring-[color:var(--border)]" style={{ background: "var(--pill)" }}>
-                  {avatarEmoji || "🗝️"}
+              <div className="mt-4">
+                <label htmlFor="avatar-custom-emoji" className="mb-1.5 block text-[12px] font-semibold text-[color:var(--muted)]">Custom emoji</label>
+                <div className="flex items-center gap-3">
+                  <input
+                    id="avatar-custom-emoji"
+                    value={avatarEmoji}
+                    onChange={(e) => setAvatarEmoji(e.target.value.slice(0, 4))}
+                    aria-label="Custom emoji"
+                    className="h-11 w-24 rounded-xl px-3 text-center text-lg ring-1 ring-[color:var(--border)] focus:outline-none"
+                    style={{ background: "var(--theme-card)" }}
+                  />
+                  <div className="grid h-12 w-12 place-items-center rounded-2xl text-xl ring-1 ring-[color:var(--border)]" style={{ background: "var(--pill)" }}>
+                    {avatarEmoji || "🗝️"}
+                  </div>
                 </div>
+                <p className="mt-1.5 text-[11px] text-[color:var(--muted2)]">Type or paste any emoji you like. It is your own choice and is not one of VLTD&apos;s illustrated avatars.</p>
               </div>
             ) : (
               <div className="mt-4 flex items-center gap-3">
@@ -892,7 +897,7 @@ export default function AccountPage() {
             Universes displayed
           </div>
           <p className="px-1 mb-4 text-xs text-[color:var(--muted)]">
-            Choose which universes appear in your home, vault, and discover pages.
+            Choose which universes your own collection views show: Home, Vault and Insights. Items in the universes you leave out are not deleted: they stay in your account, exports and insurance documents, and "Show all universes" brings them back at once. Discover's public browsing filters are separate and are not affected.
           </p>
 
           {/* Show all toggle */}

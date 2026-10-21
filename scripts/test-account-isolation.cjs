@@ -16,7 +16,7 @@ const root = path.resolve(__dirname, "..");
 const out = fs.mkdtempSync(path.join(os.tmpdir(), "vltd-isolation-"));
 
 // Source files under test, transpiled flat into one folder.
-const FILES = ["localDataOwner", "sessionGuard", "vaultLocalStore", "vaultSyncQueue", "collectionGoals", "cloudSaveStatus", "specsDeviceOnly", "pushNotifications", "onboardingDraft", "goalRules"];
+const FILES = ["localDataOwner", "sessionGuard", "vaultLocalStore", "vaultSyncQueue", "collectionGoals", "cloudSaveStatus", "specsDeviceOnly", "pushNotifications", "onboardingDraft", "goalRules", "vaultStats"];
 for (const name of FILES) {
   const src = fs.readFileSync(path.join(root, "src", "lib", name + ".ts"), "utf8");
   const js = ts.transpileModule(src, { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2020 } }).outputText;

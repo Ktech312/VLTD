@@ -153,8 +153,9 @@ export default function VaultWallView({ items, saleMap, sortMode = "newest", sho
     });
   }
 
-  // Value and gain sorts keep the Vault page's order, shown as one run with no letter headings. Newest / Title A-Z stay the A-Z wall.
-  const flat = sortMode === "value_desc" || sortMode === "value_asc" || sortMode === "gain_desc" || sortMode === "gain_asc";
+  // Every sort except Title A-Z keeps the Vault page's order, shown as one run with no letter headings: Newest is a flat newest-first wall.
+  // Only "Title A-Z" is the lettered A-Z wall.
+  const flat = sortMode !== "title";
 
   /* Filtered + sorted items */
   const filtered = useMemo(() => {
@@ -373,7 +374,7 @@ export default function VaultWallView({ items, saleMap, sortMode = "newest", sho
         {/* Row 3: A–Z nav + Advanced toggle */}
         <div className="mt-2 flex items-center gap-1">
           <div className="-my-1.5 flex gap-0.5 overflow-x-auto pb-3 pt-2.5 flex-1" style={{ scrollbarWidth: "none" }}>
-            {flat ? <span className="px-1 text-[11px] text-white/40">Ordered by the Sort you chose</span> : null}
+            {flat ? <span className="px-1 text-[11px] text-white/40" data-testid="wall-order-note">{sortMode === "newest" ? "Newest first" : "Ordered by the Sort you chose"}</span> : null}
             {(flat ? [] : LETTERS).map((letter) => {
               const active = activeLetters.has(letter);
               return (

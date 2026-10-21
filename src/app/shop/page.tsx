@@ -114,7 +114,7 @@ const PRODUCTS: Product[] = [
     tags: ["Comics"],
     price: "From $38/book",
     description: "Industry leader for comic book grading. Universal label for standard issues.",
-    url: "https://www.cgccomics.com/submit/",
+    url: "https://www.cgccomics.com/submit/how-to-submit/",
   },
   {
     id: "slab-wata-sub",

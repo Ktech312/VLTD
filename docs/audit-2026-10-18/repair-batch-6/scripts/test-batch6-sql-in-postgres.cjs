@@ -1,4 +1,5 @@
-// Runs the batch 6 SQL (scan-quota guard + avatar upload rules) and its rollback in a real in-process Postgres with synthetic data.
+// Runs the corrected batch 6 SQL (scan-quota guard without the anonymous bypass + avatar upload rules) and its rollback in a real in-process Postgres
+// with synthetic data. Emulates Supabase's explicit EXECUTE grants to anon/authenticated/service_role on new functions.
 //   node test-batch6-sql-in-postgres.cjs   (PGLITE_DIR = folder holding node_modules/@electric-sql/pglite)
 const fs = require("fs");
 const path = require("path");
@@ -18,6 +19,7 @@ const PA = "11111111-1111-1111-1111-111111111111", PB = "22222222-2222-2222-2222
     create role anon nologin; create role authenticated nologin; create role service_role nologin;
     create schema auth; create schema storage;
     create function auth.uid() returns uuid language sql stable as $$ select nullif(current_setting('request.jwt.claim.sub', true), '')::uuid $$;
+    create function auth.role() returns text language sql stable as $$ select nullif(current_setting('request.jwt.claim.role', true), '') $$;
     create function auth.jwt() returns jsonb language sql stable as $$ select jsonb_build_object('email', nullif(current_setting('request.jwt.claim.email', true), '')) $$;
     create table public.profiles (id uuid primary key, user_id uuid, created_at timestamptz default now(), tier text default 'FREE');
     create table public.profile_members (profile_id uuid, user_id uuid, role text);
@@ -31,27 +33,58 @@ const PA = "11111111-1111-1111-1111-111111111111", PB = "22222222-2222-2222-2222
     alter table storage.objects enable row level security;
     grant usage on schema public, auth, storage to anon, authenticated, service_role;
     grant select, insert, update, delete on storage.objects to authenticated;
+    -- Supabase's own default: every new function in public is explicitly executable by anon, authenticated and service_role.
+    alter default privileges in schema public grant execute on functions to anon, authenticated, service_role;
   `);
   await db.exec(fs.readFileSync(path.join(MIG, "20260723_bulk_scan_quota.sql"), "utf8"));
-  await db.exec("grant select, update on public.profiles to authenticated");
+  await db.exec("grant select, update on public.profiles to authenticated, service_role");
   await db.query("insert into public.profiles (id, user_id) values ($1,$2), ($3,$4)", [PA, ALICE, PB, BOB]);
   await db.query("insert into public.profile_members values ($1,$2,'owner'), ($3,$4,'owner')", [PA, ALICE, PB, BOB]);
 
-  const as = async (sub, sql, params = []) => {
+  // role: authenticated | anon | service_role. claims set the way PostgREST sets them.
+  const as = async (sub, sql, params = [], role = "authenticated", email = "") => {
     await db.exec(`select set_config('request.jwt.claim.sub', '${sub || ""}', false)`);
-    await db.exec("set role authenticated");
+    await db.exec(`select set_config('request.jwt.claim.role', '${role}', false)`);
+    await db.exec(`select set_config('request.jwt.claim.email', '${email}', false)`);
+    await db.exec(`set role ${role}`);
     try { return { rows: (await db.query(sql, params)).rows }; } catch (e) { return { error: String(e.message || e) }; } finally { await db.exec("reset role"); }
   };
+  const anon = (sql, params) => as("", sql, params, "anon");
+  const denied = (r) => !!r.error && /not authorized|permission denied/.test(r.error);
 
-  // ---------- before: the reported defect
+  // ---------- before: the reported defects
   let r = await as(ALICE, "select * from public.bulk_scan_status($1)", [PA]);
   check("BEFORE: member whose profile id differs from user id is refused", !!r.error && /not authorized/.test(r.error), r);
+  r = await anon("select * from public.bulk_scan_status($1)", [PA]);
+  check("BEFORE (the exposure): an anonymous caller READS any profile's allowance", !r.error && r.rows.length === 1, r);
+  r = await anon("select * from public.consume_bulk_scan($1, 3)", [PA]);
+  check("BEFORE (the exposure): an anonymous caller SPENDS any profile's scans", !r.error && r.rows[0].granted === 3, r);
+  await db.query("update public.profiles set bulk_scans_used = 0 where id = $1", [PA]);
 
   // ---------- apply
   await db.exec(fs.readFileSync(path.join(SQL, "1-scan-quota-guard-and-avatar-uploads.sql"), "utf8"));
   await db.exec(fs.readFileSync(path.join(SQL, "1-scan-quota-guard-and-avatar-uploads.sql"), "utf8")); // idempotent re-run
   check("re-run is harmless", true);
 
+  // anonymous: nothing, through any exposed function, including the guards
+  r = await anon("select * from public.bulk_scan_status($1)", [PA]);
+  check("anonymous caller cannot READ a profile's allowance", denied(r), r);
+  r = await anon("select * from public.consume_bulk_scan($1, 1)", [PA]);
+  check("anonymous caller cannot SPEND a profile's scans", denied(r), r);
+  r = await anon("select * from public.consume_bulk_scan($1, 0)", [PA]);
+  check("anonymous caller cannot even call consume with 0", denied(r), r);
+  r = await anon("select public.bulk_scan_guard($1)", [PA]);
+  check("anonymous caller cannot call the strict guard", denied(r), r);
+  r = await anon("select public.bulk_scan_guard_read($1)", [PA]);
+  check("anonymous caller cannot call the read guard", denied(r), r);
+  r = await as(ALICE, "select public.bulk_scan_guard($1)", [PA]);
+  check("a signed-in account cannot call the guards directly either", denied(r), r);
+  r = await anon("select scan_limit from public.profiles where id = $1", [PA]).catch(() => ({ error: "x" }));
+  check("anonymous caller has no table access to profiles (sanity)", !!r.error, r);
+  const ov = (await db.query("select bulk_scans_used u from public.profiles where id = $1", [PA])).rows[0].u;
+  check("no allowance was spent by the anonymous attempts", ov === 0, ov);
+
+  // members
   r = await as(ALICE, "select * from public.bulk_scan_status($1)", [PA]);
   check("member reads own profile's allowance (id differs from user id)", !r.error && r.rows.length === 1 && r.rows[0].scan_limit === 10, r);
   r = await as(ALICE, "select * from public.consume_bulk_scan($1, 2)", [PA]);
@@ -65,13 +98,30 @@ const PA = "11111111-1111-1111-1111-111111111111", PB = "22222222-2222-2222-2222
   await db.query("insert into public.profiles (id, user_id) values ($1,$1)", [ALICE]); // a profile whose id equals the user id (the old rule)
   r = await as(ALICE, "select * from public.bulk_scan_status($1)", [ALICE]);
   check("profile id = user id still works", !r.error && r.rows.length === 1, r);
+  r = await as(ALICE, "select * from public.consume_bulk_scan($1, 1)", [ALICE]);
+  check("profile id = user id can still spend", !r.error && r.rows[0].granted === 1, r);
+
+  // admins: read only
   await db.query("insert into public.user_roles values ('boss@example.com','admin')");
-  await db.exec("select set_config('request.jwt.claim.email','boss@example.com', false)");
-  r = await as(BOB, "select * from public.bulk_scan_status($1)", [PA]);
-  check("admin role still passes the guard", !r.error && r.rows.length === 1, r);
-  await db.exec("select set_config('request.jwt.claim.email','', false)");
-  r = await as("", "select * from public.bulk_scan_status($1)", [PA]);
-  check("no session (server) still passes the guard (unchanged behaviour)", !r.error, r);
+  r = await as(BOB, "select * from public.bulk_scan_status($1)", [PA], "authenticated", "boss@example.com");
+  check("an admin (user_roles) can READ a profile's allowance", !r.error && r.rows.length === 1, r);
+  r = await as(BOB, "select * from public.consume_bulk_scan($1, 1)", [PA], "authenticated", "boss@example.com");
+  check("an admin (user_roles) cannot SPEND a profile's scans", !!r.error && /not authorized/.test(r.error), r);
+  r = await as(BOB, "select * from public.bulk_scan_status($1)", [PA], "authenticated", "eck1679@gmail.com");
+  check("the owner email can READ a profile's allowance", !r.error && r.rows.length === 1, r);
+  r = await as(BOB, "select * from public.consume_bulk_scan($1, 1)", [PA], "authenticated", "eck1679@gmail.com");
+  check("the owner email cannot SPEND a profile's scans", !!r.error && /not authorized/.test(r.error), r);
+  r = await as(BOB, "select * from public.bulk_scan_status($1)", [PA], "authenticated", "someone@example.com");
+  check("an email that is not an admin gets nothing", !!r.error, r);
+  // a forged-looking email with no session (anon role) is still nothing
+  r = await as("", "select * from public.bulk_scan_status($1)", [PA], "anon", "eck1679@gmail.com");
+  check("an anonymous caller claiming the owner email gets nothing", denied(r), r);
+
+  // service role
+  r = await as("", "select * from public.bulk_scan_status($1)", [PA], "service_role");
+  check("the server's service role can read", !r.error && r.rows.length === 1, r);
+  r = await as("", "select * from public.consume_bulk_scan($1, 1)", [PA], "service_role");
+  check("the server's service role can spend", !r.error && r.rows[0].granted === 1, r);
 
   // ---------- avatars
   const ins = (sub, name, bucket = "avatars") => as(sub, "insert into storage.objects (bucket_id, name) values ($1,$2) returning id", [bucket, name]);
@@ -93,13 +143,18 @@ const PA = "11111111-1111-1111-1111-111111111111", PB = "22222222-2222-2222-2222
   check("unrelated account sees no rows through these rules", !r.error && r.rows.length === 0, r);
   r = await as(BOB, "delete from storage.objects where bucket_id = 'avatars' returning id");
   check("unrelated account deletes nothing", !r.error && r.rows.length === 0, r);
+  r = await anon("insert into storage.objects (bucket_id, name) values ('avatars', $1)", [`${PA}/avatar.jpg`]);
+  check("anonymous caller cannot write avatars", !!r.error, r);
+
   const v = (await db.query(fs.readFileSync(path.join(SQL, "validation-1.sql"), "utf8").replace(/^--.*$/gm, ""))).rows[0].result;
-  check("validation query: all true, 4 policies", v.guard_allows_profile_members === true && v.guard_still_allows_owner_email_and_admins === true && Number(v.avatar_policies) === 4 && v.avatar_policies_all_scoped_to_bucket === true, v);
+  check("validation query: every flag true, 4 policies", Object.entries(v).every(([k, x]) => k === "avatar_policies" ? Number(x) === 4 : x === true), v);
 
   // ---------- rollback
   await db.exec(fs.readFileSync(path.join(SQL, "rollback-1.sql"), "utf8"));
   r = await as(ALICE, "select * from public.bulk_scan_status($1)", [PA]);
   check("ROLLBACK: guard back to the original behaviour", !!r.error && /not authorized/.test(r.error), r);
+  r = await anon("select * from public.bulk_scan_status($1)", [PA]);
+  check("ROLLBACK: restores the ORIGINAL (exposed) behaviour, as its warning says", !r.error, r);
   r = await ins(ALICE, `${PA}/avatar2.jpg`);
   check("ROLLBACK: upload refused again", !!r.error && /row-level security/.test(r.error), r);
   const left = (await db.query("select count(*)::int c from pg_policies where policyname like 'avatars_member_%'")).rows[0].c;

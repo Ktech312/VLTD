@@ -53,6 +53,8 @@ import { currentLocalOwner } from "@/lib/localDataOwner";
 import { StaleDataNotice } from "@/components/vault/CloudStatus";
 import { storedSessionUserId } from "@/lib/sessionGuard";
 import { parseMoneyInput } from "@/lib/moneyInput";
+import { applyDisplayedUniverses } from "@/lib/displayedUniverses";
+import DisplayedUniversesNotice from "@/components/DisplayedUniversesNotice";
 
 // How long the page waits for the account check and for the cloud before it stops waiting and says so.
 const ACCOUNT_CHECK_TIMEOUT_MS = 12_000;
@@ -1128,7 +1130,7 @@ export default function VaultListView({ lockedUniverse }: { lockedUniverse?: Uni
   // On /vault the shared Vault workspace draws the header and the tab row; a universe page (/vault/<universe>) keeps its own.
   const inWorkspace = useInVaultWorkspace() && !lockedUniverse;
   const [focusKey] = useState<UniverseKey | null>(() => readFocusUniverseKey());
-  const [items, setItems] = useState<VaultItem[]>([]);
+  const [allItems, setItems] = useState<VaultItem[]>([]);
   const [query, setQuery] = useState("");
   // The header search box and the command palette open /vault?q=...: the list follows that text. (Typing in this page's own search box changes the box, not the address.)
   const urlParams = useSearchParams();
@@ -1191,6 +1193,29 @@ export default function VaultListView({ lockedUniverse }: { lockedUniverse?: Uni
       return null;
     }
   });
+
+  // "Universes displayed" (the Show menu below, and Settings > Preferences) decides which universes the Vault lists. It only filters what is shown:
+  // nothing is deleted, exports and insurance documents still cover everything, and a universe page you open directly is always shown in full.
+  const displayedFilter = useMemo(
+    () => (lockedUniverse ? { shown: allItems, hiddenCount: 0, hiddenUniverses: 0 } : applyDisplayedUniverses(allItems, visibleUniverseKeys)),
+    [allItems, visibleUniverseKeys, lockedUniverse]
+  );
+  const items = displayedFilter.shown;
+  async function showAllDisplayedUniverses(): Promise<boolean> {
+    const before = visibleUniverseKeys;
+    setVisibleUniverseKeys(null);
+    try { window.localStorage.removeItem(VISIBLE_UNIVERSE_CHIPS_LS_KEY); } catch { /* storage unavailable */ }
+    const profileId = getStoredActiveProfileId();
+    if (!profileId) return true;
+    try {
+      await saveDisplayedUniverses(profileId, null);
+      return true;
+    } catch {
+      setVisibleUniverseKeys(before);
+      try { if (before) window.localStorage.setItem(VISIBLE_UNIVERSE_CHIPS_LS_KEY, JSON.stringify(before)); } catch { /* storage unavailable */ }
+      return false;
+    }
+  }
 
   function refresh(profileId?: string) {
     const next = loadItems(profileId ? { profileId } : undefined);
@@ -1926,7 +1951,7 @@ export default function VaultListView({ lockedUniverse }: { lockedUniverse?: Uni
 
   function handleMassMove() {
     if (!moveTargetUniverse || selectedIds.size === 0) return;
-    const updated = items.map((item) => {
+    const updated = allItems.map((item) => {
       if (!selectedIds.has(item.id)) return item;
       return {
         ...item,
@@ -2085,7 +2110,10 @@ export default function VaultListView({ lockedUniverse }: { lockedUniverse?: Uni
       <div className="mx-auto max-w-[1480px] px-4 pb-4 sm:px-6 sm:pb-5 lg:px-8">
         {cloudStale ? <StaleDataNotice onRetry={() => { resetCloudBackoff(); retryAccountLookups(); void hydrateAll(); }} /> : null}
         {/* While the load has failed and nothing is saved here, the figures below would read $0 / 0 items as if they were real; the error card further down is the page. */}
-        <section className="mb-5" hidden={items.length === 0 && loadFailed}>
+        <section className="mb-5" hidden={allItems.length === 0 && loadFailed}>
+          {displayedFilter.hiddenCount > 0 ? (
+            <DisplayedUniversesNotice className="mb-3" hiddenCount={displayedFilter.hiddenCount} hiddenUniverses={displayedFilter.hiddenUniverses} onShowAll={showAllDisplayedUniverses} />
+          ) : null}
           {items.length > 0 ? (
             <div className="mb-3 hidden flex-wrap gap-2 text-xs text-[color:var(--muted)] sm:flex">
               <span className="rounded-full bg-[color:var(--pill)] px-2.5 py-1 ring-1 ring-[color:var(--border)]">{privateCount} private</span>
@@ -2124,8 +2152,12 @@ export default function VaultListView({ lockedUniverse }: { lockedUniverse?: Uni
                     border: "1px solid var(--theme-border)",
                   }}
                 >
-                  <div className="px-2 pb-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-[color:var(--muted2)]">
-                    Show Universe Titles
+                  <div className="px-2 pb-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-[color:var(--muted2)]">
+                    Universes displayed
+                  </div>
+                  <div className="px-2 pb-2 text-[11px] leading-snug text-[color:var(--muted)]">
+                    Unticked universes are hidden from your Vault, Home and Insights. Nothing is deleted.{" "}
+                    {visibleUniverseKeys ? <button type="button" className="font-semibold underline underline-offset-2" style={{ color: "var(--theme-gold)" }} onClick={() => void showAllDisplayedUniverses()}>Show all</button> : null}
                   </div>
                   <div className="max-h-72 space-y-1 overflow-y-auto pr-1">
                     {orderedUniverses.map((category) => {
@@ -2527,6 +2559,15 @@ export default function VaultListView({ lockedUniverse }: { lockedUniverse?: Uni
           </section>
         ) : items.length === 0 && loadFailed ? (
           <VaultLoadError onRetry={() => { resetCloudBackoff(); retryAccountLookups(); void hydrateAll(); }} />
+        ) : items.length === 0 && allItems.length > 0 ? (
+          <section className="mt-3 rounded-[18px] bg-[color:var(--surface)] p-8 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]" data-testid="vault-all-hidden">
+            <div className="mx-auto max-w-xl text-center">
+              <div className="text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">HIDDEN BY YOUR SETTING</div>
+              <h2 className="mt-2 text-2xl font-semibold">Your items are not shown right now</h2>
+              <div className="mt-2 text-sm text-[color:var(--muted)]">Your Universes displayed setting hides all {allItems.length.toLocaleString("en-US")} of your items. Nothing was deleted.</div>
+              <div className="mt-5 flex justify-center"><PillButton variant="primary" onClick={() => void showAllDisplayedUniverses()}>Show all</PillButton></div>
+            </div>
+          </section>
         ) : items.length === 0 ? (
           <VaultEmptyState hasFilters={false} onClearFilters={handleClearFilters} />
         ) : lockedUniverse && filteredItems.length === 0 && !hasItemFilters ? (

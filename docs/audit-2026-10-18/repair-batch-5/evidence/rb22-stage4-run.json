@@ -1,0 +1,126 @@
+{
+ "label": "run",
+ "cases": [
+  {
+   "control": "Visitor reads the exhibitions table for QA exhibitions (public, alias, and the rest)",
+   "expected": "nothing",
+   "ok": true,
+   "actual": "0 rows"
+  },
+  {
+   "control": "Visitor reads the exhibitions table without a filter",
+   "expected": "nothing at all",
+   "ok": true,
+   "actual": "0 rows"
+  },
+  {
+   "control": "Unrelated signed-in account reads A's exhibitions from the table",
+   "expected": "nothing",
+   "ok": true,
+   "actual": "0 rows"
+  },
+  {
+   "control": "Owner A still reads all five of their exhibitions from the table (public, alias, private, guest-only, draft), with full rows",
+   "expected": "5 rows with profile_id",
+   "ok": true,
+   "actual": "5 rows"
+  },
+  {
+   "control": "Unrelated account B's own table read returns only B's own exhibitions",
+   "expected": "none of anyone else's",
+   "ok": true,
+   "actual": "0 rows, all B's=true"
+  },
+  {
+   "control": "Public view as visitor: the public QA exhibitions, the alias one without a profile id",
+   "expected": "alias|plain, alias profile_id null",
+   "ok": true,
+   "actual": "alias|plain"
+  },
+  {
+   "control": "Public view as unrelated account: the public QA exhibitions, the alias one without a profile id",
+   "expected": "alias|plain, alias profile_id null",
+   "ok": true,
+   "actual": "alias|plain"
+  },
+  {
+   "control": "Public view as owner: the public QA exhibitions, the alias one without a profile id",
+   "expected": "alias|plain, alias profile_id null",
+   "ok": true,
+   "actual": "alias|plain"
+  },
+  {
+   "control": "The view still lists every public exhibition in the account",
+   "expected": "49",
+   "ok": true,
+   "actual": "49"
+  },
+  {
+   "control": "Visitor reads the items of the public plain exhibition",
+   "expected": "2",
+   "ok": true,
+   "actual": "2"
+  },
+  {
+   "control": "Visitor reads the items of the public alias exhibition",
+   "expected": "2",
+   "ok": true,
+   "actual": "2"
+  },
+  {
+   "control": "Visitor and unrelated account read none of the private exhibition's items",
+   "expected": "0",
+   "ok": true,
+   "actual": "visitor 0; B 0"
+  },
+  {
+   "control": "Visitor and unrelated account read none of the guest exhibition's items",
+   "expected": "0",
+   "ok": true,
+   "actual": "visitor 0; B 0"
+  },
+  {
+   "control": "Visitor and unrelated account read none of the draft exhibition's items",
+   "expected": "0",
+   "ok": true,
+   "actual": "visitor 0; B 0"
+  },
+  {
+   "control": "Owner reads their private exhibition's items",
+   "expected": "2",
+   "ok": true,
+   "actual": "2"
+  },
+  {
+   "control": "Share link (visitor): alias exhibition still works and is sanitised",
+   "expected": "profile id empty, no notes, no keys",
+   "ok": true,
+   "actual": "profile_id=null; notes=[]; keys=null"
+  },
+  {
+   "control": "Share link: ordinary works for a visitor; private only for the owner",
+   "expected": "1 / 0 / 1",
+   "ok": true,
+   "actual": "1 / 0 / 1"
+  },
+  {
+   "control": "Owner can still update their own exhibition",
+   "expected": "1 row",
+   "ok": true,
+   "actual": "1"
+  },
+  {
+   "control": "Unrelated account cannot update A's exhibition",
+   "expected": "0 rows",
+   "ok": true,
+   "actual": "0"
+  },
+  {
+   "control": "Events still readable the stage-1 way: a visitor sees only the public alias-free exhibition's event",
+   "expected": "plain only",
+   "ok": true,
+   "actual": "1 rows"
+  }
+ ],
+ "facts": {}
+}
