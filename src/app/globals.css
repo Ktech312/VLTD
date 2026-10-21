@@ -2432,6 +2432,12 @@ main {
 
 /* NavShell fixed container already stops at bottom nav via `bottom:` CSS — no extra padding needed.
    Also kill min-h-screen inside the scrollable shell so pages don't add blank space. */
+/* Room under the last content while the "Add to Home Screen" pill floats over the bottom of the page (PWAInstallBanner sets the variable). */
+.vltd-content-wrap::after {
+  content: "";
+  display: block;
+  height: var(--pwa-banner-space, 0px);
+}
 .vltd-content-wrap main,
 .vltd-content-wrap > div > main {
   min-height: 0 !important;

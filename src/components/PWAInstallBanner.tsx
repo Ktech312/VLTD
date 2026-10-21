@@ -14,6 +14,9 @@ const DISMISSED_KEY = "vltd_pwa_dismissed_until";
 const INSTALLED_KEY = "vltd_pwa_installed";
 const COOLDOWN_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
 
+// Screens whose own controls sit where the pill would float (the camera shutter, Bulk's "Add all"): the prompt waits until the person is somewhere else.
+const NO_BANNER_ROUTES = ["/vault/quick", "/vault/bulk"];
+
 function isGuestGalleryRoute(pathname: string) {
   const parts = pathname.split("/");
   return parts.length >= 4 && parts[1] === "museum" && parts[3] === "guest";
@@ -81,6 +84,15 @@ export default function PWAInstallBanner() {
     };
   }, []);
 
+  const suppressed = NO_BANNER_ROUTES.some((route) => pathname === route || pathname.startsWith(route + "/"));
+
+  // While the pill is on screen the page scrolls a little further, so the last controls and links can be scrolled out from under it (globals.css reads this).
+  useEffect(() => {
+    const visible = show && !suppressed && (deferredPrompt !== null || isIOS);
+    document.documentElement.style.setProperty("--pwa-banner-space", visible ? (iosExpanded ? "132px" : "72px") : "0px");
+    return () => { document.documentElement.style.removeProperty("--pwa-banner-space"); };
+  }, [show, suppressed, deferredPrompt, isIOS, iosExpanded]);
+
   function dismiss() {
     localStorage.setItem(DISMISSED_KEY, String(Date.now() + COOLDOWN_MS));
     setShow(false);
@@ -98,7 +110,7 @@ export default function PWAInstallBanner() {
     setDeferredPrompt(null);
   }
 
-  if (!show) return null;
+  if (!show || suppressed) return null;
 
   // Small floating pill — bottom-left, above the bottom nav. On phones, pages that show the
   // floating Add group (Quick Add / Add Item / upload) put that group right above the bar, and the
