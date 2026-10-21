@@ -1,0 +1,67 @@
+{
+ "label": "second",
+ "cases": [
+  {
+   "control": "/museum in a clean browser: exhibition cards",
+   "expected": "the cards show their real item counts (not every card 0 items)",
+   "ok": true,
+   "actual": "item counts seen on the page: [5,7,8,6,6,5]",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb34-second-1.jpg"
+  },
+  {
+   "control": "/museum/new in a clean browser: Current Exhibitions",
+   "expected": "5 (what the account holds)",
+   "ok": true,
+   "actual": "tile=5",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb34-second-2.jpg"
+  },
+  {
+   "control": "/vault/print in a clean browser: Collection report",
+   "expected": "TOTAL ITEMS 26",
+   "ok": true,
+   "actual": "TOTAL ITEMS 26",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb34-second-3.jpg"
+  },
+  {
+   "control": "/vault/readiness in a clean browser: Listing Readiness",
+   "expected": "lists the 4 for-sale items",
+   "ok": true,
+   "actual": "empty message shown=false; text: Home Vault Exhibitions Lounge Discover Help ⌘K NOVICE Level 1 Vault / Listing Readiness Listing Readiness Check which of your for-sale listings are market-ready",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb34-second-4.jpg"
+  },
+  {
+   "control": "/portfolio/insurance in a clean browser: Inventory Schedule",
+   "expected": "shows the account's items",
+   "ok": true,
+   "actual": "empty message=false; zero basis=false",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb34-second-5.jpg"
+  },
+  {
+   "control": "/reports/weekly in a clean browser: Weekly report",
+   "expected": "loads the account's items and shows the report",
+   "ok": true,
+   "actual": "text: Home Vault Exhibitions Lounge Discover Help ⌘K NOVICE Level 1 WEEKLY VAULT REPORT Collector health check A local-first weekly report foundation for new items, s",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb34-second-6.jpg"
+  },
+  {
+   "control": "/account in a clean browser: the sync line",
+   "expected": "does not warn 'Out of sync' only because this browser has not loaded the vault yet",
+   "ok": true,
+   "actual": "out of sync shown=false; text: ",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb34-second-7.jpg"
+  },
+  {
+   "control": "Export Vault JSON in a clean browser",
+   "expected": "a file with the account's 31 records (not an empty 64-byte file)",
+   "ok": true,
+   "actual": "file={\"size\":30817,\"records\":31}; message: ",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb34-second-8.jpg"
+  }
+ ],
+ "facts": {
+  "allItems": 31,
+  "owned": 26,
+  "forSale": 4,
+  "galleries": 5
+ }
+}

@@ -24,6 +24,8 @@ Behaviour-asserted rows (a test checked the outcome): 3754 = 509 FAIL, 2770 PASS
 
 ## Repair status (updated 2026-10-20)
 
+**Batch 10 (2026-10-21, `repair-batch-10/CLOSEOUT.md`): RC-22 closed (9 of 9 rows).**
+
 **Batch 9 (2026-10-21, `repair-batch-9/CLOSEOUT.md`): RC-21 closed (26 of 26 rows); RC-20 10 of 22 rows closed, the other 12 need a product decision (explicit goal types).**
 
 **Batch 8 (2026-10-20, `repair-batch-8/CLOSEOUT.md`): RC-16 14 of 16 rows closed on production; ADD-415 waits for the SQL file, ADD-168 is a product decision.**
@@ -107,7 +109,7 @@ Full table with commits and evidence: `DEFECT-STATUS.md`. Closed and re-tested o
 - **[CLOSED] RC-21 A failed load is shown as an empty collection (or stays on 'Loading…')**  
   With the connection refused, Insights says 'No items yet', Activity/Alerts 'No activity yet', Goals 'No goals yet', reports an empty collection, Discover 'No public exhibitions yet', Upcoming/Watchlist/Home show empty or no stale notice; unknown club and the stream page for another user's item stay on 'Loading…' forever.  
   Rows (26): VLT-434, VLT-484, VLT-485, VLT-343, VLT-437, VLT-086 (+20 more)
-- **RC-22 Direct load in a clean browser shows zeros until the Vault has been opened**  
+- **[CLOSED] RC-22 Direct load in a clean browser shows zeros until the Vault has been opened**  
   /museum shows every card as 0 items / $0, /museum/new 0 current exhibitions, /vault/print 0 items, /vault/readiness 'No for-sale listings', /portfolio/insurance and /reports/weekly zeros, Settings export is a 64-byte empty file, sync line 'Out of sync - Local 0, Cloud 31'.  
   Rows (9): EXH-001, EXH-064, GIN-174, GIN-216, VLT-232, VLT-233 (+3 more)
 - **RC-23 Watchlist, Favorites and Market show invented or wrong numbers and broken links**  

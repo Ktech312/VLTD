@@ -96,3 +96,8 @@ Migration-blocked (stage-0 production output reviewed 2026-10-21: matches; stage
 |---|---|---|---|
 | RC-21 (26 of 26) | VLT-434, 484, 485, 343, 437, 086; GIN-067, 188, 193, 196, 197, 069; DIS-086, 267, 268, 359, 360, 159, 154; ACC-599, 738, 647, 748; ITM-615; CRW-005, 006 | `d5a7ec7`, `1e7c19f`, `b8a2aa6` | RB30, RB32, RB33 |
 | RC-20 (10 of 22) | GIN-001, 013, 025, 029, 030, 031, 032, 033, 041, 237 | `3064380` (Goals) | RB31 (open: the 12 type-guessing rows, a decision) |
+
+### Batch 10: clean-browser direct loads (closeout `repair-batch-10/CLOSEOUT.md`)
+| Root cause | Audit rows closed | Commits | Evidence |
+|---|---|---|---|
+| RC-22 (9 of 9) | EXH-001, EXH-064, GIN-174, GIN-216, VLT-232, VLT-233, ACC-418, ACC-848, ACC-849 | `294ca45` (and `d5a7ec7` for the two report pages) | RB34 |

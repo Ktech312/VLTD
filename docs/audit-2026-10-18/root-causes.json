@@ -440,7 +440,8 @@
    "ACC-848",
    "ACC-849"
   ],
-  "status": "OPEN"
+  "status": "CLOSED",
+  "statusNote": "batch 10: all 9 rows verified on production in a clean browser (RB34): pages load the account's items/exhibitions, exports never hand over an empty file, the sync line no longer reads \"Out of sync\" on a device that has not downloaded the vault. See repair-batch-10/CLOSEOUT.md."
  },
  {
   "id": "RC-23",
