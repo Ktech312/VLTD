@@ -1,3 +1,5 @@
+> **All five files were run by the owner on 2026-10-21 and verified on production (see `repair-batch-17/CLOSEOUT.md`). This page is kept as the record of what each did.**
+
 # SQL to run (updated 2026-10-21): five files, in this order
 
 RC-05 stage 4 (the old exhibitions-table read) is done and verified (database checks 20 of 20, page matrix 41 of 41), so nothing below waits on it any more.

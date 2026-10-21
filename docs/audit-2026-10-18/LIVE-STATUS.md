@@ -2,9 +2,8 @@
 
 Last updated: 2026-10-21.
 
-## Waiting on you (external SQL, four ready files in one run order: [SQL-RUN-ME.md](repair-batch-6/SQL-RUN-ME.md); everything else is done)
-- **File 1 first: scan allowance + avatar upload (RC-10, RC-11) and a hole in the live allowance functions** (anyone with no session could read and spend any profile's allowance). **File 2** Market asking price (RC-23), **file 3** exhibition view counter (RC-27, approximate and inflatable), **file 4** goal type and unit (optional; the site works without it).
-- **File 5 (new, for your review): account-synced insurance exclusions** ([6-insurance-exclusions.sql](repair-batch-15/sql/6-insurance-exclusions.sql); the site is already switched over and says "this device only" until it runs). No open decisions.
+## Waiting on you
+Nothing. All five SQL files were run and verified on production (2026-10-21, `repair-batch-17/CLOSEOUT.md`); every root cause is closed.
 
 ## Done and verified on production
 - Batches 1 to 4 and the batch-4 gap closure (see their CLOSEOUT files); RB10-024 (Vault card value box).
@@ -20,10 +19,9 @@ Last updated: 2026-10-21.
 - **Batch 14 (2026-10-21)**: RC-30 closed; RC-29 10 of 12, RC-32 8 of 9, RC-34 7 of 8 rows closed on production (Close/Escape, empty results, setup notice, Lounge dates, no emoji on Shop) (`repair-batch-14/CLOSEOUT.md`).
 - **Batch 16 (2026-10-21)**: insurance exclusions follow the account (code live, tests 25 of 25, production device-only path 8 of 8; SQL file 6 waiting) and Cancel in the crop step discards a just-chosen photo (`repair-batch-16/CLOSEOUT.md`).
 - **Batch 15 (2026-10-21)**: RC-05 stage 4 verified (20 of 20 + 41 of 41); your decisions applied; the held SQL corrected; the phone pass (RC-31) and the Insurance count rows verified (`repair-batch-15/CLOSEOUT.md`).
+- **Batch 17 (2026-10-21)**: SQL files 1 to 5 verified on production: scan security and allowances, avatar uploads, Market asking prices, exhibition view counting, goal type across browsers, account-synced insurance exclusions (`repair-batch-17/CLOSEOUT.md`). All root causes closed.
 - `test:isolation` repaired (real network-failure rule and the goal rules module wired into the test; 85 checks pass, assertions unchanged).
 
-## Queue (order: data loss / private exposure / false "saved", then Insurance and core workflows, then figures / search / filters / misleading actions, then navigation and interaction, then cosmetics)
-See `root-causes.json` for IDs; each batch below gets its own CLOSEOUT.
 
 ## Cleanup (2026-10-21)
 QA fixture `rb24` dropped by exact manifest ids; recount after 20 s: 3,477 items / 39 profiles / 47 exhibitions / 3 sales / 0 activity events / 0 QA-named profiles = baseline. Scratch credentials file removed. A new fixture is created when the SQL re-checks run.
@@ -33,3 +31,6 @@ QA fixture `rb48` dropped by exact manifest ids; recount: 3,477 items / 39 profi
 
 ## Cleanup (2026-10-21, batch 16)
 QA fixture `rb55` dropped by exact manifest ids; recount: 3,477 items / 39 profiles / 47 exhibitions / 3 sales / 0 activity events / 0 QA-named profiles = baseline. Scratch credentials file removed again.
+
+## Cleanup (2026-10-21, batch 17)
+QA fixture `rb56` dropped by exact manifest ids; recount: 3,477 items / 39 profiles / 47 exhibitions / 3 sales / 0 activity events / 0 QA-named profiles = baseline. No leftover QA rows in goals, wishlist, exhibitions or insurance exclusions; the avatar test object was removed and the profile's avatar restored. Scratch credentials file removed.

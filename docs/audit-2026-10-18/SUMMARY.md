@@ -24,6 +24,8 @@ Behaviour-asserted rows (a test checked the outcome): 3754 = 509 FAIL, 2770 PASS
 
 ## Repair status (updated 2026-10-20)
 
+**Batch 17 (2026-10-21, `repair-batch-17/CLOSEOUT.md`): all five SQL files run and verified on production (RB26 18 of 18, RB35 9 of 9, RB54 9 of 9, RB55 12 of 12, RB56 11 of 11, RB57 7 of 7, RB58 pass); RC-10, RC-11, RC-16, RC-19, RC-23 and RC-27 closed. Every root cause is closed.**
+
 **Batch 16 (2026-10-21, `repair-batch-16/CLOSEOUT.md`): insurance exclusions follow the account (code live, SQL file 6 waiting for you) and Cancel in the crop step discards a just-chosen photo (ADD-168 closed).**
 
 **Batch 15 (2026-10-21, `repair-batch-15/CLOSEOUT.md`): RC-05 closed (stage 4 ran and passed); RC-12, RC-20, RC-24, RC-25, RC-26, RC-29, RC-31, RC-32, RC-34 closed by your decisions and the phone pass; GIN-092, GIN-155, VLT-353 closed; the held SQL corrected (a live hole in the scan-allowance functions closed by file 1). Open: the SQL you run, GIN-095 (proposal), ADD-168 (decision).**
@@ -79,10 +81,10 @@ Full table with commits and evidence: `DEFECT-STATUS.md`. Closed and re-tested o
 - **[CLOSED] RC-09 Printable insurance packet is a blank white page; item-sheet and inventory prints are unreadable**  
   A print rule in the page ([style*="--topnav"]{display:none}) matches the <html> element (it carries --topnav-shift), hiding the whole document, on screen and in print. Item-sheet print has near-white text on white; the top bar prints on four pages. NOTE: the coordinator's earlier production check of this page only confirmed the text existed, which could not detect this.  
   Rows (7): GIN-122, GIN-123, GIN-227, GIN-228, GIN-229, GIN-230 (+1 more)
-- **RC-10 Avatar upload is refused by storage for ordinary users**  
+- **[CLOSED] RC-10 Avatar upload is refused by storage for ordinary users**  
   Every avatar upload fails with a raw row-level-security message (verified with the QA login directly).  
   Rows (1): ACC-871
-- **RC-11 Bulk scan quota function refuses profiles whose id differs from the user id**  
+- **[CLOSED] RC-11 Bulk scan quota function refuses profiles whose id differs from the user id**  
   bulk_scan_status answers 'not authorized' unless profile id = user id; 17 of 39 real profiles (all 3 Business, 14 Personal) have different ids. Effect: no quota ticker; 'Scan with AI' says all scans are used without calling the AI.  
   Rows (7): ADD-428, ADD-429, ADD-430, ADD-431, DIS-366, DIS-367 (+1 more)
 - **[CLOSED] RC-12 Lounge subject boards call the leaderboard function with the wrong argument name**  
@@ -97,7 +99,7 @@ Full table with commits and evidence: `DEFECT-STATUS.md`. Closed and re-tested o
 - **[CLOSED] RC-15 Exhibitions page on a phone opens a details sheet over ~74% of the screen that cannot be closed**  
   Filter, sort, Tools and Create sit under it in the first view.  
   Rows (9): EXH-381, EXH-382, EXH-383, EXH-384, EXH-385, EXH-386 (+3 more)
-- **[PARTLY CLOSED] RC-16 Camera / image / PSA controls fail silently**  
+- **[CLOSED] RC-16 Camera / image / PSA controls fail silently**  
   Refused Identify with AI, Quick Add camera start failure, wrong-type photos and empty import files give no clear message; 'Use Full Photo' and crop Cancel do the wrong thing; PSA 'Look up' does nothing visible; mouse drag-reorder of photos fails.  
   Rows (16): ADD-197, ADD-218, ADD-415, ADD-237, ADD-200, ADD-202 (+10 more)
 
@@ -112,7 +114,7 @@ Full table with commits and evidence: `DEFECT-STATUS.md`. Closed and re-tested o
 - **[CLOSED] RC-18 Sales ledger and profit figures break the value rule or disagree**  
   A sale with no cost reads as pure profit; a recorded $0 cost shows a dash; a sale made from For Sale shows its sold price missing and -100%; the item page and the Sold card show different profits for one sale; the Pricing card shows an explicit $0 value as '—'.  
   Rows (9): ITM-354, ITM-353, ITM-357, ITM-364, ITM-333, ITM-430 (+3 more)
-- **[PARTLY CLOSED] RC-19 Totals and counts disagree between Insurance, packet, reports, PDFs and Insights**  
+- **[CLOSED] RC-19 Totals and counts disagree between Insurance, packet, reports, PDFs and Insights**  
   Insurance and packet list the 5 sold items, the reports do not; totals $1,431 vs $1,226 vs $1,443; Vault Insurance PDF says 44 items where 36 belong; exclusions are device-only; weekly gap count 31 vs 30; three pages report stale prices as three numbers.  
   Rows (11): GIN-087, GIN-092, GIN-240, GIN-243, GIN-260, GIN-095 (+5 more)
 - **[CLOSED] RC-20 Goal progress and labels wrong; goal type guessed from words**  
@@ -124,7 +126,7 @@ Full table with commits and evidence: `DEFECT-STATUS.md`. Closed and re-tested o
 - **[CLOSED] RC-22 Direct load in a clean browser shows zeros until the Vault has been opened**  
   /museum shows every card as 0 items / $0, /museum/new 0 current exhibitions, /vault/print 0 items, /vault/readiness 'No for-sale listings', /portfolio/insurance and /reports/weekly zeros, Settings export is a 64-byte empty file, sync line 'Out of sync - Local 0, Cloud 31'.  
   Rows (9): EXH-001, EXH-064, GIN-174, GIN-216, VLT-232, VLT-233 (+3 more)
-- **[PARTLY CLOSED] RC-23 Watchlist, Favorites and Market show invented or wrong numbers and broken links**  
+- **[CLOSED] RC-23 Watchlist, Favorites and Market show invented or wrong numbers and broken links**  
   A wish's 'Current Value' is target x 1.18; watched items show a made-up Target Price and totals computed from them; Market cards link to /v/undefined (raw database error) and rank/total by current value not asking price; Favorites counts differ.  
   Rows (15): DIS-144, DIS-145, DIS-146, DIS-147, DIS-149, DIS-213 (+9 more)
 - **[CLOSED] RC-24 Insights/Vault links and drill-downs lead to the wrong or an empty place**  
@@ -136,7 +138,7 @@ Full table with commits and evidence: `DEFECT-STATUS.md`. Closed and re-tested o
 - **[CLOSED] RC-26 Buttons that do something other than their label**  
   Exhibition list Duplicate/Export PDF/'View public page' only open the editor; Watchlist '+ Add Watch' goes to Add Item; 'Add to Insurance' only opens a print dialog; 'The Flip' links go to Discover; sign-out-all has no confirmation; 'Unlock All' clears the form; Universes-displayed setting is ignored by most pages; 'Switch app theme? Yes' changes nothing; '/auth/confirmed' says the email is confirmed with no code.  
   Rows (24): EXH-028, EXH-029, EXH-027, DIS-166, DIS-176, DIS-170 (+18 more)
-- **[PARTLY CLOSED] RC-27 Counters and messages that cannot be believed**  
+- **[CLOSED] RC-27 Counters and messages that cannot be believed**  
   Exhibition view counter never increments for visitors; Upcoming date range edits the banner without refetching; signed-out Want says it could not save to your account; messages show 'Collector' for every partner and silently cut at 4,000 chars; expired invite says 'Link not available'; Bid History lists one bid twice.  
   Rows (12): EXH-283, EXH-284, EXH-285, EXH-292, DIS-252, DIS-271 (+6 more)
 - **[CLOSED] RC-28 Create/profile forms give poor or wrong validation**  

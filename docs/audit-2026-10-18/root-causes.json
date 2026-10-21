@@ -163,8 +163,8 @@
   "rowIds": [
    "ACC-871"
   ],
-  "status": "OPEN",
-  "statusNote": "batch 7: needs the batch 6 SQL (storage rules for the avatars bucket): repair-batch-6/SQL-RUN-ME.md (tested locally; not applied). Production reproduced again with a QA login: every upload path refused (403), bucket is public and empty."
+  "status": "CLOSED",
+  "statusNote": "batch 17: SQL file 1 run by the owner and verified on production: the owner uploads into their own profile folder (public address serves it, replace works, account page saves it); other accounts, other folders and the bucket root are refused (RB26-011..018)."
  },
  {
   "id": "RC-11",
@@ -181,8 +181,8 @@
    "DIS-367",
    "DIS-369"
   ],
-  "status": "OPEN",
-  "statusNote": "batch 7: code half done (Bulk no longer says scans are used up when the allowance could not be read, RB25-010). The cause in the database (bulk_scan_guard refuses profiles whose id differs from the user id) needs the batch 6 SQL: repair-batch-6/SQL-RUN-ME.md (tested locally 23 of 23; not applied)."
+  "status": "CLOSED",
+  "statusNote": "batch 17: SQL file 1 run and verified: Personal and Business profiles read and spend their own allowance, the Bulk ticker shows for both and Bulk, Capture and Quick Add make no failed allowance request (RB26, RB57); a visitor with no session and unrelated accounts are refused on the allowance functions and guards."
  },
  {
   "id": "RC-12",
@@ -277,8 +277,8 @@
    "ADD-190",
    "ADD-417"
   ],
-  "status": "PARTLY CLOSED",
-  "statusNote": "batch 8 (14 rows) and batch 16 (ADD-168: Cancel in the crop step discards the photo that was just chosen; RB53). Only ADD-415 remains: the Bulk single-card Scan needs a readable scan allowance, which needs SQL file 1 (repair-batch-6/SQL-RUN-ME.md)."
+  "status": "CLOSED",
+  "statusNote": "batch 8 (14 rows), batch 16 (ADD-168) and batch 17 (ADD-415: a card's own Scan with AI says \"Couldn't identify that one\" now that the allowance is readable; RB57)."
  },
  {
   "id": "RC-17",
@@ -350,8 +350,8 @@
    "VLT-297",
    "VLT-353"
   ],
-  "status": "PARTLY CLOSED",
-  "statusNote": "batches 1 to 3 and 15: GIN-092, GIN-155 and VLT-353 verified (RB49). GIN-095 (exclusions follow the account): code live and verified in device-only mode (RB53 8 of 8, tests 25 of 25); it becomes account-wide when repair-batch-15/sql/6-insurance-exclusions.sql is run, then rb54-exclusions-account.cjs."
+  "status": "CLOSED",
+  "statusNote": "batches 1 to 3 and 15 (GIN-092, GIN-155, VLT-353) and batch 17: GIN-095 exclusions follow the account, verified with two clean browsers, the packet, copy-up of an older list, and refusal of other accounts and visitors (RB54, RB58)."
  },
  {
   "id": "RC-20",
@@ -466,8 +466,8 @@
    "DIS-241",
    "DIS-242"
   ],
-  "status": "PARTLY CLOSED",
-  "statusNote": "batch 11: 13 of 15 rows verified on production (RB35, RB36). DIS-233 and DIS-242 (the Market showing the seller's ASKING price and the total of asking prices) need the public items view to carry asking_price: repair-batch-6/sql/2-public-view-asking-price.sql (tested locally 11 of 11; not applied). Until then cards show the amount labelled \"value\"."
+  "status": "CLOSED",
+  "statusNote": "batch 11 (13 rows) and batch 17: SQL file 2 run and verified: Market cards say \"asking\" with the seller's asking price; Total asking adds asking prices only and counts listings without one beside it (RB35 9 of 9)."
  },
  {
   "id": "RC-24",
@@ -569,8 +569,8 @@
    "ITM-482",
    "DIS-404"
   ],
-  "status": "PARTLY CLOSED",
-  "statusNote": "batch 12: 8 of 12 rows verified on production (RB37, RB38). EXH-283, 284, 285, 292 (visitor view counter) need the third SQL file (record_exhibition_view; tested locally 13 of 13; not applied). DIS-404: the failed-search message and cleared result line verified; the stale-line starting condition did not occur on the QA run."
+  "status": "CLOSED",
+  "statusNote": "batch 12 (8 rows) and batch 17: SQL file 3 run and verified: one view per viewer key, owners' teams, private and draft exhibitions not counted, direct writes refused, a clean browser counts once (RB55 12 of 12). The count is approximate and can be inflated by design."
  },
  {
   "id": "RC-28",

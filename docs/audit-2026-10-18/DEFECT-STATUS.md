@@ -141,3 +141,14 @@ Migration-blocked (stage-0 production output reviewed 2026-10-21: matches; stage
 |---|---|---|---|
 | RC-16 | ADD-168 closed | `10cf188`, `37a8703` | RB53 |
 | RC-19 | GIN-095: code live and verified device-only; account-wide after SQL file 6 | `10cf188` | RB53, tests 25 of 25; RB54 after the SQL |
+
+### Batch 17: the five SQL files, verified (closeout `repair-batch-17/CLOSEOUT.md`)
+| Root cause | Audit rows closed | Commits | Evidence |
+|---|---|---|---|
+| RC-10 | ACC-871 | owner's SQL (file 1) | RB26 |
+| RC-11 | ADD-428, 429, 430, 431; DIS-366, 367, 369 | owner's SQL (file 1) | RB26, RB57 |
+| RC-16 | ADD-415 | owner's SQL (file 1) | RB57 |
+| RC-23 | DIS-233, DIS-242 (and a Total asking fix) | owner's SQL (file 2), `cf89d44` | RB35 |
+| RC-27 | EXH-283, 284, 285, 292 | owner's SQL (file 3) | RB55 |
+| RC-19 | GIN-095 | owner's SQL (file 5), `83114a6`, `24852c7`, `cefe05d` | RB54, RB58 |
+| RC-20 (storage) | goal type and unit in the account | owner's SQL (file 4) | RB56 |
