@@ -1,8 +1,24 @@
-﻿# Stage 1 verification attempt (2026-10-21): NOT VERIFIED, stage 1 is not in place on production
+﻿# Stage 1: VERIFIED on production (2026-10-21)
 
-What was run: `scripts/rb17-stage1.cjs` on production with two QA accounts and isolated synthetic exhibitions (QA profiles A and B, 0 followers each, 0 events in the account).
-Result: the very first check, "the owner records an event for their own exhibition", is still **refused (42501, row-level security)**, exactly as before stage 1. So the event rules on production are still the old ones: either `sql/1-events-authorization-and-privacy.sql` has not been run on this account, or it did not commit (an error in the editor, or it was run against a different project).
-The script stopped there by design: no event was written, no forged-event or visibility check could mean anything, and nothing was created that survives (fixture dropped, recount 3,477 / 39 / 47, `exhibition_events` 0 rows, scratch removed).
-Row: RB16-001 (FAIL = "stage 1 not in place"). No result about forged events, alias / private / draft event privacy, edit / delete refusal, or the site's Announce and Make public can be reported yet.
+History: the first attempt (RB16-001) found the old event rules still in place; after you ran `sql/1-events-authorization-and-privacy.sql` the full check was rerun: **33 of 33 pass** (rows RB16-002 to RB16-034; evidence `evidence/rb16-stage1-second.log` / `rb16-stage1-second.json`, screenshots listed in the json). Synthetic exhibitions only; both QA profiles had 0 followers; the account held 0 events before and holds 0 after cleanup.
 
-To resolve: in the SQL editor run `select policyname, cmd from pg_policies where schemaname = 'public' and tablename = 'exhibition_events' order by 1;`. After stage 1 it lists exactly "Members read their own events", "Members record events for their own exhibitions" and "Public read of public exhibitions' events". If it still lists "Owner insert exhibition_events" and "Public read exhibition_events", send me the editor's message from the stage-1 run. The verification script is ready to rerun unchanged once the policies are in place; stage 2 is not requested.
+| Check | Result |
+|---|---|
+| Owner records an event for each of their own exhibitions (public, alias, private, guest-only, draft) | accepted (RB16-002) |
+| Second QA account records an event for its own exhibition (control) | accepted (RB16-003) |
+| A's profile + B's exhibition | refused 42501 (RB16-004) |
+| B's profile (A not a member) + B's exhibition / + A's exhibition | refused 42501 (RB16-005, 006) |
+| A's profile + a missing exhibition / a malformed id | refused 42501 (RB16-007, 008) |
+| Unrelated account B in all three combinations; a signed-out visitor | refused (RB16-009 to 012); exactly the six legitimate events exist afterwards (RB16-013) |
+| Visitor and unrelated account read events | only the public, alias-free exhibitions' events (RB16-014, 015); 0 alias / private / guest-only / draft events exposed (RB16-017) |
+| Owner reads their events | all states (RB16-016, 023) |
+| Switching an exhibition to Private, Guest View / Registered, draft, or alias on | its event is hidden from visitors and other accounts at once; back to public it is visible again (RB16-018 to 022) |
+| Edit / delete an event, as owner or visitor | refused: permission denied (RB16-024 to 027) |
+| Ownership helper | an unrelated account always gets false; a visitor cannot call it (RB16-028, 029); the public-check helper says false for alias (RB16-030) |
+| Site: Announce on a synthetic exhibition | "✓ Announced", exactly one row (RB16-031) |
+| Site: Make public | exhibition public, one "published" event, no "not notified" message; the event is then visible to a visitor because it is public without an alias (RB16-032, 033) |
+| Site: Announce on an alias exhibition | works for the owner, row written, invisible to visitors (RB16-034) |
+
+Not part of this migration (recorded separately, unchanged): broader table-grant tightening on `galleries` and `gallery_items`; visitor view counting that cannot persist. Real events: at the time of the last check `exhibition_events` holds 0 rows, so no real user has published or announced since stage 1 went in.
+
+Stage 2 (view and link sanitising) is the next step; it is requested separately and only on your word.

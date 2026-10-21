@@ -1,0 +1,252 @@
+{
+ "label": "second",
+ "cases": [
+  {
+   "control": "Owner records an event for each of their own exhibitions (public, alias, private, guest-only, draft)",
+   "expected": "all five accepted (a member may record for their own exhibitions; what visitors can read is decided at read time)",
+   "ok": true,
+   "actual": "public: accepted; alias: accepted; private: accepted; guest: accepted; draft: accepted",
+   "screenshot": ""
+  },
+  {
+   "control": "Second QA account records an event for its own exhibition (control)",
+   "expected": "accepted",
+   "ok": true,
+   "actual": "accepted",
+   "screenshot": ""
+  },
+  {
+   "control": "Forged event refused: A's profile + B's exhibition",
+   "expected": "refused, no row written",
+   "ok": true,
+   "actual": "42501 new row violates row-level security policy for table \"exhibition_events\"",
+   "screenshot": ""
+  },
+  {
+   "control": "Forged event refused: B's profile (A is not a member) + B's exhibition",
+   "expected": "refused, no row written",
+   "ok": true,
+   "actual": "42501 new row violates row-level security policy for table \"exhibition_events\"",
+   "screenshot": ""
+  },
+  {
+   "control": "Forged event refused: B's profile (A is not a member) + A's exhibition",
+   "expected": "refused, no row written",
+   "ok": true,
+   "actual": "42501 new row violates row-level security policy for table \"exhibition_events\"",
+   "screenshot": ""
+  },
+  {
+   "control": "Forged event refused: A's profile + an exhibition that does not exist",
+   "expected": "refused, no row written",
+   "ok": true,
+   "actual": "42501 new row violates row-level security policy for table \"exhibition_events\"",
+   "screenshot": ""
+  },
+  {
+   "control": "Forged event refused: A's profile + a malformed exhibition id",
+   "expected": "refused, no row written",
+   "ok": true,
+   "actual": "42501 new row violates row-level security policy for table \"exhibition_events\"",
+   "screenshot": ""
+  },
+  {
+   "control": "Forged event refused: B (unrelated to A) + A's profile + A's exhibition",
+   "expected": "refused, no row written",
+   "ok": true,
+   "actual": "42501 new row violates row-level security policy for table \"exhibition_events\"",
+   "screenshot": ""
+  },
+  {
+   "control": "Forged event refused: B + B's profile + A's exhibition",
+   "expected": "refused, no row written",
+   "ok": true,
+   "actual": "42501 new row violates row-level security policy for table \"exhibition_events\"",
+   "screenshot": ""
+  },
+  {
+   "control": "Forged event refused: B + A's profile + B's exhibition",
+   "expected": "refused, no row written",
+   "ok": true,
+   "actual": "42501 new row violates row-level security policy for table \"exhibition_events\"",
+   "screenshot": ""
+  },
+  {
+   "control": "Forged event refused: visitor (not signed in) + A's profile + A's exhibition",
+   "expected": "refused, no row written",
+   "ok": true,
+   "actual": "42501 permission denied for table exhibition_events",
+   "screenshot": ""
+  },
+  {
+   "control": "Only the six legitimate events exist after all forgery attempts",
+   "expected": "0 + 6 rows (five own events + the control)",
+   "ok": true,
+   "actual": "rows in the account now: 6",
+   "screenshot": ""
+  },
+  {
+   "control": "Visitor reads events: only the public, alias-free exhibitions",
+   "expected": "public (A) and bobs (B); never alias, private, guest-only or draft",
+   "ok": true,
+   "actual": "visitor sees: bobs|public",
+   "screenshot": ""
+  },
+  {
+   "control": "Unrelated signed-in account reads events: same as a visitor",
+   "expected": "bobs|public",
+   "ok": true,
+   "actual": "account B sees (it is not a member of A): bobs|public",
+   "screenshot": ""
+  },
+  {
+   "control": "Owner reads their own events (all states) plus public ones",
+   "expected": "A sees all five of their own events (and B's public one)",
+   "ok": true,
+   "actual": "A sees: alias|bobs|draft|guest|private|public",
+   "screenshot": ""
+  },
+  {
+   "control": "No alias / private / guest-only / draft event reaches a visitor (direct database read)",
+   "expected": "0 exposed",
+   "ok": true,
+   "actual": "0 exposed",
+   "screenshot": ""
+  },
+  {
+   "control": "Switching the exhibition to Private: its event is hidden from visitors and other accounts at once",
+   "expected": "hidden",
+   "ok": true,
+   "actual": "visitor sees: bobs; account B sees: bobs",
+   "screenshot": ""
+  },
+  {
+   "control": "Switching the exhibition to Guest View / Registered: its event is hidden from visitors and other accounts at once",
+   "expected": "hidden",
+   "ok": true,
+   "actual": "visitor sees: bobs; account B sees: bobs",
+   "screenshot": ""
+  },
+  {
+   "control": "Switching the exhibition to draft: its event is hidden from visitors and other accounts at once",
+   "expected": "hidden",
+   "ok": true,
+   "actual": "visitor sees: bobs; account B sees: bobs",
+   "screenshot": ""
+  },
+  {
+   "control": "Switching the exhibition to alias on: its event is hidden from visitors and other accounts at once",
+   "expected": "hidden",
+   "ok": true,
+   "actual": "visitor sees: bobs; account B sees: bobs",
+   "screenshot": ""
+  },
+  {
+   "control": "Back to public without an alias: the event is visible again",
+   "expected": "bobs|public",
+   "ok": true,
+   "actual": "visitor sees: bobs|public",
+   "screenshot": ""
+  },
+  {
+   "control": "While Private the owner still reads their own event",
+   "expected": "yes",
+   "ok": true,
+   "actual": "A sees: alias|bobs|draft|guest|private|public",
+   "screenshot": ""
+  },
+  {
+   "control": "Owner cannot edit an event",
+   "expected": "refused or no row changed",
+   "ok": true,
+   "actual": "42501 permission denied for table exhibition_events",
+   "screenshot": ""
+  },
+  {
+   "control": "Owner cannot delete an event",
+   "expected": "refused or no row deleted",
+   "ok": true,
+   "actual": "42501 permission denied for table exhibition_events",
+   "screenshot": ""
+  },
+  {
+   "control": "Visitor cannot edit an event",
+   "expected": "refused or no row changed",
+   "ok": true,
+   "actual": "42501 permission denied for table exhibition_events",
+   "screenshot": ""
+  },
+  {
+   "control": "Visitor cannot delete an event",
+   "expected": "refused or no row deleted",
+   "ok": true,
+   "actual": "42501 permission denied for table exhibition_events",
+   "screenshot": ""
+  },
+  {
+   "control": "Unrelated account asks 'does this alias exhibition belong to this profile?'",
+   "expected": "always false (cannot be used to find who owns an alias exhibition)",
+   "ok": true,
+   "actual": "answer: false",
+   "screenshot": ""
+  },
+  {
+   "control": "Visitor cannot call the ownership helper at all",
+   "expected": "refused",
+   "ok": true,
+   "actual": "42501 permission denied for function can_record_exhibition_event",
+   "screenshot": ""
+  },
+  {
+   "control": "The public-check helper says false for an alias exhibition (same as for a missing one)",
+   "expected": "false",
+   "ok": true,
+   "actual": "answer: false",
+   "screenshot": ""
+  },
+  {
+   "control": "Site: Announce on a synthetic exhibition",
+   "expected": "'✓ Announced' and exactly one event row",
+   "ok": true,
+   "actual": "button '✓ Announced'; rows 0 -> 1",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb16-second-1.jpg"
+  },
+  {
+   "control": "Site: Make public records the follower notice and says nothing is wrong",
+   "expected": "exhibition public, one 'published' event row, no 'not notified' message",
+   "ok": true,
+   "actual": "visibility PUBLIC; event rows 1 -> 2 (published,published); 'not notified' message shown: false",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb16-second-2.jpg"
+  },
+  {
+   "control": "That now-public exhibition's published event is visible to a visitor (it is public and has no alias)",
+   "expected": "visible",
+   "ok": true,
+   "actual": "visitor sees: bobs|private|public",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb16-second-3.jpg"
+  },
+  {
+   "control": "Site: Announce on an ALIAS exhibition works for the owner but the event stays invisible to visitors",
+   "expected": "row written, not readable by a visitor",
+   "ok": true,
+   "actual": "announce rows 0 -> 1; visitor sees: bobs|private|public",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb16-second-4.jpg"
+  }
+ ],
+ "facts": {
+  "followersOfQaProfileA": 0,
+  "followersOfQaProfileB": 0,
+  "eventsInAccountBefore": 0,
+  "qaProfileA": "fb3e54c5",
+  "qaProfileB": "5e8e102a",
+  "seeded": {
+   "public": "PUBLIC/ACTIVE/alias=false/A",
+   "alias": "PUBLIC/ACTIVE/alias=true/A",
+   "private": "LOCKED/ACTIVE/alias=false/A",
+   "guest": "INVITE/ACTIVE/alias=false/A",
+   "draft": "PUBLIC/STORAGE/alias=false/A",
+   "bobs": "PUBLIC/ACTIVE/alias=false/B"
+  },
+  "eventsInAccountAfterCleanup": 0
+ }
+}

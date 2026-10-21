@@ -1,0 +1,37 @@
+facts {"followersOfQaProfileA":0,"followersOfQaProfileB":0,"eventsInAccountBefore":0,"qaProfileA":"fb3e54c5","qaProfileB":"5e8e102a"}
+seeded {"public":"PUBLIC/ACTIVE/alias=false/A","alias":"PUBLIC/ACTIVE/alias=true/A","private":"LOCKED/ACTIVE/alias=false/A","guest":"INVITE/ACTIVE/alias=false/A","draft":"PUBLIC/STORAGE/alias=false/A","bobs":"PUBLIC/ACTIVE/alias=false/B"}
+PASS       RB16-002 | database (signed-in QA accounts / visitor) | Owner records an event for each of their own exhibitions (public, alias, private, guest-only, draft) | public: accepted; alias: accepted; private: accepted; guest: accepted; draft: accepted
+PASS       RB16-003 | database (signed-in QA accounts / visitor) | Second QA account records an event for its own exhibition (control) | accepted
+PASS       RB16-004 | database (signed-in QA accounts / visitor) | Forged event refused: A's profile + B's exhibition | 42501 new row violates row-level security policy for table "exhibition_events"
+PASS       RB16-005 | database (signed-in QA accounts / visitor) | Forged event refused: B's profile (A is not a member) + B's exhibition | 42501 new row violates row-level security policy for table "exhibition_events"
+PASS       RB16-006 | database (signed-in QA accounts / visitor) | Forged event refused: B's profile (A is not a member) + A's exhibition | 42501 new row violates row-level security policy for table "exhibition_events"
+PASS       RB16-007 | database (signed-in QA accounts / visitor) | Forged event refused: A's profile + an exhibition that does not exist | 42501 new row violates row-level security policy for table "exhibition_events"
+PASS       RB16-008 | database (signed-in QA accounts / visitor) | Forged event refused: A's profile + a malformed exhibition id | 42501 new row violates row-level security policy for table "exhibition_events"
+PASS       RB16-009 | database (signed-in QA accounts / visitor) | Forged event refused: B (unrelated to A) + A's profile + A's exhibition | 42501 new row violates row-level security policy for table "exhibition_events"
+PASS       RB16-010 | database (signed-in QA accounts / visitor) | Forged event refused: B + B's profile + A's exhibition | 42501 new row violates row-level security policy for table "exhibition_events"
+PASS       RB16-011 | database (signed-in QA accounts / visitor) | Forged event refused: B + A's profile + B's exhibition | 42501 new row violates row-level security policy for table "exhibition_events"
+PASS       RB16-012 | database (signed-in QA accounts / visitor) | Forged event refused: visitor (not signed in) + A's profile + A's exhibition | 42501 permission denied for table exhibition_events
+PASS       RB16-013 | database (signed-in QA accounts / visitor) | Only the six legitimate events exist after all forgery attempts | rows in the account now: 6
+PASS       RB16-014 | database (signed-in QA accounts / visitor) | Visitor reads events: only the public, alias-free exhibitions | visitor sees: bobs|public
+PASS       RB16-015 | database (signed-in QA accounts / visitor) | Unrelated signed-in account reads events: same as a visitor | account B sees (it is not a member of A): bobs|public
+PASS       RB16-016 | database (signed-in QA accounts / visitor) | Owner reads their own events (all states) plus public ones | A sees: alias|bobs|draft|guest|private|public
+PASS       RB16-017 | database (signed-in QA accounts / visitor) | No alias / private / guest-only / draft event reaches a visitor (direct database read) | 0 exposed
+PASS       RB16-018 | database (signed-in QA accounts / visitor) | Switching the exhibition to Private: its event is hidden from visitors and other accounts at once | visitor sees: bobs; account B sees: bobs
+PASS       RB16-019 | database (signed-in QA accounts / visitor) | Switching the exhibition to Guest View / Registered: its event is hidden from visitors and other accounts at once | visitor sees: bobs; account B sees: bobs
+PASS       RB16-020 | database (signed-in QA accounts / visitor) | Switching the exhibition to draft: its event is hidden from visitors and other accounts at once | visitor sees: bobs; account B sees: bobs
+PASS       RB16-021 | database (signed-in QA accounts / visitor) | Switching the exhibition to alias on: its event is hidden from visitors and other accounts at once | visitor sees: bobs; account B sees: bobs
+PASS       RB16-022 | database (signed-in QA accounts / visitor) | Back to public without an alias: the event is visible again | visitor sees: bobs|public
+PASS       RB16-023 | database (signed-in QA accounts / visitor) | While Private the owner still reads their own event | A sees: alias|bobs|draft|guest|private|public
+PASS       RB16-024 | database (signed-in QA accounts / visitor) | Owner cannot edit an event | 42501 permission denied for table exhibition_events
+PASS       RB16-025 | database (signed-in QA accounts / visitor) | Owner cannot delete an event | 42501 permission denied for table exhibition_events
+PASS       RB16-026 | database (signed-in QA accounts / visitor) | Visitor cannot edit an event | 42501 permission denied for table exhibition_events
+PASS       RB16-027 | database (signed-in QA accounts / visitor) | Visitor cannot delete an event | 42501 permission denied for table exhibition_events
+PASS       RB16-028 | database (signed-in QA accounts / visitor) | Unrelated account asks 'does this alias exhibition belong to this profile?' | answer: false
+PASS       RB16-029 | database (signed-in QA accounts / visitor) | Visitor cannot call the ownership helper at all | 42501 permission denied for function can_record_exhibition_event
+PASS       RB16-030 | database (signed-in QA accounts / visitor) | The public-check helper says false for an alias exhibition (same as for a missing one) | answer: false
+PASS       RB16-031 | /museum/[galleryId] | Site: Announce on a synthetic exhibition | button '✓ Announced'; rows 0 -> 1
+PASS       RB16-032 | /museum/[galleryId] | Site: Make public records the follower notice and says nothing is wrong | visibility PUBLIC; event rows 1 -> 2 (published,published); 'not notified' message shown: false
+PASS       RB16-033 | database (signed-in QA accounts / visitor) | That now-public exhibition's published event is visible to a visitor (it is public and has no alias) | visitor sees: bobs|private|public
+PASS       RB16-034 | /museum/[galleryId] | Site: Announce on an ALIAS exhibition works for the owner but the event stays invisible to visitors | announce rows 0 -> 1; visitor sees: bobs|private|public
+
+33 ok, 0 not ok of 33 | events left in account: 0
