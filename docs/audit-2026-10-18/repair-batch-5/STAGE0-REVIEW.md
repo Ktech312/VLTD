@@ -31,7 +31,7 @@ Production matches every assumption the package makes. **Stage 1 is cleared to r
 The events table has **never been writable** in production (0 rows). After stage 1 the site's existing code starts recording real events: every time any user makes an exhibition public, and every time any user presses Announce, a row is written. Followers of that profile will see public, alias-free events in their feed. That is the designed feature switching on for the first time, not something I added; alias, private, guest-only and draft exhibitions never appear. If you want it switched on later, run stage 1 later: nothing else depends on it.
 
 ## Authorised now
-- **Stage 1** (`sql/1-events-authorization-and-privacy.sql`; one transaction; rollback `sql/rollback-1.sql`), then the stage-1 block of `sql/validation-queries.sql` with the output sent to me. I then run the two-account production checks on isolated QA content (0 followers, nothing reaches a real person).
+- **Stage 1** (`sql/1-events-authorization-and-privacy.sql`; one transaction; rollback `sql/rollback-1.sql`), then the stage-1 block of `sql/validation-stage1.sql`, `validation-stage2.sql`, `validation-stage4.sql` with the output sent to me. I then run the two-account production checks on isolated QA content (0 followers, nothing reaches a real person).
 
 ## Not authorised yet
 - Stage 2 (view and link sanitising): after stage 1 is verified.

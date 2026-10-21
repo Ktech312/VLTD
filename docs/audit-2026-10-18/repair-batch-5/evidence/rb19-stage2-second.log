@@ -1,0 +1,34 @@
+PASS       RB19-033 | database (visitor / QA accounts) | View as visitor: only the public, active QA exhibitions | hostile|plain
+PASS       RB19-034 | database (visitor / QA accounts) | View as unrelated signed-in account B: only the public, active QA exhibitions | hostile|plain
+PASS       RB19-035 | database (visitor / QA accounts) | View as owner A: only the public, active QA exhibitions | hostile|plain
+PASS       RB19-036 | database (visitor / QA accounts) | View columns are exactly the allowlist | alias_avatar, alias_enabled, alias_name, analytics_views, cover_image, created_at, description, exhibition_layout, id, layout, profile_id, p
+PASS       RB19-037 | database (visitor / QA accounts) | Alias exhibition in the view: no profile id, alias name kept | profile_id=null; alias_name=QA Alias Curator
+PASS       RB19-038 | database (visitor / QA accounts) | Ordinary exhibition in the view keeps its profile id (Discover and listings need it) | profile_id present=true
+PASS       RB19-039 | database (visitor / QA accounts) | Hostile row in the view: none of the planted secrets survive (owner email, private note, hidden title and images, visitor key) | leaked: none
+PASS       RB19-040 | database (visitor / QA accounts) | Hostile row: layout keeps only allowlisted keys (owner id, email, private note, stray numeric keys removed) | keys outside: none
+PASS       RB19-041 | database (visitor / QA accounts) | Hidden item in the view keeps only id, hidden, blur thumbnail, created time | blurThumb, createdAt, hidden, id
+PASS       RB19-042 | database (visitor / QA accounts) | Visible card keeps what a public card needs and none of price / value / owner fields | categoryLabel, createdAt, description, grade, id, imageBackUrl, imageFrontStoragePath, imageFrontUrl, number, primaryImageKey, subcategoryLa
+PASS       RB19-043 | database (visitor / QA accounts) | Item ids keep only text ids | ["qa_vz_mvhjj3pj_2","qa_vz_mvhjj3pj_3"]
+PASS       RB19-044 | database (visitor / QA accounts) | Ordinary exhibition's layout is unchanged for a public page (titles, theme, sections) | {"titles":["QA Card One","QA Card Two"],"theme":"classic","sections":1}
+PASS       RB19-045 | database (visitor / QA accounts) | The view lists every public, active exhibition in the account (nothing lost for discovery) | 49
+PASS       RB19-046 | database (visitor / QA accounts) | No alias exhibition anywhere in the view names a profile | 0
+PASS       RB19-047 | database (visitor / QA accounts) | Share link of the hostile alias exhibition as visitor: sanitised | profile_id=null; item_notes=[]; keys=null; lastViewed=null; leaked=none
+PASS       RB19-048 | database (visitor / QA accounts) | Share link of the hostile alias exhibition as unrelated account B: sanitised | profile_id=null; item_notes=[]; keys=null; lastViewed=null; leaked=none
+PASS       RB19-049 | database (visitor / QA accounts) | Share link as the owner: still the whole row (profile id, notes, visitor keys) | profile_id present=true; notes=1; keys=["viewer-key-rb19"]
+PASS       RB19-050 | database (visitor / QA accounts) | Share link of an ordinary exhibition for a visitor: content intact, profile id as before | ["QA Card One","QA Card Two"]
+PASS       RB19-051 | database (visitor / QA accounts) | Share link of a private exhibition for an unrelated account | 0 rows
+PASS       RB19-052 | database (visitor / QA accounts) | Share link of a draft exhibition for an unrelated account | 0 rows
+PASS       RB19-053 | database (visitor / QA accounts) | ...but the owner still reaches their private exhibition through it | 1
+PASS       RB19-054 | database (visitor / QA accounts) | Share link of a guest-only exhibition for a visitor: sanitised too | notes=[]; keys=null
+PASS       RB19-055 | database (visitor / QA accounts) | Invite link of the hostile alias exhibition for a visitor: sanitised | profile_id=null; notes=[]; leaked=none
+PASS       RB19-056 | database (visitor / QA accounts) | Invite link of a private exhibition for a visitor | 0 rows
+PASS       RB19-057 | database (visitor / QA accounts) | Invite link items still load | 2
+PASS       RB19-058 | database (visitor / QA accounts) | Share-link items still load | 2
+BLOCKED    RB19-059 | database (visitor) | Old path (expected to stay open until stage 4): a visitor reading the table for an alias exhibition | STILL OPEN UNTIL STAGE 4 (expected): still returns profile_id=the real id, item_notes=[{"note":"SECRET-NOTE-RB19","itemId":"qa
+PASS       RB19-060 | /museum/share/[token] | Site: share-link page of an ordinary exhibition (visitor) | title=true; cards=true,true
+PASS       RB19-061 | /museum/share/[token] | Site: share-link page of the hostile alias exhibition (visitor) | title=true; alias=true; secret on page=false
+PASS       RB19-062 | /museum/invite/[token] | Site: invite-link page of a guest-only exhibition (signed-in QA account B) | title=true; card=true
+PASS       RB19-063 | /museum/[galleryId]/guest | Site: guest page of an ordinary public exhibition (visitor) | title=true; card=true
+PASS       RB19-064 | /discover | Site: Discover still lists a public exhibition (nothing reads the view yet) | listed=true
+
+31 ok, 1 not ok of 32

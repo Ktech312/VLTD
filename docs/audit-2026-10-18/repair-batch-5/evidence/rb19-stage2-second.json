@@ -1,0 +1,230 @@
+{
+ "label": "second",
+ "cases": [
+  {
+   "control": "View as visitor: only the public, active QA exhibitions",
+   "expected": "hostile|plain (not private, guest-only, draft)",
+   "ok": true,
+   "actual": "hostile|plain",
+   "screenshot": ""
+  },
+  {
+   "control": "View as unrelated signed-in account B: only the public, active QA exhibitions",
+   "expected": "hostile|plain (not private, guest-only, draft)",
+   "ok": true,
+   "actual": "hostile|plain",
+   "screenshot": ""
+  },
+  {
+   "control": "View as owner A: only the public, active QA exhibitions",
+   "expected": "hostile|plain (not private, guest-only, draft)",
+   "ok": true,
+   "actual": "hostile|plain",
+   "screenshot": ""
+  },
+  {
+   "control": "View columns are exactly the allowlist",
+   "expected": "alias_avatar, alias_enabled, alias_name, analytics_views, cover_image, created_at, description, exhibition_layout, id, layout, profile_id, public_token, state, title, visibility",
+   "ok": true,
+   "actual": "alias_avatar, alias_enabled, alias_name, analytics_views, cover_image, created_at, description, exhibition_layout, id, layout, profile_id, public_token, state, title, visibility",
+   "screenshot": ""
+  },
+  {
+   "control": "Alias exhibition in the view: no profile id, alias name kept",
+   "expected": "profile_id null, alias name present",
+   "ok": true,
+   "actual": "profile_id=null; alias_name=QA Alias Curator",
+   "screenshot": ""
+  },
+  {
+   "control": "Ordinary exhibition in the view keeps its profile id (Discover and listings need it)",
+   "expected": "real profile id present",
+   "ok": true,
+   "actual": "profile_id present=true",
+   "screenshot": ""
+  },
+  {
+   "control": "Hostile row in the view: none of the planted secrets survive (owner email, private note, hidden title and images, visitor key)",
+   "expected": "none",
+   "ok": true,
+   "actual": "leaked: none",
+   "screenshot": ""
+  },
+  {
+   "control": "Hostile row: layout keeps only allowlisted keys (owner id, email, private note, stray numeric keys removed)",
+   "expected": "no key outside the allowlist",
+   "ok": true,
+   "actual": "keys outside: none",
+   "screenshot": ""
+  },
+  {
+   "control": "Hidden item in the view keeps only id, hidden, blur thumbnail, created time",
+   "expected": "title and image references removed",
+   "ok": true,
+   "actual": "blurThumb, createdAt, hidden, id",
+   "screenshot": ""
+  },
+  {
+   "control": "Visible card keeps what a public card needs and none of price / value / owner fields",
+   "expected": "title, images etc. kept; owner fields gone",
+   "ok": true,
+   "actual": "categoryLabel, createdAt, description, grade, id, imageBackUrl, imageFrontStoragePath, imageFrontUrl, number, primaryImageKey, subcategoryLabel, subtitle, title, year",
+   "screenshot": ""
+  },
+  {
+   "control": "Item ids keep only text ids",
+   "expected": "[\"qa_vz_mvhjj3pj_2\",\"qa_vz_mvhjj3pj_3\"]",
+   "ok": true,
+   "actual": "[\"qa_vz_mvhjj3pj_2\",\"qa_vz_mvhjj3pj_3\"]",
+   "screenshot": ""
+  },
+  {
+   "control": "Ordinary exhibition's layout is unchanged for a public page (titles, theme, sections)",
+   "expected": "same content",
+   "ok": true,
+   "actual": "{\"titles\":[\"QA Card One\",\"QA Card Two\"],\"theme\":\"classic\",\"sections\":1}",
+   "screenshot": ""
+  },
+  {
+   "control": "The view lists every public, active exhibition in the account (nothing lost for discovery)",
+   "expected": "49",
+   "ok": true,
+   "actual": "49",
+   "screenshot": ""
+  },
+  {
+   "control": "No alias exhibition anywhere in the view names a profile",
+   "expected": "0",
+   "ok": true,
+   "actual": "0",
+   "screenshot": ""
+  },
+  {
+   "control": "Share link of the hostile alias exhibition as visitor: sanitised",
+   "expected": "profile id empty, no notes, no visitor keys, no last-viewed time, layout allowlisted, no planted secret",
+   "ok": true,
+   "actual": "profile_id=null; item_notes=[]; keys=null; lastViewed=null; leaked=none",
+   "screenshot": ""
+  },
+  {
+   "control": "Share link of the hostile alias exhibition as unrelated account B: sanitised",
+   "expected": "profile id empty, no notes, no visitor keys, no last-viewed time, layout allowlisted, no planted secret",
+   "ok": true,
+   "actual": "profile_id=null; item_notes=[]; keys=null; lastViewed=null; leaked=none",
+   "screenshot": ""
+  },
+  {
+   "control": "Share link as the owner: still the whole row (profile id, notes, visitor keys)",
+   "expected": "full row",
+   "ok": true,
+   "actual": "profile_id present=true; notes=1; keys=[\"viewer-key-rb19\"]",
+   "screenshot": ""
+  },
+  {
+   "control": "Share link of an ordinary exhibition for a visitor: content intact, profile id as before",
+   "expected": "titles intact",
+   "ok": true,
+   "actual": "[\"QA Card One\",\"QA Card Two\"]",
+   "screenshot": ""
+  },
+  {
+   "control": "Share link of a private exhibition for an unrelated account",
+   "expected": "nothing",
+   "ok": true,
+   "actual": "0 rows",
+   "screenshot": ""
+  },
+  {
+   "control": "Share link of a draft exhibition for an unrelated account",
+   "expected": "nothing",
+   "ok": true,
+   "actual": "0 rows",
+   "screenshot": ""
+  },
+  {
+   "control": "...but the owner still reaches their private exhibition through it",
+   "expected": "1 row",
+   "ok": true,
+   "actual": "1",
+   "screenshot": ""
+  },
+  {
+   "control": "Share link of a guest-only exhibition for a visitor: sanitised too",
+   "expected": "no notes, no keys",
+   "ok": true,
+   "actual": "notes=[]; keys=null",
+   "screenshot": ""
+  },
+  {
+   "control": "Invite link of the hostile alias exhibition for a visitor: sanitised",
+   "expected": "profile id empty, no notes, no keys, no secrets",
+   "ok": true,
+   "actual": "profile_id=null; notes=[]; leaked=none",
+   "screenshot": ""
+  },
+  {
+   "control": "Invite link of a private exhibition for a visitor",
+   "expected": "nothing",
+   "ok": true,
+   "actual": "0 rows",
+   "screenshot": ""
+  },
+  {
+   "control": "Invite link items still load",
+   "expected": "2 items",
+   "ok": true,
+   "actual": "2",
+   "screenshot": ""
+  },
+  {
+   "control": "Share-link items still load",
+   "expected": "2",
+   "ok": true,
+   "actual": "2",
+   "screenshot": ""
+  },
+  {
+   "control": "Old path (expected to stay open until stage 4): a visitor reading the table for an alias exhibition",
+   "expected": "(after stage 4) nothing",
+   "ok": false,
+   "actual": "still returns profile_id=the real id, item_notes=[{\"note\":\"SECRET-NOTE-RB19\",\"itemId\":\"qa",
+   "screenshot": ""
+  },
+  {
+   "control": "Site: share-link page of an ordinary exhibition (visitor)",
+   "expected": "title and both cards render",
+   "ok": true,
+   "actual": "title=true; cards=true,true",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb19-second-1.jpg"
+  },
+  {
+   "control": "Site: share-link page of the hostile alias exhibition (visitor)",
+   "expected": "renders under the alias; no planted secret on the page",
+   "ok": true,
+   "actual": "title=true; alias=true; secret on page=false",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb19-second-2.jpg"
+  },
+  {
+   "control": "Site: invite-link page of a guest-only exhibition (signed-in QA account B)",
+   "expected": "title and cards render",
+   "ok": true,
+   "actual": "title=true; card=true",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb19-second-3.jpg"
+  },
+  {
+   "control": "Site: guest page of an ordinary public exhibition (visitor)",
+   "expected": "title and cards render",
+   "ok": true,
+   "actual": "title=true; card=true",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb19-second-4.jpg"
+  },
+  {
+   "control": "Site: Discover still lists a public exhibition (nothing reads the view yet)",
+   "expected": "listed",
+   "ok": true,
+   "actual": "listed=true",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb19-second-5.jpg"
+  }
+ ],
+ "facts": {}
+}
