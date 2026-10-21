@@ -40,6 +40,13 @@ export type UpcomingComicsResult = {
 export async function fetchUpcomingComics(
   opts: FetchUpcomingOptions = {}
 ): Promise<UpcomingComicsResult | null> {
+  return (await fetchUpcomingComicsChecked(opts)).data;
+}
+
+/** Same request, but says whether it FAILED (network, server error) as opposed to answering with nothing. */
+export async function fetchUpcomingComicsChecked(
+  opts: FetchUpcomingOptions = {}
+): Promise<{ data: UpcomingComicsResult | null; failed: boolean }> {
   const p = new URLSearchParams();
   if (opts.days)      p.set("days", String(opts.days));
   if (opts.creator)   p.set("creator", opts.creator);
@@ -52,16 +59,20 @@ export async function fetchUpcomingComics(
   if (opts.byDate)    p.set("by", "date");
 
   const qs = p.toString();
-  const res = await fetch(`/api/comic-upcoming${qs ? "?" + qs : ""}`);
-  if (!res.ok) return null;
+  try {
+    const res = await fetch(`/api/comic-upcoming${qs ? "?" + qs : ""}`);
+    if (!res.ok) return { data: null, failed: true };
 
-  const data = (await res.json()) as UpcomingComicsResult;
-  if (data.error) return null;
+    const data = (await res.json()) as UpcomingComicsResult;
+    if (data.error) return { data: null, failed: true };
 
-  // Annotate variant info from issue number patterns (Metron doesn't expose roles)
-  data.results = data.results.map(annotateVariant);
+    // Annotate variant info from issue number patterns (Metron doesn't expose roles)
+    data.results = data.results.map(annotateVariant);
 
-  return data;
+    return { data, failed: false };
+  } catch {
+    return { data: null, failed: true };
+  }
 }
 
 /** Alias kept for components that call fetchAllSources */

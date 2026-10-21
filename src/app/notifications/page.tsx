@@ -4,7 +4,9 @@ import { PageHeader } from "@/components/layout/PageHeader";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { getCurrentUser, getStoredActiveProfileId } from "@/lib/auth";
-import { fetchAlerts, timeAgo, type AlertItem } from "@/lib/notificationFeed";
+import { fetchAlertsChecked, timeAgo, type AlertItem } from "@/lib/notificationFeed";
+import { CLOUD_WAIT_MS, LoadErrorCard } from "@/components/vault/CloudStatus";
+import { PillButton } from "@/components/ui/PillButton";
 import { Glyph, type GlyphName } from "@/components/ui/Glyph";
 
 const LAST_SEEN_KEY = "vltd_alerts_last_seen";
@@ -26,25 +28,41 @@ export default function NotificationsPage() {
   const [items, setItems] = useState<AlertItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  // True when some alert source could not be read (or the answer was too slow): an empty list is then a failed load, not "no activity".
+  const [incomplete, setIncomplete] = useState(false);
+  const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
+    let active = true;
     async function load() {
+      setLoading(true);
+      setError(null);
       try {
         const { data: { user } } = await getCurrentUser();
         if (!user) { setError("Sign in to see your alerts."); setLoading(false); return; }
         const profileId = getStoredActiveProfileId() ?? user.id;
-        const alerts = await fetchAlerts(profileId);
-        setItems(alerts);
+        const result = await Promise.race([
+          fetchAlertsChecked(profileId),
+          new Promise<{ items: AlertItem[]; complete: boolean }>((resolve) => window.setTimeout(() => resolve({ items: [], complete: false }), CLOUD_WAIT_MS)),
+        ]);
+        if (!active) return;
+        setItems(result.items);
+        setIncomplete(!result.complete);
         // Opening the page clears the bell's green glow.
         try { window.localStorage.setItem(LAST_SEEN_KEY, String(Date.now())); } catch { /* ignore */ }
       } catch {
-        setError("Could not load your alerts.");
+        if (active) setIncomplete(true);
       } finally {
-        setLoading(false);
+        if (active) setLoading(false);
       }
     }
     load();
-  }, []);
+    return () => {
+      active = false;
+    };
+  }, [attempt]);
+
+  const retry = () => setAttempt((n) => n + 1);
 
   return (
     <div className="min-h-screen bg-[color:var(--bg)] text-[color:var(--fg)]">
@@ -67,7 +85,18 @@ export default function NotificationsPage() {
           </div>
         )}
 
-        {!loading && !error && items.length === 0 && (
+        {!loading && !error && items.length === 0 && incomplete && (
+          <LoadErrorCard what="alerts" onRetry={retry} />
+        )}
+
+        {!loading && !error && items.length > 0 && incomplete && (
+          <div role="status" data-testid="alerts-partial" className="mb-3 flex flex-wrap items-center gap-2 rounded-[8px] px-3 py-1.5 text-[12px] ring-1 ring-[color:var(--border)]" style={{ background: "var(--surface)" }}>
+            <span className="font-semibold">Some alerts couldn’t be loaded.</span>
+            <PillButton size="compact" onClick={retry}>Retry</PillButton>
+          </div>
+        )}
+
+        {!loading && !error && items.length === 0 && !incomplete && (
           <div className="rounded-xl border border-[color:var(--border)] p-10 text-center">
             <div className="mb-3 flex justify-center" style={{ color: "var(--gold, #C8CDD2)" }}>
               <Glyph name="bell" size={30} />

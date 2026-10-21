@@ -6,7 +6,7 @@ import { PageHeader } from "@/components/layout/PageHeader";
 import { PillButton } from "@/components/ui/PillButton";
 import { getStoredActiveProfileId } from "@/lib/auth";
 import {
-  getClub,
+  getClubChecked,
   getMyMembership,
   joinClub,
   leaveClub,
@@ -47,6 +47,8 @@ export default function ClubDetailPage() {
 
   const [profileId, setProfileId] = useState("");
   const [club, setClub] = useState<Club | null>(null);
+  // What the club read turned out to be: still loading, there is no such club, or the read failed (never an endless "Loading…").
+  const [clubState, setClubState] = useState<"loading" | "missing" | "failed" | "ready">("loading");
   const [myRole, setMyRole] = useState<ClubRole | null>(null);
   const [posts, setPosts] = useState<ClubPost[] | null>(null);
   const [members, setMembers] = useState<ClubMember[]>([]);
@@ -70,7 +72,16 @@ export default function ClubDetailPage() {
 
   const refresh = useCallback(async () => {
     if (!clubId) return;
-    const [c, p] = await Promise.all([getClub(clubId), listClubPosts(clubId)]);
+    let c: Club | null = null;
+    let p: ClubPost[] = [];
+    try {
+      const [checked, posts] = await Promise.all([getClubChecked(clubId), listClubPosts(clubId)]);
+      c = checked.club;
+      p = posts;
+      setClubState(checked.club ? "ready" : checked.failed ? "failed" : "missing");
+    } catch {
+      setClubState("failed");
+    }
     setClub(c);
     setPosts(p);
     const pid = getStoredActiveProfileId();
@@ -186,7 +197,21 @@ export default function ClubDetailPage() {
       <>
         <PageHeader title="Club" contentClassName="max-w-[900px]" />
         <main className="mx-auto w-full max-w-[900px] px-4 pb-16 sm:px-6">
-          <p className="text-sm text-[color:var(--muted2)]">Loading…</p>
+          {clubState === "missing" ? (
+            <div role="alert" data-testid="club-not-found" className="rounded-[8px] px-6 py-8 text-center ring-1 ring-[color:var(--border)]" style={{ background: "var(--surface)" }}>
+              <div className="text-base font-semibold">That club doesn&apos;t exist</div>
+              <p className="mt-1 text-sm text-[color:var(--muted)]">The link may be wrong or the club may have been removed.</p>
+              <div className="mt-4 flex justify-center"><PillButton href="/community-board">Back to the Lounge</PillButton></div>
+            </div>
+          ) : clubState === "failed" ? (
+            <div role="alert" data-testid="club-load-failed" className="rounded-[8px] px-6 py-8 text-center ring-1 ring-[color:var(--border)]" style={{ background: "var(--surface)" }}>
+              <div className="text-base font-semibold">We couldn&apos;t load this club just now</div>
+              <p className="mt-1 text-sm text-[color:var(--muted)]">Check your connection and try again.</p>
+              <div className="mt-4 flex justify-center"><PillButton variant="primary" onClick={() => { setClubState("loading"); void refresh(); }}>Try again</PillButton></div>
+            </div>
+          ) : (
+            <p className="text-sm text-[color:var(--muted2)]">Loading…</p>
+          )}
         </main>
       </>
     );

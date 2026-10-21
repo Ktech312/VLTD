@@ -35,6 +35,19 @@ export function LoadErrorCard({ what, onRetry, busy = false }: { what: string; o
   );
 }
 
+/** What a page shows in place of an empty list until the cloud has answered: a short wait note, or the could-not-load card with Retry. */
+export function CloudWait({ what, cloud }: { what: string; cloud: { state: CloudState; busy: boolean; retry: () => void } }) {
+  return (
+    <main className="no-print mx-auto max-w-3xl px-4 py-10">
+      {cloud.state === "failed" ? (
+        <LoadErrorCard what={what} onRetry={cloud.retry} busy={cloud.busy} />
+      ) : (
+        <div role="status" className="rounded-[8px] px-6 py-8 text-center text-sm ring-1 ring-[color:var(--border)]" style={{ background: "var(--surface)", color: "var(--muted)" }}>Loading your {what}…</div>
+      )}
+    </main>
+  );
+}
+
 export type CloudState = "loading" | "ok" | "failed";
 
 /**

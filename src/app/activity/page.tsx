@@ -15,7 +15,8 @@ import { loadSaleHistory } from "@/lib/historyModel";
 import { fetchPublicProfile } from "@/lib/publicProfile";
 import { loadSales, type SaleRecord as LegacySaleRecord } from "@/lib/salesHistory";
 import { syncSalesFromSupabase } from "@/lib/salesModel";
-import { loadItems, syncVaultItemsFromSupabase, type VaultItem } from "@/lib/vaultModel";
+import { loadItems, resetCloudBackoff, syncVaultItemsFromSupabaseChecked, type VaultItem } from "@/lib/vaultModel";
+import { CLOUD_WAIT_MS, LoadErrorCard, StaleDataNotice } from "@/components/vault/CloudStatus";
 import { itemImageOrPlaceholder } from "@/lib/itemPlaceholder";
 import type { SaleRecord } from "@/types/vaultLifecycle";
 
@@ -348,6 +349,10 @@ export default function ActivityPage() {
   const [sales, setSales] = useState<Array<SaleRecord | LegacySaleRecord>>([]);
   const [loggedEvents, setLoggedEvents] = useState<ActivityEventRecord[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  // True when the cloud did not answer (or answered too late): what is on screen is then the saved copy, and an empty list is not "no activity".
+  const [cloudFailed, setCloudFailed] = useState(false);
+  const [attempt, setAttempt] = useState(0);
+  const [retrying, setRetrying] = useState(false);
   const [recentComments, setRecentComments] = useState<RecentComment[]>([]);
   const [exhibitionEvents, setExhibitionEvents] = useState<Array<ExhibitionEvent & { galleryTitle: string }>>([]);
   const [filter, setFilter] = useState<ActivityKind | "all">("all");
@@ -375,19 +380,29 @@ export default function ActivityPage() {
 
       // These three sources are independent, so refresh them together rather
       // than serially adding every network delay before anything can render.
-      const [, , activityResult] = await Promise.allSettled([
-        syncVaultItemsFromSupabase(),
+      const settled = Promise.allSettled([
+        syncVaultItemsFromSupabaseChecked(),
         syncSalesFromSupabase(),
         syncActivityEventsFromSupabase(),
       ]);
-
-      if (!isActive) return;
-      setLoggedEvents(
-        activityResult.status === "fulfilled" ? activityResult.value : loadActivityEvents()
-      );
-      setItems(loadItems());
-      setSales([...loadSaleHistory(), ...loadSales()]);
-      setIsLoading(false);
+      const finish = (results: Awaited<typeof settled> | null) => {
+        if (!isActive) return;
+        const [itemsResult, , activityResult] = results ?? [];
+        const answered = results !== null && itemsResult?.status === "fulfilled" && itemsResult.value.ok && activityResult?.status === "fulfilled";
+        setCloudFailed(!answered);
+        setLoggedEvents(
+          activityResult && activityResult.status === "fulfilled" ? activityResult.value : loadActivityEvents()
+        );
+        setItems(loadItems());
+        setSales([...loadSaleHistory(), ...loadSales()]);
+        setIsLoading(false);
+        setRetrying(false);
+      };
+      // A request that never answers must not leave "Loading activity..." on screen for ever.
+      const timer = window.setTimeout(() => finish(null), CLOUD_WAIT_MS);
+      const results = await settled;
+      window.clearTimeout(timer);
+      finish(results);
     }
 
     void loadActivity();
@@ -395,7 +410,14 @@ export default function ActivityPage() {
     return () => {
       isActive = false;
     };
-  }, []);
+  }, [attempt]);
+
+  const retryLoad = () => {
+    resetCloudBackoff();
+    setRetrying(true);
+    setIsLoading(true);
+    setAttempt((n) => n + 1);
+  };
 
   useEffect(() => {
     let cancelled = false;
@@ -487,6 +509,7 @@ export default function ActivityPage() {
       <div className="mx-auto grid max-w-[1420px] gap-5 xl:grid-cols-[minmax(0,1fr)_410px]">
         <section className="min-w-0">
           <div className="mt-2 space-y-4">
+            {cloudFailed && !isLoading && grouped.length > 0 ? <StaleDataNotice onRetry={retryLoad} busy={retrying} /> : null}
             {isLoading ? (
               <div className="rounded-[8px] border border-[rgba(203,208,213,0.22)] p-6" style={{ background: "var(--theme-card,rgba(15,25,45,0.86))", color: "var(--theme-text-muted,#61656B)" }}>
                 Loading activity...
@@ -507,6 +530,8 @@ export default function ActivityPage() {
                   </div>
                 </section>
               ))
+            ) : cloudFailed ? (
+              <LoadErrorCard what="activity" onRetry={retryLoad} busy={retrying} />
             ) : (
               <EmptyState />
             )}

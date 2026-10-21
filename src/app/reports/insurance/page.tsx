@@ -2,14 +2,15 @@
 "use client";
 
 import { PillSelect } from "@/components/ui/PillSelect";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { CloudWait, useCloudRefresh } from "@/components/vault/CloudStatus";
 import { describeGainExclusions, itemGain, summarizeGain } from "@/lib/vaultStats";
 import { COST_LABEL, COST_NOTE, ESTIMATE_LABEL, EXCLUSIONS_ARE_DEVICE_ONLY, fmtCost, fmtEstimate, insuranceCost, insuranceEstimate, insuranceScope, insuranceTotals, noEstimateNote, notCountedLine, readInsuranceExcludedIds } from "@/lib/insuranceDocs";
 import Link from "next/link";
 
 import { DEMO_ITEMS } from "@/lib/demoVault";
 import { TAXONOMY, UNIVERSE_LABEL, type UniverseKey } from "@/lib/taxonomy";
-import { loadItemsOrSeed, loadItems, syncVaultItemsFromSupabase, type VaultItem as ModelItem } from "@/lib/vaultModel";
+import { loadItemsOrSeed, loadItems, type VaultItem as ModelItem } from "@/lib/vaultModel";
 import { EmptyVault } from "@/components/ui/EmptyVault";
 import { PillButton } from "@/components/ui/PillButton";
 
@@ -84,19 +85,15 @@ export default function InsuranceReportPage() {
   const [includePhotos, setIncludePhotos] = useState(true);
   const [sortBy, setSortBy] = useState<"value_desc" | "value_asc" | "title_asc" | "gain_desc">("value_desc");
 
+  const reloadRef = useRef<() => void>(() => undefined);
+  const cloud = useCloudRefresh(() => reloadRef.current());
   useEffect(() => {
     const seed = toSeedItemsFromDemo();
     const loaded = loadItemsOrSeed(seed);
+    reloadRef.current = () => setAllItems(loadItems());
     setAllItems(loaded);
     setExcludedIds(readInsuranceExcludedIds());
     setHydrated(true);
-    let active = true;
-    void syncVaultItemsFromSupabase().then(() => {
-      if (active) setAllItems(loadItems());
-    });
-    return () => {
-      active = false;
-    };
   }, []);
 
   // ONE rule set (src/lib/insuranceDocs.ts), the same as the inventory, the packet and the PDFs.
@@ -138,6 +135,8 @@ export default function InsuranceReportPage() {
 
   const generatedAt = useMemo(() => Date.now(), []);
 
+  // "Nothing to report" is only true once the cloud has answered; before that, or after a failed answer, it is a wait or a load error.
+  if (hydrated && scope.eligible.length === 0 && cloud.state !== "ok") return <CloudWait what="insurance report" cloud={cloud} />;
   if (hydrated && scope.eligible.length === 0) {
     return (
       <EmptyVault

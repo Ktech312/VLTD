@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { CloudWait, StaleDataNotice, useCloudRefresh } from "@/components/vault/CloudStatus";
 
 import { formatPrice } from "@/lib/pricingMvp";
 import { getOrderedImages, loadItems, type VaultItem } from "@/lib/vaultModel";
@@ -135,7 +136,16 @@ function HealthBar({ score }: { score: number }) {
 }
 
 export default function WeeklyVaultReportPage() {
-  const [items] = useState<VaultItem[]>(() => loadItems());
+  const [items, setItems] = useState<VaultItem[]>(() => loadItems());
+  const reloadRef = useRef<() => void>(() => undefined);
+  // The report asks the cloud itself (it used to show only what this device held); an empty list is believed only once the cloud answered.
+  const cloud = useCloudRefresh(() => reloadRef.current());
+  useEffect(() => {
+    const reload = () => setItems(loadItems());
+    reloadRef.current = reload;
+    window.addEventListener("vltd:vault-updated", reload);
+    return () => window.removeEventListener("vltd:vault-updated", reload);
+  }, []);
   const [now] = useState(() => Date.now());
   const weekStart = now - WEEK_MS;
 
@@ -227,9 +237,12 @@ export default function WeeklyVaultReportPage() {
     year: "numeric",
   });
 
+  if (items.length === 0 && cloud.state !== "ok") return <CloudWait what="weekly report" cloud={cloud} />;
+
   return (
     <main className="bg-[color:var(--bg)] text-[color:var(--fg)]">
       <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+        {cloud.state === "failed" ? <StaleDataNotice onRetry={cloud.retry} busy={cloud.busy} /> : null}
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
             <div className="text-[11px] uppercase tracking-[0.22em] text-[color:var(--muted2)]">Weekly Vault Report</div>

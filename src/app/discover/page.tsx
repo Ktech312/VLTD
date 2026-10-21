@@ -153,6 +153,7 @@ export default function DiscoverPage() {
   const [galleries, setGalleries] = useState<PublicGallery[]>([]);
   const [loading, setLoading] = useState(true);
   const [fetchError, setFetchError] = useState<string | null>(null);
+  const [attempt, setAttempt] = useState(0);
   const [swipeOpen, setSwipeOpen] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [sort, setSort] = useState<"recommended" | "views" | "items" | "newest" | "az">("recommended");
@@ -194,6 +195,8 @@ export default function DiscoverPage() {
 
   useEffect(() => {
     async function fetchData() {
+      setFetchError(null);
+      setLoading(true);
       const supabase = getSupabaseBrowserClient();
       if (!supabase) {
         setLoading(false);
@@ -314,7 +317,7 @@ export default function DiscoverPage() {
     }
 
     void fetchData();
-  }, []);
+  }, [attempt]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -337,7 +340,8 @@ export default function DiscoverPage() {
     return base;
   }, [activeTab, galleries, query, userPrefs]);
 
-  const isEmpty = !loading && filtered.length === 0;
+  // A failed load is never an empty list: the could-not-load card below replaces "No exhibitions match".
+  const isEmpty = !loading && filtered.length === 0 && !fetchError;
   const hasActiveFilter = activeTab !== "All" || query.trim() !== "";
   const galleryTime = (gallery: PublicGallery) => (gallery.created_at ? Date.parse(gallery.created_at) : 0);
   const displayGalleries = (() => {
@@ -535,7 +539,12 @@ export default function DiscoverPage() {
             />
           </div>
 
-          {fetchError && <div className="mt-3 rounded-[7px] border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs text-red-300">Query error: {fetchError}</div>}
+          {fetchError && (
+            <div role="alert" data-testid="discover-load-failed" className="mt-3 flex flex-wrap items-center gap-3 rounded-[7px] border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs text-red-300">
+              <span>We couldn&apos;t load the exhibitions just now. Check your connection and try again.</span>
+              <PillButton size="compact" onClick={() => setAttempt((n) => n + 1)}>Try again</PillButton>
+            </div>
+          )}
 
           {carouselSlides.length > 0 && (
             <section className="mt-4" aria-label="Collector spotlight">

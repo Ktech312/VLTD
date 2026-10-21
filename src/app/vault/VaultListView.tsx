@@ -2039,7 +2039,8 @@ export default function VaultListView({ lockedUniverse }: { lockedUniverse?: Uni
       ) : (
       <div className="mx-auto max-w-[1480px] px-4 pb-4 sm:px-6 sm:pb-5 lg:px-8">
         {cloudStale ? <StaleDataNotice onRetry={() => { resetCloudBackoff(); retryAccountLookups(); void hydrateAll(); }} /> : null}
-        <section className="mb-5">
+        {/* While the load has failed and nothing is saved here, the figures below would read $0 / 0 items as if they were real; the error card further down is the page. */}
+        <section className="mb-5" hidden={items.length === 0 && loadFailed}>
           {items.length > 0 ? (
             <div className="mb-3 hidden flex-wrap gap-2 text-xs text-[color:var(--muted)] sm:flex">
               <span className="rounded-full bg-[color:var(--pill)] px-2.5 py-1 ring-1 ring-[color:var(--border)]">{privateCount} private</span>

@@ -130,25 +130,37 @@ export async function listClubs(limit = 50): Promise<Club[]> {
 }
 
 export async function getClub(clubId: string): Promise<Club | null> {
+  return (await getClubChecked(clubId)).club;
+}
+
+/** Same read, but says whether the club does not exist (no such row, or not a valid club id) or the read itself failed. */
+export async function getClubChecked(clubId: string): Promise<{ club: Club | null; failed: boolean }> {
   const supabase = getSupabaseBrowserClient();
-  if (!supabase) return null;
+  if (!supabase) return { club: null, failed: true };
   const { data, error } = await supabase
     .from("clubs")
     .select("id, name, description, owner_profile_id, created_at")
     .eq("id", clubId)
     .single();
-  if (error || !data) return null;
+  if (error || !data) {
+    // PGRST116: no row; 22P02: not a valid id. Anything else (network, server) is a failed read, not a missing club.
+    const missing = error?.code === "PGRST116" || error?.code === "22P02" || (!error && !data);
+    return { club: null, failed: !missing };
+  }
   const { count } = await supabase
     .from("club_members")
     .select("profile_id", { count: "exact", head: true })
     .eq("club_id", clubId);
   return {
-    id: data.id as string,
-    name: data.name as string,
-    description: (data.description as string) || "",
-    ownerProfileId: data.owner_profile_id as string,
-    createdAt: new Date(data.created_at as string).getTime(),
-    memberCount: count ?? 0,
+    club: {
+      id: data.id as string,
+      name: data.name as string,
+      description: (data.description as string) || "",
+      ownerProfileId: data.owner_profile_id as string,
+      createdAt: new Date(data.created_at as string).getTime(),
+      memberCount: count ?? 0,
+    },
+    failed: false,
   };
 }
 

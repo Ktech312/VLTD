@@ -9,7 +9,7 @@ import { useState, useRef, useEffect, useMemo } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import {
-  fetchAllSources,
+  fetchUpcomingComicsChecked,
   groupByYear,
   groupByReleaseDate,
   formatStoreDate,
@@ -160,6 +160,8 @@ export default function UpcomingPage() {
   const statusOf = (issue: UpcomingIssue): ComicStatus | null =>
     statuses.get(issue.id) ?? (ownedTitles.has(comicTitle(issue.series, issue.number)) ? "own" : null);
   const [notFound, setNotFound]       = useState(false);
+  // The release list could not be fetched (not the same as a search that found nothing).
+  const [loadFailed, setLoadFailed]   = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
 
@@ -188,9 +190,10 @@ export default function UpcomingPage() {
   // Same request the Search button sends with an empty box.
   useEffect(() => {
     let cancelled = false;
-    fetchAllSources({ days: 90, page: 1, pageSize: 25, byDate: true }).then((data) => {
+    fetchUpcomingComicsChecked({ days: 90, page: 1, pageSize: 25, byDate: true }).then(({ data, failed }) => {
       if (cancelled) return;
       setLoading(false);
+      setLoadFailed(failed);
       if (!data) return;
       setFedResult((prev) => prev ?? data);
       setCurrentPage(1);
@@ -210,6 +213,7 @@ export default function UpcomingPage() {
     const isLoadMore = pg > 1;
     if (isLoadMore) setLoadingMore(true);
     else { setLoading(true); setNotFound(false); }
+    setLoadFailed(false);
 
     const singlePub =
       pubOverride !== undefined
@@ -228,9 +232,13 @@ export default function UpcomingPage() {
       ...(q ? (mode === "creator" ? { creator: q } : { series: q }) : {}),
     };
 
-    const data = await fetchAllSources(opts);
+    const { data, failed } = await fetchUpcomingComicsChecked(opts);
+    setLoadFailed(failed);
 
-    if (!data || (data.results.length === 0 && pg === 1)) {
+    if (failed) {
+      // The request failed: say so (below); never "Nothing found". Releases already on screen stay.
+      if (!isLoadMore) setFedResult(null);
+    } else if (!data || (data.results.length === 0 && pg === 1)) {
       if (!isLoadMore) { setFedResult(null); setNotFound(true); }
     } else if (data && isLoadMore && fedResult) {
       setFedResult({ ...data, results: [...fedResult.results, ...data.results] });
@@ -429,8 +437,15 @@ export default function UpcomingPage() {
               </div>
             )}
 
+            {loadFailed && !loading && (
+              <div role="alert" data-testid="upcoming-load-failed" className="mx-5 my-6 flex flex-wrap items-center justify-center gap-3 rounded-[8px] px-5 py-6 text-center ring-1 ring-[color:var(--border)]" style={{ background: "var(--surface)" }}>
+                <span className="text-sm text-[color:var(--fg)]">We couldn&apos;t load the upcoming releases just now. Check your connection and try again.</span>
+                <PillButton size="compact" onClick={() => void handleSearch(1)}>Try again</PillButton>
+              </div>
+            )}
+
             {/* Not found */}
-            {notFound && !loading && (
+            {notFound && !loading && !loadFailed && (
               <div className="px-5 py-14 text-center text-[color:var(--muted)]">
                 <div className="mb-3 flex justify-center"><AppIcon name="search" size={40} /></div>
                 <div className="mb-1.5 text-base font-semibold text-[color:var(--fg)]">Nothing found</div>
@@ -442,7 +457,7 @@ export default function UpcomingPage() {
             )}
 
             {/* Empty state */}
-            {!fedResult && !notFound && !loading && (
+            {!fedResult && !notFound && !loading && !loadFailed && (
               <div className="px-5 py-14 text-center text-[color:var(--muted)]">
                 <div className="mb-3.5 flex justify-center"><AppIcon name="events" size={44} /></div>
                 <div className="mb-1.5 text-base font-semibold text-[color:var(--fg)]">Find what&apos;s dropping soon</div>

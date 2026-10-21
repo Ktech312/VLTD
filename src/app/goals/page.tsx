@@ -14,11 +14,12 @@ import {
   legacyDeviceWideGoalCount,
   pendingGoalCounts,
   retryPendingGoals,
-  syncGoalsFromSupabase,
+  syncGoalsFromSupabaseChecked,
   type GoalProgress,
 } from "@/lib/collectionGoals";
 import { addWishlistItem } from "@/lib/wishlistModel";
-import { loadItems, type VaultItem } from "@/lib/vaultModel";
+import { loadItems, resetCloudBackoff, type VaultItem } from "@/lib/vaultModel";
+import { LoadErrorCard, StaleDataNotice } from "@/components/vault/CloudStatus";
 import { Glyph } from "@/components/ui/Glyph";
 import { showToast } from "@/lib/toast";
 import { subscribeCloudSave } from "@/lib/cloudSaveStatus";
@@ -259,6 +260,9 @@ export default function GoalsPage() {
   // Goal changes the account has not confirmed yet (saved or deleted on this device only): said out loud, never silent.
   const [waiting, setWaiting] = useState({ saves: 0, deletes: 0 });
   const [retrying, setRetrying] = useState(false);
+  // True when the account could not be read: the saved copy (possibly none) is on screen, and an empty list is not "no goals".
+  const [loadFailed, setLoadFailed] = useState(false);
+  const [attempt, setAttempt] = useState(0);
   // Goals an older version left on this device that cannot be tied to this account: kept, never added automatically.
   const [legacyHeld, setLegacyHeld] = useState(0);
   const refreshWaiting = () => setWaiting(pendingGoalCounts());
@@ -282,9 +286,16 @@ export default function GoalsPage() {
 
   useEffect(() => {
     let active = true;
-    void syncGoalsFromSupabase().then(() => {
-      if (active) setGoals(loadGoals());
-    }).catch(() => undefined).finally(() => {
+    // A pull that never answers must not leave "Loading your goals…" on screen for ever.
+    const timer = window.setTimeout(() => {
+      if (active) { setLoadFailed(true); setGoalsLoaded(true); }
+    }, 20_000);
+    void syncGoalsFromSupabaseChecked().then((result) => {
+      if (!active) return;
+      setGoals(loadGoals());
+      setLoadFailed(!result.ok);
+    }).catch(() => { if (active) setLoadFailed(true); }).finally(() => {
+      window.clearTimeout(timer);
       if (active) {
         setGoalsLoaded(true);
         refreshWaiting();
@@ -293,8 +304,16 @@ export default function GoalsPage() {
     });
     return () => {
       active = false;
+      window.clearTimeout(timer);
     };
-  }, []);
+  }, [attempt]);
+
+  const retryGoalsLoad = () => {
+    resetCloudBackoff();
+    setGoalsLoaded(false);
+    setLoadFailed(false);
+    setAttempt((n) => n + 1);
+  };
 
   const progress = useMemo(() => computeAllGoalProgress(goals, items), [goals, items]);
   const realGoalViews = useMemo(() => buildGoalViews(progress, items), [items, progress]);
@@ -437,6 +456,7 @@ export default function GoalsPage() {
           </div>
 
           <div className="mt-3 space-y-2">
+            {loadFailed && goalViews.length > 0 ? <StaleDataNotice onRetry={retryGoalsLoad} /> : null}
             {visibleGoals.length === 0 && !goalsLoaded && (
               <div role="status" className="grid min-h-[220px] place-items-center rounded-[7px] border border-[rgba(203,208,213,0.22)] text-sm" style={{ background: "var(--theme-card,rgba(15,25,45,0.86))", color: "var(--theme-text-muted,#61656B)" }}>
                 Loading your goals…
@@ -454,7 +474,10 @@ export default function GoalsPage() {
                 </div>
               </div>
             )}
-            {visibleGoals.length === 0 && goalsLoaded && goalViews.length === 0 && (
+            {visibleGoals.length === 0 && goalsLoaded && goalViews.length === 0 && loadFailed && (
+              <LoadErrorCard what="goals" onRetry={retryGoalsLoad} />
+            )}
+            {visibleGoals.length === 0 && goalsLoaded && goalViews.length === 0 && !loadFailed && (
               <div className="grid min-h-[220px] place-items-center rounded-[7px] border border-[rgba(203,208,213,0.22)] text-center" style={{ background: "var(--theme-card,rgba(15,25,45,0.86))" }}>
                 <div>
                   <Glyph name="target" size={42} style={{ color: "var(--theme-gold,#C8CDD2)" }} />

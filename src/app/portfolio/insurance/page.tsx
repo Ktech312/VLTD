@@ -3,9 +3,10 @@
 import Link from "next/link";
 import { describeGainExclusions, summarizeGain } from "@/lib/vaultStats";
 import { COST_LABEL, COST_NOTE, ESTIMATE_LABEL, EXCLUSIONS_ARE_DEVICE_ONLY, fmtCost, fmtEstimate, insuranceCost, insuranceEstimate, insuranceScope, insuranceTotals, noEstimateNote, notCountedLine, readInsuranceExcludedIds } from "@/lib/insuranceDocs";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import { loadItems, type VaultItem } from "@/lib/vaultModel";
+import { CloudWait, StaleDataNotice, useCloudRefresh } from "@/components/vault/CloudStatus";
 import { PillButton } from "@/components/ui/PillButton";
 
 function clamp(n: number) {
@@ -21,9 +22,16 @@ export default function InsuranceReportPage() {
   const [allItems, setAllItems] = useState<VaultItem[]>([]);
   const [excludedIds, setExcludedIds] = useState<Set<string>>(new Set());
 
+  const reloadRef = useRef<() => void>(() => undefined);
+  // The schedule asks the cloud itself (it used to show only what this device happened to hold, so a clean browser showed zeros).
+  const cloud = useCloudRefresh(() => reloadRef.current());
   useEffect(() => {
-    setAllItems(loadItems());
+    const reload = () => setAllItems(loadItems());
+    reloadRef.current = reload;
+    reload();
     setExcludedIds(readInsuranceExcludedIds());
+    window.addEventListener("vltd:vault-updated", reload);
+    return () => window.removeEventListener("vltd:vault-updated", reload);
   }, []);
 
   // ONE rule set (src/lib/insuranceDocs.ts), the same as the inventory, the packet, the reports and the PDFs.
@@ -39,6 +47,9 @@ export default function InsuranceReportPage() {
   function onPrint() {
     window.print();
   }
+
+  // An empty list is only believed once the cloud has answered; before that, or after a failed answer, it is a wait or a load error.
+  if (allItems.length === 0 && cloud.state !== "ok") return <CloudWait what="inventory schedule" cloud={cloud} />;
 
   return (
     <main className="vltd-print-document text-[color:var(--fg)]">
@@ -74,6 +85,8 @@ export default function InsuranceReportPage() {
             Print / Save PDF
           </PillButton>
         </div>
+
+        {cloud.state === "failed" ? <div className="no-print mt-4"><StaleDataNotice onRetry={cloud.retry} busy={cloud.busy} /></div> : null}
 
         {/* Report header */}
         <div className="mt-6 rounded-3xl bg-[color:var(--surface)] p-6 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)] print-card">

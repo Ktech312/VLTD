@@ -56,22 +56,24 @@ export async function fetchFollowingFeed(
   if (!supabase) return [];
 
   // 1. Get list of followed profile IDs
-  const { data: followRows } = await supabase
+  const { data: followRows, error: followError } = await supabase
     .from("follows")
     .select("followed_id")
     .eq("follower_id", currentProfileId)
     .limit(100);
+  if (followError) throw new Error(followError.message);
 
   const followedIds = (followRows ?? []).map((r: { followed_id: string }) => r.followed_id);
   if (followedIds.length === 0) return [];
 
   // 2. Fetch recent exhibition events from those profiles
-  const { data: eventRows } = await supabase
+  const { data: eventRows, error: eventError } = await supabase
     .from("exhibition_events")
     .select("id, type, gallery_id, profile_id, metadata, created_at")
     .in("profile_id", followedIds)
     .order("created_at", { ascending: false })
     .limit(limit);
+  if (eventError) throw new Error(eventError.message);
 
   const events: EventRow[] = (eventRows ?? []) as EventRow[];
   if (events.length === 0) return [];
@@ -131,7 +133,13 @@ export type AlertItem = {
  * Each source is guarded, so one failing never breaks the others.
  */
 export async function fetchAlerts(currentProfileId: string): Promise<AlertItem[]> {
+  return (await fetchAlertsChecked(currentProfileId)).items;
+}
+
+/** Same feed, but also says whether any source could not be read, so a page never presents a failed read as "no activity". */
+export async function fetchAlertsChecked(currentProfileId: string): Promise<{ items: AlertItem[]; complete: boolean }> {
   const out: AlertItem[] = [];
+  let complete = true;
   const supabase = getSupabaseBrowserClient();
 
   // 1. Follows
@@ -150,16 +158,17 @@ export async function fetchAlerts(currentProfileId: string): Promise<AlertItem[]
       });
     }
   } catch {
-    /* ignore */
+    complete = false;
   }
 
   // 2. Messages — comments on your exhibitions
   try {
     if (supabase && currentProfileId) {
-      const { data: gal } = await supabase
+      const { data: gal, error: galError } = await supabase
         .from("galleries")
         .select("id, title")
         .eq("profile_id", currentProfileId);
+      if (galError) throw new Error(galError.message);
       const galleries = (gal ?? []) as { id: string; title: string | null }[];
       const ids = galleries.map((g) => g.id);
       if (ids.length > 0) {
@@ -179,7 +188,7 @@ export async function fetchAlerts(currentProfileId: string): Promise<AlertItem[]
       }
     }
   } catch {
-    /* ignore */
+    complete = false;
   }
 
   // 3. Bugs — all reports (admins only; 403 for everyone else)
@@ -230,7 +239,7 @@ export async function fetchAlerts(currentProfileId: string): Promise<AlertItem[]
       }
     }
   } catch {
-    /* ignore */
+    complete = false;
   }
 
   // 4. Your own bug reports — a reply or resolution from the admin. Every
@@ -242,12 +251,13 @@ export async function fetchAlerts(currentProfileId: string): Promise<AlertItem[]
       const { data: authData } = await supabase.auth.getUser();
       const uid = authData?.user?.id;
       if (uid) {
-        const { data: mine } = await supabase
+        const { data: mine, error: mineError } = await supabase
           .from("bug_reports")
           .select("id, message, status, admin_reply, admin_replied_at, updated_at, created_at")
           .eq("user_id", uid)
           .order("updated_at", { ascending: false })
           .limit(20);
+        if (mineError) throw new Error(mineError.message);
         for (const b of (mine ?? []) as {
           id: string; message: string; status: string; admin_reply: string | null;
           admin_replied_at: string | null; updated_at: string | null; created_at: string;
@@ -265,7 +275,7 @@ export async function fetchAlerts(currentProfileId: string): Promise<AlertItem[]
       }
     }
   } catch {
-    /* ignore */
+    complete = false;
   }
 
   // 5. Direct messages — real unread conversations, one alert per
@@ -287,10 +297,10 @@ export async function fetchAlerts(currentProfileId: string): Promise<AlertItem[]
       }
     }
   } catch {
-    /* ignore */
+    complete = false;
   }
 
-  return out.sort((a, b) => b.createdAt - a.createdAt).slice(0, 50);
+  return { items: out.sort((a, b) => b.createdAt - a.createdAt).slice(0, 50), complete };
 }
 
 export function timeAgo(ts: number): string {

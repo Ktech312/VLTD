@@ -230,25 +230,30 @@ function ensureRetryRegistered() {
 }
 
 export async function syncGoalsFromSupabase(): Promise<CollectionGoal[]> {
-  if (typeof window === "undefined") return [];
+  return (await syncGoalsFromSupabaseChecked()).goals;
+}
+
+/** Same pull, but says whether the account really answered ("no goals" and "could not reach the account" are different things). */
+export async function syncGoalsFromSupabaseChecked(): Promise<{ goals: CollectionGoal[]; ok: boolean }> {
+  if (typeof window === "undefined") return { goals: [], ok: false };
   ensureRetryRegistered();
   // First finish what this device still owes the account, so the list read below already includes it.
   if (activeProfileId()) await retryPendingGoals().catch(() => undefined);
   const local = loadGoals();
   try {
     const pid = activeProfileId();
-    if (!pid) return local;
+    if (!pid) return { goals: local, ok: true };
     const supabase = getSupabaseBrowserClient();
-    if (!supabase) return local;
+    if (!supabase) return { goals: local, ok: false };
     const startedAs = storedSessionUserId();
     const { data, error } = await supabase
       .from("collection_goals")
       .select("id,name,target_count,universe,subject,notes,created_at")
       .eq("profile_id", pid);
-    if (error || !data) return local;
+    if (error || !data) return { goals: local, ok: false };
     // The answer is for the person and profile that asked. If either changed while it was in flight, drop it: saving it would
     // file one profile's goals under another's, and pushing the local copy would upload them to the wrong profile.
-    if (!stillSignedInAs(startedAs) || activeProfileId() !== pid) return local;
+    if (!stillSignedInAs(startedAs) || activeProfileId() !== pid) return { goals: local, ok: false };
     const fromCloud: CollectionGoal[] = data.map((r: Record<string, unknown>) => ({
       id: String(r.id),
       name: String(r.name ?? ""),
@@ -271,11 +276,11 @@ export async function syncGoalsFromSupabase(): Promise<CollectionGoal[]> {
       for (const id of merged.deviceOnly) pending.add(id);
       writeIdSet(LS_PENDING, pid, pending);
       await retryPendingGoals().catch(() => undefined);
-      return loadGoals();
+      return { goals: loadGoals(), ok: true };
     }
-    return merged.goals;
+    return { goals: merged.goals, ok: true };
   } catch {
-    return local;
+    return { goals: local, ok: false };
   }
 }
 

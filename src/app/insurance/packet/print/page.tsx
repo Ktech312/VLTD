@@ -3,11 +3,12 @@
 
 import Link from "next/link";
 import { COST_LABEL, COST_NOTE, ESTIMATE_LABEL, EXCLUSIONS_ARE_DEVICE_ONLY, fmtCost, fmtEstimate, insuranceCost, insuranceEstimate, insuranceScope, insuranceTotals, noEstimateNote, notCountedLine, readInsuranceExcludedIds, totalsSentence } from "@/lib/insuranceDocs";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { CloudWait, useCloudRefresh } from "@/components/vault/CloudStatus";
 import { useSearchParams } from "next/navigation";
 
 import { DEMO_ITEMS } from "@/lib/demoVault";
-import { loadItemsOrSeed, loadItems, syncVaultItemsFromSupabase, type VaultItem as ModelItem } from "@/lib/vaultModel";
+import { loadItemsOrSeed, loadItems, type VaultItem as ModelItem } from "@/lib/vaultModel";
 import { UNIVERSE_LABEL, type UniverseKey } from "@/lib/taxonomy";
 
 type Item = ModelItem & {
@@ -69,19 +70,15 @@ export default function InsurancePacketPrintPage() {
   const requestedPage = Math.max(0, Number(params.get("page") ?? 0) || 0);
   const [items, setItems] = useState<Item[]>([]);
   const [excludedIds, setExcludedIds] = useState<Set<string>>(new Set());
+  const reloadRef = useRef<() => void>(() => undefined);
+  const cloud = useCloudRefresh(() => reloadRef.current());
 
   useEffect(() => {
     const seed = toSeedItemsFromDemo();
     const loaded = loadItemsOrSeed(seed as any) as any as Item[];
     setItems(loaded);
     setExcludedIds(readInsuranceExcludedIds());
-    let active = true;
-    void syncVaultItemsFromSupabase().then(() => {
-      if (active) setItems(loadItems() as any as Item[]);
-    });
-    return () => {
-      active = false;
-    };
+    reloadRef.current = () => setItems(loadItems() as any as Item[]);
   }, []);
 
   // ONE rule set (src/lib/insuranceDocs.ts), the same as the packet screen, the inventory and the reports.
@@ -95,6 +92,9 @@ export default function InsurancePacketPrintPage() {
 
   const totals = useMemo(() => insuranceTotals(selectedItems), [selectedItems]);
   const noEstimate = noEstimateNote(totals);
+
+  // An empty list is only believed once the cloud has answered; before that, or after a failed answer, it is a wait or a load error.
+  if (items.length === 0 && cloud.state !== "ok") return <CloudWait what="insurance packet" cloud={cloud} />;
 
   return (
     <main className="vltd-ins-light vltd-print-document vltd-paper bg-white px-5 py-5 text-black">
