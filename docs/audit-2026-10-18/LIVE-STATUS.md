@@ -1,6 +1,6 @@
 # Live status (updated as work completes; a checkpoint is not a request to stop)
 
-Last updated: 2026-10-20.
+Last updated: 2026-10-21.
 
 ## Waiting on you (external, two ready files; nothing else is blocked)
 - **Market asking price (RC-23) and exhibition view counter (RC-27) SQL**: files 2 and 3 in the same `repair-batch-6/SQL-RUN-ME.md`.
@@ -17,6 +17,8 @@ Last updated: 2026-10-20.
 - **Batch 10 (2026-10-21)**: RC-22 closed (direct loads in a clean browser show the account's data; exports never empty). `repair-batch-10/CLOSEOUT.md`.
 - **Batch 11 (2026-10-21)**: RC-23 13 of 15 rows closed on production (Watchlist numbers, Market seller/link/sort/pills, Favorites/Discover counts); the Market asking price needs SQL file 2.
 - **Batch 12 (2026-10-21)**: RC-25 6 of 7 and RC-27 8 of 12 rows closed on production (gain sort, Halls, Upcoming, invites, Messages, bid history); view counter needs SQL file 3.
+- **Batch 13 (2026-10-21)**: RC-24 15 of 16 and RC-26 19 of 24 rows closed on production (links lead somewhere real, buttons do what they say) (`repair-batch-13/CLOSEOUT.md`).
+- **Batch 14 (2026-10-21)**: RC-30 closed; RC-29 10 of 12, RC-32 8 of 9, RC-34 7 of 8 rows closed on production (Close/Escape, empty results, setup notice, Lounge dates, no emoji on Shop) (`repair-batch-14/CLOSEOUT.md`).
 - `test:isolation` repaired (real network-failure rule and the goal rules module wired into the test; 85 checks pass, assertions unchanged).
 
 ## Queue (order: data loss / private exposure / false "saved", then Insurance and core workflows, then figures / search / filters / misleading actions, then navigation and interaction, then cosmetics)

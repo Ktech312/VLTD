@@ -1,0 +1,26 @@
+{
+ "label": "a",
+ "cases": [
+  {
+   "control": "Item page: Edit Photo dialog, press Escape (no changes made)",
+   "expected": "the dialog closes",
+   "ok": true,
+   "actual": "open=true; open after Escape=false",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb45-a-1.jpg"
+  },
+  {
+   "control": "Activity: Close on the details panel",
+   "expected": "the panel closes and stays closed (another entry used to take its place)",
+   "ok": true,
+   "actual": "panel open before=true; after Close=false",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb45-a-2.jpg"
+  },
+  {
+   "control": "Exhibitions: filter 'Drafts' (matches nothing)",
+   "expected": "says no exhibition matches, with a Show all button that clears it",
+   "ok": true,
+   "actual": "message=\"No exhibitions match this filter. You have 5 in total. Show all\"; cleared by Show all=true",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb45-a-3.jpg"
+  }
+ ]
+}

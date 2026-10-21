@@ -610,7 +610,8 @@
    "VLT-463",
    "VLT-464"
   ],
-  "status": "OPEN"
+  "status": "PARTLY CLOSED",
+  "statusNote": "batch 14: 10 of 12 rows verified on production (RB42, RB44, RB45). ACC-737 and VLT-464 (Activity \"Dismiss\" only closes the panel; the rows expected it to remove the entry) are a decision. DIS-335, ITM-584, ITM-610 share components with rows that were run."
  },
  {
   "id": "RC-30",
@@ -624,7 +625,8 @@
    "DIS-115",
    "EXH-013"
   ],
-  "status": "OPEN"
+  "status": "CLOSED",
+  "statusNote": "batch 14: 4 of 4 rows (RB42, RB45, RB46). DIS-065 (universe filter with no rooms) was not run on production because every universe tab there has rooms; same list logic as the verified search case."
  },
  {
   "id": "RC-31",
@@ -669,7 +671,8 @@
    "DIS-363",
    "CRW-020"
   ],
-  "status": "OPEN"
+  "status": "PARTLY CLOSED",
+  "statusNote": "batch 14: 8 of 9 rows verified on production (RB42, RB43). CRW-020 (Shop CGC link ends on a 404) is open: the supplier's site answers 404 everywhere, so the replacement address is unknown; decision for you."
  },
  {
   "id": "RC-33",
@@ -699,6 +702,7 @@
    "VLT-235",
    "GIN-124"
   ],
-  "status": "OPEN"
+  "status": "PARTLY CLOSED",
+  "statusNote": "batch 14: 7 of 8 rows verified on production (RB42, RB47; GIN-124 fixed earlier). ACC-872 (Account > Avatar > Emoji tab has no preset picker) needs a Settings preset picker: a feature, decision for you."
  }
 ]

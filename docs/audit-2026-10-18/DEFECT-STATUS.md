@@ -112,3 +112,17 @@ Migration-blocked (stage-0 production output reviewed 2026-10-21: matches; stage
 |---|---|---|---|
 | RC-25 (6 of 7) | VLT-143, 144, 252, 287, 278, GIN-013 | `1e70578` | RB37, RB31 (open: VLT-147 decision) |
 | RC-27 (8 of 12) | DIS-252, 271, 308, 314, 404; EXH-322, 334; ITM-482 | `1e70578` | RB37, RB38 (open: EXH-283/284/285/292 need SQL file 3) |
+
+### Batch 13: links and buttons (closeout `repair-batch-13/CLOSEOUT.md`)
+| Root cause | Audit rows closed | Commits | Evidence |
+|---|---|---|---|
+| RC-24 (15 of 16) | VLT-364, 366, 368, 377, 378, 409, 420, 422, 428, 228, 273, 274, 275; GIN-146, 152 | `3e9b484` to `ce87bf8` | RB39, RB40, RB41 (open: VLT-385, goal types decision) |
+| RC-26 (19 of 24) | EXH-027, 028, 029; DIS-170, 176, 198, 203; ITM-243, 625, 220; ACC-460, 706, 868, 359, 403; CRW-010; ADD-199 (+ ACC-808, 817 under RC-28) | `3e9b484` to `ce87bf8` | RB39, RB40, RB41 (open: DIS-166, ACC-375/441/721, VLT-073, decisions) |
+
+### Batch 14: panels, empty results, wording (closeout `repair-batch-14/CLOSEOUT.md`)
+| Root cause | Audit rows closed | Commits | Evidence |
+|---|---|---|---|
+| RC-29 (10 of 12) | DIS-045, 165, 331, 335; ITM-100, 116, 584, 610; ACC-736; VLT-463 | `a71052a` | RB42, RB44, RB45 (open: ACC-737, VLT-464, Dismiss decision) |
+| RC-30 (4 of 4) | DIS-057, 065, 115; EXH-013 | `a71052a` | RB42, RB45, RB46 (DIS-065 not run on production) |
+| RC-32 (8 of 9) | ACC-029, 098, 105, 184, 479; DIS-345, 362, 363 | `a71052a` to `d52e26b` | RB42, RB43 (open: CRW-020, dead CGC link) |
+| RC-34 (7 of 8) | DIS-414, CRW-019, ACC-851, VLT-401, 423, 235, GIN-124 | `a71052a` | RB42, RB47 (open: ACC-872, Avatar emoji tab) |

@@ -1,0 +1,33 @@
+{
+ "label": "b",
+ "cases": [
+  {
+   "control": "Account menu > Switch Profile: profile avatars",
+   "expected": "a picture (or the profile's initial) for each profile, never the word 'key'",
+   "ok": true,
+   "actual": "[{\"text\":\"QA Visual Collection @qa_jr_p_mvhnhleu · Personal ACTIVE\",\"img\":true,\"first\":\"\"},{\"text\":\"QA Journey Business @qa_jr_b_mvhnhleu · Business Switch\",\"img\":true,\"first\":\"\"}]",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb47-b-1.jpg"
+  },
+  {
+   "control": "Insights: category 'Movies / TV / Film'",
+   "expected": "TV in capitals",
+   "ok": true,
+   "actual": "'Tv' spelling present=false; 'TV' present=true",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb47-b-2.jpg"
+  },
+  {
+   "control": "Category page: subtitle",
+   "expected": "no developer wording",
+   "ok": true,
+   "actual": "'Future DB-ready' present=false",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb47-b-3.jpg"
+  },
+  {
+   "control": "Collection report: group headings",
+   "expected": "universe names (Pop Culture), not POP_CULTURE",
+   "ok": true,
+   "actual": "'POP_CULTURE' present=false; 'Pop Culture' present=true",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb47-b-4.jpg"
+  }
+ ]
+}

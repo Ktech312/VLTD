@@ -1,0 +1,31 @@
+{
+ "label": "a",
+ "cases": [
+  {
+   "control": "Switch Profile",
+   "ok": null,
+   "actual": "the list is not shown for this account"
+  },
+  {
+   "control": "Insights: category 'Movies / TV / Film'",
+   "expected": "TV in capitals",
+   "ok": true,
+   "actual": "'Tv' spelling present=false; 'TV' present=true",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb47-a-1.jpg"
+  },
+  {
+   "control": "Category page: subtitle",
+   "expected": "no developer wording",
+   "ok": true,
+   "actual": "'Future DB-ready' present=false",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb47-a-2.jpg"
+  },
+  {
+   "control": "Collection report: group headings",
+   "expected": "universe names (Pop Culture), not POP_CULTURE",
+   "ok": true,
+   "actual": "'POP_CULTURE' present=false; 'Pop Culture' present=true",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb47-a-3.jpg"
+  }
+ ]
+}

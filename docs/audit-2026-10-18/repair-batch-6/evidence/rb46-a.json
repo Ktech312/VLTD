@@ -1,0 +1,17 @@
+{
+ "label": "a",
+ "cases": [
+  {
+   "control": "Discover: a search that matches nothing",
+   "expected": "the empty message alone (no featured rooms, no carousel, no room cards)",
+   "ok": true,
+   "actual": "with no search: {\"msg\":false,\"featured\":true,\"carousel\":true,\"cards\":14}; with the search: {\"msg\":true,\"featured\":false,\"carousel\":false,\"cards\":0}",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb46-a-1.jpg"
+  },
+  {
+   "control": "Discover: universe filter with no rooms",
+   "ok": null,
+   "actual": "every candidate tab had rooms ([\"Jewelry & Apparel\\n3 exhibitions\",\"Art\\n11 exhibitions\"])"
+  }
+ ]
+}

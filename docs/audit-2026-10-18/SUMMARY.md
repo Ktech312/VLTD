@@ -24,6 +24,10 @@ Behaviour-asserted rows (a test checked the outcome): 3754 = 509 FAIL, 2770 PASS
 
 ## Repair status (updated 2026-10-20)
 
+**Batch 14 (2026-10-21, `repair-batch-14/CLOSEOUT.md`): RC-30 closed (4 of 4); RC-29 10 of 12, RC-32 8 of 9, RC-34 7 of 8 rows closed. Open: Activity Dismiss behaviour, the dead CGC link, the Avatar emoji tab (all decisions).**
+
+**Batch 13 (2026-10-21, `repair-batch-13/CLOSEOUT.md`): RC-24 15 of 16 and RC-26 19 of 24 rows closed. Open: VLT-385 (goal types), DIS-166, ACC-375/441/721 (Universes displayed), VLT-073 (all decisions).**
+
 **Batch 12 (2026-10-21, `repair-batch-12/CLOSEOUT.md`): RC-25 6 of 7 rows and RC-27 8 of 12 rows closed; the view counter needs SQL file 3, VLT-147 is a decision.**
 
 **Batch 11 (2026-10-21, `repair-batch-11/CLOSEOUT.md`): RC-23 13 of 15 rows closed; the other 2 (Market asking price) need SQL file 2.**
@@ -119,13 +123,13 @@ Full table with commits and evidence: `DEFECT-STATUS.md`. Closed and re-tested o
 - **[PARTLY CLOSED] RC-23 Watchlist, Favorites and Market show invented or wrong numbers and broken links**  
   A wish's 'Current Value' is target x 1.18; watched items show a made-up Target Price and totals computed from them; Market cards link to /v/undefined (raw database error) and rank/total by current value not asking price; Favorites counts differ.  
   Rows (15): DIS-144, DIS-145, DIS-146, DIS-147, DIS-149, DIS-213 (+9 more)
-- **RC-24 Insights/Vault links and drill-downs lead to the wrong or an empty place**  
+- **[PARTLY CLOSED] RC-24 Insights/Vault links and drill-downs lead to the wrong or an empty place**  
   Breakdown and cost rows link to an empty 'Misc' page; 'View all movers', '+ Add note', 'Open Exhibitions' go to plain /vault; unknown universe/slug silently shows Misc; empty gallery pages say 'Your vault is empty'; the universe drill-down defaults to a 30-day window.  
   Rows (16): VLT-364, VLT-366, VLT-368, VLT-377, VLT-378, VLT-385 (+10 more)
 - **[PARTLY CLOSED] RC-25 Sort and Halls arithmetic wrong**  
   Gain sort mishandles value-with-no-cost and explicit $0; default Wall view says 'Newest' but is A to Z; Halls ignore tax/shipping/fees and offer sold items; 'Recent' goal sort is not newest-first.  
   Rows (7): VLT-143, VLT-144, VLT-147, VLT-252, VLT-287, VLT-278 (+1 more)
-- **RC-26 Buttons that do something other than their label**  
+- **[PARTLY CLOSED] RC-26 Buttons that do something other than their label**  
   Exhibition list Duplicate/Export PDF/'View public page' only open the editor; Watchlist '+ Add Watch' goes to Add Item; 'Add to Insurance' only opens a print dialog; 'The Flip' links go to Discover; sign-out-all has no confirmation; 'Unlock All' clears the form; Universes-displayed setting is ignored by most pages; 'Switch app theme? Yes' changes nothing; '/auth/confirmed' says the email is confirmed with no code.  
   Rows (24): EXH-028, EXH-029, EXH-027, DIS-166, DIS-176, DIS-170 (+18 more)
 - **[PARTLY CLOSED] RC-27 Counters and messages that cannot be believed**  
@@ -137,16 +141,16 @@ Full table with commits and evidence: `DEFECT-STATUS.md`. Closed and re-tested o
 
 ### P4 - usability
 
-- **RC-29 Close / Escape does not close panels, dialogs and sheets**  
+- **[PARTLY CLOSED] RC-29 Close / Escape does not close panels, dialogs and sheets**  
   Discover and Watchlist detail panels, Lounge composer, photo preview, Edit Photo dialog, Activity details panel Close/Dismiss.  
   Rows (12): DIS-045, DIS-165, DIS-331, DIS-335, ITM-100, ITM-116 (+6 more)
-- **RC-30 Empty-result states missing when a filter matches nothing**  
+- **[CLOSED] RC-30 Empty-result states missing when a filter matches nothing**  
   No-match search on Discover still lists all rooms; Watchlist and exhibitions filters show no message.  
   Rows (4): DIS-057, DIS-065, DIS-115, EXH-013
 - **RC-31 Small tap targets, off-screen feedback and sideways overflow on phones (browser-emulated)**  
   Targets under 44 px on item, Sales, Goals, builder and Events pages; 'Asking price saved' message off-screen; 2 px overflow on For Sale/Sold; Discover room card tap fills a panel 4,300 px down.  
   Rows (16): ITM-590, ITM-607, ITM-597, ITM-603, ITM-226, ITM-620 (+10 more)
-- **RC-32 Misc. navigation and wording defects**  
+- **[PARTLY CLOSED] RC-32 Misc. navigation and wording defects**  
   Footer 'Exhibitions' link goes to login; onboarding header links bounce silently; dead CGC link; Lounge drops show an all-day event a day early (US Pacific); /lounge-preview shows developer wording; 'Open Exhibitions' wrong targets elsewhere.  
   Rows (9): ACC-029, ACC-098, ACC-105, ACC-184, ACC-479, DIS-345 (+3 more)
 - **[CLOSED] RC-33 Legacy /api/vault/[id] accepts anonymous writes (reachable, not durable, not used)**  
@@ -155,7 +159,7 @@ Full table with commits and evidence: `DEFECT-STATUS.md`. Closed and re-tested o
 
 ### P5 - cosmetic
 
-- **RC-34 Cosmetic: emoji icons (standing project rule), raw labels and placeholders**  
+- **[PARTLY CLOSED] RC-34 Cosmetic: emoji icons (standing project rule), raw labels and placeholders**  
   /shop and /saved use emoji; avatar emoji tab; 'key' shown as avatar in Switch Profile; category label 'Tv'; raw POP_CULTURE headings on print; placeholder subtitle; 'insured items' wording.  
   Rows (8): DIS-414, CRW-019, ACC-872, ACC-851, VLT-401, VLT-423 (+2 more)
 
