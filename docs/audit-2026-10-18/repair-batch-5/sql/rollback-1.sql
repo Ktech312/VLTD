@@ -5,8 +5,9 @@ drop policy if exists "Members read their own events" on public.exhibition_event
 drop policy if exists "Members record events for their own exhibitions" on public.exhibition_events;
 create policy "Public read exhibition_events" on public.exhibition_events for select using (true);
 create policy "Owner insert exhibition_events" on public.exhibition_events for insert with check (auth.uid() = profile_id);
-grant insert, update, delete on public.exhibition_events to authenticated;
-grant insert, update, delete on public.exhibition_events to anon;
+-- production's original grants (stage 0): every privilege to both roles
+grant all on public.exhibition_events to authenticated;
+grant all on public.exhibition_events to anon;
 drop function if exists public.can_record_exhibition_event(text, uuid);
 drop function if exists public.exhibition_events_are_public(text);
 commit;

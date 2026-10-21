@@ -92,8 +92,9 @@ create policy "Members record events for their own exhibitions"
   with check (public.can_record_exhibition_event(gallery_id, profile_id));
 
 -- privileges: read for everyone the policies allow, insert for signed-in people only, nothing else
-revoke insert, update, delete, truncate on public.exhibition_events from anon;
-revoke update, delete, truncate on public.exhibition_events from authenticated;
+-- (production grants every privilege to both roles today, stage 0: row rules were the only protection, and TRUNCATE is not covered by row rules)
+revoke insert, update, delete, truncate, references, trigger on public.exhibition_events from anon;
+revoke update, delete, truncate, references, trigger on public.exhibition_events from authenticated;
 grant select on public.exhibition_events to anon, authenticated;
 grant insert on public.exhibition_events to authenticated;
 

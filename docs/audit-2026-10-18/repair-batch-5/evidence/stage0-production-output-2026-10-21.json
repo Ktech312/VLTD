@@ -1,0 +1,71 @@
+{
+    "rls": [
+        {"table": "exhibition_events", "rls_on": true, "rls_forced": false},
+        {"table": "galleries", "rls_on": true, "rls_forced": false},
+        {"table": "gallery_invites", "rls_on": true, "rls_forced": false},
+        {"table": "gallery_items", "rls_on": true, "rls_forced": false}
+    ],
+    "policies": [
+        {"cmd": "INSERT", "roles": "{public}", "table": "exhibition_events", "using": null, "policy": "Owner insert exhibition_events", "with_check": "(auth.uid() = profile_id)"},
+        {"cmd": "SELECT", "roles": "{public}", "table": "exhibition_events", "using": "true", "policy": "Public read exhibition_events", "with_check": null},
+        {"cmd": "DELETE", "roles": "{authenticated}", "table": "galleries", "using": "is_profile_manager(profile_id)", "policy": "galleries_delete_manager", "with_check": null},
+        {"cmd": "INSERT", "roles": "{authenticated}", "table": "galleries", "using": null, "policy": "galleries_insert_member", "with_check": "is_profile_member(profile_id)"},
+        {"cmd": "SELECT", "roles": "{public}", "table": "galleries", "using": "((visibility = 'PUBLIC'::text) AND (state = 'ACTIVE'::text))", "policy": "Public galleries are readable", "with_check": null},
+        {"cmd": "SELECT", "roles": "{authenticated}", "table": "galleries", "using": "is_profile_member(profile_id)", "policy": "galleries_select_member", "with_check": null},
+        {"cmd": "UPDATE", "roles": "{authenticated}", "table": "galleries", "using": "is_profile_member(profile_id)", "policy": "galleries_update_member", "with_check": "is_profile_member(profile_id)"},
+        {"cmd": "ALL", "roles": "{authenticated}", "table": "gallery_invites", "using": "(EXISTS ( SELECT 1\n   FROM galleries g\n  WHERE ((g.id = gallery_invites.gallery_id) AND is_profile_member(g.profile_id))))", "policy": "gallery_invites_manage_member", "with_check": "(EXISTS ( SELECT 1\n   FROM galleries g\n  WHERE ((g.id = gallery_invites.gallery_id) AND is_profile_member(g.profile_id))))"},
+        {"cmd": "ALL", "roles": "{authenticated}", "table": "gallery_items", "using": "(EXISTS ( SELECT 1\n   FROM galleries g\n  WHERE ((g.id = gallery_items.gallery_id) AND is_profile_member(g.profile_id))))", "policy": "gallery_items_write_member", "with_check": "(EXISTS ( SELECT 1\n   FROM galleries g\n  WHERE ((g.id = gallery_items.gallery_id) AND is_profile_member(g.profile_id))))"},
+        {"cmd": "SELECT", "roles": "{authenticated}", "table": "gallery_items", "using": "(EXISTS ( SELECT 1\n   FROM galleries g\n  WHERE ((g.id = gallery_items.gallery_id) AND is_profile_member(g.profile_id))))", "policy": "gallery_items_read_member", "with_check": null},
+        {"cmd": "SELECT", "roles": "{anon,authenticated}", "table": "gallery_items", "using": "(EXISTS ( SELECT 1\n   FROM galleries g\n  WHERE ((g.id = gallery_items.gallery_id) AND (g.visibility = 'PUBLIC'::text) AND (g.state = 'ACTIVE'::text))))", "policy": "gallery_items_read_public", "with_check": null}
+    ],
+    "triggers": [
+        {"event": "INSERT", "table": "galleries", "action": "EXECUTE FUNCTION enforce_gallery_limit()", "timing": "BEFORE", "trigger": "trg_enforce_gallery_limit"},
+        {"event": "INSERT", "table": "gallery_items", "action": "EXECUTE FUNCTION enforce_gallery_item_same_profile()", "timing": "BEFORE", "trigger": "gallery_items_same_profile"},
+        {"event": "UPDATE", "table": "gallery_items", "action": "EXECUTE FUNCTION enforce_gallery_item_same_profile()", "timing": "BEFORE", "trigger": "gallery_items_same_profile"}
+    ],
+    "functions": [
+        {"name": "gallery_public_row", "owner": "postgres", "execute_acl": "{postgres=X/postgres,service_role=X/postgres}", "security_definer": true},
+        {"name": "get_gallery_by_invite_token", "owner": "postgres", "execute_acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}", "security_definer": true},
+        {"name": "get_gallery_by_share_token", "owner": "postgres", "execute_acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}", "security_definer": true},
+        {"name": "get_gallery_items_by_invite_token", "owner": "postgres", "execute_acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}", "security_definer": true},
+        {"name": "get_gallery_items_by_share_token", "owner": "postgres", "execute_acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}", "security_definer": true},
+        {"name": "is_profile_member", "owner": "postgres", "execute_acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}", "security_definer": true},
+        {"name": "profile_is_hidden", "owner": "postgres", "execute_acl": "{postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}", "security_definer": true}
+    ],
+    "checked_at": "2026-10-21T02:19:29.712994+00:00",
+    "table_grants": [
+        {"table": "exhibition_events", "grantee": "anon", "privileges": "DELETE, INSERT, REFERENCES, SELECT, TRIGGER, TRUNCATE, UPDATE"},
+        {"table": "exhibition_events", "grantee": "authenticated", "privileges": "DELETE, INSERT, REFERENCES, SELECT, TRIGGER, TRUNCATE, UPDATE"},
+        {"table": "galleries", "grantee": "anon", "privileges": "DELETE, INSERT, REFERENCES, SELECT, TRIGGER, TRUNCATE, UPDATE"},
+        {"table": "galleries", "grantee": "authenticated", "privileges": "DELETE, INSERT, REFERENCES, SELECT, TRIGGER, TRUNCATE, UPDATE"},
+        {"table": "gallery_items", "grantee": "anon", "privileges": "DELETE, INSERT, REFERENCES, SELECT, TRIGGER, TRUNCATE, UPDATE"},
+        {"table": "gallery_items", "grantee": "authenticated", "privileges": "DELETE, INSERT, REFERENCES, SELECT, TRIGGER, TRUNCATE, UPDATE"}
+    ],
+    "exhibitions_by_state": [
+        {"count": 1, "state": "ACTIVE", "visibility": "INVITE", "alias_enabled": true},
+        {"count": 44, "state": "ACTIVE", "visibility": "PUBLIC", "alias_enabled": false},
+        {"count": 2, "state": "ACTIVE", "visibility": "PUBLIC", "alias_enabled": true}
+    ],
+    "column_grants_of_note": [
+        {"table": "exhibition_events", "column": "profile_id", "grantee": "anon", "privilege": "SELECT"},
+        {"table": "exhibition_events", "column": "profile_id", "grantee": "authenticated", "privilege": "SELECT"},
+        {"table": "galleries", "column": "analytics_unique_view_keys", "grantee": "anon", "privilege": "SELECT"},
+        {"table": "galleries", "column": "item_notes", "grantee": "anon", "privilege": "SELECT"},
+        {"table": "galleries", "column": "profile_id", "grantee": "anon", "privilege": "SELECT"},
+        {"table": "galleries", "column": "analytics_unique_view_keys", "grantee": "authenticated", "privilege": "SELECT"},
+        {"table": "galleries", "column": "item_notes", "grantee": "authenticated", "privilege": "SELECT"},
+        {"table": "galleries", "column": "profile_id", "grantee": "authenticated", "privilege": "SELECT"}
+    ],
+    "exhibition_events_rows": 0,
+    "views_mentioning_galleries": [],
+    "public_galleries_view_exists": false,
+    "gallery_public_row_definition": "CREATE OR REPLACE FUNCTION public.gallery_public_row(g galleries)\n RETURNS galleries\n LANGUAGE sql\n STABLE SECURITY DEFINER\n SET search_path TO 'public', 'pg_temp'\nAS $function$\r\n  select jsonb_populate_record(\r\n    null::public.galleries,\r\n    case\r\n      when public.is_profile_member(g.profile_id) then to_jsonb(g)\r\n      else (to_jsonb(g) - 'analytics_unique_view_keys')\r\n           || case when g.alias_enabled then jsonb_build_object('profile_id', null) else '{}'::jsonb end\r\n    end\r\n  );\r\n$function$\n",
+    "other_policies_mentioning_galleries": [
+        {"table": "gallery_invites", "policy": "gallery_invites_manage_member", "definition": "(EXISTS ( SELECT 1\n   FROM galleries g\n  WHERE ((g.id = gallery_invites.gallery_id) AND is_profile_member(g.profile_id)))) (EXISTS ( SELECT 1\n   FROM galleries g\n  WHERE ((g.id = gallery_invites.gallery_id) AND is_profile_member(g.profile_id))))"},
+        {"table": "gallery_items", "policy": "gallery_items_read_member", "definition": "(EXISTS ( SELECT 1\n   FROM galleries g\n  WHERE ((g.id = gallery_items.gallery_id) AND is_profile_member(g.profile_id)))) "},
+        {"table": "gallery_items", "policy": "gallery_items_read_public", "definition": "(EXISTS ( SELECT 1\n   FROM galleries g\n  WHERE ((g.id = gallery_items.gallery_id) AND (g.visibility = 'PUBLIC'::text) AND (g.state = 'ACTIVE'::text)))) "},
+        {"table": "gallery_items", "policy": "gallery_items_write_member", "definition": "(EXISTS ( SELECT 1\n   FROM galleries g\n  WHERE ((g.id = gallery_items.gallery_id) AND is_profile_member(g.profile_id)))) (EXISTS ( SELECT 1\n   FROM galleries g\n  WHERE ((g.id = gallery_items.gallery_id) AND is_profile_member(g.profile_id))))"}
+    ],
+    "get_gallery_by_share_token_definition": "CREATE OR REPLACE FUNCTION public.get_gallery_by_share_token(p_token text)\n RETURNS SETOF galleries\n LANGUAGE sql\n STABLE SECURITY DEFINER\n SET search_path TO 'public', 'pg_temp'\nAS $function$\r\n  select r.*\r\n  from public.galleries g\r\n  cross join lateral public.gallery_public_row(g) r\r\n  where g.public_token = p_token\r\n    and (\r\n      public.is_profile_member(g.profile_id)\r\n      or (g.visibility in ('PUBLIC', 'INVITE') and g.state = 'ACTIVE')\r\n    )\r\n  limit 1;\r\n$function$\n",
+    "exhibitions_with_account_ids_in_public_columns": 0
+}
