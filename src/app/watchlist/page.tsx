@@ -41,6 +41,7 @@ type WatchEntry = {
   targetPrice: number;
   source: string;
   savedAgo: string;
+  savedTs: number;
   priority: "low" | "medium" | "high";
   alertActive: boolean;
   notes: string;
@@ -79,6 +80,7 @@ function entryFromWishlist(item: WishlistItem): WatchEntry {
       targetPrice: target,
       source: "Upcoming Comics",
       savedAgo: formatAgo(item.createdAt),
+      savedTs: Number(item.createdAt) || 0,
       priority: priorityFromItem(item),
       alertActive: false,
       notes: item.notes || "Saved from Upcoming Comics. Tap + Add to Vault once you have it.",
@@ -95,12 +97,15 @@ function entryFromWishlist(item: WishlistItem): WatchEntry {
       .filter(Boolean)
       .join(" · ") || "Target watch",
     image: item.imageUrl || universePlaceholder(item.universe),
-    currentValue: target ? Math.round(target * 1.18) : 0,
+    // A wish has no market value of its own: "--" until it is moved into the vault (it used to show the target x 1.18).
+    currentValue: 0,
     targetPrice: target,
     source: "Manual",
-    savedAgo: "manual",
+    savedAgo: formatAgo(item.createdAt),
+    savedTs: Number(item.createdAt) || 0,
     priority: priorityFromItem(item),
-    alertActive: target > 0,
+    // No price alert can be set on this page, so none is ever shown as active.
+    alertActive: false,
     notes: item.notes || "Saved from your watchlist. Add notes, target price, and condition before moving to vault.",
     sourceType: "wishlist",
     raw: item,
@@ -117,11 +122,13 @@ function entryFromWatch(item: WatchlistItem): WatchEntry {
     meta: item.grade || "Exhibition watch",
     image: item.imageFrontUrl || universePlaceholder(),
     currentValue,
-    targetPrice: currentValue ? Math.round(currentValue * 0.86) : 0,
+    // No target was ever entered for a watched item: "--" (it used to show 86% of its value).
+    targetPrice: 0,
     source: item.collectorName || "Public Exhibition",
     savedAgo: formatAgo(item.savedAt),
+    savedTs: Number(item.savedAt) || 0,
     priority: currentValue > 5000 ? "high" : "medium",
-    alertActive: currentValue > 0,
+    alertActive: false,
     notes: "Saved from Discover. Watch this item before adding it to your private vault.",
     sourceType: "watchlist",
     raw: item,
@@ -251,6 +258,8 @@ export default function WatchlistPage() {
       return [entry.title, entry.subtitle, entry.meta, entry.source].join(" ").toLowerCase().includes(q);
     });
 
+    // Recently added: newest first across wishlist entries and watched items alike.
+    if (sort === "recent") list = [...list].sort((a, b) => b.savedTs - a.savedTs);
     if (sort === "value") list = [...list].sort((a, b) => b.currentValue - a.currentValue);
     if (sort === "target") list = [...list].sort((a, b) => b.targetPrice - a.targetPrice);
     return list;

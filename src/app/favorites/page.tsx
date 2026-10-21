@@ -10,6 +10,7 @@ import { listViewerFavorites, type FavoriteRecord } from "@/lib/favorites";
 import { loadGalleries, type Gallery } from "@/lib/galleryModel";
 import { loadItems, getPrimaryImageUrl, type VaultItem } from "@/lib/vaultModel";
 import { Glyph } from "@/components/ui/Glyph";
+import { fetchVisibleItemCounts } from "@/lib/exhibitionCounts";
 import { AppIcon } from "@/components/ui/AppIcon";
 
 // ─── helpers ──────────────────────────────────────────────────────────────────
@@ -23,13 +24,14 @@ function favoriteTitle(r: FavoriteRecord, items: VaultItem[], galleries: Gallery
   return g?.title || String(r.metadata?.title || "Saved exhibition");
 }
 
-function favoriteSubtitle(r: FavoriteRecord, items: VaultItem[], galleries: Gallery[]) {
+function favoriteSubtitle(r: FavoriteRecord, items: VaultItem[], galleries: Gallery[], visibleCounts?: Map<string, number>) {
   if (r.content_type === "item") {
     const it = items.find((x) => String(x.id) === String(r.content_id));
     return [it?.universe, it?.number && `#${it.number}`, it?.grade].filter(Boolean).join(" · ") || "Saved item";
   }
   const g = galleries.find((x) => String(x.id) === String(r.content_id));
-  const n = g?.itemIds?.length ?? r.metadata?.itemCount ?? 0;
+  // What a visitor can see now (counted like Discover), not the number saved when it was favourited or the room's own list (which can name private items).
+  const n = visibleCounts?.get(String(r.content_id)) ?? g?.itemIds?.length ?? r.metadata?.itemCount ?? 0;
   return `${n} item${n === 1 ? "" : "s"} · Exhibition`;
 }
 
@@ -75,14 +77,16 @@ function FavoriteCard({
   record,
   items,
   galleries,
+  visibleCounts,
 }: {
   record: FavoriteRecord;
   items: VaultItem[];
   galleries: Gallery[];
+  visibleCounts?: Map<string, number>;
 }) {
   const image = favoriteImage(record, items, galleries);
   const title = favoriteTitle(record, items, galleries);
-  const subtitle = favoriteSubtitle(record, items, galleries);
+  const subtitle = favoriteSubtitle(record, items, galleries, visibleCounts);
   const href = favoriteHref(record, items);
   const isItem = record.content_type === "item";
   const value = favoriteValue(record, items);
@@ -153,6 +157,7 @@ export default function FavoritesPage() {
   const [items, setItems] = useState<VaultItem[]>([]);
   const [galleries, setGalleries] = useState<Gallery[]>([]);
   const [loading, setLoading] = useState(true);
+  const [visibleCounts, setVisibleCounts] = useState<Map<string, number>>(new Map());
   const [filter, setFilter] = useState<Filter>("all");
   const [sort, setSort] = useState<Sort>("saved");
   const [search, setSearch] = useState("");
@@ -163,6 +168,7 @@ export default function FavoritesPage() {
       const [records] = await Promise.all([listViewerFavorites()]);
       if (!active) return;
       setFavorites(records);
+      void fetchVisibleItemCounts(records.filter((r) => r.content_type === "gallery").map((r) => String(r.content_id))).then((counts) => { if (active) setVisibleCounts(counts); }).catch(() => undefined);
       setItems(loadItems({ includeAllProfiles: true }));
       setGalleries(loadGalleries({ includeAllProfiles: true }));
       setLoading(false);
@@ -290,6 +296,7 @@ export default function FavoritesPage() {
                     record={rec}
                     items={items}
                     galleries={galleries}
+                    visibleCounts={visibleCounts}
                   />
                 ))}
               </div>

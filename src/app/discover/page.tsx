@@ -262,9 +262,10 @@ export default function DiscoverPage() {
             // deleted.  Public counts and featured-item previews must describe
             // the rows a visitor can actually see, not stale layout ids.
             // A visitor sees an item if it is public in the vault OR the exhibition itself published it (its public snapshot) -
-            // the room shows all of those, so the count on Discover must too. When the public read failed, keep the room's own list.
+            // the room shows all of those, so the count on Discover must too. When the public read failed, only items the exhibition itself
+            // published (its public snapshots) are counted: the room's own list can include private items, and a count must never reveal those.
             gallery.itemIds = itemRowsError
-              ? gallery.itemIds
+              ? gallery.itemIds.filter((itemId) => gallery.snapshots[itemId])
               : gallery.itemIds.filter((itemId) => itemFacts.has(itemId) || gallery.snapshots[itemId]);
             gallery.item_count = gallery.itemIds.length;
             gallery.universeKey = computeGalleryUniverse(gallery.itemIds, itemUniverseMap, gallery);

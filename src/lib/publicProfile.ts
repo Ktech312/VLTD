@@ -124,6 +124,7 @@ export function publicRowToItem(input: unknown): VaultItem {
     grade: optionalString(row.grade),
     purchasePrice: optionalNumber(row.purchase_price),
     currentValue: optionalNumber(row.current_value),
+    askingPrice: optionalNumber(row.asking_price),
     imageFrontUrl,
     imageFrontStoragePath: imageFrontStoragePath || undefined,
     images,
@@ -425,20 +426,41 @@ export async function fetchMarketItems(opts?: {
   const supabase = getSupabaseBrowserClient();
   if (!supabase) return [];
 
-  let query = supabase
-    .from(await publicItemsTable(supabase))
-    .select(PUBLIC_ITEM_COLUMNS_WITH_VALUE)
-    .eq("status", "FOR_SALE")
-    .eq("is_public", true)
-    .order("created_at", { ascending: false })
-    .limit(opts?.limit ?? 120);
-
-  if (opts?.universe) query = query.eq("universe", opts.universe);
-
-  const { data, error } = await query;
+  const table = await publicItemsTable(supabase);
+  const read = (columns: string) => {
+    let q = supabase
+      .from(table)
+      .select(columns)
+      .eq("status", "FOR_SALE")
+      .eq("is_public", true)
+      .order("created_at", { ascending: false })
+      .limit(opts?.limit ?? 120);
+    if (opts?.universe) q = q.eq("universe", opts.universe);
+    return q;
+  };
+  // The seller's asking price is read when the public view offers it; until it does the page falls back to the item's value (and says so).
+  let { data, error } = await read(`${PUBLIC_ITEM_COLUMNS_WITH_VALUE}, asking_price`);
+  if (error && (error as { code?: string }).code === "42703") ({ data, error } = await read(PUBLIC_ITEM_COLUMNS_WITH_VALUE));
   if (error) throw new Error(error.message || "Failed to load market.");
 
-  return ((data ?? []) as unknown as Record<string, unknown>[])
-    .filter((r) => !isSupplyItem({ universe: r.universe as string, categoryLabel: r.category_label as string }))
-    .map(r => publicRowToItem(r) as MarketItem);
+  const rows = ((data ?? []) as unknown as Record<string, unknown>[])
+    .filter((r) => !isSupplyItem({ universe: r.universe as string, categoryLabel: r.category_label as string }));
+
+  // Sellers' public names, so a card shows who is selling and links to that seller's public vault.
+  const sellerIds = [...new Set(rows.map((r) => String(r.profile_id ?? "")).filter(Boolean))];
+  const sellers = new Map<string, { name?: string; emoji?: string }>();
+  if (sellerIds.length > 0) {
+    const { data: people } = await supabase.from("public_profiles").select("profile_id, display_name, avatar_emoji").in("profile_id", sellerIds);
+    for (const p of (people ?? []) as { profile_id: string; display_name?: string | null; avatar_emoji?: string | null }[]) {
+      const name = typeof p.display_name === "string" ? p.display_name.trim() : "";
+      sellers.set(p.profile_id, { name: name && name.toLowerCase() !== "user" ? name : undefined, emoji: p.avatar_emoji ?? undefined });
+    }
+  }
+
+  return rows.map((r) => {
+    const item = publicRowToItem(r);
+    const sellerProfileId = String(r.profile_id ?? "");
+    const seller = sellers.get(sellerProfileId);
+    return { ...item, sellerProfileId, sellerDisplayName: seller?.name, sellerAvatarEmoji: seller?.emoji } as MarketItem;
+  });
 }

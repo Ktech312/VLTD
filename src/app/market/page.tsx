@@ -12,18 +12,6 @@ import { UNIVERSE_LABEL, type UniverseKey } from "@/lib/taxonomy";
 import ProgressiveImage from "@/components/ui/ProgressiveImage";
 import { Glyph } from "@/components/ui/Glyph";
 
-const UNIVERSES: { key: string; label: string }[] = [
-  { key: "", label: "All" },
-  { key: "SPORTS", label: "Sports" },
-  { key: "TCG", label: "TCG" },
-  { key: "COMICS", label: "Comics" },
-  { key: "VINYL", label: "Vinyl" },
-  { key: "GAMES", label: "Games" },
-  { key: "TOYS", label: "Toys" },
-  { key: "ART", label: "Art" },
-  { key: "BOOKS", label: "Books" },
-  { key: "MISC", label: "Other" },
-];
 
 const SORT_OPTIONS = [
   { value: "recent", label: "Recently Listed" },
@@ -67,10 +55,11 @@ function MarketCard({ item }: { item: MarketItem }) {
   const imageUrl = getPrimaryImageUrl(item);
   const universeLabel = UNIVERSE_LABEL[item.universe as UniverseKey] ?? item.universe ?? "";
   const price = item.askingPrice ?? item.currentValue;
+  const isAsking = item.askingPrice !== undefined && item.askingPrice !== null;
 
   return (
     <Link
-      href={`/v/${encodeURIComponent(item.sellerProfileId)}`}
+      href={item.sellerProfileId ? `/v/${encodeURIComponent(item.sellerProfileId)}` : "/market"}
       className="group flex flex-col rounded-2xl overflow-hidden ring-1 ring-[color:var(--border)] transition hover:ring-[color:var(--theme-gold)] hover:shadow-lg"
       style={{ background: "var(--surface)" }}
     >
@@ -154,6 +143,7 @@ function MarketCard({ item }: { item: MarketItem }) {
             {price ? (
               <div className="text-base font-bold" style={{ color: "var(--theme-gold)" }}>
                 {fmt(price)}
+                <span className="ml-1 text-[10px] font-semibold" style={{ color: "var(--muted)" }}>{isAsking ? "asking" : "value"}</span>
               </div>
             ) : (
               <div className="text-sm" style={{ color: "var(--muted)" }}>Price on request</div>
@@ -198,10 +188,23 @@ export default function MarketPage() {
           i.subject?.toLowerCase().includes(q)
       );
     }
-    if (sort === "price_asc") list = [...list].sort((a, b) => (a.askingPrice ?? a.currentValue ?? 0) - (b.askingPrice ?? b.currentValue ?? 0));
-    else if (sort === "price_desc") list = [...list].sort((a, b) => (b.askingPrice ?? b.currentValue ?? 0) - (a.askingPrice ?? a.currentValue ?? 0));
+    // Items with no price known sort after every priced item, in either direction.
+    const priceOf = (i: MarketItem) => { const p = i.askingPrice ?? i.currentValue; return typeof p === "number" && Number.isFinite(p) && p > 0 ? p : null; };
+    const byPrice = (dir: 1 | -1) => (a: MarketItem, b: MarketItem) => {
+      const x = priceOf(a), y = priceOf(b);
+      if (x === null || y === null) return x === y ? 0 : x === null ? 1 : -1;
+      return (x - y) * dir;
+    };
+    if (sort === "price_asc") list = [...list].sort(byPrice(1));
+    else if (sort === "price_desc") list = [...list].sort(byPrice(-1));
     return list;
   }, [items, universe, sort, search]);
+
+  // One pill per universe that really has listings (the old fixed list used names the data never uses, so most listings had no pill), so the pills add up to All.
+  const universePills = useMemo(() => {
+    const seen = [...new Set(items.map((i) => i.universe).filter((u): u is string => Boolean(u)))].sort();
+    return [{ key: "", label: "All" }, ...seen.map((key) => ({ key, label: UNIVERSE_LABEL[key as UniverseKey] ?? key }))];
+  }, [items]);
 
   const totalValue = useMemo(
     () => displayed.reduce((s, i) => s + (i.askingPrice ?? i.currentValue ?? 0), 0),
@@ -241,7 +244,7 @@ export default function MarketPage() {
           </div>
 
           <div className="mt-3 flex flex-wrap gap-1.5">
-            {UNIVERSES.map((u) => {
+            {universePills.map((u) => {
               const count = u.key ? items.filter((i) => i.universe === u.key).length : items.length;
               if (!u.key && items.length === 0) return null;
               if (u.key && count === 0) return null;
