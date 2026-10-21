@@ -109,11 +109,17 @@ export default function SubjectCommunityBoardPage({ params }: { params: Promise<
   const decoded = decodeURIComponent(subject);
   const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadFailed, setLoadFailed] = useState(false);
+  const [attempt, setAttempt] = useState(0);
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
-    fetchSubjectLeaderboard(decoded).then((data) => { setEntries(data); setLoading(false); });
-  }, [decoded]);
+    setLoading(true);
+    setLoadFailed(false);
+    fetchSubjectLeaderboard(decoded)
+      .then((data) => { setEntries(data); setLoading(false); })
+      .catch(() => { setLoadFailed(true); setLoading(false); });
+  }, [decoded, attempt]);
 
   function handleSharePage() {
     navigator.clipboard.writeText(window.location.href).then(() => {
@@ -141,7 +147,7 @@ export default function SubjectCommunityBoardPage({ params }: { params: Promise<
             <div>
               <h1 className="text-2xl font-bold" style={{ color: "var(--fg)" }}>{decoded}</h1>
               <p className="mt-1 text-sm" style={{ color: "var(--muted)" }}>
-                {loading ? "Loading..." : `${totalCollectors} collector${totalCollectors !== 1 ? "s" : ""} · ${totalItems} items`}
+                {loading ? "Loading..." : loadFailed ? "Could not load" : `${totalCollectors} collector${totalCollectors !== 1 ? "s" : ""} · ${totalItems} items`}
               </p>
             </div>
             <button
@@ -159,6 +165,11 @@ export default function SubjectCommunityBoardPage({ params }: { params: Promise<
       <div className="mx-auto max-w-2xl px-4 py-8 space-y-4">
         {loading ? (
           <div className="text-center py-16 text-sm" style={{ color: "var(--muted)" }}>Loading leaderboard...</div>
+        ) : loadFailed ? (
+          <div role="alert" data-testid="leaderboard-load-failed" className="text-center py-16">
+            <div className="text-sm" style={{ color: "var(--muted)" }}>Couldn&apos;t load this leaderboard. Check your connection and try again.</div>
+            <button type="button" onClick={() => setAttempt((n) => n + 1)} className="mt-4 inline-block text-sm underline" style={{ color: "var(--theme-gold)" }}>Try again</button>
+          </div>
         ) : entries.length === 0 ? (
           <div className="text-center py-16">
             <div className="mb-3 flex justify-center opacity-30"><Glyph name="trophy" size={40} style={{ color: "var(--theme-gold)" }} /></div>

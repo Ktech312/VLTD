@@ -62,8 +62,9 @@ export async function fetchRegistrySubjects(): Promise<RegistrySubject[]> {
 export async function fetchSubjectLeaderboard(subject: string): Promise<LeaderboardEntry[]> {
   const supabase = getSupabaseBrowserClient();
   if (!supabase) return [];
-  const { data, error } = await supabase.rpc("get_subject_leaderboard", { subject_name: subject });
-  if (error) { console.error("subject leaderboard:", error); return []; }
+  const { data, error } = await supabase.rpc("get_subject_leaderboard", { p_subject: subject, p_limit: 25 });
+  // A failed request must not read as "no collectors": the caller shows its own could-not-load state.
+  if (error) throw new Error(error.message || "Could not load the leaderboard.");
   return (data ?? []).map((row: Record<string, unknown>, i: number) => {
     const rawItems = Array.isArray(row.sample_items) ? row.sample_items : [];
     return {

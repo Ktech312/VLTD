@@ -244,7 +244,7 @@ export default function LoungePreviewPage() {
       const subjects = (subjectsResult.data ?? []) as Array<{ subject: string }>;
       for (const subject of subjects) {
         const { data } = await supabase.rpc("get_subject_leaderboard", {
-          subject_name: subject.subject,
+          p_subject: subject.subject,
           p_limit: 4,
         });
         const entries = ((data ?? []) as Array<Record<string, unknown>>).map((entry) => ({
