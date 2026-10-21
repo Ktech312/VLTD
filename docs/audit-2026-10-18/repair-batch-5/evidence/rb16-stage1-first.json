@@ -1,0 +1,29 @@
+{
+ "label": "first",
+ "cases": [
+  {
+   "control": "Stage 1 is in place",
+   "expected": "the owner can record an event for their own exhibition",
+   "ok": false,
+   "actual": "still refused: 42501 new row violates row-level security policy for table \"exhibition_events\". Stage 1 has not been applied to this account (or did not take effect); stopping",
+   "screenshot": ""
+  }
+ ],
+ "facts": {
+  "followersOfQaProfileA": 0,
+  "followersOfQaProfileB": 0,
+  "eventsInAccountBefore": 0,
+  "qaProfileA": "57482466",
+  "qaProfileB": "b2b25444",
+  "seeded": {
+   "public": "PUBLIC/ACTIVE/alias=false/A",
+   "alias": "PUBLIC/ACTIVE/alias=true/A",
+   "private": "LOCKED/ACTIVE/alias=false/A",
+   "guest": "INVITE/ACTIVE/alias=false/A",
+   "draft": "PUBLIC/STORAGE/alias=false/A",
+   "bobs": "PUBLIC/ACTIVE/alias=false/B"
+  },
+  "eventsInAccountAfterCleanup": 0
+ },
+ "error": "STAGE1-NOT-APPLIED"
+}

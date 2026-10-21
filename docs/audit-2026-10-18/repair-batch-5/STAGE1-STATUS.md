@@ -1,0 +1,8 @@
+﻿# Stage 1 verification attempt (2026-10-21): NOT VERIFIED, stage 1 is not in place on production
+
+What was run: `scripts/rb17-stage1.cjs` on production with two QA accounts and isolated synthetic exhibitions (QA profiles A and B, 0 followers each, 0 events in the account).
+Result: the very first check, "the owner records an event for their own exhibition", is still **refused (42501, row-level security)**, exactly as before stage 1. So the event rules on production are still the old ones: either `sql/1-events-authorization-and-privacy.sql` has not been run on this account, or it did not commit (an error in the editor, or it was run against a different project).
+The script stopped there by design: no event was written, no forged-event or visibility check could mean anything, and nothing was created that survives (fixture dropped, recount 3,477 / 39 / 47, `exhibition_events` 0 rows, scratch removed).
+Row: RB16-001 (FAIL = "stage 1 not in place"). No result about forged events, alias / private / draft event privacy, edit / delete refusal, or the site's Announce and Make public can be reported yet.
+
+To resolve: in the SQL editor run `select policyname, cmd from pg_policies where schemaname = 'public' and tablename = 'exhibition_events' order by 1;`. After stage 1 it lists exactly "Members read their own events", "Members record events for their own exhibitions" and "Public read of public exhibitions' events". If it still lists "Owner insert exhibition_events" and "Public read exhibition_events", send me the editor's message from the stage-1 run. The verification script is ready to rerun unchanged once the policies are in place; stage 2 is not requested.

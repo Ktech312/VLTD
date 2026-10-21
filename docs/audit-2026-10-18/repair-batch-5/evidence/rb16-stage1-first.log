@@ -1,0 +1,5 @@
+facts {"followersOfQaProfileA":0,"followersOfQaProfileB":0,"eventsInAccountBefore":0,"qaProfileA":"57482466","qaProfileB":"b2b25444"}
+seeded {"public":"PUBLIC/ACTIVE/alias=false/A","alias":"PUBLIC/ACTIVE/alias=true/A","private":"LOCKED/ACTIVE/alias=false/A","guest":"INVITE/ACTIVE/alias=false/A","draft":"PUBLIC/STORAGE/alias=false/A","bobs":"PUBLIC/ACTIVE/alias=false/B"}
+FAIL       RB16-001 | database (signed-in QA accounts / visitor) | Stage 1 is in place | still refused: 42501 new row violates row-level security policy for table "exhibition_events". Stage 1 has not been applied to this account 
+
+0 ok, 1 not ok of 1 | STAGE1-NOT-APPLIED | events left in account: 0
