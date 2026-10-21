@@ -2,7 +2,7 @@
 
 The frozen audit evidence (`rows.jsonl` first-failure rows, `results.csv`, screenshots) is unchanged. This file is the status layer on top of it; `SUMMARY.md` and `root-causes.json` carry the same status tags. "Closed" means re-tested on production with synthetic data after the fix (evidence named). Anything not shown here is still open as written in `SUMMARY.md`.
 
-**Closed so far: 71 specific audit rows** (RC-01: 2, RC-02: 6, RC-03: 2, RC-09: 7, RC-19: 7, RC-06: 10, RC-07: 3, RC-17: 20, RC-18: 9, RC-05: 5). Open P1 root causes: RC-05 (untouched) and the six profile-validation rows of RC-07 (kept with RC-28). **Insurance is not fully closed** (section 2 and the open items RC-14 and RC-31).
+**Closed so far: 71 specific audit rows through batch 5; batch 6 adds 24 more (see the last section)** (RC-01: 2, RC-02: 6, RC-03: 2, RC-09: 7, RC-19: 7, RC-06: 10, RC-07: 3, RC-17: 20, RC-18: 9, RC-05: 5). Open P1 root causes: RC-05 (untouched) and the six profile-validation rows of RC-07 (kept with RC-28). **Insurance is not fully closed** (section 2 and the open items RC-14 and RC-31).
 
 ## 1. Closed findings
 
@@ -68,3 +68,12 @@ Migration-blocked (stage-0 production output reviewed 2026-10-21: matches; stage
 ## 4. Unresolved incidents (not defects of the repairs)
 1. **Original missing-record attribution.** One real exhibition (public, Business profile, id prefix `fbbb6fc7`, empty, with a cover and background, 4 views) was already empty when first read, before the audit. A wipe leaves no trace in the data, so whether RC-01 emptied it cannot be established. It was not restored. Wording: "no current evidence found", not "ruled out".
 2. **Historical exposure of RC-02.** No saved description contains its own private note, a cost line or generated listing copy (read-only check). Text that was copied to a clipboard or posted elsewhere cannot be known.
+
+### Batch 6: admin gate, legacy API, sign-out, account/exhibition forms (closeout `repair-batch-6/CLOSEOUT.md`)
+| Root cause | Audit rows closed | Commits | Evidence |
+|---|---|---|---|
+| RC-08 admin Themes / Studio shown to everyone | CRW-001, ACC-396, ACC-439, ACC-515, ACC-405, ACC-459, ACC-528 | `9c4bcc8` | RB23-001 to 004 (admin-positive path not exercised on production) |
+| RC-33 legacy /api/vault/[id] open to anonymous writes | CRW-027 | `29e18cb` | RB23-005, 006 |
+| RC-04 failed sign-out request looks like a sign-out | ACC-850, ACC-286, ACC-344 | `67d037e` | RB23-015, 016 |
+| RC-07 profile validation (rest of the group) | ACC-381, ACC-796, ACC-390, ACC-811, ACC-395, ACC-819 | `86ed798` | RB23-007 to 011 |
+| RC-28 create/profile form validation | EXH-076, EXH-063, EXH-077, ACC-869, ACC-870, ACC-808, ACC-817 | `86ed798`, `cad5cc5` | RB23-010, 012 to 014, 017; RB24-001 to 004 |

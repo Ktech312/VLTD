@@ -22,7 +22,9 @@ Behaviour-asserted rows (a test checked the outcome): 3754 = 509 FAIL, 2770 PASS
 
 **How to read FAIL:** 316 behaviour FAIL rows belong to the 34 root causes below (confirmed by the auditors after setting their own test mistakes aside). 188 further behaviour FAIL rows are first-run failures the auditors describe as mostly their own test mistakes; they are kept as first-failure evidence, marked "UNRECONCILED" in the Triage column, and need triage rather than repair. 5 FAIL rows (KNO-001..005) are the ORIGINAL Discover failures, kept as historical first-failure evidence, fixed before the audit and re-verified separately: they are not current defects. 226 rows are SUPERSEDED (first-run result replaced by a corrected row; both stay visible).
 
-## Repair status (updated 2026-10-19)
+## Repair status (updated 2026-10-20)
+
+**Batch 6 (2026-10-20, `repair-batch-6/CLOSEOUT.md`): RC-04, RC-07 (remaining six rows), RC-08, RC-28 and RC-33 closed and re-tested on production (21 of 21 checks).**
 
 Full table with commits and evidence: `DEFECT-STATUS.md`. Closed and re-tested on production: **RC-01, RC-02, RC-03, RC-06, RC-09, RC-17, RC-18**, **7 of 11 rows of RC-19** and **3 of 9 rows of RC-07** (66 specific rows in total; batch 3 in `repair-batch-3/CLOSEOUT.md`, batch 4 in `repair-batch-4/CLOSEOUT.md`), plus **5 of 8 rows of RC-05** (EXH-165, 123, 124, 126, 127: batch 5, `repair-batch-5/CLOSEOUT.md`; the other three are migration-blocked or reporting-only). Deferred migrations and unresolved incidents are listed separately in `DEFECT-STATUS.md` (sections 3 and 4); they are not counted as closed. Tags below: [CLOSED], [PARTLY CLOSED]; untagged means still open.
 
@@ -45,13 +47,13 @@ Full table with commits and evidence: `DEFECT-STATUS.md`. Closed and re-tested o
 - **[CLOSED] RC-06 Silent data loss in Add / Import / Halls**  
   Import 'Undo last' says it undid items that stay in the account; 'Skip exact titles' imports duplicates in a clean browser; approving an AI draft is not saved until /vault is opened; Bulk takes 60 of 62 files without saying; /capture loses typed data on leaving; 'Save as Hall' creates nothing and opens 'Exhibition not found'.  
   Rows (10): ADD-357, ADD-365, ADD-267, ADD-272, ADD-371, ADD-432 (+4 more)
-- **[PARTLY CLOSED] RC-07 Writes that look saved but are lost (Goals, profile fields)**  
+- **[CLOSED] RC-07 Writes that look saved but are lost (Goals, profile fields)**  
   A goal target above ~2.1 billion shows 'saved' and is lost on reload; Create/Delete goal while the connection fails shows success but the database disagrees; an empty display name and bad usernames are saved.  
   Rows (9): GIN-066, GIN-068, GIN-070, ACC-381, ACC-796, ACC-390 (+3 more)
 
 ### P2 - blocked workflow / exposure
 
-- **RC-08 Admin screens (/admin/themes, /studio) are shown to signed-out visitors and non-admins**  
+- **[CLOSED] RC-08 Admin screens (/admin/themes, /studio) are shown to signed-out visitors and non-admins**  
   The theme manager with + New Theme / Edit / Delete is visible to everyone; /studio shows its setup screen. By reading the table policy, writes need an admin role, and no write was attempted. Exposure, not a confirmed data-loss path.  
   Rows (7): CRW-001, ACC-396, ACC-439, ACC-515, ACC-405, ACC-459 (+1 more)
 - **[CLOSED] RC-09 Printable insurance packet is a blank white page; item-sheet and inventory prints are unreadable**  
@@ -81,7 +83,7 @@ Full table with commits and evidence: `DEFECT-STATUS.md`. Closed and re-tested o
 
 ### P3 - misleading result
 
-- **RC-04 SIMULATED interrupted connection: when the sign-out request fails, the page shows the login screen and gives no error while the session continues**  
+- **[CLOSED] RC-04 SIMULATED interrupted connection: when the sign-out request fails, the page shows the login screen and gives no error while the session continues**  
   These rows were made with the sign-out request REFUSED by the audit, so they do not show that sign-out fails in normal use. A REAL sign-out of a synthetic QA session was verified separately and PASSED (CRW-025, CRW-026: session cleared, refresh token revoked, old session refused in a clean browser). Only the failed-request case is a finding: no error is shown and the session remains.  
   Rows (5): ACC-850, ACC-286, ACC-344, CRW-025, CRW-026
 - **[CLOSED] RC-17 Values: letters, blanks and negatives become money; negative values accepted; numbers parsed wrongly**  
@@ -117,7 +119,7 @@ Full table with commits and evidence: `DEFECT-STATUS.md`. Closed and re-tested o
 - **RC-27 Counters and messages that cannot be believed**  
   Exhibition view counter never increments for visitors; Upcoming date range edits the banner without refetching; signed-out Want says it could not save to your account; messages show 'Collector' for every partner and silently cut at 4,000 chars; expired invite says 'Link not available'; Bid History lists one bid twice.  
   Rows (12): EXH-283, EXH-284, EXH-285, EXH-292, DIS-252, DIS-271 (+6 more)
-- **RC-28 Create/profile forms give poor or wrong validation**  
+- **[CLOSED] RC-28 Create/profile forms give poor or wrong validation**  
   Double-clicking Create makes two exhibitions; a disabled Create has no explanation; 140-char title accepted though the editor caps at 80; taken usernames give only a generic 'Failed to save'; Verify Age shows 'Verified' before Save.  
   Rows (5): EXH-076, EXH-063, EXH-077, ACC-869, ACC-870
 
@@ -135,7 +137,7 @@ Full table with commits and evidence: `DEFECT-STATUS.md`. Closed and re-tested o
 - **RC-32 Misc. navigation and wording defects**  
   Footer 'Exhibitions' link goes to login; onboarding header links bounce silently; dead CGC link; Lounge drops show an all-day event a day early (US Pacific); /lounge-preview shows developer wording; 'Open Exhibitions' wrong targets elsewhere.  
   Rows (9): ACC-029, ACC-098, ACC-105, ACC-184, ACC-479, DIS-345 (+3 more)
-- **RC-33 Legacy /api/vault/[id] accepts anonymous writes (reachable, not durable, not used)**  
+- **[CLOSED] RC-33 Legacy /api/vault/[id] accepts anonymous writes (reachable, not durable, not used)**  
   Probed with a synthetic payload only, after reading the code: POST/DELETE answer 200 to an anonymous caller; the route keeps items only in server process memory (no database or file), has no read endpoint, and nothing in the app calls it. Hygiene finding (unauthenticated memory use), not data exposure or loss.  
   Rows (1): CRW-027
 

@@ -55,7 +55,8 @@
    "CRW-025",
    "CRW-026"
   ],
-  "status": "OPEN"
+  "status": "CLOSED",
+  "statusNote": "batch 6: a failed sign-out request now shows \"Couldn't sign you out ... You are still signed in\" and keeps the session; the successful path still signs out (RB23-015, RB23-016). Rows ACC-850, ACC-286, ACC-344 fixed; CRW-025/026 (real sign-out) unchanged and passing."
  },
  {
   "id": "RC-05",
@@ -114,8 +115,8 @@
    "ACC-395",
    "ACC-819"
   ],
-  "status": "PARTLY CLOSED",
-  "statusNote": "batch 3 (D-03, D-04, D-05, goal ownership): GIN-066, GIN-068, GIN-070 closed; the six profile-validation rows (ACC-381, 796, 390, 811, 395, 819) stay open with RC-28"
+  "status": "CLOSED",
+  "statusNote": "batch 6: the six profile-validation rows (ACC-381, 796, 390, 811, 395, 819) fixed on /account: empty display name and bad usernames are refused in plain words and nothing is saved (RB23-007 to 011). Earlier batches closed GIN-066/068/070."
  },
  {
   "id": "RC-08",
@@ -132,7 +133,8 @@
    "ACC-459",
    "ACC-528"
   ],
-  "status": "OPEN"
+  "status": "CLOSED",
+  "statusNote": "batch 6: /admin/themes and /studio show only \"You don't have access to this page.\" to a signed-out visitor and a signed-in non-admin (RB23-001 to 004). NOT exercised on production: the positive path (a real admin with a verified second factor still sees both pages); it uses the same getMyAdminAccessStatus rule verified on /admin/characters in batch 5."
  },
  {
   "id": "RC-09",
@@ -566,9 +568,12 @@
    "EXH-063",
    "EXH-077",
    "ACC-869",
-   "ACC-870"
+   "ACC-870",
+   "ACC-808",
+   "ACC-817"
   ],
-  "status": "OPEN"
+  "status": "CLOSED",
+  "statusNote": "batch 6: /museum/new no longer creates two exhibitions on a double-click, caps the title at 80 and explains the disabled Create; taken usernames say so on /account and onboarding step 1; Verify Age (ACC-808, ACC-817, named in the group summary but missing from its row list) says it is not saved until Save (RB23-012 to 014, 010, 017; RB24-001 to 004)."
  },
  {
   "id": "RC-29",
@@ -660,7 +665,8 @@
   "rowIds": [
    "CRW-027"
   ],
-  "status": "OPEN"
+  "status": "CLOSED",
+  "statusNote": "batch 6: anonymous and bad-token POST/DELETE now answer 401; a signed-in session still gets 200; store capped at 200 (RB23-005, 006)."
  },
  {
   "id": "RC-34",

@@ -1,0 +1,33 @@
+{
+ "label": "first",
+ "cases": [
+  {
+   "control": "Verify Age pressed on its own",
+   "expected": "the page says it is not saved yet; nothing stored",
+   "ok": true,
+   "actual": "note=\"Not saved yet. Press Save to keep the verification.\"; stored age_verified=false",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb24-first-1.jpg"
+  },
+  {
+   "control": "Save after Verify Age",
+   "expected": "the note disappears; verification and date of birth stored",
+   "ok": true,
+   "actual": "note=null; stored age_verified=true, dob=1990-05-17",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb24-first-2.jpg"
+  },
+  {
+   "control": "Remove Verification pressed on its own",
+   "expected": "the page says removal is not saved yet; stored value unchanged",
+   "ok": true,
+   "actual": "note=\"Not saved yet. Press Save to remove the verification.\"; stored age_verified=true",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb24-first-3.jpg"
+  },
+  {
+   "control": "Save after Remove Verification",
+   "expected": "note gone; verification removed in the database",
+   "ok": true,
+   "actual": "stored age_verified=false",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb24-first-4.jpg"
+  }
+ ]
+}

@@ -1,0 +1,132 @@
+{
+ "label": "first",
+ "cases": [
+  {
+   "control": "Signed-out visitor opens /admin/themes",
+   "expected": "only 'You don't have access to this page.'; none of the page's tools or data",
+   "ok": true,
+   "actual": "message shown=true; themes heading shown=false; text: Home Vault Exhibitions Lounge Discover Help ⌘K G You don't have access to this page. Add to Home Screen",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb23-first-1.jpg"
+  },
+  {
+   "control": "Signed-out visitor opens /studio",
+   "expected": "only 'You don't have access to this page.'; none of the page's tools or data",
+   "ok": true,
+   "actual": "message shown=true; themes heading shown=false; text: You don't have access to this page. Add to Home Screen",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb23-first-2.jpg"
+  },
+  {
+   "control": "Signed-in non-admin (QA account B) opens /admin/themes",
+   "expected": "only 'You don't have access to this page.'; none of the page's tools or data",
+   "ok": true,
+   "actual": "message shown=true; themes heading shown=false; text: Home Vault Exhibitions Lounge Discover Help ⌘K NOVICE Level 1 You don't have access to this page. Add to Home Screen",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb23-first-3.jpg"
+  },
+  {
+   "control": "Signed-in non-admin (QA account B) opens /studio",
+   "expected": "only 'You don't have access to this page.'; none of the page's tools or data",
+   "ok": true,
+   "actual": "message shown=true; themes heading shown=false; text: You don't have access to this page. Add to Home Screen",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb23-first-4.jpg"
+  },
+  {
+   "control": "Anonymous and bad-token POST/DELETE on /api/vault/<id>",
+   "expected": "401 for all four",
+   "ok": true,
+   "actual": "POST 401, DELETE 401, POST bad token 401, DELETE bad token 401",
+   "screenshot": ""
+  },
+  {
+   "control": "Signed-in (QA account A) POST/DELETE on /api/vault/<id>",
+   "expected": "200 and 200",
+   "ok": true,
+   "actual": "POST 200, DELETE 200",
+   "screenshot": ""
+  },
+  {
+   "control": "/account: Empty display name, then Save changes",
+   "expected": "refused in plain words that name the problem; saved profile unchanged",
+   "ok": true,
+   "actual": "message=\"Enter a display name.\"; saved username=qa_jr_p_mvhn4yui, display_name=\"QA Visual Collection\"; unchanged=true",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb23-first-5.jpg"
+  },
+  {
+   "control": "/account: Username 'ab' (too short), then Save changes",
+   "expected": "refused in plain words that name the problem; saved profile unchanged",
+   "ok": true,
+   "actual": "message=\"Usernames need at least 3 characters.\"; saved username=qa_jr_p_mvhn4yui, display_name=\"QA Visual Collection\"; unchanged=true",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb23-first-6.jpg"
+  },
+  {
+   "control": "/account: Username 'A B!' (spaces and symbols), then Save changes",
+   "expected": "refused in plain words that name the problem; saved profile unchanged",
+   "ok": true,
+   "actual": "message=\"Usernames can't start or end with an underscore.\"; saved username=qa_jr_p_mvhn4yui, display_name=\"QA Visual Collection\"; unchanged=true",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb23-first-7.jpg"
+  },
+  {
+   "control": "/account: A username another account already uses, then Save changes",
+   "expected": "refused in plain words that name the problem; saved profile unchanged",
+   "ok": true,
+   "actual": "message=\"That username is already taken. Try a different one.\"; saved username=qa_jr_p_mvhn4yui, display_name=\"QA Visual Collection\"; unchanged=true",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb23-first-8.jpg"
+  },
+  {
+   "control": "/account: a valid new display name and username, then Save changes",
+   "expected": "saves; says 'Account updated.'; database shows the new values",
+   "ok": true,
+   "actual": "username=qarb23mvhn4yui; display_name=QA Owner Edited; message shown=true",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb23-first-9.jpg"
+  },
+  {
+   "control": "/museum/new: Create is disabled with no title",
+   "expected": "disabled, with a sentence saying a title is needed",
+   "ok": true,
+   "actual": "disabled=true; hint=\"Enter an exhibition title above to create it.\"",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb23-first-10.jpg"
+  },
+  {
+   "control": "/museum/new: a 140-character title",
+   "expected": "cut to 80, like the exhibition editor",
+   "ok": true,
+   "actual": "length 80",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb23-first-11.jpg"
+  },
+  {
+   "control": "/museum/new: double-click Create Exhibition",
+   "expected": "exactly one exhibition",
+   "ok": true,
+   "actual": "on this device: 1; in the database: 1",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb23-first-12.jpg"
+  },
+  {
+   "control": "Sign Out while the sign-out request fails",
+   "expected": "a plain error ('still signed in'); the person is NOT sent to the login screen; the session stays",
+   "ok": true,
+   "actual": "error=\"Couldn't sign you out (Failed to fetch). You are still signed in. Check your connection and try again.\"; path=/dashboard; session kept=true; menu still signed-in=true",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb23-first-13.jpg"
+  },
+  {
+   "control": "Sign Out when the request succeeds",
+   "expected": "goes to the login page and the session is cleared",
+   "ok": true,
+   "actual": "path=/login; session kept=false",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb23-first-14.jpg"
+  },
+  {
+   "control": "/onboarding step 1: Save and continue with a username another account already uses",
+   "expected": "stays on step 1 and says the username is taken",
+   "ok": true,
+   "actual": "message=\"That username is already taken. Try a different one.\"; still on step 1=true",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb23-first-15.jpg"
+  }
+ ],
+ "facts": {
+  "original": {
+   "username": "qa_jr_p_mvhn4yui",
+   "display_name": "QA Visual Collection"
+  },
+  "takenUsername": "(B's username)",
+  "restored": true
+ }
+}
