@@ -16,7 +16,7 @@ const root = path.resolve(__dirname, "..");
 const out = fs.mkdtempSync(path.join(os.tmpdir(), "vltd-isolation-"));
 
 // Source files under test, transpiled flat into one folder.
-const FILES = ["localDataOwner", "sessionGuard", "vaultLocalStore", "vaultSyncQueue", "collectionGoals", "cloudSaveStatus", "specsDeviceOnly", "pushNotifications", "onboardingDraft"];
+const FILES = ["localDataOwner", "sessionGuard", "vaultLocalStore", "vaultSyncQueue", "collectionGoals", "cloudSaveStatus", "specsDeviceOnly", "pushNotifications", "onboardingDraft", "goalRules"];
 for (const name of FILES) {
   const src = fs.readFileSync(path.join(root, "src", "lib", name + ".ts"), "utf8");
   const js = ts.transpileModule(src, { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2020 } }).outputText;
@@ -64,6 +64,12 @@ const set = (k, v) => store.set(k, v);
 
 // ---- module wiring: relative and "@/lib/..." imports go to the transpiled copies, or to a mock ----
 const mocks = {};
+// vaultCloud is mocked (it talks to the network) but isNetworkFailure is a pure rule that collectionGoals depends on: use the real code from the source file
+const vaultCloudSrc = fs.readFileSync(path.join(root, "src", "lib", "vaultCloud.ts"), "utf8");
+const nfStart = vaultCloudSrc.indexOf("export function isNetworkFailure");
+const nfEnd = vaultCloudSrc.indexOf("\n}\n", nfStart) + 3;
+const realIsNetworkFailure = new Function("exports", ts.transpileModule(vaultCloudSrc.slice(nfStart, nfEnd), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2020 } }).outputText + "; return exports.isNetworkFailure;")({});
+mocks.vaultCloud = { isNetworkFailure: realIsNetworkFailure };
 const origLoad = Module._load;
 Module._load = function (request, parent, ...rest) {
   if (request === "fflate") return origLoad.call(this, path.join(root, "node_modules", "fflate"), parent, ...rest);
@@ -274,7 +280,7 @@ const galleriesA = JSON.stringify([{ id: "gA", profile_id: PA, title: "A locked"
     saveItem: () => {}, saveItemsBatch: () => {}, noteItemUploaded: () => {},
     syncVaultItemsFromSupabase: async () => { pulls++; if (signatureOnPull) localSig = signatureOnPull; return []; },
   };
-  mocks.vaultCloud = { hasSupabaseEnv: () => true, upsertVaultItemToSupabase: async () => { uploads++; }, uploadVaultImageToSupabase: async () => ({}) };
+  mocks.vaultCloud = { isNetworkFailure: realIsNetworkFailure, hasSupabaseEnv: () => true, upsertVaultItemToSupabase: async () => { uploads++; }, uploadVaultImageToSupabase: async () => ({}) };
   mocks.vaultImageStore = { getImageBlobFromIndexedDb: async () => null };
   mocks.auth = { getStoredActiveProfileId: () => get("vltd_active_profile_id_v1") ?? "" };
   // vaultLocalStore is real, but its signature is what the queue compares: control it through storage

@@ -1,0 +1,40 @@
+{
+ "label": "fifth",
+ "cases": [
+  {
+   "control": "Admin role without a completed second factor is refused",
+   "expected": "the shell is not shown",
+   "ok": true,
+   "actual": "shell shown=false; text: Home Vault Exhibitions Lounge Discover Help ⌘K NOVICE Level 1 TWO-FACTOR AUTHENTICATION Verify to continue This page needs a freshly verified 2FA session, separ",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb21-fifth-1.jpg"
+  },
+  {
+   "control": "Admin with a verified session: the characters page opens",
+   "expected": "shell and character list",
+   "ok": true,
+   "actual": "shell=true; Home Vault Exhibitions Lounge Discover Help ⌘K COLLECTOR Level 3 VLTD Admin 22 characters · 880 items · $725.0M USERS CHARACTERS COUPONS THE",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb21-fifth-2.jpg"
+  },
+  {
+   "control": "Temporary admin role removed and removal verified",
+   "expected": "0 role rows for the QA account; the table is back to its original single row",
+   "ok": true,
+   "actual": "role rows for the QA account: 0; rows in user_roles now: 1",
+   "screenshot": ""
+  },
+  {
+   "control": "QA account's second factor removed and removal verified",
+   "expected": "0 factors",
+   "ok": true,
+   "actual": "factors left: 0",
+   "screenshot": ""
+  }
+ ],
+ "facts": {
+  "assuranceLevelAfterChallenge": "aal2",
+  "roleRowsForQaAccountAfterRemoval": 0,
+  "factorsLeftOnQaAccount": 0,
+  "userRolesRowsTotalNow": 1
+ },
+ "error": "Error: SyntaxError: Invalid regular expression: /^Exhibitions?s*(/i: Unterminated group\n    at Object.evaluate (C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\scripts\\cdp.cjs:65:35)\n    at async openFirstExhibit (C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\repair-batch-5\\scripts\\rb21-admin.cjs:71:7)\n    at async C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\repair-batch-5\\scripts\\rb21-admin.cjs:78:16"
+}
