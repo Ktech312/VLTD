@@ -22,6 +22,7 @@ import {
 } from "@/lib/collectionGoals";
 import { addWishlistItem } from "@/lib/wishlistModel";
 import { loadItems, resetCloudBackoff, syncVaultItemsFromSupabaseChecked, type VaultItem } from "@/lib/vaultModel";
+import { activeItems as ownedItems, summarizeValues } from "@/lib/vaultStats";
 import { loadWishlist } from "@/lib/wishlistModel";
 import { LoadErrorCard, StaleDataNotice } from "@/components/vault/CloudStatus";
 import { Glyph } from "@/components/ui/Glyph";
@@ -48,6 +49,7 @@ type GoalView = {
   ownedCount: number;
   targetCount: number;
   missing: number;
+  /** The value of the owned items this goal covers (never sold or wishlist items). */
   valueImpact: number;
   visibility: "Private" | "Public";
   previewLabel: string;
@@ -107,13 +109,6 @@ function thumbForItem(item: VaultItem | undefined) {
 
 function buildGoalViews(progress: GoalProgress[], items: VaultItem[]): GoalView[] {
   return progress.map((goal, index) => {
-    const matching = items
-      .filter((item) => {
-        if (goal.subject?.trim()) return (item.subject ?? "").toLowerCase() === goal.subject.trim().toLowerCase();
-        if (goal.universe) return item.universe === goal.universe;
-        return true;
-      })
-      .slice(0, 5);
     const ownedAll = items.filter((item) => item.status !== "SOLD" && item.status !== "WISHLIST").filter((item) => {
       if (goal.subject?.trim()) return (item.subject ?? "").toLowerCase() === goal.subject.trim().toLowerCase();
       if (goal.universe) return item.universe === goal.universe;
@@ -123,7 +118,8 @@ function buildGoalViews(progress: GoalProgress[], items: VaultItem[]): GoalView[
 
     // The goal's own stored kind. Never worked out from its name or notes.
     const type: GoalFilter = goal.needsSetup ? "setup" : goal.kind === "value" ? "value" : "count";
-    const valueImpact = matching.reduce((sum, item) => sum + (item.currentValue ?? item.purchasePrice ?? 0), 0);
+    // What the owned items in this goal's scope are worth (the one value rule). Sold and wishlist items are not owned and add nothing.
+    const valueImpact = Math.round(summarizeValues(ownedItems(ownedAll)).totalValue);
 
     return {
       id: goal.id,
@@ -357,7 +353,9 @@ export default function GoalsPage() {
   const measured = goalViews.filter((goal) => !goal.needsSetup);
   const needSetup = goalViews.length - measured.length;
   const averageProgress = Math.round(measured.reduce((sum, goal) => sum + goal.pct, 0) / Math.max(1, measured.length));
-  const goalValueImpact = goalViews.reduce((sum, goal) => sum + goal.valueImpact, 0);
+  // A potential increase can only be stated for goals that are measured in dollars: the dollars still to reach. Item goals have no dollar figure to add up.
+  const valueGoalViews = goalViews.filter((goal) => goal.type === "value");
+  const goalValueImpact = valueGoalViews.reduce((sum, goal) => sum + goal.missing, 0);
   const completed = measured.filter((goal) => goal.pct >= 100).length;
   const countGoals = goalViews.filter((goal) => goal.type === "count").length;
   const valueGoals = goalViews.filter((goal) => goal.type === "value").length;
@@ -466,9 +464,9 @@ export default function GoalsPage() {
                 <span style={{ color: "var(--theme-text-muted,#61656B)" }}>{measured.filter((goal) => goal.pct === 0).length} not started{needSetup > 0 ? ` · ${needSetup} need setup` : ""}</span>
               </div>
             </StatPanel>
-            <StatPanel label="Goal Value Impact">
-              <div className="mt-2 text-[32px] font-black text-[color:var(--info,#52D6F4)]">{money(goalValueImpact)}</div>
-              <p className="text-sm leading-5" style={{ color: "var(--theme-text-muted,#61656B)" }}>Potential increase across all goals</p>
+            <StatPanel label="Value Still To Reach">
+              <div className="mt-2 text-[32px] font-black text-[color:var(--info,#52D6F4)]">{valueGoalViews.length > 0 ? money(goalValueImpact) : "—"}</div>
+              <p className="text-sm leading-5" style={{ color: "var(--theme-text-muted,#61656B)" }}>{valueGoalViews.length > 0 ? `Across your ${valueGoalViews.length} value ${valueGoalViews.length === 1 ? "goal" : "goals"}` : "You have no value goals yet. Item goals have no dollar figure."}</p>
             </StatPanel>
             <StatPanel label="Measured By" icon={<Glyph name="chart" size={34} style={{ color: "var(--theme-gold,#C8CDD2)" }} />}>
               <div className="text-sm leading-6" style={{ color: "var(--theme-text-primary,#ECEDEF)" }} data-testid="goals-measured-by">
@@ -588,9 +586,9 @@ export default function GoalsPage() {
                 <div className="text-xs" style={{ color: "var(--theme-text-muted,#61656B)" }}>{selectedGoal.type === "value" ? "Collection value to reach" : selectedGoal.type === "setup" ? "Items or dollars: you choose" : "Items in the complete set"}</div>
               </div>
               <div className="border-l border-[rgba(203,208,213,0.18)] pl-5">
-                <div className="text-[11px] font-black uppercase tracking-[0.16em]" style={{ color: "var(--theme-text-muted,#61656B)" }}>Insurable Value</div>
+                <div className="text-[11px] font-black uppercase tracking-[0.16em]" style={{ color: "var(--theme-text-muted,#61656B)" }}>Value You Own Here</div>
                 <div className="mt-1 text-[23px] font-black text-[color:var(--info,#52D6F4)]">{money(selectedGoal.valueImpact)}</div>
-                <div className="text-xs" style={{ color: "var(--theme-text-muted,#61656B)" }}>From matching vault items</div>
+                <div className="text-xs" style={{ color: "var(--theme-text-muted,#61656B)" }}>Items you own that this goal covers (not sold or wishlist items)</div>
               </div>
             </div>
 

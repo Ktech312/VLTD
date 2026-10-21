@@ -673,7 +673,7 @@ export default function VltLoungePage() {
                 ))}
               </ul>
             )}
-            <Link href="/discover" className="block w-full px-4 py-3 text-left text-[12px] font-bold" style={{ color: CYAN }}>View full leaderboard →</Link>
+            <Link href="/discover" className="block w-full px-4 py-3 text-left text-[12px] font-bold" style={{ color: CYAN }}>Browse Discover →</Link>
           </section>
 
           <section className="rounded-[8px]" style={CARD}>
