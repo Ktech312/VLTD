@@ -121,6 +121,8 @@ function visionToDraftPatch(vision: VisionAnalysisResult): Partial<BulkDraft> {
 
 /* ── Page ──────────────────────────────────────────────────────── */
 
+const ALLOWANCE_UNKNOWN = "Couldn't check your AI scan allowance, so AI scanning is paused. Reload to try again, or fill these in by hand.";
+
 export default function BulkUploadPage() {
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -241,6 +243,11 @@ export default function BulkUploadPage() {
       const draft = drafts[i];
       setScanDone(i);
 
+      // Allowance never read (not the same as used up): say so and leave the rest for manual entry.
+      if (profileId && remaining === null) {
+        setStatus(ALLOWANCE_UNKNOWN);
+        break;
+      }
       // Out of scans — leave this and the rest for manual entry.
       if (profileId && localRemaining <= 0) {
         setStatus("You've used all your AI scans for this cycle. The rest are ready to fill in by hand.");
@@ -285,6 +292,10 @@ export default function BulkUploadPage() {
     async (draft: BulkDraft) => {
       if (!universe || !isUniverseKey(universe)) return;
       if (scanningId) return; // one at a time
+      if (profileId && remaining === null) {
+        setStatus(ALLOWANCE_UNKNOWN);
+        return;
+      }
       if (profileId && (remaining ?? 0) <= 0) {
         setStatus("No AI scans left this cycle — fill this one in by hand.");
         return;
