@@ -210,7 +210,7 @@ function getProductivityCommands(
       id: "action_highest_value_item",
       label: "Open Highest Value Item",
       subtitle: `${highestValueItem.title} • ${formatMoney(itemValue(highestValueItem))}`,
-      href: `/vault?q=${encodeURIComponent(highestValueItem.title ?? "")}`,
+      href: `/vault/item/${encodeURIComponent(highestValueItem.id)}`,
       section: "action",
       keywords: ["highest value", "top item", "best value", "most valuable item"],
     });
@@ -221,7 +221,7 @@ function getProductivityCommands(
       id: "action_best_performing_item",
       label: "Open Best Performing Item",
       subtitle: `${bestPerformingItem.title} • ${itemProfit(bestPerformingItem) >= 0 ? "+" : ""}${formatMoney(itemProfit(bestPerformingItem))}`,
-      href: `/vault?q=${encodeURIComponent(bestPerformingItem.title ?? "")}`,
+      href: `/vault/item/${encodeURIComponent(bestPerformingItem.id)}`,
       section: "action",
       keywords: ["best performing", "top performer", "highest gain", "best roi item"],
     });
@@ -232,7 +232,7 @@ function getProductivityCommands(
       id: "action_most_underwater_item",
       label: "Open Most Underwater Item",
       subtitle: `${mostUnderwaterItem.title} • ${itemProfit(mostUnderwaterItem) >= 0 ? "+" : ""}${formatMoney(itemProfit(mostUnderwaterItem))}`,
-      href: `/vault?q=${encodeURIComponent(mostUnderwaterItem.title ?? "")}`,
+      href: `/vault/item/${encodeURIComponent(mostUnderwaterItem.id)}`,
       section: "action",
       keywords: ["underwater", "worst item", "largest loss", "biggest loser"],
     });

@@ -89,9 +89,15 @@ export default function PWAInstallBanner() {
   // While the pill is on screen the page scrolls a little further, so the last controls and links can be scrolled out from under it (globals.css reads this).
   useEffect(() => {
     const visible = show && !suppressed && (deferredPrompt !== null || isIOS);
-    document.documentElement.style.setProperty("--pwa-banner-space", visible ? (iosExpanded ? "132px" : "72px") : "0px");
-    return () => { document.documentElement.style.removeProperty("--pwa-banner-space"); };
-  }, [show, suppressed, deferredPrompt, isIOS, iosExpanded]);
+    const space = visible ? (iosExpanded ? "132px" : "72px") : "0px";
+    document.documentElement.style.setProperty("--pwa-banner-space", space);
+    // The public home page scrolls the window itself (no scroller inside the app shell), so it gets the room as page padding.
+    if (pathname === "/") document.body.style.paddingBottom = visible ? space : "";
+    return () => {
+      document.documentElement.style.removeProperty("--pwa-banner-space");
+      document.body.style.paddingBottom = "";
+    };
+  }, [show, suppressed, deferredPrompt, isIOS, iosExpanded, pathname]);
 
   function dismiss() {
     localStorage.setItem(DISMISSED_KEY, String(Date.now() + COOLDOWN_MS));

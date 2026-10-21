@@ -67,8 +67,19 @@ function trimGroupedResults(grouped: Record<CommandSection, CommandItem[]>) {
   return trimmed;
 }
 
-function flattenOrdered(grouped: Record<CommandSection, CommandItem[]>) {
-  return SECTION_ORDER.flatMap((section) => grouped[section]);
+// Sections in their fixed order when nothing is typed; once something is typed, the section holding the best match goes first,
+// so the first row (the one Enter opens) is the best match rather than whatever "Actions" holds.
+function orderedSections(searched: CommandItem[], typed: boolean) {
+  if (!typed) return SECTION_ORDER;
+  const best = (section: CommandSection) => {
+    const at = searched.findIndex((command) => command.section === section);
+    return at < 0 ? Number.MAX_SAFE_INTEGER : at;
+  };
+  return [...SECTION_ORDER].sort((a, b) => best(a) - best(b) || SECTION_ORDER.indexOf(a) - SECTION_ORDER.indexOf(b));
+}
+
+function flattenOrdered(grouped: Record<CommandSection, CommandItem[]>, order: CommandSection[]) {
+  return order.flatMap((section) => grouped[section]);
 }
 
 export default function CommandPalette({
@@ -93,7 +104,8 @@ export default function CommandPalette({
   const searchedResults = useMemo(() => searchCommands(commands, query), [commands, query]);
   const groupedRaw = useMemo(() => groupCommands(searchedResults), [searchedResults]);
   const grouped = useMemo(() => trimGroupedResults(groupedRaw), [groupedRaw]);
-  const visibleResults = useMemo(() => flattenOrdered(grouped), [grouped]);
+  const sectionOrder = useMemo(() => orderedSections(searchedResults, query.trim().length > 0), [searchedResults, query]);
+  const visibleResults = useMemo(() => flattenOrdered(grouped, sectionOrder), [grouped, sectionOrder]);
 
   useEffect(() => {
     if (!open) {
@@ -234,7 +246,7 @@ export default function CommandPalette({
             </div>
           ) : (
             <div className="grid gap-4">
-              {SECTION_ORDER.map((section) => {
+              {sectionOrder.map((section) => {
                 const sectionItems = grouped[section];
                 if (!sectionItems.length) return null;
 
