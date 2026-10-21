@@ -246,10 +246,12 @@ export function PillSelect<T extends string>({
             ref={menuRef}
             id={`pillselect-${id}`}
             role="menu"
-            className="overflow-hidden rounded-[8px] bg-[color:var(--surface-strong)] ring-1 ring-[color:var(--border)] shadow-[var(--shadow-pill)]"
+            className="overflow-y-auto overflow-x-hidden rounded-[8px] bg-[color:var(--surface-strong)] ring-1 ring-[color:var(--border)] shadow-[var(--shadow-pill)]"
             style={{
               position: "fixed",
               top: (btnRect?.bottom ?? 0) + 8,
+              // A long list scrolls inside the menu instead of running off the bottom of the screen (the last options could not be reached).
+              maxHeight: typeof window !== "undefined" ? Math.max(160, window.innerHeight - ((btnRect?.bottom ?? 0) + 8) - 12) : undefined,
               ...(align === "left"
                 ? { left: btnRect?.left ?? 0 }
                 : { right: (typeof window !== "undefined" ? window.innerWidth : 0) - (btnRect?.right ?? 0) }),

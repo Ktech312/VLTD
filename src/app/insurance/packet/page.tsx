@@ -137,11 +137,11 @@ export default function InsurancePacketPage() {
       <div className="packet-shell mx-auto max-w-6xl">
         {cloud.state === "failed" && items.length > 0 ? <StaleDataNotice onRetry={cloud.retry} busy={cloud.busy} /> : null}
         <div className="vltd-no-print mb-6 flex flex-wrap items-center justify-between gap-3 rounded-[24px] border border-[color:var(--border)] bg-vault-card p-3 shadow-[0_18px_56px_rgba(0,0,0,0.22)]">
-          <Link href="/insurance" className="rounded-full border border-[color:var(--border)] bg-vault-card px-4 py-2 text-sm font-semibold text-[color:var(--accent)] transition hover:border-[rgba(203,208,213,0.42)]">
+          <Link href="/insurance" className="inline-flex items-center rounded-full border border-[color:var(--border)] bg-vault-card px-4 py-2 text-sm font-semibold text-[color:var(--accent)] transition hover:border-[rgba(203,208,213,0.42)] max-md:min-h-11">
             ← Back to Insurance
           </Link>
           <div className="flex flex-wrap items-center gap-3">
-            <label className="flex items-center gap-2 rounded-full border border-[color:var(--border)] bg-vault-card px-4 py-2 text-sm text-[color:var(--muted)]">
+            <label className="flex items-center gap-2 rounded-full border border-[color:var(--border)] bg-vault-card px-4 py-2 text-sm text-[color:var(--muted)] max-md:min-h-11">
               <input
                 type="checkbox"
                 checked={includeImages}
@@ -153,7 +153,7 @@ export default function InsurancePacketPage() {
             <button
               disabled={safePageIndex === 0}
               onClick={() => setPageIndex((prev) => Math.max(0, prev - 1))}
-              className="rounded-full border border-[color:var(--border)] bg-vault-card px-4 py-2 text-sm font-semibold text-[color:var(--accent)] disabled:opacity-40"
+              className="rounded-full border border-[color:var(--border)] bg-vault-card px-4 py-2 text-sm font-semibold text-[color:var(--accent)] disabled:opacity-40 max-md:min-h-11"
             >
               Prev
             </button>
@@ -163,14 +163,14 @@ export default function InsurancePacketPage() {
             <button
               disabled={safePageIndex >= totalPages - 1}
               onClick={() => setPageIndex((prev) => Math.min(totalPages - 1, prev + 1))}
-              className="rounded-full border border-[color:var(--border)] bg-vault-card px-4 py-2 text-sm font-semibold text-[color:var(--accent)] disabled:opacity-40"
+              className="rounded-full border border-[color:var(--border)] bg-vault-card px-4 py-2 text-sm font-semibold text-[color:var(--accent)] disabled:opacity-40 max-md:min-h-11"
             >
               Next
             </button>
             <Link
               href={printHref}
               target="_blank"
-              className="vltd-ins-primary rounded-full px-4 py-2 text-sm font-black text-[#0B0B0B]"
+              className="vltd-ins-primary inline-flex items-center rounded-full px-4 py-2 text-sm font-black text-[#0B0B0B] max-md:min-h-11"
               style={{ background: 'var(--theme-gold-gradient)', boxShadow: 'var(--theme-gold-glow)' }}
             >
               Open Printable Page

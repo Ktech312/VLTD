@@ -187,7 +187,7 @@ function GoalRow({
     <button
       type="button"
       onClick={onSelect}
-      className="grid min-h-[110px] w-full grid-cols-[108px_minmax(220px,1.2fr)_minmax(250px,1fr)_220px] items-center gap-5 rounded-[7px] border p-4 text-left transition hover:-translate-y-0.5"
+      className="grid min-h-[110px] w-full grid-cols-[82px_minmax(0,1fr)] items-center gap-x-4 gap-y-3 rounded-[7px] border p-4 text-left transition hover:-translate-y-0.5 lg:grid-cols-[108px_minmax(220px,1.2fr)_minmax(250px,1fr)_220px] lg:gap-5"
       style={{
         background: "var(--theme-card,rgba(15,25,45,0.88))",
         borderColor: selected ? "var(--theme-gold,#C8CDD2)" : "rgba(203,208,213,0.28)",
@@ -207,7 +207,7 @@ function GoalRow({
         </div>
       </div>
 
-      <div className="min-w-0 border-l border-r border-[rgba(203,208,213,0.16)] px-5">
+      <div className="min-w-0 border-[rgba(203,208,213,0.16)] max-lg:col-span-2 lg:border-l lg:border-r lg:px-5">
         <div className="mb-2 text-[11px] font-black uppercase tracking-[0.16em]" style={{ color: "var(--theme-text-muted,#61656B)" }}>{goal.previewLabel}</div>
         {goal.type === "setup" ? (
           <p className="text-sm" style={{ color: "var(--theme-text-muted,#61656B)" }}>
@@ -239,14 +239,14 @@ function GoalRow({
         )}
       </div>
 
-      <div>
+      <div className="max-lg:col-span-2">
         <div className="text-[11px] font-black uppercase tracking-[0.16em]" style={{ color: "var(--theme-text-muted,#61656B)" }}>Next Action</div>
         <div className="mt-1 text-lg font-bold leading-tight" style={{ color: "var(--theme-text-primary,#ECEDEF)" }}>{goal.nextAction}</div>
         <div className="text-xs" style={{ color: "var(--theme-text-muted,#61656B)" }}>{goal.type === "setup" ? "Not set up" : goal.type === "value" ? (goal.missing > 0 ? `${money(goal.missing)} short` : "Reached") : goal.missing > 0 ? `${goal.missing} items missing` : "Ready"}</div>
         {goal.type === "setup" ? (
           <div className="mt-3 flex flex-wrap gap-2" data-testid="goal-setup-choices">
-            <button type="button" onClick={(event) => { event.stopPropagation(); onConfigure("count"); }} className="rounded-[7px] border border-[rgba(203,208,213,0.36)] px-3 py-1.5 text-xs font-black" style={{ color: "var(--theme-gold,#C8CDD2)" }}>Count items</button>
-            <button type="button" onClick={(event) => { event.stopPropagation(); onConfigure("value"); }} className="rounded-[7px] border border-[rgba(203,208,213,0.36)] px-3 py-1.5 text-xs font-black" style={{ color: "var(--theme-gold,#C8CDD2)" }}>Measure value ($)</button>
+            <button type="button" onClick={(event) => { event.stopPropagation(); onConfigure("count"); }} className="rounded-[7px] border border-[rgba(203,208,213,0.36)] px-3 py-1.5 text-xs font-black max-md:min-h-11" style={{ color: "var(--theme-gold,#C8CDD2)" }}>Count items</button>
+            <button type="button" onClick={(event) => { event.stopPropagation(); onConfigure("value"); }} className="rounded-[7px] border border-[rgba(203,208,213,0.36)] px-3 py-1.5 text-xs font-black max-md:min-h-11" style={{ color: "var(--theme-gold,#C8CDD2)" }}>Measure value ($)</button>
           </div>
         ) : null}
         {goal.type === "count" ? <button
@@ -257,7 +257,7 @@ function GoalRow({
           }}
           disabled={goal.missing <= 0}
           title={goal.missing > 0 ? "Adds what is missing from this goal to your wishlist" : "Nothing is missing: this goal is complete"}
-          className="mt-3 rounded-[7px] border border-[rgba(203,208,213,0.36)] px-5 py-1.5 text-xs font-black disabled:cursor-not-allowed disabled:opacity-60"
+          className="mt-3 rounded-[7px] border border-[rgba(203,208,213,0.36)] px-5 py-1.5 text-xs font-black max-md:min-h-11 disabled:cursor-not-allowed disabled:opacity-60"
           style={{ color: "var(--theme-gold,#C8CDD2)" }}
         >
           {goal.missing > 0 ? "Add missing to Wishlist" : "Goal complete"}
@@ -650,7 +650,7 @@ export default function GoalsPage() {
             <section className="mt-5">
               <div className="mb-3 flex justify-between">
                 <h3 className="text-[12px] font-black uppercase tracking-[0.16em]" style={{ color: "var(--theme-gold,#C8CDD2)" }}>Items In Goal ({selectedGoal.scopeCount})</h3>
-                <button type="button" onClick={() => setShowAllGoalItems((v) => !v)} className="text-xs font-bold" style={{ color: "var(--theme-gold,#C8CDD2)" }}>{showAllGoalItems ? "Show less" : "View all"}</button>
+                <button type="button" onClick={() => setShowAllGoalItems((v) => !v)} className="text-xs font-bold vltd-tap-y" style={{ color: "var(--theme-gold,#C8CDD2)" }}>{showAllGoalItems ? "Show less" : "View all"}</button>
               </div>
               <div className="flex flex-wrap gap-2">
                 {(showAllGoalItems ? selectedGoal.thumbnails : selectedGoal.thumbnails.slice(0, 5)).map((src, index) => (

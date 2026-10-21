@@ -367,7 +367,7 @@ function InlineEditSection({
                   onClick={() => startOne(field)}
                   onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); startOne(field); } }}
                   title={`Click to edit ${row.label.toLowerCase()}`}
-                  className="cursor-pointer text-right text-[color:var(--fg)] hover:underline hover:decoration-[color:var(--border)] hover:underline-offset-4"
+                  className="vltd-tap cursor-pointer text-right text-[color:var(--fg)] hover:underline hover:decoration-[color:var(--border)] hover:underline-offset-4"
                 >
                   {row.value}
                 </span>
@@ -1139,6 +1139,7 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
 
     await persist(nextItem);
     setMediaMessage(nextStatus === "FOR_SALE" ? "Marked for sale." : "Removed from For Sale.");
+    showToast(nextStatus === "FOR_SALE" ? "Marked for sale." : "Removed from For Sale.");
   }
 
   async function handleAskingPriceBlur(value: string) {
@@ -1152,7 +1153,10 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
     setAskingError("");
     const askingPrice = parsed.blank ? undefined : parsed.value;
     await persist({ ...item, askingPrice });
-    setMediaMessage(askingPrice === undefined ? "Asking price cleared." : "Asking price saved.");
+    const saved = askingPrice === undefined ? "Asking price cleared." : "Asking price saved.";
+    setMediaMessage(saved);
+    // The line above sits in the photo card at the top of the page, out of sight while the price field is on screen: say it where the person is looking.
+    showToast(saved);
   }
 
   const universe = normUniverse(item.universe);

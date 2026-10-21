@@ -2676,6 +2676,12 @@ html:not([data-vltd-logo="b"]) .vltd-logo.vltd-logo-on-dark .vltd-logo-black { d
   }
   .vltd-tap-y { --tap-w: 0px; }
   .vltd-tap-y:not(.absolute):not(.fixed):not(.sticky) { position: relative; }
+  /* Compact pills (PillButton size="compact"): the invisible hit area grows sideways only as far as needed to reach 44px, so a narrow pill gets a
+     44px-wide target and a wide one is unchanged. */
+  .vltd-hit-x::after {
+    left: calc(-1 * max(0px, (44px - 100%) / 2));
+    right: calc(-1 * max(0px, (44px - 100%) / 2));
+  }
 }
 
 

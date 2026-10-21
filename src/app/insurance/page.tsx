@@ -229,7 +229,7 @@ export default function InsuranceExportPage() {
         {/* Documentation readiness is a record-keeping checklist. It is not insurance coverage, and nothing here says an item is insured. */}
         <div className="no-print mb-3 flex flex-wrap items-center gap-x-3 gap-y-1 rounded-[8px] px-3 py-2 text-[12px] ring-1 ring-[color:var(--border)]" style={{ background: "var(--surface)", color: "var(--muted)" }} data-testid="readiness-note">
           <span><b style={{ color: "var(--fg)" }}>Documentation readiness:</b> {readiness.ready} of {listed.length} items complete. {REVIEW_CHECKLIST_NOTE}</span>
-          <Link href="/vault?review=needs_review" className="font-semibold text-[color:var(--accent)] underline underline-offset-4">See what is missing</Link>
+          <Link href="/vault?review=needs_review" className="font-semibold text-[color:var(--accent)] underline underline-offset-4 vltd-tap-y">See what is missing</Link>
         </div>
 
         <section
@@ -279,13 +279,15 @@ export default function InsuranceExportPage() {
                     return (
                       <tr key={i.id} className="no-print border-b border-[color:var(--border)] align-top opacity-45 last:border-b-0">
                         <td className="py-3 pl-4 pr-3">
-                          <input
-                            type="checkbox"
-                            checked={false}
-                            onChange={(event) => setItemIncluded(String(i.id), event.target.checked)}
-                            className="h-5 w-5 accent-[#C8CDD2]"
-                            aria-label={`Include ${i.title} in insurance`}
-                          />
+                          <label className="vltd-tap relative inline-flex" style={{ ["--tap-w" as string]: "44px", ["--tap-h" as string]: "44px" }}>
+                            <input
+                              type="checkbox"
+                              checked={false}
+                              onChange={(event) => setItemIncluded(String(i.id), event.target.checked)}
+                              className="h-5 w-5 accent-[#C8CDD2]"
+                              aria-label={`Include ${i.title} in insurance`}
+                            />
+                          </label>
                         </td>
                         <td className="py-3 pl-4 pr-3" colSpan={9}>
                           <div className="font-black text-text-primary">{i.title}</div>
@@ -298,13 +300,15 @@ export default function InsuranceExportPage() {
                   return (
                     <tr key={i.id} className="border-b border-[color:var(--border)] align-top last:border-b-0">
                       <td className="no-print py-3 pl-4 pr-3">
-                        <input
-                          type="checkbox"
-                          checked={included}
-                          onChange={(event) => setItemIncluded(String(i.id), event.target.checked)}
-                          className="h-5 w-5 accent-[#C8CDD2]"
-                          aria-label={`Include ${i.title} in insurance`}
-                        />
+                        <label className="vltd-tap relative inline-flex" style={{ ["--tap-w" as string]: "44px", ["--tap-h" as string]: "44px" }}>
+                          <input
+                            type="checkbox"
+                            checked={included}
+                            onChange={(event) => setItemIncluded(String(i.id), event.target.checked)}
+                            className="h-5 w-5 accent-[#C8CDD2]"
+                            aria-label={`Include ${i.title} in insurance`}
+                          />
+                        </label>
                       </td>
                       <td className="py-3 pl-4 pr-3">
                         <div className="item-title font-black text-text-primary">{i.title}</div>
@@ -313,7 +317,7 @@ export default function InsuranceExportPage() {
                           {i.number ?? ""}
                         </div>
                         <div className="no-print mt-2">
-                          <Link href={`/insurance/item?id=${encodeURIComponent(String(i.id))}`} className="text-xs font-semibold text-[color:var(--accent)] underline underline-offset-4">
+                          <Link href={`/insurance/item?id=${encodeURIComponent(String(i.id))}`} className="text-xs font-semibold text-[color:var(--accent)] underline underline-offset-4 vltd-tap-y">
                             Per-item sheet →
                           </Link>
                         </div>

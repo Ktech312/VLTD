@@ -303,7 +303,7 @@ function SoldCard({
         </Link>
       )}
 
-      <Link href={detailHref} className="mt-3 min-w-0">
+      <Link href={detailHref} className="mt-3 min-w-0 max-md:min-h-11">
         <div className="line-clamp-1 text-[15px] font-semibold leading-tight vltd-keep-color" style={{ "--vltd-keep-color": "var(--vault-title-color)" } as React.CSSProperties}>
           {item.title}
         </div>

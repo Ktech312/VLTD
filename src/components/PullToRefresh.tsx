@@ -103,6 +103,8 @@ export default function PullToRefresh({ children }: { children: React.ReactNode 
         right:                     0,
         bottom:                    "calc(var(--bottomnav-h) + max(env(safe-area-inset-bottom, 0px), 0px))",
         overflowY:                 "auto",
+        // The invisible tap areas of small controls at the screen edge used to make every page scroll 2px sideways.
+        overflowX:                 "hidden",
         WebkitOverflowScrolling:   "touch",
         overscrollBehaviorY:       "contain",
       }}

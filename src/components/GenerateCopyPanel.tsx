@@ -116,7 +116,7 @@ export default function GenerateCopyPanel({
         className={[
           fullWidth
             ? "flex-1 flex items-center justify-center gap-1.5 rounded-2xl py-3 text-sm font-bold transition"
-            : "inline-flex items-center gap-1.5 rounded-[7px] px-3 py-1.5 text-xs font-semibold ring-1 transition",
+            : "inline-flex items-center gap-1.5 rounded-[7px] px-3 py-1.5 text-xs font-semibold ring-1 transition max-md:min-h-11",
           "hover:ring-[color:var(--theme-gold)] hover:text-[color:var(--theme-gold)]",
           className,
         ].join(" ")}

@@ -277,9 +277,9 @@ export default function SalesHistoryPage() {
         <div className="flex flex-wrap items-start justify-between gap-4 mb-6">
           <div>
             <div className="flex items-center gap-2 text-[11px]" style={{ color: "var(--muted)" }}>
-              <Link href="/vault" className="hover:underline">Vault</Link>
+              <Link href="/vault" className="hover:underline vltd-tap-y">Vault</Link>
               <span>/</span>
-              <Link href="/vault/sold" className="hover:underline">Sold Items</Link>
+              <Link href="/vault/sold" className="hover:underline vltd-tap-y">Sold Items</Link>
               <span>/</span>
               <span>Sales History</span>
             </div>
@@ -287,11 +287,11 @@ export default function SalesHistoryPage() {
             <p className="mt-1 text-sm" style={{ color: "var(--muted)" }}>Every recorded sale, profit, and margin.</p>
           </div>
           <div className="flex gap-2">
-            <Link href="/vault/sold" className="inline-flex h-9 items-center rounded-full px-4 text-sm font-semibold ring-1 ring-[color:var(--border)]"
+            <Link href="/vault/sold" className="inline-flex h-11 md:h-9 items-center rounded-full px-4 text-sm font-semibold ring-1 ring-[color:var(--border)]"
               style={{ background: "var(--pill)" }}>
               Sold Items
             </Link>
-            <Link href="/vault" className="inline-flex h-9 items-center rounded-full px-4 text-sm font-semibold ring-1 ring-[color:var(--border)]"
+            <Link href="/vault" className="inline-flex h-11 md:h-9 items-center rounded-full px-4 text-sm font-semibold ring-1 ring-[color:var(--border)]"
               style={{ background: "var(--pill)" }}>
               ← Vault
             </Link>
@@ -326,7 +326,7 @@ export default function SalesHistoryPage() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search sales…"
-              className="h-9 flex-1 rounded-full px-4 text-sm ring-1 ring-[color:var(--border)] focus:outline-none min-w-[140px]"
+              className="h-11 md:h-9 flex-1 rounded-full px-4 text-sm ring-1 ring-[color:var(--border)] focus:outline-none min-w-[140px]"
               style={{ background: "var(--pill)", color: "var(--fg)" }}
             />
             <div className="flex flex-wrap gap-1.5">
@@ -336,7 +336,7 @@ export default function SalesHistoryPage() {
                   key={key}
                   type="button"
                   onClick={() => setSort(key)}
-                  className="h-9 rounded-full px-3 text-[11px] font-semibold capitalize ring-1 transition"
+                  className="h-11 md:h-9 rounded-full px-3 text-[11px] font-semibold capitalize ring-1 transition"
                   style={sort === key
                     ? { background: "linear-gradient(180deg,#79E7FB,#41C6E4 55%,#2CB1D1)", color: "#06171d", borderColor: "transparent" }
                     : { background: "var(--pill)", color: "var(--muted)", borderColor: "var(--border)" }
@@ -357,7 +357,7 @@ export default function SalesHistoryPage() {
                 key={u}
                 type="button"
                 onClick={() => setUniverseFilter(u)}
-                className="rounded-full px-3 py-1 text-xs font-semibold ring-1 transition"
+                className="rounded-full px-3 py-1 text-xs font-semibold ring-1 transition max-md:min-h-11"
                 style={universeFilter === u
                   ? { background: "linear-gradient(180deg,#79E7FB,#41C6E4 55%,#2CB1D1)", color: "#06171d", borderColor: "transparent" }
                   : { background: "var(--pill)", color: "var(--muted)", borderColor: "var(--border)" }

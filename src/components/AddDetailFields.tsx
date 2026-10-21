@@ -172,7 +172,7 @@ export default function AddDetailFields({
             type="button"
             onClick={() => setExpanded((v) => !v)}
             aria-expanded={expanded}
-            className="text-[12px] font-semibold text-[color:var(--muted)] hover:text-[color:var(--fg)]"
+            className="vltd-tap-y text-[12px] font-semibold text-[color:var(--muted)] hover:text-[color:var(--fg)]"
           >
             {expanded ? "Fewer details" : `More details (${emptyAdditional.length})`}
           </button>

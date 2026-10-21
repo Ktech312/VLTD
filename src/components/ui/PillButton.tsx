@@ -50,7 +50,7 @@ export function pillClassName(variant: PillVariant = "default", disabled = false
           // 44px touch target on phones without growing the visual
           iconOnlyCompact
             ? "max-md:after:absolute max-md:after:-inset-x-1.5 max-md:after:-inset-y-1.5 max-md:after:content-['']"
-            : "max-md:after:absolute max-md:after:inset-x-0 max-md:after:-inset-y-1.5 max-md:after:content-['']",
+            : "vltd-hit-x max-md:after:absolute max-md:after:-inset-y-1.5 max-md:after:content-['']",
         ].join(" ")
       : "h-11 md:h-9 px-3 text-[13px] font-medium";
   const base = [

@@ -1,0 +1,601 @@
+{
+ "/vault/item/qa_vz_mvi8xe2a_13": {
+  "overflow": {
+   "sw": 390,
+   "cw": 390,
+   "wrap": 0
+  },
+  "small": [
+   {
+    "label": "Move up",
+    "w": 29,
+    "h": 44,
+    "tag": "button",
+    "cls": "inline-flex items-center justify-center gap-1.5 relative h-8 md:h-7 px-2.5 text-xs font-me"
+   },
+   {
+    "label": "Move down",
+    "w": 29,
+    "h": 44,
+    "tag": "button",
+    "cls": "inline-flex items-center justify-center gap-1.5 relative h-8 md:h-7 px-2.5 text-xs font-me"
+   },
+   {
+    "label": "Delete image",
+    "w": 29,
+    "h": 44,
+    "tag": "button",
+    "cls": "inline-flex items-center justify-center gap-1.5 relative h-8 md:h-7 px-2.5 text-xs font-me"
+   },
+   {
+    "label": "Add grade",
+    "w": 70,
+    "h": 23,
+    "tag": "a",
+    "cls": "shrink-0 rounded-[7px] px-2.5 py-1 text-[10px] font-semibold ring-1 transition hover:brigh"
+   },
+   {
+    "label": "Add description",
+    "w": 97,
+    "h": 23,
+    "tag": "a",
+    "cls": "shrink-0 rounded-[7px] px-2.5 py-1 text-[10px] font-semibold ring-1 transition hover:brigh"
+   },
+   {
+    "label": "Add subject",
+    "w": 78,
+    "h": 23,
+    "tag": "a",
+    "cls": "shrink-0 rounded-[7px] px-2.5 py-1 text-[10px] font-semibold ring-1 transition hover:brigh"
+   },
+   {
+    "label": "Generate listing copy",
+    "w": 167,
+    "h": 28,
+    "tag": "button",
+    "cls": "inline-flex items-center gap-1.5 rounded-[7px] px-3 py-1.5 text-xs font-semibold ring-1 tr"
+   },
+   {
+    "label": "—",
+    "w": 14,
+    "h": 20,
+    "tag": "span",
+    "cls": "cursor-pointer whitespace-pre-wrap break-words text-right text-[color:var(--fg)] hover:und"
+   },
+   {
+    "label": "More details (14)",
+    "w": 97,
+    "h": 18,
+    "tag": "button",
+    "cls": "mt-3 text-[12px] font-semibold text-[color:var(--muted)] hover:text-[color:var(--fg)]"
+   },
+   {
+    "label": "$17",
+    "w": 23,
+    "h": 20,
+    "tag": "span",
+    "cls": "cursor-pointer text-right text-[color:var(--fg)] hover:underline hover:decoration-[color:v"
+   }
+  ]
+ },
+ "/sales": {
+  "overflow": {
+   "sw": 390,
+   "cw": 390,
+   "wrap": 0
+  },
+  "small": [
+   {
+    "label": "Vault",
+    "w": 26,
+    "h": 17,
+    "tag": "a",
+    "cls": "hover:underline"
+   },
+   {
+    "label": "Sold Items",
+    "w": 55,
+    "h": 17,
+    "tag": "a",
+    "cls": "hover:underline"
+   },
+   {
+    "label": "Sold Items",
+    "w": 103,
+    "h": 36,
+    "tag": "a",
+    "cls": "inline-flex h-9 items-center rounded-full px-4 text-sm font-semibold ring-1 ring-[color:va"
+   },
+   {
+    "label": "← Vault",
+    "w": 85,
+    "h": 36,
+    "tag": "a",
+    "cls": "inline-flex h-9 items-center rounded-full px-4 text-sm font-semibold ring-1 ring-[color:va"
+   },
+   {
+    "label": "Search sales…",
+    "w": 354,
+    "h": 20,
+    "tag": "input",
+    "cls": "h-9 flex-1 rounded-full px-4 text-sm ring-1 ring-[color:var(--border)] focus:outline-none "
+   },
+   {
+    "label": "Date",
+    "w": 49,
+    "h": 36,
+    "tag": "button",
+    "cls": "h-9 rounded-full px-3 text-[11px] font-semibold capitalize ring-1 transition"
+   },
+   {
+    "label": "Profit",
+    "w": 53,
+    "h": 36,
+    "tag": "button",
+    "cls": "h-9 rounded-full px-3 text-[11px] font-semibold capitalize ring-1 transition"
+   },
+   {
+    "label": "Sale Price",
+    "w": 77,
+    "h": 36,
+    "tag": "button",
+    "cls": "h-9 rounded-full px-3 text-[11px] font-semibold capitalize ring-1 transition"
+   },
+   {
+    "label": "QA Sold Poster",
+    "w": 199,
+    "h": 20,
+    "tag": "a",
+    "cls": "block truncate font-semibold text-sm hover:underline"
+   },
+   {
+    "label": "QA Sold Unknown Cost",
+    "w": 137,
+    "h": 20,
+    "tag": "a",
+    "cls": "block truncate font-semibold text-sm hover:underline"
+   },
+   {
+    "label": "QA Sold Rookie Card",
+    "w": 191,
+    "h": 20,
+    "tag": "a",
+    "cls": "block truncate font-semibold text-sm hover:underline"
+   },
+   {
+    "label": "QA Sold Batman 1988",
+    "w": 191,
+    "h": 20,
+    "tag": "a",
+    "cls": "block truncate font-semibold text-sm hover:underline"
+   },
+   {
+    "label": "QA Sold Spider-Man 300",
+    "w": 191,
+    "h": 20,
+    "tag": "a",
+    "cls": "block truncate font-semibold text-sm hover:underline"
+   }
+  ]
+ },
+ "/vault/for-sale": {
+  "overflow": {
+   "sw": 390,
+   "cw": 390,
+   "wrap": 2
+  },
+  "small": []
+ },
+ "/vault/sold": {
+  "overflow": {
+   "sw": 390,
+   "cw": 390,
+   "wrap": 2
+  },
+  "small": [
+   {
+    "label": "QA Sold Poster Pop Culture · Comics",
+    "w": 145,
+    "h": 39,
+    "tag": "a",
+    "cls": "mt-3 min-w-0"
+   },
+   {
+    "label": "QA Sold Unknown Cost Pop Culture · Comic",
+    "w": 145,
+    "h": 39,
+    "tag": "a",
+    "cls": "mt-3 min-w-0"
+   },
+   {
+    "label": "QA Sold Rookie Card Pop Culture · Comics",
+    "w": 145,
+    "h": 39,
+    "tag": "a",
+    "cls": "mt-3 min-w-0"
+   },
+   {
+    "label": "QA Sold Batman 1988 Pop Culture · Comics",
+    "w": 145,
+    "h": 39,
+    "tag": "a",
+    "cls": "mt-3 min-w-0"
+   },
+   {
+    "label": "QA Sold Spider-Man 300 Pop Culture · Com",
+    "w": 145,
+    "h": 39,
+    "tag": "a",
+    "cls": "mt-3 min-w-0"
+   }
+  ]
+ },
+ "/goals": {
+  "overflow": {
+   "sw": 390,
+   "cw": 390,
+   "wrap": 505
+  },
+  "small": [
+   {
+    "label": "Add missing to Wishlist",
+    "w": 184,
+    "h": 30,
+    "tag": "button",
+    "cls": "mt-3 rounded-[7px] border border-[rgba(203,208,213,0.36)] px-5 py-1.5 text-xs font-black d"
+   },
+   {
+    "label": "Goal complete",
+    "w": 128,
+    "h": 30,
+    "tag": "button",
+    "cls": "mt-3 rounded-[7px] border border-[rgba(203,208,213,0.36)] px-5 py-1.5 text-xs font-black d"
+   },
+   {
+    "label": "View all",
+    "w": 46,
+    "h": 18,
+    "tag": "button",
+    "cls": "text-xs font-bold"
+   }
+  ]
+ },
+ "/insurance": {
+  "overflow": {
+   "sw": 390,
+   "cw": 390,
+   "wrap": 2
+  },
+  "small": [
+   {
+    "label": "See what is missing",
+    "w": 114,
+    "h": 18,
+    "tag": "a",
+    "cls": "font-semibold text-[color:var(--accent)] underline underline-offset-4"
+   },
+   {
+    "label": "Include QA Album 1 - Original Motion Pic",
+    "w": 20,
+    "h": 20,
+    "tag": "input",
+    "cls": "h-5 w-5 accent-[#C8CDD2]"
+   },
+   {
+    "label": "Per-item sheet →",
+    "w": 50,
+    "h": 35,
+    "tag": "a",
+    "cls": "text-xs font-semibold text-[color:var(--accent)] underline underline-offset-4"
+   },
+   {
+    "label": "Include QA Album 2 - Original Motion Pic",
+    "w": 20,
+    "h": 20,
+    "tag": "input",
+    "cls": "h-5 w-5 accent-[#C8CDD2]"
+   },
+   {
+    "label": "Include QA Album 3 - Original Motion Pic",
+    "w": 20,
+    "h": 20,
+    "tag": "input",
+    "cls": "h-5 w-5 accent-[#C8CDD2]"
+   },
+   {
+    "label": "Include QA Album 4 - Original Motion Pic",
+    "w": 20,
+    "h": 20,
+    "tag": "input",
+    "cls": "h-5 w-5 accent-[#C8CDD2]"
+   },
+   {
+    "label": "Include QA Album 5 - Original Motion Pic",
+    "w": 20,
+    "h": 20,
+    "tag": "input",
+    "cls": "h-5 w-5 accent-[#C8CDD2]"
+   },
+   {
+    "label": "Include QA Album 6 - Original Motion Pic",
+    "w": 20,
+    "h": 20,
+    "tag": "input",
+    "cls": "h-5 w-5 accent-[#C8CDD2]"
+   },
+   {
+    "label": "Include QA Album 7 - Original Motion Pic",
+    "w": 20,
+    "h": 20,
+    "tag": "input",
+    "cls": "h-5 w-5 accent-[#C8CDD2]"
+   },
+   {
+    "label": "Include QA Album 8 - Original Motion Pic",
+    "w": 20,
+    "h": 20,
+    "tag": "input",
+    "cls": "h-5 w-5 accent-[#C8CDD2]"
+   },
+   {
+    "label": "Include QA Album 9 - Original Motion Pic",
+    "w": 20,
+    "h": 20,
+    "tag": "input",
+    "cls": "h-5 w-5 accent-[#C8CDD2]"
+   },
+   {
+    "label": "Include QA Album 10 - Original Motion Pi",
+    "w": 20,
+    "h": 20,
+    "tag": "input",
+    "cls": "h-5 w-5 accent-[#C8CDD2]"
+   },
+   {
+    "label": "Include QA Album 11 - Original Motion Pi",
+    "w": 20,
+    "h": 20,
+    "tag": "input",
+    "cls": "h-5 w-5 accent-[#C8CDD2]"
+   },
+   {
+    "label": "Include QA Album 12 - Original Motion Pi",
+    "w": 20,
+    "h": 20,
+    "tag": "input",
+    "cls": "h-5 w-5 accent-[#C8CDD2]"
+   },
+   {
+    "label": "Include QA Album 13 - Original Motion Pi",
+    "w": 20,
+    "h": 20,
+    "tag": "input",
+    "cls": "h-5 w-5 accent-[#C8CDD2]"
+   },
+   {
+    "label": "Include QA Album 14 - Original Motion Pi",
+    "w": 20,
+    "h": 20,
+    "tag": "input",
+    "cls": "h-5 w-5 accent-[#C8CDD2]"
+   },
+   {
+    "label": "Include QA Album 15 - Original Motion Pi",
+    "w": 20,
+    "h": 20,
+    "tag": "input",
+    "cls": "h-5 w-5 accent-[#C8CDD2]"
+   },
+   {
+    "label": "Include QA Album 16 - Original Motion Pi",
+    "w": 20,
+    "h": 20,
+    "tag": "input",
+    "cls": "h-5 w-5 accent-[#C8CDD2]"
+   },
+   {
+    "label": "Include QA Album 17 - Original Motion Pi",
+    "w": 20,
+    "h": 20,
+    "tag": "input",
+    "cls": "h-5 w-5 accent-[#C8CDD2]"
+   },
+   {
+    "label": "Include QA Album 18 - Original Motion Pi",
+    "w": 20,
+    "h": 20,
+    "tag": "input",
+    "cls": "h-5 w-5 accent-[#C8CDD2]"
+   },
+   {
+    "label": "Include QA Album 19 - Original Motion Pi",
+    "w": 20,
+    "h": 20,
+    "tag": "input",
+    "cls": "h-5 w-5 accent-[#C8CDD2]"
+   },
+   {
+    "label": "Include QA Album 20 - Original Motion Pi",
+    "w": 20,
+    "h": 20,
+    "tag": "input",
+    "cls": "h-5 w-5 accent-[#C8CDD2]"
+   },
+   {
+    "label": "Include QA Album 21 - Original Motion Pi",
+    "w": 20,
+    "h": 20,
+    "tag": "input",
+    "cls": "h-5 w-5 accent-[#C8CDD2]"
+   },
+   {
+    "label": "Include QA Album 22 - Original Motion Pi",
+    "w": 20,
+    "h": 20,
+    "tag": "input",
+    "cls": "h-5 w-5 accent-[#C8CDD2]"
+   },
+   {
+    "label": "Include QA Album 23 - Original Motion Pi",
+    "w": 20,
+    "h": 20,
+    "tag": "input",
+    "cls": "h-5 w-5 accent-[#C8CDD2]"
+   },
+   {
+    "label": "Include QA Album 24 - Original Motion Pi",
+    "w": 20,
+    "h": 20,
+    "tag": "input",
+    "cls": "h-5 w-5 accent-[#C8CDD2]"
+   },
+   {
+    "label": "Include QA Album 25 - Original Motion Pi",
+    "w": 20,
+    "h": 20,
+    "tag": "input",
+    "cls": "h-5 w-5 accent-[#C8CDD2]"
+   },
+   {
+    "label": "Include QA Album 26 - Original Motion Pi",
+    "w": 20,
+    "h": 20,
+    "tag": "input",
+    "cls": "h-5 w-5 accent-[#C8CDD2]"
+   }
+  ]
+ },
+ "/insurance/packet": {
+  "overflow": {
+   "sw": 390,
+   "cw": 390,
+   "wrap": 2
+  },
+  "small": [
+   {
+    "label": "← Back to Insurance",
+    "w": 173,
+    "h": 38,
+    "tag": "a",
+    "cls": "rounded-full border border-[color:var(--border)] bg-vault-card px-4 py-2 text-sm font-semi"
+   },
+   {
+    "label": "on",
+    "w": 16,
+    "h": 16,
+    "tag": "input",
+    "cls": "h-4 w-4 accent-[#C8CDD2]"
+   },
+   {
+    "label": "Prev",
+    "w": 65,
+    "h": 38,
+    "tag": "button",
+    "cls": "rounded-full border border-[color:var(--border)] bg-vault-card px-4 py-2 text-sm font-semi"
+   },
+   {
+    "label": "Next",
+    "w": 66,
+    "h": 38,
+    "tag": "button",
+    "cls": "rounded-full border border-[color:var(--border)] bg-vault-card px-4 py-2 text-sm font-semi"
+   },
+   {
+    "label": "Open Printable Page",
+    "w": 174,
+    "h": 36,
+    "tag": "a",
+    "cls": "vltd-ins-primary rounded-full px-4 py-2 text-sm font-black text-[#0B0B0B]"
+   }
+  ]
+ },
+ "/museum/ea3ae218-4aa5-4eb8-b007-46163ff5670a": {
+  "overflow": {
+   "sw": 390,
+   "cw": 390,
+   "wrap": 0
+  },
+  "small": [
+   {
+    "label": "Require 18+ confirmation",
+    "w": 14,
+    "h": 14,
+    "tag": "input",
+    "cls": "h-3.5 w-3.5 accent-cyan-400"
+   },
+   {
+    "label": "Show a made-up curator identity instead ",
+    "w": 14,
+    "h": 14,
+    "tag": "input",
+    "cls": "h-3.5 w-3.5 accent-cyan-400"
+   }
+  ]
+ },
+ "/discover": {
+  "overflow": {
+   "sw": 390,
+   "cw": 390,
+   "wrap": 2
+  },
+  "small": [
+   {
+    "label": "Search exhibitions, items, and collector",
+    "w": 305,
+    "h": 21,
+    "tag": "input",
+    "cls": "min-w-0 flex-1 bg-transparent text-xs outline-none placeholder:opacity-45"
+   },
+   {
+    "label": "View Comics (Misc. & Peach cards) →",
+    "w": 295,
+    "h": 36,
+    "tag": "a",
+    "cls": "mt-4 inline-flex h-9 items-center rounded-full px-4 text-sm font-black"
+   },
+   {
+    "label": "Show Comics (Misc. & Peach cards)",
+    "w": 24,
+    "h": 24,
+    "tag": "button",
+    "cls": "grid h-6 w-6 place-items-center"
+   },
+   {
+    "label": "Show Grails",
+    "w": 24,
+    "h": 24,
+    "tag": "button",
+    "cls": "grid h-6 w-6 place-items-center"
+   },
+   {
+    "label": "Show Music",
+    "w": 24,
+    "h": 24,
+    "tag": "button",
+    "cls": "grid h-6 w-6 place-items-center"
+   },
+   {
+    "label": "Show Sports Slabs",
+    "w": 24,
+    "h": 24,
+    "tag": "button",
+    "cls": "grid h-6 w-6 place-items-center"
+   },
+   {
+    "label": "Show The Hughes Aviation Collection",
+    "w": 24,
+    "h": 24,
+    "tag": "button",
+    "cls": "grid h-6 w-6 place-items-center"
+   }
+  ]
+ },
+ "/events": {
+  "overflow": {
+   "sw": 390,
+   "cw": 390,
+   "wrap": 2
+  },
+  "small": []
+ }
+}

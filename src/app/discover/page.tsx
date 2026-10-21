@@ -6,7 +6,7 @@ import { AppIcon } from "@/components/ui/AppIcon";
 import { publicItemsTable } from "@/lib/publicItemsSource";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import DiscoverSwipe from "@/components/DiscoverSwipe";
 import FeaturedRoomsCarousel, { type FeaturedRoomSlide } from "@/components/discover/FeaturedRoomsCarousel";
 import { PageHeader } from "@/components/layout/PageHeader";
@@ -162,6 +162,12 @@ export default function DiscoverPage() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   // Close on the details panel really closes it (the first room used to take its place).
   const [panelClosed, setPanelClosed] = useState(false);
+  const panelRef = useRef<HTMLElement | null>(null);
+  // On a phone the details panel sits far below the room cards (the layout is one column): bring it into view when a card is tapped.
+  function showPanelOnPhone() {
+    if (typeof window === "undefined" || !window.matchMedia("(max-width: 1279px)").matches) return;
+    window.setTimeout(() => panelRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 80);
+  }
   const [sort, setSort] = useState<"recommended" | "views" | "items" | "newest" | "az">("recommended");
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
   const [reporting, setReporting] = useState(false);
@@ -473,7 +479,7 @@ export default function DiscoverPage() {
     return (
       <button
         type="button"
-        onClick={() => { setSelectedId(gallery.id); setPanelClosed(false); }}
+        onClick={() => { setSelectedId(gallery.id); setPanelClosed(false); showPanelOnPhone(); }}
         onDoubleClick={() => openGallery(gallery)}
         className="group overflow-hidden rounded-[7px] border text-left transition hover:-translate-y-0.5"
         style={{
@@ -523,7 +529,7 @@ export default function DiscoverPage() {
           <div className="mt-2 grid gap-3 lg:grid-cols-[minmax(0,1fr)_200px_200px]">
             <label className="flex h-10 items-center gap-2 rounded-[7px] border border-[rgba(203,208,213,0.22)] px-3" style={{ background: "var(--theme-card,rgba(15,25,45,0.85))" }}>
               <Glyph name="search" size={15} className="opacity-60" />
-              <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search exhibitions, items, and collectors..." className="min-w-0 flex-1 bg-transparent text-xs outline-none placeholder:opacity-45" />
+              <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search exhibitions, items, and collectors..." className="h-full min-w-0 flex-1 bg-transparent text-xs outline-none placeholder:opacity-45" />
             </label>
             <PillSelect
               value={activeTab}
@@ -672,7 +678,7 @@ export default function DiscoverPage() {
         </div>
 
         {selectedGallery && (
-          <aside className="h-fit rounded-[8px] border border-[rgba(203,208,213,0.32)] p-5 xl:sticky xl:top-24" style={{ background: "var(--theme-card,rgba(15,25,45,0.92))", boxShadow: "0 18px 55px rgba(0,0,0,0.26)" }}>
+          <aside ref={panelRef} className="h-fit rounded-[8px] border border-[rgba(203,208,213,0.32)] p-5 xl:sticky xl:top-24 xl:max-h-[calc(100vh-7rem)] xl:overflow-y-auto" style={{ background: "var(--theme-card,rgba(15,25,45,0.92))", boxShadow: "0 18px 55px rgba(0,0,0,0.26)" }}>
             <div className="flex items-center justify-between">
               <div className="text-[12px] font-black uppercase tracking-[0.16em]" style={{ color: "var(--theme-gold,#C8CDD2)" }}>Public Exhibition</div>
               <PillButton onClick={() => { setSelectedId(null); setPanelClosed(true); }} ariaLabel="Close" title="Close" className="px-0! w-11 md:w-9"><AppIcon name="close" size={16} /></PillButton>

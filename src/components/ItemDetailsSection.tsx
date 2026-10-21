@@ -241,7 +241,7 @@ export default function ItemDetailsSection({
               }
             }}
             title={`Click to edit ${field.label.toLowerCase()}`}
-            className="cursor-pointer whitespace-pre-wrap break-words text-right text-[color:var(--fg)] hover:underline hover:decoration-[color:var(--border)] hover:underline-offset-4"
+            className="vltd-tap cursor-pointer whitespace-pre-wrap break-words text-right text-[color:var(--fg)] hover:underline hover:decoration-[color:var(--border)] hover:underline-offset-4"
           >
             {displayDetail(item, field)}
           </span>
@@ -281,7 +281,7 @@ export default function ItemDetailsSection({
             type="button"
             onClick={() => setExpanded((v) => !v)}
             aria-expanded={expanded}
-            className="mt-3 text-[12px] font-semibold text-[color:var(--muted)] hover:text-[color:var(--fg)]"
+            className="vltd-tap-y mt-3 text-[12px] font-semibold text-[color:var(--muted)] hover:text-[color:var(--fg)]"
           >
             {expanded ? "Fewer details" : `More details (${emptyMore.length})`}
           </button>

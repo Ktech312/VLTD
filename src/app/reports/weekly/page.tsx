@@ -7,9 +7,9 @@ import { CloudWait, StaleDataNotice, useCloudRefresh } from "@/components/vault/
 import { formatPrice } from "@/lib/pricingMvp";
 import { getOrderedImages, loadItems, type VaultItem } from "@/lib/vaultModel";
 import { buildSoldItems, soldStats } from "@/lib/soldItems";
+import { REVIEW_GAP_SHORT, reviewGaps } from "@/lib/vaultReview";
 import { activeItems, describeGainExclusions, effectiveMarketValue, readValueMode, summarizeGain, summarizeValues } from "@/lib/vaultStats";
 
-type GapKind = "photo" | "cost" | "value" | "condition" | "insurance";
 
 const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
 const VALUE_STALE_MS = 30 * 24 * 60 * 60 * 1000;
@@ -41,10 +41,6 @@ function hasPhoto(item: VaultItem) {
   return getOrderedImages(item).length > 0 || Boolean(item.imageFrontUrl || item.imageBackUrl || item.imageFrontStoragePath);
 }
 
-function hasInsuranceBasics(item: VaultItem) {
-  return hasPhoto(item) && itemValue(item) > 0 && Boolean(item.notes || item.certNumber || item.serialNumber || item.storageLocation);
-}
-
 function hasCondition(item: VaultItem) {
   return Boolean(item.grade || item.conditionReason || item.conditionSource);
 }
@@ -56,16 +52,6 @@ function valueUpdatedAt(item: VaultItem) {
 
 function universeLabel(value?: string) {
   return String(value || "MISC").replace(/_/g, " ");
-}
-
-function getGapKinds(item: VaultItem): GapKind[] {
-  const gaps: GapKind[] = [];
-  if (!hasPhoto(item)) gaps.push("photo");
-  if (itemCost(item) <= 0) gaps.push("cost");
-  if (itemValue(item) <= 0) gaps.push("value");
-  if (!hasCondition(item)) gaps.push("condition");
-  if (!hasInsuranceBasics(item)) gaps.push("insurance");
-  return gaps;
 }
 
 function StatCard({ label, value, helper }: { label: string; value: string; helper?: string }) {
@@ -161,7 +147,8 @@ export default function WeeklyVaultReportPage() {
     const missingCost = collectionItems.filter((item) => itemCost(item) <= 0);
     const missingValue = collectionItems.filter((item) => itemValue(item) <= 0);
     const missingCondition = collectionItems.filter((item) => !hasCondition(item));
-    const insuranceGaps = collectionItems.filter((item) => !hasInsuranceBasics(item));
+    // The Insurance tab's own checklist (photo, value, price, identity) over the items you currently own: the same number the Vault and Insurance show.
+    const insuranceGaps = activeItems(items).filter((item) => reviewGaps(item).length > 0);
     const forSaleItems = collectionItems.filter((item) => item.status === "FOR_SALE");
     const publicItems = collectionItems.filter((item) => item.isPublic === true);
     const staleValuations = collectionItems.filter((item) => itemValue(item) > 0 && valueUpdatedAt(item) > 0 && now - valueUpdatedAt(item) > VALUE_STALE_MS);
@@ -433,7 +420,7 @@ export default function WeeklyVaultReportPage() {
             <ActionShortcut
               href="/reports/insurance"
               label={`Insurance report (${report.insuranceGaps.length})`}
-              helper="Generate the documentation view for photos, values, proof fields, and gaps."
+              helper="Items you own that still need a photo, a value, a price or an identifying detail: the same checklist as the Insurance tab."
             />
           </div>
 
@@ -446,9 +433,9 @@ export default function WeeklyVaultReportPage() {
               >
                 <div className="truncate text-sm font-semibold">{item.title}</div>
                 <div className="mt-2 flex flex-wrap gap-1.5">
-                  {getGapKinds(item).map((gap) => (
+                  {reviewGaps(item).map((gap) => (
                     <span key={gap} className="rounded-full bg-[color:var(--surface)] px-2 py-1 text-[10px] uppercase tracking-[0.08em] text-[color:var(--muted)] ring-1 ring-[color:var(--border)]">
-                      {gap}
+                      {REVIEW_GAP_SHORT[gap]}
                     </span>
                   ))}
                 </div>

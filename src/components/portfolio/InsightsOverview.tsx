@@ -24,7 +24,8 @@ import {
   syncValueHistoryFromSupabase,
 } from "@/lib/valueHistory";
 import { getPrimaryImageUrl, type VaultItem } from "@/lib/vaultModel";
-import { activeItems, hasExplicitValue, itemGain, readValueMode, valueBasis, type ValueMode } from "@/lib/vaultStats";
+import { activeItems, effectiveMarketValue, hasExplicitValue, itemGain, readValueMode, valueBasis, type ValueMode } from "@/lib/vaultStats";
+import { priceCheckIsStale } from "@/lib/pricingMvp";
 import { loadGoals, syncGoalsFromSupabase, type CollectionGoal } from "@/lib/collectionGoals";
 import { getCollectionValuationScore } from "@/lib/collectionValuationScore";
 import { ToolsMenu } from "@/components/ui/ToolsMenu";
@@ -651,15 +652,10 @@ export default function InsightsOverview({ items: allItems, loading = false }: {
   // Items with neither a valuation nor a recorded cost: left out of the total, and said so beside it.
   const missingValueCount = useMemo(() => items.filter((item) => valueBasis(item).basis === "missing").length, [items]);
 
-  const staleItems = useMemo(() => {
-    const now = Date.now();
-    const staleAfter = 1000 * 60 * 60 * 24 * 30;
-    return items.filter((item) => {
-      const value = itemCurrentValue(item);
-      const updated = Math.max(safeTime(item.valueUpdatedAt), safeTime(item.priceUpdatedAt));
-      return value <= 0 || updated <= 0 || now - updated > staleAfter;
-    });
-  }, [items]);
+  // ONE rule for "stale price", shared with the Vault card and the Home notice: an item that HAS a value but has not had a price check in 6 months.
+  // Items with no value at all are a different fact (counted separately below), not a stale price.
+  const staleItems = useMemo(() => items.filter((item) => effectiveMarketValue(item) > 0 && priceCheckIsStale(item)), [items]);
+  const noValueItemCount = useMemo(() => items.filter((item) => !hasExplicitValue(item)).length, [items]);
 
   const categoryRows = useMemo(() => {
     const segments = metrics.topValueSegments.filter((segment) => segment.value > 0);
@@ -707,9 +703,7 @@ export default function InsightsOverview({ items: allItems, loading = false }: {
         if (!hasPhoto(item)) reason = "Missing photo";
         else if (!hasExplicitValue(item)) reason = valueBasis(item).basis === "missing" ? "Missing value" : "Needs valuation";
         else {
-          const updated = Math.max(safeTime(item.valueUpdatedAt), safeTime(item.priceUpdatedAt));
-          if (updated <= 0) reason = "No recent comps";
-          else if (Date.now() - updated > 1000 * 60 * 60 * 24 * 30) reason = "Price stale";
+          if (priceCheckIsStale(item)) reason = "Price stale";
         }
         return { item, reason };
       })
@@ -808,7 +802,7 @@ export default function InsightsOverview({ items: allItems, loading = false }: {
           <StatCard
             label="Stale Prices"
             value={staleItems.length}
-            sub={`${Math.min(staleItems.length, items.length)} items need a price check`}
+            sub={`${staleItems.length === 1 ? "valued item has" : "valued items have"} not had a price check in 6 months`}
             icon={<Glyph name="clock" size={28} />}
             tone={staleItems.length > 0 ? AMBER : GREEN}
           />
@@ -1037,7 +1031,8 @@ export default function InsightsOverview({ items: allItems, loading = false }: {
           <Panel className="p-4">
             <Label>Pricing Alerts</Label>
             <div className="mt-2 text-2xl font-black" style={{ color: staleItems.length > 0 ? GOLD : GREEN }}>{staleItems.length}</div>
-            <div className="text-sm" style={{ color: MUTED }}>items with stale or missing prices</div>
+            <div className="text-sm" style={{ color: MUTED }}>valued {staleItems.length === 1 ? "item has" : "items have"} not had a price check in 6 months</div>
+            {noValueItemCount > 0 ? <div className="mt-1 text-xs" style={{ color: MUTED }}>{noValueItemCount} {noValueItemCount === 1 ? "item has" : "items have"} no value yet (counted separately)</div> : null}
           </Panel>
           <Panel className="p-4">
             <Label>Value Not Fully Documented</Label>

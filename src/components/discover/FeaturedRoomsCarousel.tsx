@@ -122,7 +122,7 @@ export default function FeaturedRoomsCarousel({ slides }: { slides: FeaturedRoom
                   href={slide.href}
                   draggable={false}
                   tabIndex={i === current ? 0 : -1}
-                  className="mt-4 inline-flex h-9 items-center rounded-full px-4 text-sm font-black"
+                  className="mt-4 inline-flex h-11 md:h-9 items-center rounded-full px-4 text-sm font-black"
                   style={{ background: "linear-gradient(135deg,#8C9298,#C8CDD2)", color: "#0B0B0B" }}
                 >
                   <span className="max-w-[260px] truncate">View {slide.title}</span>&nbsp;&rarr;
@@ -168,7 +168,7 @@ export default function FeaturedRoomsCarousel({ slides }: { slides: FeaturedRoom
                 aria-label={`Show ${slide.title}`}
                 aria-current={i === current ? "true" : undefined}
                 onClick={() => go(i)}
-                className="grid h-6 w-6 place-items-center"
+                className="grid h-6 w-6 place-items-center max-md:h-11 max-md:w-10"
               >
                 <span className="h-2 w-2 rounded-full" style={{ background: i === current ? "var(--theme-gold,#C8CDD2)" : "rgba(240,234,214,0.35)" }} />
               </button>
