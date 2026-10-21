@@ -2,7 +2,8 @@
 "use client";
 
 import Link from "next/link";
-import { COST_LABEL, COST_NOTE, ESTIMATE_LABEL, EXCLUSIONS_ARE_DEVICE_ONLY, fmtCost, fmtEstimate, insuranceCost, insuranceEstimate, insuranceScope, insuranceTotals, noEstimateNote, notCountedLine, readInsuranceExcludedIds, saveInsuranceExcludedIds, totalsSentence } from "@/lib/insuranceDocs";
+import { COST_LABEL, COST_NOTE, ESTIMATE_LABEL, fmtCost, fmtEstimate, insuranceCost, insuranceEstimate, insuranceScope, insuranceTotals, noEstimateNote, notCountedLine, totalsSentence } from "@/lib/insuranceDocs";
+import { useInsuranceExclusions } from "@/lib/useInsuranceExclusions";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import { DEMO_ITEMS } from "@/lib/demoVault";
@@ -87,7 +88,7 @@ function itemLabel(i: Item) {
 
 export default function InsuranceExportPage() {
   const [items, setItems] = useState<Item[]>([]);
-  const [excludedIds, setExcludedIds] = useState<Set<string>>(new Set());
+  const { excluded: excludedIds, note: exclusionsNote, where: exclusionsWhere, setExcluded } = useInsuranceExclusions();
   const [hydrated, setHydrated] = useState(false);
   const reloadRef = useRef<() => void>(() => undefined);
   const retryRef = useRef<() => void>(() => undefined);
@@ -98,7 +99,6 @@ export default function InsuranceExportPage() {
     const reload = () => setItems(loadItems() as any as Item[]);
     reloadRef.current = reload;
     reload();
-    setExcludedIds(readInsuranceExcludedIds());
     setHydrated(true);
     // A switch of profile (or a change made elsewhere) re-reads the saved copy and asks the cloud again; the page never keeps the previous profile's items.
     const onProfile = () => { reload(); retryRef.current(); };
@@ -115,23 +115,19 @@ export default function InsuranceExportPage() {
   const readiness = useMemo(() => reviewCounts(listed as any), [listed]);
   const selectedItems = scope.included;
   const totals = useMemo(() => insuranceTotals(selectedItems), [selectedItems]);
-  const notCounted = notCountedLine(scope);
+  const notCounted = notCountedLine(scope, exclusionsWhere);
   const noEstimate = noEstimateNote(totals);
 
+  // Each change is shown at once, kept on this device, and sent to the account (which says whether it took it; see useInsuranceExclusions).
   function setItemIncluded(id: string, included: boolean) {
-    setExcludedIds((prev) => {
-      const next = new Set(prev);
-      if (included) next.delete(id);
-      else next.add(id);
-      saveInsuranceExcludedIds(next);
-      return next;
-    });
+    const next = new Set(excludedIds);
+    if (included) next.delete(id);
+    else next.add(id);
+    void setExcluded(next);
   }
 
   function includeAll() {
-    const next = new Set<string>();
-    setExcludedIds(next);
-    saveInsuranceExcludedIds(next);
+    void setExcluded(new Set<string>());
   }
 
   function excludeZeroValue() {
@@ -139,8 +135,7 @@ export default function InsuranceExportPage() {
     listed.forEach((item) => {
       if ((insuranceEstimate(item) ?? 0) <= 0) next.add(String(item.id));
     });
-    setExcludedIds(next);
-    saveInsuranceExcludedIds(next);
+    void setExcluded(next);
   }
 
   // An empty list is only "nothing to insure" once the cloud has answered; before that, or after a failed answer, it is not.
@@ -253,7 +248,7 @@ export default function InsuranceExportPage() {
             <PillButton size="compact" onClick={excludeZeroValue}>Exclude $0 value</PillButton>
           </div>
           <div className="no-print mt-3 rounded-[9px] border border-[rgba(203,208,213,0.18)] bg-[rgba(203,208,213,0.06)] px-4 py-3 text-sm text-[color:var(--muted)]">
-            Checked items are included in the inventory, the policy packet and the reports on this device. {EXCLUSIONS_ARE_DEVICE_ONLY} Uncheck anything that should not be part of insurance documentation. Inventory print uses compact landscape formatting.
+            Checked items are included in the inventory, the policy packet and the reports. {exclusionsNote} Uncheck anything that should not be part of insurance documentation. Inventory print uses compact landscape formatting.
           </div>
 
           <div className="insurance-table-wrap mt-6 overflow-x-auto rounded-[9px] border border-[color:var(--border)] bg-vault-card">
@@ -291,7 +286,7 @@ export default function InsuranceExportPage() {
                         </td>
                         <td className="py-3 pl-4 pr-3" colSpan={9}>
                           <div className="font-black text-text-primary">{i.title}</div>
-                          <div className="mt-0.5 text-xs text-[color:var(--muted)]">Excluded from the insurance documents on this device.</div>
+                          <div className="mt-0.5 text-xs text-[color:var(--muted)]">Excluded from the insurance documents{exclusionsWhere === "device" ? " on this device" : ""}.</div>
                         </td>
                       </tr>
                     );

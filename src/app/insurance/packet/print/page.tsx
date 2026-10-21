@@ -2,7 +2,8 @@
 "use client";
 
 import Link from "next/link";
-import { COST_LABEL, COST_NOTE, ESTIMATE_LABEL, EXCLUSIONS_ARE_DEVICE_ONLY, fmtCost, fmtEstimate, insuranceCost, insuranceEstimate, insuranceScope, insuranceTotals, noEstimateNote, notCountedLine, readInsuranceExcludedIds, totalsSentence } from "@/lib/insuranceDocs";
+import { COST_LABEL, COST_NOTE, ESTIMATE_LABEL, fmtCost, fmtEstimate, insuranceCost, insuranceEstimate, insuranceScope, insuranceTotals, noEstimateNote, notCountedLine, totalsSentence } from "@/lib/insuranceDocs";
+import { useInsuranceExclusions } from "@/lib/useInsuranceExclusions";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { CloudWait, useCloudRefresh } from "@/components/vault/CloudStatus";
 import { useSearchParams } from "next/navigation";
@@ -69,7 +70,7 @@ export default function InsurancePacketPrintPage() {
   const includeImages = params.get("images") === "1";
   const requestedPage = Math.max(0, Number(params.get("page") ?? 0) || 0);
   const [items, setItems] = useState<Item[]>([]);
-  const [excludedIds, setExcludedIds] = useState<Set<string>>(new Set());
+  const { excluded: excludedIds, note: exclusionsNote, where: exclusionsWhere } = useInsuranceExclusions();
   const reloadRef = useRef<() => void>(() => undefined);
   const cloud = useCloudRefresh(() => reloadRef.current());
 
@@ -77,14 +78,13 @@ export default function InsurancePacketPrintPage() {
     const seed = toSeedItemsFromDemo();
     const loaded = loadItemsOrSeed(seed as any) as any as Item[];
     setItems(loaded);
-    setExcludedIds(readInsuranceExcludedIds());
     reloadRef.current = () => setItems(loadItems() as any as Item[]);
   }, []);
 
   // ONE rule set (src/lib/insuranceDocs.ts), the same as the packet screen, the inventory and the reports.
   const scope = useMemo(() => insuranceScope(items, excludedIds), [items, excludedIds]);
   const selectedItems = scope.included;
-  const notCounted = notCountedLine(scope);
+  const notCounted = notCountedLine(scope, exclusionsWhere);
   const itemsPerPage = includeImages ? ITEMS_PER_PAGE_WITH_IMAGES : ITEMS_PER_PAGE_NO_IMAGES;
   const totalPages = Math.max(1, Math.ceil(selectedItems.length / itemsPerPage));
   const pageIndex = Math.min(requestedPage, totalPages - 1);
@@ -131,7 +131,7 @@ export default function InsurancePacketPrintPage() {
         <div className="mt-1 text-[8px] text-slate-700">
           Generated {new Date().toLocaleString()} • Page {pageIndex + 1} of {totalPages} • Showing {visibleItems.length} of {selectedItems.length} counted items • {totalsSentence(totals)} • Images {includeImages ? "included" : "excluded"}
         </div>
-        {notCounted ? <div className="mt-1 text-[8px] text-slate-700" data-testid="not-counted">{notCounted} {EXCLUSIONS_ARE_DEVICE_ONLY}</div> : null}
+        {notCounted ? <div className="mt-1 text-[8px] text-slate-700" data-testid="not-counted">{notCounted} {exclusionsNote}</div> : null}
         {noEstimate ? <div className="mt-1 text-[8px] text-slate-700" data-testid="no-estimate-note">{noEstimate}</div> : null}
         <div className="mt-1 text-[8px] text-slate-700">{COST_NOTE}</div>
       </section>

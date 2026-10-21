@@ -8,7 +8,8 @@ import { DEMO_ITEMS } from "@/lib/demoVault";
 import { loadItems, type VaultItem as ModelItem } from "@/lib/vaultModel";
 import { LoadErrorCard, StaleDataNotice, useCloudRefresh } from "@/components/vault/CloudStatus";
 import { UNIVERSE_LABEL, type UniverseKey } from "@/lib/taxonomy";
-import { COST_LABEL, COST_NOTE, ESTIMATE_LABEL, EXCLUSIONS_ARE_DEVICE_ONLY, fmtCost, fmtEstimate, insuranceCost, insuranceEstimate, insuranceScope, notCountedLine, readInsuranceExcludedIds } from "@/lib/insuranceDocs";
+import { COST_LABEL, COST_NOTE, ESTIMATE_LABEL, fmtCost, fmtEstimate, insuranceCost, insuranceEstimate, insuranceScope, notCountedLine } from "@/lib/insuranceDocs";
+import { useInsuranceExclusions } from "@/lib/useInsuranceExclusions";
 import { isSoldItem } from "@/lib/vaultStats";
 import { EmptyVault } from "@/components/ui/EmptyVault";
 import { PillButton } from "@/components/ui/PillButton";
@@ -112,7 +113,8 @@ export default function InsuranceItemPage() {
   const item = useMemo(() => items.find((x) => String(x.id) === String(id)), [items, id]);
   // An owner's historical sheet stays reachable for a sold item (marked Sold); the sheet also says whether the item is counted in the current totals.
   const sold = item ? isSoldItem(item) : false;
-  const countedLine = useMemo(() => (item ? notCountedLine(insuranceScope([item], readInsuranceExcludedIds())) : null), [item]);
+  const { excluded: excludedIds, note: exclusionsNote, where: exclusionsWhere } = useInsuranceExclusions();
+  const countedLine = useMemo(() => (item ? notCountedLine(insuranceScope([item], excludedIds), exclusionsWhere) : null), [item, excludedIds, exclusionsWhere]);
 
   if (hydrated && items.length === 0 && cloud.state !== "ok") {
     return (
@@ -245,7 +247,7 @@ export default function InsuranceItemPage() {
                 </div>
               ) : null}
 
-              {countedLine ? <div className="mt-4 text-xs text-[color:var(--muted)]" data-testid="not-counted">{countedLine} {EXCLUSIONS_ARE_DEVICE_ONLY}</div> : null}
+              {countedLine ? <div className="mt-4 text-xs text-[color:var(--muted)]" data-testid="not-counted">{countedLine} {exclusionsNote}</div> : null}
               <div className="mt-6 text-xs text-[color:var(--muted2)]">
                 Generated {new Date().toLocaleString()} • Item ID {String(item.id)}
               </div>

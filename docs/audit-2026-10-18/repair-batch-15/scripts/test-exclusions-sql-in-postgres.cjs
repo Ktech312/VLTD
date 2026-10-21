@@ -45,10 +45,14 @@ const PA = "11111111-1111-1111-1111-111111111111", PB = "22222222-2222-2222-2222
   check("an unrelated account deletes nothing", !r.error && r.rows.length === 0, r);
   r = await as("", "select * from public.insurance_exclusions", [], "anon");
   check("an anonymous caller is refused", !!r.error && /permission denied/.test(r.error), r);
+  r = await as(ALICE, "insert into public.insurance_exclusions (profile_id, item_id) values ($1, 'item-1'), ($1, 'item-9') on conflict (profile_id, item_id) do nothing", [PA]);
+  check("the site's upload (insert ... on conflict do nothing) works for a member and skips duplicates", !r.error, r);
+  r = await as(ALICE, "select count(*)::int c from public.insurance_exclusions");
+  check("that upload left exactly the two rows", !r.error && r.rows[0].c === 2, r);
   r = await as(ALICE, "update public.insurance_exclusions set item_id = 'x'");
   check("rows cannot be edited (only added and removed)", !!r.error && /permission denied/.test(r.error), r);
-  r = await as(ALICE, "delete from public.insurance_exclusions where item_id = 'item-1' returning item_id");
-  check("a member re-includes an item (row removed)", !r.error && r.rows.length === 1, r);
+  r = await as(ALICE, "delete from public.insurance_exclusions where profile_id = $1 and item_id in ('item-1', 'item-9') returning item_id", [PA]);
+  check("the site's removal (delete ... where item_id in (...)) works for a member", !r.error && r.rows.length === 2, r);
   const v = (await db.query(fs.readFileSync(path.join(SQL, "validation-6.sql"), "utf8").replace(/^--.*$/gm, ""))).rows[0].result;
   check("validation: every flag true", Object.values(v).every((x) => x === true), v);
   await db.exec(fs.readFileSync(path.join(SQL, "rollback-6.sql"), "utf8"));

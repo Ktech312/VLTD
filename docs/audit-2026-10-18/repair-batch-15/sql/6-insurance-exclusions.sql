@@ -1,9 +1,10 @@
--- PROPOSED (not yet wired into the site): insurance exclusions that follow the account (audit GIN-095).
--- Today "not part of the insurance documents" is kept in the browser only, so a second device prints a packet that still includes the item.
--- This adds one small table: one row = "this item is left out of this profile's insurance documents". Only members of the profile can read or
--- change its rows (the same membership rule that protects the profile's items); nobody else, and no signed-out visitor, sees anything.
--- Nothing existing is changed. Safe to run again. After it runs, the site is switched over in a separate, reviewed code change (it will copy a
--- person's existing on-device exclusions into the account the first time, never removing anything).
+-- Insurance exclusions that follow the account (audit GIN-095). Run the whole file once in the Supabase SQL editor. Safe to run again.
+-- Until now "leave this item out of the insurance documents" was kept in the browser only, so a second device printed a packet that still included the item.
+-- This adds one small table: one row = "this item is left out of this profile's insurance documents". Only members of the profile can read, add or remove its
+-- rows (the same membership rule that protects the profile's items); nobody else, and no signed-out visitor, sees anything. Rows cannot be edited.
+-- Nothing existing is changed. The site is already switched over and works before and after this file: until it runs, exclusions stay on the device and every
+-- Insurance page says so; after it runs, the first visit to Insurance copies each profile's on-device exclusions up (never removing anything) and the pages
+-- stop saying "this device only".
 begin;
 
 create table if not exists public.insurance_exclusions (

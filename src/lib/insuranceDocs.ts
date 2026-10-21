@@ -1,36 +1,15 @@
 // ONE set of rules for every Insurance document: the inventory, the policy packet (screen and print), the per-item sheet, the reports and the Vault PDF.
 //
-//   WHO IS COUNTED   items you currently own: not sold, not a supply (boxes, cases), not a wishlist entry, and not excluded by you on this device.
+//   WHO IS COUNTED   items you currently own: not sold, not a supply (boxes, cases), not a wishlist entry, and not excluded by you.
 //   COST             total acquisition cost = purchase price + tax + shipping + fees (the same all-in cost Home shows). Nothing recorded stays blank ("-"),
 //                    an explicit $0 is a real $0.
 //   ESTIMATED VALUE  only a value somebody entered or looked up (an explicit $0 is valid). An item with none shows "No estimate": its purchase cost is
 //                    NEVER presented as an estimated or insured value.
-//   EXCLUSIONS       saved in this browser only. They do not follow the account, and every document says so.
+//   EXCLUSIONS       your own "leave this out" choices follow the account (src/lib/insuranceExclusions.ts); when the account cannot hold them yet the documents say they are on this device only.
 //
-// Pure functions (plus the one localStorage key) so the rules are tested once and cannot drift between pages.
+// Pure functions so the rules are tested once and cannot drift between pages.
 import type { VaultItem } from "./vaultModel";
 import { effectiveMarketValue, hasExplicitValue, hasRecordedCost, isSoldItem, isSupplyItem, totalCost } from "./vaultStats";
-
-export const INSURANCE_EXCLUDED_KEY = "vltd_insurance_excluded_item_ids_v1";
-
-export function readInsuranceExcludedIds(): Set<string> {
-  if (typeof window === "undefined") return new Set<string>();
-  try {
-    const parsed = JSON.parse(window.localStorage.getItem(INSURANCE_EXCLUDED_KEY) ?? "[]");
-    return new Set(Array.isArray(parsed) ? parsed.map(String) : []);
-  } catch {
-    return new Set<string>();
-  }
-}
-
-export function saveInsuranceExcludedIds(ids: Set<string>) {
-  if (typeof window === "undefined") return;
-  try {
-    window.localStorage.setItem(INSURANCE_EXCLUDED_KEY, JSON.stringify(Array.from(ids)));
-  } catch {
-    /* storage full or blocked */
-  }
-}
 
 export type InsuranceScope<T extends VaultItem = VaultItem> = {
   /** Owned items that follow the rules (what the inventory lists, including ones you excluded so you can include them again). */
@@ -55,13 +34,13 @@ export function insuranceScope<T extends VaultItem>(items: T[], excluded: Set<st
 }
 
 /** The one sentence that says what is NOT counted and why. null when everything is counted. */
-export function notCountedLine(scope: { counts: InsuranceScope["counts"] }): string | null {
+export function notCountedLine(scope: { counts: InsuranceScope["counts"] }, where: "device" | "account" = "device"): string | null {
   const c = scope.counts;
   const parts: string[] = [];
   if (c.sold > 0) parts.push(`${c.sold} sold`);
   if (c.supplies > 0) parts.push(`${c.supplies} supply item${c.supplies === 1 ? "" : "s"} (boxes, cases)`);
   if (c.wishlist > 0) parts.push(`${c.wishlist} wishlist item${c.wishlist === 1 ? "" : "s"}`);
-  if (c.excludedByYou > 0) parts.push(`${c.excludedByYou} excluded by you on this device`);
+  if (c.excludedByYou > 0) parts.push(`${c.excludedByYou} excluded by you${where === "device" ? " on this device" : ""}`);
   return parts.length ? `Not counted: ${parts.join(", ")}.` : null;
 }
 

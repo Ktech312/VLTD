@@ -5,7 +5,8 @@ import { useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 
 import { printInsurancePdf } from "@/lib/insurancePdf";
-import { EXCLUSIONS_ARE_DEVICE_ONLY, insuranceScope, notCountedLine, readInsuranceExcludedIds } from "@/lib/insuranceDocs";
+import { insuranceScope, notCountedLine } from "@/lib/insuranceDocs";
+import { useInsuranceExclusions } from "@/lib/useInsuranceExclusions";
 import type { VaultItem } from "@/lib/vaultModel";
 
 export default function InsurancePdfButton({
@@ -36,9 +37,10 @@ export default function InsurancePdfButton({
     onOpenChange?.(next);
   };
   // Collection export = the same eligibility rules as the Insurance pages (owned only; sold, supplies, wishlist and your exclusions are counted out and said so).
-  const scope = useMemo(() => (open && !single ? insuranceScope(allItems, readInsuranceExcludedIds()) : null), [open, single, allItems]);
+  const { excluded: excludedIds, note: exclusionsNote, where: exclusionsWhere } = useInsuranceExclusions();
+  const scope = useMemo(() => (open && !single ? insuranceScope(allItems, excludedIds) : null), [open, single, allItems, excludedIds]);
   const items = scope ? scope.included : allItems;
-  const notCounted = scope ? notCountedLine(scope) : null;
+  const notCounted = scope ? notCountedLine(scope, exclusionsWhere) : null;
   const [name, setName] = useState(collectorName ?? "");
   const [includeNotes, setIncludeNotes] = useState(true);
   const [includeComparables, setIncludeComparables] = useState(true);
@@ -87,7 +89,7 @@ export default function InsurancePdfButton({
               </div>
               <div className="mt-1 text-[12px]" style={{ color: "var(--muted)" }}>
                 {items.length} item{items.length !== 1 ? "s" : ""}. Opens print dialog so you can save as PDF.
-                {notCounted ? <span data-testid="pdf-not-counted"> {notCounted} {EXCLUSIONS_ARE_DEVICE_ONLY}</span> : null}
+                {notCounted ? <span data-testid="pdf-not-counted"> {notCounted} {exclusionsNote}</span> : null}
               </div>
             </div>
 

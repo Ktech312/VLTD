@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { describeGainExclusions, summarizeGain } from "@/lib/vaultStats";
-import { COST_LABEL, COST_NOTE, ESTIMATE_LABEL, EXCLUSIONS_ARE_DEVICE_ONLY, fmtCost, fmtEstimate, insuranceCost, insuranceEstimate, insuranceScope, insuranceTotals, noEstimateNote, notCountedLine, readInsuranceExcludedIds } from "@/lib/insuranceDocs";
+import { COST_LABEL, COST_NOTE, ESTIMATE_LABEL, fmtCost, fmtEstimate, insuranceCost, insuranceEstimate, insuranceScope, insuranceTotals, noEstimateNote, notCountedLine } from "@/lib/insuranceDocs";
+import { useInsuranceExclusions } from "@/lib/useInsuranceExclusions";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import { loadItems, type VaultItem } from "@/lib/vaultModel";
@@ -20,7 +21,7 @@ function fmtMoney(n: number) {
 
 export default function InsuranceReportPage() {
   const [allItems, setAllItems] = useState<VaultItem[]>([]);
-  const [excludedIds, setExcludedIds] = useState<Set<string>>(new Set());
+  const { excluded: excludedIds, note: exclusionsNote, where: exclusionsWhere } = useInsuranceExclusions();
 
   const reloadRef = useRef<() => void>(() => undefined);
   // The schedule asks the cloud itself (it used to show only what this device happened to hold, so a clean browser showed zeros).
@@ -29,7 +30,6 @@ export default function InsuranceReportPage() {
     const reload = () => setAllItems(loadItems());
     reloadRef.current = reload;
     reload();
-    setExcludedIds(readInsuranceExcludedIds());
     window.addEventListener("vltd:vault-updated", reload);
     return () => window.removeEventListener("vltd:vault-updated", reload);
   }, []);
@@ -37,7 +37,7 @@ export default function InsuranceReportPage() {
   // ONE rule set (src/lib/insuranceDocs.ts), the same as the inventory, the packet, the reports and the PDFs.
   const scope = useMemo(() => insuranceScope(allItems, excludedIds), [allItems, excludedIds]);
   const items = scope.included;
-  const notCounted = notCountedLine(scope);
+  const notCounted = notCountedLine(scope, exclusionsWhere);
 
   const totals = useMemo(() => ({ ...insuranceTotals(items), gainSummary: summarizeGain(items) }), [items]);
   const noEstimate = noEstimateNote(totals);
@@ -117,7 +117,7 @@ export default function InsuranceReportPage() {
           <div className="mt-4 text-xs text-[color:var(--muted)]">
             Includes title, category, grade, cost, estimated value, storage location, and cert number. {COST_NOTE}
           </div>
-          {notCounted ? <div className="mt-1 text-xs text-[color:var(--muted)]" data-testid="not-counted">{notCounted} {EXCLUSIONS_ARE_DEVICE_ONLY}</div> : null}
+          {notCounted ? <div className="mt-1 text-xs text-[color:var(--muted)]" data-testid="not-counted">{notCounted} {exclusionsNote}</div> : null}
           {noEstimate ? <div className="mt-1 text-xs text-[color:var(--muted)]" data-testid="no-estimate-note">{noEstimate}</div> : null}
         </div>
 

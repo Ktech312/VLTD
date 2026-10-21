@@ -2,7 +2,8 @@
 "use client";
 
 import Link from "next/link";
-import { COST_LABEL, COST_NOTE, ESTIMATE_LABEL, EXCLUSIONS_ARE_DEVICE_ONLY, fmtCost, fmtEstimate, insuranceCost, insuranceEstimate, insuranceScope, insuranceTotals, noEstimateNote, notCountedLine, readInsuranceExcludedIds, totalsSentence } from "@/lib/insuranceDocs";
+import { COST_LABEL, COST_NOTE, ESTIMATE_LABEL, fmtCost, fmtEstimate, insuranceCost, insuranceEstimate, insuranceScope, insuranceTotals, noEstimateNote, notCountedLine, totalsSentence } from "@/lib/insuranceDocs";
+import { useInsuranceExclusions } from "@/lib/useInsuranceExclusions";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import { DEMO_ITEMS } from "@/lib/demoVault";
@@ -70,7 +71,7 @@ export default function InsurancePacketPage() {
   const [items, setItems] = useState<Item[]>([]);
   const [includeImages, setIncludeImages] = useState(false);
   const [pageIndex, setPageIndex] = useState(0);
-  const [excludedIds, setExcludedIds] = useState<Set<string>>(new Set());
+  const { excluded: excludedIds, note: exclusionsNote, where: exclusionsWhere } = useInsuranceExclusions();
   const [hydrated, setHydrated] = useState(false);
   const reloadRef = useRef<() => void>(() => undefined);
   const retryRef = useRef<() => void>(() => undefined);
@@ -81,7 +82,6 @@ export default function InsurancePacketPage() {
     const reload = () => setItems(loadItems() as any as Item[]);
     reloadRef.current = reload;
     reload();
-    setExcludedIds(readInsuranceExcludedIds());
     setHydrated(true);
     // A switch of profile (or a change made elsewhere) re-reads the saved copy and asks the cloud again; the page never keeps the previous profile's items.
     const onProfile = () => { reload(); retryRef.current(); };
@@ -100,7 +100,7 @@ export default function InsurancePacketPage() {
   // ONE rule set (src/lib/insuranceDocs.ts): owned items only; sold, supply and wishlist items and your own exclusions are counted out and said so.
   const scope = useMemo(() => insuranceScope(items, excludedIds), [items, excludedIds]);
   const selectedItems = scope.included;
-  const notCounted = notCountedLine(scope);
+  const notCounted = notCountedLine(scope, exclusionsWhere);
   const itemsPerPage = includeImages ? ITEMS_PER_PAGE_WITH_IMAGES : ITEMS_PER_PAGE_NO_IMAGES;
 
   const totals = useMemo(() => insuranceTotals(selectedItems), [selectedItems]);
@@ -191,7 +191,7 @@ export default function InsurancePacketPage() {
           <div className="mt-2 text-sm text-[color:var(--muted)]">
             Generated {new Date().toLocaleString()} • Included {selectedItems.length} of {scope.eligible.length} owned items • {totalsSentence(totals)} • Page {safePageIndex + 1} of {totalPages} • Showing {visibleItems.length} items
           </div>
-          {notCounted ? <div className="mt-2 text-sm text-[color:var(--muted)]" data-testid="not-counted">{notCounted} {EXCLUSIONS_ARE_DEVICE_ONLY}</div> : null}
+          {notCounted ? <div className="mt-2 text-sm text-[color:var(--muted)]" data-testid="not-counted">{notCounted} {exclusionsNote}</div> : null}
           {noEstimate ? <div className="mt-1 text-sm text-[color:var(--muted)]" data-testid="no-estimate-note">{noEstimate}</div> : null}
           <div className="mt-1 text-xs text-[color:var(--muted)]">{COST_NOTE}</div>
           <div className="vltd-no-print mt-3 rounded-2xl border border-[rgba(203,208,213,0.18)] bg-[rgba(203,208,213,0.06)] px-4 py-3 text-sm text-[color:var(--muted)]">

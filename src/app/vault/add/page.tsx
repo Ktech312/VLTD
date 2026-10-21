@@ -361,6 +361,8 @@ export default function AddPage() {
   const [usedAutoIdentify, setUsedAutoIdentify] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [isCropEditorOpen, setIsCropEditorOpen] = useState(false);
+  // The photo that was added by choosing a file a moment ago and whose crop step is still open: Cancel discards it (nothing was ever asked to keep it).
+  const [freshCropMediaId, setFreshCropMediaId] = useState("");
   const [cropEditorTarget, setCropEditorTarget] = useState<"scan" | "media">("scan");
   const [cropMediaImageId, setCropMediaImageId] = useState("");
   const [scanCrop, setScanCrop] = useState<ScanCropRect>(DEFAULT_SCAN_CROP);
@@ -371,7 +373,7 @@ export default function AddPage() {
   const [selectedMediaImageId, setSelectedMediaImageId] = useState("");
   // Dialog behaviour (Escape, focus containment, focus return) for the photo options and crop editor.
   const photoDialogRef = useDialogA11y<HTMLDivElement>(Boolean(selectedMediaImageId), () => setSelectedMediaImageId(""));
-  const cropDialogRef = useDialogA11y<HTMLDivElement>(isCropEditorOpen, () => setIsCropEditorOpen(false));
+  const cropDialogRef = useDialogA11y<HTMLDivElement>(isCropEditorOpen, () => cancelCropEditor());
   const [cameraTarget, setCameraTarget] = useState<"scan" | "item">("scan");
   const [isCameraPanelOpen, setIsCameraPanelOpen] = useState(false);
   const [cameraPanelKey, setCameraPanelKey] = useState(0);
@@ -690,6 +692,10 @@ export default function AddPage() {
     router.push("/vault");
   }
 
+  useEffect(() => {
+    if (!isCropEditorOpen) setFreshCropMediaId("");
+  }, [isCropEditorOpen]);
+
   function clearScanImage() {
     const previewUrl = scanSession.image?.previewUrl ?? "";
     if (previewUrl.startsWith("blob:")) revokeImageObjectUrl(previewUrl);
@@ -861,6 +867,20 @@ export default function AddPage() {
     replaceScanImage(image.file);
     setSelectedMediaImageId("");
     setStatus("Selected picture ready. Crop if needed, then choose Identify with AI.");
+  }
+
+  // Cancel (and Close, the backdrop and Escape) in the crop step. For a picture that was only just chosen, it discards that picture; for one that was
+  // already part of the item it just closes the step and leaves the photo as it was.
+  function cancelCropEditor() {
+    const fresh = freshCropMediaId;
+    if (fresh && cropEditorTarget === "scan" && draftMediaImages.some((image) => image.id === fresh)) {
+      setFreshCropMediaId("");
+      removeDraftMediaImage(fresh);
+      setIsCropEditorOpen(false);
+      setStatus("Picture discarded. Choose another when you are ready.");
+      return;
+    }
+    setIsCropEditorOpen(false);
   }
 
   function openScanCropEditor() {
@@ -1889,12 +1909,13 @@ export default function AddPage() {
       return;
     }
 
-    addDraftMediaFiles([file]);
+    const added = addDraftMediaFiles([file]);
     replaceScanImage(file);
     setCropEditorTarget("scan");
     setCropMediaImageId("");
+    setFreshCropMediaId(added[0]?.id ?? "");
     setIsCropEditorOpen(true);
-    setStatus("Picture added. Crop if needed, then choose Identify with AI or save the item.");
+    setStatus("Picture added. Crop if needed, then choose Identify with AI or save the item. Cancel in the crop step discards it.");
   }
 
   async function handleApplyScanCrop() {
@@ -2835,7 +2856,7 @@ export default function AddPage() {
                 aria-modal="true"
                 aria-label="Edit photo crop"
                 onMouseDown={(event) => {
-                  if (event.target === event.currentTarget) setIsCropEditorOpen(false);
+                  if (event.target === event.currentTarget) cancelCropEditor();
                 }}
               >
                 <div className="w-full max-w-3xl">
@@ -2847,8 +2868,8 @@ export default function AddPage() {
                           {cropEditorTarget === "media" ? "Adjust Item Photo" : "Adjust Identify Picture"}
                         </h2>
                       </div>
-                      <PillButton onClick={() => setIsCropEditorOpen(false)}>
-                        Close
+                      <PillButton onClick={() => cancelCropEditor()}>
+                        {freshCropMediaId && cropEditorTarget === "scan" ? "Cancel" : "Close"}
                       </PillButton>
                     </div>
                     <div className="min-h-0 overflow-auto">
@@ -2867,7 +2888,7 @@ export default function AddPage() {
                           setIsCropEditorOpen(false);
                           setStatus(cropEditorTarget === "media" ? "Photo kept as it was." : "Picture ready. Choose Identify with AI to fill in the details, or fill them in yourself.");
                         }}
-                        onCancel={() => setIsCropEditorOpen(false)}
+                        onCancel={() => cancelCropEditor()}
                         isApplying={isApplyingCrop}
                         compact
                         viewportFixed={cropEditorTarget === "media"}

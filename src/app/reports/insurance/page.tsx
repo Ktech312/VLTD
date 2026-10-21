@@ -5,7 +5,8 @@ import { PillSelect } from "@/components/ui/PillSelect";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { CloudWait, useCloudRefresh } from "@/components/vault/CloudStatus";
 import { describeGainExclusions, itemGain, summarizeGain } from "@/lib/vaultStats";
-import { COST_LABEL, COST_NOTE, ESTIMATE_LABEL, EXCLUSIONS_ARE_DEVICE_ONLY, fmtCost, fmtEstimate, insuranceCost, insuranceEstimate, insuranceScope, insuranceTotals, noEstimateNote, notCountedLine, readInsuranceExcludedIds } from "@/lib/insuranceDocs";
+import { COST_LABEL, COST_NOTE, ESTIMATE_LABEL, fmtCost, fmtEstimate, insuranceCost, insuranceEstimate, insuranceScope, insuranceTotals, noEstimateNote, notCountedLine } from "@/lib/insuranceDocs";
+import { useInsuranceExclusions } from "@/lib/useInsuranceExclusions";
 import Link from "next/link";
 
 import { DEMO_ITEMS } from "@/lib/demoVault";
@@ -80,7 +81,7 @@ function trimNotes(s?: string) {
 
 export default function InsuranceReportPage() {
   const [allItems, setAllItems] = useState<ModelItem[]>([]);
-  const [excludedIds, setExcludedIds] = useState<Set<string>>(new Set());
+  const { excluded: excludedIds, note: exclusionsNote, where: exclusionsWhere } = useInsuranceExclusions();
   const [hydrated, setHydrated] = useState(false);
   const [includePhotos, setIncludePhotos] = useState(true);
   const [sortBy, setSortBy] = useState<"value_desc" | "value_asc" | "title_asc" | "gain_desc">("value_desc");
@@ -92,14 +93,13 @@ export default function InsuranceReportPage() {
     const loaded = loadItemsOrSeed(seed);
     reloadRef.current = () => setAllItems(loadItems());
     setAllItems(loaded);
-    setExcludedIds(readInsuranceExcludedIds());
     setHydrated(true);
   }, []);
 
   // ONE rule set (src/lib/insuranceDocs.ts), the same as the inventory, the packet and the PDFs.
   const scope = useMemo(() => insuranceScope(allItems, excludedIds), [allItems, excludedIds]);
   const items = scope.included;
-  const notCounted = notCountedLine(scope);
+  const notCounted = notCountedLine(scope, exclusionsWhere);
 
   const sorted = useMemo(() => {
     const arr = [...items];
@@ -250,7 +250,7 @@ export default function InsuranceReportPage() {
           </div>
 
           {noEstimate ? <div className="mt-3 text-xs text-[color:var(--muted)]" data-testid="no-estimate-note">{noEstimate}</div> : null}
-          <div className="mt-1 text-xs text-[color:var(--muted)]">{COST_NOTE} {EXCLUSIONS_ARE_DEVICE_ONLY}</div>
+          <div className="mt-1 text-xs text-[color:var(--muted)]">{COST_NOTE} {exclusionsNote}</div>
           <div className="mt-4 text-xs text-[color:var(--muted2)] no-print">
             Tip for best PDF: in the print dialog choose “Save as PDF” and enable “Background graphics” if you want the subtle styling.
           </div>
