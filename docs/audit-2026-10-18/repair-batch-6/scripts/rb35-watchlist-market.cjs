@@ -85,8 +85,10 @@ const body = async (S) => (await S.text().catch(() => "")).replace(/\s+/g, " ").
     const priced = amounts.filter((x) => x !== null);
     await rec(V, priced.every((x, i) => i === 0 || priced[i - 1] <= x) && (amounts.indexOf(null) === -1 || amounts.indexOf(null) >= priced.length), "Market sort: Price low to high", "ascending prices, no NaN, unpriced items last", `amounts in order: ${JSON.stringify(amounts)}`, "/market");
     const total = ((await body(V)).match(/Total asking:\s*\$([\d,]+)/) || [])[1];
-    const expectTotal = shown.reduce((a, b) => a + b, 0);
-    await rec(V, Number(String(total).replace(/,/g, "")) >= expectTotal, "Market: Total asking", `at least $${expectTotal} (the four QA listings)`, `total=${total}`, "/market");
+    // With the asking column, the total adds ASKING prices only (the listing with no asking price is counted beside it, not added); without it, values.
+    const expectTotal = hasAsking ? plan.filter((x) => x.ask).reduce((a, x) => a + x.ask, 0) : shown.reduce((a, b) => a + b, 0);
+    const totalText = (await body(V)).match(/Total asking:[^.]*?not counted\)|Total asking:\s*\$[\d,]+/);
+    await rec(V, Number(String(total).replace(/,/g, "")) >= expectTotal && (!hasAsking || /without an asking price, not counted/.test(totalText ? totalText[0] : "")), "Market: Total asking", hasAsking ? `at least $${expectTotal} (the three asking prices), and says how many listings have no asking price and are not counted` : `at least $${expectTotal} (the four QA listings)`, `total=${total}; line=${totalText ? totalText[0] : "(none)"}`, "/market");
     await V.close();
   } catch (e) { console.error("RUNNER ERROR", e); out.error = String(e && e.stack || e).slice(0, 600); }
   finally {

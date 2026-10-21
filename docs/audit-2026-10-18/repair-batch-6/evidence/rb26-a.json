@@ -1,0 +1,134 @@
+{
+ "label": "a",
+ "cases": [
+  {
+   "control": "Owner reads the Personal profile's scan allowance (profile id differs from user id)",
+   "expected": "answers with the same numbers the database holds",
+   "ok": true,
+   "actual": "{\"scan_limit\":500,\"used\":0,\"remaining\":500,\"cycle_start\":\"2026-10-21\",\"cycle_end\":\"2026-11-21\"}",
+   "screenshot": ""
+  },
+  {
+   "control": "Owner reads the Business profile's scan allowance (profile id differs from user id)",
+   "expected": "answers with the same numbers the database holds",
+   "ok": true,
+   "actual": "{\"scan_limit\":500,\"used\":0,\"remaining\":500,\"cycle_start\":\"2026-10-21\",\"cycle_end\":\"2026-11-21\"}",
+   "screenshot": ""
+  },
+  {
+   "control": "Owner calls consume_bulk_scan for their profile with 0 (no scan spent)",
+   "expected": "accepted, 0 granted",
+   "ok": true,
+   "actual": "{\"granted\":0,\"scan_limit\":500,\"used\":0,\"remaining\":500}",
+   "screenshot": ""
+  },
+  {
+   "control": "Unrelated account reads the owner's scan allowance",
+   "expected": "refused ('not authorized')",
+   "ok": true,
+   "actual": "P0001 not authorized to access this quota",
+   "screenshot": ""
+  },
+  {
+   "control": "Unrelated account calls consume_bulk_scan on the owner's profile",
+   "expected": "refused ('not authorized')",
+   "ok": true,
+   "actual": "P0001 not authorized to access this quota",
+   "screenshot": ""
+  },
+  {
+   "control": "A visitor with no session reads the owner's scan allowance (bulk_scan_status)",
+   "expected": "refused ('permission denied' or 'not authorized'); nothing returned",
+   "ok": true,
+   "actual": "42501 permission denied for function bulk_scan_status",
+   "screenshot": ""
+  },
+  {
+   "control": "A visitor with no session calls consume (0) on the owner's scan allowance (consume_bulk_scan)",
+   "expected": "refused ('permission denied' or 'not authorized'); nothing returned",
+   "ok": true,
+   "actual": "42501 permission denied for function consume_bulk_scan",
+   "screenshot": ""
+  },
+  {
+   "control": "A visitor with no session reads the Business profile's allowance of the owner's scan allowance (bulk_scan_status)",
+   "expected": "refused ('permission denied' or 'not authorized'); nothing returned",
+   "ok": true,
+   "actual": "42501 permission denied for function bulk_scan_status",
+   "screenshot": ""
+  },
+  {
+   "control": "A visitor with no session calls the internal guard function directly",
+   "expected": "refused",
+   "ok": true,
+   "actual": "42501 permission denied for function bulk_scan_guard",
+   "screenshot": ""
+  },
+  {
+   "control": "A signed-in owner calls the internal guard function directly",
+   "expected": "refused (it is only for the database's own functions)",
+   "ok": true,
+   "actual": "42501 permission denied for function bulk_scan_guard",
+   "screenshot": ""
+  },
+  {
+   "control": "Owner uploads an avatar into their profile folder, then the public URL serves it",
+   "expected": "uploaded; public URL 200",
+   "ok": true,
+   "actual": "uploaded; public URL 200",
+   "screenshot": ""
+  },
+  {
+   "control": "Owner replaces the avatar (upsert)",
+   "expected": "accepted",
+   "ok": true,
+   "actual": "ok",
+   "screenshot": ""
+  },
+  {
+   "control": "Unrelated account uploads into the owner's profile folder",
+   "expected": "refused",
+   "ok": true,
+   "actual": "403 new row violates row-level security policy",
+   "screenshot": ""
+  },
+  {
+   "control": "Owner uploads into the OTHER account's profile folder",
+   "expected": "refused",
+   "ok": true,
+   "actual": "403 new row violates row-level security policy",
+   "screenshot": ""
+  },
+  {
+   "control": "Owner uploads a file at the bucket root",
+   "expected": "refused",
+   "ok": true,
+   "actual": "403 new row violates row-level security policy",
+   "screenshot": ""
+  },
+  {
+   "control": "Bulk page (Personal profile): the AI scans ticker appears",
+   "expected": "'N of M AI scans left this cycle'",
+   "ok": true,
+   "actual": "500 of 500 AI scans left",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb26-a-1.jpg"
+  },
+  {
+   "control": "Account page: Image upload > Choose Image",
+   "expected": "the picture uploads and is previewed; no error",
+   "ok": true,
+   "actual": "preview src=https://intxhrrtuzgodfzgavlo.supabase.co/storage/v1/object/public/avatars/98c4c458-0732-43ef-b5c5-8e5606abcfe7/avatar.jpg",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb26-a-2.jpg"
+  },
+  {
+   "control": "Account page: Save avatar after an upload",
+   "expected": "profile stores the uploaded image address",
+   "ok": true,
+   "actual": "avatar_url=https://intxhrrtuzgodfzgavlo.supabase.co/storage/v1/object/public/avatars/98c4c458-0732-43ef-b5c5-8e5606abcfe7/avatar.jpg",
+   "screenshot": "C:\\Users\\EK\\VLTD\\.claude\\worktrees\\quizzical-hamilton-a45b28\\docs\\audit-2026-10-18\\shots\\rb26-a-3.jpg"
+  }
+ ],
+ "facts": {
+  "avatarObjectsLeftInQaFolder": 0
+ }
+}

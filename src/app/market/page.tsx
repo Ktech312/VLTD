@@ -206,10 +206,17 @@ export default function MarketPage() {
     return [{ key: "", label: "All" }, ...seen.map((key) => ({ key, label: UNIVERSE_LABEL[key as UniverseKey] ?? key }))];
   }, [items]);
 
-  const totalValue = useMemo(
-    () => displayed.reduce((s, i) => s + (i.askingPrice ?? i.currentValue ?? 0), 0),
-    [displayed]
-  );
+  // "Total asking" adds up ASKING prices only. A listing with no asking price shows its estimated value on its card, labelled "value", and is left out of this
+  // total (and counted beside it) so the total never mixes what sellers ask with what items are estimated to be worth.
+  const askingTotals = useMemo(() => {
+    let total = 0; let without = 0;
+    for (const i of displayed) {
+      if (typeof i.askingPrice === "number" && Number.isFinite(i.askingPrice)) total += i.askingPrice;
+      else without += 1;
+    }
+    return { total, without };
+  }, [displayed]);
+  const totalValue = askingTotals.total;
 
   return (
     <div className="" style={{ background: "var(--bg)" }}>
@@ -227,7 +234,7 @@ export default function MarketPage() {
               {displayed.length !== items.length && (
                 <span><strong style={{ color: "var(--fg)" }}>{displayed.length}</strong> matching</span>
               )}
-              <span>Total asking: <strong style={{ color: "var(--theme-gold)" }}>{fmt(totalValue)}</strong></span>
+              <span data-testid="market-total-asking">Total asking: <strong style={{ color: "var(--theme-gold)" }}>{fmt(totalValue)}</strong>{askingTotals.without > 0 ? <span className="ml-1 text-[11px]">({askingTotals.without} without an asking price, not counted)</span> : null}</span>
             </div>
           )}
 
