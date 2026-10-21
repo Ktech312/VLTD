@@ -277,7 +277,7 @@ export default function SalesHistoryPage() {
         <div className="flex flex-wrap items-start justify-between gap-4 mb-6">
           <div>
             <div className="flex items-center gap-2 text-[11px]" style={{ color: "var(--muted)" }}>
-              <Link href="/vault" className="hover:underline vltd-tap-y">Vault</Link>
+              <Link href="/vault" className="hover:underline vltd-tap-y" style={{ ["--tap-w" as string]: "40px" }}>Vault</Link>
               <span>/</span>
               <Link href="/vault/sold" className="hover:underline vltd-tap-y">Sold Items</Link>
               <span>/</span>
