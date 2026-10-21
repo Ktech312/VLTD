@@ -1426,6 +1426,9 @@ async function hydrateLocalGalleriesFromSupabase(force = false) {
   if (typeof window === "undefined") return;
   // A request that is already running for someone else (who has since signed out or been replaced) is not reused.
   const startedAs = storedSessionUserId();
+  // Nobody signed in has exhibitions of their own to load, and public pages read the sanitised public view directly (never through
+  // this cache): a visitor's browser no longer copies every public exhibition, with its owner's profile id, into its local storage.
+  if (!startedAs) return;
   if (supabaseHydrationInFlight && supabaseHydrationFor === startedAs) return supabaseHydrationInFlight;
 
   const now = Date.now();

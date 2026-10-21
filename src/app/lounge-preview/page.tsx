@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Glyph, type GlyphName } from "@/components/ui/Glyph";
 import { loadActivityEvents, syncActivityEventsFromSupabase, type ActivityEventRecord } from "@/lib/activityEvents";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
+import { queryPublicGalleries } from "@/lib/publicGalleries";
 import { isUniverseKey, type UniverseKey, UNIVERSE_LABEL } from "@/lib/taxonomy";
 
 const gold = "#D9A23A";
@@ -233,13 +234,9 @@ export default function LoungePreviewPage() {
           .order("is_featured", { ascending: false })
           .order("sort_order", { ascending: true })
           .limit(6),
-        supabase
-          .from("galleries")
-          .select("id,title,description,cover_image,analytics_views,layout")
-          .eq("visibility", "PUBLIC")
-          .eq("state", "ACTIVE")
-          .order("analytics_views", { ascending: false })
-          .limit(6),
+        queryPublicGalleries(supabase, "id,title,description,cover_image,analytics_views,layout", (q) =>
+          q.eq("visibility", "PUBLIC").eq("state", "ACTIVE").order("analytics_views", { ascending: false }).limit(6)
+        ),
         supabase.rpc("get_top_subjects", { p_limit: 4 }),
       ]);
 

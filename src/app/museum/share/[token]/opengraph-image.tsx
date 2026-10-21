@@ -1,4 +1,5 @@
 import { ImageResponse } from "next/og";
+import { fetchPublicGalleriesRest } from "@/lib/publicGalleries";
 
 export const runtime = "edge";
 export const alt = "VLTD Exhibition";
@@ -33,9 +34,11 @@ async function fetchData(token: string) {
   if (!SUPABASE_URL || !SUPABASE_ANON) return fallback;
   const h = { apikey: SUPABASE_ANON, Authorization: `Bearer ${SUPABASE_ANON}` };
   try {
-    const res = await fetch(
-      `${SUPABASE_URL}/rest/v1/galleries?public_token=eq.${encodeURIComponent(token)}&visibility=eq.PUBLIC&select=title,description,cover_image,layout,profile_id,alias_enabled,alias_name&limit=1`,
-      { headers: h, cache: "no-store" }
+    const res = await fetchPublicGalleriesRest(
+      SUPABASE_URL,
+      h,
+      `public_token=eq.${encodeURIComponent(token)}&visibility=eq.PUBLIC&select=title,description,cover_image,layout,profile_id,alias_enabled,alias_name&limit=1`,
+      { cache: "no-store" }
     );
     const rows: GalleryRow[] = await res.json().catch(() => []);
     const g = rows[0];

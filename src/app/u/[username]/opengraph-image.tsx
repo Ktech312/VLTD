@@ -1,4 +1,5 @@
 import { ImageResponse } from "next/og";
+import { fetchPublicGalleriesRest } from "@/lib/publicGalleries";
 
 export const runtime = "edge";
 export const alt = "VLTD Curator Profile";
@@ -30,7 +31,7 @@ async function fetchProfileData(username: string) {
     // Fetch public profile + gallery count in parallel
     const [pubRes, galRes] = await Promise.all([
       fetch(`${SUPABASE_URL}/rest/v1/public_profiles?profile_id=eq.${profileId}&select=display_name,bio,avatar_url&limit=1`, { headers: h, cache: "no-store" }),
-      fetch(`${SUPABASE_URL}/rest/v1/galleries?profile_id=eq.${profileId}&visibility=eq.PUBLIC&select=id`, { headers: h, cache: "no-store" }),
+      fetchPublicGalleriesRest(SUPABASE_URL, h, `profile_id=eq.${profileId}&visibility=eq.PUBLIC&select=id`, { cache: "no-store" }),
     ]);
 
     const pubProfiles: PublicProfileRow[] = await pubRes.json().catch(() => []);

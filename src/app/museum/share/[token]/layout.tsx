@@ -7,6 +7,7 @@
 // The opengraph-image.tsx at this route segment fetches its own data,
 // so we only need to set the text metadata here.
 import type { Metadata } from "next";
+import { fetchPublicGalleriesRest } from "@/lib/publicGalleries";
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
 // Matches opengraph-image.tsx in this same route segment: the anon-key
@@ -36,9 +37,11 @@ async function fetchGalleryMeta(token: string) {
   if (!SUPABASE_URL || !SUPABASE_ANON) return fallback;
   const h = { apikey: SUPABASE_ANON, Authorization: `Bearer ${SUPABASE_ANON}` };
   try {
-    const res = await fetch(
-      `${SUPABASE_URL}/rest/v1/galleries?public_token=eq.${encodeURIComponent(token)}&visibility=eq.PUBLIC&select=title,description,layout,profile_id,alias_enabled,alias_name&limit=1`,
-      { headers: h, cache: "no-store" }
+    const res = await fetchPublicGalleriesRest(
+      SUPABASE_URL,
+      h,
+      `public_token=eq.${encodeURIComponent(token)}&visibility=eq.PUBLIC&select=title,description,layout,profile_id,alias_enabled,alias_name&limit=1`,
+      { cache: "no-store" }
     );
     const rows: GalleryRow[] = await res.json().catch(() => []);
     const g = rows[0];

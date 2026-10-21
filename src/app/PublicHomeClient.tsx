@@ -11,9 +11,12 @@ import { HOME_FAQ } from "@/lib/homeFaq";
 import {
   GALLERY_EVENT,
   loadAllGalleries,
+  normalizeSupabaseGallery,
   refreshGalleriesFromSupabase,
   type Gallery,
 } from "@/lib/galleryModel";
+import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
+import { queryPublicGalleries } from "@/lib/publicGalleries";
 import { getVaultImagePublicUrl, isDirectBrowserImageUrl } from "@/lib/vaultCloud";
 import VltdVaultLogoAnimation from "@/components/VltdVaultLogoAnimation";
 import VltdLogo from "@/components/VltdLogo";
@@ -248,15 +251,31 @@ export default function PublicHomeClient() {
     return () => window.removeEventListener(GALLERY_EVENT, loadPublicGalleries);
   }, []);
 
+  // The featured exhibitions are read through the sanitised public view and kept ONLY in this page's memory: other people's
+  // exhibitions are never written into this browser's own exhibition list (which would make them look like the visitor's own).
+  const [viewGalleries, setViewGalleries] = useState<Gallery[]>([]);
+  useEffect(() => {
+    let alive = true;
+    const supabase = getSupabaseBrowserClient();
+    if (!supabase) return;
+    void queryPublicGalleries(supabase, "*", (q) => q.in("public_token", FEATURED_GALLERY_TOKENS).eq("visibility", "PUBLIC").eq("state", "ACTIVE")).then(({ data }) => {
+      if (!alive || !Array.isArray(data)) return;
+      setViewGalleries(data.map((row: unknown) => normalizeSupabaseGallery(row)).filter(Boolean) as Gallery[]);
+    });
+    return () => {
+      alive = false;
+    };
+  }, []);
+
   const galleryCards = useMemo(() => {
     return FEATURED_GALLERY_TOKENS.flatMap((token) => {
-      const gallery = galleries.find((candidate) => candidate.share?.publicToken === token);
+      const gallery = [...galleries, ...viewGalleries].find((candidate) => candidate.share?.publicToken === token);
       if (!gallery || gallery.state !== "ACTIVE" || gallery.visibility !== "PUBLIC") return [];
       if (!(gallery.itemIds.length || gallery.publicItemSnapshots?.length)) return [];
       if (!gallery.coverImage && !resolveSnapshotImage(gallery)) return [];
       return [toPublicCard(gallery)];
     });
-  }, [galleries]);
+  }, [galleries, viewGalleries]);
 
   // Opening the form submit no longer sends immediately — it gates the request
   // behind the beta consent agreement (checkbox required before we submit).

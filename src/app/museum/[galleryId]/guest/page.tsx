@@ -20,6 +20,7 @@ import {
 import { resolveGuestGalleryViewModel } from "@/lib/guestGalleryViewModel";
 import { loadItems, syncVaultItemsFromSupabase, type VaultItem } from "@/lib/vaultModel";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
+import { queryPublicGalleries } from "@/lib/publicGalleries";
 import { AdultContentGate, useAdultGate } from "@/components/PublicSafetyControls";
 
 const ACTIVE_PROFILE_KEY = "vltd_active_profile_id_v1";
@@ -51,13 +52,10 @@ export default function GuestGalleryPage() {
       if (!found) {
         const supabase = getSupabaseBrowserClient();
         if (supabase) {
-          const { data } = await supabase
-            .from("galleries")
-            .select("*")
-            .eq("id", galleryId)
-            .eq("visibility", "PUBLIC")
-            .eq("state", "ACTIVE")
-            .maybeSingle();
+          // a visitor's read goes through the sanitised public view (nothing else about the exhibition's owner or visitors)
+          const { data } = await queryPublicGalleries<Record<string, unknown>>(supabase, "*", (q) =>
+            q.eq("id", galleryId).eq("visibility", "PUBLIC").eq("state", "ACTIVE").maybeSingle()
+          );
 
           if (data) {
             found = normalizeSupabaseGallery(data);

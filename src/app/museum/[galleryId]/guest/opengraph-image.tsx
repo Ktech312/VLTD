@@ -4,6 +4,7 @@
 // a branded 1200×630 card with cover image, title, item count and VLTD mark.
 
 import { ImageResponse } from "next/og";
+import { fetchPublicGalleriesRest } from "@/lib/publicGalleries";
 
 export const runtime = "edge";
 export const alt = "VLTD Exhibition";
@@ -30,13 +31,11 @@ type ProfileRow = {
 };
 
 async function fetchGallery(galleryId: string): Promise<{ gallery: GalleryRow; profile: ProfileRow | null }> {
-  const url = `${SUPABASE_URL}/rest/v1/galleries?id=eq.${galleryId}&visibility=eq.PUBLIC&state=eq.ACTIVE&select=id,title,description,cover_image,layout,profile_id,alias_enabled,alias_name&limit=1`;
-  const res = await fetch(url, {
-    headers: {
-      apikey: SUPABASE_ANON,
-      Authorization: `Bearer ${SUPABASE_ANON}`,
-    },
-  });
+  const res = await fetchPublicGalleriesRest(
+    SUPABASE_URL,
+    { apikey: SUPABASE_ANON, Authorization: `Bearer ${SUPABASE_ANON}` },
+    `id=eq.${galleryId}&visibility=eq.PUBLIC&state=eq.ACTIVE&select=id,title,description,cover_image,layout,profile_id,alias_enabled,alias_name&limit=1`
+  );
   const rows: GalleryRow[] = await res.json().catch(() => []);
   const gallery = rows[0] ?? null;
 

@@ -28,6 +28,7 @@ import { getSeedAvatarUrl } from "@/lib/seedAvatar";
 import OnlineDot from "@/components/OnlineDot";
 import { isOnline, sessionLength, exactDateTime, averageSessionLength, formatDuration } from "@/lib/presence";
 import { useSaveFeedback } from "@/lib/useSaveFeedback";
+import { queryPublicGalleries } from "@/lib/publicGalleries";
 import {
   getMyAdminAccessStatus,
   listAdmins,
@@ -1396,7 +1397,10 @@ function CharacterDetail({ char }: { char: SeedCharacter }) {
   const loadExhibitItems = useCallback(async (galleryId: string) => {
     const supabase = getSupabaseBrowserClient();
     if (!supabase) return;
-    const { data } = await supabase.from("galleries").select("layout").eq("id", galleryId).single();
+    // members read the table; if it returns nothing (the public read of the table is being closed) the public view has the same layout
+    type LayoutRow = { layout?: { itemIds?: string[] } } | null;
+    let data = (await supabase.from("galleries").select("layout").eq("id", galleryId).maybeSingle()).data as LayoutRow;
+    if (!data) data = (await queryPublicGalleries<LayoutRow>(supabase, "layout", (q) => q.eq("id", galleryId).maybeSingle())).data;
     const ids: string[] = data?.layout?.itemIds ?? [];
     const slots: (string | null)[] = Array(MAX_SLOTS).fill(null);
     ids.forEach((id, i) => { if (i < MAX_SLOTS) slots[i] = id; });

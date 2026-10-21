@@ -21,6 +21,7 @@ import { getGalleryThemeBackground, normalizeSupabaseItemIds } from "@/lib/galle
 import { showToast } from "@/lib/toast";
 import { isUniverseKey, type UniverseKey, UNIVERSE_KEYS, UNIVERSE_LABEL } from "@/lib/taxonomy";
 import { loadItems } from "@/lib/vaultModel";
+import { queryPublicGalleries } from "@/lib/publicGalleries";
 import { loadWatchlist } from "@/lib/watchlistModel";
 
 const UNIVERSE_THUMB: Record<UniverseKey, string> = {
@@ -200,16 +201,15 @@ export default function DiscoverPage() {
       }
 
       try {
-        const { data, error } = await supabase
-          .from("galleries")
-          .select("id, title, description, cover_image, profile_id, analytics_views, layout, exhibition_layout, created_at, alias_enabled, alias_name, alias_avatar")
-          .eq("visibility", "PUBLIC")
-          .eq("state", "ACTIVE")
-          .order("analytics_views", { ascending: false })
-          .limit(100);
+        // read through the sanitised public view (no profile id for an alias exhibition); the table only if the view is missing
+        const { data, error } = await queryPublicGalleries(
+          supabase,
+          "id, title, description, cover_image, profile_id, analytics_views, layout, exhibition_layout, created_at, alias_enabled, alias_name, alias_avatar",
+          (q) => q.eq("visibility", "PUBLIC").eq("state", "ACTIVE").order("analytics_views", { ascending: false }).limit(100)
+        );
 
         if (error) {
-          setFetchError(error.message);
+          setFetchError(error.message ?? "Could not load exhibitions.");
           setLoading(false);
           return;
         }

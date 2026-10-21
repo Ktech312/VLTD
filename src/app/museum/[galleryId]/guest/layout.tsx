@@ -1,5 +1,6 @@
 // Server component — injects OG/Twitter metadata for the public guest gallery page.
 import type { Metadata } from "next";
+import { fetchPublicGalleriesRest } from "@/lib/publicGalleries";
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
 const SUPABASE_ANON = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "";
@@ -21,9 +22,11 @@ async function fetchMeta(galleryId: string) {
   if (!SUPABASE_URL || !SUPABASE_ANON) return fallback;
   const h = { apikey: SUPABASE_ANON, Authorization: `Bearer ${SUPABASE_ANON}` };
   try {
-    const res = await fetch(
-      `${SUPABASE_URL}/rest/v1/galleries?id=eq.${galleryId}&visibility=eq.PUBLIC&select=title,description,layout,profile_id,alias_enabled,alias_name&limit=1`,
-      { headers: h, cache: "no-store" }
+    const res = await fetchPublicGalleriesRest(
+      SUPABASE_URL,
+      h,
+      `id=eq.${galleryId}&visibility=eq.PUBLIC&select=title,description,layout,profile_id,alias_enabled,alias_name&limit=1`,
+      { cache: "no-store" }
     );
     const rows: GalleryRow[] = await res.json().catch(() => []);
     const g = rows[0];

@@ -3,6 +3,7 @@
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 import { listRecentCommentsForExhibitions } from "@/lib/comments";
 import { listConversations } from "@/lib/directMessages";
+import { queryPublicGalleries } from "@/lib/publicGalleries";
 
 export type FeedNotification = {
   id: string;
@@ -88,10 +89,8 @@ export async function fetchFollowingFeed(
 
   // 4. Enrich with gallery public tokens (batch)
   const uniqueGalleryIds = [...new Set(events.map(e => e.gallery_id))];
-  const { data: galleryRows } = await supabase
-    .from("galleries")
-    .select("id, public_token")
-    .in("id", uniqueGalleryIds);
+  // (through the sanitised public view: events only exist for exhibitions that are public and have no alias)
+  const { data: galleryRows } = await queryPublicGalleries(supabase, "id, public_token", (q) => q.in("id", uniqueGalleryIds));
 
   const galleryMap = new Map<string, string | null>(
     ((galleryRows ?? []) as GalleryRow[]).map(g => [g.id, g.public_token])

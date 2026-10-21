@@ -1,4 +1,5 @@
 import { ImageResponse } from "next/og";
+import { fetchPublicGalleriesRest } from "@/lib/publicGalleries";
 
 export const runtime = "edge";
 export const alt = "VLTD - Explore Exhibitions";
@@ -28,15 +29,13 @@ async function fetchStats(): Promise<{ galleryCount: number; collectorCount: num
   if (!SUPABASE_URL || !SUPABASE_KEY) return fallback;
   try {
     const h = { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` };
-    const res = await fetch(
-      `${SUPABASE_URL}/rest/v1/galleries?visibility=eq.PUBLIC&state=eq.ACTIVE&select=id,profile_id`,
-      { headers: h, cache: "no-store" }
-    );
+    const res = await fetchPublicGalleriesRest(SUPABASE_URL, h, "visibility=eq.PUBLIC&state=eq.ACTIVE&select=id,profile_id", { cache: "no-store" });
     if (!res.ok) return fallback;
-    const rows: Array<{ id: string; profile_id: string }> = await res.json().catch(() => []);
+    const rows: Array<{ id: string; profile_id: string | null }> = await res.json().catch(() => []);
     return {
       galleryCount: rows.length,
-      collectorCount: new Set(rows.map((r) => r.profile_id)).size,
+      // an exhibition under an alias has no profile id and counts toward no collector
+      collectorCount: new Set(rows.map((r) => r.profile_id).filter(Boolean)).size,
     };
   } catch {
     return fallback;
