@@ -687,7 +687,7 @@ export default function BulkUploadPage() {
                     <div className="flex items-end justify-between gap-2">
                       <button
                         type="button"
-                        disabled={scanningId !== null || (profileId !== "" && (remaining ?? 0) <= 0)}
+                        disabled={scanningId !== null || (profileId !== "" && remaining !== null && remaining <= 0)}
                         onClick={() => void rescanOne(d)}
                         className="inline-flex items-center gap-1.5 text-xs font-semibold text-[color:var(--theme-gold,#C8CDD2)] underline-offset-2 hover:underline disabled:opacity-40 disabled:no-underline"
                       >
