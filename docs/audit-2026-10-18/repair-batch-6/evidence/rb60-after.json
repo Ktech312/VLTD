@@ -1,0 +1,118 @@
+{
+ "label": "after",
+ "cases": [
+  {
+   "ok": true,
+   "control": "Home totals are the same with an old Universes displayed setting"
+  },
+  {
+   "ok": true,
+   "control": "Vault shows the full count with an old setting"
+  },
+  {
+   "ok": true,
+   "control": "Insights totals are the same with an old setting"
+  },
+  {
+   "ok": true,
+   "control": "no 'hiding items' notice or all-hidden page anywhere"
+  },
+  {
+   "ok": true,
+   "control": "the Vault has no Universes displayed 'Show' menu"
+  },
+  {
+   "ok": true,
+   "control": "the old device copy is cleared"
+  },
+  {
+   "ok": true,
+   "control": "a visible page filter narrows the list and Clear all brings everything back"
+  },
+  {
+   "ok": true,
+   "control": "Account > Preferences no longer offers Universes displayed"
+  },
+  {
+   "ok": true,
+   "control": "collection interests are still on the profile"
+  },
+  {
+   "ok": true,
+   "control": "no item was deleted"
+  }
+ ],
+ "samples": {
+  "full": {
+   "home": "WELCOME BACK, QA Visual Collection 26 items · Open Vault Quick Add ADD ITEM COLLECTION OVERVIEW Value basis: 15 of 26 at purchase cost · 1 missing value, not counted Show priced only What does this change? PURCHASE COST $631 What you paid, with tax, shipping and fees Cost breakdown › ESTIMATED VALUE $1,226 10 of 26 priced · 15 at purchase cost · 1 missing value, not counted Value history › UNREALIZED CHANGE +$595 (+234.3%) On 10 of 26 items · cost basis $254 Not counted: 16 without a value Biggest movers › SALES REVENUE $1,355 5 sold Profit +$937 after estimated fees. Not counted: 1 sold without a recorded cost Sales analytics › Insights › Music 9 Pop Culture 8 Sports 5 TCG & Non Sport Card ",
+   "homeFlags": {
+    "notice": false,
+    "allHidden": false,
+    "noticeText": false,
+    "showMenu": false,
+    "oldKey": null
+   },
+   "vault": {
+    "count": "26",
+    "head": "Home Vault Exhibitions Lounge Discover ? ? ? Help ⌘K COLLECTOR Level 4 Vault Every item you own, documented and searchable. Quick Add ADD ITEM Tools Items For Sale Sold Insights Goals Insurance 24 private 2 public Public links only show items you unlock All Sports 5 Pop Culture 8 TCG & Non Sport Card 4 Music 9 TOTAL VALUE $1,226 +$595 Change on 10 of 26 items · cost basis $254 · not counted: 16 without a value 15 of 26 at purchase cost · 1 missing value, not counted Financial breakdown Show pric"
+   },
+   "vaultFlags": {
+    "notice": false,
+    "allHidden": false,
+    "noticeText": false,
+    "showMenu": false,
+    "oldKey": null
+   },
+   "insights": "TOTAL VAULT VALUE i $1,226 +234.3% against what you paid, all-time · 1 missing value, not counted TOTAL VALUE CHANGE i — Needs two recorded days. Total value now, not a gain on cost. DOCUMENTATION COMPLETE i 0 of 26 0% of items, 0% of estimated value. A record checklist, not insurance coverage. STALE PRICES i 9 valued items have not had a price check in 6 months VALUE HISTORY 7D 30D 90D 1Y Not enough history yet — value is recorded once a day. VALUE BREAKDOWN $1,226 Total Value Trading Card Games $373 (30.4%) Movies / TV / Film $224 (18.3%) Comics $205 (16.7%) Sports Cards $192 (15.7%) Audio Formats $120 (9.8%) Instruments & Gear $112 (9.1%) PORTFOLIO MOVERS View all movers > BIGGEST GAINERS QA Album 17 - Original Motion Picture Soundtrack TCG - 0 comps Low $300 +$255 +566.7% QA Album 1 - Original Motion Picture Soundtrack SPORTS - 0 comps Medium $120 +$80 +200.0% QA Album 24 - Original ",
+   "insightsFlags": {
+    "notice": false,
+    "allHidden": false,
+    "noticeText": false,
+    "showMenu": false,
+    "oldKey": null
+   }
+  },
+  "oldSetting": {
+   "home": "WELCOME BACK, QA Visual Collection 26 items · Open Vault Quick Add ADD ITEM COLLECTION OVERVIEW Value basis: 15 of 26 at purchase cost · 1 missing value, not counted Show priced only What does this change? PURCHASE COST $631 What you paid, with tax, shipping and fees Cost breakdown › ESTIMATED VALUE $1,226 10 of 26 priced · 15 at purchase cost · 1 missing value, not counted Value history › UNREALIZED CHANGE +$595 (+234.3%) On 10 of 26 items · cost basis $254 Not counted: 16 without a value Biggest movers › SALES REVENUE $1,355 5 sold Profit +$937 after estimated fees. Not counted: 1 sold without a recorded cost Sales analytics › Insights › Music 9 Pop Culture 8 Sports 5 TCG & Non Sport Card ",
+   "homeFlags": {
+    "notice": false,
+    "allHidden": false,
+    "noticeText": false,
+    "showMenu": false,
+    "oldKey": "[\"POP_CULTURE\"]"
+   },
+   "vault": {
+    "count": "26",
+    "head": "Home Vault Exhibitions Lounge Discover ? ? ? Help ⌘K COLLECTOR Level 4 Vault Every item you own, documented and searchable. Quick Add ADD ITEM Tools Items For Sale Sold Insights Goals Insurance 24 private 2 public Public links only show items you unlock All Sports 5 Pop Culture 8 TCG & Non Sport Card 4 Music 9 TOTAL VALUE $1,226 +$595 Change on 10 of 26 items · cost basis $254 · not counted: 16 without a value 15 of 26 at purchase cost · 1 missing value, not counted Financial breakdown Show pric"
+   },
+   "vaultFlags": {
+    "notice": false,
+    "allHidden": false,
+    "noticeText": false,
+    "showMenu": false,
+    "oldKey": null
+   },
+   "insights": "TOTAL VAULT VALUE i $1,226 +234.3% against what you paid, all-time · 1 missing value, not counted TOTAL VALUE CHANGE i — Needs two recorded days. Total value now, not a gain on cost. DOCUMENTATION COMPLETE i 0 of 26 0% of items, 0% of estimated value. A record checklist, not insurance coverage. STALE PRICES i 9 valued items have not had a price check in 6 months VALUE HISTORY 7D 30D 90D 1Y Not enough history yet — value is recorded once a day. VALUE BREAKDOWN $1,226 Total Value Trading Card Games $373 (30.4%) Movies / TV / Film $224 (18.3%) Comics $205 (16.7%) Sports Cards $192 (15.7%) Audio Formats $120 (9.8%) Instruments & Gear $112 (9.1%) PORTFOLIO MOVERS View all movers > BIGGEST GAINERS QA Album 17 - Original Motion Picture Soundtrack TCG - 0 comps Low $300 +$255 +566.7% QA Album 1 - Original Motion Picture Soundtrack SPORTS - 0 comps Medium $120 +$80 +200.0% QA Album 24 - Original ",
+   "insightsFlags": {
+    "notice": false,
+    "allHidden": false,
+    "noticeText": false,
+    "showMenu": false,
+    "oldKey": null
+   }
+  },
+  "chips": [
+   "Sports5",
+   "Pop Culture8",
+   "TCG & Non Sport Card4",
+   "Music9"
+  ],
+  "explicit": {
+   "picked": "Sports5",
+   "filtered": "5",
+   "cleared": "26",
+   "hasClear": true
+  }
+ },
+ "itemCount": 31
+}
