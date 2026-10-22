@@ -1,0 +1,13 @@
+{
+ "when": "2026-10-22T02:52:43.730Z",
+ "totalBefore": 907,
+ "error": {
+  "code": "21000",
+  "details": null,
+  "hint": "Ensure that no rows proposed for insertion within the same command have duplicate constrained values.",
+  "message": "ON CONFLICT DO UPDATE command cannot affect row a second time"
+ },
+ "rowsSavedFromBatch": 0,
+ "totalAfter": 907,
+ "qaRowsLeft": 0
+}
