@@ -1,0 +1,115 @@
+{
+ "label": "before",
+ "cases": [
+  {
+   "ok": false,
+   "control": "Home totals are the same with an old Universes displayed setting"
+  },
+  {
+   "ok": false,
+   "control": "Vault shows the full count with an old setting"
+  },
+  {
+   "ok": false,
+   "control": "Insights totals are the same with an old setting"
+  },
+  {
+   "ok": false,
+   "control": "no 'hiding items' notice or all-hidden page anywhere"
+  },
+  {
+   "ok": false,
+   "control": "the Vault has no Universes displayed 'Show' menu"
+  },
+  {
+   "ok": false,
+   "control": "the old device copy is cleared"
+  },
+  {
+   "ok": false,
+   "control": "a visible page filter narrows the list and Clear all brings everything back"
+  },
+  {
+   "ok": false,
+   "control": "Account > Preferences no longer offers Universes displayed"
+  },
+  {
+   "ok": true,
+   "control": "collection interests are still on the profile"
+  },
+  {
+   "ok": true,
+   "control": "no item was deleted"
+  }
+ ],
+ "samples": {
+  "full": {
+   "home": "WELCOME BACK, QA Visual Collection 26 items · Open Vault Quick Add ADD ITEM COLLECTION OVERVIEW Value basis: 15 of 26 at purchase cost · 1 missing value, not counted Show priced only What does this change? PURCHASE COST $631 What you paid, with tax, shipping and fees Cost breakdown › ESTIMATED VALUE $1,226 10 of 26 priced · 15 at purchase cost · 1 missing value, not counted Value history › UNREALIZED CHANGE +$595 (+234.3%) On 10 of 26 items · cost basis $254 Not counted: 16 without a value Biggest movers › SALES REVENUE $1,355 5 sold Profit +$937 after estimated fees. Not counted: 1 sold without a recorded cost Sales analytics › Insights › Music 9 Pop Culture 8 Sports 5 TCG & Non Sport Card ",
+   "homeFlags": {
+    "notice": false,
+    "allHidden": false,
+    "noticeText": false,
+    "showMenu": false,
+    "oldKey": null
+   },
+   "vault": {
+    "count": "26",
+    "head": "Home Vault Exhibitions Lounge Discover Help ⌘K COLLECTOR Level 4 Vault Every item you own, documented and searchable. Quick Add ADD ITEM Tools Items For Sale Sold Insights Goals Insurance 24 private 2 public Public links only show items you unlock All Show Sports 5 Pop Culture 8 TCG & Non Sport Card 4 Music 9 TOTAL VALUE $1,226 +$595 Change on 10 of 26 items · cost basis $254 · not counted: 16 without a value 15 of 26 at purchase cost · 1 missing value, not counted Financial breakdown Show price"
+   },
+   "vaultFlags": {
+    "notice": false,
+    "allHidden": false,
+    "noticeText": false,
+    "showMenu": true,
+    "oldKey": null
+   },
+   "insights": "TOTAL VAULT VALUE i $1,226 +234.3% against what you paid, all-time · 1 missing value, not counted TOTAL VALUE CHANGE i — Needs two recorded days. Total value now, not a gain on cost. DOCUMENTATION COMPLETE i 0 of 26 0% of items, 0% of estimated value. A record checklist, not insurance coverage. STALE PRICES i 9 valued items have not had a price check in 6 months VALUE HISTORY 7D 30D 90D 1Y Not enough history yet — value is recorded once a day. VALUE BREAKDOWN $1,226 Total Value Trading Card Games $373 (30.4%) Movies / TV / Film $224 (18.3%) Comics $205 (16.7%) Sports Cards $192 (15.7%) Audio Formats $120 (9.8%) Instruments & Gear $112 (9.1%) PORTFOLIO MOVERS View all movers > BIGGEST GAINERS QA Album 17 - Original Motion Picture Soundtrack TCG - 0 comps Low $300 +$255 +566.7% QA Album 1 - Original Motion Picture Soundtrack SPORTS - 0 comps Medium $120 +$80 +200.0% QA Album 24 - Original ",
+   "insightsFlags": {
+    "notice": false,
+    "allHidden": false,
+    "noticeText": false,
+    "showMenu": false,
+    "oldKey": null
+   }
+  },
+  "oldSetting": {
+   "home": "WELCOME BACK, QA Visual Collection 8 items · Open Vault Quick Add ADD ITEM COLLECTION OVERVIEW Value basis: 1 missing value, not counted Show priced only What does this change? PURCHASE COST $154 What you paid, with tax, shipping and fees Cost breakdown › ESTIMATED VALUE $429 7 of 8 priced · 1 missing value, not counted Value history › UNREALIZED CHANGE +$275 (+178.6%) On 7 of 8 items · cost basis $154 Not counted: 1 without a value Biggest movers › SALES REVENUE $1,355 5 sold Profit +$937 after estimated fees. Not counted: 1 sold without a recorded cost Sales analytics › Insights › Pop Culture 8 8 items across 1 universe Sales analytics › May Jun Jul Aug Sep Oct Revenue Profit Loss $1,355 f",
+   "homeFlags": {
+    "notice": true,
+    "allHidden": false,
+    "noticeText": true,
+    "showMenu": false,
+    "oldKey": "[\"POP_CULTURE\"]"
+   },
+   "vault": {
+    "count": "18",
+    "head": "Home Vault Exhibitions Lounge Discover Help ⌘K COLLECTOR Level 4 Vault Every item you own, documented and searchable. Quick Add ADD ITEM Tools Items For Sale Sold Insights Goals Insurance Your Universes displayed setting is hiding 18 items from 3 universes. Nothing was deleted. Show all Change setting 7 private 1 public Public links only show items you unlock All Show Pop Culture 8 TOTAL VALUE $429 +$275 Change on 7 of 8 items · cost basis $154 · not counted: 1 without a value 1 missing value, n"
+   },
+   "vaultFlags": {
+    "notice": true,
+    "allHidden": false,
+    "noticeText": true,
+    "showMenu": true,
+    "oldKey": "[\"POP_CULTURE\"]"
+   },
+   "insights": "TOTAL VAULT VALUE i $429 +178.6% against what you paid, all-time · 1 missing value, not counted TOTAL VALUE CHANGE i — Needs two recorded days. Total value now, not a gain on cost. DOCUMENTATION COMPLETE i 0 of 8 0% of items, 0% of estimated value. A record checklist, not insurance coverage. STALE PRICES i 7 valued items have not had a price check in 6 months VALUE HISTORY 7D 30D 90D 1Y Not enough history yet — value is recorded once a day. VALUE BREAKDOWN $429 Total Value Movies / TV / Film $224 (52.2%) Comics $205 (47.8%) PORTFOLIO MOVERS View all movers > BIGGEST GAINERS QA Album 24 - Original Motion Picture Soundtrack POP_CULTURE - 0 comps Low $92 +$78 +557.1% QA Album 18 - Original Motion Picture Soundtrack POP_CULTURE - 0 comps Low $75 +$63 +525.0% QA Album 21 - Original Motion Picture Soundtrack POP_CULTURE - 0 comps Low $83 +$50 +151.5% BIGGEST DECLINERS No decliners in this view",
+   "insightsFlags": {
+    "notice": true,
+    "allHidden": false,
+    "noticeText": true,
+    "showMenu": false,
+    "oldKey": "[\"POP_CULTURE\"]"
+   }
+  },
+  "chips": [
+   "Pop Culture8"
+  ],
+  "explicit": {
+   "picked": "Pop Culture8",
+   "filtered": "18",
+   "cleared": "18",
+   "hasClear": true
+  }
+ },
+ "itemCount": 31
+}
