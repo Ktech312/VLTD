@@ -2738,13 +2738,27 @@ html[data-load-stalled="1"] #vltd-load-stalled {
 
 /* Only an accepted, active seasonal theme recolors the existing icon artwork. */
 [data-seasonal] {
-  --holiday-icon-0: color-mix(in srgb, var(--seasonal-accent, #27e3ff) 100%, var(--seasonal-accent-secondary, #fc46e3));
-  --holiday-icon-20: color-mix(in srgb, var(--seasonal-accent, #27e3ff) 80%, var(--seasonal-accent-secondary, #fc46e3));
-  --holiday-icon-32: color-mix(in srgb, var(--seasonal-accent, #27e3ff) 68%, var(--seasonal-accent-secondary, #fc46e3));
-  --holiday-icon-45: color-mix(in srgb, var(--seasonal-accent, #27e3ff) 55%, var(--seasonal-accent-secondary, #fc46e3));
-  --holiday-icon-62: color-mix(in srgb, var(--seasonal-accent, #27e3ff) 38%, var(--seasonal-accent-secondary, #fc46e3));
-  --holiday-icon-70: color-mix(in srgb, var(--seasonal-accent, #27e3ff) 30%, var(--seasonal-accent-secondary, #fc46e3));
-  --holiday-icon-72: color-mix(in srgb, var(--seasonal-accent, #27e3ff) 28%, var(--seasonal-accent-secondary, #fc46e3));
-  --holiday-icon-88: color-mix(in srgb, var(--seasonal-accent, #27e3ff) 12%, var(--seasonal-accent-secondary, #fc46e3));
-  --holiday-icon-100: color-mix(in srgb, var(--seasonal-accent, #27e3ff) 0%, var(--seasonal-accent-secondary, #fc46e3));
+  --holiday-icon-0: color-mix(in srgb, var(--seasonal-icon-primary, var(--seasonal-accent, #27e3ff)) 100%, var(--seasonal-icon-secondary, var(--seasonal-accent-secondary, #fc46e3)));
+  --holiday-icon-20: color-mix(in srgb, var(--seasonal-icon-primary, var(--seasonal-accent, #27e3ff)) 80%, var(--seasonal-icon-secondary, var(--seasonal-accent-secondary, #fc46e3)));
+  --holiday-icon-32: color-mix(in srgb, var(--seasonal-icon-primary, var(--seasonal-accent, #27e3ff)) 68%, var(--seasonal-icon-secondary, var(--seasonal-accent-secondary, #fc46e3)));
+  --holiday-icon-45: color-mix(in srgb, var(--seasonal-icon-primary, var(--seasonal-accent, #27e3ff)) 55%, var(--seasonal-icon-secondary, var(--seasonal-accent-secondary, #fc46e3)));
+  --holiday-icon-62: color-mix(in srgb, var(--seasonal-icon-primary, var(--seasonal-accent, #27e3ff)) 38%, var(--seasonal-icon-secondary, var(--seasonal-accent-secondary, #fc46e3)));
+  --holiday-icon-70: color-mix(in srgb, var(--seasonal-icon-primary, var(--seasonal-accent, #27e3ff)) 30%, var(--seasonal-icon-secondary, var(--seasonal-accent-secondary, #fc46e3)));
+  --holiday-icon-72: color-mix(in srgb, var(--seasonal-icon-primary, var(--seasonal-accent, #27e3ff)) 28%, var(--seasonal-icon-secondary, var(--seasonal-accent-secondary, #fc46e3)));
+  --holiday-icon-88: color-mix(in srgb, var(--seasonal-icon-primary, var(--seasonal-accent, #27e3ff)) 12%, var(--seasonal-icon-secondary, var(--seasonal-accent-secondary, #fc46e3)));
+  --holiday-icon-100: color-mix(in srgb, var(--seasonal-icon-primary, var(--seasonal-accent, #27e3ff)) 0%, var(--seasonal-icon-secondary, var(--seasonal-accent-secondary, #fc46e3)));
 }
+
+/* Approved readable icon/light palettes; banners keep their own theme colors. */
+[data-seasonal^="halloween"] { --seasonal-icon-secondary: #AD67FF; }
+[data-seasonal^="christmas"] { --seasonal-icon-primary: #FF4058; --seasonal-icon-secondary: #27DC79; }
+.vltd-seasonal-lights { display: none; position: absolute; top: 100%; left: 0; right: 0; height: 29px; overflow: hidden; pointer-events: none; }
+[data-seasonal] .vltd-seasonal-lights { display: flex; }
+.vltd-seasonal-wire { flex: 0 0 34px; height: 7px; border-bottom: 1px solid #565c59; border-radius: 0 0 50% 50%; position: relative; }
+.vltd-seasonal-bulb { --bulb: var(--seasonal-icon-primary, var(--seasonal-accent, #FF4058)); position: absolute; left: 14px; top: 7px; width: 6px; height: 10px; border-radius: 3px 3px 5px 5px; background: var(--bulb); box-shadow: 0 0 3px var(--bulb); animation: vltd-seasonal-breathe 6s ease-in-out infinite; }
+.vltd-seasonal-wire:nth-child(even) .vltd-seasonal-bulb { --bulb: var(--seasonal-icon-secondary, var(--seasonal-accent-secondary, #27DC79)); }
+.vltd-seasonal-bulb::before { content: ''; position: absolute; top: -3px; left: 1px; width: 4px; height: 3px; border-radius: 1px; background: #60665f; }
+.vltd-seasonal-bulb::after { content: ''; position: absolute; top: 2px; left: 1px; width: 2px; height: 4px; border-radius: 2px; background: #ffffff90; }
+@keyframes vltd-seasonal-breathe { 0%,100% { filter: brightness(.82); box-shadow: 0 0 3px var(--bulb); } 50% { filter: brightness(1.25); box-shadow: 0 0 9px var(--bulb); } }
+@media (prefers-reduced-motion: reduce) { .vltd-seasonal-bulb { animation: none; } }
+@media print { .vltd-seasonal-lights { display: none !important; } }

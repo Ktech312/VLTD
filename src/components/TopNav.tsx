@@ -315,6 +315,13 @@ function TopNavInner() {
         className={`fixed top-0 left-0 right-0 w-full backdrop-blur-xl ${userOpen || commandOpen ? "z-[9999]" : "z-[200]"}`}
         style={{ background: "var(--theme-nav-bg, rgba(11,19,32,0.96))", borderBottom: "1px solid var(--theme-nav-border, rgba(203,208,213,0.15))" }}
       >
+        <div className="vltd-seasonal-lights" aria-hidden="true">
+          {Array.from({ length: 48 }, (_, index) => (
+            <span className="vltd-seasonal-wire" key={index}>
+              <span className="vltd-seasonal-bulb" />
+            </span>
+          ))}
+        </div>
         {/* ── Main nav row ── */}
         <div className="mx-auto flex h-[64px] max-w-[1400px] items-center gap-2 px-4 sm:gap-4 sm:px-6">
 
