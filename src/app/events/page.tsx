@@ -10,6 +10,7 @@ import { PillSelect, type PillSelectOption } from "@/components/ui/PillSelect";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 import { loadSavedEventIds, syncSavedEventIdsFromSupabase, toggleSavedEvent } from "@/lib/savedEventsModel";
 import { UNIVERSE_KEYS, UNIVERSE_LABEL, isUniverseKey } from "@/lib/taxonomy";
+import { earliestStoredEnd, eventPhase } from "@/lib/eventDates";
 
 type EventType = "local" | "national" | "international";
 
@@ -560,7 +561,7 @@ export default function EventsPage() {
       const rows: CollectorEvent[] = [];
       for (let offset = 0; !cancelled; offset += 1000) {
         const { data, error } = await supabase!.from("collector_events").select("*")
-          .eq("enabled", true).gte("ends_at", new Date().toISOString())
+          .eq("enabled", true).gte("ends_at", earliestStoredEnd())
           .order("starts_at", { ascending: true }).order("id").range(offset, offset + 999);
         if (error) throw error;
         rows.push(...(data ?? []) as CollectorEvent[]);
@@ -600,7 +601,8 @@ export default function EventsPage() {
 
   const upcomingEvents = useMemo(() => {
     const baseline = nowMs || 0;
-    return sortedEvents.filter((event) => safeDate(event.ends_at).getTime() >= baseline);
+    // Over or not is decided in the event's own time zone (an LA event is on until midnight in Los Angeles on its last day)
+    return sortedEvents.filter((event) => eventPhase(event, new Date(baseline)) !== "past");
   }, [nowMs, sortedEvents]);
 
   const featuredEvent = useMemo(() => {

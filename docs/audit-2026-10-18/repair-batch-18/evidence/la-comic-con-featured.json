@@ -1,0 +1,46 @@
+{
+ "ranAt": "2026-10-22T15:13:20.502Z",
+ "before": {
+  "slug": "freshcomics-la-comic-con-2026",
+  "name": "L.A. Comic Con",
+  "starts_at": "2026-10-30T00:00:00+00:00",
+  "ends_at": "2026-11-01T23:59:59+00:00",
+  "city": "Los Angeles",
+  "state_region": "CA",
+  "country": "US",
+  "website_url": "https://www.comicconla.com/",
+  "image_url": null,
+  "is_featured": false,
+  "enabled": true
+ },
+ "after": {
+  "slug": "freshcomics-la-comic-con-2026",
+  "name": "L.A. Comic Con",
+  "starts_at": "2026-10-30T00:00:00+00:00",
+  "ends_at": "2026-11-01T23:59:59+00:00",
+  "city": "Los Angeles",
+  "state_region": "CA",
+  "country": "US",
+  "website_url": "https://www.comicconla.com/",
+  "image_url": "https://static1.squarespace.com/static/659dcc8b7b388b4c858473c7/t/69b1962247648a2b94c7d4cc/1773245986818/2026_Black.png?format=1500w",
+  "is_featured": true,
+  "enabled": true
+ },
+ "art": {
+  "checked": 19,
+  "filled": 10,
+  "filledSlugs": [
+   "freshcomics-la-comic-con-2026",
+   "freshcomics-collect-a-con-dallas-fall-2026",
+   "specialist-piratedogsglenallencardshowmixedgenre-1b9c53743876",
+   "specialist-harrisonburgsportscardtcgpokemonhobbyexpo-d3ceb1c29610",
+   "specialist-thecardshow-f6fe80544c78",
+   "specialist-palsturnpiketradingcardshow-5452a0853169",
+   "specialist-phillynonsportscardshow-7e0965ec9944",
+   "specialist-cardclashexpo-9c526f8fc1bb",
+   "specialist-757cardshowvirginiabeachfieldhouseoctober2026-324e99400256",
+   "freshcomics-comic-con-brussels-oct-2026"
+  ],
+  "errors": []
+ }
+}

@@ -7,7 +7,7 @@ import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 import { fetchActiveThemes, type SeasonalTheme } from "@/lib/seasonalTheme";
 import { Glyph } from "@/components/ui/Glyph";
 import { acceptTheme, applyAcceptedTheme, declineTheme, getThemePrefs, type ThemeChoice } from "@/lib/seasonalConsent";
-import { eventCountdown } from "@/lib/eventDates";
+import { earliestStoredEnd, eventCountdown } from "@/lib/eventDates";
 import { BANNER_FETCH_FEATURED, BANNER_FETCH_NEAREST, FEATURED_HORIZON_DAYS, pickBannerEvents } from "@/lib/bannerEvents";
 
 const ROTATE_MS = 15_000;
@@ -37,6 +37,7 @@ type CollectorEvent = {
   ends_at: string;
   city: string | null;
   state_region: string | null;
+  country?: string | null;
   image_url?: string | null;
   is_featured?: boolean | null;
 };
@@ -45,27 +46,28 @@ type Slide =
   | { type: "theme"; theme: SeasonalTheme }
   | { type: "event"; event: CollectorEvent };
 
-const EVENT_COLUMNS = "id, slug, name, emoji, starts_at, ends_at, city, state_region, image_url, is_featured";
+const EVENT_COLUMNS = "id, slug, name, emoji, starts_at, ends_at, city, state_region, country, image_url, is_featured";
 
 async function loadBannerEvents(): Promise<CollectorEvent[]> {
   const supabase = getSupabaseBrowserClient();
   if (!supabase) return [];
   const now = new Date();
-  const nowIso = now.toISOString();
+  // Ask for anything not yet over in every time zone; pickBannerEvents then drops the ones that are over in their own zone.
+  const fromIso = earliestStoredEnd(now);
   const horizonIso = new Date(now.getTime() + FEATURED_HORIZON_DAYS * 86_400_000).toISOString();
   const [featured, nearest] = await Promise.all([
     supabase
       .from("collector_events")
       .select(EVENT_COLUMNS)
       .eq("is_featured", true)
-      .gte("ends_at", nowIso)
+      .gte("ends_at", fromIso)
       .lte("starts_at", horizonIso)
       .order("starts_at", { ascending: true })
       .limit(BANNER_FETCH_FEATURED),
     supabase
       .from("collector_events")
       .select(EVENT_COLUMNS)
-      .gte("ends_at", nowIso)
+      .gte("ends_at", fromIso)
       .order("starts_at", { ascending: true })
       .limit(BANNER_FETCH_NEAREST),
   ]);
@@ -205,6 +207,16 @@ export default function SeasonalBanner() {
   }
 
   const art = slide.type === "event" && slide.event.image_url && !brokenArt[slide.event.image_url] ? slide.event.image_url : null;
+  // A "photo" fills the card behind a dark scrim. A "graphic" (a logo or title lettering with a transparent background, usually dark) would vanish on the
+  // dark card, so it is shown on a light card instead, with dark words; the card keeps exactly the same size and layout.
+  const graphic = !!art && /#graphic$/.test(art);
+  const photo = !!art && !graphic;
+  const ink = graphic ? "#10161B" : undefined;
+  const inkSoft = graphic ? "#46505A" : undefined;
+  const glyph = graphic ? "#2A3138" : "#E6C46A";
+  const arrowStyle = graphic
+    ? { background: "rgba(255,255,255,0.75)", border: "1px solid rgba(60,70,80,0.30)", borderRadius: 7 }
+    : { background: "rgba(0,0,0,0.35)", border: "1px solid rgba(203,208,213,0.30)", borderRadius: 7 };
 
   // Pointer handling: a horizontal drag (finger on a phone, mouse on a computer) moves to the next or previous slide. Vertical movement is never
   // taken (touch-action: pan-y leaves page scrolling to the browser), and a press that turned into a drag never counts as a tap on the event or a button.
@@ -250,19 +262,22 @@ export default function SeasonalBanner() {
     : eventCountdown(slide.event);
   const emoji = slide.type === "theme" ? slide.theme.banner_emoji : slide.event.emoji;
   const ctaLabel = slide.type === "theme" ? slide.theme.banner_cta_label : "Learn More";
-  const ctaHref  = slide.type === "theme" ? (slide.theme.banner_cta_href ?? "#") : "/events";
-  const eventHref = slide.type === "event" ? "/events" : null;
+  // An event slide opens that event on the Events page (the page selects the event named in ?highlight=)
+  const eventHref = slide.type === "event" ? `/events?highlight=${encodeURIComponent(slide.event.slug)}` : null;
+  const ctaHref = slide.type === "theme" ? (slide.theme.banner_cta_href ?? "#") : (eventHref ?? "/events");
 
   return (
     <div>
       <div
         data-seasonal-banner
         data-slide={slide.type === "event" ? slide.event.slug : slide.theme.slug}
-        data-art={art ? "yes" : "no"}
-        className="vltd-dark-surface relative select-none overflow-hidden"
+        data-art={art ? (graphic ? "graphic" : "photo") : "no"}
+        className={`${graphic ? "" : "vltd-dark-surface "}relative select-none overflow-hidden`}
         style={{
-          background: "linear-gradient(90deg, rgba(4,10,16,0.98), rgba(7,18,26,0.96) 48%, rgba(3,8,14,0.98))",
-          border: "1px solid rgba(203,208,213,0.42)",
+          background: graphic
+            ? "linear-gradient(90deg, #E2E5E8, #F2F4F6 55%, #E2E5E8)"
+            : "linear-gradient(90deg, rgba(4,10,16,0.98), rgba(7,18,26,0.96) 48%, rgba(3,8,14,0.98))",
+          border: graphic ? "1px solid rgba(60,70,80,0.35)" : "1px solid rgba(203,208,213,0.42)",
           borderRadius: 10,
           boxShadow: "0 18px 46px rgba(0,0,0,0.36), inset 0 1px 0 rgba(237,239,241,0.08)",
           opacity: visible ? 1 : 0,
@@ -301,7 +316,7 @@ export default function SeasonalBanner() {
         onPointerCancel={onPointerCancel}
       >
         {/* Artwork (the event's own picture) with a scrim so the words stay readable; without artwork, the same card with a soft accent glow */}
-        {art ? (
+        {photo ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
             src={art}
@@ -312,13 +327,13 @@ export default function SeasonalBanner() {
             className="pointer-events-none absolute inset-0 h-full w-full object-cover"
             style={{ objectPosition: "center 30%" }}
           />
-        ) : (
+        ) : graphic ? null : (
           <div
             className="pointer-events-none absolute inset-0"
             style={{ background: `linear-gradient(90deg, transparent, ${accent}12 52%, transparent 78%)`, opacity: 0.42 }}
           />
         )}
-        {art && (
+        {photo && (
           <div
             className="pointer-events-none absolute inset-0"
             style={{ background: "linear-gradient(90deg, rgba(4,10,16,0.94) 0%, rgba(4,10,16,0.84) 42%, rgba(4,10,16,0.5) 100%)" }}
@@ -335,20 +350,35 @@ export default function SeasonalBanner() {
               }}
               aria-label="Previous"
               className="vltd-tap-y flex h-6 w-6 flex-shrink-0 items-center justify-center transition hover:brightness-125"
-              style={{ background: "rgba(0,0,0,0.35)", border: "1px solid rgba(203,208,213,0.30)", borderRadius: 7 }}
+              style={arrowStyle}
             >
-              <Glyph name="back" size={12} strokeWidth={2} style={{ color: "#E6C46A" }} />
+              <Glyph name="back" size={12} strokeWidth={2} style={{ color: glyph }} />
             </button>
           )}
 
           {/* Emoji (only on slides without artwork) */}
           {emoji && !art && <span className="text-base flex-shrink-0">{emoji}</span>}
 
+          {/* The logo / title lettering, on the light card */}
+          {graphic && art && (
+            <span className="flex h-11 w-[72px] flex-shrink-0 items-center justify-center sm:w-[132px]">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={art}
+                alt=""
+                draggable={false}
+                referrerPolicy="no-referrer"
+                onError={() => setBrokenArt((b) => ({ ...b, [art]: true }))}
+                className="pointer-events-none h-full w-full object-contain"
+              />
+            </span>
+          )}
+
           {/* Text: one line title + faint sublabel. The card carries .vltd-dark-surface (theme-override.css) so every descendant inherits light text. */}
-          <div className="flex-1 min-w-0" style={{ textShadow: art ? "0 1px 3px rgba(0,0,0,0.9)" : undefined }}>
-            <p className="text-xs font-bold leading-tight truncate">{label}</p>
+          <div className="flex-1 min-w-0" style={{ textShadow: photo ? "0 1px 3px rgba(0,0,0,0.9)" : undefined }}>
+            <p className="line-clamp-2 text-xs font-bold leading-tight sm:line-clamp-1" style={{ color: ink }}>{label}</p>
             {sublabel && (
-              <p className="text-[10px] leading-tight truncate" style={{ color: art ? "#E6EAEE" : `${accent}bb` }}>{sublabel}</p>
+              <p className="text-[10px] leading-tight truncate" style={{ color: graphic ? inkSoft : photo ? "#E6EAEE" : `${accent}bb` }}>{sublabel}</p>
             )}
           </div>
 
@@ -358,14 +388,18 @@ export default function SeasonalBanner() {
               href={ctaHref ?? "#"}
               draggable={false}
               onClick={(e) => e.stopPropagation()}
-              className="flex-shrink-0 px-3 py-1.5 text-[11px] font-black transition hover:brightness-110"
-              style={{
-                background: "linear-gradient(135deg,#8C9298,#C8CDD2)",
-                border: "1px solid rgba(255,225,128,0.40)",
-                borderRadius: 7,
-                color: "#080808",
-                boxShadow: "0 10px 24px rgba(203,208,213,0.18)",
-              }}
+              className="max-w-[84px] flex-shrink-0 whitespace-normal px-2 py-1 text-center text-[10px] font-black leading-tight transition hover:brightness-110 sm:max-w-none sm:whitespace-nowrap sm:px-3 sm:py-1.5 sm:text-[11px] sm:leading-normal"
+              style={
+                graphic
+                  ? { background: "#141A1F", border: "1px solid rgba(0,0,0,0.5)", borderRadius: 7, color: "#F1F3F5", boxShadow: "0 6px 16px rgba(0,0,0,0.18)" }
+                  : {
+                      background: "linear-gradient(135deg,#8C9298,#C8CDD2)",
+                      border: "1px solid rgba(255,225,128,0.40)",
+                      borderRadius: 7,
+                      color: "#080808",
+                      boxShadow: "0 10px 24px rgba(203,208,213,0.18)",
+                    }
+              }
             >
               {ctaLabel}
             </Link>
@@ -380,9 +414,9 @@ export default function SeasonalBanner() {
               }}
               aria-label="Next"
               className="vltd-tap-y flex h-6 w-6 flex-shrink-0 items-center justify-center transition hover:brightness-125"
-              style={{ background: "rgba(0,0,0,0.35)", border: "1px solid rgba(203,208,213,0.30)", borderRadius: 7 }}
+              style={arrowStyle}
             >
-              <Glyph name="next" size={12} strokeWidth={2} style={{ color: "#E6C46A" }} />
+              <Glyph name="next" size={12} strokeWidth={2} style={{ color: glyph }} />
             </button>
           )}
         </div>
@@ -402,7 +436,7 @@ export default function SeasonalBanner() {
                   ["--tap-h" as string]: "28px",
                   width: i === idx ? 14 : 5,
                   height: 3,
-                  background: i === idx ? "#E6C46A" : "rgba(203,208,213,0.34)",
+                  background: graphic ? (i === idx ? "#2A3138" : "rgba(60,70,80,0.30)") : i === idx ? "#E6C46A" : "rgba(203,208,213,0.34)",
                   borderRadius: 2,
                 }}
                 aria-label={`Slide ${i + 1}`}

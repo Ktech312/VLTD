@@ -20,7 +20,7 @@ async function main() {
     return;
   }
   const result = await fillBannerArt(svc);
-  console.log(JSON.stringify({ checked: result.checked, filled: result.filled, errors: result.errors }));
+  console.log(JSON.stringify({ checked: result.checked, filled: result.filled, classified: result.classified, errors: result.errors }));
   if (out) fs.writeFileSync(out, JSON.stringify({ ranAt: new Date().toISOString(), ...result }, null, 1));
 }
 void main();

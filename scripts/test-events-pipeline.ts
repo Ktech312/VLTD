@@ -33,9 +33,10 @@ import { NextRequest } from "next/server";
 import { getServiceClient } from "../src/lib/serverAdmin";
 import { persistEvents, dedupeRows, normalizeEventName, eventSlug, dayStamps, isIsoDay } from "../src/lib/events/eventPipeline";
 import { MAJOR_SHOWS } from "../src/lib/events/majorShows";
-import { pickMetaImage, isPublicHttpUrl, fillBannerArt } from "../src/lib/events/eventArt";
+import { pickMetaImage, isPublicHttpUrl, fillBannerArt, artKind, withArtKind, pngHasAlpha } from "../src/lib/events/eventArt";
 import { pickBannerEvents } from "../src/lib/bannerEvents";
-import { eventPhase, eventCountdown, daysUntilStart } from "../src/lib/eventDates";
+import { eventPhase, eventCountdown, daysUntilStart, earliestStoredEnd, eventBounds } from "../src/lib/eventDates";
+import { eventTimeZone } from "../src/lib/eventTimeZone";
 import {
   SEASONAL_CHANGE_EVENT,
   acceptTheme,
@@ -180,8 +181,13 @@ async function fakeFetch(input: RequestInfo | URL, init: RequestInit = {}): Prom
     if (url.pathname === "/svg") return page(`<meta property="og:image" content="https://img.test/logo.svg">`);
     if (url.pathname === "/no-meta") return page("<title>nothing</title>");
     if (url.pathname === "/gone") return new Response("nope", { status: 404 });
+    if (url.pathname === "/graphic-art") return page(`<meta property="og:image" content="https://img.test/logo.png">`);
   }
   if (url.host === "img.test" || url.host === "organiser.test") {
+    if (url.pathname === "/logo.png") {
+      // a PNG whose header says "colour type 6": RGB with transparency
+      return new Response(new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0, 0, 0, 13, 0x49, 0x48, 0x44, 0x52, 0, 0, 0, 1, 0, 0, 0, 1, 8, 6, 0, 0, 0]), { status: 206, headers: { "content-type": "image/png" } });
+    }
     const isImage = /.(jpg|png)$/.test(url.pathname) || url.pathname === "/img/banner.jpg";
     return new Response(isImage ? "x" : "<html/>", { status: 206, headers: { "content-type": isImage ? "image/jpeg" : "text/html" } });
   }
@@ -468,13 +474,32 @@ async function main() {
     seed({ ...base, slug: "j-disabled", name: "J", website_url: "https://organiser.test/with-art", enabled: false });
     const result = await fillBannerArt(getServiceClient()!, fakeFetch as typeof fetch);
     const img = (slug: string) => table.find((r) => r.slug === slug)?.image_url ?? null;
-    assert.equal(img("a-fills"), "https://organiser.test/img/banner.jpg");
-    assert.equal(img("b-twitter"), "https://img.test/a.jpg?x=1&y=2");
-    assert.equal(img("c-has-one"), "https://img.test/mine.jpg");
+    assert.equal(img("a-fills"), "https://organiser.test/img/banner.jpg#photo");
+    assert.equal(img("b-twitter"), "https://img.test/a.jpg?x=1&y=2#photo");
+    assert.equal(img("c-has-one"), "https://img.test/mine.jpg#photo", "a picture that is there is never replaced; it is only labelled with its kind");
     for (const slug of ["d-not-image", "e-svg", "f-nometa", "g-gone", "h-private", "i-nosite", "j-disabled"]) assert.equal(img(slug), null, slug);
     assert.equal(result.filled, 2);
     assert.deepEqual(result.filledSlugs.sort(), ["a-fills", "b-twitter"]);
     assert.equal(result.errors.length, 0);
+  });
+  await test("art: a transparent PNG (a logo or title lettering) is marked as a graphic, other pictures as photos; older pictures are classified once", async () => {
+    const base = { starts_at: "2026-10-30T00:00:00.000Z", ends_at: "2026-11-01T23:59:59.000Z" };
+    seed({ ...base, slug: "g-logo", name: "G", website_url: "https://organiser.test/graphic-art" });
+    seed({ ...base, slug: "o-old-logo", name: "O", website_url: null, image_url: "https://img.test/logo.png" });
+    seed({ ...base, slug: "p-old-photo", name: "P", website_url: null, image_url: "https://img.test/photo.jpg" });
+    seed({ ...base, slug: "q-done", name: "Q", website_url: null, image_url: "https://img.test/photo.jpg#photo" });
+    const result = await fillBannerArt(getServiceClient()!, fakeFetch as typeof fetch);
+    const img = (slug: string) => table.find((r) => r.slug === slug)?.image_url;
+    assert.equal(img("g-logo"), "https://img.test/logo.png#graphic");
+    assert.equal(img("o-old-logo"), "https://img.test/logo.png#graphic");
+    assert.equal(img("p-old-photo"), "https://img.test/photo.jpg#photo");
+    assert.equal(img("q-done"), "https://img.test/photo.jpg#photo");
+    assert.equal(result.filled, 1);
+    assert.equal(result.classified, 2);
+    assert.equal(artKind("https://x.test/a.png#graphic"), "graphic");
+    assert.equal(artKind("https://x.test/a.png"), null);
+    assert.equal(withArtKind("https://x.test/a.png#photo", "graphic"), "https://x.test/a.png#graphic");
+    assert.equal(pngHasAlpha(new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0, 0, 0, 13, 0x49, 0x48, 0x44, 0x52, 0, 0, 0, 1, 0, 0, 0, 1, 8, 2, 0, 0, 0])), false, "colour type 2 = no transparency");
   });
   await test("art: a refresh that matches a row keeps the picture already on it", async () => {
     seed({ slug: "keep-art", name: "Keep Art Expo", starts_at: "2026-11-20T00:00:00.000Z", ends_at: "2026-11-20T23:59:59.000Z", city: "Austin, TX", image_url: "https://img.test/mine.jpg" });
@@ -540,6 +565,53 @@ async function main() {
     // timed events keep their real instants; the +00:00 spelling from the database counts as the same convention
     assert.equal(eventPhase({ starts_at: "2026-10-22T18:00:00+00:00", ends_at: "2026-10-22T22:00:00+00:00" }, new Date("2026-10-22T20:00:00Z")), "live");
     assert.equal(eventPhase({ starts_at: "2026-10-30T00:00:00+00:00", ends_at: "2026-11-01T23:59:59+00:00" }, lastEvening), "live");
+  });
+
+  // ───────── expiry in the event's own time zone ─────────
+  await test("zones: the event's place names its time zone (state code, state name, province, city-with-state, country)", () => {
+    assert.equal(eventTimeZone({ city: "Los Angeles", state_region: "CA", country: "US" }), "America/Los_Angeles");
+    assert.equal(eventTimeZone({ city: "Miami", state_region: "Florida", country: "US" }), "America/New_York");
+    assert.equal(eventTimeZone({ city: "Anaheim, CA", state_region: null, country: "US" }), "America/Los_Angeles");
+    assert.equal(eventTimeZone({ city: "Toronto", state_region: "ON", country: "CA" }), "America/Toronto");
+    assert.equal(eventTimeZone({ city: "London", state_region: null, country: "GB" }), "Europe/London");
+    assert.equal(eventTimeZone({ city: "Honolulu", state_region: "HI", country: "US" }), "Pacific/Honolulu");
+    assert.equal(eventTimeZone({ city: null, state_region: null, country: "Not listed" }), null);
+    assert.equal(eventTimeZone({ city: null, state_region: null, country: "US" }), null);
+  });
+  await test("zones: an LA event stays on through its final local evening and ends at local midnight, wherever the viewer is; others likewise", () => {
+    const la = { ...span("2026-10-30", "2026-11-01"), city: "Los Angeles", state_region: "CA", country: "US" };
+    const fl = { ...span("2026-10-30", "2026-11-01"), city: "Miami", state_region: "FL", country: "US" };
+    const hi = { ...span("2026-10-30", "2026-11-01"), city: "Honolulu", state_region: "HI", country: "US" };
+    const uk = { ...span("2026-10-30", "2026-11-01"), city: "London", state_region: null, country: "GB" };
+    const at = (iso: string) => new Date(iso);
+    // 2026-11-01 is the day US clocks go back, so Los Angeles is on PST (UTC-8) by the evening
+    assert.equal(eventPhase(la, at("2026-11-02T04:00:00Z")), "live", "8 pm in Los Angeles on the last day");
+    assert.equal(eventPhase(la, at("2026-11-02T07:59:00Z")), "live", "11:59 pm in Los Angeles");
+    assert.equal(eventPhase(la, at("2026-11-02T08:01:00Z")), "past", "just after local midnight");
+    assert.equal(eventPhase(fl, at("2026-11-02T04:30:00Z")), "live", "11:30 pm in Miami (EST)");
+    assert.equal(eventPhase(fl, at("2026-11-02T05:30:00Z")), "past", "00:30 in Miami");
+    assert.equal(eventPhase(hi, at("2026-11-02T09:30:00Z")), "live", "11:30 pm in Honolulu");
+    assert.equal(eventPhase(hi, at("2026-11-02T10:30:00Z")), "past");
+    assert.equal(eventPhase(uk, at("2026-11-01T23:30:00Z")), "live", "11:30 pm in London (GMT)");
+    assert.equal(eventPhase(uk, at("2026-11-02T00:30:00Z")), "past", "00:30 in London: already over, though still the same day in Los Angeles");
+    // it starts at local midnight too, not the evening before
+    assert.equal(eventPhase(la, at("2026-10-30T06:00:00Z")), "upcoming", "11 pm on Oct 29 in Los Angeles (PDT)");
+    assert.equal(eventPhase(la, at("2026-10-30T07:30:00Z")), "live", "00:30 on Oct 30 in Los Angeles");
+    assert.equal(eventBounds(la).end.toISOString(), "2026-11-02T08:00:00.000Z");
+    assert.equal(eventBounds(la).start.toISOString(), "2026-10-30T07:00:00.000Z");
+    assert.equal(daysUntilStart(la, at("2026-10-29T20:00:00-07:00")), 1);
+    assert.equal(eventCountdown(la, at("2026-11-02T04:00:00Z")), "Happening now!");
+    assert.equal(earliestStoredEnd(at("2026-11-02T04:00:00Z")), "2026-11-01T16:00:00.000Z");
+    // the database now lets it through until 12 hours after its stored end; the stored end of the LA event is 2026-11-01T23:59:59Z
+    assert.ok(RealDate.parse(la.ends_at) >= RealDate.parse(earliestStoredEnd(at("2026-11-02T04:00:00Z"))));
+  });
+  await test("zones: the banner keeps an LA event in its ten during its final local evening", () => {
+    const la = { id: "la", slug: "la", is_featured: true, ...span("2026-10-30", "2026-11-01"), city: "Los Angeles", state_region: "CA", country: "US" };
+    const noZone = { id: "x", slug: "x", is_featured: false, ...span("2026-11-01", "2026-11-01") };
+    const picked = pickBannerEvents([la], [la, noZone], new RealDate("2026-11-02T04:00:00Z"));
+    assert.ok(picked.some((e) => e.id === "la"), "still shown at 8 pm in Los Angeles, though its stored end has passed");
+    const later = pickBannerEvents([la], [la], new RealDate("2026-11-02T08:30:00Z"));
+    assert.equal(later.length, 0, "gone after local midnight");
   });
 
   // ───────── seasonal themes: layered over the base theme, one at a time, fully removed ─────────
