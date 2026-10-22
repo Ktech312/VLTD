@@ -72,3 +72,29 @@ Live: `81a2085` and `8c4c9c8`. Browser run RB62 (15 of 15, `repair-batch-6/scrip
 - Pictures are classified (photo or graphic) once the daily job has seen the event; a brand-new event that enters the banner before that is treated as a photo for up to a day.
 - Event pictures I filled are links to the organisers' own images (37 events now have one): they stop showing if the organiser removes the file, and the banner then shows its plain fallback.
 - Shows on the maintained list are saved Featured every week; LA Comic Con's Featured flag was set by hand today and the weekly run will keep it.
+
+---
+
+# Final status after SQL file 7 (2026-10-22)
+
+You ran file 7 and both validation values read true. Commit `b9d1233`. Checks: RB63 (`repair-batch-6/scripts/rb63-final-evening-expiry.cjs`, fourth run 12 of 12). Fixture dropped; production back to 3,477 items / 39 profiles / 47 exhibitions / 3 sales / 907 events (744 upcoming), no QA rows left.
+
+## Synthetic production checks (what "synthetic" means here)
+- **Database read rule, real production database, public key:** short-lived QA rows that ended 1, 9, 11 and 13 hours ago, a disabled one and a future one. Readable: 1 h, 9 h, 11 h and the future one. Hidden: 13 h and the disabled one. So the rule holds the 12-hour margin and no more. The rows are far in the past with real end times (no page ever showed them) and were deleted by exact slug.
+- **Page logic, live site, browser clock moved** (the answer of the events table topped up in the browser only with QA events in Los Angeles, Miami, Honolulu and London; nothing written for real users; the real LA Comic Con row is read as it is):
+  - 8 pm Pacific on Nov 1: the real LA Comic Con and the LA, Miami and Honolulu events are on the banner and read "Happening now!"; London's is gone.
+  - 11:59 pm Pacific: LA and Honolulu still on, Miami gone.
+  - 00:01 on Nov 2 Pacific: both LA events gone, Honolulu still on; 00:01 in Honolulu: gone.
+  - Local-midnight start: at 11:30 pm Oct 29 Pacific LA Comic Con has not started; at 00:30 Oct 30 it is "Happening now!".
+  - Events page at the same instants: lists LA at 8 pm, not at 00:01; Honolulu still listed.
+- **A real bug found by this and fixed:** with the 12-hour margin, the Events page chose its default "Featured event" before checking whether it was over in its own zone, so LA Comic Con would have stayed on show as the featured event until about noon UTC on Nov 2. It now picks from events that are not over in their own zone (RB63-012 and RB63-024 stay recorded as failures; RB63-036 and RB63-048 pass).
+- **Test mistakes superseded** (ITM-762): the first three runs could not see the banner because the moved clock made the stored sign-in look expired and signed the test account out; the harness now keeps the sign-in valid under the moved clock.
+- **Not shown:** the real evening of Nov 1. The clock was moved for the pages; the database rule was checked at today's real time with rows that had already ended. Watch the LA Comic Con slide that evening: it should be on until midnight Pacific.
+
+## Still open
+1. **Automatic event refresh: open.** Nothing in production has confirmed a run that processed and saved events. What is known: today's daily run (13:00 UTC window, already on my first rewrite) showed a 100% error rate, about 1 minute, on Vercel. The fixes (picture lookups after the response, a time limit on every outside request, timings and counts in the response and log) are live since `8c4c9c8`. The next scheduled run is the daily one tomorrow in the 13:00 to 14:00 UTC window; the weekly one is Mon Oct 26, 14:00 UTC. It is confirmed only when Vercel > Observability > Cron Jobs / Vercel Functions shows that route with an error rate of 0%, and the `[refresh-events]` log line (read within the hour) shows `inserted` or `updated` above 0. To do it now: **Run** beside `/api/cron/refresh-events` in Vercel > Settings > Cron Jobs; about $0.10 (6 SerpApi searches plus one Haiku call; free inside a search allowance). Weekly job, about $0.30. Not run, because it spends credits.
+2. **A real phone** for swipe, vertical scroll and tap.
+3. **Nov 1 evening** observation of LA Comic Con (above).
+
+## Cleanup done
+QA fixtures `bnr`, `bnr2` and `bnr3` dropped; QA events and read-rule rows removed; scratch sign-in settings file removed; production counts as above.

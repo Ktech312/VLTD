@@ -1,0 +1,83 @@
+{
+ "label": "third",
+ "cases": [
+  {
+   "ok": true,
+   "control": "production read rule: events stay readable for 12 hours after their stored end, not longer, and disabled stay hidden (public key)"
+  },
+  {
+   "ok": true,
+   "control": "the QA read-rule rows are removed"
+  },
+  {
+   "ok": false,
+   "control": "banner loads with the clock moved (synthetic clock)"
+  },
+  {
+   "ok": false,
+   "control": "8 pm Pacific on the last day: the real LA Comic Con and the LA, Miami and Honolulu events are still on the banner, London's is gone (synthetic clock)"
+  },
+  {
+   "ok": false,
+   "control": "the real LA Comic Con reads 'Happening now!' on its last evening (synthetic clock)"
+  },
+  {
+   "ok": false,
+   "control": "11:59 pm Pacific: LA still on, Miami (02:59) gone, Honolulu still on (synthetic clock)"
+  },
+  {
+   "ok": false,
+   "control": "00:01 on Nov 2 Pacific: the LA events are over, Honolulu still on (synthetic clock)"
+  },
+  {
+   "ok": true,
+   "control": "00:01 on Nov 2 in Honolulu: that event is over too (synthetic clock)"
+  },
+  {
+   "ok": false,
+   "control": "11:30 pm on Oct 29 Pacific: LA Comic Con has not started yet (synthetic clock)"
+  },
+  {
+   "ok": false,
+   "control": "00:30 on Oct 30 Pacific: LA Comic Con has started (synthetic clock)"
+  },
+  {
+   "ok": true,
+   "control": "Events page at 8 pm Pacific on the last day lists LA Comic Con and the LA event, not London's (synthetic clock)"
+  },
+  {
+   "ok": true,
+   "control": "Events page at 00:01 Pacific on Nov 2: LA gone, Honolulu still listed (synthetic clock)"
+  }
+ ],
+ "samples": [
+  {
+   "dbRead": [
+    "ended-11h",
+    "ended-1h",
+    "ended-9h",
+    "future"
+   ]
+  },
+  {
+   "clocks": {
+    "2026-11-02T04:00:00Z": "{\"probe\":\"seen:1793592000000\",\"now\":\"2026-11-02T04:00:34.265Z\",\"path\":\"/login\"}",
+    "2026-11-02T07:59:00Z": "{\"probe\":\"seen:1793606340000\",\"now\":\"2026-11-02T07:59:34.409Z\",\"path\":\"/\"}",
+    "2026-11-02T08:01:00Z": "{\"probe\":\"seen:1793606460000\",\"now\":\"2026-11-02T08:01:33.986Z\",\"path\":\"/\"}",
+    "2026-11-02T10:01:00Z": "{\"probe\":\"seen:1793613660000\",\"now\":\"2026-11-02T10:01:35.065Z\",\"path\":\"/\"}",
+    "2026-10-30T06:30:00Z": "{\"probe\":\"seen:1793341800000\",\"now\":\"2026-10-30T06:30:33.928Z\",\"path\":\"/\"}",
+    "2026-10-30T07:30:00Z": "{\"probe\":\"seen:1793345400000\",\"now\":\"2026-10-30T07:30:33.931Z\",\"path\":\"/\"}"
+   }
+  },
+  {
+   "banner": {
+    "2026-11-02T04:00:00Z": [],
+    "2026-11-02T07:59:00Z": [],
+    "2026-11-02T08:01:00Z": [],
+    "2026-11-02T10:01:00Z": [],
+    "2026-10-30T06:30:00Z": [],
+    "2026-10-30T07:30:00Z": []
+   }
+  }
+ ]
+}

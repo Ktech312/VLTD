@@ -6,7 +6,7 @@
     class FD extends RD { constructor(...a) { if (a.length === 0) super(nowFake()); else super(...a); } static now() { return nowFake(); } }
     window.Date = FD;
     // the stored sign-in says when it expires; seen from the moved clock it would look expired and the app would sign out, so its expiry is pushed far out (the token itself is untouched)
-    try { for (const k of Object.keys(localStorage)) if (/^sb-.*-auth-token$/.test(k)) { const v = JSON.parse(localStorage.getItem(k)); if (v && v.expires_at) { v.expires_at = 4102444800; localStorage.setItem(k, JSON.stringify(v)); } } } catch (e) {}
+    try { for (const k of Object.keys(localStorage)) if (k === 'vltd-auth') { const v = JSON.parse(localStorage.getItem(k)); if (v && v.expires_at) { v.expires_at = 4102444800; localStorage.setItem(k, JSON.stringify(v)); } } } catch (e) {}
     const extra = JSON.parse(sessionStorage.getItem('__rb63_rows') || '[]'); const of = window.fetch.bind(window);
     window.fetch = async (...args) => {
       const res = await of(...args); const u = String((args[0] && args[0].url) || args[0]);
