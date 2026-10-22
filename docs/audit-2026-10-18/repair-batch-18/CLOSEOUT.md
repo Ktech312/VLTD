@@ -43,3 +43,32 @@ Almost no event had a picture (1 of 744). The daily refresh now also looks at ea
 - On a phone the seasonal slide's title is cut ("Trick or Tr…") because its button is wide; that was already so and I did not change it.
 - The red "?" in your earlier screenshot sat by the "Universes displayed" notice, which has since been removed (separate note in this folder).
 - Test mistakes superseded by correction rows (ITM-759 to 761): the check compared Home's address with "/" (Home is /dashboard) and read the window's scroll instead of the page's scroll box. Real failures kept: RB61-007 and RB61-030 (the first, toggle-style control sat 32 px in from the banner's right edge; redone as the small line, which passes), RB59 before-run (the defects above). RB59's "after" run was cut short by my own change of design; RB61 replaces it.
+
+---
+
+# Finishing pass (2026-10-22)
+
+Live: `81a2085` and `8c4c9c8`. Browser run RB62 (15 of 15, `repair-batch-6/scripts/rb62-la-comic-con-banner.cjs`); fixture dropped, production back to 3,477 items / 39 profiles / 47 exhibitions / 3 sales / 907 events.
+
+## Done and checked on the live site
+- **LA Comic Con is featured and on the banner.** I set Featured on its one existing row (`freshcomics-la-comic-con-2026`; record in `evidence/la-comic-con-featured.json`; undo = turn Featured off). On the live banner it is slide 11 of 11 (the banner is in date order and it starts last), at desktop and phone width:
+  - **Artwork:** its official title graphic (from comicconla.com) loads. It is black lettering on a transparent background, which disappears on the dark banner, so graphics like that are now shown on a light card with dark words (same size and layout). This applies to every transparent-PNG logo (5 events today); photos still fill the card behind the words.
+  - **Dates:** "Starts in 8 days — Los Angeles, CA", and the Events page shows Oct 30 - Nov 1, 2026.
+  - **Destination:** the button and a click on the slide now open that event on the Events page (`/events?highlight=<event>`), not the generic list.
+- **Phone title:** the seasonal button was too wide for the title. The button is now narrower and wraps onto two lines, event titles may use two lines on a phone, and "Trick or Treat" shows in full. The card is still 72 px high on every slide (checked at 390 px). The small line under the title ("Starts in 8 days — …") is still shortened on a phone.
+- **Expiry in the event's own time zone (code, tested; live on the site).** An event now counts as over at local midnight at the end of its last day, in the zone its place names (state, province or country; 29 US/Canada/other zones covered). An LA event is on at 8 pm and 11:59 pm Pacific on Nov 1 and over at 00:01 on Nov 2; Miami, Honolulu and London likewise; an event whose place does not name a zone uses the viewer's calendar. Both the banner and the Events page use it. Tested with fixed instants in `npm run test:events` (30 of 30), not by waiting for Nov 1.
+
+## Not finished: needs you, or cannot be checked yet
+1. **Run `repair-batch-18/sql/7-events-visible-through-local-last-evening.sql`** ([file](sql/7-events-visible-through-local-last-evening.sql), then [validation-7.sql](sql/validation-7.sql); undo with [rollback-7.sql](sql/rollback-7.sql)). Until it runs, the database still hides an event at 23:59:59 UTC on its last day (about 5 pm Pacific), so an LA event still disappears at 5 pm on Nov 1 whatever the pages do. The file only widens the read rule by 12 hours (no event row is touched); tested 5 of 5 in a local Postgres (`repair-batch-18/scripts/test-sql7-in-postgres.cjs`). The real check is the evening of Nov 1 Pacific: the LA Comic Con slide should still be there until midnight.
+2. **The production refresh is not verified end to end.** What I could read from your Vercel dashboard (Hobby plan; request logs there are kept for one hour, so the older runs are gone):
+   - The daily job `/api/cron/refresh-events` ran **once** in the last day (today, 13:00 UTC window) with an **error rate of 100%**, about 1 minute long, and only 1.7 s of active CPU. That means it spent its time waiting on outside services and then either hit the 60 s limit or returned an error; I cannot tell which, because the log lines are gone. That run was already on my first rewrite (which still did the picture lookups inside the run), so it may be my own change that pushed it over the limit.
+   - **Fixed since:** the picture lookups now run after the response is sent, every outside request has its own limit (SerpApi 15 s, Ticketmaster 8 s, AI 25 s), and the response and the log line now say where the time went (`timingMs`) and how many events were saved. These are in `8c4c9c8`.
+   - The weekly job did not run in the window (next run Mon Oct 26 14:00 UTC), so nothing is known about it from production.
+   - **Remaining blocker, a real run costs money, so I did not do it.** To check it now: Vercel > vltd > Settings > Cron Jobs > **Run** beside `/api/cron/refresh-events`, then open Logs within the hour and look for the `[refresh-events]` line. Cost: 6 SerpApi searches (about 6 of your monthly searches; roughly $0.09 if billed at $0.015 each, nothing if inside a free allowance) plus one Haiku call (about $0.01); Ticketmaster is free. The weekly job (**Run** beside `/api/cron/refresh-major-events`) is 20 searches plus one Haiku call, about $0.30. Without that, the next daily run tomorrow (13:00 to 14:00 UTC) will show in Vercel > Observability > Cron Jobs / Vercel Functions: an error rate of 0% there is the sign it works.
+   - **Kept separate:** the simulated route tests (`npm run test:events`, 30 of 30) run the real handlers against a pretend internet and table; they are not a production run. The one real production fact I have for the daily job is the error rate above, plus the earlier duplicate-slug rejection captured on the real database.
+3. **A real phone** for swipe, vertical scroll and tap (all touch results so far are Chrome's emulation).
+
+## Small things to know
+- Pictures are classified (photo or graphic) once the daily job has seen the event; a brand-new event that enters the banner before that is treated as a photo for up to a day.
+- Event pictures I filled are links to the organisers' own images (37 events now have one): they stop showing if the organiser removes the file, and the banner then shows its plain fallback.
+- Shows on the maintained list are saved Featured every week; LA Comic Con's Featured flag was set by hand today and the weekly run will keep it.
