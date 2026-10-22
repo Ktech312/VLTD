@@ -113,7 +113,8 @@ export type ArtResult = { checked: number; filled: number; filledSlugs: string[]
 type Candidate = { slug: string; website_url: string | null; image_url?: string | null };
 
 /** Fills image_url (never replacing one that is there) for the events the banner is most likely to show: the featured ones and the nearest. */
-export async function fillBannerArt(svc: SupabaseClient, fetchImpl: typeof fetch = fetch): Promise<ArtResult> {
+export async function fillBannerArt(svc: SupabaseClient, fetchImpl: typeof fetch = fetch, budgetMs = 30_000): Promise<ArtResult> {
+  const deadline = Date.now() + budgetMs; // no new lookup is started after this, so the step always finishes inside the function's time limit
   const result: ArtResult = { checked: 0, filled: 0, filledSlugs: [], classified: 0, errors: [] };
   const nowIso = new Date().toISOString();
   const [featured, nearest] = await Promise.all([
@@ -134,6 +135,7 @@ export async function fillBannerArt(svc: SupabaseClient, fetchImpl: typeof fetch
   const queue = [...todo];
   const worker = async () => {
     for (let c = queue.shift(); c; c = queue.shift()) {
+      if (Date.now() > deadline) return;
       result.checked += 1;
       const art = await fetchEventArt(c.website_url as string, fetchImpl);
       if (!art) continue;
@@ -147,6 +149,7 @@ export async function fillBannerArt(svc: SupabaseClient, fetchImpl: typeof fetch
   };
   await Promise.all(Array.from({ length: 8 }, worker));
   for (const c of unclassified) {
+    if (Date.now() > deadline) break;
     const kind = await probeImage(c.image_url as string, fetchImpl);
     if (!kind) continue; // not loadable right now: leave it as it is
     const { error } = await svc.from("collector_events").update({ image_url: withArtKind(c.image_url as string, kind) }).eq("slug", c.slug).eq("image_url", c.image_url as string);

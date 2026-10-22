@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServiceClient } from "@/lib/serverAdmin";
 import { MAJOR_SHOWS } from "@/lib/events/majorShows";
 import { fillBannerArt } from "@/lib/events/eventArt";
+import { runAfterResponse } from "@/lib/events/afterResponse";
 import { dayStamps, eventSlug, isIsoDay, persistEvents, type EventRow } from "@/lib/events/eventPipeline";
 
 // Runs weekly (see vercel.json) to keep a curated list of the major,
@@ -20,6 +21,9 @@ import { dayStamps, eventSlug, isIsoDay, persistEvents, type EventRow } from "@/
 
 // One search per show plus the AI call have to finish inside one request; the platform default (10 s on some plans) is too short for that.
 export const maxDuration = 60;
+// Every outside request has its own time limit, so one slow answer cannot use up the whole run (a run that hits the platform limit is killed and saves nothing).
+const SERP_TIMEOUT_MS = 15_000;
+const AI_TIMEOUT_MS = 25_000;
 
 type Snippet = { title: string; snippet: string; link: string };
 type SnippetResult = { snippets: Snippet[]; error: string | null };
@@ -35,7 +39,7 @@ async function fetchSearchSnippets(apiKey: string, query: string): Promise<Snipp
 
   let response: Response;
   try {
-    response = await fetch(url);
+    response = await fetch(url, { signal: AbortSignal.timeout(SERP_TIMEOUT_MS) });
   } catch (err) {
     return { snippets: [], error: `"${query}": request failed (${String(err)})`.slice(0, 200) };
   }
@@ -101,6 +105,7 @@ async function extractShowDates(
         max_tokens: 4096,
         messages: [{ role: "user", content: prompt }],
       }),
+      signal: AbortSignal.timeout(AI_TIMEOUT_MS),
     });
 
     if (!response.ok) {
@@ -158,6 +163,7 @@ export async function GET(req: NextRequest) {
   }
 
   const now = new Date();
+  const t0 = Date.now();
 
   const withSnippets = await Promise.all(
     MAJOR_SHOWS.map(async (show) => ({
@@ -212,9 +218,18 @@ export async function GET(req: NextRequest) {
     });
   });
 
+  const tSearched = Date.now();
   const saved = await persistEvents(svc, rows);
-  // Pictures for the banner events that have none (their organiser's own share image); a failure here never fails the run.
-  const art = await fillBannerArt(svc).catch((err) => ({ checked: 0, filled: 0, filledSlugs: [] as string[], errors: [`art step threw: ${String(err)}`.slice(0, 200)] }));
+  const tSaved = Date.now();
+  // Pictures for the banner events that have none (their organiser's own share image). Done after the response has gone: a run that did its real work
+  // must not be marked failed, or time out, because of this. Its result goes to the log.
+  const artRan: { scheduled: boolean } = { scheduled: false };
+  artRan.scheduled = await runAfterResponse(async () => {
+    const art = await fillBannerArt(svc).catch((err) => ({ checked: 0, filled: 0, classified: 0, filledSlugs: [] as string[], errors: [`art step threw: ${String(err)}`.slice(0, 200)] }));
+    const line = JSON.stringify({ checked: art.checked, filled: art.filled, classified: art.classified, errors: art.errors });
+    if (art.errors.length) console.error("[refresh-major-events] art", line);
+    else console.log("[refresh-major-events] art", line);
+  });
 
   const problems: string[] = [];
   if (searchErrors.length === MAJOR_SHOWS.length) problems.push("every search failed");
@@ -238,7 +253,8 @@ export async function GET(req: NextRequest) {
     duplicatesDropped: saved.duplicatesDropped,
     failed: saved.failed,
     saveErrors: saved.errors,
-    art: { checked: art.checked, filled: art.filled, errors: art.errors },
+    artAfterResponse: artRan.scheduled,
+    timingMs: { searchesAndAi: tSearched - t0, save: tSaved - tSearched, total: Date.now() - t0 },
     problems,
   };
   if (hardFailure || problems.length) console.error("[refresh-major-events]", JSON.stringify(body));

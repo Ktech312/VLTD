@@ -1,0 +1,389 @@
+{
+ "label": "first",
+ "cases": [
+  {
+   "ok": true,
+   "control": "LA Comic Con is among the banner's slides (desktop 1440)"
+  },
+  {
+   "ok": true,
+   "control": "LA Comic Con's official artwork loads on the banner (desktop 1440)"
+  },
+  {
+   "ok": true,
+   "control": "dates and place read right (desktop 1440)"
+  },
+  {
+   "ok": true,
+   "control": "the button names this event (desktop 1440)"
+  },
+  {
+   "ok": true,
+   "control": "the title is not cut off (desktop 1440)"
+  },
+  {
+   "ok": true,
+   "control": "the button opens LA Comic Con on the Events page with its dates (desktop 1440)"
+  },
+  {
+   "ok": true,
+   "control": "size and the overview's position identical on every slide (desktop 1440)"
+  },
+  {
+   "ok": true,
+   "control": "LA Comic Con is among the banner's slides (phone 390 (emulated))"
+  },
+  {
+   "ok": true,
+   "control": "LA Comic Con's official artwork loads on the banner (phone 390 (emulated))"
+  },
+  {
+   "ok": true,
+   "control": "dates and place read right (phone 390 (emulated))"
+  },
+  {
+   "ok": true,
+   "control": "the button names this event (phone 390 (emulated))"
+  },
+  {
+   "ok": true,
+   "control": "the title is not cut off (phone 390 (emulated))"
+  },
+  {
+   "ok": true,
+   "control": "the button opens LA Comic Con on the Events page with its dates (phone 390 (emulated))"
+  },
+  {
+   "ok": true,
+   "control": "size and the overview's position identical on every slide (phone 390 (emulated))"
+  },
+  {
+   "ok": true,
+   "control": "the seasonal slide's title (\"Trick or Treat\") shows in full on a phone (phone 390 (emulated))"
+  }
+ ],
+ "samples": [
+  {
+   "name": "desktop 1440",
+   "per": [
+    {
+     "i": 0,
+     "slide": "halloween-2026",
+     "art": "no",
+     "imgLoaded": null,
+     "label": "Trick or Treat",
+     "sub": "Horror, comics, and dark collectibles aw",
+     "h": 72,
+     "w": 1044,
+     "clipped": false,
+     "lines": 1,
+     "cta": "Explore Spooky Vaults",
+     "ctaW": 150
+    },
+    {
+     "i": 1,
+     "slide": "specialist-propstorejamesbondonlineauctionlondon-264bcd5c7384",
+     "art": "photo",
+     "imgLoaded": true,
+     "label": "Propstore: James Bond Online Auction – L",
+     "sub": "Happening now!",
+     "h": 72,
+     "w": 1044,
+     "clipped": false,
+     "lines": 1,
+     "cta": "Learn More",
+     "ctaW": 88
+    },
+    {
+     "i": 2,
+     "slide": "specialist-propstorethewheeloftimeonlineauction-840374c43b68",
+     "art": "photo",
+     "imgLoaded": true,
+     "label": "Propstore: The Wheel of Time Online Auct",
+     "sub": "Happening now!",
+     "h": 72,
+     "w": 1044,
+     "clipped": false,
+     "lines": 1,
+     "cta": "Learn More",
+     "ctaW": 88
+    },
+    {
+     "i": 3,
+     "slide": "specialist-anaheimcardshowoctober222026-c13ce9066a9b",
+     "art": "photo",
+     "imgLoaded": true,
+     "label": "Anaheim Card Show — October 22, 2026",
+     "sub": "Happening now!",
+     "h": 72,
+     "w": 1044,
+     "clipped": false,
+     "lines": 1,
+     "cta": "Learn More",
+     "ctaW": 88
+    },
+    {
+     "i": 4,
+     "slide": "freshcomics-armageddon-aukland-spring-2026",
+     "art": "no",
+     "imgLoaded": null,
+     "label": "Armageddon Expo Auckland Spring",
+     "sub": "Happening now!",
+     "h": 72,
+     "w": 1044,
+     "clipped": false,
+     "lines": 1,
+     "cta": "Learn More",
+     "ctaW": 88
+    },
+    {
+     "i": 5,
+     "slide": "specialist-artbaselparis-97cd61f6a48b",
+     "art": "photo",
+     "imgLoaded": true,
+     "label": "Art Basel Paris",
+     "sub": "This weekend! — Paris",
+     "h": 72,
+     "w": 1044,
+     "clipped": false,
+     "lines": 1,
+     "cta": "Learn More",
+     "ctaW": 88
+    },
+    {
+     "i": 6,
+     "slide": "freshcomics-mcm-london-oct-2026",
+     "art": "no",
+     "imgLoaded": null,
+     "label": "MCM Comic Con London",
+     "sub": "This weekend! — London",
+     "h": 72,
+     "w": 1044,
+     "clipped": false,
+     "lines": 1,
+     "cta": "Learn More",
+     "ctaW": 88
+    },
+    {
+     "i": 7,
+     "slide": "freshcomics-georgia-mountains-2026",
+     "art": "no",
+     "imgLoaded": null,
+     "label": "Georgia Mountains Charity Comic Con",
+     "sub": "This weekend! — Jasper, GA",
+     "h": 72,
+     "w": 1044,
+     "clipped": false,
+     "lines": 1,
+     "cta": "Learn More",
+     "ctaW": 88
+    },
+    {
+     "i": 8,
+     "slide": "freshcomics-smackdown-sketches-2026",
+     "art": "no",
+     "imgLoaded": null,
+     "label": "Smackdown and Sketches",
+     "sub": "This weekend! — State College, PA",
+     "h": 72,
+     "w": 1044,
+     "clipped": false,
+     "lines": 1,
+     "cta": "Learn More",
+     "ctaW": 88
+    },
+    {
+     "i": 9,
+     "slide": "specialist-nationalcardsharkstcgandsportsexpo-3dab69215e68",
+     "art": "photo",
+     "imgLoaded": true,
+     "label": "National Card Sharks TCG and Sports EXPO",
+     "sub": "This weekend! — Randolph, NJ",
+     "h": 72,
+     "w": 1044,
+     "clipped": false,
+     "lines": 1,
+     "cta": "Learn More",
+     "ctaW": 88
+    },
+    {
+     "i": 10,
+     "slide": "freshcomics-la-comic-con-2026",
+     "art": "graphic",
+     "imgLoaded": true,
+     "label": "L.A. Comic Con",
+     "sub": "Starts in 8 days — Los Angeles, CA",
+     "h": 72,
+     "w": 1044,
+     "clipped": false,
+     "lines": 1,
+     "cta": "Learn More",
+     "ctaW": 88
+    }
+   ]
+  },
+  {
+   "name": "phone 390 (emulated)",
+   "per": [
+    {
+     "i": 0,
+     "slide": "halloween-2026",
+     "art": "no",
+     "imgLoaded": null,
+     "label": "Trick or Treat",
+     "sub": "Horror, comics, and dark collectibles aw",
+     "h": 72,
+     "w": 354,
+     "clipped": false,
+     "lines": 1,
+     "cta": "Explore Spooky Vaults",
+     "ctaW": 84
+    },
+    {
+     "i": 1,
+     "slide": "specialist-propstorejamesbondonlineauctionlondon-264bcd5c7384",
+     "art": "photo",
+     "imgLoaded": true,
+     "label": "Propstore: James Bond Online Auction – L",
+     "sub": "Happening now!",
+     "h": 72,
+     "w": 354,
+     "clipped": false,
+     "lines": 2,
+     "cta": "Learn More",
+     "ctaW": 75
+    },
+    {
+     "i": 2,
+     "slide": "specialist-propstorethewheeloftimeonlineauction-840374c43b68",
+     "art": "photo",
+     "imgLoaded": true,
+     "label": "Propstore: The Wheel of Time Online Auct",
+     "sub": "Happening now!",
+     "h": 72,
+     "w": 354,
+     "clipped": false,
+     "lines": 2,
+     "cta": "Learn More",
+     "ctaW": 75
+    },
+    {
+     "i": 3,
+     "slide": "specialist-anaheimcardshowoctober222026-c13ce9066a9b",
+     "art": "photo",
+     "imgLoaded": true,
+     "label": "Anaheim Card Show — October 22, 2026",
+     "sub": "Happening now!",
+     "h": 72,
+     "w": 354,
+     "clipped": false,
+     "lines": 2,
+     "cta": "Learn More",
+     "ctaW": 75
+    },
+    {
+     "i": 4,
+     "slide": "freshcomics-armageddon-aukland-spring-2026",
+     "art": "no",
+     "imgLoaded": null,
+     "label": "Armageddon Expo Auckland Spring",
+     "sub": "Happening now!",
+     "h": 72,
+     "w": 354,
+     "clipped": false,
+     "lines": 2,
+     "cta": "Learn More",
+     "ctaW": 75
+    },
+    {
+     "i": 5,
+     "slide": "specialist-artbaselparis-97cd61f6a48b",
+     "art": "photo",
+     "imgLoaded": true,
+     "label": "Art Basel Paris",
+     "sub": "This weekend! — Paris",
+     "h": 72,
+     "w": 354,
+     "clipped": false,
+     "lines": 1,
+     "cta": "Learn More",
+     "ctaW": 75
+    },
+    {
+     "i": 6,
+     "slide": "freshcomics-mcm-london-oct-2026",
+     "art": "no",
+     "imgLoaded": null,
+     "label": "MCM Comic Con London",
+     "sub": "This weekend! — London",
+     "h": 72,
+     "w": 354,
+     "clipped": false,
+     "lines": 1,
+     "cta": "Learn More",
+     "ctaW": 75
+    },
+    {
+     "i": 7,
+     "slide": "freshcomics-georgia-mountains-2026",
+     "art": "no",
+     "imgLoaded": null,
+     "label": "Georgia Mountains Charity Comic Con",
+     "sub": "This weekend! — Jasper, GA",
+     "h": 72,
+     "w": 354,
+     "clipped": false,
+     "lines": 2,
+     "cta": "Learn More",
+     "ctaW": 75
+    },
+    {
+     "i": 8,
+     "slide": "freshcomics-smackdown-sketches-2026",
+     "art": "no",
+     "imgLoaded": null,
+     "label": "Smackdown and Sketches",
+     "sub": "This weekend! — State College, PA",
+     "h": 72,
+     "w": 354,
+     "clipped": false,
+     "lines": 2,
+     "cta": "Learn More",
+     "ctaW": 75
+    },
+    {
+     "i": 9,
+     "slide": "specialist-nationalcardsharkstcgandsportsexpo-3dab69215e68",
+     "art": "photo",
+     "imgLoaded": true,
+     "label": "National Card Sharks TCG and Sports EXPO",
+     "sub": "This weekend! — Randolph, NJ",
+     "h": 72,
+     "w": 354,
+     "clipped": false,
+     "lines": 2,
+     "cta": "Learn More",
+     "ctaW": 75
+    },
+    {
+     "i": 10,
+     "slide": "freshcomics-la-comic-con-2026",
+     "art": "graphic",
+     "imgLoaded": true,
+     "label": "L.A. Comic Con",
+     "sub": "Starts in 8 days — Los Angeles, CA",
+     "h": 72,
+     "w": 354,
+     "clipped": false,
+     "lines": 1,
+     "cta": "Learn More",
+     "ctaW": 75
+    }
+   ]
+  },
+  {
+   "name": "phone 390 (emulated)",
+   "phoneClippedTitles": []
+  }
+ ]
+}

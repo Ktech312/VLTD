@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServiceClient } from "@/lib/serverAdmin";
 import { parseSerpEventWindow } from "@/lib/events/serpEventDateParse";
 import { fillBannerArt } from "@/lib/events/eventArt";
+import { runAfterResponse } from "@/lib/events/afterResponse";
 import { dayStamps, eventSlug, isIsoDay, persistEvents, type EventRow } from "@/lib/events/eventPipeline";
 
 // Several searches plus the AI check run in one request; the platform default (10 s on some plans) is too short for that.
@@ -72,6 +73,11 @@ type SerpApiEvent = {
   thumbnail?: string;
 };
 
+// Every outside request has its own time limit, so one slow answer cannot use up the whole run (a run that hits the platform limit is killed and saves nothing).
+const SERP_TIMEOUT_MS = 15_000;
+const TM_TIMEOUT_MS = 8_000;
+const AI_TIMEOUT_MS = 25_000;
+
 const NATIONWIDE_LOCATION = "United States";
 
 function parseAddress(address?: string[]): { venue: string | null; location: string | null } {
@@ -98,7 +104,7 @@ async function fetchSerpCandidates(apiKey: string, category: string, query: stri
 
   let response: Response;
   try {
-    response = await fetch(url, { headers: { Accept: "application/json" } });
+    response = await fetch(url, { headers: { Accept: "application/json" }, signal: AbortSignal.timeout(SERP_TIMEOUT_MS) });
   } catch (err) {
     return { candidates: [], error: `SerpApi ${category}: request failed (${String(err)})`.slice(0, 200) };
   }
@@ -166,7 +172,7 @@ async function fetchTicketmasterCandidates(apiKey: string, category: string, key
 
   let response: Response;
   try {
-    response = await fetch(url);
+    response = await fetch(url, { signal: AbortSignal.timeout(TM_TIMEOUT_MS) });
   } catch (err) {
     return { candidates: [], error: `Ticketmaster ${category}: request failed (${String(err)})`.slice(0, 200) };
   }
@@ -242,6 +248,7 @@ async function filterRelevantCandidates(
         max_tokens: 4096,
         messages: [{ role: "user", content: prompt }],
       }),
+      signal: AbortSignal.timeout(AI_TIMEOUT_MS),
     });
 
     if (!response.ok) {
@@ -297,6 +304,7 @@ export async function GET(req: NextRequest) {
   }
 
   const now = new Date();
+  const t0 = Date.now();
   const allCandidates: Candidate[] = [];
   const foundByCategory: Record<string, number> = {};
   const sourceErrors: string[] = [];
@@ -358,9 +366,18 @@ export async function GET(req: NextRequest) {
     // only ever updated in the columns above and only where this run has a value, so a manual disable or feature-flip is never undone by the next run.
   }));
 
+  const tSearched = Date.now();
   const saved = await persistEvents(svc, rows);
-  // Pictures for the banner events that have none (their organiser's own share image); a failure here never fails the run.
-  const art = await fillBannerArt(svc).catch((err) => ({ checked: 0, filled: 0, filledSlugs: [] as string[], errors: [`art step threw: ${String(err)}`.slice(0, 200)] }));
+  const tSaved = Date.now();
+  // Pictures for the banner events that have none (their organiser's own share image). Done after the response has gone: a run that did its real work
+  // must not be marked failed, or time out, because of this. Its result goes to the log.
+  const artRan: { scheduled: boolean } = { scheduled: false };
+  artRan.scheduled = await runAfterResponse(async () => {
+    const art = await fillBannerArt(svc).catch((err) => ({ checked: 0, filled: 0, classified: 0, filledSlugs: [] as string[], errors: [`art step threw: ${String(err)}`.slice(0, 200)] }));
+    const line = JSON.stringify({ checked: art.checked, filled: art.filled, classified: art.classified, errors: art.errors });
+    if (art.errors.length) console.error("[refresh-events] art", line);
+    else console.log("[refresh-events] art", line);
+  });
 
   // A run that did not do its job answers with an error status (the platform marks the cron run failed and the log line below is easy to find),
   // instead of a cheerful 200 that nobody looks at.
@@ -386,7 +403,9 @@ export async function GET(req: NextRequest) {
     duplicatesDropped: saved.duplicatesDropped,
     failed: saved.failed,
     saveErrors: saved.errors,
-    art: { checked: art.checked, filled: art.filled, errors: art.errors },
+    artAfterResponse: artRan.scheduled,
+    // where the time went, so a slow run can be told from a failed one
+    timingMs: { searchesAndAi: tSearched - t0, save: tSaved - tSearched, total: Date.now() - t0 },
     problems,
   };
   if (hardFailure || problems.length) console.error("[refresh-events]", JSON.stringify(body));
