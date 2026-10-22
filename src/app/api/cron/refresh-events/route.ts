@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServiceClient } from "@/lib/serverAdmin";
 import { parseSerpEventWindow } from "@/lib/events/serpEventDateParse";
+import { fillBannerArt } from "@/lib/events/eventArt";
 import { dayStamps, eventSlug, isIsoDay, persistEvents, type EventRow } from "@/lib/events/eventPipeline";
 
 // Several searches plus the AI check run in one request; the platform default (10 s on some plans) is too short for that.
@@ -358,6 +359,8 @@ export async function GET(req: NextRequest) {
   }));
 
   const saved = await persistEvents(svc, rows);
+  // Pictures for the banner events that have none (their organiser's own share image); a failure here never fails the run.
+  const art = await fillBannerArt(svc).catch((err) => ({ checked: 0, filled: 0, filledSlugs: [] as string[], errors: [`art step threw: ${String(err)}`.slice(0, 200)] }));
 
   // A run that did not do its job answers with an error status (the platform marks the cron run failed and the log line below is easy to find),
   // instead of a cheerful 200 that nobody looks at.
@@ -383,6 +386,7 @@ export async function GET(req: NextRequest) {
     duplicatesDropped: saved.duplicatesDropped,
     failed: saved.failed,
     saveErrors: saved.errors,
+    art: { checked: art.checked, filled: art.filled, errors: art.errors },
     problems,
   };
   if (hardFailure || problems.length) console.error("[refresh-events]", JSON.stringify(body));

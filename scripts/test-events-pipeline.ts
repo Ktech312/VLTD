@@ -33,6 +33,7 @@ import { NextRequest } from "next/server";
 import { getServiceClient } from "../src/lib/serverAdmin";
 import { persistEvents, dedupeRows, normalizeEventName, eventSlug, dayStamps, isIsoDay } from "../src/lib/events/eventPipeline";
 import { MAJOR_SHOWS } from "../src/lib/events/majorShows";
+import { pickMetaImage, isPublicHttpUrl, fillBannerArt } from "../src/lib/events/eventArt";
 import { pickBannerEvents } from "../src/lib/bannerEvents";
 import { eventPhase, eventCountdown, daysUntilStart } from "../src/lib/eventDates";
 import {
@@ -170,6 +171,19 @@ async function fakeFetch(input: RequestInfo | URL, init: RequestInit = {}): Prom
       answer = payload.map((s) => world.majorAnswers[String(s.name)] ?? { name: s.name, confident: false, startDate: null, endDate: null, city: null, link: null });
     }
     return jsonResponse(200, { content: [{ type: "text", text: JSON.stringify(answer) }] });
+  }
+  if (url.host === "organiser.test") {
+    const page = (head: string) => new Response(`<html><head>${head}</head><body/></html>`, { status: 200, headers: { "content-type": "text/html; charset=utf-8" } });
+    if (url.pathname === "/with-art") return page(`<meta property="og:title" content="X"><meta content="/img/banner.jpg" property="og:image">`);
+    if (url.pathname === "/twitter-art") return page(`<meta name="twitter:image" content="https://img.test/a.jpg?x=1&amp;y=2">`);
+    if (url.pathname === "/not-image") return page(`<meta property="og:image" content="https://img.test/page.html">`);
+    if (url.pathname === "/svg") return page(`<meta property="og:image" content="https://img.test/logo.svg">`);
+    if (url.pathname === "/no-meta") return page("<title>nothing</title>");
+    if (url.pathname === "/gone") return new Response("nope", { status: 404 });
+  }
+  if (url.host === "img.test" || url.host === "organiser.test") {
+    const isImage = /.(jpg|png)$/.test(url.pathname) || url.pathname === "/img/banner.jpg";
+    return new Response(isImage ? "x" : "<html/>", { status: 206, headers: { "content-type": isImage ? "image/jpeg" : "text/html" } });
   }
   throw new Error(`test tried to reach the real internet: ${url.href}`);
 }
@@ -427,6 +441,48 @@ async function main() {
     assert.equal(status, 502);
     assert.ok(body.problems.some((p: string) => /every search failed/.test(p)));
     assert.equal(world.calls.ai, 0);
+  });
+
+  // ───────── pictures for the banner ─────────
+  await test("art: the share picture a page names is found, made absolute, and unusable ones are skipped", () => {
+    assert.equal(pickMetaImage(`<meta content="/img/b.jpg" property="og:image">`, "https://x.test/events/a"), "https://x.test/img/b.jpg");
+    assert.equal(pickMetaImage(`<meta name="twitter:image" content="http://x.test/t.png">`, "https://x.test/"), "https://x.test/t.png");
+    assert.equal(pickMetaImage(`<meta property="og:image" content="https://x.test/logo.svg"><meta name="twitter:image" content="https://x.test/t.png">`, "https://x.test/"), "https://x.test/t.png");
+    assert.equal(pickMetaImage("<title>none</title>", "https://x.test/"), null);
+    assert.equal(isPublicHttpUrl("http://localhost:3000/x"), false);
+    assert.equal(isPublicHttpUrl("http://192.168.1.4/x"), false);
+    assert.equal(isPublicHttpUrl("file:///etc/passwd"), false);
+    assert.equal(isPublicHttpUrl("https://www.comicconla.com/"), true);
+  });
+  await test("art: fills only empty pictures, never replaces one, rejects non-images and dead pages, and saves nothing it did not verify", async () => {
+    const base = { starts_at: "2026-10-30T00:00:00.000Z", ends_at: "2026-11-01T23:59:59.000Z" };
+    seed({ ...base, slug: "a-fills", name: "A", website_url: "https://organiser.test/with-art" });
+    seed({ ...base, slug: "b-twitter", name: "B", website_url: "https://organiser.test/twitter-art" });
+    seed({ ...base, slug: "c-has-one", name: "C", website_url: "https://organiser.test/with-art", image_url: "https://img.test/mine.jpg" });
+    seed({ ...base, slug: "d-not-image", name: "D", website_url: "https://organiser.test/not-image" });
+    seed({ ...base, slug: "e-svg", name: "E", website_url: "https://organiser.test/svg" });
+    seed({ ...base, slug: "f-nometa", name: "F", website_url: "https://organiser.test/no-meta" });
+    seed({ ...base, slug: "g-gone", name: "G", website_url: "https://organiser.test/gone" });
+    seed({ ...base, slug: "h-private", name: "H", website_url: "http://localhost/secret" });
+    seed({ ...base, slug: "i-nosite", name: "I", website_url: null });
+    seed({ ...base, slug: "j-disabled", name: "J", website_url: "https://organiser.test/with-art", enabled: false });
+    const result = await fillBannerArt(getServiceClient()!, fakeFetch as typeof fetch);
+    const img = (slug: string) => table.find((r) => r.slug === slug)?.image_url ?? null;
+    assert.equal(img("a-fills"), "https://organiser.test/img/banner.jpg");
+    assert.equal(img("b-twitter"), "https://img.test/a.jpg?x=1&y=2");
+    assert.equal(img("c-has-one"), "https://img.test/mine.jpg");
+    for (const slug of ["d-not-image", "e-svg", "f-nometa", "g-gone", "h-private", "i-nosite", "j-disabled"]) assert.equal(img(slug), null, slug);
+    assert.equal(result.filled, 2);
+    assert.deepEqual(result.filledSlugs.sort(), ["a-fills", "b-twitter"]);
+    assert.equal(result.errors.length, 0);
+  });
+  await test("art: a refresh that matches a row keeps the picture already on it", async () => {
+    seed({ slug: "keep-art", name: "Keep Art Expo", starts_at: "2026-11-20T00:00:00.000Z", ends_at: "2026-11-20T23:59:59.000Z", city: "Austin, TX", image_url: "https://img.test/mine.jpg" });
+    const row = { slug: "keep-art-2026-11-20-austin", name: "Keep Art Expo", starts_at: "2026-11-20T00:00:00.000Z", ends_at: "2026-11-20T23:59:59.000Z", city: "Austin, TX", image_url: "https://img.test/theirs.jpg", venue_name: "Hall" };
+    const r = await persistEvents(getServiceClient()!, [row]);
+    assert.equal(r.updated, 1);
+    assert.equal(table[0].image_url, "https://img.test/mine.jpg");
+    assert.equal(table[0].venue_name, "Hall");
   });
 
   // ───────── the Home banner's ten ─────────

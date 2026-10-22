@@ -1,24 +1,24 @@
 "use client";
 
-import { PillButton } from "@/components/ui/PillButton";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 import { fetchActiveThemes, type SeasonalTheme } from "@/lib/seasonalTheme";
 import { Glyph } from "@/components/ui/Glyph";
+import { Toggle } from "@/components/ui/Toggle";
 import { acceptTheme, applyAcceptedTheme, declineTheme, getThemePrefs, type ThemeChoice } from "@/lib/seasonalConsent";
 import { eventCountdown } from "@/lib/eventDates";
 import { BANNER_FETCH_FEATURED, BANNER_FETCH_NEAREST, FEATURED_HORIZON_DAYS, pickBannerEvents } from "@/lib/bannerEvents";
 
-const ROTATE_MS = 35_000;
+const ROTATE_MS = 15_000;
 const FADE_MS = 300;
+const DRAG_START_PX = 8; // movement before a press counts as a drag (and stops it counting as a tap)
+const SWIPE_PX = 40; // a drag at least this long, left or right, moves to the next or previous slide
 
-// One size for every slide. The card is a main row plus a band underneath; the band always exists (it carries the dots, and on a theme slide the
-// theme question), so choosing Yes or No, or moving between a theme slide and an event slide, never changes the card's height and nothing below moves.
-const MAIN_ROW_PX = 46;
-const BAND_PX = 32;
-const CARD_PX = MAIN_ROW_PX + BAND_PX + 2; // + the 1px border top and bottom
+// One size for every slide and every theme state: the card has a fixed height (the artwork, or the fallback, fills it), and the Seasonal theme switch
+// below it sits in a row of fixed height, so changing the switch or the slide never changes the size of anything or moves what is below.
+const CARD_PX = 72;
 
 // Color map for collector events by slug
 const EVENT_COLOR_MAP: Record<string, { accent: string; secondary: string }> = {
@@ -38,6 +38,7 @@ type CollectorEvent = {
   ends_at: string;
   city: string | null;
   state_region: string | null;
+  image_url?: string | null;
   is_featured?: boolean | null;
 };
 
@@ -45,7 +46,7 @@ type Slide =
   | { type: "theme"; theme: SeasonalTheme }
   | { type: "event"; event: CollectorEvent };
 
-const EVENT_COLUMNS = "id, slug, name, emoji, starts_at, ends_at, city, state_region, is_featured";
+const EVENT_COLUMNS = "id, slug, name, emoji, starts_at, ends_at, city, state_region, image_url, is_featured";
 
 async function loadBannerEvents(): Promise<CollectorEvent[]> {
   const supabase = getSupabaseBrowserClient();
@@ -72,6 +73,9 @@ async function loadBannerEvents(): Promise<CollectorEvent[]> {
   return pickBannerEvents((featured.data ?? []) as CollectorEvent[], (nearest.data ?? []) as CollectorEvent[], now);
 }
 
+// The switch's row, and the same row kept as an empty spacer while loading
+const SWITCH_ROW = "mt-1.5 flex h-11 items-center justify-end gap-2 md:h-6";
+
 export default function SeasonalBanner() {
   const router = useRouter();
   const [loaded, setLoaded] = useState(false);
@@ -80,16 +84,18 @@ export default function SeasonalBanner() {
   const [idx, setIdx] = useState(0);
   const [visible, setVisible] = useState(true);
   const [themePrefs, setThemePrefs] = useState<Record<string, ThemeChoice>>({});
-  const [moves, setMoves] = useState(0); // counts manual moves so the 35 s countdown starts over after each one
-  const touchStartX = useRef<number | null>(null); // must be before any early return
+  const [moves, setMoves] = useState(0); // counts manual moves so the 15 s countdown starts over after each one
+  const [brokenArt, setBrokenArt] = useState<Record<string, true>>({});
   const shownRef = useRef(0); // the slide being shown, or about to be: rapid taps add up instead of all starting from the same slide
   const fadeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const press = useRef<{ id: number; x: number; y: number; dragging: boolean } | null>(null);
+  const swallowClick = useRef(false);
   const count = slides.length;
 
   useEffect(() => {
     let cancelled = false;
     async function loadSlides() {
-      // Seasonal themes (the one the person said Yes to is switched on; with none accepted the normal theme stays)
+      // Seasonal themes (the one the person turned on is applied; with it off the normal theme stays)
       const allThemes = await fetchActiveThemes();
       applyAcceptedTheme(allThemes);
       const bannerThemes = allThemes.filter((t) => t.banner_enabled);
@@ -128,19 +134,58 @@ export default function SeasonalBanner() {
     [count],
   );
 
-  // Rotate every 35 s with a fade; any manual move starts the countdown over
+  // Rotate every 15 s with a fade; any manual move (arrow, dot, swipe, drag, key) starts the countdown over, so it never jumps again right after
   useEffect(() => {
     if (count <= 1) return;
     const id = setInterval(() => goTo(shownRef.current + 1, false), ROTATE_MS);
     return () => clearInterval(id);
   }, [count, moves, goTo]);
 
+  // Have the next slide's picture ready before it is shown
+  useEffect(() => {
+    if (count < 2) return;
+    const next = slides[(idx + 1) % count];
+    const url = next?.type === "event" ? next.event.image_url : null;
+    if (url) {
+      const img = new Image();
+      img.referrerPolicy = "no-referrer";
+      img.src = url;
+    }
+  }, [idx, count, slides]);
+
   const slide = slides[idx];
   if (!loaded) {
-    // Same box as the finished banner, so the page does not jump when the slides arrive.
-    return <div aria-hidden className="mb-4" style={{ height: CARD_PX, borderRadius: 10 }} />;
+    // The same boxes as the finished banner, so the page does not jump when the slides arrive.
+    return (
+      <div aria-hidden>
+        <div style={{ height: CARD_PX, borderRadius: 10 }} />
+        <div className={SWITCH_ROW} />
+      </div>
+    );
   }
-  if (!slide) return null;
+
+  // The seasonal theme the switch controls: the latest-starting active one that can recolor the app
+  const seasonal = [...themes].reverse().find((t) => t.accent_color) ?? null;
+  const seasonalOn = seasonal ? themePrefs[seasonal.slug] === "accepted" : false;
+  function toggleSeasonal() {
+    if (!seasonal) return;
+    if (seasonalOn) declineTheme(seasonal, themes);
+    else acceptTheme(seasonal, themes);
+    setThemePrefs(getThemePrefs());
+  }
+
+  if (!slide && !seasonal) return null;
+
+  const switchRow = seasonal ? (
+    <div className={SWITCH_ROW}>
+      <span id="seasonal-theme-label" className="text-[11px] font-medium" style={{ color: "var(--muted)" }}>Seasonal theme</span>
+      <Toggle on={seasonalOn} onChange={toggleSeasonal} ariaLabel="Seasonal theme" />
+      <span className="w-6 text-[11px] font-semibold" style={{ color: "var(--muted)" }} aria-hidden>{seasonalOn ? "On" : "Off"}</span>
+    </div>
+  ) : (
+    <div className={SWITCH_ROW} />
+  );
+  if (!slide) return <div>{switchRow}</div>;
 
   // Get colors for current slide
   let accent: string;
@@ -150,31 +195,42 @@ export default function SeasonalBanner() {
     accent = (EVENT_COLOR_MAP[slide.event.slug] ?? DEFAULT_EVENT_COLORS).accent;
   }
 
-  // Theme question / state: shown in the band on a theme slide that can recolor the app
-  const themeSlide = slide.type === "theme" && slide.theme.accent_color ? slide.theme : null;
-  const choice = themeSlide ? themePrefs[themeSlide.slug] : undefined;
-  function chooseYes() {
-    if (!themeSlide) return;
-    acceptTheme(themeSlide, themes);
-    setThemePrefs(getThemePrefs());
-  }
-  function chooseNo() {
-    if (!themeSlide) return;
-    declineTheme(themeSlide, themes);
-    setThemePrefs(getThemePrefs());
-  }
+  const art = slide.type === "event" && slide.event.image_url && !brokenArt[slide.event.image_url] ? slide.event.image_url : null;
 
-  // Touch swipe support
-  function handleTouchStart(e: React.TouchEvent) {
-    touchStartX.current = e.touches[0].clientX;
+  // Pointer handling: a horizontal drag (finger on a phone, mouse on a computer) moves to the next or previous slide. Vertical movement is never
+  // taken (touch-action: pan-y leaves page scrolling to the browser), and a press that turned into a drag never counts as a tap on the event or a button.
+  function onPointerDown(e: React.PointerEvent) {
+    if (count < 2 || (e.pointerType === "mouse" && e.button !== 0)) return;
+    press.current = { id: e.pointerId, x: e.clientX, y: e.clientY, dragging: false };
   }
-  function handleTouchEnd(e: React.TouchEvent) {
-    const start = touchStartX.current;
-    touchStartX.current = null;
-    if (start === null || count <= 1) return;
-    const dx = e.changedTouches[0].clientX - start;
-    if (Math.abs(dx) < 40) return; // ignore tiny moves
-    goTo(shownRef.current + (dx < 0 ? 1 : -1), true); // swipe left → next, swipe right → previous
+  function onPointerMove(e: React.PointerEvent) {
+    const p = press.current;
+    if (!p || p.id !== e.pointerId || p.dragging) return;
+    const dx = e.clientX - p.x;
+    const dy = e.clientY - p.y;
+    if (Math.abs(dx) > DRAG_START_PX && Math.abs(dx) > Math.abs(dy) * 1.2) {
+      p.dragging = true;
+      try {
+        e.currentTarget.setPointerCapture(e.pointerId); // keeps a mouse drag going outside the banner
+      } catch {
+        /* the pointer is already gone */
+      }
+    }
+  }
+  function onPointerUp(e: React.PointerEvent) {
+    const p = press.current;
+    if (!p || p.id !== e.pointerId) return;
+    press.current = null;
+    if (!p.dragging) return;
+    swallowClick.current = true;
+    setTimeout(() => {
+      swallowClick.current = false;
+    }, 60);
+    const dx = e.clientX - p.x;
+    if (Math.abs(dx) >= SWIPE_PX) goTo(shownRef.current + (dx < 0 ? 1 : -1), true); // left = next, right = previous
+  }
+  function onPointerCancel() {
+    press.current = null; // the browser took the gesture (a vertical scroll): nothing to do
   }
 
   const label = slide.type === "theme"
@@ -189,219 +245,166 @@ export default function SeasonalBanner() {
   const eventHref = slide.type === "event" ? "/events" : null;
 
   return (
-    <div
-      data-seasonal-banner
-      className="vltd-dark-surface relative mb-4 select-none overflow-hidden"
-      style={{
-        background: "linear-gradient(90deg, rgba(4,10,16,0.98), rgba(7,18,26,0.96) 48%, rgba(3,8,14,0.98))",
-        border: "1px solid rgba(203,208,213,0.42)",
-        borderRadius: 10,
-        boxShadow: "0 18px 46px rgba(0,0,0,0.36), inset 0 1px 0 rgba(237,239,241,0.08)",
-        opacity: visible ? 1 : 0,
-        transition: "opacity 0.3s ease",
-        height: CARD_PX,
-        boxSizing: "border-box",
-        cursor: eventHref ? "pointer" : "default",
-      }}
-      role={eventHref ? "link" : undefined}
-      tabIndex={eventHref ? 0 : undefined}
-      onClick={() => {
-        if (eventHref) router.push(eventHref);
-      }}
-      onKeyDown={(e) => {
-        if (!eventHref) return;
-        if (e.key === "Enter" || e.key === " ") {
-          e.preventDefault();
-          router.push(eventHref);
-        }
-      }}
-      onTouchStart={handleTouchStart}
-      onTouchEnd={handleTouchEnd}
-    >
+    <div>
       <div
-        className="pointer-events-none absolute inset-0"
+        data-seasonal-banner
+        data-slide={slide.type === "event" ? slide.event.slug : slide.theme.slug}
+        data-art={art ? "yes" : "no"}
+        className="vltd-dark-surface relative select-none overflow-hidden"
         style={{
-          background: `linear-gradient(90deg, transparent, ${accent}12 52%, transparent 78%)`,
-          opacity: 0.42,
+          background: "linear-gradient(90deg, rgba(4,10,16,0.98), rgba(7,18,26,0.96) 48%, rgba(3,8,14,0.98))",
+          border: "1px solid rgba(203,208,213,0.42)",
+          borderRadius: 10,
+          boxShadow: "0 18px 46px rgba(0,0,0,0.36), inset 0 1px 0 rgba(237,239,241,0.08)",
+          opacity: visible ? 1 : 0,
+          transition: "opacity 0.3s ease",
+          height: CARD_PX,
+          boxSizing: "border-box",
+          cursor: eventHref ? "pointer" : "default",
+          touchAction: "pan-y",
         }}
-      />
-      {/* Main row */}
-      <div className="relative flex items-center gap-2 px-3" style={{ height: MAIN_ROW_PX }}>
-
-        {/* Prev arrow */}
-        {count > 1 && (
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              goTo(shownRef.current - 1, true);
-            }}
-            aria-label="Previous"
-            className="vltd-tap-y flex h-6 w-6 flex-shrink-0 items-center justify-center transition hover:brightness-125"
-            style={{
-              background: "rgba(255,255,255,0.035)",
-              border: "1px solid rgba(203,208,213,0.30)",
-              borderRadius: 7,
-            }}
-          >
-            <Glyph name="back" size={12} strokeWidth={2} style={{ color: "#E6C46A" }} />
-          </button>
+        role={eventHref ? "link" : undefined}
+        tabIndex={0}
+        aria-roledescription="carousel"
+        onClickCapture={(e) => {
+          if (swallowClick.current) {
+            swallowClick.current = false;
+            e.preventDefault();
+            e.stopPropagation();
+          }
+        }}
+        onClick={() => {
+          if (eventHref) router.push(eventHref);
+        }}
+        onKeyDown={(e) => {
+          if (e.target !== e.currentTarget) return;
+          if (e.key === "ArrowRight") goTo(shownRef.current + 1, true);
+          else if (e.key === "ArrowLeft") goTo(shownRef.current - 1, true);
+          else if (eventHref && (e.key === "Enter" || e.key === " ")) {
+            e.preventDefault();
+            router.push(eventHref);
+          }
+        }}
+        onDragStart={(e) => e.preventDefault()}
+        onPointerDown={onPointerDown}
+        onPointerMove={onPointerMove}
+        onPointerUp={onPointerUp}
+        onPointerCancel={onPointerCancel}
+      >
+        {/* Artwork (the event's own picture) with a scrim so the words stay readable; without artwork, the same card with a soft accent glow */}
+        {art ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={art}
+            alt=""
+            draggable={false}
+            referrerPolicy="no-referrer"
+            onError={() => setBrokenArt((b) => ({ ...b, [art]: true }))}
+            className="pointer-events-none absolute inset-0 h-full w-full object-cover"
+            style={{ objectPosition: "center 30%" }}
+          />
+        ) : (
+          <div
+            className="pointer-events-none absolute inset-0"
+            style={{ background: `linear-gradient(90deg, transparent, ${accent}12 52%, transparent 78%)`, opacity: 0.42 }}
+          />
+        )}
+        {art && (
+          <div
+            className="pointer-events-none absolute inset-0"
+            style={{ background: "linear-gradient(90deg, rgba(4,10,16,0.94) 0%, rgba(4,10,16,0.84) 42%, rgba(4,10,16,0.5) 100%)" }}
+          />
         )}
 
-        {/* Emoji */}
-        {emoji && <span className="text-base flex-shrink-0">{emoji}</span>}
+        <div className="relative flex h-full items-center gap-2 px-3" style={{ paddingBottom: 8 }}>
+          {/* Prev arrow */}
+          {count > 1 && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                goTo(shownRef.current - 1, true);
+              }}
+              aria-label="Previous"
+              className="vltd-tap-y flex h-6 w-6 flex-shrink-0 items-center justify-center transition hover:brightness-125"
+              style={{ background: "rgba(0,0,0,0.35)", border: "1px solid rgba(203,208,213,0.30)", borderRadius: 7 }}
+            >
+              <Glyph name="back" size={12} strokeWidth={2} style={{ color: "#E6C46A" }} />
+            </button>
+          )}
 
-        {/* Text — one line title + faint sublabel. The outer card carries
-            .vltd-dark-surface (theme-override.css) so every descendant here
-            inherits light text automatically -- no per-element class
-            needed, and the sublabel's own accent color below just wins
-            normally since nothing is forcing it anymore. */}
-        <div className="flex-1 min-w-0">
-          <p className="text-xs font-bold leading-tight truncate">{label}</p>
-          {sublabel && (
-            <p className="text-[10px] leading-tight truncate" style={{ color: `${accent}bb` }}>{sublabel}</p>
+          {/* Emoji (only on slides without artwork) */}
+          {emoji && !art && <span className="text-base flex-shrink-0">{emoji}</span>}
+
+          {/* Text: one line title + faint sublabel. The card carries .vltd-dark-surface (theme-override.css) so every descendant inherits light text. */}
+          <div className="flex-1 min-w-0" style={{ textShadow: art ? "0 1px 3px rgba(0,0,0,0.9)" : undefined }}>
+            <p className="text-xs font-bold leading-tight truncate">{label}</p>
+            {sublabel && (
+              <p className="text-[10px] leading-tight truncate" style={{ color: art ? "#E6EAEE" : `${accent}bb` }}>{sublabel}</p>
+            )}
+          </div>
+
+          {/* CTA */}
+          {ctaLabel && (
+            <Link
+              href={ctaHref ?? "#"}
+              draggable={false}
+              onClick={(e) => e.stopPropagation()}
+              className="flex-shrink-0 px-3 py-1.5 text-[11px] font-black transition hover:brightness-110"
+              style={{
+                background: "linear-gradient(135deg,#8C9298,#C8CDD2)",
+                border: "1px solid rgba(255,225,128,0.40)",
+                borderRadius: 7,
+                color: "#080808",
+                boxShadow: "0 10px 24px rgba(203,208,213,0.18)",
+              }}
+            >
+              {ctaLabel}
+            </Link>
+          )}
+
+          {/* Next arrow */}
+          {count > 1 && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                goTo(shownRef.current + 1, true);
+              }}
+              aria-label="Next"
+              className="vltd-tap-y flex h-6 w-6 flex-shrink-0 items-center justify-center transition hover:brightness-125"
+              style={{ background: "rgba(0,0,0,0.35)", border: "1px solid rgba(203,208,213,0.30)", borderRadius: 7 }}
+            >
+              <Glyph name="next" size={12} strokeWidth={2} style={{ color: "#E6C46A" }} />
+            </button>
           )}
         </div>
 
-        {/* CTA */}
-        {ctaLabel && (
-          <Link
-            href={ctaHref ?? "#"}
-            onClick={(e) => e.stopPropagation()}
-            className="flex-shrink-0 px-3 py-1.5 text-[11px] font-black transition hover:brightness-110"
-            style={{
-              background: "linear-gradient(135deg,#8C9298,#C8CDD2)",
-              border: "1px solid rgba(255,225,128,0.40)",
-              borderRadius: 7,
-              color: "#080808",
-              boxShadow: "0 10px 24px rgba(203,208,213,0.18)",
-            }}
-          >
-            {ctaLabel}
-          </Link>
-        )}
-
-        {/* Next arrow */}
+        {/* Dots, along the bottom edge */}
         {count > 1 && (
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              goTo(shownRef.current + 1, true);
-            }}
-            aria-label="Next"
-            className="vltd-tap-y flex h-6 w-6 flex-shrink-0 items-center justify-center transition hover:brightness-125"
-            style={{
-              background: "rgba(255,255,255,0.035)",
-              border: "1px solid rgba(203,208,213,0.30)",
-              borderRadius: 7,
-            }}
-          >
-            <Glyph name="next" size={12} strokeWidth={2} style={{ color: "#E6C46A" }} />
-          </button>
-        )}
-      </div>
-
-      {/* Band: the theme question on the left (theme slides only), the dots in the middle, the answer buttons on the right. Always the same height. */}
-      <div
-        className="relative grid items-center gap-2 px-3"
-        style={{ height: BAND_PX, gridTemplateColumns: "minmax(0,1fr) auto minmax(0,1fr)" }}
-      >
-        <p className="flex min-w-0 items-center gap-1 text-[10px]" style={{ color: `${accent}bb` }}>
-          {themeSlide && (
-            <>
-              <Glyph name="palette" size={11} />
-              <span className="truncate">
-                {choice === "accepted" ? "Seasonal theme on" : choice === "dismissed" ? "Normal theme" : "Switch app theme?"}
-              </span>
-            </>
-          )}
-        </p>
-
-        <div className="flex items-center justify-center gap-1">
-          {count > 1 &&
-            slides.map((_, i) => (
+          <div className="pointer-events-none absolute bottom-1 left-0 right-0 flex items-center justify-center gap-1">
+            {slides.map((_, i) => (
               <button
                 key={i}
                 onClick={(e) => {
                   e.stopPropagation();
                   goTo(i, true);
                 }}
-                className="vltd-tap-y flex-shrink-0 transition-all duration-300"
+                className="vltd-tap-y pointer-events-auto flex-shrink-0 transition-all duration-300"
                 style={{
                   ["--tap-h" as string]: "28px",
                   width: i === idx ? 14 : 5,
                   height: 3,
-                  background: i === idx ? "#E6C46A" : "rgba(203,208,213,0.24)",
+                  background: i === idx ? "#E6C46A" : "rgba(203,208,213,0.34)",
                   borderRadius: 2,
                 }}
                 aria-label={`Slide ${i + 1}`}
                 aria-current={i === idx ? "true" : undefined}
               />
             ))}
-        </div>
-
-        <div className="flex items-center justify-end gap-1.5">
-          {themeSlide && !choice && (
-            <>
-              <PillButton size="compact" onClick={(e) => { e.stopPropagation(); chooseYes(); }} style={{ background: "linear-gradient(135deg,#8C9298,#C8CDD2)", color: "#000" }}>Yes</PillButton>
-              <PillButton size="compact" onClick={(e) => { e.stopPropagation(); chooseNo(); }}>No</PillButton>
-            </>
-          )}
-          {themeSlide && choice === "accepted" && (
-            <PillButton size="compact" onClick={(e) => { e.stopPropagation(); chooseNo(); }}>Back to normal</PillButton>
-          )}
-          {themeSlide && choice === "dismissed" && (
-            <PillButton size="compact" onClick={(e) => { e.stopPropagation(); chooseYes(); }}>Use seasonal</PillButton>
-          )}
-        </div>
+          </div>
+        )}
       </div>
+
+      {switchRow}
     </div>
   );
-}
-
-function SeasonalAccents({ style, color }: { style: string; color: string }) {
-  if (style === "snowflakes") {
-    return (
-      <div className="pointer-events-none absolute inset-0 overflow-hidden opacity-20">
-        {["10%","25%","45%","65%","80%","92%"].map((left, i) => (
-          <span key={i} className="absolute text-lg animate-bounce"
-            style={{ left, top: `${(i*17)%70}%`, animationDelay: `${i*0.3}s` }}>❄️</span>
-        ))}
-      </div>
-    );
-  }
-  if (style === "confetti") {
-    return (
-      <div className="pointer-events-none absolute inset-0 overflow-hidden opacity-30">
-        {["8%","20%","35%","55%","70%","85%"].map((left, i) => (
-          <span key={i} className="absolute text-sm animate-pulse"
-            style={{ left, top: `${(i*20)%80}%`, animationDelay: `${i*0.2}s` }}>
-            {["🟩","🟦","🟨","⚽","🏆","⚽"][i]}
-          </span>
-        ))}
-      </div>
-    );
-  }
-  if (style === "leaves") {
-    return (
-      <div className="pointer-events-none absolute inset-0 overflow-hidden opacity-25">
-        {["5%","22%","40%","60%","78%","90%"].map((left, i) => (
-          <span key={i} className="absolute animate-pulse"
-            style={{ left, top: `${(i*15)%75}%`, animationDelay: `${i*0.4}s` }}>
-            {["🍂","🍁","🎃","🍂","🍁","🎃"][i]}
-          </span>
-        ))}
-      </div>
-    );
-  }
-  if (style === "stars") {
-    return (
-      <div className="pointer-events-none absolute inset-0 overflow-hidden opacity-20">
-        {["12%","30%","50%","68%","84%"].map((left, i) => (
-          <span key={i} className="absolute animate-ping"
-            style={{ left, top: `${(i*20)%70}%`, animationDelay: `${i*0.5}s`, color }}>✦</span>
-        ))}
-      </div>
-    );
-  }
-  return null;
 }

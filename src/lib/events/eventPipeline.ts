@@ -116,7 +116,7 @@ export function dedupeRows<T extends EventRow>(rows: T[]): { rows: T[]; dropped:
   return { rows: kept, dropped };
 }
 
-type ExistingRow = { slug: string; name: string; starts_at: string; city: string | null };
+type ExistingRow = { slug: string; name: string; starts_at: string; city: string | null; image_url?: string | null };
 
 function findExisting(row: EventRow, existing: ExistingRow[]): ExistingRow | null {
   const exact = existing.find((e) => e.slug === row.slug);
@@ -129,11 +129,12 @@ function findExisting(row: EventRow, existing: ExistingRow[]): ExistingRow | nul
   );
 }
 
-/** A row that is already in the table is changed only where the new source has a value, and never in name, slug or Disabled. */
-function patchFor(row: EventRow): Record<string, unknown> {
+/** A row that is already in the table is changed only where the new source has a value, and never in name, slug or Disabled; a picture that is there stays. */
+function patchFor(row: EventRow, existing: ExistingRow): Record<string, unknown> {
   const patch: Record<string, unknown> = {};
   for (const [key, value] of Object.entries(row)) {
     if (key === "slug" || key === "name") continue;
+    if (key === "image_url" && existing.image_url) continue;
     if (value === null || value === undefined || value === "") continue;
     patch[key] = value;
   }
@@ -152,7 +153,7 @@ export async function persistEvents(svc: SupabaseClient, input: EventRow[]): Pro
   const last = Math.max(...rows.map((r) => startMs(r.starts_at)));
   const { data: existingData, error: lookupError } = await svc
     .from("collector_events")
-    .select("slug, name, starts_at, city")
+    .select("slug, name, starts_at, city, image_url")
     .gte("starts_at", new Date(first - 4 * DAY_MS).toISOString())
     .lte("starts_at", new Date(last + 4 * DAY_MS).toISOString())
     .limit(5000);
@@ -178,7 +179,7 @@ export async function persistEvents(svc: SupabaseClient, input: EventRow[]): Pro
     }
     claimed.add(match.slug);
     result.matchedExisting += 1;
-    const { error } = await svc.from("collector_events").update(patchFor(row)).eq("slug", match.slug);
+    const { error } = await svc.from("collector_events").update(patchFor(row, match)).eq("slug", match.slug);
     if (error) {
       result.failed += 1;
       result.errors.push(`update ${match.slug}: ${error.message}`.slice(0, 300));

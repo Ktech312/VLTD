@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServiceClient } from "@/lib/serverAdmin";
 import { MAJOR_SHOWS } from "@/lib/events/majorShows";
+import { fillBannerArt } from "@/lib/events/eventArt";
 import { dayStamps, eventSlug, isIsoDay, persistEvents, type EventRow } from "@/lib/events/eventPipeline";
 
 // Runs weekly (see vercel.json) to keep a curated list of the major,
@@ -212,6 +213,8 @@ export async function GET(req: NextRequest) {
   });
 
   const saved = await persistEvents(svc, rows);
+  // Pictures for the banner events that have none (their organiser's own share image); a failure here never fails the run.
+  const art = await fillBannerArt(svc).catch((err) => ({ checked: 0, filled: 0, filledSlugs: [] as string[], errors: [`art step threw: ${String(err)}`.slice(0, 200)] }));
 
   const problems: string[] = [];
   if (searchErrors.length === MAJOR_SHOWS.length) problems.push("every search failed");
@@ -235,6 +238,7 @@ export async function GET(req: NextRequest) {
     duplicatesDropped: saved.duplicatesDropped,
     failed: saved.failed,
     saveErrors: saved.errors,
+    art: { checked: art.checked, filled: art.filled, errors: art.errors },
     problems,
   };
   if (hardFailure || problems.length) console.error("[refresh-major-events]", JSON.stringify(body));
