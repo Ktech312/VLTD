@@ -1,3 +1,5 @@
+import { useId } from "react";
+import { approvedIconArt } from "@/lib/approvedIconArt";
 import type { CSSProperties, ReactNode } from "react";
 
 // The single icon system for VLTD's interface. One semantic name per
@@ -437,17 +439,19 @@ export function AppIcon({
   filled?: boolean;
   active?: boolean;
 }) {
+  const gradientId = "icon-" + useId().replace(/:/g, "");
+  const art = approvedIconArt[name].replaceAll('id="ink"', `id="${gradientId}"`).replaceAll("url(#ink)", `url(#${gradientId})`);
   const nav = variant === "navTop" || variant === "navBottom";
   const artworkSize = nav ? Math.min(size, 28) : size;
   const box = variant === "feature" ? size + Math.round(size * 0.62) : size;
   return (
     <span className={className} style={{ display: "inline-grid", placeItems: "center", position: "relative", flexShrink: 0, width: box, height: box, lineHeight: 0, ...style }}>
-      <img
-        src={`/ui/icon-themes/cyan-purple-neon-v1/${name}.svg`}
-        alt="" aria-hidden="true" width={artworkSize} height={artworkSize}
-        style={{ display: "block", width: artworkSize, height: artworkSize, objectFit: "contain" }}
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none"
+        data-approved-icon={name} aria-hidden="true" width={artworkSize} height={artworkSize}
+        style={{ display: "block", width: artworkSize, height: artworkSize }}
+        dangerouslySetInnerHTML={{ __html: art }}
       />
-      {filled && <span aria-hidden="true" style={{ position: "absolute", right: 0, bottom: 0, width: 7, height: 7, borderRadius: "50%", background: "#fc46e3", border: "1px solid #08172c" }} />}
+      {filled && <span aria-hidden="true" style={{ position: "absolute", right: 0, bottom: 0, width: 7, height: 7, borderRadius: "50%", background: "var(--holiday-icon-100, #fc46e3)", border: "1px solid #08172c" }} />}
     </span>
   );
 }

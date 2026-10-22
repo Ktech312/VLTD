@@ -2739,3 +2739,16 @@ html[data-load-stalled="1"] #vltd-load-stalled {
   .vltd-print-document .vltd-no-print { display: none !important; }
   .vltd-print-document .vltd-print-muted { color: #333333 !important; -webkit-text-fill-color: #333333 !important; }
 }
+
+/* Only an accepted, active seasonal theme recolors the existing icon artwork. */
+[data-seasonal] {
+  --holiday-icon-0: color-mix(in srgb, var(--seasonal-accent, #27e3ff) 100%, var(--seasonal-accent-secondary, #fc46e3));
+  --holiday-icon-20: color-mix(in srgb, var(--seasonal-accent, #27e3ff) 80%, var(--seasonal-accent-secondary, #fc46e3));
+  --holiday-icon-32: color-mix(in srgb, var(--seasonal-accent, #27e3ff) 68%, var(--seasonal-accent-secondary, #fc46e3));
+  --holiday-icon-45: color-mix(in srgb, var(--seasonal-accent, #27e3ff) 55%, var(--seasonal-accent-secondary, #fc46e3));
+  --holiday-icon-62: color-mix(in srgb, var(--seasonal-accent, #27e3ff) 38%, var(--seasonal-accent-secondary, #fc46e3));
+  --holiday-icon-70: color-mix(in srgb, var(--seasonal-accent, #27e3ff) 30%, var(--seasonal-accent-secondary, #fc46e3));
+  --holiday-icon-72: color-mix(in srgb, var(--seasonal-accent, #27e3ff) 28%, var(--seasonal-accent-secondary, #fc46e3));
+  --holiday-icon-88: color-mix(in srgb, var(--seasonal-accent, #27e3ff) 12%, var(--seasonal-accent-secondary, #fc46e3));
+  --holiday-icon-100: color-mix(in srgb, var(--seasonal-accent, #27e3ff) 0%, var(--seasonal-accent-secondary, #fc46e3));
+}

@@ -42,3 +42,4 @@ for (const name of names) {
 }
 fs.writeFileSync(path.join(out, "manifest.json"), JSON.stringify({ style: "Cyan–purple neon", icons: names }, null, 2) + "\n");
 console.log(`Approved pack: ${names.length} icons (Home and Vault preserved).`);
+require('./build-seasonal-icon-art.cjs');
