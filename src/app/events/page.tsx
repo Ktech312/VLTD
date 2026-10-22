@@ -580,7 +580,10 @@ export default function EventsPage() {
           // rather than trusting a status message on a different page.
           const highlightSlug = new URLSearchParams(window.location.search).get("highlight");
           const highlighted = highlightSlug ? rows.find((event) => event.slug === highlightSlug) : undefined;
-          setSelectedId(highlighted?.id ?? rows.find((event) => event.is_featured)?.id ?? rows[0]?.id ?? "");
+          // The database lets an event through for up to 12 hours after its stored end (so the last local evening is not lost), so the one shown by default
+          // must be chosen from the events that are not over in their own time zone
+          const live = rows.filter((event) => eventPhase(event, new Date()) !== "past");
+          setSelectedId(highlighted?.id ?? live.find((event) => event.is_featured)?.id ?? live[0]?.id ?? "");
           if (highlighted) {
             window.setTimeout(() => detailRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" }), 300);
           }
