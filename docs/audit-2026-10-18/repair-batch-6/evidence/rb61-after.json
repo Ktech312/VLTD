@@ -1,0 +1,465 @@
+{
+ "label": "after",
+ "cases": [
+  {
+   "ok": true,
+   "control": "slides present (desktop 1440 (mouse))"
+  },
+  {
+   "ok": true,
+   "control": "artwork loads on the slides that have it (desktop 1440 (mouse))"
+  },
+  {
+   "ok": true,
+   "control": "slides without artwork use the fallback (desktop 1440 (mouse))"
+  },
+  {
+   "ok": true,
+   "control": "card height and width identical on every slide (desktop 1440 (mouse))"
+  },
+  {
+   "ok": true,
+   "control": "the collection overview does not move between slides (desktop 1440 (mouse))"
+  },
+  {
+   "ok": true,
+   "control": "old controls removed (desktop 1440 (mouse))"
+  },
+  {
+   "ok": false,
+   "control": "switch sits right-aligned below the banner and above the overview (desktop 1440 (mouse))"
+  },
+  {
+   "ok": true,
+   "control": "default is Off and the normal appearance (desktop 1440 (mouse))"
+  },
+  {
+   "ok": true,
+   "control": "On applies the seasonal theme (desktop 1440 (mouse))"
+  },
+  {
+   "ok": true,
+   "control": "turning it On changes no size and moves nothing (desktop 1440 (mouse))"
+  },
+  {
+   "ok": true,
+   "control": "moving between slides does not change the choice (desktop 1440 (mouse))"
+  },
+  {
+   "ok": true,
+   "control": "On survives reload and other pages (desktop 1440 (mouse))"
+  },
+  {
+   "ok": true,
+   "control": "Off restores the normal appearance with nothing stuck (desktop 1440 (mouse))"
+  },
+  {
+   "ok": true,
+   "control": "Off survives reload (desktop 1440 (mouse))"
+  },
+  {
+   "ok": true,
+   "control": "an earlier 'Yes' shows as On (desktop 1440 (mouse))"
+  },
+  {
+   "ok": true,
+   "control": "links still open correctly (desktop 1440 (mouse))"
+  },
+  {
+   "ok": true,
+   "control": "arrows and dots (desktop 1440 (mouse))"
+  },
+  {
+   "ok": true,
+   "control": "mouse drag moves left/right both ways, wrapping (desktop 1440 (mouse))"
+  },
+  {
+   "ok": false,
+   "control": "a drag never opens the event (desktop 1440 (mouse))"
+  },
+  {
+   "ok": true,
+   "control": "size unchanged after all interactions (desktop 1440 (mouse))"
+  },
+  {
+   "ok": true,
+   "control": "automatic rotation every ~15 s through several slides (desktop 1440 (mouse))"
+  },
+  {
+   "ok": true,
+   "control": "after manual navigation the timer starts over (desktop 1440 (mouse))"
+  },
+  {
+   "ok": true,
+   "control": "rotation continues after using the switch, and the switch stays On while slides change (desktop 1440 (mouse))"
+  },
+  {
+   "ok": true,
+   "control": "slides present (phone 390 (emulated touch))"
+  },
+  {
+   "ok": true,
+   "control": "artwork loads on the slides that have it (phone 390 (emulated touch))"
+  },
+  {
+   "ok": true,
+   "control": "slides without artwork use the fallback (phone 390 (emulated touch))"
+  },
+  {
+   "ok": true,
+   "control": "card height and width identical on every slide (phone 390 (emulated touch))"
+  },
+  {
+   "ok": true,
+   "control": "the collection overview does not move between slides (phone 390 (emulated touch))"
+  },
+  {
+   "ok": true,
+   "control": "old controls removed (phone 390 (emulated touch))"
+  },
+  {
+   "ok": false,
+   "control": "switch sits right-aligned below the banner and above the overview (phone 390 (emulated touch))"
+  },
+  {
+   "ok": true,
+   "control": "default is Off and the normal appearance (phone 390 (emulated touch))"
+  },
+  {
+   "ok": true,
+   "control": "On applies the seasonal theme (phone 390 (emulated touch))"
+  },
+  {
+   "ok": true,
+   "control": "turning it On changes no size and moves nothing (phone 390 (emulated touch))"
+  },
+  {
+   "ok": true,
+   "control": "moving between slides does not change the choice (phone 390 (emulated touch))"
+  },
+  {
+   "ok": true,
+   "control": "On survives reload and other pages (phone 390 (emulated touch))"
+  },
+  {
+   "ok": true,
+   "control": "Off restores the normal appearance with nothing stuck (phone 390 (emulated touch))"
+  },
+  {
+   "ok": true,
+   "control": "Off survives reload (phone 390 (emulated touch))"
+  },
+  {
+   "ok": true,
+   "control": "an earlier 'Yes' shows as On (phone 390 (emulated touch))"
+  },
+  {
+   "ok": true,
+   "control": "links still open correctly (phone 390 (emulated touch))"
+  },
+  {
+   "ok": true,
+   "control": "arrows and dots (phone 390 (emulated touch))"
+  },
+  {
+   "ok": true,
+   "control": "finger swipe (emulated touch) moves left/right both ways, wrapping (phone 390 (emulated touch))"
+  },
+  {
+   "ok": false,
+   "control": "a drag never opens the event (phone 390 (emulated touch))"
+  },
+  {
+   "ok": false,
+   "control": "a vertical finger drag on the banner does not change the slide or open it (phone 390 (emulated touch))"
+  },
+  {
+   "ok": false,
+   "control": "the page still scrolls vertically when the finger starts on the banner (phone 390 (emulated touch))"
+  },
+  {
+   "ok": true,
+   "control": "size unchanged after all interactions (phone 390 (emulated touch))"
+  }
+ ],
+ "samples": [
+  {
+   "name": "desktop 1440 (mouse)",
+   "per": [
+    {
+     "i": 0,
+     "slide": "halloween-2026",
+     "art": "no",
+     "imgLoaded": null,
+     "h": 72,
+     "w": 1044,
+     "overviewTop": 218,
+     "label": "Trick or Treat",
+     "sub": "Horror, comics, and dark colle"
+    },
+    {
+     "i": 1,
+     "slide": "specialist-propstorejamesbondonlineauctionlondon-264bcd5c7384",
+     "art": "yes",
+     "imgLoaded": true,
+     "h": 72,
+     "w": 1044,
+     "overviewTop": 218,
+     "label": "Propstore: James Bond Online Auction",
+     "sub": "Happening now!"
+    },
+    {
+     "i": 2,
+     "slide": "specialist-propstorethewheeloftimeonlineauction-840374c43b68",
+     "art": "yes",
+     "imgLoaded": true,
+     "h": 72,
+     "w": 1044,
+     "overviewTop": 218,
+     "label": "Propstore: The Wheel of Time Online ",
+     "sub": "Happening now!"
+    },
+    {
+     "i": 3,
+     "slide": "specialist-anaheimcardshowoctober222026-c13ce9066a9b",
+     "art": "yes",
+     "imgLoaded": true,
+     "h": 72,
+     "w": 1044,
+     "overviewTop": 218,
+     "label": "Anaheim Card Show — October 22, 2026",
+     "sub": "This weekend! — Anaheim, CA"
+    },
+    {
+     "i": 4,
+     "slide": "specialist-gascardshowscouncilbluffsoctober2026-6079aab3e974",
+     "art": "yes",
+     "imgLoaded": true,
+     "h": 72,
+     "w": 1044,
+     "overviewTop": 218,
+     "label": "GAS Card Shows Council Bluffs — Octo",
+     "sub": "This weekend! — Council Bluffs"
+    },
+    {
+     "i": 5,
+     "slide": "specialist-birminghamtradingcardfestoctober2026-1fbc79330d4f",
+     "art": "no",
+     "imgLoaded": null,
+     "h": 72,
+     "w": 1044,
+     "overviewTop": 218,
+     "label": "Birmingham Trading Card Fest — Octob",
+     "sub": "This weekend! — Birmingham, AL"
+    },
+    {
+     "i": 6,
+     "slide": "specialist-artbaselparis-97cd61f6a48b",
+     "art": "yes",
+     "imgLoaded": true,
+     "h": 72,
+     "w": 1044,
+     "overviewTop": 218,
+     "label": "Art Basel Paris",
+     "sub": "This weekend! — Paris"
+    },
+    {
+     "i": 7,
+     "slide": "specialist-nationalcardsharkstcgandsportsexpo-3dab69215e68",
+     "art": "yes",
+     "imgLoaded": true,
+     "h": 72,
+     "w": 1044,
+     "overviewTop": 218,
+     "label": "National Card Sharks TCG and Sports ",
+     "sub": "This weekend! — Randolph, NJ"
+    },
+    {
+     "i": 8,
+     "slide": "freshcomics-armageddon-aukland-spring-2026",
+     "art": "no",
+     "imgLoaded": null,
+     "h": 72,
+     "w": 1044,
+     "overviewTop": 218,
+     "label": "Armageddon Expo Auckland Spring",
+     "sub": "This weekend! — Epsom, Aucklan"
+    },
+    {
+     "i": 9,
+     "slide": "specialist-denvercardshowsoctober2026-cab823a8ec3a",
+     "art": "yes",
+     "imgLoaded": true,
+     "h": 72,
+     "w": 1044,
+     "overviewTop": 218,
+     "label": "Denver Card Shows — October 2026",
+     "sub": "This weekend! — Denver, CO"
+    },
+    {
+     "i": 10,
+     "slide": "specialist-asociacionperuanodeorquideaspaisdeorquideas40anos-1b830b398f94",
+     "art": "yes",
+     "imgLoaded": true,
+     "h": 72,
+     "w": 1044,
+     "overviewTop": 218,
+     "label": "Asociación Peruano de Orquideas' \"Pa",
+     "sub": "This weekend!"
+    }
+   ]
+  },
+  {
+   "name": "desktop 1440 (mouse)",
+   "rotation": [
+    {
+     "s": 0,
+     "at": 0
+    },
+    {
+     "s": 14.9,
+     "at": 1
+    },
+    {
+     "s": 29.8,
+     "at": 2
+    },
+    {
+     "s": 44.7,
+     "at": 3
+    }
+   ],
+   "gaps": [
+    14.9,
+    14.9,
+    14.9
+   ]
+  },
+  {
+   "name": "phone 390 (emulated touch)",
+   "per": [
+    {
+     "i": 0,
+     "slide": "halloween-2026",
+     "art": "no",
+     "imgLoaded": null,
+     "h": 72,
+     "w": 354,
+     "overviewTop": 230,
+     "label": "Trick or Treat",
+     "sub": "Horror, comics, and dark colle"
+    },
+    {
+     "i": 1,
+     "slide": "specialist-propstorejamesbondonlineauctionlondon-264bcd5c7384",
+     "art": "yes",
+     "imgLoaded": true,
+     "h": 72,
+     "w": 354,
+     "overviewTop": 230,
+     "label": "Propstore: James Bond Online Auction",
+     "sub": "Happening now!"
+    },
+    {
+     "i": 2,
+     "slide": "specialist-propstorethewheeloftimeonlineauction-840374c43b68",
+     "art": "yes",
+     "imgLoaded": true,
+     "h": 72,
+     "w": 354,
+     "overviewTop": 230,
+     "label": "Propstore: The Wheel of Time Online ",
+     "sub": "Happening now!"
+    },
+    {
+     "i": 3,
+     "slide": "specialist-anaheimcardshowoctober222026-c13ce9066a9b",
+     "art": "yes",
+     "imgLoaded": true,
+     "h": 72,
+     "w": 354,
+     "overviewTop": 230,
+     "label": "Anaheim Card Show — October 22, 2026",
+     "sub": "This weekend! — Anaheim, CA"
+    },
+    {
+     "i": 4,
+     "slide": "specialist-gascardshowscouncilbluffsoctober2026-6079aab3e974",
+     "art": "yes",
+     "imgLoaded": true,
+     "h": 72,
+     "w": 354,
+     "overviewTop": 230,
+     "label": "GAS Card Shows Council Bluffs — Octo",
+     "sub": "This weekend! — Council Bluffs"
+    },
+    {
+     "i": 5,
+     "slide": "specialist-birminghamtradingcardfestoctober2026-1fbc79330d4f",
+     "art": "no",
+     "imgLoaded": null,
+     "h": 72,
+     "w": 354,
+     "overviewTop": 230,
+     "label": "Birmingham Trading Card Fest — Octob",
+     "sub": "This weekend! — Birmingham, AL"
+    },
+    {
+     "i": 6,
+     "slide": "specialist-artbaselparis-97cd61f6a48b",
+     "art": "yes",
+     "imgLoaded": true,
+     "h": 72,
+     "w": 354,
+     "overviewTop": 230,
+     "label": "Art Basel Paris",
+     "sub": "This weekend! — Paris"
+    },
+    {
+     "i": 7,
+     "slide": "specialist-nationalcardsharkstcgandsportsexpo-3dab69215e68",
+     "art": "yes",
+     "imgLoaded": true,
+     "h": 72,
+     "w": 354,
+     "overviewTop": 230,
+     "label": "National Card Sharks TCG and Sports ",
+     "sub": "This weekend! — Randolph, NJ"
+    },
+    {
+     "i": 8,
+     "slide": "freshcomics-armageddon-aukland-spring-2026",
+     "art": "no",
+     "imgLoaded": null,
+     "h": 72,
+     "w": 354,
+     "overviewTop": 230,
+     "label": "Armageddon Expo Auckland Spring",
+     "sub": "This weekend! — Epsom, Aucklan"
+    },
+    {
+     "i": 9,
+     "slide": "specialist-denvercardshowsoctober2026-cab823a8ec3a",
+     "art": "yes",
+     "imgLoaded": true,
+     "h": 72,
+     "w": 354,
+     "overviewTop": 230,
+     "label": "Denver Card Shows — October 2026",
+     "sub": "This weekend! — Denver, CO"
+    },
+    {
+     "i": 10,
+     "slide": "specialist-asociacionperuanodeorquideaspaisdeorquideas40anos-1b830b398f94",
+     "art": "yes",
+     "imgLoaded": true,
+     "h": 72,
+     "w": 354,
+     "overviewTop": 230,
+     "label": "Asociación Peruano de Orquideas' \"Pa",
+     "sub": "This weekend!"
+    }
+   ]
+  }
+ ]
+}

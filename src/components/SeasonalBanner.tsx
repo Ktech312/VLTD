@@ -6,7 +6,6 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 import { fetchActiveThemes, type SeasonalTheme } from "@/lib/seasonalTheme";
 import { Glyph } from "@/components/ui/Glyph";
-import { Toggle } from "@/components/ui/Toggle";
 import { acceptTheme, applyAcceptedTheme, declineTheme, getThemePrefs, type ThemeChoice } from "@/lib/seasonalConsent";
 import { eventCountdown } from "@/lib/eventDates";
 import { BANNER_FETCH_FEATURED, BANNER_FETCH_NEAREST, FEATURED_HORIZON_DAYS, pickBannerEvents } from "@/lib/bannerEvents";
@@ -73,8 +72,8 @@ async function loadBannerEvents(): Promise<CollectorEvent[]> {
   return pickBannerEvents((featured.data ?? []) as CollectorEvent[], (nearest.data ?? []) as CollectorEvent[], now);
 }
 
-// The switch's row, and the same row kept as an empty spacer while loading
-const SWITCH_ROW = "mt-1.5 flex h-11 items-center justify-end gap-2 md:h-6";
+// The switch's row (one slim line), and the same row kept as an empty spacer while loading
+const SWITCH_ROW = "mt-1.5 flex h-6 items-center justify-end";
 
 export default function SeasonalBanner() {
   const router = useRouter();
@@ -176,11 +175,21 @@ export default function SeasonalBanner() {
 
   if (!slide && !seasonal) return null;
 
+  // The small palette line that used to sit inside the card, moved here and made clickable: one press turns the seasonal theme on or off.
   const switchRow = seasonal ? (
     <div className={SWITCH_ROW}>
-      <span id="seasonal-theme-label" className="text-[11px] font-medium" style={{ color: "var(--muted)" }}>Seasonal theme</span>
-      <Toggle on={seasonalOn} onChange={toggleSeasonal} ariaLabel="Seasonal theme" />
-      <span className="w-6 text-[11px] font-semibold" style={{ color: "var(--muted)" }} aria-hidden>{seasonalOn ? "On" : "Off"}</span>
+      <button
+        type="button"
+        role="switch"
+        aria-checked={seasonalOn}
+        aria-label="Seasonal theme"
+        onClick={toggleSeasonal}
+        className="vltd-tap-y flex items-center gap-1 text-[10px] transition hover:brightness-125"
+        style={{ color: `${seasonal.accent_color}bb`, ["--tap-h" as string]: "32px" }}
+      >
+        <Glyph name="palette" size={11} />
+        Seasonal theme {seasonalOn ? "on" : "off"}
+      </button>
     </div>
   ) : (
     <div className={SWITCH_ROW} />
