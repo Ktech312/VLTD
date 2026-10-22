@@ -9,9 +9,9 @@ export type ProfileRow = {
   display_name: string;
   profile_type: AuthProfileType;
   primary_focus?: string | null;
-  /** What you collect (profile, personalises Discover). Separate from displayed_universes. */
+  /** What you collect (profile, personalises Discover and the category shortcuts). Never filters your own items. */
   collection_interests?: string[] | null;
-  /** Which universes VLTD shows you (Vault chips, Discover); null = all. Separate from collection_interests. */
+  /** The removed "Universes displayed" setting. Nothing reads it; an old value stays stored and hides nothing. */
   displayed_universes?: string[] | null;
   bio?: string | null;
   avatar_emoji?: string | null;

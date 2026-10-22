@@ -48,13 +48,10 @@ import {
 import { hasSupabaseEnv } from "@/lib/vaultCloud";
 import { deleteVaultItemEverywhere, deleteVaultItemsEverywhere, moveItemsToProfileConfirmed } from "@/lib/vaultActions";
 import { getOnboardingStatus, getStoredActiveProfileId, listMyProfiles, retryAccountLookups, type ProfileRow } from "@/lib/auth";
-import { readUniversePrefs, saveDisplayedUniverses } from "@/lib/universePrefs";
 import { currentLocalOwner } from "@/lib/localDataOwner";
 import { StaleDataNotice } from "@/components/vault/CloudStatus";
 import { storedSessionUserId } from "@/lib/sessionGuard";
 import { parseMoneyInput } from "@/lib/moneyInput";
-import { applyDisplayedUniverses } from "@/lib/displayedUniverses";
-import DisplayedUniversesNotice from "@/components/DisplayedUniversesNotice";
 
 // How long the page waits for the account check and for the cloud before it stops waiting and says so.
 const ACCOUNT_CHECK_TIMEOUT_MS = 12_000;
@@ -82,7 +79,8 @@ const ACTIVE_PROFILE_EVENT = "vltd:active-profile";
 const SALES_KEY = "vltd_sales_history";
 const FOCUS_LS_KEY = "vltd_primary_focus";
 const VIEW_MODE_KEY = "vltd_vault_view_mode";
-const VISIBLE_UNIVERSE_CHIPS_LS_KEY = "vltd_visible_universe_chips";
+// The removed "Universes displayed" setting kept a copy under this key; it is cleared once so it can never be read again.
+const OLD_VISIBLE_UNIVERSE_CHIPS_LS_KEY = "vltd_visible_universe_chips";
 const INITIAL_VISIBLE_ITEM_COUNT = 60;
 // The first screen draws this many cards at once; the rest of the first page follows in small slices (the reset effect below).
 const FIRST_PAINT_ITEM_COUNT = 24;
@@ -1181,41 +1179,14 @@ export default function VaultListView({ lockedUniverse }: { lockedUniverse?: Uni
   const [moveTargetSubcategory, setMoveTargetSubcategory] = useState<string>("");
   const [deleteConfirmPending, setDeleteConfirmPending] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
-  const [showUniverseMenu, setShowUniverseMenu] = useState(false);
   const [selectedDetailId, setSelectedDetailId] = useState<string | null>(null);
   const [isDetailDrawerDismissed, setIsDetailDrawerDismissed] = useState(false);
-  const [visibleUniverseKeys, setVisibleUniverseKeys] = useState<UniverseKey[] | null>(() => {
-    if (typeof window === "undefined") return null;
-    try {
-      const parsed: unknown = JSON.parse(window.localStorage.getItem(VISIBLE_UNIVERSE_CHIPS_LS_KEY) || "null");
-      return Array.isArray(parsed) ? parsed.filter(isUniverseKey) : null;
-    } catch {
-      return null;
-    }
-  });
-
-  // "Universes displayed" (the Show menu below, and Settings > Preferences) decides which universes the Vault lists. It only filters what is shown:
-  // nothing is deleted, exports and insurance documents still cover everything, and a universe page you open directly is always shown in full.
-  const displayedFilter = useMemo(
-    () => (lockedUniverse ? { shown: allItems, hiddenCount: 0, hiddenUniverses: 0 } : applyDisplayedUniverses(allItems, visibleUniverseKeys)),
-    [allItems, visibleUniverseKeys, lockedUniverse]
-  );
-  const items = displayedFilter.shown;
-  async function showAllDisplayedUniverses(): Promise<boolean> {
-    const before = visibleUniverseKeys;
-    setVisibleUniverseKeys(null);
-    try { window.localStorage.removeItem(VISIBLE_UNIVERSE_CHIPS_LS_KEY); } catch { /* storage unavailable */ }
-    const profileId = getStoredActiveProfileId();
-    if (!profileId) return true;
-    try {
-      await saveDisplayedUniverses(profileId, null);
-      return true;
-    } catch {
-      setVisibleUniverseKeys(before);
-      try { if (before) window.localStorage.setItem(VISIBLE_UNIVERSE_CHIPS_LS_KEY, JSON.stringify(before)); } catch { /* storage unavailable */ }
-      return false;
-    }
-  }
+  // The Vault lists every item you own. Items are narrowed only by a filter you pick on this page (the chips, search, Filters), and Clear all removes
+  // them. The old "Universes displayed" setting no longer hides anything.
+  const items = allItems;
+  useEffect(() => {
+    try { window.localStorage.removeItem(OLD_VISIBLE_UNIVERSE_CHIPS_LS_KEY); } catch { /* storage unavailable */ }
+  }, []);
 
   function refresh(profileId?: string) {
     const next = loadItems(profileId ? { profileId } : undefined);
@@ -1745,52 +1716,10 @@ export default function VaultListView({ lockedUniverse }: { lockedUniverse?: Uni
     return withItems.length ? withItems : orderedUniverses.map((category) => category.key);
   }, [focusKey, orderedUniverses, universeGroups]);
 
-  const visibleUniverseKeySet = useMemo(
-    () => new Set(visibleUniverseKeys ?? defaultVisibleUniverseKeys),
-    [defaultVisibleUniverseKeys, visibleUniverseKeys]
-  );
-
   const visibleUniverseChips = useMemo(
-    () => orderedUniverses.filter((category) => visibleUniverseKeySet.has(category.key)),
-    [orderedUniverses, visibleUniverseKeySet]
+    () => orderedUniverses.filter((category) => defaultVisibleUniverseKeys.includes(category.key)),
+    [orderedUniverses, defaultVisibleUniverseKeys]
   );
-
-  function updateVisibleUniverseKeys(updater: (current: UniverseKey[]) => UniverseKey[]) {
-    setVisibleUniverseKeys((current) => {
-      const base = current ?? defaultVisibleUniverseKeys;
-      const next = Array.from(new Set(updater(base))).filter(isUniverseKey);
-      window.localStorage.setItem(VISIBLE_UNIVERSE_CHIPS_LS_KEY, JSON.stringify(next));
-      // Also saved to the profile (Settings > Preferences > Universes displayed), so every device agrees.
-      const profileId = getStoredActiveProfileId();
-      if (profileId) void saveDisplayedUniverses(profileId, next).catch(() => {});
-      return next;
-    });
-  }
-
-  // Universes displayed is a saved setting. When the profile has one, it decides which universe chips show here.
-  useEffect(() => {
-    let active = true;
-    async function loadDisplayed() {
-      try {
-        const status = await getOnboardingStatus();
-        if (!active || !status.activeProfile) return;
-        const prefs = readUniversePrefs(status.activeProfile as unknown as Record<string, unknown>);
-        if (prefs.displayed) {
-          setVisibleUniverseKeys(prefs.displayed);
-          window.localStorage.setItem(VISIBLE_UNIVERSE_CHIPS_LS_KEY, JSON.stringify(prefs.displayed));
-        } else {
-          setVisibleUniverseKeys(null);
-          window.localStorage.removeItem(VISIBLE_UNIVERSE_CHIPS_LS_KEY);
-        }
-      } catch {
-        /* keep what this device remembered */
-      }
-    }
-    void loadDisplayed();
-    return () => {
-      active = false;
-    };
-  }, []);
 
   // Same switch as the Home page (remembered on this device): count un-priced
   // items at purchase price ("fill", default) or show priced items only.
@@ -2111,9 +2040,6 @@ export default function VaultListView({ lockedUniverse }: { lockedUniverse?: Uni
         {cloudStale ? <StaleDataNotice onRetry={() => { resetCloudBackoff(); retryAccountLookups(); void hydrateAll(); }} /> : null}
         {/* While the load has failed and nothing is saved here, the figures below would read $0 / 0 items as if they were real; the error card further down is the page. */}
         <section className="mb-5" hidden={allItems.length === 0 && loadFailed}>
-          {displayedFilter.hiddenCount > 0 ? (
-            <DisplayedUniversesNotice className="mb-3" hiddenCount={displayedFilter.hiddenCount} hiddenUniverses={displayedFilter.hiddenUniverses} onShowAll={showAllDisplayedUniverses} />
-          ) : null}
           {items.length > 0 ? (
             <div className="mb-3 hidden flex-wrap gap-2 text-xs text-[color:var(--muted)] sm:flex">
               <span className="rounded-full bg-[color:var(--pill)] px-2.5 py-1 ring-1 ring-[color:var(--border)]">{privateCount} private</span>
@@ -2132,61 +2058,8 @@ export default function VaultListView({ lockedUniverse }: { lockedUniverse?: Uni
                 >
                   All
                 </button>
-                <button
-                  type="button"
-                  onClick={() => setShowUniverseMenu((value) => !value)}
-                  className="hidden min-h-11 items-center gap-1.5 rounded-[8px] px-4 text-sm font-semibold ring-1 sm:inline-flex"
-                  style={{ background: "var(--pill)", borderColor: "var(--border)", color: "var(--fg)" }}
-                  aria-expanded={showUniverseMenu}
-                  aria-haspopup="true"
-                >
-                  Show <AppIcon name="chevronDown" size={16} />
-                </button>
               </div>
 
-              {showUniverseMenu ? (
-                <div
-                  className="absolute left-0 top-[calc(100%+8px)] z-50 w-72 rounded-[8px] p-2 shadow-2xl"
-                  style={{
-                    background: "var(--theme-card)",
-                    border: "1px solid var(--theme-border)",
-                  }}
-                >
-                  <div className="px-2 pb-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-[color:var(--muted2)]">
-                    Universes displayed
-                  </div>
-                  <div className="px-2 pb-2 text-[11px] leading-snug text-[color:var(--muted)]">
-                    Unticked universes are hidden from your Vault, Home and Insights. Nothing is deleted.{" "}
-                    {visibleUniverseKeys ? <button type="button" className="font-semibold underline underline-offset-2" style={{ color: "var(--theme-gold)" }} onClick={() => void showAllDisplayedUniverses()}>Show all</button> : null}
-                  </div>
-                  <div className="max-h-72 space-y-1 overflow-y-auto pr-1">
-                    {orderedUniverses.map((category) => {
-                      const checked = visibleUniverseKeySet.has(category.key);
-                      return (
-                        <label
-                          key={category.key}
-                          className="flex min-h-11 cursor-pointer items-center gap-2 rounded-[8px] px-2 text-sm md:min-h-9"
-                          style={{ color: "var(--fg)" }}
-                        >
-                          <input
-                            type="checkbox"
-                            checked={checked}
-                            onChange={() => {
-                              updateVisibleUniverseKeys((current) =>
-                                checked
-                                  ? current.filter((key) => key !== category.key)
-                                  : [...current, category.key]
-                              );
-                            }}
-                          />
-                          <span className="min-w-0 flex-1 truncate">{UNIVERSE_LABEL[category.key] ?? category.key}</span>
-                          <span className="text-[11px] opacity-65">{universeGroups[category.key]?.length ?? 0}</span>
-                        </label>
-                      );
-                    })}
-                  </div>
-                </div>
-              ) : null}
             </div>
             {visibleUniverseChips.map((category) => (
               <button
@@ -2559,15 +2432,6 @@ export default function VaultListView({ lockedUniverse }: { lockedUniverse?: Uni
           </section>
         ) : items.length === 0 && loadFailed ? (
           <VaultLoadError onRetry={() => { resetCloudBackoff(); retryAccountLookups(); void hydrateAll(); }} />
-        ) : items.length === 0 && allItems.length > 0 ? (
-          <section className="mt-3 rounded-[18px] bg-[color:var(--surface)] p-8 ring-1 ring-[color:var(--border)] shadow-[var(--shadow-soft)]" data-testid="vault-all-hidden">
-            <div className="mx-auto max-w-xl text-center">
-              <div className="text-[11px] tracking-[0.22em] text-[color:var(--muted2)]">HIDDEN BY YOUR SETTING</div>
-              <h2 className="mt-2 text-2xl font-semibold">Your items are not shown right now</h2>
-              <div className="mt-2 text-sm text-[color:var(--muted)]">Your Universes displayed setting hides all {allItems.length.toLocaleString("en-US")} of your items. Nothing was deleted.</div>
-              <div className="mt-5 flex justify-center"><PillButton variant="primary" onClick={() => void showAllDisplayedUniverses()}>Show all</PillButton></div>
-            </div>
-          </section>
         ) : items.length === 0 ? (
           <VaultEmptyState hasFilters={false} onClearFilters={handleClearFilters} />
         ) : lockedUniverse && filteredItems.length === 0 && !hasItemFilters ? (

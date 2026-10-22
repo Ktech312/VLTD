@@ -25,7 +25,7 @@ import { getProfileSafe, setProfileSafe, broadcastProfileChange } from "@/lib/us
 import { showToast } from "@/lib/toast";
 import { isPushSupported, getPushSubscriptionState, subscribeToPush, unsubscribeFromPush, type PushState } from "@/lib/pushNotifications";
 import { resolveAvatarSrc } from "@/lib/avatarResolve";
-import { readUniversePrefs, saveCollectionInterests, saveDisplayedUniverses } from "@/lib/universePrefs";
+import { readUniversePrefs, saveCollectionInterests } from "@/lib/universePrefs";
 import type { UniverseKey } from "@/lib/taxonomy";
 
 /** Normalize a stored focus value — treats the literal string "null" as empty. */
@@ -78,12 +78,8 @@ export default function AccountPage() {
   const [country, setCountry] = useState("US");
   const [contactSaving, setContactSaving] = useState(false);
   const [contactSuccess, setContactSuccess] = useState("");
-  // Collection interests (Profile) and Universes displayed (Preferences) are two separate settings.
+  // Collection interests (Profile): personalise Discover and the category shortcuts. They never hide or filter your own items.
   const [focusedUniverses, setFocusedUniverses] = useState<string[]>([]);
-  const [displayedUniverses, setDisplayedUniverses] = useState<string[]>([]);
-  const [showAllUniverses, setShowAllUniverses] = useState(false);
-  const [universeFocusSaving, setUniverseFocusSaving] = useState(false);
-  const [universeFocusSuccess, setUniverseFocusSuccess] = useState("");
   // Avatar (emoji and uploaded image are both real/synced via profiles.avatar_emoji/avatar_url)
   const [avatarMode, setAvatarMode] = useState<"EMOJI" | "IMAGE">("EMOJI");
   const [avatarEmoji, setAvatarEmoji] = useState("🗝️");
@@ -125,11 +121,9 @@ export default function AccountPage() {
         setStateVal(status.activeProfile.state ?? "");
         setZip(status.activeProfile.zip ?? "");
         setCountry(status.activeProfile.country ?? "US");
-        // Two separate saved settings (see lib/universePrefs.ts): what you collect, and which universes are displayed.
+        // What you collect (see lib/universePrefs.ts).
         const prefs = readUniversePrefs(status.activeProfile as unknown as Record<string, unknown>);
         setFocusedUniverses(prefs.interests);
-        setDisplayedUniverses(prefs.displayed ?? []);
-        setShowAllUniverses(prefs.displayed === null);
 
         // Avatar emoji + uploaded image are both real (profiles table) --
         // whichever one is actually set wins; "mode" here just remembers
@@ -322,28 +316,6 @@ export default function AccountPage() {
     } finally {
       setContactSaving(false);
       setTimeout(() => setContactSuccess(""), 3000);
-    }
-  }
-
-  async function handleUniverseFocusSave() {
-    if (!profileId) return;
-    setUniverseFocusSaving(true);
-    setUniverseFocusSuccess("");
-    try {
-      const val = showAllUniverses ? null : (displayedUniverses.length > 0 ? (displayedUniverses as UniverseKey[]) : null);
-      await saveDisplayedUniverses(profileId, val);
-      // The Vault remembers its own copy on this device; refresh it so the change shows there right away.
-      try {
-        window.localStorage.removeItem("vltd_visible_universe_chips");
-      } catch {
-        /* storage blocked: the Vault simply reloads the saved setting */
-      }
-      setUniverseFocusSuccess("Saved.");
-    } catch (err) {
-      setUniverseFocusSuccess(err instanceof Error ? err.message : "Failed to save.");
-    } finally {
-      setUniverseFocusSaving(false);
-      setTimeout(() => setUniverseFocusSuccess(""), 3000);
     }
   }
 
@@ -885,59 +857,6 @@ export default function AccountPage() {
             </PillButton>
             {contactSuccess && (
               <span className="text-sm text-emerald-400">{contactSuccess}</span>
-            )}
-          </div>
-        </section>
-        ) : null}
-
-        {/* Universe Focus */}
-        {section === "preferences" ? (
-        <section className="mt-6 rounded-[9px] border border-[color:var(--border)] bg-[color:var(--surface)] p-5 shadow-[0_8px_32px_rgba(0,0,0,0.24)]">
-          <div className="text-[12px] font-semibold uppercase tracking-[0.34em] text-[color:var(--muted2)] px-1 mb-1">
-            Universes displayed
-          </div>
-          <p className="px-1 mb-4 text-xs text-[color:var(--muted)]">
-            Choose which universes your own collection views show: Home, Vault and Insights. Items in the universes you leave out are not deleted: they stay in your account, exports and insurance documents, and "Show all universes" brings them back at once. Discover's public browsing filters are separate and are not affected.
-          </p>
-
-          {/* Show all toggle */}
-          <div className="mb-4 flex items-center justify-between gap-4 rounded-2xl border border-[color:var(--border)] px-4 py-3" style={{ background: "var(--theme-card)" }}>
-            <div>
-              <div className="text-sm font-black text-text-primary">Show all universes</div>
-              <div className="mt-0.5 text-xs text-[color:var(--muted)]">Turn off to pick specific universes</div>
-            </div>
-            <Toggle on={showAllUniverses} onChange={() => setShowAllUniverses((v) => !v)} ariaLabel="Show all universes" />
-          </div>
-
-          {/* Universe chip grid */}
-          {!showAllUniverses && (
-            <div className="flex flex-wrap gap-2 mb-4">
-              {UNIVERSE_KEYS.map((key) => {
-                const active = displayedUniverses.includes(key);
-                return (
-                  <PillButton
-                    key={key}
-                    variant={active ? "active" : "default"}
-                    onClick={() =>
-                      setDisplayedUniverses((prev) =>
-                        active ? prev.filter((k) => k !== key) : [...prev, key]
-                      )
-                    }
-                  >
-                    <Glyph name={universeGlyphName(key)} size={16} />
-                    <span>{UNIVERSE_LABEL[key]}</span>
-                  </PillButton>
-                );
-              })}
-            </div>
-          )}
-
-          <div className="flex items-center gap-4">
-            <PillButton onClick={() => void handleUniverseFocusSave()} disabled={universeFocusSaving} className="font-black" style={{ background: "var(--theme-gold-gradient)", boxShadow: "var(--theme-gold-glow)", color: "#0B0B0B" }}>
-              {universeFocusSaving ? "Saving..." : "Save"}
-            </PillButton>
-            {universeFocusSuccess && (
-              <span className="text-sm text-emerald-400">{universeFocusSuccess}</span>
             )}
           </div>
         </section>

@@ -2,20 +2,17 @@ import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 import { isUniverseKey, type UniverseKey } from "@/lib/taxonomy";
 
 /**
- * Two separate settings, stored in two separate columns:
- *   collection_interests: what you collect (profile, personalises Discover)
- *   displayed_universes:  which universes VLTD shows you (Vault chips, Discover). null means show all.
- * Changing one never touches the other.
+ * collection_interests is what you collect. It personalises Discover and the category shortcuts, and it NEVER hides or filters your own items.
  *
- * The older shared column (focused_universes) is only a fallback while the two new columns do not exist yet
- * (the property is absent from the profile). Once they exist, what is stored there is the truth: an empty
- * interests list means the person cleared it, and a null displayed list means show everything. Neither is
- * ever replaced by the old shared value.
+ * The profile also still carries an older displayed_universes column ("Universes displayed"), which used to hide whole universes from Home, the Vault and
+ * Insights. That setting was removed (2026-10-21): nothing reads or writes that column any more, so a value left in it cannot hide anything.
+ * Its stored values are left in place (nothing is deleted).
+ *
+ * The older shared column (focused_universes) is only a fallback for interests while collection_interests does not exist yet
+ * (the property is absent from the profile). Once it exists, what is stored there is the truth: an empty list means the person cleared it.
  */
 export type UniversePrefs = {
   interests: UniverseKey[];
-  /** null = show every universe */
-  displayed: UniverseKey[] | null;
 };
 
 function cleanKeys(value: unknown): UniverseKey[] | null {
@@ -35,10 +32,7 @@ export function readUniversePrefs(profile: Record<string, unknown> | null | unde
         ? legacy
         : primary;
 
-  const ownDisplayed = "displayed_universes" in p ? cleanKeys(p.displayed_universes) : legacy;
-  const displayed = ownDisplayed && ownDisplayed.length > 0 ? ownDisplayed : null;
-
-  return { interests, displayed };
+  return { interests };
 }
 
 export async function saveCollectionInterests(profileId: string, interests: UniverseKey[]) {
@@ -48,16 +42,6 @@ export async function saveCollectionInterests(profileId: string, interests: Univ
     .from("profiles")
     // An empty list is stored as an empty list, so clearing interests on purpose survives a reload.
     .update({ collection_interests: interests })
-    .eq("id", profileId);
-  if (error) throw error;
-}
-
-export async function saveDisplayedUniverses(profileId: string, displayed: UniverseKey[] | null) {
-  const supabase = getSupabaseBrowserClient();
-  if (!supabase) throw new Error("Supabase not ready");
-  const { error } = await supabase
-    .from("profiles")
-    .update({ displayed_universes: displayed && displayed.length > 0 ? displayed : null })
     .eq("id", profileId);
   if (error) throw error;
 }

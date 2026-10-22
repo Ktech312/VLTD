@@ -174,8 +174,7 @@ export default function DiscoverPage() {
   const [itemFactsById, setItemFactsById] = useState<Map<string, GalleryItemFact>>(new Map());
   const [userPrefs, setUserPrefs] = useState<ReturnType<typeof buildUserPreferences> | null>(null);
   const [signedIn, setSignedIn] = useState(false);
-  // Discover browses OTHER people's public exhibitions, so its universe filter always offers every universe. Your own "Universes displayed"
-  // setting only filters your own collection (Vault, Home, Insights) and is not applied here.
+  // Discover browses OTHER people's public exhibitions, so its universe filter always offers every universe.
   const visibleUniverseKeys: UniverseKey[] = UNIVERSE_KEYS;
 
   useEffect(() => {

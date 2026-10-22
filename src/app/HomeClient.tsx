@@ -22,8 +22,6 @@ import { INSIGHTS_BREAKDOWN_COLORS, INSIGHTS_GREEN, INSIGHTS_RED, INSIGHTS_REVEN
 import { buildSoldItems, hasKnownCost, profitOf, soldStats } from "@/lib/soldItems";
 import { activeItems, computeVaultStats, describeGainExclusions, effectiveMarketValue, readValueMode, totalsValue, writeValueMode, type ValueMode } from "@/lib/vaultStats";
 import { loadItems, resetCloudBackoff, syncVaultItemsFromSupabaseChecked, type VaultItem } from "@/lib/vaultModel";
-import { applyDisplayedUniverses, useDisplayedUniverses } from "@/lib/displayedUniverses";
-import DisplayedUniversesNotice from "@/components/DisplayedUniversesNotice";
 import { LoadErrorCard, StaleDataNotice } from "@/components/vault/CloudStatus";
 import { currentLocalOwner } from "@/lib/localDataOwner";
 import { storedSessionUserId } from "@/lib/sessionGuard";
@@ -217,10 +215,8 @@ export default function HomeClient() {
   const [error, setError] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [allItems, setItems] = useState<VaultItem[]>([]);
-  // "Universes displayed" decides which universes Home counts and lists; the held-back items stay in the account (see lib/displayedUniverses).
-  const { displayed: displayedUniverses, showAll: showAllUniverses } = useDisplayedUniverses();
-  const universeView = useMemo(() => applyDisplayedUniverses(allItems, displayedUniverses), [allItems, displayedUniverses]);
-  const items = universeView.shown;
+  // Home counts and lists every item you own: no setting hides a universe here.
+  const items = allItems;
   const [galleries, setGalleries] = useState<Gallery[]>([]);
   // null = still loading, "error" = could not load, array = loaded
   const [posts, setPosts] = useState<LoungePost[] | "error" | null>(null);
@@ -428,8 +424,6 @@ export default function HomeClient() {
         <SeasonalBanner />
 
         {stale ? <StaleDataNotice onRetry={() => reloadHome.current()} /> : null}
-
-        <DisplayedUniversesNotice hiddenCount={universeView.hiddenCount} hiddenUniverses={universeView.hiddenUniverses} onShowAll={showAllUniverses} />
 
         {/* 1. Collection overview: heading with the add controls beside it, four separate money figures with the value-basis controls above them, then three summary panels that each open their full page */}
         <section aria-label="Collection overview" style={{ background: C.elevated, border: premiumBorder, borderRadius: 10, padding: "20px 24px 22px", boxShadow: premiumShadow }}>
