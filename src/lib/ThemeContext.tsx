@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react'
 import { Theme, ThemeId, themes, defaultTheme, THEME_LS_KEY } from './themes'
 import { loadLookFromAccount, saveLookToAccount } from './lookSync'
+import { applySeasonalOverlay, SEASONAL_CHANGE_EVENT } from './seasonalConsent'
 
 // Icon style is a separate, independent preference from the background
 // theme (Dark/Light + palette). Simple Glass is a navigation-wide trial;
@@ -80,6 +81,8 @@ function applyThemeVars(theme: Theme) {
   // Keep the legacy `.dark` class (Tailwind dark: variants) in sync with the
   // actual selected theme so light mode doesn't get stray dark: styling.
   root.classList.toggle('dark', theme.mode === 'dark')
+  // A seasonal theme the person said Yes to sits on top of the base colours (inline styles beat the stylesheet, so it has to be layered here).
+  applySeasonalOverlay()
 }
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
@@ -145,6 +148,13 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       } catch {}
     }
   }, [themeId, hydrated])
+
+  // The seasonal theme turned on or off: lay the base colours down again (which also puts the seasonal ones on top when one is on).
+  useEffect(() => {
+    const reapply = () => applyThemeVars(themes[themeId])
+    window.addEventListener(SEASONAL_CHANGE_EVENT, reapply)
+    return () => window.removeEventListener(SEASONAL_CHANGE_EVENT, reapply)
+  }, [themeId])
 
   useEffect(() => {
     applyIconStyleAttr(iconStyle)

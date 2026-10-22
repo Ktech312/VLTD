@@ -3,13 +3,22 @@
 import { PillButton } from "@/components/ui/PillButton";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 import { fetchActiveThemes, type SeasonalTheme } from "@/lib/seasonalTheme";
 import { Glyph } from "@/components/ui/Glyph";
-import { applyThemeVars, clearThemeVars, getThemePrefs, setThemePref } from "@/lib/seasonalConsent";
+import { acceptTheme, applyAcceptedTheme, declineTheme, getThemePrefs, type ThemeChoice } from "@/lib/seasonalConsent";
+import { eventCountdown } from "@/lib/eventDates";
+import { BANNER_FETCH_FEATURED, BANNER_FETCH_NEAREST, FEATURED_HORIZON_DAYS, pickBannerEvents } from "@/lib/bannerEvents";
 
 const ROTATE_MS = 35_000;
+const FADE_MS = 300;
+
+// One size for every slide. The card is a main row plus a band underneath; the band always exists (it carries the dots, and on a theme slide the
+// theme question), so choosing Yes or No, or moving between a theme slide and an event slide, never changes the card's height and nothing below moves.
+const MAIN_ROW_PX = 46;
+const BAND_PX = 32;
+const CARD_PX = MAIN_ROW_PX + BAND_PX + 2; // + the 1px border top and bottom
 
 // Color map for collector events by slug
 const EVENT_COLOR_MAP: Record<string, { accent: string; secondary: string }> = {
@@ -29,127 +38,130 @@ type CollectorEvent = {
   ends_at: string;
   city: string | null;
   state_region: string | null;
+  is_featured?: boolean | null;
 };
 
 type Slide =
   | { type: "theme"; theme: SeasonalTheme }
   | { type: "event"; event: CollectorEvent };
 
-function getEventCountdown(event: CollectorEvent): string {
+const EVENT_COLUMNS = "id, slug, name, emoji, starts_at, ends_at, city, state_region, is_featured";
+
+async function loadBannerEvents(): Promise<CollectorEvent[]> {
+  const supabase = getSupabaseBrowserClient();
+  if (!supabase) return [];
   const now = new Date();
-  const starts = new Date(event.starts_at);
-  const ends = new Date(event.ends_at);
-
-  if (now >= starts && now <= ends) return "Happening now!";
-
-  const diffMs = starts.getTime() - now.getTime();
-  const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
-
-  const loc = [event.city, event.state_region].filter(Boolean).join(", ");
-  const locationSuffix = loc ? ` — ${loc}` : "";
-
-  if (diffDays <= 2) return `This weekend!${locationSuffix}`;
-  return `Starts in ${diffDays} day${diffDays !== 1 ? "s" : ""}${locationSuffix}`;
+  const nowIso = now.toISOString();
+  const horizonIso = new Date(now.getTime() + FEATURED_HORIZON_DAYS * 86_400_000).toISOString();
+  const [featured, nearest] = await Promise.all([
+    supabase
+      .from("collector_events")
+      .select(EVENT_COLUMNS)
+      .eq("is_featured", true)
+      .gte("ends_at", nowIso)
+      .lte("starts_at", horizonIso)
+      .order("starts_at", { ascending: true })
+      .limit(BANNER_FETCH_FEATURED),
+    supabase
+      .from("collector_events")
+      .select(EVENT_COLUMNS)
+      .gte("ends_at", nowIso)
+      .order("starts_at", { ascending: true })
+      .limit(BANNER_FETCH_NEAREST),
+  ]);
+  return pickBannerEvents((featured.data ?? []) as CollectorEvent[], (nearest.data ?? []) as CollectorEvent[], now);
 }
 
 export default function SeasonalBanner() {
   const router = useRouter();
+  const [loaded, setLoaded] = useState(false);
+  const [themes, setThemes] = useState<SeasonalTheme[]>([]);
   const [slides, setSlides] = useState<Slide[]>([]);
   const [idx, setIdx] = useState(0);
   const [visible, setVisible] = useState(true);
-  const [themePrefs, setThemePrefs] = useState<Record<string, "accepted" | "dismissed">>({});
+  const [themePrefs, setThemePrefs] = useState<Record<string, ThemeChoice>>({});
+  const [moves, setMoves] = useState(0); // counts manual moves so the 35 s countdown starts over after each one
   const touchStartX = useRef<number | null>(null); // must be before any early return
+  const shownRef = useRef(0); // the slide being shown, or about to be: rapid taps add up instead of all starting from the same slide
+  const fadeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const count = slides.length;
 
   useEffect(() => {
+    let cancelled = false;
     async function loadSlides() {
-      // Load seasonal themes
+      // Seasonal themes (the one the person said Yes to is switched on; with none accepted the normal theme stays)
       const allThemes = await fetchActiveThemes();
+      applyAcceptedTheme(allThemes);
       const bannerThemes = allThemes.filter((t) => t.banner_enabled);
-
-      // Apply accepted theme vars
-      const prefs = getThemePrefs();
-      setThemePrefs(prefs);
-      bannerThemes.forEach((t) => {
-        if (prefs[t.slug] === "accepted") applyThemeVars(t);
-      });
-
-      // Load upcoming collector events
-      const supabase = getSupabaseBrowserClient();
-      let events: CollectorEvent[] = [];
-      if (supabase) {
-        const now = new Date().toISOString();
-        const { data } = await supabase
-          .from("collector_events")
-          .select("id, slug, name, emoji, starts_at, ends_at, city, state_region")
-          .gte("ends_at", now)
-          .order("starts_at", { ascending: true })
-          .limit(10);
-        events = (data ?? []) as CollectorEvent[];
-      }
-
+      const events = await loadBannerEvents();
+      if (cancelled) return;
+      setThemes(allThemes);
+      setThemePrefs(getThemePrefs());
       // Merge: seasonal themes first, then events
-      const combined: Slide[] = [
+      setSlides([
         ...bannerThemes.map((t): Slide => ({ type: "theme", theme: t })),
         ...events.map((e): Slide => ({ type: "event", event: e })),
-      ];
-      setSlides(combined);
+      ]);
+      setLoaded(true);
     }
     void loadSlides();
+    return () => {
+      cancelled = true;
+      if (fadeTimer.current) clearTimeout(fadeTimer.current);
+    };
   }, []);
 
-  // Rotate every 35s with fade
-  useEffect(() => {
-    if (slides.length <= 1) return;
-    const id = setInterval(() => {
+  const goTo = useCallback(
+    (next: number, manual: boolean) => {
+      if (count < 2) return;
+      const target = ((next % count) + count) % count;
+      shownRef.current = target;
+      if (fadeTimer.current) clearTimeout(fadeTimer.current);
       setVisible(false);
-      setTimeout(() => {
-        setIdx((i) => (i + 1) % slides.length);
+      fadeTimer.current = setTimeout(() => {
+        fadeTimer.current = null;
+        setIdx(target);
         setVisible(true);
-      }, 400);
-    }, ROTATE_MS);
+      }, FADE_MS);
+      if (manual) setMoves((m) => m + 1);
+    },
+    [count],
+  );
+
+  // Rotate every 35 s with a fade; any manual move starts the countdown over
+  useEffect(() => {
+    if (count <= 1) return;
+    const id = setInterval(() => goTo(shownRef.current + 1, false), ROTATE_MS);
     return () => clearInterval(id);
-  }, [slides.length]);
+  }, [count, moves, goTo]);
 
   const slide = slides[idx];
+  if (!loaded) {
+    // Same box as the finished banner, so the page does not jump when the slides arrive.
+    return <div aria-hidden className="mb-4" style={{ height: CARD_PX, borderRadius: 10 }} />;
+  }
   if (!slide) return null;
 
   // Get colors for current slide
   let accent: string;
-  let secondary: string;
   if (slide.type === "theme") {
     accent = slide.theme.accent_color ?? "#E8B84B";
-    secondary = slide.theme.accent_secondary ?? "#1a1a2e";
   } else {
-    const colors = EVENT_COLOR_MAP[slide.event.slug] ?? DEFAULT_EVENT_COLORS;
-    accent = colors.accent;
-    secondary = colors.secondary;
+    accent = (EVENT_COLOR_MAP[slide.event.slug] ?? DEFAULT_EVENT_COLORS).accent;
   }
 
-  // Theme-specific handlers
-  let showThemePrompt = false;
-  let handleAcceptTheme = () => {};
-  let handleDismissTheme = () => {};
-
-  if (slide.type === "theme") {
-    const theme = slide.theme;
-    const pref = themePrefs[theme.slug];
-    showThemePrompt = !!(theme.accent_color && !pref);
-    handleAcceptTheme = () => {
-      applyThemeVars(theme);
-      setThemePref(theme.slug, "accepted");
-      setThemePrefs((p) => ({ ...p, [theme.slug]: "accepted" }));
-    };
-    handleDismissTheme = () => {
-      // No: the app stays exactly as it is. If this theme had been applied earlier, it is taken off.
-      if (pref === "accepted") clearThemeVars();
-      setThemePref(theme.slug, "dismissed");
-      setThemePrefs((p) => ({ ...p, [theme.slug]: "dismissed" }));
-    };
+  // Theme question / state: shown in the band on a theme slide that can recolor the app
+  const themeSlide = slide.type === "theme" && slide.theme.accent_color ? slide.theme : null;
+  const choice = themeSlide ? themePrefs[themeSlide.slug] : undefined;
+  function chooseYes() {
+    if (!themeSlide) return;
+    acceptTheme(themeSlide, themes);
+    setThemePrefs(getThemePrefs());
   }
-
-  function jumpTo(i: number) {
-    setVisible(false);
-    setTimeout(() => { setIdx(i); setVisible(true); }, 300);
+  function chooseNo() {
+    if (!themeSlide) return;
+    declineTheme(themeSlide, themes);
+    setThemePrefs(getThemePrefs());
   }
 
   // Touch swipe support
@@ -157,12 +169,12 @@ export default function SeasonalBanner() {
     touchStartX.current = e.touches[0].clientX;
   }
   function handleTouchEnd(e: React.TouchEvent) {
-    if (touchStartX.current === null || slides.length <= 1) return;
-    const dx = e.changedTouches[0].clientX - touchStartX.current;
-    if (Math.abs(dx) < 40) return; // ignore tiny moves
-    if (dx < 0) jumpTo((idx + 1) % slides.length);       // swipe left → next
-    else jumpTo((idx - 1 + slides.length) % slides.length); // swipe right → prev
+    const start = touchStartX.current;
     touchStartX.current = null;
+    if (start === null || count <= 1) return;
+    const dx = e.changedTouches[0].clientX - start;
+    if (Math.abs(dx) < 40) return; // ignore tiny moves
+    goTo(shownRef.current + (dx < 0 ? 1 : -1), true); // swipe left → next, swipe right → previous
   }
 
   const label = slide.type === "theme"
@@ -170,7 +182,7 @@ export default function SeasonalBanner() {
     : slide.event.name;
   const sublabel = slide.type === "theme"
     ? slide.theme.banner_subtext ?? ""
-    : getEventCountdown(slide.event);
+    : eventCountdown(slide.event);
   const emoji = slide.type === "theme" ? slide.theme.banner_emoji : slide.event.emoji;
   const ctaLabel = slide.type === "theme" ? slide.theme.banner_cta_label : "Learn More";
   const ctaHref  = slide.type === "theme" ? (slide.theme.banner_cta_href ?? "#") : "/events";
@@ -178,6 +190,7 @@ export default function SeasonalBanner() {
 
   return (
     <div
+      data-seasonal-banner
       className="vltd-dark-surface relative mb-4 select-none overflow-hidden"
       style={{
         background: "linear-gradient(90deg, rgba(4,10,16,0.98), rgba(7,18,26,0.96) 48%, rgba(3,8,14,0.98))",
@@ -185,8 +198,9 @@ export default function SeasonalBanner() {
         borderRadius: 10,
         boxShadow: "0 18px 46px rgba(0,0,0,0.36), inset 0 1px 0 rgba(237,239,241,0.08)",
         opacity: visible ? 1 : 0,
-        transition: "opacity 0.4s ease",
-        minHeight: 46,
+        transition: "opacity 0.3s ease",
+        height: CARD_PX,
+        boxSizing: "border-box",
         cursor: eventHref ? "pointer" : "default",
       }}
       role={eventHref ? "link" : undefined}
@@ -211,15 +225,15 @@ export default function SeasonalBanner() {
           opacity: 0.42,
         }}
       />
-      {/* Single slim row */}
-      <div className="relative flex items-center gap-2 px-3 py-2">
+      {/* Main row */}
+      <div className="relative flex items-center gap-2 px-3" style={{ height: MAIN_ROW_PX }}>
 
         {/* Prev arrow */}
-        {slides.length > 1 && (
+        {count > 1 && (
           <button
             onClick={(e) => {
               e.stopPropagation();
-              jumpTo((idx - 1 + slides.length) % slides.length);
+              goTo(shownRef.current - 1, true);
             }}
             aria-label="Previous"
             className="vltd-tap-y flex h-6 w-6 flex-shrink-0 items-center justify-center transition hover:brightness-125"
@@ -267,11 +281,11 @@ export default function SeasonalBanner() {
         )}
 
         {/* Next arrow */}
-        {slides.length > 1 && (
+        {count > 1 && (
           <button
             onClick={(e) => {
               e.stopPropagation();
-              jumpTo((idx + 1) % slides.length);
+              goTo(shownRef.current + 1, true);
             }}
             aria-label="Next"
             className="vltd-tap-y flex h-6 w-6 flex-shrink-0 items-center justify-center transition hover:brightness-125"
@@ -286,45 +300,60 @@ export default function SeasonalBanner() {
         )}
       </div>
 
-      {/* Dot indicators — single pixel row at bottom */}
-      {slides.length > 1 && (
-        <div className="flex justify-center gap-1 pb-1">
-          {slides.map((_, i) => (
-            <button
-              key={i}
-              onClick={(e) => {
-                e.stopPropagation();
-                jumpTo(i);
-              }}
-              className="vltd-tap-y transition-all duration-300"
-              style={{
-                ["--tap-h" as string]: "28px",
-                width: i === idx ? 14 : 5,
-                height: 3,
-                background: i === idx ? "#E6C46A" : "rgba(203,208,213,0.24)",
-                borderRadius: 2,
-              }}
-              aria-label={`Slide ${i + 1}`}
-            />
-          ))}
-        </div>
-      )}
+      {/* Band: the theme question on the left (theme slides only), the dots in the middle, the answer buttons on the right. Always the same height. */}
+      <div
+        className="relative grid items-center gap-2 px-3"
+        style={{ height: BAND_PX, gridTemplateColumns: "minmax(0,1fr) auto minmax(0,1fr)" }}
+      >
+        <p className="flex min-w-0 items-center gap-1 text-[10px]" style={{ color: `${accent}bb` }}>
+          {themeSlide && (
+            <>
+              <Glyph name="palette" size={11} />
+              <span className="truncate">
+                {choice === "accepted" ? "Seasonal theme on" : choice === "dismissed" ? "Normal theme" : "Switch app theme?"}
+              </span>
+            </>
+          )}
+        </p>
 
-      {/* Theme prompt — only shown if user hasn't decided yet */}
-      {slide.type === "theme" && showThemePrompt && (
-        <div
-          className="flex items-center justify-between gap-2 px-3 pb-2"
-        >
-          <p className="flex items-center gap-1 text-[10px]" style={{ color: `${accent}bb` }}>
-            <Glyph name="palette" size={11} />
-            Switch app theme?
-          </p>
-          <div className="flex gap-1.5 flex-shrink-0">
-            <PillButton size="compact" onClick={(e) => { e.stopPropagation(); handleAcceptTheme(); }} style={{ background: "linear-gradient(135deg,#8C9298,#C8CDD2)", color: "#000" }}>Yes</PillButton>
-            <PillButton size="compact" onClick={(e) => { e.stopPropagation(); handleDismissTheme(); }}>No</PillButton>
-          </div>
+        <div className="flex items-center justify-center gap-1">
+          {count > 1 &&
+            slides.map((_, i) => (
+              <button
+                key={i}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  goTo(i, true);
+                }}
+                className="vltd-tap-y flex-shrink-0 transition-all duration-300"
+                style={{
+                  ["--tap-h" as string]: "28px",
+                  width: i === idx ? 14 : 5,
+                  height: 3,
+                  background: i === idx ? "#E6C46A" : "rgba(203,208,213,0.24)",
+                  borderRadius: 2,
+                }}
+                aria-label={`Slide ${i + 1}`}
+                aria-current={i === idx ? "true" : undefined}
+              />
+            ))}
         </div>
-      )}
+
+        <div className="flex items-center justify-end gap-1.5">
+          {themeSlide && !choice && (
+            <>
+              <PillButton size="compact" onClick={(e) => { e.stopPropagation(); chooseYes(); }} style={{ background: "linear-gradient(135deg,#8C9298,#C8CDD2)", color: "#000" }}>Yes</PillButton>
+              <PillButton size="compact" onClick={(e) => { e.stopPropagation(); chooseNo(); }}>No</PillButton>
+            </>
+          )}
+          {themeSlide && choice === "accepted" && (
+            <PillButton size="compact" onClick={(e) => { e.stopPropagation(); chooseNo(); }}>Back to normal</PillButton>
+          )}
+          {themeSlide && choice === "dismissed" && (
+            <PillButton size="compact" onClick={(e) => { e.stopPropagation(); chooseYes(); }}>Use seasonal</PillButton>
+          )}
+        </div>
+      </div>
     </div>
   );
 }

@@ -1,8 +1,8 @@
 "use client";
 
 import { createContext, useContext, useEffect, useState } from "react";
-import { fetchActiveTheme, type SeasonalTheme } from "@/lib/seasonalTheme";
-import { applyThemeVars, clearThemeVars, hasAcceptedTheme } from "@/lib/seasonalConsent";
+import { fetchActiveThemes, type SeasonalTheme } from "@/lib/seasonalTheme";
+import { applyAcceptedTheme } from "@/lib/seasonalConsent";
 
 interface SeasonalThemeCtx {
   theme: SeasonalTheme | null;
@@ -20,12 +20,13 @@ export default function SeasonalThemeProvider({ children }: { children: React.Re
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchActiveTheme().then((t) => {
-      setTheme(t);
+    fetchActiveThemes().then((themes) => {
+      // The latest-starting active theme, as before.
+      setTheme(themes.length ? themes[themes.length - 1] : null);
       setLoading(false);
-      // Never before consent: the theme is applied only when the person already said Yes to it. Otherwise the app is left as it is.
-      if (!t) clearThemeVars();
-      else if (hasAcceptedTheme(t.slug)) applyThemeVars(t);
+      // Never before consent: a theme is applied only when the person already said Yes to it. With none active (or none accepted) the app is left as it
+      // is, and anything seasonal that was left on is taken off.
+      applyAcceptedTheme(themes);
     });
   }, []);
 

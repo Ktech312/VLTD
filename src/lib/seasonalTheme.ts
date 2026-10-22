@@ -67,7 +67,9 @@ export async function fetchActiveThemes(): Promise<SeasonalTheme[]> {
     const cached = sessionStorage.getItem(CACHE_KEY_ALL);
     if (cached) {
       const { ts, data } = JSON.parse(cached) as { ts: number; data: SeasonalTheme[] };
-      if (Date.now() - ts < CACHE_TTL) return data;
+      // A theme whose window has closed (or not yet opened) is not served from the cache.
+      const nowMs = Date.now();
+      if (nowMs - ts < CACHE_TTL) return data.filter((t) => Date.parse(t.starts_at) <= nowMs && Date.parse(t.ends_at) >= nowMs);
     }
   } catch {}
 
@@ -94,6 +96,7 @@ export async function fetchActiveThemes(): Promise<SeasonalTheme[]> {
 
 export function clearThemeCache() {
   try { sessionStorage.removeItem(CACHE_KEY); } catch {}
+  try { sessionStorage.removeItem(CACHE_KEY_ALL); } catch {}
 }
 
 /** All themes — admin only */

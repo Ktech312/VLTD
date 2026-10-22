@@ -2550,17 +2550,13 @@ main {
 }
 
 /* =========================================================
-   SEASONAL THEME OVERRIDES
-   Applied when user opts in via SeasonalBanner ("Yes, switch").
-   SeasonalBanner sets data-seasonal on <html> and writes
-   --seasonal-accent / --seasonal-accent-secondary to :root.
+   SEASONAL THEME
+   Applied when the person says Yes in the Home banner. The base theme
+   (lib/ThemeContext.tsx) writes --accent / --theme-gold* as inline styles on
+   <html>, which beat any rule here, so the seasonal colours are layered on as
+   inline styles too (lib/seasonalConsent.ts, applySeasonalOverlay). <html> also
+   gets data-seasonal="<slug>" and --seasonal-accent while one is on.
 ========================================================= */
-[data-seasonal] {
-  --accent: var(--seasonal-accent, #D9A23A);
-  --accent-2: var(--seasonal-accent-secondary, #B8872B);
-  --theme-gold: var(--seasonal-accent, #D9A23A);
-  --theme-gold-gradient: linear-gradient(135deg, var(--seasonal-accent-secondary, #B8872B), var(--seasonal-accent, #D9A23A));
-}
 
 /* Pull-to-refresh spinner */
 @keyframes ptr-spin {

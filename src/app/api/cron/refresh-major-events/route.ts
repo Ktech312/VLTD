@@ -1,8 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServiceClient } from "@/lib/serverAdmin";
+import { MAJOR_SHOWS } from "@/lib/events/majorShows";
+import { dayStamps, eventSlug, isIsoDay, persistEvents, type EventRow } from "@/lib/events/eventPipeline";
 
 // Runs weekly (see vercel.json) to keep a curated list of the major,
-// well-known recurring collector shows current -- this is a NAME lookup,
+// well-known recurring collector shows current (the list lives in
+// lib/events/majorShows.ts) -- this is a NAME lookup,
 // not a keyword search, so there's no "plumbing convention matched the
 // keyword" risk the way there is in refresh-events: nothing is being
 // discovered here, only refreshed against a fixed, EK-approved list.
@@ -14,35 +17,13 @@ import { getServiceClient } from "@/lib/serverAdmin";
 // past year's pattern, and anything not confidently determined is dropped
 // rather than published with a made-up date.
 
-type MajorShow = { name: string; universes: string[] };
-
-// EK: edit this list freely -- add/remove shows as you see fit. Each
-// listed once by name; the weekly job just keeps its date/location current.
-const MAJOR_SHOWS: MajorShow[] = [
-  { name: "San Diego Comic-Con", universes: ["comics", "toys", "games"] },
-  { name: "New York Comic Con", universes: ["comics", "toys"] },
-  { name: "WonderCon", universes: ["comics"] },
-  { name: "C2E2 Chicago Comic and Entertainment Expo", universes: ["comics", "toys"] },
-  { name: "The National Sports Collectors Convention", universes: ["sports_cards", "tcg"] },
-  { name: "Pokemon World Championships", universes: ["tcg"] },
-  { name: "MagicCon", universes: ["tcg"] },
-  { name: "Gen Con", universes: ["games", "tcg"] },
-  { name: "NAMM Show", universes: ["vinyl"] },
-  { name: "WFMU Record Fair", universes: ["vinyl"] },
-  { name: "Sneaker Con", universes: ["sneakers"] },
-  { name: "Windup Watch Fair", universes: ["watches"] },
-  { name: "Portland Retro Gaming Expo", universes: ["games"] },
-  { name: "WhiskyFest", universes: ["whisky"] },
-  { name: "ANA World's Fair of Money", universes: ["coins"] },
-  { name: "APS StampShow", universes: ["stamps"] },
-  { name: "Barrett-Jackson Auction", universes: ["classic_cars"] },
-  { name: "Pebble Beach Concours d'Elegance", universes: ["classic_cars"] },
-  { name: "SEMA Show", universes: ["automotive"] },
-];
+// One search per show plus the AI call have to finish inside one request; the platform default (10 s on some plans) is too short for that.
+export const maxDuration = 60;
 
 type Snippet = { title: string; snippet: string; link: string };
+type SnippetResult = { snippets: Snippet[]; error: string | null };
 
-async function fetchSearchSnippets(apiKey: string, query: string): Promise<Snippet[]> {
+async function fetchSearchSnippets(apiKey: string, query: string): Promise<SnippetResult> {
   const url = new URL("https://serpapi.com/search.json");
   url.searchParams.set("engine", "google");
   url.searchParams.set("q", query);
@@ -51,18 +32,28 @@ async function fetchSearchSnippets(apiKey: string, query: string): Promise<Snipp
   url.searchParams.set("gl", "us");
   url.searchParams.set("num", "5");
 
-  const response = await fetch(url).catch(() => null);
-  if (!response || !response.ok) return [];
-
+  let response: Response;
+  try {
+    response = await fetch(url);
+  } catch (err) {
+    return { snippets: [], error: `"${query}": request failed (${String(err)})`.slice(0, 200) };
+  }
   const payload = (await response.json().catch(() => null)) as {
     organic_results?: Array<{ title?: string; snippet?: string; link?: string }>;
+    error?: string;
   } | null;
+  if (!response.ok) return { snippets: [], error: `"${query}": HTTP ${response.status} ${payload?.error ?? ""}`.trim().slice(0, 200) };
+  if (!payload) return { snippets: [], error: `"${query}": unreadable answer` };
+  if (payload.error && !/hasn't returned any results|no results/i.test(payload.error)) return { snippets: [], error: `"${query}": ${payload.error}`.slice(0, 200) };
 
-  return (payload?.organic_results ?? []).slice(0, 5).map((r) => ({
-    title: r.title ?? "",
-    snippet: r.snippet ?? "",
-    link: r.link ?? "",
-  }));
+  return {
+    snippets: (payload.organic_results ?? []).slice(0, 5).map((r) => ({
+      title: r.title ?? "",
+      snippet: r.snippet ?? "",
+      link: r.link ?? "",
+    })),
+    error: null,
+  };
 }
 
 type ExtractedShow = {
@@ -78,8 +69,8 @@ async function extractShowDates(
   apiKey: string,
   shows: Array<{ name: string; snippets: Snippet[] }>,
   now: Date,
-): Promise<ExtractedShow[]> {
-  if (!shows.length) return [];
+): Promise<{ shows: ExtractedShow[]; error: string | null }> {
+  if (!shows.length) return { shows: [], error: null };
 
   const prompt = [
     `Today's date is ${now.toISOString().slice(0, 10)}.`,
@@ -111,27 +102,35 @@ async function extractShowDates(
       }),
     });
 
-    if (!response.ok) return []; // fail closed
+    if (!response.ok) {
+      const details = await response.text().catch(() => "");
+      return { shows: [], error: `AI request failed: ${response.status} ${details}`.slice(0, 300) }; // fail closed
+    }
 
     const result = (await response.json()) as { content?: { type: string; text: string }[] };
     const rawText = result.content?.[0]?.text ?? "[]";
     const firstBracket = rawText.indexOf("[");
     const lastBracket = rawText.lastIndexOf("]");
-    if (firstBracket < 0 || lastBracket <= firstBracket) return [];
+    if (firstBracket < 0 || lastBracket <= firstBracket) return { shows: [], error: `No JSON array in AI response: ${rawText}`.slice(0, 300) };
 
-    return JSON.parse(rawText.slice(firstBracket, lastBracket + 1)) as ExtractedShow[];
-  } catch {
-    return []; // fail closed
+    return { shows: JSON.parse(rawText.slice(firstBracket, lastBracket + 1)) as ExtractedShow[], error: null };
+  } catch (err) {
+    return { shows: [], error: `AI extraction threw: ${String(err)}`.slice(0, 300) }; // fail closed
   }
 }
 
-function slugify(name: string, year: string): string {
-  const base = name
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "")
-    .slice(0, 60);
-  return `${base || "event"}-${year}`;
+const DAY_MS = 86_400_000;
+
+/** A date the model gave back is only used if it is a real day, not already over, not absurdly far off, and the range is a plausible length. */
+function sensibleDates(start: unknown, end: unknown, now: Date): { start: string; end: string } | null {
+  if (!isIsoDay(start)) return null;
+  const endDay = isIsoDay(end) ? end : start;
+  const startMs = Date.parse(`${start}T00:00:00Z`);
+  const endMs = Date.parse(`${endDay}T00:00:00Z`);
+  if (endMs < startMs || endMs - startMs > 14 * DAY_MS) return null;
+  if (endMs < now.getTime() - DAY_MS) return null; // already over
+  if (startMs > now.getTime() + 540 * DAY_MS) return null; // further out than any announced show
+  return { start, end: endDay };
 }
 
 export async function GET(req: NextRequest) {
@@ -162,50 +161,83 @@ export async function GET(req: NextRequest) {
   const withSnippets = await Promise.all(
     MAJOR_SHOWS.map(async (show) => ({
       show,
-      snippets: await fetchSearchSnippets(serpApiKey, `${show.name} official dates`).catch(() => []),
+      ...(await fetchSearchSnippets(serpApiKey, `${show.name} official dates`)),
     })),
   );
+  const searchErrors = withSnippets.flatMap((s) => (s.error ? [s.error] : []));
 
-  const extracted = await extractShowDates(
+  // The model is only asked about shows whose search worked; a show with no snippets cannot be dated.
+  const askable = withSnippets.filter((s) => !s.error && s.snippets.length > 0);
+  const extraction = await extractShowDates(
     anthropicKey,
-    withSnippets.map(({ show, snippets }) => ({ name: show.name, snippets })),
+    askable.map(({ show, snippets }) => ({ name: show.name, snippets })),
     now,
   );
 
-  const rows = [];
+  const rows: EventRow[] = [];
   let skippedUnconfident = 0;
-  for (const result of extracted) {
+  let rejectedDates = 0;
+  let unmatched = 0;
+  const byName = new Map(extraction.shows.map((e) => [e?.name, e]));
+  askable.forEach(({ show }, i) => {
+    // By position (the model was told to keep the order), checked against the name; otherwise by name; never guessed.
+    const positional = extraction.shows[i];
+    const result = positional && positional.name === show.name ? positional : byName.get(show.name);
+    if (!result) {
+      unmatched += 1;
+      return;
+    }
     if (!result.confident || !result.startDate) {
       skippedUnconfident += 1;
-      continue;
+      return;
     }
-    const show = MAJOR_SHOWS.find((s) => s.name === result.name);
-    const endDate = result.endDate ?? result.startDate;
-    const year = result.startDate.slice(0, 4);
-
+    const dates = sensibleDates(result.startDate, result.endDate, now);
+    if (!dates) {
+      rejectedDates += 1;
+      return;
+    }
+    const stamps = dayStamps(dates.start, dates.end);
     rows.push({
-      slug: slugify(result.name, year),
-      name: result.name,
-      starts_at: `${result.startDate}T00:00:00.000Z`,
-      ends_at: `${endDate}T23:59:59.000Z`,
+      slug: eventSlug(show.name, dates.start, result.city),
+      name: show.name,
+      ...stamps,
       city: result.city,
       website_url: result.link,
       country: "US",
-      relevant_universes: show?.universes ?? null,
-      // enabled/is_featured omitted -- see refresh-events for why.
+      relevant_universes: show.universes,
+      // Every show on the maintained list is Featured: that is what puts it ahead of the small local shows in the Home banner's ten.
+      is_featured: true,
+      // enabled omitted -- see refresh-events for why.
     });
-  }
+  });
 
-  let upserted = 0;
-  if (rows.length) {
-    const { error } = await svc.from("collector_events").upsert(rows, { onConflict: "slug" });
-    if (!error) upserted = rows.length;
-  }
+  const saved = await persistEvents(svc, rows);
 
-  return NextResponse.json({
+  const problems: string[] = [];
+  if (searchErrors.length === MAJOR_SHOWS.length) problems.push("every search failed");
+  else if (searchErrors.length) problems.push(`${searchErrors.length} of ${MAJOR_SHOWS.length} searches failed`);
+  if (extraction.error) problems.push(`date extraction: ${extraction.error}`);
+  if (saved.failed) problems.push(`${saved.failed} event(s) could not be saved`);
+  const hardFailure = searchErrors.length === MAJOR_SHOWS.length || Boolean(extraction.error) || saved.failed > 0;
+
+  const body = {
+    ok: !hardFailure,
     ranAt: now.toISOString(),
     totalShows: MAJOR_SHOWS.length,
+    searchErrors,
+    extractionError: extraction.error,
     skippedUnconfident,
-    upserted,
-  });
+    rejectedDates,
+    unmatched,
+    inserted: saved.inserted,
+    updated: saved.updated,
+    matchedExisting: saved.matchedExisting,
+    duplicatesDropped: saved.duplicatesDropped,
+    failed: saved.failed,
+    saveErrors: saved.errors,
+    problems,
+  };
+  if (hardFailure || problems.length) console.error("[refresh-major-events]", JSON.stringify(body));
+  else console.log("[refresh-major-events]", JSON.stringify({ ranAt: body.ranAt, inserted: body.inserted, updated: body.updated, skippedUnconfident }));
+  return NextResponse.json(body, { status: hardFailure ? 502 : 200 });
 }

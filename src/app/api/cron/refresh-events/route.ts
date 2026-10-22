@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServiceClient } from "@/lib/serverAdmin";
 import { parseSerpEventWindow } from "@/lib/events/serpEventDateParse";
+import { dayStamps, eventSlug, isIsoDay, persistEvents, type EventRow } from "@/lib/events/eventPipeline";
+
+// Several searches plus the AI check run in one request; the platform default (10 s on some plans) is too short for that.
+export const maxDuration = 60;
 
 // Runs on a daily schedule (see vercel.json) so nobody has to manually find
 // and type new rows into collector_events -- pulls from two independent
@@ -79,7 +83,10 @@ function pickTicketLink(event: SerpApiEvent): string | null {
   return event.ticket_info?.find((ticket) => ticket.link)?.link ?? event.link ?? null;
 }
 
-async function fetchSerpCandidates(apiKey: string, category: string, query: string, now: Date): Promise<Candidate[]> {
+// What one search gave back. A search that failed is reported as a failure, never as "found nothing", so a dead key or an outage cannot look like a quiet day.
+type SourceResult = { candidates: Candidate[]; error: string | null };
+
+async function fetchSerpCandidates(apiKey: string, category: string, query: string, now: Date): Promise<SourceResult> {
   const url = new URL("https://serpapi.com/search.json");
   url.searchParams.set("engine", "google_events");
   url.searchParams.set("q", query);
@@ -88,11 +95,20 @@ async function fetchSerpCandidates(apiKey: string, category: string, query: stri
   url.searchParams.set("gl", "us");
   url.searchParams.set("location", NATIONWIDE_LOCATION);
 
-  const response = await fetch(url, { headers: { Accept: "application/json" } }).catch(() => null);
-  if (!response || !response.ok) return [];
-
+  let response: Response;
+  try {
+    response = await fetch(url, { headers: { Accept: "application/json" } });
+  } catch (err) {
+    return { candidates: [], error: `SerpApi ${category}: request failed (${String(err)})`.slice(0, 200) };
+  }
   const payload = (await response.json().catch(() => null)) as { events_results?: SerpApiEvent[]; error?: string } | null;
-  if (!payload || payload.error) return [];
+  if (!response.ok) return { candidates: [], error: `SerpApi ${category}: HTTP ${response.status} ${payload?.error ?? ""}`.trim().slice(0, 200) };
+  if (!payload) return { candidates: [], error: `SerpApi ${category}: unreadable answer` };
+  // SerpApi answers a search with no hits as an error string; that is an empty result, not a failure.
+  if (payload.error) {
+    if (/hasn't returned any results|no results/i.test(payload.error)) return { candidates: [], error: null };
+    return { candidates: [], error: `SerpApi ${category}: ${payload.error}`.slice(0, 200) };
+  }
 
   const candidates: Candidate[] = [];
   for (const event of (payload.events_results ?? []).slice(0, 10)) {
@@ -114,7 +130,7 @@ async function fetchSerpCandidates(apiKey: string, category: string, query: stri
       imageUrl: event.thumbnail ?? null,
     });
   }
-  return candidates;
+  return { candidates, error: null };
 }
 
 // ── Source 2: Ticketmaster Discovery ────────────────────────────────────
@@ -139,7 +155,7 @@ function pickTicketmasterImage(event: TicketmasterEvent): string | null {
   return wide?.url ?? images[0]?.url ?? null;
 }
 
-async function fetchTicketmasterCandidates(apiKey: string, category: string, keyword: string): Promise<Candidate[]> {
+async function fetchTicketmasterCandidates(apiKey: string, category: string, keyword: string): Promise<SourceResult> {
   const url = new URL("https://app.ticketmaster.com/discovery/v2/events.json");
   url.searchParams.set("apikey", apiKey);
   url.searchParams.set("keyword", keyword);
@@ -147,27 +163,33 @@ async function fetchTicketmasterCandidates(apiKey: string, category: string, key
   url.searchParams.set("size", "10");
   url.searchParams.set("sort", "date,asc");
 
-  const response = await fetch(url).catch(() => null);
-  if (!response || !response.ok) return [];
-
+  let response: Response;
+  try {
+    response = await fetch(url);
+  } catch (err) {
+    return { candidates: [], error: `Ticketmaster ${category}: request failed (${String(err)})`.slice(0, 200) };
+  }
+  if (!response.ok) return { candidates: [], error: `Ticketmaster ${category}: HTTP ${response.status}` };
   const payload = (await response.json().catch(() => null)) as { _embedded?: { events?: TicketmasterEvent[] } } | null;
+  if (!payload) return { candidates: [], error: `Ticketmaster ${category}: unreadable answer` };
 
   const candidates: Candidate[] = [];
-  for (const event of payload?._embedded?.events ?? []) {
+  for (const event of payload._embedded?.events ?? []) {
     const name = event.name?.trim();
     const startDate = event.dates?.start?.localDate;
-    if (!name || !startDate) continue;
+    if (!name || !startDate || !isIsoDay(startDate)) continue;
     const endDate = event.dates?.end?.localDate ?? startDate;
 
     const venue = event._embedded?.venues?.[0];
     const city = [venue?.city?.name, venue?.state?.stateCode].filter(Boolean).join(", ") || null;
+    const stamps = dayStamps(startDate, endDate);
 
     candidates.push({
       category,
       name,
       description: event.info?.trim() || event.pleaseNote?.trim() || null,
-      startsAt: `${startDate}T00:00:00.000Z`,
-      endsAt: `${endDate}T23:59:59.000Z`,
+      startsAt: stamps.starts_at,
+      endsAt: stamps.ends_at,
       venueName: venue?.name ?? null,
       city,
       websiteUrl: event.url ?? null,
@@ -175,7 +197,7 @@ async function fetchTicketmasterCandidates(apiKey: string, category: string, key
       imageUrl: pickTicketmasterImage(event),
     });
   }
-  return candidates;
+  return { candidates, error: null };
 }
 
 // ── Relevance gate: one batched AI call for everything found this run ──
@@ -247,14 +269,6 @@ async function filterRelevantCandidates(
   }
 }
 
-function slugify(name: string, startsAt: string): string {
-  const base = name
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "")
-    .slice(0, 60);
-  return `${base || "event"}-${startsAt.slice(0, 10)}`;
-}
 
 export async function GET(req: NextRequest) {
   const cronSecret = process.env.CRON_SECRET;
@@ -284,17 +298,39 @@ export async function GET(req: NextRequest) {
   const now = new Date();
   const allCandidates: Candidate[] = [];
   const foundByCategory: Record<string, number> = {};
+  const sourceErrors: string[] = [];
+  let searchesRun = 0;
+  // A source that failed on every one of its searches is a dead source (bad key, outage, quota), not a quiet day.
+  const attempts = { serp: 0, ticketmaster: 0 };
+  const failures = { serp: 0, ticketmaster: 0 };
 
-  for (const [category, query] of Object.entries(CATEGORY_QUERIES)) {
-    const [serpCandidates, tmCandidates] = await Promise.all([
-      serpApiKey ? fetchSerpCandidates(serpApiKey, category, query, now).catch(() => []) : Promise.resolve([]),
-      ticketmasterKey
-        ? fetchTicketmasterCandidates(ticketmasterKey, category, TICKETMASTER_KEYWORDS[category] ?? category).catch(() => [])
-        : Promise.resolve([]),
-    ]);
-    allCandidates.push(...serpCandidates, ...tmCandidates);
-    foundByCategory[category] = serpCandidates.length + tmCandidates.length;
+  // Every category at once (each is one Google Events and one Ticketmaster search) so the whole run fits in the time the function is given.
+  const perCategory = await Promise.all(
+    Object.entries(CATEGORY_QUERIES).map(async ([category, query]) => {
+      const [serp, tm] = await Promise.all([
+        serpApiKey ? fetchSerpCandidates(serpApiKey, category, query, now) : Promise.resolve<SourceResult | null>(null),
+        ticketmasterKey
+          ? fetchTicketmasterCandidates(ticketmasterKey, category, TICKETMASTER_KEYWORDS[category] ?? category)
+          : Promise.resolve<SourceResult | null>(null),
+      ]);
+      return { category, serp, tm };
+    }),
+  );
+  for (const { category, serp, tm } of perCategory) {
+    foundByCategory[category] = 0;
+    for (const [source, result] of [["serp", serp], ["ticketmaster", tm]] as const) {
+      if (!result) continue;
+      searchesRun += 1;
+      attempts[source] += 1;
+      if (result.error) {
+        failures[source] += 1;
+        sourceErrors.push(result.error);
+      }
+      allCandidates.push(...result.candidates);
+      foundByCategory[category] += result.candidates.length;
+    }
   }
+  const deadSources = (["serp", "ticketmaster"] as const).filter((source) => attempts[source] > 0 && failures[source] === attempts[source]);
 
   // No AI key to gate with -> nothing from a keyword search gets published,
   // full stop. (Not expected to trigger; ANTHROPIC_API_KEY has been live in
@@ -304,8 +340,8 @@ export async function GET(req: NextRequest) {
     : { approved: new Set<number>(), error: "ANTHROPIC_API_KEY not set" };
   const approved = allCandidates.filter((_, i) => aiFilterResult.approved.has(i));
 
-  const rows = approved.map((c) => ({
-    slug: slugify(c.name, c.startsAt),
+  const rows: EventRow[] = approved.map((c) => ({
+    slug: eventSlug(c.name, c.startsAt.slice(0, 10), c.city),
     name: c.name,
     short_desc: c.description?.slice(0, 200) ?? null,
     long_desc: c.description ?? null,
@@ -317,28 +353,39 @@ export async function GET(req: NextRequest) {
     ticket_url: c.ticketUrl,
     image_url: c.imageUrl,
     country: "US",
-    // enabled/is_featured deliberately omitted: on a fresh insert the table
-    // defaults (enabled=true, is_featured=false) apply, but on a re-run that
-    // matches an existing slug, upsert only overwrites the columns listed
-    // here -- so a manual disable or feature-flip from EK never gets undone
-    // by tomorrow's run.
+    // enabled/is_featured deliberately omitted: a new row gets the table defaults (enabled=true, is_featured=false), and a row that is already there is
+    // only ever updated in the columns above and only where this run has a value, so a manual disable or feature-flip is never undone by the next run.
   }));
 
-  let upserted = 0;
-  let upsertError: string | null = null;
-  if (rows.length) {
-    const { error } = await svc.from("collector_events").upsert(rows, { onConflict: "slug" });
-    if (!error) upserted = rows.length;
-    else upsertError = error.message;
-  }
+  const saved = await persistEvents(svc, rows);
 
-  return NextResponse.json({
+  // A run that did not do its job answers with an error status (the platform marks the cron run failed and the log line below is easy to find),
+  // instead of a cheerful 200 that nobody looks at.
+  const problems: string[] = [];
+  for (const source of deadSources) problems.push(`${source === "serp" ? "Google Events (SerpApi)" : "Ticketmaster"}: every search failed`);
+  if (sourceErrors.length && !deadSources.length) problems.push(`${sourceErrors.length} of ${searchesRun} searches failed`);
+  if (aiFilterResult.error) problems.push(`relevance check: ${aiFilterResult.error}`);
+  if (saved.failed) problems.push(`${saved.failed} event(s) could not be saved`);
+  const hardFailure = deadSources.length > 0 || Boolean(aiFilterResult.error) || saved.failed > 0;
+
+  const body = {
+    ok: !hardFailure,
     ranAt: now.toISOString(),
+    searchesRun,
+    sourceErrors,
     foundByCategory,
     totalFound: allCandidates.length,
     approvedByAi: approved.length,
     aiFilterError: aiFilterResult.error,
-    upserted,
-    upsertError,
-  });
+    inserted: saved.inserted,
+    updated: saved.updated,
+    matchedExisting: saved.matchedExisting,
+    duplicatesDropped: saved.duplicatesDropped,
+    failed: saved.failed,
+    saveErrors: saved.errors,
+    problems,
+  };
+  if (hardFailure || problems.length) console.error("[refresh-events]", JSON.stringify(body));
+  else console.log("[refresh-events]", JSON.stringify({ ranAt: body.ranAt, totalFound: body.totalFound, inserted: body.inserted, updated: body.updated }));
+  return NextResponse.json(body, { status: hardFailure ? 502 : 200 });
 }

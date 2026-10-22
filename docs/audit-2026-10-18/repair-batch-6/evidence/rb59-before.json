@@ -1,0 +1,711 @@
+{
+ "label": "before",
+ "cases": [
+  {
+   "ok": true,
+   "control": "slides present (desktop 1440)"
+  },
+  {
+   "ok": false,
+   "control": "card height identical on every slide (desktop 1440)"
+  },
+  {
+   "ok": false,
+   "control": "content below does not move across slides (desktop 1440)"
+  },
+  {
+   "ok": false,
+   "control": "Yes switches the theme (desktop 1440)"
+  },
+  {
+   "ok": false,
+   "control": "visible colours change after Yes (desktop 1440)"
+  },
+  {
+   "ok": false,
+   "control": "size and content position unchanged before/after Yes and Back (desktop 1440)"
+  },
+  {
+   "ok": false,
+   "control": "Back to normal removes the theme (desktop 1440)"
+  },
+  {
+   "ok": false,
+   "control": "No leaves the app as it is, also after reload (desktop 1440)"
+  },
+  {
+   "ok": false,
+   "control": "an accepted theme survives reload and other pages (desktop 1440)"
+  },
+  {
+   "ok": false,
+   "control": "returning to the normal theme sticks after reload (desktop 1440)"
+  },
+  {
+   "ok": true,
+   "control": "arrows and dots (desktop 1440)"
+  },
+  {
+   "ok": true,
+   "control": "arrows still work after choosing a theme (desktop 1440)"
+  },
+  {
+   "ok": true,
+   "control": "slides present (phone 390)"
+  },
+  {
+   "ok": false,
+   "control": "card height identical on every slide (phone 390)"
+  },
+  {
+   "ok": false,
+   "control": "content below does not move across slides (phone 390)"
+  },
+  {
+   "ok": false,
+   "control": "Yes switches the theme (phone 390)"
+  },
+  {
+   "ok": false,
+   "control": "visible colours change after Yes (phone 390)"
+  },
+  {
+   "ok": false,
+   "control": "size and content position unchanged before/after Yes and Back (phone 390)"
+  },
+  {
+   "ok": false,
+   "control": "Back to normal removes the theme (phone 390)"
+  },
+  {
+   "ok": false,
+   "control": "No leaves the app as it is, also after reload (phone 390)"
+  },
+  {
+   "ok": false,
+   "control": "an accepted theme survives reload and other pages (phone 390)"
+  },
+  {
+   "ok": false,
+   "control": "returning to the normal theme sticks after reload (phone 390)"
+  },
+  {
+   "ok": true,
+   "control": "arrows and dots (phone 390)"
+  },
+  {
+   "ok": true,
+   "control": "swipe both directions (phone 390)"
+  },
+  {
+   "ok": true,
+   "control": "swipe still works after choosing a theme (phone 390)"
+  },
+  {
+   "ok": true,
+   "control": "swipe still works after returning to normal (phone 390)"
+  }
+ ],
+ "samples": [
+  {
+   "name": "desktop 1440",
+   "first": {
+    "h": 91.5,
+    "w": 1044,
+    "top": 92,
+    "belowTop": 223.5,
+    "label": "Trick or Treat",
+    "sub": "Horror, comics, and dark collectibles await",
+    "dots": 11,
+    "active": 0,
+    "btns": [
+     "Yes",
+     "No"
+    ],
+    "prompt": true,
+    "opacity": "1",
+    "seasonal": null,
+    "gold": "#C8CDD2",
+    "accent": "#C8CDD2",
+    "accentBody": "#C8CDD2",
+    "seasonalAccent": "",
+    "goldBorder": "rgba(203, 208, 213, 0.34)",
+    "prefs": null
+   }
+  },
+  {
+   "name": "desktop 1440",
+   "per": [
+    {
+     "i": 0,
+     "h": 91.5,
+     "belowTop": 223.5,
+     "label": "Trick or Treat",
+     "prompt": true,
+     "btns": "Yes|No"
+    },
+    {
+     "i": 1,
+     "h": 55.5,
+     "belowTop": 187.5,
+     "label": "Propstore: James Bond Online Auction – L",
+     "prompt": false,
+     "btns": ""
+    },
+    {
+     "i": 2,
+     "h": 55.5,
+     "belowTop": 187.5,
+     "label": "Propstore: The Wheel of Time Online Auct",
+     "prompt": false,
+     "btns": ""
+    },
+    {
+     "i": 3,
+     "h": 55.5,
+     "belowTop": 187.5,
+     "label": "Anaheim Card Show — October 22, 2026",
+     "prompt": false,
+     "btns": ""
+    },
+    {
+     "i": 4,
+     "h": 55.5,
+     "belowTop": 187.5,
+     "label": "SCG CON Hartford 2026",
+     "prompt": false,
+     "btns": ""
+    },
+    {
+     "i": 5,
+     "h": 55.5,
+     "belowTop": 187.5,
+     "label": "Smackdown and Sketches",
+     "prompt": false,
+     "btns": ""
+    },
+    {
+     "i": 6,
+     "h": 55.5,
+     "belowTop": 187.5,
+     "label": "GalaxyCon St. Louis",
+     "prompt": false,
+     "btns": ""
+    },
+    {
+     "i": 7,
+     "h": 55.5,
+     "belowTop": 187.5,
+     "label": "MCM Comic Con London",
+     "prompt": false,
+     "btns": ""
+    },
+    {
+     "i": 8,
+     "h": 55.5,
+     "belowTop": 187.5,
+     "label": "Armageddon Expo Auckland Spring",
+     "prompt": false,
+     "btns": ""
+    },
+    {
+     "i": 9,
+     "h": 55.5,
+     "belowTop": 187.5,
+     "label": "Georgia Mountains Charity Comic Con",
+     "prompt": false,
+     "btns": ""
+    },
+    {
+     "i": 10,
+     "h": 55.5,
+     "belowTop": 187.5,
+     "label": "Birmingham Trading Card Fest — October 2",
+     "prompt": false,
+     "btns": ""
+    }
+   ]
+  },
+  {
+   "name": "desktop 1440",
+   "sizes": [
+    {
+     "step": "undecided",
+     "h": 91.5,
+     "belowTop": 223.5
+    },
+    {
+     "step": "after Yes",
+     "h": 55.5,
+     "belowTop": 187.5
+    }
+   ],
+   "undecided": {
+    "h": 91.5,
+    "w": 1044,
+    "top": 92,
+    "belowTop": 223.5,
+    "label": "Trick or Treat",
+    "sub": "Horror, comics, and dark collectibles await",
+    "dots": 11,
+    "active": 0,
+    "btns": [
+     "Yes",
+     "No"
+    ],
+    "prompt": true,
+    "opacity": "1",
+    "seasonal": null,
+    "gold": "#C8CDD2",
+    "accent": "#C8CDD2",
+    "accentBody": "#C8CDD2",
+    "seasonalAccent": "",
+    "goldBorder": "rgba(203, 208, 213, 0.34)",
+    "prefs": null
+   },
+   "afterYes": {
+    "h": 55.5,
+    "w": 1044,
+    "top": 92,
+    "belowTop": 187.5,
+    "label": "Trick or Treat",
+    "sub": "Horror, comics, and dark collectibles await",
+    "dots": 11,
+    "active": 0,
+    "btns": [],
+    "prompt": false,
+    "opacity": "1",
+    "seasonal": "halloween-2026",
+    "gold": "#C8CDD2",
+    "accent": "#C8CDD2",
+    "accentBody": "#C8CDD2",
+    "seasonalAccent": "#FF6B00",
+    "goldBorder": "rgba(203, 208, 213, 0.34)",
+    "prefs": "{\"halloween-2026\":\"accepted\"}"
+   },
+   "afterBack": null,
+   "orangeYes": 0,
+   "orangeBack": null
+  },
+  {
+   "name": "desktop 1440",
+   "u2": {
+    "h": 91.5,
+    "w": 1044,
+    "top": 92,
+    "belowTop": 223.5,
+    "label": "Trick or Treat",
+    "sub": "Horror, comics, and dark collectibles await",
+    "dots": 11,
+    "active": 0,
+    "btns": [
+     "Yes",
+     "No"
+    ],
+    "prompt": true,
+    "opacity": "1",
+    "seasonal": null,
+    "gold": "#C8CDD2",
+    "accent": "#C8CDD2",
+    "accentBody": "#C8CDD2",
+    "seasonalAccent": "",
+    "goldBorder": "rgba(203, 208, 213, 0.34)",
+    "prefs": null
+   },
+   "afterNo": {
+    "h": 55.5,
+    "w": 1044,
+    "top": 92,
+    "belowTop": 187.5,
+    "label": "Trick or Treat",
+    "sub": "Horror, comics, and dark collectibles await",
+    "dots": 11,
+    "active": 0,
+    "btns": [],
+    "prompt": false,
+    "opacity": "1",
+    "seasonal": null,
+    "gold": "#C8CDD2",
+    "accent": "#C8CDD2",
+    "accentBody": "#C8CDD2",
+    "seasonalAccent": "",
+    "goldBorder": "rgba(203, 208, 213, 0.34)",
+    "prefs": "{\"halloween-2026\":\"dismissed\"}"
+   },
+   "afterNoReload": {
+    "h": 55.5,
+    "w": 1044,
+    "top": 92,
+    "belowTop": 187.5,
+    "label": "Trick or Treat",
+    "sub": "Horror, comics, and dark collectibles await",
+    "dots": 11,
+    "active": 0,
+    "btns": [],
+    "prompt": false,
+    "opacity": "1",
+    "seasonal": null,
+    "gold": "#C8CDD2",
+    "accent": "#C8CDD2",
+    "accentBody": "#C8CDD2",
+    "seasonalAccent": "",
+    "goldBorder": "rgba(203, 208, 213, 0.34)",
+    "prefs": "{\"halloween-2026\":\"dismissed\"}"
+   },
+   "orangeNo": 0
+  },
+  {
+   "name": "desktop 1440",
+   "reloaded": {
+    "h": 55.5,
+    "w": 1044,
+    "top": 92,
+    "belowTop": 187.5,
+    "label": "Trick or Treat",
+    "sub": "Horror, comics, and dark collectibles await",
+    "dots": 11,
+    "active": 0,
+    "btns": [],
+    "prompt": false,
+    "opacity": "1",
+    "seasonal": "halloween-2026",
+    "gold": "#C8CDD2",
+    "accent": "#C8CDD2",
+    "accentBody": "#C8CDD2",
+    "seasonalAccent": "#FF6B00",
+    "goldBorder": "rgba(203, 208, 213, 0.34)",
+    "prefs": "{\"halloween-2026\":\"accepted\"}"
+   },
+   "orangeReloaded": 0,
+   "onVault": {
+    "seasonal": "halloween-2026",
+    "gold": "#C8CDD2"
+   },
+   "revertedReload": {
+    "h": 55.5,
+    "w": 1044,
+    "top": 92,
+    "belowTop": 187.5,
+    "label": "Trick or Treat",
+    "sub": "Horror, comics, and dark collectibles await",
+    "dots": 11,
+    "active": 0,
+    "btns": [],
+    "prompt": false,
+    "opacity": "1",
+    "seasonal": "halloween-2026",
+    "gold": "#C8CDD2",
+    "accent": "#C8CDD2",
+    "accentBody": "#C8CDD2",
+    "seasonalAccent": "#FF6B00",
+    "goldBorder": "rgba(203, 208, 213, 0.34)",
+    "prefs": "{\"halloween-2026\":\"accepted\"}"
+   },
+   "orangeRevertedReload": 0,
+   "vaultReverted": {
+    "seasonal": "halloween-2026",
+    "gold": "#C8CDD2"
+   }
+  },
+  {
+   "name": "phone 390",
+   "first": {
+    "h": 95.5,
+    "w": 354,
+    "top": 84,
+    "belowTop": 219.5,
+    "label": "Trick or Treat",
+    "sub": "Horror, comics, and dark collectibles await",
+    "dots": 11,
+    "active": 0,
+    "btns": [
+     "Yes",
+     "No"
+    ],
+    "prompt": true,
+    "opacity": "1",
+    "seasonal": null,
+    "gold": "#C8CDD2",
+    "accent": "#C8CDD2",
+    "accentBody": "#C8CDD2",
+    "seasonalAccent": "",
+    "goldBorder": "rgba(203, 208, 213, 0.34)",
+    "prefs": null
+   }
+  },
+  {
+   "name": "phone 390",
+   "per": [
+    {
+     "i": 0,
+     "h": 95.5,
+     "belowTop": 219.5,
+     "label": "Trick or Treat",
+     "prompt": true,
+     "btns": "Yes|No"
+    },
+    {
+     "i": 1,
+     "h": 55.5,
+     "belowTop": 179.5,
+     "label": "Propstore: James Bond Online Auction – L",
+     "prompt": false,
+     "btns": ""
+    },
+    {
+     "i": 2,
+     "h": 55.5,
+     "belowTop": 179.5,
+     "label": "Propstore: The Wheel of Time Online Auct",
+     "prompt": false,
+     "btns": ""
+    },
+    {
+     "i": 3,
+     "h": 55.5,
+     "belowTop": 179.5,
+     "label": "Anaheim Card Show — October 22, 2026",
+     "prompt": false,
+     "btns": ""
+    },
+    {
+     "i": 4,
+     "h": 55.5,
+     "belowTop": 179.5,
+     "label": "SCG CON Hartford 2026",
+     "prompt": false,
+     "btns": ""
+    },
+    {
+     "i": 5,
+     "h": 55.5,
+     "belowTop": 179.5,
+     "label": "Smackdown and Sketches",
+     "prompt": false,
+     "btns": ""
+    },
+    {
+     "i": 6,
+     "h": 55.5,
+     "belowTop": 179.5,
+     "label": "GalaxyCon St. Louis",
+     "prompt": false,
+     "btns": ""
+    },
+    {
+     "i": 7,
+     "h": 55.5,
+     "belowTop": 179.5,
+     "label": "MCM Comic Con London",
+     "prompt": false,
+     "btns": ""
+    },
+    {
+     "i": 8,
+     "h": 55.5,
+     "belowTop": 179.5,
+     "label": "Armageddon Expo Auckland Spring",
+     "prompt": false,
+     "btns": ""
+    },
+    {
+     "i": 9,
+     "h": 55.5,
+     "belowTop": 179.5,
+     "label": "Georgia Mountains Charity Comic Con",
+     "prompt": false,
+     "btns": ""
+    },
+    {
+     "i": 10,
+     "h": 55.5,
+     "belowTop": 179.5,
+     "label": "Birmingham Trading Card Fest — October 2",
+     "prompt": false,
+     "btns": ""
+    }
+   ]
+  },
+  {
+   "name": "phone 390",
+   "sizes": [
+    {
+     "step": "undecided",
+     "h": 95.5,
+     "belowTop": 219.5
+    },
+    {
+     "step": "after Yes",
+     "h": 55.5,
+     "belowTop": 179.5
+    }
+   ],
+   "undecided": {
+    "h": 95.5,
+    "w": 354,
+    "top": 84,
+    "belowTop": 219.5,
+    "label": "Trick or Treat",
+    "sub": "Horror, comics, and dark collectibles await",
+    "dots": 11,
+    "active": 0,
+    "btns": [
+     "Yes",
+     "No"
+    ],
+    "prompt": true,
+    "opacity": "1",
+    "seasonal": null,
+    "gold": "#C8CDD2",
+    "accent": "#C8CDD2",
+    "accentBody": "#C8CDD2",
+    "seasonalAccent": "",
+    "goldBorder": "rgba(203, 208, 213, 0.34)",
+    "prefs": null
+   },
+   "afterYes": {
+    "h": 55.5,
+    "w": 354,
+    "top": 84,
+    "belowTop": 179.5,
+    "label": "Trick or Treat",
+    "sub": "Horror, comics, and dark collectibles await",
+    "dots": 11,
+    "active": 0,
+    "btns": [],
+    "prompt": false,
+    "opacity": "1",
+    "seasonal": "halloween-2026",
+    "gold": "#C8CDD2",
+    "accent": "#C8CDD2",
+    "accentBody": "#C8CDD2",
+    "seasonalAccent": "#FF6B00",
+    "goldBorder": "rgba(203, 208, 213, 0.34)",
+    "prefs": "{\"halloween-2026\":\"accepted\"}"
+   },
+   "afterBack": null,
+   "orangeYes": 0,
+   "orangeBack": null
+  },
+  {
+   "name": "phone 390",
+   "u2": {
+    "h": 95.5,
+    "w": 354,
+    "top": 84,
+    "belowTop": 219.5,
+    "label": "Trick or Treat",
+    "sub": "Horror, comics, and dark collectibles await",
+    "dots": 11,
+    "active": 0,
+    "btns": [
+     "Yes",
+     "No"
+    ],
+    "prompt": true,
+    "opacity": "1",
+    "seasonal": null,
+    "gold": "#C8CDD2",
+    "accent": "#C8CDD2",
+    "accentBody": "#C8CDD2",
+    "seasonalAccent": "",
+    "goldBorder": "rgba(203, 208, 213, 0.34)",
+    "prefs": null
+   },
+   "afterNo": {
+    "h": 55.5,
+    "w": 354,
+    "top": 84,
+    "belowTop": 179.5,
+    "label": "Trick or Treat",
+    "sub": "Horror, comics, and dark collectibles await",
+    "dots": 11,
+    "active": 0,
+    "btns": [],
+    "prompt": false,
+    "opacity": "1",
+    "seasonal": null,
+    "gold": "#C8CDD2",
+    "accent": "#C8CDD2",
+    "accentBody": "#C8CDD2",
+    "seasonalAccent": "",
+    "goldBorder": "rgba(203, 208, 213, 0.34)",
+    "prefs": "{\"halloween-2026\":\"dismissed\"}"
+   },
+   "afterNoReload": {
+    "h": 55.5,
+    "w": 354,
+    "top": 84,
+    "belowTop": 179.5,
+    "label": "Trick or Treat",
+    "sub": "Horror, comics, and dark collectibles await",
+    "dots": 11,
+    "active": 0,
+    "btns": [],
+    "prompt": false,
+    "opacity": "1",
+    "seasonal": null,
+    "gold": "#C8CDD2",
+    "accent": "#C8CDD2",
+    "accentBody": "#C8CDD2",
+    "seasonalAccent": "",
+    "goldBorder": "rgba(203, 208, 213, 0.34)",
+    "prefs": "{\"halloween-2026\":\"dismissed\"}"
+   },
+   "orangeNo": 0
+  },
+  {
+   "name": "phone 390",
+   "reloaded": {
+    "h": 55.5,
+    "w": 354,
+    "top": 84,
+    "belowTop": 179.5,
+    "label": "Trick or Treat",
+    "sub": "Horror, comics, and dark collectibles await",
+    "dots": 11,
+    "active": 0,
+    "btns": [],
+    "prompt": false,
+    "opacity": "1",
+    "seasonal": "halloween-2026",
+    "gold": "#C8CDD2",
+    "accent": "#C8CDD2",
+    "accentBody": "#C8CDD2",
+    "seasonalAccent": "#FF6B00",
+    "goldBorder": "rgba(203, 208, 213, 0.34)",
+    "prefs": "{\"halloween-2026\":\"accepted\"}"
+   },
+   "orangeReloaded": 0,
+   "onVault": {
+    "seasonal": "halloween-2026",
+    "gold": "#C8CDD2"
+   },
+   "revertedReload": {
+    "h": 55.5,
+    "w": 354,
+    "top": 84,
+    "belowTop": 179.5,
+    "label": "Trick or Treat",
+    "sub": "Horror, comics, and dark collectibles await",
+    "dots": 11,
+    "active": 0,
+    "btns": [],
+    "prompt": false,
+    "opacity": "1",
+    "seasonal": "halloween-2026",
+    "gold": "#C8CDD2",
+    "accent": "#C8CDD2",
+    "accentBody": "#C8CDD2",
+    "seasonalAccent": "#FF6B00",
+    "goldBorder": "rgba(203, 208, 213, 0.34)",
+    "prefs": "{\"halloween-2026\":\"accepted\"}"
+   },
+   "orangeRevertedReload": 0,
+   "vaultReverted": {
+    "seasonal": "halloween-2026",
+    "gold": "#C8CDD2"
+   }
+  }
+ ]
+}
