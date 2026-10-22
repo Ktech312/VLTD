@@ -24,6 +24,8 @@ Behaviour-asserted rows (a test checked the outcome): 3754 = 509 FAIL, 2770 PASS
 
 ## Repair status (updated 2026-10-20)
 
+**Batch 18 (2026-10-21, `repair-batch-18/CLOSEOUT.md`): banner and events pass, live and verified in a browser run (RB61): the seasonal theme now really recolors the app (it did nothing before), one fixed-size banner with event artwork, 15 s rotation, drag/swipe, one small clickable Seasonal theme line; event refreshes fixed and tested (26 of 26), failures now loud; LA Comic Con added (official dates confirmed). Open: real-phone check, LA Comic Con not in the banner until featured or the Oct 26 weekly run.**
+
 **Batch 17 (2026-10-21, `repair-batch-17/CLOSEOUT.md`): all five SQL files run and verified on production (RB26 18 of 18, RB35 9 of 9, RB54 9 of 9, RB55 12 of 12, RB56 11 of 11, RB57 7 of 7, RB58 pass); RC-10, RC-11, RC-16, RC-19, RC-23 and RC-27 closed. Every root cause is closed.**
 
 **Batch 16 (2026-10-21, `repair-batch-16/CLOSEOUT.md`): insurance exclusions follow the account (code live, SQL file 6 waiting for you) and Cancel in the crop step discards a just-chosen photo (ADD-168 closed).**

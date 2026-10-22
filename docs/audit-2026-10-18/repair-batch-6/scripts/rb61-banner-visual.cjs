@@ -82,7 +82,7 @@ const CLICK_ARIA = (aria) => `(() => { const b = ${CARD}.querySelector('button[a
       const tag = mobile ? "m" : "d";
       const first = await st();
       if (!first) { ck(false, `banner present (${name})`, "the Home banner shows", "no banner found"); continue; }
-      const n = first.dots;
+      const n = first.dots; const homePath = first.path; // the signed-in Home is /dashboard
       ck(n >= 2, `slides present (${name})`, "a seasonal slide and event slides", `slides=${n}; first=${first.label}`);
 
       // ── artwork and size on every slide
@@ -159,18 +159,23 @@ const CLICK_ARIA = (aria) => `(() => { const b = ${CARD}.querySelector('button[a
       }
       const expD = [2, 3, 2, 1, n - 1, 0];
       ck(JSON.stringify(d) === JSON.stringify(expD), `${mobile ? "finger swipe (emulated touch)" : "mouse drag"} moves left/right both ways, wrapping (${name})`, "left = next, right = previous", JSON.stringify(d));
-      ck((await dragPath()) === "/", `a drag never opens the event (${name})`, "still on Home after 6 drags that started on an event or theme slide", await dragPath());
+      ck((await dragPath()) === homePath, `a drag never opens the event (${name})`, "still on Home after 6 drags that started on an event or theme slide", `${await dragPath()} (Home is ${homePath})`);
       if (mobile) {
         await toSlide(2); const before = await st(); const b = await cardBox();
         await touch([[b.x + b.w * 0.5, b.y + b.h * 0.5], [b.x + b.w * 0.5 + 4, b.y + b.h * 0.5 - 40], [b.x + b.w * 0.5 + 6, b.y + b.h * 0.5 - 90], [b.x + b.w * 0.5 + 6, b.y + b.h * 0.5 - 150]]);
         const afterV = await st();
-        ck(afterV.slide === before.slide && afterV.path === "/", `a vertical finger drag on the banner does not change the slide or open it (${name})`, "same slide, still on Home", `slide ${before.slide} -> ${afterV.slide}; path=${afterV.path}; scrollY ${before.scrollY} -> ${afterV.scrollY}`);
-        await S.evaluate("window.scrollTo(0,0)"); await sleep(300);
-        const b2 = await cardBox(); const sy0 = await S.evaluate("scrollY");
-        await S.send("Input.synthesizeScrollGesture", { x: b2.x + b2.w * 0.5, y: b2.y + b2.h * 0.5, yDistance: -250, gestureSourceType: "touch", speed: 800 }).catch(() => {});
-        await sleep(900); const sy1 = await S.evaluate("scrollY");
-        ck(sy1 > sy0 + 50, `the page still scrolls vertically when the finger starts on the banner (${name})`, "scrollY increases after a touch scroll gesture that starts on the banner", `scrollY ${sy0} -> ${sy1}`);
-        await S.evaluate("window.scrollTo(0,0)");
+        ck(afterV.slide === before.slide && afterV.path === homePath, `a vertical finger drag on the banner does not change the slide or open it (${name})`, "same slide, still on Home", `slide ${before.slide} -> ${afterV.slide}; path=${afterV.path}; scrollY ${before.scrollY} -> ${afterV.scrollY}`);
+        // the app scrolls inside .vltd-content-wrap, not the window
+        const SCROLLER = "document.querySelector('.vltd-content-wrap').scrollTop";
+        await S.evaluate(SCROLLER + " = 0"); await sleep(300);
+        const b2 = await cardBox(); const sy0 = await S.evaluate(SCROLLER);
+        const x2 = b2.x + b2.w * 0.5, y2 = b2.y + b2.h * 0.5;
+        await S.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: [{ x: x2, y: y2 }] });
+        for (let i = 1; i <= 10; i++) { await S.send("Input.dispatchTouchEvent", { type: "touchMove", touchPoints: [{ x: x2, y: y2 - 30 * i }] }); await sleep(16); }
+        await S.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] }); await sleep(900);
+        const sy1 = await S.evaluate(SCROLLER); const afterScroll = await st();
+        ck(sy1 > sy0 + 100 && afterScroll.path === homePath && afterScroll.slide === afterV.slide, `the page still scrolls vertically when the finger starts on the banner (${name})`, "the page scrolls by the drag and the banner neither changes slide nor opens", `scroll position ${sy0} -> ${sy1}; slide unchanged: ${afterScroll.slide === afterV.slide}; path ${afterScroll.path}`);
+        await S.evaluate(SCROLLER + " = 0");
       }
       await home();
       const sw0 = await st();
