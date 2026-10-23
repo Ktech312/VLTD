@@ -66,11 +66,17 @@
   border-color: transparent !important;
 }
 
-/* ── INPUTS ── */
+/* ── INPUTS ──
+   A field that sits inside a box that already draws the field (the header search, Discover's search) is marked bg-transparent. It must stay
+   transparent: painting it too put a second, lighter rectangle inside the box (the "ghost" look). */
+[data-vltd-theme] body input:not([type="checkbox"]):not([type="radio"]):not(.bg-transparent),
+[data-vltd-theme] body textarea:not(.bg-transparent),
+[data-vltd-theme] body select:not(.bg-transparent) {
+  background: var(--theme-elevated, rgba(7,13,22,0.96)) !important;
+}
 [data-vltd-theme] body input:not([type="checkbox"]):not([type="radio"]),
 [data-vltd-theme] body textarea,
 [data-vltd-theme] body select {
-  background: var(--theme-elevated, rgba(7,13,22,0.96)) !important;
   border-color: var(--theme-border, rgba(203,208,213,0.22)) !important;
   color: var(--theme-text-primary, #E8D7B8) !important;
 }
@@ -282,11 +288,15 @@
   color: var(--theme-text-primary, #1A1A2E) !important;
 }
 
-/* Inputs — white bg, dark text */
+/* Inputs — white bg, dark text (a bg-transparent field stays transparent inside its own box, see INPUTS above) */
+.theme-light body input:not([type="checkbox"]):not([type="radio"]):not(.bg-transparent),
+.theme-light body textarea:not(.bg-transparent),
+.theme-light body select:not(.bg-transparent) {
+  background: var(--theme-elevated, #ffffff) !important;
+}
 .theme-light body input:not([type="checkbox"]):not([type="radio"]),
 .theme-light body textarea,
 .theme-light body select {
-  background: var(--theme-elevated, #ffffff) !important;
   color: var(--theme-text-primary, #1A1A2E) !important;
 }
 
