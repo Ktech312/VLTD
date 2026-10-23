@@ -1,0 +1,465 @@
+{
+ "label": "run1",
+ "cases": [
+  {
+   "ok": true,
+   "control": "desktop header reads Home, Vault, Exhibitions, Insights, More"
+  },
+  {
+   "ok": true,
+   "control": "Home is marked current on Home"
+  },
+  {
+   "ok": true,
+   "control": "More lists Discover, Events, VLT Lounge, Activity, Learn (signed in)"
+  },
+  {
+   "ok": false,
+   "control": "find an item: header search, then Enter"
+  },
+  {
+   "ok": true,
+   "control": "add an item: Add Item on Home"
+  },
+  {
+   "ok": true,
+   "control": "add an item: Quick Add on Home"
+  },
+  {
+   "ok": false,
+   "control": "sell one: Vault, then Sell on the item asks for the sale price (cancelled here, nothing was sold)"
+  },
+  {
+   "ok": true,
+   "control": "cancelling the sale price left the item unsold"
+  },
+  {
+   "ok": true,
+   "control": "see what is for sale: Vault, For Sale"
+  },
+  {
+   "ok": true,
+   "control": "open Insurance: Vault, Insurance (Vault stays highlighted)"
+  },
+  {
+   "ok": true,
+   "control": "check Insights: one click, Insights highlighted"
+  },
+  {
+   "ok": true,
+   "control": "find an event: More, Events (More highlighted)"
+  },
+  {
+   "ok": true,
+   "control": "return to Saved from anywhere: account menu, Saved"
+  },
+  {
+   "ok": true,
+   "control": "Saved from Discover: More, Discover, Saved shortcut"
+  },
+  {
+   "ok": true,
+   "control": "Watchlist from Discover: More, Discover, Watchlist shortcut"
+  },
+  {
+   "ok": true,
+   "control": "Discover sections in the requested order, no repeated Featured Rooms block"
+  },
+  {
+   "ok": true,
+   "control": "Marketplace, Events and Upcoming Comics sections have clearly labelled links to their pages"
+  },
+  {
+   "ok": true,
+   "control": "Discover's Events preview shows events that are on the Events page"
+  },
+  {
+   "ok": true,
+   "control": "direct URLs open and highlight the right header link"
+  },
+  {
+   "ok": true,
+   "control": "More is highlighted on Discover, Events, Lounge, Activity, Learn, Marketplace and Upcoming Comics"
+  },
+  {
+   "ok": true,
+   "control": "Saved and Watchlist highlight nothing"
+  },
+  {
+   "ok": false,
+   "control": "browser Back returns through Events, Insights, Home with the right highlight"
+  },
+  {
+   "ok": false,
+   "control": "phone bottom bar is unchanged (Home, Vault, Exhibitions, Lounge, Discover)"
+  },
+  {
+   "ok": true,
+   "control": "phone: Events, Marketplace, Upcoming Comics and the Saved/Watchlist shortcuts on Discover; Insights in the Vault bar; Learn in the Lounge bar; Activity on Home"
+  },
+  {
+   "ok": true,
+   "control": "a visitor sees public items only (each opens a public room), no hidden items, no cost, no personal shortcuts"
+  },
+  {
+   "ok": true,
+   "control": "a visitor's More menu leaves out Activity (it needs an account)"
+  }
+ ],
+ "journeys": {
+  "find an item": {
+   "clicks": 2,
+   "url": "/dashboard",
+   "h1": "QA Visual Collection",
+   "log": [
+    {
+     "step": "click the header search",
+     "ok": true
+    },
+    {
+     "step": "type the item name and press Enter",
+     "ok": true
+    }
+   ]
+  },
+  "add an item": {
+   "clicks": 1,
+   "url": "/capture",
+   "h1": "New Vault Item",
+   "log": [
+    {
+     "step": "click Add Item on Home",
+     "ok": true
+    }
+   ]
+  },
+  "quick add": {
+   "clicks": 1,
+   "url": "/vault/quick",
+   "h1": "",
+   "log": [
+    {
+     "step": "click Quick Add on Home",
+     "ok": true
+    }
+   ]
+  },
+  "sell an item": {
+   "clicks": 1,
+   "url": "/vault",
+   "h1": "Vault",
+   "log": [
+    {
+     "step": "Vault",
+     "ok": true
+    },
+    {
+     "step": "Sell on an item card",
+     "ok": false
+    }
+   ]
+  },
+  "for sale list": {
+   "clicks": 2,
+   "url": "/vault/for-sale",
+   "h1": "Vault",
+   "log": [
+    {
+     "step": "Vault",
+     "ok": true
+    },
+    {
+     "step": "For Sale",
+     "ok": true
+    }
+   ]
+  },
+  "insurance": {
+   "clicks": 2,
+   "url": "/insurance",
+   "h1": "Vault",
+   "log": [
+    {
+     "step": "Vault",
+     "ok": true
+    },
+    {
+     "step": "Insurance",
+     "ok": true
+    }
+   ]
+  },
+  "insights": {
+   "clicks": 1,
+   "url": "/portfolio",
+   "h1": "Vault",
+   "log": [
+    {
+     "step": "Insights",
+     "ok": true
+    }
+   ]
+  },
+  "events": {
+   "clicks": 2,
+   "url": "/events",
+   "h1": "Events",
+   "log": [
+    {
+     "step": "More",
+     "ok": true
+    },
+    {
+     "step": "Events",
+     "ok": true
+    }
+   ]
+  },
+  "saved via account menu": {
+   "clicks": 2,
+   "url": "/saved",
+   "h1": "Saved",
+   "log": [
+    {
+     "step": "open the account menu",
+     "ok": true
+    },
+    {
+     "step": "Saved",
+     "ok": true
+    }
+   ]
+  },
+  "saved via Discover": {
+   "clicks": 3,
+   "url": "/saved",
+   "h1": "Saved",
+   "log": [
+    {
+     "step": "More",
+     "ok": true
+    },
+    {
+     "step": "Discover",
+     "ok": true
+    },
+    {
+     "step": "Saved (beside the search)",
+     "ok": true
+    }
+   ]
+  },
+  "watchlist via Discover": {
+   "clicks": 3,
+   "url": "/watchlist",
+   "h1": "Watchlist",
+   "log": [
+    {
+     "step": "More",
+     "ok": true
+    },
+    {
+     "step": "Discover",
+     "ok": true
+    },
+    {
+     "step": "Watchlist (beside the search)",
+     "ok": true
+    }
+   ]
+  }
+ },
+ "notes": {
+  "headerHome": {
+   "links": [
+    {
+     "label": "Home",
+     "href": "/dashboard",
+     "current": true
+    },
+    {
+     "label": "Vault",
+     "href": "/vault",
+     "current": false
+    },
+    {
+     "label": "Exhibitions",
+     "href": "/museum",
+     "current": false
+    },
+    {
+     "label": "Insights",
+     "href": "/portfolio",
+     "current": false
+    }
+   ],
+   "more": true,
+   "moreActive": false
+  },
+  "discoverHeadings": [
+   "Collector Rooms Worth Seeing",
+   "Trending Exhibitions",
+   "New This Week",
+   "Notable Items",
+   "Across Every Universe",
+   "Marketplace",
+   "Events",
+   "Upcoming Comics",
+   "Comics (Misc. & Peach cards)"
+  ],
+  "direct": {
+   "/dashboard": {
+    "url": "/dashboard",
+    "h1": "QA Visual Collection",
+    "current": "Home",
+    "moreActive": false
+   },
+   "/vault": {
+    "url": "/vault",
+    "h1": "Vault",
+    "current": "Vault",
+    "moreActive": false
+   },
+   "/museum": {
+    "url": "/museum",
+    "h1": "Exhibitions",
+    "current": "Exhibitions",
+    "moreActive": false
+   },
+   "/portfolio": {
+    "url": "/portfolio",
+    "h1": "Vault",
+    "current": "Insights",
+    "moreActive": false
+   },
+   "/discover": {
+    "url": "/discover",
+    "h1": "Discover",
+    "current": "",
+    "moreActive": true
+   },
+   "/events": {
+    "url": "/events",
+    "h1": "Events",
+    "current": "",
+    "moreActive": true
+   },
+   "/community-board": {
+    "url": "/community-board",
+    "h1": "VLT Lounge",
+    "current": "",
+    "moreActive": true
+   },
+   "/activity": {
+    "url": "/activity",
+    "h1": "Activity",
+    "current": "",
+    "moreActive": true
+   },
+   "/learn": {
+    "url": "/learn",
+    "h1": "Learn",
+    "current": "",
+    "moreActive": true
+   },
+   "/market": {
+    "url": "/market",
+    "h1": "Marketplace",
+    "current": "",
+    "moreActive": true
+   },
+   "/upcoming": {
+    "url": "/upcoming",
+    "h1": "Upcoming Comics",
+    "current": "",
+    "moreActive": true
+   },
+   "/saved": {
+    "url": "/saved",
+    "h1": "Saved",
+    "current": "",
+    "moreActive": false
+   },
+   "/watchlist": {
+    "url": "/watchlist",
+    "h1": "Watchlist",
+    "current": "",
+    "moreActive": false
+   },
+   "/vault/for-sale": {
+    "url": "/vault/for-sale",
+    "h1": "Vault",
+    "current": "Vault",
+    "moreActive": false
+   },
+   "/vault/sold": {
+    "url": "/vault/sold",
+    "h1": "Vault",
+    "current": "Vault",
+    "moreActive": false
+   },
+   "/goals": {
+    "url": "/goals",
+    "h1": "Vault",
+    "current": "Vault",
+    "moreActive": false
+   },
+   "/insurance": {
+    "url": "/insurance",
+    "h1": "Vault",
+    "current": "Vault",
+    "moreActive": false
+   }
+  },
+  "phoneReach": {
+   "events": true,
+   "market": true,
+   "comics": true,
+   "savedWatch": true,
+   "insightsInVaultBar": true,
+   "learnInLoungeBar": true,
+   "activityOnHome": true
+  },
+  "visitor": {
+   "vis": {
+    "notable": 8,
+    "allGuestRooms": true,
+    "hiddenShown": false,
+    "savedShown": false,
+    "privateWords": false
+   },
+   "navVisitor": {
+    "links": [
+     {
+      "label": "Home",
+      "href": "/dashboard",
+      "current": false
+     },
+     {
+      "label": "Vault",
+      "href": "/vault",
+      "current": false
+     },
+     {
+      "label": "Exhibitions",
+      "href": "/museum",
+      "current": false
+     },
+     {
+      "label": "Insights",
+      "href": "/portfolio",
+      "current": false
+     }
+    ],
+    "more": true,
+    "moreActive": true
+   },
+   "visitorMenu": [
+    "DiscoverPublic",
+    "EventsConventions,",
+    "VLT",
+    "LearnGuides"
+   ]
+  }
+ }
+}
