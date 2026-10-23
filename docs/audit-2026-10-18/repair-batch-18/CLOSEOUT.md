@@ -98,3 +98,9 @@ You ran file 7 and both validation values read true. Commit `b9d1233`. Checks: R
 
 ## Cleanup done
 QA fixtures `bnr`, `bnr2` and `bnr3` dropped; QA events and read-rule rows removed; scratch sign-in settings file removed; production counts as above.
+
+---
+
+# Owner verification on a physical phone (recorded 2026-10-23)
+
+The owner tested the Home banner on their own physical phone and reported that all of these passed: **banner swipe, vertical scrolling, event opening, and the Seasonal theme on/off control.** This is owner-verified (not run by me); it closes the real-phone item for the banner. It does not cover the Browse menu or the Account menu rows, which were not named, so those phone checks stay browser-emulated only (RB64). Earlier emulated results (RB61, RB62) are unchanged.

@@ -17,4 +17,4 @@ Every destination by direct URL (title, highlight, Browse present or absent, no 
 - Page-level scroll closes any open menu (existing ActionMenu behaviour), so a page that scrolls by itself, such as an event link scrolling the event into view, closes a menu that was opened a moment earlier.
 - A highlighted-event page scrolls the header out of view; the Browse button is reachable by scrolling up.
 - The Marketplace page is too short to scroll for an account with no listings.
-- Still open and separate: the automatic event refresh needs a real run, and a physical phone needs a swipe/scroll/tap check.
+- Still open and separate: the automatic event refresh needs a real run. Physical phone: the owner verified the Home banner (swipe, vertical scroll, event opening, Seasonal theme on/off) on 2026-10-23; the Browse and Account menus were not named in that report, so their phone behaviour is still browser-emulated only.
