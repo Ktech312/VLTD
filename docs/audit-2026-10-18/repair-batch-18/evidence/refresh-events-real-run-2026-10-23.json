@@ -1,0 +1,25 @@
+{
+  "what": "The real scheduled daily event refresh (Vercel cron /api/cron/refresh-events), read from Vercel > Logs and Observability within the one-hour log retention",
+  "run": { "ranAtUtc": "2026-10-23T13:21:05Z", "request": "GET /api/cron/refresh-events", "status": 502, "deployment": "vltd-9uc0mhow6 (code of 8c4c9c8 and later: art after the response, per-request time limits, timings)" },
+  "vercelObservability": { "invocations": 1, "activeCpu": "1.74s", "errorRate": "100%" },
+  "logLine": {
+    "ok": false,
+    "searchesRun": 12,
+    "sourceErrors": [
+      "SerpApi drop: request failed (TimeoutError: The operation was aborted due to timeout)",
+      "SerpApi gallery: request failed (TimeoutError: The operation was aborted due to timeout)",
+      "SerpApi music: request failed (TimeoutError: The operation was aborted due to timeout)"
+    ],
+    "foundByCategory": { "convention": 10, "card_show": 19, "auction": 0, "drop": 1, "gallery": 8, "music": 4 },
+    "totalFound": 42,
+    "approvedByAi": 0,
+    "aiFilterError": "AI request failed: 400 invalid_request_error: Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits. (request_id req_011CgKEnU9pwKYrzuy5QL5z2)",
+    "inserted": 0, "updated": 0, "matchedExisting": 0, "duplicatesDropped": 0, "failed": 0, "saveErrors": [],
+    "artAfterResponse": true,
+    "timingMs": { "searchesAndAi": 15315, "save": 1, "total": 15316 },
+    "problems": ["3 of 12 searches failed", "relevance check: AI request failed: 400 ... credit balance is too low ..."]
+  },
+  "artLine": { "at": "2026-10-23T13:21:26Z", "checked": 15, "filled": 2, "classified": 2, "errors": [] },
+  "recordsCheck": "docs/audit-2026-10-18/repair-batch-18/scripts/check-refresh-run.cjs 2026-10-23T12:55:00Z at 13:26Z: created 0, updated 0 (the picture step writes image_url without changing updated_at); table 907 rows, 743 upcoming",
+  "conclusion": "The run finished in 15 s (no timeout) and reported its own failure correctly. It found 42 candidate events, but the AI relevance check was refused because the Anthropic account has no credit, so by design (fail closed) nothing was approved and nothing was saved. Not fixed in code: it needs credit on the Anthropic account."
+}

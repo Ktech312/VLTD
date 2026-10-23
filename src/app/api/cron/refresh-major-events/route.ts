@@ -22,7 +22,7 @@ import { dayStamps, eventSlug, isIsoDay, persistEvents, type EventRow } from "@/
 // One search per show plus the AI call have to finish inside one request; the platform default (10 s on some plans) is too short for that.
 export const maxDuration = 60;
 // Every outside request has its own time limit, so one slow answer cannot use up the whole run (a run that hits the platform limit is killed and saves nothing).
-const SERP_TIMEOUT_MS = 15_000;
+const SERP_TIMEOUT_MS = 25_000; // was 15 s: on 2026-10-23 three of the six Google Events searches timed out at 15 s (real run); 25 s + the 25 s AI check still ends well inside the 60 s limit
 const AI_TIMEOUT_MS = 25_000;
 
 type Snippet = { title: string; snippet: string; link: string };

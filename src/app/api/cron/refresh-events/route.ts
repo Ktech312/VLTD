@@ -74,7 +74,7 @@ type SerpApiEvent = {
 };
 
 // Every outside request has its own time limit, so one slow answer cannot use up the whole run (a run that hits the platform limit is killed and saves nothing).
-const SERP_TIMEOUT_MS = 15_000;
+const SERP_TIMEOUT_MS = 25_000; // was 15 s: on 2026-10-23 three of the six Google Events searches timed out at 15 s (real run); 25 s + the 25 s AI check still ends well inside the 60 s limit
 const TM_TIMEOUT_MS = 8_000;
 const AI_TIMEOUT_MS = 25_000;
 

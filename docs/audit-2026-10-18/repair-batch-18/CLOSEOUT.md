@@ -104,3 +104,20 @@ QA fixtures `bnr`, `bnr2` and `bnr3` dropped; QA events and read-rule rows remov
 # Owner verification on a physical phone (recorded 2026-10-23)
 
 The owner tested the Home banner on their own physical phone and reported that all of these passed: **banner swipe, vertical scrolling, event opening, and the Seasonal theme on/off control.** This is owner-verified (not run by me); it closes the real-phone item for the banner. It does not cover the Browse menu or the Account menu rows, which were not named, so those phone checks stay browser-emulated only (RB64). Earlier emulated results (RB61, RB62) are unchanged.
+
+---
+
+# Automatic event refresh: the real scheduled run (2026-10-23)
+
+**Result: the run was seen and read; it processed events but saved none, because the Anthropic account has no credit. Still open until credit is added and a real run saves events.**
+
+Read from Vercel (Logs and Observability) for the real run at 13:21 UTC, within the one-hour log retention. Evidence: `repair-batch-18/evidence/refresh-events-real-run-2026-10-23.json`.
+- **What the run did:** it finished in 15 s (no timeout; the earlier fixes work: it answered with its own failure status, 502, and logged the reason). It ran 12 searches (6 Google Events, 6 Ticketmaster), found **42 candidate events** (convention 10, card show 19, drop 1, gallery 8, music 4), then asked the AI relevance check which are real collectibles events.
+- **Why nothing was saved:** the AI check was refused: `Your credit balance is too low to access the Anthropic API`. By design (the run drops everything it cannot check, so unchecked results are never published) it approved 0 and saved 0 (`inserted 0, updated 0, failed 0`). The records check agrees: no event created or updated by the run. This is almost certainly why the refresh has produced nothing for weeks, hidden until the failures became visible.
+- **Also found:** 3 of the 6 Google Events searches (drop, gallery, music) timed out at the 15 s limit I had set. I raised that limit to 25 s for both jobs (25 s + the 25 s AI check still ends inside the 60 s limit), pushed in the commit after this note.
+- **The picture step** (which runs after the response) worked: 15 checked, 2 filled, 2 classified, no errors.
+
+## What is needed from you (nothing else is blocking)
+1. **Add credit to the Anthropic API account** (console.anthropic.com > Plans & Billing). Cost: the daily refresh makes one small AI call (about 3,000 words in, 1,000 out, roughly **1 cent a day**) and the weekly major-shows job one more, so the smallest top-up lasts for months. **The same key powers the app's other AI features (scan and verify), so those are probably refused too until credit is added**; I did not test that, because it would spend credit.
+2. Then the next scheduled run (tomorrow 13:00 to 14:00 UTC, or the weekly one Mon Oct 26 14:00 UTC) will show whether events are saved: Vercel > Observability > Vercel Functions should show `/api/cron/refresh-events` with an error rate of 0%, and the log line `[refresh-events]` should show `inserted` or `updated` above 0. I have a check set for tomorrow's window and will read it if this session is still open. A manual Run in Vercel > Settings > Cron Jobs would confirm sooner at the cost of 6 search credits (about $0.10, or free inside an allowance) plus the cent of AI.
+3. Not changed, your call: I did not loosen the rule that nothing is saved without the AI check. If you would rather have a no-AI fallback filter while credit is low, that is a product decision for you to make.
