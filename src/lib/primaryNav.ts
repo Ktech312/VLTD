@@ -4,8 +4,9 @@ import type { AppIconName } from "@/components/ui/AppIcon";
  * The five primary destinations, in the approved order. The top bar (768px and wider) and the
  * bottom bar (under 768px) both read this list, so they can never drift apart.
  * A destination stays highlighted for the pages that live inside it:
- * Insights and Goals sit in Vault, Learn sits in Lounge, and Saved, Watchlist, Marketplace,
- * Upcoming Comics and Events sit in Discover.
+ * Insights and Goals sit in Vault, Learn sits in Lounge, and Marketplace, Upcoming Comics and Events
+ * sit in Discover (reached from its Browse menu). Saved and Watchlist are personal lists, reached from the
+ * Account menu, so they do not highlight Discover.
  */
 export type PrimaryNavItem = {
   label: string;
@@ -22,7 +23,23 @@ export const PRIMARY_NAV: PrimaryNavItem[] = [
   { label: "Vault", href: "/vault", icon: "vault", match: ["/vault", "/portfolio", "/goals", "/insurance"] },
   { label: "Exhibitions", href: "/museum", icon: "exhibitions", match: ["/museum"] },
   { label: "Lounge", href: "/community-board", icon: "communityBoard", match: ["/community-board", "/learn"] },
-  { label: "Discover", href: "/discover", icon: "discover", match: ["/discover", "/saved", "/watchlist", "/market", "/upcoming", "/events"] },
+  { label: "Discover", href: "/discover", icon: "discover", match: ["/discover", "/market", "/upcoming", "/events"] },
+];
+
+export type BrowseKey = "discover" | "market" | "upcoming" | "events";
+
+/** The Browse menu beside the title of the four public Discover pages. Each destination keeps its own page, title and URL. */
+export const BROWSE_ITEMS: { key: BrowseKey; label: string; description: string; href: string }[] = [
+  { key: "discover", label: "Public collections", description: "Explore public exhibitions and notable items", href: "/discover" },
+  { key: "market", label: "Marketplace", description: "Collectibles for sale by collectors", href: "/market" },
+  { key: "upcoming", label: "Upcoming Comics", description: "New releases by artist or series", href: "/upcoming" },
+  { key: "events", label: "Events", description: "Conventions, card shows, auctions, drops", href: "/events" },
+];
+
+/** Direct entries at the top of the Account menu's links, on every page. Personal lists: not part of Discover. */
+export const ACCOUNT_SHORTCUTS: { key: string; label: string; href: string }[] = [
+  { key: "saved", label: "Saved", href: "/saved" },
+  { key: "watchlist", label: "Watchlist", href: "/watchlist" },
 ];
 
 export function isPrimaryNavActive(item: PrimaryNavItem, pathname: string): boolean {

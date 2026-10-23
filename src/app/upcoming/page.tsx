@@ -1,6 +1,6 @@
 "use client";
 
-import { DiscoverNav } from "@/components/SectionNav";
+import { BrowseMenu } from "@/components/BrowseMenu";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { PillButton } from "@/components/ui/PillButton";
 import { PillSelect } from "@/components/ui/PillSelect";
@@ -364,11 +364,11 @@ export default function UpcomingPage() {
     <>
       <PageHeader
         title="Upcoming Comics"
+        titleAdornment={<BrowseMenu current="upcoming" />}
         description={statuses.size > 0 ? `Releases by artist or series. ${statuses.size} saved.` : "Releases by artist or series."}
         contentClassName="max-w-[900px]"
       />
       <main className="text-[color:var(--fg)]" style={{ paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 90px)" }}>
-        <DiscoverNav activeKey="upcoming" />
         <div className="mx-auto max-w-[900px] px-4">
           {/* Mode toggle */}
           <div className="flex flex-wrap gap-2">

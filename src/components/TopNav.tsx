@@ -8,7 +8,8 @@ import VltdLogo from "@/components/VltdLogo";
 import AlertsBell from "@/components/AlertsBell";
 import CommandPalette from "@/components/CommandPalette";
 import { ActionMenu, type ActionMenuItem } from "@/components/ui/ActionMenu";
-import { PRIMARY_NAV, isPrimaryNavActive } from "@/lib/primaryNav";
+import { ACCOUNT_SHORTCUTS, PRIMARY_NAV, isPrimaryNavActive } from "@/lib/primaryNav";
+import { MENU_OPEN_EVENT } from "@/components/ui/ActionMenu";
 import { AppIcon, type AppIconName } from "@/components/ui/AppIcon";
 import {
   getCurrentUser,
@@ -260,6 +261,17 @@ function TopNavInner() {
     document.addEventListener("mousedown", handleOutside);
     return () => document.removeEventListener("mousedown", handleOutside);
   }, []);
+
+  // Only one menu is open at a time: opening this one tells the others (Browse, Help, tools), and it closes when another one opens.
+  useEffect(() => {
+    if (!userOpen) return;
+    window.dispatchEvent(new CustomEvent(MENU_OPEN_EVENT, { detail: "account" }));
+    const onOther = (e: Event) => {
+      if ((e as CustomEvent).detail !== "account") setUserOpen(false);
+    };
+    window.addEventListener(MENU_OPEN_EVENT, onOther);
+    return () => window.removeEventListener(MENU_OPEN_EVENT, onOther);
+  }, [userOpen]);
 
   // The Collector Level info popover closes on Escape, independent of the
   // account dropdown it lives inside (closing just the popover should not
@@ -631,6 +643,16 @@ function TopNavInner() {
                   </div>
                 )}
                 <div className={profiles.length > 1 ? "mt-1 pt-1" : ""} style={profiles.length > 1 ? { borderTop: "1px solid rgba(203,208,213,0.10)" } : undefined}>
+                  {/* Saved and Watchlist: personal lists, reachable from every page (not part of Discover) */}
+                  {ACCOUNT_SHORTCUTS.map((shortcut) => (
+                    <Link key={shortcut.key} href={shortcut.href} onClick={() => setUserOpen(false)}
+                      aria-current={pathname === shortcut.href ? "page" : undefined}
+                      className="flex min-h-[44px] items-center rounded-xl px-3 text-sm transition hover:bg-[rgba(203,208,213,0.06)] md:min-h-[36px]"
+                      style={{ color: "var(--theme-text-primary, #ECEDEF)" }}>
+                      {shortcut.label}
+                    </Link>
+                  ))}
+                  <div className="mx-3 my-1 h-px" style={{ background: "rgba(203,208,213,0.10)" }} aria-hidden="true" />
                   <Link href="/account" onClick={() => setUserOpen(false)}
                     className="flex min-h-[44px] items-center rounded-xl px-3 text-sm transition hover:bg-[rgba(203,208,213,0.06)] md:min-h-[36px]"
                     style={{ color: "var(--theme-text-primary, #ECEDEF)" }}>

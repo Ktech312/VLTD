@@ -2,7 +2,6 @@
 
 import { PageHeader } from "@/components/layout/PageHeader";
 import { PillButton } from "@/components/ui/PillButton";
-import { DiscoverNav } from "@/components/SectionNav";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -48,7 +47,7 @@ export default function SavedPage() {
   return (
     <>
       <PageHeader
-        title="Your Saves"
+        title="Saved"
         description="Items you swiped right on in The Flip."
         contentClassName="max-w-2xl"
         actions={
@@ -66,7 +65,6 @@ export default function SavedPage() {
         }
       />
     <main className="text-[color:var(--fg)]">
-      <DiscoverNav activeKey="saved" />
       <div className="mx-auto max-w-2xl px-4 pb-6 sm:px-6">
 
         {/* Empty state */}

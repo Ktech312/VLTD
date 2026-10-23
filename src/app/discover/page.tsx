@@ -10,7 +10,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import DiscoverSwipe from "@/components/DiscoverSwipe";
 import FeaturedRoomsCarousel, { type FeaturedRoomSlide } from "@/components/discover/FeaturedRoomsCarousel";
 import { PageHeader } from "@/components/layout/PageHeader";
-import { DiscoverNav } from "@/components/SectionNav";
+import { BrowseMenu } from "@/components/BrowseMenu";
 import { Glyph } from "@/components/ui/Glyph";
 import { getCurrentUser, getOnboardingStatus } from "@/lib/auth";
 import { readUniversePrefs } from "@/lib/universePrefs";
@@ -515,11 +515,11 @@ export default function DiscoverPage() {
     <>
       <PageHeader
         title="Discover"
+        titleAdornment={<BrowseMenu current="discover" />}
         description={<span style={{ color: "var(--theme-text-muted,#61656B)" }}>Explore public collections, notable items, and collector rooms.</span>}
         contentClassName="max-w-[1480px]"
       />
       <main className="text-[color:var(--fg)]">
-      <DiscoverNav activeKey="explore" />
       <div className="mx-auto grid max-w-[1480px] gap-6 px-4 pb-6 sm:px-6 lg:px-8 xl:grid-cols-[minmax(0,1fr)_430px]">
         <div className="min-w-0">
           <p className="mt-5 text-xs" style={{ color: "var(--theme-text-muted,#61656B)" }} data-testid="discover-filter-note">

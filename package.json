@@ -15,6 +15,7 @@
     "check:auth-email": "node scripts/check-auth-email-gate.mjs",
     "test:isolation": "node scripts/test-account-isolation.cjs",
     "test:events": "tsx scripts/test-events-pipeline.ts",
+    "test:nav": "tsx scripts/test-navigation.ts",
     "build:email-templates": "node scripts/build-supabase-email-templates.mjs",
     "test:delete": "node scripts/test-vault-delete.cjs",
     "test:category": "node scripts/test-category-label.cjs",

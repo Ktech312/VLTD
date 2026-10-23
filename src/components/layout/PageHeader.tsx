@@ -23,12 +23,15 @@ export function PageHeader({
   title,
   description,
   actions,
+  titleAdornment,
   contentClassName = "max-w-[1440px]",
   titleClassName = DEFAULT_TITLE_CLASS,
 }: {
   title: ReactNode;
   description?: ReactNode;
   actions?: ReactNode;
+  /** Sits right of the title (for example the Browse menu). */
+  titleAdornment?: ReactNode;
   contentClassName?: string;
   titleClassName?: string;
 }) {
@@ -40,7 +43,14 @@ export function PageHeader({
         className={`vltd-page-band relative isolate mx-auto flex w-full flex-col gap-4 px-4 sm:px-6 lg:flex-row lg:min-h-[50px] lg:items-center lg:justify-between lg:px-8 ${contentClassName}`}
       >
         <div className="flex flex-wrap items-end gap-x-5 gap-y-1">
-          <h1 className={titleClassName}>{title}</h1>
+          {titleAdornment ? (
+            <div className="flex items-center gap-3">
+              <h1 className={titleClassName}>{title}</h1>
+              {titleAdornment}
+            </div>
+          ) : (
+            <h1 className={titleClassName}>{title}</h1>
+          )}
           {description ? (
             <p className="pb-1 text-sm leading-tight" style={{ color: "var(--muted)" }}>
               {description}

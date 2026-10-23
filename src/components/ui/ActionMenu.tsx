@@ -11,7 +11,12 @@ export type ActionMenuItem = {
   href?: string;
   onClick?: () => void;
   disabled?: boolean;
+  /** Marks the page the person is on (a dot, bold, aria-current). */
+  current?: boolean;
 };
+
+// Only one menu is open at a time: a menu that opens tells the others, and each closes when another one opens (the Account menu does the same).
+export const MENU_OPEN_EVENT = "vltd:menu-open";
 
 /**
  * The shared "menu opened by a button" used for Add Item options and Tools menus.
@@ -44,6 +49,16 @@ export function ActionMenu({
   const menuRef = useRef<HTMLDivElement | null>(null);
   const [open, setOpen] = useState(false);
   const [rect, setRect] = useState<DOMRect | null>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    window.dispatchEvent(new CustomEvent(MENU_OPEN_EVENT, { detail: id }));
+    const onOther = (e: Event) => {
+      if ((e as CustomEvent).detail !== id) setOpen(false);
+    };
+    window.addEventListener(MENU_OPEN_EVENT, onOther);
+    return () => window.removeEventListener(MENU_OPEN_EVENT, onOther);
+  }, [open, id]);
 
   const close = useCallback((returnFocus = true) => {
     setOpen(false);
@@ -88,7 +103,7 @@ export function ActionMenu({
 
   useEffect(() => {
     if (!open) return;
-    const first = menuRef.current?.querySelector<HTMLElement>("[role='menuitem']:not([aria-disabled='true'])");
+    const first = menuRef.current?.querySelector<HTMLElement>("[aria-current='page'][role='menuitem']") ?? menuRef.current?.querySelector<HTMLElement>("[role='menuitem']:not([aria-disabled='true'])");
     first?.focus();
   }, [open]);
 
@@ -141,7 +156,10 @@ export function ActionMenu({
                   {items.map((item) => {
                     const content = (
                       <>
-                        <span>{item.label}</span>
+                        <span className={item.current ? "flex items-center gap-2 font-bold" : undefined}>
+                          {item.current ? <span aria-hidden="true" className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ background: "#4FD3EE" }} /> : null}
+                          {item.label}
+                        </span>
                         {item.description ? (
                           <span className="text-[11px] font-normal text-[color:var(--muted)]">{item.description}</span>
                         ) : null}
@@ -149,7 +167,7 @@ export function ActionMenu({
                     );
                     if (item.href && !item.disabled) {
                       return (
-                        <Link key={item.key} href={item.href} role="menuitem" className={itemClass} onClick={() => { item.onClick?.(); close(false); }}>
+                        <Link key={item.key} href={item.href} role="menuitem" aria-current={item.current ? "page" : undefined} className={itemClass} onClick={() => { item.onClick?.(); close(false); }}>
                           {content}
                         </Link>
                       );

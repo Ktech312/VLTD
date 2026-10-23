@@ -5,7 +5,6 @@ import { parseMoneyInput } from "@/lib/moneyInput";
 import { PillSelect } from "@/components/ui/PillSelect";
 import Link from "next/link";
 import { PageHeader } from "@/components/layout/PageHeader";
-import { DiscoverNav } from "@/components/SectionNav";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Glyph } from "@/components/ui/Glyph";
@@ -436,7 +435,6 @@ export default function WatchlistPage() {
         }
       />
       <main className="px-4 pb-6 sm:px-6 lg:px-8">
-      <DiscoverNav activeKey="watchlist" />
       <div className="mx-auto grid max-w-[1480px] gap-6 xl:grid-cols-[minmax(0,1fr)_430px]">
         <section className="min-w-0">
           <div className="mt-2 grid gap-3 lg:grid-cols-[minmax(0,1fr)_140px_160px_150px]">

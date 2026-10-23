@@ -3,7 +3,7 @@
 import { PageHeader } from "@/components/layout/PageHeader";
 import { PillButton } from "@/components/ui/PillButton";
 import { PillSelect } from "@/components/ui/PillSelect";
-import { DiscoverNav } from "@/components/SectionNav";
+import { BrowseMenu } from "@/components/BrowseMenu";
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { fetchMarketItems, type MarketItem } from "@/lib/publicProfile";
@@ -221,11 +221,11 @@ export default function MarketPage() {
   return (
     <div className="" style={{ background: "var(--bg)" }}>
       <PageHeader
-        title="VLTD Market"
+        title="Marketplace"
+        titleAdornment={<BrowseMenu current="market" />}
         description="Browse collectibles for sale by VLTD collectors. Contact sellers through their public vault."
         contentClassName="max-w-6xl"
       />
-      <DiscoverNav activeKey="market" />
       <div>
         <div className="mx-auto max-w-6xl px-4">
           {!loading && items.length > 0 && (
@@ -294,7 +294,7 @@ export default function MarketPage() {
 
       {!loading && displayed.length > 0 && (
         <div className="mx-auto max-w-6xl px-4 pb-12 text-center text-xs" style={{ color: "var(--muted)" }}>
-          VLTD Market is contact-only. Click any listing to visit the seller&apos;s public vault and reach out.
+          The Marketplace is contact-only. Click any listing to visit the seller&apos;s public vault and reach out.
           No payments are processed through VLTD.
         </div>
       )}
