@@ -2,7 +2,7 @@
 
 import { LocalNav } from "@/components/ui/LocalNav";
 
-// Local navigation for the sections that hold several pages (Lounge, Vault). Same pill recipe everywhere (see LocalNav). Discover uses the Browse menu instead (components/BrowseMenu.tsx).
+// Local navigation for the sections that hold several pages (Lounge, Vault). Same pill recipe everywhere (see LocalNav). Discover has no local bar: its sections link to Marketplace, Events and Upcoming Comics.
 
 const LOUNGE_ITEMS = [
   { key: "community", label: "Community", href: "/community-board" },

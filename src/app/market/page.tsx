@@ -2,8 +2,8 @@
 
 import { PageHeader } from "@/components/layout/PageHeader";
 import { PillButton } from "@/components/ui/PillButton";
+import { AppIcon } from "@/components/ui/AppIcon";
 import { PillSelect } from "@/components/ui/PillSelect";
-import { BrowseMenu } from "@/components/BrowseMenu";
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { fetchMarketItems, type MarketItem } from "@/lib/publicProfile";
@@ -222,7 +222,7 @@ export default function MarketPage() {
     <div className="" style={{ background: "var(--bg)" }}>
       <PageHeader
         title="Marketplace"
-        titleAdornment={<BrowseMenu current="market" />}
+        titleAdornment={<PillButton size="compact" href="/discover" ariaLabel="Back to Discover"><AppIcon name="back" size={14} strokeWidth={2} /><span>Discover</span></PillButton>}
         description="Browse collectibles for sale by VLTD collectors. Contact sellers through their public vault."
         contentClassName="max-w-6xl"
       />

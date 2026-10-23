@@ -2,7 +2,6 @@
 
 import { pillClassName } from "@/components/ui/PillButton";
 import { PageHeader } from "@/components/layout/PageHeader";
-import { BrowseMenu } from "@/components/BrowseMenu";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { AppIcon } from "@/components/ui/AppIcon";
 import { PillButton } from "@/components/ui/PillButton";
@@ -11,6 +10,7 @@ import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 import { loadSavedEventIds, syncSavedEventIdsFromSupabase, toggleSavedEvent } from "@/lib/savedEventsModel";
 import { UNIVERSE_KEYS, UNIVERSE_LABEL, isUniverseKey } from "@/lib/taxonomy";
 import { earliestStoredEnd, eventPhase } from "@/lib/eventDates";
+import { formatDateRange, safeDate } from "@/lib/events/eventPreview";
 
 type EventType = "local" | "national" | "international";
 
@@ -57,26 +57,6 @@ type EventSuggestion = {
   source: string;
 };
 
-
-function safeDate(value: string): Date {
-  const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? new Date() : date;
-}
-
-function formatDateRange(starts: string, ends: string): string {
-  const start = safeDate(starts);
-  const end = safeDate(ends);
-  const startText = start.toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "UTC" });
-  const endText = end.toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "UTC" });
-  const year = start.getUTCFullYear();
-
-  if (startText === endText) return `${startText}, ${year}`;
-  if (start.getUTCFullYear() !== end.getUTCFullYear()) return `${startText}, ${year} - ${endText}, ${end.getUTCFullYear()}`;
-  if (start.getUTCMonth() === end.getUTCMonth()) {
-    return `${startText}-${end.getUTCDate()}, ${year}`;
-  }
-  return `${startText} - ${endText}, ${year}`;
-}
 
 function formatLongDate(starts: string, ends: string): string {
   return formatDateRange(starts, ends).toUpperCase();
@@ -711,7 +691,6 @@ export default function EventsPage() {
     <>
     <PageHeader
       title="Events"
-      titleAdornment={<BrowseMenu current="events" />}
       description="Conventions, card shows, auctions and drops."
       contentClassName="max-w-[1360px]"
     />

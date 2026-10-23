@@ -1,8 +1,9 @@
-// Tests for the Discover navigation: the Browse menu on the four public pages, Saved and Watchlist in the Account menu, and the active states.
+// Tests for the navigation: the desktop header (Home, Vault, Exhibitions, Insights, More), the More menu, the unchanged phone bar, Saved and Watchlist,
+// active states, and that the Browse menu is gone. Reads the real source files.
 //   npm run test:nav
 import assert from "node:assert/strict";
 import fs from "node:fs";
-import { PRIMARY_NAV, BROWSE_ITEMS, ACCOUNT_SHORTCUTS, isPrimaryNavActive, showMobileAddItem } from "../src/lib/primaryNav";
+import { PRIMARY_NAV, DESKTOP_NAV, MORE_ITEMS, ACCOUNT_SHORTCUTS, activeMoreKey, isPrimaryNavActive, showMobileAddItem } from "../src/lib/primaryNav";
 
 let pass = 0;
 let fail = 0;
@@ -16,54 +17,102 @@ function test(name: string, fn: () => void) {
     console.log("FAIL ", name, "\n      ", String((e as Error).message).split("\n")[0]);
   }
 }
-const active = (path: string) => PRIMARY_NAV.filter((i) => isPrimaryNavActive(i, path)).map((i) => i.label);
+const desktop = (path: string) => DESKTOP_NAV.filter((i) => isPrimaryNavActive(i, path)).map((i) => i.label);
+const phone = (path: string) => PRIMARY_NAV.filter((i) => isPrimaryNavActive(i, path)).map((i) => i.label);
 const read = (p: string) => fs.readFileSync(p, "utf8");
 
-test("Discover is highlighted on its four public pages (and their sub-paths)", () => {
-  for (const p of ["/discover", "/market", "/upcoming", "/events"]) assert.deepEqual(active(p), ["Discover"], p);
-  assert.deepEqual(active("/events/anything"), ["Discover"]);
+test("the desktop header is Home, Vault, Exhibitions, Insights, then a More menu", () => {
+  assert.deepEqual(DESKTOP_NAV.map((i) => [i.label, i.href]), [["Home", "/dashboard"], ["Vault", "/vault"], ["Exhibitions", "/museum"], ["Insights", "/portfolio"]]);
+  const top = read("src/components/TopNav.tsx");
+  assert.match(top, /DESKTOP_NAV\.map/);
+  assert.match(top, /ariaLabel="More"/);
 });
-test("Saved and Watchlist do not highlight Discover (or anything else in the main bar)", () => {
-  assert.deepEqual(active("/saved"), []);
-  assert.deepEqual(active("/watchlist"), []);
+test("More holds Discover, Events, VLT Lounge, Activity and Learn at their existing URLs", () => {
+  assert.deepEqual(MORE_ITEMS.map((i) => [i.label, i.href]), [["Discover", "/discover"], ["Events", "/events"], ["VLT Lounge", "/community-board"], ["Activity", "/activity"], ["Learn", "/learn"]]);
 });
-test("the other destinations still highlight as before", () => {
-  assert.deepEqual(active("/dashboard"), ["Home"]);
-  assert.deepEqual(active("/vault/sold"), ["Vault"]);
-  assert.deepEqual(active("/portfolio"), ["Vault"]);
-  assert.deepEqual(active("/museum"), ["Exhibitions"]);
-  assert.deepEqual(active("/learn"), ["Lounge"]);
+test("Activity is offered only to people who are signed in", () => {
+  assert.deepEqual(MORE_ITEMS.filter((i) => i.signedInOnly).map((i) => i.key), ["activity"]);
+  assert.match(read("src/components/TopNav.tsx"), /signedIn \|\| !item\.signedInOnly/);
 });
-test("Browse lists the four public destinations at their existing URLs", () => {
-  assert.deepEqual(
-    BROWSE_ITEMS.map((i) => [i.label, i.href]),
-    [["Public collections", "/discover"], ["Marketplace", "/market"], ["Upcoming Comics", "/upcoming"], ["Events", "/events"]],
-  );
+test("More is highlighted on its pages (Marketplace and Upcoming Comics belong to Discover) and nowhere else", () => {
+  assert.equal(activeMoreKey("/discover"), "discover");
+  assert.equal(activeMoreKey("/market"), "discover");
+  assert.equal(activeMoreKey("/upcoming"), "discover");
+  assert.equal(activeMoreKey("/events"), "events");
+  assert.equal(activeMoreKey("/events/anything"), "events");
+  assert.equal(activeMoreKey("/community-board"), "lounge");
+  assert.equal(activeMoreKey("/community-board/topic"), "lounge");
+  assert.equal(activeMoreKey("/activity"), "activity");
+  assert.equal(activeMoreKey("/learn"), "learn");
+  assert.equal(activeMoreKey("/learn/articles"), "learn");
+  for (const p of ["/dashboard", "/vault", "/portfolio", "/museum", "/saved", "/watchlist", "/account"]) assert.equal(activeMoreKey(p), null, p);
 });
-test("the Account menu gets Saved then Watchlist at the existing URLs", () => {
+test("Saved and Watchlist highlight nothing in the header", () => {
+  assert.deepEqual(desktop("/saved"), []);
+  assert.deepEqual(desktop("/watchlist"), []);
+  assert.equal(activeMoreKey("/saved"), null);
+});
+test("Insights highlights on /portfolio only; Vault keeps Items, For Sale, Sold, Goals and Insurance", () => {
+  assert.deepEqual(desktop("/portfolio"), ["Insights"]);
+  for (const p of ["/vault", "/vault/for-sale", "/vault/sold", "/goals", "/insurance", "/insurance/packet"]) assert.deepEqual(desktop(p), ["Vault"], p);
+  assert.deepEqual(desktop("/dashboard"), ["Home"]);
+  assert.deepEqual(desktop("/museum"), ["Exhibitions"]);
+});
+test("the phone bar is unchanged: Home, Vault, Exhibitions, Lounge, Discover (Insights still counts as Vault there)", () => {
+  assert.deepEqual(PRIMARY_NAV.map((i) => i.label), ["Home", "Vault", "Exhibitions", "Lounge", "Discover"]);
+  assert.deepEqual(phone("/portfolio"), ["Vault"]);
+  for (const p of ["/discover", "/market", "/upcoming", "/events"]) assert.deepEqual(phone(p), ["Discover"], p);
+  assert.deepEqual(phone("/learn"), ["Lounge"]);
+});
+test("the account menu still has Saved then Watchlist at the existing URLs", () => {
   assert.deepEqual(ACCOUNT_SHORTCUTS.map((i) => [i.label, i.href]), [["Saved", "/saved"], ["Watchlist", "/watchlist"]]);
+  const top = read("src/components/TopNav.tsx");
+  assert.match(top, /ACCOUNT_SHORTCUTS\.map/);
+  assert.ok(top.indexOf("ACCOUNT_SHORTCUTS.map") < top.indexOf('<Link href="/account"'), "shortcuts come before Settings");
 });
-test("the mobile Add Item action still shows on all six pages", () => {
+test("Discover shows Saved and Watchlist beside its search controls", () => {
+  const page = read("src/app/discover/page.tsx");
+  assert.match(page, /href="\/saved"/);
+  assert.match(page, /href="\/watchlist"/);
+  assert.ok(page.indexOf('placeholder="Search exhibitions') < page.indexOf('href="/saved"'), "after the search field");
+  assert.ok(page.indexOf('href="/watchlist"') < page.indexOf('aria-label="Collector spotlight"'), "before the first section");
+});
+test("the Browse menu is gone everywhere, and Marketplace and Upcoming Comics link back to Discover", () => {
+  assert.equal(fs.existsSync("src/components/BrowseMenu.tsx"), false);
+  for (const f of ["discover", "market", "upcoming", "events", "saved", "watchlist"]) assert.doesNotMatch(read(`src/app/${f}/page.tsx`), /BrowseMenu/, f);
+  for (const f of ["market", "upcoming"]) assert.match(read(`src/app/${f}/page.tsx`), /href="\/discover"/, f);
+});
+test("the mobile Add Item action still shows on Discover, Marketplace, Upcoming Comics, Events, Saved and Watchlist", () => {
   for (const p of ["/discover", "/market", "/upcoming", "/events", "/saved", "/watchlist"]) assert.equal(showMobileAddItem(p), true, p);
 });
 test("page titles are Discover, Marketplace, Upcoming Comics, Events, Saved, Watchlist", () => {
   const title = (f: string) => read(`src/app/${f}/page.tsx`).match(/<PageHeader[\s\S]*?\btitle="([^"]+)"/)?.[1];
   assert.deepEqual(["discover", "market", "upcoming", "events", "saved", "watchlist"].map(title), ["Discover", "Marketplace", "Upcoming Comics", "Events", "Saved", "Watchlist"]);
 });
-test("each of the four public pages shows Browse with itself marked; Saved and Watchlist show none", () => {
-  const cur = (f: string) => read(`src/app/${f}/page.tsx`).match(/<BrowseMenu current="(\w+)"/)?.[1];
-  assert.deepEqual(["discover", "market", "upcoming", "events"].map(cur), ["discover", "market", "upcoming", "events"]);
-  assert.equal(cur("saved"), undefined);
-  assert.equal(cur("watchlist"), undefined);
+test("Discover has the public sections in order, with the Events and Upcoming sections linking to their pages", () => {
+  const page = read("src/app/discover/page.tsx");
+  const order = ['aria-label="Collector spotlight"', ">Trending Exhibitions<", ">New This Week<", "<NotableItemsSection", ">Across Every Universe<", "<MarketplaceSection", "<EventsSection", "<UpcomingComicsSection"].map((m) => page.indexOf(m));
+  assert.ok(order.every((n) => n > 0), `all present: ${order}`);
+  assert.deepEqual([...order].sort((a, b) => a - b), order, "in the requested order");
+  assert.doesNotMatch(page, />Featured Rooms</, "the spotlight is one section, not repeated as Featured Rooms");
+  const sections = read("src/components/discover/DiscoverSections.tsx");
+  assert.match(sections, /href: "\/events", label: "See all events"/);
+  assert.match(sections, /href: "\/upcoming", label: "Open Upcoming Comics"/);
+  assert.match(sections, /href: "\/market", label: "Open Marketplace"/);
 });
-test("the six-button row is gone from every page", () => {
-  for (const f of ["discover", "market", "upcoming", "events", "saved", "watchlist"]) assert.doesNotMatch(read(`src/app/${f}/page.tsx`), /DiscoverNav/, f);
-  assert.doesNotMatch(read("src/components/SectionNav.tsx"), /DiscoverNav|DISCOVER_ITEMS/);
+test("Discover's Events preview reads the same data, filter and order as the Events page", () => {
+  const events = read("src/app/events/page.tsx");
+  const preview = read("src/lib/events/eventPreview.ts");
+  for (const fragment of ['from("collector_events")', '.eq("enabled", true)', ".gte(\"ends_at\", earliestStoredEnd", '.order("starts_at", { ascending: true })', "eventPhase("]) {
+    assert.ok(events.includes(fragment.replace("earliestStoredEnd", "earliestStoredEnd")), `Events page has ${fragment}`);
+    assert.ok(preview.includes(fragment.replace("earliestStoredEnd", "earliestStoredEnd(now")) || preview.includes(fragment), `preview has ${fragment}`);
+  }
+  assert.match(events, /from "@\/lib\/events\/eventPreview"/, "one date formatter for both");
 });
-test("the Account menu reads its Saved and Watchlist rows from the shared list, above Settings", () => {
-  const top = read("src/components/TopNav.tsx");
-  assert.match(top, /ACCOUNT_SHORTCUTS\.map/);
-  assert.ok(top.indexOf("ACCOUNT_SHORTCUTS.map") < top.indexOf('<Link href="/account"'), "shortcuts come before Settings");
+test("Notable Items are real items: no exhibition cards, hidden items and cost are never read", () => {
+  const page = read("src/app/discover/page.tsx");
+  assert.match(page, /if \(snap\?\.hidden\) continue;/);
+  assert.doesNotMatch(read("src/components/discover/DiscoverSections.tsx"), /purchase_price|purchasePrice/);
 });
 
 console.log(`\n${pass} of ${pass + fail} passed`);

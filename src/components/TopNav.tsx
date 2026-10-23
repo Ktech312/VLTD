@@ -8,7 +8,7 @@ import VltdLogo from "@/components/VltdLogo";
 import AlertsBell from "@/components/AlertsBell";
 import CommandPalette from "@/components/CommandPalette";
 import { ActionMenu, type ActionMenuItem } from "@/components/ui/ActionMenu";
-import { ACCOUNT_SHORTCUTS, PRIMARY_NAV, isPrimaryNavActive } from "@/lib/primaryNav";
+import { ACCOUNT_SHORTCUTS, DESKTOP_NAV, MORE_ITEMS, activeMoreKey, isPrimaryNavActive } from "@/lib/primaryNav";
 import { MENU_OPEN_EVENT } from "@/components/ui/ActionMenu";
 import { AppIcon, type AppIconName } from "@/components/ui/AppIcon";
 import {
@@ -336,10 +336,10 @@ function TopNavInner() {
             <VltdLogo height={38} glow={isHome} />
           </Link>
 
-          {/* Desktop navigation (768px and wider): the five primary destinations in the approved order */}
+          {/* Desktop navigation (768px and wider): Home, Vault, Exhibitions, Insights and a More menu */}
           <nav aria-label="Primary" className="hidden md:flex flex-1 items-center justify-center">
             <div className="flex items-end gap-1">
-              {PRIMARY_NAV.map((item) => {
+              {DESKTOP_NAV.map((item) => {
                 const active = isPrimaryNavActive(item, pathname);
                 return (
                   <Link
@@ -370,6 +370,48 @@ function TopNavInner() {
                   </Link>
                 );
               })}
+              {(() => {
+                const moreActive = activeMoreKey(pathname) !== null;
+                return (
+                  <ActionMenu
+                    ariaLabel="More"
+                    align="right"
+                    width={300}
+                    items={MORE_ITEMS.filter((item) => signedIn || !item.signedInOnly).map((item) => ({
+                      key: item.key,
+                      label: item.label,
+                      description: item.description,
+                      href: item.href,
+                      current: activeMoreKey(pathname) === item.key,
+                    }))}
+                    triggerClassName="relative flex flex-col items-center gap-[4px] px-3 pt-1 pb-2"
+                    triggerChildren={
+                      <>
+                        <AppIcon
+                          name="more"
+                          variant="navTop"
+                          active={moreActive}
+                          size={32}
+                          style={{ color: moreActive ? "#C8CDD2" : "var(--muted2, #61656B)" }}
+                        />
+                        <span
+                          className="flex items-center gap-1 text-[11px] font-semibold tracking-[0.04em] leading-none whitespace-nowrap"
+                          style={{ color: moreActive ? "#C8CDD2" : "var(--muted, #C4B07A)" }}
+                        >
+                          More
+                          <AppIcon name="chevronDown" size={10} strokeWidth={2.4} />
+                        </span>
+                        {moreActive && (
+                          <span
+                            className="absolute bottom-0 left-3 right-3 h-[2px] rounded-full"
+                            style={{ background: "linear-gradient(90deg, transparent, #4092FF, transparent)" }}
+                          />
+                        )}
+                      </>
+                    }
+                  />
+                );
+              })()}
             </div>
           </nav>
 

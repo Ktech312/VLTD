@@ -1,12 +1,12 @@
 import type { AppIconName } from "@/components/ui/AppIcon";
 
 /**
- * The five primary destinations, in the approved order. The top bar (768px and wider) and the
- * bottom bar (under 768px) both read this list, so they can never drift apart.
- * A destination stays highlighted for the pages that live inside it:
- * Insights and Goals sit in Vault, Learn sits in Lounge, and Marketplace, Upcoming Comics and Events
- * sit in Discover (reached from its Browse menu). Saved and Watchlist are personal lists, reached from the
- * Account menu, so they do not highlight Discover.
+ * Navigation has two arrangements that read this file:
+ *  - DESKTOP (768px and wider, the top bar): Home, Vault, Exhibitions, Insights and a More menu (Discover, Events, VLT Lounge, Activity, Learn).
+ *  - PHONE (under 768px, the bottom bar): PRIMARY_NAV below, unchanged while the phone arrangement is reviewed. Every destination in More is
+ *    still reachable on a phone (Discover and Lounge are tabs; Insights, Goals and Insurance are in the Vault bar; Events and Upcoming Comics
+ *    are sections on Discover; Learn is in the Lounge bar; Activity is on Home).
+ * Saved and Watchlist are personal lists, reached from the Account menu and from the shortcuts beside Discover's search, so they highlight nothing.
  */
 export type PrimaryNavItem = {
   label: string;
@@ -26,15 +26,32 @@ export const PRIMARY_NAV: PrimaryNavItem[] = [
   { label: "Discover", href: "/discover", icon: "discover", match: ["/discover", "/market", "/upcoming", "/events"] },
 ];
 
-export type BrowseKey = "discover" | "market" | "upcoming" | "events";
-
-/** The Browse menu beside the title of the four public Discover pages. Each destination keeps its own page, title and URL. */
-export const BROWSE_ITEMS: { key: BrowseKey; label: string; description: string; href: string }[] = [
-  { key: "discover", label: "Public collections", description: "Explore public exhibitions and notable items", href: "/discover" },
-  { key: "market", label: "Marketplace", description: "Collectibles for sale by collectors", href: "/market" },
-  { key: "upcoming", label: "Upcoming Comics", description: "New releases by artist or series", href: "/upcoming" },
-  { key: "events", label: "Events", description: "Conventions, card shows, auctions, drops", href: "/events" },
+/** The desktop top bar's direct links. Insights is a direct link here (its page is still /portfolio and it is still in the Vault bar). */
+export const DESKTOP_NAV: PrimaryNavItem[] = [
+  { label: "Home", href: "/dashboard", icon: "dashboard", match: ["/dashboard"], exactOnly: true },
+  { label: "Vault", href: "/vault", icon: "vault", match: ["/vault", "/goals", "/insurance"] },
+  { label: "Exhibitions", href: "/museum", icon: "exhibitions", match: ["/museum"] },
+  { label: "Insights", href: "/portfolio", icon: "insights", match: ["/portfolio"] },
 ];
+
+export type MoreItem = { key: string; label: string; description: string; href: string; match: string[]; signedInOnly?: boolean };
+
+/** The desktop More menu. Marketplace and Upcoming Comics are Discover sections, so they keep More (Discover) highlighted. */
+export const MORE_ITEMS: MoreItem[] = [
+  { key: "discover", label: "Discover", description: "Public collections, notable items and collectors", href: "/discover", match: ["/discover", "/market", "/upcoming"] },
+  { key: "events", label: "Events", description: "Conventions, card shows, auctions and drops", href: "/events", match: ["/events"] },
+  { key: "lounge", label: "VLT Lounge", description: "Community board and leaderboards", href: "/community-board", match: ["/community-board"] },
+  { key: "activity", label: "Activity", description: "Everything that changed in your vault", href: "/activity", match: ["/activity"], signedInOnly: true },
+  { key: "learn", label: "Learn", description: "Guides and learning", href: "/learn", match: ["/learn"] },
+];
+
+const pathMatches = (path: string, prefixes: string[]) => prefixes.some((prefix) => path === prefix || path.startsWith(prefix + "/"));
+
+/** Which More entry the page belongs to (null when it is not one of them). */
+export function activeMoreKey(pathname: string): string | null {
+  const path = pathname || "";
+  return MORE_ITEMS.find((item) => pathMatches(path, item.match))?.key ?? null;
+}
 
 /** Direct entries at the top of the Account menu's links, on every page. Personal lists: not part of Discover. */
 export const ACCOUNT_SHORTCUTS: { key: string; label: string; href: string }[] = [

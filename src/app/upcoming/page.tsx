@@ -1,6 +1,5 @@
 "use client";
 
-import { BrowseMenu } from "@/components/BrowseMenu";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { PillButton } from "@/components/ui/PillButton";
 import { PillSelect } from "@/components/ui/PillSelect";
@@ -364,7 +363,7 @@ export default function UpcomingPage() {
     <>
       <PageHeader
         title="Upcoming Comics"
-        titleAdornment={<BrowseMenu current="upcoming" />}
+        titleAdornment={<PillButton size="compact" href="/discover" ariaLabel="Back to Discover"><AppIcon name="back" size={14} strokeWidth={2} /><span>Discover</span></PillButton>}
         description={statuses.size > 0 ? `Releases by artist or series. ${statuses.size} saved.` : "Releases by artist or series."}
         contentClassName="max-w-[900px]"
       />

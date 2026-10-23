@@ -16,6 +16,8 @@ export type FeaturedRoomSlide = {
   /** The cover thumbnail, shown only as the slide's picture. */
   coverUrl: string | null;
   href: string;
+  /** A few of the room's own public items, shown as small previews on the slide. */
+  previews?: { src: string; title: string }[];
 };
 
 const SWIPE_PX = 48;
@@ -99,7 +101,7 @@ export default function FeaturedRoomsCarousel({ slides }: { slides: FeaturedRoom
         {slides.map((slide, i) => (
           <div
             key={slide.id}
-            className="relative min-h-[210px] w-full shrink-0"
+            className="relative min-h-[240px] w-full shrink-0"
             role="group"
             aria-roledescription="slide"
             aria-label={`${i + 1} of ${count}: ${slide.title}`}
@@ -109,7 +111,7 @@ export default function FeaturedRoomsCarousel({ slides }: { slides: FeaturedRoom
             style={{ background: slide.backgroundUrl ? `#0B0D10 url(${slide.backgroundUrl}) center/cover no-repeat` : "linear-gradient(135deg,#15181c,#0B0D10)" }}
           >
             <div className="absolute inset-0 bg-gradient-to-r from-[#040909] via-[#040909]/70 to-transparent" />
-            <div className="relative flex min-h-[210px] items-center gap-5 px-12 py-6 sm:px-14">
+            <div className="relative flex min-h-[240px] items-center gap-5 px-12 py-6 sm:px-14">
               <div className="min-w-0 max-w-[420px] flex-1">
                 <div className="text-[11px] font-black uppercase tracking-[0.18em]" style={{ color: "#C8CDD2" }}>
                   {slide.universeLabel} · {i + 1} of {count}
@@ -127,6 +129,14 @@ export default function FeaturedRoomsCarousel({ slides }: { slides: FeaturedRoom
                 >
                   <span className="max-w-[260px] truncate">View {slide.title}</span>&nbsp;&rarr;
                 </Link>
+                {slide.previews && slide.previews.length > 0 ? (
+                  <div className="mt-3 flex gap-1.5" data-testid="slide-previews">
+                    {slide.previews.slice(0, 4).map((p, k) => (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img key={k} src={p.src} alt={p.title} draggable={false} className="h-12 w-12 rounded-[5px] border border-[rgba(203,208,213,0.35)] object-cover" />
+                    ))}
+                  </div>
+                ) : null}
               </div>
               {slide.coverUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element

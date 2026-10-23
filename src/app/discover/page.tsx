@@ -9,8 +9,8 @@ import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import DiscoverSwipe from "@/components/DiscoverSwipe";
 import FeaturedRoomsCarousel, { type FeaturedRoomSlide } from "@/components/discover/FeaturedRoomsCarousel";
+import { EventsSection, MarketplaceSection, NotableItemsSection, UpcomingComicsSection, type NotableItem } from "@/components/discover/DiscoverSections";
 import { PageHeader } from "@/components/layout/PageHeader";
-import { BrowseMenu } from "@/components/BrowseMenu";
 import { Glyph } from "@/components/ui/Glyph";
 import { getCurrentUser, getOnboardingStatus } from "@/lib/auth";
 import { readUniversePrefs } from "@/lib/universePrefs";
@@ -368,10 +368,33 @@ export default function DiscoverPage() {
   const selectedGallery = panelClosed ? null : displayGalleries.find((gallery) => gallery.id === selectedId) ?? displayGalleries[0] ?? null;
 
   // Real groupings rather than arbitrary slices of the same list.
-  const trending = [...displayGalleries].sort((a, b) => (b.analytics_views ?? 0) - (a.analytics_views ?? 0));
+  // The Collector Spotlight takes the first five rooms that have items; Trending and New This Week do not repeat those same rooms
+  // (unless leaving them out would leave the section empty).
+  const spotlightIds = new Set(displayGalleries.filter((gallery) => gallery.item_count > 0).slice(0, 5).map((gallery) => gallery.id));
+  const withoutSpotlight = (list: PublicGallery[]) => { const rest = list.filter((gallery) => !spotlightIds.has(gallery.id)); return rest.length > 0 ? rest : list; };
+  const trending = withoutSpotlight([...displayGalleries].sort((a, b) => (b.analytics_views ?? 0) - (a.analytics_views ?? 0)));
   const weekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
-  const newThisWeek = displayGalleries.filter((gallery) => galleryTime(gallery) >= weekAgo);
-  const notableItems = [...displayGalleries].sort((a, b) => (b.item_count ?? 0) - (a.item_count ?? 0));
+  const newThisWeek = withoutSpotlight(displayGalleries.filter((gallery) => galleryTime(gallery) >= weekAgo));
+  // Notable Items are real public items (not exhibition cards): ones an exhibition shows to visitors, with a photo, the most valuable published value first.
+  // Items an exhibition hides, and items with no photo or title, never appear. Only the published value is read (never what was paid).
+  const notableItems: NotableItem[] = (() => {
+    const seen = new Set<string>();
+    const out: NotableItem[] = [];
+    for (const gallery of displayGalleries) {
+      for (const id of gallery.itemIds) {
+        if (seen.has(id)) continue;
+        const snap = gallery.snapshots[id];
+        if (snap?.hidden) continue;
+        const fact = itemFactsById.get(id);
+        const imageUrl = fact?.imageUrl || snap?.imageUrl || null;
+        const title = (fact?.title || snap?.title || "").trim();
+        if (!imageUrl || !title) continue;
+        seen.add(id);
+        out.push({ id, title, imageUrl, value: fact?.value ?? null, roomId: gallery.id, roomTitle: gallery.title, collectorName: gallery.collector_name ?? "Collector" });
+      }
+    }
+    return out.sort((a, b) => (b.value ?? 0) - (a.value ?? 0));
+  })();
   const shown = (list: PublicGallery[], key: string) => (expanded[key] ? list : list.slice(0, 4));
   const toggleSection = (key: string) => setExpanded((prev) => ({ ...prev, [key]: !prev[key] }));
 
@@ -444,6 +467,13 @@ export default function DiscoverPage() {
   }
 
   const featuredRooms = displayGalleries.filter((gallery) => gallery.item_count > 0).slice(0, 8);
+  const roomPreviews = (gallery: PublicGallery) => gallery.itemIds.flatMap((id) => {
+    const snap = gallery.snapshots[id];
+    if (snap?.hidden) return [];
+    const fact = itemFactsById.get(id);
+    const src = fact?.imageUrl || snap?.imageUrl || null;
+    return src ? [{ src, title: fact?.title || snap?.title || "" }] : [];
+  }).slice(0, 4);
   const carouselSlides: FeaturedRoomSlide[] = featuredRooms.slice(0, 5).map((gallery) => ({
     id: gallery.id,
     title: gallery.title,
@@ -453,11 +483,8 @@ export default function DiscoverPage() {
     backgroundUrl: roomBackground(gallery),
     coverUrl: gallery.cover_image,
     href: `/museum/${gallery.id}/guest`,
+    previews: roomPreviews(gallery),
   }));
-  function showFeaturedRooms() {
-    setExpanded((prev) => ({ ...prev, featured: true }));
-    window.setTimeout(() => document.getElementById("featured-rooms")?.scrollIntoView({ behavior: "smooth", block: "start" }), 0);
-  }
 
   function openGallery(gallery: PublicGallery) {
     router.push(`/museum/${gallery.id}/guest`);
@@ -515,7 +542,6 @@ export default function DiscoverPage() {
     <>
       <PageHeader
         title="Discover"
-        titleAdornment={<BrowseMenu current="discover" />}
         description={<span style={{ color: "var(--theme-text-muted,#61656B)" }}>Explore public collections, notable items, and collector rooms.</span>}
         contentClassName="max-w-[1480px]"
       />
@@ -525,7 +551,7 @@ export default function DiscoverPage() {
           <p className="mt-5 text-xs" style={{ color: "var(--theme-text-muted,#61656B)" }} data-testid="discover-filter-note">
             Browsing public exhibitions from every collector. These filters do not change what your own Vault shows.
           </p>
-          <div className="mt-2 grid gap-3 lg:grid-cols-[minmax(0,1fr)_200px_200px]">
+          <div className={`mt-2 grid gap-3 ${signedIn ? "lg:grid-cols-[minmax(0,1fr)_170px_170px_auto]" : "lg:grid-cols-[minmax(0,1fr)_200px_200px]"}`}>
             <label className="flex h-11 md:h-10 items-center gap-2 rounded-[7px] border border-[rgba(203,208,213,0.22)] px-3" style={{ background: "var(--theme-card,rgba(15,25,45,0.85))" }}>
               <Glyph name="search" size={15} className="opacity-60" />
               <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search exhibitions, items, and collectors..." className="h-full min-w-0 flex-1 bg-transparent text-xs outline-none placeholder:opacity-45" />
@@ -552,6 +578,12 @@ export default function DiscoverPage() {
                 { value: "az", label: "A to Z" },
               ]}
             />
+            {signedIn ? (
+              <div className="flex gap-2" role="group" aria-label="Your saved and watched">
+                <PillButton href="/saved" ariaLabel="Saved: things you saved"><AppIcon name="bookmark" size={16} /><span>Saved</span></PillButton>
+                <PillButton href="/watchlist" ariaLabel="Watchlist: items and exhibitions you are watching"><AppIcon name="favorite" size={16} /><span>Watchlist</span></PillButton>
+              </div>
+            ) : null}
           </div>
 
           {fetchError && (
@@ -568,21 +600,8 @@ export default function DiscoverPage() {
                   <div className="text-[11px] font-black uppercase tracking-[0.18em]" style={{ color: "var(--theme-gold,#C8CDD2)" }}>Collector Spotlight</div>
                   <h2 className="font-serif text-[22px] font-black leading-tight" style={{ color: "var(--theme-text-primary,#ECEDEF)" }}>Collector Rooms Worth Seeing</h2>
                 </div>
-                <PillButton variant="active" onClick={showFeaturedRooms}>Explore featured rooms &rarr;</PillButton>
               </div>
               <FeaturedRoomsCarousel slides={carouselSlides} />
-            </section>
-          )}
-
-          {!loading && featuredRooms.length > 0 && (
-            <section className="mt-5" id="featured-rooms" data-testid="featured-rooms">
-              <div className="mb-2 flex items-center justify-between">
-                <h2 className="text-[12px] font-black uppercase tracking-[0.16em]" style={{ color: "var(--theme-gold,#C8CDD2)" }}>Featured Rooms</h2>
-                <PillButton size="compact" onClick={() => toggleSection("featured")}>{expanded.featured ? "Show less" : "View all"}</PillButton>
-              </div>
-              <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-                {shown(featuredRooms, "featured").map((gallery) => <GalleryCard key={gallery.id} gallery={gallery} />)}
-              </div>
             </section>
           )}
 
@@ -631,17 +650,7 @@ export default function DiscoverPage() {
             </section>
           )}
 
-          {!loading && notableItems.length > 0 && (
-            <section className="mt-5">
-              <div className="mb-2 flex items-center justify-between">
-                <h2 className="text-[12px] font-black uppercase tracking-[0.16em]" style={{ color: "var(--theme-gold,#C8CDD2)" }}>Notable Items</h2>
-                <PillButton size="compact" onClick={() => toggleSection("notableItems")}>{expanded.notableItems ? "Show less" : "View all"}</PillButton>
-              </div>
-              <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-                {shown(notableItems, "notableItems").map((gallery) => <GalleryCard key={gallery.id} gallery={gallery} compact />)}
-              </div>
-            </section>
-          )}
+          {!loading && <NotableItemsSection items={notableItems} expanded={Boolean(expanded.notableItems)} onToggle={() => toggleSection("notableItems")} />}
 
           {!loading && universeCounts.length > 0 && (
             <section className="mt-5">
@@ -663,6 +672,10 @@ export default function DiscoverPage() {
               </div>
             </section>
           )}
+
+          <MarketplaceSection />
+          <EventsSection />
+          <UpcomingComicsSection />
 
           {!loading && !signedIn && (
             <section className="mt-6 flex flex-col items-center gap-3 rounded-[7px] border border-[rgba(203,208,213,0.22)] px-6 py-8 text-center" style={{ background: "var(--theme-card, rgba(15,25,45,0.85))" }}>
