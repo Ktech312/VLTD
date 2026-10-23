@@ -1,0 +1,123 @@
+{
+ "label": "first",
+ "cases": [
+  {
+   "ok": false,
+   "control": "/discover: title \"Discover\", Discover highlighted and Browse shown, no six-button row (desktop 1440)"
+  },
+  {
+   "ok": false,
+   "control": "/market: title \"Marketplace\", Discover highlighted and Browse shown, no six-button row (desktop 1440)"
+  },
+  {
+   "ok": false,
+   "control": "/upcoming: title \"Upcoming Comics\", Discover highlighted and Browse shown, no six-button row (desktop 1440)"
+  },
+  {
+   "ok": false,
+   "control": "/events: title \"Events\", Discover highlighted and Browse shown, no six-button row (desktop 1440)"
+  },
+  {
+   "ok": true,
+   "control": "/saved: title \"Saved\", Discover not highlighted and no Browse, no six-button row (desktop 1440)"
+  },
+  {
+   "ok": true,
+   "control": "/watchlist: title \"Watchlist\", Discover not highlighted and no Browse, no six-button row (desktop 1440)"
+  },
+  {
+   "ok": true,
+   "control": "/discover: Browse opens with the four destinations, \"Public collections\" marked and focused (desktop 1440)"
+  },
+  {
+   "ok": true,
+   "control": "/market: Browse opens with the four destinations, \"Marketplace\" marked and focused (desktop 1440)"
+  },
+  {
+   "ok": true,
+   "control": "/upcoming: Browse opens with the four destinations, \"Upcoming Comics\" marked and focused (desktop 1440)"
+  },
+  {
+   "ok": true,
+   "control": "/events: Browse opens with the four destinations, \"Events\" marked and focused (desktop 1440)"
+  },
+  {
+   "ok": true,
+   "control": "Browse > Marketplace opens /market and the menu closes (desktop 1440)"
+  },
+  {
+   "ok": true,
+   "control": "Browse > Upcoming Comics opens /upcoming and the menu closes (desktop 1440)"
+  },
+  {
+   "ok": true,
+   "control": "Browse > Events opens /events and the menu closes (desktop 1440)"
+  },
+  {
+   "ok": true,
+   "control": "browser Back retraces Events > Upcoming > Marketplace > Discover (desktop 1440)"
+  },
+  {
+   "ok": true,
+   "control": "Account menu: Saved, Watchlist, then Settings, Appearance, Invite Friends (desktop 1440)"
+  },
+  {
+   "ok": true,
+   "control": "Account > Saved opens /saved: own title, Discover not highlighted, no Browse, menu closed (desktop 1440)"
+  },
+  {
+   "ok": true,
+   "control": "Account > Watchlist opens /watchlist: own title, Discover not highlighted, no Browse, menu closed (desktop 1440)"
+  },
+  {
+   "ok": true,
+   "control": "Back from Watchlist returns to Saved (desktop 1440)"
+  },
+  {
+   "ok": true,
+   "control": "Back again returns to Discover (desktop 1440)"
+  },
+  {
+   "ok": true,
+   "control": "opening Account closes Browse, and opening Browse closes Account (desktop 1440)"
+  },
+  {
+   "ok": true,
+   "control": "a real click on the Account button while Browse is open never leaves both open (desktop 1440)"
+  },
+  {
+   "ok": true,
+   "control": "Escape closes Browse and focus returns to its button (desktop 1440)"
+  },
+  {
+   "ok": true,
+   "control": "a press outside closes Browse without navigating (desktop 1440)"
+  },
+  {
+   "ok": true,
+   "control": "Escape closes the Account menu (desktop 1440)"
+  },
+  {
+   "ok": false,
+   "control": "keyboard: Enter opens on the current item, arrows move and wrap (desktop 1440)"
+  },
+  {
+   "ok": false,
+   "control": "keyboard: Enter on \"Events\" opens /events (desktop 1440)"
+  },
+  {
+   "ok": true,
+   "control": "keyboard: Space opens Browse (desktop 1440)"
+  },
+  {
+   "ok": true,
+   "control": "keyboard: Tab leaves and closes the menu (desktop 1440)"
+  },
+  {
+   "ok": true,
+   "control": "an event link (?highlight=) still opens that event, with Browse beside the title (desktop 1440)"
+  }
+ ],
+ "samples": [],
+ "error": "Error: TypeError: Cannot read properties of undefined (reading 'getBoundingClientRect')\n    at <anonymous>:1:172\n    at <anonymous>:1:259\n    at Object.evaluate (C:\\Users\\EK\\VLTD\\.claude\\worktrees\\bold-perlman-182cc2\\docs\\audit-2026-10-18\\scripts\\cdp.cjs:65:35)\n    at async C:\\Users\\EK\\VLTD\\.claude\\worktrees\\bold-perlman-182cc2\\docs\\audit-2026-10-18\\repair-batch-6\\scripts\\rb64-navigation.cjs:174:18"
+}

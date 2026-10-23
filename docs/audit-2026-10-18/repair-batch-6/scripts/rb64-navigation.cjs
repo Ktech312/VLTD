@@ -22,7 +22,7 @@ const PAGES = [
 const BROWSE_EXPECT = [["Public collections", "/discover"], ["Marketplace", "/market"], ["Upcoming Comics", "/upcoming"], ["Events", "/events"]];
 
 const INFO = `(() => {
-  const h1 = document.querySelector('h1'); const mainActive = [...document.querySelectorAll('nav[aria-label="Primary"] a[aria-current="page"], nav[aria-label="Main navigation"] a[aria-current="page"]')].map((a) => a.textContent.trim());
+  const h1 = document.querySelector('h1'); const mainActive = [...new Set([...document.querySelectorAll('nav[aria-label="Primary"] a[aria-current="page"], nav[aria-label="Main navigation"] a[aria-current="page"]')].filter((a) => a.getClientRects().length > 0).map((a) => a.textContent.trim()))];
   const browse = document.querySelector('button[aria-label="Browse"]');
   return { path: location.pathname + location.search, h1: h1 ? h1.textContent.trim() : null, mainActive, browse: !!browse, oldRow: !!document.querySelector('nav[aria-label="Discover"]'),
     localTabs: document.querySelectorAll('nav[data-local-nav] a[data-local-tab]').length, menus: document.querySelectorAll('[role="menu"]').length,
@@ -56,7 +56,7 @@ const ACCOUNT_LINKS = `(() => { const s = [...document.querySelectorAll('a')].fi
   }
   async function press(selOrNull, mobile, sel) { const b = await rect(sel); if (!b) return false; const x = b.x + b.w / 2, y = b.y + b.h / 2; if (mobile) await tap(x, y); else await mouse(x, y); return true; }
   async function key(k, code, vk) {
-    await S.send("Input.dispatchKeyEvent", { type: "rawKeyDown", key: k, code, windowsVirtualKeyCode: vk });
+    await S.send("Input.dispatchKeyEvent", k === "Enter" ? { type: "keyDown", key: k, code, windowsVirtualKeyCode: vk, text: "\r" } : { type: "rawKeyDown", key: k, code, windowsVirtualKeyCode: vk });
     await S.send("Input.dispatchKeyEvent", { type: "keyUp", key: k, code, windowsVirtualKeyCode: vk });
     await sleep(500);
   }
@@ -167,32 +167,33 @@ const ACCOUNT_LINKS = `(() => { const s = [...document.querySelectorAll('a')].fi
       await key("Tab", "Tab", 9); ki = await info(); ck(ki.menus === 0, `keyboard: Tab leaves and closes the menu (${name})`, "closed", `menus=${ki.menus}`);
 
       // I. event highlight and Back
-      await goDirect("/events?highlight=freshcomics-la-comic-con-2026");
+      await goDirect("/events?highlight=freshcomics-la-comic-con-2026"); await sleep(5000);
       const hi = await S.evaluate(`({ path: location.pathname + location.search, text: document.body.innerText.slice(0, 5000), browse: !!document.querySelector('button[aria-label="Browse"]') })`);
       ck(hi.path === "/events?highlight=freshcomics-la-comic-con-2026" && /L\.A\. Comic Con/.test(hi.text) && hi.browse, `an event link (?highlight=) still opens that event, with Browse beside the title (${name})`, "LA Comic Con selected; Browse present", `path=${hi.path}; event shown=${/L\.A\. Comic Con/.test(hi.text)}; Browse=${hi.browse}`);
       await press(null, mobile, BROWSE_BTN);
-      const mk = await S.evaluate(`(() => { const a = [...document.querySelectorAll('[role="menu"][aria-label="Browse"] [role="menuitem"]')].find((x) => x.textContent.includes('Marketplace')); const rr = a.getBoundingClientRect(); return { x: rr.x + rr.width / 2, y: rr.y + rr.height / 2 }; })()`);
-      if (mobile) await tap(mk.x, mk.y); else await mouse(mk.x, mk.y); await sleep(1800);
+      const mk = await S.evaluate(`(() => { const a = [...document.querySelectorAll('[role="menu"][aria-label="Browse"] [role="menuitem"]')].find((x) => x.textContent.includes('Marketplace')); if (!a) return null; const rr = a.getBoundingClientRect(); return { x: rr.x + rr.width / 2, y: rr.y + rr.height / 2 }; })()`);
+      ck(!!mk, `on the highlighted-event page the Browse menu opens and stays open (${name})`, "menu open with Marketplace", mk ? "open" : "menu not open after pressing Browse");
+      if (mk) { if (mobile) await tap(mk.x, mk.y); else await mouse(mk.x, mk.y); } await sleep(1800);
       const bh = await back(); ck(bh.path === "/events?highlight=freshcomics-la-comic-con-2026", `Back from Marketplace returns to the highlighted event URL (${name})`, "/events?highlight=...", bh.path);
 
       // J. mobile scrolling
       if (mobile) {
-        await goDirect("/market");
+        await goDirect("/discover"); await sleep(1500);
         const SC = "document.querySelector('.vltd-content-wrap').scrollTop";
         const drag = async (x, y, dy) => { await S.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: [{ x, y }] }); for (let k = 1; k <= 10; k++) { await S.send("Input.dispatchTouchEvent", { type: "touchMove", touchPoints: [{ x, y: y + dy * k / 10 }] }); await sleep(16); } await S.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] }); await sleep(900); };
         const bb = await rect(BROWSE_BTN); const s0 = await S.evaluate(SC);
         await drag(bb.x + bb.w / 2, bb.y + bb.h / 2, -260); const s1 = await S.evaluate(SC);
         const stay = await info();
-        ck(s1 > s0 + 80 && stay.path === "/market" && stay.menus === 0, `a vertical finger drag that starts on the Browse button scrolls the page and opens nothing (${name})`, "page scrolls; no menu; no navigation", `scroll ${s0} -> ${s1}; menus=${stay.menus}; path=${stay.path}`, "/market");
+        ck(s1 > s0 + 80 && stay.path === "/discover" && stay.menus === 0, `a vertical finger drag that starts on the Browse button scrolls the page and opens nothing (${name})`, "page scrolls; no menu; no navigation", `scroll ${s0} -> ${s1}; menus=${stay.menus}; path=${stay.path}`, "/discover");
         await S.evaluate(SC + " = 0"); await sleep(300);
         await press(null, true, BROWSE_BTN); const opened = await S.evaluate(BROWSE_MENU);
         await drag(200, 520, -240); const afterScroll = await info(); const s2 = await S.evaluate(SC);
-        ck(opened && afterScroll.menus === 0 && s2 > 60, `with Browse open, scrolling the page closes the menu and the page scrolls (${name})`, "menu closed, page scrolled", `menu was open=${!!opened}; menus after=${afterScroll.menus}; scroll=${s2}`, "/market");
+        ck(opened && afterScroll.menus === 0 && s2 > 60, `with Browse open, scrolling the page closes the menu and the page scrolls (${name})`, "menu closed, page scrolled", `menu was open=${!!opened}; menus after=${afterScroll.menus}; scroll=${s2}`, "/discover");
         await S.evaluate(SC + " = 0");
         const tb = await rect(BROWSE_BTN);
         const hitAbove = await S.evaluate(`(() => { const e = document.elementFromPoint(${tb.x + tb.w / 2}, ${tb.y - 5}); return !!e && (e.closest('button') || {}).getAttribute && (e.closest('button').getAttribute('aria-label') === 'Browse'); })()`);
         const hitBelow = await S.evaluate(`(() => { const e = document.elementFromPoint(${tb.x + tb.w / 2}, ${tb.y + tb.h + 5}); return !!e && !!e.closest('button') && e.closest('button').getAttribute('aria-label') === 'Browse'; })()`);
-        ck(hitAbove && hitBelow, `the Browse button's touch area reaches 44 px (${name})`, "points 5 px above and below the button still hit it", `button ${Math.round(tb.h)} px high; above=${hitAbove}; below=${hitBelow}`, "/market");
+        ck(hitAbove && hitBelow, `the Browse button's touch area reaches 44 px (${name})`, "points 5 px above and below the button still hit it", `button ${Math.round(tb.h)} px high; above=${hitAbove}; below=${hitBelow}`, "/discover");
       }
       await goDirect("/market"); await press(null, mobile, BROWSE_BTN); await S.jshot(`rb64-${LABEL}-${tag}-market-browse`);
       await key("Escape", "Escape", 27);

@@ -1,0 +1,29 @@
+{
+ "label": "first",
+ "cases": [
+  {
+   "ok": true,
+   "control": "an event link (?highlight=) opens that event with Browse beside the title (desktop 1440)"
+  },
+  {
+   "ok": true,
+   "control": "on the highlighted-event page the Browse menu opens (desktop 1440)"
+  },
+  {
+   "ok": true,
+   "control": "Marketplace opens, and browser Back returns to the highlighted event URL (desktop 1440)"
+  },
+  {
+   "ok": true,
+   "control": "an event link (?highlight=) opens that event with Browse beside the title (phone 390 (emulated touch))"
+  },
+  {
+   "ok": true,
+   "control": "on the highlighted-event page the Browse menu opens (phone 390 (emulated touch))"
+  },
+  {
+   "ok": true,
+   "control": "Marketplace opens, and browser Back returns to the highlighted event URL (phone 390 (emulated touch))"
+  }
+ ]
+}
