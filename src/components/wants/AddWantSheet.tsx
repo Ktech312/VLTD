@@ -104,7 +104,7 @@ function CatalogPicker({ onAdded }: { onAdded: (w: WishlistItem) => void }) {
           <li key={issue.id} className="flex items-center justify-between gap-3 rounded-[8px] border border-[rgba(203,208,213,0.18)] px-3 py-2">
             <div className="min-w-0">
               <div className="truncate text-sm font-semibold">{issue.series} #{issue.number}</div>
-              <div className="truncate text-[12px]" style={{ color: "var(--muted)" }}>{issue.publisher} · {formatStoreDate(issue.storeDate)}{issue.isVariant ? " · variant cover" : ""}</div>
+              <div className="truncate text-[12px]" style={{ color: "var(--muted)" }}>{[issue.publisher, formatStoreDate(issue.storeDate), issue.isVariant ? "variant cover" : ""].filter(Boolean).join(" · ")}</div>
             </div>
             <PillButton size="compact" onClick={() => add(issue)}>Add</PillButton>
           </li>

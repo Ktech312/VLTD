@@ -72,7 +72,7 @@ export default function FollowSheet({ onClose, onCreated }: { onClose: () => voi
             {(found ?? []).map((c) => (
               <li key={c.key}>
                 <button type="button" onClick={() => setPicked(c)} aria-pressed={picked?.key === c.key} className="flex w-full items-center justify-between gap-3 rounded-[8px] border px-3 py-2 text-left" style={{ borderColor: picked?.key === c.key ? "rgba(82,214,244,0.7)" : "rgba(203,208,213,0.18)" }}>
-                  <span className="min-w-0"><span className="block truncate text-sm font-semibold">{c.name}{c.yearBegan ? ` (${c.yearBegan})` : ""}</span><span className="block truncate text-[12px]" style={{ color: "var(--muted)" }}>{c.publisher} · {c.upcoming} upcoming · {describeNextDate(c)}</span></span>
+                  <span className="min-w-0"><span className="block truncate text-sm font-semibold">{c.name}{c.yearBegan ? ` (${c.yearBegan})` : ""}</span><span className="block truncate text-[12px]" style={{ color: "var(--muted)" }}>{[c.publisher, `${c.upcoming} upcoming`, describeNextDate(c)].filter(Boolean).join(" · ")}</span></span>
                   <span className="text-[12px] font-semibold" style={{ color: "var(--theme-gold)" }}>{picked?.key === c.key ? "Picked" : "Pick"}</span>
                 </button>
               </li>
