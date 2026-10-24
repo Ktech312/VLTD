@@ -4,7 +4,7 @@ import { useState } from "react";
 
 import { PillButton } from "@/components/ui/PillButton";
 import { Field, Sheet, inputClass } from "@/components/wants/Sheet";
-import { describeNextDate, newRuleId, saveRule, searchComicSeries, type SeriesCandidate } from "@/lib/pullRules";
+import { describeNextDate, loadPullRules, newRuleId, saveRule, searchComicSeries, type SeriesCandidate } from "@/lib/pullRules";
 import { clampQuantity, type PullRule, type PullRuleKind } from "@/lib/wantsCore";
 
 const KINDS: { key: PullRuleKind; label: string }[] = [
@@ -44,6 +44,8 @@ export default function FollowSheet({ onClose, onCreated }: { onClose: () => voi
     let rule: PullRule;
     if (kind === "comic_series") {
       if (!picked) return setError("Search for the series and pick the one you mean.");
+      const already = loadPullRules().find((r) => r.sourceKey === picked.key);
+      if (already) return setError(already.state === "stopped" ? "You stopped following this series. Show stopped rules and press Follow again." : "You already follow this series.");
       rule = { ...base, kind, name: picked.name, publisher: picked.publisher, yearBegan: picked.yearBegan, source: "metron", sourceKey: picked.key };
     } else {
       if (!name.trim()) return setError("Give it a name.");

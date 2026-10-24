@@ -1,0 +1,161 @@
+{
+ "label": "sql9a",
+ "cases": [
+  {
+   "ok": true,
+   "control": "the new wishlist columns accept a full want (SQL 9 is in place)"
+  },
+  {
+   "ok": false,
+   "control": "Following rules are saved to the account (a manual rule and a comic rule matched to a series key)"
+  },
+  {
+   "ok": true,
+   "control": "pausing a rule reaches the account"
+  },
+  {
+   "ok": false,
+   "control": "the releases the comic rule added reached the account with their source identity and standard-cover edition"
+  },
+  {
+   "ok": true,
+   "control": "a clean second browser shows both rules with their states (manual rule paused, comic rule following)"
+  },
+  {
+   "ok": true,
+   "control": "the 'saved on this device' warning is gone now that rules live in the account"
+  },
+  {
+   "ok": true,
+   "control": "sharing turns on and shows a link"
+  },
+  {
+   "ok": true,
+   "control": "by default only titles are switched on in the account"
+  },
+  {
+   "ok": true,
+   "control": "the switches are available (no 'not available yet' notice)"
+  },
+  {
+   "ok": true,
+   "control": "default link: a visitor sees the title and edition and nothing else (no shop, note, price, target price, quantity or date)"
+  },
+  {
+   "ok": true,
+   "control": "switching on Quantities shows x2 (copies still to get) to a visitor and nothing that is still off; the target price is never shown"
+  },
+  {
+   "ok": true,
+   "control": "switching on Release dates shows the release date to a visitor and nothing that is still off; the target price is never shown"
+  },
+  {
+   "ok": true,
+   "control": "switching on Expected prices shows $12.34 to a visitor and nothing that is still off; the target price is never shown"
+  },
+  {
+   "ok": true,
+   "control": "switching on Shops shows QA Shop to a visitor and nothing that is still off; the target price is never shown"
+  },
+  {
+   "ok": true,
+   "control": "switching on My notes shows the note to a visitor and nothing that is still off; the target price is never shown"
+  },
+  {
+   "ok": true,
+   "control": "the public read returns the switched-on fields (copies left = 2) and has no target price column at all"
+  },
+  {
+   "ok": true,
+   "control": "switching them back off hides them again (account and visitor agree)"
+  },
+  {
+   "ok": true,
+   "control": "skipped and fully acquired wants are never shown on the link"
+  },
+  {
+   "ok": true,
+   "control": "turning sharing off kills the link (page and public read)"
+  },
+  {
+   "ok": true,
+   "control": "control: the owner reads their own wants through the real account rules"
+  },
+  {
+   "ok": true,
+   "control": "a second account reads none of the owner's wants"
+  },
+  {
+   "ok": true,
+   "control": "a second account reads none of the owner's Following rules"
+  },
+  {
+   "ok": true,
+   "control": "a second account cannot read the owner's share link token"
+  },
+  {
+   "ok": true,
+   "control": "a second account reads none of the owner's watched items"
+  },
+  {
+   "ok": true,
+   "control": "a second account cannot add a want into the owner's list"
+  },
+  {
+   "ok": true,
+   "control": "a second account cannot change or delete the owner's want"
+  },
+  {
+   "ok": true,
+   "control": "a second account cannot create a rule in the owner's profile"
+  },
+  {
+   "ok": true,
+   "control": "a visitor with no account cannot read Following rules"
+  },
+  {
+   "ok": true,
+   "control": "a visitor with no account cannot read any wants"
+  },
+  {
+   "ok": true,
+   "control": "a visitor cannot list share tokens"
+  },
+  {
+   "ok": true,
+   "control": "a guessed link returns nothing"
+  },
+  {
+   "ok": true,
+   "control": "the second account's own Watchlist page shows none of the owner's wants or rules"
+  },
+  {
+   "ok": true,
+   "control": "the want from the account is on the page with an Acquired button"
+  },
+  {
+   "ok": false,
+   "control": "pressing Save twice at once makes ONE Vault record"
+  },
+  {
+   "ok": false,
+   "control": "the account shows 1 of 2 received with the record's id kept (status still open)"
+  },
+  {
+   "ok": false,
+   "control": "a retry of the same copy from a browser with an out-of-date list creates no second Vault record"
+  },
+  {
+   "ok": true,
+   "control": "a clean browser shows the want as 1 of 2"
+  },
+  {
+   "ok": true,
+   "control": "the second copy numbers on (2 records, unique ids) and the want becomes Acquired in the account"
+  }
+ ],
+ "notes": {
+  "seedError": null,
+  "ruleRowsBefore": 2
+ }
+}
