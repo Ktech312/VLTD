@@ -9,7 +9,7 @@
 process.env.TZ = "America/Los_Angeles";
 
 const RealDate = Date;
-const FIXED = new RealDate("2026-10-21T17:30:00-07:00").getTime();
+let FIXED = new RealDate("2026-10-21T17:30:00-07:00").getTime();
 class FakeDate extends RealDate {
   constructor(...args: unknown[]) {
     if (args.length === 0) super(FIXED);
@@ -120,11 +120,71 @@ function restCollectorEvents(url: URL, init: RequestInit): Response {
   return jsonResponse(405, { message: "not supported by the pretend table" });
 }
 
+// ───────────────────────── pretend refresh memory (SQL file 8) ─────────────────────────
+type StoreTables = { event_refresh_candidates: Row[]; event_refresh_steps: Row[] };
+let store: StoreTables | null = null; // null = the tables do not exist yet
+const STORE_KEY: Record<string, string> = { event_refresh_candidates: "slug", event_refresh_steps: "step_key" };
+function freshStore(): StoreTables {
+  return { event_refresh_candidates: [], event_refresh_steps: [] };
+}
+function storeMatch(row: Row, params: URLSearchParams): boolean {
+  for (const [key, raw] of params.entries()) {
+    if (["select", "order", "limit", "on_conflict", "columns"].includes(key)) continue;
+    const dot = raw.indexOf(".");
+    const op = raw.slice(0, dot);
+    const val = raw.slice(dot + 1);
+    const cell = row[key];
+    if (op === "eq" && String(cell) !== val) return false;
+    if (op === "is" && val === "null" && cell !== null && cell !== undefined) return false;
+    if (op === "in" && !val.slice(1, -1).split(",").map((x) => x.replace(/^"|"$/g, "")).includes(String(cell))) return false;
+    if (op === "like" && !new RegExp("^" + val.replace(/[.*+?^${}()|[\]\\]/g, "\\$&").replace(/%/g, ".*") + "$").test(String(cell))) return false;
+    if (op === "lt" && !(String(cell) < val)) return false;
+  }
+  return true;
+}
+function restStore(url: URL, init: RequestInit, name: keyof StoreTables): Response {
+  if (!store) return jsonResponse(404, { code: "PGRST205", message: `Could not find the table 'public.${name}' in the schema cache` });
+  const rows = store[name];
+  const pk = STORE_KEY[name];
+  const method = (init.method ?? "GET").toUpperCase();
+  const body = init.body ? JSON.parse(String(init.body)) : undefined;
+  if (method === "GET") {
+    let out = rows.filter((r) => storeMatch(r, url.searchParams));
+    const order = url.searchParams.get("order");
+    if (order) { const col = order.split(".")[0]; out = [...out].sort((a, b) => String(a[col]).localeCompare(String(b[col]))); }
+    out = out.slice(0, Number(url.searchParams.get("limit") ?? 1000));
+    const cols = (url.searchParams.get("select") ?? "*").split(",").map((c) => c.trim());
+    return jsonResponse(200, out.map((r) => (cols[0] === "*" ? r : Object.fromEntries(cols.map((c) => [c, r[c] ?? null])))));
+  }
+  if (method === "POST") {
+    const incoming: Row[] = Array.isArray(body) ? body : [body];
+    const upsert = url.searchParams.has("on_conflict");
+    for (const r of incoming) {
+      const i = rows.findIndex((x) => x[pk] === r[pk]);
+      if (i >= 0 && !upsert) return jsonResponse(409, { code: "23505", message: "duplicate key value violates unique constraint" });
+      if (i >= 0) rows[i] = { ...rows[i], ...r };
+      else rows.push(name === "event_refresh_candidates" ? { verdict: "pending", saved_at: null, judged_at: null, last_seen_at: new RealDate(FIXED).toISOString(), ...r } : { created_at: new RealDate(FIXED).toISOString(), ...r });
+    }
+    return jsonResponse(201, undefined);
+  }
+  if (method === "PATCH") {
+    for (const r of rows) if (storeMatch(r, url.searchParams)) Object.assign(r, body);
+    return jsonResponse(204, undefined);
+  }
+  if (method === "DELETE") {
+    for (let i = rows.length - 1; i >= 0; i--) if (storeMatch(rows[i], url.searchParams)) rows.splice(i, 1);
+    return jsonResponse(204, undefined);
+  }
+  return jsonResponse(405, { message: "not supported" });
+}
+
 // ───────────────────────── pretend internet ─────────────────────────
 type World = {
   serp: "ok" | "fail" | "empty-error";
   tm: "ok" | "fail";
-  ai: "ok" | "fail";
+  ai: "ok" | "fail" | "nocredit";
+  aiOmit: string[]; // names the AI leaves out of its answer
+  aiNames: string[][]; // the names put to the AI on each call
   serpEvents: Array<Record<string, unknown>>; // returned for the convention and gallery searches alike (so one event arrives twice)
   tmEvents: Array<Record<string, unknown>>;
   majorAnswers: Record<string, Record<string, unknown>>; // by show name; anything missing is unconfident
@@ -133,12 +193,13 @@ type World = {
 };
 let world: World;
 function freshWorld(): World {
-  return { serp: "ok", tm: "ok", ai: "ok", serpEvents: [], tmEvents: [], majorAnswers: {}, majorSerp: "ok", calls: { serp: 0, tm: 0, ai: 0 } };
+  return { serp: "ok", tm: "ok", ai: "ok", aiOmit: [], aiNames: [], serpEvents: [], tmEvents: [], majorAnswers: {}, majorSerp: "ok", calls: { serp: 0, tm: 0, ai: 0 } };
 }
 
 async function fakeFetch(input: RequestInfo | URL, init: RequestInit = {}): Promise<Response> {
   const url = new URL(typeof input === "string" ? input : input instanceof URL ? input.href : input.url);
   if (url.host === "fake.supabase.co" && url.pathname === "/rest/v1/collector_events") return restCollectorEvents(url, init);
+  if (url.host === "fake.supabase.co" && (url.pathname === "/rest/v1/event_refresh_candidates" || url.pathname === "/rest/v1/event_refresh_steps")) return restStore(url, init, url.pathname.split("/").pop() as keyof StoreTables);
   if (url.host === "serpapi.com") {
     world.calls.serp += 1;
     const engine = url.searchParams.get("engine");
@@ -162,12 +223,14 @@ async function fakeFetch(input: RequestInfo | URL, init: RequestInit = {}): Prom
   if (url.host === "api.anthropic.com") {
     world.calls.ai += 1;
     if (world.ai === "fail") return jsonResponse(529, { error: { type: "overloaded_error" } });
+    if (world.ai === "nocredit") return jsonResponse(400, { type: "error", error: { type: "invalid_request_error", message: "Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits." } });
     const prompt: string = JSON.parse(String(init.body)).messages[0].content;
     const lines = prompt.split("\n");
     const payload = JSON.parse(lines[lines.length - 1]) as Array<Record<string, unknown>>;
     let answer: unknown;
+    world.aiNames.push(payload.map((c) => String(c.name)));
     if (prompt.includes("screening event listings")) {
-      answer = payload.map((c) => ({ i: c.i, relevant: !/plumbing/i.test(String(c.name)) }));
+      answer = payload.filter((c) => !world.aiOmit.includes(String(c.name))).map((c) => ({ i: c.i, relevant: !/plumbing/i.test(String(c.name)) }));
     } else {
       answer = payload.map((s) => world.majorAnswers[String(s.name)] ?? { name: s.name, confident: false, startDate: null, endDate: null, city: null, link: null });
     }
@@ -197,8 +260,11 @@ async function fakeFetch(input: RequestInfo | URL, init: RequestInit = {}): Prom
 
 // ───────────────────────── harness ─────────────────────────
 const results: Array<{ name: string; ok: boolean; err?: string }> = [];
+const START = FIXED;
 async function test(name: string, fn: () => Promise<void> | void) {
   table = [];
+  store = null;
+  FIXED = START;
   world = freshWorld();
   try {
     await fn();
@@ -447,6 +513,152 @@ async function main() {
     assert.equal(status, 502);
     assert.ok(body.problems.some((p: string) => /every search failed/.test(p)));
     assert.equal(world.calls.ai, 0);
+  });
+
+  // ───────── a retry does not pay twice (the refresh memory, SQL file 8) ─────────
+  const stan = () => serpEvent("Stan Lee Fest", "Nov 14", "Sat, Nov 14 – Sun, Nov 15", ["Convention Center", "Los Angeles, CA"]);
+  const reno = () => tmEvent("Reno Card Show", "2026-11-21", "2026-11-21", "Reno", "NV");
+  const plumbing = () => tmEvent("Plumbing Trade Expo", "2026-11-20", "2026-11-20", "Reno", "NV");
+  const daily = () => silenceLogs(() => call(refreshEvents));
+  const weekly = () => silenceLogs(() => call(refreshMajor));
+  const mark = () => ({ ...world.calls });
+  const since = (m: { serp: number; tm: number; ai: number }) => ({ serp: world.calls.serp - m.serp, tm: world.calls.tm - m.tm, ai: world.calls.ai - m.ai });
+  const cands = () => (store as StoreTables).event_refresh_candidates;
+
+  await test("memory: before SQL file 8 is run the refresh works as it did and says the memory is not set up", async () => {
+    world.tmEvents = [reno()];
+    const { status, body } = await daily();
+    assert.equal(status, 200, JSON.stringify(body));
+    assert.equal(body.memory.available, false);
+    assert.match(body.memory.note, /not set up/);
+    assert.equal(table.length, 1);
+  });
+  await test("memory: when the AI check is refused, what was found is kept; a retry the same day repeats no search and asks the AI only what it has not judged", async () => {
+    store = freshStore();
+    world.ai = "nocredit";
+    world.serpEvents = [stan()];
+    world.tmEvents = [reno(), plumbing()];
+    const first = await daily();
+    assert.equal(first.status, 502);
+    assert.match(String(first.body.aiFilterError), /credit balance is too low/);
+    assert.equal(first.body.memory.askedTheAiAbout, 3);
+    assert.equal(first.body.searchesRun, 12);
+    assert.equal(table.length, 0, "nothing saved without the AI check");
+    assert.equal(cands().length, 3, "the three parsed events are kept");
+    assert.ok(cands().every((c) => c.verdict === "pending" && !c.saved_at));
+    assert.equal(store!.event_refresh_steps.length, 12, "every search that succeeded is recorded");
+
+    let m = mark();
+    const retry = await daily();
+    assert.equal(retry.status, 502, "still refused");
+    assert.deepEqual(since(m), { serp: 0, tm: 0, ai: 1 }, "no search repeated; one AI call");
+    assert.equal(retry.body.searchesRun, 0);
+    assert.equal(retry.body.searchesReusedFromToday, 12);
+    assert.equal(cands().length, 3, "kept, not duplicated");
+
+    world.ai = "ok";
+    m = mark();
+    const third = await daily();
+    assert.equal(third.status, 200, JSON.stringify(third.body));
+    assert.deepEqual(since(m), { serp: 0, tm: 0, ai: 1 });
+    assert.deepEqual([...world.aiNames[world.aiNames.length - 1]].sort(), ["Plumbing Trade Expo", "Reno Card Show", "Stan Lee Fest"]);
+    assert.deepEqual(table.map((r) => r.name).sort(), ["Reno Card Show", "Stan Lee Fest"], "the approved ones are saved, the plumbing show is not");
+    assert.equal(third.body.inserted, 2);
+    const verdict = (name: string) => cands().find((c) => (c.row_data as { name: string }).name === name);
+    assert.equal(verdict("Plumbing Trade Expo")?.verdict, "rejected");
+    assert.ok(verdict("Stan Lee Fest")?.saved_at && verdict("Reno Card Show")?.saved_at);
+
+    m = mark();
+    const fourth = await daily();
+    assert.equal(fourth.status, 200);
+    assert.deepEqual(since(m), { serp: 0, tm: 0, ai: 0 }, "nothing left to judge: no AI call, no search");
+    assert.equal(fourth.body.inserted, 0);
+    assert.equal(table.length, 2);
+  });
+  await test("memory: an event the AI left out of its answer stays not-yet-judged and is the only one asked about next time", async () => {
+    store = freshStore();
+    world.serpEvents = [stan()];
+    world.tmEvents = [reno(), plumbing()];
+    world.aiOmit = ["Reno Card Show"];
+    const first = await daily();
+    assert.equal(first.status, 200, JSON.stringify(first.body));
+    assert.equal(first.body.memory.stillNotJudged, 1);
+    assert.deepEqual(table.map((r) => r.name), ["Stan Lee Fest"]);
+    world.aiOmit = [];
+    const second = await daily();
+    assert.deepEqual(world.aiNames[world.aiNames.length - 1], ["Reno Card Show"], "only the one it had not judged");
+    assert.deepEqual(table.map((r) => r.name).sort(), ["Reno Card Show", "Stan Lee Fest"]);
+    assert.equal(second.body.memory.askedTheAiAbout, 1);
+  });
+  await test("memory: an event approved but not saved is saved on the next run without asking the AI again", async () => {
+    store = freshStore();
+    world.tmEvents = [tmEvent("BAD", "2026-11-22", "2026-11-22", "Reno", "NV"), reno()];
+    const first = await daily();
+    assert.equal(first.status, 502);
+    assert.equal(first.body.failed, 1);
+    const bad = () => cands().find((c) => (c.row_data as { name: string }).name === "BAD");
+    assert.equal(bad()?.verdict, "approved");
+    assert.equal(bad()?.saved_at ?? null, null, "approved but not saved");
+    const m = mark();
+    const second = await daily();
+    assert.equal(since(m).ai, 0, "no AI call: it is already approved");
+    assert.equal(second.body.memory.alreadyApprovedNowSaved, 1);
+    assert.equal(second.body.failed, 1, "the save is tried again (and the pretend table still refuses this name)");
+    assert.deepEqual(table.map((r) => r.name), ["Reno Card Show"], "the good one was not saved a second time");
+  });
+  await test("memory: the next day the searches run again, and events still waiting from yesterday are judged with the new ones", async () => {
+    store = freshStore();
+    world.ai = "nocredit";
+    world.tmEvents = [reno(), plumbing()];
+    await daily();
+    assert.equal(cands().length, 2);
+    FIXED += 24 * 3_600_000;
+    world.ai = "ok";
+    const m = mark();
+    const next = await daily();
+    assert.equal(since(m).serp, 6, "a new day: the searches are repeated");
+    assert.equal(next.body.searchesReusedFromToday, 0);
+    assert.equal(cands().length, 2, "the same events are not stored twice");
+    assert.equal(next.status, 200, JSON.stringify(next.body));
+    assert.deepEqual(table.map((r) => r.name), ["Reno Card Show"]);
+  });
+  await test("memory: old candidates and finished steps are cleared out", async () => {
+    store = freshStore();
+    const old = new RealDate(FIXED - 40 * 86_400_000).toISOString();
+    cands().push({ slug: "old-1", category: "x", source: "serp", row_data: { name: "Old" }, verdict: "rejected", saved_at: null, last_seen_at: old });
+    store.event_refresh_steps.push({ step_key: "search|2026-09-01|serp|convention", payload: {}, created_at: old });
+    world.tmEvents = [reno()];
+    await daily();
+    assert.equal(cands().some((c) => c.slug === "old-1"), false);
+    assert.equal(store.event_refresh_steps.some((r) => String(r.step_key).startsWith("search|2026-09-01")), false);
+  });
+  await test("memory (weekly major shows): a refused AI call keeps the searches; a retry the same day costs one AI call and no search, and a finished day costs none", async () => {
+    store = freshStore();
+    world.ai = "nocredit";
+    world.majorAnswers = { "LA Comic Con": LA_OFFICIAL };
+    const first = await weekly();
+    assert.equal(first.status, 502);
+    assert.equal(world.calls.serp, MAJOR_SHOWS.length, "one search per show, once");
+    assert.equal(store!.event_refresh_steps.filter((r) => String(r.step_key).startsWith("major-snippets")).length, MAJOR_SHOWS.length);
+    let m = mark();
+    const retry = await weekly();
+    assert.equal(retry.status, 502);
+    assert.deepEqual(since(m), { serp: 0, tm: 0, ai: 1 });
+    assert.equal(retry.body.reusedFromToday.searches, MAJOR_SHOWS.length);
+    world.ai = "ok";
+    m = mark();
+    const third = await weekly();
+    assert.equal(third.status, 200, JSON.stringify(third.body));
+    assert.deepEqual(since(m), { serp: 0, tm: 0, ai: 1 });
+    assert.equal(world.aiNames[world.aiNames.length - 1].length, MAJOR_SHOWS.length, "asked about every show once");
+    assert.equal(table.length, 1);
+    assert.equal(table[0].starts_at, "2026-10-30T00:00:00.000Z");
+    m = mark();
+    const fourth = await weekly();
+    assert.equal(fourth.status, 200);
+    assert.deepEqual(since(m), { serp: 0, tm: 0, ai: 0 }, "every show already answered: no search, no AI");
+    assert.equal(fourth.body.reusedFromToday.aiAnswers, MAJOR_SHOWS.length);
+    assert.equal(table.length, 1, "still one row for LA Comic Con");
   });
 
   // ───────── pictures for the banner ─────────

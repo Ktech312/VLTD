@@ -3,6 +3,7 @@ import { getServiceClient } from "@/lib/serverAdmin";
 import { MAJOR_SHOWS } from "@/lib/events/majorShows";
 import { fillBannerArt } from "@/lib/events/eventArt";
 import { runAfterResponse } from "@/lib/events/afterResponse";
+import { openRefreshStore } from "@/lib/events/refreshStore";
 import { dayStamps, eventSlug, isIsoDay, persistEvents, type EventRow } from "@/lib/events/eventPipeline";
 
 // Runs weekly (see vercel.json) to keep a curated list of the major,
@@ -165,31 +166,55 @@ export async function GET(req: NextRequest) {
   const now = new Date();
   const t0 = Date.now();
 
+  // The memory of paid work already done today (lib/events/refreshStore.ts): a show whose search succeeded today is not searched again, and a show the AI
+  // already answered about is not asked about again. A retry after a refused AI call therefore costs one AI call and no searches.
+  const store = await openRefreshStore(svc, now.toISOString().slice(0, 10));
+  let searchesReused = 0;
   const withSnippets = await Promise.all(
-    MAJOR_SHOWS.map(async (show) => ({
-      show,
-      ...(await fetchSearchSnippets(serpApiKey, `${show.name} official dates`)),
-    })),
+    MAJOR_SHOWS.map(async (show) => {
+      const key = store.stepKey("major-snippets", show.name);
+      const stored = store.done<{ snippets: Snippet[] }>(key);
+      if (stored) {
+        searchesReused += 1;
+        return { show, snippets: stored.snippets, error: null as string | null };
+      }
+      const result = await fetchSearchSnippets(serpApiKey, `${show.name} official dates`);
+      if (!result.error) await store.record(key, { snippets: result.snippets });
+      return { show, ...result };
+    }),
   );
   const searchErrors = withSnippets.flatMap((s) => (s.error ? [s.error] : []));
 
-  // The model is only asked about shows whose search worked; a show with no snippets cannot be dated.
+  // The model is only asked about shows whose search worked and that it has not already answered today; a show with no snippets cannot be dated.
   const askable = withSnippets.filter((s) => !s.error && s.snippets.length > 0);
+  const answers = new Map<string, ExtractedShow>();
+  for (const { show } of askable) {
+    const stored = store.done<ExtractedShow>(store.stepKey("major-answer", show.name));
+    if (stored) answers.set(show.name, stored);
+  }
+  const needAnswer = askable.filter(({ show }) => !answers.has(show.name));
   const extraction = await extractShowDates(
     anthropicKey,
-    askable.map(({ show, snippets }) => ({ name: show.name, snippets })),
+    needAnswer.map(({ show, snippets }) => ({ name: show.name, snippets })),
     now,
   );
+  const answersReused = answers.size;
+  // Position first (the model was told to keep the order), checked against the name; otherwise by name; never guessed.
+  const byName = new Map(extraction.shows.map((e) => [e?.name, e]));
+  for (const [i, { show }] of needAnswer.entries()) {
+    const positional = extraction.shows[i];
+    const result = positional && positional.name === show.name ? positional : byName.get(show.name);
+    if (!result) continue;
+    answers.set(show.name, result);
+    await store.record(store.stepKey("major-answer", show.name), result);
+  }
 
   const rows: EventRow[] = [];
   let skippedUnconfident = 0;
   let rejectedDates = 0;
   let unmatched = 0;
-  const byName = new Map(extraction.shows.map((e) => [e?.name, e]));
-  askable.forEach(({ show }, i) => {
-    // By position (the model was told to keep the order), checked against the name; otherwise by name; never guessed.
-    const positional = extraction.shows[i];
-    const result = positional && positional.name === show.name ? positional : byName.get(show.name);
+  askable.forEach(({ show }) => {
+    const result = answers.get(show.name);
     if (!result) {
       unmatched += 1;
       return;
@@ -220,6 +245,7 @@ export async function GET(req: NextRequest) {
 
   const tSearched = Date.now();
   const saved = await persistEvents(svc, rows);
+  await store.purge();
   const tSaved = Date.now();
   // Pictures for the banner events that have none (their organiser's own share image). Done after the response has gone: a run that did its real work
   // must not be marked failed, or time out, because of this. Its result goes to the log.
@@ -243,6 +269,8 @@ export async function GET(req: NextRequest) {
     ranAt: now.toISOString(),
     totalShows: MAJOR_SHOWS.length,
     searchErrors,
+    reusedFromToday: store.available ? { searches: searchesReused, aiAnswers: answersReused } : { available: false, note: store.note },
+    askedTheAiAbout: needAnswer.length,
     extractionError: extraction.error,
     skippedUnconfident,
     rejectedDates,

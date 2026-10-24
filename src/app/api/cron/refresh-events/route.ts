@@ -3,6 +3,7 @@ import { getServiceClient } from "@/lib/serverAdmin";
 import { parseSerpEventWindow } from "@/lib/events/serpEventDateParse";
 import { fillBannerArt } from "@/lib/events/eventArt";
 import { runAfterResponse } from "@/lib/events/afterResponse";
+import { openRefreshStore, type NewCandidate } from "@/lib/events/refreshStore";
 import { dayStamps, eventSlug, isIsoDay, persistEvents, type EventRow } from "@/lib/events/eventPipeline";
 
 // Several searches plus the AI check run in one request; the platform default (10 s on some plans) is too short for that.
@@ -207,13 +208,16 @@ async function fetchTicketmasterCandidates(apiKey: string, category: string, key
   return { candidates, error: null };
 }
 
-// ── Relevance gate: one batched AI call for everything found this run ──
+// ── Relevance gate: one batched AI call for the events not yet judged ──
+
+type AiAnswer = { approved: Set<number>; rejected: Set<number>; error: string | null };
+const NO_ANSWER = (error: string | null): AiAnswer => ({ approved: new Set(), rejected: new Set(), error });
 
 async function filterRelevantCandidates(
   apiKey: string,
-  candidates: Candidate[],
-): Promise<{ approved: Set<number>; error: string | null }> {
-  if (!candidates.length) return { approved: new Set(), error: null };
+  candidates: Array<{ name: string; category: string; description: string | null }>,
+): Promise<AiAnswer> {
+  if (!candidates.length) return NO_ANSWER(null);
 
   const prompt = [
     "You are screening event listings for VLTD, a collectibles/hobbyist marketplace app.",
@@ -253,7 +257,7 @@ async function filterRelevantCandidates(
 
     if (!response.ok) {
       const details = await response.text().catch(() => "");
-      return { approved: new Set(), error: `AI request failed: ${response.status} ${details}`.slice(0, 500) };
+      return NO_ANSWER(`AI request failed: ${response.status} ${details}`.slice(0, 500));
     }
 
     const result = (await response.json()) as {
@@ -264,19 +268,39 @@ async function filterRelevantCandidates(
     const firstBracket = rawText.indexOf("[");
     const lastBracket = rawText.lastIndexOf("]");
     if (firstBracket < 0 || lastBracket <= firstBracket) {
-      return {
-        approved: new Set(),
-        error: `No JSON array in AI response (stop_reason=${result.stop_reason}): ${rawText}`.slice(0, 500),
-      };
+      return NO_ANSWER(`No JSON array in AI response (stop_reason=${result.stop_reason}): ${rawText}`.slice(0, 500));
     }
 
     const parsed = JSON.parse(rawText.slice(firstBracket, lastBracket + 1)) as Array<{ i: number; relevant: boolean }>;
-    return { approved: new Set(parsed.filter((entry) => entry.relevant === true).map((entry) => entry.i)), error: null };
+    // Only what the AI actually answered about is judged: a candidate it left out stays "not yet judged" and is asked about again next time.
+    return {
+      approved: new Set(parsed.filter((entry) => entry.relevant === true).map((entry) => entry.i)),
+      rejected: new Set(parsed.filter((entry) => entry.relevant === false).map((entry) => entry.i)),
+      error: null,
+    };
   } catch (err) {
-    return { approved: new Set(), error: `AI filter threw: ${String(err)}`.slice(0, 500) }; // fail closed
+    return NO_ANSWER(`AI filter threw: ${String(err)}`.slice(0, 500)); // fail closed
   }
 }
 
+function toRow(c: Candidate): EventRow {
+  return {
+    slug: eventSlug(c.name, c.startsAt.slice(0, 10), c.city),
+    name: c.name,
+    short_desc: c.description?.slice(0, 200) ?? null,
+    long_desc: c.description ?? null,
+    starts_at: c.startsAt,
+    ends_at: c.endsAt,
+    venue_name: c.venueName,
+    city: c.city,
+    website_url: c.websiteUrl,
+    ticket_url: c.ticketUrl,
+    image_url: c.imageUrl,
+    country: "US",
+    // enabled/is_featured deliberately omitted: a new row gets the table defaults (enabled=true, is_featured=false), and a row that is already there is
+    // only ever updated in the columns above and only where this run has a value, so a manual disable or feature-flip is never undone by the next run.
+  };
+}
 
 export async function GET(req: NextRequest) {
   const cronSecret = process.env.CRON_SECRET;
@@ -305,10 +329,15 @@ export async function GET(req: NextRequest) {
 
   const now = new Date();
   const t0 = Date.now();
-  const allCandidates: Candidate[] = [];
+  const day = now.toISOString().slice(0, 10);
+  // The memory of paid work already done (see lib/events/refreshStore.ts): a search that succeeded today is not repeated, and what was found is kept
+  // whether or not the AI check could run.
+  const store = await openRefreshStore(svc, day);
+  const fetched: NewCandidate[] = [];
   const foundByCategory: Record<string, number> = {};
   const sourceErrors: string[] = [];
   let searchesRun = 0;
+  let searchesSkipped = 0;
   // A source that failed on every one of its searches is a dead source (bad key, outage, quota), not a quiet day.
   const attempts = { serp: 0, ticketmaster: 0 };
   const failures = { serp: 0, ticketmaster: 0 };
@@ -316,58 +345,62 @@ export async function GET(req: NextRequest) {
   // Every category at once (each is one Google Events and one Ticketmaster search) so the whole run fits in the time the function is given.
   const perCategory = await Promise.all(
     Object.entries(CATEGORY_QUERIES).map(async ([category, query]) => {
+      const serpKey = store.stepKey("search", "serp", category);
+      const tmKey = store.stepKey("search", "ticketmaster", category);
       const [serp, tm] = await Promise.all([
-        serpApiKey ? fetchSerpCandidates(serpApiKey, category, query, now) : Promise.resolve<SourceResult | null>(null),
-        ticketmasterKey
+        serpApiKey && store.done(serpKey) === undefined ? fetchSerpCandidates(serpApiKey, category, query, now) : Promise.resolve<SourceResult | null>(null),
+        ticketmasterKey && store.done(tmKey) === undefined
           ? fetchTicketmasterCandidates(ticketmasterKey, category, TICKETMASTER_KEYWORDS[category] ?? category)
           : Promise.resolve<SourceResult | null>(null),
       ]);
-      return { category, serp, tm };
+      return { category, serp, tm, serpKey, tmKey };
     }),
   );
-  for (const { category, serp, tm } of perCategory) {
+  for (const { category, serp, tm, serpKey, tmKey } of perCategory) {
     foundByCategory[category] = 0;
-    for (const [source, result] of [["serp", serp], ["ticketmaster", tm]] as const) {
+    if (serpApiKey && !serp) searchesSkipped += 1;
+    if (ticketmasterKey && !tm) searchesSkipped += 1;
+    for (const [source, result, key] of [["serp", serp, serpKey], ["ticketmaster", tm, tmKey]] as const) {
       if (!result) continue;
       searchesRun += 1;
       attempts[source] += 1;
       if (result.error) {
         failures[source] += 1;
         sourceErrors.push(result.error);
+      } else {
+        await store.record(key, { found: result.candidates.length, at: new Date().toISOString() });
       }
-      allCandidates.push(...result.candidates);
+      for (const c of result.candidates) fetched.push({ slug: eventSlug(c.name, c.startsAt.slice(0, 10), c.city), category: c.category, source, row: toRow(c), description: c.description });
       foundByCategory[category] += result.candidates.length;
     }
   }
   const deadSources = (["serp", "ticketmaster"] as const).filter((source) => attempts[source] > 0 && failures[source] === attempts[source]);
+  await store.addCandidates(fetched);
+
+  // Which events still need the AI check, and which were already approved but not saved. Without the store, everything found this run is asked about.
+  const pending = store.available ? await store.pending() : fetched.map((f) => ({ slug: f.slug, category: f.category, source: f.source, row: f.row, description: f.description }));
+  const approvedBefore = store.available ? await store.approvedUnsaved() : [];
 
   // No AI key to gate with -> nothing from a keyword search gets published,
   // full stop. (Not expected to trigger; ANTHROPIC_API_KEY has been live in
   // Vercel for months.)
-  const aiFilterResult = anthropicKey
-    ? await filterRelevantCandidates(anthropicKey, allCandidates)
-    : { approved: new Set<number>(), error: "ANTHROPIC_API_KEY not set" };
-  const approved = allCandidates.filter((_, i) => aiFilterResult.approved.has(i));
+  const aiFilterResult: AiAnswer = !pending.length
+    ? NO_ANSWER(null)
+    : anthropicKey
+      ? await filterRelevantCandidates(anthropicKey, pending.map((p) => ({ name: p.row.name, category: p.category, description: p.description })))
+      : NO_ANSWER("ANTHROPIC_API_KEY not set");
+  const approvedNow = pending.filter((_, i) => aiFilterResult.approved.has(i));
+  const rejectedNow = pending.filter((_, i) => aiFilterResult.rejected.has(i));
+  await store.judge(approvedNow.map((c) => c.slug), rejectedNow.map((c) => c.slug));
 
-  const rows: EventRow[] = approved.map((c) => ({
-    slug: eventSlug(c.name, c.startsAt.slice(0, 10), c.city),
-    name: c.name,
-    short_desc: c.description?.slice(0, 200) ?? null,
-    long_desc: c.description ?? null,
-    starts_at: c.startsAt,
-    ends_at: c.endsAt,
-    venue_name: c.venueName,
-    city: c.city,
-    website_url: c.websiteUrl,
-    ticket_url: c.ticketUrl,
-    image_url: c.imageUrl,
-    country: "US",
-    // enabled/is_featured deliberately omitted: a new row gets the table defaults (enabled=true, is_featured=false), and a row that is already there is
-    // only ever updated in the columns above and only where this run has a value, so a manual disable or feature-flip is never undone by the next run.
-  }));
+  const toSave = [...new Map([...approvedBefore, ...approvedNow].map((c) => [c.slug, c])).values()];
+  const repeatsMerged = approvedBefore.length + approvedNow.length - toSave.length; // the same event found by two searches or two sources
+  const rows: EventRow[] = toSave.map((c) => c.row);
 
   const tSearched = Date.now();
   const saved = await persistEvents(svc, rows);
+  await store.markSaved(toSave.map((c) => c.slug).filter((slug) => !saved.failedSlugs.includes(slug)));
+  await store.purge();
   const tSaved = Date.now();
   // Pictures for the banner events that have none (their organiser's own share image). Done after the response has gone: a run that did its real work
   // must not be marked failed, or time out, because of this. Its result goes to the log.
@@ -392,15 +425,20 @@ export async function GET(req: NextRequest) {
     ok: !hardFailure,
     ranAt: now.toISOString(),
     searchesRun,
+    searchesReusedFromToday: searchesSkipped,
     sourceErrors,
     foundByCategory,
-    totalFound: allCandidates.length,
-    approvedByAi: approved.length,
+    totalFound: fetched.length,
+    // the memory of earlier work: events kept for the AI check, and events already approved that only needed saving
+    memory: store.available
+      ? { available: true, askedTheAiAbout: pending.length, alreadyApprovedNowSaved: approvedBefore.length, judgedApproved: approvedNow.length, judgedRejected: rejectedNow.length, stillNotJudged: pending.length - approvedNow.length - rejectedNow.length }
+      : { available: false, note: store.note },
+    approvedByAi: approvedNow.length,
     aiFilterError: aiFilterResult.error,
     inserted: saved.inserted,
     updated: saved.updated,
     matchedExisting: saved.matchedExisting,
-    duplicatesDropped: saved.duplicatesDropped,
+    duplicatesDropped: saved.duplicatesDropped + repeatsMerged,
     failed: saved.failed,
     saveErrors: saved.errors,
     artAfterResponse: artRan.scheduled,

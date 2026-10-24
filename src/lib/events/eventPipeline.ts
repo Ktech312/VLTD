@@ -35,6 +35,8 @@ export type PersistResult = {
   duplicatesDropped: number;
   matchedExisting: number;
   errors: string[];
+  /** The slugs (as given) of the rows that could not be saved, so a caller can leave exactly those to be retried. */
+  failedSlugs: string[];
 };
 
 const DAY_MS = 86_400_000;
@@ -144,7 +146,7 @@ function patchFor(row: EventRow, existing: ExistingRow): Record<string, unknown>
 const INSERT_CHUNK = 25;
 
 export async function persistEvents(svc: SupabaseClient, input: EventRow[]): Promise<PersistResult> {
-  const result: PersistResult = { inserted: 0, updated: 0, failed: 0, duplicatesDropped: 0, matchedExisting: 0, errors: [] };
+  const result: PersistResult = { inserted: 0, updated: 0, failed: 0, duplicatesDropped: 0, matchedExisting: 0, errors: [], failedSlugs: [] };
   const { rows, dropped } = dedupeRows(input);
   result.duplicatesDropped = dropped;
   if (!rows.length) return result;
@@ -160,6 +162,7 @@ export async function persistEvents(svc: SupabaseClient, input: EventRow[]): Pro
   if (lookupError) {
     // Nothing is written without knowing what is already there: a blind insert is how a second copy of a show gets made.
     result.failed = rows.length;
+    result.failedSlugs.push(...rows.map((r) => r.slug));
     result.errors.push(`lookup of existing events failed: ${lookupError.message}`.slice(0, 300));
     return result;
   }
@@ -182,6 +185,7 @@ export async function persistEvents(svc: SupabaseClient, input: EventRow[]): Pro
     const { error } = await svc.from("collector_events").update(patchFor(row, match)).eq("slug", match.slug);
     if (error) {
       result.failed += 1;
+      result.failedSlugs.push(row.slug);
       result.errors.push(`update ${match.slug}: ${error.message}`.slice(0, 300));
     } else result.updated += 1;
   }
@@ -198,6 +202,7 @@ export async function persistEvents(svc: SupabaseClient, input: EventRow[]): Pro
       const { error: rowError } = await svc.from("collector_events").insert(row);
       if (rowError) {
         result.failed += 1;
+        result.failedSlugs.push(row.slug);
         result.errors.push(`insert ${row.slug}: ${rowError.message}`.slice(0, 300));
       } else result.inserted += 1;
     }

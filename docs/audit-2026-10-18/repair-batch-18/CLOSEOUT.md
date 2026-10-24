@@ -121,3 +121,28 @@ Read from Vercel (Logs and Observability) for the real run at 13:21 UTC, within 
 1. **Add credit to the Anthropic API account** (console.anthropic.com > Plans & Billing). Cost: the daily refresh makes one small AI call (about 3,000 words in, 1,000 out, roughly **1 cent a day**) and the weekly major-shows job one more, so the smallest top-up lasts for months. **The same key powers the app's other AI features (scan and verify), so those are probably refused too until credit is added**; I did not test that, because it would spend credit.
 2. Then the next scheduled run (tomorrow 13:00 to 14:00 UTC, or the weekly one Mon Oct 26 14:00 UTC) will show whether events are saved: Vercel > Observability > Vercel Functions should show `/api/cron/refresh-events` with an error rate of 0%, and the log line `[refresh-events]` should show `inserted` or `updated` above 0. I have a check set for tomorrow's window and will read it if this session is still open. A manual Run in Vercel > Settings > Cron Jobs would confirm sooner at the cost of 6 search credits (about $0.10, or free inside an allowance) plus the cent of AI.
 3. Not changed, your call: I did not loosen the rule that nothing is saved without the AI check. If you would rather have a no-AI fallback filter while credit is low, that is a product decision for you to make.
+
+---
+
+# Event refresh: BLOCKED on Anthropic credit; retries made cheap (2026-10-24)
+
+**Status: BLOCKED.** The refresh will not save events until the Anthropic account has credit. Nothing below changes that, adds credit, changes billing or makes a paid call.
+
+## What the real runs show (Oct 23 and Oct 24, 13:21 UTC)
+1. **Exact credit error text** (from the run's log, the AI request's HTTP 400): `AI request failed: 400 {"type":"error","error":{"type":"invalid_request_error","message":"Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits."},"request_id":"req_011CgKEnU9pwKYrzuy5QL5z2"}` (Oct 23; Oct 24 reads the same, its request id is cut off in the log view).
+2. **The step that failed: the AI relevance check** (the Anthropic call), and only that. The searches did not fail the run: 9 of 12 searches succeeded each day (Ticketmaster all 6, Google Events 3 of 6); the other 3 Google Events searches timed out (a separate, secondary slowness). Parsing did not fail. The save step did not fail: it ran with nothing approved (`inserted 0, updated 0, failed 0`).
+3. **The 42 candidates were fetched and parsed** (`totalFound 42` counts parsed events with a name and valid dates) **and were ready for the AI check, not ready to save**: the AI check is what decides which of them are real collectibles events, and by design nothing is saved without it. They were **not retained**: they lived only in that run's memory, so they were lost when the run ended, and the next run would have paid for the same searches again.
+
+## What changed so a retry does not repeat paid work (code in this commit; takes effect once SQL file 8 is run)
+- A small memory for both refresh jobs: **[8-event-refresh-store.sql](sql/8-event-refresh-store.sql)**, then [validation-8.sql](sql/validation-8.sql); undo with [rollback-8.sql](sql/rollback-8.sql). **Not run: it is yours to run by hand.** Two tables, server-only (no public access), no existing table touched; tested 8 of 8 in a local Postgres.
+  - `event_refresh_candidates`: each event found and parsed, with the AI's verdict (pending, approved, rejected) and when it was saved;
+  - `event_refresh_steps`: each paid step that already succeeded today (a search; for the weekly job, a show's search results and the AI's answer for that show).
+- Daily job: **does not repeat a search that succeeded the same day; keeps every event it parses; asks the AI only about events it has not yet judged** (an event the AI leaves out of its answer stays not-yet-judged); events already approved but not saved (a save failed) are saved without asking the AI again; next day the searches run again and events still waiting from yesterday are judged with the new ones. Old candidates (30 days) and steps (3 days) are cleared.
+- Weekly job: a show whose search succeeded today is not searched again, and a show the AI already answered about is not asked about again, so a retry after a refused AI call costs one AI call and no searches.
+- **Until SQL file 8 is run the jobs behave exactly as before** (they notice the tables are missing and say so in the log: `memory.available false`). The run's log line now also reports what was reused (`searchesReusedFromToday`, `memory.askedTheAiAbout`, `alreadyApprovedNowSaved`, `stillNotJudged`).
+- Tests: `npm run test:events` 37 of 37 (7 new, all against pretend services, none of them a production run), including: a refused AI call keeps the found events; a same-day retry repeats no search and asks the AI once; a later success saves only the approved; a finished day makes no AI call and no search; an omitted event is the only one asked about next; an approved-but-unsaved event is saved without the AI; next day searches repeat; old rows are cleared; the weekly job likewise.
+
+## To unblock (yours)
+1. Add credit to the Anthropic account (console.anthropic.com > Plans & Billing); about one cent a day for the daily run. The same key powers the app's AI scan and verify.
+2. Run SQL file 8 when you want the retry memory on (optional but recommended before credit is restored, so the first real run keeps its candidates even if something else goes wrong).
+3. Then the next scheduled run (daily 13:00 to 14:00 UTC, weekly Mon 14:00 UTC) shows whether events are saved: Vercel > Observability error rate 0% and the `[refresh-events]` log line with `inserted` or `updated` above 0.
