@@ -1,0 +1,21 @@
+{
+  "what": "The real scheduled daily event refresh of 2026-10-24, read from Vercel > Logs (Runtime Logs) and Observability within the one-hour retention",
+  "run": { "ranAtUtc": "2026-10-24T13:21:05Z", "route": "/api/cron/refresh-events", "deploymentIncludes": "37106da (SerpApi limit 25 s, art after the response, timings)" },
+  "vercelObservability": { "invocations": 1, "activeCpu": "970ms", "errorRate": "100%" },
+  "logLine": {
+    "ok": false,
+    "searchesRun": 12,
+    "sourceErrors": [
+      "SerpApi auction: request failed (TimeoutError: The operation was aborted due to timeout)",
+      "SerpApi gallery: request failed (TimeoutError: The operation was aborted due to timeout)",
+      "SerpApi music: request failed (TimeoutError: The operation was aborted due to timeout)"
+    ],
+    "foundByCategory": { "convention": 20, "card_show": 9, "auction": 0, "drop": 1, "gallery": 8, "music": 4 },
+    "totalFound": 42,
+    "approvedByAi": 0,
+    "aiFilterError": "AI request failed: 400 invalid_request_error: Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits."
+  },
+  "artLine": { "checked": 18, "filled": 4, "classified": 0, "errors": [] },
+  "recordsCheck": "check-refresh-run.cjs 2026-10-24T12:55:00Z at 13:28Z: created 0, updated 0; table 907 rows, 740 upcoming",
+  "conclusion": "Same failure as 2026-10-23: the Anthropic account still has no credit, so the AI relevance check is refused and nothing is saved (fail closed). The owner has not yet added credit. The raised 25 s SerpApi limit did not help the three slow categories (they still time out at 25 s), so that is the search service being slow, not my limit."
+}
