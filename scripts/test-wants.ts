@@ -126,6 +126,25 @@ async function test(name: string, fn: () => void | Promise<void>) {
     assert.equal(second.update.length, 0);
     assert.equal(core.wantIdForIdentity("metron:issue:4"), first.add[0].id);
   });
+  await test("two accounts following the same series never ask for the same want or Vault id (ids are one list for every account); one account still gets the same id every time", () => {
+    const a = core.idNamespaceOf("f1550542-cd54-4ee3-925b-efd9990c9d78");
+    const b = core.idNamespaceOf("cf3f0396-1111-4222-8333-444455556666");
+    assert.notEqual(a, b);
+    assert.equal(a, "f1550542cd");
+    const forA = core.planRuleRefresh(rule(), [rel("4")], [], now, a).add[0];
+    const forB = core.planRuleRefresh(rule(), [rel("4")], [], now, b).add[0];
+    assert.notEqual(forA.id, forB.id);
+    assert.equal(forA.id, core.planRuleRefresh(rule(), [rel("4")], [], now, a).add[0].id, "same account, same release: same id (adding twice is one row)");
+    assert.notEqual(`vault_acq_${forA.id}_1`, `vault_acq_${forB.id}_1`, "the Vault record ids made from them differ too");
+    const wa = core.wantFromWatching({ id: "item-9", title: "T" }, now, a);
+    const wb = core.wantFromWatching({ id: "item-9", title: "T" }, now, b);
+    assert.notEqual(wa.id, wb.id);
+    assert.equal(core.wantFromWatching({ id: "item-9", title: "T" }, now, a).id, wa.id);
+    assert.equal(core.idNamespaceOf(""), "", "no profile: the plain id as before");
+    // a want that already has the older, shared-style id is still recognised as the same release (matched by identity, not id)
+    const legacy = core.planRuleRefresh(rule(), [rel("4")], [base({ id: "pull_metron_issue_4", sourceIdentity: "metron:issue:4" })], now, a);
+    assert.equal(legacy.add.length, 0);
+  });
   await test("an existing catalog pick from Upcoming Comics (source metron + external id) counts as already there", () => {
     const old = base({ id: "metron_4_abcd1234", title: "Night Courier #4", source: "metron", externalId: "4" });
     const p = core.planRuleRefresh(rule(), [rel("4")], [old], now);

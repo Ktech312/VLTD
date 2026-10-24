@@ -205,16 +205,24 @@ export function ruleIdentityOfItem(item: WishlistItem): string | undefined {
   return undefined;
 }
 
-export function wantIdForIdentity(identity: string): string {
-  return `pull_${identity.toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "").slice(0, 80)}`;
+/**
+ * A short, stable piece of a profile id, put inside ids that are worked out from what the want is (a catalog release, a watched item). Want ids (and the Vault ids made from them)
+ * are one list for every account in the database, so two people following the same series would otherwise be asking for the same id and the second one's want could never be saved.
+ */
+export function idNamespaceOf(profileId: string | null | undefined): string {
+  return String(profileId ?? "").toLowerCase().replace(/[^a-z0-9]+/g, "").slice(0, 10);
 }
 
-/** A want built from one catalog release. Same release = same id, so adding it twice is one row. */
-export function wantFromRelease(release: CatalogRelease, opts: { quantity: number; seriesName?: string; ruleId?: string; formatNote?: string; now?: number; source?: string }): WishlistItem {
+export function wantIdForIdentity(identity: string, namespace = ""): string {
+  return `pull_${namespace ? `${namespace}_` : ""}${identity.toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "").slice(0, 80)}`;
+}
+
+/** A want built from one catalog release. Same release for the same profile = same id, so adding it twice is one row. */
+export function wantFromRelease(release: CatalogRelease, opts: { quantity: number; seriesName?: string; ruleId?: string; formatNote?: string; now?: number; source?: string; idNamespace?: string }): WishlistItem {
   const now = opts.now ?? Date.now();
   const date = release.date && isIsoDay(release.date) ? release.date : undefined;
   return {
-    id: wantIdForIdentity(release.identity),
+    id: wantIdForIdentity(release.identity, opts.idNamespace),
     title: release.title,
     createdAt: now,
     updatedAt: now,
@@ -238,9 +246,9 @@ export function wantFromRelease(release: CatalogRelease, opts: { quantity: numbe
 }
 
 /** A want made from something the person was watching (someone else's public item). The watched record stays; nothing about it becomes an owned record, and its value is NOT copied as a price. */
-export function wantFromWatching(w: { id: string; title: string; subtitle?: string; imageFrontUrl?: string; profileId?: string; collectorName?: string }, now: number = Date.now()): WishlistItem {
+export function wantFromWatching(w: { id: string; title: string; subtitle?: string; imageFrontUrl?: string; profileId?: string; collectorName?: string }, now: number = Date.now(), idNamespace = ""): WishlistItem {
   return {
-    id: `want_watch_${w.id}`.replace(/[^a-zA-Z0-9_-]+/g, "_").slice(0, 100),
+    id: `want_watch_${idNamespace ? `${idNamespace}_` : ""}${w.id}`.replace(/[^a-zA-Z0-9_-]+/g, "_").slice(0, 100),
     title: w.title || "Watched item",
     createdAt: now,
     updatedAt: now,
@@ -264,7 +272,7 @@ export type RuleRefreshPlan = {
   matched: number;
 };
 
-export function planRuleRefresh(rule: PullRule, releases: CatalogRelease[], existing: WishlistItem[], now: number = Date.now()): RuleRefreshPlan {
+export function planRuleRefresh(rule: PullRule, releases: CatalogRelease[], existing: WishlistItem[], now: number = Date.now(), idNamespace = ""): RuleRefreshPlan {
   const plan: RuleRefreshPlan = { add: [], update: [], suggestions: [], matched: 0 };
   if (rule.state !== "following" || rule.source === "manual" || !rule.sourceKey) return plan;
   const byIdentity = new Map<string, WishlistItem>();
@@ -291,7 +299,7 @@ export function planRuleRefresh(rule: PullRule, releases: CatalogRelease[], exis
       plan.suggestions.push(release);
       continue;
     }
-    plan.add.push(wantFromRelease(release, { quantity: rule.quantity, seriesName: rule.name, ruleId: rule.id, formatNote: rule.formatNote, now, source: rule.source }));
+    plan.add.push(wantFromRelease(release, { quantity: rule.quantity, seriesName: rule.name, ruleId: rule.id, formatNote: rule.formatNote, now, source: rule.source, idNamespace }));
   }
   return plan;
 }

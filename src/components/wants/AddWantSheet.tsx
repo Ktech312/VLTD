@@ -9,7 +9,7 @@ import { fetchUpcomingComicsChecked, formatStoreDate, type UpcomingIssue } from 
 import { issueToRelease } from "@/lib/pullRules";
 import { ruleIdentityOfItem, wantFromRelease, wantFromWatching } from "@/lib/wantsCore";
 import type { WatchlistItem } from "@/lib/watchlistModel";
-import { loadWishlist, saveWishlistItem, type WishlistItem } from "@/lib/wishlistModel";
+import { loadWishlist, saveWishlistItem, wantIdNamespace, type WishlistItem } from "@/lib/wishlistModel";
 
 export type AddMode = "catalog" | "watched" | "link" | "manual";
 
@@ -85,7 +85,7 @@ function CatalogPicker({ onAdded }: { onAdded: (w: WishlistItem) => void }) {
     const release = issueToRelease(issue);
     const have = loadWishlist().some((w) => ruleIdentityOfItem(w) === release.identity);
     if (have) return setNote(`${release.title} is already on your list.`);
-    const want = wantFromRelease(release, { quantity: 1, seriesName: issue.series });
+    const want = wantFromRelease(release, { quantity: 1, seriesName: issue.series, idNamespace: wantIdNamespace() });
     saveWishlistItem(want);
     onAdded(want);
   }
@@ -126,7 +126,7 @@ function WatchedPicker({ watching, onAdded }: { watching: WatchlistItem[]; onAdd
           <li key={w.id} className="flex items-center justify-between gap-3 rounded-[8px] border border-[rgba(203,208,213,0.18)] px-3 py-2">
             <div className="min-w-0"><div className="truncate text-sm font-semibold">{w.title}</div><div className="truncate text-[12px]" style={{ color: "var(--muted)" }}>{w.collectorName ?? "Public exhibition"}</div></div>
             <PillButton size="compact" onClick={() => {
-              const want = wantFromWatching(w);
+              const want = wantFromWatching(w, Date.now(), wantIdNamespace());
               if (loadWishlist().some((x) => ruleIdentityOfItem(x) === want.sourceIdentity)) return setNote(`${w.title} is already one of your wants.`);
               saveWishlistItem(want); onAdded(want);
             }}>Add to my wants</PillButton>

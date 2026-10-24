@@ -18,7 +18,7 @@ import { loadPullRules, refreshPullRules, syncPullRulesFromSupabase } from "@/li
 import { showToast } from "@/lib/toast";
 import { formatMoney, groupPullList, isOpen, plannedTotals, ruleIdentityOfItem, wantFromRelease, wantFromWatching, type CatalogRelease, type PullRule } from "@/lib/wantsCore";
 import { loadWatchlist, removeFromWatchlist, syncWatchlistFromSupabase, type WatchlistItem } from "@/lib/watchlistModel";
-import { loadWishlist, removeWishlistItem, saveWishlistItem, syncWishlistFromSupabase, type WishlistItem } from "@/lib/wishlistModel";
+import { loadWishlist, removeWishlistItem, saveWishlistItem, syncWishlistFromSupabase, wantIdNamespace, type WishlistItem } from "@/lib/wishlistModel";
 
 // Watchlist: three views of what you collect next.
 //   Wishlist  = what I want (any category, with or without a date or price), plus things I am Watching (someone else's public items).
@@ -112,7 +112,7 @@ export default function WatchlistPage() {
     reload();
   }
   function addFromWatching(w: WatchlistItem) {
-    const want = wantFromWatching(w);
+    const want = wantFromWatching(w, Date.now(), wantIdNamespace());
     if (wishlist.some((x) => ruleIdentityOfItem(x) === want.sourceIdentity)) return showToast(`${w.title} is already one of your wants.`);
     save(want);
     showToast("Added to your wants. The watched item stays as it is.");
@@ -227,7 +227,7 @@ export default function WatchlistPage() {
               onChanged={setRules}
               onCheck={(r) => void checkNow(r)}
               onAddRelease={(r) => setAdding({ mode: "manual", rule: r })}
-              onAddSuggestion={(release, rule) => { save(wantFromRelease(release, { quantity: rule.quantity, seriesName: rule.name, ruleId: rule.id, formatNote: rule.formatNote })); setSuggestions((s) => s.filter((x) => x.identity !== release.identity)); }}
+              onAddSuggestion={(release, rule) => { save(wantFromRelease(release, { quantity: rule.quantity, seriesName: rule.name, ruleId: rule.id, formatNote: rule.formatNote, idNamespace: wantIdNamespace() })); setSuggestions((s) => s.filter((x) => x.identity !== release.identity)); }}
               onFollow={() => setFollowing(true)}
             />
           ) : null}

@@ -2,7 +2,7 @@ import { mayAdoptLegacyKey } from "./legacyKeys";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 import { captureIdentity } from "@/lib/sessionGuard";
 import { fetchUpcomingComicsChecked, formatStoreDate, type UpcomingIssue } from "@/lib/comicUpcoming";
-import { loadWishlist, saveWishlistItems, updateWishlistItem } from "@/lib/wishlistModel";
+import { loadWishlist, saveWishlistItems, updateWishlistItem, wantIdNamespace } from "@/lib/wishlistModel";
 import { clampQuantity, planRuleRefresh, type CatalogRelease, type PullRule, type PullRuleKind, type PullRuleState } from "@/lib/wantsCore";
 
 // Following: rules that collect future releases. Saved to the account (`pull_rules`, 20261024_wishlist_pull_list.sql) with a copy on this device;
@@ -216,7 +216,7 @@ export async function refreshPullRules(opts: { force?: boolean; ruleId?: string 
     }
     const releases = data.results.map(issueToRelease);
     // Read the wishlist again for every rule: the previous rule's additions are part of what "already there" means.
-    const plan = planRuleRefresh(rule, releases, loadWishlist(), Date.now());
+    const plan = planRuleRefresh(rule, releases, loadWishlist(), Date.now(), wantIdNamespace());
     if (plan.add.length) saveWishlistItems(plan.add);
     for (const u of plan.update) updateWishlistItem(u.id, u.patch);
     out.added += plan.add.length;

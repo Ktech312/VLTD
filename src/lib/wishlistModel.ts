@@ -1,6 +1,7 @@
 import { mayAdoptLegacyKey } from "./legacyKeys";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 import { captureIdentity } from "@/lib/sessionGuard";
+import { idNamespaceOf } from "@/lib/wantsCore";
 
 /**
  * The Curator's wishlist: one per profile, saved to the account (`wishlist`
@@ -71,6 +72,11 @@ function activeProfileId(): string {
   } catch {
     return "";
   }
+}
+
+/** The piece of the active profile that goes into ids worked out from what a want is (see idNamespaceOf). */
+export function wantIdNamespace(): string {
+  return idNamespaceOf(activeProfileId());
 }
 
 function lsKey(): string {
