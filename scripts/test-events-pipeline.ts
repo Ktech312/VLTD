@@ -22,6 +22,7 @@ class FakeDate extends RealDate {
 (globalThis as { Date: DateConstructor }).Date = FakeDate as unknown as DateConstructor;
 
 process.env.CRON_SECRET = "test-secret";
+process.env.EVENTS_REFRESH_ENABLED = "true"; // the jobs are OFF in production; these tests run them as if the owner had switched them on (the off state is tested separately)
 process.env.SERPAPI_KEY = "serp-test";
 process.env.TICKETMASTER_API_KEY = "tm-test";
 process.env.ANTHROPIC_API_KEY = "ai-test";
@@ -308,10 +309,26 @@ async function main() {
   const { GET: refreshMajor } = await import("../src/app/api/cron/refresh-major-events/route");
 
   // ───────── scheduling and access ─────────
-  await test("both cron routes are scheduled in vercel.json (daily events, weekly major shows)", async () => {
-    const cfg = JSON.parse((await import("node:fs")).readFileSync("vercel.json", "utf8")) as { crons: Array<{ path: string; schedule: string }> };
-    assert.ok(cfg.crons.some((c) => c.path === "/api/cron/refresh-events" && c.schedule === "0 13 * * *"));
-    assert.ok(cfg.crons.some((c) => c.path === "/api/cron/refresh-major-events" && c.schedule === "0 14 * * 1"));
+  await test("the daily and weekly Events schedules are removed from vercel.json (nothing calls the paid jobs on its own)", async () => {
+    const cfg = JSON.parse((await import("node:fs")).readFileSync("vercel.json", "utf8")) as { crons?: Array<{ path: string }> };
+    assert.deepEqual(cfg.crons ?? [], []);
+  });
+  await test("switched off (the default): a call with the right secret does nothing - zero searches, zero AI calls, zero database calls - and says so", async () => {
+    const saved = process.env.EVENTS_REFRESH_ENABLED;
+    try {
+      delete process.env.EVENTS_REFRESH_ENABLED;
+      const before = JSON.stringify(world.calls);
+      for (const [name, handler] of [["refresh-events", refreshEvents], ["refresh-major-events", refreshMajor]] as const) {
+        const res = await silenceLogs(() => call(handler));
+        assert.equal(res.status, 200, name);
+        assert.equal((res.body as { disabled?: boolean }).disabled, true, name);
+      }
+      assert.equal(JSON.stringify(world.calls), before, "no outside call of any kind was made");
+      process.env.EVENTS_REFRESH_ENABLED = "false";
+      assert.equal(((await silenceLogs(() => call(refreshEvents))).body as { disabled?: boolean }).disabled, true, "only the exact word true switches it on");
+    } finally {
+      process.env.EVENTS_REFRESH_ENABLED = saved;
+    }
   });
   await test("without the right secret nothing runs: 401 for a wrong one, 503 when none is configured", async () => {
     assert.equal((await call(refreshEvents, null)).status, 401);

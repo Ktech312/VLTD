@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServiceClient } from "@/lib/serverAdmin";
+import { eventsRefreshEnabled, refreshDisabledResponse } from "@/lib/events/refreshSwitch";
 import { MAJOR_SHOWS } from "@/lib/events/majorShows";
 import { fillBannerArt } from "@/lib/events/eventArt";
 import { runAfterResponse } from "@/lib/events/afterResponse";
@@ -148,6 +149,9 @@ export async function GET(req: NextRequest) {
   if (req.headers.get("authorization") !== `Bearer ${cronSecret}`) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
+
+  // Switched off (see lib/events/refreshSwitch.ts): nothing below runs, so no search, AI call or database write can happen.
+  if (!eventsRefreshEnabled()) return refreshDisabledResponse("refresh-major-events");
 
   const serpApiKey = process.env.SERPAPI_KEY;
   const anthropicKey = process.env.ANTHROPIC_API_KEY;
