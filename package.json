@@ -35,7 +35,8 @@
     "test:insurance-docs": "node scripts/test-insurance-docs.cjs",
     "test:repair-batch3": "node scripts/test-repair-batch3.cjs",
     "test:money": "node scripts/test-money-input.cjs",
-    "test:exclusions": "node scripts/test-insurance-exclusions.cjs"
+    "test:exclusions": "node scripts/test-insurance-exclusions.cjs",
+    "test:wants": "tsx scripts/test-wants.ts"
   },
   "dependencies": {
     "@imgly/background-removal": "^1.7.0",

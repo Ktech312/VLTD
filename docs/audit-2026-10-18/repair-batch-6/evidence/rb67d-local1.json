@@ -1,0 +1,54 @@
+{
+ "label": "local1",
+ "cases": [
+  {
+   "ok": true,
+   "control": "Wishlist fits a 390px phone without sideways scrolling"
+  },
+  {
+   "ok": true,
+   "control": "Pull List fits 390px"
+  },
+  {
+   "ok": true,
+   "control": "Following fits 390px"
+  },
+  {
+   "ok": true,
+   "control": "an opened row fits 390px"
+  },
+  {
+   "ok": true,
+   "control": "the Add sheet fits 390px"
+  },
+  {
+   "ok": true,
+   "control": "the sheet's buttons can be scrolled to and reached on 390px"
+  },
+  {
+   "ok": true,
+   "control": "Wishlist fits a 320px phone without sideways scrolling"
+  },
+  {
+   "ok": true,
+   "control": "Pull List fits 320px"
+  },
+  {
+   "ok": true,
+   "control": "Following fits 320px"
+  },
+  {
+   "ok": true,
+   "control": "an opened row fits 320px"
+  },
+  {
+   "ok": true,
+   "control": "the Add sheet fits 320px"
+  },
+  {
+   "ok": true,
+   "control": "the sheet's buttons can be scrolled to and reached on 320px"
+  }
+ ],
+ "notes": {}
+}

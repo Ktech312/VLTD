@@ -1,0 +1,84 @@
+{
+ "label": "local1",
+ "cases": [
+  {
+   "ok": true,
+   "control": "the page offers Wishlist, Pull List and Following"
+  },
+  {
+   "ok": true,
+   "control": "an empty account shows an empty state with a way to add"
+  },
+  {
+   "ok": true,
+   "control": "four wants added through the form (comic, card product, toy, older undated piece)"
+  },
+  {
+   "ok": true,
+   "control": "planned total counts known prices times quantities and counts the unpriced one separately"
+  },
+  {
+   "ok": true,
+   "control": "the undated, unpriced piece says Date unknown and Price unknown (not today, not $0)"
+  },
+  {
+   "ok": true,
+   "control": "the card product shows its release window"
+  },
+  {
+   "ok": true,
+   "control": "nothing was invented for the undated piece: no date, window or price stored"
+  },
+  {
+   "ok": true,
+   "control": "category-specific details (era, maker) were kept for the older piece"
+  },
+  {
+   "ok": true,
+   "control": "trading-card fields appear for a card product only (the toy has none)"
+  },
+  {
+   "ok": false,
+   "control": "the Pull List groups by month and window, and leaves the undated piece off"
+  },
+  {
+   "ok": true,
+   "control": "Preordered is recorded by the person (one tap) and can be undone"
+  },
+  {
+   "ok": true,
+   "control": "the page says Preordered is your own arrangement and VLTD placed no order"
+  },
+  {
+   "ok": true,
+   "control": "Preordered can be undone back to Wanted"
+  },
+  {
+   "ok": true,
+   "control": "Skip keeps the record but takes it off the open list"
+  },
+  {
+   "ok": true,
+   "control": "a skipped want no longer counts toward the planned total"
+  },
+  {
+   "ok": true,
+   "control": "a skipped want stays skipped after a reload"
+  }
+ ],
+ "notes": {
+  "emptyText": "Home Vault Exhibitions Insights More ? ? ? Help ⌘K NOVICE Level 1 Watchlist Wishlist, Pull List and Following: what you want, what is coming, and what to collect for you. Checklist Add Wishlist 0 Pull List 0 Following 0 All categories Wants and watching Priority first Nothing on your wishlist yet Ad",
+  "fillProblems_comic": [],
+  "fillProblems_card": [],
+  "fillProblems_toy": [],
+  "fillProblems_vintage": [],
+  "rows": [
+   "TCG Starlight Duel: Booster Box Set 7 · sealed, English High Window: Q1 2027 $143 expected · target $130 Wanted Preordered Acquired",
+   "COMIC Night Courier #4 Night Courier · Cover B Comics x2 Thu, Nov 12 $4.99 each Wanted Preordered Acquired",
+   "POP_C Cosmic Rangers 6-inch: Captain Vale Cosmic Rangers · Wave 3 Sun, Dec 6 $27.99 expected Wanted Preordered Acquired",
+   "MISC Tin wind-up robot Date unknown Price unknown Wanted Preordered Acquired TITLE CATEGORY Choose… Pop Culture Sports TCG & Non Sport Card Music Jewelry & Apparel Games Built, Botany & Bar Misc Gears & Gasoline Art TYPE Any Collectors Choi"
+  ],
+  "total": "Planned total $180.97 from 3 priced wants, with quantities\n1 without a price, not counted",
+  "pull": []
+ }
+}

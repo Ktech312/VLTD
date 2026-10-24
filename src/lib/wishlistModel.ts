@@ -27,11 +27,39 @@ export type WishlistItem = {
   externalId?: string;
   /** YYYY-MM-DD release date for upcoming catalog items. */
   releaseDate?: string;
-  /** Want (default) or already pre-ordered. */
+  /** Wanted (default), Preordered (arranged by the person with a shop; VLTD places no order), Acquired, or Skipped (kept, not deleted). */
   status?: WishStatus;
+  /** How many copies are wanted (default 1) and how many are in the Vault already. */
+  quantity?: number;
+  quantityAcquired?: number;
+  /** Series or product line. */
+  series?: string;
+  /** Edition, cover or variant. */
+  edition?: string;
+  /** A release window when there is no exact date, e.g. "Q1 2027". Unknown stays unknown. */
+  releaseWindow?: string;
+  /** Where to buy or read about it (opens outside VLTD). */
+  sourceUrl?: string;
+  shop?: string;
+  /** Category-specific details, only the ones that apply (era, maker, set, format...). */
+  details?: Record<string, string>;
+  skippedAt?: number;
+  /** The Vault records created when copies were acquired (so a repeat save never creates a second one). */
+  acquiredItemIds?: string[];
+  /** The Following rule that added this want. */
+  ruleId?: string;
+  /** Source identity, e.g. "metron:issue:181794", so a refresh never adds the same release twice. */
+  sourceIdentity?: string;
+  /** Fields the person changed by hand; a refresh never overwrites these. */
+  edited?: string[];
+  /** The price expected for one copy (cover, retail or a quote). Unknown stays unknown, never $0. Not the same as the target price. */
+  price?: number;
+  updatedAt?: number;
+  /** Device-only: the extra fields above have been uploaded to an account that can hold them. */
+  extrasInCloud?: boolean;
 };
 
-export type WishStatus = "want" | "preordered";
+export type WishStatus = "want" | "preordered" | "acquired" | "skipped";
 
 const LS_BASE = "vltd_wishlist";
 const ACTIVE_PROFILE_KEY = "vltd_active_profile_id_v1";
@@ -76,8 +104,13 @@ export function saveWishlist(items: WishlistItem[]) {
 }
 
 // ── Supabase sync (local cache always works) ────────────────────────
+// Three column tiers, newest first. The extras (quantity, edition, release window, source link, shop, details, skipped/acquired records, rule link, source
+// identity, edited fields, expected price) need 20261024_wishlist_pull_list.sql; the catalog columns need 20261011_wishlist_comics_and_sharing.sql. Until a tier
+// exists in the database, what it would hold stays on this device and is merged back in on every read, so nothing is lost and nothing is shown twice.
 const BASE_COLUMNS = "id,title,target_price,notes,universe,category,subject,condition,priority,created_at";
 const CATALOG_COLUMNS = ",image_url,source,external_id,release_date,status";
+const EXTRA_COLUMNS =
+  ",quantity,quantity_acquired,series,edition,release_window,source_url,shop,details,skipped_at,acquired_item_ids,rule_id,source_identity,edited,expected_price,updated_at";
 
 function wishRow(item: WishlistItem, pid: string) {
   return {
@@ -105,23 +138,87 @@ function catalogFields(item: WishlistItem) {
   };
 }
 
-// Columns added by 20261011_wishlist_comics_and_sharing.sql. Until it's run,
-// save the original columns so the wishlist still reaches the account.
-function isMissingCatalogColumn(message: string | undefined) {
-  return !!message && /(image_url|source|external_id|release_date|status)/i.test(message);
+function extraFields(item: WishlistItem) {
+  return {
+    quantity: item.quantity ?? 1,
+    quantity_acquired: item.quantityAcquired ?? 0,
+    series: item.series ?? null,
+    edition: item.edition ?? null,
+    release_window: item.releaseWindow ?? null,
+    source_url: item.sourceUrl ?? null,
+    shop: item.shop ?? null,
+    details: item.details ?? null,
+    skipped_at: item.skippedAt ? new Date(item.skippedAt).toISOString() : null,
+    acquired_item_ids: item.acquiredItemIds ?? [],
+    rule_id: item.ruleId ?? null,
+    source_identity: item.sourceIdentity ?? null,
+    edited: item.edited ?? [],
+    expected_price: item.price ?? null,
+    updated_at: new Date(item.updatedAt || Date.now()).toISOString(),
+  };
+}
+
+// A column (or the widened status check) the database does not have yet.
+function isMissingColumn(message: string | undefined) {
+  return !!message && /column|schema cache|constraint|does not exist/i.test(message);
+}
+
+// An outbox on this device: a want that was saved or deleted here but whose upload has not been confirmed is remembered, so going offline (or a failed
+// request) never loses it and a later read never undoes it. It is retried on every read.
+type Pending = { up: string[]; del: string[] };
+function pendingKey() {
+  const pid = activeProfileId();
+  return pid ? `vltd_wishlist_pending:${pid}` : "vltd_wishlist_pending";
+}
+function readPending(): Pending {
+  try {
+    const parsed = JSON.parse(localStorage.getItem(pendingKey()) ?? "{}") as Partial<Pending>;
+    return { up: Array.isArray(parsed.up) ? parsed.up : [], del: Array.isArray(parsed.del) ? parsed.del : [] };
+  } catch {
+    return { up: [], del: [] };
+  }
+}
+function writePending(p: Pending) {
+  try {
+    localStorage.setItem(pendingKey(), JSON.stringify({ up: [...new Set(p.up)], del: [...new Set(p.del)] }));
+  } catch {
+    /* storage unavailable */
+  }
+}
+function markUp(id: string) { const p = readPending(); writePending({ up: [...p.up, id], del: p.del.filter((x) => x !== id) }); }
+function clearUp(id: string) { const p = readPending(); writePending({ up: p.up.filter((x) => x !== id), del: p.del }); }
+function markDel(id: string) { const p = readPending(); writePending({ up: p.up.filter((x) => x !== id), del: [...p.del, id] }); }
+function clearDel(id: string) { const p = readPending(); writePending({ up: p.up, del: p.del.filter((x) => x !== id) }); }
+
+function flagExtrasInCloud(id: string) {
+  const items = loadWishlist();
+  if (!items.some((w) => w.id === id && w.extrasInCloud !== true)) return;
+  saveWishlist(items.map((w) => (w.id === id ? { ...w, extrasInCloud: true } : w)));
 }
 
 async function pushWish(item: WishlistItem): Promise<boolean> {
+  markUp(item.id);
   try {
     const pid = activeProfileId();
     if (!pid) return false;
     const supabase = getSupabaseBrowserClient();
     if (!supabase) return false;
-    const full = await supabase.from("wishlist").upsert({ ...wishRow(item, pid), ...catalogFields(item) }, { onConflict: "id" });
-    if (!full.error) return true;
-    if (!isMissingCatalogColumn(full.error.message)) return false;
-    const legacy = await supabase.from("wishlist").upsert(wishRow(item, pid), { onConflict: "id" });
-    return !legacy.error;
+    const { extrasInCloud: _local, ...clean } = item; // eslint-disable-line @typescript-eslint/no-unused-vars
+    const tiers = [
+      { ...wishRow(clean, pid), ...catalogFields(clean), ...extraFields(clean) },
+      { ...wishRow(clean, pid), ...catalogFields(clean) },
+      wishRow(clean, pid),
+    ];
+    for (let i = 0; i < tiers.length; i++) {
+      const res = await supabase.from("wishlist").upsert(tiers[i], { onConflict: "id" });
+      if (!res.error) {
+        clearUp(item.id);
+        if (i === 0) flagExtrasInCloud(item.id);
+        return true;
+      }
+      if (!isMissingColumn(res.error.message)) return false;
+    }
+    return false;
   } catch {
     return false;
   }
@@ -133,14 +230,20 @@ async function deleteWishRow(id: string) {
     if (!pid) return;
     const supabase = getSupabaseBrowserClient();
     if (!supabase) return;
-    await supabase.from("wishlist").delete().eq("id", id).eq("profile_id", pid);
+    const { error } = await supabase.from("wishlist").delete().eq("id", id).eq("profile_id", pid);
+    if (!error) clearDel(id);
   } catch {
-    /* ignore */
+    /* stays in the outbox and is retried */
   }
 }
 
+function dayOrUndefined(value: unknown): string | undefined {
+  return typeof value === "string" && value ? value.slice(0, 10) : undefined;
+}
+
 function rowToItem(r: Record<string, unknown>): WishlistItem {
-  return {
+  const status = r.status === "preordered" || r.status === "acquired" || r.status === "skipped" ? (r.status as WishStatus) : r.status === "want" ? "want" : undefined;
+  const item: WishlistItem = {
     id: String(r.id),
     title: String(r.title ?? ""),
     targetPrice: r.target_price != null ? Number(r.target_price) : undefined,
@@ -154,9 +257,27 @@ function rowToItem(r: Record<string, unknown>): WishlistItem {
     imageUrl: (r.image_url as string) ?? undefined,
     source: (r.source as string) ?? undefined,
     externalId: r.external_id != null ? String(r.external_id) : undefined,
-    releaseDate: (r.release_date as string) ?? undefined,
-    status: r.status === "preordered" ? "preordered" : r.status === "want" ? "want" : undefined,
+    releaseDate: dayOrUndefined(r.release_date),
+    status,
   };
+  if ("quantity" in r) {
+    item.quantity = r.quantity != null ? Number(r.quantity) : undefined;
+    item.quantityAcquired = r.quantity_acquired != null ? Number(r.quantity_acquired) : undefined;
+    item.series = (r.series as string) ?? undefined;
+    item.edition = (r.edition as string) ?? undefined;
+    item.releaseWindow = (r.release_window as string) ?? undefined;
+    item.sourceUrl = (r.source_url as string) ?? undefined;
+    item.shop = (r.shop as string) ?? undefined;
+    item.details = r.details && typeof r.details === "object" ? (r.details as Record<string, string>) : undefined;
+    item.skippedAt = r.skipped_at ? Date.parse(String(r.skipped_at)) || undefined : undefined;
+    item.acquiredItemIds = Array.isArray(r.acquired_item_ids) && r.acquired_item_ids.length ? (r.acquired_item_ids as string[]) : undefined;
+    item.ruleId = (r.rule_id as string) ?? undefined;
+    item.sourceIdentity = (r.source_identity as string) ?? undefined;
+    item.edited = Array.isArray(r.edited) && r.edited.length ? (r.edited as string[]) : undefined;
+    item.price = r.expected_price != null ? Number(r.expected_price) : undefined;
+    item.updatedAt = Date.parse(String(r.updated_at)) || undefined;
+  }
+  return item;
 }
 
 export async function syncWishlistFromSupabase(): Promise<WishlistItem[]> {
@@ -171,9 +292,12 @@ export async function syncWishlistFromSupabase(): Promise<WishlistItem[]> {
     type Res = { data: unknown; error: { message: string } | null };
     const read = async (columns: string): Promise<Res> =>
       (await supabase.from("wishlist").select(columns).eq("profile_id", pid)) as unknown as Res;
-    let res = await read(BASE_COLUMNS + CATALOG_COLUMNS);
-    if (res.error && isMissingCatalogColumn(res.error.message)) {
-      res = await read(BASE_COLUMNS);
+    let extrasInDatabase = true;
+    let res = await read(BASE_COLUMNS + CATALOG_COLUMNS + EXTRA_COLUMNS);
+    if (res.error && isMissingColumn(res.error.message)) {
+      extrasInDatabase = false;
+      res = await read(BASE_COLUMNS + CATALOG_COLUMNS);
+      if (res.error && isMissingColumn(res.error.message)) res = await read(BASE_COLUMNS);
     }
     const { error } = res;
     const data = Array.isArray(res.data) ? (res.data as Record<string, unknown>[]) : null;
@@ -183,30 +307,65 @@ export async function syncWishlistFromSupabase(): Promise<WishlistItem[]> {
       for (const w of local) void pushWish(w);
       return local;
     }
+    const pending = readPending();
+    const pendingUp = new Set(pending.up);
+    const pendingDel = new Set(pending.del);
     const remote = data.map(rowToItem);
-    // Keep catalog fields a pre-migration row can't hold yet, from the local copy.
+    for (const w of remote) if (pendingDel.has(w.id)) void deleteWishRow(w.id); // a delete that never reached the account: finish it
+    // Fields a database that has not been upgraded yet cannot hold stay as the local copy has them.
     const localById = new Map(local.map((w) => [w.id, w]));
-    const items = remote.map((w) => ({ ...localById.get(w.id), ...w, ...pickDefined(localOnlyCatalog(localById.get(w.id)), w) }));
+    const repush: WishlistItem[] = [];
+    const items: WishlistItem[] = [];
+    for (const w of remote) {
+      if (pendingDel.has(w.id)) continue;
+      const l = localById.get(w.id);
+      if (l && pendingUp.has(w.id)) { items.push(l); repush.push(l); continue; } // saved here, not confirmed in the account: this device's copy wins and is sent again
+      let merged = mergeRemote(l, w, extrasInDatabase);
+      if (extrasInDatabase && l && l.extrasInCloud !== true && hasLocalExtras(l)) {
+        // Saved before the account could hold these fields: send them now, and keep them meanwhile.
+        merged = { ...merged, ...pickExtras(l) };
+        repush.push(merged);
+      } else if (extrasInDatabase && l && hasLocalExtras(l)) merged.extrasInCloud = true;
+      items.push(merged);
+    }
+    const remoteIds = new Set(remote.map((w) => w.id));
+    for (const l of local) if (pendingUp.has(l.id) && !remoteIds.has(l.id) && !pendingDel.has(l.id)) { items.push(l); repush.push(l); } // created offline: not lost
     items.sort((a, b) => b.createdAt - a.createdAt);
     saveWishlist(items);
+    for (const w of repush) void pushWish(w);
     return items;
   } catch {
     return local;
   }
 }
 
-function localOnlyCatalog(w: WishlistItem | undefined): Partial<WishlistItem> {
-  if (!w) return {};
-  return { imageUrl: w.imageUrl, source: w.source, externalId: w.externalId, releaseDate: w.releaseDate, status: w.status };
+function hasLocalExtras(w: WishlistItem): boolean {
+  return EXTRA_KEYS.some((k) => k !== "updatedAt" && w[k] !== undefined);
+}
+function pickExtras(w: WishlistItem): Partial<WishlistItem> {
+  const out: Partial<WishlistItem> = {};
+  for (const k of EXTRA_KEYS) if (w[k] !== undefined) (out as Record<string, unknown>)[k] = w[k];
+  return out;
 }
 
-/** Fill catalog fields the remote row is missing (undefined) from the local copy. */
-function pickDefined(fromLocal: Partial<WishlistItem>, remote: WishlistItem): Partial<WishlistItem> {
-  const out: Partial<WishlistItem> = {};
-  for (const key of Object.keys(fromLocal) as (keyof WishlistItem)[]) {
-    if (remote[key] === undefined && fromLocal[key] !== undefined) {
-      (out as Record<string, unknown>)[key] = fromLocal[key];
-    }
+const EXTRA_KEYS: (keyof WishlistItem)[] = [
+  "quantity", "quantityAcquired", "series", "edition", "releaseWindow", "sourceUrl", "shop", "details", "skippedAt", "acquiredItemIds", "ruleId", "sourceIdentity", "edited", "price", "updatedAt",
+];
+const CATALOG_KEYS: (keyof WishlistItem)[] = ["imageUrl", "source", "externalId", "releaseDate", "status"];
+
+/**
+ * Remote wins where the database holds the field. A field the database cannot hold yet (columns not added, or a status its check does not allow yet)
+ * keeps the local value, so an Acquired or Skipped want is never turned back into Wanted by a read.
+ */
+export function mergeRemote(local: WishlistItem | undefined, remote: WishlistItem, extrasInDatabase: boolean): WishlistItem {
+  if (!local) return remote;
+  const out: WishlistItem = { ...local, ...remote };
+  for (const key of CATALOG_KEYS) if (remote[key] === undefined && local[key] !== undefined) (out as Record<string, unknown>)[key] = local[key];
+  if (!extrasInDatabase) {
+    for (const key of EXTRA_KEYS) if (local[key] !== undefined) (out as Record<string, unknown>)[key] = local[key];
+    if (local.status === "acquired" || local.status === "skipped") out.status = local.status;
+  } else {
+    for (const key of EXTRA_KEYS) if (remote[key] === undefined && local[key] !== undefined && key !== "skippedAt") (out as Record<string, unknown>)[key] = local[key];
   }
   return out;
 }
@@ -233,18 +392,37 @@ export function addWishlistItem(
 // Persists locally and to Supabase, same as add/remove.
 export function updateWishlistItem(
   id: string,
-  patch: Partial<Pick<WishlistItem, "targetPrice" | "notes" | "priority" | "status">>
+  patch: Partial<Omit<WishlistItem, "id" | "createdAt">>
 ): WishlistItem[] {
-  const next = loadWishlist().map((item) => (item.id === id ? { ...item, ...patch } : item));
+  const next = loadWishlist().map((item) => (item.id === id ? { ...item, ...patch, updatedAt: Date.now() } : item));
   saveWishlist(next);
   const updated = next.find((item) => item.id === id);
   if (updated) void pushWish(updated);
   return next;
 }
 
+/** Add (or replace) a complete want: used by the Pull List page, rule refreshes and Acquired. Same id = same row, so repeating it never makes a copy. */
+export function saveWishlistItem(item: WishlistItem): WishlistItem[] {
+  const next = [item, ...loadWishlist().filter((w) => w.id !== item.id)];
+  saveWishlist(next);
+  void pushWish(item);
+  return next;
+}
+
+/** Add several at once (a rule refresh): one local write, one push each. */
+export function saveWishlistItems(items: WishlistItem[]): WishlistItem[] {
+  if (items.length === 0) return loadWishlist();
+  const ids = new Set(items.map((i) => i.id));
+  const next = [...items, ...loadWishlist().filter((w) => !ids.has(w.id))];
+  saveWishlist(next);
+  for (const item of items) void pushWish(item);
+  return next;
+}
+
 export function removeWishlistItem(id: string) {
   const next = loadWishlist().filter((i) => i.id !== id);
   saveWishlist(next);
+  markDel(id);
   void deleteWishRow(id);
   return next;
 }
@@ -282,6 +460,8 @@ export async function setCatalogWish(pick: CatalogPick, status: WishStatus | nul
     if (existing) removeWishlistItem(existing.id);
     return true;
   }
+  // A want that was already received or skipped is not turned back into Wanted by a tap on Upcoming Comics.
+  if (existing && (existing.status === "acquired" || existing.status === "skipped")) return true;
   const item: WishlistItem = {
     ...(existing ?? { id: catalogWishId(pick.source, pick.externalId), createdAt: Date.now() }),
     title: pick.title,

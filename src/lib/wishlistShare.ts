@@ -2,6 +2,7 @@
 
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 import { getStoredActiveProfileId } from "@/lib/auth";
+import { DEFAULT_SHARE_FIELDS, normalizeShareFields, type ShareFields } from "@/lib/wantsCore";
 
 // Public share link for the active profile's wishlist
 // (20261011_wishlist_comics_and_sharing.sql: wishlist_shares + get_shared_wishlist).
@@ -15,7 +16,33 @@ export type SharedWish = {
   releaseDate?: string;
   status: "want" | "preordered";
   source?: string;
+  /** Present only when the owner switched the matching field on (the database returns null otherwise). */
+  series?: string;
+  edition?: string;
+  releaseWindow?: string;
+  quantity?: number;
+  price?: number;
+  shop?: string;
+  notes?: string;
 };
+
+/** What this link currently shares. `supported` is false until 9-wishlist-pull-list.sql has run (then only titles and categories are shared, as before). */
+export async function loadWishlistShareFields(): Promise<{ fields: ShareFields; supported: boolean }> {
+  const supabase = getSupabaseBrowserClient();
+  const pid = getStoredActiveProfileId();
+  if (!supabase || !pid) return { fields: DEFAULT_SHARE_FIELDS, supported: false };
+  const { data, error } = await supabase.from("wishlist_shares").select("fields").eq("profile_id", pid).maybeSingle();
+  if (error) return { fields: DEFAULT_SHARE_FIELDS, supported: false };
+  return { fields: normalizeShareFields((data as { fields?: unknown } | null)?.fields), supported: true };
+}
+
+export async function saveWishlistShareFields(fields: ShareFields): Promise<{ ok: boolean; error?: string }> {
+  const supabase = getSupabaseBrowserClient();
+  const pid = getStoredActiveProfileId();
+  if (!supabase || !pid) return { ok: false, error: "Not signed in." };
+  const { error } = await supabase.from("wishlist_shares").update({ fields }).eq("profile_id", pid);
+  return error ? { ok: false, error: error.message } : { ok: true };
+}
 
 function randomToken() {
   const bytes = new Uint8Array(12);
@@ -77,6 +104,13 @@ export async function loadSharedWishlist(token: string): Promise<{ owner: string
     releaseDate: (r.release_date as string) ?? undefined,
     status: (r.status === "preordered" ? "preordered" : "want") as SharedWish["status"],
     source: (r.source as string) ?? undefined,
+    series: (r.series as string) ?? undefined,
+    edition: (r.edition as string) ?? undefined,
+    releaseWindow: (r.release_window as string) ?? undefined,
+    quantity: r.quantity != null ? Number(r.quantity) : undefined,
+    price: r.price != null ? Number(r.price) : undefined,
+    shop: (r.shop as string) ?? undefined,
+    notes: (r.notes as string) ?? undefined,
   }));
   return { owner: (owner.data as string | null) ?? null, items };
 }

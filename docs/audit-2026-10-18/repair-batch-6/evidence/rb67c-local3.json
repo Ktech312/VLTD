@@ -1,0 +1,102 @@
+{
+ "label": "local3",
+ "cases": [
+  {
+   "ok": false,
+   "control": "a watched public item is listed inside Wishlist, under a Watching heading"
+  },
+  {
+   "ok": true,
+   "control": "the watched row is labelled Watching, says it is someone else's item, and keeps its source link"
+  },
+  {
+   "ok": true,
+   "control": "Add to my wants makes a want of your own with the source link and NO price copied from the other person's listing"
+  },
+  {
+   "ok": true,
+   "control": "watching or adding it to my wants did not create an owned Vault record"
+  },
+  {
+   "ok": true,
+   "control": "the watched item itself is kept after Add to my wants"
+  },
+  {
+   "ok": true,
+   "control": "adding the same watched item again does not make a copy"
+  },
+  {
+   "ok": true,
+   "control": "the default checklist lists items with edition and quantity, and shows no prices or private notes"
+  },
+  {
+   "ok": true,
+   "control": "switching prices on adds them and the planned total to the checklist"
+  },
+  {
+   "ok": true,
+   "control": "Share a read-only link turns sharing on and shows the link"
+  },
+  {
+   "ok": true,
+   "control": "a visitor with the link sees the wishlist titles"
+  },
+  {
+   "ok": true,
+   "control": "a visitor sees no private notes, prices or target prices"
+  },
+  {
+   "ok": true,
+   "control": "skipped wants are not shown on the shared link"
+  },
+  {
+   "ok": true,
+   "control": "the printable checklist shows prices and notes only when they were switched on"
+  },
+  {
+   "ok": true,
+   "control": "the checklist page is a print document (site bars do not print, text prints black on white)"
+  },
+  {
+   "ok": true,
+   "control": "turning sharing off stops the link"
+  },
+  {
+   "ok": true,
+   "control": "a want added while offline appears at once on this device"
+  },
+  {
+   "ok": true,
+   "control": "while offline it has not reached the account (so it is held for retry)"
+  },
+  {
+   "ok": true,
+   "control": "after reconnecting and reloading, the offline want is still there (not lost by the account read)"
+  },
+  {
+   "ok": true,
+   "control": "the retry sent it to the account once connected (one row, not two)"
+  },
+  {
+   "ok": true,
+   "control": "a want removed while offline disappears at once"
+  },
+  {
+   "ok": true,
+   "control": "after reconnecting, the removed want is not brought back by the account read"
+  },
+  {
+   "ok": true,
+   "control": "the delete reached the account on retry"
+  },
+  {
+   "ok": true,
+   "control": "acquiring while offline saves to the Vault on this device and says it will upload later"
+  }
+ ],
+ "notes": {
+  "seedError": null,
+  "shareToken": "2j07…",
+  "publicText": "Home Vault Exhibitions Insights More ? ? ? Help ⌘K G WISHLIST QA Visual Collection's wishlist Absolute Batman #25 Comics · Oct 28, 2026 Night Courier #4 Comics · Nov 12, 2026 Cosmic Rangers 6-inch: Captain Vale Dec 6, 2026 Starlight Duel: Booster Box (Set 8) Feb 20, 2027 QA watched public item Night Courier #4 (acq test) Tin wind-up robot Starlight Duel: Booster Box Shared from VLTD"
+ }
+}

@@ -9,8 +9,8 @@ import { formatStoreDate } from "@/lib/comicUpcoming";
 import { loadSharedWishlist, type SharedWish } from "@/lib/wishlistShare";
 
 // Public, read-only view of a Curator's shared wishlist. Data comes only from
-// get_shared_wishlist (title, cover, category, release date, status) — no
-// notes or target prices.
+// get_shared_wishlist: title, cover, category, edition and status always; quantity, dates, price, shop and notes only
+// when the owner switched them on. Target prices are never shared.
 export default function SharedWishlistPage() {
   const params = useParams<{ token: string }>();
   const token = String(params?.token ?? "");
@@ -68,8 +68,9 @@ export default function SharedWishlistPage() {
               <div className="p-2.5">
                 <div className="line-clamp-2 text-[13px] font-semibold leading-tight">{item.title}</div>
                 <div className="mt-1 text-[11px]" style={{ color: "var(--muted)" }}>
-                  {[item.category, item.releaseDate ? formatStoreDate(item.releaseDate) : null].filter(Boolean).join(" · ")}
+                  {[item.edition, item.category, item.quantity && item.quantity > 1 ? `x${item.quantity}` : null, item.releaseDate ? formatStoreDate(item.releaseDate) : item.releaseWindow ? item.releaseWindow : null, typeof item.price === "number" ? `$${item.price}` : null, item.shop].filter(Boolean).join(" · ")}
                 </div>
+                {item.notes ? <div className="mt-1 text-[11px]" style={{ color: "var(--muted)" }}>{item.notes}</div> : null}
               </div>
             </div>
           ))}

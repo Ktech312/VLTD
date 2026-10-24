@@ -1,0 +1,118 @@
+{
+ "label": "local2",
+ "cases": [
+  {
+   "ok": true,
+   "control": "a clean second browser shows the wants saved in the first one"
+  },
+  {
+   "ok": true,
+   "control": "title, notes and release date reached the account"
+  },
+  {
+   "ok": true,
+   "control": "NOT YET TESTED: quantity, edition, price and skipped state in the account need SQL package 8"
+  },
+  {
+   "ok": false,
+   "control": "an invalid cost is refused and nothing is saved to the Vault"
+  },
+  {
+   "ok": true,
+   "control": "cancelling Acquired leaves the want exactly as it was"
+  },
+  {
+   "ok": true,
+   "control": "receiving 1 of 2 with the cost left unknown saves one Vault record with NO price (not the expected or cover price)"
+  },
+  {
+   "ok": false,
+   "control": "the want shows 1 of 2 and stays open (it is not marked Acquired yet)"
+  },
+  {
+   "ok": false,
+   "control": "the planned total now counts only the copy still to get"
+  },
+  {
+   "ok": false,
+   "control": "the second copy is saved with the cost entered; two copies, two records"
+  },
+  {
+   "ok": true,
+   "control": "no duplicate Vault records"
+  },
+  {
+   "ok": true,
+   "control": "with both copies in, the want is Acquired and leaves the open list"
+  },
+  {
+   "ok": true,
+   "control": "acquiring with the cost unknown never uses the target price ($130) or the expected price ($143)"
+  },
+  {
+   "ok": true,
+   "control": "Following starts with an honest empty state"
+  },
+  {
+   "ok": true,
+   "control": "a card product rule is a manual rule and says so (no release feed)"
+  },
+  {
+   "ok": true,
+   "control": "Pause keeps the rule and marks it Paused"
+  },
+  {
+   "ok": true,
+   "control": "Resume starts following again"
+  },
+  {
+   "ok": true,
+   "control": "Add a release on a manual rule makes a want linked to that rule"
+  },
+  {
+   "ok": true,
+   "control": "Stop keeps the rule (shown under stopped rules) and what it added"
+  },
+  {
+   "ok": true,
+   "control": "stopping a rule does not remove the wants it added"
+  },
+  {
+   "ok": true,
+   "control": "a comic series rule is matched to one exact series (a catalog key)"
+  },
+  {
+   "ok": true,
+   "control": "following added the series' standard-cover releases, each with its source identity"
+  },
+  {
+   "ok": true,
+   "control": "no variant cover was added automatically"
+  },
+  {
+   "ok": true,
+   "control": "checking again creates no copies"
+  }
+ ],
+ "notes": {
+  "extrasInDatabase": false,
+  "partialDialogText": "Acquired: Night Courier #4\n\nAll copies are in your Vault.\n\nAdd photos and details\nDone",
+  "catalogCandidates": [
+   "Absolute Batman (2024) · 1 upcoming · next Oct 28, 2026 Pick",
+   "Absolute Batman: Beyond Ark M (2027) · 1 upcoming · next Nov 25, 2026 Pick",
+   "Batman (2025) · 2 upcoming · next Nov 4, 2026 Pick",
+   "Batman / Superman: World's Finest (2022) · 1 upcoming · next Nov 18, 2026 Pick",
+   "Batman & Robin: Year One – Dynamic Duos (2026) · 1 upcoming · next Nov 11, 2026 Pick",
+   "Batman 2026 Annual (2027) · 1 upcoming · next Nov 25, 2026 Pick",
+   "Batman: Bad Seeds – Gotham General (2026) · 2 upcoming · next Oct 28, 2026 Pick",
+   "Batman: Bad Seeds – Sunrise (2026) · 1 upcoming · next Oct 28, 2026 Pick"
+  ],
+  "afterFirstCheck": [
+   [
+    "Absolute Batman #25",
+    "Standard cover",
+    "2026-10-28"
+   ]
+  ]
+ }
+}

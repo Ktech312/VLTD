@@ -15,6 +15,8 @@ export type UpcomingIssue = {
   id: number;
   series: string;
   seriesYearBegan?: number;
+  /** Metron's series id when the list answer includes it. */
+  seriesId?: number;
   number: string;
   publisher: string;
   storeDate: string | null;
@@ -34,7 +36,7 @@ export type CreatorResult = {
 
 type MetronListItem = {
   id: number;
-  series: { name: string; year_began?: number } | string;
+  series: { id?: number; name: string; year_began?: number } | string;
   number: string;
   publisher?: { id: number; name: string } | string;
   cover_date?: string | null;
@@ -64,6 +66,8 @@ function normalizeItem(item: MetronListItem): UpcomingIssue {
     typeof item.series === "string" ? item.series : (item.series?.name ?? "");
   const seriesYearBegan =
     typeof item.series === "object" ? (item.series?.year_began ?? undefined) : undefined;
+  // The catalog's own series id, when its list answer carries one: it is what makes a Following rule match exactly one series.
+  const seriesId = typeof item.series === "object" && typeof item.series?.id === "number" ? item.series.id : undefined;
   const publisher =
     typeof item.publisher === "string"
       ? item.publisher
@@ -73,6 +77,7 @@ function normalizeItem(item: MetronListItem): UpcomingIssue {
     id: item.id,
     series,
     seriesYearBegan,
+    seriesId,
     number: item.number ?? "",
     publisher,
     storeDate: item.store_date ?? null,

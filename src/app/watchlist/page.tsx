@@ -1,693 +1,259 @@
 "use client";
 
-import { PillButton } from "@/components/ui/PillButton";
-import { parseMoneyInput } from "@/lib/moneyInput";
-import { PillSelect } from "@/components/ui/PillSelect";
 import Link from "next/link";
+import { useCallback, useEffect, useMemo, useState } from "react";
+
 import { PageHeader } from "@/components/layout/PageHeader";
-import { useEffect, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
+import { AppIcon } from "@/components/ui/AppIcon";
 import { Glyph } from "@/components/ui/Glyph";
-import {
-  loadWishlist,
-  removeWishlistItem,
-  updateWishlistItem,
-  syncWishlistFromSupabase,
-  type WishlistItem,
-} from "@/lib/wishlistModel";
-import { convertWishlistToVault } from "@/lib/wishlistToVault";
-import {
-  loadWatchlist,
-  removeFromWatchlist,
-  syncWatchlistFromSupabase,
-  type WatchlistItem,
-} from "@/lib/watchlistModel";
-import { COMIC_STATUS_LABEL, ownComicFromWish } from "@/lib/comicWishlistModel";
-import { disableWishlistShare, enableWishlistShare, loadWishlistShareToken, wishlistShareUrl } from "@/lib/wishlistShare";
+import { PillButton } from "@/components/ui/PillButton";
+import { PillSelect } from "@/components/ui/PillSelect";
+import AcquireSheet from "@/components/wants/AcquireSheet";
+import AddWantSheet, { type AddMode } from "@/components/wants/AddWantSheet";
+import ChecklistSheet from "@/components/wants/ChecklistSheet";
+import FollowSheet from "@/components/wants/FollowSheet";
+import FollowTab from "@/components/wants/FollowTab";
+import WantRow, { WatchingRow } from "@/components/wants/WantRow";
+import { loadPullRules, refreshPullRules, syncPullRulesFromSupabase } from "@/lib/pullRules";
 import { showToast } from "@/lib/toast";
-import { universePlaceholder } from "@/lib/itemPlaceholder";
-import WatchEntrySheet from "@/components/WatchEntrySheet";
+import { formatMoney, groupPullList, isOpen, plannedTotals, ruleIdentityOfItem, wantFromRelease, wantFromWatching, type CatalogRelease, type PullRule } from "@/lib/wantsCore";
+import { loadWatchlist, removeFromWatchlist, syncWatchlistFromSupabase, type WatchlistItem } from "@/lib/watchlistModel";
+import { loadWishlist, removeWishlistItem, saveWishlistItem, syncWishlistFromSupabase, type WishlistItem } from "@/lib/wishlistModel";
 
-type WatchKind = "item" | "exhibition" | "comic";
-type FilterKey = "all" | "wishlist" | "items" | "exhibitions" | "alerts" | "undecided";
-type SortMode = "recent" | "value" | "target";
+// Watchlist: three views of what you collect next.
+//   Wishlist  = what I want (any category, with or without a date or price), plus things I am Watching (someone else's public items).
+//   Pull List = wants with a release date or window, grouped by when.
+//   Following = rules that add future releases for you (comic series from the comic catalog; card products and toy lines are manual).
+// Exhibition bookmarks are saved content, not things to acquire: they are on Saved.
 
-type WatchEntry = {
-  id: string;
-  kind: WatchKind;
-  title: string;
-  subtitle: string;
-  meta: string;
-  image?: string;
-  currentValue: number;
-  targetPrice: number;
-  source: string;
-  savedAgo: string;
-  savedTs: number;
-  priority: "low" | "medium" | "high";
-  alertActive: boolean;
-  notes: string;
-  sourceType: "wishlist" | "watchlist" | "comic";
-  raw?: WishlistItem | WatchlistItem;
-};
+type Tab = "wishlist" | "pull" | "follow";
+type Show = "active" | "wants" | "watching" | "received" | "skipped";
+type Sort = "priority" | "newest" | "release" | "az";
 
-function money(value: number) {
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-    maximumFractionDigits: 0,
-  }).format(value);
-}
-
-function safeNumber(value: unknown, fallback = 0) {
-  return typeof value === "number" && Number.isFinite(value) ? value : fallback;
-}
-
-function priorityFromItem(item: WishlistItem): WatchEntry["priority"] {
-  return item.priority ?? (item.targetPrice && item.targetPrice > 1000 ? "high" : "medium");
-}
-
-function entryFromWishlist(item: WishlistItem): WatchEntry {
-  const target = safeNumber(item.targetPrice, 0);
-  // Catalog picks (Upcoming Comics Want / Ordered) carry their own cover and release date.
-  if (item.source === "metron") {
-    return {
-      id: item.id,
-      kind: "comic",
-      title: item.title || "Upcoming comic",
-      subtitle: item.subject || "Upcoming comic",
-      meta: COMIC_STATUS_LABEL[item.status ?? "want"] + (item.releaseDate ? " · Release " + item.releaseDate : ""),
-      image: item.imageUrl || universePlaceholder("POP_CULTURE"),
-      currentValue: 0,
-      targetPrice: target,
-      source: "Upcoming Comics",
-      savedAgo: formatAgo(item.createdAt),
-      savedTs: Number(item.createdAt) || 0,
-      priority: priorityFromItem(item),
-      alertActive: false,
-      notes: item.notes || "Saved from Upcoming Comics. Tap + Add to Vault once you have it.",
-      sourceType: "wishlist",
-      raw: item,
-    };
-  }
-  return {
-    id: item.id,
-    kind: "item",
-    title: item.title || "Untitled Watch",
-    subtitle: item.subject || item.category || item.universe || "Saved target",
-    meta: [item.condition && item.condition !== "any" ? item.condition.toUpperCase() : null, item.priority ? `${item.priority} priority` : null]
-      .filter(Boolean)
-      .join(" · ") || "Target watch",
-    image: item.imageUrl || universePlaceholder(item.universe),
-    // A wish has no market value of its own: "--" until it is moved into the vault (it used to show the target x 1.18).
-    currentValue: 0,
-    targetPrice: target,
-    source: "Manual",
-    savedAgo: formatAgo(item.createdAt),
-    savedTs: Number(item.createdAt) || 0,
-    priority: priorityFromItem(item),
-    // No price alert can be set on this page, so none is ever shown as active.
-    alertActive: false,
-    notes: item.notes || "Saved from your watchlist. Add notes, target price, and condition before moving to vault.",
-    sourceType: "wishlist",
-    raw: item,
-  };
-}
-
-function entryFromWatch(item: WatchlistItem): WatchEntry {
-  const currentValue = safeNumber(item.currentValue, 0);
-  return {
-    id: item.id,
-    kind: "item",
-    title: item.title || "Watched item",
-    subtitle: item.subtitle || item.collectorName || "Public exhibition save",
-    meta: item.grade || "Exhibition watch",
-    image: item.imageFrontUrl || universePlaceholder(),
-    currentValue,
-    // No target was ever entered for a watched item: "--" (it used to show 86% of its value).
-    targetPrice: 0,
-    source: item.collectorName || "Public Exhibition",
-    savedAgo: formatAgo(item.savedAt),
-    savedTs: Number(item.savedAt) || 0,
-    priority: currentValue > 5000 ? "high" : "medium",
-    alertActive: false,
-    notes: "Saved from Discover. Watch this item before adding it to your private vault.",
-    sourceType: "watchlist",
-    raw: item,
-  };
-}
-
-function formatAgo(timestamp: number) {
-  if (!timestamp || Number.isNaN(timestamp)) return "recently";
-  const diff = Math.max(0, Date.now() - timestamp);
-  const minutes = Math.floor(diff / 60000);
-  if (minutes < 60) return `${Math.max(1, minutes)}m ago`;
-  const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours}h ago`;
-  const days = Math.floor(hours / 24);
-  return `${days}d ago`;
-}
-
-
-function WatchCard({
-  entry,
-  selected,
-  onSelect,
-  onMove,
-}: {
-  entry: WatchEntry;
-  selected: boolean;
-  onSelect: () => void;
-  onMove: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onSelect}
-      className="group min-h-[264px] rounded-[7px] border p-3 text-left transition hover:-translate-y-0.5"
-      style={{
-        background: "var(--theme-card,rgba(15,25,45,0.85))",
-        borderColor: selected ? "var(--theme-gold,#C8CDD2)" : "rgba(203,208,213,0.28)",
-        boxShadow: selected ? "0 0 0 1px rgba(203,208,213,0.16), 0 16px 44px rgba(0,0,0,0.22)" : "none",
-      }}
-    >
-      <div className="mb-2">
-        <span className="rounded-[4px] border border-[rgba(203,208,213,0.42)] px-1.5 py-0.5 text-[9px] font-black uppercase tracking-[0.12em]" style={{ color: "var(--theme-gold,#C8CDD2)" }}>
-          {entry.kind}
-        </span>
-      </div>
-      <div className="grid grid-cols-[118px_minmax(0,1fr)] gap-4">
-        <div className="relative flex h-[154px] items-center justify-center rounded-[7px] bg-black/25">
-          <img src={entry.image || universePlaceholder()} alt="" className="max-h-[148px] max-w-[110px] object-contain drop-shadow-[0_18px_22px_rgba(0,0,0,0.5)]" />
-        </div>
-        <div className="min-w-0">
-          <div className="line-clamp-2 font-serif text-[17px] font-black leading-tight" style={{ color: "var(--theme-text-primary,#ECEDEF)" }}>
-            {entry.title}
-          </div>
-          <div className="mt-1 text-[12px]" style={{ color: "var(--theme-text-muted,#61656B)" }}>{entry.subtitle}</div>
-          <div className="text-[12px]" style={{ color: "var(--theme-text-primary,#ECEDEF)" }}>{entry.meta}</div>
-          <div className="mt-4 text-[11px]" style={{ color: "var(--theme-text-muted,#61656B)" }}>Current Value</div>
-          <div className="text-[23px] font-black leading-tight text-[color:var(--info,#52D6F4)]">{entry.currentValue ? money(entry.currentValue) : "--"}</div>
-          <div className="mt-1 text-[12px]" style={{ color: "var(--theme-text-primary,#ECEDEF)" }}>Target Price</div>
-          <div className="text-[17px] font-black" style={{ color: "var(--theme-text-primary,#ECEDEF)" }}>{entry.targetPrice ? money(entry.targetPrice) : "--"}</div>
-        </div>
-      </div>
-      <div className="mt-4 flex items-end justify-between">
-        <div className="flex items-center gap-4" style={{ color: "var(--theme-gold,#C8CDD2)" }}>
-          <Glyph name="sparkle" size={22} />
-          <Glyph name="heart" size={24} />
-        </div>
-        {entry.kind === "exhibition" ? (
-          <PillButton size="compact" href="/discover" onClick={(event) => event.stopPropagation()}>View Exhibition</PillButton>
-        ) : (
-          <PillButton size="compact" onClick={(event) => { event.stopPropagation(); onMove(); }}>+ Add to Vault</PillButton>
-        )}
-      </div>
-    </button>
-  );
-}
+const PRIORITY_RANK = { high: 0, medium: 1, low: 2 } as const;
 
 export default function WatchlistPage() {
-  const router = useRouter();
+  const [tab, setTab] = useState<Tab>("wishlist");
   const [wishlist, setWishlist] = useState<WishlistItem[]>(() => loadWishlist());
-  const [watchlist, setWatchlist] = useState<WatchlistItem[]>(() => loadWatchlist());
-  const [shareToken, setShareToken] = useState<string | null>(null);
-  const [shareBusy, setShareBusy] = useState(false);
+  const [watching, setWatching] = useState<WatchlistItem[]>(() => loadWatchlist());
+  const [rules, setRules] = useState<PullRule[]>(() => loadPullRules());
+  const [inAccount, setInAccount] = useState(true);
+  const [suggestions, setSuggestions] = useState<CatalogRelease[]>([]);
+  const [checking, setChecking] = useState(false);
   const [query, setQuery] = useState("");
-  const [filter, setFilter] = useState<FilterKey>("all");
-  const [sort, setSort] = useState<SortMode>("recent");
-  const [selectedId, setSelectedId] = useState<string | null>(null);
-  // Close details really closes the panel (the first card used to take its place).
-  const [panelClosed, setPanelClosed] = useState(false);
-  const [movingId, setMovingId] = useState<string | null>(null);
-  const [view, setView] = useState<"grid" | "list">("grid");
-  const [editingTarget, setEditingTarget] = useState(false);
-  const [targetDraft, setTargetDraft] = useState("");
-  const [editingNotes, setEditingNotes] = useState(false);
-  const [notesDraft, setNotesDraft] = useState("");
-  const [addingWatch, setAddingWatch] = useState(false);
+  const [category, setCategory] = useState("all");
+  const [show, setShow] = useState<Show>("active");
+  const [sort, setSort] = useState<Sort>("priority");
+  const [openId, setOpenId] = useState<string | null>(null);
+  const [adding, setAdding] = useState<{ mode: AddMode; rule?: PullRule } | null>(null);
+  const [acquiring, setAcquiring] = useState<WishlistItem | null>(null);
+  const [following, setFollowing] = useState(false);
+  const [checklist, setChecklist] = useState(false);
+
+  const reload = useCallback(() => setWishlist(loadWishlist()), []);
 
   useEffect(() => {
     let active = true;
-    void syncWishlistFromSupabase().then(() => {
-      if (active) setWishlist(loadWishlist());
-    });
-    void syncWatchlistFromSupabase().then(() => {
-      if (active) setWatchlist(loadWatchlist());
-    });
-    void loadWishlistShareToken().then((res) => {
-      if (active) setShareToken(res.token);
-    });
+    const onWish = () => setWishlist(loadWishlist());
+    const onWatch = () => setWatching(loadWatchlist());
+    const onRules = () => setRules(loadPullRules());
+    window.addEventListener("vltd:wishlist-updated", onWish);
+    window.addEventListener("vltd:watchlist-updated", onWatch);
+    window.addEventListener("vltd:pull-rules-updated", onRules);
+    void (async () => {
+      const [w, wl, pr] = await Promise.all([syncWishlistFromSupabase(), syncWatchlistFromSupabase(), syncPullRulesFromSupabase()]);
+      if (!active) return;
+      setWishlist(w); setWatching(wl); setRules(pr.rules); setInAccount(pr.inAccount);
+      // Check Following comic rules (at most every six hours per rule); adds nothing for paused or stopped rules.
+      const outcome = await refreshPullRules();
+      if (!active) return;
+      if (outcome.suggestions.length) setSuggestions(outcome.suggestions);
+      setWishlist(loadWishlist()); setRules(loadPullRules());
+    })();
     return () => {
       active = false;
+      window.removeEventListener("vltd:wishlist-updated", onWish);
+      window.removeEventListener("vltd:watchlist-updated", onWatch);
+      window.removeEventListener("vltd:pull-rules-updated", onRules);
     };
   }, []);
 
-  const realEntries = useMemo<WatchEntry[]>(() => {
-    return [
-      ...watchlist.map(entryFromWatch),
-      ...wishlist.map(entryFromWishlist),
-    ];
-  }, [watchlist, wishlist]);
+  const categories = useMemo(() => [...new Set(wishlist.map((w) => w.category).filter((c): c is string => Boolean(c && c.trim())))].sort(), [wishlist]);
+  const ruleNames = useMemo(() => new Map(rules.map((r) => [r.id, r.name])), [rules]);
+  const watchingIdentities = useMemo(() => new Set(wishlist.map((w) => ruleIdentityOfItem(w))), [wishlist]);
 
-  const entries = realEntries;
-
-  const filteredEntries = useMemo(() => {
+  const matches = useCallback((w: { title: string; category?: string; series?: string; edition?: string; notes?: string }) => {
     const q = query.trim().toLowerCase();
-    let list = entries.filter((entry) => {
-      if (filter === "wishlist" && entry.sourceType !== "wishlist") return false;
-      if (filter === "items" && entry.kind !== "item" && entry.kind !== "comic") return false;
-      if (filter === "exhibitions" && entry.kind !== "exhibition") return false;
-      if (filter === "alerts" && !entry.alertActive) return false;
-      if (filter === "undecided" && entry.priority !== "low") return false;
-      if (!q) return true;
-      return [entry.title, entry.subtitle, entry.meta, entry.source].join(" ").toLowerCase().includes(q);
-    });
+    if (category !== "all" && (w.category ?? "") !== category) return false;
+    return !q || [w.title, w.category, w.series, w.edition, w.notes].filter(Boolean).join(" ").toLowerCase().includes(q);
+  }, [query, category]);
 
-    // Recently added: newest first across wishlist entries and watched items alike.
-    if (sort === "recent") list = [...list].sort((a, b) => b.savedTs - a.savedTs);
-    if (sort === "value") list = [...list].sort((a, b) => b.currentValue - a.currentValue);
-    if (sort === "target") list = [...list].sort((a, b) => b.targetPrice - a.targetPrice);
-    return list;
-  }, [entries, filter, query, sort]);
+  const wants = useMemo(() => {
+    const list = wishlist.filter((w) => matches(w));
+    const pick = (w: WishlistItem) => show === "received" ? w.status === "acquired" : show === "skipped" ? w.status === "skipped" : show === "watching" ? false : isOpen(w);
+    const out = list.filter(pick);
+    const rank = (w: WishlistItem) => PRIORITY_RANK[w.priority ?? "medium"];
+    out.sort((a, b) =>
+      sort === "az" ? a.title.localeCompare(b.title)
+      : sort === "newest" ? (b.createdAt ?? 0) - (a.createdAt ?? 0)
+      : sort === "release" ? (a.releaseDate ?? "9999").localeCompare(b.releaseDate ?? "9999") || a.title.localeCompare(b.title)
+      : rank(a) - rank(b) || (a.releaseDate ?? "9999").localeCompare(b.releaseDate ?? "9999") || (b.createdAt ?? 0) - (a.createdAt ?? 0));
+    return out;
+  }, [wishlist, matches, show, sort]);
 
-  const selected = panelClosed ? null : filteredEntries.find((entry) => entry.id === selectedId) ?? filteredEntries[0] ?? null;
-  const itemCount = entries.filter((entry) => entry.kind === "item" || entry.kind === "comic").length;
-  const wishlistCount = entries.filter((entry) => entry.sourceType === "wishlist").length;
-  const exhibitionCount = entries.filter((entry) => entry.kind === "exhibition").length;
-  const alertCount = entries.filter((entry) => entry.alertActive).length;
-  const undecidedCount = entries.filter((entry) => entry.priority === "low").length;
-  const totalValue = entries.reduce((sum, entry) => sum + entry.currentValue, 0);
-  const priceDropOpps = entries
-    .filter((entry) => entry.targetPrice > 0 && entry.currentValue > 0 && entry.currentValue <= entry.targetPrice * 1.12)
-    .reduce((sum, entry) => sum + Math.max(0, entry.currentValue - entry.targetPrice), 0);
+  const watchRows = useMemo(() => (show === "active" || show === "watching" ? watching.filter((w) => matches({ title: w.title })) : []), [watching, matches, show]);
+  const pullGroups = useMemo(() => groupPullList(wishlist.filter((w) => matches(w))), [wishlist, matches]);
+  const openWants = useMemo(() => wishlist.filter(isOpen), [wishlist]);
+  const pullCount = useMemo(() => groupPullList(wishlist).reduce((n, g) => n + g.items.length, 0), [wishlist]);
+  const visibleTotals = plannedTotals(tab === "pull" ? pullGroups.flatMap((g) => g.items) : wants);
 
-  async function handleMove(entry: WatchEntry) {
-    if (entry.sourceType === "wishlist" && entry.raw) {
-      const item = entry.raw as WishlistItem;
-      if (movingId) return;
-      setMovingId(item.id);
-      try {
-        if (item.source === "metron") {
-          // Same as Own on Upcoming Comics: stock cover, details, cover price.
-          const res = await ownComicFromWish(item);
-          setWishlist(loadWishlist());
-          showToast(res.ok ? "Moved \"" + res.item.title + "\" to your vault" : "Couldn't move that item. Try again.");
-          return;
-        }
-        await convertWishlistToVault(item);
-        setWishlist((prev) => prev.filter((candidate) => candidate.id !== item.id));
-        showToast(`Moved "${item.title}" to your vault`);
-      } catch {
-        showToast("Couldn't move that item. Try again.");
-      } finally {
-        setMovingId(null);
-      }
-      return;
-    }
-
-    if (entry.sourceType === "watchlist") {
-      router.push("/vault/add");
-      return;
-    }
-
-    showToast("Use Add Item when this release is ready for your vault.");
+  function save(next: WishlistItem) {
+    saveWishlistItem(next);
+    reload();
+  }
+  function addFromWatching(w: WatchlistItem) {
+    const want = wantFromWatching(w);
+    if (wishlist.some((x) => ruleIdentityOfItem(x) === want.sourceIdentity)) return showToast(`${w.title} is already one of your wants.`);
+    save(want);
+    showToast("Added to your wants. The watched item stays as it is.");
   }
 
-  function handleDismiss(entry: WatchEntry) {
-    if (entry.sourceType === "wishlist" && entry.raw) {
-      const item = entry.raw as WishlistItem;
-      removeWishlistItem(item.id);
-      setWishlist((prev) => prev.filter((candidate) => candidate.id !== item.id));
-    }
-    if (entry.sourceType === "watchlist") {
-      removeFromWatchlist(entry.id);
-      setWatchlist((prev) => prev.filter((candidate) => candidate.id !== entry.id));
-    }
+  async function checkNow(rule?: PullRule) {
+    setChecking(true);
+    const outcome = await refreshPullRules({ force: true, ruleId: rule?.id });
+    setChecking(false);
+    setSuggestions((prev) => [...prev.filter((p) => !outcome.suggestions.some((n) => n.identity === p.identity)), ...outcome.suggestions]);
+    setWishlist(loadWishlist()); setRules(loadPullRules());
+    showToast(outcome.failed.length ? "The comic catalog could not be reached. Try again soon." : outcome.added || outcome.updated ? `${outcome.added} added, ${outcome.updated} date change${outcome.updated === 1 ? "" : "s"}.` : "Nothing new.");
   }
 
-  // Step through the filtered list from the detail panel.
-  const selectedIndex = selected ? filteredEntries.findIndex((entry) => entry.id === selected.id) : -1;
-  const canPrev = selectedIndex > 0;
-  const canNext = selectedIndex >= 0 && selectedIndex < filteredEntries.length - 1;
-  function step(delta: number) {
-    const next = filteredEntries[selectedIndex + delta];
-    if (next) {
-      setSelectedId(next.id);
-      setPanelClosed(false);
-      setEditingTarget(false);
-      setEditingNotes(false);
-    }
-  }
-
-  // Target price / notes are stored on wishlist items, so they're editable there.
-  const canEditSelected = selected?.sourceType === "wishlist" && Boolean(selected?.raw);
-
-  function saveTarget() {
-    if (!selected || !canEditSelected) return;
-    // The shared money rule: blank clears the target, 0 is an explicit zero, anything that is not an amount is refused and the old target is kept.
-    const parsed = parseMoneyInput(targetDraft, { label: "Target price" });
-    if (!parsed.ok) {
-      showToast(parsed.message);
-      return;
-    }
-    const value = parsed.blank ? 0 : parsed.value;
-    updateWishlistItem(selected.id, { targetPrice: value });
-    setWishlist(loadWishlist());
-    setEditingTarget(false);
-    showToast(value ? `Target price set to ${money(value)}` : "Target price cleared");
-  }
-
-  function saveNotes() {
-    if (!selected || !canEditSelected) return;
-    updateWishlistItem(selected.id, { notes: notesDraft.trim() });
-    setWishlist(loadWishlist());
-    setEditingNotes(false);
-    showToast("Notes saved");
-  }
-
-  async function shareWishlist() {
-    if (shareBusy) return;
-    setShareBusy(true);
-    const res = shareToken ? { token: shareToken } : await enableWishlistShare();
-    setShareBusy(false);
-    if (!res.token) {
-      showToast("Couldn't create a share link. Try again.");
-      return;
-    }
-    setShareToken(res.token);
-    const url = wishlistShareUrl(res.token);
-    // Phone share sheet when there is one, otherwise copy the link.
-    const shared = typeof navigator !== "undefined" && navigator.share
-      ? await navigator.share({ title: "My wishlist", url }).then(() => true, () => false)
-      : false;
-    if (shared) return;
-    const copied = await navigator.clipboard.writeText(url).then(() => true, () => false);
-    showToast(copied ? "Wishlist link copied" : url);
-  }
-
-  async function stopSharingWishlist() {
-    const res = await disableWishlistShare();
-    if (res.ok) {
-      setShareToken(null);
-      showToast("Wishlist link turned off");
-    } else {
-      showToast("Couldn't turn the link off. Try again.");
-    }
-  }
-
-  async function shareSelected() {
-    if (!selected) return;
-    const parts = [
-      selected.title,
-      selected.subtitle,
-      selected.currentValue ? `Current value ${money(selected.currentValue)}` : "",
-      selected.targetPrice ? `Target ${money(selected.targetPrice)}` : "",
-    ].filter(Boolean);
-    const text = parts.join(" — ");
-    try {
-      if (typeof navigator !== "undefined" && navigator.share) {
-        await navigator.share({ title: selected.title, text });
-        return;
-      }
-      await navigator.clipboard.writeText(text);
-      showToast("Copied to clipboard");
-    } catch {
-      showToast("Couldn't share that item.");
-    }
-  }
+  const tabButton = (key: Tab, label: string, count: number) => (
+    <PillButton key={key} variant={tab === key ? "active" : "default"} pressed={tab === key} onClick={() => setTab(key)}>
+      {label} <span className="opacity-70" style={{ fontVariantNumeric: "tabular-nums" }}>{count}</span>
+    </PillButton>
+  );
+  const activeRules = rules.filter((r) => r.state !== "stopped").length;
+  const wishlistCount = openWants.length + watching.length;
 
   return (
     <>
       <PageHeader
         title="Watchlist"
-        description={<span style={{ color: "var(--theme-text-muted,#61656B)" }}>Track items, exhibitions, and price targets before they enter your vault.</span>}
+        description={<span style={{ color: "var(--theme-text-muted,#61656B)" }}>Wishlist, Pull List and Following: what you want, what is coming, and what to collect for you.</span>}
         contentClassName="max-w-[1480px]"
         actions={
           <div className="flex items-center gap-2">
-            <PillButton onClick={() => void shareWishlist()} disabled={shareBusy}>
-              {shareToken ? "Copy wishlist link" : "Share wishlist"}
-            </PillButton>
-            {shareToken ? (
-              <PillButton onClick={() => void stopSharingWishlist()}>Stop sharing</PillButton>
-            ) : null}
+            <PillButton onClick={() => setChecklist(true)}><AppIcon name="document" size={15} />Checklist</PillButton>
+            <PillButton variant="primary" onClick={() => setAdding({ mode: "manual" })}><AppIcon name="addItem" size={15} />Add</PillButton>
           </div>
         }
       />
-      <main className="px-4 pb-6 sm:px-6 lg:px-8">
-      <div className="mx-auto grid max-w-[1480px] gap-6 xl:grid-cols-[minmax(0,1fr)_430px]">
-        <section className="min-w-0">
-          <div className="mt-2 grid gap-3 lg:grid-cols-[minmax(0,1fr)_140px_160px_150px]">
-            <label className="flex h-10 items-center gap-2 rounded-[7px] border border-[rgba(203,208,213,0.22)] px-3" style={{ background: "var(--theme-card,rgba(15,25,45,0.85))" }}>
-              <Glyph name="search" size={15} className="opacity-60" />
-              <input
-                value={query}
-                onChange={(event) => setQuery(event.target.value)}
-                placeholder="Search watchlist..."
-                className="min-w-0 flex-1 bg-transparent text-xs outline-none placeholder:opacity-45"
-              />
-            </label>
-            {([
-              ["Items", "items", "cards"],
-              ["Exhibitions", "exhibitions", "exhibition"],
-              ["Price Drops", "alerts", "sparkle"],
-            ] as const).map(([label, key, glyph]) => {
-              const active = filter === key;
-              return (
-                <PillButton key={key} variant={active ? "active" : "default"} pressed={active} onClick={() => setFilter(active ? "all" : key)}>
-                  <Glyph name={glyph} size={16} />
-                  {label}
-                </PillButton>
-              );
-            })}
-          </div>
-
-          <div className="mt-4 flex flex-wrap items-center gap-3">
-            {[
-              ["all", `All (${entries.length})`],
-              ["wishlist", `Wishlist (${wishlistCount})`],
-              ["items", `Items (${itemCount})`],
-              ["exhibitions", `Exhibitions (${exhibitionCount})`],
-              ["alerts", `Price Alerts (${alertCount})`],
-              ["undecided", `Undecided (${undecidedCount})`],
-            ].map(([key, label]) => (
-              <PillButton key={key} variant={filter === key ? "active" : "default"} pressed={filter === key} onClick={() => setFilter(key as FilterKey)}>{label}</PillButton>
-            ))}
-            <div className="ml-auto flex items-center gap-2">
-              <span className="text-xs" style={{ color: "var(--theme-text-muted,#61656B)" }}>Sort</span>
-              <PillSelect
-                value={sort}
-                ariaLabel="Sort watchlist"
-                align="right"
-                minWidthPx={150}
-                onChange={(next) => setSort(next)}
-                options={[
-                  { value: "recent", label: "Recently added" },
-                  { value: "value", label: "Highest value" },
-                  { value: "target", label: "Target price" },
-                ]}
-              />
-              <PillButton variant={view === "grid" ? "active" : "default"} pressed={view === "grid"} onClick={() => setView("grid")} ariaLabel="Grid view" title="Grid view" className="w-11 px-0! md:w-9"><Glyph name="cards" size={16} /></PillButton>
-              <PillButton variant={view === "list" ? "active" : "default"} pressed={view === "list"} onClick={() => setView("list")} ariaLabel="List view" title="List view" className="w-11 px-0! md:w-9"><Glyph name="box" size={16} /></PillButton>
-            </div>
-          </div>
-
-          <div className={`mt-4 grid gap-3 ${view === "grid" ? "lg:grid-cols-2 2xl:grid-cols-3" : "grid-cols-1"}`}>
-            {filteredEntries.length === 0 && (query.trim() || filter !== "all") ? (
-              <div role="status" data-testid="watchlist-no-match" className="col-span-full flex flex-wrap items-center gap-3 rounded-[7px] border border-[rgba(203,208,213,0.22)] px-4 py-3 text-sm" style={{ color: "var(--theme-text-muted,#61656B)" }}>
-                <span>{query.trim() ? `Nothing on your watchlist matches “${query.trim()}”.` : "Nothing here for this filter yet."}</span>
-                <PillButton size="compact" onClick={() => { setQuery(""); setFilter("all"); }}>Show everything</PillButton>
-              </div>
-            ) : null}
-            {filteredEntries.map((entry) => (
-              <WatchCard
-                key={`${entry.sourceType}-${entry.id}`}
-                entry={entry}
-                selected={selected?.id === entry.id}
-                onSelect={() => { setSelectedId(entry.id); setPanelClosed(false); }}
-                onMove={() => handleMove(entry)}
-              />
-            ))}
-            <button type="button" onClick={() => setAddingWatch(true)} data-testid="add-watch-tile" className="grid min-h-[264px] place-items-center rounded-[7px] border border-dashed border-[rgba(203,208,213,0.42)] text-center transition hover:bg-[rgba(203,208,213,0.05)]">
-              <span>
-                <span className="block text-3xl" style={{ color: "var(--theme-gold,#C8CDD2)" }}>+</span>
-                <span className="mt-2 block text-lg font-black" style={{ color: "var(--theme-gold,#C8CDD2)" }}>Add Watch</span>
-                <span className="mt-1 block text-sm" style={{ color: "var(--theme-text-muted,#61656B)" }}>Add something you are watching, with an optional target price.</span>
-                <span className="mt-6 flex justify-center" style={{ color: "var(--theme-gold,#C8CDD2)" }}>
-                  <Glyph name="search" size={28} />
-                </span>
-              </span>
-            </button>
-          </div>
-
-          <div className="mt-4 grid rounded-[7px] border border-[rgba(203,208,213,0.22)] md:grid-cols-[1.8fr_repeat(4,1fr)]" style={{ background: "var(--theme-card,rgba(15,25,45,0.85))" }}>
-            <div className="flex gap-3 border-r border-[rgba(203,208,213,0.16)] p-4">
-              <div className="grid h-10 w-10 place-items-center rounded-full border border-[rgba(203,208,213,0.34)]" style={{ color: "var(--theme-gold,#C8CDD2)" }}>
-                <Glyph name="target" size={18} />
-              </div>
-              <div>
-                <div className="text-[11px] font-black uppercase tracking-[0.14em]" style={{ color: "var(--theme-gold,#C8CDD2)" }}>Pro Tip</div>
-                <p className="text-xs leading-5" style={{ color: "var(--theme-text-muted,#61656B)" }}>
-                  Get the most out of your watchlist by setting target prices and alerts.
-                </p>
-              </div>
-            </div>
-            {[
-              [entries.length, "Watching", "info"],
-              [alertCount, "Alerts active", "info"],
-              [money(totalValue), "Watchlist value", "info"],
-              [priceDropOpps ? money(priceDropOpps) : "$0", "Price drop opps", "success"],
-            ].map(([value, label, tone]) => (
-              <div key={label} className="grid place-items-center border-r border-[rgba(203,208,213,0.12)] p-4 text-center last:border-r-0">
-                <div className={`text-2xl font-black ${tone === "danger" ? "text-red-400" : tone === "success" ? "text-green-400" : "text-[color:var(--info,#52D6F4)]"}`}>{value}</div>
-                <div className="text-xs" style={{ color: "var(--theme-text-muted,#61656B)" }}>{label}</div>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        {selected && (
-          <aside className="h-fit rounded-[8px] border border-[rgba(203,208,213,0.32)] p-4 xl:sticky xl:top-24" style={{ background: "var(--theme-card,rgba(15,25,45,0.92))", boxShadow: "0 18px 55px rgba(0,0,0,0.26)" }}>
-            <div className="flex items-center justify-between">
-              <span className="rounded-[4px] border border-[rgba(203,208,213,0.42)] px-2 py-1 text-[10px] font-black uppercase tracking-[0.12em]" style={{ color: "var(--theme-gold,#C8CDD2)" }}>
-                {selected.kind}
-              </span>
-              <div className="flex items-center gap-2">
-                <PillButton size="compact" disabled={!canPrev} onClick={() => step(-1)} ariaLabel="Previous item" title="Previous item" className="w-8 px-0! md:w-7"><Glyph name="back" size={16} strokeWidth={2.4} /></PillButton>
-                <PillButton size="compact" disabled={!canNext} onClick={() => step(1)} ariaLabel="Next item" title="Next item" className="w-8 px-0! md:w-7"><Glyph name="next" size={16} strokeWidth={2.4} /></PillButton>
-                <PillButton size="compact" onClick={() => { setSelectedId(null); setPanelClosed(true); }} ariaLabel="Close details" title="Close" className="w-8 px-0! md:w-7"><Glyph name="close" size={16} strokeWidth={2.4} /></PillButton>
-              </div>
-            </div>
-
-            <div className="mt-4 grid gap-5 sm:grid-cols-[170px_minmax(0,1fr)] xl:grid-cols-1 2xl:grid-cols-[170px_minmax(0,1fr)]">
-              <div className="flex h-[210px] items-center justify-center rounded-[7px] border border-[rgba(203,208,213,0.18)] bg-black/20">
-                <img src={selected.image || universePlaceholder()} alt="" className="max-h-[198px] max-w-[150px] object-contain drop-shadow-[0_22px_26px_rgba(0,0,0,0.55)]" />
-              </div>
-              <div>
-                <h2 className="font-serif text-[25px] font-black leading-tight" style={{ color: "var(--theme-text-primary,#ECEDEF)" }}>{selected.title}</h2>
-                <p className="mt-1 text-sm" style={{ color: "var(--theme-text-muted,#61656B)" }}>{selected.subtitle}</p>
-                <p className="text-sm" style={{ color: "var(--theme-text-primary,#ECEDEF)" }}>{selected.meta}</p>
-                <div className="mt-5 text-xs" style={{ color: "var(--theme-text-muted,#61656B)" }}>Current Value</div>
-                <div className="text-[30px] font-black text-[color:var(--info,#52D6F4)]">{selected.currentValue ? money(selected.currentValue) : "--"}</div>
-                <div className="mt-3 overflow-hidden rounded-[7px] border border-[rgba(203,208,213,0.18)]">
-                  {editingTarget && canEditSelected ? (
-                    <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2 p-2">
-                      <input
-                        autoFocus
-                        value={targetDraft}
-                        onChange={(event) => setTargetDraft(event.target.value)}
-                        onKeyDown={(event) => {
-                          if (event.key === "Enter") saveTarget();
-                          if (event.key === "Escape") setEditingTarget(false);
-                        }}
-                        inputMode="decimal"
-                        placeholder="Target price"
-                        className="min-w-0 rounded-[6px] border border-[rgba(203,208,213,0.28)] bg-transparent px-2 py-2 text-sm outline-none"
-                        style={{ color: "var(--theme-text-primary,#ECEDEF)" }}
-                      />
-                      <span className="flex gap-1">
-                        <button type="button" onClick={saveTarget} className="rounded-[6px] px-3 py-2 text-xs font-black" style={{ background: "linear-gradient(135deg,#8C9298,#C8CDD2)", color: "#0B0B0B" }}>Save</button>
-                        <button type="button" onClick={() => setEditingTarget(false)} className="rounded-[6px] border border-[rgba(203,208,213,0.22)] px-3 py-2 text-xs font-bold" style={{ color: "var(--theme-text-primary,#ECEDEF)" }}>Cancel</button>
-                      </span>
-                    </div>
-                  ) : (
-                    <div className={`grid ${canEditSelected ? "grid-cols-[1fr_104px_36px]" : "grid-cols-[1fr_104px]"}`}>
-                      <div className="px-3 py-3 text-sm" style={{ color: "var(--theme-text-muted,#61656B)" }}>Target Price</div>
-                      <div className="border-l border-[rgba(203,208,213,0.12)] px-3 py-3 text-right text-sm font-bold" style={{ color: "var(--theme-text-primary,#ECEDEF)" }}>{selected.targetPrice ? money(selected.targetPrice) : "--"}</div>
-                      {canEditSelected && (
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setTargetDraft(selected.targetPrice ? String(selected.targetPrice) : "");
-                            setEditingTarget(true);
-                          }}
-                          aria-label="Set target price"
-                          title="Set target price"
-                          className="grid place-items-center border-l border-[rgba(203,208,213,0.12)] transition hover:bg-[rgba(203,208,213,0.08)]"
-                          style={{ color: "var(--theme-gold,#C8CDD2)" }}
-                        >
-                          <Glyph name="tag" size={14} />
-                        </button>
-                      )}
-                    </div>
-                  )}
-                </div>
-                <div className="mt-3 rounded-[7px] border border-[rgba(203,208,213,0.18)] p-3 text-sm" style={{ color: "var(--theme-text-primary,#ECEDEF)" }}>
-                  <span
-                    className="mr-2 inline-block h-2 w-2 rounded-full align-middle"
-                    style={{ background: selected.alertActive ? "#4ade80" : "var(--theme-text-muted,#61656B)" }}
-                  />{" "}
-                  {selected.alertActive ? "Alert Active" : "No alert set"}
+      <main className="px-4 pb-32 sm:px-6 md:pb-8 lg:px-8">
+        <div className="mx-auto flex max-w-[1180px] flex-col gap-3">
+          <div className="mt-2 flex flex-wrap items-center gap-2" data-testid="watchlist-controls">
+            {tabButton("wishlist", "Wishlist", wishlistCount)}
+            {tabButton("pull", "Pull List", pullCount)}
+            {tabButton("follow", "Following", activeRules)}
+            {tab !== "follow" ? (
+              <div className="flex w-full min-w-0 flex-col gap-2 sm:ml-auto sm:w-auto sm:flex-row sm:flex-wrap sm:items-center">
+                <label className="flex h-10 min-w-[180px] items-center gap-2 rounded-[7px] border border-[rgba(203,208,213,0.22)] px-3" style={{ background: "var(--theme-card,rgba(15,25,45,0.85))" }}>
+                  <Glyph name="search" size={15} className="opacity-60" />
+                  <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search wants" aria-label="Search wants" className="min-w-0 flex-1 bg-transparent text-xs outline-none placeholder:opacity-45" />
+                </label>
+                <div className="-mx-1 flex min-w-0 items-center gap-2 overflow-x-auto px-1 pb-0.5 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0 sm:pb-0 [&>*]:shrink-0">
+                <PillSelect value={category} ariaLabel="Filter by category" align="right" minWidthPx={140} onChange={(v) => setCategory(v)} options={[{ value: "all", label: "All categories" }, ...categories.map((c) => ({ value: c, label: c }))]} />
+                {tab === "wishlist" ? (
+                  <PillSelect value={show} ariaLabel="Show" align="right" minWidthPx={140} onChange={(v) => setShow(v as Show)} options={[{ value: "active", label: "Wants and watching" }, { value: "wants", label: "Wants only" }, { value: "watching", label: "Watching only" }, { value: "received", label: "Received" }, { value: "skipped", label: "Skipped" }]} />
+                ) : null}
+                <PillSelect value={sort} ariaLabel="Sort" align="right" minWidthPx={130} onChange={(v) => setSort(v as Sort)} options={[{ value: "priority", label: "Priority first" }, { value: "release", label: "Release date" }, { value: "newest", label: "Newest" }, { value: "az", label: "A to Z" }]} />
+                {(query || category !== "all" || show !== "active") ? <PillButton size="compact" onClick={() => { setQuery(""); setCategory("all"); setShow("active"); }}>Clear all</PillButton> : null}
                 </div>
               </div>
-            </div>
+            ) : (
+              <div className="ml-auto flex gap-2"><PillButton size="compact" variant="primary" onClick={() => setFollowing(true)}><AppIcon name="addItem" size={14} />Follow</PillButton></div>
+            )}
+          </div>
 
-            <div className="mt-5">
-              <div className="mb-2 flex items-center justify-between">
-                <div className="text-[11px] font-black uppercase tracking-[0.16em]" style={{ color: "var(--theme-gold,#C8CDD2)" }}>Value History</div>
-              </div>
-              <div className="rounded-[7px] border border-[rgba(203,208,213,0.16)] px-4 py-5 text-sm leading-6" style={{ color: "var(--theme-text-muted,#61656B)" }}>
-                No value-history tracking exists yet for watched items — this will show a real chart once that's built.
-              </div>
-            </div>
-
-            <div className="mt-5">
-              <div className="mb-2 flex items-center justify-between">
-                <div className="text-[11px] font-black uppercase tracking-[0.16em]" style={{ color: "var(--theme-gold,#C8CDD2)" }}>Recent Comparable Sales</div>
-              </div>
-              <div className="rounded-[7px] border border-[rgba(203,208,213,0.16)] px-4 py-5 text-sm leading-6" style={{ color: "var(--theme-text-muted,#61656B)" }}>
-                Comparable sales will appear here after this watched item is linked to a live pricing source.
-              </div>
-            </div>
-
-            <div className="mt-5 border-t border-[rgba(203,208,213,0.16)] pt-4">
-              <div className="mb-2 flex items-center justify-between">
-                <div className="text-[11px] font-black uppercase tracking-[0.16em]" style={{ color: "var(--theme-gold,#C8CDD2)" }}>Notes</div>
-                {canEditSelected && !editingNotes && (
-                  <PillButton size="compact" onClick={() => { setNotesDraft(selected.notes ?? ""); setEditingNotes(true); }}>Edit</PillButton>
-                )}
-              </div>
-              {editingNotes && canEditSelected ? (
-                <div>
-                  <textarea
-                    autoFocus
-                    value={notesDraft}
-                    onChange={(event) => setNotesDraft(event.target.value)}
-                    rows={4}
-                    placeholder="Why you're watching this, condition notes, sellers to check..."
-                    className="w-full rounded-[6px] border border-[rgba(203,208,213,0.28)] bg-transparent p-2 text-sm leading-6 outline-none"
-                    style={{ color: "var(--theme-text-primary,#ECEDEF)" }}
-                  />
-                  <div className="mt-2 flex gap-2">
-                    <button type="button" onClick={saveNotes} className="rounded-[6px] px-3 py-1.5 text-xs font-black" style={{ background: "linear-gradient(135deg,#8C9298,#C8CDD2)", color: "#0B0B0B" }}>Save</button>
-                    <button type="button" onClick={() => setEditingNotes(false)} className="rounded-[6px] border border-[rgba(203,208,213,0.22)] px-3 py-1.5 text-xs font-bold" style={{ color: "var(--theme-text-primary,#ECEDEF)" }}>Cancel</button>
-                  </div>
+          {tab === "wishlist" ? (
+            <section aria-label="Wishlist" className="flex flex-col gap-1.5">
+              {wants.length === 0 && watchRows.length === 0 ? (
+                <div className="rounded-[8px] border px-4 py-10 text-center" style={{ borderColor: "rgba(203,208,213,0.18)" }}>
+                  <p className="text-sm font-semibold">{wishlist.length === 0 && watching.length === 0 ? "Nothing on your wishlist yet" : "Nothing matches that"}</p>
+                  <p className="mx-auto mt-1 max-w-md text-[13px]" style={{ color: "var(--muted)" }}>{wishlist.length === 0 ? "Add what you want from a catalog, a link, or by typing it in. Any category works." : "Clear the search or filters to see everything."}</p>
+                  {wishlist.length === 0 ? <PillButton className="mt-3" variant="primary" onClick={() => setAdding({ mode: "manual" })}>Add a want</PillButton> : <PillButton className="mt-3" onClick={() => { setQuery(""); setCategory("all"); setShow("active"); }}>Clear all</PillButton>}
                 </div>
-              ) : (
-                <p className="text-sm leading-6" style={{ color: "var(--theme-text-muted,#61656B)" }}>{selected.notes}</p>
-              )}
-              <div className="mt-4 grid grid-cols-3 gap-3 text-[11px]" style={{ color: "var(--theme-text-muted,#61656B)" }}>
-                <div><div className="uppercase tracking-[0.12em]">Added</div><div style={{ color: "var(--theme-text-primary,#ECEDEF)" }}>{selected.savedAgo}</div></div>
-                <div><div className="uppercase tracking-[0.12em]">Source</div><div style={{ color: "var(--theme-text-primary,#ECEDEF)" }}>{selected.source}</div></div>
-                <div><div className="uppercase tracking-[0.12em]">Status</div><div style={{ color: "var(--theme-text-primary,#ECEDEF)" }}>{selected.alertActive ? "Watching" : "Saved"}</div></div>
-              </div>
-            </div>
+              ) : null}
+              {wants.map((w) => (
+                <WantRow key={w.id} want={w} open={openId === w.id} onToggle={() => setOpenId((id) => (id === w.id ? null : w.id))} onChange={save} onAcquire={setAcquiring} onRemove={(id) => { removeWishlistItem(id); reload(); setOpenId(null); }} ruleName={w.ruleId ? ruleNames.get(w.ruleId) : undefined} />
+              ))}
+              {watchRows.length > 0 ? (
+                <div className="mt-2 flex flex-col gap-1.5" aria-label="Watching">
+                  <h2 className="px-0.5 pt-1 text-[11px] font-semibold uppercase tracking-[0.12em]" style={{ color: "var(--muted2)" }}>Watching (other people&apos;s items, not yours)</h2>
+                  {watchRows.map((w) => (
+                    <WatchingRow key={w.id} item={w} added={watchingIdentities.has(`watch:${w.id}`)} onAdd={() => addFromWatching(w)} onStop={() => { removeFromWatchlist(w.id); setWatching(loadWatchlist()); }} />
+                  ))}
+                </div>
+              ) : null}
+              <p className="px-0.5 pt-2 text-[12px]" style={{ color: "var(--muted)" }}>Exhibition bookmarks are not things to buy: they are on <Link href="/saved" className="underline underline-offset-2" style={{ color: "var(--theme-gold)" }}>Saved</Link>.</p>
+            </section>
+          ) : null}
 
-            <div className="mt-5 flex flex-wrap gap-2">
-              <PillButton variant="active" className="font-black" onClick={() => handleMove(selected)}>+ Add to Vault</PillButton>
-              <PillButton onClick={() => handleDismiss(selected)}>Dismiss</PillButton>
-              <PillButton onClick={shareSelected}>Share</PillButton>
+          {tab === "pull" ? (
+            <section aria-label="Pull List" className="flex flex-col gap-1.5">
+              {pullGroups.length === 0 ? (
+                <div className="rounded-[8px] border px-4 py-10 text-center" style={{ borderColor: "rgba(203,208,213,0.18)" }}>
+                  <p className="text-sm font-semibold">Nothing is dated yet</p>
+                  <p className="mx-auto mt-1 max-w-md text-[13px]" style={{ color: "var(--muted)" }}>The Pull List shows wants that have a release date or window. Add one with a date, or follow a comic series and its releases arrive here.</p>
+                </div>
+              ) : null}
+              {pullGroups.map((g) => (
+                <div key={g.key} className="flex flex-col gap-1.5" data-testid="pull-group">
+                  <h2 className="flex items-baseline justify-between px-0.5 pt-2 text-[11px] font-semibold uppercase tracking-[0.12em]" style={{ color: "var(--muted2)" }}><span>{g.label}</span><span style={{ fontVariantNumeric: "tabular-nums" }}>{g.total > 0 ? formatMoney(g.total) : ""}</span></h2>
+                  {g.items.map((w) => (
+                    <WantRow key={w.id} want={w} open={openId === w.id} onToggle={() => setOpenId((id) => (id === w.id ? null : w.id))} onChange={save} onAcquire={setAcquiring} onRemove={(id) => { removeWishlistItem(id); reload(); setOpenId(null); }} ruleName={w.ruleId ? ruleNames.get(w.ruleId) : undefined} />
+                  ))}
+                </div>
+              ))}
+            </section>
+          ) : null}
+
+          {tab === "follow" ? (
+            <FollowTab
+              rules={rules}
+              wants={wishlist}
+              suggestions={suggestions}
+              inAccount={inAccount}
+              checking={checking}
+              onChanged={setRules}
+              onCheck={(r) => void checkNow(r)}
+              onAddRelease={(r) => setAdding({ mode: "manual", rule: r })}
+              onAddSuggestion={(release, rule) => { save(wantFromRelease(release, { quantity: rule.quantity, seriesName: rule.name, ruleId: rule.id, formatNote: rule.formatNote })); setSuggestions((s) => s.filter((x) => x.identity !== release.identity)); }}
+              onFollow={() => setFollowing(true)}
+            />
+          ) : null}
+
+          {tab !== "follow" ? (
+            <div className="flex flex-wrap items-center justify-between gap-2 border-t pt-3 text-[13px]" style={{ borderColor: "rgba(203,208,213,0.18)" }} data-testid="planned-total">
+              <span>Planned total <b style={{ fontVariantNumeric: "tabular-nums" }}>{formatMoney(visibleTotals.total)}</b> <span style={{ color: "var(--muted)" }}>from {visibleTotals.priced} priced {visibleTotals.priced === 1 ? "want" : "wants"}, with quantities</span></span>
+              {visibleTotals.unpriced > 0 ? <span className="rounded-full border px-2.5 py-0.5 text-[12px]" style={{ borderColor: "rgba(224,166,76,0.5)", color: "#e0a64c" }}>{visibleTotals.unpriced} without a price, not counted</span> : null}
             </div>
-          </aside>
-        )}
-      </div>
+          ) : null}
+        </div>
       </main>
-      {addingWatch ? (
-        <WatchEntrySheet
-          onClose={() => setAddingWatch(false)}
-          onAdded={(item) => { setWishlist(loadWishlist()); setSelectedId(item.id); setPanelClosed(false); showToast(`Added to your watchlist: ${item.title}`); }}
+
+      {adding ? (
+        <AddWantSheet
+          watching={watching}
+          initialMode={adding.mode}
+          ruleId={adding.rule?.id}
+          presetSeries={adding.rule?.name}
+          onClose={() => setAdding(null)}
+          onAdded={(item) => { reload(); showToast(`Added: ${item.title}`); }}
         />
       ) : null}
+      {acquiring ? <AcquireSheet want={acquiring} onClose={() => setAcquiring(null)} onSaved={(updated) => save(updated)} /> : null}
+      {following ? <FollowSheet onClose={() => setFollowing(false)} onCreated={(rule) => { setRules(loadPullRules()); setTab("follow"); void checkNow(rule); }} /> : null}
+      {checklist ? <ChecklistSheet items={wishlist} onClose={() => setChecklist(false)} /> : null}
     </>
   );
 }
