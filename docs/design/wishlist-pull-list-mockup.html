@@ -1,0 +1,271 @@
+<title>Pull List Layout</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: a short intro, then the same three views (Wishlist, Pull List, Following) drawn at desktop and phone width with sample data, then the two sheets (Add a want, Acquired). */
+:root {
+  --bg: #f3f4f6; --fg: #14181c; --muted: #59616a; --line: #cfd4da; --note-bg: #e6e9ed; --link: #0b6f8a;
+  --a-bg: #0d1013; --a-card: #151a1f; --a-elev: #1c2228; --a-line: rgba(203,208,213,.18); --a-text: #eceef0; --a-mute: #8d949b;
+  --a-plat: #c8cdd2; --a-cyan: #52d6f4; --a-ok: #54c98a; --a-warn: #e0a64c; --a-bad: #e0705c;
+  --sans: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif; --mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg: #0a0c0e; --fg: #e6e9ec; --muted: #98a0a8; --line: #2a3138; --note-bg: #14191d; --link: #52d6f4; color-scheme: dark; } }
+:root[data-theme="dark"] { --bg: #0a0c0e; --fg: #e6e9ec; --muted: #98a0a8; --line: #2a3138; --note-bg: #14191d; --link: #52d6f4; color-scheme: dark; }
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font-family: var(--sans); font-size: 14px; line-height: 1.5; padding-block: 28px 56px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.wrap { max-width: 1100px; margin: 0 auto; display: flex; flex-direction: column; gap: 36px; }
+h1 { font-size: 26px; font-weight: 600; margin: 0 0 6px; text-wrap: balance; }
+h2 { font-size: 13px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; margin: 0 0 4px; color: var(--muted); }
+.lead { max-width: 68ch; margin: 0; color: var(--muted); }
+.cap { margin: 0 0 12px; max-width: 70ch; color: var(--muted); font-size: 13px; }
+.note { background: var(--note-bg); border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; font-size: 13px; max-width: 78ch; }
+.note b { font-weight: 600; }
+.rule { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.rule div { border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; font-size: 13px; }
+.rule strong { display: block; font-size: 14px; }
+@media (max-width: 700px) { .rule { grid-template-columns: 1fr; } }
+
+/* ---- the app, drawn ---- */
+.scroll { overflow-x: auto; border-radius: 10px; }
+.app { background: var(--a-bg); color: var(--a-text); border: 1px solid var(--a-line); border-radius: 10px; font-size: 13px; }
+.app * { color: inherit; }
+.desk { min-width: 940px; }
+.app .m { color: var(--a-mute); }
+.mono { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+.bar { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 18px 10px; }
+.bar h3 { margin: 0; font-size: 22px; font-weight: 500; }
+.bar .sub { color: var(--a-mute); font-size: 12px; margin-left: 10px; }
+.btn { display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 12px; border-radius: 8px; border: 1px solid var(--a-line); background: var(--a-elev); font: inherit; font-size: 12.5px; font-weight: 500; white-space: nowrap; cursor: default; }
+.btn.pri { background: linear-gradient(135deg, #8c9298, #c8cdd2); color: #0b0b0b; border-color: transparent; }
+.btn.pri * { color: #0b0b0b; }
+.btn.sm { height: 26px; padding: 0 9px; font-size: 12px; }
+.ico { width: 15px; height: 15px; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; flex: none; }
+.tabs { display: flex; gap: 6px; padding: 0 18px 10px; flex-wrap: wrap; align-items: center; }
+.tab { height: 32px; padding: 0 12px; border-radius: 8px; border: 1px solid var(--a-line); display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; font-weight: 500; background: var(--a-card); }
+.tab.on { background: rgba(82,214,244,.12); border-color: rgba(82,214,244,.55); color: var(--a-cyan); }
+.tab.on * { color: var(--a-cyan); }
+.tab .n { font-family: var(--mono); font-size: 11.5px; color: var(--a-mute); }
+.tools { margin-left: auto; display: flex; gap: 6px; flex-wrap: wrap; }
+.field { height: 32px; border: 1px solid var(--a-line); background: var(--a-card); border-radius: 8px; display: inline-flex; align-items: center; gap: 6px; padding: 0 10px; color: var(--a-mute); font-size: 12.5px; }
+.field.search { min-width: 190px; }
+.list { padding: 0 18px 4px; display: flex; flex-direction: column; gap: 6px; }
+.grp { font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--a-mute); padding: 10px 2px 2px; display: flex; justify-content: space-between; }
+.row { background: var(--a-card); border: 1px solid var(--a-line); border-radius: 8px; }
+.row.open { border-color: rgba(82,214,244,.4); }
+.r { display: grid; grid-template-columns: 44px minmax(0, 1fr) 150px 120px 112px 196px 28px; gap: 12px; align-items: center; padding: 8px 12px; min-height: 60px; }
+.th { width: 44px; height: 44px; border-radius: 6px; border: 1px solid var(--a-line); display: grid; place-items: center; font-size: 10px; font-weight: 600; letter-spacing: .06em; color: var(--a-mute); background: repeating-linear-gradient(135deg, #1a2026 0 6px, #161b20 6px 12px); }
+.ttl { font-weight: 600; font-size: 13.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.var { font-size: 12px; color: var(--a-mute); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.chips { display: flex; gap: 5px; flex-wrap: wrap; }
+.chip { font-size: 11px; padding: 1px 7px; border-radius: 5px; border: 1px solid var(--a-line); color: var(--a-plat); white-space: nowrap; }
+.chip.q { font-family: var(--mono); }
+.pri-dot { width: 7px; height: 7px; border-radius: 50%; display: inline-block; margin-right: 5px; }
+.hi { background: var(--a-warn); } .md { background: var(--a-plat); } .lo { background: #4a525a; }
+.date { font-size: 12.5px; } .date.unk { color: var(--a-mute); }
+.price { text-align: right; font-size: 12.5px; }
+.price small { display: block; color: var(--a-mute); font-size: 11px; }
+.step { display: inline-flex; border: 1px solid var(--a-line); border-radius: 8px; overflow: hidden; }
+.step span { padding: 5px 9px; font-size: 11.5px; color: var(--a-mute); border-right: 1px solid var(--a-line); }
+.step span:last-child { border-right: 0; }
+.step .on { background: rgba(82,214,244,.14); color: var(--a-cyan); font-weight: 600; }
+.step .done { color: var(--a-ok); }
+.pill { font-size: 11.5px; padding: 3px 9px; border-radius: 999px; border: 1px solid var(--a-line); white-space: nowrap; }
+.pill.ok { color: var(--a-ok); border-color: rgba(84,201,138,.5); } .pill.warn { color: var(--a-warn); border-color: rgba(224,166,76,.5); } .pill.mute { color: var(--a-mute); }
+.dots { color: var(--a-mute); text-align: center; letter-spacing: 2px; font-weight: 700; }
+.drawer { border-top: 1px solid var(--a-line); padding: 12px 14px 14px; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px 14px; }
+.f label { display: block; font-size: 11px; color: var(--a-mute); margin-bottom: 3px; }
+.f .v { border: 1px solid var(--a-line); background: var(--a-bg); border-radius: 6px; padding: 5px 8px; min-height: 28px; font-size: 12.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.f .v.empty { color: var(--a-mute); font-style: italic; }
+.f.w2 { grid-column: span 2; } .f.w4 { grid-column: span 4; }
+.drawer .acts { grid-column: span 4; display: flex; gap: 6px; flex-wrap: wrap; align-items: center; justify-content: space-between; border-top: 1px dashed var(--a-line); padding-top: 10px; }
+.sum { display: flex; flex-wrap: wrap; gap: 8px 18px; align-items: center; justify-content: space-between; padding: 10px 18px 14px; border-top: 1px solid var(--a-line); margin-top: 8px; }
+.sum b { font-family: var(--mono); font-weight: 500; }
+.rl { padding: 0 18px 12px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.rc { background: var(--a-card); border: 1px solid var(--a-line); border-radius: 8px; padding: 10px 12px; display: flex; flex-direction: column; gap: 8px; }
+.rc.paused { opacity: .75; }
+.rc .top { display: flex; gap: 10px; align-items: center; justify-content: space-between; }
+.kv { display: flex; flex-wrap: wrap; gap: 4px 16px; font-size: 12px; color: var(--a-mute); }
+.kv b { color: var(--a-text); font-weight: 500; }
+.acts2 { display: flex; gap: 6px; flex-wrap: wrap; }
+.src { font-size: 11.5px; }
+.src.good { color: var(--a-ok); } .src.none { color: var(--a-warn); }
+
+/* ---- phone frames ---- */
+.phones { display: flex; gap: 18px; flex-wrap: wrap; align-items: flex-start; }
+.ph { width: 100%; max-width: 336px; flex: 1 1 300px; }
+.ph .app { padding-bottom: 8px; }
+.ph .bar { padding: 12px 12px 6px; } .ph .bar h3 { font-size: 19px; }
+.ph .tabs { padding: 0 12px 8px; gap: 5px; } .ph .tab { height: 30px; padding: 0 9px; font-size: 12px; }
+.ph .list { padding: 0 12px 4px; }
+.pc { background: var(--a-card); border: 1px solid var(--a-line); border-radius: 8px; padding: 9px 10px; display: grid; grid-template-columns: 40px minmax(0, 1fr); gap: 4px 10px; }
+.pc .th { width: 40px; height: 40px; }
+.pc .l2 { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center; justify-content: space-between; border-top: 1px dashed var(--a-line); padding-top: 7px; margin-top: 3px; }
+.pc .meta { font-size: 12px; color: var(--a-mute); display: flex; flex-wrap: wrap; gap: 3px 10px; }
+.ph .sum { padding: 8px 12px 10px; font-size: 12px; }
+.phnav { margin: 8px 12px 0; border: 1px solid var(--a-line); border-radius: 20px; padding: 7px 12px; display: flex; justify-content: space-between; font-size: 10.5px; color: var(--a-mute); }
+.cols { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; align-items: start; }
+@media (max-width: 860px) { .cols { grid-template-columns: 1fr; } }
+.sheet { padding: 14px 16px 16px; display: flex; flex-direction: column; gap: 10px; }
+.sheet h3 { margin: 0; font-size: 16px; font-weight: 600; }
+.g2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 10px; }
+.opt { display: flex; align-items: center; gap: 8px; font-size: 12.5px; }
+.tog { width: 28px; height: 16px; border-radius: 9px; border: 1px solid var(--a-line); background: var(--a-bg); position: relative; flex: none; }
+.tog::after { content: ""; position: absolute; top: 2px; left: 2px; width: 10px; height: 10px; border-radius: 50%; background: var(--a-mute); }
+.tog.on { background: rgba(82,214,244,.2); border-color: rgba(82,214,244,.6); } .tog.on::after { left: 14px; background: var(--a-cyan); }
+.tag { font-size: 11px; color: var(--a-mute); }
+code { font-family: var(--mono); font-size: 12px; }
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>Wishlist, Pull List and Following</h1>
+    <p class="lead">Proposed layout for the Watchlist page (the address and the menu links stay the same). Everything below is sample data made up for the layout; the series, products and prices are not real.</p>
+  </header>
+
+  <section class="rule" aria-label="What each view answers">
+    <div><strong>Wishlist</strong>What do I want? Anything, in any category, with or without a date or price.</div>
+    <div><strong>Pull List</strong>What am I expecting, and when? Wants that have a release date or window, grouped by when.</div>
+    <div><strong>Following</strong>What future releases should VLTD collect for me? Rules for a series, a card product or a toy line.</div>
+  </section>
+
+  <section>
+    <h2>Desktop: Wishlist</h2>
+    <p class="cap">One filter row. Compact rows instead of tall cards. Details open inside the row you click (here the comic), not in a panel that is always open. Exhibition bookmarks are not here: they live under Saved.</p>
+    <div class="scroll"><div class="app desk">
+      <div class="bar"><div><h3 style="display:inline">Watchlist</h3><span class="sub">Wishlist, Pull List and Following</span></div><div style="display:flex;gap:6px"><span class="btn"><svg class="ico" viewBox="0 0 24 24"><path d="M6 9V3h12v6M6 18H4v-7h16v7h-2M7 14h10v7H7z"/></svg>Checklist</span><span class="btn pri"><svg class="ico" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>Add</span></div></div>
+      <div class="tabs"><span class="tab on">Wishlist <span class="n">4</span></span><span class="tab">Pull List <span class="n">3</span></span><span class="tab">Following <span class="n">2</span></span>
+        <div class="tools"><span class="field search"><svg class="ico" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6"/><path d="M20 20l-4-4"/></svg>Search wants</span><span class="field">All categories<svg class="ico" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></span><span class="field">Priority first<svg class="ico" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></span></div></div>
+      <div class="list">
+        <div class="row open">
+          <div class="r"><div class="th">COMIC</div><div style="min-width:0"><div class="ttl">Night Courier #4</div><div class="var">Cover B variant · Example Comics</div></div><div class="chips"><span class="chip">Comics</span><span class="chip q">x2</span></div><div class="date">Wed Nov 12</div><div class="price mono">$4.99<small>cover price</small></div><div class="step"><span class="on">Wanted</span><span>Preordered</span><span>Acquired</span></div><div class="dots">...</div></div>
+          <div class="drawer">
+            <div class="f"><label>Series</label><div class="v">Night Courier</div></div><div class="f"><label>Edition or variant</label><div class="v">Cover B</div></div><div class="f"><label>Quantity</label><div class="v">2</div></div><div class="f"><label>Priority</label><div class="v"><span class="pri-dot hi"></span>High</div></div>
+            <div class="f"><label>Release date</label><div class="v">Nov 12, 2026</div></div><div class="f"><label>Price I will pay (each)</label><div class="v">$4.99</div></div><div class="f"><label>Target price (optional)</label><div class="v empty">Not set</div></div><div class="f"><label>Shop</label><div class="v">Corner Comics</div></div>
+            <div class="f w2"><label>Source link</label><div class="v">metron.cloud/issue/… (opens outside VLTD)</div></div><div class="f w2"><label>Notes (private)</label><div class="v">Ask for the 1:25 ratio copy too</div></div>
+            <div class="acts"><span class="tag">Preordered means you arranged it yourself with a shop. VLTD has placed no order.</span><span style="display:flex;gap:6px"><span class="btn sm">Skip</span><span class="btn sm">Mark preordered</span><span class="btn sm pri">Acquired</span></span></div>
+          </div>
+        </div>
+        <div class="row"><div class="r"><div class="th">CARDS</div><div style="min-width:0"><div class="ttl">Starlight Duel: Booster Box</div><div class="var">Set 7 · sealed, English</div></div><div class="chips"><span class="chip">Trading cards</span><span class="chip q">x1</span></div><div class="date">Window: Q1 2027</div><div class="price mono">$143.00<small>target $130</small></div><div class="step"><span class="on">Wanted</span><span>Preordered</span><span>Acquired</span></div><div class="dots">...</div></div></div>
+        <div class="row"><div class="r"><div class="th">TOY</div><div style="min-width:0"><div class="ttl">Cosmic Rangers 6-inch: Captain Vale</div><div class="var">Wave 3 · chase variant not wanted</div></div><div class="chips"><span class="chip">Toys</span><span class="chip q">x1</span></div><div class="date">Sat Dec 6</div><div class="price mono">$27.99<small>retail</small></div><div class="step"><span>Wanted</span><span class="on">Preordered</span><span>Acquired</span></div><div class="dots">...</div></div></div>
+        <div class="row"><div class="r"><div class="th">OTHER</div><div style="min-width:0"><div class="ttl">Tin wind-up robot</div><div class="var">1960s, maker unknown · any condition</div></div><div class="chips"><span class="chip">Vintage toys</span><span class="chip q">x1</span></div><div class="date unk">Date unknown</div><div class="price mono" style="color:var(--a-mute)">Price unknown<small>no target</small></div><div class="step"><span class="on">Wanted</span><span>Preordered</span><span>Acquired</span></div><div class="dots">...</div></div></div>
+      </div>
+      <div class="sum"><span>Planned total <b>$240.94</b> <span class="m">from 3 priced wants, with quantities</span></span><span class="pill warn">1 without a price, not counted</span></div>
+    </div></div>
+  </section>
+
+  <section>
+    <h2>Desktop: Pull List and Following</h2>
+    <p class="cap">The Pull List groups wants by when they are expected, and shows what is still undated at the bottom. Following holds the rules; each says exactly where its releases come from, or that you add them yourself.</p>
+    <div class="cols">
+      <div class="scroll"><div class="app" style="min-width:480px">
+        <div class="tabs" style="padding-top:12px"><span class="tab">Wishlist <span class="n">4</span></span><span class="tab on">Pull List <span class="n">3</span></span><span class="tab">Following <span class="n">2</span></span></div>
+        <div class="list">
+          <div class="grp"><span>November 2026</span><span class="mono">$9.98</span></div>
+          <div class="row"><div class="r" style="grid-template-columns:44px minmax(0,1fr) 84px 96px;"><div class="th">COMIC</div><div style="min-width:0"><div class="ttl">Night Courier #4</div><div class="var">Cover B · x2 · Wed Nov 12</div></div><span class="pill mute">Wanted</span><span class="btn sm">Preordered</span></div></div>
+          <div class="grp"><span>December 2026</span><span class="mono">$27.99</span></div>
+          <div class="row"><div class="r" style="grid-template-columns:44px minmax(0,1fr) 84px 96px;"><div class="th">TOY</div><div style="min-width:0"><div class="ttl">Cosmic Rangers: Captain Vale</div><div class="var">Wave 3 · x1 · Sat Dec 6</div></div><span class="pill ok">Preordered</span><span class="btn sm pri">Acquired</span></div></div>
+          <div class="grp"><span>Q1 2027 (window)</span><span class="mono">$143.00</span></div>
+          <div class="row"><div class="r" style="grid-template-columns:44px minmax(0,1fr) 84px 96px;"><div class="th">CARDS</div><div style="min-width:0"><div class="ttl">Starlight Duel: Booster Box</div><div class="var">Set 7 · x1 · date not announced</div></div><span class="pill mute">Wanted</span><span class="btn sm">Preordered</span></div></div>
+        </div>
+        <div class="sum"><span>Planned <b>$180.97</b></span><span class="tag">Delayed releases move to their new date and keep your choices</span></div>
+      </div></div>
+      <div class="scroll"><div class="app" style="min-width:480px">
+        <div class="tabs" style="padding-top:12px"><span class="tab">Wishlist <span class="n">4</span></span><span class="tab">Pull List <span class="n">3</span></span><span class="tab on">Following <span class="n">2</span></span><div class="tools"><span class="btn sm"><svg class="ico" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>Follow</span></div></div>
+        <div class="rl" style="grid-template-columns:1fr">
+          <div class="rc"><div class="top"><div><div class="ttl" style="white-space:normal">Night Courier (comic series)</div><div class="var">Cover A and Cover B only · 1 copy of each issue</div></div><span class="pill ok">Following</span></div>
+            <div class="kv"><span>Source <b class="src good">Comic catalog (matched to one series)</b></span><span>Next <b>#5, Dec 10</b></span></div>
+            <div class="acts2"><span class="btn sm"><svg class="ico" viewBox="0 0 24 24"><path d="M9 5v14M15 5v14"/></svg>Pause</span><span class="btn sm"><svg class="ico" viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="1"/></svg>Stop</span><span class="btn sm">Edit rule</span></div></div>
+          <div class="rc paused"><div class="top"><div><div class="ttl" style="white-space:normal">Starlight Duel (card product line)</div><div class="var">Booster boxes only · 1 box</div></div><span class="pill warn">Manual only</span></div>
+            <div class="kv"><span>Source <b class="src none">No release feed for cards yet</b></span><span>You add each release yourself</span></div>
+            <div class="acts2"><span class="btn sm">Add a release</span><span class="btn sm"><svg class="ico" viewBox="0 0 24 24"><path d="M8 5l11 7-11 7z"/></svg>Resume</span><span class="btn sm">Stop</span></div></div>
+        </div>
+        <div class="sum"><span class="tag">Pause keeps the rule and adds nothing. Stop keeps what it already added. Skipped releases never come back.</span></div>
+      </div></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Phone</h2>
+    <p class="cap">The same three views as stacked rows. The status is one tap on the row; the rest is in the row's details. The global bars are unchanged.</p>
+    <div class="phones">
+      <div class="ph"><div class="app">
+        <div class="bar"><h3>Watchlist</h3><span style="display:flex;gap:6px"><span class="btn sm"><svg class="ico" viewBox="0 0 24 24"><path d="M6 9V3h12v6M6 18H4v-7h16v7h-2M7 14h10v7H7z"/></svg></span><span class="btn sm pri"><svg class="ico" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>Add</span></span></div>
+        <div class="tabs"><span class="tab on">Wishlist <span class="n">4</span></span><span class="tab">Pull List <span class="n">3</span></span><span class="tab">Following <span class="n">2</span></span></div>
+        <div class="tabs" style="padding-top:0"><span class="field search" style="flex:1;min-width:0">Search wants</span><span class="field">All<svg class="ico" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></span></div>
+        <div class="list">
+          <div class="pc"><div class="th">COMIC</div><div style="min-width:0"><div class="ttl">Night Courier #4</div><div class="var">Cover B · x2</div></div><div class="l2"><span class="meta"><span>Wed Nov 12</span><span class="mono">$4.99</span></span><span class="step"><span class="on">Wanted</span><span>Pre</span><span>Got</span></span></div></div>
+          <div class="pc"><div class="th">CARDS</div><div style="min-width:0"><div class="ttl">Starlight Duel: Booster Box</div><div class="var">Set 7 · sealed · x1</div></div><div class="l2"><span class="meta"><span>Q1 2027</span><span class="mono">$143.00</span></span><span class="step"><span class="on">Wanted</span><span>Pre</span><span>Got</span></span></div></div>
+          <div class="pc"><div class="th">TOY</div><div style="min-width:0"><div class="ttl">Cosmic Rangers: Captain Vale</div><div class="var">Wave 3 · x1</div></div><div class="l2"><span class="meta"><span>Sat Dec 6</span><span class="mono">$27.99</span></span><span class="step"><span>Wanted</span><span class="on">Pre</span><span>Got</span></span></div></div>
+          <div class="pc"><div class="th">OTHER</div><div style="min-width:0"><div class="ttl">Tin wind-up robot</div><div class="var">1960s, maker unknown</div></div><div class="l2"><span class="meta"><span>Date unknown</span><span class="mono">Price unknown</span></span><span class="step"><span class="on">Wanted</span><span>Pre</span><span>Got</span></span></div></div>
+        </div>
+        <div class="sum"><span>Planned <b>$240.94</b></span><span class="pill warn">1 unpriced</span></div>
+        <div class="phnav"><span>Home</span><span>Vault</span><span>Exhibitions</span><span>Lounge</span><span>Discover</span></div>
+      </div></div>
+      <div class="ph"><div class="app">
+        <div class="bar"><h3>Watchlist</h3><span class="btn sm pri"><svg class="ico" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>Add</span></div>
+        <div class="tabs"><span class="tab">Wishlist <span class="n">4</span></span><span class="tab on">Pull List <span class="n">3</span></span><span class="tab">Following <span class="n">2</span></span></div>
+        <div class="list">
+          <div class="grp"><span>November 2026</span><span class="mono">$9.98</span></div>
+          <div class="pc"><div class="th">COMIC</div><div style="min-width:0"><div class="ttl">Night Courier #4</div><div class="var">Cover B · x2 · Wed Nov 12</div></div><div class="l2"><span class="pill mute">Wanted</span><span class="btn sm">Mark preordered</span></div></div>
+          <div class="grp"><span>December 2026</span><span class="mono">$27.99</span></div>
+          <div class="pc"><div class="th">TOY</div><div style="min-width:0"><div class="ttl">Cosmic Rangers: Captain Vale</div><div class="var">Wave 3 · x1 · Sat Dec 6</div></div><div class="l2"><span class="pill ok">Preordered</span><span class="btn sm pri">Acquired</span></div></div>
+          <div class="grp"><span>Q1 2027 (window)</span><span class="mono">$143.00</span></div>
+          <div class="pc"><div class="th">CARDS</div><div style="min-width:0"><div class="ttl">Starlight Duel: Booster Box</div><div class="var">Set 7 · x1 · date not announced</div></div><div class="l2"><span class="pill mute">Wanted</span><span class="btn sm">Mark preordered</span></div></div>
+        </div>
+        <div class="sum"><span>Planned <b>$180.97</b></span><span class="tag">3 of 3 priced</span></div>
+        <div class="phnav"><span>Home</span><span>Vault</span><span>Exhibitions</span><span>Lounge</span><span>Discover</span></div>
+      </div></div>
+      <div class="ph"><div class="app">
+        <div class="bar"><h3>Watchlist</h3><span class="btn sm pri"><svg class="ico" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>Follow</span></div>
+        <div class="tabs"><span class="tab">Wishlist <span class="n">4</span></span><span class="tab">Pull List <span class="n">3</span></span><span class="tab on">Following <span class="n">2</span></span></div>
+        <div class="rl" style="grid-template-columns:1fr;padding:0 12px 8px">
+          <div class="rc"><div class="top"><div style="min-width:0"><div class="ttl" style="white-space:normal">Night Courier</div><div class="var">Cover A and B · 1 each</div></div><span class="pill ok">Following</span></div><div class="kv"><span>Source <b class="src good">Comic catalog</b></span><span>Next <b>#5, Dec 10</b></span></div><div class="acts2"><span class="btn sm">Pause</span><span class="btn sm">Stop</span><span class="btn sm">Edit</span></div></div>
+          <div class="rc paused"><div class="top"><div style="min-width:0"><div class="ttl" style="white-space:normal">Starlight Duel</div><div class="var">Booster boxes · 1 each</div></div><span class="pill warn">Manual only</span></div><div class="kv"><span>Source <b class="src none">No card release feed yet</b></span></div><div class="acts2"><span class="btn sm">Add a release</span><span class="btn sm">Resume</span><span class="btn sm">Stop</span></div></div>
+        </div>
+        <div class="phnav"><span>Home</span><span>Vault</span><span>Exhibitions</span><span>Lounge</span><span>Discover</span></div>
+      </div></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>The three sheets</h2>
+    <p class="cap">Add a want (fields appear only when they apply), what Acquired asks, and the checklist with opt-in sharing.</p>
+    <div class="cols">
+      <div class="app sheet">
+        <h3>Add a want</h3>
+        <div class="chips"><span class="chip">From a catalog</span><span class="chip">A public item</span><span class="chip">A product link</span><span class="chip" style="color:var(--a-cyan);border-color:rgba(82,214,244,.6)">Type it in</span></div>
+        <div class="g2">
+          <div class="f w2"><label>Title</label><div class="v">Tin wind-up robot</div></div>
+          <div class="f"><label>Category</label><div class="v">Vintage toys</div></div><div class="f"><label>Series or product line</label><div class="v empty">Optional</div></div>
+          <div class="f"><label>Edition or variant</label><div class="v empty">Optional</div></div><div class="f"><label>Quantity</label><div class="v">1</div></div>
+          <div class="f"><label>Priority</label><div class="v">Medium</div></div><div class="f"><label>Target price</label><div class="v empty">Unknown</div></div>
+          <div class="f"><label>Release date or window</label><div class="v empty">Unknown</div></div><div class="f"><label>Shop</label><div class="v empty">Optional</div></div>
+          <div class="f w2"><label>Era and maker (shown for vintage items)</label><div class="v">1960s · maker unknown</div></div>
+          <div class="f w2"><label>Source link and notes</label><div class="v empty">Optional</div></div>
+        </div>
+        <div class="tag">Left blank stays unknown. It is never saved as today's date or as $0.</div>
+        <div style="display:flex;gap:6px;justify-content:flex-end"><span class="btn sm">Cancel</span><span class="btn sm pri">Add to wishlist</span></div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:18px;min-width:0">
+        <div class="app sheet">
+          <h3>Acquired: Night Courier #4, Cover B</h3>
+          <div class="tag">This opens the usual Add to Vault screen with these filled in. You enter what you actually paid.</div>
+          <div class="g2">
+            <div class="f"><label>Title</label><div class="v">Night Courier #4</div></div><div class="f"><label>Edition</label><div class="v">Cover B</div></div>
+            <div class="f"><label>Received now (of 2)</label><div class="v">1</div></div><div class="f"><label>What I paid (each)</label><div class="v empty" style="border-color:rgba(224,166,76,.7)">Required: not filled from the cover price</div></div>
+          </div>
+          <div class="tag">The want shows 1 of 2 acquired until the Vault save succeeds. If the save fails, nothing changes.</div>
+        </div>
+        <div class="app sheet">
+          <h3>Checklist and sharing</h3>
+          <div style="display:flex;gap:6px;flex-wrap:wrap"><span class="btn sm">Print checklist</span><span class="btn sm">Download as a file</span></div>
+          <div class="opt"><span class="tog on"></span>Share a read-only link <span class="tag">you can turn it off any time</span></div>
+          <div class="g2"><div class="opt"><span class="tog on"></span>Titles and editions</div><div class="opt"><span class="tog on"></span>Quantities</div><div class="opt"><span class="tog"></span>Release dates</div><div class="opt"><span class="tog"></span>Target prices and budget</div><div class="opt"><span class="tog"></span>My notes</div><div class="opt"><span class="tog"></span>Shop names</div></div>
+          <div class="tag">Notes, budgets and prices stay private unless you switch them on here. No checkout, no payments, no messages to shops.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <aside class="note"><b>Honest limits.</b> Comics can follow a series because the comic catalog identifies series. Card products and toys have no release feed in VLTD today, so those rules are manual until a real source is chosen. Alerts: a target price is a note to yourself. Nothing in VLTD watches prices, so the page will not call it an alert.</aside>
+</div>
