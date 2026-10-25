@@ -1,0 +1,30 @@
+{
+ "label": "prod1",
+ "cases": [
+  {
+   "ok": true,
+   "control": "setup: a photo was added on the Capture page"
+  },
+  {
+   "ok": true,
+   "control": "the Identify with AI button is there and was pressed twice in a row"
+  },
+  {
+   "ok": true,
+   "control": "two presses on the same photo sent ONE request"
+  },
+  {
+   "ok": true,
+   "control": "that request carried the sign-in token, the active profile, a request id and the photo"
+  },
+  {
+   "ok": false,
+   "control": "the server's refusal reaches the person as a plain sentence on the page"
+  },
+  {
+   "ok": true,
+   "control": "the browser made NO allowance-spending call of its own (the server owns the charge); 113 requests were watched"
+  }
+ ],
+ "shot": "shots/rb75-prod1-capture-refusal.jpg"
+}

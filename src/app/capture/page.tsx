@@ -799,6 +799,8 @@ export default function CapturePage() {
         });
         return next;
       });
+      // If the AI part was refused (allowance spent, not signed in, not this profile) but the free local scans still found something, say so: the person should know why the AI did not fill the rest.
+      if (scanRefusal) setErrorMsg(scanRefusal);
       setIdentified(true);
       setAnalyzing(false);
     } catch (err) {
