@@ -146,3 +146,14 @@ Read from Vercel (Logs and Observability) for the real run at 13:21 UTC, within 
 1. Add credit to the Anthropic account (console.anthropic.com > Plans & Billing); about one cent a day for the daily run. The same key powers the app's AI scan and verify.
 2. Run SQL file 8 when you want the retry memory on (optional but recommended before credit is restored, so the first real run keeps its candidates even if something else goes wrong).
 3. Then the next scheduled run (daily 13:00 to 14:00 UTC, weekly Mon 14:00 UTC) shows whether events are saved: Vercel > Observability error rate 0% and the `[refresh-events]` log line with `inserted` or `updated` above 0.
+
+---
+
+# SUPERSEDED (2026-10-24, on the owner's instruction)
+
+**This session's navigation proposals and its event-refresh retry proposal are superseded. Its pending work is stopped.** In particular:
+- **Not to be pushed or deployed:** the visible six-link row correction, local commit `3892ecc` (kept only as the local, never-pushed branch `nav-visible-wip`; it is not on `main`). The current navigation on `main` stays as it is.
+- **Events scheduling stays switched off.** The daily and weekly refresh schedules were removed and both jobs are off unless `EVENTS_REFRESH_ENABLED` is exactly `true` (commit `d066a99`); nothing here re-enables them.
+- **SQL file 8 (the event refresh memory) is WITHDRAWN: it is not requested and must not be run.** The files `repair-batch-18/sql/8-event-refresh-store.sql`, `validation-8.sql` and `rollback-8.sql` are kept only as a record. The retry-memory code in the two Events jobs (commit `594dcd4`) is inert: it needs those tables, which do not exist, and the jobs are off.
+- The Events refresh remains BLOCKED on the Anthropic credit for whoever decides to revisit it; the findings above (exact error, failed step, the 42 parsed candidates not retained) stand as the record.
+- Unchanged and still true: the owner-verified physical-phone banner checks, the batch 18 banner/events fixes that were verified, and the recorded test corrections.
