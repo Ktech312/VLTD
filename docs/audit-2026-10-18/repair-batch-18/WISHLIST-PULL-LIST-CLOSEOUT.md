@@ -1,5 +1,7 @@
 # Wishlist, Pull List and Following: closeout (2026-10-24)
 
+**Status: COMPLETE.** SQL 9 is in, every check below passes on production (final clean run RB68-078 to RB68-116, 39 of 39), the one real defect the verification found is fixed and regression-checked, and the QA accounts are dropped (production back to 3,477 vault items, 39 profiles, 47 exhibitions).
+
 Commit `5f78db9` (live), plus a small follow-up for the series line. `/watchlist` and every link to it are unchanged; global navigation is untouched. Verified on production with an isolated QA owner and a clean second browser; the QA account is dropped and production is back to 3,477 vault items.
 
 ## Update after SQL 9 (2026-10-24): verified on production
@@ -11,7 +13,8 @@ SQL 9 was run by the owner and every validation value was true. No more SQL is n
 - **Acquisition retries**: pressing Save twice at once makes one Vault record; a browser with an out-of-date list retrying the same copy makes no second record; the second copy numbers on with unique ids and the want becomes Acquired in the account.
 - **Final clean run**: RB68, QA account wsh4, 39 of 39 on production. Cleanup: every QA account dropped, production back to 3,477 vault items, 39 profiles, 47 exhibitions, no QA wishlist, rule, share or acquisition rows left.
 - **A real fault this run found, now fixed (d97cf1c)**: the id of a want added by a Following rule (and of a watched item turned into a want), and the Vault ids made from it, were the same for every account, and want ids are one list for the whole database. A second account following the same series could not have saved its wants. They now carry a short per-profile part. Older rows keep their ids and are still recognised by their catalog identity. One real row (the owner's own, from Oct 11) was untouched.
-- **Mistakes in my checks, superseded with reasons on record**: the planned-total check (the account held other priced wants too), two checks that assumed an empty account, one that assumed one copy is offered by default (all remaining are), and three that reused one fixed want id in two QA accounts. A duplicate correction row exists for RB67-240.
+- **The defect's evidence label**: it is recorded as a REAL APP DEFECT, fixed (row ITM-785). The original failure (RB68-043) is kept unchanged, and so are the passing regression checks (RB68-078 to RB68-116 and the new unit test). An earlier version of that row wrongly called it a test mistake; the row says so.
+- **Mistakes in my checks, superseded with reasons on record**: the planned-total check (the account held other priced wants too), two checks that assumed an empty account, one that assumed one copy is offered by default (all remaining are), and three that failed because the check reused one fixed want id in two QA accounts (they point to the real defect). A duplicate correction row exists for RB67-240.
 
 ## What is built
 - **Wishlist**: compact rows (about 60 px), one filter row, details open inside the row you click. Manual entry works for every category (collecting area, type, or typed-in), with the fields that only matter for that category shown only then (comics, trading cards, sports, toys, music, games, jewelry, automotive, art, and an "Older or vintage piece" switch that adds era and maker). Unknown dates and prices stay unknown ("Date unknown", "Price unknown"; never today, never $0).
@@ -43,7 +46,7 @@ RB67, RB67b, RB67c, RB67d: 74 checks on production, 73 pass. The one miss (the s
 - Phone: no sideways scrolling at 390 and 320 px on every view, the opened row and the Add sheet; the sheet's buttons can be reached.
 
 ## Not done or not verified
-- **After the SQL**: persistence in a clean second browser for quantity, edition, price and skipped/acquired, per-field sharing switches, and Following rules in the account. The scripts are ready (`rb67b` checks these automatically once the columns exist); I cannot run the SQL.
+- ~~After the SQL~~ DONE 2026-10-24 (see the update at the top).
 - Real-phone taps and swipes (the harness emulates a phone).
 - Variant detection is only as good as the catalog's issue numbers; an unlabelled variant looks like a standard cover.
 

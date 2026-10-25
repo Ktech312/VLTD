@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { liveEventLookupEnabled } from "@/lib/events/refreshSwitch";
 
 type SerpApiEvent = {
   title?: string;
@@ -100,6 +101,14 @@ async function fetchSerpEvents(apiKey: string, q: string, location: string, date
 }
 
 export async function GET(req: NextRequest) {
+  // Paused (see lib/events/refreshSwitch.ts): answered before anything else, so no key is read and no outside request is made, for a visitor or a signed-in member alike.
+  if (!liveEventLookupEnabled()) {
+    return NextResponse.json(
+      { error: "paused", message: "Live event lookup is paused for now. Search and filter the events already listed on this page." },
+      { status: 503 },
+    );
+  }
+
   const apiKey = process.env.SERPAPI_KEY;
   if (!apiKey) {
     return NextResponse.json(

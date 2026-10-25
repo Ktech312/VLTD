@@ -413,6 +413,7 @@ function EventRow({
   );
 }
 
+// Kept for when the live lookup is switched back on (it is paused: see lib/events/refreshSwitch.ts). Nothing renders it today.
 function EventSuggestionCard({
   suggestion,
   saved,
@@ -484,14 +485,6 @@ export default function EventsPage() {
   const [selectedId, setSelectedId] = useState<string>("");
   const [showSavedOnly, setShowSavedOnly] = useState(false);
   const [nowMs, setNowMs] = useState(0);
-  const [eventLocation, setEventLocation] = useState("");
-  const [eventSearchCategory, setEventSearchCategory] = useState<EventFilter>("convention");
-  const [eventSearchRadius, setEventSearchRadius] = useState("100");
-  const [eventSearchRange, setEventSearchRange] = useState("next_90");
-  const [eventSearchLoading, setEventSearchLoading] = useState(false);
-  const [eventSearchError, setEventSearchError] = useState("");
-  const [eventSearchQuery, setEventSearchQuery] = useState("");
-  const [eventSuggestions, setEventSuggestions] = useState<EventSuggestion[]>([]);
   const detailRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -623,55 +616,6 @@ export default function EventsPage() {
     });
   };
 
-  const searchEvents = async () => {
-    const location = eventLocation.trim();
-    if (location.length < 2) {
-      setEventSearchError("Enter a city or ZIP code.");
-      return;
-    }
-
-    setEventSearchLoading(true);
-    setEventSearchError("");
-    setEventSearchQuery("");
-
-    const params = new URLSearchParams({
-      location,
-      category: eventSearchCategory,
-      radius: eventSearchRadius,
-      dateRange: eventSearchRange,
-    });
-
-    const response = await fetch(`/api/events/search?${params.toString()}`).catch(() => null);
-    if (!response) {
-      setEventSuggestions([]);
-      setEventSearchError("Event search failed. Try again.");
-      setEventSearchLoading(false);
-      return;
-    }
-
-    const payload = (await response.json()) as {
-        query?: string;
-        searchArea?: string;
-        results?: EventSuggestion[];
-        message?: string;
-      };
-
-    if (!response.ok) {
-      setEventSuggestions([]);
-      setEventSearchError(payload.message ? payload.message : "Event search failed.");
-      setEventSearchLoading(false);
-      return;
-    }
-
-    const results = payload.results ?? [];
-      setEventSuggestions(results);
-      setEventSearchQuery(payload.searchArea ? `${payload.query ?? ""} - ${payload.searchArea}` : payload.query ?? "");
-    if (!results.length) {
-      setEventSearchError("No event suggestions found. Try another ZIP or category.");
-    }
-    setEventSearchLoading(false);
-  };
-
   const selectEvent = (id: string, scroll = false) => {
     setSelectedId(id);
     if (scroll) {
@@ -782,87 +726,10 @@ export default function EventsPage() {
           </PillButton>
         </section>
 
-        <details className="mt-4 rounded-[7px] border border-[color:var(--border)] bg-[color:var(--surface)] p-4">
-          <summary className="flex min-h-11 cursor-pointer items-center text-xs font-bold text-[color:var(--muted)] md:min-h-9">Search beyond the catalog</summary>
-          <div className="mt-3 flex flex-col gap-3 lg:flex-row lg:items-end">
-            <div className="min-w-0 flex-1">
-              <div className="text-[11px] font-black uppercase tracking-[0.18em] text-[color:var(--theme-gold)]">Find Events</div>
-              <p className="mt-1 text-xs text-[color:var(--muted)]">
-                Search for nearby events by category and city. This additional search may return fewer results than the specialist catalog.
-              </p>
-            </div>
-            <label className="block min-w-[170px]">
-              <span className="mb-1 block text-[10px] font-black uppercase tracking-[0.14em] text-[color:var(--muted)]">Category</span>
-              <PillSelect value={eventSearchCategory} ariaLabel="Category" align="left" minWidthPx={170} onChange={(next) => setEventSearchCategory(next as EventFilter)} options={[
-                { value: "convention", label: "Conventions" },
-                { value: "card_show", label: "Card Shows" },
-                { value: "auction", label: "Auctions" },
-                { value: "drop", label: "Drops" },
-                { value: "gallery", label: "Gallery Events" },
-                { value: "music", label: "Music / Vinyl" },
-              ]} />
-            </label>
-            <label className="block w-full lg:w-[170px]">
-              <span className="mb-1 block text-[10px] font-black uppercase tracking-[0.14em] text-[color:var(--muted)]">City or ZIP</span>
-              <input
-                value={eventLocation}
-                onChange={(event) => setEventLocation(event.target.value.slice(0, 80))}
-                onKeyDown={(event) => {
-                  if (event.key === "Enter") void searchEvents();
-                }}
-                placeholder="San Diego or 92101"
-                className="h-10 w-full rounded-[7px] border border-[color:var(--border)] bg-[color:var(--pill)] px-3 text-sm font-bold text-[color:var(--fg)] outline-none placeholder:text-[color:var(--muted)]"
-              />
-            </label>
-            <label className="block min-w-[130px]">
-              <span className="mb-1 block text-[10px] font-black uppercase tracking-[0.14em] text-[color:var(--muted)]">Range</span>
-              <PillSelect value={eventSearchRadius} ariaLabel="Range" align="left" minWidthPx={130} onChange={(next) => setEventSearchRadius(next)} options={[
-                { value: "25", label: "25 miles" },
-                { value: "50", label: "50 miles" },
-                { value: "100", label: "100 miles" },
-                { value: "250", label: "250 miles" },
-              ]} />
-            </label>
-            <label className="block min-w-[150px]">
-              <span className="mb-1 block text-[10px] font-black uppercase tracking-[0.14em] text-[color:var(--muted)]">Date</span>
-              <PillSelect value={eventSearchRange} ariaLabel="Date" align="left" minWidthPx={150} onChange={(next) => setEventSearchRange(next)} options={[
-                { value: "next_90", label: "Upcoming" },
-                { value: "this_month", label: "This month" },
-                { value: "next_week", label: "Next week" },
-                { value: "today", label: "Today" },
-              ]} />
-            </label>
-            <PillButton onClick={() => void searchEvents()} disabled={eventSearchLoading} className="font-black" style={{ background: "linear-gradient(180deg, #79E7FB, #41C6E4 55%, #2CB1D1)", color: "#06171d", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.5), 0 0 16px rgba(79,211,238,0.25)" }}>
-              {eventSearchLoading ? <AppIcon name="loader" size={16} className="animate-spin" /> : <AppIcon name="search" size={16} />}
-              Search
-            </PillButton>
-          </div>
-
-          {(eventSearchError || eventSuggestions.length > 0) && (
-            <div className="mt-4 border-t border-[color:var(--border)] pt-4">
-              {eventSearchQuery && (
-                <div className="mb-3 text-[10px] font-bold uppercase tracking-[0.14em] text-[color:var(--muted)]">
-                  Search: {eventSearchQuery}
-                </div>
-              )}
-              {eventSearchError && (
-                <div className="mb-3 rounded-[7px] border border-[color:var(--border)] bg-black/20 px-3 py-2 text-sm text-[color:var(--muted)]">
-                  {eventSearchError}
-                </div>
-              )}
-              <div className="grid gap-3">
-                {eventSuggestions.map((suggestion) => (
-                  <EventSuggestionCard
-                    key={suggestion.id}
-                    suggestion={suggestion}
-                    saved={savedSuggestionIds.has(suggestion.id)}
-                    onSave={() => toggleSavedSuggestion(suggestion.id)}
-                  />
-                ))}
-              </div>
-            </div>
-          )}
-        </details>
+        <section className="mt-4 rounded-[7px] border border-[color:var(--border)] bg-[color:var(--surface)] p-4" data-testid="live-lookup-paused">
+          <div className="text-[11px] font-black uppercase tracking-[0.18em] text-[color:var(--theme-gold)]">Find Events</div>
+          <p className="mt-1 text-xs text-[color:var(--muted)]">Live event lookup is paused for now. Search and filter the events already listed below, by name, city, type or universe.</p>
+        </section>
 
         <section className="mt-4 md:hidden">
           <div className="flex gap-2 overflow-x-auto pb-2">

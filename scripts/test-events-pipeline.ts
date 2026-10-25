@@ -350,6 +350,57 @@ async function main() {
     assert.equal(world.calls.serp + world.calls.tm + world.calls.ai, 0, "no outside call was made");
   });
 
+  // ───────── the live "Find events" lookup is paused ─────────
+  await test("paused lookup: a visitor and a signed-in member both get 'paused' and NO SerpApi search is made, even with a key configured and a valid-looking search", async () => {
+    const { GET: lookup } = await import("../src/app/api/events/search/route");
+    const saved = process.env.EVENTS_LIVE_LOOKUP_ENABLED;
+    try {
+      delete process.env.EVENTS_LIVE_LOOKUP_ENABLED;
+      const url = "http://localhost/api/events/search?location=San%20Diego&category=convention&radius=100&dateRange=next_90";
+      const visitor = await lookup(new NextRequest(url));
+      const member = await lookup(new NextRequest(url, { headers: { authorization: "Bearer a-members-access-token", cookie: "sb-access-token=member; sb-refresh-token=member" } }));
+      for (const res of [visitor, member]) {
+        assert.equal(res.status, 503);
+        const body = (await res.json()) as Json;
+        assert.equal(body.error, "paused");
+        assert.match(String(body.message), /paused/i);
+      }
+      assert.equal(world.calls.serp, 0, "no SerpApi search");
+      assert.equal(world.calls.tm + world.calls.ai, 0, "nothing else either");
+      assert.deepEqual(world.serpQueries, []);
+      process.env.EVENTS_LIVE_LOOKUP_ENABLED = "false";
+      assert.equal((await lookup(new NextRequest(url))).status, 503, "only the exact word true switches it on");
+      assert.equal(world.calls.serp, 0);
+      // the same test would notice a search: switched on (by the owner, in this pretend world) it does make one
+      process.env.EVENTS_LIVE_LOOKUP_ENABLED = "true";
+      const on = await lookup(new NextRequest(url));
+      assert.equal(on.status, 200);
+      assert.ok(world.calls.serp >= 1, "the check can see a search when one is made");
+    } finally {
+      if (saved === undefined) delete process.env.EVENTS_LIVE_LOOKUP_ENABLED;
+      else process.env.EVENTS_LIVE_LOOKUP_ENABLED = saved;
+    }
+  });
+  await test("paused lookup: the Events page no longer calls the lookup, still has its stored-event search and filters, and no other page or component calls it", async () => {
+    const fs = await import("node:fs");
+    const path = await import("node:path");
+    const page = fs.readFileSync("src/app/events/page.tsx", "utf8");
+    assert.equal(/api\/events\/search/.test(page), false, "the Events page does not reach the lookup");
+    assert.match(page, /Live event lookup is paused/);
+    assert.match(page, /catalogQuery/, "the search over stored events is still there");
+    assert.match(page, /universeFilter/, "and its filters");
+    const callers: string[] = [];
+    const walk = (dir: string) => {
+      for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+        const full = path.join(dir, entry.name);
+        if (entry.isDirectory()) walk(full);
+        else if (/\.(ts|tsx)$/.test(entry.name) && fs.readFileSync(full, "utf8").includes("/api/events/search") && !full.replace(/\\/g, "/").endsWith("src/app/api/events/search/route.ts")) callers.push(full);
+      }
+    };
+    walk("src");
+    assert.deepEqual(callers, [], "nothing in the app calls the lookup");
+  });
+
   // ───────── monthly refresh (disabled until its cost is approved) ─────────
   const APPROVED = { EVENTS_MONTHLY_REFRESH_ENABLED: "true", EVENTS_MONTHLY_APPROVED_MAX_USD: "1.00", EVENTS_MONTHLY_APPROVED_MAX_SEARCHES: "24" };
   const withEnv = async (vars: Record<string, string | undefined>, fn: () => Promise<void>) => {

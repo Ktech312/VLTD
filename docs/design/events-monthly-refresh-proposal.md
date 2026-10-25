@@ -1,6 +1,6 @@
 # Monthly Events refresh: proposal (OFF until you approve its cost)
 
-Status: built, tested (11 new tests, 49 of 49 pass), **switched off**. It sends nothing until you set three variables in Vercel. It has no schedule. Nothing here needed SQL, and SQL file 8 is not required.
+Status: built, tested, **switched off, and it stays off**. Nothing here is approved: the dollar figures below are my own estimate, not an approved budget and not a spending cap set at SerpApi or Anthropic. It sends nothing until you set three variables in Vercel. It has no schedule. Nothing here needed SQL, and SQL file 8 is not required.
 
 ## What one run does (one pass over the coming year)
 - Splits the next twelve months into 4 windows (today to 1 Jan, then one window per quarter).
@@ -9,13 +9,13 @@ Status: built, tested (11 new tests, 49 of 49 pass), **switched off**. It sends 
 - Saves only what the AI check approves, through the same save step the daily job used (no duplicates, nothing blanked, nothing re-enabled).
 - Fills missing banner pictures from each organiser's own page (free; no paid request).
 
-## Maximum usage and cost (a ceiling, enforced by the job itself)
+## Estimated maximum usage and cost (my estimate; nobody has approved it and no provider enforces it)
 | Item | Most it can do | Most it can cost |
 |---|---|---|
 | Google Events searches (SerpApi) | **24** | **$0.60** at $0.025 each (the dearest plan I checked); $0.36 on Developer ($0.015); $0.24 on Production ($0.01); $0 on the free plan while you are under 250 a month |
 | Ticketmaster searches | 24 | $0 (free quota is 5,000 calls a day) |
 | AI calls (Claude Haiku 4.5) | **6**, each at most 8,000 input tokens and 1,500 output tokens (the 1,500 is sent with the request, so it cannot be exceeded) | **$0.093** ($1 per million input, $5 per million output) |
-| **One run, worst case** | | **$0.69** (about $8.30 a year if run monthly) |
+| **One run, estimated worst case** | | **about $0.69** (about $8.30 a year if run monthly), as I calculate it |
 
 Honest limits of these numbers: SerpApi charges a search only when it succeeds, so a failed search costs nothing. The AI figure is a bound from token limits and list prices, not a measurement; the first real run reports the tokens the AI service says it used. The figures come from SerpApi's published plan prices on 2026-10-24 and the Claude price table I last cached on 2026-10-06; the provider's billing page is the record of what was actually charged. I do not know which SerpApi plan you are on.
 
@@ -44,5 +44,5 @@ That runs at 13:00 UTC on the 1st. A Hobby plan allows one run a day per cron at
 ## What stays working with no paid request
 The Events page, the Home banner and its rotation, the countdown and date-based expiry read stored rows only. A row disappears from the banner and the list on its own end date. Without refreshes, no new events arrive and the banner shows whatever remains; the monthly run (or an admin adding events by hand through the admin quick-add) is how new ones come in.
 
-## One paid path that is not a schedule (your decision)
-The **Find events** search box on the Events page (`/api/events/search`) spends one SerpApi search each time any visitor presses Search (an identical search within an hour is served from a cache). Nothing calls it automatically and it is not part of this refresh. It is open to anyone, signed in or not, so it is the one place a visitor or a script could spend SerpApi searches. I have not changed it. Options: leave it, limit it to signed-in members, or turn it off.
+## The live "Find events" lookup is paused
+The lookup behind the Events page (`/api/events/search`) spent up to three SerpApi searches each time anyone pressed Search, signed in or not. It is now **paused**: the page no longer offers it (stored events can still be searched and filtered), and the route answers "paused" with no outside request unless `EVENTS_LIVE_LOOKUP_ENABLED` is exactly `true`, which is not set. Turning it back on needs a code change as well as that variable.

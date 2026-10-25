@@ -57,6 +57,7 @@ function planResponse(approval: ReturnType<typeof checkApproval>, windows: Retur
       retries: 0,
     },
     worstCaseUsd: {
+      basis: "my estimate from list prices and the token limits: not an approved budget and not a spending cap at the provider",
       googleEventsSearches: round(approval.worst.serpUsd),
       aiChecks: round(approval.worst.aiUsd),
       total: round(approval.worst.totalUsd),
