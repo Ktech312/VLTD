@@ -2,8 +2,9 @@
 //   npm run test:ai-scan
 //
 // The REAL route handlers run here against a pretend internet: global fetch answers Supabase Auth, the allowance functions (reserve_ai_scan, complete_ai_scan and the older
-// consume_bulk_scan, written to behave exactly like the SQL, which is proven separately in a real Postgres by repair-batch-19/scripts/test-sql10-in-postgres.cjs) and the AI
-// provider. Nothing leaves the machine, no key is used, no credit is spent. Every refusal case asserts the pretend provider was called ZERO times.
+// consume_bulk_scan) and the AI provider. The pretend database mirrors the real permissions, which are proven against a REAL Postgres server, with separate connections, by
+// repair-batch-19/scripts/test-sql10-real-postgres.cjs: reserve and complete answer ONLY the server (service key), a member's own token is refused, and a member's own call to
+// the older consume_bulk_scan is told 'granted' while the billing-column trigger leaves the counter unchanged (so a route that used the member's token would never move the allowance). Nothing leaves the machine, no key is used, no credit is spent. Every refusal case asserts the pretend provider was called ZERO times.
 
 process.env.ANTHROPIC_API_KEY = "ai-test";
 process.env.NEXT_PUBLIC_SUPABASE_URL = "https://fake.supabase.co";
@@ -41,7 +42,8 @@ type World = {
   ai: "ok" | "fail" | "busy" | "network" | "badjson";
   authDown: boolean;
   reserveBroken: boolean;
-  calls: { anthropic: number; getUser: number; reserve: number; complete: number; consume: number; usageLog: number };
+  calls: { anthropic: number; getUser: number; reserve: number; complete: number; consume: number; status: number; members: number; usageLog: number; memberTokenAllowanceCalls: number; deniedToMembers: number };
+  hold: Promise<void> | null; // when set, the provider answers only after this resolves (a call 'in flight')
   anthropicBodies: Array<Record<string, unknown>>;
 };
 let world: World;
@@ -54,7 +56,8 @@ function freshWorld(): World {
     ai: "ok",
     authDown: false,
     reserveBroken: false,
-    calls: { anthropic: 0, getUser: 0, reserve: 0, complete: 0, consume: 0, usageLog: 0 },
+    calls: { anthropic: 0, getUser: 0, reserve: 0, complete: 0, consume: 0, status: 0, members: 0, usageLog: 0, memberTokenAllowanceCalls: 0, deniedToMembers: 0 },
+    hold: null,
     anthropicBodies: [],
   };
 }
@@ -71,21 +74,36 @@ async function fakeFetch(input: RequestInfo | URL, init: RequestInit = {}): Prom
     const uid = TOKENS[token];
     return uid ? json(200, { id: uid, aud: "authenticated", email: `${uid}@test` }) : json(401, { msg: "invalid JWT", code: 401 });
   }
+  const callerOf = () => {
+    const bearer = (headers.get("authorization") ?? "").replace(/^Bearer /, "");
+    return bearer === "fake-service-key" ? { role: "service" as const, user: null } : TOKENS[bearer] ? { role: "member" as const, user: TOKENS[bearer] } : { role: "anon" as const, user: null };
+  };
+  if (url.host === "fake.supabase.co" && url.pathname === "/rest/v1/profile_members") {
+    world.calls.members += 1;
+    if (callerOf().role !== "service") { world.calls.deniedToMembers += 1; return json(401, { code: "42501", message: "permission denied for table profile_members" }); }
+    const profile = (url.searchParams.get("profile_id") ?? "").replace(/^eq\./, "");
+    const user = (url.searchParams.get("user_id") ?? "").replace(/^eq\./, "");
+    return json(200, world.members.has(`${user}:${profile}`) ? [{ profile_id: profile }] : []);
+  }
   if (url.host === "fake.supabase.co" && url.pathname.startsWith("/rest/v1/rpc/")) {
     const fn = url.pathname.split("/").pop()!;
-    const user = TOKENS[(headers.get("authorization") ?? "").replace(/^Bearer /, "")];
+    const caller = callerOf();
     const body = JSON.parse(String(init.body ?? "{}")) as Record<string, unknown>;
     const profile = world.profiles.get(String(body.p_profile));
-    const guard = () => (user && world.members.has(`${user}:${body.p_profile}`) ? null : rpcError("not authorized to access this quota"));
+    const denied = (what: string) => { world.calls.deniedToMembers += 1; return json(403, { code: "42501", message: `permission denied for function ${what}` }); };
+    const numbers = (extra: Record<string, unknown>) => ({ scan_limit: profile!.limit, used: profile!.used, remaining: Math.max(profile!.limit - profile!.used, 0), ...extra });
     if (fn === "reserve_ai_scan") {
       world.calls.reserve += 1;
-      if (world.mode === "basic") return json(404, { code: "PGRST202", message: "Could not find the function public.reserve_ai_scan(p_kind, p_profile, p_request) in the schema cache" });
+      if (world.mode === "basic") return json(404, { code: "PGRST202", message: "Could not find the function public.reserve_ai_scan(p_kind, p_profile, p_request, p_user) in the schema cache" });
+      if (caller.role !== "service") return denied("reserve_ai_scan");
       if (world.reserveBroken) return json(500, { code: "XX000", message: "internal error" });
-      const denied = guard(); if (denied) return denied;
+      const user = String(body.p_user ?? "");
+      if (!user) return rpcError("a verified user is required");
+      if (!(body.p_profile === user || world.members.has(`${user}:${body.p_profile}`))) return rpcError("not authorized to access this quota");
       if (!profile) return rpcError("profile not found");
       const key = `${body.p_profile}:${body.p_request}`;
       const state = world.ledger.get(key);
-      const row = (outcome: string, used = profile.used) => json(200, [{ outcome, scan_limit: profile.limit, used, remaining: Math.max(profile.limit - used, 0), cycle_end: profile.resets }]);
+      const row = (outcome: string) => json(200, [{ outcome, ...numbers({}), cycle_end: profile.resets }]);
       if (state === "reserved" || state === "done") return row("duplicate");
       if (profile.used >= profile.limit) return row("limit");
       profile.used += 1;
@@ -94,7 +112,7 @@ async function fakeFetch(input: RequestInfo | URL, init: RequestInit = {}): Prom
     }
     if (fn === "complete_ai_scan") {
       world.calls.complete += 1;
-      const denied = guard(); if (denied) return denied;
+      if (caller.role !== "service") return denied("complete_ai_scan"); // a member can neither complete nor refund
       if (!profile) return rpcError("profile not found");
       const key = `${body.p_profile}:${body.p_request}`;
       const state = world.ledger.get(key);
@@ -103,15 +121,27 @@ async function fakeFetch(input: RequestInfo | URL, init: RequestInit = {}): Prom
         if (body.p_succeeded) { world.ledger.set(key, "done"); outcome = "done"; }
         else { profile.used = Math.max(profile.used - 1, 0); world.ledger.set(key, "released"); outcome = "released"; }
       } else if (state) outcome = state;
-      return json(200, [{ outcome, scan_limit: profile.limit, used: profile.used, remaining: Math.max(profile.limit - profile.used, 0) }]);
+      return json(200, [{ outcome, ...numbers({}) }]);
+    }
+    if (fn === "bulk_scan_status") {
+      world.calls.status += 1;
+      if (!profile) return rpcError("profile not found");
+      return json(200, [{ ...numbers({}), cycle_start: "2026-10-24", cycle_end: profile.resets }]);
     }
     if (fn === "consume_bulk_scan") {
       world.calls.consume += 1;
-      const denied = guard(); if (denied) return denied;
       if (!profile) return rpcError("profile not found");
+      if (caller.role === "member") {
+        // The member's own session: the guard passes for a member, the answer says 'granted', but the billing-column trigger leaves the counter where it was.
+        world.calls.memberTokenAllowanceCalls += 1;
+        if (!world.members.has(`${caller.user}:${body.p_profile}`)) return rpcError("not authorized to access this quota");
+        const granted = profile.used < profile.limit ? 1 : 0;
+        return json(200, [{ granted, scan_limit: profile.limit, used: profile.used + granted, remaining: Math.max(profile.limit - profile.used - granted, 0) }]);
+      }
+      if (caller.role !== "service") return denied("consume_bulk_scan");
       const granted = profile.used < profile.limit ? 1 : 0;
       profile.used += granted;
-      return json(200, [{ granted, scan_limit: profile.limit, used: profile.used, remaining: Math.max(profile.limit - profile.used, 0) }]);
+      return json(200, [{ granted, ...numbers({}) }]);
     }
   }
   if (url.host === "fake.supabase.co" && url.pathname === "/rest/v1/ai_usage_log") {
@@ -121,6 +151,7 @@ async function fakeFetch(input: RequestInfo | URL, init: RequestInit = {}): Prom
   if (url.host === "api.anthropic.com") {
     world.calls.anthropic += 1;
     world.anthropicBodies.push(JSON.parse(String(init.body ?? "{}")));
+    if (world.hold) await world.hold;
     if (world.ai === "network") throw new TypeError("fetch failed");
     if (world.ai === "busy") return json(429, { type: "error", error: { type: "rate_limit_error" } });
     if (world.ai === "fail") return json(400, { type: "error", error: { type: "invalid_request_error", message: "Your credit balance is too low to access the Anthropic API." } });
@@ -383,7 +414,8 @@ async function main() {
       const badImage = await post(handler, scanRequest(path, { bytes: text(), requestId: R(81) }));
       assert.deepEqual([anon.status, stranger.status, badImage.status], [401, 403, 415]);
       noPaidCall();
-      assert.equal(world.calls.consume, 1, "only the stranger's request reached the allowance function, and it was refused there; the anonymous and bad-image requests never did");
+      assert.equal(world.calls.consume, 0, "nobody reached the allowance function: the anonymous request, the stranger (refused at the membership check) and the bad image were all stopped before it");
+      assert.equal(world.calls.members, 1, "only the stranger's request got as far as the membership check");
       assert.equal(spentOn(PA), 0);
       world.profiles.get(PA)!.used = 3;
       const over = await post(handler, scanRequest(path, { requestId: R(82) }));
@@ -406,6 +438,80 @@ async function main() {
       assert.equal(world.calls.consume, consumedAfterFirst + 0, "the repeat never reached the allowance");
       assert.equal(world.calls.anthropic, 1);
       assert.equal(spentOn(PA), 1);
+    });
+  }
+
+  // ───────── only the trusted server decides success and refunds ─────────
+  const direct = async (fn: string, token: string, body: Record<string, unknown>) => {
+    const res = await fetch(`https://fake.supabase.co/rest/v1/rpc/${fn}`, { method: "POST", headers: { authorization: `Bearer ${token}`, "content-type": "application/json", apikey: "anon-test" }, body: JSON.stringify(body) });
+    return { status: res.status, body: (await res.json()) as Json };
+  };
+  for (const [label, handler, path] of routes) {
+    await test(`${label}: the route moves the allowance as the SERVER (never with the caller's own token), in both modes, and the counter really moves`, async () => {
+      for (const mode of ["full", "basic"] as const) {
+        world = freshWorld();
+        __resetBasicDedupe();
+        world.mode = mode;
+        const res = await post(handler, scanRequest(path, { requestId: R(900) }));
+        assert.equal(res.status, 200, mode);
+        assert.equal(spentOn(PA), 1, `${mode}: the counter moved (a call made with the member's token would have left it at 0)`);
+        assert.equal(world.calls.memberTokenAllowanceCalls, 0, `${mode}: no allowance call used the member's token`);
+        assert.equal(world.calls.deniedToMembers, 0, `${mode}: nothing was attempted that only the server may do, as the wrong caller`);
+      }
+    });
+    await test(`${label}: DURING the provider call a member cannot refund, complete, re-reserve or reset their reservation, and the server's own completion then works once`, async () => {
+      let release!: () => void;
+      world.hold = new Promise<void>((r) => { release = r; });
+      const inFlight = post(handler, scanRequest(path, { requestId: R(910) }));
+      for (let i = 0; i < 100 && world.calls.anthropic === 0; i++) await new Promise((r) => setTimeout(r, 10));
+      assert.equal(world.calls.anthropic, 1, "the provider call is in flight");
+      assert.equal(spentOn(PA), 1);
+      const refund = await direct("complete_ai_scan", "tok-alice", { p_profile: PA, p_request: R(910), p_succeeded: false });
+      const done = await direct("complete_ai_scan", "tok-alice", { p_profile: PA, p_request: R(910), p_succeeded: true });
+      const again = await direct("reserve_ai_scan", "tok-alice", { p_user: ALICE, p_profile: PA, p_request: R(910), p_kind: "item" });
+      assert.deepEqual([refund.status, done.status, again.status], [403, 403, 403], "all refused to the member");
+      const consume = await direct("consume_bulk_scan", "tok-alice", { p_profile: PA, p_count: 1 });
+      assert.equal(consume.status, 200);
+      assert.equal(spentOn(PA), 1, "even the older spend function, called with the member's token, changes nothing");
+      assert.equal(world.ledger.get(`${PA}:${R(910)}`), "reserved", "the reservation is untouched while the provider is still answering");
+      release();
+      const res = await inFlight;
+      assert.equal(res.status, 200);
+      assert.equal(world.ledger.get(`${PA}:${R(910)}`), "done", "the server completed it");
+      assert.equal(spentOn(PA), 1);
+      assert.equal(world.calls.complete >= 3, true);
+    });
+    await test(`${label}: DURING a provider failure a member's own refund attempt is refused, and the server's refund gives the scan back exactly once`, async () => {
+      let release!: () => void;
+      world.hold = new Promise<void>((r) => { release = r; });
+      world.ai = "fail";
+      const inFlight = silent(() => post(handler, scanRequest(path, { requestId: R(920) })));
+      for (let i = 0; i < 100 && world.calls.anthropic === 0; i++) await new Promise((r) => setTimeout(r, 10));
+      const attempt = await direct("complete_ai_scan", "tok-alice", { p_profile: PA, p_request: R(920), p_succeeded: false });
+      assert.equal(attempt.status, 403);
+      assert.equal(spentOn(PA), 1, "nothing was refunded by the member");
+      release();
+      const res = await inFlight;
+      assert.equal(res.status, 502);
+      assert.equal(spentOn(PA), 0, "the server refunded it");
+      assert.equal(world.ledger.get(`${PA}:${R(920)}`), "released");
+      // the server cannot be talked into refunding twice: a retry that succeeds is charged once, and a repeated failure refunds once
+      world.hold = null; world.ai = "ok";
+      const retry = await post(handler, scanRequest(path, { requestId: R(920) }));
+      assert.equal(retry.status, 200);
+      assert.equal(spentOn(PA), 1);
+      const dup = await post(handler, scanRequest(path, { requestId: R(920) }));
+      assert.equal(dup.status, 409);
+      assert.equal(spentOn(PA), 1);
+    });
+    await test(`${label}: the verified token decides who is asking: a request that CLAIMS to be another user (extra form fields) is still refused for a profile that user's token does not belong to`, async () => {
+      const req = scanRequest(path, { token: "tok-bob", profileId: PA, requestId: R(930) });
+      const form = await req.formData();
+      form.append("userId", ALICE); form.append("user", ALICE); form.append("p_user", ALICE); form.append("user_id", ALICE);
+      const res = await post(handler, new NextRequest(`http://localhost${path}`, { method: "POST", body: form, headers: { authorization: "Bearer tok-bob" } }));
+      assert.equal(res.status, 403);
+      noPaidCall();
+      assert.equal(spentOn(PA), 0);
     });
   }
 

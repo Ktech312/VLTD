@@ -37,7 +37,8 @@
     "test:money": "node scripts/test-money-input.cjs",
     "test:exclusions": "node scripts/test-insurance-exclusions.cjs",
     "test:wants": "tsx scripts/test-wants.ts",
-    "test:ai-scan": "tsx scripts/test-ai-scan-guard.ts"
+    "test:ai-scan": "tsx scripts/test-ai-scan-guard.ts",
+    "test:ai-gate": "tsx scripts/test-ai-endpoints-gated.ts"
   },
   "dependencies": {
     "@imgly/background-removal": "^1.7.0",

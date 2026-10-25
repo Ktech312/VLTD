@@ -1,20 +1,26 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import { getServiceClient } from "@/lib/serverAdmin";
 
 // The gate in front of every paid AI scan (api/ai/analyze-item and api/ai/analyze-coa).
 //
 // Nothing reaches the AI provider unless ALL of these hold, checked in this order, each one before any paid request:
 //   1. the caller is signed in (the Supabase access token is verified by Supabase, server side);
 //   2. the image is a real, small-enough JPEG, PNG, WebP or GIF (checked from its bytes, not from the name or the type the browser claims);
-//   3. the caller is a member of the profile named in the request AND that profile has an AI scan left in its existing monthly allowance. One scan is RESERVED
-//      atomically in the database before the provider is called (the database checks the membership itself, from the caller's own token);
+//   3. the VERIFIED caller (the user id Supabase returned for the token, never anything the browser says) is a member of the profile named in the request AND that profile has an
+//      AI scan left in its existing monthly allowance. One scan is RESERVED atomically in the database before the provider is called;
 //   4. the same request id has not already been reserved or finished (a double press or a replay spends nothing).
 // When the provider then fails (it could not be reached, it refused, it was busy) the scan is given back. When it answered, the scan stays spent.
 //
+// WHO DECIDES: only this server. Reserving, completing and refunding are done with the service role; the database functions refuse every other caller, so a signed-in browser
+// can neither mark its own in-flight reservation complete nor refund it. (It is also why the service role is used even for the older consume_bulk_scan: called with a member's own
+// token it answers "granted" but the billing-column trigger on profiles silently undoes the counter change, so the allowance would never move.)
+//
 // Two modes, chosen by what the database has:
 //   full   reserve_ai_scan / complete_ai_scan exist (SQL package 10): repeated requests are recognised in the database, failures give the scan back.
-//   basic  they do not exist yet: the existing atomic consume_bulk_scan(profile, 1) is used before the call. A repeated request is recognised only within this
-//          server instance's memory, and a failed provider call is not given back. Everything else (sign-in, membership, allowance, image checks) is identical.
+//   basic  they do not exist yet: this server checks the membership itself (profile_members, for the verified user) and then uses the existing atomic consume_bulk_scan(profile, 1)
+//          as the service role before the call. A repeated request is recognised only within this server instance's memory, and a failed provider call is not given back.
+//          Everything else (sign-in, membership, allowance, image checks) is identical.
 // No allowance numbers are invented here: the limits, tiers, per-person overrides and the signup-anniversary cycle are the ones the database already has.
 
 export const MAX_IMAGE_BYTES = 4_000_000; // Vercel refuses request bodies over 4.5 MB; a phone photo is resized well below this before it is sent
@@ -112,9 +118,9 @@ const notAuthorised = (e: { code?: string; message?: string }) => /not authorize
 type RpcRow = Record<string, unknown>;
 const firstRow = (data: unknown): RpcRow | null => (Array.isArray(data) ? ((data[0] as RpcRow) ?? null) : (data as RpcRow | null));
 
-async function reserve(client: SupabaseClient, profileId: string, requestId: string, kind: ScanKind): Promise<ReserveResult> {
+async function reserve(svc: SupabaseClient, userId: string, profileId: string, requestId: string, kind: ScanKind): Promise<ReserveResult> {
   const key = `${profileId}:${requestId}`;
-  const { data, error } = await client.rpc("reserve_ai_scan", { p_profile: profileId, p_request: requestId, p_kind: kind });
+  const { data, error } = await svc.rpc("reserve_ai_scan", { p_user: userId, p_profile: profileId, p_request: requestId, p_kind: kind });
   if (!error) {
     const row = firstRow(data);
     const outcome = String(row?.outcome ?? "");
@@ -124,9 +130,16 @@ async function reserve(client: SupabaseClient, profileId: string, requestId: str
   if (notAuthorised(error)) return { ok: false, reason: "not_member", detail: error.message };
   if (!missingFunction(error)) return { ok: false, reason: "unavailable", detail: `${error.code ?? ""} ${error.message}`.trim().slice(0, 200) };
 
-  // Basic mode (SQL package 10 not run yet).
+  // Basic mode (SQL package 10 not run yet). The service role does not go through the database's membership guard, so the membership of the VERIFIED user is checked here first.
+  if (profileId !== userId) {
+    const member = await svc.from("profile_members").select("profile_id").eq("profile_id", profileId).eq("user_id", userId).limit(1);
+    if (member.error) return { ok: false, reason: "unavailable", detail: `${member.error.code ?? ""} ${member.error.message}`.trim().slice(0, 200) };
+    if (!member.data || member.data.length === 0) return { ok: false, reason: "not_member", detail: "not a member of that profile" };
+  }
   if (basicSeen.has(key)) return { ok: true, mode: "basic", outcome: "duplicate", allowance: { limit: 0, used: 0, remaining: 0, resetsOn: null } };
-  const spent = await client.rpc("consume_bulk_scan", { p_profile: profileId, p_count: 1 });
+  // Roll a lapsed allowance cycle forward under the server's own authority first (a member's own call to this would be half-undone by the billing-column trigger).
+  await svc.rpc("bulk_scan_status", { p_profile: profileId });
+  const spent = await svc.rpc("consume_bulk_scan", { p_profile: profileId, p_count: 1 });
   if (spent.error) {
     if (notAuthorised(spent.error)) return { ok: false, reason: "not_member", detail: spent.error.message };
     return { ok: false, reason: "unavailable", detail: `${spent.error.code ?? ""} ${spent.error.message}`.trim().slice(0, 200) };
@@ -139,9 +152,9 @@ async function reserve(client: SupabaseClient, profileId: string, requestId: str
   return { ok: true, mode: "basic", outcome: "reserved", allowance };
 }
 
-async function complete(client: SupabaseClient, profileId: string, requestId: string, succeeded: boolean): Promise<Allowance | null> {
+async function complete(svc: SupabaseClient, profileId: string, requestId: string, succeeded: boolean): Promise<Allowance | null> {
   try {
-    const { data, error } = await client.rpc("complete_ai_scan", { p_profile: profileId, p_request: requestId, p_succeeded: succeeded });
+    const { data, error } = await svc.rpc("complete_ai_scan", { p_profile: profileId, p_request: requestId, p_succeeded: succeeded });
     if (error) {
       console.error("[scan-guard] could not complete the reservation:", error.message);
       return null;
@@ -214,9 +227,13 @@ export async function guardedScan(req: NextRequest, kind: ScanKind, run: (ctx: S
   const checked = inspectImage(bytes);
   if (!checked.ok) return refuse(checked.status, checked.code, checked.message);
 
-  // 3 and 4. membership, allowance and the request id, decided atomically in the database
-  const client = createClient(url, anonKey, { auth: { persistSession: false, autoRefreshToken: false }, global: { headers: { Authorization: `Bearer ${token}` } } });
-  const reserved = await reserve(client, profileId, requestId, kind);
+  // 3 and 4. membership of the verified user, the allowance and the request id, decided atomically in the database by the trusted server
+  const svc = getServiceClient();
+  if (!svc) {
+    console.error("[scan-guard] the service client is not configured");
+    return refuse(503, "unavailable", "AI scanning is temporarily unavailable. Fill the details in by hand for now.");
+  }
+  const reserved = await reserve(svc, userId, profileId, requestId, kind);
   if (!reserved.ok) {
     if (reserved.reason === "not_member") return refuse(403, "not_member", "That profile is not yours, so it cannot use AI scans.");
     console.error("[scan-guard] reservation unavailable:", reserved.detail);
@@ -238,7 +255,8 @@ export async function guardedScan(req: NextRequest, kind: ScanKind, run: (ctx: S
 
   let allowance = reserved.allowance;
   if (reserved.mode === "full") {
-    const after = await complete(client, profileId, requestId, result.ok || !result.refund);
+    // Only this server says whether the provider answered and whether a refund is due.
+    const after = await complete(svc, profileId, requestId, result.ok || !result.refund);
     if (after) allowance = { ...allowance, ...after, resetsOn: allowance.resetsOn };
   }
   const allowanceBody = { remaining: allowance.remaining, limit: allowance.limit, used: allowance.used };

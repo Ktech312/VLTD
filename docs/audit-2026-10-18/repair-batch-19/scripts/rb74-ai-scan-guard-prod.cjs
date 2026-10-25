@@ -72,9 +72,20 @@ const used = async () => (await admin.from("profiles").select("bulk_scans_used,b
     }
     const after = await used();
     ck(after.bulk_scans_used === before.bulk_scans_used, "a refused (over-limit) request spends nothing", "unchanged", JSON.stringify([before, after]));
+    // an allowance used up EXACTLY (2 of 2): the server reads the real counter (it is moved by the server only; a member's own session cannot move it)
+    const exact = await admin.from("profiles").update({ bulk_scan_limit_override: 2, bulk_scans_used: 2 }).eq("id", P);
+    ck(!exact.error, "setup: the QA profile set to 2 scans used of 2 (by the server's own authority)", "ok", exact.error ? exact.error.message : "ok");
+    const stored = await used();
+    ck(stored.bulk_scans_used === 2, "setup check: the counter really holds 2 (so the next answer is read from it)", "2", JSON.stringify(stored));
+    for (const [label, route] of [["item scan", "analyze-item"], ["certificate scan", "analyze-coa"]]) {
+      const x = await call(route, { tok: ownerTok });
+      ck(x.status === 429 && x.body.code === "limit" && x.body.limit === 2 && x.body.used === 2, `${label}: 2 used of 2 is refused (429), read from the real counter by the server`, "429 limit 2 of 2", JSON.stringify([x.status, x.body.code, x.body.limit, x.body.used]));
+    }
+    const still = await used();
+    ck(still.bulk_scans_used === 2, "and the refusals changed nothing (still 2)", "2", JSON.stringify(still));
   } catch (e) { out.error = String((e && e.stack) || e).slice(0, 600); console.error("RUNNER ERROR", e); }
   finally {
-    try { await admin.from("profiles").update({ bulk_scan_limit_override: null }).eq("id", P); } catch { /* removed with the account anyway */ }
+    try { await admin.from("profiles").update({ bulk_scan_limit_override: null, bulk_scans_used: 0 }).eq("id", P); } catch { /* removed with the account anyway */ }
     fs.writeFileSync(path.join(EV, `rb74-${LABEL}.json`), JSON.stringify(out, null, 1));
     console.log(out.cases.map((c) => (c.ok ? "PASS " : "FAIL ") + c.control).join("\n"), out.error ? "\nRUNNER ERROR " + out.error : "");
     process.exit(0);
