@@ -25,7 +25,8 @@ import {
 import { analyzeImageWithVision, type VisionAnalysisResult } from "@/lib/ai/openaiVision";
 import { matchVisionCategory, matchVisionSubcategory, matchVisionUniverse } from "@/lib/visionTaxonomy";
 import { getStoredActiveProfileId } from "@/lib/auth";
-import { getBulkScanStatus, consumeBulkScans } from "@/lib/bulkScanQuota";
+import { getBulkScanStatus } from "@/lib/bulkScanQuota";
+import { ScanRefusedError, stopsTheBatch } from "@/lib/ai/scanRequest";
 import { useUnsavedChangesGuard } from "@/hooks/useUnsavedChangesGuard";
 import { useCameraZoom, type CameraCaptureCrop } from "@/hooks/useCameraZoom";
 import { classifyBackCameras } from "@/lib/scanners/cameraLenses";
@@ -659,22 +660,20 @@ export default function ScanCapturePanel({ onClose }: { onClose: () => void }) {
         AI_SCAN_TIMEOUT_MS
       );
 
-        // Only charge the quota when a scan actually produced a result.
-        if (metered) {
-          const res = await consumeBulkScans(profileId, 1);
-          if (res) {
-            localRemaining = res.remaining;
-            setScanRemaining(res.remaining);
-            if (res.granted === 0) {
-              stopped = "You've used all your AI scans for this cycle — fill the rest in by hand.";
-              break;
-            }
-          }
+        // The server spent this scan before the AI was called (and gives it back if the AI fails); the numbers come from its answer. Nothing is charged here.
+        if (metered && vision.allowance) {
+          localRemaining = vision.allowance.remaining;
+          setScanRemaining(vision.allowance.remaining);
         }
 
         const patch = visionToDraftPatch(vision, draft.universe, draft.categoryLabel);
         setDrafts((prev) => prev.map((d) => (d.id === draft.id ? { ...d, ...patch } : d)));
-      } catch {
+      } catch (err) {
+        if (stopsTheBatch(err)) {
+          if (err.code === "limit") { localRemaining = 0; setScanRemaining(0); }
+          stopped = err.message;
+          break;
+        }
         // Leave this draft blank for manual entry, and count it so the person is told.
         failed += 1;
       }
@@ -709,23 +708,16 @@ export default function ScanCapturePanel({ onClose }: { onClose: () => void }) {
         }),
         AI_SCAN_TIMEOUT_MS
       );
-      let charged = true;
-      if (metered) {
-        const res = await consumeBulkScans(profileId, 1);
-        if (res) {
-          setScanRemaining(res.remaining);
-          if (res.granted === 0) {
-            setVerifyStatus("No AI scans left this cycle — fill this one in by hand.");
-            charged = false;
-          }
-        }
+      if (metered && vision.allowance) setScanRemaining(vision.allowance.remaining);
+      const patch = visionToDraftPatch(vision, draft.universe, draft.categoryLabel);
+      setDrafts((prev) => prev.map((d) => (d.id === id ? { ...d, ...patch } : d)));
+    } catch (err) {
+      if (err instanceof ScanRefusedError) {
+        if (err.code === "limit") setScanRemaining(0);
+        setVerifyStatus(err.message);
+      } else {
+        setVerifyStatus("Couldn't identify that one — try again or fill it in by hand.");
       }
-      if (charged) {
-        const patch = visionToDraftPatch(vision, draft.universe, draft.categoryLabel);
-        setDrafts((prev) => prev.map((d) => (d.id === id ? { ...d, ...patch } : d)));
-      }
-    } catch {
-      setVerifyStatus("Couldn't identify that one — try again or fill it in by hand.");
     }
     setScanningId(null);
   }

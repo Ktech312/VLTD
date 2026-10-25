@@ -690,7 +690,7 @@ async function main() {
       assert.ok(body.errors.some((e: string) => /credit balance is too low/.test(e)));
     });
   });
-  await test("monthly allowance: SerpApi's figures are read first (free, not a search) and a shortfall stops the run with nothing spent, stating exactly what it is", async () => {
+  await test("monthly allowance: SerpApi's figures are read first (free, not a search) and a shortfall stops the run before any search or AI request, stating exactly what it is", async () => {
     const cases: Array<[string, World["account"], RegExp]> = [
       ["too few searches left", "low", /plan "Free Plan": 10 of 250 monthly searches left, this run needs 24 \(short by 14\)/],
       ["only bought extra credits would cover it (not used: no overage)", "extra-only", /5 of 250 monthly searches left, this run needs 24 \(short by 19\)/],

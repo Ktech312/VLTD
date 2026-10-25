@@ -1,4 +1,4 @@
-import { getStoredActiveProfileId } from "@/lib/auth";
+import { ScanRefusedError, postScan, type ScanAllowance } from "@/lib/ai/scanRequest";
 
 export type VisionAnalysisResult = {
   title: string;
@@ -19,6 +19,8 @@ export type VisionAnalysisResult = {
   categoryLabel: string;
   subcategoryLabel: string;
   estimatedValue?: number;
+  /** The profile's AI scans after this one, as the server counted them (the server spends the scan; the browser never charges it). */
+  allowance?: ScanAllowance;
 };
 
 export const AI_ASSIST_SETUP_MESSAGE =
@@ -36,28 +38,16 @@ export async function analyzeImageWithVision(
   if (options?.universe?.trim()) formData.append("universe", options.universe.trim());
   if (options?.category?.trim()) formData.append("category", options.category.trim());
   if (options?.subcategory?.trim()) formData.append("subcategory", options.subcategory.trim());
-  const profileId = getStoredActiveProfileId();
-  if (profileId) formData.append("profileId", profileId);
-
-  const response = await fetch("/api/ai/analyze-item", {
-    method: "POST",
-    body: formData,
-  });
-
-  const payload = (await response.json()) as Partial<VisionAnalysisResult> & {
-    error?: string;
-    details?: string;
-  };
-
-  if (!response.ok) {
-    const message =
-      payload.error || payload.details || "Vision analysis failed.";
-
-    if (/ANTHROPIC_API_KEY|Gemini_API_Key|GEMINI_API_KEY|GOOGLE_API_KEY|not configured|AI Assist is not set up|unavailable/i.test(message)) {
-      throw new Error(AI_ASSIST_SETUP_MESSAGE);
-    }
-
-    throw new Error(message);
+  // The sign-in token, the profile and a request id are added by postScan; the server checks them before anything is paid for.
+  let payload: Partial<VisionAnalysisResult>;
+  let allowance: ScanAllowance | undefined;
+  try {
+    const sent = await postScan<Partial<VisionAnalysisResult>>("/api/ai/analyze-item", formData);
+    payload = sent.data;
+    allowance = sent.allowance;
+  } catch (err) {
+    if (err instanceof ScanRefusedError && err.code === "not_configured") throw new Error(AI_ASSIST_SETUP_MESSAGE);
+    throw err;
   }
 
   return {
@@ -85,5 +75,6 @@ export async function analyzeImageWithVision(
       typeof payload.estimatedValue === "number" && Number.isFinite(payload.estimatedValue)
         ? payload.estimatedValue
         : undefined,
+    allowance,
   };
 }

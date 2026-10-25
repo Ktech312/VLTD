@@ -29,7 +29,8 @@ import {
   saveImageBlobToIndexedDb,
 } from "@/lib/vaultImageStore";
 import { getStoredActiveProfileId } from "@/lib/auth";
-import { getBulkScanStatus, consumeBulkScans } from "@/lib/bulkScanQuota";
+import { getBulkScanStatus } from "@/lib/bulkScanQuota";
+import { ScanRefusedError, stopsTheBatch } from "@/lib/ai/scanRequest";
 import {
   getUniverses,
   getCategories,
@@ -257,22 +258,20 @@ export default function BulkUploadPage() {
       try {
         const vision = await analyzeImageWithVision(draft.file, { universe, category, subcategory });
 
-        // Only charge the quota for a scan that actually produced a result.
-        if (profileId) {
-          const res = await consumeBulkScans(profileId, 1);
-          if (res) {
-            localRemaining = res.remaining;
-            setRemaining(res.remaining);
-            if (res.granted === 0) {
-              // Server says the cycle is spent (e.g. another device used them).
-              setStatus("You've used all your AI scans for this cycle. The rest are ready to fill in by hand.");
-              break;
-            }
-          }
+        // The server spent this scan before the AI was called (and gives it back if the AI fails); the numbers come from its answer. Nothing is charged here.
+        if (profileId && vision.allowance) {
+          localRemaining = vision.allowance.remaining;
+          setRemaining(vision.allowance.remaining);
         }
 
         patchDraft(draft.id, visionToDraftPatch(vision));
       } catch (err) {
+        if (stopsTheBatch(err)) {
+          // Spent (also on another device), not signed in, or not this profile: say so and leave the rest for manual entry.
+          if (err.code === "limit") { localRemaining = 0; setRemaining(0); }
+          setStatus(err.message);
+          break;
+        }
         console.error("[Bulk] Scan failed for one image:", err);
         // Leave the draft as-is for manual entry.
       }
@@ -304,20 +303,16 @@ export default function BulkUploadPage() {
       setStatus("");
       try {
         const vision = await analyzeImageWithVision(draft.file, { universe, category, subcategory });
-        if (profileId) {
-          const res = await consumeBulkScans(profileId, 1);
-          if (res) {
-            setRemaining(res.remaining);
-            if (res.granted === 0) {
-              setStatus("No AI scans left this cycle — fill this one in by hand.");
-              return;
-            }
-          }
-        }
+        if (profileId && vision.allowance) setRemaining(vision.allowance.remaining);
         patchDraft(draft.id, visionToDraftPatch(vision));
       } catch (err) {
         console.error("[Bulk] Rescan failed:", err);
-        setStatus("Couldn't identify that one — try again or fill it in by hand.");
+        if (err instanceof ScanRefusedError) {
+          if (err.code === "limit") setRemaining(0);
+          setStatus(err.message);
+        } else {
+          setStatus("Couldn't identify that one — try again or fill it in by hand.");
+        }
       } finally {
         setScanningId(null);
       }

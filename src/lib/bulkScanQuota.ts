@@ -21,13 +21,6 @@ export type BulkScanStatus = {
   cycleEnd: string | null;
 };
 
-export type ConsumeResult = {
-  granted: number;
-  scanLimit: number;
-  used: number;
-  remaining: number;
-};
-
 export type TierQuota = { tier: Tier; monthlyLimit: number };
 
 // ── Runtime (used by the bulk flow + ticker) ────────────────────
@@ -49,27 +42,8 @@ export async function getBulkScanStatus(profileId: string): Promise<BulkScanStat
   };
 }
 
-/**
- * Spend up to `count` scans atomically. Returns how many were actually
- * granted (may be fewer than asked, or 0 at the limit) plus the new totals.
- */
-export async function consumeBulkScans(profileId: string, count = 1): Promise<ConsumeResult | null> {
-  const supabase = getSupabaseBrowserClient();
-  if (!supabase) return null;
-  const { data, error } = await supabase.rpc("consume_bulk_scan", {
-    p_profile: profileId,
-    p_count: count,
-  });
-  if (error || !data) return null;
-  const row = Array.isArray(data) ? data[0] : data;
-  if (!row) return null;
-  return {
-    granted: row.granted ?? 0,
-    scanLimit: row.scan_limit ?? 0,
-    used: row.used ?? 0,
-    remaining: row.remaining ?? 0,
-  };
-}
+// There is deliberately NO browser-side "spend a scan" any more. The AI scan routes reserve the scan on the server before the provider is called
+// (lib/server/scanGuard.ts), so charging here as well would take two scans for one. The browser only reads the status above.
 
 // ── Admin (used by /admin/scan-limits) ──────────────────────────
 

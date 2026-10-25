@@ -50,7 +50,8 @@ import { getStoredActiveProfileId } from "@/lib/auth";
 import { storedSessionUserId } from "@/lib/sessionGuard";
 import { parseMoneyInput } from "@/lib/moneyInput";
 import { captureDraftScope, clearCaptureDraft, draftHasContent, loadCaptureDraft, saveCaptureDraft } from "@/lib/captureDraft";
-import { getBulkScanStatus, consumeBulkScans } from "@/lib/bulkScanQuota";
+import { getBulkScanStatus } from "@/lib/bulkScanQuota";
+import { ScanRefusedError } from "@/lib/ai/scanRequest";
 
 const UNIVERSES = getUniverses();
 
@@ -690,9 +691,15 @@ export default function CapturePage() {
         isTcgCardContext ? lookupTcgCardFromFile(file) : Promise.resolve(null),
       ]);
 
-      let vision = visionSettled.status === "fulfilled" ? visionSettled.value : null;
+      const vision = visionSettled.status === "fulfilled" ? visionSettled.value : null;
+      let scanRefusal = "";
       if (visionSettled.status === "rejected") {
         console.error("[Capture] Vision error:", visionSettled.reason);
+        // A refusal (allowance spent, not signed in, not this profile, a photo that cannot be scanned) is explained; any other failure falls through to the usual wording.
+        if (visionSettled.reason instanceof ScanRefusedError) {
+          scanRefusal = visionSettled.reason.message;
+          if (visionSettled.reason.code === "limit") setScanRemaining(0);
+        }
       }
 
       const comicScan = comicSettled.status === "fulfilled" ? comicSettled.value : null;
@@ -705,13 +712,8 @@ export default function CapturePage() {
         console.error("[Capture] Card lookup error:", cardSettled.reason);
       }
 
-      if (vision && metered) {
-        const res = await consumeBulkScans(profileId, 1);
-        if (res) {
-          setScanRemaining(res.remaining);
-          if (res.granted === 0) vision = null;
-        }
-      }
+      // The server spent this scan before the AI was called; the number comes from its answer. Nothing is charged here.
+      if (vision?.allowance && metered) setScanRemaining(vision.allowance.remaining);
 
       // UPC lookup if a barcode was detected
       let upcData: Awaited<ReturnType<typeof lookupUpcItem>> | null = null;
@@ -734,8 +736,8 @@ export default function CapturePage() {
       const comicHasResult = Boolean(comicScan && (comicScan.barcode || comicScan.titleText || comicScan.issueText));
       const cardHasResult = Boolean(cardResult);
 
-      if (scanExhausted && !upcData && !comicHasResult && !cardHasResult) {
-        setErrorMsg("You've used all your AI scans for this cycle — fill it in by hand.");
+      if ((scanExhausted || scanRefusal) && !upcData && !comicHasResult && !cardHasResult) {
+        setErrorMsg(scanRefusal || "You've used all your AI scans for this cycle — fill it in by hand.");
         setAnalyzing(false);
         return;
       }

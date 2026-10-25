@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { TAXONOMY, UNIVERSE_KEYS, UNIVERSE_LABEL } from "@/lib/taxonomy";
 import { getServiceClient } from "@/lib/serverAdmin";
+import { SCAN_FIELD_MAX_CHARS, SCAN_HINT_MAX_CHARS, callVision, clip, guardedScan } from "@/lib/server/scanGuard";
+
+// The paid call sits behind lib/server/scanGuard.ts: signed in, the image checked from its bytes, membership of the profile and one scan reserved from the profile's
+// existing monthly allowance, all before the provider is called; the scan is given back if the provider fails.
+export const maxDuration = 60;
 
 // Best-effort usage logging for the future per-user analytics EK asked for
 // (Users admin page: AI calls + tokens per account, alongside the existing
@@ -135,29 +140,11 @@ function gradingScaleInstructions(universe: string, category: string) {
 }
 
 export async function POST(req: NextRequest) {
-  try {
-    const apiKey = process.env.ANTHROPIC_API_KEY;
-    if (!apiKey) {
-      return NextResponse.json(
-        { error: "AI identification is not configured." },
-        { status: 503 }
-      );
-    }
-
-    const formData = await req.formData();
-    const image = formData.get("image");
-    const hints = String(formData.get("hints") ?? "").trim();
-    const universe = String(formData.get("universe") ?? "").trim();
-    const category = String(formData.get("category") ?? "").trim();
-    const subcategory = String(formData.get("subcategory") ?? "").trim();
-    const profileId = String(formData.get("profileId") ?? "").trim() || null;
-
-    if (!(image instanceof File)) {
-      return NextResponse.json({ error: "Missing image upload." }, { status: 400 });
-    }
-
-    const arrayBuffer = await image.arrayBuffer();
-    const base64 = Buffer.from(arrayBuffer).toString("base64");
+  return guardedScan(req, "item", async ({ form, base64, mime, profileId, apiKey }) => {
+    const hints = clip(form.get("hints"), SCAN_HINT_MAX_CHARS);
+    const universe = clip(form.get("universe"), SCAN_FIELD_MAX_CHARS);
+    const category = clip(form.get("category"), SCAN_FIELD_MAX_CHARS);
+    const subcategory = clip(form.get("subcategory"), SCAN_FIELD_MAX_CHARS);
     const gradingInstructions = gradingScaleInstructions(universe, category);
 
     const preClassified = Boolean(universe || category || subcategory);
@@ -223,98 +210,50 @@ card if it pictures an athlete.`,
       .filter(Boolean)
       .join("\n\n");
 
-    let response: Response;
+    const call = await callVision(apiKey, base64, mime, prompt, 1024);
+    if (call.kind === "network") {
+      console.error("Claude fetch error:", call.error);
+      return { ok: false, status: 503, body: { error: "AI request failed", code: "provider_unreachable" }, refund: true };
+    }
+    if (call.kind === "busy") return { ok: false, status: 429, body: { error: "AI is busy right now. Please wait a moment and try again.", code: "busy" }, refund: true };
+    if (call.kind === "failed") {
+      console.error("Claude non-OK response:", call.status, call.details);
+      return { ok: false, status: 502, body: { error: "AI Vision request failed.", code: "provider_failed" }, refund: true };
+    }
+
+    let parsed: VisionRouteResult;
     try {
-      response = await fetch("https://api.anthropic.com/v1/messages", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-api-key": apiKey,
-          "anthropic-version": "2023-06-01",
-        },
-        body: JSON.stringify({
-          model: "claude-haiku-4-5-20251001",
-          max_tokens: 1024,
-          messages: [
-            {
-              role: "user",
-              content: [
-                {
-                  type: "image",
-                  source: {
-                    type: "base64",
-                    media_type: image.type || "image/jpeg",
-                    data: base64,
-                  },
-                },
-                {
-                  type: "text",
-                  text: prompt,
-                },
-              ],
-            },
-          ],
-        }),
-      });
+      parsed = sanitizeVisionResult(extractJsonObject(call.text));
     } catch (err) {
-      console.error("Claude fetch error:", err);
-      return NextResponse.json(
-        { error: "AI request failed", detail: String(err) },
-        { status: 503 }
-      );
+      // The provider answered (and charged), so the scan stays spent.
+      void logAiUsage(profileId, "analyze-item", call.usage);
+      return { ok: false, status: 502, body: { error: err instanceof Error ? err.message : "AI did not return JSON.", code: "unreadable_answer" }, refund: false };
     }
 
-    if (response.status === 429) {
-      return NextResponse.json(
-        { error: "AI is busy right now. Please wait a moment and try again." },
-        { status: 429 }
-      );
-    }
+    void logAiUsage(profileId, "analyze-item", call.usage);
 
-    if (!response.ok) {
-      const details = await response.text();
-      console.error("Claude non-OK response:", response.status, details);
-      return NextResponse.json(
-        { error: "AI Vision request failed.", details },
-        { status: 502 }
-      );
-    }
-
-    const result = (await response.json()) as {
-      content?: { type: string; text: string }[];
-      usage?: { input_tokens?: number; output_tokens?: number };
-    };
-    const rawText = result.content?.[0]?.text || "{}";
-    const parsed = sanitizeVisionResult(extractJsonObject(rawText));
-
-    void logAiUsage(profileId, "analyze-item", result.usage);
-
-    return NextResponse.json({
-      title: parsed.detectedTitle,
-      subtitle: parsed.subtitle ?? "",
-      year: parsed.year ?? "",
-      brand: parsed.brand ?? "",
-      grade: parsed.grade ?? "",
-      certNumber: parsed.certNumber ?? "",
-      condition: parsed.condition ?? "",
-      conditionReason: parsed.conditionReason ?? "",
-      conditionConfidence: parsed.conditionConfidence ?? 0,
-      description: parsed.notes ?? "",
-      confidence: parsed.confidence,
-      barcode: parsed.barcode ?? "",
-      number: parsed.number ?? "",
-      estimatedValue: parsed.estimatedValue,
-      universe: parsed.universe ?? "",
-      category: parsed.categoryLabel ?? "",
-      categoryLabel: parsed.categoryLabel ?? "",
-      subcategoryLabel: parsed.subcategoryLabel ?? "",
-    });
-  } catch (error) {
-    return NextResponse.json(
-      {
-        error: error instanceof Error ? error.message : "Unknown AI analysis error.",
+    return {
+      ok: true,
+      body: {
+        title: parsed.detectedTitle,
+        subtitle: parsed.subtitle ?? "",
+        year: parsed.year ?? "",
+        brand: parsed.brand ?? "",
+        grade: parsed.grade ?? "",
+        certNumber: parsed.certNumber ?? "",
+        condition: parsed.condition ?? "",
+        conditionReason: parsed.conditionReason ?? "",
+        conditionConfidence: parsed.conditionConfidence ?? 0,
+        description: parsed.notes ?? "",
+        confidence: parsed.confidence,
+        barcode: parsed.barcode ?? "",
+        number: parsed.number ?? "",
+        estimatedValue: parsed.estimatedValue,
+        universe: parsed.universe ?? "",
+        category: parsed.categoryLabel ?? "",
+        categoryLabel: parsed.categoryLabel ?? "",
+        subcategoryLabel: parsed.subcategoryLabel ?? "",
       },
-      { status: 500 }
-    );
-  }
+    };
+  });
 }

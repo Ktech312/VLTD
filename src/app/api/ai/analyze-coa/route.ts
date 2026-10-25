@@ -1,5 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServiceClient } from "@/lib/serverAdmin";
+import { callVision, guardedScan } from "@/lib/server/scanGuard";
+
+// The paid call sits behind lib/server/scanGuard.ts (signed in, image checked, membership and one scan reserved from the existing allowance before the provider is called).
+export const maxDuration = 60;
 
 // Same best-effort usage logging as analyze-item/route.ts -- see that file
 // for the reasoning (EK's Users-admin-page analytics ask, 2026-08-23).
@@ -43,23 +47,7 @@ function extractJsonObject(raw: string) {
 }
 
 export async function POST(req: NextRequest) {
-  try {
-    const apiKey = process.env.ANTHROPIC_API_KEY;
-    if (!apiKey) {
-      return NextResponse.json({ error: "AI not configured." }, { status: 503 });
-    }
-
-    const formData = await req.formData();
-    const image = formData.get("image");
-    const profileId = String(formData.get("profileId") ?? "").trim() || null;
-
-    if (!(image instanceof File)) {
-      return NextResponse.json({ error: "Missing image." }, { status: 400 });
-    }
-
-    const arrayBuffer = await image.arrayBuffer();
-    const base64 = Buffer.from(arrayBuffer).toString("base64");
-
+  return guardedScan(req, "coa", async ({ base64, mime, profileId, apiKey }) => {
     const prompt = `This image is a Certificate of Authenticity, authentication label, grading slab label, or similar certification document for a collectible item.
 
 Extract all available information and return ONLY a JSON object with this exact schema:
@@ -80,60 +68,34 @@ Rules:
 - Leave fields as empty string "" if not visible or not applicable
 - Return ONLY the JSON object, no explanation, no markdown`;
 
-    const response = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-api-key": apiKey,
-        "anthropic-version": "2023-06-01",
-      },
-      body: JSON.stringify({
-        model: "claude-haiku-4-5-20251001",
-        max_tokens: 512,
-        messages: [
-          {
-            role: "user",
-            content: [
-              {
-                type: "image",
-                source: { type: "base64", media_type: image.type || "image/jpeg", data: base64 },
-              },
-              { type: "text", text: prompt },
-            ],
-          },
-        ],
-      }),
-    });
+    const call = await callVision(apiKey, base64, mime, prompt, 512);
+    if (call.kind === "network") return { ok: false, status: 503, body: { error: "AI request failed.", code: "provider_unreachable" }, refund: true };
+    if (call.kind === "busy") return { ok: false, status: 429, body: { error: "AI is busy right now. Please wait a moment and try again.", code: "busy" }, refund: true };
+    if (call.kind === "failed") return { ok: false, status: 502, body: { error: "AI request failed.", code: "provider_failed" }, refund: true };
 
-    if (!response.ok) {
-      return NextResponse.json({ error: "AI request failed." }, { status: 502 });
+    let parsed: Partial<CoaAnalysisResult>;
+    try {
+      parsed = extractJsonObject(call.text);
+    } catch (err) {
+      // The provider answered (and charged), so the scan stays spent.
+      void logAiUsage(profileId, "analyze-coa", call.usage);
+      return { ok: false, status: 502, body: { error: err instanceof Error ? err.message : "No JSON returned.", code: "unreadable_answer" }, refund: false };
     }
 
-    const result = (await response.json()) as {
-      content?: { type: string; text: string }[];
-      usage?: { input_tokens?: number; output_tokens?: number };
+    void logAiUsage(profileId, "analyze-coa", call.usage);
+
+    return {
+      ok: true,
+      body: {
+        certNumber: String(parsed.certNumber ?? "").trim(),
+        grade: String(parsed.grade ?? "").trim(),
+        authenticator: String(parsed.authenticator ?? "").trim(),
+        itemDescription: String(parsed.itemDescription ?? "").trim(),
+        signerName: String(parsed.signerName ?? "").trim(),
+        authDate: String(parsed.authDate ?? "").trim(),
+        notes: String(parsed.notes ?? "").trim(),
+        confidence: typeof parsed.confidence === "number" ? Math.max(0, Math.min(1, parsed.confidence)) : 0.5,
+      } satisfies CoaAnalysisResult,
     };
-    const rawText = result.content?.[0]?.text || "{}";
-    const parsed = extractJsonObject(rawText);
-
-    void logAiUsage(profileId, "analyze-coa", result.usage);
-
-    return NextResponse.json({
-      certNumber: String(parsed.certNumber ?? "").trim(),
-      grade: String(parsed.grade ?? "").trim(),
-      authenticator: String(parsed.authenticator ?? "").trim(),
-      itemDescription: String(parsed.itemDescription ?? "").trim(),
-      signerName: String(parsed.signerName ?? "").trim(),
-      authDate: String(parsed.authDate ?? "").trim(),
-      notes: String(parsed.notes ?? "").trim(),
-      confidence: typeof parsed.confidence === "number"
-        ? Math.max(0, Math.min(1, parsed.confidence))
-        : 0.5,
-    } satisfies CoaAnalysisResult);
-  } catch (err) {
-    return NextResponse.json(
-      { error: err instanceof Error ? err.message : "Unknown error." },
-      { status: 500 }
-    );
-  }
+  });
 }

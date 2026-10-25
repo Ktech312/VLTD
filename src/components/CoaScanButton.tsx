@@ -4,7 +4,7 @@ import { PillButton } from "@/components/ui/PillButton";
 import { useRef, useState } from "react";
 import { AppIcon } from "@/components/ui/AppIcon";
 import type { CoaAnalysisResult } from "@/app/api/ai/analyze-coa/route";
-import { getStoredActiveProfileId } from "@/lib/auth";
+import { postScan } from "@/lib/ai/scanRequest";
 
 type Props = {
   onApply: (data: CoaAnalysisResult, imageFile: File) => void;
@@ -29,11 +29,8 @@ export default function CoaScanButton({ onApply }: Props) {
     try {
       const form = new FormData();
       form.append("image", file);
-      const profileId = getStoredActiveProfileId();
-      if (profileId) form.append("profileId", profileId);
-      const res = await fetch("/api/ai/analyze-coa", { method: "POST", body: form });
-      if (!res.ok) throw new Error("Scan failed.");
-      const data = (await res.json()) as CoaAnalysisResult;
+      // Sign-in, profile and the request id are added by postScan; the server spends one scan from the allowance before reading the certificate.
+      const { data } = await postScan<CoaAnalysisResult>("/api/ai/analyze-coa", form);
       setResult(data);
       setPhase("review");
     } catch (err) {

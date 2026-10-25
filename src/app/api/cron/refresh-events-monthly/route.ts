@@ -115,7 +115,7 @@ export async function GET(req: NextRequest) {
   if (!svc) return NextResponse.json({ error: "not_configured", message: "Supabase service client unavailable. No search was made." }, { status: 500 });
 
   // BEFORE the first search is paid for: (1) SerpApi's own figures must show the plan's monthly allowance covers every search; (2) one tiny AI request must succeed, so searches are
-  // never bought that the AI check could not then judge. A shortfall stops the run with nothing spent and says exactly what it is. Neither check is retried.
+  // never bought that the AI check could not then judge. A SerpApi allowance shortfall stops the run before any search or AI request; a refused AI request stops it before any search. The AI request is itself a PAID request (it can consume a little credit when it succeeds), so a run that goes on to search has already spent that. Neither check is retried; each says exactly what is short.
   const needed = planCounts().serpSearches;
   // ONCE A MONTH: claim this month's marker before anything is sent. An invocation that finds it taken (a second cron firing, a hand-pressed Run, two at the same instant) does nothing.
   const claimName = monthClaimName(now);

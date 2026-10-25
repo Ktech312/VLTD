@@ -89,6 +89,7 @@ import {
   saveImageBlobToIndexedDb,
 } from "@/lib/vaultImageStore";
 import { analyzeImageWithVision } from "@/lib/ai/openaiVision";
+import { ScanRefusedError } from "@/lib/ai/scanRequest";
 import {
   getCategories,
   getDefaultCategory,
@@ -1766,7 +1767,9 @@ export default function AddPage() {
       return safeToAutofill;
     } catch (error) {
       const detail = error instanceof Error ? error.message.trim() : "";
-      const message = `Image identify failed${detail ? ` (${detail.replace(/\.$/, "")})` : ""}. Fill in the details by hand, or try again.`;
+      const message = error instanceof ScanRefusedError
+        ? `${error.message.replace(/\.$/, "")}. You can fill in the details by hand.`
+        : `Image identify failed${detail ? ` (${detail.replace(/\.$/, "")})` : ""}. Fill in the details by hand, or try again.`;
       setScanSession((prev) => markScanSessionFailed(prev, message));
       setStatus(message);
       return false;
