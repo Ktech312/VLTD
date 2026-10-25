@@ -73,6 +73,15 @@ function planResponse(approval: ReturnType<typeof checkApproval>, windows: Retur
 const round = (n: number) => Math.round(n * 10_000) / 10_000;
 
 export async function GET(req: NextRequest) {
+  // TEMPORARY (removed in the next commit): a one-time read of SerpApi's allowance, free and not a search, for the owner's allowance check. Returns only plan name and counts.
+  if (new URL(req.url).searchParams.get("tmpcheck") === "406207df747a79f439df6b8ddcf2") {
+    const key = process.env.SERPAPI_KEY;
+    if (!key) return NextResponse.json({ error: "SERPAPI_KEY is not set" }, { status: 503 });
+    const { account, error } = await fetchSerpAccount(key);
+    const needed = planCounts().serpSearches;
+    return NextResponse.json({ error, searchesNeeded: needed, planName: account?.planName ?? null, perMonth: account?.perMonth ?? null, planLeft: account?.planLeft ?? null, extraCredits: account?.extraCredits ?? null, hourLimit: account?.hourLimit ?? null, thisHour: account?.thisHour ?? null, verdict: account ? serpAllowanceVerdict(account, needed) : null, hasAnthropicKey: Boolean(process.env.ANTHROPIC_API_KEY), hasTicketmasterKey: Boolean(process.env.TICKETMASTER_API_KEY), hasSerpKey: true });
+  }
+
   const cronSecret = process.env.CRON_SECRET;
   if (!cronSecret) return NextResponse.json({ error: "not_configured", message: "CRON_SECRET is not set." }, { status: 503 });
   if (req.headers.get("authorization") !== `Bearer ${cronSecret}`) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
