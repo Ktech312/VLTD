@@ -3,6 +3,7 @@ import { getServiceClient } from "@/lib/serverAdmin";
 import { fillBannerArt } from "@/lib/events/eventArt";
 import { runAfterResponse } from "@/lib/events/afterResponse";
 import { eventSlug, persistEvents, type EventRow } from "@/lib/events/eventPipeline";
+import { claimMonth, monthClaimName, releaseMonth } from "@/lib/events/monthlyClaim";
 import {
   CATEGORY_QUERIES,
   TICKETMASTER_KEYWORDS,
@@ -30,17 +31,18 @@ import {
   withRecordedApproval,
 } from "@/lib/events/monthlyRefreshPlan";
 
-// The monthly Events refresh: ONE pass over the coming year (see lib/events/monthlyRefreshPlan.ts for the plan, the ceiling and the approval it needs).
+// The monthly Events refresh: ONE pass over the coming year (see lib/events/monthlyRefreshPlan.ts for the plan and its estimated cost).
 //
-//  - It has no schedule (vercel.json is empty) and sends NOTHING until the owner has set the three approval variables. Until then a call answers with what is
-//    missing and makes no search, no AI call and no database change.
+//  - It runs once a month (vercel.json), authorized by the owner: once monthly, within the allowances the accounts already have, no top-ups, no overages, no repeated paid
+//    retries. Switched off, a call answers with why and makes no search, no AI call and no database change.
+//  - ONCE A MONTH, whatever invokes it: before any paid request it claims the month's marker (lib/events/monthlyClaim.ts); an invocation that finds it taken does nothing.
 //  - Everything it may ask for is counted before the first request, and the request counts below come from that plan, so they cannot grow while it runs.
 //  - Every request is made once. A search or AI call that fails is reported and is not repeated: not here, and not by a retry loop around it. The next paid
 //    request happens only when the owner runs the job again.
 //  - It does not need the retry memory (SQL file 8) and does not use it.
-//  - It checks, before the first search, that the AI check can run, because a keyword search is never published without that check and searches with nothing
-//    to judge them would be paid for nothing.
-//  - `?plan=1` (with the secret) returns the plan, the worst case and the approval state and makes no outside request at all.
+//  - Before the first search it makes one very small AI request. That is a PAID request (it uses a little of the AI account's credit), and it shows only that the key works
+//    and the account could be charged for that request. It does NOT show that the balance covers the whole run: the AI account's balance is unverified.
+//  - `?plan=1` (with the secret) returns the plan, the ESTIMATED worst case and whether it is switched on, and makes no outside request at all.
 //
 // A run on a Hobby plan needs the longer function limit; 300 seconds is the largest the platform allows there.
 export const maxDuration = 300;
@@ -115,18 +117,31 @@ export async function GET(req: NextRequest) {
   // BEFORE the first search is paid for: (1) SerpApi's own figures must show the plan's monthly allowance covers every search; (2) one tiny AI request must succeed, so searches are
   // never bought that the AI check could not then judge. A shortfall stops the run with nothing spent and says exactly what it is. Neither check is retried.
   const needed = planCounts().serpSearches;
+  // ONCE A MONTH: claim this month's marker before anything is sent. An invocation that finds it taken (a second cron firing, a hand-pressed Run, two at the same instant) does nothing.
+  const claimName = monthClaimName(now);
+  const claim = await claimMonth(svc, claimName);
+  if (claim.status === "already") {
+    console.log("[refresh-events-monthly] already ran this month: nothing was sent", claimName);
+    return NextResponse.json({ ok: true, alreadyRanThisMonth: true, month: claimName.slice(-7), message: "The refresh already started this month, so this call did nothing: no search, no AI call, no database change.", usage: { googleEventsSearches: { made: 0, succeeded: 0 }, ticketmasterSearches: { made: 0, succeeded: 0 }, aiCalls: { made: 0 }, retries: 0 } }, { status: 200 });
+  }
+  if (claim.status === "error") {
+    console.error("[refresh-events-monthly] not started: this month's run could not be recorded:", claim.message);
+    return NextResponse.json({ ok: false, stoppedBeforeAnySearch: true, shortfall: `this month's run could not be recorded, so it was not started (it cannot promise to run only once): ${claim.message}`, usage: { googleEventsSearches: { made: 0, succeeded: 0 }, ticketmasterSearches: { made: 0, succeeded: 0 }, aiCalls: { made: 0 }, retries: 0 } }, { status: 503 });
+  }
   if (serpKey) {
     const { account, error } = await fetchSerpAccount(serpKey);
     const verdict = account ? serpAllowanceVerdict(account, needed) : null;
     if (!verdict?.fits) {
       const shortfall = verdict?.shortfall ?? `could not read the SerpApi allowance (${error})`;
       console.error("[refresh-events-monthly] stopped before any search:", shortfall);
+      await releaseMonth(svc, claimName); // no monthly work was done, so the month is given back
       return NextResponse.json({ ok: false, stoppedBeforeAnySearch: true, shortfall, serpApi: account, usage: { googleEventsSearches: { made: 0, succeeded: 0 }, ticketmasterSearches: { made: 0, succeeded: 0 }, aiCalls: { made: 0 }, retries: 0 } }, { status: 503 });
     }
   }
   const ping = await pingAi(aiKey);
   if (ping.error) {
     console.error("[refresh-events-monthly] stopped before any search: AI check unavailable:", ping.error);
+    await releaseMonth(svc, claimName); // no search was made, so the month is given back
     return NextResponse.json({ ok: false, stoppedBeforeAnySearch: true, shortfall: `the AI check cannot run: ${ping.error}`, usage: { googleEventsSearches: { made: 0, succeeded: 0 }, ticketmasterSearches: { made: 0, succeeded: 0 }, aiCalls: { made: 1, failed: 1 }, retries: 0 } }, { status: 503 });
   }
 

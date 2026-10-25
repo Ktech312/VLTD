@@ -1,6 +1,6 @@
 import { CATEGORY_QUERIES, type SerpAccount } from "@/lib/events/eventSources";
 
-// The monthly Events refresh: what it would ask for, the most it can cost, and the approval it needs before it may send anything.
+// The monthly Events refresh: what it would ask for, an ESTIMATE of the most it can cost, and the switch that lets it run.
 //
 // Everything here is pure (no outside request, no clock but the one passed in), so the numbers the owner approves are the same numbers the job enforces.
 //
@@ -107,11 +107,10 @@ const positive = (raw: string | undefined): number | null => {
 };
 
 /**
- * Whether the job may send anything. It may only when ALL of these are set in the environment by the owner:
- *  - EVENTS_MONTHLY_REFRESH_ENABLED is exactly "true";
- *  - EVENTS_MONTHLY_APPROVED_MAX_USD is a number at least as large as this plan's worst case (at SERPAPI_USD_PER_SEARCH, or $0.025 when that is not set);
- *  - EVENTS_MONTHLY_APPROVED_MAX_SEARCHES is a number at least as large as the plan's Google Events searches.
- * Anything else, including a figure that is set but unreadable, leaves it switched off, and the reasons say exactly what is missing.
+ * Whether the job is switched on. It is when EVENTS_MONTHLY_REFRESH_ENABLED is exactly "true" (the owner's authorization is recorded as the default, see RECORDED_AUTHORIZATION).
+ * There is NO dollar budget in the authorization. Two optional extra limits an owner can set in the environment are enforced when present, and a figure that is set but unreadable
+ * switches the job off: EVENTS_MONTHLY_APPROVED_MAX_USD (checked against this plan's ESTIMATED worst case) and EVENTS_MONTHLY_APPROVED_MAX_SEARCHES (checked against the plan's searches).
+ * The protection against overage is not a dollar figure: it is the allowance check and the once-a-month claim that run before anything is paid for.
  */
 export function checkApproval(env: Record<string, string | undefined>): Approval {
   const counts = planCounts();
@@ -128,13 +127,18 @@ export function checkApproval(env: Record<string, string | undefined>): Approval
 
   if (env.EVENTS_MONTHLY_REFRESH_ENABLED !== "true") reasons.push('EVENTS_MONTHLY_REFRESH_ENABLED is not exactly "true"');
 
-  const maxUsd = positive(env.EVENTS_MONTHLY_APPROVED_MAX_USD);
-  if (maxUsd === null) reasons.push("EVENTS_MONTHLY_APPROVED_MAX_USD is not set to a positive number (no cost has been approved)");
-  else if (maxUsd + 1e-9 < worst.totalUsd) reasons.push(`the approved ceiling $${maxUsd.toFixed(2)} is below this plan's worst case $${worst.totalUsd.toFixed(2)}`);
-
-  const maxSearches = positive(env.EVENTS_MONTHLY_APPROVED_MAX_SEARCHES);
-  if (maxSearches === null) reasons.push("EVENTS_MONTHLY_APPROVED_MAX_SEARCHES is not set to a positive number (no search count has been approved)");
-  else if (maxSearches < counts.serpSearches) reasons.push(`the approved search count ${maxSearches} is below the plan's ${counts.serpSearches} Google Events searches`);
+  const rawMaxUsd = env.EVENTS_MONTHLY_APPROVED_MAX_USD;
+  if (rawMaxUsd !== undefined && rawMaxUsd.trim() !== "") {
+    const maxUsd = positive(rawMaxUsd);
+    if (maxUsd === null) reasons.push("EVENTS_MONTHLY_APPROVED_MAX_USD is set but is not a positive number (no cost has been approved)");
+    else if (maxUsd + 1e-9 < worst.totalUsd) reasons.push(`the extra cost limit $${maxUsd.toFixed(2)} set in the environment is below this plan's estimated worst case $${worst.totalUsd.toFixed(2)}`);
+  }
+  const rawMaxSearches = env.EVENTS_MONTHLY_APPROVED_MAX_SEARCHES;
+  if (rawMaxSearches !== undefined && rawMaxSearches.trim() !== "") {
+    const maxSearches = positive(rawMaxSearches);
+    if (maxSearches === null) reasons.push("EVENTS_MONTHLY_APPROVED_MAX_SEARCHES is set but is not a positive number (no search count has been approved)");
+    else if (maxSearches < counts.serpSearches) reasons.push(`the extra search limit ${maxSearches} set in the environment is below the plan's ${counts.serpSearches} Google Events searches`);
+  }
 
   return { allowed: reasons.length === 0, reasons, worst, counts };
 }
@@ -156,20 +160,18 @@ export function serpAllowanceVerdict(account: SerpAccount, needed: number): Allo
 }
 
 /**
- * The owner's approval, recorded here (2026-10-24: "Enable one Events refresh on the first of each month, covering the coming year. Use the existing monthly allowances.
- * No automatic top-ups, paid overages or repeated paid retries."). It is the DEFAULT for the three approval settings; an environment variable of the same name overrides it,
- * so the refresh can still be switched off from Vercel without a deploy (EVENTS_MONTHLY_REFRESH_ENABLED=false) or held to a lower ceiling. The figures are the plan's own
- * estimate (see worstCase), not a limit set at a provider; the real protection against overage is the allowance check and the AI check that run before the first search.
+ * The owner's AUTHORIZATION, recorded here. On 2026-10-24 the owner wrote: "Enable one Events refresh on the first of each month, covering the coming year. Use the existing monthly
+ * allowances. ... No automatic top-ups, paid overages or repeated paid retries." That is: once a month, within the allowances the accounts already have, no top-ups, no overages, no
+ * repeated paid retries. The owner did NOT approve a dollar budget; the figures in worstCase are the developer's own estimate and nothing here treats them as an approved amount.
+ * An environment variable of the same name overrides this, so the refresh can be switched off from Vercel without a deploy (EVENTS_MONTHLY_REFRESH_ENABLED=false).
  */
-export const RECORDED_APPROVAL = {
+export const RECORDED_AUTHORIZATION = {
   EVENTS_MONTHLY_REFRESH_ENABLED: "true",
-  EVENTS_MONTHLY_APPROVED_MAX_USD: "0.70",
-  EVENTS_MONTHLY_APPROVED_MAX_SEARCHES: "24",
 } as const;
 
-/** The environment the approval check should read: the recorded approval, with any real environment variable taking precedence. */
+/** The environment the switch check should read: the recorded authorization, with any real environment variable taking precedence. */
 export function withRecordedApproval(env: Record<string, string | undefined>): Record<string, string | undefined> {
   const out: Record<string, string | undefined> = { ...env };
-  for (const [key, value] of Object.entries(RECORDED_APPROVAL)) if (out[key] === undefined || out[key] === "") out[key] = value;
+  for (const [key, value] of Object.entries(RECORDED_AUTHORIZATION)) if (out[key] === undefined || out[key] === "") out[key] = value;
   return out;
 }

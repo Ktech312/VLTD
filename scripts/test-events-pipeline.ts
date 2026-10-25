@@ -34,7 +34,7 @@ import { NextRequest } from "next/server";
 import { getServiceClient } from "../src/lib/serverAdmin";
 import { persistEvents, dedupeRows, normalizeEventName, eventSlug, dayStamps, isIsoDay } from "../src/lib/events/eventPipeline";
 import { MAJOR_SHOWS } from "../src/lib/events/majorShows";
-import { AI_MAX_OUTPUT_TOKENS, monthlyWindows, planCounts, worstCase } from "../src/lib/events/monthlyRefreshPlan";
+import { AI_MAX_OUTPUT_TOKENS, RECORDED_AUTHORIZATION, monthlyWindows, planCounts, worstCase } from "../src/lib/events/monthlyRefreshPlan";
 import { pickMetaImage, isPublicHttpUrl, fillBannerArt, artKind, withArtKind, pngHasAlpha } from "../src/lib/events/eventArt";
 import { pickBannerEvents } from "../src/lib/bannerEvents";
 import { eventPhase, eventCountdown, daysUntilStart, earliestStoredEnd, eventBounds } from "../src/lib/eventDates";
@@ -180,6 +180,26 @@ function restStore(url: URL, init: RequestInit, name: keyof StoreTables): Respon
   return jsonResponse(405, { message: "not supported" });
 }
 
+// ───────────────────────── pretend flags table (vltd_migration_flags: name is the primary key) ─────────────────────────
+let flags: Set<string> = new Set();
+let flagsMissing = false;
+function restFlags(url: URL, init: RequestInit): Response {
+  if (flagsMissing) return jsonResponse(404, { code: "PGRST205", message: "Could not find the table 'public.vltd_migration_flags' in the schema cache" });
+  const method = (init.method ?? "GET").toUpperCase();
+  if (method === "POST") {
+    const body = JSON.parse(String(init.body)) as { name: string };
+    if (flags.has(body.name)) return jsonResponse(409, { code: "23505", message: 'duplicate key value violates unique constraint "vltd_migration_flags_pkey"' });
+    flags.add(body.name); // one row per name, decided atomically here exactly as the primary key does
+    return jsonResponse(201, undefined);
+  }
+  if (method === "DELETE") {
+    const name = (url.searchParams.get("name") ?? "").replace(/^eq\./, "");
+    flags.delete(name);
+    return jsonResponse(204, undefined);
+  }
+  return jsonResponse(405, { message: "not supported" });
+}
+
 // ───────────────────────── pretend internet ─────────────────────────
 type World = {
   serp: "ok" | "fail" | "empty-error";
@@ -205,6 +225,7 @@ function freshWorld(): World {
 
 async function fakeFetch(input: RequestInfo | URL, init: RequestInit = {}): Promise<Response> {
   const url = new URL(typeof input === "string" ? input : input instanceof URL ? input.href : input.url);
+  if (url.host === "fake.supabase.co" && url.pathname === "/rest/v1/vltd_migration_flags") return restFlags(url, init);
   if (url.host === "fake.supabase.co" && url.pathname === "/rest/v1/collector_events") return restCollectorEvents(url, init);
   if (url.host === "fake.supabase.co" && (url.pathname === "/rest/v1/event_refresh_candidates" || url.pathname === "/rest/v1/event_refresh_steps")) return restStore(url, init, url.pathname.split("/").pop() as keyof StoreTables);
   if (url.host === "serpapi.com" && url.pathname === "/account.json") {
@@ -286,6 +307,8 @@ const START = FIXED;
 async function test(name: string, fn: () => Promise<void> | void) {
   table = [];
   store = null;
+  flags = new Set();
+  flagsMissing = false;
   FIXED = START;
   world = freshWorld();
   try {
@@ -465,14 +488,14 @@ async function main() {
       assert.equal(table.length, 0);
     });
   });
-  await test("monthly: every approval is needed on its own - not enabled, no cost approved, a cost below the worst case, too few searches, an unreadable price: each sends nothing", async () => {
+  await test("monthly: it only runs when switched on, and an optional extra limit that is set but unreadable or below the estimate switches it off: each sends nothing", async () => {
     const cases: Array<[string, Record<string, string | undefined>, RegExp]> = [
       ["not enabled", { ...APPROVED, EVENTS_MONTHLY_REFRESH_ENABLED: "yes" }, /EVENTS_MONTHLY_REFRESH_ENABLED/],
-      ["no cost approved", { ...APPROVED, EVENTS_MONTHLY_APPROVED_MAX_USD: "0" }, /no cost has been approved/],
-      ["cost below the worst case", { ...APPROVED, EVENTS_MONTHLY_APPROVED_MAX_USD: "0.50" }, /below this plan's worst case/],
-      ["search count too low", { ...APPROVED, EVENTS_MONTHLY_APPROVED_MAX_SEARCHES: "10" }, /approved search count 10/],
-      ["no search count", { ...APPROVED, EVENTS_MONTHLY_APPROVED_MAX_SEARCHES: "0" }, /no search count has been approved/],
-      ["a dearer price makes the same ceiling too low", { ...APPROVED, SERPAPI_USD_PER_SEARCH: "0.05" }, /below this plan's worst case/],
+      ["an extra cost limit that cannot be read", { ...APPROVED, EVENTS_MONTHLY_APPROVED_MAX_USD: "0" }, /no cost has been approved/],
+      ["an extra cost limit below the estimate", { ...APPROVED, EVENTS_MONTHLY_APPROVED_MAX_USD: "0.50" }, /below this plan's estimated worst case/],
+      ["an extra search limit too low", { ...APPROVED, EVENTS_MONTHLY_APPROVED_MAX_SEARCHES: "10" }, /extra search limit 10/],
+      ["an extra search limit that cannot be read", { ...APPROVED, EVENTS_MONTHLY_APPROVED_MAX_SEARCHES: "0" }, /no search count has been approved/],
+      ["a dearer price makes the same extra limit too low", { ...APPROVED, SERPAPI_USD_PER_SEARCH: "0.05" }, /below this plan's estimated worst case/],
       ["an unreadable price", { ...APPROVED, SERPAPI_USD_PER_SEARCH: "cheap" }, /not a positive number/],
     ];
     for (const [name, vars, why] of cases) {
@@ -486,19 +509,112 @@ async function main() {
     }
     assert.equal(table.length, 0);
   });
-  await test("monthly: with nothing set in the environment the owner's recorded approval applies ($0.70, 24 searches, enabled), and any real environment setting overrides it", async () => {
+  await test("monthly: with nothing set in the environment the owner's recorded authorization applies (switched on; no dollar budget is recorded), and any real environment setting overrides it", async () => {
     await withEnv({}, async () => {
       const res = await refreshMonthly(new NextRequest("http://localhost/api/cron/refresh-events-monthly?plan=1", { headers: { authorization: "Bearer test-secret" } }));
       const body = (await res.json()) as Json;
       assert.equal(body.enabled, true, JSON.stringify(body.refusedBecause));
+      assert.equal(JSON.stringify(RECORDED_AUTHORIZATION), '{"EVENTS_MONTHLY_REFRESH_ENABLED":"true"}', "the recorded authorization contains no dollar figure and no search count");
       noOutsideCall();
     });
     await withEnv({ EVENTS_MONTHLY_APPROVED_MAX_USD: "0.50" }, async () => {
       const res = await refreshMonthly(new NextRequest("http://localhost/api/cron/refresh-events-monthly?plan=1", { headers: { authorization: "Bearer test-secret" } }));
       const body = (await res.json()) as Json;
       assert.equal(body.enabled, false);
-      assert.match(String(body.refusedBecause[0]), /below this plan's worst case/);
+      assert.match(String(body.refusedBecause[0]), /below this plan's estimated worst case/);
     });
+  });
+  const totals = () => [world.calls.serp, world.calls.tm, world.calls.ai, world.accountCalls];
+  await test("once a month: a second, third and fourth invocation in the same month (a second cron, a hand-pressed Run) do NOTHING - no search, no AI call, no database change", async () => {
+    await withEnv(APPROVED, async () => {
+      world.serpEvents = [serpEvent("Stan Lee Fest", "Nov 14", "Sat, Nov 14 – Sun, Nov 15", ["Convention Center", "Los Angeles, CA"])];
+      world.tmEvents = [tmEvent("Reno Card Show", "2027-03-06", "2027-03-07", "Reno", "NV")];
+      const first = await silenceLogs(() => call(refreshMonthly));
+      assert.equal(first.status, 200, JSON.stringify(first.body));
+      assert.deepEqual(totals(), [24, 24, 2, 1]);
+      const rowsAfterFirst = JSON.stringify(table);
+      assert.deepEqual([...flags], ["events-monthly-refresh:2026-10"], "the month's marker was written before the work");
+      for (let i = 0; i < 3; i++) {
+        const again = await silenceLogs(() => call(refreshMonthly));
+        assert.equal(again.status, 200);
+        assert.equal(again.body.alreadyRanThisMonth, true);
+        assert.equal(again.body.usage.googleEventsSearches.made, 0);
+        assert.deepEqual(totals(), [24, 24, 2, 1], "not even SerpApi's free account read was repeated");
+      }
+      assert.equal(JSON.stringify(table), rowsAfterFirst, "no database change either");
+    });
+  });
+  await test("once a month: invocations at the SAME INSTANT - exactly one does the work", async () => {
+    await withEnv(APPROVED, async () => {
+      world.tmEvents = [tmEvent("Reno Card Show", "2027-03-06", "2027-03-07", "Reno", "NV")];
+      const results = await silenceLogs(() => Promise.all([call(refreshMonthly), call(refreshMonthly), call(refreshMonthly), call(refreshMonthly)]));
+      assert.equal(results.filter((r) => r.body.alreadyRanThisMonth === true).length, 3);
+      assert.equal(results.filter((r) => r.body.usage?.googleEventsSearches?.made === 24).length, 1);
+      assert.deepEqual(totals(), [24, 24, 2, 1], "one run's worth of requests in total");
+    });
+  });
+  await test("once a month: the next month it runs again (a new marker), and a different month's marker never blocks it", async () => {
+    await withEnv(APPROVED, async () => {
+      world.tmEvents = [tmEvent("Reno Card Show", "2027-03-06", "2027-03-07", "Reno", "NV")];
+      await silenceLogs(() => call(refreshMonthly));
+      FIXED = new RealDate("2026-11-01T06:00:00-07:00").getTime(); // 13:00 UTC on 1 November
+      const next = await silenceLogs(() => call(refreshMonthly));
+      assert.equal(next.body.alreadyRanThisMonth, undefined);
+      assert.deepEqual(totals(), [48, 48, 4, 2]);
+      assert.deepEqual([...flags].sort(), ["events-monthly-refresh:2026-10", "events-monthly-refresh:2026-11"]);
+    });
+  });
+  await test("once a month: a run stopped BEFORE any search (allowance short, or the AI check refused) gives the month back, so the owner can fix it and it can still run - and nothing was repeated", async () => {
+    await withEnv(APPROVED, async () => {
+      world.tmEvents = [tmEvent("Reno Card Show", "2027-03-06", "2027-03-07", "Reno", "NV")];
+      world.account = "low";
+      let r = await silenceLogs(() => call(refreshMonthly));
+      assert.equal(r.status, 503);
+      assert.equal(flags.size, 0, "released: no monthly work was done");
+      world.ai = "nocredit";
+      world.account = "ok";
+      r = await silenceLogs(() => call(refreshMonthly));
+      assert.equal(r.status, 503);
+      assert.equal(world.calls.serp + world.calls.tm, 0, "still no search of either kind");
+      assert.equal(flags.size, 0);
+      world.ai = "ok";
+      r = await silenceLogs(() => call(refreshMonthly));
+      assert.equal(r.status, 200, JSON.stringify(r.body));
+      assert.equal(flags.size, 1);
+    });
+  });
+  await test("once a month: a run that FAILS AFTER its searches keeps the month, so nothing repeats the paid work (no automatic retry)", async () => {
+    await withEnv(APPROVED, async () => {
+      world.ai = "batch-nocredit";
+      world.tmEvents = [tmEvent("Reno Card Show", "2027-03-06", "2027-03-07", "Reno", "NV")];
+      const first = await silenceLogs(() => call(refreshMonthly));
+      assert.equal(first.status, 502);
+      const afterFirst = totals();
+      world.ai = "ok";
+      const again = await silenceLogs(() => call(refreshMonthly));
+      assert.equal(again.body.alreadyRanThisMonth, true);
+      assert.deepEqual(totals(), afterFirst, "the second invocation sent nothing");
+    });
+  });
+  await test("once a month: if the month's marker cannot be written the run does not start at all (it could not promise to run only once)", async () => {
+    await withEnv(APPROVED, async () => {
+      flagsMissing = true;
+      const r = await silenceLogs(() => call(refreshMonthly));
+      assert.equal(r.status, 503);
+      assert.equal(r.body.stoppedBeforeAnySearch, true);
+      assert.match(String(r.body.shortfall), /could not be recorded/);
+      assert.deepEqual(totals(), [0, 0, 0, 0]);
+    });
+  });
+  await test("once a month: the free allowance read (?preflight=1), the plan view (?plan=1) and a switched-off call never take the month", async () => {
+    await withEnv(APPROVED, async () => {
+      const ask = (q: string) => refreshMonthly(new NextRequest("http://localhost/api/cron/refresh-events-monthly?" + q, { headers: { authorization: "Bearer test-secret" } }));
+      await silenceLogs(async () => { await ask("preflight=1"); await ask("plan=1"); });
+    });
+    await withEnv({ EVENTS_MONTHLY_REFRESH_ENABLED: "false" }, async () => {
+      await silenceLogs(() => call(refreshMonthly));
+    });
+    assert.equal(flags.size, 0);
   });
   await test("monthly: it needs the secret like the others, and ?plan=1 shows the plan and the cost with no outside request even when approved", async () => {
     await withEnv(APPROVED, async () => {
