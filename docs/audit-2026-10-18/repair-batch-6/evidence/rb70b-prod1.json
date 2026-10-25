@@ -1,0 +1,313 @@
+{
+ "label": "prod1",
+ "pages": {
+  "/dashboard": {
+   "elements": 799,
+   "styles": {
+    "ENGRAVED": {
+     "elementsThatChange": 0,
+     "share": "0%",
+     "fields": {
+      "shadow": 0,
+      "border": 0,
+      "bg": 0,
+      "color": 0,
+      "filter": 0,
+      "radius": 0
+     }
+    },
+    "ROYAL": {
+     "elementsThatChange": 0,
+     "share": "0%",
+     "fields": {
+      "shadow": 0,
+      "border": 0,
+      "bg": 0,
+      "color": 0,
+      "filter": 0,
+      "radius": 0
+     }
+    },
+    "NEON_MIRROR": {
+     "elementsThatChange": 0,
+     "share": "0%",
+     "fields": {
+      "shadow": 0,
+      "border": 0,
+      "bg": 0,
+      "color": 0,
+      "filter": 0,
+      "radius": 0
+     }
+    },
+    "NEON_PURPLE": {
+     "elementsThatChange": 0,
+     "share": "0%",
+     "fields": {
+      "shadow": 0,
+      "border": 0,
+      "bg": 0,
+      "color": 0,
+      "filter": 0,
+      "radius": 0
+     }
+    },
+    "NOIR": {
+     "elementsThatChange": 0,
+     "share": "0%",
+     "fields": {
+      "shadow": 0,
+      "border": 0,
+      "bg": 0,
+      "color": 0,
+      "filter": 0,
+      "radius": 0
+     }
+    },
+    "PAPER": {
+     "elementsThatChange": 8,
+     "share": "1%",
+     "fields": {
+      "shadow": 8,
+      "border": 0,
+      "bg": 0,
+      "color": 0,
+      "filter": 0,
+      "radius": 0
+     }
+    }
+   }
+  },
+  "/vault": {
+   "elements": 725,
+   "styles": {
+    "ENGRAVED": {
+     "elementsThatChange": 0,
+     "share": "0%",
+     "fields": {
+      "shadow": 0,
+      "border": 0,
+      "bg": 0,
+      "color": 0,
+      "filter": 0,
+      "radius": 0
+     }
+    },
+    "ROYAL": {
+     "elementsThatChange": 0,
+     "share": "0%",
+     "fields": {
+      "shadow": 0,
+      "border": 0,
+      "bg": 0,
+      "color": 0,
+      "filter": 0,
+      "radius": 0
+     }
+    },
+    "NEON_MIRROR": {
+     "elementsThatChange": 0,
+     "share": "0%",
+     "fields": {
+      "shadow": 0,
+      "border": 0,
+      "bg": 0,
+      "color": 0,
+      "filter": 0,
+      "radius": 0
+     }
+    },
+    "NEON_PURPLE": {
+     "elementsThatChange": 0,
+     "share": "0%",
+     "fields": {
+      "shadow": 0,
+      "border": 0,
+      "bg": 0,
+      "color": 0,
+      "filter": 0,
+      "radius": 0
+     }
+    },
+    "NOIR": {
+     "elementsThatChange": 1,
+     "share": "0.1%",
+     "fields": {
+      "shadow": 1,
+      "border": 0,
+      "bg": 1,
+      "color": 0,
+      "filter": 0,
+      "radius": 0
+     }
+    },
+    "PAPER": {
+     "elementsThatChange": 26,
+     "share": "3.6%",
+     "fields": {
+      "shadow": 25,
+      "border": 1,
+      "bg": 1,
+      "color": 0,
+      "filter": 0,
+      "radius": 0
+     }
+    }
+   }
+  },
+  "/watchlist": {
+   "elements": 392,
+   "styles": {
+    "ENGRAVED": {
+     "elementsThatChange": 0,
+     "share": "0%",
+     "fields": {
+      "shadow": 0,
+      "border": 0,
+      "bg": 0,
+      "color": 0,
+      "filter": 0,
+      "radius": 0
+     }
+    },
+    "ROYAL": {
+     "elementsThatChange": 0,
+     "share": "0%",
+     "fields": {
+      "shadow": 0,
+      "border": 0,
+      "bg": 0,
+      "color": 0,
+      "filter": 0,
+      "radius": 0
+     }
+    },
+    "NEON_MIRROR": {
+     "elementsThatChange": 0,
+     "share": "0%",
+     "fields": {
+      "shadow": 0,
+      "border": 0,
+      "bg": 0,
+      "color": 0,
+      "filter": 0,
+      "radius": 0
+     }
+    },
+    "NEON_PURPLE": {
+     "elementsThatChange": 0,
+     "share": "0%",
+     "fields": {
+      "shadow": 0,
+      "border": 0,
+      "bg": 0,
+      "color": 0,
+      "filter": 0,
+      "radius": 0
+     }
+    },
+    "NOIR": {
+     "elementsThatChange": 0,
+     "share": "0%",
+     "fields": {
+      "shadow": 0,
+      "border": 0,
+      "bg": 0,
+      "color": 0,
+      "filter": 0,
+      "radius": 0
+     }
+    },
+    "PAPER": {
+     "elementsThatChange": 6,
+     "share": "1.5%",
+     "fields": {
+      "shadow": 6,
+      "border": 0,
+      "bg": 0,
+      "color": 0,
+      "filter": 0,
+      "radius": 0
+     }
+    }
+   }
+  },
+  "/museum": {
+   "elements": 1000,
+   "styles": {
+    "ENGRAVED": {
+     "elementsThatChange": 0,
+     "share": "0%",
+     "fields": {
+      "shadow": 0,
+      "border": 0,
+      "bg": 0,
+      "color": 0,
+      "filter": 0,
+      "radius": 0
+     }
+    },
+    "ROYAL": {
+     "elementsThatChange": 0,
+     "share": "0%",
+     "fields": {
+      "shadow": 0,
+      "border": 0,
+      "bg": 0,
+      "color": 0,
+      "filter": 0,
+      "radius": 0
+     }
+    },
+    "NEON_MIRROR": {
+     "elementsThatChange": 0,
+     "share": "0%",
+     "fields": {
+      "shadow": 0,
+      "border": 0,
+      "bg": 0,
+      "color": 0,
+      "filter": 0,
+      "radius": 0
+     }
+    },
+    "NEON_PURPLE": {
+     "elementsThatChange": 0,
+     "share": "0%",
+     "fields": {
+      "shadow": 0,
+      "border": 0,
+      "bg": 0,
+      "color": 0,
+      "filter": 0,
+      "radius": 0
+     }
+    },
+    "NOIR": {
+     "elementsThatChange": 0,
+     "share": "0%",
+     "fields": {
+      "shadow": 0,
+      "border": 0,
+      "bg": 0,
+      "color": 0,
+      "filter": 0,
+      "radius": 0
+     }
+    },
+    "PAPER": {
+     "elementsThatChange": 11,
+     "share": "1.1%",
+     "fields": {
+      "shadow": 7,
+      "border": 4,
+      "bg": 0,
+      "color": 0,
+      "filter": 0,
+      "radius": 0
+     }
+    }
+   }
+  }
+ }
+}

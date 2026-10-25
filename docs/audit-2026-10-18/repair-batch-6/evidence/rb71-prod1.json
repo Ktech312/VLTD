@@ -1,0 +1,1076 @@
+{
+ "label": "prod1",
+ "runs": [
+  {
+   "kind": "A",
+   "delay": 300,
+   "rep": 0,
+   "clicked": true,
+   "atInsights": [
+    "/portfolio",
+    "/portfolio",
+    "/portfolio",
+    "/portfolio"
+   ],
+   "entriesBefore": [
+    "/robots.txt",
+    "/dashboard"
+   ],
+   "entriesAfter": [
+    "/robots.txt",
+    "/dashboard",
+    "/portfolio"
+   ],
+   "hlog": [
+    {
+     "k": "pushState",
+     "u": "/portfolio",
+     "at": 3782,
+     "from": "/dashboard",
+     "stack": [
+      "at https://vltd.app/_next/static/chunks/beae59601c7d10d2.js:1:14369",
+      "at ih (https://vltd.app/_next/static/chunks/4fa395d360c87cc3.js:1:95533)",
+      "at ur (https://vltd.app/_next/static/chunks/4fa395d360c87cc3.js:1:111281)"
+     ]
+    }
+   ],
+   "afterBack": "/dashboard"
+  },
+  {
+   "kind": "A",
+   "delay": 300,
+   "rep": 1,
+   "clicked": true,
+   "atInsights": [
+    "/portfolio",
+    "/portfolio",
+    "/portfolio",
+    "/portfolio"
+   ],
+   "entriesBefore": [
+    "/robots.txt",
+    "/dashboard",
+    "/portfolio"
+   ],
+   "entriesAfter": [
+    "/robots.txt",
+    "/dashboard",
+    "/portfolio"
+   ],
+   "hlog": [
+    {
+     "k": "pushState",
+     "u": "/portfolio",
+     "at": 3014,
+     "from": "/dashboard",
+     "stack": [
+      "at https://vltd.app/_next/static/chunks/beae59601c7d10d2.js:1:14369",
+      "at ih (https://vltd.app/_next/static/chunks/4fa395d360c87cc3.js:1:95533)",
+      "at ur (https://vltd.app/_next/static/chunks/4fa395d360c87cc3.js:1:111281)"
+     ]
+    }
+   ],
+   "afterBack": "/dashboard"
+  },
+  {
+   "kind": "A",
+   "delay": 300,
+   "rep": 2,
+   "clicked": true,
+   "atInsights": [
+    "/portfolio",
+    "/portfolio",
+    "/portfolio",
+    "/portfolio"
+   ],
+   "entriesBefore": [
+    "/robots.txt",
+    "/dashboard",
+    "/portfolio"
+   ],
+   "entriesAfter": [
+    "/robots.txt",
+    "/dashboard",
+    "/portfolio"
+   ],
+   "hlog": [
+    {
+     "k": "pushState",
+     "u": "/portfolio",
+     "at": 2676,
+     "from": "/dashboard",
+     "stack": [
+      "at https://vltd.app/_next/static/chunks/beae59601c7d10d2.js:1:14369",
+      "at ih (https://vltd.app/_next/static/chunks/4fa395d360c87cc3.js:1:95533)",
+      "at ur (https://vltd.app/_next/static/chunks/4fa395d360c87cc3.js:1:111281)"
+     ]
+    }
+   ],
+   "afterBack": "/dashboard"
+  },
+  {
+   "kind": "A",
+   "delay": 300,
+   "rep": 3,
+   "clicked": true,
+   "atInsights": [
+    "/portfolio",
+    "/portfolio",
+    "/portfolio",
+    "/portfolio"
+   ],
+   "entriesBefore": [
+    "/robots.txt",
+    "/dashboard",
+    "/portfolio"
+   ],
+   "entriesAfter": [
+    "/robots.txt",
+    "/dashboard",
+    "/portfolio"
+   ],
+   "hlog": [
+    {
+     "k": "pushState",
+     "u": "/portfolio",
+     "at": 2691,
+     "from": "/dashboard",
+     "stack": [
+      "at https://vltd.app/_next/static/chunks/beae59601c7d10d2.js:1:14369",
+      "at ih (https://vltd.app/_next/static/chunks/4fa395d360c87cc3.js:1:95533)",
+      "at ur (https://vltd.app/_next/static/chunks/4fa395d360c87cc3.js:1:111281)"
+     ]
+    }
+   ],
+   "afterBack": "/dashboard"
+  },
+  {
+   "kind": "A",
+   "delay": 1000,
+   "rep": 0,
+   "clicked": true,
+   "atInsights": [
+    "/portfolio",
+    "/portfolio",
+    "/portfolio",
+    "/portfolio"
+   ],
+   "entriesBefore": [
+    "/robots.txt",
+    "/dashboard",
+    "/portfolio"
+   ],
+   "entriesAfter": [
+    "/robots.txt",
+    "/dashboard",
+    "/portfolio"
+   ],
+   "hlog": [
+    {
+     "k": "pushState",
+     "u": "/portfolio",
+     "at": 3434,
+     "from": "/dashboard",
+     "stack": [
+      "at https://vltd.app/_next/static/chunks/beae59601c7d10d2.js:1:14369",
+      "at ih (https://vltd.app/_next/static/chunks/4fa395d360c87cc3.js:1:95533)",
+      "at ur (https://vltd.app/_next/static/chunks/4fa395d360c87cc3.js:1:111281)"
+     ]
+    }
+   ],
+   "afterBack": "/dashboard"
+  },
+  {
+   "kind": "A",
+   "delay": 1000,
+   "rep": 1,
+   "clicked": true,
+   "atInsights": [
+    "/portfolio",
+    "/portfolio",
+    "/portfolio",
+    "/portfolio"
+   ],
+   "entriesBefore": [
+    "/robots.txt",
+    "/dashboard",
+    "/portfolio"
+   ],
+   "entriesAfter": [
+    "/robots.txt",
+    "/dashboard",
+    "/portfolio"
+   ],
+   "hlog": [
+    {
+     "k": "pushState",
+     "u": "/portfolio",
+     "at": 3653,
+     "from": "/dashboard",
+     "stack": [
+      "at https://vltd.app/_next/static/chunks/beae59601c7d10d2.js:1:14369",
+      "at ih (https://vltd.app/_next/static/chunks/4fa395d360c87cc3.js:1:95533)",
+      "at ur (https://vltd.app/_next/static/chunks/4fa395d360c87cc3.js:1:111281)"
+     ]
+    }
+   ],
+   "afterBack": "/dashboard"
+  },
+  {
+   "kind": "A",
+   "delay": 1000,
+   "rep": 2,
+   "clicked": true,
+   "atInsights": [
+    "/portfolio",
+    "/portfolio",
+    "/portfolio",
+    "/portfolio"
+   ],
+   "entriesBefore": [
+    "/robots.txt",
+    "/dashboard",
+    "/portfolio"
+   ],
+   "entriesAfter": [
+    "/robots.txt",
+    "/dashboard",
+    "/portfolio"
+   ],
+   "hlog": [
+    {
+     "k": "pushState",
+     "u": "/portfolio",
+     "at": 3623,
+     "from": "/dashboard",
+     "stack": [
+      "at https://vltd.app/_next/static/chunks/beae59601c7d10d2.js:1:14369",
+      "at ih (https://vltd.app/_next/static/chunks/4fa395d360c87cc3.js:1:95533)",
+      "at ur (https://vltd.app/_next/static/chunks/4fa395d360c87cc3.js:1:111281)"
+     ]
+    }
+   ],
+   "afterBack": "/dashboard"
+  },
+  {
+   "kind": "A",
+   "delay": 1000,
+   "rep": 3,
+   "clicked": true,
+   "atInsights": [
+    "/portfolio",
+    "/portfolio",
+    "/portfolio",
+    "/portfolio"
+   ],
+   "entriesBefore": [
+    "/robots.txt",
+    "/dashboard",
+    "/portfolio"
+   ],
+   "entriesAfter": [
+    "/robots.txt",
+    "/dashboard",
+    "/portfolio"
+   ],
+   "hlog": [
+    {
+     "k": "pushState",
+     "u": "/portfolio",
+     "at": 3414,
+     "from": "/dashboard",
+     "stack": [
+      "at https://vltd.app/_next/static/chunks/beae59601c7d10d2.js:1:14369",
+      "at ih (https://vltd.app/_next/static/chunks/4fa395d360c87cc3.js:1:95533)",
+      "at ur (https://vltd.app/_next/static/chunks/4fa395d360c87cc3.js:1:111281)"
+     ]
+    }
+   ],
+   "afterBack": "/dashboard"
+  },
+  {
+   "kind": "A",
+   "delay": 2500,
+   "rep": 0,
+   "clicked": true,
+   "atInsights": [
+    "/portfolio",
+    "/portfolio",
+    "/portfolio",
+    "/portfolio"
+   ],
+   "entriesBefore": [
+    "/robots.txt",
+    "/dashboard",
+    "/portfolio"
+   ],
+   "entriesAfter": [
+    "/robots.txt",
+    "/dashboard",
+    "/portfolio"
+   ],
+   "hlog": [
+    {
+     "k": "pushState",
+     "u": "/portfolio",
+     "at": 4871,
+     "from": "/dashboard",
+     "stack": [
+      "at https://vltd.app/_next/static/chunks/beae59601c7d10d2.js:1:14369",
+      "at ih (https://vltd.app/_next/static/chunks/4fa395d360c87cc3.js:1:95533)",
+      "at ur (https://vltd.app/_next/static/chunks/4fa395d360c87cc3.js:1:111281)"
+     ]
+    }
+   ],
+   "afterBack": "/dashboard"
+  },
+  {
+   "kind": "A",
+   "delay": 2500,
+   "rep": 1,
+   "clicked": true,
+   "atInsights": [
+    "/portfolio",
+    "/portfolio",
+    "/portfolio",
+    "/portfolio"
+   ],
+   "entriesBefore": [
+    "/robots.txt",
+    "/dashboard",
+    "/portfolio"
+   ],
+   "entriesAfter": [
+    "/robots.txt",
+    "/dashboard",
+    "/portfolio"
+   ],
+   "hlog": [
+    {
+     "k": "pushState",
+     "u": "/portfolio",
+     "at": 4915,
+     "from": "/dashboard",
+     "stack": [
+      "at https://vltd.app/_next/static/chunks/beae59601c7d10d2.js:1:14369",
+      "at ih (https://vltd.app/_next/static/chunks/4fa395d360c87cc3.js:1:95533)",
+      "at ur (https://vltd.app/_next/static/chunks/4fa395d360c87cc3.js:1:111281)"
+     ]
+    }
+   ],
+   "afterBack": "/dashboard"
+  },
+  {
+   "kind": "A",
+   "delay": 2500,
+   "rep": 2,
+   "clicked": true,
+   "atInsights": [
+    "/portfolio",
+    "/portfolio",
+    "/portfolio",
+    "/portfolio"
+   ],
+   "entriesBefore": [
+    "/robots.txt",
+    "/dashboard",
+    "/portfolio"
+   ],
+   "entriesAfter": [
+    "/robots.txt",
+    "/dashboard",
+    "/portfolio"
+   ],
+   "hlog": [
+    {
+     "k": "pushState",
+     "u": "/portfolio",
+     "at": 4917,
+     "from": "/dashboard",
+     "stack": [
+      "at https://vltd.app/_next/static/chunks/beae59601c7d10d2.js:1:14369",
+      "at ih (https://vltd.app/_next/static/chunks/4fa395d360c87cc3.js:1:95533)",
+      "at ur (https://vltd.app/_next/static/chunks/4fa395d360c87cc3.js:1:111281)"
+     ]
+    }
+   ],
+   "afterBack": "/dashboard"
+  },
+  {
+   "kind": "A",
+   "delay": 2500,
+   "rep": 3,
+   "clicked": true,
+   "atInsights": [
+    "/portfolio",
+    "/portfolio",
+    "/portfolio",
+    "/portfolio"
+   ],
+   "entriesBefore": [
+    "/robots.txt",
+    "/dashboard",
+    "/portfolio"
+   ],
+   "entriesAfter": [
+    "/robots.txt",
+    "/dashboard",
+    "/portfolio"
+   ],
+   "hlog": [
+    {
+     "k": "pushState",
+     "u": "/portfolio",
+     "at": 4928,
+     "from": "/dashboard",
+     "stack": [
+      "at https://vltd.app/_next/static/chunks/beae59601c7d10d2.js:1:14369",
+      "at ih (https://vltd.app/_next/static/chunks/4fa395d360c87cc3.js:1:95533)",
+      "at ur (https://vltd.app/_next/static/chunks/4fa395d360c87cc3.js:1:111281)"
+     ]
+    }
+   ],
+   "afterBack": "/dashboard"
+  },
+  {
+   "kind": "A",
+   "delay": 3000,
+   "rep": 0,
+   "clicked": true,
+   "atInsights": [
+    "/portfolio",
+    "/portfolio",
+    "/portfolio",
+    "/portfolio"
+   ],
+   "entriesBefore": [
+    "/robots.txt",
+    "/dashboard",
+    "/portfolio"
+   ],
+   "entriesAfter": [
+    "/robots.txt",
+    "/dashboard",
+    "/portfolio"
+   ],
+   "hlog": [
+    {
+     "k": "pushState",
+     "u": "/portfolio",
+     "at": 5661,
+     "from": "/dashboard",
+     "stack": [
+      "at https://vltd.app/_next/static/chunks/beae59601c7d10d2.js:1:14369",
+      "at ih (https://vltd.app/_next/static/chunks/4fa395d360c87cc3.js:1:95533)",
+      "at ur (https://vltd.app/_next/static/chunks/4fa395d360c87cc3.js:1:111281)"
+     ]
+    }
+   ],
+   "afterBack": "/dashboard"
+  },
+  {
+   "kind": "A",
+   "delay": 3000,
+   "rep": 1,
+   "clicked": true,
+   "atInsights": [
+    "/portfolio",
+    "/portfolio",
+    "/portfolio",
+    "/portfolio"
+   ],
+   "entriesBefore": [
+    "/robots.txt",
+    "/dashboard",
+    "/portfolio"
+   ],
+   "entriesAfter": [
+    "/robots.txt",
+    "/dashboard",
+    "/portfolio"
+   ],
+   "hlog": [
+    {
+     "k": "pushState",
+     "u": "/portfolio",
+     "at": 5639,
+     "from": "/dashboard",
+     "stack": [
+      "at https://vltd.app/_next/static/chunks/beae59601c7d10d2.js:1:14369",
+      "at ih (https://vltd.app/_next/static/chunks/4fa395d360c87cc3.js:1:95533)",
+      "at ur (https://vltd.app/_next/static/chunks/4fa395d360c87cc3.js:1:111281)"
+     ]
+    }
+   ],
+   "afterBack": "/dashboard"
+  },
+  {
+   "kind": "A",
+   "delay": 3000,
+   "rep": 2,
+   "clicked": true,
+   "atInsights": [
+    "/portfolio",
+    "/portfolio",
+    "/portfolio",
+    "/portfolio"
+   ],
+   "entriesBefore": [
+    "/robots.txt",
+    "/dashboard",
+    "/portfolio"
+   ],
+   "entriesAfter": [
+    "/robots.txt",
+    "/dashboard",
+    "/portfolio"
+   ],
+   "hlog": [
+    {
+     "k": "pushState",
+     "u": "/portfolio",
+     "at": 5634,
+     "from": "/dashboard",
+     "stack": [
+      "at https://vltd.app/_next/static/chunks/beae59601c7d10d2.js:1:14369",
+      "at ih (https://vltd.app/_next/static/chunks/4fa395d360c87cc3.js:1:95533)",
+      "at ur (https://vltd.app/_next/static/chunks/4fa395d360c87cc3.js:1:111281)"
+     ]
+    }
+   ],
+   "afterBack": "/dashboard"
+  },
+  {
+   "kind": "A",
+   "delay": 3000,
+   "rep": 3,
+   "clicked": true,
+   "atInsights": [
+    "/portfolio",
+    "/portfolio",
+    "/portfolio",
+    "/portfolio"
+   ],
+   "entriesBefore": [
+    "/robots.txt",
+    "/dashboard",
+    "/portfolio"
+   ],
+   "entriesAfter": [
+    "/robots.txt",
+    "/dashboard",
+    "/portfolio"
+   ],
+   "hlog": [
+    {
+     "k": "pushState",
+     "u": "/portfolio",
+     "at": 5383,
+     "from": "/dashboard",
+     "stack": [
+      "at https://vltd.app/_next/static/chunks/beae59601c7d10d2.js:1:14369",
+      "at ih (https://vltd.app/_next/static/chunks/4fa395d360c87cc3.js:1:95533)",
+      "at ur (https://vltd.app/_next/static/chunks/4fa395d360c87cc3.js:1:111281)"
+     ]
+    }
+   ],
+   "afterBack": "/dashboard"
+  },
+  {
+   "kind": "A",
+   "delay": 6000,
+   "rep": 0,
+   "clicked": true,
+   "atInsights": [
+    "/portfolio",
+    "/portfolio",
+    "/portfolio",
+    "/portfolio"
+   ],
+   "entriesBefore": [
+    "/robots.txt",
+    "/dashboard",
+    "/portfolio"
+   ],
+   "entriesAfter": [
+    "/robots.txt",
+    "/dashboard",
+    "/portfolio"
+   ],
+   "hlog": [
+    {
+     "k": "pushState",
+     "u": "/portfolio",
+     "at": 8415,
+     "from": "/dashboard",
+     "stack": [
+      "at https://vltd.app/_next/static/chunks/beae59601c7d10d2.js:1:14369",
+      "at ih (https://vltd.app/_next/static/chunks/4fa395d360c87cc3.js:1:95533)",
+      "at ur (https://vltd.app/_next/static/chunks/4fa395d360c87cc3.js:1:111281)"
+     ]
+    }
+   ],
+   "afterBack": "/dashboard"
+  },
+  {
+   "kind": "A",
+   "delay": 6000,
+   "rep": 1,
+   "clicked": true,
+   "atInsights": [
+    "/portfolio",
+    "/portfolio",
+    "/portfolio",
+    "/portfolio"
+   ],
+   "entriesBefore": [
+    "/robots.txt",
+    "/dashboard",
+    "/portfolio"
+   ],
+   "entriesAfter": [
+    "/robots.txt",
+    "/dashboard",
+    "/portfolio"
+   ],
+   "hlog": [
+    {
+     "k": "pushState",
+     "u": "/portfolio",
+     "at": 8383,
+     "from": "/dashboard",
+     "stack": [
+      "at https://vltd.app/_next/static/chunks/beae59601c7d10d2.js:1:14369",
+      "at ih (https://vltd.app/_next/static/chunks/4fa395d360c87cc3.js:1:95533)",
+      "at ur (https://vltd.app/_next/static/chunks/4fa395d360c87cc3.js:1:111281)"
+     ]
+    }
+   ],
+   "afterBack": "/dashboard"
+  },
+  {
+   "kind": "A",
+   "delay": 6000,
+   "rep": 2,
+   "clicked": true,
+   "atInsights": [
+    "/portfolio",
+    "/portfolio",
+    "/portfolio",
+    "/portfolio"
+   ],
+   "entriesBefore": [
+    "/robots.txt",
+    "/dashboard",
+    "/portfolio"
+   ],
+   "entriesAfter": [
+    "/robots.txt",
+    "/dashboard",
+    "/portfolio"
+   ],
+   "hlog": [
+    {
+     "k": "pushState",
+     "u": "/portfolio",
+     "at": 8432,
+     "from": "/dashboard",
+     "stack": [
+      "at https://vltd.app/_next/static/chunks/beae59601c7d10d2.js:1:14369",
+      "at ih (https://vltd.app/_next/static/chunks/4fa395d360c87cc3.js:1:95533)",
+      "at ur (https://vltd.app/_next/static/chunks/4fa395d360c87cc3.js:1:111281)"
+     ]
+    }
+   ],
+   "afterBack": "/dashboard"
+  },
+  {
+   "kind": "A",
+   "delay": 6000,
+   "rep": 3,
+   "clicked": true,
+   "atInsights": [
+    "/portfolio",
+    "/portfolio",
+    "/portfolio",
+    "/portfolio"
+   ],
+   "entriesBefore": [
+    "/robots.txt",
+    "/dashboard",
+    "/portfolio"
+   ],
+   "entriesAfter": [
+    "/robots.txt",
+    "/dashboard",
+    "/portfolio"
+   ],
+   "hlog": [
+    {
+     "k": "pushState",
+     "u": "/portfolio",
+     "at": 8416,
+     "from": "/dashboard",
+     "stack": [
+      "at https://vltd.app/_next/static/chunks/beae59601c7d10d2.js:1:14369",
+      "at ih (https://vltd.app/_next/static/chunks/4fa395d360c87cc3.js:1:95533)",
+      "at ur (https://vltd.app/_next/static/chunks/4fa395d360c87cc3.js:1:111281)"
+     ]
+    }
+   ],
+   "afterBack": "/dashboard"
+  },
+  {
+   "kind": "B",
+   "delay": 2500,
+   "rep": 0,
+   "atInsights": "/portfolio",
+   "atEvents": "/events",
+   "entries": [
+    "/robots.txt",
+    "/dashboard",
+    "/portfolio",
+    "/events"
+   ],
+   "hlog": [
+    {
+     "k": "pushState",
+     "u": "/portfolio",
+     "at": 5165,
+     "from": "/dashboard",
+     "stack": [
+      "at https://vltd.app/_next/static/chunks/beae59601c7d10d2.js:1:14369",
+      "at ih (https://vltd.app/_next/static/chunks/4fa395d360c87cc3.js:1:95533)",
+      "at ur (https://vltd.app/_next/static/chunks/4fa395d360c87cc3.js:1:111281)"
+     ]
+    },
+    {
+     "k": "pushState",
+     "u": "/events",
+     "at": 7037,
+     "from": "/portfolio",
+     "stack": [
+      "at https://vltd.app/_next/static/chunks/beae59601c7d10d2.js:1:14369",
+      "at ih (https://vltd.app/_next/static/chunks/4fa395d360c87cc3.js:1:95533)",
+      "at ur (https://vltd.app/_next/static/chunks/4fa395d360c87cc3.js:1:111281)"
+     ]
+    }
+   ],
+   "back1": "/portfolio",
+   "back2": "/dashboard"
+  },
+  {
+   "kind": "B",
+   "delay": 2500,
+   "rep": 1,
+   "atInsights": "/portfolio",
+   "atEvents": "/events",
+   "entries": [
+    "/robots.txt",
+    "/dashboard",
+    "/portfolio",
+    "/events"
+   ],
+   "hlog": [
+    {
+     "k": "pushState",
+     "u": "/portfolio",
+     "at": 33231,
+     "from": "/dashboard",
+     "stack": [
+      "at https://vltd.app/_next/static/chunks/beae59601c7d10d2.js:1:14369",
+      "at ih (https://vltd.app/_next/static/chunks/4fa395d360c87cc3.js:1:95533)",
+      "at ur (https://vltd.app/_next/static/chunks/4fa395d360c87cc3.js:1:111281)"
+     ]
+    },
+    {
+     "k": "pushState",
+     "u": "/events",
+     "at": 35101,
+     "from": "/portfolio",
+     "stack": [
+      "at https://vltd.app/_next/static/chunks/beae59601c7d10d2.js:1:14369",
+      "at ih (https://vltd.app/_next/static/chunks/4fa395d360c87cc3.js:1:95533)",
+      "at ur (https://vltd.app/_next/static/chunks/4fa395d360c87cc3.js:1:111281)"
+     ]
+    }
+   ],
+   "back1": "/portfolio",
+   "back2": "/dashboard"
+  },
+  {
+   "kind": "B",
+   "delay": 2500,
+   "rep": 2,
+   "atInsights": "/portfolio",
+   "atEvents": "/events",
+   "entries": [
+    "/robots.txt",
+    "/dashboard",
+    "/portfolio",
+    "/events"
+   ],
+   "hlog": [
+    {
+     "k": "pushState",
+     "u": "/portfolio",
+     "at": 33267,
+     "from": "/dashboard",
+     "stack": [
+      "at https://vltd.app/_next/static/chunks/beae59601c7d10d2.js:1:14369",
+      "at ih (https://vltd.app/_next/static/chunks/4fa395d360c87cc3.js:1:95533)",
+      "at ur (https://vltd.app/_next/static/chunks/4fa395d360c87cc3.js:1:111281)"
+     ]
+    },
+    {
+     "k": "pushState",
+     "u": "/events",
+     "at": 35134,
+     "from": "/portfolio",
+     "stack": [
+      "at https://vltd.app/_next/static/chunks/beae59601c7d10d2.js:1:14369",
+      "at ih (https://vltd.app/_next/static/chunks/4fa395d360c87cc3.js:1:95533)",
+      "at ur (https://vltd.app/_next/static/chunks/4fa395d360c87cc3.js:1:111281)"
+     ]
+    }
+   ],
+   "back1": "/portfolio",
+   "back2": "/dashboard"
+  },
+  {
+   "kind": "B",
+   "delay": 3000,
+   "rep": 0,
+   "atInsights": "/portfolio",
+   "atEvents": "/events",
+   "entries": [
+    "/robots.txt",
+    "/dashboard",
+    "/portfolio",
+    "/events"
+   ],
+   "hlog": [
+    {
+     "k": "pushState",
+     "u": "/portfolio",
+     "at": 33698,
+     "from": "/dashboard",
+     "stack": [
+      "at https://vltd.app/_next/static/chunks/beae59601c7d10d2.js:1:14369",
+      "at ih (https://vltd.app/_next/static/chunks/4fa395d360c87cc3.js:1:95533)",
+      "at ur (https://vltd.app/_next/static/chunks/4fa395d360c87cc3.js:1:111281)"
+     ]
+    },
+    {
+     "k": "pushState",
+     "u": "/events",
+     "at": 35567,
+     "from": "/portfolio",
+     "stack": [
+      "at https://vltd.app/_next/static/chunks/beae59601c7d10d2.js:1:14369",
+      "at ih (https://vltd.app/_next/static/chunks/4fa395d360c87cc3.js:1:95533)",
+      "at ur (https://vltd.app/_next/static/chunks/4fa395d360c87cc3.js:1:111281)"
+     ]
+    }
+   ],
+   "back1": "/portfolio",
+   "back2": "/dashboard"
+  },
+  {
+   "kind": "B",
+   "delay": 3000,
+   "rep": 1,
+   "atInsights": "/portfolio",
+   "atEvents": "/events",
+   "entries": [
+    "/robots.txt",
+    "/dashboard",
+    "/portfolio",
+    "/events"
+   ],
+   "hlog": [
+    {
+     "k": "pushState",
+     "u": "/portfolio",
+     "at": 33698,
+     "from": "/dashboard",
+     "stack": [
+      "at https://vltd.app/_next/static/chunks/beae59601c7d10d2.js:1:14369",
+      "at ih (https://vltd.app/_next/static/chunks/4fa395d360c87cc3.js:1:95533)",
+      "at ur (https://vltd.app/_next/static/chunks/4fa395d360c87cc3.js:1:111281)"
+     ]
+    },
+    {
+     "k": "pushState",
+     "u": "/events",
+     "at": 35569,
+     "from": "/portfolio",
+     "stack": [
+      "at https://vltd.app/_next/static/chunks/beae59601c7d10d2.js:1:14369",
+      "at ih (https://vltd.app/_next/static/chunks/4fa395d360c87cc3.js:1:95533)",
+      "at ur (https://vltd.app/_next/static/chunks/4fa395d360c87cc3.js:1:111281)"
+     ]
+    }
+   ],
+   "back1": "/portfolio",
+   "back2": "/dashboard"
+  },
+  {
+   "kind": "B",
+   "delay": 3000,
+   "rep": 2,
+   "atInsights": "/portfolio",
+   "atEvents": "/events",
+   "entries": [
+    "/robots.txt",
+    "/dashboard",
+    "/portfolio",
+    "/events"
+   ],
+   "hlog": [
+    {
+     "k": "pushState",
+     "u": "/portfolio",
+     "at": 33899,
+     "from": "/dashboard",
+     "stack": [
+      "at https://vltd.app/_next/static/chunks/beae59601c7d10d2.js:1:14369",
+      "at ih (https://vltd.app/_next/static/chunks/4fa395d360c87cc3.js:1:95533)",
+      "at ur (https://vltd.app/_next/static/chunks/4fa395d360c87cc3.js:1:111281)"
+     ]
+    },
+    {
+     "k": "pushState",
+     "u": "/events",
+     "at": 35767,
+     "from": "/portfolio",
+     "stack": [
+      "at https://vltd.app/_next/static/chunks/beae59601c7d10d2.js:1:14369",
+      "at ih (https://vltd.app/_next/static/chunks/4fa395d360c87cc3.js:1:95533)",
+      "at ur (https://vltd.app/_next/static/chunks/4fa395d360c87cc3.js:1:111281)"
+     ]
+    }
+   ],
+   "back1": "/portfolio",
+   "back2": "/dashboard"
+  },
+  {
+   "kind": "C",
+   "rep": 0,
+   "clicked": true,
+   "atInsights": "/portfolio",
+   "entries": [
+    "/robots.txt",
+    "/dashboard",
+    "/portfolio"
+   ],
+   "hlog": [
+    {
+     "k": "pushState",
+     "u": "/portfolio",
+     "at": 30917,
+     "from": "/dashboard",
+     "stack": [
+      "at https://vltd.app/_next/static/chunks/beae59601c7d10d2.js:1:14369",
+      "at ih (https://vltd.app/_next/static/chunks/4fa395d360c87cc3.js:1:95533)",
+      "at ur (https://vltd.app/_next/static/chunks/4fa395d360c87cc3.js:1:111281)"
+     ]
+    }
+   ],
+   "afterBack": "/dashboard"
+  },
+  {
+   "kind": "C",
+   "rep": 1,
+   "clicked": true,
+   "atInsights": "/portfolio",
+   "entries": [
+    "/robots.txt",
+    "/dashboard",
+    "/portfolio"
+   ],
+   "hlog": [
+    {
+     "k": "pushState",
+     "u": "/portfolio",
+     "at": 30834,
+     "from": "/dashboard",
+     "stack": [
+      "at https://vltd.app/_next/static/chunks/beae59601c7d10d2.js:1:14369",
+      "at ih (https://vltd.app/_next/static/chunks/4fa395d360c87cc3.js:1:95533)",
+      "at ur (https://vltd.app/_next/static/chunks/4fa395d360c87cc3.js:1:111281)"
+     ]
+    }
+   ],
+   "afterBack": "/dashboard"
+  },
+  {
+   "kind": "C",
+   "rep": 2,
+   "clicked": true,
+   "atInsights": "/portfolio",
+   "entries": [
+    "/robots.txt",
+    "/dashboard",
+    "/portfolio"
+   ],
+   "hlog": [
+    {
+     "k": "pushState",
+     "u": "/portfolio",
+     "at": 30816,
+     "from": "/dashboard",
+     "stack": [
+      "at https://vltd.app/_next/static/chunks/beae59601c7d10d2.js:1:14369",
+      "at ih (https://vltd.app/_next/static/chunks/4fa395d360c87cc3.js:1:95533)",
+      "at ur (https://vltd.app/_next/static/chunks/4fa395d360c87cc3.js:1:111281)"
+     ]
+    }
+   ],
+   "afterBack": "/dashboard"
+  },
+  {
+   "kind": "C",
+   "rep": 3,
+   "clicked": true,
+   "atInsights": "/portfolio",
+   "entries": [
+    "/robots.txt",
+    "/dashboard",
+    "/portfolio"
+   ],
+   "hlog": [
+    {
+     "k": "pushState",
+     "u": "/portfolio",
+     "at": 30940,
+     "from": "/dashboard",
+     "stack": [
+      "at https://vltd.app/_next/static/chunks/beae59601c7d10d2.js:1:14369",
+      "at ih (https://vltd.app/_next/static/chunks/4fa395d360c87cc3.js:1:95533)",
+      "at ur (https://vltd.app/_next/static/chunks/4fa395d360c87cc3.js:1:111281)"
+     ]
+    }
+   ],
+   "afterBack": "/dashboard"
+  }
+ ],
+ "summary": {
+  "A": {
+   "runs": 20,
+   "stayedOnInsights": 20,
+   "backToHome": 20,
+   "replaceCalls": 0
+  },
+  "B": {
+   "runs": 6,
+   "back1Insights": 6,
+   "back2Home": 6
+  },
+  "C": {
+   "runs": 4,
+   "stayedOnInsights": 4,
+   "backToHome": 4
+  }
+ }
+}

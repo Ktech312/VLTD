@@ -1,0 +1,177 @@
+{
+ "label": "prod1",
+ "cases": [
+  {
+   "ok": true,
+   "control": "first visit: Minimal is the current style by default"
+  },
+  {
+   "ok": true,
+   "control": "Apply Engraved: the page takes the style (root class, saved choice, one Applied badge)"
+  },
+  {
+   "ok": true,
+   "control": "Apply Engraved: the accent colour is still a real colour (not blanked)"
+  },
+  {
+   "ok": true,
+   "control": "Apply Royal: the page takes the style (root class, saved choice, one Applied badge)"
+  },
+  {
+   "ok": true,
+   "control": "Apply Royal: the accent colour is still a real colour (not blanked)"
+  },
+  {
+   "ok": true,
+   "control": "Apply Neon Mirror: the page takes the style (root class, saved choice, one Applied badge)"
+  },
+  {
+   "ok": true,
+   "control": "Apply Neon Mirror: the accent colour is still a real colour (not blanked)"
+  },
+  {
+   "ok": true,
+   "control": "Apply Neon Purple: the page takes the style (root class, saved choice, one Applied badge)"
+  },
+  {
+   "ok": true,
+   "control": "Apply Neon Purple: the accent colour is still a real colour (not blanked)"
+  },
+  {
+   "ok": true,
+   "control": "Apply Noir: the page takes the style (root class, saved choice, one Applied badge)"
+  },
+  {
+   "ok": true,
+   "control": "Apply Noir: the accent colour is still a real colour (not blanked)"
+  },
+  {
+   "ok": true,
+   "control": "Apply Paper: the page takes the style (root class, saved choice, one Applied badge)"
+  },
+  {
+   "ok": true,
+   "control": "Apply Paper: the accent colour is still a real colour (not blanked)"
+  },
+  {
+   "ok": true,
+   "control": "an applied style stays on another page (Home)"
+  },
+  {
+   "ok": true,
+   "control": "after a full reload the Styles page shows the saved style as current"
+  },
+  {
+   "ok": true,
+   "control": "Reset to Minimal puts every measured value back to where the first visit was"
+  },
+  {
+   "ok": true,
+   "control": "after Reset, other pages are back to normal and stay that way"
+  }
+ ],
+ "styles": {
+  "baseline": {
+   "cls": "style-minimal",
+   "ls": null,
+   "accent": "#C8CDD2",
+   "shadowPill": "0 8px 20px #0000001f",
+   "bodyBg": "rgba(0, 0, 0, 0)",
+   "h1Color": "rgb(236, 237, 239)",
+   "pillBg": "rgba(0, 0, 0, 0)",
+   "pillColor": "rgb(236, 237, 239)",
+   "applied": 1,
+   "current": "Minimal"
+  },
+  "ENGRAVED": {
+   "cls": "style-engraved",
+   "ls": "ENGRAVED",
+   "accent": "#C8CDD2",
+   "shadowPill": "0 18px 40px #00000059",
+   "bodyBg": "rgba(0, 0, 0, 0)",
+   "h1Color": "rgb(236, 237, 239)",
+   "pillBg": "rgba(0, 0, 0, 0)",
+   "pillColor": "rgb(236, 237, 239)",
+   "applied": 1,
+   "current": "Engraved",
+   "visibleChange": true
+  },
+  "ROYAL": {
+   "cls": "style-royal",
+   "ls": "ROYAL",
+   "accent": "#C8CDD2",
+   "shadowPill": "0 16px 34px #0000008c",
+   "bodyBg": "rgba(0, 0, 0, 0)",
+   "h1Color": "rgb(236, 237, 239)",
+   "pillBg": "rgba(0, 0, 0, 0)",
+   "pillColor": "rgb(236, 237, 239)",
+   "applied": 1,
+   "current": "Royal",
+   "visibleChange": true
+  },
+  "NEON_MIRROR": {
+   "cls": "style-neon_mirror",
+   "ls": "NEON_MIRROR",
+   "accent": "#C8CDD2",
+   "shadowPill": "0 0 18px color-mix(in srgb,#C8CDD2/**/40%,transparent)",
+   "bodyBg": "rgba(0, 0, 0, 0)",
+   "h1Color": "rgb(236, 237, 239)",
+   "pillBg": "rgba(0, 0, 0, 0)",
+   "pillColor": "rgb(236, 237, 239)",
+   "applied": 1,
+   "current": "Neon Mirror",
+   "visibleChange": true
+  },
+  "NEON_PURPLE": {
+   "cls": "style-neon_purple",
+   "ls": "NEON_PURPLE",
+   "accent": "#C8CDD2",
+   "shadowPill": "0 16px 34px #0000008c",
+   "bodyBg": "rgba(0, 0, 0, 0)",
+   "h1Color": "rgb(236, 237, 239)",
+   "pillBg": "rgba(0, 0, 0, 0)",
+   "pillColor": "rgb(236, 237, 239)",
+   "applied": 1,
+   "current": "Neon Purple",
+   "visibleChange": true
+  },
+  "NOIR": {
+   "cls": "style-noir",
+   "ls": "NOIR",
+   "accent": "#C8CDD2",
+   "shadowPill": "0 16px 34px #0000008c",
+   "bodyBg": "rgba(0, 0, 0, 0)",
+   "h1Color": "rgb(236, 237, 239)",
+   "pillBg": "rgba(0, 0, 0, 0)",
+   "pillColor": "rgb(236, 237, 239)",
+   "applied": 1,
+   "current": "Noir",
+   "visibleChange": true
+  },
+  "PAPER": {
+   "cls": "style-paper",
+   "ls": "PAPER",
+   "accent": "#C8CDD2",
+   "shadowPill": "0 16px 34px #0000008c",
+   "bodyBg": "rgba(0, 0, 0, 0)",
+   "h1Color": "rgb(236, 237, 239)",
+   "pillBg": "rgba(0, 0, 0, 0)",
+   "pillColor": "rgb(236, 237, 239)",
+   "applied": 1,
+   "current": "Paper",
+   "visibleChange": true
+  },
+  "afterReset": {
+   "cls": "style-minimal",
+   "ls": "MINIMAL",
+   "accent": "#C8CDD2",
+   "shadowPill": "0 8px 20px #0000001f",
+   "bodyBg": "rgba(0, 0, 0, 0)",
+   "h1Color": "rgb(236, 237, 239)",
+   "pillBg": "rgba(0, 0, 0, 0)",
+   "pillColor": "rgb(236, 237, 239)",
+   "applied": 1,
+   "current": "Minimal"
+  }
+ }
+}

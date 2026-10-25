@@ -1,0 +1,691 @@
+{
+ "label": "v1",
+ "shots": [
+  "shots/rb72-v1-desktop-wishlist.jpg",
+  "shots/rb72-v1-desktop-wishlist-full.jpg",
+  "shots/rb72-v1-desktop-wishlist-row-open.jpg",
+  "shots/rb72-v1-desktop-pull-list.jpg",
+  "shots/rb72-v1-desktop-pull-list-full.jpg",
+  "shots/rb72-v1-desktop-following.jpg",
+  "shots/rb72-v1-desktop-following-full.jpg",
+  "shots/rb72-v1-phone-wishlist.jpg",
+  "shots/rb72-v1-phone-wishlist-full.jpg",
+  "shots/rb72-v1-phone-wishlist-row-open.jpg",
+  "shots/rb72-v1-phone-pull-list.jpg",
+  "shots/rb72-v1-phone-pull-list-full.jpg",
+  "shots/rb72-v1-phone-following.jpg",
+  "shots/rb72-v1-phone-following-full.jpg"
+ ],
+ "measure": {
+  "desktop:Wishlist": {
+   "rowCount": 13,
+   "rowHeights": {
+    "min": 62,
+    "max": 73,
+    "avg": 65
+   },
+   "ruleCards": 0,
+   "controlsUnder36": [
+    {
+     "t": "Search",
+     "w": 26,
+     "h": 32
+    },
+    {
+     "t": "Search vault, exhibitions, collectors...",
+     "w": 122,
+     "h": 24
+    },
+    {
+     "t": "Search wants",
+     "w": 215,
+     "h": 21
+    },
+    {
+     "t": "Field watch, steel, 38 mm",
+     "w": 388,
+     "h": 20
+    },
+    {
+     "t": "Wanted",
+     "w": 65,
+     "h": 30
+    },
+    {
+     "t": "Preordered",
+     "w": 85,
+     "h": 30
+    },
+    {
+     "t": "Acquired",
+     "w": 72,
+     "h": 30
+    },
+    {
+     "t": "Wanted",
+     "w": 65,
+     "h": 30
+    },
+    {
+     "t": "Preordered",
+     "w": 85,
+     "h": 30
+    },
+    {
+     "t": "Acquired",
+     "w": 72,
+     "h": 30
+    },
+    {
+     "t": "Wanted",
+     "w": 65,
+     "h": 30
+    },
+    {
+     "t": "Preordered",
+     "w": 85,
+     "h": 30
+    }
+   ],
+   "controlCount": 90,
+   "repeatedControlLabels": [
+    "Wanted x13",
+    "Preordered x13",
+    "Acquired x13"
+   ],
+   "pricingPanels": [
+    "Planned total $1,053.93 from 9 priced wants, with quantities 4 without a price, not counted"
+   ],
+   "overflowX": 0,
+   "hasLoading": false,
+   "textSample": "Home Vault Exhibitions Insights More ? ? ? Help ⌘K NOVICE Level 1 Watchlist Wishlist, Pull List and Following: what you want, what is coming, and what to collec"
+  },
+  "desktop:Wishlist-row-open": {
+   "rowCount": 13,
+   "rowHeights": {
+    "min": 62,
+    "max": 807,
+    "avg": 122
+   },
+   "ruleCards": 0,
+   "controlsUnder36": [
+    {
+     "t": "Search",
+     "w": 26,
+     "h": 32
+    },
+    {
+     "t": "Search vault, exhibitions, collectors...",
+     "w": 122,
+     "h": 24
+    },
+    {
+     "t": "Search wants",
+     "w": 215,
+     "h": 21
+    },
+    {
+     "t": "Field watch, steel, 38 mm",
+     "w": 388,
+     "h": 20
+    },
+    {
+     "t": "Wanted",
+     "w": 65,
+     "h": 30
+    },
+    {
+     "t": "Preordered",
+     "w": 85,
+     "h": 30
+    },
+    {
+     "t": "Acquired",
+     "w": 72,
+     "h": 30
+    },
+    {
+     "t": "Wanted",
+     "w": 65,
+     "h": 30
+    },
+    {
+     "t": "Preordered",
+     "w": 85,
+     "h": 30
+    },
+    {
+     "t": "Acquired",
+     "w": 72,
+     "h": 30
+    },
+    {
+     "t": "Wanted",
+     "w": 65,
+     "h": 30
+    },
+    {
+     "t": "Preordered",
+     "w": 85,
+     "h": 30
+    }
+   ],
+   "controlCount": 111,
+   "repeatedControlLabels": [
+    "Wanted x13",
+    "Preordered x13",
+    "Acquired x13",
+    "Optional x6",
+    "Unknown x3"
+   ],
+   "pricingPanels": [
+    "Planned total $1,053.93 from 9 priced wants, with quantities 4 without a price, not counted"
+   ],
+   "overflowX": 0,
+   "hasLoading": false,
+   "textSample": "Home Vault Exhibitions Insights More ? ? ? Help ⌘K NOVICE Level 1 Watchlist Wishlist, Pull List and Following: what you want, what is coming, and what to collec"
+  },
+  "desktop:Pull List": {
+   "rowCount": 10,
+   "rowHeights": {
+    "min": 62,
+    "max": 807,
+    "avg": 140
+   },
+   "ruleCards": 0,
+   "controlsUnder36": [
+    {
+     "t": "Search",
+     "w": 26,
+     "h": 32
+    },
+    {
+     "t": "Search vault, exhibitions, collectors...",
+     "w": 122,
+     "h": 24
+    },
+    {
+     "t": "Search wants",
+     "w": 215,
+     "h": 21
+    },
+    {
+     "t": "Wanted",
+     "w": 65,
+     "h": 30
+    },
+    {
+     "t": "Preordered",
+     "w": 85,
+     "h": 30
+    },
+    {
+     "t": "Acquired",
+     "w": 72,
+     "h": 30
+    },
+    {
+     "t": "Wanted",
+     "w": 65,
+     "h": 30
+    },
+    {
+     "t": "Preordered",
+     "w": 85,
+     "h": 30
+    },
+    {
+     "t": "Acquired",
+     "w": 72,
+     "h": 30
+    },
+    {
+     "t": "Wanted",
+     "w": 65,
+     "h": 30
+    },
+    {
+     "t": "Preordered",
+     "w": 85,
+     "h": 30
+    },
+    {
+     "t": "Acquired",
+     "w": 72,
+     "h": 30
+    }
+   ],
+   "controlCount": 94,
+   "repeatedControlLabels": [
+    "Wanted x10",
+    "Preordered x10",
+    "Acquired x10",
+    "Optional x6",
+    "Unknown x3"
+   ],
+   "pricingPanels": [
+    "Planned total $1,053.93 from 9 priced wants, with quantities 1 without a price, not counted"
+   ],
+   "overflowX": 0,
+   "hasLoading": false,
+   "textSample": "Home Vault Exhibitions Insights More ? ? ? Help ⌘K NOVICE Level 1 Watchlist Wishlist, Pull List and Following: what you want, what is coming, and what to collec"
+  },
+  "desktop:Following": {
+   "rowCount": 0,
+   "rowHeights": {
+    "min": null,
+    "max": null,
+    "avg": 0
+   },
+   "ruleCards": 3,
+   "controlsUnder36": [
+    {
+     "t": "Search",
+     "w": 26,
+     "h": 32
+    },
+    {
+     "t": "Search vault, exhibitions, collectors...",
+     "w": 122,
+     "h": 24
+    },
+    {
+     "t": "Follow",
+     "w": 77,
+     "h": 28
+    },
+    {
+     "t": "Pause",
+     "w": 74,
+     "h": 28
+    },
+    {
+     "t": "Stop",
+     "w": 46,
+     "h": 28
+    },
+    {
+     "t": "Check now",
+     "w": 84,
+     "h": 28
+    },
+    {
+     "t": "Edit rule",
+     "w": 67,
+     "h": 28
+    },
+    {
+     "t": "Pause",
+     "w": 74,
+     "h": 28
+    },
+    {
+     "t": "Stop",
+     "w": 46,
+     "h": 28
+    },
+    {
+     "t": "Add a release",
+     "w": 98,
+     "h": 28
+    },
+    {
+     "t": "Edit rule",
+     "w": 67,
+     "h": 28
+    },
+    {
+     "t": "Resume",
+     "w": 66,
+     "h": 28
+    }
+   ],
+   "controlCount": 34,
+   "repeatedControlLabels": [
+    "Pause x2",
+    "Stop x3",
+    "Edit rule x3",
+    "Add a release x2"
+   ],
+   "pricingPanels": [],
+   "overflowX": 0,
+   "hasLoading": false,
+   "textSample": "Home Vault Exhibitions Insights More ? ? ? Help ⌘K NOVICE Level 1 Watchlist Wishlist, Pull List and Following: what you want, what is coming, and what to collec"
+  },
+  "phone:Wishlist": {
+   "rowCount": 13,
+   "rowHeights": {
+    "min": 147,
+    "max": 198,
+    "avg": 176
+   },
+   "ruleCards": 0,
+   "controlsUnder36": [
+    {
+     "t": "Search wants",
+     "w": 305,
+     "h": 21
+    },
+    {
+     "t": "Field watch, steel, 38 mm",
+     "w": 166,
+     "h": 20
+    },
+    {
+     "t": "Wanted",
+     "w": 65,
+     "h": 30
+    },
+    {
+     "t": "Preordered",
+     "w": 85,
+     "h": 30
+    },
+    {
+     "t": "Acquired",
+     "w": 72,
+     "h": 30
+    },
+    {
+     "t": "Wanted",
+     "w": 65,
+     "h": 30
+    },
+    {
+     "t": "Preordered",
+     "w": 85,
+     "h": 30
+    },
+    {
+     "t": "Acquired",
+     "w": 72,
+     "h": 30
+    },
+    {
+     "t": "Wanted",
+     "w": 65,
+     "h": 30
+    },
+    {
+     "t": "Preordered",
+     "w": 85,
+     "h": 30
+    },
+    {
+     "t": "Acquired",
+     "w": 72,
+     "h": 30
+    },
+    {
+     "t": "Wanted",
+     "w": 65,
+     "h": 30
+    }
+   ],
+   "controlCount": 91,
+   "repeatedControlLabels": [
+    "Wanted x13",
+    "Preordered x13",
+    "Acquired x13"
+   ],
+   "pricingPanels": [
+    "Planned total $1,053.93 from 9 priced wants, with quantities 4 without a price, not counted"
+   ],
+   "overflowX": 0,
+   "hasLoading": false,
+   "textSample": "Watchlist Wishlist, Pull List and Following: what you want, what is coming, and what to collect for you. Checklist Add Wishlist 13 Pull List 10 Following 3 All "
+  },
+  "phone:Wishlist-row-open": {
+   "rowCount": 13,
+   "rowHeights": {
+    "min": 147,
+    "max": 1904,
+    "avg": 308
+   },
+   "ruleCards": 0,
+   "controlsUnder36": [
+    {
+     "t": "Search wants",
+     "w": 305,
+     "h": 21
+    },
+    {
+     "t": "Field watch, steel, 38 mm",
+     "w": 166,
+     "h": 20
+    },
+    {
+     "t": "Wanted",
+     "w": 65,
+     "h": 30
+    },
+    {
+     "t": "Preordered",
+     "w": 85,
+     "h": 30
+    },
+    {
+     "t": "Acquired",
+     "w": 72,
+     "h": 30
+    },
+    {
+     "t": "Wanted",
+     "w": 65,
+     "h": 30
+    },
+    {
+     "t": "Preordered",
+     "w": 85,
+     "h": 30
+    },
+    {
+     "t": "Acquired",
+     "w": 72,
+     "h": 30
+    },
+    {
+     "t": "Wanted",
+     "w": 65,
+     "h": 30
+    },
+    {
+     "t": "Preordered",
+     "w": 85,
+     "h": 30
+    },
+    {
+     "t": "Acquired",
+     "w": 72,
+     "h": 30
+    },
+    {
+     "t": "Wanted",
+     "w": 65,
+     "h": 30
+    }
+   ],
+   "controlCount": 112,
+   "repeatedControlLabels": [
+    "Wanted x13",
+    "Preordered x13",
+    "Acquired x13",
+    "Optional x6",
+    "Unknown x3"
+   ],
+   "pricingPanels": [
+    "Planned total $1,053.93 from 9 priced wants, with quantities 4 without a price, not counted"
+   ],
+   "overflowX": 0,
+   "hasLoading": false,
+   "textSample": "Watchlist Wishlist, Pull List and Following: what you want, what is coming, and what to collect for you. Checklist Add Wishlist 13 Pull List 10 Following 3 All "
+  },
+  "phone:Pull List": {
+   "rowCount": 10,
+   "rowHeights": {
+    "min": 181,
+    "max": 1904,
+    "avg": 357
+   },
+   "ruleCards": 0,
+   "controlsUnder36": [
+    {
+     "t": "Search wants",
+     "w": 305,
+     "h": 21
+    },
+    {
+     "t": "Wanted",
+     "w": 65,
+     "h": 30
+    },
+    {
+     "t": "Preordered",
+     "w": 85,
+     "h": 30
+    },
+    {
+     "t": "Acquired",
+     "w": 72,
+     "h": 30
+    },
+    {
+     "t": "Wanted",
+     "w": 65,
+     "h": 30
+    },
+    {
+     "t": "Preordered",
+     "w": 85,
+     "h": 30
+    },
+    {
+     "t": "Acquired",
+     "w": 72,
+     "h": 30
+    },
+    {
+     "t": "Wanted",
+     "w": 65,
+     "h": 30
+    },
+    {
+     "t": "Preordered",
+     "w": 85,
+     "h": 30
+    },
+    {
+     "t": "Acquired",
+     "w": 72,
+     "h": 30
+    },
+    {
+     "t": "Wanted",
+     "w": 65,
+     "h": 30
+    },
+    {
+     "t": "Preordered",
+     "w": 85,
+     "h": 30
+    }
+   ],
+   "controlCount": 95,
+   "repeatedControlLabels": [
+    "Wanted x10",
+    "Preordered x10",
+    "Acquired x10",
+    "Optional x6",
+    "Unknown x3"
+   ],
+   "pricingPanels": [
+    "Planned total $1,053.93 from 9 priced wants, with quantities 1 without a price, not counted"
+   ],
+   "overflowX": 0,
+   "hasLoading": false,
+   "textSample": "Watchlist Wishlist, Pull List and Following: what you want, what is coming, and what to collect for you. Checklist Add Wishlist 13 Pull List 10 Following 3 All "
+  },
+  "phone:Following": {
+   "rowCount": 0,
+   "rowHeights": {
+    "min": null,
+    "max": null,
+    "avg": 0
+   },
+   "ruleCards": 3,
+   "controlsUnder36": [
+    {
+     "t": "Follow",
+     "w": 77,
+     "h": 32
+    },
+    {
+     "t": "Pause",
+     "w": 74,
+     "h": 32
+    },
+    {
+     "t": "Stop",
+     "w": 46,
+     "h": 32
+    },
+    {
+     "t": "Check now",
+     "w": 84,
+     "h": 32
+    },
+    {
+     "t": "Edit rule",
+     "w": 67,
+     "h": 32
+    },
+    {
+     "t": "Pause",
+     "w": 74,
+     "h": 32
+    },
+    {
+     "t": "Stop",
+     "w": 46,
+     "h": 32
+    },
+    {
+     "t": "Add a release",
+     "w": 98,
+     "h": 32
+    },
+    {
+     "t": "Edit rule",
+     "w": 67,
+     "h": 32
+    },
+    {
+     "t": "Resume",
+     "w": 66,
+     "h": 32
+    },
+    {
+     "t": "Stop",
+     "w": 46,
+     "h": 32
+    },
+    {
+     "t": "Add a release",
+     "w": 98,
+     "h": 32
+    }
+   ],
+   "controlCount": 35,
+   "repeatedControlLabels": [
+    "Pause x2",
+    "Stop x3",
+    "Edit rule x3",
+    "Add a release x2"
+   ],
+   "pricingPanels": [],
+   "overflowX": 0,
+   "hasLoading": false,
+   "textSample": "Watchlist Wishlist, Pull List and Following: what you want, what is coming, and what to collect for you. Checklist Add Wishlist 13 Pull List 10 Following 3 Foll"
+  }
+ }
+}

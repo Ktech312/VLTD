@@ -224,6 +224,7 @@ export default function MarketPage() {
         title="Marketplace"
         titleAdornment={<PillButton size="compact" href="/discover" ariaLabel="Back to Discover"><AppIcon name="back" size={14} strokeWidth={2} /><span>Discover</span></PillButton>}
         description="Browse collectibles for sale by VLTD collectors. Contact sellers through their public vault."
+        actions={<PillButton size="compact" href="/shop"><span>Collector supplies &amp; services</span></PillButton>}
         contentClassName="max-w-6xl"
       />
       <div>

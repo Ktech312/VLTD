@@ -23,7 +23,7 @@ export const PRIMARY_NAV: PrimaryNavItem[] = [
   { label: "Vault", href: "/vault", icon: "vault", match: ["/vault", "/portfolio", "/goals", "/insurance"] },
   { label: "Exhibitions", href: "/museum", icon: "exhibitions", match: ["/museum"] },
   { label: "Lounge", href: "/community-board", icon: "communityBoard", match: ["/community-board", "/learn"] },
-  { label: "Discover", href: "/discover", icon: "discover", match: ["/discover", "/market", "/upcoming", "/events"] },
+  { label: "Discover", href: "/discover", icon: "discover", match: ["/discover", "/market", "/shop", "/upcoming", "/kickstarter", "/patreon", "/events"] },
 ];
 
 /** The desktop top bar's direct links. Insights is a direct link here (its page is still /portfolio and it is still in the Vault bar). */
@@ -36,9 +36,9 @@ export const DESKTOP_NAV: PrimaryNavItem[] = [
 
 export type MoreItem = { key: string; label: string; description: string; href: string; match: string[]; signedInOnly?: boolean };
 
-/** The desktop More menu. Marketplace and Upcoming Comics are Discover sections, so they keep More (Discover) highlighted. */
+/** The desktop More menu. Marketplace and Upcoming Comics are Discover sections, so they keep More (Discover) highlighted; so do the pages they link to (Collector supplies & services, Kickstarter and Patreon comics). */
 export const MORE_ITEMS: MoreItem[] = [
-  { key: "discover", label: "Discover", description: "Public collections, notable items and collectors", href: "/discover", match: ["/discover", "/market", "/upcoming"] },
+  { key: "discover", label: "Discover", description: "Public collections, notable items and collectors", href: "/discover", match: ["/discover", "/market", "/shop", "/upcoming", "/kickstarter", "/patreon"] },
   { key: "events", label: "Events", description: "Conventions, card shows, auctions and drops", href: "/events", match: ["/events"] },
   { key: "lounge", label: "VLT Lounge", description: "Community board and leaderboards", href: "/community-board", match: ["/community-board"] },
   { key: "activity", label: "Activity", description: "Everything that changed in your vault", href: "/activity", match: ["/activity"], signedInOnly: true },

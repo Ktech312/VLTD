@@ -115,5 +115,33 @@ test("Notable Items are real items: no exhibition cards, hidden items and cost a
   assert.doesNotMatch(read("src/components/discover/DiscoverSections.tsx"), /purchase_price|purchasePrice/);
 });
 
+
+test("Collector supplies & services is a labelled link in Marketplace; Kickstarter and Patreon comics are labelled links in Upcoming Comics; the header and every existing URL are unchanged", () => {
+  const market = read("src/app/market/page.tsx");
+  assert.ok(market.includes('href="/shop"'));
+  assert.match(market, /Collector supplies &amp; services/);
+  const upcoming = read("src/app/upcoming/page.tsx");
+  assert.ok(upcoming.includes('href="/kickstarter"'));
+  assert.match(upcoming, /Kickstarter comics/);
+  assert.ok(upcoming.includes('href="/patreon"'));
+  assert.match(upcoming, /Patreon comics/);
+  // no new header or More entry
+  assert.deepEqual(DESKTOP_NAV.map((i) => i.label), ["Home", "Vault", "Exhibitions", "Insights"]);
+  assert.deepEqual(MORE_ITEMS.map((i) => i.label), ["Discover", "Events", "VLT Lounge", "Activity", "Learn"]);
+  for (const f of ["src/app/shop/page.tsx", "src/app/kickstarter/page.tsx", "src/app/patreon/page.tsx", "src/app/market/page.tsx", "src/app/upcoming/page.tsx"]) assert.ok(fs.existsSync(f), f + " still exists");
+  // the destinations keep More (Discover) highlighted, and the phone bar's Discover
+  for (const path of ["/shop", "/kickstarter", "/patreon"]) {
+    assert.equal(activeMoreKey(path), "discover", path);
+    assert.deepEqual(desktop(path), [], path + ": no direct header link highlighted");
+    assert.deepEqual(phone(path), ["Discover"], path);
+  }
+});
+test("/collector still redirects to Home and gets no menu entry; the Styles page gets no link", () => {
+  assert.ok(read("src/app/collector/page.tsx").includes('redirect("/dashboard")'));
+  const nav = JSON.stringify([PRIMARY_NAV, DESKTOP_NAV, MORE_ITEMS, ACCOUNT_SHORTCUTS]);
+  assert.equal(nav.includes("/collector"), false);
+  assert.equal(nav.includes("/styles"), false);
+  assert.equal(read("src/app/account/page.tsx").includes('href="/styles"'), false);
+});
 console.log(`\n${pass} of ${pass + fail} passed`);
 process.exit(fail ? 1 : 0);

@@ -42,7 +42,7 @@ function Stepper({ want, onStatus, onAcquire }: { want: WishlistItem; onStatus: 
   if (status === "acquired") return <span className="rounded-full border px-3 py-1 text-[12px] font-semibold text-emerald-400" style={{ borderColor: "rgba(84,201,138,0.5)" }}>Acquired</span>;
   if (status === "skipped") return <span className="rounded-full border px-3 py-1 text-[12px]" style={{ borderColor: line, color: "var(--muted)" }}>Skipped</span>;
   const seg = (key: string, label: string, on: boolean, click: () => void, title: string) => (
-    <button key={key} type="button" onClick={click} aria-pressed={on} title={title} className="min-h-[30px] px-2.5 text-[12px] font-medium transition" style={{ background: on ? "rgba(82,214,244,0.14)" : "transparent", color: on ? "var(--info, #52d6f4)" : "var(--muted)", borderRight: `1px solid ${line}` }}>
+    <button key={key} type="button" onClick={click} aria-pressed={on} title={title} className="min-h-[30px] max-md:min-h-11 px-2.5 text-[12px] font-medium transition" style={{ background: on ? "rgba(82,214,244,0.14)" : "transparent", color: on ? "var(--info, #52d6f4)" : "var(--muted)", borderRight: `1px solid ${line}` }}>
       {label}
     </button>
   );
@@ -50,7 +50,7 @@ function Stepper({ want, onStatus, onAcquire }: { want: WishlistItem; onStatus: 
     <span className="inline-flex overflow-hidden rounded-[8px] border" style={{ borderColor: line }} role="group" aria-label={`Status of ${want.title}`}>
       {seg("want", "Wanted", status === "want", () => onStatus("want"), "Still wanted")}
       {seg("pre", "Preordered", status === "preordered", () => onStatus("preordered"), "You arranged it with a shop yourself. VLTD places no order.")}
-      <button type="button" onClick={onAcquire} className="min-h-[30px] px-2.5 text-[12px] font-medium" style={{ color: "var(--muted)" }} title="You have it: add it to your Vault">Acquired</button>
+      <button type="button" onClick={onAcquire} className="min-h-[30px] max-md:min-h-11 px-2.5 text-[12px] font-medium" style={{ color: "var(--muted)" }} title="You have it: add it to your Vault">Acquired</button>
     </span>
   );
 }

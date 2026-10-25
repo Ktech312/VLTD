@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 
-import { AppIcon } from "@/components/ui/AppIcon";
 import { PillButton } from "@/components/ui/PillButton";
 import { Field, inputClass } from "@/components/wants/Sheet";
 import { setRuleState, updateRule } from "@/lib/pullRules";
@@ -88,7 +87,7 @@ export default function FollowTab({
           </div>
         ) : null}
         <div className="flex flex-wrap gap-2">
-          {rule.state === "following" ? <PillButton size="compact" onClick={() => onChanged(setRuleState(rule.id, "paused"))}><AppIcon name="more" size={13} />Pause</PillButton> : null}
+          {rule.state === "following" ? <PillButton size="compact" onClick={() => onChanged(setRuleState(rule.id, "paused"))}>Pause</PillButton> : null}
           {rule.state !== "following" ? <PillButton size="compact" onClick={() => onChanged(setRuleState(rule.id, "following"))}>{rule.state === "paused" ? "Resume" : "Follow again"}</PillButton> : null}
           {rule.state !== "stopped" ? <PillButton size="compact" onClick={() => onChanged(setRuleState(rule.id, "stopped"))}>Stop</PillButton> : null}
           {rule.source === "metron" && rule.state === "following" ? <PillButton size="compact" disabled={checking} onClick={() => onCheck(rule)}>{checking ? "Checking…" : "Check now"}</PillButton> : null}

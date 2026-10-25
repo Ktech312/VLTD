@@ -365,6 +365,7 @@ export default function UpcomingPage() {
         title="Upcoming Comics"
         titleAdornment={<PillButton size="compact" href="/discover" ariaLabel="Back to Discover"><AppIcon name="back" size={14} strokeWidth={2} /><span>Discover</span></PillButton>}
         description={statuses.size > 0 ? `Releases by artist or series. ${statuses.size} saved.` : "Releases by artist or series."}
+        actions={<><PillButton size="compact" href="/kickstarter"><span>Kickstarter comics</span></PillButton><PillButton size="compact" href="/patreon"><span>Patreon comics</span></PillButton></>}
         contentClassName="max-w-[900px]"
       />
       <main className="text-[color:var(--fg)]" style={{ paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 90px)" }}>
