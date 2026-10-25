@@ -100,7 +100,7 @@ export default function WantRow({
     />
   );
   const titleButton = (
-    <button type="button" onClick={onToggle} aria-expanded={open} className="min-w-0 text-left">
+    <button type="button" onClick={onToggle} aria-expanded={open} className="block w-full min-w-0 text-left">
       <span className="block truncate text-[13.5px] font-semibold" style={{ color: "var(--theme-text-primary, var(--fg))" }}>{want.title}</span>
       {sub ? <span className="block truncate text-[12px]" style={{ color: "var(--muted)" }}>{sub}</span> : null}
       {ruleName ? <span className="block truncate text-[11px]" style={{ color: "var(--muted2)" }}>From following {ruleName}</span> : null}

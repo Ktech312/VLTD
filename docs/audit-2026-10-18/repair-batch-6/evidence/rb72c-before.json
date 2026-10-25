@@ -1,0 +1,368 @@
+{
+ "label": "before",
+ "results": {
+  "390:wishlist": {
+   "vw": 390,
+   "count": 0,
+   "sample": []
+  },
+  "390:pull-list": {
+   "vw": 390,
+   "count": 0,
+   "sample": []
+  },
+  "390:following": {
+   "vw": 390,
+   "count": 18,
+   "sample": [
+    {
+     "tag": "div",
+     "cls": "flex flex-col gap-2 rounded-[8px] border px-3 py-3",
+     "text": "Starlight Duel boo ter boxe \nCard produc",
+     "right": 502,
+     "width": 486
+    },
+    {
+     "tag": "div",
+     "cls": "flex items-start justify-between gap-3",
+     "text": "Starlight Duel boo ter boxe \nCard produc",
+     "right": 489,
+     "width": 460
+    },
+    {
+     "tag": "div",
+     "cls": "min-w-0",
+     "text": "Starlight Duel boo ter boxe \nCard produc",
+     "right": 402,
+     "width": 373
+    },
+    {
+     "tag": "div",
+     "cls": "truncate text-[13.5px] font-semibold",
+     "text": "Starlight Duel boo ter boxe ",
+     "right": 402,
+     "width": 373
+    },
+    {
+     "tag": "div",
+     "cls": "truncate text-[12px]",
+     "text": "Card product or  et · 2 copie  of each ·",
+     "right": 402,
+     "width": 373
+    },
+    {
+     "tag": "span",
+     "cls": "shrink-0 rounded-full border px-2.5 py-0.5 text-[1",
+     "text": "Following",
+     "right": 489,
+     "width": 75
+    }
+   ]
+  },
+  "390:follow-sheet": {
+   "vw": 390,
+   "count": 18,
+   "sample": [
+    {
+     "tag": "div",
+     "cls": "flex flex-col gap-2 rounded-[8px] border px-3 py-3",
+     "text": "Starlight Duel boo ter boxe \nCard produc",
+     "right": 502,
+     "width": 486
+    },
+    {
+     "tag": "div",
+     "cls": "flex items-start justify-between gap-3",
+     "text": "Starlight Duel boo ter boxe \nCard produc",
+     "right": 489,
+     "width": 460
+    },
+    {
+     "tag": "div",
+     "cls": "min-w-0",
+     "text": "Starlight Duel boo ter boxe \nCard produc",
+     "right": 402,
+     "width": 373
+    },
+    {
+     "tag": "div",
+     "cls": "truncate text-[13.5px] font-semibold",
+     "text": "Starlight Duel boo ter boxe ",
+     "right": 402,
+     "width": 373
+    },
+    {
+     "tag": "div",
+     "cls": "truncate text-[12px]",
+     "text": "Card product or  et · 2 copie  of each ·",
+     "right": 402,
+     "width": 373
+    },
+    {
+     "tag": "span",
+     "cls": "shrink-0 rounded-full border px-2.5 py-0.5 text-[1",
+     "text": "Following",
+     "right": 489,
+     "width": 75
+    }
+   ]
+  },
+  "390:row-open": {
+   "vw": 390,
+   "count": 0,
+   "sample": []
+  },
+  "360:wishlist": {
+   "vw": 360,
+   "count": 0,
+   "sample": []
+  },
+  "360:pull-list": {
+   "vw": 360,
+   "count": 0,
+   "sample": []
+  },
+  "360:following": {
+   "vw": 360,
+   "count": 18,
+   "sample": [
+    {
+     "tag": "div",
+     "cls": "flex flex-col gap-2 rounded-[8px] border px-3 py-3",
+     "text": "Starlight Duel boo ter boxe \nCard produc",
+     "right": 502,
+     "width": 486
+    },
+    {
+     "tag": "div",
+     "cls": "flex items-start justify-between gap-3",
+     "text": "Starlight Duel boo ter boxe \nCard produc",
+     "right": 489,
+     "width": 460
+    },
+    {
+     "tag": "div",
+     "cls": "min-w-0",
+     "text": "Starlight Duel boo ter boxe \nCard produc",
+     "right": 402,
+     "width": 373
+    },
+    {
+     "tag": "div",
+     "cls": "truncate text-[13.5px] font-semibold",
+     "text": "Starlight Duel boo ter boxe ",
+     "right": 402,
+     "width": 373
+    },
+    {
+     "tag": "div",
+     "cls": "truncate text-[12px]",
+     "text": "Card product or  et · 2 copie  of each ·",
+     "right": 402,
+     "width": 373
+    },
+    {
+     "tag": "span",
+     "cls": "shrink-0 rounded-full border px-2.5 py-0.5 text-[1",
+     "text": "Following",
+     "right": 489,
+     "width": 75
+    }
+   ]
+  },
+  "360:follow-sheet": {
+   "vw": 360,
+   "count": 18,
+   "sample": [
+    {
+     "tag": "div",
+     "cls": "flex flex-col gap-2 rounded-[8px] border px-3 py-3",
+     "text": "Starlight Duel boo ter boxe \nCard produc",
+     "right": 502,
+     "width": 486
+    },
+    {
+     "tag": "div",
+     "cls": "flex items-start justify-between gap-3",
+     "text": "Starlight Duel boo ter boxe \nCard produc",
+     "right": 489,
+     "width": 460
+    },
+    {
+     "tag": "div",
+     "cls": "min-w-0",
+     "text": "Starlight Duel boo ter boxe \nCard produc",
+     "right": 402,
+     "width": 373
+    },
+    {
+     "tag": "div",
+     "cls": "truncate text-[13.5px] font-semibold",
+     "text": "Starlight Duel boo ter boxe ",
+     "right": 402,
+     "width": 373
+    },
+    {
+     "tag": "div",
+     "cls": "truncate text-[12px]",
+     "text": "Card product or  et · 2 copie  of each ·",
+     "right": 402,
+     "width": 373
+    },
+    {
+     "tag": "span",
+     "cls": "shrink-0 rounded-full border px-2.5 py-0.5 text-[1",
+     "text": "Following",
+     "right": 489,
+     "width": 75
+    }
+   ]
+  },
+  "360:row-open": {
+   "vw": 360,
+   "count": 0,
+   "sample": []
+  },
+  "320:wishlist": {
+   "vw": 320,
+   "count": 2,
+   "sample": [
+    {
+     "tag": "button",
+     "cls": "min-w-0 text-left",
+     "text": "Signed  creen print, 'Harbor at Du k'",
+     "right": 326,
+     "width": 241
+    },
+    {
+     "tag": "span",
+     "cls": "block truncate text-[13.5px] font-semibold",
+     "text": "Signed  creen print, 'Harbor at Du k'",
+     "right": 326,
+     "width": 241
+    }
+   ]
+  },
+  "320:pull-list": {
+   "vw": 320,
+   "count": 0,
+   "sample": []
+  },
+  "320:following": {
+   "vw": 320,
+   "count": 20,
+   "sample": [
+    {
+     "tag": "div",
+     "cls": "flex flex-col gap-2 rounded-[8px] border px-3 py-3",
+     "text": "Starlight Duel boo ter boxe \nCard produc",
+     "right": 502,
+     "width": 486
+    },
+    {
+     "tag": "div",
+     "cls": "flex items-start justify-between gap-3",
+     "text": "Starlight Duel boo ter boxe \nCard produc",
+     "right": 489,
+     "width": 460
+    },
+    {
+     "tag": "div",
+     "cls": "min-w-0",
+     "text": "Starlight Duel boo ter boxe \nCard produc",
+     "right": 402,
+     "width": 373
+    },
+    {
+     "tag": "div",
+     "cls": "truncate text-[13.5px] font-semibold",
+     "text": "Starlight Duel boo ter boxe ",
+     "right": 402,
+     "width": 373
+    },
+    {
+     "tag": "div",
+     "cls": "truncate text-[12px]",
+     "text": "Card product or  et · 2 copie  of each ·",
+     "right": 402,
+     "width": 373
+    },
+    {
+     "tag": "span",
+     "cls": "shrink-0 rounded-full border px-2.5 py-0.5 text-[1",
+     "text": "Following",
+     "right": 489,
+     "width": 75
+    }
+   ]
+  },
+  "320:follow-sheet": {
+   "vw": 320,
+   "count": 20,
+   "sample": [
+    {
+     "tag": "div",
+     "cls": "flex flex-col gap-2 rounded-[8px] border px-3 py-3",
+     "text": "Starlight Duel boo ter boxe \nCard produc",
+     "right": 502,
+     "width": 486
+    },
+    {
+     "tag": "div",
+     "cls": "flex items-start justify-between gap-3",
+     "text": "Starlight Duel boo ter boxe \nCard produc",
+     "right": 489,
+     "width": 460
+    },
+    {
+     "tag": "div",
+     "cls": "min-w-0",
+     "text": "Starlight Duel boo ter boxe \nCard produc",
+     "right": 402,
+     "width": 373
+    },
+    {
+     "tag": "div",
+     "cls": "truncate text-[13.5px] font-semibold",
+     "text": "Starlight Duel boo ter boxe ",
+     "right": 402,
+     "width": 373
+    },
+    {
+     "tag": "div",
+     "cls": "truncate text-[12px]",
+     "text": "Card product or  et · 2 copie  of each ·",
+     "right": 402,
+     "width": 373
+    },
+    {
+     "tag": "span",
+     "cls": "shrink-0 rounded-full border px-2.5 py-0.5 text-[1",
+     "text": "Following",
+     "right": 489,
+     "width": 75
+    }
+   ]
+  },
+  "320:row-open": {
+   "vw": 320,
+   "count": 2,
+   "sample": [
+    {
+     "tag": "button",
+     "cls": "min-w-0 text-left",
+     "text": "Signed  creen print, 'Harbor at Du k'",
+     "right": 326,
+     "width": 241
+    },
+    {
+     "tag": "span",
+     "cls": "block truncate text-[13.5px] font-semibold",
+     "text": "Signed  creen print, 'Harbor at Du k'",
+     "right": 326,
+     "width": 241
+    }
+   ]
+  }
+ }
+}

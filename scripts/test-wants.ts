@@ -132,6 +132,8 @@ async function test(name: string, fn: () => void | Promise<void>) {
     const lines = src.split(/\r?\n/);
     const card = lines.find((l) => l.includes('data-testid="rule-card"')) ?? "";
     assert.match(card, /min-w-0/);
+    const row = readFileSync("src/components/wants/WantRow.tsx", "utf8");
+    assert.match(row, /aria-expanded=\{open\} className="block w-full min-w-0 text-left"/, "a long want title truncates inside its row instead of pushing past a 320 px screen");
     assert.doesNotMatch(lines.filter((l) => l.includes("KIND_LABEL[rule.kind]") || l.includes("{rule.name}{rule.yearBegan")).join(" "), /truncate/);
   });
   await test("two accounts following the same series never ask for the same want or Vault id (ids are one list for every account); one account still gets the same id every time", () => {
