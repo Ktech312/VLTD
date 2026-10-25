@@ -7,8 +7,10 @@ import {
   CATEGORY_QUERIES,
   TICKETMASTER_KEYWORDS,
   fetchSerpCandidates,
+  fetchSerpAccount,
   fetchTicketmasterCandidates,
   filterRelevantCandidates,
+  pingAi,
   toRow,
   type Candidate,
   type SourceResult,
@@ -23,6 +25,9 @@ import {
   checkApproval,
   monthlyCategories,
   monthlyWindows,
+  planCounts,
+  serpAllowanceVerdict,
+  withRecordedApproval,
 } from "@/lib/events/monthlyRefreshPlan";
 
 // The monthly Events refresh: ONE pass over the coming year (see lib/events/monthlyRefreshPlan.ts for the plan, the ceiling and the approval it needs).
@@ -74,10 +79,22 @@ export async function GET(req: NextRequest) {
 
   const now = new Date();
   const windows = monthlyWindows(now);
-  const approval = checkApproval(process.env);
+  const approval = checkApproval(withRecordedApproval(process.env));
 
   // The plan and its cost, with no outside request (works whether or not the job is approved).
   if (new URL(req.url).searchParams.get("plan") === "1") return NextResponse.json(planResponse(approval, windows), { status: 200 });
+
+  // `?preflight=1`: reads SerpApi's own account figures (free, not a search) and says whether this run's searches would fit. Nothing else is sent, and nothing is saved.
+  if (new URL(req.url).searchParams.get("preflight") === "1") {
+    const key = process.env.SERPAPI_KEY;
+    if (!key) return NextResponse.json({ ok: false, error: "SERPAPI_KEY is not set" }, { status: 503 });
+    const { account, error } = await fetchSerpAccount(key);
+    const needed = planCounts().serpSearches;
+    const verdict = account ? serpAllowanceVerdict(account, needed) : null;
+    const body = { ok: Boolean(verdict?.fits), checkedAt: now.toISOString(), searchesNeeded: needed, serpApi: account, fits: verdict?.fits ?? false, shortfall: verdict?.shortfall ?? error, note: "read-only: no search, no AI call, nothing saved" };
+    console.log("[refresh-events-monthly] preflight", JSON.stringify(body));
+    return NextResponse.json(body, { status: 200 });
+  }
 
   if (!approval.allowed) {
     console.log("[refresh-events-monthly] not approved: no outside request was made");
@@ -95,9 +112,27 @@ export async function GET(req: NextRequest) {
   const svc = getServiceClient();
   if (!svc) return NextResponse.json({ error: "not_configured", message: "Supabase service client unavailable. No search was made." }, { status: 500 });
 
+  // BEFORE the first search is paid for: (1) SerpApi's own figures must show the plan's monthly allowance covers every search; (2) one tiny AI request must succeed, so searches are
+  // never bought that the AI check could not then judge. A shortfall stops the run with nothing spent and says exactly what it is. Neither check is retried.
+  const needed = planCounts().serpSearches;
+  if (serpKey) {
+    const { account, error } = await fetchSerpAccount(serpKey);
+    const verdict = account ? serpAllowanceVerdict(account, needed) : null;
+    if (!verdict?.fits) {
+      const shortfall = verdict?.shortfall ?? `could not read the SerpApi allowance (${error})`;
+      console.error("[refresh-events-monthly] stopped before any search:", shortfall);
+      return NextResponse.json({ ok: false, stoppedBeforeAnySearch: true, shortfall, serpApi: account, usage: { googleEventsSearches: { made: 0, succeeded: 0 }, ticketmasterSearches: { made: 0, succeeded: 0 }, aiCalls: { made: 0 }, retries: 0 } }, { status: 503 });
+    }
+  }
+  const ping = await pingAi(aiKey);
+  if (ping.error) {
+    console.error("[refresh-events-monthly] stopped before any search: AI check unavailable:", ping.error);
+    return NextResponse.json({ ok: false, stoppedBeforeAnySearch: true, shortfall: `the AI check cannot run: ${ping.error}`, usage: { googleEventsSearches: { made: 0, succeeded: 0 }, ticketmasterSearches: { made: 0, succeeded: 0 }, aiCalls: { made: 1, failed: 1 }, retries: 0 } }, { status: 503 });
+  }
+
   const t0 = Date.now();
   const serpUsdPerSearch = Number(process.env.SERPAPI_USD_PER_SEARCH) > 0 ? Number(process.env.SERPAPI_USD_PER_SEARCH) : SERPAPI_DEFAULT_USD_PER_SEARCH;
-  const usage = { serpRequests: 0, serpSucceeded: 0, ticketmasterRequests: 0, ticketmasterSucceeded: 0, aiCalls: 0, aiInputTokens: 0, aiOutputTokens: 0 };
+  const usage = { serpRequests: 0, serpSucceeded: 0, ticketmasterRequests: 0, ticketmasterSucceeded: 0, aiCalls: 1, aiInputTokens: ping.usage?.inputTokens ?? 0, aiOutputTokens: ping.usage?.outputTokens ?? 0 }; // the check request before the searches is the first AI call
   const errors: string[] = [];
   const found: Candidate[] = [];
   let roundsRun = 0;

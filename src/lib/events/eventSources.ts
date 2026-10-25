@@ -278,6 +278,61 @@ export async function filterRelevantCandidates(
   }
 }
 
+// ── Allowance checks: what the providers say is left, read before anything is spent ──
+
+/** SerpApi's own account figures. Reading them is free and is not counted as a search (SerpApi Account API). */
+export type SerpAccount = { planName: string | null; perMonth: number | null; planLeft: number; extraCredits: number; totalLeft: number; hourLimit: number | null; thisHour: number | null };
+
+const numOrNull = (v: unknown): number | null => (typeof v === "number" && Number.isFinite(v) ? v : null);
+
+export async function fetchSerpAccount(apiKey: string): Promise<{ account: SerpAccount | null; error: string | null }> {
+  const url = new URL("https://serpapi.com/account.json");
+  url.searchParams.set("api_key", apiKey);
+  let response: Response;
+  try {
+    response = await fetch(url, { headers: { Accept: "application/json" }, signal: AbortSignal.timeout(TM_TIMEOUT_MS) });
+  } catch (err) {
+    return { account: null, error: `SerpApi account: request failed (${String(err)})`.slice(0, 200) };
+  }
+  const payload = (await response.json().catch(() => null)) as Record<string, unknown> | null;
+  if (!response.ok || !payload) return { account: null, error: `SerpApi account: HTTP ${response.status} ${String(payload?.error ?? "")}`.trim().slice(0, 200) };
+  const planLeft = numOrNull(payload.plan_searches_left);
+  const totalLeft = numOrNull(payload.total_searches_left);
+  if (planLeft === null || totalLeft === null) return { account: null, error: "SerpApi account: the answer did not include the searches left" };
+  return {
+    account: {
+      planName: typeof payload.plan_name === "string" ? payload.plan_name : null,
+      perMonth: numOrNull(payload.searches_per_month),
+      planLeft,
+      extraCredits: numOrNull(payload.extra_credits) ?? 0,
+      totalLeft,
+      hourLimit: numOrNull(payload.account_rate_limit_per_hour),
+      thisHour: numOrNull(payload.this_hour_searches),
+    },
+    error: null,
+  };
+}
+
+/** One very small AI request (a few tokens) to learn, before any search is paid for, that the key works and the account can be charged. */
+export async function pingAi(apiKey: string): Promise<{ error: string | null; usage?: { inputTokens: number; outputTokens: number } }> {
+  try {
+    const response = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "x-api-key": apiKey, "anthropic-version": "2023-06-01" },
+      body: JSON.stringify({ model: AI_MODEL, max_tokens: 5, messages: [{ role: "user", content: "Reply with the single word ok." }] }),
+      signal: AbortSignal.timeout(AI_TIMEOUT_MS),
+    });
+    if (!response.ok) {
+      const details = await response.text().catch(() => "");
+      return { error: `AI request failed: ${response.status} ${details}`.slice(0, 500) };
+    }
+    const result = (await response.json().catch(() => null)) as { usage?: { input_tokens?: number; output_tokens?: number } } | null;
+    return { error: null, usage: result?.usage ? { inputTokens: result.usage.input_tokens ?? 0, outputTokens: result.usage.output_tokens ?? 0 } : undefined };
+  } catch (err) {
+    return { error: `AI check threw: ${String(err)}`.slice(0, 500) };
+  }
+}
+
 export function toRow(c: Candidate): EventRow {
   return {
     slug: eventSlug(c.name, c.startsAt.slice(0, 10), c.city),

@@ -1,4 +1,4 @@
-import { CATEGORY_QUERIES } from "@/lib/events/eventSources";
+import { CATEGORY_QUERIES, type SerpAccount } from "@/lib/events/eventSources";
 
 // The monthly Events refresh: what it would ask for, the most it can cost, and the approval it needs before it may send anything.
 //
@@ -23,6 +23,10 @@ export const TICKETMASTER_PAGE_SIZE = 20;
  */
 export const AI_MAX_OUTPUT_TOKENS = 1_500;
 export const AI_MAX_INPUT_TOKENS = 8_000;
+
+/** The one tiny AI request made before any search (see pingAi): its prompt is about 15 tokens; 200 is a generous ceiling. Its answer is capped at 5 tokens in the request. */
+export const PING_MAX_INPUT_TOKENS = 200;
+export const PING_MAX_OUTPUT_TOKENS = 5;
 
 /** Claude Haiku 4.5 list prices, US dollars per million tokens (the Claude API pricing table in the claude-api skill, cached 2026-10-06). */
 export const AI_USD_PER_MTOK = { input: 1, output: 5 } as const;
@@ -67,7 +71,7 @@ export function monthlyWindows(now: Date): MonthlyWindow[] {
 
 export const monthlyCategories = (): string[] => Object.keys(CATEGORY_QUERIES);
 
-export type PlanCounts = { windows: number; categories: number; serpSearches: number; ticketmasterSearches: number; aiCalls: number; maxCandidatesForAi: number };
+export type PlanCounts = { windows: number; categories: number; serpSearches: number; ticketmasterSearches: number; aiCalls: number; preflightAiCalls: number; maxCandidatesForAi: number };
 
 export function planCounts(): PlanCounts {
   const categories = monthlyCategories().length;
@@ -77,6 +81,7 @@ export function planCounts(): PlanCounts {
     serpSearches: WINDOW_COUNT * categories,
     ticketmasterSearches: WINDOW_COUNT * categories,
     aiCalls: Math.ceil(MAX_CANDIDATES_FOR_AI / AI_BATCH_SIZE),
+    preflightAiCalls: 1,
     maxCandidatesForAi: MAX_CANDIDATES_FOR_AI,
   };
 }
@@ -89,7 +94,7 @@ export type WorstCase = { serpUsd: number; aiUsd: number; totalUsd: number; serp
 export function worstCase(serpUsdPerSearch: number = SERPAPI_DEFAULT_USD_PER_SEARCH): WorstCase {
   const c = planCounts();
   const serpUsd = c.serpSearches * serpUsdPerSearch;
-  const aiUsd = c.aiCalls * aiCallUsd(AI_MAX_INPUT_TOKENS, AI_MAX_OUTPUT_TOKENS);
+  const aiUsd = c.aiCalls * aiCallUsd(AI_MAX_INPUT_TOKENS, AI_MAX_OUTPUT_TOKENS) + c.preflightAiCalls * aiCallUsd(PING_MAX_INPUT_TOKENS, PING_MAX_OUTPUT_TOKENS);
   return { serpUsd, aiUsd, totalUsd: serpUsd + aiUsd, serpUsdPerSearch };
 }
 
@@ -132,4 +137,39 @@ export function checkApproval(env: Record<string, string | undefined>): Approval
   else if (maxSearches < counts.serpSearches) reasons.push(`the approved search count ${maxSearches} is below the plan's ${counts.serpSearches} Google Events searches`);
 
   return { allowed: reasons.length === 0, reasons, worst, counts };
+}
+
+/**
+ * Whether SerpApi's own figures say this run's searches fit in what is left of the plan's monthly allowance. The run must not dip into bought extra credits or be refused
+ * part-way (no overage of any kind), so it needs the PLAN's searches left (not the total with extra credits) to cover every search it will make, and, when SerpApi reports an
+ * hourly limit, room for them all in this hour (the searches go out together).
+ */
+export type AllowanceVerdict = { fits: boolean; shortfall: string | null };
+export function serpAllowanceVerdict(account: SerpAccount, needed: number): AllowanceVerdict {
+  if (account.planLeft < needed) {
+    return { fits: false, shortfall: `SerpApi plan "${account.planName ?? "unknown"}": ${account.planLeft} of ${account.perMonth ?? "?"} monthly searches left, this run needs ${needed} (short by ${needed - account.planLeft})` };
+  }
+  if (account.hourLimit !== null && account.thisHour !== null && account.hourLimit - account.thisHour < needed) {
+    return { fits: false, shortfall: `SerpApi hourly limit: ${account.hourLimit} an hour, ${account.thisHour} already used this hour, this run needs ${needed}` };
+  }
+  return { fits: true, shortfall: null };
+}
+
+/**
+ * The owner's approval, recorded here (2026-10-24: "Enable one Events refresh on the first of each month, covering the coming year. Use the existing monthly allowances.
+ * No automatic top-ups, paid overages or repeated paid retries."). It is the DEFAULT for the three approval settings; an environment variable of the same name overrides it,
+ * so the refresh can still be switched off from Vercel without a deploy (EVENTS_MONTHLY_REFRESH_ENABLED=false) or held to a lower ceiling. The figures are the plan's own
+ * estimate (see worstCase), not a limit set at a provider; the real protection against overage is the allowance check and the AI check that run before the first search.
+ */
+export const RECORDED_APPROVAL = {
+  EVENTS_MONTHLY_REFRESH_ENABLED: "true",
+  EVENTS_MONTHLY_APPROVED_MAX_USD: "0.70",
+  EVENTS_MONTHLY_APPROVED_MAX_SEARCHES: "24",
+} as const;
+
+/** The environment the approval check should read: the recorded approval, with any real environment variable taking precedence. */
+export function withRecordedApproval(env: Record<string, string | undefined>): Record<string, string | undefined> {
+  const out: Record<string, string | undefined> = { ...env };
+  for (const [key, value] of Object.entries(RECORDED_APPROVAL)) if (out[key] === undefined || out[key] === "") out[key] = value;
+  return out;
 }

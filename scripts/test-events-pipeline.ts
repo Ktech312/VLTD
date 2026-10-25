@@ -184,7 +184,9 @@ function restStore(url: URL, init: RequestInit, name: keyof StoreTables): Respon
 type World = {
   serp: "ok" | "fail" | "empty-error";
   tm: "ok" | "fail";
-  ai: "ok" | "fail" | "nocredit";
+  ai: "ok" | "fail" | "nocredit" | "batch-nocredit"; // batch-nocredit: the tiny check request works, the real checks are refused
+  account: "ok" | "low" | "extra-only" | "hourly" | "fail"; // what SerpApi's account figures say (a read, never a search)
+  accountCalls: number;
   aiOmit: string[]; // names the AI leaves out of its answer
   aiNames: string[][]; // the names put to the AI on each call
   serpEvents: Array<Record<string, unknown>>; // returned for the convention and gallery searches alike (so one event arrives twice)
@@ -198,13 +200,22 @@ type World = {
 };
 let world: World;
 function freshWorld(): World {
-  return { serp: "ok", tm: "ok", ai: "ok", aiOmit: [], aiNames: [], serpEvents: [], tmEvents: [], majorAnswers: {}, majorSerp: "ok", calls: { serp: 0, tm: 0, ai: 0 }, tmUrls: [], aiMaxTokens: [], serpQueries: [] };
+  return { serp: "ok", tm: "ok", ai: "ok", account: "ok", accountCalls: 0, aiOmit: [], aiNames: [], serpEvents: [], tmEvents: [], majorAnswers: {}, majorSerp: "ok", calls: { serp: 0, tm: 0, ai: 0 }, tmUrls: [], aiMaxTokens: [], serpQueries: [] };
 }
 
 async function fakeFetch(input: RequestInfo | URL, init: RequestInit = {}): Promise<Response> {
   const url = new URL(typeof input === "string" ? input : input instanceof URL ? input.href : input.url);
   if (url.host === "fake.supabase.co" && url.pathname === "/rest/v1/collector_events") return restCollectorEvents(url, init);
   if (url.host === "fake.supabase.co" && (url.pathname === "/rest/v1/event_refresh_candidates" || url.pathname === "/rest/v1/event_refresh_steps")) return restStore(url, init, url.pathname.split("/").pop() as keyof StoreTables);
+  if (url.host === "serpapi.com" && url.pathname === "/account.json") {
+    world.accountCalls += 1;
+    if (world.account === "fail") return jsonResponse(401, { error: "Invalid API key" });
+    const base = { plan_name: "Free Plan", searches_per_month: 250, plan_searches_left: 250, extra_credits: 0, total_searches_left: 250, account_rate_limit_per_hour: 50, this_hour_searches: 0 };
+    if (world.account === "low") return jsonResponse(200, { ...base, plan_searches_left: 10, total_searches_left: 10 });
+    if (world.account === "extra-only") return jsonResponse(200, { ...base, plan_searches_left: 5, extra_credits: 1000, total_searches_left: 1005 });
+    if (world.account === "hourly") return jsonResponse(200, { ...base, this_hour_searches: 40 });
+    return jsonResponse(200, base);
+  }
   if (url.host === "serpapi.com") {
     world.calls.serp += 1;
     const engine = url.searchParams.get("engine");
@@ -229,9 +240,12 @@ async function fakeFetch(input: RequestInfo | URL, init: RequestInit = {}): Prom
   }
   if (url.host === "api.anthropic.com") {
     world.calls.ai += 1;
+    const sentMaxTokens = JSON.parse(String(init.body)).max_tokens;
+    world.aiMaxTokens.push(sentMaxTokens);
+    const isPing = sentMaxTokens === 5; // the small check request made before any search
     if (world.ai === "fail") return jsonResponse(529, { error: { type: "overloaded_error" } });
-    if (world.ai === "nocredit") return jsonResponse(400, { type: "error", error: { type: "invalid_request_error", message: "Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits." } });
-    world.aiMaxTokens.push(JSON.parse(String(init.body)).max_tokens);
+    if (world.ai === "nocredit" || (world.ai === "batch-nocredit" && !isPing)) return jsonResponse(400, { type: "error", error: { type: "invalid_request_error", message: "Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits." } });
+    if (isPing) return jsonResponse(200, { content: [{ type: "text", text: "ok" }], usage: { input_tokens: 15, output_tokens: 2 } });
     const prompt: string = JSON.parse(String(init.body)).messages[0].content;
     const lines = prompt.split("\n");
     const payload = JSON.parse(lines[lines.length - 1]) as Array<Record<string, unknown>>;
@@ -318,9 +332,14 @@ async function main() {
   const round4 = (n: number) => Math.round(n * 10_000) / 10_000;
 
   // ───────── scheduling and access ─────────
-  await test("the daily and weekly Events schedules are removed from vercel.json (nothing calls the paid jobs on its own)", async () => {
-    const cfg = JSON.parse((await import("node:fs")).readFileSync("vercel.json", "utf8")) as { crons?: Array<{ path: string }> };
-    assert.deepEqual(cfg.crons ?? [], []);
+  await test("schedules: the daily and weekly Events jobs are not scheduled; the ONLY schedules are the monthly free allowance read (12:00 UTC on the 1st) and the monthly refresh (13:00 UTC on the 1st)", async () => {
+    const cfg = JSON.parse((await import("node:fs")).readFileSync("vercel.json", "utf8")) as { crons?: Array<{ path: string; schedule: string }> };
+    assert.deepEqual(cfg.crons ?? [], [
+      { path: "/api/cron/refresh-events-monthly?preflight=1", schedule: "0 12 1 * *" },
+      { path: "/api/cron/refresh-events-monthly", schedule: "0 13 1 * *" },
+    ]);
+    assert.equal(JSON.stringify(cfg).includes("refresh-events\""), false, "no daily job");
+    assert.equal(JSON.stringify(cfg).includes("refresh-major-events"), false, "no weekly job");
   });
   await test("switched off (the default): a call with the right secret does nothing - zero searches, zero AI calls, zero database calls - and says so", async () => {
     const saved = process.env.EVENTS_REFRESH_ENABLED;
@@ -419,15 +438,15 @@ async function main() {
   };
   const noOutsideCall = () => assert.equal(world.calls.serp + world.calls.tm + world.calls.ai, 0, "no search and no AI call was made");
 
-  await test("monthly plan: 24 Google Events searches, 24 Ticketmaster searches, 6 AI calls, and a worst case of $0.69 that the limits themselves enforce", () => {
+  await test("monthly plan: 24 Google Events searches, 24 Ticketmaster searches, 1 tiny AI check + 6 AI calls, and an estimated worst case of $0.69", () => {
     const c = planCounts();
-    assert.deepEqual(c, { windows: 4, categories: 6, serpSearches: 24, ticketmasterSearches: 24, aiCalls: 6, maxCandidatesForAi: 300 });
+    assert.deepEqual(c, { windows: 4, categories: 6, serpSearches: 24, ticketmasterSearches: 24, aiCalls: 6, preflightAiCalls: 1, maxCandidatesForAi: 300 });
     const w = worstCase();
     assert.equal(round4(w.serpUsd), 0.6, "24 searches at the dearest verified plan, $0.025 each");
-    assert.equal(round4(w.aiUsd), 0.093, "6 calls x (8,000 input tokens x $1 + 1,500 output tokens x $5) per million");
-    assert.equal(round4(w.totalUsd), 0.693);
+    assert.equal(round4(w.aiUsd), 0.0932, "6 calls x (8,000 input tokens x $1 + 1,500 output tokens x $5) per million, plus the tiny check request");
+    assert.equal(round4(w.totalUsd), 0.6932);
     assert.equal(AI_MAX_OUTPUT_TOKENS, 1500);
-    assert.equal(round4(worstCase(0.01).totalUsd), 0.333, "on the cheapest plan the same plan costs less");
+    assert.equal(round4(worstCase(0.01).totalUsd), 0.3332, "on the cheapest plan the same plan costs less");
   });
   await test("monthly plan: the coming year is four windows that start today and then on the first of a month, and the last one ends a year out", () => {
     const w = monthlyWindows(new Date());
@@ -435,13 +454,13 @@ async function main() {
     assert.equal(w[0].months, "October 2026 November 2026 December 2026");
     assert.equal(w[3].label, "July 2027 to September 2027");
   });
-  await test("monthly: with nothing set it is OFF - zero searches, zero AI calls, zero database writes - and says what is missing", async () => {
-    await withEnv({}, async () => {
+  await test("monthly: switched off from Vercel (EVENTS_MONTHLY_REFRESH_ENABLED=false) - zero searches, zero AI calls, zero database writes - and says why", async () => {
+    await withEnv({ EVENTS_MONTHLY_REFRESH_ENABLED: "false" }, async () => {
       const { status, body } = await silenceLogs(() => call(refreshMonthly));
       assert.equal(status, 200);
       assert.equal(body.disabled, true);
-      assert.ok(body.refusedBecause.length >= 3, JSON.stringify(body.refusedBecause));
-      assert.equal(body.worstCaseUsd.total, 0.693);
+      assert.ok(body.refusedBecause.some((r: string) => /EVENTS_MONTHLY_REFRESH_ENABLED/.test(r)), JSON.stringify(body.refusedBecause));
+      assert.equal(body.worstCaseUsd.total, 0.6932);
       noOutsideCall();
       assert.equal(table.length, 0);
     });
@@ -449,10 +468,10 @@ async function main() {
   await test("monthly: every approval is needed on its own - not enabled, no cost approved, a cost below the worst case, too few searches, an unreadable price: each sends nothing", async () => {
     const cases: Array<[string, Record<string, string | undefined>, RegExp]> = [
       ["not enabled", { ...APPROVED, EVENTS_MONTHLY_REFRESH_ENABLED: "yes" }, /EVENTS_MONTHLY_REFRESH_ENABLED/],
-      ["no cost approved", { ...APPROVED, EVENTS_MONTHLY_APPROVED_MAX_USD: undefined }, /no cost has been approved/],
+      ["no cost approved", { ...APPROVED, EVENTS_MONTHLY_APPROVED_MAX_USD: "0" }, /no cost has been approved/],
       ["cost below the worst case", { ...APPROVED, EVENTS_MONTHLY_APPROVED_MAX_USD: "0.50" }, /below this plan's worst case/],
       ["search count too low", { ...APPROVED, EVENTS_MONTHLY_APPROVED_MAX_SEARCHES: "10" }, /approved search count 10/],
-      ["no search count", { ...APPROVED, EVENTS_MONTHLY_APPROVED_MAX_SEARCHES: undefined }, /no search count has been approved/],
+      ["no search count", { ...APPROVED, EVENTS_MONTHLY_APPROVED_MAX_SEARCHES: "0" }, /no search count has been approved/],
       ["a dearer price makes the same ceiling too low", { ...APPROVED, SERPAPI_USD_PER_SEARCH: "0.05" }, /below this plan's worst case/],
       ["an unreadable price", { ...APPROVED, SERPAPI_USD_PER_SEARCH: "cheap" }, /not a positive number/],
     ];
@@ -467,6 +486,20 @@ async function main() {
     }
     assert.equal(table.length, 0);
   });
+  await test("monthly: with nothing set in the environment the owner's recorded approval applies ($0.70, 24 searches, enabled), and any real environment setting overrides it", async () => {
+    await withEnv({}, async () => {
+      const res = await refreshMonthly(new NextRequest("http://localhost/api/cron/refresh-events-monthly?plan=1", { headers: { authorization: "Bearer test-secret" } }));
+      const body = (await res.json()) as Json;
+      assert.equal(body.enabled, true, JSON.stringify(body.refusedBecause));
+      noOutsideCall();
+    });
+    await withEnv({ EVENTS_MONTHLY_APPROVED_MAX_USD: "0.50" }, async () => {
+      const res = await refreshMonthly(new NextRequest("http://localhost/api/cron/refresh-events-monthly?plan=1", { headers: { authorization: "Bearer test-secret" } }));
+      const body = (await res.json()) as Json;
+      assert.equal(body.enabled, false);
+      assert.match(String(body.refusedBecause[0]), /below this plan's worst case/);
+    });
+  });
   await test("monthly: it needs the secret like the others, and ?plan=1 shows the plan and the cost with no outside request even when approved", async () => {
     await withEnv(APPROVED, async () => {
       assert.equal((await call(refreshMonthly, null)).status, 401);
@@ -477,26 +510,28 @@ async function main() {
       assert.equal(body.enabled, true);
       assert.equal(body.plan.googleEventsSearches, 24);
       assert.equal(body.plan.retries, 0);
-      assert.equal(body.worstCaseUsd.total, 0.693);
+      assert.equal(body.worstCaseUsd.total, 0.6932);
       noOutsideCall();
     });
   });
-  await test("monthly: an approved run makes exactly the planned requests once each - 24 + 24 + 1 here - with the date window on every Ticketmaster search and the AI answer capped", async () => {
+  await test("monthly: an approved run makes exactly the planned requests once each - the allowance read, 1 tiny AI check, 24 + 24 searches and 1 AI group here - with the date window on every Ticketmaster search and the AI answer capped", async () => {
     await withEnv(APPROVED, async () => {
       world.serpEvents = [serpEvent("Stan Lee Fest", "Nov 14", "Sat, Nov 14 – Sun, Nov 15", ["Convention Center", "Los Angeles, CA"])];
       world.tmEvents = [tmEvent("Stan Lee Fest", "2026-11-14", "2026-11-15", "Los Angeles", "CA"), tmEvent("Plumbing Trade Expo", "2026-11-20", "2026-11-20", "Reno", "NV"), tmEvent("Reno Card Show", "2027-03-06", "2027-03-07", "Reno", "NV")];
       const { status, body } = await silenceLogs(() => call(refreshMonthly));
       assert.equal(status, 200, JSON.stringify(body));
-      assert.deepEqual([world.calls.serp, world.calls.tm, world.calls.ai], [24, 24, 1]);
+      assert.deepEqual([world.calls.serp, world.calls.tm, world.calls.ai], [24, 24, 2]);
+      assert.equal(world.accountCalls, 1, "SerpApi's account figures were read once, and that read is not a search");
       assert.equal(body.usage.retries, 0);
-      assert.deepEqual(world.aiMaxTokens, [1500]);
+      assert.deepEqual(world.aiMaxTokens, [5, 1500], "the tiny check first, then the one group, each capped");
       const windows = world.tmUrls.map((u) => new URLSearchParams(u)).map((p) => `${p.get("startDateTime")}..${p.get("endDateTime")}`);
       assert.deepEqual([...new Set(windows)].sort(), ["2026-10-22T00:00:00Z..2027-01-01T00:00:00Z", "2027-01-01T00:00:00Z..2027-04-01T00:00:00Z", "2027-04-01T00:00:00Z..2027-07-01T00:00:00Z", "2027-07-01T00:00:00Z..2027-10-01T00:00:00Z"]);
       assert.ok(world.serpQueries.every((q) => /20(26|27)$/.test(q)), "every Google Events query names its months");
       assert.deepEqual(table.map((r) => r.name).sort(), ["Reno Card Show", "Stan Lee Fest"], "the AI gate dropped the unrelated show; the same show from two sources is one row");
       // what it reports: the planned numbers, from the usage the services themselves reported
       assert.deepEqual(body.usage.googleEventsSearches, { made: 24, succeeded: 24 });
-      assert.equal(body.usage.aiCalls.inputTokens, 1000);
+      assert.equal(body.usage.aiCalls.made, 2);
+      assert.equal(body.usage.aiCalls.inputTokens, 1015);
       assert.equal(body.estimatedUsd.googleEventsSearches, 0.6);
       assert.equal(body.estimatedUsd.aiChecks, 0.0015);
       assert.equal(body.estimatedUsd.basis, "estimate, not billing");
@@ -509,22 +544,76 @@ async function main() {
       world.tmEvents = [tmEvent("Reno Card Show", "2027-03-06", "2027-03-07", "Reno", "NV")];
       const { status, body } = await silenceLogs(() => call(refreshMonthly));
       assert.equal(status, 200, JSON.stringify(body));
-      assert.deepEqual([world.calls.serp, world.calls.tm, world.calls.ai], [24, 24, 1]);
+      assert.deepEqual([world.calls.serp, world.calls.tm, world.calls.ai], [24, 24, 2]);
       assert.deepEqual(body.usage.googleEventsSearches, { made: 24, succeeded: 0 });
       assert.equal(body.estimatedUsd.googleEventsSearches, 0, "failed searches are not billed");
       assert.equal(table.length, 1);
     });
   });
-  await test("monthly: when the AI is refused (no credit) it is asked once per group and not again, nothing is published, and the run fails loudly", async () => {
+  await test("monthly: when the AI account cannot be charged (no credit) the run stops BEFORE any search - zero searches bought - and says exactly why, after one tiny request that is not repeated", async () => {
     await withEnv(APPROVED, async () => {
       world.ai = "nocredit";
       world.tmEvents = [tmEvent("Reno Card Show", "2027-03-06", "2027-03-07", "Reno", "NV")];
       const { status, body } = await silenceLogs(() => call(refreshMonthly));
+      assert.equal(status, 503);
+      assert.equal(body.stoppedBeforeAnySearch, true);
+      assert.match(String(body.shortfall), /credit balance is too low/);
+      assert.deepEqual([world.calls.serp, world.calls.tm, world.calls.ai], [0, 0, 1], "no search of either kind; the one tiny request was not repeated");
+      assert.equal(table.length, 0);
+    });
+  });
+  await test("monthly: if the real AI checks are refused after the tiny request worked, each group is asked once and not again, nothing is published, and the run fails loudly", async () => {
+    await withEnv(APPROVED, async () => {
+      world.ai = "batch-nocredit";
+      world.tmEvents = [tmEvent("Reno Card Show", "2027-03-06", "2027-03-07", "Reno", "NV")];
+      const { status, body } = await silenceLogs(() => call(refreshMonthly));
       assert.equal(status, 502);
-      assert.equal(world.calls.ai, 1, "one group, one call, no second try");
+      assert.equal(world.calls.ai, 2, "the tiny request plus one group, no second try");
       assert.equal(world.calls.serp, 24);
       assert.equal(table.length, 0);
       assert.ok(body.errors.some((e: string) => /credit balance is too low/.test(e)));
+    });
+  });
+  await test("monthly allowance: SerpApi's figures are read first (free, not a search) and a shortfall stops the run with nothing spent, stating exactly what it is", async () => {
+    const cases: Array<[string, World["account"], RegExp]> = [
+      ["too few searches left", "low", /plan "Free Plan": 10 of 250 monthly searches left, this run needs 24 \(short by 14\)/],
+      ["only bought extra credits would cover it (not used: no overage)", "extra-only", /5 of 250 monthly searches left, this run needs 24 \(short by 19\)/],
+      ["the hourly limit has no room for the burst", "hourly", /hourly limit: 50 an hour, 40 already used this hour, this run needs 24/],
+      ["the account figures cannot be read", "fail", /could not read the SerpApi allowance \(SerpApi account: HTTP 401/],
+    ];
+    for (const [name, account, why] of cases) {
+      await withEnv(APPROVED, async () => {
+        world = freshWorld();
+        world.account = account;
+        const { status, body } = await silenceLogs(() => call(refreshMonthly));
+        assert.equal(status, 503, name);
+        assert.equal(body.stoppedBeforeAnySearch, true, name);
+        assert.match(String(body.shortfall), why, name);
+        assert.deepEqual([world.calls.serp, world.calls.tm, world.calls.ai], [0, 0, 0], name + ": no search, no Ticketmaster call, not even the tiny AI request");
+        assert.equal(world.accountCalls, 1, name);
+        assert.equal(table.length, 0);
+      });
+    }
+  });
+  await test("monthly allowance: ?preflight=1 only reads SerpApi's figures - no search, no Ticketmaster, no AI, nothing saved - and works before any approval", async () => {
+    await withEnv({}, async () => {
+      const ask = async () => {
+        const res = await refreshMonthly(new NextRequest("http://localhost/api/cron/refresh-events-monthly?preflight=1", { headers: { authorization: "Bearer test-secret" } }));
+        return { status: res.status, body: (await res.json()) as Json };
+      };
+      let r = await silenceLogs(ask);
+      assert.equal(r.status, 200);
+      assert.equal(r.body.fits, true);
+      assert.equal(r.body.searchesNeeded, 24);
+      assert.equal(r.body.serpApi.planLeft, 250);
+      world.account = "low";
+      r = await silenceLogs(ask);
+      assert.equal(r.body.fits, false);
+      assert.match(String(r.body.shortfall), /short by 14/);
+      assert.deepEqual([world.calls.serp, world.calls.tm, world.calls.ai], [0, 0, 0]);
+      assert.equal(world.accountCalls, 2);
+      assert.equal(table.length, 0);
+      assert.equal((await refreshMonthly(new NextRequest("http://localhost/api/cron/refresh-events-monthly?preflight=1"))).status, 401, "it needs the secret");
     });
   });
   await test("monthly: with no AI key nothing is searched at all (a search with nothing to judge it would be paid for in vain)", async () => {
@@ -544,18 +633,16 @@ async function main() {
     await withEnv(APPROVED, async () => {
       world.tmEvents = Array.from({ length: 320 }, (_, i) => tmEvent(`Card Show ${i}`, `2027-01-${String(1 + (i % 28)).padStart(2, "0")}`, `2027-01-${String(1 + (i % 28)).padStart(2, "0")}`, "Reno", "NV"));
       const { body } = await silenceLogs(() => call(refreshMonthly));
-      assert.equal(world.calls.ai, 6);
+      assert.equal(world.calls.ai, 7, "the tiny check plus six groups");
       assert.ok(world.aiNames.every((n) => n.length <= 50));
       assert.equal(world.aiNames.reduce((n, g) => n + g.length, 0), 300);
       assert.equal(body.putToTheAi, 300);
       assert.equal(body.leftOutByTheCap, 20);
       assert.ok(body.problems.some((p: string) => /beyond the 300 cap/.test(p)));
-      assert.ok(body.estimatedUsd.total <= 0.693);
+      assert.ok(body.estimatedUsd.total <= 0.6932);
     });
   });
-  await test("monthly: nothing from the monthly job is scheduled, and with every refresh off the banner, countdown and expiry still work from stored rows with no outside request", async () => {
-    const cfg = JSON.parse((await import("node:fs")).readFileSync("vercel.json", "utf8")) as { crons?: unknown[] };
-    assert.deepEqual(cfg.crons ?? [], []);
+  await test("stored events: with no refresh running, the banner, its rotation order, the countdown and expiry still work from stored rows with no outside request", async () => {
     const saved = process.env.EVENTS_REFRESH_ENABLED;
     try {
       delete process.env.EVENTS_REFRESH_ENABLED;
