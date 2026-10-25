@@ -1,0 +1,61 @@
+{
+ "label": "prod1",
+ "cases": [
+  {
+   "ok": true,
+   "control": "a visitor (not signed in): the Events page says the live lookup is paused"
+  },
+  {
+   "ok": true,
+   "control": "a visitor (not signed in): no city box and no Search button for the live lookup"
+  },
+  {
+   "ok": true,
+   "control": "a visitor (not signed in): searching the stored events still works (a nonsense name matches nothing)"
+  },
+  {
+   "ok": true,
+   "control": "a visitor (not signed in): clearing the search brings the stored events back (738 listed)"
+  },
+  {
+   "ok": false,
+   "control": "a visitor (not signed in): the type filters still respond"
+  },
+  {
+   "ok": true,
+   "control": "a visitor (not signed in): the page made no request to the lookup route (wrapped fetch and resource timing)"
+  },
+  {
+   "ok": true,
+   "control": "a visitor (not signed in): asking the lookup route directly gets \"paused\" (503), no results"
+  },
+  {
+   "ok": true,
+   "control": "a signed-in member: the Events page says the live lookup is paused"
+  },
+  {
+   "ok": true,
+   "control": "a signed-in member: no city box and no Search button for the live lookup"
+  },
+  {
+   "ok": true,
+   "control": "a signed-in member: searching the stored events still works (a nonsense name matches nothing)"
+  },
+  {
+   "ok": true,
+   "control": "a signed-in member: clearing the search brings the stored events back (738 listed)"
+  },
+  {
+   "ok": false,
+   "control": "a signed-in member: the type filters still respond"
+  },
+  {
+   "ok": true,
+   "control": "a signed-in member: the page made no request to the lookup route (wrapped fetch and resource timing)"
+  },
+  {
+   "ok": true,
+   "control": "a signed-in member: asking the lookup route directly gets \"paused\" (503), no results"
+  }
+ ]
+}
