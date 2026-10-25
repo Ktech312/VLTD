@@ -20,7 +20,8 @@ This replaces the conflicting session updates. If another status file disagrees,
 | Daily and weekly Events jobs unscheduled and switched off | `d066a99` | Vercel Cron Jobs page shows only the two monthly entries |
 | Paid visitor "Find events" lookup paused; stored-event search and filters untouched | `e829bba` | RB69 (14 of 14 after two check fixes) and 62 events tests |
 | Monthly Events refresh on the 1st (12:00 UTC read-only allowance check, 13:00 UTC refresh); once-a-month marker; allowance check; authorization recorded | `724dd88`, `826f210` (temporary read removed), `1f9da26` | `docs/design/events-monthly-refresh-proposal.md`, simulated-service tests; SerpApi read 2026-10-24: Free Plan, 185 of 250 left |
-| Labelled links: Collector supplies & services (Marketplace), Kickstarter comics and Patreon comics (Upcoming Comics); More stays highlighted there; Wishlist status control 44 px on phones; Pause no longer shows a three-dot icon | `22aed62` | RB73, 17 navigation tests |
+| Labelled links: Collector supplies & services (Marketplace), Kickstarter comics and Patreon comics (Upcoming Comics); More stays highlighted there | `22aed62` | RB73 (43 checks on production), 17 navigation tests |
+| Wishlist phone fixes from the visual review: status control 44 px on phones, Pause icon removed, Following cards no longer wider than the screen (a real defect: 486 px on a 390 px phone), long titles truncate at 320 px | `22aed62`, `1555e61`, `9823fad` | RB72 clip scan: before 8 FAIL rows kept, after all PASS; unit test (29 of 29) |
 | Batches 1 to 18 of the audit repair programme | see `LIVE-STATUS.md` | per-batch closeouts |
 
 QA accounts used in this pass are dropped; production is at the baseline (3,477 vault items, 39 profiles, 47 exhibitions).
@@ -35,7 +36,7 @@ Once a month, using the allowances the accounts already have, covering the comin
 4. **Product questions already put to the owner and still open**: Upcoming Comics "Own" records the cover price as paid; connect Scryfall as a card source; the card scan's Pokemon lookup uses an API ending 2027-03-01; Sell is not on the Vault Wall view.
 
 ## Awaiting owner review
-1. **Wishlist visual acceptance**: screenshots in `docs/audit-2026-10-18/shots/rb72-*`, measurements in `repair-batch-6/evidence/rb72-*.json`; assessment in the closeout. Functional results (RB67, RB68) are separate and pass.
+1. **Wishlist visual acceptance**: screenshots `docs/audit-2026-10-18/shots/rb72-final-*`, measurements `repair-batch-6/evidence/rb72-final.json`; my assessment is in the "Visual review" section of `repair-batch-18/WISHLIST-PULL-LIST-CLOSEOUT.md` (compact rows and no empty pricing panels hold; details open as a long edit form; an open row follows you to another tab). Functional results (RB67, RB68) are separate and pass.
 2. **Styles page** (`/styles`): Apply and Reset work, but five of the six styles change almost nothing visible; not linked from Settings. Decide: build real styles, or retire the page.
 3. **The AI scan routes are open to anyone with the URL** (`/api/ai/analyze-item`, `/api/ai/analyze-coa`: no sign-in, no server quota). The monthly scan quota is enforced only in the browser, after the paid call. Not changed in this pass.
 4. **Automatic usage without an established authorization or cap** (see `AUTOMATIC-USAGE-INVENTORY.md`): the direct-message push trigger, club-post cross-posting triggers (Reddit marked unverified) and browser polling against Supabase.
