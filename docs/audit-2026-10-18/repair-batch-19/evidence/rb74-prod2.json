@@ -1,0 +1,91 @@
+{
+ "label": "prod2",
+ "cases": [
+  {
+   "ok": true,
+   "control": "item scan: no sign-in at all is refused (401)"
+  },
+  {
+   "ok": true,
+   "control": "item scan: a forged token is refused (401)"
+  },
+  {
+   "ok": true,
+   "control": "item scan: a signed-in person using someone else's profile is refused (403)"
+  },
+  {
+   "ok": true,
+   "control": "item scan: a text file named photo.jpg is refused (415)"
+  },
+  {
+   "ok": true,
+   "control": "item scan: an oversized file is refused before anything else (413)"
+  },
+  {
+   "ok": true,
+   "control": "item scan: a request with no request id is refused (400)"
+  },
+  {
+   "ok": true,
+   "control": "item scan: a request with no profile is refused (400)"
+  },
+  {
+   "ok": true,
+   "control": "certificate scan: no sign-in at all is refused (401)"
+  },
+  {
+   "ok": true,
+   "control": "certificate scan: a forged token is refused (401)"
+  },
+  {
+   "ok": true,
+   "control": "certificate scan: a signed-in person using someone else's profile is refused (403)"
+  },
+  {
+   "ok": true,
+   "control": "certificate scan: a text file named photo.jpg is refused (415)"
+  },
+  {
+   "ok": true,
+   "control": "certificate scan: an oversized file is refused before anything else (413)"
+  },
+  {
+   "ok": true,
+   "control": "certificate scan: a request with no request id is refused (400)"
+  },
+  {
+   "ok": true,
+   "control": "certificate scan: a request with no profile is refused (400)"
+  },
+  {
+   "ok": true,
+   "control": "none of those refusals spent a scan from the profile's allowance"
+  },
+  {
+   "ok": true,
+   "control": "setup: the QA profile's own scan override set to 0 (removed at the end)"
+  },
+  {
+   "ok": true,
+   "control": "item scan: an allowance of 0 is refused (429) with the numbers, after the sign-in, membership and image were verified for real"
+  },
+  {
+   "ok": true,
+   "control": "item scan: the answer says which gate mode it used (basic: 'basic' until SQL package 10 is run, then 'full')"
+  },
+  {
+   "ok": true,
+   "control": "certificate scan: an allowance of 0 is refused (429) with the numbers, after the sign-in, membership and image were verified for real"
+  },
+  {
+   "ok": true,
+   "control": "certificate scan: the answer says which gate mode it used (basic: 'basic' until SQL package 10 is run, then 'full')"
+  },
+  {
+   "ok": true,
+   "control": "a refused (over-limit) request spends nothing"
+  }
+ ],
+ "analyze-item-mode": "basic",
+ "analyze-coa-mode": "basic"
+}
