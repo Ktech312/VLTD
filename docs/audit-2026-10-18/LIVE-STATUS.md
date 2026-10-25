@@ -1,4 +1,6 @@
-# Live status (updated as work completes; a checkpoint is not a request to stop)
+# Live status (HISTORY up to 2026-10-21: the current list is CURRENT-STATUS.md)
+
+> **SUPERSEDED by [CURRENT-STATUS.md](CURRENT-STATUS.md) (2026-10-24).** Where this file disagrees with it, CURRENT-STATUS.md is right. In particular the entries below that say the Events refresh is "BLOCKED on credit", "needs credit added" or runs daily/weekly, and the entry that describes the 2026-10-22 Browse-menu navigation (commit 38b3d01), are historical: the Browse menu was replaced by the current header (e1b6285), the daily and weekly refreshes are not scheduled, and a monthly refresh runs on the 1st. Kept unchanged below as the record.
 
 Last updated: 2026-10-21.
 

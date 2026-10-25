@@ -53,11 +53,11 @@ export default function FollowTab({
     const ruleSuggestions = suggestions.filter((s) => s.seriesKey === rule.sourceKey && !wants.some((w) => w.sourceIdentity === s.identity));
     const paused = rule.state === "paused";
     return (
-      <div key={rule.id} className="flex flex-col gap-2 rounded-[8px] border px-3 py-3" style={{ background: "var(--theme-card, rgba(15,25,45,0.85))", borderColor: line, opacity: paused || rule.state === "stopped" ? 0.8 : 1 }} data-testid="rule-card" data-state={rule.state}>
+      <div key={rule.id} className="flex min-w-0 flex-col gap-2 rounded-[8px] border px-3 py-3" style={{ background: "var(--theme-card, rgba(15,25,45,0.85))", borderColor: line, opacity: paused || rule.state === "stopped" ? 0.8 : 1 }} data-testid="rule-card" data-state={rule.state}>
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
-            <div className="truncate text-[13.5px] font-semibold">{rule.name}{rule.yearBegan ? ` (${rule.yearBegan})` : ""}</div>
-            <div className="truncate text-[12px]" style={{ color: "var(--muted)" }}>{KIND_LABEL[rule.kind]} · {rule.quantity} {rule.quantity === 1 ? "copy" : "copies"} of each{rule.formatNote ? ` · ${rule.formatNote}` : ""}{rule.publisher ? ` · ${rule.publisher}` : ""}</div>
+            <div className="break-words text-[13.5px] font-semibold">{rule.name}{rule.yearBegan ? ` (${rule.yearBegan})` : ""}</div>
+            <div className="break-words text-[12px]" style={{ color: "var(--muted)" }}>{KIND_LABEL[rule.kind]} · {rule.quantity} {rule.quantity === 1 ? "copy" : "copies"} of each{rule.formatNote ? ` · ${rule.formatNote}` : ""}{rule.publisher ? ` · ${rule.publisher}` : ""}</div>
           </div>
           <span className="shrink-0 rounded-full border px-2.5 py-0.5 text-[11.5px] font-semibold" style={{ borderColor: paused ? "rgba(224,166,76,0.5)" : rule.state === "stopped" ? line : "rgba(84,201,138,0.5)", color: paused ? "#e0a64c" : rule.state === "stopped" ? "var(--muted)" : "#54c98a" }}>
             {rule.state === "following" ? "Following" : rule.state === "paused" ? "Paused" : "Stopped"}

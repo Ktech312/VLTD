@@ -3,6 +3,7 @@
 // Vault records, a failed save changes nothing), merging with a database that has not been upgraded, and the public share fields.
 //   npm run test:wants
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 
 // A small simulated browser, so the real Vault code can run.
 const store = new Map<string, string>();
@@ -125,6 +126,13 @@ async function test(name: string, fn: () => void | Promise<void>) {
     assert.equal(second.add.length, 0);
     assert.equal(second.update.length, 0);
     assert.equal(core.wantIdForIdentity("metron:issue:4"), first.add[0].id);
+  });
+  await test("layout: a Following rule card can shrink to the screen (it is a grid item, so it needs min-w-0) and long rule text wraps instead of widening it (it was 486 px wide on a 390 px phone)", () => {
+    const src = readFileSync("src/components/wants/FollowTab.tsx", "utf8");
+    const lines = src.split(/\r?\n/);
+    const card = lines.find((l) => l.includes('data-testid="rule-card"')) ?? "";
+    assert.match(card, /min-w-0/);
+    assert.doesNotMatch(lines.filter((l) => l.includes("KIND_LABEL[rule.kind]") || l.includes("{rule.name}{rule.yearBegan")).join(" "), /truncate/);
   });
   await test("two accounts following the same series never ask for the same want or Vault id (ids are one list for every account); one account still gets the same id every time", () => {
     const a = core.idNamespaceOf("f1550542-cd54-4ee3-925b-efd9990c9d78");

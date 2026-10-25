@@ -6971,7 +6971,7 @@ accordingly.
   ones the public page already auto-hides (past/disabled), with working
   Enabled/Featured toggles and Delete (there was previously no UI for
   either, only raw SQL).
-- **Two Vercel Cron jobs** (`vercel.json`): `refresh-events` (daily,
+- **(Out of date, 2026-10-24: these two are no longer scheduled; a monthly refresh runs on the 1st instead. See `docs/audit-2026-10-18/CURRENT-STATUS.md`.)** **Two Vercel Cron jobs** (`vercel.json`): `refresh-events` (daily,
   06:00 Pacific) and `refresh-major-events` (weekly Mondays, a curated
   EK-editable list of ~19 shows looked up by NAME via real search
   snippets + Claude extraction — not a keyword search, so no false-

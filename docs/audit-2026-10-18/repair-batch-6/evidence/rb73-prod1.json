@@ -1,0 +1,169 @@
+{
+ "label": "prod1",
+ "cases": [
+  {
+   "ok": true,
+   "control": "desktop visitor: \"Collector supplies & services\" is a visible labelled link on /market to /shop"
+  },
+  {
+   "ok": true,
+   "control": "desktop visitor: one click opens /shop and it shows its content"
+  },
+  {
+   "ok": true,
+   "control": "desktop visitor: the header on /shop is still Home, Vault, Exhibitions, Insights, More"
+  },
+  {
+   "ok": true,
+   "control": "desktop visitor: Back from /shop returns to /market"
+  },
+  {
+   "ok": true,
+   "control": "desktop visitor: \"Kickstarter comics\" is a visible labelled link on /upcoming to /kickstarter"
+  },
+  {
+   "ok": true,
+   "control": "desktop visitor: one click opens /kickstarter and it shows its content"
+  },
+  {
+   "ok": true,
+   "control": "desktop visitor: the header on /kickstarter is still Home, Vault, Exhibitions, Insights, More"
+  },
+  {
+   "ok": true,
+   "control": "desktop visitor: Back from /kickstarter returns to /upcoming"
+  },
+  {
+   "ok": true,
+   "control": "desktop visitor: \"Patreon comics\" is a visible labelled link on /upcoming to /patreon"
+  },
+  {
+   "ok": true,
+   "control": "desktop visitor: one click opens /patreon and it shows its content"
+  },
+  {
+   "ok": true,
+   "control": "desktop visitor: the header on /patreon is still Home, Vault, Exhibitions, Insights, More"
+  },
+  {
+   "ok": true,
+   "control": "desktop visitor: Back from /patreon returns to /upcoming"
+  },
+  {
+   "ok": true,
+   "control": "desktop visitor: /collector still redirects (to Home when signed in)"
+  },
+  {
+   "ok": true,
+   "control": "desktop visitor: Settings > Appearance has no link to Styles (held back: its choices barely change the app)"
+  },
+  {
+   "ok": true,
+   "control": "desktop owner: \"Collector supplies & services\" is a visible labelled link on /market to /shop"
+  },
+  {
+   "ok": true,
+   "control": "desktop owner: one click opens /shop and it shows its content"
+  },
+  {
+   "ok": true,
+   "control": "desktop owner: the header on /shop is still Home, Vault, Exhibitions, Insights, More"
+  },
+  {
+   "ok": true,
+   "control": "desktop owner: Back from /shop returns to /market"
+  },
+  {
+   "ok": true,
+   "control": "desktop owner: \"Kickstarter comics\" is a visible labelled link on /upcoming to /kickstarter"
+  },
+  {
+   "ok": true,
+   "control": "desktop owner: one click opens /kickstarter and it shows its content"
+  },
+  {
+   "ok": true,
+   "control": "desktop owner: the header on /kickstarter is still Home, Vault, Exhibitions, Insights, More"
+  },
+  {
+   "ok": true,
+   "control": "desktop owner: Back from /kickstarter returns to /upcoming"
+  },
+  {
+   "ok": true,
+   "control": "desktop owner: \"Patreon comics\" is a visible labelled link on /upcoming to /patreon"
+  },
+  {
+   "ok": true,
+   "control": "desktop owner: one click opens /patreon and it shows its content"
+  },
+  {
+   "ok": true,
+   "control": "desktop owner: the header on /patreon is still Home, Vault, Exhibitions, Insights, More"
+  },
+  {
+   "ok": true,
+   "control": "desktop owner: Back from /patreon returns to /upcoming"
+  },
+  {
+   "ok": true,
+   "control": "desktop owner: /collector still redirects (to Home when signed in)"
+  },
+  {
+   "ok": true,
+   "control": "desktop owner: Settings > Appearance has no link to Styles (held back: its choices barely change the app)"
+  },
+  {
+   "ok": true,
+   "control": "phone owner: \"Collector supplies & services\" is a visible labelled link on /market to /shop"
+  },
+  {
+   "ok": true,
+   "control": "phone owner: the link is tappable (32px tall; compact pills carry a 44px phone hit area)"
+  },
+  {
+   "ok": true,
+   "control": "phone owner: one click opens /shop and it shows its content"
+  },
+  {
+   "ok": true,
+   "control": "phone owner: Back from /shop returns to /market"
+  },
+  {
+   "ok": true,
+   "control": "phone owner: \"Kickstarter comics\" is a visible labelled link on /upcoming to /kickstarter"
+  },
+  {
+   "ok": true,
+   "control": "phone owner: the link is tappable (32px tall; compact pills carry a 44px phone hit area)"
+  },
+  {
+   "ok": true,
+   "control": "phone owner: one click opens /kickstarter and it shows its content"
+  },
+  {
+   "ok": true,
+   "control": "phone owner: Back from /kickstarter returns to /upcoming"
+  },
+  {
+   "ok": true,
+   "control": "phone owner: \"Patreon comics\" is a visible labelled link on /upcoming to /patreon"
+  },
+  {
+   "ok": true,
+   "control": "phone owner: the link is tappable (32px tall; compact pills carry a 44px phone hit area)"
+  },
+  {
+   "ok": true,
+   "control": "phone owner: one click opens /patreon and it shows its content"
+  },
+  {
+   "ok": true,
+   "control": "phone owner: Back from /patreon returns to /upcoming"
+  },
+  {
+   "ok": true,
+   "control": "phone owner: /collector still redirects (to Home when signed in)"
+  }
+ ]
+}

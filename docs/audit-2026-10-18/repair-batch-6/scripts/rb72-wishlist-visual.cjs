@@ -65,14 +65,14 @@ const MEASURE = `(() => {
       // the browser's own "Add to Home Screen" promotion appears on a first visit and sits over the page: dismissed so the page itself can be judged (it is noted in the review)
       await S.evaluate(`(() => { const box = [...document.querySelectorAll('div')].find((d) => /Add to Home Screen/.test(d.textContent || '') && d.querySelectorAll('button').length <= 3 && d.getBoundingClientRect().height < 120); const x = box && [...box.querySelectorAll('button')].find((b) => /^[×✕x]$/i.test(b.textContent.trim()) || /close|dismiss/i.test(b.getAttribute('aria-label') || '')); if (x) { x.click(); return true; } return false; })()`);
       await sleep(600);
-      const click = (label, scope) => S.evaluate(`(() => { const root = ${scope || "document"}; const el = [...root.querySelectorAll('button,a,[role="tab"]')].find((x) => x.getBoundingClientRect().width > 0 && x.textContent.replace(/\s+/g, ' ').trim().startsWith(${JSON.stringify(label)})); if (!el) return false; el.click(); return true; })()`);
+      const click = (label, scope) => S.evaluate(`(() => { const root = ${scope || "document"}; const el = [...root.querySelectorAll('button,a,[role="tab"]')].find((x) => x.getBoundingClientRect().width > 0 && x.textContent.replace(/\\s+/g, ' ').trim().startsWith(${JSON.stringify(label)})); if (!el) return false; el.click(); return true; })()`);
       const tabs = `document.querySelector('[data-testid="watchlist-controls"]')`;
-      const shotAt = async (name, y) => { await S.evaluate(`window.scrollTo(0, ${y}); true`); await sleep(700); out.shots.push(await S.jshot(name)); };
+      const shotAt = async (name, y) => { await S.evaluate(y === 0 ? "window.scrollTo(0, 0); document.scrollingElement && (document.scrollingElement.scrollTop = 0); true" : `(() => { const rows = [...document.querySelectorAll('[data-testid="want-row"]')]; const r = rows[Math.min(rows.length - 1, 6)]; if (r) r.scrollIntoView({ block: 'center' }); return !!r; })()`); await sleep(900); out.shots.push(await S.jshot(name)); };
       for (const tab of ["Wishlist", "Pull List", "Following"]) {
         await click(tab, tabs); await sleep(2500); await S.settle({ quiet: 1200 });
         const meas = await S.evaluate(MEASURE);
         out.measure[`${dev.name}:${tab}`] = meas;
-        const slug = tab.toLowerCase().replace(/W+/g, "-");
+        const slug = tab.toLowerCase().replace(/\W+/g, "-");
         await shotAt(`rb72-${LABEL}-${dev.name}-${slug}-top`, 0);
         if (meas.rowCount > 6) await shotAt(`rb72-${LABEL}-${dev.name}-${slug}-middle`, dev.mobile ? 900 : 650);
         await S.evaluate("window.scrollTo(0, 0); true");

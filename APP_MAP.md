@@ -440,6 +440,8 @@ documents a real, externally-disclosed secret leak, remediated same day. See
 
 ## 5. Background jobs (Vercel Cron)
 
+> **Out of date (2026-10-24).** The daily and weekly crons below are NOT scheduled any more. `vercel.json` now has two monthly entries for `/api/cron/refresh-events-monthly` (12:00 UTC read-only allowance check, 13:00 UTC refresh, 1st of the month). See `docs/audit-2026-10-18/CURRENT-STATUS.md` and `docs/audit-2026-10-18/AUTOMATIC-USAGE-INVENTORY.md`.
+
 Defined in `vercel.json`:
 
 ```json
