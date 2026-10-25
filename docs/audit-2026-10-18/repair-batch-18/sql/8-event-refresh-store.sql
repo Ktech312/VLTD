@@ -1,3 +1,4 @@
+-- WITHDRAWN 2026-10-24: superseded, not requested, do NOT run. Kept only as a record. The Events refresh jobs are switched off and nothing needs these tables.
 -- File 8: a memory for the scheduled event refreshes, so a retry does not pay twice for work that already succeeded.
 --
 -- On 2026-10-23 and 24 the refresh's searches succeeded and found 42 events, but the AI check was refused (no Anthropic credit), and the 42 were lost with the run,
