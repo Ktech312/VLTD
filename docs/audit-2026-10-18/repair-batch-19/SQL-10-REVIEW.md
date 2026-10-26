@@ -31,6 +31,9 @@ Files: [10-ai-scan-reservations.sql](sql/10-ai-scan-reservations.sql), [validati
 ## How to run the real-Postgres test
 `npm install embedded-postgres pg` in any folder, set `EMBEDDED_PG_DIR` to it, run `node docs/audit-2026-10-18/repair-batch-19/scripts/test-sql10-real-postgres.cjs`. It starts its own temporary database; nothing outside your machine is touched.
 
+## Owner-only rule (2026-10-25)
+The server now refuses every account except the owner's (confirmed email `eck1679@gmail.com`) before it reaches reserve/complete, so this package's functions are reached only for the owner. SQL 10 is unchanged by the rule (it still checks membership of the verified user, and stays service-role only). Still HELD, not run.
+
 ## Until the SQL is run (live now): "basic" mode
 The server verifies the token, checks the verified user's membership itself (`profile_members`), rolls the cycle as the service role, and spends one scan with the existing `consume_bulk_scan` as the service role, all before the provider is called. This already makes the allowance real (it was not before). Not available until the SQL is run: recognising a repeated request across servers, and giving the scan back after a provider failure. One honest limit: until `bulk_scan_status` is replaced by the read-only version, a member's ticker read at the exact moment a cycle lapses could carry the old count into the new cycle for that profile; run this package before the first profile's next allowance cycle begins (cycles run monthly from each profile's signup day).
 
