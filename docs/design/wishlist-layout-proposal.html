@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Wishlist Layout Proposal</title>
+<style>
+:root{--bg:#0b1117;--panel:#111a22;--card:#16212b;--ink:#e8eef5;--mute:#93a4b4;--line:#2a3a48;--info:#52d6f4;--gold:#e0a64c;--ok:#54c98a;--warn:#e0a64c;--field:#0c141b}
+@media (prefers-color-scheme: light){:root:not([data-theme="dark"]){--bg:#f1f4f7;--panel:#ffffff;--card:#ffffff;--ink:#14202b;--mute:#53667a;--line:#cfd8e1;--info:#0a7490;--gold:#8a5a00;--ok:#15803d;--warn:#8a5a00;--field:#f6f8fa}}
+:root[data-theme="light"]{--bg:#f1f4f7;--panel:#ffffff;--card:#ffffff;--ink:#14202b;--mute:#53667a;--line:#cfd8e1;--info:#0a7490;--gold:#8a5a00;--ok:#15803d;--warn:#8a5a00;--field:#f6f8fa}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 system-ui,Segoe UI,Arial,sans-serif}
+.page{max-width:1240px;margin:0 auto;padding:22px 16px 80px}
+h1{font-size:28px;margin:0 0 6px}h2{font-size:21px;margin:34px 0 6px}h3{font-size:16px;margin:0}
+.lede{color:var(--mute);max-width:75ch}.pill{display:inline-block;border:1px solid var(--line);border-radius:999px;padding:1px 11px;font-size:12px;color:var(--mute);margin-right:6px}
+.box{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin:14px 0}
+table.cmp{width:100%;border-collapse:collapse;font-size:14px}table.cmp th,table.cmp td{border-top:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:top}table.cmp th{color:var(--mute);font-weight:600}
+.stage{display:grid;grid-template-columns:minmax(0,1fr);gap:18px;align-items:start}
+.stage:not(.phones)>div:nth-child(2){display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;align-items:start}
+@media (max-width:760px){.stage:not(.phones)>div:nth-child(2){grid-template-columns:minmax(0,1fr)}}
+.stage.phones{grid-template-columns:repeat(3,minmax(0,390px));justify-content:center}
+@media (max-width:1300px){.stage.phones{grid-template-columns:minmax(0,390px)}}
+
+.frame{background:var(--bg);border:1px solid var(--line);border-radius:14px;padding:14px}
+.frame.phone{width:390px;max-width:100%;margin:0 auto;padding:10px}
+.frame.phone .fgrid.two{grid-template-columns:repeat(2,minmax(0,1fr))}.frame.phone .fgrid .wide{grid-column:span 2}
+.cap{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--mute);margin:0 0 8px}
+/* ---- mock of the existing components ---- */
+.tabs{display:flex;gap:6px;margin-bottom:10px}.tabs button{border:1px solid var(--line);background:transparent;color:var(--mute);border-radius:8px;padding:6px 12px;font:inherit;font-size:13px;cursor:pointer}.tabs button[aria-selected=true]{color:var(--info);border-color:var(--info);background:rgba(82,214,244,.1)}
+.toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px}
+.toolbar .search{flex:1 1 180px;min-width:0;border:1px solid var(--line);background:var(--field);color:var(--ink);border-radius:8px;padding:8px 10px;font:inherit;font-size:13px}
+.pillbtn{border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:999px;padding:6px 12px;font:inherit;font-size:13px;cursor:pointer;white-space:nowrap;min-height:34px}
+.pillbtn.primary{background:var(--info);color:#04202a;border-color:var(--info);font-weight:600}
+.chips{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px}.chips::-webkit-scrollbar{display:none}
+.chip{border:1px solid var(--line);border-radius:999px;padding:4px 11px;font-size:12.5px;color:var(--mute);white-space:nowrap;background:transparent}.chip.on{color:var(--info);border-color:var(--info)}
+.row{background:var(--card);border:1px solid var(--line);border-radius:8px;margin-bottom:8px;overflow:hidden}.row.open{border-color:rgba(82,214,244,.45)}
+.rowtop{display:grid;grid-template-columns:44px minmax(0,1fr) 120px 110px 120px auto 34px;gap:12px;align-items:center;padding:8px 12px;min-height:60px}
+.thumb{width:44px;height:44px;border-radius:6px;border:1px solid var(--line);display:grid;place-items:center;font-size:9px;font-weight:700;letter-spacing:.05em;color:var(--mute);background:var(--field);text-transform:uppercase}
+.t{font-weight:600;font-size:13.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.s{font-size:12px;color:var(--mute);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tag{border:1px solid var(--line);border-radius:5px;padding:0 6px;font-size:11px}.tag.unsaved{border-color:var(--warn);color:var(--warn);font-weight:600}.tag.high{border-color:var(--gold);color:var(--gold)}
+.stepper{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}.stepper span{padding:5px 9px;font-size:12px;color:var(--mute);border-right:1px solid var(--line)}.stepper span:last-child{border:0}.stepper span.on{background:rgba(82,214,244,.14);color:var(--info)}
+.kebab{width:34px;height:34px;border:1px solid var(--line);border-radius:8px;display:grid;place-items:center;color:var(--mute);font-weight:700}
+.rowphone{padding:10px 12px}.rowphone .l1{display:flex;gap:10px;align-items:flex-start}.rowphone .l2{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px;border-top:1px dashed var(--line);margin-top:8px;padding-top:8px;font-size:12.5px;align-items:center}
+.stepper.big span{min-height:44px;display:inline-flex;align-items:center}
+/* ---- the proposed open row ---- */
+.edit{border-top:1px solid var(--line);padding:12px}
+.fgrid{display:grid;gap:10px;grid-template-columns:repeat(4,minmax(0,1fr))}.fgrid.two{grid-template-columns:repeat(2,minmax(0,1fr))}
+.fgrid .wide{grid-column:span 2}
+label.f{display:block;font-size:12px;color:var(--mute)}label.f input,label.f select,label.f textarea{display:block;width:100%;margin-top:4px;border:1px solid var(--line);background:var(--field);color:var(--ink);border-radius:7px;padding:8px 10px;font:inherit;font-size:14px;min-height:40px}
+label.f .hint{display:block;margin-top:3px;font-size:11px;color:var(--mute)}
+.disc{border:1px solid var(--line);border-radius:8px;margin-top:10px}.disc>button{display:flex;width:100%;align-items:center;gap:8px;background:transparent;border:0;color:var(--ink);font:inherit;font-size:13.5px;padding:10px 12px;cursor:pointer;text-align:left;min-height:44px}
+.disc>button .cnt{margin-left:auto;color:var(--mute);font-size:12px}.disc>button .car{color:var(--mute);transition:transform .15s}.disc.open>button .car{transform:rotate(90deg)}
+.disc .body{display:none;padding:0 12px 12px}.disc.open .body{display:block}
+.savebar{display:flex;gap:8px;justify-content:space-between;align-items:center;margin-top:12px;flex-wrap:wrap}
+.sticky{position:sticky;bottom:0;background:var(--card);border-top:1px solid var(--line);margin:12px -12px -12px;padding:10px 12px}
+.note{font-size:12.5px;color:var(--mute)}
+.ann{font-size:13px;color:var(--mute);margin:8px 2px 0}.ann b{color:var(--ink)}
+.sortmenu{border:1px solid var(--line);background:var(--card);border-radius:10px;padding:6px;margin:6px 0 10px;font-size:13px;max-width:240px}.sortmenu div{padding:7px 10px;border-radius:6px}.sortmenu .sel{background:rgba(82,214,244,.12);color:var(--info)}
+.before{border:1px dashed var(--warn)}
+#desk{overflow-x:auto}#desk .row,#desk .toolbar,#desk .chips{min-width:820px}table.cmp{display:block;overflow-x:auto}
+</style></head><body><div class="page">
+<h1>Wishlist layout: compact proposal</h1>
+<p><span class="pill">Proposal: awaiting your review</span><span class="pill">Nothing implemented or deployed</span><span class="pill">Mockup with fictional items</span></p>
+<p class="lede">The Wishlist closeout left three usability problems: an opened item becomes a very long form on a phone, it stays open when you switch tabs, and Sort is off screen until you swipe the filter row. This page shows a fix, built only from components the app already has (<code>WantRow</code>, <code>WantForm</code>, <code>ActionMenu</code>, <code>PillButton</code>, <code>Toggle</code>), with populated examples. Every control below is a mock (clickable where it matters) so you can judge the layout before I touch the real page.</p>
+
+<div class="box"><h3>What changes, in plain words</h3>
+<table class="cmp"><tr><th></th><th>Today</th><th>Proposed</th></tr>
+<tr><th>Opened item on a phone</th><td>One long form: 14 fields plus category fields and notes, about 1,900 px tall.</td><td>Five essentials first (Title, Category, Release date, Expected price, Quantity), then <b>three labelled expanders</b>: More product details, Category details, Notes and target price. Closed expanders show how many fields are filled. About <span id="mh">…</span> px tall with all expanders closed (measured on this mockup).</td></tr>
+<tr><th>Switching tabs</th><td>The opened row stays open on the other tab.</td><td>Switching tabs <b>closes</b> the row. Anything you typed and did not save is kept as a draft and the row shows an amber <b>Unsaved edit</b> tag. Open it again and the draft is restored.</td></tr>
+<tr><th>Sort</th><td>On a phone, Sort is at the far end of a sideways-scrolling filter row.</td><td>Search and <b>Sort</b> share a fixed first row, always visible. The filter chips scroll on their own second row.</td></tr>
+<tr><th>Save</th><td>Save changes is at the bottom of a long form.</td><td>On a phone, a sticky bar keeps <b>Save changes</b> and Cancel in reach while you scroll inside the open row.</td></tr>
+<tr><th>What does not change</th><td colspan="2">Fields, validation, blank stays unknown, manual entry for every category, Following rules, Pull List, the status control and menu on each row, Acquire. No new data is stored except the in-browser draft (session storage on this device).</td></tr></table></div>
+
+<h2>Desktop (1440 wide)</h2>
+<div class="stage"><div>
+<div class="frame" id="desk">
+<p class="cap">Wishlist tab</p>
+<div class="tabs" role="tablist"><button role="tab" aria-selected="true">Wishlist</button><button role="tab" aria-selected="false">Pull List</button><button role="tab" aria-selected="false">Following</button></div>
+<div class="toolbar"><input class="search" placeholder="Search your wants" aria-label="Search"><button class="pillbtn">Sort: Soonest ▾</button><button class="pillbtn">Checklist</button><button class="pillbtn primary">Add</button></div>
+<div class="chips" style="margin-bottom:10px"><span class="chip on">All 5</span><span class="chip">Comics 1</span><span class="chip">Cards 2</span><span class="chip">Toys 1</span><span class="chip">Auto 1</span><span class="chip">Skipped 0</span></div>
+
+<div class="row"><div class="rowtop"><span class="thumb">Comic</span><div><div class="t">Midnight Courier #7 Cover B</div><div class="s">Midnight Courier · Cover B</div></div><span><span class="tag">Comics</span> <span class="tag">x2</span></span><span style="font-size:12.5px">Jan 14, 2027</span><span style="text-align:right;font-size:12.5px">$6.99<div class="s">each</div></span><span class="stepper"><span class="on">Wanted</span><span>Preordered</span><span>Acquired</span></span><span class="kebab">⋯</span></div></div>
+
+<div class="row open" id="deskopen"><div class="rowtop"><span class="thumb">Toys</span><div><div class="t">Retro Robots Series 3 Action Figure</div><div class="s">Retro Robots · Series 3</div></div><span><span class="tag">Toys</span> <span class="tag high">High</span></span><span style="font-size:12.5px">Mar 3, 2027</span><span style="text-align:right;font-size:12.5px">$29.99<div class="s">expected</div></span><span class="stepper"><span>Wanted</span><span class="on">Preordered</span><span>Acquired</span></span><span class="kebab">⋯</span></div>
+<div class="edit">
+<div class="fgrid"><label class="f wide">Title<input value="Retro Robots Series 3 Action Figure"></label><label class="f">Category<select><option>Pop Culture</option></select></label><label class="f">Type<select><option>Toys &amp; Figures</option></select></label>
+<label class="f">Release date<input value="2027-03-03" type="date"></label><label class="f">Expected price (each)<input value="29.99"><span class="hint">Blank stays unknown.</span></label><label class="f">Quantity<input value="1"></label><label class="f">Priority<select><option>High</option></select></label></div>
+<div class="disc" data-d><button><span class="car">▸</span> More product details <span class="note">series, edition, shop, link</span><span class="cnt">2 of 5 filled</span></button><div class="body"><div class="fgrid"><label class="f">Series or product line<input value="Series 3"></label><label class="f">Edition or variant<input placeholder="Optional, e.g. Cover B"></label><label class="f">Shop<input value="Corner Toy Co."></label><label class="f">Product or shop link<input placeholder="https://…"></label></div></div></div>
+<div class="disc" data-d><button><span class="car">▸</span> Category details <span class="note">scale, character, line</span><span class="cnt">0 of 4 filled</span></button><div class="body"><div class="fgrid"><label class="f">Character<input placeholder="Optional"></label><label class="f">Scale<input placeholder="Optional"></label><label class="f">Material<input placeholder="Optional"></label><label class="f">Product number<input placeholder="Optional"></label></div></div></div>
+<div class="disc" data-d><button><span class="car">▸</span> Notes and target price <span class="cnt">1 of 2 filled</span></button><div class="body"><div class="fgrid two"><label class="f">Target price (optional)<input value="24.00"><span class="hint">A note to yourself. VLTD does not watch prices.</span></label><label class="f">Notes (private)<textarea rows="2"></textarea></label></div></div></div>
+<div class="savebar"><span class="note">Preordered means you arranged it yourself with a shop. VLTD has placed no order.</span><span><button class="pillbtn">Remove…</button> <button class="pillbtn primary">Save changes</button></span></div>
+</div></div>
+
+<div class="row"><div class="rowtop"><span class="thumb">TCG</span><div><div class="t">Aurora Dragon booster box, Realm Clash</div><div class="s">Realm Clash · sealed</div></div><span><span class="tag">TCG</span></span><span style="font-size:12.5px;color:var(--mute)">Q1 2027</span><span style="text-align:right;font-size:12.5px">$144.00<div class="s">expected</div></span><span class="stepper"><span class="on">Wanted</span><span>Preordered</span><span>Acquired</span></span><span class="kebab">⋯</span></div></div>
+<div class="row"><div class="rowtop"><span class="thumb">Sport</span><div><div class="t">1992 Hardwood Heroes Javier Alvarez Rookie #14 (PSA 8)</div><div class="s">Hardwood Heroes 1992</div></div><span><span class="tag">Cards</span> <span class="tag unsaved">Unsaved edit</span></span><span style="font-size:12.5px;color:var(--mute)">Date unknown</span><span style="text-align:right;font-size:12.5px;color:var(--mute)">Price unknown</span><span class="stepper"><span class="on">Wanted</span><span>Preordered</span><span>Acquired</span></span><span class="kebab">⋯</span></div></div>
+<div class="row"><div class="rowtop"><span class="thumb">Auto</span><div><div class="t">Skyline Racer 1:18 die-cast, red</div><div class="s">Skyline Racer · 1:18</div></div><span><span class="tag">Die-Cast</span></span><span style="font-size:12.5px;color:var(--mute)">Date unknown</span><span style="text-align:right;font-size:12.5px">$89.00<div class="s">expected</div></span><span class="stepper"><span class="on">Wanted</span><span>Preordered</span><span>Acquired</span></span><span class="kebab">⋯</span></div></div>
+</div>
+<p class="ann"><b>Reading the example.</b> The Retro Robots row is open: five essentials in two lines, three closed expanders that say what is inside and how much is filled. The Hardwood Heroes row carries the amber <b>Unsaved edit</b> tag: its title was edited, then the person switched tab, and the draft was kept.</p>
+</div>
+<div>
+<div class="frame"><p class="cap">Sort menu, always one tap away</p><div class="toolbar" style="margin:0"><input class="search" placeholder="Search your wants"><button class="pillbtn" aria-expanded="true">Sort: Soonest ▾</button></div>
+<div class="sortmenu"><div class="sel">Soonest release</div><div>Latest release</div><div>Title A to Z</div><div>Highest priority</div><div>Recently added</div><div>Price, high to low</div></div>
+<p class="note">Sort is a <code>PillButton</code> that opens an <code>ActionMenu</code>, the same pair the rows already use. It replaces the sort select at the end of the scrolling chip row.</p></div>
+<div class="frame"><p class="cap">Draft rules</p><ul class="note" style="margin:0;padding-left:18px"><li>Typing in an open row saves a draft in this browser session after each pause.</li><li>Switching tabs or opening another row closes this one and keeps the draft.</li><li>The closed row shows <b>Unsaved edit</b>. Opening it restores the draft, with a Discard draft link.</li><li>Save changes writes it for real and clears the draft. Cancel or Discard clears it.</li><li>Closing the browser tab drops drafts. Nothing unsaved is ever sent to your account.</li></ul></div>
+</div></div>
+
+<h2>Phone (390 wide)</h2>
+<div class="stage phones">
+<div class="frame phone"><p class="cap">1 · The list: Sort always visible</p>
+<div class="tabs"><button role="tab" aria-selected="true">Wishlist</button><button role="tab" aria-selected="false">Pull List</button><button role="tab" aria-selected="false">Following</button></div>
+<div class="toolbar" style="flex-wrap:nowrap"><input class="search" placeholder="Search" aria-label="Search"><button class="pillbtn">Sort ▾</button><button class="pillbtn primary">Add</button></div>
+<div class="chips" style="margin-bottom:10px"><span class="chip on">All 5</span><span class="chip">Comics 1</span><span class="chip">Cards 2</span><span class="chip">Toys 1</span><span class="chip">Auto 1</span></div>
+<div class="row"><div class="rowphone"><div class="l1"><span class="thumb">Comic</span><div style="min-width:0;flex:1"><div class="t">Midnight Courier #7 Cover B</div><div style="margin-top:4px"><span class="tag">Comics</span> <span class="tag">x2</span></div></div><span class="kebab">⋯</span></div><div class="l2"><span>Jan 14, 2027</span><span>$6.99 each</span><span class="stepper big"><span class="on">Wanted</span><span>Preordered</span><span>Acquired</span></span></div></div></div>
+<div class="row"><div class="rowphone"><div class="l1"><span class="thumb">Sport</span><div style="min-width:0;flex:1"><div class="t">1992 Hardwood Heroes Javier Alvarez Rookie…</div><div style="margin-top:4px"><span class="tag">Cards</span> <span class="tag unsaved">Unsaved edit</span></div></div><span class="kebab">⋯</span></div><div class="l2"><span style="color:var(--mute)">Date unknown</span><span style="color:var(--mute)">Price unknown</span><span class="stepper big"><span class="on">Wanted</span><span>Preordered</span><span>Acquired</span></span></div></div></div>
+<p class="ann"><b>Sort</b> and search share the first row; only the chips scroll sideways.</p></div>
+
+<div class="frame phone" id="phopen"><p class="cap">2 · One item opened (all expanders closed)</p>
+<div class="row open"><div class="rowphone"><div class="l1"><span class="thumb">Toys</span><div style="min-width:0;flex:1"><div class="t">Retro Robots Series 3 Action Figure</div><div style="margin-top:4px"><span class="tag">Toys</span> <span class="tag high">High</span></div></div><span class="kebab">⋯</span></div><div class="l2"><span>Mar 3, 2027</span><span>$29.99 expected</span><span class="stepper big"><span>Wanted</span><span class="on">Preordered</span><span>Acquired</span></span></div></div>
+<div class="edit"><div class="fgrid two"><label class="f wide">Title<input value="Retro Robots Series 3 Action Figure"></label><label class="f">Category<select><option>Pop Culture</option></select></label><label class="f">Type<select><option>Toys &amp; Figures</option></select></label><label class="f">Release date<input value="2027-03-03" type="date"></label><label class="f">Expected price (each)<input value="29.99"></label><label class="f">Quantity<input value="1"></label><label class="f">Priority<select><option>High</option></select></label></div>
+<div class="disc" data-d><button><span class="car">▸</span> More product details <span class="cnt">2 of 5</span></button><div class="body"><div class="fgrid two" style="grid-template-columns:1fr"><label class="f">Series or product line<input value="Series 3"></label><label class="f">Edition or variant<input placeholder="Optional"></label><label class="f">Shop<input value="Corner Toy Co."></label><label class="f">Product or shop link<input placeholder="https://…"></label></div></div></div>
+<div class="disc" data-d><button><span class="car">▸</span> Category details <span class="cnt">0 of 4</span></button><div class="body"><div class="fgrid two" style="grid-template-columns:1fr"><label class="f">Character<input placeholder="Optional"></label><label class="f">Scale<input placeholder="Optional"></label></div></div></div>
+<div class="disc" data-d><button><span class="car">▸</span> Notes and target price <span class="cnt">1 of 2</span></button><div class="body"><div class="fgrid two" style="grid-template-columns:1fr"><label class="f">Target price<input value="24.00"></label><label class="f">Notes (private)<textarea rows="2"></textarea></label></div></div></div>
+<div class="sticky"><div class="savebar" style="margin:0"><button class="pillbtn">Cancel</button><button class="pillbtn primary">Save changes</button></div></div></div></div>
+<p class="ann"><b>Tap an expander</b> (they work on this page) to see its fields; the open row grows only by what you ask for.</p></div>
+
+<div class="frame phone"><p class="cap">3 · Back on the list after switching tabs</p>
+<div class="tabs"><button role="tab" aria-selected="true">Wishlist</button><button role="tab" aria-selected="false">Pull List</button><button role="tab" aria-selected="false">Following</button></div>
+<div class="row"><div class="rowphone"><div class="l1"><span class="thumb">Sport</span><div style="min-width:0;flex:1"><div class="t">1992 Hardwood Heroes Javier Alvarez Rookie #14 (PSA 8)</div><div style="margin-top:4px"><span class="tag">Cards</span> <span class="tag unsaved">Unsaved edit</span></div></div><span class="kebab">⋯</span></div><div class="l2"><span style="color:var(--mute)">Date unknown</span><span style="color:var(--mute)">Price unknown</span><span class="stepper big"><span class="on">Wanted</span><span>Preordered</span><span>Acquired</span></span></div></div></div>
+<div class="box" style="margin:10px 0 0;font-size:13px"><b>Unsaved edit</b> on this row: the title was changed. <a href="#" onclick="return false" style="color:var(--info)">Open to continue</a> · <a href="#" onclick="return false" style="color:var(--info)">Discard draft</a></div>
+<p class="ann">The tab switch closed the row (no more open form following you around), and the edit is waiting, clearly marked.</p></div>
+</div>
+
+<h2>What I will build if you approve</h2>
+<div class="box"><ol style="margin:0;padding-left:20px"><li><code>WantForm</code>: split the fields into Essentials and the three expanders (a small <code>Disclosure</code> built from <code>PillButton</code> styling), show "n of m filled" on each, keep every field and rule.</li><li><code>WantRow</code> and the Wishlist page: one open row at a time; close it on tab switch; keep a per-want draft in session storage; show the Unsaved edit tag; sticky Save bar on phones.</li><li>Toolbar: Sort becomes a <code>PillButton</code> + <code>ActionMenu</code> next to Search on its own fixed row; chips scroll on the row below.</li><li>Tests: draft survives a tab switch and a reopen; draft is dropped on Save, Cancel and Discard; Sort reachable at 320, 360 and 390 px with no sideways scroll; the opened row at 390 px is under 800 px with expanders closed; existing Wishlist tests still pass. Then a branch preview for you to look at before it goes to the live site.</li></ol>
+<p class="note">Open choices for you: (a) keep Priority among the essentials (shown here) or move it into the notes expander; (b) whether Quantity belongs in the essentials (here: yes, because it changes the planned total).</p></div>
+</div>
+<script>
+document.querySelectorAll('[data-d] > button').forEach(function(b){b.addEventListener('click',function(){b.parentElement.classList.toggle('open');measure();});});
+function measure(){var e=document.querySelector('#phopen .row.open');var el=document.getElementById('mh');if(e&&el)el.textContent=Math.round(e.getBoundingClientRect().height);}
+window.addEventListener('load',measure);window.addEventListener('resize',measure);
+</script></body></html>

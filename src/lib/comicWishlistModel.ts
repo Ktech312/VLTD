@@ -18,6 +18,7 @@ import { enqueueVaultItemSync, processVaultSyncQueue, removeVaultItemFromSyncQue
 import { deleteVaultItemEverywhere } from "@/lib/vaultActions";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 import { VAULT_ITEMS_TABLE } from "@/lib/vaultCloud";
+import { issueToRelease } from "@/lib/pullRules";
 import {
   findCatalogWish,
   loadWishlist,
@@ -41,16 +42,22 @@ export function comicCatalogRef(metronId: number | string) {
   return `${SOURCE}:${metronId}`;
 }
 
+// The same release, described the same way Following describes it (title, date, series, cover, identity), so a want made here and one made by a rule are one entry.
 function pickFor(issue: UpcomingIssue) {
+  const release = issueToRelease(issue);
   return {
     source: SOURCE,
-    externalId: String(issue.id),
-    title: `${issue.series} #${issue.number}`.trim(),
-    imageUrl: issue.imageUrl ?? undefined,
-    releaseDate: issue.storeDate ?? undefined,
+    externalId: release.externalId,
+    title: release.title,
+    imageUrl: release.imageUrl,
+    releaseDate: release.date ?? undefined,
     universe: "POP_CULTURE",
     category: "Comics",
     subject: issue.publisher || undefined,
+    series: issue.series,
+    edition: release.edition,
+    sourceIdentity: release.identity,
+    sourceUrl: release.url,
   };
 }
 
@@ -71,9 +78,13 @@ function isOwnedCatalogItem(item: VaultItem) {
 export function findOwnedComic(issue: { id: number; series: string; number: string }): VaultItem | undefined {
   const ref = comicCatalogRef(issue.id);
   const title = comicTitle(issue.series, issue.number);
-  return loadItems().find(
-    (item) => isOwnedCatalogItem(item) && (item.catalogRef === ref || (!item.catalogRef && item.title === title))
-  );
+  // A copy received through the Wishlist (Acquired) carries the same tag, so it counts as owned here too. Older ones are found through the record of Vault ids kept on their want.
+  const byTag = loadItems().find((item) => item.status !== "SOLD" && item.catalogRef === ref);
+  if (byTag) return byTag;
+  const ids = new Set(findCatalogWish(SOURCE, String(issue.id))?.acquiredItemIds ?? []);
+  const viaWant = ids.size ? loadItems().find((item) => item.status !== "SOLD" && ids.has(String(item.id))) : undefined;
+  if (viaWant) return viaWant;
+  return loadItems().find((item) => isOwnedCatalogItem(item) && !item.catalogRef && item.title === title);
 }
 
 /** Titles of comics added from the catalog without a surviving catalog tag (see findOwnedComic). */
@@ -86,7 +97,8 @@ export function loadComicStatuses(): Map<number, ComicStatus> {
   const map = new Map<number, ComicStatus>();
   for (const w of loadWishlist()) {
     if (w.source !== SOURCE || !w.externalId) continue;
-    map.set(Number(w.externalId), w.status === "preordered" ? "preordered" : "want");
+    if (w.status === "skipped") continue; // a skipped release is not lit as Want (the record stays so Following never adds it again)
+    map.set(Number(w.externalId), w.status === "preordered" ? "preordered" : w.status === "acquired" ? "own" : "want");
   }
   for (const item of loadItems()) {
     const m = item.catalogRef?.match(/^metron:(\d+)$/);

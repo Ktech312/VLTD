@@ -43,6 +43,8 @@ export function vaultItemFromWant(want: WishlistItem, id: string, profileId: str
     createdAt: now,
     isNew: true,
     addedVia: "wishlist",
+    // A comic from the catalog carries the same tag as Own on Upcoming Comics, so that page shows it as owned and never adds it a second time.
+    catalogRef: want.source === "metron" && want.externalId ? `metron:${want.externalId}` : undefined,
   };
 }
 

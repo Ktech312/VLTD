@@ -16,7 +16,7 @@ import FollowTab from "@/components/wants/FollowTab";
 import WantRow, { WatchingRow } from "@/components/wants/WantRow";
 import { loadPullRules, refreshPullRules, syncPullRulesFromSupabase } from "@/lib/pullRules";
 import { showToast } from "@/lib/toast";
-import { formatMoney, groupPullList, isOpen, plannedTotals, ruleIdentityOfItem, wantFromRelease, wantFromWatching, type CatalogRelease, type PullRule } from "@/lib/wantsCore";
+import { addableSuggestion, formatMoney, groupPullList, isOpen, plannedTotals, ruleIdentityOfItem, wantFromWatching, type CatalogRelease, type PullRule } from "@/lib/wantsCore";
 import { loadWatchlist, removeFromWatchlist, syncWatchlistFromSupabase, type WatchlistItem } from "@/lib/watchlistModel";
 import { loadWishlist, removeWishlistItem, saveWishlistItem, syncWishlistFromSupabase, wantIdNamespace, type WishlistItem } from "@/lib/wishlistModel";
 
@@ -227,7 +227,7 @@ export default function WatchlistPage() {
               onChanged={setRules}
               onCheck={(r) => void checkNow(r)}
               onAddRelease={(r) => setAdding({ mode: "manual", rule: r })}
-              onAddSuggestion={(release, rule) => { save(wantFromRelease(release, { quantity: rule.quantity, seriesName: rule.name, ruleId: rule.id, formatNote: rule.formatNote, idNamespace: wantIdNamespace() })); setSuggestions((s) => s.filter((x) => x.identity !== release.identity)); }}
+              onAddSuggestion={(release, rule) => { const want = addableSuggestion(loadWishlist(), release, rule, wantIdNamespace()); if (want) save(want); setSuggestions((s) => s.filter((x) => x.identity !== release.identity)); }}
               onFollow={() => setFollowing(true)}
             />
           ) : null}

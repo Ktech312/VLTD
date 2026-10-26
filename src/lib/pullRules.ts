@@ -3,6 +3,7 @@ import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 import { captureIdentity } from "@/lib/sessionGuard";
 import { fetchUpcomingComicsChecked, formatStoreDate, type UpcomingIssue } from "@/lib/comicUpcoming";
 import { loadWishlist, saveWishlistItems, updateWishlistItem, wantIdNamespace } from "@/lib/wishlistModel";
+import { loadItems } from "@/lib/vaultModel";
 import { clampQuantity, planRuleRefresh, type CatalogRelease, type PullRule, type PullRuleKind, type PullRuleState } from "@/lib/wantsCore";
 
 // Following: rules that collect future releases. Saved to the account (`pull_rules`, 20261024_wishlist_pull_list.sql) with a copy on this device;
@@ -36,6 +37,22 @@ export function loadPullRules(): PullRule[] {
     const parsed: unknown = raw ? JSON.parse(raw) : [];
     return Array.isArray(parsed) ? (parsed as PullRule[]) : [];
   } catch { return []; }
+}
+
+// A rule that was saved here but whose upload has not been confirmed is remembered on this device (same idea as the wishlist outbox), so a read of the account
+// can never undo a pause, an edit or a new rule that has not reached it yet. Cleared when the account confirms.
+function pendingKey() {
+  const pid = activeProfileId();
+  return pid ? `vltd_pull_rules_pending:${pid}` : "vltd_pull_rules_pending";
+}
+function readPending(): string[] {
+  try {
+    const parsed: unknown = JSON.parse(localStorage.getItem(pendingKey()) ?? "[]");
+    return Array.isArray(parsed) ? parsed.filter((x): x is string => typeof x === "string") : [];
+  } catch { return []; }
+}
+function writePending(ids: string[]) {
+  try { localStorage.setItem(pendingKey(), JSON.stringify([...new Set(ids)])); } catch { /* storage unavailable */ }
 }
 
 function saveRules(rules: PullRule[]) {
@@ -85,11 +102,13 @@ function rowToRule(r: Record<string, unknown>): PullRule {
 
 /** True when the account table exists (rules reach the account); false means this device only. */
 export async function pushRule(rule: PullRule): Promise<boolean> {
+  writePending([...readPending(), rule.id]);
   try {
     const pid = activeProfileId();
     const supabase = getSupabaseBrowserClient();
     if (!pid || !supabase) return false;
     const { error } = await supabase.from("pull_rules").upsert(ruleRow(rule, pid), { onConflict: "id" });
+    if (!error) writePending(readPending().filter((id) => id !== rule.id));
     return !error;
   } catch { return false; }
 }
@@ -108,8 +127,21 @@ export async function syncPullRulesFromSupabase(): Promise<{ rules: PullRule[]; 
       for (const r of local) void pushRule(r);
       return { rules: local, inAccount: true };
     }
-    const rules = (data as Record<string, unknown>[]).map(rowToRule).sort((a, b) => b.createdAt - a.createdAt);
+    // A rule saved here and not yet confirmed by the account keeps this device's copy and is sent again; the account's older copy must not undo it.
+    const pending = new Set(readPending());
+    const localById = new Map(local.map((r) => [r.id, r]));
+    const remote = (data as Record<string, unknown>[]).map(rowToRule);
+    const remoteIds = new Set(remote.map((r) => r.id));
+    const resend: PullRule[] = [];
+    const merged = remote.map((r) => {
+      const mine = localById.get(r.id);
+      if (mine && pending.has(r.id)) { resend.push(mine); return mine; }
+      return r;
+    });
+    for (const r of local) if (pending.has(r.id) && !remoteIds.has(r.id)) { resend.push(r); merged.push(r); }
+    const rules = merged.sort((a, b) => b.createdAt - a.createdAt);
     saveRules(rules);
+    for (const r of resend) void pushRule(r);
     return { rules, inAccount: true };
   } catch { return { rules: local, inAccount: false }; }
 }
@@ -194,6 +226,18 @@ export function describeNextDate(c: SeriesCandidate): string {
   return c.nextDate ? `next ${formatStoreDate(c.nextDate)}` : "no date yet";
 }
 
+/** Comics already in the Vault from the catalog (Own on Upcoming Comics, or Acquired from the Wishlist), as release identities: a refresh never adds those back as wants. */
+function ownedComicIdentities(): Set<string> {
+  const owned = new Set<string>();
+  try {
+    for (const item of loadItems()) {
+      const m = item.catalogRef?.match(/^metron:(\d+)$/);
+      if (m) owned.add(`metron:issue:${m[1]}`);
+    }
+  } catch { /* the Vault could not be read: fall back to the wishlist alone */ }
+  return owned;
+}
+
 export type RefreshOutcome = { checked: number; added: number; updated: number; suggestions: CatalogRelease[]; failed: string[] };
 
 /**
@@ -216,7 +260,7 @@ export async function refreshPullRules(opts: { force?: boolean; ruleId?: string 
     }
     const releases = data.results.map(issueToRelease);
     // Read the wishlist again for every rule: the previous rule's additions are part of what "already there" means.
-    const plan = planRuleRefresh(rule, releases, loadWishlist(), Date.now(), wantIdNamespace());
+    const plan = planRuleRefresh(rule, releases, loadWishlist(), Date.now(), wantIdNamespace(), ownedComicIdentities());
     if (plan.add.length) saveWishlistItems(plan.add);
     for (const u of plan.update) updateWishlistItem(u.id, u.patch);
     out.added += plan.add.length;

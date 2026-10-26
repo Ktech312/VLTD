@@ -444,6 +444,11 @@ export type CatalogPick = {
   universe?: string;
   category?: string;
   subject?: string;
+  /** Same fields Following fills in for the same release, so a want from either route describes it the same way. */
+  series?: string;
+  edition?: string;
+  sourceIdentity?: string;
+  sourceUrl?: string;
 };
 
 /** Stable id so the same catalog item is one row per profile. */
@@ -463,19 +468,26 @@ export function findCatalogWish(source: string, externalId: string): WishlistIte
 export async function setCatalogWish(pick: CatalogPick, status: WishStatus | null): Promise<boolean> {
   const existing = findCatalogWish(pick.source, pick.externalId);
   if (status === null) {
-    if (existing) removeWishlistItem(existing.id);
+    // Skipped and Acquired records are what stop Following from adding the release again: clearing a tap never deletes them.
+    if (existing && existing.status !== "skipped" && existing.status !== "acquired") removeWishlistItem(existing.id);
     return true;
   }
   // A want that was already received or skipped is not turned back into Wanted by a tap on Upcoming Comics.
   if (existing && (existing.status === "acquired" || existing.status === "skipped")) return true;
+  // A field the person changed by hand is never overwritten by the catalog, and a field the catalog does not give is never erased.
+  const edited = new Set(existing?.edited ?? []);
   const item: WishlistItem = {
     ...(existing ?? { id: catalogWishId(pick.source, pick.externalId), createdAt: Date.now() }),
-    title: pick.title,
-    imageUrl: pick.imageUrl,
-    releaseDate: pick.releaseDate,
+    title: edited.has("title") && existing?.title ? existing.title : pick.title,
+    imageUrl: pick.imageUrl ?? existing?.imageUrl,
+    releaseDate: edited.has("releaseDate") ? existing?.releaseDate : pick.releaseDate ?? existing?.releaseDate,
     universe: pick.universe,
     category: pick.category,
     subject: pick.subject,
+    series: existing?.series ?? pick.series,
+    edition: existing?.edition ?? pick.edition,
+    sourceIdentity: existing?.sourceIdentity ?? pick.sourceIdentity,
+    sourceUrl: existing?.sourceUrl ?? pick.sourceUrl,
     source: pick.source,
     externalId: pick.externalId,
     status,

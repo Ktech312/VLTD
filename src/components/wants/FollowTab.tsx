@@ -5,7 +5,7 @@ import { useState } from "react";
 import { PillButton } from "@/components/ui/PillButton";
 import { Field, inputClass } from "@/components/wants/Sheet";
 import { setRuleState, updateRule } from "@/lib/pullRules";
-import { clampQuantity, isOpen, releaseLabel, type CatalogRelease, type PullRule } from "@/lib/wantsCore";
+import { clampQuantity, findWantForIdentity, isOpen, releaseLabel, type CatalogRelease, type PullRule } from "@/lib/wantsCore";
 import type { WishlistItem } from "@/lib/wishlistModel";
 
 const line = "rgba(203,208,213,0.18)";
@@ -50,7 +50,7 @@ export default function FollowTab({
     const mine = wants.filter((w) => w.ruleId === rule.id && isOpen(w) && w.releaseDate).sort((a, b) => (a.releaseDate ?? "").localeCompare(b.releaseDate ?? ""));
     const today = new Date().toISOString().slice(0, 10);
     const next = mine.find((w) => (w.releaseDate ?? "") >= today) ?? mine[0];
-    const ruleSuggestions = suggestions.filter((s) => s.seriesKey === rule.sourceKey && !wants.some((w) => w.sourceIdentity === s.identity));
+    const ruleSuggestions = suggestions.filter((s) => s.seriesKey === rule.sourceKey && !findWantForIdentity(wants, s.identity));
     const paused = rule.state === "paused";
     return (
       <div key={rule.id} className="flex min-w-0 flex-col gap-2 rounded-[8px] border px-3 py-3" style={{ background: "var(--theme-card, rgba(15,25,45,0.85))", borderColor: line, opacity: paused || rule.state === "stopped" ? 0.8 : 1 }} data-testid="rule-card" data-state={rule.state}>

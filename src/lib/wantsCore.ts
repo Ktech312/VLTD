@@ -272,7 +272,18 @@ export type RuleRefreshPlan = {
   matched: number;
 };
 
-export function planRuleRefresh(rule: PullRule, releases: CatalogRelease[], existing: WishlistItem[], now: number = Date.now(), idNamespace = ""): RuleRefreshPlan {
+/** The want already on the list for this exact release, however it got there (a Following rule, a tap on Upcoming Comics, an older catalog pick). */
+export function findWantForIdentity(items: WishlistItem[], identity: string): WishlistItem | undefined {
+  return items.find((item) => ruleIdentityOfItem(item) === identity);
+}
+
+/** The want to save when the person adds a suggested release from a Following card, or null when that release is already on the list (so Add never makes a second one). */
+export function addableSuggestion(items: WishlistItem[], release: CatalogRelease, rule: Pick<PullRule, "id" | "name" | "quantity" | "formatNote">, idNamespace = "", now: number = Date.now()): WishlistItem | null {
+  if (findWantForIdentity(items, release.identity)) return null;
+  return wantFromRelease(release, { quantity: rule.quantity, seriesName: rule.name, ruleId: rule.id, formatNote: rule.formatNote, idNamespace, now });
+}
+
+export function planRuleRefresh(rule: PullRule, releases: CatalogRelease[], existing: WishlistItem[], now: number = Date.now(), idNamespace = "", ownedIdentities?: ReadonlySet<string>): RuleRefreshPlan {
   const plan: RuleRefreshPlan = { add: [], update: [], suggestions: [], matched: 0 };
   if (rule.state !== "following" || rule.source === "manual" || !rule.sourceKey) return plan;
   const byIdentity = new Map<string, WishlistItem>();
@@ -295,6 +306,8 @@ export function planRuleRefresh(rule: PullRule, releases: CatalogRelease[], exis
       if (date && have.releaseDate !== date && !(have.edited ?? []).includes("releaseDate")) plan.update.push({ id: have.id, patch: { releaseDate: date, updatedAt: now } });
       continue;
     }
+    // Already in the Vault (bought with Own on Upcoming Comics, which takes the want off the list): never put it back as a want.
+    if (ownedIdentities?.has(release.identity)) continue;
     if (release.variant) {
       plan.suggestions.push(release);
       continue;
