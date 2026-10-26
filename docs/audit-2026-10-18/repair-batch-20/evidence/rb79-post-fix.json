@@ -1,0 +1,80 @@
+{
+ "cases": [
+  {
+   "ok": true,
+   "control": "setup: a photo was added on the Add Item form"
+  },
+  {
+   "ok": true,
+   "control": "Add Item with a photo: no Identify with AI button and no 'AI scans left' for an account without AI"
+  },
+  {
+   "ok": true,
+   "control": "Add Item: the empty-photo hint no longer promises Identify"
+  },
+  {
+   "ok": true,
+   "control": "the stored amounts and brand are exactly what was typed (3.5, 4.25, 0, 38, Retro Robots)"
+  },
+  {
+   "ok": true,
+   "control": "the Purchase panel reads $38.00, $3.50, $4.25 and $0.00 (3.50 stays 3.50)"
+  },
+  {
+   "ok": true,
+   "control": "Total cost reads $45.75, not a rounded $46"
+  },
+  {
+   "ok": true,
+   "control": "the recorded Brand is shown on the Brand row"
+  },
+  {
+   "ok": true,
+   "control": "it is no longer listed as Publisher / maker"
+  },
+  {
+   "ok": true,
+   "control": "the item page has no 'Scan certificate with AI' for an account without AI"
+  },
+  {
+   "ok": true,
+   "control": "the crop editor shows no timing or debug text"
+  },
+  {
+   "ok": true,
+   "control": "Quick Add's Verify sheet: no Identify with AI (per item or for all) and no allowance for an account without AI"
+  },
+  {
+   "ok": true,
+   "control": "and the sheet still saves the items (nothing else was removed)"
+  },
+  {
+   "ok": true,
+   "control": "Bulk Upload: no AI allowance for an account without AI"
+  },
+  {
+   "ok": true,
+   "control": "phone: the whole round camera button is above the bottom bar"
+  },
+  {
+   "ok": true,
+   "control": "phone: tapping the centre of the button takes the photo"
+  },
+  {
+   "ok": true,
+   "control": "phone: no timing text in the crop editor"
+  },
+  {
+   "ok": true,
+   "control": "owner's browser identity: Add Item shows Identify with AI"
+  },
+  {
+   "ok": true,
+   "control": "owner's browser identity: Add Item shows the AI allowance"
+  },
+  {
+   "ok": true,
+   "control": "owner's browser identity: Quick Add's Verify sheet shows Identify with AI and the allowance"
+  }
+ ]
+}

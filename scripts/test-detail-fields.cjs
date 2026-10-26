@@ -117,6 +117,8 @@ t("an older item's existing values all have visible rows", oldOthers.length === 
   t("the Brand typed on Add Item is shown on that Brand row", brandRow && D.displayDetail(toy, brandRow) === "Retro Robots", brandRow && D.displayDetail(toy, brandRow));
   const others = D.otherSavedDetails(toy, profile);
   t("it is not listed a second time under Publisher / maker", !others.some((f) => f.target === "brand"), others.map((f) => f.label));
+  t("and no other category's Brand row (watch, handbag) lists it as an 'other saved detail'", !others.some((f) => /Brand/.test(f.label)), others.map((f) => f.label));
+  t("a toy's Other saved details have no brand entry at all", others.every((f) => !/brand|maker|publisher/i.test(f.label)), others.map((f) => f.label));
   t("the stored brand column is untouched by showing it", toy.brand === "Retro Robots");
   const typed = { ...toy, toyBrand: "Own Brand" };
   t("a category Brand that was typed on the item wins over the general brand", D.displayDetail(typed, brandRow) === "Own Brand");

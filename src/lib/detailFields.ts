@@ -317,6 +317,11 @@ export function otherSavedDetails(item: VaultItem, profile: DetailProfile): Deta
     if (inProfile.has(target)) continue;
     // The general brand is already shown on the category's own Brand row, so it is not listed twice.
     if (target === "brand" && profileShowsBrand) continue;
+    // A category's own Brand row only counts here when it holds its own value; the fallback to the general brand is for the row of the category the item is in.
+    if (OWN_BRAND_KEYS.has(String(field.key))) {
+      const own = (item as Record<string, unknown>)[field.key as string];
+      if (own === undefined || own === null || String(own).trim() === "") continue;
+    }
     if (hasDetailValue(item, field)) found.push(target === "brand" ? { ...field, label: "Brand / maker / publisher" } : field);
   }
   const specs = itemSpecs(item);
