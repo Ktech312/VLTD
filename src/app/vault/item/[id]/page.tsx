@@ -120,6 +120,12 @@ function fmtMoney(value: number) {
   return `${sign}$${Math.abs(value).toLocaleString(undefined, { maximumFractionDigits: 0 })}`;
 }
 
+// Costs are shown to the cent so what you typed is what you read back ($3.50 stays $3.50). The stored amounts were never rounded; only the old display was.
+function fmtMoneyExact(value: number) {
+  const sign = value < 0 ? "-" : "";
+  return `${sign}$${Math.abs(value).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+}
+
 function fmtPct(value: number) {
   if (!Number.isFinite(value)) return "0.0%";
   return `${value.toFixed(1)}%`;
@@ -1372,7 +1378,7 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
                   <DetailGrid
                     rows={[
                       { label: "Sold Price", value: <span data-testid="sale-revenue">{fmtMoney(clamp(displayedSale.soldPrice))}</span> },
-                      { label: "Cost (all-in)", value: <span data-testid="sale-cost">{saleResult && saleResult.cost !== null ? fmtMoney(saleResult.cost) : "Unknown"}</span> },
+                      { label: "Cost (all-in)", value: <span data-testid="sale-cost">{saleResult && saleResult.cost !== null ? fmtMoneyExact(saleResult.cost) : "Unknown"}</span> },
                       { label: "Estimated fees", value: <span data-testid="sale-fees">{saleResult && saleResult.fees > 0 ? fmtMoney(saleResult.fees) : "—"}</span> },
                       {
                         label: "Profit / Loss",
@@ -1483,8 +1489,8 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
                   <DetailGrid
                     rows={[
                       { label: "ROI", value: roi(item) !== null ? fmtPct(roi(item) as number) : "—" },
-                      { label: "Total cost", value: totalCost(item) > 0 || typeof item.purchasePrice === "number" ? fmtMoney(totalCost(item)) : "Not recorded" },
-                      { label: "Gain", value: gain(item) !== null ? fmtMoney(gain(item) as number) : "—" },
+                      { label: "Total cost", value: totalCost(item) > 0 || typeof item.purchasePrice === "number" ? fmtMoneyExact(totalCost(item)) : "Not recorded" },
+                      { label: "Gain", value: gain(item) !== null ? fmtMoneyExact(gain(item) as number) : "—" },
                     ]}
                   />
                 </div>
@@ -1688,10 +1694,10 @@ export default function ItemPage({ params }: { params: Promise<{ id: string }> }
             item={item}
             onSave={(patch) => persist({ ...item, ...patch })}
             rows={[
-                { label: "Purchase price", field: { key: "purchasePrice", kind: "money", nonNegative: true }, value: item.purchasePrice == null ? "—" : fmtMoney(clamp(item.purchasePrice)) },
-                { label: "Tax", field: { key: "purchaseTax", kind: "money", nonNegative: true }, value: item.purchaseTax == null ? "—" : fmtMoney(clamp(item.purchaseTax)) },
-                { label: "Shipping", field: { key: "purchaseShipping", kind: "money", nonNegative: true }, value: item.purchaseShipping == null ? "—" : fmtMoney(clamp(item.purchaseShipping)) },
-                { label: "Fees", field: { key: "purchaseFees", kind: "money", nonNegative: true }, value: item.purchaseFees == null ? "—" : fmtMoney(clamp(item.purchaseFees)) },
+                { label: "Purchase price", field: { key: "purchasePrice", kind: "money", nonNegative: true }, value: item.purchasePrice == null ? "—" : fmtMoneyExact(clamp(item.purchasePrice)) },
+                { label: "Tax", field: { key: "purchaseTax", kind: "money", nonNegative: true }, value: item.purchaseTax == null ? "—" : fmtMoneyExact(clamp(item.purchaseTax)) },
+                { label: "Shipping", field: { key: "purchaseShipping", kind: "money", nonNegative: true }, value: item.purchaseShipping == null ? "—" : fmtMoneyExact(clamp(item.purchaseShipping)) },
+                { label: "Fees", field: { key: "purchaseFees", kind: "money", nonNegative: true }, value: item.purchaseFees == null ? "—" : fmtMoneyExact(clamp(item.purchaseFees)) },
                 { label: "Source", field: { key: "purchaseSource", kind: "text" }, value: detailValue(item.purchaseSource) },
                 { label: "Location", field: { key: "purchaseLocation", kind: "text" }, value: detailValue(item.purchaseLocation) },
                 { label: "Order #", field: { key: "orderNumber", kind: "text" }, value: detailValue(item.orderNumber) },

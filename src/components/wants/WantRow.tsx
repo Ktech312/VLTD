@@ -7,7 +7,7 @@ import { ActionMenu } from "@/components/ui/ActionMenu";
 import { AppIcon } from "@/components/ui/AppIcon";
 import { PillButton } from "@/components/ui/PillButton";
 import WantForm from "@/components/wants/WantForm";
-import { acquiredOf, formatMoney, quantityOf, releaseLabel, withStatus } from "@/lib/wantsCore";
+import { acquiredOf, formatMoney, needsRemovalRecord, quantityOf, releaseLabel, withStatus } from "@/lib/wantsCore";
 import type { WatchlistItem } from "@/lib/watchlistModel";
 import type { WishlistItem } from "@/lib/wishlistModel";
 
@@ -142,7 +142,7 @@ export default function WantRow({
           <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-dashed pt-3 text-[12px]" style={{ borderColor: line, color: "var(--muted)" }}>
             <span>Preordered means you arranged it yourself with a shop. VLTD has placed no order.{want.sourceUrl ? <> <SourceLink url={want.sourceUrl}>Source link</SourceLink></> : null}</span>
             {confirmRemove ? (
-              <span className="flex items-center gap-2"><span>Remove it for good?</span><PillButton size="compact" variant="danger" onClick={() => onRemove(want.id)}>Remove</PillButton><PillButton size="compact" onClick={() => setConfirmRemove(false)}>Keep</PillButton></span>
+              <span className="flex items-center gap-2"><span>{needsRemovalRecord(want) ? "Remove it? A Following check will not add it back." : "Remove it for good?"}</span><PillButton size="compact" variant="danger" onClick={() => onRemove(want.id)}>Remove</PillButton><PillButton size="compact" onClick={() => setConfirmRemove(false)}>Keep</PillButton></span>
             ) : (
               <PillButton size="compact" onClick={() => setConfirmRemove(true)}>Remove…</PillButton>
             )}

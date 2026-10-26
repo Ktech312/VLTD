@@ -313,6 +313,13 @@ export default function UpcomingPage() {
         apply(before);
         showToast("Couldn't save to your account. Try again.");
       }
+      if (ok && value === null && (before === "want" || before === "preordered")) {
+        // Clearing a followed release is remembered, so a later check does not add it back; Undo puts it back exactly as it was.
+        showToast("Removed from your wishlist. A Following check will not add it back.", 8000, {
+          label: "Undo",
+          onClick: () => { void setComicWish(target, before).then(() => setStatuses(loadComicStatuses())); },
+        });
+      }
     }
   }
 

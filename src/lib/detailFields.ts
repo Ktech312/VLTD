@@ -229,13 +229,18 @@ export function itemSpecs(item: Pick<VaultItem, "specs">): Record<string, string
   return item.specs && typeof item.specs === "object" ? item.specs : {};
 }
 
+// The Add Item and Add manually forms record "Brand / Manufacturer / Publisher" in the general `brand` column. A category that has its own Brand row (toys, watches, handbags)
+// reads that column when its own value is empty, so the brand typed on the form shows under "Brand" instead of under a Publisher / maker label. Nothing is copied or moved.
+const OWN_BRAND_KEYS = new Set(["toyBrand", "watchBrand", "bagBrand"]);
+
 /** The text form of a field's value for editing: "" when empty, "yes" / "no" for yes-no fields. */
 export function readDetail(item: VaultItem, field: DetailField): string {
   if (field.specId) {
     const value = itemSpecs(item)[field.specId];
     return typeof value === "string" ? value : "";
   }
-  const raw = (item as Record<string, unknown>)[field.key as string];
+  let raw = (item as Record<string, unknown>)[field.key as string];
+  if ((raw === undefined || raw === null || String(raw).trim() === "") && OWN_BRAND_KEYS.has(String(field.key))) raw = (item as Record<string, unknown>).brand;
   if (field.boolean) return raw === true ? "yes" : raw === false ? "no" : "";
   if (raw === undefined || raw === null) return "";
   return String(raw);
@@ -276,6 +281,8 @@ export function detailPatch(item: VaultItem, field: DetailField, raw: string): P
   }
   const key = field.key as string;
   if (field.boolean) return { [key]: value === "yes" ? true : value === "no" ? false : undefined } as Partial<VaultItem>;
+  // Clearing a category's own Brand row also clears the general brand it was showing, so a cleared value does not come straight back.
+  if (!value && OWN_BRAND_KEYS.has(key)) return { [key]: undefined, brand: undefined } as Partial<VaultItem>;
   return { [key]: value || undefined } as Partial<VaultItem>;
 }
 
@@ -305,9 +312,12 @@ export function otherSavedDetails(item: VaultItem, profile: DetailProfile): Deta
   const inProfile = new Set(profile.all.map((f) => f.target));
   const library = detailFieldLibrary();
   const found: DetailField[] = [];
+  const profileShowsBrand = profile.all.some((f) => OWN_BRAND_KEYS.has(String(f.key)));
   for (const [target, field] of library) {
     if (inProfile.has(target)) continue;
-    if (hasDetailValue(item, field)) found.push(field);
+    // The general brand is already shown on the category's own Brand row, so it is not listed twice.
+    if (target === "brand" && profileShowsBrand) continue;
+    if (hasDetailValue(item, field)) found.push(target === "brand" ? { ...field, label: "Brand / maker / publisher" } : field);
   }
   const specs = itemSpecs(item);
   for (const [id, value] of Object.entries(specs)) {

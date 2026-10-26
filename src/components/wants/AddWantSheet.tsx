@@ -7,7 +7,7 @@ import { Field, Sheet, inputClass } from "@/components/wants/Sheet";
 import WantForm from "@/components/wants/WantForm";
 import { fetchUpcomingComicsChecked, formatStoreDate, type UpcomingIssue } from "@/lib/comicUpcoming";
 import { issueToRelease } from "@/lib/pullRules";
-import { ruleIdentityOfItem, wantFromRelease, wantFromWatching } from "@/lib/wantsCore";
+import { findWantForIdentity, isRemoved, restoredFromRemoved, ruleIdentityOfItem, wantFromRelease, wantFromWatching } from "@/lib/wantsCore";
 import type { WatchlistItem } from "@/lib/watchlistModel";
 import { loadWishlist, saveWishlistItem, wantIdNamespace, type WishlistItem } from "@/lib/wishlistModel";
 
@@ -83,7 +83,9 @@ function CatalogPicker({ onAdded }: { onAdded: (w: WishlistItem) => void }) {
   }
   function add(issue: UpcomingIssue) {
     const release = issueToRelease(issue);
-    const have = loadWishlist().some((w) => ruleIdentityOfItem(w) === release.identity);
+    const have = findWantForIdentity(loadWishlist(), release.identity);
+    // A release the person removed earlier is brought back by adding it by hand (that is a clear decision), exactly as it was.
+    if (have && isRemoved(have)) { const back = restoredFromRemoved(have); saveWishlistItem(back); onAdded(back); return; }
     if (have) return setNote(`${release.title} is already on your list.`);
     const want = wantFromRelease(release, { quantity: 1, seriesName: issue.series, idNamespace: wantIdNamespace() });
     saveWishlistItem(want);

@@ -39,7 +39,8 @@
     "test:wants": "tsx scripts/test-wants.ts",
     "test:wants-handoff": "tsx scripts/test-wants-handoff.ts",
     "test:ai-scan": "tsx scripts/test-ai-scan-guard.ts",
-    "test:ai-gate": "tsx scripts/test-ai-endpoints-gated.ts"
+    "test:ai-gate": "tsx scripts/test-ai-endpoints-gated.ts",
+    "test:ai-ui": "tsx scripts/test-ai-ui-access.ts"
   },
   "dependencies": {
     "@imgly/background-removal": "^1.7.0",

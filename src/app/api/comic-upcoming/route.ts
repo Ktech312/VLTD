@@ -128,6 +128,25 @@ export async function GET(req: NextRequest) {
 
   const allIssues = searchParams.get("all") === "true";
 
+  // One issue by its catalog id (a date check for a release already on someone's list). Not the permanent lookup cache: a date can change, so this goes to the
+  // catalog (which VLTD's server caches for an hour). An issue the catalog no longer has answers with no results; only a real failure is an error.
+  const issueId = searchParams.get("id")?.replace(/\D/g, "") ?? "";
+  if (issueId) {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 8_000);
+    try {
+      const detail: MetronListItem = await metronFetch(`/issue/${issueId}/`, auth, controller.signal);
+      clearTimeout(timeout);
+      return NextResponse.json({ count: 1, page: 1, pageSize: 1, hasMore: false, resolvedCreator: null, results: [normalizeItem(detail)] });
+    } catch (error) {
+      clearTimeout(timeout);
+      const message = error instanceof Error ? error.message : "Unknown error";
+      if (message.startsWith("Metron 404")) return NextResponse.json({ count: 0, page: 1, pageSize: 1, hasMore: false, resolvedCreator: null, results: [] });
+      if (message.includes("abort")) return NextResponse.json({ error: "Metron API timed out." }, { status: 504 });
+      return NextResponse.json({ error: message }, { status: 502 });
+    }
+  }
+
   const days = Math.min(
     Math.max(1, parseInt(searchParams.get("days") ?? "60", 10)),
     180

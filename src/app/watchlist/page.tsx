@@ -16,9 +16,9 @@ import FollowTab from "@/components/wants/FollowTab";
 import WantRow, { WatchingRow } from "@/components/wants/WantRow";
 import { loadPullRules, refreshPullRules, syncPullRulesFromSupabase } from "@/lib/pullRules";
 import { showToast } from "@/lib/toast";
-import { addableSuggestion, formatMoney, groupPullList, isOpen, plannedTotals, ruleIdentityOfItem, wantFromWatching, type CatalogRelease, type PullRule } from "@/lib/wantsCore";
+import { addableSuggestion, formatMoney, groupPullList, isOpen, isRemoved, needsRemovalRecord, plannedTotals, ruleIdentityOfItem, wantFromWatching, type CatalogRelease, type PullRule } from "@/lib/wantsCore";
 import { loadWatchlist, removeFromWatchlist, syncWatchlistFromSupabase, type WatchlistItem } from "@/lib/watchlistModel";
-import { loadWishlist, removeWishlistItem, saveWishlistItem, syncWishlistFromSupabase, wantIdNamespace, type WishlistItem } from "@/lib/wishlistModel";
+import { loadWishlist, removeWant, saveWishlistItem, syncWishlistFromSupabase, undoRemoveWant, wantIdNamespace, type WishlistItem } from "@/lib/wishlistModel";
 
 // Watchlist: three views of what you collect next.
 //   Wishlist  = what I want (any category, with or without a date or price), plus things I am Watching (someone else's public items).
@@ -34,7 +34,9 @@ const PRIORITY_RANK = { high: 0, medium: 1, low: 2 } as const;
 
 export default function WatchlistPage() {
   const [tab, setTab] = useState<Tab>("wishlist");
-  const [wishlist, setWishlist] = useState<WishlistItem[]>(() => loadWishlist());
+  const [rawWishlist, setWishlist] = useState<WishlistItem[]>(() => loadWishlist());
+  // Removed releases are kept as records so Following never adds them back; they are not shown anywhere.
+  const wishlist = useMemo(() => rawWishlist.filter((w) => !isRemoved(w)), [rawWishlist]);
   const [watching, setWatching] = useState<WatchlistItem[]>(() => loadWatchlist());
   const [rules, setRules] = useState<PullRule[]>(() => loadPullRules());
   const [inAccount, setInAccount] = useState(true);
@@ -111,6 +113,17 @@ export default function WatchlistPage() {
     saveWishlistItem(next);
     reload();
   }
+  function removeFromList(id: string) {
+    const original = removeWant(id);
+    reload();
+    setOpenId(null);
+    if (!original) return;
+    const remembered = needsRemovalRecord(original);
+    showToast(remembered ? `Removed ${original.title}. A Following check will not add it back.` : `Removed ${original.title}.`, 9000, {
+      label: "Undo",
+      onClick: () => { if (undoRemoveWant(original)) { reload(); showToast("Put back as it was."); } else showToast("Could not undo: that release has changed since."); },
+    });
+  }
   function addFromWatching(w: WatchlistItem) {
     const want = wantFromWatching(w, Date.now(), wantIdNamespace());
     if (wishlist.some((x) => ruleIdentityOfItem(x) === want.sourceIdentity)) return showToast(`${w.title} is already one of your wants.`);
@@ -184,7 +197,7 @@ export default function WatchlistPage() {
                 </div>
               ) : null}
               {wants.map((w) => (
-                <WantRow key={w.id} want={w} open={openId === w.id} onToggle={() => setOpenId((id) => (id === w.id ? null : w.id))} onChange={save} onAcquire={setAcquiring} onRemove={(id) => { removeWishlistItem(id); reload(); setOpenId(null); }} ruleName={w.ruleId ? ruleNames.get(w.ruleId) : undefined} />
+                <WantRow key={w.id} want={w} open={openId === w.id} onToggle={() => setOpenId((id) => (id === w.id ? null : w.id))} onChange={save} onAcquire={setAcquiring} onRemove={removeFromList} ruleName={w.ruleId ? ruleNames.get(w.ruleId) : undefined} />
               ))}
               {watchRows.length > 0 ? (
                 <div className="mt-2 flex flex-col gap-1.5" aria-label="Watching">
@@ -210,7 +223,7 @@ export default function WatchlistPage() {
                 <div key={g.key} className="flex flex-col gap-1.5" data-testid="pull-group">
                   <h2 className="flex items-baseline justify-between px-0.5 pt-2 text-[11px] font-semibold uppercase tracking-[0.12em]" style={{ color: "var(--muted2)" }}><span>{g.label}</span><span style={{ fontVariantNumeric: "tabular-nums" }}>{g.total > 0 ? formatMoney(g.total) : ""}</span></h2>
                   {g.items.map((w) => (
-                    <WantRow key={w.id} want={w} open={openId === w.id} onToggle={() => setOpenId((id) => (id === w.id ? null : w.id))} onChange={save} onAcquire={setAcquiring} onRemove={(id) => { removeWishlistItem(id); reload(); setOpenId(null); }} ruleName={w.ruleId ? ruleNames.get(w.ruleId) : undefined} />
+                    <WantRow key={w.id} want={w} open={openId === w.id} onToggle={() => setOpenId((id) => (id === w.id ? null : w.id))} onChange={save} onAcquire={setAcquiring} onRemove={removeFromList} ruleName={w.ruleId ? ruleNames.get(w.ruleId) : undefined} />
                   ))}
                 </div>
               ))}
@@ -220,7 +233,7 @@ export default function WatchlistPage() {
           {tab === "follow" ? (
             <FollowTab
               rules={rules}
-              wants={wishlist}
+              wants={rawWishlist}
               suggestions={suggestions}
               inAccount={inAccount}
               checking={checking}

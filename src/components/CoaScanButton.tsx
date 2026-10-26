@@ -5,6 +5,7 @@ import { useRef, useState } from "react";
 import { AppIcon } from "@/components/ui/AppIcon";
 import type { CoaAnalysisResult } from "@/app/api/ai/analyze-coa/route";
 import { postScan } from "@/lib/ai/scanRequest";
+import { useAiAccess } from "@/lib/ai/useAiAccess";
 
 type Props = {
   onApply: (data: CoaAnalysisResult, imageFile: File) => void;
@@ -13,6 +14,8 @@ type Props = {
 type Phase = "idle" | "scanning" | "review" | "error";
 
 export default function CoaScanButton({ onApply }: Props) {
+  // Only an account that has AI is offered this; the server refuses every other account.
+  const aiAccess = useAiAccess();
   const inputRef = useRef<HTMLInputElement>(null);
   const [phase, setPhase] = useState<Phase>("idle");
   const [result, setResult] = useState<CoaAnalysisResult | null>(null);
@@ -73,6 +76,8 @@ export default function CoaScanButton({ onApply }: Props) {
         { label: "Notes", value: result.notes },
       ].filter((f) => f.value)
     : [];
+
+  if (!aiAccess) return null;
 
   return (
     <>

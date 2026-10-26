@@ -72,8 +72,31 @@ type Issue = { id: number; series: string; seriesId: number; seriesYearBegan: nu
 let catalog: Issue[] = [];
 let catalogDown = false;
 let catalogCalls = 0;
+// One-issue answers (the date check): an issue listed here is answered even when the discovery window no longer lists it; an id that is absent answers "not listed".
+const byId = new Map<number, Issue>();
+let lookupCalls = 0;
+let lookupDown = false;
+const lookedUp: number[] = [];
+const metronIssues = new Map<number, Record<string, unknown> | "error">();
+const metronCalls: number[] = [];
 (globalThis as unknown as { fetch: unknown }).fetch = async (url: string) => {
   const u = new URL(url, "http://test");
+  const metronIssue = u.hostname === "metron.cloud" ? u.pathname.match(/^\/api\/issue\/(\d+)\/$/) : null;
+  if (metronIssue) {
+    metronCalls.push(Number(metronIssue[1]));
+    const hit = metronIssues.get(Number(metronIssue[1]));
+    if (hit === "error") return { ok: false, status: 500, text: async () => "boom", json: async () => ({}) };
+    if (!hit) return { ok: false, status: 404, text: async () => "", json: async () => ({}) };
+    return { ok: true, status: 200, text: async () => "", json: async () => hit };
+  }
+  if (u.pathname === "/api/comic-upcoming" && u.searchParams.get("id")) {
+    lookupCalls += 1;
+    const id = Number(u.searchParams.get("id"));
+    lookedUp.push(id);
+    if (lookupDown) return { ok: false, json: async () => ({}) };
+    const hit = byId.get(id);
+    return { ok: true, json: async () => ({ count: hit ? 1 : 0, results: hit ? [hit] : [] }) };
+  }
   if (u.pathname === "/api/comic-upcoming") {
     catalogCalls += 1;
     if (catalogDown) return { ok: false, json: async () => ({}) };
@@ -112,7 +135,7 @@ const issue = (id: number, number: string, storeDate: string | null, over: Parti
 
   const PROFILE = "p1";
   function freshDevice() { store.clear(); store.set("vltd_active_profile_id_v1", PROFILE); }
-  function freshWorld() { freshDevice(); db.wishlist.clear(); db.pull_rules.clear(); online = true; catalogDown = false; catalog = []; upsertLog = []; }
+  function freshWorld() { freshDevice(); db.wishlist.clear(); db.pull_rules.clear(); online = true; catalogDown = false; catalog = []; upsertLog = []; byId.clear(); lookupCalls = 0; lookupDown = false; lookedUp.length = 0; }
   const settle = () => new Promise((r) => setTimeout(r, 15));
   const asIssue = (i: Issue) => i as unknown as import("../src/lib/comicUpcoming").UpcomingIssue;
   const comicRule = (over: Partial<import("../src/lib/wantsCore").PullRule> = {}): import("../src/lib/wantsCore").PullRule => ({
@@ -481,6 +504,260 @@ const issue = (id: number, number: string, storeDate: string | null, over: Parti
     await rules.refreshPullRules({ force: true });
     assert.equal(wishFor(1061).length, 0, "an owned comic is not added back as a want");
     assert.equal(vault.loadItems().filter((i) => i.catalogRef === "metron:1061").length, 1);
+  });
+
+  /* ───────────── removed releases: Remove is a recorded decision, Undo restores it ───────────── */
+
+  const day = (n: number) => new Date(Date.now() + n * 86_400_000).toISOString().slice(0, 10);
+  const tracked = () => model.loadWishlist().filter((w) => !core.isRemoved(w));
+
+  await test("R. removing a release Following added keeps the rule following and is not undone by the next check; a new issue is still added", async () => {
+    freshWorld();
+    catalog = [issue(1100, "4", day(20)), issue(1101, "5", day(34))];
+    rules.saveRule(comicRule());
+    await rules.refreshPullRules({ force: true });
+    const id = wishFor(1100)[0].id;
+    const original = model.removeWant(id);
+    assert.ok(original);
+    assert.equal(tracked().some((w) => w.id === id), false, "gone from every list");
+    assert.equal(wishFor(1100).length, 1, "the removal is kept as a record");
+    assert.equal(core.isRemoved(wishFor(1100)[0]), true);
+    const again = await rules.refreshPullRules({ force: true });
+    assert.deepEqual([again.added, again.updated], [0, 0], "the check does not restore it");
+    assert.equal(tracked().some((w) => w.id === id), false);
+    assert.equal(rules.loadPullRules()[0].state, "following", "the series is still followed");
+    catalog = [...catalog, issue(1102, "6", day(48))];
+    const next = await rules.refreshPullRules({ force: true });
+    assert.equal(next.added, 1, "the next issue of the series still arrives");
+    assert.deepEqual(tracked().map((w) => w.externalId).sort(), ["1101", "1102"]);
+  });
+  await test("R. Undo puts the removed want back exactly as it was (variant label, quantity, status, identity, dates, edits)", async () => {
+    freshWorld();
+    catalog = [issue(1103, "4", day(20)), issue(1104, "4B", day(20))];
+    rules.saveRule(comicRule({ quantity: 2 }));
+    const out = await rules.refreshPullRules({ force: true });
+    for (const sug of out.suggestions) model.saveWishlistItem(core.wantFromRelease(sug, { quantity: 2, seriesName: "Night Courier", ruleId: "rule_nc", idNamespace: model.wantIdNamespace() }));
+    const variant = wishFor(1104)[0];
+    model.saveWishlistItem({ ...variant, status: "preordered", releaseDate: day(25), edited: ["releaseDate"], notes: "ask for the 1:25", details: { cover: "B" } });
+    const std = wishFor(1103)[0];
+    for (const target of [wishFor(1104)[0], std]) {
+      const before = JSON.parse(JSON.stringify(model.loadWishlist().find((w) => w.id === target.id)));
+      const original = model.removeWant(target.id);
+      assert.ok(original);
+      assert.equal(model.undoRemoveWant(original), true);
+      const after = model.loadWishlist().find((w) => w.id === target.id);
+      assert.deepEqual(JSON.parse(JSON.stringify(after)), before, "identical, field for field");
+    }
+    assert.equal(wishFor(1103).length + wishFor(1104).length, 2, "no duplicates");
+  });
+  await test("R. Undo does not overwrite a want the person has since put in its place", async () => {
+    freshWorld();
+    catalog = [issue(1105, "4", day(20))];
+    rules.saveRule(comicRule());
+    await rules.refreshPullRules({ force: true });
+    const original = model.removeWant(wishFor(1105)[0].id);
+    assert.ok(original);
+    await comics.setComicWish(asIssue(catalog[0]), "preordered"); // tapped Preordered on Upcoming: the release is back
+    assert.equal(wishFor(1105)[0].status, "preordered");
+    assert.equal(model.undoRemoveWant(original), false);
+    assert.equal(wishFor(1105)[0].status, "preordered");
+    assert.equal(wishFor(1105).length, 1);
+  });
+  await test("R. clearing the Want tap on Upcoming Comics is remembered the same way; a Want tap later brings it back; Undo restores the status", async () => {
+    freshWorld();
+    catalog = [issue(1106, "4", day(20))];
+    rules.saveRule(comicRule());
+    await rules.refreshPullRules({ force: true });
+    await comics.setComicWish(asIssue(catalog[0]), "preordered");
+    const before = JSON.parse(JSON.stringify(wishFor(1106)[0]));
+    await comics.setComicWish(asIssue(catalog[0]), null);
+    assert.equal(tracked().length, 0);
+    assert.equal(comics.loadComicStatuses().get(1106), undefined);
+    await rules.refreshPullRules({ force: true });
+    assert.equal(tracked().length, 0, "the check does not put it back");
+    await comics.setComicWish(asIssue(catalog[0]), "preordered"); // what the Undo button does
+    const back = wishFor(1106);
+    assert.equal(back.length, 1);
+    assert.deepEqual({ ...back[0], updatedAt: 0 }, { ...before, updatedAt: 0 });
+  });
+  await test("R. the removal reaches the account: a clean second browser's check does not restore it either", async () => {
+    freshWorld();
+    catalog = [issue(1107, "4", day(20)), issue(1108, "5", day(34))];
+    rules.saveRule(comicRule());
+    await rules.refreshPullRules({ force: true });
+    await settle();
+    model.removeWant(wishFor(1107)[0].id);
+    await settle();
+    const row = [...db.wishlist.values()].find((r) => r.source_identity === "metron:issue:1107");
+    assert.equal(row?.status, "skipped");
+    assert.deepEqual(row?.details, { removed: "1", removedFrom: "want" });
+    freshDevice();
+    await model.syncWishlistFromSupabase();
+    await rules.syncPullRulesFromSupabase();
+    const out = await rules.refreshPullRules({ force: true });
+    assert.equal(out.added, 0);
+    assert.deepEqual(tracked().map((w) => w.externalId), ["1108"]);
+  });
+  await test("R. Skip is unchanged (kept, visible under Skipped, not a removal); a want typed in by hand is simply deleted and Undo brings it back", async () => {
+    freshWorld();
+    catalog = [issue(1109, "4", day(20))];
+    rules.saveRule(comicRule());
+    await rules.refreshPullRules({ force: true });
+    model.saveWishlistItem(core.withStatus(wishFor(1109)[0], "skipped"));
+    assert.equal(core.isRemoved(wishFor(1109)[0]), false);
+    assert.equal(wishFor(1109)[0].details, undefined);
+    await rules.refreshPullRules({ force: true });
+    assert.equal(wishFor(1109).length, 1);
+    assert.equal(wishFor(1109)[0].status, "skipped");
+    const mine = model.addWishlistItem({ title: "A thing I typed in" });
+    assert.equal(core.needsRemovalRecord(mine), false);
+    const original = model.removeWant(mine.id);
+    assert.ok(original);
+    assert.equal(model.loadWishlist().some((w) => w.id === mine.id), false, "deleted, no record");
+    assert.equal(model.undoRemoveWant(original), true);
+    assert.deepEqual(model.loadWishlist().find((w) => w.id === mine.id), original);
+  });
+  await test("R. the Following text says what removing and skipping do", async () => {
+    const fs = await import("node:fs");
+    const text = fs.readFileSync("src/components/wants/FollowTab.tsx", "utf8");
+    assert.match(text, /skip or remove stays off your list/);
+    assert.match(text, /keeps following the series/);
+    assert.match(text, /Removing offers Undo/);
+    assert.doesNotMatch(text, /A release you skipped never comes back, and/);
+  });
+
+  /* ───────────── date corrections for releases already on the list ───────────── */
+
+  await test("D. a tracked release whose date moves from inside the window to outside it is corrected (one entry, new date), by a one-issue lookup", async () => {
+    freshWorld();
+    catalog = [issue(1120, "4", day(30))];
+    rules.saveRule(comicRule());
+    await rules.refreshPullRules({ force: true });
+    const id = wishFor(1120)[0].id;
+    assert.equal(lookupCalls, 0, "listed by discovery: no extra lookup");
+    catalog = []; // the catalog now dates it 300 days out, past the 180-day window, so discovery no longer lists it
+    byId.set(1120, issue(1120, "4", day(300)));
+    const out = await rules.refreshPullRules({ force: true });
+    assert.deepEqual([out.added, out.updated, out.lookups], [0, 1, 1]);
+    assert.equal(wishFor(1120).length, 1);
+    assert.equal(wishFor(1120)[0].id, id);
+    assert.equal(wishFor(1120)[0].releaseDate, day(300));
+  });
+  await test("D. a release the source dropped (no date, or no longer listed) keeps its last known date and is not duplicated", async () => {
+    freshWorld();
+    catalog = [issue(1121, "4", day(30)), issue(1122, "5", day(40))];
+    rules.saveRule(comicRule());
+    await rules.refreshPullRules({ force: true });
+    catalog = [];
+    byId.set(1121, issue(1121, "4", null)); // still listed, but the date is gone
+    // 1122 is not in byId at all: the catalog no longer lists it
+    const out = await rules.refreshPullRules({ force: true });
+    assert.equal(out.lookups, 2);
+    assert.equal(out.updated, 0);
+    assert.equal(wishFor(1121)[0].releaseDate, day(30));
+    assert.equal(wishFor(1122)[0].releaseDate, day(40));
+    assert.equal(model.loadWishlist().length, 2, "nothing added");
+  });
+  await test("D. a date the person set by hand always wins and is not even looked up", async () => {
+    freshWorld();
+    catalog = [issue(1123, "4", day(30))];
+    rules.saveRule(comicRule());
+    await rules.refreshPullRules({ force: true });
+    model.updateWishlistItem(wishFor(1123)[0].id, { releaseDate: day(33), edited: ["releaseDate"] });
+    catalog = [];
+    byId.set(1123, issue(1123, "4", day(300)));
+    const out = await rules.refreshPullRules({ force: true });
+    assert.equal(out.lookups, 0);
+    assert.equal(wishFor(1123)[0].releaseDate, day(33));
+  });
+  await test("D. a want added by a Want tap with no Following rule at all also gets its date corrected", async () => {
+    freshWorld();
+    await comics.setComicWish(asIssue(issue(1124, "4", day(30))), "want");
+    byId.set(1124, issue(1124, "4", day(75)));
+    const out = await rules.refreshPullRules({ force: true });
+    assert.deepEqual([out.checked, out.lookups, out.updated], [0, 1, 1]);
+    assert.equal(wishFor(1124).length, 1);
+    assert.equal(wishFor(1124)[0].releaseDate, day(75));
+    const quiet = await rules.refreshPullRules({ now: Date.now() + 3_600_000 }); // an hour later, automatic: not due again
+    assert.equal(quiet.lookups, 0);
+  });
+  await test("D. lookups are bounded: at most 8 per check, 24 in any six hours, and an issue is not asked about again inside six hours", async () => {
+    freshWorld();
+    const T = Date.now();
+    for (let n = 0; n < 30; n++) {
+      await comics.setComicWish(asIssue(issue(2000 + n, String(n + 1), day(30))), "want");
+      byId.set(2000 + n, issue(2000 + n, String(n + 1), day(200)));
+    }
+    const counts: number[] = [];
+    for (let run = 0; run < 4; run++) counts.push((await rules.refreshPullRules({ force: true, now: T })).lookups);
+    assert.deepEqual(counts, [8, 8, 8, 0], "8 + 8 + 8 = 24, then none until the window passes");
+    assert.equal(new Set(lookedUp).size, 24, "24 different issues, none asked twice");
+    const firstBatch = lookedUp.slice(0, 24);
+    const later = await rules.refreshPullRules({ now: T + 7 * 3_600_000 });
+    assert.equal(later.lookups, 8);
+    assert.equal(lookedUp.slice(24).filter((id) => !firstBatch.includes(id)).length, 6, "the six never looked up go first");
+    assert.equal((await rules.refreshPullRules({ now: T + 7 * 3_600_000 + 60_000 })).lookups, 8);
+    assert.equal((await rules.refreshPullRules({ now: T + 7 * 3_600_000 + 120_000 })).lookups, 8);
+    assert.equal((await rules.refreshPullRules({ now: T + 7 * 3_600_000 + 180_000 })).lookups, 0, "24 reached in this window");
+  });
+  await test("D. a paused rule's wants are not looked up; a catalog failure stops the pass after one request and changes nothing", async () => {
+    freshWorld();
+    catalog = [issue(1130, "4", day(30))];
+    rules.saveRule(comicRule());
+    await rules.refreshPullRules({ force: true });
+    rules.setRuleState("rule_nc", "paused");
+    catalog = [];
+    byId.set(1130, issue(1130, "4", day(300)));
+    const paused = await rules.refreshPullRules({ force: true });
+    assert.equal(paused.lookups, 0);
+    assert.equal(wishFor(1130)[0].releaseDate, day(30));
+    rules.setRuleState("rule_nc", "following");
+    for (let n = 0; n < 3; n++) {
+      await comics.setComicWish(asIssue(issue(1140 + n, "9", day(30))), "want");
+      byId.set(1140 + n, issue(1140 + n, "9", day(90)));
+    }
+    lookupDown = true;
+    const before = model.loadWishlist().map((w) => w.releaseDate);
+    const down = await rules.refreshPullRules({ force: true });
+    assert.equal(down.lookups, 1, "stopped at the first failure");
+    assert.equal(down.updated, 0);
+    assert.deepEqual(model.loadWishlist().map((w) => w.releaseDate), before);
+    lookupDown = false;
+    const ok = await rules.refreshPullRules({ force: true });
+    assert.ok(ok.lookups >= 1 && ok.updated >= 1, "the next check catches up");
+  });
+  await test("D. the pure rule: a different valid date updates; no date or unlisted changes nothing; a hand-set date wins", async () => {
+    const w = { id: "x", title: "t", createdAt: 1, releaseDate: "2026-11-12" };
+    assert.equal(core.planDateCorrection(w, { date: "2026-11-26" })?.releaseDate, "2026-11-26");
+    assert.equal(core.planDateCorrection(w, { date: null }), null);
+    assert.equal(core.planDateCorrection(w, null), null);
+    assert.equal(core.planDateCorrection(w, { date: "2026-11-12" }), null);
+    assert.equal(core.planDateCorrection(w, { date: "garbage" }), null);
+    assert.equal(core.planDateCorrection({ ...w, edited: ["releaseDate"] }, { date: "2026-12-01" }), null);
+  });
+
+  await test("D. the one-issue route answers from the catalog (no permanent cache): the issue as listed now, an empty answer when it is gone, an error only on a real failure", async () => {
+    process.env.METRON_USERNAME = "u";
+    process.env.METRON_PASSWORD = "p";
+    const route = await import("../src/app/api/comic-upcoming/route");
+    const { NextRequest } = await import("next/server");
+    const get = async (query: string) => { const r = await route.GET(new NextRequest(`http://test/api/comic-upcoming?${query}`)); return { status: r.status, body: (await r.json()) as { results?: Array<{ id: number; storeDate: string | null; seriesId?: number; series: string }>; error?: string } }; };
+    metronIssues.set(777, { id: 777, series: { id: 77, name: "Night Courier", year_began: 2026 }, number: "4", publisher: { id: 1, name: "Example Comics" }, store_date: "2027-05-05", cover_date: null, image: null });
+    const ok = await get("id=777");
+    assert.equal(ok.status, 200);
+    assert.deepEqual([ok.body.results?.length, ok.body.results?.[0].id, ok.body.results?.[0].storeDate, ok.body.results?.[0].seriesId], [1, 777, "2027-05-05", 77]);
+    metronIssues.set(777, { id: 777, series: { id: 77, name: "Night Courier" }, number: "4", store_date: "2027-06-09" });
+    assert.equal((await get("id=777")).body.results?.[0].storeDate, "2027-06-09", "a changed date is seen on the next ask (nothing is kept forever)");
+    assert.equal((await get("id=abc7d7e7")).body.results?.[0]?.id, 777, "only the digits of the id are used");
+    const gone = await get("id=999");
+    assert.deepEqual([gone.status, gone.body.results?.length, gone.body.error], [200, 0, undefined]);
+    metronIssues.set(888, "error");
+    const bad = await get("id=888");
+    assert.equal(bad.status, 502);
+    assert.ok(bad.body.error);
+    delete process.env.METRON_USERNAME;
+    delete process.env.METRON_PASSWORD;
+    void metronCalls;
   });
 
   await test("6. a Vault that refuses the save (free-plan limit) marks nothing and makes no record; after the limit is lifted the retry makes exactly one", async () => {

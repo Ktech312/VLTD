@@ -4,6 +4,7 @@ import { PillButton } from "@/components/ui/PillButton";
 import ProgressiveImage from "@/components/ui/ProgressiveImage";
 import { AppIcon } from "@/components/ui/AppIcon";
 import type { ScanSessionState } from "@/lib/scanners/scanSession";
+import { useAiAccess } from "@/lib/ai/useAiAccess";
 
 function chipClass(active = false) {
   return active
@@ -59,6 +60,8 @@ export default function ScanPanel({
   titleValue: string;
   onTitleChange: (value: string) => void;
 }) {
+  // Only an account that has AI is offered the AI button; the server refuses every other account.
+  const aiAccess = useAiAccess();
   const previewUrl = session.image?.previewUrl ?? "";
   const hasImage = Boolean(previewUrl);
   const review = session.review;
@@ -214,18 +217,20 @@ export default function ScanPanel({
             </button>
           </div>
 
-          <PillButton
-            onClick={onScanAutofill}
-            disabled={!hasImage || isIdentifying}
-            className="font-bold"
-            style={hasImage ? { background: "linear-gradient(135deg, #8C9298, #C8CDD2)", color: "#0B0B0B", boxShadow: "0 4px 18px rgba(203,208,213,0.28)" } : undefined}
-          >
-            <AppIcon name="flash" size={16} strokeWidth={2.2} />
-            {isIdentifying ? "Reading..." : hasImage ? "Identify with AI" : "Take a picture first"}
-          </PillButton>
+          {aiAccess ? (
+            <PillButton
+              onClick={onScanAutofill}
+              disabled={!hasImage || isIdentifying}
+              className="font-bold"
+              style={hasImage ? { background: "linear-gradient(135deg, #8C9298, #C8CDD2)", color: "#0B0B0B", boxShadow: "0 4px 18px rgba(203,208,213,0.28)" } : undefined}
+            >
+              <AppIcon name="flash" size={16} strokeWidth={2.2} />
+              {isIdentifying ? "Reading..." : hasImage ? "Identify with AI" : "Take a picture first"}
+            </PillButton>
+          ) : null}
 
           <p className="text-center text-[10px] leading-4 text-[color:var(--muted2)]">
-            Take item pictures here. Use one to identify/autofill, then save.
+            {aiAccess ? "Take item pictures here. Use one to identify/autofill, then save." : "Take item pictures here, fill in the details, then save."}
           </p>
         </div>
       </div>

@@ -75,6 +75,20 @@ export async function fetchUpcomingComicsChecked(
   }
 }
 
+/** One issue by its catalog id: the release as the catalog has it now (a date check). `issue` is null when the catalog no longer lists it; `failed` is a real failure (nothing learned). */
+export async function fetchComicIssueChecked(id: number): Promise<{ issue: UpcomingIssue | null; failed: boolean }> {
+  try {
+    const res = await fetch(`/api/comic-upcoming?id=${encodeURIComponent(String(id))}`);
+    if (!res.ok) return { issue: null, failed: true };
+    const data = (await res.json()) as UpcomingComicsResult;
+    if (data.error) return { issue: null, failed: true };
+    const first = data.results?.[0];
+    return { issue: first ? annotateVariant(first) : null, failed: false };
+  } catch {
+    return { issue: null, failed: true };
+  }
+}
+
 /** Alias kept for components that call fetchAllSources */
 export const fetchAllSources = fetchUpcomingComics;
 

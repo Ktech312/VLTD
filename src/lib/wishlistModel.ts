@@ -1,7 +1,7 @@
 import { mayAdoptLegacyKey } from "./legacyKeys";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 import { captureIdentity } from "@/lib/sessionGuard";
-import { idNamespaceOf } from "@/lib/wantsCore";
+import { asRemoved, idNamespaceOf, isRemoved, needsRemovalRecord, restoredFromRemoved } from "@/lib/wantsCore";
 
 /**
  * The Curator's wishlist: one per profile, saved to the account (`wishlist`
@@ -433,6 +433,26 @@ export function removeWishlistItem(id: string) {
   return next;
 }
 
+/**
+ * Remove from the list. A want that came from a catalog release is kept as a removed record (see wantsCore: asRemoved) so no later check adds it again; a want typed in
+ * by hand is deleted. Returns the want as it was, for Undo (undoRemoveWant).
+ */
+export function removeWant(id: string): WishlistItem | undefined {
+  const item = loadWishlist().find((w) => w.id === id);
+  if (!item) return undefined;
+  if (needsRemovalRecord(item) && !isRemoved(item)) saveWishlistItem(asRemoved(item));
+  else removeWishlistItem(id);
+  return item;
+}
+
+/** Undo for removeWant: puts the want back exactly as it was (unless the person has since put something else in its place). Returns false if it did not. */
+export function undoRemoveWant(original: WishlistItem): boolean {
+  const current = loadWishlist().find((w) => w.id === original.id);
+  if (current && !isRemoved(current)) return false;
+  saveWishlistItem(original);
+  return true;
+}
+
 // ── Catalog picks (Upcoming Comics etc.) ─────────────────────────────
 
 export type CatalogPick = {
@@ -466,12 +486,15 @@ export function findCatalogWish(source: string, externalId: string): WishlistIte
  * (null). Returns false if it could not be saved to the account.
  */
 export async function setCatalogWish(pick: CatalogPick, status: WishStatus | null): Promise<boolean> {
-  const existing = findCatalogWish(pick.source, pick.externalId);
+  let existing = findCatalogWish(pick.source, pick.externalId);
   if (status === null) {
-    // Skipped and Acquired records are what stop Following from adding the release again: clearing a tap never deletes them.
-    if (existing && existing.status !== "skipped" && existing.status !== "acquired") removeWishlistItem(existing.id);
+    // Skipped and Acquired records are what stop Following from adding the release again: clearing a tap never deletes them, and clearing a Want is remembered the
+    // same way (a removed record), so the next check does not put it back.
+    if (existing && existing.status !== "skipped" && existing.status !== "acquired") removeWant(existing.id);
     return true;
   }
+  // Tapping Want or Pre-ordered on a release that was removed is a clear decision to have it back: take the removed record back, then apply the tap.
+  if (existing && isRemoved(existing)) existing = { ...restoredFromRemoved(existing), status: "want" };
   // A want that was already received or skipped is not turned back into Wanted by a tap on Upcoming Comics.
   if (existing && (existing.status === "acquired" || existing.status === "skipped")) return true;
   // A field the person changed by hand is never overwritten by the catalog, and a field the catalog does not give is never erased.

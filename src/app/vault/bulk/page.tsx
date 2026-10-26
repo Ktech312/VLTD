@@ -13,6 +13,7 @@ import { PillButton } from "@/components/ui/PillButton";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useAiAccess } from "@/lib/ai/useAiAccess";
 
 import CameraCapturePanel from "@/components/CameraCapturePanel";
 import { analyzeImageWithVision, type VisionAnalysisResult } from "@/lib/ai/openaiVision";
@@ -125,6 +126,8 @@ function visionToDraftPatch(vision: VisionAnalysisResult): Partial<BulkDraft> {
 const ALLOWANCE_UNKNOWN = "Couldn't check your AI scan allowance, so AI scanning is paused. Reload to try again, or fill these in by hand.";
 
 export default function BulkUploadPage() {
+  // Only an account that has AI is offered an AI scan or an AI allowance; the server refuses every other account.
+  const aiAccess = useAiAccess();
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -387,7 +390,7 @@ export default function BulkUploadPage() {
         </div>
 
         {/* Ticker */}
-        {profileId && remaining !== null && scanLimit !== null ? (
+        {aiAccess && profileId && remaining !== null && scanLimit !== null ? (
           <div className="mt-3 inline-flex items-center gap-2 rounded-full bg-[color:var(--pill)] px-3 py-1.5 text-xs ring-1 ring-[color:var(--border)]">
             <span
               className="inline-block h-1.5 w-1.5 rounded-full"
@@ -552,15 +555,17 @@ export default function BulkUploadPage() {
               >
                 <label className={LABEL_CLS}>Step 3 — Fill in details</label>
                 <div className="mt-3 flex flex-wrap gap-3">
-                  <button
-                    type="button"
-                    disabled={!universe || !category || (profileId !== "" && remaining === 0)}
-                    onClick={() => void runScan()}
-                    className="inline-flex min-h-11 items-center justify-center rounded-[8px] px-6 text-sm font-black text-[#0B0B0B] disabled:opacity-40"
-                    style={{ background: "var(--theme-gold-gradient)", boxShadow: "var(--theme-gold-glow)" }}
-                  >
-                    Scan with AI to fill details
-                  </button>
+                  {aiAccess ? (
+                    <button
+                      type="button"
+                      disabled={!universe || !category || (profileId !== "" && remaining === 0)}
+                      onClick={() => void runScan()}
+                      className="inline-flex min-h-11 items-center justify-center rounded-[8px] px-6 text-sm font-black text-[#0B0B0B] disabled:opacity-40"
+                      style={{ background: "var(--theme-gold-gradient)", boxShadow: "var(--theme-gold-glow)" }}
+                    >
+                      Scan with AI to fill details
+                    </button>
+                  ) : null}
                   <button
                     type="button"
                     disabled={!universe || !category}
@@ -568,12 +573,12 @@ export default function BulkUploadPage() {
                     className="inline-flex min-h-11 items-center justify-center rounded-[8px] border px-6 text-sm font-semibold text-[color:var(--muted)] transition hover:text-text-primary disabled:opacity-40"
                     style={{ borderColor: "var(--theme-gold-border, rgba(203,208,213,0.3))" }}
                   >
-                    Skip — I&apos;ll fill in by hand
+                    {aiAccess ? "Skip — I’ll fill in by hand" : "Fill in by hand"}
                   </button>
                 </div>
                 {!universe || !category ? (
                   <p className="mt-2 text-[11px] text-[#EF4444]">Pick a Universe and Category above first.</p>
-                ) : profileId && remaining === 0 ? (
+                ) : aiAccess && profileId && remaining === 0 ? (
                   <p className="mt-2 text-[11px] text-[color:var(--muted2)]">
                     No AI scans left this cycle — you can still add everything by hand.
                   </p>

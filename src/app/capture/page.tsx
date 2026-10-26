@@ -52,6 +52,7 @@ import { parseMoneyInput } from "@/lib/moneyInput";
 import { captureDraftScope, clearCaptureDraft, draftHasContent, loadCaptureDraft, saveCaptureDraft } from "@/lib/captureDraft";
 import { getBulkScanStatus } from "@/lib/bulkScanQuota";
 import { ScanRefusedError } from "@/lib/ai/scanRequest";
+import { useAiAccess } from "@/lib/ai/useAiAccess";
 
 const UNIVERSES = getUniverses();
 
@@ -356,6 +357,8 @@ async function lookupTcgCardFromFile(file: File): Promise<CardLookupResult | nul
 
 export default function CapturePage() {
   const router = useRouter();
+  // Only an account that has AI is offered an AI button or an AI allowance (the server refuses every other account anyway).
+  const aiAccess = useAiAccess();
   const uploadInputRef = useRef<HTMLInputElement | null>(null);
   const nativeCameraInputRef = useRef<HTMLInputElement | null>(null);
   // "Take Real Photo" hands off to the phone's actual native camera app (via
@@ -1061,12 +1064,14 @@ export default function CapturePage() {
                         onClick={() => { setCapturedImages([]); setIdentified(false); setErrorMsg(""); }}
                         icon={<AppIcon name="rotate" size={15} strokeWidth={1.7} />}
                       />
-                      <ActionButton
-                        label={analyzing ? "Identifying…" : "Identify with AI"}
-                        disabled={analyzing}
-                        onClick={() => void runAiIdentify()}
-                        icon={<AppIcon name="sparkleAI" size={15} strokeWidth={1.7} />}
-                      />
+                      {aiAccess ? (
+                        <ActionButton
+                          label={analyzing ? "Identifying…" : "Identify with AI"}
+                          disabled={analyzing}
+                          onClick={() => void runAiIdentify()}
+                          icon={<AppIcon name="sparkleAI" size={15} strokeWidth={1.7} />}
+                        />
+                      ) : null}
                     </>
                   ) : null}
                 </div>
@@ -1095,7 +1100,7 @@ export default function CapturePage() {
                             <AppIcon name="camera" size={26} strokeWidth={1.6} />
                           </div>
                           <div className="text-sm font-semibold text-text-primary">Add a photo — optional</div>
-                          <p className="max-w-[240px] text-xs leading-5 text-[color:var(--muted)]">Snap or upload one — then tap <b className="font-semibold text-[color:var(--fg)]">Identify</b> to auto-fill, or just type the details in. No photo required.</p>
+                          <p className="max-w-[240px] text-xs leading-5 text-[color:var(--muted)]">Snap or upload one{aiAccess ? <> — then tap <b className="font-semibold text-[color:var(--fg)]">Identify</b> to auto-fill, or just type the details in</> : <>, then type the details in</>}. No photo required.</p>
                           <div className="flex flex-wrap justify-center gap-2">
                             <button type="button" onClick={() => setIsCameraPanelOpen(true)} className="vltd-tap-y inline-flex items-center gap-1.5 rounded-[8px] px-4 py-2 text-xs font-bold text-[#0B0B0B]" style={{ background: "var(--theme-gold-gradient)", boxShadow: "var(--theme-gold-glow)" }}>Take photo</button>
                             <button type="button" onClick={() => nativeCameraInputRef.current?.click()} title="Uses your phone's own camera app for the sharpest quality" className="vltd-tap-y inline-flex items-center gap-1.5 rounded-[8px] border px-4 py-2 text-xs font-semibold text-text-primary transition hover:bg-[color:var(--theme-gold-subtle,rgba(203,208,213,0.08))]" style={{ borderColor: "var(--theme-gold-border, rgba(203,208,213,0.3))" }}>Take Real Photo</button>
@@ -1230,7 +1235,7 @@ export default function CapturePage() {
                     <p className="mt-2 text-[11px] leading-4 text-[#EF4444]">
                       {errorMsg} You can still fill it in by hand.
                     </p>
-                  ) : metered && scanRemaining !== null && capturedImageFile ? (
+                  ) : aiAccess && metered && scanRemaining !== null && capturedImageFile ? (
                     <p className="mt-2 text-[11px] leading-4 text-[color:var(--muted2)]">
                       {scanRemaining} AI scan{scanRemaining === 1 ? "" : "s"} left this cycle.
                     </p>

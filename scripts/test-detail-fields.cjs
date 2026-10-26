@@ -108,5 +108,33 @@ const old = { id: "3", title: "Older item", universe: "SPORTS", categoryLabel: "
 const oldOthers = D.otherSavedDetails(old, D.resolveItemDetailProfile(old));
 t("an older item's existing values all have visible rows", oldOthers.length === 0 || oldOthers.every((f) => ["serialNumber"].includes(f.target)), oldOthers.map((f) => f.target));
 
+// ── Brand typed on Add Item shows under a Brand label (toys have their own Brand row), without losing or moving data ─────────
+{
+  const toy = { id: "b1", title: "Retro Robots Series 2 Action Figure", universe: "POP_CULTURE", categoryLabel: "Toys & Figures", subcategoryLabel: "Action Figures", brand: "Retro Robots" };
+  const profile = D.resolveItemDetailProfile(toy);
+  const brandRow = profile.all.find((f) => f.label === "Brand");
+  t("a toy has its own Brand row", !!brandRow, profile.all.map((f) => f.label));
+  t("the Brand typed on Add Item is shown on that Brand row", brandRow && D.displayDetail(toy, brandRow) === "Retro Robots", brandRow && D.displayDetail(toy, brandRow));
+  const others = D.otherSavedDetails(toy, profile);
+  t("it is not listed a second time under Publisher / maker", !others.some((f) => f.target === "brand"), others.map((f) => f.label));
+  t("the stored brand column is untouched by showing it", toy.brand === "Retro Robots");
+  const typed = { ...toy, toyBrand: "Own Brand" };
+  t("a category Brand that was typed on the item wins over the general brand", D.displayDetail(typed, brandRow) === "Own Brand");
+  t("editing the Brand row writes the category Brand and keeps the general brand", JSON.stringify(D.detailPatch(toy, brandRow, "Newer Name")) === JSON.stringify({ toyBrand: "Newer Name" }));
+  const cleared = D.detailPatch(toy, brandRow, "");
+  t("clearing the Brand row clears what it was showing (so it does not come straight back)", cleared.toyBrand === undefined && "brand" in cleared && cleared.brand === undefined);
+  // a category with no Brand row of its own keeps the value visible, with a label that says what it is
+  const card = { id: "b2", title: "A card", universe: "SPORTS", categoryLabel: "Sports Cards", subcategoryLabel: "Basketball", brand: "Hardwood Heroes" };
+  const cardProfile = D.resolveItemDetailProfile(card);
+  const cardShown = cardProfile.all.some((f) => f.key === "brand" && D.displayDetail(card, f) === "Hardwood Heroes");
+  const cardOthers = D.otherSavedDetails(card, cardProfile);
+  const cardOther = cardOthers.find((f) => f.target === "brand");
+  t("a category without its own Brand row still shows the brand, never labelled only 'Publisher / maker'", cardShown || (cardOther && /Brand/.test(cardOther.label) && D.displayDetail(card, cardOther) === "Hardwood Heroes"), cardOthers.map((f) => f.label));
+  // a legitimate Publisher / maker on a category that lists it is not touched
+  const withMaker = { id: "b3", title: "A card", universe: "SPORTS", categoryLabel: "Sports Cards", subcategoryLabel: "Basketball", brand: "Topps" };
+  const makerField = D.resolveItemDetailProfile(withMaker).all.find((f) => f.key === "brand");
+  t("a category that lists Publisher / maker as a field keeps that label and value", !makerField || (makerField.label !== "Brand" && D.displayDetail(withMaker, makerField) === "Topps"));
+}
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

@@ -101,7 +101,7 @@ export default function FollowTab({
   return (
     <div className="flex flex-col gap-2" data-testid="follow-tab">
       {!inAccount ? <p className="rounded-[7px] border px-3 py-2 text-[12px]" style={{ borderColor: "rgba(224,166,76,0.4)", color: "var(--muted)" }} role="status">Your rules are saved on this device for now. They will follow your account once the Following update is applied.</p> : null}
-      <p className="px-0.5 text-[12px]" style={{ color: "var(--muted)" }}>Pause keeps a rule and adds nothing. Stop keeps what it already added. A release you skipped never comes back, and a release whose date changes keeps your choices.</p>
+      <p className="px-0.5 text-[12px]" style={{ color: "var(--muted)" }}>Pause keeps a rule and adds nothing. Stop keeps what it already added. A release you skip or remove stays off your list: a check never adds it back, and the rule keeps following the series. Removing offers Undo; to bring a removed release back later, tap Want on it in Upcoming Comics. A release whose date changes keeps your choices.</p>
       {active.length === 0 ? (
         <div className="rounded-[8px] border px-4 py-8 text-center" style={{ borderColor: line }}>
           <p className="text-sm font-semibold">You are not following anything yet</p>

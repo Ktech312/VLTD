@@ -190,6 +190,38 @@ export function withAcquired(item: WishlistItem, newItemIds: string[], now: numb
   return { ...item, acquiredItemIds: ids, quantityAcquired: have, status: have >= quantityOf(item) ? "acquired" : item.status === "preordered" ? "preordered" : "want", updatedAt: now };
 }
 
+/* ── removed releases ─────────────────────────────────────────────────
+ * "Remove" on a release that came from a catalog (a Following rule, or a tap on Upcoming Comics) is a recorded decision, not just a delete: the want stays in the
+ * account as a Skipped record marked removed (details.removed), hidden everywhere, so a later check sees the release identity and never adds it again, on any device,
+ * with no database change (status "skipped" and the details column already exist). The record keeps every field, so Undo restores the want exactly.
+ * Wants with no catalog identity (typed in by hand) and watched items are simply deleted, as before. */
+
+/** A want that came from a catalog release (not typed in, not a watched item): removing it is remembered. */
+export function needsRemovalRecord(item: WishlistItem): boolean {
+  const identity = ruleIdentityOfItem(item);
+  return Boolean(identity && !identity.startsWith("watch:"));
+}
+
+export function isRemoved(item: Pick<WishlistItem, "status" | "details">): boolean {
+  return item.status === "skipped" && item.details?.removed === "1";
+}
+
+/** The record kept in place of a removed catalog release. Everything else about the want is untouched. */
+export function asRemoved(item: WishlistItem, now: number = Date.now()): WishlistItem {
+  return { ...item, status: "skipped", skippedAt: item.skippedAt ?? now, details: { ...(item.details ?? {}), removed: "1", removedFrom: item.status ?? "want" }, updatedAt: now };
+}
+
+/** Takes a removed release back exactly as it was before it was removed (status, skipped time, details). */
+export function restoredFromRemoved(item: WishlistItem, now: number = Date.now()): WishlistItem {
+  const from = item.details?.removedFrom;
+  const status: WishStatus = from === "preordered" || from === "acquired" || from === "skipped" ? from : "want";
+  const { removed: _removed, removedFrom: _removedFrom, ...rest } = item.details ?? {}; // eslint-disable-line @typescript-eslint/no-unused-vars
+  const next: WishlistItem = { ...item, status, details: Object.keys(rest).length ? rest : undefined, updatedAt: now };
+  if (status !== "skipped") delete next.skippedAt;
+  if (next.details === undefined) delete next.details;
+  return next;
+}
+
 /** Fields the person changed by hand; a refresh from a catalog never overwrites these. */
 export function markEdited(item: WishlistItem, fields: string[]): WishlistItem {
   const edited = new Set(item.edited ?? []);
@@ -302,8 +334,8 @@ export function planRuleRefresh(rule: PullRule, releases: CatalogRelease[], exis
     const date = release.date && isIsoDay(release.date) ? release.date : undefined;
     if (have) {
       // Already a selection (any status, including Skipped): never add a copy, never undo the person's edits, never bring a skipped release back.
-      // A changed release date updates the existing selection unless the person set the date themselves.
-      if (date && have.releaseDate !== date && !(have.edited ?? []).includes("releaseDate")) plan.update.push({ id: have.id, patch: { releaseDate: date, updatedAt: now } });
+      // A changed release date updates the existing selection unless the person set the date themselves. A removed release is left exactly as recorded.
+      if (!isRemoved(have) && date && have.releaseDate !== date && !(have.edited ?? []).includes("releaseDate")) plan.update.push({ id: have.id, patch: { releaseDate: date, updatedAt: now } });
       continue;
     }
     // Already in the Vault (bought with Own on Upcoming Comics, which takes the want off the list): never put it back as a want.
@@ -350,4 +382,61 @@ export const DEFAULT_SHARE_FIELDS: ShareFields = { titles: true, quantities: fal
 export function normalizeShareFields(raw: unknown): ShareFields {
   const r = raw && typeof raw === "object" ? (raw as Record<string, unknown>) : {};
   return { titles: true, quantities: r.quantities === true, dates: r.dates === true, prices: r.prices === true, notes: r.notes === true, shops: r.shops === true };
+}
+
+/* ── date corrections for releases already on the list ─────────────────────── */
+
+export const DATE_LOOKUP_INTERVAL_MS = 6 * 3_600_000;
+/** The most per-issue lookups one check may make, and the most in any rolling six hours (the catalog allows about 20 requests a minute; this stays far under). */
+export const DATE_LOOKUPS_PER_RUN = 8;
+export const DATE_LOOKUPS_PER_WINDOW = 24;
+/** A release whose date passed more than this long ago is out: the catalog's date for it is final. */
+const DATE_LOOKUP_STALE_DAYS = 90;
+
+/** The catalog issue id behind a want's identity ("metron:issue:181794" -> 181794), or undefined. */
+export function catalogIssueIdOf(item: WishlistItem): number | undefined {
+  const m = ruleIdentityOfItem(item)?.match(/^metron:issue:(\d+)$/);
+  return m ? Number(m[1]) : undefined;
+}
+
+/**
+ * Which wants on the list should have their date looked up one by one: open catalog wants that this check's discovery did not report (they moved outside the window, or the
+ * catalog dropped them), with no hand-edited date, whose Following rule (if any) is still following and was checked successfully this run. Paused and stopped rules'
+ * wants are left alone. Least recently looked-up first, so a long list is covered over several checks.
+ */
+export function trackedDateCandidates(
+  items: WishlistItem[],
+  rules: Array<Pick<PullRule, "id" | "state">>,
+  opts: { covered: ReadonlySet<string>; checkedRuleIds: ReadonlySet<string>; lastLookup: Record<string, number>; now: number; force?: boolean; ruleId?: string },
+): WishlistItem[] {
+  const ruleById = new Map(rules.map((r) => [r.id, r]));
+  const oldest = new Date(opts.now - DATE_LOOKUP_STALE_DAYS * 86_400_000).toISOString().slice(0, 10);
+  const out: WishlistItem[] = [];
+  for (const item of items) {
+    const identity = ruleIdentityOfItem(item);
+    if (!identity || catalogIssueIdOf(item) === undefined || !isOpen(item)) continue;
+    if ((item.edited ?? []).includes("releaseDate")) continue;
+    if (opts.covered.has(identity)) continue;
+    if (item.releaseDate && item.releaseDate < oldest) continue;
+    if (opts.ruleId && item.ruleId !== opts.ruleId) continue;
+    if (item.ruleId) {
+      const rule = ruleById.get(item.ruleId);
+      if (rule && rule.state !== "following") continue;
+      if (rule && !opts.checkedRuleIds.has(rule.id)) continue;
+    }
+    if (!opts.force && opts.now - (opts.lastLookup[identity] ?? 0) < DATE_LOOKUP_INTERVAL_MS) continue;
+    out.push(item);
+  }
+  return out.sort((a, b) => (opts.lastLookup[ruleIdentityOfItem(a) ?? ""] ?? 0) - (opts.lastLookup[ruleIdentityOfItem(b) ?? ""] ?? 0) || (a.releaseDate ?? "9999").localeCompare(b.releaseDate ?? "9999"));
+}
+
+/**
+ * What a one-issue lookup means for a want. A different valid date updates it; a date the catalog no longer gives, or an issue it no longer lists, changes nothing
+ * (the last known date stays; never "today", never blank). A date the person set by hand always wins.
+ */
+export function planDateCorrection(item: WishlistItem, found: { date: string | null } | null, now: number = Date.now()): { releaseDate: string; updatedAt: number } | null {
+  if (!found || !found.date || !isIsoDay(found.date)) return null;
+  if ((item.edited ?? []).includes("releaseDate")) return null;
+  if (item.releaseDate === found.date) return null;
+  return { releaseDate: found.date, updatedAt: now };
 }

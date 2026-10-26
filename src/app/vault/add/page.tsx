@@ -105,6 +105,7 @@ import { resolveCategoryLabel } from "@/lib/categoryLabels";
 import AddDetailFields from "@/components/AddDetailFields";
 import { resolveDetailProfile } from "@/lib/detailFields";
 import { isSpecsDeviceOnly, SPECS_DEVICE_ONLY_NOTE } from "@/lib/specsDeviceOnly";
+import { useAiAccess } from "@/lib/ai/useAiAccess";
 
 const ACTIVE_PROFILE_KEY = "vltd_active_profile_id_v1";
 
@@ -343,6 +344,8 @@ function Field({
 }
 
 export default function AddPage() {
+  // Only an account that has AI is told to use it (and shown the button); the server refuses every other account.
+  const aiAccess = useAiAccess();
   const router = useRouter();
   const cameraInputRef = useRef<HTMLInputElement | null>(null);
   const uploadInputRef = useRef<HTMLInputElement | null>(null);
@@ -832,9 +835,9 @@ export default function AddPage() {
       const digits = barcode.digits;
       const raw = barcode.rawValue ?? digits;
       setScanSession((prev) => setScanSessionBarcode(prev, raw, digits));
-      setStatus("Picture + barcode captured. Choose Identify with AI or save the item.");
+      setStatus(aiAccess ? "Picture + barcode captured. Choose Identify with AI or save the item." : "Picture + barcode captured. Fill in the details or save the item.");
     } else {
-      setStatus("Picture added. Choose Identify with AI or save the item.");
+      setStatus(aiAccess ? "Picture added. Choose Identify with AI or save the item." : "Picture added. Fill in the details or save the item.");
     }
   }
 
@@ -868,7 +871,7 @@ export default function AddPage() {
     setActiveMediaImageId(image.id);
     replaceScanImage(image.file);
     setSelectedMediaImageId("");
-    setStatus("Selected picture ready. Crop if needed, then choose Identify with AI.");
+    setStatus(aiAccess ? "Selected picture ready. Crop if needed, then choose Identify with AI." : "Selected picture ready. Crop if needed, then fill in the details.");
   }
 
   // Cancel (and Close, the backdrop and Escape) in the crop step. For a picture that was only just chosen, it discards that picture; for one that was
@@ -1920,7 +1923,7 @@ export default function AddPage() {
     setCropMediaImageId("");
     setFreshCropMediaId(added[0]?.id ?? "");
     setIsCropEditorOpen(true);
-    setStatus("Picture added. Crop if needed, then choose Identify with AI or save the item. Cancel in the crop step discards it.");
+    setStatus(aiAccess ? "Picture added. Crop if needed, then choose Identify with AI or save the item. Cancel in the crop step discards it." : "Picture added. Crop if needed, then fill in the details or save the item. Cancel in the crop step discards it.");
   }
 
   async function handleApplyScanCrop() {
@@ -1943,7 +1946,7 @@ export default function AddPage() {
       setIsCropEditorOpen(false);
       // Choosing or cropping the picture only sets the picture. Nothing is looked up or sent to the AI until the person
       // chooses Auto Identify (handleScanAutofill); it used to start by itself here.
-      setStatus("Picture ready. Choose Identify with AI to fill in the details, or fill them in yourself.");
+      setStatus(aiAccess ? "Picture ready. Choose Identify with AI to fill in the details, or fill them in yourself." : "Picture ready. Fill in the details yourself.");
     } catch (error) {
       setStatus(error instanceof Error ? error.message : "Failed to crop scan image.");
     } finally {
@@ -2891,7 +2894,7 @@ export default function AddPage() {
                           // The whole photo, as it is: close the step (the crop frame is back to full).
                           setScanCrop(DEFAULT_SCAN_CROP);
                           setIsCropEditorOpen(false);
-                          setStatus(cropEditorTarget === "media" ? "Photo kept as it was." : "Picture ready. Choose Identify with AI to fill in the details, or fill them in yourself.");
+                          setStatus(cropEditorTarget === "media" ? "Photo kept as it was." : aiAccess ? "Picture ready. Choose Identify with AI to fill in the details, or fill them in yourself." : "Picture ready. Fill in the details yourself.");
                         }}
                         onCancel={() => cancelCropEditor()}
                         isApplying={isApplyingCrop}

@@ -27,6 +27,7 @@ import { matchVisionCategory, matchVisionSubcategory, matchVisionUniverse } from
 import { getStoredActiveProfileId } from "@/lib/auth";
 import { getBulkScanStatus } from "@/lib/bulkScanQuota";
 import { ScanRefusedError, stopsTheBatch } from "@/lib/ai/scanRequest";
+import { useAiAccess } from "@/lib/ai/useAiAccess";
 import { useUnsavedChangesGuard } from "@/hooks/useUnsavedChangesGuard";
 import { useCameraZoom, type CameraCaptureCrop } from "@/hooks/useCameraZoom";
 import { classifyBackCameras } from "@/lib/scanners/cameraLenses";
@@ -170,6 +171,8 @@ function FrameOverlay({ frameType, capturing }: { frameType: FrameType; capturin
 }
 
 export default function ScanCapturePanel({ onClose }: { onClose: () => void }) {
+  // Only an account that has AI is shown an AI allowance (the server refuses every other account).
+  const aiAccess = useAiAccess();
   const router = useRouter();
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const captureCanvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -1018,7 +1021,7 @@ export default function ScanCapturePanel({ onClose }: { onClose: () => void }) {
           Identifying {Math.min(scanDone + 1, scanTotal)} of {scanTotal}…
         </div>
         <div className="text-xs text-white/60">AI is filling in your items.</div>
-        {metered && scanRemaining !== null ? (
+        {aiAccess && metered && scanRemaining !== null ? (
           <div className="text-xs text-white/50">{scanRemaining} AI scans left this cycle</div>
         ) : null}
         <div className="h-1.5 w-full max-w-xs overflow-hidden rounded-full bg-white/10">

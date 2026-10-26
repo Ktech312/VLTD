@@ -1,10 +1,10 @@
 import { mayAdoptLegacyKey } from "./legacyKeys";
 import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 import { captureIdentity } from "@/lib/sessionGuard";
-import { fetchUpcomingComicsChecked, formatStoreDate, type UpcomingIssue } from "@/lib/comicUpcoming";
+import { fetchComicIssueChecked, fetchUpcomingComicsChecked, formatStoreDate, type UpcomingIssue } from "@/lib/comicUpcoming";
 import { loadWishlist, saveWishlistItems, updateWishlistItem, wantIdNamespace } from "@/lib/wishlistModel";
 import { loadItems } from "@/lib/vaultModel";
-import { clampQuantity, planRuleRefresh, type CatalogRelease, type PullRule, type PullRuleKind, type PullRuleState } from "@/lib/wantsCore";
+import { DATE_LOOKUPS_PER_RUN, DATE_LOOKUPS_PER_WINDOW, DATE_LOOKUP_INTERVAL_MS, catalogIssueIdOf, clampQuantity, planDateCorrection, planRuleRefresh, ruleIdentityOfItem, trackedDateCandidates, type CatalogRelease, type PullRule, type PullRuleKind, type PullRuleState } from "@/lib/wantsCore";
 
 // Following: rules that collect future releases. Saved to the account (`pull_rules`, 20261024_wishlist_pull_list.sql) with a copy on this device;
 // until that table exists the rules live on this device only (the page says so).
@@ -238,16 +238,64 @@ function ownedComicIdentities(): Set<string> {
   return owned;
 }
 
-export type RefreshOutcome = { checked: number; added: number; updated: number; suggestions: CatalogRelease[]; failed: string[] };
+export type RefreshOutcome = { checked: number; added: number; updated: number; suggestions: CatalogRelease[]; failed: string[]; /** One-issue date lookups made by this check. */ lookups: number };
+
+// Date corrections for releases already on the list (see trackedDateCandidates): a record of when each was last looked up and of how many lookups were made in the
+// last six hours, kept on this device, so the catalog is never asked more than the bounds allow.
+type LookupLog = { last: Record<string, number>; recent: number[] };
+function lookupLogKey() {
+  const pid = activeProfileId();
+  return pid ? `vltd_want_date_lookups:${pid}` : "vltd_want_date_lookups";
+}
+function readLookupLog(): LookupLog {
+  try {
+    const parsed = JSON.parse(localStorage.getItem(lookupLogKey()) ?? "{}") as Partial<LookupLog>;
+    return { last: parsed.last && typeof parsed.last === "object" ? parsed.last : {}, recent: Array.isArray(parsed.recent) ? parsed.recent.filter((n) => typeof n === "number") : [] };
+  } catch { return { last: {}, recent: [] }; }
+}
+function writeLookupLog(log: LookupLog) {
+  try { localStorage.setItem(lookupLogKey(), JSON.stringify(log)); } catch { /* storage unavailable: the bounds still hold for this run */ }
+}
+
+/**
+ * Looks up, one release at a time, the date of wants that the discovery window did not report this check, and corrects their date (a hand-set date always wins; a dropped
+ * or unlisted release keeps its last known date). At most DATE_LOOKUPS_PER_RUN per check and DATE_LOOKUPS_PER_WINDOW in any six hours; stops at the first failure.
+ */
+async function refreshTrackedDates(args: { covered: Set<string>; checkedRuleIds: Set<string>; force?: boolean; ruleId?: string; now: number }): Promise<{ lookups: number; updated: number }> {
+  const log = readLookupLog();
+  log.recent = log.recent.filter((t) => args.now - t < DATE_LOOKUP_INTERVAL_MS);
+  const budget = Math.min(DATE_LOOKUPS_PER_RUN, DATE_LOOKUPS_PER_WINDOW - log.recent.length);
+  let lookups = 0;
+  let updated = 0;
+  if (budget > 0) {
+    const due = trackedDateCandidates(loadWishlist(), loadPullRules(), { covered: args.covered, checkedRuleIds: args.checkedRuleIds, lastLookup: log.last, now: args.now, force: args.force, ruleId: args.ruleId });
+    for (const item of due.slice(0, budget)) {
+      const id = catalogIssueIdOf(item);
+      const identity = ruleIdentityOfItem(item);
+      if (id === undefined || !identity) continue;
+      lookups += 1;
+      log.recent.push(args.now);
+      const { issue, failed } = await fetchComicIssueChecked(id);
+      if (failed) break; // the catalog could not be reached: nothing learned, try again at the next check
+      log.last[identity] = args.now;
+      const patch = planDateCorrection(item, issue ? { date: issueToRelease(issue).date } : null, Date.now());
+      if (patch) { updateWishlistItem(item.id, { releaseDate: patch.releaseDate }); updated += 1; }
+    }
+  }
+  writeLookupLog(log);
+  return { lookups, updated };
+}
 
 /**
  * Checks every Following comic rule against the catalog and applies the plan (planRuleRefresh: exact series only, standard covers only,
  * no copies, edits kept, skipped stay skipped, changed dates update the existing selection). Re-running it changes nothing new.
  * `force` ignores the 6-hour pause between automatic checks.
  */
-export async function refreshPullRules(opts: { force?: boolean; ruleId?: string } = {}): Promise<RefreshOutcome> {
-  const out: RefreshOutcome = { checked: 0, added: 0, updated: 0, suggestions: [], failed: [] };
-  const now = Date.now();
+export async function refreshPullRules(opts: { force?: boolean; ruleId?: string; now?: number } = {}): Promise<RefreshOutcome> {
+  const out: RefreshOutcome = { checked: 0, added: 0, updated: 0, suggestions: [], failed: [], lookups: 0 };
+  const now = opts.now ?? Date.now();
+  const covered = new Set<string>(); // releases the discovery window listed for a rule's own series this check: their dates are already corrected by the plan
+  const checkedRuleIds = new Set<string>();
   let rules = loadPullRules().filter((r) => r.state === "following" && r.source === "metron" && r.sourceKey && (!opts.ruleId || r.id === opts.ruleId));
   if (!opts.force) rules = rules.filter((r) => !r.lastCheckedAt || now - r.lastCheckedAt >= REFRESH_EVERY_MS);
   for (const rule of rules) {
@@ -259,6 +307,8 @@ export async function refreshPullRules(opts: { force?: boolean; ruleId?: string 
       continue;
     }
     const releases = data.results.map(issueToRelease);
+    checkedRuleIds.add(rule.id);
+    for (const r of releases) if (r.seriesKey === rule.sourceKey) covered.add(r.identity);
     // Read the wishlist again for every rule: the previous rule's additions are part of what "already there" means.
     const plan = planRuleRefresh(rule, releases, loadWishlist(), Date.now(), wantIdNamespace(), ownedComicIdentities());
     if (plan.add.length) saveWishlistItems(plan.add);
@@ -270,5 +320,8 @@ export async function refreshPullRules(opts: { force?: boolean; ruleId?: string 
     const current = loadPullRules().find((r) => r.id === rule.id);
     if (current) saveRule({ ...current, lastCheckedAt: Date.now(), lastResult: summary });
   }
+  const dates = await refreshTrackedDates({ covered, checkedRuleIds, force: opts.force, ruleId: opts.ruleId, now });
+  out.lookups = dates.lookups;
+  out.updated += dates.updated;
   return out;
 }

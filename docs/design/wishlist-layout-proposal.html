@@ -128,7 +128,7 @@ label.f .hint{display:block;margin-top:3px;font-size:11px;color:var(--mute)}
 
 <h2>What I will build if you approve</h2>
 <div class="box"><ol style="margin:0;padding-left:20px"><li><code>WantForm</code>: split the fields into Essentials and the three expanders (a small <code>Disclosure</code> built from <code>PillButton</code> styling), show "n of m filled" on each, keep every field and rule.</li><li><code>WantRow</code> and the Wishlist page: one open row at a time; close it on tab switch; keep a per-want draft in session storage; show the Unsaved edit tag; sticky Save bar on phones.</li><li>Toolbar: Sort becomes a <code>PillButton</code> + <code>ActionMenu</code> next to Search on its own fixed row; chips scroll on the row below.</li><li>Tests: draft survives a tab switch and a reopen; draft is dropped on Save, Cancel and Discard; Sort reachable at 320, 360 and 390 px with no sideways scroll; the opened row at 390 px is under 800 px with expanders closed; existing Wishlist tests still pass. Then a branch preview for you to look at before it goes to the live site.</li></ol>
-<p class="note">Open choices for you: (a) keep Priority among the essentials (shown here) or move it into the notes expander; (b) whether Quantity belongs in the essentials (here: yes, because it changes the planned total).</p></div>
+<p class="note">Decided by the owner (2026-10-26): Quantity and Priority stay visible among the essential fields, as shown here. This layout stays a proposal awaiting your visual approval; it is not built or deployed.</p></div>
 </div>
 <script>
 document.querySelectorAll('[data-d] > button').forEach(function(b){b.addEventListener('click',function(){b.parentElement.classList.toggle('open');measure();});});

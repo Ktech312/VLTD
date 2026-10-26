@@ -6,6 +6,7 @@ import { useState } from "react";
 import { Glyph } from "@/components/ui/Glyph";
 import { AppIcon } from "@/components/ui/AppIcon";
 import { PillButton } from "@/components/ui/PillButton";
+import { useAiAccess } from "@/lib/ai/useAiAccess";
 
 import type { VisionAnalysisResult } from "@/lib/ai/openaiVision";
 import {
@@ -88,6 +89,8 @@ export default function ScanVerifySheet({
   const dialogRef = useDialogA11y<HTMLDivElement>(true, onClose);
   const [preview, setPreview] = useState<{ front: string; back?: string; label: string } | null>(null);
   const outOfScans = metered && remaining !== null && remaining <= 0;
+  // Only an account that has AI is offered an AI button or an allowance; everyone else just fills the details in.
+  const aiAccess = useAiAccess();
 
   return (
     <div
@@ -108,10 +111,10 @@ export default function ScanVerifySheet({
           <div className="min-w-0">
             <div className="text-sm font-bold">Verify your Drop</div>
             <div className="truncate text-[11px] text-[color:var(--muted)]">
-              Fill these in yourself, or choose Identify with AI. Nothing is identified until you ask.
+              {aiAccess ? "Fill these in yourself, or choose Identify with AI. Nothing is identified until you ask." : "Fill these in, then save."}
             </div>
           </div>
-          {metered && remaining !== null && scanLimit !== null ? (
+          {aiAccess && metered && remaining !== null && scanLimit !== null ? (
             <div className="flex shrink-0 items-center gap-1.5 rounded-full bg-[color:var(--pill)] px-2.5 py-1 text-[11px] ring-1 ring-[color:var(--border)]">
               <span className="inline-block h-1.5 w-1.5 rounded-full" style={{ background: remaining > 0 ? "#22C55E" : "#EF4444" }} />
               <span className="font-semibold">{remaining}</span>
@@ -270,10 +273,12 @@ export default function ScanVerifySheet({
                         {costCheck(d.currentValue, "Value") ? (
                           <span role="alert" className="basis-full text-[12px] leading-snug text-red-300">{costCheck(d.currentValue, "Value")}</span>
                         ) : null}
-                        <PillButton size="compact" className="ml-auto shrink-0" onClick={() => onRescan(d.id)} disabled={scanningId !== null || outOfScans}>
-                          {isScanning ? "Identifying…" : d.scanned ? "Identify again with AI" : "Identify with AI"}
-                        </PillButton>
-                        <PillButton size="compact" variant="danger" className="shrink-0" onClick={() => onRemove(d.id)}>Remove</PillButton>
+                        {aiAccess ? (
+                          <PillButton size="compact" className="ml-auto shrink-0" onClick={() => onRescan(d.id)} disabled={scanningId !== null || outOfScans}>
+                            {isScanning ? "Identifying…" : d.scanned ? "Identify again with AI" : "Identify with AI"}
+                          </PillButton>
+                        ) : null}
+                        <PillButton size="compact" variant="danger" className={`shrink-0${aiAccess ? "" : " ml-auto"}`} onClick={() => onRemove(d.id)}>Remove</PillButton>
                       </div>
                     </div>
                   </div>
@@ -291,7 +296,7 @@ export default function ScanVerifySheet({
 
         {/* Footer */}
         <div className="shrink-0 border-t border-[color:var(--border)] px-4 pb-4 pt-3">
-          {drafts.some((d) => !d.scanned) ? (
+          {aiAccess && drafts.some((d) => !d.scanned) ? (
             <PillButton
               className="mb-2 w-full"
               onClick={onIdentifyAll}
