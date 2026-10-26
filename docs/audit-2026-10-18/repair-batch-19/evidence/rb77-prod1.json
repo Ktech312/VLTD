@@ -1,0 +1,120 @@
+{
+ "label": "prod1",
+ "cases": [
+  {
+   "ok": true,
+   "control": "the server can reserve (SQL 10 is installed: reserve_ai_scan exists and answers)"
+  },
+  {
+   "ok": true,
+   "control": "a signed-in member cannot reserve (refused by the database)"
+  },
+  {
+   "ok": true,
+   "control": "a signed-in member cannot complete or refund (refused by the database)"
+  },
+  {
+   "ok": true,
+   "control": "a signed-in member cannot call the number helper"
+  },
+  {
+   "ok": true,
+   "control": "an anonymous caller cannot reserve (refused by the database)"
+  },
+  {
+   "ok": true,
+   "control": "an anonymous caller cannot complete or refund (refused by the database)"
+  },
+  {
+   "ok": true,
+   "control": "an anonymous caller cannot call the number helper"
+  },
+  {
+   "ok": true,
+   "control": "a signed-in member cannot read the reservation table"
+  },
+  {
+   "ok": true,
+   "control": "(pre-existing) a member's own consume_bulk_scan still cannot move the counter"
+  },
+  {
+   "ok": true,
+   "control": "reserve one scan: allowance 5, 1 used (a provider call would now be 'in flight')"
+  },
+  {
+   "ok": true,
+   "control": "during the in-flight reservation the member's direct refund, completion and re-reservation are all refused"
+  },
+  {
+   "ok": true,
+   "control": "the reservation and the counter are untouched by those attempts and by direct edits (still reserved, still 1 used)"
+  },
+  {
+   "ok": true,
+   "control": "the server then completes it: scan stays spent"
+  },
+  {
+   "ok": true,
+   "control": "a finished scan cannot be refunded afterwards (even by the server)"
+  },
+  {
+   "ok": true,
+   "control": "completing twice changes nothing"
+  },
+  {
+   "ok": true,
+   "control": "a repeated request id spends once (reserved, then duplicate; 1 used)"
+  },
+  {
+   "ok": true,
+   "control": "10 identical requests at the same instant: exactly one reserved, nine duplicates, 1 used"
+  },
+  {
+   "ok": true,
+   "control": "14 different requests at the same instant against an allowance of 3: exactly 3 reserved, 11 refused as over the limit, counter 3"
+  },
+  {
+   "ok": true,
+   "control": "two requests racing for the one scan left, 6 rounds: exactly one wins every time"
+  },
+  {
+   "ok": true,
+   "control": "provider failed: 8 refunds at the same instant give the scan back exactly once (counter 0, all answers 'released')"
+  },
+  {
+   "ok": true,
+   "control": "the released request id can be retried and is charged once (1 used)"
+  },
+  {
+   "ok": true,
+   "control": "refunding a request the server never reserved does nothing"
+  },
+  {
+   "ok": true,
+   "control": "setup: a lapsed cycle (started 2020-01-01) with 4 used"
+  },
+  {
+   "ok": true,
+   "control": "a member's status read of the lapsed cycle answers with the NEW cycle and 0 used"
+  },
+  {
+   "ok": true,
+   "control": "and writes NOTHING: the stored row is exactly as it was (4 used, old cycle), so nothing can be carried over by a read"
+  },
+  {
+   "ok": true,
+   "control": "the server's next reservation rolls the cycle: 1 used in the new cycle (the old 4 are NOT carried over)"
+  },
+  {
+   "ok": true,
+   "control": "a refund for a reservation taken in an OLDER cycle changes nothing in the current one (released, counter unchanged)"
+  },
+  {
+   "ok": true,
+   "control": "an anonymous caller cannot read the allowance status"
+  }
+ ],
+ "profile": {
+  "created_at": "2026-10-26T07:47:28.019545+00:00"
+ }
+}

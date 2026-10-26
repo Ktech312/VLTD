@@ -1,0 +1,123 @@
+{
+ "label": "prod1",
+ "usageLogRowsBefore": 0,
+ "usageLogRowsAfter": 14,
+ "usageLogRowsRemoved": "removed",
+ "cases": [
+  {
+   "ok": true,
+   "control": "item scan: the route runs in FULL mode (x-scan-guard: full) and the scan succeeds",
+   "actual": "[200,\"full\"]"
+  },
+  {
+   "ok": true,
+   "control": "item scan: one stand-in provider call, one scan spent, the reservation is 'done'",
+   "actual": "[1,1,\"done\"]"
+  },
+  {
+   "ok": true,
+   "control": "item scan: the same request id again is refused (409 duplicate): no second provider call, nothing more spent",
+   "actual": "[409,\"duplicate\",1]"
+  },
+  {
+   "ok": true,
+   "control": "item scan: three identical requests at the same instant: ONE provider call, one 200, two 409, 1 spent",
+   "actual": "[1,[200,409,409]]"
+  },
+  {
+   "ok": true,
+   "control": "item scan: the provider fails: the person gets an error (not charged)",
+   "actual": "[502,\"full\"]"
+  },
+  {
+   "ok": true,
+   "control": "item scan: the scan was GIVEN BACK by the server (0 spent, reservation 'released')",
+   "actual": "[0,\"released\"]"
+  },
+  {
+   "ok": true,
+   "control": "item scan: the retry with the same request id works and is charged once",
+   "actual": "[200,1]"
+  },
+  {
+   "ok": true,
+   "control": "item scan: 8 different requests at once against an allowance of 3: exactly 3 provider calls, 3 succeed, 5 refused (429), 3 spent",
+   "actual": "[3,[200,200,200,429,429,429,429,429]]"
+  },
+  {
+   "ok": true,
+   "control": "item scan: an allowance of 0 is refused (429, full mode) with no provider call",
+   "actual": "[429,\"full\",0]"
+  },
+  {
+   "ok": true,
+   "control": "item scan: while the provider call is in flight the member's direct refund is refused; the scan stays reserved (1 spent)",
+   "actual": "[\"permission denied for function complete_\",1,\"reserved\"]"
+  },
+  {
+   "ok": true,
+   "control": "item scan: the server then completes it",
+   "actual": "[200,\"done\"]"
+  },
+  {
+   "ok": true,
+   "control": "certificate scan: the route runs in FULL mode (x-scan-guard: full) and the scan succeeds",
+   "actual": "[200,\"full\"]"
+  },
+  {
+   "ok": true,
+   "control": "certificate scan: one stand-in provider call, one scan spent, the reservation is 'done'",
+   "actual": "[1,1,\"done\"]"
+  },
+  {
+   "ok": true,
+   "control": "certificate scan: the same request id again is refused (409 duplicate): no second provider call, nothing more spent",
+   "actual": "[409,\"duplicate\",1]"
+  },
+  {
+   "ok": true,
+   "control": "certificate scan: three identical requests at the same instant: ONE provider call, one 200, two 409, 1 spent",
+   "actual": "[1,[409,200,409]]"
+  },
+  {
+   "ok": true,
+   "control": "certificate scan: the provider fails: the person gets an error (not charged)",
+   "actual": "[502,\"full\"]"
+  },
+  {
+   "ok": true,
+   "control": "certificate scan: the scan was GIVEN BACK by the server (0 spent, reservation 'released')",
+   "actual": "[0,\"released\"]"
+  },
+  {
+   "ok": true,
+   "control": "certificate scan: the retry with the same request id works and is charged once",
+   "actual": "[200,1]"
+  },
+  {
+   "ok": true,
+   "control": "certificate scan: 8 different requests at once against an allowance of 3: exactly 3 provider calls, 3 succeed, 5 refused (429), 3 spent",
+   "actual": "[3,[200,200,200,429,429,429,429,429]]"
+  },
+  {
+   "ok": true,
+   "control": "certificate scan: an allowance of 0 is refused (429, full mode) with no provider call",
+   "actual": "[429,\"full\",0]"
+  },
+  {
+   "ok": true,
+   "control": "certificate scan: while the provider call is in flight the member's direct refund is refused; the scan stays reserved (1 spent)",
+   "actual": "[\"permission denied for function complete_\",1,\"reserved\"]"
+  },
+  {
+   "ok": true,
+   "control": "certificate scan: the server then completes it",
+   "actual": "[200,\"done\"]"
+  },
+  {
+   "ok": true,
+   "control": "no request went anywhere except this project's Supabase and the local provider stand-in",
+   "actual": "[]"
+  }
+ ]
+}

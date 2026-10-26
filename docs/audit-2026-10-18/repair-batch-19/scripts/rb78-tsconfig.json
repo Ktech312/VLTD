@@ -1,0 +1,11 @@
+{
+  "extends": "../../../../tsconfig.json",
+  "compilerOptions": {
+    "baseUrl": "../../../..",
+    "paths": {
+      "@/lib/ownerAccess": ["docs/audit-2026-10-18/repair-batch-19/scripts/rb78-owner-stub.ts"],
+      "@/*": ["src/*"]
+    }
+  },
+  "include": []
+}

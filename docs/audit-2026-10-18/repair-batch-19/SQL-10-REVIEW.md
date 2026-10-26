@@ -1,4 +1,4 @@
-# SQL package 10 (corrected): for review. HOLD: not run.
+# SQL package 10 (corrected): APPLIED by the owner 2026-10-26, validation all true. Production checks: CLOSEOUT.md (RB77, RB78, RB76).
 
 Files: [10-ai-scan-reservations.sql](sql/10-ai-scan-reservations.sql), [validation-10.sql](sql/validation-10.sql), [rollback-10.sql](sql/rollback-10.sql). Server caller: `src/lib/server/scanGuard.ts`.
 

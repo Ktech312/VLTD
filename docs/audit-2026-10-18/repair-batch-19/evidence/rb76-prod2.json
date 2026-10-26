@@ -1,0 +1,99 @@
+{
+ "label": "prod2",
+ "cases": [
+  {
+   "ok": true,
+   "control": "setup: neither QA account is the owner's address"
+  },
+  {
+   "ok": true,
+   "control": "setup: the QA profile has a POSITIVE allowance (5, none used) and the QA account is its real member"
+  },
+  {
+   "ok": true,
+   "control": "setup check: allowance really reads 5 with 0 used"
+  },
+  {
+   "ok": true,
+   "control": "item scan: no sign-in at all is refused (401)"
+  },
+  {
+   "ok": true,
+   "control": "item scan: a forged token is refused (401)"
+  },
+  {
+   "ok": true,
+   "control": "item scan: a signed-in account that really is a member of the profile, with allowance left, is refused (403 owner_only)"
+  },
+  {
+   "ok": true,
+   "control": "item scan: the refusal came before the gate mode was even chosen (no x-scan-guard header: no membership or allowance step ran)"
+  },
+  {
+   "ok": true,
+   "control": "item scan: another signed-in account using that profile is refused the same way (403 owner_only, not a membership answer)"
+  },
+  {
+   "ok": true,
+   "control": "item scan: a non-owner with a bad file gets the same refusal (the request is not even examined)"
+  },
+  {
+   "ok": true,
+   "control": "item scan: a non-owner with no profile and no request id gets the same refusal"
+  },
+  {
+   "ok": true,
+   "control": "item scan: a repeated request id is refused both times (nothing is reserved)"
+  },
+  {
+   "ok": true,
+   "control": "certificate scan: no sign-in at all is refused (401)"
+  },
+  {
+   "ok": true,
+   "control": "certificate scan: a forged token is refused (401)"
+  },
+  {
+   "ok": true,
+   "control": "certificate scan: a signed-in account that really is a member of the profile, with allowance left, is refused (403 owner_only)"
+  },
+  {
+   "ok": true,
+   "control": "certificate scan: the refusal came before the gate mode was even chosen (no x-scan-guard header: no membership or allowance step ran)"
+  },
+  {
+   "ok": true,
+   "control": "certificate scan: another signed-in account using that profile is refused the same way (403 owner_only, not a membership answer)"
+  },
+  {
+   "ok": true,
+   "control": "certificate scan: a non-owner with a bad file gets the same refusal (the request is not even examined)"
+  },
+  {
+   "ok": true,
+   "control": "certificate scan: a non-owner with no profile and no request id gets the same refusal"
+  },
+  {
+   "ok": true,
+   "control": "certificate scan: a repeated request id is refused both times (nothing is reserved)"
+  },
+  {
+   "ok": true,
+   "control": "none of those requests spent or reserved anything: the allowance still reads 0 used of 5"
+  },
+  {
+   "ok": true,
+   "control": "no reservation row exists for the profile (SQL 10's table, if present, is empty for it)"
+  }
+ ],
+ "membersOfQaProfile": 1,
+ "analyze-item-member-body": {
+  "error": "AI scans are not available on this account.",
+  "code": "owner_only"
+ },
+ "analyze-coa-member-body": {
+  "error": "AI scans are not available on this account.",
+  "code": "owner_only"
+ },
+ "ledgerTable": "0 rows"
+}
