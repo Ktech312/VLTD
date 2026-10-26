@@ -63,6 +63,7 @@ async function asOwnerInBrowser(R) {
     ck(/Total cost\s*\$45\.75/.test(t.replace(/\n/g, " ")), "Total cost reads $45.75, not a rounded $46", "$45.75", (t.replace(/\n/g, " ").match(/Total cost[^A-Za-z]*/) || ["no match"])[0]);
     const flat = t.replace(/\n/g, " ");
     ck(/Brand\s*Retro Robots/.test(flat), "the recorded Brand is shown on the Brand row", "Brand Retro Robots", (flat.match(/Brand[^A-Za-z]{0,6}[A-Za-z ]{0,20}/) || ["none"])[0]);
+    ck((flat.match(/(?:Brand|maker|publisher)[^A-Za-z]{0,6}Retro Robots/gi) || []).length === 1, "the brand appears once among the Details rows (not repeated under 'Other saved details')", "exactly one brand row", JSON.stringify(flat.match(/(?:Brand|maker|publisher)[^A-Za-z]{0,6}Retro Robots/gi)));
     ck(!/Publisher \/ maker\s*Retro Robots/.test(flat), "it is no longer listed as Publisher / maker", "no Publisher / maker Retro Robots", (flat.match(/Publisher \/ maker[^A-Za-z]{0,6}[A-Za-z ]{0,20}/) || ["none"])[0]);
     ck(!AI_TEXT.test(t), "the item page has no 'Scan certificate with AI' for an account without AI", "none", (t.match(AI_TEXT) || ["none"])[0]);
     // crop editor has no timing text (desktop camera)
